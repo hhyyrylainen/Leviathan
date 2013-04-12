@@ -96,13 +96,13 @@ bool Leviathan::GameObject::Model::ReloadModel(wstring &file, MultiFlag flags, G
 	if(loadnow != NULL){
 		if(!LoadRenderModel(&ModelPath/*, loadnow*/)){
 			// failed //
-			Logger::Get()->Error(L"GameObject::Model::Render: Failed to load model: model file "+ModelPath, false);
+			Logger::Get()->Error(L"GameObject::Model: Render: Failed to load model: model file "+ModelPath, false);
 			MType = MODELOBJECT_MODEL_TYPE_ERROR;
 			return false;
 		}
 		if(!InitBuffers(loadnow->GetRenderer()->GetDevice())){
 			// failed //
-			Logger::Get()->Error(L"GameObject::Model::Render: Failed to init buffers model: model file "+ModelPath, false);
+			Logger::Get()->Error(L"GameObject::Model: Render: Failed to init buffers model: model file "+ModelPath, false);
 			MType = MODELOBJECT_MODEL_TYPE_ERROR;
 			return false;
 		}
@@ -264,7 +264,7 @@ DLLEXPORT bool Leviathan::GameObject::Model::Render(Graphics* renderer, int mspa
 		case MODEL_NEEDED_SHADER_TEXTURE:
 			{
 				RenderingLight* light = Engine::GetEngine()->GetLightAtObject(dynamic_cast<BasePositionable*>(this));
-				return renderer->GetShader()->RenderSkinnedShaderSmall(renderer->GetRenderer()->GetDeviceContext(), this->GetIndexCount(), OwnWorld,
+				return renderer->GetShader()->RenderSkinnedShader(renderer->GetRenderer()->GetDeviceContext(), this->GetIndexCount(), OwnWorld,
 					ViewMatrix, ProjectionMatrix, skeleton, renderer->GetTextureManager()->GetTextureView(TextureIDS[0], TEXTUREMANAGER_SEARCH_LATEST),
 					light->GetDirection(), light->GetAmbientColor(), light->GetDiffuseColor(), CameraPos, light->GetSpecularColor(), light->GetSpecularPower());
 

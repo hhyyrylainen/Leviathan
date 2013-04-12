@@ -7,15 +7,10 @@ using namespace Leviathan;
 using namespace Leviathan::GameObject;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameObject::SkeletonRig::SkeletonRig(){
-	VerticeTranslationMatrices.resize(10);
 
-	// populate with empty matrices //
-	for(unsigned int i = 0; i < VerticeTranslationMatrices.size(); i++){
-		VerticeTranslationMatrices[i] = shared_ptr<D3DXMATRIX>(new D3DXMATRIX());
-	}
-
-	Translated = 0.f;
 }
+
+
 
 DLLEXPORT Leviathan::GameObject::SkeletonRig::~SkeletonRig(){
 
@@ -27,52 +22,30 @@ void Leviathan::GameObject::SkeletonRig::ReleaseBuffers(){
 
 }
 // ------------------------------------ //
+void Leviathan::GameObject::SkeletonRig::ResizeMatriceCount(int newsize){
+	// resize //
+	VerticeTranslationMatrices.resize(newsize);
 
-
-DLLEXPORT bool Leviathan::GameObject::SkeletonRig::CreateBuffersForRendering(ID3D11Device* device){
-	return false;
-}
-
-DLLEXPORT bool Leviathan::GameObject::SkeletonRig::UpdateBuffersForRendering(ID3D11DeviceContext* devcont){
-
-
-	return false;
+	// overwrite everything with NULL pointers //
+	for(unsigned int i = 0; i < VerticeTranslationMatrices.size(); i++){
+		VerticeTranslationMatrices[i] = NULL;
+	}
 }
 
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed, D3DXMATRIX* WorldMatrix){
-	// test update //
-	Translated += mspassed*0.00001f;
-	
+	// update currently playing animations //
+
+	// resize matrices if apropriate //
+
 	for(unsigned int i = 0; i < VerticeTranslationMatrices.size(); i++){
-		//D3DXMatrixTranslation((VerticeTranslationMatrices[i].get()), Translated, Translated, 0);
-
-		//Float3 parentPos(0.f, 0.f, 0.f);
-		//D3DXMATRIX mTranslate;
-		//D3DXMatrixTranslation(&mTranslate, parentPos.X(), parentPos.Y(), parentPos.Z());
-
-		//D3DXMATRIX mQuat;
-		//D3DXMatrixRotationYawPitchRoll(&mQuat, 0.f, 0.f, 0.f);
-
-		////D3DXMatrixRotationQuaternion( &mQuat, &quat );
-		//D3DXMATRIX LocalTransform = ( mQuat * mTranslate );
-	
-		//// Transform ourselves
-		//D3DXMATRIX LocalWorld;
-		//D3DXMatrixMultiply(&LocalWorld, &LocalTransform, WorldMatrix);
-		//(*VerticeTranslationMatrices[i]) = LocalWorld;
+		// clear matrix //
 		D3DXMatrixIdentity(VerticeTranslationMatrices[i].get());
 
-		// try multiplying with world matrix //
-		//D3DXMatrixMultiply(VerticeTranslationMatrices[i].get(), VerticeTranslationMatrices[i].get(), WorldMatrix);
+		// fetch new translation //
 
-		//D3DXMatrixTranslation((VerticeTranslationMatrices[i].get()), Translated, Translated, Translated);
-
-		// translate it a bit //
-		if(i == 1){
-			//D3DXMatrixTranslation((VerticeTranslationMatrices[i].get()), Translated/-1.f, Translated/-1.f, Translated/-1.f);
-			//D3DXMatrixTranslation((VerticeTranslationMatrices[i].get()), mspassed*0.01f, mspassed*0.01f,mspassed*0.01f);
-		}
+		// maybe transpose the matrix //
+		D3DXMatrixTranspose(VerticeTranslationMatrices[i].get(), VerticeTranslationMatrices[i].get());
 	}
 	//// Transform our siblings
 	//if( m_pFrameArray[iFrame].SiblingFrame != INVALID_FRAME )
@@ -94,13 +67,55 @@ DLLEXPORT bool Leviathan::GameObject::SkeletonRig::SaveOnTopOfTextBlock(ObjectFi
 	return false;
 }
 
-DLLEXPORT bool Leviathan::GameObject::SkeletonRig::CopyValuesToBuffer(BoneTransformsBufferType* buffer){
+DLLEXPORT bool Leviathan::GameObject::SkeletonRig::CopyValuesToBuffer(BoneTransfromBufferWrapper* buffer){
+	// dynamically cast the wrapper's buffer to right type //
+	D3DXMATRIX* Buffersdata = NULL;
+	unsigned int MaxCount = 0;
+	if(buffer->BoneCount <= MAX_BONES_TINY){
+		MaxCount = MAX_BONES_TINY;
+		Buffersdata =  (dynamic_cast<BoneTransformsPointerTiny*>(buffer->Data))->Data->BoneMatrices;
+	} else if(buffer->BoneCount <= MAX_BONES_SMALL){
+		MaxCount = MAX_BONES_SMALL;
+		Buffersdata =  (dynamic_cast<BoneTransformsPointerSmall*>(buffer->Data))->Data->BoneMatrices;
+	} else if(buffer->BoneCount <= MAX_BONES_MEDIUM){
+		MaxCount = MAX_BONES_MEDIUM;
+		Buffersdata =  (dynamic_cast<BoneTransformsPointerMedium*>(buffer->Data))->Data->BoneMatrices;
+	} else if(buffer->BoneCount <= MAX_BONES_LARGE){
+		MaxCount = MAX_BONES_LARGE;
+		Buffersdata =  (dynamic_cast<BoneTransformsPointerLarge*>(buffer->Data))->Data->BoneMatrices;
+	} else if(buffer->BoneCount <= MAX_BONES_HUGE){
+		MaxCount = MAX_BONES_HUGE;
+		Buffersdata =  (dynamic_cast<BoneTransformsPointerHuge*>(buffer->Data))->Data->BoneMatrices;
+	} else if(buffer->BoneCount <= MAX_BONES_MAX){
+		MaxCount = MAX_BONES_MAX;
+		Buffersdata =  (dynamic_cast<BoneTransformsPointerMax*>(buffer->Data))->Data->BoneMatrices;
+	} else {
+
+		ComplainOnce::PrintErrorOnce(L"skeletonRig: CopyValuesToBuffer: too many bones!", L"SkeletonRig: CopyValuesToBuffer: too many bones! max is "+Convert::IntToWstring(MAX_BONES_MAX)
+			+L" bone count: "+Convert::IntToWstring(buffer->BoneCount));
+		return false;
+	}
+	try{
+		if(MaxCount < VerticeTranslationMatrices.size() || Buffersdata[0] == NULL){
+			return false;
+		}
+	}
+	catch(...){
+		DEBUG_BREAK;
+		return false;
+	}
 	// copy matrices to the buffer //
 	for(unsigned int i = 0; i < VerticeTranslationMatrices.size(); i++){
-		buffer->BoneMatrices[i] = *VerticeTranslationMatrices[i];
+		*(Buffersdata+1) = *VerticeTranslationMatrices[i];
 	}
 
 	return true;
 }
+
+DLLEXPORT int Leviathan::GameObject::SkeletonRig::GetBoneCount(){
+	return VerticeTranslationMatrices.size();
+}
+
+
 
 

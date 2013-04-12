@@ -23,6 +23,17 @@ DLLEXPORT bool Leviathan::ComplainOnce::PrintWarningOnce(const wstring& warning,
 	}
 	return false;
 }
+
+DLLEXPORT  bool Leviathan::ComplainOnce::PrintErrorOnce(const wstring& error, const wstring& message){
+	// print only once to log //
+	if(DataStore::Get()->AddValueIfDoesntExist(error, 1)){
+		// value wasn't there, print //
+		Logger::Get()->Error(message, false);
+		return true;
+	}
+	return false;
+}
+
 // ------------------------------------ //
 
 // ------------------------------------ //

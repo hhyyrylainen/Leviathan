@@ -9,6 +9,7 @@
 #include "BaseObject.h"
 #include "ObjectFileTextBlock.h"
 #include "Rendering\ShaderDataTypes.h"
+#include "ComplainOnce.h"
 
 namespace Leviathan{ namespace GameObject{
 
@@ -21,24 +22,28 @@ namespace Leviathan{ namespace GameObject{
 		
 		DLLEXPORT void UpdatePose(int mspassed, D3DXMATRIX* WorldMatrix);
 		
-		DLLEXPORT bool CreateBuffersForRendering(ID3D11Device* device);
-		DLLEXPORT bool UpdateBuffersForRendering(ID3D11DeviceContext* devcont);
+		// aren't actually needed //
+		//DLLEXPORT bool CreateBuffersForRendering(ID3D11Device* device);
+		//DLLEXPORT bool UpdateBuffersForRendering(ID3D11DeviceContext* devcont);
 		//DLLEXPORT ID3D11Buffer* FetchBuffer();
 		
-		DLLEXPORT bool CopyValuesToBuffer(BoneTransformsBufferType* buffer);
+		DLLEXPORT bool CopyValuesToBuffer(BoneTransfromBufferWrapper* buffer);
 
 		DLLEXPORT bool SaveOnTopOfTextBlock(ObjectFileTextBlock* block);
+
+		DLLEXPORT int GetBoneCount();
 
 		DLLEXPORT static SkeletonRig* LoadRigFromFileStructure(ObjectFileTextBlock* structure, bool NeedToChangeCoordinateSystem);
 
 	private:
 		void ReleaseBuffers();
+		void ResizeMatriceCount(int newsize);
 
 		// -------------------- //
 		//SkeletalAnimationStream* Animation;
 		vector<shared_ptr<D3DXMATRIX>> VerticeTranslationMatrices;
 		
-		float Translated;
+		//float Translated;
 	};
 
 }}

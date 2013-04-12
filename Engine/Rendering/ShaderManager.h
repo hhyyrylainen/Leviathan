@@ -11,7 +11,7 @@
 #include "TextureShader.h"
 #include "LightShader.h"
 #include "BumpShader.h"
-#include "SkinnedShaderSmall.h"
+#include "SkinnedShader.h"
 #include "ColorGradientShader.h"
 #include "..\SkeletonRig.h"
 
@@ -34,7 +34,7 @@ namespace Leviathan{
 
 		DLLEXPORT bool RenderGradientShader(ID3D11DeviceContext* devcont,int indexcount, D3DXMATRIX worldmatrix, D3DXMATRIX viewmatrix, D3DXMATRIX projectionmatrix, Float4& colorstart, Float4& colorend);
 
-		DLLEXPORT bool RenderSkinnedShaderSmall(ID3D11DeviceContext* devcont,int indexcount, D3DXMATRIX worldmatrix, D3DXMATRIX viewmatrix, 
+		DLLEXPORT bool RenderSkinnedShader(ID3D11DeviceContext* devcont,int indexcount, D3DXMATRIX worldmatrix, D3DXMATRIX viewmatrix, 
 			D3DXMATRIX projectionmatrix, GameObject::SkeletonRig* Bones, ID3D11ShaderResourceView* texture, Float3 lightDirection, Float4 ambientColor, 
 			Float4 diffuseColor, Float3 cameraPosition, Float4 specularColor, float specularPower);
 
@@ -51,7 +51,7 @@ namespace Leviathan{
 		LightShader* _LightShader;
 		BumpMapShader* _BumpMapShader;
 		GradientShader* _GradientShader;
-		SkinnedShaderSmall* _SkinnedShaderSmall;
+		SkinnedShader* _SkinnedShader;
 	};
 // --------- ShaderDesc --------- //
 	class ShaderDesc{

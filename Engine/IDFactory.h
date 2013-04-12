@@ -13,7 +13,7 @@ namespace Leviathan{
 	class IDFactory : public Object{
 	public:
 		DLLEXPORT IDFactory::IDFactory();
-        DLLEXPORT IDFactory::~IDFactory();
+		DLLEXPORT IDFactory::~IDFactory();
 
 
 		DLLEXPORT static int GetID();

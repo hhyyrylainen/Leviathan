@@ -444,11 +444,11 @@
     <ClCompile Include="Rendering\RenderingPassInfo.cpp">
       <Filter>rendering</Filter>
     </ClCompile>
-    <ClCompile Include="Rendering\SkinnedShaderSmall.cpp">
-      <Filter>rendering\shaders</Filter>
-    </ClCompile>
     <ClCompile Include="ComplainOnce.cpp">
       <Filter>core\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\SkinnedShader.cpp">
+      <Filter>rendering\shaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -801,11 +801,11 @@
     <ClInclude Include="Rendering\RenderingPassInfo.h">
       <Filter>rendering</Filter>
     </ClInclude>
-    <ClInclude Include="Rendering\SkinnedShaderSmall.h">
-      <Filter>rendering\shaders</Filter>
-    </ClInclude>
     <ClInclude Include="ComplainOnce.h">
       <Filter>core\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\SkinnedShader.h">
+      <Filter>rendering\shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

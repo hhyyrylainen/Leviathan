@@ -26,7 +26,7 @@ ShaderManager::ShaderManager(){
 	_BumpMapShader = NULL;
 	_MultTextureShader = NULL;
 	_GradientShader = NULL;
-	_SkinnedShaderSmall = NULL;
+	_SkinnedShader = NULL;
 }
 
 ShaderManager::~ShaderManager(){
@@ -96,14 +96,14 @@ bool ShaderManager::Init(ID3D11Device* device, Window* wind){
 		return false;
 	}
 
-	// SkinnedShaderSmall shader //
-	_SkinnedShaderSmall = new SkinnedShaderSmall();
-	if(!_SkinnedShaderSmall){
+	// SkinnedShader shader //
+	_SkinnedShader = new SkinnedShader();
+	if(!_SkinnedShader){
 
 		QUICK_MEMORY_ERROR_MESSAGE;
 		return false;
 	}
-	if(!_SkinnedShaderSmall->Init(device)){
+	if(!_SkinnedShader->Init(device)){
 
 		Logger::Get()->Error(L"ShaderManager: Init: could not init SkinnedShaderSmall");
 		return false;
@@ -121,7 +121,7 @@ void ShaderManager::Release()
 	SAFE_RELEASEDEL(_TextureShader);
 	SAFE_RELEASEDEL(_MultTextureShader);
 	SAFE_RELEASEDEL(_GradientShader);
-	SAFE_RELEASEDEL(_SkinnedShaderSmall);
+	SAFE_RELEASEDEL(_SkinnedShader);
 	
 }
 // ------------------------------------ //
@@ -178,12 +178,12 @@ bool ShaderManager::RenderBumpMapShader(ID3D11DeviceContext* deviceContext, int 
 
 	return true;
 }
-DLLEXPORT bool Leviathan::ShaderManager::RenderSkinnedShaderSmall(ID3D11DeviceContext* devcont,int indexcount, D3DXMATRIX worldmatrix, 
+DLLEXPORT bool Leviathan::ShaderManager::RenderSkinnedShader(ID3D11DeviceContext* devcont,int indexcount, D3DXMATRIX worldmatrix, 
 	D3DXMATRIX viewmatrix, D3DXMATRIX projectionmatrix, GameObject::SkeletonRig* Bones, ID3D11ShaderResourceView* texture, Float3 lightDirection, 
 	Float4 ambientColor, Float4 diffuseColor, Float3 cameraPosition, Float4 specularColor, float specularPower)
 {
 	// Render with Skinned shader small version
-	if(!_SkinnedShaderSmall->Render(devcont, indexcount, worldmatrix, viewmatrix, projectionmatrix, Bones, texture, lightDirection, ambientColor, diffuseColor, 
+	if(!_SkinnedShader->Render(devcont, indexcount, worldmatrix, viewmatrix, projectionmatrix, Bones, texture, lightDirection, ambientColor, diffuseColor, 
 		cameraPosition, specularColor, specularPower))
 	{
 		// rendering failed //

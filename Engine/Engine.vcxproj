@@ -171,7 +171,7 @@
     <ClCompile Include="Rendering\RenderingPassInfo.cpp" />
     <ClCompile Include="Rendering\RenderSavedResource.cpp" />
     <ClCompile Include="Rendering\ShaderDataTypes.cpp" />
-    <ClCompile Include="Rendering\SkinnedShaderSmall.cpp" />
+    <ClCompile Include="Rendering\SkinnedShader.cpp" />
     <ClCompile Include="Rendering\TextRenderer.cpp" />
     <ClCompile Include="Rendering\3DRenderer.cpp" />
     <ClCompile Include="Rendering\BaseModel.cpp" />
@@ -290,7 +290,7 @@
     <ClInclude Include="Rendering\RenderingPassInfo.h" />
     <ClInclude Include="Rendering\RenderSavedResource.h" />
     <ClInclude Include="Rendering\ShaderDataTypes.h" />
-    <ClInclude Include="Rendering\SkinnedShaderSmall.h" />
+    <ClInclude Include="Rendering\SkinnedShader.h" />
     <ClInclude Include="Rendering\TextRenderer.h" />
     <ClInclude Include="Rendering\3DRenderer.h" />
     <ClInclude Include="Rendering\BaseModel.h" />

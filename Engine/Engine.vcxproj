@@ -130,6 +130,7 @@
     <ClCompile Include="Event.cpp" />
     <ClCompile Include="EventableGui.cpp" />
     <ClCompile Include="EventHandler.cpp" />
+    <ClCompile Include="ExceptionNULLPtr.cpp" />
     <ClCompile Include="FileHelper.cpp" />
     <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="FpsCounter.cpp" />
@@ -140,8 +141,10 @@
     <ClCompile Include="GuiScriptInterface.cpp" />
     <ClCompile Include="IDFactory.cpp" />
     <ClCompile Include="Input.cpp" />
+    <ClCompile Include="IteratorData.cpp" />
     <ClCompile Include="Key.cpp" />
     <ClCompile Include="KeyPressManager.cpp" />
+    <ClCompile Include="ExceptionBase.cpp" />
     <ClCompile Include="LineTokenizer.cpp" />
     <ClCompile Include="NormalModelData.cpp" />
     <ClCompile Include="ObjectFileList.cpp" />
@@ -203,6 +206,7 @@
     <ClCompile Include="ScriptScript.cpp" />
     <ClCompile Include="ScriptVariable.cpp" />
     <ClCompile Include="ScriptVariableHolder.cpp" />
+    <ClCompile Include="SkeletonBone.cpp" />
     <ClCompile Include="SkeletonRig.cpp" />
     <ClCompile Include="SmoothedPosition.cpp" />
     <ClCompile Include="SoundDevice.cpp" />
@@ -216,6 +220,7 @@
     <ClCompile Include="TriangulateDelaunay.cpp" />
     <ClCompile Include="Types.cpp" />
     <ClCompile Include="Window.cpp" />
+    <ClCompile Include="WstringIterator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\AngelScript\add_on\scriptarray\scriptarray.h" />
@@ -246,6 +251,7 @@
     <ClInclude Include="Event.h" />
     <ClInclude Include="EventableGui.h" />
     <ClInclude Include="EventHandler.h" />
+    <ClInclude Include="ExceptionNULLPtr.h" />
     <ClInclude Include="FileHelper.h" />
     <ClInclude Include="FileSystem.h" />
     <ClInclude Include="FpsCounter.h" />
@@ -258,8 +264,10 @@
     <ClInclude Include="IDFactory.h" />
     <ClInclude Include="Include.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="IteratorData.h" />
     <ClInclude Include="Key.h" />
     <ClInclude Include="KeyPressManager.h" />
+    <ClInclude Include="ExceptionBase.h" />
     <ClInclude Include="LineTokenizer.h" />
     <ClInclude Include="NormalModelData.h" />
     <ClInclude Include="ObjectFileList.h" />
@@ -322,6 +330,7 @@
     <ClInclude Include="ScriptScript.h" />
     <ClInclude Include="ScriptVariable.h" />
     <ClInclude Include="ScriptVariableHolder.h" />
+    <ClInclude Include="SkeletonBone.h" />
     <ClInclude Include="SkeletonRig.h" />
     <ClInclude Include="SmoothedPosition.h" />
     <ClInclude Include="SoundDevice.h" />
@@ -337,6 +346,7 @@
     <ClInclude Include="Types.h" />
     <ClInclude Include="WaveInfo.h" />
     <ClInclude Include="Window.h" />
+    <ClInclude Include="WstringIterator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\ErrorCodes.txt" />

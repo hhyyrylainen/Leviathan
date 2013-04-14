@@ -29,3 +29,15 @@ bool EngineComponent::Release(bool all){
 bool EngineComponent::IsInited(){
 	return Inited;
 }
+
+DLLEXPORT Leviathan::Object::Object(){
+
+}
+
+DLLEXPORT Leviathan::Object::~Object(){
+
+}
+
+//DLLEXPORT bool Leviathan::Object::IsThis(Object* compare){
+//	return this == compare;
+//}

@@ -45,6 +45,15 @@ namespace Leviathan{
 			return stream.str();
 		}
 
+		template<class T>
+		DLLEXPORT static wstring ToHexadecimalWstring(const T& val){
+			wstringstream stream;
+			if(!(stream << std::hex << val)){
+				return L"";
+			}
+			return stream.str();
+		}
+
 
 	};
 

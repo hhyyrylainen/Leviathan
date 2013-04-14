@@ -87,5 +87,7 @@ namespace Leviathan{
 #include "CommonMath.h"
 //#include "IDFactory.h"
 //#include "Convert.h"
+// exceptions //
+#include "ExceptionBase.h"
 
 #endif

@@ -118,13 +118,12 @@ namespace Leviathan{
 
 	class Object{
 	public:
-		DLLEXPORT Object(){};
-		DLLEXPORT bool IsThis(Object* compare);
-		//DLLEXPORT static Object* GetApp();
-		//DLLEXPORT static void SetApp(Object* app); // moved to LeviathanApplication class
+		DLLEXPORT Object();;
+		DLLEXPORT virtual ~Object();
+		DLLEXPORT virtual bool IsThis(Object* compare);
+
 	protected:
-		// pointer to application //
-		//static Object* LApp;
+
 	};
 	
 

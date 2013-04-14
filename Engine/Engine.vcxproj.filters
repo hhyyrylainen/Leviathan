@@ -106,6 +106,12 @@
     <Filter Include="common\debugging">
       <UniqueIdentifier>{8ccad782-1783-4451-9470-378aa2318302}</UniqueIdentifier>
     </Filter>
+    <Filter Include="objects\Skeleton">
+      <UniqueIdentifier>{74a27de1-5f95-44e1-b2b0-8a1019f77337}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\Exceptions">
+      <UniqueIdentifier>{5bbea59e-9f4a-41c5-9c33-e6b847260c51}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp">
@@ -438,9 +444,6 @@
     <ClCompile Include="Token.cpp">
       <Filter>core\helpers</Filter>
     </ClCompile>
-    <ClCompile Include="SkeletonRig.cpp">
-      <Filter>objects\ModelObject</Filter>
-    </ClCompile>
     <ClCompile Include="Rendering\RenderingPassInfo.cpp">
       <Filter>rendering</Filter>
     </ClCompile>
@@ -449,6 +452,24 @@
     </ClCompile>
     <ClCompile Include="Rendering\SkinnedShader.cpp">
       <Filter>rendering\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="SkeletonRig.cpp">
+      <Filter>objects\Skeleton</Filter>
+    </ClCompile>
+    <ClCompile Include="SkeletonBone.cpp">
+      <Filter>objects\Skeleton</Filter>
+    </ClCompile>
+    <ClCompile Include="WstringIterator.cpp">
+      <Filter>utility</Filter>
+    </ClCompile>
+    <ClCompile Include="ExceptionBase.cpp">
+      <Filter>common\Exceptions</Filter>
+    </ClCompile>
+    <ClCompile Include="ExceptionNULLPtr.cpp">
+      <Filter>common\Exceptions</Filter>
+    </ClCompile>
+    <ClCompile Include="IteratorData.cpp">
+      <Filter>utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -795,9 +816,6 @@
     <ClInclude Include="Token.h">
       <Filter>core\helpers</Filter>
     </ClInclude>
-    <ClInclude Include="SkeletonRig.h">
-      <Filter>objects\ModelObject</Filter>
-    </ClInclude>
     <ClInclude Include="Rendering\RenderingPassInfo.h">
       <Filter>rendering</Filter>
     </ClInclude>
@@ -806,6 +824,24 @@
     </ClInclude>
     <ClInclude Include="Rendering\SkinnedShader.h">
       <Filter>rendering\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="SkeletonRig.h">
+      <Filter>objects\Skeleton</Filter>
+    </ClInclude>
+    <ClInclude Include="SkeletonBone.h">
+      <Filter>objects\Skeleton</Filter>
+    </ClInclude>
+    <ClInclude Include="WstringIterator.h">
+      <Filter>utility</Filter>
+    </ClInclude>
+    <ClInclude Include="ExceptionBase.h">
+      <Filter>common\Exceptions</Filter>
+    </ClInclude>
+    <ClInclude Include="ExceptionNULLPtr.h">
+      <Filter>common\Exceptions</Filter>
+    </ClInclude>
+    <ClInclude Include="IteratorData.h">
+      <Filter>utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

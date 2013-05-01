@@ -333,7 +333,7 @@ int Misc::WstringGetFirstWord(const wstring& data, wstring& result){
 	return 0;
 }
 
-bool Misc::WstringStartsWith(const wstring& data, wstring lookfor){
+bool Misc::WstringStartsWith(const wstring& data, const wstring& lookfor){
 	if(data.size() < lookfor.size())
 		return false;
 	for(unsigned int i = 0; i < lookfor.size(); i++){

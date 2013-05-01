@@ -182,7 +182,8 @@ void Leviathan::GameObject::Model::CheckTextures(){
 		} else {
 			NeededShader = MODEL_NEEDED_SHADER_ERROR;
 			// matches nothing //
-			Logger::Get()->Error(L"Model: Matches no shader! NormalTextures: "+Convert::IntToWstring(NormalTextures)+L" bump maps: "+Convert::IntToWstring(BumpMaps)+L" light maps: "+Convert::IntToWstring(LightMaps));
+			Logger::Get()->Error(L"Model: Matches no shader! NormalTextures: "+Convert::IntToWstring(NormalTextures)+L" bump maps: "
+				+Convert::IntToWstring(BumpMaps)+L" light maps: "+Convert::IntToWstring(LightMaps));
 			return;
 		}
 	}
@@ -444,4 +445,90 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::Model::GetSkeleton(){
 		return ModelDataContainer->GetSkeleton();
 	}
 	return NULL;
+}
+
+DLLEXPORT bool Leviathan::GameObject::Model::StartPlayingAnimation(shared_ptr<AnimationBlock> Block, bool Smoothtonew /*= false*/){
+	// bind the animation to a (new) masterblock //
+	if(CurrentlyPlaying.get() == NULL){
+		// new block is required //
+		CurrentlyPlaying = shared_ptr<AnimationMasterBlock>(new AnimationMasterBlock());
+	}
+	// check can new child animation be added //
+	bool CanAdd = true;
+
+	if(!CanAdd)
+		return false;
+
+	// add animation //
+
+
+	// make sure that skeleton is playing the animation //
+	VerifySkeletonPlayingAnimations();
+
+	// now playing the animation //
+	return true;
+}
+
+DLLEXPORT void Leviathan::GameObject::Model::StopPlayingAnimations(bool KeepCurrentPose /*= false*/){
+	if(KeepCurrentPose){
+		// set current animation to be saved and then destroyed //
+
+
+	} else {
+		// just reset all animations //
+		// set the master block to die //
+
+	}
+	// clear pointer //
+	CurrentlyPlaying.reset();
+
+	SmoothOutTo.reset();
+}
+
+DLLEXPORT void Leviathan::GameObject::Model::FreezeAnimations(){
+	// set animation as paused //
+
+}
+
+DLLEXPORT bool Leviathan::GameObject::Model::UnFreezeAnimations(){
+	// un pause animation //
+
+	return false;
+}
+
+DLLEXPORT bool Leviathan::GameObject::Model::VerifySkeletonPlayingAnimations(){
+	// get a skeleton //
+	SkeletonRig* rig = this->GetSkeleton();
+	if(rig == NULL){
+
+		return false;
+	}
+
+	// check is skeleton playing this' objects animation //
+	if(rig->GetAnimation().get() != CurrentlyPlaying.get()){
+		rig->StartPlayingAnimation(CurrentlyPlaying);
+	}
+
+	return false;
+}
+
+DLLEXPORT bool Leviathan::GameObject::Model::VerifyResourcesLoaded(Graphics* renderer){
+	// try to load //
+	if(!LoadRenderModel(&ModelPath/*, renderer*/)){
+		// failed //
+		Logger::Get()->Error(L"GameObject::Model::Render: Failed to load model: model file "+ModelPath, false);
+		MType = MODELOBJECT_MODEL_TYPE_ERROR;
+		LastError = MODEL_ERROR_LOADDATAFAIL;
+		return false;
+	}
+	if(!InitBuffers(renderer->GetRenderer()->GetDevice())){
+		// failed //
+		Logger::Get()->Error(L"GameObject::Model::Render: Failed to init buffers model: model file "+ModelPath, false);
+		MType = MODELOBJECT_MODEL_TYPE_ERROR;
+		LastError = MODEL_ERROR_LOADDATAFAIL;
+		return false;
+	}
+	Inited = true;
+	MType = ModelDataContainer->GetType();
+	return true;
 }

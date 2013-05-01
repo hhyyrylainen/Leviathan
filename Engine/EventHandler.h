@@ -30,7 +30,7 @@ namespace Leviathan{
 	class EventHandler : public EngineComponent{
 	public:
 		DLLEXPORT EventHandler::EventHandler();
-        DLLEXPORT EventHandler::~EventHandler();
+		DLLEXPORT EventHandler::~EventHandler();
 
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();

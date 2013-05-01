@@ -22,9 +22,6 @@
     <Filter Include="objects">
       <UniqueIdentifier>{7cc855bc-da07-4359-bd34-e6a828a95cdc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="animation">
-      <UniqueIdentifier>{11c91fd4-96b6-48f8-9b12-fe672317a006}</UniqueIdentifier>
-    </Filter>
     <Filter Include="application">
       <UniqueIdentifier>{f3044376-3190-4ad8-baf3-e6587ead032f}</UniqueIdentifier>
     </Filter>
@@ -111,6 +108,9 @@
     </Filter>
     <Filter Include="common\Exceptions">
       <UniqueIdentifier>{5bbea59e-9f4a-41c5-9c33-e6b847260c51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="animation">
+      <UniqueIdentifier>{9fb6bb90-f8ad-4558-a497-0d6b4e16c6ce}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -470,6 +470,21 @@
     </ClCompile>
     <ClCompile Include="IteratorData.cpp">
       <Filter>utility</Filter>
+    </ClCompile>
+    <ClCompile Include="OutOfMemoryHandler.cpp">
+      <Filter>core\managers</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationMasterBlock.cpp">
+      <Filter>animation</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationBlock.cpp">
+      <Filter>animation</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationManager.cpp">
+      <Filter>animation</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadedAnimation.cpp">
+      <Filter>animation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -842,6 +857,21 @@
     </ClInclude>
     <ClInclude Include="IteratorData.h">
       <Filter>utility</Filter>
+    </ClInclude>
+    <ClInclude Include="OutOfMemoryHandler.h">
+      <Filter>core\managers</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationMasterBlock.h">
+      <Filter>animation</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationBlock.h">
+      <Filter>animation</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationManager.h">
+      <Filter>animation</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadedAnimation.h">
+      <Filter>animation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

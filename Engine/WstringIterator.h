@@ -16,7 +16,8 @@ namespace Leviathan{
 	class WstringIterator;
 
 	enum QUOTETYPE {QUOTETYPE_DOUBLEQUOTES, QUOTETYPE_SINGLEQUOTES, QUOTETYPE_BOTH};
-	enum DECIMALSEPARATORTYPE {DECIMALSEPARATORTYPE_DOT, DECIMALSEPARATORTYPE_COMMA, DECIMALSEPARATORTYPE_BOTH};
+	enum DECIMALSEPARATORTYPE {DECIMALSEPARATORTYPE_DOT, DECIMALSEPARATORTYPE_COMMA, DECIMALSEPARATORTYPE_BOTH, DECIMALSEPARATORTYPE_NONE};
+	enum UNNORMALCHARACTER {UNNORMALCHARACTER_TYPE_NON_ASCII, UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS};
 	enum ITERATORCALLBACK_RETURNTYPE {ITERATORCALLBACK_RETURNTYPE_STOP, ITERATORCALLBACK_RETURNTYPE_CONTINUE};
 
 #define WSTRINGITERATOR_IGNORE_SPECIAL			200001
@@ -27,6 +28,7 @@ namespace Leviathan{
 	// forward declarations for iterator methods //
 	ITERATORCALLBACK_RETURNTYPE FindFirstQuotedString(WstringIterator* instance, Object* IteratorData, int parameters);
 	ITERATORCALLBACK_RETURNTYPE FindNextNumber(WstringIterator* instance, Object* IteratorData, int parameters);
+	ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(WstringIterator* instance, Object* IteratorData, int parameters);
 
 	// could potentially inherit from base iterator, but not right now //
 	class WstringIterator : public Object{
@@ -34,6 +36,7 @@ namespace Leviathan{
 		// ----------------- friend functions ------------------- //
 		friend ITERATORCALLBACK_RETURNTYPE FindFirstQuotedString(WstringIterator* instance, Object* IteratorData, int parameters);
 		friend ITERATORCALLBACK_RETURNTYPE FindNextNumber(WstringIterator* instance, Object* IteratorData, int parameters);
+		friend ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(WstringIterator* instance, Object* IteratorData, int parameters);
 		// ------------------------------------ //
 		DLLEXPORT WstringIterator::WstringIterator(const wstring& text);
 		//************************************
@@ -49,6 +52,7 @@ namespace Leviathan{
 
 		DLLEXPORT unique_ptr<wstring> GetStringInQuotes(QUOTETYPE quotes, bool AllowSpecialQualifiers = true);
 		DLLEXPORT unique_ptr<wstring> GetNextNumber(DECIMALSEPARATORTYPE decimal);
+		DLLEXPORT unique_ptr<wstring> GetNextCharacterSequence(UNNORMALCHARACTER stopcase);
 
 		DLLEXPORT unsigned long GetPosition();
 		DLLEXPORT void SetPosition(unsigned long pos);

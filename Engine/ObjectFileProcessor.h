@@ -21,7 +21,7 @@ namespace Leviathan{
 		DLLEXPORT static void RegisterObjectType(wstring name, int value);
 		DLLEXPORT static int GetObjectTypeID(wstring &name);
 
-		DLLEXPORT static void RegisterValue(const wstring& signature, int value);
+		DLLEXPORT static void RegisterValue(const wstring &signature, int value);
 
 		DLLEXPORT static void TrimLineSpaces(wstring* str);
 

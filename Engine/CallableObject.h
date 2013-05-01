@@ -17,7 +17,10 @@ namespace Leviathan{
 
 		DLLEXPORT virtual void OnEvent(Event** pEvent) = 0;
 
-	private:
+
+	protected:
+		void Leviathan::CallableObject::UnRegister(EVENT_TYPE from, bool all = false);
+		void Leviathan::CallableObject::RegisterForEvent(EVENT_TYPE toregister);
 
 	};
 

@@ -83,6 +83,40 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetStringInQuotes(QUOT
 }
 
 
+DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextCharacterSequence(UNNORMALCHARACTER stopcase){
+	// iterate over the string and return what is wanted //
+	IteratorPositionData* data = new IteratorPositionData();
+	data->Positions.SetData(-1, -1);
+
+	// iterate over the string getting the proper part //
+
+	StartIterating(FindNextNormalCharacterString, (Object*)data, (int)stopcase);
+
+	// create substring of the wanted part //
+	unique_ptr<wstring> resultstr;
+
+	// check for end //
+	if(data->Positions[1] == -1){
+		// set to end on string end //
+		data->Positions.Val[1] = GetWstringLenght()-1;
+	}
+
+	if(IsPtrUsed){
+
+		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data->Positions[0], data->Positions[1]-data->Positions[0]+1)));
+	} else {
+
+		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data->Positions[0], data->Positions[1]-data->Positions[0]+1)));
+	}
+
+
+	// release memory //
+	SAFE_DELETE(data);
+
+	// return wanted part //
+	return resultstr;
+}
+
 DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextNumber(DECIMALSEPARATORTYPE decimal){
 	// iterate over the string and return what is wanted //
 	IteratorNumberFindData* data = new IteratorNumberFindData();
@@ -385,5 +419,58 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNumber(WstringIterator
 		}
 
 	}
+	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+}
+
+ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIterator* instance, Object* IteratorData, int parameters){
+	// check is current element a valid element //
+	wchar_t CurChar(instance->GetCurrentCharacter());
+
+	bool IsValid = false;
+
+	// check for number //
+	UNNORMALCHARACTER stoptype = (UNNORMALCHARACTER)parameters;
+
+	IteratorNumberFindData* tmpdata = dynamic_cast<IteratorNumberFindData*>(IteratorData);
+	if(tmpdata == NULL){
+		// well darn //
+		DEBUG_BREAK;
+	}
+	int charvalue = (int) CurChar;
+
+	if(((charvalue >= 32) && (charvalue <= 57)) || ((charvalue >= 63) && (charvalue <= 90)) || ((charvalue >= 96) && (charvalue <= 122))){
+		// is just a ascii char with some text characters included //
+		IsValid = true;
+	} else {
+		if(stoptype != UNNORMALCHARACTER_TYPE_NON_ASCII){
+			// we can check if it allows some other characters //
+			if(stoptype == UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS){
+				if(!((charvalue >= 58) && (charvalue <= 62)) && (charvalue < 123) && (charvalue >= 32)){
+					// is still valid! //
+					IsValid = true;
+				}
+			}
+		}
+	}
+
+
+	if(IsValid){
+		// check is this first character //
+		tmpdata->DigitsFound++;
+		if(tmpdata->Positions[0] == -1){
+			// first position! //
+
+			tmpdata->Positions.Val[0] = instance->IteratorPosition;
+		}
+
+	} else {
+		// check for end //
+		if(tmpdata->Positions[0] != -1){
+			// ended //
+			tmpdata->Positions.Val[1] = instance->IteratorPosition-1;
+			return ITERATORCALLBACK_RETURNTYPE_STOP;
+		}
+	}
+
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }

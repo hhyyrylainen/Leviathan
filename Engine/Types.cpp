@@ -258,9 +258,17 @@ DLLEXPORT float Leviathan::Float3::Y() const{
 DLLEXPORT float Leviathan::Float3::Z() const{
 	return (*this)[2];
 }
+DLLEXPORT void Leviathan::Float3::X(const float &x){
+	Val[0] = x;
+}
 
+DLLEXPORT void Leviathan::Float3::Y(const float &y){
+	Val[1] = y;
+}
 
-
+DLLEXPORT void Leviathan::Float3::Z(const float &z){
+	Val[2] = z;
+}
 
 
 

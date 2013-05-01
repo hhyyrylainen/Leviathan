@@ -12,6 +12,7 @@
 // data types //
 #include "Rendering/ShaderDataTypes.h"
 #include "SkeletonRig.h"
+#include "AnimationMasterBlock.h"
 
 namespace Leviathan{ namespace GameObject{
 
@@ -51,6 +52,8 @@ namespace Leviathan{ namespace GameObject{
 		DLLEXPORT int GetIndexCount() const;
 
 		DLLEXPORT virtual SkeletonRig* GetSkeleton();
+		DLLEXPORT virtual int GetAnimation(shared_ptr<AnimationMasterBlock> &ReceivedPtr);
+
 
 		// vars //
 		bool IsLoaded;

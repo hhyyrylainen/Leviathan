@@ -45,6 +45,8 @@ Engine::Engine(){
 	GObjects = NULL;
 	Loader = NULL;
 	AdvancedGeometryFiles = NULL;
+	OutOMemory = NULL;
+	AnimManager = NULL;
 
 	Focused = true;
 	MouseCaptured = false;
@@ -66,6 +68,11 @@ bool Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 	} else {
 		Mainlog = new Logger();
 	}
+
+	// create //
+	OutOMemory = new OutOfMemoryHandler();
+
+
 	Wind = wind;
 
 	// create randomizer //
@@ -180,6 +187,13 @@ bool Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 
 	// file parsing //
 	ObjectFileProcessor::Initialize();
+
+	// 3d model animations //
+	AnimManager = new AnimationManager();
+	if(!AnimManager->Init()){
+		Logger::Get()->Error(L"Failed to init Engine, AnimationManager init failed");
+		return false;
+	}
 
 	// key listening //
 	KeyListener = new KeyPressManager();
@@ -321,6 +335,8 @@ bool Engine::ShutDownEngine(){
 	// file parsing //
 	ObjectFileProcessor::Release();
 
+	SAFE_RELEASEDEL(AnimManager);
+
 	//Graph->Release();
 	SAFE_RELEASEDEL(Graph);
 
@@ -345,6 +361,10 @@ bool Engine::ShutDownEngine(){
 	Wind = NULL;
 	SAFE_DELETE(Mainlog);
 	this->Inited = false;
+
+	// safe to delete this here //
+	SAFE_DELETE(OutOMemory);
+
 	return true;
 
 }
@@ -455,6 +475,9 @@ void Engine::Tick(bool Force){
 	//TimePassed = -TICKSPEED;
 	//TimePassed = 0;
 	TickTime = (int)(Misc::GetTimeMs64()-LastFrame);
+
+	// send tick event //
+	MainEvents->CallEvent(new Event(EVENT_TYPE_ENGINE_TICK, new int(TickCount)));
 }
 // ------------------------------------ //
 void Engine::UpdateFrameScene(){
@@ -462,87 +485,7 @@ void Engine::UpdateFrameScene(){
 
 
 }
-//void Engine::RenderFrame(){
-//	if(!Inited)
-//		return;
-//
-//	__int64 starttime = Misc::GetTimeMs64();
-//	if(FrameCount == 0){
-//		// first frame! set SinceRender to 1 //
-//		RenderStart = starttime-1; // -1 so that since render will be one //
-//	}
-//
-//	SinceRender = (int)(starttime-RenderStart);
-//
-//	// corrupt check //
-//	if(SinceRender < -5){
-//		RenderStart = starttime;
-//		Logger::Get()->Error(L"Engine: RenderFrame SinceRender value, invalid - CORRUPTION!", SinceRender, true);
-//	}
-//
-//	// don't try if less than 1 ms passed //
-//	if(SinceRender < 1)
-//		return;
-//
-//
-//	// limit check //
-//	if(!FpsMonitor->ShouldRender(SinceRender, FrameLimit)){
-//		// fps would go too high //
-//		FpsMonitor->FakeFrame(SinceRender);
-//		return;
-//	}
-//	// get micro seconds //
-//	__int64 Microstart = Misc::GetTimeMicro64();
-//	// set the start time //
-//	RenderStart = starttime;
-//
-//	FrameCount++;
-//
-//	// update monitor objects //
-//	FpsMonitor->Frame(SinceRender);
-//	//CpuUsage->Frame();
-//
-//	// advanced statistic start monitoring //
-//	RenderStatistics->RenderingStart();
-//
-//
-//	// Gui object animations //
-//	Gui->AnimationTick(SinceRender);
-//
-//	//Logger::Get()->Info(L"RendTime: "+Convert::IntToWstring(SinceRender), false);
-//
-//	// update simulations will go here, or not //
-//#ifdef _DEBUG
-//	// some test magic here //
-//
-//	// update model stuff //
-//	shared_ptr<BaseObject> bobj = GObjects->Get(0); // nasty index grab //
-//	if(bobj.get() != NULL){
-//		if(bobj->Type == OBJECT_TYPE_MODEL){
-//			GameObject::Model* modl = dynamic_cast<GameObject::Model*>(bobj.get());
-//			// update some shit //
-//			//modl->SetScale(modl->GetScale()*(1.0001f/**SinceRender*/));
-//			modl->SetOrientation(modl->GetPitch()+5*SinceRender, modl->GetYaw()+4*SinceRender, modl->GetRoll()+7*SinceRender);
-//			
-//
-//		}
-//	}
-//
-//#endif
-//
-//
-//
-//	// Gui //
-//	Gui->Render();
-//	// render //
-//	vector<BaseRenderable*>* objects = GObjects->GetRenderableObjects();
-//	Graph->Frame(SinceRender, MainCamera, *objects);
-//
-//	// advanced statistics frame has ended //
-//	RenderStatistics->RenderingEnd();
-//
-//	FrameTime = (int)(Misc::GetTimeMicro64()-Microstart);
-//}
+
 void Leviathan::Engine::RenderFrame(){
 	if(!Inited)
 		return;
@@ -565,6 +508,7 @@ void Leviathan::Engine::RenderFrame(){
 	// advanced statistic start monitoring //
 	RenderTimer->RenderingStart();
 
+	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN, new int(SinceLastFrame)));
 
 	// Gui object animations //
 	Gui->AnimationTick(SinceLastFrame);
@@ -596,6 +540,8 @@ void Leviathan::Engine::RenderFrame(){
 	// render //
 	vector<BaseRenderable*>* objects = GObjects->GetRenderableObjects();
 	Graph->Frame(SinceLastFrame, MainCamera, *objects);
+
+	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_END, new int(FrameCount)));
 
 	// advanced statistics frame has ended //
 	RenderTimer->RenderingEnd();

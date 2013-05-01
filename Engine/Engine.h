@@ -12,6 +12,8 @@
 
 #include "Random.h"
 
+#include "OutOfMemoryHandler.h"
+
 #include "DataStore.h"
 #include "AppDefine.h"
 #include "ObjectManager.h"
@@ -22,6 +24,7 @@
 #include "GuiManager.h"
 #include "EventHandler.h"
 #include "KeyPressManager.h"
+#include "AnimationManager.h"
 
 #include "ScriptInterface.h"
 
@@ -100,6 +103,7 @@ namespace Leviathan{
 		DLLEXPORT ObjectLoader* GetObjectLoader(){return Loader;};
 		DLLEXPORT RenderingStatistics* GetRenderingStatistics(){ return RenderTimer;};
 		DLLEXPORT GeometryAdvancedLoader* GetAdvancedGeometryHandler(){ return AdvancedGeometryFiles; };
+		DLLEXPORT AnimationManager* GetAnimationManager(){ return AnimManager; };
 
 	private:
 		void PostLoad();
@@ -141,6 +145,8 @@ namespace Leviathan{
 		Random* MainRandom;
 		RenderingStatistics* RenderTimer;
 		GeometryAdvancedLoader* AdvancedGeometryFiles;
+		OutOfMemoryHandler* OutOMemory;
+		AnimationManager* AnimManager;
 
 		bool MouseCaptured;
 		bool WantsToCapture;

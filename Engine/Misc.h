@@ -115,7 +115,7 @@ namespace Leviathan{
 		DLLEXPORT static bool WstringContainsNumbers(const wstring& data);
 		DLLEXPORT static int WstringGetSecondWord(const wstring& data, wstring& result);
 		DLLEXPORT static int WstringGetFirstWord(const wstring& data, wstring& result);
-		DLLEXPORT static bool WstringStartsWith(const wstring& data, wstring lookfor);
+		DLLEXPORT static bool WstringStartsWith(const wstring& data, const wstring& lookfor);
 		DLLEXPORT static wstring WstringRemoveFirstWords(wstring& data, int amount);
 		DLLEXPORT static wstring WstringStitchTogether(vector<wstring*> data, wstring separator);
 		// returns 0 for equal 1 for str is before and -1 for tocompare to be before //

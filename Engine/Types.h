@@ -98,6 +98,7 @@ namespace Leviathan{
 		// ------------ //
 
 		DLLEXPORT inline void SetData(const int &data){ Val[0] = data; Val[1] = data; };
+		DLLEXPORT inline void SetData(const int &data1, const int &data2){ Val[0] = data1; Val[1] = data2; };
 
 		int Val[2];
 
@@ -174,6 +175,9 @@ namespace Leviathan{
 		DLLEXPORT float X() const;
 		DLLEXPORT float Y() const;
 		DLLEXPORT float Z() const;
+		DLLEXPORT void X(const float &x);
+		DLLEXPORT void Y(const float &y);
+		DLLEXPORT void Z(const float &z);
 		float Val[3];
 
 

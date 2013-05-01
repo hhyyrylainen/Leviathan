@@ -52,6 +52,13 @@ DLLEXPORT  SkeletonRig* Leviathan::GameObject::BaseModelDataObject::GetSkeleton(
 	return NULL;
 }
 
+DLLEXPORT  int Leviathan::GameObject::BaseModelDataObject::GetAnimation(shared_ptr<AnimationMasterBlock> &ReceivedPtr){
+	ReceivedPtr = NULL;
+
+	// ERROR: class doesn't support this
+	return 12;
+}
+
 
 // ------------------------------------ //
 

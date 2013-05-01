@@ -790,7 +790,7 @@ ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstrin
 
 
 
-void Leviathan::ObjectFileProcessor::RegisterValue(const wstring& signature, int value){
+DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(const wstring &signature, int value){
 	RegisteredValues.push_back(new IntWstring(signature, value));
 }
 

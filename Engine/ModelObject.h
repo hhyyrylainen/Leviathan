@@ -14,6 +14,7 @@
 #include "SmoothedPosition.h"
 #include "BaseScalable.h"
 #include "SkeletonRig.h"
+#include "AnimationBlock.h"
 
 //#include <Assimp/scene.h>
 
@@ -42,6 +43,8 @@ namespace Leviathan{ namespace GameObject{
 
 		DLLEXPORT bool Render(Graphics* renderer, int mspassed, const RenderingPassInfo &info, D3DXMATRIX &ViewMatrix, D3DXMATRIX &ProjectionMatrix, D3DXMATRIX &WorldMatrix, D3DXMATRIX &TranslateMatrix, Float3 CameraPos);
 
+		DLLEXPORT bool VerifyResourcesLoaded(Graphics* renderer);
+
 		DLLEXPORT void SetTexturesToLoad(vector<shared_ptr<wstring>> files, MultiFlag flags);
 		DLLEXPORT void SetModelToLoad(wstring &file, MultiFlag flags);
 		DLLEXPORT bool Init();
@@ -57,6 +60,17 @@ namespace Leviathan{ namespace GameObject{
 
 		DLLEXPORT wstring GetModelTypeName();
 		DLLEXPORT SkeletonRig* GetSkeleton();
+
+		// animations //
+		// skeletal //
+		DLLEXPORT bool StartPlayingAnimation(shared_ptr<AnimationBlock> Block, bool Smoothtonew = false);
+		DLLEXPORT void StopPlayingAnimations(bool KeepCurrentPose = false);
+		DLLEXPORT void FreezeAnimations();
+		DLLEXPORT bool UnFreezeAnimations();
+
+		DLLEXPORT bool VerifySkeletonPlayingAnimations();
+
+		// animated textures //
 
 		// static utility //
 		DLLEXPORT static int GetFlagFromTextureTypeName(wstring &name);
@@ -80,6 +94,11 @@ namespace Leviathan{ namespace GameObject{
 		// pointer to model object //
 		BaseModelDataObject* ModelDataContainer;
 
+		// animation data //
+		shared_ptr<AnimationMasterBlock> CurrentlyPlaying;
+		// not required yet //
+		shared_ptr<AnimationMasterBlock> SmoothOutTo;
+
 		// ------------------------ //
 		bool Inited;
 
@@ -95,6 +114,7 @@ namespace Leviathan{ namespace GameObject{
 		void RenderBuffers(ID3D11DeviceContext* devcont);
 
 		bool LoadRenderModel(wstring* file /* ,Graphics* graph*/);
+
 
 		// static part //
 		static bool VecGen;

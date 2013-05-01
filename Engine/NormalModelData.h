@@ -39,6 +39,7 @@ namespace Leviathan{ namespace GameObject{
 		DLLEXPORT bool LoadFromLEVMO(wstring* file);
 
 		DLLEXPORT SkeletonRig* GetSkeleton();
+		DLLEXPORT virtual int GetAnimation(shared_ptr<AnimationMasterBlock> &ReceivedPtr);
 
 	protected:
 		// structs //

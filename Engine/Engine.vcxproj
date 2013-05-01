@@ -106,6 +106,9 @@
     <ClCompile Include="..\AngelScript\add_on\scriptstdstring\scriptstdstring.cpp" />
     <ClCompile Include="..\AngelScript\add_on\scriptstdstring\scriptstdstring_utils.cpp" />
     <ClCompile Include="AnimateableGui.cpp" />
+    <ClCompile Include="AnimationBlock.cpp" />
+    <ClCompile Include="AnimationManager.cpp" />
+    <ClCompile Include="AnimationMasterBlock.cpp" />
     <ClCompile Include="AppDefine.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="AutoUpdateable.cpp" />
@@ -146,6 +149,7 @@
     <ClCompile Include="KeyPressManager.cpp" />
     <ClCompile Include="ExceptionBase.cpp" />
     <ClCompile Include="LineTokenizer.cpp" />
+    <ClCompile Include="LoadedAnimation.cpp" />
     <ClCompile Include="NormalModelData.cpp" />
     <ClCompile Include="ObjectFileList.cpp" />
     <ClCompile Include="ObjectFileObject.cpp" />
@@ -160,6 +164,7 @@
     <ClCompile Include="ObjectFileTextBlock.cpp" />
     <ClCompile Include="ObjectLoader.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
+    <ClCompile Include="OutOfMemoryHandler.cpp" />
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="RayTracing.cpp" />
     <ClCompile Include="RenderableGuiObject.cpp" />
@@ -226,6 +231,9 @@
     <ClInclude Include="..\AngelScript\add_on\scriptarray\scriptarray.h" />
     <ClInclude Include="AngelScriptCommon.h" />
     <ClInclude Include="AnimateableGui.h" />
+    <ClInclude Include="AnimationBlock.h" />
+    <ClInclude Include="AnimationManager.h" />
+    <ClInclude Include="AnimationMasterBlock.h" />
     <ClInclude Include="AppDefine.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="AutoUpdateable.h" />
@@ -269,6 +277,7 @@
     <ClInclude Include="KeyPressManager.h" />
     <ClInclude Include="ExceptionBase.h" />
     <ClInclude Include="LineTokenizer.h" />
+    <ClInclude Include="LoadedAnimation.h" />
     <ClInclude Include="NormalModelData.h" />
     <ClInclude Include="ObjectFileList.h" />
     <ClInclude Include="ObjectFileObject.h" />
@@ -284,6 +293,7 @@
     <ClInclude Include="ObjectFileTextBlock.h" />
     <ClInclude Include="ObjectLoader.h" />
     <ClInclude Include="ObjectManager.h" />
+    <ClInclude Include="OutOfMemoryHandler.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="RayTracing.h" />
     <ClInclude Include="RenderableGuiObject.h" />

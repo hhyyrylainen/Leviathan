@@ -518,7 +518,7 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 
 										if(Adjusted){
 											// report //
-											DEBUG_BREAK;
+											//DEBUG_BREAK;
 											ComplainOnce::PrintWarningOnce(*file+L"_report_uv_adjust", 
 												L"NormalModelData: LoadFromLEVMO: File has UVs that are not in range 0-1 adjusting done, file: "+*file);
 
@@ -838,7 +838,7 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 						boneblock->Lines.clear();
 						boneblock->Name.clear();
 					} else {
-
+						Skeleton->SaveOnTopOfTextBlock(boneblock);
 					}
 				}
 
@@ -1418,7 +1418,27 @@ DLLEXPORT wstring Leviathan::GameObject::NormalModelData::GetModelTypeName(){
 }
 
 DLLEXPORT SkeletonRig* Leviathan::GameObject::NormalModelData::GetSkeleton(){
+	// check is this loaded //
+	if(!IsLoaded){
+		// quite bad //
+		DEBUG_BREAK;
+	}
+
 	return Skeleton;
+}
+
+DLLEXPORT int Leviathan::GameObject::NormalModelData::GetAnimation(shared_ptr<AnimationMasterBlock> &ReceivedPtr){
+	// try to get animation from skeleton //
+	if(Skeleton == NULL){
+		// can't have animation //
+		ReceivedPtr = NULL;
+		return 13;
+	}
+	ReceivedPtr = Skeleton->GetAnimation();
+
+
+	// stop compiler from complaining
+	return (int)true;
 }
 
 // ------------------------------------ //

@@ -107,14 +107,14 @@ bool Leviathan::FontShader::InitShader(ID3D11Device* dev, const wstring &vsfilen
 		return false;
 	}
 	// create shaders from buffers
-	hr = device->CreateVertexShader(Vertexshaderbuffer->GetBufferPointer(), Vertexshaderbuffer->GetBufferSize(), NULL, &VertexShader);
+	hr = dev->CreateVertexShader(Vertexshaderbuffer->GetBufferPointer(), Vertexshaderbuffer->GetBufferSize(), NULL, &VertexShader);
 	if(FAILED(hr))
 	{
 		Logger::Get()->Error(L"InitShader failed, failed to create VertexShader from buffer",hr);
 		return false;
 	}
 
-	hr = device->CreatePixelShader(Pixelshaderbuffer->GetBufferPointer(), Pixelshaderbuffer->GetBufferSize(), NULL, &PixelShader);
+	hr = dev->CreatePixelShader(Pixelshaderbuffer->GetBufferPointer(), Pixelshaderbuffer->GetBufferSize(), NULL, &PixelShader);
 	if(FAILED(hr))
 	{
 		Logger::Get()->Error(L"InitShader failed, failed to create PixelShader from buffer",hr);
@@ -143,7 +143,7 @@ bool Leviathan::FontShader::InitShader(ID3D11Device* dev, const wstring &vsfilen
 	numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
 
 	// create input layout //
-	hr = device->CreateInputLayout(polygonLayout, numElements, Vertexshaderbuffer->GetBufferPointer(), 
+	hr = dev->CreateInputLayout(polygonLayout, numElements, Vertexshaderbuffer->GetBufferPointer(), 
 						Vertexshaderbuffer->GetBufferSize(), &Layout);
 	if(FAILED(hr))
 	{
@@ -165,7 +165,7 @@ bool Leviathan::FontShader::InitShader(ID3D11Device* dev, const wstring &vsfilen
 	matrixBufferDesc.MiscFlags = 0;
 	matrixBufferDesc.StructureByteStride = 0;
 
-	hr = device->CreateBuffer(&matrixBufferDesc, NULL, &MatrixBuffer);
+	hr = dev->CreateBuffer(&matrixBufferDesc, NULL, &MatrixBuffer);
 	if(FAILED(hr)){
 
 		Logger::Get()->Error(L"InitShader failed, failed to create MatrixBuffer",hr);
@@ -189,7 +189,7 @@ bool Leviathan::FontShader::InitShader(ID3D11Device* dev, const wstring &vsfilen
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	// Create the texture sampler state.
-	hr = device->CreateSamplerState(&samplerDesc, &SamplerState);
+	hr = dev->CreateSamplerState(&samplerDesc, &SamplerState);
 	if(FAILED(hr)){
 
 		return false;
@@ -205,7 +205,7 @@ bool Leviathan::FontShader::InitShader(ID3D11Device* dev, const wstring &vsfilen
 	pixelBufferDesc.StructureByteStride = 0;
 
 	// Create the pixel constant buffer pointer so we can access the pixel shader constant buffer from within this class.
-	hr = device->CreateBuffer(&pixelBufferDesc, NULL, &PixelColorBuffer);
+	hr = dev->CreateBuffer(&pixelBufferDesc, NULL, &PixelColorBuffer);
 	if(FAILED(hr)){
 
 		return false;

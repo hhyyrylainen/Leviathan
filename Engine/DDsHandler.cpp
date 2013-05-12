@@ -30,12 +30,12 @@ void DDSHandler::WriteDDSFromGrayScale(wstring& file, vector<vector<unsigned cha
 	DDS_HEADER header;
 	ZeroMemory(&header, sizeof(header));
 	header.dwSize = sizeof(DDS_HEADER);
-	header.dwFlags = 0x1 | 0x2 | 0x4 | 0x1000;
+	header.dwHeaderFlags = 0x1 | 0x2 | 0x4 | 0x1000;
 	header.dwHeight = height;
 	header.dwWidth = width;
 	header.dwPitchOrLinearSize = Pitch;
 	header.ddspf = DDSPF_R8G8B8;
-	header.dwCaps = DDS_SURFACE_FLAGS_TEXTURE;
+	header.dwSurfaceFlags = DDS_SURFACE_FLAGS_TEXTURE;
 	//header.dwCaps2 = 
 
 	writer.write((char*)&header, sizeof(header));
@@ -109,12 +109,12 @@ unsigned char* DDSHandler::GenerateRGBDDSToMemory(vector<vector<Int3>>& data, in
 	DDS_HEADER header;
 	ZeroMemory(&header, sizeof(header));
 	header.dwSize = sizeof(DDS_HEADER);
-	header.dwFlags = 0x1 | 0x2 | 0x4 | 0x1000;
+	header.dwHeaderFlags = 0x1 | 0x2 | 0x4 | 0x1000;
 	header.dwHeight = height;
 	header.dwWidth = width;
 	header.dwPitchOrLinearSize = Pitch;
 	header.ddspf = DDSPF_R8G8B8;
-	header.dwCaps = DDS_SURFACE_FLAGS_TEXTURE;
+	header.dwSurfaceFlags = DDS_SURFACE_FLAGS_TEXTURE;
 
 	// calculate total size //
 	int size = 0;

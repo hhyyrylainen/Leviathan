@@ -21,7 +21,7 @@ namespace Leviathan{
 	public:
 		DLLEXPORT ShaderManager::ShaderManager();
 		DLLEXPORT ShaderManager::~ShaderManager();
-		DLLEXPORT bool Init(ID3D11Device* dev, Window* wind);
+		DLLEXPORT bool Init(ID3D11Device* device);
 		DLLEXPORT void Release();
 
 		DLLEXPORT bool RenderMultiTextureShader(ID3D11DeviceContext* devcont, int indexcount, D3DXMATRIX viewmatrix, D3DXMATRIX projectionmatrix, D3DXMATRIX, ID3D11ShaderResourceView** textures);

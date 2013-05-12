@@ -34,7 +34,7 @@ bool TextRenderer::Init(ID3D11Device* dev, ID3D11DeviceContext* devcont, Window*
 	if(!_FontShader)
 		return false;
 
-	if(!_FontShader->Init(dev, wind)){
+	if(!_FontShader->Init(dev)){
 		Logger::Get()->Error(L"Failed to init TextRenderer, init fontshader failed", true);
 		return false;
 	}

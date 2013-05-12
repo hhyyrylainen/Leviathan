@@ -69,35 +69,35 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 	hr = factory->EnumAdapters(0, &adapter);
 	if(FAILED(hr)){
 		Logger::Get()->Error(L"failed to get graphics adapter",0);
-		return false;
+		return hr;
 	}
 
 	// Enumerate the primary adapter
 	hr = adapter->EnumOutputs(0, &adapterOutput);
 	if(FAILED(hr)){
 		Logger::Get()->Error(L"failed to enum adapter output",0);
-		return false;
+		return hr;
 	}
 
 	// Get the number of modes that fit the DXGI_FORMAT_R8G8B8A8_UNORM display format for the adapter output (monitor).
 	hr = adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, NULL);
 	if(FAILED(hr)){
 		Logger::Get()->Error(L"failed to get graphics adapter",0);
-		return false;
+		return hr;
 	}
 
 	// Create a list to hold all the possible display modes for this monitor/video card combination.
 	displayModeList = new DXGI_MODE_DESC[numModes];
 	if(!displayModeList){
 		Logger::Get()->Error(L"empty display mode list",0);
-		return false;
+		return hr;
 	}
 
 	// Now fill the display mode list structures.
 	hr = adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, displayModeList);
 	if(FAILED(hr)){
 		Logger::Get()->Error(L"failed to fill display mode list structures",0);
-		return false;
+		return hr;
 	}
 	// Now go through all the display modes and find the one that matches the screen width and height.
 	// When a match is found store the numerator and denominator of the refresh rate for that monitor.
@@ -114,7 +114,7 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 	hr = adapter->GetDesc(&adapterDesc);
 	if(FAILED(hr)){
 		Logger::Get()->Error(L"failed to get adapter description",0);
-		return false;
+		return hr;
 	}
 	// get video card memory in mbits
 	VideoCardMemory = (int)(adapterDesc.DedicatedVideoMemory / 1024 / 1024);
@@ -158,9 +158,9 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 
 		Logger::Get()->Error(L"D3D11Device creation failed", (int)hr);
 #ifdef _DEBUG
-		Logger::Get()->Info(L"This error can be caused by not having proper directx debug runtime installed, try reinstalling directx sdk (june 2010)", (int)hr);
+		Logger::Get()->Info(L"This error can be caused by not having proper directx debug runtime installed, try reinstalling directx sdk (june 2010)");
 #endif
-		return false;
+		return hr;
 	}
 
 	// check does MSAA quality function //
@@ -168,11 +168,11 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 
 	if(Device->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, AntiAliasing,  &QualityLevels) != S_OK){
 		Logger::Get()->Error(L"D3D11Device: could not retrieve available quality levels",hr);
-		return false;
+		return hr;
 	}
 	if(QualityLevels < 1){
 		Logger::Get()->Error(L"D3D11Device: MSAA VALUE NOT SUPPORTED PLEASE TRY ANOTHER VALUE (1 WILL ALWAYS WORK)",QualityLevels);
-		return false;
+		return hr;
 	}
 
 	SampleQuality = QualityLevels;
@@ -256,7 +256,7 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 	if(FAILED(hr)){
 
 		QUICK_ERROR_MESSAGE;
-		return false;
+		return hr;
 	}
 
 	IDXGIAdapter* tempdapter = 0;
@@ -264,7 +264,7 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 	if(FAILED(hr)){
 
 		QUICK_ERROR_MESSAGE;
-		return false;
+		return hr;
 	}
 
 	IDXGIFactory* devicesfactory = 0;
@@ -272,7 +272,7 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 	if(FAILED(hr)){
 
 		QUICK_ERROR_MESSAGE;
-		return false;
+		return hr;
 	}
 
 
@@ -287,7 +287,7 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 	if(!SwapChain){
 
 		Logger::Get()->Error(L"3DRenderer: Failed to create swap chain", hr, true);
-		return false;
+		return hr;
 	}
 
 	// finally get debug interface //
@@ -323,7 +323,7 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 	hr = Device->CreateRasterizerState(&RasterDesc, &RasterState);
 	if(FAILED(hr)){
 		Logger::Get()->Error(L"3DRenderer: Resize: failed to create rasterizer state",0);
-		return false;
+		return hr;
 	}
 
 	// set rasterizer
@@ -359,7 +359,7 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 	if(FAILED(hr)){
 
 		Logger::Get()->Error(L"3DRenderer: Resize: failed to create depth stencil state",0);
-		return false;
+		return hr;
 	}
 
 	// set depth stencil state
@@ -383,7 +383,7 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 	hr = Device->CreateBlendState(&blendStateDescription, &AlphaEnableBlendingState);
 	if(FAILED(hr)){
 		Logger::Get()->Error(L"3DRenderer: failed to create blending state with alpha blending enabled");
-		return false;
+		return hr;
 	}
 
 	// Modify the description to create an alpha disabled blend state description.
@@ -394,7 +394,7 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 	if(FAILED(hr)){
 
 		Logger::Get()->Error(L"3DRenderer: failed to create blending state with alpha blending disabled");
-		return false;
+		return hr;
 	}
 
 	D3D11_DEPTH_STENCIL_DESC depthDisabledStencilDesc;
@@ -421,7 +421,7 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 	hr = Device->CreateDepthStencilState(&depthDisabledStencilDesc, &DepthDisabledStencilState);
 	if(FAILED(hr)){
 		Logger::Get()->Error(L"3DRenderer: Resize: failed to create DepthStencilstate with depth disabled ");
-		return false;
+		return hr;
 	}
 
 	// following initialization steps are required on resize so just call that here //
@@ -429,7 +429,7 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 		// initial resizing failed, bad thing //
 
 		Logger::Get()->Error(L"3DRenderer: Initial resizing failed, cannot continue", true);
-		return false;
+		return hr;
 	}
 	
 

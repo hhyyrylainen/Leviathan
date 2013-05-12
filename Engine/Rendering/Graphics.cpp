@@ -68,7 +68,7 @@ bool Graphics::Init(Window* wind){
 	}
 
 	// init it //
-	if(!Shaders->Init(Drenderer->GetDevice(), Wind)){
+	if(!Shaders->Init(Drenderer->GetDevice())){
 
 		Logger::Get()->Error(L"Failed to init graphics, can't init shaders");
 		return false;
@@ -272,35 +272,6 @@ bool Graphics::Resize(int newwidth, int newheight){
 
 HRESULT Graphics::Create3DRenderer(Window* wind){
 	HRESULT hr= S_OK;
-
-	//// create render configuration // created in ENGINE
-	//bool tempwind = false;
-	//bool tempvsync = false;
-	//float tempscreendepth = 1000.0f;
-	//float tempscreennear = 0.1f;
-	//D3D_DRIVER_TYPE tempdtype = D3D_DRIVER_TYPE_HARDWARE;
-	//int tempmsaa = 4;
-
-	//int tempval = 0;
-
-	//AppDef* def = LeviathanApplication::GetAppDef();
-
-	//def->GetValues()->GetValue(L"DriverHardWare",tempval);
-
-	//if(!tempval){
-	//	tempdtype = D3D_DRIVER_TYPE_REFERENCE;
-	//}
-
-	//def->GetValues()->GetValue(L"Vsync",tempval);
-	//tempvsync = tempval != 0;
-	//def->GetValues()->GetValue(L"AntiAliasign",tempval);
-	//tempmsaa = tempval;
-	//if(tempmsaa < 1)
-	//	tempmsaa = 1;
-	//if(tempmsaa > 32)
-	//	tempmsaa = 32;
-	//def->GetValues()->GetValue(L"Windowed",tempval);
-	//tempwind = tempval != 0;
 
 	//Dconfig = DxRendConf(tempwind, tempvsync, tempscreendepth, tempscreennear, tempdtype, tempmsaa);
 

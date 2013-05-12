@@ -111,14 +111,14 @@ bool Leviathan::MultiTextureShader::InitShader(ID3D11Device* dev, const wstring 
 		return false;
 	}
 	// create shaders from buffers
-	hr = device->CreateVertexShader(Vertexshaderbuffer->GetBufferPointer(), Vertexshaderbuffer->GetBufferSize(), NULL, &VertexShader);
+	hr = dev->CreateVertexShader(Vertexshaderbuffer->GetBufferPointer(), Vertexshaderbuffer->GetBufferSize(), NULL, &VertexShader);
 	if(FAILED(hr))
 	{
 		Logger::Get()->Error(L"InitShader failed, failed to create VertexShader from buffer",hr);
 		return false;
 	}
 
-	hr = device->CreatePixelShader(Pixelshaderbuffer->GetBufferPointer(), Pixelshaderbuffer->GetBufferSize(), NULL, &PixelShader);
+	hr = dev->CreatePixelShader(Pixelshaderbuffer->GetBufferPointer(), Pixelshaderbuffer->GetBufferSize(), NULL, &PixelShader);
 	if(FAILED(hr))
 	{
 		Logger::Get()->Error(L"InitShader failed, failed to create PixelShader from buffer",hr);
@@ -147,7 +147,7 @@ bool Leviathan::MultiTextureShader::InitShader(ID3D11Device* dev, const wstring 
 	numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
 
 	// create input layout //
-	hr = device->CreateInputLayout(polygonLayout, numElements, Vertexshaderbuffer->GetBufferPointer(), 
+	hr = dev->CreateInputLayout(polygonLayout, numElements, Vertexshaderbuffer->GetBufferPointer(), 
 						Vertexshaderbuffer->GetBufferSize(), &Layout);
 	if(FAILED(hr))
 	{
@@ -169,7 +169,7 @@ bool Leviathan::MultiTextureShader::InitShader(ID3D11Device* dev, const wstring 
 	matrixBufferDesc.MiscFlags = 0;
 	matrixBufferDesc.StructureByteStride = 0;
 
-	hr = device->CreateBuffer(&matrixBufferDesc, NULL, &MatrixBuffer);
+	hr = dev->CreateBuffer(&matrixBufferDesc, NULL, &MatrixBuffer);
 	if(FAILED(hr))
 	{
 		Logger::Get()->Error(L"InitShader failed, failed to create MatrixBuffer",hr);
@@ -193,7 +193,7 @@ bool Leviathan::MultiTextureShader::InitShader(ID3D11Device* dev, const wstring 
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	// Create the texture sampler state.
-	hr = device->CreateSamplerState(&samplerDesc, &SamplerState);
+	hr = dev->CreateSamplerState(&samplerDesc, &SamplerState);
 	if(FAILED(hr))
 	{
 		return false;

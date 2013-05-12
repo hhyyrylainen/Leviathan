@@ -33,7 +33,7 @@ ShaderManager::~ShaderManager(){
 
 }
 // ------------------------------------ //
-bool ShaderManager::Init(ID3D11Device* device, Window* wind){
+DLLEXPORT bool Leviathan::ShaderManager::Init(ID3D11Device* device){
 	// check is device invalid //
 	if(device == NULL){
 		// can't do anything //
@@ -49,7 +49,7 @@ bool ShaderManager::Init(ID3D11Device* device, Window* wind){
 	}
 
 	// init texture shader
-	if(!_TextureShader->Init(device, wind)){
+	if(!_TextureShader->Init(device)){
 		Logger::Get()->Error(L"ShaderManager: Init: could not init texture shader");
 		return false;
 	}
@@ -60,7 +60,7 @@ bool ShaderManager::Init(ID3D11Device* device, Window* wind){
 		return false;
 	}
 	// init it
-	if(!_MultTextureShader->Init(device, wind)){
+	if(!_MultTextureShader->Init(device)){
 		Logger::Get()->Error(L"ShaderManager: Init: could not init multitexture shader");
 		return false;
 	}
@@ -72,7 +72,7 @@ bool ShaderManager::Init(ID3D11Device* device, Window* wind){
 	}
 
 	// init light shader
-	if(!_LightShader->Init(device, wind)){
+	if(!_LightShader->Init(device)){
 		Logger::Get()->Error(L"ShaderManager: Init: could not init light shader");
 		return false;
 	}
@@ -84,7 +84,7 @@ bool ShaderManager::Init(ID3D11Device* device, Window* wind){
 	}
 
 	// init bumpmap shader
-	if(!_BumpMapShader->Init(device, wind)){
+	if(!_BumpMapShader->Init(device)){
 		Logger::Get()->Error(L"ShaderManager: Init: could not init bump map shader");
 		return false;
 	}
@@ -96,7 +96,7 @@ bool ShaderManager::Init(ID3D11Device* device, Window* wind){
 		Logger::Get()->Error(L"ShaderManager: 008");
 		return false;
 	}
-	if(!_GradientShader->Init(device, wind)){
+	if(!_GradientShader->Init(device)){
 
 		Logger::Get()->Error(L"ShaderManager: Init: could not init GradientShader");
 		return false;

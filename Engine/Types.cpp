@@ -460,9 +460,9 @@ Leviathan::Int1 Leviathan::Int1::operator+(const Int1& val){
 	return Int1(val.GetIntValue());
 }
 
-int Leviathan::Int1::operator[]() const{
-	return iVal;
-}
+//int Leviathan::Int1::operator[]() const{
+//	return iVal;
+//}
 
 Leviathan::Int1::operator int() const{
 	return iVal;
@@ -505,9 +505,9 @@ DLLEXPORT Float1 Leviathan::Float1::operator+(const Float1& val){
 	return Float1(fVal+val);
 }
 
-DLLEXPORT float Leviathan::Float1::operator[]() const{
-	return fVal;
-}
+//DLLEXPORT float Leviathan::Float1::operator[]() const{
+//	return fVal;
+//}
 
 DLLEXPORT Leviathan::Float1::operator float() const{
 	return fVal;

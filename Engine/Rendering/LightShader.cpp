@@ -113,14 +113,14 @@ bool Leviathan::LightShader::InitShader(ID3D11Device* dev, const wstring &vsfile
 		return false;
 	}
 	// create shaders from buffers
-	hr = device->CreateVertexShader(Vertexshaderbuffer->GetBufferPointer(), Vertexshaderbuffer->GetBufferSize(), NULL, &VertexShader);
+	hr = dev->CreateVertexShader(Vertexshaderbuffer->GetBufferPointer(), Vertexshaderbuffer->GetBufferSize(), NULL, &VertexShader);
 	if(FAILED(hr))
 	{
 		Logger::Get()->Error(L"InitShader failed, failed to create VertexShader from buffer",hr);
 		return false;
 	}
 
-	hr = device->CreatePixelShader(Pixelshaderbuffer->GetBufferPointer(), Pixelshaderbuffer->GetBufferSize(), NULL, &PixelShader);
+	hr = dev->CreatePixelShader(Pixelshaderbuffer->GetBufferPointer(), Pixelshaderbuffer->GetBufferSize(), NULL, &PixelShader);
 	if(FAILED(hr))
 	{
 		Logger::Get()->Error(L"InitShader failed, failed to create PixelShader from buffer",hr);
@@ -157,7 +157,7 @@ bool Leviathan::LightShader::InitShader(ID3D11Device* dev, const wstring &vsfile
 	numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
 
 	// create input layout //
-	hr = device->CreateInputLayout(polygonLayout, numElements, Vertexshaderbuffer->GetBufferPointer(), 
+	hr = dev->CreateInputLayout(polygonLayout, numElements, Vertexshaderbuffer->GetBufferPointer(), 
 						Vertexshaderbuffer->GetBufferSize(), &Layout);
 	if(FAILED(hr))
 	{
@@ -190,7 +190,7 @@ bool Leviathan::LightShader::InitShader(ID3D11Device* dev, const wstring &vsfile
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	// Create the texture sampler state.
-	hr = device->CreateSamplerState(&samplerDesc, &SamplerState);
+	hr = dev->CreateSamplerState(&samplerDesc, &SamplerState);
 	if(FAILED(hr))
 	{
 		Logger::Get()->Error(L"InitShader failed, failed to create samplerstate",hr);
@@ -206,7 +206,7 @@ bool Leviathan::LightShader::InitShader(ID3D11Device* dev, const wstring &vsfile
 	matrixBufferDesc.MiscFlags = 0;
 	matrixBufferDesc.StructureByteStride = 0;
 
-	hr = device->CreateBuffer(&matrixBufferDesc, NULL, &MatrixBuffer);
+	hr = dev->CreateBuffer(&matrixBufferDesc, NULL, &MatrixBuffer);
 	if(FAILED(hr))
 	{
 		Logger::Get()->Error(L"InitShader failed, failed to create MatrixBuffer",hr);
@@ -224,7 +224,7 @@ bool Leviathan::LightShader::InitShader(ID3D11Device* dev, const wstring &vsfile
 	cameraBufferDesc.StructureByteStride = 0;
 
 	// Create the camera constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	hr = device->CreateBuffer(&cameraBufferDesc, NULL, &CameraBuffer);
+	hr = dev->CreateBuffer(&cameraBufferDesc, NULL, &CameraBuffer);
 	if(FAILED(hr))
 	{
 		return false;
@@ -241,7 +241,7 @@ bool Leviathan::LightShader::InitShader(ID3D11Device* dev, const wstring &vsfile
 	lightBufferDesc.StructureByteStride = 0;
 
 	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	hr = device->CreateBuffer(&lightBufferDesc, NULL, &LightBuffer);
+	hr = dev->CreateBuffer(&lightBufferDesc, NULL, &LightBuffer);
 	if(FAILED(hr))
 	{
 		return false;

@@ -6,6 +6,7 @@
 
 #include <XAudio2.h>
 #include <XAudio2fx.h>
+#include <MMSystem.h>
 // ------------------------------------ //
 // ---- PARTIAL "CLASS" FILE ---- //
 

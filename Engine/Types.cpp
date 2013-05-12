@@ -323,7 +323,7 @@ float Float4::operator++(int){
 }
 bool Float4::operator <(float val){
 	int count = 0;
-	for(unsigned int i = 0; i < 5; i++){
+	for(unsigned int i = 0; i < 4; i++){
 		if(Ops[i] < val){
 			count++;
 		}
@@ -334,7 +334,7 @@ bool Float4::operator <(float val){
 }
 bool Float4::operator >(float val){
 	int count = 0;
-	for(unsigned int i = 0; i < 5; i++){
+	for(unsigned int i = 0; i < 4; i++){
 		if(Ops[i] > val){
 			count++;
 		}
@@ -460,7 +460,7 @@ Leviathan::Int1 Leviathan::Int1::operator+(const Int1& val){
 	return Int1(val.GetIntValue());
 }
 
-int Leviathan::Int1::operator[](const int nIndex) const{
+int Leviathan::Int1::operator[]() const{
 	return iVal;
 }
 
@@ -505,7 +505,7 @@ DLLEXPORT Float1 Leviathan::Float1::operator+(const Float1& val){
 	return Float1(fVal+val);
 }
 
-DLLEXPORT float Leviathan::Float1::operator[](const int nIndex) const{
+DLLEXPORT float Leviathan::Float1::operator[]() const{
 	return fVal;
 }
 

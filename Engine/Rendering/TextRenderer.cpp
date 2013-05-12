@@ -9,11 +9,8 @@ using namespace Leviathan;
 #include "Graphics.h"
 
 TextRenderer::TextRenderer(){
-//	m_Font = NULL;
-	m_FontShader = NULL;
+	_FontShader = NULL;
 
-	//m_sentence1 = NULL;
-	//m_sentence2 = NULL;
 }
 TextRenderer::~TextRenderer(){
 
@@ -23,29 +20,21 @@ bool TextRenderer::Init(ID3D11Device* dev, ID3D11DeviceContext* devcont, Window*
 	// store values //
 	ScreenWidth = wind->GetWidth();
 	ScreenHeight = wind->GetHeight();
-	m_baseViewMatrix = baseview;
+	BaseViewMatrix = baseview;
 
 	device = dev;
 	// create fonts //
 	wstring ArialFont = L"Arial.dds";
 
-	LoadFont(/*FileSystem::GetFontFolder()+*/ArialFont);
-	//m_Font = new Font;
-	//if(!m_Font)
-	//	return false;
-	////if(!m_Font->Init(dev, FileSystem::GetFontFolder()+L"ArialSmall.dds")){
-	//if(!m_Font->Init(dev, FileSystem::GetFontFolder()+L"font.dds")){
+	LoadFont(ArialFont);
 
-	//	Logger::Get()->Error(L"Failed to init TextRenderer, init font failed", true);
-	//	return false;
-	//}
 
 	// create shader //
-	m_FontShader = new FontShader;
-	if(!m_FontShader)
+	_FontShader = new FontShader;
+	if(!_FontShader)
 		return false;
 
-	if(!m_FontShader->Init(dev, wind)){
+	if(!_FontShader->Init(dev, wind)){
 		Logger::Get()->Error(L"Failed to init TextRenderer, init fontshader failed", true);
 		return false;
 	}
@@ -55,36 +44,13 @@ bool TextRenderer::Init(ID3D11Device* dev, ID3D11DeviceContext* devcont, Window*
 	StartMonitoring(DATAINDEX_HEIGHT, false);
 	StartMonitoring(DATAINDEX_WIDTH, false);
 
-	// init sentences //
-	//Sentences.push_back(NULL);
-
-	//if(!InitializeSentence(&Sentences.at(Sentences.size()-1), 16, dev)){
-
-	//	return false;
-	//}
-
-	//if(!UpdateSentence(Sentences.at(Sentences.size()-1), L"Hello", 100, 100, 1.0f, 1.0f, 1.0f, devcont)){
-
-	//	return false;
-	//}
-	
-	//if(!InitializeSentence(&m_sentence1, 25, dev)){
-
-	//	return false;
-	//}
-
-	//if(!UpdateSentence(m_sentence1, L"Alpha() Test{}!", 100, 100, 0.2f, 0.5f, 0.9f, 4.0f, devcont)){
-
-	//	return false;
-	//}
 	return true;
 }
 void TextRenderer::Release(){
 	// release shader
-	SAFE_RELEASEDEL(m_FontShader);
+	SAFE_RELEASEDEL(_FontShader);
 	
 	// release fonts //
-	//SAFE_RELEASEDEL(m_Font);
 	for(unsigned int i = 0; i < FontHolder.size(); i++){
 		SAFE_RELEASEDEL(FontHolder[i]);
 	}
@@ -93,9 +59,7 @@ void TextRenderer::Release(){
 	while(Sentences.size() > 0){
 		ReleaseSentence(&Sentences.at(Sentences.size()-1));
 		Sentences.pop_back();
-
 	}
-	//ReleaseSentence(&m_sentence1);
 
 	// stop monitoring everything //
 	StopMonitoring(DATAINDEX_HEIGHT, L"", true);
@@ -195,15 +159,15 @@ bool TextRenderer::RenderSingle(int ID, ID3D11DeviceContext* devcont, D3DXMATRIX
 	return false;
 }
 // ------------------------------------ //
-void TextRenderer::LoadFont(wstring &file){
-	FontHolder.push_back(new Font());
+void Leviathan::TextRenderer::LoadFont(const wstring &file){
+	FontHolder.push_back(new RenderingFont());
 
-	if(!VECTOR_LAST(FontHolder)->Init(device, file)){
+	if(!FontHolder.back()->Init(device, file)){
 
-		Logger::Get()->Error(L"Error while loading font", true);
+		Logger::Get()->Error(L"Error while loading font, file: "+file, true);
 	}
 }
-int TextRenderer::GetFontIndex(wstring &name){
+int Leviathan::TextRenderer::GetFontIndex(const wstring &name){
 	// try to get id //
 	int index = -1;
 	for(unsigned int i = 0; i < FontHolder.size(); i++){
@@ -536,7 +500,7 @@ bool TextRenderer::RenderSentence(ID3D11DeviceContext* devcont, SentenceType* se
 	//pixelColor = D3DXVECTOR4(sentence->red, sentence->green, sentence->blue, 1.0f);
 
 	// Render the text using the font shader.
-	if(!m_FontShader->Render(devcont, sentence->indexCount, worldMatrix, m_baseViewMatrix, orthoMatrix, FontHolder[sentence->FontID]->GetTexture(), pixelColor)){
+	if(!_FontShader->Render(devcont, sentence->indexCount, worldMatrix, BaseViewMatrix, orthoMatrix, FontHolder[sentence->FontID]->GetTexture(), pixelColor)){
 		false;
 	}
 

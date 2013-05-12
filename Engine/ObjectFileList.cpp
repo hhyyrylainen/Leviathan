@@ -19,13 +19,17 @@ ObjectFileList::~ObjectFileList(){
 }
 // ------------------------------------ //
 ScriptList* ObjectFileList::AllocateNewListFromData(){
-	ScriptList* obj = new ScriptList(Name);
+	unique_ptr<ScriptList> obj(new ScriptList(Name));
 
 	obj->Variables = new NamedVars(*this->Variables);
 	for(unsigned int i = 0; i < Lines.size(); i++){
 		obj->Lines.push_back(new wstring(*Lines[i]));
 	}
-	return obj;
+
+	// returning smart pointer //
+	ScriptList* tempptr = obj.get();
+	obj.reset();
+	return tempptr;
 }
 // ------------------------------------ //
 

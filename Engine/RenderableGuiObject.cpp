@@ -15,13 +15,7 @@ RenderableGuiObject::~RenderableGuiObject(){
 
 }
 // ------------------------------------ //
-void RenderableGuiObject::Render(Graphics* graph){
 
-}
-// ------------------------------------ //
- void RenderableGuiObject::Release(Graphics* graph){
-	 return;
- }
 // ------------------------------------ //
 
 // ------------------------------------ //

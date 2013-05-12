@@ -39,12 +39,12 @@ ObjectFileObject::~ObjectFileObject(){
 //}
 // ------------------------------------ //
 ScriptObject* ObjectFileObject::CreateScriptObjectFromThis(int BaseType, int Overridetype){
-	ScriptObject* obj;
+	unique_ptr<ScriptObject> obj;
 	if(Overridetype != -1){
-		obj = new ScriptObject(Name, BaseType, Overridetype, TName);
+		obj = unique_ptr<ScriptObject>(new ScriptObject(Name, BaseType, Overridetype, TName));
 
 	} else {
-		obj = new ScriptObject(Name, BaseType, Type, TName);
+		obj = unique_ptr<ScriptObject>(new ScriptObject(Name, BaseType, Type, TName));
 	}
 	// re allocate all the data //
 
@@ -65,8 +65,10 @@ ScriptObject* ObjectFileObject::CreateScriptObjectFromThis(int BaseType, int Ove
 
 	obj->Prefixes = prfx;
 	obj->Contents = cnts;
-
-	return obj;
+	// reset smart pointer //
+	ScriptObject* tempptr = obj.get();
+	obj.reset();
+	return tempptr;
 }
 ScriptObject* ObjectFileObject::CreateScriptObjectAndDeleteThis(int BaseType, int Overridetype){
 	ScriptObject* obj;

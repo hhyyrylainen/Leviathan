@@ -53,7 +53,7 @@ namespace Leviathan{
 
 		// ------------ //
 		DLLEXPORT Int1 operator +(const Int1& val);
-		DLLEXPORT int operator[](const int nIndex) const;
+		DLLEXPORT int operator[]() const;
 
 		DLLEXPORT operator int() const;
 
@@ -74,7 +74,7 @@ namespace Leviathan{
 
 		// ------------ //
 		DLLEXPORT Float1 operator +(const Float1& val);
-		DLLEXPORT float operator[](const int nIndex) const;
+		DLLEXPORT float operator[]() const;
 
 		DLLEXPORT operator float() const;
 

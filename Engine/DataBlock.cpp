@@ -30,6 +30,10 @@ DataBlock* DataBlock::CopyConstructor(DataBlock* arg){
 	if(typeid(arg) == typeid(VoidBlock)){
 		tmp = new VoidBlock((VoidBlock*)arg);
 	}
+	if(tmp == NULL){
+		// invalid copying //
+		throw exception("Invalid copy");
+	}
 	tmp->Type = arg->Type;
 	return tmp;
 }

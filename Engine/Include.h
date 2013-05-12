@@ -5,6 +5,8 @@
 // visual leak detector //
 //#include <vld.h>
 
+//#define ANALYZEBUILD
+
 // C RunTime Header Files
 #include <stdlib.h>
 #include <malloc.h>
@@ -13,9 +15,23 @@
 #include <math.h>
 #include <assert.h>
 
+#include <SDKDDKVer.h>
+
+// some special compiler settings //
+#ifdef ANALYZEBUILD
+// this stop code analyze from breaking //
+#define _AFXDLL
+#endif
+
+#ifdef ANALYZEBUILD
+#pragma warning (disable:6387)
+#include <afxcontrolbars.h>
+#pragma warning (default:6387)
+#endif // ANALYZEBUILD
+
+
 #include <Windows.h>
 #include <Windowsx.h>
-#include <SDKDDKVer.h>
 #include <wincodec.h>
 
 #include <iostream>

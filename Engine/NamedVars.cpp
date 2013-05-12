@@ -275,6 +275,107 @@ DLLEXPORT  int Leviathan::NamedVar::ProcessDataDumb(wstring& data, vector<shared
 	return 0;
 }
 
+DLLEXPORT Leviathan::NamedVar::NamedVar(const wstring &line){
+	// do process datadump, but with just one value //
+	wstring name = L"";
+	wstring tempvar = L"";
+
+	wstring possiv = L"";
+	//int possii = 0;
+
+	wchar_t SplitChar = L':';
+	for(unsigned int a = 1; a < line.length(); a++){
+		if(line[a] == L'"')
+			break;
+		// check if = is used as name and variable separator //
+		if(line[a] == L'='){
+			if(a-1 < 0)
+				continue;
+			if(line[a-1] != L'\\'){
+				SplitChar = L'=';
+				break;
+			}
+
+		}
+
+	}
+
+	// split name/ variable //
+	bool skip = false;
+	unsigned int e = 0;
+	bool IsNextSpecial = false;
+	while((line[e] != SplitChar) && (!IsNextSpecial)){
+		if(((line[e] < 32) | (line[e] == L' ')) && (e+1 < line.length())){
+			e++;
+			continue;
+		}
+		if(line[e] == L'\\'){
+			if(!IsNextSpecial){
+				IsNextSpecial = true;
+				continue;
+			}
+		} else {
+			if(IsNextSpecial)
+				continue;
+		}
+		name += line[e];
+		e++;
+		if(e >= line.length()){
+			// no variable! //
+			//Logger::Get()->Info(L"ProcessDataDumb name split no variable, error: 404", true);
+			skip = true;
+			break;
+		}
+	}
+	// skip : //
+	e++;
+	if(skip)
+		DEBUG_BREAK;
+	// skip spaces //
+	while(line[e] == L' '){
+		e++;
+		if(e >= line.length()){
+			// no variable! //
+			Logger::Get()->Info(L"ProcessDataDumb skip spaces no variable, error: 404", true);
+			skip = true;
+			break;
+		}
+	}
+	if(skip)
+		DEBUG_BREAK;
+	// get temp var //
+	for(e; e < line.length(); e++){
+		if(line[e] == L';')
+			break;
+		tempvar += line[e];
+	}
+
+	// check type //
+	if(Misc::WstringTypeCheck(tempvar, 0 /* check int */) == 1){
+		// is int //
+		this->Name = name;
+		this->iValue = Convert::WstringToInt(tempvar);
+		this->Isint = true;
+		return;
+	}
+	if(Misc::WstringTypeCheck(tempvar, 3 /* check bool */) == 1){
+		// is int //
+		this->Name = name;
+		this->iValue = Convert::WstringFromBoolToInt(tempvar);
+		this->Isint = true;
+	}
+	// is string/other //
+
+	if(tempvar[0] == L'"'){
+		// remove " marks //
+		tempvar.erase(tempvar.begin());
+		tempvar.erase(tempvar.begin()+tempvar.size()-1);
+	}
+	this->Name = name;
+	this->wValue = new wstring(tempvar);
+	this->Isint = false;
+}
+
 
 // ---------------------------- NamedVars --------------------------------- //
 NamedVars::NamedVars(){

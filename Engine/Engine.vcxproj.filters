@@ -486,6 +486,9 @@
     <ClCompile Include="LoadedAnimation.cpp">
       <Filter>animation</Filter>
     </ClCompile>
+    <ClCompile Include="FileReader.cpp">
+      <Filter>utility</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">
@@ -872,6 +875,9 @@
     </ClInclude>
     <ClInclude Include="LoadedAnimation.h">
       <Filter>animation</Filter>
+    </ClInclude>
+    <ClInclude Include="FileReader.h">
+      <Filter>utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

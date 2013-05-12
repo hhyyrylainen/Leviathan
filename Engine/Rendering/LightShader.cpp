@@ -26,9 +26,9 @@ LightShader::~LightShader(){
 		Release();
 }
 
-bool LightShader::Init(ID3D11Device* device, Window* wind){
+bool Leviathan::LightShader::Init(ID3D11Device* device){
 
-	if(!this->InitShader(device, wind, FileSystem::GetShaderFolder()+L"light.vs", FileSystem::GetShaderFolder()+L"light.ps")){
+	if(!this->InitShader(device, FileSystem::GetShaderFolder()+L"light.vs", FileSystem::GetShaderFolder()+L"light.ps")){
 
 		Logger::Get()->Error(L"Failed to init Shaders, InitShader failed",0);
 		return false;
@@ -58,7 +58,7 @@ bool LightShader::Render(ID3D11DeviceContext* deviceContext, int indexCount, D3D
 	return true;
 }
 
-bool LightShader::InitShader(ID3D11Device* device, Window* wind, wstring vsfilename, wstring psfilename){
+bool Leviathan::LightShader::InitShader(ID3D11Device* dev, const wstring &vsfilename, const wstring &psfilename){
 
 	HRESULT hr = S_OK;
 	ID3D10Blob* Errordumb;

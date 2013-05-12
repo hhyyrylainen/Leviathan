@@ -14,10 +14,10 @@
 
 namespace Leviathan{
 
-	class Font : public EngineComponent{
+	class RenderingFont : public EngineComponent{
 	public:
-		DLLEXPORT Font::Font();
-		DLLEXPORT Font::~Font();
+		DLLEXPORT RenderingFont::RenderingFont();
+		DLLEXPORT RenderingFont::~RenderingFont();
 
 		DLLEXPORT bool Init(ID3D11Device* dev, wstring FontFile);
 		DLLEXPORT void Release();

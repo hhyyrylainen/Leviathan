@@ -176,6 +176,13 @@ namespace Leviathan{
 	//};
 
 	// ----     ----- //
+	// must match the one in font renderer
+	
+	struct VertexType{
+
+		D3DXVECTOR3 position;
+		D3DXVECTOR2 texture;
+	};
 
 	struct ModelVertexType{
 

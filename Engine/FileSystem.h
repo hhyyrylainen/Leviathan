@@ -7,9 +7,8 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "NamedVars.h"
-#ifndef LEVIATHAN_LOGGER
-#include "Logger.h"
-#endif
+#include "FileReader.h"
+
 namespace Leviathan{
 
 	enum FILEGROUP{FILEGROUP_MODEL, FILEGROUP_TEXTURE, FILEGROUP_SOUND, FILEGROUP_SCRIPT, FILEGROUP_OTHER};

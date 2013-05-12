@@ -26,9 +26,9 @@ BumpMapShader::~BumpMapShader(){
 }
 
 
-bool BumpMapShader::Init(ID3D11Device* device, Window* wind){
+bool BumpMapShader::Init(ID3D11Device* device){
 
-	if(!this->InitShader(device, wind, FileSystem::GetShaderFolder()+L"bumpmap.vs", FileSystem::GetShaderFolder()+L"bumpmap.ps")){
+	if(!this->InitShader(device, FileSystem::GetShaderFolder()+L"bumpmap.vs", FileSystem::GetShaderFolder()+L"bumpmap.ps")){
 
 		Logger::Get()->Error(L"Failed to init Shaders, InitShader failed",0);
 		return false;
@@ -65,7 +65,7 @@ bool BumpMapShader::Render(ID3D11DeviceContext* deviceContext, int indexCount, D
 }
 	
 
-bool BumpMapShader::InitShader(ID3D11Device* dev, Window* wind, wstring vsfilename, wstring psfilename){
+bool Leviathan::BumpMapShader::InitShader(ID3D11Device* dev, const wstring &vsfilename, const wstring &psfilename){
 	
 	HRESULT hr = S_OK;
 	ID3D10Blob* Errordumb;

@@ -45,7 +45,7 @@ namespace Leviathan{
 		DLLEXPORT bool UnloadAnimationFromIndex(int ind);
 
 
-		DLLEXPORT bool IndexAllAnimations();
+		DLLEXPORT bool IndexAllAnimations(bool LoadToMemory=false);
 
 		DLLEXPORT static AnimationManager* Get();
 	private:
@@ -53,7 +53,7 @@ namespace Leviathan{
 
 		int VerifyAnimLoaded(const wstring &file, bool SkipCheck = false);
 		bool IsSourceFileLoaded(const wstring &sourcefile);
-
+		wstring GetAnimationNameFromFile(const wstring &file);
 		vector<unique_ptr<IndexedAnimation>> AnimationFiles;
 
 		// static access //

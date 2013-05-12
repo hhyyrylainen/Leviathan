@@ -1,7 +1,7 @@
 #include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_FONT
-#include "Font.h"
+#include "RenderingFont.h"
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
@@ -9,18 +9,18 @@ using namespace Leviathan;
 
 #include "FileSystem.h"
 
-Font::Font(){
+RenderingFont::RenderingFont(){
 	//Fontdata = NULL;
 	Textures = NULL;
 }
-Font::~Font(){
+RenderingFont::~RenderingFont(){
 
 }
 
-bool Font::FreeTypeLoaded = false;
-FT_Library Font::FreeTypeLibrary = FT_Library();
+bool RenderingFont::FreeTypeLoaded = false;
+FT_Library RenderingFont::FreeTypeLibrary = FT_Library();
 // ------------------------------------ //
-bool Font::Init(ID3D11Device* dev, wstring FontFile){
+bool RenderingFont::Init(ID3D11Device* dev, wstring FontFile){
 
 	Name = FileSystem::RemoveExtension(FontFile, true);
 
@@ -37,13 +37,13 @@ bool Font::Init(ID3D11Device* dev, wstring FontFile){
 	}
 	return true;
 }
-void Font::Release(){
+void RenderingFont::Release(){
 	SAFE_RELEASE(Textures);
 	//SAFE_DELETE_ARRAY(Fontdata);
 	FontData.clear();
 }
 // ------------------------------------ //
-int Font::CountLenght(wstring &sentence, float heightmod, bool IsAbsolute, bool TranslateSize){
+int RenderingFont::CountLenght(wstring &sentence, float heightmod, bool IsAbsolute, bool TranslateSize){
 	// if it is non absolute and translate size is true, scale height by window size // 
 	if(!IsAbsolute && TranslateSize){
 
@@ -79,7 +79,7 @@ int Font::CountLenght(wstring &sentence, float heightmod, bool IsAbsolute, bool 
 	//Logger::Get()->Info(L"CountedLenght: "+Convert::IntToWstring(lenght)+L" promille lenght "+Convert::IntToWstring(ResolutionScaling::GetPromilleFactor()*((float)lenght/DataStore::Get()->GetWidth())), false);
 	return (int)(ResolutionScaling::GetPromilleFactor()*((float)lenght/DataStore::Get()->GetWidth()));
 }
- int Font::GetHeight(float heightmod, bool IsAbsolute, bool TranslateSize){
+ int RenderingFont::GetHeight(float heightmod, bool IsAbsolute, bool TranslateSize){
 	if(IsAbsolute)
 		return (int)(FontHeight*heightmod+0.5f);
 	// if it is non absolute and translate size is true, scale height by window size // 
@@ -92,7 +92,7 @@ int Font::CountLenght(wstring &sentence, float heightmod, bool IsAbsolute, bool 
 	return (int)(ResolutionScaling::GetPromilleFactor()*((float)(FontHeight*heightmod+0.5f)/DataStore::Get()->GetHeight()));
  }
 // ------------------------------------ //
-bool Font::CreateFontData(wstring texture, wstring texturedatafile){
+bool RenderingFont::CreateFontData(wstring texture, wstring texturedatafile){
 	// get path to bmp version of font texture //
 	wstring toload = FileSystem::GetFontFolder()+FileSystem::ChangeExtension(texture, L"bmp");
 
@@ -225,7 +225,7 @@ bool Font::CreateFontData(wstring texture, wstring texturedatafile){
 	return true;
 
 }
-bool Font::LoadFontData(ID3D11Device* dev, wstring file){
+bool RenderingFont::LoadFontData(ID3D11Device* dev, wstring file){
 
 	// is data already in memory?//
 	if(FontData.size() > 10){
@@ -296,7 +296,7 @@ bool Font::LoadFontData(ID3D11Device* dev, wstring file){
 	return true;
 }
 // ------------------------------------ //
-bool Font::LoadTexture(ID3D11Device* dev, wstring file, bool forcegen){
+bool RenderingFont::LoadTexture(ID3D11Device* dev, wstring file, bool forcegen){
 	// check does file exist //
 	if((!FileSystem::FileExists(FileSystem::GetFontFolder()+file)) | forcegen){
 		Logger::Get()->Info(L"No font texture found: generating...", false);
@@ -499,11 +499,11 @@ bool Font::LoadTexture(ID3D11Device* dev, wstring file, bool forcegen){
 	return true;
 }
 
-ID3D11ShaderResourceView* Font::GetTexture(){
+ID3D11ShaderResourceView* RenderingFont::GetTexture(){
 	return Textures->GetTexture();
 }
 // ------------------------------------ //
-void Font::BuildVertexArray(void* vertices, wstring text, float drawx, float drawy, float heightmod, bool IsAbsolute, bool TranslateSize){
+void RenderingFont::BuildVertexArray(void* vertices, wstring text, float drawx, float drawy, float heightmod, bool IsAbsolute, bool TranslateSize){
 	// if it is non absolute and translate size is true, scale height by window size // 
 	if(!IsAbsolute && TranslateSize){
 
@@ -619,7 +619,7 @@ void Font::BuildVertexArray(void* vertices, wstring text, float drawx, float dra
 
 // ------------------------------------ //
 
-bool Font::CheckFreeTypeLoad(){
+bool RenderingFont::CheckFreeTypeLoad(){
 	if(!FreeTypeLoaded){
 
 		FT_Error error = FT_Init_FreeType(&FreeTypeLibrary);

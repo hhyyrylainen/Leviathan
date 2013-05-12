@@ -24,8 +24,8 @@ TextureShader::~TextureShader(){
 		Release();
 }
 
-bool TextureShader::Init(ID3D11Device* device, Window* wind){
-	if(!this->InitShader(device, wind, FileSystem::GetShaderFolder()+L"texture.vs", FileSystem::GetShaderFolder()+L"texture.ps")){
+bool TextureShader::Init(ID3D11Device* device){
+	if(!this->InitShader(device, FileSystem::GetShaderFolder()+L"texture.vs", FileSystem::GetShaderFolder()+L"texture.ps")){
 
 		Logger::Get()->Error(L"Failed to init Shaders, InitShader failed",0);
 		return false;
@@ -54,8 +54,7 @@ bool TextureShader::Render(ID3D11DeviceContext* deviceContext, int indexCount, D
 	return true;
 }
 
-bool TextureShader::InitShader(ID3D11Device* device, Window* wind, wstring vsfilename, wstring psfilename)
-{
+bool Leviathan::TextureShader::InitShader(ID3D11Device* dev, const wstring &vsfilename, const wstring &psfilename){
 	HRESULT hr = S_OK;
 	ID3D10Blob* Errordumb;
 	ID3D10Blob* Vertexshaderbuffer;

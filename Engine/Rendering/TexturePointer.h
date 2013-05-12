@@ -12,12 +12,12 @@ namespace Leviathan{
 
 	class TexturePointer : public Object{
 	public:
-		DLLEXPORT TexturePointer::TexturePointer(int id, wstring* file, int index);
-        DLLEXPORT TexturePointer::~TexturePointer();
+		DLLEXPORT TexturePointer::TexturePointer(int id, const wstring &file, int index);
+		DLLEXPORT TexturePointer::~TexturePointer();
 
-		int P_ID;
-		wstring P_File;
-		int P_Index;
+		int ID;
+		wstring File;
+		int Index;
 	};
 
 }

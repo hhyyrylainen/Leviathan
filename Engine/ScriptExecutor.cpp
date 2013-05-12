@@ -454,15 +454,17 @@ shared_ptr<ScriptArguement> ScriptExecutor::RunScript(wstring start, bool fullde
 			// code took too long //
 		} else if(retcode == asEXECUTION_EXCEPTION){
 			// script caused an exception //
-			asIScriptFunction *func = ScriptContext->GetExceptionFunction();
+			asIScriptFunction *exceptionfunc = ScriptContext->GetExceptionFunction();
 
-			Logger::Get()->Error(L"[SCRIPT] from: func: "+Convert::ToWstring(func->GetDeclaration())+L" modl: "+Convert::ToWstring(func->GetModuleName())+L" sect: "+Convert::ToWstring(func->GetScriptSectionName()), false);
-			throw ScriptException(retcode, Convert::StringToWstringNonRef(ScriptContext->GetExceptionString()), script->Source+L" line: "+Convert::ToWstring(ScriptContext->GetExceptionLineNumber()));
+			Logger::Get()->Error(L"[SCRIPT] from: func: "+Convert::ToWstring(func->GetDeclaration())+L" modl: "
+				+Convert::ToWstring(exceptionfunc->GetModuleName())+L" sect: "+Convert::ToWstring(exceptionfunc->GetScriptSectionName()), false);
+			throw ScriptException(retcode, Convert::StringToWstringNonRef(ScriptContext->GetExceptionString()), script->Source+
+				L" line: "+Convert::ToWstring(ScriptContext->GetExceptionLineNumber()));
 		}
 		SAFE_RELEASE(ScriptContext);
 		return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
 	}
-	// succesfully executed, try to fetch return value //
+	// successfully executed, try to fetch return value //
 	// for now just return it as a float //
 	shared_ptr<ScriptArguement> retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(ScriptContext->GetReturnDWord()), DATABLOCK_TYPE_INT, true));
 	// release context //

@@ -5,13 +5,10 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-TexturePointer::TexturePointer(int id, wstring* file, int index){
-	P_ID = id;
-	if(file != NULL)
-		P_File = *file;
-	else
-		P_File = L"";
-	P_Index;
+TexturePointer::TexturePointer(int id, const wstring &file, int index){
+	ID = id;
+	File = file;
+	Index = index;
 }
 TexturePointer::~TexturePointer(){
 

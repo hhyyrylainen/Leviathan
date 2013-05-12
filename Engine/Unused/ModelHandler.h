@@ -14,7 +14,7 @@ namespace Leviathan{
 	class ModelHandler : public EngineComponent{
 	public:
 		DLLEXPORT ModelHandler::ModelHandler();
-        DLLEXPORT ModelHandler::~ModelHandler();
+		DLLEXPORT ModelHandler::~ModelHandler();
 
 
 		DLLEXPORT bool Init();

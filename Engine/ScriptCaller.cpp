@@ -12,6 +12,9 @@ ScriptCaller::ScriptCaller(){
 
 }
 ScriptCaller::ScriptCaller(bool justrueforglobalcall){
+	if(!justrueforglobalcall)
+		// this shouldn't be hit ever //
+		DEBUG_BREAK;
 	Global = this;
 
 	// define functions that are exposed to scripts //

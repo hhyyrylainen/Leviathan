@@ -6,11 +6,13 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "Window.h"
 #include "ResolutionScaling.h"
 #include "AutoUpdateable.h"
 
-#include "Font.h"
+#include "RenderingFont.h"
 #include "FontShader.h"
+#include "ShaderDataTypes.h"
 
 namespace Leviathan{
 
@@ -60,14 +62,10 @@ namespace Leviathan{
 			int posx, posy; 
 			bool TranslateSize;
 		};
-		struct VertexType	// must match the one in FontClass! // ----------------
-		{
-			D3DXVECTOR3 position;
-			D3DXVECTOR2 texture;
-		};
+
 		// ------------------ //
-		void LoadFont(wstring &file);
-		int GetFontIndex(wstring &name);
+		void LoadFont(const wstring &file);
+		int GetFontIndex(const wstring &name);
 
 		bool InitializeSentence(SentenceType** sentence, int id, int maxlenght, ID3D11Device* dev);
 		bool UpdateSentence(SentenceType* sentence, bool absolute, wstring &text, int posx, int posy, float red, float green, float blue, 
@@ -77,20 +75,16 @@ namespace Leviathan{
 
 		// ------------------ //
 		//Font* m_Font;
-		FontShader* m_FontShader;
+		FontShader* _FontShader;
 		int ScreenWidth, ScreenHeight;
-		D3DXMATRIX m_baseViewMatrix;
+		D3DXMATRIX BaseViewMatrix;
 
 		ID3D11Device* device;
 
 		//vector<SentenceType*> Sentences;
 
-		vector<Font*> FontHolder;
+		vector<RenderingFont*> FontHolder;
 		vector<SentenceType*> Sentences;
-
-		SentenceType* m_sentence1;
-		//SentenceType* m_sentence2;
-
 	};
 
 }

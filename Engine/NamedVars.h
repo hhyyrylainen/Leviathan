@@ -18,8 +18,9 @@ namespace Leviathan{
 	public:
 		DLLEXPORT NamedVar();
 		DLLEXPORT NamedVar(const NamedVar &other);
-		DLLEXPORT NamedVar(const wstring& name, int val);
-		DLLEXPORT NamedVar(const wstring& name, const wstring& val);
+		DLLEXPORT NamedVar(const wstring &name, int val);
+		DLLEXPORT NamedVar(const wstring &name, const wstring &val);
+		DLLEXPORT NamedVar(const wstring &line);
 		DLLEXPORT ~NamedVar();
 		// ------------------------------------ //
 		DLLEXPORT void SetValue(int val);

@@ -37,6 +37,8 @@ namespace Leviathan{
 		DLLEXPORT void SetBaseModelName(const wstring &basemodelname);
 		DLLEXPORT void SetBones(const vector<shared_ptr<GameObject::SkeletonBone>> &bones);
 
+		DLLEXPORT int ProcessLoadedData();
+
 		DLLEXPORT void AddNewFrame(shared_ptr<AnimationFrameData> frame);
 
 	private:

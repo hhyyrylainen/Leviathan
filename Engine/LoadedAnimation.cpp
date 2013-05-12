@@ -13,7 +13,10 @@ DLLEXPORT Leviathan::LoadedAnimation::~LoadedAnimation(){
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<AnimationBlock> Leviathan::LoadedAnimation::CreateFromThis(){
-	return shared_ptr<AnimationBlock>(new AnimationBlock());
+	shared_ptr<AnimationBlock> createdblock(new AnimationBlock());
+
+
+	return createdblock;
 }
 
 // ------------------------------------ //
@@ -47,6 +50,14 @@ DLLEXPORT void Leviathan::LoadedAnimation::SetBones(const vector<shared_ptr<Game
 
 DLLEXPORT void Leviathan::LoadedAnimation::AddNewFrame(shared_ptr<AnimationFrameData> frame){
 	AnimationFrames.push_back(frame);
+}
+
+DLLEXPORT int Leviathan::LoadedAnimation::ProcessLoadedData(){
+	// process some data, that would have to be handled everytime when creating new Animations from this //
+
+
+	// succeeded //
+	return 0;
 }
 
 // ------------------------------------ //

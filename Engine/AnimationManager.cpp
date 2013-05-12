@@ -3,6 +3,7 @@
 #ifndef LEVIATHAN_ANIMATIONMANAGER
 #include "AnimationManager.h"
 #endif
+#include "NamedVars.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::AnimationManager::AnimationManager(){
@@ -23,6 +24,12 @@ DLLEXPORT AnimationManager* Leviathan::AnimationManager::Get(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::AnimationManager::Init(){
+	// false to not load ALL animations into memory //
+	if(!IndexAllAnimations(false)){
+
+		Logger::Get()->Error(L"AnimationManager: Init: failed to index animation files");
+		return false;
+	}
 	Inited = true;
 	return true;
 }
@@ -52,12 +59,29 @@ DLLEXPORT shared_ptr<AnimationBlock> Leviathan::AnimationManager::GetAnimation(c
 	}
 
 	// none found, needs to create new //
+	if(AnimationFiles.size() == 0){
+		// needs to load the index //
+		Logger::Get()->Warning(L"AnimationManager: GetAnimation: No indexed animation files", false);
+		if(!IndexAllAnimations()){
+
+			Logger::Get()->Error(L"AnimationManager: GetAnimation: failed to index animation files");
+			return NULL;
+		}
+	}
 	// lets look for a animation from our index //
 	for(unsigned int i = 0; i < AnimationFiles.size(); i++){
 		if(AnimationFiles[i]->AnimationName == name){
 			// found //
 			// load it //
-			VerifyAnimLoaded(AnimationFiles[i]->AnimationName);
+			VerifyAnimLoaded(AnimationFiles[i]->SourceFile);
+
+			// link //
+			// find the current, shouldn't have moved //
+			shared_ptr<LoadedAnimation> CurAnim(AnimationsInMemory.back());
+
+			// direct link //
+			AnimationFiles[i]->CorrespondingAnimation = CurAnim;
+
 			// call again //
 			return GetAnimation(name);
 		}
@@ -105,7 +129,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 	// file header variables //
 	wstring AnimationName = L"";
 	wstring BaseModelName = L"";
-	bool NeedsToChangeCoordinates = false;
+	bool NeedToChangeCoordinateSystem = false;
 	bool IsUnCompiled = false;
 
 
@@ -156,9 +180,9 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 			// check coordinates //
 			if(twval != L"LEVIATHAN"){
 				// needs to change coordinates //
-				NeedsToChangeCoordinates = true;
+				NeedToChangeCoordinateSystem = true;
 			} else {
-				NeedsToChangeCoordinates = false;
+				NeedToChangeCoordinateSystem = false;
 			}
 			continue;
 		}
@@ -336,6 +360,11 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 						curvalue.Val[2] = Convert::WstringToFloat(*resultstr);
 
+						if(NeedToChangeCoordinateSystem){
+							// swap y and z to convert from blender coordinates //
+							swap(curvalue.Val[1], curvalue.Val[2]);
+						}
+
 						LoadingBone->SetRestPosition(curvalue);
 
 						continue;
@@ -363,11 +392,13 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 					}
 
 				}
-
-
+				// add //
+				LoadedBones.push_back(LoadingBone);
 			}
 			// set bones //
 			CurrentlyLoading->SetBones(LoadedBones);
+			LoadedBones.clear();
+			continue;
 		}
 
 		// is a frame //
@@ -380,6 +411,9 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 			// create new frame //
 			shared_ptr<AnimationFrameData> LoadingFrame(new AnimationFrameData(CurrentFrameNumber));
+
+			// set number //
+			LoadingFrame->FrameNumber = CurrentFrameNumber;
 
 			// loop through lines and load bones //
 			for(unsigned int ind = 0; ind < CurTB->Lines.size(); ind++){
@@ -398,9 +432,9 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 					// get what this token is //
 					if(Misc::WstringStartsWith(*Tokens[tokenind], L"id")){
 						// store used id as BoneGroup //
-						WstringIterator itr(Tokens[tokenind], false);
+						WstringIterator itrsecond(Tokens[tokenind], false);
 
-						unique_ptr<wstring> resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
+						unique_ptr<wstring> resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
 
 						LoadingBone->SetBoneGroup(Convert::WstringToInt(*resultstr));
 
@@ -408,19 +442,24 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 					}
 					if(Misc::WstringStartsWith(*Tokens[tokenind], L"pos")){
 						// expecting to load 3 floats //
-						WstringIterator itr(Tokens[tokenind], false);
+						WstringIterator itrsecond(Tokens[tokenind], false);
 
-						unique_ptr<wstring> resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						unique_ptr<wstring> resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 
 						Float3 curvalue;
 
 						curvalue.Val[0] = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 						curvalue.Val[1] = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 						curvalue.Val[2] = Convert::WstringToFloat(*resultstr);
+
+						if(NeedToChangeCoordinateSystem){
+							// swap y and z to convert from blender coordinates //
+							swap(curvalue.Val[1], curvalue.Val[2]);
+						}
 
 						// set it as rest position even though it actually isn't //
 						LoadingBone->SetRestPosition(curvalue);
@@ -429,18 +468,18 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 					}
 					if(Misc::WstringStartsWith(*Tokens[tokenind], L"dir")){
 						// expecting to load 3 floats //
-						WstringIterator itr(Tokens[tokenind], false);
+						WstringIterator itrsecond(Tokens[tokenind], false);
 
-						unique_ptr<wstring> resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						unique_ptr<wstring> resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 
 						Float3 curvalue;
 
 						curvalue.Val[0] = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 						curvalue.Val[1] = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 						curvalue.Val[2] = Convert::WstringToFloat(*resultstr);
 
 						//LoadingBone->SetRestPosition(curvalue);
@@ -454,6 +493,11 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 				// unlink from smart pointer //
 				LoadingBone.reset();
 			}
+			// push frame //
+
+			CurrentlyLoading->AddNewFrame(LoadingFrame);
+			LoadingFrame.reset();
+
 			continue;
 		}
 
@@ -462,6 +506,13 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 		DEBUG_BREAK;
 	}
 
+	// let the animation object process input //
+
+	int retcode = CurrentlyLoading->ProcessLoadedData();
+	if(retcode != 0){
+		// error occurred //
+		DEBUG_BREAK;
+	}
 
 	// store loaded data //
 	AnimationsInMemory.push_back(CurrentlyLoading);
@@ -485,7 +536,7 @@ bool Leviathan::AnimationManager::IsSourceFileLoaded(const wstring &sourcefile){
 	return false;
 }
 
-DLLEXPORT bool Leviathan::AnimationManager::IndexAllAnimations(){
+DLLEXPORT bool Leviathan::AnimationManager::IndexAllAnimations(bool LoadToMemory/*=false*/){
 	// clear old animations, TOOO: create a method to update //
 	AnimationFiles.clear();
 
@@ -498,20 +549,92 @@ DLLEXPORT bool Leviathan::AnimationManager::IndexAllAnimations(){
 		// check is this loaded //
 		if(IsSourceFileLoaded(Files[i]))
 			continue;
-		// needs to load, force load //
-		VerifyAnimLoaded(Files[i], true);
+		if(LoadToMemory){
+			// needs to load, force load //
+			if(VerifyAnimLoaded(Files[i], true) != 1){
+				// failed //
+				Logger::Get()->Error(L"AnimationManager: IndexAllAnimations: can't index file: "+Files[i]);
+				continue;
+			}
 
-		// find the current, shouldn't have moved //
-		shared_ptr<LoadedAnimation> CurAnim(AnimationsInMemory.back());
+			// find the current, shouldn't have moved //
+			shared_ptr<LoadedAnimation> CurAnim(AnimationsInMemory.back());
 
-		// link //
-		AnimationFiles.push_back(unique_ptr<IndexedAnimation>(new IndexedAnimation(CurAnim->GetName(), Files[i])));
-		// direct link //
-		AnimationFiles.back()->CorrespondingAnimation = CurAnim;
+			// link //
+			AnimationFiles.push_back(unique_ptr<IndexedAnimation>(new IndexedAnimation(CurAnim->GetName(), Files[i])));
+
+			// direct link //
+			AnimationFiles.back()->CorrespondingAnimation = CurAnim;
+		} else {
+
+			wstring Animname = GetAnimationNameFromFile(Files[i]);
+
+			AnimationFiles.push_back(unique_ptr<IndexedAnimation>(new IndexedAnimation(Animname, Files[i])));
+		}
 	}
 
 	// in the future maybe update index here //
 
 	// done //
 	return true;
+}
+
+wstring Leviathan::AnimationManager::GetAnimationNameFromFile(const wstring &file){
+	// needs to read lines until animation name has been found //
+
+	wifstream reader;
+	reader.open(file);
+
+	wstring Name = L"";
+	wstring BaseModelName = L"";
+
+	if(!reader.is_open()){
+		DEBUG_BREAK;
+	}
+
+	bool Found = false;
+	bool FoundBase = false;
+
+	unique_ptr<wchar_t> ReadCharacters(new wchar_t[400]);
+
+	int junkftch;
+
+	while(!(Found && FoundBase) && reader.good()){
+		reader.getline(ReadCharacters.get(), 400);
+
+		// generate wstring //
+		wstring line(ReadCharacters.get());
+
+		// check is correct line //
+		if(Misc::WstringStartsWith(line, L"Animation-Name")){
+			// correct line //
+
+			// generate named var from this line //
+			NamedVar linevar(line);
+
+			linevar.GetValue(junkftch, Name);
+			// done //
+			Found = true;
+			continue;
+		}
+		if(Misc::WstringStartsWith(line, L"Base-Model-Name")){
+			// correct line //
+
+			// generate named var from this line //
+			NamedVar linevar(line);
+
+			linevar.GetValue(junkftch, BaseModelName);
+			// done //
+			FoundBase = true;
+			continue;
+		}
+	}
+
+	if(!Found || !FoundBase){
+		// no name, invalid file //
+
+		DEBUG_BREAK;
+		return Name;
+	}
+	return BaseModelName+L"[]"+Name;
 }

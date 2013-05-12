@@ -19,19 +19,12 @@ namespace Leviathan{
 	public:
 		DLLEXPORT TextureShader();
 		DLLEXPORT ~TextureShader();
-		DLLEXPORT bool Init(ID3D11Device* device, Window* wind);
+		DLLEXPORT bool Init(ID3D11Device* device);
 		DLLEXPORT void Release();
 		DLLEXPORT bool Render(ID3D11DeviceContext* devcont,int indexcount, D3DXMATRIX worldmatrix, D3DXMATRIX viewmatrix, D3DXMATRIX projectionmatrix, ID3D11ShaderResourceView* texture);
 
 	private:
-		bool Inited;
-		//struct MatrixBufferType
-		//{
-		//	D3DXMATRIX world;
-		//	D3DXMATRIX view;
-		//	D3DXMATRIX projection;
-		//};
-		bool InitShader(ID3D11Device* dev, Window* wind, wstring vsfilename, wstring psfilename);
+		bool InitShader(ID3D11Device* dev, const wstring &vsfilename, const wstring &psfilename);
 		void ReleaseShader();
 		void PrintShaderError(ID3D10Blob* datadumb);
 

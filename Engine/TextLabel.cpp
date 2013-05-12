@@ -118,9 +118,9 @@ void TextLabel::Release(Graphics* graph){
 		(*RBridge).WantsToClose = TRUE;
 	RBridge.reset();
 
-	this->UnRegister(EVENT_TYPE_ALL, true);
+	// this shouldn't be required anymore with StopMonitoring //
+	//this->UnRegister(EVENT_TYPE_ALL, true);
 	StopMonitoring(-1, L"", true);
-	
 }
 // ------------------------------------ //
 void TextLabel::Render(Graphics* graph){

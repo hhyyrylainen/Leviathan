@@ -132,13 +132,11 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 
 	// feature flags //
 	D3D_FEATURE_LEVEL FeatureLevels[FEATURE_LEVELS];
-	for(int i = 0; i < FEATURE_LEVELS; i++){
-		switch(i){
-		case 0: FeatureLevels[i] = D3D_FEATURE_LEVEL_11_0; break;
-		case 1: FeatureLevels[i] = D3D_FEATURE_LEVEL_10_1; break;
-		case 2: FeatureLevels[i] = D3D_FEATURE_LEVEL_10_0; break;
-		}
-	}
+
+	FeatureLevels[0] = D3D_FEATURE_LEVEL_11_0;
+	FeatureLevels[1] = D3D_FEATURE_LEVEL_10_1;
+	FeatureLevels[2] = D3D_FEATURE_LEVEL_10_0;
+
 	// creation flags
 	UINT CreateDeviceFlags = 0;
 #ifdef _DEBUG
@@ -158,7 +156,10 @@ HRESULT Dx11Renderer::Init(Window* wind, DxRendConf conf){
 		&DeviceContext);
 	if(FAILED(hr)){
 
-		Logger::Get()->Error(L"D3D11Device creation failed");
+		Logger::Get()->Error(L"D3D11Device creation failed", (int)hr);
+#ifdef _DEBUG
+		Logger::Get()->Info(L"This error can be caused by not having proper directx debug runtime installed, try reinstalling directx sdk (june 2010)", (int)hr);
+#endif
 		return false;
 	}
 

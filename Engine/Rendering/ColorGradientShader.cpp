@@ -25,9 +25,9 @@ GradientShader::~GradientShader(){
 		Release();
 }
 
-bool GradientShader::Init(ID3D11Device* device, Window* wind){
+bool GradientShader::Init(ID3D11Device* device){
 
-	if(!this->InitShader(device, wind, FileSystem::GetShaderFolder()+L"gradient.vs", FileSystem::GetShaderFolder()+L"gradient.ps")){
+	if(!this->InitShader(device, FileSystem::GetShaderFolder()+L"gradient.vs", FileSystem::GetShaderFolder()+L"gradient.ps")){
 
 		Logger::Get()->Error(L"Failed to init Shaders, InitShader failed",0);
 		return false;
@@ -56,7 +56,7 @@ bool GradientShader::Render(ID3D11DeviceContext* devcont,int indexcount, D3DXMAT
 	return true;
 }
 
-bool GradientShader::InitShader(ID3D11Device* device, Window* wind, wstring vsfilename, wstring psfilename){
+bool Leviathan::GradientShader::InitShader(ID3D11Device* dev, const wstring &vsfilename, const wstring &psfilename){
 
 	HRESULT hr = S_OK;
 	ID3D10Blob* Errordumb;

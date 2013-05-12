@@ -431,10 +431,11 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIter
 	// check for number //
 	UNNORMALCHARACTER stoptype = (UNNORMALCHARACTER)parameters;
 
-	IteratorNumberFindData* tmpdata = dynamic_cast<IteratorNumberFindData*>(IteratorData);
+	IteratorPositionData* tmpdata = dynamic_cast<IteratorPositionData*>(IteratorData);
 	if(tmpdata == NULL){
 		// well darn //
 		DEBUG_BREAK;
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
 	int charvalue = (int) CurChar;
 
@@ -445,7 +446,7 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIter
 		if(stoptype != UNNORMALCHARACTER_TYPE_NON_ASCII){
 			// we can check if it allows some other characters //
 			if(stoptype == UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS){
-				if(!((charvalue >= 58) && (charvalue <= 62)) && (charvalue < 123) && (charvalue >= 32)){
+				if(!((charvalue >= 91) && (charvalue <= 93)) && !((charvalue >= 58) && (charvalue <= 62)) && ((charvalue < 123) && (charvalue >= 32))){
 					// is still valid! //
 					IsValid = true;
 				}
@@ -456,7 +457,6 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIter
 
 	if(IsValid){
 		// check is this first character //
-		tmpdata->DigitsFound++;
 		if(tmpdata->Positions[0] == -1){
 			// first position! //
 

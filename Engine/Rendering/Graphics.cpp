@@ -17,6 +17,7 @@ Graphics::Graphics(){
 	ActiveCamera = NULL;
 	Shaders = NULL;
 	Light = NULL;
+	TextureKeeper = NULL;
 
 	TextRender = NULL;
 

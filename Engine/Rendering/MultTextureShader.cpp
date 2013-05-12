@@ -25,8 +25,8 @@ MultiTextureShader::~MultiTextureShader(){
 		Release();
 }
 
-bool MultiTextureShader::Init(ID3D11Device* device, Window* wind){
-	if(!this->InitShader(device, wind, FileSystem::GetShaderFolder()+L"multitexture.vs", FileSystem::GetShaderFolder()+L"multitexture.ps")){
+bool MultiTextureShader::Init(ID3D11Device* device){
+	if(!this->InitShader(device, FileSystem::GetShaderFolder()+L"multitexture.vs", FileSystem::GetShaderFolder()+L"multitexture.ps")){
 
 		Logger::Get()->Error(L"Failed to init Shaders, InitShader failed",0);
 		return false;
@@ -56,7 +56,7 @@ bool MultiTextureShader::Render(ID3D11DeviceContext* deviceContext, int indexCou
 	return true;
 }
 
-bool MultiTextureShader::InitShader(ID3D11Device* device, Window* wind, wstring vsfilename, wstring psfilename){
+bool Leviathan::MultiTextureShader::InitShader(ID3D11Device* dev, const wstring &vsfilename, const wstring &psfilename){
 
 	HRESULT hr = S_OK;
 	ID3D10Blob* Errordumb;

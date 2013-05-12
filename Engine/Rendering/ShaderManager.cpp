@@ -34,6 +34,12 @@ ShaderManager::~ShaderManager(){
 }
 // ------------------------------------ //
 bool ShaderManager::Init(ID3D11Device* device, Window* wind){
+	// check is device invalid //
+	if(device == NULL){
+		// can't do anything //
+		Logger::Get()->Error(L"ShaderManager: Init: device is null, can't do anything", false);
+		return false;
+	}
 
 	// create texture shader
 	_TextureShader = new TextureShader;
@@ -197,7 +203,6 @@ DLLEXPORT bool Leviathan::ShaderManager::RenderSkinnedShader(ID3D11DeviceContext
 
 DLLEXPORT void Leviathan::ShaderManager::PrintShaderError(const wstring &shader, ID3D10Blob* datadump){
 
-
 	// get errors from dump //
 	char* Errors = (char*)(datadump->GetBufferPointer());
 	unsigned long Errossize = datadump->GetBufferSize();
@@ -206,7 +211,7 @@ DLLEXPORT void Leviathan::ShaderManager::PrintShaderError(const wstring &shader,
 	// copy message to wstring //
 	string tempstr(Errors, Errossize);
 
-	Logger::Get()->Error(L"[SHADER] "+Convert::StringToWstring(tempstr), false);
+	Logger::Get()->Error(L"[SHADER] "+shader+L" Error:\n"+Convert::StringToWstring(tempstr)+L"\n[END]", false);
 	// release error data //
 	SAFE_RELEASE(datadump);
 }

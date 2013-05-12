@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "ScriptInterface.h"
 #include "ObjectFileObject.h"
+#include "TimingMonitor.h"
 
 
 namespace Leviathan{

@@ -50,10 +50,6 @@ Leviathan::TimingMonitor::TimingMonitor(){
 
 }
 
-Leviathan::TimingMonitor::TimingMonitor(const TimingMonitor& other){
-
-}
-
 Leviathan::TimingMonitor::~TimingMonitor(){
 
 }
@@ -75,3 +71,22 @@ Leviathan::TimingMonitorClock::TimingMonitorClock(const wstring& name, int style
 	StartTime = Misc::GetTimeMicro64();
 	Style = style;
 }
+// ---------------- ScopeTimer -------------------- //
+DLLEXPORT Leviathan::ScopeTimer::ScopeTimer(const wstring& source){
+	// create unique name for this timer //
+	CurID++;
+	TimerName = BASETIMERNAME_FOR_SCROPE_TIMER+Convert::IntToWstring(CurID);
+	Source = source;
+	// start timer for this object //
+	TimingMonitor::StartTiming(TimerName, TIMINGMONITOR_STYLE_RESULT_NONE);
+}
+
+DLLEXPORT Leviathan::ScopeTimer::~ScopeTimer(){
+	// kill this timer //
+	int ElapsedTime = TimingMonitor::StopTiming(TimerName, false);
+	// print data //
+	Logger::Get()->Info(L"ScopeTimer: "+Source+L" Stopped elapsed: "+Convert::IntToWstring(ElapsedTime)+L" µs ("+
+		Convert::FloatToWstring(ElapsedTime/1000000.f)+L" s)");
+}
+
+int Leviathan::ScopeTimer::CurID = 42;

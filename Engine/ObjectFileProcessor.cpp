@@ -130,7 +130,8 @@ DLLEXPORT  vector<ObjectFileObject*> Leviathan::ObjectFileProcessor::ProcessObje
 				wstring script = Misc::WstringRemoveFirstWords(readline, 2);
 
 				// TODO: CALL script executor //
-				ScriptScript* inlscript = new ScriptScript();
+				unique_ptr<ScriptScript> inlscript(new ScriptScript());
+
 				inlscript->Name = L"inl: "+file+L" line: "+Convert::IntToWstring(Line);
 				inlscript->Instructions = L"void Do(int Line){\n"+script+L"\nreturn;\n}";
 				inlscript->Source = L"inline on file: "+file+L" on line: "+Convert::IntToWstring(Line);
@@ -144,7 +145,7 @@ DLLEXPORT  vector<ObjectFileObject*> Leviathan::ObjectFileProcessor::ProcessObje
 				vector<ScriptNamedArguement*> Args;
 				Args.push_back(new ScriptNamedArguement(L"FileLine", new IntBlock(Line), DATABLOCK_TYPE_INT, false, true));
 
-				ScriptInterface::Get()->ExecuteScript(inlscript,vars, L"void Do(int Line)", Args, NULL, true);
+				ScriptInterface::Get()->ExecuteScript(inlscript.get(),vars, L"void Do(int Line)", Args, NULL, true);
 
 
 				SAFE_DELETE_VECTOR(Args);
@@ -152,7 +153,7 @@ DLLEXPORT  vector<ObjectFileObject*> Leviathan::ObjectFileProcessor::ProcessObje
 				vars.clear();
 				varhold.reset();
 				// make sure not to cause memory leaks //
-				delete(inlscript);
+
 				//delete(varhold); //using smart pointers, just clear array //
 				//while(varhold->Vars.size() != 0){ // this is released by varholder //
 				//	SAFE_DELETE(varhold->Vars[0]);
@@ -177,8 +178,11 @@ DLLEXPORT  vector<ObjectFileObject*> Leviathan::ObjectFileProcessor::ProcessObje
 	return returned;
 }
 ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstring firstline/*, int BaseType, int Type*/, int &Line, const wstring& sourcefile){
+	// monitoring //
+	QUICKTIME_THISSCOPE;
+
 	// this object's definition should be in firstline parameter //
-	ObjectFileObject* obj = NULL;
+	shared_ptr<ObjectFileObject> obj(NULL);
 
 	// split definitions from first line //
 	vector<wstring> lines;
@@ -232,7 +236,7 @@ ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstrin
 		return NULL;
 	}
 
-	obj = new ObjectFileObject(Name, GetObjectTypeID(TypeN), TypeN);
+	obj = shared_ptr<ObjectFileObject>(new ObjectFileObject(Name, GetObjectTypeID(TypeN), TypeN));
 	obj->Prefixes = Prefixes;
 #ifdef _DEBUG
 	// no more spam //
@@ -780,7 +784,10 @@ ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstrin
 		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: no matching bracket found in o "+Name, 404, true);
 	}
 
-	return obj;
+	// returning smart pointer //
+	ObjectFileObject* tempptr = obj.get();
+	obj.reset();
+	return tempptr;
 }
 // ------------------------------------ //
 
@@ -881,12 +888,12 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<ObjectFile
 			// write instructions //
 			vector<wstring> SplitInstrLines;
 			Misc::CutWstring(scrpt->Instructions, L"\n", SplitInstrLines);
-			for(unsigned int i = 0; i < SplitInstrLines.size(); i++){
+			for(unsigned int e = 0; e < SplitInstrLines.size(); e++){
 				// check for adding spaces //
 				if(SplitInstrLines.size() > 10){
 					// no spaces //
 					// just the instruction //
-					writer << SplitInstrLines[i] << endl;
+					writer << SplitInstrLines[e] << endl;
 
 					continue;
 				}

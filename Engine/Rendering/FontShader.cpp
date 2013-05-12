@@ -5,7 +5,7 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-
+#include "ShaderManager.h"
 
 // --------- Shaders --------- //
 FontShader::FontShader(){
@@ -25,8 +25,8 @@ FontShader::~FontShader(){
 		Release();
 }
 
-bool FontShader::Init(ID3D11Device* device, Window* wind){
-	if(!this->InitShader(device, wind, FileSystem::GetShaderFolder()+L"font.vs", FileSystem::GetShaderFolder()+L"font.ps")){
+bool FontShader::Init(ID3D11Device* device){
+	if(!this->InitShader(device, FileSystem::GetShaderFolder()+L"font.vs", FileSystem::GetShaderFolder()+L"font.ps")){
 
 		Logger::Get()->Error(L"Failed to init FontShader, InitShader failed",0);
 		return false;
@@ -56,8 +56,7 @@ bool FontShader::Render(ID3D11DeviceContext* deviceContext, int indexCount, D3DX
 	return true;
 }
 
-bool FontShader::InitShader(ID3D11Device* device, Window* wind, wstring vsfilename, wstring psfilename)
-{
+bool Leviathan::FontShader::InitShader(ID3D11Device* dev, const wstring &vsfilename, const wstring &psfilename){
 	HRESULT hr = S_OK;
 	ID3D10Blob* Errordumb;
 	ID3D10Blob* Vertexshaderbuffer;
@@ -77,7 +76,7 @@ bool FontShader::InitShader(ID3D11Device* device, Window* wind, wstring vsfilena
 		// check for compile error //
 		if(Errordumb)
 		{
-			PrintShaderError(Errordumb);
+			ShaderManager::PrintShaderError(L"FontShader", Errordumb);
 			Logger::Get()->Error(L"Failed to Init vetexshader, see info for error",0);
 		}
 		else
@@ -97,7 +96,7 @@ bool FontShader::InitShader(ID3D11Device* device, Window* wind, wstring vsfilena
 		// check for compile error //
 		if(Errordumb)
 		{
-			PrintShaderError(Errordumb);
+			ShaderManager::PrintShaderError(L"FontShader", Errordumb);
 			Logger::Get()->Error(L"Failed to Init pixelshader, see info for error",0);
 		}
 		else
@@ -226,28 +225,6 @@ void FontShader::ReleaseShader(){
 	SAFE_RELEASE(SamplerState);
 	SAFE_RELEASE(PixelColorBuffer);
 
-}
-void FontShader::PrintShaderError(ID3D10Blob* datadumb){
-	char* Errors;
-	unsigned long Errossize;
-	wstring FinalError;
-
-
-	// get erros from dumb
-	Errors = (char*)(datadumb->GetBufferPointer());
-	Errossize = datadumb->GetBufferSize();
-
-
-	// copy message to wstring //
-	FinalError = L"";
-	for(unsigned int i=0; i < Errossize; i++)
-	{
-		FinalError += Errors[i];
-	}
-
-	Logger::Get()->Info(L"Shader error datadumb :\n"+FinalError,true);
-	// release error data
-	SAFE_RELEASE(datadumb);
 }
 bool FontShader::SetShaderParams(ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, D3DXMATRIX viewmatrix, D3DXMATRIX projectionmatrix, ID3D11ShaderResourceView* texture, Float4 color){
 	HRESULT hr = S_OK;

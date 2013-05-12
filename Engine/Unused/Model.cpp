@@ -569,7 +569,7 @@ void RenderModel::RenderBuffers(ID3D11DeviceContext* devcont){
 	// Set vertex buffer stride and offset.
 	stride = sizeof(VertexType); 
 	offset = 0;
-    
+	
 	// Set the vertex buffer to active in the input assembler so it can be rendered.
 	devcont->IASetVertexBuffers(0, 1, &Vertexbuffer, &stride, &offset);
 

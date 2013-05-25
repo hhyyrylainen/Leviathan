@@ -17,7 +17,7 @@ namespace Leviathan{
 	public:
 		DLLEXPORT static void Initialize();
 		DLLEXPORT static void Release();
-		DLLEXPORT static vector<ObjectFileObject*> ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVar>> &HeaderVars);
+		DLLEXPORT static vector<shared_ptr<ObjectFileObject>> ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVar>> &HeaderVars);
 
 		DLLEXPORT static void RegisterObjectType(wstring name, int value);
 		DLLEXPORT static int GetObjectTypeID(wstring &name);
@@ -26,10 +26,10 @@ namespace Leviathan{
 
 		DLLEXPORT static void TrimLineSpaces(wstring* str);
 
-		DLLEXPORT static int WriteObjectFile(vector<ObjectFileObject*> &objects, const wstring &file, vector<shared_ptr<NamedVar>> &headervars,bool UseBinary = false);
+		DLLEXPORT static int WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const wstring &file, vector<shared_ptr<NamedVar>> &headervars,bool UseBinary = false);
 
 	private:
-		static ObjectFileObject* ReadObjectBlock(wifstream &reader, wstring firstline/*, int BaseType, int Type*/, int &Line, const wstring& sourcefile);
+		static shared_ptr<ObjectFileObject> ReadObjectBlock(wifstream &reader, wstring firstline, int &Line, const wstring& sourcefile);
 
 		// ------------------------- //
 		static vector<IntWstring*> ObjectTypes;

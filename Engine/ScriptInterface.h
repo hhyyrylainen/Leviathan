@@ -47,8 +47,7 @@ namespace Leviathan{
 			ScriptCaller* callconv = NULL, bool FullDecl = false);
 		DLLEXPORT shared_ptr<ScriptArguement> ExecuteScript(ScriptScript* script, vector<shared_ptr<ScriptVariableHolder>> vars, wstring entrypoint, vector<ScriptNamedArguement*> Parameters, 
 			ScriptCaller* callconv = NULL, bool FullDecl = false);
-		DLLEXPORT shared_ptr<ScriptArguement> ExecuteIfExistsScript(ScriptObject* obj, wstring entrypoint, vector<ScriptNamedArguement*> Parameters, 
-			ScriptCaller* callconv = NULL, bool FullDecl = false);
+		DLLEXPORT shared_ptr<ScriptArguement> ExecuteIfExistsScript(shared_ptr<ScriptObject> obj, wstring entrypoint, vector<ScriptNamedArguement*> Parameters, ScriptCaller* callconv = NULL, bool FullDecl = false);
 
 
 	private:

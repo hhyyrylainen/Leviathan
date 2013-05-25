@@ -122,7 +122,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 	// actual loading of the file //
 	vector<shared_ptr<NamedVar>> HeaderVars;
 
-	vector<ObjectFileObject*> Objects = ObjectFileProcessor::ProcessObjectFile(file, HeaderVars);
+	vector<shared_ptr<ObjectFileObject>> Objects = ObjectFileProcessor::ProcessObjectFile(file, HeaderVars);
 
 	wstring twval = L"";
 	int tval = 0;
@@ -150,7 +150,8 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 				// invalid file //
 				Logger::Get()->Error(L"AnimationManager: VerifyAnimLoaded: FileType is invalid BoneAnimation expected, got: "+twval);
 				RetVal = 7;
-				goto fileloadlabelcleanup;
+				// cleanup not required //
+				return RetVal;
 			}
 
 			continue;
@@ -202,14 +203,16 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 		// invalid file //
 		Logger::Get()->Error(L"AnimationManager: VerifyAnimLoaded: File is invalid, no name for animation found, file: "+file);
 		RetVal = 7;
-		goto fileloadlabelcleanup;
+		// cleanup not required //
+		return RetVal;
 	}
 	if(BaseModelName.size() < 1){
 		// no name found //
 		// invalid file //
 		Logger::Get()->Error(L"AnimationManager: VerifyAnimLoaded: File is invalid, no base model name for animation found, file: "+file);
 		RetVal = 7;
-		goto fileloadlabelcleanup;
+		// cleanup not required //
+		return RetVal;
 	}
 
 	// set data //
@@ -222,10 +225,11 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 		// invalid file //
 		Logger::Get()->Error(L"AnimationManager: VerifyAnimLoaded: File is invalid, didn't find exactly one BoneAnimation object, count: ", Objects.size());
 		RetVal = 7;
-		goto fileloadlabelcleanup;
+		// cleanup not required //
+		return RetVal;
 	}
 
-	ObjectFileObject* curobj = Objects[0];
+	ObjectFileObject* curobj = Objects[0].get();
 	if(curobj == NULL){
 		// maybe a bug //
 		DEBUG_BREAK;
@@ -235,7 +239,9 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 		// invalid file //
 		Logger::Get()->Error(L"AnimationManager: VerifyAnimLoaded: File is invalid, objects type is wrong, expected BoneAnimation, got: "+curobj->TName);
 		RetVal = 7;
-		goto fileloadlabelcleanup;
+		
+		// cleanup not required //
+		return RetVal;
 	}
 	// find properties first //
 	int KeyFrameCount = -1;
@@ -518,12 +524,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 	AnimationsInMemory.push_back(CurrentlyLoading);
 
 
-fileloadlabelcleanup:
-	// clean up values //
-	HeaderVars.clear();
-	SAFE_DELETE_VECTOR(Objects);
-
-
+	// cleanup not required //
 	return RetVal;
 }
 bool Leviathan::AnimationManager::IsSourceFileLoaded(const wstring &sourcefile){

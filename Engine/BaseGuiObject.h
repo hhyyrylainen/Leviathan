@@ -32,7 +32,7 @@ namespace Leviathan{
 
 		int ID;
 
-		ScriptObject* Scripting;
+		shared_ptr<ScriptObject> Scripting;
 		static ScriptCaller* StaticCall;
 
 	private:

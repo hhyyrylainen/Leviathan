@@ -6,9 +6,9 @@
 using namespace Leviathan;
 #include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_FILESYSTEM
 #include "FileSystem.h"
-#endif
+#include "TimingMonitor.h"
+
 NamedVar::NamedVar(){
 	Name = L"uninit";
 	wValue = NULL;
@@ -136,6 +136,7 @@ bool NamedVar::CompareName(const wstring& name) const{
 // ------------------------------------ //
 		// process functions //
 DLLEXPORT  int Leviathan::NamedVar::ProcessDataDumb(wstring& data, vector<shared_ptr<NamedVar>>& vec, vector<IntWstring*>* specialintvalues /*= NULL*/){
+	QUICKTIME_THISSCOPE;
 	// split to lines //
 	vector<wstring> Lines;
 

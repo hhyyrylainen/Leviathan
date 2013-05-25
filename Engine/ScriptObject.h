@@ -27,8 +27,8 @@ namespace Leviathan{
 		wstring TName;
 		int Type;
 
-		vector<wstring*> Prefixes;
-		vector<ScriptList*> Contents;
+		vector<shared_ptr<wstring>> Prefixes;
+		vector<shared_ptr<ScriptList>> Contents;
 
 
 		//vector<ScriptScript*> Scripts;

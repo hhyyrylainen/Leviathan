@@ -19,11 +19,7 @@ Leviathan::ObjectLoader::~ObjectLoader(){
 }
 // ------------------------------------ //
 DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(const wstring &file, bool finishnow /*= true*/){
-#ifdef _DEBUG
-	wstring timername = L"Objectloader: loading file "+file;
-	TimingMonitor::StartTiming(timername);
-#endif // _DEBUG
-
+	QUICKTIME_THISSCOPE;
 
 	vector<GameObject::Model*> result = vector<GameObject::Model*>();
 	// try to locate data file //
@@ -38,7 +34,7 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 
 	// use ObjectFileParser class to get structures from the file //
 	vector<shared_ptr<NamedVar>> HeaderVars;
-	vector<ObjectFileObject*> structure =  ObjectFileProcessor::ProcessObjectFile(path, HeaderVars);
+	vector<shared_ptr<ObjectFileObject>> structure =  ObjectFileProcessor::ProcessObjectFile(path, HeaderVars);
 
 	if(structure.size() == 0){
 
@@ -270,9 +266,6 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 			Logger::Get()->Error(L"ObjectLoader: LoadModelFile: failed to save the file on top of the old file");
 		}
 	}
-#ifdef _DEBUG
-	TimingMonitor::StopTiming(timername, true);
-#endif // _DEBUG
 
 	//// cleanup header variables //
 	//SAFE_DELETE_VECTOR(HeaderVars);
@@ -294,7 +287,7 @@ DLLEXPORT TextureDefinition* Leviathan::ObjectLoader::LoadTextureDefinitionFile(
 
 	// use ObjectFileParser class to get structures from the file //
 	vector<shared_ptr<NamedVar>> HeaderVars;
-	vector<ObjectFileObject*> structure =  ObjectFileProcessor::ProcessObjectFile(path, HeaderVars);
+	vector<shared_ptr<ObjectFileObject>> structure =  ObjectFileProcessor::ProcessObjectFile(path, HeaderVars);
 
 	int headvar_int = 0;
 	wstring headvar_str = L"";

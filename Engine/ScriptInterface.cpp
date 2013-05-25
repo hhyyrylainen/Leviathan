@@ -122,7 +122,7 @@ shared_ptr<ScriptArguement> ScriptInterface::ExecuteScript(ScriptScript* script,
 	return ScriptRunner->RunScript(script, callobjs, vars, Parameters, true, entrypoint, true, FullDecl);
 }
 
-shared_ptr<ScriptArguement> ScriptInterface::ExecuteIfExistsScript(ScriptObject* obj, wstring entrypoint, vector<ScriptNamedArguement*> Parameters, ScriptCaller* callconv, bool FullDecl){
+shared_ptr<ScriptArguement> ScriptInterface::ExecuteIfExistsScript(shared_ptr<ScriptObject> obj, wstring entrypoint, vector<ScriptNamedArguement*> Parameters, ScriptCaller* callconv, bool FullDecl){
 	vector<ScriptCaller*> callobjs;
 	if(callconv == NULL){
 		callconv = this->GlobalCaller;

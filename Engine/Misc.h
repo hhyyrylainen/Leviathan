@@ -91,6 +91,20 @@ namespace Leviathan{
 			return temp;
 		}
 		template<typename T>
+		DLLEXPORT static T VectorValuesToSingleSmartPTR(vector<shared_ptr<T>> &values, const T& separator, bool UseSeparator = false){
+			if(values.size() == 0)
+				return T();
+			T temp(*(values[0].get()));
+
+			for(unsigned int i = 1; i < values.size(); i++){
+				if(UseSeparator)
+					temp += separator;
+				temp += *values[i].get();
+			}
+
+			return temp;
+		}
+		template<typename T>
 		DLLEXPORT static T VectorValuesToSingle(vector<T> &values, const T& separator, bool UseSeparator = false){
 			//bool IsFirst = true;
 			if(values.size() == 0)
@@ -118,6 +132,8 @@ namespace Leviathan{
 		DLLEXPORT static bool WstringStartsWith(const wstring& data, const wstring& lookfor);
 		DLLEXPORT static wstring WstringRemoveFirstWords(wstring& data, int amount);
 		DLLEXPORT static wstring WstringStitchTogether(vector<wstring*> data, wstring separator);
+		DLLEXPORT static wstring WstringStitchTogether(vector<shared_ptr<wstring>> data, wstring separator);
+		DLLEXPORT static void WstringRemovePreceedingTrailingSpaces(wstring& str);
 		// returns 0 for equal 1 for str is before and -1 for tocompare to be before //
 		DLLEXPORT static int IsWstringBeforeInAlphabet(const wstring& str, const wstring& tocompare);
 			// type checks //

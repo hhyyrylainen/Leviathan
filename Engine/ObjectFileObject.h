@@ -20,7 +20,7 @@ namespace Leviathan{
 		DLLEXPORT ObjectFileObject::~ObjectFileObject();
 
 		DLLEXPORT ScriptObject* CreateScriptObjectFromThis(int BaseType, int Overridetype = -1);
-		DLLEXPORT ScriptObject* CreateScriptObjectAndDeleteThis(int BaseType, int Overridetype = -1);
+		DLLEXPORT ScriptObject* CreateScriptObjectAndReleaseThis(int BaseType, int Overridetype = -1);
 
 		//DLLEXPORT bool ContainsScript(wstring name); doesn't work anymore
 
@@ -29,7 +29,7 @@ namespace Leviathan{
 		wstring TName;
 		int Type;
 
-		vector<wstring*> Prefixes;
+		vector<shared_ptr<wstring>> Prefixes;
 		vector<ObjectFileList*> Contents;
 		vector<ObjectFileTextBlock*> TextBlocks;
 

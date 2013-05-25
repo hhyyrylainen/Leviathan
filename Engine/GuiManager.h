@@ -92,7 +92,6 @@ namespace Leviathan {
 		}
 		~GuiCollection(){
 			// release script //
-			SAFE_DELETE(Scripting);
 
 			// possibly release children here //
 
@@ -108,7 +107,7 @@ namespace Leviathan {
 		Key Toggle;
 		vector<BaseGuiObject*> children;
 
-		ScriptObject* Scripting;
+		shared_ptr<ScriptObject> Scripting;
 
 	};
 	struct GuiEventListener{

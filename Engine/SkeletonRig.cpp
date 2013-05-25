@@ -352,10 +352,10 @@ DLLEXPORT bool Leviathan::GameObject::SkeletonRig::StartPlayingAnimation(shared_
 	// verify if can hook into animation //
 
 
-	if(false){
-		// cannot get into animation //
-		return false;
-	}
+	//if(false){
+	//	// cannot get into animation //
+	//	return false;
+	//}
 
 
 

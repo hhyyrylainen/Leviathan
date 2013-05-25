@@ -18,15 +18,10 @@ ObjectFileObject::ObjectFileObject(wstring name, int type, wstring typenam){
 
 ObjectFileObject::~ObjectFileObject(){
 	// release some stuff //
-	while(Prefixes.size() != 0){
-		SAFE_DELETE(Prefixes[0]);
-		Prefixes.erase(Prefixes.begin());
-	}
-	while(Contents.size() != 0){
-		SAFE_DELETE(Contents[0]);
-		Contents.erase(Contents.begin());
-	}
 
+	Prefixes.clear();
+
+	SAFE_DELETE_VECTOR(Contents);
 	SAFE_DELETE_VECTOR(TextBlocks);
 }
 // ------------------------------------ //
@@ -53,24 +48,24 @@ ScriptObject* ObjectFileObject::CreateScriptObjectFromThis(int BaseType, int Ove
 
 
 
-	vector<wstring*> prfx;
-	vector<ScriptList*> cnts;
+	vector<shared_ptr<wstring>> prfx;
+	vector<shared_ptr<ScriptList>> cnts;
 
 	for(unsigned int i = 0; i < Prefixes.size(); i++){
-		prfx.push_back(new wstring(*Prefixes[i]));
+		prfx.push_back(shared_ptr<wstring>(new wstring(*Prefixes[i])));
 	}
 	for(unsigned int i = 0; i < Contents.size(); i++){
-		cnts.push_back(Contents[i]->AllocateNewListFromData());
+		cnts.push_back(shared_ptr<ScriptList>(Contents[i]->AllocateNewListFromData()));
 	}
 
 	obj->Prefixes = prfx;
 	obj->Contents = cnts;
 	// reset smart pointer //
 	ScriptObject* tempptr = obj.get();
-	obj.reset();
+	obj.release();
 	return tempptr;
 }
-ScriptObject* ObjectFileObject::CreateScriptObjectAndDeleteThis(int BaseType, int Overridetype){
+ScriptObject* ObjectFileObject::CreateScriptObjectAndReleaseThis(int BaseType, int Overridetype){
 	ScriptObject* obj;
 	if(Overridetype != -1){
 		obj = new ScriptObject(Name, BaseType, Overridetype, TName);
@@ -85,21 +80,16 @@ ScriptObject* ObjectFileObject::CreateScriptObjectAndDeleteThis(int BaseType, in
 	// reset script smart pointer so that it doesn't accidentally get deleted //
 	Script.reset();
 
-	vector<ScriptList*> cnts;
+	vector<shared_ptr<ScriptList>> cnts;
 
 	for(unsigned int i = 0; i < Contents.size(); i++){
-		cnts.push_back(Contents[i]->AllocateNewListFromData());
+		cnts.push_back(shared_ptr<ScriptList>(Contents[i]->AllocateNewListFromData()));
+		SAFE_DELETE(Contents[i]);
 	}
-
 	obj->Prefixes = Prefixes;
-	Prefixes.clear();
 	obj->Contents = cnts;
-
-	// self releasing //
-	this->~ObjectFileObject();
-	
-	delete this;
-	//this = NULL;
+	// don't forget to let go of memory //
+	Prefixes.clear();
 
 	return obj;
 }

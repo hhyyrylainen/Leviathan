@@ -5,10 +5,10 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-ObjectFileList::ObjectFileList(){
+ObjectFileList::ObjectFileList() : Lines(){
 	Variables = new NamedVars();
 }
-ObjectFileList::ObjectFileList(wstring name){
+ObjectFileList::ObjectFileList(wstring name) : Lines(){
 	Name = name;
 	Variables = new NamedVars();
 }
@@ -28,7 +28,8 @@ ScriptList* ObjectFileList::AllocateNewListFromData(){
 
 	// returning smart pointer //
 	ScriptList* tempptr = obj.get();
-	obj.reset();
+	// don't accidently delete here (don't use .reset()) //
+	obj.release();
 	return tempptr;
 }
 // ------------------------------------ //

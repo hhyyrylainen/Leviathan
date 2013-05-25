@@ -13,8 +13,7 @@ BaseGuiObject::BaseGuiObject(){
 	StaticCall = NULL;
 }
 BaseGuiObject::~BaseGuiObject(){
-	SAFE_DELETE(StaticCall);
-	SAFE_DELETE(Scripting);
+	//SAFE_DELETE(StaticCall);
 }
 
 ScriptCaller* BaseGuiObject::StaticCall = NULL;

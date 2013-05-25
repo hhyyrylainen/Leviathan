@@ -60,13 +60,10 @@ TextLabel::TextLabel(int id){
 	AreAbsolutePos = false;
 }
 TextLabel::~TextLabel(){
-	//delete SpesData;
-	SAFE_DELETE(Scripting);
+	// release rendering stuff //
 	if(RBridge.get() != NULL)
 		RBridge->WantsToClose = true;
 	RBridge.reset();
-
-	return;
 }
 //ScriptCaller* TextLabel::StaticCall = NULL;
 // ------------------------------------ //

@@ -8,7 +8,7 @@ using namespace Leviathan;
 ScriptObject::ScriptObject(){
 	Script = NULL;
 }
-ScriptObject::ScriptObject(wstring name, int basetype, int type, wstring typenam){
+ScriptObject::ScriptObject(wstring name, int basetype, int type, wstring typenam) : Contents(), Prefixes(){
 	BaseType = basetype;
 	Name =  wstring(name);
 	TName =  wstring(typenam);
@@ -18,14 +18,8 @@ ScriptObject::ScriptObject(wstring name, int basetype, int type, wstring typenam
 
 ScriptObject::~ScriptObject(){
 	// release some stuff //
-	while(Prefixes.size() != 0){
-		SAFE_DELETE(Prefixes[0]);
-		Prefixes.erase(Prefixes.begin());
-	}
-	while(Contents.size() != 0){
-		SAFE_DELETE(Contents[0]);
-		Contents.erase(Contents.begin());
-	}
+	Prefixes.clear();
+	Contents.clear();
 }
 // ------------------------------------ //
 //bool ScriptObject::ContainsScript(wstring name){

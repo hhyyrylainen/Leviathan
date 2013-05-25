@@ -394,6 +394,28 @@ wstring Misc::WstringStitchTogether(vector<wstring*> data, wstring separator){
 	return ret;
 }
 
+wstring Misc::WstringStitchTogether(vector<shared_ptr<wstring>> data, wstring separator){
+	wstring ret = L"";
+	bool first = true;
+	// reserve space //
+	int totalcharacters = 0;
+	for(unsigned int i = 0; i < data.size(); i++){
+		totalcharacters += data[i]->length();
+	}
+	totalcharacters += separator.length()*data.size();
+
+	ret.reserve(totalcharacters);
+
+	for(unsigned int i = 0; i < data.size(); i++){
+		if(!first)
+			ret += separator;
+		ret += *data[i];
+		first = false;
+	}
+
+	return ret;
+}
+
 	// type checks //
 int Misc::WstringTypeCheck(const wstring& data, int typecheckfor){
 	switch(typecheckfor){
@@ -573,4 +595,60 @@ DLLEXPORT bool Leviathan::Misc::IsCharacterNumber(wchar_t chara){
 	}
 	return false;
 }
+
+DLLEXPORT void Leviathan::Misc::WstringRemovePreceedingTrailingSpaces(wstring& str){
+	Int2 CutPositions(-1,-1);
+
+	// search the right part of the string //
+	for(unsigned int i = 0; i < str.size(); i++){
+		if(str[i] != L' ' && str[i] != L'	'){
+			if(CutPositions[0] == -1){
+				// beginning ended //
+				CutPositions.Val[0] = i;
+			} else {
+				// set last pos as this //
+
+			}
+			continue;
+		}
+		if(CutPositions[0] == -1){
+			// still haven't found a character //
+			continue;
+		}
+		// check is this last character //
+		unsigned int a = str.size()-1;
+		bool found = false;
+		for(a; a > i; a--){
+			if(str[a] != L' ' && str[a] != L'	'){
+				// there is still valid characters //
+				found = true;
+				break;
+			}
+		}
+		if(found){
+			// skip to the found non-space character //
+			i = a;
+			continue;
+		}
+		// end found //
+		CutPositions.Val[1] = i;
+		break;
+	}
+
+	if(CutPositions.Val[0] == -1){
+		// nothing in the string //
+		str.clear();
+		return;
+	}
+	if(CutPositions.Val[1] == -1){
+		// no need to cut from the end //
+		CutPositions.Val[1] = str.length()-1;
+	}
+
+	// set the wstring as it's sub string //
+	str = str.substr((UINT)CutPositions[0], (UINT)(CutPositions[1]-CutPositions[0]+1));
+
+	return;
+}
+
 std::wstring Leviathan::Misc::ValidNumberCharacters = L"1234567890-+.";

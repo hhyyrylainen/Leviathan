@@ -36,8 +36,8 @@ int ObjectFileProcessor::GetObjectTypeID(wstring &name){
 }
 
 // ------------------------------------ //
-DLLEXPORT  vector<ObjectFileObject*> Leviathan::ObjectFileProcessor::ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVar>> &HeaderVars){
-	vector<ObjectFileObject*> returned;
+DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVar>> &HeaderVars){
+	vector<shared_ptr<ObjectFileObject>> returned;
 
 	wifstream reader;
 	reader.open(file);
@@ -60,9 +60,8 @@ DLLEXPORT  vector<ObjectFileObject*> Leviathan::ObjectFileProcessor::ProcessObje
 
 	int Line = 0;
 
-	wstring header = L"";
 	// last Read character needs to be added to header //
-	header += Read;
+	wstring header(&Read, 1);
 
 	bool first = true;
 
@@ -81,59 +80,51 @@ DLLEXPORT  vector<ObjectFileObject*> Leviathan::ObjectFileProcessor::ProcessObje
 
 	NamedVar::ProcessDataDumb(header, HeaderVars);
 
-
 	readline = L"!";
 
 	// read objects //
 	while((reader.good()) && (!Misc::WstringStartsWith(readline, L"-!-"))){
 		reader.getline(Buff, 400);
 		Line++;
-		readline = Buff;
+		wstring readline(Buff);
+		
+		Misc::WstringRemovePreceedingTrailingSpaces(readline);
 
 		// skip empty //
-		for(unsigned int i = 0; i < readline.size(); i++){
-			if(readline[i] == L' '){
-				readline.erase(readline.begin());
-				i--;
-				continue;
-			} else {
-				break;
-			}
-		}
+
 
 		if(readline.size() < 2) // can't really be anything
 			continue;
 
 		// test for possible objects/structs and stuff //
-		wstring deftype = L"";
+		wstring deftype;
 		Misc::WstringGetFirstWord(readline, deftype);
 
 		if(deftype == L"o"){
 			// there's a object //
-			ObjectFileObject* objs = ReadObjectBlock(reader, readline, Line, file);
-			if(objs != NULL){
-				returned.push_back(objs);
+			shared_ptr<ObjectFileObject> objs = ReadObjectBlock(reader, readline, Line, file);
+			if(objs.get() != NULL){
 
+				returned.push_back(objs);
 			} else {
-				Logger::Get()->Error(L"FileLoader: ProcessObjectFile: ReadObjectBlock returned null object", 404, true);
+				Logger::Get()->Error(L"FileLoader: ProcessObjectFile: ReadObjectBlock returned NULL object", true);
 			}
 			continue;
 		}
 		if(deftype == L"s"){
 			// script related //
 
-			wstring second = L"";
+			wstring second;
 			Misc::WstringGetSecondWord(readline, second);
 
 			if(second == L"run:"){
 				// run a script, like right now! //
-				wstring script = Misc::WstringRemoveFirstWords(readline, 2);
+				wstring scriptinstructions = Misc::WstringRemoveFirstWords(readline, 2);
 
-				// TODO: CALL script executor //
 				unique_ptr<ScriptScript> inlscript(new ScriptScript());
-
+				// set variables //
 				inlscript->Name = L"inl: "+file+L" line: "+Convert::IntToWstring(Line);
-				inlscript->Instructions = L"void Do(int Line){\n"+script+L"\nreturn;\n}";
+				inlscript->Instructions = L"void Do(int Line){\n"+scriptinstructions+L"\nreturn;\n}";
 				inlscript->Source = L"inline on file: "+file+L" on line: "+Convert::IntToWstring(Line);
 
 				shared_ptr<ScriptVariableHolder> varhold(new ScriptVariableHolder());
@@ -149,35 +140,21 @@ DLLEXPORT  vector<ObjectFileObject*> Leviathan::ObjectFileProcessor::ProcessObje
 
 
 				SAFE_DELETE_VECTOR(Args);
-
+				// delete allocated memory //
 				vars.clear();
 				varhold.reset();
-				// make sure not to cause memory leaks //
-
-				//delete(varhold); //using smart pointers, just clear array //
-				//while(varhold->Vars.size() != 0){ // this is released by varholder //
-				//	SAFE_DELETE(varhold->Vars[0]);
-				//	varhold->Vars.erase(varhold->Vars.begin());
-				//}
-				// clear //
 
 				continue;
 			}
 
-
 			continue;
 		}
-
-
 	}
 
-
-
 	reader.close();
-
 	return returned;
 }
-ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstring firstline/*, int BaseType, int Type*/, int &Line, const wstring& sourcefile){
+shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstring firstline, int &Line, const wstring& sourcefile){
 	// monitoring //
 	QUICKTIME_THISSCOPE;
 
@@ -188,25 +165,26 @@ ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstrin
 	vector<wstring> lines;
 	Misc::CutWstring(firstline, L" ", lines);
 
+	// used for error reporting //
+	int StartLine = Line;
+
 	wstring Name = L"ERROR-NAME";
-	vector<wstring*> Prefixes;
+	vector<shared_ptr<wstring>> Prefixes;
 
 	wstring TypeN = L"ETYPE";
-
-	// remove first from lines //
-	//lines.erase(lines.begin()); // don't actually erase it //
 
 	for(unsigned int i = 0; i < lines.size(); i++){
 		if(lines[i].size() == 0){
 
-			Logger::Get()->Info(L"FileLoader: ReadObjectBlock: empty object prefix");
+			Logger::Get()->Info(L"FileLoader: ReadObjectBlock: empty object prefix, prefixes/line: "+firstline);
 			continue;
 		}
 		if(lines[i].length() == 1){
 			// check is it o //
-			if(lines[i] == L"o")
+			if(lines[i] == L"o"){
 				// skip it //
 				continue;
+			}
 		}
 		if(lines[i][0] == L'{'){
 			break;
@@ -228,21 +206,17 @@ ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstrin
 		}
 
 		// just a prefix //
-		Prefixes.push_back(new wstring(lines[i]));
+		Prefixes.push_back(shared_ptr<wstring>(new wstring(lines[i])));
 	}
 	if(Name == L"ERROR-NAME"){
 
-		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: object doesn't have a name! prefixes "+ Misc::WstringStitchTogether(Prefixes, L" , "), 404, true);
+		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: object doesn't have a name! prefixes "+ Misc::WstringStitchTogether(Prefixes, L" , ")
+			+L" line ", Line, true);
 		return NULL;
 	}
 
 	obj = shared_ptr<ObjectFileObject>(new ObjectFileObject(Name, GetObjectTypeID(TypeN), TypeN));
 	obj->Prefixes = Prefixes;
-#ifdef _DEBUG
-	// no more spam //
-	//Logger::Get()->Info(L"DEBUG: Loaded ObjectFileObject from file: "+Name+L" type: "+Convert::IntToWstring(obj->Type)+L" "+TypeN, false);
-
-#endif
 
 	// load it's contents //
 	wchar_t Buff[400];
@@ -255,7 +229,6 @@ ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstrin
 	int Something = -1;
 
 	wstring SpesLines = L"";
-	//wstring CodeLines = L"";
 
 	int Handleindex = 0;
 
@@ -269,15 +242,8 @@ ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstrin
 				continue;
 
 			// skip empty //
-			for(unsigned int i = 0; i < currentline.size(); i++){
-				if(currentline[i] == L' '){
-					currentline.erase(currentline.begin());
-					i--;
-					continue;
-				} else {
-					break;
-				}
-			}
+			Misc::WstringRemovePreceedingTrailingSpaces(currentline);
+
 			// skip comment lines //
 			if(Misc::WstringStartsWith(currentline, L"//"))
 				continue;
@@ -700,8 +666,7 @@ ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstrin
 			continue;
 		}
 
-		wstring start = L"";
-		Misc::WstringGetFirstWord(currentline, start);
+
 
 		if(Misc::WstringStartsWith(currentline, L"}")){
 			// object ended //
@@ -710,7 +675,10 @@ ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstrin
 			Something = 0;
 			Level--;
 			continue;
-		}	
+		}
+
+		wstring start = L"";
+		Misc::WstringGetFirstWord(currentline, start);
 
 		if(start == L"l"){
 			// data list //
@@ -774,20 +742,18 @@ ObjectFileObject* ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstrin
 				continue;
 			}
 
-			Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: invalid script block no type "+type, 005 , true);
+			Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: invalid script block no type "+type, true);
 
 			continue;
 		}
 	}
 
 	if(Level != -1){
-		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: no matching bracket found in o "+Name, 404, true);
+		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: no matching bracket found in o "+Name+L" line ", StartLine, true);
 	}
 
 	// returning smart pointer //
-	ObjectFileObject* tempptr = obj.get();
-	obj.reset();
-	return tempptr;
+	return obj;
 }
 // ------------------------------------ //
 
@@ -812,7 +778,7 @@ DLLEXPORT  void Leviathan::ObjectFileProcessor::TrimLineSpaces(wstring* str){
 	}
 }
 
-DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<ObjectFileObject*> &objects, const wstring &file, vector<shared_ptr<NamedVar>> &headervars,bool UseBinary /*= false*/){
+DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const wstring &file, vector<shared_ptr<NamedVar>> &headervars,bool UseBinary /*= false*/){
 	// open file for writing //
 	wofstream writer;
 	writer.open(file);
@@ -829,11 +795,11 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<ObjectFile
 
 	for(unsigned int i = 0; i < objects.size(); i++){
 		// put object data //
-		ObjectFileObject* temp = objects[i];
+		ObjectFileObject* temp = objects[i].get();
 
 		// starting line //
 		if(temp->Prefixes.size() != 0){
-			writer << L"    o " << temp->TName << L" " << Misc::VectorValuesToSingle<wstring>(temp->Prefixes, L" ", true) << L" \"" 
+			writer << L"    o " << temp->TName << L" " << Misc::VectorValuesToSingleSmartPTR<wstring>(temp->Prefixes, L" ", true) << L" \"" 
 				<< temp->Name << L"\" {" << endl;
 		} else {
 			writer << L"    o " << temp->TName << L" \"" << temp->Name << L"\" {" << endl;

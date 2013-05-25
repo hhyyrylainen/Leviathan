@@ -55,9 +55,10 @@ void GuiManager::Release(){
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		if(Objects[i]->HigherLevel == true){
 			((RenderableGuiObject*)Objects[i])->Release(graph);
+			delete Objects[i];
+		} else {
+			SAFE_DELETE(Objects[i]);
 		}
-		SAFE_DELETE(Objects[i]);
-
 
 
 		Objects.erase(Objects.begin()+i);
@@ -239,7 +240,7 @@ BaseGuiObject* GuiManager::GetObject(unsigned int index){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 	vector<shared_ptr<NamedVar>> headerdata;
-	vector<ObjectFileObject*> data = ObjectFileProcessor::ProcessObjectFile(file, headerdata);
+	vector<shared_ptr<ObjectFileObject>> data = ObjectFileProcessor::ProcessObjectFile(file, headerdata);
 	vector<Int2> FakeIDRealID;
 
 	vector<BaseGuiObject*> TempOs;
@@ -247,10 +248,10 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 
 
 	for(unsigned int i = 0; i < data.size(); i++){
+		// legacy code //
 		if(data[i]->Name == L"Body"){ // this doesn't get produced anymore //
 			// not required for anything //
 			// delete current //
-			SAFE_DELETE(data[i]);
 			data.erase(data.begin()+i);
 			i--;
 			continue;
@@ -295,7 +296,7 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 			GuiCollection* cobj = new GuiCollection(data[i]->Name, createdid, Visible != 0, Toggle, Strict != 0, Enabled != 0);
 
 			CreateCollection(cobj);
-			cobj->Scripting = data[i]->CreateScriptObjectAndDeleteThis(SCRIPT_CALLCONVENTION_GUI_OPEN, GOBJECT_TYPE_TEXTLABEL);
+			cobj->Scripting = shared_ptr<ScriptObject>(data[i]->CreateScriptObjectAndReleaseThis(SCRIPT_CALLCONVENTION_GUI_OPEN, GOBJECT_TYPE_TEXTLABEL));
 			// this function should have deleted everything related to that object, so it should be safe to just erase it //
 			data.erase(data.begin()+i);
 			i--;
@@ -423,21 +424,17 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 			// init with correct values //
 			//curlabel->Init(x,y,areabsolute,width, height, text, StartColor, EndColor, TextColor, TextSize, AutoAdjust != 0, Font, ListenOn);
 			curlabel->Init(x,y,width, height, text, StartColor, EndColor, TextColor, TextSize, AutoAdjust != 0, Font, ListenOn);
-			curlabel->Scripting = data[i]->CreateScriptObjectAndDeleteThis(SCRIPT_CALLCONVENTION_GUI_OPEN, GOBJECT_TYPE_TEXTLABEL);
+			curlabel->Scripting = shared_ptr<ScriptObject>(data[i]->CreateScriptObjectAndReleaseThis(SCRIPT_CALLCONVENTION_GUI_OPEN, 
+				GOBJECT_TYPE_TEXTLABEL));
 			// this function should have deleted everything related to that object, so it should be safe to just erase it //
 			data.erase(data.begin()+i);
 			i--;
 
-			// delete current //
-			//SAFE_DELETE(data[i]);
-			//data.erase(data.begin()+i);
-			//i--;
 			continue;
 		}
 
 		Logger::Get()->Error(L"GuiManager: ParseGuiFileResult: Unrecognized type ! "+data[i]->TName);
 		// delete current //
-		SAFE_DELETE(data[i]);
 		data.erase(data.begin()+i);
 		i--;
 	}
@@ -471,8 +468,6 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 			}
 		}
 	}
-
-	//SAFE_DELETE_VECTOR(headerdata);
 
 	return;
 }

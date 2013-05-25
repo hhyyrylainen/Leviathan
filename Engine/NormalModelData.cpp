@@ -210,7 +210,7 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadRenderModel(wstring* 
 DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* file){
 	vector<shared_ptr<NamedVar>> HeadVars;
 
-	vector<ObjectFileObject*> FileStructure = ObjectFileProcessor::ProcessObjectFile(*file, HeadVars);
+	vector<shared_ptr<ObjectFileObject>> FileStructure = ObjectFileProcessor::ProcessObjectFile(*file, HeadVars);
 
 	int head_int = 0;
 	wstring head_str = L"";
@@ -884,9 +884,6 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 		// invalid object //
 		Logger::Get()->Error(L"NormalModelData: load levmo: file contains unknown structure type: "+FileStructure[i]->TName);
 	}
-	// cleanup //
-	SAFE_DELETE_VECTOR(FileStructure);
-	//SAFE_DELETE_VECTOR(HeadVars);
 
 	if(pRenderModel.size() == 0){
 		// failed //

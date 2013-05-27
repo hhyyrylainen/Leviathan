@@ -161,8 +161,8 @@ void Leviathan::FileSystem::SetTextureFolder(wstring& folder){
 	TextureFolder = folder;
 }
 // ------------------------------------ //
-		  // file handling //
-DLLEXPORT  int Leviathan::FileSystem::LoadDataDumb(wstring file, vector<shared_ptr<NamedVar>>& vec){
+// file handling //
+DLLEXPORT int Leviathan::FileSystem::LoadDataDumb(const wstring &file, vector<shared_ptr<NamedVar>>& vec){
 	wstring filecontents = L"";
 	wstring construct = L"";
 	int Lenght = 0;
@@ -171,7 +171,7 @@ DLLEXPORT  int Leviathan::FileSystem::LoadDataDumb(wstring file, vector<shared_p
 	stream.open(file, ios::in);
 	if(!stream.good()){
 		// no file ! //
-		Logger::Get()->Info(L"Tried to LoadDataDumb with invalid file, file: "+file, false);
+		Logger::Get()->Error(L"FileSystem: LoadDataDumb: Failed to read file: "+file, false);
 		return 404;
 	}
 	// count length //
@@ -180,13 +180,12 @@ DLLEXPORT  int Leviathan::FileSystem::LoadDataDumb(wstring file, vector<shared_p
 	stream.seekg(0, ios::beg);
 	if(Lenght == 0){
 		// empty file ! //
-		Logger::Get()->Info(L"Tried to LoadDataDumb with empty file, file: "+file, false);
-		return 400;
+		Logger::Get()->Warning(L"FileSystem: LoadDataDumb: Empty file: "+file, false);
+		return 0;
 	}
 	wchar_t* Buff = new wchar_t[Lenght+1];
 	// set null terminator, just in case
 	Buff[Lenght] = '\0';
-
 
 	stream.read(Buff, Lenght);
 
@@ -195,10 +194,11 @@ DLLEXPORT  int Leviathan::FileSystem::LoadDataDumb(wstring file, vector<shared_p
 	filecontents = Buff;
 
 	// create values //
-	if(NamedVar::ProcessDataDumb(filecontents, vec) != 0){
+	int retvalue = NamedVar::ProcessDataDump(filecontents, vec);
+	if(retvalue != 0){
 		// error happened //
-		Logger::Get()->Info(L"Tried to LoadDataDumb call to ProcessDataDumb failed, error: 005", true);
-		return 005;
+		Logger::Get()->Error(L"FileSystem: LoadDataDumb: call to ProcessDataDumb failed", retvalue, true);
+		return 5;
 	}
 	return 0;
 }

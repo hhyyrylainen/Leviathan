@@ -72,7 +72,7 @@ namespace Leviathan{
 		DLLEXPORT static void SetTextureFolder( wstring& folder );
 
 		// file handling //
-		DLLEXPORT static int LoadDataDumb(wstring file, vector<shared_ptr<NamedVar>>& vec);
+		DLLEXPORT static int LoadDataDumb(const wstring &file, vector<shared_ptr<NamedVar>>& vec);
 		DLLEXPORT static wstring GetExtension(const wstring &path);
 		DLLEXPORT static wstring ChangeExtension(const wstring& path, wstring newext);
 

@@ -12,6 +12,8 @@ namespace Leviathan{
 #define NAMEDVAR_RETURNVALUE_IS_INT			1
 #define NAMEDVAR_RETURNVALUE_IS_WSTRING		0
 
+	class NamedVars;
+
 	class NamedVar{
 	public:
 		DLLEXPORT NamedVar();
@@ -37,7 +39,7 @@ namespace Leviathan{
 		// ------------------------------------ //
 		DLLEXPORT wstring ToText(int WhichSeparator = 0) const;
 		// process functions //
-		DLLEXPORT static int ProcessDataDumb(const wstring &data, vector<shared_ptr<NamedVar>> &vec, vector<IntWstring*>* specialintvalues = NULL);
+		DLLEXPORT static int ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVar>> &vec, vector<IntWstring*>* specialintvalues = NULL);
 		// operators //
 		DLLEXPORT NamedVar& operator=(const NamedVar &other);
 
@@ -62,6 +64,8 @@ namespace Leviathan{
 
 		wstring Name;
 
+		// friends //
+		friend NamedVars;
 	};
 
 
@@ -73,35 +77,41 @@ namespace Leviathan{
 		DLLEXPORT NamedVars(const wstring &datadump);
 		DLLEXPORT ~NamedVars();
 		// ------------------------------------ //
-		DLLEXPORT void SetValue(const wstring &name, int val);
-		DLLEXPORT void SetValue(const wstring &name, wstring& val);
+		DLLEXPORT bool SetValue(const wstring &name, int val);
+		DLLEXPORT bool SetValue(const wstring &name, wstring& val);
+		DLLEXPORT bool SetValue(NamedVar &nameandvalues);
+
 		DLLEXPORT int GetValue(const wstring &name, int& val1, wstring& val2) const;
 		DLLEXPORT int GetValue(const wstring &name, int& val1) const;
+		DLLEXPORT int GetValue(const wstring &name, wstring& val) const;
 
+		// ------------------------------------ //
 		DLLEXPORT bool IsIntValue(const wstring &name) const;
-		DLLEXPORT bool IsIntValue(unsigned int index);
+		DLLEXPORT bool IsIntValue(unsigned int index) const;
 
-		DLLEXPORT wstring& GetName(unsigned int index) const;
+		DLLEXPORT wstring& GetName(unsigned int index);
+		DLLEXPORT bool GetName(unsigned int index, wstring &name) const;
+
 		DLLEXPORT void SetName(unsigned int index, const wstring &name);
 		DLLEXPORT void SetName(const wstring &oldname, const wstring &name);
 		DLLEXPORT bool CompareName(unsigned int index, const wstring &name) const;
-		DLLEXPORT bool CompareName(const wstring &name1, const wstring &name2) const;
-
-		DLLEXPORT void AddVar(const wstring &name, int val, const wstring &wval, bool isint);
-		DLLEXPORT void Remove(unsigned int index);
 
 		// ------------------------------------ //
-
+		DLLEXPORT void AddVar(const wstring &name, int val, const wstring &wval, bool isint);
+		DLLEXPORT void AddVar(shared_ptr<NamedVar> values);
+		DLLEXPORT void Remove(unsigned int index);
+		DLLEXPORT void Remove(const wstring &name);
+		// ------------------------------------ //
 		DLLEXPORT int LoadVarsFromFile(const wstring &file);
 
 		DLLEXPORT vector<shared_ptr<NamedVar>>* GetVec();
-		DLLEXPORT void SetVec(vector<shared_ptr<NamedVar>>& vec);
+		DLLEXPORT void SetVec(vector<shared_ptr<NamedVar>> &vec);
 
-		// ------- //
+		// ------------------------------------ //
 		DLLEXPORT int Find(const wstring &name) const;
 
 	private:
-		vector<shared_ptr<NamedVar>> variables;
+		vector<shared_ptr<NamedVar>> Variables;
 	};
 
 }

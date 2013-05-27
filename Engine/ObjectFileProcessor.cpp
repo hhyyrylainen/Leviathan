@@ -78,7 +78,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 	}
 	
 
-	NamedVar::ProcessDataDumb(header, HeaderVars);
+	NamedVar::ProcessDataDump(header, HeaderVars);
 
 	readline = L"!";
 
@@ -267,7 +267,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wif
 						if(SpesLines.size() > 0){
 							vector<shared_ptr<NamedVar>> HeaderVars;
 
-							NamedVar::ProcessDataDumb(SpesLines, HeaderVars, &RegisteredValues);
+							NamedVar::ProcessDataDump(SpesLines, HeaderVars, &RegisteredValues);
 
 							vector<shared_ptr<NamedVar>>* currobjs = obj->Contents[Handleindex]->Variables->GetVec();
 							for(unsigned int i = 0; i < HeaderVars.size(); i++){

@@ -9,14 +9,14 @@ using namespace Leviathan;
 #include "FileSystem.h"
 #include "TimingMonitor.h"
 
-NamedVar::NamedVar(){
-	Name = L"uninit";
-	wValue = NULL;
-	//wValue = L"";
+Leviathan::NamedVar::NamedVar() : Name(L""), wValue(NULL){
+
 	iValue = -1;
-	Isint = TRUE;
+	Isint = true;
 }
-NamedVar::NamedVar(const NamedVar &other){
+
+Leviathan::NamedVar::NamedVar(const NamedVar &other){
+
 	Name = other.Name;
 	Isint = other.Isint;
 	if(Isint){
@@ -27,25 +27,23 @@ NamedVar::NamedVar(const NamedVar &other){
 		wValue = new wstring(*other.wValue);
 	}
 }
-NamedVar::NamedVar(const wstring& name, int val){
-	Name = name;
-	wValue = NULL;
-	//wValue = L"";
+
+Leviathan::NamedVar::NamedVar(const wstring& name, int val) : Name(name), wValue(NULL){
+
 	iValue = val;
-	Isint = TRUE;
+	Isint = true;
 }
-NamedVar::NamedVar(const wstring& name, const wstring& val){
-	Name = name;
-	wValue = new wstring(val);
-	//wValue = val;
-	iValue = 0;
-	Isint = FALSE;
+
+Leviathan::NamedVar::NamedVar(const wstring& name, const wstring& val) : Name(name), wValue(new wstring(val)){
+
+	iValue = -1;
+	Isint = false;
 }
 
 //vector<unsigned int> Deletedindexes;
-
 DLLEXPORT Leviathan::NamedVar::~NamedVar(){
-	//SAFE_DELETE(wValue);
+
+	SAFE_DELETE(wValue);
 	//if(Deletedindexes.size() == 0)
 	//	Deletedindexes.reserve(2100);
 
@@ -58,8 +56,71 @@ DLLEXPORT Leviathan::NamedVar::~NamedVar(){
 
 	//Deletedindexes.push_back((unsigned int)this);
 }
+// ------------------------------------ //
+void Leviathan::NamedVar::SetValue(int val){
+	if(this->Isint){
+		iValue = val;
+		return;
+	}
+	this->Isint = true;
+	// destroy string //
+	SAFE_DELETE(wValue);
+}
 
+void Leviathan::NamedVar::SetValue(const wstring& val){
+	this->Isint = false;
+	iValue = -1;
+	SAFE_DELETE(wValue);
+	wValue = new wstring(val);
+}
 
+int Leviathan::NamedVar::GetValue(int& val1, wstring& val2) const{
+	if(this->Isint){
+		val1 = this->iValue;
+		return NAMEDVAR_RETURNVALUE_IS_INT;
+	}
+	val2 = *this->wValue;
+	return NAMEDVAR_RETURNVALUE_IS_WSTRING;
+}
+
+DLLEXPORT bool Leviathan::NamedVar::GetValue(int &val) const{
+	if(!Isint)
+		return false;
+	// copy value //
+	val = iValue;
+	// signal valid value //
+	return true;
+}
+
+DLLEXPORT bool Leviathan::NamedVar::GetValue(wstring &val) const{
+	if(Isint)
+		return false;
+	// value copying //
+	val = *wValue;
+	return true;
+}
+
+bool Leviathan::NamedVar::IsIntValue() const{
+	return Isint;
+}
+
+wstring& Leviathan::NamedVar::GetName(){
+	return Name;
+}
+
+DLLEXPORT void Leviathan::NamedVar::GetName(wstring &name) const{
+	// return name in a reference //
+	name = Name;
+}
+
+void Leviathan::NamedVar::SetName(const wstring& name){
+	Name = name;
+}
+
+bool Leviathan::NamedVar::CompareName(const wstring& name) const{
+	// just default comparison //
+	return Name == name;
+}
 DLLEXPORT wstring Leviathan::NamedVar::ToText(int WhichSeparator /*= 0*/) const{
 	switch(WhichSeparator){
 	case 0:
@@ -84,58 +145,27 @@ DLLEXPORT wstring Leviathan::NamedVar::ToText(int WhichSeparator /*= 0*/) const{
 	}
 }
 
-// ------------------------------------ //
-void NamedVar::SetValue(int val){
-	if(this->Isint){
-		iValue = val;
-		return;
+DLLEXPORT NamedVar& Leviathan::NamedVar::operator=(const NamedVar &other){
+	// copy values //
+	Name = other.Name;
+	Isint = other.Isint;
+	// check what needs to be copied //
+	if(Isint){
+		iValue = other.iValue;
+		SAFE_DELETE(wValue);
+	} else {
+		iValue = -1;
+		SAFE_DELETE(wValue);
+		wValue = new wstring(*other.wValue);
 	}
-	this->Isint = true;
-	// destroy string //
-	SAFE_DELETE(wValue);
-	wValue = NULL;
-	//wValue.clear();
-}
-void NamedVar::SetValue(const wstring& val){
-	this->Isint = false;
-	iValue = -1;
-	SAFE_DELETE(wValue);
-	wValue = new wstring(val);
-	//wValue = val;
-}
-int NamedVar::GetValue(int& val1, wstring& val2) const{
-	if(this->Isint){
-		val1 = this->iValue;
-		return 1;
-	}
-	val2 = *this->wValue;
-	return 0;
+
+	// return this as result //
+	return *this;
 }
 
-bool NamedVar::IsIntValue() const{
-	return this->Isint;
-}
-
-wstring& NamedVar::GetName(){
-	return this->Name;
-}
-void NamedVar::SetName(const wstring& name){
-	this->Name = name;
-}
-bool NamedVar::CompareName(const wstring& name) const{
-	for(unsigned int i = 0; (i < name.length() ) && (i < this->Name.length()); i++){
-		if(!(name[i] == this->Name[i])){
-			return false;
-		}
-	}
-	return true;
-
-
-//	return !this->Name.compare(name);
-}
 // ------------------------------------ //
 		// process functions //
-DLLEXPORT  int Leviathan::NamedVar::ProcessDataDumb(wstring& data, vector<shared_ptr<NamedVar>>& vec, vector<IntWstring*>* specialintvalues /*= NULL*/){
+DLLEXPORT  int Leviathan::NamedVar::ProcessDataDumb(const wstring &data, vector<shared_ptr<NamedVar>> &vec, vector<IntWstring*> *specialintvalues /*= NULL*/){
 	QUICKTIME_THISSCOPE;
 	// split to lines //
 	vector<wstring> Lines;
@@ -276,6 +306,10 @@ DLLEXPORT  int Leviathan::NamedVar::ProcessDataDumb(wstring& data, vector<shared
 	return 0;
 }
 
+DLLEXPORT  int Leviathan::NamedVar::ProcessDataDumb(const wstring &data, vector<shared_ptr<NamedVar>> &vec, vector<IntWstring*>* specialintvalues /*= NULL*/){
+
+}
+
 DLLEXPORT Leviathan::NamedVar::NamedVar(const wstring &line){
 	// do process datadump, but with just one value //
 	wstring name = L"";
@@ -377,6 +411,27 @@ DLLEXPORT Leviathan::NamedVar::NamedVar(const wstring &line){
 	this->Isint = false;
 }
 
+DLLEXPORT  void Leviathan::NamedVar::SwitchValues(NamedVar &receiver, NamedVar &donator){
+	// only overwrite name if there is one //
+	if(donator.Name.size() > 0)
+		receiver.Name = donator.Name;
+
+	receiver.Isint = donator.Isint;
+	SAFE_DELETE(receiver.wValue);
+	receiver.iValue = -1;
+	if(receiver.Isint){
+		// copy ivalue //
+		receiver.iValue = donator.iValue;
+	} else {
+		// copy string pointers around //
+		receiver.wValue = donator.wValue;
+	}
+	// don't allow original owner to delete this //
+	donator.wValue = NULL;
+
+	// maybe butcher donator entirely //
+	donator.iValue = -2;
+}
 
 // ---------------------------- NamedVars --------------------------------- //
 NamedVars::NamedVars(){

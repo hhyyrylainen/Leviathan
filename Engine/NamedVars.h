@@ -6,13 +6,11 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#ifndef LEVIATHAN_MISC
-#include "Misc.h"
-#endif
-#ifndef LEVIATHAN_LOGGER
-#include "Logger.h"
-#endif
+
 namespace Leviathan{
+
+#define NAMEDVAR_RETURNVALUE_IS_INT			1
+#define NAMEDVAR_RETURNVALUE_IS_WSTRING		0
 
 	class NamedVar{
 	public:
@@ -24,31 +22,55 @@ namespace Leviathan{
 		DLLEXPORT ~NamedVar();
 		// ------------------------------------ //
 		DLLEXPORT void SetValue(int val);
-		DLLEXPORT void SetValue(const wstring& val);
-		DLLEXPORT int GetValue(int& val1, wstring& val2) const;
+		DLLEXPORT void SetValue(const wstring &val);
+		DLLEXPORT int GetValue(int &val1, wstring &val2) const;
+		DLLEXPORT bool GetValue(int &val) const;
+		DLLEXPORT bool GetValue(wstring &val) const;
 
 		DLLEXPORT bool IsIntValue() const;
 
 		DLLEXPORT wstring& GetName();
-		DLLEXPORT void SetName(const wstring& name);
-		DLLEXPORT bool CompareName(const wstring& name) const;
+		DLLEXPORT void GetName(wstring &name) const;
+
+		DLLEXPORT void SetName(const wstring &name);
+		DLLEXPORT bool CompareName(const wstring &name) const;
 		// ------------------------------------ //
 		DLLEXPORT wstring ToText(int WhichSeparator = 0) const;
 		// process functions //
-		DLLEXPORT static int ProcessDataDumb(wstring& data, vector<shared_ptr<NamedVar>>& vec, vector<IntWstring*>* specialintvalues = NULL);
+		DLLEXPORT static int ProcessDataDumb(const wstring &data, vector<shared_ptr<NamedVar>> &vec, vector<IntWstring*>* specialintvalues = NULL);
+		// operators //
+		DLLEXPORT NamedVar& operator=(const NamedVar &other);
+
+		//************************************
+		// Method:    SwitchValues
+		// FullName:  Leviathan::NamedVar::SwitchValues
+		// Access:    public static 
+		// Returns:   DLLEXPORT  void
+		// Qualifier:
+		// Parameter: NamedVar & receiver
+		// Parameter: NamedVar & donator
+		// Usage: Efficient way to copy new values to existing NamedVar, WARNING Will demolish the value that's values are copied
+		//************************************
+		DLLEXPORT static void SwitchValues(NamedVar &receiver, NamedVar &donator);
 
 	private:
+
 		bool Isint;
+
 		int iValue;
 		wstring *wValue;
 
 		wstring Name;
+
 	};
+
+
 
 	class NamedVars{
 	public:
 		DLLEXPORT NamedVars();
-		DLLEXPORT NamedVars(const NamedVars& other);
+		DLLEXPORT NamedVars(const NamedVars &other);
+		DLLEXPORT NamedVars(const wstring &datadump);
 		DLLEXPORT ~NamedVars();
 		// ------------------------------------ //
 		DLLEXPORT void SetValue(const wstring &name, int val);
@@ -83,4 +105,5 @@ namespace Leviathan{
 	};
 
 }
+
 #endif

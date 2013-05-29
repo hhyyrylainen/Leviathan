@@ -85,33 +85,35 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetStringInQuotes(QUOT
 
 DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextCharacterSequence(UNNORMALCHARACTER stopcase){
 	// iterate over the string and return what is wanted //
-	IteratorPositionData* data = new IteratorPositionData();
-	data->Positions.SetData(-1, -1);
+	IteratorPositionData data;
+	data.Positions.SetData(-1, -1);
 
 	// iterate over the string getting the proper part //
 
-	StartIterating(FindNextNormalCharacterString, (Object*)data, (int)stopcase);
+	StartIterating(FindNextNormalCharacterString, (Object*)&data, (int)stopcase);
 
 	// create substring of the wanted part //
 	unique_ptr<wstring> resultstr;
 
+	// check for nothing found //
+	if(data.Positions[0] == -1 && data.Positions[1] == -1){
+		resultstr = unique_ptr<wstring>(new wstring(L""));
+		return resultstr;
+	}
+
 	// check for end //
-	if(data->Positions[1] == -1){
+	if(data.Positions[1] == -1){
 		// set to end on string end //
-		data->Positions.Val[1] = GetWstringLenght()-1;
+		data.Positions.Val[1] = GetWstringLenght()-1;
 	}
 
 	if(IsPtrUsed){
 
-		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data->Positions[0], data->Positions[1]-data->Positions[0]+1)));
+		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data.Positions[0], data.Positions[1]-data.Positions[0]+1)));
 	} else {
 
-		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data->Positions[0], data->Positions[1]-data->Positions[0]+1)));
+		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data.Positions[0], data.Positions[1]-data.Positions[0]+1)));
 	}
-
-
-	// release memory //
-	SAFE_DELETE(data);
 
 	// return wanted part //
 	return resultstr;
@@ -157,6 +159,41 @@ getnextnumberfuncendreleaseresourceslabel:
 	return resultstr;
 }
 
+DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase){
+	
+	// iterate over the string and return what is wanted //
+	IteratorAssignmentData data;
+	data.Positions.SetData(-1, -1);
+	data.SeparatorFound = false;
+
+	// iterate over the string getting the proper part //
+	StartIterating(FindUntilEquality, (Object*)&data, (int)stopcase);
+
+	// create substring of the wanted part //
+	unique_ptr<wstring> resultstr;
+
+	// check for end //
+	if(data.Positions[0] == data.Positions[1] || data.SeparatorFound == false){
+		// nothing found //
+		resultstr = unique_ptr<wstring>(new wstring());
+		return resultstr;
+	}
+	if(data.Positions[1] == -1){
+		// set to start, this only happens if there is just one character //
+		data.Positions.Val[1] = data.Positions[0];
+	}
+
+	if(IsPtrUsed){
+
+		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data.Positions[0], data.Positions[1]-data.Positions[0]+1)));
+	} else {
+
+		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data.Positions[0], data.Positions[1]-data.Positions[0]+1)));
+	}
+
+	// return wanted part //
+	return resultstr;
+}
 
 // ------------------------------------ //
 DLLEXPORT Object* Leviathan::WstringIterator::StartIterating(IteratorWstrCallBack functiontocall, Object* IteratorData, int parameters){
@@ -254,7 +291,7 @@ DLLEXPORT bool Leviathan::WstringIterator::IsOutOfBounds(unsigned long pos){
 	// switch on wstring type
 	if(IsPtrUsed){
 		if(Data == NULL){
-			throw ExceptionNULLPtr(L"WstringIterator: IsOutOfBounds: Text pointer is invalid (while checking pos)", pos, (void*)Data);
+			throw ExceptionNULLPtr(L"Text pointer is invalid (while checking pos)", pos, __WFUNCTION__, (void*)Data);
 		}
 		if(pos >= Data->size()){
 			return true;
@@ -271,7 +308,8 @@ DLLEXPORT unsigned int Leviathan::WstringIterator::GetWstringLenght(){
 	// switch on wstring type
 	if(IsPtrUsed){
 		if(Data == NULL){
-			throw ExceptionNULLPtr(L"WstringIterator: GetWstringLenght: Text pointer is invalid ", 0, (void*)Data);
+			//WstringIterator: GetWstringLenght:
+			throw ExceptionNULLPtr(L"Text pointer is invalid ", NULL, __WFUNCTION__, (void*)Data);
 		}
 		return Data->size();
 
@@ -290,6 +328,8 @@ DLLEXPORT wchar_t Leviathan::WstringIterator::GetCurrentCharacter(){
 		return this->ConstData[this->IteratorPosition];
 	}
 }
+
+
 
 // ------------------------------------ //
 
@@ -472,5 +512,75 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIter
 		}
 	}
 
+	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+}
+
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilEquality(WstringIterator* instance, Object* IteratorData, int parameters){
+	// check is current element a valid element //
+	int charvalue((int)instance->GetCurrentCharacter());
+
+	bool IsValid = true;
+	bool IsStop = false;
+
+	// what characters are stopping //
+	EQUALITYCHARACTER stoptype = (EQUALITYCHARACTER)parameters;
+
+	IteratorAssignmentData* tmpdata = dynamic_cast<IteratorAssignmentData*>(IteratorData);
+	if(tmpdata == NULL){
+		// well darn //
+		DEBUG_BREAK;
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
+	}
+
+	// skip if this is a space //
+	if((charvalue < 33)){
+		// non allowed character in name
+		IsValid = false;
+	}
+
+	if(stoptype == EQUALITYCHARACTER_TYPE_ALL){
+		// check for all possible value separators //
+		if(charvalue == (int)'=' || charvalue == (int)':'){
+
+			IsStop = true;
+		}
+	} else {
+		if(stoptype == EQUALITYCHARACTER_TYPE_EQUALITY){
+			// check for equality sign //
+			if(charvalue == (int)'='){
+
+				IsStop = true;
+			}
+		} else if (stoptype == EQUALITYCHARACTER_TYPE_DOUBLEDOTSTYLE){
+			// check does it match the characters //
+			if(charvalue == (int)':'){
+
+				IsStop = true;
+			}
+		}
+	}
+
+	if(!IsStop){
+		// end if end already found //
+		if(tmpdata->SeparatorFound){
+			return ITERATORCALLBACK_RETURNTYPE_STOP;
+		}
+	} else {
+		tmpdata->SeparatorFound = true;
+		IsValid = false;
+	}
+
+	if(IsValid){
+		// check is this first character //
+		if(tmpdata->Positions[0] == -1){
+			// first position! //
+			tmpdata->Positions.Val[0] = instance->IteratorPosition;
+		} else {
+			// set end to this valid character //
+			tmpdata->Positions.Val[1] = instance->IteratorPosition;
+		}
+
+	}
+	// will have exited if encountered separator character //
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }

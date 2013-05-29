@@ -6,6 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "ExceptionInvalidArguement.h"
 
 namespace Leviathan{
 
@@ -20,7 +21,7 @@ namespace Leviathan{
 		DLLEXPORT NamedVar(const NamedVar &other);
 		DLLEXPORT NamedVar(const wstring &name, int val);
 		DLLEXPORT NamedVar(const wstring &name, const wstring &val);
-		DLLEXPORT NamedVar(const wstring &line);
+		DLLEXPORT NamedVar(wstring &line, vector<IntWstring*> *specialintvalues = NULL) throw (...);
 		DLLEXPORT ~NamedVar();
 		// ------------------------------------ //
 		DLLEXPORT void SetValue(int val);

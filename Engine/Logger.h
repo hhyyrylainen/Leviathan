@@ -20,7 +20,7 @@ namespace Leviathan{
 		DLLEXPORT void Write(const wstring &data, bool save);
 		DLLEXPORT void Info(const wstring &data, bool save);
 		DLLEXPORT void Error(const wstring &data, int value, bool save);
-		DLLEXPORT void Warning(const wstring &data, bool save);
+		DLLEXPORT void Warning(const wstring &data, bool save = false);
 
 		DLLEXPORT static void SendDebugMessage(const wstring& str);
 		DLLEXPORT static void QueueErrorMessage(const wstring& str);

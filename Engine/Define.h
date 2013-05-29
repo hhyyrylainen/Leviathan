@@ -29,6 +29,7 @@
 #define __WFUNCTION__ WIDEN(__FUNCTION__)
 #define __WDATE__ WIDEN(__DATE__)
 #define __WTIME__ WIDEN(__TIME__)
+#define __WFUNCSIG__ WIDEN(__FUNCSIG__)
 
 #define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: "+__LINE__ ), true);}
 #define QUICK_MEMORY_ERROR_MESSAGE {Logger::Get()->Error((L"Out of memory error from: " __WFILE__ L" function: "__WFUNCTION__), true);}

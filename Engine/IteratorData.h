@@ -27,5 +27,12 @@ namespace Leviathan{
 		bool NegativeFound : 1;
 	};
 
+	class IteratorAssignmentData : public Object{
+	public:
+		Int2 Positions;
+
+		bool SeparatorFound : 1;
+	};
+
 }
 #endif

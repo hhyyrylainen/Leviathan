@@ -61,7 +61,6 @@ DLLEXPORT int Leviathan::Misc::CutWstring(const wstring& strtocut, const wstring
 	vector<unique_ptr<Int2>> CopyOperations;
 	bool PositionStarted = false;
 
-
 	for(unsigned int i = 0; i < strtocut.length(); i++){
 		if(!PositionStarted){
 			PositionStarted = true;
@@ -416,80 +415,7 @@ wstring Misc::WstringStitchTogether(vector<shared_ptr<wstring>> data, wstring se
 	return ret;
 }
 
-	// type checks //
-int Misc::WstringTypeCheck(const wstring& data, int typecheckfor){
-	switch(typecheckfor){
-	case 0: // int
-		{
-			wstring valid = L"1234567890-+";
-			for(unsigned int i = 0; i < data.length(); i++){
-				if(!WstringContains(valid, data[i]))
-					return 0;
-			}
 
-			return 1;
-		}
-	break;
-	case 1: // float/double
-		{
-			wstring valid = L"1234567890-+.,";
-			for(unsigned int i = 0; i < data.length(); i++){
-				if(!WstringContains(valid, data[i]))
-					return 0;
-			}
-
-			return 1;
-		}
-	break;
-	case 3: // boolean
-		{
-			if((data.compare(L"true") != 0) && (data.compare(L"false") != 0) && (data.compare(L"True") != 0) && (data.compare(L"False") != 0) && (data.compare(L"TRUE") != 0) && (data.compare(L"FALSE") != 0)){
-				// didn't match any //
-				return 0;
-
-			}
-			return 1;
-
-		}
-	break;
-	case 4: // wstring checking
-		{
-			unsigned int foundnumbparts = 0;
-			wstring valid = L"1234567890-+.,";
-			for(unsigned int i = 0; i < data.length(); i++){
-				if(WstringContains(valid, data[i]))
-					foundnumbparts++;
-			}
-			if(foundnumbparts == data.length())
-				return 0;
-			return 1;
-		}
-	break;
-
-
-	}
-
-	Logger::Get()->Error(L"WstringTypeCheck: invalid tocheck value", typecheckfor);
-	return 007;
-}
-int Misc::WstringTypeNameCheck(const wstring& data){
-	if(Misc::WstringCompareInsensitive(data, L"int")){
-		return 0;
-	}
-	if(Misc::WstringCompareInsensitive(data, L"float")){
-		return 1;
-	}
-	if(Misc::WstringCompareInsensitive(data, L"bool")){
-		return 3;
-	}
-	if(Misc::WstringCompareInsensitive(data, L"wstring")){
-		return 4;
-	}
-	if(Misc::WstringCompareInsensitive(data, L"void")){
-		return 5;
-	}
-	return 007;
-}
 bool Misc::CompareDataBlockTypeToTHISNameCheck(int datablock, int typenamecheckresult){
 	if(typenamecheckresult == 0){
 		// int //
@@ -601,7 +527,7 @@ DLLEXPORT void Leviathan::Misc::WstringRemovePreceedingTrailingSpaces(wstring& s
 
 	// search the right part of the string //
 	for(unsigned int i = 0; i < str.size(); i++){
-		if(str[i] != L' ' && str[i] != L'	'){
+		if(!IsCharacterWhiteSpace(str[i])){
 			if(CutPositions[0] == -1){
 				// beginning ended //
 				CutPositions.Val[0] = i;
@@ -619,7 +545,7 @@ DLLEXPORT void Leviathan::Misc::WstringRemovePreceedingTrailingSpaces(wstring& s
 		unsigned int a = str.size()-1;
 		bool found = false;
 		for(a; a > i; a--){
-			if(str[a] != L' ' && str[a] != L'	'){
+			if(!IsCharacterWhiteSpace(str[a])){
 				// there is still valid characters //
 				found = true;
 				break;
@@ -627,11 +553,11 @@ DLLEXPORT void Leviathan::Misc::WstringRemovePreceedingTrailingSpaces(wstring& s
 		}
 		if(found){
 			// skip to the found non-space character //
-			i = a;
+			i = a-1;
 			continue;
 		}
 		// end found //
-		CutPositions.Val[1] = i;
+		CutPositions.Val[1] = i-1;
 		break;
 	}
 
@@ -641,14 +567,23 @@ DLLEXPORT void Leviathan::Misc::WstringRemovePreceedingTrailingSpaces(wstring& s
 		return;
 	}
 	if(CutPositions.Val[1] == -1){
-		// no need to cut from the end //
-		CutPositions.Val[1] = str.length()-1;
+		if(CutPositions.Val[0] == 0){
+			// just the first character required //
+			CutPositions.Val[1] = CutPositions.Val[0];
+		} else {
+			// no need to cut from the end //
+			CutPositions.Val[1] = str.length()-1;
+		}
 	}
 
 	// set the wstring as it's sub string //
 	str = str.substr((UINT)CutPositions[0], (UINT)(CutPositions[1]-CutPositions[0]+1));
 
 	return;
+}
+
+DLLEXPORT  bool Leviathan::Misc::IsCharacterWhiteSpace(const wchar_t chara){
+	return (int)chara < 33;
 }
 
 std::wstring Leviathan::Misc::ValidNumberCharacters = L"1234567890-+.";

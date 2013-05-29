@@ -474,6 +474,9 @@
     <ClCompile Include="Rendering\RenderingFont.cpp">
       <Filter>rendering\text</Filter>
     </ClCompile>
+    <ClCompile Include="ExceptionInvalidArguement.cpp">
+      <Filter>common\Exceptions</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">
@@ -851,6 +854,9 @@
     </ClInclude>
     <ClInclude Include="Rendering\RenderingFont.h">
       <Filter>rendering\text</Filter>
+    </ClInclude>
+    <ClInclude Include="ExceptionInvalidArguement.h">
+      <Filter>common\Exceptions</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

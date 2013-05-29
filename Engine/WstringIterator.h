@@ -18,6 +18,7 @@ namespace Leviathan{
 	enum QUOTETYPE {QUOTETYPE_DOUBLEQUOTES, QUOTETYPE_SINGLEQUOTES, QUOTETYPE_BOTH};
 	enum DECIMALSEPARATORTYPE {DECIMALSEPARATORTYPE_DOT, DECIMALSEPARATORTYPE_COMMA, DECIMALSEPARATORTYPE_BOTH, DECIMALSEPARATORTYPE_NONE};
 	enum UNNORMALCHARACTER {UNNORMALCHARACTER_TYPE_NON_ASCII, UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS};
+	enum EQUALITYCHARACTER {EQUALITYCHARACTER_TYPE_EQUALITY, EQUALITYCHARACTER_TYPE_DOUBLEDOTSTYLE, EQUALITYCHARACTER_TYPE_ALL};
 	enum ITERATORCALLBACK_RETURNTYPE {ITERATORCALLBACK_RETURNTYPE_STOP, ITERATORCALLBACK_RETURNTYPE_CONTINUE};
 
 #define WSTRINGITERATOR_IGNORE_SPECIAL			200001
@@ -29,6 +30,7 @@ namespace Leviathan{
 	ITERATORCALLBACK_RETURNTYPE FindFirstQuotedString(WstringIterator* instance, Object* IteratorData, int parameters);
 	ITERATORCALLBACK_RETURNTYPE FindNextNumber(WstringIterator* instance, Object* IteratorData, int parameters);
 	ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(WstringIterator* instance, Object* IteratorData, int parameters);
+	ITERATORCALLBACK_RETURNTYPE FindUntilEquality(WstringIterator* instance, Object* IteratorData, int parameters);
 
 	// could potentially inherit from base iterator, but not right now //
 	class WstringIterator : public Object{
@@ -37,6 +39,7 @@ namespace Leviathan{
 		friend ITERATORCALLBACK_RETURNTYPE FindFirstQuotedString(WstringIterator* instance, Object* IteratorData, int parameters);
 		friend ITERATORCALLBACK_RETURNTYPE FindNextNumber(WstringIterator* instance, Object* IteratorData, int parameters);
 		friend ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(WstringIterator* instance, Object* IteratorData, int parameters);
+		friend ITERATORCALLBACK_RETURNTYPE FindUntilEquality(WstringIterator* instance, Object* IteratorData, int parameters);
 		// ------------------------------------ //
 		DLLEXPORT WstringIterator::WstringIterator(const wstring& text);
 		//************************************
@@ -53,6 +56,7 @@ namespace Leviathan{
 		DLLEXPORT unique_ptr<wstring> GetStringInQuotes(QUOTETYPE quotes, bool AllowSpecialQualifiers = true);
 		DLLEXPORT unique_ptr<wstring> GetNextNumber(DECIMALSEPARATORTYPE decimal);
 		DLLEXPORT unique_ptr<wstring> GetNextCharacterSequence(UNNORMALCHARACTER stopcase);
+		DLLEXPORT unique_ptr<wstring> GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase);
 
 		DLLEXPORT unsigned long GetPosition();
 		DLLEXPORT void SetPosition(unsigned long pos);

@@ -360,7 +360,7 @@ shared_ptr<ScriptArguement> ScriptExecutor::RunScript(wstring start, bool fullde
 
 		int typeondecl = 0;
 
-		typeondecl = Misc::WstringTypeNameCheck(Params[i]);
+		typeondecl = Convert::WstringTypeNameCheck(Params[i]);
 		if(typeondecl == 7){
 			Logger::Get()->Error(L"ScriptExecutor: RunScript: pass parameters failed, invalid parameter types in func: "+start+L" named: "+script->Name+L" param typename: "+Params[i], typeondecl, true);
 			return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000804), DATABLOCK_TYPE_INT, true));

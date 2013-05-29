@@ -22,7 +22,7 @@ namespace Leviathan{
 		}
 		template<typename T>
 		DLLEXPORT static bool IsFiniteNumber(T& Value){
-			// fpclass check //
+			// fp class check //
 			switch (_fpclass(Value))
 			{
 			case _FPCLASS_SNAN: return false;
@@ -136,9 +136,9 @@ namespace Leviathan{
 		DLLEXPORT static void WstringRemovePreceedingTrailingSpaces(wstring& str);
 		// returns 0 for equal 1 for str is before and -1 for tocompare to be before //
 		DLLEXPORT static int IsWstringBeforeInAlphabet(const wstring& str, const wstring& tocompare);
-			// type checks //
-		DLLEXPORT static int WstringTypeCheck(const wstring& data, int typecheckfor);
-		DLLEXPORT static int WstringTypeNameCheck(const wstring &data);
+
+		DLLEXPORT static bool inline IsCharacterWhiteSpace(const wchar_t chara);
+
 		DLLEXPORT static bool CompareDataBlockTypeToTHISNameCheck(int datablock, int typenamecheckresult);
 		DLLEXPORT static bool WstringCompareInsensitive(const wstring& data, wstring second);
 		DLLEXPORT static bool WstringCompareInsensitiveRefs(const wstring& data, const wstring &second);
@@ -157,11 +157,6 @@ namespace Leviathan{
 
 
 	};
-	
-
-	/// quickmessage
-
-
 }
 
 #endif

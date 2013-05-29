@@ -24,8 +24,6 @@ namespace Leviathan{
 
 		DLLEXPORT static void RegisterValue(const wstring &signature, int value);
 
-		DLLEXPORT static void TrimLineSpaces(wstring* str);
-
 		DLLEXPORT static int WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const wstring &file, vector<shared_ptr<NamedVar>> &headervars,bool UseBinary = false);
 
 	private:

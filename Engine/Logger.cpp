@@ -220,7 +220,7 @@ void Leviathan::Logger::Error(const wstring &data, int value, bool save){
 #endif // THROW_ON_PRINTERROR
 }
 
-DLLEXPORT void Leviathan::Logger::Warning(const wstring &data, bool save){
+DLLEXPORT void Leviathan::Logger::Warning(const wstring &data, bool save /*= false*/){
 	WaitToFinish();
 	_inuse = true;
 

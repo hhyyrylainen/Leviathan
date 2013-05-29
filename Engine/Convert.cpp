@@ -82,15 +82,6 @@ float Convert::WstringToFloat(const wstring &i){
 	return ret;
 }
 
-// must be in class declaration //
-//template<typename T>
-//wstring Convert::ToWstring(const T& val){
-//	wstringstream stream;
-//	if(!(stream << val)){
-//		return L"";
-//	}
-//	return stream.str();
-//}
 wchar_t Convert::ToLower(const wchar_t &chara){
 	int val = (int)chara;
 
@@ -98,4 +89,79 @@ wchar_t Convert::ToLower(const wchar_t &chara){
 		return (wchar_t)(val+32);
 	}
 	return chara;
+}
+// ----------------- type checks ------------------- //
+int Convert::WstringTypeCheck(const wstring& data, int typecheckfor){
+	switch(typecheckfor){
+	case 0: // int
+		{
+			wstring valid = L"1234567890-+";
+			for(unsigned int i = 0; i < data.length(); i++){
+				if(!Misc::WstringContains(valid, data[i]))
+					return 0;
+			}
+
+			return 1;
+		}
+		break;
+	case 1: // float/double
+		{
+			wstring valid = L"1234567890-+.,";
+			for(unsigned int i = 0; i < data.length(); i++){
+				if(!Misc::WstringContains(valid, data[i]))
+					return 0;
+			}
+
+			return 1;
+		}
+		break;
+	case 3: // boolean
+		{
+			if((data.compare(L"true") != 0) && (data.compare(L"false") != 0) && (data.compare(L"True") != 0) && (data.compare(L"False") != 0) && (data.compare(L"TRUE") != 0) && (data.compare(L"FALSE") != 0)){
+				// didn't match any //
+				return 0;
+
+			}
+			return 1;
+
+		}
+		break;
+	case 4: // wstring checking
+		{
+			unsigned int foundnumbparts = 0;
+			wstring valid = L"1234567890-+.,";
+			for(unsigned int i = 0; i < data.length(); i++){
+				if(Misc::WstringContains(valid, data[i]))
+					foundnumbparts++;
+			}
+			if(foundnumbparts == data.length())
+				return 0;
+			return 1;
+		}
+		break;
+
+
+	}
+
+	Logger::Get()->Error(L"WstringTypeCheck: invalid tocheck value", typecheckfor);
+	return 007;
+}
+
+int Convert::WstringTypeNameCheck(const wstring& data){
+	if(Misc::WstringCompareInsensitive(data, L"int")){
+		return 0;
+	}
+	if(Misc::WstringCompareInsensitive(data, L"float")){
+		return 1;
+	}
+	if(Misc::WstringCompareInsensitive(data, L"bool")){
+		return 3;
+	}
+	if(Misc::WstringCompareInsensitive(data, L"wstring")){
+		return 4;
+	}
+	if(Misc::WstringCompareInsensitive(data, L"void")){
+		return 5;
+	}
+	return 007;
 }

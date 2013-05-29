@@ -8,6 +8,8 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "FileSystem.h"
 #include "TimingMonitor.h"
+#include "WstringIterator.h"
+
 
 Leviathan::NamedVar::NamedVar() : Name(L""), wValue(NULL){
 
@@ -40,8 +42,79 @@ Leviathan::NamedVar::NamedVar(const wstring& name, const wstring& val) : Name(na
 	Isint = false;
 }
 
-DLLEXPORT Leviathan::NamedVar::NamedVar(const wstring &line){
+DLLEXPORT Leviathan::NamedVar::NamedVar(wstring &line, vector<IntWstring*> *specialintvalues /*= NULL*/) : wValue(NULL){
+	// using WstringIterator makes this shorter //
+	WstringIterator itr(&line, false);
 
+	unique_ptr<wstring> name = itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_ALL);
+
+	if(name->size() < 1){
+		// no name //
+		throw ExceptionInvalidArguement(L"invalid name", name->size(), __WFUNCSIG__, L"line");
+	}
+
+	// get last part of it //
+	unique_ptr<wstring> tempvar = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+
+	if(tempvar->size() < 1){
+		// no variable //
+		throw ExceptionInvalidArguement(L"no variable", tempvar->size(), __WFUNCSIG__, L"line");
+	}
+	// remove leading spaces //
+	Misc::WstringRemovePreceedingTrailingSpaces(*tempvar);
+
+
+	Name = *name;
+
+	// check is it a int value //
+	if(specialintvalues != NULL){
+		bool isspecial = false;
+		int specialval = 0;
+		// find matching values //
+		for(unsigned int indexed = 0; indexed < specialintvalues->size(); indexed++){
+			wstring* tempcompare = specialintvalues->at(indexed)->GetString();
+			if(tempcompare != NULL){
+				if(*tempcompare == *tempvar){
+					isspecial = true;
+					specialval = specialintvalues->at(indexed)->GetValue();
+					break;
+				}
+			}
+		}
+
+		if(isspecial){
+			// is int, construct //
+			Isint = true;
+			iValue = specialval;
+			return;
+		}
+	}
+
+	// check type //
+	if(Convert::WstringTypeCheck(*tempvar, 0 /* check int */) == 1){
+		// is int //
+		Isint = true;
+		iValue = Convert::WstringToInt(*tempvar);
+		return;
+	}
+	if(Convert::WstringTypeCheck(*tempvar, 3 /* check bool */) == 1){
+		// is int //
+		Isint = true;
+		iValue = Convert::WstringFromBoolToInt(*tempvar);
+		return;
+	}
+	// is string/other //
+	Isint = false;
+	iValue = -1;
+	if((*tempvar)[0] == L'"' && (*tempvar)[tempvar->size()-1] == L'"'){
+		// remove " marks //
+		// copy from index 1 to second to last //
+		wValue = new wstring(tempvar->substr(1, tempvar->size()-2));
+
+	} else {
+
+		wValue = new wstring(*tempvar);
+	}
 }
 
 //vector<unsigned int> Deletedindexes;
@@ -123,7 +196,7 @@ void Leviathan::NamedVar::SetName(const wstring& name){
 
 bool Leviathan::NamedVar::CompareName(const wstring& name) const{
 	// just default comparison //
-	return Name == name;
+	return Name.compare(name) == 0;
 }
 DLLEXPORT wstring Leviathan::NamedVar::ToText(int WhichSeparator /*= 0*/) const{
 	switch(WhichSeparator){
@@ -169,142 +242,49 @@ DLLEXPORT NamedVar& Leviathan::NamedVar::operator=(const NamedVar &other){
 
 // ----------------- process functions ------------------- //
 DLLEXPORT int Leviathan::NamedVar::ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVar>> &vec, vector<IntWstring*> *specialintvalues /*= NULL*/){
-	QUICKTIME_THISSCOPE;
+	//QUICKTIME_THISSCOPE;
 	// split to lines //
 	vector<wstring> Lines;
 
 	if(Misc::CutWstring(data, L";", Lines) != 0){
 		// no lines //
-		Logger::Get()->Info(L"Tried to ProcessDataDumb with empty string", true);
+		Logger::Get()->Error(L"NamedVar: ProcessDataDump: No lines (even 1 line requires ending ';' to work)", data.length(), true);
 		return 400;
 	}
 	// make space for values //
 	vec.clear();
+	// let's reserve space //
+	vec.reserve(Lines.size());
 
-
-
-	// fill values //	// skip last
+	// fill values //
 	for(unsigned int i = 0; i < Lines.size(); i++){
-		wstring cur = Lines.at(i);
-		if(cur.length() == 0)
+		// skip empty lines //
+		if(Lines.at(i).length() == 0)
 			continue;
-		wstring name = L"";
-		wstring tempvar = L"";
 
-		wstring possiv = L"";
-		//int possii = 0;
-
-		wchar_t SplitChar = L':';
-		for(unsigned int a = 1; a < cur.length(); a++){
-			if(cur[a] == L'"')
-				break;
-			// check if = is used as name and variable separator //
-			if(cur[a] == L'='){
-				if(a-1 < 0)
-					continue;
-				if(cur[a-1] != L'\\'){
-					SplitChar = L'=';
-					break;
-				}
-
-			}
-
+		// create a named var //
+		try{
+			vec.push_back(shared_ptr<NamedVar>(new NamedVar(Lines[i], specialintvalues)));
 		}
-
-		// split name/ variable //
-		bool skip = false;
-		unsigned int e = 0;
-		bool IsNextSpecial = false;
-		while((cur[e] != SplitChar) && (!IsNextSpecial)){
-			if(((cur[e] < 32) | (cur[e] == L' ')) && (e+1 < cur.length())){
-				e++;
-				continue;
-			}
-			if(cur[e] == L'\\'){
-				if(!IsNextSpecial){
-					IsNextSpecial = true;
-					continue;
-				}
-			} else {
-				if(IsNextSpecial)
-					continue;
-			}
-			name += cur[e];
-			e++;
-			if(e >= cur.length()){
-				// no variable! //
-				//Logger::Get()->Info(L"ProcessDataDumb name split no variable, error: 404", true);
-				skip = true;
-				break;
-			}
-		}
-		// skip : //
-		e++;
-		if(skip)
-			continue;
-		// skip spaces //
-		while(cur[e] == L' '){
-			e++;
-			if(e >= cur.length()){
-				// no variable! //
-				Logger::Get()->Info(L"ProcessDataDumb skip spaces no variable, error: 404", true);
-				skip = true;
-				break;
-			}
-		}
-		if(skip)
-			continue;
-		// get temp var //
-		for(e; e < cur.length(); e++){
-			tempvar += cur[e];
-		}
-		// check is it a int value //
-		bool isspecial = false;
-		int specialval = 0;
-		if(specialintvalues != NULL){
-			for(unsigned int indexed = 0; indexed < specialintvalues->size(); indexed++){
-				wstring* tempcompare = specialintvalues->at(indexed)->GetString();
-				if(tempcompare != NULL){
-					if(*tempcompare == tempvar){
-						isspecial = true;
-						specialval = specialintvalues->at(indexed)->GetValue();
-						break;
-					}
-				}
-			}
-
-			if(isspecial){
-				// is int //
-				vec.push_back(shared_ptr<NamedVar>(new NamedVar(name, specialval)));
-				continue;
-			}
-		}
-
-		// check type //
-		if(Misc::WstringTypeCheck(tempvar, 0 /* check int */) == 1){
-			// is int //
-			vec.push_back(shared_ptr<NamedVar>(new NamedVar(name, Convert::WstringToInt(tempvar))));
+		catch (const ExceptionInvalidArguement &e){
+			// print to log //
+			e.PrintToLog();
+			// exception throws, must be invalid line //
+			Logger::Get()->Info(L"NamedVar: ProcessDataDump: contains invalid line, line (with only ASCII characters): "+
+				Convert::StringToWstring(Convert::WstringToString(Lines[i]))+L"\nEND", false);
 			continue;
 		}
-		if(Misc::WstringTypeCheck(tempvar, 3 /* check bool */) == 1){
-			// is int //
-			vec.push_back(shared_ptr<NamedVar>(new NamedVar(name, Convert::WstringFromBoolToInt(tempvar))));
-			continue;
-		}
-		// is string/other //
 
-		if(tempvar[0] == L'"'){
-			// remove " marks //
-			tempvar.erase(tempvar.begin());
-			tempvar.erase(tempvar.begin()+tempvar.size()-1);
+		// check is it valid //
+		if(vec.back()->GetName().size() == 0 || vec.back()->GetName().size() > 10000){
+			// invalid //
+			Logger::Get()->Error(L"NamedVar: ProcessDataDump: invalid NamedVar generated for line: "+Lines[i]+L"\nEND");
+			DEBUG_BREAK;
+			vec.erase(vec.end());
 		}
 
-
-		vec.push_back(shared_ptr<NamedVar>(new NamedVar(name, tempvar)));
 		continue;
 	}
-
-	
 
 	return 0;
 }
@@ -361,8 +341,10 @@ Leviathan::NamedVars::~NamedVars(){
 bool Leviathan::NamedVars::SetValue(const wstring &name, int val){
 	int index = Find(name);
 	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
-		Logger::Get()->Error(L"NamedVars: GetValue: out of range", index);
-		return false;
+		Logger::Get()->Warning(L"NamedVars: SetValue: not found, creating new for: "+name, false);
+
+		this->AddVar(name, val, L"", true);
+		return true;
 	}
 	// set value //
 	Variables[index]->SetValue(val);
@@ -372,8 +354,10 @@ bool Leviathan::NamedVars::SetValue(const wstring &name, int val){
 bool Leviathan::NamedVars::SetValue(const wstring &name, wstring &val){
 	int index = Find(name);
 	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
-		Logger::Get()->Error(L"NamedVars: GetValue: out of range", index);
-		return false;
+		Logger::Get()->Warning(L"NamedVars: SetValue: not found, creating new for: "+name, false);
+
+		this->AddVar(name, 0, val, true);
+		return true;
 	}
 	// set value //
 	Variables[index]->SetValue(val);
@@ -384,8 +368,10 @@ DLLEXPORT bool Leviathan::NamedVars::SetValue(NamedVar &nameandvalues){
 	int index = Find(nameandvalues.Name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
-		Logger::Get()->Error(L"NamedVars: GetValue: out of range", index);
-		return false;
+		Logger::Get()->Warning(L"NamedVars: SetValue: not found, creating new for: "+nameandvalues.GetName(), false);
+
+		Variables.push_back(shared_ptr<NamedVar>(new NamedVar(nameandvalues)));
+		return true;
 	}
 	nameandvalues.Name.clear();
 	// set values with "swap" //
@@ -397,7 +383,7 @@ int Leviathan::NamedVars::GetValue(const wstring &name, int& val1, wstring& val2
 	int index = Find(name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
-		Logger::Get()->Error(L"NamedVars: GetValue: out of range", index);
+		Logger::Get()->Error(L"NamedVars: GetValue: out of range, trying to find: "+name, index);
 		return 6;
 	}
 
@@ -408,7 +394,7 @@ int Leviathan::NamedVars::GetValue(const wstring &name, int& val1) const{
 	int index = Find(name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
-		Logger::Get()->Error(L"NamedVars: GetValue: out of range", index);
+		Logger::Get()->Error(L"NamedVars: GetValue: out of range, trying to find: "+name, index);
 		return 6;
 	}
 
@@ -419,7 +405,7 @@ DLLEXPORT int Leviathan::NamedVars::GetValue(const wstring &name, wstring& val) 
 	int index = Find(name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
-		Logger::Get()->Error(L"NamedVars: GetValue: out of range", index);
+		Logger::Get()->Error(L"NamedVars: GetValue: out of range, trying to find: "+name, index);
 		return 6;
 	}
 
@@ -453,7 +439,6 @@ wstring& Leviathan::NamedVars::GetName(unsigned int index){
 DLLEXPORT bool Leviathan::NamedVars::GetName(unsigned int index, wstring &name) const{
 	ARR_INDEX_CHECKINV(index, Variables.size()){
 		Logger::Get()->Error(L"NamedVars: GetName: out of range", index);
-		//wstring errstr = Misc::GetErrString();
 		return false;
 	}
 	// fetch name to variables //
@@ -494,6 +479,10 @@ DLLEXPORT void Leviathan::NamedVars::AddVar(shared_ptr<NamedVar> values){
 }
 
 void Leviathan::NamedVars::Remove(unsigned int index){
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+		Logger::Get()->Error(L"NamedVars: Remove: out of range", index);
+		return;
+	}
 	// smart pointers //
 	Variables.erase(Variables.begin()+index);
 }
@@ -519,5 +508,8 @@ DLLEXPORT int Leviathan::NamedVars::Find(const wstring &name) const{
 		if(Variables[i]->CompareName(name))
 			return i;
 	}
+#ifdef _DEBUG
+	Logger::Get()->Warning(L"NamedVars: Find: \""+name+L"\" not found");
+#endif // _DEBUG
 	return -1;
 }

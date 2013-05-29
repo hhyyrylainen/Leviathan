@@ -12,21 +12,15 @@ namespace Leviathan{
 	// base exception for other exceptions //
 	class ExceptionNULLPtr : public ExceptionBase{
 	public:
-		DLLEXPORT ExceptionNULLPtr::ExceptionNULLPtr(const wstring& message, int val, void* InvalidPtr);
+		DLLEXPORT ExceptionNULLPtr::ExceptionNULLPtr(const wstring& message, int val, const wstring& sourcefunction, void* InvalidPtr);
 		DLLEXPORT ExceptionNULLPtr::ExceptionNULLPtr(const ExceptionNULLPtr &other);
 		DLLEXPORT ExceptionNULLPtr::~ExceptionNULLPtr();
 
-		DLLEXPORT wstring* GetMessage();
-		DLLEXPORT wstring Get();
-		DLLEXPORT int GetValue();
-		DLLEXPORT void* GetInvalidPtr();
+		DLLEXPORT void* GetInvalidPtr() const;
 
-		DLLEXPORT void PrintToLog();
-
+		DLLEXPORT void PrintToLog() const;
 	private:
-		unique_ptr<wstring> Message;
-		int ErrorValue;
-
+		// specific to this exception //
 		void* InvalidPointer;
 
 	};

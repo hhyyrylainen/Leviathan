@@ -5,28 +5,24 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-ObjectFileProcessor::ObjectFileProcessor(){
+ObjectFileProcessor::ObjectFileProcessor(){}
 
-}
-ObjectFileProcessor::~ObjectFileProcessor(){
-
-}
 vector<IntWstring*> ObjectFileProcessor::ObjectTypes = vector<IntWstring*>();
 // ------------------------------------ //
-void ObjectFileProcessor::Initialize(){
+void Leviathan::ObjectFileProcessor::Initialize(){
 	// register basic types //
 
 }
-void ObjectFileProcessor::Release(){
+void Leviathan::ObjectFileProcessor::Release(){
 	// release memory //
 	SAFE_DELETE_VECTOR(ObjectTypes);
 
 	SAFE_DELETE_VECTOR(RegisteredValues);
 }
-void ObjectFileProcessor::RegisterObjectType(wstring name, int value){
+void Leviathan::ObjectFileProcessor::RegisterObjectType(wstring name, int value){
 	ObjectTypes.push_back(new IntWstring(name, value));
 }
-int ObjectFileProcessor::GetObjectTypeID(wstring &name){
+int Leviathan::ObjectFileProcessor::GetObjectTypeID(wstring &name){
 	for(unsigned int i = 0; i < ObjectTypes.size(); i++){
 		if(*ObjectTypes[i]->Wstr == name)
 			return ObjectTypes[i]->Value;
@@ -34,9 +30,12 @@ int ObjectFileProcessor::GetObjectTypeID(wstring &name){
 
 	return -1;
 }
-
+DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(const wstring &signature, int value){
+	RegisteredValues.push_back(new IntWstring(signature, value));
+}
 // ------------------------------------ //
 DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVar>> &HeaderVars){
+	QUICKTIME_THISSCOPE;
 	vector<shared_ptr<ObjectFileObject>> returned;
 
 	wifstream reader;
@@ -65,16 +64,24 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 
 	bool first = true;
 
+	// get first line //
+	reader.getline(Buff, 400);
+	Line++;
+	readline = Buff;
+
+
 	while((Misc::CountOccuranceWstring(readline, L"objects") == 0) && (reader.good())){
 		if(!first){
 			if(readline.size() != 0)
 				header += L"\n" + readline;
+		} else {
+			header += readline;
+			first = false;
 		}
 
 		reader.getline(Buff, 400);
 		Line++;
 		readline = Buff;
-		first = false;
 	}
 	
 
@@ -156,7 +163,6 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 }
 shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstring firstline, int &Line, const wstring& sourcefile){
 	// monitoring //
-	QUICKTIME_THISSCOPE;
 
 	// this object's definition should be in firstline parameter //
 	shared_ptr<ObjectFileObject> obj(NULL);
@@ -760,23 +766,6 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wif
 // ------------------------------------ //
 
 // ------------------------------------ //
-
-
-
-DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(const wstring &signature, int value){
-	RegisteredValues.push_back(new IntWstring(signature, value));
-}
-
-DLLEXPORT  void Leviathan::ObjectFileProcessor::TrimLineSpaces(wstring* str){
-	// trim beginning //
-	while(str->size() > 0 && str->at(0) == L' ' || str->at(0) == L'	'){
-		str->erase(str->begin());
-	}
-	// trim end //
-	while(str->size() > 0 && str->at(str->length()-1) == L' ' || str->at(str->length()-1) == L'	'){
-		str->erase(str->begin()+str->length()-1);
-	}
-}
 
 DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const wstring &file, vector<shared_ptr<NamedVar>> &headervars,bool UseBinary /*= false*/){
 	// open file for writing //

@@ -7,6 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 namespace Leviathan{
+
 	class Convert{
 	public:
 		//DLLEXPORT static string ToAscii( std::wstring& input );
@@ -27,6 +28,13 @@ namespace Leviathan{
 		DLLEXPORT static int WstringFromBoolToInt(const wstring &i);
 		DLLEXPORT static float WstringToFloat(const wstring &i);
 		DLLEXPORT static wchar_t ToLower(const wchar_t &chara);
+
+
+		// type checks //
+		DLLEXPORT static int WstringTypeCheck(const wstring& data, int typecheckfor);
+		DLLEXPORT static int WstringTypeNameCheck(const wstring &data);
+
+		// template functions //
 
 		template<typename T>
 		DLLEXPORT static wstring ToWstring(const T& val){

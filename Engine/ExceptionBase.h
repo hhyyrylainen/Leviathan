@@ -10,24 +10,27 @@
 
 namespace Leviathan{
 	// base exception for other exceptions //
-	enum EXCEPTIONTYPE {EXCEPTIONTYPE_BASE, EXCEPTIONTYPE_NULLPTR};
+	enum EXCEPTIONTYPE {EXCEPTIONTYPE_BASE, EXCEPTIONTYPE_NULLPTR, EXCEPTIONTYPE_INVALIDARGUEMENT};
 
 	class ExceptionBase /*: public Object*/{
 	public:
 		DLLEXPORT ExceptionBase::ExceptionBase();
-		DLLEXPORT ExceptionBase::ExceptionBase(const wstring& message, int val);
+		DLLEXPORT ExceptionBase::ExceptionBase(const wstring &message, int val, const wstring &source);
 		DLLEXPORT ExceptionBase::ExceptionBase(const ExceptionBase &other);
 		DLLEXPORT virtual ExceptionBase::~ExceptionBase();
 
-		DLLEXPORT wstring* GetMessage();
-		DLLEXPORT wstring Get();
-		DLLEXPORT int GetValue();
+		DLLEXPORT virtual wstring* GetMessage();
+		DLLEXPORT virtual wstring Get() const;
+		DLLEXPORT virtual wstring* GetSource();
+		DLLEXPORT virtual wstring Source() const;
+		DLLEXPORT virtual int GetValue() const;
 
-		DLLEXPORT void PrintToLog();
+		DLLEXPORT virtual void PrintToLog() const = 0;
 
-		DLLEXPORT EXCEPTIONTYPE GetType();
+		DLLEXPORT virtual EXCEPTIONTYPE GetType() const;
 	protected:
 		unique_ptr<wstring> Message;
+		unique_ptr<wstring> SourceFunction;
 		int ErrorValue;
 
 		// store type //

@@ -137,6 +137,7 @@
     <ClCompile Include="ExceptionNULLPtr.cpp" />
     <ClCompile Include="FileHelper.cpp" />
     <ClCompile Include="FileReader.cpp" />
+    <ClCompile Include="FileReaderSimple.cpp" />
     <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="FpsCounter.cpp" />
     <ClCompile Include="GeometryAdvancedLoader.cpp" />
@@ -261,6 +262,8 @@
     <ClInclude Include="ExceptionNULLPtr.h" />
     <ClInclude Include="FileHelper.h" />
     <ClInclude Include="FileReader.h" />
+    <ClInclude Include="FileReaderBuffer.h" />
+    <ClInclude Include="FileReaderSimple.h" />
     <ClInclude Include="FileSystem.h" />
     <ClInclude Include="FpsCounter.h" />
     <ClInclude Include="GeometryAdvancedLoader.h" />

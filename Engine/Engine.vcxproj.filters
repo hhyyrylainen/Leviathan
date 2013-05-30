@@ -477,6 +477,9 @@
     <ClCompile Include="ExceptionInvalidArguement.cpp">
       <Filter>common\Exceptions</Filter>
     </ClCompile>
+    <ClCompile Include="FileReaderSimple.cpp">
+      <Filter>utility</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">
@@ -857,6 +860,12 @@
     </ClInclude>
     <ClInclude Include="ExceptionInvalidArguement.h">
       <Filter>common\Exceptions</Filter>
+    </ClInclude>
+    <ClInclude Include="FileReaderSimple.h">
+      <Filter>utility</Filter>
+    </ClInclude>
+    <ClInclude Include="FileReaderBuffer.h">
+      <Filter>utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

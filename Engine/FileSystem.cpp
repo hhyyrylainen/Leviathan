@@ -1032,24 +1032,21 @@ Scriptindexbegin:
 	}
 }
 
-DLLEXPORT wstring Leviathan::FileSystem::ReadFileEntirely(const wstring &file) throw(...){
+DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wstring &resultreceiver) throw(...){
 	wifstream reader(file, ios::in);
 	if(reader){
 
-		wstring data;
 		// go to end to count length //
 		reader.seekg(0, ios::end);
-		data.resize(reader.tellg());
+		resultreceiver.resize(reader.tellg());
 		// back to start //
 		reader.seekg(0, ios::beg);
 		// read the actual data //
-		reader.read(&data[0], data.size());
+		reader.read(&resultreceiver[0], resultreceiver.size());
 
 		// done, cleanup //
 		reader.close();
-
-		// return the contents //
-		return data;
+		return;
 	}
 	throw ExceptionInvalidArguement(L"cannot read given file", GetLastError(), __WFUNCTION__, L"file");
 }

@@ -87,7 +87,7 @@ namespace Leviathan{
 		DLLEXPORT static bool AppendToFile(const wstring &data, const wstring &filepath);
 		DLLEXPORT static bool GetFilesInDirectory(vector<wstring> &files, wstring dirpath, wstring pattern = L"*.*", bool recursive = true);
 
-		DLLEXPORT static wstring ReadFileEntirely(const wstring &file) throw(...);
+		DLLEXPORT static void ReadFileEntirely(const wstring &file, wstring &resultreceiver) throw(...);
 
 		DLLEXPORT static vector<shared_ptr<FileDefinitionType>>& GetModelFiles();
 		DLLEXPORT static vector<shared_ptr<FileDefinitionType>>& GetSoundFiles();

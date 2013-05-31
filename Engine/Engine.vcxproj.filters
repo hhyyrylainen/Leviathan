@@ -109,6 +109,12 @@
     <Filter Include="animation">
       <UniqueIdentifier>{9fb6bb90-f8ad-4558-a497-0d6b4e16c6ce}</UniqueIdentifier>
     </Filter>
+    <Filter Include="math\Types">
+      <UniqueIdentifier>{aa039031-d579-4101-80fb-7b419a586002}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math\Encryption">
+      <UniqueIdentifier>{dc6e2295-d4af-4395-9bec-d741a28ef383}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp">
@@ -479,6 +485,15 @@
     </ClCompile>
     <ClCompile Include="FileReaderSimple.cpp">
       <Filter>utility</Filter>
+    </ClCompile>
+    <ClCompile Include="EuclideanFunctions.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="MPUINT.cpp">
+      <Filter>math\Encryption</Filter>
+    </ClCompile>
+    <ClCompile Include="RSAEncryption.cpp">
+      <Filter>math\Encryption</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -866,6 +881,15 @@
     </ClInclude>
     <ClInclude Include="FileReaderBuffer.h">
       <Filter>utility</Filter>
+    </ClInclude>
+    <ClInclude Include="MPUINT.h">
+      <Filter>math\Encryption</Filter>
+    </ClInclude>
+    <ClInclude Include="RSAEncryption.h">
+      <Filter>math\Encryption</Filter>
+    </ClInclude>
+    <ClInclude Include="EuclideanFunctions.h">
+      <Filter>math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

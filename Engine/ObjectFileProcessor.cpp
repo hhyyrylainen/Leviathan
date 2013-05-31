@@ -3,6 +3,7 @@
 #ifndef LEVIATHAN_OBJECTFILEPROCESSOR
 #include "ObjectFileProcessor.h"
 #endif
+#include "FileSystem.h"
 using namespace Leviathan;
 // ------------------------------------ //
 ObjectFileProcessor::ObjectFileProcessor(){}
@@ -38,95 +39,102 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 	QUICKTIME_THISSCOPE;
 	vector<shared_ptr<ObjectFileObject>> returned;
 
-	wifstream reader;
-	reader.open(file);
+	// read the file entirely //
+	wstring filecontents;
 
-	if(!reader.good()){
+	try{
+		FileSystem::ReadFileEntirely(file, filecontents);
+	}
+	catch (const ExceptionInvalidArguement &e){
 
-		Logger::Get()->Error(L"FileLoader: ProcessObjectFile 404, file not found", true);
+		Logger::Get()->Error(L"ObjectFileProcessor: ProcessObjectFile: file could not be read, exception:");
+		e.PrintToLog();
 		return returned;
-	}
-
-	// read through heading stuff //
-	wchar_t Read = L' ';
-	while(Read == L' '){
-		reader.read(&Read, 1);
-	}
-
-	// gather values //
-	wstring readline = L"";
-	wchar_t Buff[400];
-
-	int Line = 0;
-
-	// last Read character needs to be added to header //
-	wstring header(&Read, 1);
-
-	bool first = true;
-
-	// get first line //
-	reader.getline(Buff, 400);
-	Line++;
-	readline = Buff;
-
-
-	while((Misc::CountOccuranceWstring(readline, L"objects") == 0) && (reader.good())){
-		if(!first){
-			if(readline.size() != 0)
-				header += L"\n" + readline;
-		} else {
-			header += readline;
-			first = false;
-		}
-
-		reader.getline(Buff, 400);
-		Line++;
-		readline = Buff;
 	}
 	
 
-	NamedVar::ProcessDataDump(header, HeaderVars);
+	// file needs to be split to lines //
+	vector<wstring> Lines;
 
-	readline = L"!";
+	if(Misc::CutWstring(filecontents, L"\n\r", Lines)){
+		// failed //
+		DEBUG_BREAK;
+	}
+
+	// remove excess spaces //
+
+	// TODO: REMOVE COMMENTS ALSO HERE ----------------------------------------------------------------------------------------------------------------
+	for(unsigned int i = 0; i < Lines.size(); i++){
+		Misc::WstringRemovePreceedingTrailingSpaces(Lines[i]);
+	}
+
+	// set line //
+	UINT Line = 0;
+
+	while(true){
+		// check is still valid //
+		if(Line >= (int)Lines.size()){
+			// not valid, "file" ended //
+			DEBUG_BREAK;
+		}
+
+		// skip empty lines //
+		if(Lines[Line].size() == 0){
+			Line++;
+			continue;
+		}
+		// try to create a named var from this line //
+		try{
+			shared_ptr<NamedVar> namevar(new NamedVar(Lines[Line]));
+			// didn't cause an exception, is valid add //
+			HeaderVars.push_back(namevar);
+		}
+		catch(const ExceptionInvalidArguement &e){
+
+			// end found //
+#ifdef _DEBUG
+			Logger::Get()->Info(L"ObjectFileProcessor: Header ended because of line: "+Lines[Line]);
+#endif // _DEBUG
+			break;
+		}
+
+		Line++;
+	}
 
 	// read objects //
-	while((reader.good()) && (!Misc::WstringStartsWith(readline, L"-!-"))){
-		reader.getline(Buff, 400);
+	while(Line < (int)Lines.size() && (!Misc::WstringStartsWith(Lines[Line], L"-!-"))){
+		// move to next line, on first iteration skips "objects {" part //
 		Line++;
-		wstring readline(Buff);
-		
-		Misc::WstringRemovePreceedingTrailingSpaces(readline);
 
 		// skip empty //
-
-
-		if(readline.size() < 2) // can't really be anything
+		if(Lines[Line].size() == 0){ 
 			continue;
+		}
 
 		// test for possible objects/structs and stuff //
 		wstring deftype;
-		Misc::WstringGetFirstWord(readline, deftype);
+		Misc::WstringGetFirstWord(Lines[Line], deftype);
 
 		if(deftype == L"o"){
 			// there's a object //
-			shared_ptr<ObjectFileObject> objs = ReadObjectBlock(reader, readline, Line, file);
-			if(objs.get() != NULL){
+			//shared_ptr<ObjectFileObject> objs = ReadObjectBlock(reader, readline, Line, file);
+			//if(objs.get() != NULL){
 
-				returned.push_back(objs);
-			} else {
-				Logger::Get()->Error(L"FileLoader: ProcessObjectFile: ReadObjectBlock returned NULL object", true);
-			}
+			//	returned.push_back(objs);
+			//} else {
+			//	Logger::Get()->Error(L"FileLoader: ProcessObjectFile: ReadObjectBlock returned NULL object", true);
+			//}
 			continue;
 		}
 		if(deftype == L"s"){
 			// script related //
 
 			wstring second;
-			Misc::WstringGetSecondWord(readline, second);
+			Misc::WstringGetSecondWord(Lines[Line], second);
 
 			if(second == L"run:"){
 				// run a script, like right now! //
-				wstring scriptinstructions = Misc::WstringRemoveFirstWords(readline, 2);
+				wstring scriptinstructions = Misc::WstringRemoveFirstWords(Lines[Line], 2);
 
 				unique_ptr<ScriptScript> inlscript(new ScriptScript());
 				// set variables //
@@ -158,7 +166,6 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 		}
 	}
 
-	reader.close();
 	return returned;
 }
 shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstring firstline, int &Line, const wstring& sourcefile){

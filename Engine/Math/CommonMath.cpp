@@ -5,6 +5,8 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
+#include "MPUINT.h"
+#include "Random.h"
 
 float MMath::RandomNumber(float Min, float Max)
 {
@@ -95,5 +97,31 @@ DLLEXPORT bool Leviathan::MMath::IsEqual(double x, double y){
 DLLEXPORT bool Leviathan::MMath::IsEqual(float x, float y){
 	const double epsilon = 1e-5;
 	return abs(x - y) <= epsilon * abs(x);
+}
+/*--------------------------------------
+Original Function written by Philip J. Erdelsky October 25, 2001 (revised August 22, 2002)
+Code Edited by Henri Hyyryläinen
+----------------------------------------*/
+DLLEXPORT  bool Leviathan::MMath::IsPrime(const mpuint &p){
+	mpuint pminus1(p);
+	pminus1 -= 1;
+	unsigned count = 101;
+	while (--count != 0)
+	{
+		mpuint r(p.length);
+		mpuint x(p.length);
+		{
+			for (unsigned i = 0; i < x.length; i++)
+				x.value[i] = (USHORT)Random::Get()->GetNumber(0, USHRT_MAX) << 8 | (USHORT)Random::Get()->GetNumber(0, USHRT_MAX);
+		}
+		x %= p;
+		if (x != 0)
+		{
+			mpuint::Power(x, pminus1, p, r);
+			if (r != 1)
+				return false;
+		}
+	}
+	return true;
 }
 

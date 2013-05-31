@@ -130,6 +130,7 @@
     <ClCompile Include="DDsHandler.cpp" />
     <ClCompile Include="Define.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="EuclideanFunctions.cpp" />
     <ClCompile Include="Event.cpp" />
     <ClCompile Include="EventableGui.cpp" />
     <ClCompile Include="EventHandler.cpp" />
@@ -153,6 +154,7 @@
     <ClCompile Include="ExceptionBase.cpp" />
     <ClCompile Include="LineTokenizer.cpp" />
     <ClCompile Include="LoadedAnimation.cpp" />
+    <ClCompile Include="MPUINT.cpp" />
     <ClCompile Include="NormalModelData.cpp" />
     <ClCompile Include="ObjectFileList.cpp" />
     <ClCompile Include="ObjectFileObject.cpp" />
@@ -200,6 +202,7 @@
     <ClCompile Include="Rendering\TextureShader.cpp" />
     <ClCompile Include="Rendering\ShaderManager.cpp" />
     <ClCompile Include="ResolutionScaling.cpp" />
+    <ClCompile Include="RSAEncryption.cpp" />
     <ClCompile Include="ScriptArguement.cpp" />
     <ClCompile Include="ScriptCaller.cpp" />
     <ClCompile Include="ScriptException.cpp" />
@@ -255,6 +258,7 @@
     <ClInclude Include="Define.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="ErrorTypes.h" />
+    <ClInclude Include="EuclideanFunctions.h" />
     <ClInclude Include="Event.h" />
     <ClInclude Include="EventableGui.h" />
     <ClInclude Include="EventHandler.h" />
@@ -281,6 +285,7 @@
     <ClInclude Include="ExceptionBase.h" />
     <ClInclude Include="LineTokenizer.h" />
     <ClInclude Include="LoadedAnimation.h" />
+    <ClInclude Include="MPUINT.h" />
     <ClInclude Include="NormalModelData.h" />
     <ClInclude Include="ObjectFileList.h" />
     <ClInclude Include="ObjectFileObject.h" />
@@ -329,6 +334,7 @@
     <ClInclude Include="Rendering\TextureShader.h" />
     <ClInclude Include="Rendering\ShaderManager.h" />
     <ClInclude Include="ResolutionScaling.h" />
+    <ClInclude Include="RSAEncryption.h" />
     <ClInclude Include="ScriptArguement.h" />
     <ClInclude Include="ScriptCaller.h" />
     <ClInclude Include="ScriptException.h" />

@@ -11,7 +11,9 @@
 Original Functions written by Philip J. Erdelsky October 25, 2001 (revised August 22, 2002)
 Code Edited by Henri Hyyryläinen
 ----------------------------------------*/
+namespace Leviathan{
 
-void EuclideanAlgorithm(const mpuint &x, const mpuint &y, mpuint &a, mpuint &b, mpuint &g);
+	void EuclideanAlgorithm(const mpuint &x, const mpuint &y, mpuint &a, mpuint &b, mpuint &g);
 
+}
 #endif

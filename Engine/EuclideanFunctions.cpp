@@ -19,7 +19,7 @@ Numbers of type mpuint are accessed by reference because in some applications
 
 This function will fail in undefined ways if either x or y is zero.
 ----------------------------------------------------------------------------*/
-void EuclideanAlgorithm(const mpuint &x, const mpuint &y, mpuint &a, mpuint &b, mpuint &g){
+void Leviathan::EuclideanAlgorithm(const mpuint &x, const mpuint &y, mpuint &a, mpuint &b, mpuint &g){
 
 	unsigned length = x.length;
 	if (y.length > length)

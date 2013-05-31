@@ -27,7 +27,17 @@ namespace Leviathan{
 		DLLEXPORT static int WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const wstring &file, vector<shared_ptr<NamedVar>> &headervars,bool UseBinary = false);
 
 	private:
-		static shared_ptr<ObjectFileObject> ReadObjectBlock(wifstream &reader, wstring firstline, int &Line, const wstring& sourcefile);
+		static shared_ptr<ObjectFileObject> ReadObjectBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile);
+		// handling object blocks //
+		static void ProcessObjectFileBlockListBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+			shared_ptr<ObjectFileObject> obj, int &Handleindex);
+		static void ProcessObjectFileBlockVariableBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+			shared_ptr<ObjectFileObject> obj, int &Handleindex);
+		static void ProcessObjectFileBlockScriptBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+			shared_ptr<ObjectFileObject> obj, int &Handleindex);
+		static void ProcessObjectFileBlockTextBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+			shared_ptr<ObjectFileObject> obj, int &Handleindex);
+
 
 		// ------------------------- //
 		static vector<IntWstring*> ObjectTypes;

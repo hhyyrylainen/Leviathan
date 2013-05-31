@@ -329,14 +329,38 @@ DLLEXPORT wchar_t Leviathan::WstringIterator::GetCurrentCharacter(){
 	}
 }
 
+DLLEXPORT void Leviathan::WstringIterator::ReInit(wstring* text, bool TakesOwnership /*= false*/){
+	// copied from ctor //
 
+	// only delete if wanted //
+	HandlesDelete = TakesOwnership;
+	Data = text;
 
+	// start from beginning of string //
+	IteratorPosition = 0;
+
+	// set right type //
+	IsPtrUsed = true;
+
+	// clear flags //
+	CurrentFlags->ClearFlags();
+}
+
+DLLEXPORT void Leviathan::WstringIterator::ReInit(const wstring& text){
+	// copied from ctor //
+	HandlesDelete = false;
+	Data = NULL;
+
+	// start from beginning of string //
+	IteratorPosition = 0;
+
+	// set right type //
+	IsPtrUsed = false;
+
+	// clear flags //
+	CurrentFlags->ClearFlags();
+}
 // ------------------------------------ //
-
-
-
-
-
 ITERATORCALLBACK_RETURNTYPE Leviathan::FindFirstQuotedString(WstringIterator* instance, Object* IteratorData, int parameters){
 	// check is current element a quote //
 	wchar_t CurChar(instance->GetCurrentCharacter());
@@ -481,19 +505,32 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIter
 
 	if(((charvalue >= 32) && (charvalue <= 57)) || ((charvalue >= 63) && (charvalue <= 90)) || ((charvalue >= 96) && (charvalue <= 122))){
 		// is just a ascii char with some text characters included //
+
 		IsValid = true;
 	} else {
 		if(stoptype != UNNORMALCHARACTER_TYPE_NON_ASCII){
 			// we can check if it allows some other characters //
 			if(stoptype == UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS){
-				if(!((charvalue >= 91) && (charvalue <= 93)) && !((charvalue >= 58) && (charvalue <= 62)) && ((charvalue < 123) && (charvalue >= 32))){
-					// is still valid! //
+				// skip if this character is to be ignored //
+				if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL)){
+
 					IsValid = true;
+				} else {
+					if(!((charvalue >= 91) && (charvalue <= 93)) && !((charvalue >= 58) && (charvalue <= 62)) && ((charvalue < 123) 
+						&& (charvalue >= 32)))
+					{
+						// is still valid! //
+						IsValid = true;
+					}
 				}
 			}
 		}
 	}
-
+	if(stoptype == UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE){
+		// check for whitespace //
+		if(charvalue < 33)
+			IsValid = false;
+	}
 
 	if(IsValid){
 		// check is this first character //
@@ -542,20 +579,25 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilEquality(WstringItera
 		// check for all possible value separators //
 		if(charvalue == (int)'=' || charvalue == (int)':'){
 
-			IsStop = true;
+			if(!instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL)){
+				// if ignored don't stop //
+				IsStop = true;
+			}
 		}
 	} else {
 		if(stoptype == EQUALITYCHARACTER_TYPE_EQUALITY){
 			// check for equality sign //
 			if(charvalue == (int)'='){
-
-				IsStop = true;
+				if(!instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL)){
+					IsStop = true;
+				}
 			}
 		} else if (stoptype == EQUALITYCHARACTER_TYPE_DOUBLEDOTSTYLE){
 			// check does it match the characters //
 			if(charvalue == (int)':'){
-
-				IsStop = true;
+				if(!instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL)){
+					IsStop = true;
+				}
 			}
 		}
 	}

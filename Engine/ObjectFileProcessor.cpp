@@ -6,6 +6,8 @@
 #include "FileSystem.h"
 using namespace Leviathan;
 // ------------------------------------ //
+#include "WstringIterator.h"
+
 ObjectFileProcessor::ObjectFileProcessor(){}
 
 vector<IntWstring*> ObjectFileProcessor::ObjectTypes = vector<IntWstring*>();
@@ -56,7 +58,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 	// file needs to be split to lines //
 	vector<wstring> Lines;
 
-	if(Misc::CutWstring(filecontents, L"\n\r", Lines)){
+	if(Misc::CutWstring(filecontents, L"\n", Lines)){
 		// failed //
 		DEBUG_BREAK;
 	}
@@ -101,11 +103,9 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 		Line++;
 	}
 
-	// read objects //
-	while(Line < (int)Lines.size() && (!Misc::WstringStartsWith(Lines[Line], L"-!-"))){
-		// move to next line, on first iteration skips "objects {" part //
-		Line++;
-
+	// read objects // // move to next line, on first iteration skips "objects {" part //
+	while(++Line < (int)Lines.size() && (!Misc::WstringStartsWith(Lines[Line], L"-!-"))){
+		
 		// skip empty //
 		if(Lines[Line].size() == 0){ 
 			continue;
@@ -117,13 +117,13 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 
 		if(deftype == L"o"){
 			// there's a object //
-			//shared_ptr<ObjectFileObject> objs = ReadObjectBlock(reader, readline, Line, file);
-			//if(objs.get() != NULL){
+			shared_ptr<ObjectFileObject> objs = ReadObjectBlock(Line, Lines, file);
+			if(objs.get() != NULL){
 
-			//	returned.push_back(objs);
-			//} else {
-			//	Logger::Get()->Error(L"FileLoader: ProcessObjectFile: ReadObjectBlock returned NULL object", true);
-			//}
+				returned.push_back(objs);
+			} else {
+				Logger::Get()->Error(L"FileLoader: ProcessObjectFile: ReadObjectBlock returned NULL object", true);
+			}
 			continue;
 		}
 		if(deftype == L"s"){
@@ -168,60 +168,66 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 
 	return returned;
 }
-shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wifstream &reader, wstring firstline, int &Line, const wstring& sourcefile){
+shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile){
 	// monitoring //
 
-	// this object's definition should be in firstline parameter //
+	// this object's definition should be on the Line in Lines parameter //
 	shared_ptr<ObjectFileObject> obj(NULL);
 
 	// split definitions from first line //
-	vector<wstring> lines;
-	Misc::CutWstring(firstline, L" ", lines);
+	vector<wstring> lineparts;
+	Misc::CutWstring(Lines[Line], L" ", lineparts);
 
 	// used for error reporting //
 	int StartLine = Line;
 
-	wstring Name = L"ERROR-NAME";
+	wstring Name(L"");
+
 	vector<shared_ptr<wstring>> Prefixes;
 
-	wstring TypeN = L"ETYPE";
+	wstring TypeN(L"");
 
-	for(unsigned int i = 0; i < lines.size(); i++){
-		if(lines[i].size() == 0){
+	WstringIterator itr(NULL, false);
 
-			Logger::Get()->Info(L"FileLoader: ReadObjectBlock: empty object prefix, prefixes/line: "+firstline);
+	for(size_t i = 0; i < lineparts.size(); i++){
+		if(lineparts[i].size() == 0){
+
+			Logger::Get()->Info(L"FileLoader: ReadObjectBlock: empty object prefix, prefixes/line: "+Lines[Line]);
 			continue;
 		}
-		if(lines[i].length() == 1){
+		if(lineparts[i].length() == 1){
 			// check is it o //
-			if(lines[i] == L"o"){
+			if(lineparts[i] == L"o"){
 				// skip it //
 				continue;
 			}
 		}
-		if(lines[i][0] == L'{'){
+		if(lineparts[i][0] == L'{'){
 			break;
 		}
-		if(lines[i][0] == L'"'){
+		if(lineparts[i][0] == L'"'){
 			// must be the name //
-			if(Name != L"ERROR-NAME"){
+			if(Name.size() != 0){
 				Logger::Get()->Error(L"FileLoader: ReadObjectBlock: object has multiple names! "+Name);
 				continue;
 			}
-			// remove " marks //
-			Name = Misc::Replace(lines[i], L"\"", L"");
+			// get the text inside " marks //
+			itr.ReInit(&lineparts[i], false);
+
+			// wstring iterator can be used to skip all sorts of junk outside quotes //
+			Name = *itr.GetStringInQuotes(QUOTETYPE_BOTH, true).get();
 			continue;
 		}
 		// if no type, must be it //
-		if(TypeN == L"ETYPE"){
-			TypeN = lines[i];
+		if(TypeN.size() == 0){
+			TypeN = lineparts[i];
 			continue;
 		}
 
 		// just a prefix //
-		Prefixes.push_back(shared_ptr<wstring>(new wstring(lines[i])));
+		Prefixes.push_back(shared_ptr<wstring>(new wstring(lineparts[i])));
 	}
-	if(Name == L"ERROR-NAME"){
+	if(Name.size() == 0){
 
 		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: object doesn't have a name! prefixes "+ Misc::WstringStitchTogether(Prefixes, L" , ")
 			+L" line ", Line, true);
@@ -231,447 +237,40 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wif
 	obj = shared_ptr<ObjectFileObject>(new ObjectFileObject(Name, GetObjectTypeID(TypeN), TypeN));
 	obj->Prefixes = Prefixes;
 
-	// load it's contents //
-	wchar_t Buff[400];
-	wstring currentline = L"!";
-
+	// process blocks contents //
 	int Level = 0;
 
 	bool Insomething = false;
-	bool Read = true;
+	bool MoveToNextLine = true;
 	int Something = -1;
 
 	wstring SpesLines = L"";
 
 	int Handleindex = 0;
 
-	while((Level > -1) && (reader.good())){
-		if(Read){
-			reader.getline(Buff, 400);
-			Line++;
-			currentline = Buff;
-
-			if(currentline.size() < 1)
-				continue;
-
-			// skip empty //
-			Misc::WstringRemovePreceedingTrailingSpaces(currentline);
-
-			// skip comment lines //
-			if(Misc::WstringStartsWith(currentline, L"//"))
-				continue;
-
-		}
-
-		if(Insomething){
-
+	while((Level > -1) && (++Line < (int)Lines.size())){
+		// check is this inside block //
+		if(Something != 0){
+			// handle the block //
 			switch(Something){
 			case 1:
 				{
-					// list //
-					if(Misc::WstringStartsWith(currentline, L"}")){
-						// object ended //
-						Insomething = false;
-						Read = true;
-						Something = 0;
-						Level--;
-
-						// parse variables //
-						if(SpesLines.size() > 0){
-							vector<shared_ptr<NamedVar>> HeaderVars;
-
-							NamedVar::ProcessDataDump(SpesLines, HeaderVars, &RegisteredValues);
-
-							vector<shared_ptr<NamedVar>>* currobjs = obj->Contents[Handleindex]->Variables->GetVec();
-							for(unsigned int i = 0; i < HeaderVars.size(); i++){
-								currobjs->push_back(HeaderVars[i]);
-							}
-							HeaderVars.clear();
-						}
-
-						SpesLines = L"";
-
-						continue;
-					}					
-					// if begins with <t> is plain text //
-					if(Misc::WstringStartsWith(currentline, L"<t>")){
-						// store plain text //
-						wstring line = Misc::WstringRemoveFirstWords(currentline, 1);
-						if(line[line.size()-1] == L';'){
-							line.erase(line.begin()+line.size()-1);
-						}
-						obj->Contents[Handleindex]->Lines.push_back(new wstring(line));
-						continue;
-					}
-
-					// parse variable //
-					SpesLines += L"\n"+currentline;
 
 				}
 				break;
 			case 2:
 				{
-					// script variable blob //
-					if(Misc::WstringStartsWith(currentline, L"}")){
-						// object ended //
-						Insomething = false;
-						Read = true;
-						Something = 0;
-						Level--;
-
-						SpesLines = L"";
-
-						continue;
-					}	
-
-					if(Misc::WstringStartsWith(currentline, L"var")){
-						// proper variable //
-
-						// split words //
-						vector<wstring> Words;
-						Misc::CutWstring(Misc::WstringRemoveFirstWords(currentline, 1), L" ", Words);
-
-						int stype = 0;
-						wstring varname = L"";
-						DataBlock* value = NULL;
-
-						bool invalue = false;;
-
-						for(unsigned int i = 0; i < Words.size(); i++){
-							if(Words[i].size() < 1){
-								Words.erase(Words.begin()+i);
-								i--;
-							}
-
-							if(i == 0){
-								// type //
-								if(Misc::WstringCompareInsensitive(Words[i], L"int")){
-									stype = DATABLOCK_TYPE_INT;
-									continue;
-								}
-								if(Misc::WstringCompareInsensitive(Words[i], L"float")){
-									stype = DATABLOCK_TYPE_FLOAT;
-									continue;
-								}
-								if(Misc::WstringCompareInsensitive(Words[i], L"bool")){
-									stype = DATABLOCK_TYPE_BOOL;
-									continue;
-								}
-								if(Misc::WstringCompareInsensitive(Words[i], L"wstring")){
-									stype = DATABLOCK_TYPE_WSTRING;
-									continue;
-								}
-								if(Misc::WstringCompareInsensitive(Words[i], L"void")){
-									stype = DATABLOCK_TYPE_VOIDPTR;
-									continue;
-								}
-							}
-							if(!invalue){
-								// check for name //
-								if(Words[i][0] == L'"'){
-									// name //
-
-									Words[i] = Misc::Replace(Words[i], L"\"", L"");
-
-									if(Misc::CountOccuranceWstring(Words[i], L";") > 0){
-										// end //
-
-										Words[i] = Misc::Replace(Words[i], L";", L"");
-										varname = Words[i];
-
-										break;
-									}
-
-									varname = Words[i];
-
-								}
-								if(Words[i][0] == L'='){
-									invalue = true;
-								}
-								continue;
-							}
-
-							// check for string //
-							if(Words[i][0] == L'"'){
-
-								if(stype != DATABLOCK_TYPE_WSTRING){
-
-									Logger::Get()->Info(L"ScriptInterface: ReadObjectBlock: s variables block cannot assign string to other type, converted!", false);
-									stype = DATABLOCK_TYPE_WSTRING;
-								}
-
-								Words[i].erase(Words[i].begin());
-
-								// stitch rest of words together //
-								wstring thing;
-								for(unsigned int a = i; a < Words.size(); a++){
-									if(a != i)
-										thing += L" ";
-									thing += Words[a];
-								}
-
-								// remove end row and " //
-								for(int a = thing.size()-1; a > -1; a--){
-									if(thing[a] == L';'){
-										thing.erase(thing.begin()+a);
-										continue;
-									}
-									if(thing[a] == L'"'){
-										thing.erase(thing.begin()+a);
-										break;
-									}
-								}
-
-								value = new WstringBlock(thing);
-
-								break;
-							}
-							// remove ; from messing with assign //
-							Words[i] = Misc::Replace(Words[i], L";", L" ");
-
-							// parse based on type //
-							if(stype == DATABLOCK_TYPE_INT){
-
-								value = new IntBlock(Convert::WstringToInt(Words[i]));
-								break;
-							}
-							if(stype == DATABLOCK_TYPE_FLOAT){
-
-								value = new FloatBlock(Convert::WstringToFloat(Words[i]));
-								break;
-							}
-							if(stype == DATABLOCK_TYPE_BOOL){
-
-								value = new BoolBlock(Convert::WstringFromBoolToInt(Words[i]) != 0);
-								break;
-							}
-							//if(Misc::WstringCompareInsensitive(Words[i], L"void")){
-							//	stype = DATABLOCKTYPE_VOIDPTR;
-							//	break;
-							//}
-							Logger::Get()->Error(L"ScriptInterface: Invalid value for type: check var type!"+currentline);
-
-						}
-
-						// end //
-
-						// check for validness //
-						if((varname == L"") | (value == NULL) | (stype < 3)){
-
-							Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: s variables contains invalid var "+currentline);
-							continue;
-						}
-						//obj->Varss[Handleindex]->Vars.push_back(new ScriptNamedArguement(varname, value, stype, true, true));
-
-						continue;
-					}
-
-					Logger::Get()->Info(L"ScriptInterface: ReadObjectBlock: s variables block contains invalid line "+currentline, false);
 
 				}
 				break;
 			case 3:
 				{
-					bool Working = true;
 
-					wstring instructions = L"";
-					int IntendLevel = 0;
-					wstring Typename = L"";
-					wstring SName = L"";
-
-					// first line should be definition //
-					if(Misc::WstringStartsWith(currentline, L"inl")){
-						// get script type //
-						vector<wstring> Words;
-						Misc::CutWstring(currentline, L" ", Words);
-
-						int prevtype = 0;
-
-						IntendLevel++;
-
-						for(unsigned int a = 1; a < Words.size(); a++){
-							if(prevtype != 0){
-								switch(prevtype){
-								case 1:
-									{
-										// type specification
-										if((Words[a][0] == L'"') && (Words[a][Words[a].size()-1] == L'"')){
-											Typename = Misc::Replace(Words[a], L"\"", L"");
-											prevtype = 0;
-											break;
-										}
-
-										Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: inl has invalid type "+Words[a]);
-
-										prevtype = 0;
-									}
-									break;
-
-								}
-
-
-								continue;
-							}
-
-							if(Words[a] == L"type:"){
-								prevtype = 1;
-								continue;
-							}
-						}
-					}
-
-
-					bool Incode = false;
-					while((reader.good()) & Working){
-						reader.getline(Buff, 400);
-						Line++;
-						currentline = Buff;
-
-						if(currentline.size() < 1)
-							continue;
-
-						// skip empty //
-						for(unsigned int i = 0; i < currentline.size(); i++){
-							if(currentline[i] == L' '){
-								currentline.erase(currentline.begin());
-								i--;
-								continue;
-							} else {
-								break;
-							}
-						}
-						if(Incode){
-							if(currentline == L"@%};"){
-								Incode = false;
-								IntendLevel = 1;
-								continue;
-							}
-							instructions += currentline+L"\n";
-							continue;
-						}
-						if(IntendLevel == 0){
-							if(Misc::WstringStartsWith(currentline, L"inl")){
-								// get script type //
-								vector<wstring> Words;
-								Misc::CutWstring(currentline, L" ", Words);
-
-								int prevtype = 0;
-
-								IntendLevel++;
-
-								for(unsigned int a = 1; a < Words.size(); a++){
-									if(prevtype != 0){
-										switch(prevtype){
-										case 1:
-											{
-												// type specification
-												if((Words[a][0] == L'"') && (Words[a][Words[a].size()-1] == L'"')){
-													Typename = Misc::Replace(Words[a], L"\"", L"");
-													prevtype = 0;
-													break;
-												}
-
-												Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: inl has invalid type "+Words[a]);
-
-												prevtype = 0;
-											}
-											break;
-
-										}
-
-
-										continue;
-									}
-
-									if(Words[a] == L"type:"){
-										prevtype = 1;
-										continue;
-									}
-								}
-							}
-							if(Misc::WstringStartsWith(currentline, L"}")){
-								Working = false;
-								//Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: Script body blob contained no definitions ");
-								break;
-							}
-							continue;
-						}
-						if(IntendLevel == 1){
-							if(Misc::WstringStartsWith(currentline, L"name")){
-								vector<wstring> Words;
-								Misc::CutWstring(currentline, L" = ", Words);
-
-								if(Words.size() != 2){
-
-									Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid "+currentline, Words.size(), true);
-									continue;
-								}
-
-								// remove unnecessary stuff from value //
-								while(Words[1][Words[1].size()-1] == L';'){
-									Words[1].erase(Words[1].begin()+Words[1].size()-1);
-								}
-								while(Words[1][0] == L' '){
-									Words[1].erase(Words[1].begin());
-								}
-
-								SName = Words[1];
-								continue;
-							}
-							if(Misc::WstringStartsWith(currentline, L"body")){
-								IntendLevel = 2;
-								Incode = true;
-								continue;
-							}
-							if(Misc::WstringStartsWith(currentline, L"}")){
-								IntendLevel = 0;
-								// create script //
-								ScriptScript* tscript = new ScriptScript();
-								tscript->Instructions = instructions;
-								tscript->Name = SName;
-								tscript->Source = sourcefile+L":OBJ:"+obj->Name;
-
-								obj->Script = shared_ptr<ScriptScript>(tscript);
-								//obj->Script = new ScriptScript();
-								//obj->Script->Instructions = instructions;
-								//obj->Script->Name = SName;
-								//obj->Script->Source = sourcefile+L":OBJ:"+obj->Name;
-
-
-								//Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: Script body blob contained no definitions ");
-								continue;
-							}
-
-						}
-
-					}
-
-
-					Insomething = false;
-					Something = 0;
-					Level--;
 				}
 			break;
 			case 4:
 				{
-					// text block //
-					if(Misc::WstringStartsWith(currentline, L"}")){
-						// object ended //
-						Insomething = false;
-						Read = true;
-						Something = 0;
-						Level--;
 
-						SpesLines = L"";
-
-						continue;
-					}					
-					// it is always text, just add a new line //
-
-					// store plain text //
-
-					obj->TextBlocks[Handleindex]->Lines.push_back(new wstring(currentline));
-					continue;
 				}
 				break;
 			}
@@ -680,23 +279,22 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wif
 		}
 
 
-
-		if(Misc::WstringStartsWith(currentline, L"}")){
+		if(Misc::WstringStartsWith(Lines[Line], L"}")){
 			// object ended //
-			Insomething = false;
-			Read = true;
 			Something = 0;
 			Level--;
 			continue;
 		}
 
-		wstring start = L"";
-		Misc::WstringGetFirstWord(currentline, start);
+		// update iterator //
+		itr.ReInit(&Lines[Line], false);
+		
+		shared_ptr<wstring> start = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE);
 
-		if(start == L"l"){
+		if(*start == L"l"){
 			// data list //
 			Insomething = true;
-			Read = true;
+			MoveToNextLine = true;
 			Something = 1;
 
 			Level++;
@@ -713,7 +311,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wif
 		if((start == L"t") || (start == L"l<t>")){
 			// text block //
 			Insomething = true;
-			Read = true;
+			MoveToNextLine = true;
 			Something = 4;
 
 			Level++;
@@ -736,7 +334,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wif
 
 			if(type == L"variables"){
 				Insomething = true;
-				Read = true;
+				MoveToNextLine = true;
 				Something = 2;
 
 				//obj->Varss.push_back(shared_ptr<ScriptVariableHolder>(new ScriptVariableHolder()));
@@ -746,7 +344,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wif
 			}
 			if(type == L"scripts"){
 				Insomething = true;
-				Read = true;
+				MoveToNextLine = true;
 				Something = 3;
 
 				//obj->Scripts.push_back(new ScriptScript());
@@ -769,7 +367,417 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(wif
 	return obj;
 }
 // ------------------------------------ //
+void Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+	shared_ptr<ObjectFileObject> obj)
+{
+	// list //
+	if(Misc::WstringStartsWith(currentline, L"}")){
+		// object ended //
+		Insomething = false;
+		MoveToNextLine = true;
+		Something = 0;
+		Level--;
 
+		// parse variables //
+		if(SpesLines.size() > 0){
+			vector<shared_ptr<NamedVar>> HeaderVars;
+
+			NamedVar::ProcessDataDump(SpesLines, HeaderVars, &RegisteredValues);
+
+			vector<shared_ptr<NamedVar>>* currobjs = obj->Contents[Handleindex]->Variables->GetVec();
+			for(unsigned int i = 0; i < HeaderVars.size(); i++){
+				currobjs->push_back(HeaderVars[i]);
+			}
+			HeaderVars.clear();
+		}
+
+		SpesLines = L"";
+
+		continue;
+	}					
+	// if begins with <t> is plain text //
+	if(Misc::WstringStartsWith(currentline, L"<t>")){
+		// store plain text //
+		wstring line = Misc::WstringRemoveFirstWords(currentline, 1);
+		if(line[line.size()-1] == L';'){
+			line.erase(line.begin()+line.size()-1);
+		}
+		obj->Contents[Handleindex]->Lines.push_back(new wstring(line));
+		continue;
+	}
+
+	// parse variable //
+	SpesLines += L"\n"+currentline;
+
+}
+
+void Leviathan::ObjectFileProcessor::ProcessObjectFileBlockVariableBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+	shared_ptr<ObjectFileObject> obj)
+{
+	// script variable blob //
+	if(Misc::WstringStartsWith(currentline, L"}")){
+		// object ended //
+		Insomething = false;
+		MoveToNextLine = true;
+		Something = 0;
+		Level--;
+
+		SpesLines = L"";
+
+		continue;
+	}	
+
+	if(Misc::WstringStartsWith(currentline, L"var")){
+		// proper variable //
+
+		// split words //
+		vector<wstring> Words;
+		Misc::CutWstring(Misc::WstringRemoveFirstWords(currentline, 1), L" ", Words);
+
+		int stype = 0;
+		wstring varname = L"";
+		DataBlock* value = NULL;
+
+		bool invalue = false;;
+
+		for(unsigned int i = 0; i < Words.size(); i++){
+			if(Words[i].size() < 1){
+				Words.erase(Words.begin()+i);
+				i--;
+			}
+
+			if(i == 0){
+				// type //
+				if(Misc::WstringCompareInsensitive(Words[i], L"int")){
+					stype = DATABLOCK_TYPE_INT;
+					continue;
+				}
+				if(Misc::WstringCompareInsensitive(Words[i], L"float")){
+					stype = DATABLOCK_TYPE_FLOAT;
+					continue;
+				}
+				if(Misc::WstringCompareInsensitive(Words[i], L"bool")){
+					stype = DATABLOCK_TYPE_BOOL;
+					continue;
+				}
+				if(Misc::WstringCompareInsensitive(Words[i], L"wstring")){
+					stype = DATABLOCK_TYPE_WSTRING;
+					continue;
+				}
+				if(Misc::WstringCompareInsensitive(Words[i], L"void")){
+					stype = DATABLOCK_TYPE_VOIDPTR;
+					continue;
+				}
+			}
+			if(!invalue){
+				// check for name //
+				if(Words[i][0] == L'"'){
+					// name //
+
+					Words[i] = Misc::Replace(Words[i], L"\"", L"");
+
+					if(Misc::CountOccuranceWstring(Words[i], L";") > 0){
+						// end //
+
+						Words[i] = Misc::Replace(Words[i], L";", L"");
+						varname = Words[i];
+
+						break;
+					}
+
+					varname = Words[i];
+
+				}
+				if(Words[i][0] == L'='){
+					invalue = true;
+				}
+				continue;
+			}
+
+			// check for string //
+			if(Words[i][0] == L'"'){
+
+				if(stype != DATABLOCK_TYPE_WSTRING){
+
+					Logger::Get()->Info(L"ScriptInterface: ReadObjectBlock: s variables block cannot assign string to other type, converted!", false);
+					stype = DATABLOCK_TYPE_WSTRING;
+				}
+
+				Words[i].erase(Words[i].begin());
+
+				// stitch rest of words together //
+				wstring thing;
+				for(unsigned int a = i; a < Words.size(); a++){
+					if(a != i)
+						thing += L" ";
+					thing += Words[a];
+				}
+
+				// remove end row and " //
+				for(int a = thing.size()-1; a > -1; a--){
+					if(thing[a] == L';'){
+						thing.erase(thing.begin()+a);
+						continue;
+					}
+					if(thing[a] == L'"'){
+						thing.erase(thing.begin()+a);
+						break;
+					}
+				}
+
+				value = new WstringBlock(thing);
+
+				break;
+			}
+			// remove ; from messing with assign //
+			Words[i] = Misc::Replace(Words[i], L";", L" ");
+
+			// parse based on type //
+			if(stype == DATABLOCK_TYPE_INT){
+
+				value = new IntBlock(Convert::WstringToInt(Words[i]));
+				break;
+			}
+			if(stype == DATABLOCK_TYPE_FLOAT){
+
+				value = new FloatBlock(Convert::WstringToFloat(Words[i]));
+				break;
+			}
+			if(stype == DATABLOCK_TYPE_BOOL){
+
+				value = new BoolBlock(Convert::WstringFromBoolToInt(Words[i]) != 0);
+				break;
+			}
+			//if(Misc::WstringCompareInsensitive(Words[i], L"void")){
+			//	stype = DATABLOCKTYPE_VOIDPTR;
+			//	break;
+			//}
+			Logger::Get()->Error(L"ScriptInterface: Invalid value for type: check var type!"+currentline);
+
+		}
+
+		// end //
+
+		// check for validness //
+		if((varname == L"") | (value == NULL) | (stype < 3)){
+
+			Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: s variables contains invalid var "+currentline);
+			continue;
+		}
+		//obj->Varss[Handleindex]->Vars.push_back(new ScriptNamedArguement(varname, value, stype, true, true));
+
+		continue;
+	}
+
+	Logger::Get()->Info(L"ScriptInterface: ReadObjectBlock: s variables block contains invalid line "+currentline, false);
+
+}
+
+void Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+	shared_ptr<ObjectFileObject> obj)
+{
+	bool Working = true;
+
+	wstring instructions = L"";
+	int IntendLevel = 0;
+	wstring Typename = L"";
+	wstring SName = L"";
+
+	// first line should be definition //
+	if(Misc::WstringStartsWith(currentline, L"inl")){
+		// get script type //
+		vector<wstring> Words;
+		Misc::CutWstring(currentline, L" ", Words);
+
+		int prevtype = 0;
+
+		IntendLevel++;
+
+		for(unsigned int a = 1; a < Words.size(); a++){
+			if(prevtype != 0){
+				switch(prevtype){
+				case 1:
+					{
+						// type specification
+						if((Words[a][0] == L'"') && (Words[a][Words[a].size()-1] == L'"')){
+							Typename = Misc::Replace(Words[a], L"\"", L"");
+							prevtype = 0;
+							break;
+						}
+
+						Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: inl has invalid type "+Words[a]);
+
+						prevtype = 0;
+					}
+					break;
+
+				}
+
+
+				continue;
+			}
+
+			if(Words[a] == L"type:"){
+				prevtype = 1;
+				continue;
+			}
+		}
+	}
+
+
+	bool Incode = false;
+	while((reader.good()) & Working){
+		reader.getline(Buff, 400);
+		Line++;
+		currentline = Buff;
+
+		if(currentline.size() < 1)
+			continue;
+
+		// skip empty //
+		for(unsigned int i = 0; i < currentline.size(); i++){
+			if(currentline[i] == L' '){
+				currentline.erase(currentline.begin());
+				i--;
+				continue;
+			} else {
+				break;
+			}
+		}
+		if(Incode){
+			if(currentline == L"@%};"){
+				Incode = false;
+				IntendLevel = 1;
+				continue;
+			}
+			instructions += currentline+L"\n";
+			continue;
+		}
+		if(IntendLevel == 0){
+			if(Misc::WstringStartsWith(currentline, L"inl")){
+				// get script type //
+				vector<wstring> Words;
+				Misc::CutWstring(currentline, L" ", Words);
+
+				int prevtype = 0;
+
+				IntendLevel++;
+
+				for(unsigned int a = 1; a < Words.size(); a++){
+					if(prevtype != 0){
+						switch(prevtype){
+						case 1:
+							{
+								// type specification
+								if((Words[a][0] == L'"') && (Words[a][Words[a].size()-1] == L'"')){
+									Typename = Misc::Replace(Words[a], L"\"", L"");
+									prevtype = 0;
+									break;
+								}
+
+								Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: inl has invalid type "+Words[a]);
+
+								prevtype = 0;
+							}
+							break;
+
+						}
+
+
+						continue;
+					}
+
+					if(Words[a] == L"type:"){
+						prevtype = 1;
+						continue;
+					}
+				}
+			}
+			if(Misc::WstringStartsWith(currentline, L"}")){
+				Working = false;
+				//Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: Script body blob contained no definitions ");
+				break;
+			}
+			continue;
+		}
+		if(IntendLevel == 1){
+			if(Misc::WstringStartsWith(currentline, L"name")){
+				vector<wstring> Words;
+				Misc::CutWstring(currentline, L" = ", Words);
+
+				if(Words.size() != 2){
+
+					Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid "+currentline, Words.size(), true);
+					continue;
+				}
+
+				// remove unnecessary stuff from value //
+				while(Words[1][Words[1].size()-1] == L';'){
+					Words[1].erase(Words[1].begin()+Words[1].size()-1);
+				}
+				while(Words[1][0] == L' '){
+					Words[1].erase(Words[1].begin());
+				}
+
+				SName = Words[1];
+				continue;
+			}
+			if(Misc::WstringStartsWith(currentline, L"body")){
+				IntendLevel = 2;
+				Incode = true;
+				continue;
+			}
+			if(Misc::WstringStartsWith(currentline, L"}")){
+				IntendLevel = 0;
+				// create script //
+				ScriptScript* tscript = new ScriptScript();
+				tscript->Instructions = instructions;
+				tscript->Name = SName;
+				tscript->Source = sourcefile+L":OBJ:"+obj->Name;
+
+				obj->Script = shared_ptr<ScriptScript>(tscript);
+				//obj->Script = new ScriptScript();
+				//obj->Script->Instructions = instructions;
+				//obj->Script->Name = SName;
+				//obj->Script->Source = sourcefile+L":OBJ:"+obj->Name;
+
+
+				//Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: Script body blob contained no definitions ");
+				continue;
+			}
+
+		}
+
+	}
+
+
+	Insomething = false;
+	Something = 0;
+	Level--;
+}
+
+void Leviathan::ObjectFileProcessor::ProcessObjectFileBlockTextBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+	shared_ptr<ObjectFileObject> obj)
+{
+	// text block //
+	if(Misc::WstringStartsWith(currentline, L"}")){
+		// object ended //
+		Insomething = false;
+		MoveToNextLine = true;
+		Something = 0;
+		Level--;
+
+		SpesLines = L"";
+
+		continue;
+	}					
+	// it is always text, just add a new line //
+
+	// store plain text //
+
+	obj->TextBlocks[Handleindex]->Lines.push_back(new wstring(currentline));
+	continue;
+}
 // ------------------------------------ //
 
 // ------------------------------------ //
@@ -795,10 +803,10 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 
 		// starting line //
 		if(temp->Prefixes.size() != 0){
-			writer << L"    o " << temp->TName << L" " << Misc::VectorValuesToSingleSmartPTR<wstring>(temp->Prefixes, L" ", true) << L" \"" 
+			writer << L"	o " << temp->TName << L" " << Misc::VectorValuesToSingleSmartPTR<wstring>(temp->Prefixes, L" ", true) << L" \"" 
 				<< temp->Name << L"\" {" << endl;
 		} else {
-			writer << L"    o " << temp->TName << L" \"" << temp->Name << L"\" {" << endl;
+			writer << L"	o " << temp->TName << L" \"" << temp->Name << L"\" {" << endl;
 		}
 
 		// contents //
@@ -806,18 +814,18 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 			ObjectFileList* tmp = temp->Contents[a];
 
 			// start //
-			writer << L"        l " << tmp->Name << L" {" << endl;
+			writer << L"		l " << tmp->Name << L" {" << endl;
 			// add text lines first //
 			for(unsigned int ind = 0; ind < tmp->Lines.size(); ind++){
-				writer << L"            <t> " << *tmp->Lines[ind] << endl;
+				writer << L"		<t> " << *tmp->Lines[ind] << endl;
 			}
 			// variable lines //
 			vector<shared_ptr<NamedVar>>* tempvals = tmp->Variables->GetVec();
 			for(unsigned int ind = 0; ind < tempvals->size(); ind++){
-				writer << L"            " << tempvals->at(ind)->ToText(0) << endl;
+				writer << L"			" << tempvals->at(ind)->ToText(0) << endl;
 			}
 			// end //
-			writer << L"        }" << endl;
+			writer << L"		}" << endl;
 		}
 		// plain text lines //
 		for(unsigned int a = 0;  a < temp->TextBlocks.size(); a++){
@@ -830,23 +838,23 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 			}
 
 			// start //
-			writer << L"        t " << tmp->Name << L" {" << endl;
+			writer << L"		t " << tmp->Name << L" {" << endl;
 			// add text lines //
 			for(unsigned int ind = 0; ind < tmp->Lines.size(); ind++){
 				writer << L"            " << *tmp->Lines[ind] << endl;
 			}
 			// end //
-			writer << L"        }" << endl;
+			writer << L"		}" << endl;
 		}
 		// script block //
 		if(temp->Script != NULL){
 			ScriptScript* scrpt = temp->Script.get();
 
 			// start //
-			writer << L"        s scripts {" << endl;
-			writer << L"            inl type: \"script\" {" << endl;
-			writer << L"                name = " << scrpt->Name << L";" << endl;
-			writer << L"                body {" << endl;
+			writer << L"		s scripts {" << endl;
+			writer << L"			inl type: \"script\" {" << endl;
+			writer << L"				name = " << scrpt->Name << L";" << endl;
+			writer << L"				body {" << endl;
 			// write instructions //
 			vector<wstring> SplitInstrLines;
 			Misc::CutWstring(scrpt->Instructions, L"\n", SplitInstrLines);
@@ -859,23 +867,25 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 
 					continue;
 				}
-				writer << L"                    " << SplitInstrLines[i] << endl;
+				writer << L"					" << SplitInstrLines[i] << endl;
 			}
 			// body end //
-			writer << L"                @%};" << endl;
-			writer << L"            }" << endl;
+			writer << L"				@%};" << endl;
+			writer << L"			}" << endl;
 			// end //
-			writer << L"        }" << endl;
+			writer << L"		}" << endl;
 		}
 
 
 		// ending bracket //
-		writer << L"    }" << endl;
+		writer << L"	}" << endl;
 	}
 
 	// end //
 	writer << L"}"/* << endl*/;
 	return true;
 }
+
+
 
 vector<IntWstring*> Leviathan::ObjectFileProcessor::RegisteredValues;

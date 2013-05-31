@@ -41,7 +41,7 @@ void mpuint::operator = (const mpuint &n)
 	for (; i < n.length; i++)
 	{
 		if (n.value[i] != 0)
-			numeric_overflow();
+			DEBUG_BREAK;
 	}
 }
 
@@ -64,11 +64,11 @@ void mpuint::operator += (const mpuint &n)
 		carry = sum >> 16;
 	}
 	if (carry != 0)
-		numeric_overflow();
+		DEBUG_BREAK;
 	for (; i < n.length; i++)
 	{
 		if (n.value[i] != 0)
-			numeric_overflow();
+			DEBUG_BREAK;
 	}
 }
 
@@ -83,7 +83,7 @@ void mpuint::operator += (unsigned short n)
 			if (++value[i] != 0)
 				return;
 		}
-		numeric_overflow();
+		DEBUG_BREAK;
 	}
 }
 
@@ -98,11 +98,11 @@ void mpuint::operator -= (const mpuint &n)
 		value[i] -= subtrahend;
 	}
 	if (borrow != 0)
-		numeric_overflow();
+		DEBUG_BREAK;
 	for (; i < n.length; i++)
 	{
 		if (n.value[i] != 0)
-			numeric_overflow();
+			DEBUG_BREAK;
 	}
 }
 
@@ -118,7 +118,7 @@ void mpuint::operator -= (unsigned short n)
 			if (--value[i] != 0xFFFF)
 				return;
 		}
-		numeric_overflow();
+		DEBUG_BREAK;
 	}
 }
 
@@ -141,7 +141,7 @@ void mpuint::operator *= (const mpuint &n)
 			while (product != 0)
 			{
 				if (k >= length)
-					numeric_overflow();
+					DEBUG_BREAK;
 				product += value[k];
 				value[k] = product;
 				product >>= 16;
@@ -163,7 +163,7 @@ void mpuint::operator *= (unsigned short n)
 		product >>= 16;
 	}
 	if (product != 0)
-		numeric_overflow();
+		DEBUG_BREAK;
 }
 void mpuint::operator /= (unsigned short n)
 {
@@ -303,7 +303,7 @@ void mpuint::shift(unsigned bit)
 		bit = x >> 16; 
 	} 
 	if (bit != 0) 
-		numeric_overflow();
+		DEBUG_BREAK;
 } 
 
 
@@ -311,7 +311,7 @@ void mpuint::Divide(const mpuint &dividend, const mpuint &divisor, mpuint &quoti
 	mpuint &remainder)
 { 
 	if (divisor.IsZero())
-		numeric_overflow(); 
+		DEBUG_BREAK; 
 	remainder = 0; 
 	quotient = 0;
 	unsigned i = dividend.length; 

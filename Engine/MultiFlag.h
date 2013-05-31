@@ -55,6 +55,8 @@ namespace Leviathan{
 
 		DLLEXPORT bool IsSet(int value);
 
+		DLLEXPORT void ClearFlags();
+
 
 		DLLEXPORT inline vector<shared_ptr<Flag>> GetFlags();
 	private:

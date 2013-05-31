@@ -45,7 +45,13 @@ bool MultiFlag::IsSet(int value){
 	return false;
 }
 // ------------------------------------ //
+
+DLLEXPORT void Leviathan::MultiFlag::ClearFlags(){
+	// using smart pointers, safe to just clear //
+	Flags.clear();
+}
+
+// ------------------------------------ //
 vector<shared_ptr<Flag>> MultiFlag::GetFlags(){
 	return Flags;
 }
-// ------------------------------------ //

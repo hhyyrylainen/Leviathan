@@ -11,10 +11,10 @@ using namespace Leviathan::Gui;
 #include "FileSystem.h"
 
 #ifdef _DEBUG
-#pragma warning (disable : 4800)
+//#pragma warning (disable : 4800)
 #endif
 
-GuiManager::GuiManager(){
+Leviathan::GuiManager::GuiManager(){
 	ObjectAmountChanged = false;
 	Foreground = NULL;
 
@@ -24,17 +24,17 @@ GuiManager::GuiManager(){
 
 	staticaccess = this;
 }
-GuiManager::~GuiManager(){
+Leviathan::GuiManager::~GuiManager(){
 	// on quit calls //
 	SAFE_DELETE(CollectionCall);
 	delete MainInput;
 	Release();
 }
 
-GuiManager* GuiManager::staticaccess = NULL;
-GuiManager* GuiManager::Get(){return staticaccess; };
+GuiManager* Leviathan::GuiManager::staticaccess = NULL;
+GuiManager* Leviathan::GuiManager::Get(){return staticaccess; };
 // ------------------------------------ //
-bool GuiManager::Init(AppDef* vars){
+bool Leviathan::GuiManager::Init(AppDef* vars){
 
 	graph = Engine::GetEngine()->GetGraphics();
 	// create press listeners //
@@ -51,7 +51,7 @@ bool GuiManager::Init(AppDef* vars){
 
 
 
-void GuiManager::Release(){
+void Leviathan::GuiManager::Release(){
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		if(Objects[i]->HigherLevel == true){
 			((RenderableGuiObject*)Objects[i])->Release(graph);
@@ -66,7 +66,7 @@ void GuiManager::Release(){
 	}
 }
 // ------------------------------------ //
-void GuiManager::GuiTick(int mspassed){
+void Leviathan::GuiManager::GuiTick(int mspassed){
 	// animations are now in OnAnimationTime
 	bool Shift = false;
 	bool Ctrl = false;
@@ -112,17 +112,6 @@ void GuiManager::GuiTick(int mspassed){
 				}
 				// collection disabling //
 				GuiComboPress(current);
-				//if((KeyPresses[i] == 'D')){
-				//	// toggle debug collection //
-				//	int debug = GetCollection(L"Debug", -1);
-				//	if(Collections[debug]->Visible){
-				//		DisableCollection(Collections[debug]->ID, false);
-
-				//	} else {
-
-				//		ActivateCollection(Collections[debug]->ID, false);
-				//	}
-				//}
 			}
 		}
 
@@ -143,7 +132,7 @@ void GuiManager::GuiTick(int mspassed){
 	}
 	KeysDown.clear();
 }
-void GuiManager::AnimationTick(int mspassed){
+void Leviathan::GuiManager::AnimationTick(int mspassed){
 	// animations //
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		if(Objects[i]->ObjectLevel >= GUI_OBJECT_LEVEL_ANIMATEABLE){
@@ -151,7 +140,7 @@ void GuiManager::AnimationTick(int mspassed){
 		}
 	}
 }
-void GuiManager::Render(){
+void Leviathan::GuiManager::Render(){
 	UpdateArrays();
 
 	for(unsigned int i = 0; i < NeedRendering.size(); i++){
@@ -159,11 +148,11 @@ void GuiManager::Render(){
 	}
 }
 // ------------------------------------ //
-void GuiManager::QuickSendPress(int keyinfo){
+void Leviathan::GuiManager::QuickSendPress(int keyinfo){
 
 }
 
-void GuiManager::OnResize(){
+void Leviathan::GuiManager::OnResize(){
 	// update objects that by default need this //
 
 
@@ -173,13 +162,13 @@ void GuiManager::OnResize(){
 }
 
 // ------------------------------------ //
-bool GuiManager::AddGuiObject(BaseGuiObject* obj){
+bool Leviathan::GuiManager::AddGuiObject(BaseGuiObject* obj){
 	ObjectAmountChanged = true;
 
 	Objects.push_back(obj);
 	return true;
 }
-bool GuiManager::AddGuiObject(BaseGuiObject* obj, int collectionid){
+bool Leviathan::GuiManager::AddGuiObject(BaseGuiObject* obj, int collectionid){
 	ObjectAmountChanged = true;
 
 
@@ -193,7 +182,7 @@ bool GuiManager::AddGuiObject(BaseGuiObject* obj, int collectionid){
 	}
 	return true;
 }
-void GuiManager::DeleteObject(int id){
+void Leviathan::GuiManager::DeleteObject(int id){
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		if(Objects[i]->ID == id){
 			ObjectAmountChanged = true;
@@ -223,7 +212,7 @@ void GuiManager::DeleteObject(int id){
 
 	
 }
-int GuiManager::GetObjectIndexFromId(int id){
+int Leviathan::GuiManager::GetObjectIndexFromId(int id){
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		if(Objects[i]->ID == id)
 			return i;
@@ -231,7 +220,7 @@ int GuiManager::GetObjectIndexFromId(int id){
 	}
 	return -1;
 }
-BaseGuiObject* GuiManager::GetObject(unsigned int index){
+BaseGuiObject* Leviathan::GuiManager::GetObject(unsigned int index){
 	 ARR_INDEX_CHECK(index, Objects.size()){
 		 return Objects[index];
 	 }
@@ -248,15 +237,7 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 
 
 	for(unsigned int i = 0; i < data.size(); i++){
-		// legacy code //
-		if(data[i]->Name == L"Body"){ // this doesn't get produced anymore //
-			// not required for anything //
-			// delete current //
-			data.erase(data.begin()+i);
-			i--;
-			continue;
-		}
-
+		// check what type the object is //
 		if(data[i]->TName == L"Collection"){
 			int createdid = IDFactory::GetID();
 
@@ -266,7 +247,7 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 			int Strict = false;
 
 			for(unsigned int a = 0; a < data[i]->Contents.size(); a++){
-				if(Misc::WstringCompareInsensitive(data[i]->Contents[a]->Name, L"members")){
+				if(data[i]->Contents[a]->Name == L"members"){
 					for(unsigned int tind = 0; tind < data[i]->Contents[a]->Lines.size(); tind++){
 						vector<wstring> Words;
 						Misc::CutWstring(*data[i]->Contents[a]->Lines[tind], L" ", Words);
@@ -282,14 +263,16 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 
 						}
 					}
+					continue;
 				}
-				if(Misc::WstringCompareInsensitive(data[i]->Contents[a]->Name, L"params")){
-					int junk = 0;
+				if(data[i]->Contents[a]->Name == L"params"){
 
-					data[i]->Contents[a]->Variables->GetValue(L"ToggleOn", junk, Toggle);
+					data[i]->Contents[a]->Variables->GetValue(L"ToggleOn", Toggle);
 					data[i]->Contents[a]->Variables->GetValue(L"Enabled", Enabled);
 					data[i]->Contents[a]->Variables->GetValue(L"Visible", Visible);
 					data[i]->Contents[a]->Variables->GetValue(L"Strict", Strict);
+
+					continue;
 				}
 
 			}
@@ -305,27 +288,36 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 		}
 		if(data[i]->TName == L"TextLabel"){
 			int TID = IDFactory::GetID();
-			bool IDFound = false;
-			for(unsigned int a = 0; a < data[i]->Prefixes.size(); a++){
-				if(IDFound){
+			for(size_t a = 0; a < data[i]->Prefixes.size(); a++){
+				if(Misc::WstringStartsWith(*data[i]->Prefixes[a], L"ID")){
+					// this is a token line, split it //
+					vector<Token*> tokens;
+					LineTokeNizer::SplitTokenToRTokens(*data[i]->Prefixes[a], tokens);
 
-					int FakeID = Convert::WstringToInt(*data[i]->Prefixes[a]);
-					FakeIDRealID.push_back(Int2(FakeID, TID));
+					// check size //
+					if(tokens.size() != 2){
+						// invalid id //
+						DEBUG_BREAK;
+					}
+
+					FakeIDRealID.push_back(Int2(Convert::WstringToInt(tokens[1]->GetChangeableData()), TID));
+
+					// don't forget to release memory //
+					SAFE_DELETE_VECTOR(tokens);
 					break;
 				}
-				if(Misc::WstringCompareInsensitive(*data[i]->Prefixes[a], L"ID")){
-					IDFound = TRUE;
-				}
 			}
+			// create object //
 			TextLabel* curlabel = new TextLabel(TID);
+			// add to temporary objects //
 			TempOs.push_back(curlabel);
 
 			int x = -36003;
 			int y = -36003;
 			int width = -36003;
 			int height = -36003;
-			//int areabsolute = false; // not used anymore AKA always false //
-			wstring text = L"NONE";
+
+			wstring text(L"");
 
 			Float4 StartColor;
 			Float4 EndColor;
@@ -337,103 +329,91 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 			int ListenOn = -1;
 
 			// get values for initiation //
-			for(unsigned int a = 0; a < data[i]->Contents.size(); a++){
-				if(Misc::WstringCompareInsensitive(data[i]->Contents[a]->Name, L"params")){
-					int junk = 0;
+			for(size_t a = 0; a < data[i]->Contents.size(); a++){
+				// check what list is being processed //
+				if(data[i]->Contents[a]->Name == L"params"){
+					int tmpi = 0;
+					// get variables //
 					data[i]->Contents[a]->Variables->GetValue(L"X", x);
 					data[i]->Contents[a]->Variables->GetValue(L"Y", y);
-					//data[i]->Contents[a]->Variables->GetValue(L"IsPosAbsolute", areabsolute);
-					
 
 					data[i]->Contents[a]->Variables->GetValue(L"Width", width);
 					data[i]->Contents[a]->Variables->GetValue(L"Height", height);
 
-					data[i]->Contents[a]->Variables->GetValue(L"TextSizeMod", junk);
-					TextSize = (float)junk/100;
+					data[i]->Contents[a]->Variables->GetValue(L"TextSizeMod", tmpi);
+					TextSize = (float)tmpi/100;
 					data[i]->Contents[a]->Variables->GetValue(L"AutoAdjust", AutoAdjust);
 					data[i]->Contents[a]->Variables->GetValue(L"ListenOn", ListenOn);
 
-					data[i]->Contents[a]->Variables->GetValue(L"StartText", junk, text);
-					data[i]->Contents[a]->Variables->GetValue(L"Font", junk, Font);
+					data[i]->Contents[a]->Variables->GetValue(L"StartText", text);
+					data[i]->Contents[a]->Variables->GetValue(L"Font", Font);
 
 					for(int tval = 0; tval < 3; tval++){
-						wstring svalue = L"";
-						switch(tval){
-						case 0:
-							{
-								data[i]->Contents[a]->Variables->GetValue(L"StartColor", junk, svalue);
-							}
-						break;
-						case 1:
-							{
-								data[i]->Contents[a]->Variables->GetValue(L"EndColor", junk, svalue);
-							}
-						break;
-						case 2:
-							{
-								data[i]->Contents[a]->Variables->GetValue(L"TextColor", junk, svalue);
-							}
-						break;
-						}
-						// trim excess //
-						while(svalue[0] != L'('){
-							svalue.erase(svalue.begin());
-						}
-						svalue.erase(svalue.begin());
-						while(svalue[svalue.size()-1] != L')'){
-							svalue.erase(svalue.begin()+svalue.size()-1);
-						}
-						svalue.erase(svalue.begin()+svalue.size()-1);	
-						// split 4 floats //
-						vector<wstring> SplitResult;
-						Misc::CutWstring(svalue, L",", SplitResult);
+						// a job for tokens //
+						vector<Token*> tokens;
 
-						Float4 curcolor;
+						// split tokens from right source //
+						if(tval == 0)
+							LineTokeNizer::SplitTokenToRTokens(*data[i]->Contents[a]->Variables->ReturnValue(L"StartColor"), tokens);
+						if(tval == 1)
+							LineTokeNizer::SplitTokenToRTokens(*data[i]->Contents[a]->Variables->ReturnValue(L"EndColor"), tokens);
+						if(tval == 2)
+							LineTokeNizer::SplitTokenToRTokens(*data[i]->Contents[a]->Variables->ReturnValue(L"TextColor"), tokens);
 
-						if(SplitResult.size() == 4){
-							curcolor = Float4(Convert::WstringToFloat(SplitResult[0]),Convert::WstringToFloat(SplitResult[1]),Convert::WstringToFloat(SplitResult[2]),Convert::WstringToFloat(SplitResult[3]));
-
-						} else if(SplitResult.size() == 3){
-							curcolor = Float4(Convert::WstringToFloat(SplitResult[0]),Convert::WstringToFloat(SplitResult[1]),Convert::WstringToFloat(SplitResult[2]),1.0f);
-
-						} else {
-							Logger::Get()->Error(L"GuiManager: ParseGuiFileResult: Invalid color required 3 or 4 params got"+svalue);
-							break;
+						if(tokens.size() != 2){
+							// invalid definition //
+							DEBUG_BREAK;
 						}
-						switch(tval){
-						case 0:
-							{
-								StartColor = curcolor;
+
+						// get values from second token //
+						WstringIterator itr(&tokens[1]->GetChangeableData(), false);
+
+						float Vals[] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+						// iterate 4 decimal values //
+						for(int loopitrfloat = 0; loopitrfloat < 4; loopitrfloat++){
+							unique_ptr<wstring> valstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
+
+							// check for no characters //
+							if(valstr->size() == 0){
+								// damn //
+								DEBUG_BREAK;
+								Logger::Get()->Error(L"GuiManager: ParseGuiFileResult: Invalid color required 3 or 4 params got: only "
+									+Convert::IntToWstring(loopitrfloat));
+								break;
 							}
-						break;
-						case 1:
-							{
-								EndColor = curcolor;
-							}
-						break;
-						case 2:
-							{
-								TextColor = curcolor;
-							}
-						break;
+							Vals[loopitrfloat] = Convert::WstringToFloat(*valstr);
 						}
+						// create value //
+						Float4 curcolor(Vals[0], Vals[1], Vals[2], Vals[3]);
+
+						// set to right one //
+						if(tval == 0)
+							StartColor = curcolor;
+						if(tval == 1)
+							EndColor = curcolor;
+						if(tval == 2)
+							TextColor = curcolor;
+
+						// don't forget to release memory //
+						SAFE_DELETE_VECTOR(tokens);
 					}
 				}
 			}
 
 			// init with correct values //
-			//curlabel->Init(x,y,areabsolute,width, height, text, StartColor, EndColor, TextColor, TextSize, AutoAdjust != 0, Font, ListenOn);
-			curlabel->Init(x,y,width, height, text, StartColor, EndColor, TextColor, TextSize, AutoAdjust != 0, Font, ListenOn);
+			curlabel->Init(x, y, width, height, text, StartColor, EndColor, TextColor, TextSize, AutoAdjust != 0, Font, ListenOn);
 			curlabel->Scripting = shared_ptr<ScriptObject>(data[i]->CreateScriptObjectAndReleaseThis(SCRIPT_CALLCONVENTION_GUI_OPEN, 
 				GOBJECT_TYPE_TEXTLABEL));
-			// this function should have deleted everything related to that object, so it should be safe to just erase it //
+			// this function should have deleted everything related to that object (smart pointers and dtors take care of rest,
+			// so it should be safe to just erase it //
 			data.erase(data.begin()+i);
 			i--;
 
 			continue;
 		}
 
-		Logger::Get()->Error(L"GuiManager: ParseGuiFileResult: Unrecognized type ! "+data[i]->TName);
+		Logger::Get()->Error(L"GuiManager: ParseGuiFileResult: Unrecognized type !: "+data[i]->TName);
 		// delete current //
 		data.erase(data.begin()+i);
 		i--;
@@ -471,11 +451,11 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 
 	return;
 }
-void GuiManager::WriteGuiToFile(wstring file){
+DLLEXPORT void Leviathan::GuiManager::WriteGuiToFile(const wstring &file){
 
 }
 // ------------------------------------ //
-void GuiManager::UpdateArrays(){
+void Leviathan::GuiManager::UpdateArrays(){
 	if(!ObjectAmountChanged)
 		return;
 
@@ -484,7 +464,7 @@ void GuiManager::UpdateArrays(){
 	vector<RenderableGuiObject*> temp;
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		if(Objects[i]->HigherLevel){
-			// higher than base object, minimum of renderable //
+			// higher than base object, minimum of render able //
 			temp.push_back((RenderableGuiObject*)Objects[i]);
 		}
 
@@ -1130,3 +1110,67 @@ bool GuiManager::HasForeGround(){
 	return (Foreground != NULL);
 }
 
+// ----------------- GuiCollection --------------------- //
+
+Leviathan::GuiCollection::GuiCollection(wstring name, int id, bool visible, wstring toggle, bool strict /*= false*/, bool exclusive /*= false*/, bool enabled /*= true*/){
+	Name = name;
+	ID = id;
+	Visible = visible;
+	Enabled = enabled;
+	Exclusive = exclusive;
+
+	wchar_t chara = L'\n';
+	KEYSPECIAL additional = KEYSPECIAL_NONE;
+	bool Shift = false;
+	bool Alt = false;
+	bool Ctrl = false;
+
+	if(Misc::CountOccuranceWstring(toggle, L"+")){
+		vector<wstring> words;
+		Misc::CutWstring(toggle, L"+",words);
+
+
+
+		for(unsigned int i = 0; i < words.size(); i++){
+			if(words[i].size() == 0)
+				continue;
+			if(i+1 >= words.size()){
+				// last must be character
+				chara = words[i][0];
+			}
+			if(Misc::WstringCompareInsensitive(words[i], L"alt")){
+				Alt = true;
+				continue;
+			}
+			if(Misc::WstringCompareInsensitive(words[i], L"shift")){
+				Shift = true;
+				continue;
+			}
+			if(Misc::WstringCompareInsensitive(words[i], L"ctrl")){
+				Ctrl = true;
+				continue;
+			}
+		}
+
+	} else {
+		if(toggle.size() != 0)
+			chara = toggle[0];
+	}
+	additional = Key::ConstructSpecial(Shift, Alt, Ctrl);
+	Toggle = Key(chara, additional);
+
+	Strict = strict;
+}
+
+Leviathan::GuiCollection::GuiCollection(){
+	Name = Misc::GetErrString();
+	ID = -1;
+	Visible = false;
+	Enabled = false;
+}
+
+Leviathan::GuiCollection::~GuiCollection(){
+	// release script //
+
+	// possibly release children here //
+}

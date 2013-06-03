@@ -514,12 +514,8 @@ DLLEXPORT int Leviathan::Misc::IsWstringBeforeInAlphabet(const wstring& str, con
 }
 
 DLLEXPORT bool Leviathan::Misc::IsCharacterNumber(wchar_t chara){
-	for(unsigned int i = 0; i < ValidNumberCharacters.length(); i++){
-		if(ValidNumberCharacters[i] == chara){
-			return true;
-		}
-	}
-	return false;
+	// check is it in valid characters //
+	return Misc::WstringContains(ValidNumberCharacters, chara);
 }
 
 DLLEXPORT void Leviathan::Misc::WstringRemovePreceedingTrailingSpaces(wstring& str){

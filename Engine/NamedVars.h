@@ -35,6 +35,8 @@ namespace Leviathan{
 		DLLEXPORT wstring& GetName();
 		DLLEXPORT void GetName(wstring &name) const;
 
+		DLLEXPORT wstring* GetPointedValue();
+
 		DLLEXPORT void SetName(const wstring &name);
 		DLLEXPORT bool CompareName(const wstring &name) const;
 		// ------------------------------------ //
@@ -86,6 +88,8 @@ namespace Leviathan{
 		DLLEXPORT int GetValue(const wstring &name, int& val1) const;
 		DLLEXPORT int GetValue(const wstring &name, wstring& val) const;
 
+		// warning should be used with caution //
+		DLLEXPORT wstring* ReturnValue(const wstring &name);
 		// ------------------------------------ //
 		DLLEXPORT bool IsIntValue(const wstring &name) const;
 		DLLEXPORT bool IsIntValue(unsigned int index) const;

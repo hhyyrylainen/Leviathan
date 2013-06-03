@@ -88,7 +88,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 		}
 		// try to create a named var from this line //
 		try{
-			shared_ptr<NamedVar> namevar(new NamedVar(Lines[Line]));
+			shared_ptr<NamedVar> namevar(new NamedVar(Lines[Line], &RegisteredValues));
 			// didn't cause an exception, is valid add //
 			HeaderVars.push_back(namevar);
 		}
@@ -387,7 +387,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line,
 	// parse variable //
 
 	try{
-		obj->Contents[Handleindex]->Variables->GetVec()->push_back(shared_ptr<NamedVar>(new NamedVar(Lines[Line])));
+		obj->Contents[Handleindex]->Variables->GetVec()->push_back(shared_ptr<NamedVar>(new NamedVar(Lines[Line], &RegisteredValues)));
 	}
 	catch (const ExceptionInvalidArguement &e){
 

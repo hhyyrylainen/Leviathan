@@ -407,7 +407,6 @@ void Engine::Tick(bool Force){
 	TickCount++;
 	
 	// update input //
-	
 	Inputs->Update();
 
 	// sound tick //
@@ -418,15 +417,6 @@ void Engine::Tick(bool Force){
 
 	Gui->GuiTick(TimePassed);
 
-	// main camera tick (if active //
-	//MainCamera->SetFrameTime(SinceRender/2); // shouldn't be set here, renderer handles this //
-	//if((Focused) && (!Gui->HasForeGround())){
-	//	MainCamera->ReadInput(Inputs, true, true);
-	//} else if((Focused) && (Gui->HasForeGround())){
-	//	MainCamera->ReadInput(Inputs, false, true);
-	//} else {
-	//	MainCamera->ClearInputs();
-	//}
 	if(Focused){
 		if(!GuiActive){
 			MainCamera->ReadInput(Inputs, true, true);
@@ -466,11 +456,7 @@ void Engine::Tick(bool Force){
 		
 		// send updated rendering statistics //
 		RenderTimer->ReportStats(Mainstore);
-
-		//DEBUG_OUTPUT(matrix);
 	}
-		//((Gui::TextLabel*)Gui->GetObjectW(0))->Update(50, 50+Mainstore->GetTickCount()/5, -1,-1, true,L"Tick: "+Convert::IntToWstring(Mainstore->GetTickCount()));
-
 
 	//TimePassed = -TICKSPEED;
 	//TimePassed = 0;

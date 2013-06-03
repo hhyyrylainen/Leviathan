@@ -42,7 +42,7 @@ Leviathan::NamedVar::NamedVar(const wstring& name, const wstring& val) : Name(na
 	Isint = false;
 }
 
-DLLEXPORT Leviathan::NamedVar::NamedVar(wstring &line, vector<IntWstring*> *specialintvalues /*= NULL*/) : wValue(NULL){
+DLLEXPORT Leviathan::NamedVar::NamedVar(wstring &line, vector<IntWstring*>* specialintvalues /*= NULL*/) : wValue(NULL){
 	// using WstringIterator makes this shorter //
 	WstringIterator itr(&line, false);
 
@@ -313,6 +313,10 @@ DLLEXPORT  void Leviathan::NamedVar::SwitchValues(NamedVar &receiver, NamedVar &
 	donator.iValue = -2;
 }
 
+DLLEXPORT wstring* Leviathan::NamedVar::GetPointedValue(){
+	return wValue;
+}
+
 // ---------------------------- NamedVars --------------------------------- //
 Leviathan::NamedVars::NamedVars() : Variables(){
 	// nothing to initialize //
@@ -412,6 +416,17 @@ DLLEXPORT int Leviathan::NamedVars::GetValue(const wstring &name, wstring& val) 
 	return Variables[index]->GetValue(val);
 }
 
+
+DLLEXPORT wstring* Leviathan::NamedVars::ReturnValue(const wstring &name){
+	int index = Find(name);
+	// index check //
+	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
+		Logger::Get()->Error(L"NamedVars: ReturnValue: out of range, trying to find: "+name, index);
+		return NULL;
+	}
+
+	return Variables[index]->GetPointedValue();
+}
 
 bool Leviathan::NamedVars::IsIntValue(const wstring &name) const{
 	// call overload //

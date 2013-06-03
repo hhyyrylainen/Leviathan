@@ -22,6 +22,7 @@
 #include "AnimateableGui.h"
 
 #include "ScriptInterface.h"
+#include "LineTokenizer.h"
 
 
 // objects //
@@ -35,67 +36,9 @@
 
 namespace Leviathan {
 	struct GuiCollection{
-		GuiCollection(){
-			Name = Misc::GetErrString();
-			ID = -1;
-			Visible = false;
-			Enabled = false;
-		}
-		GuiCollection(wstring name, int id, bool visible, wstring toggle, bool strict = false, bool exclusive = false, bool enabled = true){
-			Name = name;
-			ID = id;
-			Visible = visible;
-			Enabled = enabled;
-			Exclusive = exclusive;
-
-			wchar_t chara = L'\n';
-			KEYSPECIAL additional = KEYSPECIAL_NONE;
-			bool Shift = false;
-			bool Alt = false;
-			bool Ctrl = false;
-
-			if(Misc::CountOccuranceWstring(toggle, L"+")){
-				vector<wstring> words;
-				Misc::CutWstring(toggle, L"+",words);
-
-
-
-				for(unsigned int i = 0; i < words.size(); i++){
-					if(words[i].size() == 0)
-						continue;
-					if(i+1 >= words.size()){
-						// last must be character
-						chara = words[i][0];
-					}
-					if(Misc::WstringCompareInsensitive(words[i], L"alt")){
-						Alt = true;
-						continue;
-					}
-					if(Misc::WstringCompareInsensitive(words[i], L"shift")){
-						Shift = true;
-						continue;
-					}
-					if(Misc::WstringCompareInsensitive(words[i], L"ctrl")){
-						Ctrl = true;
-						continue;
-					}
-				}
-
-			} else {
-				if(toggle.size() != 0)
-					chara = toggle[0];
-			}
-			additional = Key::ConstructSpecial(Shift, Alt, Ctrl);
-			Toggle = Key(chara, additional);
-
-			Strict = strict;
-		}
-		~GuiCollection(){
-			// release script //
-
-			// possibly release children here //
-
-		}
+		GuiCollection();
+		GuiCollection(wstring name, int id, bool visible, wstring toggle, bool strict = false, bool exclusive = false, bool enabled = true);
+		~GuiCollection();
 
 		wstring Name;
 		int ID;
@@ -108,8 +51,8 @@ namespace Leviathan {
 		vector<BaseGuiObject*> children;
 
 		shared_ptr<ScriptObject> Scripting;
-
 	};
+
 	struct GuiEventListener{
 		GuiEventListener(){
 			Listen = NULL;
@@ -149,7 +92,7 @@ namespace Leviathan {
 		DLLEXPORT BaseGuiObject* GetObject(unsigned int index);
 
 		DLLEXPORT void ExecuteGuiScript(const wstring &file);
-		DLLEXPORT void WriteGuiToFile(wstring file);
+		DLLEXPORT void WriteGuiToFile(const wstring &file);
 
 
 		DLLEXPORT static GuiManager* Get();
@@ -181,19 +124,18 @@ namespace Leviathan {
 
 		DLLEXPORT ScriptCaller* GetCollectionCall(GuiCollection* customize);
 
-
-		
-
 	private:
-		void UpdateArrays(); // should be called before every vector operation
+		// should be called before every vector operation //
+		void UpdateArrays(); 
 
-		// ---------------------- //
+		// ------------------------------------ //
 		Graphics* graph;
 
 		Gui::KeyListener* MainInput;
 
 		vector<BaseGuiObject*> Objects;
-		vector<RenderableGuiObject*> NeedRendering; // for easy iteration on draw //
+		// for easy iteration on draw //
+		vector<RenderableGuiObject*> NeedRendering; 
 
 		vector<int> KeyPresses;
 		vector<int> KeysDown;
@@ -212,7 +154,7 @@ namespace Leviathan {
 		// collections //
 		vector<GuiCollection*> Collections;
 
-		// ----------------------- //
+		// ------------------------------------ //
 		static GuiManager* staticaccess;
 	};
 

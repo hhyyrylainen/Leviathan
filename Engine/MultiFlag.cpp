@@ -21,7 +21,8 @@ MultiFlag::~MultiFlag(){
 	//	Flags.erase(Flags.begin());
 	//}
 	// smart pointers, clear
-	Flags.clear();
+	//Flags.clear();
+	// no need to clear //
 }
 // ------------------------------------ //
 void MultiFlag::SetFlag(const Flag &flag){

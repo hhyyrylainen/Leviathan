@@ -510,7 +510,7 @@ asIScriptModule* ScriptExecutor::LoadScript(ScriptScript* script){
 		}
 		return mod;
 	}
-	string createname = /*Convert::WstringToString(script->Name)+*/Convert::WstringToString(Convert::ToWstring(idnumber));
+	string createname = Convert::ToString<int>(idnumber);
 	// get module //
 	asIScriptModule *mod = engine->GetModule(createname.c_str());
 	if(NULL == mod){

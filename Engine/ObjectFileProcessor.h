@@ -9,7 +9,8 @@
 #include "ScriptInterface.h"
 #include "ObjectFileObject.h"
 #include "TimingMonitor.h"
-
+#include "WstringIterator.h"
+#include "LineTokenizer.h"
 
 namespace Leviathan{
 
@@ -29,14 +30,12 @@ namespace Leviathan{
 	private:
 		static shared_ptr<ObjectFileObject> ReadObjectBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile);
 		// handling object blocks //
-		static void ProcessObjectFileBlockListBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
-			shared_ptr<ObjectFileObject> obj, int &Handleindex);
-		static void ProcessObjectFileBlockVariableBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
-			shared_ptr<ObjectFileObject> obj, int &Handleindex);
-		static void ProcessObjectFileBlockScriptBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
-			shared_ptr<ObjectFileObject> obj, int &Handleindex);
-		static void ProcessObjectFileBlockTextBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
-			shared_ptr<ObjectFileObject> obj, int &Handleindex);
+		static bool ProcessObjectFileBlockListBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+			shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr);
+		static bool ProcessObjectFileBlockScriptBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+			shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr);
+		static bool ProcessObjectFileBlockTextBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+			shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr);
 
 
 		// ------------------------- //

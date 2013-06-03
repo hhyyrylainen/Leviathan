@@ -8,7 +8,7 @@ using namespace Leviathan;
 ObjectFileList::ObjectFileList() : Lines(){
 	Variables = new NamedVars();
 }
-ObjectFileList::ObjectFileList(wstring name) : Lines(){
+ObjectFileList::ObjectFileList(const wstring &name) : Lines(){
 	Name = name;
 	Variables = new NamedVars();
 }

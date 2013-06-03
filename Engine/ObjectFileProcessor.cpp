@@ -6,7 +6,7 @@
 #include "FileSystem.h"
 using namespace Leviathan;
 // ------------------------------------ //
-#include "WstringIterator.h"
+
 
 ObjectFileProcessor::ObjectFileProcessor(){}
 
@@ -67,7 +67,8 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 
 	// TODO: REMOVE COMMENTS ALSO HERE ----------------------------------------------------------------------------------------------------------------
 	for(unsigned int i = 0; i < Lines.size(); i++){
-		Misc::WstringRemovePreceedingTrailingSpaces(Lines[i]);
+		//Misc::WstringRemovePreceedingTrailingSpaces(Lines[i]);
+		WstringIterator::StripPreceedingAndTrailingWhitespaceComments(Lines[i]);
 	}
 
 	// set line //
@@ -91,7 +92,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 			// didn't cause an exception, is valid add //
 			HeaderVars.push_back(namevar);
 		}
-		catch(const ExceptionInvalidArguement &e){
+		catch(...){
 
 			// end found //
 #ifdef _DEBUG
@@ -192,7 +193,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 	for(size_t i = 0; i < lineparts.size(); i++){
 		if(lineparts[i].size() == 0){
 
-			Logger::Get()->Info(L"FileLoader: ReadObjectBlock: empty object prefix, prefixes/line: "+Lines[Line]);
+			Logger::Get()->Warning(L"FileLoader: ReadObjectBlock: empty object prefix, prefixes/line: "+Lines[Line], false);
 			continue;
 		}
 		if(lineparts[i].length() == 1){
@@ -238,41 +239,59 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 	obj->Prefixes = Prefixes;
 
 	// process blocks contents //
-	int Level = 0;
-
-	bool Insomething = false;
-	bool MoveToNextLine = true;
-	int Something = -1;
-
-	wstring SpesLines = L"";
-
-	int Handleindex = 0;
+	int Level = 0, Something = 0, Handleindex = 0;
 
 	while((Level > -1) && (++Line < (int)Lines.size())){
+		// skip empty lines //
+		if(Lines[Line].size() == 0){
+			continue;
+		}
+
 		// check is this inside block //
 		if(Something != 0){
 			// handle the block //
 			switch(Something){
 			case 1:
 				{
-
+					// list //
+					if(ProcessObjectFileBlockListBlock(Line, Lines, sourcefile, Level, obj, Handleindex, itr)){
+						// block ended //
+						Something = 0;
+						Level--;
+					}
 				}
-				break;
-			case 2:
-				{
-
-				}
-				break;
+			break;
+			//case 2:
+			//	{
+			//		DEBUG_BREAK;
+			//		if(ProcessObjectFileBlockVariableBlock(Line, Lines, sourcefile, Level, obj, Handleindex, itr)){
+			//			// block ended //
+			//			Something = 0;
+			//		}
+			//	}
+			//break;
 			case 3:
 				{
-
+					if(ProcessObjectFileBlockScriptBlock(Line, Lines, sourcefile, Level, obj, Handleindex, itr)){
+						// block ended //
+						Something = 0;
+						Level--;
+					}
 				}
 			break;
 			case 4:
 				{
-
+					// text block //
+					if(ProcessObjectFileBlockTextBlock(Line, Lines, sourcefile, Level, obj, Handleindex, itr)){
+						// block ended //
+						Something = 0;
+						Level--;
+					}
 				}
-				break;
+			break;
+			default:
+				// won't be hit //
+				__assume(0);
 			}
 
 			continue;
@@ -281,8 +300,8 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 
 		if(Misc::WstringStartsWith(Lines[Line], L"}")){
 			// object ended //
-			Something = 0;
 			Level--;
+			// could as well be break here //
 			continue;
 		}
 
@@ -293,68 +312,31 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 
 		if(*start == L"l"){
 			// data list //
-			Insomething = true;
-			MoveToNextLine = true;
 			Something = 1;
-
 			Level++;
 
 			// handle first line of object //
-
-			wstring namey = L"";
-			Misc::WstringGetSecondWord(currentline, namey);
-			obj->Contents.push_back(new ObjectFileList(namey));
+			obj->Contents.push_back(new ObjectFileList(*itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE)));
 			Handleindex = obj->Contents.size()-1;
 
 			continue;
 		}
-		if((start == L"t") || (start == L"l<t>")){
+		if((*start == L"t") || (*start == L"l<t>")){
 			// text block //
-			Insomething = true;
-			MoveToNextLine = true;
 			Something = 4;
 
 			Level++;
 
 			// handle first line of object //
-
-			wstring namey = L"";
-			Misc::WstringGetSecondWord(currentline, namey);
-			obj->TextBlocks.push_back(new ObjectFileTextBlock(namey));
+			obj->TextBlocks.push_back(new ObjectFileTextBlock(*itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE)));
 			Handleindex = obj->TextBlocks.size()-1;
 
 			continue;
 		}
-		if(start == L"s"){
-			// get which type of script //
-			wstring type = L"";
-			Misc::WstringGetSecondWord(currentline, type);
-
+		if(*start == L"s"){
 			Level++;
 
-			if(type == L"variables"){
-				Insomething = true;
-				MoveToNextLine = true;
-				Something = 2;
-
-				//obj->Varss.push_back(shared_ptr<ScriptVariableHolder>(new ScriptVariableHolder()));
-				//Handleindex = obj->Varss.size()-1;
-
-				continue;
-			}
-			if(type == L"scripts"){
-				Insomething = true;
-				MoveToNextLine = true;
-				Something = 3;
-
-				//obj->Scripts.push_back(new ScriptScript());
-				//Handleindex = obj->Scripts.size()-1;
-
-				continue;
-			}
-
-			Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: invalid script block no type "+type, true);
-
+			Something = 3;
 			continue;
 		}
 	}
@@ -367,416 +349,232 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 	return obj;
 }
 // ------------------------------------ //
-void Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
-	shared_ptr<ObjectFileObject> obj)
+bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+	shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr)
 {
-	// list //
-	if(Misc::WstringStartsWith(currentline, L"}")){
+	// update iterator //
+	itr.ReInit(&Lines[Line], false);
+
+	unique_ptr<wstring> linegot = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE);
+
+	// check for end //
+	if(*linegot == L"}"){
 		// object ended //
-		Insomething = false;
-		MoveToNextLine = true;
-		Something = 0;
-		Level--;
+		//Level--; // no need to change level here
 
-		// parse variables //
-		if(SpesLines.size() > 0){
-			vector<shared_ptr<NamedVar>> HeaderVars;
-
-			NamedVar::ProcessDataDump(SpesLines, HeaderVars, &RegisteredValues);
-
-			vector<shared_ptr<NamedVar>>* currobjs = obj->Contents[Handleindex]->Variables->GetVec();
-			for(unsigned int i = 0; i < HeaderVars.size(); i++){
-				currobjs->push_back(HeaderVars[i]);
-			}
-			HeaderVars.clear();
-		}
-
-		SpesLines = L"";
-
-		continue;
-	}					
+		// ended //
+		return true;
+	}
 	// if begins with <t> is plain text //
-	if(Misc::WstringStartsWith(currentline, L"<t>")){
+	if(*linegot == L"<t>"){
 		// store plain text //
-		wstring line = Misc::WstringRemoveFirstWords(currentline, 1);
-		if(line[line.size()-1] == L';'){
-			line.erase(line.begin()+line.size()-1);
+		
+		linegot = itr.GetUntilEnd();
+
+		if(linegot->back() == L';'){
+
+			linegot->erase(linegot->begin()+linegot->size()-1);
 		}
-		obj->Contents[Handleindex]->Lines.push_back(new wstring(line));
-		continue;
+
+		// remember to release it or it will delete //
+		wstring* tmpptr = linegot.release();
+
+		obj->Contents[Handleindex]->Lines.push_back(tmpptr);
+		// don't delete tmpptr or bad things will happen //
+		return false;
 	}
 
 	// parse variable //
-	SpesLines += L"\n"+currentline;
 
-}
-
-void Leviathan::ObjectFileProcessor::ProcessObjectFileBlockVariableBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
-	shared_ptr<ObjectFileObject> obj)
-{
-	// script variable blob //
-	if(Misc::WstringStartsWith(currentline, L"}")){
-		// object ended //
-		Insomething = false;
-		MoveToNextLine = true;
-		Something = 0;
-		Level--;
-
-		SpesLines = L"";
-
-		continue;
-	}	
-
-	if(Misc::WstringStartsWith(currentline, L"var")){
-		// proper variable //
-
-		// split words //
-		vector<wstring> Words;
-		Misc::CutWstring(Misc::WstringRemoveFirstWords(currentline, 1), L" ", Words);
-
-		int stype = 0;
-		wstring varname = L"";
-		DataBlock* value = NULL;
-
-		bool invalue = false;;
-
-		for(unsigned int i = 0; i < Words.size(); i++){
-			if(Words[i].size() < 1){
-				Words.erase(Words.begin()+i);
-				i--;
-			}
-
-			if(i == 0){
-				// type //
-				if(Misc::WstringCompareInsensitive(Words[i], L"int")){
-					stype = DATABLOCK_TYPE_INT;
-					continue;
-				}
-				if(Misc::WstringCompareInsensitive(Words[i], L"float")){
-					stype = DATABLOCK_TYPE_FLOAT;
-					continue;
-				}
-				if(Misc::WstringCompareInsensitive(Words[i], L"bool")){
-					stype = DATABLOCK_TYPE_BOOL;
-					continue;
-				}
-				if(Misc::WstringCompareInsensitive(Words[i], L"wstring")){
-					stype = DATABLOCK_TYPE_WSTRING;
-					continue;
-				}
-				if(Misc::WstringCompareInsensitive(Words[i], L"void")){
-					stype = DATABLOCK_TYPE_VOIDPTR;
-					continue;
-				}
-			}
-			if(!invalue){
-				// check for name //
-				if(Words[i][0] == L'"'){
-					// name //
-
-					Words[i] = Misc::Replace(Words[i], L"\"", L"");
-
-					if(Misc::CountOccuranceWstring(Words[i], L";") > 0){
-						// end //
-
-						Words[i] = Misc::Replace(Words[i], L";", L"");
-						varname = Words[i];
-
-						break;
-					}
-
-					varname = Words[i];
-
-				}
-				if(Words[i][0] == L'='){
-					invalue = true;
-				}
-				continue;
-			}
-
-			// check for string //
-			if(Words[i][0] == L'"'){
-
-				if(stype != DATABLOCK_TYPE_WSTRING){
-
-					Logger::Get()->Info(L"ScriptInterface: ReadObjectBlock: s variables block cannot assign string to other type, converted!", false);
-					stype = DATABLOCK_TYPE_WSTRING;
-				}
-
-				Words[i].erase(Words[i].begin());
-
-				// stitch rest of words together //
-				wstring thing;
-				for(unsigned int a = i; a < Words.size(); a++){
-					if(a != i)
-						thing += L" ";
-					thing += Words[a];
-				}
-
-				// remove end row and " //
-				for(int a = thing.size()-1; a > -1; a--){
-					if(thing[a] == L';'){
-						thing.erase(thing.begin()+a);
-						continue;
-					}
-					if(thing[a] == L'"'){
-						thing.erase(thing.begin()+a);
-						break;
-					}
-				}
-
-				value = new WstringBlock(thing);
-
-				break;
-			}
-			// remove ; from messing with assign //
-			Words[i] = Misc::Replace(Words[i], L";", L" ");
-
-			// parse based on type //
-			if(stype == DATABLOCK_TYPE_INT){
-
-				value = new IntBlock(Convert::WstringToInt(Words[i]));
-				break;
-			}
-			if(stype == DATABLOCK_TYPE_FLOAT){
-
-				value = new FloatBlock(Convert::WstringToFloat(Words[i]));
-				break;
-			}
-			if(stype == DATABLOCK_TYPE_BOOL){
-
-				value = new BoolBlock(Convert::WstringFromBoolToInt(Words[i]) != 0);
-				break;
-			}
-			//if(Misc::WstringCompareInsensitive(Words[i], L"void")){
-			//	stype = DATABLOCKTYPE_VOIDPTR;
-			//	break;
-			//}
-			Logger::Get()->Error(L"ScriptInterface: Invalid value for type: check var type!"+currentline);
-
-		}
-
-		// end //
-
-		// check for validness //
-		if((varname == L"") | (value == NULL) | (stype < 3)){
-
-			Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: s variables contains invalid var "+currentline);
-			continue;
-		}
-		//obj->Varss[Handleindex]->Vars.push_back(new ScriptNamedArguement(varname, value, stype, true, true));
-
-		continue;
+	try{
+		obj->Contents[Handleindex]->Variables->GetVec()->push_back(shared_ptr<NamedVar>(new NamedVar(Lines[Line])));
 	}
+	catch (const ExceptionInvalidArguement &e){
 
-	Logger::Get()->Info(L"ScriptInterface: ReadObjectBlock: s variables block contains invalid line "+currentline, false);
+		Logger::Get()->Error(L"ObjectFileProcessor: ProcessObjectFileBlockListBlock: invalid variable on line "+Convert::IntToWstring(Line)+
+			L" caused an exception:", false);
+		e.PrintToLog();
 
+		return false;
+	}
+	return false;
 }
 
-void Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
-	shared_ptr<ObjectFileObject> obj)
+bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+	shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr)
 {
 	bool Working = true;
 
-	wstring instructions = L"";
 	int IntendLevel = 0;
-	wstring Typename = L"";
-	wstring SName = L"";
 
-	// first line should be definition //
-	if(Misc::WstringStartsWith(currentline, L"inl")){
-		// get script type //
-		vector<wstring> Words;
-		Misc::CutWstring(currentline, L" ", Words);
+	// create the script here so that stuff can be added to it //
+	ScriptScript* tscript = new ScriptScript();
+	tscript->Instructions = L"";
+	tscript->Source = sourcefile+L":OBJ:"+obj->Name;
 
-		int prevtype = 0;
+	wstring ScriptType;
+	int CodeStartLine = 0;
 
-		IntendLevel++;
+	IntendLevel = 0;
 
-		for(unsigned int a = 1; a < Words.size(); a++){
-			if(prevtype != 0){
-				switch(prevtype){
-				case 1:
-					{
-						// type specification
-						if((Words[a][0] == L'"') && (Words[a][Words[a].size()-1] == L'"')){
-							Typename = Misc::Replace(Words[a], L"\"", L"");
-							prevtype = 0;
-							break;
-						}
-
-						Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: inl has invalid type "+Words[a]);
-
-						prevtype = 0;
-					}
-					break;
-
-				}
-
-
-				continue;
-			}
-
-			if(Words[a] == L"type:"){
-				prevtype = 1;
-				continue;
-			}
-		}
-	}
-
+	// go back 1 line before going back to the line we are currently on //
+	Line -= 1;
 
 	bool Incode = false;
-	while((reader.good()) & Working){
-		reader.getline(Buff, 400);
-		Line++;
-		currentline = Buff;
-
-		if(currentline.size() < 1)
-			continue;
-
-		// skip empty //
-		for(unsigned int i = 0; i < currentline.size(); i++){
-			if(currentline[i] == L' '){
-				currentline.erase(currentline.begin());
-				i--;
-				continue;
-			} else {
-				break;
+	while(++Line < (int)Lines.size() && Working){
+		// skip empty lines //
+		if(Lines[Line].size() == 0){
+			// scripts should have proper line numbers inside them //
+			if(Incode){
+				// add empty line to have this work, but outside files should also be supported //
+				tscript->Instructions += L"\n";
 			}
+			continue;
 		}
+
 		if(Incode){
-			if(currentline == L"@%};"){
+			if(Lines[Line] == L"@%};"){
 				Incode = false;
-				IntendLevel = 1;
+				IntendLevel = 0;
 				continue;
 			}
-			instructions += currentline+L"\n";
+			// add to script //
+			tscript->Instructions += Lines[Line]+L"\n";
 			continue;
 		}
-		if(IntendLevel == 0){
-			if(Misc::WstringStartsWith(currentline, L"inl")){
-				// get script type //
-				vector<wstring> Words;
-				Misc::CutWstring(currentline, L" ", Words);
+		switch(IntendLevel){
+		case 0:
+			{
+				// check for script definition //
+				if(Misc::WstringStartsWith(Lines[Line], L"inl")){
+					// process script block definition//
+					vector<wstring*> Tokens;
+					// use token separator here //
+					LineTokeNizer::TokeNizeLine(Lines[Line], Tokens);
 
-				int prevtype = 0;
+					if(Tokens.size() == 0){
+						// invalid //
+						DEBUG_BREAK;
+					}
 
-				IntendLevel++;
+					// first token is "inl" and can be skipped //
 
-				for(unsigned int a = 1; a < Words.size(); a++){
-					if(prevtype != 0){
-						switch(prevtype){
-						case 1:
-							{
-								// type specification
-								if((Words[a][0] == L'"') && (Words[a][Words[a].size()-1] == L'"')){
-									Typename = Misc::Replace(Words[a], L"\"", L"");
-									prevtype = 0;
-									break;
-								}
+					// get script type from this line //
+					for(size_t a = 1; a < Tokens.size(); a++){
+						if(Misc::WstringStartsWith(*Tokens[a], L"type")){
+							// type specification
+							// split token //
+							vector<Token*> linetokens;
 
-								Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: inl has invalid type "+Words[a]);
+							LineTokeNizer::SplitTokenToRTokens(*Tokens[a], linetokens);
 
-								prevtype = 0;
+							// token size should be 2 //
+							if(linetokens.size() != 2){
+								DEBUG_BREAK;
+								Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: inline has invalid type "+*Tokens[a]);
+								continue;
 							}
-							break;
-
+							// second token is script type name //
+							ScriptType = linetokens[1]->GetChangeableData();
+							SAFE_DELETE_VECTOR(linetokens);
+							continue;
 						}
-
-
-						continue;
+						if(Misc::WstringStartsWith(*Tokens[a], L"{")){
+							// can't be anything important after this //
+							break;
+						}
 					}
 
-					if(Words[a] == L"type:"){
-						prevtype = 1;
-						continue;
-					}
-				}
-			}
-			if(Misc::WstringStartsWith(currentline, L"}")){
-				Working = false;
-				//Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: Script body blob contained no definitions ");
-				break;
-			}
-			continue;
-		}
-		if(IntendLevel == 1){
-			if(Misc::WstringStartsWith(currentline, L"name")){
-				vector<wstring> Words;
-				Misc::CutWstring(currentline, L" = ", Words);
+					// release tokens //
+					SAFE_DELETE_VECTOR(Tokens);
 
-				if(Words.size() != 2){
-
-					Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid "+currentline, Words.size(), true);
+					// go to next level //
+					IntendLevel++;
 					continue;
 				}
 
-				// remove unnecessary stuff from value //
-				while(Words[1][Words[1].size()-1] == L';'){
-					Words[1].erase(Words[1].begin()+Words[1].size()-1);
+				// check for block end //
+				if(Misc::WstringStartsWith(Lines[Line], L"}")){
+					Working = false;
+					//Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: Script body blob contained no definitions ");
+					break;
 				}
-				while(Words[1][0] == L' '){
-					Words[1].erase(Words[1].begin());
+			}
+		break;
+		case 1:
+			{
+				if(Misc::WstringStartsWith(Lines[Line], L"name")){
+
+					// this line should be a NamedVar object //
+					try{
+						// use NamedVar constructor to parse this line //
+						NamedVar tmpnamedvar(Lines[Line]);
+
+						// get variable value to name //
+						tmpnamedvar.GetValue(tscript->Name);
+					}
+					catch(const ExceptionInvalidArguement &e){
+						// invalid definition //
+						Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid name line: "+Convert::IntToWstring(Line)+
+							L" in file"+sourcefile+L" see exception: ", true);
+						e.PrintToLog();
+						tscript->Name = L"Invalid name";
+					}
+
+					continue;
 				}
 
-				SName = Words[1];
-				continue;
+				if(Misc::WstringStartsWith(Lines[Line], L"body")){
+					IntendLevel = 2;
+					Incode = true;
+					CodeStartLine = Line+1;
+					continue;
+				}
+
+				if(Misc::WstringStartsWith(Lines[Line], L"}")){
+					// go back to level 0 for processing lowest level end //
+					IntendLevel = 0;
+					continue;
+				}
+				DEBUG_BREAK;
 			}
-			if(Misc::WstringStartsWith(currentline, L"body")){
-				IntendLevel = 2;
-				Incode = true;
-				continue;
-			}
-			if(Misc::WstringStartsWith(currentline, L"}")){
-				IntendLevel = 0;
-				// create script //
-				ScriptScript* tscript = new ScriptScript();
-				tscript->Instructions = instructions;
-				tscript->Name = SName;
-				tscript->Source = sourcefile+L":OBJ:"+obj->Name;
-
-				obj->Script = shared_ptr<ScriptScript>(tscript);
-				//obj->Script = new ScriptScript();
-				//obj->Script->Instructions = instructions;
-				//obj->Script->Name = SName;
-				//obj->Script->Source = sourcefile+L":OBJ:"+obj->Name;
-
-
-				//Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: Script body blob contained no definitions ");
-				continue;
-			}
-
+		break;
 		}
-
 	}
 
+	if(Incode){
+		// darn //
+		// no end for script body end //
+		Logger::Get()->Error(L"ObjectFileProcessor: ProcessObjectFileBlockScriptBlock: script block script body has leaked, no ending \"@%};\" "
+			L"was found, began on line "+Convert::IntToWstring(CodeStartLine), true);
+		SAFE_DELETE(tscript);
+		return true;
+	}
 
-	Insomething = false;
-	Something = 0;
-	Level--;
+	// set script to object //
+	obj->Script = shared_ptr<ScriptScript>(tscript);
+
+	// always fully processed //
+	return true;
 }
 
-void Leviathan::ObjectFileProcessor::ProcessObjectFileBlockTextBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
-	shared_ptr<ObjectFileObject> obj)
+bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockTextBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+	shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr)
 {
-	// text block //
-	if(Misc::WstringStartsWith(currentline, L"}")){
+	// check for end //
+	if(Misc::WstringStartsWith(Lines[Line], L"}")){
 		// object ended //
-		Insomething = false;
-		MoveToNextLine = true;
-		Something = 0;
-		Level--;
-
-		SpesLines = L"";
-
-		continue;
-	}					
+		//Level--; // no need to change here //
+		 
+		// ended //
+		return true;
+	}
 	// it is always text, just add a new line //
 
 	// store plain text //
+	obj->TextBlocks[Handleindex]->Lines.push_back(new wstring(Lines[Line]));
 
-	obj->TextBlocks[Handleindex]->Lines.push_back(new wstring(currentline));
-	continue;
+	return false;
 }
 // ------------------------------------ //
 

@@ -14,7 +14,7 @@ namespace Leviathan{
 	class ObjectFileList : public Object{
 	public:
 		DLLEXPORT ObjectFileList::ObjectFileList();
-		DLLEXPORT ObjectFileList::ObjectFileList(wstring name);
+		DLLEXPORT ObjectFileList::ObjectFileList(const wstring &name);
 		DLLEXPORT ObjectFileList::~ObjectFileList();
 
 		DLLEXPORT ScriptList* AllocateNewListFromData();

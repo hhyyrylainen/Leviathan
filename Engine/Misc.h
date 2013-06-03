@@ -134,6 +134,7 @@ namespace Leviathan{
 		DLLEXPORT static wstring WstringStitchTogether(vector<wstring*> data, wstring separator);
 		DLLEXPORT static wstring WstringStitchTogether(vector<shared_ptr<wstring>> data, wstring separator);
 		DLLEXPORT static void WstringRemovePreceedingTrailingSpaces(wstring& str);
+
 		// returns 0 for equal 1 for str is before and -1 for tocompare to be before //
 		DLLEXPORT static int IsWstringBeforeInAlphabet(const wstring& str, const wstring& tocompare);
 

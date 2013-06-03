@@ -189,7 +189,7 @@ bool Leviathan::FileReader::ReadNewBufferToMemory(){
 	// set position to handle //
 	if(SetFilePointer(FileHandle, FileReadPosition, NULL, FILE_BEGIN) != FileReadPosition){
 		// failed //
-		int errorcode = GetLastError();
+		//int errorcode = GetLastError();
 		DEBUG_BREAK;
 		return false;
 	}
@@ -204,7 +204,7 @@ bool Leviathan::FileReader::ReadNewBufferToMemory(){
 	BOOL readresult = ReadFile(FileHandle, ReadingBuffer, sizeof(wchar_t)*ReadBufferSize,  &LastReadBytes, NULL);
 	if(!readresult){
 		// error //
-		int errorcode = GetLastError();
+		//int errorcode = GetLastError();
 		return false;
 	}
 

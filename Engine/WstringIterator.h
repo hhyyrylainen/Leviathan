@@ -24,6 +24,11 @@ namespace Leviathan{
 
 #define WSTRINGITERATOR_IGNORE_SPECIAL			200001
 #define WSTRINGITERATOR_STOP					200002
+#define WSTRINGITERATOR_INSIDE_STRING			200005
+#define WSTRINGITERATOR_INSIDE_STRING_DOUBLE	200006
+#define WSTRINGITERATOR_INSIDE_STRING_SINGLE	200007
+#define WSTRINGITERATOR_IGNORE_SPECIAL_END		200008
+
 
 	typedef ITERATORCALLBACK_RETURNTYPE (*IteratorWstrCallBack)(WstringIterator* instance, Object* IteratorData, int parameters);
 
@@ -32,6 +37,7 @@ namespace Leviathan{
 	ITERATORCALLBACK_RETURNTYPE FindNextNumber(WstringIterator* instance, Object* IteratorData, int parameters);
 	ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(WstringIterator* instance, Object* IteratorData, int parameters);
 	ITERATORCALLBACK_RETURNTYPE FindUntilEquality(WstringIterator* instance, Object* IteratorData, int parameters);
+	ITERATORCALLBACK_RETURNTYPE FindFromStartUntilCommentOrEnd(WstringIterator* instance, Object* IteratorData, int parameters);
 
 	// could potentially inherit from base iterator, but not right now //
 	class WstringIterator : public Object{
@@ -41,6 +47,7 @@ namespace Leviathan{
 		friend ITERATORCALLBACK_RETURNTYPE FindNextNumber(WstringIterator* instance, Object* IteratorData, int parameters);
 		friend ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(WstringIterator* instance, Object* IteratorData, int parameters);
 		friend ITERATORCALLBACK_RETURNTYPE FindUntilEquality(WstringIterator* instance, Object* IteratorData, int parameters);
+		friend ITERATORCALLBACK_RETURNTYPE FindFromStartUntilCommentOrEnd(WstringIterator* instance, Object* IteratorData, int parameters);
 		// ------------------------------------ //
 		DLLEXPORT WstringIterator::WstringIterator(const wstring& text);
 		//************************************
@@ -58,10 +65,12 @@ namespace Leviathan{
 		DLLEXPORT unique_ptr<wstring> GetNextNumber(DECIMALSEPARATORTYPE decimal);
 		DLLEXPORT unique_ptr<wstring> GetNextCharacterSequence(UNNORMALCHARACTER stopcase);
 		DLLEXPORT unique_ptr<wstring> GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase);
+		DLLEXPORT unique_ptr<wstring> GetUntilEnd();
 
 		DLLEXPORT unsigned long GetPosition();
 		DLLEXPORT void SetPosition(unsigned long pos);
 		DLLEXPORT wchar_t GetCurrentCharacter();
+		DLLEXPORT wchar_t GetCharacterAtPos(size_t pos);
 
 		DLLEXPORT Object* StartIterating(IteratorWstrCallBack functiontocall, Object* IteratorData, int parameters);
 		
@@ -72,6 +81,7 @@ namespace Leviathan{
 		DLLEXPORT void ReInit(wstring* text, bool TakesOwnership = false);
 		DLLEXPORT void ReInit(const wstring& text);
 
+		DLLEXPORT static void StripPreceedingAndTrailingWhitespaceComments(wstring &str);
 	private:
 		// ------------------------------------ //
 		inline ITERATORCALLBACK_RETURNTYPE HandleSpecialCharacters();

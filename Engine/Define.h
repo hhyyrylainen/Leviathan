@@ -95,6 +95,10 @@
 //#define mGETVAL(classn,xtype,x) (xtype) classn::Get(x)( ){ return this->x; };
 
 #define SAFE_DELETE_VECTOR(x) while((x).size() != 0){if((x)[0]){delete (x)[0];}(x).erase((x).begin());}
+
+#define STDCONTAINERERASELAST_PTR(x) x->erase(x->begin()+x->size()-1)
+#define STDCONTAINERERASELAST(x) x.erase(x.begin()+x.size()-1)
+
 #ifdef _DEBUG
 #define MONITOR_FUNCTION_TIME_FSTART wstring functiontimemonitorname = __WFUNCTION__ L" time monitor"; TimingMonitor::StartTiming(functiontimemonitorname);
 #else

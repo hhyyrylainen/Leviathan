@@ -12,6 +12,11 @@ namespace Leviathan{
 
 	class IteratorPositionData : public Object{
 	public:
+		IteratorPositionData(int val1, int val2) : Positions(val1, val2){
+
+		}
+		IteratorPositionData() : Positions(){}
+
 		Int2 Positions;
 
 	};

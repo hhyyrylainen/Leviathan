@@ -567,7 +567,7 @@ DLLEXPORT void Leviathan::Misc::WstringRemovePreceedingTrailingSpaces(wstring& s
 		return;
 	}
 	if(CutPositions.Val[1] == -1){
-		if(CutPositions.Val[0] == 0){
+		if(CutPositions.Val[0] == -1){
 			// just the first character required //
 			CutPositions.Val[1] = CutPositions.Val[0];
 		} else {

@@ -25,8 +25,9 @@ namespace Leviathan{
 		friend class GameObject::SkeletonRig;
 	public:
 		DLLEXPORT AnimationMasterBlock::~AnimationMasterBlock();
-			DLLEXPORT AnimationMasterBlock::AnimationMasterBlock();
+			DLLEXPORT AnimationMasterBlock::AnimationMasterBlock(shared_ptr<LoadedAnimation> MainAnimation, bool isfrozen = false);
 		DLLEXPORT int UpdateAnimations(int mspassed, bool force = false);
+		DLLEXPORT void AddAnimation(shared_ptr<LoadedAnimation> anim);
 
 		DLLEXPORT void OnEvent(Event** pEvent);
 	private:
@@ -37,7 +38,7 @@ namespace Leviathan{
 		//vector<shared_ptr<AnimationBlock>> Animations;
 		vector<shared_ptr<LoadedAnimation>> Animations;
 
-		ozz::animation::SamplingCache* SampledCache;
+		//ozz::animation::SamplingCache* SampledCache;
 
 		// used for converting to specific models //
 		vector<ozz::math::SoaTransform*> TempMatrices;

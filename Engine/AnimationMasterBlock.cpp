@@ -7,11 +7,12 @@ using namespace Leviathan;
 using namespace ozz::animation;
 using namespace ozz;
 // ------------------------------------ //
-DLLEXPORT Leviathan::AnimationMasterBlock::AnimationMasterBlock(){
+DLLEXPORT Leviathan::AnimationMasterBlock::AnimationMasterBlock(shared_ptr<LoadedAnimation> MainAnimation, bool isfrozen){
 	AreAnimationsUpdated = false;
-	AnimationSecondsPassed = 0;
-	IsFrozen = false;
-	AnimationBoneCount = 0;
+	AnimationSecondsPassed = 0.f;
+	IsFrozen = isfrozen;
+	// needs the bone count to have large enough buffers for skeletons to fetch bone matrices from this animation //
+	AnimationBoneCount = MainAnimation->BaseBoneCount;
 
 	// start listening for frame end, to be able to flush the current state when frame ends //
 	this->RegisterForEvent(EVENT_TYPE_FRAME_END);
@@ -30,6 +31,8 @@ DLLEXPORT Leviathan::AnimationMasterBlock::~AnimationMasterBlock(){
 	// release memory //
 	SAFE_DELETE_VECTOR(TempMatrices);
 	SAFE_DELETE_VECTOR(Cache);
+	//// cache is initialized with ozz allocator //
+	//ozz::memory::default_allocator().Delete(SampledCache);
 }
 // ------------------------------------ //
 
@@ -56,7 +59,7 @@ DLLEXPORT int Leviathan::AnimationMasterBlock::UpdateAnimations(int mspassed, bo
 	// sample animation at current time //
 	SamplingJob sampler;
 	// set sampler parameters //
-	sampler.animation = Animations[0]->RealAnimation.get();
+	sampler.animation = Animations[0]->RealAnimation;
 	sampler.cache = Cache[0];
 	sampler.time = AnimationSecondsPassed;
 	sampler.output_begin = TempMatrices.front();
@@ -80,6 +83,10 @@ DLLEXPORT void Leviathan::AnimationMasterBlock::OnEvent(Event** pEvent){
 		// no longer up to date with bone data //
 		AreAnimationsUpdated = false;
 	}
+}
+
+DLLEXPORT void Leviathan::AnimationMasterBlock::AddAnimation(shared_ptr<LoadedAnimation> anim){
+	Animations.push_back(anim);
 }
 
 

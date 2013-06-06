@@ -448,19 +448,13 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::Model::GetSkeleton(){
 }
 
 DLLEXPORT bool Leviathan::GameObject::Model::StartPlayingAnimation(shared_ptr<LoadedAnimation> Block, bool Smoothtonew /*= false*/){
-	// bind the animation to a (new) masterblock //
+	// bind the animation to a (new) master block //
 	if(CurrentlyPlaying.get() == NULL){
 		// new block is required //
 		CurrentlyPlaying = shared_ptr<AnimationMasterBlock>(new AnimationMasterBlock());
 	}
-	// check can new child animation be added //
-	bool CanAdd = true;
-
-	if(!CanAdd)
-		return false;
-
 	// add animation //
-
+	CurrentlyPlaying->AddAnimation(Block);
 
 	// make sure that skeleton is playing the animation //
 	VerifySkeletonPlayingAnimations();

@@ -54,7 +54,7 @@ namespace Leviathan{
 
 		vector<shared_ptr<AnimationFrameData>> Frames;
 
-		shared_ptr<ozz::animation::Animation> RealAnimation;
+		ozz::animation::Animation* RealAnimation;
 
 		// some info about animation //
 		float AnimDuration;

@@ -11,7 +11,8 @@ DLLEXPORT Leviathan::LoadedAnimation::LoadedAnimation(){
 	// private constructor used by AnimationManager //
 }
 DLLEXPORT Leviathan::LoadedAnimation::~LoadedAnimation(){
-
+	// RealAnimation is for some reason new'd with ozz gay allocator //
+	ozz::memory::default_allocator().Delete(RealAnimation);
 }
 // ------------------------------------ //
 DLLEXPORT wstring& Leviathan::LoadedAnimation::GetSourceFile(){
@@ -40,6 +41,8 @@ DLLEXPORT void Leviathan::LoadedAnimation::SetBaseModelName(const wstring &basem
 
 DLLEXPORT void Leviathan::LoadedAnimation::SetBones(const vector<shared_ptr<GameObject::SkeletonLoadingBone>> &bones){
 	BaseBones = bones;
+	// store count, so that even if bone vector is unloaded count is still known //
+	BaseBoneCount = bones.size();
 }
 
 DLLEXPORT void Leviathan::LoadedAnimation::AddNewFrame(shared_ptr<AnimationFrameData> frame){
@@ -71,14 +74,34 @@ DLLEXPORT int Leviathan::LoadedAnimation::ProcessLoadedData(){
 
 		for(size_t a = 0; a < Frames.size(); a++){
 			// count time on this frame //
-			float elapsedfrombegin = AnimDuration/(KeyFrames-(int)(a+1));
+			float elapsedfrombegin = AnimDuration*((float)(a+1)/KeyFrames);
 
+			// position key //
 			const offline::RawAnimation::TranslationKey tkey = {elapsedfrombegin, math::Float3(Frames[a]->FrameBones[i]->RestPosition.X,
 				Frames[a]->FrameBones[i]->RestPosition.Y, Frames[a]->FrameBones[i]->RestPosition.Z)};
+
 			track.translations.push_back(tkey);
+			// rotation key //
+			const offline::RawAnimation::RotationKey rkey = {elapsedfrombegin, math::Quaternion::FromEuler(math::Float3(
+				Frames[a]->FrameBones[i]->RestDirection.X, Frames[a]->FrameBones[i]->RestDirection.Y, Frames[a]->FrameBones[i]->RestDirection.Z))};
+
+			track.rotations.push_back(rkey);
+			// scale key (1 for now) //
+			const offline::RawAnimation::ScaleKey skey = {elapsedfrombegin, math::Float3::one()};
+
+			track.scales.push_back(skey);
 
 		}
 	}
+
+	// compile the animation //
+	offline::AnimationBuilder animbuilder;
+	RealAnimation = animbuilder(rawanimation);
+	if(RealAnimation == NULL){
+		// failed //
+		return 1;
+	}
+
 
 
 	// succeeded //

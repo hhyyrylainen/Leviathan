@@ -17,6 +17,8 @@ DLLEXPORT Leviathan::GameObject::SkeletonRig::SkeletonRig() : PlayingAnimation(N
 DLLEXPORT Leviathan::GameObject::SkeletonRig::~SkeletonRig(){
 	// release //
 	SAFE_DELETE_VECTOR(VerticeTranslationMatrices);
+	// skeleton is allocated with ozz's allocator //
+	memory::default_allocator().Delete(ModelSkeleton);
 }
 DLLEXPORT void Leviathan::GameObject::SkeletonRig::Release(){
 	// stop playing animation //

@@ -85,7 +85,7 @@ DLLEXPORT int Leviathan::Misc::CutWstring(const wstring& strtocut, const wstring
 
 						// end old string to just before this position //
 						//if(i+1 < strtocut.length()){
-						CopyOperations.back()->Val[1] = i; /*-1; not this because we would have to add 1 in the copy phase anyway */
+						CopyOperations.back()->Y = i; /*-1; not this because we would have to add 1 in the copy phase anyway */
 						//} else {
 						//	// need a little hack here //
 						//	CopyOperations.back()->Val[1] = i-1;
@@ -115,9 +115,9 @@ DLLEXPORT int Leviathan::Misc::CutWstring(const wstring& strtocut, const wstring
 	}
 
 	// make sure final position has end //
-	if(CopyOperations.back()->Val[1] < 0)
-		CopyOperations.back()->Val[1] = strtocut.length();
-	// lenght-1 is not used here, because it would have to be added in copy phase to the substring lenght, and we didn't add that earlier... //
+	if(CopyOperations.back()->Y < 0)
+		CopyOperations.back()->Y = strtocut.length();
+	// length-1 is not used here, because it would have to be added in copy phase to the substring length, and we didn't add that earlier... //
 
 	// make space //
 	vec.reserve(CopyOperations.size());
@@ -125,7 +125,7 @@ DLLEXPORT int Leviathan::Misc::CutWstring(const wstring& strtocut, const wstring
 	// loop through positions and copy substrings to result vector //
 	for(unsigned int i = 0; i < CopyOperations.size(); i++){
 		// copy using std::wstring method for speed //
-		vec.push_back(strtocut.substr((unsigned int)CopyOperations[i]->Val[0], (unsigned int)(CopyOperations[i]->Val[1]-CopyOperations[i]->Val[0])));
+		vec.push_back(strtocut.substr((unsigned int)CopyOperations[i]->X, (unsigned int)(CopyOperations[i]->Y-CopyOperations[i]->X)));
 	}
 
 	// cutting succeeded //
@@ -526,7 +526,7 @@ DLLEXPORT void Leviathan::Misc::WstringRemovePreceedingTrailingSpaces(wstring& s
 		if(!IsCharacterWhiteSpace(str[i])){
 			if(CutPositions[0] == -1){
 				// beginning ended //
-				CutPositions.Val[0] = i;
+				CutPositions.X = i;
 			} else {
 				// set last pos as this //
 
@@ -553,22 +553,22 @@ DLLEXPORT void Leviathan::Misc::WstringRemovePreceedingTrailingSpaces(wstring& s
 			continue;
 		}
 		// end found //
-		CutPositions.Val[1] = i-1;
+		CutPositions.Y = i-1;
 		break;
 	}
 
-	if(CutPositions.Val[0] == -1){
+	if(CutPositions.X == -1){
 		// nothing in the string //
 		str.clear();
 		return;
 	}
-	if(CutPositions.Val[1] == -1){
-		if(CutPositions.Val[0] == -1){
+	if(CutPositions.Y == -1){
+		if(CutPositions.X == -1){
 			// just the first character required //
-			CutPositions.Val[1] = CutPositions.Val[0];
+			CutPositions.Y = CutPositions.X;
 		} else {
 			// no need to cut from the end //
-			CutPositions.Val[1] = str.length()-1;
+			CutPositions.Y = str.length()-1;
 		}
 	}
 

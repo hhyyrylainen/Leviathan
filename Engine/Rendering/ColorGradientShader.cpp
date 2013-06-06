@@ -293,8 +293,8 @@ bool GradientShader::SetShaderParams(ID3D11DeviceContext* devcont, D3DXMATRIX wo
 	dataPtr3 = (ColorBuffer*)mappedResource.pData;
 
 	// Copy the camera position into the constant buffer.
-	dataPtr3->ColorStart = (float*)colorstart;
-	dataPtr3->ColorEnd = (float*)colorend;
+	dataPtr3->ColorStart = colorstart;
+	dataPtr3->ColorEnd = colorend;
 
 	// Unlock the camera constant buffer.
 	devcont->Unmap(ColorsBuffer, 0);

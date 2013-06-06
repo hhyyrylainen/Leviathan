@@ -68,9 +68,8 @@ Logger* Leviathan::Logger::Get(){
 		return LatestLogger;
 	}
 	// create emergency logger //
-	LatestLogger = new Logger(L" WARNING: EMERGENCY LOGGER CREATED! log called before engine init ",true);
+	LatestLogger = new Logger(L"(W) ", true);
 	return LatestLogger;
-
 }
 void Leviathan::Logger::Write(const wstring &data){
 	WaitToFinish();

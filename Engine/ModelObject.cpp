@@ -258,7 +258,7 @@ DLLEXPORT bool Leviathan::GameObject::Model::Render(Graphics* renderer, int mspa
 	SkeletonRig* skeleton = GetSkeleton();
 	if(skeleton){
 		// update skeleton pose //
-		skeleton->UpdatePose(mspassed, &OwnWorld);
+		skeleton->UpdatePose(mspassed);
 
 		// needs a shader that can render the skeleton //
 		switch(NeededShader){
@@ -447,7 +447,7 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::Model::GetSkeleton(){
 	return NULL;
 }
 
-DLLEXPORT bool Leviathan::GameObject::Model::StartPlayingAnimation(shared_ptr<AnimationBlock> Block, bool Smoothtonew /*= false*/){
+DLLEXPORT bool Leviathan::GameObject::Model::StartPlayingAnimation(shared_ptr<LoadedAnimation> Block, bool Smoothtonew /*= false*/){
 	// bind the animation to a (new) masterblock //
 	if(CurrentlyPlaying.get() == NULL){
 		// new block is required //

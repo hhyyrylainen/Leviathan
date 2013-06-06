@@ -489,13 +489,13 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 								// create it //
 								Float2 UV;
 								if(!NeedToChangeCoordinateSystem){
-									UV.Val[0] = Convert::WstringToFloat(Parts[0]);
-									UV.Val[1] = Convert::WstringToFloat(Parts[1]);
+									UV[0] = Convert::WstringToFloat(Parts[0]);
+									UV[1] = Convert::WstringToFloat(Parts[1]);
 								} else {
-								//	UV.Val[0] = Convert::WstringToFloat(Parts[0]);
-								//	UV.Val[1] = 1.f-Convert::WstringToFloat(Parts[1]);
-									UV.Val[0] = Convert::WstringToFloat(Parts[0]);
-									UV.Val[1] = Convert::WstringToFloat(Parts[1]);
+								//	UV[0] = Convert::WstringToFloat(Parts[0]);
+								//	UV[1] = 1.f-Convert::WstringToFloat(Parts[1]);
+									UV[0] = Convert::WstringToFloat(Parts[0]);
+									UV[1] = Convert::WstringToFloat(Parts[1]);
 									bool Adjusted = false;
 									// clamp indexes into 0-1 range //
 									if(UV.GetY() < 0){
@@ -525,7 +525,7 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 										}
 									}
 
-									UV.Val[1] = 1.f-UV.Val[1];
+									UV[1] = 1.f-UV[1];
 								}
 
 								// push //
@@ -639,17 +639,17 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 					.Cross((*Vertices[CurrentFace->VertexIDS[2]])-(*Vertices[CurrentFace->VertexIDS[0]])));
 
 				// set normals //
-				pRenderModel[fileverticeindex]->nx = facenormal.X();
-				pRenderModel[fileverticeindex]->ny = facenormal.Y();
-				pRenderModel[fileverticeindex]->nz = facenormal.Z();
+				pRenderModel[fileverticeindex]->nx = facenormal.X;
+				pRenderModel[fileverticeindex]->ny = facenormal.Y;
+				pRenderModel[fileverticeindex]->nz = facenormal.Z;
 
-				pRenderModel[fileverticeindex+1]->nx = facenormal.X();
-				pRenderModel[fileverticeindex+1]->ny = facenormal.Y();
-				pRenderModel[fileverticeindex+1]->nz = facenormal.Z();
+				pRenderModel[fileverticeindex+1]->nx = facenormal.X;
+				pRenderModel[fileverticeindex+1]->ny = facenormal.Y;
+				pRenderModel[fileverticeindex+1]->nz = facenormal.Z;
 
-				pRenderModel[fileverticeindex+2]->nx = facenormal.X();
-				pRenderModel[fileverticeindex+2]->ny = facenormal.Y();
-				pRenderModel[fileverticeindex+2]->nz = facenormal.Z();
+				pRenderModel[fileverticeindex+2]->nx = facenormal.X;
+				pRenderModel[fileverticeindex+2]->ny = facenormal.Y;
+				pRenderModel[fileverticeindex+2]->nz = facenormal.Z;
 
 				// loop through vertices in face //
 				for(unsigned int VerticeIndexNumber = 0; VerticeIndexNumber < 3; VerticeIndexNumber++){
@@ -675,7 +675,7 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 
 						if(curweights.size() > 0){
 							tmp->VertexGroups[0] = curweights[0]->iVal;
-							tmp->VertexGroupWeights[0] = curweights[0]->fVal;
+							tmp->VertexGroupWeights[0] = curweights[0]->X;
 						} else {
 							// empty vertex groups //
 							tmp->VertexGroups[0] = 0;
@@ -683,7 +683,7 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 						}
 						if(curweights.size() > 1){
 							tmp->VertexGroups[1] = curweights[1]->iVal;
-							tmp->VertexGroupWeights[1] = curweights[1]->fVal;
+							tmp->VertexGroupWeights[1] = curweights[1]->X;
 						} else {
 							// empty vertex groups //
 							tmp->VertexGroups[1] = 0;
@@ -691,7 +691,7 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 						}
 						if(curweights.size() > 2){
 							tmp->VertexGroups[2] = curweights[2]->iVal;
-							tmp->VertexGroupWeights[2] = curweights[2]->fVal;
+							tmp->VertexGroupWeights[2] = curweights[2]->X;
 						} else {
 							// empty vertex groups //
 							tmp->VertexGroups[2] = 0;
@@ -699,7 +699,7 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 						}
 						if(curweights.size() > 3){
 							tmp->VertexGroups[3] = curweights[3]->iVal;
-							tmp->VertexGroupWeights[3] = curweights[3]->fVal;
+							tmp->VertexGroupWeights[3] = curweights[3]->X;
 						} else {
 							// empty vertex groups //
 							tmp->VertexGroups[3] = 0;
@@ -709,9 +709,9 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 					// set vertice (1-3) //
 
 
-					pRenderModel[fileverticeindex]->x = Vertices[VertIndex]->X();
-					pRenderModel[fileverticeindex]->y = Vertices[VertIndex]->Y();
-					pRenderModel[fileverticeindex]->z = Vertices[VertIndex]->Z();
+					pRenderModel[fileverticeindex]->x = Vertices[VertIndex]->X;
+					pRenderModel[fileverticeindex]->y = Vertices[VertIndex]->Y;
+					pRenderModel[fileverticeindex]->z = Vertices[VertIndex]->Z;
 					// texture coordinates //
 					if(CurrentFace->UVs.size() > VerticeIndexNumber){
 						pRenderModel[fileverticeindex]->tu = CurrentFace->UVs[VerticeIndexNumber].GetX();
@@ -789,13 +789,13 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 					for(unsigned int ind = 0; ind < Vertices.size(); ind++){
 						// write //
 						converter.str(L"");
-						converter << Vertices[ind]->X() << L" " << Vertices[ind]->Y() << L" " << Vertices[ind]->Z();
+						converter << Vertices[ind]->X << L" " << Vertices[ind]->Y << L" " << Vertices[ind]->Z;
 						// group data //
 						if((ind < VerticeWeights.size()) && (VerticeWeights.size() != 0)){
 							// loop and add //
 							converter << L" groups(";
 							for(unsigned int addindex = 0; addindex < VerticeWeights[ind].size(); addindex++){
-								converter << L"[" << VerticeWeights[ind][addindex]->iVal << L", " << VerticeWeights[ind][addindex]->fVal << L"]";
+								converter << L"[" << VerticeWeights[ind][addindex]->iVal << L", " << VerticeWeights[ind][addindex]->X << L"]";
 							}
 							converter << L")";
 						}

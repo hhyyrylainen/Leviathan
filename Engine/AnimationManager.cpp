@@ -40,7 +40,7 @@ DLLEXPORT void Leviathan::AnimationManager::Release(){
 	Inited = false;
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<AnimationBlock> Leviathan::AnimationManager::GetAnimation(const wstring& name){
+DLLEXPORT shared_ptr<LoadedAnimation> Leviathan::AnimationManager::GetAnimation(const wstring& name){
 	// try to find correct animation //
 	// need to split name and base model name //
 	WstringIterator itr(name);
@@ -53,7 +53,7 @@ DLLEXPORT shared_ptr<AnimationBlock> Leviathan::AnimationManager::GetAnimation(c
 			// right model animation "group" //
 			if(AnimationsInMemory[i]->GetName() == *animationname){
 				// right one found! //
-				return AnimationsInMemory[i]->CreateFromThis();
+				return AnimationsInMemory[i];
 			}
 		}
 	}
@@ -90,11 +90,13 @@ DLLEXPORT shared_ptr<AnimationBlock> Leviathan::AnimationManager::GetAnimation(c
 	return NULL;
 }
 
-DLLEXPORT shared_ptr<AnimationBlock> Leviathan::AnimationManager::GetAnimation(int ID){
+DLLEXPORT shared_ptr<LoadedAnimation> Leviathan::AnimationManager::GetAnimation(int ID){
+	DEBUG_BREAK;
 	return NULL;
 }
 
-DLLEXPORT shared_ptr<AnimationBlock> Leviathan::AnimationManager::GetAnimationFromIndex(int ind){
+DLLEXPORT shared_ptr<LoadedAnimation> Leviathan::AnimationManager::GetAnimationFromIndex(int ind){
+	DEBUG_BREAK;
 	return NULL;
 }
 // ------------------------------------ //
@@ -132,10 +134,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 	bool NeedToChangeCoordinateSystem = false;
 	bool IsUnCompiled = false;
 
-
-
-
-	vector<shared_ptr<GameObject::SkeletonBone>> LoadedBones;
+	vector<shared_ptr<GameObject::SkeletonLoadingBone>> LoadedBones;
 	shared_ptr<LoadedAnimation> CurrentlyLoading(new LoadedAnimation());
 
 	int RetVal = 1;
@@ -245,7 +244,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 	}
 	// find properties first //
 	int KeyFrameCount = -1;
-	int KeyFrameInterval = -1;
+	//int KeyFrameInterval = -1;
 	int AnimationSpeed = -1;
 	// ignore frame length if animation speed defined //
 	int FrameLenght = -1;
@@ -264,11 +263,11 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 				KeyFrameCount = tval;
 			}
 
-			if(Curlist->Variables->GetValue(L"KeyFrameInterval", tval) > 1){
-				KeyFrameInterval = -1;
-			} else {
-				KeyFrameInterval = tval;
-			}
+			//if(Curlist->Variables->GetValue(L"KeyFrameInterval", tval) > 1){
+			//	KeyFrameInterval = -1;
+			//} else {
+			//	KeyFrameInterval = tval;
+			//}
 
 			if(Curlist->Variables->GetValue(L"AnimationSpeed", tval) > 1){
 				AnimationSpeed = -1;
@@ -290,14 +289,25 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 	if(AnimationSpeed == -1 && FrameLenght == -1){
 		// both undefined, use default //
-		// 24 frames per second //
-		AnimationSpeed = 24;
+		// 30 frames per second //
+		AnimationSpeed = 30;
 		// notify //
 		Logger::Get()->Warning(L"AnimationManager: VerifyAnimLoaded: File doesn't have AnimationSpeed (frames per second) or FrameLenght (ms per frame) defined! "
-			L"using default AnimationSpeed of 24 frames per second", false);
+			L"using default AnimationSpeed of 30 frames per second", false);
 	}
 
 	// set variables //
+	CurrentlyLoading->KeyFrames = KeyFrameCount;
+
+	if(FrameLenght == -1){
+		// frames/frames per second //
+		CurrentlyLoading->AnimDuration = KeyFrameCount/(float)AnimationSpeed;
+
+	} else {
+		// frames*ms per frame/1000 //
+		CurrentlyLoading->AnimDuration = (KeyFrameCount*FrameLenght)/1000.f;
+	}
+
 
 	// now process text blocks which contain the bones and the frames //
 	for(unsigned int i = 0; i < curobj->TextBlocks.size(); i++){
@@ -309,7 +319,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 			for(unsigned int ind = 0; ind < CurTB->Lines.size(); ind++){
 				vector<wstring*> Tokens;
 
-				shared_ptr<GameObject::SkeletonBone> LoadingBone(new GameObject::SkeletonBone);
+				shared_ptr<GameObject::SkeletonLoadingBone> LoadingBone(new GameObject::SkeletonLoadingBone);
 
 				// split to tokens //
 				if(LineTokeNizer::TokeNizeLine(*CurTB->Lines[ind], Tokens)){
@@ -358,17 +368,17 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						Float3 curvalue;
 
-						curvalue.Val[0] = Convert::WstringToFloat(*resultstr);
+						curvalue.X = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[1] = Convert::WstringToFloat(*resultstr);
+						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[2] = Convert::WstringToFloat(*resultstr);
+						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
 						if(NeedToChangeCoordinateSystem){
 							// swap y and z to convert from blender coordinates //
-							swap(curvalue.Val[1], curvalue.Val[2]);
+							swap(curvalue.Y, curvalue.Z);
 						}
 
 						LoadingBone->SetRestPosition(curvalue);
@@ -383,13 +393,13 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						Float3 curvalue;
 
-						curvalue.Val[0] = Convert::WstringToFloat(*resultstr);
+						curvalue.X = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[1] = Convert::WstringToFloat(*resultstr);
+						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[2] = Convert::WstringToFloat(*resultstr);
+						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
 						//LoadingBone->SetRestPosition(curvalue);
 						// no facilities for storing direction 
@@ -425,7 +435,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 			for(unsigned int ind = 0; ind < CurTB->Lines.size(); ind++){
 				vector<wstring*> Tokens;
 
-				shared_ptr<GameObject::SkeletonBone> LoadingBone(new GameObject::SkeletonBone);
+				shared_ptr<GameObject::SkeletonLoadingBone> LoadingBone(new GameObject::SkeletonLoadingBone);
 
 				// split to tokens //
 				if(LineTokeNizer::TokeNizeLine(*CurTB->Lines[ind], Tokens)){
@@ -454,17 +464,17 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						Float3 curvalue;
 
-						curvalue.Val[0] = Convert::WstringToFloat(*resultstr);
+						curvalue.X = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[1] = Convert::WstringToFloat(*resultstr);
+						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[2] = Convert::WstringToFloat(*resultstr);
+						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
 						if(NeedToChangeCoordinateSystem){
 							// swap y and z to convert from blender coordinates //
-							swap(curvalue.Val[1], curvalue.Val[2]);
+							swap(curvalue.Y, curvalue.Z);
 						}
 
 						// set it as rest position even though it actually isn't //
@@ -480,13 +490,13 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						Float3 curvalue;
 
-						curvalue.Val[0] = Convert::WstringToFloat(*resultstr);
+						curvalue.X = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[1] = Convert::WstringToFloat(*resultstr);
+						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[2] = Convert::WstringToFloat(*resultstr);
+						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
 						//LoadingBone->SetRestPosition(curvalue);
 						// no facilities for storing direction 

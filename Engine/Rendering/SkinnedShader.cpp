@@ -516,7 +516,7 @@ bool Leviathan::SkinnedShader::SetShaderParams(SHADER_BONECOUNT AmountBones, ID3
 	dataPtr3 = (CameraBufferType*)mappedResource.pData;
 
 	// Copy the camera position into the constant buffer.
-	dataPtr3->cameraPosition = D3DXVECTOR3(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+	dataPtr3->cameraPosition = D3DXVECTOR3(cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
 	dataPtr3->padding = 0.0f;
 
 	// Unlock the camera constant buffer.
@@ -597,10 +597,10 @@ bool Leviathan::SkinnedShader::SetShaderParams(SHADER_BONECOUNT AmountBones, ID3
 	dataPtr2 = (LightBufferType*)mappedResource.pData;
 
 	// Copy the lighting variables into the light constant buffer.
-	dataPtr2->ambientColor = D3DXVECTOR4(ambientColor[0], ambientColor[1], ambientColor[2], ambientColor[2]);
-	dataPtr2->diffuseColor = D3DXVECTOR4(diffuseColor[0], diffuseColor[1], diffuseColor[2], diffuseColor[2]);
-	dataPtr2->lightDirection = D3DXVECTOR3(lightDirection[0], lightDirection[1], lightDirection[2]);
-	dataPtr2->specularColor = D3DXVECTOR4(specularColor[0], specularColor[1], specularColor[2], specularColor[3]);
+	dataPtr2->ambientColor = D3DXVECTOR4(ambientColor.X, ambientColor.Y, ambientColor.Z, ambientColor.Z);
+	dataPtr2->diffuseColor = D3DXVECTOR4(diffuseColor.X, diffuseColor.Y, diffuseColor.Z, diffuseColor.Z);
+	dataPtr2->lightDirection = D3DXVECTOR3(lightDirection.X, lightDirection.Y, lightDirection.Z);
+	dataPtr2->specularColor = D3DXVECTOR4(specularColor.X, specularColor.Y, specularColor.Z, specularColor.W);
 	dataPtr2->specularPower = specularPower;
 	
 	// Unlock the light constant buffer.

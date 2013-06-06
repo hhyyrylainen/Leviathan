@@ -61,17 +61,17 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetStringInQuotes(QUOT
 	unique_ptr<wstring> resultstr;
 
 	// check for end //
-	if(data->Positions[1] == -1){
+	if(data->Positions.Y == -1){
 		// set to end on string end //
-		data->Positions.Val[1] = GetWstringLenght()-1;
+		data->Positions.Y = GetWstringLenght()-1;
 	}
 
 	if(IsPtrUsed){
 
-		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data->Positions[0], data->Positions[1]-data->Positions[0]+1)));
+		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data->Positions.X, data->Positions.Y-data->Positions.X+1)));
 	} else {
 
-		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data->Positions[0], data->Positions[1]-data->Positions[0]+1)));
+		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data->Positions.X, data->Positions.Y-data->Positions.X+1)));
 	}
 
 
@@ -96,23 +96,23 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextCharacterSequen
 	unique_ptr<wstring> resultstr;
 
 	// check for nothing found //
-	if(data.Positions[0] == -1 && data.Positions[1] == -1){
+	if(data.Positions.X == -1 && data.Positions.Y == -1){
 		resultstr = unique_ptr<wstring>(new wstring(L""));
 		return resultstr;
 	}
 
 	// check for end //
-	if(data.Positions[1] == -1){
+	if(data.Positions.Y == -1){
 		// set to end on string end //
-		data.Positions.Val[1] = GetWstringLenght()-1;
+		data.Positions.Y = GetWstringLenght()-1;
 	}
 
 	if(IsPtrUsed){
 
-		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data.Positions[0], data.Positions[1]-data.Positions[0]+1)));
+		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data.Positions.X, data.Positions.Y-data.Positions.X+1)));
 	} else {
 
-		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data.Positions[0], data.Positions[1]-data.Positions[0]+1)));
+		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data.Positions.X, data.Positions.Y-data.Positions.X+1)));
 	}
 
 	// return wanted part //
@@ -129,7 +129,7 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextNumber(DECIMALS
 
 	unique_ptr<wstring> resultstr;
 
-	if(data->Positions[0] == -1){
+	if(data->Positions.X == -1){
 		goto getnextnumberfuncendreleaseresourceslabel;
 	}
 
@@ -137,17 +137,17 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextNumber(DECIMALS
 
 
 	// check for end //
-	if(data->Positions[1] == -1){
+	if(data->Positions.Y == -1){
 		// set to end on string end //
-		data->Positions.Val[1] = GetWstringLenght()-1;
+		data->Positions.Y = GetWstringLenght()-1;
 	}
 
 	if(IsPtrUsed){
 
-		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data->Positions[0], data->Positions[1]-data->Positions[0]+1)));
+		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data->Positions.X, data->Positions.Y-data->Positions.X+1)));
 	} else {
 
-		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data->Positions[0], data->Positions[1]-data->Positions[0]+1)));
+		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data->Positions.X, data->Positions.Y-data->Positions.X+1)));
 	}
 
 getnextnumberfuncendreleaseresourceslabel:
@@ -173,22 +173,22 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEqualityAssign
 	unique_ptr<wstring> resultstr;
 
 	// check for end //
-	if(data.Positions[0] == data.Positions[1] || data.SeparatorFound == false){
+	if(data.Positions.X == data.Positions.Y || data.SeparatorFound == false){
 		// nothing found //
 		resultstr = unique_ptr<wstring>(new wstring());
 		return resultstr;
 	}
-	if(data.Positions[1] == -1){
+	if(data.Positions.Y == -1){
 		// set to start, this only happens if there is just one character //
-		data.Positions.Val[1] = data.Positions[0];
+		data.Positions.Y = data.Positions.X;
 	}
 
 	if(IsPtrUsed){
 
-		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data.Positions[0], data.Positions[1]-data.Positions[0]+1)));
+		resultstr = unique_ptr<wstring>(new wstring(Data->substr(data.Positions.X, data.Positions.Y-data.Positions.X+1)));
 	} else {
 
-		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data.Positions[0], data.Positions[1]-data.Positions[0]+1)));
+		resultstr = unique_ptr<wstring>(new wstring(ConstData.substr(data.Positions.X, data.Positions.Y-data.Positions.X+1)));
 	}
 
 	// return wanted part //
@@ -446,20 +446,20 @@ DLLEXPORT void Leviathan::WstringIterator::StripPreceedingAndTrailingWhitespaceC
 	itr.StartIterating(FindFromStartUntilCommentOrEnd, (Object*)&data, (int)0);
 
 	// check for nothing/1 character found //
-	if(data.Positions[0] == data.Positions[1]){
-		if(data.Positions[0] == -1){
+	if(data.Positions.X == data.Positions.Y){
+		if(data.Positions.X == -1){
 			// nothing found //
 			str.clear();
 			return;
 		} else {
 			// just one character //
-			str = str[data.Positions[0]];
+			str = str[data.Positions.X];
 			return;
 		}
 	}
 
 	// set the string as the only wanted part
-	str = str.substr(data.Positions[0], data.Positions[1]-data.Positions[0]+1);
+	str = str.substr(data.Positions.X, data.Positions.Y-data.Positions.X+1);
 }
 
 // ------------------------------------ //
@@ -510,17 +510,17 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindFirstQuotedString(WstringIterator* in
 		}
 
 		// check is this first quote //
-		if(tmpdata->Positions[0] == -1){
+		if(tmpdata->Positions.X == -1){
 			// first position! //
 
 			
 
-			tmpdata->Positions.Val[0] = instance->IteratorPosition+1;
+			tmpdata->Positions.X = instance->IteratorPosition+1;
 
 		} else {
 			// end found! //
 
-			tmpdata->Positions.Val[1] = instance->IteratorPosition-1;
+			tmpdata->Positions.Y = instance->IteratorPosition-1;
 			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 
@@ -570,17 +570,17 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNumber(WstringIterator
 	if(IsValid){
 		// check is this first digit //
 		tmpdata->DigitsFound++;
-		if(tmpdata->Positions[0] == -1){
+		if(tmpdata->Positions.X == -1){
 			// first position! //
 
-			tmpdata->Positions.Val[0] = instance->IteratorPosition;
+			tmpdata->Positions.X = instance->IteratorPosition;
 		}
 
 	} else {
 		// check for end //
-		if(tmpdata->Positions[0] != -1){
+		if(tmpdata->Positions.X != -1){
 			// ended //
-			tmpdata->Positions.Val[1] = instance->IteratorPosition-1;
+			tmpdata->Positions.Y = instance->IteratorPosition-1;
 			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 
@@ -641,17 +641,17 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIter
 
 	if(IsValid){
 		// check is this first character //
-		if(tmpdata->Positions[0] == -1){
+		if(tmpdata->Positions.X == -1){
 			// first position! //
 
-			tmpdata->Positions.Val[0] = instance->IteratorPosition;
+			tmpdata->Positions.X = instance->IteratorPosition;
 		}
 
 	} else {
 		// check for end //
-		if(tmpdata->Positions[0] != -1){
+		if(tmpdata->Positions.X != -1){
 			// ended //
-			tmpdata->Positions.Val[1] = instance->IteratorPosition-1;
+			tmpdata->Positions.Y = instance->IteratorPosition-1;
 			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 	}
@@ -721,12 +721,12 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilEquality(WstringItera
 
 	if(IsValid){
 		// check is this first character //
-		if(tmpdata->Positions[0] == -1){
+		if(tmpdata->Positions.X == -1){
 			// first position! //
-			tmpdata->Positions.Val[0] = instance->IteratorPosition;
+			tmpdata->Positions.X = instance->IteratorPosition;
 		} else {
 			// set end to this valid character //
-			tmpdata->Positions.Val[1] = instance->IteratorPosition;
+			tmpdata->Positions.Y = instance->IteratorPosition;
 		}
 
 	}
@@ -773,14 +773,14 @@ findfromstartuntilcommentorendfuncendlabel:
 	}
 
 	// set this as last index if not first //
-	if(tmpdata->Positions[0] == -1){
+	if(tmpdata->Positions.X == -1){
 
 		// first position //
-		tmpdata->Positions.Val[0] = instance->IteratorPosition;
-		tmpdata->Positions.Val[1] = instance->IteratorPosition;
+		tmpdata->Positions.X = instance->IteratorPosition;
+		tmpdata->Positions.Y = instance->IteratorPosition;
 	} else {
 		// currently last position //
-		tmpdata->Positions.Val[1] = instance->IteratorPosition;
+		tmpdata->Positions.Y = instance->IteratorPosition;
 	}
 
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;

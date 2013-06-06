@@ -115,6 +115,12 @@
     <Filter Include="math\Encryption">
       <UniqueIdentifier>{dc6e2295-d4af-4395-9bec-d741a28ef383}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Ozz">
+      <UniqueIdentifier>{87514697-c737-483d-a4e6-3f5f09400970}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tinyxml2">
+      <UniqueIdentifier>{718caef5-46be-457f-a1fb-bcdee43c8b1c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp">
@@ -444,9 +450,6 @@
     <ClCompile Include="SkeletonRig.cpp">
       <Filter>objects\Skeleton</Filter>
     </ClCompile>
-    <ClCompile Include="SkeletonBone.cpp">
-      <Filter>objects\Skeleton</Filter>
-    </ClCompile>
     <ClCompile Include="WstringIterator.cpp">
       <Filter>utility</Filter>
     </ClCompile>
@@ -463,9 +466,6 @@
       <Filter>core\managers</Filter>
     </ClCompile>
     <ClCompile Include="AnimationMasterBlock.cpp">
-      <Filter>animation</Filter>
-    </ClCompile>
-    <ClCompile Include="AnimationBlock.cpp">
       <Filter>animation</Filter>
     </ClCompile>
     <ClCompile Include="AnimationManager.cpp">
@@ -489,11 +489,68 @@
     <ClCompile Include="EuclideanFunctions.cpp">
       <Filter>math</Filter>
     </ClCompile>
-    <ClCompile Include="MPUINT.cpp">
-      <Filter>math\Encryption</Filter>
-    </ClCompile>
     <ClCompile Include="RSAEncryption.cpp">
       <Filter>math\Encryption</Filter>
+    </ClCompile>
+    <ClCompile Include="SkeletonLoadingBone.cpp">
+      <Filter>objects\Skeleton</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\base\io\archive.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\base\io\archive_maths.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\base\io\archive_simd_maths.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\base\io\archive_soa_maths.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\base\io\stream.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\base\log.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\base\maths\box.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\base\memory\allocator.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\options\options.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\animation\animation.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\animation\blending_job.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\animation\local_to_model_job.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\animation\offline\animation_builder.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\animation\offline\animation_optimizer.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\animation\offline\skeleton_builder.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\animation\sampling_job.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\animation\skeleton.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="Ozz\animation\utils.cc">
+      <Filter>Ozz</Filter>
+    </ClCompile>
+    <ClCompile Include="tinyxml2\tinyxml2.cpp">
+      <Filter>tinyxml2</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -837,9 +894,6 @@
     <ClInclude Include="SkeletonRig.h">
       <Filter>objects\Skeleton</Filter>
     </ClInclude>
-    <ClInclude Include="SkeletonBone.h">
-      <Filter>objects\Skeleton</Filter>
-    </ClInclude>
     <ClInclude Include="WstringIterator.h">
       <Filter>utility</Filter>
     </ClInclude>
@@ -856,9 +910,6 @@
       <Filter>core\managers</Filter>
     </ClInclude>
     <ClInclude Include="AnimationMasterBlock.h">
-      <Filter>animation</Filter>
-    </ClInclude>
-    <ClInclude Include="AnimationBlock.h">
       <Filter>animation</Filter>
     </ClInclude>
     <ClInclude Include="AnimationManager.h">
@@ -882,14 +933,167 @@
     <ClInclude Include="FileReaderBuffer.h">
       <Filter>utility</Filter>
     </ClInclude>
-    <ClInclude Include="MPUINT.h">
-      <Filter>math\Encryption</Filter>
-    </ClInclude>
     <ClInclude Include="RSAEncryption.h">
       <Filter>math\Encryption</Filter>
     </ClInclude>
     <ClInclude Include="EuclideanFunctions.h">
       <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="SkeletonLoadingBone.h">
+      <Filter>objects\Skeleton</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\containers\deque.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\containers\intrusive_list.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\containers\list.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\containers\map.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\containers\queue.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\containers\set.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\containers\stack.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\containers\std_allocator.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\containers\string.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\containers\vector.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\endianness.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\gtest_helper.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\io\archive.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\io\archive_maths.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\io\archive_simd_maths.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\io\archive_soa_maths.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\io\archive_traits.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\io\stream.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\log.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\box.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\gtest_math_helper.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\internal\simd_math_config.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\internal\simd_math_ref-inl.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\internal\simd_math_sse-inl.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\math_constant.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\math_ex.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\quaternion.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\rect.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\simd_math.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\soa_float.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\soa_float4x4.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\soa_quaternion.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\soa_transform.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\transform.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\maths\vec_float.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\memory\allocator.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\base\platform.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\options\options.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\animation.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\animation_serialize.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\blending_job.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\key_frame.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\local_to_model_job.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\offline\animation_builder.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\offline\animation_optimizer.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\offline\skeleton_builder.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\sampling_job.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\skeleton.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\skeleton_serialize.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="Ozz\animation\utils.h">
+      <Filter>Ozz</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyxml2\tinyxml2.h">
+      <Filter>tinyxml2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

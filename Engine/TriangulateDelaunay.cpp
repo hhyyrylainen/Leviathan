@@ -43,7 +43,7 @@ DLLEXPORT  vector<Float3> Leviathan::DelaunayTriangulator::RunTriangulation(cons
 		for(unsigned int a = 0; a < inputface.size(); a++){
 			const Float3& point2 = inputface[a];
 			// get angle //
-			float angle = (Float3(0,0, point1[2])-Float3(0,0, point2[2])).AddAllTogether();
+			float angle = (Float3(0,0, point1.Z)-Float3(0,0, point2.Z)).HAdd();
 			if(angle < 0)
 				angle *= -1;
 			if(lastangle != -1){

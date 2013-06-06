@@ -5,7 +5,6 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "MPUINT.h"
 #include "Random.h"
 
 float MMath::RandomNumber(float Min, float Max)
@@ -71,8 +70,8 @@ DLLEXPORT  bool Leviathan::MMath::IsPointInsidePolygon(const vector<Float3>& pol
 	//bool IsInside = false;
 	//int i,j;
 	//for(i = 0, j = polygon.size()-1; i < polygon.size(); j = i++){
-	//	if(((polygon[i].Val[1] > point.Val[1]) != (polygon[j].Val[1] > point.Val[1])) 
-	//		&& (point.Val[0] < (polygon[j].Val[0]-polygon[i].Val[0]) * (point.Val[1]-polygon[i].Val[1]) / (polygon[j].Val[1]-polygon[i].Val[1]) + polygon[i].Val[0]))
+	//	if(((polygon[i].Y > point.Y) != (polygon[j].Y > point.Y)) 
+	//		&& (point.X < (polygon[j].X-polygon[i].X) * (point.Y-polygon[i].Y) / (polygon[j].Y-polygon[i].Y) + polygon[i].X))
 	//		IsInside = !IsInside;
 	//}
 	//return IsInside;
@@ -102,26 +101,26 @@ DLLEXPORT bool Leviathan::MMath::IsEqual(float x, float y){
 Original Function written by Philip J. Erdelsky October 25, 2001 (revised August 22, 2002)
 Code Edited by Henri Hyyryläinen
 ----------------------------------------*/
-DLLEXPORT  bool Leviathan::MMath::IsPrime(const mpuint &p){
-	mpuint pminus1(p);
-	pminus1 -= 1;
-	unsigned count = 101;
-	while (--count != 0)
-	{
-		mpuint r(p.length);
-		mpuint x(p.length);
-		{
-			for (unsigned i = 0; i < x.length; i++)
-				x.value[i] = (USHORT)Random::Get()->GetNumber(0, USHRT_MAX) << 8 | (USHORT)Random::Get()->GetNumber(0, USHRT_MAX);
-		}
-		x %= p;
-		if (x != 0)
-		{
-			mpuint::Power(x, pminus1, p, r);
-			if (r != 1)
-				return false;
-		}
-	}
-	return true;
-}
+//DLLEXPORT  bool Leviathan::MMath::IsPrime(const mpuint &p){
+//	mpuint pminus1(p);
+//	pminus1 -= 1;
+//	unsigned count = 101;
+//	while (--count != 0)
+//	{
+//		mpuint r(p.length);
+//		mpuint x(p.length);
+//		{
+//			for (unsigned i = 0; i < x.length; i++)
+//				x.value[i] = (USHORT)Random::Get()->GetNumber(0, USHRT_MAX) << 8 | (USHORT)Random::Get()->GetNumber(0, USHRT_MAX);
+//		}
+//		x %= p;
+//		if (x != 0)
+//		{
+//			mpuint::Power(x, pminus1, p, r);
+//			if (r != 1)
+//				return false;
+//		}
+//	}
+//	return true;
+//}
 

@@ -34,6 +34,8 @@
 #define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: "+__LINE__ ), true);}
 #define QUICK_MEMORY_ERROR_MESSAGE {Logger::Get()->Error((L"Out of memory error from: " __WFILE__ L" function: "__WFUNCTION__), true);}
 
+#define FORCE_INLINE __forceinline
+
 #ifdef _MSC_VER
 #ifdef _DEBUG
 #define DEBUG_BREAK __debugbreak();
@@ -81,6 +83,8 @@
 #define UNIT_SCALE		1000
 #define UNIT_SCALE_HALF	(UNIT_SCALE/2)
 #define OBJECT_SMOOTH	4
+
+
 
 #define SHADER_DEBUG 1
 

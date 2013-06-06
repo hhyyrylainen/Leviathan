@@ -248,7 +248,10 @@ DLLEXPORT int Leviathan::NamedVar::ProcessDataDump(const wstring &data, vector<s
 
 	if(Misc::CutWstring(data, L";", Lines) != 0){
 		// no lines //
-		Logger::Get()->Error(L"NamedVar: ProcessDataDump: No lines (even 1 line requires ending ';' to work)", data.length(), true);
+		Logger::Get()->Error(L"NamedVar: ProcessDataDump: No lines (even 1 line requires ending ';' to work)", data.length(), false);
+#ifdef _DEBUG
+		Logger::Get()->Info(L"[DETAILS] data: "+data, true);
+#endif // _DEBUG
 		return 400;
 	}
 	// make space for values //

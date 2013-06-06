@@ -12,7 +12,17 @@
 #include "ComplainOnce.h"
 #include "LineTokenizer.h"
 
-#include "SkeletonBone.h"
+#include "ozz/animation/skeleton.h"
+#include "ozz/animation/sampling_job.h"
+#include "ozz/animation/local_to_model_job.h"
+#include "ozz/animation/offline/skeleton_builder.h"
+
+#include "ozz/base/maths/simd_math.h"
+#include "ozz/base/maths/vec_float.h"
+#include "ozz/base/maths/quaternion.h"
+#include "ozz/base/maths/soa_transform.h"
+
+#include "SkeletonLoadingBone.h"
 #include "WstringIterator.h"
 
 #include "AnimationMasterBlock.h"
@@ -26,12 +36,7 @@ namespace Leviathan{ namespace GameObject{
 		
 		DLLEXPORT void Release();
 		
-		DLLEXPORT void UpdatePose(int mspassed, D3DXMATRIX* WorldMatrix);
-		
-		// aren't actually needed //
-		//DLLEXPORT bool CreateBuffersForRendering(ID3D11Device* device);
-		//DLLEXPORT bool UpdateBuffersForRendering(ID3D11DeviceContext* devcont);
-		//DLLEXPORT ID3D11Buffer* FetchBuffer();
+		DLLEXPORT bool UpdatePose(int mspassed);
 
 		// animation related //
 		DLLEXPORT bool StartPlayingAnimation(shared_ptr<AnimationMasterBlock> Animation);
@@ -45,23 +50,32 @@ namespace Leviathan{ namespace GameObject{
 		DLLEXPORT int GetBoneCount();
 		DLLEXPORT bool VerifyBoneGroupExist(int ID, const wstring &name);
 
+		// loading //
+		// TODO: change exporter to give axis rotations
 		DLLEXPORT static SkeletonRig* LoadRigFromFileStructure(ObjectFileTextBlock* structure, bool NeedToChangeCoordinateSystem);
+		DLLEXPORT static void SetSkeletonLoadingBoneToOzzJoint(SkeletonLoadingBone* bone, ozz::animation::offline::RawSkeleton::Joint* joint);
+
+		DLLEXPORT static D3DXMATRIX CreateFromOzzFloatMatrix(ozz::math::Float4x4* matrice);
 
 
 	private:
 		void ReleaseBuffers();
-		void ResizeMatriceCount(int newsize);
+		void ResizeMatriceCount(size_t newsize);
 
 		// -------------------- //
-		//SkeletalAnimationStream* Animation;
-		vector<shared_ptr<D3DXMATRIX>> VerticeTranslationMatrices;
-		vector<shared_ptr<SkeletonBone>> RigsBones;
+		//vector<shared_ptr<D3DXMATRIX>> VerticeTranslationMatrices;
+		vector<ozz::math::Float4x4*> VerticeTranslationMatrices;
+		
+		vector<shared_ptr<SkeletonLoadingBone>> RigsBones;
 		vector<shared_ptr<IntWstring>> BoneGroups;
+
+		ozz::animation::Skeleton* ModelSkeleton;
 
 		// animation //
 		shared_ptr<AnimationMasterBlock> PlayingAnimation;
+
+
 		bool StopOnNextFrame : 1;
-		bool UseTranslatedPositions : 1;
 	};
 
 }}

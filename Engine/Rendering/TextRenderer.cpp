@@ -82,7 +82,7 @@ bool TextRenderer::UpdateSentenceID(int id, bool absolute, wstring &Font, wstrin
 
 			// get font id //
 			int fontid = GetFontIndex(Font);
-			UpdateSentence(Sentences[i], absolute, text, x, y, color[0], color[1], color[2], sizepercent, fontid, devcont, TranslateSize);
+			UpdateSentence(Sentences[i], absolute, text, x, y, color.X, color.Y, color.Z, sizepercent, fontid, devcont, TranslateSize);
 			return true;
 		}
 	}

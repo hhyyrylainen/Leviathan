@@ -38,7 +38,7 @@ DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(const wstring &sig
 }
 // ------------------------------------ //
 DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVar>> &HeaderVars){
-	QUICKTIME_THISSCOPE;
+	//QUICKTIME_THISSCOPE;
 	vector<shared_ptr<ObjectFileObject>> returned;
 
 	// read the file entirely //
@@ -96,7 +96,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 
 			// end found //
 #ifdef _DEBUG
-			Logger::Get()->Info(L"ObjectFileProcessor: Header ended because of line: "+Lines[Line]);
+			//Logger::Get()->Info(L"ObjectFileProcessor: Header ended because of line: "+Lines[Line]);
 #endif // _DEBUG
 			break;
 		}

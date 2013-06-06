@@ -54,7 +54,7 @@ DLLEXPORT int Leviathan::LineTokeNizer::TokeNizeLine(const wstring& str, vector<
 				TokenIndex++;
 
 				// end previous token just before this one //
-				CopyOperations[TokenIndex-1]->Val[1] = i;
+				CopyOperations[TokenIndex-1]->Y = i;
 
 				continue;
 			}
@@ -74,8 +74,8 @@ DLLEXPORT int Leviathan::LineTokeNizer::TokeNizeLine(const wstring& str, vector<
 	for(unsigned int i = 0; i < CopyOperations.size(); i++){
 		// use wstring functions to get sub strings //
 		// second is actually lenght of substring (end-start positions) //
-		result.push_back(new wstring(str.substr((unsigned int)CopyOperations[i]->Val[0], 
-			(unsigned int)CopyOperations[i]->Val[1]-CopyOperations[i]->Val[0])));
+		result.push_back(new wstring(str.substr((unsigned int)CopyOperations[i]->X, 
+			(unsigned int)CopyOperations[i]->Y-CopyOperations[i]->X)));
 	}
 	// release memory //
 	CopyOperations.clear();
@@ -109,7 +109,7 @@ DLLEXPORT  int Leviathan::LineTokeNizer::SplitTokenToValues(const wstring& str, 
 currentstringend:
 
 			// current one ended //
-			CopyOperations.back()->Val[1] = (int)i;
+			CopyOperations.back()->Y = (int)i;
 			// start new one //
 			CurrentStarted = false;
 			continue;
@@ -130,8 +130,8 @@ currentstringend:
 	for(unsigned int i = 0; i < CopyOperations.size(); i++){
 		// copy the substring from original string //
 
-		result.push_back(str.substr((unsigned int)CopyOperations[i]->Val[0], /*lenght*/ (unsigned int)(CopyOperations[i]->Val[1]-
-			CopyOperations[i]->Val[0])));
+		result.push_back(str.substr((unsigned int)CopyOperations[i]->X, /*lenght*/ (unsigned int)(CopyOperations[i]->Y-
+			CopyOperations[i]->X)));
 	}
 	// no error //
 	return 0;
@@ -169,7 +169,7 @@ DLLEXPORT int Leviathan::LineTokeNizer::SplitTokenToRTokens(const wstring& str, 
 			current = new Token();
 
 			// set up copying of characters //
-			CurrentCharacters.Val[1] = i-1;
+			CurrentCharacters.Y = i-1;
 			
 
 
@@ -202,7 +202,7 @@ DLLEXPORT int Leviathan::LineTokeNizer::SplitTokenToRTokens(const wstring& str, 
 			//tempchars.clear();
 
 			// set up copying of characters //
-			CurrentCharacters.Val[1] = i-1;
+			CurrentCharacters.Y = i-1;
 			if(!((CurrentCharacters[0] == -1) || (CurrentCharacters[0] == CurrentCharacters[1]))){
 				StringsToCopy.push_back(unique_ptr<DataForToken>(new DataForToken(current, CurrentCharacters)));
 			}
@@ -221,15 +221,15 @@ DLLEXPORT int Leviathan::LineTokeNizer::SplitTokenToRTokens(const wstring& str, 
 		}
 		// check is new copy starting //
 		if(CurrentCharacters[0] == -1)
-			CurrentCharacters.Val[0] = i;
+			CurrentCharacters.X = i;
 
 		// add to temporary buffer //
 		//tempchars += checkchar;
 	}
 	// add rest of characters //
-	if(CurrentCharacters.Val[0] != -1){
+	if(CurrentCharacters.X != -1){
 		// fix the end index (as final index in string //
-		CurrentCharacters.Val[1] = str.length()-1;
+		CurrentCharacters.Y = str.length()-1;
 		if(current == NULL){
 			// check for tree //
 			if(TokenTree.size() == 0){
@@ -257,12 +257,12 @@ DLLEXPORT int Leviathan::LineTokeNizer::SplitTokenToRTokens(const wstring& str, 
 	for(unsigned int i = 0; i < StringsToCopy.size(); i++){
 		if(StringsToCopy[i]->ToToken->GetData().length() == 0){
 			// set as the wstring //
-			StringsToCopy[i]->ToToken->SetData(str.substr((unsigned int)StringsToCopy[i]->ToCopyCharacters.Val[0], (unsigned int)(1+
-				StringsToCopy[i]->ToCopyCharacters.Val[1]-StringsToCopy[i]->ToCopyCharacters.Val[0])));
+			StringsToCopy[i]->ToToken->SetData(str.substr((unsigned int)StringsToCopy[i]->ToCopyCharacters.X, (unsigned int)(1+
+				StringsToCopy[i]->ToCopyCharacters.Y-StringsToCopy[i]->ToCopyCharacters.X)));
 		} else {
 			// append //
-			StringsToCopy[i]->ToToken->GetChangeableData() += str.substr((unsigned int)StringsToCopy[i]->ToCopyCharacters.Val[0], (unsigned int)(1+
-				StringsToCopy[i]->ToCopyCharacters.Val[1]-StringsToCopy[i]->ToCopyCharacters.Val[0]));
+			StringsToCopy[i]->ToToken->GetChangeableData() += str.substr((unsigned int)StringsToCopy[i]->ToCopyCharacters.X, (unsigned int)(1+
+				StringsToCopy[i]->ToCopyCharacters.Y-StringsToCopy[i]->ToCopyCharacters.X));
 		}
 	}
 	// clear data //

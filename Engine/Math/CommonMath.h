@@ -35,7 +35,7 @@ namespace Leviathan{
 		This function uses Fermat's Theorem 100 times to test the primeness of a
 		(large) positive integer.
 		----------------------------------------------------------------------------*/
-		DLLEXPORT static bool IsPrime(const mpuint &p);
+		//DLLEXPORT static bool IsPrime(const mpuint &p);
 
 		// float and double comparison //
 		DLLEXPORT static bool IsEqual(double x, double y);

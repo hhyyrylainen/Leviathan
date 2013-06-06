@@ -334,7 +334,7 @@ bool LightShader::SetShaderParams(ID3D11DeviceContext* devcont, D3DXMATRIX world
 	dataPtr3 = (CameraBufferType*)mappedResource.pData;
 
 	// Copy the camera position into the constant buffer.
-	dataPtr3->cameraPosition = D3DXVECTOR3(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+	dataPtr3->cameraPosition = D3DXVECTOR3(cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
 	dataPtr3->padding = 0.0f;
 
 	// Unlock the camera constant buffer.

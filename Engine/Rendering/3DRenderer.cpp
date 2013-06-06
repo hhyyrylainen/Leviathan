@@ -624,7 +624,7 @@ void Dx11Renderer::BeginRender(Float4 ClearColor){
 	//SAFE_RELEASE(DepthTargetView);
 
 	// clear back buffer
-	DeviceContext->ClearRenderTargetView(RenderTargetView, ClearColor);
+	DeviceContext->ClearRenderTargetView(RenderTargetView, (D3DXVECTOR4)ClearColor);
 	
 	// clear depth buffer
 	DeviceContext->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);

@@ -13,7 +13,7 @@ Code Edited by Henri Hyyryläinen
 ----------------------------------------*/
 namespace Leviathan{
 
-	void EuclideanAlgorithm(const mpuint &x, const mpuint &y, mpuint &a, mpuint &b, mpuint &g);
+	//void EuclideanAlgorithm(const mpuint &x, const mpuint &y, mpuint &a, mpuint &b, mpuint &g);
 
 }
 #endif

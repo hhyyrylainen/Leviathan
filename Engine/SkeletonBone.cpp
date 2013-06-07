@@ -10,8 +10,8 @@ DLLEXPORT Leviathan::GameObject::SkeletonBone::SkeletonBone(){
 	// let default allocations be //
 }
 
-DLLEXPORT Leviathan::GameObject::SkeletonBone::SkeletonBone(const wstring &name, const Float3 &position, int group) : Name(name), RestPosition(position),
-	AnimationPosition(RestPosition)	
+DLLEXPORT Leviathan::GameObject::SkeletonBone::SkeletonBone(const wstring &name, const Float3 &position, const Float3 &direction, int group) : 
+	Name(name), RestPosition(position), RestDirection(direction), AnimationPosition(RestPosition), AnimationDirection(RestDirection)
 {
 	// set values + initializer list //
 	BoneGroup = group;
@@ -27,6 +27,7 @@ DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetName(const wstring &name)
 
 DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetRestPosition(const Float3 &val){
 	RestPosition = val;
+	AnimationPosition = RestPosition;
 }
 
 DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetAnimationPosition(const Float3 &val){
@@ -50,6 +51,32 @@ DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetPosePosition(const Float3
 DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetParentName(const wstring &name){
 	ParentName = name;
 }
+
+DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetRestDirection(const Float3 &val){
+	RestDirection = val;
+	AnimationDirection = RestDirection;
+}
+
+DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetAnimationDirection(const Float3 &val){
+	AnimationDirection = val;
+}
+
+DLLEXPORT Float3& Leviathan::GameObject::SkeletonBone::GetRestDirection(){
+	return RestDirection;
+}
+
+DLLEXPORT Float3& Leviathan::GameObject::SkeletonBone::GetAnimationDirection(){
+	return AnimationDirection;
+}
+
+DLLEXPORT Float3& Leviathan::GameObject::SkeletonBone::GetAnimationPosition(){
+	return AnimationPosition;
+}
+
+
+
+
+
 
 // ------------------------------------ //
 

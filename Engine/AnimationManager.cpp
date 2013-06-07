@@ -358,17 +358,17 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						Float3 curvalue;
 
-						curvalue.Val[0] = Convert::WstringToFloat(*resultstr);
+						curvalue.X = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[1] = Convert::WstringToFloat(*resultstr);
+						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[2] = Convert::WstringToFloat(*resultstr);
+						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
 						if(NeedToChangeCoordinateSystem){
 							// swap y and z to convert from blender coordinates //
-							swap(curvalue.Val[1], curvalue.Val[2]);
+							swap(curvalue.Y, curvalue.Z);
 						}
 
 						LoadingBone->SetRestPosition(curvalue);
@@ -383,15 +383,15 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						Float3 curvalue;
 
-						curvalue.Val[0] = Convert::WstringToFloat(*resultstr);
+						curvalue.X = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[1] = Convert::WstringToFloat(*resultstr);
+						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[2] = Convert::WstringToFloat(*resultstr);
+						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
-						//LoadingBone->SetRestPosition(curvalue);
+						LoadingBone->SetRestDirection(curvalue);
 						// no facilities for storing direction 
 
 						continue;
@@ -454,17 +454,17 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						Float3 curvalue;
 
-						curvalue.Val[0] = Convert::WstringToFloat(*resultstr);
+						curvalue.X = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[1] = Convert::WstringToFloat(*resultstr);
+						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[2] = Convert::WstringToFloat(*resultstr);
+						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
 						if(NeedToChangeCoordinateSystem){
 							// swap y and z to convert from blender coordinates //
-							swap(curvalue.Val[1], curvalue.Val[2]);
+							swap(curvalue.Y, curvalue.Z);
 						}
 
 						// set it as rest position even though it actually isn't //
@@ -480,15 +480,15 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						Float3 curvalue;
 
-						curvalue.Val[0] = Convert::WstringToFloat(*resultstr);
+						curvalue.X = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[1] = Convert::WstringToFloat(*resultstr);
+						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
 						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
-						curvalue.Val[2] = Convert::WstringToFloat(*resultstr);
+						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
-						//LoadingBone->SetRestPosition(curvalue);
+						LoadingBone->SetRestDirection(curvalue);
 						// no facilities for storing direction 
 
 						continue;

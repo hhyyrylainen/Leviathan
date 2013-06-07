@@ -48,7 +48,7 @@ DLLEXPORT void Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed, D3DX
 		PlayingAnimation->UpdateAnimations(mspassed);
 	}
 
-	// resize matrices if apropriate //
+	// resize matrices if appropriate //
 	if(VerticeTranslationMatrices.size() != RigsBones.size()+1){
 		// resize to proper value //
 		ResizeMatriceCount(RigsBones.size()+1);
@@ -56,11 +56,11 @@ DLLEXPORT void Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed, D3DX
 
 	for(unsigned int i = 0; i < VerticeTranslationMatrices.size(); i++){
 		if(VerticeTranslationMatrices[i].get() == NULL){
-			// needs a new matrice //
+			// needs a new matrix //
 			VerticeTranslationMatrices[i] = shared_ptr<D3DXMATRIX>(new D3DXMATRIX());
 		}
 		// clear matrix //
-		D3DXMatrixIdentity(VerticeTranslationMatrices[i].get());
+		//D3DXMatrixIdentity(VerticeTranslationMatrices[i].get());
 
 		// fetch new translation //
 		SkeletonBone* curbone = NULL;
@@ -72,31 +72,60 @@ DLLEXPORT void Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed, D3DX
 				curbone = RigsBones[ind].get();
 			}
 		}
-
-		if(curbone != NULL){
-			// transform //
-			Float3* pos = NULL;
-			if(UseTranslatedPositions){
-				pos = &curbone->AnimationPosition;
-			} else {
-				// display in rest pose //
-				pos = &curbone->RestPosition;
-			}
-			// translate matrix //
-			D3DXMatrixTranslation(VerticeTranslationMatrices[i].get(), pos->X(), pos->Y(), pos->Z());
+		if(curbone == NULL){
+			// worry about this later //
+			continue;
 		}
 
+		D3DXMATRIX ScaleMatrix;
+		D3DXMatrixIdentity(&ScaleMatrix);
+		D3DXMATRIX RotationMatrix;
+		D3DXMatrixIdentity(&RotationMatrix);
+
+
+		// vertice offset from bone matrix! //
+
+
+
+		D3DXMATRIX TranslationMatrix;
+
+		// transform //
+		if(UseTranslatedPositions){
+
+			Float3* pos = &curbone->AnimationPosition;
+			Float3* posori = &curbone->RestPosition;
+
+			const Float3 changedpos = *pos-*posori;
+			// translate matrix //
+			D3DXMatrixTranslation(&TranslationMatrix, changedpos.X, changedpos.Y, changedpos.Z);
+
+			// scaling //
+			D3DXMatrixScaling(&ScaleMatrix, 1.f, 1.f, 1.f);
+
+			// rotation //
+			Float3* dir = &curbone->AnimationDirection;
+			Float3* origdir = &curbone->RestDirection;
+
+			const Float3 changeddir = *dir-*origdir;
+
+			D3DXMatrixRotationYawPitchRoll(&RotationMatrix, Convert::DegreesToRadians(changeddir.X), Convert::DegreesToRadians(changeddir.Y), 
+				Convert::DegreesToRadians(changeddir.Z));
+		} else {
+			// matrices that do nothing //
+			D3DXMatrixTranslation(&TranslationMatrix, 0.f, 0.f, 0.f);
+			D3DXMatrixScaling(&ScaleMatrix, 1.f, 1.f, 1.f);
+			D3DXMatrixRotationYawPitchRoll(&RotationMatrix, 0.f, 0.f, 0.f);
+		}
+
+		// scale*rotation*boneoffset + translation //
+
+		// compose final matrix //
+		D3DXMatrixMultiply(&RotationMatrix, &ScaleMatrix, &RotationMatrix);
+		D3DXMatrixMultiply(VerticeTranslationMatrices[i].get(), &RotationMatrix, &TranslationMatrix);
+
 		// maybe transpose the matrix //
-		D3DXMatrixTranspose(VerticeTranslationMatrices[i].get(), VerticeTranslationMatrices[i].get());
+		//D3DXMatrixTranspose(VerticeTranslationMatrices[i].get(), VerticeTranslationMatrices[i].get());
 	}
-	//// Transform our siblings
-	//if( m_pFrameArray[iFrame].SiblingFrame != INVALID_FRAME )
-	//	TransformFrame( m_pFrameArray[iFrame].SiblingFrame, pParentWorld, fTime );
-
-	//// Transform our children
-	//if( m_pFrameArray[iFrame].ChildFrame != INVALID_FRAME )
-	//	TransformFrame( m_pFrameArray[iFrame].ChildFrame, &LocalWorld, fTime );
-
 }
 
 // ------------------------------------ //
@@ -143,7 +172,7 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 				if(NeedToChangeCoordinateSystem){
 					// swap y and z to convert from blender coordinates to work with  //
 
-					swap(Coordinates.Val[1], Coordinates.Val[2]);
+					swap(Coordinates[1], Coordinates[2]);
 				}
 
 				CurrentBone->SetRestPosition(Coordinates);
@@ -177,13 +206,14 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 				// Generate Float3 from elements //
 				Float3 Direction(Convert::WstringToFloat(Values[0]), Convert::WstringToFloat(Values[1]), Convert::WstringToFloat(Values[2]));
 
-				if(NeedToChangeCoordinateSystem){
-					// swap y and z to convert from blender coordinates to work with  //
+				//if(NeedToChangeCoordinateSystem){
+				//	// swap y and z to convert from blender coordinates to work with  //
 
-					swap(Direction.Val[1], Direction.Val[2]);
-				}
+				//	swap(Direction[1], Direction[2]);
+				//}
 
-				//CurrentBone->SetRestPosition(Direction);
+				CurrentBone->SetRestDirection(Direction);
+
 			} else if (Misc::WstringStartsWith(*LineParts[ind], L"parent")){
 				// create iterator for string //
 				unique_ptr<WstringIterator> Iterator(new WstringIterator(LineParts[ind], false));
@@ -261,8 +291,8 @@ DLLEXPORT bool Leviathan::GameObject::SkeletonRig::SaveOnTopOfTextBlock(ObjectFi
 
 		(*curstr) += L"pos("+Convert::ToWstring(bone->RestPosition[0])+L","+Convert::ToWstring(bone->RestPosition[1])+L","
 			+Convert::ToWstring(bone->RestPosition[2])+L") ";
-		//(*curstr) += L"post("+Convert::ToWstring(bone->RestDir[0])+L","+Convert::ToWstring(bone->RestDir[1])+L","
-		//	+Convert::ToWstring(bone->RestDir[2])+L") ";
+		(*curstr) += L"dir("+Convert::ToWstring(bone->RestDirection[0])+L","+Convert::ToWstring(bone->RestDirection[1])+L","
+			+Convert::ToWstring(bone->RestDirection[2])+L") ";
 
 		// look for bone group name //
 		wstring BoneGroupName = L"INVALID";
@@ -372,10 +402,12 @@ DLLEXPORT bool Leviathan::GameObject::SkeletonRig::StartPlayingAnimation(shared_
 DLLEXPORT void Leviathan::GameObject::SkeletonRig::KillAnimation(){
 	// unregister variables //
 
+	// unhook bones from animation //
+
 	// unreference animation //
 	PlayingAnimation = NULL;
 
-	// unhook bones from animation //
+
 }
 
 DLLEXPORT shared_ptr<AnimationMasterBlock> Leviathan::GameObject::SkeletonRig::GetAnimation(){

@@ -489,9 +489,6 @@
     <ClCompile Include="EuclideanFunctions.cpp">
       <Filter>math</Filter>
     </ClCompile>
-    <ClCompile Include="MPUINT.cpp">
-      <Filter>math\Encryption</Filter>
-    </ClCompile>
     <ClCompile Include="RSAEncryption.cpp">
       <Filter>math\Encryption</Filter>
     </ClCompile>
@@ -881,9 +878,6 @@
     </ClInclude>
     <ClInclude Include="FileReaderBuffer.h">
       <Filter>utility</Filter>
-    </ClInclude>
-    <ClInclude Include="MPUINT.h">
-      <Filter>math\Encryption</Filter>
     </ClInclude>
     <ClInclude Include="RSAEncryption.h">
       <Filter>math\Encryption</Filter>

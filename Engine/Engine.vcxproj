@@ -154,7 +154,6 @@
     <ClCompile Include="ExceptionBase.cpp" />
     <ClCompile Include="LineTokenizer.cpp" />
     <ClCompile Include="LoadedAnimation.cpp" />
-    <ClCompile Include="MPUINT.cpp" />
     <ClCompile Include="NormalModelData.cpp" />
     <ClCompile Include="ObjectFileList.cpp" />
     <ClCompile Include="ObjectFileObject.cpp" />
@@ -285,7 +284,6 @@
     <ClInclude Include="ExceptionBase.h" />
     <ClInclude Include="LineTokenizer.h" />
     <ClInclude Include="LoadedAnimation.h" />
-    <ClInclude Include="MPUINT.h" />
     <ClInclude Include="NormalModelData.h" />
     <ClInclude Include="ObjectFileList.h" />
     <ClInclude Include="ObjectFileObject.h" />

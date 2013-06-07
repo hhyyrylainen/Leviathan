@@ -16,21 +16,30 @@ namespace Leviathan{ namespace GameObject{
 
 	public:
 		DLLEXPORT SkeletonBone::SkeletonBone();
-		DLLEXPORT SkeletonBone::SkeletonBone(const wstring &name, const Float3 &position, int group);
+		DLLEXPORT SkeletonBone::SkeletonBone(const wstring &name, const Float3 &position, const Float3 &direction, int group);
 		DLLEXPORT SkeletonBone::~SkeletonBone();
 
 		DLLEXPORT void SetName(const wstring &name);
 		DLLEXPORT void SetRestPosition(const Float3 &val);
+		DLLEXPORT void SetRestDirection(const Float3 &val);
 		DLLEXPORT void SetAnimationPosition(const Float3 &val);
+		DLLEXPORT void SetAnimationDirection(const Float3 &val);
 		DLLEXPORT void SetBoneGroup(int group);
 		DLLEXPORT void SetParentName(const wstring &name);
 
 		DLLEXPORT Float3& GetRestPosition();
+		DLLEXPORT Float3& GetRestDirection();
+		DLLEXPORT Float3& GetAnimationDirection();
+		DLLEXPORT Float3& GetAnimationPosition();
+
 		DLLEXPORT void SetPosePosition(const Float3 &pos);
 
 	private:
 		wstring Name;
 		Float3 RestPosition;
+		Float3 RestDirection;
+
+		Float3 AnimationDirection;
 		Float3 AnimationPosition;
 
 		// bone group //

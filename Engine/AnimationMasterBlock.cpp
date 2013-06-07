@@ -56,12 +56,15 @@ DLLEXPORT int Leviathan::AnimationMasterBlock::UpdateAnimations(int mspassed, bo
 
 
 	for(unsigned int i = 0; i < HookedBones.size(); i++){
-		Float3 pos = HookedBones[i]->GetRestPosition();
-		// translate //
-		//pos.X(pos.X() + 0.001f*AnimationMSPassed);
-		pos.Y(pos.Y() + 0.001f*AnimationMSPassed);
+		if(i != 1)
+			continue;
+		Float3 dir = HookedBones[i]->GetAnimationDirection();
+		//Float3 pos = HookedBones[i]->GetAnimationPosition();
+		// set rotation //
+
 		// set position to bone //
-		HookedBones[i]->SetAnimationPosition(pos);
+		HookedBones[i]->SetAnimationDirection(dir+Float3(0.f, 0.f, 0.1f*mspassed));
+		//HookedBones[i]->SetAnimationPosition(pos+Float3(0.1f*mspassed, 0.f, 0.f));
 	}
 
 	return 2;

@@ -14,7 +14,7 @@
 #include "SmoothedPosition.h"
 #include "BaseScalable.h"
 #include "SkeletonRig.h"
-#include "LoadedAnimation.h"
+#include "AnimationBlock.h"
 
 //#include <Assimp/scene.h>
 
@@ -63,7 +63,7 @@ namespace Leviathan{ namespace GameObject{
 
 		// animations //
 		// skeletal //
-		DLLEXPORT bool StartPlayingAnimation(shared_ptr<LoadedAnimation> Block, bool Smoothtonew = false);
+		DLLEXPORT bool StartPlayingAnimation(shared_ptr<AnimationBlock> Block, bool Smoothtonew = false);
 		DLLEXPORT void StopPlayingAnimations(bool KeepCurrentPose = false);
 		DLLEXPORT void FreezeAnimations();
 		DLLEXPORT bool UnFreezeAnimations();

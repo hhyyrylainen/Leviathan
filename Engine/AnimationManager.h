@@ -6,11 +6,12 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "AnimationBlock.h"
 #include "LoadedAnimation.h"
 #include "FileSystem.h"
 #include "WstringIterator.h"
 #include "ObjectFileProcessor.h"
-#include "SkeletonLoadingBone.h"
+#include "SkeletonBone.h"
 #include "LineTokenizer.h"
 
 namespace Leviathan{
@@ -35,9 +36,9 @@ namespace Leviathan{
 		DLLEXPORT void Release();
 
 		// getting animations/managing //
-		DLLEXPORT shared_ptr<LoadedAnimation> GetAnimation(const wstring &name);
-		DLLEXPORT shared_ptr<LoadedAnimation> GetAnimation(int ID);
-		DLLEXPORT shared_ptr<LoadedAnimation> GetAnimationFromIndex(int ind);
+		DLLEXPORT shared_ptr<AnimationBlock> GetAnimation(const wstring &name);
+		DLLEXPORT shared_ptr<AnimationBlock> GetAnimation(int ID);
+		DLLEXPORT shared_ptr<AnimationBlock> GetAnimationFromIndex(int ind);
 
 		DLLEXPORT bool UnloadAnimation(const wstring &name);
 		DLLEXPORT bool UnloadAnimation(int ID);
@@ -48,13 +49,11 @@ namespace Leviathan{
 
 		DLLEXPORT static AnimationManager* Get();
 	private:
-		// private loading functions //
+		vector<shared_ptr<LoadedAnimation>> AnimationsInMemory;
+
 		int VerifyAnimLoaded(const wstring &file, bool SkipCheck = false);
 		bool IsSourceFileLoaded(const wstring &sourcefile);
 		wstring GetAnimationNameFromFile(const wstring &file);
-
-		// ------------------------------------ //
-		vector<shared_ptr<LoadedAnimation>> AnimationsInMemory;
 		vector<unique_ptr<IndexedAnimation>> AnimationFiles;
 
 		// static access //

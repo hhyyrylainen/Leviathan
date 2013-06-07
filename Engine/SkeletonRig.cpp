@@ -5,75 +5,104 @@
 #endif
 using namespace Leviathan;
 using namespace Leviathan::GameObject;
-using namespace ozz::animation;
-using namespace ozz;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameObject::SkeletonRig::SkeletonRig() : PlayingAnimation(NULL), VerticeTranslationMatrices(), RigsBones(), BoneGroups(){
 
 	StopOnNextFrame = false;
-	//UseTranslatedPositions = false;
+	UseTranslatedPositions = false;
 }
 
+
+
 DLLEXPORT Leviathan::GameObject::SkeletonRig::~SkeletonRig(){
-	// release //
-	SAFE_DELETE_VECTOR(VerticeTranslationMatrices);
+
 }
 DLLEXPORT void Leviathan::GameObject::SkeletonRig::Release(){
 	// stop playing animation //
 	KillAnimation();
 }
+//void Leviathan::GameObject::SkeletonRig::ReleaseBuffers(){
+//
+//}
 // ------------------------------------ //
-void Leviathan::GameObject::SkeletonRig::ResizeMatriceCount(size_t newsize){
-	if(newsize < VerticeTranslationMatrices.size()){
-		// delete old //
-		SAFE_DELETE_VECTOR(VerticeTranslationMatrices);
-	}
-
+void Leviathan::GameObject::SkeletonRig::ResizeMatriceCount(int newsize){
 	// resize //
 	VerticeTranslationMatrices.resize(newsize);
 
+	// overwrite everything with NULL pointers //
+	for(unsigned int i = 0; i < VerticeTranslationMatrices.size(); i++){
+		VerticeTranslationMatrices[i] = NULL;
+	}
 }
 
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed){
+DLLEXPORT void Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed, D3DXMATRIX* WorldMatrix){
 	// update currently playing animations //
-	if(PlayingAnimation.get() == NULL)
-		// this should be handled differently //
-		return false;
 
-	// using animation //
+	if(PlayingAnimation.get() != NULL){
 
-	// update current positions //
-	PlayingAnimation->UpdateAnimations(mspassed);
-	
-	// convert precalculated matrices to model space matrices //
-	ozz::animation::LocalToModelJob ltmjob;
-	ltmjob.skeleton = ModelSkeleton;
-	ltmjob.input_begin = PlayingAnimation->TempMatrices.front();
-	ltmjob.input_end = PlayingAnimation->TempMatrices.back();
-	ltmjob.output_begin = VerticeTranslationMatrices.front();
-	ltmjob.output_end = VerticeTranslationMatrices.back();
+		// using animation //
+		UseTranslatedPositions = true;
 
-	if(!ltmjob.Run()){
-		DEBUG_BREAK;
-		return false;
+		// update current positions //
+		PlayingAnimation->UpdateAnimations(mspassed);
 	}
-	// succeeded //
-	return true;
+
+	// resize matrices if apropriate //
+	if(VerticeTranslationMatrices.size() != RigsBones.size()+1){
+		// resize to proper value //
+		ResizeMatriceCount(RigsBones.size()+1);
+	}
+
+	for(unsigned int i = 0; i < VerticeTranslationMatrices.size(); i++){
+		if(VerticeTranslationMatrices[i].get() == NULL){
+			// needs a new matrice //
+			VerticeTranslationMatrices[i] = shared_ptr<D3DXMATRIX>(new D3DXMATRIX());
+		}
+		// clear matrix //
+		D3DXMatrixIdentity(VerticeTranslationMatrices[i].get());
+
+		// fetch new translation //
+		SkeletonBone* curbone = NULL;
+
+		// find bone with this index //
+		for(unsigned int ind = 0; ind < RigsBones.size(); ind++){
+			if(RigsBones[ind].get()->BoneGroup == (int)i){
+				// group matches translation index //
+				curbone = RigsBones[ind].get();
+			}
+		}
+
+		if(curbone != NULL){
+			// transform //
+			Float3* pos = NULL;
+			if(UseTranslatedPositions){
+				pos = &curbone->AnimationPosition;
+			} else {
+				// display in rest pose //
+				pos = &curbone->RestPosition;
+			}
+			// translate matrix //
+			D3DXMatrixTranslation(VerticeTranslationMatrices[i].get(), pos->X(), pos->Y(), pos->Z());
+		}
+
+		// maybe transpose the matrix //
+		D3DXMatrixTranspose(VerticeTranslationMatrices[i].get(), VerticeTranslationMatrices[i].get());
+	}
+	//// Transform our siblings
+	//if( m_pFrameArray[iFrame].SiblingFrame != INVALID_FRAME )
+	//	TransformFrame( m_pFrameArray[iFrame].SiblingFrame, pParentWorld, fTime );
+
+	//// Transform our children
+	//if( m_pFrameArray[iFrame].ChildFrame != INVALID_FRAME )
+	//	TransformFrame( m_pFrameArray[iFrame].ChildFrame, &LocalWorld, fTime );
+
 }
 
 // ------------------------------------ //
 DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStructure(ObjectFileTextBlock* structure, bool NeedToChangeCoordinateSystem){
 	// used to release memory even in case of exceptions //
 	unique_ptr<SkeletonRig> CreatedRig = unique_ptr<SkeletonRig>(new SkeletonRig());
-
-	// create temporary //
-	offline::RawSkeleton rawskeleton;
-	// root bone //
-
-	// because ozz uses funky custom allocator, don't directly copy to raw skeleton, but create bone objects and then copy //
-	rawskeleton.roots.resize(1);
-	offline::RawSkeleton::Joint* root = &rawskeleton.roots[0];
 
 	// go through each line and load the bone on that line //
 	for(unsigned int i = 0; i < structure->Lines.size(); i++){
@@ -82,17 +111,17 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 
 		LineTokeNizer::TokeNizeLine(*structure->Lines[i], LineParts);
 
-		shared_ptr<SkeletonLoadingBone> CurrentBone(new SkeletonLoadingBone());
+		shared_ptr<SkeletonBone> CurrentBone(new SkeletonBone());
 
 		// process line parts //
 		for(unsigned int ind = 0; ind < LineParts.size(); ind++){
 			// check what part of definition this is (they can be in any order) //
 			if(Misc::WstringStartsWith(*LineParts[ind], L"name")){
 				// get text between quotation marks //
-				WstringIterator itr(LineParts[ind], false);
+				unique_ptr<WstringIterator> Iterator(new WstringIterator(LineParts[ind], false));
 
 				// get wstring that is in quotes //
-				unique_ptr<wstring> bonename = itr.GetStringInQuotes(QUOTETYPE_BOTH);
+				unique_ptr<wstring> bonename = Iterator->GetStringInQuotes(QUOTETYPE_BOTH);
 
 				// set name //
 				CurrentBone->SetName(*bonename);
@@ -114,18 +143,18 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 				if(NeedToChangeCoordinateSystem){
 					// swap y and z to convert from blender coordinates to work with  //
 
-					swap(Coordinates.Y, Coordinates.Z);
+					swap(Coordinates.Val[1], Coordinates.Val[2]);
 				}
 
 				CurrentBone->SetRestPosition(Coordinates);
 			} else if (Misc::WstringStartsWith(*LineParts[ind], L"group")){
 
 				// create iterator for string //
-				WstringIterator itr(LineParts[ind], false);
+				unique_ptr<WstringIterator> Iterator(new WstringIterator(LineParts[ind], false));
 
 				// get name //
-				unique_ptr<wstring> name = itr.GetStringInQuotes(QUOTETYPE_DOUBLEQUOTES);
-				unique_ptr<wstring> idstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
+				unique_ptr<wstring> name = Iterator->GetStringInQuotes(QUOTETYPE_DOUBLEQUOTES);
+				unique_ptr<wstring> idstr = Iterator->GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 
 				int id = Convert::WstringToInt(*idstr.get());
 
@@ -141,7 +170,6 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 
 				if(Values.size() != 3){
 					// somethings wrong //
-					DEBUG_BREAK;
 					Logger::Get()->Error(L"SkeletonRig: LoadFromFileStructure: invalid number of direction elements (3) expected ", Values.size());
 					continue;
 				}
@@ -152,23 +180,28 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 				if(NeedToChangeCoordinateSystem){
 					// swap y and z to convert from blender coordinates to work with  //
 
-					swap(Direction.Y, Direction.Z);
+					swap(Direction.Val[1], Direction.Val[2]);
 				}
 
-				CurrentBone->SetRestDirection(Direction);
-
+				//CurrentBone->SetRestPosition(Direction);
 			} else if (Misc::WstringStartsWith(*LineParts[ind], L"parent")){
 				// create iterator for string //
-				WstringIterator itr(LineParts[ind], false);
+				unique_ptr<WstringIterator> Iterator(new WstringIterator(LineParts[ind], false));
 
 				// get name //
-				unique_ptr<wstring> parent = itr.GetStringInQuotes(QUOTETYPE_DOUBLEQUOTES);
+				unique_ptr<wstring> parent = Iterator->GetStringInQuotes(QUOTETYPE_DOUBLEQUOTES);
 
 				// find the parent bone //
-				// not done here anymore //
+				weak_ptr<SkeletonBone> ParentBone;
+
+				for(unsigned int bind = 0; bind < CreatedRig->RigsBones.size(); bind++){
+					if(CreatedRig->RigsBones[bind]->Name == *parent){
+						ParentBone = weak_ptr<SkeletonBone>(CreatedRig->RigsBones[bind]);
+					}
+				}
 				
 				CurrentBone->ParentName = *parent;
-				CurrentBone->Parent.reset();
+				CurrentBone->Parent = ParentBone;
 
 			} else {
 				// unknown definition //
@@ -189,82 +222,18 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 			// find parent //
 			for(unsigned int aind = 0; aind < CreatedRig->RigsBones.size(); aind++){
 				if(CreatedRig->RigsBones[aind]->Name == CreatedRig->RigsBones[bind]->ParentName){
-					// so that children are correctly set //
-					CreatedRig->RigsBones[bind]->SetParent(CreatedRig->RigsBones[aind], CreatedRig->RigsBones[bind]);
+					CreatedRig->RigsBones[bind]->Parent = weak_ptr<SkeletonBone>(CreatedRig->RigsBones[aind]);
 				}
 			}
 		}
 	}
 
-
-	// build the actual animating skeleton //
-
-	// find root bone //
-	for(size_t i = 0; i < CreatedRig->RigsBones.size(); i++){
-		// root bone doesn't have a parent, find bone with empty parent name //
-		if(CreatedRig->RigsBones[i]->ParentName.size() == 0){
-			// root bone found //
-			// call the function to copy stuff, it will recurse until all bones are added //
-			SetSkeletonLoadingBoneToOzzJoint(CreatedRig->RigsBones[i].get(), root);
-			break;
-		}
-	}
-
-	// verify bone counts //
-	if((size_t)rawskeleton.num_joints() != CreatedRig->RigsBones.size()){
-		// loading failed //
-		DEBUG_BREAK;
-	}
-
-	// compile the skeleton //
-	offline::SkeletonBuilder skeletonbuilder;
-
-	CreatedRig->ModelSkeleton = skeletonbuilder(rawskeleton);
-	// check for fail //
-	if(CreatedRig->ModelSkeleton == NULL){
-		DEBUG_BREAK;
-	}
-
-	// allocate memory for runtime data //
-
-	// no need for helper structs //
-
-	// if not working steal loan code from ozz utils //
-	
-	CreatedRig->VerticeTranslationMatrices.resize(rawskeleton.num_joints());
-
-	// potentially release all data here (check is it useful later //
-
-	// return the finished rig object //
+	SkeletonRig* tmp = CreatedRig.get();
 	// hopefully not delete it by accident here... (release should work) //
-	SkeletonRig* tmp = CreatedRig.release();
-
+	CreatedRig.release();
 	return tmp;
 }
 
-DLLEXPORT void Leviathan::GameObject::SkeletonRig::SetSkeletonLoadingBoneToOzzJoint(SkeletonLoadingBone* bone, 
-	ozz::animation::offline::RawSkeleton::Joint* joint)
-{
-	// set name //
-	joint->name = Convert::WstringToString(bone->Name).c_str();
-
-	// set rest positions //
-	joint->transform.scale = math::Float3::one();
-
-	// set rotation, TODO: change exporter to give axis rotations //
-	joint->transform.rotation = math::Quaternion::FromEuler(math::Float3(bone->RestDirection.X, bone->RestDirection.Y, bone->RestDirection.Z));
-
-	// and finally set location //
-	joint->transform.translation = math::Float3(bone->RestPosition.X, bone->RestPosition.Y, bone->RestPosition.Z);
-
-	// set root children //
-	joint->children.resize(bone->Children.size());
-
-	for(size_t a = 0; a < bone->Children.size(); a++){
-		// copy child bone data //
-		SetSkeletonLoadingBoneToOzzJoint(bone->Children[a].lock().get(), &joint->children[a]);
-	}
-}
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GameObject::SkeletonRig::SaveOnTopOfTextBlock(ObjectFileTextBlock* block){
 	// clear existing data //
@@ -276,13 +245,13 @@ DLLEXPORT bool Leviathan::GameObject::SkeletonRig::SaveOnTopOfTextBlock(ObjectFi
 		wstring* curstr = new wstring();
 		block->Lines.push_back(curstr);
 
-		SkeletonLoadingBone* bone = RigsBones[i].get();
+		SkeletonBone* bone = RigsBones[i].get();
 
 		// data //
 		(*curstr) += L"name(\""+bone->Name+L"\") ";
 
 		// check for parent //
-		shared_ptr<SkeletonLoadingBone> parentbone(bone->Parent.lock());
+		shared_ptr<SkeletonBone> parentbone(bone->Parent.lock());
 
 		if(parentbone.get() != NULL){
 			// has parent, save it //
@@ -290,8 +259,8 @@ DLLEXPORT bool Leviathan::GameObject::SkeletonRig::SaveOnTopOfTextBlock(ObjectFi
 		}
 		parentbone.reset();
 
-		(*curstr) += L"pos("+Convert::ToWstring(bone->RestPosition.X)+L","+Convert::ToWstring(bone->RestPosition.Y)+L","
-			+Convert::ToWstring(bone->RestPosition.Z)+L") ";
+		(*curstr) += L"pos("+Convert::ToWstring(bone->RestPosition[0])+L","+Convert::ToWstring(bone->RestPosition[1])+L","
+			+Convert::ToWstring(bone->RestPosition[2])+L") ";
 		//(*curstr) += L"post("+Convert::ToWstring(bone->RestDir[0])+L","+Convert::ToWstring(bone->RestDir[1])+L","
 		//	+Convert::ToWstring(bone->RestDir[2])+L") ";
 
@@ -353,24 +322,10 @@ DLLEXPORT bool Leviathan::GameObject::SkeletonRig::CopyValuesToBuffer(BoneTransf
 	}
 	// copy matrices to the buffer //
 	for(unsigned int i = 0; i < VerticeTranslationMatrices.size(); i++){
-		// converting //
-		*(Buffersdata+i) = CreateFromOzzFloatMatrix(VerticeTranslationMatrices[i]);
+		*(Buffersdata+i) = *VerticeTranslationMatrices[i];
 	}
 
 	return true;
-}
-
-DLLEXPORT D3DXMATRIX Leviathan::GameObject::SkeletonRig::CreateFromOzzFloatMatrix(ozz::math::Float4x4* matrice){
-	// construct matrix from 4x4 matrix //
-	math::SimdFloat4* row1 = &matrice->cols[0];
-	math::SimdFloat4* row2 = &matrice->cols[0];
-	math::SimdFloat4* row3 = &matrice->cols[0];
-	math::SimdFloat4* row4 = &matrice->cols[0];
-	// huge blob of constructor parameters //
-	return D3DXMATRIX(row1->x, row1->y, row1->z, row1->w, 
-		row2->x, row2->y, row2->z, row2->w,
-		row3->x, row3->y, row3->z, row3->w,
-		row4->x, row4->y, row4->z, row4->w);
 }
 
 DLLEXPORT int Leviathan::GameObject::SkeletonRig::GetBoneCount(){
@@ -409,6 +364,8 @@ DLLEXPORT bool Leviathan::GameObject::SkeletonRig::StartPlayingAnimation(shared_
 	PlayingAnimation = Animation;
 	// register values //
 
+	// hook bones //
+	PlayingAnimation->HookBones(RigsBones);
 	return true;
 }
 

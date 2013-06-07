@@ -6,51 +6,31 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "SkeletonLoadingBone.h"
+#include "AnimationBlock.h"
+#include "SkeletonBone.h"
 #include "EventHandler.h"
-#include "LoadedAnimation.h"
-
-#include "ozz/animation/animation.h"
-#include "ozz/animation/offline/animation_builder.h"
-#include "ozz/base/maths/quaternion.h"
-#include "ozz/animation/sampling_job.h"
-#include "ozz/base/maths/soa_transform.h"
-
 
 #define ANIMATIONMASTERBLOCK_UPDATE_RETURN_FROZEN	2500
 
 namespace Leviathan{
 
 	class AnimationMasterBlock : public CallableObject{
-		friend class GameObject::SkeletonRig;
 	public:
+		DLLEXPORT AnimationMasterBlock::AnimationMasterBlock();
 		DLLEXPORT AnimationMasterBlock::~AnimationMasterBlock();
-			DLLEXPORT AnimationMasterBlock::AnimationMasterBlock();
+
 		DLLEXPORT int UpdateAnimations(int mspassed, bool force = false);
+		DLLEXPORT void HookBones(vector<shared_ptr<GameObject::SkeletonBone>> &bonestohook);
 
 		DLLEXPORT void OnEvent(Event** pEvent);
+
 	private:
-		//// private constructors, can only be constructed by animation manager //
 
-		
-		// --------------------------------- //
-		//vector<shared_ptr<AnimationBlock>> Animations;
-		vector<shared_ptr<LoadedAnimation>> Animations;
+		vector<shared_ptr<AnimationBlock>> Animations;
+		vector<shared_ptr<GameObject::SkeletonBone>> HookedBones;
 
-		ozz::animation::SamplingCache* SampledCache;
-
-		// used for converting to specific models //
-		vector<ozz::math::SoaTransform*> TempMatrices;
-		vector<ozz::animation::SamplingCache*> Cache;
-
-		float AnimationSecondsPassed;
-
+		int AnimationMSPassed;
 		bool IsFrozen;
-
-		int AnimationBoneCount;
-
-		float PlayingSpeed;
-
 		bool AreAnimationsUpdated;
 	};
 

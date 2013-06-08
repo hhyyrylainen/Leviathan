@@ -73,6 +73,19 @@ DLLEXPORT Float3& Leviathan::GameObject::SkeletonBone::GetAnimationPosition(){
 	return AnimationPosition;
 }
 
+DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetParentPtr(shared_ptr<SkeletonBone> parent, shared_ptr<SkeletonBone> thisptr){
+	// add parent //
+	Parent = parent;
+	// set this as parent's child //
+	parent->AddChildren(thisptr);
+}
+
+DLLEXPORT void Leviathan::GameObject::SkeletonBone::AddChildren(shared_ptr<SkeletonBone> bone){
+	Children.push_back(bone);
+}
+
+
+
 
 
 

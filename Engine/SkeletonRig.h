@@ -26,7 +26,7 @@ namespace Leviathan{ namespace GameObject{
 		
 		DLLEXPORT void Release();
 		
-		DLLEXPORT void UpdatePose(int mspassed, D3DXMATRIX* WorldMatrix);
+		DLLEXPORT void UpdatePose(int mspassed);
 
 		// aren't actually needed //
 		//DLLEXPORT bool CreateBuffersForRendering(ID3D11Device* device);
@@ -51,6 +51,10 @@ namespace Leviathan{ namespace GameObject{
 	private:
 		void ReleaseBuffers();
 		void ResizeMatriceCount(int newsize);
+
+		// recursive bone updating //
+		void UpdateBone(SkeletonBone* bone, D3DXMATRIX* parentmatrix);
+		D3DXMATRIX* GetMatrixForBone(SkeletonBone* bone);
 
 		// -------------------- //
 		//SkeletalAnimationStream* Animation;

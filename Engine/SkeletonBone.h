@@ -26,6 +26,8 @@ namespace Leviathan{ namespace GameObject{
 		DLLEXPORT void SetAnimationDirection(const Float3 &val);
 		DLLEXPORT void SetBoneGroup(int group);
 		DLLEXPORT void SetParentName(const wstring &name);
+		DLLEXPORT void SetParentPtr(shared_ptr<SkeletonBone> parent, shared_ptr<SkeletonBone> thisptr);
+		DLLEXPORT void AddChildren(shared_ptr<SkeletonBone> bone);
 
 		DLLEXPORT Float3& GetRestPosition();
 		DLLEXPORT Float3& GetRestDirection();
@@ -46,6 +48,9 @@ namespace Leviathan{ namespace GameObject{
 		int BoneGroup;
 
 		weak_ptr<SkeletonBone> Parent;
+
+		vector<weak_ptr<SkeletonBone>> Children;
+
 		wstring ParentName;
 	};
 

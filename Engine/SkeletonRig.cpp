@@ -29,14 +29,15 @@ void Leviathan::GameObject::SkeletonRig::ResizeMatriceCount(int newsize){
 	// resize //
 	VerticeTranslationMatrices.resize(newsize);
 
-	// overwrite everything with NULL pointers //
+	// overwrite everything with identity matrices pointers //
 	for(unsigned int i = 0; i < VerticeTranslationMatrices.size(); i++){
-		VerticeTranslationMatrices[i] = NULL;
+		VerticeTranslationMatrices[i] = shared_ptr<D3DXMATRIX>(new D3DXMATRIX());
+		D3DXMatrixIdentity(VerticeTranslationMatrices[i].get());
 	}
 }
 
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed, D3DXMATRIX* WorldMatrix){
+DLLEXPORT void Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed){
 	// update currently playing animations //
 
 	if(PlayingAnimation.get() != NULL){
@@ -54,78 +55,105 @@ DLLEXPORT void Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed, D3DX
 		ResizeMatriceCount(RigsBones.size()+1);
 	}
 
-	for(unsigned int i = 0; i < VerticeTranslationMatrices.size(); i++){
-		if(VerticeTranslationMatrices[i].get() == NULL){
-			// needs a new matrix //
-			VerticeTranslationMatrices[i] = shared_ptr<D3DXMATRIX>(new D3DXMATRIX());
+	if(!UseTranslatedPositions){
+		// just reset all matrices //
+		for(unsigned int i = 0; i < VerticeTranslationMatrices.size(); i++){
+			// clear matrix //
+			D3DXMatrixIdentity(VerticeTranslationMatrices[i].get());
 		}
-		// clear matrix //
-		//D3DXMatrixIdentity(VerticeTranslationMatrices[i].get());
 
-		// fetch new translation //
-		SkeletonBone* curbone = NULL;
+		return;
+	}
 
-		// find bone with this index //
-		for(unsigned int ind = 0; ind < RigsBones.size(); ind++){
-			if(RigsBones[ind].get()->BoneGroup == (int)i){
-				// group matches translation index //
-				curbone = RigsBones[ind].get();
-			}
-		}
-		if(curbone == NULL){
-			// worry about this later //
+	// find bones without parents and start recursing from them //
+	for(size_t i = 0; i < RigsBones.size(); i++){
+		if(RigsBones[i].get() == NULL){
+			DEBUG_BREAK;
 			continue;
 		}
+		if(RigsBones[i]->Parent.lock().get() == NULL){
+			// root bone, start updating from this //
 
-		D3DXMATRIX ScaleMatrix;
-		D3DXMatrixIdentity(&ScaleMatrix);
-		D3DXMATRIX RotationMatrix;
-		D3DXMatrixIdentity(&RotationMatrix);
-
-
-		// vertice offset from bone matrix! //
-
-
-
-		D3DXMATRIX TranslationMatrix;
-
-		// transform //
-		if(UseTranslatedPositions){
-
-			Float3* pos = &curbone->AnimationPosition;
-			Float3* posori = &curbone->RestPosition;
-
-			const Float3 changedpos = *pos-*posori;
-			// translate matrix //
-			D3DXMatrixTranslation(&TranslationMatrix, changedpos.X, changedpos.Y, changedpos.Z);
-
-			// scaling //
-			D3DXMatrixScaling(&ScaleMatrix, 1.f, 1.f, 1.f);
-
-			// rotation //
-			Float3* dir = &curbone->AnimationDirection;
-			Float3* origdir = &curbone->RestDirection;
-
-			const Float3 changeddir = *dir-*origdir;
-
-			D3DXMatrixRotationYawPitchRoll(&RotationMatrix, Convert::DegreesToRadians(changeddir.X), Convert::DegreesToRadians(changeddir.Y), 
-				Convert::DegreesToRadians(changeddir.Z));
-		} else {
-			// matrices that do nothing //
-			D3DXMatrixTranslation(&TranslationMatrix, 0.f, 0.f, 0.f);
-			D3DXMatrixScaling(&ScaleMatrix, 1.f, 1.f, 1.f);
-			D3DXMatrixRotationYawPitchRoll(&RotationMatrix, 0.f, 0.f, 0.f);
+			// pass NULL to not have to multiply by identity matrix //
+			UpdateBone(RigsBones[i].get(), NULL);
 		}
-
-		// scale*rotation*boneoffset + translation //
-
-		// compose final matrix //
-		D3DXMatrixMultiply(&RotationMatrix, &ScaleMatrix, &RotationMatrix);
-		D3DXMatrixMultiply(VerticeTranslationMatrices[i].get(), &RotationMatrix, &TranslationMatrix);
-
-		// maybe transpose the matrix //
-		//D3DXMatrixTranspose(VerticeTranslationMatrices[i].get(), VerticeTranslationMatrices[i].get());
 	}
+}
+
+void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATRIX* parentmatrix){
+	// matrices //
+	D3DXMATRIX ScaleMatrix;
+	D3DXMatrixIdentity(&ScaleMatrix);
+	D3DXMATRIX RotationMatrix;
+	D3DXMatrixIdentity(&RotationMatrix);
+
+
+	// vertice offset from bone matrix! //
+
+	D3DXMATRIX TranslationMatrix;
+
+	// always uses transform inside this function //
+
+	// transform //
+
+	Float3* pos = &bone->AnimationPosition;
+	Float3* posori = &bone->RestPosition;
+
+	const Float3 changedpos = *pos-*posori;
+	// translate matrix //
+	D3DXMatrixTranslation(&TranslationMatrix, changedpos.X, changedpos.Y, changedpos.Z);
+
+	// scaling //
+	D3DXMatrixScaling(&ScaleMatrix, 1.f, 1.f, 1.f);
+
+	// rotation //
+	Float3* dir = &bone->AnimationDirection;
+	Float3* origdir = &bone->RestDirection;
+
+	const Float3 changeddir = *dir-*origdir;
+
+	D3DXMatrixRotationYawPitchRoll(&RotationMatrix, Convert::DegreesToRadians(changeddir.X), Convert::DegreesToRadians(changeddir.Y), 
+		Convert::DegreesToRadians(changeddir.Z));
+
+	// scale*rotation*boneoffset * translation //
+
+	// compose final matrix //
+	D3DXMatrixMultiply(&RotationMatrix, &ScaleMatrix, &RotationMatrix);
+
+
+	D3DXMATRIX* ThisBoneMatrix = GetMatrixForBone(bone);
+
+	// set the result to the right matrix //
+	D3DXMatrixMultiply(ThisBoneMatrix, &RotationMatrix, &TranslationMatrix);
+	//*ThisBoneMatrix = RotationMatrix+TranslationMatrix;
+
+	// parent matrix needs to be calculated in, if not null //
+	if(parentmatrix != NULL){
+		D3DXMatrixMultiply(ThisBoneMatrix, ThisBoneMatrix, parentmatrix);
+	}
+
+	// update child bones //
+	for(size_t i = 0; i < bone->Children.size(); i++){
+		if(bone->Children[i].lock().get() != NULL){
+
+			UpdateBone(bone->Children[i].lock().get(), ThisBoneMatrix);
+			continue;
+		}
+		DEBUG_BREAK;
+	}
+
+}
+
+D3DXMATRIX* Leviathan::GameObject::SkeletonRig::GetMatrixForBone(SkeletonBone* bone){
+
+	size_t MatIndex = bone->BoneGroup;
+	
+	// verify that matrix exists //
+	if(VerticeTranslationMatrices[MatIndex].get() == NULL){
+		// needs a new matrix //
+		VerticeTranslationMatrices[MatIndex] = shared_ptr<D3DXMATRIX>(new D3DXMATRIX());
+	}
+	return VerticeTranslationMatrices[MatIndex].get();
 }
 
 // ------------------------------------ //
@@ -222,16 +250,16 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 				unique_ptr<wstring> parent = Iterator->GetStringInQuotes(QUOTETYPE_DOUBLEQUOTES);
 
 				// find the parent bone //
-				weak_ptr<SkeletonBone> ParentBone;
+				shared_ptr<SkeletonBone> ParentBone;
 
 				for(unsigned int bind = 0; bind < CreatedRig->RigsBones.size(); bind++){
 					if(CreatedRig->RigsBones[bind]->Name == *parent){
-						ParentBone = weak_ptr<SkeletonBone>(CreatedRig->RigsBones[bind]);
+						ParentBone = CreatedRig->RigsBones[bind];
 					}
 				}
 				
 				CurrentBone->ParentName = *parent;
-				CurrentBone->Parent = ParentBone;
+				CurrentBone->SetParentPtr(ParentBone, CurrentBone);
 
 			} else {
 				// unknown definition //

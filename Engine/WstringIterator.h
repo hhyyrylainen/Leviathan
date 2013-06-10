@@ -38,6 +38,7 @@ namespace Leviathan{
 	ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(WstringIterator* instance, Object* IteratorData, int parameters);
 	ITERATORCALLBACK_RETURNTYPE FindUntilEquality(WstringIterator* instance, Object* IteratorData, int parameters);
 	ITERATORCALLBACK_RETURNTYPE FindFromStartUntilCommentOrEnd(WstringIterator* instance, Object* IteratorData, int parameters);
+	ITERATORCALLBACK_RETURNTYPE FindUntilSpecificCharacter(WstringIterator* instance, Object* IteratorData, int parameters);
 
 	// could potentially inherit from base iterator, but not right now //
 	class WstringIterator : public Object{
@@ -48,6 +49,7 @@ namespace Leviathan{
 		friend ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(WstringIterator* instance, Object* IteratorData, int parameters);
 		friend ITERATORCALLBACK_RETURNTYPE FindUntilEquality(WstringIterator* instance, Object* IteratorData, int parameters);
 		friend ITERATORCALLBACK_RETURNTYPE FindFromStartUntilCommentOrEnd(WstringIterator* instance, Object* IteratorData, int parameters);
+		friend ITERATORCALLBACK_RETURNTYPE FindUntilSpecificCharacter(WstringIterator* instance, Object* IteratorData, int parameters);
 		// ------------------------------------ //
 		DLLEXPORT WstringIterator::WstringIterator(const wstring& text);
 		//************************************
@@ -66,6 +68,7 @@ namespace Leviathan{
 		DLLEXPORT unique_ptr<wstring> GetNextCharacterSequence(UNNORMALCHARACTER stopcase);
 		DLLEXPORT unique_ptr<wstring> GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase);
 		DLLEXPORT unique_ptr<wstring> GetUntilEnd();
+		DLLEXPORT unique_ptr<wstring> GetUntilNextCharacterOrNothing(wchar_t charactertolookfor);
 
 		DLLEXPORT unsigned long GetPosition();
 		DLLEXPORT void SetPosition(unsigned long pos);

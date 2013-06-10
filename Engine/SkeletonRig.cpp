@@ -40,6 +40,13 @@ void Leviathan::GameObject::SkeletonRig::ResizeMatriceCount(int newsize){
 DLLEXPORT void Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed){
 	// update currently playing animations //
 
+	//int totalmspassed = DataStore::Get()->GetValue(L"globalscaleincrease");
+	//if(totalmspassed == 0){
+	//	DataStore::Get()->SetValue(L"globalscaleincrease", 1);
+	//} else {
+	//	DataStore::Get()->SetValue(L"globalscaleincrease", totalmspassed+mspassed);
+	//}
+
 	if(PlayingAnimation.get() != NULL){
 
 		// using animation //
@@ -103,8 +110,10 @@ void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATR
 	// translate matrix //
 	D3DXMatrixTranslation(&TranslationMatrix, changedpos.X, changedpos.Y, changedpos.Z);
 
+	//int totalmspassed = DataStore::Get()->GetValue(L"globalscaleincrease");
+
 	// scaling //
-	D3DXMatrixScaling(&ScaleMatrix, 1.f, 1.f, 1.f);
+	D3DXMatrixScaling(&ScaleMatrix, 1, 1, 1);
 
 	// rotation //
 	Float3* dir = &bone->AnimationDirection;
@@ -115,8 +124,6 @@ void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATR
 	D3DXMatrixRotationYawPitchRoll(&RotationMatrix, Convert::DegreesToRadians(changeddir.X), Convert::DegreesToRadians(changeddir.Y), 
 		Convert::DegreesToRadians(changeddir.Z));
 
-	// scale*rotation*boneoffset * translation //
-
 	// compose final matrix //
 	D3DXMatrixMultiply(&RotationMatrix, &ScaleMatrix, &RotationMatrix);
 
@@ -125,12 +132,15 @@ void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATR
 
 	// set the result to the right matrix //
 	D3DXMatrixMultiply(ThisBoneMatrix, &RotationMatrix, &TranslationMatrix);
-	//*ThisBoneMatrix = RotationMatrix+TranslationMatrix;
+
+	//D3DXMATRIX* temppar = new D3DXMATRIX();
 
 	// parent matrix needs to be calculated in, if not null //
 	if(parentmatrix != NULL){
 		D3DXMatrixMultiply(ThisBoneMatrix, ThisBoneMatrix, parentmatrix);
+		//D3DXMatrixMultiply(ThisBoneMatrix, ThisBoneMatrix, D3DXMatrixInverse(temppar, NULL, parentmatrix));
 	}
+
 
 	// update child bones //
 	for(size_t i = 0; i < bone->Children.size(); i++){

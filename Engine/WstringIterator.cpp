@@ -205,6 +205,33 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEnd(){
 	return unique_ptr<wstring>(new wstring(ConstData.substr(IteratorPosition, ConstData.size()-IteratorPosition)));
 }
 
+DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilNextCharacterOrNothing(wchar_t charactertolookfor){
+	// iterate over the string and return what is wanted //
+	IteratorPositionData data;
+	data.Positions.SetData(-1, -1);
+
+	// iterate over the string getting the proper part //
+	StartIterating(FindUntilSpecificCharacter, (Object*)&data, (int)charactertolookfor);
+
+	// create substring of the wanted part //
+	unique_ptr<wstring> resultstr;
+
+	// check for end //
+	if(data.Positions.Y == -1 || data.Positions.X == data.Positions.Y){
+		// not found the ending character or start character was it //
+		return unique_ptr<wstring>(new wstring(L""));
+	}
+
+	// return wanted part //
+	if(IsPtrUsed){
+
+		return unique_ptr<wstring>(new wstring(Data->substr(data.Positions.X, data.Positions.Y-data.Positions.X+1)));
+	} else {
+
+		return unique_ptr<wstring>(new wstring(ConstData.substr(data.Positions.X, data.Positions.Y-data.Positions.X+1)));
+	}
+}
+
 // ------------------------------------ //
 DLLEXPORT Object* Leviathan::WstringIterator::StartIterating(IteratorWstrCallBack functiontocall, Object* IteratorData, int parameters){
 	// "switch" here based on what type of wstring is mounted //
@@ -214,7 +241,9 @@ DLLEXPORT Object* Leviathan::WstringIterator::StartIterating(IteratorWstrCallBac
 
 			retval = HandleCurrentIteration(functiontocall, IteratorData, parameters);
 
-			if(retval == 1){
+			if(retval == ITERATORCALLBACK_RETURNTYPE_STOP){
+				// try moving to next character //
+				IteratorPosition++;
 				break;
 			}
 		}
@@ -223,7 +252,9 @@ DLLEXPORT Object* Leviathan::WstringIterator::StartIterating(IteratorWstrCallBac
 
 			retval = HandleCurrentIteration(functiontocall, IteratorData, parameters);
 
-			if(retval == 1){
+			if(retval == ITERATORCALLBACK_RETURNTYPE_STOP){
+				// try moving to next character //
+				IteratorPosition++;
 				break;
 			}
 		}
@@ -310,7 +341,7 @@ int Leviathan::WstringIterator::HandleCurrentIteration(IteratorWstrCallBack func
 	case ITERATORCALLBACK_RETURNTYPE_STOP:
 		{
 			// needs to stop //
-			return 1;
+			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 		break;
 	}
@@ -320,7 +351,7 @@ int Leviathan::WstringIterator::HandleCurrentIteration(IteratorWstrCallBack func
 	case ITERATORCALLBACK_RETURNTYPE_STOP:
 		{
 			// needs to stop //
-			return 1;
+			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 		break;
 	}
@@ -330,7 +361,7 @@ int Leviathan::WstringIterator::HandleCurrentIteration(IteratorWstrCallBack func
 	case ITERATORCALLBACK_RETURNTYPE_STOP:
 		{
 			// needs to stop //
-			return 1;
+			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 		break;
 	}
@@ -347,7 +378,7 @@ int Leviathan::WstringIterator::HandleCurrentIteration(IteratorWstrCallBack func
 			CurrentFlags->SetFlag(Flag(WSTRINGITERATOR_IGNORE_SPECIAL_END));
 		}
 	}
-	return 0;
+	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
 DLLEXPORT bool Leviathan::WstringIterator::IsOutOfBounds(unsigned long pos){
@@ -783,5 +814,38 @@ findfromstartuntilcommentorendfuncendlabel:
 		tmpdata->Positions.Y = instance->IteratorPosition;
 	}
 
+	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+}
+
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilSpecificCharacter(WstringIterator* instance, Object* IteratorData, int parameters){
+	
+	// get position data //
+	IteratorPositionData* tmpdata = dynamic_cast<IteratorPositionData*>(IteratorData);
+	if(tmpdata == NULL){
+		// well darn //
+		DEBUG_BREAK;
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
+	}
+	// always set start pos, unless set already //
+	if(tmpdata->Positions.X == -1){
+		tmpdata->Positions.X = instance->IteratorPosition;
+	}
+
+	// we can just return if we are inside a string //
+	if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_INSIDE_STRING)){
+		// can't find specific character inside a string //
+		return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+	}
+	
+	// check for found character //
+	if(instance->GetCharacterAtPos(instance->IteratorPosition) == (wchar_t)parameters){
+		// skip if ignoring special characters //
+		if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL))
+			return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+		// found character, set last char as the one before this position //
+		tmpdata->Positions.Y = instance->IteratorPosition-1;
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
+	}
+	// just continue //
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }

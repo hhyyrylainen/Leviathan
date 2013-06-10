@@ -244,9 +244,24 @@ DLLEXPORT NamedVar& Leviathan::NamedVar::operator=(const NamedVar &other){
 DLLEXPORT int Leviathan::NamedVar::ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVar>> &vec, vector<IntWstring*> *specialintvalues /*= NULL*/){
 	//QUICKTIME_THISSCOPE;
 	// split to lines //
-	vector<wstring> Lines;
+	vector<shared_ptr<wstring>> Lines;
 
-	if(Misc::CutWstring(data, L";", Lines) != 0){
+	WstringIterator itr(data);
+
+	// use wstring iterator to get the lines that are separated by ; //
+	unique_ptr<wstring> curline;
+	int linelength = 0;
+	do {
+		curline = itr.GetUntilNextCharacterOrNothing(L';');
+		linelength = curline->size();
+
+		wstring* tmp = curline.release();
+
+		Lines.push_back(shared_ptr<wstring>(tmp));
+	} while(linelength != 0);
+
+
+	if(Lines.size() < 1){
 		// no lines //
 		Logger::Get()->Error(L"NamedVar: ProcessDataDump: No lines (even 1 line requires ending ';' to work)", data.length(), false);
 #ifdef _DEBUG
@@ -255,33 +270,32 @@ DLLEXPORT int Leviathan::NamedVar::ProcessDataDump(const wstring &data, vector<s
 		return 400;
 	}
 	// make space for values //
-	vec.clear();
 	// let's reserve space //
 	vec.reserve(Lines.size());
 
 	// fill values //
 	for(unsigned int i = 0; i < Lines.size(); i++){
 		// skip empty lines //
-		if(Lines.at(i).length() == 0)
+		if(Lines[i]->size() == 0)
 			continue;
 
 		// create a named var //
 		try{
-			vec.push_back(shared_ptr<NamedVar>(new NamedVar(Lines[i], specialintvalues)));
+			vec.push_back(shared_ptr<NamedVar>(new NamedVar(*Lines[i], specialintvalues)));
 		}
 		catch (const ExceptionInvalidArguement &e){
 			// print to log //
 			e.PrintToLog();
 			// exception throws, must be invalid line //
 			Logger::Get()->Info(L"NamedVar: ProcessDataDump: contains invalid line, line (with only ASCII characters): "+
-				Convert::StringToWstring(Convert::WstringToString(Lines[i]))+L"\nEND", false);
+				Convert::StringToWstring(Convert::WstringToString(*Lines[i]))+L"\nEND", false);
 			continue;
 		}
 
 		// check is it valid //
 		if(vec.back()->GetName().size() == 0 || vec.back()->GetName().size() > 10000){
 			// invalid //
-			Logger::Get()->Error(L"NamedVar: ProcessDataDump: invalid NamedVar generated for line: "+Lines[i]+L"\nEND");
+			Logger::Get()->Error(L"NamedVar: ProcessDataDump: invalid NamedVar generated for line: "+*Lines[i]+L"\nEND");
 			DEBUG_BREAK;
 			vec.erase(vec.end());
 		}

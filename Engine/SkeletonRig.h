@@ -54,11 +54,17 @@ namespace Leviathan{ namespace GameObject{
 
 		// recursive bone updating //
 		void UpdateBone(SkeletonBone* bone, D3DXMATRIX* parentmatrix);
-		D3DXMATRIX* GetMatrixForBone(SkeletonBone* bone);
+		D3DXMATRIX* GetAbsoluteBoneMatrixForBone(SkeletonBone* bone);
+		D3DXMATRIX* GetInvBindPoseForBone(SkeletonBone* bone);
+		D3DXMATRIX* GetFinalTransformMatrixForBone(SkeletonBone* bone);
 
 		// -------------------- //
 		//SkeletalAnimationStream* Animation;
-		vector<shared_ptr<D3DXMATRIX>> VerticeTranslationMatrices;
+		vector<shared_ptr<D3DXMATRIX>> FinalTransformMatrices;
+		vector<shared_ptr<D3DXMATRIX>> InvBindPoseMatrices;
+		vector<shared_ptr<D3DXMATRIX>> AbsoluteBoneMatrices;
+
+
 		vector<shared_ptr<SkeletonBone>> RigsBones;
 		vector<shared_ptr<IntWstring>> BoneGroups;
 

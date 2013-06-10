@@ -64,10 +64,10 @@ DLLEXPORT int Leviathan::AnimationMasterBlock::UpdateAnimations(int mspassed, bo
 
 			continue;
 		}
-		Float3 dir = HookedBones[i]->GetAnimationDirection();
+		//Float3 dir = HookedBones[i]->GetAnimationDirection();
 
 		// set rotation //
-		HookedBones[i]->SetAnimationDirection(dir+Float3(0.f, 0.f, 0.007f*mspassed));
+		//HookedBones[i]->SetAnimationDirection(dir+Float3(0.f, 0.f, 0.007f*mspassed));
 	}
 
 	return 2;

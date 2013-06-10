@@ -84,6 +84,34 @@ DLLEXPORT void Leviathan::GameObject::SkeletonBone::AddChildren(shared_ptr<Skele
 	Children.push_back(bone);
 }
 
+DLLEXPORT shared_ptr<D3DXMATRIX> Leviathan::GameObject::SkeletonBone::CalculateInvBindPose(){
+	// create a matrix that translates, scales and rotates based on base bone position //
+	shared_ptr<D3DXMATRIX> BindMatrix(new D3DXMATRIX);
+
+	// translation //
+	D3DXMATRIX translation;
+	D3DXMatrixTranslation(&translation, RestPosition.X, RestPosition.Y, RestPosition.Z);
+
+	// scaling //
+	D3DXMATRIX scaling;
+	D3DXMatrixScaling(&scaling, 1.f, 1.f, 1.f);
+
+	// rotation //
+	D3DXMATRIX rotation;
+	D3DXMatrixRotationYawPitchRoll(&rotation, Convert::DegreesToRadians(RestDirection.X), Convert::DegreesToRadians(RestDirection.Y), 
+		Convert::DegreesToRadians(RestDirection.Z));
+
+	// multiply all together //
+	D3DXMatrixMultiply(&rotation, &scaling, &rotation);
+	D3DXMatrixMultiply(&rotation, &rotation, &translation);
+
+	// inversion //
+	D3DXMatrixInverse(BindMatrix.get(), NULL, &rotation);
+
+	return BindMatrix;
+}
+
+
 
 
 

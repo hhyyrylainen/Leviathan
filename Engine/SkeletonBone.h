@@ -34,6 +34,8 @@ namespace Leviathan{ namespace GameObject{
 		DLLEXPORT Float3& GetAnimationDirection();
 		DLLEXPORT Float3& GetAnimationPosition();
 
+		DLLEXPORT shared_ptr<D3DXMATRIX> CalculateInvBindPose();
+
 		DLLEXPORT void SetPosePosition(const Float3 &pos);
 
 	private:

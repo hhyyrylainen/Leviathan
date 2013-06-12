@@ -6,7 +6,7 @@
 using namespace Leviathan;
 using namespace Leviathan::GameObject;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameObject::SkeletonRig::SkeletonRig() : PlayingAnimation(NULL), FinalTransformMatrices(), InvBindPoseMatrices(), RigsBones(), 
+DLLEXPORT Leviathan::GameObject::SkeletonRig::SkeletonRig() : PlayingAnimation(NULL), FinalTransformMatrices(), /*InvBindPoseMatrices(),*/ RigsBones(), 
 	BoneGroups(), AbsoluteBoneMatrices()
 {
 
@@ -25,19 +25,18 @@ DLLEXPORT void Leviathan::GameObject::SkeletonRig::Release(){
 void Leviathan::GameObject::SkeletonRig::ResizeMatriceCount(int newsize){
 	// resize //
 	FinalTransformMatrices.resize(newsize);
-	InvBindPoseMatrices.resize(newsize);
+	//InvBindPoseMatrices.resize(newsize);
 	AbsoluteBoneMatrices.resize(newsize);
 
-	// prime time to calculate inverted bind pose matrices //
-	for(size_t i = 0; i < RigsBones.size(); i++){
+	//// prime time to calculate inverted bind pose matrices //
+	//for(size_t i = 0; i < RigsBones.size(); i++){
 
-		SkeletonBone* bone = RigsBones[i].get();
-		// set to right index (index is vertex group) //
-		InvBindPoseMatrices[bone->BoneGroup] = bone->CalculateInvBindPose();
-	}
+	//	SkeletonBone* bone = RigsBones[i].get();
+	//	// set to right index (index is vertex group) //
+	//	InvBindPoseMatrices[bone->BoneGroup] = bone->CalculateInvBindPose();
+	//}
 
-
-	for(size_t i = 0; i < InvBindPoseMatrices.size(); i++){
+	for(size_t i = 0; i < FinalTransformMatrices.size(); i++){
 		// empty out the other two //
 		FinalTransformMatrices[i] = shared_ptr<D3DXMATRIX>(new D3DXMATRIX());
 		AbsoluteBoneMatrices[i] = shared_ptr<D3DXMATRIX>(new D3DXMATRIX());
@@ -99,8 +98,9 @@ DLLEXPORT void Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed){
 void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATRIX* parentmatrix){
 	// fill matrices with data //
 	// translate matrix //
-		D3DXMATRIX TranslationMatrix;
-	D3DXMatrixTranslation(&TranslationMatrix, bone->AnimationPosition.X, bone->AnimationPosition.Y, bone->AnimationPosition.Z);
+	D3DXMATRIX TranslationMatrix;
+	//D3DXMatrixTranslation(&TranslationMatrix, bone->AnimationPosition.X, bone->AnimationPosition.Y, bone->AnimationPosition.Z);
+	D3DXMatrixTranslation(&TranslationMatrix, 0.f, 0.f, 0.f);
 
 	// scaling //
 	D3DXMATRIX ScaleMatrix;
@@ -133,8 +133,8 @@ void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATR
 	for(size_t i = 0; i < bone->Children.size(); i++){
 		if(bone->Children[i].lock().get() != NULL){
 
-			UpdateBone(bone->Children[i].lock().get(), ThisBoneMatrix);
-			//UpdateBone(bone->Children[i].lock().get(), GetFinalTransformMatrixForBone(bone));
+			//UpdateBone(bone->Children[i].lock().get(), ThisBoneMatrix);
+			UpdateBone(bone->Children[i].lock().get(), GetFinalTransformMatrixForBone(bone));
 			//UpdateBone(bone->Children[i].lock().get(), NULL);
 			continue;
 		}
@@ -168,15 +168,8 @@ D3DXMATRIX* Leviathan::GameObject::SkeletonRig::GetFinalTransformMatrixForBone(S
 }
 
 D3DXMATRIX* Leviathan::GameObject::SkeletonRig::GetInvBindPoseForBone(SkeletonBone* bone){
-	// index //
-	size_t MatIndex = bone->BoneGroup;
-
-	// verify that matrix exists //
-	if(InvBindPoseMatrices[MatIndex].get() == NULL){
-		// needs a new matrix //
-		InvBindPoseMatrices[MatIndex] = shared_ptr<D3DXMATRIX>(new D3DXMATRIX());
-	}
-	return InvBindPoseMatrices[MatIndex].get();
+	// bones now store this matrix, fetch it //
+	return bone->GetInvBindPoseFinalMatrix().get();
 }
 // ------------------------------------ //
 DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStructure(ObjectFileTextBlock* structure, bool NeedToChangeCoordinateSystem){

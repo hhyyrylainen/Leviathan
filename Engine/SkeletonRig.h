@@ -61,7 +61,7 @@ namespace Leviathan{ namespace GameObject{
 		// -------------------- //
 		//SkeletalAnimationStream* Animation;
 		vector<shared_ptr<D3DXMATRIX>> FinalTransformMatrices;
-		vector<shared_ptr<D3DXMATRIX>> InvBindPoseMatrices;
+		//vector<shared_ptr<D3DXMATRIX>> InvBindPoseMatrices;
 		vector<shared_ptr<D3DXMATRIX>> AbsoluteBoneMatrices;
 
 

@@ -34,11 +34,14 @@ namespace Leviathan{ namespace GameObject{
 		DLLEXPORT Float3& GetAnimationDirection();
 		DLLEXPORT Float3& GetAnimationPosition();
 
-		DLLEXPORT shared_ptr<D3DXMATRIX> CalculateInvBindPose();
+		DLLEXPORT shared_ptr<D3DXMATRIX> GetInvBindPoseFinalMatrix();
 
 		DLLEXPORT void SetPosePosition(const Float3 &pos);
 
 	private:
+
+		shared_ptr<D3DXMATRIX> CalculateInvBindPose();
+		// ------------------------------------ //
 		wstring Name;
 		Float3 RestPosition;
 		Float3 RestDirection;
@@ -48,6 +51,8 @@ namespace Leviathan{ namespace GameObject{
 
 		// bone group //
 		int BoneGroup;
+
+		shared_ptr<D3DXMATRIX> InvBindComplete;
 
 		weak_ptr<SkeletonBone> Parent;
 

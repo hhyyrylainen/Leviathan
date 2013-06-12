@@ -11,7 +11,8 @@ DLLEXPORT Leviathan::GameObject::SkeletonBone::SkeletonBone(){
 }
 
 DLLEXPORT Leviathan::GameObject::SkeletonBone::SkeletonBone(const wstring &name, const Float3 &position, const Float3 &direction, int group) : 
-	Name(name), RestPosition(position), RestDirection(direction), AnimationPosition(RestPosition), AnimationDirection(RestDirection)
+	Name(name), RestPosition(position), RestDirection(direction), AnimationPosition(RestPosition), AnimationDirection(RestDirection), 
+	InvBindComplete(NULL)
 {
 	// set values + initializer list //
 	BoneGroup = group;
@@ -84,13 +85,14 @@ DLLEXPORT void Leviathan::GameObject::SkeletonBone::AddChildren(shared_ptr<Skele
 	Children.push_back(bone);
 }
 
-DLLEXPORT shared_ptr<D3DXMATRIX> Leviathan::GameObject::SkeletonBone::CalculateInvBindPose(){
+shared_ptr<D3DXMATRIX> Leviathan::GameObject::SkeletonBone::CalculateInvBindPose(){
 	// create a matrix that translates, scales and rotates based on base bone position //
 	shared_ptr<D3DXMATRIX> BindMatrix(new D3DXMATRIX);
 
 	// translation //
 	D3DXMATRIX translation;
-	D3DXMatrixTranslation(&translation, RestPosition.X, RestPosition.Y, RestPosition.Z);
+	//D3DXMatrixTranslation(&translation, RestPosition.X, RestPosition.Y, RestPosition.Z);
+	D3DXMatrixTranslation(&translation, 0.f, 0.f, 0.f);
 
 	// scaling //
 	D3DXMATRIX scaling;
@@ -108,7 +110,24 @@ DLLEXPORT shared_ptr<D3DXMATRIX> Leviathan::GameObject::SkeletonBone::CalculateI
 	// inversion //
 	D3DXMatrixInverse(BindMatrix.get(), NULL, &rotation);
 
+	// try multiplying parent matrix in //
+	if(Parent.lock().get() != NULL){
+		// parent exists //
+		shared_ptr<D3DXMATRIX> ParentInvBind = Parent.lock()->GetInvBindPoseFinalMatrix();
+		// actual matrix multiplication //
+		D3DXMatrixMultiply(BindMatrix.get(), BindMatrix.get(), ParentInvBind.get());
+	}
+
 	return BindMatrix;
+}
+
+DLLEXPORT shared_ptr<D3DXMATRIX> Leviathan::GameObject::SkeletonBone::GetInvBindPoseFinalMatrix(){
+	if(InvBindComplete.get() == NULL){
+		// calculate //
+		InvBindComplete = CalculateInvBindPose();
+	}
+	// already calculated/just calculated, return //
+	return InvBindComplete;
 }
 
 

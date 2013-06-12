@@ -60,14 +60,14 @@ DLLEXPORT int Leviathan::AnimationMasterBlock::UpdateAnimations(int mspassed, bo
 			Float3 dir = HookedBones[i]->GetAnimationDirection();
 
 			// set rotation //
-			HookedBones[i]->SetAnimationDirection(dir-Float3(0.01f*mspassed, 0, 0));
+			HookedBones[i]->SetAnimationDirection(dir+Float3(0, 0, 0.01f*mspassed));
 
 			continue;
 		}
-		//Float3 dir = HookedBones[i]->GetAnimationDirection();
+		Float3 dir = HookedBones[i]->GetAnimationDirection();
 
 		// set rotation //
-		//HookedBones[i]->SetAnimationDirection(dir+Float3(0.f, 0.f, 0.007f*mspassed));
+		HookedBones[i]->SetAnimationDirection(dir+Float3(0, 0, 0.01f*mspassed));
 	}
 
 	return 2;

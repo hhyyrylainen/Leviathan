@@ -8,12 +8,14 @@
 // ---- includes ---- //
 #include "BaseObject.h"
 
-namespace Leviathan{ namespace GameObject{
+namespace Leviathan{ 
+	class AnimationMasterBlock;
+namespace GameObject{
 
 	class SkeletonBone : public BaseObject{
 		// friend to skeleton rig for sake of keeping it easy //
 		friend class SkeletonRig;
-
+		friend AnimationMasterBlock;
 	public:
 		DLLEXPORT SkeletonBone::SkeletonBone();
 		DLLEXPORT SkeletonBone::SkeletonBone(const wstring &name, const Float3 &position, const Float3 &direction, int group);
@@ -28,6 +30,8 @@ namespace Leviathan{ namespace GameObject{
 		DLLEXPORT void SetParentName(const wstring &name);
 		DLLEXPORT void SetParentPtr(shared_ptr<SkeletonBone> parent, shared_ptr<SkeletonBone> thisptr);
 		DLLEXPORT void AddChildren(shared_ptr<SkeletonBone> bone);
+
+		DLLEXPORT void CopyAnimationDataFromOther(const SkeletonBone &other);
 
 		DLLEXPORT Float3& GetRestPosition();
 		DLLEXPORT Float3& GetRestDirection();

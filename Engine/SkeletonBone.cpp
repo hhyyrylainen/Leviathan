@@ -62,6 +62,12 @@ DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetAnimationDirection(const 
 	AnimationDirection = val;
 }
 
+DLLEXPORT void Leviathan::GameObject::SkeletonBone::CopyAnimationDataFromOther(const SkeletonBone &other){
+
+	AnimationDirection = other.AnimationDirection;
+	AnimationPosition = other.AnimationPosition;
+}
+
 DLLEXPORT Float3& Leviathan::GameObject::SkeletonBone::GetRestDirection(){
 	return RestDirection;
 }
@@ -129,14 +135,6 @@ DLLEXPORT shared_ptr<D3DXMATRIX> Leviathan::GameObject::SkeletonBone::GetInvBind
 	// already calculated/just calculated, return //
 	return InvBindComplete;
 }
-
-
-
-
-
-
-
-
 
 // ------------------------------------ //
 

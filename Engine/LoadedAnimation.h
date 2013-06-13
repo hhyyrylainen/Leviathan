@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "AnimationBlock.h"
 #include "SkeletonBone.h"
+#include "AnimationBoneData.h"
 
 namespace Leviathan{
 
@@ -16,9 +17,12 @@ namespace Leviathan{
 	struct AnimationFrameData{
 		DLLEXPORT AnimationFrameData(int framenumber) : FrameNumber(framenumber){
 		};
-
+		DLLEXPORT ~AnimationFrameData(){
+			// release bone data on this frame //
+			SAFE_DELETE_VECTOR(FrameBones);
+		}
 		// bones on this frame //
-		vector<GameObject::SkeletonBone*> FrameBones;
+		vector<AnimationBoneData*> FrameBones;
 		int FrameNumber;
 	};
 

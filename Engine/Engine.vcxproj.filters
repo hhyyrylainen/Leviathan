@@ -360,9 +360,6 @@
     <ClCompile Include="NamedVars.cpp">
       <Filter>core\helpers</Filter>
     </ClCompile>
-    <ClCompile Include="Types.cpp">
-      <Filter>core\helpers</Filter>
-    </ClCompile>
     <ClCompile Include="MD5Generator.cpp">
       <Filter>utility</Filter>
     </ClCompile>
@@ -491,6 +488,15 @@
     </ClCompile>
     <ClCompile Include="RSAEncryption.cpp">
       <Filter>math\Encryption</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationStream.cpp">
+      <Filter>animation</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationBoneData.cpp">
+      <Filter>animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Types.cpp">
+      <Filter>core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -750,9 +756,6 @@
     <ClInclude Include="NamedVars.h">
       <Filter>core\helpers</Filter>
     </ClInclude>
-    <ClInclude Include="Types.h">
-      <Filter>core\helpers</Filter>
-    </ClInclude>
     <ClInclude Include="MD5Generator.h">
       <Filter>utility</Filter>
     </ClInclude>
@@ -884,6 +887,15 @@
     </ClInclude>
     <ClInclude Include="EuclideanFunctions.h">
       <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationStream.h">
+      <Filter>animation</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationBoneData.h">
+      <Filter>animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Types.h">
+      <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

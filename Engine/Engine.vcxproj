@@ -107,8 +107,10 @@
     <ClCompile Include="..\AngelScript\add_on\scriptstdstring\scriptstdstring_utils.cpp" />
     <ClCompile Include="AnimateableGui.cpp" />
     <ClCompile Include="AnimationBlock.cpp" />
+    <ClCompile Include="AnimationBoneData.cpp" />
     <ClCompile Include="AnimationManager.cpp" />
     <ClCompile Include="AnimationMasterBlock.cpp" />
+    <ClCompile Include="AnimationStream.cpp" />
     <ClCompile Include="AppDefine.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="AutoUpdateable.cpp" />
@@ -233,8 +235,10 @@
     <ClInclude Include="AngelScriptCommon.h" />
     <ClInclude Include="AnimateableGui.h" />
     <ClInclude Include="AnimationBlock.h" />
+    <ClInclude Include="AnimationBoneData.h" />
     <ClInclude Include="AnimationManager.h" />
     <ClInclude Include="AnimationMasterBlock.h" />
+    <ClInclude Include="AnimationStream.h" />
     <ClInclude Include="AppDefine.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="AutoUpdateable.h" />

@@ -171,7 +171,7 @@ bool SoundDevice::StartPlaying(wstring file, int repeatcount, int volumepercent,
 	bool Toolong = false;
 
 	// check is file over 400 kt big //
-	if(FileSystem::GetFileLenght(file) > 400000)
+	if(FileSystem::GetFileLength(file) > 400000)
 		Toolong = true;
 
 	if(Toolong){
@@ -386,18 +386,18 @@ bool SoundDevice::SoundPlay(int index){
 		return false;
 	}
 
-	DWORD lenght = waveloader.getDataLength();
+	DWORD length = waveloader.getDataLength();
 	DWORD offset = waveloader.getDataOffset();
 
-	pTemp->pDataBuff = new BYTE[lenght];
+	pTemp->pDataBuff = new BYTE[length];
 
-	if(FAILED(ReadChunkData(hFile, pTemp->pDataBuff, lenght, offset))){
+	if(FAILED(ReadChunkData(hFile, pTemp->pDataBuff, length, offset))){
 		Logger::Get()->Error(L"SoundPlay: ReadChunkData failed", GetLastError(), false);
 		return false;
 	}
 
 	// populate sound buffer //
-	pTemp->buffer.AudioBytes = lenght;
+	pTemp->buffer.AudioBytes = length;
 	pTemp->buffer.pAudioData = pTemp->pDataBuff;
 	pTemp->buffer.Flags = XAUDIO2_END_OF_STREAM;
 

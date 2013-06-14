@@ -39,6 +39,7 @@ namespace GameObject{
 		DLLEXPORT Float3& GetAnimationPosition();
 
 		DLLEXPORT shared_ptr<D3DXMATRIX> GetInvBindPoseFinalMatrix();
+		DLLEXPORT int GetBoneGroup();
 
 		DLLEXPORT void SetPosePosition(const Float3 &pos);
 

@@ -165,7 +165,7 @@ void Leviathan::FileSystem::SetTextureFolder(wstring& folder){
 DLLEXPORT int Leviathan::FileSystem::LoadDataDumb(const wstring &file, vector<shared_ptr<NamedVar>>& vec){
 	wstring filecontents = L"";
 	wstring construct = L"";
-	int Lenght = 0;
+	int Length = 0;
 	// get data //
 	wifstream stream;
 	stream.open(file, ios::in);
@@ -176,18 +176,18 @@ DLLEXPORT int Leviathan::FileSystem::LoadDataDumb(const wstring &file, vector<sh
 	}
 	// count length //
 	stream.seekg(0, ios::end);
-	Lenght = (int)stream.tellg();
+	Length = (int)stream.tellg();
 	stream.seekg(0, ios::beg);
-	if(Lenght == 0){
+	if(Length == 0){
 		// empty file ! //
 		Logger::Get()->Warning(L"FileSystem: LoadDataDumb: Empty file: "+file, false);
 		return 0;
 	}
-	wchar_t* Buff = new wchar_t[Lenght+1];
+	wchar_t* Buff = new wchar_t[Length+1];
 	// set null terminator, just in case
-	Buff[Lenght] = '\0';
+	Buff[Length] = '\0';
 
-	stream.read(Buff, Lenght);
+	stream.read(Buff, Length);
 
 	stream.close();
 
@@ -290,7 +290,7 @@ wstring Leviathan::FileSystem::ChangeExtension(const wstring& path, wstring newe
 
 
 /// file operations
-int Leviathan::FileSystem::GetFileLenght(wstring name){
+int Leviathan::FileSystem::GetFileLength(wstring name){
 	wifstream file(name);
 	if(file.good()){
 		file.seekg(0, ios::end);

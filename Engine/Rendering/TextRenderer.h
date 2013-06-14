@@ -28,11 +28,11 @@ namespace Leviathan{
 		DLLEXPORT bool Render(ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, D3DXMATRIX orthomatrix);
 		DLLEXPORT bool RenderSingle(int ID, ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, D3DXMATRIX orthomatrix);
 
-		DLLEXPORT int CountSentenceLenght(wstring &sentence, wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize = true);
+		DLLEXPORT int CountSentenceLength(wstring &sentence, wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize = true);
 		DLLEXPORT int GetFontHeight(wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize = true);
 
 
-		DLLEXPORT bool CreateSentence(int id, int maxlenght, ID3D11Device* dev);
+		DLLEXPORT bool CreateSentence(int id, int maxlength, ID3D11Device* dev);
 		DLLEXPORT bool UpdateSentenceID(int id, bool absolute, wstring &Font, wstring &text, int x, int y, Float4 &color, float sizepercent,
 			ID3D11DeviceContext* devcont, bool TranslateSize = true);
 		DLLEXPORT void ReleaseSentenceID(int id);
@@ -67,7 +67,7 @@ namespace Leviathan{
 		void LoadFont(const wstring &file);
 		int GetFontIndex(const wstring &name);
 
-		bool InitializeSentence(SentenceType** sentence, int id, int maxlenght, ID3D11Device* dev);
+		bool InitializeSentence(SentenceType** sentence, int id, int maxlength, ID3D11Device* dev);
 		bool UpdateSentence(SentenceType* sentence, bool absolute, wstring &text, int posx, int posy, float red, float green, float blue, 
 			float heightpercent, int fontindex, ID3D11DeviceContext* devcont, bool TranslateSize = true);
 		void ReleaseSentence(SentenceType** sentence);

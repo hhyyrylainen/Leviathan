@@ -509,7 +509,7 @@ void Leviathan::Engine::RenderFrame(){
 	shared_ptr<BaseObject> bobj = GObjects->Get(0); // nasty index grab //
 	if(bobj.get() != NULL){
 		if(bobj->Type == OBJECT_TYPE_MODEL){
-			GameObject::Model* modl = dynamic_cast<GameObject::Model*>(bobj.get());
+			//GameObject::Model* modl = dynamic_cast<GameObject::Model*>(bobj.get());
 			// update some shit //
 			//modl->SetScale(modl->GetScale()*(1.0001f/**SinceRender*/));
 			//if(TickCount < 186)

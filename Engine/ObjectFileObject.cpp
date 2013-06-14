@@ -78,7 +78,7 @@ ScriptObject* ObjectFileObject::CreateScriptObjectAndReleaseThis(int BaseType, i
 	// script object can just be copied, because it uses smart pointers //
 	obj->Script = (this->Script);
 	// reset script smart pointer so that it doesn't accidentally get deleted //
-	Script.reset();
+	//Script.unique();
 
 	vector<shared_ptr<ScriptList>> cnts;
 

@@ -80,7 +80,7 @@ namespace Leviathan{
 		DLLEXPORT static wstring RemoveExtension(const wstring &file, bool delpath);
 
 		/// file operations
-		DLLEXPORT static int GetFileLenght(wstring name);
+		DLLEXPORT static int GetFileLength(wstring name);
 		DLLEXPORT static bool FileExists(wstring name);
 		DLLEXPORT static bool WriteToFile(const string &data, const string &filename);
 		DLLEXPORT static bool WriteToFile(const wstring &data, const wstring &filename);

@@ -43,41 +43,41 @@ void RenderingFont::Release(){
 	FontData.clear();
 }
 // ------------------------------------ //
-int RenderingFont::CountLenght(wstring &sentence, float heightmod, bool IsAbsolute, bool TranslateSize){
+int RenderingFont::CountLength(wstring &sentence, float heightmod, bool IsAbsolute, bool TranslateSize){
 	// if it is non absolute and translate size is true, scale height by window size // 
 	if(!IsAbsolute && TranslateSize){
 
 		heightmod = ResolutionScaling::ScaleTextSize(heightmod);
 	}
 
-	float lenght = 0;
+	float length = 0;
 	for(unsigned int i = 0; i < sentence.size(); i++){
 		int letterindex = ((int)sentence[i]) - 33; // no space character in letter data array //
 
 		if(letterindex < 1){
 			// space move pos over //
 			if(IsAbsolute){
-				lenght += 3.0f*heightmod;
+				length += 3.0f*heightmod;
 			} else {
-				lenght += 3.0f*heightmod;
+				length += 3.0f*heightmod;
 			}
 		} else {
 			if(IsAbsolute){
-				lenght += heightmod*1.0f + (FontData[letterindex].size*heightmod);
+				length += heightmod*1.0f + (FontData[letterindex].size*heightmod);
 			} else {
-				lenght += heightmod*1.0f + (FontData[letterindex].size*heightmod);
+				length += heightmod*1.0f + (FontData[letterindex].size*heightmod);
 			}
 		}
 	}
 	// round to nearest integer //
-	lenght += 0.5f;
+	length += 0.5f;
 
-	//lenght += 3.0f*heightmod;
+	//length += 3.0f*heightmod;
 	if(IsAbsolute)
-		return (int)lenght;
-	// scale from screen lenght to promilles //
-	//Logger::Get()->Info(L"CountedLenght: "+Convert::IntToWstring(lenght)+L" promille lenght "+Convert::IntToWstring(ResolutionScaling::GetPromilleFactor()*((float)lenght/DataStore::Get()->GetWidth())), false);
-	return (int)(ResolutionScaling::GetPromilleFactor()*((float)lenght/DataStore::Get()->GetWidth()));
+		return (int)length;
+	// scale from screen length to promilles //
+	//Logger::Get()->Info(L"CountedLength: "+Convert::IntToWstring(length)+L" promille length "+Convert::IntToWstring(ResolutionScaling::GetPromilleFactor()*((float)length/DataStore::Get()->GetWidth())), false);
+	return (int)(ResolutionScaling::GetPromilleFactor()*((float)length/DataStore::Get()->GetWidth()));
 }
  int RenderingFont::GetHeight(float heightmod, bool IsAbsolute, bool TranslateSize){
 	if(IsAbsolute)
@@ -614,7 +614,7 @@ void RenderingFont::BuildVertexArray(void* vertices, wstring text, float drawx, 
 		}
 	}
 
-	//Logger::Get()->Info(L"SentenceRendered lenght: "+Convert::IntToWstring(drawx-startx), false);
+	//Logger::Get()->Info(L"SentenceRendered length: "+Convert::IntToWstring(drawx-startx), false);
 }
 
 // ------------------------------------ //

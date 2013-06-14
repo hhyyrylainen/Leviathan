@@ -289,8 +289,8 @@ void Graphics::Destroy3DRenderer(){
 	}
 }
 // ------------------------------------------- //
-int Graphics::CountTextRenderLenght(wstring &text, wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize){
-	return TextRender->CountSentenceLenght(text, font, heightmod, IsAbsolute, TranslateSize);
+int Graphics::CountTextRenderLength(wstring &text, wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize){
+	return TextRender->CountSentenceLength(text, font, heightmod, IsAbsolute, TranslateSize);
 }
 int Graphics::GetTextRenderHeight(wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize){
 	return TextRender->GetFontHeight(font, heightmod, IsAbsolute, TranslateSize);

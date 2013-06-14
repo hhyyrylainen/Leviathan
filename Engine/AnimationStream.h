@@ -11,6 +11,13 @@
 namespace Leviathan{
 
 	struct AnimationStreamBlock{
+		AnimationStreamBlock(const int &id) : CurrentBoneChanges(){
+
+			AnimationID = id;
+			FullControlIfOnlyBlock = true;
+			ControlPercentage = 1.f;
+		}
+
 
 		int AnimationID;
 		bool FullControlIfOnlyBlock : 1;
@@ -24,7 +31,9 @@ namespace Leviathan{
 		DLLEXPORT AnimationStream::AnimationStream(int group);
 		DLLEXPORT AnimationStream::~AnimationStream();
 
-		DLLEXPORT inline int& GetVertexGroup();
+		DLLEXPORT inline int& GetVertexGroup(){ return VertexGroup; };
+
+		DLLEXPORT inline AnimationStreamBlock* GetBlockForID(const int &id);
 
 		DLLEXPORT void SampleData(Float3 &receivingpos, Float3 &receivingdir);
 

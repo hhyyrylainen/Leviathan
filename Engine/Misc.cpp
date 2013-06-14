@@ -191,7 +191,7 @@ DLLEXPORT wstring Leviathan::Misc::Replace(const wstring& data, const wstring &t
 				}
 			}
 			if(IsMatch || toreplace.size() == 1){
-				// it is a match, copy everything in replacer and add toreplace lenght to i //
+				// it is a match, copy everything in replacer and add toreplace length to i //
 				out += replacer;
 
 				i += toreplace.length()-1;

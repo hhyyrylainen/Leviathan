@@ -94,7 +94,7 @@ namespace Leviathan{ namespace Gui{
 		bool AreAbsolutePos;
 
 		int TextID;
-		int TextLenght;
+		int TextLength;
 		wstring Font;
 
 		bool AutoAdjust;

@@ -22,7 +22,7 @@ namespace Leviathan{
 		DLLEXPORT bool Init(ID3D11Device* dev, wstring FontFile);
 		DLLEXPORT void Release();
 
-		DLLEXPORT int CountLenght(wstring &sentence, float heightmod, bool IsAbsolute, bool TranslateSize = true);
+		DLLEXPORT int CountLength(wstring &sentence, float heightmod, bool IsAbsolute, bool TranslateSize = true);
 		DLLEXPORT int GetHeight(float heightmod, bool IsAbsolute, bool TranslateSize = true);
 
 

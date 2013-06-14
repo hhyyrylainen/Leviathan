@@ -22,9 +22,9 @@ namespace Leviathan{
 			BufferEndPosition = endposition;
 
 			// count lengths //
-			BufferBitLenght = endposition-startposition+1;
-			//BufferElementCount = BufferBitLenght/sizeof(T);
-			BufferElementCount = BufferBitLenght;
+			BufferBitLength = endposition-startposition+1;
+			//BufferElementCount = BufferBitLength/sizeof(T);
+			BufferElementCount = BufferBitLength;
 		}
 
 		DLLEXPORT FileReaderBuffer::~FileReaderBuffer(){
@@ -48,7 +48,7 @@ namespace Leviathan{
 			return BufferElementCount;
 		}
 		DLLEXPORT __int64 GetBitCount(){
-			return BufferBitLenght;
+			return BufferBitLength;
 		}
 
 		DLLEXPORT void LetGoOfBuffer(){
@@ -60,7 +60,7 @@ namespace Leviathan{
 		T* MainBuffer;
 
 		__int64 BufferElementCount;
-		__int64 BufferBitLenght;
+		__int64 BufferBitLength;
 
 		__int64 BufferStartPosition;
 		__int64 BufferEndPosition;

@@ -14,10 +14,6 @@ DLLEXPORT Leviathan::AnimationStream::~AnimationStream(){
 
 }
 
-DLLEXPORT int& Leviathan::AnimationStream::GetVertexGroup(){
-	return VertexGroup;
-}
-
 DLLEXPORT void Leviathan::AnimationStream::SampleData(Float3 &receivingpos, Float3 &receivingdir){
 	// mash together all blocks taking into account the percentages //
 
@@ -58,6 +54,22 @@ DLLEXPORT void Leviathan::AnimationStream::SampleData(Float3 &receivingpos, Floa
 		receivingdir = blocky->CurrentBoneChanges->Direction.operator*(blocky->ControlPercentage);
 	}
 
+}
+
+DLLEXPORT AnimationStreamBlock* Leviathan::AnimationStream::GetBlockForID(const int &id){
+	// loop and return matching id block //
+	for(size_t i = 0; i < Blocks.size(); i++){
+
+		if(Blocks[i]->AnimationID == id){
+			// right one //
+			return Blocks[i].get();
+		}
+	}
+
+	// no matching found, add new one //
+	Blocks.push_back(shared_ptr<AnimationStreamBlock>(new AnimationStreamBlock(id)));
+
+	return Blocks.back().get();
 }
 
 // ------------------------------------ //

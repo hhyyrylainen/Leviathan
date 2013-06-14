@@ -63,7 +63,7 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetStringInQuotes(QUOT
 	// check for end //
 	if(data->Positions.Y == -1){
 		// set to end on string end //
-		data->Positions.Y = GetWstringLenght()-1;
+		data->Positions.Y = GetWstringLength()-1;
 	}
 
 	if(IsPtrUsed){
@@ -104,7 +104,7 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextCharacterSequen
 	// check for end //
 	if(data.Positions.Y == -1){
 		// set to end on string end //
-		data.Positions.Y = GetWstringLenght()-1;
+		data.Positions.Y = GetWstringLength()-1;
 	}
 
 	if(IsPtrUsed){
@@ -139,7 +139,7 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextNumber(DECIMALS
 	// check for end //
 	if(data->Positions.Y == -1){
 		// set to end on string end //
-		data->Positions.Y = GetWstringLenght()-1;
+		data->Positions.Y = GetWstringLength()-1;
 	}
 
 	if(IsPtrUsed){
@@ -398,11 +398,11 @@ DLLEXPORT bool Leviathan::WstringIterator::IsOutOfBounds(unsigned long pos){
 	return false;
 }
 
-DLLEXPORT unsigned int Leviathan::WstringIterator::GetWstringLenght(){
+DLLEXPORT unsigned int Leviathan::WstringIterator::GetWstringLength(){
 	// switch on wstring type
 	if(IsPtrUsed){
 		if(Data == NULL){
-			//WstringIterator: GetWstringLenght:
+			//WstringIterator: GetWstringLength:
 			throw ExceptionNULLPtr(L"Text pointer is invalid ", NULL, __WFUNCTION__, (void*)Data);
 		}
 		return Data->size();

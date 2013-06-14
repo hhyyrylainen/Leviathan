@@ -43,6 +43,9 @@ namespace Leviathan{
 		int ID;
 		float ControlPercentage;
 
+		bool TakeControlEntirelyIfOnlyBlock : 1;
+
+
 		shared_ptr<LoadedAnimation> FrameData;
 	};
 

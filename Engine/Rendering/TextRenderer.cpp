@@ -65,9 +65,9 @@ void TextRenderer::Release(){
 	StopMonitoring(DATAINDEX_HEIGHT, L"", true);
 }
 // ------------------------------------ //
-bool TextRenderer::CreateSentence(int id, int maxlenght, ID3D11Device* dev){
+bool TextRenderer::CreateSentence(int id, int maxlength, ID3D11Device* dev){
 	Sentences.push_back(NULL);
-	if(!InitializeSentence(&VECTOR_LAST(Sentences), id, maxlenght, dev)){
+	if(!InitializeSentence(&VECTOR_LAST(Sentences), id, maxlength, dev)){
 
 		Logger::Get()->Error(L"Failed to add new sentence, Init sentence failed");
 		return false;
@@ -110,10 +110,10 @@ void TextRenderer::HideSentence(int id, bool hidden){
 }
 // ------------------------------------ //
 
-int TextRenderer::CountSentenceLenght(wstring &sentence, wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize){
+int TextRenderer::CountSentenceLength(wstring &sentence, wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize){
 	int index = GetFontIndex(font);
 	ARR_INDEX_CHECK(index, (int)FontHolder.size()){
-		return FontHolder[index]->CountLenght(sentence, heightmod, IsAbsolute, TranslateSize);
+		return FontHolder[index]->CountLength(sentence, heightmod, IsAbsolute, TranslateSize);
 	}
 	return -1;
 }
@@ -186,7 +186,7 @@ int Leviathan::TextRenderer::GetFontIndex(const wstring &name){
 	return index;
 }
 
-bool TextRenderer::InitializeSentence(SentenceType** sentence, int id, int maxlenght, ID3D11Device* device){
+bool TextRenderer::InitializeSentence(SentenceType** sentence, int id, int maxlength, ID3D11Device* device){
 	
 	D3D11_SUBRESOURCE_DATA vertexData, indexData;
 	HRESULT hr = S_OK;
@@ -201,8 +201,8 @@ bool TextRenderer::InitializeSentence(SentenceType** sentence, int id, int maxle
 	(*sentence)->vertexBuffer = NULL;
 	(*sentence)->indexBuffer = NULL;
 
-	(*sentence)->maxLength = maxlenght;
-	(*sentence)->vertexCount = 6 * maxlenght;
+	(*sentence)->maxLength = maxlength;
+	(*sentence)->vertexCount = 6 * maxlength;
 
 	// no actual value is known //
 	(*sentence)->Absolute = false;

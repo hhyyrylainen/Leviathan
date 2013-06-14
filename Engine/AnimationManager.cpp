@@ -248,7 +248,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 	int KeyFrameInterval = -1;
 	int AnimationSpeed = -1;
 	// ignore frame length if animation speed defined //
-	int FrameLenght = -1;
+	int FrameLength = -1;
 
 
 
@@ -276,10 +276,10 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 				AnimationSpeed = tval;
 			}
 
-			if(Curlist->Variables->GetValue(L"FrameLenght", tval) > 1){
-				FrameLenght = -1;
+			if(Curlist->Variables->GetValue(L"FrameLength", tval) > 1){
+				FrameLength = -1;
 			} else {
-				FrameLenght = tval;
+				FrameLength = tval;
 			}
 
 
@@ -288,16 +288,30 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 	}
 
 
-	if(AnimationSpeed == -1 && FrameLenght == -1){
+	if(AnimationSpeed == -1 && FrameLength == -1){
 		// both undefined, use default //
 		// 24 frames per second //
-		AnimationSpeed = 24;
+		AnimationSpeed = 30;
 		// notify //
-		Logger::Get()->Warning(L"AnimationManager: VerifyAnimLoaded: File doesn't have AnimationSpeed (frames per second) or FrameLenght (ms per frame) defined! "
-			L"using default AnimationSpeed of 24 frames per second", false);
+		Logger::Get()->Warning(L"AnimationManager: VerifyAnimLoaded: File doesn't have AnimationSpeed (frames per second) or FrameLength (ms per frame) defined! "
+			L"using default AnimationSpeed of 30 frames per second", false);
+
+		CurrentlyLoading->SetAnimationFPS(AnimationSpeed);
+	} else {
+
+		// check which one to set //
+		if(AnimationSpeed == -1){
+
+			CurrentlyLoading->SetFrameMSLength(FrameLength);
+		} else {
+
+			CurrentlyLoading->SetAnimationFPS(AnimationSpeed);
+		}
 	}
 
 	// set variables //
+	
+
 
 	// now process text blocks which contain the bones and the frames //
 	for(unsigned int i = 0; i < curobj->TextBlocks.size(); i++){
@@ -425,7 +439,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 			for(unsigned int ind = 0; ind < CurTB->Lines.size(); ind++){
 				vector<wstring*> Tokens;
 
-				shared_ptr<GameObject::SkeletonBone> LoadingBone(new GameObject::SkeletonBone);
+				unique_ptr<AnimationBoneData> LoadingBone(new AnimationBoneData());
 
 				// split to tokens //
 				if(LineTokeNizer::TokeNizeLine(*CurTB->Lines[ind], Tokens)){
@@ -442,7 +456,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						unique_ptr<wstring> resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
 
-						LoadingBone->SetBoneGroup(Convert::WstringToInt(*resultstr));
+						LoadingBone->BoneGroup = Convert::WstringToInt(*resultstr);
 
 						continue;
 					}
@@ -468,7 +482,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						}
 
 						// set it as rest position even though it actually isn't //
-						LoadingBone->SetRestPosition(curvalue);
+						LoadingBone->Position = curvalue;
 
 						continue;
 					}
@@ -488,8 +502,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
-						LoadingBone->SetRestDirection(curvalue);
-						// no facilities for storing direction 
+						LoadingBone->Direction = curvalue;
 
 						continue;
 					}
@@ -497,16 +510,14 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 				// put bone into frame //
 				LoadingFrame->FrameBones.push_back(LoadingBone.get());
 				// unlink from smart pointer //
-				LoadingBone.reset();
+				LoadingBone.release();
 			}
 			// push frame //
 
 			CurrentlyLoading->AddNewFrame(LoadingFrame);
-			LoadingFrame.reset();
 
 			continue;
 		}
-
 
 		// wasn't a frame? //
 		DEBUG_BREAK;

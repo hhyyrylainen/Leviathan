@@ -21,6 +21,7 @@ DLLEXPORT Leviathan::AnimationMasterBlock::~AnimationMasterBlock(){
 	this->UnRegister(EVENT_TYPE_FRAME_END, true);
 	// release cache //
 	SAFE_DELETE_VECTOR(CachedIndexes);
+	SAFE_DELETE_VECTOR(CachedStreamsForAnimationBlock);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::AnimationMasterBlock::HookBones(vector<shared_ptr<GameObject::SkeletonBone>> &bonestohook){
@@ -148,8 +149,8 @@ DLLEXPORT bool Leviathan::AnimationMasterBlock::DoAllChannelsUpToMaxBonesExist()
 
 	while(FoundIndex <= MaxVertexGroup){
 		bool Found = false;
-		for(size_t i = FoundIndex-1; i < FoundIndex+2; i++){
-			if(FoundIndex >= BoneDataStreams.size())
+		for(int i = FoundIndex-1; i < FoundIndex+2; i++){
+			if(FoundIndex >= (int)BoneDataStreams.size())
 				break;
 
 			if(BoneDataStreams[i]->GetVertexGroup() == FoundIndex){
@@ -190,7 +191,7 @@ int Leviathan::AnimationMasterBlock::RunMixing(){
 
 	for(size_t i = 0; i < BoneDataStreams.size(); i++){
 		// get matching bone(s) //
-		BoneGroupFoundIndexes* receivingbones;
+		BoneGroupFoundIndexes* receivingbones = GetIndexesOfBonesMatchingGroup(i);
 
 		if(receivingbones->IndexesInHookedBones.size() < 1){
 			// no bones to receive data, no point in calculating //
@@ -220,12 +221,12 @@ int Leviathan::AnimationMasterBlock::RunMixing(){
 	return 2;
 }
 
-DLLEXPORT AnimationStream* Leviathan::AnimationMasterBlock::GetStreamForVertexGroup(const int &group){
+DLLEXPORT shared_ptr<AnimationStream> Leviathan::AnimationMasterBlock::GetStreamForVertexGroup(const int &group){
 	// loop through all streams and return right one //
 	for(size_t i = 0; i < BoneDataStreams.size(); i++){
 		if(BoneDataStreams[i]->GetVertexGroup() == group){
 			// right one found, return raw pointer to avoid copying smart pointers //
-			return BoneDataStreams[i].get();
+			return BoneDataStreams[i];
 		}
 	}
 	// none found //
@@ -241,7 +242,7 @@ DLLEXPORT BoneGroupFoundIndexes* Leviathan::AnimationMasterBlock::GetIndexesOfBo
 
 	// cache index should be group-1 //
 
-	for(size_t i = group-1; i < group+3; i++){
+	for(size_t i = (size_t)group-1; i < (size_t)group+3; i++){
 
 		if(i >= CachedIndexes.size()){
 			// not found //
@@ -316,4 +317,37 @@ vector<size_t> Leviathan::AnimationMasterBlock::ConstructCacheForGroup(const int
 	}
 
 	return Result;
+}
+
+DLLEXPORT int Leviathan::AnimationMasterBlock::GetBlockMSPassed(){
+	return AnimationMSPassed;
+}
+
+DLLEXPORT vector<shared_ptr<AnimationStream>>& Leviathan::AnimationMasterBlock::GetStoredStreamsForVertexGroupList(const int &AnimID, 
+	const vector<int> &vgroups)
+{
+	// find based on id //
+	for(size_t i = 0; i < CachedStreamsForAnimationBlock.size(); i++){
+		if(CachedStreamsForAnimationBlock[i]->AnimationBlockID == AnimID){
+
+			return CachedStreamsForAnimationBlock[i]->Streams;
+		}
+	}
+
+
+	// needs to construct new //
+	StreamsForAnimationBlock* tmp = new StreamsForAnimationBlock(AnimID);
+
+	tmp->Streams.reserve(vgroups.size());
+
+	// add streams //
+	for(size_t i = 0; i < vgroups.size(); i++){
+		// add corresponding stream //
+		tmp->Streams.push_back(GetStreamForVertexGroup(vgroups[i]));
+	}
+
+	// store to vector //
+	CachedStreamsForAnimationBlock.push_back(tmp);
+	// return the vectors stored in the object //
+	return tmp->Streams;
 }

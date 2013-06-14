@@ -45,7 +45,7 @@ TextLabel::TextLabel(int id){
 
 	//TextCreated;
 	TextID = IDFactory::GetID();
-	TextLenght = -1;
+	TextLength = -1;
 	Font = L"";
 
 	RelativedPadding = 0;
@@ -169,7 +169,7 @@ void TextLabel::Render(Graphics* graph){
 
 
 		//}
-		//graph->SubmitAction(new RenderAction(RENDERACTION_TEXT, NULL, NULL, L"", RENDERACTION_CREATE, this->ID, this->TextID, /* estimate max lenght */new int(LText.size()*1.5f)));
+		//graph->SubmitAction(new RenderAction(RENDERACTION_TEXT, NULL, NULL, L"", RENDERACTION_CREATE, this->ID, this->TextID, /* estimate max length */new int(LText.size()*1.5f)));
 	}
 
 	if(ValuesUpdated){
@@ -337,14 +337,14 @@ void TextLabel::SetHiddenState(bool hidden){
 void TextLabel::SizeAdjust(){
 
 	// get text length //
-	int textlenght = -1;
-	textlenght = GuiManager::Get()->GetGraph()->CountTextRenderLenght(LText, Font, TextMod, false);
+	int textlength = -1;
+	textlength = GuiManager::Get()->GetGraph()->CountTextRenderLength(LText, Font, TextMod, false);
 
 
 	// count new size //
 
 
-	Width = TextPadding*2+textlenght;
+	Width = TextPadding*2+textlength;
 
 
 	Height = TextPaddingY*2+GuiManager::Get()->GetGraph()->GetTextRenderHeight(Font, TextMod, false);
@@ -358,19 +358,19 @@ void TextLabel::SizeAdjust(){
 //	}
 //
 //	// get text length //
-//	int textlenght = -1;
+//	int textlength = -1;
 //	if(AreAbsolutePos){
-//		textlenght = GuiManager::Get()->GetGraph()->CountTextRenderLenght(LText, Font, TextMod, AreAbsolutePos);
+//		textlength = GuiManager::Get()->GetGraph()->CountTextRenderLength(LText, Font, TextMod, AreAbsolutePos);
 //	} else {
-//		textlenght = GuiManager::Get()->GetGraph()->CountTextRenderLenght(LText, Font, RelaTivedTextMod, AreAbsolutePos);
+//		textlength = GuiManager::Get()->GetGraph()->CountTextRenderLength(LText, Font, RelaTivedTextMod, AreAbsolutePos);
 //	}
 //
 //	// count new size //
 //
 //	if(AreAbsolutePos){
-//		Width = TextPadding*2+textlenght;
+//		Width = TextPadding*2+textlength;
 //	} else {
-//		Width = RelativedPadding*2+textlenght;
+//		Width = RelativedPadding*2+textlength;
 //	}
 //	if(AreAbsolutePos){
 //		Height = TextPaddingY*2+GuiManager::Get()->GetGraph()->GetTextRenderHeight(Font, TextMod, AreAbsolutePos);

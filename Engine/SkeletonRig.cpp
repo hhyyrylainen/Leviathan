@@ -330,7 +330,6 @@ DLLEXPORT bool Leviathan::GameObject::SkeletonRig::SaveOnTopOfTextBlock(ObjectFi
 			// has parent, save it //
 			(*curstr) += L"parent(\""+parentbone->Name+L"\") ";
 		}
-		parentbone.reset();
 
 		(*curstr) += L"pos("+Convert::ToWstring(bone->RestPosition[0])+L","+Convert::ToWstring(bone->RestPosition[1])+L","
 			+Convert::ToWstring(bone->RestPosition[2])+L") ";

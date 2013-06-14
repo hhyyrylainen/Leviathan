@@ -136,6 +136,10 @@ DLLEXPORT shared_ptr<D3DXMATRIX> Leviathan::GameObject::SkeletonBone::GetInvBind
 	return InvBindComplete;
 }
 
+DLLEXPORT int Leviathan::GameObject::SkeletonBone::GetBoneGroup(){
+	return BoneGroup;
+}
+
 // ------------------------------------ //
 
 // ------------------------------------ //

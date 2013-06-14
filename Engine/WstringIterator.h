@@ -79,7 +79,7 @@ namespace Leviathan{
 		
 
 		DLLEXPORT bool IsOutOfBounds(unsigned long pos);
-		DLLEXPORT unsigned int GetWstringLenght();
+		DLLEXPORT unsigned int GetWstringLength();
 
 		DLLEXPORT void ReInit(wstring* text, bool TakesOwnership = false);
 		DLLEXPORT void ReInit(const wstring& text);

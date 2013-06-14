@@ -27,6 +27,15 @@ namespace Leviathan{
 		vector<size_t> IndexesInHookedBones;
 	};
 
+	struct StreamsForAnimationBlock{
+		StreamsForAnimationBlock(const int &id){
+			AnimationBlockID = id;
+		}
+
+		int AnimationBlockID;
+		vector<shared_ptr<AnimationStream>> Streams;
+	};
+
 	class AnimationMasterBlock : public CallableObject{
 	public:
 		DLLEXPORT AnimationMasterBlock::AnimationMasterBlock();
@@ -35,7 +44,7 @@ namespace Leviathan{
 		DLLEXPORT int UpdateAnimations(int mspassed, bool force = false);
 		DLLEXPORT void HookBones(vector<shared_ptr<GameObject::SkeletonBone>> &bonestohook);
 
-		DLLEXPORT AnimationStream* GetStreamForVertexGroup(const int &group);
+		DLLEXPORT shared_ptr<AnimationStream> GetStreamForVertexGroup(const int &group);
 		DLLEXPORT BoneGroupFoundIndexes* GetIndexesOfBonesMatchingGroup(const int &group);
 		DLLEXPORT GameObject::SkeletonBone* GetBoneOnIndex(const size_t &index);
 
@@ -44,8 +53,11 @@ namespace Leviathan{
 		DLLEXPORT bool VerifyBoneStreamChannelsExist();
 		DLLEXPORT bool DoAllChannelsUpToMaxBonesExist();
 
+		DLLEXPORT vector<shared_ptr<AnimationStream>>& GetStoredStreamsForVertexGroupList(const int &AnimID, const vector<int> &vgroups);
 
 		DLLEXPORT bool VerifyCache();
+
+		DLLEXPORT int GetBlockMSPassed();
 
 	private:
 		// updates the hooked bones based on BoneDataStreams //
@@ -59,6 +71,7 @@ namespace Leviathan{
 		// index cache //
 		bool BonesChanged : 1;
 		vector<BoneGroupFoundIndexes*> CachedIndexes;
+		vector<StreamsForAnimationBlock*> CachedStreamsForAnimationBlock;
 		int MaxVertexGroup;
 
 

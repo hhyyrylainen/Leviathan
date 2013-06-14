@@ -15,7 +15,6 @@ DLLEXPORT int Leviathan::LineTokeNizer::TokeNizeLine(const wstring& str, vector<
 	vector<unique_ptr<Int2>> CopyOperations;
 	// estimate token count //
 	CopyOperations.reserve(3);
-
 	// check how many characters need to be copied to each token //
 	for(unsigned int i = 0; i < str.size(); i++){
 		// check for chars //
@@ -73,7 +72,7 @@ DLLEXPORT int Leviathan::LineTokeNizer::TokeNizeLine(const wstring& str, vector<
 
 	for(unsigned int i = 0; i < CopyOperations.size(); i++){
 		// use wstring functions to get sub strings //
-		// second is actually lenght of substring (end-start positions) //
+		// second is actually length of substring (end-start positions) //
 		result.push_back(new wstring(str.substr((unsigned int)CopyOperations[i]->X, 
 			(unsigned int)CopyOperations[i]->Y-CopyOperations[i]->X)));
 	}
@@ -130,7 +129,7 @@ currentstringend:
 	for(unsigned int i = 0; i < CopyOperations.size(); i++){
 		// copy the substring from original string //
 
-		result.push_back(str.substr((unsigned int)CopyOperations[i]->X, /*lenght*/ (unsigned int)(CopyOperations[i]->Y-
+		result.push_back(str.substr((unsigned int)CopyOperations[i]->X, /*length*/ (unsigned int)(CopyOperations[i]->Y-
 			CopyOperations[i]->X)));
 	}
 	// no error //

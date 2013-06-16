@@ -53,7 +53,7 @@ DLLEXPORT shared_ptr<AnimationBlock> Leviathan::AnimationManager::GetAnimation(c
 			// right model animation "group" //
 			if(AnimationsInMemory[i]->GetName() == *animationname){
 				// right one found! //
-				return AnimationsInMemory[i]->CreateFromThis();
+				return AnimationBlock::CreateBlockFromLoadedAnimation(AnimationsInMemory[i]);
 			}
 		}
 	}
@@ -405,6 +405,11 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
+						if(NeedToChangeCoordinateSystem){
+							// swap y and z to convert from blender coordinates //
+							swap(curvalue.Y, curvalue.Z);
+						}
+
 						LoadingBone->SetRestDirection(curvalue);
 						// no facilities for storing direction 
 
@@ -412,6 +417,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 					}
 
 				}
+
 				// add //
 				LoadedBones.push_back(LoadingBone);
 			}
@@ -446,6 +452,9 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 					// error //
 					DEBUG_BREAK;
 				}
+
+				// used to determine has a position been found //
+				bool PosFound = false;
 
 				// handle tokens //
 				for(unsigned int tokenind = 0; tokenind < Tokens.size(); tokenind++){
@@ -484,6 +493,8 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						// set it as rest position even though it actually isn't //
 						LoadingBone->Position = curvalue;
 
+						PosFound = true;
+
 						continue;
 					}
 					if(Misc::WstringStartsWith(*Tokens[tokenind], L"dir")){
@@ -507,6 +518,17 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						continue;
 					}
 				}
+
+				if(!PosFound){
+					// no position change, copy base bone position here //
+
+					for(size_t index = 0; i < LoadedBones.size(); index++){
+
+						if(LoadedBones[i]->GetBoneGroup() == LoadingBone->BoneGroup)
+							LoadingBone->Position = LoadedBones[i]->GetRestPosition();
+					}
+				}
+
 				// put bone into frame //
 				LoadingFrame->FrameBones.push_back(LoadingBone.get());
 				// unlink from smart pointer //

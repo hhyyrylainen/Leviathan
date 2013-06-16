@@ -109,8 +109,12 @@ void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATR
 	// rotation //
 	Float3& direction = bone->AnimationDirection;
 	D3DXMATRIX RotationMatrix;
-	D3DXMatrixRotationYawPitchRoll(&RotationMatrix, Convert::DegreesToRadians(direction.X), Convert::DegreesToRadians(direction.Y), 
-		Convert::DegreesToRadians(direction.Z));
+	//D3DXMatrixRotationYawPitchRoll(&RotationMatrix, Convert::DegreesToRadians(direction.X), Convert::DegreesToRadians(direction.Y), 
+	//	Convert::DegreesToRadians(direction.Z));
+	// rotations are already in radians //
+	//D3DXMatrixRotationYawPitchRoll(&RotationMatrix, direction.X, direction.Y, direction.Z);
+	D3DXMatrixRotationYawPitchRoll(&RotationMatrix, direction.X, direction.Z, direction.Y);
+	//D3DXMatrixRotationAxis(&RotationMatrix, &(D3DXVECTOR3)direction, 0.f);
 
 	// compose final matrix //
 	D3DXMatrixMultiply(&RotationMatrix, &ScaleMatrix, &RotationMatrix);
@@ -249,11 +253,11 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 				// Generate Float3 from elements //
 				Float3 Direction(Convert::WstringToFloat(Values[0]), Convert::WstringToFloat(Values[1]), Convert::WstringToFloat(Values[2]));
 
-				//if(NeedToChangeCoordinateSystem){
-				//	// swap y and z to convert from blender coordinates to work with  //
+				if(NeedToChangeCoordinateSystem){
+					// swap y and z to convert from blender coordinates to work with  //
 
-				//	swap(Direction[1], Direction[2]);
-				//}
+					swap(Direction[1], Direction[2]);
+				}
 
 				CurrentBone->SetRestDirection(Direction);
 

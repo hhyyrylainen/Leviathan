@@ -8,9 +8,12 @@ using namespace Leviathan;
 #include "AnimationMasterBlock.h"
 #include "LoadedAnimation.h"
 
-DLLEXPORT Leviathan::AnimationBlock::AnimationBlock(){
+DLLEXPORT Leviathan::AnimationBlock::AnimationBlock(shared_ptr<LoadedAnimation> parentanim) : FrameData(parentanim){
 	// get id //
 	ID = IDFactory::GetID();
+	// whole control over bones //
+	TakeControlEntirelyIfOnlyBlock = true;
+	ControlPercentage = 1.f;
 }
 
 DLLEXPORT Leviathan::AnimationBlock::~AnimationBlock(){
@@ -46,6 +49,11 @@ DLLEXPORT bool Leviathan::AnimationBlock::SampleToStreams(AnimationMasterBlock* 
 
 	// all blocks and settings copied //
 	return true;
+}
+
+DLLEXPORT shared_ptr<AnimationBlock> Leviathan::AnimationBlock::CreateBlockFromLoadedAnimation(shared_ptr<LoadedAnimation> parentanimation){
+	// create new //
+	return shared_ptr<AnimationBlock>(new AnimationBlock(parentanimation));
 }
 
 // ------------------------------------ //

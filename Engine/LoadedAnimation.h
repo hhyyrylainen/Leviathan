@@ -33,8 +33,8 @@ namespace Leviathan{
 		friend AnimationManager;
 	public:
 		DLLEXPORT LoadedAnimation::~LoadedAnimation();
-
-		DLLEXPORT shared_ptr<AnimationBlock> CreateFromThis();
+		// moved to AnimationBlock as a static function //
+		//DLLEXPORT shared_ptr<AnimationBlock> CreateFromThis();
 
 		DLLEXPORT wstring& GetSourceFile();
 		DLLEXPORT wstring& GetName();
@@ -55,7 +55,8 @@ namespace Leviathan{
 		DLLEXPORT vector<int>& GetVertexGroupsControlled();
 
 		DLLEXPORT void AddNewFrame(shared_ptr<AnimationFrameData> frame);
-		DLLEXPORT shared_ptr<AnimationFrameData> GetFrameNumber(const int &number);
+		DLLEXPORT shared_ptr<AnimationFrameData> GetFrameFromFrameNumber(const int &number);
+		// TODO: add caching to this function to speed it up //
 		DLLEXPORT void CopyChangedAmountsToResultsFromFrame(AnimationFrameData* frame, const int &bonegroup, Float3 &poschangereceiver, Float3 &dirchangereceiver);
 
 	private:

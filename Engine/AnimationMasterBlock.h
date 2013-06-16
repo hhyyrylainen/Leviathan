@@ -50,6 +50,8 @@ namespace Leviathan{
 
 		DLLEXPORT void OnEvent(Event** pEvent);
 
+		DLLEXPORT bool AddAnimationBlock(shared_ptr<AnimationBlock> newblock);
+
 		DLLEXPORT bool VerifyBoneStreamChannelsExist();
 		DLLEXPORT bool DoAllChannelsUpToMaxBonesExist();
 

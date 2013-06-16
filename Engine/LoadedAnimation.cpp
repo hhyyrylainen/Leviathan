@@ -18,14 +18,6 @@ DLLEXPORT Leviathan::LoadedAnimation::~LoadedAnimation(){
 
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<AnimationBlock> Leviathan::LoadedAnimation::CreateFromThis(){
-	shared_ptr<AnimationBlock> createdblock(new AnimationBlock());
-
-
-	return createdblock;
-}
-
-// ------------------------------------ //
 DLLEXPORT wstring& Leviathan::LoadedAnimation::GetSourceFile(){
 	return SourceFile;
 }
@@ -121,11 +113,11 @@ DLLEXPORT bool Leviathan::LoadedAnimation::SampleToStreamBlockAtTime(const int &
 				FrameBegin = FrameEnd = AnimationFrames[i]->FrameNumber;
 				break;
 			}
-			if(i == 1){
-				// animation is on first frame //
-				FrameBegin = FrameEnd = AnimationFrames[0]->FrameNumber;
-				break;
-			}
+			//if(i == 1){
+			//	// animation is on first frame //
+			//	FrameBegin = FrameEnd = AnimationFrames[0]->FrameNumber;
+			//	break;
+			//}
 			// starts on previous and ends on this one //
 			FrameBegin = AnimationFrames[i-1]->FrameNumber;
 			FrameEnd = AnimationFrames[i]->FrameNumber;
@@ -149,14 +141,14 @@ DLLEXPORT bool Leviathan::LoadedAnimation::SampleToStreamBlockAtTime(const int &
 	}
 	if(FrameBegin == FrameEnd){
 		// just one frame //
-		return _SampleFramesToBlockWithBlend(0.f, GetFrameNumber(FrameBegin).get(), NULL, block, bonegroup);
+		return _SampleFramesToBlockWithBlend(0.f, GetFrameFromFrameNumber(FrameBegin).get(), NULL, block, bonegroup);
 	}
 
 	// calculate percentage of last frame //
-	float percentageofend = (EndFrameStart-StartFrameStart)/(float)(mstimepassedfromstart-StartFrameStart);
+	float percentageofend = ((float)(mstimepassedfromstart-StartFrameStart))/(EndFrameStart-StartFrameStart);
 
 	// get changes on both frames and mix them together with the percentage //
-	return _SampleFramesToBlockWithBlend(percentageofend, GetFrameNumber(FrameBegin).get(), GetFrameNumber(FrameEnd).get(), block, bonegroup);
+	return _SampleFramesToBlockWithBlend(percentageofend, GetFrameFromFrameNumber(FrameBegin).get(), GetFrameFromFrameNumber(FrameEnd).get(), block, bonegroup);
 }
 
 DLLEXPORT void inline Leviathan::LoadedAnimation::CalculateFrameStartTime(int &startms, AnimationFrameData* frame, size_t index /*= SIZE_T_MAX*/){
@@ -232,7 +224,7 @@ bool Leviathan::LoadedAnimation::_SampleFramesToBlockWithBlend(float blendfactor
 	return true;
 }
 
-DLLEXPORT shared_ptr<AnimationFrameData> Leviathan::LoadedAnimation::GetFrameNumber(const int &number){
+DLLEXPORT shared_ptr<AnimationFrameData> Leviathan::LoadedAnimation::GetFrameFromFrameNumber(const int &number){
 	for(size_t i = 0; i < AnimationFrames.size(); i++){
 		if(AnimationFrames[i]->FrameNumber == number){
 			// number matches //
@@ -274,8 +266,8 @@ DLLEXPORT void Leviathan::LoadedAnimation::CopyChangedAmountsToResultsFromFrame(
 		return;
 	}
 
-	poschangereceiver = BindPoseBone->GetRestPosition()-AnimatedBone->Position;
-	dirchangereceiver = BindPoseBone->GetRestDirection()-AnimatedBone->Direction;
+	poschangereceiver = AnimatedBone->Position-BindPoseBone->GetRestPosition();
+	dirchangereceiver = AnimatedBone->Direction-BindPoseBone->GetRestDirection();
 }
 
 // ------------------------------------ //

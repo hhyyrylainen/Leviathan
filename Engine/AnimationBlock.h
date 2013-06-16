@@ -16,7 +16,6 @@ namespace Leviathan{
 
 	class AnimationBlock : public Object{
 	friend AnimationManager;
-	friend LoadedAnimation;
 	public:
 		// public destructor so that this can be deleted anywhere //
 		DLLEXPORT AnimationBlock::~AnimationBlock();
@@ -32,11 +31,14 @@ namespace Leviathan{
 		//************************************
 		DLLEXPORT bool SampleToStreams(AnimationMasterBlock* block);
 
+		// creating a block //
+		DLLEXPORT static shared_ptr<AnimationBlock> CreateBlockFromLoadedAnimation(shared_ptr<LoadedAnimation> parentanimation);
+
 		DLLEXPORT inline int& GetID();
 
 	private:
 		// Loaded Animation creates instances of objects //
-		DLLEXPORT AnimationBlock::AnimationBlock();
+		DLLEXPORT AnimationBlock::AnimationBlock(shared_ptr<LoadedAnimation> parentanim);
 
 		// data //
 		// unique identifier for this object //

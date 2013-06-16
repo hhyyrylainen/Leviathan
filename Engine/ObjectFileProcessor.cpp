@@ -78,7 +78,8 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 		// check is still valid //
 		if(Line >= (int)Lines.size()){
 			// not valid, "file" ended //
-			DEBUG_BREAK;
+			// can be valid //
+			break;
 		}
 
 		// skip empty lines //

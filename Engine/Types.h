@@ -676,6 +676,35 @@ namespace Leviathan{
 		DLLEXPORT inline Float4 Lerp(const Float4 &other, float f) const{
 			return Float4((other.X-X)*f + X, (other.Y-Y)*f + Y, (other.Z-Z)*f + Z, (other.W-W)*f + W);
 		}
+
+		// does SPHERICAL interpolation between quaternions //
+		DLLEXPORT inline Float4 Slerp(const Float4 &other, float f){
+			// extra quaternion for calculations //
+			Float4 quaternion3;
+
+			// dot product of both //
+			float dot = this->Dot(other);
+
+			if(dot < 0){
+
+				dot = -dot;
+				quaternion3 = -other;
+			} else {
+				quaternion3 = other;
+			}
+
+			if(dot < 0.95f){
+
+				float angle = acosf(dot);
+				return ((*this)*sinf(angle*(1-f))+quaternion3*sinf(angle*f))/sinf(angle);
+
+			} else {
+				// small angle, linear interpolation will be fine //
+				return this->Lerp(quaternion3, f);
+			}
+
+		}
+
 		// compares distance between vectors to tolerance, returns true if less //
 		DLLEXPORT inline bool Compare(const Float4 &other, float tolerance) const{
 			const Float4 difference = (*this)-other;
@@ -708,6 +737,30 @@ namespace Leviathan{
 		DLLEXPORT inline static Float4 w_axis() {
 			return Float4(0.f, 0.f, 0.f, 1.f);
 		}
+
+		// quaternion specific methods //
+		DLLEXPORT static inline Float4 CreateQuaternionFromAngles(const Float3 &angles){
+			// multiplied by 0.5 to get double the value //
+			float cosx = cosf(0.5f*angles.X);
+			float cosy = cosf(0.5f*angles.Y);
+			float cosz = cosf(0.5f*angles.Z);
+
+			float sinx = sinf(0.5f*angles.X);
+			float siny = sinf(0.5f*angles.Y);
+			float sinz = sinf(0.5f*angles.Z);
+
+
+			Float4 quaternion((Float4)0);
+			// compute quaternion //
+			quaternion.X = cosz*cosy*sinx-sinz*siny*cosx;
+			quaternion.Y = cosz*siny*cosx+sinz*cosy*sinx;
+			quaternion.Z = sinz*cosy*cosx-cosz*siny*sinx;
+			quaternion.W = cosz*cosy*cosx*sinz*siny*sinx; 
+
+			return quaternion;
+		}
+
+
 		// ----------------- casts ------------------- //
 		DLLEXPORT inline operator D3DXVECTOR4(){
 			return D3DXVECTOR4(X, Y, Z, W);

@@ -150,6 +150,8 @@ DLLEXPORT bool Leviathan::AnimationMasterBlock::DoAllChannelsUpToMaxBonesExist()
 	while(FoundIndex <= MaxVertexGroup){
 		bool Found = false;
 		for(int i = FoundIndex-1; i < FoundIndex+2; i++){
+			if(i < 0)
+				i = 0;
 			if(FoundIndex >= (int)BoneDataStreams.size())
 				break;
 
@@ -209,7 +211,7 @@ int Leviathan::AnimationMasterBlock::RunMixing(){
 
 		// add base pos and direction to get final position //
 		bone->SetAnimationPosition(bone->GetRestPosition()+ChangedPosition);
-		bone->SetAnimationDirection(bone->GetRestDirection()+ChangedPosition);
+		bone->SetAnimationDirection(bone->GetRestDirection()+ChangedDirection);
 
 		// copy result to other ones //
 		for(size_t a = 1; a < receivingbones->IndexesInHookedBones.size(); a++){
@@ -241,8 +243,11 @@ DLLEXPORT BoneGroupFoundIndexes* Leviathan::AnimationMasterBlock::GetIndexesOfBo
 	}
 
 	// cache index should be group-1 //
+	size_t startind = (size_t)group;
+	if(startind != 0)
+		startind -= 1;
 
-	for(size_t i = (size_t)group-1; i < (size_t)group+3; i++){
+	for(size_t i = startind; i < (size_t)group+3; i++){
 
 		if(i >= CachedIndexes.size()){
 			// not found //
@@ -350,4 +355,11 @@ DLLEXPORT vector<shared_ptr<AnimationStream>>& Leviathan::AnimationMasterBlock::
 	CachedStreamsForAnimationBlock.push_back(tmp);
 	// return the vectors stored in the object //
 	return tmp->Streams;
+}
+
+DLLEXPORT bool Leviathan::AnimationMasterBlock::AddAnimationBlock(shared_ptr<AnimationBlock> newblock){
+	// add to vector of playing animations //
+	Animations.push_back(newblock);
+	// can't fail right now //
+	return true;
 }

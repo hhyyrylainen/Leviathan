@@ -113,7 +113,9 @@ shared_ptr<D3DXMATRIX> Leviathan::GameObject::SkeletonBone::CalculateInvBindPose
 	//D3DXMatrixRotationYawPitchRoll(&rotation, RestDirection.X, RestDirection.Z, RestDirection.Y);
 	//D3DXMatrixRotationAxis(&rotation, &(D3DXVECTOR3)RestDirection, 0.f);
 	D3DXQUATERNION quat(RestDirection);
+	//D3DXQUATERNION quat(Float4(0,0,0,1));
 	D3DXMatrixRotationQuaternion(&rotation, &quat);
+	//D3DXMatrixIdentity(&rotation);
 
 	// multiply all together //
 	D3DXMatrixMultiply(&rotation, &scaling, &rotation);

@@ -760,6 +760,18 @@ namespace Leviathan{
 			return quaternion;
 		}
 
+		DLLEXPORT inline Float4 QuaternionMultiply(const Float4 &other){
+
+			Float4 result;
+
+			result.X = X*other.X+X*other.W+Y*other.Z-Z*other.Y;
+			result.Y = W*other.Y-X*other.Z+Y*other.W+Z*other.X;
+			result.Z = W*other.Z+X*other.Y-Y*other.X+Z*other.W;
+			result.W = W*other.W-X*other.X-Y*other.Y-Z*other.Z;
+
+			return result;
+		}
+
 
 		// ----------------- casts ------------------- //
 		DLLEXPORT inline operator D3DXVECTOR4(){

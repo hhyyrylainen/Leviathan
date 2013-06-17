@@ -211,7 +211,7 @@ int Leviathan::AnimationMasterBlock::RunMixing(){
 
 		// add base pos and direction to get final position //
 		bone->SetAnimationPosition(bone->GetRestPosition()+ChangedPosition);
-		bone->SetAnimationDirection(bone->GetRestDirection()+ChangedDirection);
+		bone->SetAnimationDirection(ChangedDirection.QuaternionMultiply(bone->GetRestDirection()));
 
 		// copy result to other ones //
 		for(size_t a = 1; a < receivingbones->IndexesInHookedBones.size(); a++){

@@ -264,7 +264,7 @@ DLLEXPORT void Leviathan::LoadedAnimation::CopyChangedAmountsToResultsFromFrame(
 	}
 
 	poschangereceiver = AnimatedBone->Position-BindPoseBone->GetRestPosition();
-	dirchangereceiver = AnimatedBone->Direction-BindPoseBone->GetRestDirection();
+	dirchangereceiver = AnimatedBone->Direction.QuaternionMultiply(BindPoseBone->GetRestDirection());
 }
 
 // ------------------------------------ //

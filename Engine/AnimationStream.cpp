@@ -50,8 +50,8 @@ DLLEXPORT void Leviathan::AnimationStream::SampleData(Float3 &receivingpos, Floa
 		// get ptr //
 		const AnimationStreamBlock* blocky = Blocks[i].get();
 
-		receivingpos = blocky->CurrentBoneChanges->Position.operator*(blocky->ControlPercentage);
-		receivingdir = blocky->CurrentBoneChanges->Direction.operator*(blocky->ControlPercentage);
+		receivingpos = receivingpos+blocky->CurrentBoneChanges->Position.operator*(blocky->ControlPercentage);
+		receivingdir = blocky->CurrentBoneChanges->Direction.operator*(blocky->ControlPercentage).QuaternionMultiply(receivingdir);
 	}
 
 }

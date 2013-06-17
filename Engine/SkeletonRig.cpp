@@ -97,15 +97,6 @@ DLLEXPORT void Leviathan::GameObject::SkeletonRig::UpdatePose(int mspassed){
 
 void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATRIX* parentmatrix){
 	// fill matrices with data //
-	// translate matrix //
-	D3DXMATRIX TranslationMatrix;
-	//D3DXMatrixTranslation(&TranslationMatrix, bone->AnimationPosition.X, bone->AnimationPosition.Y, bone->AnimationPosition.Z);
-	D3DXMatrixTranslation(&TranslationMatrix, 0.f, 0.f, 0.f);
-
-	// scaling //
-	D3DXMATRIX ScaleMatrix;
-	D3DXMatrixScaling(&ScaleMatrix, 1, 1, 1);
-
 	// rotation //
 	D3DXMATRIX RotationMatrix;
 	//D3DXMatrixRotationYawPitchRoll(&RotationMatrix, Convert::DegreesToRadians(direction.X), Convert::DegreesToRadians(direction.Y), 
@@ -115,10 +106,27 @@ void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATR
 	//D3DXMatrixRotationYawPitchRoll(&RotationMatrix, direction.X, direction.Z, direction.Y);
 	//D3DXMatrixRotationAxis(&RotationMatrix, &(D3DXVECTOR3)direction, 0.f);
 	D3DXQUATERNION quat(bone->AnimationDirection);
+	//D3DXQUATERNION quat(Float4(0,0,1,1).Normalize());
+	//D3DXQUATERNION quat(bone->RestDirection);
 	D3DXMatrixRotationQuaternion(&RotationMatrix, &quat);
+	//D3DXMatrixIdentity(&RotationMatrix);
+	
+	//D3DXMatrixRotationYawPitchRoll(&RotationMatrix, 0.f, 0.f, 0.243f);
+
+	// translate matrix //
+	D3DXMATRIX TranslationMatrix;
+	//D3DXMatrixTranslation(&TranslationMatrix, bone->AnimationPosition.X, bone->AnimationPosition.Y, bone->AnimationPosition.Z);
+	D3DXMatrixTranslation(&TranslationMatrix, 0.f, 0.f, 0.f);
+
+	// multiply //
+	D3DXMatrixMultiply(&RotationMatrix, &RotationMatrix, &TranslationMatrix);
+
+	// scaling //
+	D3DXMATRIX ScaleMatrix;
+	D3DXMatrixScaling(&ScaleMatrix, 1, 1, 1);
 
 	// compose final matrix //
-	D3DXMatrixMultiply(&RotationMatrix, &ScaleMatrix, &RotationMatrix);
+	D3DXMatrixMultiply(&RotationMatrix, &RotationMatrix, &ScaleMatrix);
 	// get this bone's translation matrix //
 	D3DXMATRIX* ThisBoneMatrix = GetAbsoluteBoneMatrixForBone(bone);
 
@@ -131,15 +139,19 @@ void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATR
 		//D3DXMatrixMultiply(ThisBoneMatrix, ThisBoneMatrix, D3DXMatrixInverse(temppar, NULL, parentmatrix));
 	}
 
+	D3DXMATRIX* finalmat = GetFinalTransformMatrixForBone(bone);
+
 	// set to the result matrix //
-	D3DXMatrixMultiply(GetFinalTransformMatrixForBone(bone), ThisBoneMatrix, GetInvBindPoseForBone(bone));
+	D3DXMatrixMultiply(finalmat, ThisBoneMatrix, GetInvBindPoseForBone(bone));
+
+
 
 	// update child bones //
 	for(size_t i = 0; i < bone->Children.size(); i++){
 		if(bone->Children[i].lock().get() != NULL){
 
-			//UpdateBone(bone->Children[i].lock().get(), ThisBoneMatrix);
-			UpdateBone(bone->Children[i].lock().get(), GetFinalTransformMatrixForBone(bone));
+			UpdateBone(bone->Children[i].lock().get(), ThisBoneMatrix);
+			//UpdateBone(bone->Children[i].lock().get(), finalmat);
 			//UpdateBone(bone->Children[i].lock().get(), NULL);
 			continue;
 		}

@@ -368,16 +368,16 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						// expecting to load 3 floats //
 						WstringIterator itr(Tokens[tokenind], false);
 
-						unique_ptr<wstring> resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						unique_ptr<wstring> resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 
 						Float3 curvalue;
 
 						curvalue.X = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
 						if(NeedToChangeCoordinateSystem){
@@ -393,19 +393,19 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						// expecting to load 3 floats //
 						WstringIterator itr(Tokens[tokenind], false);
 
-						unique_ptr<wstring> resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						unique_ptr<wstring> resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 
 						Float4 curvalue;
 
 						curvalue.X = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.W = Convert::WstringToFloat(*resultstr);
 
 						if(NeedToChangeCoordinateSystem){
@@ -476,16 +476,16 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						// expecting to load 3 floats //
 						WstringIterator itrsecond(Tokens[tokenind], false);
 
-						unique_ptr<wstring> resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						unique_ptr<wstring> resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 
 						Float3 curvalue;
 
 						curvalue.X = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
 						if(NeedToChangeCoordinateSystem){
@@ -504,19 +504,19 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						// expecting to load 3 floats //
 						WstringIterator itrsecond(Tokens[tokenind], false);
 
-						unique_ptr<wstring> resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						unique_ptr<wstring> resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 
 						Float4 curvalue;
 
 						curvalue.X = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.Y = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
-						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.W = Convert::WstringToFloat(*resultstr);
 
 						if(NeedToChangeCoordinateSystem){

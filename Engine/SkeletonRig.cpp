@@ -107,14 +107,15 @@ void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATR
 	D3DXMatrixScaling(&ScaleMatrix, 1, 1, 1);
 
 	// rotation //
-	Float3& direction = bone->AnimationDirection;
 	D3DXMATRIX RotationMatrix;
 	//D3DXMatrixRotationYawPitchRoll(&RotationMatrix, Convert::DegreesToRadians(direction.X), Convert::DegreesToRadians(direction.Y), 
 	//	Convert::DegreesToRadians(direction.Z));
 	// rotations are already in radians //
 	//D3DXMatrixRotationYawPitchRoll(&RotationMatrix, direction.X, direction.Y, direction.Z);
-	D3DXMatrixRotationYawPitchRoll(&RotationMatrix, direction.X, direction.Z, direction.Y);
+	//D3DXMatrixRotationYawPitchRoll(&RotationMatrix, direction.X, direction.Z, direction.Y);
 	//D3DXMatrixRotationAxis(&RotationMatrix, &(D3DXVECTOR3)direction, 0.f);
+	D3DXQUATERNION quat(bone->AnimationDirection);
+	D3DXMatrixRotationQuaternion(&RotationMatrix, &quat);
 
 	// compose final matrix //
 	D3DXMatrixMultiply(&RotationMatrix, &ScaleMatrix, &RotationMatrix);
@@ -244,14 +245,15 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 				vector<wstring> Values;
 				LineTokeNizer::SplitTokenToValues(*LineParts[ind], Values);
 
-				if(Values.size() != 3){
+				if(Values.size() != 4){
 					// somethings wrong //
 					Logger::Get()->Error(L"SkeletonRig: LoadFromFileStructure: invalid number of direction elements (3) expected ", Values.size());
 					continue;
 				}
 
 				// Generate Float3 from elements //
-				Float3 Direction(Convert::WstringToFloat(Values[0]), Convert::WstringToFloat(Values[1]), Convert::WstringToFloat(Values[2]));
+				Float4 Direction(Convert::WstringToFloat(Values[0]), Convert::WstringToFloat(Values[1]), Convert::WstringToFloat(Values[2]),
+					Convert::WstringToFloat(Values[3]));
 
 				if(NeedToChangeCoordinateSystem){
 					// swap y and z to convert from blender coordinates to work with  //
@@ -337,8 +339,8 @@ DLLEXPORT bool Leviathan::GameObject::SkeletonRig::SaveOnTopOfTextBlock(ObjectFi
 
 		(*curstr) += L"pos("+Convert::ToWstring(bone->RestPosition[0])+L","+Convert::ToWstring(bone->RestPosition[1])+L","
 			+Convert::ToWstring(bone->RestPosition[2])+L") ";
-		(*curstr) += L"dir("+Convert::ToWstring(bone->RestDirection[0])+L","+Convert::ToWstring(bone->RestDirection[1])+L","
-			+Convert::ToWstring(bone->RestDirection[2])+L") ";
+		(*curstr) += L"dir("+Convert::ToWstring(bone->RestDirection.X)+L","+Convert::ToWstring(bone->RestDirection.Y)+L","
+			+Convert::ToWstring(bone->RestDirection.Z)+L","+Convert::ToWstring(bone->RestDirection.W)+L") ";
 
 		// look for bone group name //
 		wstring BoneGroupName = L"INVALID";

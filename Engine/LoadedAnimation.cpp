@@ -113,11 +113,6 @@ DLLEXPORT bool Leviathan::LoadedAnimation::SampleToStreamBlockAtTime(const int &
 				FrameBegin = FrameEnd = AnimationFrames[i]->FrameNumber;
 				break;
 			}
-			//if(i == 1){
-			//	// animation is on first frame //
-			//	FrameBegin = FrameEnd = AnimationFrames[0]->FrameNumber;
-			//	break;
-			//}
 			// starts on previous and ends on this one //
 			FrameBegin = AnimationFrames[i-1]->FrameNumber;
 			FrameEnd = AnimationFrames[i]->FrameNumber;
@@ -194,7 +189,7 @@ bool Leviathan::LoadedAnimation::_SampleFramesToBlockWithBlend(float blendfactor
 	// create new data holder if it doesn't exist //
 	if(receiver->CurrentBoneChanges.get() == NULL){
 
-		receiver->CurrentBoneChanges = unique_ptr<AnimationBoneData>(new AnimationBoneData((Float3)0, (Float3)0, bonegroup));
+		receiver->CurrentBoneChanges = unique_ptr<AnimationBoneData>(new AnimationBoneData((Float3)0, (Float4)0, bonegroup));
 	}
 
 	if(blendfactor == 0 || frame2 == NULL){
@@ -211,14 +206,16 @@ bool Leviathan::LoadedAnimation::_SampleFramesToBlockWithBlend(float blendfactor
 		return true;
 	}
 
-	Float3 Frame1Pos, Frame1Rot, Frame2Pos, Frame2Rot;
+	Float3 Frame1Pos, Frame2Pos;
+	Float4 Frame1Rot, Frame2Rot;
 	// get data //
 	CopyChangedAmountsToResultsFromFrame(frame1, bonegroup, Frame1Pos, Frame1Rot);
 	CopyChangedAmountsToResultsFromFrame(frame2, bonegroup, Frame2Pos, Frame2Rot);
 
 	// multiply by modifier and set data //
 	receiver->CurrentBoneChanges->Position = Frame1Pos*(1.f-blendfactor)+Frame2Pos*blendfactor;
-	receiver->CurrentBoneChanges->Direction = Frame1Rot*(1.f-blendfactor)+Frame2Rot*blendfactor;
+	//receiver->CurrentBoneChanges->Direction = Frame1Rot*(1.f-blendfactor)+Frame2Rot*blendfactor;
+	receiver->CurrentBoneChanges->Direction = Frame1Rot.Slerp(Frame2Rot, blendfactor);
 
 	// succeeded //
 	return true;
@@ -237,7 +234,7 @@ DLLEXPORT shared_ptr<AnimationFrameData> Leviathan::LoadedAnimation::GetFrameFro
 }
 
 DLLEXPORT void Leviathan::LoadedAnimation::CopyChangedAmountsToResultsFromFrame(AnimationFrameData* frame, const int &bonegroup, 
-	Float3 &poschangereceiver, Float3 &dirchangereceiver)
+	Float3 &poschangereceiver, Float4 &dirchangereceiver)
 {
 
 	GameObject::SkeletonBone* BindPoseBone = NULL;

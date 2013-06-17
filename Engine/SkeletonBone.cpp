@@ -10,7 +10,7 @@ DLLEXPORT Leviathan::GameObject::SkeletonBone::SkeletonBone(){
 	// let default allocations be //
 }
 
-DLLEXPORT Leviathan::GameObject::SkeletonBone::SkeletonBone(const wstring &name, const Float3 &position, const Float3 &direction, int group) : 
+DLLEXPORT Leviathan::GameObject::SkeletonBone::SkeletonBone(const wstring &name, const Float3 &position, const Float4 &direction, int group) : 
 	Name(name), RestPosition(position), RestDirection(direction), AnimationPosition(RestPosition), AnimationDirection(RestDirection), 
 	InvBindComplete(NULL)
 {
@@ -53,12 +53,12 @@ DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetParentName(const wstring 
 	ParentName = name;
 }
 
-DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetRestDirection(const Float3 &val){
+DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetRestDirection(const Float4 &val){
 	RestDirection = val;
 	AnimationDirection = RestDirection;
 }
 
-DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetAnimationDirection(const Float3 &val){
+DLLEXPORT void Leviathan::GameObject::SkeletonBone::SetAnimationDirection(const Float4 &val){
 	AnimationDirection = val;
 }
 
@@ -68,11 +68,11 @@ DLLEXPORT void Leviathan::GameObject::SkeletonBone::CopyAnimationDataFromOther(c
 	AnimationPosition = other.AnimationPosition;
 }
 
-DLLEXPORT Float3& Leviathan::GameObject::SkeletonBone::GetRestDirection(){
+DLLEXPORT Float4& Leviathan::GameObject::SkeletonBone::GetRestDirection(){
 	return RestDirection;
 }
 
-DLLEXPORT Float3& Leviathan::GameObject::SkeletonBone::GetAnimationDirection(){
+DLLEXPORT Float4& Leviathan::GameObject::SkeletonBone::GetAnimationDirection(){
 	return AnimationDirection;
 }
 
@@ -110,8 +110,10 @@ shared_ptr<D3DXMATRIX> Leviathan::GameObject::SkeletonBone::CalculateInvBindPose
 	//	Convert::DegreesToRadians(RestDirection.Z));
 	// already in radians //
 	//D3DXMatrixRotationYawPitchRoll(&rotation, RestDirection.X, RestDirection.Y, RestDirection.Z);
-	D3DXMatrixRotationYawPitchRoll(&rotation, RestDirection.X, RestDirection.Z, RestDirection.Y);
+	//D3DXMatrixRotationYawPitchRoll(&rotation, RestDirection.X, RestDirection.Z, RestDirection.Y);
 	//D3DXMatrixRotationAxis(&rotation, &(D3DXVECTOR3)RestDirection, 0.f);
+	D3DXQUATERNION quat(RestDirection);
+	D3DXMatrixRotationQuaternion(&rotation, &quat);
 
 	// multiply all together //
 	D3DXMatrixMultiply(&rotation, &scaling, &rotation);

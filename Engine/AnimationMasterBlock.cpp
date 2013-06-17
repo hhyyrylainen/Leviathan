@@ -202,7 +202,7 @@ int Leviathan::AnimationMasterBlock::RunMixing(){
 
 		// calculate first from the stream //
 		Float3 ChangedPosition(0);
-		Float3 ChangedDirection(0);
+		Float4 ChangedDirection(0);
 		// use sample function to get total changed position and direction for bone //
 		BoneDataStreams[i]->SampleData(ChangedPosition, ChangedDirection);
 		

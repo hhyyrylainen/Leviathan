@@ -14,11 +14,11 @@ DLLEXPORT Leviathan::AnimationStream::~AnimationStream(){
 
 }
 
-DLLEXPORT void Leviathan::AnimationStream::SampleData(Float3 &receivingpos, Float3 &receivingdir){
+DLLEXPORT void Leviathan::AnimationStream::SampleData(Float3 &receivingpos, Float4 &receivingdir){
 	// mash together all blocks taking into account the percentages //
 
 	receivingpos = (Float3)0;
-	receivingdir = (Float3)0;
+	receivingdir = (Float4)0;
 
 	if(Blocks.size() < 1){
 		// no blocks //

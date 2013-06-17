@@ -57,7 +57,7 @@ namespace Leviathan{
 		DLLEXPORT void AddNewFrame(shared_ptr<AnimationFrameData> frame);
 		DLLEXPORT shared_ptr<AnimationFrameData> GetFrameFromFrameNumber(const int &number);
 		// TODO: add caching to this function to speed it up //
-		DLLEXPORT void CopyChangedAmountsToResultsFromFrame(AnimationFrameData* frame, const int &bonegroup, Float3 &poschangereceiver, Float3 &dirchangereceiver);
+		DLLEXPORT void CopyChangedAmountsToResultsFromFrame(AnimationFrameData* frame, const int &bonegroup, Float3 &poschangereceiver, Float4 &dirchangereceiver);
 
 	private:
 		DLLEXPORT LoadedAnimation::LoadedAnimation();

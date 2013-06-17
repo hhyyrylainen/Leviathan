@@ -1038,7 +1038,14 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wst
 
 		// go to end to count length //
 		reader.seekg(0, ios::end);
-		resultreceiver.resize(reader.tellg());
+
+		streamoff rpos = reader.tellg();
+
+
+		// cannot be loaded //
+		assert(SIZE_T_MAX >= rpos);
+
+		resultreceiver.resize(rpos);
 		// back to start //
 		reader.seekg(0, ios::beg);
 		// read the actual data //

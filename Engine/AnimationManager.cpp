@@ -395,7 +395,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						unique_ptr<wstring> resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 
-						Float3 curvalue;
+						Float4 curvalue;
 
 						curvalue.X = Convert::WstringToFloat(*resultstr);
 
@@ -405,13 +405,16 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 						curvalue.Z = Convert::WstringToFloat(*resultstr);
 
+						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						curvalue.W = Convert::WstringToFloat(*resultstr);
+
 						if(NeedToChangeCoordinateSystem){
 							// swap y and z to convert from blender coordinates //
 							swap(curvalue.Y, curvalue.Z);
 						}
 
 						LoadingBone->SetRestDirection(curvalue);
-						// no facilities for storing direction 
+
 
 						continue;
 					}
@@ -503,7 +506,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						unique_ptr<wstring> resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 
-						Float3 curvalue;
+						Float4 curvalue;
 
 						curvalue.X = Convert::WstringToFloat(*resultstr);
 
@@ -512,6 +515,14 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 
 						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
 						curvalue.Z = Convert::WstringToFloat(*resultstr);
+
+						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_BOTH);
+						curvalue.W = Convert::WstringToFloat(*resultstr);
+
+						if(NeedToChangeCoordinateSystem){
+							// swap y and z to convert from blender coordinates //
+							swap(curvalue.Y, curvalue.Z);
+						}
 
 						LoadingBone->Direction = curvalue;
 

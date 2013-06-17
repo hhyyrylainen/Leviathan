@@ -765,6 +765,9 @@ namespace Leviathan{
 		DLLEXPORT inline operator D3DXVECTOR4(){
 			return D3DXVECTOR4(X, Y, Z, W);
 		}
+		DLLEXPORT inline operator D3DXQUATERNION(){
+			return D3DXQUATERNION(X, Y, Z, W);
+		}
 
 		// ------------------------------------ //
 

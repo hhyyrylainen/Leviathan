@@ -9,7 +9,7 @@ DLLEXPORT Leviathan::AnimationBoneData::AnimationBoneData() : Position(0.f), Dir
 	BoneGroup = -1;
 }
 
-DLLEXPORT Leviathan::AnimationBoneData::AnimationBoneData(const Float3 &pos, const Float3 &dir, const int group) : Position(pos), Direction(dir){
+DLLEXPORT Leviathan::AnimationBoneData::AnimationBoneData(const Float3 &pos, const Float4 &dir, const int group) : Position(pos), Direction(dir){
 	BoneGroup = group;
 }
 

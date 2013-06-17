@@ -35,7 +35,7 @@ namespace Leviathan{
 
 		DLLEXPORT inline AnimationStreamBlock* GetBlockForID(const int &id);
 
-		DLLEXPORT void SampleData(Float3 &receivingpos, Float3 &receivingdir);
+		DLLEXPORT void SampleData(Float3 &receivingpos, Float4 &receivingdir);
 
 	private:
 		// unique identifier //

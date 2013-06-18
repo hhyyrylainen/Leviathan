@@ -408,10 +408,10 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						resultstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.W = Convert::WstringToFloat(*resultstr);
 
-						if(NeedToChangeCoordinateSystem){
-							// swap y and z to convert from blender coordinates //
-							swap(curvalue.Y, curvalue.Z);
-						}
+						//if(NeedToChangeCoordinateSystem){
+						//	// swap y and z to convert from blender coordinates //
+						//	swap(curvalue.Y, curvalue.Z);
+						//}
 
 						LoadingBone->SetRestDirection(curvalue);
 
@@ -519,10 +519,10 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 						resultstr = itrsecond.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 						curvalue.W = Convert::WstringToFloat(*resultstr);
 
-						if(NeedToChangeCoordinateSystem){
-							// swap y and z to convert from blender coordinates //
-							swap(curvalue.Y, curvalue.Z);
-						}
+						//if(NeedToChangeCoordinateSystem){
+						//	// swap y and z to convert from blender coordinates //
+						//	swap(curvalue.Y, curvalue.Z);
+						//}
 
 						LoadingBone->Direction = curvalue;
 

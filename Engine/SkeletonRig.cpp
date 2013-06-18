@@ -267,11 +267,11 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 				Float4 Direction(Convert::WstringToFloat(Values[0]), Convert::WstringToFloat(Values[1]), Convert::WstringToFloat(Values[2]),
 					Convert::WstringToFloat(Values[3]));
 
-				if(NeedToChangeCoordinateSystem){
-					// swap y and z to convert from blender coordinates to work with  //
+				//if(NeedToChangeCoordinateSystem){
+				//	// swap y and z to convert from blender coordinates to work with  //
 
-					swap(Direction[1], Direction[2]);
-				}
+				//	swap(Direction[1], Direction[2]);
+				//}
 
 				CurrentBone->SetRestDirection(Direction);
 

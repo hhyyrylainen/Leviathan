@@ -19,7 +19,6 @@ DLLEXPORT Leviathan::AnimationBlock::AnimationBlock(shared_ptr<LoadedAnimation> 
 DLLEXPORT Leviathan::AnimationBlock::~AnimationBlock(){
 
 }
-
 // ------------------------------------ //
 DLLEXPORT int& Leviathan::AnimationBlock::GetID(){
 	return ID;

@@ -108,7 +108,7 @@ DLLEXPORT int Leviathan::Misc::CutWstring(const wstring& strtocut, const wstring
 
 	}
 
-	if(CopyOperations.size() == 1){
+	if(CopyOperations.size() < 2){
 		// would be just one string, for legacy reasons we return nothing //
 		vec.clear();
 		return 404;

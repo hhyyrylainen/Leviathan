@@ -771,6 +771,11 @@ namespace Leviathan{
 
 			return result;
 		}
+		
+		DLLEXPORT inline Float4 QuaternionReverse(){
+			// reverse vector //
+			return Float4(-X, -Y, -Z, W);
+		}
 
 
 		// ----------------- casts ------------------- //

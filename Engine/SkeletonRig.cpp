@@ -133,25 +133,25 @@ void Leviathan::GameObject::SkeletonRig::UpdateBone(SkeletonBone* bone, D3DXMATR
 	// set the result to the right matrix //
 	D3DXMatrixMultiply(ThisBoneMatrix, &RotationMatrix, &TranslationMatrix);
 
-	// parent matrix needs to be calculated in, if not null //
-	if(parentmatrix != NULL){
-		D3DXMatrixMultiply(ThisBoneMatrix, ThisBoneMatrix, parentmatrix);
-		//D3DXMatrixMultiply(ThisBoneMatrix, ThisBoneMatrix, D3DXMatrixInverse(temppar, NULL, parentmatrix));
-	}
+
 
 	D3DXMATRIX* finalmat = GetFinalTransformMatrixForBone(bone);
 
 	// set to the result matrix //
 	D3DXMatrixMultiply(finalmat, ThisBoneMatrix, GetInvBindPoseForBone(bone));
 
-
+	// parent matrix needs to be calculated in, if not null //
+	if(parentmatrix != NULL){
+		D3DXMatrixMultiply(finalmat, finalmat, parentmatrix);
+		//D3DXMatrixMultiply(ThisBoneMatrix, ThisBoneMatrix, D3DXMatrixInverse(temppar, NULL, parentmatrix));
+	}
 
 	// update child bones //
 	for(size_t i = 0; i < bone->Children.size(); i++){
 		if(bone->Children[i].lock().get() != NULL){
 
-			UpdateBone(bone->Children[i].lock().get(), ThisBoneMatrix);
-			//UpdateBone(bone->Children[i].lock().get(), finalmat);
+			//UpdateBone(bone->Children[i].lock().get(), ThisBoneMatrix);
+			UpdateBone(bone->Children[i].lock().get(), finalmat);
 			//UpdateBone(bone->Children[i].lock().get(), NULL);
 			continue;
 		}
@@ -267,11 +267,15 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 				Float4 Direction(Convert::WstringToFloat(Values[0]), Convert::WstringToFloat(Values[1]), Convert::WstringToFloat(Values[2]),
 					Convert::WstringToFloat(Values[3]));
 
-				//if(NeedToChangeCoordinateSystem){
-				//	// swap y and z to convert from blender coordinates to work with  //
+				if(NeedToChangeCoordinateSystem){
+					// swap y and z to convert from blender coordinates to work with  //
+					//swap(Direction[0], Direction[1]);
 
-				//	swap(Direction[1], Direction[2]);
-				//}
+					Direction.X = -Direction.X;
+
+					// reverse direction //
+					//Direction = Direction.QuaternionReverse();
+				}
 
 				CurrentBone->SetRestDirection(Direction);
 
@@ -296,7 +300,6 @@ DLLEXPORT SkeletonRig* Leviathan::GameObject::SkeletonRig::LoadRigFromFileStruct
 
 			} else {
 				// unknown definition //
-				DEBUG_BREAK;
 				Logger::Get()->Warning(L"SkeletonRig: LoadFromFileStructure: unknown definition on line :"+*LineParts[ind], false);
 			}
 		}

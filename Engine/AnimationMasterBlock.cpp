@@ -62,6 +62,9 @@ DLLEXPORT int Leviathan::AnimationMasterBlock::UpdateAnimations(int mspassed, bo
 	AreAnimationsUpdated = true;
 	AnimationMSPassed += mspassed;
 
+	if(AnimationMSPassed > 9000)
+		AnimationMSPassed -= 9000;
+
 	// update all animations based on current total time passed //
 	// and send bones to animations for their positions to be updated //
 	for(unsigned int i = 0; i < Animations.size(); i++){

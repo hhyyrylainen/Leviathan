@@ -14,7 +14,7 @@ namespace Leviathan{
 	class Input : public EngineComponent{
 	public:
 		DLLEXPORT Input::Input();
-        DLLEXPORT Input::~Input();
+		DLLEXPORT Input::~Input();
 
 		DLLEXPORT bool Init(HINSTANCE thisprocess, int screenwidth, int screenheight);
 		DLLEXPORT void Release();
@@ -26,7 +26,9 @@ namespace Leviathan{
 
 
 		DLLEXPORT void GetMouseRelativeLocation(int& xpos, int& ypos);
-		DLLEXPORT bool GetKeyPressed(int charindex);
+		DLLEXPORT bool GetKeyState(int charindex);
+
+		DLLEXPORT void ResolutionUpdated(int width, int height);
 
 		DLLEXPORT bool IsMouseCaptured(){ return CaptureMouse; };
 	private:

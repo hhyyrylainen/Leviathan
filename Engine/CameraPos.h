@@ -10,11 +10,14 @@
 //#include "BaseInitializable.h"
 //#include "BaseTickable.h"
 #include "Input.h"
+#include "CallableObject.h"
 
 namespace Leviathan{
-	class ViewerCameraPos : public BaseObject{
+	// callable for the ability to receive key presses
+	class ViewerCameraPos : public BaseObject, public CallableObject {
 	public:
-		ViewerCameraPos();
+		DLLEXPORT ViewerCameraPos();
+		DLLEXPORT ~ViewerCameraPos();
 
 		DLLEXPORT void SetFrameTime(float frametime);
 		DLLEXPORT void GetRotation(float& pitch, float& yaw, float& roll);
@@ -41,6 +44,11 @@ namespace Leviathan{
 		DLLEXPORT void PitchTurn(int dir);
 		DLLEXPORT void YawTurn(int dir);
 		DLLEXPORT void RollTurn(int dir);
+
+
+		DLLEXPORT void BecomeMainListeningCamera();
+
+		DLLEXPORT virtual void OnEvent(Event** pEvent);
 
 	private:
 		float FrameTime;
@@ -91,6 +99,8 @@ namespace Leviathan{
 
 		bool UseMouse;
 
+
+		bool MainCameraListening : 1;
 
 	};
 }

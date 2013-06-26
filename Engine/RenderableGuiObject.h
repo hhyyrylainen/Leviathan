@@ -22,7 +22,7 @@ namespace Leviathan{
 		DLLEXPORT virtual RenderableGuiObject::~RenderableGuiObject();
 
 
-		DLLEXPORT virtual void Release(Graphics* graph) = 0;
+		DLLEXPORT virtual void Release() = 0;
 		DLLEXPORT virtual void Render(Graphics* graph) = 0;
 
 

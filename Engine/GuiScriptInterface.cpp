@@ -26,7 +26,7 @@ int Gui_QueueAnimationActionMove(int ID, int xtarget, int ytarget, int whichfirs
 	// get object //
 	GuiManager* tempg = GuiManager::Get();
 	BaseGuiObject* tempbase = tempg->GetObject(tempg->GetObjectIndexFromId(ID));
-	tempg = NULL; // just to be safe, not to mess qui handler up //
+	tempg = NULL; // just to be safe, not to mess Gui handler up //
 	if(tempbase == NULL)
 		return false;
 
@@ -37,17 +37,10 @@ int Gui_QueueAnimationActionMove(int ID, int xtarget, int ytarget, int whichfirs
 	Gui::GuiAnimateable* tempc = reinterpret_cast<Gui::GuiAnimateable*>(tempbase);
 
 	// generate action and submit //
-	Gui::GuiAnimationTypeMove* pmov = NULL;
-	Gui::AnimationAction* pact = NULL;
-	pmov = new Gui::GuiAnimationTypeMove(xtarget, ytarget, whichfirst, speed);
-	pact = new Gui::AnimationAction(Gui::GUI_ANIMATION_MOVE, pmov , special,allowsimult);
+	shared_ptr<Gui::AnimationAction> pact(new Gui::AnimationAction(Gui::GUI_ANIMATION_MOVE, new Gui::GuiAnimationTypeMove(xtarget, ytarget, 
+		whichfirst, speed) , special,allowsimult));
 
 	tempc->QueueAction(pact);
-
-	//ptrvec->push_back(pact);
-
-	//Gui::GuiAnimateable::QueueActionForObject(tempc, pact);
-	//tempc->QueueAction(pact);
 	// done //
 	return true;
 }
@@ -55,7 +48,7 @@ int Gui_QueueAnimationActionVisibility(int ID, bool visible){
 	// get object //
 	GuiManager* tempg = GuiManager::Get();
 	BaseGuiObject* tempbase = tempg->GetObject(tempg->GetObjectIndexFromId(ID));
-	tempg = NULL; // just to be safe, not to mess qui handler up //
+	tempg = NULL; // just to be safe, not to mess Gui handler up //
 	if(tempbase == NULL)
 		return false;
 
@@ -67,9 +60,9 @@ int Gui_QueueAnimationActionVisibility(int ID, bool visible){
 
 	// generate action and submit //
 	if(visible){
-		tempc->QueueAction(new Gui::AnimationAction(Gui::GUI_ANIMATION_SHOW, NULL, 0, false));
+		tempc->QueueAction(shared_ptr<Gui::AnimationAction>(new Gui::AnimationAction(Gui::GUI_ANIMATION_SHOW, NULL, 0, false)));
 	} else {
-		tempc->QueueAction(new Gui::AnimationAction(Gui::GUI_ANIMATION_HIDE, NULL, 0, false));
+		tempc->QueueAction(shared_ptr<Gui::AnimationAction>(new Gui::AnimationAction(Gui::GUI_ANIMATION_HIDE, NULL, 0, false)));
 	}
 	// done //
 	return true;
@@ -87,13 +80,8 @@ int Gui_QueuedAnimationClear(int ID){
 	}
 	Gui::GuiAnimateable* tempc = (Gui::GuiAnimateable*)tempg;
 
-	// generate action and submit //
-	for(unsigned int i = 0; i < tempc->Queue.size(); i++){
-		SAFE_DELETE(tempc->Queue[i]);
-		tempc->Queue.erase(tempc->Queue.begin()+i);
-		i--;
-	}
-	tempc->Queue.clear();
+	// clear (smart pointers will delete everything //
+	tempc->AnimationQueue.clear();
 	// done //
 	return true;
 }

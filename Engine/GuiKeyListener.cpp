@@ -9,24 +9,62 @@ using namespace Leviathan::Gui;
 #include "EventHandler.h"
 #include "GuiManager.h"
 
-KeyListener::KeyListener(){
-	// register for events //
-	EventHandler::Get()->RegisterForEvent(this, EVENT_TYPE_KEYPRESS);
-	EventHandler::Get()->RegisterForEvent(this, EVENT_TYPE_KEYDOWN);
+KeyListener::KeyListener(GuiManager* owner, KeyPressManager* eventsource){
+	// store values //
+	Master = owner;
+	KeySource = eventsource;
+
+	// register //
+	KeySource->RegisterForEvent(this, KEYPRESS_MANAGER_ORDERNUMBER_GUI); 
 }
 KeyListener::~KeyListener(){
-	// unregister for events //
-	EventHandler::Get()->Unregister(this,EVENT_TYPE_KEYPRESS, true); // unregister from all, just incase
+	// unregister //
+	KeySource->Unregister(this);
 }
 // ------------------------------------ //
-void KeyListener::OnEvent(Event** pEvent){
+DLLEXPORT bool Leviathan::Gui::KeyListener::OnEvent(InputEvent** pEvent, InputReceiver* pending){
+	// check are all events received
+	if(pending == this){
+		// this is pending //
+		// check is it processed //
+		if(Master->IsEventConsumed(pEvent)){
+			// delete event to indicate that it is processed //
+			SAFE_DELETE(*pEvent);
+			return false;
 
-	if((*pEvent)->Type == EVENT_TYPE_KEYPRESS){
-		// put key press into gui keybuffer //
-		GuiManager::Get()->AddKeyPress(*(int*)(*pEvent)->Data);
-	} else {
-		GuiManager::Get()->AddKeyDown(*(int*)(*pEvent)->Data);
+		} else {
+			// not pending //
+			return false;
+		}
 	}
+
+	// switch on type //
+	switch((*pEvent)->Type){
+	case EVENT_TYPE_KEYPRESS:
+		{
+			// add key press to Gui //
+			Master->AddKeyPress(*(int*)(*pEvent)->Data, pEvent);
+			// will be pending for a while //
+			return true;
+		}
+		break;
+	case EVENT_TYPE_KEYDOWN:
+		{
+			// add to Gui //
+			Master->AddKeyDown(*(int*)(*pEvent)->Data, pEvent);
+			// will be pending for a while //
+			return true;
+		}
+		break;
+	case EVENT_TYPE_EVENT_SEQUENCE_BEGIN:
+		{
+			// clear state for another round for keys //
+			Master->ClearKeyReceivingState();
+		}
+		break;
+	}
+	// not pending //
+	return false;
 }
 // ------------------------------------ //
 

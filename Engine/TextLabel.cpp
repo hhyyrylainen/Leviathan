@@ -12,9 +12,8 @@ using namespace Leviathan::Gui;
 #include ".\Rendering\ColorQuad.h"
 #include "GuiScriptInterface.h"
 
-//#include "TextLabelCalls.h"
-
-TextLabel::TextLabel(int id){
+Leviathan::Gui::TextLabel::TextLabel(int id) : LText(L"NONE"), Font(L"Arial") {
+	// setting created flags to false //
 	Updated = false;
 	BridgeCreated = false;
 	QuadCreated = false;
@@ -22,7 +21,8 @@ TextLabel::TextLabel(int id){
 	TextHidden = false;
 	OldHidden = false;
 
-	LText = L"NOINIT";
+	AutoFetch = TEXTLABEL_AUTOFETCH_MODE_NONE;
+
 	X = 0;
 	Y = 0;
 	Width = 20;
@@ -32,43 +32,29 @@ TextLabel::TextLabel(int id){
 	ID = id;
 
 	ObjectLevel = GUI_OBJECT_LEVEL_ANIMATEABLE;
-
 	Objecttype = GOBJECT_TYPE_TEXTLABEL;
+
 	Zorder = 1;
 
-	RelativedX = -1;
-	RelativedY = -1;
-	RelativedWidth = -1;
-	RelativedHeight = -1;
-
 	RelaTivedTextMod = -1.f;
-
-	//TextCreated;
+	// unique id for text (when it is created) //
 	TextID = IDFactory::GetID();
 	TextLength = -1;
-	Font = L"";
-
-	RelativedPadding = 0;
-	RelativedYPadding = 0;
-
-	//SpesData = new int();
-	Queue = vector<AnimationAction*>();
-
+	// default padding around text //
 	TextPadding = 5;
 	TextPaddingY = 3;
-
-	AreAbsolutePos = false;
 }
-TextLabel::~TextLabel(){
+
+Leviathan::Gui::TextLabel::~TextLabel(){
 	// release rendering stuff //
 	if(RBridge.get() != NULL)
 		RBridge->WantsToClose = true;
 	RBridge.reset();
 }
-//ScriptCaller* TextLabel::StaticCall = NULL;
 // ------------------------------------ //
-bool TextLabel::Init(int xpos, int ypos, /*bool isposabsolute,*/ int width, int height, wstring text, Float4 color1, Float4 color2, Float4 textcolor, 
-	float sizemod, bool autoadjust, wstring font, int autofetch)
+DLLEXPORT bool Leviathan::Gui::TextLabel::Init(int xpos, int ypos, int width, int height, const wstring &text, const Float4 &color1, 
+	const Float4 &color2, const Float4 &textcolor, float textsize /*= 1.0f*/, bool autoadjust /*= true*/, const wstring &font /*= L"Arial"*/, 
+	int autofetchid /*= -1*/, const wstring &autofetchname /*= L""*/)
 {
 	Updated = true;
 
@@ -82,94 +68,76 @@ bool TextLabel::Init(int xpos, int ypos, /*bool isposabsolute,*/ int width, int 
 	Colour1 = color1;
 	Colour2 = color2;
 
-	//AreAbsolutePos = isposabsolute;
-	AreAbsolutePos = false;
-
 	Font = font;
-	TextHidden = false;
-	OldHidden = false;
-	Hidden = false;
-	TextCreated = false;
 	AutoAdjust = autoadjust;
 
-	TextMod = sizemod;
+	TextMod = textsize;
 	RelaTivedTextMod = ResolutionScaling::ScaleTextSize(TextMod);
 
 	if(AutoAdjust)
 		 SizeAdjust();
 
-	if(autofetch > -1){
-		AutoFetch = true;
-		StartMonitoring(autofetch, false);
+	if(autofetchid > -1){
+		// set mode //
+		AutoFetch = TEXTLABEL_AUTOFETCH_MODE_ID;
+		// start monitoring //
+		StartMonitoring(autofetchid, false);
+
+	} else if (autofetchname.size() > 0){
+		// name //
+		AutoFetch = TEXTLABEL_AUTOFETCH_MODE_NAME;
+		StartMonitoring(-1, true, autofetchname);
 	}
 	// register //
-	this->RegisterForEvent(EVENT_TYPE_HIDE);
-	this->RegisterForEvent(EVENT_TYPE_SHOW);
+	RegisterForEvent(EVENT_TYPE_HIDE);
+	RegisterForEvent(EVENT_TYPE_SHOW);
 
 	return true;
 }
-void TextLabel::Release(Graphics* graph){
+void Leviathan::Gui::TextLabel::Release(){
 	// send close message //
+
 	// set bridge to die
 	if(RBridge.get() != NULL)
 		(*RBridge).WantsToClose = TRUE;
 	RBridge.reset();
 
-	// this shouldn't be required anymore with StopMonitoring //
-	//this->UnRegister(EVENT_TYPE_ALL, true);
+	// don't listen to anything anymore //
 	StopMonitoring(-1, L"", true);
 }
 // ------------------------------------ //
-void TextLabel::Render(Graphics* graph){
+void Leviathan::Gui::TextLabel::Render(Graphics* graph){
 	NoNUpdatedFrames++;
 	if((!ValuesUpdated) && (!Updated) && (OldHidden == Hidden) && (NoNUpdatedFrames < GUI_RENDERABLE_FORCEUPDATE_EVERY_N_FRAMES))
 		return;
+
 	Updated = false;
 
 	NoNUpdatedFrames = 0;
 
-	//// calculate relative values for use when not in absolute pos mode //
-	//CalculateRelativePositions();
-
-
-
 	// check bridge creation //
 	if(!BridgeCreated){
-		BridgeCreated = true;
-
-		RenderBridge* temppp = NULL;
-		temppp = new RenderBridge(this->ID, this->Hidden, this->Zorder);
-
-		RBridge = shared_ptr<RenderBridge>(temppp);
+		// create rendering bridge for communicating with renderer //
+		RBridge = shared_ptr<RenderBridge>(new RenderBridge(this->ID, this->Hidden, this->Zorder));
 
 		// submit //
 		graph->SubmitRenderBridge(RBridge); // this hopefully copies the bridge and maintains the second copy
+		// this won't have to be created again //
+		RBridge->DrawActions.push_back(new ColorQuadRendBlob(1,0, Int2(X,Y), Colour1, Colour2, Width, Height, 
+			COLOR_QUAD_COLOR_STYLE_LEFT_TOP_RIGHT_BOTTOM, false));
 
-		// create quad render action //
-		//if(AreAbsolutePos){
-			(*RBridge).DrawActions.push_back(new ColorQuadRendBlob(1,0, Int2(X,Y), Colour1, Colour2, Width, Height, 
-				COLOR_QUAD_COLOR_STYLE_LEFT_TOP_RIGHT_BOTTOM, false));
-		//} else {
-		//	(*RBridge).DrawActions.push_back(new ColorQuadRendBlob(1,0, Int2(RelativedX,RelativedY), Colour1, Colour2, RelativedWidth, RelativedHeight,
-		//		COLOR_QUAD_COLOR_STYLE_LEFT_TOP_RIGHT_BOTTOM, AreAbsolutePos));
-		//}
+		// created //
+		BridgeCreated = true;
 	}
+
 	// send text create if not created //
 	if(!TextCreated){
-		TextCreated = true;
+		
 		// create text rendering part into bridge //
-		//if(AreAbsolutePos){
-			(*RBridge).DrawActions.push_back(new BasicTextRendBlob(5,1, Int2(X+TextPadding, Y+TextPaddingY), TextColour, TextMod, LText, 
-				false, Font));
-		//} else {
-		//	//(*RBridge).DrawActions.push_back(new BasicTextRendBlob(5,1, Int2(RelativedX+RelativedPadding,RelativedY+RelativedYPadding), TextColour,
-		//	//	TextMod, LText, AreAbsolutePos, Font));
-		//	(*RBridge).DrawActions.push_back(new BasicTextRendBlob(5,1, Int2(RelativedX+RelativedPadding,RelativedY+RelativedYPadding), TextColour,
-		//		RelaTivedTextMod, LText, AreAbsolutePos, Font));
+		RBridge->DrawActions.push_back(new BasicTextRendBlob(5,1, Int2(X+TextPadding, Y+TextPaddingY), TextColour, TextMod, LText, false, Font));
 
-
-		//}
-		//graph->SubmitAction(new RenderAction(RENDERACTION_TEXT, NULL, NULL, L"", RENDERACTION_CREATE, this->ID, this->TextID, /* estimate max length */new int(LText.size()*1.5f)));
+		// created //
+		TextCreated = true;
 	}
 
 	if(ValuesUpdated){
@@ -192,116 +160,82 @@ void TextLabel::Render(Graphics* graph){
 			LText = wvalue;
 		}
 
+		// call script (if right listeners exist) //
+
+
 		_PopUdated();
 
 		if(AutoAdjust){
 			SizeAdjust();
-			//CalculateRelativePositions();
 		}
 	}
 
 	// send messages //
 	if((Hidden) && (!OldHidden)){
 		OldHidden = true;
-		// send hide messages //
-		//graph->SubmitAction(new RenderAction(RENDERACTION_HIDDEN, NULL, NULL, L"", 0, this->ID, 0, NULL));
-		//if(!TextHidden){
 
-		//	graph->SubmitAction(new RenderAction(RENDERACTION_TEXT, NULL, NULL, L"", RENDERACTION_HIDDEN, this->ID, this->TextID, new int(1)));
-		//	TextHidden = true;
-		//}
-		(*RBridge).Hidden = true;
-		// these two aren't even required //
-		(*RBridge).SetHidden(0, true);
-		(*RBridge).SetHidden(1, true);
+		_SetHiddenStates(true);
 
-		return;
 	} else if ((!Hidden) && (OldHidden)){
 		OldHidden = false;
 
-		//// text //
-		//if(TextHidden){
-
-		//	graph->SubmitAction(new RenderAction(RENDERACTION_TEXT, NULL, NULL, L"", RENDERACTION_SHOW, this->ID, this->TextID, new int(0)));
-		//	TextHidden = false;
-		//}
-		(*RBridge).Hidden = false;
-		// these two aren't even required //
-		(*RBridge).SetHidden(0, false);
-		(*RBridge).SetHidden(1, false);
+		_SetHiddenStates(false);
 	}
-	//vector<Float4>* colors = new vector<Float4>();
-	//vector<float>* points = new vector<float>();
 
 	// base //
 	if(!Hidden){
-		// update this Zorder //
-		(*RBridge).ZVal = this->Zorder;
+		// update this ZOrder //
+		RBridge->ZVal = this->Zorder;
 
 		// update it //
-		ColorQuadRendBlob* tempuptr;
-		int Index = (*RBridge).GetSlotIndex(0);
+		int Index = RBridge->GetSlotIndex(0);
 		if(Index < 0){
 			BridgeCreated = false;
-		}
-		tempuptr = reinterpret_cast<ColorQuadRendBlob*>((*RBridge).DrawActions[Index]);
+		} else {
+			// cast object //
+			ColorQuadRendBlob* tempuptr = reinterpret_cast<ColorQuadRendBlob*>(RBridge->DrawActions[Index]);
 
-		//if(AreAbsolutePos){
+			if(tempuptr == NULL){
+				// cast failed //
+				DEBUG_BREAK;
+				// this really should never happen //
+				assert(0);
+			}
+			// update object //
 			tempuptr->Update(1, Int2(X,Y), Colour1, Colour2, Width, Height, COLOR_QUAD_COLOR_STYLE_LEFT_TOP_RIGHT_BOTTOM, false);
-		//} else {
-		//	tempuptr->Update(1, Int2(RelativedX,RelativedY), Colour1, Colour2, RelativedWidth, RelativedHeight, 
-		//		COLOR_QUAD_COLOR_STYLE_LEFT_TOP_RIGHT_BOTTOM, AreAbsolutePos);
-		//}
-
-//int relativez, Int2 &xypos, Float4 &color, Float4 &color2, int width, int height, int colortranstype, bool absolute = false
-		//colors->push_back(Colour1);
-		//colors->push_back(Colour2);
-		//points->push_back(X);
-		//points->push_back(Y);
-		//points->push_back(Width);
-		//points->push_back(Height);
-		//graph->SubmitAction(new RenderAction(RENDERACTION_SQUARE, points, colors, L"", 0, this->ID, 0, NULL));
+		}
 	}
+	// text updating //
 	if(!TextHidden){
 		// update it //
-		BasicTextRendBlob* tempuptr;
 		int Index = (*RBridge).GetSlotIndex(1);
 		if(Index < 0){
 			TextCreated = false;
-		}
-		tempuptr = reinterpret_cast<BasicTextRendBlob*>((*RBridge).DrawActions[Index]);
+		} else {
+			// cast //
+			BasicTextRendBlob* tempuptr = reinterpret_cast<BasicTextRendBlob*>(RBridge->DrawActions[Index]);
 
-		//if(AreAbsolutePos){
+			if(tempuptr == NULL){
+				// cast failed //
+				DEBUG_BREAK;
+				// this really should never happen //
+				assert(0);
+			}
+
+			// updating //
 			tempuptr->Update(5, Int2(X+TextPadding,Y+TextPaddingY), TextColour, TextMod, LText, false, Font);
-		//} else {
-		//	//tempuptr->Update(5, Int2(RelativedX+RelativedPadding,RelativedY+RelativedYPadding), TextColour, TextMod, LText, AreAbsolutePos, Font);
-		//	tempuptr->Update(5, Int2(RelativedX+RelativedPadding,RelativedY+RelativedYPadding), TextColour, RelaTivedTextMod, LText, AreAbsolutePos, Font);
-		//}
-//int relativez, Int2 &xypos, Float4 &color, float sizemod, wstring text, bool absolute = false, wstring font = L"Arial"
-		// update text //
-		//colors = new vector<Float4>();
-		//points = new vector<float>();
-
-		//colors->push_back(TextColour);
-		//points->push_back(X+TextPadding);
-		//points->push_back(Y+TextPaddingY);
-		//// size
-		//points->push_back(TextMod);
-
-		//graph->SubmitAction(new RenderAction(RENDERACTION_TEXT, points, colors, LText, RENDERACTION_UPDATE, this->ID, this->TextID, NULL, Font));
+		}
 	}
-
-	//graph->SubmitAction(new RenderAction(RENDERACTION_HIDDEN, vector<float>(), vector<Float4>(), L"", 0, this->ID, 1));
 }
 // ------------------------------------ //
-void TextLabel::UpdateColours(Float4 color1, Float4 color2, Float4 textcolor){
+DLLEXPORT void Leviathan::Gui::TextLabel::UpdateColours(const Float4 &color1, const Float4 &color2, const Float4 &textcolor){
 	Updated = true;
 	TextColour = textcolor;
 	Colour1 = color1;
 	Colour2 = color2;
-
 }
-void TextLabel::Update(int xpos, int ypos, int width, int height, bool autoadjust, wstring text){
+
+DLLEXPORT void Leviathan::Gui::TextLabel::Update(int xpos, int ypos, int width /*= -1*/, int height /*= -1*/, bool autoadjust /*= true */, const wstring &text /*= L""*/){
 	if(xpos != VAL_NOUPDATE){
 		Updated = true;
 		X = xpos;
@@ -326,15 +260,12 @@ void TextLabel::Update(int xpos, int ypos, int width, int height, bool autoadjus
 	if(AutoAdjust)
 		SizeAdjust();
 }
-void TextLabel::SetHiddenState(bool hidden){
+void Leviathan::Gui::TextLabel::SetHiddenState(bool hidden){
 	Updated = true;
 	this->Hidden = hidden;
 }
 // ------------------------------------ //
-
-
-// ------------------------------------ //
-void TextLabel::SizeAdjust(){
+void Leviathan::Gui::TextLabel::SizeAdjust(){
 
 	// get text length //
 	int textlength = -1;
@@ -350,185 +281,113 @@ void TextLabel::SizeAdjust(){
 	Height = TextPaddingY*2+GuiManager::Get()->GetGraph()->GetTextRenderHeight(Font, TextMod, false);
 
 }
-//void TextLabel::SizeAdjust(){
-//	// calculate paddings //
-//	if(!AreAbsolutePos){
-//		RelativedPadding = ResolutionScaling::ScaleAbsoluteXToFactor(TextPadding);
-//		RelativedYPadding = ResolutionScaling::ScaleAbsoluteYToFactor(TextPaddingY);
-//	}
-//
-//	// get text length //
-//	int textlength = -1;
-//	if(AreAbsolutePos){
-//		textlength = GuiManager::Get()->GetGraph()->CountTextRenderLength(LText, Font, TextMod, AreAbsolutePos);
-//	} else {
-//		textlength = GuiManager::Get()->GetGraph()->CountTextRenderLength(LText, Font, RelaTivedTextMod, AreAbsolutePos);
-//	}
-//
-//	// count new size //
-//
-//	if(AreAbsolutePos){
-//		Width = TextPadding*2+textlength;
-//	} else {
-//		Width = RelativedPadding*2+textlength;
-//	}
-//	if(AreAbsolutePos){
-//		Height = TextPaddingY*2+GuiManager::Get()->GetGraph()->GetTextRenderHeight(Font, TextMod, AreAbsolutePos);
-//	} else {
-//		Height = RelativedYPadding*2+GuiManager::Get()->GetGraph()->GetTextRenderHeight(Font, RelaTivedTextMod, AreAbsolutePos);
-//	}
-//	CalculateRelativePositions();
-//}
-
  // ------------------------------------ //
-int TextLabel::AnimationTime(int mspassed){
-	if(Queue.size() == 0)
+int Leviathan::Gui::TextLabel::AnimationTime(int mspassed){
+	if(AnimationQueue.size() == 0)
 		return 0;
 	bool contaction = false;
 
-	for(unsigned int i = 0; i < Queue.size(); i++){
-		contaction = Queue[i]->AllowSimultanous;
+	for(size_t i = 0; i < AnimationQueue.size(); i++){
+		contaction = AnimationQueue[i]->AllowSimultanous;
 
-		if(Queue[i]->Type == GUI_ANIMATION_HIDE){
+		if(AnimationQueue[i]->Type == GUI_ANIMATION_HIDE){
 			this->Hidden = true;
 			Updated = true;
 
-			delete Queue[i];
-			Queue.erase(Queue.begin()+i);
+			AnimationQueue.erase(AnimationQueue.begin()+i);
 			i--;
 			break;
 		}
-		if(Queue[i]->Type == GUI_ANIMATION_SHOW){
+		if(AnimationQueue[i]->Type == GUI_ANIMATION_SHOW){
 			this->Hidden = false;
 			Updated = true;
 
-			delete Queue[i];
-			Queue.erase(Queue.begin()+i);
+			AnimationQueue.erase(AnimationQueue.begin()+i);
 			i--;
 			break;
 		}
 
-		if(GuiManager::Get()->HandleAnimation(Queue[i], this, mspassed) == 1){
+		if(GuiManager::Get()->HandleAnimation(AnimationQueue[i].get(), this, mspassed) == 1){
 			// event completed //
 			
-			delete Queue[i];
-			Queue.erase(Queue.begin()+i);
+			AnimationQueue.erase(AnimationQueue.begin()+i);
 			i--;
 		}
 
 		if(!contaction) // break if simultaneous flag is not set
 			break;
-
 	}
 
-	if(Queue.size() == 0){
+	if(AnimationQueue.size() == 0){
 		AnimationFinish();
 	}
 
 	return 0;
-	//return GuiManager::Get()->HandleAnimation(NULL, this, mspassed);
 }
 
-void TextLabel::AnimationFinish(){
-
+void Leviathan::Gui::TextLabel::AnimationFinish(){
+	// call script event if script wants to receive //
 }
-void TextLabel::QueueAction(AnimationAction* act){
-	Queue.push_back(act);
-}
-//void TextLabel::QueueActionForObject(TextLabel* object, AnimationAction* action){
-//	object->Queue.push_back(action);
-//}
 // ------------------------------------ //
-int TextLabel::OnEvent(Event** pEvent){
+int Leviathan::Gui::TextLabel::OnEvent(Event** pEvent){
 	// figure what to do based on type
 	switch((*pEvent)->Type){
 	case EVENT_TYPE_HIDE:
 		{
 			// run specific script if found //
-			if(Scripting->Script != NULL){
-				if(Scripting->Script->Instructions.size() < 1)
-					return 0;
-					// test some stuff //
-					//ScriptArguement* arg1 = new ScriptArguement(new WstringBlock(L"25"), DATABLOCK_TYPE_WSTRING, true);
-					//wstring lolly = *(wstring*)(*arg1);
+			if(Scripting->Script == NULL)
+				return 0;
 
-				vector<ScriptNamedArguement*> Params;
-				Params.push_back(new ScriptNamedArguement(L"Source", new IntBlock((*(Int2*)(*pEvent)->Data)[0]), DATABLOCK_TYPE_INT, false, true));
-				Params.push_back(new ScriptNamedArguement(L"InstanceID", new IntBlock(this->ID), DATABLOCK_TYPE_INT, false, true)); // OLD:needs to be false to prevent deleting THIS! object
+			if(Scripting->Script->Instructions.size() < 1)
+				return 0;
 
-				shared_ptr<ScriptArguement> returned = shared_ptr<ScriptArguement>(ScriptInterface::Get()->ExecuteIfExistsScript(Scripting, L"OnHide", Params, GetCallerForObjectType(this), false));
-				// delete parameters //
-				while(Params.size() != 0){
-					SAFE_DELETE(Params[0]); // this should not have been deleted by the scripting engine //
-					Params.erase(Params.begin());
-				}
+			vector<shared_ptr<ScriptNamedArguement>> Params;
+			Params.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"Source", new IntBlock((*(Int2*)(*pEvent)->Data)[0]), 
+				DATABLOCK_TYPE_INT, false, true)));
+			Params.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"InstanceID", new IntBlock(this->ID),
+				DATABLOCK_TYPE_INT, false, true)));
 
-				// check did it exist //
-				int Value = (int)(*returned.get());
-				if(Value == 80000802){
-					// script didn't exist //
-					return 0;
-				}
+			bool existed = false;
+			shared_ptr<ScriptArguement> returned = ScriptInterface::Get()->ExecuteIfExistsScript(Scripting.get(), L"OnHide", Params, existed, false);
 
-				return Value;
-				//Gui_QueueAnimationActionMove(this->ID, 5,0, GUI_ANIMATION_TYPEMOVE_PRIORITY_X, 1.6f);
-				//Gui_QueueAnimationActionVisibility(this->ID, false);
-
-				//return 1;
-			} else {
+			// check did it exist //
+			if(!existed){
+				// script didn't exist //
 				return 0;
 			}
-
-			//Queue.push_back(new AnimationAction(GUI_ANIMATION_MOVE, new GuiAnimationTypeMove(10, 2,GUI_ANIMATION_TYPEMOVE_PRIORITY_Y, 0.1f), 0, false));
-			//Queue.push_back(new AnimationAction(GUI_ANIMATION_HIDE, NULL, 0, false));
+			// script's exit value //
+			int Value(*(int*)(*returned.get()));
+			return Value;
 		}
 	break;
 	case EVENT_TYPE_SHOW:
 		{
 			// run specific script if found //
-			if(Scripting->Script != NULL){
-				if(Scripting->Script->Instructions.size() < 1)
-					return 0;
-					// test some stuff //
-					//ScriptArguement* arg1 = new ScriptArguement(new WstringBlock(L"25"), DATABLOCK_TYPE_WSTRING, true);
-					//wstring lolly = *(wstring*)(*arg1);
+			if(Scripting->Script == NULL)
+				return 0;
 
-				vector<ScriptNamedArguement*> Params;
-				Params.push_back(new ScriptNamedArguement(L"Source", new IntBlock((*(Int2*)(*pEvent)->Data)[0]), DATABLOCK_TYPE_INT, false, true));
-				Params.push_back(new ScriptNamedArguement(L"InstanceID", new IntBlock(this->ID), DATABLOCK_TYPE_INT, false, true)); // OLD:needs to be false to prevent deleting THIS! object
+			if(Scripting->Script->Instructions.size() < 1)
+				return 0;
 
-				shared_ptr<ScriptArguement> returned = shared_ptr<ScriptArguement>(ScriptInterface::Get()->ExecuteIfExistsScript(Scripting, L"OnShow",
-					Params, GetCallerForObjectType(this), false));
-				// delete parameters //
-				while(Params.size() != 0){
-					SAFE_DELETE(Params[0]); // this should not have been deleted by the scripting engine //
-					Params.erase(Params.begin());
-				}
+			vector<shared_ptr<ScriptNamedArguement>> Params;
+			Params.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"Source", new IntBlock((*(Int2*)(*pEvent)->Data)[0]), 
+				DATABLOCK_TYPE_INT, false, true)));
+			Params.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"InstanceID", new IntBlock(this->ID),
+				DATABLOCK_TYPE_INT, false, true)));
 
-				// check did it exist //
-				int Value = (int)(*returned.get());
-				if(Value == 80000802){
-					// script didn't exist //
-					return 0;
-				}
+			bool existed = false;
+			shared_ptr<ScriptArguement> returned = ScriptInterface::Get()->ExecuteIfExistsScript(Scripting.get(), L"OnShow", Params, existed, false);
 
-				return Value;
-				//Gui_QueueAnimationActionVisibility(this->ID, true);
-				//Gui_QueueAnimationActionMove(this->ID, 150,200, GUI_ANIMATION_TYPEMOVE_PRIORITY_Y, 1.6f);
-
-				//return 1;
-			} else {
+			// check did it exist //
+			if(!existed){
+				// script didn't exist //
 				return 0;
 			}
-
-			// add nice animation //
-			//Queue.push_back(new AnimationAction(GUI_ANIMATION_MOVE, new GuiAnimationTypeMove(10, 2,GUI_ANIMATION_TYPEMOVE_PRIORITY_Y, 0.1f), 0, false));
-			//Queue.push_back(new AnimationAction(GUI_ANIMATION_HIDE, NULL, 0, false));
-
-			//return 1;
+			// script's exit value //
+			int Value(*(int*)(*returned.get()));
+			return Value;
 		}
 	break;
-
 	}
 
 	// not used request unregistration
@@ -536,10 +395,8 @@ int TextLabel::OnEvent(Event** pEvent){
 }
 
 // ------------------------------------ //
-
-
-void TextLabel::SetValue(int semanticid, float val){
-
+DLLEXPORT void Leviathan::Gui::TextLabel::SetValue(const int &semanticid, const float &val){
+	// switch to right value //
 	switch(semanticid){
 	case GUI_ANIMATEABLE_SEMANTIC_X:
 		{
@@ -562,48 +419,33 @@ void TextLabel::SetValue(int semanticid, float val){
 		}
 	break;
 	}
+	// data has been updated //
 	Updated = true;
-
-	return;
 }
-float TextLabel::GetValue(int semanticid){
+
+DLLEXPORT float Leviathan::Gui::TextLabel::GetValue(const int &semanticid) const{
+	// return semantic data (inverse of SetValue) //
 	switch(semanticid){
-	case GUI_ANIMATEABLE_SEMANTIC_X:
-		{
-			return (float)this->X;
-		}
-	break;
-	case GUI_ANIMATEABLE_SEMANTIC_Y:
-		{
-			return (float)this->Y;
-		}
-	break;
-	case GUI_ANIMATEABLE_SEMANTIC_WIDTH:
-		{
-			return (float)this->Width;
-		}
-	break;
-	case GUI_ANIMATEABLE_SEMANTIC_HEIGHT:
-		{
-			return (float)this->Height;
-		}
-	break;
+	case GUI_ANIMATEABLE_SEMANTIC_X:		return (float)this->X;
+	case GUI_ANIMATEABLE_SEMANTIC_Y:		return (float)this->Y;
+	case GUI_ANIMATEABLE_SEMANTIC_WIDTH:	return (float)this->Width;
+	case GUI_ANIMATEABLE_SEMANTIC_HEIGHT:	return (float)this->Height;
 	}
+
 	return -1.0f;
 }
-
-
 // ------------------------------------ //
-//ScriptCaller* TextLabel::GetCallerForObjectType(TextLabel* customize){
-//	if(StaticCall == NULL){
-//		// generate new //
-//		StaticCall = new ScriptCaller();
-//		// push specific functions //
-//		//StaticCall->RegisterFunction(L"TextLabel::SetText", SetText);
-//	}
-//	// customize certain functions //
-//	return StaticCall;
-//}
+void Leviathan::Gui::TextLabel::_SetHiddenStates(bool states){
+	// set whole bridge as hidden //
+	RBridge->Hidden = states;
+	// these two aren't even required //
+	RBridge->SetHidden(0, states);
+	RBridge->SetHidden(1, states);
+}
+
+DLLEXPORT void Leviathan::Gui::TextLabel::QueueAction(shared_ptr<AnimationAction> act){
+	AnimationQueue.push_back(act);
+}
 
 //void TextLabel::CalculateRelativePositions(){
 //	if(!AreAbsolutePos){

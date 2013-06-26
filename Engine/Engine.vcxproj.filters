@@ -13,9 +13,6 @@
     <Filter Include="core">
       <UniqueIdentifier>{e8e912b5-babd-4dc1-943f-0d3cadf4b81c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Geometry">
-      <UniqueIdentifier>{27e665f8-6355-4df7-9b6b-ae8025b60698}</UniqueIdentifier>
-    </Filter>
     <Filter Include="events">
       <UniqueIdentifier>{24a4c627-3f91-4c67-9d24-69d79ba5c5db}</UniqueIdentifier>
     </Filter>

@@ -5,18 +5,14 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-BaseGuiObject::BaseGuiObject(){
+BaseGuiObject::BaseGuiObject() : Scripting(NULL){
 	Objecttype = -1;
 	HigherLevel = false;
 	ObjectLevel = GUI_OBJECT_LEVEL_BASE;
-	Scripting = NULL;
-	StaticCall = NULL;
 }
 BaseGuiObject::~BaseGuiObject(){
-	//SAFE_DELETE(StaticCall);
-}
 
-ScriptCaller* BaseGuiObject::StaticCall = NULL;
+}
 // ------------------------------------ //
 int BaseGuiObject::CompareType(int compare){
 	if(compare==this->Objecttype)
@@ -26,16 +22,7 @@ int BaseGuiObject::CompareType(int compare){
 	return -1;
 }
 // ------------------------------------ //
-ScriptCaller* BaseGuiObject::GetCallerForObjectType(BaseGuiObject* customize){
-	if(StaticCall == NULL){
-		// generate new //
-		StaticCall = new ScriptCaller();
-		// push specific functions //
 
-	}
-	// customize certain functions //
-	return StaticCall;
-}
 // ------------------------------------ //
 
 // ------------------------------------ //

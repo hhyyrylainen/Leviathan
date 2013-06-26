@@ -7,17 +7,24 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "CallableObject.h"
+#include "KeyPressManager.h"
 
-namespace Leviathan{ namespace Gui{
+namespace Leviathan{ 
+	class GuiManager;
+namespace Gui{
 
-	class KeyListener : public CallableObject{
+	
+
+	class KeyListener : public InputReceiver{
 	public:
-		DLLEXPORT KeyListener::KeyListener();
+		DLLEXPORT KeyListener::KeyListener(GuiManager* owner, KeyPressManager* eventsource);
 		DLLEXPORT KeyListener::~KeyListener();
 
-		DLLEXPORT void OnEvent(Event** pEvent);
+		DLLEXPORT virtual bool OnEvent(InputEvent** pEvent, InputReceiver* pending);
 
 	private:
+		GuiManager* Master;
+		KeyPressManager* KeySource;
 
 	};
 

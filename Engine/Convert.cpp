@@ -163,5 +163,5 @@ int Convert::WstringTypeNameCheck(const wstring& data){
 	if(Misc::WstringCompareInsensitive(data, L"void")){
 		return 5;
 	}
-	return 007;
+	return -1;
 }

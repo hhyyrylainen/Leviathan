@@ -398,6 +398,22 @@ DLLEXPORT bool Leviathan::WstringIterator::IsOutOfBounds(unsigned long pos){
 	return false;
 }
 
+DLLEXPORT bool Leviathan::WstringIterator::IsOutOfBounds(){
+	if(IsPtrUsed){
+		if(Data == NULL){
+			throw ExceptionNULLPtr(L"Text pointer is invalid (while checking IsOutOfBounds)", 0, __WFUNCTION__, (void*)Data);
+		}
+		if(IteratorPosition >= Data->size()){
+			return true;
+		}
+	} else {
+		if(IteratorPosition >= ConstData.size()){
+			return true;
+		}
+	}
+	return false;
+}
+
 DLLEXPORT unsigned int Leviathan::WstringIterator::GetWstringLength(){
 	// switch on wstring type
 	if(IsPtrUsed){
@@ -431,6 +447,18 @@ DLLEXPORT wchar_t Leviathan::WstringIterator::GetCharacterAtPos(size_t pos){
 	} else {
 
 		return this->ConstData[pos];
+	}
+}
+
+DLLEXPORT bool Leviathan::WstringIterator::MoveToNext(){
+	IteratorPosition++;
+	// return true if it is still valid //
+	if(IsPtrUsed){
+
+		return Data->size() > IteratorPosition;
+	} else {
+
+		return ConstData.size() > IteratorPosition;
 	}
 }
 
@@ -647,9 +675,18 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIter
 		if(((charvalue >= 32) && (charvalue <= 57)) || ((charvalue >= 63) && (charvalue <= 90)) || ((charvalue >= 96) && (charvalue <= 122))){
 			// is just a ascii char with some text characters included //
 
-			IsValid = true;
+			if(stoptype == UNNORMALCHARACTER_TYPE_NON_NAMEVALID_WITHWHITESPACE){
+
+				if((charvalue >= 48 && charvalue <= 57) || (charvalue >= 64 && charvalue <= 90) || (charvalue >= 97 && charvalue <= 122)){
+					IsValid = true;
+				}
+
+			} else {
+				IsValid = true;
+			}
+			
 		} else {
-			if(stoptype != UNNORMALCHARACTER_TYPE_NON_ASCII){
+			if((stoptype != UNNORMALCHARACTER_TYPE_NON_ASCII)){
 				// we can check if it allows some other characters //
 				if(stoptype == UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS){
 					// skip if this character is to be ignored //
@@ -663,6 +700,12 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIter
 							// is still valid! //
 							IsValid = true;
 						}
+					}
+				} else if (stoptype == UNNORMALCHARACTER_TYPE_NON_NAMEVALID_WITHWHITESPACE){
+					// check for whitespace //
+					if(charvalue >= 2 && charvalue <= 32){
+
+						IsValid = true;
 					}
 				}
 			}

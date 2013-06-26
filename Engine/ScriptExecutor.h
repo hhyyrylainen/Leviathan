@@ -25,17 +25,53 @@
 #define SCRIPT_LINETYPE_CONTROLLSTRUCT	5
 
 namespace Leviathan{
-	struct ScriptModule{
-		ScriptModule();
+
+	// used to store function's parameter info //
+	struct FunctionParameterInfo{
+		FunctionParameterInfo(int id, int sizes) : FunctionID(id), ParameterTypeIDS(sizes), ParameterDeclarations(sizes), 
+			MatchingDataBlockTypes(sizes){};
+
+
+		int FunctionID;
+
+		vector<asUINT> ParameterTypeIDS;
+		vector<string> ParameterDeclarations;
+		vector<int> MatchingDataBlockTypes;
+
+
+		asUINT ReturnTypeID;
+		string ReturnTypeDeclaration;
+		int ReturnMatchingDataBlock;
+
+
+	};
+
+
+	class ScriptModule{
+	public:
+		ScriptModule(const wstring &name, int id, const wstring &scriptname);
 		~ScriptModule();
-		ScriptModule(wstring name, int id);
+
+		FunctionParameterInfo* GetParamInfoForFunction(asIScriptFunction* func); 
+		asIScriptModule* GetModule(asIScriptEngine* engine);
 
 	private:
 		static int LatestAssigned;
+		 // map of type name and engine type id //
+		static map<int, string> EngineTypeIDS;
 	public:
 		wstring Name;
+		string ModuleName;
 		int ID;
 		int ModuleID;
+
+
+		asIScriptModule* Module;
+
+		vector<FunctionParameterInfo*> FuncParameterInfos;
+
+	private:
+		void FillData(int typeofas, asUINT* paramtypeid, string* paramdecl, int* datablocktype);
 	};
 
 	class ScriptExecutor : public EngineComponent{
@@ -43,52 +79,40 @@ namespace Leviathan{
 		DLLEXPORT ScriptExecutor::ScriptExecutor();
 		DLLEXPORT ScriptExecutor::~ScriptExecutor();
 
-
 		DLLEXPORT bool Init();
 		DLLEXPORT bool Release();
 
-		DLLEXPORT shared_ptr<ScriptArguement> RunScript(ScriptScript* script, vector<ScriptCaller*> callers, vector<shared_ptr<ScriptVariableHolder>> gvalues, vector<ScriptNamedArguement*> parameters, bool printerrors, wstring entrance,
-			bool ErrorIfdoesnt = true, bool fulldecl = false, int runtype = SCRIPT_EXECUTOR_RUNTYPE_BREAKONERROR);
-		DLLEXPORT shared_ptr<ScriptArguement> RunScript(ScriptScript* script, ScriptCaller* caller, shared_ptr<ScriptVariableHolder> gvalues, ScriptNamedArguement* parameter, bool printerrors, wstring entrance,
-			bool ErrorIfdoesnt = true, bool fulldecl = false, int runtype = SCRIPT_EXECUTOR_RUNTYPE_BREAKONERROR);
+		// script running commands //
+		DLLEXPORT shared_ptr<ScriptArguement> RunScript(ScriptScript* script, vector<shared_ptr<ScriptNamedArguement>> parameters, bool printerrors, 
+			const wstring &entrance, bool &existsreceiver, bool ErrorIfdoesnt = true, bool fulldecl = false, int runtype = SCRIPT_EXECUTOR_RUNTYPE_BREAKONERROR);
 
-		DLLEXPORT shared_ptr<ScriptArguement> RunSetUp(wstring entrance, bool fulldecl = false, bool ErrorIfdoesnt = true);
+		DLLEXPORT shared_ptr<ScriptArguement> RunSetUp(const wstring &entrance, bool &existsreceiver, bool fulldecl = false, bool ErrorIfdoesnt = true);
 
+		// data binding commands //
 		DLLEXPORT void SetScript(ScriptScript* script);
-		DLLEXPORT void SetCallers(vector<ScriptCaller*> callers);
-		DLLEXPORT void SetGlobalValues(vector<shared_ptr<ScriptVariableHolder>> gvalues);
-		DLLEXPORT void SetParameters(vector<ScriptNamedArguement*> parameters);
+		DLLEXPORT void SetParameters(vector<shared_ptr<ScriptNamedArguement>> parameters);
 		DLLEXPORT void SetBehavior(bool printerrors, int runtype = SCRIPT_EXECUTOR_RUNTYPE_BREAKONERROR);
 		DLLEXPORT void Clear();
-
-		DLLEXPORT ScriptNamedArguement* GetVariable(wstring& name);
 	private:
-		shared_ptr<ScriptArguement> RunScript(wstring start, bool fulldecl = false, bool ErrorIfdoesnt = true);
-		//int SearchScript(wstring name);
-		int CallGlobalFunction(wstring name, wstring unparsedargs);
-		asIScriptModule* LoadScript(ScriptScript* script);
+		shared_ptr<ScriptArguement> RunScript(const wstring &start, bool &existsreceiver, bool fulldecl = false, bool ErrorIfdoesnt = true);
+		int CallGlobalFunction(const wstring &name, const wstring &unparsedargs);
 
-		int GetModuleNumber(wstring name, int id = -1);
-		int CreateModule(wstring name, int id);
+		asIScriptModule* LoadScript(ScriptScript* script, ScriptModule** fetchmodule);
 
-
+		ScriptModule* GetModule(const wstring &name, int id = -1);
+		ScriptModule* CreateModule(const wstring &name, int id, ScriptScript* scrpt);
 		// ------------------------------ //
+		// AngelScript engine script executing part //
 		asIScriptEngine *engine;
 		vector<ScriptModule*> Modules;
-
 		// ------------------------------ //
-		vector<ScriptCaller*> Callbacks;
-		vector<shared_ptr<ScriptVariableHolder>> Globals;
-		ScriptVariableHolder* ScriptsValues;
-		//vector<ScriptScript*> RunningScripts;
 		ScriptScript* RunningScripts;
-		vector<ScriptNamedArguement*> Parameters;
+		vector<shared_ptr<ScriptNamedArguement>> Parameters;
+
 
 		vector<ScriptException*> Errors;
 		bool PrintErrors;
 		int RunType;
-
-
 	};
 
 }

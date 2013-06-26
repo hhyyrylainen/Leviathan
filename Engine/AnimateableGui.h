@@ -23,25 +23,17 @@ class GuiAnimateable : public BaseEventable{
 		DLLEXPORT GuiAnimateable::GuiAnimateable();
 		DLLEXPORT virtual GuiAnimateable::~GuiAnimateable();
 
-
-
 		DLLEXPORT virtual int AnimationTime(int mspassed); // this can be passed to animation manager for handling
 
 		DLLEXPORT virtual void AnimationFinish();
-		DLLEXPORT virtual void QueueAction(AnimationAction* act);
+		DLLEXPORT virtual void QueueAction(shared_ptr<AnimationAction> act);
 
 
-		DLLEXPORT virtual void SetValue(int semanticid, float val);
-		DLLEXPORT virtual float GetValue(int semanticid);
+		DLLEXPORT virtual void SetValue(const int &semanticid, const float &val) = 0;
+		DLLEXPORT virtual float GetValue(const int &emanticid) const = 0;
 
 
-		vector<AnimationAction*> Queue;
-
-		// script interface //
-		//DLLEXPORT static void QueueActionForObject(GuiAnimateable* object, AnimationAction* action); // not required //
-	
-
-
+		vector<shared_ptr<AnimationAction>> AnimationQueue;
 	};
 
 }}

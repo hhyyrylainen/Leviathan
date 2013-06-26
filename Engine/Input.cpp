@@ -5,8 +5,9 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "Logger.h"
 #include "Engine.h"
+
+
 Input::Input(){
 
 	//pDirectInput = NULL;
@@ -132,7 +133,7 @@ bool Input::Update(){
 	// read keyboard state //
 	if(!ReadKeyboard()){
 
-		Logger::Get()->Error(L"Input update failed, ReadKeyboard failed", false);
+		Logger::Get()->Error(L"Input: Update: ReadKeyboard failed");
 		return false;
 	}
 	
@@ -159,7 +160,6 @@ bool Input::Update(){
 	return true;
 }
 // ------------------------------------ //
-
 void Input::GetMouseRelativeLocation(int& xpos, int& ypos){
 	xpos = MouseX;
 	ypos = MouseY;
@@ -171,11 +171,11 @@ void Input::SetMouseCapture(bool toset){
 		MouseMoveY = 0;
 	}
 }
-void Input::GetMouseMoveAmount(int& xmove,int& ymove){
+void Input::GetMouseMoveAmount(int& xmove, int& ymove){
 	xmove = MouseMoveX;
 	ymove = MouseMoveY;
 }
-bool Input::GetKeyPressed(int charindex){
+bool Input::GetKeyState(int charindex){
 	if(KeyStates[charindex])
 		return true;
 	return false;
@@ -199,6 +199,12 @@ bool Input::ReadKeyboard(){
 		KeyStates[x] = (char) (GetAsyncKeyState(x) >> 8);
 
 	return true;
+}
+
+DLLEXPORT void Leviathan::Input::ResolutionUpdated(int width, int height){
+	// change internal values //
+	ScreenWidth = width;
+	ScreenHeight = height;
 }
 
 //bool InputClass::IsEscapePressed()

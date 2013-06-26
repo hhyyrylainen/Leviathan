@@ -144,22 +144,11 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 				inlscript->Instructions = L"void Do(int Line){\n"+scriptinstructions+L"\nreturn;\n}";
 				inlscript->Source = L"inline on file: "+file+L" on line: "+Convert::IntToWstring(Line);
 
-				shared_ptr<ScriptVariableHolder> varhold(new ScriptVariableHolder());
-				//varhold->Vars.push_back(new ScriptNamedArguement(L"FileName", new WstringBlock(file), DATABLOCK_TYPE_WSTRING, false, true));
-				//varhold->Vars.push_back(new ScriptNamedArguement(L"Line", new IntBlock(Line), DATABLOCK_TYPE_INT, false, true));
-				vector<shared_ptr<ScriptVariableHolder>> vars;
-				vars.push_back(varhold);
+				vector<shared_ptr<ScriptNamedArguement>> Args;
+				Args.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"FileLine", new IntBlock(Line), DATABLOCK_TYPE_INT, 
+					false, true)));
 
-				vector<ScriptNamedArguement*> Args;
-				Args.push_back(new ScriptNamedArguement(L"FileLine", new IntBlock(Line), DATABLOCK_TYPE_INT, false, true));
-
-				ScriptInterface::Get()->ExecuteScript(inlscript.get(),vars, L"void Do(int Line)", Args, NULL, true);
-
-
-				SAFE_DELETE_VECTOR(Args);
-				// delete allocated memory //
-				vars.clear();
-				varhold.reset();
+				ScriptInterface::Get()->ExecuteScript(inlscript.get(), L"void Do(int Line)", Args, true);
 
 				continue;
 			}

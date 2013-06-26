@@ -7,132 +7,117 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "FileSystem.h"
 
-ScriptInterface::ScriptInterface(){
-	GlobalCaller = NULL;
-	ScriptRunner = NULL;
+Leviathan::ScriptInterface::ScriptInterface() : ScriptRunner(NULL){
+	StaticAccess = this;
 }
-ScriptInterface::~ScriptInterface(){
-
+Leviathan::ScriptInterface::~ScriptInterface(){
+	StaticAccess = NULL;
 }
 
-ScriptInterface* ScriptInterface::staticaccess = NULL;
-ScriptInterface* ScriptInterface::Get(){ return staticaccess; };
+ScriptInterface* Leviathan::ScriptInterface::StaticAccess = NULL;
+ScriptInterface* Leviathan::ScriptInterface::Get(){ return StaticAccess; };
 // ------------------------------------ //
-bool ScriptInterface::Init(){
-	GlobalCaller = new ScriptCaller(true);
+bool Leviathan::ScriptInterface::Init(){
+	// create script executor //
 	ScriptRunner = new ScriptExecutor();
 	if(!ScriptRunner->Init()){
 
-		Logger::Get()->Error(L"ScriptInterface: failed to init script runner",true);
+		Logger::Get()->Error(L"ScriptInterface: Init: ScriptExecutor init failed",true);
 		return false;
 	}
 
-	staticaccess = this;
-
 	return true;
 }
-void ScriptInterface::Release(){
-	SAFE_DELETE(GlobalCaller);
-	SAFE_RELEASEDEL(ScriptRunner);
-
+void Leviathan::ScriptInterface::Release(){
+	// delete managed scripts //
 	while(Managed.size() != 0){
-		// TODO: use script executor to see if on delete exists //
-		SAFE_DELETE(Managed[0]);
-
+		// release //
+		ReleaseScript(0);
 	}
+
+	// send event for scripts shutting down //
+	// TODO: this
+
+	// script runner needs to be released //
+	SAFE_RELEASEDEL(ScriptRunner);
 }
 // ------------------------------------ //
-
-
-
-
-// ------------------------------------ //
-void ScriptInterface::TakeOwnerShip(ScriptObject* obj){
+void Leviathan::ScriptInterface::TakeOwnerShip(ScriptObject* obj){
+	// takes the object as manageable //
 	Managed.push_back(obj);
-} // takes the object as manageable //
-void ScriptInterface::RemoveOwnerShip(ScriptObject* obj, int index){
+}
+
+void Leviathan::ScriptInterface::RemoveOwnerShip(ScriptObject* obj, size_t index){
 	if(index != -1){
 		// TODO: use script executor to see if on delete exists //
 		Managed.erase(Managed.begin()+index);
 		return;
 	}
 	index = SearchScript(L"", obj);
-	ARR_INDEX_CHECK((unsigned int)index, Managed.size()){
+	ARR_INDEX_CHECKINV((unsigned int)index, Managed.size()){
 
-		Logger::Get()->Error(L"ScriptInterface trying to unmanage script with invalid index", index, true);
+		Logger::Get()->Error(L"ScriptInterface: RemoveOwnerShip: found invalid index", index, true);
 		return;
 	}
 	Managed.erase(Managed.begin()+index);
 }
-void ScriptInterface::ReleaseScript(unsigned int index){
-	ARR_INDEX_CHECK(index, Managed.size()){
 
-		Logger::Get()->Error(L"ScriptInterface trying to release script with invalid index", index, true);
+void Leviathan::ScriptInterface::ReleaseScript(size_t index){
+	ARR_INDEX_CHECKINV(index, Managed.size()){
+
+		Logger::Get()->Error(L"ScriptInterface: trying to release script with invalid index", index, true);
 		return;
 	}
 	// TODO: use script executor to see if on delete exists //
 	SAFE_DELETE(Managed[index]);
+	Managed.erase(Managed.begin()+index);
 }
-int ScriptInterface::SearchScript(wstring name, ScriptObject* obj){
+// ------------------------------------ //
+int Leviathan::ScriptInterface::SearchScript(const wstring &name, ScriptObject* obj){
 	if(obj != NULL){
 		// search by pointer 
-		for(unsigned int i = 0; i < Managed.size(); i++){
+		for(size_t i = 0; i < Managed.size(); i++){
 			if(Managed[i] == obj)
 				return i;
 		}
 		return -1;
 	}
-	for(unsigned int i = 0; i < Managed.size(); i++){
-		// TODO: implement search
+	for(size_t i = 0; i < Managed.size(); i++){
+		if(Managed[i]->Name == name)
+			return i;
 	}
 	return -1;
 }
-int ScriptInterface::RunManagedScript(int index){
+int Leviathan::ScriptInterface::RunManagedScript(size_t index){
 	return 0;
 }
+
+
+
 // ------------------------------------ //
-shared_ptr<ScriptArguement> ScriptInterface::ExecuteScript(ScriptObject* obj, wstring entrypoint, vector<ScriptNamedArguement*> Parameters, ScriptCaller* callconv, bool FullDecl){
-
-	vector<ScriptCaller*> callobjs;
-	if(callconv == NULL){
-		callconv = this->GlobalCaller;
-		callobjs.push_back(callconv);
-	} else {
-
-		callobjs.push_back(callconv);
-		callobjs.push_back(GlobalCaller);
-	}
-
-
-	return ScriptRunner->RunScript(obj->Script.get(), callobjs, obj->Varss, Parameters, true, entrypoint, true, FullDecl);
+DLLEXPORT shared_ptr<ScriptArguement> Leviathan::ScriptInterface::ExecuteScript(ScriptScript* obj, const wstring &entrypoint, 
+	vector<shared_ptr<ScriptNamedArguement>> Parameters, bool FullDecl /*= false*/)
+{
+	bool exists = false;
+	// run script //
+	return ScriptRunner->RunScript(obj, Parameters, true, entrypoint, exists, true, FullDecl);
 }
-shared_ptr<ScriptArguement> ScriptInterface::ExecuteScript(ScriptScript* script, vector<shared_ptr<ScriptVariableHolder>> vars, wstring entrypoint, vector<ScriptNamedArguement*> Parameters, ScriptCaller* callconv, bool FullDecl){
-
-	vector<ScriptCaller*> callobjs;
-	if(callconv == NULL){
-		callconv = this->GlobalCaller;
-		callobjs.push_back(callconv);
-	} else {
-
-		callobjs.push_back(callconv);
-		callobjs.push_back(GlobalCaller);
-	}
-	
-
-	return ScriptRunner->RunScript(script, callobjs, vars, Parameters, true, entrypoint, true, FullDecl);
+DLLEXPORT shared_ptr<ScriptArguement> Leviathan::ScriptInterface::ExecuteScript(ScriptObject* obj, const wstring &entrypoint, 
+	vector<shared_ptr<ScriptNamedArguement>> Parameters, bool FullDecl /*= false*/)
+{
+	// run script //
+	return ExecuteScript(obj->Script.get(), entrypoint, Parameters, FullDecl);
 }
 
-shared_ptr<ScriptArguement> ScriptInterface::ExecuteIfExistsScript(shared_ptr<ScriptObject> obj, wstring entrypoint, vector<ScriptNamedArguement*> Parameters, ScriptCaller* callconv, bool FullDecl){
-	vector<ScriptCaller*> callobjs;
-	if(callconv == NULL){
-		callconv = this->GlobalCaller;
-		callobjs.push_back(callconv);
-	} else {
-
-		callobjs.push_back(callconv);
-		callobjs.push_back(GlobalCaller);
-	}
-
-
-	return ScriptRunner->RunScript(obj->Script.get(), callobjs, obj->Varss, Parameters, true, entrypoint, false, FullDecl);
+DLLEXPORT shared_ptr<ScriptArguement> Leviathan::ScriptInterface::ExecuteIfExistsScript(ScriptScript* obj, const wstring &entrypoint, 
+	vector<shared_ptr<ScriptNamedArguement>> Parameters, bool &existreceiver, bool FullDecl /*= false*/)
+{
+	// run script if exists function //
+	return ScriptRunner->RunScript(obj, Parameters, true, entrypoint, existreceiver, false, FullDecl);
+}
+DLLEXPORT shared_ptr<ScriptArguement> Leviathan::ScriptInterface::ExecuteIfExistsScript(ScriptObject* obj, const wstring &entrypoint, 
+	vector<shared_ptr<ScriptNamedArguement>> Parameters, bool &existreceiver, bool FullDecl /*= false*/)
+{
+	// run script if exists function //
+	return ExecuteIfExistsScript(obj->Script.get(), entrypoint, Parameters, existreceiver, FullDecl);
 }

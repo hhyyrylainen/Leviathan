@@ -6,6 +6,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 #include "Logger.h"
+#include "KeyPressManager.h"
 
 ViewerCameraPos::ViewerCameraPos(){
 	FrameTime = 0.0f;
@@ -55,6 +56,16 @@ ViewerCameraPos::ViewerCameraPos(){
 
 	Type = OBJECT_TYPE_FLYING_CAMERA;
 	ID = IDFactory::GetID();
+
+	MainCameraListening = false;
+}
+
+Leviathan::ViewerCameraPos::~ViewerCameraPos(){
+
+	if(MainCameraListening){
+		// needs to stop listening //
+		KeyPressManager::Get()->Unregister((InputReceiver*)this);
+	}
 }
 
 void ViewerCameraPos::SetFrameTime(float frametime){
@@ -213,8 +224,8 @@ void ViewerCameraPos::ClearInputs(){
 
 	xmoved = 0;
 	ymoved = 0;
-
 }
+
 void ViewerCameraPos::UpdatePos(int mspassed){
 	SetFrameTime((float)mspassed/4);
 	if((ymoved != 0) | (xmoved != 0)){
@@ -278,16 +289,6 @@ void ViewerCameraPos::UpdatePos(int mspassed){
 
 		}
 	}
-	//if(Yaw > 360.f){
-	//	Yaw = 0;
-	//} else if(Yaw < 0.0f){
-	//	Yaw = 360.f;
-	//}
-	//if(Pitch > 360.f){
-	//	Pitch = 0;
-	//} else if(Pitch < 0.0f){
-	//	Pitch = 360.f;
-	//}
 
 
 	if(m_SideWays < 0){
@@ -332,25 +333,25 @@ void ViewerCameraPos::ReadInput(Input* input, bool mouse, bool keys){
 
 	if(!keys)
 		return;
-	if(input->GetKeyPressed((int)'A')){
+	if(input->GetKeyState((int)'A')){
 		m_SideWays = -1;
-	} else if(input->GetKeyPressed((int)'D')){
+	} else if(input->GetKeyState((int)'D')){
 		m_SideWays = 1;
 	} else {
 		m_SideWays = 0;
 	}
 
-	if(input->GetKeyPressed((int)'W')){
+	if(input->GetKeyState((int)'W')){
 		m_Forward = 1;
-	} else if(input->GetKeyPressed((int)'S')){
+	} else if(input->GetKeyState((int)'S')){
 		m_Forward = -1;
 	} else {
 		m_Forward = 0;
 	}
 
-	if(input->GetKeyPressed(VK_SPACE)){
+	if(input->GetKeyState(VK_SPACE)){
 		m_Vertical = 1;
-	} else if(input->GetKeyPressed(VK_CONTROL)){
+	} else if(input->GetKeyState(VK_CONTROL)){
 		m_Vertical = -1;
 	} else {
 		m_Vertical = 0;
@@ -624,6 +625,61 @@ void ViewerCameraPos::SetRotation(float yaw, float pitch, float roll, bool smoot
 		RollTarget = roll;
 	}
 }
-// ------------------------------------ //
 
+DLLEXPORT void Leviathan::ViewerCameraPos::OnEvent(Event** pEvent){
+	// update control based on event //
+
+	switch((*pEvent)->GetType()){
+	case EVENT_TYPE_EVENT_SEQUENCE_BEGIN:
+		{
+			// clear all //
+			xmoved = 0;
+			ymoved = 0;
+			m_SideWays = 0;
+			m_Forward = 0;
+			m_Vertical = 0;
+		}
+		return;
+	case EVENT_TYPE_MOUSEMOVED:
+		{
+
+			xmoved = (float)(((Int2*)(*pEvent)->Data))->X;
+			ymoved = (float)(((Int2*)(*pEvent)->Data))->Y;
+			xmoved /= 3.0f;
+			ymoved /= 3.0f;
+		}
+		goto cameraposoneventendreleaseevent;
+	case EVENT_TYPE_KEYDOWN:
+		{
+			// switch on Vkey code //
+
+			int &VKey = *(int*)(*pEvent)->Data;
+			// handle keys //
+			switch(VKey){
+			case (int)L'A': m_SideWays = -1; goto cameraposoneventendreleaseevent;
+			case (int)L'D': m_SideWays = 1; goto cameraposoneventendreleaseevent;
+			case (int)L'W': m_Forward = 1; goto cameraposoneventendreleaseevent;
+			case (int)L'S': m_Forward = -1; goto cameraposoneventendreleaseevent;
+			case VK_SPACE: m_Vertical = 1; goto cameraposoneventendreleaseevent;
+			case VK_CONTROL: m_Vertical = -1; goto cameraposoneventendreleaseevent;
+			}
+		}
+		return;
+	default:
+		return;
+	}
+
+cameraposoneventendreleaseevent:
+	// delete event to indicate that it has been deleted //
+	SAFE_DELETE(*pEvent);
+	return;
+}
 // ------------------------------------ //
+DLLEXPORT void Leviathan::ViewerCameraPos::BecomeMainListeningCamera(){
+	// set as main camera //
+	MainCameraListening = true;
+
+	// start listening //
+	KeyPressManager::Get()->RegisterForEvent((InputReceiver*)this, KEYPRESS_MANAGER_ORDERNUMBER_LAST_CAMERA);
+
+}

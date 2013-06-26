@@ -15,12 +15,6 @@
 
 #include "ScriptExecutor.h"
 
-#define SCRIPT_TYPE_GUI						4000
-
-#define SCRIPT_CALLCONVENTION_GLOBAL		6000
-#define SCRIPT_CALLCONVENTION_GUI_OPEN		6001 // has global caller as well //
-
-
 
 namespace Leviathan{
 
@@ -33,34 +27,34 @@ namespace Leviathan{
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();
 
-		//DLLEXPORT vector<ScriptObject*> ProcessObjectFile(wstring file);
-
 		DLLEXPORT void TakeOwnerShip(ScriptObject* obj); // takes the object as manageable //
-		DLLEXPORT void RemoveOwnerShip(ScriptObject* obj, int index = -1);
-		DLLEXPORT void ReleaseScript(unsigned int index);
-		DLLEXPORT int SearchScript(wstring name, ScriptObject* obj = NULL);
-		DLLEXPORT int RunManagedScript(int index);
+		DLLEXPORT void RemoveOwnerShip(ScriptObject* obj, size_t index = -1);
+		DLLEXPORT void ReleaseScript(size_t index);
+		DLLEXPORT int SearchScript(const wstring &name, ScriptObject* obj = NULL);
+		DLLEXPORT int RunManagedScript(size_t index);
+
+		DLLEXPORT shared_ptr<ScriptArguement> ExecuteScript(ScriptScript* obj, const wstring &entrypoint, 
+			vector<shared_ptr<ScriptNamedArguement>> Parameters, bool FullDecl = false);
+		DLLEXPORT shared_ptr<ScriptArguement> ExecuteIfExistsScript(ScriptScript* obj, const wstring &entrypoint, 
+			vector<shared_ptr<ScriptNamedArguement>> Parameters, bool &existreceiver, bool FullDecl = false);
+		DLLEXPORT shared_ptr<ScriptArguement> ExecuteScript(ScriptObject* obj, const wstring &entrypoint, 
+			vector<shared_ptr<ScriptNamedArguement>> Parameters, bool FullDecl = false);
+		DLLEXPORT shared_ptr<ScriptArguement> ExecuteIfExistsScript(ScriptObject* obj, const wstring &entrypoint, 
+			vector<shared_ptr<ScriptNamedArguement>> Parameters, bool &existreceiver, bool FullDecl = false);
 
 		DLLEXPORT static ScriptInterface* Get();
-
-		DLLEXPORT shared_ptr<ScriptArguement> ExecuteScript(ScriptObject* obj, wstring entrypoint, vector<ScriptNamedArguement*> Parameters, 
-			ScriptCaller* callconv = NULL, bool FullDecl = false);
-		DLLEXPORT shared_ptr<ScriptArguement> ExecuteScript(ScriptScript* script, vector<shared_ptr<ScriptVariableHolder>> vars, wstring entrypoint, vector<ScriptNamedArguement*> Parameters, 
-			ScriptCaller* callconv = NULL, bool FullDecl = false);
-		DLLEXPORT shared_ptr<ScriptArguement> ExecuteIfExistsScript(shared_ptr<ScriptObject> obj, wstring entrypoint, vector<ScriptNamedArguement*> Parameters, ScriptCaller* callconv = NULL, bool FullDecl = false);
-
-
 	private:
-		//ScriptObject* ReadObjectBlock(wifstream &reader, wstring firstline, int BaseType, int Type, int &Line, wstring& sourcefile);
 
-		// -------------------- //
-		static ScriptInterface* staticaccess;
+		// ------------------------------------ //
+
 
 		ScriptExecutor* ScriptRunner;
 
-		ScriptCaller* GlobalCaller;
-
 		vector<ScriptObject*> Managed;
+
+
+		// ------------------------------------ //
+		static ScriptInterface* StaticAccess;
 	};
 
 }

@@ -7,13 +7,13 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "ScriptObject.h"
-#include "ScriptCaller.h"
+
+
 #define GUI_OBJECT_LEVEL_BASE			1
 //#define GUI_OBJECT_LEVEL_AUTOUPDATEABLE	2
 #define GUI_OBJECT_LEVEL_RENDERABLE		3
 #define GUI_OBJECT_LEVEL_EVENTABLE		4
 #define GUI_OBJECT_LEVEL_ANIMATEABLE	5
-
 
 namespace Leviathan{
 
@@ -24,8 +24,6 @@ namespace Leviathan{
 
 		DLLEXPORT int CompareType(int compare);
 
-		DLLEXPORT static ScriptCaller* GetCallerForObjectType(BaseGuiObject* customize);
-
 		int Objecttype;
 		bool HigherLevel;
 		int ObjectLevel;
@@ -33,9 +31,7 @@ namespace Leviathan{
 		int ID;
 
 		shared_ptr<ScriptObject> Scripting;
-		static ScriptCaller* StaticCall;
-
-	private:
+	protected:
 
 	};
 

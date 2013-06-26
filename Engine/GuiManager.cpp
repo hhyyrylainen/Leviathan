@@ -14,31 +14,34 @@ using namespace Leviathan::Gui;
 //#pragma warning (disable : 4800)
 #endif
 
-Leviathan::GuiManager::GuiManager(){
+Leviathan::GuiManager::GuiManager() : ReceivedPresses(){
 	ObjectAmountChanged = false;
 	Foreground = NULL;
 
-	CollectionCall = NULL;
-
-	MainInput = FALSE;
+	MainInput = NULL;
 
 	staticaccess = this;
+	GKeyPressesConsumed = true;
 }
 Leviathan::GuiManager::~GuiManager(){
 	// on quit calls //
-	SAFE_DELETE(CollectionCall);
-	delete MainInput;
+	SAFE_DELETE(MainInput);
 	Release();
+
+	staticaccess = NULL;
 }
 
 GuiManager* Leviathan::GuiManager::staticaccess = NULL;
-GuiManager* Leviathan::GuiManager::Get(){return staticaccess; };
+GuiManager* Leviathan::GuiManager::Get(){
+	return staticaccess; 
+}
 // ------------------------------------ //
 bool Leviathan::GuiManager::Init(AppDef* vars){
 
 	graph = Engine::GetEngine()->GetGraphics();
 	// create press listeners //
-	MainInput = new KeyListener();
+
+	MainInput = new KeyListener(this, Engine::GetEngine()->GetKeyPresManager());
 	
 	// load main Gui file //
 	ExecuteGuiScript(FileSystem::GetScriptsFolder()+L"MainGui.txt");
@@ -48,13 +51,10 @@ bool Leviathan::GuiManager::Init(AppDef* vars){
 	return true;
 }
 
-
-
-
 void Leviathan::GuiManager::Release(){
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		if(Objects[i]->HigherLevel == true){
-			((RenderableGuiObject*)Objects[i])->Release(graph);
+			((RenderableGuiObject*)Objects[i])->Release();
 			delete Objects[i];
 		} else {
 			SAFE_DELETE(Objects[i]);
@@ -66,71 +66,105 @@ void Leviathan::GuiManager::Release(){
 	}
 }
 // ------------------------------------ //
-void Leviathan::GuiManager::GuiTick(int mspassed){
-	// animations are now in OnAnimationTime
+DLLEXPORT void Leviathan::GuiManager::ClearKeyReceivingState(){
+	// reset state //
+	GKeyPressesConsumed = false;
+	// ensure that the vector is empty //
+	ReceivedPresses.clear();
+}
+
+DLLEXPORT void Leviathan::GuiManager::AddKeyPress(int keyval, InputEvent** originalevent){
+	ReceivedPresses.push_back(shared_ptr<GuiReceivedKeyPress>(new GuiReceivedKeyPress(GUI_KEYSTATE_TYPE_KEYPRESS, keyval, originalevent)));
+}
+
+DLLEXPORT void Leviathan::GuiManager::AddKeyDown(int keyval, InputEvent** originalevent){
+	ReceivedPresses.push_back(shared_ptr<GuiReceivedKeyPress>(new GuiReceivedKeyPress(GUI_KEYSTATE_TYPE_KEYDOWN, keyval, originalevent)));
+}
+
+DLLEXPORT bool Leviathan::GuiManager::IsEventConsumed(InputEvent** ev){
+	// check is it still in key presses (if it is it hasn't been consumed) //
+	for(size_t i = 0; i < ReceivedPresses.size(); i++){
+
+		if(*ReceivedPresses[i]->MatchingEvent == *ev){
+			// wasn't consumed, consume now //
+			ReceivedPresses.erase(ReceivedPresses.begin()+i);
+			return false;
+		}
+	}
+	// not found, has been consumed //
+	return true;
+}
+
+DLLEXPORT void Leviathan::GuiManager::SetKeyContainedValuesAsConsumed(const GKey &k){
+	wchar_t chara = (wchar_t)k.GetCharacter();
+	bool Shift, Ctrl, Alt;
+	Shift = Ctrl = Alt = false;
+	GKey::DeConstructSpecial(k.GetAdditional(), Shift, Alt, Ctrl);
+
+	for(size_t i = 0; i < ReceivedPresses.size(); i++){
+		// check does this match anything that the key has //
+		if(ReceivedPresses[i]->KeyCode == chara){
+
+
+		}
+
+	}
+}
+
+DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 	bool Shift = false;
 	bool Ctrl = false;
 	bool Alt = false;
 
 	// check special keys //
-	for(unsigned int i = 0; i < KeysDown.size(); i++){
-		if(KeysDown[i] == VK_SHIFT){
+	for(size_t i = 0; i < ReceivedPresses.size(); i++){
+		// type doesn't matter here //
+		if(ReceivedPresses[i]->KeyCode == VK_SHIFT){
 			Shift = true;
 			continue;
 		}
-		if(KeysDown[i] == VK_CONTROL){
+		if(ReceivedPresses[i]->KeyCode == VK_CONTROL){
 			Ctrl = true;
 			continue;
 		}
-		if(KeysDown[i] == VK_MENU){
+		if(ReceivedPresses[i]->KeyCode == VK_MENU){
 			Alt = true;
 			continue;
 		}
 
 	}
+	//CallEvent(new Event(EVENT_TYPE_GUIENABLE, NULL));
 
+	//Engine::GetEngine()->SetGuiActive(true);
+	// pop action //
+	//ReceivedPresses.erase(ReceivedPresses.begin()+i);
+	
 	if(DataStore::Get()->GetGUiActive()){
 		// send presses to objects //
 
-		for(unsigned int i = 0; i < KeyPresses.size(); i++){
-			// check is it character //
-			if(!((KeyPresses[i] >= 32) && (KeyPresses[i] <= 126))){
-				// not real character //
+		for(unsigned int i = 0; i < ReceivedPresses.size(); i++){
+			if(ReceivedPresses[i]->MatchingEvent != GUI_KEYSTATE_TYPE_KEYPRESS){
+				// process key down by sending events //
 
 				continue;
 			}
+			// is a key press //
 			// generate key //
-			Key current = Key((wchar_t)KeyPresses[i], Key::ConstructSpecial(Shift, Alt, Ctrl));
+			GKey current = GKey(ReceivedPresses[i]->KeyCode, Leviathan::GKey::ConstructSpecial(Shift, Alt, Ctrl));
 
-			// disable if c or q and no active object //
-			if((Foreground == NULL)){
-				if((KeyPresses[i] == 'Q') | (KeyPresses[i] == 'C')){
-					// send disable events //
-					CallEvent(new Event(EVENT_TYPE_GUIDISABLE, NULL));
 
-					Engine::GetEngine()->SetGuiActive(false);
-				}
-				// collection disabling //
-				GuiComboPress(current);
-			}
 		}
 
-		KeyPresses.clear();
 	} else {
 		// check should Gui turn on //
-		for(unsigned int i = 0; i < KeyPresses.size(); i++){
-			if((KeyPresses[i] == 'Q') | (KeyPresses[i] == 'C')){
-				// send disable events //
-				CallEvent(new Event(EVENT_TYPE_GUIDISABLE, NULL));
 
-				Engine::GetEngine()->SetGuiActive(true);
-			}
-		}
-		//Engine::GetEngine()->SetGuiActive(true);
-
-		KeyPresses.clear();
 	}
-	KeysDown.clear();
+}
+
+void Leviathan::GuiManager::GuiTick(int mspassed){
+	// animations are now in OnAnimationTime
+	// send tick event //
+
 }
 void Leviathan::GuiManager::AnimationTick(int mspassed){
 	// animations //
@@ -168,6 +202,7 @@ bool Leviathan::GuiManager::AddGuiObject(BaseGuiObject* obj){
 	Objects.push_back(obj);
 	return true;
 }
+
 bool Leviathan::GuiManager::AddGuiObject(BaseGuiObject* obj, int collectionid){
 	ObjectAmountChanged = true;
 
@@ -182,6 +217,7 @@ bool Leviathan::GuiManager::AddGuiObject(BaseGuiObject* obj, int collectionid){
 	}
 	return true;
 }
+
 void Leviathan::GuiManager::DeleteObject(int id){
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		if(Objects[i]->ID == id){
@@ -199,7 +235,7 @@ void Leviathan::GuiManager::DeleteObject(int id){
 
 
 			if(Objects[i]->HigherLevel == true){
-				((RenderableGuiObject*)Objects[i])->Release(graph);
+				((RenderableGuiObject*)Objects[i])->Release();
 			}
 			SAFE_DELETE(Objects[i]);
 			Objects.erase(Objects.begin()+i);
@@ -209,9 +245,8 @@ void Leviathan::GuiManager::DeleteObject(int id){
 
 
 	}
-
-	
 }
+
 int Leviathan::GuiManager::GetObjectIndexFromId(int id){
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		if(Objects[i]->ID == id)
@@ -220,6 +255,7 @@ int Leviathan::GuiManager::GetObjectIndexFromId(int id){
 	}
 	return -1;
 }
+
 BaseGuiObject* Leviathan::GuiManager::GetObject(unsigned int index){
 	 ARR_INDEX_CHECK(index, Objects.size()){
 		 return Objects[index];
@@ -279,7 +315,7 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 			GuiCollection* cobj = new GuiCollection(data[i]->Name, createdid, Visible != 0, Toggle, Strict != 0, Enabled != 0);
 
 			CreateCollection(cobj);
-			cobj->Scripting = shared_ptr<ScriptObject>(data[i]->CreateScriptObjectAndReleaseThis(SCRIPT_CALLCONVENTION_GUI_OPEN, GOBJECT_TYPE_TEXTLABEL));
+			cobj->Scripting = shared_ptr<ScriptObject>(data[i]->CreateScriptObjectAndReleaseThis(0, GOBJECT_TYPE_TEXTLABEL));
 			// this function should have deleted everything related to that object, so it should be safe to just erase it //
 			data.erase(data.begin()+i);
 			i--;
@@ -403,8 +439,7 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 
 			// init with correct values //
 			curlabel->Init(x, y, width, height, text, StartColor, EndColor, TextColor, TextSize, AutoAdjust != 0, Font, ListenOn);
-			curlabel->Scripting = shared_ptr<ScriptObject>(data[i]->CreateScriptObjectAndReleaseThis(SCRIPT_CALLCONVENTION_GUI_OPEN, 
-				GOBJECT_TYPE_TEXTLABEL));
+			curlabel->Scripting = shared_ptr<ScriptObject>(data[i]->CreateScriptObjectAndReleaseThis(0, GOBJECT_TYPE_TEXTLABEL));
 			// this function should have deleted everything related to that object (smart pointers and dtors take care of rest,
 			// so it should be safe to just erase it //
 			data.erase(data.begin()+i);
@@ -498,20 +533,12 @@ void Leviathan::GuiManager::UpdateArrays(){
 	}
 
 }
-// -------------------------------------- //
-void GuiManager::AddKeyPress(int keyval){
-	KeyPresses.push_back(keyval);
-}
 
-void GuiManager::AddKeyDown(int keyval){
-	KeysDown.push_back(keyval);
-}
-// -------------------------------------- //
-		// event handler part //
-
+// ----------------- event handler part --------------------- //
 void GuiManager::AddListener(BaseEventable* receiver, EVENT_TYPE tolisten){
 	Listeners.push_back(new GuiEventListener(receiver, tolisten));
 }
+
 void GuiManager::RemoveListener(Gui::BaseEventable* receiver, EVENT_TYPE type, bool all){
 	for(unsigned int i = 0; i < Listeners.size(); i++){
 		if(Listeners[i]->Listen == receiver){
@@ -546,6 +573,7 @@ void GuiManager::CallEvent(Event* pEvent){
 	// delete object ourselves //
 	SAFE_DELETE(pEvent);
 }
+// used to send hide events to individual objects //
 int GuiManager::CallEventOnObject(BaseEventable* receive, Event* pEvent){
 	// find right object
 	int returval = 0;
@@ -556,7 +584,7 @@ int GuiManager::CallEventOnObject(BaseEventable* receive, Event* pEvent){
 			returval = Listeners[i]->Listen->OnEvent(&pEvent);
 
 
-			if(returval == -1){ // asking for deletion but we dont care
+			if(returval == -1){ // asking for deletion but we don't care
 				//RemoveListener(Listeners[i]->Listen, pEvent->GetType());
 				//i--;
 				continue;
@@ -572,9 +600,8 @@ int GuiManager::CallEventOnObject(BaseEventable* receive, Event* pEvent){
 	// delete object ourselves //
 	SAFE_DELETE(pEvent);
 	return returval;
-} // used to send hide events to individual objects
-// -------------------------------------- //
-		// animation handler part //
+}
+// ---------------- animation handler part ---------------------- //
 int GuiManager::HandleAnimation(AnimationAction* perform, GuiAnimateable* caller, int mspassed){
 	switch(perform->GetType()){
 	case GUI_ANIMATION_MOVE:
@@ -935,8 +962,7 @@ int GuiManager::HandleAnimation(AnimationAction* perform, GuiAnimateable* caller
 
 	//return 5; // for error //
 }
-// -------------------------------------- //
-		// collection managing //
+// ----------------- collection managing --------------------- //
 void GuiManager::CreateCollection(GuiCollection* add){
 	Collections.push_back(add);
 }
@@ -975,7 +1001,7 @@ GuiCollection* GuiManager::GetCollection(int id){
 	return NULL;
 }
 
-void GuiManager::GuiComboPress(Key key){
+bool GuiManager::GuiComboPress(const GKey &key){
 	for(unsigned int i = 0; i < Collections.size(); i++){
 		if(Collections[i]->Toggle.Match(key, false)){
 			// is a match, toggle //
@@ -984,9 +1010,10 @@ void GuiManager::GuiComboPress(Key key){
 			} else {
 				ActivateCollection(Collections[i]->ID, Collections[i]->Exclusive);
 			}
-			return;
+			return true;
 		}
 	}
+	return false;
 }
 
 void GuiManager::ActivateCollection(int id, bool exclusive){
@@ -1008,16 +1035,14 @@ void GuiManager::ActivateCollection(int id, bool exclusive){
 	}
 	// call script //
 	if(Collections[index]->Scripting->Script->Instructions.size() > 1){
-		vector<ScriptNamedArguement*> parameters;
-		parameters.push_back(new ScriptNamedArguement(L"source", new IntBlock(EVENT_SOURCE_MANAGER), DATABLOCK_TYPE_INT, false, true));
-		parameters.push_back(new ScriptNamedArguement(L"Instance", new IntBlock(Collections[index]->ID), DATABLOCK_TYPE_INT, false, true));
-		ScriptInterface::Get()->ExecuteIfExistsScript(Collections[index]->Scripting, L"OnEnable", parameters, GetCollectionCall(GetCollection(id)), false);
+		vector<shared_ptr<ScriptNamedArguement>> parameters;
+		parameters.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"source", new IntBlock(EVENT_SOURCE_MANAGER), 
+			DATABLOCK_TYPE_INT, false, true)));
+		parameters.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"Instance", new IntBlock(Collections[index]->ID), 
+			DATABLOCK_TYPE_INT, false, true)));
 
-		// delete parameters //
-		while(parameters.size() != 0){
-			SAFE_DELETE(parameters[0]); // this should not have been deleted by the scripting engine //
-			parameters.erase(parameters.begin());
-		}
+		bool existed = false;
+		ScriptInterface::Get()->ExecuteIfExistsScript(Collections[index]->Scripting.get(), L"OnEnable", parameters, existed, false);
 	}
 
 	Collections[index]->Visible = true;
@@ -1054,16 +1079,14 @@ void GuiManager::DisableCollection(int id, bool fast){
 	}
 	// call script //
 	if(Collections[index]->Scripting->Script->Instructions.size() > 1){
-		vector<ScriptNamedArguement*> parameters;
-		parameters.push_back(new ScriptNamedArguement(L"source", new IntBlock(EVENT_SOURCE_MANAGER), DATABLOCK_TYPE_INT, false, true));
-		parameters.push_back(new ScriptNamedArguement(L"Instance", new IntBlock(Collections[index]->ID), DATABLOCK_TYPE_INT, false, true));
-		ScriptInterface::Get()->ExecuteIfExistsScript(Collections[index]->Scripting, L"OnDisable", parameters, GetCollectionCall(GetCollection(id)), false);
+		vector<shared_ptr<ScriptNamedArguement>> parameters;
+		parameters.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"source", new IntBlock(EVENT_SOURCE_MANAGER), 
+			DATABLOCK_TYPE_INT, false, true)));
+		parameters.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"Instance", new IntBlock(Collections[index]->ID), 
+			DATABLOCK_TYPE_INT, false, true)));
 
-		// delete parameters //
-		while(parameters.size() != 0){
-			SAFE_DELETE(parameters[0]); // this should not have been deleted by the scripting engine //
-			parameters.erase(parameters.begin());
-		}
+		bool existed = false;
+		ScriptInterface::Get()->ExecuteIfExistsScript(Collections[index]->Scripting.get(), L"OnDisable", parameters, existed, false);
 	}
 
 	Collections[index]->Visible = false;
@@ -1091,19 +1114,6 @@ void GuiManager::DisableCollection(int id, bool fast){
 	}
 
 }
-ScriptCaller* GuiManager::GetCollectionCall(GuiCollection* customize){
-	if(CollectionCall == NULL){
-		
-		CollectionCall = new ScriptCaller();
-		// add collection commands //
-
-
-	}
-	if(customize != NULL){
-
-	}
-	return CollectionCall;
-}
 
 // -------------------------------------- //
 bool GuiManager::HasForeGround(){
@@ -1111,8 +1121,9 @@ bool GuiManager::HasForeGround(){
 }
 
 // ----------------- GuiCollection --------------------- //
-
-Leviathan::GuiCollection::GuiCollection(wstring name, int id, bool visible, wstring toggle, bool strict /*= false*/, bool exclusive /*= false*/, bool enabled /*= true*/){
+Leviathan::GuiCollection::GuiCollection(const wstring &name, int id, bool visible, const wstring &toggle, bool strict /*= false*/, 
+	bool exclusive /*= false*/, bool enabled /*= true*/)
+{
 	Name = name;
 	ID = id;
 	Visible = visible;
@@ -1156,8 +1167,8 @@ Leviathan::GuiCollection::GuiCollection(wstring name, int id, bool visible, wstr
 		if(toggle.size() != 0)
 			chara = toggle[0];
 	}
-	additional = Key::ConstructSpecial(Shift, Alt, Ctrl);
-	Toggle = Key(chara, additional);
+	additional = Leviathan::GKey::ConstructSpecial(Shift, Alt, Ctrl);
+	Toggle = GKey((int)chara, additional);
 
 	Strict = strict;
 }

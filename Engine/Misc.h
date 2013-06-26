@@ -49,8 +49,8 @@ namespace Leviathan{
 		}
 
 		template<typename T>
-		DLLEXPORT static bool DoesVectorContainValue(const vector<T> &check, const T& val){
-			for(unsigned int i = 0; i < check.size(); i++){
+		DLLEXPORT static bool DoesVectorContainValue(const vector<T> &check, const T &val){
+			for(size_t i = 0; i < check.size(); i++){
 				if(*(check[i]) == *val)
 					return true;
 			}

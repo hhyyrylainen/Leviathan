@@ -14,7 +14,7 @@ namespace Leviathan{
 	public:
 		DLLEXPORT RenderBridge::RenderBridge();
 		DLLEXPORT RenderBridge::RenderBridge(int id, bool hidden, int zorder);
-        DLLEXPORT RenderBridge::~RenderBridge();
+		DLLEXPORT RenderBridge::~RenderBridge();
 		
 		DLLEXPORT void SetHidden(int slot, bool hidden);
 		DLLEXPORT int GetSlotIndex(int slot);

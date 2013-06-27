@@ -45,6 +45,7 @@ void Leviathan::KeyPressManager::ProcessInput(Input* input){
 	if(!IsSorted){
 		// needs to sort receivers //
 		sort(Receivers.begin(), Receivers.end());
+		IsSorted = true;
 	}
 
 	// send start event //
@@ -57,7 +58,7 @@ void Leviathan::KeyPressManager::ProcessInput(Input* input){
 
 			// send press if wasn't pressed //
 			if(!PreviousStates[i]){
-				PreviousStates[i] = TRUE;
+				PreviousStates[i] = true;
 
 				// only send press (if something is listening for key down they will receive it next frame) //
 				FireEvent(new InputEvent(EVENT_TYPE_KEYPRESS, new int(i)));
@@ -69,7 +70,7 @@ void Leviathan::KeyPressManager::ProcessInput(Input* input){
 			}
 
 		} else {
-			PreviousStates[i] = FALSE;
+			PreviousStates[i] = false;
 		}
 	}
 
@@ -146,7 +147,7 @@ DLLEXPORT int Leviathan::KeyPressManager::FireEvent(InputEvent* eventptr, const 
 	// loop through receivers until event is processed and return order number of receiver which processed this //
 	InputEvent** Multiptr = &eventptr;
 
-	bool CanSend = (eventptr->pendingevent == NULL) ? false: true;
+	bool CanSend = (eventptr->pendingevent == NULL) ? true: false;
 
 	for(size_t i = 0; i < Receivers.size(); i++){
 		if(!CanSend){

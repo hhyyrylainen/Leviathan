@@ -40,8 +40,8 @@ namespace Leviathan{
 				bool Alt2 = false;
 				bool Ctrl2 = false;
 
-				DeConstructSpecial(other.Extras, Shift, Alt, Ctrl);
-				DeConstructSpecial(this->Extras, Shift2, Alt2, Ctrl2);
+				DeConstructSpecial(this->Extras, Shift, Alt, Ctrl);
+				DeConstructSpecial(other.Extras, Shift2, Alt2, Ctrl2);
 
 				if(((Shift == Shift2) || Shift == 0) && (Alt == Alt2 || Alt == 0) && (Ctrl == Ctrl2 || Ctrl == 0)){
 					return true;

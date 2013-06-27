@@ -76,7 +76,7 @@ namespace Leviathan {
 #define GUI_KEYSTATE_TYPE_KEYDOWN	1
 
 	struct GuiReceivedKeyPress{
-		GuiReceivedKeyPress(short whichcase, int key, InputEvent** receivedevent){
+		GuiReceivedKeyPress(short whichcase, int key, InputEvent* receivedevent){
 			Type = whichcase;
 			KeyCode = key;
 			MatchingEvent = receivedevent;
@@ -84,7 +84,7 @@ namespace Leviathan {
 
 		short Type;
 		int KeyCode;
-		InputEvent** MatchingEvent;
+		InputEvent* MatchingEvent;
 	};
 
 	class GuiManager : public EngineComponent{
@@ -102,8 +102,8 @@ namespace Leviathan {
 		// key press receiving from listener //
 		DLLEXPORT void ClearKeyReceivingState();
 		DLLEXPORT void ProcessKeyPresses();
-		DLLEXPORT void AddKeyPress(int keyval, InputEvent** originalevent);
-		DLLEXPORT void AddKeyDown(int keyval, InputEvent** originalevent);
+		DLLEXPORT void AddKeyPress(int keyval, InputEvent* originalevent);
+		DLLEXPORT void AddKeyDown(int keyval, InputEvent* originalevent);
 		DLLEXPORT bool IsEventConsumed(InputEvent** ev);
 		DLLEXPORT void SetKeyContainedValuesAsConsumed(const GKey &k);
 

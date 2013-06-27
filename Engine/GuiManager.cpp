@@ -73,11 +73,11 @@ DLLEXPORT void Leviathan::GuiManager::ClearKeyReceivingState(){
 	ReceivedPresses.clear();
 }
 
-DLLEXPORT void Leviathan::GuiManager::AddKeyPress(int keyval, InputEvent** originalevent){
+DLLEXPORT void Leviathan::GuiManager::AddKeyPress(int keyval, InputEvent* originalevent){
 	ReceivedPresses.push_back(shared_ptr<GuiReceivedKeyPress>(new GuiReceivedKeyPress(GUI_KEYSTATE_TYPE_KEYPRESS, keyval, originalevent)));
 }
 
-DLLEXPORT void Leviathan::GuiManager::AddKeyDown(int keyval, InputEvent** originalevent){
+DLLEXPORT void Leviathan::GuiManager::AddKeyDown(int keyval, InputEvent* originalevent){
 	ReceivedPresses.push_back(shared_ptr<GuiReceivedKeyPress>(new GuiReceivedKeyPress(GUI_KEYSTATE_TYPE_KEYDOWN, keyval, originalevent)));
 }
 
@@ -95,7 +95,7 @@ DLLEXPORT bool Leviathan::GuiManager::IsEventConsumed(InputEvent** ev){
 	// check is it still in key presses (if it is it hasn't been consumed) //
 	for(size_t i = 0; i < ReceivedPresses.size(); i++){
 
-		if(*ReceivedPresses[i]->MatchingEvent == *ev){
+		if(ReceivedPresses[i]->MatchingEvent == *ev){
 			// wasn't consumed, consume now //
 			ReceivedPresses.erase(ReceivedPresses.begin()+i);
 			return false;
@@ -106,7 +106,7 @@ DLLEXPORT bool Leviathan::GuiManager::IsEventConsumed(InputEvent** ev){
 }
 
 DLLEXPORT void Leviathan::GuiManager::SetKeyContainedValuesAsConsumed(const GKey &k){
-	wchar_t chara = (wchar_t)k.GetCharacter();
+	int chara = k.GetCharacter();
 	bool Shift, Ctrl, Alt;
 	Shift = Ctrl = Alt = false;
 
@@ -196,7 +196,7 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 					BaseEventable* temp = (BaseEventable*)Foreground;
 					int returnval = 0;
 
-					if(ReceivedPresses[i]->MatchingEvent == GUI_KEYSTATE_TYPE_KEYPRESS){
+					if(ReceivedPresses[i]->Type == GUI_KEYSTATE_TYPE_KEYPRESS){
 						returnval = CallEventOnObject(temp, new Event(EVENT_TYPE_KEYPRESS, (void*)&current, false));
 					} else {
 						returnval = CallEventOnObject(temp, new Event(EVENT_TYPE_KEYDOWN, (void*)&current, false));
@@ -212,8 +212,9 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 					// just fall through to continue sending the key //
 				}
 			}
+
 			// only allow collections to act to key presses //
-			if(ReceivedPresses[i]->MatchingEvent == GUI_KEYSTATE_TYPE_KEYPRESS){
+			if(ReceivedPresses[i]->Type == GUI_KEYSTATE_TYPE_KEYPRESS){
 				// check does a collection want to do something //
 				if(GuiComboPress(current)){
 					// press is now consumed //
@@ -225,7 +226,7 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 			// nobody wanted this, fire an event and delete if it got processed , false is important for not deleting stack object //
 			bool processed = false;
 
-			if(ReceivedPresses[i]->MatchingEvent == GUI_KEYSTATE_TYPE_KEYPRESS){
+			if(ReceivedPresses[i]->Type == GUI_KEYSTATE_TYPE_KEYPRESS){
 				processed = CallEvent(new Event(EVENT_TYPE_KEYPRESS, (void*)&current, false));
 			} else {
 				processed = CallEvent(new Event(EVENT_TYPE_KEYDOWN, (void*)&current, false));
@@ -241,7 +242,7 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 	} else {
 		// check should Gui turn on //
 		for(unsigned int i = 0; i < ReceivedPresses.size(); i++){
-			if(ReceivedPresses[i]->MatchingEvent != GUI_KEYSTATE_TYPE_KEYPRESS){
+			if(ReceivedPresses[i]->Type != GUI_KEYSTATE_TYPE_KEYPRESS){
 				// needs to be skipped //
 				continue;
 			}

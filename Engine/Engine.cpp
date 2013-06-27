@@ -319,9 +319,10 @@ bool Leviathan::Engine::ShutDownEngine(){
 
 	// Gui is very picky about delete order
 	SAFE_RELEASEDEL(Gui);
-	SAFE_DELETE(KeyListener);
+
 
 	SAFE_DELETE(MainCamera);
+
 
 	SAFE_RELEASEDEL(MainScript);
 	// save at this point (just in case it crashes before exiting) //
@@ -345,6 +346,8 @@ bool Leviathan::Engine::ShutDownEngine(){
 	FileSystem::ClearFoundFiles();
 
 	SAFE_DELETE(Mainstore);
+
+	SAFE_DELETE(KeyListener);
 
 	SAFE_DELETE(MTimer);
 

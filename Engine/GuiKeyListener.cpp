@@ -43,7 +43,7 @@ DLLEXPORT bool Leviathan::Gui::KeyListener::OnEvent(InputEvent** pEvent, InputRe
 	case EVENT_TYPE_KEYPRESS:
 		{
 			// add key press to Gui //
-			Master->AddKeyPress(*(int*)(*pEvent)->Data, pEvent);
+			Master->AddKeyPress(*(int*)(*pEvent)->Data, *pEvent);
 			// will be pending for a while //
 			return true;
 		}
@@ -51,7 +51,7 @@ DLLEXPORT bool Leviathan::Gui::KeyListener::OnEvent(InputEvent** pEvent, InputRe
 	case EVENT_TYPE_KEYDOWN:
 		{
 			// add to Gui //
-			Master->AddKeyDown(*(int*)(*pEvent)->Data, pEvent);
+			Master->AddKeyDown(*(int*)(*pEvent)->Data, *pEvent);
 			// will be pending for a while //
 			return true;
 		}

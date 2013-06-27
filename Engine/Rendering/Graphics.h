@@ -10,7 +10,7 @@
 
 #include "FileSystem.h"
 #include "3DRenderer.h"
-#include "Camera.h"
+#include "ViewCamera.h"
 #include "TextureManager.h"
 
 #include "ShaderManager.h"

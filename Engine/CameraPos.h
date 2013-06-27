@@ -7,14 +7,12 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "BaseObject.h"
-//#include "BaseInitializable.h"
-//#include "BaseTickable.h"
 #include "Input.h"
-#include "CallableObject.h"
+#include "KeyPressManager.h"
 
 namespace Leviathan{
 	// callable for the ability to receive key presses
-	class ViewerCameraPos : public BaseObject, public CallableObject {
+	class ViewerCameraPos : public BaseObject, public InputReceiver {
 	public:
 		DLLEXPORT ViewerCameraPos();
 		DLLEXPORT ~ViewerCameraPos();
@@ -48,7 +46,7 @@ namespace Leviathan{
 
 		DLLEXPORT void BecomeMainListeningCamera();
 
-		DLLEXPORT virtual void OnEvent(Event** pEvent);
+		DLLEXPORT virtual bool OnEvent(InputEvent** pEvent, InputReceiver* pending);
 
 	private:
 		float FrameTime;

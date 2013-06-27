@@ -285,9 +285,6 @@
     <ClCompile Include="Rendering\Bitmap.cpp">
       <Filter>rendering\render objects</Filter>
     </ClCompile>
-    <ClCompile Include="Rendering\Camera.cpp">
-      <Filter>rendering\render objects</Filter>
-    </ClCompile>
     <ClCompile Include="Rendering\ColorQuad.cpp">
       <Filter>rendering\render objects</Filter>
     </ClCompile>
@@ -495,6 +492,9 @@
     <ClCompile Include="Types.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="Rendering\ViewCamera.cpp">
+      <Filter>rendering\render objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">
@@ -679,9 +679,6 @@
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\Bitmap.h">
-      <Filter>rendering\render objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\Camera.h">
       <Filter>rendering\render objects</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\ColorQuad.h">
@@ -893,6 +890,9 @@
     </ClInclude>
     <ClInclude Include="Types.h">
       <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\ViewCamera.h">
+      <Filter>rendering\render objects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

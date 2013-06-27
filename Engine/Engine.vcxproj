@@ -190,7 +190,7 @@
     <ClCompile Include="Rendering\3DRenderer.cpp" />
     <ClCompile Include="Rendering\Bitmap.cpp" />
     <ClCompile Include="Rendering\BumpShader.cpp" />
-    <ClCompile Include="Rendering\Camera.cpp" />
+    <ClCompile Include="Rendering\ViewCamera.cpp" />
     <ClCompile Include="Rendering\RenderingFont.cpp" />
     <ClCompile Include="Rendering\FontShader.cpp" />
     <ClCompile Include="Rendering\Graphics.cpp" />
@@ -323,7 +323,7 @@
     <ClInclude Include="Rendering\3DRenderer.h" />
     <ClInclude Include="Rendering\Bitmap.h" />
     <ClInclude Include="Rendering\BumpShader.h" />
-    <ClInclude Include="Rendering\Camera.h" />
+    <ClInclude Include="Rendering\ViewCamera.h" />
     <ClInclude Include="Rendering\RenderingFont.h" />
     <ClInclude Include="Rendering\FontShader.h" />
     <ClInclude Include="Rendering\Graphics.h" />

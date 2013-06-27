@@ -1,7 +1,7 @@
 #include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_CAMERA
-#include "Camera.h"
+#include "ViewCamera.h"
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
@@ -88,7 +88,7 @@ void ViewCamera::UpdateMatrix(){
 	D3DXMATRIX Rotationmatrix;
 	D3DXMatrixRotationYawPitchRoll(&Rotationmatrix, yaw, pitch, roll);
 
-	// transform coords //
+	// transform coordinates //
 	D3DXVec3TransformCoord(&lookat, &lookat, &Rotationmatrix);
 	D3DXVec3TransformCoord(&up, &up, &Rotationmatrix);
 
@@ -103,6 +103,8 @@ void ViewCamera::UpdateMatrix(){
 	}
 
 }
+
+
 
 
 

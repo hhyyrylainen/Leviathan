@@ -626,7 +626,13 @@ void ViewerCameraPos::SetRotation(float yaw, float pitch, float roll, bool smoot
 	}
 }
 
-DLLEXPORT void Leviathan::ViewerCameraPos::OnEvent(Event** pEvent){
+DLLEXPORT bool Leviathan::ViewerCameraPos::OnEvent(InputEvent** pEvent, InputReceiver* pending){
+
+	if(pending == this){
+		// shouldn't happen, since thi doesn't use pending //
+		DEBUG_BREAK;
+	}
+
 	// update control based on event //
 
 	switch((*pEvent)->GetType()){
@@ -639,7 +645,7 @@ DLLEXPORT void Leviathan::ViewerCameraPos::OnEvent(Event** pEvent){
 			m_Forward = 0;
 			m_Vertical = 0;
 		}
-		return;
+		return false;
 	case EVENT_TYPE_MOUSEMOVED:
 		{
 
@@ -650,6 +656,7 @@ DLLEXPORT void Leviathan::ViewerCameraPos::OnEvent(Event** pEvent){
 		}
 		goto cameraposoneventendreleaseevent;
 	case EVENT_TYPE_KEYDOWN:
+	case EVENT_TYPE_KEYPRESS:
 		{
 			// switch on Vkey code //
 
@@ -664,15 +671,16 @@ DLLEXPORT void Leviathan::ViewerCameraPos::OnEvent(Event** pEvent){
 			case VK_CONTROL: m_Vertical = -1; goto cameraposoneventendreleaseevent;
 			}
 		}
-		return;
+		return false;
 	default:
-		return;
+		return false;
 	}
 
 cameraposoneventendreleaseevent:
-	// delete event to indicate that it has been deleted //
+	// delete event to indicate that it has been processed //
 	SAFE_DELETE(*pEvent);
-	return;
+	// no pending //
+	return false;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ViewerCameraPos::BecomeMainListeningCamera(){

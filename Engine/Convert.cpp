@@ -5,6 +5,7 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
+#include "DataBlock.h"
 
 double Convert::DegreesToRadians(float degrees){
 	return (degrees*(PI/180.f));
@@ -149,19 +150,22 @@ int Convert::WstringTypeCheck(const wstring& data, int typecheckfor){
 
 int Convert::WstringTypeNameCheck(const wstring& data){
 	if(Misc::WstringCompareInsensitive(data, L"int")){
-		return 0;
+		return DATABLOCK_TYPE_INT;
 	}
 	if(Misc::WstringCompareInsensitive(data, L"float")){
-		return 1;
+		return DATABLOCK_TYPE_FLOAT;
 	}
 	if(Misc::WstringCompareInsensitive(data, L"bool")){
-		return 3;
+		return DATABLOCK_TYPE_BOOL;
 	}
 	if(Misc::WstringCompareInsensitive(data, L"wstring")){
-		return 4;
+		return DATABLOCK_TYPE_WSTRING;
 	}
-	if(Misc::WstringCompareInsensitive(data, L"void")){
-		return 5;
+	if(Misc::WstringCompareInsensitive(data, L"wstring")){
+		return DATABLOCK_TYPE_WSTRING;
+	}
+	if(Misc::WstringCompareInsensitive(data, L"void*")){
+		return DATABLOCK_TYPE_VOIDPTR;
 	}
 	return -1;
 }

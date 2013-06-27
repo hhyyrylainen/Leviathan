@@ -289,24 +289,30 @@ shared_ptr<ScriptArguement> ScriptExecutor::RunScript(const wstring &start, bool
 	// successfully executed, try to fetch return value //
 	shared_ptr<ScriptArguement> retrval;
 
-	switch(paraminfo->ReturnMatchingDataBlock){
-	case DATABLOCK_TYPE_INT:
-		{
-			retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(ScriptContext->GetReturnDWord()), DATABLOCK_TYPE_INT, true));
+	if(paraminfo->ReturnTypeID != 0){
+		// return type isn't void //
+		switch(paraminfo->ReturnMatchingDataBlock){
+		case DATABLOCK_TYPE_INT:
+			{
+				retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(ScriptContext->GetReturnDWord()), DATABLOCK_TYPE_INT, true));
+			}
+			break;
+		case DATABLOCK_TYPE_FLOAT:
+			{
+				retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new FloatBlock(ScriptContext->GetReturnFloat()), DATABLOCK_TYPE_FLOAT, true));
+			}
+			break;
+		case DATABLOCK_TYPE_BOOL:
+			{
+				retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new BoolBlock((bool)ScriptContext->GetReturnByte() != 0), DATABLOCK_TYPE_BOOL, true));
+			}
+			break;
+		default:
+			{
+				retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new WstringBlock(L"Return type not supported"), DATABLOCK_TYPE_BOOL, true));
+				Logger::Get()->Info(L"[SCRIPT] return type not supported"+Convert::StringToWstring(paraminfo->ReturnTypeDeclaration));
+			}
 		}
-		break;
-	case DATABLOCK_TYPE_FLOAT:
-		{
-			retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new FloatBlock(ScriptContext->GetReturnFloat()), DATABLOCK_TYPE_FLOAT, true));
-		}
-		break;
-	case DATABLOCK_TYPE_BOOL:
-		{
-			retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new BoolBlock((bool)ScriptContext->GetReturnByte()), DATABLOCK_TYPE_BOOL, true));
-		}
-		break;
-	default:
-		retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new WstringBlock(L"Return type not supported"), DATABLOCK_TYPE_BOOL, true));
 	}
 
 	// release context //
@@ -417,11 +423,13 @@ FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScrip
 		int ftype = Module->GetTypeIdByDecl("float");
 		int btype = Module->GetTypeIdByDecl("bool");
 		int stype = Module->GetTypeIdByDecl("string");
+		int vtype = Module->GetTypeIdByDecl("void");
 		// add //
 		EngineTypeIDS.insert(make_pair(itype, "int"));
 		EngineTypeIDS.insert(make_pair(ftype, "float"));
 		EngineTypeIDS.insert(make_pair(btype, "bool"));
 		EngineTypeIDS.insert(make_pair(stype, "string"));
+		EngineTypeIDS.insert(make_pair(vtype, "void"));
 	}
 
 	// space is already reserved and objects allocated //

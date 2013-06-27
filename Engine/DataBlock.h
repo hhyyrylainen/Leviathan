@@ -11,26 +11,36 @@
 #define DATABLOCK_TYPE_FLOAT	4
 #define DATABLOCK_TYPE_BOOL		5
 #define DATABLOCK_TYPE_WSTRING	6 // is actually wstring
-#define DATABLOCK_TYPE_VOIDPTR	7
+#define DATABLOCK_TYPE_STRING	7
+#define DATABLOCK_TYPE_CHAR		8
+#define DATABLOCK_TYPE_DOUBLE	9
+#define DATABLOCK_TYPE_OBJECTL	10 // uses Leviathan::Object* as type
+#define DATABLOCK_TYPE_VOIDPTR	11
 
 #define DATABLOCK_TYPE_ERROR	9000
 
 namespace Leviathan{
 
+	// static class used to convert DataBlocks from different types to other types //
+	class DataBlockConverter{
+	public:
+
+
+
+	};
+
 	class DataBlock : public Object{
 	public:
 		DLLEXPORT DataBlock::DataBlock();
-		DLLEXPORT DataBlock::DataBlock(int type);
+		DLLEXPORT DataBlock::DataBlock(const int &type);
 		//DLLEXPORT DataBlock::DataBlock(DataBlock* arg);
 		DLLEXPORT virtual DataBlock::~DataBlock();
 
 		DataBlock operator =(const DataBlock& arg);
-		//operator=(const int& arg);
-		//operator=(const float& arg);
-		//operator=(const bool& arg);
-		//operator=(const wstring& arg);
+
 		DLLEXPORT static DataBlock* CopyConstructor(DataBlock* arg);
 
+		// value getting operators //
 		DLLEXPORT operator int();
 		DLLEXPORT operator int*();
 		DLLEXPORT operator float();

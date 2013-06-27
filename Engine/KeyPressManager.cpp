@@ -59,9 +59,10 @@ void Leviathan::KeyPressManager::ProcessInput(Input* input){
 			if(!PreviousStates[i]){
 				PreviousStates[i] = TRUE;
 
+				// only send press (if something is listening for key down they will receive it next frame) //
 				FireEvent(new InputEvent(EVENT_TYPE_KEYPRESS, new int(i)));
-				// also send key down event //
-				FireEvent(new InputEvent(EVENT_TYPE_KEYDOWN, new int(i)));
+				//// also send key down event //
+				//FireEvent(new InputEvent(EVENT_TYPE_KEYDOWN, new int(i)));
 			} else {
 				// send key down event //
 				FireEvent(new InputEvent(EVENT_TYPE_KEYDOWN, new int(i)));

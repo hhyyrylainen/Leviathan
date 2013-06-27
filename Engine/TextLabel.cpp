@@ -390,7 +390,7 @@ int Leviathan::Gui::TextLabel::OnEvent(Event** pEvent){
 	break;
 	}
 
-	// not used request unregistration
+	// not used, request unregistration
 	return -1;
 }
 

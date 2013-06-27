@@ -75,6 +75,11 @@ namespace Leviathan{
 			Extras = additional;
 		}
 
+		DLLEXPORT void SetAdditional(const KEYSPECIAL &additional){
+
+			Extras = additional;
+		}
+
 	private:
 		KEYSPECIAL Extras;
 		T Character;

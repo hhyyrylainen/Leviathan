@@ -82,6 +82,16 @@ DLLEXPORT void Leviathan::GuiManager::AddKeyDown(int keyval, InputEvent** origin
 }
 
 DLLEXPORT bool Leviathan::GuiManager::IsEventConsumed(InputEvent** ev){
+	// key presses must be processed before this can be used //
+	if(!GKeyPressesConsumed){
+		// presses haven't been processed yet //
+
+		ProcessKeyPresses();
+
+		// now processed //
+		GKeyPressesConsumed = true;
+	}
+
 	// check is it still in key presses (if it is it hasn't been consumed) //
 	for(size_t i = 0; i < ReceivedPresses.size(); i++){
 
@@ -99,19 +109,49 @@ DLLEXPORT void Leviathan::GuiManager::SetKeyContainedValuesAsConsumed(const GKey
 	wchar_t chara = (wchar_t)k.GetCharacter();
 	bool Shift, Ctrl, Alt;
 	Shift = Ctrl = Alt = false;
+
+	bool characterfound = false;
+
 	GKey::DeConstructSpecial(k.GetAdditional(), Shift, Alt, Ctrl);
 
 	for(size_t i = 0; i < ReceivedPresses.size(); i++){
 		// check does this match anything that the key has //
 		if(ReceivedPresses[i]->KeyCode == chara){
 
+			characterfound = true;
+			goto erasepressedkeyonindex;
+		}
+		if(Shift && ReceivedPresses[i]->KeyCode == VK_SHIFT){
 
+			Shift = false;
+			goto erasepressedkeyonindex;
+		}
+		if(Ctrl && ReceivedPresses[i]->KeyCode == VK_CONTROL){
+
+			Ctrl = false;
+			goto erasepressedkeyonindex;
+		}
+		if(Alt && ReceivedPresses[i]->KeyCode == VK_MENU){
+
+			Alt = false;
+			goto erasepressedkeyonindex;
 		}
 
+		continue;
+erasepressedkeyonindex:
+		ReceivedPresses.erase(ReceivedPresses.begin()+i);
+		i--;
+
+		// check ending //
+		if(!Shift && !Ctrl && !Alt && characterfound){
+			// we have already found everything we need, we can quit //
+			break;
+		}
 	}
 }
 
 DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
+	// special key states //
 	bool Shift = false;
 	bool Ctrl = false;
 	bool Alt = false;
@@ -121,19 +161,21 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 		// type doesn't matter here //
 		if(ReceivedPresses[i]->KeyCode == VK_SHIFT){
 			Shift = true;
-			continue;
-		}
-		if(ReceivedPresses[i]->KeyCode == VK_CONTROL){
+		} else if(ReceivedPresses[i]->KeyCode == VK_CONTROL){
 			Ctrl = true;
-			continue;
-		}
-		if(ReceivedPresses[i]->KeyCode == VK_MENU){
+		} else if(ReceivedPresses[i]->KeyCode == VK_MENU){
 			Alt = true;
+		} else {
+			// don't want to do check if nothing was updated //
 			continue;
 		}
-
+		// check for ending before all are handled //
+		if(Shift && Ctrl && Alt)
+			break;
 	}
 	//CallEvent(new Event(EVENT_TYPE_GUIENABLE, NULL));
+
+	const KEYSPECIAL specialstates = Leviathan::GKey::ConstructSpecial(Shift, Alt, Ctrl);
 
 	//Engine::GetEngine()->SetGuiActive(true);
 	// pop action //
@@ -143,21 +185,78 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 		// send presses to objects //
 
 		for(unsigned int i = 0; i < ReceivedPresses.size(); i++){
-			if(ReceivedPresses[i]->MatchingEvent != GUI_KEYSTATE_TYPE_KEYPRESS){
-				// process key down by sending events //
-
-				continue;
-			}
-			// is a key press //
 			// generate key //
-			GKey current = GKey(ReceivedPresses[i]->KeyCode, Leviathan::GKey::ConstructSpecial(Shift, Alt, Ctrl));
+			GKey current = GKey(ReceivedPresses[i]->KeyCode, specialstates);
 
+			// first we need to check the foreground object if it wants this key press //
+			if(Foreground){
 
+				if(Foreground->ObjectLevel >= GUI_OBJECT_LEVEL_EVENTABLE){
+					// can send //
+					BaseEventable* temp = (BaseEventable*)Foreground;
+					int returnval = 0;
+
+					if(ReceivedPresses[i]->MatchingEvent == GUI_KEYSTATE_TYPE_KEYPRESS){
+						returnval = CallEventOnObject(temp, new Event(EVENT_TYPE_KEYPRESS, (void*)&current, false));
+					} else {
+						returnval = CallEventOnObject(temp, new Event(EVENT_TYPE_KEYDOWN, (void*)&current, false));
+					}
+					
+
+					if(returnval > 0){
+						// processed it //
+						// TODO: make sure that if the object didn't want Shift CTRL or ALT it unmarked them from the key //
+						SetKeyContainedValuesAsConsumed(current);
+						continue;
+					}
+					// just fall through to continue sending the key //
+				}
+			}
+			// only allow collections to act to key presses //
+			if(ReceivedPresses[i]->MatchingEvent == GUI_KEYSTATE_TYPE_KEYPRESS){
+				// check does a collection want to do something //
+				if(GuiComboPress(current)){
+					// press is now consumed //
+					SetKeyContainedValuesAsConsumed(current);
+					continue;
+				}
+			}
+
+			// nobody wanted this, fire an event and delete if it got processed , false is important for not deleting stack object //
+			bool processed = false;
+
+			if(ReceivedPresses[i]->MatchingEvent == GUI_KEYSTATE_TYPE_KEYPRESS){
+				processed = CallEvent(new Event(EVENT_TYPE_KEYPRESS, (void*)&current, false));
+			} else {
+				processed = CallEvent(new Event(EVENT_TYPE_KEYDOWN, (void*)&current, false));
+			}
+
+			if(processed){
+				// TODO: make sure that if the object didn't want Shift CTRL or ALT it unmarked them from the key //
+				SetKeyContainedValuesAsConsumed(current);
+			}
+			// nobody wanted it //
 		}
 
 	} else {
 		// check should Gui turn on //
+		for(unsigned int i = 0; i < ReceivedPresses.size(); i++){
+			if(ReceivedPresses[i]->MatchingEvent != GUI_KEYSTATE_TYPE_KEYPRESS){
+				// needs to be skipped //
+				continue;
+			}
 
+			// generate key //
+			GKey current = GKey(ReceivedPresses[i]->KeyCode, specialstates);
+
+			// check does a collection want to do something //
+			if(GuiComboPress(current)){
+				// press is now consumed //
+				SetKeyContainedValuesAsConsumed(current);
+				continue;
+			}
+			// nothing //
+		}
 	}
 }
 
@@ -182,10 +281,6 @@ void Leviathan::GuiManager::Render(){
 	}
 }
 // ------------------------------------ //
-void Leviathan::GuiManager::QuickSendPress(int keyinfo){
-
-}
-
 void Leviathan::GuiManager::OnResize(){
 	// update objects that by default need this //
 
@@ -551,7 +646,7 @@ void GuiManager::RemoveListener(Gui::BaseEventable* receiver, EVENT_TYPE type, b
 	}
 }
 
-void GuiManager::CallEvent(Event* pEvent){
+bool Leviathan::GuiManager::CallEvent(Event* pEvent){
 	// loop through listeners and call events //
 	int returval = 0;
 	for(unsigned int i = 0; i < Listeners.size(); i++){
@@ -565,18 +660,20 @@ void GuiManager::CallEvent(Event* pEvent){
 			}
 			// check for deletion and end if event got deleted //
 			if(!pEvent){
-				return;
+				return true;
 			}
 		}
 	}
 
 	// delete object ourselves //
 	SAFE_DELETE(pEvent);
+	// nobody wanted the event //
+	return false;
 }
 // used to send hide events to individual objects //
 int GuiManager::CallEventOnObject(BaseEventable* receive, Event* pEvent){
 	// find right object
-	int returval = 0;
+	int returval = -3;
 
 	for(unsigned int i = 0; i < Listeners.size(); i++){
 		if(Listeners[i]->Listen == receive){
@@ -966,7 +1063,7 @@ int GuiManager::HandleAnimation(AnimationAction* perform, GuiAnimateable* caller
 void GuiManager::CreateCollection(GuiCollection* add){
 	Collections.push_back(add);
 }
-int GuiManager::GetCollection(wstring name, int id){
+int Leviathan::GuiManager::GetCollection(const wstring &name, int id){
 	for(unsigned int i = 0; i < Collections.size(); i++){
 		// if name specified check for it //
 		if(name != L""){
@@ -987,23 +1084,23 @@ int GuiManager::GetCollection(wstring name, int id){
 	return -1;
 }
 GuiCollection* GuiManager::GetCollection(int id){
-	for(unsigned int i = 0; i < Collections.size(); i++){
-		if(id != -1){
-			if(Collections[i]->ID != id)
-				continue; // no match
-
-		}
+	for(size_t i = 0; i < Collections.size(); i++){
+		// compare IDs of collections //
+		if(Collections[i]->ID != id)
+			continue; // no match
 		// match
 		return Collections[i];
-
 	}
 
 	return NULL;
 }
 
-bool GuiManager::GuiComboPress(const GKey &key){
+bool Leviathan::GuiManager::GuiComboPress(GKey &key){
 	for(unsigned int i = 0; i < Collections.size(); i++){
 		if(Collections[i]->Toggle.Match(key, false)){
+			// disable unwanted keys if possible //
+			key.SetAdditional(Collections[i]->Toggle.GetAdditional());
+
 			// is a match, toggle //
 			if(Collections[i]->Visible){
 				DisableCollection(Collections[i]->ID, false);

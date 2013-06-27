@@ -107,10 +107,10 @@ namespace Leviathan {
 		DLLEXPORT bool IsEventConsumed(InputEvent** ev);
 		DLLEXPORT void SetKeyContainedValuesAsConsumed(const GKey &k);
 
-		DLLEXPORT bool GuiComboPress(const GKey &key);
+		DLLEXPORT bool GuiComboPress(GKey &key);
 
 		// send "fake" key press to Gui //
-		DLLEXPORT void QuickSendPress(int keyinfo);
+		//DLLEXPORT void QuickSendPress(int keyinfo);
 
 		DLLEXPORT void OnResize();
 
@@ -131,7 +131,8 @@ namespace Leviathan {
 		DLLEXPORT void AddListener(Gui::BaseEventable* receiver, EVENT_TYPE tolisten);
 		DLLEXPORT void RemoveListener(Gui::BaseEventable* receiver, EVENT_TYPE type, bool all = false);
 
-		DLLEXPORT void CallEvent(Event* pEvent);
+		// returns true if an object processed the event //
+		DLLEXPORT bool CallEvent(Event* pEvent);
 		DLLEXPORT int CallEventOnObject(Gui::BaseEventable* receive, Event* pEvent); // used to send hide events to individual objects
 
 		// animation handler part //
@@ -139,7 +140,7 @@ namespace Leviathan {
 
 		// collection managing //
 		DLLEXPORT void CreateCollection(GuiCollection* add);
-		DLLEXPORT int GetCollection(wstring name, int id);
+		DLLEXPORT int GetCollection(const wstring &name, int id);
 		DLLEXPORT GuiCollection* GetCollection(int id);
 
 		DLLEXPORT void ActivateCollection(int id, bool exclusive);

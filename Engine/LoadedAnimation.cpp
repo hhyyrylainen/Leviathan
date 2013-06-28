@@ -105,7 +105,8 @@ DLLEXPORT bool Leviathan::LoadedAnimation::SampleToStreamBlockAtTime(const int &
 				// first frame, which shouldn't be here! //
 				if(mstimepassedfromstart < 0){
 					// found the problem //
-					throw new ExceptionInvalidArguement(L"negative passed time", mstimepassedfromstart, __WFUNCSIG__, L"mstimepassedfromstart");
+					throw new ExceptionInvalidArguement(L"negative passed time", mstimepassedfromstart, __WFUNCSIG__, L"mstimepassedfromstart", 
+						Convert::ToWstring<int>(mstimepassedfromstart));
 				}
 				// might be totally fine //
 				ComplainOnce::PrintWarningOnce(L"LoadedAnim_Frames_INVALID_First", L"First frame of animation's start time is not 0, check file");

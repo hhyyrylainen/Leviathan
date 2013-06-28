@@ -8,7 +8,7 @@ using namespace Leviathan;
 
 #define TEST_IVALUE_INDBLOCKS		254676
 
-bool Leviathan::DataBlockTestVerifier(const int &tests){
+DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
 
 	bool Failed = false;
 

@@ -61,6 +61,7 @@ bool ScriptExecutor::Init(){
 bool ScriptExecutor::Release(){
 	// release AngelScript //
 	engine->Release();
+	engine = NULL;
 
 	while(Modules.size() != 0){
 		SAFE_DELETE(Modules[0]);
@@ -79,7 +80,7 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunScript(ScriptS
 
 	SetBehavior(printerrors, runtype);
 	// run //
-	shared_ptr<VariableBlock> returnarg = RunSetUp(entrance, fulldecl, ErrorIfdoesnt);
+	shared_ptr<VariableBlock> returnarg = RunSetUp(entrance, existsreceiver, fulldecl, ErrorIfdoesnt);
 
 	// clean up//
 	Clear();

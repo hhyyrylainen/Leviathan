@@ -13,17 +13,21 @@ namespace Leviathan{
 	class ExceptionInvalidArguement : public ExceptionBase{
 	public:
 		DLLEXPORT ExceptionInvalidArguement::ExceptionInvalidArguement(const wstring &message, int val, const wstring& sourcefunction, 
-			const wstring &InvalidArg);
+			const wstring &InvalidArg, const wstring &invalidvalue);
 		DLLEXPORT ExceptionInvalidArguement::ExceptionInvalidArguement(const ExceptionInvalidArguement &other);
 		DLLEXPORT ExceptionInvalidArguement::~ExceptionInvalidArguement();
 
 		DLLEXPORT wstring* GetInvalidAsPtr();
 		DLLEXPORT wstring GetInvalid() const;
 
+		DLLEXPORT wstring* GetInvalidValueAsPtr();
+		DLLEXPORT wstring GetInvalidAsWstring() const;
+
 		DLLEXPORT void PrintToLog() const;
 	protected:
 		// specific to this exception //
 		unique_ptr<wstring> InvalidParameter;
+		unique_ptr<wstring> VisualizedValue;
 
 	};
 

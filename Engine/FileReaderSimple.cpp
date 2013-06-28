@@ -18,7 +18,7 @@ DLLEXPORT Leviathan::FileReaderSimple::FileReaderSimple(const wstring& source, U
 	// open reader //
 	if(!OpenFileForReading()){
 		EndOfFileReached = true;
-		throw ExceptionInvalidArguement(L"could not read file", 0, __WFUNCTION__,L"source(\""+SourceFile+L"\")");
+		throw ExceptionInvalidArguement(L"could not read file", 0, __WFUNCTION__,L"source(\""+SourceFile+L"\")", SourceFile);
 		return;
 	}
 	IsFileOpen = true;
@@ -211,7 +211,7 @@ bool Leviathan::FileReaderSimple::LoadFileSection(int index) throw(...){
 	// find right index //
 	ARR_INDEX_CHECKINV(index, (int)FileIndexBlocks.size()){
 		// invalid index //
-		throw ExceptionInvalidArguement(L"Invalid index", index, __WFUNCTION__, L"index");
+		throw ExceptionInvalidArguement(L"Invalid index", index, __WFUNCTION__, L"index", Convert::ToWstring<int>(index));
 	}
 
 	FileBlock* tempptr = FileIndexBlocks[index].get();

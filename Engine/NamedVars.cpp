@@ -50,7 +50,7 @@ DLLEXPORT Leviathan::NamedVar::NamedVar(wstring &line, vector<IntWstring*>* spec
 
 	if(name->size() < 1){
 		// no name //
-		throw ExceptionInvalidArguement(L"invalid name", name->size(), __WFUNCSIG__, L"line");
+		throw ExceptionInvalidArguement(L"invalid name", name->size(), __WFUNCSIG__, L"line", line);
 	}
 
 	// get last part of it //
@@ -58,7 +58,7 @@ DLLEXPORT Leviathan::NamedVar::NamedVar(wstring &line, vector<IntWstring*>* spec
 
 	if(tempvar->size() < 1){
 		// no variable //
-		throw ExceptionInvalidArguement(L"no variable", tempvar->size(), __WFUNCSIG__, L"line");
+		throw ExceptionInvalidArguement(L"no variable", tempvar->size(), __WFUNCSIG__, L"line", line);
 	}
 	// remove leading spaces //
 	Misc::WstringRemovePreceedingTrailingSpaces(*tempvar);

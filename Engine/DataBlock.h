@@ -22,7 +22,7 @@
 namespace Leviathan{
 
 	// testing function (for some purpose) //
-	bool DataBlockTestVerifier(const int &tests);
+	DLLEXPORT bool DataBlockTestVerifier(const int &tests);
 
 	// forward declaration //
 	template<class DBlockT> class DataBlock;
@@ -133,12 +133,16 @@ namespace Leviathan{
 
 			Type = DATABLOCK_TYPE_ERROR;
 		}
-		DLLEXPORT DataBlock(const DBlockT &blockvalue){
+		DLLEXPORT DataBlock(const DBlockT &val) : Value(new DBlockT(val)){
 
 			// use templates to get type //
 			Type = DataBlockNameResolver<DBlockT>::TVal;
 		}
+		DLLEXPORT DataBlock(DBlockT* val) : Value(val){
 
+			// use templates to get type //
+			Type = DataBlockNameResolver<DBlockT>::TVal;
+		}
 		DLLEXPORT virtual ~DataBlock(){
 			// erase memory //
 			SAFE_DELETE(Value);

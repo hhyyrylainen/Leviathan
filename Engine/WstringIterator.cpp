@@ -243,7 +243,7 @@ DLLEXPORT Object* Leviathan::WstringIterator::StartIterating(IteratorWstrCallBac
 
 			if(retval == ITERATORCALLBACK_RETURNTYPE_STOP){
 				// try moving to next character //
-				IteratorPosition++;
+				//IteratorPosition++;
 				break;
 			}
 		}
@@ -254,7 +254,7 @@ DLLEXPORT Object* Leviathan::WstringIterator::StartIterating(IteratorWstrCallBac
 
 			if(retval == ITERATORCALLBACK_RETURNTYPE_STOP){
 				// try moving to next character //
-				IteratorPosition++;
+				//IteratorPosition++;
 				break;
 			}
 		}
@@ -869,13 +869,16 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilSpecificCharacter(Wst
 		DEBUG_BREAK;
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
-	// always set start pos, unless set already //
-	if(tmpdata->Positions.X == -1){
-		tmpdata->Positions.X = instance->IteratorPosition;
-	}
+	// set start pos if not on invalid character //
+
 
 	// we can just return if we are inside a string //
 	if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_INSIDE_STRING)){
+		// valid character set start if not already set //
+		if(tmpdata->Positions.X == -1){
+			tmpdata->Positions.X = instance->IteratorPosition;
+		}
+
 		// can't find specific character inside a string //
 		return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 	}
@@ -883,11 +886,26 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilSpecificCharacter(Wst
 	// check for found character //
 	if(instance->GetCharacterAtPos(instance->IteratorPosition) == (wchar_t)parameters){
 		// skip if ignoring special characters //
-		if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL))
+		if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL)){
+			// valid character set start if not already set //
+			if(tmpdata->Positions.X == -1){
+				tmpdata->Positions.X = instance->IteratorPosition;
+			}
 			return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+		}
+
+		if(tmpdata->Positions.X == -1){
+			// we haven't started yet, skip //
+			return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+		}
+
 		// found character, set last char as the one before this position //
 		tmpdata->Positions.Y = instance->IteratorPosition-1;
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
+	}
+	// valid character set start if not already set //
+	if(tmpdata->Positions.X == -1){
+		tmpdata->Positions.X = instance->IteratorPosition;
 	}
 	// just continue //
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;

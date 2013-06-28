@@ -1055,7 +1055,7 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wst
 		reader.close();
 		return;
 	}
-	throw ExceptionInvalidArguement(L"cannot read given file", GetLastError(), __WFUNCTION__, L"file");
+	throw ExceptionInvalidArguement(L"cannot read given file", GetLastError(), __WFUNCTION__, L"file", file);
 }
 
 vector<CharWithIndex*> Leviathan::FileSystem::ScriptIndexes;

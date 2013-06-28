@@ -341,14 +341,12 @@ int Leviathan::Gui::TextLabel::OnEvent(Event** pEvent){
 			if(Scripting->Script->Instructions.size() < 1)
 				return 0;
 
-			vector<shared_ptr<ScriptNamedArguement>> Params;
-			Params.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"Source", new IntBlock((*(Int2*)(*pEvent)->Data)[0]), 
-				DATABLOCK_TYPE_INT, false, true)));
-			Params.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"InstanceID", new IntBlock(this->ID),
-				DATABLOCK_TYPE_INT, false, true)));
+			vector<shared_ptr<NamedVariableBlock>> Params;
+			Params.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock((*(Int2*)(*pEvent)->Data)[0]), L"Source")));
+			Params.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(this->ID), L"InstanceID")));
 
 			bool existed = false;
-			shared_ptr<ScriptArguement> returned = ScriptInterface::Get()->ExecuteIfExistsScript(Scripting.get(), L"OnHide", Params, existed, false);
+			shared_ptr<VariableBlock> returned = ScriptInterface::Get()->ExecuteIfExistsScript(Scripting.get(), L"OnHide", Params, existed, false);
 
 			// check did it exist //
 			if(!existed){
@@ -356,7 +354,7 @@ int Leviathan::Gui::TextLabel::OnEvent(Event** pEvent){
 				return 0;
 			}
 			// script's exit value //
-			int Value(*(int*)(*returned.get()));
+			int Value(*returned.get());
 			return Value;
 		}
 	break;
@@ -369,14 +367,12 @@ int Leviathan::Gui::TextLabel::OnEvent(Event** pEvent){
 			if(Scripting->Script->Instructions.size() < 1)
 				return 0;
 
-			vector<shared_ptr<ScriptNamedArguement>> Params;
-			Params.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"Source", new IntBlock((*(Int2*)(*pEvent)->Data)[0]), 
-				DATABLOCK_TYPE_INT, false, true)));
-			Params.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"InstanceID", new IntBlock(this->ID),
-				DATABLOCK_TYPE_INT, false, true)));
+			vector<shared_ptr<NamedVariableBlock>> Params;
+			Params.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock((*(Int2*)(*pEvent)->Data)[0]), L"Source")));
+			Params.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(this->ID), L"InstanceID")));
 
 			bool existed = false;
-			shared_ptr<ScriptArguement> returned = ScriptInterface::Get()->ExecuteIfExistsScript(Scripting.get(), L"OnShow", Params, existed, false);
+			shared_ptr<VariableBlock> returned = ScriptInterface::Get()->ExecuteIfExistsScript(Scripting.get(), L"OnHide", Params, existed, false);
 
 			// check did it exist //
 			if(!existed){
@@ -384,7 +380,7 @@ int Leviathan::Gui::TextLabel::OnEvent(Event** pEvent){
 				return 0;
 			}
 			// script's exit value //
-			int Value(*(int*)(*returned.get()));
+			int Value(*returned.get());
 			return Value;
 		}
 	break;

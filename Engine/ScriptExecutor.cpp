@@ -70,7 +70,7 @@ bool ScriptExecutor::Release(){
 	return true;
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<ScriptArguement> Leviathan::ScriptExecutor::RunScript(ScriptScript* script, vector<shared_ptr<ScriptNamedArguement>> parameters, 
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunScript(ScriptScript* script, vector<shared_ptr<NamedVariableBlock>> parameters, 
 	bool printerrors, const wstring &entrance, bool &existsreceiver, bool ErrorIfdoesnt /*= true*/, bool fulldecl /*= false*/, 
 	int runtype /*= SCRIPT_EXECUTOR_RUNTYPE_BREAKONERROR*/)
 {
@@ -79,18 +79,18 @@ DLLEXPORT shared_ptr<ScriptArguement> Leviathan::ScriptExecutor::RunScript(Scrip
 
 	SetBehavior(printerrors, runtype);
 	// run //
-	shared_ptr<ScriptArguement> returnarg = RunSetUp(entrance, fulldecl, ErrorIfdoesnt);
+	shared_ptr<VariableBlock> returnarg = RunSetUp(entrance, fulldecl, ErrorIfdoesnt);
 
 	// clean up//
 	Clear();
 	return returnarg;
 }
 
-shared_ptr<ScriptArguement> ScriptExecutor::RunSetUp(const wstring &entrance, bool &existsreceiver, bool fulldecl, bool ErrorIfdoesnt){
+shared_ptr<VariableBlock> ScriptExecutor::RunSetUp(const wstring &entrance, bool &existsreceiver, bool fulldecl, bool ErrorIfdoesnt){
 	// check data validness //
 	if(RunningScripts == NULL){
 		Logger::Get()->Error(L"ScriptExecutor: RunSetUp: no script to run!");
-		return shared_ptr<ScriptArguement>(new ScriptArguement(NULL, DATABLOCK_TYPE_INT, true));
+		return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(NULL)));
 	}
 
 	// run script //
@@ -104,31 +104,31 @@ shared_ptr<ScriptArguement> ScriptExecutor::RunSetUp(const wstring &entrance, bo
 				+e.Message+L" action "+Convert::IntToWstring(e.ActionValue)+L" from "+e.Source);
 		}
 		Errors.push_back(new ScriptException(e));
-		return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
+		return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 	}
 	catch (exception &e){
 		
 		Logger::Get()->Error(L"ScriptExecutor:  exception : "+Convert::StringToWstringNonRef(e.what()), true);
 
-		return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
+		return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 	}
 	catch (string &e){
 		
 		Logger::Get()->Error(L"ScriptExecutor:  exception : "+Convert::StringToWstring(e), true);
 
-		return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
+		return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 	}
 	catch (int e){
 		
 		Logger::Get()->Error(L"ScriptExecutor:  exception : "+Convert::ToWstring(e), true);
 
-		return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
+		return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 	}
 	catch (...){
 		
 		Logger::Get()->Error(L"ScriptExecutor:  exception : UNKOWN EXCEPTION, MIGHT BE FATAL ERROR!", true);
 
-		return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
+		return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 	}
 }
 // ------------------------------------ //
@@ -139,7 +139,7 @@ void ScriptExecutor::SetBehavior(bool printerrors, int runtype){
 	PrintErrors = printerrors;
 	RunType = runtype;
 }
-DLLEXPORT void Leviathan::ScriptExecutor::SetParameters(vector<shared_ptr<ScriptNamedArguement>> parameters){
+DLLEXPORT void Leviathan::ScriptExecutor::SetParameters(vector<shared_ptr<NamedVariableBlock>> parameters){
 	Parameters = parameters;
 }
 
@@ -156,11 +156,11 @@ void ScriptExecutor::Clear(){
 	}
 }
 // ------------------------------------ //
-shared_ptr<ScriptArguement> ScriptExecutor::RunScript(const wstring &start, bool &existsreceiver, bool fulldecl, bool ErrorIfdoesnt){
+shared_ptr<VariableBlock> ScriptExecutor::RunScript(const wstring &start, bool &existsreceiver, bool fulldecl, bool ErrorIfdoesnt){
 	// check validness //
 	if(RunningScripts->Instructions.size() < 1){
 		Logger::Get()->Error(L"ScriptExecutor: RunScript No instructions inside script name: "+RunningScripts->Name, true);
-		return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
+		return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 	}
 
 	// load script //
@@ -169,7 +169,7 @@ shared_ptr<ScriptArguement> ScriptExecutor::RunScript(const wstring &start, bool
 	if(Module == NULL){
 		// report error and exit //
 		Logger::Get()->Error(L"ScriptExecutor: RunScript: Failed to compile script "+RunningScripts->Name, true);
-		return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
+		return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 	}
 
 	// run script //
@@ -177,7 +177,7 @@ shared_ptr<ScriptArguement> ScriptExecutor::RunScript(const wstring &start, bool
 	if(ScriptContext == NULL){
 		Logger::Get()->Error(L"ScriptExecutor: RunScript: Failed to create context for script: "+RunningScripts->Name, true);
 		SAFE_RELEASE(ScriptContext);
-		return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
+		return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 	}
 
 	// run scripts //
@@ -195,11 +195,11 @@ shared_ptr<ScriptArguement> ScriptExecutor::RunScript(const wstring &start, bool
 			// set exists state //
 			existsreceiver = false;
 
-			return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
+			return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 		} else {
 			// set exists state //
 			existsreceiver = false;
-			return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000802), DATABLOCK_TYPE_INT, true));
+			return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 		}
 	}
 	// set exists state //
@@ -208,7 +208,7 @@ shared_ptr<ScriptArguement> ScriptExecutor::RunScript(const wstring &start, bool
 	if(ScriptContext->Prepare(func) < 0){
 		Logger::Get()->Error(L"ScriptExecutor: RunScript: prepare context failed func: "+start+L" in:"+RunningScripts->Name, true);
 		SAFE_RELEASE(ScriptContext);
-		return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
+		return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 	}
 
 	// pass arguments // // figure out if arguments match function declaration //
@@ -225,14 +225,14 @@ shared_ptr<ScriptArguement> ScriptExecutor::RunScript(const wstring &start, bool
 		bool l_error = false;
 
 		// check for matching types //
-		if(paraminfo->MatchingDataBlockTypes[i] != Parameters[i]->Type){
+		if(paraminfo->MatchingDataBlockTypes[i] != Parameters[i]->GetBlock()->Type){
 			// damn //
 			// check if they are compatible //
 			l_error = true;
 		}
 		if(l_error){
 			Logger::Get()->Error(L"ScriptExecutor: RunScript: pass parameters failed in func: "+start+L" named: "+RunningScripts->Name+L" param number: "+Convert::IntToWstring(i), i, true);
-			return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000804), DATABLOCK_TYPE_INT, true));
+			return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 		}
 		// pass //
 		switch(paraminfo->MatchingDataBlockTypes[i]){
@@ -284,32 +284,32 @@ shared_ptr<ScriptArguement> ScriptExecutor::RunScript(const wstring &start, bool
 				L" line: "+Convert::ToWstring(ScriptContext->GetExceptionLineNumber()));
 		}
 		SAFE_RELEASE(ScriptContext);
-		return shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(80000800), DATABLOCK_TYPE_INT, true));
+		return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(80000800)));
 	}
 	// successfully executed, try to fetch return value //
-	shared_ptr<ScriptArguement> retrval;
+	shared_ptr<VariableBlock> retrval;
 
 	if(paraminfo->ReturnTypeID != 0){
 		// return type isn't void //
 		switch(paraminfo->ReturnMatchingDataBlock){
 		case DATABLOCK_TYPE_INT:
 			{
-				retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new IntBlock(ScriptContext->GetReturnDWord()), DATABLOCK_TYPE_INT, true));
+				retrval = shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(ScriptContext->GetReturnDWord())));
 			}
 			break;
 		case DATABLOCK_TYPE_FLOAT:
 			{
-				retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new FloatBlock(ScriptContext->GetReturnFloat()), DATABLOCK_TYPE_FLOAT, true));
+				retrval = shared_ptr<VariableBlock>(new VariableBlock(new FloatBlock(ScriptContext->GetReturnFloat())));
 			}
 			break;
 		case DATABLOCK_TYPE_BOOL:
 			{
-				retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new BoolBlock((bool)ScriptContext->GetReturnByte() != 0), DATABLOCK_TYPE_BOOL, true));
+				retrval = shared_ptr<VariableBlock>(new VariableBlock(new BoolBlock(ScriptContext->GetReturnByte() != 0)));
 			}
 			break;
 		default:
 			{
-				retrval = shared_ptr<ScriptArguement>(new ScriptArguement(new WstringBlock(L"Return type not supported"), DATABLOCK_TYPE_BOOL, true));
+				retrval = shared_ptr<VariableBlock>(new VariableBlock(new WstringBlock(L"Return type not supported")));
 				Logger::Get()->Info(L"[SCRIPT] return type not supported"+Convert::StringToWstring(paraminfo->ReturnTypeDeclaration));
 			}
 		}

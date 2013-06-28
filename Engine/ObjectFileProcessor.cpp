@@ -144,9 +144,8 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 				inlscript->Instructions = L"void Do(int Line){\n"+scriptinstructions+L"\nreturn;\n}";
 				inlscript->Source = L"inline on file: "+file+L" on line: "+Convert::IntToWstring(Line);
 
-				vector<shared_ptr<ScriptNamedArguement>> Args;
-				Args.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"FileLine", new IntBlock(Line), DATABLOCK_TYPE_INT, 
-					false, true)));
+				vector<shared_ptr<NamedVariableBlock>> Args;
+				Args.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(Line), L"FileLine")));
 
 				ScriptInterface::Get()->ExecuteScript(inlscript.get(), L"void Do(int Line)", Args, true);
 

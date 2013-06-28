@@ -1133,11 +1133,9 @@ void GuiManager::ActivateCollection(int id, bool exclusive){
 	}
 	// call script //
 	if(Collections[index]->Scripting->Script->Instructions.size() > 1){
-		vector<shared_ptr<ScriptNamedArguement>> parameters;
-		parameters.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"source", new IntBlock(EVENT_SOURCE_MANAGER), 
-			DATABLOCK_TYPE_INT, false, true)));
-		parameters.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"Instance", new IntBlock(Collections[index]->ID), 
-			DATABLOCK_TYPE_INT, false, true)));
+		vector<shared_ptr<NamedVariableBlock>> parameters;
+		parameters.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(EVENT_SOURCE_MANAGER), L"source")));
+		parameters.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(Collections[index]->ID), L"Instance")));
 
 		bool existed = false;
 		ScriptInterface::Get()->ExecuteIfExistsScript(Collections[index]->Scripting.get(), L"OnEnable", parameters, existed, false);
@@ -1177,14 +1175,12 @@ void GuiManager::DisableCollection(int id, bool fast){
 	}
 	// call script //
 	if(Collections[index]->Scripting->Script->Instructions.size() > 1){
-		vector<shared_ptr<ScriptNamedArguement>> parameters;
-		parameters.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"source", new IntBlock(EVENT_SOURCE_MANAGER), 
-			DATABLOCK_TYPE_INT, false, true)));
-		parameters.push_back(shared_ptr<ScriptNamedArguement>(new ScriptNamedArguement(L"Instance", new IntBlock(Collections[index]->ID), 
-			DATABLOCK_TYPE_INT, false, true)));
+		vector<shared_ptr<NamedVariableBlock>> parameters;
+		parameters.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(EVENT_SOURCE_MANAGER), L"source")));
+		parameters.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(Collections[index]->ID), L"Instance")));
 
 		bool existed = false;
-		ScriptInterface::Get()->ExecuteIfExistsScript(Collections[index]->Scripting.get(), L"OnDisable", parameters, existed, false);
+		ScriptInterface::Get()->ExecuteIfExistsScript(Collections[index]->Scripting.get(), L"OnEnable", parameters, existed, false);
 	}
 
 	Collections[index]->Visible = false;

@@ -22,6 +22,15 @@ bool Leviathan::DataBlockTestVerifier(const int &tests){
 		Failed = true;
 	}
 
+	VariableBlock vblock(new IntBlock(TEST_IVALUE_INDBLOCKS));
+
+	gotvalue = vblock;
+
+	if(gotvalue != TEST_IVALUE_INDBLOCKS){
+
+		QUICK_ERROR_MESSAGE;
+		Failed = true;
+	}
 
 	// check fail state //
 	if(Failed){

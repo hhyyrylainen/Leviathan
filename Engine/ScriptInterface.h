@@ -11,8 +11,6 @@
 
 #include "ScriptScript.h"
 #include "ScriptObject.h"
-#include "ScriptCaller.h"
-
 #include "ScriptExecutor.h"
 
 
@@ -33,14 +31,14 @@ namespace Leviathan{
 		DLLEXPORT int SearchScript(const wstring &name, ScriptObject* obj = NULL);
 		DLLEXPORT int RunManagedScript(size_t index);
 
-		DLLEXPORT shared_ptr<ScriptArguement> ExecuteScript(ScriptScript* obj, const wstring &entrypoint, 
-			vector<shared_ptr<ScriptNamedArguement>> Parameters, bool FullDecl = false);
-		DLLEXPORT shared_ptr<ScriptArguement> ExecuteIfExistsScript(ScriptScript* obj, const wstring &entrypoint, 
-			vector<shared_ptr<ScriptNamedArguement>> Parameters, bool &existreceiver, bool FullDecl = false);
-		DLLEXPORT shared_ptr<ScriptArguement> ExecuteScript(ScriptObject* obj, const wstring &entrypoint, 
-			vector<shared_ptr<ScriptNamedArguement>> Parameters, bool FullDecl = false);
-		DLLEXPORT shared_ptr<ScriptArguement> ExecuteIfExistsScript(ScriptObject* obj, const wstring &entrypoint, 
-			vector<shared_ptr<ScriptNamedArguement>> Parameters, bool &existreceiver, bool FullDecl = false);
+		DLLEXPORT shared_ptr<VariableBlock> ExecuteScript(ScriptScript* obj, const wstring &entrypoint, 
+			vector<shared_ptr<NamedVariableBlock>> Parameters, bool FullDecl = false);
+		DLLEXPORT shared_ptr<VariableBlock> ExecuteIfExistsScript(ScriptScript* obj, const wstring &entrypoint, 
+			vector<shared_ptr<NamedVariableBlock>> Parameters, bool &existreceiver, bool FullDecl = false);
+		DLLEXPORT shared_ptr<VariableBlock> ExecuteScript(ScriptObject* obj, const wstring &entrypoint, 
+			vector<shared_ptr<NamedVariableBlock>> Parameters, bool FullDecl = false);
+		DLLEXPORT shared_ptr<VariableBlock> ExecuteIfExistsScript(ScriptObject* obj, const wstring &entrypoint, 
+			vector<shared_ptr<NamedVariableBlock>> Parameters, bool &existreceiver, bool FullDecl = false);
 
 		DLLEXPORT static ScriptInterface* Get();
 	private:

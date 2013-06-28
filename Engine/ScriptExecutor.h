@@ -7,11 +7,9 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "ScriptException.h"
-#include "ScriptArguement.h"
-#include "ScriptCaller.h"
 #include "ScriptScript.h"
-#include "ScriptArguement.h"
-#include "ScriptVariableHolder.h"
+
+#include "DataBlock.h"
 
 #include <angelscript.h>
 
@@ -83,18 +81,18 @@ namespace Leviathan{
 		DLLEXPORT bool Release();
 
 		// script running commands //
-		DLLEXPORT shared_ptr<ScriptArguement> RunScript(ScriptScript* script, vector<shared_ptr<ScriptNamedArguement>> parameters, bool printerrors, 
+		DLLEXPORT shared_ptr<VariableBlock> RunScript(ScriptScript* script, vector<shared_ptr<NamedVariableBlock>> parameters, bool printerrors, 
 			const wstring &entrance, bool &existsreceiver, bool ErrorIfdoesnt = true, bool fulldecl = false, int runtype = SCRIPT_EXECUTOR_RUNTYPE_BREAKONERROR);
 
-		DLLEXPORT shared_ptr<ScriptArguement> RunSetUp(const wstring &entrance, bool &existsreceiver, bool fulldecl = false, bool ErrorIfdoesnt = true);
+		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(const wstring &entrance, bool &existsreceiver, bool fulldecl = false, bool ErrorIfdoesnt = true);
 
 		// data binding commands //
 		DLLEXPORT void SetScript(ScriptScript* script);
-		DLLEXPORT void SetParameters(vector<shared_ptr<ScriptNamedArguement>> parameters);
+		DLLEXPORT void SetParameters(vector<shared_ptr<NamedVariableBlock>> parameters);
 		DLLEXPORT void SetBehavior(bool printerrors, int runtype = SCRIPT_EXECUTOR_RUNTYPE_BREAKONERROR);
 		DLLEXPORT void Clear();
 	private:
-		shared_ptr<ScriptArguement> RunScript(const wstring &start, bool &existsreceiver, bool fulldecl = false, bool ErrorIfdoesnt = true);
+		shared_ptr<VariableBlock> RunScript(const wstring &start, bool &existsreceiver, bool fulldecl = false, bool ErrorIfdoesnt = true);
 		int CallGlobalFunction(const wstring &name, const wstring &unparsedargs);
 
 		asIScriptModule* LoadScript(ScriptScript* script, ScriptModule** fetchmodule);
@@ -107,7 +105,7 @@ namespace Leviathan{
 		vector<ScriptModule*> Modules;
 		// ------------------------------ //
 		ScriptScript* RunningScripts;
-		vector<shared_ptr<ScriptNamedArguement>> Parameters;
+		vector<shared_ptr<NamedVariableBlock>> Parameters;
 
 
 		vector<ScriptException*> Errors;

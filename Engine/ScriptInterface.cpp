@@ -95,28 +95,28 @@ int Leviathan::ScriptInterface::RunManagedScript(size_t index){
 
 
 // ------------------------------------ //
-DLLEXPORT shared_ptr<ScriptArguement> Leviathan::ScriptInterface::ExecuteScript(ScriptScript* obj, const wstring &entrypoint, 
-	vector<shared_ptr<ScriptNamedArguement>> Parameters, bool FullDecl /*= false*/)
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptInterface::ExecuteScript(ScriptScript* obj, const wstring &entrypoint, 
+	vector<shared_ptr<NamedVariableBlock>> Parameters, bool FullDecl /*= false*/)
 {
 	bool exists = false;
 	// run script //
 	return ScriptRunner->RunScript(obj, Parameters, true, entrypoint, exists, true, FullDecl);
 }
-DLLEXPORT shared_ptr<ScriptArguement> Leviathan::ScriptInterface::ExecuteScript(ScriptObject* obj, const wstring &entrypoint, 
-	vector<shared_ptr<ScriptNamedArguement>> Parameters, bool FullDecl /*= false*/)
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptInterface::ExecuteScript(ScriptObject* obj, const wstring &entrypoint, 
+	vector<shared_ptr<NamedVariableBlock>> Parameters, bool FullDecl /*= false*/)
 {
 	// run script //
 	return ExecuteScript(obj->Script.get(), entrypoint, Parameters, FullDecl);
 }
 
-DLLEXPORT shared_ptr<ScriptArguement> Leviathan::ScriptInterface::ExecuteIfExistsScript(ScriptScript* obj, const wstring &entrypoint, 
-	vector<shared_ptr<ScriptNamedArguement>> Parameters, bool &existreceiver, bool FullDecl /*= false*/)
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptInterface::ExecuteIfExistsScript(ScriptScript* obj, const wstring &entrypoint, 
+	vector<shared_ptr<NamedVariableBlock>> Parameters, bool &existreceiver, bool FullDecl /*= false*/)
 {
 	// run script if exists function //
 	return ScriptRunner->RunScript(obj, Parameters, true, entrypoint, existreceiver, false, FullDecl);
 }
-DLLEXPORT shared_ptr<ScriptArguement> Leviathan::ScriptInterface::ExecuteIfExistsScript(ScriptObject* obj, const wstring &entrypoint, 
-	vector<shared_ptr<ScriptNamedArguement>> Parameters, bool &existreceiver, bool FullDecl /*= false*/)
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptInterface::ExecuteIfExistsScript(ScriptObject* obj, const wstring &entrypoint, 
+	vector<shared_ptr<NamedVariableBlock>> Parameters, bool &existreceiver, bool FullDecl /*= false*/)
 {
 	// run script if exists function //
 	return ExecuteIfExistsScript(obj->Script.get(), entrypoint, Parameters, existreceiver, FullDecl);

@@ -13,6 +13,7 @@
 #include "Key.h"
 #include "AppDefine.h"
 #include "DataStore.h"
+#include "DataBlock.h"
 #include "BaseGuiObject.h"
 
 #include "GuiKeyListener.h"

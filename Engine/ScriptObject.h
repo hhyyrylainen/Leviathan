@@ -8,7 +8,6 @@
 // ---- includes ---- //
 #include "ScriptList.h"
 #include "ScriptScript.h"
-#include "ScriptVariableHolder.h"
 
 namespace Leviathan{
 
@@ -17,10 +16,6 @@ namespace Leviathan{
 		DLLEXPORT ScriptObject::ScriptObject();
 		DLLEXPORT ScriptObject::ScriptObject(wstring name, int basetype, int type, wstring typenam);
 		DLLEXPORT ScriptObject::~ScriptObject();
-
-
-
-		//DLLEXPORT bool ContainsScript(wstring name); doesn't work anymore
 
 		int BaseType;
 		wstring Name;
@@ -33,10 +28,6 @@ namespace Leviathan{
 
 		//vector<ScriptScript*> Scripts;
 		shared_ptr<ScriptScript> Script;
-		vector<shared_ptr<ScriptVariableHolder>> Varss;
-
-
-
 	};
 
 }

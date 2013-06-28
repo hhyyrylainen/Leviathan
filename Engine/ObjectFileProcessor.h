@@ -11,6 +11,7 @@
 #include "TimingMonitor.h"
 #include "WstringIterator.h"
 #include "LineTokenizer.h"
+#include "DataBlock.h"
 
 namespace Leviathan{
 

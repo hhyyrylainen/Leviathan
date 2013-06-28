@@ -204,8 +204,6 @@
     <ClCompile Include="Rendering\ShaderManager.cpp" />
     <ClCompile Include="ResolutionScaling.cpp" />
     <ClCompile Include="RSAEncryption.cpp" />
-    <ClCompile Include="ScriptArguement.cpp" />
-    <ClCompile Include="ScriptCaller.cpp" />
     <ClCompile Include="ScriptException.cpp" />
     <ClCompile Include="ScriptExecutor.cpp" />
     <ClCompile Include="ScriptInterface.cpp" />
@@ -213,7 +211,6 @@
     <ClCompile Include="ScriptObject.cpp" />
     <ClCompile Include="ScriptScript.cpp" />
     <ClCompile Include="ScriptVariable.cpp" />
-    <ClCompile Include="ScriptVariableHolder.cpp" />
     <ClCompile Include="SkeletonBone.cpp" />
     <ClCompile Include="SkeletonRig.cpp" />
     <ClCompile Include="SmoothedPosition.cpp" />
@@ -337,8 +334,6 @@
     <ClInclude Include="Rendering\ShaderManager.h" />
     <ClInclude Include="ResolutionScaling.h" />
     <ClInclude Include="RSAEncryption.h" />
-    <ClInclude Include="ScriptArguement.h" />
-    <ClInclude Include="ScriptCaller.h" />
     <ClInclude Include="ScriptException.h" />
     <ClInclude Include="ScriptExecutor.h" />
     <ClInclude Include="ScriptInterface.h" />
@@ -346,7 +341,6 @@
     <ClInclude Include="ScriptObject.h" />
     <ClInclude Include="ScriptScript.h" />
     <ClInclude Include="ScriptVariable.h" />
-    <ClInclude Include="ScriptVariableHolder.h" />
     <ClInclude Include="SkeletonBone.h" />
     <ClInclude Include="SkeletonRig.h" />
     <ClInclude Include="SmoothedPosition.h" />

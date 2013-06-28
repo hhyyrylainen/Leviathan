@@ -234,16 +234,7 @@
     <ClCompile Include="ScriptScript.cpp">
       <Filter>Script</Filter>
     </ClCompile>
-    <ClCompile Include="ScriptVariableHolder.cpp">
-      <Filter>Script</Filter>
-    </ClCompile>
     <ClCompile Include="ScriptVariable.cpp">
-      <Filter>Script</Filter>
-    </ClCompile>
-    <ClCompile Include="ScriptCaller.cpp">
-      <Filter>Script</Filter>
-    </ClCompile>
-    <ClCompile Include="ScriptArguement.cpp">
       <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="ScriptException.cpp">
@@ -257,9 +248,6 @@
     </ClCompile>
     <ClCompile Include="TextLabel.cpp">
       <Filter>gui\components\Label</Filter>
-    </ClCompile>
-    <ClCompile Include="DataBlock.cpp">
-      <Filter>utility</Filter>
     </ClCompile>
     <ClCompile Include="DDsHandler.cpp">
       <Filter>utility</Filter>
@@ -495,6 +483,9 @@
     <ClCompile Include="Rendering\ViewCamera.cpp">
       <Filter>rendering\render objects</Filter>
     </ClCompile>
+    <ClCompile Include="DataBlock.cpp">
+      <Filter>core\helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">
@@ -624,16 +615,7 @@
     <ClInclude Include="ScriptScript.h">
       <Filter>Script</Filter>
     </ClInclude>
-    <ClInclude Include="ScriptVariableHolder.h">
-      <Filter>Script</Filter>
-    </ClInclude>
     <ClInclude Include="ScriptVariable.h">
-      <Filter>Script</Filter>
-    </ClInclude>
-    <ClInclude Include="ScriptCaller.h">
-      <Filter>Script</Filter>
-    </ClInclude>
-    <ClInclude Include="ScriptArguement.h">
       <Filter>Script</Filter>
     </ClInclude>
     <ClInclude Include="ScriptException.h">
@@ -647,9 +629,6 @@
     </ClInclude>
     <ClInclude Include="TextLabel.h">
       <Filter>gui\components\Label</Filter>
-    </ClInclude>
-    <ClInclude Include="DataBlock.h">
-      <Filter>utility</Filter>
     </ClInclude>
     <ClInclude Include="DDsHandler.h">
       <Filter>utility</Filter>
@@ -893,6 +872,9 @@
     </ClInclude>
     <ClInclude Include="Rendering\ViewCamera.h">
       <Filter>rendering\render objects</Filter>
+    </ClInclude>
+    <ClInclude Include="DataBlock.h">
+      <Filter>core\helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

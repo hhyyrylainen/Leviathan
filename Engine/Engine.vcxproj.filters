@@ -123,9 +123,6 @@
     <ClCompile Include="Misc.cpp">
       <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="Convert.cpp">
-      <Filter>utility</Filter>
-    </ClCompile>
     <ClCompile Include="Timer.cpp">
       <Filter>utility</Filter>
     </ClCompile>
@@ -486,6 +483,9 @@
     <ClCompile Include="DataBlock.cpp">
       <Filter>core\helpers</Filter>
     </ClCompile>
+    <ClCompile Include="Convert.cpp">
+      <Filter>core\helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">
@@ -498,9 +498,6 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="LeviathanMainDll.h" />
-    <ClInclude Include="Convert.h">
-      <Filter>utility</Filter>
-    </ClInclude>
     <ClInclude Include="Timer.h">
       <Filter>utility</Filter>
     </ClInclude>
@@ -874,6 +871,9 @@
       <Filter>rendering\render objects</Filter>
     </ClInclude>
     <ClInclude Include="DataBlock.h">
+      <Filter>core\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="Convert.h">
       <Filter>core\helpers</Filter>
     </ClInclude>
   </ItemGroup>

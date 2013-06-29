@@ -8,6 +8,8 @@
 // ---- includes ---- //
 namespace Leviathan{
 
+#define STRINGTOSOMETHINGTEMPLATEALTERNATIVE(StringyType, strstreamt, funcname, totype) DLLEXPORT static inline totype funcname(const StringyType &str){totype tempval; strstreamt stream;stream.str(str.c_str());stream >> tempval;return tempval;}
+	
 	class Convert{
 	public:
 		//DLLEXPORT static string ToAscii( std::wstring& input );
@@ -24,9 +26,34 @@ namespace Leviathan{
 		DLLEXPORT static wstring StringToWstringNonRef(const string str);
 		DLLEXPORT static string WstringToString(const wstring &str);
 		DLLEXPORT static wstring CharToWstring(const char &i);
-		DLLEXPORT static int WstringToInt(const wstring &i);
+
+
 		DLLEXPORT static int WstringFromBoolToInt(const wstring &i);
-		DLLEXPORT static float WstringToFloat(const wstring &i);
+		DLLEXPORT static int StringFromBoolToInt(const string &i);
+
+		template<class T>
+		DLLEXPORT static inline T WstringTo(const wstring &str){
+			T tempval;
+			wstringstream stream;
+			stream.str(str.c_str());
+			stream >> tempval;
+			return tempval;
+		}
+		template<class T>
+		DLLEXPORT static inline T StringTo(const string &str){
+			T tempval;
+			stringstream stream;
+			stream.str(str.c_str());
+			stream >> tempval;
+			return tempval;
+		}
+
+
+		// macro conversions //
+		STRINGTOSOMETHINGTEMPLATEALTERNATIVE(wstring, wstringstream, WstringToInt, int);
+		STRINGTOSOMETHINGTEMPLATEALTERNATIVE(wstring, wstringstream, WstringToFloat, float);
+
+
 		DLLEXPORT static wchar_t ToLower(const wchar_t &chara);
 
 

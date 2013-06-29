@@ -59,29 +59,21 @@ wstring Convert::CharToWstring(const char &i){
 	replace=wstream.str();
 	return replace;
 }
-int Convert::WstringToInt(const wstring &i){
-	int ret=-1;
-	wstringstream wstream;
-	wstream.str(i.c_str());
-	wstream >> ret;
-	return ret;
-
-}
 int Convert::WstringFromBoolToInt(const wstring &i){
-	if((i.compare(L"true") == 0) | (i.compare(L"True") == 0) | (i.compare(L"TRUE") == 0)){
+	if((i.compare(L"true") == 0) || (i.compare(L"True") == 0) || (i.compare(L"TRUE") == 0) || (i.compare(L"1") == 0)){
+		return true;	
+	} else {
+		return false;
+	}
+}
+int Convert::StringFromBoolToInt(const string &i){
+	if((i.compare("true") == 0) || (i.compare("True") == 0) || (i.compare("TRUE") == 0) || (i.compare("1") == 0)){
 		return true;	
 	} else {
 		return false;
 	}
 }
 
-float Convert::WstringToFloat(const wstring &i){
-	float ret=-1;
-	wstringstream wstream;
-	wstream.str(i.c_str());
-	wstream >> ret;
-	return ret;
-}
 
 wchar_t Convert::ToLower(const wchar_t &chara){
 	int val = (int)chara;

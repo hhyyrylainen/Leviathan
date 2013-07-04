@@ -50,20 +50,44 @@ bool LeviathanApplication::Initialize(HINSTANCE hinstance, HWND hwnd, /*int widt
 	ConstructDefinition();
 
 	// config windowed override reading //
-	if(Defvals->GetValues()->Find(L"Windowed") != -1){
+	try{
 		// override value //
-		int temp = 0;
-		Defvals->GetValues()->GetValue(L"Windowed", temp);
-		windowed = (temp != 0);
+		if(!Defvals->GetValues()->GetValue(L"Windowed").ConvertAndAssingToVariable<bool>(windowed)){
+
+			throw( exception("non casteable"));
+		}
+	}
+	catch(...){
+
+		// didn't succeed in getting value //
+		DEBUG_BREAK;
 	}
 
+	// store window state //
 	Windowed = windowed;
 	
 
 	// get size from configs //
 	int width = 800, height = 600;
-	Defvals->GetValues()->GetValue(L"WindowWidth", width);
-	Defvals->GetValues()->GetValue(L"WindowHeight", height);
+
+	try{
+		// override value //
+		if(!Defvals->GetValues()->GetValue(L"WindowWidth").ConvertAndAssingToVariable<int>(width)){
+
+			throw( exception("non casteable"));
+		}
+
+		// override value //
+		if(!Defvals->GetValues()->GetValue(L"WindowHeight").ConvertAndAssingToVariable<int>(height)){
+
+			throw( exception("non casteable"));
+		}
+	}
+	catch(...){
+
+		// didn't succeed in getting value //
+		DEBUG_BREAK;
+	}
 
 	InternalInit();
 
@@ -78,20 +102,17 @@ bool LeviathanApplication::Initialize(HINSTANCE hinstance,  WNDPROC proc, wstrin
 	ConstructDefinition();
 
 	// config windowed override reading //
-	if(Defvals->GetValues()->Find(L"Windowed") != -1){
-		// override value //
-		int temp = 0;
-		Defvals->GetValues()->GetValue(L"Windowed", temp);
-		windowed = (temp != 0);
-	}
+	ObjectFileProcessor::LoadValueFromNamedVars<bool>(Defvals->GetValues(), L"Windowed", windowed, windowed, false);
 
+	// store window state //
 	Windowed = windowed;
 	
 
 	// get size from configs //
 	int width = 800, height = 600;
-	Defvals->GetValues()->GetValue(L"WindowWidth", width);
-	Defvals->GetValues()->GetValue(L"WindowHeight", height);
+
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(Defvals->GetValues(), L"WindowWidth", width, width, true, L"Application: Initialize:");
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(Defvals->GetValues(), L"WindowHeight", height, height, true, L"Application: Initialize:");
 
 	InternalInit();
 

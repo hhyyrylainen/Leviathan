@@ -75,6 +75,44 @@ int Convert::StringFromBoolToInt(const string &i){
 }
 
 
+DLLEXPORT bool Leviathan::Convert::IsWstringBool(const wstring &val, bool* valreceiver /*= NULL*/){
+	wstring lowercased;
+	Convert::ToLower(val, lowercased);
+
+	if((lowercased.compare(L"true") == 0) || (lowercased.compare(L"1") == 0)){
+
+		// set result if somebody wants it //
+		if(valreceiver != NULL)
+			*valreceiver = true;
+		// was a boolean value //
+		return true;
+	} else if ((lowercased.compare(L"false") == 0) || (lowercased.compare(L"0") == 0)){
+
+		// set result if somebody wants it //
+		if(valreceiver != NULL)
+			*valreceiver = false;
+		// was a boolean value //
+		return true;
+	}
+	// didn't match true/false //
+	return false;
+}
+
+DLLEXPORT void Leviathan::Convert::ToLower(const wstring &source, wstring &target){
+	// make sizes match //
+	target.resize(source.size());
+
+	for(size_t i = 0; i < source.size(); i++){
+		if(source[i] >= L'A' && source[i] <= L'Z'){
+
+			target[i] = 32+(int)source[i];
+		} else {
+			// just copy value //
+			target[i] = source[i];
+		}
+	}
+}
+
 wchar_t Convert::ToLower(const wchar_t &chara){
 	int val = (int)chara;
 

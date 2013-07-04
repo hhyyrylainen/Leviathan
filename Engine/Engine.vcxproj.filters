@@ -486,6 +486,9 @@
     <ClCompile Include="Convert.cpp">
       <Filter>core\helpers</Filter>
     </ClCompile>
+    <ClCompile Include="ExceptionInvalidType.cpp">
+      <Filter>common\Exceptions</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">
@@ -875,6 +878,9 @@
     </ClInclude>
     <ClInclude Include="Convert.h">
       <Filter>core\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ExceptionInvalidType.h">
+      <Filter>common\Exceptions</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

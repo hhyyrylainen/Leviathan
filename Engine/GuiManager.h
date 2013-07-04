@@ -6,7 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#define GOBJECT_TYPE_TEXTLABEL 1
+#define GOBJECT_TYPE_COLLECTION			0
+#define GOBJECT_TYPE_TEXTLABEL			1
 
 #include "ObjectFileProcessor.h"
 
@@ -123,6 +124,8 @@ namespace Leviathan {
 		DLLEXPORT BaseGuiObject* GetObject(unsigned int index);
 
 		DLLEXPORT void ExecuteGuiScript(const wstring &file);
+		// function split into peaces //
+		DLLEXPORT bool LoadCollection(vector<Int2> &membermapping, vector<shared_ptr<ObjectFileObject>> &data, ObjectFileObject &collectiondata);
 		// TODO: actually implement this //
 		DLLEXPORT void WriteGuiToFile(const wstring &file);
 

@@ -126,7 +126,18 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 		return false;
 	}
 
-	def->GetValues()->GetValue(L"MaxFPS", FrameLimit);
+	try{
+		// try to get value, might throw something //
+		if(!def->GetValues()->GetValue(L"MaxFPS").ConvertAndAssingToVariable<int>(FrameLimit)){
+
+			throw exception("cast failed");
+		}
+	}
+	catch(...){
+		// something errored and value isn't fetched //
+		// set value to default //
+		FrameLimit = 120;
+	}
 
 
 	Graph = new Graphics();
@@ -143,7 +154,22 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 	// init graphics //
 	D3D_FEATURE_LEVEL flevel = D3D_FEATURE_LEVEL_11_0;
 	int targetlevel = 11;
-	def->GetValues()->GetValue(L"FeatureLevel",targetlevel);
+
+
+	try{
+		// try to get value, might throw something //
+		if(!def->GetValues()->GetValue(L"FeatureLevel").ConvertAndAssingToVariable<int>(targetlevel)){
+
+			throw exception("cast failed");
+		}
+	}
+	catch(...){
+		// something errored and value isn't fetched //
+		// set value to default //
+		targetlevel = 11;
+	}
+
+
 	switch(targetlevel){
 	case 11: flevel = D3D_FEATURE_LEVEL_11_0; break;
 
@@ -153,26 +179,30 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 	
 	// renderer //
 	// get values from config //
-	int vsyncon = true;
-	int dhardware = true;
+	bool vsyncon = true;
+	bool dhardware = true;
 	D3D_DRIVER_TYPE dtype = D3D_DRIVER_TYPE_HARDWARE;
 
-	LeviathanApplication::GetAppDef()->GetValues()->GetValue(L"Vsync", vsyncon);
-	LeviathanApplication::GetAppDef()->GetValues()->GetValue(L"DriverHardWare", dhardware);
-	if(dhardware == 0){
+
+	ObjectFileProcessor::LoadValueFromNamedVars<bool>(def->GetValues(), L"Vsync", vsyncon, false, false);
+
+	ObjectFileProcessor::LoadValueFromNamedVars<bool>(def->GetValues(), L"DriverHardWare", dhardware, true, false);
+
+	if(!dhardware){
 		Logger::Get()->Info(L"Driver type is NOT set to hardware, performance warning", true);
 		dtype = D3D_DRIVER_TYPE_SOFTWARE;
 	}
 
 	int MSAA = 4;
-	def->GetValues()->GetValue(L"MSAA",MSAA);
+
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(def->GetValues(), L"MSAA", MSAA, 4, true, L"Engine: INITENGINE:");
 
 	if(MSAA < 1)
 		MSAA = 1;
 	if(MSAA > 32)
 		MSAA = 32;
 
-	dxconf = DxRendConf(windowed, vsyncon != 0, 1000.0f, 0.1f,dtype, MSAA);
+	dxconf = DxRendConf(windowed, vsyncon, 1000.0f, 0.1f, dtype, MSAA);
 	Graph->SetDescObjects(dxconf);
 	// call init //
 	if(!Graph->Init(Wind)){
@@ -217,7 +247,7 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 	MainCamera->SetPos(-10,0,0);
 	MainCamera->SetSmoothing(false);
 	
-	// set camera to be last one to receive key presses because it will ALWAYs consume them //
+	// set camera to be last one to receive key presses because it will ALWAYS consume them //
 	MainCamera->BecomeMainListeningCamera();
 
 	// sound device //
@@ -308,7 +338,7 @@ void Leviathan::Engine::PostLoad(){
 	// increase start count //
 	if(!Mainstore->AddValueIfDoesntExist(L"StartCount", 1)){
 		// increase //
-		Mainstore->SetValue(L"StartCount", Mainstore->GetValue(L"StartCount")+1);
+		Mainstore->SetValue(L"StartCount", (int)Mainstore->GetValue(L"StartCount")+1);
 	} else {
 		// set as persistent //
 		Mainstore->SetPersistance(L"StartCount", true);

@@ -12,8 +12,8 @@
 #define SAFE_DELETE_ARRAY( x ) {if(x){delete[] (x);(x)=NULL;}}
 #define EXISTS( x ) {( (x) != NULL )}
 
-#define ARR_INDEX_CHECK( x, y) if(((x) >= 0 ) && ((x) < (y)))
-#define ARR_INDEX_CHECKINV( x, y) if(!(((x) >= 0 ) && ((x) < (y))))
+#define ARR_INDEX_CHECK( x, y) if(((x) >= 0 ) && ((size_t)(x) < (y)))
+#define ARR_INDEX_CHECKINV( x, y) if(!(((x) >= 0 ) && ((size_t)(x) < (y))))
 #define VECTOR_LAST(x) (x).at((x).size()-1)
 #define VECTOR_LASTP(x) (x)->at((x)->size()-1)
 #define CLASS_ALLOC_CHECK(x) if(!(x)){Logger::Get()->Error(L"008");return false;}

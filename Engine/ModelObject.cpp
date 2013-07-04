@@ -373,7 +373,7 @@ DLLEXPORT wstring Leviathan::GameObject::Model::GetModelTypeName(){
 }
 
 // ---------------- // static utility // --------------------- //
-int Leviathan::GameObject::Model::GetFlagFromTextureTypeName(wstring &name){
+DLLEXPORT int Leviathan::GameObject::Model::GetFlagFromTextureTypeName(const wstring &name){
 	// switch on the name and return corresponding value from MultiFlag.h file "
 	if(name == L"CheckRequired"){
 

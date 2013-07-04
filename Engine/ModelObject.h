@@ -73,7 +73,7 @@ namespace Leviathan{ namespace GameObject{
 		// animated textures //
 
 		// static utility //
-		DLLEXPORT static int GetFlagFromTextureTypeName(wstring &name);
+		DLLEXPORT static int GetFlagFromTextureTypeName(const wstring &name);
 		DLLEXPORT static wstring TextureFlagToTypeName(int flag);
 	protected:
 		void PosUpdated();

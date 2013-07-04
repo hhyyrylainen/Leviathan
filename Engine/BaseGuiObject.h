@@ -7,6 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "ScriptObject.h"
+#include "ObjectFileObject.h"
 
 
 #define GUI_OBJECT_LEVEL_BASE			1
@@ -21,6 +22,8 @@ namespace Leviathan{
 	public:
 		DLLEXPORT BaseGuiObject::BaseGuiObject();
 		DLLEXPORT virtual BaseGuiObject::~BaseGuiObject();
+
+		DLLEXPORT static bool LoadFromFileStructure(vector<BaseGuiObject*> &tempobjects, vector<Int2> &idmappairs, ObjectFileObject& dataforthis);
 
 		DLLEXPORT int CompareType(int compare);
 

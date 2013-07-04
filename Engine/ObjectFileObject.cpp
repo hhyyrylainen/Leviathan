@@ -86,6 +86,9 @@ ScriptObject* ObjectFileObject::CreateScriptObjectAndReleaseThis(int BaseType, i
 		cnts.push_back(shared_ptr<ScriptList>(Contents[i]->AllocateNewListFromData()));
 		SAFE_DELETE(Contents[i]);
 	}
+	// clear contents //
+	Contents.clear();
+
 	obj->Prefixes = Prefixes;
 	obj->Contents = cnts;
 	// don't forget to let go of memory //

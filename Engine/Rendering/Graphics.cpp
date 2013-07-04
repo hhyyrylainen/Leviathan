@@ -41,7 +41,9 @@ bool Graphics::Init(Window* wind){
 	// save window handle //
 	Wind = wind;
 	GuiSmooth = 5;
-	AppDef::GetDefault()->GetValues()->GetValue(L"GuiSmooth", GuiSmooth);
+	// smoothness factor //
+	AppDef::GetDefault()->GetValues()->GetValue(L"GuiSmooth").ConvertAndAssingToVariable<int>(GuiSmooth);
+
 	if(!SUCCEEDED(Create3DRenderer(wind))){
 		Logger::Get()->Error(L"Failed to init graphics, can't create 3drenderer");
 		return false;

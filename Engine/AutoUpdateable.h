@@ -19,7 +19,7 @@ namespace Leviathan{
 		DLLEXPORT virtual void StartMonitoring(int valueid, bool nonid, wstring varname = L"");
 		DLLEXPORT virtual void StopMonitoring(int index, wstring varname = L"", bool all = false);
 
-		DLLEXPORT virtual bool OnUpdate(const shared_ptr<CombinedClass<NamedVar, Int1>> &updated);
+		DLLEXPORT virtual bool OnUpdate(const shared_ptr<NamedVariableList> &updated);
 
 
 		
@@ -28,15 +28,16 @@ namespace Leviathan{
 
 	protected:
 
-		/*DLLEXPORT*/ void _PopUdated();
+		DLLEXPORT void _PopUdated();
 
 		// -------------------------- //
 		bool ValuesUpdated;
 
 		vector<int> MonitoredIndexes;
 		vector<shared_ptr<wstring>> MonitoredValueNames;
-		//vector<shared_ptr<NamedVar>> UpdatedValues;
-		vector<shared_ptr<CombinedClass<NamedVar, Int1>>> UpdatedValues;
+
+
+		vector<shared_ptr<NamedVariableList>> UpdatedValues;
 	};
 
 }

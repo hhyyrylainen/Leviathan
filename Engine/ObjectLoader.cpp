@@ -33,7 +33,7 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 	}
 
 	// use ObjectFileParser class to get structures from the file //
-	vector<shared_ptr<NamedVar>> HeaderVars;
+	vector<shared_ptr<NamedVariableList>> HeaderVars;
 	vector<shared_ptr<ObjectFileObject>> structure =  ObjectFileProcessor::ProcessObjectFile(path, HeaderVars);
 
 	if(structure.size() == 0){
@@ -41,7 +41,6 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 		Logger::Get()->Error(L"ObjectLoader: LoadModelFile: file is empty/invalid structure: "+path);
 		return result;
 	}
-	int headvar_int = 0;
 	wstring headvar_str = L"";
 
 	// parent name //
@@ -54,7 +53,14 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 	for(unsigned int i = 0; i < HeaderVars.size(); i++){
 		if(HeaderVars[i]->GetName() == L"FileType"){
 			// just in case: check is it correct //
-			HeaderVars[i]->GetValue(headvar_int, headvar_str);
+			VariableBlock* curblock = HeaderVars[i]->GetValueDirect();
+
+			if(!curblock->ConvertAndAssingToVariable<wstring>(headvar_str)){
+
+				// dang //
+				DEBUG_BREAK;
+			}
+
 			if(headvar_str != L"Model"){
 				// invalid file //
 				Logger::Get()->Error(L"ObjectLoader: LoadModelFile: file header/type invalid expected \"Model\" received "+headvar_str, true);
@@ -63,22 +69,37 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 		}
 		if(HeaderVars[i]->GetName() == L"Model-Name"){
 			// store the model file's name //
-			HeaderVars[i]->GetValue(headvar_int, headvar_str);
-			parentname = headvar_str;
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(parentname)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"LoadModelFile: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
 		}
 		if(HeaderVars[i]->GetName() == L"Model-Format"){
 			// check type //
-			HeaderVars[i]->GetValue(headvar_int, headvar_str);
-			
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(headvar_str)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"LoadModelFile: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
 		}
 		if(HeaderVars[i]->GetName() == L"Model-UnCompiled"){
-			// check type //
-			HeaderVars[i]->GetValue(headvar_int, headvar_str);
-			IsUnCompiled = headvar_int == 1;
-			// erase non wanted headervars //
-			HeaderVars.erase(HeaderVars.begin()+i);
-			i--;
+			// get compilation state flag //
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<bool>(IsUnCompiled)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"LoadModelFile: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
 		}
+		//// erase non wanted header vars //
+		//HeaderVars.erase(HeaderVars.begin()+i);
+		//i--;
 	}
 
 
@@ -286,10 +307,9 @@ DLLEXPORT TextureDefinition* Leviathan::ObjectLoader::LoadTextureDefinitionFile(
 	}
 
 	// use ObjectFileParser class to get structures from the file //
-	vector<shared_ptr<NamedVar>> HeaderVars;
+	vector<shared_ptr<NamedVariableList>> HeaderVars;
 	vector<shared_ptr<ObjectFileObject>> structure =  ObjectFileProcessor::ProcessObjectFile(path, HeaderVars);
 
-	int headvar_int = 0;
 	wstring headvar_str = L"";
 
 	// parent name //
@@ -302,45 +322,79 @@ DLLEXPORT TextureDefinition* Leviathan::ObjectLoader::LoadTextureDefinitionFile(
 	for(unsigned int i = 0; i < HeaderVars.size(); i++){
 		if(HeaderVars[i]->GetName() == L"Author"){
 			// set author //
-			HeaderVars[i]->GetValue(headvar_int, headvar_str);
-			result->Creator = headvar_str;
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(result->Creator)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"LoadTextureDefinitionFile: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
 		}
 		if(HeaderVars[i]->GetName() == L"Texture-Name"){
 			// store the texture's name //
-			HeaderVars[i]->GetValue(headvar_int, headvar_str);
-			result->Name = headvar_str;
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(result->Name)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"LoadTextureDefinitionFile: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
 		}
 		if(HeaderVars[i]->GetName() == L"Texture-Type"){
 			// check type //
-			HeaderVars[i]->GetValue(headvar_int, headvar_str);
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(headvar_str)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"LoadTextureDefinitionFile: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+
+				result->Type = GameObject::Model::GetFlagFromTextureTypeName(L"error");
+				continue;
+			}
 			result->Type = GameObject::Model::GetFlagFromTextureTypeName(headvar_str);
 		}
 		if(HeaderVars[i]->GetName() == L"Width"){
 			// store width //
-			HeaderVars[i]->GetValue(headvar_int, headvar_str);
-			result->Width = headvar_int;
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<int>(result->Width)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"LoadTextureDefinitionFile: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
 		}
 		if(HeaderVars[i]->GetName() == L"Height"){
 			// store height //
-			HeaderVars[i]->GetValue(headvar_int, headvar_str);
-			result->Height = headvar_int;
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<int>(result->Height)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"LoadTextureDefinitionFile: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
 		}
 		if(HeaderVars[i]->GetName() == L"ActualExtension"){
 			// store image's extension //
-			HeaderVars[i]->GetValue(headvar_int, headvar_str);
-			result->ImageExtension = headvar_str;
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(result->ImageExtension)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"LoadTextureDefinitionFile: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
 		}
 		if(HeaderVars[i]->GetName() == L"Animation"){
 			// check does have animation //
-			if(HeaderVars[i]->IsIntValue()){
+			if(!HeaderVars[i]->GetValue().IsConversionAllowedNonPtr<wstring>()){
 				// no animation //
 				result->HasAnimation = false;
 				continue;
 			}
+
 			// there is a animation //
-			HeaderVars[i]->GetValue(headvar_int, headvar_str);
 			result->HasAnimation = true;
-			DefaultAnimationName = headvar_str;
+			DefaultAnimationName = (wstring)HeaderVars[i]->GetValue();
 		}
 	}
 

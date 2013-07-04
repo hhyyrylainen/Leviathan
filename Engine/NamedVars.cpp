@@ -9,118 +9,137 @@ using namespace Leviathan;
 #include "FileSystem.h"
 #include "TimingMonitor.h"
 #include "WstringIterator.h"
+#include "ExceptionInvalidType.h"
+#include "LineTokenizer.h"
 
 
-Leviathan::NamedVar::NamedVar() : Name(L""), wValue(NULL){
-
-	iValue = -1;
-	Isint = true;
+Leviathan::NamedVariableList::NamedVariableList() : Datas(1), Name(L""){
 }
 
-Leviathan::NamedVar::NamedVar(const NamedVar &other){
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, VariableBlock* value1) : Datas(1), Name(name){
+	// set value //
+	Datas[0] = value1;
+}
 
-	Name = other.Name;
-	Isint = other.Isint;
-	if(Isint){
-		iValue = other.iValue;
-		wValue = NULL;
-	} else {
-		iValue = -1;
-		wValue = new wstring(*other.wValue);
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, const VariableBlock &val) : Datas(1), Name(name){
+	// set value //
+	Datas[0] = new VariableBlock(val);
+}
+
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, vector<VariableBlock*> values_willclear) : 
+	Datas(values_willclear.size()), Name(name)
+{
+	// set values //
+	for(size_t i = 0; i < values_willclear.size(); i++){
+		Datas[i] = values_willclear[i];
 	}
 }
 
-Leviathan::NamedVar::NamedVar(const wstring& name, int val) : Name(name), wValue(NULL){
+Leviathan::NamedVariableList::NamedVariableList(const NamedVariableList &other) : Datas(other.Datas.size()), Name(other.Name){
 
-	iValue = val;
-	Isint = true;
+	// copy value over //
+	for(size_t i = 0; i < other.Datas.size(); i++){
+
+		Datas[i] = new VariableBlock(*other.Datas[i]);
+	}
 }
 
-Leviathan::NamedVar::NamedVar(const wstring& name, const wstring& val) : Name(name), wValue(new wstring(val)){
-
-	iValue = -1;
-	Isint = false;
-}
-
-DLLEXPORT Leviathan::NamedVar::NamedVar(wstring &line, vector<IntWstring*>* specialintvalues /*= NULL*/) : wValue(NULL){
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, vector<const NamedVariableBlock*>* predefined /*= NULL*/) : Datas(1){
 	// using WstringIterator makes this shorter //
 	WstringIterator itr(&line, false);
 
 	unique_ptr<wstring> name = itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_ALL);
 
+	
+
 	if(name->size() < 1){
 		// no name //
-		throw ExceptionInvalidArguement(L"invalid name", name->size(), __WFUNCSIG__, L"line", line);
+		throw ExceptionInvalidArguement(L"invalid data on line (invalid name)", name->size(), __WFUNCSIG__, L"line", line);
 	}
 
+	// TODO: verify that this will be destructed if an exception happens //
+	Name = *name;
+
+	// skip whitespace //
+	itr.SkipWhiteSpace();
+
 	// get last part of it //
-	unique_ptr<wstring> tempvar = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+	unique_ptr<wstring> tempvar = itr.GetUntilEnd();
 
 	if(tempvar->size() < 1){
 		// no variable //
-		throw ExceptionInvalidArguement(L"no variable", tempvar->size(), __WFUNCSIG__, L"line", line);
+		throw ExceptionInvalidArguement(L"invalid data on line (no variable)", tempvar->size(), __WFUNCSIG__, L"line", line);
 	}
-	// remove leading spaces //
-	Misc::WstringRemovePreceedingTrailingSpaces(*tempvar);
 
+	// check does it have brackets (and need to be processed like so) //
+	//tempvar->find_first_of(L'[') != wstring::npos
+	if(tempvar->at(0) == L'['){
 
-	Name = *name;
+		// needs to be tokenized //
 
-	// check is it a int value //
-	if(specialintvalues != NULL){
-		bool isspecial = false;
-		int specialval = 0;
-		// find matching values //
-		for(unsigned int indexed = 0; indexed < specialintvalues->size(); indexed++){
-			wstring* tempcompare = specialintvalues->at(indexed)->GetString();
-			if(tempcompare != NULL){
-				if(*tempcompare == *tempvar){
-					isspecial = true;
-					specialval = specialintvalues->at(indexed)->GetValue();
-					break;
-				}
+		vector<Token*> tokens;
+		// split to tokens //
+		LineTokeNizer::SplitTokenToRTokens(*tempvar, tokens);
+
+		if(tokens.size() < 2){
+			// release tokens to not leak any memory //
+			SAFE_DELETE_VECTOR(tokens);
+
+			// might contain the base token, but cannot possibly have any values inside //
+			throw ExceptionInvalidArguement(L"invalid data on line (variable tokenization failed)", tokens.size(), __WFUNCSIG__, L"line", line);
+		}
+
+		// first should be base token //
+
+		// reserve space //
+		Datas.reserve(tokens[0]->GetSubTokenCount());
+
+		// iterate sub tokens and create values from them //
+		for(int i = 0; i < tokens[0]->GetSubTokenCount(); i++){
+
+			try{
+				// try to create new VariableBlock //
+				Datas.push_back(new VariableBlock(new WstringBlock(tokens[0]->GetSubToken(i)->GetData())));
+			}
+			catch (const ExceptionInvalidArguement &e){
+				// release memory //
+				SAFE_DELETE_VECTOR(tokens);
+				SAFE_DELETE_VECTOR(Datas);
+
+				// rethrow the exception //
+				throw;
 			}
 		}
+		// all variables are now created //
 
-		if(isspecial){
-			// is int, construct //
-			Isint = true;
-			iValue = specialval;
-			return;
-		}
-	}
+		// release tokens //
+		SAFE_DELETE_VECTOR(tokens);
 
-	// check type //
-	if(Convert::WstringTypeCheck(*tempvar, 0 /* check int */) == 1){
-		// is int //
-		Isint = true;
-		iValue = Convert::WstringToInt(*tempvar);
+
+
+		// don't want to fall to single value processing //
 		return;
 	}
-	if(Convert::WstringTypeCheck(*tempvar, 3 /* check bool */) == 1){
-		// is int //
-		Isint = true;
-		iValue = Convert::WstringFromBoolToInt(*tempvar);
-		return;
+	// just one value //
+	try{
+		// try to create new VariableBlock //
+		Datas.push_back(new VariableBlock(*tempvar));
 	}
-	// is string/other //
-	Isint = false;
-	iValue = -1;
-	if((*tempvar)[0] == L'"' && (*tempvar)[tempvar->size()-1] == L'"'){
-		// remove " marks //
-		// copy from index 1 to second to last //
-		wValue = new wstring(tempvar->substr(1, tempvar->size()-2));
+	catch (const ExceptionInvalidArguement &e){
+		// release memory //
+		//SAFE_DELETE_VECTOR(Datas);
 
-	} else {
-
-		wValue = new wstring(*tempvar);
+		// rethrow the exception //
+		throw;
 	}
+
 }
 
 //vector<unsigned int> Deletedindexes;
-DLLEXPORT Leviathan::NamedVar::~NamedVar(){
+DLLEXPORT Leviathan::NamedVariableList::~NamedVariableList(){
 
-	SAFE_DELETE(wValue);
+	SAFE_DELETE_VECTOR(Datas);
+	
 	//if(Deletedindexes.size() == 0)
 	//	Deletedindexes.reserve(2100);
 
@@ -134,106 +153,153 @@ DLLEXPORT Leviathan::NamedVar::~NamedVar(){
 	//Deletedindexes.push_back((unsigned int)this);
 }
 // ------------------------------------ //
-void Leviathan::NamedVar::SetValue(int val){
-	if(this->Isint){
-		iValue = val;
-		return;
+DLLEXPORT void Leviathan::NamedVariableList::SetValue(const VariableBlock &value1){
+	// clear old //
+	_DeleteAllButFirst();
+	// assign value //
+	if(Datas.size() == 0){
+		// create new //
+		Datas.push_back(new VariableBlock(value1));
+
+	} else {
+		// assign to existing //
+		*Datas[0] = value1;
 	}
-	this->Isint = true;
-	// destroy string //
-	SAFE_DELETE(wValue);
 }
 
-void Leviathan::NamedVar::SetValue(const wstring& val){
-	this->Isint = false;
-	iValue = -1;
-	SAFE_DELETE(wValue);
-	wValue = new wstring(val);
+DLLEXPORT void Leviathan::NamedVariableList::SetValue(VariableBlock* value1){
+	// clear old //
+	SAFE_DELETE_VECTOR(Datas);
+
+	// put value to vector //
+	Datas.push_back(value1);
 }
 
-int Leviathan::NamedVar::GetValue(int& val1, wstring& val2) const{
-	if(this->Isint){
-		val1 = this->iValue;
-		return NAMEDVAR_RETURNVALUE_IS_INT;
+DLLEXPORT void Leviathan::NamedVariableList::SetValue(const int &nindex, const VariableBlock &valuetoset){
+	// check do we need to allocate new //
+	if(Datas.size() <= (size_t)nindex){
+
+		// resize to have enough space //
+		Datas.resize(nindex+1, NULL);
+		Datas[nindex] = new VariableBlock(valuetoset);
+	} else {
+
+		if(Datas[nindex] != NULL){ 
+			// assign to existing value //
+			*Datas[nindex] = valuetoset;
+		} else {
+			// new value needed //
+			Datas[nindex] = new VariableBlock(valuetoset);
+		}
 	}
-	val2 = *this->wValue;
-	return NAMEDVAR_RETURNVALUE_IS_WSTRING;
 }
 
-DLLEXPORT bool Leviathan::NamedVar::GetValue(int &val) const{
-	if(!Isint)
-		return false;
-	// copy value //
-	val = iValue;
-	// signal valid value //
-	return true;
+DLLEXPORT void Leviathan::NamedVariableList::SetValue(const int &nindex, VariableBlock* valuetoset){
+	// check do we need to allocate new //
+	if(Datas.size() <= (size_t)nindex){
+
+		// resize to have enough space //
+		Datas.resize(nindex+1, NULL);
+		// just copy the pointer //
+		Datas[nindex] = valuetoset;
+	} else {
+
+		if(Datas[nindex] != NULL){ 
+			// existing value needs to be deleted //
+			SAFE_DELETE(Datas[nindex]);
+		}
+		// set pointer //
+		Datas[nindex] = valuetoset;
+	}
 }
 
-DLLEXPORT bool Leviathan::NamedVar::GetValue(wstring &val) const{
-	if(Isint)
-		return false;
-	// value copying //
-	val = *wValue;
-	return true;
+DLLEXPORT void Leviathan::NamedVariableList::SetValue(const vector<VariableBlock*> &values){
+	// delete old //
+	SAFE_DELETE_VECTOR(Datas);
+
+	// copy vector (will copy pointers and steal them) //
+	Datas = values;
 }
 
-bool Leviathan::NamedVar::IsIntValue() const{
-	return Isint;
+DLLEXPORT VariableBlock& Leviathan::NamedVariableList::GetValue() throw(...){
+	// uses vector operator to get value, might throw something //
+	return *Datas[0];
 }
 
-wstring& Leviathan::NamedVar::GetName(){
+DLLEXPORT VariableBlock& Leviathan::NamedVariableList::GetValue(const int &nindex) throw(...){
+	// uses vector operator to get value, might throw something //
+	return *Datas[nindex];
+}
+
+wstring& Leviathan::NamedVariableList::GetName(){
 	return Name;
 }
 
-DLLEXPORT void Leviathan::NamedVar::GetName(wstring &name) const{
+DLLEXPORT void Leviathan::NamedVariableList::GetName(wstring &name) const{
 	// return name in a reference //
 	name = Name;
 }
 
-void Leviathan::NamedVar::SetName(const wstring& name){
+void Leviathan::NamedVariableList::SetName(const wstring& name){
 	Name = name;
 }
 
-bool Leviathan::NamedVar::CompareName(const wstring& name) const{
+bool Leviathan::NamedVariableList::CompareName(const wstring& name) const{
 	// just default comparison //
 	return Name.compare(name) == 0;
 }
-DLLEXPORT wstring Leviathan::NamedVar::ToText(int WhichSeparator /*= 0*/) const{
-	switch(WhichSeparator){
-	case 0:
-		{
-			if(this->Isint)
-				return Name+L" = "+Convert::IntToWstring(iValue)+L";";
-			return Name+L" = "+*wValue+L";";
-		}
-	break;
-	case 1:
-		{
-			if(this->Isint)
-				return Name+L": "+Convert::IntToWstring(iValue)+L";";
-			return Name+L": "+*wValue+L";";
-		}
-		break;
+DLLEXPORT wstring Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*/) const{
 
+	wstring stringifiedval = Name+L" ";
+
+	switch(WhichSeparator){
+	case 0: stringifiedval += L"= "; break;
+	case 1: stringifiedval += L": "; break;
 	default:
 		// error //
 		QUICK_ERROR_MESSAGE;
 		return L"ERROR: NULL";
 	}
+
+
+
+	// convert value to wstring //
+	// starting bracket //
+	stringifiedval += L"[";
+
+	// reserve some space //
+	stringifiedval.reserve(Datas.size()*4);
+
+	for(size_t i = 0; i < Datas.size(); i++){
+
+		// check is conversion allowed //
+		if(!Datas[i]->IsConversionAllowedNonPtr<wstring>()){
+			// no choice but to throw exception //
+			throw ExceptionInvalidType(L"value cannot be cast to wstring", Datas[i]->GetBlock()->Type, __WFUNCTION__, L"Datas["+
+				Convert::ToWstring<int>(i)+L"]", Convert::ToWstring(typeid(Datas[i]->GetBlock()).name()));
+		}
+		if(i != 0)
+			stringifiedval += L",";
+		stringifiedval += L"["+(wstring)*Datas[i]+L"]";
+	}
+
+
+	// add ending bracket and done //
+	stringifiedval += L"];";
+
+	return stringifiedval;
 }
 
-DLLEXPORT NamedVar& Leviathan::NamedVar::operator=(const NamedVar &other){
+DLLEXPORT NamedVariableList& Leviathan::NamedVariableList::operator=(const NamedVariableList &other){
 	// copy values //
 	Name = other.Name;
-	Isint = other.Isint;
-	// check what needs to be copied //
-	if(Isint){
-		iValue = other.iValue;
-		SAFE_DELETE(wValue);
-	} else {
-		iValue = -1;
-		SAFE_DELETE(wValue);
-		wValue = new wstring(*other.wValue);
+	
+	SAFE_DELETE_VECTOR(Datas);
+	Datas.resize(other.Datas.size());
+	// copy values over //
+	for(size_t i = 0; i < other.Datas.size(); i++){
+
+		Datas[i] = new VariableBlock(*other.Datas[i]);
 	}
 
 	// return this as result //
@@ -241,7 +307,7 @@ DLLEXPORT NamedVar& Leviathan::NamedVar::operator=(const NamedVar &other){
 }
 
 // ----------------- process functions ------------------- //
-DLLEXPORT int Leviathan::NamedVar::ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVar>> &vec, vector<IntWstring*> *specialintvalues /*= NULL*/){
+DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVariableList>> &vec, vector<const NamedVariableBlock*>* predefined /*= NULL*/){
 	//QUICKTIME_THISSCOPE;
 	// split to lines //
 	vector<shared_ptr<wstring>> Lines;
@@ -281,7 +347,7 @@ DLLEXPORT int Leviathan::NamedVar::ProcessDataDump(const wstring &data, vector<s
 
 		// create a named var //
 		try{
-			vec.push_back(shared_ptr<NamedVar>(new NamedVar(*Lines[i], specialintvalues)));
+			vec.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(*Lines[i], predefined)));
 		}
 		catch (const ExceptionInvalidArguement &e){
 			// print to log //
@@ -306,32 +372,81 @@ DLLEXPORT int Leviathan::NamedVar::ProcessDataDump(const wstring &data, vector<s
 	return 0;
 }
 
-
-
-DLLEXPORT  void Leviathan::NamedVar::SwitchValues(NamedVar &receiver, NamedVar &donator){
+DLLEXPORT  void Leviathan::NamedVariableList::SwitchValues(NamedVariableList &receiver, NamedVariableList &donator){
 	// only overwrite name if there is one //
 	if(donator.Name.size() > 0)
 		receiver.Name = donator.Name;
 
-	receiver.Isint = donator.Isint;
-	SAFE_DELETE(receiver.wValue);
-	receiver.iValue = -1;
-	if(receiver.Isint){
-		// copy ivalue //
-		receiver.iValue = donator.iValue;
-	} else {
-		// copy string pointers around //
-		receiver.wValue = donator.wValue;
-	}
-	// don't allow original owner to delete this //
-	donator.wValue = NULL;
 
-	// maybe butcher donator entirely //
-	donator.iValue = -2;
+	SAFE_DELETE_VECTOR(receiver.Datas);
+	// resize to match sizes to avoid excess resizing //
+	receiver.Datas.resize(donator.Datas.size());
+
+	for(size_t i = 0; i < donator.Datas.size(); i++){
+
+		receiver.Datas[i] = donator.Datas[i];
+		
+	}
+	// clear donator data //
+	donator.Datas.clear();
 }
 
-DLLEXPORT wstring* Leviathan::NamedVar::GetPointedValue(){
-	return wValue;
+DLLEXPORT VariableBlock* Leviathan::NamedVariableList::GetValueDirect(){
+	// return first element //
+	return Datas.size() ? Datas[0]: NULL;
+}
+
+DLLEXPORT VariableBlock* Leviathan::NamedVariableList::GetValueDirect(const int &nindex){
+	ARR_INDEX_CHECKINV(nindex, Datas.size()){
+		// out of bounds //
+		return NULL;
+	}
+	return Datas[nindex];
+}
+
+DLLEXPORT size_t Leviathan::NamedVariableList::GetVariableCount() const{
+	return Datas.size();
+}
+
+DLLEXPORT int Leviathan::NamedVariableList::GetCommonType() const{
+	// if all have a common type return it //
+	if(Datas.size() == 0)
+		// no common type //
+		return DATABLOCK_TYPE_ERROR;
+
+	int lasttype = Datas[0]->GetBlock()->Type;
+
+	for(size_t i = 1; i < Datas.size(); i++){
+
+		if(lasttype != Datas[i]->GetBlock()->Type){
+			// not same type //
+			return DATABLOCK_TYPE_ERROR;
+		}
+	}
+	// there is a common type //
+	return lasttype;
+}
+
+DLLEXPORT int Leviathan::NamedVariableList::GetVariableType() const{
+	// get variable type of first index //
+	return Datas.size() ? Datas[0]->GetBlock()->Type: DATABLOCK_TYPE_ERROR;
+}
+
+DLLEXPORT int Leviathan::NamedVariableList::GetVariableType(const int &nindex) const{
+	ARR_INDEX_CHECKINV(nindex, Datas.size()){
+		// out of bounds //
+		return DATABLOCK_TYPE_ERROR;
+	}
+	return Datas[nindex]->GetBlock()->Type;
+}
+
+DLLEXPORT VariableBlock& Leviathan::NamedVariableList::operator[](const int &nindex) throw(...){
+	// will allow to throw any exceptions the vector wants //
+	return *Datas[nindex];
+}
+
+DLLEXPORT vector<VariableBlock*>& Leviathan::NamedVariableList::GetValues(){
+	return Datas;
 }
 
 // ---------------------------- NamedVars --------------------------------- //
@@ -342,126 +457,203 @@ Leviathan::NamedVars::NamedVars(const NamedVars& other){
 	// deep copy is required here //
 	Variables.reserve(other.Variables.size());
 	for(unsigned int i = 0; i < other.Variables.size(); i++){
-		Variables.push_back(shared_ptr<NamedVar>(new NamedVar(*other.Variables[i])));
+		Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(*other.Variables[i])));
 	}
 }
 DLLEXPORT Leviathan::NamedVars::NamedVars(const wstring &datadump) : Variables(){
 
 	// load data directly to vector //
-	if(NamedVar::ProcessDataDump(datadump, Variables, NULL) != 0){
+	if(NamedVariableList::ProcessDataDump(datadump, Variables, NULL) != 0){
 		// error happened //
 		Logger::Get()->Error(L"NamedVars: Initialize: process datadump failed", true);
 	}
 }
 
 Leviathan::NamedVars::~NamedVars(){
-	// clear values //
-	Variables.clear();
+	// no need to release due to smart pointers //
 }
-		// ------------------------------------ //
-bool Leviathan::NamedVars::SetValue(const wstring &name, int val){
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::NamedVars::SetValue(const wstring &name, const VariableBlock &value1){
 	int index = Find(name);
-	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
-		Logger::Get()->Warning(L"NamedVars: SetValue: not found, creating new for: "+name, false);
 
-		this->AddVar(name, val, L"", true);
-		return true;
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+
+		return false;
 	}
-	// set value //
-	Variables[index]->SetValue(val);
+
+	Variables[index]->SetValue(value1);
 	return true;
 }
 
-bool Leviathan::NamedVars::SetValue(const wstring &name, wstring &val){
+DLLEXPORT bool Leviathan::NamedVars::SetValue(const wstring &name, VariableBlock* value1){
 	int index = Find(name);
-	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
-		Logger::Get()->Warning(L"NamedVars: SetValue: not found, creating new for: "+name, false);
 
-		this->AddVar(name, 0, val, true);
-		return true;
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+
+		return false;
 	}
-	// set value //
-	Variables[index]->SetValue(val);
+
+	Variables[index]->SetValue(value1);
 	return true;
 }
 
-DLLEXPORT bool Leviathan::NamedVars::SetValue(NamedVar &nameandvalues){
+DLLEXPORT bool Leviathan::NamedVars::SetValue(const wstring &name, const vector<VariableBlock*> &values){
+	int index = Find(name);
+
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+
+		return false;
+	}
+
+	Variables[index]->SetValue(values);
+	return true;
+}
+
+DLLEXPORT bool Leviathan::NamedVars::SetValue(NamedVariableList &nameandvalues){
 	int index = Find(nameandvalues.Name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
 		Logger::Get()->Warning(L"NamedVars: SetValue: not found, creating new for: "+nameandvalues.GetName(), false);
 
-		Variables.push_back(shared_ptr<NamedVar>(new NamedVar(nameandvalues)));
+		Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(nameandvalues)));
 		return true;
 	}
 	nameandvalues.Name.clear();
 	// set values with "swap" //
-	NamedVar::SwitchValues(*Variables[index].get(), nameandvalues);
+	NamedVariableList::SwitchValues(*Variables[index].get(), nameandvalues);
 	return true;
 }
 
-int Leviathan::NamedVars::GetValue(const wstring &name, int& val1, wstring& val2) const{
+DLLEXPORT VariableBlock& Leviathan::NamedVars::GetValueNonConst(const wstring &name) throw(...){
 	int index = Find(name);
 	// index check //
-	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
+	ARR_INDEX_CHECKINV(index, Variables.size()){
 		Logger::Get()->Error(L"NamedVars: GetValue: out of range, trying to find: "+name, index);
-		return 6;
 	}
 
-	return Variables[index]->GetValue(val1, val2);
+	return Variables[index]->GetValue();
 }
 
-int Leviathan::NamedVars::GetValue(const wstring &name, int& val1) const{
+DLLEXPORT const VariableBlock* Leviathan::NamedVars::GetValue(const wstring &name) const{
 	int index = Find(name);
 	// index check //
-	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
+	ARR_INDEX_CHECKINV(index, Variables.size()){
 		Logger::Get()->Error(L"NamedVars: GetValue: out of range, trying to find: "+name, index);
-		return 6;
-	}
-
-	return Variables[index]->GetValue(val1);
-}
-
-DLLEXPORT int Leviathan::NamedVars::GetValue(const wstring &name, wstring& val) const{
-	int index = Find(name);
-	// index check //
-	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
-		Logger::Get()->Error(L"NamedVars: GetValue: out of range, trying to find: "+name, index);
-		return 6;
-	}
-
-	return Variables[index]->GetValue(val);
-}
-
-
-DLLEXPORT wstring* Leviathan::NamedVars::ReturnValue(const wstring &name){
-	int index = Find(name);
-	// index check //
-	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
-		Logger::Get()->Error(L"NamedVars: ReturnValue: out of range, trying to find: "+name, index);
 		return NULL;
 	}
 
-	return Variables[index]->GetPointedValue();
+	return Variables[index]->GetValueDirect();
 }
 
-bool Leviathan::NamedVars::IsIntValue(const wstring &name) const{
-	// call overload //
-	return IsIntValue((unsigned int)Find(name));
-}
-bool Leviathan::NamedVars::IsIntValue(unsigned int index) const{
+DLLEXPORT bool Leviathan::NamedVars::GetValue(const wstring &name, VariableBlock &receiver) const{
+	int index = Find(name);
+	// index check //
 	ARR_INDEX_CHECKINV(index, Variables.size()){
-		Logger::Get()->Error(L"NamedVars: IsIntValue: out of range", index);
+		Logger::Get()->Error(L"NamedVars: GetValue: out of range, trying to find: "+name, index);
 		return false;
 	}
-
-	return Variables[index]->IsIntValue();
+	// specific operator wanted here //
+	receiver = const_cast<const VariableBlock&>(Variables[index]->GetValue());
+	return true;
 }
 
+DLLEXPORT bool Leviathan::NamedVars::GetValue(const wstring &name, const int &nindex, VariableBlock &receiver) const{
+	int index = Find(name);
+	// index check //
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+		Logger::Get()->Error(L"NamedVars: GetValue: out of range, trying to find: "+name, index);
+		return false;
+	}
+	// specific operator wanted here //
+	receiver = const_cast<const VariableBlock&>(Variables[index]->GetValue(nindex));
+	return true;
+}
+
+DLLEXPORT size_t Leviathan::NamedVars::GetValueCount(const wstring &name) const{
+	int index = Find(name);
+	// index check //
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+		Logger::Get()->Error(L"NamedVars: GetValueCount: out of range, trying to find: "+name, index);
+		return 0;
+	}
+	return Variables[index]->GetVariableCount();
+}
+
+DLLEXPORT vector<VariableBlock*>* Leviathan::NamedVars::GetValues(const wstring &name) throw(...){
+	int index = Find(name);
+	// index check //
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+		Logger::Get()->Error(L"NamedVars: GetValues: out of range, trying to find: "+name, index);
+		return NULL;
+	}
+	return &Variables[index]->GetValues();
+}
+
+DLLEXPORT bool Leviathan::NamedVars::GetValues(const wstring &name, vector<const VariableBlock*> &receiver) const{
+	int index = Find(name);
+	// index check //
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+		Logger::Get()->Error(L"NamedVars: GetValues: out of range, trying to find: "+name, index);
+		return false;
+	}
+	vector<VariableBlock*> &tmpvals = Variables[index]->GetValues();
+
+	vector<const VariableBlock*> tmpconsted(tmpvals.size());
+
+	for(size_t i = 0; i < tmpconsted.size(); i++){
+
+		tmpconsted[i] = const_cast<const VariableBlock*>(tmpvals[i]);
+	}
+
+	receiver = tmpconsted;
+	return true;
+}
+
+DLLEXPORT shared_ptr<NamedVariableList> Leviathan::NamedVars::GetValueDirect(const wstring &name) const{
+	int index = Find(name);
+	// index check //
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+
+		Logger::Get()->Error(L"NamedVars: GetValueDirect: out of range, trying to find: "+name, index);
+
+		return NULL;
+	}
+	return Variables[index];
+}
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+DLLEXPORT int Leviathan::NamedVars::GetVariableType(const wstring &name) const{
+	// call overload //
+	return GetVariableType((size_t)Find(name));
+}
+
+DLLEXPORT int Leviathan::NamedVars::GetVariableType(unsigned int index) const{
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+		Logger::Get()->Error(L"NamedVars: GetVariableType: out of range", index);
+		return false;
+	}
+	return Variables[index]->GetVariableType();
+}
+
+DLLEXPORT int Leviathan::NamedVars::GetVariableTypeOfAll(const wstring &name) const{
+	// call overload //
+	return GetVariableType((size_t)Find(name));
+}
+
+DLLEXPORT int Leviathan::NamedVars::GetVariableTypeOfAll(unsigned int index) const{
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+		Logger::Get()->Error(L"NamedVars: GetVariableTypeOfAll: out of range", index);
+		return false;
+	}
+	return Variables[index]->GetCommonType();
+}
+// ------------------------------------ //
 wstring& Leviathan::NamedVars::GetName(unsigned int index){
 	ARR_INDEX_CHECKINV(index, Variables.size()){
 		Logger::Get()->Error(L"NamedVars: GetName: out of range", index);
-		//wstring errstr = Misc::GetErrString();
+		// "clever" way to avoid exceptions //
 		return Misc::GetErrString();
 	}
 
@@ -497,17 +689,15 @@ bool Leviathan::NamedVars::CompareName(unsigned int index, const wstring &name) 
 	DEBUG_BREAK;
 	return false;
 }
-void Leviathan::NamedVars::AddVar(const wstring &name, int val, const wstring &wval, bool isint){
-	if(isint){
-		Variables.push_back(shared_ptr<NamedVar>(new NamedVar(name, val)));
-	} else {
-		Variables.push_back(shared_ptr<NamedVar>(new NamedVar(name, wval)));
-	}
-}
-
-DLLEXPORT void Leviathan::NamedVars::AddVar(shared_ptr<NamedVar> values){
+// ------------------------------------ //
+DLLEXPORT void Leviathan::NamedVars::AddVar(shared_ptr<NamedVariableList> values){
 	// just add to vector //
 	Variables.push_back(values);
+}
+
+DLLEXPORT void Leviathan::NamedVars::AddVar(NamedVariableList* newvaluetoadd){
+	// create new smart pointer and push back //
+	Variables.push_back(shared_ptr<NamedVariableList>(newvaluetoadd));
 }
 
 void Leviathan::NamedVars::Remove(unsigned int index){
@@ -523,15 +713,15 @@ DLLEXPORT void Leviathan::NamedVars::Remove(const wstring &name){
 	// call overload //
 	Remove(Find(name));
 }
-
-
+// ------------------------------------ //
 int Leviathan::NamedVars::LoadVarsFromFile(const wstring &file){
-	return FileSystem::LoadDataDumb(file, Variables);
+	// call datadump loaded with this object's vector //
+	return FileSystem::LoadDataDump(file, Variables);
 }
-vector<shared_ptr<NamedVar>>* Leviathan::NamedVars::GetVec(){
+vector<shared_ptr<NamedVariableList>>* Leviathan::NamedVars::GetVec(){
 	return &Variables;
 }
-void Leviathan::NamedVars::SetVec(vector<shared_ptr<NamedVar>>& vec){
+void Leviathan::NamedVars::SetVec(vector<shared_ptr<NamedVariableList>>& vec){
 	Variables = vec;
 }
 // ------------------------------------ //

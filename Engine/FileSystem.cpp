@@ -162,7 +162,7 @@ void Leviathan::FileSystem::SetTextureFolder(wstring& folder){
 }
 // ------------------------------------ //
 // file handling //
-DLLEXPORT int Leviathan::FileSystem::LoadDataDumb(const wstring &file, vector<shared_ptr<NamedVar>>& vec){
+DLLEXPORT int Leviathan::FileSystem::LoadDataDump(const wstring &file, vector<shared_ptr<NamedVariableList>>& vec){
 	wstring filecontents = L"";
 	wstring construct = L"";
 	int Length = 0;
@@ -194,7 +194,7 @@ DLLEXPORT int Leviathan::FileSystem::LoadDataDumb(const wstring &file, vector<sh
 	filecontents = Buff;
 
 	// create values //
-	int retvalue = NamedVar::ProcessDataDump(filecontents, vec);
+	int retvalue = NamedVariableList::ProcessDataDump(filecontents, vec);
 	if(retvalue != 0){
 		// error happened //
 		Logger::Get()->Error(L"FileSystem: LoadDataDumb: call to ProcessDataDumb failed", retvalue, true);

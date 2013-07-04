@@ -31,7 +31,7 @@ void Leviathan::AutoUpdateableObject::StartMonitoring(int valueid, bool nonid, w
 }
 void Leviathan::AutoUpdateableObject::StopMonitoring(int index, wstring varname /*= L""*/, bool all /*= false*/){
 	// check is index based or name based being erased //
-	if(varname != L""){
+	if(varname == L""){
 
 		// remove value //
 		if(all){
@@ -39,7 +39,7 @@ void Leviathan::AutoUpdateableObject::StopMonitoring(int index, wstring varname 
 			MonitoredIndexes.clear();
 		} else {
 			// remove specific one //
-			for(unsigned int i = 0; i < MonitoredIndexes.size(); i++){
+			for(size_t i = 0; i < MonitoredIndexes.size(); i++){
 				if(MonitoredIndexes[i] == index){
 
 					MonitoredIndexes.erase(MonitoredIndexes.begin()+i);
@@ -65,11 +65,10 @@ void Leviathan::AutoUpdateableObject::StopMonitoring(int index, wstring varname 
 			}
 		}
 		DataStore::Get()->RemoveListener(this, -1, varname, all);
-
 	}
 }
 
-bool Leviathan::AutoUpdateableObject::OnUpdate(const shared_ptr<CombinedClass<NamedVar, Int1>> &updated){
+DLLEXPORT bool Leviathan::AutoUpdateableObject::OnUpdate(const shared_ptr<NamedVariableList> &updated){
 	ValuesUpdated = true;
 	
 	// push to update vector //

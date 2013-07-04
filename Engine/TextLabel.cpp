@@ -146,25 +146,38 @@ void Leviathan::Gui::TextLabel::Render(Graphics* graph){
 		// even if there are multiple values just use one and pop the rest //
 
 		// get values //
-		int ivalue = -1;
-		wstring wvalue = L"";
+		VariableBlock* updatedvalue = UpdatedValues[0]->GetValueDirect();
 
-		UpdatedValues[0]->GetValue(ivalue, wvalue);
+		// error if cannot be made into wstring or directly assign new value to wstring //
+		if(!updatedvalue->ConvertAndAssingToVariable<wstring>(LText)){
+			// well that's an error //
+			wstring errormessage = L"TextLabel: Render: processing updated values, cannot cast value to wstring: "+
+				Convert::ToWstring<int>(updatedvalue->GetBlock()->Type);
+			LText = errormessage;
+			Logger::Get()->Error(errormessage, updatedvalue->GetBlock()->Type, true);
 
-		// check is it int or string //
-		if(UpdatedValues[0]->IsIntValue()){
+			// unregister name //
+			int ival = -1;
 
-			LText = Convert::IntToWstring(ivalue);
+			wstringstream streamy(UpdatedValues[0]->GetName());
+			streamy >> ival;
+			if(ival != -1){
+				// it was integer //
+				StopMonitoring(ival);
 
-		} else {
-			LText = wvalue;
+			} else {
+				// name //
+				StopMonitoring(-1, UpdatedValues[0]->GetName());
+			}
 		}
 
 		// call script (if right listeners exist) //
 
 
+		// remove all other update messages //
 		_PopUdated();
 
+		// adjust sizes if wanted //
 		if(AutoAdjust){
 			SizeAdjust();
 		}
@@ -441,6 +454,144 @@ void Leviathan::Gui::TextLabel::_SetHiddenStates(bool states){
 
 DLLEXPORT void Leviathan::Gui::TextLabel::QueueAction(shared_ptr<AnimationAction> act){
 	AnimationQueue.push_back(act);
+}
+
+DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(vector<BaseGuiObject*> &tempobjects, vector<Int2> &idmappairs, 
+	ObjectFileObject& dataforthis)
+{
+	// try to load a TextLabel from the structure //
+	int RealID = IDFactory::GetID();
+
+	for(size_t a = 0; a < dataforthis.Prefixes.size(); a++){
+		if(Misc::WstringStartsWith(*dataforthis.Prefixes[a], L"ID")){
+
+			// use wstring iterator to get the id number //
+			WstringIterator itr(dataforthis.Prefixes[a].get(), false);
+
+			unique_ptr<wstring> itrresult = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
+
+			// check first word //
+			if(itrresult->size() == 0){
+
+				// invalid number //
+				Logger::Get()->Error(L"TextLabel: LoadFromFileStructure: invalid number as id, in prefix: "+*dataforthis.Prefixes[a]);
+
+			} else {
+				// should be valid id //
+				idmappairs.push_back(Int2(Convert::WstringTo<int>(*itrresult), RealID));
+			}
+
+			break;
+		}
+	}
+	// create object //
+	TextLabel* curlabel = new TextLabel(RealID);
+	// add to temporary objects //
+	tempobjects.push_back(curlabel);
+
+	int x = -36003;
+	int y = -36003;
+	int width = -36003;
+	int height = -36003;
+
+	wstring text(L"");
+
+	Float4 StartColor;
+	Float4 EndColor;
+	Float4 TextColor;
+
+	float TextSize = 1.0f;
+	bool AutoAdjust = true;
+	wstring Font = L"arial";
+	int ListenOn = -1;
+
+	vector<bool> AreIndexes;
+	vector<shared_ptr<VariableBlock>> ListenIndexes;
+
+	// get values for initiation //
+	for(size_t a = 0; a < dataforthis.Contents.size(); a++){
+		// check what list is being processed //
+		if(dataforthis.Contents[a]->Name == L"params"){
+			// get variables //
+
+			ObjectFileProcessor::LoadValueFromNamedVars<int>(dataforthis.Contents[a]->Variables, L"X", x, INT_MAX, true,
+				L"TextLabel: LoadFromFileStructure:");
+
+			ObjectFileProcessor::LoadValueFromNamedVars<int>(dataforthis.Contents[a]->Variables, L"Y", y, INT_MAX, true,
+				L"TextLabel: LoadFromFileStructure:");
+
+			ObjectFileProcessor::LoadValueFromNamedVars<int>(dataforthis.Contents[a]->Variables, L"Width", width, INT_MAX, true,
+				L"TextLabel: LoadFromFileStructure:");
+
+			ObjectFileProcessor::LoadValueFromNamedVars<int>(dataforthis.Contents[a]->Variables, L"Height", height, INT_MAX, true,
+				L"TextLabel: LoadFromFileStructure:");
+
+			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"TextSizeMod", TextSize, 1.f, true,
+				L"TextLabel: LoadFromFileStructure:");
+
+			ObjectFileProcessor::LoadValueFromNamedVars<bool>(dataforthis.Contents[a]->Variables, L"AutoAdjust", AutoAdjust, true, true, 
+				L"TextLabel: LoadFromFileStructure:");
+
+
+			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(dataforthis.Contents[a]->Variables, L"StartText", text, L"", true,
+				L"TextLabel: LoadFromFileStructure:");
+
+			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(dataforthis.Contents[a]->Variables, L"Font", Font, L"Arial", true,
+				L"TextLabel: LoadFromFileStructure:");
+
+
+
+			// listen on should allow strings and multiple numbers //
+			
+			try{
+				vector<VariableBlock*> listenvalues = dataforthis.Contents[a]->Variables->GetValues(L"ListenOn");
+
+				// check values //
+				for(size_t i = 0; i < listenvalues.size(); i++){
+					// check is it wstring or int //
+
+					if(listenvalues[i]->GetBlock()->Type == DATABLOCK_TYPE_INT){
+
+						// int index //
+						AreIndexes.push_back(true);
+						ListenIndexes.push_back(shared_ptr<VariableBlock>(new VariableBlock(listenvalues[i]->GetBlock()->AllocateNewFromThis())));
+
+
+					} else {
+						// skip if cannot be made into wstring //
+						if(!listenvalues[i]->IsConversionAllowedPtr<wstring>()){
+							continue;
+						}
+
+						// is a string index //
+						AreIndexes.push_back(false);
+						ListenIndexes.push_back(shared_ptr<VariableBlock>(new VariableBlock(listenvalues[i]->GetBlock()->AllocateNewFromThis())));
+					}
+				}
+
+			}
+			catch(...){
+				// nothing to listen on //
+				ListenIndexes.clear();
+			}
+
+			ObjectFileProcessor::LoadMultiPartValueFromNamedVars<Float4, float, 4>(dataforthis.Contents[a]->Variables, L"TextColor", TextColor,
+				Float4::ColourWhite, true, L"TextLabel: LoadFromFileStructure:");
+
+			ObjectFileProcessor::LoadMultiPartValueFromNamedVars<Float4, float, 4>(dataforthis.Contents[a]->Variables, L"StartColor", StartColor,
+				Float4::ColourBlack, true, L"TextLabel: LoadFromFileStructure:");
+
+			ObjectFileProcessor::LoadMultiPartValueFromNamedVars<Float4, float, 4>(dataforthis.Contents[a]->Variables, L"EndColor", EndColor,
+				Float4::ColourBlack, true, L"TextLabel: LoadFromFileStructure:");
+		}
+	}
+
+	// init with correct values //
+	curlabel->Init(x, y, width, height, text, StartColor, EndColor, TextColor, TextSize, AutoAdjust, Font, ListenOn);
+	curlabel->Scripting = shared_ptr<ScriptObject>(dataforthis.CreateScriptObjectAndReleaseThis(0, GOBJECT_TYPE_TEXTLABEL));
+
+	// succeeded //
+	return true;
 }
 
 //void TextLabel::CalculateRelativePositions(){

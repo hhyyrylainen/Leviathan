@@ -120,12 +120,12 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 	}
 
 	// actual loading of the file //
-	vector<shared_ptr<NamedVar>> HeaderVars;
+	vector<shared_ptr<NamedVariableList>> HeaderVars;
 
 	vector<shared_ptr<ObjectFileObject>> Objects = ObjectFileProcessor::ProcessObjectFile(file, HeaderVars);
 
 	wstring twval = L"";
-	int tval = 0;
+
 	// file header variables //
 	wstring AnimationName = L"";
 	wstring BaseModelName = L"";
@@ -144,7 +144,16 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 	for(unsigned int i = 0; i < HeaderVars.size(); i++){
 		if(HeaderVars[i]->CompareName(L"FileType")){
 			// check is this right type //
-			HeaderVars[i]->GetValue(tval, twval);
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(twval)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"AnimationManager: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+
+				continue;
+			}
+
 
 			if(twval != L"BoneAnimation"){
 				// invalid file //
@@ -157,28 +166,52 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 			continue;
 		}
 		if(HeaderVars[i]->CompareName(L"Animation-Name")){
-			HeaderVars[i]->GetValue(tval, twval);
 			// store animation name //
-			AnimationName = twval;
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(AnimationName)){
 
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"AnimationManager: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
 			continue;
 		}
 		if(HeaderVars[i]->CompareName(L"Base-Model-Name")){
-			HeaderVars[i]->GetValue(tval, twval);
 			// store animation name //
-			BaseModelName = twval;
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(BaseModelName)){
 
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"AnimationManager: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
 			continue;
 		}
 		if(HeaderVars[i]->CompareName(L"AnimationType")){
-			HeaderVars[i]->GetValue(tval, twval);
 			// maybe do something with this //
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(twval)){
 
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"AnimationManager: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+
+				continue;
+			}
 			continue;
 		}
 		if(HeaderVars[i]->CompareName(L"CoordinateSystem")){
-			HeaderVars[i]->GetValue(tval, twval);
 			// check coordinates //
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(twval)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"AnimationManager: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+
+				continue;
+			}
+
 			if(twval != L"LEVIATHAN"){
 				// needs to change coordinates //
 				NeedToChangeCoordinateSystem = true;
@@ -188,10 +221,16 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 			continue;
 		}
 		if(HeaderVars[i]->CompareName(L"Model-UnCompiled")){
-			HeaderVars[i]->GetValue(tval, twval);
-			if(tval != 0){
-				// needs to save compiled version //
-				IsUnCompiled = true;
+
+			// needs to save compiled flag //
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<bool>(IsUnCompiled)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"AnimationManager: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+
+				continue;
 			}
 			continue;
 		}
@@ -258,29 +297,12 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file, bool Skip
 		// handle based on name //
 		if(Curlist->Name == L"Properties"){
 			// get properties //
-			if(Curlist->Variables->GetValue(L"KeyFrames", tval) > 1){
-				KeyFrameCount = -1;
-			} else {
-				KeyFrameCount = tval;
-			}
 
-			if(Curlist->Variables->GetValue(L"KeyFrameInterval", tval) > 1){
-				KeyFrameInterval = -1;
-			} else {
-				KeyFrameInterval = tval;
-			}
+			ObjectFileProcessor::LoadValueFromNamedVars<int>(Curlist->Variables, L"KeyFrames", KeyFrameCount, -1, false);
+			ObjectFileProcessor::LoadValueFromNamedVars<int>(Curlist->Variables, L"KeyFrameInterval", KeyFrameInterval, -1, false);
 
-			if(Curlist->Variables->GetValue(L"AnimationSpeed", tval) > 1){
-				AnimationSpeed = -1;
-			} else {
-				AnimationSpeed = tval;
-			}
-
-			if(Curlist->Variables->GetValue(L"FrameLength", tval) > 1){
-				FrameLength = -1;
-			} else {
-				FrameLength = tval;
-			}
+			ObjectFileProcessor::LoadValueFromNamedVars<int>(Curlist->Variables, L"AnimationSpeed", AnimationSpeed, -1, false);
+			ObjectFileProcessor::LoadValueFromNamedVars<int>(Curlist->Variables, L"FrameLength", FrameLength, -1, false);
 
 
 			continue;
@@ -652,8 +674,6 @@ wstring Leviathan::AnimationManager::GetAnimationNameFromFile(const wstring &fil
 
 	unique_ptr<wchar_t> ReadCharacters(new wchar_t[400]);
 
-	int junkftch;
-
 	while(!(Found && FoundBase) && reader.good()){
 		reader.getline(ReadCharacters.get(), 400);
 
@@ -665,9 +685,19 @@ wstring Leviathan::AnimationManager::GetAnimationNameFromFile(const wstring &fil
 			// correct line //
 
 			// generate named var from this line //
-			NamedVar linevar(line);
+			NamedVariableList linevar(line);
 
-			linevar.GetValue(junkftch, Name);
+			if(!linevar.CanAllBeCastedToType<wstring>()){
+
+				DEBUG_BREAK;
+			}
+
+			if(!linevar.GetValueDirect()->ConvertAndAssingToVariable<wstring>(Name)){
+
+				Name = L"invalidname";
+				DEBUG_BREAK;
+			}
+
 			// done //
 			Found = true;
 			continue;
@@ -676,9 +706,19 @@ wstring Leviathan::AnimationManager::GetAnimationNameFromFile(const wstring &fil
 			// correct line //
 
 			// generate named var from this line //
-			NamedVar linevar(line);
+			NamedVariableList linevar(line);
 
-			linevar.GetValue(junkftch, BaseModelName);
+			if(!linevar.CanAllBeCastedToType<wstring>()){
+
+				DEBUG_BREAK;
+			}
+
+			if(!linevar.GetValueDirect()->ConvertAndAssingToVariable<wstring>(BaseModelName)){
+
+				BaseModelName = L"invalidname";
+				DEBUG_BREAK;
+			}
+
 			// done //
 			FoundBase = true;
 			continue;

@@ -127,6 +127,7 @@ namespace Leviathan{
 		DLLEXPORT static void ReplaceWord(wstring& data, wstring toreplace, wstring replacer);
 		DLLEXPORT static bool WstringContains(const wstring& data, wchar_t check);
 		DLLEXPORT static bool WstringContainsNumbers(const wstring& data);
+		DLLEXPORT static bool WstringIsNumeric(const wstring &data);
 		DLLEXPORT static int WstringGetSecondWord(const wstring& data, wstring& result);
 		DLLEXPORT static int WstringGetFirstWord(const wstring& data, wstring& result);
 		DLLEXPORT static bool WstringStartsWith(const wstring& data, const wstring& lookfor);

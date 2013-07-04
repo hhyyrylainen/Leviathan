@@ -10,6 +10,7 @@
 #include "AutoUpdateable.h"
 #include "AnimateableGui.h"
 #include "DataBlock.h"
+#include "ObjectFileObject.h"
 
 #define TEXTLABEL_AUTOFETCH_MODE_NONE		0
 #define TEXTLABEL_AUTOFETCH_MODE_ID			1
@@ -45,6 +46,10 @@ namespace Leviathan{ namespace Gui{
 
 		DLLEXPORT void SetValue(const int &semanticid, const float &val);
 		DLLEXPORT float GetValue(const int &semanticid) const;
+
+		// static loading method //
+		DLLEXPORT static bool LoadFromFileStructure(vector<BaseGuiObject*> &tempobjects, vector<Int2> &idmappairs, ObjectFileObject& dataforthis);
+
 
 		//DLLEXPORT static void QueueActionForObject(TextLabel* object, AnimationAction* action); // removed from base class
 		// public to allow animation manager to remove finished animations //

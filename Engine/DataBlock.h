@@ -53,7 +53,7 @@ namespace Leviathan{
 	class DataBlockConverter{
 	public:
 		// conversion function that templates overload //
-		static inline TargetType DoConvert(FromDataBlockType* block){
+		static inline TargetType DoConvert(const FromDataBlockType* block){
 //#pragma message ("non valid conversion from types")
 			assert(0 && "conversion not possible");
 			return TargetType();
@@ -65,7 +65,7 @@ namespace Leviathan{
 	template<class DBlockTDT, class T>
 	struct DataBlockConversionResolver{
 		// handles operator class() functions
-		static inline T DoConversionNonPtr(DataBlock<DBlockTDT>* block){
+		static inline T DoConversionNonPtr(const DataBlock<DBlockTDT>* block){
 			// direct conversion check //
 			//if(DataBlockNameResolver<T>::TVal == block->Type){
 			//	// just return //
@@ -85,7 +85,7 @@ namespace Leviathan{
 			assert(0 && "return pointer of converted value not possible");
 		}
 		// functions used to check is conversion allowed //
-		static inline bool IsConversionAllowedNonPtr(DataBlock<DBlockTDT>* block){
+		static inline bool IsConversionAllowedNonPtr(const DataBlock<DBlockTDT>* block){
 			// check types //
 			if(DataBlockNameResolver<T>::TVal == block->Type){
 				// same type, is allowed always //
@@ -94,7 +94,7 @@ namespace Leviathan{
 			// use templates to see if there is a template that allows this //
 			return DataBlockConverter<DataBlock<DBlockTDT>, T>::AllowedConversion;
 		}
-		static inline bool IsConversionAllowedPtr(DataBlock<DBlockTDT>* block){
+		static inline bool IsConversionAllowedPtr(const DataBlock<DBlockTDT>* block){
 			// check types //
 			if(DataBlockNameResolver<T>::TVal == block->Type){
 				// same type, is allowed always //
@@ -114,6 +114,8 @@ namespace Leviathan{
 
 		}
 
+		// function used in deep copy //
+		DLLEXPORT virtual DataBlockAll* AllocateNewFromThis() const = 0;
 
 		int Type;
 	protected:
@@ -165,6 +167,12 @@ namespace Leviathan{
 			return *this;
 		}
 
+		// function used in deep copy //
+		DLLEXPORT virtual DataBlockAll* AllocateNewFromThis() const{
+
+			return (DataBlockAll*)(new DataBlock<DBlockT>(*this));
+		}
+
 		// shallow copy operator //
 		// copies just the pointer over (fast for copies that don't need both copies //
 		DLLEXPORT static inline DataBlock* CopyConstructor(DataBlock* arg){
@@ -183,25 +191,26 @@ namespace Leviathan{
 
 		// value getting operators //
 		template<class ConvertT>
-		DLLEXPORT operator ConvertT(){
+		DLLEXPORT operator ConvertT() const{
 
 			return DataBlockConversionResolver<DBlockT, ConvertT>::DoConversionNonPtr(this);
 		}
+		// explicit so that this doesn't get called all the time with invalid values and such //
 		template<class ConvertT>
-		DLLEXPORT operator ConvertT*(){
+		DLLEXPORT /*explicit*/ operator ConvertT*(){
 
 			return DataBlockConversionResolver<DBlockT, ConvertT>::DoConversionPtr(this);
 		}
 
 		// conversion checkers //
 		template<class ConvertT>
-		DLLEXPORT bool IsConversionAllowedNonPtr(){
+		DLLEXPORT bool IsConversionAllowedNonPtr() const{
 			// check it //
 			return DataBlockConversionResolver<DBlockT, ConvertT>::IsConversionAllowedNonPtr(this);
 		}
 
 		template<class ConvertT>
-		DLLEXPORT bool IsConversionAllowedPtr(){
+		DLLEXPORT bool IsConversionAllowedPtr() const{
 			// check it //
 			return DataBlockConversionResolver<DBlockT, ConvertT>::IsConversionAllowedPtr(this);
 		}
@@ -229,11 +238,15 @@ namespace Leviathan{
 	template<int TValue>
 	struct TvalToTypeResolver{
 
+		static const DataBlockAll* Conversion(const DataBlockAll* bl){
+			return bl;
+		}
 		static DataBlockAll* Conversion(DataBlockAll* bl){
 			return bl;
 		}
 	};
-
+	// forward declaration to make one of the constructors work //
+	class NamedVariableBlock;
 
 
 	// DataBlock interface classes //
@@ -245,6 +258,15 @@ namespace Leviathan{
 
 			BlockData = (DataBlockAll*)block;
 		}
+		// deep copy constructor //
+		DLLEXPORT VariableBlock(const VariableBlock &arg){
+			// copy data //
+			BlockData = arg.BlockData->AllocateNewFromThis();
+		}
+
+		// constructor for creating this from wstring //
+		DLLEXPORT VariableBlock(wstring &valuetoparse, vector<const NamedVariableBlock*>* predefined = NULL) throw(...);
+
 		// non template constructor //
 		DLLEXPORT VariableBlock(DataBlockAll* block){
 
@@ -260,6 +282,11 @@ namespace Leviathan{
 		DLLEXPORT inline DataBlockAll* GetBlock(){
 
 			return BlockData;
+		}
+
+		DLLEXPORT inline const DataBlockAll* GetBlockConst() const{
+
+			return static_cast<const DataBlockAll*>(BlockData);
 		}
 
 		// operators //
@@ -294,10 +321,24 @@ namespace Leviathan{
 			return *this;
 		}
 
+		// deep copy //
+		DLLEXPORT VariableBlock& operator =(const VariableBlock &arg){
+			// release existing value (if any) //
+			if(BlockData){
+				SAFE_DELETE(BlockData);
+			}
+
+			// copy data //
+			BlockData = arg.BlockData->AllocateNewFromThis();
+
+			// avoid performance issues //
+			return *this;
+		}
+
 
 		// templated operators //
 		template<class ConvertT>
-		DLLEXPORT inline operator ConvertT(){
+		DLLEXPORT inline operator ConvertT() const{
 			// cast DataBlock to derived type //
 			if(BlockData->Type == DATABLOCK_TYPE_INT)
 				return *TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData);
@@ -321,7 +362,7 @@ namespace Leviathan{
 		template<class ConvertT>
 		DLLEXPORT inline operator ConvertT*(){
 			// check does types match //
-			if(DataBlockNameResolver<T>::TVal == BlockData->Type){
+			if(DataBlockNameResolver<ConvertT>::TVal == BlockData->Type){
 
 				if(BlockData->Type == DATABLOCK_TYPE_INT)
 					return *TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData);
@@ -351,7 +392,7 @@ namespace Leviathan{
 
 		// conversion checkers //
 		template<class ConvertT>
-		DLLEXPORT inline bool IsConversionAllowedNonPtr(){
+		DLLEXPORT inline bool IsConversionAllowedNonPtr() const{
 			// check it //
 			if(BlockData->Type == DATABLOCK_TYPE_INT)
 				return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->IsConversionAllowedNonPtr<ConvertT>();
@@ -377,7 +418,7 @@ namespace Leviathan{
 		}
 
 		template<class ConvertT>
-		DLLEXPORT inline bool IsConversionAllowedPtr(){
+		DLLEXPORT inline bool IsConversionAllowedPtr() const{
 			// check it //
 			if(BlockData->Type == DATABLOCK_TYPE_INT)
 				return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->IsConversionAllowedPtr<ConvertT>();
@@ -400,6 +441,20 @@ namespace Leviathan{
 
 			assert(0 && "invalid datablock type");
 			return false;
+		}
+
+		// templated assignment conversion operator //
+		template<class ConvertT>
+		DLLEXPORT inline bool ConvertAndAssingToVariable(ConvertT &var) const{
+			// return if not allowed conversion //
+			if(!IsConversionAllowedNonPtr<ConvertT>()){
+				//Logger::Get()->Warning(L"VariableBlock: conversion not allowed");
+				return false;
+			}
+			// assign directly to the wanted value, should be faster than converting returning and then assigning //
+			var = (ConvertT)*this;
+			// assignment succeeded //
+			return true;
 		}
 
 	protected:
@@ -444,14 +499,14 @@ namespace Leviathan{
 
 
 	// conversion template specifications //
-#define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(BlockTypeName, ToConvertTypeName, ConvertActionToDo) template<> class DataBlockConverter<BlockTypeName, ToConvertTypeName>{public: static inline ToConvertTypeName DoConvert(BlockTypeName* block){ return ConvertActionToDo;}; static const bool AllowedConversion = true;};
-#define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCKDEFAULT(BlockTypeName, ToConvertTypeName) template<> class DataBlockConverter<BlockTypeName, ToConvertTypeName>{public: static inline ToConvertTypeName DoConvert(BlockTypeName* block){ return (ToConvertTypeName)(*block->Value);}; static const bool AllowedConversion = true;};
+#define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(BlockTypeName, ToConvertTypeName, ConvertActionToDo) template<> class DataBlockConverter<BlockTypeName, ToConvertTypeName>{public: static inline ToConvertTypeName DoConvert(const BlockTypeName* block){ return ConvertActionToDo;}; static const bool AllowedConversion = true;};
+#define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCKDEFAULT(BlockTypeName, ToConvertTypeName) template<> class DataBlockConverter<BlockTypeName, ToConvertTypeName>{public: static inline ToConvertTypeName DoConvert(const BlockTypeName* block){ return (ToConvertTypeName)(*block->Value);}; static const bool AllowedConversion = true;};
 
 	// wstring and string conversions with templates //
 	template<class FromDataBlockType> 
 	class DataBlockConverter<FromDataBlockType, wstring>{
 	public:
-		static inline wstring DoConvert(FromDataBlockType* block){
+		static inline wstring DoConvert(const FromDataBlockType* block){
 			return Convert::ToWstring(*block->Value);
 		}
 		static const bool AllowedConversion = true;
@@ -459,7 +514,7 @@ namespace Leviathan{
 	template<class FromDataBlockType> 
 	class DataBlockConverter<FromDataBlockType, string>{
 	public:
-		static inline string DoConvert(FromDataBlockType* block){
+		static inline string DoConvert(const FromDataBlockType* block){
 			return Convert::ToString(*block->Value);
 		}
 		static const bool AllowedConversion = true;
@@ -518,7 +573,7 @@ namespace Leviathan{
 
 
 	// type resolver specifications //
-#define TVALRESOLVERTYPE(BlockTypeT, DEFINEDValT) template<> struct TvalToTypeResolver<DEFINEDValT>{ static BlockTypeT* Conversion(DataBlockAll* bl){return static_cast<BlockTypeT*>(bl);}};
+#define TVALRESOLVERTYPE(BlockTypeT, DEFINEDValT) template<> struct TvalToTypeResolver<DEFINEDValT>{ static const BlockTypeT* Conversion(const DataBlockAll* bl){return static_cast<const BlockTypeT*>(bl);}; static BlockTypeT* Conversion(DataBlockAll* bl){return static_cast<BlockTypeT*>(bl);}};
 
 	TVALRESOLVERTYPE(IntBlock, DATABLOCK_TYPE_INT);
 	TVALRESOLVERTYPE(FloatBlock, DATABLOCK_TYPE_FLOAT);

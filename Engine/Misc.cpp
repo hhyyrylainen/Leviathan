@@ -582,4 +582,18 @@ DLLEXPORT  bool Leviathan::Misc::IsCharacterWhiteSpace(const wchar_t chara){
 	return (int)chara < 33;
 }
 
+DLLEXPORT bool Leviathan::Misc::WstringIsNumeric(const wstring &data){
+	for(size_t i = 0; i < data.size(); i++){
+
+		if(data[i] == L'+' || data[i] == L'-' || data[i] == L'.' || (data[i] >= L'0' && data[i] <= L'9')){
+			// valid //
+			continue;
+		}
+		// non numeric character //
+		return false;
+	}
+	// not found any non numeric characters //
+	return true;
+}
+
 std::wstring Leviathan::Misc::ValidNumberCharacters = L"1234567890-+.";

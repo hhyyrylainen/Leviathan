@@ -789,6 +789,13 @@ namespace Leviathan{
 		// ------------------------------------ //
 
 		float X, Y, Z, W;
+
+
+		// specific colours //
+		static const Float4 ColourBlack;
+		static const Float4 ColourWhite;
 	};
+
+
 }
 #endif

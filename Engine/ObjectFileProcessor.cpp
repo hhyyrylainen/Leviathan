@@ -33,11 +33,11 @@ int Leviathan::ObjectFileProcessor::GetObjectTypeID(wstring &name){
 
 	return -1;
 }
-DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(const wstring &signature, int value){
-	RegisteredValues.push_back(new IntWstring(signature, value));
+DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(NamedVariableBlock* valuetokeep){
+	RegisteredValues.push_back(valuetokeep);
 }
 // ------------------------------------ //
-DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVar>> &HeaderVars){
+DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVariableList>> &HeaderVars){
 	//QUICKTIME_THISSCOPE;
 	vector<shared_ptr<ObjectFileObject>> returned;
 
@@ -89,7 +89,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 		}
 		// try to create a named var from this line //
 		try{
-			shared_ptr<NamedVar> namevar(new NamedVar(Lines[Line], &RegisteredValues));
+			shared_ptr<NamedVariableList> namevar(new NamedVariableList(Lines[Line], &RegisteredValues));
 			// didn't cause an exception, is valid add //
 			HeaderVars.push_back(namevar);
 		}
@@ -376,7 +376,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line,
 	// parse variable //
 
 	try{
-		obj->Contents[Handleindex]->Variables->GetVec()->push_back(shared_ptr<NamedVar>(new NamedVar(Lines[Line], &RegisteredValues)));
+		obj->Contents[Handleindex]->Variables->GetVec()->push_back(shared_ptr<NamedVariableList>(new NamedVariableList(Lines[Line], &RegisteredValues)));
 	}
 	catch (const ExceptionInvalidArguement &e){
 
@@ -497,10 +497,16 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 					// this line should be a NamedVar object //
 					try{
 						// use NamedVar constructor to parse this line //
-						NamedVar tmpnamedvar(Lines[Line]);
+						VariableBlock tmpnamedvar(Lines[Line]);
 
 						// get variable value to name //
-						tmpnamedvar.GetValue(tscript->Name);
+
+						if(!tmpnamedvar.ConvertAndAssingToVariable<wstring>(tscript->Name)){
+
+							Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid name line: "+Convert::IntToWstring(Line)+
+								L" in file"+sourcefile+L". Cannot be cast to wstring!", true);
+							tscript->Name = L"Invalid name";
+						}
 					}
 					catch(const ExceptionInvalidArguement &e){
 						// invalid definition //
@@ -569,7 +575,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockTextBlock(UINT &Line,
 
 // ------------------------------------ //
 
-DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const wstring &file, vector<shared_ptr<NamedVar>> &headervars,bool UseBinary /*= false*/){
+DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const wstring &file, vector<shared_ptr<NamedVariableList>> &headervars,bool UseBinary /*= false*/){
 	// open file for writing //
 	wofstream writer;
 	writer.open(file);
@@ -607,7 +613,7 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 				writer << L"		<t> " << *tmp->Lines[ind] << endl;
 			}
 			// variable lines //
-			vector<shared_ptr<NamedVar>>* tempvals = tmp->Variables->GetVec();
+			vector<shared_ptr<NamedVariableList>>* tempvals = tmp->Variables->GetVec();
 			for(unsigned int ind = 0; ind < tempvals->size(); ind++){
 				writer << L"			" << tempvals->at(ind)->ToText(0) << endl;
 			}
@@ -673,6 +679,6 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 	return true;
 }
 
+vector<const NamedVariableBlock*> Leviathan::ObjectFileProcessor::RegisteredValues;
 
 
-vector<IntWstring*> Leviathan::ObjectFileProcessor::RegisteredValues;

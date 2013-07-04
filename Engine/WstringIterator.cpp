@@ -194,7 +194,12 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEqualityAssign
 	// return wanted part //
 	return resultstr;
 }
-
+// ------------------------------------ //
+DLLEXPORT void Leviathan::WstringIterator::SkipWhiteSpace(){
+	// iterate over the string skipping until hit something that doesn't need to be skipped //
+	StartIterating(SkipSomething, NULL, (int)UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE);
+}
+// ------------------------------------ //
 DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEnd(){
 	// just return the end of the string //
 	if(IsPtrUsed){
@@ -909,4 +914,30 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilSpecificCharacter(Wst
 	}
 	// just continue //
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+}
+
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::SkipSomething(WstringIterator* instance, Object* notwanted, int parameters){
+
+	// we can just return if we are inside a string //
+	if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_INSIDE_STRING)){
+		return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+	}
+	int curchara = (int)instance->GetCurrentCharacter();
+	// check does character match what is skipped //
+
+	UNNORMALCHARACTER stoptype = (UNNORMALCHARACTER)parameters;
+
+	switch(stoptype){
+	case UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE:
+		{
+			if(curchara <= 32)
+				return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+		}
+		break;
+
+	default:
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
+	}
+	// didn't match to be skipped characters //
+	return ITERATORCALLBACK_RETURNTYPE_STOP;
 }

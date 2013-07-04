@@ -7,7 +7,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "ObjectFileProcessor.h"
 
-DataStore::DataStore(){
+DLLEXPORT Leviathan::DataStore::DataStore(){
 	Load();
 
 
@@ -25,9 +25,9 @@ DataStore::DataStore(){
 	FPSMax = 0;
 	FPSAverage = 0;
 }
-DataStore::DataStore(bool man){
+DLLEXPORT Leviathan::DataStore::DataStore(bool man){
 	if(!man)
-		assert(false);
+		assert(0 && "this shouldn't be called with false");
 
 	Staticaccess = this;
 
@@ -36,146 +36,43 @@ DataStore::DataStore(bool man){
 	TickCount = 0;
 
 	// register data indexes for use in Gui stuff //
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_TICKTIME"), DATAINDEX_TICKTIME);
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_TICKCOUNT"), DATAINDEX_TICKCOUNT);
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_FRAMETIME"), DATAINDEX_FRAMETIME);
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_FPS"), DATAINDEX_FPS);
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_WIDTH"), DATAINDEX_WIDTH);
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_HEIGHT"), DATAINDEX_HEIGHT);
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_FRAMETIME_MAX"), DATAINDEX_FRAMETIME_MAX);
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_FRAMETIME_MIN"), DATAINDEX_FRAMETIME_MIN);
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_FRAMETIME_AVERAGE"), DATAINDEX_FRAMETIME_AVERAGE);
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_FPS_MIN"), DATAINDEX_FPS_MIN);
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_FPS_MAX"), DATAINDEX_FPS_MAX);
-	ObjectFileProcessor::RegisterValue(wstring(L"DATAINDEX_FPS_AVERAGE"), DATAINDEX_FPS_AVERAGE);
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_TICKTIME), L"DATAINDEX_TICKTIME"));
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_TICKCOUNT), L"DATAINDEX_TICKCOUNT"));
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FRAMETIME), L"DATAINDEX_FRAMETIME"));
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FPS), L"DATAINDEX_FPS"));
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_WIDTH), L"DATAINDEX_WIDTH"));
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_HEIGHT), L"DATAINDEX_HEIGHT"));
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FRAMETIME_MAX), L"DATAINDEX_FRAMETIME_MAX"));
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FRAMETIME_MIN), L"DATAINDEX_FRAMETIME_MIN"));
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FRAMETIME_AVERAGE), L"DATAINDEX_FRAMETIME_AVERAGE"));
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FPS_MIN), L"DATAINDEX_FPS_MIN"));
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FPS_MAX), L"DATAINDEX_FPS_MAX"));
+	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FPS_AVERAGE), L"DATAINDEX_FPS_AVERAGE"));
 
 }
-DataStore::~DataStore(){
+DLLEXPORT Leviathan::DataStore::~DataStore(){
 	Save();
 }
-
-DataStore* Leviathan::DataStore::Staticaccess = NULL;
-DataStore* DataStore::Get(){ return Staticaccess; };
-// ------------------------------------ //
-int DataStore::GetValue(const wstring &name) const{
-	int var = 0;
-	values.GetValue(name, var);
-	return var;
-}
-//int DataStore::GetValue(int index){
-//	values.GetValue(
-//}
-bool DataStore::SetValue(const wstring &name, int value){
-	values.SetValue(name, value);
-
-	ValueUpdate(name);
-
-	return true;
-}
-//bool DataStore::SetValue(int index, int value){
-//	values.SetValue(
-//}
-// ------------------------------------ //
-int DataStore::GetIndex(const wstring &name) const{
-	return values.Find(name);
-}
-int DataStore::SeekIndex(const int &value, const wstring &partofname){
-	vector<shared_ptr<NamedVar>>* vec = values.GetVec();
-
-	int val = 0;
-	wstring var;
-
-	for(unsigned int i = 0; i < vec->size(); i++){
-		vec->at(i)->GetValue(val, var);
-
-		if(val == value){
-			if(Misc::CountOccuranceWstring(vec->at(i)->GetName(), partofname) > 0){
-				return i;
-			}
-
-		}
-
-	}
-	return -1;
-}
-// ------------------------------------ //
-void Leviathan::DataStore::SetPersistance(unsigned int index, bool toset){
-	ARR_INDEX_CHECKINV(index, Persistancestates.size())
-		return;
-
-	Persistancestates[index] = toset;
-}
-void DataStore::SetPersistance(const wstring &name, bool toset){
-	int index = GetIndex(name);
-	ARR_INDEX_CHECKINV(index, (int)Persistancestates.size())
-		return;
-
-	Persistancestates[index] = toset;
-}
-int DataStore::GetPersistance(unsigned int index) const{
-	ARR_INDEX_CHECKINV(index, Persistancestates.size())
-		return -1;
-
-	return Persistancestates[index];
-}
-int DataStore::GetPersistance(const wstring &name) const{
-	int index = GetIndex(name);
-	ARR_INDEX_CHECKINV(index, (int)Persistancestates.size())
-		return -1;
-
-	return Persistancestates[index];
-}
-// ------------------------------------ //
-bool DataStore::AddValue(const wstring &name, const int &data){
-	values.AddVar(name, data, L"", true);
-	Persistancestates.push_back(false);
-	return true;
-}
-
-
-bool Leviathan::DataStore::AddValueIfDoesntExist(const wstring &name, const int &data){
-	if(values.Find(name) == -1){
-		// didn't find, should not exist then //
-		AddValue(name, data);
-		return true;
-	}
-	return false;
-}
-
-
-bool DataStore::RemoveVariable(const wstring &name){
-	int index = GetIndex(name);
-	ARR_INDEX_CHECKINV(index, (int)Persistancestates.size())
-		return false;
-	values.Remove(index);
-	Persistancestates.erase(Persistancestates.begin()+index);
-	return true;
-}
-bool DataStore::RemoveVariable(int index){
-	values.Remove(index);
-	return true;
-}
-// ------------------------------------ //
-void DataStore::Load(){
+void Leviathan::DataStore::Load(){
 	// load //
-	vector<shared_ptr<NamedVar>> tempvec;
-	FileSystem::LoadDataDumb(L".\\Persist.txt", tempvec);
+	vector<shared_ptr<NamedVariableList>> tempvec;
+	FileSystem::LoadDataDump(L".\\Persist.txt", tempvec);
 
-	values.SetVec(tempvec);
-	Persistancestates.resize(tempvec.size());
-	for(unsigned int i = 0; i < Persistancestates.size(); i++){
-		Persistancestates[i] = true;
+	Values.SetVec(tempvec);
+	Persistencestates.resize(tempvec.size());
+	for(unsigned int i = 0; i < Persistencestates.size(); i++){
+		Persistencestates[i] = true;
 	}
 
 }
-void DataStore::Save(){
+void Leviathan::DataStore::Save(){
 	wstring tosave = L"";
-	vector<shared_ptr<NamedVar>>* tempvec = values.GetVec();
+	vector<shared_ptr<NamedVariableList>>* tempvec = Values.GetVec();
 
-	for(unsigned int i = 0; i < Persistancestates.size(); i++){
-		if(Persistancestates[i]){
+	for(unsigned int i = 0; i < Persistencestates.size(); i++){
+		if(Persistencestates[i]){
 			tosave += tempvec->at(i)->ToText(0);
-			if(i+1 < Persistancestates.size()){
+			if(i+1 < Persistencestates.size()){
 				tosave += L"\n";
 			}
 		}
@@ -184,16 +81,149 @@ void DataStore::Save(){
 	FileSystem::WriteToFile(tosave, L".\\Persist.txt");
 
 }
-// ------------------------------------ //
-void DataStore::RegisterListener(DataListener* listen){
-	Listeners.push_back(listen);
 
-//#ifdef _DEBUG
-//	Logger::Get()->Info(L"DataStore: DataListener registered! for value "+Convert::IntToWstring(listen->ListenIndex)+L" "+listen->VarName);
-//#endif
+DataStore* Leviathan::DataStore::Staticaccess = NULL;
+DataStore* Leviathan::DataStore::Get(){ return Staticaccess; };
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::DataStore::GetValue(const wstring &name, VariableBlock &receiver) const{
+	return Values.GetValue(name, receiver);
 }
 
-void Leviathan::DataStore::RemoveListener(AutoUpdateableObject* object, int valueid, const wstring &name /* = L""*/, bool all /*= false*/){
+DLLEXPORT bool Leviathan::DataStore::GetValue(const wstring &name, const int &nindex, VariableBlock &receiver) const{
+	return Values.GetValue(name, nindex, receiver);
+}
+
+DLLEXPORT size_t Leviathan::DataStore::GetValueCount(const wstring &name) const{
+	return Values.GetValueCount(name);
+}
+
+DLLEXPORT bool Leviathan::DataStore::GetValues(const wstring &name, vector<const VariableBlock*> &receiver) const{
+	return Values.GetValues(name, receiver);
+}
+// ------------------------------------ //
+void Leviathan::DataStore::SetPersistance(unsigned int index, bool toset){
+	ARR_INDEX_CHECKINV(index, Persistencestates.size())
+		return;
+
+	Persistencestates[index] = toset;
+}
+void DataStore::SetPersistance(const wstring &name, bool toset){
+	int index = Values.Find(name);
+	ARR_INDEX_CHECKINV(index, (int)Persistencestates.size())
+		return;
+
+	Persistencestates[index] = toset;
+}
+int DataStore::GetPersistance(unsigned int index) const{
+	ARR_INDEX_CHECKINV(index, Persistencestates.size())
+		return -1;
+
+	return Persistencestates[index];
+}
+int DataStore::GetPersistance(const wstring &name) const{
+	int index = Values.Find(name);
+	ARR_INDEX_CHECKINV(index, (int)Persistencestates.size())
+		return -1;
+
+	return Persistencestates[index];
+}
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::DataStore::SetValue(const wstring &name, const VariableBlock &value1){
+	// use variable holder to do this //
+	Values.SetValue(name, value1);
+
+	// send update to value listeners //
+	ValueUpdate(name);
+
+	return true;
+}
+
+DLLEXPORT bool Leviathan::DataStore::SetValue(const wstring &name, VariableBlock* value1){
+	// use variable holder to do this //
+	Values.SetValue(name, value1);
+
+	// send update to value listeners //
+	ValueUpdate(name);
+
+	return true;
+}
+
+DLLEXPORT bool Leviathan::DataStore::SetValue(const wstring &name, const vector<VariableBlock*> &values){
+	// use variable holder to do this //
+	this->Values.SetValue(name, values);
+
+	// send update to value listeners //
+	ValueUpdate(name);
+
+	return true;
+}
+
+DLLEXPORT bool Leviathan::DataStore::SetValue(NamedVariableList &nameandvalues){
+
+	// send update to value listeners //
+	ValueUpdate(nameandvalues.GetName());
+
+	return true;
+}
+
+// ----------------------------------------------- //
+DLLEXPORT void Leviathan::DataStore::AddVar(NamedVariableList* newvaluetoadd){
+	if(Values.Find(newvaluetoadd->GetName()) < 0){
+		// can add new //
+		Values.AddVar(newvaluetoadd);
+
+		// don't forget to add persistence //
+		Persistencestates.push_back(false);
+
+
+	} else {
+		// can't add, must delete //
+		SAFE_DELETE(newvaluetoadd);
+	}
+}
+
+DLLEXPORT void Leviathan::DataStore::AddVar(shared_ptr<NamedVariableList> values){
+	if(this->Values.Find(values->GetName()) < 0){
+		// can add new //
+		this->Values.AddVar(values);
+
+		// don't forget to add persistence //
+		Persistencestates.push_back(false);
+	}
+}
+
+DLLEXPORT void Leviathan::DataStore::Remove(unsigned int index){
+	// index checking //
+	ARR_INDEX_CHECKINV(index, Values.GetVec()->size()){
+		// invalid index //
+		DEBUG_BREAK;
+		return;
+	}
+
+	// remove from store //
+	Values.Remove(index);
+	// don't forget to remove from persistence states //
+	Persistencestates.erase(Persistencestates.begin()+index);
+}
+
+DLLEXPORT void Leviathan::DataStore::Remove(const wstring &name){
+	// call overload //
+	Remove(Values.Find(name));
+}
+// ----------------------------------------------- //
+DLLEXPORT int Leviathan::DataStore::GetVariableType(const wstring &name) const{
+	return Values.GetVariableType(name);
+}
+
+DLLEXPORT int Leviathan::DataStore::GetVariableTypeOfAll(const wstring &name) const{
+	return Values.GetVariableTypeOfAll(name);
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::DataStore::RegisterListener(DataListener* listen){
+	Listeners.push_back(listen);
+}
+
+DLLEXPORT void Leviathan::DataStore::RemoveListener(AutoUpdateableObject* object, int valueid, const wstring &name /* = L""*/, bool all /*= false*/){
 	for(unsigned int i = 0; i < Listeners.size(); i++){
 		if(Listeners[i]->Object == object){
 			// check type, or skip if all //
@@ -214,30 +244,39 @@ void Leviathan::DataStore::RemoveListener(AutoUpdateableObject* object, int valu
 	}
 }
 
-int Leviathan::DataStore::GetTickTime() const{
+void Leviathan::DataStore::_RemoveListener(int index){
+	ARR_INDEX_CHECK(index, (int)Listeners.size()){
+		// is valid, ARR_INDEX_CHECKINV would be used if error would be generated here //
+		delete Listeners[index];
+		Listeners.erase(Listeners.begin()+index);
+		return;
+	}
+	// error //
+	Logger::Get()->Error(L"DataStore: Trying to remove listener with invalid index", index);
+}
+// ------------------------------------ //
+DLLEXPORT int Leviathan::DataStore::GetTickTime() const{
 	return TickTime;
 }
 
-int Leviathan::DataStore::GetTickCount() const{
+DLLEXPORT int Leviathan::DataStore::GetTickCount() const{
 	return TickCount;
 }
 
-int Leviathan::DataStore::GetFrameTime() const{
+DLLEXPORT int Leviathan::DataStore::GetFrameTime() const{
 	return FrameTime;
 }
 
 void Leviathan::DataStore::ValueUpdate(int index){
-	shared_ptr<CombinedClass<NamedVar, Int1>> updatedval;
+	shared_ptr<NamedVariableList> updatedval(nullptr);
 
 	for(unsigned int i = 0; i < Listeners.size(); i++){
 		if(Listeners[i]->ListenOnIndex){
 			if(Listeners[i]->ListenIndex == index){
 				if(updatedval.get() == NULL){
 					// create //
-					updatedval = shared_ptr<CombinedClass<NamedVar, Int1>>(new CombinedClass<NamedVar, Int1>());
-					updatedval->SetName(Convert::IntToWstring(index));
-					updatedval->SetValue(GetValueFromValIndex(index));
-					updatedval->SetIntValue(index);
+					updatedval = shared_ptr<NamedVariableList>(new NamedVariableList(Convert::IntToWstring(index), new 
+						IntBlock(GetValueFromValIndex(index))));
 				}
 				
 				Listeners[i]->Object->OnUpdate(updatedval);
@@ -247,27 +286,15 @@ void Leviathan::DataStore::ValueUpdate(int index){
 }
 
 void Leviathan::DataStore::ValueUpdate(const wstring& name){
-	shared_ptr<CombinedClass<NamedVar, Int1>> updatedval;
+	shared_ptr<NamedVariableList> updatedval(nullptr);
 
 	for(unsigned int i = 0; i < Listeners.size(); i++){
 		if(!Listeners[i]->ListenOnIndex){
 			if(Listeners[i]->VarName == name){
 				if(updatedval.get() == NULL){
 					// create //
-					updatedval = shared_ptr<CombinedClass<NamedVar, Int1>>(new CombinedClass<NamedVar, Int1>());
-					updatedval->SetName(name);
-
-					int intval = -1;
-					wstring wval = L"";
-
-					this->values.GetValue(name,intval, wval);
-
-					if(wval == L""){
-						updatedval->SetValue(intval);
-					} else {
-						updatedval->SetValue(wval);
-					}
-					updatedval->SetIntValue(-1);
+					updatedval = shared_ptr<NamedVariableList>(new NamedVariableList(name, new VariableBlock(
+						Values.GetValue(name)->GetBlockConst()->AllocateNewFromThis())));
 				}
 
 				Listeners[i]->Object->OnUpdate(updatedval);
@@ -276,58 +303,60 @@ void Leviathan::DataStore::ValueUpdate(const wstring& name){
 	}
 }
 
-void Leviathan::DataStore::SetHeight(int newval){
+
+
+DLLEXPORT void Leviathan::DataStore::SetHeight(int newval){
 	Height = newval; 
 	ValueUpdate(DATAINDEX_HEIGHT);
 }
 
-void Leviathan::DataStore::SetWidth(int newval){
+DLLEXPORT void Leviathan::DataStore::SetWidth(int newval){
 	Width = newval; 
 	ValueUpdate(DATAINDEX_WIDTH);
 }
 
-void Leviathan::DataStore::SetGUiActive(int newval){
+DLLEXPORT void Leviathan::DataStore::SetGUiActive(int newval){
 	Gui = newval; 
 	//ValueUpdate(4);
 }
 
-void Leviathan::DataStore::SetFPS(int newval){
+DLLEXPORT void Leviathan::DataStore::SetFPS(int newval){
 	FPS = newval; 
 	ValueUpdate(4);
 }
 
-void Leviathan::DataStore::SetFrameTime(int newval){
+DLLEXPORT void Leviathan::DataStore::SetFrameTime(int newval){
 	FrameTime = newval; 
 	ValueUpdate(3);
 }
 
-void Leviathan::DataStore::SetTickCount(int newval){
+DLLEXPORT void Leviathan::DataStore::SetTickCount(int newval){
 	TickCount = newval; 
 	ValueUpdate(2);
 }
 
-void Leviathan::DataStore::SetTickTime(int newval){
+DLLEXPORT void Leviathan::DataStore::SetTickTime(int newval){
 	TickTime = newval; 
 	ValueUpdate(1);
 }
 
-int Leviathan::DataStore::GetGUiActive() const{
+DLLEXPORT int Leviathan::DataStore::GetGUiActive() const{
 	return Gui;
 }
 
-int Leviathan::DataStore::GetWidth() const{
+DLLEXPORT int Leviathan::DataStore::GetWidth() const{
 	return Width;
 }
 
-int Leviathan::DataStore::GetHeight() const{
+DLLEXPORT int Leviathan::DataStore::GetHeight() const{
 	return Height;
 }
 
-int Leviathan::DataStore::GetFPS() const{
+DLLEXPORT int Leviathan::DataStore::GetFPS() const{
 	return FPS;
 }
 
-int Leviathan::DataStore::GetValueFromValIndex(int valindex) const{
+DLLEXPORT int Leviathan::DataStore::GetValueFromValIndex(int valindex) const{
 	switch(valindex){
 		case DATAINDEX_TICKTIME:
 			{
@@ -394,75 +423,62 @@ int Leviathan::DataStore::GetValueFromValIndex(int valindex) const{
 }
 
 
-int Leviathan::DataStore::GetFrameTimeMin() const{
+DLLEXPORT int Leviathan::DataStore::GetFrameTimeMin() const{
 	return FrameTimeMin;
 }
 
-int Leviathan::DataStore::GetFrameTimeMax() const{
+DLLEXPORT int Leviathan::DataStore::GetFrameTimeMax() const{
 	return FrameTimeMax;
 }
 
-int Leviathan::DataStore::GetFrameTimeAverage() const{
+DLLEXPORT int Leviathan::DataStore::GetFrameTimeAverage() const{
 	return FrameTimeAverage;
 }
 
-int Leviathan::DataStore::GetFPSMin() const{
+DLLEXPORT int Leviathan::DataStore::GetFPSMin() const{
 	return FPSMax;
 }
 
-int Leviathan::DataStore::GetFPSMax() const{
+DLLEXPORT int Leviathan::DataStore::GetFPSMax() const{
 	return FPSMax;
 }
 
-int Leviathan::DataStore::GetFPSAverage() const{
+DLLEXPORT int Leviathan::DataStore::GetFPSAverage() const{
 	return FPSAverage;
 }
 
-void Leviathan::DataStore::SetFrameTimeMin(int newval){
+DLLEXPORT void Leviathan::DataStore::SetFrameTimeMin(int newval){
 	FrameTimeMin = newval;
 	ValueUpdate(DATAINDEX_FRAMETIME_MIN);
 }
 
-void Leviathan::DataStore::SetFrameTimeMax(int newval){
+DLLEXPORT void Leviathan::DataStore::SetFrameTimeMax(int newval){
 	FrameTimeMax = newval;
 	ValueUpdate(DATAINDEX_FRAMETIME_MAX);
 }
 
-void Leviathan::DataStore::SetFrameTimeAverage(int newval){
+DLLEXPORT void Leviathan::DataStore::SetFrameTimeAverage(int newval){
 	FrameTimeAverage = newval;
 	ValueUpdate(DATAINDEX_FRAMETIME_AVERAGE);
 }
 
-void Leviathan::DataStore::SetFPSMin(int newval){
+DLLEXPORT void Leviathan::DataStore::SetFPSMin(int newval){
 	FPSMin = newval;
 	ValueUpdate(DATAINDEX_FPS_MIN);
 }
 
-void Leviathan::DataStore::SetFPSMax(int newval){
+DLLEXPORT void Leviathan::DataStore::SetFPSMax(int newval){
 	FPSMax = newval;
 	ValueUpdate(DATAINDEX_FPS_MAX);
 }
 
-void Leviathan::DataStore::SetFPSAverage(int newval){
+DLLEXPORT void Leviathan::DataStore::SetFPSAverage(int newval){
 	FPSAverage = newval;
 	ValueUpdate(DATAINDEX_FPS_AVERAGE);
 }
 
-
-
-void DataStore::_RemoveListener(int index){
-	ARR_INDEX_CHECK(index, (int)Listeners.size()){
-		// is valid, ARR_INDEX_CHECKINV would be used if error would be generated here //
-		delete Listeners[index];
-		Listeners.erase(Listeners.begin()+index);
-		return;
-	}
-	// error //
-	Logger::Get()->Error(L"DataStore: Trying to remove listener with invalid index", index);
-}
-
 // ----------------------------------------------- //
-Leviathan::DataListener::DataListener(){
+DLLEXPORT Leviathan::DataListener::DataListener(){
 	ListenIndex = -1;
 	ListenOnIndex = false;
 	VarName = L"";
@@ -472,7 +488,7 @@ Leviathan::DataListener::DataListener(){
 	Termination = true;
 }
 
-Leviathan::DataListener::DataListener(int index, bool onindex, AutoUpdateableObject* obj, const wstring &var /*= L""*/){
+DLLEXPORT Leviathan::DataListener::DataListener(int index, bool onindex, AutoUpdateableObject* obj, const wstring &var /*= L""*/){
 	ListenIndex = index;
 	ListenOnIndex = onindex;
 	VarName = var;

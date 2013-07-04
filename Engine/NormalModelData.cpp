@@ -208,11 +208,10 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadRenderModel(wstring* 
 }
 
 DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* file){
-	vector<shared_ptr<NamedVar>> HeadVars;
+	vector<shared_ptr<NamedVariableList>> HeaderVars;
 
-	vector<shared_ptr<ObjectFileObject>> FileStructure = ObjectFileProcessor::ProcessObjectFile(*file, HeadVars);
+	vector<shared_ptr<ObjectFileObject>> FileStructure = ObjectFileProcessor::ProcessObjectFile(*file, HeaderVars);
 
-	int head_int = 0;
 	wstring head_str = L"";
 
 	bool NeedToChangeCoordinateSystem = false;
@@ -222,27 +221,48 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 	int ExpectedFaceCount = -1;
 
 	// check some values in header //
-	for(unsigned int i = 0; i < HeadVars.size(); i++){
-		if(HeadVars[i]->GetName() == L"FileType"){
+	for(unsigned int i = 0; i < HeaderVars.size(); i++){
+		if(HeaderVars[i]->GetName() == L"FileType"){
 			// get values //
-			HeadVars[i]->GetValue(head_int, head_str);
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(head_str)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"NormalModelData: LoadFromLEVMO: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+
+				continue;
+			}
 			// checks/storing //
 			if(head_str != L"ModelData"){
-				Logger::Get()->Error(L"NormalModelData: load from levmo: invalid FileType, ModelData expected got: "+head_str, true);
+				Logger::Get()->Error(L"NormalModelData: LoadFromLEVMO: invalid FileType, ModelData expected got: "+head_str, true);
 				return false;
 			}
 			continue;
 		}
-		if(HeadVars[i]->GetName() == L"Model-Name"){
-			// get values //
-			HeadVars[i]->GetValue(head_int, head_str);
+		if(HeaderVars[i]->GetName() == L"Model-Name"){
 			// checks/storing //
-			ThisName = head_str;
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(ThisName)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"NormalModelData: LoadFromLEVMO: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+
+			}
 			continue;
 		}
-		if(HeadVars[i]->GetName() == L"CoordinateSystem"){
+		if(HeaderVars[i]->GetName() == L"CoordinateSystem"){
 			// get values //
-			HeadVars[i]->GetValue(head_int, head_str);
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<wstring>(head_str)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"NormalModelData: LoadFromLEVMO: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+
+				continue;
+			}
 			// checks/storing //
 			if(head_str != L"LEVIATHAN"){
 				// needs to transform //
@@ -250,28 +270,38 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 			}
 			continue;
 		}
-		if(HeadVars[i]->GetName() == L"Model-UnCompiled"){
-			// get values //
-			HeadVars[i]->GetValue(head_int, head_str);
+		if(HeaderVars[i]->GetName() == L"Model-UnCompiled"){
+			// store compilation flag //
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<bool>(IsUnCompiled)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"NormalModelData: LoadFromLEVMO: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
+
+			continue;
+		}
+		if(HeaderVars[i]->GetName() == L"ExpectedVertexCount"){
 			// checks/storing //
-			if(head_int != 0){
-				// compilation needed //
-				IsUnCompiled = true;
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<int>(ExpectedVertexCount)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"NormalModelData: LoadFromLEVMO: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
 			}
 			continue;
 		}
-		if(HeadVars[i]->GetName() == L"ExpectedVertexCount"){
-			// get values //
-			HeadVars[i]->GetValue(head_int, head_str);
+		if(HeaderVars[i]->GetName() == L"ExpectedFaceCount"){
 			// checks/storing //
-			ExpectedVertexCount = head_int;
-			continue;
-		}
-		if(HeadVars[i]->GetName() == L"ExpectedFaceCount"){
-			// get values //
-			HeadVars[i]->GetValue(head_int, head_str);
-			// checks/storing //
-			ExpectedFaceCount = head_int;
+			if(!HeaderVars[i]->GetValue().ConvertAndAssingToVariable<int>(ExpectedFaceCount)){
+
+				// dang //
+				DEBUG_BREAK;
+				Logger::Get()->Error(L"NormalModelData: LoadFromLEVMO: invalid header value (cannot be cast to right type, check definition) named: "+
+					HeaderVars[i]->GetName());
+			}
 			continue;
 		}
 	}
@@ -737,18 +767,18 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 			//	}
 			//}
 			if(IsUnCompiled){
-				vector<shared_ptr<NamedVar>> SavedHeadVars;
+				vector<shared_ptr<NamedVariableList>> SavedHeadVars;
 
 				// header data //
-				SavedHeadVars.push_back(shared_ptr<NamedVar>(new NamedVar(L"FileType", L"ModelData")));
-				SavedHeadVars.push_back(shared_ptr<NamedVar>(new NamedVar(L"Model-Name", L'\"'+ThisName+L'\"')));
-				SavedHeadVars.push_back(shared_ptr<NamedVar>(new NamedVar(L"CoordinateSystem", L"LEVIATHAN")));
+				SavedHeadVars.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"FileType", new WstringBlock(L"ModelData"))));
+				SavedHeadVars.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"Model-Name", new WstringBlock(ThisName))));
+				SavedHeadVars.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"CoordinateSystem", new WstringBlock(L"LEVIATHAN"))));
 				// set data //
 				ExpectedVertexCount = Vertices.size();
 				ExpectedFaceCount = Faces.size();
 
-				SavedHeadVars.push_back(shared_ptr<NamedVar>(new NamedVar(L"ExpectedVertexCount", ExpectedVertexCount)));
-				SavedHeadVars.push_back(shared_ptr<NamedVar>(new NamedVar(L"ExpectedFaceCount", ExpectedFaceCount)));
+				SavedHeadVars.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"ExpectedVertexCount", new IntBlock(ExpectedVertexCount))));
+				SavedHeadVars.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"ExpectedFaceCount", new IntBlock(ExpectedFaceCount))));
 
 				// write to blocks //
 				wstringstream converter;
@@ -859,7 +889,7 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 					Succeeded = false;
 					// don't error on this one //
 					//Type = MODELOBJECT_MODEL_TYPE_ERROR;
-					Logger::Get()->Error(L"NormalModelData: LoadFromLEVMO: failed to resave the file");
+					Logger::Get()->Error(L"NormalModelData: LoadFromLEVMO: failed to re save the file");
 				}
 
 				// clear save structure //
@@ -882,12 +912,12 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::LoadFromLEVMO(wstring* fi
 			continue;
 		}
 		// invalid object //
-		Logger::Get()->Error(L"NormalModelData: load levmo: file contains unknown structure type: "+FileStructure[i]->TName);
+		Logger::Get()->Error(L"NormalModelData: LoadFromLEVMO: file contains unknown structure type: "+FileStructure[i]->TName);
 	}
 
 	if(pRenderModel.size() == 0){
 		// failed //
-		Logger::Get()->Error(L"NormalModelData: load levmo: file has invalid structure, no objects found");
+		Logger::Get()->Error(L"NormalModelData: LoadFromLEVMO: file has invalid structure, no objects found");
 		Type = MODELOBJECT_MODEL_TYPE_ERROR;
 		return false;
 	}

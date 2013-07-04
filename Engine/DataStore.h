@@ -11,6 +11,7 @@
 #include "AutoUpdateable.h"
 
 namespace Leviathan{
+
 #define DATAINDEX_TICKTIME				1
 #define DATAINDEX_TICKCOUNT				2
 #define DATAINDEX_FRAMETIME				3
@@ -30,8 +31,8 @@ namespace Leviathan{
 #define DATAINDEX_UND			-1
 //#define FUNCKREATE(x, y) private: #x #y; public: DLLEXPORT #x Get#y(){ return #y; }; public: DLLEXPORT void Set#y(#x newval){ #y = newval; ValueUpdate(); };
 	struct DataListener{
-			DataListener();
-			DataListener(int index, bool onindex, AutoUpdateableObject* obj, const wstring& var = L"");
+			DLLEXPORT DataListener();
+			DLLEXPORT DataListener(int index, bool onindex, AutoUpdateableObject* obj, const wstring& var = L"");
 			int ListenIndex;
 			bool ListenOnIndex;
 			wstring VarName;
@@ -47,28 +48,54 @@ namespace Leviathan{
 		DLLEXPORT DataStore::DataStore(bool main);
 		DLLEXPORT DataStore::~DataStore();
 
-		DLLEXPORT static DataStore* Get();
-
-		DLLEXPORT int GetValue(const wstring& name) const;
-		DLLEXPORT int GetValue(const int &index) const;
-		DLLEXPORT bool SetValue(const wstring &name, int value);
-		DLLEXPORT bool SetValue(const int &index, int value);
-
-
-		DLLEXPORT int GetIndex(const wstring &name) const;
-		DLLEXPORT int SeekIndex(const int &value, const wstring &partofname);
-
-
 		DLLEXPORT void SetPersistance(unsigned int index, bool toset);
 		DLLEXPORT void SetPersistance(const wstring &name, bool toset);
 		DLLEXPORT int GetPersistance(unsigned int index) const;
 		DLLEXPORT int GetPersistance(const wstring &name) const;
+		// ------------------------------------ //
+		DLLEXPORT bool SetValue(const wstring &name, const VariableBlock &value1);
+		DLLEXPORT bool SetValue(const wstring &name, VariableBlock* value1);
+		DLLEXPORT bool SetValue(const wstring &name, const vector<VariableBlock*> &values);
+
+		DLLEXPORT bool SetValue(NamedVariableList &nameandvalues);
+
+		DLLEXPORT size_t GetValueCount(const wstring &name) const;
+
+		DLLEXPORT const VariableBlock* GetValue(const wstring &name) const;
+		DLLEXPORT bool GetValue(const wstring &name, VariableBlock &receiver) const;
+		DLLEXPORT bool GetValue(const wstring &name, const int &nindex, VariableBlock &receiver) const;
+		DLLEXPORT bool GetValues(const wstring &name, vector<const VariableBlock*> &receiver) const;
 
 
-		DLLEXPORT bool AddValue(const wstring &name, const int &data);
-		DLLEXPORT bool AddValueIfDoesntExist(const wstring &name, const int &data);
-		DLLEXPORT bool RemoveVariable(const wstring &name);
-		DLLEXPORT bool RemoveVariable(int index);
+		template<class T>
+		DLLEXPORT bool GetValueAndConvertTo(const wstring &name, T &receiver) const{
+			// use try block to catch all exceptions (not found and conversion fail //
+			try{
+				if(!Values.GetValue(name).ConvertAndAssingToVariable<T>(receiver)){
+
+					throw exception("invalid");
+				}
+			}
+			catch(...){
+				// variable not found / wrong type //
+				return false;
+			}
+			// correct variable has been set //
+			return true;
+		}
+
+		//DLLEXPORT vector<VariableBlock*>* GetValues(const wstring &name) throw(...);
+
+		DLLEXPORT void AddVar(NamedVariableList* newvaluetoadd);
+		DLLEXPORT void AddVar(shared_ptr<NamedVariableList> values);
+		DLLEXPORT void Remove(unsigned int index);
+		DLLEXPORT void Remove(const wstring &name);
+
+		DLLEXPORT int GetVariableType(const wstring &name) const;
+		DLLEXPORT int GetVariableTypeOfAll(const wstring &name) const;
+		// ------------------------------------ //
+
+		DLLEXPORT static DataStore* Get();
 
 		// variables //
 	public: 
@@ -98,10 +125,6 @@ namespace Leviathan{
 		DLLEXPORT void SetFPSMax(int newval);
 		DLLEXPORT void SetFPSAverage(int newval);
 
-
-
-
-		// height/width //
 		DLLEXPORT void SetWidth(int newval);
 		DLLEXPORT void SetHeight(int newval);
 
@@ -117,20 +140,18 @@ namespace Leviathan{
 		void Load();
 		void Save();
 
-		//void ValueUpdate(int valindex);
-
-
-		//void NameVarUpdate(wstring &name);
-
 		void _RemoveListener(int index);
 		void ValueUpdate(int index);
 		void ValueUpdate(const wstring& name);
 		// ----------------- //
-		NamedVars values;
-		vector<bool> Persistancestates;
+		NamedVars Values;
+		// NamedVariableLists that should be saved to file on quit //
+		vector<bool> Persistencestates;
+
+
 		vector<DataListener*> Listeners;
 
-		static DataStore* Staticaccess;
+
 
 		// vars //
 		int TickTime;
@@ -148,6 +169,9 @@ namespace Leviathan{
 
 		int Width;
 		int Height;
+
+		// static //
+		static DataStore* Staticaccess;
 
 	};
 

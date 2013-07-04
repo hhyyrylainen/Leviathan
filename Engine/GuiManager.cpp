@@ -360,58 +360,33 @@ BaseGuiObject* Leviathan::GuiManager::GetObject(unsigned int index){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
-	vector<shared_ptr<NamedVar>> headerdata;
-	vector<shared_ptr<ObjectFileObject>> data = ObjectFileProcessor::ProcessObjectFile(file, headerdata);
-	vector<Int2> FakeIDRealID;
+	// header flag definitions //
+	vector<shared_ptr<NamedVariableList>> headerdata;
 
+	// parse file to structure //
+	vector<shared_ptr<ObjectFileObject>> data = ObjectFileProcessor::ProcessObjectFile(file, headerdata);
+
+
+	// temporary object data stores //
+	vector<Int2> FakeIDRealID;
 	vector<BaseGuiObject*> TempOs;
 	vector<Int2> CollectionMember;
+	// reserve space //
+	TempOs.reserve(data.size());
+	FakeIDRealID.reserve(data.size());
+	CollectionMember.reserve(data.size());
 
 
-	for(unsigned int i = 0; i < data.size(); i++){
+	for(size_t i = 0; i < data.size(); i++){
 		// check what type the object is //
 		if(data[i]->TName == L"Collection"){
-			int createdid = IDFactory::GetID();
 
-			wstring Toggle = L"";
-			int Enabled = true;
-			int Visible = true;
-			int Strict = false;
+			if(!LoadCollection(CollectionMember, data, *data[i])){
 
-			for(unsigned int a = 0; a < data[i]->Contents.size(); a++){
-				if(data[i]->Contents[a]->Name == L"members"){
-					for(unsigned int tind = 0; tind < data[i]->Contents[a]->Lines.size(); tind++){
-						vector<wstring> Words;
-						Misc::CutWstring(*data[i]->Contents[a]->Lines[tind], L" ", Words);
-
-						for(unsigned int word = 0; word < Words.size(); word++){
-							if(Words[word] == L"ID"){
-								if(word+1 < Words.size()){
-									int AddID = Convert::WstringToInt(Words[word+1]);
-									CollectionMember.push_back(Int2(createdid, AddID));
-									break;
-								}
-							}
-
-						}
-					}
-					continue;
-				}
-				if(data[i]->Contents[a]->Name == L"params"){
-
-					data[i]->Contents[a]->Variables->GetValue(L"ToggleOn", Toggle);
-					data[i]->Contents[a]->Variables->GetValue(L"Enabled", Enabled);
-					data[i]->Contents[a]->Variables->GetValue(L"Visible", Visible);
-					data[i]->Contents[a]->Variables->GetValue(L"Strict", Strict);
-
-					continue;
-				}
-
+				// report error //
+				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load collection, named "+data[i]->Name);
+				continue;
 			}
-			GuiCollection* cobj = new GuiCollection(data[i]->Name, createdid, Visible != 0, Toggle, Strict != 0, Enabled != 0);
-
-			CreateCollection(cobj);
-			cobj->Scripting = shared_ptr<ScriptObject>(data[i]->CreateScriptObjectAndReleaseThis(0, GOBJECT_TYPE_TEXTLABEL));
 			// this function should have deleted everything related to that object, so it should be safe to just erase it //
 			data.erase(data.begin()+i);
 			i--;
@@ -419,123 +394,15 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 			continue;
 		}
 		if(data[i]->TName == L"TextLabel"){
-			int TID = IDFactory::GetID();
-			for(size_t a = 0; a < data[i]->Prefixes.size(); a++){
-				if(Misc::WstringStartsWith(*data[i]->Prefixes[a], L"ID")){
-					// this is a token line, split it //
-					vector<Token*> tokens;
-					LineTokeNizer::SplitTokenToRTokens(*data[i]->Prefixes[a], tokens);
 
-					// check size //
-					if(tokens.size() != 2){
-						// invalid id //
-						DEBUG_BREAK;
-					}
+			// try to load //
+			if(!TextLabel::LoadFromFileStructure(TempOs, FakeIDRealID, *data[i])){
 
-					FakeIDRealID.push_back(Int2(Convert::WstringToInt(tokens[1]->GetChangeableData()), TID));
-
-					// don't forget to release memory //
-					SAFE_DELETE_VECTOR(tokens);
-					break;
-				}
-			}
-			// create object //
-			TextLabel* curlabel = new TextLabel(TID);
-			// add to temporary objects //
-			TempOs.push_back(curlabel);
-
-			int x = -36003;
-			int y = -36003;
-			int width = -36003;
-			int height = -36003;
-
-			wstring text(L"");
-
-			Float4 StartColor;
-			Float4 EndColor;
-			Float4 TextColor;
-
-			float TextSize = 1.0f;
-			int AutoAdjust = true;
-			wstring Font = L"font";
-			int ListenOn = -1;
-
-			// get values for initiation //
-			for(size_t a = 0; a < data[i]->Contents.size(); a++){
-				// check what list is being processed //
-				if(data[i]->Contents[a]->Name == L"params"){
-					int tmpi = 0;
-					// get variables //
-					data[i]->Contents[a]->Variables->GetValue(L"X", x);
-					data[i]->Contents[a]->Variables->GetValue(L"Y", y);
-
-					data[i]->Contents[a]->Variables->GetValue(L"Width", width);
-					data[i]->Contents[a]->Variables->GetValue(L"Height", height);
-
-					data[i]->Contents[a]->Variables->GetValue(L"TextSizeMod", tmpi);
-					TextSize = (float)tmpi/100;
-					data[i]->Contents[a]->Variables->GetValue(L"AutoAdjust", AutoAdjust);
-					data[i]->Contents[a]->Variables->GetValue(L"ListenOn", ListenOn);
-
-					data[i]->Contents[a]->Variables->GetValue(L"StartText", text);
-					data[i]->Contents[a]->Variables->GetValue(L"Font", Font);
-
-					for(int tval = 0; tval < 3; tval++){
-						// a job for tokens //
-						vector<Token*> tokens;
-
-						// split tokens from right source //
-						if(tval == 0)
-							LineTokeNizer::SplitTokenToRTokens(*data[i]->Contents[a]->Variables->ReturnValue(L"StartColor"), tokens);
-						if(tval == 1)
-							LineTokeNizer::SplitTokenToRTokens(*data[i]->Contents[a]->Variables->ReturnValue(L"EndColor"), tokens);
-						if(tval == 2)
-							LineTokeNizer::SplitTokenToRTokens(*data[i]->Contents[a]->Variables->ReturnValue(L"TextColor"), tokens);
-
-						if(tokens.size() != 2){
-							// invalid definition //
-							DEBUG_BREAK;
-						}
-
-						// get values from second token //
-						WstringIterator itr(&tokens[1]->GetChangeableData(), false);
-
-						float Vals[] = {0.0f, 0.0f, 0.0f, 0.0f};
-
-						// iterate 4 decimal values //
-						for(int loopitrfloat = 0; loopitrfloat < 4; loopitrfloat++){
-							unique_ptr<wstring> valstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
-
-							// check for no characters //
-							if(valstr->size() == 0){
-								// damn //
-								DEBUG_BREAK;
-								Logger::Get()->Error(L"GuiManager: ParseGuiFileResult: Invalid color required 3 or 4 params got: only "
-									+Convert::IntToWstring(loopitrfloat));
-								break;
-							}
-							Vals[loopitrfloat] = Convert::WstringToFloat(*valstr);
-						}
-						// create value //
-						Float4 curcolor(Vals[0], Vals[1], Vals[2], Vals[3]);
-
-						// set to right one //
-						if(tval == 0)
-							StartColor = curcolor;
-						if(tval == 1)
-							EndColor = curcolor;
-						if(tval == 2)
-							TextColor = curcolor;
-
-						// don't forget to release memory //
-						SAFE_DELETE_VECTOR(tokens);
-					}
-				}
+				// report error //
+				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load TextLabel, named "+data[i]->Name);
+				continue;
 			}
 
-			// init with correct values //
-			curlabel->Init(x, y, width, height, text, StartColor, EndColor, TextColor, TextSize, AutoAdjust != 0, Font, ListenOn);
-			curlabel->Scripting = shared_ptr<ScriptObject>(data[i]->CreateScriptObjectAndReleaseThis(0, GOBJECT_TYPE_TEXTLABEL));
 			// this function should have deleted everything related to that object (smart pointers and dtors take care of rest,
 			// so it should be safe to just erase it //
 			data.erase(data.begin()+i);
@@ -544,13 +411,13 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 			continue;
 		}
 
-		Logger::Get()->Error(L"GuiManager: ParseGuiFileResult: Unrecognized type !: "+data[i]->TName);
+		Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: Unrecognized type! typename: "+data[i]->TName);
 		// delete current //
 		data.erase(data.begin()+i);
 		i--;
 	}
 	// attach objects //
-	for(unsigned int i = 0; i < TempOs.size(); i++){
+	for(size_t i = 0; i < TempOs.size(); i++){
 		// get fake id //
 		int FakeID = -1;
 
@@ -580,8 +447,71 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 		}
 	}
 
-	return;
 }
+DLLEXPORT bool Leviathan::GuiManager::LoadCollection(vector<Int2> &membermapping, vector<shared_ptr<ObjectFileObject>> &data, ObjectFileObject &collectiondata){
+	// load a GuiCollection from the structure //
+	int createdid = IDFactory::GetID();
+
+	wstring Toggle = L"";
+	bool Enabled = true;
+	bool Visible = true;
+	bool Strict = false;
+
+	for(size_t a = 0; a < collectiondata.Contents.size(); a++){
+		if(collectiondata.Contents[a]->Name == L"members"){
+			for(size_t tind = 0; tind < collectiondata.Contents[a]->Lines.size(); tind++){
+				
+				WstringIterator itr(collectiondata.Contents[a]->Lines[tind], false);
+				
+				unique_ptr<wstring> itrresult = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE);
+
+				// check first word //
+				if(*itrresult == L"ID"){
+
+					// get next number, which should be id of member object //
+					itrresult = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
+
+					membermapping.push_back(Int2(createdid, Convert::WstringTo<int>(*itrresult)));
+
+				} else {
+
+					// unknown member type //
+					Logger::Get()->Error(L"GuiManager: LoadCollection: invalid member definition: "+*itrresult);
+				}
+			}
+			continue;
+		}
+		if(collectiondata.Contents[a]->Name == L"params"){
+			// get values //
+
+
+
+			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(collectiondata.Contents[a]->Variables, L"ToggleOn", Toggle, L"", true,
+				L"GuiManager: LoadCollection:");
+
+			ObjectFileProcessor::LoadValueFromNamedVars<bool>(collectiondata.Contents[a]->Variables, L"Enabled", Enabled, false, true,
+				L"GuiManager: LoadCollection:");
+
+			ObjectFileProcessor::LoadValueFromNamedVars<bool>(collectiondata.Contents[a]->Variables, L"Visible", Visible, false, true,
+				L"GuiManager: LoadCollection:");
+
+			ObjectFileProcessor::LoadValueFromNamedVars<bool>(collectiondata.Contents[a]->Variables, L"Strict", Strict, false, true,
+				L"GuiManager: LoadCollection:");
+
+			continue;
+		}
+	}
+	// allocate new GUI object //
+	GuiCollection* cobj = new GuiCollection(collectiondata.Name, createdid, Visible, Toggle, Strict, Enabled);
+	// copy script data over //
+	cobj->Scripting = shared_ptr<ScriptObject>(collectiondata.CreateScriptObjectAndReleaseThis(0, GOBJECT_TYPE_COLLECTION));
+	// add to collection list //
+	CreateCollection(cobj);
+
+	// loading succeeded //
+	return true;
+}
+
 DLLEXPORT void Leviathan::GuiManager::WriteGuiToFile(const wstring &file){
 
 }

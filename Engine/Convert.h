@@ -31,6 +31,8 @@ namespace Leviathan{
 		DLLEXPORT static int WstringFromBoolToInt(const wstring &i);
 		DLLEXPORT static int StringFromBoolToInt(const string &i);
 
+		DLLEXPORT static bool IsWstringBool(const wstring &val, bool* valreceiver = NULL);
+
 		template<class T>
 		DLLEXPORT static inline T WstringTo(const wstring &str){
 			T tempval;
@@ -55,6 +57,7 @@ namespace Leviathan{
 
 
 		DLLEXPORT static wchar_t ToLower(const wchar_t &chara);
+		DLLEXPORT static void ToLower(const wstring &source, wstring &target);
 
 
 		// type checks //

@@ -137,6 +137,7 @@
     <ClCompile Include="EventableGui.cpp" />
     <ClCompile Include="EventHandler.cpp" />
     <ClCompile Include="ExceptionInvalidArguement.cpp" />
+    <ClCompile Include="ExceptionInvalidType.cpp" />
     <ClCompile Include="ExceptionNULLPtr.cpp" />
     <ClCompile Include="FileHelper.cpp" />
     <ClCompile Include="FileReader.cpp" />
@@ -263,6 +264,7 @@
     <ClInclude Include="EventableGui.h" />
     <ClInclude Include="EventHandler.h" />
     <ClInclude Include="ExceptionInvalidArguement.h" />
+    <ClInclude Include="ExceptionInvalidType.h" />
     <ClInclude Include="ExceptionNULLPtr.h" />
     <ClInclude Include="FileHelper.h" />
     <ClInclude Include="FileReader.h" />

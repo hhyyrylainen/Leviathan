@@ -209,3 +209,9 @@ DLLEXPORT Leviathan::UINT4::operator UINT*(){
 //	default: __assume(0);
 //	}
 //}
+
+// specific colours //
+
+const Float4 Leviathan::Float4::ColourBlack = Float4(0, 0, 0, 1);
+
+const Float4 Leviathan::Float4::ColourWhite = Float4(1, 1, 1, 1);

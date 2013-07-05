@@ -48,7 +48,7 @@ DLLEXPORT void Leviathan::WstringIterator::SetPosition(unsigned long pos){
 	IteratorPosition = pos;
 }
 // ------------------------------------ //
-DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetStringInQuotes(QUOTETYPE quotes, bool AllowSpecialQualifiers /*= true*/){
+DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetStringInQuotes(QUOTETYPE quotes){
 	// iterate over the string and return what is wanted //
 	IteratorPositionData* data = new IteratorPositionData();
 	data->Positions.SetData(-1, -1);

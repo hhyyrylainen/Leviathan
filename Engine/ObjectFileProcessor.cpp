@@ -205,7 +205,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 			itr.ReInit(&lineparts[i], false);
 
 			// wstring iterator can be used to skip all sorts of junk outside quotes //
-			Name = *itr.GetStringInQuotes(QUOTETYPE_BOTH, true).get();
+			Name = *itr.GetStringInQuotes(QUOTETYPE_BOTH);
 			continue;
 		}
 		// if no type, must be it //

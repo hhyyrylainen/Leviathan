@@ -66,7 +66,7 @@ namespace Leviathan{
 		DLLEXPORT WstringIterator::WstringIterator(wstring* text, bool TakesOwnership = false);
 		DLLEXPORT virtual WstringIterator::~WstringIterator();
 
-		DLLEXPORT unique_ptr<wstring> GetStringInQuotes(QUOTETYPE quotes, bool AllowSpecialQualifiers = true);
+		DLLEXPORT unique_ptr<wstring> GetStringInQuotes(QUOTETYPE quotes);
 		DLLEXPORT unique_ptr<wstring> GetNextNumber(DECIMALSEPARATORTYPE decimal);
 		DLLEXPORT unique_ptr<wstring> GetNextCharacterSequence(UNNORMALCHARACTER stopcase);
 		DLLEXPORT unique_ptr<wstring> GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase);

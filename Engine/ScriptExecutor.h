@@ -11,7 +11,7 @@
 
 #include "DataBlock.h"
 
-#include <angelscript.h>
+#include "angelscript.h"
 
 #define SCRIPT_EXECUTOR_RUNTYPE_BREAKONERROR 1
 #define SCRIPT_EXECUTOR_RUNTYPE_TRYTOCONTINUE 2

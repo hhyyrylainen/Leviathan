@@ -219,50 +219,51 @@ DLLEXPORT int Leviathan::DataStore::GetVariableTypeOfAll(const wstring &name) co
 	return Values.GetVariableTypeOfAll(name);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::DataStore::RegisterListener(DataListener* listen){
-	// disallow duplicates //
-	for(unsigned int i = 0; i < Listeners.size(); i++){
-		if(Listeners[i]->Object == listen->Object){
-			// delete it and return //
-			SAFE_DELETE(listen);
-			return;
-		}
+DLLEXPORT void Leviathan::DataStore::RegisterListener(AutoUpdateableObject* object, DataListener* listen){
+	// set into the map //
+
+	DataListenHolder* tmpptre = Listeners[object].get();
+
+	if(tmpptre == NULL){
+		// new required //
+		tmpptre = new DataListenHolder();
+		// add back to map //
+		Listeners[object] = shared_ptr<DataListenHolder>(tmpptre);
 
 	}
 
-	Listeners.push_back(listen);
+	// can add new one //
+	tmpptre->HandledListeners.push_back(listen);
 }
 
 DLLEXPORT void Leviathan::DataStore::RemoveListener(AutoUpdateableObject* object, int valueid, const wstring &name /* = L""*/, bool all /*= false*/){
-	for(unsigned int i = 0; i < Listeners.size(); i++){
-		if(Listeners[i]->Object == object){
-			// check type, or skip if all //
-			if(name != L""){
-				if(((all) || (Listeners[i]->ListenIndex == valueid)) && (valueid != -1)){
-					_RemoveListener(i);
-					return;
-				}
-			} else {
-				if(((all) || (Listeners[i]->VarName == name)) && (name != L"")){
-					_RemoveListener(i);
-					return;
-				}
-			}
-
-			break;
-		}
-	}
-}
-
-void Leviathan::DataStore::_RemoveListener(int index){
-	ARR_INDEX_CHECK(index, (int)Listeners.size()){
-		// is valid, ARR_INDEX_CHECKINV would be used if error would be generated here //
-		delete Listeners[index];
-		Listeners.erase(Listeners.begin()+index);
+	if(all){
+		// just erase the bulk //
+		Listeners.erase(object);
 		return;
 	}
-	// error //
-	Logger::Get()->Error(L"DataStore: Trying to remove listener with invalid index", index);
+
+	// get pointer to block //
+	DataListenHolder* tmpptre = Listeners[object].get();
+
+	if(tmpptre == NULL){
+		return;
+	}
+
+	// erase the wanted ones //
+	for(size_t i = 0; i < tmpptre->HandledListeners.size(); i++){
+		if(tmpptre->HandledListeners[i]->ListenIndex == valueid){
+			// check name if wanted //
+			if(name.size() == 0 || name == tmpptre->HandledListeners[i]->VarName){
+				// erase //
+
+				SAFE_DELETE(tmpptre->HandledListeners[i]);
+				tmpptre->HandledListeners.erase(tmpptre->HandledListeners.begin()+i);
+
+				break;
+			}
+		}
+	}
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::DataStore::GetTickTime() const{
@@ -280,16 +281,20 @@ DLLEXPORT int Leviathan::DataStore::GetFrameTime() const{
 void Leviathan::DataStore::ValueUpdate(int index){
 	shared_ptr<NamedVariableList> updatedval(nullptr);
 
-	for(unsigned int i = 0; i < Listeners.size(); i++){
-		if(Listeners[i]->ListenOnIndex){
-			if(Listeners[i]->ListenIndex == index){
+
+	for(auto iter = Listeners.begin(); iter != Listeners.end(); ++iter) {
+		// iterate held indexes //
+		for(auto i = 0; iter->second->HandledListeners.size(); i++){
+			// check for match //
+			if(iter->second->HandledListeners[i]->ListenIndex == index){
+				// check is value fine or not //
 				if(updatedval.get() == NULL){
 					// create //
 					updatedval = shared_ptr<NamedVariableList>(new NamedVariableList(Convert::IntToWstring(index), new 
 						IntBlock(GetValueFromValIndex(index))));
 				}
-				
-				Listeners[i]->Object->OnUpdate(updatedval);
+				// send update //
+				iter->first->OnUpdate(updatedval);
 			}
 		}
 	}
@@ -298,16 +303,19 @@ void Leviathan::DataStore::ValueUpdate(int index){
 void Leviathan::DataStore::ValueUpdate(const wstring& name){
 	shared_ptr<NamedVariableList> updatedval(nullptr);
 
-	for(unsigned int i = 0; i < Listeners.size(); i++){
-		if(!Listeners[i]->ListenOnIndex){
-			if(Listeners[i]->VarName == name){
+	for(auto iter = Listeners.begin(); iter != Listeners.end(); ++iter) {
+		// iterate held indexes //
+		for(size_t i = 0; i < iter->second->HandledListeners.size(); i++){
+			// check for match //
+			if(iter->second->HandledListeners[i]->VarName == name){
+				// check is value fine or not //
 				if(updatedval.get() == NULL){
 					// create //
 					updatedval = shared_ptr<NamedVariableList>(new NamedVariableList(name, new VariableBlock(
 						Values.GetValue(name)->GetBlockConst()->AllocateNewFromThis())));
 				}
-
-				Listeners[i]->Object->OnUpdate(updatedval);
+				// send update //
+				iter->first->OnUpdate(updatedval);
 			}
 		}
 	}
@@ -492,18 +500,10 @@ DLLEXPORT Leviathan::DataListener::DataListener(){
 	ListenIndex = -1;
 	ListenOnIndex = false;
 	VarName = L"";
-
-	Object = NULL;
-
-	Termination = true;
 }
 
-DLLEXPORT Leviathan::DataListener::DataListener(int index, bool onindex, AutoUpdateableObject* obj, const wstring &var /*= L""*/){
+DLLEXPORT Leviathan::DataListener::DataListener(int index, bool onindex, const wstring &var /*= L""*/){
 	ListenIndex = index;
 	ListenOnIndex = onindex;
 	VarName = var;
-
-	Object = obj;
-
-	Termination = false;
 }

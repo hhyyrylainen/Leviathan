@@ -104,7 +104,7 @@ namespace Leviathan{
 
 #include "Types.h"
 #include "Misc.h"
-#include "CommonMath.h"
+#include ".\Math\CommonMath.h"
 #include "Convert.h"
 
 #include "IDFactory.h"

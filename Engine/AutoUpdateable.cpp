@@ -24,7 +24,7 @@ void Leviathan::AutoUpdateableObject::StartMonitoring(vector<shared_ptr<Variable
 			// start listening on named index //
 
 			// register new listener //
-			DataStore::Get()->RegisterListener(new DataListener(-1, false, this, (wstring)*IndexesAndNamesToListen[i]));
+			DataStore::Get()->RegisterListener(this, new DataListener(-1, false, (wstring)*IndexesAndNamesToListen[i]));
 
 			// add to listened things //
 			MonitoredValues.push_back(IndexesAndNamesToListen[i]);
@@ -45,8 +45,14 @@ void Leviathan::AutoUpdateableObject::StartMonitoring(vector<shared_ptr<Variable
 		}
 
 		// should be good now //
+		int tmpindex = (int)*IndexesAndNamesToListen[i];
+
+		// register new listener //
+		DataStore::Get()->RegisterListener(this, new DataListener(tmpindex, true, L""));
+
 		// add to listened things //
-		MonitoredValues.push_back(shared_ptr<VariableBlock>(new VariableBlock((int)*IndexesAndNamesToListen[i])));
+		MonitoredValues.push_back(shared_ptr<VariableBlock>(new VariableBlock(tmpindex)));
+
 		//// erase from original //
 		//IndexesAndNamesToListen.erase(IndexesAndNamesToListen.begin()+i);
 		//i--;

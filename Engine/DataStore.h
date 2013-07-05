@@ -30,17 +30,26 @@ namespace Leviathan{
 
 #define DATAINDEX_UND			-1
 //#define FUNCKREATE(x, y) private: #x #y; public: DLLEXPORT #x Get#y(){ return #y; }; public: DLLEXPORT void Set#y(#x newval){ #y = newval; ValueUpdate(); };
+
+
 	struct DataListener{
-			DLLEXPORT DataListener();
-			DLLEXPORT DataListener(int index, bool onindex, AutoUpdateableObject* obj, const wstring& var = L"");
-			int ListenIndex;
-			bool ListenOnIndex;
-			wstring VarName;
+		DLLEXPORT DataListener();
+		DLLEXPORT DataListener(int index, bool onindex, const wstring& var = L"");
 
-			AutoUpdateableObject* Object;
+		int ListenIndex;
+		bool ListenOnIndex;
+		wstring VarName;
 
-			bool Termination;
-		};
+		//AutoUpdateableObject* Object;
+	};
+
+	// holds all data listeners related to a object //
+	struct DataListenHolder{
+
+
+		vector<DataListener*> HandledListeners;
+	};
+
 
 	class DataStore : public Object{
 	public:
@@ -130,26 +139,27 @@ namespace Leviathan{
 
 		DLLEXPORT int GetValueFromValIndex(int valindex) const;
 	public:
-		DLLEXPORT void RegisterListener(DataListener* listen);
+		DLLEXPORT void RegisterListener(AutoUpdateableObject* object, DataListener* listen);
 		DLLEXPORT void RemoveListener(AutoUpdateableObject* object, int valueid, const wstring &name = L"", bool all = false);
 
 	private:
-
-
-		// ----------------- //
+		// ------------------------------------ //
 		void Load();
 		void Save();
 
-		void _RemoveListener(int index);
+		//void _RemoveListener(int index);
 		void ValueUpdate(int index);
 		void ValueUpdate(const wstring& name);
-		// ----------------- //
+		// ------------------------------------ //
 		NamedVars Values;
 		// NamedVariableLists that should be saved to file on quit //
 		vector<bool> Persistencestates;
 
 
-		vector<DataListener*> Listeners;
+		map<AutoUpdateableObject*, shared_ptr<DataListenHolder>> Listeners;
+
+
+		//vector<DataListener*> Listeners;
 
 
 

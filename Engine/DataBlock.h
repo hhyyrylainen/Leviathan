@@ -117,6 +117,14 @@ namespace Leviathan{
 		// function used in deep copy //
 		DLLEXPORT virtual DataBlockAll* AllocateNewFromThis() const = 0;
 
+
+		// comparison operator //
+		DLLEXPORT inline bool operator ==(const DataBlockAll &other){
+
+			// just compare types here //
+			return Type == Type;
+		}
+
 		int Type;
 	protected:
 		// private constructor to make sure that no instances of this class exist //
@@ -145,6 +153,16 @@ namespace Leviathan{
 			// use templates to get type //
 			Type = DataBlockNameResolver<DBlockT>::TVal;
 		}
+
+		DLLEXPORT DataBlock(const DataBlock &otherdeepcopy) : Value(NULL){
+			// allocate new pointer from the other instance //
+			Value = new DBlockT(*otherdeepcopy.Value);
+
+			// copy type //
+			Type = otherdeepcopy.Type;
+		}
+		
+
 		DLLEXPORT virtual ~DataBlock(){
 			// erase memory //
 			SAFE_DELETE(Value);
@@ -170,7 +188,7 @@ namespace Leviathan{
 		// function used in deep copy //
 		DLLEXPORT virtual DataBlockAll* AllocateNewFromThis() const{
 
-			return (DataBlockAll*)(new DataBlock<DBlockT>(*this));
+			return (DataBlockAll*)(new DataBlock<DBlockT>(const_cast<const DataBlock<DBlockT>&>(*this)));
 		}
 
 		// shallow copy operator //
@@ -188,6 +206,14 @@ namespace Leviathan{
 
 			return block.release();
 		}
+
+		// comparison operator //
+		DLLEXPORT inline bool operator ==(const DataBlock<DBlockT> &other){
+
+			// compare values with default operator //
+			return *Value == *other.Value;
+		}
+
 
 		// value getting operators //
 		template<class ConvertT>
@@ -245,6 +271,21 @@ namespace Leviathan{
 			return bl;
 		}
 	};
+
+
+	// type resolver specifications //
+#define TVALRESOLVERTYPE(BlockTypeT, DEFINEDValT) template<> struct TvalToTypeResolver<DEFINEDValT>{ static const BlockTypeT* Conversion(const DataBlockAll* bl){return static_cast<const BlockTypeT*>(bl);}; static BlockTypeT* Conversion(DataBlockAll* bl){return static_cast<BlockTypeT*>(bl);}};
+
+	TVALRESOLVERTYPE(IntBlock, DATABLOCK_TYPE_INT);
+	TVALRESOLVERTYPE(FloatBlock, DATABLOCK_TYPE_FLOAT);
+	TVALRESOLVERTYPE(BoolBlock, DATABLOCK_TYPE_BOOL);
+	TVALRESOLVERTYPE(WstringBlock, DATABLOCK_TYPE_WSTRING);
+	TVALRESOLVERTYPE(StringBlock, DATABLOCK_TYPE_STRING);
+	TVALRESOLVERTYPE(CharBlock, DATABLOCK_TYPE_CHAR);
+	TVALRESOLVERTYPE(DoubleBlock, DATABLOCK_TYPE_DOUBLE);
+	TVALRESOLVERTYPE(LeviathanObjectBlock, DATABLOCK_TYPE_OBJECTL);
+	TVALRESOLVERTYPE(VoidPtrBlock, DATABLOCK_TYPE_VOIDPTR);
+
 	// forward declaration to make one of the constructors work //
 	class NamedVariableBlock;
 
@@ -258,6 +299,33 @@ namespace Leviathan{
 
 			BlockData = (DataBlockAll*)block;
 		}
+		// constructors that accept basic types //
+		DLLEXPORT VariableBlock(const int &var){
+			BlockData = (DataBlockAll*)new IntBlock(var);
+		}
+		DLLEXPORT VariableBlock(const bool &var){
+			BlockData = (DataBlockAll*)new BoolBlock(var);
+		}
+		DLLEXPORT VariableBlock(const string &var){
+			BlockData = (DataBlockAll*)new StringBlock(var);
+		}
+		DLLEXPORT VariableBlock(const wstring &var){
+			BlockData = (DataBlockAll*)new WstringBlock(var);
+		}
+		DLLEXPORT VariableBlock(const double &var){
+			BlockData = (DataBlockAll*)new DoubleBlock(var);
+		}
+		DLLEXPORT VariableBlock(const float &var){
+			BlockData = (DataBlockAll*)new FloatBlock(var);
+		}
+		DLLEXPORT VariableBlock(const char &var){
+			BlockData = (DataBlockAll*)new CharBlock(var);
+		}
+		
+
+
+
+
 		// deep copy constructor //
 		DLLEXPORT VariableBlock(const VariableBlock &arg){
 			// copy data //
@@ -335,6 +403,35 @@ namespace Leviathan{
 			return *this;
 		}
 
+		// comparison operator //
+		DLLEXPORT inline bool operator ==(const VariableBlock &other){
+			// returns false if either block is NULL //
+			if(BlockData == NULL || other.BlockData == NULL)
+				return false;
+			// if different types cannot match //
+			if(BlockData->Type != other.BlockData->Type)
+				return false;
+			// need to check if values match //
+			if(BlockData->Type == DATABLOCK_TYPE_INT)
+				return *TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(other.BlockData);
+			else if(BlockData->Type == DATABLOCK_TYPE_FLOAT)
+				return *TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(other.BlockData);
+			else if(BlockData->Type == DATABLOCK_TYPE_BOOL)
+				return *TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(other.BlockData);
+			else if(BlockData->Type == DATABLOCK_TYPE_WSTRING)
+				return *TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(other.BlockData);
+			else if(BlockData->Type == DATABLOCK_TYPE_STRING)
+				return *TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(other.BlockData);
+			else if(BlockData->Type == DATABLOCK_TYPE_CHAR)
+				return *TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(other.BlockData);
+			else if(BlockData->Type == DATABLOCK_TYPE_DOUBLE)
+				return *TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(other.BlockData);
+
+			// type that shouldn't be used is used //
+			assert(0 && "unallowed datatype in datablock");
+			return false;
+		}
+
 
 		// templated operators //
 		template<class ConvertT>
@@ -393,6 +490,9 @@ namespace Leviathan{
 		// conversion checkers //
 		template<class ConvertT>
 		DLLEXPORT inline bool IsConversionAllowedNonPtr() const{
+			// return if null //
+			if(this == NULL)
+				return false;
 			// check it //
 			if(BlockData->Type == DATABLOCK_TYPE_INT)
 				return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->IsConversionAllowedNonPtr<ConvertT>();
@@ -521,6 +621,8 @@ namespace Leviathan{
 	};
 
 
+
+
 	// ------------------ IntBlock conversions ------------------ //
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(IntBlock, int, (*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(IntBlock, bool, (*block->Value) != 0);
@@ -572,18 +674,7 @@ namespace Leviathan{
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, int, Convert::StringTo<int>(*block->Value));
 
 
-	// type resolver specifications //
-#define TVALRESOLVERTYPE(BlockTypeT, DEFINEDValT) template<> struct TvalToTypeResolver<DEFINEDValT>{ static const BlockTypeT* Conversion(const DataBlockAll* bl){return static_cast<const BlockTypeT*>(bl);}; static BlockTypeT* Conversion(DataBlockAll* bl){return static_cast<BlockTypeT*>(bl);}};
 
-	TVALRESOLVERTYPE(IntBlock, DATABLOCK_TYPE_INT);
-	TVALRESOLVERTYPE(FloatBlock, DATABLOCK_TYPE_FLOAT);
-	TVALRESOLVERTYPE(BoolBlock, DATABLOCK_TYPE_BOOL);
-	TVALRESOLVERTYPE(WstringBlock, DATABLOCK_TYPE_WSTRING);
-	TVALRESOLVERTYPE(StringBlock, DATABLOCK_TYPE_STRING);
-	TVALRESOLVERTYPE(CharBlock, DATABLOCK_TYPE_CHAR);
-	TVALRESOLVERTYPE(DoubleBlock, DATABLOCK_TYPE_DOUBLE);
-	TVALRESOLVERTYPE(LeviathanObjectBlock, DATABLOCK_TYPE_OBJECTL);
-	TVALRESOLVERTYPE(VoidPtrBlock, DATABLOCK_TYPE_VOIDPTR);
 
 }
 #endif

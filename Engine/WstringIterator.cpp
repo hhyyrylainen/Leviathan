@@ -237,6 +237,38 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilNextCharacterO
 	}
 }
 
+DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilNextCharacterOrAll(wchar_t charactertolookfor){
+	// iterate over the string and return what is wanted //
+	IteratorPositionData data;
+	data.Positions.SetData(-1, -1);
+
+	// iterate over the string getting the proper part //
+	StartIterating(FindUntilSpecificCharacter, (Object*)&data, (int)charactertolookfor);
+
+	// create substring of the wanted part //
+	unique_ptr<wstring> resultstr;
+
+	if(data.Positions.X == data.Positions.Y && data.Positions.Y == -1){
+		// not found anything //
+		return unique_ptr<wstring>(new wstring(L""));
+	}
+
+	// check for end //
+	if(data.Positions.Y == -1){
+		// end is last character //
+		data.Positions.Y = GetWstringLength()-1;
+	}
+
+	// return wanted part //
+	if(IsPtrUsed){
+
+		return unique_ptr<wstring>(new wstring(Data->substr(data.Positions.X, data.Positions.Y-data.Positions.X+1)));
+	} else {
+
+		return unique_ptr<wstring>(new wstring(ConstData.substr(data.Positions.X, data.Positions.Y-data.Positions.X+1)));
+	}
+}
+
 // ------------------------------------ //
 DLLEXPORT Object* Leviathan::WstringIterator::StartIterating(IteratorWstrCallBack functiontocall, Object* IteratorData, int parameters){
 	// "switch" here based on what type of wstring is mounted //
@@ -488,6 +520,8 @@ DLLEXPORT void Leviathan::WstringIterator::ReInit(const wstring& text){
 	// copied from ctor //
 	HandlesDelete = false;
 	Data = NULL;
+
+	ConstData = text;
 
 	// start from beginning of string //
 	IteratorPosition = 0;
@@ -920,7 +954,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::SkipSomething(WstringIterator*
 
 	// we can just return if we are inside a string //
 	if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_INSIDE_STRING)){
-		return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
 	int curchara = (int)instance->GetCurrentCharacter();
 	// check does character match what is skipped //

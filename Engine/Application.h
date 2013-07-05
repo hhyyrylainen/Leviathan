@@ -20,7 +20,7 @@ namespace Leviathan{
 		DLLEXPORT LeviathanApplication();
 
 		DLLEXPORT virtual bool Initialize(HINSTANCE hinstance);
-		DLLEXPORT virtual bool Initialize(HINSTANCE hinstance, HWND hwnd, /*int width, int height,*/ bool windowed);
+		//DLLEXPORT virtual bool Initialize(HINSTANCE hinstance, HWND hwnd, /*int width, int height,*/ bool windowed);
 		DLLEXPORT virtual bool Initialize(HINSTANCE hinstance,  WNDPROC proc, wstring tittle, /*int width, int height,*/ HICON hIcon, bool windowed);
 
 		DLLEXPORT virtual void Close();

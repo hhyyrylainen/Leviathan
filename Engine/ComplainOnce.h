@@ -19,6 +19,9 @@ namespace Leviathan{
 	private:
 		ComplainOnce::ComplainOnce();
 		ComplainOnce::~ComplainOnce();
+
+		// fired warnings/errors //
+		static vector<wstring*> FiredErrors;
 	};
 
 }

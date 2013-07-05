@@ -16,13 +16,10 @@ namespace Leviathan{
 		DLLEXPORT AutoUpdateableObject::AutoUpdateableObject();
 		DLLEXPORT virtual AutoUpdateableObject::~AutoUpdateableObject();
 
-		DLLEXPORT virtual void StartMonitoring(int valueid, bool nonid, wstring varname = L"");
-		DLLEXPORT virtual void StopMonitoring(int index, wstring varname = L"", bool all = false);
+		DLLEXPORT virtual void StartMonitoring(vector<shared_ptr<VariableBlock>> &IndexesAndNamesToListen);
+		DLLEXPORT virtual void StopMonitoring(vector<shared_ptr<VariableBlock>> &unregisterindexandnames, bool all = false);
 
 		DLLEXPORT virtual bool OnUpdate(const shared_ptr<NamedVariableList> &updated);
-
-
-		
 
 
 
@@ -31,12 +28,10 @@ namespace Leviathan{
 		DLLEXPORT void _PopUdated();
 
 		// -------------------------- //
+		vector<shared_ptr<VariableBlock>> MonitoredValues;
+
+
 		bool ValuesUpdated;
-
-		vector<int> MonitoredIndexes;
-		vector<shared_ptr<wstring>> MonitoredValueNames;
-
-
 		vector<shared_ptr<NamedVariableList>> UpdatedValues;
 	};
 

@@ -44,58 +44,6 @@ bool LeviathanApplication::Initialize(HINSTANCE hinstance){
 	engine = new Engine();
 	return engine->InitEngine(m_wind, Windowed, Defvals);
 }
-bool LeviathanApplication::Initialize(HINSTANCE hinstance, HWND hwnd, /*int width, int height,*/ bool windowed){
-	// create definitions //
-	hInstance = hinstance;
-	ConstructDefinition();
-
-	// config windowed override reading //
-	try{
-		// override value //
-		if(!Defvals->GetValues()->GetValue(L"Windowed").ConvertAndAssingToVariable<bool>(windowed)){
-
-			throw( exception("non casteable"));
-		}
-	}
-	catch(...){
-
-		// didn't succeed in getting value //
-		DEBUG_BREAK;
-	}
-
-	// store window state //
-	Windowed = windowed;
-	
-
-	// get size from configs //
-	int width = 800, height = 600;
-
-	try{
-		// override value //
-		if(!Defvals->GetValues()->GetValue(L"WindowWidth").ConvertAndAssingToVariable<int>(width)){
-
-			throw( exception("non casteable"));
-		}
-
-		// override value //
-		if(!Defvals->GetValues()->GetValue(L"WindowHeight").ConvertAndAssingToVariable<int>(height)){
-
-			throw( exception("non casteable"));
-		}
-	}
-	catch(...){
-
-		// didn't succeed in getting value //
-		DEBUG_BREAK;
-	}
-
-	InternalInit();
-
-	// init engine //
-	m_wind->Init(hwnd, width, height);
-	engine = new Engine();
-	return engine->InitEngine(m_wind, Windowed, Defvals);
-}	
 bool LeviathanApplication::Initialize(HINSTANCE hinstance,  WNDPROC proc, wstring tittle, /*int width, int height,*/ HICON hIcon, bool windowed){
 	// create definitions //
 	hInstance = hinstance;

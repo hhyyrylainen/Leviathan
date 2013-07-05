@@ -77,8 +77,8 @@ using namespace std;
 
 // -------------------------- //
 #define CLASSNAME	L"LeviathanWindow"
-#define VERSION		0.382f
-#define VERSIONS	L"0.3.8.2"
+#define VERSION		0.384f
+#define VERSIONS	L"0.3.8.4"
 #define LEVIATHAN
 
 #ifndef DLLEXPORT

@@ -50,6 +50,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, vector<
 
 	unique_ptr<wstring> name = itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_ALL);
 
+
 	
 
 	if(name->size() < 1){
@@ -64,7 +65,8 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, vector<
 	itr.SkipWhiteSpace();
 
 	// get last part of it //
-	unique_ptr<wstring> tempvar = itr.GetUntilEnd();
+	//unique_ptr<wstring> tempvar = itr.GetUntilEnd();
+	unique_ptr<wstring> tempvar = itr.GetUntilNextCharacterOrAll(L';');
 
 	if(tempvar->size() < 1){
 		// no variable //
@@ -92,14 +94,15 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, vector<
 		// first should be base token //
 
 		// reserve space //
-		Datas.reserve(tokens[0]->GetSubTokenCount());
+		Datas.resize(tokens[0]->GetSubTokenCount());
 
 		// iterate sub tokens and create values from them //
 		for(int i = 0; i < tokens[0]->GetSubTokenCount(); i++){
 
 			try{
 				// try to create new VariableBlock //
-				Datas.push_back(new VariableBlock(new WstringBlock(tokens[0]->GetSubToken(i)->GetData())));
+				//Datas.push_back(new VariableBlock(new WstringBlock(tokens[0]->GetSubToken(i)->GetData())));
+				Datas[i] = new VariableBlock(tokens[0]->GetSubToken(i)->GetChangeableData(), predefined);
 			}
 			catch (const ExceptionInvalidArguement &e){
 				// release memory //
@@ -123,7 +126,13 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, vector<
 	// just one value //
 	try{
 		// try to create new VariableBlock //
-		Datas.push_back(new VariableBlock(*tempvar));
+		// it should always have one element //
+		if(Datas.size() == 0){
+			Datas.push_back(new VariableBlock(*tempvar, predefined));
+		} else {
+			SAFE_DELETE(Datas[0]);
+			Datas[0] = new VariableBlock(*tempvar, predefined);
+		}
 	}
 	catch (const ExceptionInvalidArguement &e){
 		// release memory //
@@ -698,6 +707,11 @@ DLLEXPORT void Leviathan::NamedVars::AddVar(shared_ptr<NamedVariableList> values
 DLLEXPORT void Leviathan::NamedVars::AddVar(NamedVariableList* newvaluetoadd){
 	// create new smart pointer and push back //
 	Variables.push_back(shared_ptr<NamedVariableList>(newvaluetoadd));
+}
+
+DLLEXPORT void Leviathan::NamedVars::AddVar(const wstring &name, VariableBlock* valuetosteal){
+	// create new smart pointer and push back //
+	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(name, valuetosteal)));
 }
 
 void Leviathan::NamedVars::Remove(unsigned int index){

@@ -24,8 +24,8 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT TextLabel::~TextLabel();
 
 		DLLEXPORT bool Init(int xpos, int ypos, int width, int height, const wstring &text, const Float4 &color1, const Float4 &color2, 
-			const Float4 &textcolor, float textsize = 1.0f, bool autoadjust = true, const wstring &font = L"Arial", int autofetchid = -1, 
-			const wstring &autofetchname = L"");
+			const Float4 &textcolor, float textsize = 1.0f, bool autoadjust = true, const wstring &font = L"Arial",
+			vector<shared_ptr<VariableBlock>>* listenindexes = NULL);
 
 		DLLEXPORT void Release();
 		DLLEXPORT void Render(Graphics* graph);
@@ -78,8 +78,7 @@ namespace Leviathan{ namespace Gui{
 		bool TextHidden : 1;
 		bool OldHidden : 1;
 		bool AutoAdjust : 1;
-		// automatically getting data //
-		int AutoFetch;
+
 		//bool AreAbsolutePos : 1;
 
 		int TextID;

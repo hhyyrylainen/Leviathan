@@ -72,6 +72,7 @@ namespace Leviathan{
 		DLLEXPORT unique_ptr<wstring> GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase);
 		DLLEXPORT unique_ptr<wstring> GetUntilEnd();
 		DLLEXPORT unique_ptr<wstring> GetUntilNextCharacterOrNothing(wchar_t charactertolookfor);
+		DLLEXPORT unique_ptr<wstring> GetUntilNextCharacterOrAll(wchar_t charactertolookfor);
 
 		DLLEXPORT void SkipWhiteSpace();
 
@@ -106,7 +107,7 @@ namespace Leviathan{
 		bool IsPtrUsed : 1;
 
 		wstring* Data;
-		const wstring ConstData;
+		/*const*/ wstring ConstData;
 
 		// iteration data //
 		unsigned long IteratorPosition;

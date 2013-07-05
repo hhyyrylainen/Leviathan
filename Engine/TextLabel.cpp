@@ -21,8 +21,6 @@ Leviathan::Gui::TextLabel::TextLabel(int id) : LText(L"NONE"), Font(L"Arial") {
 	TextHidden = false;
 	OldHidden = false;
 
-	AutoFetch = TEXTLABEL_AUTOFETCH_MODE_NONE;
-
 	X = 0;
 	Y = 0;
 	Width = 20;
@@ -54,7 +52,7 @@ Leviathan::Gui::TextLabel::~TextLabel(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::TextLabel::Init(int xpos, int ypos, int width, int height, const wstring &text, const Float4 &color1, 
 	const Float4 &color2, const Float4 &textcolor, float textsize /*= 1.0f*/, bool autoadjust /*= true*/, const wstring &font /*= L"Arial"*/, 
-	int autofetchid /*= -1*/, const wstring &autofetchname /*= L""*/)
+	vector<shared_ptr<VariableBlock>>* listenindexes /*= NULL*/)
 {
 	Updated = true;
 
@@ -77,16 +75,9 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::Init(int xpos, int ypos, int width, in
 	if(AutoAdjust)
 		 SizeAdjust();
 
-	if(autofetchid > -1){
-		// set mode //
-		AutoFetch = TEXTLABEL_AUTOFETCH_MODE_ID;
+	if(listenindexes){
 		// start monitoring //
-		StartMonitoring(autofetchid, false);
-
-	} else if (autofetchname.size() > 0){
-		// name //
-		AutoFetch = TEXTLABEL_AUTOFETCH_MODE_NAME;
-		StartMonitoring(-1, true, autofetchname);
+		StartMonitoring(*listenindexes);
 	}
 	// register //
 	RegisterForEvent(EVENT_TYPE_HIDE);
@@ -103,7 +94,7 @@ void Leviathan::Gui::TextLabel::Release(){
 	RBridge.reset();
 
 	// don't listen to anything anymore //
-	StopMonitoring(-1, L"", true);
+	StopMonitoring(MonitoredValues);
 }
 // ------------------------------------ //
 void Leviathan::Gui::TextLabel::Render(Graphics* graph){
@@ -159,16 +150,21 @@ void Leviathan::Gui::TextLabel::Render(Graphics* graph){
 			// unregister name //
 			int ival = -1;
 
+			vector<shared_ptr<VariableBlock>> tounregister(1);
+
 			wstringstream streamy(UpdatedValues[0]->GetName());
 			streamy >> ival;
 			if(ival != -1){
 				// it was integer //
-				StopMonitoring(ival);
+
+				tounregister[0] = shared_ptr<VariableBlock>(new VariableBlock(ival));
 
 			} else {
 				// name //
-				StopMonitoring(-1, UpdatedValues[0]->GetName());
+				tounregister[0] = shared_ptr<VariableBlock>(new VariableBlock(UpdatedValues[0]->GetName()));
 			}
+			// stop listening for this invalid index/name //
+			StopMonitoring(tounregister);
 		}
 
 		// call script (if right listeners exist) //
@@ -503,7 +499,6 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(vector<BaseGuiOb
 	float TextSize = 1.0f;
 	bool AutoAdjust = true;
 	wstring Font = L"arial";
-	int ListenOn = -1;
 
 	vector<bool> AreIndexes;
 	vector<shared_ptr<VariableBlock>> ListenIndexes;
@@ -544,28 +539,28 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(vector<BaseGuiOb
 			// listen on should allow strings and multiple numbers //
 			
 			try{
-				vector<VariableBlock*> listenvalues = dataforthis.Contents[a]->Variables->GetValues(L"ListenOn");
+				vector<VariableBlock*>* listenvalues = dataforthis.Contents[a]->Variables->GetValues(L"ListenOn");
 
 				// check values //
-				for(size_t i = 0; i < listenvalues.size(); i++){
+				for(size_t i = 0; i < listenvalues->size(); i++){
 					// check is it wstring or int //
 
-					if(listenvalues[i]->GetBlock()->Type == DATABLOCK_TYPE_INT){
+					if(listenvalues->at(i)->GetBlock()->Type == DATABLOCK_TYPE_INT){
 
 						// int index //
 						AreIndexes.push_back(true);
-						ListenIndexes.push_back(shared_ptr<VariableBlock>(new VariableBlock(listenvalues[i]->GetBlock()->AllocateNewFromThis())));
+						ListenIndexes.push_back(shared_ptr<VariableBlock>(new VariableBlock(listenvalues->at(i)->GetBlock()->AllocateNewFromThis())));
 
 
 					} else {
 						// skip if cannot be made into wstring //
-						if(!listenvalues[i]->IsConversionAllowedPtr<wstring>()){
+						if(!listenvalues->at(i)->IsConversionAllowedPtr<wstring>()){
 							continue;
 						}
 
 						// is a string index //
 						AreIndexes.push_back(false);
-						ListenIndexes.push_back(shared_ptr<VariableBlock>(new VariableBlock(listenvalues[i]->GetBlock()->AllocateNewFromThis())));
+						ListenIndexes.push_back(shared_ptr<VariableBlock>(new VariableBlock(listenvalues->at(i)->GetBlock()->AllocateNewFromThis())));
 					}
 				}
 
@@ -587,7 +582,7 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(vector<BaseGuiOb
 	}
 
 	// init with correct values //
-	curlabel->Init(x, y, width, height, text, StartColor, EndColor, TextColor, TextSize, AutoAdjust, Font, ListenOn);
+	curlabel->Init(x, y, width, height, text, StartColor, EndColor, TextColor, TextSize, AutoAdjust, Font, &ListenIndexes);
 	curlabel->Scripting = shared_ptr<ScriptObject>(dataforthis.CreateScriptObjectAndReleaseThis(0, GOBJECT_TYPE_TEXTLABEL));
 
 	// succeeded //

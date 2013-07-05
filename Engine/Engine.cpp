@@ -126,18 +126,8 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 		return false;
 	}
 
-	try{
-		// try to get value, might throw something //
-		if(!def->GetValues()->GetValue(L"MaxFPS").ConvertAndAssingToVariable<int>(FrameLimit)){
 
-			throw exception("cast failed");
-		}
-	}
-	catch(...){
-		// something errored and value isn't fetched //
-		// set value to default //
-		FrameLimit = 120;
-	}
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(def->GetValues(), L"MaxFPS", FrameLimit, 120, false);
 
 
 	Graph = new Graphics();
@@ -155,19 +145,7 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 	D3D_FEATURE_LEVEL flevel = D3D_FEATURE_LEVEL_11_0;
 	int targetlevel = 11;
 
-
-	try{
-		// try to get value, might throw something //
-		if(!def->GetValues()->GetValue(L"FeatureLevel").ConvertAndAssingToVariable<int>(targetlevel)){
-
-			throw exception("cast failed");
-		}
-	}
-	catch(...){
-		// something errored and value isn't fetched //
-		// set value to default //
-		targetlevel = 11;
-	}
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(def->GetValues(), L"FeatureLevel", targetlevel, 120, false);
 
 
 	switch(targetlevel){
@@ -336,10 +314,15 @@ void Leviathan::Engine::PostLoad(){
 	//CaptureMouse(true);
 
 	// increase start count //
-	if(!Mainstore->AddValueIfDoesntExist(L"StartCount", 1)){
+
+	int startcounts = 0;
+
+	if(Mainstore->GetValueAndConvertTo<int>(L"StartCount", startcounts)){
 		// increase //
-		Mainstore->SetValue(L"StartCount", (int)Mainstore->GetValue(L"StartCount")+1);
+		Mainstore->SetValue(L"StartCount", new VariableBlock(new IntBlock(startcounts+1)));
 	} else {
+		
+		Mainstore->AddVar(new NamedVariableList(L"StartCount", new VariableBlock(new IntBlock(1))));
 		// set as persistent //
 		Mainstore->SetPersistance(L"StartCount", true);
 	}

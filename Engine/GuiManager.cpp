@@ -458,29 +458,7 @@ DLLEXPORT bool Leviathan::GuiManager::LoadCollection(vector<Int2> &membermapping
 	bool Strict = false;
 
 	for(size_t a = 0; a < collectiondata.Contents.size(); a++){
-		if(collectiondata.Contents[a]->Name == L"members"){
-			for(size_t tind = 0; tind < collectiondata.Contents[a]->Lines.size(); tind++){
-				
-				WstringIterator itr(collectiondata.Contents[a]->Lines[tind], false);
-				
-				unique_ptr<wstring> itrresult = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE);
 
-				// check first word //
-				if(*itrresult == L"ID"){
-
-					// get next number, which should be id of member object //
-					itrresult = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
-
-					membermapping.push_back(Int2(createdid, Convert::WstringTo<int>(*itrresult)));
-
-				} else {
-
-					// unknown member type //
-					Logger::Get()->Error(L"GuiManager: LoadCollection: invalid member definition: "+*itrresult);
-				}
-			}
-			continue;
-		}
 		if(collectiondata.Contents[a]->Name == L"params"){
 			// get values //
 
@@ -501,6 +479,33 @@ DLLEXPORT bool Leviathan::GuiManager::LoadCollection(vector<Int2> &membermapping
 			continue;
 		}
 	}
+	// text block processing //
+	for(size_t a = 0; a < collectiondata.TextBlocks.size(); a++){
+		if(collectiondata.TextBlocks[a]->Name == L"members"){
+			for(size_t tind = 0; tind < collectiondata.TextBlocks[a]->Lines.size(); tind++){
+
+				WstringIterator itr(collectiondata.TextBlocks[a]->Lines[tind], false);
+
+				unique_ptr<wstring> itrresult = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE);
+
+				// check first word //
+				if(*itrresult == L"ID"){
+
+					// get next number, which should be id of member object //
+					itrresult = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
+
+					membermapping.push_back(Int2(createdid, Convert::WstringTo<int>(*itrresult)));
+
+				} else {
+
+					// unknown member type //
+					Logger::Get()->Error(L"GuiManager: LoadCollection: invalid member definition: "+*itrresult);
+				}
+			}
+			continue;
+		}
+	}
+
 	// allocate new GUI object //
 	GuiCollection* cobj = new GuiCollection(collectiondata.Name, createdid, Visible, Toggle, Strict, Enabled);
 	// copy script data over //

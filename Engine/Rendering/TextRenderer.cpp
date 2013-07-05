@@ -41,8 +41,11 @@ bool TextRenderer::Init(ID3D11Device* dev, ID3D11DeviceContext* devcont, Window*
 
 
 	// start monitoring for change in resolution //
-	StartMonitoring(DATAINDEX_HEIGHT, false);
-	StartMonitoring(DATAINDEX_WIDTH, false);
+	vector<shared_ptr<VariableBlock>> tolisten(2);
+	tolisten[0] = shared_ptr<VariableBlock>(new VariableBlock(DATAINDEX_HEIGHT));
+	tolisten[1] = shared_ptr<VariableBlock>(new VariableBlock(DATAINDEX_WIDTH));
+
+	StartMonitoring(tolisten);
 
 	return true;
 }
@@ -62,7 +65,7 @@ void TextRenderer::Release(){
 	}
 
 	// stop monitoring everything //
-	StopMonitoring(DATAINDEX_HEIGHT, L"", true);
+	StopMonitoring(MonitoredValues, true);
 }
 // ------------------------------------ //
 bool TextRenderer::CreateSentence(int id, int maxlength, ID3D11Device* dev){

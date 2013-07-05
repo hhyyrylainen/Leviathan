@@ -202,7 +202,7 @@ DLLEXPORT int Leviathan::LineTokeNizer::SplitTokenToRTokens(const wstring& str, 
 
 			// set up copying of characters //
 			CurrentCharacters.Y = i-1;
-			if(!((CurrentCharacters[0] == -1) || (CurrentCharacters[0] == CurrentCharacters[1]))){
+			if(!((CurrentCharacters[0] == -1))){
 				StringsToCopy.push_back(unique_ptr<DataForToken>(new DataForToken(current, CurrentCharacters)));
 			}
 			CurrentCharacters.SetData(-1);

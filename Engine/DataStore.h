@@ -71,7 +71,7 @@ namespace Leviathan{
 		DLLEXPORT bool GetValueAndConvertTo(const wstring &name, T &receiver) const{
 			// use try block to catch all exceptions (not found and conversion fail //
 			try{
-				if(!Values.GetValue(name).ConvertAndAssingToVariable<T>(receiver)){
+				if(!Values.GetValue(name)->ConvertAndAssingToVariable<T>(receiver)){
 
 					throw exception("invalid");
 				}

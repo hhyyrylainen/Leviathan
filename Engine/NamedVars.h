@@ -13,6 +13,7 @@ namespace Leviathan{
 
 
 	class NamedVars;
+
 	// hosts one or more VariableBlocks keeping only one name for all of them //
 	class NamedVariableList{
 	public:
@@ -136,7 +137,11 @@ namespace Leviathan{
 		DLLEXPORT bool GetValueAndConvertTo(const wstring &name, T &receiver) const{
 			// use try block to catch all exceptions (not found and conversion fail //
 			try{
-				if(!this->GetValue(name).ConvertAndAssingToVariable<T>(receiver)){
+				const VariableBlock* tmpblock = this->GetValue(name);
+				if(tmpblock == NULL){
+					return false;
+				}
+				if(!tmpblock->ConvertAndAssingToVariable<T>(receiver)){
 
 					throw exception("invalid");
 				}
@@ -167,6 +172,7 @@ namespace Leviathan{
 		// ------------------------------------ //
 		DLLEXPORT void AddVar(NamedVariableList* newvaluetoadd);
 		DLLEXPORT void AddVar(shared_ptr<NamedVariableList> values);
+		DLLEXPORT void AddVar(const wstring &name, VariableBlock* valuetosteal);
 		DLLEXPORT void Remove(unsigned int index);
 		DLLEXPORT void Remove(const wstring &name);
 		// ------------------------------------ //

@@ -10,61 +10,88 @@ Leviathan::AutoUpdateableObject::AutoUpdateableObject(){
 	ValuesUpdated = false;
 }
 Leviathan::AutoUpdateableObject::~AutoUpdateableObject(){
-	if(MonitoredIndexes.size() != 0){
-		StopMonitoring(-1, L"", true);
+	if(MonitoredValues.size() != 0){
+		StopMonitoring(MonitoredValues, true);
 	}
 }
 // ------------------------------------ //
-void Leviathan::AutoUpdateableObject::StartMonitoring(int valueid, bool nonid, wstring varname /*= L""*/){
-	ValuesUpdated = false;
+void Leviathan::AutoUpdateableObject::StartMonitoring(vector<shared_ptr<VariableBlock>> &IndexesAndNamesToListen){
 
-	if(!nonid){
-		DataStore::Get()->RegisterListener(new DataListener(valueid, !nonid, this));
-		// store it as being updated //
-		MonitoredIndexes.push_back(valueid);
-	} else {
-		DataStore::Get()->RegisterListener(new DataListener(-1, !nonid, this, varname));
-		// store it as being updated //
-		MonitoredValueNames.push_back(shared_ptr<wstring>(new wstring(varname)));
+	// loop through wanted listen indexes and names //
+	for(size_t i = 0; i < IndexesAndNamesToListen.size(); i++){
+		// check for wstring //
+		if(IndexesAndNamesToListen[i]->GetBlockConst()->Type == DATABLOCK_TYPE_WSTRING){
+			// start listening on named index //
+
+			// register new listener //
+			DataStore::Get()->RegisterListener(new DataListener(-1, false, this, (wstring)*IndexesAndNamesToListen[i]));
+
+			// add to listened things //
+			MonitoredValues.push_back(IndexesAndNamesToListen[i]);
+			//// erase from original //
+			//IndexesAndNamesToListen.erase(IndexesAndNamesToListen.begin()+i);
+			//i--;
+
+			continue;
+		}
+
+		// force to int //
+		if(!IndexesAndNamesToListen[i]->IsConversionAllowedNonPtr<int>()){
+			// cannot be listened to //
+			Logger::Get()->Warning(L"AutoUpdateableObject: StartMonitoring: cannot listen to index (not int/wstring)"
+				+(wstring)*IndexesAndNamesToListen[i]);
+
+			continue;
+		}
+
+		// should be good now //
+		// add to listened things //
+		MonitoredValues.push_back(shared_ptr<VariableBlock>(new VariableBlock((int)*IndexesAndNamesToListen[i])));
+		//// erase from original //
+		//IndexesAndNamesToListen.erase(IndexesAndNamesToListen.begin()+i);
+		//i--;
+
+
 	}
-
 }
-void Leviathan::AutoUpdateableObject::StopMonitoring(int index, wstring varname /*= L""*/, bool all /*= false*/){
-	// check is index based or name based being erased //
-	if(varname == L""){
+void Leviathan::AutoUpdateableObject::StopMonitoring(vector<shared_ptr<VariableBlock>> &unregisterindexandnames, bool all /*= false*/){
+	// check are all going to be deleted anyways //
+	if(all){
+		// clear all //
+		MonitoredValues.clear();
+		// unregister all //
+		DataStore::Get()->RemoveListener(this, -1, L"", true);
 
-		// remove value //
-		if(all){
-			// clear all //
-			MonitoredIndexes.clear();
-		} else {
-			// remove specific one //
-			for(size_t i = 0; i < MonitoredIndexes.size(); i++){
-				if(MonitoredIndexes[i] == index){
+		return;
 
-					MonitoredIndexes.erase(MonitoredIndexes.begin()+i);
-					break;
+	}
+	// remove specific ones //
+	for(size_t i = 0; i < unregisterindexandnames.size(); i++){
+		// find matching already listened index //
+		for(size_t a = 0; a < MonitoredValues.size(); i++){
+			// check match //
+			if(*unregisterindexandnames[i] == *MonitoredValues[a]){
+				// unregister it //
+				wstring possiblename = L"";
+				int possibleindex = -1;
+
+				if(unregisterindexandnames[i]->GetBlockConst()->Type == DATABLOCK_TYPE_WSTRING){
+					// assign //
+					unregisterindexandnames[i]->ConvertAndAssingToVariable<wstring>(possiblename);
+
+				} else {
+					// force to int //
+					unregisterindexandnames[i]->ConvertAndAssingToVariable<int>(possibleindex);
 				}
+
+				// unregister from listening //
+				DataStore::Get()->RemoveListener(this, possibleindex, possiblename, false);
+
+				// erase //
+				MonitoredValues.erase(MonitoredValues.begin()+a);
+				break;
 			}
 		}
-		DataStore::Get()->RemoveListener(this, index, L"", all);
-
-	} else {
-		// remove value //
-		if(all){
-			// clear all //
-			MonitoredValueNames.clear();
-		} else {
-			// remove specific one //
-			for(unsigned int i = 0; i < MonitoredValueNames.size(); i++){
-				if(*MonitoredValueNames[i] == varname){
-
-					MonitoredValueNames.erase(MonitoredValueNames.begin()+i);
-					break;
-				}
-			}
-		}
-		DataStore::Get()->RemoveListener(this, -1, varname, all);
 	}
 }
 

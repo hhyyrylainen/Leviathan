@@ -98,11 +98,16 @@ namespace Leviathan{
 	class EngineComponent;
 }
 
+#include "ErrorTypes.h"
+
+#include "Logger.h"
+
 #include "Types.h"
 #include "Misc.h"
 #include "CommonMath.h"
-//#include "IDFactory.h"
-//#include "Convert.h"
+#include "Convert.h"
+
+#include "IDFactory.h"
 // exceptions //
 #include "ExceptionBase.h"
 

@@ -240,9 +240,6 @@
     <ClCompile Include="ScriptExecutor.cpp">
       <Filter>Script</Filter>
     </ClCompile>
-    <ClCompile Include="Key.cpp">
-      <Filter>utility</Filter>
-    </ClCompile>
     <ClCompile Include="TextLabel.cpp">
       <Filter>gui\components\Label</Filter>
     </ClCompile>

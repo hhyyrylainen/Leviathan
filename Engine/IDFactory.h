@@ -10,7 +10,7 @@
 
 namespace Leviathan{
 
-	class IDFactory : public Object{
+	class IDFactory /*: public Object*/{
 	public:
 		DLLEXPORT IDFactory::IDFactory();
 		DLLEXPORT IDFactory::~IDFactory();

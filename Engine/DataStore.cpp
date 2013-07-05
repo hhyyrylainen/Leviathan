@@ -220,6 +220,16 @@ DLLEXPORT int Leviathan::DataStore::GetVariableTypeOfAll(const wstring &name) co
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::DataStore::RegisterListener(DataListener* listen){
+	// disallow duplicates //
+	for(unsigned int i = 0; i < Listeners.size(); i++){
+		if(Listeners[i]->Object == listen->Object){
+			// delete it and return //
+			SAFE_DELETE(listen);
+			return;
+		}
+
+	}
+
 	Listeners.push_back(listen);
 }
 
@@ -239,7 +249,7 @@ DLLEXPORT void Leviathan::DataStore::RemoveListener(AutoUpdateableObject* object
 				}
 			}
 
-			continue;
+			break;
 		}
 	}
 }

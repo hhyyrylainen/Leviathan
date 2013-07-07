@@ -6,7 +6,7 @@
 using namespace Leviathan;
 namespace Leviathan{
 // ------------------------------------ //
-bool Gui_SetObjectText(int ID, string inset, bool doupdate){
+bool Gui_SetObjectText(int ID, string inset){
 	// get object //
 	GuiManager* tempg = GuiManager::Get();
 	BaseGuiObject* tempbase = tempg->GetObject(tempg->GetObjectIndexFromId(ID));
@@ -16,13 +16,13 @@ bool Gui_SetObjectText(int ID, string inset, bool doupdate){
 	// get which class it is //
 	if(tempbase->Objecttype == GOBJECT_TYPE_TEXTLABEL){
 		Gui::TextLabel* tlabel = (Gui::TextLabel*)tempbase;
-		tlabel->Update(VAL_NOUPDATE,VAL_NOUPDATE,VAL_NOUPDATE,VAL_NOUPDATE,doupdate, Convert::StringToWstring(inset));
-		return true;
+
+		return tlabel->UpdateText(Convert::StringToWstring(inset), false);
 	}
 	return false;
 }
 // ------------------------------------ //
-int Gui_QueueAnimationActionMove(int ID, int xtarget, int ytarget, int whichfirst, float speed, bool allowsimult, int special){
+int Gui_QueueAnimationActionMove(int ID, float xtarget, float ytarget, int whichfirst, float speed, bool allowsimult, int special){
 	// get object //
 	GuiManager* tempg = GuiManager::Get();
 	BaseGuiObject* tempbase = tempg->GetObject(tempg->GetObjectIndexFromId(ID));

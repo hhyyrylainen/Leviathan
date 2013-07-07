@@ -25,15 +25,12 @@ namespace Leviathan{ namespace Gui{
 
 
 	struct GuiAnimationTypeMove{
-		GuiAnimationTypeMove(int xtarget, int ytarget, int whichfirst, float speed);
+		GuiAnimationTypeMove(float xtarget, float ytarget, int whichfirst, float speed);
 
-		int X;
-		int Y;
+		float X;
+		float Y;
 		int Priority;
 		float Speed;
-
-
-
 	};
 
 

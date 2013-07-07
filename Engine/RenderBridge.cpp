@@ -18,10 +18,7 @@ RenderBridge::RenderBridge(int id, bool hidden, int zorder){
 	ID = id;
 }
 RenderBridge::~RenderBridge(){
-	while(DrawActions.size() != 0){
-		SAFE_DELETE(DrawActions[0]);
-		DrawActions.erase(DrawActions.begin());
-	}
+	SAFE_DELETE_VECTOR(DrawActions);
 }
 // ------------------------------------ //
 void RenderBridge::SetHidden(int slot, bool hidden){
@@ -33,12 +30,16 @@ void RenderBridge::SetHidden(int slot, bool hidden){
 		}
 	}
 }
-int RenderBridge::GetSlotIndex(int slot){
-	for(unsigned int i = 0; i < DrawActions.size(); i++){
+size_t RenderBridge::GetSlotIndex(int slot){
+	for(size_t i = 0; i < DrawActions.size(); i++){
+		if(DrawActions[i] == NULL)
+			continue;
 		if(DrawActions[i]->SlotID == slot)
 			return i;
 	}
-	return -1;
+	// not found just push back NULL and return it //
+	DrawActions.push_back(NULL);
+	return DrawActions.size()-1;
 }
 // ------------------------------------ //
 

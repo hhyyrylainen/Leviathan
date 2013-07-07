@@ -24,7 +24,7 @@ GUI_ANIMATION_ACTION AnimationAction::GetType(){
 	return Type;
 }
 // ------------------------------------ //
-GuiAnimationTypeMove::GuiAnimationTypeMove(int xtarget, int ytarget, int whichfirst, float speed){
+GuiAnimationTypeMove::GuiAnimationTypeMove(float xtarget, float ytarget, int whichfirst, float speed){
 	X = xtarget;
 	Y = ytarget;
 	Priority = whichfirst;

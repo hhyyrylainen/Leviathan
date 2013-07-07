@@ -17,7 +17,7 @@ namespace Leviathan{
 		DLLEXPORT RenderBridge::~RenderBridge();
 		
 		DLLEXPORT void SetHidden(int slot, bool hidden);
-		DLLEXPORT int GetSlotIndex(int slot);
+		DLLEXPORT size_t GetSlotIndex(int slot);
 		
 		vector<RenderingGBlob*> DrawActions;
 

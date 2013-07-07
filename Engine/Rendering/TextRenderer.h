@@ -28,13 +28,13 @@ namespace Leviathan{
 		DLLEXPORT bool Render(ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, D3DXMATRIX orthomatrix);
 		DLLEXPORT bool RenderSingle(int ID, ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, D3DXMATRIX orthomatrix);
 
-		DLLEXPORT int CountSentenceLength(wstring &sentence, wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize = true);
-		DLLEXPORT int GetFontHeight(wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize = true);
+		DLLEXPORT float CountSentenceLength(const wstring &sentence, const wstring &font, float heightmod, int coordtype);
+		DLLEXPORT float GetFontHeight(const wstring &font, float heightmod, int coordtype);
 
 
 		DLLEXPORT bool CreateSentence(int id, int maxlength, ID3D11Device* dev);
-		DLLEXPORT bool UpdateSentenceID(int id, bool absolute, wstring &Font, wstring &text, int x, int y, Float4 &color, float sizepercent,
-			ID3D11DeviceContext* devcont, bool TranslateSize = true);
+		DLLEXPORT bool UpdateSentenceID(int id, int Coordtype, const wstring &font, const wstring &text, const Float2 &coordinates, 
+			const Float4 &color, float sizepercent, ID3D11DeviceContext* devcont);
 		DLLEXPORT void ReleaseSentenceID(int id);
 		DLLEXPORT void HideSentence(int id, bool hidden);
 
@@ -49,18 +49,17 @@ namespace Leviathan{
 			}
 			ID3D11Buffer *vertexBuffer, *indexBuffer;
 			int vertexCount, indexCount, maxLength;
-			float red, green, blue;
-			float Height;
+			Float4 Colour;
+			float SizeModifier;
 
 			int SentenceID;
 			int FontID;
 			bool Hidden;
 
-			bool Absolute;
+			int CoordType;
 
 			wstring text;
-			int posx, posy; 
-			bool TranslateSize;
+			Float2 Position;
 		};
 
 		// ------------------ //
@@ -68,8 +67,7 @@ namespace Leviathan{
 		int GetFontIndex(const wstring &name);
 
 		bool InitializeSentence(SentenceType** sentence, int id, int maxlength, ID3D11Device* dev);
-		bool UpdateSentence(SentenceType* sentence, bool absolute, wstring &text, int posx, int posy, float red, float green, float blue, 
-			float heightpercent, int fontindex, ID3D11DeviceContext* devcont, bool TranslateSize = true);
+		bool UpdateSentence(SentenceType* sentence, int Coordtype, const wstring &text, const Float2 &position, const Float4 &colour, float textmodifier, int fontindex, ID3D11DeviceContext* devcont);
 		void ReleaseSentence(SentenceType** sentence);
 		bool RenderSentence(ID3D11DeviceContext* devcont, SentenceType* sentence, D3DXMATRIX worldMatrix, D3DXMATRIX orthoMatrix);
 

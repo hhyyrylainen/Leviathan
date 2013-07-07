@@ -8,17 +8,17 @@ using namespace Leviathan;
 #include "ColorQuad.h"
 #include "Engine.h"
 
-RenderingGBlob::RenderingGBlob(){
+Leviathan::RenderingGBlob::RenderingGBlob(){
 	TypeName = -1;
 }
-RenderingGBlob::RenderingGBlob(int relativez, int slotid){
+Leviathan::RenderingGBlob::RenderingGBlob(int relativez, int slotid){
 	RelativeZ = relativez;
 	SlotID = slotid;
 	TypeName = 0;
 	Hidden = false;
 	Updated = true;
 }
-RenderingGBlob::~RenderingGBlob(){
+Leviathan::RenderingGBlob::~RenderingGBlob(){
 
 }
 bool RenderingGBlob::IsThisType(int tochecktype){
@@ -27,64 +27,54 @@ bool RenderingGBlob::IsThisType(int tochecktype){
 	return false;
 }
 // ---------------- ColorQuardRendBlob -------------------- //
-ColorQuadRendBlob::ColorQuadRendBlob() : RenderingGBlob(){
-	//SmoothX = VAL_NOUPDATE;
-	//SmoothY = VAL_NOUPDATE;
-	//SmoothWidth = VAL_NOUPDATE;
-	//SmoothHeight = VAL_NOUPDATE;
+Leviathan::ColorQuadRendBlob::ColorQuadRendBlob() : RenderingGBlob(){
+
 }
-ColorQuadRendBlob::ColorQuadRendBlob(int relativez, int slotid, const Int2 &xypos, const Float4 &color, const Float4 &color2, int width, int height, 
-	int colortranstype, bool absolute)
+Leviathan::ColorQuadRendBlob::ColorQuadRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, 
+	const Float4 &color2, const Float2 &size, int colortranstype, int coordinatetype) : RenderingGBlob(relativez, slotid), Color1(color), 
+	Color2(color2), Coord(xypos), Size(size)
 {
-	RelativeZ = relativez;
-	SlotID = slotid;
 	TypeName = GUIRENDERING_BLOB_TYPE_CQUAD;
+
 	Hidden = false;
 	Updated = true;
 
-	AbsoluteCoord = absolute;
-	Coord = xypos;
-	Color1 = color;
-	Color2 = color2;
+	CoordType = coordinatetype;
+
 	Updated = true;
-	Size = Int2(width,height);
 	ColorTransType = colortranstype;
 
 	CQuad = NULL;
-
-	//SmoothX = Coord[0];
-	//SmoothY = Coord[1];
-	//SmoothWidth = Size[0];
-	//SmoothHeight = Size[1];
 }
-ColorQuadRendBlob::~ColorQuadRendBlob(){
+Leviathan::ColorQuadRendBlob::~ColorQuadRendBlob(){
 	SAFE_RELEASEDEL(CQuad);
 }
-void ColorQuadRendBlob::Update(int relativez, const Int2 &xypos, const Float4 &color, const Float4 &color2, int width, int height, int colortranstype,
-	bool absolute)
+void Leviathan::ColorQuadRendBlob::Update(int relativez, const Float2 &xypos, const Float4 &color, const Float4 &color2, const Float2 &size, 
+	int colortranstype, int coordinatetype)
 {
 	Updated = true;
 
-	AbsoluteCoord = absolute;
+	CoordType = coordinatetype;
 	Coord = xypos;
 	Color1 = color;
 	Color2 = color2;
-	Size = Int2(width,height);
+	Size = size;
 	ColorTransType = colortranstype;
+
 	RelativeZ = relativez;
 }
-void ColorQuadRendBlob::Get(Int2 &xypos, Float4 &color, Float4 &color2, Int2 &size, int &colortranstype, bool &absolute){
+void Leviathan::ColorQuadRendBlob::Get(Float2 &xypos, Float4 &color, Float4 &color2, Float2 &size, int &colortranstype, int &coordinatetype){
 	xypos = Coord;
 	color = Color1;
 	color2 = Color2;
 	size = Size;
 	colortranstype = ColorTransType;
-	absolute = AbsoluteCoord;
+	coordinatetype = CoordType;
 }
-bool ColorQuadRendBlob::HasUpdated(){
+bool Leviathan::ColorQuadRendBlob::HasUpdated(){
 	return Updated;
 }
-bool ColorQuadRendBlob::ConsumeUpdate(){
+bool Leviathan::ColorQuadRendBlob::ConsumeUpdate(){
 	if(Updated){
 		Updated = false;
 		return true;
@@ -92,77 +82,68 @@ bool ColorQuadRendBlob::ConsumeUpdate(){
 	return false;
 }
 // ---------------- BasicTextRendBlob -------------------- //
-BasicTextRendBlob::BasicTextRendBlob() : RenderingGBlob(){
+Leviathan::BasicTextRendBlob::BasicTextRendBlob() : RenderingGBlob(){
 	HasText = false;
-	//SmoothX = VAL_NOUPDATE;
-	//SmoothY = VAL_NOUPDATE;
 }
-BasicTextRendBlob::BasicTextRendBlob(int relativez, int slotid, const Int2 &xypos, const Float4 &color, float sizemod, const wstring &text, 
-	bool absolute, const wstring &font)
-{
-	RelativeZ = relativez;
-	SlotID = slotid;
+Leviathan::BasicTextRendBlob::BasicTextRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, float sizemod, 
+	const wstring &text, const wstring &font, int coordtype) : RenderingGBlob(relativez, slotid), Coord(xypos), Color(color), Font(font), Text(text)
+{	
 	TypeName = GUIRENDERING_BLOB_TYPE_TEXT;
+
 	Hidden = false;
 	Updated = true;
 
-	AbsoluteCoord = absolute;
+	CoordType = coordtype;
 	Size = sizemod;
-	Coord = xypos;
-	Color = color;
-	Font = font;
-	Text = text;
+
+	// get unique id for text //
 	TextID = IDFactory::GetID();
 
 	HasText = false;
-	//SmoothX = Coord[0];
-	//SmoothY = Coord[1];
 }
-BasicTextRendBlob::~BasicTextRendBlob(){
+Leviathan::BasicTextRendBlob::~BasicTextRendBlob(){
 	if(HasText){
 		// needs to destroy the text //
 		Engine::GetEngine()->GetGraphics()->GetTextRenderer()->ReleaseSentenceID(TextID);
 		HasText = false;
 	}
 }
-void BasicTextRendBlob::Update(int relativez, const Int2 &xypos, const Float4 &color, float sizemod, const wstring &text, bool absolute, 
-	const wstring &font)
+// ------------------------------------ //
+void Leviathan::BasicTextRendBlob::Update(int relativez, const Float2 &xypos, const Float4 &color, float sizemod, const wstring &text, 
+	const wstring &font, int coordtype)
 {
 	Updated = true;
 
-	AbsoluteCoord = absolute;
+	CoordType = coordtype;
 	Size = sizemod;
 	Coord = xypos;
 	Color = color;
 	Font = font;
 	Text = text;
+
 	RelativeZ = relativez;
 }
-//Int2 &xypos, Float4 &color, float &size, wstring &text, wstring &font, bool &absolute, int& textid
-void BasicTextRendBlob::Get(Int2 &xypos, Float4 &color, float &size, wstring &text, wstring &font, bool &absolute, int& textid){
+void Leviathan::BasicTextRendBlob::Get(Float2 &xypos, Float4 &color, float &size, wstring &text, wstring &font, int &coordtype, int& textid){
 	xypos = Coord;
 	color = Color;
 	size = Size;
 	font = Font;
 	text = Text;
-	absolute = AbsoluteCoord;
+	coordtype = CoordType;
 	textid = TextID;
 }
-bool BasicTextRendBlob::HasUpdated(){
+// ------------------------------------ //
+bool Leviathan::BasicTextRendBlob::HasUpdated(){
 	return Updated;
 }
-bool BasicTextRendBlob::ConsumeUpdate(){
+bool Leviathan::BasicTextRendBlob::ConsumeUpdate(){
 	if(Updated){
 		Updated = false;
 		return true;
 	}
 	return false;
 }
-void BasicTextRendBlob::SetUpdated(){
+void Leviathan::BasicTextRendBlob::SetUpdated(){
 	Updated = true;
 }
-// ------------------------------------ //
-
-// ------------------------------------ //
-
 // ------------------------------------ //

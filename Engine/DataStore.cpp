@@ -284,7 +284,7 @@ void Leviathan::DataStore::ValueUpdate(int index){
 
 	for(auto iter = Listeners.begin(); iter != Listeners.end(); ++iter) {
 		// iterate held indexes //
-		for(auto i = 0; iter->second->HandledListeners.size(); i++){
+		for(size_t i = 0; i < iter->second->HandledListeners.size(); i++){
 			// check for match //
 			if(iter->second->HandledListeners[i]->ListenIndex == index){
 				// check is value fine or not //

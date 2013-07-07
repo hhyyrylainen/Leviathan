@@ -46,9 +46,6 @@
     <Filter Include="Script">
       <UniqueIdentifier>{f63612db-a93c-4029-8e69-05337c6fe7de}</UniqueIdentifier>
     </Filter>
-    <Filter Include="gui\components\Label">
-      <UniqueIdentifier>{b7d6167e-5bac-45a8-80e5-876f589a4368}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Script\AngelAddons">
       <UniqueIdentifier>{b0ea0c4b-4cca-4f8e-9cea-6974f0df59fd}</UniqueIdentifier>
     </Filter>
@@ -111,6 +108,15 @@
     </Filter>
     <Filter Include="math\Encryption">
       <UniqueIdentifier>{dc6e2295-d4af-4395-9bec-d741a28ef383}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gui\components\base components">
+      <UniqueIdentifier>{006de212-5300-48d5-b218-48f62b61bade}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gui\objects">
+      <UniqueIdentifier>{7742aa24-fe75-43f4-a07b-7caf932015be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gui\objects\TextLabel">
+      <UniqueIdentifier>{b7d6167e-5bac-45a8-80e5-876f589a4368}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -241,7 +247,7 @@
       <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="TextLabel.cpp">
-      <Filter>gui\components\Label</Filter>
+      <Filter>gui\objects\TextLabel</Filter>
     </ClCompile>
     <ClCompile Include="DDsHandler.cpp">
       <Filter>utility</Filter>
@@ -486,6 +492,18 @@
     <ClCompile Include="ExceptionInvalidType.cpp">
       <Filter>common\Exceptions</Filter>
     </ClCompile>
+    <ClCompile Include="GuiPositionable.cpp">
+      <Filter>gui\components\base components</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiBaseGraphicalComponent.cpp">
+      <Filter>gui\bases</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectBackground.cpp">
+      <Filter>gui\components</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiBasicText.cpp">
+      <Filter>gui\components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">
@@ -625,7 +643,7 @@
       <Filter>utility</Filter>
     </ClInclude>
     <ClInclude Include="TextLabel.h">
-      <Filter>gui\components\Label</Filter>
+      <Filter>gui\objects\TextLabel</Filter>
     </ClInclude>
     <ClInclude Include="DDsHandler.h">
       <Filter>utility</Filter>
@@ -878,6 +896,18 @@
     </ClInclude>
     <ClInclude Include="ExceptionInvalidType.h">
       <Filter>common\Exceptions</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiPositionable.h">
+      <Filter>gui\components\base components</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiBaseGraphicalComponent.h">
+      <Filter>gui\bases</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectBackground.h">
+      <Filter>gui\components</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiBasicText.h">
+      <Filter>gui\components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

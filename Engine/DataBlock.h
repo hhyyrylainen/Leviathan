@@ -122,7 +122,7 @@ namespace Leviathan{
 		DLLEXPORT inline bool operator ==(const DataBlockAll &other){
 
 			// just compare types here //
-			return Type == Type;
+			return Type == other.Type;
 		}
 
 		int Type;

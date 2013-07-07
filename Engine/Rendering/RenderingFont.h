@@ -11,6 +11,7 @@
 #include <ft2build.h>
 #include ".\DataStore.h"
 #include FT_FREETYPE_H
+#include "ShaderDataTypes.h"
 
 namespace Leviathan{
 
@@ -22,13 +23,13 @@ namespace Leviathan{
 		DLLEXPORT bool Init(ID3D11Device* dev, wstring FontFile);
 		DLLEXPORT void Release();
 
-		DLLEXPORT int CountLength(wstring &sentence, float heightmod, bool IsAbsolute, bool TranslateSize = true);
-		DLLEXPORT int GetHeight(float heightmod, bool IsAbsolute, bool TranslateSize = true);
+		DLLEXPORT float CountLength(const wstring &sentence, float heightmod, int Coordtype);
+		DLLEXPORT float GetHeight(float heightmod, int Coordtype);
 
 
 		ID3D11ShaderResourceView* GetTexture();
 
-		void BuildVertexArray(void* vertices, wstring text, float drawx, float draw, float heightmod, bool IsAbsolute, bool TranslateSize = true);
+		bool BuildVertexArray(VertexType* vertexptr, const wstring &text, float drawx, float drawy, float textmodifier, int Coordtype);
 
 		wstring Name;
 
@@ -39,11 +40,6 @@ namespace Leviathan{
 			float left, right;
 			int size;
 			//int height;
-		};
-		struct VertexType	// must match the one in FontClass! // ----------------
-		{
-			D3DXVECTOR3 position;
-			D3DXVECTOR2 texture;
 		};
 		// --------------------- //
 		//FontType* Fontdata;

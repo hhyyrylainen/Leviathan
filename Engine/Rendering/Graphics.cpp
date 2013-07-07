@@ -7,6 +7,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "AppDefine.h"
 #include "Application.h"
+
 Graphics::Graphics(){
 	Initialized = false;
 	DxRenderer = false;
@@ -128,7 +129,7 @@ void Graphics::Release(){
 	SAFE_DELETE(Light);
 	SAFE_DELETE(ActiveCamera);
 	try{
-	SAFE_RELEASEDEL(TextureKeeper);
+		SAFE_RELEASEDEL(TextureKeeper);
 	}
 	// this is tried because it might cause an assertion, which is something we don't like //
 	catch(...){
@@ -208,24 +209,7 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 	// turn on alpha blending //
 	Drenderer->TurnOnAlphaBlending();
 
-	//Bitmap->Render(Drenderer->GetDeviceContext(), this->Wind->GetWidth()-150, this->Wind->GetHeight()-150);
-	//if(!Shaders->RenderMultiTextureShader(Drenderer->GetDeviceContext(), Bitmap->GetIndexCount(), WorldMatrix, ViewMatrix, OrthoMatrix, Bitmap->GetTextureArray())){
-
-	//	return false;
-	//}
-	
-	// render gui //
-	//cquad->Render(Drenderer->GetDeviceContext(), 50, 50, this->Wind->GetWidth(), this->Wind->GetHeight(), 400, 250);
-
-	//Shaders->RenderGradientShader(Drenderer->GetDeviceContext(), cquad->GetIndexCount(), WorldMatrix, ViewMatrix, OrthoMatrix, Float4(0.3f, 0.9f, 1.f, 1.f), Float4(0.3f, 0.4f, 1.f, 1.f));
-
 	DrawRenderActions(WorldMatrix, ViewMatrix, OrthoMatrix);
-
-	// text rendering // DON*T call this, gui render actions will call text rendering in right order
-	//if(!TextRender->Render(Drenderer->GetDeviceContext(), WorldMatrix, OrthoMatrix)){
-
-	//	return false;
-	//}
 
 
 
@@ -291,11 +275,11 @@ void Graphics::Destroy3DRenderer(){
 	}
 }
 // ------------------------------------------- //
-int Graphics::CountTextRenderLength(wstring &text, wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize){
-	return TextRender->CountSentenceLength(text, font, heightmod, IsAbsolute, TranslateSize);
+DLLEXPORT inline float Leviathan::Graphics::CountTextRenderLength(const wstring &text, const wstring &font, float heightmod, int Coordtype){
+	return TextRender->CountSentenceLength(text, font, heightmod, Coordtype);
 }
-int Graphics::GetTextRenderHeight(wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize){
-	return TextRender->GetFontHeight(font, heightmod, IsAbsolute, TranslateSize);
+DLLEXPORT inline float Leviathan::Graphics::GetTextRenderHeight(const wstring &font, float heightmod, int Coordtype){
+	return TextRender->GetFontHeight(font, heightmod, Coordtype);
 }
 // ------------------------------------------- //
 TextRenderer* Graphics::GetTextRenderer(){
@@ -311,12 +295,6 @@ ShaderManager* Graphics::GetShader(){
 	return Shaders;
 }
 // ------------------------------------------- //
-// ------------------------------------------- //
-//void Graphics::SubmitAction(RenderAction* act){
-//
-//	GuiActions.push_back(act);
-//
-//}
 void Graphics::SubmitRenderBridge(const shared_ptr<RenderBridge> &brdg){
 	GuiObjs.push_back(brdg);
 }
@@ -324,7 +302,7 @@ shared_ptr<RenderBridge> Graphics::GetBridgeForGui(int actionid){
 	// so no dead objects exist //
 	PurgeGuiArray();
 	for(unsigned int i = 0; i < GuiObjs.size(); i++){
-		if((*GuiObjs[i]).ID == actionid)
+		if(GuiObjs[i]->ID == actionid)
 			return GuiObjs[i];
 	}
 
@@ -332,7 +310,7 @@ shared_ptr<RenderBridge> Graphics::GetBridgeForGui(int actionid){
 }
 void Graphics::PurgeGuiArray(){
 	for(unsigned int i = 0; i < GuiObjs.size(); i++){
-		if((*GuiObjs[i]).WantsToClose){
+		if(GuiObjs[i]->WantsToClose){
 			GuiObjs.erase(GuiObjs.begin()+i);
 			i--;
 			continue;
@@ -347,63 +325,6 @@ void Graphics::CleanUpRenderActions(){
 		i--;
 	}
 }
-//void Graphics::ProcessRenderActionInput(){
-//	PurgeGuiArray();
-//	for(int i = 0; i < GuiActions.size(); i++){
-//		RenderAction* curact = GuiActions[i];
-//		// look for existing handler //
-//		int index = -1;
-//		for(int a = 0; a < GuiObjs.size(); a++){
-//			if((*GuiObjs[a]).ID == curact->FromID){
-//				index = a;
-//				break;
-//			}
-//		}
-//		if(index < 0){
-//			// didn't exist, needs to create new //
-//			RenderBridge* nyabridge = new RenderBridge(curact->FromID, false);
-//			GuiObjs.push_back(shared_ptr<RenderBridge>(nyabridge));
-//
-//			index = GuiObjs.size()-1;
-//			// interpret instructions into it //
-//
-//			//continue; // let fall through to interpret instructions //
-//		}
-//		// already existed //
-//
-//		// get pointer to bridge for this loop //
-//		RenderBridge* rbridge = GuiObjs[index].get();
-//
-//		// check does slot already exist //
-//		int slotindex = -1;
-//		for(int a = 0; a < rbridge->DrawActions.size(); a++){
-//			if(rbridge->DrawActions[a]->SlotID == curact->StoreSlot){
-//
-//				slotindex = a;
-//				break;
-//			}
-//		}
-//		if(slotindex < 0){
-//			// didn't exist, needs to create new //
-//			RenderingGBlob* tempptr = NULL;
-//			// switch here based on render type //
-//			switch(curact->Type){
-//			case RENDERACTION_SQUARE:
-//				{
-//					ColorQuadRendBlob* temppyptr = new ColorQuadRendBlob(
-//				}
-//			break;
-//
-//			}
-//
-//			rbridge->DrawActions.push_back(tempptr);
-//			slotindex = rbridge->DrawActions.size()-1;
-//		}
-//
-//
-//	}
-//	GuiActions.clear();
-//}
 
 void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, D3DXMATRIX OrthoMatrix){
 	// so no dead objects exist //
@@ -423,7 +344,7 @@ void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, 
 	for(int z = MinZ; z <= MaxZ; z++){
 		// loop through objects //
 		for(unsigned int i = 0; i < GuiObjs.size(); i++){
-			if((*GuiObjs[i]).ZVal != z)
+			if(GuiObjs[i]->Hidden || GuiObjs[i]->ZVal != z)
 				continue;
 			// render //
 			int locmax = 10;
@@ -435,10 +356,9 @@ void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, 
 			// draw this object's children //
 			for(int locz = 0; locz <= locmax; locz++){
 				for(unsigned int a = 0; a < (*GuiObjs[i]).DrawActions.size(); a++){
-					if((*GuiObjs[i]).DrawActions[a]->RelativeZ != locz)
+					if(GuiObjs[i]->DrawActions[a]->RelativeZ != locz || GuiObjs[i]->Hidden)
 						continue;
-					if((*GuiObjs[i]).Hidden)
-						continue;
+
 					// real action to render //
 					RenderingGBlob* tempptr = (*GuiObjs[i]).DrawActions[a];
 					
@@ -450,13 +370,13 @@ void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, 
 						ColorQuadRendBlob* renderptr = reinterpret_cast<ColorQuadRendBlob*>(tempptr);
 
 						// get values //
-						Int2 pos;
-						Int2 size;
+						Float2 pos;
+						Float2 size;
 						Float4 col1;
 						Float4 col2;
-						int floatstyle;
-						bool absolute;
-						renderptr->Get(pos,col1,col2,size,floatstyle, absolute);
+						int gradientstyle;
+						int coordtype;
+						renderptr->Get(pos, col1, col2, size, gradientstyle, coordtype);
 
 						// check does quad exist, if not create //
 						if(renderptr->CQuad == NULL){
@@ -464,17 +384,15 @@ void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, 
 
 							// init //
 
-							renderptr->CQuad->Init(Drenderer->GetDevice(), Wind->GetWidth(), Wind->GetHeight(), size[0], size[1], floatstyle);
-
-							
+							renderptr->CQuad->Init(Drenderer->GetDevice(), Wind->GetWidth(), Wind->GetHeight(), gradientstyle);
 						}
 						// render //
-
-
-						renderptr->CQuad->Render(Drenderer->GetDeviceContext(), pos[0], pos[1], Wind->GetWidth(), Wind->GetHeight(), size[0], size[1], absolute, floatstyle);
+						renderptr->CQuad->Render(Drenderer->GetDeviceContext(), pos[0], pos[1], Wind->GetWidth(), Wind->GetHeight(), size[0], size[1], 
+							coordtype, gradientstyle);
 
 						// call shader to render this //
-						Shaders->RenderGradientShader(Drenderer->GetDeviceContext(), renderptr->CQuad->GetIndexCount(), WorldMatrix, ViewMatrix, OrthoMatrix, col1, col2);
+						Shaders->RenderGradientShader(Drenderer->GetDeviceContext(), renderptr->CQuad->GetIndexCount(), WorldMatrix, ViewMatrix, 
+							OrthoMatrix, col1, col2);
 						continue;
 					}
 					if(tempptr->IsThisType(GUIRENDERING_BLOB_TYPE_TEXT)){
@@ -483,16 +401,15 @@ void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, 
 						BasicTextRendBlob* renderptr = reinterpret_cast<BasicTextRendBlob*>(tempptr);
 
 						// get values //
-						Int2 pos;
+						Float2 pos;
 						Float4 colour;
 						float sizemod;
-						bool absolute;
+						int coordtype;
 						wstring font;
 						wstring text;
 						int textid;
-						// Int2 &xypos, Float4 &color, float &size, wstring &text, wstring &font, bool &absolute, int& textid
-
-						renderptr->Get(pos, colour, sizemod, text, font, absolute, textid);
+						// get data from render blob //
+						renderptr->Get(pos, colour, sizemod, text, font, coordtype, textid);
 
 						// check does text exist, if not create //
 						if(!renderptr->HasText){
@@ -502,7 +419,7 @@ void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, 
 						}
 						if(renderptr->ConsumeUpdate()){
 							// update //
-							TextRender->UpdateSentenceID(textid,absolute, font, text, pos[0],pos[1], colour, sizemod, Drenderer->GetDeviceContext());
+							TextRender->UpdateSentenceID(textid, coordtype, font, text, pos, colour, sizemod, Drenderer->GetDeviceContext());
 						}
 
 						// render //

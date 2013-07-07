@@ -3,38 +3,35 @@
 #ifndef LEVIATHAN_RENDERING_QUAD
 #include "ColorQuad.h"
 #endif
+#include "..\GuiPositionable.h"
 using namespace Leviathan;
 // ------------------------------------ //
 ColorQuad::ColorQuad(){
 	// init values to NULL //
 	Vertexbuffer = NULL;
 	Indexbuffer = NULL;
-	//pTexture = NULL;
 
-	VertexCount = 0;
-	IndexCount = 0;
 	Inited = false;
 }
 ColorQuad::~ColorQuad(){
 	if(Inited){
-		this->Release();
+		Release();
 	}
 }
-
-bool ColorQuad::Init(ID3D11Device* device,  int screenwidth, int screenheight, int quadwidth, int quadheight, int colorstyle){
+// ---------------------------------- //
+DLLEXPORT bool Leviathan::ColorQuad::Init(ID3D11Device* device, int screenwidth, int screenheight, int colorstyle /*= 1*/){
 
 	Colorstyle = colorstyle;
 	// Store the screen size.
 	ScreenWidth = screenwidth;
 	ScreenHeight = screenheight;
 
-	// Store the size in pixels that this bitmap should be rendered at.
-	BitmapWidth = quadwidth;
-	BitmapHeight = quadheight;
 
 	// Initialize the previous rendering position to negative one.
 	PreviousPosX = -1;
 	PreviousPosY = -1;
+	QuadWidth = -1;
+	QuadHeight = -1;
 
 	// init buffers //
 	if(!InitBuffers(device)){
@@ -43,81 +40,68 @@ bool ColorQuad::Init(ID3D11Device* device,  int screenwidth, int screenheight, i
 	}
 
 	Inited = true;
-
 	return true;
 }
 void ColorQuad::Release(){
 	// release all objects //
-
-	//SAFE_RELEASEDEL(pTexture);
 	SAFE_RELEASE(Indexbuffer);
 	SAFE_RELEASE(Vertexbuffer);
 
 	Inited = false;
 }
-void ColorQuad::Render(ID3D11DeviceContext* devcont, int posx, int posy, int screenwidth, int screenheight, int quadwidth, int quadheight, bool absolute, int colorstyle){
+// ---------------------------------- //
+DLLEXPORT bool Leviathan::ColorQuad::Render(ID3D11DeviceContext* devcont, float posx, float posy, int screenwidth, int screenheight, float quadwidth, 
+	float quadheight, int Coordtype, int colorstyle /*= 1*/)
+{
 	// Re-build the dynamic vertex buffer for rendering to possibly a different location on the screen.
-	if(!UpdateBuffers(devcont, posx, posy, screenwidth, screenheight, quadwidth, quadheight, absolute, colorstyle)){
-		return;
+	if(!UpdateBuffers(devcont, posx, posy, screenwidth, screenheight, quadwidth, quadheight, Coordtype, colorstyle)){
+		return false;
 	}
 
 	// set buffers to renderer for rendering //
 	RenderBuffers(devcont);
+	return true;
 }
-int ColorQuad::GetIndexCount(){
-	return IndexCount;
-}
-
 // ---------------------------------- //
+bool Leviathan::ColorQuad::InitBuffers(ID3D11Device* device){
 
-bool ColorQuad::InitBuffers(ID3D11Device* device){
-		
-		
-	D3D11_SUBRESOURCE_DATA vertexData, indexData;
 	HRESULT hr = S_OK;
-
-	VertexCount = 6;
-	IndexCount = VertexCount;
-
 
 	// create vertex array //
 	VertexType* verticet;
-	verticet = new VertexType[VertexCount];
+	verticet = new VertexType[COLORQUAD_VERTEXCOUNT];
 
 	// create index array //
 	unsigned long* indices;
-	indices = new unsigned long[IndexCount];
-
-
-
+	indices = new unsigned long[COLORQUAD_VERTEXCOUNT];
 
 	// Initialize vertex array to zeros
-	memset(verticet, 0, (sizeof(VertexType) * VertexCount));
+	memset(verticet, 0, (sizeof(VertexType) * COLORQUAD_VERTEXCOUNT));
 
 	// Load index array with data
-	for(int i = 0; i < IndexCount; i++){
-
+	for(int i = 0; i < COLORQUAD_VERTEXCOUNT; i++){
 		indices[i] = i;
 	}
 
 	// set buffer descs //
 	D3D11_BUFFER_DESC Vertexbufferdesc;
 	Vertexbufferdesc.Usage = D3D11_USAGE_DYNAMIC;
-	Vertexbufferdesc.ByteWidth = sizeof(VertexType) * VertexCount;
+	Vertexbufferdesc.ByteWidth = sizeof(VertexType) * COLORQUAD_VERTEXCOUNT;
 	Vertexbufferdesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	Vertexbufferdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	Vertexbufferdesc.MiscFlags = 0;
 	Vertexbufferdesc.StructureByteStride = 0;
 
-	// Give the subresource structure a pointer to the vertex data.
+	// Give the sub resource structure a pointer to the vertex data.
+	D3D11_SUBRESOURCE_DATA vertexData, indexData;
+
 	vertexData.pSysMem = verticet;
 	vertexData.SysMemPitch = 0;
 	vertexData.SysMemSlicePitch = 0;
 
 	// create vertex buffer //
 	hr = device->CreateBuffer(&Vertexbufferdesc, &vertexData, &Vertexbuffer);
-	if(FAILED(hr))
-	{
+	if(FAILED(hr)){
 		Logger::Get()->Error(L"Failed to init renderingQuad buffers, create vertex buffer failed",0);
 		return false;
 	}
@@ -125,21 +109,20 @@ bool ColorQuad::InitBuffers(ID3D11Device* device){
 	// Set up the description of the static index buffer.
 	D3D11_BUFFER_DESC Indexbufferdesc;
 	Indexbufferdesc.Usage = D3D11_USAGE_DEFAULT;
-	Indexbufferdesc.ByteWidth = sizeof(unsigned long) * IndexCount;
+	Indexbufferdesc.ByteWidth = sizeof(unsigned long) * COLORQUAD_VERTEXCOUNT;
 	Indexbufferdesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	Indexbufferdesc.CPUAccessFlags = 0;
 	Indexbufferdesc.MiscFlags = 0;
 	Indexbufferdesc.StructureByteStride = 0;
 
-	// Give the subresource structure a pointer to the index data.
+	// Give the sub resource structure a pointer to the index data.
 	indexData.pSysMem = indices;
 	indexData.SysMemPitch = 0;
 	indexData.SysMemSlicePitch = 0;
 
 	// create index buff //
 	hr = device->CreateBuffer(&Indexbufferdesc, &indexData, &Indexbuffer);
-	if(FAILED(hr))
-	{
+	if(FAILED(hr)){
 		Logger::Get()->Error(L"Failed to init renderingQuad buffers, create index buffer failed",0);
 		return false;
 	}
@@ -151,22 +134,20 @@ bool ColorQuad::InitBuffers(ID3D11Device* device){
 }
 
 // ---------------------------------- //
-bool ColorQuad::UpdateBuffers(ID3D11DeviceContext* devcont, int posx, int posy, int screenwidth, int screenheight, int quadwidth, int quadheight, bool absolute, int colorstyle){
-	// check has position been updated //
-	if((posx == PreviousPosX) && (posy == PreviousPosY) && (screenwidth == ScreenWidth) && (screenheight == ScreenHeight) && (quadwidth == BitmapWidth) && (quadheight == BitmapHeight) && (colorstyle == Colorstyle)){
+bool Leviathan::ColorQuad::UpdateBuffers(ID3D11DeviceContext* devcont, float posx, float posy, int screenwidth, int screenheight, float quadwidth, float quadheight, int Coordtype, int colorstyle /*= 1*/){
+	// check has something been updated //
+	if((posx == PreviousPosX) && (posy == PreviousPosY) && (screenwidth == ScreenWidth) && (screenheight == ScreenHeight) && (quadwidth == QuadWidth) 
+		&& (quadheight == QuadHeight) && (colorstyle == Colorstyle))
+	{
 		// no need to update //
 		return true;
 	}
-
-	//DEBUG_OUTPUT(L"ColorQuad: quad updated, old "+Convert::IntToWstring(ScreenWidth)+L","+Convert::IntToWstring(ScreenHeight)+L" new: "+
-	//	Convert::IntToWstring(screenwidth)+L","+Convert::IntToWstring(screenheight)+L"\n");
-
-	// save new pos //
+	// save new stuff //
 	Colorstyle = colorstyle;
 	ScreenWidth =  screenwidth;
 	ScreenHeight = screenheight;
-	BitmapWidth = quadwidth;
-	BitmapHeight = quadheight;
+	QuadWidth = quadwidth;
+	QuadHeight = quadheight;
 	PreviousPosX = posx;
 	PreviousPosY = posy;
 
@@ -181,56 +162,43 @@ bool ColorQuad::UpdateBuffers(ID3D11DeviceContext* devcont, int posx, int posy, 
 	float top;
 	float bottom;
 
-	if(absolute){
+	if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
+		// generate absolute positions //
+		float absx = posx*ScreenWidth;
+		float absy = posy*ScreenHeight;
+		float abswidth = QuadWidth*ScreenWidth;
+		float absheight = QuadHeight*ScreenHeight;
+
 		// Calculate the screen coordinates of the left side of the bitmap.
-		left = (float)((ScreenWidth / 2) * -1) + (float)posx;
+		left = ((ScreenWidth / 2.f)*-1)+absx;
 
 		// Calculate the screen coordinates of the right side of the bitmap.
-		right = left + (float)BitmapWidth;
+		right = left + abswidth;
 
 		// Calculate the screen coordinates of the top of the bitmap.
-		top = (float)(ScreenHeight / 2) - (float)posy;
+		top = (ScreenHeight / 2.f)-absy;
 
 		// Calculate the screen coordinates of the bottom of the bitmap.
-		bottom = top - (float)BitmapHeight;
+		bottom = top-absheight;
+
 	} else {
-		// generate absolute posses //
-		int absx;
-		int absy;
-		int abswidth;
-		int absheight;
-
-		// important scale translations //
-		// input coordinates are now in promilles (
-		//absx = ((float)posx/ResolutionScaling::GetXScaleFactor())*ScreenWidth;
-		//absy = ((float)posy/ResolutionScaling::GetYScaleFactor())*ScreenHeight;
-		//abswidth = BitmapWidth*((float)ScreenWidth/ResolutionScaling::GetXScaleFactor());
-		//absheight = BitmapHeight*((float)ScreenHeight/ResolutionScaling::GetYScaleFactor());
-		absx = (int)(((float)posx/ResolutionScaling::GetPromilleFactor())*ScreenWidth);
-		absy = (int)(((float)posy/ResolutionScaling::GetPromilleFactor())*ScreenHeight);
-		abswidth = (int)(ScreenWidth*((float)BitmapWidth/ResolutionScaling::GetPromilleFactor()));
-		absheight = (int)(ScreenHeight*((float)BitmapHeight/ResolutionScaling::GetPromilleFactor()));
-
-		//Logger::Get()->Info(L"ColorQuad: resized to "+Convert::IntToWstring(absx)+L","+Convert::IntToWstring(absy), false);
-
 
 		// Calculate the screen coordinates of the left side of the bitmap.
-		left = (float)((ScreenWidth / 2) * -1) + (float)absx;
+		left = ((ScreenWidth / 2.f) *-1)+posx;
 
 		// Calculate the screen coordinates of the right side of the bitmap.
-		// important scale function here //
-		right = left + (float)abswidth;
+		right = left+QuadWidth;
 
 		// Calculate the screen coordinates of the top of the bitmap.
-		top = (float)(ScreenHeight / 2) - (float)absy;
+		top = (ScreenHeight / 2.f)-posy;
 
 		// Calculate the screen coordinates of the bottom of the bitmap.
-		bottom = top - (float)absheight;
+		bottom = top-QuadHeight;
 	}
 
 
 	// Create temporary vertex array
-	vertices = new VertexType[VertexCount];
+	vertices = new VertexType[COLORQUAD_VERTEXCOUNT];
 	if(!vertices){
 		return false;
 	}
@@ -245,7 +213,7 @@ bool ColorQuad::UpdateBuffers(ID3D11DeviceContext* devcont, int posx, int posy, 
 	switch(Colorstyle){
 	default:
 		break;
-	case COLOR_QUAD_COLOR_STYLE_RIGHT_BOTTOM_LEFT_TOP:
+	case COLORQUAD_COLOR_STYLE_RIGHTBOTTOMLEFTTOP:
 		{
 			// opposite flow direction //
 			topleft = D3DXVECTOR2(1.0f, 1.0f);
@@ -255,7 +223,6 @@ bool ColorQuad::UpdateBuffers(ID3D11DeviceContext* devcont, int posx, int posy, 
 		}
 	break;
 	}
-
 
 	// Load the vertex array with data.
 	// First triangle.
@@ -281,7 +248,6 @@ bool ColorQuad::UpdateBuffers(ID3D11DeviceContext* devcont, int posx, int posy, 
 	// Lock the vertex buffer so it can be written to.
 	hr = devcont->Map(Vertexbuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedresource);
 	if(FAILED(hr)){
-
 		return false;
 	}
 
@@ -289,7 +255,7 @@ bool ColorQuad::UpdateBuffers(ID3D11DeviceContext* devcont, int posx, int posy, 
 	verticePTR = (VertexType*)mappedresource.pData;
 
 	// Copy the data into the vertex buffer.
-	memcpy(verticePTR, (void*)vertices, (sizeof(VertexType) * VertexCount));
+	memcpy(verticePTR, (void*)vertices, sizeof(VertexType)*COLORQUAD_VERTEXCOUNT);
 
 	// Unlock the vertex buffer.
 	devcont->Unmap(Vertexbuffer, 0);
@@ -298,7 +264,6 @@ bool ColorQuad::UpdateBuffers(ID3D11DeviceContext* devcont, int posx, int posy, 
 	SAFE_DELETE_ARRAY(vertices);
 
 	return true;
-
 }
 
 void ColorQuad::RenderBuffers(ID3D11DeviceContext* devcont){

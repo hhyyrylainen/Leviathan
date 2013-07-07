@@ -8,6 +8,7 @@ using namespace Leviathan;
 #include "DDsHandler.h"
 
 #include "FileSystem.h"
+#include "..\GuiPositionable.h"
 
 RenderingFont::RenderingFont(){
 	//Fontdata = NULL;
@@ -43,53 +44,39 @@ void RenderingFont::Release(){
 	FontData.clear();
 }
 // ------------------------------------ //
-int RenderingFont::CountLength(wstring &sentence, float heightmod, bool IsAbsolute, bool TranslateSize){
+DLLEXPORT float Leviathan::RenderingFont::CountLength(const wstring &sentence, float heightmod, int Coordtype){
 	// if it is non absolute and translate size is true, scale height by window size // 
-	if(!IsAbsolute && TranslateSize){
+	if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
 
 		heightmod = ResolutionScaling::ScaleTextSize(heightmod);
 	}
 
 	float length = 0;
-	for(unsigned int i = 0; i < sentence.size(); i++){
+	for(size_t i = 0; i < sentence.size(); i++){
 		int letterindex = ((int)sentence[i]) - 33; // no space character in letter data array //
 
 		if(letterindex < 1){
 			// space move pos over //
-			if(IsAbsolute){
-				length += 3.0f*heightmod;
-			} else {
-				length += 3.0f*heightmod;
-			}
+			length += 3.0f*heightmod;
+
 		} else {
-			if(IsAbsolute){
-				length += heightmod*1.0f + (FontData[letterindex].size*heightmod);
-			} else {
-				length += heightmod*1.0f + (FontData[letterindex].size*heightmod);
-			}
+			length += heightmod*1.0f + (FontData[letterindex].size*heightmod);
 		}
 	}
-	// round to nearest integer //
-	length += 0.5f;
 
-	//length += 3.0f*heightmod;
-	if(IsAbsolute)
-		return (int)length;
-	// scale from screen length to promilles //
-	//Logger::Get()->Info(L"CountedLength: "+Convert::IntToWstring(length)+L" promille length "+Convert::IntToWstring(ResolutionScaling::GetPromilleFactor()*((float)length/DataStore::Get()->GetWidth())), false);
-	return (int)(ResolutionScaling::GetPromilleFactor()*((float)length/DataStore::Get()->GetWidth()));
+	if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE)
+		return length/DataStore::Get()->GetWidth();
+
+	return length;
 }
- int RenderingFont::GetHeight(float heightmod, bool IsAbsolute, bool TranslateSize){
-	if(IsAbsolute)
-		return (int)(FontHeight*heightmod+0.5f);
-	// if it is non absolute and translate size is true, scale height by window size // 
-	if(TranslateSize){
-
-		heightmod = ResolutionScaling::ScaleTextSize(heightmod);
-	}
+DLLEXPORT float Leviathan::RenderingFont::GetHeight(float heightmod, int Coordtype){
+	if(Coordtype != GUI_POSITIONABLE_COORDTYPE_RELATIVE)
+		return FontHeight*heightmod;
+	// if it is relative, scale height by window size // 
+	heightmod = ResolutionScaling::ScaleTextSize(heightmod);
 
 	// scale from screen height to promilles //
-	return (int)(ResolutionScaling::GetPromilleFactor()*((float)(FontHeight*heightmod+0.5f)/DataStore::Get()->GetHeight()));
+	return FontHeight*heightmod/DataStore::Get()->GetHeight();
  }
 // ------------------------------------ //
 bool RenderingFont::CreateFontData(wstring texture, wstring texturedatafile){
@@ -503,122 +490,98 @@ ID3D11ShaderResourceView* RenderingFont::GetTexture(){
 	return Textures->GetTexture();
 }
 // ------------------------------------ //
-void RenderingFont::BuildVertexArray(void* vertices, wstring text, float drawx, float drawy, float heightmod, bool IsAbsolute, bool TranslateSize){
+bool Leviathan::RenderingFont::BuildVertexArray(VertexType* vertexptr, const wstring &text, float drawx, float drawy, float textmodifier, int Coordtype){
 	// if it is non absolute and translate size is true, scale height by window size // 
-	if(!IsAbsolute && TranslateSize){
+	if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
 
-		heightmod = ResolutionScaling::ScaleTextSize(heightmod);
+		textmodifier = ResolutionScaling::ScaleTextSize(textmodifier);
 	}
-
-	VertexType* vertexptr;
-
-	vertexptr = (VertexType*)vertices;
 
 	int index = 0;
 	if(!FontData.size()){
 		Logger::Get()->Error(L"Trying to render font which doesn't have Fontdata");
 		Release();
-		SAFE_DELETE_ARRAY(vertices);
-		return;
+		SAFE_DELETE_ARRAY(vertexptr);
+		return false;
 	}
 
-	//int startx = drawx;
-
 	// draw letters to vertices //
-	int letters = text.size();
-	for(int i = 0; i < letters; i++){
+	for(size_t i = 0; i < text.size(); i++){
 		int letterindex = ((int)text[i]) - 33; // no space character in letter data array //
 
 		if(letterindex < 1){
 			// space move pos over //
-			if(IsAbsolute){
-				drawx += 3.0f*heightmod;
-			} else {
-				//drawx += ResolutionScaling::ScalePromilleToFactorX((((3.0f*heightmod)/DataStore::Get()->GetWidth())*1000.f)/
-				//	ResolutionScaling::GetXScaleFactor());
-				drawx += 3.0f*heightmod;
-			}
+			drawx += 3.0f*textmodifier;
+
 		} else {
-			if(IsAbsolute){
-				// first triangle //
-				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 0.0);
-				index++;
-	
-				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].size*heightmod) , drawy - (FontHeight*heightmod), 0.0f); // bottom right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 1.0f);
-				index++;
-	
-				vertexptr[index].position = D3DXVECTOR3(drawx, drawy - (FontHeight*heightmod), 0.0f); // bottom left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 1.0f);
-				index++;
-				// second triangle //
-				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 0.0);
-				index++;
-	
-				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].size*heightmod) , drawy, 0.0f); // top right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 0.0f);
-				index++;
-	
-				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].size*heightmod), drawy - (FontHeight*heightmod), 0.0f); // bottom right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 1.0f);
-				index++;
-	
-				// update location //
-				drawx += heightmod*1.0f + (FontData[letterindex].size*heightmod);
-			} else {
-				// first triangle //
+			if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
 
-				// coords should already been absoluted //
-				//int AbsolutedX = drawx/ResolutionScaling::GetXScaleFactor();
-				//int AbsolutedY = drawy/ResolutionScaling::GetYScaleFactor();
-				int AbsolutedX = (int)drawx;
-				int AbsolutedY = (int)drawy;
-				//int AbsolutedWidth = ((ResolutionScaling::ScalePromilleToFactorX(((FontData[letterindex].size*heightmod)/DataStore::Get()->GetWidth()
-				//	)*1000.f))/ResolutionScaling::GetXScaleFactor());
-				//int AbsolutedHeight = ((ResolutionScaling::ScalePromilleToFactorY(((FontHeight*heightmod)/DataStore::Get()->GetHeight()
-				//	)*1000.f))/ResolutionScaling::GetYScaleFactor());
-				int AbsolutedWidth = (int)(FontData[letterindex].size*heightmod);
-				int AbsolutedHeight = (int)(FontHeight*heightmod);
+				float AbsolutedWidth = FontData[letterindex].size*textmodifier;
+				float AbsolutedHeight = FontHeight*textmodifier;
 
-				vertexptr[index].position = D3DXVECTOR3((FLOAT)AbsolutedX, (FLOAT)AbsolutedY, 0.0f); // top left
+				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
 				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 0.0f);
 				index++;
 
-				vertexptr[index].position = D3DXVECTOR3((FLOAT)(AbsolutedX + AbsolutedWidth) , (FLOAT)(AbsolutedY - AbsolutedHeight), 0.0f); // bottom right
+				vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth, drawy - AbsolutedHeight, 0.0f); // bottom right
 				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 1.0f);
 				index++;
 
-				vertexptr[index].position = D3DXVECTOR3((FLOAT)(AbsolutedX), (FLOAT)(AbsolutedY - AbsolutedHeight), 0.0f); // bottom left
+				vertexptr[index].position = D3DXVECTOR3(drawx, drawy - AbsolutedHeight, 0.0f); // bottom left
 				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 1.0f);
 				index++;
 				// second triangle //
-				vertexptr[index].position = D3DXVECTOR3((FLOAT)AbsolutedX, (FLOAT)AbsolutedY, 0.0f); // top left
+				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
 				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 0.0);
 				index++;
 
-				vertexptr[index].position = D3DXVECTOR3((FLOAT)(AbsolutedX + AbsolutedWidth) , (FLOAT)AbsolutedY, 0.0f); // top right
+				vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth , drawy, 0.0f); // top right
 				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 0.0f);
 				index++;
 
-				vertexptr[index].position = D3DXVECTOR3((FLOAT)(AbsolutedX + AbsolutedWidth), (FLOAT)(AbsolutedY - AbsolutedHeight), 0.0f); // bottom right
+				vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth, drawy - AbsolutedHeight, 0.0f); // bottom right
 				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 1.0f);
 				index++;
 
 				// update location //
-				//drawx += ResolutionScaling::ScalePromilleToFactorX((((heightmod*1.0f + (FontData[letterindex].size*heightmod))/
-				//	DataStore::Get()->GetWidth())*1000.f)/ResolutionScaling::GetXScaleFactor());
-				drawx += heightmod*1.0f + (FontData[letterindex].size*heightmod);
+				drawx += textmodifier*1.0f + (FontData[letterindex].size*textmodifier);
+
+			} else {
+
+				// first triangle //
+				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 0.0);
+				index++;
+
+				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].size*textmodifier) , drawy - (FontHeight*textmodifier), 0.0f); // bottom right
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 1.0f);
+				index++;
+
+				vertexptr[index].position = D3DXVECTOR3(drawx, drawy - (FontHeight*textmodifier), 0.0f); // bottom left
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 1.0f);
+				index++;
+				// second triangle //
+				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 0.0);
+				index++;
+
+				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].size*textmodifier) , drawy, 0.0f); // top right
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 0.0f);
+				index++;
+
+				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].size*textmodifier), drawy - (FontHeight*textmodifier), 0.0f); // bottom right
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 1.0f);
+				index++;
+
+				// update location //
+				drawx += textmodifier*1.0f + (FontData[letterindex].size*textmodifier);
 			}
 		}
 	}
-
-	//Logger::Get()->Info(L"SentenceRendered length: "+Convert::IntToWstring(drawx-startx), false);
+	return true;
 }
 
 // ------------------------------------ //
-
 bool RenderingFont::CheckFreeTypeLoad(){
 	if(!FreeTypeLoaded){
 

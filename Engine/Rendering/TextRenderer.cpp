@@ -7,6 +7,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "3DRenderer.h"
 #include "Graphics.h"
+#include "..\GuiPositionable.h"
 
 TextRenderer::TextRenderer(){
 	_FontShader = NULL;
@@ -35,7 +36,7 @@ bool TextRenderer::Init(ID3D11Device* dev, ID3D11DeviceContext* devcont, Window*
 		return false;
 
 	if(!_FontShader->Init(dev)){
-		Logger::Get()->Error(L"Failed to init TextRenderer, init fontshader failed", true);
+		Logger::Get()->Error(L"Failed to init TextRenderer, init font shader failed", true);
 		return false;
 	}
 
@@ -77,15 +78,14 @@ bool TextRenderer::CreateSentence(int id, int maxlength, ID3D11Device* dev){
 	}
 	return true;
 }
-bool TextRenderer::UpdateSentenceID(int id, bool absolute, wstring &Font, wstring &text, int x, int y, Float4 &color, float sizepercent, 
-	ID3D11DeviceContext* devcont, bool TranslateSize)
-{
-	for(unsigned int i = 0; i < Sentences.size(); i++){
+DLLEXPORT bool Leviathan::TextRenderer::UpdateSentenceID(int id, int Coordtype, const wstring &font, const wstring &text, const Float2 &coordinates, 
+	const Float4 &color, float sizepercent, ID3D11DeviceContext* devcont){
+	for(size_t i = 0; i < Sentences.size(); i++){
 		if(Sentences[i]->SentenceID == id){
 
 			// get font id //
-			int fontid = GetFontIndex(Font);
-			UpdateSentence(Sentences[i], absolute, text, x, y, color.X, color.Y, color.Z, sizepercent, fontid, devcont, TranslateSize);
+			int fontid = GetFontIndex(font);
+			UpdateSentence(Sentences[i], Coordtype, text, coordinates, color, sizepercent, fontid, devcont);
 			return true;
 		}
 	}
@@ -112,18 +112,17 @@ void TextRenderer::HideSentence(int id, bool hidden){
 
 }
 // ------------------------------------ //
-
-int TextRenderer::CountSentenceLength(wstring &sentence, wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize){
+DLLEXPORT float Leviathan::TextRenderer::CountSentenceLength(const wstring &sentence, const wstring &font, float heightmod, int coordtype){
 	int index = GetFontIndex(font);
 	ARR_INDEX_CHECK(index, (int)FontHolder.size()){
-		return FontHolder[index]->CountLength(sentence, heightmod, IsAbsolute, TranslateSize);
+		return FontHolder[index]->CountLength(sentence, heightmod, coordtype);
 	}
 	return -1;
 }
-int TextRenderer::GetFontHeight(wstring &font, float heightmod, bool IsAbsolute, bool TranslateSize){
+DLLEXPORT float Leviathan::TextRenderer::GetFontHeight(const wstring &font, float heightmod, int coordtype){
 	int index = GetFontIndex(font);
 	ARR_INDEX_CHECK(index, (int)FontHolder.size()){
-		return FontHolder[index]->GetHeight(heightmod, IsAbsolute, TranslateSize);
+		return FontHolder[index]->GetHeight(heightmod, coordtype);
 	}
 	return -1;
 }
@@ -208,7 +207,7 @@ bool TextRenderer::InitializeSentence(SentenceType** sentence, int id, int maxle
 	(*sentence)->vertexCount = 6 * maxlength;
 
 	// no actual value is known //
-	(*sentence)->Absolute = false;
+	(*sentence)->CoordType = GUI_POSITIONABLE_COORDTYPE_RELATIVE;
 
 	(*sentence)->indexCount = (*sentence)->vertexCount;
 
@@ -246,7 +245,7 @@ bool TextRenderer::InitializeSentence(SentenceType** sentence, int id, int maxle
 	vertexBufferDesc.MiscFlags = 0;
 	vertexBufferDesc.StructureByteStride = 0;
 
-	// Give the subresource structure a pointer to the vertex data.
+	// Give the sub resource structure a pointer to the vertex data.
 	vertexData.pSysMem = vertices;
 	vertexData.SysMemPitch = 0;
 	vertexData.SysMemSlicePitch = 0;
@@ -268,7 +267,7 @@ bool TextRenderer::InitializeSentence(SentenceType** sentence, int id, int maxle
 	indexBufferDesc.MiscFlags = 0;
 	indexBufferDesc.StructureByteStride = 0;
 
-	// Give the subresource structure a pointer to the index data.
+	// Give the sub resource structure a pointer to the index data.
 	indexData.pSysMem = indices;
 	indexData.SysMemPitch = 0;
 	indexData.SysMemSlicePitch = 0;
@@ -287,31 +286,28 @@ bool TextRenderer::InitializeSentence(SentenceType** sentence, int id, int maxle
 	return true;
 }
 
-bool TextRenderer::UpdateSentence(SentenceType* sentence, bool absolute, wstring &text, int posx, int posy, float red, float green, float blue, 
-	float heightpercent, int fontindex, ID3D11DeviceContext* devcont, bool TranslateSize){
+bool Leviathan::TextRenderer::UpdateSentence(SentenceType* sentence, int Coordtype, const wstring &text, const Float2 &position, const Float4 &colour, 
+	float textmodifier, int fontindex, ID3D11DeviceContext* devcont)
+{
 	HRESULT hr = S_OK;
 
 	//DEBUG_OUTPUT(L"TextRenderer: text updated, old "+Convert::IntToWstring(sentence->posx)+L","+Convert::IntToWstring(sentence->posy)+L" new: "+
 	//	Convert::IntToWstring(posx)+L","+Convert::IntToWstring(posy)+L"\n");
 
 	// store color //
-	sentence->red = red;
-	sentence->green = green;
-	sentence->blue = blue;
+	sentence->Colour = colour;
 
 	// font index //
 	sentence->FontID = fontindex;
 
-	sentence->Height = heightpercent;
+	sentence->SizeModifier = textmodifier;
 
 	// store more parameters for resolution change //
-	sentence->Absolute = absolute;
-	sentence->TranslateSize = TranslateSize;
-	sentence->posx = posx;
-	sentence->posy = posy;
+	sentence->CoordType = Coordtype;
+	sentence->Position = position;
+
 
 	sentence->text = text;
-
 
 	// get letters //
 	int letters = text.length();
@@ -319,30 +315,28 @@ bool TextRenderer::UpdateSentence(SentenceType* sentence, bool absolute, wstring
 	// check for too long string //
 	if(letters > sentence->maxLength){
 		// needs to recreate buffers //
-		SAFE_RELEASE((sentence)->vertexBuffer);
-		SAFE_RELEASE((sentence)->indexBuffer);
+		SAFE_RELEASE(sentence->vertexBuffer);
+		SAFE_RELEASE(sentence->indexBuffer);
 
 		D3D11_SUBRESOURCE_DATA vertexData, indexData;
 
 
-		(sentence)->maxLength = letters*2;
-		(sentence)->vertexCount = 6 * (sentence)->maxLength;
+		sentence->maxLength = letters*2;
+		sentence->vertexCount = 6 * sentence->maxLength;
 
-		(sentence)->indexCount = (sentence)->vertexCount;
+		sentence->indexCount = sentence->vertexCount;
 
 		// Create the vertex array.
 		VertexType* vertices;
-		vertices = new VertexType[(sentence)->vertexCount];
-		if(!vertices)
-		{
+		vertices = new VertexType[sentence->vertexCount];
+		if(!vertices){
 			return false;
 		}
 
 		// Create the index array.
 		unsigned long* indices;
-		indices = new unsigned long[(sentence)->indexCount];
-		if(!indices)
-		{
+		indices = new unsigned long[sentence->indexCount];
+		if(!indices){
 			return false;
 		}
 
@@ -350,7 +344,7 @@ bool TextRenderer::UpdateSentence(SentenceType* sentence, bool absolute, wstring
 		memset(vertices, 0, (sizeof(VertexType) * (sentence)->vertexCount));
 
 		// Initialize the index array.
-		for(int i = 0; i<(sentence)->indexCount; i++){
+		for(int i = 0; i < sentence->indexCount; i++){
 
 			indices[i] = i;
 		}
@@ -358,19 +352,19 @@ bool TextRenderer::UpdateSentence(SentenceType* sentence, bool absolute, wstring
 
 		// Set up the description of the dynamic vertex buffer.
 		vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-		vertexBufferDesc.ByteWidth = sizeof(VertexType) * (sentence)->vertexCount;
+		vertexBufferDesc.ByteWidth = sizeof(VertexType) * sentence->vertexCount;
 		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 		vertexBufferDesc.MiscFlags = 0;
 		vertexBufferDesc.StructureByteStride = 0;
 
-		// Give the subresource structure a pointer to the vertex data.
+		// Give the sub resource structure a pointer to the vertex data.
 		vertexData.pSysMem = vertices;
 		vertexData.SysMemPitch = 0;
 		vertexData.SysMemSlicePitch = 0;
 
 		// Create the vertex buffer.
-		hr = device->CreateBuffer(&vertexBufferDesc, &vertexData, &(sentence)->vertexBuffer);
+		hr = device->CreateBuffer(&vertexBufferDesc, &vertexData, &sentence->vertexBuffer);
 		if(FAILED(hr)){
 
 			return false;
@@ -380,19 +374,19 @@ bool TextRenderer::UpdateSentence(SentenceType* sentence, bool absolute, wstring
 		// Set up the description of the static index buffer.
 		D3D11_BUFFER_DESC indexBufferDesc;
 		indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		indexBufferDesc.ByteWidth = sizeof(unsigned long) * (sentence)->indexCount;
+		indexBufferDesc.ByteWidth = sizeof(unsigned long) * sentence->indexCount;
 		indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 		indexBufferDesc.CPUAccessFlags = 0;
 		indexBufferDesc.MiscFlags = 0;
 		indexBufferDesc.StructureByteStride = 0;
 
-		// Give the subresource structure a pointer to the index data.
+		// Give the sub resource structure a pointer to the index data.
 		indexData.pSysMem = indices;
 		indexData.SysMemPitch = 0;
 		indexData.SysMemSlicePitch = 0;
 
 		// Create the index buffer.
-		hr = device->CreateBuffer(&indexBufferDesc, &indexData, &(sentence)->indexBuffer);
+		hr = device->CreateBuffer(&indexBufferDesc, &indexData, &sentence->indexBuffer);
 		if(FAILED(hr)){
 
 			return false;
@@ -406,9 +400,6 @@ bool TextRenderer::UpdateSentence(SentenceType* sentence, bool absolute, wstring
 	VertexType* vertices = new VertexType[sentence->vertexCount];
 	if(!vertices){
 
-
-
-		
 		return false;
 	}
 
@@ -418,22 +409,30 @@ bool TextRenderer::UpdateSentence(SentenceType* sentence, bool absolute, wstring
 	// Calculate the X and Y pixel position on the screen to start drawing to.
 	float drawX = 0;
 	float drawY = 0;
-	if(absolute){
-		drawX = ((((float)ScreenWidth / 2) * -1) + posx);
-		drawY = (((float)ScreenHeight / 2) - posy);
-	} else {
-		// pos is value between 0 - 1000 (promille)  scale it to screen //
-		float relx = ScreenWidth*(posx/ResolutionScaling::GetPromilleFactor());
-		float rely = ScreenHeight*(posy/ResolutionScaling::GetPromilleFactor());
+	if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
+		// pos is value between 0 - 1 scale to screen size //
+		float relx = ScreenWidth*position.X;
+		float rely = ScreenHeight*position.Y;
 
 		drawX = ((((float)ScreenWidth / 2) * -1) + relx);
 		drawY = ((((float)ScreenHeight / 2)) - rely);
+
+	} else {
+		drawX = ((((float)ScreenWidth / 2) * -1) + position.X);
+		drawY = (((float)ScreenHeight / 2) - position.Y);
 	}
 
+	// make draw x and draw y match screen pixels //
+	drawX = (float)(int)(drawX+0.5f);
+	drawY = (float)(int)(drawY+0.5f);
 
 	// use font to build vertex array //
-	FontHolder[fontindex]->BuildVertexArray((void*) vertices, text, drawX, drawY, sentence->Height, absolute, TranslateSize); // this needs absolute parameter //
-	//FontHolder[fontindex]->BuildVertexArray((void*) vertices, text, 50, 50, sentence->Height, absolute); // this needs absolute parameter //
+	if(!FontHolder[fontindex]->BuildVertexArray(vertices, text, drawX, drawY, sentence->SizeModifier, Coordtype)){
+		// sentence probably has invalid characters //
+		SAFE_DELETE_ARRAY(vertices);
+
+		return false;
+	}
 	if(!vertices){
 		// font has failed //
 		Logger::Get()->Error(L"Render sentence has failed, recreating fonts", true);
@@ -463,7 +462,6 @@ bool TextRenderer::UpdateSentence(SentenceType* sentence, bool absolute, wstring
 	SAFE_DELETE_ARRAY(vertices);
 
 	return true;
-
 }
 void TextRenderer::ReleaseSentence(SentenceType** sentence){
 	if(*sentence){
@@ -498,12 +496,8 @@ bool TextRenderer::RenderSentence(ID3D11DeviceContext* devcont, SentenceType* se
 	// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
 	devcont->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	// Create pixel color
-	Float4 pixelColor(sentence->red, sentence->green, sentence->blue, 1.0f);
-	//pixelColor = D3DXVECTOR4(sentence->red, sentence->green, sentence->blue, 1.0f);
-
 	// Render the text using the font shader.
-	if(!_FontShader->Render(devcont, sentence->indexCount, worldMatrix, BaseViewMatrix, orthoMatrix, FontHolder[sentence->FontID]->GetTexture(), pixelColor)){
+	if(!_FontShader->Render(devcont, sentence->indexCount, worldMatrix, BaseViewMatrix, orthoMatrix, FontHolder[sentence->FontID]->GetTexture(), sentence->Colour)){
 		false;
 	}
 
@@ -537,8 +531,8 @@ void Leviathan::TextRenderer::CheckUpdatedValues(){
 		for(unsigned int i = 0; i < Sentences.size(); i++){
 
 			// call update sentence with sentence's current values //
-			UpdateSentence(Sentences[i], Sentences[i]->Absolute, Sentences[i]->text, Sentences[i]->posx, Sentences[i]->posy, Sentences[i]->red,
-				Sentences[i]->green, Sentences[i]->blue, Sentences[i]->Height, Sentences[i]->FontID, temprequired->GetDeviceContext(), Sentences[i]->TranslateSize);
+			UpdateSentence(Sentences[i], Sentences[i]->CoordType, Sentences[i]->text, Sentences[i]->Position, Sentences[i]->Colour,
+				Sentences[i]->SizeModifier, Sentences[i]->FontID, temprequired->GetDeviceContext());
 		}
 
 	}

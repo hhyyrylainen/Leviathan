@@ -14,6 +14,10 @@ using namespace Leviathan;
 #include "GuiScriptInterface.h"
 #include "WstringIterator.h"
 
+
+// include various headers that bind functions and classes //
+#include "GuiScriptBind.h"
+
 ScriptExecutor::ScriptExecutor() : engine(NULL), Modules(), RunningScripts(NULL), Parameters(), Errors(){
 	// set default values //
 	PrintErrors = true;
@@ -53,8 +57,12 @@ bool ScriptExecutor::Init(){
 		return false;
 	}
 
-	// include various headers that bind functions and classes //
-#include "GuiScriptBind.h"
+	// use various binding functions //
+	if(!BindGUIScriptCommon(engine)){
+		// failed //
+		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register GUI things failed");
+		return false;
+	}
 
 	return true;
 }

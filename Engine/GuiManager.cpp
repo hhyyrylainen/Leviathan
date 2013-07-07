@@ -634,367 +634,6 @@ int GuiManager::CallEventOnObject(BaseEventable* receive, Event* pEvent){
 	SAFE_DELETE(pEvent);
 	return returval;
 }
-// ---------------- animation handler part ---------------------- //
-int GuiManager::HandleAnimation(AnimationAction* perform, GuiAnimateable* caller, int mspassed){
-	switch(perform->GetType()){
-	case GUI_ANIMATION_MOVE:
-		{
-			GuiAnimationTypeMove* data = (GuiAnimationTypeMove*)perform->Data;
-
-			int x = (int)(caller->GetValue(GUI_ANIMATEABLE_SEMANTIC_X));
-			int y = (int)(caller->GetValue(GUI_ANIMATEABLE_SEMANTIC_Y));
-
-			bool finished = false;
-
-			int amount = (int)((((((float)mspassed))*data->Speed)+0.1f)*0.35f);
-			if(amount < 1) // force the object to move, to avoid bugs causing objects to stop
-				amount = 1;
-
-			// switch here based on move mode
-			switch(data->Priority){
-			case GUI_ANIMATION_TYPEMOVE_PRIORITY_X:
-				{
-					// move x if right x then move y //
-					if(x == data->X){
-						if(y == data->Y){
-							// finished
-							finished = true;
-							break;
-						}
-
-						// move y
-						if(y < data->Y){
-							y += amount;
-
-							if(y > data->Y)
-								y = data->Y;
-
-						} else if (y > data->Y){
-							y -= amount;
-
-							if(y < data->Y)
-								y = data->Y;
-						}
-						break;
-					}
-
-					if(x < data->X){
-						x += amount;
-
-						if(x > data->X)
-							x = data->X;
-
-					} else if (x > data->X){
-						x -= amount;
-
-						if(x < data->X)
-							x = data->X;
-					}
-				}
-			break;
-			case GUI_ANIMATION_TYPEMOVE_PRIORITY_Y:
-				{
-					if(y == data->Y){
-						if(x == data->X){
-							// finished
-							finished = true;
-							break;
-						}
-						if(x < data->X){
-							x += amount;
-
-							if(x > data->X)
-								x = data->X;
-
-						} else if (x > data->X){
-							x -= amount;
-
-							if(x < data->X)
-								x = data->X;
-						}
-
-						break;
-					}
-					// move y
-					if(y < data->Y){
-						y += amount;
-
-						if(y > data->Y)
-							y = data->Y;
-
-					} else if (y > data->Y){
-						y -= amount;
-
-						if(y < data->Y)
-							y = data->Y;
-					}
-
-				}
-			break;
-			case GUI_ANIMATION_TYPEMOVE_PRIORITY_BOTH:
-				{
-					// move y
-					if(y < data->Y){
-						y += amount/2;
-
-						if(y > data->Y)
-							y = data->Y;
-
-					} else if (y > data->Y){
-						y -= amount/2;
-
-						if(y < data->Y)
-							y = data->Y;
-					}
-					if(x < data->X){
-						x += amount/2;
-
-						if(x > data->X)
-							x = data->X;
-
-					} else if (x > data->X){
-						x -= amount/2;
-
-						if(x < data->X)
-							x = data->X;
-					}
-					// check for finishing //
-					if((x == data->X) && (y == data->Y)){
-						finished = true;
-						break;
-					}
-				}
-			break;
-			case GUI_ANIMATION_TYPEMOVE_PRIORITY_SLOPE:
-				{
-					// move x and calculate required y
-					int xdist = data->X-x;
-					int ydist = data->Y-y;
-					FORCE_POSITIVE(ydist);
-					FORCE_POSITIVE(xdist);
-					// would divide by zero, and we don't want that //
-					if(xdist == 0){
-						// change type //
-						data->Priority = GUI_ANIMATION_TYPEMOVE_PRIORITY_Y;
-						break;
-					}
-					if(ydist == 0){
-						// change type //
-						data->Priority = GUI_ANIMATION_TYPEMOVE_PRIORITY_X;
-						break;
-					}
-					if(xdist == ydist){
-						// need a strategy change //
-						data->Priority = GUI_ANIMATION_TYPEMOVE_PRIORITY_BOTH;
-						break;
-					}
-					// calculate slope for other coordinate //
-					float slope = (float)ydist/xdist;
-
-					if(x < data->X){
-						x += amount;
-
-						if(x > data->X)
-							x = data->X;
-
-					} else if (x > data->X){
-						x -= amount;
-
-						if(x < data->X)
-							x = data->X;
-					}
-
-					if(y < data->Y){
-						y += (int)(amount*slope);
-
-						if(y > data->Y)
-							y = data->Y;
-
-					} else if (y > data->Y){
-						y -= (int)(amount*slope);
-
-						if(y < data->Y)
-							y = data->Y;
-					}
-
-
-					// check for finishing //
-					if((x == data->X) && (y == data->Y)){
-						finished = true;
-						break;
-					}
-
-				}
-			break;
-			case GUI_ANIMATION_TYPEMOVE_PRIORITY_SLOPEY:
-				{
-					// move x and calculate required y
-					int xdist = data->X-x;
-					int ydist = data->Y-y;
-					FORCE_POSITIVE(ydist);
-					FORCE_POSITIVE(xdist);
-					// would divide by zero, and we don't want that //
-					if(xdist == 0){
-						// change type //
-						data->Priority = GUI_ANIMATION_TYPEMOVE_PRIORITY_Y;
-						break;
-					}
-					if(ydist == 0){
-						// change type //
-						data->Priority = GUI_ANIMATION_TYPEMOVE_PRIORITY_X;
-						break;
-					}
-					if(xdist == ydist){
-						// need a strategy change //
-						data->Priority = GUI_ANIMATION_TYPEMOVE_PRIORITY_BOTH;
-						break;
-					}
-					// calculate slope for other coordinate //
-					float slope = (float)xdist/ydist;
-
-					if(x < data->X){
-						x += (int)(amount*slope);
-
-						if(x > data->X)
-							x = data->X;
-
-					} else if (x > data->X){
-						x -= (int)(amount*slope);
-
-						if(x < data->X)
-							x = data->X;
-					}
-
-					if(y < data->Y){
-						y += amount;
-
-						if(y > data->Y)
-							y = data->Y;
-
-					} else if (y > data->Y){
-						y -= amount;
-
-						if(y < data->Y)
-							y = data->Y;
-					}
-
-
-					// check for finishing //
-					if((x == data->X) && (y == data->Y)){
-						finished = true;
-						break;
-					}
-
-				}
-			break;
-			case GUI_ANIMATION_TYPEMOVE_PRIORITY_SMOOTH_DIVIDE:
-				{
-					int xdist = data->X-x;
-					int ydist = data->Y-y;
-					FORCE_POSITIVE(ydist);
-					FORCE_POSITIVE(xdist);
-
-					// would divide by zero, and we don't want that //
-					if(xdist == 0){
-						// change type //
-						data->Priority = GUI_ANIMATION_TYPEMOVE_PRIORITY_Y;
-						break;
-					}
-					if(ydist == 0){
-						// change type //
-						data->Priority = GUI_ANIMATION_TYPEMOVE_PRIORITY_X;
-						break;
-					}
-					if(xdist == ydist){
-						// need a strategy change //
-						data->Priority = GUI_ANIMATION_TYPEMOVE_PRIORITY_BOTH;
-						break;
-					}
-
-					// share amount proportionally between x and y //
-					int xamount = 0, yamount = 0;
-					if(xdist < ydist){
-
-						float amountprop = 1.0f-(float)xdist/ydist;
-
-						yamount = (int)(amountprop*(mspassed*data->Speed+1.5f));
-						if(yamount < 1)
-							yamount = 1;
-						xamount = (int)((mspassed*data->Speed+1.5f)*((float)xdist/ydist));
-						if(xamount < 1)
-							xamount = 1;
-					}
-					if(ydist < xdist){
-
-						float amountprop = 1.0f-(float)ydist/xdist;
-
-						xamount = (int)(amountprop*(mspassed*data->Speed+1.5f));
-						if(xamount < 1)
-							xamount = 1;
-						yamount = (int)((mspassed*data->Speed+1.5f)*((float)ydist/xdist));
-						if(yamount < 1)
-							yamount = 1;
-					}
-
-					if(x < data->X){
-						x += xamount;
-
-						if(x > data->X)
-							x = data->X;
-
-					} else if (x > data->X){
-						x -= xamount;
-
-						if(x < data->X)
-							x = data->X;
-					}
-
-					if(y < data->Y){
-						y += yamount;
-
-						if(y > data->Y)
-							y = data->Y;
-
-					} else if (y > data->Y){
-						y -= yamount;
-
-						if(y < data->Y)
-							y = data->Y;
-					}
-
-
-					// check for finishing //
-					if((x == data->X) && (y == data->Y)){
-						finished = true;
-						break;
-					}
-
-				}
-			break;
-			}
-
-			// send updated values //
-			caller->SetValue(GUI_ANIMATEABLE_SEMANTIC_X, (float)x);
-			caller->SetValue(GUI_ANIMATEABLE_SEMANTIC_Y, (float)y);
-
-			if(finished){
-				return 1;
-
-			} else {
-				return 0;
-			}
-		}
-	break;
-
-
-	default:
-		return 404; // unrecognized type //
-	}
-
-
-
-	//return 5; // for error //
-}
 // ----------------- collection managing --------------------- //
 void GuiManager::CreateCollection(GuiCollection* add){
 	Collections.push_back(add);
@@ -1213,4 +852,191 @@ Leviathan::GuiCollection::~GuiCollection(){
 	// release script //
 
 	// possibly release children here //
+}
+
+
+// ---------------- animation handler part ---------------------- //
+int GuiManager::HandleAnimation(AnimationAction* perform, GuiAnimateable* caller, int mspassed){
+	switch(perform->GetType()){
+	case GUI_ANIMATION_MOVE:
+		{
+			GuiAnimationTypeMove* data = (GuiAnimationTypeMove*)perform->Data;
+
+			float x = caller->GetValue(GUI_ANIMATEABLE_SEMANTIC_X);
+			float y = caller->GetValue(GUI_ANIMATEABLE_SEMANTIC_Y);
+
+			bool finished = false;
+
+			float amount = mspassed*(data->Speed/1000.f)+0.0001f;
+
+			// switch here based on move mode
+			switch(data->Priority){
+			case GUI_ANIMATION_TYPEMOVE_PRIORITY_X:
+				{
+					// move x if right x then move y //
+					if(x == data->X){
+						if(y == data->Y){
+							// finished
+							finished = true;
+							break;
+						}
+
+						// move y
+						if(y < data->Y){
+							y += amount;
+
+							if(y > data->Y)
+								y = data->Y;
+
+						} else if (y > data->Y){
+							y -= amount;
+
+							if(y < data->Y)
+								y = data->Y;
+						}
+						break;
+					}
+
+					if(x < data->X){
+						x += amount;
+
+						if(x > data->X)
+							x = data->X;
+
+					} else if (x > data->X){
+						x -= amount;
+
+						if(x < data->X)
+							x = data->X;
+					}
+				}
+				break;
+			case GUI_ANIMATION_TYPEMOVE_PRIORITY_Y:
+				{
+					if(y == data->Y){
+						if(x == data->X){
+							// finished
+							finished = true;
+							break;
+						}
+						if(x < data->X){
+							x += amount;
+
+							if(x > data->X)
+								x = data->X;
+
+						} else if (x > data->X){
+							x -= amount;
+
+							if(x < data->X)
+								x = data->X;
+						}
+
+						break;
+					}
+					// move y
+					if(y < data->Y){
+						y += amount;
+
+						if(y > data->Y)
+							y = data->Y;
+
+					} else if (y > data->Y){
+						y -= amount;
+
+						if(y < data->Y)
+							y = data->Y;
+					}
+
+				}
+				break;
+			case GUI_ANIMATION_TYPEMOVE_PRIORITY_BOTH:
+				{
+					// move y
+					if(y < data->Y){
+						y += amount/2;
+
+						if(y > data->Y)
+							y = data->Y;
+
+					} else if (y > data->Y){
+						y -= amount/2;
+
+						if(y < data->Y)
+							y = data->Y;
+					}
+					if(x < data->X){
+						x += amount/2;
+
+						if(x > data->X)
+							x = data->X;
+
+					} else if (x > data->X){
+						x -= amount/2;
+
+						if(x < data->X)
+							x = data->X;
+					}
+					// check for finishing //
+					if((x == data->X) && (y == data->Y)){
+						finished = true;
+						break;
+					}
+				}
+				break;
+			case GUI_ANIMATION_TYPEMOVE_PRIORITY_SLOPE:
+				{
+					// this might be good to be done with 2d vector //
+					Float2 movementvector(data->X-x, data->Y-y);
+					// normalize so that speed is constant //
+					movementvector = movementvector.Normalize();
+
+					// move x and y according to vector //
+					x += movementvector.X*amount;
+					y += movementvector.Y*amount;
+
+					// check did we go over it //
+					Float2 checkvector(data->X-x, data->Y-y);
+
+					if(((movementvector.X < 0) != (checkvector.X < 0))){
+						// went over the target, set to the target //
+						x = data->X;
+						y = data->Y;
+
+						finished = true;
+						break;
+					}
+
+
+					// check for finishing //
+					if((x == data->X) && (y == data->Y)){
+						finished = true;
+						break;
+					}
+
+				}
+				break;
+			}
+
+			// send updated values //
+			caller->SetValue(GUI_ANIMATEABLE_SEMANTIC_X, x);
+			caller->SetValue(GUI_ANIMATEABLE_SEMANTIC_Y, y);
+
+			if(finished){
+				return 1;
+
+			} else {
+				return 0;
+			}
+		}
+		break;
+
+
+	default:
+		return 404; // unrecognized type //
+	}
+
+
+
+	//return 5; // for error //
 }

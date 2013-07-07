@@ -10,25 +10,25 @@
 
 namespace Leviathan{
 
-	class ResolutionScaling : public Object{
+	class ResolutionScaling /*: public Object*/{
 	public:
 
 		DLLEXPORT static void SetResolution(int width, int height);
 
-		DLLEXPORT static float GetXScaleFactor();
-		DLLEXPORT static float GetYScaleFactor();
+		//DLLEXPORT static float GetXScaleFactor();
+		//DLLEXPORT static float GetYScaleFactor();
 
 
-		DLLEXPORT static float ScalePromilleToFactorX(int x);
-		DLLEXPORT static float ScalePromilleToFactorY(int y);
+		//DLLEXPORT static float ScalePromilleToFactorX(int x);
+		//DLLEXPORT static float ScalePromilleToFactorY(int y);
 
-		DLLEXPORT static float GetPromilleFactor();
+		//DLLEXPORT static float GetPromilleFactor();
 
-		DLLEXPORT static float ScaleAbsoluteXToPromille(int x);
-		DLLEXPORT static float ScaleAbsoluteYToPromille(int y);
+		//DLLEXPORT static float ScaleAbsoluteXToPromille(int x);
+		//DLLEXPORT static float ScaleAbsoluteYToPromille(int y);
 
-		DLLEXPORT static float ScaleAbsoluteXToFactor(int x);
-		DLLEXPORT static float ScaleAbsoluteYToFactor(int y);
+		//DLLEXPORT static float ScaleAbsoluteXToFactor(int x);
+		//DLLEXPORT static float ScaleAbsoluteYToFactor(int y);
 
 		DLLEXPORT static float ScaleTextSize(float size);
 
@@ -37,10 +37,10 @@ namespace Leviathan{
 		DLLEXPORT ResolutionScaling::ResolutionScaling();
 		DLLEXPORT ResolutionScaling::~ResolutionScaling();
 
-		static void CalculateFactors();
+		//static void CalculateFactors();
 		// ------------------------ //
-		static float XScaleFactor;
-		static float YScaleFactor;
+		//static float XScaleFactor;
+		//static float YScaleFactor;
 
 
 		static int Width;

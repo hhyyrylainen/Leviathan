@@ -148,8 +148,11 @@
     <ClCompile Include="FpsCounter.cpp" />
     <ClCompile Include="GeometryAdvancedLoader.cpp" />
     <ClCompile Include="GuiAnimation.cpp" />
+    <ClCompile Include="GuiBaseGraphicalComponent.cpp" />
+    <ClCompile Include="GuiBasicText.cpp" />
     <ClCompile Include="GuiKeyListener.cpp" />
     <ClCompile Include="GuiManager.cpp" />
+    <ClCompile Include="GuiPositionable.cpp" />
     <ClCompile Include="GuiScriptInterface.cpp" />
     <ClCompile Include="IDFactory.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -159,6 +162,7 @@
     <ClCompile Include="LineTokenizer.cpp" />
     <ClCompile Include="LoadedAnimation.cpp" />
     <ClCompile Include="NormalModelData.cpp" />
+    <ClCompile Include="ObjectBackground.cpp" />
     <ClCompile Include="ObjectFileList.cpp" />
     <ClCompile Include="ObjectFileObject.cpp" />
     <ClCompile Include="ObjectFileProcessor.cpp" />
@@ -275,8 +279,11 @@
     <ClInclude Include="FpsCounter.h" />
     <ClInclude Include="GeometryAdvancedLoader.h" />
     <ClInclude Include="GuiAnimation.h" />
+    <ClInclude Include="GuiBaseGraphicalComponent.h" />
+    <ClInclude Include="GuiBasicText.h" />
     <ClInclude Include="GuiKeyListener.h" />
     <ClInclude Include="GuiManager.h" />
+    <ClInclude Include="GuiPositionable.h" />
     <ClInclude Include="GuiScriptBind.h" />
     <ClInclude Include="GuiScriptInterface.h" />
     <ClInclude Include="IDFactory.h" />
@@ -289,6 +296,7 @@
     <ClInclude Include="LineTokenizer.h" />
     <ClInclude Include="LoadedAnimation.h" />
     <ClInclude Include="NormalModelData.h" />
+    <ClInclude Include="ObjectBackground.h" />
     <ClInclude Include="ObjectFileList.h" />
     <ClInclude Include="ObjectFileObject.h" />
     <ClInclude Include="ObjectFileProcessor.h" />

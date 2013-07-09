@@ -147,3 +147,4 @@ void Leviathan::BasicTextRendBlob::SetUpdated(){
 	Updated = true;
 }
 // ------------------------------------ //
+

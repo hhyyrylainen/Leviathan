@@ -189,6 +189,7 @@
     <ClCompile Include="Rendering\GuiRendBlob.cpp" />
     <ClCompile Include="Rendering\ManagedTexture.cpp" />
     <ClCompile Include="Rendering\RenderingPassInfo.cpp" />
+    <ClCompile Include="Rendering\RenderingResourceCreator.cpp" />
     <ClCompile Include="Rendering\RenderSavedResource.cpp" />
     <ClCompile Include="Rendering\ShaderDataTypes.cpp" />
     <ClCompile Include="Rendering\SkinnedShader.cpp" />
@@ -210,6 +211,7 @@
     <ClCompile Include="Rendering\ShaderManager.cpp" />
     <ClCompile Include="ResolutionScaling.cpp" />
     <ClCompile Include="RSAEncryption.cpp" />
+    <ClCompile Include="ScaleableFreeTypeBitmap.cpp" />
     <ClCompile Include="ScriptException.cpp" />
     <ClCompile Include="ScriptExecutor.cpp" />
     <ClCompile Include="ScriptInterface.cpp" />
@@ -324,6 +326,7 @@
     <ClInclude Include="Rendering\GuiRendBlob.h" />
     <ClInclude Include="Rendering\ManagedTexture.h" />
     <ClInclude Include="Rendering\RenderingPassInfo.h" />
+    <ClInclude Include="Rendering\RenderingResourceCreator.h" />
     <ClInclude Include="Rendering\RenderSavedResource.h" />
     <ClInclude Include="Rendering\ShaderDataTypes.h" />
     <ClInclude Include="Rendering\SkinnedShader.h" />
@@ -345,6 +348,7 @@
     <ClInclude Include="Rendering\ShaderManager.h" />
     <ClInclude Include="ResolutionScaling.h" />
     <ClInclude Include="RSAEncryption.h" />
+    <ClInclude Include="ScaleableFreeTypeBitmap.h" />
     <ClInclude Include="ScriptException.h" />
     <ClInclude Include="ScriptExecutor.h" />
     <ClInclude Include="ScriptInterface.h" />

@@ -256,36 +256,17 @@ wstring Leviathan::FileSystem::RemoveExtension(const wstring &file, bool delpath
 }
 
 
-wstring Leviathan::FileSystem::ChangeExtension(const wstring& path, wstring newext){
-	bool DotFound = false;
+DLLEXPORT  wstring Leviathan::FileSystem::ChangeExtension(const wstring& path, const wstring &newext){
+	// get last dot in string //
+	size_t lastdot = path.find_last_of(L'.');
 
-	int index = path.length();
-	wstring returnstr = L"";
-
-	while(!DotFound){
-		index--;
-		if(index < 0){
-			Logger::Get()->Error(L"ChangeExtension: No dot found!", index, true);
-			return path;
-		}
-		if(path[index] == L'.')
-			DotFound = true;
-		else {
-			returnstr += path[index];
-		}
-
+	if(lastdot == wstring::npos){
+		// no dot!, just append to end and return //
+		return path+L'.'+newext;
 	}
 
-	// turn around //
-	wstring final = L"";
-	for(int i = (int)returnstr.size()-1; i > -1; i--){
-		final += returnstr[i];
-	}
-
-	// append new extension //
-	final += newext;
-
-	return final;
+	// get substring from begin to dot and add new extension //
+	return path.substr(0, lastdot+1)+newext;
 }
 
 
@@ -669,7 +650,7 @@ shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector
 	// nothing //
 	return NULL;
 }
-DLLEXPORT  wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const wstring& name, const wstring& extensions, bool searchall /*= true*/){
+DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const wstring& name, const wstring& extensions, bool searchall /*= true*/){
 	// search the vector specified by which //
 
 	// generate info about the search file //

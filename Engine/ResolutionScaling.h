@@ -31,7 +31,7 @@ namespace Leviathan{
 		//DLLEXPORT static float ScaleAbsoluteYToFactor(int y);
 
 		DLLEXPORT static float ScaleTextSize(float size);
-
+		DLLEXPORT static float UnScaleTextFromSize(float size);
 	private:
 
 		DLLEXPORT ResolutionScaling::ResolutionScaling();

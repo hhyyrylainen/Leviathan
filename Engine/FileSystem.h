@@ -75,7 +75,7 @@ namespace Leviathan{
 		// file handling //
 		DLLEXPORT static int LoadDataDump(const wstring &file, vector<shared_ptr<NamedVariableList>>& vec);
 		DLLEXPORT static wstring GetExtension(const wstring &path);
-		DLLEXPORT static wstring ChangeExtension(const wstring& path, wstring newext);
+		DLLEXPORT static wstring ChangeExtension(const wstring& path, const wstring &newext);
 
 		DLLEXPORT static wstring RemoveExtension(const wstring &file, bool delpath);
 

@@ -67,9 +67,12 @@ DLLEXPORT void Leviathan::Gui::GuiBasicText::Render(RenderBridge* bridge, Graphi
 		NeedsAdjusting = false;
 	}
 
+	bool releaseold = false;
+
 	if(IsExpensiveText != OldExpensiveState){
 		// needs to change text type //
-		throw exception("not implemented");
+		RUpdated = true;
+		releaseold = true;
 	}
 
 	if(!RUpdated){
@@ -77,11 +80,17 @@ DLLEXPORT void Leviathan::Gui::GuiBasicText::Render(RenderBridge* bridge, Graphi
 		return;
 	}
 
+	// get index from bridge //
+	size_t i = bridge->GetSlotIndex(Slot);
+
+	if(releaseold){
+		// needs to delete old rendering blob //
+		SAFE_DELETE(bridge->DrawActions[i]);
+	}
 
 
 	// ensure that right thing and parameters are in the render bridge //
-	// get index from bridge //
-	size_t i = bridge->GetSlotIndex(Slot);
+
 
 	if(bridge->DrawActions[i] == NULL){
 		// create new object //
@@ -92,8 +101,9 @@ DLLEXPORT void Leviathan::Gui::GuiBasicText::Render(RenderBridge* bridge, Graphi
 
 
 		} else {
-			// don't know what to do //
-			throw("not implemented");
+			// create expensive text block //
+			bridge->DrawActions[i] = new ExpensiveTextRendBlob(ZOrder, Slot, Position, PrimaryTextColour, TextModifier, Text, Font, CoordType, 
+				TextAdjustMode == GUI_BASICTEXT_MODE_TRYTOAUTOFIT, Size);
 		}
 
 
@@ -107,8 +117,13 @@ DLLEXPORT void Leviathan::Gui::GuiBasicText::Render(RenderBridge* bridge, Graphi
 			tmpptr->Update(ZOrder, Position, PrimaryTextColour, TextModifier, Text, Font, CoordType);
 
 		} else {
-			// don't know what to do //
-			throw("not implemented");
+			// update expensive text object //
+
+			ExpensiveTextRendBlob* tmpptr = (ExpensiveTextRendBlob*)bridge->DrawActions[i];
+
+			tmpptr->Update(ZOrder, Position, PrimaryTextColour, TextModifier, Text, Font, CoordType, TextAdjustMode == GUI_BASICTEXT_MODE_TRYTOAUTOFIT,
+				Size);
+
 		}
 	}
 
@@ -142,8 +157,7 @@ void Leviathan::Gui::GuiBasicText::_CheckTextAdjustment(){
 	// return if adjustment isn't wanted //
 	if(TextAdjustMode == GUI_BASICTEXT_MODE_JUSTRENDER)
 		return;
-
-	throw exception("not implemented");
+	// the text renderer will automatically adjust it, just set parameters to the 
 }
 
 DLLEXPORT bool Leviathan::Gui::GuiBasicText::GetTextLength(float &lengthreceiver, float &heightreceiver){

@@ -13,11 +13,11 @@
 
 #define TEXTUREMANAGER_LATEST_SEARCH_SIZE	10
 
-#define TEXTUREMANAGER_SEARCH_LATEST	1
-#define TEXTUREMANAGER_SEARCH_OLDER		2
-#define TEXTUREMANAGER_SEARCH_UNLOADED	3
-#define TEXTUREMANAGER_SEARCH_UTILITY	4
-
+#define TEXTUREMANAGER_SEARCH_LATEST				1
+#define TEXTUREMANAGER_SEARCH_OLDER					2
+#define TEXTUREMANAGER_SEARCH_UNLOADED				3
+#define TEXTUREMANAGER_SEARCH_UTILITY				4
+#define TEXTUREMANAGER_SEARCH_VOLATILEGENERATED		5
 
 namespace Leviathan{
 	// small forward declaration //
@@ -32,6 +32,9 @@ namespace Leviathan{
 		DLLEXPORT void Release();
 
 		DLLEXPORT void TimePass(int mspassed);
+
+		DLLEXPORT void UnloadVolatile(const int &ID);
+		DLLEXPORT bool AddVolatileGenerated(const int &ID, const wstring &source, ID3D11ShaderResourceView* texture);
 
 
 		DLLEXPORT int LoadTexture(wstring& path, bool loadnow = false);
@@ -56,6 +59,7 @@ namespace Leviathan{
 		vector<shared_ptr<ManagedTexture>> LatestFound; // last TEXTUREMANAGER_LATEST_SEARCH_SIZE amount of used textures //
 
 		vector<shared_ptr<ManagedTexture>> Utility;
+		vector<shared_ptr<ManagedTexture>> VolatileGenerated;
 		shared_ptr<ManagedTexture> ErrorTexture;
 
 		// texture finding functions //
@@ -63,12 +67,10 @@ namespace Leviathan{
 		shared_ptr<ManagedTexture> SearchExpiring(int id);
 		shared_ptr<ManagedTexture> SearchUnloaded(int id);
 		shared_ptr<ManagedTexture> SearchUtility(int id);
+		shared_ptr<ManagedTexture> SearchVolatile(int id);
 		void RemoveFromUninitialized(int id);
 
 		void AddToLatest(const shared_ptr<ManagedTexture>& toadd);
-
-		//void AddToLatestFounds(const shared_ptr<ManagedTexture>& toadd);
-
 	};
 
 }

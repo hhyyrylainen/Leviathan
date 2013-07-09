@@ -12,12 +12,8 @@
 
 #include "BaseModel.h"
 #include "FileSystem.h"
-#ifndef LEVIATHAN_LOGGER
-#include "Logger.h"
-#endif
+#include "ShaderDataTypes.h"
 
-#define COLORQUAD_COLOR_STYLE_LEFTTOPRIGHTBOTTOM	1
-#define COLORQUAD_COLOR_STYLE_RIGHTBOTTOMLEFTTOP	2
 
 #define COLORQUAD_VERTEXCOUNT						6
 
@@ -41,12 +37,6 @@ namespace Leviathan{
 
 
 	private:
-		struct VertexType{
-			D3DXVECTOR3 position;
-			D3DXVECTOR2 colorcoordinate;
-		};
-
-
 		bool InitBuffers(ID3D11Device* device);
 
 		//bool QuickBUpdate(ID3D11DeviceContext* devcont);
@@ -59,8 +49,8 @@ namespace Leviathan{
 		bool Inited;
 
 		// rendering buffers //
-		ID3D11Buffer* Vertexbuffer;
-		ID3D11Buffer* Indexbuffer;
+		ID3D11Buffer* VertexBuffer;
+		ID3D11Buffer* IndexBuffer;
 
 		int Colorstyle;
 		int ScreenWidth, ScreenHeight;

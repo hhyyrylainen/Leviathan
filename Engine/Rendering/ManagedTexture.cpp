@@ -5,6 +5,12 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
+DLLEXPORT Leviathan::ManagedTexture::ManagedTexture() : Texture(NULL){
+	ErrorState = TEXTURE_ERROR_STATE_NON_LOADED;
+	UnusedTime = 0;
+	Loaded = false;
+}
+
 ManagedTexture::ManagedTexture(wstring &file, int id){
 	FromFile = shared_ptr<wstring>(new wstring(file));
 	ID = id;
@@ -37,6 +43,9 @@ ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id
 	Loaded = true;
 	ErrorState = TEXTURE_ERROR_STATE_NONE;
 }
+
+
+
 ManagedTexture::~ManagedTexture(){
 	UnLoad(true); // just so that if there is some special functionality added it gets called
 	FromFile.reset();

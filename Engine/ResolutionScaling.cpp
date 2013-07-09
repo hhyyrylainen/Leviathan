@@ -91,3 +91,7 @@ float Leviathan::ResolutionScaling::ScaleTextSize(float size){
 	// scale it so that it fits height perfectly //
 	return size*(DataStore::Get()->GetHeight()/600.f);
 }
+
+DLLEXPORT float Leviathan::ResolutionScaling::UnScaleTextFromSize(float size){
+	return size/(DataStore::Get()->GetHeight()/600.f);
+}

@@ -504,6 +504,12 @@
     <ClCompile Include="GuiBasicText.cpp">
       <Filter>gui\components</Filter>
     </ClCompile>
+    <ClCompile Include="Rendering\RenderingResourceCreator.cpp">
+      <Filter>rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="ScaleableFreeTypeBitmap.cpp">
+      <Filter>utility</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">
@@ -908,6 +914,12 @@
     </ClInclude>
     <ClInclude Include="GuiBasicText.h">
       <Filter>gui\components</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\RenderingResourceCreator.h">
+      <Filter>rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="ScaleableFreeTypeBitmap.h">
+      <Filter>utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -10,7 +10,7 @@ using namespace Leviathan;
 DLLEXPORT Leviathan::DataStore::DataStore(){
 	Load();
 
-
+	// set default values //
 	TickTime = 0;
 	TickCount = 0;
 	FrameTime = 0;
@@ -24,6 +24,10 @@ DLLEXPORT Leviathan::DataStore::DataStore(){
 	FPSMin = 0;
 	FPSMax = 0;
 	FPSAverage = 0;
+
+	// set font multiplier default //
+	FontSizeMultiplier = 1;
+
 }
 DLLEXPORT Leviathan::DataStore::DataStore(bool man){
 	if(!man)
@@ -34,6 +38,24 @@ DLLEXPORT Leviathan::DataStore::DataStore(bool man){
 	Load();
 
 	TickCount = 0;
+
+	// set default values //
+	TickTime = 0;
+	TickCount = 0;
+	FrameTime = 0;
+	FPS = 0;
+
+	FrameTimeMin = 0;
+	FrameTimeMax = 0;
+	FrameTimeAverage = 0;
+
+
+	FPSMin = 0;
+	FPSMax = 0;
+	FPSAverage = 0;
+
+	// set font multiplier default //
+	FontSizeMultiplier = 1;
 
 	// register data indexes for use in Gui stuff //
 	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_TICKTIME), L"DATAINDEX_TICKTIME"));
@@ -493,6 +515,14 @@ DLLEXPORT void Leviathan::DataStore::SetFPSMax(int newval){
 DLLEXPORT void Leviathan::DataStore::SetFPSAverage(int newval){
 	FPSAverage = newval;
 	ValueUpdate(DATAINDEX_FPS_AVERAGE);
+}
+
+DLLEXPORT int Leviathan::DataStore::GetFontSizeMultiplier() const{
+	return FontSizeMultiplier;
+}
+
+DLLEXPORT void Leviathan::DataStore::SetFontSizeMultiplier(int newval){
+	FontSizeMultiplier = newval;
 }
 
 // ----------------------------------------------- //

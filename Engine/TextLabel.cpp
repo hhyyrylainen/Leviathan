@@ -91,7 +91,7 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstrin
 	if(AutoAdjust > 1)
 		TextAdjustMode = GUI_BASICTEXT_MODE_TRYTOAUTOFIT;
 
-	if(!((GuiBasicText*)GComponents[1])->Init(textcolor, text, font, textsize, false, TextAdjustMode)){
+	if(!((GuiBasicText*)GComponents[1])->Init(textcolor, text, font, textsize, TextAdjustMode != GUI_BASICTEXT_MODE_JUSTRENDER, TextAdjustMode)){
 
 		QUICK_ERROR_MESSAGE;
 		return false;
@@ -212,7 +212,7 @@ void Leviathan::Gui::TextLabel::Render(Graphics* graph){
 			_PopUdated();
 
 			// set text //
-			((GuiBasicText*)GComponents[1])->UpdateText(text, false, TextAdjustMode);
+			((GuiBasicText*)GComponents[1])->UpdateText(text, TextAdjustMode != GUI_BASICTEXT_MODE_JUSTRENDER, TextAdjustMode);
 		}
 	}
 
@@ -251,6 +251,19 @@ void Leviathan::Gui::TextLabel::SetHiddenState(bool hidden){
 }
 // ------------------------------------ //
 void Leviathan::Gui::TextLabel::SizeAdjust(){
+
+	if(AutoAdjust > 1){
+		// using text to fit box mode, no need to update sizes here //
+
+		// send old size to background //
+		((ObjectBackground*)GComponents[0])->SetSize(Size);
+
+		// set position to text //
+		((GuiBasicText*)GComponents[1])->SetLocationData(TextWantedCoordinates, TextAreaSize);
+
+		return;
+	}
+
 
 	// get text length //
 	float length = 0;

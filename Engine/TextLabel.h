@@ -15,7 +15,7 @@
 
 namespace Leviathan{ namespace Gui{
 
-	class TextLabel : public AutoUpdateableObject, public GuiAnimateable, public Positionable{
+	class TextLabel : public AutoUpdateableObject, public GuiAnimateable, public Leviathan::Gui::Positionable{
 	public:
 		DLLEXPORT TextLabel::TextLabel(int id, const Float2 &position, Float2 &size, int autoadjust);
 		DLLEXPORT TextLabel::~TextLabel();

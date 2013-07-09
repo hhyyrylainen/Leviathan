@@ -24,6 +24,7 @@
 
 #include "..\RenderBridge.h"
 #include "RenderingPassInfo.h"
+#include "RenderingResourceCreator.h"
 
 #define TEXTURE_INACTIVE_TIME		30000
 #define TEXTURE_UNLOAD_TIME			300000
@@ -96,7 +97,7 @@ namespace Leviathan{
 
 
 		// static //
-		static Graphics* gadapter;
+		static Graphics* _gadapter;
 	};
 
 

@@ -48,6 +48,7 @@ void TextureManager::Release(){
 
 	Utility.clear();
 	ErrorTexture.reset();
+	VolatileGenerated.clear();
 }
 // ------------------------------------ //
 void TextureManager::TimePass(int mspassed){
@@ -80,6 +81,23 @@ void TextureManager::TimePass(int mspassed){
 			i--;
 		}
 	}
+
+	// add time passed to volatile //
+	for(size_t i = 0; i < VolatileGenerated.size(); i++){
+
+		VolatileGenerated[i]->UnusedTime += mspassed;
+
+		if(VolatileGenerated[i]->UnusedTime >= 60*1000){
+			// hasn't been used for a minute //
+			// erase it (if somebody misses it they will regenerate it //
+
+			VolatileGenerated[i]->UnLoad(true);
+
+			VolatileGenerated.erase(VolatileGenerated.begin()+i);
+			i--;
+		}
+	}
+
 	// utility vector won't be processed because it SHOULDN'T be moved anywhere //
 }
 // ------------------------------------ //
@@ -103,7 +121,7 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 		}
 	}
 	// check the vector first that was specified with whichfirst //
-	bool latestsearched = false, utilitysearched = false, oldersearched = false, unloadedsearched = false;
+	bool latestsearched = false, utilitysearched = false, oldersearched = false, unloadedsearched = false, volatilesearched = false;
 
 	switch(whichfirst){
 	case TEXTUREMANAGER_SEARCH_LATEST:
@@ -158,6 +176,19 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 			}
 		}
 	break;
+	case TEXTUREMANAGER_SEARCH_VOLATILEGENERATED:
+		{
+			volatilesearched = true;
+			shared_ptr<ManagedTexture> tempresult = SearchVolatile(id);
+			if(tempresult.get() != NULL){
+				// check error state and possibly return error //
+				if(tempresult->GetErrorState() != TEXTURE_ERROR_STATE_NONE)
+					return NULL;
+				// return result //
+				return tempresult.get();
+			}
+		}
+		break;
 	}
 	// it haven't been found, so search from newest to oldest (if not already) //
 	if(!latestsearched){
@@ -284,6 +315,50 @@ shared_ptr<ManagedTexture> TextureManager::SearchUtility(int id){
 	}
 	return NULL;
 }
+shared_ptr<ManagedTexture> Leviathan::TextureManager::SearchVolatile(int id){
+	for(unsigned int i = 0; i < VolatileGenerated.size(); i++){
+		if(VolatileGenerated[i]->GetID() == id){
+			// reset unused time and return //
+			VolatileGenerated[i]->UnusedTime = 0;
+			return VolatileGenerated[i];
+		}
+	}
+	return NULL;
+}
+
+DLLEXPORT bool Leviathan::TextureManager::AddVolatileGenerated(const int &ID, const wstring &source, ID3D11ShaderResourceView* texture){
+
+	shared_ptr<ManagedTexture> tmptexture = shared_ptr<ManagedTexture>(new ManagedTexture());
+	// set stuff //
+	tmptexture->ErrorState = TEXTURE_ERROR_STATE_NONE;
+	tmptexture->FromFile = shared_ptr<wstring>(new wstring(source));
+	tmptexture->ID = ID;
+	tmptexture->Inited = true;
+	tmptexture->Texture = shared_ptr<ID3D11ShaderResourceView>(texture);
+	tmptexture->Loaded = true;
+
+
+	// add to vector //
+	VolatileGenerated.push_back(tmptexture);
+
+	return true;
+}
+
+DLLEXPORT void Leviathan::TextureManager::UnloadVolatile(const int &ID){
+	// loop the vector and remove matching id //
+	for(size_t i = 0; i < VolatileGenerated.size(); i++){
+		// compare id //
+		if(VolatileGenerated[i]->GetID() == ID){
+			// erase it (if somebody misses it they will regenerate it //
+
+			VolatileGenerated[i]->UnLoad(true);
+
+			VolatileGenerated.erase(VolatileGenerated.begin()+i);
+			break;
+		}
+	}
+}
+
 void TextureManager::RemoveFromUninitialized(int id){
 	for(unsigned int i = 0; i < NonInitialized.size(); i++){
 		if(NonInitialized[i]->GetID() == id){
@@ -332,4 +407,7 @@ int TextureManager::LoadTexture(wstring& path, bool loadnow){
 
 	return id;
 }
+
+
+
 // ------------------------------------ //

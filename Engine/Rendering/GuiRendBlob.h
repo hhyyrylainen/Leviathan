@@ -8,8 +8,9 @@
 // ---- includes ---- //
 #include "..\GuiPositionable.h"
 
-#define GUIRENDERING_BLOB_TYPE_CQUAD	1
-#define GUIRENDERING_BLOB_TYPE_TEXT		2
+#define GUIRENDERING_BLOB_TYPE_CQUAD				1
+#define GUIRENDERING_BLOB_TYPE_TEXT					2
+#define GUIRENDERING_BLOB_TYPE_EXPENSIVETEXT		3
 
 namespace Leviathan{
 
@@ -87,5 +88,36 @@ namespace Leviathan{
 		wstring Text;
 		int TextID;
 	};
+
+	class ExpensiveTextRendBlob: public RenderingGBlob{
+		friend class TextRenderer;
+		friend class ExpensiveText;
+	public:
+		DLLEXPORT ExpensiveTextRendBlob::ExpensiveTextRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, float sizemod, 
+			const wstring &text, const wstring &font, int coordtype = GUI_POSITIONABLE_COORDTYPE_RELATIVE, bool fittobox = false, 
+			const Float2 box = (Float2)0);
+		DLLEXPORT virtual ExpensiveTextRendBlob::~ExpensiveTextRendBlob();
+
+		DLLEXPORT void Update(int relativez, const Float2 &xypos, const Float4 &color, float sizemod, const wstring &text, 
+			const wstring &font, int coordtype = GUI_POSITIONABLE_COORDTYPE_RELATIVE, bool fittobox = false, 
+			const Float2 box = (Float2)0);
+
+	protected:
+		// values that should not directly be set //
+		float Size;
+
+		Float2 Coord;
+		Float2 BoxToFit;
+		bool FitToBox;
+		int CoordType;
+
+		Float4 Color;
+
+		wstring Font;
+		wstring Text;
+
+		int TextID;
+	};
+
 }
 #endif

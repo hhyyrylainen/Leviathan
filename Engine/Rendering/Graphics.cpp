@@ -24,7 +24,7 @@ Graphics::Graphics(){
 
 	GuiSmooth = 5;
 
-	gadapter = this;
+	_gadapter = this;
 }
 Graphics::~Graphics(){
 	if(Initialized){
@@ -33,15 +33,19 @@ Graphics::~Graphics(){
 }
 
 Graphics* Graphics::Get(){
-	return gadapter;
+	return _gadapter;
 }
 
-Graphics* Graphics::gadapter = NULL;
+Graphics* Graphics::_gadapter = NULL;
 // ------------------------------------------- //
 bool Graphics::Init(Window* wind){
 	// save window handle //
 	Wind = wind;
 	GuiSmooth = 5;
+
+	// set resource creator to use this graphics //
+	Rendering::ResourceCreator::StoreGraphicsInstance(this);
+
 	// smoothness factor //
 	ObjectFileProcessor::LoadValueFromNamedVars<int>(AppDef::GetDefault()->GetValues(), L"GuiSmooth", GuiSmooth, 5, false);
 
@@ -424,6 +428,18 @@ void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, 
 
 						// render //
 						TextRender->RenderSingle(textid, Drenderer->GetDeviceContext(), WorldMatrix, OrthoMatrix);
+
+						continue;
+					}
+					if(tempptr->IsThisType(GUIRENDERING_BLOB_TYPE_EXPENSIVETEXT)){
+
+						// cast pointer to right type //
+						ExpensiveTextRendBlob* renderptr = reinterpret_cast<ExpensiveTextRendBlob*>(tempptr);
+
+
+						// call drawing with object //
+						TextRender->RenderExpensiveText(renderptr, Drenderer->GetDeviceContext(), WorldMatrix, OrthoMatrix);
+
 
 						continue;
 					}

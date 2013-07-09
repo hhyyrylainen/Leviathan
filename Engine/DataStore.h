@@ -27,6 +27,8 @@ namespace Leviathan{
 #define DATAINDEX_FPS_MAX				11
 #define DATAINDEX_FPS_AVERAGE			12
 
+#define DATAINDEX_FONT_SIZEMULTIPLIER	13
+
 
 #define DATAINDEX_UND			-1
 //#define FUNCKREATE(x, y) private: #x #y; public: DLLEXPORT #x Get#y(){ return #y; }; public: DLLEXPORT void Set#y(#x newval){ #y = newval; ValueUpdate(); };
@@ -121,6 +123,7 @@ namespace Leviathan{
 		DLLEXPORT int GetFPSMin() const;
 		DLLEXPORT int GetFPSMax() const;
 		DLLEXPORT int GetFPSAverage() const;
+		DLLEXPORT int GetFontSizeMultiplier() const;
 
 		DLLEXPORT void SetTickTime(int newval);
 		DLLEXPORT void SetTickCount(int newval);
@@ -133,6 +136,7 @@ namespace Leviathan{
 		DLLEXPORT void SetFPSMin(int newval);
 		DLLEXPORT void SetFPSMax(int newval);
 		DLLEXPORT void SetFPSAverage(int newval);
+		DLLEXPORT void SetFontSizeMultiplier(int newval);
 
 		DLLEXPORT void SetWidth(int newval);
 		DLLEXPORT void SetHeight(int newval);
@@ -179,6 +183,8 @@ namespace Leviathan{
 
 		int Width;
 		int Height;
+
+		int FontSizeMultiplier;
 
 		// static //
 		static DataStore* Staticaccess;

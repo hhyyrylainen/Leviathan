@@ -13,10 +13,15 @@
 #define TEXTURE_ERROR_STATE_USE_ERROR	2502
 
 namespace Leviathan{
+	// forward declaration for friend //
+	class TextureManager;
 
 	class ManagedTexture : public EngineComponent{
+		friend TextureManager;
 	public:
+
 		DLLEXPORT ManagedTexture::ManagedTexture(wstring &file, int id);
+
 		DLLEXPORT ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id, ID3D11Device* dev);
 		DLLEXPORT ManagedTexture::~ManagedTexture();
 
@@ -36,6 +41,9 @@ namespace Leviathan{
 		int UnusedTime;
 
 	private:
+		DLLEXPORT ManagedTexture::ManagedTexture();
+		// ------------------------------------ //
+
 		int ID;
 
 		int ErrorState;

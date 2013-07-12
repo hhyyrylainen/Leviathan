@@ -14,8 +14,9 @@ using namespace Leviathan;
 #include "..\ScaleableFreeTypeBitmap.h"
 
 RenderingFont::RenderingFont(){
-	//Fontdata = NULL;
+	// set initial data to NULL //
 	Textures = NULL;
+	FontsFace = NULL;
 }
 RenderingFont::~RenderingFont(){
 
@@ -24,56 +25,40 @@ RenderingFont::~RenderingFont(){
 bool RenderingFont::FreeTypeLoaded = false;
 FT_Library RenderingFont::FreeTypeLibrary = FT_Library();
 // ------------------------------------ //
-bool RenderingFont::Init(ID3D11Device* dev, wstring FontFile){
-
+DLLEXPORT bool Leviathan::RenderingFont::Init(ID3D11Device* dev, const wstring &FontFile){
+	// get name from the filename //
 	Name = FileSystem::RemoveExtension(FontFile, true);
 
 	// load texture //
 	if(!LoadTexture(dev, FontFile)){
-		Logger::Get()->Error(L"Failed to init Font, load texture failed", true);
+		Logger::Get()->Error(L"RenderingFont: Init: texture loading failed, file: "+FontFile);
 		return false;
 	}
 
 	// load character data //
 	if(!LoadFontData(dev, FontFile)){
-		Logger::Get()->Error(L"Failed to init Font, LoadFontData failed", true);
+		Logger::Get()->Error(L"RenderingFont: Init: could not load font data, file: "+FontFile, true);
 		return false;
 	}
+	// succeeded //
 	return true;
 }
 void RenderingFont::Release(){
 	// release FreeType objects //
-	FT_Done_Face(FontsFace);
+	if(FontsFace)
+		FT_Done_Face(FontsFace);
 
-	SAFE_RELEASE(Textures);
-	//SAFE_DELETE_ARRAY(Fontdata);
-	FontData.clear();
+	SAFE_RELEASEDEL(Textures);
+	SAFE_DELETE_VECTOR(FontData);
 }
 // ------------------------------------ //
 DLLEXPORT float Leviathan::RenderingFont::CountLength(const wstring &sentence, float heightmod, int Coordtype){
-	// if it is non absolute and translate size is true, scale height by window size // 
-	if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
-
-		heightmod = ResolutionScaling::ScaleTextSize(heightmod);
-	}
-
-	float length = 0;
-	for(size_t i = 0; i < sentence.size(); i++){
-		int letterindex = ((int)sentence[i]) - 33; // no space character in letter data array //
-
-		if(letterindex < 1){
-			// space move pos over //
-			length += 3.0f*heightmod;
-
-		} else {
-			length += heightmod*1.0f + (FontData[letterindex].size*heightmod);
-		}
-	}
-
-	if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE)
-		return length/DataStore::Get()->GetWidth();
-
-	return length;
+	// call another function, this is so that the parameters don't all need to be created to call it //
+	float delimiter = 0;
+	size_t lastfit = 0;
+	float fitlength = 0;
+	// actual counting //
+	return CalculateTextLengthAndLastFitting(heightmod, Coordtype, sentence, fitlength, lastfit, delimiter);
 }
 DLLEXPORT float Leviathan::RenderingFont::GetHeight(float heightmod, int Coordtype){
 	if(Coordtype != GUI_POSITIONABLE_COORDTYPE_RELATIVE)
@@ -82,233 +67,109 @@ DLLEXPORT float Leviathan::RenderingFont::GetHeight(float heightmod, int Coordty
 	heightmod = ResolutionScaling::ScaleTextSize(heightmod);
 
 	// scale from screen height to promilles //
-	return FontHeight*heightmod/DataStore::Get()->GetHeight();
+	return (FontHeight*heightmod)/DataStore::Get()->GetHeight();
  }
 // ------------------------------------ //
-bool RenderingFont::CreateFontData(wstring texture, wstring texturedatafile){
-	// get path to bmp version of font texture //
-	wstring toload = FileSystem::GetFontFolder()+FileSystem::ChangeExtension(texture, L"bmp");
-
-	typedef struct
-	{
-		BYTE red;
-		BYTE green;
-		BYTE blue;
-	} RGBTriplet;
-	int Width = 0;
-	int Height = 0;
-	long Size = 0;
-
-	BYTE* buffer = FileSystem::LoadBMP(&Width, &Height, &Size, toload.c_str());
-	if(buffer == NULL){
-
-		return false;
-	}
-	RGBTriplet* image = (RGBTriplet*) FileSystem::ConvertBMPToRGBBuffer(buffer, Width, Height);
-	if(image == NULL){
-
-		return false;
-	}
-	SAFE_DELETE_ARRAY(buffer);
-
-
-	// data loaded //
-	wstring validchars = Misc::GetValidCharacters();
-	
-	//int count = validchars.size();
-	int charindex = 1;
-	bool emptyrow = false;
-
-	FontType* Fontdata = new FontType[validchars.size()-1];
-	if(!Fontdata)
-		return false;
-
-	//Fontdata[0].height = Height;
-	//Fontdata[0].left = 0;
-	//Fontdata[0].right = 0;
-	//Fontdata[0].size = 3; // do not write space to file //
-
-	FontHeight = Height;
-
-	bool* emptyrows;
-	emptyrows = new bool[Width];
-
-	for(int windex = 0; windex < Width; windex++){
-		for(int hindex = 0; hindex < Height; hindex++){
-			// check if row empty //
-			// get colors //
-			int index = windex + ((Width)*hindex);
-			if(image[index].red != 255 || image[index].green != 255 || image[index].blue != 255){
-				emptyrow = false;
-				break;
-			}
-			
-			emptyrow = true;
-		}
-		if(emptyrow){
-			// empty row //
-			emptyrow = false;
-			emptyrows[windex] = true;
-		} else {
-			emptyrows[windex] = false;
-		}
-	}
-	// stop between empty rows //
-	bool skipping = false;
-	for(int i = 0; i < Width; i++){
-		if(emptyrows[i]){
-			skipping = false;
-			continue;
-		}
-		// non emptyrow //
-		if(skipping)
-			continue;
-		skipping = true;
-
-		// character found! //
-		// set data //
-
-		// sample data to doubles //
-		Fontdata[charindex].left = ((float)i)/Width;
-
-		// look for end of full space //
-		int endspot = i;
-		while(!emptyrows[endspot]){
-			endspot++;
-
-
-		}
-		//endspot--;
-		Fontdata[charindex].right = ((float)(endspot))/Width;
-		//Fontdata[charindex].height = Height;
-		Fontdata[charindex].size = endspot-i+1;
-
-		charindex++;
-
-		continue;
-		
-	}
-
-
-
-	// save //
-	
-	wofstream writer;
-	writer.open(texturedatafile);
-	// output height //
-	writer << Height << endl;
-
-	for(unsigned int i = 0; i < validchars.size(); i++){
-		writer << (i+32) << L" ";
-		writer << (wchar_t)(i+32) << L" ";
-		writer << Fontdata[i].left << L" ";
-		writer << Fontdata[i].right << L" ";
-		writer << Fontdata[i].size << endl;
-		//writer << Fontdata[i].height << endl;
-	}
-	writer.close();
-
-	// release data //
-
-
-
-	SAFE_DELETE_ARRAY(image);
-	delete[] Fontdata; // required later
-	delete[] emptyrows;
-	return true;
-
-}
-bool RenderingFont::LoadFontData(ID3D11Device* dev, wstring file){
-
-	// is data already in memory?//
-	if(FontData.size() > 10){
+bool Leviathan::RenderingFont::LoadFontData(ID3D11Device* dev,const wstring &file){
+	// is data already in memory? //
+	if(FontData.size() > 0){
 		// it is //
-		Logger::Get()->Info(L"Font data already in memory, skipping load", true);
 		return true;
 	}
 
 	// check is there font data //
-	wstring texturedatafile = FileSystem::GetFontFolder()+FileSystem::ChangeExtension(file, L"levfd");
+	wstring texturedatafile = FileSystem::ChangeExtension(file, L"levfd");
 	if(!FileSystem::FileExists(texturedatafile)){
-		Logger::Get()->Info(L"Font data file doesn't exist, creating...", true);
+		Logger::Get()->Info(L"Font data file doesn't exist, creating..., regenerating texture", true);
 		// create data since it doesn't exist //
-		if(!CreateFontData(file, texturedatafile)){
-			Logger::Get()->Info(L"LoadFontData: data file was missing and no bmp map, regenerating texture", true);
-			if(!LoadTexture(dev, file, true)){
-				Logger::Get()->Error(L"LoadFontData: no data file found and generating it from font file failed", true);
-				return false;
-			}
-			//return true;
+		if(!LoadTexture(dev, file, true)){
+			Logger::Get()->Error(L"LoadFontData: no data file found and generating it from font file failed", true);
+			return false;
 		}
-		//return true;
+		// all data should now be properly loaded //
+		return true;
 	}
 
-	// create font data buffer //
-	//int chars = Misc::GetValidCharacters().size()-1;
-	int chars = 233;
-	//Fontdata = new FontType[chars];
-	FontData.resize(chars);
-	//if(!Fontdata)
-	//	return false;
 
 
 	// load data //
 	wifstream reader;
 	reader.open(texturedatafile);
-	if(reader.fail())
+	if(!reader.is_open())
 		return false;
 	// read in coordinates //
-//	wchar_t Buff[150];
-//	wstring curline = L"";
 	int index = 0;
-	wchar_t readc = L'y';
 	// read in height //
+
 	reader >> FontHeight;
-	while(reader.good()){
-		reader.get(readc);
-		while(readc != L' ' && reader.good()){
-			reader.get(readc);
-		}
-		reader.get(readc);
-		if(readc == L' ')
-			readc = L'y';
-		while(readc != L' ' && reader.good()){
-			reader.get(readc);
+
+	int DataToRead = 0;
+	reader >> DataToRead;
+
+	FontData.resize(DataToRead, NULL);
+
+	for(int i = 0; (i < DataToRead) && reader.good(); i++){
+		// create object for loading //
+		int CCode = 0;
+		UINT GlyphIndex = 0;
+
+		// read data //
+		reader >> CCode;
+		reader >> GlyphIndex;
+
+		if(CCode == 0){
+			// invalid line //
+			Logger::Get()->Error(L"RenderingFont: LoadFontData: invalid levfd data, file: "+file+L"number: "+Convert::ToWstring(i+1));
+			continue;
 		}
 
-		reader >> FontData[index].left;
-		reader >> FontData[index].right;
-		reader >> FontData[index].size;
-		//reader >> Fontdata[index].height;	// already loaded
-		index++;
-		if(index >= chars)
-			break;
+		// create new instance //
+		unique_ptr<FontsCharacter> Curload = unique_ptr<FontsCharacter>(new FontsCharacter(CCode, GlyphIndex));
+
+		// load rest of data to the new instance //
+		reader >> Curload->PixelWidth;
+
+		reader >> Curload->TopLeft.X;
+		reader >> Curload->TopLeft.Y;
+		reader >> Curload->BottomRight.X;
+		reader >> Curload->BottomRight.Y;
+		// set to right spot //
+		size_t spot = ConvertCharCodeToIndex(CCode);
+		if(FontData[spot] != NULL){
+			// that's an error //
+			Logger::Get()->Error(L"RenderingFont: LoadFontData: data has multiple characters with charcode: "+Convert::ToWstring(CCode)+L", file: "
+				+file);
+			SAFE_DELETE(FontData[spot]);
+		}
+		// set //
+		FontData[spot] = Curload.release();
 	}
 	reader.close();
 
 	return true;
 }
 // ------------------------------------ //
-bool RenderingFont::LoadTexture(ID3D11Device* dev, wstring file, bool forcegen){
+bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &file, bool forcegen /*= false*/){
 	// check does file exist //
-	if((!FileSystem::FileExists(FileSystem::GetFontFolder()+file)) | forcegen){
+	if(forcegen || !FileSystem::FileExists(file)){
 		Logger::Get()->Info(L"No font texture found: generating...", false);
 		// try to generate one //
 		if(!_VerifyFontFTDataLoaded()){
-			Logger::Get()->Error(L"LoadTexture failed: could not generate new texture", true);
+			Logger::Get()->Error(L"RenderingFont: LoadTexture: could not generate new texture, file: "+file, true);
 			return false;
 		}
-
+		// multiplier that increases generated fonts size //
 		int fontsizemultiplier = DataStore::Get()->GetFontSizeMultiplier();
 
-		FT_Error errorcode = FT_Set_Pixel_Sizes(FontsFace, 0, 32*fontsizemultiplier);
+		FT_Error errorcode = FT_Set_Pixel_Sizes(FontsFace, 0, FONT_BASEPIXELHEIGHT*fontsizemultiplier);
 		if(errorcode){
 			Logger::Get()->Error(L"FontGenerator: FreeType: set pixel size failed", true);
 			return false;
 		}
 
 		int TotalWidth = 0;
-		int Height = 2+(32*fontsizemultiplier);
+		// height "should" be forced to be this //
+		int Height = (FONT_BASEPIXELHEIGHT*fontsizemultiplier);
 
 		// "image" //
 		vector<vector<unsigned char>> Grayscale(Height);
@@ -390,42 +251,6 @@ bool RenderingFont::LoadTexture(ID3D11Device* dev, wstring file, bool forcegen){
 
 		DDSHandler::WriteDDSFromGrayScale(FileToUse, Grayscale, TotalWidth, Height/*, DDS_RGB*/);
 
-		// write font data file //
-		wstring datafilepath = FileSystem::ChangeExtension(FileToUse, L"levfd");
-
-		// generate file content //
-		wstring datafile = L"";
-
-		// need to undo height //
-
-		datafile += Convert::IntToWstring((Height-2)/fontsizemultiplier)+L"\n";
-
-		for(int i = 33; i <= 255; i++){
-			Int2 curvals = CharStartEnd[i-33];
-
-			datafile += Convert::IntToWstring(i)+L" ";
-			datafile += Convert::ToWstring(((wchar_t)i));
-			datafile += L" ";
-
-			// count percentage from beginning //
-			double Dist = curvals[0]/(double)TotalWidth;
-			double Distend = curvals[1]/(double)TotalWidth;
-
-			datafile += Convert::ToWstring(Dist)+L" ";
-			datafile += Convert::ToWstring(Distend)+L" ";
-
-
-			datafile += Convert::IntToWstring((curvals[1]-curvals[0])/fontsizemultiplier)+L"\n";
-		}
-
-		if(!FileSystem::WriteToFile(datafile, datafilepath)){
-			Logger::Get()->Error(L"FontGenerator: could not write font datafile! ", GetLastError(),true);
-			return false;
-		}
-
-
-		//writer.close();
-		Logger::Get()->Info(L"FontGenerator: wrote font data file "+datafilepath, false);
 
 		Logger::Get()->Info(L"FontGenerator: font successfully generated", false);
 	}
@@ -438,11 +263,8 @@ bool RenderingFont::LoadTexture(ID3D11Device* dev, wstring file, bool forcegen){
 		Logger::Get()->Error(L"LoadTexture failed Texture init returned false", true);
 		return false;
 	}
-	return true;
-}
 
-ID3D11ShaderResourceView* RenderingFont::GetTexture(){
-	return Textures->GetTexture();
+	return true;
 }
 // ------------------------------------ //
 bool Leviathan::RenderingFont::BuildVertexArray(VertexType* vertexptr, const wstring &text, float drawx, float drawy, float textmodifier, int Coordtype){
@@ -472,76 +294,163 @@ bool Leviathan::RenderingFont::BuildVertexArray(VertexType* vertexptr, const wst
 
 			if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
 
-				float AbsolutedWidth = FontData[letterindex].size*textmodifier;
+				float AbsolutedWidth = FontData[letterindex].PixelWidth*textmodifier;
 				float AbsolutedHeight = FontHeight*textmodifier;
 
 				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 0.0f);
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 0.0f);
 				index++;
 
 				vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth, drawy - AbsolutedHeight, 0.0f); // bottom right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 1.0f);
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 1.0f);
 				index++;
 
 				vertexptr[index].position = D3DXVECTOR3(drawx, drawy - AbsolutedHeight, 0.0f); // bottom left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 1.0f);
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 1.0f);
 				index++;
 				// second triangle //
 				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 0.0);
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 0.0);
 				index++;
 
 				vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth , drawy, 0.0f); // top right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 0.0f);
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 0.0f);
 				index++;
 
 				vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth, drawy - AbsolutedHeight, 0.0f); // bottom right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 1.0f);
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 1.0f);
 				index++;
 
 				// update location //
-				drawx += textmodifier*1.0f + (FontData[letterindex].size*textmodifier);
+				drawx += textmodifier*1.0f + (FontData[letterindex].PixelWidth*textmodifier);
 
 			} else {
 
 				// first triangle //
 				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 0.0);
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 0.0);
 				index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].size*textmodifier) , drawy - (FontHeight*textmodifier), 0.0f); // bottom right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 1.0f);
+				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].PixelWidth*textmodifier) , drawy - (FontHeight*textmodifier), 0.0f); // bottom right
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 1.0f);
 				index++;
 
 				vertexptr[index].position = D3DXVECTOR3(drawx, drawy - (FontHeight*textmodifier), 0.0f); // bottom left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 1.0f);
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 1.0f);
 				index++;
 				// second triangle //
 				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].left, 0.0);
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 0.0);
 				index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].size*textmodifier) , drawy, 0.0f); // top right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 0.0f);
+				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].PixelWidth*textmodifier) , drawy, 0.0f); // top right
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 0.0f);
 				index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].size*textmodifier), drawy - (FontHeight*textmodifier), 0.0f); // bottom right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].right, 1.0f);
+				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].PixelWidth*textmodifier), drawy - (FontHeight*textmodifier), 0.0f); // bottom right
+				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 1.0f);
 				index++;
 
 				// update location //
-				drawx += textmodifier*1.0f + (FontData[letterindex].size*textmodifier);
+				drawx += textmodifier*1.0f + (FontData[letterindex].PixelWidth*textmodifier);
 			}
 		}
 	}
 	return true;
 }
 
+DLLEXPORT bool Leviathan::RenderingFont::RenderSentenceToTexture(const int &TextureID, const float &sizemodifier, const wstring &text, 
+	Int2 &RenderedToBox, int &baselinefromimagetop)
+{
+	// first we need to calculate how large the bitmap is going to be //
+	// open FT data //
+	if(!_VerifyFontFTDataLoaded()){
+		// can't do anything //
+		return false;
+	}
+
+	// set right size //
+	FT_Error errorcode = FT_Set_Pixel_Sizes(FontsFace, 0, (UINT)(32*sizemodifier+0.5f));
+	if(errorcode){
+		Logger::Get()->Error(L"RenderSentenceToTexture: FreeType: set pixel size failed", true);
+		return false;
+	}
+	// create bitmap matching "size" //
+	ScaleableFreeTypeBitmap bitmap((int)(text.size()*28*sizemodifier), (int)(32*sizemodifier+0.5f));
+
+	int PenPosition = 0;
+
+	// set base line to be 1/3 from the bottom (actually the top of the bitmap's coordinates) //
+	int baseline = (int)(((32*sizemodifier)/3)-0.5f);
+
+	bitmap.SetBaseLine((int)((32*sizemodifier)-baseline));
+
+
+	FT_GlyphSlot slot = FontsFace->glyph;
+
+	// fill it with data //
+	for(size_t i = 0; i < text.size(); i++){
+		if(text[i] < 32){
+			// whitespace //
+			
+			PenPosition += 3;
+
+			continue;
+		}
+
+		// load glyph //
+		errorcode = FT_Load_Char(FontsFace, text[i], FT_LOAD_RENDER);
+		if(errorcode){
+			Logger::Get()->Error(L"RenderSentenceToTexture: FreeType: failed to load glyph "+text[i]);
+			continue;
+		}
+		// get the bitmap //
+		FT_Bitmap& charimg = slot->bitmap;
+
+		int BitmapPosX = PenPosition+slot->bitmap_left;
+		int BitmapPosY = slot->bitmap_top-baseline;
+
+		// render the bitmap to the result bitmap //
+		bitmap.RenderFTBitmapIntoThis(BitmapPosX, BitmapPosY, charimg);
+
+		// advance position //
+		PenPosition += slot->advance.x >> 6;
+	}
+	// determine based on parameters what to do //
+	// use the method to create DDS file to memory //
+	size_t MemorySize = 0;
+
+	// copy bitmap to DDS in memory and fetch the baseline height in the image to the return value //
+	char* FileInMemory = bitmap.GenerateDDSToMemory(MemorySize, baselinefromimagetop);
+
+	// we can copy the bitmap's calculated values to the size of the box //
+	bitmap.CopySizeToVal(RenderedToBox);
+
+
+	ID3D11ShaderResourceView* tempview = NULL;
+
+	HRESULT hr = D3DX11CreateShaderResourceViewFromMemory(Graphics::Get()->GetRenderer()->GetDevice(), FileInMemory, MemorySize, NULL, NULL, 
+		&tempview, NULL);
+	if(FAILED(hr)){
+
+		DEBUG_BREAK;
+		SAFE_DELETE(FileInMemory);
+		return false;
+	}
+
+	// load texture from that file and add it to texture id //
+	Graphics::Get()->GetTextureManager()->AddVolatileGenerated(TextureID, L"RenderingFont", tempview);
+
+	SAFE_DELETE(FileInMemory);
+
+	return true;
+}
+// ------------------------------------ //
 DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const float &Size, const Float2 &BoxToFit, const wstring &text, int CoordType, 
 	size_t &Charindexthatfits, float &EntirelyFitModifier, float &HybridScale, Float2 &Finallength, float scaletocutfrom)
 {
 	// calculate theoretical max height //
-	float TMax = GetHeight(1.f, CoordType)/BoxToFit.Y;
+	float TMax = BoxToFit.Y/GetHeight(1, CoordType);
 
 
 	// make absolute modifier //
@@ -603,83 +512,6 @@ DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const float &Siz
 	return true;
 }
 
-DLLEXPORT bool Leviathan::RenderingFont::RenderSentenceToTexture(const int &TextureID, const float &sizemodifier, const wstring &text, Float2 &RenderedToBox){
-	// first we need to calculate how large the bitmap is going to be //
-	// open FT data //
-	if(!_VerifyFontFTDataLoaded()){
-		// can't do anything //
-		return false;
-	}
-
-	// set right size //
-	FT_Error errorcode = FT_Set_Pixel_Sizes(FontsFace, 0, (UINT)(32*sizemodifier+0.5f));
-	if(errorcode){
-		Logger::Get()->Error(L"RenderSentenceToTexture: FreeType: set pixel size failed", true);
-		return false;
-	}
-	// create bitmap matching "size" //
-	ScaleableFreeTypeBitmap bitmap((int)(text.size()*28*sizemodifier), (int)(32*sizemodifier+0.5f));
-
-	int PenPosition = 0;
-
-	// set base line to be 1/3 from the bottom (actually the top of the bitmap's coordinates) //
-	int baseline = (32*sizemodifier)/3;
-
-
-	FT_GlyphSlot slot = FontsFace->glyph;
-
-	// fill it with data //
-	for(size_t i = 0; i < text.size(); i++){
-		if(text[i] < 32){
-			// whitespace //
-			
-			PenPosition += 3;
-
-			continue;
-		}
-
-		// load glyph //
-		errorcode = FT_Load_Char(FontsFace, text[i], FT_LOAD_RENDER);
-		if(errorcode){
-			Logger::Get()->Error(L"RenderSentenceToTexture: FreeType: failed to load glyph "+text[i]);
-			continue;
-		}
-		// get the bitmap //
-		FT_Bitmap& charimg = slot->bitmap;
-
-		int BitmapPosX = PenPosition+slot->bitmap_left;
-		int BitmapPosY = baseline-slot->bitmap_top;
-
-		// render the bitmap to the result bitmap //
-		bitmap.RenderFTBitmapIntoThis(BitmapPosX, BitmapPosY, charimg);
-
-		// advance position //
-		PenPosition += slot->advance.x >> 6;
-	}
-	// determine based on parameters what to do //
-	// use the method to create DDS file to memory //
-	size_t MemorySize = 0;
-
-	unsigned char* FileInMemory = bitmap.GenerateDDSToMemory(MemorySize);
-
-	ID3D11ShaderResourceView* tempview = NULL;
-
-	HRESULT hr = D3DX11CreateShaderResourceViewFromMemory(Graphics::Get()->GetRenderer()->GetDevice(), FileInMemory, MemorySize, NULL, NULL, 
-		&tempview, NULL);
-	if(FAILED(hr)){
-
-		DEBUG_BREAK;
-		return NULL;
-	}
-
-	// load texture from that file and add it to texture id //
-	Graphics::Get()->GetTextureManager()->AddVolatileGenerated(TextureID, L"RenderingFont", tempview; 
-
-	SAFE_DELETE(FileInMemory);
-
-	return true;
-}
-
 float Leviathan::RenderingFont::CalculateTextLengthAndLastFitting(float TextSize, int CoordType, const wstring &text, const float &fitlength, 
 	size_t & Charindexthatfits, float delimiterlength)
 {
@@ -692,7 +524,7 @@ float Leviathan::RenderingFont::CalculateTextLengthAndLastFitting(float TextSize
 	// calculate length using the theoretical maximum size //
 	for(size_t i = 0; i < text.size(); i++){
 		// check is this whitespace //
-		if(text[i] < L' '){
+		if(text[i] <= L' '){
 			// white space //
 			CalculatedTotalLength += 3.0f*TextSize;
 		} else {
@@ -700,7 +532,7 @@ float Leviathan::RenderingFont::CalculateTextLengthAndLastFitting(float TextSize
 			int letterindex = ((int)text[i])-33; // no space character in letter data array //
 
 
-			CalculatedTotalLength += 1.f*TextSize+FontData[letterindex].size*TextSize;
+			CalculatedTotalLength += 1.f*TextSize+FontData[letterindex].PixelWidth*TextSize;
 		}
 
 		bool Jumped = false;
@@ -763,9 +595,9 @@ textfittingtextstartofblocklabel:
 }
 
 float Leviathan::RenderingFont::CalculateDotsSizeAtScale(const float &scale){
-	return 3.f*(FontData[L'.'-33].size*scale+1.f*scale);
+	return 3.f*(FontData[L'.'-33].PixelWidth*scale+1.f*scale);
 }
-
+// ------------------------------------ //
 bool Leviathan::RenderingFont::_VerifyFontFTDataLoaded(){
 	// verify FreeType 2 //
 	if(!CheckFreeTypeLoad()){
@@ -773,15 +605,19 @@ bool Leviathan::RenderingFont::_VerifyFontFTDataLoaded(){
 		return false;
 	}
 
+	// check is it already loaded //
+	if(FontsFace != NULL)
+		return true;
+
 	// load file matching this font //
 	wstring fontgenfile = FileSystem::SearchForFile(FILEGROUP_OTHER, Name, L"ttf", true);
 
 	// look for it in registry //
 	if(fontgenfile.size() == 0){
 		// set name to arial because we can't find other fonts //
-		name = L"Arial";
+		Name = L"Arial";
 
-		if(name == L"Arial"){
+		if(Name == L"Arial"){
 			HKEY hKey;
 			LONG lRes = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", 0, KEY_READ,
 				&hKey);
@@ -810,7 +646,7 @@ bool Leviathan::RenderingFont::_VerifyFontFTDataLoaded(){
 	FT_Error errorcode = FT_New_Face(this->FreeTypeLibrary, Convert::WstringToString(fontgenfile).c_str(), 0, &FontsFace);
 
 	if(errorcode == FT_Err_Unknown_File_Format ){
-		Logger::Get()->Error(L"FontGenerator: FreeType: unkown format!", true);
+		Logger::Get()->Error(L"FontGenerator: FreeType: unknown format!", true);
 		return false;
 	} else if (errorcode) {
 
@@ -820,10 +656,53 @@ bool Leviathan::RenderingFont::_VerifyFontFTDataLoaded(){
 
 	return true;
 }
-
-
 // ------------------------------------ //
-bool RenderingFont::CheckFreeTypeLoad(){
+DLLEXPORT bool Leviathan::RenderingFont::WriteDataToFile(){
+	// write font data file //
+	wstring datafilepath = FileSystem::GetFontFolder()+Name+L".levfd";
+
+	// generate file content //
+	wstringstream datafile(Convert::IntToWstring(FontHeight)+L" ");
+	// character data count //
+	datafile << FontData.size() << endl;
+
+	// copy font data //
+	for(size_t i = 0; i < FontData.size(); i++){
+		
+		// output data to stream //
+		datafile << FontData[i]->CharCode << L" ";
+
+		datafile << FontData[i]->CharacterGlyphIndex << " ";
+		datafile << FontData[i]->PixelWidth << " ";
+		datafile << FontData[i]->TopLeft.X << " " << FontData[i]->TopLeft.Y << " ";
+		datafile << FontData[i]->BottomRight.X << " " << FontData[i]->BottomRight.Y << " ";
+		// this object is written, put empty line //
+		datafile << endl;
+	}
+	// write to file //
+	wofstream writer;
+
+	writer.open(datafilepath);
+	// check can we write stuff //
+	if(!writer.is_open()){
+		Logger::Get()->Error(L"RenderingFont: WriteDataToFile: failed to open file for reading, file: "+datafilepath, true);
+		return false;
+	}
+
+	// write the whole stringstream to the file and close //
+	writer << datafile;
+	writer.close();
+
+
+	Logger::Get()->Info(L"RenderingFont: WriteDataToFile: wrote font data file, font: "+Name+L", file: "+datafilepath);
+	return true;
+}
+// ------------------------------------ //
+ID3D11ShaderResourceView* Leviathan::RenderingFont::GetTexture(){
+	return Textures->GetTexture();
+}
+
+bool Leviathan::RenderingFont::CheckFreeTypeLoad(){
 	if(!FreeTypeLoaded){
 
 		FT_Error error = FT_Init_FreeType(&FreeTypeLibrary);
@@ -835,4 +714,17 @@ bool RenderingFont::CheckFreeTypeLoad(){
 		FreeTypeLoaded = true;
 	}
 	return true;
+}
+// ------------------ FontsCharacter ------------------ //
+Leviathan::FontsCharacter::FontsCharacter(const int &charcode, const FT_UInt &glyphindex /*= 0*/) : TopLeft(0, 0), BottomRight(0, 0), PixelWidth(0){
+	CharCode = charcode;
+	CharacterGlyphIndex = glyphindex;
+}
+
+Leviathan::FontsCharacter::FontsCharacter(const int &charcode, const int &pixelwidth, const Float2 &texturecoordtopleft, const Float2 
+	&texturecoordbotomright, const FT_UInt &glyphindex /*= 0*/) : TopLeft(texturecoordtopleft), BottomRight(texturecoordbotomright), 
+	PixelWidth(pixelwidth)
+{
+	CharCode = charcode;
+	CharacterGlyphIndex = glyphindex;
 }

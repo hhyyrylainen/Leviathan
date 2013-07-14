@@ -44,9 +44,9 @@ namespace Leviathan{
 	class ExpensiveText{
 		friend TextRenderer;
 	public:
-		ExpensiveText(const int &id){
+		ExpensiveText(const int &id) : ID(id), VertexBuffer(NULL), IndexBuffer(NULL){
 
-			ID = id;
+			TextureID = -1;
 		}
 		~ExpensiveText(){
 			// release buffers //
@@ -72,6 +72,7 @@ namespace Leviathan{
 		float Size;
 
 		Float2 RenderedToBox;
+		int RenderedBaseline;
 
 		bool AdjustedToFit;
 		float AdjustedSize;

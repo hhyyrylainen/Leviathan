@@ -12,6 +12,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include "ShaderDataTypes.h"
+#include "..\ScaleableFreeTypeBitmap.h"
 
 
 #define RENDERINGFONT_CHARCOUNT		233
@@ -40,6 +41,11 @@ namespace Leviathan{
 		Float2 TopLeft, BottomRight;
 		// BottomRight.X-Topleft.X (x distance (in pixels - converted to pixels)) //
 		int PixelWidth;
+		// pixel count that rendering uses to advance to next character //
+		int AdvancePixels;
+		// used when creating the char map, contains this glyph rendered from FT bitmap //
+		ScaleableFreeTypeBitmap* ThisRendered;
+
 	};
 
 	class RenderingFont : public EngineComponent{
@@ -61,6 +67,9 @@ namespace Leviathan{
 
 
 		ID3D11ShaderResourceView* GetTexture();
+		DLLEXPORT inline wstring& GetName(){
+			return Name;
+		}
 
 		DLLEXPORT bool BuildVertexArray(VertexType* vertexptr, const wstring &text, float drawx, float drawy, float textmodifier, int Coordtype);
 		DLLEXPORT bool AdjustTextSizeToFitBox(const float &Size, const Float2 &BoxToFit, const wstring &text, int CoordType, size_t &Charindexthatfits, 

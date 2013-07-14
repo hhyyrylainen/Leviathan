@@ -175,7 +175,7 @@ int Leviathan::TextRenderer::GetFontIndex(const wstring &name){
 	// try to get id //
 	int index = -1;
 	for(unsigned int i = 0; i < FontHolder.size(); i++){
-		if(FontHolder[i]->Name == name){
+		if(FontHolder[i]->GetName() == name){
 			index = i;
 			break;
 		}
@@ -209,7 +209,6 @@ bool TextRenderer::InitializeSentence(SentenceType** sentence, int id, int maxle
 
 	(*sentence)->indexCount = (*sentence)->vertexCount;
 
-
 	
 	// generate index buffer //
 	(*sentence)->IndexBuffer = Rendering::ResourceCreator::GenerateDefaultIndexBuffer((*sentence)->indexCount);
@@ -217,14 +216,11 @@ bool TextRenderer::InitializeSentence(SentenceType** sentence, int id, int maxle
 	(*sentence)->VertexBuffer = Rendering::ResourceCreator::GenerateDefaultDynamicDefaultTypeVertexBuffer((*sentence)->vertexCount);
 
 	// if either failed return false //
-	if(!(*sentence)->IndexBuffer || !(*sentence)->VertexBuffer)){
+	if(!(*sentence)->IndexBuffer || !(*sentence)->VertexBuffer){
 
 		DEBUG_BREAK;
 		return false;
 	}
-
-	// release allocated arrays
-	SAFE_DELETE_ARRAY(vertices);
 
 	return true;
 }
@@ -509,7 +505,7 @@ DLLEXPORT bool Leviathan::TextRenderer::RenderExpensiveText(ExpensiveTextRendBlo
 	}
 
 	// render text //
-	return text->Render(_FontShader, devcont, worldmatrix, orthomatrix);
+	return text->Render(_FontShader, this, devcont, worldmatrix, orthomatrix);
 }
 
 DLLEXPORT ExpensiveText* Leviathan::TextRenderer::GetExpensiveText(const int &ID){
@@ -547,10 +543,26 @@ DLLEXPORT bool Leviathan::TextRenderer::RenderExpensiveTextToTexture(ExpensiveTe
 	}
 
 	// pass data from expensive text to font //
-	if(text->AdjustedToFit)
-		return FontHolder[index]->RenderSentenceToTexture(TextureID, text->AdjustedSize, text->AdjustedText, &text->RenderedToBox);
-	else
-		return FontHolder[index]->RenderSentenceToTexture(TextureID, text->Size, text->Text, &text->RenderedToBox);
+	Int2 RenderedDimensions(0, 0);
+
+	bool Result = true;
+
+	if(text->AdjustedToFit){
+		Result = FontHolder[index]->RenderSentenceToTexture(TextureID, text->AdjustedSize, text->AdjustedText, RenderedDimensions, 
+		text->RenderedBaseline);
+	} else {
+		Result =  FontHolder[index]->RenderSentenceToTexture(TextureID, text->Size, text->Text, RenderedDimensions, text->RenderedBaseline);
+	}
+
+	if(text->CoordType == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
+
+		text->RenderedToBox = Float2(((float)RenderedDimensions.X)/DataStore::Get()->GetWidth(), 
+			((float)RenderedDimensions.Y)/DataStore::Get()->GetHeight());
+	} else {
+
+		text->RenderedToBox = Float2((float)RenderedDimensions.X, (float)RenderedDimensions.Y);
+	}
+	return Result;
 }
 
 DLLEXPORT bool Leviathan::TextRenderer::AdjustTextToFitBox(const float &Size, const Float2 &BoxToFit, const wstring &text, const wstring &font, 
@@ -644,7 +656,7 @@ checkresultstartslabel:
 	// check texture rendering //
 	if(TextNeedsRendering || TextureID < 0){
 
-		if(_VerifyTextures(render)){
+		if(!_VerifyTextures(render)){
 			// failed //
 			return false;
 		}
@@ -695,7 +707,7 @@ DLLEXPORT bool Leviathan::ExpensiveText::Render(FontShader* shader, TextRenderer
 		// textures aren't generated //
 trytoveerifyexpensivetexttextureslabel:
 
-		if(!_VerifyTextures()){
+		if(!_VerifyTextures(trender)){
 			// this should now be marked as invalid //
 			DEBUG_BREAK;
 		} else {
@@ -735,6 +747,7 @@ DLLEXPORT void Leviathan::ExpensiveText::AdjustToFit(TextRenderer* trenderer, bo
 
 	// set to the hybrid scale anyways //
 	AdjustedSize = HybridScale;
+	//AdjustedSize = 4;
 
 	// add dots if all didn't fit //
 	if(Charindexthatfits != Text.size()-1){
@@ -781,7 +794,6 @@ bool Leviathan::ExpensiveText::_VerifyTextures(TextRenderer* trender){
 	}
 
 
-
 	// textures are successfully rendered //
 	return true;
 }
@@ -803,18 +815,20 @@ bool Leviathan::ExpensiveText::_VerifyBuffers(ID3D11DeviceContext* devcont){
 
 
 	// update current vertex buffer //
-	D3D11_SUBRESOURCE_DATA VBufferData;
+	D3D11_MAPPED_SUBRESOURCE VBufferData;
 
-	HRESULT hr = devcont->Map(&VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &VBufferData);
+	HRESULT hr = devcont->Map(VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &VBufferData);
 	if(FAILED(hr)){
 
 		return false;
 	}
 
 	// cast to right type //
-	VertexType* VertexDataPtr = (VertexType*)VBufferData.pSysMem;
+	VertexType* VertexDataPtr = (VertexType*)VBufferData.pData;
 
 	// calculate the data that needs to be passed //
+
+	// convert data //
 	VertexType* vertices = Rendering::ResourceCreator::GenerateQuadIntoVertexBuffer(Coord, RenderedToBox, 6, CoordType, 
 		QUAD_FILLSTYLE_UPPERLEFT_0_BOTTOMRIGHT_1);
 	if(!vertices){
@@ -822,7 +836,7 @@ bool Leviathan::ExpensiveText::_VerifyBuffers(ID3D11DeviceContext* devcont){
 	}
 
 	// copy data to the mapped buffer //
-	memcpy(VertexDataPtr, (void*)vertices, sizeof(vertices));
+	memcpy(VertexDataPtr, (void*)vertices, sizeof(VertexType)*6);
 
 	// Unmap the buffer //
 	devcont->Unmap(VertexBuffer, 0);

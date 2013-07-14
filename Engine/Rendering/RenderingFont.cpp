@@ -12,6 +12,7 @@ using namespace Leviathan;
 #include "..\DataStore.h"
 #include "Graphics.h"
 #include "..\ScaleableFreeTypeBitmap.h"
+#include "..\ExceptionInvalidType.h"
 
 RenderingFont::RenderingFont(){
 	// set initial data to NULL //
@@ -97,10 +98,8 @@ bool Leviathan::RenderingFont::LoadFontData(ID3D11Device* dev,const wstring &fil
 	reader.open(texturedatafile);
 	if(!reader.is_open())
 		return false;
-	// read in coordinates //
-	int index = 0;
-	// read in height //
 
+	// read in height //
 	reader >> FontHeight;
 
 	int DataToRead = 0;
@@ -167,92 +166,218 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 			return false;
 		}
 
-		int TotalWidth = 0;
 		// height "should" be forced to be this //
 		int Height = (FONT_BASEPIXELHEIGHT*fontsizemultiplier);
+		int baseline = Height-((int)floorf(Height/3.f));
 
 		// "image" //
-		vector<vector<unsigned char>> Grayscale(Height);
-		//Grayscale.reserve(Height);
-		// stores start and end pixel positions of characters //
-		vector<Int2> CharStartEnd;
-		CharStartEnd.reserve(255-33);
+		ScaleableFreeTypeBitmap FinishedImage(512, 512);
 
-		for(int i = 33; i <= 255; i++){ // really should start from 33 to <= 255
-			wchar_t chartolook = (wchar_t)i;
+		// reserve data in the font data holder //
+		FontData.resize(RENDERINGFONT_CHARCOUNT, NULL);
 
+		// shortcut to glyph //
+		FT_GlyphSlot slot = FontsFace->glyph;
+
+		// should go from 32 to RENDERINGFONT_MAXCHARCODE
+		for(size_t i = 0; i < FontData.size(); i++){
+			wchar_t chartolook = (wchar_t)(i+32);
+
+			// get index //
 			int Index = FT_Get_Char_Index(FontsFace, chartolook);
 
-			if(Index == 0){
-				// missing glyph //
-				// ignore here //
+			// create new instance //
+			unique_ptr<FontsCharacter> CurChar(new FontsCharacter(chartolook, Index));
 
-			}
-
-
-			errorcode = FT_Load_Glyph(FontsFace, Index, FT_LOAD_DEFAULT);
+			errorcode = FT_Load_Glyph(FontsFace, Index, FT_LOAD_RENDER);
 			if(errorcode){
 				Logger::Get()->Error(L"FontGenerator: FreeType: failed to load glyph number "+Convert::IntToWstring(i)+L" char "+chartolook, true);
 				return false;
 			}
-			// check is it already rendered //
-			if(FontsFace->glyph->format != FT_GLYPH_FORMAT_BITMAP){
-				// needs to render the glyph //
-				errorcode = FT_Render_Glyph(FontsFace->glyph, FT_RENDER_MODE_NORMAL);
-				if(errorcode){
-					Logger::Get()->Error(L"FontGenerator: FreeType: failed to render glyph "+Convert::IntToWstring(i)+L" char "+chartolook, true);
-					return false;
-				}
-			}
-			FT_Bitmap charimg = FontsFace->glyph->bitmap;
-			
-			int YBearing = FontsFace->glyph->metrics.horiBearingY/64;
+			// get bitmap //
+			FT_Bitmap& charimg = slot->bitmap;
 
-			if(Height < charimg.rows){
-				Height = charimg.rows;
-				DEBUG_BREAK;
-			}
+			int BitmapPosX = 0+slot->bitmap_left;
+			int BitmapPosY = slot->bitmap_top-baseline;
 
-			CharStartEnd.push_back(Int2(TotalWidth, TotalWidth+charimg.width));
-			TotalWidth += charimg.width;
+			// render glyph to characters bitmap //
+			CurChar->ThisRendered = new ScaleableFreeTypeBitmap(5, Height);
 
-			// baseline is 
-			int baseline = Height/3;
-			int glyphtop = Height-(baseline+YBearing);
-			// little padding on top //
-			glyphtop += 1;
+			CurChar->ThisRendered->SetBaseLine(baseline);
 
-			for(int x = 0; x < charimg.width; x++){
-				for(int y = 0; y < Height; y++){
+			// copy bitmap //
+			CurChar->ThisRendered->RenderFTBitmapIntoThis(BitmapPosX, BitmapPosY, charimg);
 
-					// try to get correct color //
-					if((y >= glyphtop) && (y-glyphtop < charimg.rows)){
-						// copy colour from glyph //
-						Grayscale[y].push_back(charimg.buffer[(y-glyphtop)*charimg.width+x]);
+			// "crop" //
+			CurChar->ThisRendered->RemoveEmptyBits();
 
-					} else {
-						// set empty //
-						Grayscale[y].push_back(0);
-					}
-				}
-			}
-			// add empty row //
-			for(int a = 0; a < Height; a++){
-				Grayscale[a].push_back(0);
-				Grayscale[a].push_back(0);
-			}
-			// increase pos (to account for the empty row) //
-			TotalWidth += 2;
+			// calculate sizes and all //
+			CurChar->ThisRendered->UpdateStats();
+
+
+			// set various things //
+			CurChar->PixelWidth = CurChar->ThisRendered->GetWidth();
+			CurChar->AdvancePixels = slot->advance.x >> 6;
+
+
+			// character processed set to right spot //
+			FontData[i] = CurChar.release();
 		}
 
-		FT_Done_Face(FontsFace);
+		// font data is now fine //
 
-		wstring FileToUse = FileSystem::GetFontFolder()+file;
+		// we need to find a good enough way to pack all the character images to a texture and then write FontData to file for use with the texture //
 
-		DDSHandler::WriteDDSFromGrayScale(FileToUse, Grayscale, TotalWidth, Height/*, DDS_RGB*/);
+		// first thing to calculate is finding the maximum vertical space any glyph needs //
+		int MaxHeight = 0;
+
+		for(size_t i = 0; i < FontData.size(); i++){
+			if(FontData[i]->ThisRendered->GetHeight() > MaxHeight){
+				MaxHeight = FontData[i]->ThisRendered->GetHeight();
+			}
+		}
+		// set height //
+		FontHeight = MaxHeight;
+
+		// using this height we can create rows that will have characters so that they can then be copied to the master image //
+		struct RowType{
+			RowType(){
+				CharWidths = 0;
+			}
+			vector<size_t> WantedChars;
+			int CharWidths;
+		};
+
+		vector<RowType*> Rows(512/MaxHeight, NULL);
+
+		// update baseline to fit the new height //
+		baseline = MaxHeight-((int)floorf(MaxHeight/3.f));
+
+		// vector that marks which characters are already on a row //
+		vector<bool> FittedCharacters(FontData.size(), false);
 
 
-		Logger::Get()->Info(L"FontGenerator: font successfully generated", false);
+		const int RowMaxWidth = 512;
+		bool done = false;
+
+		size_t fillingrow = 0;
+
+		while(!done){
+
+			bool Fitted = false;
+			bool CheckedAny = false;
+
+			for(size_t i = 0; i < FontData.size(); i++){
+				// skip already fitted characters //
+				if(FittedCharacters[i])
+					continue;
+				// at least checking a character //
+				CheckedAny = true;
+
+				// try to fit to current row //
+				if(Rows[fillingrow]->CharWidths+FontData[i]->PixelWidth > RowMaxWidth){
+					// can not fit //
+					continue;
+				}
+				// can fit, add //
+				Rows[fillingrow]->WantedChars.push_back(i);
+				// increase width //
+				Rows[fillingrow]->CharWidths += FontData[i]->PixelWidth;
+
+				// set as added //
+				FittedCharacters[i] = true;
+
+				// set that a character (at least one) fit to the row //
+				Fitted = true;
+			}
+			if(!CheckedAny){
+				// we are done //
+				done = true;
+				break;
+			}
+
+			if(!Fitted){
+				// no character could fit to this row, move to next //
+				fillingrow++;
+
+				// make sure that row is fine //
+				fillingrow < Rows.size() ? (Rows[fillingrow] == NULL ? Rows[fillingrow] = new RowType(): Rows[fillingrow]): Rows.push_back(new RowType());
+			}
+		}
+
+		// copy actual character images //
+		for(size_t i = 0; i < Rows.size(); i++){
+			// calculate start y for this row //
+			int StartY = i*MaxHeight;
+
+
+			// start x is 0 on beginning of line and is increased after adding a character //
+			int StartX = 0;
+
+			// go through the characters on this line //
+			for(size_t a = 0; a < Rows[i]->WantedChars.size(); a++){
+				// to avoid errors calculate index here //
+				size_t spot = Rows[i]->WantedChars[a];
+
+				// calculate actual starting y with the baselines //
+				int ActualY = StartY+FontData[spot]->ThisRendered->GetBaseLineHeight()-baseline;
+
+				// render the bitmap to position (StartX, ActualY) //
+				FinishedImage.RenderOtherIntoThis(FontData[spot]->ThisRendered, StartX, ActualY);
+
+				// set font data's texture coordinate positions //
+				FontData[i]->TopLeft = Float2((float)StartX, (float)StartY);
+				FontData[i]->BottomRight = Float2((float)(StartX+FontData[spot]->PixelWidth-1), (float)(StartY+MaxHeight-1));
+
+				// increment StartX according to width //
+				StartX += FontData[spot]->PixelWidth;
+			}
+		}
+		// make sure that width and height are dividable by 2 //
+		FinishedImage.MakeSizeDividableBy2();
+
+		// update the main image //
+		FinishedImage.UpdateStats();
+		
+		// release memory //
+		SAFE_DELETE_VECTOR(Rows);
+
+		int RImgWidth = 0;
+		int RImgHeight = 0;
+
+		// now that image is actually finished we can calculate actual texture coordinates //
+		for(size_t i = 0; i < FontData.size(); i++){
+			// calculate final texture coordinates //
+			FontData[i]->TopLeft = Float2(FontData[i]->TopLeft.X/RImgWidth, FontData[i]->TopLeft.Y/RImgHeight);
+			FontData[i]->BottomRight = Float2(FontData[i]->BottomRight.X/RImgWidth, FontData[i]->BottomRight.Y/RImgHeight);
+		}
+
+
+		// save FontData now that it has everything filled out //
+		WriteDataToFile();
+
+		// master image is now done //
+		size_t mimgbuffersize = 0;
+		char* MainImageBuffer = NULL;
+
+
+		ofstream writer;
+		writer.open(file);
+
+		if(!writer.is_open()){
+			// error //
+			Logger::Get()->Error(L"RenderingFont: LoadTexture: failed to write font texture to file: "+file);
+
+			SAFE_DELETE(MainImageBuffer);
+			return false;
+		}
+
+
+		writer.write(MainImageBuffer, mimgbuffersize);
+
+		writer.close();
+
+		Logger::Get()->Info(L"RenderingFont: LoadTexture: successfully generated texture file: "+file);
 	}
 
 	Textures = new TextureArray();
@@ -273,89 +398,89 @@ bool Leviathan::RenderingFont::BuildVertexArray(VertexType* vertexptr, const wst
 
 		textmodifier = ResolutionScaling::ScaleTextSize(textmodifier);
 	}
+	throw ExceptionInvalidType(L"commented out", 0, __WFUNCTION__, L"all", L"void");
+	//int index = 0;
+	//if(!FontData.size()){
+	//	Logger::Get()->Error(L"Trying to render font which doesn't have Fontdata");
+	//	Release();
+	//	SAFE_DELETE_ARRAY(vertexptr);
+	//	return false;
+	//}
 
-	int index = 0;
-	if(!FontData.size()){
-		Logger::Get()->Error(L"Trying to render font which doesn't have Fontdata");
-		Release();
-		SAFE_DELETE_ARRAY(vertexptr);
-		return false;
-	}
+	//// draw letters to vertices //
+	//for(size_t i = 0; i < text.size(); i++){
+	//	int letterindex = ((int)text[i]) - 33; // no space character in letter data array //
 
-	// draw letters to vertices //
-	for(size_t i = 0; i < text.size(); i++){
-		int letterindex = ((int)text[i]) - 33; // no space character in letter data array //
+	//	if(letterindex < 1){
+	//		// space move pos over //
+	//		drawx += 3.0f*textmodifier;
 
-		if(letterindex < 1){
-			// space move pos over //
-			drawx += 3.0f*textmodifier;
+	//	} else {
 
-		} else {
+	//		if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
 
-			if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
+	//			float AbsolutedWidth = FontData[letterindex]->PixelWidth*textmodifier;
+	//			float AbsolutedHeight = FontHeight*textmodifier;
 
-				float AbsolutedWidth = FontData[letterindex].PixelWidth*textmodifier;
-				float AbsolutedHeight = FontHeight*textmodifier;
+	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 0.0f);
+	//			index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 0.0f);
-				index++;
+	//			vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth, drawy - AbsolutedHeight, 0.0f); // bottom right
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 1.0f);
+	//			index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth, drawy - AbsolutedHeight, 0.0f); // bottom right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 1.0f);
-				index++;
+	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy - AbsolutedHeight, 0.0f); // bottom left
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 1.0f);
+	//			index++;
+	//			// second triangle //
+	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 0.0);
+	//			index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx, drawy - AbsolutedHeight, 0.0f); // bottom left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 1.0f);
-				index++;
-				// second triangle //
-				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 0.0);
-				index++;
+	//			vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth , drawy, 0.0f); // top right
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 0.0f);
+	//			index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth , drawy, 0.0f); // top right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 0.0f);
-				index++;
+	//			vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth, drawy - AbsolutedHeight, 0.0f); // bottom right
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 1.0f);
+	//			index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth, drawy - AbsolutedHeight, 0.0f); // bottom right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 1.0f);
-				index++;
+	//			// update location //
+	//			drawx += textmodifier*1.0f + (FontData[letterindex]->PixelWidth*textmodifier);
 
-				// update location //
-				drawx += textmodifier*1.0f + (FontData[letterindex].PixelWidth*textmodifier);
+	//		} else {
 
-			} else {
+	//			// first triangle //
+	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 0.0);
+	//			index++;
 
-				// first triangle //
-				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 0.0);
-				index++;
+	//			vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex]->PixelWidth*textmodifier) , drawy - (FontHeight*textmodifier), 0.0f); // bottom right
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 1.0f);
+	//			index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].PixelWidth*textmodifier) , drawy - (FontHeight*textmodifier), 0.0f); // bottom right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 1.0f);
-				index++;
+	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy - (FontHeight*textmodifier), 0.0f); // bottom left
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 1.0f);
+	//			index++;
+	//			// second triangle //
+	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 0.0);
+	//			index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx, drawy - (FontHeight*textmodifier), 0.0f); // bottom left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 1.0f);
-				index++;
-				// second triangle //
-				vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].TopLeft, 0.0);
-				index++;
+	//			vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex]->PixelWidth*textmodifier) , drawy, 0.0f); // top right
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 0.0f);
+	//			index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].PixelWidth*textmodifier) , drawy, 0.0f); // top right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 0.0f);
-				index++;
+	//			vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex]->PixelWidth*textmodifier), drawy - (FontHeight*textmodifier), 0.0f); // bottom right
+	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 1.0f);
+	//			index++;
 
-				vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex].PixelWidth*textmodifier), drawy - (FontHeight*textmodifier), 0.0f); // bottom right
-				vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex].BottomRight, 1.0f);
-				index++;
-
-				// update location //
-				drawx += textmodifier*1.0f + (FontData[letterindex].PixelWidth*textmodifier);
-			}
-		}
-	}
+	//			// update location //
+	//			drawx += textmodifier*1.0f + (FontData[letterindex]->PixelWidth*textmodifier);
+	//		}
+	//	}
+	//}
 	return true;
 }
 
@@ -532,7 +657,7 @@ float Leviathan::RenderingFont::CalculateTextLengthAndLastFitting(float TextSize
 			int letterindex = ((int)text[i])-33; // no space character in letter data array //
 
 
-			CalculatedTotalLength += 1.f*TextSize+FontData[letterindex].PixelWidth*TextSize;
+			CalculatedTotalLength += 1.f*TextSize+FontData[letterindex]->PixelWidth*TextSize;
 		}
 
 		bool Jumped = false;
@@ -595,7 +720,7 @@ textfittingtextstartofblocklabel:
 }
 
 float Leviathan::RenderingFont::CalculateDotsSizeAtScale(const float &scale){
-	return 3.f*(FontData[L'.'-33].PixelWidth*scale+1.f*scale);
+	return 3.f*(FontData[L'.'-33]->PixelWidth*scale+1.f*scale);
 }
 // ------------------------------------ //
 bool Leviathan::RenderingFont::_VerifyFontFTDataLoaded(){
@@ -716,14 +841,16 @@ bool Leviathan::RenderingFont::CheckFreeTypeLoad(){
 	return true;
 }
 // ------------------ FontsCharacter ------------------ //
-Leviathan::FontsCharacter::FontsCharacter(const int &charcode, const FT_UInt &glyphindex /*= 0*/) : TopLeft(0, 0), BottomRight(0, 0), PixelWidth(0){
+Leviathan::FontsCharacter::FontsCharacter(const int &charcode, const FT_UInt &glyphindex /*= 0*/) : TopLeft(0, 0), BottomRight(0, 0), PixelWidth(0),
+	ThisRendered(NULL)
+{
 	CharCode = charcode;
 	CharacterGlyphIndex = glyphindex;
 }
 
 Leviathan::FontsCharacter::FontsCharacter(const int &charcode, const int &pixelwidth, const Float2 &texturecoordtopleft, const Float2 
 	&texturecoordbotomright, const FT_UInt &glyphindex /*= 0*/) : TopLeft(texturecoordtopleft), BottomRight(texturecoordbotomright), 
-	PixelWidth(pixelwidth)
+	PixelWidth(pixelwidth), ThisRendered(NULL)
 {
 	CharCode = charcode;
 	CharacterGlyphIndex = glyphindex;

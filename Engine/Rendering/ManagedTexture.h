@@ -21,22 +21,30 @@ namespace Leviathan{
 	public:
 
 		DLLEXPORT ManagedTexture::ManagedTexture(wstring &file, int id);
-
-		DLLEXPORT ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id, ID3D11Device* dev);
+		DLLEXPORT ManagedTexture::ManagedTexture(int id, ID3D11ShaderResourceView* texture, const wstring &source);
+		DLLEXPORT ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id, const wstring &source, ID3D11Device* dev);
 		DLLEXPORT ManagedTexture::~ManagedTexture();
 
 		DLLEXPORT bool Load(ID3D11Device* dev);
 		DLLEXPORT void UnLoad(bool force);
 
-		DLLEXPORT inline wstring* GetSourceFile();
+		// quick access inline functions //
+		DLLEXPORT inline shared_ptr<wstring> GetSourceFile(){
+			return FromFile;
+		}
 
-		DLLEXPORT inline ID3D11ShaderResourceView* GetView();
-		DLLEXPORT const shared_ptr<ID3D11ShaderResourceView>& GetPermanent();
-
-		DLLEXPORT inline int GetErrorState() const;
-		DLLEXPORT inline int GetID() const;
-
-		DLLEXPORT inline bool IsLoaded() const;
+		DLLEXPORT inline ID3D11ShaderResourceView* GetView(){
+			return Texture;
+		}
+		DLLEXPORT inline int GetErrorState() const{
+			return ErrorState;
+		}
+		DLLEXPORT inline int GetID() const{
+			return ID;
+		}
+		DLLEXPORT inline bool IsLoaded() const{
+			return Loaded;
+		}
 
 		int UnusedTime;
 
@@ -48,9 +56,11 @@ namespace Leviathan{
 
 		int ErrorState;
 		bool Loaded;
+		bool LoadedFromMemory;
 
-		// it must be made sure that this will be called with custom releaser SafeReleaser or/and made sure that texture is not deleted //
-		shared_ptr<ID3D11ShaderResourceView> Texture;
+		// shared_ptr<ID3D11ShaderResourceView>(NULL, SafeReleaser<ID3D11ShaderResourceView>);
+		// texture needs to be ->released //
+		ID3D11ShaderResourceView* Texture;
 		shared_ptr<wstring> FromFile;
 
 	};

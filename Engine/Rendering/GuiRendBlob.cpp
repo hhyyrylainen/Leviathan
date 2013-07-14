@@ -148,3 +148,37 @@ void Leviathan::BasicTextRendBlob::SetUpdated(){
 }
 // ------------------------------------ //
 
+
+DLLEXPORT Leviathan::ExpensiveTextRendBlob::ExpensiveTextRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, float sizemod, 
+	const wstring &text, const wstring &font, int coordtype /*= GUI_POSITIONABLE_COORDTYPE_RELATIVE*/, bool fittobox /*= false*/, 
+	const Float2 box /*= (Float2)0*/) : RenderingGBlob(relativez, slotid), Coord(xypos), BoxToFit(box), CoordType(coordtype), Color(color), 
+	Font(font), Text(text)
+{
+	TypeName = GUIRENDERING_BLOB_TYPE_EXPENSIVETEXT;
+
+	Size = sizemod;
+	FitToBox = fittobox;
+
+	TextID = IDFactory::GetID();
+}
+
+DLLEXPORT Leviathan::ExpensiveTextRendBlob::~ExpensiveTextRendBlob(){
+	// release the text //
+	Graphics::Get()->GetTextRenderer()->ReleaseExpensiveText(TextID);
+}
+
+DLLEXPORT void Leviathan::ExpensiveTextRendBlob::Update(int relativez, const Float2 &xypos, const Float4 &color, float sizemod, const wstring &text, 
+	const wstring &font, int coordtype /*= GUI_POSITIONABLE_COORDTYPE_RELATIVE*/, bool fittobox /*= false*/, const Float2 box /*= (Float2)0*/)
+{
+	Size = sizemod;
+
+	Coord = xypos;
+	BoxToFit = box;
+	FitToBox = fittobox;
+	CoordType = coordtype;
+
+	Color = color;
+
+	Font = font;
+	Text = text;
+}

@@ -240,6 +240,17 @@ DLLEXPORT void Leviathan::Logger::Warning(const wstring &data, bool save /*= fal
 	_inuse = false;
 }
 
+
+DLLEXPORT void Leviathan::Logger::DirectWriteBuffer(const wstring &data){
+	WaitToFinish();
+	_inuse = true;
+	// directly just append to buffers //
+	log += data;
+	PendingLog += data;
+
+	_inuse = false;
+}
+
 void Leviathan::Logger::Save(){
 	if(!Saved){
 		if(!FirstSaveDone){
@@ -274,7 +285,6 @@ void Leviathan::Logger::WaitToFinish(){
 	}
 
 }
-
 // -------------------------------- //
 void Leviathan::Logger::Print(string message, bool save){
 	Get()->Write(Convert::StringToWstring(message), save);
@@ -310,3 +320,5 @@ void Leviathan::Logger::CheckQueue(){
 		QueuedLog.clear();
 	}
 }
+
+

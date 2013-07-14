@@ -75,7 +75,7 @@ ID3D11Buffer* Leviathan::Rendering::ResourceCreator::GenerateDefaultDynamicDefau
 		return NULL;
 	}
 	// set initial data to zeros //
-	ZeroMemory(&vertices, sizeof(vertices));
+	ZeroMemory(vertices, sizeof(vertices));
 
 	D3D11_SUBRESOURCE_DATA vertexdata;
 
@@ -133,8 +133,6 @@ VertexType* Leviathan::Rendering::ResourceCreator::GenerateQuadIntoVertexBuffer(
 	if(!vertices){
 		return NULL;
 	}
-
-
 
 	Generate2DQuadCoordinatesWithStyle(vertices[0].texture, vertices[2].texture, vertices[4].texture, vertices[5].texture, style);
 
@@ -237,19 +235,19 @@ ID3D11Texture2D* Leviathan::Rendering::ResourceCreator::GenerateDefaultTexture(c
 	throw exception("Unfinished");
 
 
-	D3D11_SUBRESOURCE_DATA InitialData[2];
+	//D3D11_SUBRESOURCE_DATA InitialData[2];
 
 
-	ID3D11Texture2D* tmpptr = NULL;
+	//ID3D11Texture2D* tmpptr = NULL;
 
 
-	HRESULT hr =  GraphicsAccess::GetRenderer()->GetDevice()->CreateTexture2D(&TDesc, &InitialData[0], &tmpptr);
-	if(FAILED(hr)){
-		// failed to create //
-		return NULL;
-	}
+	//HRESULT hr =  GraphicsAccess->GetRenderer()->GetDevice()->CreateTexture2D(&TDesc, &InitialData[0], &tmpptr);
+	//if(FAILED(hr)){
+	//	// failed to create //
+	//	return NULL;
+	//}
 
-	return tmpptr;
+	//return tmpptr;
 }
 
 // ------------------------------------ //

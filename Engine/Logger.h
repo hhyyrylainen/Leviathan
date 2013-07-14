@@ -14,6 +14,7 @@ namespace Leviathan{
 		DLLEXPORT ~Logger();
 
 		DLLEXPORT void Write(const wstring &data);
+		DLLEXPORT void DirectWriteBuffer(const wstring &data);
 		DLLEXPORT void Info(const wstring &data);
 		DLLEXPORT void Error(const wstring &data, int value);
 		DLLEXPORT void Error(const wstring &data);

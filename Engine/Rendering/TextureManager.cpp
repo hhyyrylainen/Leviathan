@@ -327,19 +327,8 @@ shared_ptr<ManagedTexture> Leviathan::TextureManager::SearchVolatile(int id){
 }
 
 DLLEXPORT bool Leviathan::TextureManager::AddVolatileGenerated(const int &ID, const wstring &source, ID3D11ShaderResourceView* texture){
-
-	shared_ptr<ManagedTexture> tmptexture = shared_ptr<ManagedTexture>(new ManagedTexture());
-	// set stuff //
-	tmptexture->ErrorState = TEXTURE_ERROR_STATE_NONE;
-	tmptexture->FromFile = shared_ptr<wstring>(new wstring(source));
-	tmptexture->ID = ID;
-	tmptexture->Inited = true;
-	tmptexture->Texture = shared_ptr<ID3D11ShaderResourceView>(texture);
-	tmptexture->Loaded = true;
-
-
 	// add to vector //
-	VolatileGenerated.push_back(tmptexture);
+	VolatileGenerated.push_back(shared_ptr<ManagedTexture>(new ManagedTexture(ID, texture, source)));
 
 	return true;
 }
@@ -350,7 +339,7 @@ DLLEXPORT void Leviathan::TextureManager::UnloadVolatile(const int &ID){
 		// compare id //
 		if(VolatileGenerated[i]->GetID() == ID){
 			// erase it (if somebody misses it they will regenerate it //
-
+			// needs to use force unload //
 			VolatileGenerated[i]->UnLoad(true);
 
 			VolatileGenerated.erase(VolatileGenerated.begin()+i);

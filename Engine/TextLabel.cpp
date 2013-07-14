@@ -15,6 +15,7 @@ using namespace Leviathan::Gui;
 #include "ObjectBackground.h"
 #include "GuiBasicText.h"
 #include "Rendering\ColorQuad.h"
+#include "Rendering\RenderingResourceCreator.h"
 
 
 Leviathan::Gui::TextLabel::TextLabel(int id, const Float2 &position, Float2 &size, int autoadjust) : Positionable(position, size), GComponents(2){
@@ -70,7 +71,7 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstrin
 	}
 
 	// initialize it //
-	if(!((ObjectBackground*)GComponents[0])->Init(color1, color2, COLORQUAD_COLOR_STYLE_LEFTTOPRIGHTBOTTOM)){
+	if(!((ObjectBackground*)GComponents[0])->Init(color1, color2, QUAD_FILLSTYLE_UPPERLEFT_0_BOTTOMRIGHT_1)){
 
 		QUICK_ERROR_MESSAGE;
 		return false;

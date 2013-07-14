@@ -247,7 +247,6 @@ void Graphics::RecreateRenderer(Window* wind){
 }
 
 // ------------------------------------------- //
-
 bool Graphics::Resize(int newwidth, int newheight){
 	// resize renderer //
 	Drenderer->Resize();

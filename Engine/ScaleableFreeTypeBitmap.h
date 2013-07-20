@@ -65,11 +65,10 @@ namespace Leviathan{
 				return VerticalLineData[yactual];
 			}
 
-			void CopyDataFromOther(const BitmapVerticalLine &other);	
-
-			vector<UCHAR> VerticalLineData;
+			void CopyDataFromOther(const BitmapVerticalLine &other, const int &YAdd = 0);	
 			int NthLineFromLeft;
 			int LineStart;
+			vector<UCHAR> VerticalLineData;
 		};
 	public:
 		// the resulting image in DXGI_FORMAT_R8_UNORM format and initially zeroed out //
@@ -147,10 +146,17 @@ namespace Leviathan{
 			}
 		}
 
+		DLLEXPORT inline int GetMinY(){
+			return MinYValue;
+		}
+
+
+		DLLEXPORT bool OutPutToFile1And0(const wstring &file);
 	private:
 
 		// ------------------------------------ //
 		vector<BitmapVerticalLine*> BitmapData;
+		BitmapVerticalLine* LastAccessed;
 
 		int MinYValue;
 		int MaxYValue;

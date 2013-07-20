@@ -189,7 +189,8 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 			// create new instance //
 			unique_ptr<FontsCharacter> CurChar(new FontsCharacter(chartolook, Index));
 
-			errorcode = FT_Load_Glyph(FontsFace, Index, FT_LOAD_RENDER);
+			//errorcode = FT_Load_Glyph(FontsFace, Index, FT_LOAD_RENDER);
+			errorcode = FT_Load_Char(FontsFace, chartolook, FT_LOAD_RENDER);
 			if(errorcode){
 				Logger::Get()->Error(L"FontGenerator: FreeType: failed to load glyph number "+Convert::IntToWstring(i)+L" char "+chartolook, true);
 				return false;
@@ -200,6 +201,8 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 			int BitmapPosX = 0+slot->bitmap_left;
 			int BitmapPosY = slot->bitmap_top-baseline;
 
+			CurChar->RenderedTop = slot->bitmap_top;
+
 			// render glyph to characters bitmap //
 			CurChar->ThisRendered = new ScaleableFreeTypeBitmap(5, Height);
 
@@ -209,15 +212,24 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 			CurChar->ThisRendered->RenderFTBitmapIntoThis(BitmapPosX, BitmapPosY, charimg);
 
 			// "crop" //
-			CurChar->ThisRendered->RemoveEmptyBits();
+			//CurChar->ThisRendered->RemoveEmptyBits();
 
 			// calculate sizes and all //
 			CurChar->ThisRendered->UpdateStats();
 
 
-			// set various things //
-			CurChar->PixelWidth = CurChar->ThisRendered->GetWidth();
-			CurChar->AdvancePixels = slot->advance.x >> 6;
+			// space needs special treatment //
+			if(chartolook == L' '){
+				// we need to make up stuff about space character //
+				CurChar->PixelWidth = 5;
+				CurChar->AdvancePixels = 6;
+
+			} else {
+
+				// set various things //
+				CurChar->PixelWidth = CurChar->ThisRendered->GetWidth();
+				CurChar->AdvancePixels = slot->advance.x >> 6;
+			}
 
 
 			// character processed set to right spot //
@@ -267,6 +279,9 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 			bool Fitted = false;
 			bool CheckedAny = false;
 
+			// make sure that row is fine //
+			fillingrow < Rows.size() ? (Rows[fillingrow] == NULL ? Rows[fillingrow] = new RowType(): Rows[fillingrow]): Rows.push_back(new RowType());
+
 			for(size_t i = 0; i < FontData.size(); i++){
 				// skip already fitted characters //
 				if(FittedCharacters[i])
@@ -299,17 +314,16 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 			if(!Fitted){
 				// no character could fit to this row, move to next //
 				fillingrow++;
-
-				// make sure that row is fine //
-				fillingrow < Rows.size() ? (Rows[fillingrow] == NULL ? Rows[fillingrow] = new RowType(): Rows[fillingrow]): Rows.push_back(new RowType());
 			}
 		}
 
 		// copy actual character images //
 		for(size_t i = 0; i < Rows.size(); i++){
+			// skip non used lines //
+			if(!Rows[i])
+				continue;
 			// calculate start y for this row //
 			int StartY = i*MaxHeight;
-
 
 			// start x is 0 on beginning of line and is increased after adding a character //
 			int StartX = 0;
@@ -320,30 +334,43 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 				size_t spot = Rows[i]->WantedChars[a];
 
 				// calculate actual starting y with the baselines //
-				int ActualY = StartY+FontData[spot]->ThisRendered->GetBaseLineHeight()-baseline;
+				//int ActualY = StartY+FontData[spot]->ThisRendered->GetMinY();
+				const int &curminy = FontData[spot]->ThisRendered->GetMinY();
+				//const int &curminy = FontData[spot]->ThisRendered->GetBaseLineHeight();
+
+				//int ActualY = (StartY < 0) == (curminy < 0) ? abs(curminy-StartY): abs(StartY)+abs(curminy);
+
+				//int ActualY = StartY+(baseline-curminy);
+				int ActualY = StartY-(curminy*2);
+
+				//FontData[spot]->ThisRendered->OutPutToFile1And0(L"char"+Convert::ToWstring(spot)+L".txt");
 
 				// render the bitmap to position (StartX, ActualY) //
 				FinishedImage.RenderOtherIntoThis(FontData[spot]->ThisRendered, StartX, ActualY);
+
+				//FinishedImage.OutPutToFile1And0(L"testoutput.txt");
 
 				// set font data's texture coordinate positions //
 				FontData[i]->TopLeft = Float2((float)StartX, (float)StartY);
 				FontData[i]->BottomRight = Float2((float)(StartX+FontData[spot]->PixelWidth-1), (float)(StartY+MaxHeight-1));
 
 				// increment StartX according to width //
-				StartX += FontData[spot]->PixelWidth;
+				StartX += FontData[spot]->PixelWidth/*+1*/;
 			}
+			//break;
 		}
 		// make sure that width and height are dividable by 2 //
 		FinishedImage.MakeSizeDividableBy2();
 
 		// update the main image //
 		FinishedImage.UpdateStats();
-		
+		FinishedImage.OutPutToFile1And0(L"testoutput.txt");
+
 		// release memory //
 		SAFE_DELETE_VECTOR(Rows);
 
-		int RImgWidth = 0;
-		int RImgHeight = 0;
+		int RImgWidth = FinishedImage.GetWidth();
+		int RImgHeight = FinishedImage.GetHeight();
 
 		// now that image is actually finished we can calculate actual texture coordinates //
 		for(size_t i = 0; i < FontData.size(); i++){
@@ -352,17 +379,21 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 			FontData[i]->BottomRight = Float2(FontData[i]->BottomRight.X/RImgWidth, FontData[i]->BottomRight.Y/RImgHeight);
 		}
 
-
 		// save FontData now that it has everything filled out //
 		WriteDataToFile();
 
 		// master image is now done //
 		size_t mimgbuffersize = 0;
-		char* MainImageBuffer = NULL;
+		int junk = 0;
+		char* MainImageBuffer = FinishedImage.GenerateDDSToMemory(mimgbuffersize, junk);
 
 
 		ofstream writer;
-		writer.open(file);
+
+		wstring file = FileSystem::GetFontFolder()+Name+L".dds";
+		Logger::Get()->Info(L"RenderingFont: LoadTexture: writing texture file, file: "+file);
+
+		writer.open(Convert::WstringToString(file), ios::binary);
 
 		if(!writer.is_open()){
 			// error //
@@ -384,7 +415,7 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 	if(!Textures)
 		return false;
 
-	if(!Textures->Init(dev, FileSystem::GetFontFolder()+file, L"")){
+	if(!Textures->Init(dev, FileSystem::GetFontFolder()+Name+L".dds", L"")){
 		Logger::Get()->Error(L"LoadTexture failed Texture init returned false", true);
 		return false;
 	}
@@ -720,7 +751,7 @@ textfittingtextstartofblocklabel:
 }
 
 float Leviathan::RenderingFont::CalculateDotsSizeAtScale(const float &scale){
-	return 3.f*(FontData[L'.'-33]->PixelWidth*scale+1.f*scale);
+	return 3.f*(FontData[L'.'-32]->PixelWidth*scale+1.f*scale);
 }
 // ------------------------------------ //
 bool Leviathan::RenderingFont::_VerifyFontFTDataLoaded(){
@@ -787,9 +818,9 @@ DLLEXPORT bool Leviathan::RenderingFont::WriteDataToFile(){
 	wstring datafilepath = FileSystem::GetFontFolder()+Name+L".levfd";
 
 	// generate file content //
-	wstringstream datafile(Convert::IntToWstring(FontHeight)+L" ");
+	wstringstream datafile;
 	// character data count //
-	datafile << FontData.size() << endl;
+	datafile << FontHeight << L" " <<  FontData.size() << endl;
 
 	// copy font data //
 	for(size_t i = 0; i < FontData.size(); i++){
@@ -799,6 +830,7 @@ DLLEXPORT bool Leviathan::RenderingFont::WriteDataToFile(){
 
 		datafile << FontData[i]->CharacterGlyphIndex << " ";
 		datafile << FontData[i]->PixelWidth << " ";
+		datafile << FontData[i]->AdvancePixels << " ";
 		datafile << FontData[i]->TopLeft.X << " " << FontData[i]->TopLeft.Y << " ";
 		datafile << FontData[i]->BottomRight.X << " " << FontData[i]->BottomRight.Y << " ";
 		// this object is written, put empty line //
@@ -815,7 +847,7 @@ DLLEXPORT bool Leviathan::RenderingFont::WriteDataToFile(){
 	}
 
 	// write the whole stringstream to the file and close //
-	writer << datafile;
+	writer << datafile.str();
 	writer.close();
 
 

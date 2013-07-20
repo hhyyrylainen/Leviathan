@@ -86,7 +86,7 @@ DLLEXPORT char* Leviathan::ScaleableFreeTypeBitmap::GenerateDDSToMemory(size_t &
 	// create the buffer //
 	buffer = new char[GeneratedSize];
 	// zero out the buffer (just so that if something is missed it would be zeros //
-	ZeroMemory(buffer, sizeof(buffer));
+	ZeroMemory(buffer, sizeof(char)*GeneratedSize);
 
 	size_t bufferindex = 0;
 	// put magic //
@@ -112,16 +112,38 @@ DLLEXPORT char* Leviathan::ScaleableFreeTypeBitmap::GenerateDDSToMemory(size_t &
 	size_t pixeldatastart = bufferindex;
 
 	// copy pixel data //
-	for(int x = 0; x < MaxWidth; x++){
-		// get current vertical line //
-		BitmapVerticalLine* line = GetXLine(x);
+	//for(int x = 0; x < MaxWidth; x++){
+	//	// get current vertical line //
+	//	BitmapVerticalLine* line = GetXLineIfExists(x);
+	//	if(line == NULL){
+	//		// no data on line, we can skip because we have zeroed out the buffer //
+	//		continue;
+	//	}
 
-		for(int y = 0; y < MaxHeight; y++){
+	//	for(int y = MinYValue; y < MaxYValue; y++){
+	//		// write data and move to next //
+	//		size_t accessspot = pixeldatastart+x+(y-MinYValue)*MaxWidth;
+	//		if(accessspot >= GeneratedSize)
+	//			DEBUG_BREAK;
+
+	//		buffer[accessspot] = line->GetColourAtY(y);
+	//		//bufferindex = accessspot;
+	//		bufferindex++;
+	//	}
+	//}
+
+	for(int y = 0; y < MaxHeight; y++){
+		for(int x = 0; x < MaxWidth; x++){
+			// get current vertical line //
+			BitmapVerticalLine* line = GetXLine(x);
+
 			int ryval = MinYValue+y;
 			// write data and move to next //
-			size_t accessspot = pixeldatastart+x+(y*(MaxXValue+1));
-			buffer[accessspot] = line->GetColourAtY(ryval);
-			//bufferindex = accessspot;
+			if(line){
+				buffer[bufferindex] = line->GetColourAtY(ryval);
+			} else {
+				buffer[bufferindex] = 0;
+			}
 			bufferindex++;
 		}
 	}
@@ -143,7 +165,7 @@ DLLEXPORT char* Leviathan::ScaleableFreeTypeBitmap::GenerateDDSToMemory(size_t &
 	// just because it can be done, save to file //
 	int inumber = 1;
 
-	if(!DataStore::Get()->GetValueAndConvertTo<int>(L"Bitmaprenderingind",inumber)){
+	if(!DataStore::Get()->GetValueAndConvertTo<int>(L"Bitmaprenderingind", inumber)){
 		// add new //
 		DataStore::Get()->AddVar(new NamedVariableList(L"Bitmaprenderingind", new VariableBlock(inumber)));
 	} else {
@@ -200,13 +222,14 @@ void Leviathan::ScaleableFreeTypeBitmap::UpdateStats(){
 	MaxWidth = 1+MaxXValue;
 
 	// calculate height from min and max y values //
-	if((MinYValue < 0) != (MaxYValue < 0)){
+	MaxHeight = MaxYValue-MinYValue;
+	//if((MinYValue < 0) != (MaxYValue < 0)){
 
-		MaxHeight = 1+abs(MinYValue)+abs(MaxYValue);
-	} else {
-		// same sign, subtract one from the other //
-		MaxHeight = 1+abs(MinYValue-MaxYValue);
-	}
+	//	MaxHeight = 1+abs(MinYValue)+abs(MaxYValue);
+	//} else {
+	//	// same sign, subtract one from the other //
+	//	MaxHeight = 1+abs(MinYValue-MaxYValue);
+	//}
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::ScaleableFreeTypeBitmap::GetHeightOfLastLine(){
@@ -231,7 +254,7 @@ void Leviathan::ScaleableFreeTypeBitmap::RemoveEmptyBits(){
 
 	for(size_t i = 0; i < BitmapData.size(); i++){
 		// trim this line //
-		if(BitmapData[i]->LineTrimming() == SCALEABLEBITMAP_INTERNAL_TRIM_RESULT_NODATA){
+		if(BitmapData[i]->LineTrimming() == SCALEABLEBITMAP_INTERNAL_TRIM_RESULT_TRIMMED){
 			// set as various things //
 			int curx = BitmapData[i]->NthLineFromLeft;
 
@@ -289,7 +312,7 @@ DLLEXPORT bool Leviathan::ScaleableFreeTypeBitmap::RenderOtherIntoThis(Scaleable
 	img->UpdateStats();
 
 	// loop over image that is copied and copy data to right positions //
-	for(int x = 0; x < img->MaxXValue; x++){
+	for(int x = 0; x <= img->MaxXValue; x++){
 
 		BitmapVerticalLine* sourceline = img->GetXLine(x);
 
@@ -299,12 +322,42 @@ DLLEXPORT bool Leviathan::ScaleableFreeTypeBitmap::RenderOtherIntoThis(Scaleable
 		BitmapVerticalLine* targetline = GetXLine(DestX);
 
 
-		targetline->CopyDataFromOther(*sourceline);
+		targetline->CopyDataFromOther(*sourceline, StartY);
 	}
 	return true;
 }
 
+DLLEXPORT bool Leviathan::ScaleableFreeTypeBitmap::OutPutToFile1And0(const wstring &file){
+	// write 1s and 0s to a file //
+	ofstream writer;
+	writer.open(file);
 
+	if(!writer.is_open()){
+		return false;
+	}
+
+	this->UpdateStats();
+
+	// go through in horizontal lines and print characters //
+	for(int y = 0; y < MaxHeight; y++){
+		for(int x = 0; x < MaxWidth; x++){
+			// get current vertical line //
+			BitmapVerticalLine* line = GetXLine(x);
+
+			int ryval = MinYValue+y;
+			// write data and move to next //
+
+			writer << (char)(line->GetColourAtY(ryval) != 0 ? 35: 48);
+		}
+		// line change //
+		writer << endl;
+	}
+
+
+	// close and return true //
+	writer.close();
+	return true;
+}
 
 // ------------------------------------ //
 
@@ -335,7 +388,7 @@ int Leviathan::ScaleableFreeTypeBitmap::BitmapVerticalLine::LineTrimming(){
 	// erase from back //
 	while(VerticalLineData.back() == 0){
 
-		VerticalLineData.erase(VerticalLineData.end());
+		VerticalLineData.erase(VerticalLineData.begin()+VerticalLineData.size()-1);
 		// check if we erased everything //
 		if(VerticalLineData.size() == 0)
 			return SCALEABLEBITMAP_INTERNAL_TRIM_RESULT_NODATA;
@@ -344,33 +397,14 @@ int Leviathan::ScaleableFreeTypeBitmap::BitmapVerticalLine::LineTrimming(){
 	return SCALEABLEBITMAP_INTERNAL_TRIM_RESULT_TRIMMED;
 }
 
-void Leviathan::ScaleableFreeTypeBitmap::BitmapVerticalLine::CopyDataFromOther(const BitmapVerticalLine &other){
+void Leviathan::ScaleableFreeTypeBitmap::BitmapVerticalLine::CopyDataFromOther(const BitmapVerticalLine &other, const int &YAdd /*= 0*/){
+	// we need to store original line start //
+	const int origstart = LineStart;
+
 	// loop other's elements and calculate index in this and copy //
 	for(size_t i = 0; i < other.VerticalLineData.size(); i++){
-		int tindex = (i+(other.LineStart-LineStart));
+		int tindex = i+(other.LineStart-origstart)+YAdd;
 
-		if((tindex < 0) != (LineStart)){
-			// different sign //
-			tindex += abs(LineStart);
-		} else {
-			// same sign //
-			tindex -= LineStart;
-		}
-
-		if(tindex < 0){
-			// need to adjust start //
-			// we need to adjust this lines' start //
-			int shiftamount = abs(tindex);
-			// change start //
-			LineStart -= shiftamount;
-
-			// insert empty elements to beginning //
-			VerticalLineData.insert(VerticalLineData.begin(), (size_t)shiftamount, (UCHAR)0);
-			// actual y value should now be the first index //
-			tindex = 0;
-		}
-
-		// copy //
-		VerticalLineData[tindex] = other.VerticalLineData[i];
+		(*GetYvalue(tindex)) = other.VerticalLineData[i];
 	}
 }

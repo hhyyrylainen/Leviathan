@@ -132,7 +132,7 @@ namespace Leviathan{
 
 
 		// ------------------ //
-		void LoadFont(const wstring &file);
+		bool LoadFont(const wstring &file);
 		int GetFontIndex(const wstring &name);
 
 		bool InitializeSentence(SentenceType** sentence, int id, int maxlength, ID3D11Device* dev);

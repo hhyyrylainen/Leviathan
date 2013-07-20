@@ -163,13 +163,15 @@ bool TextRenderer::RenderSingle(int ID, ID3D11DeviceContext* devcont, D3DXMATRIX
 	return false;
 }
 // ------------------------------------ //
-void Leviathan::TextRenderer::LoadFont(const wstring &file){
+bool Leviathan::TextRenderer::LoadFont(const wstring &file){
 	FontHolder.push_back(new RenderingFont());
 
 	if(!FontHolder.back()->Init(device, file)){
 
 		Logger::Get()->Error(L"Error while loading font, file: "+file, true);
+		return false;
 	}
+	return true;
 }
 int Leviathan::TextRenderer::GetFontIndex(const wstring &name){
 	// try to get id //
@@ -183,7 +185,9 @@ int Leviathan::TextRenderer::GetFontIndex(const wstring &name){
 	if(index == -1){
 		// try to load font
 		wstring File = name+L".dds";
-		LoadFont(File);
+		if(!LoadFont(File)){
+			return -1;
+		}
 		index = FontHolder.size()-1;
 		Logger::Get()->Info(L"Font loaded! :"+name, false);
 	}

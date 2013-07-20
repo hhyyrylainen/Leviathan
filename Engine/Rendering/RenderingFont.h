@@ -11,6 +11,7 @@
 #include ".\DataStore.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_GLYPH_H
 #include "ShaderDataTypes.h"
 #include "..\ScaleableFreeTypeBitmap.h"
 
@@ -23,6 +24,16 @@
 namespace Leviathan{
 	// forward declaration for friend declaration //
 	class RenderingFont;
+
+	struct GeneratingDataForCharacter{
+		GeneratingDataForCharacter();
+		// used when creating the char map, contains this glyph rendered from FT bitmap //
+		//ScaleableFreeTypeBitmap* ThisRendered;
+		FT_Glyph ThisRendered;
+		//FT_Bitmap ThisRendered;
+		int RenderedTop;
+		int RenderedLeft;
+	};
 
 	// "internal" type to define single character's image in non expensive text //
 	class FontsCharacter{
@@ -43,9 +54,8 @@ namespace Leviathan{
 		int PixelWidth;
 		// pixel count that rendering uses to advance to next character //
 		int AdvancePixels;
-		// used when creating the char map, contains this glyph rendered from FT bitmap //
-		ScaleableFreeTypeBitmap* ThisRendered;
-
+		// used when generating font data //
+		GeneratingDataForCharacter* Generating;
 	};
 
 	class RenderingFont : public EngineComponent{
@@ -86,6 +96,9 @@ namespace Leviathan{
 		DLLEXPORT static inline int ConvertIndexToCharCode(const size_t &index){
 			return (int)(index+32);
 		}
+
+
+		//DLLEXPORT static inline void CopyFTBitmapToAnother(FT_Bitmap &receiver, const FT_Bitmap &original);
 
 	private:
 		// retrieves FontsFace from FT library //

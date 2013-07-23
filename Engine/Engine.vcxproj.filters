@@ -510,6 +510,9 @@
     <ClCompile Include="ScaleableFreeTypeBitmap.cpp">
       <Filter>utility</Filter>
     </ClCompile>
+    <ClCompile Include="Key.cpp">
+      <Filter>utility</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">

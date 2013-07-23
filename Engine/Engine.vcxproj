@@ -157,6 +157,7 @@
     <ClCompile Include="IDFactory.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="IteratorData.cpp" />
+    <ClCompile Include="Key.cpp" />
     <ClCompile Include="KeyPressManager.cpp" />
     <ClCompile Include="ExceptionBase.cpp" />
     <ClCompile Include="LineTokenizer.cpp" />

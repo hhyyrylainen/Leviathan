@@ -370,7 +370,7 @@ bool Leviathan::TextRenderer::UpdateSentence(SentenceType* sentence, int Coordty
 	//drawY = (float)(int)(drawY+0.5f);
 
 	// use font to build vertex array //
-	if(!FontHolder[fontindex]->BuildVertexArray(vertices, text, drawX, drawY, sentence->SizeModifier, Coordtype)){
+	if(!FontHolder[fontindex]->BuildVertexArray(vertices, text, drawX, drawY, sentence->SizeModifier)){
 		// sentence probably has invalid characters //
 		SAFE_DELETE_ARRAY(vertices);
 
@@ -566,6 +566,9 @@ DLLEXPORT bool Leviathan::TextRenderer::RenderExpensiveTextToTexture(ExpensiveTe
 
 		text->RenderedToBox = Float2((float)RenderedDimensions.X, (float)RenderedDimensions.Y);
 	}
+	// rendered to box is now different; vertex buffer needs updating //
+	text->BuffersFine = false;
+
 	return Result;
 }
 
@@ -653,7 +656,7 @@ checkresultstartslabel:
 
 	// update what needs to be updated //
 	if(FitToBox){
-		// update to AdjustedSize to make this fir the box //
+		// update to AdjustedSize to make this fit the box //
 		AdjustToFit(render);
 	}
 
@@ -771,16 +774,6 @@ DLLEXPORT void Leviathan::ExpensiveText::AdjustToFit(TextRenderer* trenderer, bo
 }
 
 bool Leviathan::ExpensiveText::_VerifyTextures(TextRenderer* trender){
-
-	float ScaleUsed = Size;
-	wstring& TextToRender = Text;
-
-	if(AdjustedToFit){
-		// use adjusted values //
-		ScaleUsed = AdjustedSize;
-		TextToRender = AdjustedText;
-	}
-
 	// if we are missing texture id create new or if we already have one release it //
 	if(TextureID >= 0){
 		// tell texture manager to ditch the old one //
@@ -789,14 +782,12 @@ bool Leviathan::ExpensiveText::_VerifyTextures(TextRenderer* trender){
 
 	TextureID = IDFactory::GetID();
 
-
 	// use TextRenderer to render this to texture //
 	if(!trender->RenderExpensiveTextToTexture(this, TextureID)){
 
 		Logger::Get()->Error(L"ExpensiveText: VerifyTextures: failed to render text to texture");
 		return false;
 	}
-
 
 	// textures are successfully rendered //
 	return true;

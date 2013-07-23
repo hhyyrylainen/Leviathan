@@ -112,46 +112,46 @@ DLLEXPORT char* Leviathan::ScaleableFreeTypeBitmap::GenerateDDSToMemory(size_t &
 	size_t pixeldatastart = bufferindex;
 
 	// copy pixel data //
-	//for(int x = 0; x < MaxWidth; x++){
-	//	// get current vertical line //
-	//	BitmapVerticalLine* line = GetXLineIfExists(x);
-	//	if(line == NULL){
-	//		// no data on line, we can skip because we have zeroed out the buffer //
-	//		continue;
-	//	}
+	for(int x = 0; x < MaxWidth; x++){
+		// get current vertical line //
+		BitmapVerticalLine* line = GetXLine(x);
+		for(int y = 0; y < MaxHeight; y++){
+			// calculate real y at this spot //
+			int ryval = MinYValue+y;
 
-	//	for(int y = MinYValue; y < MaxYValue; y++){
+			const size_t BuffSpot = pixeldatastart+ y*MaxWidth+x;
+
+			// write data and move to next //
+			if(line){
+				buffer[BuffSpot] = line->GetColourAtY(ryval);
+			} else {
+				// no data (whole vertical strip is zeros) //
+				buffer[BuffSpot] = 0;
+			}
+			bufferindex = BuffSpot;
+		}
+	}
+
+	//for(int y = 0; y < MaxHeight; y++){
+	//	for(int x = 0; x < MaxWidth; x++){
+	//		// get current vertical line //
+	//		BitmapVerticalLine* line = GetXLine(x);
+
+	//		int ryval = MinYValue+y;
 	//		// write data and move to next //
-	//		size_t accessspot = pixeldatastart+x+(y-MinYValue)*MaxWidth;
-	//		if(accessspot >= GeneratedSize)
-	//			DEBUG_BREAK;
-
-	//		buffer[accessspot] = line->GetColourAtY(y);
-	//		//bufferindex = accessspot;
+	//		if(line){
+	//			buffer[bufferindex] = line->GetColourAtY(ryval);
+	//		} else {
+	//			buffer[bufferindex] = 0;
+	//		}
 	//		bufferindex++;
 	//	}
 	//}
 
-	for(int y = 0; y < MaxHeight; y++){
-		for(int x = 0; x < MaxWidth; x++){
-			// get current vertical line //
-			BitmapVerticalLine* line = GetXLine(x);
+	//if(bufferindex != GeneratedSize){
 
-			int ryval = MinYValue+y;
-			// write data and move to next //
-			if(line){
-				buffer[bufferindex] = line->GetColourAtY(ryval);
-			} else {
-				buffer[bufferindex] = 0;
-			}
-			bufferindex++;
-		}
-	}
-
-	if(bufferindex != GeneratedSize){
-
-		DEBUG_BREAK;
-	}
+	//	DEBUG_BREAK;
+	//}
 
 	// set the return value of the baseline //
 
@@ -173,21 +173,21 @@ DLLEXPORT char* Leviathan::ScaleableFreeTypeBitmap::GenerateDDSToMemory(size_t &
 		DataStore::Get()->SetValue(L"Bitmaprenderingind", new VariableBlock(inumber+1));
 	}
 
-	ofstream writer;
+	//ofstream writer;
 
-	string file = ".\\renderedtext_"+Convert::ToString<int>(inumber)+".dds";
+	//string file = ".\\renderedtext_"+Convert::ToString<int>(inumber)+".dds";
 
-	writer.open(file, ios::binary);
-	if(!writer.is_open()){
-		// cannot write //
+	//writer.open(file, ios::binary);
+	//if(!writer.is_open()){
+	//	// cannot write //
 
-		DEBUG_BREAK;
+	//	DEBUG_BREAK;
 
-	}
+	//}
 
-	writer.write(buffer, GeneratedSize);
+	//writer.write(buffer, GeneratedSize);
 
-	writer.close();
+	//writer.close();
 
 	// return buffer //
 	return buffer;

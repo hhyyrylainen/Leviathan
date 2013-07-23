@@ -14,6 +14,8 @@
 #include FT_GLYPH_H
 #include "ShaderDataTypes.h"
 #include "..\ScaleableFreeTypeBitmap.h"
+#include "..\GuiPositionable.h"
+#include "..\ComplainOnce.h"
 
 
 #define RENDERINGFONT_CHARCOUNT		233
@@ -67,13 +69,37 @@ namespace Leviathan{
 		DLLEXPORT void Release();
 
 		// functions to get/calculate various things about this font (with a string) //
-		DLLEXPORT float CountLength(const wstring &sentence, float heightmod, int Coordtype);
-		DLLEXPORT float GetHeight(float heightmod, int Coordtype);
+		DLLEXPORT inline float CountLength(const wstring &sentence, float heightmod, int Coordtype){
+			// call another function, this is so that the parameters don't all need to be created to call it //
+			float delimiter = 0;
+			size_t lastfit = 0;
+			float fitlength = 0;
+			// actual counting //
+			return CalculateTextLengthAndLastFitting(heightmod, Coordtype, sentence, fitlength, lastfit, delimiter);
+		}
+		DLLEXPORT inline float GetHeight(float heightmod, int Coordtype){
+			if(Coordtype != GUI_POSITIONABLE_COORDTYPE_RELATIVE)
+				return FontHeight*heightmod;
+
+			// scale from screen height to promilles //
+			return (FontHeight*heightmod)/DataStore::Get()->GetHeight();
+		}
 		DLLEXPORT float CalculateTextLengthAndLastFitting(float TextSize, int CoordType, const wstring &text, const float &fitlength, 
 			size_t & Charindexthatfits, float delimiterlength);
 
+		DLLEXPORT inline int CalculatePixelSizeAtScale(const float &scale){
+			return (int)ceilf(FONT_BASEPIXELHEIGHT*scale);
+		}
+
 		// gets length of string "..." at a specified scale //
-		DLLEXPORT float CalculateDotsSizeAtScale(const float &scale);
+		DLLEXPORT inline float CalculateDotsSizeAtScale(const float &scale){
+			// kerning needs to be right //
+			EnsurePixelSize(CalculatePixelSizeAtScale(scale));
+
+			return 3*(FontData[ConvertCharCodeToIndex(L'.')]->AdvancePixels*scale+ceilf(GetKerningBetweenCharacters(L'.', L'.')));
+		}
+
+		DLLEXPORT bool EnsurePixelSize(const int &size);
 
 
 		ID3D11ShaderResourceView* GetTexture();
@@ -81,7 +107,7 @@ namespace Leviathan{
 			return Name;
 		}
 
-		DLLEXPORT bool BuildVertexArray(VertexType* vertexptr, const wstring &text, float drawx, float drawy, float textmodifier, int Coordtype);
+		DLLEXPORT bool BuildVertexArray(VertexType* vertexptr, const wstring &text, float drawx, float drawy, float textmodifier);
 		DLLEXPORT bool AdjustTextSizeToFitBox(const float &Size, const Float2 &BoxToFit, const wstring &text, int CoordType, size_t &Charindexthatfits, 
 			float &EntirelyFitModifier, float &HybridScale, Float2 &Finallength, float scaletocutfrom);
 		DLLEXPORT bool RenderSentenceToTexture(const int &TextureID, const float &sizemodifier, const wstring &text, Int2 &RenderedToBox, 
@@ -97,6 +123,27 @@ namespace Leviathan{
 			return (int)(index+32);
 		}
 
+		DLLEXPORT inline float GetKerningBetweenCharacters(const int &char1, const int &char2){
+			// hopefully FreeType interface is already loaded //
+			if(!FontsFace)
+				_VerifyFontFTDataLoaded();
+			// return if no kerning //
+			if(!FT_HAS_KERNING(FontsFace))
+				return 0;
+
+			// result receiver //
+			FT_Vector kerning;
+
+			// get kerning //
+			FT_Error errorcode = FT_Get_Kerning(FontsFace, FontData[ConvertCharCodeToIndex(char1)]->CharacterGlyphIndex, 
+				FontData[ConvertCharCodeToIndex(char2)]->CharacterGlyphIndex, FT_KERNING_DEFAULT, &kerning);
+			if(errorcode){
+				// report //
+				ComplainOnce::PrintWarningOnce(L"Failed_kerningdata", L"failed to retrieve kerning data");
+			}
+			// this should work for converting to pixels //
+			return (float)(kerning.x >> 6);
+		}
 
 		//DLLEXPORT static inline void CopyFTBitmapToAnother(FT_Bitmap &receiver, const FT_Bitmap &original);
 
@@ -116,7 +163,7 @@ namespace Leviathan{
 		wstring Name;
 		// path to this font's file //
 		wstring FontPath;
-
+		int SetSize;
 
 		FT_Face FontsFace;
 		// ------------------------------------ //

@@ -183,10 +183,20 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 	
 	if(DataStore::Get()->GetGUiActive()){
 		// send presses to objects //
+		bool lol = false;
+
 
 		for(unsigned int i = 0; i < ReceivedPresses.size(); i++){
 			// generate key //
 			GKey current = GKey(ReceivedPresses[i]->KeyCode, specialstates);
+
+			if(!lol){
+				lol = true;
+				DEBUG_OUTPUT_AUTOPLAINTEXT(L"--------------");
+			}
+
+			DEBUG_OUTPUT_AUTO(current.GenerateWstringMessage());
+
 
 			// first we need to check the foreground object if it wants this key press //
 			if(Foreground){
@@ -238,6 +248,11 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 			}
 			// nobody wanted it //
 		}
+
+		if(lol){
+			DEBUG_OUTPUT_AUTOPLAINTEXT(L"--------------");
+		}
+
 
 	} else {
 		// check should Gui turn on //

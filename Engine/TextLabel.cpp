@@ -97,10 +97,6 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstrin
 		QUICK_ERROR_MESSAGE;
 		return false;
 	}
-	// set size to text to ensure that it is set //
-	((GuiBasicText*)GComponents[1])->SetLocationData(TextWantedCoordinates, TextAreaSize);
-	((ObjectBackground*)GComponents[0])->SetLocationData(Position, Size);
-
 
 	
 	if(AutoAdjust)
@@ -113,6 +109,10 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstrin
 	// register //
 	RegisterForEvent(EVENT_TYPE_HIDE);
 	RegisterForEvent(EVENT_TYPE_SHOW);
+
+	// set size to text to ensure that it is set //
+	((GuiBasicText*)GComponents[1])->SetLocationData(TextWantedCoordinates, TextAreaSize);
+	((ObjectBackground*)GComponents[0])->SetLocationData(Position, Size);
 
 	return true;
 }
@@ -214,6 +214,9 @@ void Leviathan::Gui::TextLabel::Render(Graphics* graph){
 
 			// set text //
 			((GuiBasicText*)GComponents[1])->UpdateText(text, TextAdjustMode != GUI_BASICTEXT_MODE_JUSTRENDER, TextAdjustMode);
+
+			// adjust //
+			SizeAdjust();
 		}
 	}
 
@@ -238,10 +241,10 @@ void Leviathan::Gui::TextLabel::Render(Graphics* graph){
 	((ObjectBackground*)GComponents[0])->SetLocationData(Position, Size);
 
 	// location to text //
+	TextWantedCoordinates = Float2(Position.X+TextPadding, Position.Y+TextPaddingY);
 	((GuiBasicText*)GComponents[1])->SetPosition(TextWantedCoordinates);
 	
 	// render graphical components //
-
 	GComponents[0]->Render(RBridge.get(), graph);
 	GComponents[1]->Render(RBridge.get(), graph);
 }
@@ -258,6 +261,10 @@ void Leviathan::Gui::TextLabel::SizeAdjust(){
 
 		// send old size to background //
 		((ObjectBackground*)GComponents[0])->SetSize(Size);
+
+		// calculate initial area for text //
+		TextWantedCoordinates = Float2(Position.X+TextPadding, Position.Y+TextPaddingY);
+		TextAreaSize = Float2(Size.X-(TextPadding*2), Size.Y-(TextPaddingY*2));
 
 		// set position to text //
 		((GuiBasicText*)GComponents[1])->SetLocationData(TextWantedCoordinates, TextAreaSize);

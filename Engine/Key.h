@@ -10,8 +10,19 @@ enum KEYSPECIAL{ KEYSPECIAL_NONE = 0, KEYSPECIAL_SHIFT, KEYSPECIAL_ALT, KEYSPECI
 
 namespace Leviathan{
 
+	// base class to have pointers and house the lookup table for ease of use //
+	class BaseKey{
+	public:
+		virtual inline ~BaseKey(){
+		}
+
+	protected:
+		static map<int, wstring> KeySpecialStringRepresentationMap;
+	};
+
+
 	template<class T>
-	class Key /*: public Object*/{
+	class Key : public BaseKey{
 	public:
 		DLLEXPORT inline Key<T>(){
 			Extras = KEYSPECIAL_NONE;
@@ -21,7 +32,7 @@ namespace Leviathan{
 			Extras = additional;
 			Character = character;
 		}
-		DLLEXPORT inline Key::~Key(){
+		DLLEXPORT inline ~Key(){
 		}
 
 		DLLEXPORT inline bool Match(const Key<T> &other, bool strict = false) const{
@@ -49,6 +60,31 @@ namespace Leviathan{
 				return false;
 			}
 			return true;
+		}
+
+		DLLEXPORT inline wstring GenerateWstringMessage(const int &style = 0){
+			// create a string that represents this key //
+			if(style == 0){
+				// debug string //
+				UINT translated = MapVirtualKey((UINT)Character, MAPVK_VK_TO_CHAR);
+
+				wstring resultstr = L"Key["+Convert::ToWstring<wchar_t>((wchar_t)Character)+L":"+Convert::ToWstring(translated)+L"]=";
+
+				resultstr += Convert::ToWstring<T>(Character);
+				resultstr += L"(0x"+Convert::ToHexadecimalWstring<T>(Character)+L")+";
+
+				resultstr += KeySpecialStringRepresentationMap[Extras];
+				resultstr += L" :trsld_";
+				// don't want to add a null terminator to the string //
+				if(translated != 0)
+					resultstr += Convert::ToWstring<wchar_t>(wchar_t(translated));
+				resultstr += L"!";
+
+				return resultstr;
+			}
+			// various styles from which a key can be easily parsed //
+			DEBUG_BREAK;
+			return L"error";
 		}
 
 		DLLEXPORT bool Match(const T &chara, const KEYSPECIAL &additional, bool strict = false) const{

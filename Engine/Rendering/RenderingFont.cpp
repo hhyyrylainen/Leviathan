@@ -8,16 +8,11 @@ using namespace Leviathan;
 #include "DDsHandler.h"
 
 #include "FileSystem.h"
-#include "..\GuiPositionable.h"
 #include "..\DataStore.h"
 #include "Graphics.h"
-#include "..\ScaleableFreeTypeBitmap.h"
 #include "..\ExceptionInvalidType.h"
 
-RenderingFont::RenderingFont(){
-	// set initial data to NULL //
-	Textures = NULL;
-	FontsFace = NULL;
+RenderingFont::RenderingFont() : Textures(NULL), FontsFace(NULL), FontData(){
 }
 RenderingFont::~RenderingFont(){
 
@@ -30,14 +25,16 @@ DLLEXPORT bool Leviathan::RenderingFont::Init(ID3D11Device* dev, const wstring &
 	// get name from the filename //
 	Name = FileSystem::RemoveExtension(FontFile, true);
 
+	wstring completepath = FileSystem::GetFontFolder()+FontFile;
+
 	// load texture //
-	if(!LoadTexture(dev, FontFile)){
+	if(!LoadTexture(dev, completepath)){
 		Logger::Get()->Error(L"RenderingFont: Init: texture loading failed, file: "+FontFile);
 		return false;
 	}
 
 	// load character data //
-	if(!LoadFontData(dev, FontFile)){
+	if(!LoadFontData(dev, completepath)){
 		Logger::Get()->Error(L"RenderingFont: Init: could not load font data, file: "+FontFile, true);
 		return false;
 	}
@@ -53,25 +50,7 @@ void RenderingFont::Release(){
 	SAFE_DELETE_VECTOR(FontData);
 }
 // ------------------------------------ //
-DLLEXPORT float Leviathan::RenderingFont::CountLength(const wstring &sentence, float heightmod, int Coordtype){
-	// call another function, this is so that the parameters don't all need to be created to call it //
-	float delimiter = 0;
-	size_t lastfit = 0;
-	float fitlength = 0;
-	// actual counting //
-	return CalculateTextLengthAndLastFitting(heightmod, Coordtype, sentence, fitlength, lastfit, delimiter);
-}
-DLLEXPORT float Leviathan::RenderingFont::GetHeight(float heightmod, int Coordtype){
-	if(Coordtype != GUI_POSITIONABLE_COORDTYPE_RELATIVE)
-		return FontHeight*heightmod;
-	// if it is relative, scale height by window size // 
-	heightmod = ResolutionScaling::ScaleTextSize(heightmod);
-
-	// scale from screen height to promilles //
-	return (FontHeight*heightmod)/DataStore::Get()->GetHeight();
- }
-// ------------------------------------ //
-bool Leviathan::RenderingFont::LoadFontData(ID3D11Device* dev,const wstring &file){
+bool Leviathan::RenderingFont::LoadFontData(ID3D11Device* dev, const wstring &file){
 	// is data already in memory? //
 	if(FontData.size() > 0){
 		// it is //
@@ -142,8 +121,9 @@ bool Leviathan::RenderingFont::LoadFontData(ID3D11Device* dev,const wstring &fil
 		FontData[spot] = Curload.release();
 	}
 	reader.close();
-	// data loaded //
-	return true;
+
+	// this is still needed with cheap text for kerning data //
+	return _VerifyFontFTDataLoaded();
 }
 // ------------------------------------ //
 bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &file, bool forcegen /*= false*/){
@@ -185,9 +165,9 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 		int FillingRow = 0;
 		int CurrentRowLength = 0;
 		int RowX = 0;
-
+		// loop until all characters have been rendered //
 		while(!done){
-
+			// flags that are used to determine what to do after looping through characters //
 			bool Fitted = false;
 			bool CheckedAny = false;
 
@@ -204,7 +184,7 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 
 				wchar_t chartolook = (wchar_t)(i+32);
 
-				// check do we need to generate new object //
+				// check do we need to generate a new object //
 				if(FontData[i] == NULL){
 					// create new instance, with getting index of glyph //
 					unique_ptr<FontsCharacter> CurChar(new FontsCharacter(chartolook, FT_Get_Char_Index(FontsFace, chartolook)));
@@ -240,14 +220,12 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 				// accessibility ptr //
 				FontsCharacter* CurChar = FontData[i];
 				// now we can try to fit this character somewhere //
-
 				// check can it fit //
-				if(CurrentRowLength+FontData[i]->PixelWidth > RowMaxWidth){
+				if(CurrentRowLength+FontData[i]->PixelWidth+1 > RowMaxWidth){
 					// can not fit //
 					continue;
 				}
 				// it can fit, render it here //
-
 				// render bitmap //
 				errorcode = FT_Glyph_To_Bitmap(&CurChar->Generating->ThisRendered, FT_RENDER_MODE_NORMAL, NULL, true);
 				if(errorcode){
@@ -256,8 +234,7 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 				// get bitmap //
 				FT_Bitmap& charimg = ((FT_BitmapGlyph)CurChar->Generating->ThisRendered)->bitmap;
 
-
-				// important data for rendering //
+				// store important data for rendering //
 				CurChar->Generating->RenderedTop = ((FT_BitmapGlyph)CurChar->Generating->ThisRendered)->top;
 				CurChar->Generating->RenderedLeft = ((FT_BitmapGlyph)CurChar->Generating->ThisRendered)->left;
 
@@ -272,18 +249,15 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 
 				// copy bitmap //
 				FinishedImage.RenderFTBitmapIntoThis(BitmapPosX, BitmapPosY, charimg);
-				//FinishedImage.OutPutToFile1And0(L"testoutput.txt");
-				// set font data's texture coordinate positions //
+				// set font data's texture coordinate positions as pixel positions since we don't know final size //
 				FontData[i]->TopLeft = Float2((float)RowX, (float)RowY);
 				FontData[i]->BottomRight = Float2((float)(RowX+CurChar->AdvancePixels), (float)(RowY+FontHeight-1));
 
 				// increment StartX according to width //
 				RowX += CurChar->AdvancePixels+1;
 				CurrentRowLength = RowX+1;
-				// set as added //
-				FittedCharacters[i] = true;
-				// set that a character (at least one) fit to the current row //
-				Fitted = true;
+				// set as added and set that a character (at least one) fit to the current row //
+				FittedCharacters[i] = Fitted = true;
 
 				continue;
 				// fail check //
@@ -308,13 +282,11 @@ glyphprocesserrorlabel:
 			}
 		}
 		// font data is now almost done //
-
 		// make sure that width and height are dividable by 2 //
 		FinishedImage.MakeSizeDividableBy2();
 
 		// update the main image //
 		FinishedImage.UpdateStats();
-		//FinishedImage.OutPutToFile1And0(L"testoutput.txt");
 
 		int RImgWidth = FinishedImage.GetWidth();
 		int RImgHeight = FinishedImage.GetHeight();
@@ -332,7 +304,7 @@ glyphprocesserrorlabel:
 		// save FontData now that it has everything filled out //
 		WriteDataToFile();
 
-		// master image is now done //
+		// master image is now ready to be generated into a DDS bitmap //
 		size_t mimgbuffersize = 0;
 		int junk = 0;
 		// use bitmap's function to create a DDS //
@@ -347,15 +319,13 @@ glyphprocesserrorlabel:
 		if(!writer.is_open()){
 			// error //
 			Logger::Get()->Error(L"RenderingFont: LoadTexture: failed to write font texture to file: "+file);
-
 			SAFE_DELETE(MainImageBuffer);
 			return false;
 		}
+
 		// save the DDS file to actual file //
 		writer.write(MainImageBuffer, mimgbuffersize);
 		writer.close();
-
-		return false;
 
 		Logger::Get()->Info(L"RenderingFont: LoadTexture: successfully generated texture file: "+file);
 	}
@@ -372,96 +342,69 @@ glyphprocesserrorlabel:
 	return true;
 }
 // ------------------------------------ //
-bool Leviathan::RenderingFont::BuildVertexArray(VertexType* vertexptr, const wstring &text, float drawx, float drawy, float textmodifier, int Coordtype){
-	// if it is non absolute and translate size is true, scale height by window size // 
-	if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
+DLLEXPORT bool Leviathan::RenderingFont::BuildVertexArray(VertexType* vertexptr, const wstring &text, float drawx, float drawy, float textmodifier){
+	// set right size for kerning //
+	const UINT heightpixels = CalculatePixelSizeAtScale(textmodifier);
+	EnsurePixelSize(heightpixels);
 
-		textmodifier = ResolutionScaling::ScaleTextSize(textmodifier);
+	// index inside vertexptr array //
+	size_t index = 0;
+	assert(FontData.size() && "non initialized font in BuildVertexArray");
+
+	bool kerningcheck = FT_HAS_KERNING(FontsFace) != 0;
+
+	// draw letters to vertices //
+	for(size_t i = 0; i < text.size(); i++){
+		// whitespace check //
+		if(text[i] < L' '){
+			// just whitespace, jump over //
+			drawx += 3.0f*textmodifier;
+
+		} else {
+			const size_t letterindex = ConvertCharCodeToIndex(text[i]);
+
+			// add kerning //
+			if(kerningcheck){
+				// fetch kerning, if not first character //
+				if(i > 0){
+					// change render position according to kerning distance //
+					drawx += GetKerningBetweenCharacters(text[i-1], text[i]);
+				}
+			}
+
+			// first triangle //
+			// top left //
+			vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); 
+			vertexptr[index].texture = FontData[letterindex]->TopLeft;
+			index++;
+			// bottom right //
+			vertexptr[index].position = D3DXVECTOR3(drawx+(FontData[letterindex]->PixelWidth*textmodifier), drawy-(FontHeight*textmodifier), 0.0f); 
+			vertexptr[index].texture = FontData[letterindex]->BottomRight;
+			index++;
+			// bottom left //
+			vertexptr[index].position = D3DXVECTOR3(drawx, drawy-(FontHeight*textmodifier), 0.0f); 
+			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft.X, FontData[letterindex]->BottomRight.Y);
+			index++;
+			// second triangle //
+			// top left //
+			vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); 
+			vertexptr[index].texture = FontData[letterindex]->TopLeft;
+			index++;
+			// top right //
+			vertexptr[index].position = D3DXVECTOR3(drawx+(FontData[letterindex]->PixelWidth*textmodifier) , drawy, 0.0f); 
+			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight.X, FontData[letterindex]->TopLeft.Y);
+			index++;
+			// bottom right //
+			vertexptr[index].position = D3DXVECTOR3(drawx+(FontData[letterindex]->PixelWidth*textmodifier), drawy-(FontHeight*textmodifier), 0.0f); 
+			vertexptr[index].texture = FontData[letterindex]->BottomRight;
+			index++;
+
+			// update location //
+			drawx += FontData[letterindex]->AdvancePixels*textmodifier;
+		}
 	}
-	throw ExceptionInvalidType(L"commented out", 0, __WFUNCTION__, L"all", L"void");
-	//int index = 0;
-	//if(!FontData.size()){
-	//	Logger::Get()->Error(L"Trying to render font which doesn't have Fontdata");
-	//	Release();
-	//	SAFE_DELETE_ARRAY(vertexptr);
-	//	return false;
-	//}
-
-	//// draw letters to vertices //
-	//for(size_t i = 0; i < text.size(); i++){
-	//	int letterindex = ((int)text[i]) - 33; // no space character in letter data array //
-
-	//	if(letterindex < 1){
-	//		// space move pos over //
-	//		drawx += 3.0f*textmodifier;
-
-	//	} else {
-
-	//		if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
-
-	//			float AbsolutedWidth = FontData[letterindex]->PixelWidth*textmodifier;
-	//			float AbsolutedHeight = FontHeight*textmodifier;
-
-	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 0.0f);
-	//			index++;
-
-	//			vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth, drawy - AbsolutedHeight, 0.0f); // bottom right
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 1.0f);
-	//			index++;
-
-	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy - AbsolutedHeight, 0.0f); // bottom left
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 1.0f);
-	//			index++;
-	//			// second triangle //
-	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 0.0);
-	//			index++;
-
-	//			vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth , drawy, 0.0f); // top right
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 0.0f);
-	//			index++;
-
-	//			vertexptr[index].position = D3DXVECTOR3(drawx + AbsolutedWidth, drawy - AbsolutedHeight, 0.0f); // bottom right
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 1.0f);
-	//			index++;
-
-	//			// update location //
-	//			drawx += textmodifier*1.0f + (FontData[letterindex]->PixelWidth*textmodifier);
-
-	//		} else {
-
-	//			// first triangle //
-	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 0.0);
-	//			index++;
-
-	//			vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex]->PixelWidth*textmodifier) , drawy - (FontHeight*textmodifier), 0.0f); // bottom right
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 1.0f);
-	//			index++;
-
-	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy - (FontHeight*textmodifier), 0.0f); // bottom left
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 1.0f);
-	//			index++;
-	//			// second triangle //
-	//			vertexptr[index].position = D3DXVECTOR3(drawx, drawy, 0.0f); // top left
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->TopLeft, 0.0);
-	//			index++;
-
-	//			vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex]->PixelWidth*textmodifier) , drawy, 0.0f); // top right
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 0.0f);
-	//			index++;
-
-	//			vertexptr[index].position = D3DXVECTOR3(drawx + (FontData[letterindex]->PixelWidth*textmodifier), drawy - (FontHeight*textmodifier), 0.0f); // bottom right
-	//			vertexptr[index].texture = D3DXVECTOR2(FontData[letterindex]->BottomRight, 1.0f);
-	//			index++;
-
-	//			// update location //
-	//			drawx += textmodifier*1.0f + (FontData[letterindex]->PixelWidth*textmodifier);
-	//		}
-	//	}
-	//}
-	//return true;
+	// succeeded in constructing the vertex array //
+	return true;
 }
 
 DLLEXPORT bool Leviathan::RenderingFont::RenderSentenceToTexture(const int &TextureID, const float &sizemodifier, const wstring &text, 
@@ -475,33 +418,41 @@ DLLEXPORT bool Leviathan::RenderingFont::RenderSentenceToTexture(const int &Text
 	}
 
 	// set right size //
-	FT_Error errorcode = FT_Set_Pixel_Sizes(FontsFace, 0, (UINT)(32*sizemodifier+0.5f));
-	if(errorcode){
-		Logger::Get()->Error(L"RenderSentenceToTexture: FreeType: set pixel size failed", true);
-		return false;
-	}
+	const int heightpixels = CalculatePixelSizeAtScale(sizemodifier);
+	EnsurePixelSize(heightpixels);
+
 	// create bitmap matching "size" //
-	ScaleableFreeTypeBitmap bitmap((int)(text.size()*28*sizemodifier), (int)(32*sizemodifier+0.5f));
+	ScaleableFreeTypeBitmap bitmap((int)(text.size()*17*sizemodifier), heightpixels);
 
 	int PenPosition = 0;
 
 	// set base line to be 1/3 from the bottom (actually the top of the bitmap's coordinates) //
-	int baseline = (int)(((32*sizemodifier)/3)-0.5f);
-
-	bitmap.SetBaseLine((int)((32*sizemodifier)-baseline));
-
+	int baseline = heightpixels-(int)floorf(heightpixels/3.f);
+	
+	bitmap.SetBaseLine(baseline);
 
 	FT_GlyphSlot slot = FontsFace->glyph;
+
+	bool kerningcheck = FT_HAS_KERNING(FontsFace) != 0;
 
 	// fill it with data //
 	for(size_t i = 0; i < text.size(); i++){
 		if(text[i] < 32){
 			// whitespace //
-			PenPosition += 3;
+			PenPosition += (int)ceilf(3.f*sizemodifier);
 			continue;
 		}
+		// apply kerning //
+		if(kerningcheck){
+			// fetch kerning, if not first character //
+			if(i > 0){
+				// change pen position according to kerning distance //
+				PenPosition += (int)ceilf(GetKerningBetweenCharacters(text[i-1], text[i]));
+			}
+		}
+
 		// load glyph //
-		errorcode = FT_Load_Char(FontsFace, text[i], FT_LOAD_RENDER);
+		FT_Error errorcode = FT_Load_Char(FontsFace, text[i], FT_LOAD_RENDER);
 		if(errorcode){
 			Logger::Get()->Error(L"RenderSentenceToTexture: FreeType: failed to load glyph "+text[i]);
 			continue;
@@ -511,7 +462,8 @@ DLLEXPORT bool Leviathan::RenderingFont::RenderSentenceToTexture(const int &Text
 		FT_Bitmap& charimg = slot->bitmap;
 
 		int BitmapPosX = PenPosition+slot->bitmap_left;
-		int BitmapPosY = slot->bitmap_top-baseline;
+		//int BitmapPosY = abs(baseline-slot->bitmap_top);
+		int BitmapPosY = baseline-slot->bitmap_top;
 
 		// render the bitmap to the result bitmap //
 		bitmap.RenderFTBitmapIntoThis(BitmapPosX, BitmapPosY, charimg);
@@ -519,6 +471,8 @@ DLLEXPORT bool Leviathan::RenderingFont::RenderSentenceToTexture(const int &Text
 		// advance position //
 		PenPosition += slot->advance.x >> 6;
 	}
+	// ensure that texture is dividable 2 //
+	bitmap.MakeSizeDividableBy2();
 	// determine based on parameters what to do //
 
 	// use the method to create DDS file to memory //
@@ -551,14 +505,6 @@ DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const float &Siz
 	// calculate theoretical max height //
 	float TMax = BoxToFit.Y/GetHeight(1, CoordType);
 
-
-	// make absolute modifier //
-	if(CoordType == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
-
-		TMax = ResolutionScaling::ScaleTextSize(TMax);
-	}
-
-
 	// calculate length of 3 dots //
 	float dotslength = CalculateDotsSizeAtScale(TMax);
 
@@ -568,45 +514,57 @@ DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const float &Siz
 	if(Charindexthatfits == text.size()-1){
 		// everything fits at the maximum size //
 		// set data and return //
-		EntirelyFitModifier = HybridScale = ResolutionScaling::UnScaleTextFromSize(TMax);
+		EntirelyFitModifier = HybridScale = TMax;
 		Finallength = Float2(CalculatedTotalLength, GetHeight(TMax, CoordType));
 
 		return true;
 	}
+	// finding a scale at which the text could fit entirely //
+	float AdjustedScale = TMax;
 
-	// check at which scale the text would entirely fit //
-	// AdjustedScale = original * (wanted length/got length)
-	float AdjustedScale = TMax*(BoxToFit.X/CalculatedTotalLength);
 
-	// adjusted scale is now the scale that allows all characters to fit //
-	EntirelyFitModifier = ResolutionScaling::UnScaleTextFromSize(AdjustedScale);
+	int itrs = 0;
+	// it isn't 100% accurate so we need to loop //
+	while(Charindexthatfits != text.size()-1){
+		itrs++;
 
-	// check is it too low //
-	if(AdjustedScale < scaletocutfrom*TMax){
-		// we are going to need to count the spot where the text needs to be cut with scaletocutfrom*TMax //
-		HybridScale = ResolutionScaling::UnScaleTextFromSize(scaletocutfrom*TMax);
+		// check at which scale the text would entirely fit //
+		// AdjustedScale = original * (wanted length/got length)
+		AdjustedScale = AdjustedScale*((BoxToFit.X/CalculatedTotalLength));
 
-		// new length to dots //
-		dotslength = CalculateDotsSizeAtScale(scaletocutfrom*TMax);
+		// adjusted scale is now the scale that allows all characters to fit //
+		EntirelyFitModifier = AdjustedScale;
 
-		CalculatedTotalLength = CalculateTextLengthAndLastFitting(scaletocutfrom*TMax, CoordType, text, BoxToFit.X, Charindexthatfits, dotslength);
+		// check is it too low //
+		if(AdjustedScale < scaletocutfrom*TMax){
+			// we are going to need to count the spot where the text needs to be cut with scaletocutfrom*TMax //
+			HybridScale = scaletocutfrom*TMax;
 
-		Finallength = Float2(CalculatedTotalLength, GetHeight(scaletocutfrom*TMax, CoordType));
-		return true;
+			// new length to dots //
+			dotslength = CalculateDotsSizeAtScale(scaletocutfrom*TMax);
+
+			CalculatedTotalLength = CalculateTextLengthAndLastFitting(scaletocutfrom*TMax, CoordType, text, BoxToFit.X, Charindexthatfits, dotslength);
+
+			Finallength = Float2(CalculatedTotalLength, GetHeight(scaletocutfrom*TMax, CoordType));
+			return true;
+		}
+
+		// we can use adjusted scale to fit everything //
+		HybridScale = EntirelyFitModifier;
+
+		dotslength = CalculateDotsSizeAtScale(AdjustedScale);
+		CalculatedTotalLength = CalculateTextLengthAndLastFitting(AdjustedScale, CoordType, text, BoxToFit.X, Charindexthatfits, dotslength);
+
+
+		Finallength = Float2(CalculatedTotalLength, GetHeight(AdjustedScale, CoordType));
+
+		// code will loop here if the scale was a bit too high //
+
+		if(itrs > 2){
+			// quite excessive iteration //
+			DEBUG_BREAK;
+		}
 	}
-
-	// we can use adjusted scale to fit everything //
-	HybridScale = EntirelyFitModifier;
-
-	dotslength = CalculateDotsSizeAtScale(AdjustedScale);
-	CalculatedTotalLength = CalculateTextLengthAndLastFitting(AdjustedScale, CoordType, text, BoxToFit.X, Charindexthatfits, dotslength);
-
-	if(Charindexthatfits != text.size()-1){
-		// something is definitely wrong //
-		DEBUG_BREAK;
-	}
-
-	Finallength = Float2(CalculatedTotalLength, GetHeight(AdjustedScale, CoordType));
 
 	return true;
 }
@@ -614,31 +572,44 @@ DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const float &Siz
 float Leviathan::RenderingFont::CalculateTextLengthAndLastFitting(float TextSize, int CoordType, const wstring &text, const float &fitlength, 
 	size_t & Charindexthatfits, float delimiterlength)
 {
-	// TextSize is most likely already adjusted with CoordType so don't adjust here //
-	float CalculatedTotalLength = 0.f;
+	// set right size for kerning //
+	const int heightpixels = CalculatePixelSizeAtScale(TextSize);
+	if(!EnsurePixelSize(heightpixels)){
+		Logger::Get()->Error(L"RenderingFont: CalculateTextLengthAndLastFitting: set pixel size failed, cannot calculate");
+		return -1;
+	}
 
+	// calculated length after done //
+	float CalculatedTotalLength = 0.f;
 	bool FitsIfLastFits = false;
+	// used in checking if character would fit to the box //
 	float curneededlength = 0;
 
-	// calculate length using the theoretical maximum size //
+	// kerning flag //
+	bool kerningcheck = FT_HAS_KERNING(FontsFace) != 0;
+
+	// calculate length using the provided size //
 	for(size_t i = 0; i < text.size(); i++){
 		// check is this whitespace //
-		if(text[i] <= L' '){
+		if(text[i] < L' '){
 			// white space //
 			CalculatedTotalLength += 3.0f*TextSize;
 		} else {
+			// add kerning //
+			if(kerningcheck){
+				// fetch kerning, if not first character //
+				if(i > 0){
+					// change pen position according to kerning distance //
+					CalculatedTotalLength += GetKerningBetweenCharacters(text[i-1], text[i]);
+				}
+			}
+
 			// get size from letter index //
-			int letterindex = ((int)text[i])-33; // no space character in letter data array //
-
-
-			CalculatedTotalLength += 1.f*TextSize+FontData[letterindex]->PixelWidth*TextSize;
+			CalculatedTotalLength += FontData[ConvertCharCodeToIndex(text[i])]->AdvancePixels*TextSize;
 		}
 
-		bool Jumped = false;
-
 textfittingtextstartofblocklabel:
-
-
+		// get length that would need to fit here and check would it actually fit //
 		if(FitsIfLastFits){
 			// we need to only check if last character fits //
 			if(i+1 < text.size()){
@@ -652,39 +623,38 @@ textfittingtextstartofblocklabel:
 
 		} else {
 			// check does this character and dots fit to the "box" //
-			curneededlength = (CalculatedTotalLength+delimiterlength);
+			curneededlength = CalculatedTotalLength+delimiterlength;
 		}
 
+		// if coordinates are relative the box is too and the length needs to be made relative //
 		if(CoordType == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
 
 			curneededlength /= DataStore::Get()->GetWidth();
 		}
 
-		// would all this stuff fit //
+		// check would all this stuff fit //
 		if(curneededlength <= fitlength){
-			// check are we trying to fit last character //
-			if(FitsIfLastFits){
-				// last character was able to fit without delimiting characters //
-				Charindexthatfits = i;
-
-			} else {
-				// this character would fit with truncation to the box //
-				Charindexthatfits = i;
-			}
+			// this character would fit with truncation to the box (or is last character and would fit on its own) //
+			Charindexthatfits = i;
+			
 		} else {
+			// skip this if already set //
+			if(FitsIfLastFits)
+				continue;
+
 			// this character wouldn't fit if it had to be cut from here //
 			FitsIfLastFits = true;
 
 			// check is this last character, because then we need to go back and check without delimiter //
-			if(i+1 >= text.size() && !Jumped){
-				// set jumped so that we can't get stuck in an infinite loop //
-				Jumped = true;
+			if(i+1 >= text.size() /*&& !Jumped*/){
+				//// set jumped so that we can't get stuck in an infinite loop //
+				//Jumped = true;
+				// can't get stuck anymore...
 				goto textfittingtextstartofblocklabel;
 			}
 		}
 	}
-
-	// update total length //
+	// update total length if relative //
 	if(CoordType == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
 
 		CalculatedTotalLength /= DataStore::Get()->GetWidth();
@@ -693,9 +663,6 @@ textfittingtextstartofblocklabel:
 	return CalculatedTotalLength;
 }
 
-float Leviathan::RenderingFont::CalculateDotsSizeAtScale(const float &scale){
-	return 3.f*(FontData[L'.'-32]->AdvancePixels*scale+1.f*scale);
-}
 // ------------------------------------ //
 bool Leviathan::RenderingFont::_VerifyFontFTDataLoaded(){
 	// verify FreeType 2 //
@@ -816,6 +783,19 @@ bool Leviathan::RenderingFont::CheckFreeTypeLoad(){
 	return true;
 }
 
+DLLEXPORT bool Leviathan::RenderingFont::EnsurePixelSize(const int &size){
+	if(SetSize != size){
+		// set the face size //
+		SetSize = size;
+
+		FT_Error errorcode = FT_Set_Pixel_Sizes(FontsFace, 0, SetSize);
+		if(errorcode){
+			Logger::Get()->Error(L"RenderSentenceToTexture: FreeType: set pixel size failed", true);
+			return false;
+		}
+	}
+	return true;
+}
 
 // ------------------ FontsCharacter ------------------ //
 Leviathan::FontsCharacter::FontsCharacter(const int &charcode, const FT_UInt &glyphindex /*= 0*/) : TopLeft(0, 0), BottomRight(0, 0), PixelWidth(0),

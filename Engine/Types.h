@@ -321,6 +321,12 @@ namespace Leviathan{
 		DLLEXPORT inline static Float2 y_axis(){
 			return Float2(0.f, 1.f);
 		}
+		// ----------------- casts ------------------- //
+		// waiting for Microsoft's compilers to add support for "explicit" here //
+		DLLEXPORT inline operator D3DXVECTOR2(){
+			return D3DXVECTOR2(X, Y);
+		}
+
 
 		// data //
 		float X, Y; 
@@ -501,7 +507,7 @@ namespace Leviathan{
 			return Float3(0.f, 0.f, 1.f);
 		}
 		// ----------------- casts ------------------- //
-		// waiting for microsoft's compilers to add support for "explicit" here //
+		// waiting for Microsoft's compilers to add support for "explicit" here //
 		DLLEXPORT inline operator D3DXVECTOR3(){
 			return D3DXVECTOR3(X, Y, Z);
 		}

@@ -23,11 +23,7 @@ EngineComponent::EngineComponent(){
 bool EngineComponent::Init(){
 	return true;
 }
-bool EngineComponent::Release(bool all){
-	return true;
-}
-bool EngineComponent::IsInited(){
-	return Inited;
+void EngineComponent::Release(){
 }
 
 DLLEXPORT Leviathan::Object::Object(){

@@ -65,8 +65,8 @@ using namespace std;
 #include <d3d9.h>
 // -------------------------- //
 #define CLASSNAME	L"LeviathanWindow"
-#define VERSION		0.391f
-#define VERSIONS	L"0.3.9.1"
+#define VERSION		0.400f
+#define VERSIONS	L"0.4.0.0"
 #define LEVIATHAN
 
 #define PI 3.14159265
@@ -204,5 +204,7 @@ namespace Leviathan{
 #include "ExceptionBase.h"
 
 #include "TimingMonitor.h"
+// speed up compile times with leap //
+#include "leap.h"
 
 #endif

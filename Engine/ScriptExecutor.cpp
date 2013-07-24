@@ -66,7 +66,7 @@ bool ScriptExecutor::Init(){
 
 	return true;
 }
-bool ScriptExecutor::Release(){
+void ScriptExecutor::Release(){
 	// release AngelScript //
 	engine->Release();
 	engine = NULL;
@@ -75,8 +75,6 @@ bool ScriptExecutor::Release(){
 		SAFE_DELETE(Modules[0]);
 		Modules.erase(Modules.begin());
 	}
-
-	return true;
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunScript(ScriptScript* script, vector<shared_ptr<NamedVariableBlock>> parameters, 

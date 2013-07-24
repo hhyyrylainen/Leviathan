@@ -35,6 +35,7 @@
 
 #include "BasePositionable.h"
 #include "ObjectFileProcessor.h"
+#include "LeapManager.h"
 
 // monitoring //
 #include "RenderingStatistics.h"
@@ -99,6 +100,7 @@ namespace Leviathan{
 		DLLEXPORT GeometryAdvancedLoader* GetAdvancedGeometryHandler(){ return AdvancedGeometryFiles; };
 		DLLEXPORT AnimationManager* GetAnimationManager(){ return AnimManager; };
 		DLLEXPORT KeyPressManager* GetKeyPresManager(){ return KeyListener; };
+		DLLEXPORT LeapManager* GetLeapManager(){ return LeapData;};
 
 		// static access //
 		DLLEXPORT static Engine* GetEngine();
@@ -136,6 +138,7 @@ namespace Leviathan{
 
 		ObjectManager* GObjects;
 		ObjectLoader* Loader;
+		LeapManager* LeapData;
 
 		Random* MainRandom;
 

@@ -78,7 +78,7 @@ namespace Leviathan{
 		DLLEXPORT ScriptExecutor::~ScriptExecutor();
 
 		DLLEXPORT bool Init();
-		DLLEXPORT bool Release();
+		DLLEXPORT void Release();
 
 		// script running commands //
 		DLLEXPORT shared_ptr<VariableBlock> RunScript(ScriptScript* script, vector<shared_ptr<NamedVariableBlock>> parameters, bool printerrors, 

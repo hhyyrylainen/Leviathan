@@ -19,7 +19,7 @@ Leviathan::Logger::Logger(){
 
 	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
 
-	log = L"Start of Leviathan log. leviathan version :"+Convert::FloatToWstring(VERSION)+L"\n------------------------TIME: "+times+L"----------------------\n";
+	log = L"Start of Leviathan log. leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
 
 	Autosave = true;
 	Saved = true;
@@ -38,7 +38,7 @@ Leviathan::Logger::Logger(const wstring &start, bool autosave){
 
 	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
 	log += start;
-	log += L"Start of Leviathan log. leviathan version :"+Convert::FloatToWstring(VERSION)+L"\n------------------------TIME: "+times+L"----------------------\n";
+	log += L"Start of Leviathan log. leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
 
 	Autosave = autosave;
 	Saved = true;

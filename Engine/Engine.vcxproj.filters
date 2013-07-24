@@ -118,6 +118,9 @@
     <Filter Include="gui\objects\TextLabel">
       <UniqueIdentifier>{b7d6167e-5bac-45a8-80e5-876f589a4368}</UniqueIdentifier>
     </Filter>
+    <Filter Include="core\managers\leap">
+      <UniqueIdentifier>{a0f58301-f22b-42dd-b9ca-d7997aceb5a6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp">
@@ -512,6 +515,12 @@
     </ClCompile>
     <ClCompile Include="Key.cpp">
       <Filter>utility</Filter>
+    </ClCompile>
+    <ClCompile Include="LeapManager.cpp">
+      <Filter>core\managers\leap</Filter>
+    </ClCompile>
+    <ClCompile Include="LeapListener.cpp">
+      <Filter>core\managers\leap</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -923,6 +932,12 @@
     </ClInclude>
     <ClInclude Include="ScaleableFreeTypeBitmap.h">
       <Filter>utility</Filter>
+    </ClInclude>
+    <ClInclude Include="LeapManager.h">
+      <Filter>core\managers\leap</Filter>
+    </ClInclude>
+    <ClInclude Include="LeapListener.h">
+      <Filter>core\managers\leap</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

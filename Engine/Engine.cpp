@@ -7,7 +7,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "Application.h"
 
-Leviathan::Engine::Engine(){
+Leviathan::Engine::Engine() : LeapData(NULL){
 
 	Mainlog = NULL;
 	Inited = false;
@@ -219,6 +219,25 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 		return false;
 	}
 
+	// create leap controller //
+	LeapData = new LeapManager(this);
+	if(!LeapData){
+		Logger::Get()->Error(L"Engine: 008");
+		return false;
+	}
+	// try here just in case //
+	try{
+		if(!LeapData->Init()){
+
+			Logger::Get()->Info(L"Engine: Init: No Leap controller found, not using one");
+		}
+	}
+	catch(...){
+		// threw something //
+		Logger::Get()->Error(L"Engine: Init: Leap threw something, even without leap this shouldn't happen; continuing anyway");
+	}
+
+
 	// create camera that always exists //
 	MainCamera = new ViewerCameraPos();
 	MainCamera->SetMouseMode(true);
@@ -333,9 +352,8 @@ bool Leviathan::Engine::ShutDownEngine(){
 	// Gui is very picky about delete order
 	SAFE_RELEASEDEL(Gui);
 
-
+	SAFE_RELEASEDEL(LeapData);
 	SAFE_DELETE(MainCamera);
-
 
 	SAFE_RELEASEDEL(MainScript);
 	// save at this point (just in case it crashes before exiting) //
@@ -364,9 +382,8 @@ bool Leviathan::Engine::ShutDownEngine(){
 
 	SAFE_DELETE(MTimer);
 
-	Wind = NULL;
 	SAFE_DELETE(Mainlog);
-	this->Inited = false;
+
 
 	// delete randomizer last, for obvious reasons //
 	SAFE_DELETE(MainRandom);
@@ -374,8 +391,8 @@ bool Leviathan::Engine::ShutDownEngine(){
 	// safe to delete this here //
 	SAFE_DELETE(OutOMemory);
 
+	this->Inited = false;
 	return true;
-
 }
 // ------------------------------------ //
 void Leviathan::Engine::Tick(bool Force){
@@ -393,6 +410,7 @@ void Leviathan::Engine::Tick(bool Force){
 	
 	// update input //
 	Inputs->Update();
+	LeapData->OnTick(TimePassed);
 
 	// sound tick //
 	Sound->Tick(TimePassed);

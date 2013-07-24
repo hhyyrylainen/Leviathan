@@ -32,14 +32,16 @@ namespace Leviathan{
 	protected:
 
 	};
-
+	// has no virtual destructor, objects may not be pointed by this base class //
 	class EngineComponent : public Object{
 	public:
 		DLLEXPORT EngineComponent();
 
 		DLLEXPORT virtual bool Init();
-		DLLEXPORT virtual bool Release(bool all);
-		DLLEXPORT virtual bool IsInited();
+		DLLEXPORT virtual void Release();
+		DLLEXPORT inline bool IsInited(){
+			return Inited;
+		}
 	protected:
 		bool Inited;
 

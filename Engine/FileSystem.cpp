@@ -1026,7 +1026,7 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wst
 		// cannot be loaded //
 		assert(SIZE_T_MAX >= rpos);
 
-		resultreceiver.resize(rpos);
+		resultreceiver.resize((UINT)rpos);
 		// back to start //
 		reader.seekg(0, ios::beg);
 		// read the actual data //

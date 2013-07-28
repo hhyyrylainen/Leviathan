@@ -90,6 +90,10 @@ void TextureManager::TimePass(int mspassed){
 		if(VolatileGenerated[i]->UnusedTime >= 60*1000){
 			// hasn't been used for a minute //
 			// erase it (if somebody misses it they will regenerate it //
+#ifdef _DEBUG
+			Logger::Get()->Info(L"TextureManager: unloading volatile, source: "+*VolatileGenerated[i]->GetSourceFile());
+#endif // _DEBUG
+
 
 			VolatileGenerated[i]->UnLoad(true);
 

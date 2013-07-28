@@ -173,31 +173,17 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 		if(Shift && Ctrl && Alt)
 			break;
 	}
-	//CallEvent(new Event(EVENT_TYPE_GUIENABLE, NULL));
 
 	const KEYSPECIAL specialstates = Leviathan::GKey::ConstructSpecial(Shift, Alt, Ctrl);
-
-	//Engine::GetEngine()->SetGuiActive(true);
-	// pop action //
-	//ReceivedPresses.erase(ReceivedPresses.begin()+i);
 	
 	if(DataStore::Get()->GetGUiActive()){
 		// send presses to objects //
 		bool lol = false;
 
-
 		for(unsigned int i = 0; i < ReceivedPresses.size(); i++){
 			// generate key //
 			GKey current = GKey(ReceivedPresses[i]->KeyCode, specialstates);
-
-			if(!lol){
-				lol = true;
-				DEBUG_OUTPUT_AUTOPLAINTEXT(L"--------------");
-			}
-
-			DEBUG_OUTPUT_AUTO(current.GenerateWstringMessage());
-
-
+						
 			// first we need to check the foreground object if it wants this key press //
 			if(Foreground){
 
@@ -225,6 +211,15 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 
 			// only allow collections to act to key presses //
 			if(ReceivedPresses[i]->Type == GUI_KEYSTATE_TYPE_KEYPRESS){
+
+				if(!lol){
+					lol = true;
+					DEBUG_OUTPUT_AUTOPLAINTEXT(L"--------------");
+				}
+
+				DEBUG_OUTPUT_AUTO(current.GenerateWstringMessage());
+
+
 				// check does a collection want to do something //
 				if(GuiComboPress(current)){
 					// press is now consumed //
@@ -248,11 +243,6 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 			}
 			// nobody wanted it //
 		}
-
-		if(lol){
-			DEBUG_OUTPUT_AUTOPLAINTEXT(L"--------------");
-		}
-
 
 	} else {
 		// check should Gui turn on //

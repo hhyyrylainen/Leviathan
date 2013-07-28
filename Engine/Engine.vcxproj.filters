@@ -121,6 +121,9 @@
     <Filter Include="core\managers\leap">
       <UniqueIdentifier>{a0f58301-f22b-42dd-b9ca-d7997aceb5a6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="core\debug helpers">
+      <UniqueIdentifier>{54d8db54-ce34-4e40-8a19-311e496be699}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp">
@@ -521,6 +524,9 @@
     </ClCompile>
     <ClCompile Include="LeapListener.cpp">
       <Filter>core\managers\leap</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugVariableNotifier.cpp">
+      <Filter>core\debug helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -938,6 +944,9 @@
     </ClInclude>
     <ClInclude Include="LeapListener.h">
       <Filter>core\managers\leap</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugVariableNotifier.h">
+      <Filter>core\debug helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

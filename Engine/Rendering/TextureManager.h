@@ -41,6 +41,11 @@ namespace Leviathan{
 
 		DLLEXPORT ID3D11ShaderResourceView* GetTextureView(int id, int whichfirst, bool nooldsearch = false);
 		DLLEXPORT ManagedTexture* GetTexture(int id, int whichfirst, bool nooldsearch = false);
+		// compares supplied pointer with the error texture's pointer //
+		DLLEXPORT inline bool IsTextureError(const ManagedTexture* possibleerrorptr){
+			// compare to error pointer //
+			return ErrorTexture.get() == possibleerrorptr;
+		}
 
 	private:
 		Graphics* GraphInter;

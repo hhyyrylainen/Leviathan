@@ -68,6 +68,22 @@ DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
 		Failed = true;
 	}
 
+	// text to text check //
+	VariableBlock tblocky(wstring(L"this is a test text that should be intact"));
+
+	wstring checkvalue(L"");
+
+	if(!tblocky.ConvertAndAssingToVariable<wstring>(checkvalue)){
+
+		Failed = true;
+	}
+	// compare //
+	if(checkvalue != L"this is a test text that should be intact"){
+
+		QUICK_ERROR_MESSAGE;
+		Failed = true;
+	}
+
 	// check fail state //
 	if(Failed){
 

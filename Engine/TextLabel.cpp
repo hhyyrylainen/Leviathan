@@ -16,6 +16,7 @@ using namespace Leviathan::Gui;
 #include "GuiBasicText.h"
 #include "Rendering\ColorQuad.h"
 #include "Rendering\RenderingResourceCreator.h"
+#include "DebugVariableNotifier.h"
 
 
 Leviathan::Gui::TextLabel::TextLabel(int id, const Float2 &position, Float2 &size, int autoadjust) : Positionable(position, size), GComponents(2){
@@ -54,9 +55,15 @@ Leviathan::Gui::TextLabel::~TextLabel(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstring &font, const Float4 &textcolor, float textsize, 
-	const Float4 &color1, const Float4 &color2, vector<shared_ptr<VariableBlock>>* listenindexes)
+	const Float4 &color1, const Float4 &color2, const float &padding, const float &paddingy, const float &textscalecut, 
+	vector<shared_ptr<VariableBlock>>* listenindexes /*= NULL*/)
 {
 	Updated = true;
+
+	TextPadding = padding;
+	TextPaddingY = paddingy;
+
+	TextWantedCutSize = textscalecut;
 
 	// initialize graphical components //
 	if(GComponents.size() != 2)
@@ -92,7 +99,9 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstrin
 	if(AutoAdjust > 1)
 		TextAdjustMode = GUI_BASICTEXT_MODE_TRYTOAUTOFIT;
 
-	if(!((GuiBasicText*)GComponents[1])->Init(textcolor, text, font, textsize, TextAdjustMode != GUI_BASICTEXT_MODE_JUSTRENDER, TextAdjustMode)){
+	if(!((GuiBasicText*)GComponents[1])->Init(textcolor, text, font, textsize, TextAdjustMode != GUI_BASICTEXT_MODE_JUSTRENDER, TextAdjustMode, 
+		TextWantedCutSize))
+	{
 
 		QUICK_ERROR_MESSAGE;
 		return false;
@@ -117,7 +126,7 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstrin
 	return true;
 }
 void Leviathan::Gui::TextLabel::Release(){
-	// send close message //
+	// TODO: send close message to script //
 
 	// close Graphical components //
 	while(GComponents.size()){
@@ -249,11 +258,6 @@ void Leviathan::Gui::TextLabel::Render(Graphics* graph){
 	GComponents[1]->Render(RBridge.get(), graph);
 }
 // ------------------------------------ //
-void Leviathan::Gui::TextLabel::SetHiddenState(bool hidden){
-	Updated = true;
-	this->Hidden = hidden;
-}
-// ------------------------------------ //
 void Leviathan::Gui::TextLabel::SizeAdjust(){
 
 	if(AutoAdjust > 1){
@@ -265,6 +269,9 @@ void Leviathan::Gui::TextLabel::SizeAdjust(){
 		// calculate initial area for text //
 		TextWantedCoordinates = Float2(Position.X+TextPadding, Position.Y+TextPaddingY);
 		TextAreaSize = Float2(Size.X-(TextPadding*2), Size.Y-(TextPaddingY*2));
+
+		//DebugVariableNotifier::UpdateVariable(L"TextLabel::TextAreaSize::X", new VariableBlock(TextAreaSize.X));
+		//DebugVariableNotifier::UpdateVariable(L"TextLabel::TextWantedCoordinates::X", new VariableBlock(TextWantedCoordinates.X));
 
 		// set position to text //
 		((GuiBasicText*)GComponents[1])->SetLocationData(TextWantedCoordinates, TextAreaSize);
@@ -457,15 +464,8 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::UpdateText(const wstring &text, bool i
 
 	return ((GuiBasicText*)GComponents[1])->UpdateText(text, isexpensive, TextAdjustMode);
 }
-// ------------------------------------ //
-void Leviathan::Gui::TextLabel::_SetHiddenStates(bool states){
-	// set whole bridge as hidden //
-	RBridge->Hidden = states;
-	//// these two aren't even required //
-	//RBridge->SetHidden(0, states);
-	//RBridge->SetHidden(1, states);
-}
 
+// ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::TextLabel::QueueAction(shared_ptr<AnimationAction> act){
 	AnimationQueue.push_back(act);
 }
@@ -513,6 +513,9 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(vector<BaseGuiOb
 
 	float TextSize = 1.0f;
 	int AutoAdjust = 1;
+	float TextCutScale = 0.4f;
+	float Padding = 0;
+	float PaddingY = 0;
 	wstring Font = L"arial";
 
 	vector<bool> AreIndexes;
@@ -539,9 +542,16 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(vector<BaseGuiOb
 			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"TextSizeMod", TextSize, 1.f, true,
 				L"TextLabel: LoadFromFileStructure:");
 
-			ObjectFileProcessor::LoadValueFromNamedVars<int>(dataforthis.Contents[a]->Variables, L"AutoAdjust", AutoAdjust, 1, true, 
+			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"Padding", Padding, 0.07f, true,
 				L"TextLabel: LoadFromFileStructure:");
 
+			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"PaddingY", PaddingY, 0.02f, true,
+				L"TextLabel: LoadFromFileStructure:");
+
+			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"TextCutScale", TextCutScale, 0.4f, false);
+
+			ObjectFileProcessor::LoadValueFromNamedVars<int>(dataforthis.Contents[a]->Variables, L"AutoAdjust", AutoAdjust, 1, true, 
+				L"TextLabel: LoadFromFileStructure:");
 
 			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(dataforthis.Contents[a]->Variables, L"StartText", text, L"", true,
 				L"TextLabel: LoadFromFileStructure:");
@@ -549,10 +559,9 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(vector<BaseGuiOb
 			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(dataforthis.Contents[a]->Variables, L"Font", Font, L"Arial", true,
 				L"TextLabel: LoadFromFileStructure:");
 
-
+			
 
 			// listen on should allow strings and multiple numbers //
-			
 			try{
 				vector<VariableBlock*>* listenvalues = dataforthis.Contents[a]->Variables->GetValues(L"ListenOn");
 
@@ -607,11 +616,24 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(vector<BaseGuiOb
 
 
 	// init with correct values //
-	curlabel->Init(text, Font, TextColor, TextSize, StartColor, EndColor, &ListenIndexes);
+	curlabel->Init(text, Font, TextColor, TextSize, StartColor, EndColor, Padding, PaddingY, TextCutScale, &ListenIndexes);
 	curlabel->Scripting = shared_ptr<ScriptObject>(dataforthis.CreateScriptObjectAndReleaseThis(0, GOBJECT_TYPE_TEXTLABEL));
 
 	// succeeded //
 	return true;
+}
+// ------------------------------------ //
+void Leviathan::Gui::TextLabel::SetHiddenState(bool hidden){
+	Updated = true;
+	this->Hidden = hidden;
+}
+
+void Leviathan::Gui::TextLabel::_SetHiddenStates(bool states){
+	// set whole bridge as hidden //
+	RBridge->Hidden = states;
+	//// these two aren't even required //
+	//RBridge->SetHidden(0, states);
+	//RBridge->SetHidden(1, states);
 }
 
 void Leviathan::Gui::TextLabel::_OnLocationOrSizeChange(){

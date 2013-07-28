@@ -497,13 +497,13 @@ DLLEXPORT bool Leviathan::RenderingFont::RenderSentenceToTexture(const int &Text
 	Graphics::Get()->GetTextureManager()->AddVolatileGenerated(TextureID, L"RenderingFont", tempview);
 
 
-	DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::Bitmap::Width", new VariableBlock(bitmap.GetWidth()
-		/(float)DataStore::Get()->GetWidth()));
-	DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::Bitmap::Height", new VariableBlock(bitmap.GetHeight()
-		/(float)DataStore::Get()->GetHeight()));
-	DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::used::sizemodifier", new VariableBlock(sizemodifier));
-	DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::used::Text", new VariableBlock(text));
-	DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::used::Text::size", new VariableBlock((int)text.size()));
+	//DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::Bitmap::Width", new VariableBlock(bitmap.GetWidth()
+	//	/(float)DataStore::Get()->GetWidth()));
+	//DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::Bitmap::Height", new VariableBlock(bitmap.GetHeight()
+	//	/(float)DataStore::Get()->GetHeight()));
+	//DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::used::sizemodifier", new VariableBlock(sizemodifier));
+	//DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::used::Text", new VariableBlock(text));
+	//DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::used::Text::size", new VariableBlock((int)text.size()));
 
 	// release memory //
 	SAFE_DELETE(FileInMemory);
@@ -519,7 +519,7 @@ DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const Float2 &Bo
 	// calculate length of 3 dots //
 	float dotslength = CalculateDotsSizeAtScale(TMax);
 
-	float CalculatedTotalLength = CalculateTextLengthAndLastFitting(TMax, CoordType, text, BoxToFit.X, Charindexthatfits, dotslength);
+	float CalculatedTotalLength = CalculateTextLengthAndLastFittingExpensive(TMax, CoordType, text, BoxToFit.X, Charindexthatfits, dotslength);
 
 	// check did all fit //
 	if(Charindexthatfits == text.size()-1){
@@ -528,84 +528,64 @@ DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const Float2 &Bo
 		EntirelyFitModifier = HybridScale = TMax;
 		Finallength = Float2(CalculatedTotalLength, GetHeight(TMax, CoordType));
 
-
-		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::Finallength", new VariableBlock(Convert::ToWstring(Finallength.X)+
-			L"|"+Convert::ToWstring(Finallength.Y)));
-		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::HybridScale", new VariableBlock(HybridScale));
-		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::TMax", new VariableBlock(TMax));
-		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::CalculatedTotalLength", new VariableBlock(CalculatedTotalLength));
-		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::FitLength", new VariableBlock((int)Charindexthatfits));
-		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::EndCase", new VariableBlock(wstring(L"max fit")));
 		return true;
 	}
 	// finding a scale at which the text could fit entirely //
-	float AdjustedScale = TMax;
+	float MinWantedScale = TMax*scaletocutfrom;
 
+	float LowVal = TMax*(scaletocutfrom/3);
+	// how well the length needs to match //
+	const float threshold = 0.02f;
 
+	// looping variables //
+	bool Stop = false;
 	int itrs = 0;
-	// it isn't 100% accurate so we need to loop //
-	while(Charindexthatfits != text.size()-1){
+	// loop until we have narrowed down to under threshold //
+	while((TMax - LowVal) > threshold){
+		// calculate size to test this on //
+		float TestSize = (TMax+LowVal)/2;
+
+		// Use Low value so that we undershoot rather than overshoot //
+		HybridScale = LowVal;
+
+		// check is scale too low //
+		if(TestSize <= MinWantedScale){
+			// calculate values at the lowest possibly wanted value //
+			TestSize = MinWantedScale;
+			// and break afterwards //
+			Stop = true;
+			// update return value //
+			HybridScale = TestSize;
+		}
+
+		// update dots length //
+		dotslength = CalculateDotsSizeAtScale(TestSize);
+		CalculatedTotalLength = CalculateTextLengthAndLastFittingExpensive(TestSize, CoordType, text, BoxToFit.X, Charindexthatfits, dotslength);
+
+		if(Charindexthatfits < text.size()-1 || CalculatedTotalLength >= BoxToFit.X){
+			// adjust max size //
+			TMax = TestSize;
+		} else {
+			// too small text, adjust minimum size //
+			LowVal = TestSize;
+		}
+		// update possible return value before looping //
+		Finallength = Float2(CalculatedTotalLength, GetHeight(HybridScale, CoordType));
+
+		// we can return here if size will go too low //
+		if(Stop)
+			break;
 		itrs++;
-
-		// check at which scale the text would entirely fit //
-		// AdjustedScale = original * (wanted length/got length)
-		AdjustedScale = AdjustedScale*((BoxToFit.X/CalculatedTotalLength));
-
-		// adjusted scale is now the scale that allows all characters to fit //
-		EntirelyFitModifier = AdjustedScale;
-
-		// check is it too low //
-		if(AdjustedScale < scaletocutfrom*TMax){
-			// we are going to need to count the spot where the text needs to be cut with scaletocutfrom*TMax //
-			HybridScale = scaletocutfrom*TMax;
-
-			// new length to dots //
-			dotslength = CalculateDotsSizeAtScale(HybridScale);
-
-			CalculatedTotalLength = CalculateTextLengthAndLastFitting(HybridScale, CoordType, text, BoxToFit.X, Charindexthatfits, dotslength);
-
-			Finallength = Float2(CalculatedTotalLength, GetHeight(HybridScale, CoordType));
-
-
-			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::Finallength", new VariableBlock(Convert::ToWstring(Finallength.X)+
-				L"|"+Convert::ToWstring(Finallength.Y)));
-			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::HybridScale", new VariableBlock(HybridScale));
-			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::TMax", new VariableBlock(TMax));
-			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::CalculatedTotalLength", new VariableBlock(CalculatedTotalLength));
-			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::FitLength", new VariableBlock((int)Charindexthatfits));
-			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::EndCase", new VariableBlock(wstring(L"Too low adj scale")));
-			return true;
-		}
-
-		// we can use adjusted scale to fit everything //
-		HybridScale = EntirelyFitModifier;
-
-		dotslength = CalculateDotsSizeAtScale(AdjustedScale);
-		CalculatedTotalLength = CalculateTextLengthAndLastFitting(AdjustedScale, CoordType, text, BoxToFit.X, Charindexthatfits, dotslength);
-
-
-		Finallength = Float2(CalculatedTotalLength, GetHeight(AdjustedScale, CoordType));
-
-		// code will loop here if the scale was a bit too high //
-
-		if(itrs > 2){
-			// quite excessive iteration //
-			DEBUG_BREAK;
-		}
 	}
 
-	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::Finallength", new VariableBlock(Convert::ToWstring(Finallength.X)+
-		L"|"+Convert::ToWstring(Finallength.Y)));
-	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::HybridScale", new VariableBlock(HybridScale));
-	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::TMax", new VariableBlock(TMax));
-	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::CalculatedTotalLength", new VariableBlock(CalculatedTotalLength));
-	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::FitLength", new VariableBlock((int)Charindexthatfits));
-	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::EndCase", new VariableBlock(wstring(L"Fall through function")));
-
+	//DebugVariableNotifier::UpdateVariable(L"RenderingFont::AdjustTextSizeToFitBox::itrs", new VariableBlock(itrs));
+	//DebugVariableNotifier::UpdateVariable(L"RenderingFont::AdjustTextSizeToFitBox::HybridScale", new VariableBlock(HybridScale));
+	//DebugVariableNotifier::UpdateVariable(L"RenderingFont::CalculatedTotalLength", new VariableBlock(CalculatedTotalLength));
+	// everything should be done now //
 	return true;
 }
 
-float Leviathan::RenderingFont::CalculateTextLengthAndLastFitting(float TextSize, int CoordType, const wstring &text, const float &fitlength, 
+float Leviathan::RenderingFont::CalculateTextLengthAndLastFittingNonExpensive(float TextSize, int CoordType, const wstring &text, const float &fitlength, 
 	size_t & Charindexthatfits, float delimiterlength)
 {
 	// set right size for kerning //
@@ -628,19 +608,19 @@ float Leviathan::RenderingFont::CalculateTextLengthAndLastFitting(float TextSize
 		// check is this whitespace //
 		if(text[i] < L' '){
 			// white space //
-			CalculatedTotalLength += 3.0f*TextSize;
+			CalculatedTotalLength += (int)(3.0f*TextSize);
 		} else {
 			// add kerning //
 			if(kerningcheck){
 				// fetch kerning, if not first character //
 				if(i > 0){
 					// change pen position according to kerning distance //
-					CalculatedTotalLength += GetKerningBetweenCharacters(TextSize, text[i-1], text[i]);
+					CalculatedTotalLength += (int)GetKerningBetweenCharacters(TextSize, text[i-1], text[i]);
 				}
 			}
 
 			// get size from letter index //
-			CalculatedTotalLength += FontData[ConvertCharCodeToIndex(text[i])]->AdvancePixels*TextSize;
+			CalculatedTotalLength += (int)(FontData[ConvertCharCodeToIndex(text[i])]->AdvancePixels*TextSize);
 		}
 
 textfittingtextstartofblocklabel:
@@ -695,10 +675,112 @@ textfittingtextstartofblocklabel:
 		CalculatedTotalLength /= DataStore::Get()->GetWidth();
 	}
 
+	return CalculatedTotalLength;
+}
 
-	DebugVariableNotifier::UpdateVariable(L"CalculateTextLengthAndLastFitting::Result::CalculatedTotalLength", new VariableBlock(CalculatedTotalLength));
-	DebugVariableNotifier::UpdateVariable(L"CalculateTextLengthAndLastFitting::input::text", new VariableBlock(text));
-	DebugVariableNotifier::UpdateVariable(L"CalculateTextLengthAndLastFitting::input::size", new VariableBlock(TextSize));
+DLLEXPORT float Leviathan::RenderingFont::CalculateTextLengthAndLastFittingExpensive(float TextSize, int CoordType, const wstring &text, 
+	const float &fitlength, size_t & Charindexthatfits, float delimiterlength)
+{
+	// set right size for kerning //
+	if(!EnsurePixelSize(CalculatePixelSizeAtScale(TextSize))){
+		Logger::Get()->Error(L"RenderingFont: CalculateTextLengthAndLastFitting: set pixel size failed, cannot calculate");
+		return -1;
+	}
+
+	//DebugVariableNotifier::UpdateVariable(L"CalculateLastFitLength::TextAreaSize::X", new VariableBlock(fitlength));
+
+	// calculated length after done //
+	float CalculatedTotalLength = 0.f;
+	//bool FitsIfLastFits = false;
+	// used in checking if character would fit to the box //
+	float curneededlength = 0;
+
+	// kerning flag //
+	bool kerningcheck = FT_HAS_KERNING(FontsFace) != 0;
+	FT_GlyphSlot slot = FontsFace->glyph;
+
+	// calculate length using the provided size //
+	for(size_t i = 0; i < text.size(); i++){
+		// check is this whitespace //
+		if(text[i] < 32){
+			// white space //
+			CalculatedTotalLength += (int)(3.0f*TextSize);
+		} else {
+			// add kerning //
+			if(kerningcheck){
+				// fetch kerning, if not first character //
+				if(i > 0){
+					// change pen position according to kerning distance //
+					CalculatedTotalLength += (int)GetKerningBetweenCharacters(TextSize, text[i-1], text[i]);
+				}
+			}
+
+			// load glyph //
+			FT_Error errorcode = FT_Load_Glyph(FontsFace, FontData[ConvertCharCodeToIndex(text[i])]->CharacterGlyphIndex, FT_LOAD_DEFAULT);
+			if(errorcode){
+				Logger::Get()->Error(L"RenderSentenceToTexture: FreeType: failed to load glyph "+text[i]);
+				continue;
+			}
+
+			// get size from letter FreeType face //
+			CalculatedTotalLength += (float)(slot->advance.x >> 6);
+		}
+
+//textfittingtextstartofblocklabel:
+		// get length that would need to fit here and check would it actually fit //
+		//if(FitsIfLastFits){
+		//	// we need to only check if last character fits //
+		//	if(i+1 < text.size()){
+		//		// not last yet //
+		//		continue;
+		//	}
+
+		//	// will just need to try to fit this last character //
+		//	curneededlength = CalculatedTotalLength;
+		//	// fall through to continue checks //
+
+		//} else {
+		//	// check does this character and dots fit to the "box" //
+		//	curneededlength = CalculatedTotalLength+delimiterlength;
+		//}
+
+		i+1 >= text.length() ? curneededlength = CalculatedTotalLength: curneededlength = CalculatedTotalLength+delimiterlength;
+
+		// if coordinates are relative the box is too and the length needs to be made relative //
+		if(CoordType == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
+
+			curneededlength /= DataStore::Get()->GetWidth();
+		}
+
+		// check would all this stuff fit //
+		if(curneededlength <= fitlength){
+			// this character would fit with truncation to the box (or is last character and would fit on its own) //
+			Charindexthatfits = i;
+
+		}/* else {
+		//	// skip this if already set //
+		//	if(FitsIfLastFits)
+		//		continue;
+
+		//	// this character wouldn't fit if it had to be cut from here //
+		//	FitsIfLastFits = true;
+
+		//	// check is this last character, because then we need to go back and check without delimiter //
+		//	if(i+1 >= text.size()){
+		//		//// set jumped so that we can't get stuck in an infinite loop //
+		//		//Jumped = true;
+		//		// can't get stuck anymore...
+		//		goto textfittingtextstartofblocklabel;
+		//	}
+		}*/
+	}
+	// update total length if relative //
+	if(CoordType == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
+
+		CalculatedTotalLength /= DataStore::Get()->GetWidth();
+	}
+
+	//DebugVariableNotifier::UpdateVariable(L"CalculateLastFitLength::Calculated::X", new VariableBlock(CalculatedTotalLength));
 
 	return CalculatedTotalLength;
 }
@@ -839,7 +921,15 @@ DLLEXPORT float Leviathan::RenderingFont::CalculateDotsSizeAtScale(const float &
 	// kerning needs to be right //
 	EnsurePixelSize(CalculatePixelSizeAtScale(scale));
 
-	return 3*(FontData[ConvertCharCodeToIndex(L'.')]->AdvancePixels*scale)+2*(GetKerningBetweenCharacters(scale, '.', L'.'));
+	// load the dot character
+	FT_Error errorcode = FT_Load_Glyph(FontsFace, FontData[ConvertCharCodeToIndex(L'.')]->CharacterGlyphIndex, FT_LOAD_DEFAULT);
+	if(errorcode){
+		Logger::Get()->Error(L"RenderSentenceToTexture: FreeType: failed to load glyph dots");
+		return -1;
+	}
+
+	//return 3*(FontData[ConvertCharCodeToIndex(L'.')]->AdvancePixels*scale)+2*(GetKerningBetweenCharacters(scale, '.', L'.'));
+	return 3*(FontsFace->glyph->advance.x >> 6)+2*(GetKerningBetweenCharacters(scale, L'.', L'.'));
 }
 
 // ------------------ FontsCharacter ------------------ //

@@ -69,13 +69,21 @@ namespace Leviathan{
 		DLLEXPORT void Release();
 
 		// functions to get/calculate various things about this font (with a string) //
-		DLLEXPORT inline float CountLength(const wstring &sentence, float heightmod, int Coordtype){
+		DLLEXPORT inline float CountLengthNonExpensive(const wstring &sentence, float heightmod, int Coordtype){
 			// call another function, this is so that the parameters don't all need to be created to call it //
 			float delimiter = 0;
 			size_t lastfit = 0;
 			float fitlength = 0;
 			// actual counting //
-			return CalculateTextLengthAndLastFitting(heightmod, Coordtype, sentence, fitlength, lastfit, delimiter);
+			return CalculateTextLengthAndLastFittingNonExpensive(heightmod, Coordtype, sentence, fitlength, lastfit, delimiter);
+		}
+		DLLEXPORT inline float CountLengthExpensive(const wstring &sentence, float heightmod, int Coordtype){
+			// call another function, this is so that the parameters don't all need to be created to call it //
+			float delimiter = 0;
+			size_t lastfit = 0;
+			float fitlength = 0;
+			// actual counting //
+			return CalculateTextLengthAndLastFittingExpensive(heightmod, Coordtype, sentence, fitlength, lastfit, delimiter);
 		}
 		DLLEXPORT inline float GetHeight(float heightmod, int Coordtype){
 			if(Coordtype != GUI_POSITIONABLE_COORDTYPE_RELATIVE)
@@ -86,7 +94,9 @@ namespace Leviathan{
 			//return (FontHeight*heightmod)/DataStore::Get()->GetHeight();
 			return CalculatePixelSizeAtScale(heightmod)/(float)DataStore::Get()->GetHeight();
 		}
-		DLLEXPORT float CalculateTextLengthAndLastFitting(float TextSize, int CoordType, const wstring &text, const float &fitlength, 
+		DLLEXPORT float CalculateTextLengthAndLastFittingNonExpensive(float TextSize, int CoordType, const wstring &text, const float &fitlength, 
+			size_t & Charindexthatfits, float delimiterlength);
+		DLLEXPORT float CalculateTextLengthAndLastFittingExpensive(float TextSize, int CoordType, const wstring &text, const float &fitlength, 
 			size_t & Charindexthatfits, float delimiterlength);
 
 		DLLEXPORT inline int CalculatePixelSizeAtScale(const float &scale){

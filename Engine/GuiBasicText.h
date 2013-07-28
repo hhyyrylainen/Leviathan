@@ -22,7 +22,7 @@ namespace Leviathan{ namespace Gui{
 		// initialize function used to create the various backgrounds //
 		// init variant for gradient //
 		DLLEXPORT bool Init(const Float4 &colour, const wstring &text, const wstring &font, float textmodifier, bool expensivetext = false, 
-			int adjustmode = GUI_BASICTEXT_MODE_JUSTRENDER);
+			int adjustmode = GUI_BASICTEXT_MODE_JUSTRENDER, const float &cutfromscale = 0.4f);
 
 
 		DLLEXPORT bool UpdateText(const wstring &texttoset, bool expensivetext = false, int adjustmode = GUI_BASICTEXT_MODE_JUSTRENDER);
@@ -58,6 +58,7 @@ namespace Leviathan{ namespace Gui{
 
 		float TextLength;
 		float TextHeigth;
+		float TextCutScale;
 
 		float TextModifier;
 

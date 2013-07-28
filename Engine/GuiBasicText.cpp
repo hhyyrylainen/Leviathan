@@ -4,6 +4,7 @@
 #include "GuiBasicText.h"
 #endif
 #include "GuiManager.h"
+#include "DebugVariableNotifier.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
@@ -31,14 +32,14 @@ DLLEXPORT Leviathan::Gui::GuiBasicText::~GuiBasicText(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::GuiBasicText::Init(const Float4 &colour, const wstring &text, const wstring &font, float textmodifier, 
-	bool expensivetext, int adjustmode)
+	bool expensivetext /*= false*/, int adjustmode /*= GUI_BASICTEXT_MODE_JUSTRENDER*/, const float &cutfromscale)
 {
 	Text = text;
 	IsExpensiveText = expensivetext;
 	OldExpensiveState = IsExpensiveText;
 
 	TextAdjustMode = adjustmode;
-
+	TextCutScale = cutfromscale;
 	PrimaryTextColour = colour;
 
 	Font = font;
@@ -103,7 +104,7 @@ DLLEXPORT void Leviathan::Gui::GuiBasicText::Render(RenderBridge* bridge, Graphi
 		} else {
 			// create expensive text block //
 			bridge->DrawActions[i] = new ExpensiveTextRendBlob(ZOrder, Slot, Position, PrimaryTextColour, TextModifier, Text, Font, CoordType, 
-				TextAdjustMode == GUI_BASICTEXT_MODE_TRYTOAUTOFIT, Size);
+				TextAdjustMode == GUI_BASICTEXT_MODE_TRYTOAUTOFIT, Size, TextCutScale);
 		}
 
 
@@ -122,10 +123,13 @@ DLLEXPORT void Leviathan::Gui::GuiBasicText::Render(RenderBridge* bridge, Graphi
 			ExpensiveTextRendBlob* tmpptr = (ExpensiveTextRendBlob*)bridge->DrawActions[i];
 
 			tmpptr->Update(ZOrder, Position, PrimaryTextColour, TextModifier, Text, Font, CoordType, TextAdjustMode == GUI_BASICTEXT_MODE_TRYTOAUTOFIT,
-				Size);
+				Size, TextCutScale);
 
 		}
 	}
+
+	//DebugVariableNotifier::UpdateVariable(L"GuiBasicText::TextAreaSize::X", new VariableBlock(Size.X));
+	//DebugVariableNotifier::UpdateVariable(L"GuiBasicText::TextWantedCoordinates::X", new VariableBlock(Position.X));
 
 	// set as non updated //
 	RUpdated = false;
@@ -163,7 +167,7 @@ void Leviathan::Gui::GuiBasicText::_CheckTextAdjustment(){
 DLLEXPORT bool Leviathan::Gui::GuiBasicText::GetTextLength(float &lengthreceiver, float &heightreceiver){
 	if(TextLength < 0){
 		// calculate length and height //
-		TextLength = GuiManager::Get()->GetGraph()->CountTextRenderLength(Text, Font, TextModifier, CoordType);
+		TextLength = GuiManager::Get()->GetGraph()->CountTextRenderLength(Text, Font, IsExpensiveText, TextModifier, CoordType);
 
 		TextHeigth = GuiManager::Get()->GetGraph()->GetTextRenderHeight(Font, TextModifier, CoordType);
 	}

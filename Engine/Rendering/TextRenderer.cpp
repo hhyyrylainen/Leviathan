@@ -115,10 +115,12 @@ void TextRenderer::HideSentence(int id, bool hidden){
 
 }
 // ------------------------------------ //
-DLLEXPORT float Leviathan::TextRenderer::CountSentenceLength(const wstring &sentence, const wstring &font, float heightmod, int coordtype){
+DLLEXPORT float Leviathan::TextRenderer::CountSentenceLength(const wstring &sentence, const wstring &font, bool expensive, float heightmod, int coordtype){
 	int index = GetFontIndex(font);
 	ARR_INDEX_CHECK(index, (int)FontHolder.size()){
-		return FontHolder[index]->CountLength(sentence, heightmod, coordtype);
+		if(!expensive)
+			return FontHolder[index]->CountLengthNonExpensive(sentence, heightmod, coordtype);
+		return FontHolder[index]->CountLengthExpensive(sentence, heightmod, coordtype);
 	}
 	return -1;
 }
@@ -605,6 +607,9 @@ DLLEXPORT bool Leviathan::ExpensiveText::UpdateIfNeeded(ExpensiveTextRendBlob* r
 	bool TextNeedsRendering = false;
 	bool BuffersNeedUpdating = false;
 
+	//DebugVariableNotifier::UpdateVariable(L"ExpensiveTextRendBlob::TextAreaSize::X", new VariableBlock(renderptr->BoxToFit.X));
+	//DebugVariableNotifier::UpdateVariable(L"ExpensiveTextRendBlob::TextWantedCoordinates::X", new VariableBlock(renderptr->Coord.X));
+
 	// things that affect both //
 	if((renderptr->CoordType != CoordType) || ((ScreenHeight != this->ScreenHeight || ScreenWidth != this->ScreenWidth) && 
 		(CoordType == GUI_POSITIONABLE_COORDTYPE_RELATIVE)))
@@ -626,9 +631,9 @@ DLLEXPORT bool Leviathan::ExpensiveText::UpdateIfNeeded(ExpensiveTextRendBlob* r
 	}
 
 	// check does the text texture need to be rendered again //
-	if((renderptr->Font != this->Font) || (renderptr->Text != this->Text) || (renderptr->Size != Size))
+	if((renderptr->Font != this->Font) || (renderptr->Text != this->Text) || (renderptr->Size != Size) || (AdjustCutModifier != 
+		renderptr->AdjustCutModifier))
 	{
-
 		TextNeedsRendering = true;
 	}
 
@@ -654,7 +659,7 @@ checkresultstartslabel:
 	Font = renderptr->Font;
 	this->ScreenWidth = ScreenWidth;
 	this->ScreenHeight = ScreenHeight;
-
+	AdjustCutModifier = renderptr->AdjustCutModifier;
 	// can no longer be adjusted //
 	AdjustedToFit = false;
 	AdjustedSize = Size;
@@ -678,6 +683,7 @@ checkresultstartslabel:
 			return false;
 		}
 	}
+
 	// should be all good to go //
 	return true;
 }
@@ -754,8 +760,9 @@ DLLEXPORT void Leviathan::ExpensiveText::AdjustToFit(TextRenderer* trenderer, bo
 	float HybridScale = 1;
 	Float2 Finalsize = (Float2)0;
 
-	if(!trenderer->AdjustTextToFitBox(BoxToFit, Text, Font, CoordType, Charindexthatfits, EntirelyFitModifier, HybridScale, Finalsize, 0.4f)){
-
+	if(!trenderer->AdjustTextToFitBox(BoxToFit, Text, Font, CoordType, Charindexthatfits, EntirelyFitModifier, HybridScale, Finalsize, 
+		AdjustCutModifier))
+	{
 		DEBUG_BREAK;
 		return;
 	}
@@ -780,7 +787,6 @@ DLLEXPORT void Leviathan::ExpensiveText::AdjustToFit(TextRenderer* trenderer, bo
 		DEBUG_BREAK;
 
 	}
-
 }
 
 bool Leviathan::ExpensiveText::_VerifyTextures(TextRenderer* trender){
@@ -799,15 +805,17 @@ bool Leviathan::ExpensiveText::_VerifyTextures(TextRenderer* trender){
 		return false;
 	}
 
-	// dump variables //
-	DebugVariableNotifier::PrintVariables();
-
 
 	// textures are successfully rendered //
 	return true;
 }
 
 bool Leviathan::ExpensiveText::_VerifyBuffers(ID3D11DeviceContext* devcont){
+	// we can return if buffers are fine //
+	if(BuffersFine)
+		return true;
+	BuffersFine = true;
+
 
 	// check index buffer state, which is always same //
 	if(!IndexBuffer){
@@ -837,6 +845,9 @@ bool Leviathan::ExpensiveText::_VerifyBuffers(ID3D11DeviceContext* devcont){
 
 	// calculate the data that needs to be passed //
 
+	//DebugVariableNotifier::UpdateVariable(L"_VerifyBuffers::TextAreaSize::X", new VariableBlock(RenderedToBox.X));
+	//DebugVariableNotifier::UpdateVariable(L"_VerifyBuffers::TextWantedCoordinates::X", new VariableBlock(Coord.X));
+
 	// convert data //
 	VertexType* vertices = Rendering::ResourceCreator::GenerateQuadIntoVertexBuffer(Coord, RenderedToBox, 6, CoordType, 
 		QUAD_FILLSTYLE_UPPERLEFT_0_BOTTOMRIGHT_1);
@@ -852,6 +863,10 @@ bool Leviathan::ExpensiveText::_VerifyBuffers(ID3D11DeviceContext* devcont){
 
 	// release vertice data //
 	SAFE_DELETE_ARRAY(vertices);
+
+
+	// dump variables //
+	//DebugVariableNotifier::PrintVariables();
 
 
 	// buffers are now fine //

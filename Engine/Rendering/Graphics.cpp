@@ -278,8 +278,8 @@ void Graphics::Destroy3DRenderer(){
 	}
 }
 // ------------------------------------------- //
-DLLEXPORT inline float Leviathan::Graphics::CountTextRenderLength(const wstring &text, const wstring &font, float heightmod, int Coordtype){
-	return TextRender->CountSentenceLength(text, font, heightmod, Coordtype);
+DLLEXPORT inline float Leviathan::Graphics::CountTextRenderLength(const wstring &text, const wstring &font, bool expensive, float heightmod, int Coordtype){
+	return TextRender->CountSentenceLength(text, font, expensive, heightmod, Coordtype);
 }
 DLLEXPORT inline float Leviathan::Graphics::GetTextRenderHeight(const wstring &font, float heightmod, int Coordtype){
 	return TextRender->GetFontHeight(font, heightmod, Coordtype);

@@ -76,6 +76,7 @@ namespace Leviathan{
 
 		bool AdjustedToFit;
 		float AdjustedSize;
+		float AdjustCutModifier;
 
 		Float2 Coord;
 		int CoordType;
@@ -109,7 +110,7 @@ namespace Leviathan{
 		DLLEXPORT bool RenderExpensiveText(ExpensiveTextRendBlob* renderptr, ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, D3DXMATRIX orthomatrix);
 
 
-		DLLEXPORT float CountSentenceLength(const wstring &sentence, const wstring &font, float heightmod, int coordtype);
+		DLLEXPORT float CountSentenceLength(const wstring &sentence, const wstring &font, bool expensive, float heightmod, int coordtype);
 		DLLEXPORT float GetFontHeight(const wstring &font, float heightmod, int coordtype);
 
 		DLLEXPORT RenderingFont* GetFontFromName(const wstring &name);

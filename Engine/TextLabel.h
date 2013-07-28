@@ -20,8 +20,9 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT TextLabel::TextLabel(int id, const Float2 &position, Float2 &size, int autoadjust);
 		DLLEXPORT TextLabel::~TextLabel();
 
-		DLLEXPORT bool Init(const wstring &text, const wstring &font, const Float4 &textcolor, float textsize, 
-			const Float4 &color1, const Float4 &color2, vector<shared_ptr<VariableBlock>>* listenindexes = NULL);
+		DLLEXPORT bool Init(const wstring &text, const wstring &font, const Float4 &textcolor, float textsize, const Float4 &color1, 
+			const Float4 &color2, const float &padding, const float &paddingy, const float &textscalecut, 
+			vector<shared_ptr<VariableBlock>>* listenindexes = NULL);
 		DLLEXPORT void Release();
 
 
@@ -66,6 +67,7 @@ namespace Leviathan{ namespace Gui{
 		int TextAdjustMode;
 
 		Float2 TextWantedCoordinates;
+		float TextWantedCutSize;
 		Float2 TextAreaSize;
 
 		// graphical components used to easily reuse graphical parts //

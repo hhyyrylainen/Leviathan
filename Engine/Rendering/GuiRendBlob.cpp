@@ -150,9 +150,9 @@ void Leviathan::BasicTextRendBlob::SetUpdated(){
 
 
 DLLEXPORT Leviathan::ExpensiveTextRendBlob::ExpensiveTextRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, float sizemod, 
-	const wstring &text, const wstring &font, int coordtype /*= GUI_POSITIONABLE_COORDTYPE_RELATIVE*/, bool fittobox /*= false*/, 
-	const Float2 box /*= (Float2)0*/) : RenderingGBlob(relativez, slotid), Coord(xypos), BoxToFit(box), CoordType(coordtype), Color(color), 
-	Font(font), Text(text)
+	const wstring &text, const wstring &font, int coordtype /*= GUI_POSITIONABLE_COORDTYPE_RELATIVE*/, bool fittobox /*= false*/, const Float2 box 
+	/*= (Float2)0*/, const float &adjustcutpercentage /*= 0.4f*/) : RenderingGBlob(relativez, slotid), Coord(xypos), BoxToFit(box), 
+	CoordType(coordtype), Color(color), Font(font), Text(text), AdjustCutModifier(adjustcutpercentage)
 {
 	TypeName = GUIRENDERING_BLOB_TYPE_EXPENSIVETEXT;
 
@@ -168,7 +168,8 @@ DLLEXPORT Leviathan::ExpensiveTextRendBlob::~ExpensiveTextRendBlob(){
 }
 
 DLLEXPORT void Leviathan::ExpensiveTextRendBlob::Update(int relativez, const Float2 &xypos, const Float4 &color, float sizemod, const wstring &text, 
-	const wstring &font, int coordtype /*= GUI_POSITIONABLE_COORDTYPE_RELATIVE*/, bool fittobox /*= false*/, const Float2 box /*= (Float2)0*/)
+	const wstring &font, int coordtype /*= GUI_POSITIONABLE_COORDTYPE_RELATIVE*/, bool fittobox /*= false*/, const Float2 box /*= (Float2)0*/, const 
+	float &adjustcutpercentage /*= 0.4f*/)
 {
 	Size = sizemod;
 
@@ -176,6 +177,7 @@ DLLEXPORT void Leviathan::ExpensiveTextRendBlob::Update(int relativez, const Flo
 	BoxToFit = box;
 	FitToBox = fittobox;
 	CoordType = coordtype;
+	AdjustCutModifier = adjustcutpercentage;
 
 	Color = color;
 

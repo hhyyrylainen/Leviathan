@@ -48,7 +48,7 @@ namespace Leviathan{
 		DLLEXPORT bool Resize(int newwidth, int newheight);
 
 
-		DLLEXPORT inline float CountTextRenderLength(const wstring &text, const wstring &font, float heightmod, int Coordtype);
+		DLLEXPORT inline float CountTextRenderLength(const wstring &text, const wstring &font, bool expensive, float heightmod, int Coordtype);
 		DLLEXPORT inline float GetTextRenderHeight(const wstring &font, float heightmod, int Coordtype);
 
 		DLLEXPORT static Graphics* Get();

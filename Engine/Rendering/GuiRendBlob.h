@@ -95,12 +95,12 @@ namespace Leviathan{
 	public:
 		DLLEXPORT ExpensiveTextRendBlob::ExpensiveTextRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, float sizemod, 
 			const wstring &text, const wstring &font, int coordtype = GUI_POSITIONABLE_COORDTYPE_RELATIVE, bool fittobox = false, 
-			const Float2 box = (Float2)0);
+			const Float2 box = (Float2)0, const float &adjustcutpercentage = 0.4f);
 		DLLEXPORT virtual ExpensiveTextRendBlob::~ExpensiveTextRendBlob();
 
 		DLLEXPORT void Update(int relativez, const Float2 &xypos, const Float4 &color, float sizemod, const wstring &text, 
 			const wstring &font, int coordtype = GUI_POSITIONABLE_COORDTYPE_RELATIVE, bool fittobox = false, 
-			const Float2 box = (Float2)0);
+			const Float2 box = (Float2)0, const float &adjustcutpercentage = 0.4f);
 
 	protected:
 		// values that should not directly be set //
@@ -117,6 +117,7 @@ namespace Leviathan{
 		wstring Text;
 
 		int TextID;
+		float AdjustCutModifier;
 	};
 
 }

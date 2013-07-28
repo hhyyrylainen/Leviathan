@@ -112,12 +112,13 @@ namespace Leviathan{
 		DLLEXPORT float CountSentenceLength(const wstring &sentence, const wstring &font, float heightmod, int coordtype);
 		DLLEXPORT float GetFontHeight(const wstring &font, float heightmod, int coordtype);
 
+		DLLEXPORT RenderingFont* GetFontFromName(const wstring &name);
 
 		DLLEXPORT ExpensiveText* GetExpensiveText(const int &ID);
 		DLLEXPORT bool ReleaseExpensiveText(const int &ID);
 		DLLEXPORT bool RenderExpensiveTextToTexture(ExpensiveText* text, const int &TextureID);
-		DLLEXPORT bool AdjustTextToFitBox(const float &Size, const Float2 &BoxToFit, const wstring &text, const wstring &font, 
-			int CoordType, size_t &Charindexthatfits, float &EntirelyFitModifier, float &HybridScale, Float2 &Finallength, float scaletocutfrom = 0.5f);
+		DLLEXPORT bool AdjustTextToFitBox(const Float2 &BoxToFit, const wstring &text, const wstring &font, int CoordType, size_t &Charindexthatfits,
+			float &EntirelyFitModifier, float &HybridScale, Float2 &Finallength, float scaletocutfrom = 0.5f);
 
 		DLLEXPORT bool CreateSentence(int id, int maxlength, ID3D11Device* dev);
 		DLLEXPORT bool UpdateSentenceID(int id, int Coordtype, const wstring &font, const wstring &text, const Float2 &coordinates, 

@@ -8,6 +8,7 @@ using namespace Leviathan;
 #include "3DRenderer.h"
 #include "Graphics.h"
 #include "..\GuiPositionable.h"
+#include "..\DebugVariableNotifier.h"
 
 TextRenderer::TextRenderer(){
 	_FontShader = NULL;
@@ -572,8 +573,8 @@ DLLEXPORT bool Leviathan::TextRenderer::RenderExpensiveTextToTexture(ExpensiveTe
 	return Result;
 }
 
-DLLEXPORT bool Leviathan::TextRenderer::AdjustTextToFitBox(const float &Size, const Float2 &BoxToFit, const wstring &text, const wstring &font, 
-	int CoordType, size_t &Charindexthatfits, float &EntirelyFitModifier, float &HybridScale, Float2 &Finallength, float scaletocutfrom /*= 0.5f*/)
+DLLEXPORT bool Leviathan::TextRenderer::AdjustTextToFitBox(const Float2 &BoxToFit, const wstring &text, const wstring &font, int CoordType, 
+	size_t &Charindexthatfits, float &EntirelyFitModifier, float &HybridScale, Float2 &Finallength, float scaletocutfrom /*= 0.5f*/)
 {
 	int index = GetFontIndex(font);
 	ARR_INDEX_CHECKINV(index, (int)FontHolder.size()){
@@ -582,8 +583,17 @@ DLLEXPORT bool Leviathan::TextRenderer::AdjustTextToFitBox(const float &Size, co
 	}
 
 	// pass to font and return what it returns //
-	return FontHolder[index]->AdjustTextSizeToFitBox(Size, BoxToFit, text, CoordType, Charindexthatfits, EntirelyFitModifier, HybridScale, 
+	return FontHolder[index]->AdjustTextSizeToFitBox(BoxToFit, text, CoordType, Charindexthatfits, EntirelyFitModifier, HybridScale, 
 		Finallength, scaletocutfrom);
+}
+
+DLLEXPORT RenderingFont* Leviathan::TextRenderer::GetFontFromName(const wstring &name){
+	int index = GetFontIndex(name);
+	ARR_INDEX_CHECKINV(index, (int)FontHolder.size()){
+		// could not load font //
+		return NULL;
+	}
+	return FontHolder[index];
 }
 
 // ------------------ ExpensiveText ------------------ //
@@ -709,8 +719,8 @@ bool Leviathan::ExpensiveText::PrepareRender(ID3D11DeviceContext* devcont){
 DLLEXPORT bool Leviathan::ExpensiveText::Render(FontShader* shader, TextRenderer* trender, ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, D3DXMATRIX orthomatrix){
 	// Render the text using the font shader.
 	ManagedTexture* tmptexture = Graphics::Get()->GetTextureManager()->GetTexture(TextureID, TEXTUREMANAGER_SEARCH_VOLATILEGENERATED, true);
-
-	if(!tmptexture){
+	// check is texture NULL (which is very rare) or if it is the error texture for getting the text unloaded //
+	if(!tmptexture || Graphics::Get()->GetTextureManager()->IsTextureError(tmptexture)){
 		// textures aren't generated //
 trytoveerifyexpensivetexttextureslabel:
 
@@ -744,7 +754,7 @@ DLLEXPORT void Leviathan::ExpensiveText::AdjustToFit(TextRenderer* trenderer, bo
 	float HybridScale = 1;
 	Float2 Finalsize = (Float2)0;
 
-	if(!trenderer->AdjustTextToFitBox(Size, BoxToFit, Text, Font, CoordType, Charindexthatfits, EntirelyFitModifier, HybridScale, Finalsize, 0.4f)){
+	if(!trenderer->AdjustTextToFitBox(BoxToFit, Text, Font, CoordType, Charindexthatfits, EntirelyFitModifier, HybridScale, Finalsize, 0.4f)){
 
 		DEBUG_BREAK;
 		return;
@@ -788,6 +798,10 @@ bool Leviathan::ExpensiveText::_VerifyTextures(TextRenderer* trender){
 		Logger::Get()->Error(L"ExpensiveText: VerifyTextures: failed to render text to texture");
 		return false;
 	}
+
+	// dump variables //
+	DebugVariableNotifier::PrintVariables();
+
 
 	// textures are successfully rendered //
 	return true;

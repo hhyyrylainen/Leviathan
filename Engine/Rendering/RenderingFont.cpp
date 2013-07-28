@@ -11,6 +11,7 @@ using namespace Leviathan;
 #include "..\DataStore.h"
 #include "Graphics.h"
 #include "..\ExceptionInvalidType.h"
+#include "..\DebugVariableNotifier.h"
 
 RenderingFont::RenderingFont() : Textures(NULL), FontsFace(NULL), FontData(){
 }
@@ -145,7 +146,7 @@ bool Leviathan::RenderingFont::LoadTexture(ID3D11Device* dev, const wstring &fil
 		}
 
 		// height "should" be forced to be this //
-		int Height = FontHeight = (FONT_BASEPIXELHEIGHT*fontsizemultiplier)+2;
+		int Height = FontHeight = CalculatePixelSizeAtScale((float)fontsizemultiplier)+2;
 		int baseline = Height-((int)floorf(Height/3.f));
 
 		// "image" //
@@ -368,7 +369,7 @@ DLLEXPORT bool Leviathan::RenderingFont::BuildVertexArray(VertexType* vertexptr,
 				// fetch kerning, if not first character //
 				if(i > 0){
 					// change render position according to kerning distance //
-					drawx += GetKerningBetweenCharacters(text[i-1], text[i]);
+					drawx += GetKerningBetweenCharacters(textmodifier, text[i-1], text[i]);
 				}
 			}
 
@@ -439,7 +440,7 @@ DLLEXPORT bool Leviathan::RenderingFont::RenderSentenceToTexture(const int &Text
 	for(size_t i = 0; i < text.size(); i++){
 		if(text[i] < 32){
 			// whitespace //
-			PenPosition += (int)ceilf(3.f*sizemodifier);
+			PenPosition += (int)(3.f*sizemodifier);
 			continue;
 		}
 		// apply kerning //
@@ -447,7 +448,7 @@ DLLEXPORT bool Leviathan::RenderingFont::RenderSentenceToTexture(const int &Text
 			// fetch kerning, if not first character //
 			if(i > 0){
 				// change pen position according to kerning distance //
-				PenPosition += (int)ceilf(GetKerningBetweenCharacters(text[i-1], text[i]));
+				PenPosition += (int)(GetKerningBetweenCharacters(sizemodifier, text[i-1], text[i]));
 			}
 		}
 
@@ -494,13 +495,23 @@ DLLEXPORT bool Leviathan::RenderingFont::RenderSentenceToTexture(const int &Text
 	}
 	// load texture from that file and add it to texture id //
 	Graphics::Get()->GetTextureManager()->AddVolatileGenerated(TextureID, L"RenderingFont", tempview);
+
+
+	DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::Bitmap::Width", new VariableBlock(bitmap.GetWidth()
+		/(float)DataStore::Get()->GetWidth()));
+	DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::Bitmap::Height", new VariableBlock(bitmap.GetHeight()
+		/(float)DataStore::Get()->GetHeight()));
+	DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::used::sizemodifier", new VariableBlock(sizemodifier));
+	DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::used::Text", new VariableBlock(text));
+	DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::used::Text::size", new VariableBlock((int)text.size()));
+
 	// release memory //
 	SAFE_DELETE(FileInMemory);
 	return true;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const float &Size, const Float2 &BoxToFit, const wstring &text, int CoordType, 
-	size_t &Charindexthatfits, float &EntirelyFitModifier, float &HybridScale, Float2 &Finallength, float scaletocutfrom)
+DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const Float2 &BoxToFit, const wstring &text, int CoordType, size_t &Charindexthatfits, 
+	float &EntirelyFitModifier, float &HybridScale, Float2 &Finallength, float scaletocutfrom)
 {
 	// calculate theoretical max height //
 	float TMax = BoxToFit.Y/GetHeight(1, CoordType);
@@ -517,6 +528,14 @@ DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const float &Siz
 		EntirelyFitModifier = HybridScale = TMax;
 		Finallength = Float2(CalculatedTotalLength, GetHeight(TMax, CoordType));
 
+
+		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::Finallength", new VariableBlock(Convert::ToWstring(Finallength.X)+
+			L"|"+Convert::ToWstring(Finallength.Y)));
+		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::HybridScale", new VariableBlock(HybridScale));
+		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::TMax", new VariableBlock(TMax));
+		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::CalculatedTotalLength", new VariableBlock(CalculatedTotalLength));
+		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::FitLength", new VariableBlock((int)Charindexthatfits));
+		DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::EndCase", new VariableBlock(wstring(L"max fit")));
 		return true;
 	}
 	// finding a scale at which the text could fit entirely //
@@ -541,11 +560,20 @@ DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const float &Siz
 			HybridScale = scaletocutfrom*TMax;
 
 			// new length to dots //
-			dotslength = CalculateDotsSizeAtScale(scaletocutfrom*TMax);
+			dotslength = CalculateDotsSizeAtScale(HybridScale);
 
-			CalculatedTotalLength = CalculateTextLengthAndLastFitting(scaletocutfrom*TMax, CoordType, text, BoxToFit.X, Charindexthatfits, dotslength);
+			CalculatedTotalLength = CalculateTextLengthAndLastFitting(HybridScale, CoordType, text, BoxToFit.X, Charindexthatfits, dotslength);
 
-			Finallength = Float2(CalculatedTotalLength, GetHeight(scaletocutfrom*TMax, CoordType));
+			Finallength = Float2(CalculatedTotalLength, GetHeight(HybridScale, CoordType));
+
+
+			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::Finallength", new VariableBlock(Convert::ToWstring(Finallength.X)+
+				L"|"+Convert::ToWstring(Finallength.Y)));
+			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::HybridScale", new VariableBlock(HybridScale));
+			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::TMax", new VariableBlock(TMax));
+			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::CalculatedTotalLength", new VariableBlock(CalculatedTotalLength));
+			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::FitLength", new VariableBlock((int)Charindexthatfits));
+			DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::EndCase", new VariableBlock(wstring(L"Too low adj scale")));
 			return true;
 		}
 
@@ -566,6 +594,14 @@ DLLEXPORT bool Leviathan::RenderingFont::AdjustTextSizeToFitBox(const float &Siz
 		}
 	}
 
+	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::Finallength", new VariableBlock(Convert::ToWstring(Finallength.X)+
+		L"|"+Convert::ToWstring(Finallength.Y)));
+	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::HybridScale", new VariableBlock(HybridScale));
+	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::TMax", new VariableBlock(TMax));
+	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::CalculatedTotalLength", new VariableBlock(CalculatedTotalLength));
+	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::Result::FitLength", new VariableBlock((int)Charindexthatfits));
+	DebugVariableNotifier::UpdateVariable(L"AdjustTextSizeToFitBox::EndCase", new VariableBlock(wstring(L"Fall through function")));
+
 	return true;
 }
 
@@ -573,12 +609,11 @@ float Leviathan::RenderingFont::CalculateTextLengthAndLastFitting(float TextSize
 	size_t & Charindexthatfits, float delimiterlength)
 {
 	// set right size for kerning //
-	const int heightpixels = CalculatePixelSizeAtScale(TextSize);
-	if(!EnsurePixelSize(heightpixels)){
+	if(!EnsurePixelSize(CalculatePixelSizeAtScale(TextSize))){
 		Logger::Get()->Error(L"RenderingFont: CalculateTextLengthAndLastFitting: set pixel size failed, cannot calculate");
 		return -1;
 	}
-
+	
 	// calculated length after done //
 	float CalculatedTotalLength = 0.f;
 	bool FitsIfLastFits = false;
@@ -600,7 +635,7 @@ float Leviathan::RenderingFont::CalculateTextLengthAndLastFitting(float TextSize
 				// fetch kerning, if not first character //
 				if(i > 0){
 					// change pen position according to kerning distance //
-					CalculatedTotalLength += GetKerningBetweenCharacters(text[i-1], text[i]);
+					CalculatedTotalLength += GetKerningBetweenCharacters(TextSize, text[i-1], text[i]);
 				}
 			}
 
@@ -659,6 +694,11 @@ textfittingtextstartofblocklabel:
 
 		CalculatedTotalLength /= DataStore::Get()->GetWidth();
 	}
+
+
+	DebugVariableNotifier::UpdateVariable(L"CalculateTextLengthAndLastFitting::Result::CalculatedTotalLength", new VariableBlock(CalculatedTotalLength));
+	DebugVariableNotifier::UpdateVariable(L"CalculateTextLengthAndLastFitting::input::text", new VariableBlock(text));
+	DebugVariableNotifier::UpdateVariable(L"CalculateTextLengthAndLastFitting::input::size", new VariableBlock(TextSize));
 
 	return CalculatedTotalLength;
 }
@@ -783,18 +823,23 @@ bool Leviathan::RenderingFont::CheckFreeTypeLoad(){
 	return true;
 }
 
-DLLEXPORT bool Leviathan::RenderingFont::EnsurePixelSize(const int &size){
-	if(SetSize != size){
-		// set the face size //
-		SetSize = size;
+bool Leviathan::RenderingFont::_SetFTPixelSize(const int & size){
+	// set the face size //
+	SetSize = size;
 
-		FT_Error errorcode = FT_Set_Pixel_Sizes(FontsFace, 0, SetSize);
-		if(errorcode){
-			Logger::Get()->Error(L"RenderSentenceToTexture: FreeType: set pixel size failed", true);
-			return false;
-		}
+	FT_Error errorcode = FT_Set_Pixel_Sizes(FontsFace, 0, SetSize);
+	if(errorcode){
+		Logger::Get()->Error(L"RenderingFont: FreeType: set pixel size failed", true);
+		return false;
 	}
 	return true;
+}
+
+DLLEXPORT float Leviathan::RenderingFont::CalculateDotsSizeAtScale(const float &scale){
+	// kerning needs to be right //
+	EnsurePixelSize(CalculatePixelSizeAtScale(scale));
+
+	return 3*(FontData[ConvertCharCodeToIndex(L'.')]->AdvancePixels*scale)+2*(GetKerningBetweenCharacters(scale, '.', L'.'));
 }
 
 // ------------------ FontsCharacter ------------------ //

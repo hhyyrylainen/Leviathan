@@ -79,10 +79,12 @@ namespace Leviathan{
 		}
 		DLLEXPORT inline float GetHeight(float heightmod, int Coordtype){
 			if(Coordtype != GUI_POSITIONABLE_COORDTYPE_RELATIVE)
-				return FontHeight*heightmod;
+				//return FontHeight*heightmod;
+				return (float)CalculatePixelSizeAtScale(heightmod);
 
 			// scale from screen height to promilles //
-			return (FontHeight*heightmod)/DataStore::Get()->GetHeight();
+			//return (FontHeight*heightmod)/DataStore::Get()->GetHeight();
+			return CalculatePixelSizeAtScale(heightmod)/(float)DataStore::Get()->GetHeight();
 		}
 		DLLEXPORT float CalculateTextLengthAndLastFitting(float TextSize, int CoordType, const wstring &text, const float &fitlength, 
 			size_t & Charindexthatfits, float delimiterlength);
@@ -92,14 +94,17 @@ namespace Leviathan{
 		}
 
 		// gets length of string "..." at a specified scale //
-		DLLEXPORT inline float CalculateDotsSizeAtScale(const float &scale){
-			// kerning needs to be right //
-			EnsurePixelSize(CalculatePixelSizeAtScale(scale));
+		DLLEXPORT float CalculateDotsSizeAtScale(const float &scale);
 
-			return 3*(FontData[ConvertCharCodeToIndex(L'.')]->AdvancePixels*scale+ceilf(GetKerningBetweenCharacters(L'.', L'.')));
+		DLLEXPORT inline bool EnsurePixelSize(const int &size){
+			// we only need to do something if size isn't the one already set //
+			if(SetSize != size){
+				return _SetFTPixelSize(size);
+			}
+			return true;
 		}
 
-		DLLEXPORT bool EnsurePixelSize(const int &size);
+		
 
 
 		ID3D11ShaderResourceView* GetTexture();
@@ -108,7 +113,7 @@ namespace Leviathan{
 		}
 
 		DLLEXPORT bool BuildVertexArray(VertexType* vertexptr, const wstring &text, float drawx, float drawy, float textmodifier);
-		DLLEXPORT bool AdjustTextSizeToFitBox(const float &Size, const Float2 &BoxToFit, const wstring &text, int CoordType, size_t &Charindexthatfits, 
+		DLLEXPORT bool AdjustTextSizeToFitBox(const Float2 &BoxToFit, const wstring &text, int CoordType, size_t &Charindexthatfits, 
 			float &EntirelyFitModifier, float &HybridScale, Float2 &Finallength, float scaletocutfrom);
 		DLLEXPORT bool RenderSentenceToTexture(const int &TextureID, const float &sizemodifier, const wstring &text, Int2 &RenderedToBox, 
 			int &baselinefromimagetop);
@@ -123,13 +128,18 @@ namespace Leviathan{
 			return (int)(index+32);
 		}
 
-		DLLEXPORT inline float GetKerningBetweenCharacters(const int &char1, const int &char2){
+		DLLEXPORT inline float GetKerningBetweenCharacters(const float &scaleonkerning, const int &char1, const int &char2){
 			// hopefully FreeType interface is already loaded //
 			if(!FontsFace)
 				_VerifyFontFTDataLoaded();
 			// return if no kerning //
 			if(!FT_HAS_KERNING(FontsFace))
 				return 0;
+
+			// we should really verify pixel size here //
+			if(!EnsurePixelSize(CalculatePixelSizeAtScale(scaleonkerning))){
+
+			}
 
 			// result receiver //
 			FT_Vector kerning;
@@ -150,6 +160,8 @@ namespace Leviathan{
 	private:
 		// retrieves FontsFace from FT library //
 		bool _VerifyFontFTDataLoaded();
+		// sets internal pixel size of the FreeType face associated with this object //
+		bool _SetFTPixelSize(const int & size);
 		// internal loading functions //
 		bool LoadFontData(ID3D11Device* dev,const wstring &file);
 		bool LoadTexture(ID3D11Device* dev, const wstring &file, bool forcegen = false);

@@ -5,10 +5,15 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
+// function used for comparing //
+bool ComparePtrs(KeyPressManager::RegisteredObject* first, KeyPressManager::RegisteredObject* second){ 
+	return (*first) < (*second);
+}
+
 KeyPressManager::KeyPressManager() : Receivers(), PendingEvents(){
 	Fetched = false;
-	// empty list (is sorted) //
-	IsSorted = true;
+	//// empty list (is sorted) //
+	IsSorted = false;
 
 	// generate id //
 	ID = IDFactory::GetID();
@@ -36,15 +41,18 @@ KeyPressManager* Leviathan::KeyPressManager::StaticInstance = NULL;
 void Leviathan::KeyPressManager::ProcessInput(Input* input){
 	if(!Fetched){
 		// get all keys //
-		for(int i = 0; i < 256; i++){
-			PreviousStates[i] = input->GetKeyState(i);
-		}
+		//for(int i = 0; i < 256; i++){
+		//	PreviousStates[i] = input->GetKeyState(i);
+		//}
+
+		Clear();
+
 		Fetched = true;
 	}
 
 	if(!IsSorted){
 		// needs to sort receivers //
-		sort(Receivers.begin(), Receivers.end());
+		sort(Receivers.begin(), Receivers.end(), ComparePtrs);
 		IsSorted = true;
 	}
 
@@ -81,7 +89,7 @@ void Leviathan::KeyPressManager::ProcessInput(Input* input){
 		input->GetMouseMoveAmount(xmoved, ymoved);
 
 		// send them //
-		FireEvent(new InputEvent(EVENT_TYPE_EVENT_SEQUENCE_END, (void*)(new Int2(xmoved, ymoved))));
+		FireEvent(new InputEvent(EVENT_TYPE_MOUSEMOVED, (void*)(new Int2(xmoved, ymoved))));
 
 	} else {
 

@@ -34,6 +34,8 @@ namespace Leviathan{
 	};
 
 	class KeyPressManager : public Object{
+	public:
+
 		struct RegisteredObject{
 			RegisteredObject(InputReceiver* ptr, int order){
 				OrderNumber = order;
@@ -41,14 +43,15 @@ namespace Leviathan{
 			}
 
 			// operation for sorting //
-			bool inline operator < (const RegisteredObject& other) const{
+			DLLEXPORT inline bool operator < (const RegisteredObject& other) const{
+				//// we actually want the smallest order number to be first //
 				return OrderNumber < other.OrderNumber;
 			}
 
 			int OrderNumber;
 			InputReceiver* callable;
 		};
-	public:
+		// ------------------------------------ //
 		DLLEXPORT KeyPressManager::KeyPressManager();
 		DLLEXPORT KeyPressManager::~KeyPressManager();
 

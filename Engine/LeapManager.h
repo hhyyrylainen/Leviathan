@@ -12,7 +12,7 @@
 #include "LeapListener.h"
 #include "Leap.h"
 
-#define SHUTDOWNSWEEPTHRESSHOLD			18000
+#define SHUTDOWNSWEEPTHRESSHOLD			20000
 #define GESTURESTATERESETTIME			1000
 
 namespace Leviathan{

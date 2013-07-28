@@ -60,7 +60,9 @@ DLLEXPORT void Leviathan::LeapManager::OnTick(const int &mspassed){
 	}
 	// could get state from controller here //
 
+	//wstring stuff(L"value: "+Convert::ToWstring(SweepDownShutdown));
 
+	//DEBUG_OUTPUT_AUTO(stuff);
 
 	// check for action //
 	if(SweepDownShutdown >= SHUTDOWNSWEEPTHRESSHOLD){

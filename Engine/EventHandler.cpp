@@ -22,7 +22,8 @@ bool EventHandler::Init(){
 	return true;
 }
 void EventHandler::Release(){
-
+	// release listeners //
+	SAFE_DELETE_VECTOR(EventListeners);
 }
 // ------------------------------------ //
 void EventHandler::CallEvent(Event* pEvent){

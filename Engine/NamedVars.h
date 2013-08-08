@@ -23,7 +23,7 @@ namespace Leviathan{
 		DLLEXPORT NamedVariableList(const wstring &name, const VariableBlock &val);
 		// warning the vector will be wiped clean after creating new variable //
 		DLLEXPORT NamedVariableList(const wstring &name, vector<VariableBlock*> values_willclear);
-		DLLEXPORT NamedVariableList(wstring &line, vector<const NamedVariableBlock*>* predefined = NULL) throw (...);
+		DLLEXPORT NamedVariableList(wstring &line, map<wstring, shared_ptr<VariableBlock>>* predefined = NULL) throw (...);
 		DLLEXPORT ~NamedVariableList();
 		// ------------------------------------ //
 		DLLEXPORT void SetValue(const VariableBlock &value1);
@@ -55,6 +55,23 @@ namespace Leviathan{
 			// all passed, can be casted //
 			return true;
 		}
+		template<class DBT>
+		DLLEXPORT inline bool CanAllBeCastedToType(const int &startindex, const int &endindex) const{
+			if(Datas.size() == 0)
+				return false;
+			// check would it go over //
+			if((size_t)endindex >= Datas.size())
+				return false;
+
+			for(int i = startindex; i < endindex+1; i++){
+				// check this //
+				if(!Datas[(size_t)i]->IsConversionAllowedNonPtr<DBT>()){
+					return false;
+				}
+			}
+			// all passed, can be casted //
+			return true;
+		}
 
 		DLLEXPORT int GetVariableType() const;
 		DLLEXPORT int GetVariableType(const int &nindex) const;
@@ -67,7 +84,8 @@ namespace Leviathan{
 		// ------------------------------------ //
 		DLLEXPORT wstring ToText(int WhichSeparator = 0) const;
 		// process functions //
-		DLLEXPORT static int ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVariableList>> &vec, vector<const NamedVariableBlock*>* predefined = NULL);
+		DLLEXPORT static int ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVariableList>> &vec, 
+			map<wstring, shared_ptr<VariableBlock>>* predefined = NULL);
 		// operators //
 		DLLEXPORT NamedVariableList& operator=(const NamedVariableList &other);
 

@@ -21,10 +21,8 @@ namespace Leviathan{
 		DLLEXPORT static void Release();
 		DLLEXPORT static vector<shared_ptr<ObjectFileObject>> ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVariableList>> &HeaderVars);
 
-		DLLEXPORT static void RegisterObjectType(wstring name, int value);
-		DLLEXPORT static int GetObjectTypeID(wstring &name);
 
-		DLLEXPORT static void RegisterValue(NamedVariableBlock* valuetokeep);
+		DLLEXPORT static void RegisterValue(const wstring &name, VariableBlock* valuetokeep);
 
 		DLLEXPORT static int WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const wstring &file, vector<shared_ptr<NamedVariableList>> &headervars,bool UseBinary = false);
 
@@ -45,6 +43,13 @@ namespace Leviathan{
 				receiver = defaultvalue;
 			}
 		}
+		// function to call the one before //
+		template<class T>
+		static __forceinline void LoadValueFromNamedVars(NamedVars &block, const wstring &varname, T &receiver, const T &defaultvalue, bool ReportError 
+			= false, const wstring &errorprefix = L""){
+				LoadValueFromNamedVars<T>(&block, varname, receiver, defaultvalue, ReportError, errorprefix);
+		}
+
 
 		template<class RType, class SingleType, int VarCount>
 		DLLEXPORT static void LoadMultiPartValueFromNamedVars(NamedVars* block, const wstring &varname, RType &receiver, const RType &defaultvalue, bool ReportError 
@@ -61,27 +66,49 @@ namespace Leviathan{
 				receiver = defaultvalue;
 				return;
 			}
+			// call assigning function //
+			int varindex = 0;
+			LoadMultiPartValueFromNamedVariableList<RType, SingleType, VarCount>(curvalues.get(), varindex, receiver, defaultvalue, ReportError, 
+				errorprefix);
 
+		}
+
+		template<class RType, class SingleType, int VarCount>
+		DLLEXPORT static bool LoadMultiPartValueFromNamedVariableList(NamedVariableList* block, int &valuestartindex, RType &receiver, 
+			const RType &defaultvalue, bool ReportError = false, const wstring &errorprefix = L"")
+		{
 			// make sure that size is right and types are correct //
-			if(curvalues->GetVariableCount() < VarCount || !curvalues->CanAllBeCastedToType<SingleType>()){
+			if(block->GetVariableCount()-valuestartindex < VarCount || !block->CanAllBeCastedToType<SingleType>(valuestartindex, valuestartindex+VarCount-1)){
 				// not enough values / wrong types //
 				if(ReportError){
-					Logger::Get()->Error(errorprefix+L" invalid variable "+varname+L", not enough values ("+Convert::ToWstring<int>(VarCount)
+					Logger::Get()->Error(errorprefix+L" invalid variable "+block->GetName()+L", not enough values ("+Convert::ToWstring<int>(VarCount)
 						+L" needed) or wrong types");
 				}
 				// set as default //
 				receiver = defaultvalue;
-				return;
+				return false;
 			}
 
 			// iterate over how many are wanted and assign //
 			for(int i = 0; i < VarCount; i++){
 
 				// convert and set //
-				receiver[i] = (SingleType)curvalues->GetValue(i);
+				receiver[i] = (SingleType)block->GetValue(valuestartindex+i);
 
 			}
 			// values copied //
+			// increment the index before returning //
+			valuestartindex += VarCount;
+
+			return true;
+		}
+
+		// function to call the one before //
+		template<class RType, class SingleType, int VarCount>
+		static __forceinline void LoadMultiPartValueFromNamedVars(NamedVars &block, const wstring &varname, RType &receiver, const RType &defaultvalue, bool ReportError 
+			= false, const wstring &errorprefix = L"")
+		{
+			return LoadMultiPartValueFromNamedVars<RType, SingleType, VarCount>(&block, varname, receiver, defaultvalue, ReportError, errorprefix);
 		}
 
 	private:
@@ -96,13 +123,12 @@ namespace Leviathan{
 
 
 		// ------------------------- //
-		static vector<IntWstring*> ObjectTypes;
 
 		// private constructor to prevent instantiating //
 		ObjectFileProcessor::ObjectFileProcessor();
 		ObjectFileProcessor::~ObjectFileProcessor();
 
-		static vector<const NamedVariableBlock*> RegisteredValues;
+		static map<wstring, shared_ptr<VariableBlock>> RegisteredValues;
 	};
 
 }

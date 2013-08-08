@@ -28,6 +28,7 @@ KeyPressManager::KeyPressManager() : Receivers(), PendingEvents(){
 KeyPressManager::~KeyPressManager(){
 	// release all listeners //
 	SAFE_DELETE_VECTOR(Receivers);
+	SAFE_DELETE_VECTOR(PendingEvents);
 	// should only be one so this is safe //
 	StaticInstance = NULL;
 }

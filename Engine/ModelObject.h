@@ -117,7 +117,6 @@ namespace Leviathan{ namespace GameObject{
 
 
 		// static part //
-		static bool VecGen;
 		static vector<shared_ptr<Flag>> DefFlags;
 	};
 

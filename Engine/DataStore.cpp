@@ -58,18 +58,7 @@ DLLEXPORT Leviathan::DataStore::DataStore(bool man){
 	FontSizeMultiplier = 1;
 
 	// register data indexes for use in Gui stuff //
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_TICKTIME), L"DATAINDEX_TICKTIME"));
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_TICKCOUNT), L"DATAINDEX_TICKCOUNT"));
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FRAMETIME), L"DATAINDEX_FRAMETIME"));
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FPS), L"DATAINDEX_FPS"));
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_WIDTH), L"DATAINDEX_WIDTH"));
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_HEIGHT), L"DATAINDEX_HEIGHT"));
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FRAMETIME_MAX), L"DATAINDEX_FRAMETIME_MAX"));
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FRAMETIME_MIN), L"DATAINDEX_FRAMETIME_MIN"));
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FRAMETIME_AVERAGE), L"DATAINDEX_FRAMETIME_AVERAGE"));
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FPS_MIN), L"DATAINDEX_FPS_MIN"));
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FPS_MAX), L"DATAINDEX_FPS_MAX"));
-	ObjectFileProcessor::RegisterValue(new NamedVariableBlock(new IntBlock(DATAINDEX_FPS_AVERAGE), L"DATAINDEX_FPS_AVERAGE"));
+	// moved directly to object file processor
 
 }
 DLLEXPORT Leviathan::DataStore::~DataStore(){
@@ -181,7 +170,7 @@ DLLEXPORT bool Leviathan::DataStore::SetValue(const wstring &name, const vector<
 }
 
 DLLEXPORT bool Leviathan::DataStore::SetValue(NamedVariableList &nameandvalues){
-
+	DEBUG_BREAK;
 	// send update to value listeners //
 	ValueUpdate(nameandvalues.GetName());
 
@@ -248,10 +237,10 @@ DLLEXPORT void Leviathan::DataStore::RegisterListener(AutoUpdateableObject* obje
 
 	if(tmpptre == NULL){
 		// new required //
-		tmpptre = new DataListenHolder();
 		// add back to map //
-		Listeners[object] = shared_ptr<DataListenHolder>(tmpptre);
-
+		Listeners[object] = shared_ptr<DataListenHolder>(new DataListenHolder());
+		// recurse to use the new object //
+		return RegisterListener(object, listen);
 	}
 
 	// can add new one //

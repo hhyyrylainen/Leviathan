@@ -8,20 +8,9 @@ using namespace Leviathan;
 MultiFlag::MultiFlag(){
 
 }
-MultiFlag::MultiFlag(vector<shared_ptr<Flag>>& toset){
-	for(unsigned int i = 0; i < toset.size(); i++){
-		Flags.push_back(toset[i]);
-	}
-	// clear input array //
-	toset.clear();
+MultiFlag::MultiFlag(vector<shared_ptr<Flag>>& toset) : Flags(toset){
 }
 MultiFlag::~MultiFlag(){
-	//while(Flags.size() != 0){
-	//	SAFE_DELETE(Flags[0]);
-	//	Flags.erase(Flags.begin());
-	//}
-	// smart pointers, clear
-	//Flags.clear();
 	// no need to clear //
 }
 // ------------------------------------ //

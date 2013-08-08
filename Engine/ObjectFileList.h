@@ -7,7 +7,6 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "NamedVars.h"
-#include "ScriptList.h"
 
 namespace Leviathan{
 
@@ -17,14 +16,10 @@ namespace Leviathan{
 		DLLEXPORT ObjectFileList::ObjectFileList(const wstring &name);
 		DLLEXPORT ObjectFileList::~ObjectFileList();
 
-		DLLEXPORT ScriptList* AllocateNewListFromData();
-
 
 		wstring Name;
-		NamedVars* Variables;
+		NamedVars/***/ Variables;
 		vector<wstring*> Lines; // for storing plain text //
-	
-
 	};
 
 }

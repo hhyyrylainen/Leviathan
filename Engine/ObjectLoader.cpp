@@ -24,7 +24,7 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 	vector<GameObject::Model*> result = vector<GameObject::Model*>();
 	// try to locate data file //
 	wstring modelextension = L"levmd";
-	wstring path = FileSystem::SearchForFile(FILEGROUP_MODEL, file, modelextension, false);
+	wstring path = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL, file, modelextension, false);
 
 	if(path == L""){
 		// the file wasn't found //
@@ -110,7 +110,7 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 	// go through the structures and add them to the result vector //
 	for(unsigned int i = 0; i < structure.size(); i++){
 		if(structure[i]->TName == L"Model"){
-			GameObject::Model* obj = new GameObject::Model();
+			unique_ptr<GameObject::Model> obj(new GameObject::Model());
 
 			// set name //
 			wstring objname = structure[i]->Name;
@@ -149,7 +149,7 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 						continue;
 					}
 
-					wstring path = FileSystem::SearchForFile(FILEGROUP_MODEL, filetosearchfor, extension, false);
+					wstring path = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL, filetosearchfor, extension, false);
 					if(path == L""){
 						Logger::Get()->Error(L"ObjectLoader: LoadModelFile: no model file found \""+filetosearchfor+L"\" with extension "+extension);
 						continue;
@@ -223,7 +223,7 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 
 
 						// do the actual search here //
-						wstring path = FileSystem::SearchForFile(FILEGROUP_TEXTURE, filetosearch, extension);
+						wstring path = FileSystem::Get()->SearchForFile(FILEGROUP_TEXTURE, filetosearch, extension);
 						if(path == L""){
 							Logger::Get()->Error(L"ObjectLoader: no texture file found \""+filetosearch+L"\" with extension "+extension);
 							path = L"404";
@@ -254,7 +254,7 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 				for(unsigned int a = 0; a < structure[i]->Contents.size(); a++){
 					if(structure[i]->Contents[a]->Name == L"Flags"){
 						// set  ModelType line //
-						structure[i]->Contents[a]->Variables->SetValue(L"ModelType", realtype);
+						structure[i]->Contents[a]->Variables.SetValue(L"ModelType", realtype);
 						continue;
 					}
 				}
@@ -263,7 +263,7 @@ DLLEXPORT vector<GameObject::Model*> Leviathan::ObjectLoader::LoadModelFile(cons
 
 
 			// finally add to result vector //
-			result.push_back(obj);
+			result.push_back(obj.release());
 			continue;
 		}
 
@@ -298,7 +298,7 @@ DLLEXPORT TextureDefinition* Leviathan::ObjectLoader::LoadTextureDefinitionFile(
 	TextureDefinition* result = NULL;
 	// try to locate data file //
 	wstring modelextension = L"levtd";
-	wstring path = FileSystem::SearchForFile(FILEGROUP_TEXTURE, file, modelextension, false);
+	wstring path = FileSystem::Get()->SearchForFile(FILEGROUP_TEXTURE, file, modelextension, false);
 
 	if(path == L""){
 		// the file wasn't found //

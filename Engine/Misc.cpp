@@ -472,12 +472,11 @@ bool Misc::WstringCompareInsensitiveRefs(const wstring& data, const wstring& sec
 	}
 	return true;
 }
-wstring& Misc::GetErrString(){
-	return Errstring;
-}
 
 wstring Misc::Errstring = L"ERROR";
+std::string Leviathan::Misc::Errstrings = "ERROR";
 
+std::wstring Leviathan::Misc::ValidNumberCharacters = L"1234567890-+.";
 wstring Misc::GetValidCharacters(){
 																								   // extended. starts here //
 	return L" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
@@ -596,4 +595,4 @@ DLLEXPORT bool Leviathan::Misc::WstringIsNumeric(const wstring &data){
 	return true;
 }
 
-std::wstring Leviathan::Misc::ValidNumberCharacters = L"1234567890-+.";
+

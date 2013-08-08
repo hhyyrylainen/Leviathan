@@ -148,7 +148,22 @@ namespace Leviathan{
 
 		
 
-		DLLEXPORT static wstring& GetErrString();
+		DLLEXPORT static inline wstring& GetErrString(){
+
+			return Errstring;
+		}
+		DLLEXPORT static inline const wstring& GetErrStringConst(){
+
+			return Errstring;
+		}
+		DLLEXPORT static inline string& GetErrStrings(){
+
+			return Errstrings;
+		}
+		DLLEXPORT static inline const string& GetErrStringConsts(){
+
+			return Errstrings;
+		}
 		DLLEXPORT static wstring GetValidCharacters();
 
 		static wstring EmptyString;
@@ -156,6 +171,7 @@ namespace Leviathan{
 
 	private:
 		static wstring Errstring;
+		static string Errstrings;
 
 
 	};

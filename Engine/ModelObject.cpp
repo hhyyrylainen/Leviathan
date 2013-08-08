@@ -8,17 +8,12 @@ using namespace Leviathan::GameObject;
 // ------------------------------------ //
 #include "Engine.h"
 #include "Rendering\Graphics.h"
+#include <boost\assign\list_of.hpp>
 
 Leviathan::GameObject::Model::Model(){
 	ID = IDFactory::GetID();
 
 	Type = OBJECT_TYPE_MODEL;
-	if(!VecGen){
-		VecGen = true;
-		DefFlags.push_back(shared_ptr<Flag>(new Flag(FLAG_GOBJECT_CONTAINS_INIT)));
-		DefFlags.push_back(shared_ptr<Flag>(new Flag(FLAG_GOBJECT_CONTAINS_RENDER)));
-		DefFlags.push_back(shared_ptr<Flag>(new Flag(FLAG_GOBJECT_TYPE_MODEL)));
-	}
 
 	Flags = new MultiFlag(DefFlags);
 
@@ -45,8 +40,8 @@ Leviathan::GameObject::Model::~Model(){
 	Release();
 }
 
-bool Leviathan::GameObject::Model::VecGen = false;
-vector<shared_ptr<Flag>> Leviathan::GameObject::Model::DefFlags = vector<shared_ptr<Flag>>();
+vector<shared_ptr<Flag>> Leviathan::GameObject::Model::DefFlags = boost::assign::list_of(new Flag(FLAG_GOBJECT_CONTAINS_INIT))
+	(new Flag(FLAG_GOBJECT_CONTAINS_RENDER)) (new Flag(FLAG_GOBJECT_TYPE_MODEL));
 // ------------------------------------ //
 bool Leviathan::GameObject::Model::Init(){
 	// don't actually load anything //
@@ -58,6 +53,7 @@ void Leviathan::GameObject::Model::Release(){
 	ReleaseModel();
 	// destroy model object //
 	SAFE_DELETE(ModelDataContainer);
+	SAFE_DELETE(Flags);
 }
 // ------------------------------------ //
 void Leviathan::GameObject::Model::SetTexturesToLoad(vector<shared_ptr<wstring>> files, MultiFlag flags){
@@ -244,7 +240,7 @@ DLLEXPORT bool Leviathan::GameObject::Model::Render(Graphics* renderer, int mspa
 		// apply scale //
 		D3DXMatrixMultiply(&OwnWorld, &OwnWorld, &ScaleMatrix);
 		// translate location //
-		D3DXMatrixTranslation(&TranslateMatrix, (float)s_X/UNIT_SCALE, (float)s_Z/UNIT_SCALE, (float)s_Y/UNIT_SCALE);
+		D3DXMatrixTranslation(&TranslateMatrix, (float)s_X/1000, (float)s_Z/1000, (float)s_Y/1000);
 		// apply translation //
 		D3DXMatrixMultiply(&OwnWorld, &OwnWorld, &TranslateMatrix); 
 	}

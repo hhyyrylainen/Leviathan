@@ -7,90 +7,64 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "FileSystem.h"
 
-Logger* Leviathan::Logger::LatestLogger = NULL;
+Leviathan::Logger::Logger(): FirstSaveDone(false), Saved(false), Autosave(false), Path(L".\\Log.txt"){
+	// get time for putting to beginning of log //
+	SYSTEMTIME tdate;
+	GetLocalTime(&tdate);
+
+	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "
+		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
+
+	PendingLog = L"Start of Leviathan log for leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
+
+	LatestLogger = this;
+}
+DLLEXPORT Leviathan::Logger::Logger(const wstring &start, const bool &autosave) : FirstSaveDone(false), Saved(false), Autosave(autosave), 
+	Path(L".\\Log.txt")
+{
+	// use the argument as initial text //
+	SYSTEMTIME tdate;
+	GetLocalTime(&tdate);
+
+	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "
+		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
+
+	PendingLog = start+L"Start of Leviathan log for leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
+
+	LatestLogger = this;
+}
+
+
+Leviathan::Logger::~Logger(){
+	// thread safety //
+	boost::strict_lock<Logger> guard(*this);
+
+	// check is something in queue //
+	CheckQueue(guard);
+	// save if unsaved //
+	Save(guard);
+}
+
 std::wstring Leviathan::Logger::QueuedLog = L"";
 
-Leviathan::Logger::Logger(){
-	log = L"";
-	PendingLog = L"";
-	FirstSaveDone = false;
-	SYSTEMTIME tdate;
-	GetLocalTime(&tdate);
-
-	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
-
-	log = L"Start of Leviathan log. leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
-
-	Autosave = true;
-	Saved = true;
-
-	LatestLogger = this;
-	Path = L".\\Log.txt";
-
-	_inuse = false;
-}
-Leviathan::Logger::Logger(const wstring &start, bool autosave){
-	log = L"";
-	PendingLog = L"";
-	FirstSaveDone = false;
-	SYSTEMTIME tdate;
-	GetLocalTime(&tdate);
-
-	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
-	log += start;
-	log += L"Start of Leviathan log. leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
-
-	Autosave = autosave;
-	Saved = true;
-
-	LatestLogger = this;
-	Path = L".\\Log.txt";
-
-	_inuse = false;
-}
-Leviathan::Logger::~Logger(){
-	// check is something in queue //
-	CheckQueue();
-	// save if unsaved //
-	if(!Saved)
-		Save();
-}
-
-Logger* Leviathan::Logger::GetIfExists(){
-	if(LatestLogger){
-		return LatestLogger;
-	}
-	return NULL;
-}
-
-Logger* Leviathan::Logger::Get(){
-	if(LatestLogger){
-		return LatestLogger;
-	}
-	// create emergency logger //
-	LatestLogger = new Logger(L"(W) ", true);
-	return LatestLogger;
-}
-void Leviathan::Logger::Write(const wstring &data){
-	WaitToFinish();
-	_inuse = true;
+Logger* Leviathan::Logger::LatestLogger = NULL;
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Logger::Write(const wstring &data, const bool &save /*= false*/){
+	// thread safety //
+	boost::strict_lock<Logger> guard(*this);
 
 	// create message string //
-	wstring message = data + L"\n";
+	const wstring message = data + L"\n";
 
 	// if debug build send it to debug output //
 	DEBUG_OUTPUT(message);
 
-	log += message;
-	PendingLog += message;
-	// check is something in queue //
-	CheckQueue();
-	Saved = false;
-	_inuse = false;
+	_LogUpdateEndPart(save, guard);
 }
-void Leviathan::Logger::Info(const wstring &data){
-	WaitToFinish();
-	_inuse = true;
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Logger::Info(const wstring &data, const bool &save /*= false*/){
+	// thread safety //
+	boost::strict_lock<Logger> guard(*this);
 
 	// create message string //
 	wstring message = L"[INFO] "+data + L"\n";
@@ -98,165 +72,47 @@ void Leviathan::Logger::Info(const wstring &data){
 	// if debug build send it to debug output //
 	DEBUG_OUTPUT(message);
 
-	log += message;
 	PendingLog += message;
-	// check is something in queue //
-	CheckQueue();
-	Saved = false;
-	if(Autosave)
-		Save();
-	_inuse = false;
+
+	_LogUpdateEndPart(save, guard);
 }
-void Leviathan::Logger::Error(const wstring &data, int value){
-	WaitToFinish();
-	_inuse = true;
-
-	// create message string //
-	wstring message = L"[ERROR] "+data + L" value: "+Convert::IntToWstring(value)+L"\n";
-
-	// if debug build send it to debug output //
-	DEBUG_OUTPUT(message);
-
-	log += message;
-	PendingLog += message;
-	// check is something in queue //
-	CheckQueue();
-	Saved = false;
-	if(Autosave)
-		Save();
-	_inuse = false;
-
-	// if specified throw exception //
-#ifdef THROW_ON_PRINTERROR
-	throw exception("error_message", 13);
-#endif // THROW_ON_PRINTERROR
-}
-void Leviathan::Logger::Error(const wstring &data){
-	WaitToFinish();
-	_inuse = true;
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Logger::Error(const wstring &data, const int &pvalue /*= 0*/, const bool &save /*= false*/){
+	// thread safety //
+	boost::strict_lock<Logger> guard(*this);
 
 	// create message string //
 	wstring message = L"[ERROR] "+data+L"\n";
 
 	// if debug build send it to debug output //
 	DEBUG_OUTPUT(message);
-
-	log += message;
 	PendingLog += message;
-	// check is something in queue //
-	CheckQueue();
-	Saved = false;
-	if(Autosave)
-		Save();
-	_inuse = false;
 
-	// if specified throw exception //
-#ifdef THROW_ON_PRINTERROR
-	throw exception("error_message", 13);
-#endif // THROW_ON_PRINTERROR
+
+	_LogUpdateEndPart(save, guard);
 }
-void Leviathan::Logger::Write(const wstring &data, bool save){
-	WaitToFinish();
-	_inuse = true;
-
-	// create message string //
-	wstring message = data + L"\n";
-
-	// if debug build send it to debug output //
-	DEBUG_OUTPUT(message);
-
-	log += message;
-	PendingLog += message;
-	// check is something in queue //
-	CheckQueue();
-	Saved = false;
-	if(save)
-		this->Save();
-	_inuse = false;
-}
-void Leviathan::Logger::Info(const wstring &data, bool save){
-	WaitToFinish();
-	_inuse = true;
-
-	// create message string //
-	wstring message = L"[INFO] "+data + L"\n";
-
-	// if debug build send it to debug output //
-	DEBUG_OUTPUT(message);
-
-	log += message;
-	PendingLog += message;
-	// check is something in queue //
-	CheckQueue();
-	Saved = false;
-	if(save)
-		this->Save();
-	_inuse = false;
-}
-void Leviathan::Logger::Error(const wstring &data, int value, bool save){
-	WaitToFinish();
-	_inuse = true;
-
-	// create message string //
-	wstring message = L"[ERROR] "+data + L" value: "+Convert::IntToWstring(value)+L"\n";
-
-	// if debug build send it to debug output //
-	DEBUG_OUTPUT(message);
-
-	log += message;
-	PendingLog += message;
-	// check is something in queue //
-	CheckQueue();
-
-	Saved = false;
-	if(save)
-		this->Save();
-	_inuse = false;
-
-	// if specified throw exception //
-#ifdef THROW_ON_PRINTERROR
-	throw exception("error_message", 13);
-#endif // THROW_ON_PRINTERROR
-}
-
+// ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::Warning(const wstring &data, bool save /*= false*/){
-	WaitToFinish();
-	_inuse = true;
+	// thread safety //
+	boost::strict_lock<Logger> guard(*this);
 
 	// create message string //
 	wstring message = L"[WARNING] "+data+L"\n";
 
 	// if debug build send it to debug output //
 	DEBUG_OUTPUT(message);
-
-	log += message;
 	PendingLog += message;
-	// check is something in queue //
-	CheckQueue();
 
-	Saved = false;
-	if(save)
-		this->Save();
-	_inuse = false;
+	_LogUpdateEndPart(save, guard);
 }
-
-
-DLLEXPORT void Leviathan::Logger::DirectWriteBuffer(const wstring &data){
-	WaitToFinish();
-	_inuse = true;
-	// directly just append to buffers //
-	log += data;
-	PendingLog += data;
-
-	_inuse = false;
-}
-
-void Leviathan::Logger::Save(){
+// ------------------------------------ //
+void Leviathan::Logger::Save(boost::strict_lock<Logger> &guard){
 	if(!Saved){
 		if(!FirstSaveDone){
-			FileSystem::WriteToFile(log, Path);
+			FileSystem::WriteToFile(PendingLog, Path);
 			PendingLog.clear();
 			FirstSaveDone = true;
+
 		} else {
 			// append to file //
 			FileSystem::AppendToFile(PendingLog, Path);
@@ -267,23 +123,10 @@ void Leviathan::Logger::Save(){
 }
 
 DLLEXPORT void Leviathan::Logger::SetSavePath(const wstring& path){
+	// thread safety //
+	boost::strict_lock<Logger> guard(*this);
+
 	Path = path;
-}
-
-void Leviathan::Logger::WaitToFinish(){
-	int count = 0;
-	while(_inuse){
-		Sleep(1);
-		count++;
-		if(count > 1000){
-			
-			log += L"[ERROR] logger waiting too long!\n";
-			PendingLog += L"[ERROR] logger waiting too long!\n";
-			Saved = false;
-			break;
-		}
-	}
-
 }
 // -------------------------------- //
 void Leviathan::Logger::Print(string message, bool save){
@@ -297,7 +140,7 @@ void Leviathan::Logger::SendDebugMessage(const wstring& str){
 	return;
 #endif
 }
-
+// ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::QueueErrorMessage(const wstring& str){
 	Logger* tmp = GetIfExists();
 	if(tmp == NULL){
@@ -306,19 +149,49 @@ DLLEXPORT void Leviathan::Logger::QueueErrorMessage(const wstring& str){
 		return;
 	}
 	// send to logger //
-	tmp->Error(str, false);
+	tmp->Error(str);
 }
 
-void Leviathan::Logger::CheckQueue(){
+DLLEXPORT void Leviathan::Logger::DirectWriteBuffer(const wstring &data){
+	// thread safety //
+	boost::strict_lock<Logger> guard(*this);
+
+	// directly just append to buffers //
+	PendingLog += data;
+	Saved = false;
+}
+// ------------------------------------ //
+void Leviathan::Logger::CheckQueue(boost::strict_lock<Logger> &guard){
 	if(LatestLogger != NULL){
-		// send it to error log //
-		// just write to avoid issues 
-		//LatestLogger->Write(QueuedLog, true);
-		LatestLogger->log += QueuedLog;
 		LatestLogger->PendingLog += QueuedLog;
 		// clear //
-		QueuedLog.clear();
+		QueuedLog.resize(0);
 	}
 }
+
+void Leviathan::Logger::_LogUpdateEndPart(const bool &save, boost::strict_lock<Logger> &guard){
+	// check is something in queue //
+	CheckQueue(guard);
+	// unsaved //
+	Saved = false;
+
+	if(save)
+		Save();
+}
+// ------------------------------------ //
+DLLEXPORT Logger* Leviathan::Logger::GetIfExists(){
+	return LatestLogger ? LatestLogger: NULL;
+}
+
+DLLEXPORT Logger* Leviathan::Logger::Get(){
+	if(LatestLogger){
+		return LatestLogger;
+	}
+	// create emergency logger //
+	LatestLogger = new Logger(L"(W) ", true);
+	return LatestLogger;
+}
+
+
 
 

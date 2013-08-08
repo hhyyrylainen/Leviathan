@@ -47,7 +47,10 @@ namespace Leviathan{
 
 	// holds all data listeners related to a object //
 	struct DataListenHolder{
-
+		inline ~DataListenHolder(){
+			// free memory //
+			SAFE_DELETE_VECTOR(HandledListeners);
+		}
 
 		vector<DataListener*> HandledListeners;
 	};

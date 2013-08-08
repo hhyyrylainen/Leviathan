@@ -44,14 +44,11 @@ Leviathan::NamedVariableList::NamedVariableList(const NamedVariableList &other) 
 	}
 }
 
-DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, vector<const NamedVariableBlock*>* predefined /*= NULL*/) : Datas(1){
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wstring, shared_ptr<VariableBlock>>* predefined /*= NULL*/) : Datas(1){
 	// using WstringIterator makes this shorter //
 	WstringIterator itr(&line, false);
 
 	unique_ptr<wstring> name = itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_ALL);
-
-
-	
 
 	if(name->size() < 1){
 		// no name //
@@ -316,7 +313,9 @@ DLLEXPORT NamedVariableList& Leviathan::NamedVariableList::operator=(const Named
 }
 
 // ----------------- process functions ------------------- //
-DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVariableList>> &vec, vector<const NamedVariableBlock*>* predefined /*= NULL*/){
+DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVariableList>> &vec, 
+	map<wstring, shared_ptr<VariableBlock>>* predefined /*= NULL*/)
+{
 	//QUICKTIME_THISSCOPE;
 	// split to lines //
 	vector<shared_ptr<wstring>> Lines;
@@ -356,7 +355,8 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data,
 
 		// create a named var //
 		try{
-			vec.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(*Lines[i], predefined)));
+			shared_ptr<NamedVariableList> var(new NamedVariableList(*Lines[i], predefined));
+			vec.push_back(var);
 		}
 		catch (const ExceptionInvalidArguement &e){
 			// print to log //

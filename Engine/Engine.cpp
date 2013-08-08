@@ -7,7 +7,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "Application.h"
 
-Leviathan::Engine::Engine() : LeapData(NULL){
+Leviathan::Engine::Engine() : LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL){
 
 	Mainlog = NULL;
 	Inited = false;
@@ -24,20 +24,13 @@ Leviathan::Engine::Engine() : LeapData(NULL){
 	TimePassed = 0;
 	LastFrame = 0;
 
-	//FpsMonitor = NULL;
-	//CpuUsage = NULL;
-
-	Gui = NULL;
+	GManager = NULL;
 	Mainstore = NULL;
 	MainScript = NULL;
 
 	TickCount = 0;
 	TickTime = 0;
-	//FrameTime = 0;
 	FrameCount = 0;
-
-	//RenderStart = 0;
-	//SinceRender = 0;
 
 	MainCamera = NULL;
 	KeyListener = NULL;
@@ -54,18 +47,23 @@ Leviathan::Engine::Engine() : LeapData(NULL){
 
 }
 Engine* Leviathan::Engine::instance = NULL;
-// ------------------------------------ //
+
 Engine* Leviathan::Engine::GetEngine(){
 	return instance;
 }
 // ------------------------------------ //
-bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
+bool Leviathan::Engine::Init(AppDef* definition){
 	// get time, for monitoring how long load takes //
 	__int64 InitStartTime = Misc::GetTimeMs64();
-
+	// set static access to this object //
 	instance = this;
+	// store parameters //
+	Define = definition;
 
-	Define = def;
+	// get windows //
+
+	Wind = definition->RWindow;
+
 	// create logger object //
 	if(Logger::GetIfExists() != NULL){
 		// already exists //
@@ -77,42 +75,42 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 	// create //
 	OutOMemory = new OutOfMemoryHandler();
 
-
-	Wind = wind;
-
 	// create randomizer //
 	MainRandom = new Random((int)InitStartTime);
 	MainRandom->SetAsMain();
-
-	// update resolution scaling //
-	ResolutionScaling::SetResolution(Wind->GetWidth(), Wind->GetHeight());
-
 
 	// data storage //
 	Mainstore = new DataStore(true);
 	CLASS_ALLOC_CHECK(Mainstore);
 	// set height/width values //
-	Mainstore->SetHeight(wind->GetHeight());
-	Mainstore->SetWidth(wind->GetWidth());
+	Mainstore->SetHeight(Wind->GetHeight());
+	Mainstore->SetWidth(Wind->GetWidth());
 
-	// search data folder for files // 
-	FileSystem::SearchFiles();
+	// search data folder for files //
+	MainFileHandler = new FileSystem();
+	CLASS_ALLOC_CHECK(MainFileHandler);
+	MainFileHandler->Init();
 
+	// file parsing //
+	ObjectFileProcessor::Initialize();
 
+	// main program wide event dispatcher //
+	MainEvents = new EventHandler();
+	CLASS_ALLOC_CHECK(MainEvents);
+	if(!MainEvents->Init()){
+		Logger::Get()->Error(L"Engine: Init: Init EventHandler failed!");
+		return false;
+	}
 
 	// object holder //
 	GObjects = new ObjectManager();
-	if(!GObjects){
-
-		Logger::Get()->Error(L"Engine: 008");
-		return false;
-	}
+	CLASS_ALLOC_CHECK(GObjects);
 	if(!GObjects->Init()){
 		Logger::Get()->Error(L"Failed to init Engine, Init ObjectManager failed!");
 		return false;
 	}
-
-
+	// timing object //
+	MTimer = new Timer();
 
 	// create script interface before renderer //
 	MainScript = new ScriptInterface();
@@ -126,27 +124,36 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 		return false;
 	}
 
+	// create console after script engine //
+	MainConsole = new ScriptConsole();
+	CLASS_ALLOC_CHECK(MainConsole);
 
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(def->GetValues(), L"MaxFPS", FrameLimit, 120, false);
+	if(!MainConsole->Init(MainScript)){
 
-
-	Graph = new Graphics();
-	MTimer = new Timer();
-	MainEvents = new EventHandler();
-	if(!MainEvents){
-		Logger::Get()->Error(L"Engine: 008");
-		return false;
+		Logger::Get()->Error(L"Engine: Init: failed to initialize Console, continuing anyway");
 	}
-	if(!MainEvents->Init()){
-		Logger::Get()->Error(L"Failed to init Engine, Init EventHandler failed!");
-		return false;
-	}
+
+	// temporary parameters for creating a graphics instance //
+	bool vsyncon = true;
+	bool dhardware = true;
+	int targetlevel = 11;
+	int MSAA = 4;
+
+	// get variables from engine configuration file //
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(definition->GetValues(), L"MaxFPS", FrameLimit, 120, true, L"Engine: Init:");
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(definition->GetValues(), L"FeatureLevel", targetlevel, 120, false);
+	ObjectFileProcessor::LoadValueFromNamedVars<bool>(definition->GetValues(), L"Vsync", vsyncon, false, true, L"Engine: Init:");
+	ObjectFileProcessor::LoadValueFromNamedVars<bool>(definition->GetValues(), L"DriverHardWare", dhardware, true, true, L"Engine: Init:");
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(definition->GetValues(), L"MSAA", MSAA, 4, true, L"Engine: Init:");
+
+	// check sanity of values //
+	if(MSAA < 1)
+		MSAA = 1;
+	if(MSAA > 32)
+		MSAA = 32;
+
 	// init graphics //
 	D3D_FEATURE_LEVEL flevel = D3D_FEATURE_LEVEL_11_0;
-	int targetlevel = 11;
-
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(def->GetValues(), L"FeatureLevel", targetlevel, 120, false);
-
 
 	switch(targetlevel){
 	case 11: flevel = D3D_FEATURE_LEVEL_11_0; break;
@@ -156,43 +163,27 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 	}
 	
 	// renderer //
-	// get values from config //
-	bool vsyncon = true;
-	bool dhardware = true;
 	D3D_DRIVER_TYPE dtype = D3D_DRIVER_TYPE_HARDWARE;
-
-
-	ObjectFileProcessor::LoadValueFromNamedVars<bool>(def->GetValues(), L"Vsync", vsyncon, false, false);
-
-	ObjectFileProcessor::LoadValueFromNamedVars<bool>(def->GetValues(), L"DriverHardWare", dhardware, true, false);
-
 	if(!dhardware){
 		Logger::Get()->Info(L"Driver type is NOT set to hardware, performance warning", true);
 		dtype = D3D_DRIVER_TYPE_SOFTWARE;
 	}
 
-	int MSAA = 4;
+	Graph = new Graphics();
+	CLASS_ALLOC_CHECK(Graph);
 
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(def->GetValues(), L"MSAA", MSAA, 4, true, L"Engine: INITENGINE:");
+	// description object for renderer //
+	DxRendConf dxconf = DxRendConf(Wind->IsWindowed(), vsyncon, 1000.0f, 0.1f, dtype, MSAA);
 
-	if(MSAA < 1)
-		MSAA = 1;
-	if(MSAA > 32)
-		MSAA = 32;
-
-	dxconf = DxRendConf(windowed, vsyncon, 1000.0f, 0.1f, dtype, MSAA);
-	Graph->SetDescObjects(dxconf);
 	// call init //
-	if(!Graph->Init(Wind)){
+	if(!Graph->Init(Wind, dxconf)){
 		Logger::Get()->Error(L"Failed to init Engine, Init graphics failed! Aborting");
 		return false;
 	}
 
-	// file parsing //
-	ObjectFileProcessor::Initialize();
-
 	// 3d model animations //
 	AnimManager = new AnimationManager();
+	CLASS_ALLOC_CHECK(AnimManager);
 	if(!AnimManager->Init()){
 		Logger::Get()->Error(L"Failed to init Engine, AnimationManager init failed");
 		return false;
@@ -200,20 +191,13 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 
 	// key listening //
 	KeyListener = new KeyPressManager();
-	if(!KeyListener){
-		Logger::Get()->Error(L"Engine: 008");
-		return false;
-	}
+	CLASS_ALLOC_CHECK(KeyListener);
 
 	// Gui //
-	Gui = new GuiManager();
-	if(!Gui){
+	GManager = new Gui::GuiManager();
+	CLASS_ALLOC_CHECK(GManager);
 
-		Logger::Get()->Error(L"Engine: 008");
-		return false;
-	}
-
-	if(!Gui->Init(def)){
+	if(!GManager->Init(definition, Graph)){
 
 		Logger::Get()->Error(L"Failed to init Engine, Gui init failed");
 		return false;
@@ -237,7 +221,6 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 		Logger::Get()->Error(L"Engine: Init: Leap threw something, even without leap this shouldn't happen; continuing anyway");
 	}
 
-
 	// create camera that always exists //
 	MainCamera = new ViewerCameraPos();
 	MainCamera->SetMouseMode(true);
@@ -249,11 +232,7 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 
 	// sound device //
 	Sound = new SoundDevice();
-	if(!Sound){
-
-		Logger::Get()->Error(L"Engine: 008");
-		return false;
-	}
+	CLASS_ALLOC_CHECK(Sound);
 	if(!Sound->Init()){
 
 		Logger::Get()->Error(L"Failed to init Engine, sound init failed");
@@ -261,64 +240,33 @@ bool Leviathan::Engine::InitEngine(Window* wind, bool windowed, AppDef* def){
 	}
 	
 	Inputs = new Input();
-	if(!Inputs){
-		
-		Logger::Get()->Error(L"Engine: 008");
-		return false;
-	}
+	CLASS_ALLOC_CHECK(Inputs);
 	// load control structures //
-	if(!Inputs->Init(LeviathanApplication::GetApp()->GetHinstance(), Wind->GetWidth(), Wind->GetHeight())){
+	if(!Inputs->Init(Define->HInstance, Wind->GetWidth(), Wind->GetHeight())){
 
 		Logger::Get()->Error(L"Failed to init Engine, input init failed");
 		return false;
 	}
 
-	// start monitors //
-	// CPumonitor
-	//CpuUsage = new CpuMonitor();
-	//if(!CpuUsage){
-
-	//	Logger::Get()->Error(L"Engine: 008");
-	//	return false;
-	//}
-	//// init //
-	//if(!CpuUsage->Init()){
-
-	//	Logger::Get()->Error(L"Engine: failed to init Cpumonitor");
-	//	return false;
-	//}
 	// create object loader //
 	Loader = new ObjectLoader(this);
-	if(!Loader){
-		Logger::Get()->Error(L"Engine: 008");
-		return false;
-	}
+	CLASS_ALLOC_CHECK(Loader);
 
-	// temporary move
 	AdvancedGeometryFiles = new GeometryAdvancedLoader();
-	if(!AdvancedGeometryFiles){
+	CLASS_ALLOC_CHECK(AdvancedGeometryFiles);
 
-		Logger::Get()->Error(L"Engine: 008");
-		return false;
-	}
 	// measuring //
 	RenderTimer = new RenderingStatistics();
-	if(!RenderTimer){
-		Logger::Get()->Error(L"Engine: 008");
-		return false;
-	}
+	CLASS_ALLOC_CHECK(RenderTimer);
 
 	Inited = true;
 
 	PostLoad();
 
-	int TimeTaken = (int)(Misc::GetTimeMs64()-InitStartTime);
-	Logger::Get()->Info(L"Engine init took "+Convert::IntToWstring(TimeTaken)+L" ms");
+	Logger::Get()->Info(L"Engine init took "+Convert::ToWstring(Misc::GetTimeMs64()-InitStartTime)+L" ms", false);
 
 	// let's send a debug message telling engine initialized //
-	DEBUG_OUTPUT(wstring(L"[INFO] Engine initialized\n")); // important new line in the end //
-	
-	//AdvancedGeometryFiles->ScanGeometryFile(FileSystem::SearchForFile(FILEGROUP_MODEL, model, exts));
+	Logger::Get()->Info(L"Engine initialized", true);
 	return true;
 }
 
@@ -329,11 +277,10 @@ void Leviathan::Engine::PostLoad(){
 	// get time //
 	LastFrame = Misc::GetTimeMs64();
 
+	// it is preferable that mouse isn't captured on start //
 	SetGuiActive(true);
-	//CaptureMouse(true);
 
 	// increase start count //
-
 	int startcounts = 0;
 
 	if(Mainstore->GetValueAndConvertTo<int>(L"StartCount", startcounts)){
@@ -341,19 +288,30 @@ void Leviathan::Engine::PostLoad(){
 		Mainstore->SetValue(L"StartCount", new VariableBlock(new IntBlock(startcounts+1)));
 	} else {
 		
-		Mainstore->AddVar(new NamedVariableList(L"StartCount", new VariableBlock(new IntBlock(1))));
+		Mainstore->AddVar(new NamedVariableList(L"StartCount", new VariableBlock(1)));
 		// set as persistent //
 		Mainstore->SetPersistance(L"StartCount", true);
 	}
 }
 
-bool Leviathan::Engine::ShutDownEngine(){
+bool Leviathan::Engine::Release(){
+	// set inited to false to cause all engine functions just return //
+	Inited = false;
+
+	// objects WILL contain things that want to do everything before shutting down //
+	SAFE_RELEASEDEL(GObjects);
 
 	// Gui is very picky about delete order
-	SAFE_RELEASEDEL(Gui);
+	SAFE_RELEASEDEL(GManager);
+
+	// clears all running timers that might have accidentally been left running //
+	TimingMonitor::ClearTimers();
 
 	SAFE_RELEASEDEL(LeapData);
 	SAFE_DELETE(MainCamera);
+
+	// console needs to be before script release //
+	SAFE_RELEASEDEL(MainConsole);
 
 	SAFE_RELEASEDEL(MainScript);
 	// save at this point (just in case it crashes before exiting) //
@@ -363,39 +321,39 @@ bool Leviathan::Engine::ShutDownEngine(){
 	SAFE_DELETE(AdvancedGeometryFiles);
 
 	SAFE_RELEASEDEL(AnimManager);
-
 	SAFE_RELEASEDEL(Graph);
+	SAFE_DELETE(RenderTimer);
 
 	SAFE_RELEASEDEL(Inputs);
 	SAFE_RELEASEDEL(Sound);
-
-	SAFE_DELETE(RenderTimer);
-
-	SAFE_RELEASEDEL(GObjects);
-
-	ObjectFileProcessor::Release();
-	FileSystem::ClearFoundFiles();
-
 	SAFE_DELETE(Mainstore);
+
+	// engine is now tasked to delete windows //
+	SAFE_RELEASEDEL(Wind);
+
+	SAFE_RELEASEDEL(MainEvents);
 
 	SAFE_DELETE(KeyListener);
 
+
 	SAFE_DELETE(MTimer);
-
 	SAFE_DELETE(Mainlog);
-
 
 	// delete randomizer last, for obvious reasons //
 	SAFE_DELETE(MainRandom);
 
+	ObjectFileProcessor::Release();
+	SAFE_RELEASEDEL(MainFileHandler);
+
 	// safe to delete this here //
 	SAFE_DELETE(OutOMemory);
 
-	this->Inited = false;
 	return true;
 }
 // ------------------------------------ //
 void Leviathan::Engine::Tick(bool Force){
+	if(!Inited)
+		return;
 	// get time since last update //
 	__int64 CurTime = Misc::GetTimeMs64();
 	TimePassed = (int)(CurTime-LastFrame);
@@ -418,7 +376,7 @@ void Leviathan::Engine::Tick(bool Force){
 	if(this->Focused)
 		KeyListener->ProcessInput(Inputs);
 
-	Gui->GuiTick(TimePassed);
+	GManager->GuiTick(TimePassed);
 
 	//if(Focused){
 	//	if(!GuiActive){
@@ -467,6 +425,8 @@ void Leviathan::Engine::UpdateFrameScene(){
 }
 
 void Leviathan::Engine::RenderFrame(){
+	if(!Inited)
+		return;
 
 	int SinceLastFrame = -1;
 
@@ -489,7 +449,7 @@ void Leviathan::Engine::RenderFrame(){
 	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN, new int(SinceLastFrame)));
 
 	// Gui object animations //
-	Gui->AnimationTick(SinceLastFrame);
+	GManager->AnimationTick(SinceLastFrame);
 
 	// update simulations will go here, or not //
 #ifdef _DEBUG
@@ -511,7 +471,7 @@ void Leviathan::Engine::RenderFrame(){
 
 #endif
 	// Gui //
-	Gui->Render();
+	GManager->Render();
 	// render //
 	vector<BaseRenderable*>* objects = GObjects->GetRenderableObjects();
 	Graph->Frame(SinceLastFrame, MainCamera, *objects);
@@ -553,7 +513,7 @@ void Leviathan::Engine::OnResize(int width, int height){
 	Graph->Resize(width, height);
 
 	// update Gui //
-	Gui->OnResize();
+	GManager->OnResize();
 
 	// inputs manager size //
 	Inputs->ResolutionUpdated(width, height);

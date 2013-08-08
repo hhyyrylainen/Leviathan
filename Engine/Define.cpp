@@ -5,6 +5,14 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
+
+// visual leak detector //
+#include <vld.h>
+
+
+
+
+
 //Object* Object::LApp = NULL;
 bool Object::IsThis(Object* compare){
 	return this == compare;

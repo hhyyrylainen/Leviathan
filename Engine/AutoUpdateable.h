@@ -11,7 +11,7 @@
 
 namespace Leviathan{
 
-	class AutoUpdateableObject : public Object{
+	class AutoUpdateableObject{
 	public:
 		DLLEXPORT AutoUpdateableObject::AutoUpdateableObject();
 		DLLEXPORT virtual AutoUpdateableObject::~AutoUpdateableObject();

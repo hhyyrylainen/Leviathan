@@ -7,19 +7,17 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "NamedVars.h"
-#include "FileReader.h"
 #include "ExceptionInvalidArguement.h"
 
 namespace Leviathan{
 
 	enum FILEGROUP{FILEGROUP_MODEL, FILEGROUP_TEXTURE, FILEGROUP_SOUND, FILEGROUP_SCRIPT, FILEGROUP_OTHER};
 
-	struct FileDefinitionType{
-		FileDefinitionType();
-		FileDefinitionType(wstring &path); // just the path, everything else is worked out by the constructor //
+	class FileSystem;
 
-		// helper function //
-		//DLLEXPORT bool IsLesserPTR(shared_ptr<FileDefinitionType> first, shared_ptr<FileDefinitionType> second);
+	struct FileDefinitionType{
+		FileDefinitionType(FileSystem* instance, const wstring &path); // just the path, everything else is worked out by the constructor //
+		~FileDefinitionType();
 
 		// operation for sorting //
 		bool operator < (const FileDefinitionType& other) const;
@@ -36,19 +34,35 @@ namespace Leviathan{
 
 	class FileSystem{
 	public:
-		DLLEXPORT bool OperatingOnVista();
-		DLLEXPORT bool OperatingOnXP();
+		//// private constructors, to prevent creation of this class //
+		DLLEXPORT FileSystem();
+		DLLEXPORT ~FileSystem();
 
-		//wstring GetLogFolder();
-		DLLEXPORT static void ClearFoundFiles();
-		DLLEXPORT static bool SearchFiles();
-		DLLEXPORT static int RegisterExtension(wstring& extension);
-		DLLEXPORT static void ReSearchFiles();
+
+		DLLEXPORT bool Init();
+		DLLEXPORT void Release();
+		DLLEXPORT bool ReSearchFiles();
+
+		// vector sorting //
+		DLLEXPORT void SortFileVectors();
+		DLLEXPORT void CreateIndexesForVecs(bool ForceRe = false);
+
+		DLLEXPORT int RegisterExtension(const wstring &extension);
+		DLLEXPORT void GetExtensionIDS(const wstring& extensions, vector<int>& ids);
+		
+
 		// loaded file searching functions //
-		DLLEXPORT static wstring& SearchForFile(FILEGROUP which, const wstring& name, const wstring& extensions, bool searchall = true);
+		DLLEXPORT wstring& SearchForFile(FILEGROUP which, const wstring& name, const wstring& extensions, bool searchall = true);
 
-		DLLEXPORT static void GetExtensionIDS(const wstring& extensions, vector<int>& ids);
-		DLLEXPORT static bool DoesExtensionMatch(FileDefinitionType* file, const vector<int>&Ids);
+		// direct access to files //
+		DLLEXPORT vector<shared_ptr<FileDefinitionType>>& GetModelFiles();
+		DLLEXPORT vector<shared_ptr<FileDefinitionType>>& GetSoundFiles();
+		DLLEXPORT vector<shared_ptr<FileDefinitionType>>& GetAllFiles();
+		DLLEXPORT vector<shared_ptr<FileDefinitionType>>& GetScriptFiles();
+		// ------------------ Static part ------------------ //
+		DLLEXPORT static bool OperatingOnVista();
+		DLLEXPORT static bool OperatingOnXP();
+		
 		
 		DLLEXPORT static wstring& GetDataFolder();
 		DLLEXPORT static wstring GetModelsFolder();
@@ -58,93 +72,83 @@ namespace Leviathan{
 		DLLEXPORT static wstring GetFontFolder();
 		DLLEXPORT static wstring GetSoundFolder();
 
-		// vector sorting //
-		DLLEXPORT static void SortFileVectors(int MaxMCR = -1);
-		DLLEXPORT static void CreateIndexesForVecs(bool ForceRe = false);
-
+		DLLEXPORT static bool DoesExtensionMatch(FileDefinitionType* file, const vector<int>&Ids);
 
 		DLLEXPORT static void GetWindowsFolder(wstring &path);
 		DLLEXPORT static void GetSpecialFolder(wstring &path, int specialtype);
 
-		DLLEXPORT static void SetDataFolder( wstring& folder );
-		DLLEXPORT static void SetModelsFolder( wstring& folder );
-		DLLEXPORT static void SetScriptsFolder( wstring& folder );
-		DLLEXPORT static void SetShaderFolder( wstring& folder );
-		DLLEXPORT static void SetTextureFolder( wstring& folder );
+		DLLEXPORT static void SetDataFolder(const wstring &folder);
+		DLLEXPORT static void SetModelsFolder(const wstring &folder);
+		DLLEXPORT static void SetScriptsFolder(const wstring &folder);
+		DLLEXPORT static void SetShaderFolder(const wstring &folder);
+		DLLEXPORT static void SetTextureFolder(const wstring &folder);
 
 		// file handling //
 		DLLEXPORT static int LoadDataDump(const wstring &file, vector<shared_ptr<NamedVariableList>>& vec);
+		DLLEXPORT static bool GetFilesInDirectory(vector<wstring> &files, wstring dirpath, wstring pattern = L"*.*", bool recursive = true);
+
+		// extension handling //
 		DLLEXPORT static wstring GetExtension(const wstring &path);
 		DLLEXPORT static wstring ChangeExtension(const wstring& path, const wstring &newext);
-
 		DLLEXPORT static wstring RemoveExtension(const wstring &file, bool delpath);
 
-		/// file operations
+		// file operations //
 		DLLEXPORT static int GetFileLength(wstring name);
 		DLLEXPORT static bool FileExists(wstring name);
 		DLLEXPORT static bool WriteToFile(const string &data, const string &filename);
 		DLLEXPORT static bool WriteToFile(const wstring &data, const wstring &filename);
 		DLLEXPORT static bool AppendToFile(const wstring &data, const wstring &filepath);
-		DLLEXPORT static bool GetFilesInDirectory(vector<wstring> &files, wstring dirpath, wstring pattern = L"*.*", bool recursive = true);
-
 		DLLEXPORT static void ReadFileEntirely(const wstring &file, wstring &resultreceiver) throw(...);
-
-		DLLEXPORT static vector<shared_ptr<FileDefinitionType>>& GetModelFiles();
-		DLLEXPORT static vector<shared_ptr<FileDefinitionType>>& GetSoundFiles();
-		DLLEXPORT static vector<shared_ptr<FileDefinitionType>>& GetAllFiles();
-		DLLEXPORT static vector<shared_ptr<FileDefinitionType>>& GetScriptFiles();
-
-		// utility stuff
-		//DLLEXPORT
-
 
 		// bitmap stuff //
 		DLLEXPORT static BYTE* LoadBMP ( int* width, int* height, long* size, LPCTSTR bmpfile );
 		DLLEXPORT static BYTE* ConvertBMPToRGBBuffer ( BYTE* Buffer, int width, int height );
 
+		DLLEXPORT static inline FileSystem* Get(){
+			return Staticaccess;
+		}
+
 	private:
-		// private constructors, to prevent creation of this class //
-		DLLEXPORT FileSystem();
-		DLLEXPORT ~FileSystem();
-
-
-		// file search funcs //
-		static shared_ptr<FileDefinitionType> _SearchForFileInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<int>& extensions, const wstring& name, bool UseIndexVector, vector<CharWithIndex*>* Index);
+		// file search functions //
+		shared_ptr<FileDefinitionType> _SearchForFileInVec(vector<shared_ptr<FileDefinitionType>> &vec, vector<int> &extensions, 
+			const wstring &name, bool UseIndexVector, vector<CharWithIndex*>* Index);
+		void _CreateIndexesIfMissing(vector<shared_ptr<FileDefinitionType>> &vec, vector<CharWithIndex*> &resultvec, bool &indexed, 
+			const bool &force = false);
+		// ------------------------------------ //
+		// vector that holds string value of file extension and it's id code //
+		vector<IntWstring*> FileTypes;
+		int CurrentFileExtID;
 
 		// file holders //
-		static vector<IntWstring*> FileTypes; // vector that holds string value of file extension and it's id code //
-		static int CurrentFileExtID;
+		vector<shared_ptr<FileDefinitionType>> AllFiles;
 
-		static vector<shared_ptr<FileDefinitionType>> AllFiles;
-
-		static vector<shared_ptr<FileDefinitionType>> TextureFiles;
-		static vector<shared_ptr<FileDefinitionType>> ModelFiles;
-		static vector<shared_ptr<FileDefinitionType>> SoundFiles;
-		static vector<shared_ptr<FileDefinitionType>> ScriptFiles;
+		vector<shared_ptr<FileDefinitionType>> TextureFiles;
+		vector<shared_ptr<FileDefinitionType>> ModelFiles;
+		vector<shared_ptr<FileDefinitionType>> SoundFiles;
+		vector<shared_ptr<FileDefinitionType>> ScriptFiles;
 
 		// index vectors //
-		static bool IsAllIndexed;
-		static vector<CharWithIndex*> AllIndexes;
+		bool IsAllIndexed;
+		vector<CharWithIndex*> AllIndexes;
 		
-		static bool IsTextureIndexed;
-		static vector<CharWithIndex*> TextureIndexes;
+		bool IsTextureIndexed;
+		vector<CharWithIndex*> TextureIndexes;
 
-		static bool IsModelIndexed;
-		static vector<CharWithIndex*> ModelIndexes;
+		bool IsModelIndexed;
+		vector<CharWithIndex*> ModelIndexes;
 
-		static bool IsSoundIndexed;
-		static vector<CharWithIndex*> SoundIndexes;
+		bool IsSoundIndexed;
+		vector<CharWithIndex*> SoundIndexes;
 
-		static bool IsScriptIndexed;
-		static vector<CharWithIndex*> ScriptIndexes;
+		bool IsScriptIndexed;
+		vector<CharWithIndex*> ScriptIndexes;
 
 		// vector sorting //
-		static bool IsSorted;
-		static bool IsBeingSorted;
-		static bool ShouldSortStop;
+		bool IsSorted;
+		bool IsBeingSorted;
+		bool ShouldSortStop;
 
-		//static vector<shared_ptr<IntWstring>> 
-
+		// ------------------------------------ //
 		static wstring DataFolder;
 		static wstring ModelsFolder;
 		static wstring ScriptsFolder;
@@ -152,6 +156,8 @@ namespace Leviathan{
 		static wstring TextureFolder;
 		static wstring FontFolder;
 		static wstring SoundFolder;
+
+		static FileSystem* Staticaccess;
 	};
 
 }

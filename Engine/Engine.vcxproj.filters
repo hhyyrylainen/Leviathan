@@ -73,9 +73,6 @@
     <Filter Include="core\helpers">
       <UniqueIdentifier>{20c1095c-c283-48c0-845d-b3fa1544e234}</UniqueIdentifier>
     </Filter>
-    <Filter Include="utility\ObjectFiles">
-      <UniqueIdentifier>{5bb3b429-d54a-40f8-9f93-f028811102b4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="core\statistics">
       <UniqueIdentifier>{e7e86752-1f82-42f4-b1b7-c8a0fb1f6f18}</UniqueIdentifier>
     </Filter>
@@ -109,9 +106,6 @@
     <Filter Include="math\Encryption">
       <UniqueIdentifier>{dc6e2295-d4af-4395-9bec-d741a28ef383}</UniqueIdentifier>
     </Filter>
-    <Filter Include="gui\components\base components">
-      <UniqueIdentifier>{006de212-5300-48d5-b218-48f62b61bade}</UniqueIdentifier>
-    </Filter>
     <Filter Include="gui\objects">
       <UniqueIdentifier>{7742aa24-fe75-43f4-a07b-7caf932015be}</UniqueIdentifier>
     </Filter>
@@ -123,6 +117,12 @@
     </Filter>
     <Filter Include="core\debug helpers">
       <UniqueIdentifier>{54d8db54-ce34-4e40-8a19-311e496be699}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Script\AngelModules">
+      <UniqueIdentifier>{a976573c-18d1-4801-855a-a43ba2c1570d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\ObjectFiles">
+      <UniqueIdentifier>{5bb3b429-d54a-40f8-9f93-f028811102b4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -225,28 +225,13 @@
     <ClCompile Include="BaseGuiObject.cpp">
       <Filter>gui\bases</Filter>
     </ClCompile>
-    <ClCompile Include="EventableGui.cpp">
-      <Filter>gui\bases</Filter>
-    </ClCompile>
     <ClCompile Include="RenderableGuiObject.cpp">
       <Filter>gui\bases</Filter>
     </ClCompile>
     <ClCompile Include="ScriptInterface.cpp">
       <Filter>Script</Filter>
     </ClCompile>
-    <ClCompile Include="ScriptObject.cpp">
-      <Filter>Script</Filter>
-    </ClCompile>
-    <ClCompile Include="ScriptList.cpp">
-      <Filter>Script</Filter>
-    </ClCompile>
     <ClCompile Include="ScriptScript.cpp">
-      <Filter>Script</Filter>
-    </ClCompile>
-    <ClCompile Include="ScriptVariable.cpp">
-      <Filter>Script</Filter>
-    </ClCompile>
-    <ClCompile Include="ScriptException.cpp">
       <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="ScriptExecutor.cpp">
@@ -355,13 +340,13 @@
       <Filter>objects\bases</Filter>
     </ClCompile>
     <ClCompile Include="ObjectFileProcessor.cpp">
-      <Filter>utility\ObjectFiles</Filter>
+      <Filter>common\ObjectFiles</Filter>
     </ClCompile>
     <ClCompile Include="ObjectFileList.cpp">
-      <Filter>utility\ObjectFiles</Filter>
+      <Filter>common\ObjectFiles</Filter>
     </ClCompile>
     <ClCompile Include="ObjectFileObject.cpp">
-      <Filter>utility\ObjectFiles</Filter>
+      <Filter>common\ObjectFiles</Filter>
     </ClCompile>
     <ClCompile Include="ResolutionScaling.cpp">
       <Filter>utility</Filter>
@@ -379,7 +364,7 @@
       <Filter>core\statistics</Filter>
     </ClCompile>
     <ClCompile Include="ObjectFileTextBlock.cpp">
-      <Filter>utility\ObjectFiles</Filter>
+      <Filter>common\ObjectFiles</Filter>
     </ClCompile>
     <ClCompile Include="ObjectLoader.cpp">
       <Filter>core\Loading</Filter>
@@ -400,7 +385,7 @@
       <Filter>objects\ModelObject</Filter>
     </ClCompile>
     <ClCompile Include="LineTokenizer.cpp">
-      <Filter>utility\ObjectFiles</Filter>
+      <Filter>common\ObjectFiles</Filter>
     </ClCompile>
     <ClCompile Include="TriangulateDelaunay.cpp">
       <Filter>math</Filter>
@@ -498,9 +483,6 @@
     <ClCompile Include="ExceptionInvalidType.cpp">
       <Filter>common\Exceptions</Filter>
     </ClCompile>
-    <ClCompile Include="GuiPositionable.cpp">
-      <Filter>gui\components\base components</Filter>
-    </ClCompile>
     <ClCompile Include="GuiBaseGraphicalComponent.cpp">
       <Filter>gui\bases</Filter>
     </ClCompile>
@@ -527,6 +509,42 @@
     </ClCompile>
     <ClCompile Include="DebugVariableNotifier.cpp">
       <Filter>core\debug helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="ScriptRunningSetup.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="ScriptModule.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Console.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AngelScript\add_on\scriptbuilder\scriptbuilder.cpp">
+      <Filter>Script\AngelModules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AngelScript\add_on\debugger\debugger.cpp">
+      <Filter>Script\AngelModules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AngelScript\add_on\scriptmath\scriptmath.cpp">
+      <Filter>Script\AngelAddons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AngelScript\add_on\scriptmath\scriptmathcomplex.cpp">
+      <Filter>Script\AngelAddons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AngelScript\add_on\scripthelper\scripthelper.cpp">
+      <Filter>Script\AngelModules</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiPositionable.cpp">
+      <Filter>gui\bases</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseGuiEventable.cpp">
+      <Filter>gui\bases</Filter>
+    </ClCompile>
+    <ClCompile Include="ExceptionInvalidAccess.cpp">
+      <Filter>common\Exceptions</Filter>
+    </ClCompile>
+    <ClCompile Include="ReferenceCounted.cpp">
+      <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -636,28 +654,13 @@
     <ClInclude Include="BaseGuiObject.h">
       <Filter>gui\bases</Filter>
     </ClInclude>
-    <ClInclude Include="EventableGui.h">
-      <Filter>gui\bases</Filter>
-    </ClInclude>
     <ClInclude Include="RenderableGuiObject.h">
       <Filter>gui\bases</Filter>
     </ClInclude>
     <ClInclude Include="ScriptInterface.h">
       <Filter>Script</Filter>
     </ClInclude>
-    <ClInclude Include="ScriptObject.h">
-      <Filter>Script</Filter>
-    </ClInclude>
-    <ClInclude Include="ScriptList.h">
-      <Filter>Script</Filter>
-    </ClInclude>
     <ClInclude Include="ScriptScript.h">
-      <Filter>Script</Filter>
-    </ClInclude>
-    <ClInclude Include="ScriptVariable.h">
-      <Filter>Script</Filter>
-    </ClInclude>
-    <ClInclude Include="ScriptException.h">
       <Filter>Script</Filter>
     </ClInclude>
     <ClInclude Include="ScriptExecutor.h">
@@ -772,13 +775,13 @@
       <Filter>utility</Filter>
     </ClInclude>
     <ClInclude Include="ObjectFileProcessor.h">
-      <Filter>utility\ObjectFiles</Filter>
+      <Filter>common\ObjectFiles</Filter>
     </ClInclude>
     <ClInclude Include="ObjectFileList.h">
-      <Filter>utility\ObjectFiles</Filter>
+      <Filter>common\ObjectFiles</Filter>
     </ClInclude>
     <ClInclude Include="ObjectFileObject.h">
-      <Filter>utility\ObjectFiles</Filter>
+      <Filter>common\ObjectFiles</Filter>
     </ClInclude>
     <ClInclude Include="ResolutionScaling.h">
       <Filter>utility</Filter>
@@ -796,7 +799,7 @@
       <Filter>core\statistics</Filter>
     </ClInclude>
     <ClInclude Include="ObjectFileTextBlock.h">
-      <Filter>utility\ObjectFiles</Filter>
+      <Filter>common\ObjectFiles</Filter>
     </ClInclude>
     <ClInclude Include="ObjectLoader.h">
       <Filter>core\Loading</Filter>
@@ -820,7 +823,7 @@
       <Filter>objects\ModelObject</Filter>
     </ClInclude>
     <ClInclude Include="LineTokenizer.h">
-      <Filter>utility\ObjectFiles</Filter>
+      <Filter>common\ObjectFiles</Filter>
     </ClInclude>
     <ClInclude Include="TriangulateDelaunay.h">
       <Filter>math</Filter>
@@ -921,9 +924,6 @@
     <ClInclude Include="ExceptionInvalidType.h">
       <Filter>common\Exceptions</Filter>
     </ClInclude>
-    <ClInclude Include="GuiPositionable.h">
-      <Filter>gui\components\base components</Filter>
-    </ClInclude>
     <ClInclude Include="GuiBaseGraphicalComponent.h">
       <Filter>gui\bases</Filter>
     </ClInclude>
@@ -948,9 +948,46 @@
     <ClInclude Include="DebugVariableNotifier.h">
       <Filter>core\debug helpers</Filter>
     </ClInclude>
+    <ClInclude Include="ScriptRunningSetup.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptModule.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Console.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AngelScript\add_on\scriptbuilder\scriptbuilder.h">
+      <Filter>Script\AngelModules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AngelScript\add_on\debugger\debugger.h">
+      <Filter>Script\AngelModules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AngelScript\add_on\scriptmath\scriptmath.h">
+      <Filter>Script\AngelAddons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AngelScript\add_on\scriptmath\scriptmathcomplex.h">
+      <Filter>Script\AngelAddons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AngelScript\add_on\scripthelper\scripthelper.h">
+      <Filter>Script\AngelModules</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiPositionable.h">
+      <Filter>gui\bases</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseGuiEventable.h">
+      <Filter>gui\bases</Filter>
+    </ClInclude>
+    <ClInclude Include="ExceptionInvalidAccess.h">
+      <Filter>common\Exceptions</Filter>
+    </ClInclude>
+    <ClInclude Include="ReferenceCounted.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\ErrorCodes.txt" />
     <None Include="ClassDiagram1.cd" />
+    <None Include="ScriptModule" />
   </ItemGroup>
 </Project>

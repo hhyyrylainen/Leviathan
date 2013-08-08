@@ -84,6 +84,23 @@ DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
 		Failed = true;
 	}
 
+	// void block testings //
+
+	Float4* floaty = new Float4(1, 564, 73784, 124);
+
+	VoidPtrBlock vblocky(floaty);
+
+	Float4* returnptr = (Float4*)(void*)(vblocky);
+
+	if(returnptr != floaty || *returnptr != *floaty){
+
+		QUICK_ERROR_MESSAGE;
+		Failed = true;
+	}
+
+	SAFE_DELETE(floaty);
+
+
 	// check fail state //
 	if(Failed){
 
@@ -105,7 +122,7 @@ DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
 
 
 // ------------------------------------ //
-DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, vector<const NamedVariableBlock*>* predefined) throw(...){
+DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined) throw(...){
 	// the text should have all preceding and trailing spaces removed //
 	if(valuetoparse.size() == 0){
 		// can't be anything //
@@ -144,13 +161,14 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, vector<
 		// check does some special value match it //
 		if(predefined != NULL){
 			// check do them match //
-			for(size_t i = 0; i < predefined->size(); i++){
 
-				if(predefined->at(i)->CompareName(valuetoparse)){
-					// match found, copy value to here //
-					BlockData = predefined->at(i)->GetBlockConst()->AllocateNewFromThis();
-					return;
-				}
+			auto ivaliterator = predefined->find(valuetoparse);
+
+			if(ivaliterator != predefined->end()){
+				// found! //
+
+				BlockData = ivaliterator->second->GetBlockConst()->AllocateNewFromThis();
+				return;
 			}
 		}
 

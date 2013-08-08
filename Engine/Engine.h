@@ -27,7 +27,7 @@
 
 #include "Window.h"
 #include ".\Rendering\Graphics.h"
-
+#include "Console.h"
 
 #include "Input.h"
 #include "SoundDevice.h"
@@ -40,27 +40,23 @@
 // monitoring //
 #include "RenderingStatistics.h"
 #include "Timer.h"
+#include "GuiManager.h"
 
 namespace Leviathan{
 	class Engine : public Object{
 	public:
 		DLLEXPORT Engine::Engine();
-		DLLEXPORT bool InitEngine(Window* wind, bool windowed, AppDef* def);
-		DLLEXPORT bool ShutDownEngine();
-
-		//DLLEXPORT bool ConfigureRenderingSetup();
+		DLLEXPORT bool Init(AppDef* definition);
+		DLLEXPORT bool Release();
 
 		DLLEXPORT void Tick(bool Force);
 
 		DLLEXPORT void UpdateFrameScene();
 		DLLEXPORT void RenderFrame();
-		//DLLEXPORT HRESULT StartFrame();
 
 		DLLEXPORT bool HandleWindowCallBack(UINT message, WPARAM wParam,LPARAM lParam);
 		DLLEXPORT bool DoWindowResize(int width, int height);
 		DLLEXPORT void OnResize(int width, int height);
-
-		
 
 		DLLEXPORT void CaptureMouse(bool toset);
 		DLLEXPORT void SetGuiActive(bool toset);
@@ -91,7 +87,7 @@ namespace Leviathan{
 		Timer* MTimer;
 
 		DLLEXPORT Window* GetWindow(){ return Wind; };
-		DLLEXPORT GuiManager* GetGui(){ return Gui; };
+		DLLEXPORT Gui::GuiManager* GetGui(){ return GManager; };
 		DLLEXPORT Graphics* GetGraphics(){ return Graph; };
 		DLLEXPORT EventHandler* GetEventHandler(){ return MainEvents; };
 		DLLEXPORT ObjectManager* GetObjectManager(){ return GObjects; };
@@ -101,6 +97,8 @@ namespace Leviathan{
 		DLLEXPORT AnimationManager* GetAnimationManager(){ return AnimManager; };
 		DLLEXPORT KeyPressManager* GetKeyPresManager(){ return KeyListener; };
 		DLLEXPORT LeapManager* GetLeapManager(){ return LeapData;};
+		DLLEXPORT ScriptConsole* GetScriptConsole(){ return MainConsole;};
+		DLLEXPORT FileSystem* GetFileSystem(){ return MainFileHandler; };
 
 		// static access //
 		DLLEXPORT static Engine* GetEngine();
@@ -118,12 +116,10 @@ namespace Leviathan{
 		
 		AppDef* Define;
 
-		GuiManager* Gui;
+		Gui::GuiManager* GManager;
 
 		RenderingStatistics* RenderTimer;
 		Graphics* Graph;
-		// renderer configuration //
-		DxRendConf dxconf;
 
 		SoundDevice* Sound;
 
@@ -139,6 +135,8 @@ namespace Leviathan{
 		ObjectManager* GObjects;
 		ObjectLoader* Loader;
 		LeapManager* LeapData;
+		ScriptConsole* MainConsole;
+		FileSystem* MainFileHandler;
 
 		Random* MainRandom;
 

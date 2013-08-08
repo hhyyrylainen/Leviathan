@@ -5,12 +5,19 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-ScriptScript::ScriptScript(){
-	Compiled = false;
-}
-ScriptScript::~ScriptScript(){
+DLLEXPORT Leviathan::ScriptScript::ScriptScript(const int &MID, weak_ptr<ScriptModule> wptr) : ModuleID(MID), ScriptsModule(wptr){
 
 }
+
+DLLEXPORT Leviathan::ScriptScript::ScriptScript(const ScriptScript &other){
+	// copy over //
+	ModuleID = other.ModuleID;
+	ScriptsModule = other.ScriptsModule;
+}
+
+DLLEXPORT Leviathan::ScriptScript::~ScriptScript(){
+
+}
 // ------------------------------------ //
 
 // ------------------------------------ //
@@ -18,3 +25,5 @@ ScriptScript::~ScriptScript(){
 // ------------------------------------ //
 
 // ------------------------------------ //
+
+

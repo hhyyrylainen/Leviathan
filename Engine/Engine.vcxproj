@@ -41,18 +41,18 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)D</TargetName>
     <IncludePath>.\Rendering;.\Math;.\..\Freetype2410;.\..\AngelScript;.\..\;.\;.\..\Leap\include;$(IncludePath)</IncludePath>
-    <LibraryPath>.\..\Freetype2410;.\..\AngelScript;.\..\Leap\lib\x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath>.\..\Freetype2410;.\..\AngelScript;.\..\Leap\lib\x86;.\..\Boost\Lib\debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>.\Rendering;.\Math;.\..\Freetype2410;.\..\AngelScript;.\..\;.\;.\..\Leap\include;$(IncludePath)</IncludePath>
-    <LibraryPath>.\..\Freetype2410;.\..\AngelScript;.\..\Leap\lib\x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath>.\..\Freetype2410;.\..\AngelScript;.\..\Leap\lib\x86;.\..\Boost\Lib\release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ENGINE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ENGINE_EXPORTS;_CRTDBG_MAP_ALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4100</DisableSpecificWarnings>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeaderFile>Include.h</PrecompiledHeaderFile>
@@ -102,7 +102,12 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\AngelScript\add_on\debugger\debugger.cpp" />
     <ClCompile Include="..\AngelScript\add_on\scriptarray\scriptarray.cpp" />
+    <ClCompile Include="..\AngelScript\add_on\scriptbuilder\scriptbuilder.cpp" />
+    <ClCompile Include="..\AngelScript\add_on\scripthelper\scripthelper.cpp" />
+    <ClCompile Include="..\AngelScript\add_on\scriptmath\scriptmath.cpp" />
+    <ClCompile Include="..\AngelScript\add_on\scriptmath\scriptmathcomplex.cpp" />
     <ClCompile Include="..\AngelScript\add_on\scriptstdstring\scriptstdstring.cpp" />
     <ClCompile Include="..\AngelScript\add_on\scriptstdstring\scriptstdstring_utils.cpp" />
     <ClCompile Include="AnimateableGui.cpp" />
@@ -126,6 +131,7 @@
     <ClCompile Include="CallableObject.cpp" />
     <ClCompile Include="CameraPos.cpp" />
     <ClCompile Include="ComplainOnce.cpp" />
+    <ClCompile Include="Console.cpp" />
     <ClCompile Include="Convert.cpp" />
     <ClCompile Include="DataBlock.cpp" />
     <ClCompile Include="DataStore.cpp" />
@@ -137,8 +143,9 @@
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="EuclideanFunctions.cpp" />
     <ClCompile Include="Event.cpp" />
-    <ClCompile Include="EventableGui.cpp" />
+    <ClCompile Include="BaseGuiEventable.cpp" />
     <ClCompile Include="EventHandler.cpp" />
+    <ClCompile Include="ExceptionInvalidAccess.cpp" />
     <ClCompile Include="ExceptionInvalidArguement.cpp" />
     <ClCompile Include="ExceptionInvalidType.cpp" />
     <ClCompile Include="ExceptionNULLPtr.cpp" />
@@ -183,6 +190,7 @@
     <ClCompile Include="OutOfMemoryHandler.cpp" />
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="RayTracing.cpp" />
+    <ClCompile Include="ReferenceCounted.cpp" />
     <ClCompile Include="RenderableGuiObject.cpp" />
     <ClCompile Include="RenderAction.cpp" />
     <ClCompile Include="RenderBridge.cpp" />
@@ -216,13 +224,11 @@
     <ClCompile Include="ResolutionScaling.cpp" />
     <ClCompile Include="RSAEncryption.cpp" />
     <ClCompile Include="ScaleableFreeTypeBitmap.cpp" />
-    <ClCompile Include="ScriptException.cpp" />
     <ClCompile Include="ScriptExecutor.cpp" />
     <ClCompile Include="ScriptInterface.cpp" />
-    <ClCompile Include="ScriptList.cpp" />
-    <ClCompile Include="ScriptObject.cpp" />
+    <ClCompile Include="ScriptModule.cpp" />
+    <ClCompile Include="ScriptRunningSetup.cpp" />
     <ClCompile Include="ScriptScript.cpp" />
-    <ClCompile Include="ScriptVariable.cpp" />
     <ClCompile Include="SkeletonBone.cpp" />
     <ClCompile Include="SkeletonRig.cpp" />
     <ClCompile Include="SmoothedPosition.cpp" />
@@ -240,7 +246,12 @@
     <ClCompile Include="WstringIterator.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\AngelScript\add_on\debugger\debugger.h" />
     <ClInclude Include="..\AngelScript\add_on\scriptarray\scriptarray.h" />
+    <ClInclude Include="..\AngelScript\add_on\scriptbuilder\scriptbuilder.h" />
+    <ClInclude Include="..\AngelScript\add_on\scripthelper\scripthelper.h" />
+    <ClInclude Include="..\AngelScript\add_on\scriptmath\scriptmath.h" />
+    <ClInclude Include="..\AngelScript\add_on\scriptmath\scriptmathcomplex.h" />
     <ClInclude Include="AngelScriptCommon.h" />
     <ClInclude Include="AnimateableGui.h" />
     <ClInclude Include="AnimationBlock.h" />
@@ -263,6 +274,7 @@
     <ClInclude Include="CallableObject.h" />
     <ClInclude Include="CameraPos.h" />
     <ClInclude Include="ComplainOnce.h" />
+    <ClInclude Include="Console.h" />
     <ClInclude Include="Convert.h" />
     <ClInclude Include="DataBlock.h" />
     <ClInclude Include="DataStore.h" />
@@ -273,8 +285,9 @@
     <ClInclude Include="ErrorTypes.h" />
     <ClInclude Include="EuclideanFunctions.h" />
     <ClInclude Include="Event.h" />
-    <ClInclude Include="EventableGui.h" />
+    <ClInclude Include="BaseGuiEventable.h" />
     <ClInclude Include="EventHandler.h" />
+    <ClInclude Include="ExceptionInvalidAccess.h" />
     <ClInclude Include="ExceptionInvalidArguement.h" />
     <ClInclude Include="ExceptionInvalidType.h" />
     <ClInclude Include="ExceptionNULLPtr.h" />
@@ -323,6 +336,7 @@
     <ClInclude Include="OutOfMemoryHandler.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="RayTracing.h" />
+    <ClInclude Include="ReferenceCounted.h" />
     <ClInclude Include="RenderableGuiObject.h" />
     <ClInclude Include="RenderAction.h" />
     <ClInclude Include="RenderBridge.h" />
@@ -356,13 +370,11 @@
     <ClInclude Include="ResolutionScaling.h" />
     <ClInclude Include="RSAEncryption.h" />
     <ClInclude Include="ScaleableFreeTypeBitmap.h" />
-    <ClInclude Include="ScriptException.h" />
     <ClInclude Include="ScriptExecutor.h" />
     <ClInclude Include="ScriptInterface.h" />
-    <ClInclude Include="ScriptList.h" />
-    <ClInclude Include="ScriptObject.h" />
+    <ClInclude Include="ScriptModule.h" />
+    <ClInclude Include="ScriptRunningSetup.h" />
     <ClInclude Include="ScriptScript.h" />
-    <ClInclude Include="ScriptVariable.h" />
     <ClInclude Include="SkeletonBone.h" />
     <ClInclude Include="SkeletonRig.h" />
     <ClInclude Include="SmoothedPosition.h" />
@@ -384,6 +396,7 @@
   <ItemGroup>
     <None Include="..\ErrorCodes.txt" />
     <None Include="ClassDiagram1.cd" />
+    <None Include="ScriptModule" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

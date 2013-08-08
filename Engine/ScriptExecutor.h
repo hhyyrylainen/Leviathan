@@ -6,71 +6,12 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "ScriptException.h"
 #include "ScriptScript.h"
-
 #include "DataBlock.h"
-
 #include "angelscript.h"
-
-#define SCRIPT_EXECUTOR_RUNTYPE_BREAKONERROR 1
-#define SCRIPT_EXECUTOR_RUNTYPE_TRYTOCONTINUE 2
-
-#define SCRIPT_LINETYPE_FUNCTIONCALL	1
-#define SCRIPT_LINETYPE_VARIABLEASSIGN	2
-#define SCRIPT_LINETYPE_SEMANTIC		3
-#define SCRIPT_LINETYPE_DEFINITION		4
-#define SCRIPT_LINETYPE_CONTROLLSTRUCT	5
+#include "ScriptRunningSetup.h"
 
 namespace Leviathan{
-
-	// used to store function's parameter info //
-	struct FunctionParameterInfo{
-		FunctionParameterInfo(int id, int sizes) : FunctionID(id), ParameterTypeIDS(sizes), ParameterDeclarations(sizes), 
-			MatchingDataBlockTypes(sizes){};
-
-
-		int FunctionID;
-
-		vector<asUINT> ParameterTypeIDS;
-		vector<string> ParameterDeclarations;
-		vector<int> MatchingDataBlockTypes;
-
-
-		asUINT ReturnTypeID;
-		string ReturnTypeDeclaration;
-		int ReturnMatchingDataBlock;
-
-
-	};
-
-
-	class ScriptModule{
-	public:
-		ScriptModule(const wstring &name, int id, const wstring &scriptname);
-		~ScriptModule();
-
-		FunctionParameterInfo* GetParamInfoForFunction(asIScriptFunction* func); 
-		asIScriptModule* GetModule(asIScriptEngine* engine);
-
-	private:
-		static int LatestAssigned;
-		 // map of type name and engine type id //
-		static map<int, string> EngineTypeIDS;
-	public:
-		wstring Name;
-		string ModuleName;
-		int ID;
-		int ModuleID;
-
-
-		asIScriptModule* Module;
-
-		vector<FunctionParameterInfo*> FuncParameterInfos;
-
-	private:
-		void FillData(int typeofas, asUINT* paramtypeid, string* paramdecl, int* datablocktype);
-	};
 
 	class ScriptExecutor : public EngineComponent{
 	public:
@@ -80,37 +21,25 @@ namespace Leviathan{
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();
 
+		// module managing //
+		DLLEXPORT weak_ptr<ScriptModule> CreateNewModule(const wstring &name, const string &source, const int &modulesid = IDFactory::GetID());
+		DLLEXPORT void DeleteModule(ScriptModule* ptrtomatch); 
+		DLLEXPORT weak_ptr<ScriptModule> GetModule(const int &ID);
+
+		DLLEXPORT inline asIScriptEngine* GetASEngine(){
+			return engine;
+		}
+
 		// script running commands //
-		DLLEXPORT shared_ptr<VariableBlock> RunScript(ScriptScript* script, vector<shared_ptr<NamedVariableBlock>> parameters, bool printerrors, 
-			const wstring &entrance, bool &existsreceiver, bool ErrorIfdoesnt = true, bool fulldecl = false, int runtype = SCRIPT_EXECUTOR_RUNTYPE_BREAKONERROR);
+		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptScript* scriptobject, ScriptRunningSetup* parameters);
 
-		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(const wstring &entrance, bool &existsreceiver, bool fulldecl = false, bool ErrorIfdoesnt = true);
-
-		// data binding commands //
-		DLLEXPORT void SetScript(ScriptScript* script);
-		DLLEXPORT void SetParameters(vector<shared_ptr<NamedVariableBlock>> parameters);
-		DLLEXPORT void SetBehavior(bool printerrors, int runtype = SCRIPT_EXECUTOR_RUNTYPE_BREAKONERROR);
-		DLLEXPORT void Clear();
 	private:
-		shared_ptr<VariableBlock> RunScript(const wstring &start, bool &existsreceiver, bool fulldecl = false, bool ErrorIfdoesnt = true);
-		int CallGlobalFunction(const wstring &name, const wstring &unparsedargs);
-
-		asIScriptModule* LoadScript(ScriptScript* script, ScriptModule** fetchmodule);
-
-		ScriptModule* GetModule(const wstring &name, int id = -1);
-		ScriptModule* CreateModule(const wstring &name, int id, ScriptScript* scrpt);
 		// ------------------------------ //
 		// AngelScript engine script executing part //
-		asIScriptEngine *engine;
-		vector<ScriptModule*> Modules;
-		// ------------------------------ //
-		ScriptScript* RunningScripts;
-		vector<shared_ptr<NamedVariableBlock>> Parameters;
+		asIScriptEngine* engine;
+		// list of modules that have been created, some might only have this as reference, and could potentially be released //
+		vector<shared_ptr<ScriptModule>> AllocatedScriptModules;
 
-
-		vector<ScriptException*> Errors;
-		bool PrintErrors;
-		int RunType;
 	};
 
 }

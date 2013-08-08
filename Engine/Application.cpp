@@ -7,171 +7,97 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "FileSystem.h"
 
-LeviathanApplication* GlobalLevApPtr = NULL;
 
-LeviathanApplication::LeviathanApplication(){
-	Quit = false;
-	engine = NULL;// = new Engine();
-	m_wind = new Window();
-	Defvals = NULL;
-	if(Curapp != NULL){
-		Logger::Get()->Error(L"Application already existed, overwrote old!");
-	}
+DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), engine(NULL), ApplicationConfiguration(NULL), ShouldQuit(false){
 	Curapp = this;
-	GlobalLevApPtr = Curapp;
-	Windowed = true;
-	Quitted = false;
 }
+
+DLLEXPORT Leviathan::LeviathanApplication::~LeviathanApplication(){
+
+}
+
 LeviathanApplication* LeviathanApplication::Curapp = NULL;
-LeviathanApplication* LeviathanApplication::GetApp(){
-	return Curapp;
-}
-
-
-
-AppDef* LeviathanApplication::GetAppDef(){
-	return Curapp->Defvals;
-}
 // ------------------------------------ //
-bool LeviathanApplication::Initialize(HINSTANCE hinstance){
-	hInstance = hinstance;
-	m_wind->Init(hinstance);
-	// create definitions //
-	ConstructDefinition();
-	InternalInit();
+DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration){
+	// store configuration //
+	ApplicationConfiguration = configuration;
+
 
 	// init engine //
 	engine = new Engine();
-	return engine->InitEngine(m_wind, Windowed, Defvals);
+	if(!engine->Init(ApplicationConfiguration))
+		return false;
+	_InternalInit();
+	return true;
 }
-bool LeviathanApplication::Initialize(HINSTANCE hinstance,  WNDPROC proc, wstring tittle, /*int width, int height,*/ HICON hIcon, bool windowed){
-	// create definitions //
-	hInstance = hinstance;
-	ConstructDefinition();
 
-	// config windowed override reading //
-	ObjectFileProcessor::LoadValueFromNamedVars<bool>(Defvals->GetValues(), L"Windowed", windowed, windowed, false);
-
-	// store window state //
-	Windowed = windowed;
-	
-
-	// get size from configs //
-	int width = 800, height = 600;
-
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(Defvals->GetValues(), L"WindowWidth", width, width, true, L"Application: Initialize:");
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(Defvals->GetValues(), L"WindowHeight", height, height, true, L"Application: Initialize:");
-
-	InternalInit();
-
-	// init engine //
-	m_wind->Init(hinstance, proc, tittle, width, height, hIcon, Windowed);
-	engine = new Engine();
-	return engine->InitEngine(m_wind, Windowed, Defvals);
-}
-void LeviathanApplication::ConstructDefinition(){
-	this->Defvals = new AppDef(true);
-
-	// store this pointer //
-
-	if(!Defvals){
-		Logger::Get()->Error(L"Application: failed to generate default configuration values", true);
-		return;
-	}
-	this->Defvals->GetValues()->LoadVarsFromFile(L".\\EngineConf.conf");
-
-	//Defvals = AppDef::GetDefault();
-	//FileSystem::LoadDataDumb(L".\\EngineConf.conf", *Defvals->GetValues()->GetVec());
-
-}
-void LeviathanApplication::InternalInit(){
-
-
-}
-// ------------------------------------ //
-void LeviathanApplication::Close(){
-	if(!Quitted){
-		engine->ShutDownEngine();
-		delete engine;
-		engine = NULL;
-		m_wind->CloseDown();
-		delete m_wind;
-		m_wind = NULL;
-		Quitted = true;
-	}
-
-
-		
+DLLEXPORT void Leviathan::LeviathanApplication::Release(){
+	// set as quitting //
 	Quit = true;
+
+	// let engine release itself and then delete it //
+	SAFE_RELEASEDEL(engine);
+	// configuration object needs to be destroyed by program main function //
+}
+
+DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
+	ShouldQuit = true;
+}
+
+DLLEXPORT void Leviathan::LeviathanApplication::PassCommandLine(const wstring &params){
+	engine->ExecuteCommandLine(params);
+}
+
+DLLEXPORT void Leviathan::LeviathanApplication::_InternalInit(){
+
 }
 // ------------------------------------ //
-void LeviathanApplication::LoseFocus(){
+DLLEXPORT void Leviathan::LeviathanApplication::Render(){
+	engine->RenderFrame();
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::LeviathanApplication::LoseFocus(){
 	if(engine)
 		engine->LoseFocus();
 }
-void LeviathanApplication::GainFocus(){
+
+DLLEXPORT void Leviathan::LeviathanApplication::GainFocus(){
 	if(engine)
 		engine->GainFocus();
 }
 // ------------------------------------ //
-void LeviathanApplication::Render(){
-	engine->RenderFrame();
+DLLEXPORT void Leviathan::LeviathanApplication::OnResize(const int &width, const int &height){
+	engine->OnResize(width, height);
 }
 
-void Leviathan::LeviathanApplication::OnResize(UINT width, UINT height){
-	// let the engine handle this //
-	if(engine == NULL){
-		// something is terribly wrong OR
-		// this is also called when window is created, should be ignored (window is created before engine) //
-		return;
-	}
-	engine->OnResize(width,height);
-}
-
-void Leviathan::LeviathanApplication::ResizeWindow(int newwidth, int newheight){
+DLLEXPORT void Leviathan::LeviathanApplication::DoResizeWindow(const int &newwidth, const int &newheight){
 	// tell engine to resize window //
 	engine->DoWindowResize(newwidth, newheight);
 }
+// ------------------------------------ //
+DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 
-int LeviathanApplication::RunMessageLoop(){
 	MSG Msg;
-//	BOOL bRet;
-	for (int GameLoopCount=0; ; GameLoopCount++){
-		while(PeekMessage(&Msg, this->m_wind->GetHandle(),NULL,NULL,PM_REMOVE)){
+
+	HWND windhandle = engine->GetWindow()->GetHandle();
+
+	for(int GameLoopCount = 0; ; GameLoopCount++){
+		while(PeekMessage(&Msg, windhandle, NULL, NULL, PM_REMOVE) && !Quit && !ShouldQuit){
 			TranslateMessage(&Msg); 
 			DispatchMessage(&Msg); 
-			if(Msg.message == WM_QUIT){
-				this->Close();
-				break;
-			}
 		}
-		//while(GetQueueStatus(QS_ALLINPUT) !=0 ){
-		//		bRet = GetMessage( &Msg, NULL, 0, 0 );
-		//	if (bRet <= 0){
-		//		Quit=1;
-		//		break;
-		//	} else {
-		//		TranslateMessage(&Msg); 
-		//		DispatchMessage(&Msg); 
-		//		if(Msg.message == WM_QUIT){
-		//			Quit = true;
-		//		}
-		//	}
-		//}
-		if(Quit){
-			this->Close();
-			Msg.wParam = 0;
+
+		if(ShouldQuit || Quit){
+			Release();
+			// this forcing should be done by window procedure //
+			//Msg.wParam = 0;
 			break;
 		}
 
 		// engine tick //
 		engine->Tick(false);
 		Render();
-
 	}
 	return Msg.wParam; 
 }
 // ------------------------------------ //
- void LeviathanApplication::PassCommandLine(wstring params){
-	 engine->ExecuteCommandLine(params);
- }

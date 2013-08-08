@@ -6,23 +6,27 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-
+#include "ScriptModule.h"
 
 namespace Leviathan{
 
+	// holds a reference of script module //
 	class ScriptScript : public Object{
 	public:
-		DLLEXPORT ScriptScript::ScriptScript();
+		DLLEXPORT ScriptScript::ScriptScript(const int &MID, weak_ptr<ScriptModule> wptr);
+		DLLEXPORT ScriptScript::ScriptScript(const ScriptScript &other);
 		DLLEXPORT ScriptScript::~ScriptScript();
 
-		wstring Name;
-		wstring Source;
 
-		bool Compiled;
+		DLLEXPORT inline ScriptModule* GetModule(){
+			return ScriptsModule.lock().get();
+		}
 
-		wstring Instructions;
+
 	private:
-
+		// reference to module //
+		weak_ptr<ScriptModule> ScriptsModule;
+		int ModuleID;
 	};
 
 }

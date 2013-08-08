@@ -1,11 +1,12 @@
 #ifndef LEVIATHAN_INCLUDE
 #define LEVIATHAN_INCLUDE
+
 #include <stdio.h>
 
-// visual leak detector //
-//#include <vld.h>
-
 //#define ANALYZEBUILD
+
+// we need to disable this warning to stop stdint and instsafe causing errors //
+#pragma warning (disable: 4005)
 
 // C RunTime Header Files
 #include <stdlib.h>
@@ -65,23 +66,19 @@ using namespace std;
 #include <d3d9.h>
 // -------------------------- //
 #define CLASSNAME	L"LeviathanWindow"
-#define VERSION		0.400f
-#define VERSIONS	L"0.4.0.0"
+#define VERSION		0.412f
+#define VERSIONS	L"0.4.1.2"
 #define LEVIATHAN
 
 #define PI 3.14159265
 #define EPSILON		0.00000001
 #define VAL_NOUPDATE	-1333678
-#define UNIT_SCALE		1000
-#define UNIT_SCALE_HALF	(UNIT_SCALE/2)
 #define OBJECT_SMOOTH	4
-
 #define SHADER_DEBUG 1
 
+#define UNIT_SCALE		1000
 // throw on Error message //
 //#define THROW_ON_PRINTERROR
-
-//#define NUM_THREADS 4
 
 #ifdef SHADER_DEBUG
 #define SHADER_COMPILE_PREFERFLOW 1
@@ -166,17 +163,26 @@ using namespace std;
 #define WIDEN(x) WIDEN2(x)
 #define __WFILE__ WIDEN(__FILE__)
 #define __WFUNCTION__ WIDEN(__FUNCTION__)
+
+#define SSLINE2(x) #x
+#define SSLINE(x) SSLINE2(x)
+#define __SLINE__ SSLINE(__LINE__)
+
+
+#define __SWLINE__ WIDEN(__SLINE__)
+
+
+
 #define __WDATE__ WIDEN(__DATE__)
 #define __WTIME__ WIDEN(__TIME__)
 #define __WFUNCSIG__ WIDEN(__FUNCSIG__)
-
 
 #define SAFE_DELETE_VECTOR(x) while((x).size() != 0){if((x)[0]){delete (x)[0];}(x).erase((x).begin());}
 
 #define STDCONTAINERERASELAST_PTR(x) x->erase(x->begin()+x->size()-1)
 #define STDCONTAINERERASELAST(x) x.erase(x.begin()+x.size()-1)
 
-#define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: "+__LINE__ ), true);}
+#define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: " __SWLINE__ ), true);}
 #define QUICK_MEMORY_ERROR_MESSAGE {Logger::Get()->Error((L"Out of memory error from: " __WFILE__ L" function: "__WFUNCTION__), true);}
 
 

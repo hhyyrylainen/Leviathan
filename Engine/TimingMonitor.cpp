@@ -22,7 +22,7 @@ int Leviathan::TimingMonitor::GetCurrentElapsed(const wstring& name){
 
 int Leviathan::TimingMonitor::StopTiming(const wstring& name, bool printoutput /*= true*/){
 	// loop through timers and get right based on name //
-	for(unsigned int i = 0; i < Timers.size(); i++){
+	for(size_t i = 0; i < Timers.size(); i++){
 		if(Timers[i]->Name == name){
 			// "end" the timer and return it's result which is the elapsed time //
 			// if specified print to log //
@@ -53,6 +53,20 @@ Leviathan::TimingMonitor::TimingMonitor(){
 Leviathan::TimingMonitor::~TimingMonitor(){
 
 }
+
+DLLEXPORT void Leviathan::TimingMonitor::ClearTimers(){
+	// just clear all timers vector and they will delete automatically //
+	if(Timers.size() == 0)
+		return;
+
+	Logger::Get()->Info(L"TimingMonitor: leaked timers! names:");
+	for(size_t i = 0; i < Timers.size(); i++){
+
+		Logger::Get()->Write(Timers[i]->Name);
+	}
+	Timers.clear();
+}
+
 // ------------------------------------ //
 vector<shared_ptr<TimingMonitorClock>> Leviathan::TimingMonitor::Timers;
 // ---------------- TimingMonitorClock -------------------- //

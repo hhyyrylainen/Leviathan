@@ -35,15 +35,14 @@ namespace Leviathan{
 	public:
 		DLLEXPORT Graphics();
 		DLLEXPORT ~Graphics();
-		DLLEXPORT void SetDescObjects(DxRendConf dx11) { Dconfig = dx11; };
-		DLLEXPORT bool Init(Window* wind);
+		DLLEXPORT void SetDescObjects(const DxRendConf &dx11) { Dconfig = dx11; };
+		DLLEXPORT bool Init(Window* wind, const DxRendConf &conf);
 
 		DLLEXPORT bool Frame(int mspassed, ViewerCameraPos* camerapostouse, vector<BaseRenderable*> &objects);
 		DLLEXPORT void Release();
 		DLLEXPORT void CleanUpRenderActions();
 
 		DLLEXPORT bool HasRenderer();
-		DLLEXPORT void RecreateRenderer(Window* wind);
 
 		DLLEXPORT bool Resize(int newwidth, int newheight);
 
@@ -70,19 +69,13 @@ namespace Leviathan{
 
 		void DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, D3DXMATRIX OrthoMatrix);
 		HRESULT Create3DRenderer(Window* wind);
-		void Destroy3DRenderer();
 		// ------------------------ //
-
 		bool Initialized;
-		bool DxRenderer;
 
 		Window* Wind;
-
-
 		DxRendConf Dconfig;
 
 		
-
 		Dx11Renderer* Drenderer;
 		ShaderManager* Shaders;
 		TextureManager* TextureKeeper;

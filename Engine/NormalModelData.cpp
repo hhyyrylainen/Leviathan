@@ -147,6 +147,7 @@ DLLEXPORT bool Leviathan::GameObject::NormalModelData::InitBuffers(ID3D11Device*
 	}
 
 	SAFE_DELETE_ARRAY(basicvertices);
+	SAFE_DELETE_ARRAY(groupedvertices);
 	SAFE_DELETE_ARRAY(indices);
 
 	IsBufferDone = true;

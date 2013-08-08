@@ -42,6 +42,7 @@ namespace Leviathan{
 		DLLEXPORT static int StopTiming(const wstring& name, bool printoutput = true);
 
 		DLLEXPORT static int GetCurrentTimerCount();
+		DLLEXPORT static void ClearTimers();
 
 	private:
 		TimingMonitor::TimingMonitor();

@@ -10,7 +10,6 @@ using namespace Leviathan;
 
 Graphics::Graphics(){
 	Initialized = false;
-	DxRenderer = false;
 		
 	Dconfig = DxRendConf();
 	
@@ -38,10 +37,12 @@ Graphics* Graphics::Get(){
 
 Graphics* Graphics::_gadapter = NULL;
 // ------------------------------------------- //
-bool Graphics::Init(Window* wind){
+bool Graphics::Init(Window* wind, const DxRendConf &conf){
 	// save window handle //
 	Wind = wind;
 	GuiSmooth = 5;
+	// set description object //
+	SetDescObjects(conf);
 
 	// set resource creator to use this graphics //
 	Rendering::ResourceCreator::StoreGraphicsInstance(this);
@@ -53,7 +54,6 @@ bool Graphics::Init(Window* wind){
 		Logger::Get()->Error(L"Failed to init graphics, can't create 3drenderer");
 		return false;
 	}
-	DxRenderer = true;
 	
 	// create texture holder //
 	TextureKeeper = new TextureManager(true, this);
@@ -129,7 +129,8 @@ bool Graphics::Init(Window* wind){
 void Graphics::Release(){
 
 	CleanUpRenderActions();
-	
+
+	SAFE_RELEASEDEL(TextRender);
 	SAFE_DELETE(Light);
 	SAFE_DELETE(ActiveCamera);
 	try{
@@ -140,9 +141,9 @@ void Graphics::Release(){
 		Logger::Get()->Error(L"Possible assertion from releasing graphics");
 	}
 	SAFE_RELEASEDEL(Shaders);
-	SAFE_RELEASEDEL(TextRender);
 
-	Destroy3DRenderer();
+
+	SAFE_RELEASEDEL(Drenderer);
 	Initialized = false;
 }
 // ------------------------------------------- //
@@ -201,8 +202,6 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 		CurrentPass->ResetState();
 	}
 
-	CurrentPass.release();
-
 	// 2d rendering //
 	ActiveCamera->GetStaticViewMatrix(ViewMatrix);
 	Drenderer->GetWorldMatrix(WorldMatrix);
@@ -230,20 +229,7 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 
 // ------------------------------------------- //
 bool Graphics::HasRenderer(){
-	return DxRenderer;
-}
-void Graphics::RecreateRenderer(Window* wind){
-	if(Initialized){
-		Destroy3DRenderer();
-		Initialized = false;
-	} else {
-		Logger::Get()->Info(L"Renderer doesn't exist, recreating anyways");
-	}
-	if(!SUCCEEDED(Create3DRenderer(wind))){
-		Logger::Get()->Error(L"Failed to recreate 3drenderer",0);
-		return;
-	}
-	Initialized = true;
+	return Drenderer != NULL;
 }
 
 // ------------------------------------------- //
@@ -264,18 +250,9 @@ HRESULT Graphics::Create3DRenderer(Window* wind){
 
 	//Dconfig = DxRendConf(tempwind, tempvsync, tempscreendepth, tempscreennear, tempdtype, tempmsaa);
 
-	Drenderer = new Dx11Renderer;
+	Drenderer = new Dx11Renderer();
 	hr = Drenderer->Init(wind, this->Dconfig);
-	if(SUCCEEDED(hr)){
-		DxRenderer = true;
-	}
 	return hr;
-}
-void Graphics::Destroy3DRenderer(){
-	if(DxRenderer){
-		SAFE_RELEASE(Drenderer);
-		DxRenderer = false;
-	}
 }
 // ------------------------------------------- //
 DLLEXPORT inline float Leviathan::Graphics::CountTextRenderLength(const wstring &text, const wstring &font, bool expensive, float heightmod, int Coordtype){
@@ -322,11 +299,7 @@ void Graphics::PurgeGuiArray(){
 }
 
 void Graphics::CleanUpRenderActions(){
-	for(unsigned int i = 0; i < GuiObjs.size(); i++){
-		GuiObjs[i].reset();
-		GuiObjs.erase(GuiObjs.begin()+i);
-		i--;
-	}
+	GuiObjs.clear();
 }
 
 void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, D3DXMATRIX OrthoMatrix){

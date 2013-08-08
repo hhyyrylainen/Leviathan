@@ -21,6 +21,18 @@ namespace Leviathan{
 
 	};
 
+	class IteratorFindUntilData : public Object{
+	public:
+		IteratorFindUntilData(int val1, int val2) : Positions(val1, val2), FoundEnd(false){
+
+		}
+		IteratorFindUntilData() : Positions(), FoundEnd(false){}
+
+		Int2 Positions;
+		bool FoundEnd;
+	};
+
+
 	class IteratorNumberFindData : public Object{
 	public:
 		IteratorNumberFindData();

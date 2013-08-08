@@ -16,7 +16,7 @@
 #include "..\ScaleableFreeTypeBitmap.h"
 #include "..\GuiPositionable.h"
 #include "..\ComplainOnce.h"
-
+#include "boost/thread/thread.hpp"
 
 #define RENDERINGFONT_CHARCOUNT		233
 #define RENDERINGFONT_MAXCHARCODE	255
@@ -195,6 +195,9 @@ namespace Leviathan{
 		// FreeType instance //
 		static bool FreeTypeLoaded;
 		static FT_Library FreeTypeLibrary;
+		// used to release FreeType library //
+		static int LivingObjects;
+		static boost::mutex LivingStaticMutex;
 	};
 
 }

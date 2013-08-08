@@ -14,13 +14,28 @@ using namespace Leviathan;
 #include "..\DebugVariableNotifier.h"
 
 RenderingFont::RenderingFont() : Textures(NULL), FontsFace(NULL), FontData(){
+	// we need to increase instance count //
+	boost::lock_guard<boost::mutex> guard(LivingStaticMutex);
+	LivingObjects++;
 }
 RenderingFont::~RenderingFont(){
+	// we need to decrease instance count //
+	boost::lock_guard<boost::mutex> guard(LivingStaticMutex);
+	LivingObjects--;
 
+	if(LivingObjects <= 0){
+		// we can unload FreeType //
+		FreeTypeLoaded = false;
+		FT_Done_FreeType(FreeTypeLibrary);
+		FreeTypeLibrary = NULL;
+	}
 }
 
 bool RenderingFont::FreeTypeLoaded = false;
-FT_Library RenderingFont::FreeTypeLibrary = FT_Library();
+FT_Library RenderingFont::FreeTypeLibrary = NULL;
+boost::mutex Leviathan::RenderingFont::LivingStaticMutex;
+int Leviathan::RenderingFont::LivingObjects = 0;
+
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::RenderingFont::Init(ID3D11Device* dev, const wstring &FontFile){
 	// get name from the filename //
@@ -42,6 +57,7 @@ DLLEXPORT bool Leviathan::RenderingFont::Init(ID3D11Device* dev, const wstring &
 	// succeeded //
 	return true;
 }
+
 void RenderingFont::Release(){
 	// release FreeType objects //
 	if(FontsFace)
@@ -798,7 +814,7 @@ bool Leviathan::RenderingFont::_VerifyFontFTDataLoaded(){
 		return true;
 
 	// load file matching this font //
-	wstring fontgenfile = FileSystem::SearchForFile(FILEGROUP_OTHER, Name, L"ttf", true);
+	wstring fontgenfile = FileSystem::Get()->SearchForFile(FILEGROUP_OTHER, Name, L"ttf", true);
 
 	// look for it in registry //
 	if(fontgenfile.size() == 0){
@@ -894,6 +910,11 @@ ID3D11ShaderResourceView* Leviathan::RenderingFont::GetTexture(){
 bool Leviathan::RenderingFont::CheckFreeTypeLoad(){
 	if(!FreeTypeLoaded){
 
+		if(!FreeTypeLibrary){
+			// "new" library object //
+			FreeTypeLibrary = FT_Library();
+		}
+
 		FT_Error error = FT_Init_FreeType(&FreeTypeLibrary);
 		if(error){
 
@@ -931,6 +952,8 @@ DLLEXPORT float Leviathan::RenderingFont::CalculateDotsSizeAtScale(const float &
 	//return 3*(FontData[ConvertCharCodeToIndex(L'.')]->AdvancePixels*scale)+2*(GetKerningBetweenCharacters(scale, '.', L'.'));
 	return 3*(FontsFace->glyph->advance.x >> 6)+2*(GetKerningBetweenCharacters(scale, L'.', L'.'));
 }
+
+
 
 // ------------------ FontsCharacter ------------------ //
 Leviathan::FontsCharacter::FontsCharacter(const int &charcode, const FT_UInt &glyphindex /*= 0*/) : TopLeft(0, 0), BottomRight(0, 0), PixelWidth(0),

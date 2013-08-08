@@ -6,61 +6,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 #include "Application.h"
-LRESULT CALLBACK DefWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
-	LRESULT result = 0;
 
-	if (message == WM_CREATE){
-
-	} else {
-		bool wasHandled = false;
-		switch (message)
-		{
-		case WM_SIZE:
-			{
-				UINT width = LOWORD(lParam);
-				UINT height = HIWORD(lParam);
-
-				(LeviathanApplication::GetApp())->OnResize(width, height);
-
-			}
-			result = 0;
-			wasHandled = true;
-			break;
-
-		case WM_DISPLAYCHANGE:
-			{
-				InvalidateRect(hwnd, NULL, FALSE);
-			}
-			result = 0;
-			wasHandled = true;
-			break;
-
-		case WM_PAINT:
-			{
-				(LeviathanApplication::GetApp())->Render();	
-			}
-			result = 0;
-			wasHandled = true;
-			break;
-		case WM_SETFOCUS:
-			{
-				LeviathanApplication::GetApp()->GainFocus();
-			}
-		break;
-		case WM_KILLFOCUS:
-			{
-				LeviathanApplication::GetApp()->LoseFocus();
-			}
-		break;
-		}
-		if (!wasHandled){
-			result = (LeviathanApplication::GetApp())->GetEngine()->HandleWindowCallBack(message,wParam,lParam);
-			if(!result)
-				result = DefWindowProc(hwnd, message, wParam, lParam);
-		}
-	}
-	return result;
-}
 // ------------------------------------ //
 
 Window::Window(){
@@ -72,8 +18,10 @@ Window::Window(){
 	CursorHidden = false;
 }
 void Window::CloseDown(){
-	if(!IsWindow(m_hwnd))
+	if(!IsWindow(m_hwnd)){
 		return;
+	}
+
 	if(!Windowed){
 		ChangeDisplaySettings(NULL, 0);
 	}
@@ -81,14 +29,10 @@ void Window::CloseDown(){
 	DestroyWindow(m_hwnd);
 	m_hwnd = NULL;
 }
-void Window::Init(HWND hwnd, int width, int height){
-	m_hwnd = hwnd;
-	Width = width;
-	Height = height;
 
-	
-}
-bool Window::Init(HINSTANCE hInstance, WNDPROC proc, wstring tittle, int width, int height, HICON hIcon, bool windowed){
+bool Window::Init(HINSTANCE hInstance, WNDPROC proc, wstring tittle, int width, int height, HICON hIcon, bool windowed, 
+	LeviathanApplication* application)
+{
 	HRESULT hr = S_OK;
 	Width = width;
 	Height = height;
@@ -113,6 +57,9 @@ bool Window::Init(HINSTANCE hInstance, WNDPROC proc, wstring tittle, int width, 
 	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 	DEVMODE dmScreenSettings;
 
+	// data to pass to window procedure (this will probably leak, but it's not much) //
+	WindowPassData* wdata = new WindowPassData(this, application);
+
 	if(!windowed){
 		// If full screen set the screen to maximum size of the users desktop and 32bit.
 		memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
@@ -124,6 +71,8 @@ bool Window::Init(HINSTANCE hInstance, WNDPROC proc, wstring tittle, int width, 
 
 		// Change the display settings to full screen.
 		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
+
+
 
 		// Set the position of the window to the top left corner.
 		Xpos = Ypos = 0;
@@ -139,7 +88,7 @@ bool Window::Init(HINSTANCE hInstance, WNDPROC proc, wstring tittle, int width, 
 			NULL,
 			NULL,
 			hInstance,
-			this
+			wdata
 			);
 	} else {
 		//Xpos = (GetSystemMetrics(SM_CXSCREEN) - screenWidth)  / 2;
@@ -166,11 +115,8 @@ bool Window::Init(HINSTANCE hInstance, WNDPROC proc, wstring tittle, int width, 
 		NULL,
 		NULL,
 		hInstance,
-		this
+		wdata
 		);
-
-	//Width=width;
-	//Height=height;
 
 	hr = IsWindow(m_hwnd) ? S_OK : E_FAIL;
 	if (SUCCEEDED(hr))
@@ -189,55 +135,13 @@ bool Window::Init(HINSTANCE hInstance, WNDPROC proc, wstring tittle, int width, 
 			SetFocus(m_hwnd);
 		}
 		catch (...){
-#ifdef _DEBUG
-			__debugbreak();
-#endif // _DEBUG
+			
+			DEBUG_BREAK;
 			throw;
 		}
 	}
 		
 
-	return SUCCEEDED(hr);
-}
-bool Window::Init(HINSTANCE hInstance){
-	HRESULT hr = S_OK;
-	WNDCLASSEX wcex = { sizeof(wcex) };
-	wcex.style         = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc   = DefWndProc;
-	wcex.cbWndExtra    = sizeof(LONG_PTR);
-	wcex.hInstance     = hInstance;
-	wcex.hCursor       = LoadCursor(NULL, IDC_ARROW);
-	wcex.lpszClassName = CLASSNAME;
-	wcex.hIcon         = NULL;
-
-	RegisterClassEx(&wcex);
-	////calculate size
-	RECT wr = {0,0,800,600};
-	AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
-	// Create the application window.
-	m_hwnd = CreateWindow(
-		CLASSNAME,
-		L"Leviathan window",
-		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		wr.right - wr.left,
-		wr.bottom - wr.top,
-		NULL,
-		NULL,
-		hInstance,
-		this
-		);
-
-	Width=800;
-	Height=600;
-
-	hr = m_hwnd ? S_OK : E_FAIL;
-	if (SUCCEEDED(hr))
-	{
-		ShowWindow(m_hwnd, SW_SHOWNORMAL);
-		UpdateWindow(m_hwnd);
-	}
 	return SUCCEEDED(hr);
 }
 
@@ -324,4 +228,9 @@ void Window::GainFocus(){
 
 float Leviathan::Window::GetAspectRatio() const{
 	return ((float)Width)/Height;
+}
+
+Leviathan::WindowPassData::WindowPassData(Window* wind, LeviathanApplication* appinterface){
+	OwningWindow = wind;
+	Appinterface = appinterface;
 }

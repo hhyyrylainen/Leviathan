@@ -81,7 +81,7 @@ ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, un
 
 
 	int charsinbuffer = -1;
-	unsigned char* tempbuffer = DDSHandler::GenerateRGBDDSToMemory(Pixels,width,height/*, DDS_RGB*/, charsinbuffer);
+	unique_ptr<unsigned char> tempbuffer(DDSHandler::GenerateRGBDDSToMemory(Pixels,width,height/*, DDS_RGB*/, charsinbuffer));
 	if(tempbuffer == NULL){
 
 		Logger::Get()->Error(L"TextureGenerator: GenerateCheckerBoard: failed to write memory buffer: DDSHandler::GenerateRGBDDSToMemory(Pixels,width,height, DDS_RGB, charsinbuffer)");
@@ -89,7 +89,7 @@ ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, un
 	}
 
 	
-	result = new ManagedTexture(tempbuffer, charsinbuffer, IDFactory::GetID(), L"TextureGenerator::Checkerboard", dev);
+	result = new ManagedTexture(tempbuffer.get(), charsinbuffer, IDFactory::GetID(), L"TextureGenerator::Checkerboard", dev);
 	return result;
 }
 // ------------------------------------ //

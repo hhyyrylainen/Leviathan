@@ -22,12 +22,14 @@ namespace Leviathan{
 	enum EQUALITYCHARACTER {EQUALITYCHARACTER_TYPE_EQUALITY, EQUALITYCHARACTER_TYPE_DOUBLEDOTSTYLE, EQUALITYCHARACTER_TYPE_ALL};
 	enum ITERATORCALLBACK_RETURNTYPE {ITERATORCALLBACK_RETURNTYPE_STOP, ITERATORCALLBACK_RETURNTYPE_CONTINUE};
 
-#define WSTRINGITERATOR_IGNORE_SPECIAL			200001
-#define WSTRINGITERATOR_STOP					200002
-#define WSTRINGITERATOR_INSIDE_STRING			200005
-#define WSTRINGITERATOR_INSIDE_STRING_DOUBLE	200006
-#define WSTRINGITERATOR_INSIDE_STRING_SINGLE	200007
-#define WSTRINGITERATOR_IGNORE_SPECIAL_END		200008
+#define WSTRINGITERATOR_IGNORE_SPECIAL					200001
+#define WSTRINGITERATOR_STOP							200002
+#define WSTRINGITERATOR_INSIDE_STRING					200005
+#define WSTRINGITERATOR_INSIDE_STRING_DOUBLE			200006
+#define WSTRINGITERATOR_INSIDE_STRING_SINGLE			200007
+#define WSTRINGITERATOR_INSIDE_STRING_SINGLE_END		200009
+#define WSTRINGITERATOR_INSIDE_STRING_DOUBLE_END		200010
+#define WSTRINGITERATOR_IGNORE_SPECIAL_END				200008
 
 
 	typedef ITERATORCALLBACK_RETURNTYPE (*IteratorWstrCallBack)(WstringIterator* instance, Object* IteratorData, int parameters);
@@ -75,7 +77,9 @@ namespace Leviathan{
 		DLLEXPORT unique_ptr<wstring> GetUntilNextCharacterOrAll(wchar_t charactertolookfor);
 
 		DLLEXPORT void SkipWhiteSpace();
-
+#ifdef _DEBUG
+		DLLEXPORT void SetDebugMode(const bool &mode);
+#endif
 		DLLEXPORT unsigned long GetPosition();
 		DLLEXPORT void SetPosition(unsigned long pos);
 		DLLEXPORT wchar_t GetCurrentCharacter();
@@ -98,14 +102,16 @@ namespace Leviathan{
 		inline ITERATORCALLBACK_RETURNTYPE HandleSpecialCharacters();
 		inline ITERATORCALLBACK_RETURNTYPE CheckActiveFlags();
 
-		int HandleCurrentIteration(IteratorWstrCallBack functiontocall, Object* IteratorData, int parameters);
+		int HandleCurrentIteration(IteratorWstrCallBack functiontocall, Object* IteratorData, int parameters, bool &firstiter);
 
 		// ------------------------------------ //
 		// type, specifies if should try to delete the wstring on destructor //
 		// bool bitfield to save memory //
 		bool HandlesDelete : 1;
 		bool IsPtrUsed : 1;
-
+#ifdef _DEBUG
+		bool DebugMode;
+#endif
 		wstring* Data;
 		/*const*/ wstring ConstData;
 

@@ -19,7 +19,7 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT BaseGraphicalComponent::BaseGraphicalComponent(int slot, int zorder);
 		DLLEXPORT virtual BaseGraphicalComponent::~BaseGraphicalComponent();
 
-		// release used to explicitly release render bridge blob //
+		// release used to explicitly release render bridge blob, (will always be released when render bridge is deleted) //
 		DLLEXPORT virtual void Release(RenderBridge* bridge) = 0;
 
 		// rendering function //

@@ -10,64 +10,45 @@ using namespace Leviathan::Gui;
 #include "DataStore.h"
 #include "GuiAnimation.h"
 
-#include "GuiScriptInterface.h"
 #include "DataBlock.h"
 #include "ObjectBackground.h"
 #include "GuiBasicText.h"
-#include "Rendering\ColorQuad.h"
-#include "Rendering\RenderingResourceCreator.h"
 #include "DebugVariableNotifier.h"
+#include <boost\assign\list_of.hpp>
+#include "ObjectFileProcessor.h"
 
 
-Leviathan::Gui::TextLabel::TextLabel(int id, const Float2 &position, Float2 &size, int autoadjust) : Positionable(position, size), GComponents(2){
-	// set object levels //
-	ObjectLevel = GUI_OBJECT_LEVEL_ANIMATEABLE;
-	Objecttype = GOBJECT_TYPE_TEXTLABEL;
+DLLEXPORT Leviathan::Gui::TextLabel::TextLabel(GuiManager* owner, const int &id, const bool &hidden, const Float2 &position, Float2 &size, 
+	const int &autoadjust, shared_ptr<ScriptScript> script) : BaseGuiObject(owner, TEXTLABEL_OBJECTFLAGS, id, GUIOBJECTTYPE_TEXTLABEL, script), 
+	AutoUpdateableObject(), GuiAnimateable(), RenderableGuiObject(0, TEXTLABEL_GRAPHICALCOMPONENT_COUNT, hidden), Positionable(position, size), 
+	BaseGuiEventable(owner), TextPadding(0, 0)
+{
+	// set some default values //
+	AutoAdjust = 2;
+	TextAdjustMode = 1;
 
-	// setting created flags to false //
-	BridgeCreated = false;
-
-	AutoAdjust = autoadjust;
-	TextAdjustMode = GUI_BASICTEXT_MODE_JUSTRENDER;
-
-	Updated = false;
-	Hidden = false;
-	OldHidden = false;
-	// copy id //
-	ID = id;
-	
-	Zorder = 1;
-
-
-	TextWantedCoordinates = position;
-	TextAreaSize = size;
-
-	// default padding around text //
-	TextPadding = 0.012f;
-	TextPaddingY = 0.008f;
+	TextWantedCutSize = 0.4f;
 }
 
 Leviathan::Gui::TextLabel::~TextLabel(){
-	// release rendering stuff //
-	if(RBridge.get() != NULL)
-		RBridge->WantsToClose = true;
-	RBridge.reset();
+	// don't listen to anything anymore //
+	StopMonitoring(MonitoredValues);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstring &font, const Float4 &textcolor, float textsize, 
-	const Float4 &color1, const Float4 &color2, const float &padding, const float &paddingy, const float &textscalecut, 
+DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstring &font, const Float4 &textcolor, const float &textsize, 
+	const Float2 &padding, const float &textscalecut, shared_ptr<NamedVariableList> backgroundgen, 
 	vector<shared_ptr<VariableBlock>>* listenindexes /*= NULL*/)
 {
+	// freshly generated and we need to make sure that update happens before rendering //
 	Updated = true;
 
+	// copy values //
 	TextPadding = padding;
-	TextPaddingY = paddingy;
-
 	TextWantedCutSize = textscalecut;
 
 	// initialize graphical components //
-	if(GComponents.size() != 2)
-		GComponents.resize(2);
+	assert(GComponents.size() == 2 && "g components should be right");
+
 
 	// background //
 	GComponents[0] = new ObjectBackground(0, 1);
@@ -78,7 +59,7 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstrin
 	}
 
 	// initialize it //
-	if(!((ObjectBackground*)GComponents[0])->Init(color1, color2, QUAD_FILLSTYLE_UPPERLEFT_0_BOTTOMRIGHT_1)){
+	if(!((ObjectBackground*)GComponents[0])->Init(backgroundgen)){
 
 		QUICK_ERROR_MESSAGE;
 		return false;
@@ -106,8 +87,7 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstrin
 		QUICK_ERROR_MESSAGE;
 		return false;
 	}
-
-	
+	// we want to adjust size automatically before first rendering if it is set //
 	if(AutoAdjust)
 		 SizeAdjust();
 
@@ -120,31 +100,10 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::Init(const wstring &text, const wstrin
 	RegisterForEvent(EVENT_TYPE_SHOW);
 
 	// set size to text to ensure that it is set //
-	((GuiBasicText*)GComponents[1])->SetLocationData(TextWantedCoordinates, TextAreaSize);
+	//((GuiBasicText*)GComponents[1])->SetLocationData(TextWantedCoordinates, TextAreaSize);
 	((ObjectBackground*)GComponents[0])->SetLocationData(Position, Size);
 
 	return true;
-}
-void Leviathan::Gui::TextLabel::Release(){
-	// TODO: send close message to script //
-
-	// close Graphical components //
-	while(GComponents.size()){
-		// release if exists //
-		if(GComponents[0] && RBridge.get() != NULL)
-			GComponents[0]->Release(RBridge.get());
-		SAFE_DELETE(GComponents[0]);
-		GComponents.erase(GComponents.begin());
-	}
-
-
-	// set bridge to die
-	if(RBridge.get() != NULL)
-		(*RBridge).WantsToClose = TRUE;
-	RBridge.reset();
-
-	// don't listen to anything anymore //
-	StopMonitoring(MonitoredValues);
 }
 // ------------------------------------ //
 void Leviathan::Gui::TextLabel::Render(Graphics* graph){
@@ -156,16 +115,12 @@ void Leviathan::Gui::TextLabel::Render(Graphics* graph){
 	NoNUpdatedFrames = 0;
 
 	// check bridge creation //
-	if(!BridgeCreated){
-		// create rendering bridge for communicating with renderer //
-		RBridge = shared_ptr<RenderBridge>(new RenderBridge(this->ID, this->Hidden, this->Zorder));
+	if(!VerifyRenderingBridge(graph, ID)){
 
-		// submit //
-		graph->SubmitRenderBridge(RBridge); // this hopefully copies the bridge and maintains the second copy
-
-		// created //
-		BridgeCreated = true;
+		DEBUG_BREAK;
+		return;
 	}
+	assert(GComponents.size() == 2 && "non initialized TextLabel");
 
 	// check hidden state //
 	if((Hidden) && (!OldHidden)){
@@ -223,35 +178,23 @@ void Leviathan::Gui::TextLabel::Render(Graphics* graph){
 
 			// set text //
 			((GuiBasicText*)GComponents[1])->UpdateText(text, TextAdjustMode != GUI_BASICTEXT_MODE_JUSTRENDER, TextAdjustMode);
-
-			// adjust //
-			SizeAdjust();
 		}
 	}
-
 
 	if(Hidden){
 		// updating anything can wait until visible //
 		return;
 	}
 
-	// adjust size if visible and wanted //
-	if(AutoAdjust)
-		SizeAdjust();
+	// ensure that size is properly calculated //
+	SizeAdjust();
 
-
-	// update this ZOrder //
+	// update bride's draw order //
 	RBridge->ZVal = this->Zorder;
 	
-	// update components if needed //
-	assert(GComponents.size() == 2 && "non initialized TextLabel");
-
-	// send location to background //
+	// update components //
+	// background will always use same location and size as this //
 	((ObjectBackground*)GComponents[0])->SetLocationData(Position, Size);
-
-	// location to text //
-	TextWantedCoordinates = Float2(Position.X+TextPadding, Position.Y+TextPaddingY);
-	((GuiBasicText*)GComponents[1])->SetPosition(TextWantedCoordinates);
 	
 	// render graphical components //
 	GComponents[0]->Render(RBridge.get(), graph);
@@ -260,91 +203,41 @@ void Leviathan::Gui::TextLabel::Render(Graphics* graph){
 // ------------------------------------ //
 void Leviathan::Gui::TextLabel::SizeAdjust(){
 
-	if(AutoAdjust > 1){
-		// using text to fit box mode, no need to update sizes here //
+	if(AutoAdjust == 1){
+		// adjust to text's length //
+		// get text length //
+		float length = 0;
+		float heigth = 0;
 
-		// send old size to background //
+		((GuiBasicText*)GComponents[1])->GetTextLength(length, heigth);
+
+		// count new size //
+		Size.X = TextPadding.X*2+length;
+		Size.Y = TextPadding.Y*2+heigth;
+
+		// calculate area for text //
+		Float2 TextWantedCoordinates = Float2(Position.X+TextPadding.X, Position.Y+TextPadding.Y);
+		Float2 TextAreaSize = Float2(Size.X-(TextPadding.X*2), Size.Y-(TextPadding.Y*2));
+
+		// send new size to background //
 		((ObjectBackground*)GComponents[0])->SetSize(Size);
-
-		// calculate initial area for text //
-		TextWantedCoordinates = Float2(Position.X+TextPadding, Position.Y+TextPaddingY);
-		TextAreaSize = Float2(Size.X-(TextPadding*2), Size.Y-(TextPaddingY*2));
-
-		//DebugVariableNotifier::UpdateVariable(L"TextLabel::TextAreaSize::X", new VariableBlock(TextAreaSize.X));
-		//DebugVariableNotifier::UpdateVariable(L"TextLabel::TextWantedCoordinates::X", new VariableBlock(TextWantedCoordinates.X));
 
 		// set position to text //
 		((GuiBasicText*)GComponents[1])->SetLocationData(TextWantedCoordinates, TextAreaSize);
 
 		return;
 	}
+	// using text to fit box mode or no adjustment (in which case the text will still need these variables) //
+	Float2 TextWantedCoordinates = Float2(Position.X+TextPadding.X, Position.Y+TextPadding.Y);
+	Float2 TextAreaSize = Float2(Size.X-(TextPadding.X*2), Size.Y-(TextPadding.Y*2));
 
-
-	// get text length //
-	float length = 0;
-	float heigth = 0;
-
-	((GuiBasicText*)GComponents[1])->GetTextLength(length, heigth);
-
-	// count new size //
-
-	Size.X = TextPadding*2+length;
-
-	Size.Y = TextPaddingY*2+heigth;
-
-	// calculate area for text //
-	TextWantedCoordinates = Float2(Position.X+TextPadding, Position.Y+TextPaddingY);
-	TextAreaSize = Float2(Size.X-TextPadding, Size.Y-TextPaddingY);
-
-	// send new size to background //
-	((ObjectBackground*)GComponents[0])->SetSize(Size);
-
-	// set position to text //
+	// set positions to text //
 	((GuiBasicText*)GComponents[1])->SetLocationData(TextWantedCoordinates, TextAreaSize);
-
 }
  // ------------------------------------ //
 int Leviathan::Gui::TextLabel::AnimationTime(int mspassed){
-	if(AnimationQueue.size() == 0)
-		return 0;
-	bool contaction = false;
-
-	for(size_t i = 0; i < AnimationQueue.size(); i++){
-		contaction = AnimationQueue[i]->AllowSimultanous;
-
-		if(AnimationQueue[i]->Type == GUI_ANIMATION_HIDE){
-			this->Hidden = true;
-			Updated = true;
-
-			AnimationQueue.erase(AnimationQueue.begin()+i);
-			i--;
-			continue;
-		}
-		if(AnimationQueue[i]->Type == GUI_ANIMATION_SHOW){
-			this->Hidden = false;
-			Updated = true;
-
-			AnimationQueue.erase(AnimationQueue.begin()+i);
-			i--;
-			continue;
-		}
-
-		if(GuiManager::Get()->HandleAnimation(AnimationQueue[i].get(), this, mspassed) == 1){
-			// event completed //
-			
-			AnimationQueue.erase(AnimationQueue.begin()+i);
-			i--;
-		}
-
-		if(!contaction) // break if simultaneous flag is not set
-			break;
-	}
-
-	if(AnimationQueue.size() == 0){
-		AnimationFinish();
-	}
-
-	return 0;
+	// just call default and be done with it //
+	return _RunAnimationTimeDefault(OwningInstance, mspassed);
 }
 
 void Leviathan::Gui::TextLabel::AnimationFinish(){
@@ -352,63 +245,47 @@ void Leviathan::Gui::TextLabel::AnimationFinish(){
 }
 // ------------------------------------ //
 int Leviathan::Gui::TextLabel::OnEvent(Event** pEvent){
-	// figure what to do based on type
-	switch((*pEvent)->Type){
-	case EVENT_TYPE_HIDE:
-		{
-			// run specific script if found //
-			if(Scripting->Script == NULL)
+	// script listeners that are static //
+
+	const EVENT_TYPE &etype = (*pEvent)->Type;
+
+	// check is this event type a event that we can forward to scripts //
+	if(etype == EVENT_TYPE_HIDE || etype == EVENT_TYPE_SHOW){
+		// let's try to pass this to scripts //
+		wstring calllistenername(L"");
+
+		switch(etype){
+			case EVENT_TYPE_SHOW: calllistenername = LISTENERNAME_ONHIDE; break;
+			case EVENT_TYPE_HIDE: calllistenername = LISTENERNAME_ONSHOW; break;
+			default:
 				return 0;
-
-			if(Scripting->Script->Instructions.size() < 1)
-				return 0;
-
-			vector<shared_ptr<NamedVariableBlock>> Params;
-			Params.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock((*(Int2*)(*pEvent)->Data)[0]), L"Source")));
-			Params.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(this->ID), L"InstanceID")));
-
-			bool existed = false;
-			shared_ptr<VariableBlock> returned = ScriptInterface::Get()->ExecuteIfExistsScript(Scripting.get(), L"OnHide", Params, existed, false);
-
-			// check did it exist //
-			if(!existed){
-				// script didn't exist //
-				return 0;
-			}
-			// script's exit value //
-			int Value(*returned.get());
-			return Value;
 		}
-	break;
-	case EVENT_TYPE_SHOW:
-		{
-			// run specific script if found //
-			if(Scripting->Script == NULL)
-				return 0;
 
-			if(Scripting->Script->Instructions.size() < 1)
-				return 0;
-
-			vector<shared_ptr<NamedVariableBlock>> Params;
-			Params.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock((*(Int2*)(*pEvent)->Data)[0]), L"Source")));
-			Params.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(this->ID), L"InstanceID")));
-
-			bool existed = false;
-			shared_ptr<VariableBlock> returned = ScriptInterface::Get()->ExecuteIfExistsScript(Scripting.get(), L"OnShow", Params, existed, false);
-
-			// check did it exist //
-			if(!existed){
-				// script didn't exist //
-				return 0;
-			}
-			// script's exit value //
-			int Value(*returned.get());
-			return Value;
+		// check does right listener exist //
+		if(!Scripting->GetModule()->DoesListenersContainSpecificListener(calllistenername)){
+			// no valid listener //
+			Logger::Get()->Info(L"TextLabel: missing listener : "+calllistenername);
+			return 0;
 		}
-	break;
+
+		vector<shared_ptr<NamedVariableBlock>> Params = boost::assign::list_of(new NamedVariableBlock(new IntBlock((*(Int2*)(*pEvent)->Data)[0]), L"Source"))
+			(new NamedVariableBlock(new VoidPtrBlock(this), L"TextLabel"));
+		// we need to add reference to ourselves to not get deleted by the script instance releasing //
+		AddRef();
+
+
+		// create parameters //
+		ScriptRunningSetup ssetup;
+		ssetup.SetEntrypoint(Convert::WstringToString(calllistenername)).SetUseFullDeclaration(false).SetArguements(Params);
+
+		shared_ptr<VariableBlock> returned = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &ssetup);
+
+		// script's exit value //
+		return int(*returned.get());
+
 	}
 
-	// not used, request unregistration
+	// not used, request unregistration //
 	return -1;
 }
 
@@ -416,26 +293,10 @@ int Leviathan::Gui::TextLabel::OnEvent(Event** pEvent){
 DLLEXPORT void Leviathan::Gui::TextLabel::SetValue(const int &semanticid, const float &val){
 	// switch to right value //
 	switch(semanticid){
-	case GUI_ANIMATEABLE_SEMANTIC_X:
-		{
-			Position.X = val;
-		}
-	break;
-	case GUI_ANIMATEABLE_SEMANTIC_Y:
-		{
-			Position.Y = val;
-		}
-	break;
-	case GUI_ANIMATEABLE_SEMANTIC_WIDTH:
-		{
-			Size.X = val;
-		}
-	break;
-	case GUI_ANIMATEABLE_SEMANTIC_HEIGHT:
-		{
-			Size.Y = val;
-		}
-	break;
+	case GUI_ANIMATEABLE_SEMANTIC_X: Position.X = val; break;
+	case GUI_ANIMATEABLE_SEMANTIC_Y: Position.Y = val; break;
+	case GUI_ANIMATEABLE_SEMANTIC_WIDTH: Size.X = val; break;
+	case GUI_ANIMATEABLE_SEMANTIC_HEIGHT: Size.Y = val; break;
 	}
 	// data has been updated //
 	Updated = true;
@@ -453,40 +314,23 @@ DLLEXPORT float Leviathan::Gui::TextLabel::GetValue(const int &semanticid) const
 	return -1.0f;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::TextLabel::UpdateBackgroundColours(const Float4 &colour1, const Float4 &colour2, int gradienttype){
-	assert(GComponents.size() == 2 && "non initialized TextLabel");
-
-	return ((ObjectBackground*)GComponents[0])->UpdateGradient(colour1, colour2, gradienttype);
-}
-
-DLLEXPORT bool Leviathan::Gui::TextLabel::UpdateText(const wstring &text, bool isexpensive /*= false*/){
-	assert(GComponents.size() == 2 && "non initialized TextLabel");
-
-	return ((GuiBasicText*)GComponents[1])->UpdateText(text, isexpensive, TextAdjustMode);
-}
-
-// ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::TextLabel::QueueAction(shared_ptr<AnimationAction> act){
-	AnimationQueue.push_back(act);
-}
-
-DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(vector<BaseGuiObject*> &tempobjects, vector<Int2> &idmappairs, 
+DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects, vector<Int2> &idmappairs, 
 	ObjectFileObject& dataforthis)
 {
 	// try to load a TextLabel from the structure //
+	// get a new id for the new object //
 	int RealID = IDFactory::GetID();
 
+	// find the "fake" id which is used to assign this to parent //
 	for(size_t a = 0; a < dataforthis.Prefixes.size(); a++){
 		if(Misc::WstringStartsWith(*dataforthis.Prefixes[a], L"ID")){
-
 			// use wstring iterator to get the id number //
-			WstringIterator itr(dataforthis.Prefixes[a].get(), false);
+			WstringIterator itr(dataforthis.Prefixes[a], false);
 
 			unique_ptr<wstring> itrresult = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
 
-			// check first word //
+			// check result word //
 			if(itrresult->size() == 0){
-
 				// invalid number //
 				Logger::Get()->Error(L"TextLabel: LoadFromFileStructure: invalid number as id, in prefix: "+*dataforthis.Prefixes[a]);
 
@@ -494,148 +338,151 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(vector<BaseGuiOb
 				// should be valid id //
 				idmappairs.push_back(Int2(Convert::WstringTo<int>(*itrresult), RealID));
 			}
-
 			break;
 		}
 	}
 
-
-	float x = -36003;
-	float y = -36003;
-	float width = -36003;
-	float height = -36003;
+	Float2 Location(0, 0);
+	Float2 Size(0, 0);
+	Float2 Padding(0, 0);
 
 	wstring text(L"");
+	wstring Font(L"");
 
-	Float4 StartColor;
-	Float4 EndColor;
+	float TextSize;
 	Float4 TextColor;
 
-	float TextSize = 1.0f;
-	int AutoAdjust = 1;
+	int AutoAdjust;
+	bool Hidden;
 	float TextCutScale = 0.4f;
-	float Padding = 0;
-	float PaddingY = 0;
-	wstring Font = L"arial";
 
-	vector<bool> AreIndexes;
+	shared_ptr<NamedVariableList> BackgroundInfo(NULL);
+
 	vector<shared_ptr<VariableBlock>> ListenIndexes;
+
+	ObjectFileList* paramlist = NULL;
 
 	// get values for initiation //
 	for(size_t a = 0; a < dataforthis.Contents.size(); a++){
 		// check what list is being processed //
 		if(dataforthis.Contents[a]->Name == L"params"){
-			// get variables //
-
-			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"X", x, FLT_MAX, true,
-				L"TextLabel: LoadFromFileStructure:");
-
-			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"Y", y, FLT_MAX, true,
-				L"TextLabel: LoadFromFileStructure:");
-
-			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"Width", width, FLT_MAX, true,
-				L"TextLabel: LoadFromFileStructure:");
-
-			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"Height", height, FLT_MAX, true,
-				L"TextLabel: LoadFromFileStructure:");
-
-			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"TextSizeMod", TextSize, 1.f, true,
-				L"TextLabel: LoadFromFileStructure:");
-
-			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"Padding", Padding, 0.07f, true,
-				L"TextLabel: LoadFromFileStructure:");
-
-			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"PaddingY", PaddingY, 0.02f, true,
-				L"TextLabel: LoadFromFileStructure:");
-
-			ObjectFileProcessor::LoadValueFromNamedVars<float>(dataforthis.Contents[a]->Variables, L"TextCutScale", TextCutScale, 0.4f, false);
-
-			ObjectFileProcessor::LoadValueFromNamedVars<int>(dataforthis.Contents[a]->Variables, L"AutoAdjust", AutoAdjust, 1, true, 
-				L"TextLabel: LoadFromFileStructure:");
-
-			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(dataforthis.Contents[a]->Variables, L"StartText", text, L"", true,
-				L"TextLabel: LoadFromFileStructure:");
-
-			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(dataforthis.Contents[a]->Variables, L"Font", Font, L"Arial", true,
-				L"TextLabel: LoadFromFileStructure:");
-
-			
-
-			// listen on should allow strings and multiple numbers //
-			try{
-				vector<VariableBlock*>* listenvalues = dataforthis.Contents[a]->Variables->GetValues(L"ListenOn");
-
-				// check values //
-				for(size_t i = 0; i < listenvalues->size(); i++){
-					// check is it wstring or int //
-
-					if(listenvalues->at(i)->GetBlock()->Type == DATABLOCK_TYPE_INT){
-
-						// int index //
-						AreIndexes.push_back(true);
-						ListenIndexes.push_back(shared_ptr<VariableBlock>(new VariableBlock(listenvalues->at(i)->GetBlock()->AllocateNewFromThis())));
-
-
-					} else {
-						// skip if cannot be made into wstring //
-						if(!listenvalues->at(i)->IsConversionAllowedPtr<wstring>()){
-							continue;
-						}
-
-						// is a string index //
-						AreIndexes.push_back(false);
-						ListenIndexes.push_back(shared_ptr<VariableBlock>(new VariableBlock(listenvalues->at(i)->GetBlock()->AllocateNewFromThis())));
-					}
-				}
-
-			}
-			catch(...){
-				// nothing to listen on //
-				ListenIndexes.clear();
-			}
-
-			ObjectFileProcessor::LoadMultiPartValueFromNamedVars<Float4, float, 4>(dataforthis.Contents[a]->Variables, L"TextColor", TextColor,
-				Float4::ColourWhite, true, L"TextLabel: LoadFromFileStructure:");
-
-			ObjectFileProcessor::LoadMultiPartValueFromNamedVars<Float4, float, 4>(dataforthis.Contents[a]->Variables, L"StartColor", StartColor,
-				Float4::ColourBlack, true, L"TextLabel: LoadFromFileStructure:");
-
-			ObjectFileProcessor::LoadMultiPartValueFromNamedVars<Float4, float, 4>(dataforthis.Contents[a]->Variables, L"EndColor", EndColor,
-				Float4::ColourBlack, true, L"TextLabel: LoadFromFileStructure:");
+			// found the parameter list //
+			paramlist = dataforthis.Contents[a];
+			break;
 		}
 	}
 
+	if(paramlist == NULL){
+		// couldn't find it //
+
+		Logger::Get()->Error(L"TextLabel: LoadFromFileStructure: variable list \"params\" wasn't found");
+		return false;
+	}
+
+
+	// Get variables from the parameter object //
+
+	// get variables //
+	ObjectFileProcessor::LoadValueFromNamedVars<float>(paramlist->Variables, L"TextSizeMod", TextSize, 1.f, true,
+		L"TextLabel: LoadFromFileStructure:");
+
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(paramlist->Variables, L"AutoAdjust", AutoAdjust, 1, true, 
+		L"TextLabel: LoadFromFileStructure:");
+
+	ObjectFileProcessor::LoadValueFromNamedVars<float>(paramlist->Variables, L"TextCutScale", TextCutScale, 0.4f, false);
+	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(paramlist->Variables, L"StartText", text, L"", false);
+	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(paramlist->Variables, L"Font", Font, L"Arial", false);
+	ObjectFileProcessor::LoadValueFromNamedVars<bool>(paramlist->Variables, L"Hidden", Hidden, false, false);
+	
+
+	ObjectFileProcessor::LoadMultiPartValueFromNamedVars<Float4, float, 4>(paramlist->Variables, L"TextColor", TextColor,
+		Float4::ColourWhite, true, L"TextLabel: LoadFromFileStructure:");
+
+	ObjectFileProcessor::LoadMultiPartValueFromNamedVars<Float2, float, 2>(paramlist->Variables, L"Location", Location,
+		Float2(0, 0), true, L"TextLabel: LoadFromFileStructure:");
+
+	ObjectFileProcessor::LoadMultiPartValueFromNamedVars<Float2, float, 2>(paramlist->Variables, L"Size", Size,
+		Float2(0, 0), true, L"TextLabel: LoadFromFileStructure:");
+
+	ObjectFileProcessor::LoadMultiPartValueFromNamedVars<Float2, float, 2>(paramlist->Variables, L"Padding", Padding,
+		Float2(0, 0), true, L"TextLabel: LoadFromFileStructure:");
+
+	BackgroundInfo = paramlist->Variables.GetValueDirect(L"Background");
+
+	// listen on should allow strings and multiple numbers //
+	try{
+		vector<VariableBlock*>* listenvalues = paramlist->Variables.GetValues(L"ListenOn");
+
+		// check values //
+		for(size_t i = 0; i < listenvalues->size(); i++){
+			// check is it wstring or int //
+
+			if(listenvalues->at(i)->GetBlock()->Type == DATABLOCK_TYPE_INT){
+
+				// int index //
+				ListenIndexes.push_back(shared_ptr<VariableBlock>(new VariableBlock(listenvalues->at(i)->GetBlock()->AllocateNewFromThis())));
+
+			} else {
+				// skip if cannot be made into wstring //
+				if(!listenvalues->at(i)->IsConversionAllowedPtr<wstring>()){
+					continue;
+				}
+
+				// is a string index //
+				ListenIndexes.push_back(shared_ptr<VariableBlock>(new VariableBlock(listenvalues->at(i)->GetBlock()->AllocateNewFromThis())));
+			}
+		}
+	}
+	catch(...){
+		// nothing to listen on //
+		ListenIndexes.clear();
+		Logger::Get()->Warning(L"TextLabel: LoadFromFileStructure: listen index parsing caused an exception, not listening for anything");
+	}
+
 	// create object //
-
-	Float2 tmppos(x, y);
-	Float2 tmpsize(width, height);
-
-	TextLabel* curlabel = new TextLabel(RealID, tmppos, tmpsize, AutoAdjust);
+	TextLabel* curlabel = new TextLabel(owner, RealID, Hidden, Location, Size, AutoAdjust, dataforthis.Script);
 	// add to temporary objects //
 	tempobjects.push_back(curlabel);
 
-
 	// init with correct values //
-	curlabel->Init(text, Font, TextColor, TextSize, StartColor, EndColor, Padding, PaddingY, TextCutScale, &ListenIndexes);
-	curlabel->Scripting = shared_ptr<ScriptObject>(dataforthis.CreateScriptObjectAndReleaseThis(0, GOBJECT_TYPE_TEXTLABEL));
+	curlabel->Init(text, Font, TextColor, TextSize, Padding, TextCutScale, BackgroundInfo, &ListenIndexes);
 
 	// succeeded //
 	return true;
 }
 // ------------------------------------ //
-void Leviathan::Gui::TextLabel::SetHiddenState(bool hidden){
-	Updated = true;
-	this->Hidden = hidden;
-}
-
 void Leviathan::Gui::TextLabel::_SetHiddenStates(bool states){
 	// set whole bridge as hidden //
 	RBridge->Hidden = states;
-	//// these two aren't even required //
-	//RBridge->SetHidden(0, states);
-	//RBridge->SetHidden(1, states);
 }
 
 void Leviathan::Gui::TextLabel::_OnLocationOrSizeChange(){
 	Updated = true;
+}
+// ------------------------------------ //
+int Leviathan::Gui::TextLabel::_RunAnimationTimeDefault(GuiManager* owner, const int &mspassed){
+	if(AnimationQueue.size() == 0)
+		return 0;
+	bool contaction = false;
+
+	for(size_t i = 0; i < AnimationQueue.size(); i++){
+		// save simultaneous flag //
+		contaction = AnimationQueue[i]->AllowSimultanous;
+
+		if(owner->HandleAnimation<TextLabel>(AnimationQueue[i], this, mspassed) == 1){
+			// event completed //
+
+			RemoveActionFromQueue(AnimationQueue[i]);
+			i--;
+		}
+
+		// break if simultaneous flag is not set //
+		if(!contaction)
+			break;
+	}
+	if(AnimationQueue.size() == 0){
+		AnimationFinish();
+	}
+
+	return 0;
 }

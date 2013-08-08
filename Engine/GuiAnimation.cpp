@@ -31,5 +31,11 @@ GuiAnimationTypeMove::GuiAnimationTypeMove(float xtarget, float ytarget, int whi
 	Speed = speed;
 }
 
+// ------------------ Factory functions ------------------ //
+DLLEXPORT AnimationAction* Leviathan::Gui::CreateAnimationActionMove(float xtarget, float ytarget, int whichfirst, float speed, bool allowsimult){
+	return new AnimationAction(GUI_ANIMATION_MOVE, new GuiAnimationTypeMove(xtarget, ytarget, whichfirst, speed), 0, allowsimult);
+}
 
-// ------------------------------------ //
+DLLEXPORT AnimationAction* Leviathan::Gui::CreateAnimationActionVisibility(bool visible){
+	return new AnimationAction(visible ? GUI_ANIMATION_SHOW: GUI_ANIMATION_HIDE, NULL, 0, false);
+}

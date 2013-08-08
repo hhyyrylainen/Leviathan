@@ -4,13 +4,37 @@
 #include "ObjectFileProcessor.h"
 #endif
 #include "FileSystem.h"
+#include <boost\assign\list_of.hpp>
+#include "DataStore.h"
+#include "Rendering\RenderingResourceCreator.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
-
 ObjectFileProcessor::ObjectFileProcessor(){}
 
-vector<IntWstring*> ObjectFileProcessor::ObjectTypes = vector<IntWstring*>();
+Leviathan::ObjectFileProcessor::~ObjectFileProcessor(){}
+
+// quick macro to make this shorter //
+#define ADDDATANAMEINTDEFINITION(x) (L##x , new VariableBlock(new IntBlock(x)))
+
+map<wstring, shared_ptr<VariableBlock>> Leviathan::ObjectFileProcessor::RegisteredValues = boost::assign::map_list_of
+	(L"DATAINDEX_TICKTIME", new VariableBlock(new IntBlock(DATAINDEX_TICKTIME)))
+	(L"DATAINDEX_TICKCOUNT", new VariableBlock(new IntBlock(DATAINDEX_TICKCOUNT)))
+	(L"DATAINDEX_FRAMETIME", new VariableBlock(new IntBlock(DATAINDEX_FRAMETIME)))
+	(L"DATAINDEX_FPS", new VariableBlock(new IntBlock(DATAINDEX_FPS)))
+	(L"DATAINDEX_WIDTH", new VariableBlock(new IntBlock(DATAINDEX_WIDTH)))
+	(L"DATAINDEX_HEIGHT", new VariableBlock(new IntBlock(DATAINDEX_HEIGHT)))
+	(L"DATAINDEX_FRAMETIME_MAX", new VariableBlock(new IntBlock(DATAINDEX_TICKTIME)))
+	(L"DATAINDEX_FRAMETIME_MIN", new VariableBlock(new IntBlock(DATAINDEX_TICKTIME)))
+	(L"DATAINDEX_FRAMETIME_AVERAGE", new VariableBlock(new IntBlock(DATAINDEX_TICKTIME)))
+	(L"DATAINDEX_FPS_MIN", new VariableBlock(new IntBlock(DATAINDEX_TICKTIME)))
+	(L"DATAINDEX_FPS_MAX", new VariableBlock(new IntBlock(DATAINDEX_TICKTIME)))
+	(L"DATAINDEX_FPS_AVERAGE", new VariableBlock(new IntBlock(DATAINDEX_TICKTIME)))
+	(L"QUAD_FILLSTYLE_UPPERLEFT_0_BOTTOMRIGHT_1", new VariableBlock(new IntBlock(QUAD_FILLSTYLE_UPPERLEFT_0_BOTTOMRIGHT_1)))
+	ADDDATANAMEINTDEFINITION(QUAD_FILLSTYLE_UPPERLEFT_0_BOTTOMRIGHT_1)
+	(L"QUAD_FILLSTYLE_UPPERLEFT_1_BOTTOMRIGHT_0", new VariableBlock(new IntBlock(QUAD_FILLSTYLE_UPPERLEFT_1_BOTTOMRIGHT_0)));
+
+
 // ------------------------------------ //
 void Leviathan::ObjectFileProcessor::Initialize(){
 	// register basic types //
@@ -18,23 +42,12 @@ void Leviathan::ObjectFileProcessor::Initialize(){
 }
 void Leviathan::ObjectFileProcessor::Release(){
 	// release memory //
-	SAFE_DELETE_VECTOR(ObjectTypes);
 
-	SAFE_DELETE_VECTOR(RegisteredValues);
+	RegisteredValues.clear();
 }
-void Leviathan::ObjectFileProcessor::RegisterObjectType(wstring name, int value){
-	ObjectTypes.push_back(new IntWstring(name, value));
-}
-int Leviathan::ObjectFileProcessor::GetObjectTypeID(wstring &name){
-	for(unsigned int i = 0; i < ObjectTypes.size(); i++){
-		if(*ObjectTypes[i]->Wstr == name)
-			return ObjectTypes[i]->Value;
-	}
 
-	return -1;
-}
-DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(NamedVariableBlock* valuetokeep){
-	RegisteredValues.push_back(valuetokeep);
+DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(const wstring &name, VariableBlock* valuetokeep){
+	RegisteredValues[name] = shared_ptr<VariableBlock>(valuetokeep);
 }
 // ------------------------------------ //
 DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVariableList>> &HeaderVars){
@@ -73,7 +86,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 
 	// set line //
 	UINT Line = 0;
-
+	
 	for(;;){
 		// check is still valid //
 		if(Line >= (int)Lines.size()){
@@ -138,16 +151,41 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 				// run a script, like right now! //
 				wstring scriptinstructions = Misc::WstringRemoveFirstWords(Lines[Line], 2);
 
-				unique_ptr<ScriptScript> inlscript(new ScriptScript());
-				// set variables //
-				inlscript->Name = L"inl: "+file+L" line: "+Convert::IntToWstring(Line);
-				inlscript->Instructions = L"void Do(int Line){\n"+scriptinstructions+L"\nreturn;\n}";
-				inlscript->Source = L"inline on file: "+file+L" on line: "+Convert::IntToWstring(Line);
+				ScriptInterface* sinterface = ScriptInterface::Get();
 
-				vector<shared_ptr<NamedVariableBlock>> Args;
-				Args.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(Line), L"FileLine")));
+				// create module for this script //
+				weak_ptr<ScriptModule> inlscript(sinterface->GetExecutor()->CreateNewModule(L"inl: "+file+L" line: "+Convert::IntToWstring(Line),
+					"inline on file: "+Convert::WstringToString(file)+" on line: "+Convert::ToString(Line)));
 
-				ScriptInterface::Get()->ExecuteScript(inlscript.get(), L"void Do(int Line)", Args, true);
+				shared_ptr<ScriptScript> tmpscrpptr = inlscript.lock()->GetScriptInstance();
+
+				ScriptModule* tmpmodule = tmpscrpptr->GetModule();
+				// add sections to the module //
+				tmpmodule->GetBuilder().AddSectionFromMemory(("void Do(int Line){\n"+Convert::WstringToString(scriptinstructions)+"\nreturn;\n}"
+					).c_str(), Convert::WstringToString(file+L":"+Convert::IntToWstring(Line)).c_str(), Line);
+
+				// compile the script //
+				int result = tmpmodule->GetBuilder().BuildModule();
+				if(result < 0){
+					// failed to compile //
+
+					Logger::Get()->Error(L"ObjectFileProcessor: ProcessObjectFile: inline script failed to compile"+tmpmodule->GetInfoWstring());
+					continue;
+
+				} else {
+					// set state to built //
+					tmpmodule->SetBuildState(SCRIPTBUILDSTATE_BUILT);
+
+					vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new IntBlock(Line), L"FileLine"));
+
+					ScriptRunningSetup sargs;
+					sargs.SetEntrypoint("void Do(int Line)").SetArguements(Args).SetUseFullDeclaration(true);
+
+					ScriptInterface::Get()->ExecuteScript(tmpscrpptr.get(), &sargs);
+				}
+
+				// release the module //
+				tmpmodule->DeleteThisModule();
 
 				continue;
 			}
@@ -173,7 +211,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 
 	wstring Name(L"");
 
-	vector<shared_ptr<wstring>> Prefixes;
+	vector<wstring*> Prefixes;
 
 	wstring TypeN(L"");
 
@@ -215,17 +253,21 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 		}
 
 		// just a prefix //
-		Prefixes.push_back(shared_ptr<wstring>(new wstring(lineparts[i])));
+		Prefixes.push_back(new wstring(lineparts[i]));
 	}
 	if(Name.size() == 0){
+		// don't leak memory //
+		SAFE_DELETE_VECTOR(Prefixes);
 
 		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: object doesn't have a name! prefixes "+ Misc::WstringStitchTogether(Prefixes, L" , ")
 			+L" line ", Line, true);
 		return NULL;
 	}
 
-	obj = shared_ptr<ObjectFileObject>(new ObjectFileObject(Name, GetObjectTypeID(TypeN), TypeN));
+	obj = shared_ptr<ObjectFileObject>(new ObjectFileObject(Name, TypeN));
 	obj->Prefixes = Prefixes;
+	// pointers have been copied to the object's vector //
+	Prefixes.clear();
 
 	// process blocks contents //
 	int Level = 0, Something = 0, Handleindex = 0;
@@ -250,15 +292,6 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 					}
 				}
 			break;
-			//case 2:
-			//	{
-			//		DEBUG_BREAK;
-			//		if(ProcessObjectFileBlockVariableBlock(Line, Lines, sourcefile, Level, obj, Handleindex, itr)){
-			//			// block ended //
-			//			Something = 0;
-			//		}
-			//	}
-			//break;
 			case 3:
 				{
 					if(ProcessObjectFileBlockScriptBlock(Line, Lines, sourcefile, Level, obj, Handleindex, itr)){
@@ -285,7 +318,6 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 
 			continue;
 		}
-
 
 		if(Misc::WstringStartsWith(Lines[Line], L"}")){
 			// object ended //
@@ -376,7 +408,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line,
 	// parse variable //
 
 	try{
-		obj->Contents[Handleindex]->Variables->GetVec()->push_back(shared_ptr<NamedVariableList>(new NamedVariableList(Lines[Line], &RegisteredValues)));
+		obj->Contents[Handleindex]->Variables.GetVec()->push_back(shared_ptr<NamedVariableList>(new NamedVariableList(Lines[Line], &RegisteredValues)));
 	}
 	catch (const ExceptionInvalidArguement &e){
 
@@ -397,12 +429,12 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 	int IntendLevel = 0;
 
 	// create the script here so that stuff can be added to it //
-	ScriptScript* tscript = new ScriptScript();
-	tscript->Instructions = L"";
-	tscript->Source = sourcefile+L":OBJ:"+obj->Name;
+	string Instructions("");
+	wstring Name(L"");
+	string source = Convert::WstringToString(sourcefile+L":OBJ:"+obj->Name);
 
-	wstring ScriptType;
 	int CodeStartLine = 0;
+	wstring ScriptType(L"");
 
 	IntendLevel = 0;
 
@@ -411,16 +443,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 
 	bool Incode = false;
 	while(++Line < (int)Lines.size() && Working){
-		// skip empty lines //
-		if(Lines[Line].size() == 0){
-			// scripts should have proper line numbers inside them //
-			if(Incode){
-				// add empty line to have this work, but outside files should also be supported //
-				tscript->Instructions += L"\n";
-			}
-			continue;
-		}
-
+		// if we are inside code add lines to the code body //
 		if(Incode){
 			if(Lines[Line] == L"@%};"){
 				Incode = false;
@@ -428,7 +451,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 				continue;
 			}
 			// add to script //
-			tscript->Instructions += Lines[Line]+L"\n";
+			Instructions += Convert::WstringToString(Lines[Line]+L"\n");
 			continue;
 		}
 		switch(IntendLevel){
@@ -451,8 +474,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 					// get script type from this line //
 					for(size_t a = 1; a < Tokens.size(); a++){
 						if(Misc::WstringStartsWith(*Tokens[a], L"type")){
-							// type specification
-							// split token //
+							// type specification //
 							vector<Token*> linetokens;
 
 							LineTokeNizer::SplitTokenToRTokens(*Tokens[a], linetokens);
@@ -497,15 +519,25 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 					// this line should be a NamedVar object //
 					try{
 						// use NamedVar constructor to parse this line //
-						VariableBlock tmpnamedvar(Lines[Line]);
+
+						// we first need to get just the value //
+						WstringIterator itr(&Lines[Line], false);
+
+						itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_ALL);
+						// skip whitespace and we should be at right spot //
+						itr.SkipWhiteSpace();
+
+						unique_ptr<wstring> nameval = itr.GetUntilNextCharacterOrAll(L';');
+
+						VariableBlock tmpnamedvar(*nameval, NULL);
 
 						// get variable value to name //
 
-						if(!tmpnamedvar.ConvertAndAssingToVariable<wstring>(tscript->Name)){
+						if(!tmpnamedvar.ConvertAndAssingToVariable<wstring>(Name)){
 
 							Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid name line: "+Convert::IntToWstring(Line)+
 								L" in file"+sourcefile+L". Cannot be cast to wstring!", true);
-							tscript->Name = L"Invalid name";
+							Name = L"Invalid name";
 						}
 					}
 					catch(const ExceptionInvalidArguement &e){
@@ -513,7 +545,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 						Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid name line: "+Convert::IntToWstring(Line)+
 							L" in file"+sourcefile+L" see exception: ", true);
 						e.PrintToLog();
-						tscript->Name = L"Invalid name";
+						Name = L"Invalid name";
 					}
 
 					continue;
@@ -538,16 +570,27 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 	}
 
 	if(Incode){
-		// darn //
-		// no end for script body end //
+		// darn, no end for script body end //
 		Logger::Get()->Error(L"ObjectFileProcessor: ProcessObjectFileBlockScriptBlock: script block script body has leaked, no ending \"@%};\" "
 			L"was found, began on line "+Convert::IntToWstring(CodeStartLine), true);
-		SAFE_DELETE(tscript);
+
 		return true;
 	}
 
+	// create script //
+	weak_ptr<ScriptModule> tscript = ScriptInterface::Get()->GetExecutor()->CreateNewModule(Name, source);
+
+	ScriptModule* tmpmod = tscript.lock().get();
+
+	// "build" the script //
+	tmpmod->GetBuilder().AddSectionFromMemory(Instructions.c_str(), Convert::WstringToString(sourcefile+L":"+Convert::ToWstring(CodeStartLine)
+		).c_str(), CodeStartLine);
+
+	// ensure right state //
+	tmpmod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
+
 	// set script to object //
-	obj->Script = shared_ptr<ScriptScript>(tscript);
+	obj->Script = tscript.lock()->GetScriptInstance();
 
 	// always fully processed //
 	return true;
@@ -596,7 +639,7 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 
 		// starting line //
 		if(temp->Prefixes.size() != 0){
-			writer << L"	o " << temp->TName << L" " << Misc::VectorValuesToSingleSmartPTR<wstring>(temp->Prefixes, L" ", true) << L" \"" 
+			writer << L"	o " << temp->TName << L" " << Misc::VectorValuesToSingle<wstring>(temp->Prefixes, L" ", true) << L" \"" 
 				<< temp->Name << L"\" {" << endl;
 		} else {
 			writer << L"	o " << temp->TName << L" \"" << temp->Name << L"\" {" << endl;
@@ -613,7 +656,7 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 				writer << L"		<t> " << *tmp->Lines[ind] << endl;
 			}
 			// variable lines //
-			vector<shared_ptr<NamedVariableList>>* tempvals = tmp->Variables->GetVec();
+			vector<shared_ptr<NamedVariableList>>* tempvals = tmp->Variables.GetVec();
 			for(unsigned int ind = 0; ind < tempvals->size(); ind++){
 				writer << L"			" << tempvals->at(ind)->ToText(0) << endl;
 			}
@@ -641,25 +684,18 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 		}
 		// script block //
 		if(temp->Script != NULL){
-			ScriptScript* scrpt = temp->Script.get();
+			ScriptModule* scrpt = temp->Script.get()->GetModule();
 
 			// start //
 			writer << L"		s scripts {" << endl;
 			writer << L"			inl type: \"script\" {" << endl;
-			writer << L"				name = " << scrpt->Name << L";" << endl;
+			writer << L"				name = " << scrpt->GetName() << L";" << endl;
 			writer << L"				body {" << endl;
 			// write instructions //
 			vector<wstring> SplitInstrLines;
-			Misc::CutWstring(scrpt->Instructions, L"\n", SplitInstrLines);
+			Misc::CutWstring(Convert::StringToWstring(scrpt->GetIncompleteSourceCode()), L"\n", SplitInstrLines);
 			for(unsigned int e = 0; e < SplitInstrLines.size(); e++){
-				// check for adding spaces //
-				if(SplitInstrLines.size() > 10){
-					// no spaces //
-					// just the instruction //
-					writer << SplitInstrLines[e] << endl;
-
-					continue;
-				}
+				// write to file //
 				writer << L"					" << SplitInstrLines[i] << endl;
 			}
 			// body end //
@@ -668,7 +704,6 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 			// end //
 			writer << L"		}" << endl;
 		}
-
 
 		// ending bracket //
 		writer << L"	}" << endl;
@@ -679,6 +714,8 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 	return true;
 }
 
-vector<const NamedVariableBlock*> Leviathan::ObjectFileProcessor::RegisteredValues;
+
+
+
 
 

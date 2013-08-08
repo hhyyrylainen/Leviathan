@@ -9,11 +9,9 @@
 #include "CallableObject.h"
 #include "KeyPressManager.h"
 
-namespace Leviathan{ 
-	class GuiManager;
-namespace Gui{
+namespace Leviathan{ namespace Gui{
 
-	
+	class GuiManager;
 
 	class KeyListener : public InputReceiver{
 	public:

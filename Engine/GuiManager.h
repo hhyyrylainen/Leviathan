@@ -6,26 +6,17 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#define GOBJECT_TYPE_COLLECTION			0
-#define GOBJECT_TYPE_TEXTLABEL			1
-
-#include "ObjectFileProcessor.h"
-
 #include "Key.h"
+
 #include "AppDefine.h"
 #include "DataStore.h"
 #include "DataBlock.h"
+
 #include "BaseGuiObject.h"
 
 #include "GuiKeyListener.h"
 #include "Rendering\Graphics.h"
-#include "RenderableGuiObject.h"
-#include "EventableGui.h"
-#include "AnimateableGui.h"
-
 #include "ScriptInterface.h"
-#include "LineTokenizer.h"
-
 
 // objects //
 #include "TextLabel.h"
@@ -36,7 +27,7 @@
 #define EVENT_SOURCE_MANAGINGOBJECT	4
 #define EVENT_SOURCE_OTHEROBJECT	5
 
-namespace Leviathan {
+namespace Leviathan { namespace Gui{
 
 	// usability type define //
 	typedef Key<int> GKey;
@@ -58,7 +49,7 @@ namespace Leviathan {
 
 		vector<BaseGuiObject*> children;
 
-		shared_ptr<ScriptObject> Scripting;
+		shared_ptr<ScriptScript> Scripting;
 	};
 
 	struct GuiEventListener{
@@ -66,11 +57,11 @@ namespace Leviathan {
 			Listen = NULL;
 			Tolisten = EVENT_TYPE_ERROR;
 		}
-		GuiEventListener(Gui::BaseEventable* listen, EVENT_TYPE tolisten){
+		GuiEventListener(BaseGuiEventable* listen, EVENT_TYPE tolisten){
 			Listen = listen;
 			Tolisten = tolisten;
 		}
-		Gui::BaseEventable* Listen;
+		BaseGuiEventable* Listen;
 		EVENT_TYPE Tolisten;
 	};
 
@@ -94,7 +85,7 @@ namespace Leviathan {
 		DLLEXPORT GuiManager::GuiManager();
 		DLLEXPORT GuiManager::~GuiManager();
 
-		DLLEXPORT bool Init(AppDef* vars);
+		DLLEXPORT bool Init(AppDef* vars, Graphics* graph);
 		DLLEXPORT void Release();
 
 		DLLEXPORT void GuiTick(int mspassed);
@@ -132,35 +123,30 @@ namespace Leviathan {
 		DLLEXPORT bool HasForeGround();
 
 		// event handler part //
-		DLLEXPORT void AddListener(Gui::BaseEventable* receiver, EVENT_TYPE tolisten);
-		DLLEXPORT void RemoveListener(Gui::BaseEventable* receiver, EVENT_TYPE type, bool all = false);
+		DLLEXPORT void AddListener(Gui::BaseGuiEventable* receiver, EVENT_TYPE tolisten);
+		DLLEXPORT void RemoveListener(Gui::BaseGuiEventable* receiver, EVENT_TYPE type, bool all = false);
 
 		// returns true if an object processed the event //
 		DLLEXPORT bool CallEvent(Event* pEvent);
-		DLLEXPORT int CallEventOnObject(Gui::BaseEventable* receive, Event* pEvent); // used to send hide events to individual objects
-
-		// animation handler part //
-		DLLEXPORT int HandleAnimation(Gui::AnimationAction* perform, Gui::GuiAnimateable* caller, int mspassed);
+		DLLEXPORT int CallEventOnObject(Gui::BaseGuiEventable* receive, Event* pEvent); // used to send hide events to individual objects
 
 		// collection managing //
 		DLLEXPORT void CreateCollection(GuiCollection* add);
-		DLLEXPORT int GetCollection(const wstring &name, int id);
-		DLLEXPORT GuiCollection* GetCollection(int id);
+		DLLEXPORT GuiCollection* GetCollection(const int &id, const wstring &name = L"");
 
-		DLLEXPORT void ActivateCollection(int id, bool exclusive);
-		DLLEXPORT void DisableCollection(int id, bool fast);
+		DLLEXPORT void SetCollectionState(const int &id, const bool &visible, const bool &exclusive = false);
 
 
 		DLLEXPORT static GuiManager* Get();
-		DLLEXPORT Graphics* GetGraph(){return graph; };
+		DLLEXPORT Graphics* GetGraph(){return ThisRenderer; };
 
 	private:
 		// should be called before every vector operation //
 		void UpdateArrays(); 
 
 		// ------------------------------------ //
-		Graphics* graph;
 		Gui::KeyListener* MainInput;
+		Graphics* ThisRenderer;
 
 		// Gui elements //
 		vector<BaseGuiObject*> Objects;
@@ -175,6 +161,9 @@ namespace Leviathan {
 
 		BaseGuiObject* Foreground;
 
+		// we will soon need a  GuiManager for each window //
+		int ID;
+
 
 		// event handler //
 		vector<GuiEventListener*> Listeners;
@@ -183,7 +172,159 @@ namespace Leviathan {
 		vector<GuiCollection*> Collections;
 		// ------------------------------------ //
 		static GuiManager* staticaccess;
+
+	public:
+		// ------------------ animation handler part ------------------ //
+		template<class TC>
+		DLLEXPORT int HandleAnimation(AnimationAction* perform, TC* caller, const int &mspassed){
+			switch(perform->GetType()){
+			case GUI_ANIMATION_HIDE:
+				{
+					// set visibility //
+					caller->SetHiddenState(true);
+
+					// always finishes //
+					return 1;
+				}
+			case GUI_ANIMATION_SHOW:
+				{
+					// set visibility //
+					caller->SetHiddenState(false);
+
+					// always finishes //
+					return 1;
+				}
+			case GUI_ANIMATION_MOVE:
+				{
+					GuiAnimationTypeMove* data = static_cast<GuiAnimationTypeMove*>(perform->Data);
+
+					float x = caller->GetValue(GUI_ANIMATEABLE_SEMANTIC_X);
+					float y = caller->GetValue(GUI_ANIMATEABLE_SEMANTIC_Y);
+
+					bool finished = false;
+
+					float amount = mspassed*(data->Speed/1000.f)+0.0001f;
+
+					// switch here based on move mode
+					switch(data->Priority){
+					case GUI_ANIMATION_TYPEMOVE_PRIORITY_X:
+						{
+							// this might be good to be done with 2d vector //
+							Float2 movementvector(data->X-x, data->Y-y);
+
+							// move x and maybe y according to vector //
+							if(movementvector.X == 0)
+								y += movementvector.Y*amount;
+							else
+								x += movementvector.X*amount;
+
+							// check did we go over it //
+							Float2 checkvector(data->X-x, data->Y-y);
+
+							if(((movementvector.X < 0) != (checkvector.X < 0))){
+								// went over the target, set to the target //
+								x = data->X;
+							}
+							if(((movementvector.Y < 0) != (checkvector.Y < 0))){
+								// went over the target, set to the target //
+								y = data->Y;
+							}
+
+							// check for finishing //
+							if((x == data->X) && (y == data->Y)){
+								finished = true;
+								break;
+							}
+						}
+						break;
+					case GUI_ANIMATION_TYPEMOVE_PRIORITY_Y:
+						{
+							// this might be good to be done with 2d vector //
+							Float2 movementvector(data->X-x, data->Y-y);
+
+							// move x and maybe y according to vector //
+							if(movementvector.Y == 0)
+								x += movementvector.X*amount;
+							else
+								y += movementvector.Y*amount;
+
+							// check did we go over it //
+							Float2 checkvector(data->X-x, data->Y-y);
+
+							if(((movementvector.X < 0) != (checkvector.X < 0))){
+								// went over the target, set to the target //
+								x = data->X;
+							}
+							if(((movementvector.Y < 0) != (checkvector.Y < 0))){
+								// went over the target, set to the target //
+								y = data->Y;
+							}
+
+							// check for finishing //
+							if((x == data->X) && (y == data->Y)){
+								finished = true;
+								break;
+							}
+
+						}
+						break;
+					case GUI_ANIMATION_TYPEMOVE_PRIORITY_SLOPE:
+						{
+							// this might be good to be done with 2d vector //
+							Float2 movementvector(data->X-x, data->Y-y);
+							// animation finish if no distance //
+							if(movementvector.Length() == 0){
+								finished = true;
+								break;
+							}
+
+							// normalize so that speed is constant //
+							movementvector = movementvector.Normalize();
+
+							// move x and y according to vector //
+							x += movementvector.X*amount;
+							y += movementvector.Y*amount;
+
+							// check did we go over it //
+							Float2 checkvector(data->X-x, data->Y-y);
+
+							if(((movementvector.X < 0) != (checkvector.X < 0))){
+								// went over the target, set to the target //
+								x = data->X;
+								y = data->Y;
+
+								finished = true;
+								break;
+							}
+
+
+							// check for finishing //
+							if((x == data->X) && (y == data->Y)){
+								finished = true;
+								break;
+							}
+
+						}
+						break;
+					}
+
+					// send updated values //
+					caller->SetValue(GUI_ANIMATEABLE_SEMANTIC_X, x);
+					caller->SetValue(GUI_ANIMATEABLE_SEMANTIC_Y, y);
+
+					if(finished){
+						return 1;
+
+					} else {
+						return 0;
+					}
+				}
+				break;
+			default:
+				return 404; // unrecognized type //
+			}
+		}
 	};
 
-}
+}}
 #endif

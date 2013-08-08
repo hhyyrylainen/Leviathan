@@ -6,14 +6,11 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-
+#include "ReferenceCounted.h"
 
 #define GUI_ANIMATION_TYPEMOVE_PRIORITY_X				1
 #define GUI_ANIMATION_TYPEMOVE_PRIORITY_Y				2
-#define GUI_ANIMATION_TYPEMOVE_PRIORITY_BOTH			3
 #define GUI_ANIMATION_TYPEMOVE_PRIORITY_SLOPE			4
-#define GUI_ANIMATION_TYPEMOVE_PRIORITY_SLOPEY			5
-#define GUI_ANIMATION_TYPEMOVE_PRIORITY_SMOOTH_DIVIDE	6
 
 namespace Leviathan{ namespace Gui{
 
@@ -33,12 +30,14 @@ namespace Leviathan{ namespace Gui{
 		float Speed;
 	};
 
-
-	class AnimationAction : public Object{
+	class AnimationAction : public ReferenceCounted{
 	public:
 		DLLEXPORT AnimationAction::AnimationAction();
 		DLLEXPORT AnimationAction::AnimationAction(GUI_ANIMATION_ACTION type, void* data, int special, bool allowsimult);
 		DLLEXPORT AnimationAction::~AnimationAction();
+
+		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(AnimationAction);
+
 
 		GUI_ANIMATION_ACTION Type;
 		int SpecialInstr;
@@ -49,6 +48,11 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT GUI_ANIMATION_ACTION GetType();
 
 	};
+
+	// Factory functions //
+	DLLEXPORT AnimationAction* CreateAnimationActionMove(float xtarget, float ytarget, int whichfirst, float speed, bool allowsimult);
+	DLLEXPORT AnimationAction* CreateAnimationActionVisibility(bool visible);
+
 
 }}
 #endif

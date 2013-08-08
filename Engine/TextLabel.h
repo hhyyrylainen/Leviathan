@@ -6,77 +6,64 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "ResolutionScaling.h"
 #include "AutoUpdateable.h"
 #include "AnimateableGui.h"
-#include "ObjectFileObject.h"
 #include "GuiPositionable.h"
+#include "BaseGuiObject.h"
 #include "GuiBaseGraphicalComponent.h"
+#include "RenderableGuiObject.h"
+#include "BaseGuiEventable.h"
+
+#define TEXTLABEL_OBJECTFLAGS (GUIOBJECTHAS_BASE | GUIOBJECTHAS_POSITIONABLE | GUIOBJECTHAS_RENDERABLE | GUIOBJECTHAS_EVENTABLE | GUIOBJECTHAS_ANIMATEABLE)
+#define TEXTLABEL_GRAPHICALCOMPONENT_COUNT		2
 
 namespace Leviathan{ namespace Gui{
 
-	class TextLabel : public AutoUpdateableObject, public GuiAnimateable, public Leviathan::Gui::Positionable{
+	class GuiManager;
+
+	class TextLabel : public BaseGuiObject, public AutoUpdateableObject, public GuiAnimateable, public RenderableGuiObject, 
+		public Positionable, public BaseGuiEventable
+	{
 	public:
-		DLLEXPORT TextLabel::TextLabel(int id, const Float2 &position, Float2 &size, int autoadjust);
-		DLLEXPORT TextLabel::~TextLabel();
+		DLLEXPORT TextLabel::TextLabel(GuiManager* owner, const int &id, const bool &hidden, const Float2 &position, Float2 &size, 
+			const int &autoadjust, shared_ptr<ScriptScript> script = NULL);
+		DLLEXPORT virtual TextLabel::~TextLabel();
 
-		DLLEXPORT bool Init(const wstring &text, const wstring &font, const Float4 &textcolor, float textsize, const Float4 &color1, 
-			const Float4 &color2, const float &padding, const float &paddingy, const float &textscalecut, 
-			vector<shared_ptr<VariableBlock>>* listenindexes = NULL);
-		DLLEXPORT void Release();
-
+		DLLEXPORT bool Init(const wstring &text, const wstring &font, const Float4 &textcolor, const float &textsize, const Float2 &padding, 
+			const float &textscalecut, shared_ptr<NamedVariableList> backgroundgen, vector<shared_ptr<VariableBlock>>* listenindexes = NULL);
 
 		DLLEXPORT void Render(Graphics* graph);
 
-
-		DLLEXPORT bool UpdateBackgroundColours(const Float4 &colour1, const Float4 &colour2, int gradienttype);
-		DLLEXPORT bool UpdateText(const wstring &text, bool isexpensive = false);
-
-
-		DLLEXPORT void SetHiddenState(bool hidden);
-		DLLEXPORT void SizeAdjust();
-
 		DLLEXPORT int OnEvent(Event** pEvent);
 
-		DLLEXPORT int AnimationTime(int mspassed); // this is passed to animation manager for handling
+		// this is passed to animation manager for handling //
+		DLLEXPORT int AnimationTime(int mspassed); 
 		DLLEXPORT void AnimationFinish();
-		DLLEXPORT void QueueAction(shared_ptr<AnimationAction> act);
 
 		DLLEXPORT void SetValue(const int &semanticid, const float &val);
 		DLLEXPORT float GetValue(const int &semanticid) const;
 
 		// static loading method //
-		DLLEXPORT static bool LoadFromFileStructure(vector<BaseGuiObject*> &tempobjects, vector<Int2> &idmappairs, ObjectFileObject& dataforthis);
+		DLLEXPORT static bool LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects, vector<Int2> &idmappairs, 
+			ObjectFileObject& dataforthis);
 
-		//DLLEXPORT static void QueueActionForObject(TextLabel* object, AnimationAction* action); // removed from base class
-		// public to allow animation manager to remove finished animations //
-		vector<shared_ptr<AnimationAction>> AnimationQueue;
+		// public proxies //
+		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(TextLabel);
+		GUIANIMATEABLE_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(TextLabel);
+
 	protected:
 		void _SetHiddenStates(bool states);
+		virtual int _RunAnimationTimeDefault(GuiManager* owner, const int &mspassed);
+		void SizeAdjust();
 		// function that gets called when size or location changes (used to call autoadjust) //
 		virtual void _OnLocationOrSizeChange();
 		// ------------------------- //
-		float TextPadding;
-		float TextPaddingY;
-
-		bool Updated : 1;
-		bool BridgeCreated : 1;
-		bool OldHidden : 1;
+		Float2 TextPadding;
 
 		int AutoAdjust;
 		int TextAdjustMode;
 
-		Float2 TextWantedCoordinates;
 		float TextWantedCutSize;
-		Float2 TextAreaSize;
-
-		// graphical components used to easily reuse graphical parts //
-		vector<BaseGraphicalComponent*> GComponents;
-
-		//bool AreAbsolutePos : 1;
-
-		// rendering bridge //
-		shared_ptr<RenderBridge> RBridge;
 	};
 
 }}

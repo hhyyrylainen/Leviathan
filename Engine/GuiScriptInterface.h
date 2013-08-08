@@ -6,17 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "GuiManager.h"
 
-namespace Leviathan{
+namespace Leviathan{ namespace Gui{
 
-bool Gui_SetObjectText(int ID, string inset);
-// ----------------- //
-//int Gui_QueueAnimationActionMove(int ID, GuiAnimationTypeMove& );
-int Gui_QueueAnimationActionMove(int ID, float xtarget, float ytarget, int whichfirst, float speed, bool allowsimult, int special = 0);
-int Gui_QueueAnimationActionVisibility(int ID, bool visible);
-int Gui_QueuedAnimationClear(int ID);
-int Gui_QueuedAnimationUpdate(int ID, int passedms);
-// ----------------- //
-}
+
+}}
 #endif

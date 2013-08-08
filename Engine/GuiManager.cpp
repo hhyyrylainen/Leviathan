@@ -9,21 +9,15 @@ using namespace Leviathan::Gui;
 #include "Engine.h"
 #include "ScriptInterface.h"
 #include "FileSystem.h"
+#include <boost\assign\list_of.hpp>
 
-#ifdef _DEBUG
-//#pragma warning (disable : 4800)
-#endif
-
-Leviathan::GuiManager::GuiManager() : ReceivedPresses(){
+Leviathan::Gui::GuiManager::GuiManager() : ReceivedPresses(), ID(IDFactory::GetID()), Foreground(NULL), MainInput(NULL){
 	ObjectAmountChanged = false;
-	Foreground = NULL;
-
-	MainInput = NULL;
 
 	staticaccess = this;
 	GKeyPressesConsumed = true;
 }
-Leviathan::GuiManager::~GuiManager(){
+Leviathan::Gui::GuiManager::~GuiManager(){
 	// on quit calls //
 	SAFE_DELETE(MainInput);
 	Release();
@@ -31,63 +25,58 @@ Leviathan::GuiManager::~GuiManager(){
 	staticaccess = NULL;
 }
 
-GuiManager* Leviathan::GuiManager::staticaccess = NULL;
-GuiManager* Leviathan::GuiManager::Get(){
+GuiManager* Leviathan::Gui::GuiManager::staticaccess = NULL;
+GuiManager* Leviathan::Gui::GuiManager::Get(){
 	return staticaccess; 
 }
 // ------------------------------------ //
-bool Leviathan::GuiManager::Init(AppDef* vars){
+bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph){
 
-	graph = Engine::GetEngine()->GetGraphics();
+	ThisRenderer = graph;
+
 	// create press listeners //
-
 	MainInput = new KeyListener(this, Engine::GetEngine()->GetKeyPresManager());
 	
 	// load main Gui file //
 	ExecuteGuiScript(FileSystem::GetScriptsFolder()+L"MainGui.txt");
 
 
-
 	return true;
 }
 
-void Leviathan::GuiManager::Release(){
+void Leviathan::Gui::GuiManager::Release(){
 	for(unsigned int i = 0; i < Objects.size(); i++){
-		if(Objects[i]->HigherLevel == true){
-			((RenderableGuiObject*)Objects[i])->Release();
-			delete Objects[i];
-		} else {
-			SAFE_DELETE(Objects[i]);
-		}
-
+		// object's release function will do everything needed (even deleted if last reference) //
+		SAFE_RELEASE(Objects[i]);
 
 		Objects.erase(Objects.begin()+i);
 		i--;
 	}
+
+	SAFE_DELETE_VECTOR(Collections);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GuiManager::ClearKeyReceivingState(){
+DLLEXPORT void Leviathan::Gui::GuiManager::ClearKeyReceivingState(){
 	// reset state //
 	GKeyPressesConsumed = false;
 	// ensure that the vector is empty //
 	ReceivedPresses.clear();
 }
 
-DLLEXPORT void Leviathan::GuiManager::AddKeyPress(int keyval, InputEvent* originalevent){
+DLLEXPORT void Leviathan::Gui::GuiManager::AddKeyPress(int keyval, InputEvent* originalevent){
 	ReceivedPresses.push_back(shared_ptr<GuiReceivedKeyPress>(new GuiReceivedKeyPress(GUI_KEYSTATE_TYPE_KEYPRESS, keyval, originalevent)));
 }
 
-DLLEXPORT void Leviathan::GuiManager::AddKeyDown(int keyval, InputEvent* originalevent){
+DLLEXPORT void Leviathan::Gui::GuiManager::AddKeyDown(int keyval, InputEvent* originalevent){
 	ReceivedPresses.push_back(shared_ptr<GuiReceivedKeyPress>(new GuiReceivedKeyPress(GUI_KEYSTATE_TYPE_KEYDOWN, keyval, originalevent)));
 }
 
-DLLEXPORT bool Leviathan::GuiManager::IsEventConsumed(InputEvent** ev){
+DLLEXPORT bool Leviathan::Gui::GuiManager::IsEventConsumed(InputEvent** ev){
 	// key presses must be processed before this can be used //
 	if(!GKeyPressesConsumed){
 		// presses haven't been processed yet //
 
 		ProcessKeyPresses();
-
 		// now processed //
 		GKeyPressesConsumed = true;
 	}
@@ -105,7 +94,7 @@ DLLEXPORT bool Leviathan::GuiManager::IsEventConsumed(InputEvent** ev){
 	return true;
 }
 
-DLLEXPORT void Leviathan::GuiManager::SetKeyContainedValuesAsConsumed(const GKey &k){
+DLLEXPORT void Leviathan::Gui::GuiManager::SetKeyContainedValuesAsConsumed(const GKey &k){
 	int chara = k.GetCharacter();
 	bool Shift, Ctrl, Alt;
 	Shift = Ctrl = Alt = false;
@@ -150,7 +139,7 @@ erasepressedkeyonindex:
 	}
 }
 
-DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
+DLLEXPORT void Leviathan::Gui::GuiManager::ProcessKeyPresses(){
 	// special key states //
 	bool Shift = false;
 	bool Ctrl = false;
@@ -174,7 +163,7 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 			break;
 	}
 
-	const KEYSPECIAL specialstates = Leviathan::GKey::ConstructSpecial(Shift, Alt, Ctrl);
+	const KEYSPECIAL specialstates = GKey::ConstructSpecial(Shift, Alt, Ctrl);
 	
 	if(DataStore::Get()->GetGUiActive()){
 		// send presses to objects //
@@ -187,9 +176,9 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 			// first we need to check the foreground object if it wants this key press //
 			if(Foreground){
 
-				if(Foreground->ObjectLevel >= GUI_OBJECT_LEVEL_EVENTABLE){
+				if(Foreground->ObjectFlags & GUIOBJECTHAS_EVENTABLE){
 					// can send //
-					BaseEventable* temp = (BaseEventable*)Foreground;
+					BaseGuiEventable* temp = dynamic_cast<BaseGuiEventable*>(Foreground);
 					int returnval = 0;
 
 					if(ReceivedPresses[i]->Type == GUI_KEYSTATE_TYPE_KEYPRESS){
@@ -198,7 +187,6 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 						returnval = CallEventOnObject(temp, new Event(EVENT_TYPE_KEYDOWN, (void*)&current, false));
 					}
 					
-
 					if(returnval > 0){
 						// processed it //
 						// TODO: make sure that if the object didn't want Shift CTRL or ALT it unmarked them from the key //
@@ -266,62 +254,58 @@ DLLEXPORT void Leviathan::GuiManager::ProcessKeyPresses(){
 	}
 }
 
-void Leviathan::GuiManager::GuiTick(int mspassed){
-	// animations are now in OnAnimationTime
+void Leviathan::Gui::GuiManager::GuiTick(int mspassed){
 	// send tick event //
 
 }
-void Leviathan::GuiManager::AnimationTick(int mspassed){
+void Leviathan::Gui::GuiManager::AnimationTick(int mspassed){
 	// animations //
 	for(unsigned int i = 0; i < Objects.size(); i++){
-		if(Objects[i]->ObjectLevel >= GUI_OBJECT_LEVEL_ANIMATEABLE){
-			((GuiAnimateable*)Objects[i])->AnimationTime(mspassed);
+		if(Objects[i]->ObjectFlags & GUIOBJECTHAS_ANIMATEABLE){
+
+			dynamic_cast<GuiAnimateable*>(Objects[i])->AnimationTime(mspassed);
 		}
 	}
 }
-void Leviathan::GuiManager::Render(){
+void Leviathan::Gui::GuiManager::Render(){
 	UpdateArrays();
 
 	for(unsigned int i = 0; i < NeedRendering.size(); i++){
-		NeedRendering[i]->Render(graph);
+		NeedRendering[i]->Render(ThisRenderer);
 	}
 }
 // ------------------------------------ //
-void Leviathan::GuiManager::OnResize(){
-	// update objects that by default need this //
-
-
+void Leviathan::Gui::GuiManager::OnResize(){
 	// call events //
 	this->CallEvent(new Event(EVENT_TYPE_WINDOW_RESIZE, (void*)new Int2(DataStore::Get()->GetWidth(), DataStore::Get()->GetHeight())));
-
 }
 
 // ------------------------------------ //
-bool Leviathan::GuiManager::AddGuiObject(BaseGuiObject* obj){
+bool Leviathan::Gui::GuiManager::AddGuiObject(BaseGuiObject* obj){
 	ObjectAmountChanged = true;
 
 	Objects.push_back(obj);
 	return true;
 }
 
-bool Leviathan::GuiManager::AddGuiObject(BaseGuiObject* obj, int collectionid){
+bool Leviathan::Gui::GuiManager::AddGuiObject(BaseGuiObject* obj, int collectionid){
+	// new objects will be added //
 	ObjectAmountChanged = true;
-
 
 	Objects.push_back(obj);
 
 	// add to collection //
-	unsigned int index = GetCollection(L"", collectionid);
-	ARR_INDEX_CHECK(index,Collections.size()){
+	GuiCollection* collection = GetCollection(collectionid);
+	if(collection){
 		// add
-		Collections[index]->children.push_back(obj);
+		collection->children.push_back(obj);
 	}
 	return true;
 }
 
-void Leviathan::GuiManager::DeleteObject(int id){
+void Leviathan::Gui::GuiManager::DeleteObject(int id){
 	for(unsigned int i = 0; i < Objects.size(); i++){
-		if(Objects[i]->ID == id){
+		if(Objects[i]->GetID() == id){
 			ObjectAmountChanged = true;
 
 			// remove from collections //
@@ -334,37 +318,29 @@ void Leviathan::GuiManager::DeleteObject(int id){
 				}
 			}
 
-
-			if(Objects[i]->HigherLevel == true){
-				((RenderableGuiObject*)Objects[i])->Release();
-			}
-			SAFE_DELETE(Objects[i]);
+			SAFE_RELEASE(Objects[i]);
 			Objects.erase(Objects.begin()+i);
-			i--;
-			break;
+			return;
 		}
-
-
 	}
 }
 
-int Leviathan::GuiManager::GetObjectIndexFromId(int id){
+int Leviathan::Gui::GuiManager::GetObjectIndexFromId(int id){
 	for(unsigned int i = 0; i < Objects.size(); i++){
-		if(Objects[i]->ID == id)
+		if(Objects[i]->GetID() == id)
 			return i;
-
 	}
 	return -1;
 }
 
-BaseGuiObject* Leviathan::GuiManager::GetObject(unsigned int index){
-	 ARR_INDEX_CHECK(index, Objects.size()){
-		 return Objects[index];
-	 }
-	 return NULL;
+BaseGuiObject* Leviathan::Gui::GuiManager::GetObject(unsigned int index){
+	ARR_INDEX_CHECK(index, Objects.size()){
+		return Objects[index];
+	}
+	return NULL;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
+DLLEXPORT void Leviathan::Gui::GuiManager::ExecuteGuiScript(const wstring &file){
 	// header flag definitions //
 	vector<shared_ptr<NamedVariableList>> headerdata;
 
@@ -392,31 +368,26 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load collection, named "+data[i]->Name);
 				continue;
 			}
-			// this function should have deleted everything related to that object, so it should be safe to just erase it //
-			data.erase(data.begin()+i);
-			i--;
-
-			continue;
+			// delete rest of the object //
+			goto guiprocessguifileloopdeleteprocessedobject;
 		}
 		if(data[i]->TName == L"TextLabel"){
 
 			// try to load //
-			if(!TextLabel::LoadFromFileStructure(TempOs, FakeIDRealID, *data[i])){
+			if(!TextLabel::LoadFromFileStructure(this, TempOs, FakeIDRealID, *data[i])){
 
 				// report error //
 				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load TextLabel, named "+data[i]->Name);
 				continue;
 			}
-
-			// this function should have deleted everything related to that object (smart pointers and dtors take care of rest,
-			// so it should be safe to just erase it //
-			data.erase(data.begin()+i);
-			i--;
-
-			continue;
+			// delete rest of the object //
+			goto guiprocessguifileloopdeleteprocessedobject;
 		}
 
 		Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: Unrecognized type! typename: "+data[i]->TName);
+
+guiprocessguifileloopdeleteprocessedobject:
+
 		// delete current //
 		data.erase(data.begin()+i);
 		i--;
@@ -427,7 +398,7 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 		int FakeID = -1;
 
 		for(unsigned int a = 0; a < FakeIDRealID.size(); a++){
-			if(FakeIDRealID[a][1] == TempOs[i]->ID){
+			if(FakeIDRealID[a][1] == TempOs[i]->GetID()){
 				FakeID = FakeIDRealID[a][0];
 				break;
 			}
@@ -444,16 +415,17 @@ DLLEXPORT void Leviathan::GuiManager::ExecuteGuiScript(const wstring &file){
 		}
 		// add to real objects //
 		AddGuiObject(TempOs[i], CollID);
-		// should be visible //
-		if(TempOs[i]->HigherLevel == true){
-			if(!GetCollection(CollID)->Visible){
-				((RenderableGuiObject*)TempOs[i])->Hidden = TRUE;
+		// should be hidden if collection is hidden //
+		if(!GetCollection(CollID)->Visible){
+			if(TempOs[i]->ObjectFlags & GUIOBJECTHAS_RENDERABLE){
+
+				dynamic_cast<RenderableGuiObject*>(TempOs[i])->SetHiddenState(true);
 			}
 		}
 	}
 
 }
-DLLEXPORT bool Leviathan::GuiManager::LoadCollection(vector<Int2> &membermapping, vector<shared_ptr<ObjectFileObject>> &data, ObjectFileObject &collectiondata){
+DLLEXPORT bool Leviathan::Gui::GuiManager::LoadCollection(vector<Int2> &membermapping, vector<shared_ptr<ObjectFileObject>> &data, ObjectFileObject &collectiondata){
 	// load a GuiCollection from the structure //
 	int createdid = IDFactory::GetID();
 
@@ -511,10 +483,10 @@ DLLEXPORT bool Leviathan::GuiManager::LoadCollection(vector<Int2> &membermapping
 		}
 	}
 
-	// allocate new GUI object //
+	// allocate new Collection object //
 	GuiCollection* cobj = new GuiCollection(collectiondata.Name, createdid, Visible, Toggle, Strict, Enabled);
 	// copy script data over //
-	cobj->Scripting = shared_ptr<ScriptObject>(collectiondata.CreateScriptObjectAndReleaseThis(0, GOBJECT_TYPE_COLLECTION));
+	cobj->Scripting = collectiondata.Script;
 	// add to collection list //
 	CreateCollection(cobj);
 
@@ -522,60 +494,31 @@ DLLEXPORT bool Leviathan::GuiManager::LoadCollection(vector<Int2> &membermapping
 	return true;
 }
 
-DLLEXPORT void Leviathan::GuiManager::WriteGuiToFile(const wstring &file){
+DLLEXPORT void Leviathan::Gui::GuiManager::WriteGuiToFile(const wstring &file){
 
 }
 // ------------------------------------ //
-void Leviathan::GuiManager::UpdateArrays(){
+void Leviathan::Gui::GuiManager::UpdateArrays(){
 	if(!ObjectAmountChanged)
 		return;
 
 	ObjectAmountChanged = false;
 	NeedRendering.clear();
-	vector<RenderableGuiObject*> temp;
 	for(unsigned int i = 0; i < Objects.size(); i++){
-		if(Objects[i]->HigherLevel){
-			// higher than base object, minimum of render able //
-			temp.push_back((RenderableGuiObject*)Objects[i]);
+		// check does it contain renderable data //
+		if(Objects[i]->ObjectFlags & GUIOBJECTHAS_RENDERABLE){
+			// copy to renderables vector to reduce dynamic casts per frame //
+			NeedRendering.push_back(dynamic_cast<RenderableGuiObject*>(Objects[i]));
 		}
-
-
 	}
-
-	int maxzval = 0;
-	for(unsigned int i = 0; i < temp.size(); i++){
-		if(temp[i]->Zorder > maxzval){
-			maxzval = temp[i]->Zorder;
-		}
-
-	}
-
-	NeedRendering.resize(temp.size());
-	int curzval = 0;
-
-	int index = NeedRendering.size()-1;
-	// z ordering //
-	while(curzval <= maxzval){
-		for(unsigned int i = 0; i < temp.size(); i++){
-			if(temp[i]->Zorder == curzval){
-				NeedRendering[index] = temp[i];
-				index--;
-				if(index < 0)
-					break;
-			}
-
-		}
-		curzval++;
-	}
-
 }
 
 // ----------------- event handler part --------------------- //
-void GuiManager::AddListener(BaseEventable* receiver, EVENT_TYPE tolisten){
+void GuiManager::AddListener(BaseGuiEventable* receiver, EVENT_TYPE tolisten){
 	Listeners.push_back(new GuiEventListener(receiver, tolisten));
 }
 
-void GuiManager::RemoveListener(Gui::BaseEventable* receiver, EVENT_TYPE type, bool all){
+void GuiManager::RemoveListener(Gui::BaseGuiEventable* receiver, EVENT_TYPE type, bool all){
 	for(unsigned int i = 0; i < Listeners.size(); i++){
 		if(Listeners[i]->Listen == receiver){
 			if((all) | (Listeners[i]->Tolisten == type)){
@@ -587,7 +530,7 @@ void GuiManager::RemoveListener(Gui::BaseEventable* receiver, EVENT_TYPE type, b
 	}
 }
 
-bool Leviathan::GuiManager::CallEvent(Event* pEvent){
+bool Leviathan::Gui::GuiManager::CallEvent(Event* pEvent){
 	// loop through listeners and call events //
 	int returval = 0;
 	for(unsigned int i = 0; i < Listeners.size(); i++){
@@ -612,7 +555,7 @@ bool Leviathan::GuiManager::CallEvent(Event* pEvent){
 	return false;
 }
 // used to send hide events to individual objects //
-int GuiManager::CallEventOnObject(BaseEventable* receive, Event* pEvent){
+int GuiManager::CallEventOnObject(BaseGuiEventable* receive, Event* pEvent){
 	// find right object
 	int returval = -3;
 
@@ -643,31 +586,21 @@ int GuiManager::CallEventOnObject(BaseEventable* receive, Event* pEvent){
 void GuiManager::CreateCollection(GuiCollection* add){
 	Collections.push_back(add);
 }
-int Leviathan::GuiManager::GetCollection(const wstring &name, int id){
-	for(unsigned int i = 0; i < Collections.size(); i++){
-		// if name specified check for it //
-		if(name != L""){
-			if(Collections[i]->Name != name)
-				continue; // no match
-
-		}
-		if(id != -1){
-			if(Collections[i]->ID != id)
-				continue; // no match
-
-		}
-		// match
-		return i;
-
-	}
-
-	return -1;
-}
-GuiCollection* GuiManager::GetCollection(int id){
+GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const wstring &name){
+	// look for collection based on id or name //
 	for(size_t i = 0; i < Collections.size(); i++){
-		// compare IDs of collections //
-		if(Collections[i]->ID != id)
-			continue; // no match
+		if(id >= 0){
+			if(Collections[i]->ID != id){
+				// no match //
+				continue;
+			}
+		} else {
+			// name should be specified, check for it //
+			if(Collections[i]->Name != name){
+				continue; 
+			}
+		}
+
 		// match
 		return Collections[i];
 	}
@@ -675,126 +608,88 @@ GuiCollection* GuiManager::GetCollection(int id){
 	return NULL;
 }
 
-bool Leviathan::GuiManager::GuiComboPress(GKey &key){
+bool Leviathan::Gui::GuiManager::GuiComboPress(GKey &key){
 	for(unsigned int i = 0; i < Collections.size(); i++){
 		if(Collections[i]->Toggle.Match(key, false)){
 			// disable unwanted keys if possible //
 			key.SetAdditional(Collections[i]->Toggle.GetAdditional());
 
 			// is a match, toggle //
-			if(Collections[i]->Visible){
-				DisableCollection(Collections[i]->ID, false);
-			} else {
-				ActivateCollection(Collections[i]->ID, Collections[i]->Exclusive);
-			}
+			SetCollectionState(Collections[i]->ID, !Collections[i]->Visible, Collections[i]->Exclusive);
+
 			return true;
 		}
 	}
 	return false;
 }
 
-void GuiManager::ActivateCollection(int id, bool exclusive){
-	// if exclusive disable all others, but not self of course //
-	if(exclusive){
-		for(unsigned int i = 0; i < Collections.size(); i++){
+void GuiManager::SetCollectionState(const int &id, const bool &visible, const bool &exclusive){
+	// if exclusive and becoming visible disable all others, but not self of course //
+	if(exclusive && visible){
+		for(size_t i = 0; i < Collections.size(); i++){
 			if(Collections[i]->ID != id){
-				DisableCollection(Collections[i]->ID, false);
+				SetCollectionState(Collections[i]->ID, false, false);
 			}
 		}
 	}
+	
+	GuiCollection* collection = GetCollection(id);
+	if(!collection){
 
-
-	unsigned int index = GetCollection(L"", id);
-	ARR_INDEX_CHECKINV(index, Collections.size()){
-		// not found
-		Logger::Get()->Error(L"Gui: 404, trying to show non existing collection", id,true);
+		Logger::Get()->Error(L"GuiManager: SetCollectionState: invalid collection");
 		return;
 	}
 	// call script //
-	if(Collections[index]->Scripting->Script->Instructions.size() > 1){
-		vector<shared_ptr<NamedVariableBlock>> parameters;
-		parameters.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(EVENT_SOURCE_MANAGER), L"source")));
-		parameters.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(Collections[index]->ID), L"Instance")));
+	ScriptScript* tmpscript = collection->Scripting.get();
 
-		bool existed = false;
-		ScriptInterface::Get()->ExecuteIfExistsScript(Collections[index]->Scripting.get(), L"OnEnable", parameters, existed, false);
+	if(tmpscript){
+		// check does the script contain right listeners //
+		ScriptModule* mod = tmpscript->GetModule();
+
+		const wstring &listenername = visible ? L"OnEnable": L"OnDisable";
+
+		if(mod->DoesListenersContainSpecificListener(listenername)){
+			// call it //
+			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new IntBlock(EVENT_SOURCE_MANAGER), L"source"))
+				(new NamedVariableBlock(new IntBlock(id), L"Instance"));
+
+			ScriptRunningSetup sargs;
+			sargs.SetEntrypoint(Convert::WstringToString(listenername)).SetArguements(Args);
+
+			ScriptInterface::Get()->ExecuteScript(tmpscript, &sargs);
+		}
 	}
 
-	Collections[index]->Visible = true;
-	// unhide objects, call events and check return values //
-	for(unsigned int i = 0; i < Collections[index]->children.size(); i++){
+	collection->Visible = visible;
+	// set all child object's visibilities, also //
+	for(size_t i = 0; i < collection->children.size(); i++){
 
 		// check is it eventable //
-		if(Collections[index]->children[i]->ObjectLevel >= GUI_OBJECT_LEVEL_EVENTABLE){
+		if(collection->children[i]->ObjectFlags & GUIOBJECTHAS_EVENTABLE){
 			// event can be sent //
-			BaseEventable* temp = (BaseEventable*)Collections[index]->children[i];
-			int returnval = CallEventOnObject(temp, new Event(EVENT_TYPE_SHOW, new Int2(EVENT_SOURCE_MANAGER, false /* non fast */)));
+			BaseGuiEventable* temp = dynamic_cast<BaseGuiEventable*>(collection->children[i]);
+			int returnval = CallEventOnObject(temp, new Event(visible ? EVENT_TYPE_SHOW: EVENT_TYPE_HIDE, new Int2(EVENT_SOURCE_MANAGER, false /* non fast */)));
 			if(returnval == 1){
 				// asks to be allowed to show itself
 				continue;
 			}
-			temp->Hidden = false;
 
-		} else if (Collections[index]->children[i]->ObjectLevel >= GUI_OBJECT_LEVEL_RENDERABLE){
+		}
+		// object is letting Collection to set it's visibility state //
+		if(collection->children[i]->ObjectFlags & GUIOBJECTHAS_RENDERABLE){
 			// set as visible //
-			((RenderableGuiObject*)Collections[index]->children[i])->Hidden = false;
-
+			dynamic_cast<RenderableGuiObject*>(collection->children[i])->SetHiddenState(!visible);
 		}
 	}
 	
 
 }
-void GuiManager::DisableCollection(int id, bool fast){
-	
-	unsigned int index = GetCollection(L"", id);
-	ARR_INDEX_CHECKINV(index, Collections.size()){
-		// not found
-		Logger::Get()->Error(L"Gui: 404, trying to hide non existing collection", id,true);
-		return;
-	}
-	// call script //
-	if(Collections[index]->Scripting->Script->Instructions.size() > 1){
-		vector<shared_ptr<NamedVariableBlock>> parameters;
-		parameters.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(EVENT_SOURCE_MANAGER), L"source")));
-		parameters.push_back(shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(Collections[index]->ID), L"Instance")));
-
-		bool existed = false;
-		ScriptInterface::Get()->ExecuteIfExistsScript(Collections[index]->Scripting.get(), L"OnEnable", parameters, existed, false);
-	}
-
-	Collections[index]->Visible = false;
-	// call events and hide if doesn't want to hide self //
-	for(unsigned int i = 0; i < Collections[index]->children.size(); i++){
-
-		// check is it eventable //
-		if(Collections[index]->children[i]->ObjectLevel >= GUI_OBJECT_LEVEL_EVENTABLE){
-			// event can be sent //
-			BaseEventable* temp = (BaseEventable*)Collections[index]->children[i];
-			int returnval = CallEventOnObject(temp, new Event(EVENT_TYPE_HIDE, new Int2(EVENT_SOURCE_MANAGER, fast /* fast/non fast */)));
-			if(returnval == 1){
-				// asks to be allowed to hide itself
-				continue;
-			}
-			temp->Hidden = true;
-
-		} else if (Collections[index]->children[i]->ObjectLevel >= GUI_OBJECT_LEVEL_RENDERABLE){
-			// set as hidden //
-			((RenderableGuiObject*)Collections[index]->children[i])->Hidden = true;
-
-		}
-
-
-	}
-
-}
-
 // -------------------------------------- //
 bool GuiManager::HasForeGround(){
 	return (Foreground != NULL);
 }
-
 // ----------------- GuiCollection --------------------- //
-Leviathan::GuiCollection::GuiCollection(const wstring &name, int id, bool visible, const wstring &toggle, bool strict /*= false*/, 
+Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, int id, bool visible, const wstring &toggle, bool strict /*= false*/, 
 	bool exclusive /*= false*/, bool enabled /*= true*/)
 {
 	Name = name;
@@ -812,8 +707,6 @@ Leviathan::GuiCollection::GuiCollection(const wstring &name, int id, bool visibl
 	if(Misc::CountOccuranceWstring(toggle, L"+")){
 		vector<wstring> words;
 		Misc::CutWstring(toggle, L"+",words);
-
-
 
 		for(unsigned int i = 0; i < words.size(); i++){
 			if(words[i].size() == 0)
@@ -840,208 +733,14 @@ Leviathan::GuiCollection::GuiCollection(const wstring &name, int id, bool visibl
 		if(toggle.size() != 0)
 			chara = toggle[0];
 	}
-	additional = Leviathan::GKey::ConstructSpecial(Shift, Alt, Ctrl);
+	additional = GKey::ConstructSpecial(Shift, Alt, Ctrl);
 	Toggle = GKey((int)chara, additional);
 
 	Strict = strict;
 }
-
-Leviathan::GuiCollection::GuiCollection(){
-	Name = Misc::GetErrString();
-	ID = -1;
-	Visible = false;
-	Enabled = false;
-}
-
-Leviathan::GuiCollection::~GuiCollection(){
+Leviathan::Gui::GuiCollection::~GuiCollection(){
 	// release script //
 
 	// possibly release children here //
-}
 
-
-// ---------------- animation handler part ---------------------- //
-int GuiManager::HandleAnimation(AnimationAction* perform, GuiAnimateable* caller, int mspassed){
-	switch(perform->GetType()){
-	case GUI_ANIMATION_MOVE:
-		{
-			GuiAnimationTypeMove* data = (GuiAnimationTypeMove*)perform->Data;
-
-			float x = caller->GetValue(GUI_ANIMATEABLE_SEMANTIC_X);
-			float y = caller->GetValue(GUI_ANIMATEABLE_SEMANTIC_Y);
-
-			bool finished = false;
-
-			float amount = mspassed*(data->Speed/1000.f)+0.0001f;
-
-			// switch here based on move mode
-			switch(data->Priority){
-			case GUI_ANIMATION_TYPEMOVE_PRIORITY_X:
-				{
-					// move x if right x then move y //
-					if(x == data->X){
-						if(y == data->Y){
-							// finished
-							finished = true;
-							break;
-						}
-
-						// move y
-						if(y < data->Y){
-							y += amount;
-
-							if(y > data->Y)
-								y = data->Y;
-
-						} else if (y > data->Y){
-							y -= amount;
-
-							if(y < data->Y)
-								y = data->Y;
-						}
-						break;
-					}
-
-					if(x < data->X){
-						x += amount;
-
-						if(x > data->X)
-							x = data->X;
-
-					} else if (x > data->X){
-						x -= amount;
-
-						if(x < data->X)
-							x = data->X;
-					}
-				}
-				break;
-			case GUI_ANIMATION_TYPEMOVE_PRIORITY_Y:
-				{
-					if(y == data->Y){
-						if(x == data->X){
-							// finished
-							finished = true;
-							break;
-						}
-						if(x < data->X){
-							x += amount;
-
-							if(x > data->X)
-								x = data->X;
-
-						} else if (x > data->X){
-							x -= amount;
-
-							if(x < data->X)
-								x = data->X;
-						}
-
-						break;
-					}
-					// move y
-					if(y < data->Y){
-						y += amount;
-
-						if(y > data->Y)
-							y = data->Y;
-
-					} else if (y > data->Y){
-						y -= amount;
-
-						if(y < data->Y)
-							y = data->Y;
-					}
-
-				}
-				break;
-			case GUI_ANIMATION_TYPEMOVE_PRIORITY_BOTH:
-				{
-					// move y
-					if(y < data->Y){
-						y += amount/2;
-
-						if(y > data->Y)
-							y = data->Y;
-
-					} else if (y > data->Y){
-						y -= amount/2;
-
-						if(y < data->Y)
-							y = data->Y;
-					}
-					if(x < data->X){
-						x += amount/2;
-
-						if(x > data->X)
-							x = data->X;
-
-					} else if (x > data->X){
-						x -= amount/2;
-
-						if(x < data->X)
-							x = data->X;
-					}
-					// check for finishing //
-					if((x == data->X) && (y == data->Y)){
-						finished = true;
-						break;
-					}
-				}
-				break;
-			case GUI_ANIMATION_TYPEMOVE_PRIORITY_SLOPE:
-				{
-					// this might be good to be done with 2d vector //
-					Float2 movementvector(data->X-x, data->Y-y);
-					// normalize so that speed is constant //
-					movementvector = movementvector.Normalize();
-
-					// move x and y according to vector //
-					x += movementvector.X*amount;
-					y += movementvector.Y*amount;
-
-					// check did we go over it //
-					Float2 checkvector(data->X-x, data->Y-y);
-
-					if(((movementvector.X < 0) != (checkvector.X < 0))){
-						// went over the target, set to the target //
-						x = data->X;
-						y = data->Y;
-
-						finished = true;
-						break;
-					}
-
-
-					// check for finishing //
-					if((x == data->X) && (y == data->Y)){
-						finished = true;
-						break;
-					}
-
-				}
-				break;
-			}
-
-			// send updated values //
-			caller->SetValue(GUI_ANIMATEABLE_SEMANTIC_X, x);
-			caller->SetValue(GUI_ANIMATEABLE_SEMANTIC_Y, y);
-
-			if(finished){
-				return 1;
-
-			} else {
-				return 0;
-			}
-		}
-		break;
-
-
-	default:
-		return 404; // unrecognized type //
-	}
-
-
-
-	//return 5; // for error //
 }

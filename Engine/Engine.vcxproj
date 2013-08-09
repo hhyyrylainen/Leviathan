@@ -126,6 +126,7 @@
     <ClCompile Include="BasePositionable.cpp" />
     <ClCompile Include="BaseRenderable.cpp" />
     <ClCompile Include="BaseScalable.cpp" />
+    <ClCompile Include="BaseShader.cpp" />
     <ClCompile Include="BaseTickable.cpp" />
     <ClCompile Include="BumpModelData.cpp" />
     <ClCompile Include="CallableObject.cpp" />
@@ -219,7 +220,6 @@
     <ClCompile Include="Rendering\TextureArray.cpp" />
     <ClCompile Include="Rendering\TextureManager.cpp" />
     <ClCompile Include="Rendering\TexturePointer.cpp" />
-    <ClCompile Include="Rendering\TextureShader.cpp" />
     <ClCompile Include="Rendering\ShaderManager.cpp" />
     <ClCompile Include="ResolutionScaling.cpp" />
     <ClCompile Include="RSAEncryption.cpp" />
@@ -229,6 +229,7 @@
     <ClCompile Include="ScriptModule.cpp" />
     <ClCompile Include="ScriptRunningSetup.cpp" />
     <ClCompile Include="ScriptScript.cpp" />
+    <ClCompile Include="ShaderRenderTask.cpp" />
     <ClCompile Include="SkeletonBone.cpp" />
     <ClCompile Include="SkeletonRig.cpp" />
     <ClCompile Include="SmoothedPosition.cpp" />
@@ -269,6 +270,7 @@
     <ClInclude Include="BasePositionable.h" />
     <ClInclude Include="BaseRenderable.h" />
     <ClInclude Include="BaseScalable.h" />
+    <ClInclude Include="BaseShader.h" />
     <ClInclude Include="BaseTickable.h" />
     <ClInclude Include="BumpModelData.h" />
     <ClInclude Include="CallableObject.h" />
@@ -365,7 +367,6 @@
     <ClInclude Include="Rendering\TextureArray.h" />
     <ClInclude Include="Rendering\TextureManager.h" />
     <ClInclude Include="Rendering\TexturePointer.h" />
-    <ClInclude Include="Rendering\TextureShader.h" />
     <ClInclude Include="Rendering\ShaderManager.h" />
     <ClInclude Include="ResolutionScaling.h" />
     <ClInclude Include="RSAEncryption.h" />
@@ -375,6 +376,7 @@
     <ClInclude Include="ScriptModule.h" />
     <ClInclude Include="ScriptRunningSetup.h" />
     <ClInclude Include="ScriptScript.h" />
+    <ClInclude Include="ShaderRenderTask.h" />
     <ClInclude Include="SkeletonBone.h" />
     <ClInclude Include="SkeletonRig.h" />
     <ClInclude Include="SmoothedPosition.h" />

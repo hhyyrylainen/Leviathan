@@ -16,13 +16,54 @@ namespace Leviathan{
 	// forward declaration for friend //
 	class TextureManager;
 
+
+	// texture types //
+	enum TEXTURETYPE {
+		TEXTURETYPE_NORMAL = 0x1, 
+		TEXTURETYPE_BUMPMAP = 0x2, 
+		TEXTURETYPE_BLENDMAP = 0x4, 
+		TEXTURETYPE_LIGHTMAP = 0x8,
+		//TEXTURETYPE_POSITIONABLE = 0x10, 
+		//TEXTURETYPE_BASEGRAPHICAL = 0x20
+		//0x40
+		//0x80 // first byte full
+		//0x100
+		//0x200
+		//0x400
+		//0x800
+		//0x1000
+		//0x2000
+		//0x4000
+		//0x8000 // second byte full (int range might stop here(
+		//0x10000
+		//0x20000
+		//0x40000
+		//0x80000
+		//0x100000
+		//0x200000
+		//0x400000
+		//0x800000 // third byte full
+		//0x1000000
+		//0x2000000
+		//0x4000000
+		//0x8000000
+		//0x10000000
+		//0x20000000
+		//0x40000000
+		//0x80000000 // fourth byte full (will need QWORD here)
+		//0x100000000
+	};
+
+
+
 	class ManagedTexture : public EngineComponent{
 		friend TextureManager;
 	public:
 
-		DLLEXPORT ManagedTexture::ManagedTexture(wstring &file, int id);
-		DLLEXPORT ManagedTexture::ManagedTexture(int id, ID3D11ShaderResourceView* texture, const wstring &source);
-		DLLEXPORT ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id, const wstring &source, ID3D11Device* dev);
+		DLLEXPORT ManagedTexture::ManagedTexture(wstring &file, const int &id, const TEXTURETYPE &type);
+		DLLEXPORT ManagedTexture::ManagedTexture(int id, ID3D11ShaderResourceView* texture, const wstring &source, const TEXTURETYPE &type);
+		DLLEXPORT ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id, const wstring &source, ID3D11Device* dev
+			, const TEXTURETYPE &type);
 		DLLEXPORT ManagedTexture::~ManagedTexture();
 
 		DLLEXPORT bool Load(ID3D11Device* dev);
@@ -38,6 +79,9 @@ namespace Leviathan{
 		}
 		DLLEXPORT inline int GetErrorState() const{
 			return ErrorState;
+		}
+		DLLEXPORT inline TEXTURETYPE GetType() const{
+			return TextureType;
 		}
 		DLLEXPORT inline int GetID() const{
 			return ID;
@@ -57,6 +101,7 @@ namespace Leviathan{
 		int ErrorState;
 		bool Loaded;
 		bool LoadedFromMemory;
+		TEXTURETYPE TextureType;
 
 		// shared_ptr<ID3D11ShaderResourceView>(NULL, SafeReleaser<ID3D11ShaderResourceView>);
 		// texture needs to be ->released //

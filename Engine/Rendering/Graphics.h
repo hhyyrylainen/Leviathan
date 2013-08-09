@@ -13,7 +13,6 @@
 #include "ViewCamera.h"
 #include "TextureManager.h"
 
-#include "ShaderManager.h"
 #include "Light.h"
 #include "MultTextureShader.h"
 #include "Bitmap.h"
@@ -30,6 +29,8 @@
 #define TEXTURE_UNLOAD_TIME			300000
 
 namespace Leviathan{
+	// forward declarations to avoid having tons of headers here that aren't necessary //
+	class ShaderManager;
 
 	class Graphics : public EngineComponent{
 	public:

@@ -8,7 +8,6 @@
 // ---- includes ---- //
 #include "3DRenderer.h"
 #include "MultTextureShader.h"
-#include "TextureShader.h"
 #include "LightShader.h"
 #include "BumpShader.h"
 #include "SkinnedShader.h"
@@ -52,17 +51,6 @@ namespace Leviathan{
 		BumpMapShader* _BumpMapShader;
 		GradientShader* _GradientShader;
 		SkinnedShader* _SkinnedShader;
-	};
-// --------- ShaderDesc --------- //
-	class ShaderDesc{
-	public:
-		ShaderDesc();
-		ShaderDesc(ShaderType type, wstring file, int shaderid);
-
-		int ID;
-		wstring File;
-		ShaderType Type;
-
 	};
 }
 #endif

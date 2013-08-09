@@ -250,6 +250,21 @@ ID3D11Texture2D* Leviathan::Rendering::ResourceCreator::GenerateDefaultTexture(c
 	//return tmpptr;
 }
 
+bool Leviathan::Rendering::ResourceCreator::CreateDynamicConstantBufferForVSShader(ID3D11Buffer** receiver, const UINT &bufferbytewidth){
+	// setup the buffer description //
+	D3D11_BUFFER_DESC BuffDesc;
+	BuffDesc.Usage = D3D11_USAGE_DYNAMIC;
+	BuffDesc.ByteWidth = bufferbytewidth;
+	BuffDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	BuffDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	BuffDesc.MiscFlags = 0;
+	BuffDesc.StructureByteStride = 0;
+	
+	// create the buffer and interpret return code //
+	HRESULT hr = GraphicsAccess->GetRenderer()->GetDevice()->CreateBuffer(&BuffDesc, NULL, receiver);
+	return FAILED(hr) ? false: true;
+}
+
 // ------------------------------------ //
 
 // ------------------------------------ //

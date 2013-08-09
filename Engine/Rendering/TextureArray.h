@@ -14,7 +14,7 @@ namespace Leviathan{
 	class TextureArray : public EngineComponent{
 	public:
 		DLLEXPORT TextureArray::TextureArray();
-        DLLEXPORT TextureArray::~TextureArray();
+		DLLEXPORT TextureArray::~TextureArray();
 
 		DLLEXPORT bool Init(ID3D11Device* dev, wstring texture1, wstring texture2);
 		DLLEXPORT void Release();

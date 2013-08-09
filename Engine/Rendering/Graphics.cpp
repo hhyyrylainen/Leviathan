@@ -7,6 +7,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "AppDefine.h"
 #include "Application.h"
+#include "ShaderManager.h"
 
 Graphics::Graphics(){
 	Initialized = false;

@@ -13,9 +13,6 @@
     <Filter Include="core">
       <UniqueIdentifier>{e8e912b5-babd-4dc1-943f-0d3cadf4b81c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="events">
-      <UniqueIdentifier>{24a4c627-3f91-4c67-9d24-69d79ba5c5db}</UniqueIdentifier>
-    </Filter>
     <Filter Include="objects">
       <UniqueIdentifier>{7cc855bc-da07-4359-bd34-e6a828a95cdc}</UniqueIdentifier>
     </Filter>
@@ -85,9 +82,6 @@
     <Filter Include="objects\Internal data">
       <UniqueIdentifier>{e91cb1ee-5fa1-4460-95bd-9f7a82c82bcd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="rendering\datatypes">
-      <UniqueIdentifier>{6b546222-81de-42a8-a301-dfc5ba281e4e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="common\debugging">
       <UniqueIdentifier>{8ccad782-1783-4451-9470-378aa2318302}</UniqueIdentifier>
     </Filter>
@@ -115,14 +109,17 @@
     <Filter Include="core\managers\leap">
       <UniqueIdentifier>{a0f58301-f22b-42dd-b9ca-d7997aceb5a6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\debug helpers">
-      <UniqueIdentifier>{54d8db54-ce34-4e40-8a19-311e496be699}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Script\AngelModules">
       <UniqueIdentifier>{a976573c-18d1-4801-855a-a43ba2c1570d}</UniqueIdentifier>
     </Filter>
     <Filter Include="common\ObjectFiles">
       <UniqueIdentifier>{5bb3b429-d54a-40f8-9f93-f028811102b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\events">
+      <UniqueIdentifier>{24a4c627-3f91-4c67-9d24-69d79ba5c5db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rendering\shaders\specialized">
+      <UniqueIdentifier>{aed3be9a-b43d-4956-a996-12ec1ef9f1d1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -156,19 +153,7 @@
     <ClCompile Include="Rendering\Graphics.cpp">
       <Filter>rendering</Filter>
     </ClCompile>
-    <ClCompile Include="Rendering\BumpShader.cpp">
-      <Filter>rendering\shaders</Filter>
-    </ClCompile>
-    <ClCompile Include="Rendering\TextureShader.cpp">
-      <Filter>rendering\shaders</Filter>
-    </ClCompile>
     <ClCompile Include="Rendering\ShaderManager.cpp">
-      <Filter>rendering\shaders</Filter>
-    </ClCompile>
-    <ClCompile Include="Rendering\LightShader.cpp">
-      <Filter>rendering\shaders</Filter>
-    </ClCompile>
-    <ClCompile Include="Rendering\MultTextureShader.cpp">
       <Filter>rendering\shaders</Filter>
     </ClCompile>
     <ClCompile Include="Rendering\FontShader.cpp">
@@ -198,20 +183,17 @@
     <ClCompile Include="GuiManager.cpp">
       <Filter>gui</Filter>
     </ClCompile>
-    <ClCompile Include="Rendering\ColorGradientShader.cpp">
-      <Filter>rendering\shaders</Filter>
-    </ClCompile>
     <ClCompile Include="CameraPos.cpp">
       <Filter>objects</Filter>
     </ClCompile>
     <ClCompile Include="EventHandler.cpp">
-      <Filter>events</Filter>
+      <Filter>core\events</Filter>
     </ClCompile>
     <ClCompile Include="Event.cpp">
-      <Filter>events</Filter>
+      <Filter>core\events</Filter>
     </ClCompile>
     <ClCompile Include="CallableObject.cpp">
-      <Filter>events</Filter>
+      <Filter>core\events</Filter>
     </ClCompile>
     <ClCompile Include="GuiKeyListener.cpp">
       <Filter>gui</Filter>
@@ -396,9 +378,6 @@
     <ClCompile Include="TextureDefinition.cpp">
       <Filter>objects\Internal data</Filter>
     </ClCompile>
-    <ClCompile Include="Rendering\ShaderDataTypes.cpp">
-      <Filter>rendering\datatypes</Filter>
-    </ClCompile>
     <ClCompile Include="Token.cpp">
       <Filter>core\helpers</Filter>
     </ClCompile>
@@ -407,9 +386,6 @@
     </ClCompile>
     <ClCompile Include="ComplainOnce.cpp">
       <Filter>core\helpers</Filter>
-    </ClCompile>
-    <ClCompile Include="Rendering\SkinnedShader.cpp">
-      <Filter>rendering\shaders</Filter>
     </ClCompile>
     <ClCompile Include="SkeletonRig.cpp">
       <Filter>objects\Skeleton</Filter>
@@ -507,9 +483,6 @@
     <ClCompile Include="LeapListener.cpp">
       <Filter>core\managers\leap</Filter>
     </ClCompile>
-    <ClCompile Include="DebugVariableNotifier.cpp">
-      <Filter>core\debug helpers</Filter>
-    </ClCompile>
     <ClCompile Include="ScriptRunningSetup.cpp">
       <Filter>Script</Filter>
     </ClCompile>
@@ -546,6 +519,33 @@
     <ClCompile Include="ReferenceCounted.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="DebugVariableNotifier.cpp">
+      <Filter>common\debugging</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseShader.cpp">
+      <Filter>rendering\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\BumpShader.cpp">
+      <Filter>rendering\shaders\specialized</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\ColorGradientShader.cpp">
+      <Filter>rendering\shaders\specialized</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\LightShader.cpp">
+      <Filter>rendering\shaders\specialized</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\MultTextureShader.cpp">
+      <Filter>rendering\shaders\specialized</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\SkinnedShader.cpp">
+      <Filter>rendering\shaders\specialized</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\ShaderDataTypes.cpp">
+      <Filter>rendering\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderRenderTask.cpp">
+      <Filter>rendering\shaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">
@@ -579,19 +579,7 @@
     <ClInclude Include="Rendering\Graphics.h">
       <Filter>rendering</Filter>
     </ClInclude>
-    <ClInclude Include="Rendering\BumpShader.h">
-      <Filter>rendering\shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\TextureShader.h">
-      <Filter>rendering\shaders</Filter>
-    </ClInclude>
     <ClInclude Include="Rendering\ShaderManager.h">
-      <Filter>rendering\shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\LightShader.h">
-      <Filter>rendering\shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\MultTextureShader.h">
       <Filter>rendering\shaders</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\FontShader.h">
@@ -627,20 +615,17 @@
     <ClInclude Include="GuiManager.h">
       <Filter>gui</Filter>
     </ClInclude>
-    <ClInclude Include="Rendering\ColorGradientShader.h">
-      <Filter>rendering\shaders</Filter>
-    </ClInclude>
     <ClInclude Include="CameraPos.h">
       <Filter>objects</Filter>
     </ClInclude>
     <ClInclude Include="EventHandler.h">
-      <Filter>events</Filter>
+      <Filter>core\events</Filter>
     </ClInclude>
     <ClInclude Include="Event.h">
-      <Filter>events</Filter>
+      <Filter>core\events</Filter>
     </ClInclude>
     <ClInclude Include="CallableObject.h">
-      <Filter>events</Filter>
+      <Filter>core\events</Filter>
     </ClInclude>
     <ClInclude Include="GuiKeyListener.h">
       <Filter>gui</Filter>
@@ -834,9 +819,6 @@
     <ClInclude Include="TextureDefinition.h">
       <Filter>objects\Internal data</Filter>
     </ClInclude>
-    <ClInclude Include="Rendering\ShaderDataTypes.h">
-      <Filter>rendering\datatypes</Filter>
-    </ClInclude>
     <ClInclude Include="Token.h">
       <Filter>core\helpers</Filter>
     </ClInclude>
@@ -845,9 +827,6 @@
     </ClInclude>
     <ClInclude Include="ComplainOnce.h">
       <Filter>core\helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\SkinnedShader.h">
-      <Filter>rendering\shaders</Filter>
     </ClInclude>
     <ClInclude Include="SkeletonRig.h">
       <Filter>objects\Skeleton</Filter>
@@ -945,9 +924,6 @@
     <ClInclude Include="LeapListener.h">
       <Filter>core\managers\leap</Filter>
     </ClInclude>
-    <ClInclude Include="DebugVariableNotifier.h">
-      <Filter>core\debug helpers</Filter>
-    </ClInclude>
     <ClInclude Include="ScriptRunningSetup.h">
       <Filter>Script</Filter>
     </ClInclude>
@@ -983,6 +959,33 @@
     </ClInclude>
     <ClInclude Include="ReferenceCounted.h">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugVariableNotifier.h">
+      <Filter>common\debugging</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseShader.h">
+      <Filter>rendering\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\BumpShader.h">
+      <Filter>rendering\shaders\specialized</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\ColorGradientShader.h">
+      <Filter>rendering\shaders\specialized</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\LightShader.h">
+      <Filter>rendering\shaders\specialized</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\MultTextureShader.h">
+      <Filter>rendering\shaders\specialized</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\SkinnedShader.h">
+      <Filter>rendering\shaders\specialized</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\ShaderDataTypes.h">
+      <Filter>rendering\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderRenderTask.h">
+      <Filter>rendering\shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -6,15 +6,22 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "3DRenderer.h"
-#include "MultTextureShader.h"
-#include "LightShader.h"
-#include "BumpShader.h"
-#include "SkinnedShader.h"
-#include "ColorGradientShader.h"
-#include "..\SkeletonRig.h"
+#include "DefaultShaders.h"
 
-namespace Leviathan{
+namespace Leviathan{ namespace Rendering{
+
+	struct StoredShader{
+		StoredShader(const string &shaderdefinition, const wstring &name, BaseShader* baseptr) : ShaderDefStr(shaderdefinition), ShaderName(name),
+			ShaderPtr(baseptr)
+		{
+
+		}
+
+		shared_ptr<BaseShader> ShaderPtr;
+		const string ShaderDefStr;
+		const wstring  ShaderName;
+	};
+
 
 	class ShaderManager : public EngineComponent{
 	public:
@@ -23,36 +30,32 @@ namespace Leviathan{
 		DLLEXPORT bool Init(ID3D11Device* device);
 		DLLEXPORT void Release();
 
-		DLLEXPORT bool RenderMultiTextureShader(ID3D11DeviceContext* devcont, int indexcount, D3DXMATRIX viewmatrix, D3DXMATRIX projectionmatrix, D3DXMATRIX, ID3D11ShaderResourceView** textures);
-		DLLEXPORT bool RenderTextureShader(ID3D11DeviceContext* devcont, int indexcount, D3DXMATRIX viewmatrix, D3DXMATRIX projectionmatrix, D3DXMATRIX, ID3D11ShaderResourceView* texture);
-		DLLEXPORT bool RenderLightShader(ID3D11DeviceContext* devcont, int indexcount, D3DXMATRIX viewmatrix, D3DXMATRIX projectionmatrix, D3DXMATRIX, ID3D11ShaderResourceView* texture, 
-							   Float3 lightDirection, Float4 ambient, Float4 diffuse, Float3 cameraPosition, Float4 specular, float specularPower);
+		// preferredname can be used to use a specific shader if you know the right name (e.g. font renderer forces FontShader usage with this) //
+		DLLEXPORT bool AutoRender(ID3D11DeviceContext* devcont, const int &indexcount, ShaderRenderTask* torender, const wstring &preferredname);
 
-		DLLEXPORT bool RenderBumpMapShader(ID3D11DeviceContext* devcont, int indexcount, D3DXMATRIX viewmatrix, D3DXMATRIX projectionmatrix, D3DXMATRIX, ID3D11ShaderResourceView* texture, 
-								 ID3D11ShaderResourceView*, Float3, Float4);
 
-		DLLEXPORT bool RenderGradientShader(ID3D11DeviceContext* devcont,int indexcount, D3DXMATRIX worldmatrix, D3DXMATRIX viewmatrix, D3DXMATRIX projectionmatrix, Float4& colorstart, Float4& colorend);
-
-		DLLEXPORT bool RenderSkinnedShader(ID3D11DeviceContext* devcont,int indexcount, D3DXMATRIX worldmatrix, D3DXMATRIX viewmatrix, 
-			D3DXMATRIX projectionmatrix, GameObject::SkeletonRig* Bones, ID3D11ShaderResourceView* texture, Float3 lightDirection, Float4 ambientColor, 
-			Float4 diffuseColor, Float3 cameraPosition, Float4 specularColor, float specularPower);
 
 		DLLEXPORT static void PrintShaderError(const wstring &shader, ID3D10Blob* datadump);
-
 		DLLEXPORT static UINT GetShaderCompileFlags();
 
-		// array of NULL pointers for clearing shader resources//
-		static ID3D11Buffer* NULLBufferBlob[20];
-
 	private:
-		MultiTextureShader* _MultTextureShader;
-		TextureShader* _TextureShader;
-		LightShader* _LightShader;
-		BumpMapShader* _BumpMapShader;
-		GradientShader* _GradientShader;
-		SkinnedShader* _SkinnedShader;
+
+		// vector that holds all loaded shaders //
+		vector<shared_ptr<StoredShader>> Shaders;
+
+		// pointers to various parts in the vector //
+		shared_ptr<StoredShader> _StoredTextureShader;
+		TextureShader* _DirectTextureShader;
+		shared_ptr<StoredShader> _StoredLightShader;
+		LightShader* _DirectLightShader;
+		shared_ptr<StoredShader> _StoredBumpMapShader;
+		LightBumpShader* _DirectBumpMapShader;
+		shared_ptr<StoredShader> _StoredGradientShader;
+		GradientShader* _DirectGradientShader;
+		shared_ptr<StoredShader> _StoredSkinnedShader;
+		SkinnedShader* _DirectSkinnedShader;
 	};
-}
+}}
 #endif
 
 	

@@ -16,6 +16,7 @@ namespace Leviathan{
 
 	// some forward declarations //
 	class ColorQuad;
+	class Graphics;
 
 	class RenderingGBlob : public Object{
 	public:
@@ -23,6 +24,10 @@ namespace Leviathan{
 		DLLEXPORT RenderingGBlob::RenderingGBlob(int relativez, int slotid);
 		DLLEXPORT virtual RenderingGBlob::~RenderingGBlob();
 		DLLEXPORT bool IsThisType(int tochecktype);
+
+		// for automatic rendering //
+		DLLEXPORT virtual Rendering::BaseRenderableBufferContainer* GetRenderingBuffers(Graphics* graph) = 0;
+		DLLEXPORT virtual ShaderRenderTask* GetShaderParameters(Graphics* graph) = 0;
 
 		int RelativeZ;
 		int SlotID;

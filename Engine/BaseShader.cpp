@@ -201,7 +201,7 @@ bool Leviathan::BaseShader::CreateInputLayout(ID3D11Device* dev, ID3D10Blob* Ver
 
 // ------------------ TextureShader ------------------ //
 DLLEXPORT Leviathan::TextureShader::TextureShader() : BaseShader(L"TextureShader.hlsl", "TextureVertexShader", "TexturePixelShader", 
-	"BUF:BMAT,TEX:VISIBLE"), MatrixBuffer(NULL)
+	"BUF:BMAT:TEX:NORMAL"), MatrixBuffer(NULL)
 {
 
 }
@@ -210,7 +210,7 @@ DLLEXPORT Leviathan::TextureShader::~TextureShader(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::TextureShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck){
+DLLEXPORT bool Leviathan::TextureShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck) const{
 	// check for data presence of required objects //
 	BaseMatrixBufferData* bmtocheck = paramstocheck->GetBaseMatrixBufferData();
 	BaseTextureHolder* bttocheck = paramstocheck->GetBaseTextureHolder();
@@ -294,7 +294,7 @@ bool Leviathan::TextureShader::SetupShaderInputLayouts(ID3D11Device* dev, ID3D10
 	// create layout //
 	D3D11_INPUT_ELEMENT_DESC shaderdatalayoutdesc[] = {
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 	// calculate element count //
 	UINT elementcount = sizeof(shaderdatalayoutdesc)/sizeof(shaderdatalayoutdesc[0]);
@@ -306,15 +306,6 @@ bool Leviathan::TextureShader::SetupShaderInputLayouts(ID3D11Device* dev, ID3D10
 
 	return true;
 }
-
-
-
-
-
-
-
-
-
 
 
 

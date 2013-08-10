@@ -7,9 +7,6 @@
 // ------------------------------------ //
 // ---- includes ---- //
 
-
-
-
 namespace Leviathan{
 
 	class ViewCamera{

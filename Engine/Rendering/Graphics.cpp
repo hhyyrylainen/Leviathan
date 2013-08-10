@@ -8,6 +8,7 @@ using namespace Leviathan;
 #include "AppDefine.h"
 #include "Application.h"
 #include "ShaderManager.h"
+#include "RenderingQuad.h"
 
 Graphics::Graphics(){
 	Initialized = false;
@@ -51,7 +52,8 @@ bool Graphics::Init(Window* wind, const DxRendConf &conf){
 	// smoothness factor //
 	ObjectFileProcessor::LoadValueFromNamedVars<int>(AppDef::GetDefault()->GetValues(), L"GuiSmooth", GuiSmooth, 5, false);
 
-	if(!SUCCEEDED(Create3DRenderer(wind))){
+	Drenderer = new Dx11Renderer();
+	if(!SUCCEEDED(Drenderer->Init(wind, this->Dconfig))){
 		Logger::Get()->Error(L"Failed to init graphics, can't create 3drenderer");
 		return false;
 	}
@@ -129,7 +131,7 @@ bool Graphics::Init(Window* wind, const DxRendConf &conf){
 
 void Graphics::Release(){
 
-	CleanUpRenderActions();
+	GuiObjs.clear();
 
 	SAFE_RELEASEDEL(TextRender);
 	SAFE_DELETE(Light);
@@ -215,65 +217,23 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 
 	DrawRenderActions(WorldMatrix, ViewMatrix, OrthoMatrix);
 
-
-
 	// turn z-buffer back on
 	Drenderer->TurnOffAlphaBlending();
 	Drenderer->TurnZBufferOn();
 
 
+
 	// present result //
 	Drenderer->EndRender();
-
 	return true;
 }
-
-// ------------------------------------------- //
-bool Graphics::HasRenderer(){
-	return Drenderer != NULL;
-}
-
 // ------------------------------------------- //
 bool Graphics::Resize(int newwidth, int newheight){
 	// resize renderer //
 	Drenderer->Resize();
 
-	// cameras //
-	//ActiveCamera->
-	//return true;
-
 	// hope that everything uses updated values //
 	return true;
-}
-
-HRESULT Graphics::Create3DRenderer(Window* wind){
-	HRESULT hr= S_OK;
-
-	//Dconfig = DxRendConf(tempwind, tempvsync, tempscreendepth, tempscreennear, tempdtype, tempmsaa);
-
-	Drenderer = new Dx11Renderer();
-	hr = Drenderer->Init(wind, this->Dconfig);
-	return hr;
-}
-// ------------------------------------------- //
-DLLEXPORT inline float Leviathan::Graphics::CountTextRenderLength(const wstring &text, const wstring &font, bool expensive, float heightmod, int Coordtype){
-	return TextRender->CountSentenceLength(text, font, expensive, heightmod, Coordtype);
-}
-DLLEXPORT inline float Leviathan::Graphics::GetTextRenderHeight(const wstring &font, float heightmod, int Coordtype){
-	return TextRender->GetFontHeight(font, heightmod, Coordtype);
-}
-// ------------------------------------------- //
-TextRenderer* Graphics::GetTextRenderer(){
-	return TextRender;
-}
-Dx11Renderer* Graphics::GetRenderer(){
-	return Drenderer;
-}
-TextureManager* Graphics::GetTextureManager(){
-	return TextureKeeper;
-}
-ShaderManager* Graphics::GetShader(){
-	return Shaders;
 }
 // ------------------------------------------- //
 void Graphics::SubmitRenderBridge(const shared_ptr<RenderBridge> &brdg){
@@ -299,9 +259,6 @@ void Graphics::PurgeGuiArray(){
 	}
 }
 
-void Graphics::CleanUpRenderActions(){
-	GuiObjs.clear();
-}
 
 void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, D3DXMATRIX OrthoMatrix){
 	// so no dead objects exist //
@@ -338,40 +295,14 @@ void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, 
 
 					// real action to render //
 					RenderingGBlob* tempptr = (*GuiObjs[i]).DrawActions[a];
-					
-					// compare, which class it is //
-					/*string thistest = string(typeid(ColorQuadRendBlob).raw_name());*/
-					if(tempptr->IsThisType(GUIRENDERING_BLOB_TYPE_CQUAD)){
 
-						// draw the quad //
-						ColorQuadRendBlob* renderptr = reinterpret_cast<ColorQuadRendBlob*>(tempptr);
+					// with virtual objects it is as easy as this //
+					if(!RenderAutomatic(tempptr->GetRenderingBuffers(this), tempptr->GetShaderParameters(this))){
 
-						// get values //
-						Float2 pos;
-						Float2 size;
-						Float4 col1;
-						Float4 col2;
-						int gradientstyle;
-						int coordtype;
-						renderptr->Get(pos, col1, col2, size, gradientstyle, coordtype);
 
-						// check does quad exist, if not create //
-						if(renderptr->CQuad == NULL){
-							renderptr->CQuad = new ColorQuad();
-
-							// init //
-
-							renderptr->CQuad->Init(Drenderer->GetDevice(), Wind->GetWidth(), Wind->GetHeight(), gradientstyle);
-						}
-						// render //
-						renderptr->CQuad->Render(Drenderer->GetDeviceContext(), pos[0], pos[1], Wind->GetWidth(), Wind->GetHeight(), size[0], size[1], 
-							coordtype, gradientstyle);
-
-						// call shader to render this //
-						Shaders->RenderGradientShader(Drenderer->GetDeviceContext(), renderptr->CQuad->GetIndexCount(), WorldMatrix, ViewMatrix, 
-							OrthoMatrix, col1, col2);
 						continue;
 					}
+
 					if(tempptr->IsThisType(GUIRENDERING_BLOB_TYPE_TEXT)){
 
 						// draw the quad //
@@ -427,8 +358,4 @@ void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, 
 
 		}
 	}
-}
-
-Window* Leviathan::Graphics::GetWindow(){
-	return Wind;
 }

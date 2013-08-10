@@ -6,24 +6,19 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "..\BaseRenderable.h"
-
-#include "FileSystem.h"
 #include "3DRenderer.h"
 #include "ViewCamera.h"
 #include "TextureManager.h"
-
 #include "Light.h"
-#include "MultTextureShader.h"
-#include "Bitmap.h"
 #include "TextRenderer.h"
-#include "..\RenderAction.h"
-#include "ColorQuad.h"
-#include "..\CameraPos.h"
 
+#include "..\RenderAction.h"
+#include "..\CameraPos.h"
+#include "..\BaseRenderable.h"
 #include "..\RenderBridge.h"
+
 #include "RenderingPassInfo.h"
-#include "RenderingResourceCreator.h"
+#include "..\BaseRenderableBufferContainer.h"
 
 #define TEXTURE_INACTIVE_TIME		30000
 #define TEXTURE_UNLOAD_TIME			300000
@@ -36,40 +31,47 @@ namespace Leviathan{
 	public:
 		DLLEXPORT Graphics();
 		DLLEXPORT ~Graphics();
+
 		DLLEXPORT void SetDescObjects(const DxRendConf &dx11) { Dconfig = dx11; };
 		DLLEXPORT bool Init(Window* wind, const DxRendConf &conf);
-
-		DLLEXPORT bool Frame(int mspassed, ViewerCameraPos* camerapostouse, vector<BaseRenderable*> &objects);
 		DLLEXPORT void Release();
-		DLLEXPORT void CleanUpRenderActions();
-
-		DLLEXPORT bool HasRenderer();
 
 		DLLEXPORT bool Resize(int newwidth, int newheight);
 
-
-		DLLEXPORT inline float CountTextRenderLength(const wstring &text, const wstring &font, bool expensive, float heightmod, int Coordtype);
-		DLLEXPORT inline float GetTextRenderHeight(const wstring &font, float heightmod, int Coordtype);
-
-		DLLEXPORT static Graphics* Get();
-		DLLEXPORT TextRenderer* GetTextRenderer();
-		DLLEXPORT Dx11Renderer* GetRenderer();
-		DLLEXPORT TextureManager* GetTextureManager();
-		DLLEXPORT ShaderManager* GetShader();
-		DLLEXPORT Window* GetWindow();
+		DLLEXPORT bool Frame(int mspassed, ViewerCameraPos* camerapostouse, vector<BaseRenderable*> &objects);
 
 		DLLEXPORT void SubmitRenderBridge(const shared_ptr<RenderBridge> &brdg);
 		DLLEXPORT shared_ptr<RenderBridge> GetBridgeForGui(int actionid);
 
+
+		DLLEXPORT bool RenderAutomatic(Rendering::BaseRenderableBufferContainer* torenderbuffers, ShaderRenderTask* shaderparameters);
+
+
+		DLLEXPORT inline TextRenderer* GetTextRenderer(){
+			return TextRender;
+		}
+		DLLEXPORT inline Dx11Renderer* GetRenderer(){
+			return Drenderer;
+		}
+		DLLEXPORT inline TextureManager* GetTextureManager(){
+			return TextureKeeper;
+		}
+		DLLEXPORT inline ShaderManager* GetShader(){
+			return Shaders;
+		}
+		DLLEXPORT inline Window* GetWindow(){
+			return Wind;
+		}
 		RenderingLight* Light;
+
+		DLLEXPORT static Graphics* Get();
 
 	private:
 		bool Render(int mspassed, vector<BaseRenderable*> &objects);
 
-		void PurgeGuiArray();
-
 		void DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, D3DXMATRIX OrthoMatrix);
 		HRESULT Create3DRenderer(Window* wind);
+		void PurgeGuiArray();
 		// ------------------------ //
 		bool Initialized;
 
@@ -93,22 +95,5 @@ namespace Leviathan{
 		// static //
 		static Graphics* _gadapter;
 	};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 #endif

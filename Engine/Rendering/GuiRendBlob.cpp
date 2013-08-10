@@ -5,7 +5,7 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "ColorQuad.h"
+#include "RenderingQuad.h"
 #include "Engine.h"
 
 Leviathan::RenderingGBlob::RenderingGBlob(){

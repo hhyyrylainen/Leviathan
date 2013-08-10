@@ -28,7 +28,7 @@ namespace Leviathan{
 		float specularPower;
 		D3DXVECTOR4 specularColor;
 	};
-	// ---- Bone matrice classes ---- //
+	// ---- Bone matrix classes ---- //
 	class BoneTransformsPointerBase : public Object{
 	public:
 		// used to be able to have pointers to all different types of Bone matrix buffer classes
@@ -237,7 +237,7 @@ namespace Leviathan{
 		//float VertexGroupWeight1, VertexGroupWeight2, VertexGroupWeight3, VertexGroupWeight4;
 		Float4 VertexGroupWeights;
 	};
-	struct ColorBuffer
+	struct ColorBufferTwoType
 	{
 		D3DXVECTOR4 ColorStart;
 		D3DXVECTOR4 ColorEnd;

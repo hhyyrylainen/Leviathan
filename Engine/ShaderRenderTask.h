@@ -34,7 +34,19 @@ namespace Leviathan{
 
 		shared_ptr<ManagedTexture> Texture1;
 	};
+	struct DoubleTextureHolder : public BaseTextureHolder{
+		inline DoubleTextureHolder(shared_ptr<ManagedTexture> texture1, shared_ptr<ManagedTexture> texture2) : BaseTextureHolder(1, 
+			texture1->GetType() | texture2->GetType()), Texture1(texture1), Texture2(texture2)
+		{
 
+		}
+
+
+		shared_ptr<ManagedTexture> Texture1;
+		shared_ptr<ManagedTexture> Texture2;
+	};
+
+	
 
 	struct BaseMatrixBufferData{
 		BaseMatrixBufferData(const D3DXMATRIX &worldm, const D3DXMATRIX &viewm, const D3DXMATRIX &projm);
@@ -62,12 +74,29 @@ namespace Leviathan{
 		float SpecularPower;
 	};
 
+	struct CameraBufferData{
+		CameraBufferData(const D3DXVECTOR3 &camlocation) : CameraPositionInWorld(camlocation){
+
+		}
+
+		D3DXVECTOR3 CameraPositionInWorld;
+	};
+
 	struct BaseSkinningData{
-		BaseSkinningData(GameObject::SkeletonRig* bones) : Bones(Bones){
+		BaseSkinningData(GameObject::SkeletonRig* bones) : Bones(Bones), ShaderInternalDataPass(0) {
 
 		}
 
 		GameObject::SkeletonRig* Bones;
+		int ShaderInternalDataPass;
+	};
+
+	struct TwoColorBufferData{
+		TwoColorBufferData(const D3DXVECTOR4 &color1, const D3DXVECTOR4 &color2) : Colour1(color1), Colour2(color2){
+
+		}
+
+		D3DXVECTOR4 Colour1, Colour2;
 	};
 
 
@@ -85,28 +114,44 @@ namespace Leviathan{
 			BMatData = newbdata;
 			return this;
 		}
-
 		DLLEXPORT inline ShaderRenderTask* SetBaseLightBuffer(BaseLightBufferData* newbdata){
 			// release old and set new //
 			SAFE_DELETE(BLightData);
 			BLightData = newbdata;
+			PatternCreated = false;
 			return this;
 		}
-
 		DLLEXPORT inline ShaderRenderTask* SetTextures(BaseTextureHolder* newtextures){
 			// release old and set new //
 			SAFE_DELETE(TextureObjects);
 			TextureObjects = newtextures;
+			PatternCreated = false;
 			return this;
 		}
-
 		DLLEXPORT inline ShaderRenderTask* SetVertexSkinningData(BaseSkinningData* newskinningdata){
 			// release old and set new //
 			SAFE_DELETE(VertexSkinningData);
 			VertexSkinningData = newskinningdata;
+			PatternCreated = false;
 			return this;
 		}
+		DLLEXPORT inline ShaderRenderTask* SetCameraBufferData(CameraBufferData* newcbuffer){
+			// release old and set new //
+			SAFE_DELETE(CameraLocationData);
+			CameraLocationData = newcbuffer;
+			PatternCreated = false;
+			return this;
+		}
+		DLLEXPORT inline ShaderRenderTask* SetColourBufferTwo(TwoColorBufferData* newcbuffer){
+			// release old and set new //
+			SAFE_DELETE(ColourBuffer2Data);
+			ColourBuffer2Data = newcbuffer;
+			PatternCreated = false;
+			return this;
+		}
+		
 
+		
 		// get functions //
 		DLLEXPORT inline BaseMatrixBufferData* GetBaseMatrixBufferData(){
 			return BMatData;
@@ -120,7 +165,23 @@ namespace Leviathan{
 		DLLEXPORT inline BaseSkinningData* GetBaseSkinningData(){
 			return VertexSkinningData;
 		}
+		DLLEXPORT inline CameraBufferData* GetCameraBufferData(){
+			return CameraLocationData;
+		}
+		DLLEXPORT inline TwoColorBufferData* GetColourBufferTwo(){
+			return ColourBuffer2Data;
+		}
+		DLLEXPORT inline const string& GetShaderPattern() const{
+			if(PatternCreated){
 
+				return ShaderPattern;
+			}
+			// generate pattern //
+
+
+			// recurse //
+			return GetShaderPattern();
+		}
 	protected:
 
 		// ------------------------------------ //
@@ -132,6 +193,13 @@ namespace Leviathan{
 		BaseLightBufferData* BLightData;
 		// used for vertex skinning supporting shaders //
 		BaseSkinningData* VertexSkinningData;
+
+		CameraBufferData* CameraLocationData;
+		TwoColorBufferData* ColourBuffer2Data;
+
+		bool PatternCreated;
+		string ShaderPattern;
+
 	};
 
 }

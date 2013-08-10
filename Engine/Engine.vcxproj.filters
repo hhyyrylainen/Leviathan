@@ -525,26 +525,14 @@
     <ClCompile Include="BaseShader.cpp">
       <Filter>rendering\shaders</Filter>
     </ClCompile>
-    <ClCompile Include="Rendering\BumpShader.cpp">
-      <Filter>rendering\shaders\specialized</Filter>
-    </ClCompile>
-    <ClCompile Include="Rendering\ColorGradientShader.cpp">
-      <Filter>rendering\shaders\specialized</Filter>
-    </ClCompile>
-    <ClCompile Include="Rendering\LightShader.cpp">
-      <Filter>rendering\shaders\specialized</Filter>
-    </ClCompile>
-    <ClCompile Include="Rendering\MultTextureShader.cpp">
-      <Filter>rendering\shaders\specialized</Filter>
-    </ClCompile>
-    <ClCompile Include="Rendering\SkinnedShader.cpp">
-      <Filter>rendering\shaders\specialized</Filter>
-    </ClCompile>
     <ClCompile Include="Rendering\ShaderDataTypes.cpp">
       <Filter>rendering\shaders</Filter>
     </ClCompile>
     <ClCompile Include="ShaderRenderTask.cpp">
       <Filter>rendering\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="DefaultShaders.cpp">
+      <Filter>rendering\shaders\specialized</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -966,26 +954,14 @@
     <ClInclude Include="BaseShader.h">
       <Filter>rendering\shaders</Filter>
     </ClInclude>
-    <ClInclude Include="Rendering\BumpShader.h">
-      <Filter>rendering\shaders\specialized</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\ColorGradientShader.h">
-      <Filter>rendering\shaders\specialized</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\LightShader.h">
-      <Filter>rendering\shaders\specialized</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\MultTextureShader.h">
-      <Filter>rendering\shaders\specialized</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\SkinnedShader.h">
-      <Filter>rendering\shaders\specialized</Filter>
-    </ClInclude>
     <ClInclude Include="Rendering\ShaderDataTypes.h">
       <Filter>rendering\shaders</Filter>
     </ClInclude>
     <ClInclude Include="ShaderRenderTask.h">
       <Filter>rendering\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="DefaultShaders.h">
+      <Filter>rendering\shaders\specialized</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

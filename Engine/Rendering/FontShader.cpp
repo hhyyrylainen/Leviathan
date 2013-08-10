@@ -4,303 +4,136 @@
 #include "FontShader.h"
 #endif
 using namespace Leviathan;
+using namespace Rendering;
 // ------------------------------------ //
 #include "ShaderManager.h"
 
-// --------- Shaders --------- //
-FontShader::FontShader(){
-	// set values to null //
-	Inited = false;
+DLLEXPORT Leviathan::Rendering::GradientShader::GradientShader() : BaseShader(L"FontShader.hlsl", "FontVertexShader", "FontPixelShader", 
+	"BUF:BMAT:COL2:TEX:TEXT:INPUT:C0:T0"), MatrixBuffer(NULL), ColorsBuffer(NULL)
+{
 
-	VertexShader = NULL;
-	PixelShader = NULL;
-	Layout = NULL;
-	MatrixBuffer = NULL;
-	SamplerState = NULL;
-	PixelColorBuffer = NULL;
 }
 
-FontShader::~FontShader(){
-	if(Inited)
-		Release();
-}
-
-bool FontShader::Init(ID3D11Device* device){
-	if(!this->InitShader(device, FileSystem::GetShaderFolder()+L"font.vs", FileSystem::GetShaderFolder()+L"font.ps")){
-
-		Logger::Get()->Error(L"Failed to init FontShader, InitShader failed",0);
-		return false;
-	}
-
-	Inited = true;
-	return true;
-}
-
-void FontShader::Release(){
-	// shutdown shaders //
-	ReleaseShader();
+DLLEXPORT Leviathan::Rendering::GradientShader::~GradientShader(){
 
 }
 // ------------------------------------ //
-bool FontShader::Render(ID3D11DeviceContext* deviceContext, int indexCount, D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture, Float4 color){
+DLLEXPORT bool Leviathan::Rendering::GradientShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck){
+	// check for data presence of required objects //
+	BaseMatrixBufferData* bmtocheck = paramstocheck->GetBaseMatrixBufferData();
+	TwoColorBufferData* bctocheck = paramstocheck->GetColourBufferTwo();
+	BaseTextureHolder* bttocheck = paramstocheck->GetBaseTextureHolder();
 
-	// Set the shader parameters that it will use for rendering.
-	if(!SetShaderParams(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, color)){
-
+	if(bmtocheck == NULL || bctocheck== NULL || bttocheck == NULL || bttocheck->TextureCount != 1 || !(bttocheck->TextureFlags & TEXTURETYPE_TEXT)){
+		// failed a check //
 		return false;
 	}
 
-	// render buffers with shader //
-	ShaderRender(deviceContext, indexCount);
-
+	// passed all tests //
 	return true;
 }
-
-bool Leviathan::FontShader::InitShader(ID3D11Device* dev, const wstring &vsfilename, const wstring &psfilename){
-	HRESULT hr = S_OK;
-	ID3D10Blob* Errordumb;
-	ID3D10Blob* Vertexshaderbuffer;
-	ID3D10Blob* Pixelshaderbuffer;
-
-
-	// init objects to null //
-	Errordumb = NULL;
-	Vertexshaderbuffer = NULL;
-	Pixelshaderbuffer = NULL;
-
-	// compile shaders //
-	hr = D3DX11CompileFromFile(vsfilename.c_str(), NULL, NULL, "FontVertexShader", "vs_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL, 
-						&Vertexshaderbuffer, &Errordumb, NULL);
-	if(FAILED(hr))
-	{
-		// check for compile error //
-		if(Errordumb)
-		{
-			ShaderManager::PrintShaderError(L"FontShader", Errordumb);
-			Logger::Get()->Error(L"Failed to Init vetexshader, see info for error",0);
-		}
-		else
-		{
-			// file was not found //
-			Logger::Get()->Error(L"InitShader failed, can't find Vertexshader :"+vsfilename,GetLastError());
-		}
-			
-		return false;
-	}
-
-	// pixel shader compile //
-	hr = D3DX11CompileFromFile(psfilename.c_str(), NULL, NULL, "FontPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL, 
-						&Pixelshaderbuffer, &Errordumb, NULL);
-	if(FAILED(hr))
-	{
-		// check for compile error //
-		if(Errordumb)
-		{
-			ShaderManager::PrintShaderError(L"FontShader", Errordumb);
-			Logger::Get()->Error(L"Failed to Init pixelshader, see info for error",0);
-		}
-		else
-		{
-			// file was not found //
-			Logger::Get()->Error(L"InitShader failed, can't find Vertexshader :"+vsfilename,GetLastError());
-		}
-		return false;
-	}
-	// create shaders from buffers
-	hr = dev->CreateVertexShader(Vertexshaderbuffer->GetBufferPointer(), Vertexshaderbuffer->GetBufferSize(), NULL, &VertexShader);
-	if(FAILED(hr))
-	{
-		Logger::Get()->Error(L"InitShader failed, failed to create VertexShader from buffer",hr);
-		return false;
-	}
-
-	hr = dev->CreatePixelShader(Pixelshaderbuffer->GetBufferPointer(), Pixelshaderbuffer->GetBufferSize(), NULL, &PixelShader);
-	if(FAILED(hr))
-	{
-		Logger::Get()->Error(L"InitShader failed, failed to create PixelShader from buffer",hr);
-		return false;
-	}
-	D3D11_INPUT_ELEMENT_DESC polygonLayout[2];
-	// setup shader layout data //
-	polygonLayout[0].SemanticName = "POSITION";
-	polygonLayout[0].SemanticIndex = 0;
-	polygonLayout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	polygonLayout[0].InputSlot = 0;
-	polygonLayout[0].AlignedByteOffset = 0;
-	polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	polygonLayout[0].InstanceDataStepRate = 0;
-
-	polygonLayout[1].SemanticName = "TEXCOORD";
-	polygonLayout[1].SemanticIndex = 0;
-	polygonLayout[1].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	polygonLayout[1].InputSlot = 0;
-	polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	polygonLayout[1].InstanceDataStepRate = 0;
-
-	// get element count //
-	unsigned int numElements;
-	numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
-
-	// create input layout //
-	hr = dev->CreateInputLayout(polygonLayout, numElements, Vertexshaderbuffer->GetBufferPointer(), 
-						Vertexshaderbuffer->GetBufferSize(), &Layout);
-	if(FAILED(hr))
-	{
-		Logger::Get()->Error(L"InitShader failed, failed to create layout object",hr);
-		return false;
-	}
-
-	// release shader buffers
-	SAFE_RELEASE(Vertexshaderbuffer);
-	SAFE_RELEASE(Pixelshaderbuffer);
-
-	// setup matrix buffer //
-	D3D11_BUFFER_DESC matrixBufferDesc;
-
-	matrixBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	matrixBufferDesc.ByteWidth = sizeof(MatrixBufferType);
-	matrixBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	matrixBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	matrixBufferDesc.MiscFlags = 0;
-	matrixBufferDesc.StructureByteStride = 0;
-
-	hr = dev->CreateBuffer(&matrixBufferDesc, NULL, &MatrixBuffer);
-	if(FAILED(hr)){
-
-		Logger::Get()->Error(L"InitShader failed, failed to create MatrixBuffer",hr);
-		return false;
-	}
-
-	// Create a texture sampler state description.
-	D3D11_SAMPLER_DESC samplerDesc;
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 16;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	samplerDesc.BorderColor[0] = 0;
-	samplerDesc.BorderColor[1] = 0;
-	samplerDesc.BorderColor[2] = 0;
-	samplerDesc.BorderColor[3] = 0;
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	// Create the texture sampler state.
-	hr = dev->CreateSamplerState(&samplerDesc, &SamplerState);
-	if(FAILED(hr)){
+// ------------------------------------ //
+bool Leviathan::Rendering::GradientShader::SetupShaderDataBuffers(ID3D11Device* dev){
+	// create this shader specific buffers //
+	if(!Rendering::ResourceCreator::CreateDynamicConstantBufferForVSShader(&MatrixBuffer, sizeof(MatrixBufferType))){
 
 		return false;
 	}
 
-	// setup pixel color buffer //
-	D3D11_BUFFER_DESC pixelBufferDesc;
-	pixelBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	pixelBufferDesc.ByteWidth = sizeof(PixelBufferType);
-	pixelBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	pixelBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	pixelBufferDesc.MiscFlags = 0;
-	pixelBufferDesc.StructureByteStride = 0;
-
-	// Create the pixel constant buffer pointer so we can access the pixel shader constant buffer from within this class.
-	hr = dev->CreateBuffer(&pixelBufferDesc, NULL, &PixelColorBuffer);
-	if(FAILED(hr)){
+	if(!Rendering::ResourceCreator::CreateDynamicConstantBufferForVSShader(&ColorsBuffer, sizeof(ColorBufferTwoType))){
 
 		return false;
 	}
-
 
 
 	return true;
 }
 
-
-void FontShader::ReleaseShader(){
+void Leviathan::Rendering::GradientShader::ReleaseShaderDataBuffers(){
+	// this shader specific buffers //
 	SAFE_RELEASE(MatrixBuffer);
-	SAFE_RELEASE(Layout);
-	SAFE_RELEASE(PixelShader);
-	SAFE_RELEASE(VertexShader);
-	SAFE_RELEASE(SamplerState);
-	SAFE_RELEASE(PixelColorBuffer);
-
+	SAFE_RELEASE(ColorsBuffer);
 }
-bool FontShader::SetShaderParams(ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, D3DXMATRIX viewmatrix, D3DXMATRIX projectionmatrix, ID3D11ShaderResourceView* texture, Float4 color){
-	HRESULT hr = S_OK;
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
+// ------------------------------------ //
+bool Leviathan::Rendering::GradientShader::SetShaderParams(ID3D11DeviceContext* devcont, ShaderRenderTask* parameters){
+	// copy new data from parameters object to the shader buffers //
+	// prepare buffers //
+	if(!SetNewDataToShaderBuffers(devcont, parameters)){
 
-	// prepare shaders //
-	D3DXMatrixTranspose(&worldmatrix, &worldmatrix);
-	D3DXMatrixTranspose(&viewmatrix, &viewmatrix);
-	D3DXMatrixTranspose(&projectionmatrix, &projectionmatrix);
+		Logger::Get()->Error(L"TextureShader: SetShaderParams: failed to update buffers");
+		return false;
+	}
+	// all buffers should now have new data and be unlocked //
 
-	// lock buffer for writing //
-	hr = devcont->Map(MatrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if(FAILED(hr))
-	{
-		Logger::Get()->Error(L"SetShaderParams failed, buffer lock failed",hr);
+
+	// set this shader specific buffers active //
+
+
+	// set VertexShader buffers //
+	devcont->VSSetConstantBuffers(0, 1, &MatrixBuffer);
+	// !PixelShader uses this buffer //
+	devcont->PSSetConstantBuffers(0, 1, &ColorsBuffer);
+
+	// set PixelShader resources //
+	// we need this temporary because the function actually wants an array of these values //
+	ID3D11ShaderResourceView* tmpview = static_cast<SingleTextureHolder*>(parameters->GetBaseTextureHolder())->Texture1->GetView();
+
+	devcont->PSSetShaderResources(0, 1, &tmpview);
+
+	return true;
+}
+
+bool Leviathan::Rendering::GradientShader::SetNewDataToShaderBuffers(ID3D11DeviceContext* devcont, ShaderRenderTask* parameters){
+	// copy new matrix buffer data //
+	auto AutoUnlocker = Rendering::ResourceCreator::MapConstantBufferForWriting<MatrixBufferType>(devcont, MatrixBuffer);
+	if(AutoUnlocker == NULL){
+		// lock failed //
 		return false;
 	}
 
-	// get pointer to data //
-	MatrixBufferType* dataPtr;
-	dataPtr = (MatrixBufferType*)mappedResource.pData;
+	// create temporary matrices and transpose matrices into them //
+	D3DXMATRIX worldmatrix;
+	D3DXMATRIX viewmatrix;
+	D3DXMATRIX projectionmatrix;
+
+	D3DXMatrixTranspose(&worldmatrix, &parameters->GetBaseMatrixBufferData()->WorldMatrix);
+	D3DXMatrixTranspose(&viewmatrix, &parameters->GetBaseMatrixBufferData()->ViewMatrix);
+	D3DXMatrixTranspose(&projectionmatrix, &parameters->GetBaseMatrixBufferData()->ProjectionMatrix);
 
 	// copy matrices //
-	dataPtr->world = worldmatrix;
-	dataPtr->view = viewmatrix;
-	dataPtr->projection = projectionmatrix;
+	AutoUnlocker->LockedResourcePtr->world = worldmatrix;
+	AutoUnlocker->LockedResourcePtr->world = viewmatrix;
+	AutoUnlocker->LockedResourcePtr->world = projectionmatrix;
 
-	// unlock buffer //
-	devcont->Unmap(MatrixBuffer, 0);
-
-	// set position of buffer
-	unsigned int buffernumber;
-	buffernumber = 0;
-
-	// set constant buffer with updated values //
-	devcont->VSSetConstantBuffers(buffernumber, 1, &MatrixBuffer);
-
-	// Set shader texture resource in the pixel shader.
-	devcont->PSSetShaderResources(0, 1, &texture);
-
-	// Lock the pixel color constant buffer for writing
-	hr = devcont->Map(PixelColorBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if(FAILED(hr)){
-
+	// new colour buffer data //
+	auto ColourBufferData = Rendering::ResourceCreator::MapConstantBufferForWriting<ColorBufferTwoType>(devcont, ColorsBuffer);
+	if(ColourBufferData == NULL){
+		// lock failed //
 		return false;
 	}
-	PixelBufferType* dataPtr2;
-	// Get a pointer to the data in the pixel constant buffer.
-	dataPtr2 = (PixelBufferType*)mappedResource.pData;
 
-	// Copy the pixel color into the pixel constant buffer.
-	dataPtr2->pixelColor = D3DXVECTOR4(color[0], color[1], color[2], color[3]);
+	ColourBufferData->LockedResourcePtr->ColorStart = parameters->GetColourBufferTwo()->Colour1;
+	ColourBufferData->LockedResourcePtr->ColorEnd = parameters->GetColourBufferTwo()->Colour2;
 
-	// Unlock the pixel constant buffer.
-	devcont->Unmap(PixelColorBuffer, 0);
-
-	// Set the position of the pixel constant buffer in the pixel shader.
-	buffernumber = 0;
-
-	// Now set the pixel constant buffer in the pixel shader with the updated value.
-	devcont->PSSetConstantBuffers(buffernumber, 1, &PixelColorBuffer);
 
 	return true;
 }
-void FontShader::ShaderRender(ID3D11DeviceContext* devcont, int indexcount){
-	// set input layout
-	devcont->IASetInputLayout(Layout);
+// ------------------------------------ //
+bool Leviathan::Rendering::GradientShader::SetupShaderInputLayouts(ID3D11Device* dev, ID3D10Blob* VertexShaderBuffer){
+	// create layout //
+	D3D11_INPUT_ELEMENT_DESC shaderdatalayoutdesc[] = {
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+	};
 
-	// set shaders //
-	devcont->VSSetShader(VertexShader, NULL, 0);
-	devcont->PSSetShader(PixelShader, NULL, 0);
+	// calculate element count //
+	UINT elementcount = sizeof(shaderdatalayoutdesc)/sizeof(shaderdatalayoutdesc[0]);
 
-	// Set the sampler state in the pixel shader.
-	devcont->PSSetSamplers(0, 1, &SamplerState);
+	if(!CreateInputLayout(dev, VertexShaderBuffer, &shaderdatalayoutdesc[0], elementcount)){
 
-	// render image
-	devcont->DrawIndexed(indexcount, 0, 0);
+		return false;
+	}
+
+	return true;
 }
 

@@ -138,6 +138,7 @@
     <ClCompile Include="DataStore.cpp" />
     <ClCompile Include="DDsHandler.cpp" />
     <ClCompile Include="DebugVariableNotifier.cpp" />
+    <ClCompile Include="DefaultShaders.cpp" />
     <ClCompile Include="Define.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
@@ -196,7 +197,6 @@
     <ClCompile Include="RenderAction.cpp" />
     <ClCompile Include="RenderBridge.cpp" />
     <ClCompile Include="RenderingStatistics.cpp" />
-    <ClCompile Include="Rendering\ColorGradientShader.cpp" />
     <ClCompile Include="Rendering\ColorQuad.cpp" />
     <ClCompile Include="Rendering\Frustrum.cpp" />
     <ClCompile Include="Rendering\GuiRendBlob.cpp" />
@@ -205,18 +205,14 @@
     <ClCompile Include="Rendering\RenderingResourceCreator.cpp" />
     <ClCompile Include="Rendering\RenderSavedResource.cpp" />
     <ClCompile Include="Rendering\ShaderDataTypes.cpp" />
-    <ClCompile Include="Rendering\SkinnedShader.cpp" />
     <ClCompile Include="Rendering\TextRenderer.cpp" />
     <ClCompile Include="Rendering\3DRenderer.cpp" />
     <ClCompile Include="Rendering\Bitmap.cpp" />
-    <ClCompile Include="Rendering\BumpShader.cpp" />
     <ClCompile Include="Rendering\ViewCamera.cpp" />
     <ClCompile Include="Rendering\RenderingFont.cpp" />
     <ClCompile Include="Rendering\FontShader.cpp" />
     <ClCompile Include="Rendering\Graphics.cpp" />
     <ClCompile Include="Rendering\Light.cpp" />
-    <ClCompile Include="Rendering\LightShader.cpp" />
-    <ClCompile Include="Rendering\MultTextureShader.cpp" />
     <ClCompile Include="Rendering\TextureArray.cpp" />
     <ClCompile Include="Rendering\TextureManager.cpp" />
     <ClCompile Include="Rendering\TexturePointer.cpp" />
@@ -282,6 +278,7 @@
     <ClInclude Include="DataStore.h" />
     <ClInclude Include="DDsHandler.h" />
     <ClInclude Include="DebugVariableNotifier.h" />
+    <ClInclude Include="DefaultShaders.h" />
     <ClInclude Include="Define.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="ErrorTypes.h" />
@@ -343,7 +340,6 @@
     <ClInclude Include="RenderAction.h" />
     <ClInclude Include="RenderBridge.h" />
     <ClInclude Include="RenderingStatistics.h" />
-    <ClInclude Include="Rendering\ColorGradientShader.h" />
     <ClInclude Include="Rendering\ColorQuad.h" />
     <ClInclude Include="Rendering\Frustrum.h" />
     <ClInclude Include="Rendering\GuiRendBlob.h" />
@@ -352,18 +348,14 @@
     <ClInclude Include="Rendering\RenderingResourceCreator.h" />
     <ClInclude Include="Rendering\RenderSavedResource.h" />
     <ClInclude Include="Rendering\ShaderDataTypes.h" />
-    <ClInclude Include="Rendering\SkinnedShader.h" />
     <ClInclude Include="Rendering\TextRenderer.h" />
     <ClInclude Include="Rendering\3DRenderer.h" />
     <ClInclude Include="Rendering\Bitmap.h" />
-    <ClInclude Include="Rendering\BumpShader.h" />
     <ClInclude Include="Rendering\ViewCamera.h" />
     <ClInclude Include="Rendering\RenderingFont.h" />
     <ClInclude Include="Rendering\FontShader.h" />
     <ClInclude Include="Rendering\Graphics.h" />
     <ClInclude Include="Rendering\Light.h" />
-    <ClInclude Include="Rendering\LightShader.h" />
-    <ClInclude Include="Rendering\MultTextureShader.h" />
     <ClInclude Include="Rendering\TextureArray.h" />
     <ClInclude Include="Rendering\TextureManager.h" />
     <ClInclude Include="Rendering\TexturePointer.h" />

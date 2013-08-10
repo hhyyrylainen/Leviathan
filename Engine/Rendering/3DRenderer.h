@@ -6,9 +6,6 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#ifndef LEVIATHAN_LOGGER
-#include "Logger.h"
-#endif
 #include "Window.h"
 
 namespace Leviathan{

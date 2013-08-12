@@ -37,7 +37,7 @@ namespace Leviathan{ namespace GameObject{
 		DLLEXPORT Model::Model();
 		DLLEXPORT Model::~Model();
 
-		DLLEXPORT bool Render(Graphics* renderer, int mspassed, const RenderingPassInfo &info, D3DXMATRIX &ViewMatrix, D3DXMATRIX &ProjectionMatrix, D3DXMATRIX &WorldMatrix, D3DXMATRIX &TranslateMatrix, Float3 CameraPos);
+		DLLEXPORT bool Render(Graphics* renderer, int mspassed, const RenderingPassInfo &info);
 
 		DLLEXPORT bool VerifyResourcesLoaded(Graphics* renderer);
 

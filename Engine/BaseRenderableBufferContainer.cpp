@@ -25,9 +25,9 @@ DLLEXPORT void Leviathan::Rendering::BaseRenderableBufferContainer::Release(){
 	Inited = false;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Rendering::BaseRenderableBufferContainer::SetBuffersForRendering(ID3D11DeviceContext* devcont){
+DLLEXPORT bool Leviathan::Rendering::BaseRenderableBufferContainer::SetBuffersForRendering(ID3D11DeviceContext* devcont, int &indexbuffersize){
 
-
+	indexbuffersize = GetIndexCount();
 	return RenderBuffers(devcont);
 }
 
@@ -50,7 +50,7 @@ bool Leviathan::Rendering::BaseRenderableBufferContainer::RenderBuffers(ID3D11De
 }
 
 // ------------------------------------ //
-bool Leviathan::Rendering::BaseRenderableBufferContainer::ReleaseBuffers(){
+void Leviathan::Rendering::BaseRenderableBufferContainer::ReleaseBuffers(){
 	SAFE_RELEASE(VertexBuffer);
 	SAFE_RELEASE(IndexBuffer);
 }

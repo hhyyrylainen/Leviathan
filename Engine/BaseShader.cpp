@@ -5,6 +5,7 @@
 #endif
 #include "Rendering\ShaderManager.h"
 using namespace Leviathan;
+using namespace Rendering;
 // ------------------------------------ //
 
 

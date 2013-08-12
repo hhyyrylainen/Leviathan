@@ -785,10 +785,10 @@ namespace Leviathan{
 
 
 		// ----------------- casts ------------------- //
-		DLLEXPORT inline operator D3DXVECTOR4(){
+		DLLEXPORT inline operator D3DXVECTOR4() const{
 			return D3DXVECTOR4(X, Y, Z, W);
 		}
-		DLLEXPORT inline operator D3DXQUATERNION(){
+		DLLEXPORT inline operator D3DXQUATERNION() const{
 			return D3DXQUATERNION(X, Y, Z, W);
 		}
 
@@ -800,6 +800,7 @@ namespace Leviathan{
 		// specific colours //
 		static const Float4 ColourBlack;
 		static const Float4 ColourWhite;
+		static const Float4 ColourTransparent;
 	};
 
 

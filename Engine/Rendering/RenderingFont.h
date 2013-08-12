@@ -17,6 +17,7 @@
 #include "..\GuiPositionable.h"
 #include "..\ComplainOnce.h"
 #include "boost/thread/thread.hpp"
+#include "ManagedTexture.h"
 
 #define RENDERINGFONT_CHARCOUNT		233
 #define RENDERINGFONT_MAXCHARCODE	255
@@ -114,10 +115,10 @@ namespace Leviathan{
 			return true;
 		}
 
-		
+		DLLEXPORT inline shared_ptr<ManagedTexture> GetTexture(){
+			return Texture;
+		}
 
-
-		ID3D11ShaderResourceView* GetTexture();
 		DLLEXPORT inline wstring& GetName(){
 			return Name;
 		}
@@ -177,7 +178,7 @@ namespace Leviathan{
 		bool LoadTexture(ID3D11Device* dev, const wstring &file, bool forcegen = false);
 		// ------------------------------------ //
 		vector<FontsCharacter*> FontData;
-		TextureArray* Textures;
+		shared_ptr<ManagedTexture> Texture;
 		// should be the height (in pixels) of FontsCharacter texture coordinate box heights //
 		int FontHeight;
 

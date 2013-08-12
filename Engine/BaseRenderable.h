@@ -17,7 +17,7 @@ namespace Leviathan{
 		DLLEXPORT BaseRenderable::BaseRenderable();
 		DLLEXPORT virtual BaseRenderable::~BaseRenderable();
 
-		DLLEXPORT virtual bool Render(Graphics* renderer, int mspassed, const RenderingPassInfo &info, D3DXMATRIX &ViewMatrix, D3DXMATRIX &ProjectionMatrix, D3DXMATRIX &WorldMatrix, D3DXMATRIX &TranslateMatrix, Float3 CameraPos) = 0;
+		DLLEXPORT virtual bool Render(Graphics* renderer, int mspassed, const RenderingPassInfo &info) = 0;
 
 		DLLEXPORT bool IsHidden();
 

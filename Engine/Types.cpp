@@ -215,3 +215,5 @@ DLLEXPORT Leviathan::UINT4::operator UINT*(){
 const Float4 Leviathan::Float4::ColourBlack = Float4(0, 0, 0, 1);
 
 const Float4 Leviathan::Float4::ColourWhite = Float4(1, 1, 1, 1);
+
+const Float4 Leviathan::Float4::ColourTransparent = Float4(0, 0, 0, 0);

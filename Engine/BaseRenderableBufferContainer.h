@@ -26,7 +26,7 @@ namespace Leviathan{ namespace Rendering{
 		DLLEXPORT virtual bool Init(ID3D11Device* device);
 		DLLEXPORT virtual void Release();
 
-		DLLEXPORT bool SetBuffersForRendering(ID3D11DeviceContext* devcont);
+		DLLEXPORT virtual bool SetBuffersForRendering(ID3D11DeviceContext* devcont, int &indexbuffersize);
 		DLLEXPORT virtual inline int GetIndexCount() const = 0;
 
 	protected:
@@ -34,7 +34,7 @@ namespace Leviathan{ namespace Rendering{
 		virtual bool RenderBuffers(ID3D11DeviceContext* devcont);
 
 		virtual bool CreateBuffers(ID3D11Device* device) = 0;
-		virtual bool ReleaseBuffers();
+		virtual void ReleaseBuffers();
 		virtual bool Create1To1IndexBuffer(ID3D11Device* device, const int &icount);
 
 		// ------------------------------------ //

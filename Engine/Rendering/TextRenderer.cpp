@@ -4,55 +4,45 @@
 #include "TextRenderer.h"
 #endif
 using namespace Leviathan;
+using namespace Rendering;
 // ------------------------------------ //
 #include "3DRenderer.h"
 #include "Graphics.h"
 #include "..\GuiPositionable.h"
 #include "..\DebugVariableNotifier.h"
 
-TextRenderer::TextRenderer(){
-	_FontShader = NULL;
+TextRenderer::TextRenderer() : _FontShader(NULL), Graph(NULL){
 
 }
+
 TextRenderer::~TextRenderer(){
+
 }
 // ------------------------------------ //
-bool TextRenderer::Init(ID3D11Device* dev, ID3D11DeviceContext* devcont, Window* wind, D3DXMATRIX baseview){
-	// store values //
-	ScreenWidth = wind->GetWidth();
-	ScreenHeight = wind->GetHeight();
-	BaseViewMatrix = baseview;
+DLLEXPORT bool Leviathan::TextRenderer::Init(Graphics* graph){
+	// store Graphics object ptr //
+	Graph = graph;
 
-	device = dev;
-	// create fonts //
-	wstring ArialFont = L"Arial.dds";
-
-	LoadFont(ArialFont);
-
+	// always create arial font //
+	LoadFont(L"Arial.dds");
 
 	// create shader //
-	_FontShader = new FontShader;
+	_FontShader = new FontShader();
 	if(!_FontShader)
 		return false;
 
-	if(!_FontShader->Init(dev)){
+	if(!_FontShader->Init(graph->GetRenderer()->GetDevice())){
 		Logger::Get()->Error(L"Failed to init TextRenderer, init font shader failed", true);
 		return false;
 	}
 
-	// start monitoring for change in resolution //
-	vector<shared_ptr<VariableBlock>> tolisten(2);
-	tolisten[0] = shared_ptr<VariableBlock>(new VariableBlock(DATAINDEX_HEIGHT));
-	tolisten[1] = shared_ptr<VariableBlock>(new VariableBlock(DATAINDEX_WIDTH));
-
-	StartMonitoring(tolisten);
-
 	return true;
 }
+
 void TextRenderer::Release(){
 	// release expensive text //
 	SAFE_DELETE_VECTOR(ExpensiveTexts);
-
+	SAFE_DELETE_VECTOR(CheapTexts);
 
 	// release shader
 	SAFE_RELEASEDEL(_FontShader);
@@ -62,58 +52,30 @@ void TextRenderer::Release(){
 		SAFE_RELEASEDEL(FontHolder[i]);
 	}
 	FontHolder.clear();
-	// release sentences //
-	while(Sentences.size() > 0){
-		ReleaseSentence(&Sentences.at(Sentences.size()-1));
-		Sentences.pop_back();
-	}
-
-	// stop monitoring everything //
-	StopMonitoring(MonitoredValues, true);
 }
-// ------------------------------------ //
-bool TextRenderer::CreateSentence(int id, int maxlength, ID3D11Device* dev){
-	Sentences.push_back(NULL);
-	if(!InitializeSentence(&VECTOR_LAST(Sentences), id, maxlength, dev)){
 
-		Logger::Get()->Error(L"Failed to add new sentence, Init sentence failed");
-		return false;
-	}
-	return true;
-}
-DLLEXPORT bool Leviathan::TextRenderer::UpdateSentenceID(int id, int Coordtype, const wstring &font, const wstring &text, const Float2 &coordinates, 
-	const Float4 &color, float sizepercent, ID3D11DeviceContext* devcont){
-	for(size_t i = 0; i < Sentences.size(); i++){
-		if(Sentences[i]->SentenceID == id){
+DLLEXPORT bool Leviathan::TextRenderer::ReleaseText(const int &ID){
+	// we need to check both vectors and delete if we find matching id //
+	for(size_t i = 0; i < CheapTexts.size(); i++){
+		if(CheapTexts[i]->ID == ID){
 
-			// get font id //
-			int fontid = GetFontIndex(font);
-			UpdateSentence(Sentences[i], Coordtype, text, coordinates, color, sizepercent, fontid, devcont);
+			SAFE_RELEASEDEL(CheapTexts[i]);
+			CheapTexts.erase(CheapTexts.begin()+i);
 			return true;
 		}
 	}
-	return false;
-}
-void TextRenderer::ReleaseSentenceID(int id){
-	for(unsigned int i = 0; i < Sentences.size(); i++){
-		if(Sentences[i]->SentenceID == id){
-			// release //
-			ReleaseSentence(&Sentences[i]);
-			SAFE_DELETE(Sentences[i]);
-			Sentences.erase(Sentences.begin()+i);
-			break;
-		}
-	}
-}
-void TextRenderer::HideSentence(int id, bool hidden){
-	for(unsigned int i = 0; i < Sentences.size(); i++){
-		if(Sentences[i]->SentenceID == id){
-			// set hidden flag //
-			Sentences[i]->Hidden = hidden;
+
+	for(size_t i = 0; i < ExpensiveTexts.size(); i++){
+		if(ExpensiveTexts[i]->ID == ID){
+
+			SAFE_RELEASEDEL(ExpensiveTexts[i]);
+			ExpensiveTexts.erase(ExpensiveTexts.begin()+i);
+			return true;
 		}
 	}
 
 }
+
 // ------------------------------------ //
 DLLEXPORT float Leviathan::TextRenderer::CountSentenceLength(const wstring &sentence, const wstring &font, bool expensive, float heightmod, int coordtype){
 	int index = GetFontIndex(font);
@@ -124,6 +86,7 @@ DLLEXPORT float Leviathan::TextRenderer::CountSentenceLength(const wstring &sent
 	}
 	return -1;
 }
+
 DLLEXPORT float Leviathan::TextRenderer::GetFontHeight(const wstring &font, float heightmod, int coordtype){
 	int index = GetFontIndex(font);
 	ARR_INDEX_CHECK(index, (int)FontHolder.size()){
@@ -132,415 +95,45 @@ DLLEXPORT float Leviathan::TextRenderer::GetFontHeight(const wstring &font, floa
 	return -1;
 }
 
-// ------------------------------------ //
-bool TextRenderer::Render(ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, D3DXMATRIX orthomatrix){
-
-	// draw sentences //
-	for(unsigned int i = 0; i < Sentences.size(); i++){
-		if(Sentences[i]->Hidden)
-			continue;
-		if(!RenderSentence(devcont, Sentences.at(i), worldmatrix, orthomatrix)){
-
-			Logger::Get()->Error(L"Failed to render sentence id:"+i, false);
-			continue;
-		}
-
-
+DLLEXPORT RenderingFont* Leviathan::TextRenderer::GetFontFromName(const wstring &name){
+	int index = GetFontIndex(name);
+	ARR_INDEX_CHECKINV(index, (int)FontHolder.size()){
+		// could not load font //
+		return NULL;
 	}
-	//RenderSentence(devcont, m_sentence1, worldmatrix, orthomatrix);
-
-	return true;
-}
-bool TextRenderer::RenderSingle(int ID, ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, D3DXMATRIX orthomatrix){
-	CheckUpdatedValues();
-	for(unsigned int i = 0; i < Sentences.size(); i++){
-		if(Sentences[i]->SentenceID != ID)
-			continue;
-		if(!RenderSentence(devcont, Sentences.at(i), worldmatrix, orthomatrix)){
-
-			Logger::Get()->Error(L"Failed to render sentence id:"+i, false);
-			return false;
-		}
-		return true;
-	}
-	return false;
+	return FontHolder[index];
 }
 // ------------------------------------ //
 bool Leviathan::TextRenderer::LoadFont(const wstring &file){
+	// add new and initialize //
 	FontHolder.push_back(new RenderingFont());
+	if(!FontHolder.back()->Init(Graph->GetRenderer()->GetDevice(), file)){
 
-	if(!FontHolder.back()->Init(device, file)){
-
-		Logger::Get()->Error(L"Error while loading font, file: "+file, true);
+		Logger::Get()->Error(L"TextRenderer: LoadFont: failed to initialize, font: "+file);
 		return false;
 	}
+
 	return true;
 }
+
 int Leviathan::TextRenderer::GetFontIndex(const wstring &name){
-	// try to get id //
-	int index = -1;
+	// try to get index //
 	for(unsigned int i = 0; i < FontHolder.size(); i++){
 		if(FontHolder[i]->GetName() == name){
-			index = i;
-			break;
+			return i;
 		}
 	}
-	if(index == -1){
-		// try to load font
-		wstring File = name+L".dds";
-		if(!LoadFont(File)){
-			return -1;
-		}
-		index = FontHolder.size()-1;
-		Logger::Get()->Info(L"Font loaded! :"+name, false);
+	// not found, try to load font //
+	const wstring File = name+L".dds";
+	if(!LoadFont(File)){
+		return -1;
 	}
-	return index;
+
+	Logger::Get()->Info(L"TextRenderer: GetFontIndex: new font loaded! : "+name, true);
+	// return the new font from the last index //
+	return FontHolder.size()-1;
 }
-
-bool TextRenderer::InitializeSentence(SentenceType** sentence, int id, int maxlength, ID3D11Device* device){
-	// create new object //
-	*sentence = new SentenceType;
-	if(!*sentence)
-		return false;
-
-	// initialize values //
-	(*sentence)->SentenceID = id;
-	(*sentence)->VertexBuffer = NULL;
-	(*sentence)->IndexBuffer = NULL;
-
-	(*sentence)->maxLength = maxlength;
-	(*sentence)->vertexCount = 6 * maxlength;
-
-	// no actual value is known //
-	(*sentence)->CoordType = GUI_POSITIONABLE_COORDTYPE_RELATIVE;
-
-	(*sentence)->indexCount = (*sentence)->vertexCount;
-
-	
-	// generate index buffer //
-	(*sentence)->IndexBuffer = Rendering::ResourceCreator::GenerateDefaultIndexBuffer((*sentence)->indexCount);
-	// set up dynamic vertex buffer //
-	(*sentence)->VertexBuffer = Rendering::ResourceCreator::GenerateDefaultDynamicDefaultTypeVertexBuffer((*sentence)->vertexCount);
-
-	// if either failed return false //
-	if(!(*sentence)->IndexBuffer || !(*sentence)->VertexBuffer){
-
-		DEBUG_BREAK;
-		return false;
-	}
-
-	return true;
-}
-
-bool Leviathan::TextRenderer::UpdateSentence(SentenceType* sentence, int Coordtype, const wstring &text, const Float2 &position, const Float4 &colour, 
-	float textmodifier, int fontindex, ID3D11DeviceContext* devcont)
-{
-	HRESULT hr = S_OK;
-
-	//DEBUG_OUTPUT(L"TextRenderer: text updated, old "+Convert::IntToWstring(sentence->posx)+L","+Convert::IntToWstring(sentence->posy)+L" new: "+
-	//	Convert::IntToWstring(posx)+L","+Convert::IntToWstring(posy)+L"\n");
-
-	// store color //
-	sentence->Colour = colour;
-
-	// font index //
-	sentence->FontID = fontindex;
-
-	sentence->SizeModifier = textmodifier;
-
-	// store more parameters for resolution change //
-	sentence->CoordType = Coordtype;
-	sentence->Position = position;
-
-
-	sentence->text = text;
-
-	// get letters //
-	int letters = text.length();
-
-	// check for too long string //
-	if(letters > sentence->maxLength){
-		// needs to recreate buffers //
-		SAFE_RELEASE(sentence->VertexBuffer);
-		SAFE_RELEASE(sentence->IndexBuffer);
-
-		D3D11_SUBRESOURCE_DATA vertexData, indexData;
-
-
-		sentence->maxLength = letters*2;
-		sentence->vertexCount = 6 * sentence->maxLength;
-
-		sentence->indexCount = sentence->vertexCount;
-
-		// Create the vertex array.
-		VertexType* vertices;
-		vertices = new VertexType[sentence->vertexCount];
-		if(!vertices){
-			return false;
-		}
-
-		// Create the index array.
-		unsigned long* indices;
-		indices = new unsigned long[sentence->indexCount];
-		if(!indices){
-			return false;
-		}
-
-		// Initialize vertex array to zeros at first.
-		memset(vertices, 0, (sizeof(VertexType) * (sentence)->vertexCount));
-
-		// Initialize the index array.
-		for(int i = 0; i < sentence->indexCount; i++){
-
-			indices[i] = i;
-		}
-		D3D11_BUFFER_DESC vertexBufferDesc;
-
-		// Set up the description of the dynamic vertex buffer.
-		vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-		vertexBufferDesc.ByteWidth = sizeof(VertexType) * sentence->vertexCount;
-		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		vertexBufferDesc.MiscFlags = 0;
-		vertexBufferDesc.StructureByteStride = 0;
-
-		// Give the sub resource structure a pointer to the vertex data.
-		vertexData.pSysMem = vertices;
-		vertexData.SysMemPitch = 0;
-		vertexData.SysMemSlicePitch = 0;
-
-		// Create the vertex buffer.
-		hr = device->CreateBuffer(&vertexBufferDesc, &vertexData, &sentence->VertexBuffer);
-		if(FAILED(hr)){
-
-			return false;
-		}
-
-	
-		// Set up the description of the static index buffer.
-		D3D11_BUFFER_DESC indexBufferDesc;
-		indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		indexBufferDesc.ByteWidth = sizeof(unsigned long) * sentence->indexCount;
-		indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		indexBufferDesc.CPUAccessFlags = 0;
-		indexBufferDesc.MiscFlags = 0;
-		indexBufferDesc.StructureByteStride = 0;
-
-		// Give the sub resource structure a pointer to the index data.
-		indexData.pSysMem = indices;
-		indexData.SysMemPitch = 0;
-		indexData.SysMemSlicePitch = 0;
-
-		// Create the index buffer.
-		hr = device->CreateBuffer(&indexBufferDesc, &indexData, &sentence->IndexBuffer);
-		if(FAILED(hr)){
-
-			return false;
-		}
-
-		// release allocated arrays
-		SAFE_DELETE_ARRAY(vertices);
-		SAFE_DELETE_ARRAY(indices);
-	}
-
-	VertexType* vertices = new VertexType[sentence->vertexCount];
-	if(!vertices){
-
-		return false;
-	}
-
-	// Initialize vertex array to zeros at first.
-	memset(vertices, 0, (sizeof(VertexType) * sentence->vertexCount));
-
-	// Calculate the X and Y pixel position on the screen to start drawing to.
-	float drawX = 0;
-	float drawY = 0;
-	if(Coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
-		// pos is value between 0 - 1 scale to screen size //
-		float relx = ScreenWidth*position.X;
-		float rely = ScreenHeight*position.Y;
-
-		drawX = ((((float)ScreenWidth / 2) * -1) + relx);
-		drawY = ((((float)ScreenHeight / 2)) - rely);
-
-	} else {
-		drawX = ((((float)ScreenWidth / 2) * -1) + position.X);
-		drawY = (((float)ScreenHeight / 2) - position.Y);
-	}
-
-	//// make draw x and draw y match screen pixels //
-	//drawX = (float)(int)(drawX+0.5f);
-	//drawY = (float)(int)(drawY+0.5f);
-
-	// use font to build vertex array //
-	if(!FontHolder[fontindex]->BuildVertexArray(vertices, text, drawX, drawY, sentence->SizeModifier)){
-		// sentence probably has invalid characters //
-		SAFE_DELETE_ARRAY(vertices);
-
-		return false;
-	}
-	if(!vertices){
-		// font has failed //
-		Logger::Get()->Error(L"Render sentence has failed, recreating fonts", true);
-		this->Release();
-		Logger::Get()->Error(L"Quitting...");
-		return false;
-	}
-
-	// Lock the vertex buffer so it can be written to.
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	hr = devcont->Map(sentence->VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if(FAILED(hr)){
-
-		return false;
-	}
-
-	// Get a pointer to the data in the vertex buffer.
-	VertexType* verticesPtr = (VertexType*)mappedResource.pData;
-
-	// Copy the data into the vertex buffer.
-	memcpy(verticesPtr, (void*)vertices, (sizeof(VertexType) * sentence->vertexCount));
-
-	// Unlock the vertex buffer.
-	devcont->Unmap(sentence->VertexBuffer, 0);
-
-	// Release the vertex array as it is no longer needed.
-	SAFE_DELETE_ARRAY(vertices);
-
-	return true;
-}
-void TextRenderer::ReleaseSentence(SentenceType** sentence){
-	if(*sentence){
-		// Release the sentence vertex buffer.
-		SAFE_RELEASE((*sentence)->VertexBuffer);
-		SAFE_RELEASE((*sentence)->IndexBuffer);
-
-		// Release the sentence.
-		delete *sentence;
-		*sentence = NULL;
-	}
-
-}
-
 // ------------------------------------ //
-bool TextRenderer::RenderSentence(ID3D11DeviceContext* devcont, SentenceType* sentence, D3DXMATRIX worldMatrix, D3DXMATRIX orthoMatrix){
-
-	// update check //
-	CheckUpdatedValues();
-
-	// Set vertex buffer stride and offset.
-	unsigned int stride, offset;
-	stride = sizeof(VertexType); 
-	offset = 0;
-
-	// Set the vertex buffer to active in the input assembler so it can be rendered.
-	devcont->IASetVertexBuffers(0, 1, &sentence->VertexBuffer, &stride, &offset);
-
-	// Set the index buffer to active in the input assembler so it can be rendered.
-	devcont->IASetIndexBuffer(sentence->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
-	devcont->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	// Render the text using the font shader.
-	if(!_FontShader->Render(devcont, sentence->indexCount, worldMatrix, BaseViewMatrix, orthoMatrix, FontHolder[sentence->FontID]->GetTexture(), sentence->Colour)){
-		false;
-	}
-
-	return true;
-}
-
-void Leviathan::TextRenderer::CheckUpdatedValues(){
-	// check that is the window size changed //
-	if(ValuesUpdated){
-		// received new values //
-
-		// new values don't have to be checked, just pop them //
-		_PopUdated();
-
-		// update stored values //
-		Window* wind = Graphics::Get()->GetWindow();
-		ScreenWidth = wind->GetWidth();
-		ScreenHeight = wind->GetHeight();
-
-
-		// get a pointer to device context for recreating arrays //
-		Dx11Renderer* temprequired = Graphics::Get()->GetRenderer();
-
-		if(!temprequired){
-
-			QUICK_ERROR_MESSAGE;
-			return;
-		}
-
-		// recreate all vertex arrays //
-		for(unsigned int i = 0; i < Sentences.size(); i++){
-
-			// call update sentence with sentence's current values //
-			UpdateSentence(Sentences[i], Sentences[i]->CoordType, Sentences[i]->text, Sentences[i]->Position, Sentences[i]->Colour,
-				Sentences[i]->SizeModifier, Sentences[i]->FontID, temprequired->GetDeviceContext());
-		}
-
-	}
-}
-
-DLLEXPORT bool Leviathan::TextRenderer::RenderExpensiveText(ExpensiveTextRendBlob* renderptr, ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, 
-	D3DXMATRIX orthomatrix)
-{
-	// get right expensive text object and render it //
-
-	// check id //
-	if(renderptr->TextID < 0)
-		renderptr->TextID = IDFactory::GetID();
-
-	ExpensiveText* text = GetExpensiveText(renderptr->TextID);
-
-
-	// check does text need updating //
-	if(!text->UpdateIfNeeded(renderptr, this, ScreenWidth, ScreenHeight)){
-		// failed to update sentence's internal buffers/textures //
-		DEBUG_BREAK;
-		return false;
-	}
-
-
-	// prepare text for rendering //
-	if(!text->PrepareRender(devcont)){
-
-		DEBUG_BREAK;
-		return false;
-	}
-
-	// render text //
-	return text->Render(_FontShader, this, devcont, worldmatrix, orthomatrix);
-}
-
-DLLEXPORT ExpensiveText* Leviathan::TextRenderer::GetExpensiveText(const int &ID){
-	// try to find one //
-	for(size_t i = 0; i < ExpensiveTexts.size(); i++){
-		if(ExpensiveTexts[i]->ID == ID){
-			// found right one //
-			return ExpensiveTexts[i];
-		}
-	}
-
-	// create new //
-	ExpensiveTexts.push_back(new ExpensiveText(ID));
-	return ExpensiveTexts.back();
-}
-
-DLLEXPORT bool Leviathan::TextRenderer::ReleaseExpensiveText(const int &ID){
-	for(size_t i = 0; i < ExpensiveTexts.size(); i++){
-		if(ExpensiveTexts[i]->ID == ID){
-			// found right one //
-			SAFE_DELETE(ExpensiveTexts[i]);
-			ExpensiveTexts.erase(ExpensiveTexts.begin()+i);
-			return true;
-		}
-	}
-	return false;
-}
-
 DLLEXPORT bool Leviathan::TextRenderer::RenderExpensiveTextToTexture(ExpensiveText* text, const int &TextureID){
 	// get right font and pass data to it //
 	int index = GetFontIndex(text->Font);
@@ -588,32 +181,17 @@ DLLEXPORT bool Leviathan::TextRenderer::AdjustTextToFitBox(const Float2 &BoxToFi
 	return FontHolder[index]->AdjustTextSizeToFitBox(BoxToFit, text, CoordType, Charindexthatfits, EntirelyFitModifier, HybridScale, 
 		Finallength, scaletocutfrom);
 }
-
-DLLEXPORT RenderingFont* Leviathan::TextRenderer::GetFontFromName(const wstring &name){
-	int index = GetFontIndex(name);
-	ARR_INDEX_CHECKINV(index, (int)FontHolder.size()){
-		// could not load font //
-		return NULL;
-	}
-	return FontHolder[index];
-}
-
 // ------------------ ExpensiveText ------------------ //
-DLLEXPORT bool Leviathan::ExpensiveText::UpdateIfNeeded(ExpensiveTextRendBlob* renderptr, TextRenderer* render, int ScreenWidth, int ScreenHeight){
-	// copy values that are always safe to change //
-	Color = renderptr->Color;
-
+DLLEXPORT bool Leviathan::ExpensiveText::UpdateIfNeeded(TextRenderer* render, const wstring &text, const wstring &font, const Float2 &location, 
+	int coordtype, float size, float adjustcut, const Float2 &boxtofit, bool fittobox, int screenwidth, int screenheight)
+{
 	// check has something changed //
 	bool TextNeedsRendering = false;
 	bool BuffersNeedUpdating = false;
 
-	//DebugVariableNotifier::UpdateVariable(L"ExpensiveTextRendBlob::TextAreaSize::X", new VariableBlock(renderptr->BoxToFit.X));
-	//DebugVariableNotifier::UpdateVariable(L"ExpensiveTextRendBlob::TextWantedCoordinates::X", new VariableBlock(renderptr->Coord.X));
-
 	// things that affect both //
-	if((renderptr->CoordType != CoordType) || ((ScreenHeight != this->ScreenHeight || ScreenWidth != this->ScreenWidth) && 
-		(CoordType == GUI_POSITIONABLE_COORDTYPE_RELATIVE)))
-	{
+	if(coordtype != CoordType || (screenheight != ScreenHeight || screenwidth != ScreenWidth)){
+
 		TextNeedsRendering = true;
 		// needs to reposition the buffer //
 		BuffersNeedUpdating = true;
@@ -621,7 +199,7 @@ DLLEXPORT bool Leviathan::ExpensiveText::UpdateIfNeeded(ExpensiveTextRendBlob* r
 		goto checkresultstartslabel;
 	}
 
-	if((FitToBox != renderptr->FitToBox) || (FitToBox && (BoxToFit != renderptr->BoxToFit))){
+	if(FitToBox != fittobox || BoxToFit != boxtofit){
 		// needs to redo everything //
 		TextNeedsRendering = true;
 		BuffersNeedUpdating = true;
@@ -631,13 +209,12 @@ DLLEXPORT bool Leviathan::ExpensiveText::UpdateIfNeeded(ExpensiveTextRendBlob* r
 	}
 
 	// check does the text texture need to be rendered again //
-	if((renderptr->Font != this->Font) || (renderptr->Text != this->Text) || (renderptr->Size != Size) || (AdjustCutModifier != 
-		renderptr->AdjustCutModifier))
-	{
+	if(font != Font || text != Text || size != Size || AdjustCutModifier != adjustcut){
+
 		TextNeedsRendering = true;
 	}
 
-	if((renderptr->Coord != Coord)){
+	if(Coord != location){
 		// needs to reposition the buffer //
 		BuffersNeedUpdating = true;
 	}
@@ -650,16 +227,16 @@ DLLEXPORT bool Leviathan::ExpensiveText::UpdateIfNeeded(ExpensiveTextRendBlob* r
 checkresultstartslabel:
 
 	// copy new values //
-	Size = renderptr->Size;
-	Coord = renderptr->Coord;
-	CoordType = renderptr->CoordType;
-	BoxToFit = renderptr->BoxToFit;
-	FitToBox = renderptr->FitToBox;
-	Text = renderptr->Text;
-	Font = renderptr->Font;
-	this->ScreenWidth = ScreenWidth;
-	this->ScreenHeight = ScreenHeight;
-	AdjustCutModifier = renderptr->AdjustCutModifier;
+	Size = size;
+	Coord = location;
+	CoordType = coordtype;
+	BoxToFit = boxtofit;
+	FitToBox = fittobox;
+	Text = text;
+	Font = font;
+	ScreenWidth = screenwidth;
+	ScreenHeight = screenheight;
+	AdjustCutModifier = adjustcut;
 	// can no longer be adjusted //
 	AdjustedToFit = false;
 	AdjustedSize = Size;
@@ -686,70 +263,6 @@ checkresultstartslabel:
 
 	// should be all good to go //
 	return true;
-}
-
-bool Leviathan::ExpensiveText::PrepareRender(ID3D11DeviceContext* devcont){
-	// verify buffers //
-	if(!BuffersFine){
-		// check buffer states //
-
-		if(!_VerifyBuffers(devcont)){
-			// failed //
-			return false;
-		}
-
-		// buffers good //
-		BuffersFine = true;
-	}
-
-
-
-	// Set vertex buffer stride and offset.
-	unsigned int stride, offset;
-	stride = sizeof(VertexType); 
-	offset = 0;
-
-	// Set the vertex buffer to active in the input assembler so it can be rendered.
-	devcont->IASetVertexBuffers(0, 1, &VertexBuffer, &stride, &offset);
-
-	// Set the index buffer to active in the input assembler so it can be rendered.
-	devcont->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
-	devcont->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-
-	return true;
-}
-
-DLLEXPORT bool Leviathan::ExpensiveText::Render(FontShader* shader, TextRenderer* trender, ID3D11DeviceContext* devcont, D3DXMATRIX worldmatrix, D3DXMATRIX orthomatrix){
-	// Render the text using the font shader.
-	ManagedTexture* tmptexture = Graphics::Get()->GetTextureManager()->GetTexture(TextureID, TEXTUREMANAGER_SEARCH_VOLATILEGENERATED, true);
-	// check is texture NULL (which is very rare) or if it is the error texture for getting the text unloaded //
-	if(!tmptexture || Graphics::Get()->GetTextureManager()->IsTextureError(tmptexture)){
-		// textures aren't generated //
-trytoveerifyexpensivetexttextureslabel:
-
-		if(!_VerifyTextures(trender)){
-			// this should now be marked as invalid //
-			DEBUG_BREAK;
-		} else {
-			// textures should now be fine //
-			// recurse
-			return Render(shader, trender, devcont, worldmatrix, orthomatrix);
-		}
-		return false;
-	}
-
-	// get resource //
-	ID3D11ShaderResourceView* texture = tmptexture->GetView();
-
-	if(!texture){
-		// texture needs to be re created //
-		goto trytoveerifyexpensivetexttextureslabel;
-	}
-
-	return shader->Render(devcont, 6, worldmatrix, trender->BaseViewMatrix, orthomatrix, texture, Color);
 }
 
 DLLEXPORT void Leviathan::ExpensiveText::AdjustToFit(TextRenderer* trenderer, bool trytocenter /*= false*/){
@@ -843,11 +356,6 @@ bool Leviathan::ExpensiveText::_VerifyBuffers(ID3D11DeviceContext* devcont){
 	// cast to right type //
 	VertexType* VertexDataPtr = (VertexType*)VBufferData.pData;
 
-	// calculate the data that needs to be passed //
-
-	//DebugVariableNotifier::UpdateVariable(L"_VerifyBuffers::TextAreaSize::X", new VariableBlock(RenderedToBox.X));
-	//DebugVariableNotifier::UpdateVariable(L"_VerifyBuffers::TextWantedCoordinates::X", new VariableBlock(Coord.X));
-
 	// convert data //
 	VertexType* vertices = Rendering::ResourceCreator::GenerateQuadIntoVertexBuffer(Coord, RenderedToBox, 6, CoordType, 
 		QUAD_FILLSTYLE_UPPERLEFT_0_BOTTOMRIGHT_1);
@@ -870,5 +378,169 @@ bool Leviathan::ExpensiveText::_VerifyBuffers(ID3D11DeviceContext* devcont){
 
 
 	// buffers are now fine //
+	return true;
+}
+
+DLLEXPORT bool Leviathan::ExpensiveText::SetBuffersForRendering(ID3D11DeviceContext* devcont, int &indexbuffersize){
+	if(!BuffersFine){
+		// check buffer states //
+		if(!_VerifyBuffers(devcont)){
+			// failed //
+			return false;
+		}
+
+		// buffers good //
+		BuffersFine = true;
+	}
+
+	indexbuffersize = GetIndexCount();
+	return RenderBuffers(devcont);
+}
+
+DLLEXPORT bool Leviathan::ExpensiveText::SetRenderingVariablesToSH(TextRenderer* trenderer, ShaderRenderTask* task){
+	// set parameters for rendering this text //
+	shared_ptr<ManagedTexture> tmptexture = Graphics::Get()->GetTextureManager()->GetTexture(TextureID, TEXTUREMANAGER_SEARCH_VOLATILEGENERATED, true);
+	// check is texture NULL (which is very rare) or if it is the error texture for getting the text unloaded //
+	if(!tmptexture.get() || trenderer->GetOwningGraphics()->GetTextureManager()->IsTextureError(tmptexture.get())){
+		// textures aren't generated //
+trytoveerifyexpensivetexttextureslabel:
+
+		if(!_VerifyTextures(trenderer)){
+			// this should now be marked as invalid //
+			DEBUG_BREAK;
+		} else {
+			// textures should now be fine //
+			// recurse
+			return SetRenderingVariablesToSH(trenderer, task);
+		}
+		return false;
+	}
+	// get resource //
+	ID3D11ShaderResourceView* texture = tmptexture->GetView();
+
+	if(!texture){
+		// texture needs to be re created //
+		goto trytoveerifyexpensivetexttextureslabel;
+	}
+
+	// set parameters for shader //
+	if(!task->GetBaseTextureHolder() ||task->GetBaseTextureHolder()->TextureCount != 1){
+		// new texture holder //
+		task->SetTextures(new SingleTextureHolder(tmptexture));
+	} else {
+		// set texture //
+		static_cast<SingleTextureHolder*>(task->GetBaseTextureHolder())->Texture1 = tmptexture;
+	}
+
+	return true;
+}
+// ------------------ CheapText ------------------ //
+Leviathan::CheapText::CheapText(const int &id) : BaseRenderableBufferContainer("C0:T0", sizeof(VertexType)), ID(id){
+	// set max character count to 0 to force updating on first Update call //
+	MaxTextLength = 0;
+
+}
+
+Leviathan::CheapText::~CheapText(){
+	// release buffers //
+	Release();
+}
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::CheapText::Update(TextRenderer* render, const wstring &text, const wstring &font, const Float2 &pos, int coordtype, 
+	float sizemodifier, int screenwidth, int screenheight)
+{
+	// return if none are updated //
+	if(Text == text && Font == font && Position == pos && CoordType == coordtype && SizeModifier == sizemodifier && ScreenWidth == screenwidth &&
+		ScreenHeight == screenheight)
+	{
+		return true;
+	}
+
+	// check for too long string //
+	if((int)text.length() > MaxTextLength || MaxTextLength == 0){
+		// needs to recreate buffers //
+		SAFE_RELEASE(VertexBuffer);
+		SAFE_RELEASE(IndexBuffer);
+
+		// update max length //
+		MaxTextLength = text.size()*2;
+		VertexCount = 6 * MaxTextLength;
+	}
+
+	// copy new values //
+	Text = text;
+	Position = pos;
+	CoordType = coordtype;
+	SizeModifier = sizemodifier;
+	ScreenWidth = screenwidth;
+	ScreenHeight = screenheight;
+
+
+
+	// generate buffers if they haven't been created already //
+	IndexBuffer = Rendering::ResourceCreator::GenerateDefaultIndexBuffer(VertexCount);
+	// dynamic buffer for updating texture coordinates //
+	VertexBuffer = Rendering::ResourceCreator::GenerateDefaultDynamicDefaultTypeVertexBuffer(VertexCount);
+
+
+	// create new vertex array //
+	unique_ptr<VertexType[]> vertices(new VertexType[VertexCount]);
+	ZeroMemory(vertices.get(), sizeof(VertexType)*VertexCount);
+
+	// calculate where to draw //
+	float drawX = 0;
+	float drawY = 0;
+	if(CoordType == GUI_POSITIONABLE_COORDTYPE_RELATIVE){
+		// pos is value between 0 - 1 scale to screen size //
+		drawX = ((((float)ScreenWidth / 2) * -1) + ScreenWidth*Position.X);
+		drawY = ((((float)ScreenHeight / 2)) - ScreenHeight*Position.Y);
+
+	} else {
+		drawX = ((((float)ScreenWidth / 2) * -1) + Position.X);
+		drawY = (((float)ScreenHeight / 2) - Position.Y);
+	}
+	
+	// use font to build vertex array //
+	if(!render->GetFontFromName(Font)->BuildVertexArray(vertices.get(), text, drawX, drawY, SizeModifier)){
+		// sentence probably has invalid characters //
+		return false;
+	}
+	if(!vertices){
+		// font has failed //
+		Logger::Get()->Error(L"Render sentence has failed");
+		return false;
+	}
+
+	// lock vertex buffer for writing //
+	auto AutoUnlocker = Rendering::ResourceCreator::MapConstantBufferForWriting<VertexType>(render->GetOwningGraphics()->GetRenderer()->
+		GetDeviceContext(), VertexBuffer);
+	if(AutoUnlocker.get() == NULL){
+		// failed to lock buffer //
+		return false;
+	}
+	// copy data to the actual buffer //
+	memcpy(AutoUnlocker->LockedResourcePtr, (void*)vertices.get(), sizeof(VertexType)*VertexCount);
+
+	return true;
+}
+
+bool Leviathan::CheapText::CreateBuffers(ID3D11Device* device){
+	// we actually cannot create buffers here //
+	return true;
+}
+
+DLLEXPORT bool Leviathan::CheapText::SetRenderingVariablesToSH(TextRenderer* trenderer, ShaderRenderTask* task){
+	// get font's texture //
+	shared_ptr<ManagedTexture> texture = trenderer->GetFontFromName(Font)->GetTexture();
+
+	// set parameters for shader //
+	if(!task->GetBaseTextureHolder() ||task->GetBaseTextureHolder()->TextureCount != 1){
+		// new texture holder //
+		task->SetTextures(new SingleTextureHolder(texture));
+	} else {
+		// set texture //
+		static_cast<SingleTextureHolder*>(task->GetBaseTextureHolder())->Texture1 = texture;
+	}
+
 	return true;
 }

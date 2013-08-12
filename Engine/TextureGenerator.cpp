@@ -89,7 +89,7 @@ ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, un
 	}
 
 	
-	result = new ManagedTexture(tempbuffer.get(), charsinbuffer, IDFactory::GetID(), L"TextureGenerator::Checkerboard", dev);
+	result = new ManagedTexture(tempbuffer.get(), charsinbuffer, IDFactory::GetID(), L"TextureGenerator::Checkerboard", dev, TEXTURETYPE_NORMAL);
 	return result;
 }
 // ------------------------------------ //

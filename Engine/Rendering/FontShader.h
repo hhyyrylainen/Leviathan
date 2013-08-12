@@ -12,12 +12,12 @@
 namespace Leviathan{ namespace Rendering{
 
 
-	class FontShader : BaseShader{
+	class FontShader : public BaseShader{
 	public:
 		DLLEXPORT FontShader();
 		DLLEXPORT virtual ~FontShader();
 
-		DLLEXPORT virtual bool DoesInputObjectWork(ShaderRenderTask* paramstocheck);
+		DLLEXPORT virtual bool DoesInputObjectWork(ShaderRenderTask* paramstocheck) const;
 
 	private:
 

@@ -49,9 +49,6 @@
     <Filter Include="rendering\render objects">
       <UniqueIdentifier>{80237cee-ef3e-4ea9-bfad-5662f309fdbb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="rendering\data objects">
-      <UniqueIdentifier>{eede6a01-f1de-41bd-80e6-f0f5765fedc5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="rendering\textures">
       <UniqueIdentifier>{ab12e3a5-6df6-4880-b9e3-aa2c26b64bfd}</UniqueIdentifier>
     </Filter>
@@ -120,6 +117,9 @@
     </Filter>
     <Filter Include="rendering\shaders\specialized">
       <UniqueIdentifier>{aed3be9a-b43d-4956-a996-12ec1ef9f1d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rendering\2d objects">
+      <UniqueIdentifier>{6ec81b60-110c-471c-bc13-3cf254313f34}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -243,26 +243,11 @@
     <ClCompile Include="Define.cpp">
       <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="Rendering\Bitmap.cpp">
-      <Filter>rendering\render objects</Filter>
-    </ClCompile>
-    <ClCompile Include="Rendering\ColorQuad.cpp">
-      <Filter>rendering\render objects</Filter>
-    </ClCompile>
     <ClCompile Include="Rendering\Frustrum.cpp">
       <Filter>rendering\render objects</Filter>
     </ClCompile>
     <ClCompile Include="Rendering\Light.cpp">
       <Filter>rendering\render objects</Filter>
-    </ClCompile>
-    <ClCompile Include="Rendering\RenderSavedResource.cpp">
-      <Filter>rendering\data objects</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderAction.cpp">
-      <Filter>rendering\data objects</Filter>
-    </ClCompile>
-    <ClCompile Include="Rendering\GuiRendBlob.cpp">
-      <Filter>rendering\data objects</Filter>
     </ClCompile>
     <ClCompile Include="Rendering\TextureArray.cpp">
       <Filter>rendering\textures</Filter>
@@ -534,6 +519,18 @@
     <ClCompile Include="DefaultShaders.cpp">
       <Filter>rendering\shaders\specialized</Filter>
     </ClCompile>
+    <ClCompile Include="BaseRenderableBufferContainer.cpp">
+      <Filter>rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\RenderingQuad.cpp">
+      <Filter>rendering\2d objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\GuiRendBlob.cpp">
+      <Filter>rendering\2d objects</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderAction.cpp">
+      <Filter>rendering\2d objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Misc.h">
@@ -672,26 +669,11 @@
     <ClInclude Include="Include.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="Rendering\Bitmap.h">
-      <Filter>rendering\render objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\ColorQuad.h">
-      <Filter>rendering\render objects</Filter>
-    </ClInclude>
     <ClInclude Include="Rendering\Frustrum.h">
       <Filter>rendering\render objects</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\Light.h">
       <Filter>rendering\render objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\RenderSavedResource.h">
-      <Filter>rendering\data objects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderAction.h">
-      <Filter>rendering\data objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\GuiRendBlob.h">
-      <Filter>rendering\data objects</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\TextureArray.h">
       <Filter>rendering\textures</Filter>
@@ -962,6 +944,18 @@
     </ClInclude>
     <ClInclude Include="DefaultShaders.h">
       <Filter>rendering\shaders\specialized</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseRenderableBufferContainer.h">
+      <Filter>rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\RenderingQuad.h">
+      <Filter>rendering\2d objects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderAction.h">
+      <Filter>rendering\2d objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\GuiRendBlob.h">
+      <Filter>rendering\2d objects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

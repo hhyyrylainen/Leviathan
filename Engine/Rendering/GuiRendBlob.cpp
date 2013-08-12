@@ -7,180 +7,192 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "RenderingQuad.h"
 #include "Engine.h"
+#include ".\Rendering\TextRenderer.h"
 
-Leviathan::RenderingGBlob::RenderingGBlob(){
-	TypeName = -1;
-}
-Leviathan::RenderingGBlob::RenderingGBlob(int relativez, int slotid){
-	RelativeZ = relativez;
-	SlotID = slotid;
-	TypeName = 0;
-	Hidden = false;
-	Updated = true;
+Leviathan::RenderingGBlob::RenderingGBlob(const int &relativez, const int &slotid, const bool &hidden) : SHRender(NULL), 
+	RelativeZ(relativez), SlotID(slotid), Hidden(hidden)
+{
 }
 Leviathan::RenderingGBlob::~RenderingGBlob(){
+	SAFE_DELETE(SHRender);
+}
 
+void Leviathan::RenderingGBlob::SetShaderMatrixBuffers(RenderingPassInfo* pass){
+	// copy matrices //
+	SHRender->GetBaseMatrixBufferData()->ProjectionMatrix = pass->GetProjectionMatrix();
+	SHRender->GetBaseMatrixBufferData()->ViewMatrix = pass->GetViewMatrix();
+	SHRender->GetBaseMatrixBufferData()->WorldMatrix = pass->GetWorldMatrix();
 }
-bool RenderingGBlob::IsThisType(int tochecktype){
-	if(tochecktype == TypeName)
-		return true;
-	return false;
-}
+
 // ---------------- ColorQuardRendBlob -------------------- //
-Leviathan::ColorQuadRendBlob::ColorQuadRendBlob() : RenderingGBlob(){
-
-}
-Leviathan::ColorQuadRendBlob::ColorQuadRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, 
-	const Float4 &color2, const Float2 &size, int colortranstype, int coordinatetype) : RenderingGBlob(relativez, slotid), Color1(color), 
-	Color2(color2), Coord(xypos), Size(size)
+Leviathan::ColorQuadRendBlob::ColorQuadRendBlob(Graphics* graph, const int &relativez, const int &slotid, const bool &hidden) : RenderingGBlob(
+	relativez, slotid, hidden)
 {
-	TypeName = GUIRENDERING_BLOB_TYPE_CQUAD;
+	// create new quad //
+	CQuad = new Rendering::RenderingQuad();
+	if(!CQuad->Init(graph->GetRenderer()->GetDevice())){
 
-	Hidden = false;
-	Updated = true;
-
-	CoordType = coordinatetype;
-
-	Updated = true;
-	ColorTransType = colortranstype;
-
-	CQuad = NULL;
+		throw ExceptionNULLPtr(L" can't init RenderingQuad", false, __WFUNCTION__, NULL);
+	}
 }
 Leviathan::ColorQuadRendBlob::~ColorQuadRendBlob(){
 	SAFE_RELEASEDEL(CQuad);
 }
-void Leviathan::ColorQuadRendBlob::Update(int relativez, const Float2 &xypos, const Float4 &color, const Float4 &color2, const Float2 &size, 
-	int colortranstype, int coordinatetype)
+void Leviathan::ColorQuadRendBlob::Update(Graphics* graph, const int &relativez, const Float2 &xypos, const Float4 &color, const Float4 &color2, 
+	const Float2 &size, int colortranstype, int coordinatetype)
 {
-	Updated = true;
-
-	CoordType = coordinatetype;
-	Coord = xypos;
-	Color1 = color;
-	Color2 = color2;
-	Size = size;
-	ColorTransType = colortranstype;
-
+	// update z-order //
 	RelativeZ = relativez;
+
+	// update colours buffer //
+	EnsureShaderRenderTask();
+
+	SHRender->GetColourBufferTwo()->Colour1 = (D3DXVECTOR4)color;
+	SHRender->GetColourBufferTwo()->Colour2 = (D3DXVECTOR4)color2;
+
+	CQuad->Update(graph->GetRenderer()->GetDeviceContext(), xypos, size, graph->GetWindow()->GetWidth(), graph->GetWindow()->GetHeight(), 
+		coordinatetype, colortranstype);
 }
-void Leviathan::ColorQuadRendBlob::Get(Float2 &xypos, Float4 &color, Float4 &color2, Float2 &size, int &colortranstype, int &coordinatetype){
-	xypos = Coord;
-	color = Color1;
-	color2 = Color2;
-	size = Size;
-	colortranstype = ColorTransType;
-	coordinatetype = CoordType;
+
+
+DLLEXPORT Rendering::BaseRenderableBufferContainer* Leviathan::ColorQuadRendBlob::GetRenderingBuffers(Graphics* graph){
+	// RenderingQuad is inherited from the base so we can just return it //
+	return CQuad;
 }
-bool Leviathan::ColorQuadRendBlob::HasUpdated(){
-	return Updated;
+
+DLLEXPORT ShaderRenderTask* Leviathan::ColorQuadRendBlob::GetShaderParameters(Graphics* graph, RenderingPassInfo* pass){
+	// update matrix buffers //
+	EnsureShaderRenderTask();
+	SetShaderMatrixBuffers(pass);
+	return SHRender;
 }
-bool Leviathan::ColorQuadRendBlob::ConsumeUpdate(){
-	if(Updated){
-		Updated = false;
-		return true;
+
+void Leviathan::ColorQuadRendBlob::EnsureShaderRenderTask(){
+	// create new if NULL //
+	if(SHRender == NULL){
+
+		SHRender = new ShaderRenderTask();
+		// set required parts //
+		SHRender->SetBaseMatrixBuffer(new BaseMatrixBufferData())->SetColourBufferTwo(new TwoColorBufferData());
 	}
-	return false;
 }
+
 // ---------------- BasicTextRendBlob -------------------- //
-Leviathan::BasicTextRendBlob::BasicTextRendBlob() : RenderingGBlob(){
-	HasText = false;
-}
-Leviathan::BasicTextRendBlob::BasicTextRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, float sizemod, 
-	const wstring &text, const wstring &font, int coordtype) : RenderingGBlob(relativez, slotid), Coord(xypos), Color(color), Font(font), Text(text)
+Leviathan::BasicTextRendBlob::BasicTextRendBlob(Graphics* graph, const int &relativez, const int &slotid, const bool &hidden) : 
+	RenderingGBlob(relativez, slotid, hidden)
 {	
-	TypeName = GUIRENDERING_BLOB_TYPE_TEXT;
-
-	Hidden = false;
-	Updated = true;
-
-	CoordType = coordtype;
-	Size = sizemod;
-
 	// get unique id for text //
 	TextID = IDFactory::GetID();
-
-	HasText = false;
+	// copy text renderer ptr //
+	TRenderer = graph->GetTextRenderer();
 }
+
 Leviathan::BasicTextRendBlob::~BasicTextRendBlob(){
-	if(HasText){
-		// needs to destroy the text //
-		Engine::GetEngine()->GetGraphics()->GetTextRenderer()->ReleaseSentenceID(TextID);
-		HasText = false;
-	}
+	// needs to destroy the text //
+	TRenderer->ReleaseText(TextID);
 }
 // ------------------------------------ //
 void Leviathan::BasicTextRendBlob::Update(int relativez, const Float2 &xypos, const Float4 &color, float sizemod, const wstring &text, 
 	const wstring &font, int coordtype)
 {
-	Updated = true;
-
-	CoordType = coordtype;
-	Size = sizemod;
-	Coord = xypos;
-	Color = color;
-	Font = font;
-	Text = text;
-
+	// update z-order //
 	RelativeZ = relativez;
+	
+	// set colour //
+	EnsureShaderRenderTask();
+	SHRender->GetColourBufferTwo()->Colour1 = (D3DXVECTOR4)color;
+
+	// update text //
+	CheapText* tmpt = TRenderer->GetCheapText(TextID);
+	// get screen sizes for update method //
+	Window* tmpw = TRenderer->GetOwningGraphics()->GetWindow();
+
+	tmpt->Update(TRenderer, text, font, xypos, coordtype, sizemod, tmpw->GetWidth(), tmpw->GetHeight());
 }
-void Leviathan::BasicTextRendBlob::Get(Float2 &xypos, Float4 &color, float &size, wstring &text, wstring &font, int &coordtype, int& textid){
-	xypos = Coord;
-	color = Color;
-	size = Size;
-	font = Font;
-	text = Text;
-	coordtype = CoordType;
-	textid = TextID;
-}
-// ------------------------------------ //
-bool Leviathan::BasicTextRendBlob::HasUpdated(){
-	return Updated;
-}
-bool Leviathan::BasicTextRendBlob::ConsumeUpdate(){
-	if(Updated){
-		Updated = false;
-		return true;
+
+void Leviathan::BasicTextRendBlob::EnsureShaderRenderTask(){
+	// create new if NULL //
+	if(SHRender == NULL){
+
+		SHRender = new ShaderRenderTask();
+		// set required parts //
+		SHRender->SetBaseMatrixBuffer(new BaseMatrixBufferData())->SetColourBufferTwo(new TwoColorBufferData());
 	}
-	return false;
-}
-void Leviathan::BasicTextRendBlob::SetUpdated(){
-	Updated = true;
-}
-// ------------------------------------ //
 
+}
 
-DLLEXPORT Leviathan::ExpensiveTextRendBlob::ExpensiveTextRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, float sizemod, 
-	const wstring &text, const wstring &font, int coordtype /*= GUI_POSITIONABLE_COORDTYPE_RELATIVE*/, bool fittobox /*= false*/, const Float2 box 
-	/*= (Float2)0*/, const float &adjustcutpercentage /*= 0.4f*/) : RenderingGBlob(relativez, slotid), Coord(xypos), BoxToFit(box), 
-	CoordType(coordtype), Color(color), Font(font), Text(text), AdjustCutModifier(adjustcutpercentage)
+DLLEXPORT Rendering::BaseRenderableBufferContainer* Leviathan::BasicTextRendBlob::GetRenderingBuffers(Graphics* graph){
+	// let text renderer to return it's internal buffers //
+	EnsureShaderRenderTask();
+	return TRenderer->GetRenderingBuffers(TextID, SHRender);
+}
+
+DLLEXPORT ShaderRenderTask* Leviathan::BasicTextRendBlob::GetShaderParameters(Graphics* graph, RenderingPassInfo* pass){
+	EnsureShaderRenderTask();
+	SetShaderMatrixBuffers(pass);
+
+	// fetch textures from text renderer //
+	TRenderer->UpdateShaderRenderTask(TextID, SHRender, pass);
+	return SHRender;
+}
+
+// ------------------ ExpensiveTextRendBlob ------------------ //
+DLLEXPORT Leviathan::ExpensiveTextRendBlob::ExpensiveTextRendBlob(Graphics* graph, const int &relativez, const int &slotid, const bool &hidden) : 
+	RenderingGBlob(relativez, slotid, hidden)
 {
-	TypeName = GUIRENDERING_BLOB_TYPE_EXPENSIVETEXT;
-
-	Size = sizemod;
-	FitToBox = fittobox;
-
+	// get unique id for text //
 	TextID = IDFactory::GetID();
+
+
 }
 
 DLLEXPORT Leviathan::ExpensiveTextRendBlob::~ExpensiveTextRendBlob(){
 	// release the text //
-	Graphics::Get()->GetTextRenderer()->ReleaseExpensiveText(TextID);
+	TRenderer->ReleaseText(TextID);
 }
 
 DLLEXPORT void Leviathan::ExpensiveTextRendBlob::Update(int relativez, const Float2 &xypos, const Float4 &color, float sizemod, const wstring &text, 
 	const wstring &font, int coordtype /*= GUI_POSITIONABLE_COORDTYPE_RELATIVE*/, bool fittobox /*= false*/, const Float2 box /*= (Float2)0*/, const 
 	float &adjustcutpercentage /*= 0.4f*/)
 {
-	Size = sizemod;
+	// update z-order //
+	RelativeZ = relativez;
 
-	Coord = xypos;
-	BoxToFit = box;
-	FitToBox = fittobox;
-	CoordType = coordtype;
-	AdjustCutModifier = adjustcutpercentage;
+	// set colour //
+	EnsureShaderRenderTask();
+	SHRender->GetColourBufferTwo()->Colour1 = (D3DXVECTOR4)color;
 
-	Color = color;
+	// update text //
+	ExpensiveText* tmpt = TRenderer->GetExpensiveText(TextID);
 
-	Font = font;
-	Text = text;
+	// get screen sizes for update method //
+	Window* tmpw = TRenderer->GetOwningGraphics()->GetWindow();
+
+	tmpt->UpdateIfNeeded(TRenderer, text, font, xypos, coordtype, sizemod, adjustcutpercentage, box, fittobox, tmpw->GetWidth(), tmpw->GetHeight());
+}
+
+void Leviathan::ExpensiveTextRendBlob::EnsureShaderRenderTask(){
+	// create new if NULL //
+	if(SHRender == NULL){
+
+		SHRender = new ShaderRenderTask();
+		// set required parts //
+		SHRender->SetBaseMatrixBuffer(new BaseMatrixBufferData())->SetColourBufferTwo(new TwoColorBufferData());
+	}
+
+}
+
+DLLEXPORT Rendering::BaseRenderableBufferContainer* Leviathan::ExpensiveTextRendBlob::GetRenderingBuffers(Graphics* graph){
+	// let text renderer to return it's internal buffers //
+	EnsureShaderRenderTask();
+	return TRenderer->GetRenderingBuffers(TextID, SHRender);
+}
+
+DLLEXPORT ShaderRenderTask* Leviathan::ExpensiveTextRendBlob::GetShaderParameters(Graphics* graph, RenderingPassInfo* pass){
+	EnsureShaderRenderTask();
+	SetShaderMatrixBuffers(pass);
+
+	// fetch textures from text renderer //
+	TRenderer->UpdateShaderRenderTask(TextID, SHRender, pass);
+	return SHRender;
 }

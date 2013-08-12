@@ -23,13 +23,10 @@ namespace Leviathan{ namespace Rendering{
 		DLLEXPORT bool Update(ID3D11DeviceContext* devcont, const Float2 &pos, const Float2 &sizes, int screenwidth, int screenheight, int coordtype, 
 			int flowstyle = 1);
 
-		//DLLEXPORT void Resize(int screenwidth, int screenheight, int quadwidth, int quadheight);
-		DLLEXPORT bool Render(ID3D11DeviceContext* devcont, );
-
-		DLLEXPORT inline int GetIndexCount(){
+		DLLEXPORT virtual inline int GetIndexCount() const{
 			return COLORQUAD_VERTEXCOUNT;
 		}
-
+		
 
 	private:
 		virtual bool CreateBuffers(ID3D11Device* device);

@@ -13,7 +13,7 @@ using namespace Leviathan;
 #include "..\ExceptionInvalidType.h"
 #include "..\DebugVariableNotifier.h"
 
-RenderingFont::RenderingFont() : Textures(NULL), FontsFace(NULL), FontData(){
+RenderingFont::RenderingFont() : Texture(NULL), FontsFace(NULL), FontData(){
 	// we need to increase instance count //
 	boost::lock_guard<boost::mutex> guard(LivingStaticMutex);
 	LivingObjects++;
@@ -63,7 +63,7 @@ void RenderingFont::Release(){
 	if(FontsFace)
 		FT_Done_Face(FontsFace);
 
-	SAFE_RELEASEDEL(Textures);
+	Texture->UnLoad(true);
 	SAFE_DELETE_VECTOR(FontData);
 }
 // ------------------------------------ //
@@ -347,12 +347,11 @@ glyphprocesserrorlabel:
 		Logger::Get()->Info(L"RenderingFont: LoadTexture: successfully generated texture file: "+file);
 	}
 
-	Textures = new TextureArray();
-	if(!Textures)
-		return false;
+	Texture = shared_ptr<ManagedTexture>(new ManagedTexture(FileSystem::GetFontFolder()+Name+L".dds", IDFactory::GetID(), TEXTURETYPE_TEXT));
+	
+	if(!Texture->Load(dev)){
 
-	if(!Textures->Init(dev, FileSystem::GetFontFolder()+Name+L".dds", L"")){
-		Logger::Get()->Error(L"LoadTexture failed Texture init returned false", true);
+		Logger::Get()->Error(L"RenderingFont: LoadTexture: failed to load texture file");
 		return false;
 	}
 
@@ -510,7 +509,7 @@ DLLEXPORT bool Leviathan::RenderingFont::RenderSentenceToTexture(const int &Text
 		return false;
 	}
 	// load texture from that file and add it to texture id //
-	Graphics::Get()->GetTextureManager()->AddVolatileGenerated(TextureID, L"RenderingFont", tempview);
+	Graphics::Get()->GetTextureManager()->AddVolatileGenerated(TextureID, L"RenderingFont", tempview, TEXTURETYPE_TEXT);
 
 
 	//DebugVariableNotifier::UpdateVariable(L"RenderSentenceToTexture::Bitmap::Width", new VariableBlock(bitmap.GetWidth()
@@ -903,10 +902,6 @@ DLLEXPORT bool Leviathan::RenderingFont::WriteDataToFile(){
 	return true;
 }
 // ------------------------------------ //
-ID3D11ShaderResourceView* Leviathan::RenderingFont::GetTexture(){
-	return Textures->GetTexture();
-}
-
 bool Leviathan::RenderingFont::CheckFreeTypeLoad(){
 	if(!FreeTypeLoaded){
 

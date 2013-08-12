@@ -10,27 +10,18 @@ using namespace Leviathan;
 #include "ShaderManager.h"
 #include "RenderingQuad.h"
 
-Graphics::Graphics(){
-	Initialized = false;
+Graphics::Graphics() : Drenderer(NULL), ActiveCamera(NULL), Shaders(NULL), Light(NULL), TextureKeeper(NULL), TextRender(NULL), Initialized(false)
+{
 		
 	Dconfig = DxRendConf();
 	
-	Drenderer = NULL;
-	ActiveCamera = NULL;
-	Shaders = NULL;
-	Light = NULL;
-	TextureKeeper = NULL;
 
-	TextRender = NULL;
 
 	GuiSmooth = 5;
 
 	_gadapter = this;
 }
 Graphics::~Graphics(){
-	if(Initialized){
-		Release();
-	}
 }
 
 Graphics* Graphics::Get(){
@@ -42,7 +33,6 @@ Graphics* Graphics::_gadapter = NULL;
 bool Graphics::Init(Window* wind, const DxRendConf &conf){
 	// save window handle //
 	Wind = wind;
-	GuiSmooth = 5;
 	// set description object //
 	SetDescObjects(conf);
 
@@ -71,7 +61,7 @@ bool Graphics::Init(Window* wind, const DxRendConf &conf){
 	}
 
 	// create shader holder //
-	Shaders = new ShaderManager;
+	Shaders = new Rendering::ShaderManager();
 	if(!Shaders){
 		Logger::Get()->Error(L"Failed to init graphics, can't create ShaderManager");
 		return false;
@@ -117,10 +107,8 @@ bool Graphics::Init(Window* wind, const DxRendConf &conf){
 		Logger::Get()->Error(L"Failed to init graphics, can't create TextRenderer");
 		return false;
 	}
-	D3DXMATRIX tempview;
-	ActiveCamera->GetStaticViewMatrix(tempview);
 
-	if(!TextRender->Init(Drenderer->GetDevice(), Drenderer->GetDeviceContext(), wind, tempview)){
+	if(!TextRender->Init(this)){
 		Logger::Get()->Error(L"Failed to init graphics, can't init TextRenderer");
 		return false;
 	}
@@ -139,7 +127,7 @@ void Graphics::Release(){
 	try{
 		SAFE_RELEASEDEL(TextureKeeper);
 	}
-	// this is tried because it might cause an assertion, which is something we don't like //
+	// this is tried because it might cause an exception, which is something we don't like //
 	catch(...){
 		Logger::Get()->Error(L"Possible assertion from releasing graphics");
 	}
@@ -151,31 +139,24 @@ void Graphics::Release(){
 }
 // ------------------------------------------- //
 bool Graphics::Frame(int mspassed, ViewerCameraPos* camerapostouse, vector<BaseRenderable*> &objects){
-	if(Initialized){
+	// set camera pos //
+	float x, y, z, yaw, pitch, roll;
+	camerapostouse->UpdatePos(mspassed);
+	camerapostouse->GetPos(x,y,z);
+	camerapostouse->GetRotation(yaw,pitch,roll);
+	ActiveCamera->SetPosition(Float3(y,z,x));
+	ActiveCamera->SetRotation(Float3(pitch, yaw, roll));
 
+	// call rendering function //
+	if(!Render(mspassed, objects)){
 
-		//ProcessRenderActionInput();
-		//float rotation = 0.0f;
-
-		// set camera pos //
-		float x, y, z, yaw, pitch, roll;
-		camerapostouse->UpdatePos(mspassed);
-		camerapostouse->GetPos(x,y,z);
-		camerapostouse->GetRotation(yaw,pitch,roll);
-		ActiveCamera->SetPosition(Float3(y,z,x));
-		ActiveCamera->SetRotation(Float3(pitch, yaw, roll));
-
-		// call rendering function //
-		if(!Render(mspassed, objects)){
-
-			return false;
-		}
+		return false;
 	}
 
 	return true;
 }
-bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 
+bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 	// clear render target //
 	Drenderer->BeginRender(Float4(0.4f, 0.7f, 0.85f, 1));
 
@@ -190,32 +171,32 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 	Drenderer->GetProjectionMatrix(ProjectionMatrix);
 
 	// create info object about current pass //
-	unique_ptr<RenderingPassInfo> CurrentPass = unique_ptr<RenderingPassInfo>(new RenderingPassInfo());
+	unique_ptr<RenderingPassInfo> CurrentPass = unique_ptr<RenderingPassInfo>(new RenderingPassInfo(ViewMatrix, ProjectionMatrix, WorldMatrix, 
+		TranslateMatrix, ActiveCamera));
 
 	// go through objects and call their render functions //
-	for(unsigned int i = 0; i < objects.size(); i++){
+	for(size_t i = 0; i < objects.size(); i++){
 		if(objects[i]->IsHidden())
 			continue;
-		// redo matrices and call render //
-		//Drenderer->GetWorldMatrix(WorldMatrix); // objects should be smart enough to not to change common matrices
-
-		objects[i]->Render(this, mspassed, *CurrentPass.get(), ViewMatrix, ProjectionMatrix, WorldMatrix, TranslateMatrix, ActiveCamera->GetPosition()); 
-
-		// reset pass object //
-		CurrentPass->ResetState();
+		
+		// objects should be smart enough to not to change common matrices
+		objects[i]->Render(this, mspassed, *CurrentPass.get()); 
 	}
 
 	// 2d rendering //
 	ActiveCamera->GetStaticViewMatrix(ViewMatrix);
-	Drenderer->GetWorldMatrix(WorldMatrix);
-	Drenderer->GetProjectionMatrix(ProjectionMatrix);
+	//Drenderer->GetWorldMatrix(WorldMatrix);
 	Drenderer->GetOrthoMatrix(OrthoMatrix);
 
 	Drenderer->TurnZBufferOff();
 	// turn on alpha blending //
 	Drenderer->TurnOnAlphaBlending();
 
-	DrawRenderActions(WorldMatrix, ViewMatrix, OrthoMatrix);
+	// update pass object //
+	CurrentPass->SetViewMatrix(ViewMatrix);
+	CurrentPass->SetProjectionMatrix(OrthoMatrix);
+
+	DrawRenderActions(CurrentPass.get());
 
 	// turn z-buffer back on
 	Drenderer->TurnOffAlphaBlending();
@@ -258,9 +239,8 @@ void Graphics::PurgeGuiArray(){
 		}
 	}
 }
-
-
-void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, D3DXMATRIX OrthoMatrix){
+// ------------------------------------------- //
+void Graphics::DrawRenderActions(RenderingPassInfo* pass){
 	// so no dead objects exist //
 	PurgeGuiArray();
 
@@ -297,65 +277,13 @@ void Graphics::DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, 
 					RenderingGBlob* tempptr = (*GuiObjs[i]).DrawActions[a];
 
 					// with virtual objects it is as easy as this //
-					if(!RenderAutomatic(tempptr->GetRenderingBuffers(this), tempptr->GetShaderParameters(this))){
+					if(!RenderAutomatic(tempptr->GetRenderingBuffers(this), tempptr->GetShaderParameters(this, pass))){
 
 
 						continue;
 					}
-
-					if(tempptr->IsThisType(GUIRENDERING_BLOB_TYPE_TEXT)){
-
-						// draw the quad //
-						BasicTextRendBlob* renderptr = reinterpret_cast<BasicTextRendBlob*>(tempptr);
-
-						// get values //
-						Float2 pos;
-						Float4 colour;
-						float sizemod;
-						int coordtype;
-						wstring font;
-						wstring text;
-						int textid;
-						// get data from render blob //
-						renderptr->Get(pos, colour, sizemod, text, font, coordtype, textid);
-
-						// check does text exist, if not create //
-						if(!renderptr->HasText){
-							// create //
-							TextRender->CreateSentence(textid, (int)(text.size()*1.5f), Drenderer->GetDevice());
-							renderptr->HasText = true; // VERY important line
-						}
-						if(renderptr->ConsumeUpdate()){
-							// update //
-							TextRender->UpdateSentenceID(textid, coordtype, font, text, pos, colour, sizemod, Drenderer->GetDeviceContext());
-						}
-
-						// render //
-						TextRender->RenderSingle(textid, Drenderer->GetDeviceContext(), WorldMatrix, OrthoMatrix);
-
-						continue;
-					}
-					if(tempptr->IsThisType(GUIRENDERING_BLOB_TYPE_EXPENSIVETEXT)){
-
-						// cast pointer to right type //
-						ExpensiveTextRendBlob* renderptr = reinterpret_cast<ExpensiveTextRendBlob*>(tempptr);
-
-
-						// call drawing with object //
-						TextRender->RenderExpensiveText(renderptr, Drenderer->GetDeviceContext(), WorldMatrix, OrthoMatrix);
-
-
-						continue;
-					}
-
-					// invalid type //
-
-
 				}
 			}
-
-
-
 		}
 	}
 }

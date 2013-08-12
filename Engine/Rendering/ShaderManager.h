@@ -18,8 +18,8 @@ namespace Leviathan{ namespace Rendering{
 		}
 
 		shared_ptr<BaseShader> ShaderPtr;
-		const string ShaderDefStr;
-		const wstring  ShaderName;
+		string ShaderDefStr;
+		wstring  ShaderName;
 	};
 
 

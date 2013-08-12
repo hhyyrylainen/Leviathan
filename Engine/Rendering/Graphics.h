@@ -25,7 +25,9 @@
 
 namespace Leviathan{
 	// forward declarations to avoid having tons of headers here that aren't necessary //
+	namespace Rendering{
 	class ShaderManager;
+	}
 
 	class Graphics : public EngineComponent{
 	public:
@@ -56,7 +58,7 @@ namespace Leviathan{
 		DLLEXPORT inline TextureManager* GetTextureManager(){
 			return TextureKeeper;
 		}
-		DLLEXPORT inline ShaderManager* GetShader(){
+		DLLEXPORT inline Rendering::ShaderManager* GetShader(){
 			return Shaders;
 		}
 		DLLEXPORT inline Window* GetWindow(){
@@ -69,7 +71,7 @@ namespace Leviathan{
 	private:
 		bool Render(int mspassed, vector<BaseRenderable*> &objects);
 
-		void DrawRenderActions(D3DXMATRIX WorldMatrix, D3DXMATRIX ViewMatrix, D3DXMATRIX OrthoMatrix);
+		void DrawRenderActions(RenderingPassInfo* pass);
 		HRESULT Create3DRenderer(Window* wind);
 		void PurgeGuiArray();
 		// ------------------------ //
@@ -80,7 +82,7 @@ namespace Leviathan{
 
 		
 		Dx11Renderer* Drenderer;
-		ShaderManager* Shaders;
+		Rendering::ShaderManager* Shaders;
 		TextureManager* TextureKeeper;
 		ViewCamera* ActiveCamera;
 		TextRenderer* TextRender;

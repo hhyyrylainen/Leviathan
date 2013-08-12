@@ -23,7 +23,7 @@ namespace Leviathan{ namespace Gui{
 		BaseBackgroundData();
 		virtual ~BaseBackgroundData();
 
-		virtual RenderingGBlob* CreateBlobForThis(ObjectBackground* vars) = 0;
+		virtual RenderingGBlob* CreateBlobForThis(Graphics* graph, ObjectBackground* vars) = 0;
 		virtual void RenderThis(RenderBridge* bridge, Graphics* graph, const size_t index, ObjectBackground* vars) = 0;
 		// updates this object based on the variables, currentindex is first index in variables that haven't been processed to get here //
 		virtual void Update(NamedVariableList* variables, int currentindex) = 0;
@@ -57,7 +57,7 @@ namespace Leviathan{ namespace Gui{
 
 		void Set(const Float4 &colour1, const Float4 &colour2, int type);
 
-		virtual RenderingGBlob* CreateBlobForThis(ObjectBackground* vars);
+		virtual RenderingGBlob* CreateBlobForThis(Graphics* graph, ObjectBackground* vars);
 		virtual void RenderThis(RenderBridge* bridge, Graphics* graph, const size_t index, ObjectBackground* vars);
 		virtual void Update(NamedVariableList* variables, int currentindex);
 

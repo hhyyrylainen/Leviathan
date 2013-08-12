@@ -88,7 +88,7 @@ namespace Leviathan{
 	};
 
 	// this shader is included here because it is so basic that it makes a good example for other shaders how to properly do a shader class //
-	class TextureShader : BaseShader{
+	class TextureShader : public BaseShader{
 	public:
 		DLLEXPORT TextureShader();
 		DLLEXPORT virtual ~TextureShader();

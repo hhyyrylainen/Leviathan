@@ -98,38 +98,30 @@ DLLEXPORT void Leviathan::Gui::GuiBasicText::Render(RenderBridge* bridge, Graphi
 
 		if(!IsExpensiveText){
 
-			bridge->DrawActions[i] = new BasicTextRendBlob(ZOrder, Slot, Position, PrimaryTextColour, TextModifier, Text, Font, CoordType);
-
+			bridge->DrawActions[i] = new BasicTextRendBlob(graph, ZOrder, Slot, false);
 
 		} else {
 			// create expensive text block //
-			bridge->DrawActions[i] = new ExpensiveTextRendBlob(ZOrder, Slot, Position, PrimaryTextColour, TextModifier, Text, Font, CoordType, 
-				TextAdjustMode == GUI_BASICTEXT_MODE_TRYTOAUTOFIT, Size, TextCutScale);
+			bridge->DrawActions[i] = new ExpensiveTextRendBlob(graph, ZOrder, Slot, false);
 		}
 
+	}
+	// update the existing object //
+	if(!IsExpensiveText){
 
+		BasicTextRendBlob* tmpptr = (BasicTextRendBlob*)bridge->DrawActions[i];
+
+		tmpptr->Update(ZOrder, Position, PrimaryTextColour, TextModifier, Text, Font, CoordType);
 
 	} else {
-		// update existing object //
-		if(!IsExpensiveText){
+		// update expensive text object //
 
-			BasicTextRendBlob* tmpptr = (BasicTextRendBlob*)bridge->DrawActions[i];
+		ExpensiveTextRendBlob* tmpptr = (ExpensiveTextRendBlob*)bridge->DrawActions[i];
 
-			tmpptr->Update(ZOrder, Position, PrimaryTextColour, TextModifier, Text, Font, CoordType);
+		tmpptr->Update(ZOrder, Position, PrimaryTextColour, TextModifier, Text, Font, CoordType, TextAdjustMode == GUI_BASICTEXT_MODE_TRYTOAUTOFIT,
+			Size, TextCutScale);
 
-		} else {
-			// update expensive text object //
-
-			ExpensiveTextRendBlob* tmpptr = (ExpensiveTextRendBlob*)bridge->DrawActions[i];
-
-			tmpptr->Update(ZOrder, Position, PrimaryTextColour, TextModifier, Text, Font, CoordType, TextAdjustMode == GUI_BASICTEXT_MODE_TRYTOAUTOFIT,
-				Size, TextCutScale);
-
-		}
 	}
-
-	//DebugVariableNotifier::UpdateVariable(L"GuiBasicText::TextAreaSize::X", new VariableBlock(Size.X));
-	//DebugVariableNotifier::UpdateVariable(L"GuiBasicText::TextWantedCoordinates::X", new VariableBlock(Position.X));
 
 	// set as non updated //
 	RUpdated = false;
@@ -167,9 +159,9 @@ void Leviathan::Gui::GuiBasicText::_CheckTextAdjustment(){
 DLLEXPORT bool Leviathan::Gui::GuiBasicText::GetTextLength(float &lengthreceiver, float &heightreceiver){
 	if(TextLength < 0){
 		// calculate length and height //
-		TextLength = GuiManager::Get()->GetGraph()->CountTextRenderLength(Text, Font, IsExpensiveText, TextModifier, CoordType);
+		TextLength = GuiManager::Get()->GetGraph()->GetTextRenderer()->CountSentenceLength(Text, Font, IsExpensiveText, TextModifier, CoordType);
 
-		TextHeigth = GuiManager::Get()->GetGraph()->GetTextRenderHeight(Font, TextModifier, CoordType);
+		TextHeigth = GuiManager::Get()->GetGraph()->GetTextRenderer()->GetFontHeight(Font, TextModifier, CoordType);
 	}
 
 	lengthreceiver = TextLength;

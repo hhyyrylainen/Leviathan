@@ -6,7 +6,7 @@
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
-#include ".\Rendering\ColorQuad.h"
+#include ".\Rendering\RenderingQuad.h"
 #include "ObjectFileProcessor.h"
 
 // initialize all different background pointers to NULL //
@@ -67,7 +67,7 @@ DLLEXPORT void Leviathan::Gui::ObjectBackground::Render(RenderBridge* bridge, Gr
 		// allocate new //
 
 		// we'll take advantage of background data base class virtual functions to create new blob //
-		bridge->DrawActions[i] = BData->CreateBlobForThis(this);
+		bridge->DrawActions[i] = BData->CreateBlobForThis(graph, this);
 	}
 
 	// if it is still null we need to error //
@@ -175,15 +175,15 @@ void Leviathan::Gui::GradientBackgroundData::Set(const Float4 &colour1, const Fl
 	GradientType = type;
 }
 
-RenderingGBlob* Leviathan::Gui::GradientBackgroundData::CreateBlobForThis(ObjectBackground* vars){
-	return new ColorQuadRendBlob(vars->ZOrder, vars->Slot, vars->Position, Colour1, Colour2, vars->Size, GradientType, vars->CoordType);
+RenderingGBlob* Leviathan::Gui::GradientBackgroundData::CreateBlobForThis(Graphics* graph, ObjectBackground* vars){
+	return new ColorQuadRendBlob(graph, vars->ZOrder, vars->Slot, false);
 }
 
 void Leviathan::Gui::GradientBackgroundData::RenderThis(RenderBridge* bridge, Graphics* graph, const size_t index, ObjectBackground* vars){
 	// update rendering blob //
 	ColorQuadRendBlob* tmppr = static_cast<ColorQuadRendBlob*>(bridge->DrawActions[index]);
 
-	tmppr->Update(vars->ZOrder, vars->Position, Colour1, Colour2, vars->Size, GradientType, vars->CoordType);
+	tmppr->Update(graph, vars->ZOrder, vars->Position, Colour1, Colour2, vars->Size, GradientType, vars->CoordType);
 }
 
 void Leviathan::Gui::GradientBackgroundData::Update(NamedVariableList* variables, int currentindex){

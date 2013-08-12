@@ -7,122 +7,100 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "..\GuiPositionable.h"
-
-#define GUIRENDERING_BLOB_TYPE_CQUAD				1
-#define GUIRENDERING_BLOB_TYPE_TEXT					2
-#define GUIRENDERING_BLOB_TYPE_EXPENSIVETEXT		3
+#include "..\BaseRenderableBufferContainer.h"
+#include "..\ShaderRenderTask.h"
+#include ".\Rendering\RenderingQuad.h"
+#include "RenderingPassInfo.h"
 
 namespace Leviathan{
 
 	// some forward declarations //
-	class ColorQuad;
+	class RenderingQuad;
 	class Graphics;
+	class TextRenderer;
 
 	class RenderingGBlob : public Object{
 	public:
-		DLLEXPORT RenderingGBlob::RenderingGBlob();
-		DLLEXPORT RenderingGBlob::RenderingGBlob(int relativez, int slotid);
+		DLLEXPORT RenderingGBlob::RenderingGBlob(const int &relativez, const int &slotid, const bool &hidden);
 		DLLEXPORT virtual RenderingGBlob::~RenderingGBlob();
-		DLLEXPORT bool IsThisType(int tochecktype);
 
 		// for automatic rendering //
 		DLLEXPORT virtual Rendering::BaseRenderableBufferContainer* GetRenderingBuffers(Graphics* graph) = 0;
-		DLLEXPORT virtual ShaderRenderTask* GetShaderParameters(Graphics* graph) = 0;
+		DLLEXPORT virtual ShaderRenderTask* GetShaderParameters(Graphics* graph, RenderingPassInfo* pass) = 0;
 
 		int RelativeZ;
 		int SlotID;
 		bool Hidden;
-		bool Updated;
+
 	protected:
-		int TypeName;
+		virtual void EnsureShaderRenderTask() = 0;
+		virtual void SetShaderMatrixBuffers(RenderingPassInfo* pass);
+
+		ShaderRenderTask* SHRender;
 	};
 
 	// ----- DERIVED CLASSES ----- //
 
 	class ColorQuadRendBlob: public RenderingGBlob{
 	public:
-		DLLEXPORT ColorQuadRendBlob::ColorQuadRendBlob();
-		DLLEXPORT ColorQuadRendBlob::ColorQuadRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, 
-			const Float4 &color2, const Float2 &size, int colortranstype, int coordinatetype = GUI_POSITIONABLE_COORDTYPE_RELATIVE);
+		DLLEXPORT ColorQuadRendBlob::ColorQuadRendBlob(Graphics* graph, const int &relativez, const int &slotid, const bool &hidden);
 		DLLEXPORT virtual ColorQuadRendBlob::~ColorQuadRendBlob();
 
-		DLLEXPORT void Update(int relativez, const Float2 &xypos, const Float4 &color, const Float4 &color2, const Float2 &size, 
-			int colortranstype, int coordinatetype = GUI_POSITIONABLE_COORDTYPE_RELATIVE);
-		DLLEXPORT void Get(Float2 &xypos, Float4 &color, Float4 &color2, Float2 &size, int &colortranstype, int &coordinatetype);
-		DLLEXPORT bool HasUpdated();
-		DLLEXPORT bool ConsumeUpdate();
 
-		// objects that renderer uses, should not be touched //
-		ColorQuad* CQuad;
+		// for automatic rendering //
+		DLLEXPORT virtual Rendering::BaseRenderableBufferContainer* GetRenderingBuffers(Graphics* graph);
+		DLLEXPORT virtual ShaderRenderTask* GetShaderParameters(Graphics* graph, RenderingPassInfo* pass);
+
+		DLLEXPORT void Update(Graphics* graph, const int &relativez, const Float2 &xypos, const Float4 &color, const Float4 &color2, const Float2 &size, 
+			int colortranstype, int coordinatetype = GUI_POSITIONABLE_COORDTYPE_RELATIVE);
 	private:
+		virtual void EnsureShaderRenderTask();
 		// values that should not directly be set //
-		int CoordType;
-		Float2 Coord;
-		Float2 Size;
-		Float4 Color1;
-		Float4 Color2;
-		int ColorTransType;
-		bool Updated;
+		Rendering::RenderingQuad* CQuad;
 	};
 
 	class BasicTextRendBlob: public RenderingGBlob{
 	public:
-		DLLEXPORT BasicTextRendBlob::BasicTextRendBlob();
-		DLLEXPORT BasicTextRendBlob::BasicTextRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, float sizemod, 
-			const wstring &text, const wstring &font, int coordtype = GUI_POSITIONABLE_COORDTYPE_RELATIVE);
+		DLLEXPORT BasicTextRendBlob::BasicTextRendBlob(Graphics* graph, const int &relativez, const int &slotid, const bool &hidden);
 		DLLEXPORT virtual BasicTextRendBlob::~BasicTextRendBlob();
 		
 		DLLEXPORT void Update(int relativez, const Float2 &xypos, const Float4 &color, float sizemod, const wstring &text, 
 			const wstring &font, int coordtype = GUI_POSITIONABLE_COORDTYPE_RELATIVE);
-		DLLEXPORT void Get(Float2 &xypos, Float4 &color, float &size, wstring &text, wstring &font, int &coordtype, int& textid);
-		DLLEXPORT bool HasUpdated();
-		DLLEXPORT bool ConsumeUpdate();
-		DLLEXPORT void SetUpdated();
 
-		// objects that renderer uses, should not be touched //
-		bool HasText;
+		// for automatic rendering //
+		DLLEXPORT virtual Rendering::BaseRenderableBufferContainer* GetRenderingBuffers(Graphics* graph);
+		DLLEXPORT virtual ShaderRenderTask* GetShaderParameters(Graphics* graph, RenderingPassInfo* pass);
 
 	private:
+		virtual void EnsureShaderRenderTask();
+
 		// values that should not directly be set //
-		int CoordType;
-		float Size;
-		Float2 Coord;
-		Float4 Color;
-		bool Updated;
-		wstring Font;
-		wstring Text;
 		int TextID;
+		// text renderer instance //
+		TextRenderer* TRenderer;
 	};
 
 	class ExpensiveTextRendBlob: public RenderingGBlob{
 		friend class TextRenderer;
 		friend class ExpensiveText;
 	public:
-		DLLEXPORT ExpensiveTextRendBlob::ExpensiveTextRendBlob(int relativez, int slotid, const Float2 &xypos, const Float4 &color, float sizemod, 
-			const wstring &text, const wstring &font, int coordtype = GUI_POSITIONABLE_COORDTYPE_RELATIVE, bool fittobox = false, 
-			const Float2 box = (Float2)0, const float &adjustcutpercentage = 0.4f);
+		DLLEXPORT ExpensiveTextRendBlob::ExpensiveTextRendBlob(Graphics* graph, const int &relativez, const int &slotid, const bool &hidden);
 		DLLEXPORT virtual ExpensiveTextRendBlob::~ExpensiveTextRendBlob();
 
 		DLLEXPORT void Update(int relativez, const Float2 &xypos, const Float4 &color, float sizemod, const wstring &text, 
 			const wstring &font, int coordtype = GUI_POSITIONABLE_COORDTYPE_RELATIVE, bool fittobox = false, 
 			const Float2 box = (Float2)0, const float &adjustcutpercentage = 0.4f);
 
+		// for automatic rendering //
+		DLLEXPORT virtual Rendering::BaseRenderableBufferContainer* GetRenderingBuffers(Graphics* graph);
+		DLLEXPORT virtual ShaderRenderTask* GetShaderParameters(Graphics* graph, RenderingPassInfo* pass);
+
 	protected:
+		virtual void EnsureShaderRenderTask();
 		// values that should not directly be set //
-		float Size;
-
-		Float2 Coord;
-		Float2 BoxToFit;
-		bool FitToBox;
-		int CoordType;
-
-		Float4 Color;
-
-		wstring Font;
-		wstring Text;
-
 		int TextID;
-		float AdjustCutModifier;
+		// text renderer instance //
+		TextRenderer* TRenderer;
 	};
 
 }

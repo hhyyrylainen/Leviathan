@@ -18,7 +18,7 @@ DLLEXPORT Leviathan::Rendering::GradientShader::~GradientShader(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Rendering::GradientShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck){
+DLLEXPORT bool Leviathan::Rendering::GradientShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck) const{
 	// check for data presence of required objects //
 	BaseMatrixBufferData* bmtocheck = paramstocheck->GetBaseMatrixBufferData();
 	TwoColorBufferData* bctocheck = paramstocheck->GetColourBufferTwo();

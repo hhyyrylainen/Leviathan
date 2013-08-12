@@ -125,70 +125,15 @@ void Leviathan::GameObject::Model::CheckTextures(){
 		// need to "reload" textures //
 		for(unsigned int i = 0; i < TexturePath.size(); i++){
 			// add it to texture manager //
-			int id = tempman->LoadTexture(*TexturePath[0], false);
+			int id = tempman->LoadTexture(*TexturePath[0], TEXTURETYPE_NORMAL, false);
 			TextureIDS.push_back(id);
-		}
-
-		int NormalTextures = 0;
-		int LightMaps = 0; int BumpMaps = 0; // determine shader type //
-		for(unsigned int i = 0; i < TextureTypes.size(); i++){
-			if(TextureTypes[i] == MODEL_TEXTURETYPE_BUMP){
-				BumpMaps++;
-			}
-			if(TextureTypes[i] == MODEL_TEXTURETYPE_NORMAL){
-				NormalTextures++;
-			}
-			if(TextureTypes[i] == MODEL_TEXTURETYPE_BLENDMAP){
-				//NormalTextures++;
-				// not used yet //
-			}
-			if(TextureTypes[i] == MODEL_TEXTURETYPE_LIGHT){
-				LightMaps++;
-			}
-		}
-		if((NormalTextures) && (!(LightMaps | BumpMaps))){
-			if(NormalTextures == 1){
-				// normal shader //
-				NeededShader = MODEL_NEEDED_SHADER_TEXTURE;
-				return;
-
-			} else if(NormalTextures == 2){
-				NeededShader = MODEL_NEEDED_SHADER_MULTITEXTURE;
-			} else {
-				NeededShader = MODEL_NEEDED_SHADER_ERROR;
-				Logger::Get()->Error(L"Model: Too many normal textures, only 1 and 2 are supported", NormalTextures);
-				return;
-			}
-		} if((NormalTextures) && (BumpMaps) && (!(LightMaps))){
-			if(NormalTextures == 1){
-				// must be 1 bump map //
-				if(BumpMaps != 1){
-					NeededShader = MODEL_NEEDED_SHADER_ERROR;
-					Logger::Get()->Error(L"Model: Too many bump map textures, only 1 is allowed", BumpMaps);
-					return;
-				}
-				NeededShader = MODEL_NEEDED_SHADER_BUMPSHADER;
-				return;
-
-			} else {
-				NeededShader = MODEL_NEEDED_SHADER_ERROR;
-				Logger::Get()->Error(L"Model: Too many normal textures, with bump map only 1 is allowed", NormalTextures);
-				return;
-			}
-		} else {
-			NeededShader = MODEL_NEEDED_SHADER_ERROR;
-			// matches nothing //
-			Logger::Get()->Error(L"Model: Matches no shader! NormalTextures: "+Convert::IntToWstring(NormalTextures)+L" bump maps: "
-				+Convert::IntToWstring(BumpMaps)+L" light maps: "+Convert::IntToWstring(LightMaps));
-			return;
 		}
 	}
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameObject::Model::Render(Graphics* renderer, int mspassed, const RenderingPassInfo &info, D3DXMATRIX &ViewMatrix, 
-	D3DXMATRIX &ProjectionMatrix, D3DXMATRIX &WorldMatrix, D3DXMATRIX &TranslateMatrix, Float3 CameraPos)
-{
+DLLEXPORT bool Leviathan::GameObject::Model::Render(Graphics* renderer, int mspassed, const RenderingPassInfo &info){
+
 	// check for total error //
 	if(TotallyErrored || MType == MODELOBJECT_MODEL_TYPE_ERROR){
 		return false;
@@ -223,12 +168,12 @@ DLLEXPORT bool Leviathan::GameObject::Model::Render(Graphics* renderer, int mspa
 
 	SmoothValues();
 	// only update things when they are updated //
-	if(SmoothUpdated | IsScaleUpdated()){
+	if(SmoothUpdated || IsScaleUpdated()){
 		SmoothUpdated = false;
 		ScaleUpdated = false;
 
 		// move values towards real ones //
-		OwnWorld = WorldMatrix;
+		OwnWorld = info.GetWorldMatrix();
 
 		// Y and Z are switched in application, this needs to be taken into account here //
 		D3DXMATRIX ScaleMatrix = OwnWorld;
@@ -240,6 +185,7 @@ DLLEXPORT bool Leviathan::GameObject::Model::Render(Graphics* renderer, int mspa
 		// apply scale //
 		D3DXMatrixMultiply(&OwnWorld, &OwnWorld, &ScaleMatrix);
 		// translate location //
+		D3DXMATRIX TranslateMatrix;
 		D3DXMatrixTranslation(&TranslateMatrix, (float)s_X/1000, (float)s_Z/1000, (float)s_Y/1000);
 		// apply translation //
 		D3DXMatrixMultiply(&OwnWorld, &OwnWorld, &TranslateMatrix); 
@@ -257,46 +203,10 @@ DLLEXPORT bool Leviathan::GameObject::Model::Render(Graphics* renderer, int mspa
 		skeleton->UpdatePose(mspassed);
 
 		// needs a shader that can render the skeleton //
-		switch(NeededShader){
-		case MODEL_NEEDED_SHADER_TEXTURE:
-			{
-				RenderingLight* light = Engine::GetEngine()->GetLightAtObject(dynamic_cast<BasePositionable*>(this));
-				return renderer->GetShader()->RenderSkinnedShader(renderer->GetRenderer()->GetDeviceContext(), this->GetIndexCount(), OwnWorld,
-					ViewMatrix, ProjectionMatrix, skeleton, renderer->GetTextureManager()->GetTextureView(TextureIDS[0], TEXTUREMANAGER_SEARCH_LATEST),
-					light->GetDirection(), light->GetAmbientColor(), light->GetDiffuseColor(), CameraPos, light->GetSpecularColor(), light->GetSpecularPower());
-
-				//return renderer->GetShader()->RenderLightShader(renderer->GetRenderer()->GetDeviceContext(), this->GetIndexCount(), OwnWorld, ViewMatrix, ProjectionMatrix,
-				//	renderer->GetTextureManager()->GetTextureView(TextureIDS[0], TEXTUREMANAGER_SEARCH_LATEST), light->GetDirection(),
-				//	light->GetAmbientColor(), light->GetDiffuseColor(),CameraPos, light->GetSpecularColor(), light->GetSpecularPower());
-				// multiply area specular stuffs with model specific [NOT YET IMPLEMENTED]
-			}
-		break;
-		}
 
 
 	} else {
 
-		switch(NeededShader){
-		case MODEL_NEEDED_SHADER_TEXTURE:
-			{
-				RenderingLight* light = Engine::GetEngine()->GetLightAtObject(dynamic_cast<BasePositionable*>(this));
-				return renderer->GetShader()->RenderLightShader(renderer->GetRenderer()->GetDeviceContext(), this->GetIndexCount(), OwnWorld, ViewMatrix, ProjectionMatrix,
-					renderer->GetTextureManager()->GetTextureView(TextureIDS[0], TEXTUREMANAGER_SEARCH_LATEST), light->GetDirection(),
-					light->GetAmbientColor(), light->GetDiffuseColor(),CameraPos, light->GetSpecularColor(), light->GetSpecularPower());
-				// multiply area specular stuffs with model specific [NOT YET IMPLEMENTED]
-			}
-		break;
-		case MODEL_NEEDED_SHADER_MULTITEXTURE:
-			{
-
-			}
-		break;
-		case MODEL_NEEDED_SHADER_BUMPSHADER:
-			{
-
-			}
-		break;
-		}
 
 	}
 

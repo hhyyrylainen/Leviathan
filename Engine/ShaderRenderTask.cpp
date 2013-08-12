@@ -6,12 +6,9 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ShaderRenderTask::ShaderRenderTask() : BMatData(NULL), TextureObjects(NULL), BLightData(NULL), VertexSkinningData(NULL),
-	CameraLocationData(NULL), ColourBuffer2Data(NULL)
+	CameraLocationData(NULL), ColourBuffer2Data(NULL), PatternCreated(false), ShaderPattern(""), VertexBufferType("")
 {
-	
 
-	bool PatternCreated;
-	string ShaderPattern;
 }
 
 DLLEXPORT Leviathan::ShaderRenderTask::~ShaderRenderTask(){
@@ -29,6 +26,3 @@ DLLEXPORT Leviathan::ShaderRenderTask::~ShaderRenderTask(){
 // ------------------------------------ //
 
 // ------------------------------------ //
-
-
-

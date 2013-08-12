@@ -111,7 +111,7 @@ ID3D11ShaderResourceView* TextureManager::GetTextureView(int id, int whichfirst,
 
 	return temp;
 }
-ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsearch){
+shared_ptr<ManagedTexture> TextureManager::GetTexture(int id, int whichfirst, bool nooldsearch){
 	if(!nooldsearch){
 		// check TEXTUREMANAGER_LATEST_SEARCH_SIZE latest founds //
 		for(unsigned int i = 0; i < LatestFound.size(); i++){
@@ -119,8 +119,8 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 				// return //
 				LatestFound[i]->UnusedTime = 0;
 				if(LatestFound[i]->GetErrorState() != TEXTURE_ERROR_STATE_NONE)
-					return ErrorTexture.get();
-				return LatestFound[i].get();
+					return ErrorTexture;
+				return LatestFound[i];
 			}
 		}
 	}
@@ -135,9 +135,9 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 			if(tempresult.get() != NULL){
 				// check error state and possibly return error //
 				if(tempresult->GetErrorState() != TEXTURE_ERROR_STATE_NONE)
-					return ErrorTexture.get();
+					return ErrorTexture;
 				// return result //
-				return tempresult.get();
+				return tempresult;
 			}
 		}
 	break;
@@ -148,9 +148,9 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 			if(tempresult.get() != NULL){
 				// check error state and possibly return error //
 				if(tempresult->GetErrorState() != TEXTURE_ERROR_STATE_NONE)
-					return ErrorTexture.get();
+					return ErrorTexture;
 				// return result //
-				return tempresult.get();
+				return tempresult;
 			}
 		}
 	break;
@@ -161,9 +161,9 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 			if(tempresult.get() != NULL){
 				// check error state and possibly return error //
 				if(tempresult->GetErrorState() != TEXTURE_ERROR_STATE_NONE)
-					return ErrorTexture.get();
+					return ErrorTexture;
 				// return result //
-				return tempresult.get();
+				return tempresult;
 			}
 		}
 	break;
@@ -174,9 +174,9 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 			if(tempresult.get() != NULL){
 				// check error state and possibly return error //
 				if(tempresult->GetErrorState() != TEXTURE_ERROR_STATE_NONE)
-					return ErrorTexture.get();
+					return ErrorTexture;
 				// return result //
-				return tempresult.get();
+				return tempresult;
 			}
 		}
 	break;
@@ -189,7 +189,7 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 				if(tempresult->GetErrorState() != TEXTURE_ERROR_STATE_NONE)
 					return NULL;
 				// return result //
-				return tempresult.get();
+				return tempresult;
 			}
 		}
 		break;
@@ -200,9 +200,9 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 		if(tempresult.get() != NULL){
 			// check error state and possibly return error //
 			if(tempresult->GetErrorState() != TEXTURE_ERROR_STATE_NONE)
-				return ErrorTexture.get();
+				return ErrorTexture;
 			// return result //
-			return tempresult.get();
+			return tempresult;
 		}
 	}
 	if(!oldersearched){
@@ -210,9 +210,9 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 		if(tempresult.get() != NULL){
 			// check error state and possibly return error //
 			if(tempresult->GetErrorState() != TEXTURE_ERROR_STATE_NONE)
-				return ErrorTexture.get();
+				return ErrorTexture;
 			// return result //
-			return tempresult.get();
+			return tempresult;
 		}
 	}
 	if(!utilitysearched){
@@ -220,9 +220,9 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 		if(tempresult.get() != NULL){
 			// check error state and possibly return error //
 			if(tempresult->GetErrorState() != TEXTURE_ERROR_STATE_NONE)
-				return ErrorTexture.get();
+				return ErrorTexture;
 			// return result //
-			return tempresult.get();
+			return tempresult;
 		}
 	}
 	if(!unloadedsearched){
@@ -230,13 +230,13 @@ ManagedTexture* TextureManager::GetTexture(int id, int whichfirst, bool nooldsea
 		if(tempresult.get() != NULL){
 			// check error state and possibly return error //
 			if(tempresult->GetErrorState() != TEXTURE_ERROR_STATE_NONE)
-				return ErrorTexture.get();
+				return ErrorTexture;
 			// return result //
-			return tempresult.get();
+			return tempresult;
 		}
 	}
 	// nothing found, return error texture //
-	return ErrorTexture.get();
+	return ErrorTexture;
 }
 // private searching functions //
 shared_ptr<ManagedTexture> TextureManager::SearchLastUsed(int id){
@@ -330,9 +330,11 @@ shared_ptr<ManagedTexture> Leviathan::TextureManager::SearchVolatile(int id){
 	return NULL;
 }
 
-DLLEXPORT bool Leviathan::TextureManager::AddVolatileGenerated(const int &ID, const wstring &source, ID3D11ShaderResourceView* texture){
+DLLEXPORT bool Leviathan::TextureManager::AddVolatileGenerated(const int &ID, const wstring &source, ID3D11ShaderResourceView* texture, 
+	const TEXTURETYPE &type)
+{
 	// add to vector //
-	VolatileGenerated.push_back(shared_ptr<ManagedTexture>(new ManagedTexture(ID, texture, source)));
+	VolatileGenerated.push_back(shared_ptr<ManagedTexture>(new ManagedTexture(ID, texture, source, type)));
 
 	return true;
 }
@@ -381,10 +383,10 @@ void TextureManager::AddToLatest(const shared_ptr<ManagedTexture>& toadd){
 }
 
 // ------------------------------------ //
-int TextureManager::LoadTexture(wstring& path, bool loadnow){
+int TextureManager::LoadTexture(wstring& path, const TEXTURETYPE &type, bool loadnow){
 	// create new texture object //
 	int id = IDFactory::GetID();
-	ManagedTexture* temp = new ManagedTexture(path, id);
+	ManagedTexture* temp = new ManagedTexture(path, id, type);
 
 	// add to last used //
 	shared_ptr<ManagedTexture> tempptr = shared_ptr<ManagedTexture>(temp);

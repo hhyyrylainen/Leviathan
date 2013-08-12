@@ -11,12 +11,12 @@
 namespace Leviathan{ namespace Rendering{
 
 
-	class LightShader : BaseShader{
+	class LightShader : public BaseShader{
 	public:
 		DLLEXPORT LightShader();
 		DLLEXPORT virtual ~LightShader();
 
-		DLLEXPORT virtual bool DoesInputObjectWork(ShaderRenderTask* paramstocheck);
+		DLLEXPORT virtual bool DoesInputObjectWork(ShaderRenderTask* paramstocheck) const;
 
 	private:
 
@@ -33,12 +33,12 @@ namespace Leviathan{ namespace Rendering{
 		ID3D11Buffer* LightBuffer;
 	};
 
-	class GradientShader : BaseShader{
+	class GradientShader : public BaseShader{
 	public:
 		DLLEXPORT GradientShader();
 		DLLEXPORT virtual ~GradientShader();
 
-		DLLEXPORT virtual bool DoesInputObjectWork(ShaderRenderTask* paramstocheck);
+		DLLEXPORT virtual bool DoesInputObjectWork(ShaderRenderTask* paramstocheck) const;
 
 	private:
 
@@ -54,12 +54,12 @@ namespace Leviathan{ namespace Rendering{
 		ID3D11Buffer* ColorsBuffer;
 	};
 
-	class LightBumpShader{
+	class LightBumpShader : public BaseShader{
 	public:
 		DLLEXPORT LightBumpShader();
 		DLLEXPORT virtual ~LightBumpShader();
 
-		DLLEXPORT virtual bool DoesInputObjectWork(ShaderRenderTask* paramstocheck);
+		DLLEXPORT virtual bool DoesInputObjectWork(ShaderRenderTask* paramstocheck) const;
 
 	private:
 
@@ -84,7 +84,7 @@ namespace Leviathan{ namespace Rendering{
 		DLLEXPORT SkinnedShader();
 		DLLEXPORT virtual ~SkinnedShader();
 
-		DLLEXPORT virtual bool DoesInputObjectWork(ShaderRenderTask* paramstocheck);
+		DLLEXPORT virtual bool DoesInputObjectWork(ShaderRenderTask* paramstocheck) const;
 		DLLEXPORT virtual bool Render(ID3D11DeviceContext* devcont,int indexcount, ShaderRenderTask* Parameters);
 
 	private:
@@ -141,13 +141,13 @@ namespace Leviathan{ namespace Rendering{
 					// get values from the rig //
 					if(!Bones->CopyValuesToBuffer(&wrap)){
 						// invalid bone stuff //
-						Logger::Get()->Error(L"Invalid bones",);
+						Logger::Get()->Error(L"Invalid bones");
 						return false;
 					}
 
 				} else {
 					// clear the buffer //
-					(*BoneBuffer) = BufferSize();
+					(*AutoUnlocker->LockedResourcePtr) = BufferSize();
 				}
 			}
 			// buffer is auto unlocked here //
@@ -156,7 +156,7 @@ namespace Leviathan{ namespace Rendering{
 			devcont->VSSetConstantBuffers(3, 1, buffer);
 			return true;
 		}
-	}
+	};
 
 
 

@@ -34,13 +34,13 @@ namespace Leviathan{
 		DLLEXPORT void TimePass(int mspassed);
 
 		DLLEXPORT void UnloadVolatile(const int &ID);
-		DLLEXPORT bool AddVolatileGenerated(const int &ID, const wstring &source, ID3D11ShaderResourceView* texture);
+		DLLEXPORT bool AddVolatileGenerated(const int &ID, const wstring &source, ID3D11ShaderResourceView* texture, const TEXTURETYPE &type);
 
 
-		DLLEXPORT int LoadTexture(wstring& path, bool loadnow = false);
+		DLLEXPORT int LoadTexture(wstring& path, const TEXTURETYPE &type, bool loadnow = false);
 
 		DLLEXPORT ID3D11ShaderResourceView* GetTextureView(int id, int whichfirst, bool nooldsearch = false);
-		DLLEXPORT ManagedTexture* GetTexture(int id, int whichfirst, bool nooldsearch = false);
+		DLLEXPORT shared_ptr<ManagedTexture> GetTexture(int id, int whichfirst, bool nooldsearch = false);
 		// compares supplied pointer with the error texture's pointer //
 		DLLEXPORT inline bool IsTextureError(const ManagedTexture* possibleerrorptr){
 			// compare to error pointer //

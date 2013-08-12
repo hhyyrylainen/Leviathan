@@ -4,6 +4,7 @@
 #include "DefaultShaders.h"
 #endif
 #include "../SkeletonRig.h"
+#include ".\Rendering\ShaderManager.h"
 using namespace Leviathan;
 using namespace Leviathan::Rendering;
 // ------------------------------------ //
@@ -19,7 +20,7 @@ DLLEXPORT Leviathan::Rendering::LightShader::~LightShader(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Rendering::LightShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck){
+DLLEXPORT bool Leviathan::Rendering::LightShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck) const{
 	// check for data presence of required objects //
 	BaseMatrixBufferData* bmtocheck = paramstocheck->GetBaseMatrixBufferData();
 	BaseTextureHolder* bttocheck = paramstocheck->GetBaseTextureHolder();
@@ -173,7 +174,7 @@ DLLEXPORT Leviathan::Rendering::GradientShader::~GradientShader(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Rendering::GradientShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck){
+DLLEXPORT bool Leviathan::Rendering::GradientShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck) const{
 	// check for data presence of required objects //
 	BaseMatrixBufferData* bmtocheck = paramstocheck->GetBaseMatrixBufferData();
 	TwoColorBufferData* bctocheck = paramstocheck->GetColourBufferTwo();
@@ -295,7 +296,7 @@ DLLEXPORT Leviathan::Rendering::LightBumpShader::~LightBumpShader(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Rendering::LightBumpShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck){
+DLLEXPORT bool Leviathan::Rendering::LightBumpShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck) const{
 	// check for data presence of required objects //
 	BaseMatrixBufferData* bmtocheck = paramstocheck->GetBaseMatrixBufferData();
 	BaseTextureHolder* bttocheck = paramstocheck->GetBaseTextureHolder();
@@ -366,7 +367,7 @@ bool Leviathan::Rendering::LightBumpShader::SetShaderParams(ID3D11DeviceContext*
 	// the textures need to be in right order //
 	DoubleTextureHolder* tmphold = static_cast<DoubleTextureHolder*>(parameters->GetBaseTextureHolder());
 
-	if(tmphold->Texture1->GetType == TEXTURETYPE_BUMPMAP){
+	if(tmphold->Texture1->GetType() == TEXTURETYPE_BUMPMAP){
 		// Bump map first and then normal //
 		TmpTexArray[0] = tmphold->Texture2->GetView();
 		TmpTexArray[1] = tmphold->Texture1->GetView();
@@ -378,7 +379,7 @@ bool Leviathan::Rendering::LightBumpShader::SetShaderParams(ID3D11DeviceContext*
 	}
 
 
-	devcont->PSSetShaderResources(0, 2, &TmpTexArray);
+	devcont->PSSetShaderResources(0, 2, &TmpTexArray[0]);
 
 	return true;
 }
@@ -468,7 +469,7 @@ DLLEXPORT Leviathan::Rendering::SkinnedShader::~SkinnedShader(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Rendering::SkinnedShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck){
+DLLEXPORT bool Leviathan::Rendering::SkinnedShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck) const{
 	// check for data presence of required objects //
 	BaseMatrixBufferData* bmtocheck = paramstocheck->GetBaseMatrixBufferData();
 	BaseTextureHolder* bttocheck = paramstocheck->GetBaseTextureHolder();
@@ -776,7 +777,7 @@ bool Leviathan::Rendering::SkinnedShader::LoadShaderFromDisk(ID3D11Device* dev){
 		// create shader //
 		if(i == 1){
 
-			hr = dev->CreatePixelShader(Pixelshaderbuffer->GetBufferPointer(), Pixelshaderbuffer->GetBufferSize(), NULL, &PixelShader);
+			hr = dev->CreatePixelShader(CurrentShaderBuffer->GetBufferPointer(), CurrentShaderBuffer->GetBufferSize(), NULL, &PixelShader);
 			if(FAILED(hr)){
 				SAFE_RELEASE(CurrentShaderBuffer);
 				Logger::Get()->Error(L"InitShader: failed to create PixelShader from buffer", hr);
@@ -799,7 +800,7 @@ bool Leviathan::Rendering::SkinnedShader::LoadShaderFromDisk(ID3D11Device* dev){
 				__assume(0);
 			}
 
-			hr = dev->CreateVertexShader(Vertexshaderbuffer->GetBufferPointer(), Vertexshaderbuffer->GetBufferSize(), NULL, vsptr);
+			hr = dev->CreateVertexShader(CurrentShaderBuffer->GetBufferPointer(), CurrentShaderBuffer->GetBufferSize(), NULL, vsptr);
 			if(FAILED(hr)){
 				SAFE_RELEASE(CurrentShaderBuffer);
 				Logger::Get()->Error(L"InitShader: failed to create VertexShader from buffer", hr);
@@ -827,7 +828,7 @@ DLLEXPORT bool Leviathan::Rendering::SkinnedShader::Render(ID3D11DeviceContext* 
 	ID3D11VertexShader* UseShader = NULL;
 
 	// switch to see which layout and which shader needs to be used //
-	switch(parameters->GetBaseSkinningData()->ShaderInternalDataPass){
+	switch(Parameters->GetBaseSkinningData()->ShaderInternalDataPass){
 	case SHADER_BONES_TINY: UseShader = VertexShader; break;
 	case SHADER_BONES_SMALL: UseShader = VertexShader_small; break;
 	case SHADER_BONES_MEDIUM: UseShader = VertexShader_medium; break;
@@ -837,8 +838,8 @@ DLLEXPORT bool Leviathan::Rendering::SkinnedShader::Render(ID3D11DeviceContext* 
 	}
 	if(!UseShader){
 		ComplainOnce::PrintErrorOnce(L"SkinnedShader_bonecount_not_supported", L"SkinnedShader: Render: invalid bone count enum value :"+
-			Convert::IntToWstring((int)parameters->GetBaseSkinningData()->ShaderInternalDataPass));
-		return;
+			Convert::IntToWstring((int)Parameters->GetBaseSkinningData()->ShaderInternalDataPass));
+		return false;
 	}
 
 

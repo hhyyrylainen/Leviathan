@@ -34,7 +34,7 @@ DLLEXPORT bool Leviathan::Rendering::ShaderManager::Init(ID3D11Device* device){
 	_StoredTextureShader = shared_ptr<StoredShader>(new StoredShader(_DirectTextureShader->GetShaderPattern(), L"TextureShader", _DirectTextureShader));
 
 
-	_DirectLightShader = new TextureShader();
+	_DirectLightShader = new LightShader();
 	CLASS_ALLOC_CHECK(_DirectLightShader);
 
 	if(!_DirectLightShader->Init(device)){
@@ -108,7 +108,7 @@ DLLEXPORT bool Leviathan::Rendering::ShaderManager::AutoRender(ID3D11DeviceConte
 	const wstring &preferredname)
 {
 	// assigning negative to unsigned creates a huge number which is hopefully above shader count //
-	size_t RenderIndex = -1;
+	size_t RenderIndex = (size_t)-1;
 	// if preferred name is set try to use that shader //
 	if(preferredname.size() > 0){
 

@@ -50,6 +50,7 @@ namespace Leviathan{
 
 	struct BaseMatrixBufferData{
 		BaseMatrixBufferData(const D3DXMATRIX &worldm, const D3DXMATRIX &viewm, const D3DXMATRIX &projm);
+		BaseMatrixBufferData();
 
 
 		D3DXMATRIX WorldMatrix;
@@ -93,6 +94,9 @@ namespace Leviathan{
 
 	struct TwoColorBufferData{
 		TwoColorBufferData(const D3DXVECTOR4 &color1, const D3DXVECTOR4 &color2) : Colour1(color1), Colour2(color2){
+
+		}
+		TwoColorBufferData() : Colour1(Float4::ColourTransparent), Colour2(Float4::ColourTransparent){
 
 		}
 
@@ -171,10 +175,10 @@ namespace Leviathan{
 		DLLEXPORT inline TwoColorBufferData* GetColourBufferTwo(){
 			return ColourBuffer2Data;
 		}
-		DLLEXPORT inline const string& GetShaderPattern() const{
+		DLLEXPORT inline const string GetShaderPattern(){
 			if(PatternCreated){
 
-				return ShaderPattern;
+				return ShaderPattern+":"+VertexBufferType;
 			}
 			// generate pattern //
 
@@ -182,6 +186,13 @@ namespace Leviathan{
 			// recurse //
 			return GetShaderPattern();
 		}
+
+		DLLEXPORT void SetInputPattern(const string &pattern){
+			
+			VertexBufferType = pattern;
+		}
+		
+
 	protected:
 
 		// ------------------------------------ //
@@ -199,7 +210,7 @@ namespace Leviathan{
 
 		bool PatternCreated;
 		string ShaderPattern;
-
+		string VertexBufferType;
 	};
 
 }

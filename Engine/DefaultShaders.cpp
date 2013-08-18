@@ -11,7 +11,7 @@ using namespace Leviathan::Rendering;
 
 // ------------------ LightShader ------------------ //
 DLLEXPORT Leviathan::Rendering::LightShader::LightShader() : BaseShader(L"LightShader.hlsl", "LightVertexShader", "LightPixelShader", 
-	"BUF:BMAT:CAMB:BLIGHT:TEX:NORMAL"), MatrixBuffer(NULL), CameraBuffer(NULL), LightBuffer(NULL)
+	"BUF:BMAT:CAMB:BLIGHT:TEX:NORMAL:INPUT:C0:T0:N0"), MatrixBuffer(NULL), CameraBuffer(NULL), LightBuffer(NULL)
 {
 
 }
@@ -113,8 +113,8 @@ bool Leviathan::Rendering::LightShader::SetNewDataToShaderBuffers(ID3D11DeviceCo
 
 	// copy matrices //
 	AutoUnlocker->LockedResourcePtr->world = worldmatrix;
-	AutoUnlocker->LockedResourcePtr->world = viewmatrix;
-	AutoUnlocker->LockedResourcePtr->world = projectionmatrix;
+	AutoUnlocker->LockedResourcePtr->view = viewmatrix;
+	AutoUnlocker->LockedResourcePtr->projection = projectionmatrix;
 	
 	// new camera buffer data //
 	auto CamBufferData = Rendering::ResourceCreator::MapConstantBufferForWriting<CameraBufferType>(devcont, CameraBuffer);
@@ -223,11 +223,10 @@ bool Leviathan::Rendering::GradientShader::SetShaderParams(ID3D11DeviceContext* 
 
 	// set this shader specific buffers active //
 
-
 	// set VertexShader buffers //
 	devcont->VSSetConstantBuffers(0, 1, &MatrixBuffer);
-	// !PixelShader uses this buffer //
-	devcont->PSSetConstantBuffers(0, 1, &ColorsBuffer);
+	// pixel shader buffer //
+	devcont->PSSetConstantBuffers(1, 1, &ColorsBuffer);
 
 	return true;
 }
@@ -251,8 +250,8 @@ bool Leviathan::Rendering::GradientShader::SetNewDataToShaderBuffers(ID3D11Devic
 
 	// copy matrices //
 	AutoUnlocker->LockedResourcePtr->world = worldmatrix;
-	AutoUnlocker->LockedResourcePtr->world = viewmatrix;
-	AutoUnlocker->LockedResourcePtr->world = projectionmatrix;
+	AutoUnlocker->LockedResourcePtr->view = viewmatrix;
+	AutoUnlocker->LockedResourcePtr->projection = projectionmatrix;
 
 	// new colour buffer data //
 	auto ColourBufferData = Rendering::ResourceCreator::MapConstantBufferForWriting<ColorBufferTwoType>(devcont, ColorsBuffer);
@@ -403,8 +402,8 @@ bool Leviathan::Rendering::LightBumpShader::SetNewDataToShaderBuffers(ID3D11Devi
 
 	// copy matrices //
 	AutoUnlocker->LockedResourcePtr->world = worldmatrix;
-	AutoUnlocker->LockedResourcePtr->world = viewmatrix;
-	AutoUnlocker->LockedResourcePtr->world = projectionmatrix;
+	AutoUnlocker->LockedResourcePtr->view = viewmatrix;
+	AutoUnlocker->LockedResourcePtr->projection = projectionmatrix;
 
 	// new camera buffer data //
 	auto CamBufferData = Rendering::ResourceCreator::MapConstantBufferForWriting<CameraBufferType>(devcont, CameraBuffer);
@@ -457,7 +456,7 @@ bool Leviathan::Rendering::LightBumpShader::SetupShaderInputLayouts(ID3D11Device
 }
 // ------------------ SkinnedShader ------------------ //
 DLLEXPORT Leviathan::Rendering::SkinnedShader::SkinnedShader() : BaseShader(L"SkinnedModelShader.hlsl", "SkinnedVertexShader", "SkinnedPixelShader", 
-	"BUF:BMAT:CAMB:BLIGHT:BSKIN:TEX:NORMAL"), MatrixBuffer(NULL), CameraBuffer(NULL), LightBuffer(NULL), BoneMatriceBuffer_tiny(NULL),
+	"BUF:BMAT:CAMB:BLIGHT:BSKIN:TEX:NORMAL:INPUT:C0:T0:N0:BIDU4:BWEF4"), MatrixBuffer(NULL), CameraBuffer(NULL), LightBuffer(NULL), BoneMatriceBuffer_tiny(NULL),
 	VertexShader_small(NULL), BoneMatriceBuffer_small(NULL), VertexShader_medium(NULL), BoneMatriceBuffer_medium(NULL), VertexShader_large(NULL),
 	BoneMatriceBuffer_large(NULL), VertexShader_huge(NULL), BoneMatriceBuffer_huge(NULL), VertexShader_max(NULL), BoneMatriceBuffer_max(NULL)
 {
@@ -619,8 +618,8 @@ bool Leviathan::Rendering::SkinnedShader::SetNewDataToShaderBuffers(ID3D11Device
 
 	// copy matrices //
 	AutoUnlocker->LockedResourcePtr->world = worldmatrix;
-	AutoUnlocker->LockedResourcePtr->world = viewmatrix;
-	AutoUnlocker->LockedResourcePtr->world = projectionmatrix;
+	AutoUnlocker->LockedResourcePtr->view = viewmatrix;
+	AutoUnlocker->LockedResourcePtr->projection = projectionmatrix;
 
 	// new camera buffer data //
 	auto CamBufferData = Rendering::ResourceCreator::MapConstantBufferForWriting<CameraBufferType>(devcont, CameraBuffer);
@@ -736,21 +735,22 @@ bool Leviathan::Rendering::SkinnedShader::LoadShaderFromDisk(ID3D11Device* dev){
 				__assume(0);
 		}
 
-		D3D10_SHADER_MACRO Shader_Macros[2] = {{"MAX_TRANSFORMS", Convert::ToString(max_transforms).c_str()}, {NULL, NULL}};
+		string tformcount(Convert::ToString(max_transforms));
+
+		D3D10_SHADER_MACRO Shader_Macros[] = {{"MAX_TRANSFORMS", tformcount.c_str()}, {NULL, NULL}};
 
 		ID3D10Blob* Errordumb = NULL;
 		ID3D10Blob* CurrentShaderBuffer = NULL;
 
-		if(i != 1){
-			// compile vertex shader //
-			hr = D3DX11CompileFromFile(ShaderFileName.c_str(), &Shader_Macros[0], NULL, VSShaderEntryPoint.c_str(), "vs_5_0", CompileFlags, 0, 
-				NULL, &CurrentShaderBuffer, &Errordumb, NULL);
-
+		if(i == 1){
+			// pixel shader compile //
+			hr = D3DX11CompileFromFile((FileSystem::GetShaderFolder()+ShaderFileName).c_str(), &Shader_Macros[0], NULL, PSShaderEntryPoint.c_str(), 
+				"ps_5_0", CompileFlags, 0, NULL, &CurrentShaderBuffer, &Errordumb, NULL);
 
 		} else {
-			// pixel shader compile //
-			hr = D3DX11CompileFromFile(ShaderFileName.c_str(), &Shader_Macros[0], NULL, PSShaderEntryPoint.c_str(), "ps_5_0", CompileFlags, 0, NULL, 
-				&CurrentShaderBuffer, &Errordumb, NULL);
+			// compile vertex shader //
+			hr = D3DX11CompileFromFile((FileSystem::GetShaderFolder()+ShaderFileName).c_str(), &Shader_Macros[0], NULL, VSShaderEntryPoint.c_str(), 
+				"vs_5_0", CompileFlags, 0, NULL, &CurrentShaderBuffer, &Errordumb, NULL);
 		}
 		// try to report something useful if the creation failed //
 		if(FAILED(hr)){

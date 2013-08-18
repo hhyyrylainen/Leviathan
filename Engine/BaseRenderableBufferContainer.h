@@ -29,6 +29,14 @@ namespace Leviathan{ namespace Rendering{
 		DLLEXPORT virtual bool SetBuffersForRendering(ID3D11DeviceContext* devcont, int &indexbuffersize);
 		DLLEXPORT virtual inline int GetIndexCount() const = 0;
 
+
+		// returns empty string unless overridden //
+		DLLEXPORT virtual wstring GetPreferredShaderName();
+
+		DLLEXPORT inline const string& GetInputFormat(){
+			return InputFormatStr;
+		}
+
 	protected:
 
 		virtual bool RenderBuffers(ID3D11DeviceContext* devcont);

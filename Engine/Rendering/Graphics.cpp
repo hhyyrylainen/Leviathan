@@ -164,7 +164,7 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 	ActiveCamera->UpdateMatrix();
 	
 	// get matrices //
-	D3DXMATRIX ViewMatrix, ProjectionMatrix, WorldMatrix, TranslateMatrix, OrthoMatrix;
+	D3DXMATRIX ViewMatrix, ProjectionMatrix, WorldMatrix, OrthoMatrix;
 
 	ActiveCamera->GetViewMatrix(ViewMatrix);
 	Drenderer->GetWorldMatrix(WorldMatrix);
@@ -172,7 +172,7 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 
 	// create info object about current pass //
 	unique_ptr<RenderingPassInfo> CurrentPass = unique_ptr<RenderingPassInfo>(new RenderingPassInfo(ViewMatrix, ProjectionMatrix, WorldMatrix, 
-		TranslateMatrix, ActiveCamera));
+		ActiveCamera));
 
 	// go through objects and call their render functions //
 	for(size_t i = 0; i < objects.size(); i++){
@@ -185,7 +185,7 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 
 	// 2d rendering //
 	ActiveCamera->GetStaticViewMatrix(ViewMatrix);
-	//Drenderer->GetWorldMatrix(WorldMatrix);
+	Drenderer->GetWorldMatrix(WorldMatrix);
 	Drenderer->GetOrthoMatrix(OrthoMatrix);
 
 	Drenderer->TurnZBufferOff();
@@ -193,6 +193,7 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 	Drenderer->TurnOnAlphaBlending();
 
 	// update pass object //
+	CurrentPass->SetWorldMatrix(WorldMatrix);
 	CurrentPass->SetViewMatrix(ViewMatrix);
 	CurrentPass->SetProjectionMatrix(OrthoMatrix);
 
@@ -286,4 +287,45 @@ void Graphics::DrawRenderActions(RenderingPassInfo* pass){
 			}
 		}
 	}
+}
+
+DLLEXPORT bool Leviathan::Graphics::RenderAutomatic(Rendering::BaseRenderableBufferContainer* torenderbuffers, ShaderRenderTask* shaderparameters){
+	// finalize render task //
+	shaderparameters->SetInputPattern(torenderbuffers->GetInputFormat());
+
+#ifdef _DEBUG
+	string tmpformatstrcheck = shaderparameters->GetShaderPattern();
+#endif // _DEBUG
+
+
+	// find matching shader //
+	BaseShader* tmpsptr = Shaders->GetShaderMatchingObject(shaderparameters, torenderbuffers->GetPreferredShaderName());
+
+	if(!tmpsptr){
+		// no matching shader found //
+		return false;
+	}
+
+	// final check on object //
+	if(!tmpsptr->DoesInputObjectWork(shaderparameters)){
+
+		return false;
+	}
+
+	// set buffers to directx //
+	int DrawIndexCount = 0;
+	if(!torenderbuffers->SetBuffersForRendering(Drenderer->GetDeviceContext(), DrawIndexCount)){
+		// buffers cannot be rendered, abort rendering //
+		return false;
+	}
+
+	// call shader render //
+	if(!tmpsptr->Render(Drenderer->GetDeviceContext(), DrawIndexCount, shaderparameters)){
+		// shader failed to update internal buffers //
+		return false;
+	}
+
+
+	// even if the rendering at this point could fail we count getting this far as success //
+	return true;
 }

@@ -39,10 +39,10 @@ DLLEXPORT bool Leviathan::Rendering::ShaderManager::Init(ID3D11Device* device){
 
 	if(!_DirectLightShader->Init(device)){
 
-		Logger::Get()->Error(L"ShaderManager: Init: failed to initialize TextureShader");
+		Logger::Get()->Error(L"ShaderManager: Init: failed to initialize LightShader");
 		return false;
 	}
-	_StoredLightShader = shared_ptr<StoredShader>(new StoredShader(_DirectLightShader->GetShaderPattern(), L"TextureShader", _DirectLightShader));
+	_StoredLightShader = shared_ptr<StoredShader>(new StoredShader(_DirectLightShader->GetShaderPattern(), L"LightShader", _DirectLightShader));
 
 
 	_DirectBumpMapShader = new LightBumpShader();
@@ -50,10 +50,10 @@ DLLEXPORT bool Leviathan::Rendering::ShaderManager::Init(ID3D11Device* device){
 
 	if(!_DirectBumpMapShader->Init(device)){
 
-		Logger::Get()->Error(L"ShaderManager: Init: failed to initialize TextureShader");
+		Logger::Get()->Error(L"ShaderManager: Init: failed to initialize LightBumpShader");
 		return false;
 	}
-	_StoredBumpMapShader = shared_ptr<StoredShader>(new StoredShader(_DirectBumpMapShader->GetShaderPattern(), L"TextureShader", _DirectBumpMapShader));
+	_StoredBumpMapShader = shared_ptr<StoredShader>(new StoredShader(_DirectBumpMapShader->GetShaderPattern(), L"LightBumpShader", _DirectBumpMapShader));
 
 
 
@@ -62,10 +62,10 @@ DLLEXPORT bool Leviathan::Rendering::ShaderManager::Init(ID3D11Device* device){
 
 	if(!_DirectGradientShader->Init(device)){
 
-		Logger::Get()->Error(L"ShaderManager: Init: failed to initialize TextureShader");
+		Logger::Get()->Error(L"ShaderManager: Init: failed to initialize GradientShader");
 		return false;
 	}
-	_StoredGradientShader = shared_ptr<StoredShader>(new StoredShader(_DirectGradientShader->GetShaderPattern(), L"TextureShader", _DirectGradientShader));
+	_StoredGradientShader = shared_ptr<StoredShader>(new StoredShader(_DirectGradientShader->GetShaderPattern(), L"GradientShader", _DirectGradientShader));
 
 
 	_DirectSkinnedShader = new SkinnedShader();
@@ -73,10 +73,32 @@ DLLEXPORT bool Leviathan::Rendering::ShaderManager::Init(ID3D11Device* device){
 
 	if(!_DirectSkinnedShader->Init(device)){
 
-		Logger::Get()->Error(L"ShaderManager: Init: failed to initialize TextureShader");
+		Logger::Get()->Error(L"ShaderManager: Init: failed to initialize SkinnedShader");
 		return false;
 	}
-	_StoredSkinnedShader = shared_ptr<StoredShader>(new StoredShader(_DirectSkinnedShader->GetShaderPattern(), L"TextureShader", _DirectSkinnedShader));
+	_StoredSkinnedShader = shared_ptr<StoredShader>(new StoredShader(_DirectSkinnedShader->GetShaderPattern(), L"SkinnedShader", _DirectSkinnedShader));
+
+
+	_DirectFontShader = new FontShader();
+	CLASS_ALLOC_CHECK(_DirectFontShader);
+
+	if(!_DirectFontShader->Init(device)){
+
+		Logger::Get()->Error(L"ShaderManager: Init: failed to initialize FontShader");
+		return false;
+	}
+	_StoredFontShader = shared_ptr<StoredShader>(new StoredShader(_DirectFontShader->GetShaderPattern(), L"FontShader", _DirectFontShader));
+
+	// push all to the vector //
+	Shaders.reserve(5);
+
+	Shaders.push_back(_StoredTextureShader);
+	Shaders.push_back(_StoredLightShader);
+	Shaders.push_back(_StoredGradientShader);
+	Shaders.push_back(_StoredSkinnedShader);
+	Shaders.push_back(_StoredFontShader);
+
+
 
 	return true;
 }
@@ -107,6 +129,14 @@ DLLEXPORT void Leviathan::Rendering::ShaderManager::Release(){
 DLLEXPORT bool Leviathan::Rendering::ShaderManager::AutoRender(ID3D11DeviceContext* devcont, const int &indexcount, ShaderRenderTask* torender, 
 	const wstring &preferredname)
 {
+	// find right shader //
+	BaseShader* tmpptr = GetShaderMatchingObject(torender, preferredname);
+
+	// render if something found //
+	return tmpptr ? tmpptr->Render(devcont, indexcount, torender): false;
+}
+
+DLLEXPORT BaseShader* Leviathan::Rendering::ShaderManager::GetShaderMatchingObject(ShaderRenderTask* matchingdata, const wstring &preferredname /*= L""*/){
 	// assigning negative to unsigned creates a huge number which is hopefully above shader count //
 	size_t RenderIndex = (size_t)-1;
 	// if preferred name is set try to use that shader //
@@ -116,7 +146,7 @@ DLLEXPORT bool Leviathan::Rendering::ShaderManager::AutoRender(ID3D11DeviceConte
 
 			if(Shaders[i]->ShaderName == preferredname){
 				// check for pattern match //
-				if(torender->GetShaderPattern() != Shaders[i]->ShaderDefStr){
+				if(matchingdata->GetShaderPattern() != Shaders[i]->ShaderDefStr){
 
 					DEBUG_BREAK;
 				}
@@ -130,12 +160,12 @@ DLLEXPORT bool Leviathan::Rendering::ShaderManager::AutoRender(ID3D11DeviceConte
 
 	ARR_INDEX_CHECK(RenderIndex, Shaders.size()){
 		// valid index //
-		goto labelcanrender;
+		return Shaders[RenderIndex]->ShaderPtr.get();
 	}
 
 	// find by comparing shader patterns //
 	for(size_t i = 0; i < Shaders.size(); i++){
-		if(Shaders[i]->ShaderDefStr == torender->GetShaderPattern()){
+		if(Shaders[i]->ShaderDefStr == matchingdata->GetShaderPattern()){
 			// pattern match //
 			RenderIndex = i;
 			// if we have a name defined we might want to keep looping until exact match //
@@ -149,18 +179,13 @@ DLLEXPORT bool Leviathan::Rendering::ShaderManager::AutoRender(ID3D11DeviceConte
 
 	ARR_INDEX_CHECK(RenderIndex, Shaders.size()){
 		// valid index //
-		goto labelcanrender;
+		return Shaders[RenderIndex]->ShaderPtr.get();
 	}
 
 	// didn't find any matching shader //
-	DEBUG_BREAK;
-	return false;
-
-labelcanrender:
-
-
-	return Shaders[RenderIndex]->ShaderPtr->Render(devcont, indexcount, torender);
+	return NULL;
 }
+
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Rendering::ShaderManager::PrintShaderError(const wstring &shader, ID3D10Blob* datadump){
 

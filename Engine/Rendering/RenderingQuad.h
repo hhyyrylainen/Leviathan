@@ -38,7 +38,7 @@ namespace Leviathan{ namespace Rendering{
 		Float2 QuadSize;
 		Float2 Position;
 
-		static const string InputDefinitionType;
+		//static const string InputDefinitionType;
 	};
 }}
 #endif

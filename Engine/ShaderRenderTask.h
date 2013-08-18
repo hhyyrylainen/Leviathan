@@ -22,6 +22,20 @@ namespace Leviathan{
 
 		}
 
+		DLLEXPORT static string GetPatternForTextureFlags(const __int32 &TextureFlags){
+			// check flags in strict order and append to string //
+			string tnames("");
+
+			if(TextureFlags & TEXTURETYPE_NORMAL)
+				tnames += ":NORMAL";
+			if(TextureFlags & TEXTURETYPE_BUMPMAP)
+				tnames += ":BUMP";
+			if(TextureFlags & TEXTURETYPE_TEXT)
+				tnames += ":TEXT";
+
+			return tnames;
+		}
+
 		int TextureCount;
 		__int32 TextureFlags;
 	};
@@ -49,8 +63,14 @@ namespace Leviathan{
 	
 
 	struct BaseMatrixBufferData{
-		BaseMatrixBufferData(const D3DXMATRIX &worldm, const D3DXMATRIX &viewm, const D3DXMATRIX &projm);
-		BaseMatrixBufferData();
+		BaseMatrixBufferData(const D3DXMATRIX &worldm, const D3DXMATRIX &viewm, const D3DXMATRIX &projm) : WorldMatrix(worldm), ViewMatrix(viewm),
+			ProjectionMatrix(projm)
+		{
+
+		}
+		BaseMatrixBufferData(){
+
+		}
 
 
 		D3DXMATRIX WorldMatrix;
@@ -84,7 +104,7 @@ namespace Leviathan{
 	};
 
 	struct BaseSkinningData{
-		BaseSkinningData(GameObject::SkeletonRig* bones) : Bones(Bones), ShaderInternalDataPass(0) {
+		BaseSkinningData(GameObject::SkeletonRig* bones) : Bones(bones), ShaderInternalDataPass(0) {
 
 		}
 
@@ -178,11 +198,35 @@ namespace Leviathan{
 		DLLEXPORT inline const string GetShaderPattern(){
 			if(PatternCreated){
 
-				return ShaderPattern+":"+VertexBufferType;
+				return ShaderPattern+":INPUT:"+VertexBufferType;
 			}
 			// generate pattern //
 
+			// check each buffer and append name if found //
 
+			ShaderPattern = "BUF";
+
+			if(BMatData)
+				ShaderPattern += ":BMAT";
+			if(CameraLocationData)
+				ShaderPattern += ":CAMB";
+			if(BLightData)
+				ShaderPattern += ":BLIGHT";
+			if(ColourBuffer2Data)
+				ShaderPattern += ":COL2";
+			if(VertexSkinningData)
+				ShaderPattern += ":BSKIN";
+
+			// texture data //
+			if(TextureObjects){
+
+				ShaderPattern += ":TEX";
+
+				// get pattern for textures //
+				ShaderPattern += BaseTextureHolder::GetPatternForTextureFlags(TextureObjects->TextureFlags);
+			}
+
+			PatternCreated = true;
 			// recurse //
 			return GetShaderPattern();
 		}

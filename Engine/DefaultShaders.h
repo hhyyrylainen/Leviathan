@@ -85,7 +85,7 @@ namespace Leviathan{ namespace Rendering{
 		DLLEXPORT virtual ~SkinnedShader();
 
 		DLLEXPORT virtual bool DoesInputObjectWork(ShaderRenderTask* paramstocheck) const;
-		DLLEXPORT virtual bool Render(ID3D11DeviceContext* devcont,int indexcount, ShaderRenderTask* Parameters);
+		DLLEXPORT virtual bool Render(ID3D11DeviceContext* devcont, int indexcount, ShaderRenderTask* Parameters);
 
 	private:
 
@@ -96,7 +96,7 @@ namespace Leviathan{ namespace Rendering{
 		virtual bool SetNewDataToShaderBuffers(ID3D11DeviceContext* devcont, ShaderRenderTask* parameters);
 		// overload some base class functions //
 		virtual bool LoadShaderFromDisk(ID3D11Device* dev);
-		void virtual ShaderRender(ID3D11DeviceContext* devcont, ID3D11VertexShader* vertexshader, ID3D11PixelShader* pixelshader, const int &indexcount);
+		//void virtual ShaderRender(ID3D11DeviceContext* devcont, ID3D11VertexShader* vertexshader, ID3D11PixelShader* pixelshader, const int &indexcount);
 		// ------------------------------------ //
 
 		// buffers for passing shader data //

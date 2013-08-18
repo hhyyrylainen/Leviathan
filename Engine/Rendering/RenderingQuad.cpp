@@ -11,7 +11,7 @@ using namespace Rendering;
 // ------------------------------------ //
 
 
-DLLEXPORT Leviathan::Rendering::RenderingQuad::RenderingQuad() : BaseRenderableBufferContainer(InputDefinitionType, sizeof(VertexType)){
+DLLEXPORT Leviathan::Rendering::RenderingQuad::RenderingQuad() : BaseRenderableBufferContainer("C0:T0", sizeof(VertexType)){
 	// set so bizarre enough values that they are always updated //
 
 
@@ -20,8 +20,6 @@ DLLEXPORT Leviathan::Rendering::RenderingQuad::RenderingQuad() : BaseRenderableB
 DLLEXPORT Leviathan::Rendering::RenderingQuad::~RenderingQuad(){
 
 }
-// ---------------------------------- //
-const string Leviathan::Rendering::RenderingQuad::InputDefinitionType = "INPUT:C0:T0";
 // ---------------------------------- //
 DLLEXPORT bool Leviathan::Rendering::RenderingQuad::Update(ID3D11DeviceContext* devcont, const Float2 &pos, const Float2 &sizes, int screenwidth, 
 	int screenheight, int coordtype, int flowstyle /*= 1*/)
@@ -39,6 +37,7 @@ DLLEXPORT bool Leviathan::Rendering::RenderingQuad::Update(ID3D11DeviceContext* 
 	ScreenHeight = screenheight;
 	QuadSize = sizes;
 	Position = pos;
+	CoordType = coordtype;
 
 	Float4 leftrighttopbottomlocations(Float4(0));
 	Rendering::ResourceCreator::Generate2DCoordinatesFromLocationAndSize(Position, QuadSize, CoordType, leftrighttopbottomlocations);

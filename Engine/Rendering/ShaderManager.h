@@ -7,6 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "DefaultShaders.h"
+#include "FontShader.h"
 
 namespace Leviathan{ namespace Rendering{
 
@@ -15,6 +16,11 @@ namespace Leviathan{ namespace Rendering{
 			ShaderPtr(baseptr)
 		{
 
+		}
+		~StoredShader(){
+			// safely release the shader ptr //
+			ShaderPtr->Release();
+			ShaderPtr.reset();
 		}
 
 		shared_ptr<BaseShader> ShaderPtr;
@@ -33,6 +39,7 @@ namespace Leviathan{ namespace Rendering{
 		// preferredname can be used to use a specific shader if you know the right name (e.g. font renderer forces FontShader usage with this) //
 		DLLEXPORT bool AutoRender(ID3D11DeviceContext* devcont, const int &indexcount, ShaderRenderTask* torender, const wstring &preferredname);
 
+		DLLEXPORT BaseShader* GetShaderMatchingObject(ShaderRenderTask* matchingdata, const wstring &preferredname = L"");
 
 
 		DLLEXPORT static void PrintShaderError(const wstring &shader, ID3D10Blob* datadump);
@@ -54,6 +61,8 @@ namespace Leviathan{ namespace Rendering{
 		GradientShader* _DirectGradientShader;
 		shared_ptr<StoredShader> _StoredSkinnedShader;
 		SkinnedShader* _DirectSkinnedShader;
+		shared_ptr<StoredShader> _StoredFontShader;
+		FontShader* _DirectFontShader;
 	};
 }}
 #endif

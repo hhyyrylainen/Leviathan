@@ -10,8 +10,9 @@ using namespace Rendering;
 #include "Graphics.h"
 #include "..\GuiPositionable.h"
 #include "..\DebugVariableNotifier.h"
+#include "RenderingResourceCreator.h"
 
-TextRenderer::TextRenderer() : _FontShader(NULL), Graph(NULL){
+TextRenderer::TextRenderer() : Graph(NULL){
 
 }
 
@@ -26,16 +27,6 @@ DLLEXPORT bool Leviathan::TextRenderer::Init(Graphics* graph){
 	// always create arial font //
 	LoadFont(L"Arial.dds");
 
-	// create shader //
-	_FontShader = new FontShader();
-	if(!_FontShader)
-		return false;
-
-	if(!_FontShader->Init(graph->GetRenderer()->GetDevice())){
-		Logger::Get()->Error(L"Failed to init TextRenderer, init font shader failed", true);
-		return false;
-	}
-
 	return true;
 }
 
@@ -44,8 +35,6 @@ void TextRenderer::Release(){
 	SAFE_DELETE_VECTOR(ExpensiveTexts);
 	SAFE_DELETE_VECTOR(CheapTexts);
 
-	// release shader
-	SAFE_RELEASEDEL(_FontShader);
 	
 	// release fonts //
 	for(unsigned int i = 0; i < FontHolder.size(); i++){
@@ -74,6 +63,7 @@ DLLEXPORT bool Leviathan::TextRenderer::ReleaseText(const int &ID){
 		}
 	}
 
+	return false;
 }
 
 // ------------------------------------ //
@@ -181,6 +171,64 @@ DLLEXPORT bool Leviathan::TextRenderer::AdjustTextToFitBox(const Float2 &BoxToFi
 	return FontHolder[index]->AdjustTextSizeToFitBox(BoxToFit, text, CoordType, Charindexthatfits, EntirelyFitModifier, HybridScale, 
 		Finallength, scaletocutfrom);
 }
+
+DLLEXPORT ExpensiveText* Leviathan::TextRenderer::GetExpensiveText(const int &ID){
+	for(size_t i = 0; i < ExpensiveTexts.size(); i++){
+		if(ExpensiveTexts[i]->ID == ID)
+			return ExpensiveTexts[i];
+	}
+	// create new //
+	ExpensiveTexts.push_back(new ExpensiveText(ID));
+	// init it's buffers //
+	ExpensiveTexts.back()->Init(Graph->GetRenderer()->GetDevice());
+	return ExpensiveTexts.back();
+}
+
+DLLEXPORT CheapText* Leviathan::TextRenderer::GetCheapText(const int &ID){
+	for(size_t i = 0; i < CheapTexts.size(); i++){
+		if(CheapTexts[i]->ID == ID)
+			return CheapTexts[i];
+	}
+	// create new //
+	CheapTexts.push_back(new CheapText(ID));
+	// init it's buffers //
+	CheapTexts.back()->Init(Graph->GetRenderer()->GetDevice());
+	return CheapTexts.back();
+}
+
+DLLEXPORT void Leviathan::TextRenderer::UpdateShaderRenderTask(int TextID, ShaderRenderTask* SHRender, RenderingPassInfo* pass){
+
+	for(size_t i = 0; i < CheapTexts.size(); i++){
+		if(CheapTexts[i]->ID == TextID){
+			CheapTexts[i]->SetRenderingVariablesToSH(this, SHRender);
+			return;
+		}
+	}
+
+	for(size_t i = 0; i < ExpensiveTexts.size(); i++){
+		if(ExpensiveTexts[i]->ID == TextID){
+			ExpensiveTexts[i]->SetRenderingVariablesToSH(this, SHRender);
+			return;
+		}
+	}
+
+	
+}
+
+DLLEXPORT Rendering::BaseRenderableBufferContainer* Leviathan::TextRenderer::GetRenderingBuffers(int TextID, ShaderRenderTask* SHRender){
+	for(size_t i = 0; i < CheapTexts.size(); i++){
+		if(CheapTexts[i]->ID == TextID)
+			return CheapTexts[i];
+	}
+
+	for(size_t i = 0; i < ExpensiveTexts.size(); i++){
+		if(ExpensiveTexts[i]->ID == TextID)
+			return ExpensiveTexts[i];
+	}
+
+	return NULL;
+}
+
 // ------------------ ExpensiveText ------------------ //
 DLLEXPORT bool Leviathan::ExpensiveText::UpdateIfNeeded(TextRenderer* render, const wstring &text, const wstring &font, const Float2 &location, 
 	int coordtype, float size, float adjustcut, const Float2 &boxtofit, bool fittobox, int screenwidth, int screenheight)
@@ -329,52 +377,19 @@ bool Leviathan::ExpensiveText::_VerifyBuffers(ID3D11DeviceContext* devcont){
 		return true;
 	BuffersFine = true;
 
-
-	// check index buffer state, which is always same //
-	if(!IndexBuffer){
-		// this just needs 6 element default vertex buffer //
-		IndexBuffer = Rendering::ResourceCreator::GenerateDefaultIndexBuffer(6);
-	}
-
-
-	// vertex buffer needs some more work //
-	if(!VertexBuffer){
-		// create new from scratch //
-		VertexBuffer = Rendering::ResourceCreator::GenerateDefaultDynamicDefaultTypeVertexBuffer(6);
-	}
-
-
 	// update current vertex buffer //
-	D3D11_MAPPED_SUBRESOURCE VBufferData;
 
-	HRESULT hr = devcont->Map(VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &VBufferData);
-	if(FAILED(hr)){
+	auto AutoUnlocked = ResourceCreator::MapConstantBufferForWriting<VertexType>(devcont, VertexBuffer);
 
-		return false;
-	}
-
-	// cast to right type //
-	VertexType* VertexDataPtr = (VertexType*)VBufferData.pData;
-
-	// convert data //
-	VertexType* vertices = Rendering::ResourceCreator::GenerateQuadIntoVertexBuffer(Coord, RenderedToBox, 6, CoordType, 
-		QUAD_FILLSTYLE_UPPERLEFT_0_BOTTOMRIGHT_1);
-	if(!vertices){
+	// create new data for buffer //
+	unique_ptr<VertexType[]> vertices(ResourceCreator::GenerateQuadIntoVertexBuffer(Coord, RenderedToBox, 6, CoordType, 
+		QUAD_FILLSTYLE_UPPERLEFT_0_BOTTOMRIGHT_1));
+	if(!vertices || AutoUnlocked.get() == NULL){
 		return false;
 	}
 
 	// copy data to the mapped buffer //
-	memcpy(VertexDataPtr, (void*)vertices, sizeof(VertexType)*6);
-
-	// Unmap the buffer //
-	devcont->Unmap(VertexBuffer, 0);
-
-	// release vertice data //
-	SAFE_DELETE_ARRAY(vertices);
-
-
-	// dump variables //
-	//DebugVariableNotifier::PrintVariables();
+	memcpy(AutoUnlocked->LockedResourcePtr, vertices.get(), sizeof(VertexType)*6);
 
 
 	// buffers are now fine //
@@ -434,6 +449,21 @@ trytoveerifyexpensivetexttextureslabel:
 
 	return true;
 }
+
+bool Leviathan::ExpensiveText::CreateBuffers(ID3D11Device* device){
+	// buffers are always the same size for this text, we can create them here //
+
+	// this just needs 6 element default vertex index //
+	IndexBuffer = Rendering::ResourceCreator::GenerateDefaultIndexBuffer(6);
+
+	// dynamic vertex buffer for updating location //
+	VertexBuffer = Rendering::ResourceCreator::GenerateDefaultDynamicDefaultTypeVertexBuffer(6);
+
+
+	BuffersFine = false;
+	return true;
+}
+
 // ------------------ CheapText ------------------ //
 Leviathan::CheapText::CheapText(const int &id) : BaseRenderableBufferContainer("C0:T0", sizeof(VertexType)), ID(id){
 	// set max character count to 0 to force updating on first Update call //

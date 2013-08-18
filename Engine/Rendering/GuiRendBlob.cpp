@@ -142,8 +142,8 @@ DLLEXPORT Leviathan::ExpensiveTextRendBlob::ExpensiveTextRendBlob(Graphics* grap
 {
 	// get unique id for text //
 	TextID = IDFactory::GetID();
-
-
+	// copy text renderer ptr //
+	TRenderer = graph->GetTextRenderer();
 }
 
 DLLEXPORT Leviathan::ExpensiveTextRendBlob::~ExpensiveTextRendBlob(){

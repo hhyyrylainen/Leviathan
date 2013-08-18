@@ -17,8 +17,8 @@ Leviathan::BaseShader::BaseShader(const wstring &shaderfile, const string &vsent
 
 DLLEXPORT Leviathan::BaseShader::~BaseShader(){
 	if(Inited){
-		// just so that no shader is left initialized //
-		Release();
+		// we cannot call the virtual function to release this //
+		Logger::Get()->Error(L"BaseShader: DTor: shader has leaked!, name: "+ShaderFileName);
 	}
 }
 // ------------------------------------ //
@@ -65,6 +65,11 @@ bool Leviathan::BaseShader::CreateShader(ID3D11Device* dev){
 		Logger::Get()->Error(L"CreateShader: failed to load shader code");
 		return false;
 	}
+	if(!CreateDefaultSamplerState(dev)){
+
+		Logger::Get()->Error(L"CreateShader: failed to create texture sampler");
+		return false;
+	}
 	if(!SetupShaderDataBuffers(dev)){
 
 		Logger::Get()->Error(L"CreateShader: failed to setup shader specific buffers");
@@ -92,12 +97,12 @@ bool Leviathan::BaseShader::LoadShaderFromDisk(ID3D11Device* dev){
 
 		if(i == 0){
 			// compile vertex shader //
-			hr = D3DX11CompileFromFile(ShaderFileName.c_str(), &Shader_Macros[0], NULL, VSShaderEntryPoint.c_str(), "vs_5_0", CompileFlags, 0, 
-				NULL, &Vertexshaderbuffer, &Errordumb, NULL);
+			hr = D3DX11CompileFromFile((FileSystem::GetShaderFolder()+ShaderFileName).c_str(), &Shader_Macros[0], NULL, VSShaderEntryPoint.c_str(), 
+				"vs_5_0", CompileFlags, 0, NULL, &Vertexshaderbuffer, &Errordumb, NULL);
 		} else {
 			// pixel shader compile //
-			hr = D3DX11CompileFromFile(ShaderFileName.c_str(), &Shader_Macros[0], NULL, PSShaderEntryPoint.c_str(), "ps_5_0", CompileFlags, 0, NULL, 
-				&Pixelshaderbuffer, &Errordumb, NULL);
+			hr = D3DX11CompileFromFile((FileSystem::GetShaderFolder()+ShaderFileName).c_str(), &Shader_Macros[0], NULL, PSShaderEntryPoint.c_str(), 
+				"ps_5_0", CompileFlags, 0, NULL, &Pixelshaderbuffer, &Errordumb, NULL);
 		}
 		// try to report something useful if the creation failed //
 		if(FAILED(hr)){

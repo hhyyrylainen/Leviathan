@@ -16,11 +16,11 @@ namespace Leviathan{
 	// NOTE: On creating shader definition strings (those "BUF:BMAT:TEX:NORMAL")
 	// The strings are directly compared thus they always need to have the object in certain order:
 	// first there are buffers "BUF:" following these buffers in this order if they are needed
-	// BMAT, BMAT, CAMB, BLIGHT, COL[1-8] (e.g. COL2)
+	// BMAT, BMAT, CAMB, BLIGHT, COL[1-8] (e.g. COL2), BSKIN
 	// next follows which texture types "TEX:" are contained also in this strict order:
 	// NORMAL, BUMP
-	// Finally the format of input "INPUT:" vertices if not default (Float3 pos, Float2 texturecoordinate, Float3 normal)
-	// C0, T0, N0, TANG0, BINOR0
+	// Finally the format of input "INPUT:" vertices
+	// C0, T0, N0, TANG0, BINOR0, BIDU4 (bone ids uints 4), BWEF4 (bone weights floats 4) 
 
 
 	// class that all shaders must inherit //
@@ -30,10 +30,10 @@ namespace Leviathan{
 		DLLEXPORT virtual ~BaseShader();
 
 		DLLEXPORT inline bool DoesMatchPattern(const string &checktomatch) const{
-			return InputPatternForShader == checktomatch;
+			return ShaderInputPattern == checktomatch;
 		}
 		DLLEXPORT inline const string& GetShaderPattern() const{
-			return InputPatternForShader;
+			return ShaderInputPattern;
 		}
 
 		DLLEXPORT virtual bool Init(ID3D11Device* device);
@@ -82,9 +82,9 @@ namespace Leviathan{
 
 		// shader definition strings //
 		wstring ShaderFileName;
-		string VSShaderEntryPoint, PSShaderEntryPoint, ShaderInputPattern;
+		string VSShaderEntryPoint, PSShaderEntryPoint;
 		// holds the pattern of input that this shader needs //
-		string InputPatternForShader;
+		string ShaderInputPattern;
 	};
 
 	// this shader is included here because it is so basic that it makes a good example for other shaders how to properly do a shader class //

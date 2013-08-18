@@ -11,7 +11,6 @@
 #include "AutoUpdateable.h"
 
 #include "RenderingFont.h"
-#include "FontShader.h"
 #include "ShaderDataTypes.h"
 #include "GuiRendBlob.h"
 #include "BaseRenderableBufferContainer.h"
@@ -32,7 +31,7 @@ namespace Leviathan{
 
 		DLLEXPORT bool SetRenderingVariablesToSH(TextRenderer* trenderer, ShaderRenderTask* task);
 
-		DLLEXPORT virtual inline int GetIndexCount(){
+		DLLEXPORT virtual inline int GetIndexCount() const{
 			return VertexCount;
 		}
 	protected:
@@ -71,7 +70,7 @@ namespace Leviathan{
 		DLLEXPORT virtual bool SetBuffersForRendering(ID3D11DeviceContext* devcont, int &indexbuffersize);
 		DLLEXPORT bool SetRenderingVariablesToSH(TextRenderer* trenderer, ShaderRenderTask* task);
 
-		DLLEXPORT virtual inline int GetIndexCount(){
+		DLLEXPORT virtual inline int GetIndexCount() const{
 			return 6;
 		}
 
@@ -143,7 +142,6 @@ namespace Leviathan{
 		int GetFontIndex(const wstring &name);
 
 		// ------------------------------------ //
-		Rendering::FontShader* _FontShader;
 
 		vector<RenderingFont*> FontHolder;
 

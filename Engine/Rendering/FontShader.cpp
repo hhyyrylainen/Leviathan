@@ -8,17 +8,17 @@ using namespace Rendering;
 // ------------------------------------ //
 #include "ShaderManager.h"
 
-DLLEXPORT Leviathan::Rendering::GradientShader::GradientShader() : BaseShader(L"FontShader.hlsl", "FontVertexShader", "FontPixelShader", 
+DLLEXPORT Leviathan::Rendering::FontShader::FontShader() : BaseShader(L"FontShader.hlsl", "FontVertexShader", "FontPixelShader", 
 	"BUF:BMAT:COL2:TEX:TEXT:INPUT:C0:T0"), MatrixBuffer(NULL), ColorsBuffer(NULL)
 {
 
 }
 
-DLLEXPORT Leviathan::Rendering::GradientShader::~GradientShader(){
+DLLEXPORT Leviathan::Rendering::FontShader::~FontShader(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Rendering::GradientShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck) const{
+DLLEXPORT bool Leviathan::Rendering::FontShader::DoesInputObjectWork(ShaderRenderTask* paramstocheck) const{
 	// check for data presence of required objects //
 	BaseMatrixBufferData* bmtocheck = paramstocheck->GetBaseMatrixBufferData();
 	TwoColorBufferData* bctocheck = paramstocheck->GetColourBufferTwo();
@@ -33,7 +33,7 @@ DLLEXPORT bool Leviathan::Rendering::GradientShader::DoesInputObjectWork(ShaderR
 	return true;
 }
 // ------------------------------------ //
-bool Leviathan::Rendering::GradientShader::SetupShaderDataBuffers(ID3D11Device* dev){
+bool Leviathan::Rendering::FontShader::SetupShaderDataBuffers(ID3D11Device* dev){
 	// create this shader specific buffers //
 	if(!Rendering::ResourceCreator::CreateDynamicConstantBufferForVSShader(&MatrixBuffer, sizeof(MatrixBufferType))){
 
@@ -49,13 +49,13 @@ bool Leviathan::Rendering::GradientShader::SetupShaderDataBuffers(ID3D11Device* 
 	return true;
 }
 
-void Leviathan::Rendering::GradientShader::ReleaseShaderDataBuffers(){
+void Leviathan::Rendering::FontShader::ReleaseShaderDataBuffers(){
 	// this shader specific buffers //
 	SAFE_RELEASE(MatrixBuffer);
 	SAFE_RELEASE(ColorsBuffer);
 }
 // ------------------------------------ //
-bool Leviathan::Rendering::GradientShader::SetShaderParams(ID3D11DeviceContext* devcont, ShaderRenderTask* parameters){
+bool Leviathan::Rendering::FontShader::SetShaderParams(ID3D11DeviceContext* devcont, ShaderRenderTask* parameters){
 	// copy new data from parameters object to the shader buffers //
 	// prepare buffers //
 	if(!SetNewDataToShaderBuffers(devcont, parameters)){
@@ -71,8 +71,8 @@ bool Leviathan::Rendering::GradientShader::SetShaderParams(ID3D11DeviceContext* 
 
 	// set VertexShader buffers //
 	devcont->VSSetConstantBuffers(0, 1, &MatrixBuffer);
-	// !PixelShader uses this buffer //
-	devcont->PSSetConstantBuffers(0, 1, &ColorsBuffer);
+	// pixel shader buffer //
+	devcont->PSSetConstantBuffers(1, 1, &ColorsBuffer);
 
 	// set PixelShader resources //
 	// we need this temporary because the function actually wants an array of these values //
@@ -83,7 +83,7 @@ bool Leviathan::Rendering::GradientShader::SetShaderParams(ID3D11DeviceContext* 
 	return true;
 }
 
-bool Leviathan::Rendering::GradientShader::SetNewDataToShaderBuffers(ID3D11DeviceContext* devcont, ShaderRenderTask* parameters){
+bool Leviathan::Rendering::FontShader::SetNewDataToShaderBuffers(ID3D11DeviceContext* devcont, ShaderRenderTask* parameters){
 	// copy new matrix buffer data //
 	auto AutoUnlocker = Rendering::ResourceCreator::MapConstantBufferForWriting<MatrixBufferType>(devcont, MatrixBuffer);
 	if(AutoUnlocker == NULL){
@@ -102,8 +102,8 @@ bool Leviathan::Rendering::GradientShader::SetNewDataToShaderBuffers(ID3D11Devic
 
 	// copy matrices //
 	AutoUnlocker->LockedResourcePtr->world = worldmatrix;
-	AutoUnlocker->LockedResourcePtr->world = viewmatrix;
-	AutoUnlocker->LockedResourcePtr->world = projectionmatrix;
+	AutoUnlocker->LockedResourcePtr->view = viewmatrix;
+	AutoUnlocker->LockedResourcePtr->projection = projectionmatrix;
 
 	// new colour buffer data //
 	auto ColourBufferData = Rendering::ResourceCreator::MapConstantBufferForWriting<ColorBufferTwoType>(devcont, ColorsBuffer);
@@ -119,7 +119,7 @@ bool Leviathan::Rendering::GradientShader::SetNewDataToShaderBuffers(ID3D11Devic
 	return true;
 }
 // ------------------------------------ //
-bool Leviathan::Rendering::GradientShader::SetupShaderInputLayouts(ID3D11Device* dev, ID3D10Blob* VertexShaderBuffer){
+bool Leviathan::Rendering::FontShader::SetupShaderInputLayouts(ID3D11Device* dev, ID3D10Blob* VertexShaderBuffer){
 	// create layout //
 	D3D11_INPUT_ELEMENT_DESC shaderdatalayoutdesc[] = {
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},

@@ -60,3 +60,7 @@ bool Leviathan::Rendering::BaseRenderableBufferContainer::Create1To1IndexBuffer(
 	IndexBuffer = ResourceCreator::GenerateDefaultIndexBuffer(icount);
 	return IndexBuffer ? true: false;
 }
+
+DLLEXPORT wstring Leviathan::Rendering::BaseRenderableBufferContainer::GetPreferredShaderName(){
+	return L"";
+}

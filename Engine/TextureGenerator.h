@@ -6,15 +6,16 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "DDsHandler.h"
+#include "Utility\FileRelated\DDsHandler.h"
 #include "Rendering\ManagedTexture.h"
 
 namespace Leviathan{
 
-	class TextureGenerator/* : public Object "static class" don't inherit anything*/{
+	class TextureGenerator{
 	public:
-		DLLEXPORT static ManagedTexture* GenerateCheckerBoard(int width, int height, unsigned int colours, int tilesperwidth, int tilesperheight, vector<Int3>& colors, ID3D11Device* dev);
-		DLLEXPORT static ManagedTexture* GenerateCheckerBoard(int width, int height, unsigned int colours, int tilesperside, vector<Int3>& colors, ID3D11Device* dev);
+		DLLEXPORT static ManagedTexture* GenerateCheckerBoard(int width, int height, unsigned int colours, int tilesperwidth, int tilesperheight, 
+			vector<Int3>& colors);
+		DLLEXPORT static ManagedTexture* GenerateCheckerBoard(int width, int height, unsigned int colours, int tilesperside, vector<Int3>& colors);
 	private:
 		TextureGenerator(); // private constructor to prevent instantiating this class
 	};

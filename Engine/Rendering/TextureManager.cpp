@@ -13,18 +13,17 @@ TextureManager::TextureManager(bool Main, Graphics* graph){
 	GraphInter = graph;
 
 	// generate error texture //
-	// make 50x50 blue and black texture //
+
+	// make 500x500 blue and black texture //
 
 	// colors for error //
 	vector<Int3> colors;
 	colors.push_back(Int3(114,194,255));
 	colors.push_back(Int3(0,0,0));
-	//colors.push_back(Int3(255,91,127));
 
-	ManagedTexture* errorimage = TextureGenerator::GenerateCheckerBoard(500,500, 2, 10, colors, graph->GetRenderer()->GetDevice());
-	// add to utility array, for fast finding //
+	ManagedTexture* errorimage = TextureGenerator::GenerateCheckerBoard(500,500, 2, 10, colors);
+	// store as error texture ptr //
 	ErrorTexture = shared_ptr<ManagedTexture>(errorimage);
-
 }
 TextureManager::~TextureManager(){
 	Release();
@@ -249,7 +248,7 @@ shared_ptr<ManagedTexture> TextureManager::SearchLastUsed(int id){
 #ifdef _DEBUG
 				Logger::Get()->Info(L"TextureManager: Initializing GetTextureView value");
 #endif
-				LastUsed[i]->Load(Graphics::Get()->GetRenderer()->GetDevice());
+				LastUsed[i]->Load(NULL);
 				RemoveFromUninitialized(id);
 			}
 			AddToLatest(LastUsed[i]);
@@ -269,7 +268,7 @@ shared_ptr<ManagedTexture> TextureManager::SearchExpiring(int id){
 #ifdef _DEBUG
 				Logger::Get()->Info(L"TextureManager: Initializing GetTextureView value");
 #endif
-				Expiring[i]->Load(Graphics::Get()->GetRenderer()->GetDevice());
+				Expiring[i]->Load(NULL);
 				RemoveFromUninitialized(id);
 			}
 			LastUsed.push_back(Expiring[i]);
@@ -290,7 +289,7 @@ shared_ptr<ManagedTexture> TextureManager::SearchUnloaded(int id){
 #ifdef _DEBUG
 				Logger::Get()->Info(L"TextureManager: Initializing GetTextureView value");
 #endif
-				Unloaded[i]->Load(Graphics::Get()->GetRenderer()->GetDevice());
+				Unloaded[i]->Load(NULL);
 				RemoveFromUninitialized(id);
 			}
 			LastUsed.push_back(Unloaded[i]);
@@ -310,7 +309,7 @@ shared_ptr<ManagedTexture> TextureManager::SearchUtility(int id){
 #ifdef _DEBUG
 				Logger::Get()->Info(L"TextureManager: Initializing GetTextureView value");
 #endif
-				Utility[i]->Load(Graphics::Get()->GetRenderer()->GetDevice());
+				Utility[i]->Load(NULL);
 				RemoveFromUninitialized(id);
 			}
 			AddToLatest(Utility[i]);
@@ -334,7 +333,8 @@ DLLEXPORT bool Leviathan::TextureManager::AddVolatileGenerated(const int &ID, co
 	const TEXTURETYPE &type)
 {
 	// add to vector //
-	VolatileGenerated.push_back(shared_ptr<ManagedTexture>(new ManagedTexture(ID, texture, source, type)));
+	//VolatileGenerated.push_back(shared_ptr<ManagedTexture>(new ManagedTexture(ID, texture, source, type)));
+	DEBUG_BREAK;
 
 	return true;
 }
@@ -397,7 +397,7 @@ int TextureManager::LoadTexture(wstring& path, const TEXTURETYPE &type, bool loa
 		NonInitialized.push_back(tempptr);
 	} else {
 		// call texture to load itself //
-		temp->Load(Graphics::Get()->GetRenderer()->GetDevice());
+		temp->Load(NULL);
 	}
 
 	return id;

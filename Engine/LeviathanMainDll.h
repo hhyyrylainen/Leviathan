@@ -9,19 +9,14 @@ using namespace Leviathan;
 // ---- includes ---- //
 #include "Include.h"
 #include "Define.h"
-#include "Types.h"
-#include "Misc.h"
+#include "Common\Types.h"
+#include "Common\Misc.h"
 #include "Logger.h"
-#include "Window.h"
+#include "Common\Window.h"
 #include "Engine.h"
 
 
-#include "Application.h"
-
-//#include "LastDefs.h"
-
-// include library //
-//#pragma comment( lib, "Engine.lib" ) // should be in project settings
+#include "Application\Application.h"
 
 
 #endif

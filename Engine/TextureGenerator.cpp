@@ -10,12 +10,12 @@ TextureGenerator::TextureGenerator(){
 }
 // ------------------------------------ //
 
-ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, unsigned int colours, int tilesperside, vector<Int3>& colors, ID3D11Device* dev){
+ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, unsigned int colours, int tilesperside, vector<Int3>& colors){
 	// lil hack, just call the other function //
-	return GenerateCheckerBoard(width, height, colours, tilesperside, tilesperside, colors, dev);
+	return GenerateCheckerBoard(width, height, colours, tilesperside, tilesperside, colors);
 }
 
-ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, unsigned int colours, int tilesperwidth, int tilesperheight, vector<Int3>& colors, ID3D11Device* dev){
+ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, unsigned int colours, int tilesperwidth, int tilesperheight, vector<Int3>& colors){
 	ManagedTexture* result = NULL;
 
 	// basic checks to see if data is somewhat ok
@@ -89,7 +89,7 @@ ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, un
 	}
 
 	
-	result = new ManagedTexture(tempbuffer.get(), charsinbuffer, IDFactory::GetID(), L"TextureGenerator::Checkerboard", dev, TEXTURETYPE_NORMAL);
+	result = new ManagedTexture(tempbuffer.get(), charsinbuffer, IDFactory::GetID(), L"TextureGenerator::Checkerboard", TEXTURETYPE_NORMAL);
 	return result;
 }
 // ------------------------------------ //

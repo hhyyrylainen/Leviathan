@@ -3,6 +3,7 @@
 #ifndef LEVIATHAN_FILESYSTEM
 #include "FileSystem.h"
 #endif
+#include "OgreResourceGroupManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::FileSystem::FileSystem(){
@@ -807,6 +808,37 @@ void Leviathan::FileSystem::_CreateIndexesIfMissing(vector<shared_ptr<FileDefini
 
 	// done //
 	indexed = true;
+}
+
+DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
+	// get the resource managing singleton //
+	Ogre::ResourceGroupManager& manager = Ogre::ResourceGroupManager::getSingleton();
+
+
+	// Models folder //
+	manager.createResourceGroup("MainModelsFolder");
+
+	Ogre::String folder = Convert::WstringToString(DataFolder+ModelsFolder);
+
+	manager.addResourceLocation(folder, "FileSystem", "MainModelsFolder", true);
+
+
+	// Textures folder //
+	manager.createResourceGroup("MainTexturesFolder");
+
+	folder = Convert::WstringToString(DataFolder+TextureFolder);
+
+	manager.addResourceLocation(folder, "FileSystem", "MainTexturesFolder", true);
+
+
+	// possibly register addon folders //
+
+
+	// initialize the groups //
+	manager.initialiseAllResourceGroups();
+
+	// load the groups //
+	manager.loadResourceGroup("MainModelsFolder");
 }
 
 // ------------------ FileDefinitionType ------------------ //

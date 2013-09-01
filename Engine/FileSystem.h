@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "NamedVars.h"
-#include "ExceptionInvalidArguement.h"
+#include "Common\DataStoring\NamedVars.h"
+#include "Exceptions\ExceptionInvalidArguement.h"
 
 namespace Leviathan{
 
@@ -71,6 +71,8 @@ namespace Leviathan{
 		DLLEXPORT static wstring GetTextureFolder();
 		DLLEXPORT static wstring GetFontFolder();
 		DLLEXPORT static wstring GetSoundFolder();
+
+		DLLEXPORT static void RegisterOGREResourceGroups();
 
 		DLLEXPORT static bool DoesExtensionMatch(FileDefinitionType* file, const vector<int>&Ids);
 

@@ -7,9 +7,8 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "ManagedTexture.h"
-#include "TexturePointer.h"
 
-#include <TextureGenerator.h>
+#include "TextureGenerator.h"
 
 #define TEXTUREMANAGER_LATEST_SEARCH_SIZE	10
 

@@ -1,53 +1,45 @@
 #include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_GRAPHS
+#ifndef LEVIATHAN_GRAPHICS
 #include "Graphics.h"
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "AppDefine.h"
-#include "Application.h"
-#include "ShaderManager.h"
-#include "RenderingQuad.h"
+#include "Application\AppDefine.h"
+#include "Application\Application.h"
+#include "Utility\ComplainOnce.h"
+#include <boost\assign\list_of.hpp>
 
-Graphics::Graphics() : Drenderer(NULL), ActiveCamera(NULL), Shaders(NULL), Light(NULL), TextureKeeper(NULL), TextRender(NULL), Initialized(false)
+Graphics::Graphics() : Light(NULL), TextureKeeper(NULL), ORoot(nullptr), MainCamera(NULL), MainCameraNode(NULL), MainViewport(NULL)
 {
-		
-	Dconfig = DxRendConf();
-	
-
-
 	GuiSmooth = 5;
 
-	_gadapter = this;
+	Staticaccess = this;
+	Initialized = false;
 }
 Graphics::~Graphics(){
 }
 
 Graphics* Graphics::Get(){
-	return _gadapter;
+	return Staticaccess;
 }
 
-Graphics* Graphics::_gadapter = NULL;
+Graphics* Graphics::Staticaccess = NULL;
 // ------------------------------------------- //
-bool Graphics::Init(Window* wind, const DxRendConf &conf){
-	// save window handle //
-	Wind = wind;
-	// set description object //
-	SetDescObjects(conf);
-
-	// set resource creator to use this graphics //
-	Rendering::ResourceCreator::StoreGraphicsInstance(this);
+bool Graphics::Init(AppDef* appdef){
+	// save definition pointer //
+	AppDefinition = appdef;
 
 	// smoothness factor //
 	ObjectFileProcessor::LoadValueFromNamedVars<int>(AppDef::GetDefault()->GetValues(), L"GuiSmooth", GuiSmooth, 5, false);
 
-	Drenderer = new Dx11Renderer();
-	if(!SUCCEEDED(Drenderer->Init(wind, this->Dconfig))){
-		Logger::Get()->Error(L"Failed to init graphics, can't create 3drenderer");
+	// create ogre renderer //
+	if(!InitializeOgre(AppDefinition)){
+
+		Logger::Get()->Error(L"Graphics: Init: failed to create ogre renderer");
 		return false;
 	}
-	
+
 	// create texture holder //
 	TextureKeeper = new TextureManager(true, this);
 	if(!TextureKeeper){
@@ -60,31 +52,6 @@ bool Graphics::Init(Window* wind, const DxRendConf &conf){
 		return false;
 	}
 
-	// create shader holder //
-	Shaders = new Rendering::ShaderManager();
-	if(!Shaders){
-		Logger::Get()->Error(L"Failed to init graphics, can't create ShaderManager");
-		return false;
-	}
-
-	// init it //
-	if(!Shaders->Init(Drenderer->GetDevice())){
-
-		Logger::Get()->Error(L"Failed to init graphics, can't init shaders");
-		return false;
-	}
-
-	// create camera //
-	ActiveCamera = new ViewCamera;
-	if(!ActiveCamera){
-		Logger::Get()->Error(L"Failed to init graphics, can't create Camera",GetLastError());
-		return false;
-	}
-
-	// set camera pos //
-	ActiveCamera->SetPosition(Float3(0.0f, 0.0f, -10.0f));
-	// render to set matrices //
-	ActiveCamera->UpdateMatrix();
 
 	// Create the light object.
 	Light = new RenderingLight;
@@ -100,52 +67,243 @@ bool Graphics::Init(Window* wind, const DxRendConf &conf){
 	Light->SetSpecularColor(1.0f, 1.0f, 1.0f, 1.0f);
 	Light->SetSpecularPower(32.0f);
 
-	// text renderer //
-	TextRender = new TextRenderer;
-
-	if(!TextRender){
-		Logger::Get()->Error(L"Failed to init graphics, can't create TextRenderer");
-		return false;
-	}
-
-	if(!TextRender->Init(this)){
-		Logger::Get()->Error(L"Failed to init graphics, can't init TextRenderer");
-		return false;
-	}
-
 	Initialized = true;
 	return true;
 }
 
 void Graphics::Release(){
 
+
 	GuiObjs.clear();
-
-	SAFE_RELEASEDEL(TextRender);
 	SAFE_DELETE(Light);
-	SAFE_DELETE(ActiveCamera);
-	try{
-		SAFE_RELEASEDEL(TextureKeeper);
-	}
-	// this is tried because it might cause an exception, which is something we don't like //
-	catch(...){
-		Logger::Get()->Error(L"Possible assertion from releasing graphics");
-	}
-	SAFE_RELEASEDEL(Shaders);
+	SAFE_RELEASEDEL(TextureKeeper);
 
 
-	SAFE_RELEASEDEL(Drenderer);
 	Initialized = false;
 }
 // ------------------------------------------- //
-bool Graphics::Frame(int mspassed, ViewerCameraPos* camerapostouse, vector<BaseRenderable*> &objects){
-	// set camera pos //
-	float x, y, z, yaw, pitch, roll;
+bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
+
+	Ogre::String ConfigFileName = "";
+
+
+	Ogre::String PluginsFileName = "";
+
+	Ogre::String OgreLogName = "LogOGRE.txt";
+
+	ORoot = unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, OgreLogName));
+
+
+	vector<Ogre::String> PluginNames = boost::assign::list_of("RenderSystem_GL")("Plugin_ParticleFX")("Plugin_CgProgramManager")
+		("Plugin_OctreeSceneManager");
+
+	for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++){
+		// append "_d" if in debug mode //
+#ifdef _DEBUG
+		Iter->append("_d");
+#endif // _DEBUG
+		// load //
+		ORoot->loadPlugin(*Iter);
+	}
+
+
+	// Choose proper render system //
+	const Ogre::RenderSystemList& RSystemList = ORoot->getAvailableRenderers();
+
+	if(RSystemList.size() == 0){
+		// no render systems found //
+
+		Logger::Get()->Error(L"Graphics: InitializeOgre: no render systems found");
+		return false;
+	}
+
+	// for now just choose the first one in the list //
+	ORoot->setRenderSystem(RSystemList[0]);
+
+
+	bool CreateWindowNow = false;
+	Ogre::String WindowTitle = "";
+	Ogre::String CustomCapacities = "";
+
+	ORoot->initialise(CreateWindowNow, WindowTitle, CustomCapacities);
+
+
+	// we can now ourselves create a window //
+	const WindowDataDetails& WData = AppDefinition->GetWindowDetails();
+
+	// set some rendering specific parameters //
+
+	Ogre::NameValuePairList WParams;
+
+	WParams["FSAA"] = "0";
+	WParams["vsync"] = "false";
+
+	Ogre::String wcaption = Convert::WstringToString(WData.Title);
+
+	// create the actual window and store it at the same time //
+	AppDefinition->SetRenderingWindow(ORoot->createRenderWindow(wcaption, WData.Width, WData.Height, !WData.Windowed, &WParams));
+
+	if(!CreateDefaultRenderView()){
+
+		return false;
+	}
+
+	// quicker access to the window //
+	Ogre::RenderWindow* tmpwindow = AppDefinition->GetWindow();
+
+	// set the main window to be active //
+	tmpwindow->setActive(true);
+
+	// manual window updating //
+	tmpwindow->setAutoUpdated(false);
+
+
+	// set loading paths //
+	FileSystem::RegisterOGREResourceGroups();
+
+	CreateTestObject();
+
+	// create test model //
+	try{
+		Ogre::Entity* ModelEntity = MainScene->createEntity("Cube.mesh");
+
+		// attach to new node //
+		Ogre::SceneNode* mnode = MainScene->getRootSceneNode()->createChildSceneNode();
+
+		mnode->attachObject(ModelEntity);
+		// set position //
+		mnode->setPosition(0.f, -2.f, -5.f);
+	}
+	catch(const Ogre::FileNotFoundException &e){
+
+		Logger::Get()->Error(L"[EXCEPTION] "+Convert::StringToWstring(e.getFullDescription()));
+	}
+	
+	
+	// test light //
+	Ogre::Light* TLight = MainScene->createLight();
+
+	TLight->setType(Ogre::Light::LT_DIRECTIONAL);
+
+	TLight->setDiffuseColour(0.98f, 1.f, 0.95f);
+	TLight->setSpecularColour(1.f, 1.f, 1.f);
+
+	Ogre::SceneNode* lnode = MainScene->getRootSceneNode()->createChildSceneNode();
+	lnode->attachObject(TLight);
+	lnode->setOrientation(1.f, 0.5f, -0.3f, 0.4f);
+
+	// set scene ambient colour //
+	MainScene->setAmbientLight(Ogre::ColourValue(0.2f, 0.2f, 0.2f, 1.f));
+
+
+
+
+	// clear events that might have queued A LOT while starting up //
+	ORoot->clearEventTimes();
+
+	return true;
+}
+
+bool Leviathan::Graphics::CreateDefaultRenderView(){
+	// create fully window spanning default view //
+
+	// create matching SceneManager //
+	if(!CreateCameraAndNodesForScene()){
+
+		return false;
+	}
+
+
+	// create the actual viewport //
+	float ViewWidth = 1.f;
+	float ViewHeight = 1.f;
+	float ViewLeft = (1.f-ViewWidth)*0.5f;
+	float ViewTop = (1.f-ViewHeight)*0.5f;
+
+	USHORT ZOrder = 100;
+
+	MainViewport = AppDefinition->GetWindow()->addViewport(MainCamera, ZOrder, ViewLeft, ViewTop, ViewWidth, ViewHeight);
+
+	// set default viewport colour //
+	MainViewport->setBackgroundColour(Ogre::ColourValue(0.3f, 0.6f, 0.9f));
+
+	// automatic updating //
+	MainViewport->setAutoUpdated(true);
+
+	// set aspect ratio to the same as the view port (this makes it look realistic) //
+	MainCamera->setAspectRatio(MainViewport->getActualWidth()/(float)MainViewport->getActualHeight());
+
+	// near and far clipping planes //
+	MainCamera->setFOVy(Ogre::Radian(60.f*DEGREES_TO_RADIANS));
+	// MadMarx tip (far/near > 2000 equals probles) //
+	MainCamera->setNearClipDistance(0.3f);
+	//MainCamera->setNearClipDistance(1.3f);
+	//MainCamera->setFarClipDistance(2600.f);
+
+
+	return true;
+}
+
+bool Leviathan::Graphics::CreateCameraAndNodesForScene(){
+	// create scene manager //
+	MainScene = ORoot->createSceneManager(Ogre::ST_INTERIOR, "MainSceneManager");
+
+	// create camera //
+	MainCamera = MainScene->createCamera("Camera01");
+
+	// create node for camera and attach it //
+	MainCameraNode = MainScene->getRootSceneNode()->createChildSceneNode("MainCameraNode");
+	MainCameraNode->attachObject(MainCamera);
+
+
+
+	return true;
+}
+
+void Leviathan::Graphics::CreateTestObject(){
+
+	string CubeName = "DefaultTestCube";
+
+	vector<Float3> positions(5);
+	// create several meshes //
+	for(int i = 0; i < 5; ++i){
+
+		float offset = (float)(1+i*2-5);
+		positions[i] = Float3(offset, offset, -14.f);
+	}
+
+	// create it and create instances //
+	Engine::GetEngine()->GetObjectLoader()->CreateTestCubeToScene(MainScene, CubeName);
+
+	Engine::GetEngine()->GetObjectLoader()->AddTestCubeToScenePositions(MainScene, positions, CubeName);
+
+}
+
+// ------------------------------------------- //
+DLLEXPORT bool Leviathan::Graphics::Frame(int mspassed, ViewerCameraPos* camerapostouse, vector<BaseRenderable*> &objects){
+	// update camera //
 	camerapostouse->UpdatePos(mspassed);
-	camerapostouse->GetPos(x,y,z);
-	camerapostouse->GetRotation(yaw,pitch,roll);
-	ActiveCamera->SetPosition(Float3(y,z,x));
-	ActiveCamera->SetRotation(Float3(pitch, yaw, roll));
+
+	// set camera position //
+	MainCameraNode->setPosition(camerapostouse->GetPosition());
+
+	// convert rotation into a quaternion //
+	const Float3& angles = camerapostouse->GetRotation();
+
+	// create quaternion from quaternion rotations around each axis //
+	Ogre::Quaternion rotq(Ogre::Degree(angles.Y), Ogre::Vector3::UNIT_X);
+	Ogre::Quaternion rotyaw(Ogre::Degree(angles.X), Ogre::Vector3::UNIT_Y);
+	Ogre::Quaternion rotroll(Ogre::Degree(angles.Z), Ogre::Vector3::UNIT_Z);
+
+	rotq = rotyaw*rotq*rotroll;
+
+	//// create point that the camera looks at and set it //
+	//Float3 point = camerapostouse->GetPosition()+(Float3(-sin(angles.X*DEGREES_TO_RADIANS), sin(angles.Y*DEGREES_TO_RADIANS), 
+	//	-cos(angles.X*DEGREES_TO_RADIANS))*10.f);
+
+	//MainCamera->lookAt(point);
+
+	MainCamera->setOrientation(rotq);
 
 	// call rendering function //
 	if(!Render(mspassed, objects)){
@@ -153,68 +311,36 @@ bool Graphics::Frame(int mspassed, ViewerCameraPos* camerapostouse, vector<BaseR
 		return false;
 	}
 
+	// now we can render one frame //
+	ORoot->renderOneFrame();
+
 	return true;
 }
 
 bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
-	// clear render target //
-	Drenderer->BeginRender(Float4(0.4f, 0.7f, 0.85f, 1));
-
-	// update camera //
-	ActiveCamera->UpdateMatrix();
-	
-	// get matrices //
-	D3DXMATRIX ViewMatrix, ProjectionMatrix, WorldMatrix, OrthoMatrix;
-
-	ActiveCamera->GetViewMatrix(ViewMatrix);
-	Drenderer->GetWorldMatrix(WorldMatrix);
-	Drenderer->GetProjectionMatrix(ProjectionMatrix);
-
-	// create info object about current pass //
-	unique_ptr<RenderingPassInfo> CurrentPass = unique_ptr<RenderingPassInfo>(new RenderingPassInfo(ViewMatrix, ProjectionMatrix, WorldMatrix, 
-		ActiveCamera));
 
 	// go through objects and call their render functions //
 	for(size_t i = 0; i < objects.size(); i++){
 		if(objects[i]->IsHidden())
 			continue;
-		
+		DEBUG_BREAK;
 		// objects should be smart enough to not to change common matrices
-		objects[i]->Render(this, mspassed, *CurrentPass.get()); 
+		//objects[i]->Render(this, mspassed, *CurrentPass.get()); 
 	}
 
-	// 2d rendering //
-	ActiveCamera->GetStaticViewMatrix(ViewMatrix);
-	Drenderer->GetWorldMatrix(WorldMatrix);
-	Drenderer->GetOrthoMatrix(OrthoMatrix);
+	DrawRenderActions();
 
-	Drenderer->TurnZBufferOff();
-	// turn on alpha blending //
-	Drenderer->TurnOnAlphaBlending();
+	// we can now actually render the window //
+	Ogre::RenderWindow* tmpwindow = AppDefinition->GetWindow();
 
-	// update pass object //
-	CurrentPass->SetWorldMatrix(WorldMatrix);
-	CurrentPass->SetViewMatrix(ViewMatrix);
-	CurrentPass->SetProjectionMatrix(OrthoMatrix);
+	tmpwindow->update(false);
+	// all automatically updated view ports are updated //
 
-	DrawRenderActions(CurrentPass.get());
+	// update special view ports //
 
-	// turn z-buffer back on
-	Drenderer->TurnOffAlphaBlending();
-	Drenderer->TurnZBufferOn();
+	// finish rendering the main window //
+	tmpwindow->swapBuffers(AppDefinition->GetVSync());
 
-
-
-	// present result //
-	Drenderer->EndRender();
-	return true;
-}
-// ------------------------------------------- //
-bool Graphics::Resize(int newwidth, int newheight){
-	// resize renderer //
-	Drenderer->Resize();
-
-	// hope that everything uses updated values //
 	return true;
 }
 // ------------------------------------------- //
@@ -241,7 +367,7 @@ void Graphics::PurgeGuiArray(){
 	}
 }
 // ------------------------------------------- //
-void Graphics::DrawRenderActions(RenderingPassInfo* pass){
+void Graphics::DrawRenderActions(/*RenderingPassInfo* pass*/){
 	// so no dead objects exist //
 	PurgeGuiArray();
 
@@ -277,55 +403,11 @@ void Graphics::DrawRenderActions(RenderingPassInfo* pass){
 					// real action to render //
 					RenderingGBlob* tempptr = (*GuiObjs[i]).DrawActions[a];
 
-					// with virtual objects it is as easy as this //
-					if(!RenderAutomatic(tempptr->GetRenderingBuffers(this), tempptr->GetShaderParameters(this, pass))){
-
-
-						continue;
-					}
+					ComplainOnce::PrintWarningOnce(L"no rendering code", L"no rendering code"__WFILE__ L" func" __WFUNCTION__);
 				}
 			}
 		}
 	}
 }
 
-DLLEXPORT bool Leviathan::Graphics::RenderAutomatic(Rendering::BaseRenderableBufferContainer* torenderbuffers, ShaderRenderTask* shaderparameters){
-	// finalize render task //
-	shaderparameters->SetInputPattern(torenderbuffers->GetInputFormat());
 
-#ifdef _DEBUG
-	string tmpformatstrcheck = shaderparameters->GetShaderPattern();
-#endif // _DEBUG
-
-
-	// find matching shader //
-	BaseShader* tmpsptr = Shaders->GetShaderMatchingObject(shaderparameters, torenderbuffers->GetPreferredShaderName());
-
-	if(!tmpsptr){
-		// no matching shader found //
-		return false;
-	}
-
-	// final check on object //
-	if(!tmpsptr->DoesInputObjectWork(shaderparameters)){
-
-		return false;
-	}
-
-	// set buffers to directx //
-	int DrawIndexCount = 0;
-	if(!torenderbuffers->SetBuffersForRendering(Drenderer->GetDeviceContext(), DrawIndexCount)){
-		// buffers cannot be rendered, abort rendering //
-		return false;
-	}
-
-	// call shader render //
-	if(!tmpsptr->Render(Drenderer->GetDeviceContext(), DrawIndexCount, shaderparameters)){
-		// shader failed to update internal buffers //
-		return false;
-	}
-
-
-	// even if the rendering at this point could fail we count getting this far as success //
-	return true;
-}

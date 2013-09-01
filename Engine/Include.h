@@ -3,8 +3,6 @@
 
 #include <stdio.h>
 
-//#define ANALYZEBUILD
-
 // we need to disable this warning to stop stdint and instsafe causing errors //
 #pragma warning (disable: 4005)
 
@@ -48,30 +46,75 @@
 #include <initguid.h>
 #include <shlobj.h>
 
+// common ogre files //
+#include <OgreCamera.h>
+#include <OgreEntity.h>
+#include <OgreLogManager.h>
+#include <OgreRoot.h>
+#include <OgreViewport.h>
+#include <OgreSceneManager.h>
+#include <OgreRenderWindow.h>
+#include <OgreConfigFile.h>
+
+// temporarily have this here to reduce compile errors
+#include <D3D11.h>
+
+// pragma include libraries
+
+// AngelAddons use std style names
+#define AS_USE_STLNAMES     1
+
+#ifdef ENGINE_EXPORTS
+#ifdef _DEBUG
+// debug versions //
+#pragma comment(lib, "angelscriptd.lib")
+#pragma comment(lib, "Leapd.lib")
+#pragma comment(lib, "OgreMain_d.lib")
+#pragma comment(lib, "OgreOverlay_d.lib")
+#pragma comment(lib, "Plugin_CgProgramManager_d.lib")
+#pragma comment(lib, "Plugin_OctreeZone_d.lib")
+#pragma comment(lib, "Plugin_ParticleFX_d.lib")
+#pragma comment(lib, "RenderSystem_Direct3D11_d.lib")
+#pragma comment(lib, "RenderSystem_GL_d.lib")
+#else
+// release libraries
+#pragma comment(lib, "angelscript.lib")
+#pragma comment(lib, "Leap.lib")
+#pragma comment(lib, "OgreMain.lib")
+#pragma comment(lib, "OgreOverlay.lib")
+#pragma comment(lib, "Plugin_CgProgramManager.lib")
+#pragma comment(lib, "Plugin_OctreeZone.lib")
+#pragma comment(lib, "Plugin_ParticleFX.lib")
+#pragma comment(lib, "RenderSystem_Direct3D11.lib")
+#pragma comment(lib, "RenderSystem_GL.lib")
+#endif
+#else
+// include engine lib
+#ifdef _DEBUG
+#pragma comment(lib, "EngineD.lib")
+#else
+#pragma comment(lib, "Engine.lib")
+#endif
+
+#endif // ENGINE_EXPORTS
+
 using namespace std;
-//#include <d2d1.h>
-//#include <d2d1helper.h>
-//#include <dwrite.h>
-
-// DirectX SDK includes
-#include <D3Dcommon.h>
-#include <dxgi.h>
-#include <d3d11.h>
-#include <d3dCompiler.h>
-#include <d3dx11.h>
-#include <d3dx10math.h>
-#include <D3DX10core.h>
-#include <D3D11Shader.h>
-
-#include <d3d9.h>
 // -------------------------- //
 #define CLASSNAME	L"LeviathanWindow"
-#define VERSION		0.412f
-#define VERSIONS	L"0.4.1.2"
+
+#define LEVIATHAN_VERSION 0.502
+#define LEVIATHAN_VERSIONS L"0.5.0.2"
+#define LEVIATHAN_VERSION_ANSIS "0.5.0.2"
+/* #undef USE_MYMATH */
+
+#define VERSION		LEVIATHAN_VERSION
+#define VERSIONS	LEVIATHAN_VERSIONS
+
 #define LEVIATHAN
 
-#define PI 3.14159265
-#define EPSILON		0.00000001
+#define PI 3.14159265f
+#define DEGREES_TO_RADIANS		PI/180.f
+#define EPSILON		0.00000001f
 #define VAL_NOUPDATE	-1333678
 #define OBJECT_SMOOTH	4
 #define SHADER_DEBUG 1
@@ -79,12 +122,6 @@ using namespace std;
 #define UNIT_SCALE		1000
 // throw on Error message //
 //#define THROW_ON_PRINTERROR
-
-#ifdef SHADER_DEBUG
-#define SHADER_COMPILE_PREFERFLOW 1
-#define SHADER_COMPILE_SKIP_OPTIMIZE 1
-#define SHADER_COMPILE_DEBUG 1
-#endif
 
 #define FORCE_INLINE __forceinline
 
@@ -196,20 +233,20 @@ namespace Leviathan{
 	class EngineComponent;
 }
 
-#include "ErrorTypes.h"
+#include "Common\ErrorTypes.h"
 
 #include "Logger.h"
 
-#include "Types.h"
-#include "Misc.h"
-#include ".\Math\CommonMath.h"
-#include "Convert.h"
+#include "Common\Types.h"
+#include "Common\Misc.h"
+#include "Math\CommonMath.h"
+#include "Utility\Convert.h"
 
-#include "IDFactory.h"
+#include "Handlers\IDFactory.h"
 // exceptions //
-#include "ExceptionBase.h"
+#include "Exceptions\ExceptionBase.h"
 
-#include "TimingMonitor.h"
+#include "Statistics\TimingMonitor.h"
 // speed up compile times with leap //
 #include "leap.h"
 

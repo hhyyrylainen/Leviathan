@@ -5,13 +5,12 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "Application.h"
+#include "Application\Application.h"
 
 Leviathan::Engine::Engine() : LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL){
 
 	Mainlog = NULL;
 	Inited = false;
-	Wind = NULL;
 	Graph = NULL;
 	Define = NULL;
 	MTimer = NULL;
@@ -37,7 +36,6 @@ Leviathan::Engine::Engine() : LeapData(NULL), MainConsole(NULL), MainFileHandler
 	MainEvents = NULL;
 	GObjects = NULL;
 	Loader = NULL;
-	AdvancedGeometryFiles = NULL;
 	OutOMemory = NULL;
 	AnimManager = NULL;
 
@@ -60,10 +58,6 @@ bool Leviathan::Engine::Init(AppDef* definition){
 	// store parameters //
 	Define = definition;
 
-	// get windows //
-
-	Wind = definition->RWindow;
-
 	// create logger object //
 	if(Logger::GetIfExists() != NULL){
 		// already exists //
@@ -82,9 +76,7 @@ bool Leviathan::Engine::Init(AppDef* definition){
 	// data storage //
 	Mainstore = new DataStore(true);
 	CLASS_ALLOC_CHECK(Mainstore);
-	// set height/width values //
-	Mainstore->SetHeight(Wind->GetHeight());
-	Mainstore->SetWidth(Wind->GetWidth());
+
 
 	// search data folder for files //
 	MainFileHandler = new FileSystem();
@@ -172,14 +164,17 @@ bool Leviathan::Engine::Init(AppDef* definition){
 	Graph = new Graphics();
 	CLASS_ALLOC_CHECK(Graph);
 
-	// description object for renderer //
-	DxRendConf dxconf = DxRendConf(Wind->IsWindowed(), vsyncon, 1000.0f, 0.1f, dtype, MSAA);
-
 	// call init //
-	if(!Graph->Init(Wind, dxconf)){
+	if(!Graph->Init(definition)){
 		Logger::Get()->Error(L"Failed to init Engine, Init graphics failed! Aborting");
 		return false;
 	}
+
+
+	// set height/width values //
+	Mainstore->SetHeight(definition->GetWindow()->getHeight());
+	Mainstore->SetWidth(definition->GetWindow()->getWidth());
+
 
 	// 3d model animations //
 	AnimManager = new AnimationManager();
@@ -223,9 +218,7 @@ bool Leviathan::Engine::Init(AppDef* definition){
 
 	// create camera that always exists //
 	MainCamera = new ViewerCameraPos();
-	MainCamera->SetMouseMode(true);
-	MainCamera->SetPos(-10,0,0);
-	MainCamera->SetSmoothing(false);
+	MainCamera->SetPos(Float3(0, 0, 5));
 	
 	// set camera to be last one to receive key presses because it will ALWAYS consume them //
 	MainCamera->BecomeMainListeningCamera();
@@ -242,7 +235,7 @@ bool Leviathan::Engine::Init(AppDef* definition){
 	Inputs = new Input();
 	CLASS_ALLOC_CHECK(Inputs);
 	// load control structures //
-	if(!Inputs->Init(Define->HInstance, Wind->GetWidth(), Wind->GetHeight())){
+	if(!Inputs->Init(Define->HInstance, Mainstore->GetWidth(), Mainstore->GetHeight())){
 
 		Logger::Get()->Error(L"Failed to init Engine, input init failed");
 		return false;
@@ -251,9 +244,6 @@ bool Leviathan::Engine::Init(AppDef* definition){
 	// create object loader //
 	Loader = new ObjectLoader(this);
 	CLASS_ALLOC_CHECK(Loader);
-
-	AdvancedGeometryFiles = new GeometryAdvancedLoader();
-	CLASS_ALLOC_CHECK(AdvancedGeometryFiles);
 
 	// measuring //
 	RenderTimer = new RenderingStatistics();
@@ -271,14 +261,13 @@ bool Leviathan::Engine::Init(AppDef* definition){
 }
 
 void Leviathan::Engine::PostLoad(){
-	// process models to valid formats //
-	AdvancedGeometryFiles->ProcessAllModels();
 
 	// get time //
 	LastFrame = Misc::GetTimeMs64();
 
-	// it is preferable that mouse isn't captured on start //
+	//// it is preferable that mouse isn't captured on start //
 	SetGuiActive(true);
+	//SetGuiActive(false);
 
 	// increase start count //
 	int startcounts = 0;
@@ -294,7 +283,7 @@ void Leviathan::Engine::PostLoad(){
 	}
 }
 
-bool Leviathan::Engine::Release(){
+void Leviathan::Engine::Release(){
 	// set inited to false to cause all engine functions just return //
 	Inited = false;
 
@@ -318,7 +307,6 @@ bool Leviathan::Engine::Release(){
 	Mainlog->Save();
 
 	SAFE_DELETE(Loader);
-	SAFE_DELETE(AdvancedGeometryFiles);
 
 	SAFE_RELEASEDEL(AnimManager);
 	SAFE_RELEASEDEL(Graph);
@@ -327,9 +315,6 @@ bool Leviathan::Engine::Release(){
 	SAFE_RELEASEDEL(Inputs);
 	SAFE_RELEASEDEL(Sound);
 	SAFE_DELETE(Mainstore);
-
-	// engine is now tasked to delete windows //
-	SAFE_RELEASEDEL(Wind);
 
 	SAFE_RELEASEDEL(MainEvents);
 
@@ -347,8 +332,6 @@ bool Leviathan::Engine::Release(){
 
 	// safe to delete this here //
 	SAFE_DELETE(OutOMemory);
-
-	return true;
 }
 // ------------------------------------ //
 void Leviathan::Engine::Tick(bool Force){
@@ -418,12 +401,6 @@ void Leviathan::Engine::Tick(bool Force){
 	MainEvents->CallEvent(new Event(EVENT_TYPE_ENGINE_TICK, new int(TickCount)));
 }
 // ------------------------------------ //
-void Leviathan::Engine::UpdateFrameScene(){
-	// update render objects //
-
-
-}
-
 void Leviathan::Engine::RenderFrame(){
 	if(!Inited)
 		return;
@@ -487,7 +464,7 @@ bool Leviathan::Engine::HandleWindowCallBack(UINT message, WPARAM wParam,LPARAM 
 }
 bool Leviathan::Engine::DoWindowResize(int width, int height){
 	// tell window class to resize the real windows window //
-	Wind->ResizeWin32Window(width, height);
+	Define->GetWindow()->resize(width, height);
 
 	// update values //
 	this->OnResize(width, height);
@@ -499,18 +476,12 @@ void Leviathan::Engine::OnResize(int width, int height){
 		return;
 	}
 
-	// update resolution scaling //
-	ResolutionScaling::SetResolution(width, height);
-
 	// update values in DataStore and call resize functions of things //
 	Mainstore->SetWidth(width);
 	Mainstore->SetHeight(height);
 
-	// set them to window class //
-	Wind->SetNewSize(width, height);
-
 	// update rendering stuff //
-	Graph->Resize(width, height);
+
 
 	// update Gui //
 	GManager->OnResize();
@@ -521,7 +492,9 @@ void Leviathan::Engine::OnResize(int width, int height){
 // ------------------------------------ //
 void Leviathan::Engine::CaptureMouse(bool toset){
 	MouseCaptured = toset;
-	Wind->SetHideCursor(toset);
+
+	//Wind->SetHideCursor(toset);
+
 	Inputs->SetMouseCapture(toset);
 	WantsToCapture = toset;
 }
@@ -531,19 +504,17 @@ void Leviathan::Engine::SetGuiActive(bool toset){
 		CaptureMouse(false);
 
 	} else {
-		Wind->SetMouseToCenter();
+		Window::SetMouseToCenter(Window::GetRenderWindowHandle(Define->GetWindow()), Define->GetWindow());
 		CaptureMouse(true);
 	}
 	Mainstore->SetGUiActive(GuiActive);
 }
 
 void Leviathan::Engine::LoseFocus(){
-	Wind->LoseFocus();
 	Inputs->SetMouseCapture(false);
 	Focused = false;
 }
 void Leviathan::Engine::GainFocus(){
-	Wind->GainFocus();
 	Focused = true;
 	if(!GuiActive){
 		Inputs->SetMouseCapture(true);
@@ -553,105 +524,19 @@ void Leviathan::Engine::GainFocus(){
 
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(const wstring &commands){
-	bool incommand = false;
-	bool inparams = false;
-
-	bool execute = false;
-
-	wstring command;
-	wstring params;
-
-	for(unsigned int i = 0; i < commands.size(); i++){
-		if(execute){
-			// run command //
-			incommand = false;
-			inparams = false;
-			execute = false;
-
-			RunScrCommand(command, params);
-
-			command = L"";
-			params = L"";
-		}
-		if(incommand){
-			if(inparams){
-				if(commands[i] == L' '){
-					execute = true;
-				} else if(commands[i] == L'-'){
-					incommand = true;
-					inparams = false;
-					execute = false;
-					RunScrCommand(command, params);
-
-					command = L"";
-					params = L"";
-					continue;
-
-				} else {
-					params += commands[i];
-				}
-				continue;
-			}
-			if(commands[i] == L' '){
-				inparams = true;
-			} else {
-				command += commands[i];
-			}
-			continue;
-
-		} else {
-			if(commands[i] == L'-')
-				incommand = true;
-		}
-
-
-	}
-	if(command != L""){
-		RunScrCommand(command, params);
-	}
 
 }
 void Leviathan::Engine::RunScrCommand(wstring command, wstring params){
 #ifdef _DEBUG
-	 Mainlog->Info(L"[DEBUG] Running script command: "+command+L" with params "+params, false);
+	Mainlog->Info(L"[DEBUG] Running script command: "+command+L" with params "+params, false);
 #endif
-	 if(Misc::WstringCompareInsensitive(command, L"Print")){
-		Mainlog->Info(params, false);
-		return;
-	 }
+
+	// pass to console //
+	DEBUG_BREAK;
+
 }
 // ------------------------------------ //
-RenderingLight* Leviathan::Engine::GetLightAtObject(BasePositionable* obj){
-	// just return basic light //
-	return Graph->Light;
-}
+
 // ------------------------------------ //
-void Engine::AddObject(BaseObject* obj){
-	GObjects->AddObject(obj);
-}
 
-const shared_ptr<BaseObject>& Engine::GetObjectByID(int id) const{
-	return GObjects->Search(id);
-}
-
-int Engine::GetIndex(int id){
-	return GObjects->SearchGetIndex(id);
-}
-
-const shared_ptr<BaseObject>& Engine::GetObjectByIndex(int index) const{
-	return GObjects->Get(index);
-}
-
-void Engine::RemoveObject(int id){
-	GObjects->Delete(id);
-}
-
-bool Engine::RemoveObjectByIndex(int index){
-	// not implemented in GObjects //
-	return false;
-}
-
-int Engine::GetObjectCount(){
-	return GObjects->GetObjectCount();
-}
 // ------------------------------------ //

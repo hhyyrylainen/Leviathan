@@ -5,7 +5,7 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "Random.h"
+#include "Utility\Random.h"
 
 float MMath::RandomNumber(float Min, float Max)
 {

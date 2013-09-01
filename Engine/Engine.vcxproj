@@ -40,12 +40,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)D</TargetName>
-    <IncludePath>.\Rendering;.\Math;.\..\Freetype2410;.\..\AngelScript;.\..\;.\;.\..\Leap\include;$(IncludePath)</IncludePath>
-    <LibraryPath>.\..\Freetype2410;.\..\AngelScript;.\..\Leap\lib\x86;.\..\Boost\Lib\debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\Rendering;.\Math;.\..\Freetype2410;.\..\AngelScript;.\..\;.\;.\..\Leap\include;.\..\OGRE\include;.\..\OGRE\include\OGRE;$(IncludePath)</IncludePath>
+    <LibraryPath>.\..\Freetype2410;.\..\AngelScript;.\..\Leap\lib\x86;.\..\Boost\Lib\debug;.\..\OGRE\lib\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>.\Rendering;.\Math;.\..\Freetype2410;.\..\AngelScript;.\..\;.\;.\..\Leap\include;$(IncludePath)</IncludePath>
-    <LibraryPath>.\..\Freetype2410;.\..\AngelScript;.\..\Leap\lib\x86;.\..\Boost\Lib\release;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\Rendering;.\Math;.\..\Freetype2410;.\..\AngelScript;.\..\;.\;.\..\Leap\include;.\..\OGRE\include;.\..\OGRE\include\OGRE;$(IncludePath)</IncludePath>
+    <LibraryPath>.\..\Freetype2410;.\..\AngelScript;.\..\Leap\lib\x86;.\..\Boost\Lib\release;.\..\OGRE\lib\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

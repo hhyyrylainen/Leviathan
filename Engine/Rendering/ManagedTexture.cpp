@@ -3,6 +3,7 @@
 #ifndef LEVIATHAN_RENDERING_MANAGEDTEXTURE
 #include "ManagedTexture.h"
 #endif
+#include "Utility\ComplainOnce.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ManagedTexture::ManagedTexture() : Texture(NULL), FromFile(NULL){
@@ -25,11 +26,13 @@ DLLEXPORT Leviathan::ManagedTexture::ManagedTexture(const wstring &file, const i
 	LoadedFromMemory = false;
 }
 
-DLLEXPORT Leviathan::ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id, const wstring &source, ID3D11Device* dev, 
-	const TEXTURETYPE &type) : ID(id), FromFile(new wstring(source)), TextureType(type)
+DLLEXPORT Leviathan::ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id, const wstring &source, const TEXTURETYPE &type) 
+	: ID(id), FromFile(new wstring(source)), TextureType(type)
 {
 	// load the texture from memory
-	HRESULT hr = D3DX11CreateShaderResourceViewFromMemory(dev, buffer, sizeof(char)*bufferelements, NULL, NULL, &Texture, NULL);
+	HRESULT hr = E_FAIL;
+	ComplainOnce::PrintWarningOnce(L"no textureloading", L"no textureloading in" __WFUNCTION__);
+	Texture = NULL;
 	if(FAILED(hr)){
 
 		Logger::Get()->Error(L"ManagedTexture: CTor: Failed to load texture from memory("+Convert::ToHexadecimalWstring<void*>((void*)buffer)+L"): \""
@@ -50,15 +53,15 @@ DLLEXPORT Leviathan::ManagedTexture::~ManagedTexture(){
 	UnLoad(true); 
 }
 
-DLLEXPORT Leviathan::ManagedTexture::ManagedTexture(const int &id, ID3D11ShaderResourceView* texture, const wstring &source, const TEXTURETYPE 
-	&type) : ID(id), Texture(texture), FromFile(new wstring(source)), TextureType(type)
-{
-	// texture is already loaded to memory //
-	Loaded = true;
-	ErrorState = TEXTURE_ERROR_STATE_NONE;
-	UnusedTime = 0;
-	LoadedFromMemory = true;
-}
+//DLLEXPORT Leviathan::ManagedTexture::ManagedTexture(const int &id, ID3D11ShaderResourceView* texture, const wstring &source, const TEXTURETYPE 
+//	&type) : ID(id), Texture(texture), FromFile(new wstring(source)), TextureType(type)
+//{
+//	// texture is already loaded to memory //
+//	Loaded = true;
+//	ErrorState = TEXTURE_ERROR_STATE_NONE;
+//	UnusedTime = 0;
+//	LoadedFromMemory = true;
+//}
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ManagedTexture::Load(ID3D11Device* dev){
 	// loads the texture //
@@ -68,7 +71,7 @@ DLLEXPORT bool Leviathan::ManagedTexture::Load(ID3D11Device* dev){
 	}
 
 	// load the texture from file
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(dev, (*FromFile).c_str(), NULL, NULL, &Texture, NULL);
+	HRESULT hr = E_FAIL;
 	if(FAILED(hr)){
 
 		Logger::Get()->Error(L"Failed to load texture from file: \""+*FromFile+L"\" loaded error texture");
@@ -94,7 +97,7 @@ DLLEXPORT void Leviathan::ManagedTexture::UnLoad(bool force){
 	// TODO: implement a callback system that allows this function to call callback that tells if it can be unloaded //
 	if((force) || (!LoadedFromMemory)){
 		// safely release the pointer //
-		SAFE_RELEASE(Texture);
+		//SAFE_RELEASE(Texture);
 	}
 }
 // ------------------------------------ //

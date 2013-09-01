@@ -61,9 +61,7 @@ namespace Leviathan{
 	public:
 
 		DLLEXPORT ManagedTexture::ManagedTexture(const wstring &file, const int &id, const TEXTURETYPE &type);
-		DLLEXPORT ManagedTexture::ManagedTexture(const int &id, ID3D11ShaderResourceView* texture, const wstring &source, const TEXTURETYPE &type);
-		DLLEXPORT ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id, const wstring &source, ID3D11Device* dev
-			, const TEXTURETYPE &type);
+		DLLEXPORT ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id, const wstring &source, const TEXTURETYPE &type);
 		DLLEXPORT ManagedTexture::~ManagedTexture();
 
 		DLLEXPORT bool Load(ID3D11Device* dev);

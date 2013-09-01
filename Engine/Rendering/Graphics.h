@@ -1,24 +1,26 @@
-#ifndef LEVIATHAN_GRAPHS
-#define LEVIATHAN_GRAPHS
+#ifndef LEVIATHAN_GRAPHICS
+#define LEVIATHAN_GRAPHICS
 // ------------------------------------ //
 #ifndef LEVIATHAN_DEFINE
 #include "Define.h"
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "3DRenderer.h"
-#include "ViewCamera.h"
+#include "Entities\ViewerCameraPos.h"
 #include "TextureManager.h"
+
+#include <Overlay\OgreOverlay.h>
+#include <Overlay\OgreOverlayElement.h>
+#include <Overlay\OgreOverlayManager.h>
+#include <OgreManualObject.h>
+
+#include "GUI\RenderAction.h"
+#include "Entities\Bases\BaseRenderable.h"
+#include "GUI\RenderBridge.h"
+
 #include "Light.h"
-#include "TextRenderer.h"
-
-#include "..\RenderAction.h"
-#include "..\CameraPos.h"
-#include "..\BaseRenderable.h"
-#include "..\RenderBridge.h"
-
-#include "RenderingPassInfo.h"
-#include "..\BaseRenderableBufferContainer.h"
+#include "Common\Window.h"
+#include "Application\AppDefine.h"
 
 #define TEXTURE_INACTIVE_TIME		30000
 #define TEXTURE_UNLOAD_TIME			300000
@@ -34,11 +36,9 @@ namespace Leviathan{
 		DLLEXPORT Graphics();
 		DLLEXPORT ~Graphics();
 
-		DLLEXPORT void SetDescObjects(const DxRendConf &dx11) { Dconfig = dx11; };
-		DLLEXPORT bool Init(Window* wind, const DxRendConf &conf);
+		DLLEXPORT bool Init(AppDef* appdef);
 		DLLEXPORT void Release();
 
-		DLLEXPORT bool Resize(int newwidth, int newheight);
 
 		DLLEXPORT bool Frame(int mspassed, ViewerCameraPos* camerapostouse, vector<BaseRenderable*> &objects);
 
@@ -46,46 +46,31 @@ namespace Leviathan{
 		DLLEXPORT shared_ptr<RenderBridge> GetBridgeForGui(int actionid);
 
 
-		DLLEXPORT bool RenderAutomatic(Rendering::BaseRenderableBufferContainer* torenderbuffers, ShaderRenderTask* shaderparameters);
+		//DLLEXPORT bool RenderAutomatic(Rendering::BaseRenderableBufferContainer* torenderbuffers, ShaderRenderTask* shaderparameters);
 
-
-		DLLEXPORT inline TextRenderer* GetTextRenderer(){
-			return TextRender;
-		}
-		DLLEXPORT inline Dx11Renderer* GetRenderer(){
-			return Drenderer;
-		}
 		DLLEXPORT inline TextureManager* GetTextureManager(){
 			return TextureKeeper;
 		}
-		DLLEXPORT inline Rendering::ShaderManager* GetShader(){
-			return Shaders;
-		}
-		DLLEXPORT inline Window* GetWindow(){
-			return Wind;
+		DLLEXPORT inline AppDef* GetDefinitionObject(){
+			return AppDefinition;
 		}
 		RenderingLight* Light;
 
 		DLLEXPORT static Graphics* Get();
-
 	private:
 		bool Render(int mspassed, vector<BaseRenderable*> &objects);
 
-		void DrawRenderActions(RenderingPassInfo* pass);
-		HRESULT Create3DRenderer(Window* wind);
+		void DrawRenderActions();
+		bool InitializeOgre(AppDef* appdef);
+		bool CreateDefaultRenderView();
+		bool CreateCameraAndNodesForScene();
+		void CreateTestObject();
 		void PurgeGuiArray();
 		// ------------------------ //
 		bool Initialized;
 
-		Window* Wind;
-		DxRendConf Dconfig;
-
-		
-		Dx11Renderer* Drenderer;
-		Rendering::ShaderManager* Shaders;
+		AppDef* AppDefinition;
 		TextureManager* TextureKeeper;
-		ViewCamera* ActiveCamera;
-		TextRenderer* TextRender;
 
 		// save this value //
 		int GuiSmooth;
@@ -94,8 +79,15 @@ namespace Leviathan{
 		vector<shared_ptr<RenderBridge>> GuiObjs;
 
 
+		// OGRE //
+		unique_ptr<Ogre::Root> ORoot;
+		Ogre::SceneManager* MainScene;
+		Ogre::Camera* MainCamera;
+		Ogre::SceneNode* MainCameraNode;
+		Ogre::Viewport* MainViewport;
+
 		// static //
-		static Graphics* _gadapter;
+		static Graphics* Staticaccess;
 	};
 }
 #endif

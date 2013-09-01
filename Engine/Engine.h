@@ -6,52 +6,44 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "Application\AppDefine.h"
+#include "Entities\Bases\BaseObject.h"
+#include "Statistics\Timer.h"
+#include "Common\Window.h"
+#include "GUI\GuiManager.h"
+#include "Rendering\Graphics.h"
+#include "Events\EventHandler.h"
+#include "Handlers\ObjectManager.h"
+#include "Handlers\ObjectLoader.h"
+#include "Statistics\RenderingStatistics.h"
+#include "Handlers\AnimationManager.h"
+#include "Input\KeyPressManager.h"
+#include "Leap\LeapManager.h"
+#include "Script\Console.h"
+#include "FileSystem.h"
+#include "Sound\SoundDevice.h"
+#include "Common\DataStoring\DataStore.h"
+#include "Entities\ViewerCameraPos.h"
+#include "Handlers\OutOfMemoryHandler.h"
+#include "Utility\Random.h"
+
+
+
 #define TICKSPEED 60
 
-#include "Random.h"
-#include "OutOfMemoryHandler.h"
 
-#include "DataStore.h"
-#include "AppDefine.h"
-#include "ObjectManager.h"
-#include "ObjectLoader.h"
-#include "GeometryAdvancedLoader.h"
-#include "ResolutionScaling.h"
-
-#include "GuiManager.h"
-#include "EventHandler.h"
-#include "KeyPressManager.h"
-#include "AnimationManager.h"
-
-#include "ScriptInterface.h"
-
-#include "Window.h"
-#include ".\Rendering\Graphics.h"
-#include "Console.h"
-
-#include "Input.h"
-#include "SoundDevice.h"
-#include "CameraPos.h"
-
-#include "BasePositionable.h"
-#include "ObjectFileProcessor.h"
-#include "LeapManager.h"
-
-// monitoring //
-#include "RenderingStatistics.h"
-#include "Timer.h"
-#include "GuiManager.h"
 
 namespace Leviathan{
 	class Engine : public Object{
 	public:
-		DLLEXPORT Engine::Engine();
+
+		DLLEXPORT Engine();
+
 		DLLEXPORT bool Init(AppDef* definition);
-		DLLEXPORT bool Release();
+		DLLEXPORT void Release();
 
 		DLLEXPORT void Tick(bool Force);
 
-		DLLEXPORT void UpdateFrameScene();
 		DLLEXPORT void RenderFrame();
 
 		DLLEXPORT bool HandleWindowCallBack(UINT message, WPARAM wParam,LPARAM lParam);
@@ -66,40 +58,31 @@ namespace Leviathan{
 
 
 		// Object handling //
-		DLLEXPORT void AddObject(BaseObject* obj);
-		DLLEXPORT const shared_ptr<BaseObject>& GetObjectByID(int id) const;
-		DLLEXPORT int GetIndex(int id);
-		DLLEXPORT const shared_ptr<BaseObject>& GetObjectByIndex(int index) const;
-
-		DLLEXPORT void RemoveObject(int id);
-		DLLEXPORT bool RemoveObjectByIndex(int index);
-
+		DLLEXPORT void AddEntityObject(BaseObject* obj);
+		DLLEXPORT const shared_ptr<BaseObject>& GetObjectByID(const int &id) const;
+		DLLEXPORT const shared_ptr<BaseObject>& GetObjectByIndex(const size_t &index) const;
+		DLLEXPORT size_t GetIndexFromID(const int &id);
+		DLLEXPORT void RemoveObject(const int &id);
+		DLLEXPORT bool RemoveObjectByIndex(const size_t &index);
 		DLLEXPORT int GetObjectCount();
 
-		// ----------------- //
-
+		// ------------------------------------ //
 		DLLEXPORT void ExecuteCommandLine(const wstring &commands);
 		DLLEXPORT void RunScrCommand(wstring command, wstring params);
 
-
-		DLLEXPORT RenderingLight* GetLightAtObject(BasePositionable* obj);
-
-		Timer* MTimer;
-
-		DLLEXPORT Window* GetWindow(){ return Wind; };
+		
 		DLLEXPORT Gui::GuiManager* GetGui(){ return GManager; };
 		DLLEXPORT Graphics* GetGraphics(){ return Graph; };
 		DLLEXPORT EventHandler* GetEventHandler(){ return MainEvents; };
 		DLLEXPORT ObjectManager* GetObjectManager(){ return GObjects; };
 		DLLEXPORT ObjectLoader* GetObjectLoader(){return Loader;};
 		DLLEXPORT RenderingStatistics* GetRenderingStatistics(){ return RenderTimer;};
-		DLLEXPORT GeometryAdvancedLoader* GetAdvancedGeometryHandler(){ return AdvancedGeometryFiles; };
 		DLLEXPORT AnimationManager* GetAnimationManager(){ return AnimManager; };
 		DLLEXPORT KeyPressManager* GetKeyPresManager(){ return KeyListener; };
 		DLLEXPORT LeapManager* GetLeapManager(){ return LeapData;};
 		DLLEXPORT ScriptConsole* GetScriptConsole(){ return MainConsole;};
 		DLLEXPORT FileSystem* GetFileSystem(){ return MainFileHandler; };
-
+		DLLEXPORT AppDef* GetDefinition(){ return Define;};
 		// static access //
 		DLLEXPORT static Engine* GetEngine();
 
@@ -107,43 +90,29 @@ namespace Leviathan{
 		// after load function //
 		void PostLoad();
 
-		static Engine* instance;
-
-		// objects //
+		// ------------------------------------ //
 		Logger* Mainlog;
-		Window* Wind;
-
-		
+		Timer* MTimer;
 		AppDef* Define;
 
 		Gui::GuiManager* GManager;
-
 		RenderingStatistics* RenderTimer;
 		Graphics* Graph;
 
+
 		SoundDevice* Sound;
-
-
 		Input* Inputs;
 		KeyPressManager* KeyListener;
-
 		DataStore* Mainstore;
-
 		EventHandler* MainEvents;
 		ScriptInterface* MainScript;
-
 		ObjectManager* GObjects;
 		ObjectLoader* Loader;
 		LeapManager* LeapData;
 		ScriptConsole* MainConsole;
 		FileSystem* MainFileHandler;
-
 		Random* MainRandom;
-
-		GeometryAdvancedLoader* AdvancedGeometryFiles;
-
 		AnimationManager* AnimManager;
-
 		OutOfMemoryHandler* OutOMemory;
 		// data //
 		__int64 LastFrame;
@@ -162,18 +131,10 @@ namespace Leviathan{
 
 		// this might have to be moved to some other place //
 		ViewerCameraPos* MainCamera;
+
+
+		static Engine* instance;
 	};
-
-
-
-
-
-
-
-
-
-
-
 
 }
 #endif

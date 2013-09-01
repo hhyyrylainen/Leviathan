@@ -1,0 +1,28 @@
+List of possible Leviathan errors
+for reference
+
+
+// ------------------------------- //
+005									- Common error for everything
+006									- value out of range
+007									- parameter value invalid
+008                                 - instance of class were not created succesfully (memory allocation issue)
+009                                 - not enough parameters
+010                                 - parameter type is wrong
+011                                 - something is wrong with parameters
+012                                 - Class doesn't support function
+013                                 - Class is missing a part of data to use function
+400									- Parameter/file is empty
+404									- Parameter/file not found
+80000800                            - Script error
+80000801                            - Script cannot convert block of memory
+80000802                            - Script didn't exist
+80000804                            - Invalid parameters
+// ---------------- SCRIPT CALL VALUES --------------- //
+5(and above)                        - Normal error values                                   
+1                                   - Function succeeded
+0                                   - Invalid id
+-001                                - error happened (-1 or below)
+-002                                - found object not high enough level (e.g. gui object doesn't have animation component)
+-003                                - Invalid parameter (invalid parameter info should be printed to log)
+-004                                - Invalid

@@ -1,0 +1,34 @@
+# Sandboxie application CMake
+
+
+# get all files in their groups
+file(GLOB SBSourceFiles *.cpp)
+file(GLOB SBHeaderFiles *.h) 
+
+
+# resource files
+file(GLOB SBResourceFiles "resource.h" "*.rc")
+
+# file grouping
+source_group("Source" FILES ${SBSourceFiles})
+source_group("Header" FILES ${SBHeaderFiles})
+source_group("resources" FILES ${SBResourceFiles})
+
+
+
+# all Sandboxie files in one list
+set(Sandboxiefiles ${SBSourceFiles} ${SBHeaderFiles} ${SBResourceFiles})
+
+add_executable(Sandboxie WIN32 ${Sandboxiefiles})
+set_target_properties(Sandboxie PROPERTIES DEBUG_POSTFIX D)
+
+# linking to engine
+target_link_libraries(Sandboxie Engine)
+
+# set working directory when we want to run this
+create_target_launcher(Sandboxie RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/" WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin/")
+
+# post build copy
+ADD_CUSTOM_COMMAND(TARGET Sandboxie POST_BUILD COMMAND copy ARGS 
+    "\"$(SolutionDir)Project_sandboxie\\$(Configuration)\\$(TargetName).exe\" \"$(SolutionDir)bin\\$(TargetName).exe\""
+)

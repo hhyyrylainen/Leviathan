@@ -1,0 +1,212 @@
+cppppppp
+
+// ------------------ aaaa ------------------ //
+
+---------------------------------------------------------------------------
+#include "Include.h"
+// ------------------------------------ //
+#ifndef LEVIATHAN_FILEREPLACENAME
+#include "FILEREPLACENAME.h"
+#endif
+using namespace Leviathan;
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+
+------------------------------------------------------------------------
+hddddd
+
+------------------------------------------------------------------------
+#ifndef LEVIATHAN_FILEREPLACENAME
+#define LEVIATHAN_FILEREPLACENAME
+// ------------------------------------ //
+#ifndef LEVIATHAN_DEFINE
+#include "Define.h"
+#endif
+// ------------------------------------ //
+// ---- includes ---- //
+
+
+namespace Leviathan{
+
+	class FILEREPLACENAME : public Object{
+	public:
+		DLLEXPORT FILEREPLACENAME::FILEREPLACENAME();
+        DLLEXPORT FILEREPLACENAME::~FILEREPLACENAME();
+
+
+	private:
+
+	};
+
+}
+#endif
+
+// --------------------------------------------------------------------------- GUI
+
+cppppppp
+
+---------------------------------------------------------------------------
+#include "Include.h"
+// ------------------------------------ //
+#ifndef LEVIATHAN_FILEREPLACENAME
+#include "FILEREPLACENAME.h"
+#endif
+using namespace Leviathan;
+using namespace Leviathan::Gui;
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+
+------------------------------------------------------------------------
+hddddd
+
+------------------------------------------------------------------------
+#ifndef LEVIATHAN_FILEREPLACENAME
+#define LEVIATHAN_FILEREPLACENAME
+// ------------------------------------ //
+#ifndef LEVIATHAN_DEFINE
+#include "Define.h"
+#endif
+// ------------------------------------ //
+// ---- includes ---- //
+
+
+namespace Leviathan{ namespace Gui{
+
+	class FILEREPLACENAME : public Object{
+	public:
+		DLLEXPORT FILEREPLACENAME::FILEREPLACENAME();
+        DLLEXPORT FILEREPLACENAME::~FILEREPLACENAME();
+
+
+	private:
+
+	};
+
+}}
+#endif
+
+// --------------------------------------------------------------------------- OBJECT
+
+cppppppp
+
+---------------------------------------------------------------------------
+#include "Include.h"
+// ------------------------------------ //
+#ifndef LEVIATHAN_FILEREPLACENAME
+#include "FILEREPLACENAME.h"
+#endif
+using namespace Leviathan;
+using namespace Leviathan::GameObject;
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+
+------------------------------------------------------------------------
+hddddd
+
+------------------------------------------------------------------------
+#ifndef LEVIATHAN_FILEREPLACENAME
+#define LEVIATHAN_FILEREPLACENAME
+// ------------------------------------ //
+#ifndef LEVIATHAN_DEFINE
+#include "Define.h"
+#endif
+// ------------------------------------ //
+// ---- includes ---- //
+#include "BaseObject.h"
+
+namespace Leviathan{ namespace GameObject{
+
+	class FILEREPLACENAME : public BaseObject{
+	public:
+		DLLEXPORT FILEREPLACENAME::FILEREPLACENAME();
+        DLLEXPORT FILEREPLACENAME::~FILEREPLACENAME();
+
+
+	private:
+
+	};
+
+}}
+#endif
+
+// ------------------------------------------------------------------------------------------------------------------ GAME ----------
+cppppppp
+
+---------------------------------------------------------------------------
+// ------------------------------------ //
+#ifndef SANDBOXIE_FILEREPLACENAME
+#include "FILEREPLACENAME.h"
+#endif
+//using namespace Leviathan;
+using namespace SandBoxie;
+// ------------------------------------ //
+FILEREPLACENAME::FILEREPLACENAME(){
+
+}
+FILEREPLACENAME::~FILEREPLACENAME(){
+
+}
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+
+------------------------------------------------------------------------
+hddddd
+
+------------------------------------------------------------------------
+#ifndef SANDBOXIE_FILEREPLACENAME
+#define SANDBOXIE_FILEREPLACENAME
+// ------------------------------------ //
+#ifndef SANDBOXIE_INCLUDE
+#include "Define.h"
+#endif
+// ------------------------------------ //
+// ---- includes ---- //
+
+
+namespace SandBoxie{
+
+	class FILEREPLACENAME : public Leviathan::Object{
+	public:
+		FILEREPLACENAME::FILEREPLACENAME();
+        FILEREPLACENAME::~FILEREPLACENAME();
+
+
+	private:
+
+	};
+
+}
+// ------------------------------------ //
+
+#endif
+

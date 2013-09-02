@@ -35,26 +35,20 @@
 
 namespace Leviathan{
 	class Engine : public Object{
+		// friend so that window can update size //
+		friend Window;
+		friend Gui::GuiManager;
 	public:
-
 		DLLEXPORT Engine();
 
 		DLLEXPORT bool Init(AppDef* definition);
 		DLLEXPORT void Release();
 
-		DLLEXPORT void Tick(bool Force);
-
+		DLLEXPORT void Tick();
 		DLLEXPORT void RenderFrame();
 
-		DLLEXPORT bool HandleWindowCallBack(UINT message, WPARAM wParam,LPARAM lParam);
+
 		DLLEXPORT bool DoWindowResize(int width, int height);
-		DLLEXPORT void OnResize(int width, int height);
-
-		DLLEXPORT void CaptureMouse(bool toset);
-		DLLEXPORT void SetGuiActive(bool toset);
-
-		DLLEXPORT void LoseFocus();
-		DLLEXPORT void GainFocus();
 
 
 		// Object handling //
@@ -90,6 +84,14 @@ namespace Leviathan{
 		// after load function //
 		void PostLoad();
 
+		// private so that only Window objects can update this //
+		void OnResize(int width, int height);
+		void LoseFocus();
+		void GainFocus();
+		// for gui manager to update //
+		void SetGuiActive(bool toset);
+		// to be called when gui is set non active //
+		void CaptureMouse(bool toset);
 		// ------------------------------------ //
 		Logger* Mainlog;
 		Timer* MTimer;

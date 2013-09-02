@@ -172,8 +172,8 @@ bool Leviathan::Engine::Init(AppDef* definition){
 
 
 	// set height/width values //
-	Mainstore->SetHeight(definition->GetWindow()->getHeight());
-	Mainstore->SetWidth(definition->GetWindow()->getWidth());
+	Mainstore->SetHeight(definition->GetWindow()->GetHeight());
+	Mainstore->SetWidth(definition->GetWindow()->GetWidth());
 
 
 	// 3d model animations //
@@ -218,7 +218,8 @@ bool Leviathan::Engine::Init(AppDef* definition){
 
 	// create camera that always exists //
 	MainCamera = new ViewerCameraPos();
-	MainCamera->SetPos(Float3(0, 0, 5));
+	//MainCamera->SetPos(Float3(0, 0, 5));
+	MainCamera->SetPos(Float3(0, 0, 15));
 	
 	// set camera to be last one to receive key presses because it will ALWAYS consume them //
 	MainCamera->BecomeMainListeningCamera();
@@ -334,19 +335,18 @@ void Leviathan::Engine::Release(){
 	SAFE_DELETE(OutOMemory);
 }
 // ------------------------------------ //
-void Leviathan::Engine::Tick(bool Force){
-	if(!Inited)
-		return;
+void Leviathan::Engine::Tick(){
 	// get time since last update //
 	__int64 CurTime = Misc::GetTimeMs64();
 	TimePassed = (int)(CurTime-LastFrame);
 
-	if((TimePassed < TICKSPEED) && (!Force)){
+	if((TimePassed < TICKSPEED)){
 		// no tick time yet //
 		return;
 	}
 
 	LastFrame = CurTime;
+	//LastFrame += TICKSPEED;
 	TickCount++;
 	
 	// update input //
@@ -459,15 +459,11 @@ void Leviathan::Engine::RenderFrame(){
 	RenderTimer->RenderingEnd();
 }
 // ------------------------------------ //
-bool Leviathan::Engine::HandleWindowCallBack(UINT message, WPARAM wParam,LPARAM lParam){
-	return false;
-}
 bool Leviathan::Engine::DoWindowResize(int width, int height){
 	// tell window class to resize the real windows window //
-	Define->GetWindow()->resize(width, height);
+	Define->GetWindow()->ResizeWindow(width, height);
+	// window class updates engine's values //
 
-	// update values //
-	this->OnResize(width, height);
 	return true;
 }
 void Leviathan::Engine::OnResize(int width, int height){
@@ -493,7 +489,7 @@ void Leviathan::Engine::OnResize(int width, int height){
 void Leviathan::Engine::CaptureMouse(bool toset){
 	MouseCaptured = toset;
 
-	//Wind->SetHideCursor(toset);
+	Define->GetWindow()->SetHideCursor(toset);
 
 	Inputs->SetMouseCapture(toset);
 	WantsToCapture = toset;
@@ -504,7 +500,7 @@ void Leviathan::Engine::SetGuiActive(bool toset){
 		CaptureMouse(false);
 
 	} else {
-		Window::SetMouseToCenter(Window::GetRenderWindowHandle(Define->GetWindow()), Define->GetWindow());
+		Define->GetWindow()->SetMouseToCenter();
 		CaptureMouse(true);
 	}
 	Mainstore->SetGUiActive(GuiActive);
@@ -519,9 +515,7 @@ void Leviathan::Engine::GainFocus(){
 	if(!GuiActive){
 		Inputs->SetMouseCapture(true);
 	}
-
 }
-
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(const wstring &commands){
 

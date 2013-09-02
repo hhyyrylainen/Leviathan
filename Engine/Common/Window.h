@@ -6,6 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "OgreWindowEventUtilities.h"
+#include "OgreRenderWindow.h"
 
 namespace Leviathan{
 	
@@ -22,43 +24,52 @@ namespace Leviathan{
 		Window* OwningWindow;
 	};
 
-
 	// window class //
-	class Window : public EngineComponent{
+	class Window : public Ogre::WindowEventListener{
 	public:
-		DLLEXPORT Window::Window();
-
-		DLLEXPORT bool Init(HINSTANCE hInstance, WNDPROC proc, wstring tittle, int width, int height, HICON hIcon, bool windowed, 
-			LeviathanApplication* application);
+		DLLEXPORT Window(Ogre::RenderWindow* owindow, bool vsync);
+		DLLEXPORT ~Window();
 
 		DLLEXPORT void CloseDown();
-		DLLEXPORT HWND GetHandle(){ return m_hwnd;};
-		DLLEXPORT int GetWidth(){ return Width;};
-		DLLEXPORT int GetHeight(){ return Height;};
 
-		DLLEXPORT void SetNewSize(int width, int height);
-		DLLEXPORT bool ResizeWin32Window(int newwidth, int newheight, bool resizetocenter = false);
 
-		DLLEXPORT float GetAspectRatio() const;
+		DLLEXPORT void ResizeWindow(const int &width, const int &height);
+
+		DLLEXPORT inline float GetAspectRatio() const{
+
+			return ((float)GetWidth())/GetHeight();
+		}
 
 		DLLEXPORT void SetHideCursor(bool toset);
-		DLLEXPORT void LoseFocus();
-		DLLEXPORT void GainFocus();
 
-		DLLEXPORT static void GetRelativeMouse(HWND hwnd, int& x, int& y);
-		
+		// callback functions //
+		virtual void windowResized(Ogre::RenderWindow* rw);
+		virtual void windowFocusChange(Ogre::RenderWindow* rw);
 
-		DLLEXPORT bool IsWindowed(){ return Windowed;};
+		DLLEXPORT void GetRelativeMouse(int& x, int& y);
+		DLLEXPORT void SetMouseToCenter();
 
-		// TODO: change this class to cache this //
+
+		DLLEXPORT inline bool IsWindowed() const{ return !OWindow->isFullScreen();};
+		DLLEXPORT inline HWND GetHandle(){ return (m_hwnd = GetRenderWindowHandle(OWindow)); };
+		DLLEXPORT inline int GetWidth() const{ return OWindow->getWidth(); };
+		DLLEXPORT inline int GetHeight() const{ return OWindow->getHeight(); };
+		DLLEXPORT inline bool GetVsync() const{ return VerticalSync;};
+		DLLEXPORT inline Ogre::RenderWindow* GetOgreWindow() const{ return OWindow; };
+
+		DLLEXPORT inline bool IsOpen() const{
+
+			return !OWindow->isClosed();
+		}
+
 		DLLEXPORT static HWND GetRenderWindowHandle(Ogre::RenderWindow* owindow);
-		DLLEXPORT static void SetMouseToCenter(HWND hwnd, Ogre::RenderWindow* owindow);
 	private:
-		bool Windowed;
-		int Width;
-		int Height;
-		HWND m_hwnd;
 
+		HWND m_hwnd;
+		Ogre::RenderWindow* OWindow;
+
+		bool VerticalSync;
+		bool Focused;
 		bool CursorHidden;
 	};
 

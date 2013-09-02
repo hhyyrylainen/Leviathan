@@ -23,8 +23,8 @@ namespace Leviathan{
 		DLLEXPORT virtual void StartRelease();
 		
 		// functions called when certain events happen //
-		DLLEXPORT virtual void LoseFocus();
-		DLLEXPORT virtual void GainFocus();
+		DLLEXPORT virtual void OnLoseFocus();
+		DLLEXPORT virtual void OnGainFocus();
 		DLLEXPORT virtual void OnResize(const int &width, const int &height);
 
 

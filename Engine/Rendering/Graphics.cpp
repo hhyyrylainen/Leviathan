@@ -120,36 +120,32 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	// for now just choose the first one in the list //
 	ORoot->setRenderSystem(RSystemList[0]);
 
-
-	bool CreateWindowNow = false;
-	Ogre::String WindowTitle = "";
-	Ogre::String CustomCapacities = "";
-
-	ORoot->initialise(CreateWindowNow, WindowTitle, CustomCapacities);
+	ORoot->initialise(false, "", "");
 
 
 	// we can now ourselves create a window //
 	const WindowDataDetails& WData = AppDefinition->GetWindowDetails();
 
 	// set some rendering specific parameters //
-
 	Ogre::NameValuePairList WParams;
 
 	WParams["FSAA"] = "0";
 	WParams["vsync"] = "false";
 
 	Ogre::String wcaption = Convert::WstringToString(WData.Title);
+	// quicker access to the window //
+	Ogre::RenderWindow* tmpwindow = ORoot->createRenderWindow(wcaption, WData.Width, WData.Height, !WData.Windowed, &WParams);
 
 	// create the actual window and store it at the same time //
-	AppDefinition->SetRenderingWindow(ORoot->createRenderWindow(wcaption, WData.Width, WData.Height, !WData.Windowed, &WParams));
+	AppDefinition->SetRenderingWindow(new Window(tmpwindow, AppDefinition->GetVSync()));
+	// apply style settings (mainly ICON) //
+	WData.ApplyIconToHandle(AppDefinition->GetWindow()->GetHandle());
+	AppDefinition->GetWindow()->GetOgreWindow()->setDeactivateOnFocusChange(false);
 
 	if(!CreateDefaultRenderView()){
 
 		return false;
 	}
-
-	// quicker access to the window //
-	Ogre::RenderWindow* tmpwindow = AppDefinition->GetWindow();
 
 	// set the main window to be active //
 	tmpwindow->setActive(true);
@@ -222,7 +218,7 @@ bool Leviathan::Graphics::CreateDefaultRenderView(){
 
 	USHORT ZOrder = 100;
 
-	MainViewport = AppDefinition->GetWindow()->addViewport(MainCamera, ZOrder, ViewLeft, ViewTop, ViewWidth, ViewHeight);
+	MainViewport = AppDefinition->GetWindow()->GetOgreWindow()->addViewport(MainCamera, ZOrder, ViewLeft, ViewTop, ViewWidth, ViewHeight);
 
 	// set default viewport colour //
 	MainViewport->setBackgroundColour(Ogre::ColourValue(0.3f, 0.6f, 0.9f));
@@ -230,8 +226,10 @@ bool Leviathan::Graphics::CreateDefaultRenderView(){
 	// automatic updating //
 	MainViewport->setAutoUpdated(true);
 
+	float aspectratio = MainViewport->getActualWidth()/(float)MainViewport->getActualHeight();
+
 	// set aspect ratio to the same as the view port (this makes it look realistic) //
-	MainCamera->setAspectRatio(MainViewport->getActualWidth()/(float)MainViewport->getActualHeight());
+	MainCamera->setAspectRatio(aspectratio);
 
 	// near and far clipping planes //
 	MainCamera->setFOVy(Ogre::Radian(60.f*DEGREES_TO_RADIANS));
@@ -324,14 +322,13 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 		if(objects[i]->IsHidden())
 			continue;
 		DEBUG_BREAK;
-		// objects should be smart enough to not to change common matrices
-		//objects[i]->Render(this, mspassed, *CurrentPass.get()); 
+
 	}
 
 	DrawRenderActions();
 
 	// we can now actually render the window //
-	Ogre::RenderWindow* tmpwindow = AppDefinition->GetWindow();
+	Ogre::RenderWindow* tmpwindow = AppDefinition->GetWindow()->GetOgreWindow();
 
 	tmpwindow->update(false);
 	// all automatically updated view ports are updated //
@@ -339,7 +336,7 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 	// update special view ports //
 
 	// finish rendering the main window //
-	tmpwindow->swapBuffers(AppDefinition->GetVSync());
+	tmpwindow->swapBuffers(AppDefinition->GetWindow()->GetVsync());
 
 	return true;
 }

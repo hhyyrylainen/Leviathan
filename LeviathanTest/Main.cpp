@@ -53,7 +53,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			ProgramDefinition->SetHInstance(hInstance);
 
 			// create window last //
-			ProgramDefinition->StoreWindowDetails(tittle, true, LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)), WndProc, &app);
+			ProgramDefinition->StoreWindowDetails(tittle, true, LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)), &app);
 
 
 
@@ -75,7 +75,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 				TimingMonitor::StopTiming(L"All tests timer");
 				// finish //
-				app.GetEngine()->GetDefinition()->GetWindow()->destroy();
+				app.GetEngine()->GetDefinition()->GetWindow()->CloseDown();
 				// receive close message //
 				Return = app.RunMessageLoop();
 			} else {

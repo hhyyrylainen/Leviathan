@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "Common\DataStoring\NamedVars.h"
 #include "Common\Window.h"
+#include "ObjectFiles\ObjectFileProcessor.h"
 
 namespace Leviathan{
 
@@ -17,10 +18,12 @@ namespace Leviathan{
 	struct WindowDataDetails{
 		WindowDataDetails();
 		WindowDataDetails(const wstring &title, const int &width, const int &height, const bool &windowed, const bool &windowborder, HICON icon, 
-			WNDPROC wndproc, LeviathanApplication* appvirtualptr);
+			LeviathanApplication* appvirtualptr);
 
+		void ApplyIconToHandle(HWND hwnd) const;
 
 		wstring Title;
+		HICON Icon;
 		int Height;
 		int Width;
 		bool Windowed;
@@ -37,7 +40,7 @@ namespace Leviathan{
 		DLLEXPORT NamedVars* GetValues();
 
 		// named constructor functions //
-		DLLEXPORT AppDef& SetRenderingWindow(Ogre::RenderWindow* wind){
+		DLLEXPORT AppDef& SetRenderingWindow(Window* wind){
 
 			RWindow = wind;
 			return *this;
@@ -62,28 +65,32 @@ namespace Leviathan{
 			return Defaultconf;
 		}
 		DLLEXPORT inline bool GetVSync(){
-			return VerticalSync;
+			
+			bool vsync;
+
+			ObjectFileProcessor::LoadValueFromNamedVars(*ConfigurationValues, L"Vsync", vsync, false, false);
+			return vsync;
 		}
-		DLLEXPORT Ogre::RenderWindow* GetWindow(){
+		DLLEXPORT Window* GetWindow(){
 
 			return RWindow;
 		}
 
 		DLLEXPORT static AppDef* GenerateAppdefine();
-		DLLEXPORT void StoreWindowDetails(const wstring &title, const bool &windowborder, HICON icon, WNDPROC wndproc, 
-			LeviathanApplication* appvirtualptr);
+		DLLEXPORT void StoreWindowDetails(const wstring &title, const bool &windowborder, HICON icon, LeviathanApplication* appvirtualptr);
 
 	protected:
 		
 		unique_ptr<NamedVars> ConfigurationValues;
 		HINSTANCE HInstance;
-		Ogre::RenderWindow* RWindow;
+
+		Window* RWindow;
 
 		// details used to create a window //
 		WindowDataDetails WDetails;
 
 
-		bool VerticalSync;
+		
 
 
 		// ------------------------------------ //

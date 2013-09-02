@@ -112,8 +112,9 @@ using namespace std;
 
 #define LEVIATHAN
 
-#define PI 3.14159265
-#define EPSILON		0.00000001
+#define PI 3.14159265f
+#define DEGREES_TO_RADIANS  PI/180
+#define EPSILON		0.00000001f
 #define VAL_NOUPDATE	-1333678
 #define OBJECT_SMOOTH	4
 #define SHADER_DEBUG 1

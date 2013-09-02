@@ -13,7 +13,7 @@ DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false),
 }
 
 DLLEXPORT Leviathan::LeviathanApplication::~LeviathanApplication(){
-
+	Curapp = NULL;
 }
 
 LeviathanApplication* LeviathanApplication::Curapp = NULL;
@@ -56,20 +56,6 @@ DLLEXPORT void Leviathan::LeviathanApplication::Render(){
 	engine->RenderFrame();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::LeviathanApplication::LoseFocus(){
-	if(engine)
-		engine->LoseFocus();
-}
-
-DLLEXPORT void Leviathan::LeviathanApplication::GainFocus(){
-	if(engine)
-		engine->GainFocus();
-}
-// ------------------------------------ //
-DLLEXPORT void Leviathan::LeviathanApplication::OnResize(const int &width, const int &height){
-	engine->OnResize(width, height);
-}
-
 DLLEXPORT void Leviathan::LeviathanApplication::DoResizeWindow(const int &newwidth, const int &newheight){
 	// tell engine to resize window //
 	engine->DoWindowResize(newwidth, newheight);
@@ -79,10 +65,8 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 
 	//MSG Msg;
 
-	//HWND windhandle = engine->GetWindow()->GetHandle();
-
 	//for(int GameLoopCount = 0; ; GameLoopCount++){
-	while(!ApplicationConfiguration->GetWindow()->isClosed()){
+	while(ApplicationConfiguration->GetWindow()->IsOpen()){
 
 
 		Ogre::WindowEventUtilities::messagePump();
@@ -94,7 +78,7 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 		}
 
 		// engine tick //
-		engine->Tick(false);
+		engine->Tick();
 		Render();
 	}
 	// always release before quitting to avoid tons of memory leaks //
@@ -102,4 +86,17 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 
 	return 0; 
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::LeviathanApplication::OnLoseFocus(){
+
+}
+
+DLLEXPORT void Leviathan::LeviathanApplication::OnGainFocus(){
+
+}
+
+DLLEXPORT void Leviathan::LeviathanApplication::OnResize(const int &width, const int &height){
+
+}
+
 // ------------------------------------ //

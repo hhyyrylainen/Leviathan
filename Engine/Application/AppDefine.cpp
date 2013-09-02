@@ -17,6 +17,8 @@ AppDef::~AppDef(){
 	// reset static access if this is it //
 	if(Defaultconf == this)
 		Defaultconf = NULL;
+	// we need to release the memory allocated with windows //
+	SAFE_DELETE(RWindow);
 }
 
 AppDef* Leviathan::AppDef::Defaultconf = NULL;
@@ -35,7 +37,7 @@ DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(){
 	return tmpptr.release();
 }
 
-DLLEXPORT void Leviathan::AppDef::StoreWindowDetails(const wstring &title, const bool &windowborder, HICON icon, WNDPROC wndproc, LeviathanApplication* appvirtualptr){
+DLLEXPORT void Leviathan::AppDef::StoreWindowDetails(const wstring &title, const bool &windowborder, HICON icon, LeviathanApplication* appvirtualptr){
 	// store the parameters to be used for window creation //
 
 	int width;
@@ -46,16 +48,23 @@ DLLEXPORT void Leviathan::AppDef::StoreWindowDetails(const wstring &title, const
 	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), L"Height", height, 600, true, L"Create window: ");
 	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), L"Windowed", window, true, true, L"Create window: ");
 
-	this->SetWindowDetails(WindowDataDetails(title, width, height, window, windowborder, icon, wndproc, appvirtualptr));
+	this->SetWindowDetails(WindowDataDetails(title, width, height, window, windowborder, icon, appvirtualptr));
 }
 
 // ------------------ WindowDataDetails ------------------ //
 Leviathan::WindowDataDetails::WindowDataDetails(const wstring &title, const int &width, const int &height, const bool &windowed, 
-	const bool &windowborder, HICON icon, WNDPROC wndproc, LeviathanApplication* appvirtualptr) : Title(title), Width(width), Height(height), Windowed(windowed)
+	const bool &windowborder, HICON icon, LeviathanApplication* appvirtualptr) : Title(title), Width(width), Height(height), 
+	Windowed(windowed), Icon(icon)
 {
 
 }
 
 Leviathan::WindowDataDetails::WindowDataDetails(){
 
+}
+
+void Leviathan::WindowDataDetails::ApplyIconToHandle(HWND hwnd) const{
+
+	// send set icon message //
+	SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)Icon);
 }

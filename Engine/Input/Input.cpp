@@ -139,13 +139,13 @@ bool Input::Update(){
 	
 	auto tmpptr = Engine::GetEngine()->GetDefinition()->GetWindow();
 
-	Window::GetRelativeMouse(Window::GetRenderWindowHandle(tmpptr), MouseX, MouseY);
+	tmpptr->GetRelativeMouse(MouseX, MouseY);
 
 	// get mouse move amount //
 	if(CaptureMouse){
 		// get distance to center of window //
-		int width = tmpptr->getWidth();
-		int height = tmpptr->getHeight();
+		int width = tmpptr->GetWidth();
+		int height = tmpptr->GetHeight();
 
 		width /= 2;
 		height /= 2;
@@ -154,7 +154,7 @@ bool Input::Update(){
 		MouseMoveY = MouseY-height;
 
 		// set to center //
-		Window::SetMouseToCenter(Window::GetRenderWindowHandle(tmpptr), tmpptr);
+		tmpptr->SetMouseToCenter();
 	}
 
 	// process data to values //

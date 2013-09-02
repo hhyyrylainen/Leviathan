@@ -41,10 +41,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		ProgramDefinition->SetHInstance(hInstance);
 
 		// create window parameters last //
-		ProgramDefinition->StoreWindowDetails(tittle, true, LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)), 
-			SandBoxie::App::WndProc, &app);
-			
-
+		ProgramDefinition->StoreWindowDetails(tittle, true, LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)), &app);
 
 
 		if(app.Initialize(ProgramDefinition.get())){

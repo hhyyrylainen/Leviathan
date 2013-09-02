@@ -3,232 +3,119 @@
 #ifndef LEVIATHAN_WINDOW
 #include "Window.h"
 #endif
+#include "Engine.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
+DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, bool vsync) : OWindow(owindow), VerticalSync(vsync), m_hwnd(NULL){
 
-Window::Window(){
-	Windowed = true;
-	Width = -1;
-	Height = -1;
-	m_hwnd = NULL;
+	// update focused this way //
+	Focused = (m_hwnd = GetRenderWindowHandle(OWindow)) == GetForegroundWindow() ? true: false;
 
+	// register as listener to get update notifications //
+	Ogre::WindowEventUtilities::addWindowEventListener(OWindow, this);
+
+	// cursor on top of window's windows isn't hidden //
 	CursorHidden = false;
 }
-void Window::CloseDown(){
-	if(!IsWindow(m_hwnd)){
-		return;
-	}
 
-	if(!Windowed){
-		ChangeDisplaySettings(NULL, 0);
-	}
-
-	DestroyWindow(m_hwnd);
-	m_hwnd = NULL;
+DLLEXPORT Leviathan::Window::~Window(){
+	// unregister, just in case //
+	Ogre::WindowEventUtilities::removeWindowEventListener(OWindow, this);
+	// close window (might be closed already) //
+	//OWindow->destroy();
 }
-
-bool Window::Init(HINSTANCE hInstance, WNDPROC proc, wstring tittle, int width, int height, HICON hIcon, bool windowed, 
-	LeviathanApplication* application)
-{
-	HRESULT hr = S_OK;
-	Width = width;
-	Height = height;
-	// get data from config //
-
-
-	WNDCLASSEX wcex = { sizeof(wcex) };
-	wcex.style         = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc   = proc;
-	wcex.cbWndExtra    = sizeof(LONG_PTR);
-	wcex.hInstance     = hInstance;
-	wcex.hCursor       = LoadCursor(NULL, IDC_ARROW);
-	wcex.lpszClassName = CLASSNAME;
-	wcex.hIcon         = hIcon;
-	if(!RegisterClassEx(&wcex)){
-		Logger::Get()->Error(L"failed to register window class",GetLastError());
-		return false;
-	}
-	// variable dumb //
-	int Xpos = CW_USEDEFAULT, Ypos = CW_USEDEFAULT;
-	int screenWidth  = GetSystemMetrics(SM_CXSCREEN);
-	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-	DEVMODE dmScreenSettings;
-
-	// data to pass to window procedure (this will probably leak, but it's not much) //
-	WindowPassData* wdata = new WindowPassData(this, application);
-
-	if(!windowed){
-		// If full screen set the screen to maximum size of the users desktop and 32bit.
-		memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
-		dmScreenSettings.dmSize       = sizeof(dmScreenSettings);
-		dmScreenSettings.dmPelsWidth  = (unsigned long)screenWidth;
-		dmScreenSettings.dmPelsHeight = (unsigned long)screenHeight;
-		dmScreenSettings.dmBitsPerPel = 32;			
-		dmScreenSettings.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-
-		// Change the display settings to full screen.
-		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
-
-
-
-		// Set the position of the window to the top left corner.
-		Xpos = Ypos = 0;
-		m_hwnd = CreateWindowEx(
-			WS_EX_APPWINDOW,
-			CLASSNAME,
-			tittle.c_str(),
-				WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP,
-			0,
-			0,
-			screenWidth,
-			screenHeight,
-			NULL,
-			NULL,
-			hInstance,
-			wdata
-			);
-	} else {
-		//Xpos = (GetSystemMetrics(SM_CXSCREEN) - screenWidth)  / 2;
-		//Ypos = (GetSystemMetrics(SM_CYSCREEN) - screenHeight) / 2;
-		Xpos = screenWidth/2 - width/2;
-		Ypos = screenHeight/2 - height/2;
-		////calculate size
-		RECT wr = {0,0,width,height};
-		AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
-		width = wr.right - wr.left;
-		height = wr.bottom - wr.top;
-	}
-
-
-	// Create the application window.
-	m_hwnd = CreateWindow(
-		CLASSNAME,
-		tittle.c_str(),
-		WS_BORDER | WS_CAPTION | WS_SYSMENU,
-		Xpos,
-		Ypos,
-		width,
-		height,
-		NULL,
-		NULL,
-		hInstance,
-		wdata
-		);
-
-	hr = IsWindow(m_hwnd) ? S_OK : E_FAIL;
-	if (SUCCEEDED(hr))
-	{
-		try{
-			if(!ShowWindow(m_hwnd, SW_SHOWNORMAL)){
-				// fail? //
-				Logger::QueueErrorMessage(L"Window: ShowWindow failed, trying to continue");
-				return S_OK;
-			}
-			if(!UpdateWindow(m_hwnd)){
-				// fail? //
-				Logger::QueueErrorMessage(L"Window: UpdateWindow failed, trying to continue");
-				return S_OK;
-			}
-			SetFocus(m_hwnd);
-		}
-		catch (...){
-			
-			DEBUG_BREAK;
-			throw;
-		}
-	}
-		
-
-	return SUCCEEDED(hr);
-}
-
-void Window::SetNewSize(int width, int height){
-	Width = width;
-	Height = height;
-}
-bool Window::ResizeWin32Window(int newwidth, int newheight, bool resizetocenter){
-	SetNewSize(newwidth, newheight);
-	int x,y;
-	RECT wndsize;
-
-	//Width = newwidth;
-	//Height = newheight;
-
-	GetWindowRect(m_hwnd, &wndsize);
-
-	RECT wr = {0,0,newwidth,newheight};
-	AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
-	// calculate actual width and height //
-	int realwidth = wr.right-wr.left;
-	int realheight = wr.bottom-wr.top;
-
-	if(!resizetocenter){
-		// get old x and y first to preserve them //
-
-		x = wndsize.left;
-		y = wndsize.top;
-	} else {
-		// get screen size and set window coordinates to center //
-		x = (GetSystemMetrics(SM_CXSCREEN) - realwidth)  / 2;
-		y = (GetSystemMetrics(SM_CYSCREEN) - realheight) / 2;
-	}
-
-
-	// call window resize //
-	MoveWindow(m_hwnd, x, y, realwidth, realheight, FALSE);
-	return true;
-}
-
-void Window::SetHideCursor(bool toset){
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
 	if(toset == CursorHidden)
 		return;
 	CursorHidden = toset;
 	if(CursorHidden){
 		ShowCursor(FALSE);
 	} else {
-		//CursorHidden = true;
 		ShowCursor(TRUE);
 	}
 }
 
+DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
+	// update window handle before using //
+	m_hwnd = GetRenderWindowHandle(OWindow);
+	if(m_hwnd == NULL){
+		// window has closed //
+		return;
+	}
 
+	POINT p;
+	p.x = GetWidth()/2;
+	p.y = GetHeight()/2;
 
-float Leviathan::Window::GetAspectRatio() const{
-	return ((float)Width)/Height;
+	ClientToScreen(m_hwnd, &p);
+
+	SetCursorPos(p.x, p.y);
 }
 
-HWND Leviathan::Window::GetRenderWindowHandle(Ogre::RenderWindow* owindow){
+DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
+	// update window handle before using //
+	m_hwnd = GetRenderWindowHandle(OWindow);
+	if(m_hwnd == NULL){
+		// window has closed //
+		x = y = 0;
+		return;
+	}
 
+	POINT p;
+	GetCursorPos(&p);
+
+	ScreenToClient(m_hwnd, &p);
+
+	x = p.x;
+	y = p.y;
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Window::CloseDown(){
+	// close the window //
+	OWindow->destroy();
+}
+
+DLLEXPORT void Leviathan::Window::ResizeWindow(const int &width, const int &height){
+	// make ogre window resize //
+	OWindow->resize(width, height);
+}
+// ------------------------------------ //
+void Leviathan::Window::windowResized(Ogre::RenderWindow* rw){
+	// notify engine //
+	Engine::GetEngine()->OnResize(GetWidth(), GetHeight());
+}
+
+void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
+	// update handle to have it up to date //
+	m_hwnd = GetRenderWindowHandle(OWindow);
+
+	//Focused = m_hwnd == GetFocus() ? true: false;
+	Focused = m_hwnd == GetForegroundWindow() ? true: false;
+	
+	wstring message = L"Window focus is now ";
+	message += Focused ? L"true": L"false";
+
+	Logger::Get()->Info(message);
+}
+// ------------------------------------ //
+HWND Leviathan::Window::GetRenderWindowHandle(Ogre::RenderWindow* owindow){
 
 	unsigned int WindowHwnd(0);
 
 	owindow->getCustomAttribute(Ogre::String("WINDOW"), &WindowHwnd);
 
+	HWND reswnd = reinterpret_cast<HWND>(WindowHwnd);
 
-	return HWND(WindowHwnd);
+	if(!IsWindow(reswnd)){
+		// not a window! //
+		return NULL;
+	}
+
+	return reswnd;
 }
-
-DLLEXPORT void Leviathan::Window::SetMouseToCenter(HWND hwnd, Ogre::RenderWindow* owindow){
-	POINT p;
-	p.x = owindow->getWidth()/2;
-	p.y = owindow->getHeight()/2;
-
-	ClientToScreen(hwnd, &p);
-
-	SetCursorPos(p.x, p.y);
-}
-
-DLLEXPORT void Leviathan::Window::GetRelativeMouse(HWND hwnd, int& x, int& y){
-	POINT p;
-	GetCursorPos(&p);
-
-	ScreenToClient(hwnd, &p);
-
-	x = p.x;
-	y = p.y;
-}
-
+// ------------------ WindowPassData ------------------ //
 Leviathan::WindowPassData::WindowPassData(Window* wind, LeviathanApplication* appinterface){
 	OwningWindow = wind;
 	Appinterface = appinterface;

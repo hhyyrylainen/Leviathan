@@ -11,9 +11,9 @@ set(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/Install")
 #set(PATHS_OGRE_COPY_DLL_PATH "H:/c++ resources/OgreSDK_vc10_v1-9-0unstable/bin" CACHE PATH "path for ogre binarie/bin dir")
 
 # version number
-set(LEVIATHAN_VERSION 0.502)
-set(LEVIATHAN_VERSIONS "L\"0.5.0.2\"")
-set(LEVIATHAN_VERSION_ANSIS "\"0.5.0.2\"")
+set(LEVIATHAN_VERSION 0.503)
+set(LEVIATHAN_VERSIONS "L\"0.5.0.3\"")
+set(LEVIATHAN_VERSION_ANSIS "\"0.5.0.3\"")
 
 set(CMAKE_DEBUG_POSTFIX "D")
 
@@ -39,7 +39,7 @@ file(GLOB MoveFiles "Leap/lib/x86/Leap.dll" "Leap/lib/x86/Leapd.dll")
 file(COPY ${MoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 # ogre dlls (this should be changed for public release to only copy required dlls)
-file(GLOB MoveFiles "OGRE/bin/Debug/*.dll" "OGRE/bin/Release/*.dll")
+file(GLOB MoveFiles "OGRE/bin/Debug/*.pdb" "OGRE/bin/Debug/*.dll" "OGRE/bin/Release/*.dll")
 file(COPY ${MoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 

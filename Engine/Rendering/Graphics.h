@@ -13,6 +13,10 @@
 #include <Overlay\OgreOverlayElement.h>
 #include <Overlay\OgreOverlayManager.h>
 #include <OgreManualObject.h>
+#include <Terrain/OgreTerrain.h>
+#include <Terrain/OgreTerrainGroup.h>
+
+#include <Terrain/OgreTerrainMaterialGeneratorA.h>
 
 #include "GUI\RenderAction.h"
 #include "Entities\Bases\BaseRenderable.h"
@@ -66,6 +70,11 @@ namespace Leviathan{
 		bool CreateCameraAndNodesForScene();
 		void CreateTestObject();
 		void PurgeGuiArray();
+		void TERRAIN_ConfigureTerrainDefaults(Ogre::Light* light);
+		void TERRAIN_DefineTerrainAt(long x, long y);
+		void TERRAIN_GetTerrainImage(bool flipx, bool flipy, Ogre::Image &img);
+		void TERRAIN_InitBlendMaps(Ogre::Terrain* terrain);
+		bool TERRAIN_FrameRenderingQueued(const Ogre::FrameEvent& evt);
 		// ------------------------ //
 		bool Initialized;
 
@@ -85,6 +94,11 @@ namespace Leviathan{
 		Ogre::Camera* MainCamera;
 		Ogre::SceneNode* MainCameraNode;
 		Ogre::Viewport* MainViewport;
+
+		// should be moved to world class when done //
+		Ogre::TerrainGlobalOptions* _TerrainGlobalSettings;
+		Ogre::TerrainGroup* _TerrainGroup;
+		bool _TerrainImported;
 
 		// static //
 		static Graphics* Staticaccess;

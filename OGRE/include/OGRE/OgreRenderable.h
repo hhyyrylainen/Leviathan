@@ -426,5 +426,4 @@ namespace Ogre {
 } // namespace Ogre
 
 #include "OgreHeaderSuffix.h"
-
 #endif //__Renderable_H__

@@ -830,6 +830,13 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 
 	manager.addResourceLocation(folder, "FileSystem", "MainTexturesFolder", true);
 
+	// Terrain group //
+	manager.createResourceGroup("Terrain");
+
+	folder = Convert::WstringToString(DataFolder+L"Cache\\Terrain\\");
+
+	manager.addResourceLocation(folder, "FileSystem", "Terrain", true);
+
 
 	// possibly register addon folders //
 

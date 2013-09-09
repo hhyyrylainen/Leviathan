@@ -208,4 +208,24 @@ DLLEXPORT void Leviathan::KeyPressManager::ProcessPendingEvents(){
 	}
 }
 
+DLLEXPORT void Leviathan::KeyPressManager::RunUnfocusedProcess(Input* input){
+	// send start and end event and set all keys as up //
+	Clear();
+
+	if(!IsSorted){
+		// needs to sort receivers //
+		sort(Receivers.begin(), Receivers.end(), ComparePtrs);
+		IsSorted = true;
+	}
+
+	// send start event //
+	FireEvent(new InputEvent(EVENT_TYPE_EVENT_SEQUENCE_BEGIN, (void*)(new int(ID))));
+
+	// process pending here so that all get the start event //
+	ProcessPendingEvents();
+
+	// send end event //
+	FireEvent(new InputEvent(EVENT_TYPE_EVENT_SEQUENCE_END, (void*)(new int(ID))));
+}
+
 // ------------------------------------ //

@@ -125,41 +125,7 @@ bool Leviathan::Engine::Init(AppDef* definition){
 		Logger::Get()->Error(L"Engine: Init: failed to initialize Console, continuing anyway");
 	}
 
-	// temporary parameters for creating a graphics instance //
-	bool vsyncon = true;
-	bool dhardware = true;
-	int targetlevel = 11;
-	int MSAA = 4;
-
-	// get variables from engine configuration file //
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(definition->GetValues(), L"MaxFPS", FrameLimit, 120, true, L"Engine: Init:");
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(definition->GetValues(), L"FeatureLevel", targetlevel, 120, false);
-	ObjectFileProcessor::LoadValueFromNamedVars<bool>(definition->GetValues(), L"Vsync", vsyncon, false, true, L"Engine: Init:");
-	ObjectFileProcessor::LoadValueFromNamedVars<bool>(definition->GetValues(), L"DriverHardWare", dhardware, true, true, L"Engine: Init:");
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(definition->GetValues(), L"MSAA", MSAA, 4, true, L"Engine: Init:");
-
-	// check sanity of values //
-	if(MSAA < 1)
-		MSAA = 1;
-	if(MSAA > 32)
-		MSAA = 32;
-
-	// init graphics //
-	D3D_FEATURE_LEVEL flevel = D3D_FEATURE_LEVEL_11_0;
-
-	switch(targetlevel){
-	case 11: flevel = D3D_FEATURE_LEVEL_11_0; break;
-
-
-	default: break;
-	}
-	
-	// renderer //
-	D3D_DRIVER_TYPE dtype = D3D_DRIVER_TYPE_HARDWARE;
-	if(!dhardware){
-		Logger::Get()->Info(L"Driver type is NOT set to hardware, performance warning", true);
-		dtype = D3D_DRIVER_TYPE_SOFTWARE;
-	}
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), L"MaxFPS", FrameLimit, 120, true, L"Graphics: Init:");
 
 	Graph = new Graphics();
 	CLASS_ALLOC_CHECK(Graph);
@@ -219,7 +185,8 @@ bool Leviathan::Engine::Init(AppDef* definition){
 	// create camera that always exists //
 	MainCamera = new ViewerCameraPos();
 	//MainCamera->SetPos(Float3(0, 0, 5));
-	MainCamera->SetPos(Float3(0, 0, 15));
+	MainCamera->SetPos(Float3(0, 300, 60));
+
 	
 	// set camera to be last one to receive key presses because it will ALWAYS consume them //
 	MainCamera->BecomeMainListeningCamera();
@@ -345,8 +312,11 @@ void Leviathan::Engine::Tick(){
 		return;
 	}
 
-	LastFrame = CurTime;
-	//LastFrame += TICKSPEED;
+	// update focus state //
+
+
+	//LastFrame = CurTime;
+	LastFrame += TICKSPEED;
 	TickCount++;
 	
 	// update input //
@@ -356,54 +326,36 @@ void Leviathan::Engine::Tick(){
 	// sound tick //
 	Sound->Tick(TimePassed);
 
-	if(this->Focused)
+	if(Focused){
 		KeyListener->ProcessInput(Inputs);
+	} else {
+		// send this so that all keys are set as up //
+		KeyListener->RunUnfocusedProcess(Inputs);
+	}
 
 	GManager->GuiTick(TimePassed);
 
-	//if(Focused){
-	//	if(!GuiActive){
-	//		MainCamera->ReadInput(Inputs, true, true);
-	//	} else if(!Gui->HasForeGround()){
-	//		MainCamera->ReadInput(Inputs, false, true);
-	//	} else {
-	//		MainCamera->ClearInputs();
-	//	}
-	//} else {
-	//	MainCamera->ClearInputs();
-	//}
-
 	// update texture usage times, to allow unused textures to be unloaded //
 	Graph->GetTextureManager()->TimePass(TimePassed);
-
 
 	// some dark magic here //
 	if(TickCount % 25 == 0){
 		// update values
 		Mainstore->SetTickCount(TickCount);
 		Mainstore->SetTickTime(TickTime);
-
-		//// window resize test //
-		//int newwidth = Mainstore->GetWidth()+3;
-		//int newheight = Mainstore->GetHeight()+3;
-		//this->DoWindowResize(newwidth, newheight);
 		
 
 		// send updated rendering statistics //
 		RenderTimer->ReportStats(Mainstore);
 	}
 
-	//TimePassed = -TICKSPEED;
-	//TimePassed = 0;
-	TickTime = (int)(Misc::GetTimeMs64()-LastFrame);
-
 	// send tick event //
 	MainEvents->CallEvent(new Event(EVENT_TYPE_ENGINE_TICK, new int(TickCount)));
+
+	TickTime = (int)(Misc::GetTimeMs64()-LastFrame);
 }
 // ------------------------------------ //
 void Leviathan::Engine::RenderFrame(){
-	if(!Inited)
-		return;
 
 	int SinceLastFrame = -1;
 
@@ -415,6 +367,7 @@ void Leviathan::Engine::RenderFrame(){
 	}
 
 	// since last frame is in microseconds 10^-6 convert to milliseconds //
+	// SinceLastFrame is always more than 1000 (always 1 ms or more) //
 	SinceLastFrame /= 1000;
 
 	FrameCount++;
@@ -429,26 +382,10 @@ void Leviathan::Engine::RenderFrame(){
 	GManager->AnimationTick(SinceLastFrame);
 
 	// update simulations will go here, or not //
-#ifdef _DEBUG
-	// some test magic here //
 
-	// update model stuff //
-	shared_ptr<BaseObject> bobj = GObjects->Get(0); // nasty index grab //
-	if(bobj.get() != NULL){
-		if(bobj->Type == OBJECT_TYPE_MODEL){
-			//GameObject::Model* modl = dynamic_cast<GameObject::Model*>(bobj.get());
-			// update some shit //
-			//modl->SetScale(modl->GetScale()*(1.0001f/**SinceRender*/));
-			//if(TickCount < 186)
-			//	modl->SetOrientation(modl->GetPitch()+5*SinceLastFrame, modl->GetYaw()+4*SinceLastFrame, modl->GetRoll()+7*SinceLastFrame);
-
-
-		}
-	}
-
-#endif
 	// Gui //
 	GManager->Render();
+
 	// render //
 	vector<BaseRenderable*>* objects = GObjects->GetRenderableObjects();
 	Graph->Frame(SinceLastFrame, MainCamera, *objects);

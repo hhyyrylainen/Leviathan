@@ -56,6 +56,7 @@ namespace Leviathan{
 		DLLEXPORT KeyPressManager::~KeyPressManager();
 
 		DLLEXPORT void ProcessInput(Input* input);
+		DLLEXPORT void RunUnfocusedProcess(Input* input);
 		// clears old state of keys (all keys that were pressed will fire key press event again) //
 		DLLEXPORT void Clear();
 

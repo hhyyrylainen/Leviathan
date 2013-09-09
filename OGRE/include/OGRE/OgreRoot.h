@@ -95,6 +95,7 @@ namespace Ogre
         ParticleSystemManager* mParticleManager;
         SkeletonManager* mSkeletonManager;
         
+        
         ArchiveFactory *mZipArchiveFactory;
         ArchiveFactory *mEmbeddedZipArchiveFactory;
         ArchiveFactory *mFileSystemArchiveFactory;

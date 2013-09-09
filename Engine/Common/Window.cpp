@@ -94,6 +94,9 @@ void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
 	//Focused = m_hwnd == GetFocus() ? true: false;
 	Focused = m_hwnd == GetForegroundWindow() ? true: false;
 	
+	// update engine focus state (TODO: add a list of focuses to support multiple windows) //
+	Focused ? Engine::GetEngine()->GainFocus(): Engine::GetEngine()->LoseFocus();
+
 	wstring message = L"Window focus is now ";
 	message += Focused ? L"true": L"false";
 

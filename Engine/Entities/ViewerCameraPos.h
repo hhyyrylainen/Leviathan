@@ -10,6 +10,9 @@
 #include "Input\Input.h"
 #include "Input\KeyPressManager.h"
 
+#define DEFAULTMOVEMENTMODIFIER		1.f
+#define TURBOMOVEMENTMODIFIER		20.f
+
 namespace Leviathan{
 	// callable for the ability to receive key presses
 	class ViewerCameraPos : public BaseObject, public InputReceiver {

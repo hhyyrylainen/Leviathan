@@ -64,6 +64,8 @@ namespace Leviathan{
 		DLLEXPORT void ExecuteCommandLine(const wstring &commands);
 		DLLEXPORT void RunScrCommand(wstring command, wstring params);
 
+
+		DLLEXPORT void SaveScreenShot();
 		
 		DLLEXPORT Gui::GuiManager* GetGui(){ return GManager; };
 		DLLEXPORT Graphics* GetGraphics(){ return Graph; };

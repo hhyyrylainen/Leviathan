@@ -55,11 +55,7 @@ DLLEXPORT bool Leviathan::Gui::GuiBasicText::Init(const Float4 &colour, const ws
 }
 DLLEXPORT void Leviathan::Gui::GuiBasicText::Release(RenderBridge* bridge){
 	// remove from render bridge //
-	size_t i = bridge->GetSlotIndex(Slot);
-
-	SAFE_DELETE(bridge->DrawActions[i]);
-
-	bridge->DrawActions.erase(bridge->DrawActions.begin());
+	bridge->DeleteBlobOnIndex(bridge->GetSlotIndex(Slot));
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiBasicText::Render(RenderBridge* bridge, Graphics* graph){
@@ -87,7 +83,8 @@ DLLEXPORT void Leviathan::Gui::GuiBasicText::Render(RenderBridge* bridge, Graphi
 
 	if(releaseold){
 		// needs to delete old rendering blob //
-		SAFE_DELETE(bridge->DrawActions[i]);
+		bridge->DeleteBlobOnIndex(i);
+		i = bridge->GetSlotIndex(Slot);
 	}
 
 
@@ -96,7 +93,7 @@ DLLEXPORT void Leviathan::Gui::GuiBasicText::Render(RenderBridge* bridge, Graphi
 
 	if(bridge->DrawActions[i] == NULL){
 		// create new object //
-		bridge->DrawActions[i] = new TextRendBlob(graph, ZOrder, Slot, false);
+		bridge->DrawActions[i] = new TextRendBlob(graph, IDFactory::GetID(), ZOrder, Slot, false);
 	}
 	// update the existing object //
 	TextRendBlob* tmpptr = (TextRendBlob*)bridge->DrawActions[i];

@@ -38,8 +38,8 @@ namespace Leviathan{
 
 	class FILEREPLACENAME : public Object{
 	public:
-		DLLEXPORT FILEREPLACENAME::FILEREPLACENAME();
-        DLLEXPORT FILEREPLACENAME::~FILEREPLACENAME();
+		DLLEXPORT FILEREPLACENAME();
+        DLLEXPORT ~FILEREPLACENAME();
 
 
 	private:
@@ -90,8 +90,8 @@ namespace Leviathan{ namespace Gui{
 
 	class FILEREPLACENAME : public Object{
 	public:
-		DLLEXPORT FILEREPLACENAME::FILEREPLACENAME();
-        DLLEXPORT FILEREPLACENAME::~FILEREPLACENAME();
+		DLLEXPORT FILEREPLACENAME();
+        DLLEXPORT ~FILEREPLACENAME();
 
 
 	private:
@@ -100,6 +100,58 @@ namespace Leviathan{ namespace Gui{
 
 }}
 #endif
+
+// --------------------------------------------------------------------------- RENDERING
+cppppppp
+
+---------------------------------------------------------------------------
+#include "Include.h"
+// ------------------------------------ //
+#ifndef LEVIATHAN_FILEREPLACENAME
+#include "FILEREPLACENAME.h"
+#endif
+using namespace Leviathan;
+using namespace Leviathan::Rendering;
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+// ------------------------------------ //
+
+
+------------------------------------------------------------------------
+hddddd
+
+------------------------------------------------------------------------
+#ifndef LEVIATHAN_FILEREPLACENAME
+#define LEVIATHAN_FILEREPLACENAME
+// ------------------------------------ //
+#ifndef LEVIATHAN_DEFINE
+#include "Define.h"
+#endif
+// ------------------------------------ //
+// ---- includes ---- //
+
+
+namespace Leviathan{ namespace Rendering{
+
+	class FILEREPLACENAME : public Object{
+	public:
+		DLLEXPORT FILEREPLACENAME();
+        DLLEXPORT ~FILEREPLACENAME();
+
+
+	private:
+
+	};
+
+}}
+#endif
+
 
 // --------------------------------------------------------------------------- OBJECT
 
@@ -142,8 +194,8 @@ namespace Leviathan{ namespace GameObject{
 
 	class FILEREPLACENAME : public BaseObject{
 	public:
-		DLLEXPORT FILEREPLACENAME::FILEREPLACENAME();
-        DLLEXPORT FILEREPLACENAME::~FILEREPLACENAME();
+		DLLEXPORT FILEREPLACENAME();
+        DLLEXPORT ~FILEREPLACENAME();
 
 
 	private:
@@ -197,8 +249,8 @@ namespace SandBoxie{
 
 	class FILEREPLACENAME : public Leviathan::Object{
 	public:
-		FILEREPLACENAME::FILEREPLACENAME();
-        FILEREPLACENAME::~FILEREPLACENAME();
+		FILEREPLACENAME();
+        ~FILEREPLACENAME();
 
 
 	private:

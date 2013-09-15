@@ -31,6 +31,7 @@ namespace Leviathan{
 		DLLEXPORT int GetNumber();
 		DLLEXPORT int GetNumber(int min, int max);
 		DLLEXPORT float GetNumber(float min, float max);
+		DLLEXPORT float SymmetricRandom();
 
 		// more advanced functions, should not be actually used //
 		DLLEXPORT void SetSeed(int seed);

@@ -41,6 +41,8 @@
 #include <ctime>
 
 #include <vector>
+#include <list>
+#include <set>
 #include <regex>
 
 #include <initguid.h>

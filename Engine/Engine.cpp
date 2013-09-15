@@ -186,7 +186,6 @@ bool Leviathan::Engine::Init(AppDef* definition){
 	MainCamera = new ViewerCameraPos();
 	//MainCamera->SetPos(Float3(0, 0, 5));
 	MainCamera->SetPos(Float3(0, 300, 60));
-
 	
 	// set camera to be last one to receive key presses because it will ALWAYS consume them //
 	MainCamera->BecomeMainListeningCamera();
@@ -452,6 +451,8 @@ void Leviathan::Engine::GainFocus(){
 	if(!GuiActive){
 		Inputs->SetMouseCapture(true);
 	}
+
+	//SaveScreenShot();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(const wstring &commands){
@@ -466,6 +467,15 @@ void Leviathan::Engine::RunScrCommand(wstring command, wstring params){
 	DEBUG_BREAK;
 
 }
+
+DLLEXPORT void Leviathan::Engine::SaveScreenShot(){
+
+	const wstring fileprefix = MainFileHandler->GetDataFolder()+L"Screenshots\\Captured_frame_";
+
+
+	Graph->SaveScreenShot(Convert::WstringToString(fileprefix));
+}
+
 // ------------------------------------ //
 
 // ------------------------------------ //

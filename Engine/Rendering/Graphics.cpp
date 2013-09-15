@@ -4,19 +4,22 @@
 #include "Graphics.h"
 #endif
 using namespace Leviathan;
+using namespace Rendering;
 // ------------------------------------ //
 #include "Application\AppDefine.h"
 #include "Application\Application.h"
 #include "Utility\ComplainOnce.h"
 #include <boost\assign\list_of.hpp>
 #include "OgreHardwarePixelBuffer.h"
+#include <OgreMeshManager.h>
+#include "OverlayMaster.h"
+#include "FontManager.h"
 
-DLLEXPORT Leviathan::Graphics::Graphics() : Light(NULL), TextureKeeper(NULL), ORoot(nullptr), MainCamera(NULL), MainCameraNode(NULL), MainViewport(NULL), 
-	_TerrainGlobalSettings(NULL), _TerrainGroup(NULL)
+DLLEXPORT Leviathan::Graphics::Graphics() : Light(NULL), TextureKeeper(NULL), ORoot(nullptr), MainCamera(NULL), MainCameraNode(NULL), MainViewport(NULL)
+	/*, Terrain(NULL)*/, Overlays(NULL), Fonts(NULL)
 {
 	GuiSmooth = 5;
 
-	_TerrainImported = false;
 	Staticaccess = this;
 	Initialized = false;
 }
@@ -74,15 +77,33 @@ bool Graphics::Init(AppDef* appdef){
 	return true;
 }
 
-void Graphics::Release(){
+DLLEXPORT void Leviathan::Graphics::Release(){
+	// these use everything and need to be deleted before anything //
+#ifdef _DEBUG
+	// check if any have any other references, if they do throw error //
+	for(size_t i = 0; i < GuiObjs.size(); i++){
+		if(GuiObjs[i].use_count() != 1){
 
+			Logger::Get()->Error(L"Graphics: Release: render bridge has other references, "+Convert::ToWstring(GuiObjs[i]->GetID()));
+		}
+	}
+#endif // _DEBUG
 
 	GuiObjs.clear();
+
+	//SAFE_DELETE(Terrain);
+	// release overlay //
+	Overlays->Release();
+	
+	SAFE_DELETE(Fonts);
+
+
 	SAFE_DELETE(Light);
 	SAFE_RELEASEDEL(TextureKeeper);
 
-	OGRE_DELETE _TerrainGroup;
-	OGRE_DELETE _TerrainGlobalSettings;
+	ORoot.reset();
+	// delete listeners and overlay master memory //
+	SAFE_DELETE(Overlays);
 
 	Initialized = false;
 }
@@ -92,9 +113,13 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	Ogre::String ConfigFileName = "";
 	Ogre::String PluginsFileName = "";
 
-	Ogre::String OgreLogName = "LogOGRE.txt";
+	Ogre::LogManager* logMgr = new Ogre::LogManager();
 
-	ORoot = unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, OgreLogName));
+	OLog = Ogre::LogManager::getSingleton().createLog("LogOGRE.txt", true, true, false);
+	OLog->setDebugOutputEnabled(true);
+	OLog->setLogDetail(Ogre::LL_NORMAL);
+
+	ORoot = unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, ""));
 
 
 	vector<Ogre::String> PluginNames = boost::assign::list_of("RenderSystem_GL")/*("RenderSystem_Direct3D11")*/("Plugin_ParticleFX")
@@ -135,6 +160,8 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 	ORoot->initialise(false, "", "");
 
+	// register listener //
+	ORoot->addFrameListener(this);
 
 	// we can now ourselves create a window //
 	const WindowDataDetails& WData = AppDefinition->GetWindowDetails();
@@ -144,8 +171,6 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 	// set some rendering specific parameters //
 	Ogre::NameValuePairList WParams;
-
-	
 
 	// set anti aliasing //
 	// temporary parameters for creating a graphics instance //
@@ -157,8 +182,6 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	Ogre::String fsaastr = Convert::ToString(FSAA);
 
 	WParams["FSAA"] = fsaastr;
-
-
 	WParams["vsync"] = vsync ? "true": "false";
 
 	Ogre::String wcaption = Convert::WstringToString(WData.Title);
@@ -171,10 +194,10 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	WData.ApplyIconToHandle(AppDefinition->GetWindow()->GetHandle());
 	AppDefinition->GetWindow()->GetOgreWindow()->setDeactivateOnFocusChange(false);
 
-	if(!CreateDefaultRenderView()){
+	Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(Ogre::TFO_ANISOTROPIC);
+	Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(7);
 
-		return false;
-	}
+	AppDefinition->GetWindow()->GetOgreWindow();
 
 	// set the main window to be active //
 	tmpwindow->setActive(true);
@@ -182,122 +205,54 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	// manual window updating //
 	tmpwindow->setAutoUpdated(false);
 
+	Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
+
+	if(!CreateDefaultRenderView()){
+
+		return false;
+	}
+
+	// load fonts before overlay //
+	Fonts = new Rendering::FontManager();
+
+	if(!InitializeOverlay()){
+
+		Logger::Get()->Error(L"Graphics: Init: cannot initialize GUI rendering");
+		return false;
+	}
 
 	// set loading paths //
 	FileSystem::RegisterOGREResourceGroups();
 
-	// set scene shadow types //
-	MainScene->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
+	ConfigureTestRendering();
 
+	// clear events that might have queued A LOT while starting up //
+	ORoot->clearEventTimes();
 
-	//CreateTestObject();
+	return true;
+}
+// ------------------------------------ //
+void Leviathan::Graphics::ConfigureTestRendering(){
 
-	// create test model //
-	//try{
-	//	Ogre::Entity* ModelEntity = MainScene->createEntity("Cube.mesh");
-	//	// casts shadows //
-	//	ModelEntity->setCastShadows(true);
-
-	//	// attach to new node //
-	//	Ogre::SceneNode* mnode = MainScene->getRootSceneNode()->createChildSceneNode();
-
-	//	mnode->attachObject(ModelEntity);
-	//	// set position //
-	//	mnode->setPosition(0.f, -2.f, -5.f);
-	//}
-	//catch(const Ogre::FileNotFoundException &e){
-
-	//	Logger::Get()->Error(L"[EXCEPTION] "+Convert::StringToWstring(e.getFullDescription()));
-	//}
-
-	// platform that receives shadows //
-	//try{
-	//	Ogre::Entity* ModelEntity = MainScene->createEntity("Cube.002.mesh");
-	//	// casts shadows //
-	//	ModelEntity->setCastShadows(true);
-
-	//	// attach to new node //
-	//	Ogre::SceneNode* mnode = MainScene->getRootSceneNode()->createChildSceneNode();
-
-	//	mnode->attachObject(ModelEntity);
-	//	// set position //
-	//	mnode->setPosition(0.f, -3.f, -5.f);
-	//}
-	//catch(const Ogre::FileNotFoundException &e){
-
-	//	Logger::Get()->Error(L"[EXCEPTION] "+Convert::StringToWstring(e.getFullDescription()));
-	//}
-
-
-	//// test render to texture //
-	//Ogre::TextureManager& tmptextures = Ogre::TextureManager::getSingleton();
-
-	//Ogre::String RttTextureName = "MainSceneTestRTT";
-	//Ogre::String RttMaterialName = "TestRttMaterial";
-
-	//Ogre::TexturePtr TextureWithRtt = tmptextures.createManual(RttTextureName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, 
-	//	Ogre::TEX_TYPE_2D, 1024, 1024, 0, Ogre::PF_R8G8B8, Ogre::TU_RENDERTARGET, 0, true, 2);
-
-	//// create the drawing surface and a camera for it //
-	//Ogre::HardwarePixelBufferSharedPtr RttTextureBuffer = TextureWithRtt->getBuffer();
-	//Ogre::RenderTexture* RttTextureRenderTarget = RttTextureBuffer->getRenderTarget();
-	//// we don't want to manually update this //
-	//RttTextureRenderTarget->setAutoUpdated(true);
-	//// new camera to match aspect ration, could use existing //
-	//Ogre::Camera * RttTextureCamera = MainScene->createCamera("TestRttCamera");
-	//// same rules as in all cameras //
-	//RttTextureCamera->setNearClipDistance(1.5f);
-	//RttTextureCamera->setFarClipDistance(3000.0f);
-	//// aspect ration from the texture //
-	//RttTextureCamera->setAspectRatio(1.0f);
-
-	//Ogre::SceneNode* TestRttCameraNode = MainScene->getRootSceneNode()->createChildSceneNode();
-	//TestRttCameraNode->attachObject(RttTextureCamera);
-
-	//TestRttCameraNode->setPosition(2.f, 1.f, -6.f);
-	//TestRttCameraNode->lookAt(Ogre::Vector3(0.f, 0.f, -10.0f), Ogre::Node::TS_WORLD);
-
-	//Ogre::Viewport* TestRttTextureViewport1 = RttTextureRenderTarget->addViewport(RttTextureCamera, 100, 0.f, 0.f, 1.f, 1.f);
-	//// nor manually update this //
-	//TestRttTextureViewport1->setAutoUpdated(true);
-	//TestRttTextureViewport1->setBackgroundColour(Ogre::ColourValue(0.f,0.f,1.f,1.f));
-
-
-	//// material with the texture //
-	//Ogre::MaterialManager& tmpmaterialmanager = Ogre::MaterialManager::getSingleton();
-	//Ogre::MaterialPtr TestRttMaterial = tmpmaterialmanager.create(RttMaterialName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-	//Ogre::Technique * technique = TestRttMaterial->getTechnique(0);
-	//Ogre::Pass* pass = technique->getPass(0);
-	//Ogre::TextureUnitState* textureunit = pass->createTextureUnitState();
-	//textureunit->setTextureName(RttTextureName);
-	//textureunit->setNumMipmaps(0);
-	//textureunit->setTextureFiltering(Ogre::TFO_BILINEAR);
-
-	//// object that has the render target on it //
-	//// entity that isn't visible to the rtt camera (would block it's vision) //
-	//Ogre::Entity* RttDisplayer = MainScene->createEntity("RttQuad");
-	//RttDisplayer->setMaterialName(RttMaterialName);
-	//RttDisplayer->setCastShadows(true);
-	//// how is this visible only by the first camera and not the rtt camera //
-	//Ogre::SceneNode* lVisibleOnlyByFirstCam = MainScene->getRootSceneNode()->createChildSceneNode();
-	//lVisibleOnlyByFirstCam->attachObject(RttDisplayer);
-	//lVisibleOnlyByFirstCam->setPosition(2.0f, -1.f, -5.5f);
-
+	CreateTestObject();
 
 	// test light //
-	Ogre::Light* TLight = MainScene->createLight();
+	Ogre::Light* TLight = MainScene->createLight("testlight");
 
 	TLight->setType(Ogre::Light::LT_DIRECTIONAL);
-	TLight->setDirection(Float3(0.55f, -0.3f, 0.75f).Normalize());
+	//TLight->setDirection(Float3(0.55f, -0.3f, 0.75f).Normalize());
 	TLight->setDiffuseColour(0.98f, 1.f, 0.95f);
 	TLight->setSpecularColour(1.f, 1.f, 1.f);
 
 	Ogre::SceneNode* lnode = MainScene->getRootSceneNode()->createChildSceneNode();
 	lnode->attachObject(TLight);
-	//lnode->setOrientation(Float4(1.f, 0.5f, -0.3f, 0.4f).Normalize());
+
+	Ogre::Quaternion quat;
+	quat.FromAngleAxis(Ogre::Radian(1.f), Float3(0.55f, -0.3f, 0.75f));
+	lnode->setOrientation(quat);
 
 	// set scene ambient colour //
-	MainScene->setAmbientLight(Ogre::ColourValue(0.2f, 0.2f, 0.2f, 1.f));
+	MainScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.3f, 0.3f));
 
 	// set sky dome //
 	try{
@@ -309,175 +264,11 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 		Logger::Get()->Error(L"[EXCEPTION] "+Convert::StringToWstring(e.getFullDescription()));
 	}
 
-	// test terrain //
-	_TerrainGlobalSettings = OGRE_NEW Ogre::TerrainGlobalOptions();
-	_TerrainGroup = OGRE_NEW Ogre::TerrainGroup(MainScene, Ogre::Terrain::ALIGN_X_Z, 513, 12000.f);
+	MainScene->setFog(Ogre::FOG_LINEAR, Ogre::ColourValue(0.7f, 0.7f, 0.8f), 0, 4000, 10000);
+	//MainScene->setFog(Ogre::FOG_NONE);
 
-	// data caching file names //
-	_TerrainGroup->setFilenameConvention("TestTerrainCache", ".dat");
-	//_TerrainGroup->setResourceGroup("Terrain");
-	_TerrainGroup->setResourceGroup("General");
-	_TerrainGroup->setOrigin(Ogre::Vector3::ZERO);
-	_TerrainGroup->setAutoUpdateLod(Ogre::TerrainAutoUpdateLodFactory::getAutoUpdateLod(Ogre::BY_DISTANCE) );
-
-	TERRAIN_ConfigureTerrainDefaults(TLight);
-
-	for(long x = 0;  x <= 0; x++){
-		for(long y = 0; y <= 0; y++){
-			TERRAIN_DefineTerrainAt(x, y);
-		}
-	}
-
-	// we want all terrain to be loaded now //
-	_TerrainGroup->loadAllTerrains(true);
-
-	// if terrain has just been imported from generation (or image) we need to calculate blend maps //
-	_TerrainImported = true;
-	if(_TerrainImported){
-		Ogre::TerrainGroup::TerrainIterator itr = _TerrainGroup->getTerrainIterator();
-		// loop all elements and use blend map creation function //
-		while(itr.hasMoreElements()){
-			// get direct ptr to the terrain //
-			Ogre::Terrain* tmp = itr.getNext()->instance;
-			TERRAIN_InitBlendMaps(tmp);
-			// re-calculate light maps //
-			tmp->dirtyLightmap();
-			tmp->update(true);
-		}
-	}
-
-	// update the terrain objects //
-	//_TerrainGroup->update(true);
-
-
-	// cleanup after terrain generation //
-	//_TerrainGroup->freeTemporaryResources();
-
-
-	// clear events that might have queued A LOT while starting up //
-	ORoot->clearEventTimes();
-
-	return true;
-}
-// ------------------------------------ //
-void Leviathan::Graphics::TERRAIN_ConfigureTerrainDefaults(Ogre::Light* light){
-	// configure global terrain options //
-	_TerrainGlobalSettings->setMaxPixelError(8);
-
-	_TerrainGlobalSettings->setCompositeMapDistance(32000);
-	_TerrainGlobalSettings->setSkirtSize(10);
-	// TODO: this should be removed
-	_TerrainGlobalSettings->setCastsDynamicShadows(false);
-
-	// textures
-	Ogre::TerrainMaterialGeneratorA::SM2Profile* mProfile = static_cast<Ogre::TerrainMaterialGeneratorA::SM2Profile*>(_TerrainGlobalSettings->
-		getDefaultMaterialGenerator()->getActiveProfile());
-	mProfile->setLayerParallaxMappingEnabled(false);
-	mProfile->setLayerSpecularMappingEnabled(true);
-
-	// non-realtime lighting data //
-	_TerrainGlobalSettings->setLightMapDirection(light->getDerivedDirection());
-	_TerrainGlobalSettings->setCompositeMapAmbient(MainScene->getAmbientLight());
-	_TerrainGlobalSettings->setCompositeMapDiffuse(light->getDiffuseColour());
-
-	_TerrainGlobalSettings->setLayerBlendMapSize(4096);
-	_TerrainGlobalSettings->setLightMapSize(1024);
-
-
-	// configure import settings from an image //
-	Ogre::Terrain::ImportData& defaultimport = _TerrainGroup->getDefaultImportSettings();
-	defaultimport.terrainSize = 513;
-	defaultimport.worldSize = 12000.f;
-	// image isn't pure floats, needs scaling //
-	defaultimport.inputScale = 600;
-	defaultimport.minBatchSize = 33;
-	defaultimport.maxBatchSize = 65;
-
-	// terrain textures //
-	defaultimport.layerList.resize(3);
-	defaultimport.layerList[0].worldSize = 100;
-	defaultimport.layerList[0].textureNames.push_back("dirt_grayrocky_diffusespecular.dds");
-	defaultimport.layerList[0].textureNames.push_back("dirt_grayrocky_normalheight.dds");
-	defaultimport.layerList[1].worldSize = 30;
-	defaultimport.layerList[1].textureNames.push_back("grass_green-01_diffusespecular.dds");
-	defaultimport.layerList[1].textureNames.push_back("grass_green-01_normalheight.dds");
-	defaultimport.layerList[2].worldSize = 200;
-	defaultimport.layerList[2].textureNames.push_back("growth_weirdfungus-03_diffusespecular.dds");
-	defaultimport.layerList[2].textureNames.push_back("growth_weirdfungus-03_normalheight.dds");
-}
-
-void Leviathan::Graphics::TERRAIN_DefineTerrainAt(long x, long y){
-	// first get the name of the file that could contain the terrain data//
-	Ogre::String filename = _TerrainGroup->generateFilename(x, y);
-
-	// check does the file exist //
-	if(Ogre::ResourceGroupManager::getSingleton().resourceExists(_TerrainGroup->getResourceGroup(), filename)){
-		// has cached results //
-		_TerrainGroup->defineTerrain(x, y);
-
-	} else {
-		// needs to generate new //
-		Ogre::Image img;
-		TERRAIN_GetTerrainImage(x % 2 != 0, y % 2 != 0, img);
-		_TerrainGroup->defineTerrain(x, y, &img);
-		_TerrainImported = true;
-	}
-	//// occlusion maps //
-
-}
-
-void Leviathan::Graphics::TERRAIN_GetTerrainImage(bool flipx, bool flipy, Ogre::Image &img){
-	// load the terrain height map image and possibly flip it //
-	img.load("terrain.png", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-	if(flipx)
-		img.flipAroundY();
-	if(flipy)
-		img.flipAroundX();
-}
-
-void Leviathan::Graphics::TERRAIN_InitBlendMaps(Ogre::Terrain* terrain){
-	// see defaultimport.layerList for reference to different layers //
-
-	// use same fades as in ogre tutorial //
-	Ogre::TerrainLayerBlendMap* BlendMap0 = terrain->getLayerBlendMap(1);
-	Ogre::TerrainLayerBlendMap* BlendMap1 = terrain->getLayerBlendMap(2);
-
-	// start and fade out heights //
-	Ogre::Real minheight0 = 70;
-	Ogre::Real fadedist0 = 40;
-	Ogre::Real minheight1 = 70;
-	Ogre::Real fadedist1 = 15;
-
-	// direct blend map blend pointers //
-	float* blend0 = BlendMap0->getBlendPointer();
-	float* blend1 = BlendMap1->getBlendPointer();
-	// loop through all and calculate blends //
-	for(Ogre::uint16 y = 0; y < terrain->getLayerBlendMapSize(); y++){
-		for(Ogre::uint16 x = 0; x < terrain->getLayerBlendMapSize(); x++){
-
-			Ogre::Real tx, ty;
-
-			BlendMap0->convertImageToTerrainSpace(x, y, &tx, &ty);
-			Ogre::Real height = terrain->getHeightAtTerrainPosition(tx, ty);
-			// calculate blend value //
-			Ogre::Real val = (height-minheight0)/fadedist0;
-			val = Ogre::Math::Clamp(val, (Ogre::Real)0, (Ogre::Real)1);
-			// set //
-			*blend0++ = val;
-
-			// calculate second blend //
-			val = (height-minheight1)/fadedist1;
-			val = Ogre::Math::Clamp(val, (Ogre::Real)0, (Ogre::Real)1);
-			// set //
-			*blend1++ = val;
-		}
-	}
-
-	BlendMap0->dirty();
-	BlendMap1->dirty();
-	BlendMap0->update();
-	BlendMap1->update();
+	//// create terrain //
+	//Terrain = new WorldTerrain(TLight, MainScene, MainCamera);
 }
 // ------------------------------------ //
 bool Leviathan::Graphics::CreateDefaultRenderView(){
@@ -507,16 +298,22 @@ bool Leviathan::Graphics::CreateDefaultRenderView(){
 	MainViewport->setAutoUpdated(true);
 
 	float aspectratio = MainViewport->getActualWidth()/(float)MainViewport->getActualHeight();
-
+	
 	// set aspect ratio to the same as the view port (this makes it look realistic) //
 	MainCamera->setAspectRatio(aspectratio);
+	MainCamera->setAutoAspectRatio(true);
 
 	// near and far clipping planes //
 	MainCamera->setFOVy(Ogre::Radian(60.f*DEGREES_TO_RADIANS));
 	// MadMarx tip (far/near > 2000 equals probles) //
-	MainCamera->setNearClipDistance(0.3f);
+	MainCamera->setNearClipDistance(0.1f);
 	//MainCamera->setNearClipDistance(1.3f);
-	//MainCamera->setFarClipDistance(2600.f);
+	MainCamera->setFarClipDistance(50000.f);
+
+	if(ORoot->getRenderSystem()->getCapabilities()->hasCapability(Ogre::RSC_INFINITE_FAR_PLANE)){
+		// enable infinite far clip distance if we can
+		MainCamera->setFarClipDistance(0);   
+	}
 
 
 	return true;
@@ -524,7 +321,10 @@ bool Leviathan::Graphics::CreateDefaultRenderView(){
 
 bool Leviathan::Graphics::CreateCameraAndNodesForScene(){
 	// create scene manager //
-	MainScene = ORoot->createSceneManager(Ogre::ST_INTERIOR, "MainSceneManager");
+	MainScene = ORoot->createSceneManager(Ogre::ST_EXTERIOR_FAR, "MainSceneManager");
+
+	// set scene shadow types //
+	MainScene->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
 
 	// create camera //
 	MainCamera = MainScene->createCamera("Camera01");
@@ -540,6 +340,10 @@ bool Leviathan::Graphics::CreateCameraAndNodesForScene(){
 
 void Leviathan::Graphics::CreateTestObject(){
 
+
+	Float3 startpos(0, 300, 60);
+
+
 	string CubeName = "DefaultTestCube";
 
 	vector<Float3> positions(5);
@@ -547,7 +351,7 @@ void Leviathan::Graphics::CreateTestObject(){
 	for(int i = 0; i < 5; ++i){
 
 		float offset = (float)(1+i*2-5);
-		positions[i] = Float3(offset, offset, -14.f);
+		positions[i] = startpos+Float3(offset, offset, -14.f);
 	}
 
 	// create it and create instances //
@@ -555,6 +359,105 @@ void Leviathan::Graphics::CreateTestObject(){
 
 	Engine::GetEngine()->GetObjectLoader()->AddTestCubeToScenePositions(MainScene, positions, CubeName);
 
+	// create test model //
+	try{
+		Ogre::Entity* ModelEntity = MainScene->createEntity("Cube.mesh");
+		// casts shadows //
+		ModelEntity->setCastShadows(true);
+
+		// attach to new node //
+		Ogre::SceneNode* mnode = MainScene->getRootSceneNode()->createChildSceneNode();
+
+		mnode->attachObject(ModelEntity);
+		// set position //
+		mnode->setPosition(startpos+Float3(0.f, -2.f, -5.f));
+	}
+	catch(const Ogre::FileNotFoundException &e){
+
+		Logger::Get()->Error(L"[EXCEPTION] "+Convert::StringToWstring(e.getFullDescription()));
+	}
+
+	// plane for bottom //
+	Ogre::Plane ground(Ogre::Vector3::UNIT_Y, Ogre::Vector3(startpos-Float3(0, 2, 0)));
+	Ogre::MeshManager::getSingleton().createPlane("ground", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+		ground, 300, 300, 20, 20, true, 1, 65, 65, Ogre::Vector3::UNIT_Z);
+
+	// platform that receives shadows //
+	Ogre::Entity* groundentity = MainScene->createEntity("GroundEntity", "ground");
+	MainScene->getRootSceneNode()->createChildSceneNode()->attachObject(groundentity);
+
+	// set nice stone material //
+	groundentity->setMaterialName("Material.001");
+
+
+	// test render to texture //
+	Ogre::TextureManager& tmptextures = Ogre::TextureManager::getSingleton();
+
+	Ogre::String RttTextureName = "MainSceneTestRTT";
+	Ogre::String RttMaterialName = "TestRttMaterial";
+
+	Ogre::TexturePtr TextureWithRtt = tmptextures.createManual(RttTextureName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, 
+		Ogre::TEX_TYPE_2D, 1024, 1024, 0, Ogre::PF_R8G8B8, Ogre::TU_RENDERTARGET, 0, true, 2);
+
+	// create the drawing surface and a camera for it //
+	Ogre::HardwarePixelBufferSharedPtr RttTextureBuffer = TextureWithRtt->getBuffer();
+	Ogre::RenderTexture* RttTextureRenderTarget = RttTextureBuffer->getRenderTarget();
+	// we don't want to manually update this //
+	RttTextureRenderTarget->setAutoUpdated(true);
+	// new camera to match aspect ration, could use existing //
+	Ogre::Camera * RttTextureCamera = MainScene->createCamera("TestRttCamera");
+	// same rules as in all cameras //
+	RttTextureCamera->setNearClipDistance(1.5f);
+	RttTextureCamera->setFarClipDistance(3000.0f);
+	// aspect ration from the texture //
+	RttTextureCamera->setAspectRatio(1.0f);
+
+	Ogre::SceneNode* TestRttCameraNode = MainScene->getRootSceneNode()->createChildSceneNode();
+	TestRttCameraNode->attachObject(RttTextureCamera);
+
+	TestRttCameraNode->setPosition(startpos+Float3(2.f, 1.f, -6.f));
+	TestRttCameraNode->lookAt((Ogre::Vector3)startpos+Ogre::Vector3(0.f, 0.f, -10.0f), Ogre::Node::TS_WORLD);
+
+	Ogre::Viewport* TestRttTextureViewport1 = RttTextureRenderTarget->addViewport(RttTextureCamera, 100, 0.f, 0.f, 1.f, 1.f);
+	// nor manually update this //
+	TestRttTextureViewport1->setAutoUpdated(true);
+	TestRttTextureViewport1->setBackgroundColour(Ogre::ColourValue(0.f,0.f,1.f,1.f));
+	// we definitely don't want overlays over this //
+	TestRttTextureViewport1->setOverlaysEnabled(false);
+
+
+	// material with the texture //
+	Ogre::MaterialManager& tmpmaterialmanager = Ogre::MaterialManager::getSingleton();
+	Ogre::MaterialPtr TestRttMaterial = tmpmaterialmanager.create(RttMaterialName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	Ogre::Technique * technique = TestRttMaterial->getTechnique(0);
+	Ogre::Pass* pass = technique->getPass(0);
+	Ogre::TextureUnitState* textureunit = pass->createTextureUnitState();
+	textureunit->setTextureName(RttTextureName);
+	textureunit->setNumMipmaps(0);
+	textureunit->setTextureFiltering(Ogre::TFO_BILINEAR);
+
+	// object that has the render target on it //
+	// entity that isn't visible to the rtt camera (would block it's vision) //
+	Ogre::Entity* RttDisplayer = MainScene->createEntity("RttQuad");
+	RttDisplayer->setMaterialName(RttMaterialName);
+	RttDisplayer->setCastShadows(true);
+	// how is this visible only by the first camera and not the rtt camera //
+	Ogre::SceneNode* lVisibleOnlyByFirstCam = MainScene->getRootSceneNode()->createChildSceneNode();
+	lVisibleOnlyByFirstCam->attachObject(RttDisplayer);
+	lVisibleOnlyByFirstCam->setPosition(startpos+Float3(2.0f, -1.f, -5.5f));
+
+
+	// add an extra light to light the rtt quad //
+	Ogre::Light* rttplight = MainScene->createLight("rttlighter");
+	rttplight->setType(Ogre::Light::LT_POINT);
+	rttplight->setPosition(Ogre::Vector3(startpos+Float3(6.f, 2.f, 0.f)));
+	rttplight->setDiffuseColour(Ogre::ColourValue::White);
+	rttplight->setSpecularColour(Ogre::ColourValue::ZERO);
+
+	//Light::setAttenuation
+
+	// set to node //
+	MainScene->getRootSceneNode()->createChildSceneNode()->attachObject(rttplight);
 }
 
 // ------------------------------------------- //
@@ -575,12 +478,6 @@ DLLEXPORT bool Leviathan::Graphics::Frame(int mspassed, ViewerCameraPos* camerap
 
 	rotq = rotyaw*rotq*rotroll;
 
-	//// create point that the camera looks at and set it //
-	//Float3 point = camerapostouse->GetPosition()+(Float3(-sin(angles.X*DEGREES_TO_RADIANS), sin(angles.Y*DEGREES_TO_RADIANS), 
-	//	-cos(angles.X*DEGREES_TO_RADIANS))*10.f);
-
-	//MainCamera->lookAt(point);
-
 	MainCamera->setOrientation(rotq);
 
 	// call rendering function //
@@ -592,6 +489,24 @@ DLLEXPORT bool Leviathan::Graphics::Frame(int mspassed, ViewerCameraPos* camerap
 	// now we can render one frame //
 	ORoot->renderOneFrame();
 
+	return true;
+}
+
+bool Leviathan::Graphics::frameRenderingQueued(const Ogre::FrameEvent& evt){
+
+
+	return true;
+}
+
+DLLEXPORT void Leviathan::Graphics::SaveScreenShot(const string &filename){
+	// uses render target's capability to save it's contents //
+	AppDefinition->GetWindow()->GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
+}
+
+bool Leviathan::Graphics::InitializeOverlay(){
+	// create overlay manager //
+	Overlays = new Rendering::OverlayMaster(MainScene, MainViewport, Fonts);
+	// if no exceptions were thrown it succeeded //
 	return true;
 }
 
@@ -610,6 +525,14 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 	// we can now actually render the window //
 	Ogre::RenderWindow* tmpwindow = AppDefinition->GetWindow()->GetOgreWindow();
 
+
+	// cancel actual rendering if window closed //
+	if(tmpwindow->isClosed()){
+
+		Logger::Get()->Warning(L"Graphics: Render: skipping render due to window being closed");
+		return false;
+	}
+
 	tmpwindow->update(false);
 	// all automatically updated view ports are updated //
 
@@ -624,19 +547,24 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 void Graphics::SubmitRenderBridge(const shared_ptr<RenderBridge> &brdg){
 	GuiObjs.push_back(brdg);
 }
+
 shared_ptr<RenderBridge> Graphics::GetBridgeForGui(int actionid){
-	// so no dead objects exist //
-	PurgeGuiArray();
-	for(unsigned int i = 0; i < GuiObjs.size(); i++){
-		if(GuiObjs[i]->ID == actionid)
+	for(size_t i = 0; i < GuiObjs.size(); i++){
+		// purge at the same time if we happen to find dead objects //
+		if(GuiObjs[i]->DoesWantToClose()){
+			GuiObjs.erase(GuiObjs.begin()+i);
+			i--;
+			continue;
+		}
+		if(GuiObjs[i]->GetID() == actionid)
 			return GuiObjs[i];
 	}
-
 	return NULL;
 }
+
 void Graphics::PurgeGuiArray(){
-	for(unsigned int i = 0; i < GuiObjs.size(); i++){
-		if(GuiObjs[i]->WantsToClose){
+	for(size_t i = 0; i < GuiObjs.size(); i++){
+		if(GuiObjs[i]->DoesWantToClose()){
 			GuiObjs.erase(GuiObjs.begin()+i);
 			i--;
 			continue;
@@ -644,46 +572,13 @@ void Graphics::PurgeGuiArray(){
 	}
 }
 // ------------------------------------------- //
-void Graphics::DrawRenderActions(/*RenderingPassInfo* pass*/){
+void Leviathan::Graphics::DrawRenderActions(/*RenderingPassInfo* pass*/){
 	// so no dead objects exist //
 	PurgeGuiArray();
 
-	int MinZ = 0;
-	int MaxZ = 1;
-
-	for(unsigned int i = 0; i < GuiObjs.size(); i++){
-		int curz = (*GuiObjs[i]).ZVal;
-		if(curz < MinZ)
-			MinZ = curz;
-		if(curz > MaxZ)
-			MaxZ = curz;
-	}
-	// draw everything in order //
-	for(int z = MinZ; z <= MaxZ; z++){
-		// loop through objects //
-		for(unsigned int i = 0; i < GuiObjs.size(); i++){
-			if(GuiObjs[i]->Hidden || GuiObjs[i]->ZVal != z)
-				continue;
-			// render //
-			int locmax = 10;
-			for(unsigned int a = 0; a < (*GuiObjs[i]).DrawActions.size(); a++){
-				if((*GuiObjs[i]).DrawActions[a]->RelativeZ > locmax)
-					locmax = (*GuiObjs[i]).DrawActions[a]->RelativeZ;
-			}
-
-			// draw this object's children //
-			for(int locz = 0; locz <= locmax; locz++){
-				for(unsigned int a = 0; a < (*GuiObjs[i]).DrawActions.size(); a++){
-					if(GuiObjs[i]->DrawActions[a]->RelativeZ != locz || GuiObjs[i]->Hidden)
-						continue;
-
-					// real action to render //
-					RenderingGBlob* tempptr = (*GuiObjs[i]).DrawActions[a];
-
-					ComplainOnce::PrintWarningOnce(L"no rendering code", L"no rendering code"__WFILE__ L" func" __WFUNCTION__);
-				}
-			}
-		}
+	// all the render bridges now manage drawing order through overlays (we can just render the vector) //
+	for(size_t i = 0; i < GuiObjs.size(); i++){
+		GuiObjs[i]->RenderActions(Overlays);
 	}
 }
 

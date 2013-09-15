@@ -105,7 +105,8 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 				SAFE_DELETE_VECTOR(Datas);
 
 				// rethrow the exception //
-				throw;
+				if(e.GetInvalidValueAsPtr()->size())
+					throw;
 			}
 		}
 		// all variables are now created //
@@ -134,7 +135,8 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 		//SAFE_DELETE_VECTOR(Datas);
 
 		// rethrow the exception //
-		throw;
+		if(e.GetInvalidValueAsPtr()->size())
+			throw;
 	}
 
 }

@@ -73,6 +73,7 @@ namespace Leviathan{
 		DLLEXPORT static wstring GetSoundFolder();
 
 		DLLEXPORT static void RegisterOGREResourceGroups();
+		DLLEXPORT static void RegisterOGREResourceLocation(const string &location);
 
 		DLLEXPORT static bool DoesExtensionMatch(FileDefinitionType* file, const vector<int>&Ids);
 

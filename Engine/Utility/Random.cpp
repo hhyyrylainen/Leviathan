@@ -92,6 +92,10 @@ float Leviathan::Random::GetNumber(float min, float max){
 	// basically get percentage of max value and then get difference of min and max and multiply that by percents and add it to min to get value between min and max //
 	return min+(((float)GetNumber()/RANDOM_MAX_POSSIBLE)*(max-min));
 }
+
+DLLEXPORT float Leviathan::Random::SymmetricRandom(){
+	return 2.f*GetNumber(0.f, 1.f)-1.f;
+}
 // ------------------------------------ //
 void Leviathan::Random::SetSeed(int seed){
 	// this acts the same as generating new object with the provided seed //

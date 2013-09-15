@@ -91,11 +91,11 @@ void ViewerCameraPos::SideWays(int dir){
 	
 	// actual movement calculations here //
 	if(right > left){
-		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X+90))*right);
-		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X+90))*right);
+		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X+90))*right)*DEFAULTMOVEMENTMODIFIER;
+		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X+90))*right)*DEFAULTMOVEMENTMODIFIER;
 	} else if(left > right){
-		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X-90))*left);
-		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X-90))*left);
+		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X-90))*left)*DEFAULTMOVEMENTMODIFIER;
+		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X-90))*left)*DEFAULTMOVEMENTMODIFIER;
 	}
 }
 void ViewerCameraPos::Forward(int dir){
@@ -113,13 +113,13 @@ void ViewerCameraPos::Forward(int dir){
 	}
 
 	if(forward > backward){
-		Position.X -= (float)(sin(Convert::DegreesToRadians(Orientation.X))*forward);
-		Position.Z -= (float)(cos(Convert::DegreesToRadians(Orientation.X))*forward);
-		Position.Y += (float)(sin(Convert::DegreesToRadians(Orientation.Y))*forward);
+		Position.X -= (float)(sin(Convert::DegreesToRadians(Orientation.X))*forward)*DEFAULTMOVEMENTMODIFIER;
+		Position.Z -= (float)(cos(Convert::DegreesToRadians(Orientation.X))*forward)*DEFAULTMOVEMENTMODIFIER;
+		Position.Y += (float)(sin(Convert::DegreesToRadians(Orientation.Y))*forward)*DEFAULTMOVEMENTMODIFIER;
 	} else if(backward > forward){
-		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X))*backward);
-		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X))*backward);
-		Position.Y -= (float)(sin(Convert::DegreesToRadians(Orientation.Y))*backward);
+		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X))*backward)*DEFAULTMOVEMENTMODIFIER;
+		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X))*backward)*DEFAULTMOVEMENTMODIFIER;
+		Position.Y -= (float)(sin(Convert::DegreesToRadians(Orientation.Y))*backward)*DEFAULTMOVEMENTMODIFIER;
 	}
 }
 
@@ -137,8 +137,8 @@ void ViewerCameraPos::Vertical(int dir){
 		RollValueTowards(zup, -FrameTime*0.04f, false, 0.f);
 	}
 	
-	Position.Y += zup;
-	Position.Y -= zdown;
+	Position.Y += zup*DEFAULTMOVEMENTMODIFIER;
+	Position.Y -= zdown*DEFAULTMOVEMENTMODIFIER;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ViewerCameraPos::OnEvent(InputEvent** pEvent, InputReceiver* pending){

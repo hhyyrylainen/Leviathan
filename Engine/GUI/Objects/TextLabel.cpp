@@ -190,7 +190,7 @@ void Leviathan::Gui::TextLabel::Render(Graphics* graph){
 	SizeAdjust();
 
 	// update bride's draw order //
-	RBridge->ZVal = this->Zorder;
+	RBridge->SetZOrder(this->Zorder);
 	
 	// update components //
 	// background will always use same location and size as this //
@@ -453,7 +453,7 @@ DLLEXPORT bool Leviathan::Gui::TextLabel::LoadFromFileStructure(GuiManager* owne
 // ------------------------------------ //
 void Leviathan::Gui::TextLabel::_SetHiddenStates(bool states){
 	// set whole bridge as hidden //
-	RBridge->Hidden = states;
+	RBridge->SetVisibility(!states);
 }
 
 void Leviathan::Gui::TextLabel::_OnLocationOrSizeChange(){

@@ -30,8 +30,8 @@ THE SOFTWARE.
 #define __Ogre_TerrainPaging_H__
 
 #include "OgreTerrainPrerequisites.h"
-#include "OgrePagedWorldSection.h"
-#include "OgrePageManager.h"
+#include "Paging\OgrePagedWorldSection.h"
+#include "Paging\OgrePageManager.h"
 
 
 

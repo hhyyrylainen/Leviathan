@@ -25,10 +25,7 @@ DLLEXPORT Leviathan::Gui::ObjectBackground::~ObjectBackground(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::ObjectBackground::Release(RenderBridge* bridge){
 	// remove from render bridge //
-	size_t i = bridge->GetSlotIndex(Slot);
-
-	SAFE_DELETE(bridge->DrawActions[i]);
-	bridge->DrawActions.erase(bridge->DrawActions.begin()+i);
+	bridge->DeleteBlobOnIndex(bridge->GetSlotIndex(Slot));
 
 	// unallocate //
 	_UnAllocateAllBackgroundData();
@@ -56,7 +53,9 @@ DLLEXPORT void Leviathan::Gui::ObjectBackground::Render(RenderBridge* bridge, Gr
 
 	// delete data if type has changed //
 	if(NeedsToUnAllocateRBData){
-		SAFE_DELETE(bridge->DrawActions[i]);
+		bridge->DeleteBlobOnIndex(i);
+		// get new object //
+		size_t i = bridge->GetSlotIndex(Slot);
 		NeedsToUnAllocateRBData = false;
 	}
 
@@ -175,7 +174,7 @@ void Leviathan::Gui::GradientBackgroundData::Set(const Float4 &colour1, const Fl
 }
 
 RenderingGBlob* Leviathan::Gui::GradientBackgroundData::CreateBlobForThis(Graphics* graph, ObjectBackground* vars){
-	return new ColorQuadRendBlob(graph, vars->ZOrder, vars->Slot, false);
+	return new ColorQuadRendBlob(graph, IDFactory::GetID(), vars->ZOrder, vars->Slot, false);
 }
 
 void Leviathan::Gui::GradientBackgroundData::RenderThis(RenderBridge* bridge, Graphics* graph, const size_t index, ObjectBackground* vars){

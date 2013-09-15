@@ -9,12 +9,11 @@
 #include "Entities\ViewerCameraPos.h"
 #include "TextureManager.h"
 
-#include <Overlay\OgreOverlay.h>
-#include <Overlay\OgreOverlayElement.h>
-#include <Overlay\OgreOverlayManager.h>
+
 #include <OgreManualObject.h>
-#include <Terrain/OgreTerrain.h>
-#include <Terrain/OgreTerrainGroup.h>
+//#include <Terrain/OgreTerrain.h>
+//#include <Terrain/OgreTerrainGroup.h>
+#include <OgreFrameListener.h>
 
 #include <Terrain/OgreTerrainMaterialGeneratorA.h>
 
@@ -25,6 +24,7 @@
 #include "Light.h"
 #include "Common\Window.h"
 #include "Application\AppDefine.h"
+#include "WorldTerrain.h"
 
 #define TEXTURE_INACTIVE_TIME		30000
 #define TEXTURE_UNLOAD_TIME			300000
@@ -33,9 +33,11 @@ namespace Leviathan{
 	// forward declarations to avoid having tons of headers here that aren't necessary //
 	namespace Rendering{
 	class ShaderManager;
+	class OverlayMaster;
+	class FontManager;
 	}
 
-	class Graphics : public EngineComponent{
+	class Graphics : public EngineComponent, Ogre::FrameListener{
 	public:
 		DLLEXPORT Graphics();
 		DLLEXPORT ~Graphics();
@@ -50,10 +52,19 @@ namespace Leviathan{
 		DLLEXPORT shared_ptr<RenderBridge> GetBridgeForGui(int actionid);
 
 
+		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt);
+
+		DLLEXPORT void SaveScreenShot(const string &filename);
+
+
+
 		//DLLEXPORT bool RenderAutomatic(Rendering::BaseRenderableBufferContainer* torenderbuffers, ShaderRenderTask* shaderparameters);
 
 		DLLEXPORT inline TextureManager* GetTextureManager(){
 			return TextureKeeper;
+		}
+		DLLEXPORT inline Rendering::OverlayMaster* GetOverlayMaster(){
+			return Overlays;
 		}
 		DLLEXPORT inline AppDef* GetDefinitionObject(){
 			return AppDefinition;
@@ -70,11 +81,8 @@ namespace Leviathan{
 		bool CreateCameraAndNodesForScene();
 		void CreateTestObject();
 		void PurgeGuiArray();
-		void TERRAIN_ConfigureTerrainDefaults(Ogre::Light* light);
-		void TERRAIN_DefineTerrainAt(long x, long y);
-		void TERRAIN_GetTerrainImage(bool flipx, bool flipy, Ogre::Image &img);
-		void TERRAIN_InitBlendMaps(Ogre::Terrain* terrain);
-		bool TERRAIN_FrameRenderingQueued(const Ogre::FrameEvent& evt);
+		void ConfigureTestRendering();
+		bool InitializeOverlay();
 		// ------------------------ //
 		bool Initialized;
 
@@ -85,20 +93,21 @@ namespace Leviathan{
 		int GuiSmooth;
 
 		// 2d Gui rendering //
-		vector<shared_ptr<RenderBridge>> GuiObjs;
+		std::vector<shared_ptr<RenderBridge>> GuiObjs;
 
 
 		// OGRE //
 		unique_ptr<Ogre::Root> ORoot;
+		Ogre::Log* OLog;
 		Ogre::SceneManager* MainScene;
 		Ogre::Camera* MainCamera;
 		Ogre::SceneNode* MainCameraNode;
 		Ogre::Viewport* MainViewport;
 
-		// should be moved to world class when done //
-		Ogre::TerrainGlobalOptions* _TerrainGlobalSettings;
-		Ogre::TerrainGroup* _TerrainGroup;
-		bool _TerrainImported;
+		Rendering::OverlayMaster* Overlays;
+		Rendering::FontManager* Fonts;
+
+		//WorldTerrain* Terrain;
 
 		// static //
 		static Graphics* Staticaccess;

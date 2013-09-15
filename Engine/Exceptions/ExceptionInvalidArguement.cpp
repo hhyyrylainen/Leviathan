@@ -29,15 +29,15 @@ DLLEXPORT Leviathan::ExceptionInvalidArguement::~ExceptionInvalidArguement(){
 	// smart pointers auto release //
 }
 // ------------------------------------ //
-DLLEXPORT wstring* Leviathan::ExceptionInvalidArguement::GetInvalidAsPtr(){
-	return InvalidParameter.get();
+DLLEXPORT const wstring* Leviathan::ExceptionInvalidArguement::GetInvalidAsPtr() const{
+	return static_cast<const wstring*>(InvalidParameter.get());
 }
 
 DLLEXPORT wstring Leviathan::ExceptionInvalidArguement::GetInvalid() const{
 	return *InvalidParameter;
 }
-DLLEXPORT wstring* Leviathan::ExceptionInvalidArguement::GetInvalidValueAsPtr(){
-	return VisualizedValue.get();
+DLLEXPORT const wstring* Leviathan::ExceptionInvalidArguement::GetInvalidValueAsPtr() const{
+	return static_cast<const wstring*>(VisualizedValue.get());
 }
 
 DLLEXPORT wstring Leviathan::ExceptionInvalidArguement::GetInvalidAsWstring() const{

@@ -17,10 +17,10 @@ namespace Leviathan{
 		DLLEXPORT ExceptionInvalidArguement::ExceptionInvalidArguement(const ExceptionInvalidArguement &other);
 		DLLEXPORT ExceptionInvalidArguement::~ExceptionInvalidArguement();
 
-		DLLEXPORT wstring* GetInvalidAsPtr();
+		DLLEXPORT const wstring* GetInvalidAsPtr() const;
 		DLLEXPORT wstring GetInvalid() const;
 
-		DLLEXPORT wstring* GetInvalidValueAsPtr();
+		DLLEXPORT const wstring* GetInvalidValueAsPtr() const;
 		DLLEXPORT wstring GetInvalidAsWstring() const;
 
 		DLLEXPORT void PrintToLog() const;

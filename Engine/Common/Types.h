@@ -198,6 +198,12 @@ namespace Leviathan{
 		DLLEXPORT inline Float2 operator +(const Float2 &val) const{
 			return Float2(X+val.X, Y+val.Y);
 		}
+
+		DLLEXPORT inline Float2* operator +=(const Float2 &val){
+			X +=val.X;
+			Y +=val.Y;
+			return this;
+		}
 		// subtracts all elements //
 		DLLEXPORT inline Float2 operator-(const Float2 &val) const{
 			return Float2(X-val.X, Y-val.Y);
@@ -213,6 +219,12 @@ namespace Leviathan{
 		// multiply  by scalar f //
 		DLLEXPORT inline Float2 operator*(float f) const{
 			return Float2(X*f, Y*f);
+		}
+
+		DLLEXPORT inline Float2* operator*=(float f){
+			X *= f;
+			Y *= f;
+			return this;
 		}
 		// divides all elements //
 		DLLEXPORT inline Float2 operator/(const Float2 &val) const{
@@ -277,6 +289,8 @@ namespace Leviathan{
 		// normalizes the vector //
 		DLLEXPORT inline Float2 Normalize() const{
 			const float length = Length();
+			if(length == 0)
+				return Float2(0, 0);
 			return Float2(X/length, Y/length);
 		}
 		// safe version of normalization //
@@ -468,6 +482,8 @@ namespace Leviathan{
 		// normalizes the vector //
 		DLLEXPORT inline Float3 Normalize() const{
 			const float length = Length();
+			if(length == 0)
+				return Float3(0, 0, 0);
 			return Float3(X/length, Y/length, Z/length);
 		}
 		// safe version of normalization //
@@ -686,6 +702,8 @@ namespace Leviathan{
 		// normalizes the vector //
 		DLLEXPORT inline Float4 Normalize() const{
 			const float length = Length();
+			if(length == 0)
+				return Float4(0, 0, 0, 0);
 			return Float4(X/length, Y/length, Z/length, W/length);
 		}
 		// safe version of normalization //
@@ -836,6 +854,15 @@ namespace Leviathan{
 		DLLEXPORT inline operator Ogre::Quaternion() const{
 
 			return Ogre::Quaternion(W, X, Y, Z);
+		}
+
+		DLLEXPORT inline operator Ogre::ColourValue() const{
+
+			return Ogre::ColourValue(X, Y, Z, W);
+		}
+		DLLEXPORT inline operator Ogre::Vector4() const{
+
+			return Ogre::Vector4(X, Y, Z, W);
 		}
 
 		// ------------------------------------ //

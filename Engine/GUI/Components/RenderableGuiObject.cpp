@@ -22,7 +22,7 @@ DLLEXPORT Leviathan::Gui::RenderableGuiObject::~RenderableGuiObject(){
 
 	// set bridge to be deleted //
 	if(RBridge.get() != NULL)
-		RBridge->WantsToClose = true;
+		RBridge->SetAsClosing();
 	RBridge.reset();
 }
 

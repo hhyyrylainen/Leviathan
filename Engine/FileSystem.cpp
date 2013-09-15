@@ -830,13 +830,23 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 
 	manager.addResourceLocation(folder, "FileSystem", "MainTexturesFolder", true);
 
+	// shaders //
+	manager.createResourceGroup("ShadersFolder");
+
+	folder = Convert::WstringToString(DataFolder+ShaderFolder);
+
+	manager.addResourceLocation(folder, "FileSystem", "ShadersFolder", true);
+
 	// Terrain group //
 	manager.createResourceGroup("Terrain");
 
 	folder = Convert::WstringToString(DataFolder+L"Cache\\Terrain\\");
 
-	manager.addResourceLocation(folder, "FileSystem", "Terrain", true);
-
+	manager.addResourceLocation(folder, "FileSystem", "Terrain", true, false);
+	
+	// add cache to general //
+	folder = Convert::WstringToString(DataFolder+L"Cache\\");
+	manager.addResourceLocation(folder, "FileSystem", "General");
 
 	// possibly register addon folders //
 
@@ -846,6 +856,19 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 
 	// load the groups //
 	manager.loadResourceGroup("MainModelsFolder");
+}
+
+DLLEXPORT  void Leviathan::FileSystem::RegisterOGREResourceLocation(const string &location){
+
+	Ogre::ResourceGroupManager& manager = Ogre::ResourceGroupManager::getSingleton();
+
+	Ogre::String groupname = location+"_group";
+
+	manager.createResourceGroup(groupname);
+
+	manager.addResourceLocation(location, "FileSystem", groupname, true);
+
+	manager.initialiseResourceGroup(groupname);
 }
 
 // ------------------ FileDefinitionType ------------------ //

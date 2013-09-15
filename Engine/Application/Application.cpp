@@ -37,7 +37,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 
 	// let engine release itself and then delete it //
 	SAFE_RELEASEDEL(engine);
-	// configuration object needs to be destroyed by program main function //
+	// configuration object needs to be destroyed by the program main function //
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){

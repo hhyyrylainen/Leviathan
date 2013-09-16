@@ -52,6 +52,8 @@ DLLEXPORT bool Leviathan::RenderBridge::RenderActions(Rendering::OverlayMaster* 
 		string panelname = "RenderBridge_"+Convert::ToString(ID);
 		BridgesContainer = rendering->CreateContainerForRenderBridge(panelname, rendering->GetMainContainerInWindow(), Hidden);
 
+		BridgesContainer->SetRelativeZOrder((USHORT)ZVal);
+
 		Hidden ? BridgesContainer->hide(): BridgesContainer->show();
 	}
 

@@ -53,6 +53,8 @@ void Leviathan::ColorQuadRendBlob::Update(Graphics* graph, const int &relativez,
 
 	//Panel->getTechnique()->getPass(0)->getTextureUnitState(0)->setTextureName();
 
+	Panel->SetRelativeZOrder((USHORT)RelativeZ);
+
 	//TODO: set z order //
 	Panel->setMetricsMode(coordinatetype == GUI_POSITIONABLE_COORDTYPE_RELATIVE ? Ogre::GMM_RELATIVE: Ogre::GMM_PIXELS);
 	Panel->setPosition(xypos.X, xypos.Y);
@@ -111,14 +113,34 @@ DLLEXPORT void Leviathan::TextRendBlob::Update(int relativez, const Float2 &xypo
 	// update z-order //
 	RelativeZ = relativez;
 
+	wstring texttoset;
+
 	if(fittobox){
 
-		// TODO: use font manager class to adjust the size //
+		// use font manager class to adjust the size //
 
+		size_t charindexfit;
+		float hybridscale, maxscale;
+		Float2 finalsize;
+
+		Rendering::FontManager::AdjustTextSizeToFitBox(Rendering::FontManager::GetFontPtrFromName(Convert::WstringToString(font)), box, text, 
+			coordtype, charindexfit, maxscale, hybridscale, finalsize, adjustcutpercentage);
+
+		// adjust set text //
+		if(charindexfit != text.length()-1){
+
+			texttoset = text.substr(0, charindexfit+1)+L"...";
+		} else {
+			texttoset = text;
+		}
+		Text->setCharHeight(hybridscale);
+
+	} else {
+		texttoset = text;
+		Text->setCharHeight((32.f/DataStore::Get()->GetHeight())*sizemod);
 	}
 
-	Text->getZOrder();
-
+	Text->SetRelativeZOrder((USHORT)RelativeZ);
 
 	//TODO: set z order //
 	Text->setMetricsMode(coordtype == GUI_POSITIONABLE_COORDTYPE_RELATIVE ? Ogre::GMM_RELATIVE: Ogre::GMM_PIXELS);
@@ -127,8 +149,8 @@ DLLEXPORT void Leviathan::TextRendBlob::Update(int relativez, const Float2 &xypo
 	Text->setColour(color);
 	Text->setFontName(Convert::WstringToString(font));
 	Text->setAlignment(Ogre::TextAreaOverlayElement::Left);
-	Text->setCaption(text);
-	Text->setCharHeight((32.f/DataStore::Get()->GetHeight())*sizemod);
+	Text->setCaption(texttoset);
+	
 }
 
 void Leviathan::TextRendBlob::_VisibilityChanged(){

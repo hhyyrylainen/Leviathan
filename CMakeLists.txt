@@ -11,9 +11,9 @@ set(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/Install")
 #set(PATHS_OGRE_COPY_DLL_PATH "H:/c++ resources/OgreSDK_vc10_v1-9-0unstable/bin" CACHE PATH "path for ogre binarie/bin dir")
 
 # version number
-set(LEVIATHAN_VERSION 0.520)
-set(LEVIATHAN_VERSIONS "L\"0.5.2.0\"")
-set(LEVIATHAN_VERSION_ANSIS "\"0.5.2.0\"")
+set(LEVIATHAN_VERSION 0.530)
+set(LEVIATHAN_VERSIONS "L\"0.5.3.0\"")
+set(LEVIATHAN_VERSION_ANSIS "\"0.5.3.0\"")
 
 set(CMAKE_DEBUG_POSTFIX "D")
 
@@ -62,6 +62,10 @@ include_directories("${PROJECT_SOURCE_DIR}/Leap/include")
 include_directories("${PROJECT_SOURCE_DIR}/OGRE/include")
 include_directories("${PROJECT_SOURCE_DIR}/OGRE/include/OGRE")
 include_directories("${PROJECT_SOURCE_DIR}/OGRE/include/OGRE/Overlay")
+include_directories("${PROJECT_SOURCE_DIR}/OGRE/include/OGRE/Terrain")
+include_directories("${PROJECT_SOURCE_DIR}/OGRE/include/OGRE/Paging")
+include_directories("${PROJECT_SOURCE_DIR}/OGRE/include/OGRE/Threading")
+include_directories("${PROJECT_SOURCE_DIR}/OGRE/include/OGRE/Volume")
 
 # libraries paths
 link_directories("${PROJECT_SOURCE_DIR}/AngelScript")

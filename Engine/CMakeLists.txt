@@ -4,6 +4,7 @@
 # get all files in their groups
 file(GLOB GroupCore "*.cpp" "*.h")
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
+file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
 file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
 file(GLOB GroupGUI "GUI/*.cpp" "GUI/*.h")
 file(GLOB GroupGUIObjects "GUI/Objects/*.cpp" "GUI/Objects/*.h")
@@ -61,13 +62,14 @@ source_group("Common\\ObjectFiles" FILES ${GroupObjectFiles})
 source_group("Common\\DataStoring" FILES ${GroupCommonData})
 
 source_group("Rendering" FILES ${GroupRendering})
+source_group("Rendering\\GUI" FILES ${GroupRenderingGUI})
 
 # collect all files to one group
 set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics} ${GroupMath} ${GroupSound}
     ${GroupLeap} ${GroupScript} ${GroupGUI} ${GroupGUIObjects} ${GroupGUIComponents} ${GroupEvents}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
-    ${GroupEntitiesBases} ${GroupScriptAddons})
+    ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI})
     
 # precompiled headers
 # remove from list before adding back

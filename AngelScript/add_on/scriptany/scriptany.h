@@ -49,19 +49,20 @@ protected:
 	void FreeObject();
 
 	mutable int refCount;
+	mutable bool gcFlag;
 	asIScriptEngine *engine;
 
 	// The structure for holding the values
-	struct valueStruct
-	{
-		union
-		{
-			asINT64 valueInt;
-			double  valueFlt;
-			void   *valueObj;
-		};
-		int   typeId;
-	};
+    struct valueStruct
+    {
+        union
+        {
+            asINT64 valueInt;
+            double  valueFlt;
+            void   *valueObj;
+        };
+        int   typeId;
+    };
 
 	valueStruct value;
 };

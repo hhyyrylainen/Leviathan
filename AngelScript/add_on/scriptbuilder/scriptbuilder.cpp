@@ -1,17 +1,16 @@
-#include "Include.h"
 #include "scriptbuilder.h"
 #include <vector>
 using namespace std;
 
 #include <stdio.h>
-#if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined( AS_MARMALADE )
+#if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(__S3E__)
 #include <direct.h>
 #endif
 #ifdef _WIN32_WCE
 #include <windows.h> // For GetModuleFileName()
 #endif
 
-#if defined(AS_MARMALADE) || defined(__APPLE__)
+#if defined(__S3E__) || defined(__APPLE__)
 #include <unistd.h> // For getcwd()
 #endif
 
@@ -54,6 +53,20 @@ asIScriptModule *CScriptBuilder::GetModule()
 	return module;
 }
 
+unsigned int CScriptBuilder::GetSectionCount() const
+{
+	return (unsigned int)(includedScripts.size());
+}
+
+string CScriptBuilder::GetSectionName(unsigned int idx) const
+{
+	if( idx >= includedScripts.size() ) return "";
+
+	set<string>::const_iterator it = includedScripts.begin();
+	while( idx-- > 0 ) it++;
+	return *it;
+}
+
 int CScriptBuilder::AddSectionFromFile(const char *filename)
 {
 	// TODO: The file name stored in the set should be the fully resolved name because
@@ -64,17 +77,22 @@ int CScriptBuilder::AddSectionFromFile(const char *filename)
 		int r = LoadScriptSection(filename);
 		if( r < 0 )
 			return r;
+		else
+			return 1;
 	}
 
 	return 0;
 }
 
-int CScriptBuilder::AddSectionFromMemory(const char *scriptCode, const char *sectionName /*= ""*/, const int &lineoffset /*= 0*/){
+int CScriptBuilder::AddSectionFromMemory(const char *sectionName, const char *scriptCode, unsigned int scriptLength)
+{
 	if( IncludeIfNotAlreadyIncluded(sectionName) )
 	{
-		int r = ProcessScriptSection(scriptCode, sectionName, lineoffset);
+		int r = ProcessScriptSection(scriptCode, scriptLength, sectionName);
 		if( r < 0 )
 			return r;
+		else
+			return 1;
 	}
 
 	return 0;
@@ -100,6 +118,7 @@ void CScriptBuilder::ClearAll()
 
 #if AS_PROCESS_METADATA == 1
 	currentClass = "";
+	currentNamespace = "";
 
 	foundDeclarations.clear();
 	typeMetadataMap.clear();
@@ -127,7 +146,7 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 {
 	// Open the script file
 	string scriptFile = filename;
-#if _MSC_VER >= 1500 && !defined(AS_MARMALADE)
+#if _MSC_VER >= 1500 && !defined(__S3E__)
 	FILE *f = 0;
 	fopen_s(&f, scriptFile.c_str(), "rb");
 #else
@@ -144,7 +163,7 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 
 		return -1;
 	}
-	
+
 	// Determine size of the file
 	fseek(f, 0, SEEK_END);
 	int len = ftell(f);
@@ -155,12 +174,16 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 
 	// Read the entire file
 	string code;
-	code.resize(len);
-	size_t c = fread(&code[0], len, 1, f);
+	size_t c = 0;
+	if( len > 0 )
+	{
+		code.resize(len);
+		c = fread(&code[0], len, 1, f);
+	}
 
 	fclose(f);
 
-	if( c == 0 ) 
+	if( c == 0 && len > 0 )
 	{
 		// Write a message to the engine's message callback
 		char buf[256];
@@ -169,14 +192,19 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 		return -1;
 	}
 
-	return ProcessScriptSection(code.c_str(), filename, 0);
+	// Process the script section even if it is zero length so that the name is registered
+	return ProcessScriptSection(code.c_str(), (unsigned int)(code.length()), filename);
 }
 
-int CScriptBuilder::ProcessScriptSection(const char *script, const char *sectionname, const int &lineoffset){
+int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length, const char *sectionname)
+{
 	vector<string> includes;
 
 	// Perform a superficial parsing of the script first to store the metadata
-	modifiedScript = script;
+	if( length )
+		modifiedScript.assign(script, length);
+	else
+		modifiedScript = script;
 
 	// First perform the checks for #if directives to exclude code that shouldn't be compiled
 	unsigned int pos = 0;
@@ -235,7 +263,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 					OverwriteCode(start, pos-start);
 					nested--;
 				}
-			}			
+			}
 		}
 		else
 			pos += len;
@@ -265,21 +293,70 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 		if( currentClass == "" && modifiedScript.substr(pos,len) == "class" )
 		{
 			// Get the identifier after "class"
-			do 
+			do
+			{
+				pos += len;
+				if( pos >= modifiedScript.size() )
+				{
+					t = asTC_UNKNOWN;
+					break;
+				}
+				t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+			} while(t == asTC_COMMENT || t == asTC_WHITESPACE);
+
+			if( t == asTC_IDENTIFIER )
+			{
+				currentClass = modifiedScript.substr(pos,len);
+
+				// Search until first { is encountered
+				while( pos < modifiedScript.length() )
+				{
+					engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+
+					// If start of class section encountered stop
+					if( modifiedScript[pos] == '{' )
+					{
+						pos += len;
+						break;
+					}
+
+					// Check next symbol
+					pos += len;
+				}
+			}
+
+			continue;
+		}
+
+		// Check if end of class
+		if( currentClass != "" && modifiedScript[pos] == '}' )
+		{
+			currentClass = "";
+			pos += len;
+			continue;
+		}
+
+		// Check if namespace
+		if( modifiedScript.substr(pos,len) == "namespace" )
+		{
+			// Get the identifier after "namespace"
+			do
 			{
 				pos += len;
 				t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 			} while(t == asTC_COMMENT || t == asTC_WHITESPACE);
 
-			currentClass = modifiedScript.substr(pos,len);
-			
+			if( currentNamespace != "" )
+				currentNamespace += "::";
+			currentNamespace += modifiedScript.substr(pos,len);
+
 			// Search until first { is encountered
 			while( pos < modifiedScript.length() )
 			{
 				engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-			
-				// If start of class section encountered stop
-				if( modifiedScript[pos] == '{' ) 
+
+				// If start of namespace section encountered stop
+				if( modifiedScript[pos] == '{' )
 				{
 					pos += len;
 					break;
@@ -292,10 +369,18 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 			continue;
 		}
 
-		// Check if end of class
-		if( currentClass != "" && modifiedScript[pos] == '}' )
+		// Check if end of namespace
+		if( currentNamespace != "" && modifiedScript[pos] == '}' )
 		{
-			currentClass = "";
+			size_t found = currentNamespace.rfind( "::" );
+			if( found != string::npos )
+			{
+				currentNamespace.erase( found );
+			}
+			else
+			{
+				currentNamespace = "";
+			}
 			pos += len;
 			continue;
 		}
@@ -313,11 +398,11 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 			// Store away the declaration in a map for lookup after the build has completed
 			if( type > 0 )
 			{
-				SMetadataDecl decl(metadata, declaration, type, currentClass);
+				SMetadataDecl decl(metadata, declaration, type, currentClass, currentNamespace);
 				foundDeclarations.push_back(decl);
 			}
 		}
-		else 
+		else
 #endif
 		// Is this a preprocessor directive?
 		if( modifiedScript[pos] == '#' && (pos + 1 < modifiedScript.size()) )
@@ -356,7 +441,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 			}
 		}
 		// Don't search for metadata/includes within statement blocks or between tokens in statements
-		else 
+		else
 		{
 			pos = SkipStatement(pos);
 		}
@@ -364,7 +449,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 
 	// Build the actual script
 	engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, true);
-	module->AddScriptSection(sectionname, modifiedScript.c_str(), modifiedScript.size(), lineoffset);
+	module->AddScriptSection(sectionname, modifiedScript.c_str(), modifiedScript.size());
 
 	if( includes.size() > 0 )
 	{
@@ -418,11 +503,12 @@ int CScriptBuilder::Build()
 		return r;
 
 #if AS_PROCESS_METADATA == 1
-	// After the script has been built, the metadata strings should be 
+	// After the script has been built, the metadata strings should be
 	// stored for later lookup by function id, type id, and variable index
 	for( int n = 0; n < (int)foundDeclarations.size(); n++ )
 	{
 		SMetadataDecl *decl = &foundDeclarations[n];
+		module->SetDefaultNamespace(decl->nameSpace.c_str());
 		if( decl->type == 1 )
 		{
 			// Find the type id
@@ -501,7 +587,7 @@ int CScriptBuilder::Build()
 			else
 			{
 				int typeId = module->GetTypeIdByDecl(decl->parentClass.c_str());
-				
+
 				// Add the classes if needed
 				map<int, SClassMetadata>::iterator it = classMetadataMap.find(typeId);
 				if( it == classMetadataMap.end() )
@@ -525,12 +611,13 @@ int CScriptBuilder::Build()
 						break;
 					}
 				}
-				
+
 				// If found, add it
 				if( idx >= 0 ) it->second.varMetadataMap.insert(map<int, string>::value_type(idx, decl->metadata));
 			}
 		}
 	}
+	module->SetDefaultNamespace("");
 #endif
 
 	return 0;
@@ -616,7 +703,7 @@ int CScriptBuilder::ExcludeCode(int pos)
 	return pos;
 }
 
-// Overwrite all characters except line breaks with blanks 
+// Overwrite all characters except line breaks with blanks
 void CScriptBuilder::OverwriteCode(int start, int len)
 {
 	char *code = &modifiedScript[start];
@@ -746,8 +833,8 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &declaration, int &type)
 					}
 					else if( token == "(" )
 					{
-						// This is the first parenthesis we encounter. If the parenthesis isn't followed 
-						// by a statement block, then this is a variable declaration, in which case we 
+						// This is the first parenthesis we encounter. If the parenthesis isn't followed
+						// by a statement block, then this is a variable declaration, in which case we
 						// should only store the type and name of the variable, not the initialization parameters.
 						hasParenthesis = true;
 					}
@@ -777,9 +864,12 @@ const char *CScriptBuilder::GetMetadataStringForType(int typeId)
 
 const char *CScriptBuilder::GetMetadataStringForFunc(asIScriptFunction *func)
 {
-	map<int,string>::iterator it = funcMetadataMap.find(func->GetId());
-	if( it != funcMetadataMap.end() )
-		return it->second.c_str();
+	if( func )
+	{
+		map<int,string>::iterator it = funcMetadataMap.find(func->GetId());
+		if( it != funcMetadataMap.end() )
+			return it->second.c_str();
+	}
 
 	return "";
 }
@@ -806,13 +896,18 @@ const char *CScriptBuilder::GetMetadataStringForTypeProperty(int typeId, int var
 
 const char *CScriptBuilder::GetMetadataStringForTypeMethod(int typeId, asIScriptFunction *method)
 {
-	map<int, SClassMetadata>::iterator typeIt = classMetadataMap.find(typeId);
-	if(typeIt == classMetadataMap.end()) return "";
+	if( method )
+	{
+		map<int, SClassMetadata>::iterator typeIt = classMetadataMap.find(typeId);
+		if(typeIt == classMetadataMap.end()) return "";
 
-	map<int, string>::iterator methodIt = typeIt->second.funcMetadataMap.find(method->GetId());
-	if(methodIt == typeIt->second.funcMetadataMap.end()) return "";
-	
-	return methodIt->second.c_str();
+		map<int, string>::iterator methodIt = typeIt->second.funcMetadataMap.find(method->GetId());
+		if(methodIt == typeIt->second.funcMetadataMap.end()) return "";
+
+		return methodIt->second.c_str();
+	}
+
+	return "";
 }
 #endif
 
@@ -820,37 +915,37 @@ static const char *GetCurrentDir(char *buf, size_t size)
 {
 #ifdef _MSC_VER
 #ifdef _WIN32_WCE
-	static TCHAR apppath[MAX_PATH] = TEXT("");
-	if (!apppath[0])
-	{
-		GetModuleFileName(NULL, apppath, MAX_PATH);
+    static TCHAR apppath[MAX_PATH] = TEXT("");
+    if (!apppath[0])
+    {
+        GetModuleFileName(NULL, apppath, MAX_PATH);
 
-		
-		int appLen = _tcslen(apppath);
 
-		// Look for the last backslash in the path, which would be the end
-		// of the path itself and the start of the filename.  We only want
-		// the path part of the exe's full-path filename
-		// Safety is that we make sure not to walk off the front of the 
-		// array (in case the path is nothing more than a filename)
-		while (appLen > 1)
-		{
-			if (apppath[appLen-1] == TEXT('\\'))
-				break;
-			appLen--;
-		}
+        int appLen = _tcslen(apppath);
 
-		// Terminate the string after the trailing backslash
-		apppath[appLen] = TEXT('\0');
-	}
+        // Look for the last backslash in the path, which would be the end
+        // of the path itself and the start of the filename.  We only want
+        // the path part of the exe's full-path filename
+        // Safety is that we make sure not to walk off the front of the
+        // array (in case the path is nothing more than a filename)
+        while (appLen > 1)
+        {
+            if (apppath[appLen-1] == TEXT('\\'))
+                break;
+            appLen--;
+        }
+
+        // Terminate the string after the trailing backslash
+        apppath[appLen] = TEXT('\0');
+    }
 #ifdef _UNICODE
-	wcstombs(buf, apppath, min(size, wcslen(apppath)*sizeof(wchar_t)));
+    wcstombs(buf, apppath, min(size, wcslen(apppath)*sizeof(wchar_t)));
 #else
-	memcpy(buf, apppath, min(size, strlen(apppath)));
+    memcpy(buf, apppath, min(size, strlen(apppath)));
 #endif
 
-	return buf;
-#elif defined( AS_MARMALADE )
+    return buf;
+#elif defined(__S3E__)
 	// Marmalade uses its own portable C library
 	return getcwd(buf, (int)size);
 #elif _XBOX_VER >= 200

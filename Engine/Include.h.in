@@ -71,6 +71,7 @@
 // debug versions //
 #pragma comment(lib, "angelscriptd.lib")
 #pragma comment(lib, "Leapd.lib")
+
 #pragma comment(lib, "OgreMain_d.lib")
 #pragma comment(lib, "OgreOverlay_d.lib")
 #pragma comment(lib, "OgrePaging_d.lib")
@@ -81,10 +82,13 @@
 #pragma comment(lib, "RenderSystem_Direct3D11_d.lib")
 #pragma comment(lib, "RenderSystem_GL_d.lib")
 #pragma comment(lib, "RenderSystem_Direct3D11_d.lib")
+
+#pragma comment(lib, "OIS_d.lib")
 #else
 // release libraries
 #pragma comment(lib, "angelscript.lib")
 #pragma comment(lib, "Leap.lib")
+
 #pragma comment(lib, "OgreMain.lib")
 #pragma comment(lib, "OgreOverlay.lib")
 #pragma comment(lib, "OgrePaging.lib")
@@ -95,6 +99,8 @@
 #pragma comment(lib, "RenderSystem_Direct3D11.lib")
 #pragma comment(lib, "RenderSystem_GL.lib")
 #pragma comment(lib, "RenderSystem_Direct3D11.lib")
+
+#pragma comment(lib, "OIS.lib")
 #endif
 #else
 // include engine lib
@@ -257,5 +263,15 @@ namespace Leviathan{
 #include "Statistics\TimingMonitor.h"
 // speed up compile times with leap //
 #include "leap.h"
+// OIS compile speed up //
+#include <OISMouse.h>
+#include <OISKeyboard.h>
+#include <OISJoyStick.h>
+#include <OISInputManager.h>
+// core libRocket //
+#include <Rocket/Core.h>
+// angelscript //
+#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
+#include "angelscript.h"
 
 #endif

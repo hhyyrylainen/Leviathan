@@ -1,4 +1,3 @@
-#include "Include.h"
 #include "scriptfile.h"
 #include <new>
 #include <assert.h>
@@ -19,7 +18,7 @@ BEGIN_AS_NAMESPACE
 
 CScriptFile *ScriptFile_Factory()
 {
-	return new CScriptFile();
+    return new CScriptFile();
 }
 
 void ScriptFile_Factory_Generic(asIScriptGeneric *gen)
@@ -171,15 +170,15 @@ void ScriptFile_MovePos_Generic(asIScriptGeneric *gen)
 
 void RegisterScriptFile_Native(asIScriptEngine *engine)
 {
-	int r;
+    int r;
 
-	r = engine->RegisterObjectType("file", 0, asOBJ_REF); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("file", asBEHAVE_FACTORY, "file @f()", asFUNCTION(ScriptFile_Factory), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("file", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptFile,AddRef), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("file", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptFile,Release), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectType("file", 0, asOBJ_REF); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("file", asBEHAVE_FACTORY, "file @f()", asFUNCTION(ScriptFile_Factory), asCALL_CDECL); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("file", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptFile,AddRef), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("file", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptFile,Release), asCALL_THISCALL); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("file", "int open(const string &in, const string &in)", asMETHOD(CScriptFile,Open), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("file", "int close()", asMETHOD(CScriptFile,Close), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("file", "int open(const string &in, const string &in)", asMETHOD(CScriptFile,Open), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("file", "int close()", asMETHOD(CScriptFile,Close), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int getSize() const", asMETHOD(CScriptFile,GetSize), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "bool isEndOfFile() const", asMETHOD(CScriptFile,IsEOF), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int readString(uint, string &out)", asMETHOD(CScriptFile,ReadString), asCALL_THISCALL); assert( r >= 0 );
@@ -208,11 +207,11 @@ void RegisterScriptFile_Generic(asIScriptEngine *engine)
 
 	r = engine->RegisterObjectType("file", 0, asOBJ_REF); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("file", asBEHAVE_FACTORY, "file @f()", asFUNCTION(ScriptFile_Factory_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("file", asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptFile_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("file", asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptFile_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("file", asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptFile_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("file", asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptFile_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("file", "int open(const string &in, const string &in)", asFUNCTION(ScriptFile_Open_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("file", "int close()", asFUNCTION(ScriptFile_Close_Generic), asCALL_GENERIC); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("file", "int open(const string &in, const string &in)", asFUNCTION(ScriptFile_Open_Generic), asCALL_GENERIC); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("file", "int close()", asFUNCTION(ScriptFile_Close_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int getSize() const", asFUNCTION(ScriptFile_GetSize_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "bool isEndOfFile() const", asFUNCTION(ScriptFile_IsEOF_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int readString(uint, string &out)", asFUNCTION(ScriptFile_ReadString_Generic), asCALL_GENERIC); assert( r >= 0 );
@@ -245,98 +244,100 @@ void RegisterScriptFile(asIScriptEngine *engine)
 
 CScriptFile::CScriptFile()
 {
-	refCount = 1;
-	file = 0;
+    refCount = 1;
+    file = 0;
 	mostSignificantByteFirst = false;
 }
 
 CScriptFile::~CScriptFile()
 {
-	Close();
+    Close();
 }
 
 void CScriptFile::AddRef() const
 {
-	++refCount;
+	asAtomicInc(refCount);
 }
 
 void CScriptFile::Release() const
 {
-	if( --refCount == 0 )
-		delete this;
+    if( asAtomicDec(refCount) == 0 )
+        delete this;
 }
 
 int CScriptFile::Open(const std::string &filename, const std::string &mode)
 {
-	// Close the previously opened file handle
-	if( file )
-		Close();
+    // Close the previously opened file handle
+    if( file )
+        Close();
 
-	std::string myFilename = filename;
+    std::string myFilename = filename;
 
-	// Validate the mode
+    // Validate the mode
 	string m;
 #if AS_WRITE_OPS == 1
-	if( mode != "r" && mode != "w" && mode != "a" )
+    if( mode != "r" && mode != "w" && mode != "a" )
 #else
 	if( mode != "r" )
 #endif
-		return -1;
+        return -1;
 	else
 		m = mode;
 
 #ifdef _WIN32_WCE
-	// no relative pathing on CE
-	char buf[MAX_PATH];
-	static TCHAR apppath[MAX_PATH] = TEXT("");
-	if (!apppath[0])
-	{
-		GetModuleFileName(NULL, apppath, MAX_PATH);
-		
-		int appLen = _tcslen(apppath);
-		while (appLen > 1)
-		{
-			if (apppath[appLen-1] == TEXT('\\'))
-				break;
-			appLen--;
-		}
+    // no relative pathing on CE
+    char buf[MAX_PATH];
+    static TCHAR apppath[MAX_PATH] = TEXT("");
+    if (!apppath[0])
+    {
+        GetModuleFileName(NULL, apppath, MAX_PATH);
+        
+        int appLen = _tcslen(apppath);
+        while (appLen > 1)
+        {
+            if (apppath[appLen-1] == TEXT('\\'))
+                break;
+            appLen--;
+        }
 
-		// Terminate the string after the trailing backslash
-		apppath[appLen] = TEXT('\0');
-	}
+        // Terminate the string after the trailing backslash
+        apppath[appLen] = TEXT('\0');
+    }
 #ifdef _UNICODE
-	wcstombs(buf, apppath, wcslen(apppath)+1);
+    wcstombs(buf, apppath, wcslen(apppath)+1);
 #else
-	memcpy(buf, apppath, strlen(apppath));
+    memcpy(buf, apppath, strlen(apppath));
 #endif
-	myFilename = buf + myFilename;
+    myFilename = buf + myFilename;
 #endif
 
 
 	// By default windows translates "\r\n" to "\n", but we want to read the file as-is.
 	m += "b";
 
-	// Open the file
-#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+    // Open the file
+#if _MSC_VER >= 1400 && !defined(__S3E__) 
+	// MSVC 8.0 / 2005 introduced new functions 
+	// Marmalade doesn't use these, even though it uses the MSVC compiler
 	fopen_s(&file, myFilename.c_str(), m.c_str());
 #else
-	file = fopen(myFilename.c_str(), m.c_str());
+    file = fopen(myFilename.c_str(), m.c_str());
 #endif
-	if( file == 0 )
-		return -1;
+    if( file == 0 )
+        return -1;
 
-	return 0;
+    return 0;
 }
 
 int CScriptFile::Close()
 {
-	if( file == 0 )
-		return -1;
+    if( file == 0 )
+        return -1;
 
-	fclose(file);
-	file = 0;
+    fclose(file);
+    file = 0;
 
-	return 0;
+    return 0;
 }
 
 int CScriptFile::GetSize() const

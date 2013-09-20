@@ -87,6 +87,11 @@ add_definitions(-DENGINE_EXPORTS)
 # create library with all the files
 add_library(Engine SHARED ${EngineFiles})
 
+# depend on libRocket
+target_link_libraries(Engine RocketCore)
+target_link_libraries(Engine RocketControls)
+target_link_libraries(Engine RocketDebugger)
+
 # post build copy
 ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND copy ARGS 
     "\"$(SolutionDir)Engine\\$(Configuration)\\$(TargetName).dll\" \"$(SolutionDir)bin\\$(TargetName).dll\""

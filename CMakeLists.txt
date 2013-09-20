@@ -11,9 +11,9 @@ set(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/Install")
 #set(PATHS_OGRE_COPY_DLL_PATH "H:/c++ resources/OgreSDK_vc10_v1-9-0unstable/bin" CACHE PATH "path for ogre binarie/bin dir")
 
 # version number
-set(LEVIATHAN_VERSION 0.530)
-set(LEVIATHAN_VERSIONS "L\"0.5.3.0\"")
-set(LEVIATHAN_VERSION_ANSIS "\"0.5.3.0\"")
+set(LEVIATHAN_VERSION 0.532)
+set(LEVIATHAN_VERSIONS "L\"0.5.3.2\"")
+set(LEVIATHAN_VERSION_ANSIS "\"0.5.3.2\"")
 
 set(CMAKE_DEBUG_POSTFIX "D")
 
@@ -42,6 +42,17 @@ file(COPY ${MoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(GLOB MoveFiles "OGRE/bin/Debug/*.pdb" "OGRE/bin/Debug/*.dll" "OGRE/bin/Release/*.dll")
 file(COPY ${MoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
+# OIS dll
+file(GLOB MoveFiles "OIS/Bin/*")
+file(COPY ${MoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+
+# libRocket dlls
+file(GLOB MoveFiles "libRocket/bin/*")
+file(COPY ${MoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+
+# angelscript
+file(GLOB MoveFiles "AngelScript/bin/*")
+file(COPY ${MoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 message(STATUS "Done copying")
 
@@ -56,9 +67,12 @@ configure_file(
 
 
 # additional include directories
-include_directories("${PROJECT_SOURCE_DIR}/AngelScript/")
+include_directories("${PROJECT_SOURCE_DIR}/AngelScript/include")
 include_directories("${PROJECT_SOURCE_DIR}/Engine/")
 include_directories("${PROJECT_SOURCE_DIR}/Leap/include")
+include_directories("${PROJECT_SOURCE_DIR}/OIS/include")
+include_directories("${PROJECT_SOURCE_DIR}/libRocket/include")
+
 include_directories("${PROJECT_SOURCE_DIR}/OGRE/include")
 include_directories("${PROJECT_SOURCE_DIR}/OGRE/include/OGRE")
 include_directories("${PROJECT_SOURCE_DIR}/OGRE/include/OGRE/Overlay")
@@ -68,12 +82,15 @@ include_directories("${PROJECT_SOURCE_DIR}/OGRE/include/OGRE/Threading")
 include_directories("${PROJECT_SOURCE_DIR}/OGRE/include/OGRE/Volume")
 
 # libraries paths
-link_directories("${PROJECT_SOURCE_DIR}/AngelScript")
+link_directories("${PROJECT_SOURCE_DIR}/AngelScript/lib")
 link_directories("${PROJECT_SOURCE_DIR}/Leap/lib/x86")
 link_directories("${PROJECT_SOURCE_DIR}/Boost/Lib/debug")
 link_directories("${PROJECT_SOURCE_DIR}/Boost/Lib/release")
 link_directories("${PROJECT_SOURCE_DIR}/OGRE/lib/Debug")
 link_directories("${PROJECT_SOURCE_DIR}/OGRE/lib/Release")
+link_directories("${PROJECT_SOURCE_DIR}/OIS/lib/")
+link_directories("${PROJECT_SOURCE_DIR}/libRocket/lib/")
+
 # engine linking
 link_directories("${PROJECT_BINARY_DIR}")
 link_directories("${PROJECT_BINARY_DIR}/Engine/Debug")

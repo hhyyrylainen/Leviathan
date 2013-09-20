@@ -4,7 +4,10 @@ Debug/
 Release/
 AngelScript/sdk/docs/
 CodeAnalyst/
-bin/
+*.dll
+*.pdb
+*.exe
+./bin/
 cryptopp/
 *.jar
 *.dia
@@ -16,3 +19,5 @@ AngelScript/sdk/angelscript/lib/delete.me
 AngelScript/sdk/angelscript/projects/
 Engine/Include.h
 Leviathan.sln
+bin/
+libRocket/lib/

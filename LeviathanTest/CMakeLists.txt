@@ -18,6 +18,8 @@ set(LeviathanTestFiles ${LTSourceFiles} ${LTHeaderFiles})
 add_executable(LeviathanTest WIN32 ${LeviathanTestFiles})
 set_target_properties(LeviathanTest PROPERTIES DEBUG_POSTFIX D)
 
+install(TARGETS LeviathanTest DESTINATION bin)
+
 # linking to engine
 target_link_libraries(LeviathanTest Engine)
 
@@ -29,3 +31,8 @@ create_target_launcher(LeviathanTest RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}
 ADD_CUSTOM_COMMAND(TARGET LeviathanTest POST_BUILD COMMAND copy ARGS 
     "\"$(SolutionDir)LeviathanTest\\$(Configuration)\\$(TargetName).exe\" \"$(SolutionDir)bin\\$(TargetName).exe\""
 )
+
+# testing
+add_test(LeviathanTestMainTest LeviathanTest CONFIGURATIONS Debug Release WORKING_DIRECTORY 
+    "${PROJECT_BINARY_DIR}/bin" COMMAND "TestOutDefault.txt")
+set_tests_properties(LeviathanTestMainTest PROPERTIES PASS_REGULAR_EXPRESSION "testing completed succesfully")

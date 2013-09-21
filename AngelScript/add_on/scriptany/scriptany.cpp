@@ -1,3 +1,4 @@
+#include "Include.h"
 #include "scriptany.h"
 #include <new>
 #include <assert.h>

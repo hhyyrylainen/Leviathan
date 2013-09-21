@@ -66,9 +66,7 @@ public:
 	// Returns  1 if the section was included
 	//          0 if a section with the same name had already been included before
 	//         <0 on error
-	int AddSectionFromMemory(const char *sectionName,
-							 const char *scriptCode, 
-							 unsigned int scriptLength = 0);
+	int AddSectionFromMemory(const char *sectionName, const char *scriptCode, int startline, unsigned int scriptLength = 0);
 
 	// Build the added script sections
 	int BuildModule();
@@ -106,7 +104,7 @@ public:
 protected:
 	void ClearAll();
 	int  Build();
-	int  ProcessScriptSection(const char *script, unsigned int length, const char *sectionname);
+	int ProcessScriptSection(const char *script, unsigned int length, const char *sectionname, int linestart);
 	int  LoadScriptSection(const char *filename);
 	bool IncludeIfNotAlreadyIncluded(const char *filename);
 

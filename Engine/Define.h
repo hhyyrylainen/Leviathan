@@ -4,14 +4,6 @@
 #include "Include.h"
 #endif
 
-#ifndef Assert
-#if defined( DEBUG ) || defined( _DEBUG )
-#define Assert(b) do {if (!(b)) {OutputDebugStringA("Assert: " #b "\n");}} while(0)
-#else
-#define Assert(b)	{}
-#endif //DEBUG || _DEBUG
-#endif
-
 namespace Leviathan{
 	
 	template<class T>

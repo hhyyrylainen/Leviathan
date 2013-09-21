@@ -1,3 +1,4 @@
+#include "Include.h"
 #include "scripthandle.h"
 #include <new>
 #include <assert.h>

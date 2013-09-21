@@ -6,7 +6,6 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Rendering/RenderingPassInfo.h"
 
 namespace Leviathan{
 
@@ -17,7 +16,7 @@ namespace Leviathan{
 		DLLEXPORT BaseRenderable::BaseRenderable();
 		DLLEXPORT virtual BaseRenderable::~BaseRenderable();
 
-		DLLEXPORT virtual bool Render(Graphics* renderer, int mspassed, const RenderingPassInfo &info) = 0;
+		DLLEXPORT virtual bool Render(Graphics* renderer, int mspassed) = 0;
 
 		DLLEXPORT bool IsHidden();
 

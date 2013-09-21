@@ -59,7 +59,7 @@ void Leviathan::GameObject::Model::CheckTextures(){
 	// check textures //
 	if(TextureIDS.size() == 0){
 
-		TextureManager* tempman = Graphics::Get()->GetTextureManager();
+		TextureManager* tempman = Leviathan::Graphics::Get()->GetTextureManager();
 
 		// need to "reload" textures //
 		for(unsigned int i = 0; i < TexturePath.size(); i++){
@@ -71,7 +71,7 @@ void Leviathan::GameObject::Model::CheckTextures(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameObject::Model::Render(Graphics* renderer, int mspassed, const RenderingPassInfo &info){
+DLLEXPORT bool Leviathan::GameObject::Model::Render(Graphics* renderer, int mspassed){
 
 	// update frame count //
 	Frames++;

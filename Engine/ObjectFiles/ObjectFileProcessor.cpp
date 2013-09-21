@@ -159,8 +159,9 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 
 				ScriptModule* tmpmodule = tmpscrpptr->GetModule();
 				// add sections to the module //
-				tmpmodule->GetBuilder().AddSectionFromMemory(("void Do(int Line){\n"+Convert::WstringToString(scriptinstructions)+"\nreturn;\n}"
-					).c_str(), Convert::WstringToString(file+L":"+Convert::IntToWstring(Line)).c_str(), Line);
+
+				tmpmodule->GetBuilder().AddSectionFromMemory(Convert::WstringToString(file+L":"+Convert::IntToWstring(Line)).c_str(), 
+					("void Do(int Line){\n"+Convert::WstringToString(scriptinstructions)+"\nreturn;\n}").c_str(), Line);
 
 				// compile the script //
 				int result = tmpmodule->GetBuilder().BuildModule();
@@ -581,8 +582,8 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 	ScriptModule* tmpmod = tscript.lock().get();
 
 	// "build" the script //
-	tmpmod->GetBuilder().AddSectionFromMemory(Instructions.c_str(), Convert::WstringToString(sourcefile+L":"+Convert::ToWstring(CodeStartLine)
-		).c_str(), CodeStartLine);
+	tmpmod->GetBuilder().AddSectionFromMemory(Convert::WstringToString(sourcefile+L":"+Convert::ToWstring(CodeStartLine)).c_str(),
+		Instructions.c_str(), CodeStartLine);
 
 	// ensure right state //
 	tmpmod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);

@@ -17,13 +17,12 @@ namespace Leviathan{ namespace GameObject{
 
 #define MODEL_ERROR_LOADDATAFAIL	450
 
-
 	class Model : public BaseObject, public BaseRenderable, public BaseInitable, public SmoothedPosition, public BaseScalable{
 	public:
 		DLLEXPORT Model::Model();
 		DLLEXPORT Model::~Model();
 
-		DLLEXPORT bool Render(Graphics* renderer, int mspassed, const RenderingPassInfo &info);
+		DLLEXPORT virtual bool Render(Graphics* renderer, int mspassed);
 
 		DLLEXPORT bool VerifyResourcesLoaded(Graphics* renderer);
 

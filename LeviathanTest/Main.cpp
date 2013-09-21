@@ -28,6 +28,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			SYSTEMTIME tdate;
 			GetLocalTime(&tdate);
 
+			bool Passed = true;
+
 			wstring times = Convert::IntToWstring(tdate.wYear)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wDay)+L" "+Convert::IntToWstring(tdate.wHour)+L"."+Convert::IntToWstring(tdate.wMinute);
 
 			customlogger->SetSavePath(L".\\TestLog "+times+L".txt");
@@ -41,6 +43,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			if(TestPreEngine()){
 				Logger::Get()->Write(L"\n\n", false);
 				Logger::Get()->Error(L"!----! Some Tests [Failed] !----!", true);
+				Passed = false;
 			} else {
 				Logger::Get()->Write(L"\n\n", false);
 				Logger::Get()->Info(L"-------------------- ALL TESTS PASSED --------------------\n", true);
@@ -68,6 +71,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 				if(TestEngine(app.GetEngine())){
 					Logger::Get()->Write(L"\n\n", false);
 					Logger::Get()->Error(L"!----! Some Tests [Failed] !----!", true);
+					Passed = false;
 				} else {
 					Logger::Get()->Write(L"\n\n", false);
 					Logger::Get()->Info(L"-------------------- ALL ENGINE TESTS PASSED --------------------\n", true);
@@ -82,10 +86,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 				Logger::Get()->Error(L"App init failed, closing",0, true);
 				//app.Close();
 
+				cout << "Testing failed" << endl;
+
 				Return = 005;
 			}
 
 			Logger::Get()->Save();
+
+			if(Passed){
+				// CMake testing will detect this
+				cout << "testing completed succesfully" << endl;
+			}
+
 			//un-init
 			app.Release();
 			//CoUninitialize();

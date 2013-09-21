@@ -22,6 +22,8 @@ set(Sandboxiefiles ${SBSourceFiles} ${SBHeaderFiles} ${SBResourceFiles})
 add_executable(Sandboxie WIN32 ${Sandboxiefiles})
 set_target_properties(Sandboxie PROPERTIES DEBUG_POSTFIX D)
 
+install(TARGETS Sandboxie DESTINATION bin)
+
 # linking to engine
 target_link_libraries(Sandboxie Engine)
 

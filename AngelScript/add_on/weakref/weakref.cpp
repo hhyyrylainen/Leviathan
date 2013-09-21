@@ -1,6 +1,6 @@
 
 // The CScriptWeakRef class was originally implemented by vroad in March 2013
-
+#include "Include.h"
 #include "weakref.h"
 #include <new>
 #include <assert.h>

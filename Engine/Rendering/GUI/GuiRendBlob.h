@@ -7,7 +7,6 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "GUI\Components\GuiPositionable.h"
-#include "Rendering\RenderingPassInfo.h"
 #include "OgreOverlayContainer.h"
 #include "OverlayMaster.h"
 

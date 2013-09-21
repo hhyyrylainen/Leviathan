@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Rendering\GuiRendBlob.h"
-#include "Rendering\OverlayMaster.h"
+#include "Rendering\GUI\GuiRendBlob.h"
+#include "Rendering\GUI\OverlayMaster.h"
 #include "OgreOverlayContainer.h"
 
 namespace Leviathan{

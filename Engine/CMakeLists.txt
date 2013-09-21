@@ -78,25 +78,22 @@ file(GLOB PrecompiledSourceName "Include.cpp")
 
 list(REMOVE_ITEM EngineFiles ${PrecompiledSourceName})
 
-#ADD_MSVC_PRECOMPILED_HEADER(${PrecompiledHeaderName} ${PrecompiledSourceName} GroupCore)
-ADD_MSVC_PRECOMPILED_HEADER("Include.h" "Include.cpp" EngineFiles)
-    
+# precompiled header
+
+#ADD_MSVC_PRECOMPILED_HEADER(${PrecompiledHeaderName} ${PrecompiledSourceName} EngineFiles)
+ADD_MSVC_PRECOMPILED_HEADER("Include.h" ${PrecompiledSourceName} EngineFiles)
+#ADD_MSVC_PRECOMPILED_HEADER("Include.h" "Include.cpp" EngineFiles)
+
 # engine exporting define
 add_definitions(-DENGINE_EXPORTS)
 
 # create library with all the files
 add_library(Engine SHARED ${EngineFiles})
 
-# depend on libRocket
-target_link_libraries(Engine RocketCore)
-target_link_libraries(Engine RocketControls)
-target_link_libraries(Engine RocketDebugger)
+install(TARGETS Engine DESTINATION bin)
 
 # post build copy
 ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND copy ARGS 
     "\"$(SolutionDir)Engine\\$(Configuration)\\$(TargetName).dll\" \"$(SolutionDir)bin\\$(TargetName).dll\""
 )
-
-
-# link with libraries
 

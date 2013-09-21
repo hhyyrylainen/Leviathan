@@ -1,3 +1,4 @@
+#include "Include.h"
 #include <assert.h>
 #include <string>
 
@@ -18,7 +19,7 @@ BEGIN_AS_NAMESPACE
 
 struct SContextInfo
 {
-    asUINT sleepUntil;
+	asUINT sleepUntil;
 	vector<asIScriptContext*> coRoutines;
 	asUINT currentCoRoutine;
 };
@@ -83,7 +84,7 @@ void ScriptCreateCoRoutine(string &func, CScriptAny *arg)
 
 CContextMgr::CContextMgr()
 {
-    m_getTimeFunc   = 0;
+	m_getTimeFunc   = 0;
 	m_currentThread = 0;
 
 	m_numExecutions         = 0;
@@ -183,7 +184,7 @@ void CContextMgr::ExecuteScripts()
 				engine->GarbageCollect(asGC_FULL_CYCLE | asGC_DESTROY_GARBAGE);
 
 				// Determine how many objects were destroyed
- 				engine->GetGCStatistics(&gcSize3);
+				engine->GetGCStatistics(&gcSize3);
 				m_numGCObjectsDestroyed += gcSize3 - gcSize2;
 			}
 
@@ -263,9 +264,9 @@ asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, asIScriptFunc
 		info = new SContextInfo;
 	}
 
-    info->coRoutines.push_back(ctx);
+	info->coRoutines.push_back(ctx);
 	info->currentCoRoutine = 0;
-    info->sleepUntil = 0;
+	info->sleepUntil = 0;
 	m_threads.push_back(info);
 
 	return ctx;
@@ -305,8 +306,8 @@ asIScriptContext *CContextMgr::AddContextForCoRoutine(asIScriptContext *currCtx,
 
 void CContextMgr::SetSleeping(asIScriptContext *ctx, asUINT milliSeconds)
 {
-    assert( m_getTimeFunc != 0 );
-    
+	assert( m_getTimeFunc != 0 );
+	
 	// Find the context and update the timeStamp  
 	// for when the context is to be continued
 
@@ -325,11 +326,11 @@ void CContextMgr::RegisterThreadSupport(asIScriptEngine *engine)
 {
 	int r;
 
-    // Must set the get time callback function for this to work
-    assert( m_getTimeFunc != 0 );
-    
-    // Register the sleep function
-    r = engine->RegisterGlobalFunction("void sleep(uint)", asFUNCTION(ScriptSleep), asCALL_CDECL); assert( r >= 0 );
+	// Must set the get time callback function for this to work
+	assert( m_getTimeFunc != 0 );
+	
+	// Register the sleep function
+	r = engine->RegisterGlobalFunction("void sleep(uint)", asFUNCTION(ScriptSleep), asCALL_CDECL); assert( r >= 0 );
 
 	// TODO: Add support for spawning new threads, waiting for signals, etc
 }

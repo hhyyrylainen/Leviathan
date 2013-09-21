@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "OgreWindowEventUtilities.h"
 #include "OgreRenderWindow.h"
+#include "OIS.h"
 
 namespace Leviathan{
 	
@@ -25,7 +26,7 @@ namespace Leviathan{
 	};
 
 	// window class //
-	class Window : public Ogre::WindowEventListener{
+	class Window : public Ogre::WindowEventListener, OIS::KeyListener, OIS::MouseListener, OIS::JoyStickListener{
 	public:
 		DLLEXPORT Window(Ogre::RenderWindow* owindow, bool vsync);
 		DLLEXPORT ~Window();
@@ -49,6 +50,7 @@ namespace Leviathan{
 		DLLEXPORT void GetRelativeMouse(int& x, int& y);
 		DLLEXPORT void SetMouseToCenter();
 
+		DLLEXPORT void GatherInput(Rocket::Core::Context* context);
 
 		DLLEXPORT inline bool IsWindowed() const{ return !OWindow->isFullScreen();};
 		DLLEXPORT inline HWND GetHandle(){ return (m_hwnd = GetRenderWindowHandle(OWindow)); };
@@ -63,10 +65,42 @@ namespace Leviathan{
 		}
 
 		DLLEXPORT static HWND GetRenderWindowHandle(Ogre::RenderWindow* owindow);
+
+		virtual bool keyPressed(const OIS::KeyEvent &arg);
+		virtual bool keyReleased(const OIS::KeyEvent &arg);
+		virtual bool mouseMoved(const OIS::MouseEvent &arg);
+		virtual bool mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
+		virtual bool mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
+		virtual bool buttonPressed(const OIS::JoyStickEvent &arg, int button);
+		virtual bool buttonReleased(const OIS::JoyStickEvent &arg, int button);
+		virtual bool axisMoved(const OIS::JoyStickEvent &arg, int axis);
+
+		// map that converts OIS::KeyCode to Rocket key codes //
+		static std::map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> OISRocketKeyConvert;
+
 	private:
+
+		bool SetupOISForThisWindow();
+		void ReleaseOIS();
+		void UpdateOISMouseWindowSize();
+
+		void CheckInputState();
+		// ------------------------------------ //
 
 		HWND m_hwnd;
 		Ogre::RenderWindow* OWindow;
+
+		OIS::InputManager* WindowsInputManager;
+		OIS::Mouse* WindowMouse;
+		OIS::Keyboard* WindowKeyboard;
+		std::vector<OIS::JoyStick*> WindowJoysticks;
+
+		// this is temporarily stored during input gathering //
+		Rocket::Core::Context* inputreceiver;
+		bool ThisFrameHandledCreate;
+		int LastFrameDonwMouseButtons;
+		// this is updated every time input is gathered //
+		int SpecialKeyModifiers;
 
 		bool VerticalSync;
 		bool Focused;

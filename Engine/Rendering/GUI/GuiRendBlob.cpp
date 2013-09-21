@@ -3,11 +3,10 @@
 #ifndef LEVIATHAN_RENDERING_GUIRBLOB
 #include "GuiRendBlob.h"
 #endif
-#include "Graphics.h"
 #include "Common\DataStoring\DataStore.h"
+#include "Rendering\Graphics.h"
 using namespace Leviathan;
 // ------------------------------------ //
-
 Leviathan::RenderingGBlob::RenderingGBlob(const int &id, const int &relativez, const int &slotid, const bool &hidden) : RelativeZ(relativez), 
 	SlotID(slotid), Hidden(hidden), ID(id)
 {

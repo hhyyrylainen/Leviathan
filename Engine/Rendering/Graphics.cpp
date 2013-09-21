@@ -12,8 +12,8 @@ using namespace Rendering;
 #include <boost\assign\list_of.hpp>
 #include "OgreHardwarePixelBuffer.h"
 #include <OgreMeshManager.h>
-#include "OverlayMaster.h"
-#include "FontManager.h"
+#include "GUI/OverlayMaster.h"
+#include "GUI/FontManager.h"
 
 DLLEXPORT Leviathan::Graphics::Graphics() : Light(NULL), TextureKeeper(NULL), ORoot(nullptr), MainCamera(NULL), MainCameraNode(NULL), MainViewport(NULL)
 	/*, Terrain(NULL)*/, Overlays(NULL), Fonts(NULL)
@@ -493,6 +493,9 @@ DLLEXPORT bool Leviathan::Graphics::Frame(int mspassed, ViewerCameraPos* camerap
 }
 
 bool Leviathan::Graphics::frameRenderingQueued(const Ogre::FrameEvent& evt){
+	// we can update GUI inputs now //
+
+	//Engine::GetEngine()->GetDefinition()->GetWindow()->GatherInput();
 
 
 	return true;

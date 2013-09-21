@@ -1,3 +1,4 @@
+#include "Include.h"
 #include <new>
 #include <stdlib.h>
 #include <string.h>
@@ -25,7 +26,7 @@ struct SArrayCache
 	asIScriptFunction *cmpFunc;
 	asIScriptFunction *eqFunc;
 	int cmpFuncReturnCode; // To allow better error message in case of multiple matches
-    int eqFuncReturnCode;
+	int eqFuncReturnCode;
 };
 
 // We just define a number here that we assume nobody else is using for 
@@ -657,9 +658,9 @@ void CScriptArray::CreateBuffer(SArrayBuffer **buf, asUINT numElements)
 	{
 		#if defined(__S3E__)
 		*buf = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1+elementSize*numElements];
-        #else
+		#else
 		*buf = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1+elementSize*numElements];
-        #endif
+		#endif
 	}
 
 	if( *buf )
@@ -774,16 +775,16 @@ bool CScriptArray::Less(const void *a, const void *b, bool asc, asIScriptContext
 			// TODO: Add proper error handling
 			r = ctx->Prepare(cache->cmpFunc); assert(r >= 0);
 
-            if( subTypeId & asTYPEID_OBJHANDLE )
-            {
-			    r = ctx->SetObject(*((void**)a)); assert(r >= 0);
-			    r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
-            }
-            else
-            {
-			    r = ctx->SetObject((void*)a); assert(r >= 0);
-			    r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
-            }
+			if( subTypeId & asTYPEID_OBJHANDLE )
+			{
+				r = ctx->SetObject(*((void**)a)); assert(r >= 0);
+				r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
+			}
+			else
+			{
+				r = ctx->SetObject((void*)a); assert(r >= 0);
+				r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+			}
 
 			r = ctx->Execute();
 
@@ -907,23 +908,23 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx, S
 			// TODO: Add proper error handling
 			r = ctx->Prepare(cache->eqFunc); assert(r >= 0);
 
-            if( subTypeId & asTYPEID_OBJHANDLE )
-            {
-			    r = ctx->SetObject(*((void**)a)); assert(r >= 0);
-			    r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
-            }
-            else
-            {
-			    r = ctx->SetObject((void*)a); assert(r >= 0);
-			    r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
-            }
+			if( subTypeId & asTYPEID_OBJHANDLE )
+			{
+				r = ctx->SetObject(*((void**)a)); assert(r >= 0);
+				r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
+			}
+			else
+			{
+				r = ctx->SetObject((void*)a); assert(r >= 0);
+				r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+			}
 
 			r = ctx->Execute();
 
 			if( r == asEXECUTION_FINISHED )
 				return ctx->GetReturnByte() != 0;
 
-            return false;
+			return false;
 		}
 
 		// Execute object opCmp if available
@@ -932,23 +933,23 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx, S
 			// TODO: Add proper error handling
 			r = ctx->Prepare(cache->cmpFunc); assert(r >= 0);
 
-            if( subTypeId & asTYPEID_OBJHANDLE )
-            {
-			    r = ctx->SetObject(*((void**)a)); assert(r >= 0);
-			    r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
-            }
-            else
-            {
-			    r = ctx->SetObject((void*)a); assert(r >= 0);
-			    r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
-            }
+			if( subTypeId & asTYPEID_OBJHANDLE )
+			{
+				r = ctx->SetObject(*((void**)a)); assert(r >= 0);
+				r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
+			}
+			else
+			{
+				r = ctx->SetObject((void*)a); assert(r >= 0);
+				r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+			}
 
 			r = ctx->Execute();
 
 			if( r == asEXECUTION_FINISHED )
 				return (int)ctx->GetReturnDWord() == 0;
 
-            return false;
+			return false;
 		}
 	}
 

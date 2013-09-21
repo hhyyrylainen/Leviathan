@@ -1,3 +1,4 @@
+#include "Include.h"
 #include "scriptstdstring.h"
 #include <assert.h> // assert()
 #include <sstream>  // std::stringstream
@@ -452,8 +453,8 @@ static asINT64 parseInt(const string &val, asUINT base, asUINT *byteCount)
 	else if( base == 16 )
 	{
 		while( (*end >= '0' && *end <= '9') ||
-		       (*end >= 'a' && *end <= 'f') ||
-		       (*end >= 'A' && *end <= 'F') )
+			   (*end >= 'a' && *end <= 'f') ||
+			   (*end >= 'A' && *end <= 'F') )
 		{
 			res *= 16;
 			if( *end >= '0' && *end <= '9' )
@@ -480,9 +481,9 @@ double parseFloat(const string &val, asUINT *byteCount)
 {
 	char *end;
 
-    // WinCE doesn't have setlocale. Some quick testing on my current platform
-    // still manages to parse the numbers such as "3.14" even if the decimal for the
-    // locale is ",".
+	// WinCE doesn't have setlocale. Some quick testing on my current platform
+	// still manages to parse the numbers such as "3.14" even if the decimal for the
+	// locale is ",".
 #if !defined(_WIN32_WCE) && !defined(ANDROID)
 	// Set the locale to C so that we are guaranteed to parse the float value correctly
 	char *orig = setlocale(LC_NUMERIC, 0);
@@ -525,7 +526,7 @@ static string StringSubString(asUINT start, int count, const string &str)
 // makro, so this wrapper was introduced as work around.
 static bool StringEquals(const std::string& lhs, const std::string& rhs)
 {
-    return lhs == rhs;
+	return lhs == rhs;
 }
 
 void RegisterStdString_Native(asIScriptEngine *engine)
@@ -781,15 +782,15 @@ static void StringCharAtGeneric(asIScriptGeneric * gen)
 
   if (index >= self->size()) 
   {
-    // Set a script exception
-    asIScriptContext *ctx = asGetActiveContext();
-    ctx->SetException("Out of range");
+	// Set a script exception
+	asIScriptContext *ctx = asGetActiveContext();
+	ctx->SetException("Out of range");
 
-    gen->SetReturnAddress(0);
+	gen->SetReturnAddress(0);
   } 
   else 
   {
-    gen->SetReturnAddress(&(self->operator [](index)));
+	gen->SetReturnAddress(&(self->operator [](index)));
   }
 }
 
@@ -955,13 +956,13 @@ static void AddBool2StringGeneric(asIScriptGeneric * gen)
 
 static void StringSubString_Generic(asIScriptGeneric *gen)
 {
-    // Get the arguments
-    string *str   = (string*)gen->GetObject();
-    asUINT  start = *(int*)gen->GetAddressOfArg(0);
-    int     count = *(int*)gen->GetAddressOfArg(1);
+	// Get the arguments
+	string *str   = (string*)gen->GetObject();
+	asUINT  start = *(int*)gen->GetAddressOfArg(0);
+	int     count = *(int*)gen->GetAddressOfArg(1);
 
 	// Return the substring
-    new(gen->GetAddressOfReturnLocation()) string(StringSubString(start, count, *str));
+	new(gen->GetAddressOfReturnLocation()) string(StringSubString(start, count, *str));
 }
 
 void RegisterStdString_Generic(asIScriptEngine *engine) 

@@ -1,3 +1,4 @@
+#include "Include.h"
 #include <string.h>
 #include "scripthelper.h"
 #include <string>
@@ -10,9 +11,9 @@ BEGIN_AS_NAMESPACE
 
 int CompareRelation(asIScriptEngine *engine, void *lobj, void *robj, int typeId, int &result)
 {
-    // TODO: If a lot of script objects are going to be compared, e.g. when sorting an array, 
-    //       then the method id and context should be cached between calls.
-    
+	// TODO: If a lot of script objects are going to be compared, e.g. when sorting an array, 
+	//       then the method id and context should be cached between calls.
+	
 	int retval = -1;
 	asIScriptFunction *func = 0;
 
@@ -66,9 +67,9 @@ int CompareRelation(asIScriptEngine *engine, void *lobj, void *robj, int typeId,
 
 int CompareEquality(asIScriptEngine *engine, void *lobj, void *robj, int typeId, bool &result)
 {
-    // TODO: If a lot of script objects are going to be compared, e.g. when searching for an
+	// TODO: If a lot of script objects are going to be compared, e.g. when searching for an
 	//       entry in a set, then the method and context should be cached between calls.
-    
+	
 	int retval = -1;
 	asIScriptFunction *func = 0;
 

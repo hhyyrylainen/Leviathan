@@ -135,7 +135,7 @@ Leviathan::Rendering::OverlayPreferer::OverlayPreferer(Ogre::OverlayContainer* t
 }
 
 Leviathan::Rendering::OverlayPreferer::~OverlayPreferer(){
-
+	OverlayPreferer::setOverlays.erase(setOverlays.find(RTarget));
 }
 // ------------------------------------ //
 void Leviathan::Rendering::OverlayPreferer::postViewportUpdate(const Ogre::RenderTargetViewportEvent & evt){

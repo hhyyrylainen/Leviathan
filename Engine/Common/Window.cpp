@@ -8,6 +8,11 @@
 #include <boost\assign\list_of.hpp>
 using namespace Leviathan;
 // ------------------------------------ //
+// we must have an int of size 32 bits //
+#pragma intrinsic(_BitScanForward)
+
+static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function");
+
 
 DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, bool vsync) : OWindow(owindow), VerticalSync(vsync), m_hwnd(NULL), 
 	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDonwMouseButtons(0)
@@ -294,8 +299,26 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
 bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id){
 	CheckInputState();
 	// pass event to active Rocket context //
-	int Keynumber = 0;
-	arg.state.buttons;
+	int differences = arg.state.buttons^LastFrameDonwMouseButtons;
+
+	// find differences //
+	unsigned long index = 0;
+
+	_BitScanForward(&index, differences);
+
+	// update old state //
+	LastFrameDonwMouseButtons |= 1 << index;
+
+	//wstring message = L"mouse number: "+Convert::ToWstring(index)+L" pressed; ";
+
+	//wstringstream convert;
+	//convert << std::hex << LastFrameDonwMouseButtons;
+	//message += convert.str();
+
+	//DEBUG_OUTPUT_AUTO(message);
+
+
+	int Keynumber = index;
 
 	inputreceiver->ProcessMouseButtonDown(Keynumber, SpecialKeyModifiers);
 
@@ -306,11 +329,27 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id){
 	CheckInputState();
 	// pass event to active Rocket context //
-	int Keynumber = 0;
+	int differences = arg.state.buttons^LastFrameDonwMouseButtons;
 
+	// find differences //
+	unsigned long index = 0;
 
+	_BitScanForward(&index, differences);
 
-	inputreceiver->ProcessMouseButtonDown(Keynumber, SpecialKeyModifiers);
+	// update old state //
+	LastFrameDonwMouseButtons ^= 1 << index;
+
+	//wstring message = L"mouse number: "+Convert::ToWstring(index)+L" released; ";
+
+	//wstringstream convert;
+	//convert << std::hex << LastFrameDonwMouseButtons;
+	//message += convert.str();
+
+	//DEBUG_OUTPUT_AUTO(message);
+
+	int Keynumber = index;
+
+	inputreceiver->ProcessMouseButtonUp(Keynumber, SpecialKeyModifiers);
 
 	// don't really know what to return
 	return true;

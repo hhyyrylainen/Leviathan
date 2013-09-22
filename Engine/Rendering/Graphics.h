@@ -60,15 +60,27 @@ namespace Leviathan{
 
 		//DLLEXPORT bool RenderAutomatic(Rendering::BaseRenderableBufferContainer* torenderbuffers, ShaderRenderTask* shaderparameters);
 
+		DLLEXPORT inline Window* GetOwningWindow(){
+			return AppDefinition->GetWindow();
+		}
+
 		DLLEXPORT inline TextureManager* GetTextureManager(){
 			return TextureKeeper;
 		}
 		DLLEXPORT inline Rendering::OverlayMaster* GetOverlayMaster(){
 			return Overlays;
 		}
+
+		DLLEXPORT inline Rendering::FontManager* GetFontManager(){
+			return Fonts;
+		}
 		DLLEXPORT inline AppDef* GetDefinitionObject(){
 			return AppDefinition;
 		}
+		DLLEXPORT inline Ogre::SceneManager* GetWindowScene(){
+			return MainScene;
+		}
+
 		RenderingLight* Light;
 
 		DLLEXPORT static Graphics* Get();

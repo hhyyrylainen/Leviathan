@@ -54,6 +54,9 @@ namespace Leviathan{
 		// loaded file searching functions //
 		DLLEXPORT wstring& SearchForFile(FILEGROUP which, const wstring& name, const wstring& extensions, bool searchall = true);
 
+		DLLEXPORT vector<shared_ptr<FileDefinitionType>> FindAllMatchingFiles(FILEGROUP which, const wstring& regexname, const wstring &extensions,
+			bool searchall = true);
+
 		// direct access to files //
 		DLLEXPORT vector<shared_ptr<FileDefinitionType>>& GetModelFiles();
 		DLLEXPORT vector<shared_ptr<FileDefinitionType>>& GetSoundFiles();
@@ -94,6 +97,7 @@ namespace Leviathan{
 		DLLEXPORT static wstring GetExtension(const wstring &path);
 		DLLEXPORT static wstring ChangeExtension(const wstring& path, const wstring &newext);
 		DLLEXPORT static wstring RemoveExtension(const wstring &file, bool delpath);
+		DLLEXPORT static string RemovePath(const string &filepath);
 
 		// file operations //
 		DLLEXPORT static int GetFileLength(wstring name);
@@ -115,8 +119,10 @@ namespace Leviathan{
 		// file search functions //
 		shared_ptr<FileDefinitionType> _SearchForFileInVec(vector<shared_ptr<FileDefinitionType>> &vec, vector<int> &extensions, 
 			const wstring &name, bool UseIndexVector, vector<CharWithIndex*>* Index);
+		void _SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<shared_ptr<FileDefinitionType>>& results, 
+			vector<int>& extensions, const basic_regex<wchar_t> &regex);
 		void _CreateIndexesIfMissing(vector<shared_ptr<FileDefinitionType>> &vec, vector<CharWithIndex*> &resultvec, bool &indexed, 
-			const bool &force = false);
+			const bool &force /*= false*/);
 		// ------------------------------------ //
 		// vector that holds string value of file extension and it's id code //
 		vector<IntWstring*> FileTypes;

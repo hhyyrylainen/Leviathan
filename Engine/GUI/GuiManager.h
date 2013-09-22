@@ -20,12 +20,16 @@
 
 // objects //
 #include "GUI\Objects\TextLabel.h"
+#include "RocketSysInternals.h"
+#include "OgreRenderQueueListener.h"
 
 #define EVENT_SOURCE_MANAGER		1
 #define EVENT_SOURCE_COLLECTION		2
 #define EVENT_SOURCE_SELF			3
 #define EVENT_SOURCE_MANAGINGOBJECT	4
 #define EVENT_SOURCE_OTHEROBJECT	5
+
+class RenderInterfaceOgre3D;
 
 namespace Leviathan { namespace Gui{
 
@@ -80,7 +84,7 @@ namespace Leviathan { namespace Gui{
 		InputEvent* MatchingEvent;
 	};
 
-	class GuiManager : public EngineComponent{
+	class GuiManager : public EngineComponent, public Ogre::RenderQueueListener{
 	public:
 		DLLEXPORT GuiManager::GuiManager();
 		DLLEXPORT GuiManager::~GuiManager();
@@ -101,9 +105,6 @@ namespace Leviathan { namespace Gui{
 		DLLEXPORT void SetKeyContainedValuesAsConsumed(const GKey &k);
 
 		DLLEXPORT bool GuiComboPress(GKey &key);
-
-		// send "fake" key press to Gui //
-		//DLLEXPORT void QuickSendPress(int keyinfo);
 
 		DLLEXPORT void OnResize();
 
@@ -140,12 +141,27 @@ namespace Leviathan { namespace Gui{
 		DLLEXPORT static GuiManager* Get();
 		DLLEXPORT Graphics* GetGraph(){return ThisRenderer; };
 
+		virtual void renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation);
+
 	private:
 		// should be called before every vector operation //
 		void UpdateArrays(); 
 
+		// rendering //
+		void BuildProjectionMatrix(Ogre::Matrix4& projection_matrix);
+		void ConfigureRenderSystem();
+
 		// ------------------------------------ //
 		Gui::KeyListener* MainInput;
+
+		RenderInterfaceOgre3D* RocketRenderer;
+		RocketSysInternals* RocketInternals;
+
+		// TODO: implement this in OverlayMaster to hide GUI in view ports that don't need it //
+		bool Visible;
+
+		Rocket::Core::Context* WindowContext;
+
 		Graphics* ThisRenderer;
 
 		// Gui elements //

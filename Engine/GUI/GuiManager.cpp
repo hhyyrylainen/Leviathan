@@ -3,15 +3,23 @@
 #ifndef LEVIATHAN_GUI_MAIN
 #include "GuiManager.h"
 #endif
-using namespace Leviathan;
-using namespace Leviathan::Gui;
-// ------------------------------------ //
 #include "Engine.h"
 #include "Script\ScriptInterface.h"
 #include "FileSystem.h"
 #include <boost\assign\list_of.hpp>
+#include <Rocket\Controls\Controls.h>
+#include <Rocket\Debugger\Debugger.h>
+#include <Rocket/Controls.h>
+#include <Rocket/Debugger.h>
+#include "Rendering\GUI\RenderInterfaceOgre3D.h"
+using namespace Leviathan;
+using namespace Leviathan::Gui;
+// ------------------------------------ //
 
-Leviathan::Gui::GuiManager::GuiManager() : ReceivedPresses(), ID(IDFactory::GetID()), Foreground(NULL), MainInput(NULL){
+
+Leviathan::Gui::GuiManager::GuiManager() : ReceivedPresses(), ID(IDFactory::GetID()), Foreground(NULL), MainInput(NULL), RocketRenderer(NULL),
+	RocketInternals(NULL), WindowContext(NULL), Visible(true)
+{
 	ObjectAmountChanged = false;
 
 	staticaccess = this;
@@ -20,7 +28,6 @@ Leviathan::Gui::GuiManager::GuiManager() : ReceivedPresses(), ID(IDFactory::GetI
 Leviathan::Gui::GuiManager::~GuiManager(){
 	// on quit calls //
 	SAFE_DELETE(MainInput);
-	Release();
 
 	staticaccess = NULL;
 }
@@ -34,11 +41,56 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph){
 
 	ThisRenderer = graph;
 
+
+	// create renderer for Rocket GUI //
+	RocketRenderer = new RenderInterfaceOgre3D(graph->GetOwningWindow()->GetWidth(), graph->GetOwningWindow()->GetHeight());
+
+	Rocket::Core::SetRenderInterface(RocketRenderer);
+
+	RocketInternals = new RocketSysInternals();
+
+	Rocket::Core::SetSystemInterface(RocketInternals);
+
+	Rocket::Core::Initialise();
+	Rocket::Controls::Initialise();
+
+	// font database //
+	Rocket::Core::FontDatabase::Initialise();
+
+	// load fonts //
+	graph->GetFontManager()->LoadAllFonts();
+
+	// create context for this window //
+	WindowContext = Rocket::Core::CreateContext("window01_context", Rocket::Core::Vector2i(graph->GetOwningWindow()->GetWidth(), 
+		graph->GetOwningWindow()->GetHeight())/*, static_cast<Rocket::Core::RenderInterface*>RocketRenderer*/);
+	
+	Rocket::Debugger::Initialise(WindowContext);
+
+
+	Rocket::Core::ElementDocument* cursor = WindowContext->LoadMouseCursor(
+		Convert::WstringToString(FileSystem::GetScriptsFolder()+L"cursor.rml").c_str());
+	if(cursor)
+		cursor->RemoveReference();
+
+	Rocket::Core::ElementDocument* document = WindowContext->LoadDocument(
+		Convert::WstringToString(FileSystem::GetScriptsFolder()+L"demo.rml").c_str());
+	if(document){
+
+		document->Show();
+		document->RemoveReference();
+	}
+
+
 	// create press listeners //
 	MainInput = new KeyListener(this, Engine::GetEngine()->GetKeyPresManager());
 	
 	// load main Gui file //
 	ExecuteGuiScript(FileSystem::GetScriptsFolder()+L"MainGui.txt");
+
+
+
+	// we render during Ogre overlay //
+	graph->GetWindowScene()->addRenderQueueListener(this);
 
 
 	return true;
@@ -54,6 +106,14 @@ void Leviathan::Gui::GuiManager::Release(){
 	}
 
 	SAFE_DELETE_VECTOR(Collections);
+
+	// shutdown rocket //
+	WindowContext->RemoveReference();
+	Rocket::Core::Shutdown();
+	Rocket::Core::FontDatabase::Shutdown();
+
+	SAFE_DELETE(RocketInternals);
+	SAFE_DELETE(RocketRenderer);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiManager::ClearKeyReceivingState(){
@@ -273,11 +333,17 @@ void Leviathan::Gui::GuiManager::Render(){
 	for(unsigned int i = 0; i < NeedRendering.size(); i++){
 		NeedRendering[i]->Render(ThisRenderer);
 	}
+
+	// update Rocket input //
+	ThisRenderer->GetOwningWindow()->GatherInput(WindowContext);
 }
 // ------------------------------------ //
 void Leviathan::Gui::GuiManager::OnResize(){
 	// call events //
 	this->CallEvent(new Event(EVENT_TYPE_WINDOW_RESIZE, (void*)new Int2(DataStore::Get()->GetWidth(), DataStore::Get()->GetHeight())));
+
+	// resize Rocket on this window //
+	WindowContext->SetDimensions(Rocket::Core::Vector2i(DataStore::Get()->GetWidth(), DataStore::Get()->GetHeight()));
 }
 
 // ------------------------------------ //
@@ -684,6 +750,91 @@ void GuiManager::SetCollectionState(const int &id, const bool &visible, const bo
 	
 
 }
+
+// -------------------------------------- //
+// code from Rocket Ogre sample //
+void Leviathan::Gui::GuiManager::renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation){
+	// we render Rocket at the same time with OGRE overlay //
+	if(queueGroupId == Ogre::RENDER_QUEUE_OVERLAY && Visible){
+
+		WindowContext->Update();
+
+		ConfigureRenderSystem();
+		WindowContext->Render();
+	}
+}
+
+
+// Configures Ogre's rendering system for rendering Rocket.
+void Leviathan::Gui::GuiManager::ConfigureRenderSystem()
+{
+	Ogre::RenderSystem* render_system = Ogre::Root::getSingleton().getRenderSystem();
+
+	// Set up the projection and view matrices.
+	Ogre::Matrix4 projection_matrix;
+	BuildProjectionMatrix(projection_matrix);
+	render_system->_setProjectionMatrix(projection_matrix);
+	render_system->_setViewMatrix(Ogre::Matrix4::IDENTITY);
+
+	// Disable lighting, as all of Rocket's geometry is unlit.
+	render_system->setLightingEnabled(false);
+	// Disable depth-buffering; all of the geometry is already depth-sorted.
+	render_system->_setDepthBufferParams(false, false);
+	// Rocket generates anti-clockwise geometry, so enable clockwise-culling.
+	render_system->_setCullingMode(Ogre::CULL_CLOCKWISE);
+	// Disable fogging.
+	render_system->_setFog(Ogre::FOG_NONE);
+	// Enable writing to all four channels.
+	render_system->_setColourBufferWriteEnabled(true, true, true, true);
+	// Unbind any vertex or fragment programs bound previously by the application.
+	render_system->unbindGpuProgram(Ogre::GPT_FRAGMENT_PROGRAM);
+	render_system->unbindGpuProgram(Ogre::GPT_VERTEX_PROGRAM);
+
+	// Set texture settings to clamp along both axes.
+	Ogre::TextureUnitState::UVWAddressingMode addressing_mode;
+	addressing_mode.u = Ogre::TextureUnitState::TAM_CLAMP;
+	addressing_mode.v = Ogre::TextureUnitState::TAM_CLAMP;
+	addressing_mode.w = Ogre::TextureUnitState::TAM_CLAMP;
+	render_system->_setTextureAddressingMode(0, addressing_mode);
+
+	// Set the texture coordinates for unit 0 to be read from unit 0.
+	render_system->_setTextureCoordSet(0, 0);
+	// Disable texture coordinate calculation.
+	render_system->_setTextureCoordCalculation(0, Ogre::TEXCALC_NONE);
+	// Enable linear filtering; images should be rendering 1 texel == 1 pixel, so point filtering could be used
+	// except in the case of scaling tiled decorators.
+	render_system->_setTextureUnitFiltering(0, Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_POINT);
+	// Disable texture coordinate transforms.
+	render_system->_setTextureMatrix(0, Ogre::Matrix4::IDENTITY);
+	// Reject pixels with an alpha of 0.
+	render_system->_setAlphaRejectSettings(Ogre::CMPF_GREATER, 0, false);
+	// Disable all texture units but the first.
+	render_system->_disableTextureUnitsFrom(1);
+
+	// Enable simple alpha blending.
+	render_system->_setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+
+	// Disable depth bias.
+	render_system->_setDepthBias(0, 0);
+}
+
+// Builds an OpenGL-style orthographic projection matrix.
+void Leviathan::Gui::GuiManager::BuildProjectionMatrix(Ogre::Matrix4& projection_matrix)
+{
+	float z_near = -1;
+	float z_far = 1;
+
+	projection_matrix = Ogre::Matrix4::ZERO;
+
+	// Set up matrices.
+	projection_matrix[0][0] = 2.0f / ThisRenderer->GetOwningWindow()->GetWidth();
+	projection_matrix[0][3]= -1.0000000f;
+	projection_matrix[1][1]= -2.0f / ThisRenderer->GetOwningWindow()->GetHeight();
+	projection_matrix[1][3]= 1.0000000f;
+	projection_matrix[2][2]= -2.0f / (z_far - z_near);
+	projection_matrix[3][3]= 1.0000000f;
+}
+
 // -------------------------------------- //
 bool GuiManager::HasForeGround(){
 	return (Foreground != NULL);

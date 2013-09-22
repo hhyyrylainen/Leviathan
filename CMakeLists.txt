@@ -4,6 +4,11 @@ cmake_minimum_required(VERSION 2.8)
 # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, higher memory for compiling
 add_definitions(-DUNICODE -D_UNICODE -Gm -fp:except /ZI -Zm144)
 
+#set(LINKER_REQUIRED_FLAGS "/NODEFAULTLIB:LIBCMTD")
+
+# linker flag
+SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_REQUIRED_FLAGS}")
+
 project(Leviathan)
 
 set(WORK_DIR "${PROJECT_BINARY_DIR}/bin")

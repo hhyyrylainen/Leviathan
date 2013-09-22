@@ -19,7 +19,7 @@ SmoothedPosition::~SmoothedPosition(){
 }
 // ------------------------------------ //
 void SmoothedPosition::SmoothValues(){
-	int difference = 0;
+	float difference = 0;
 	// smooth values towards real values for smooth movement //
 	// check is jump too high - directly change the value then //
 	if(s_X != X){
@@ -31,7 +31,7 @@ void SmoothedPosition::SmoothValues(){
 		// this needed to be done before forcing the value to positive //
 
 		FORCE_POSITIVE(difference);
-		if(difference > 300 * UNIT_SCALE){
+		if(difference > 300 * LEVIATHAN_UNIT_SCALE){
 			s_X = X;
 		}
 	}
@@ -44,7 +44,7 @@ void SmoothedPosition::SmoothValues(){
 		// this needed to be done before forcing the value to positive //
 
 		FORCE_POSITIVE(difference);
-		if(difference > 300 * UNIT_SCALE){
+		if(difference > 300 * LEVIATHAN_UNIT_SCALE){
 			s_Y = Y;
 		}
 	}
@@ -57,7 +57,7 @@ void SmoothedPosition::SmoothValues(){
 		// this needed to be done before forcing the value to positive //
 
 		FORCE_POSITIVE(difference);
-		if(difference > 300 * UNIT_SCALE){
+		if(difference > 300 * LEVIATHAN_UNIT_SCALE){
 			s_Z = Z;
 		}
 	}
@@ -72,7 +72,7 @@ void SmoothedPosition::SmoothValues(){
 		// this needed to be done before forcing the value to positive //
 
 		FORCE_POSITIVE(difference);
-		if(difference > 300 * UNIT_SCALE){
+		if(difference > 300 * LEVIATHAN_UNIT_SCALE){
 			s_Pitch = Pitch;
 		}
 	}
@@ -85,7 +85,7 @@ void SmoothedPosition::SmoothValues(){
 		// this needed to be done before forcing the value to positive //
 
 		FORCE_POSITIVE(difference);
-		if(difference > 300 * UNIT_SCALE){
+		if(difference > 300 * LEVIATHAN_UNIT_SCALE){
 			s_Yaw = Yaw;
 		}
 	}
@@ -98,7 +98,7 @@ void SmoothedPosition::SmoothValues(){
 		// this needed to be done before forcing the value to positive //
 
 		FORCE_POSITIVE(difference);
-		if(difference > 300 * UNIT_SCALE){
+		if(difference > 300 * LEVIATHAN_UNIT_SCALE){
 			s_Roll = Roll;
 		}
 	}

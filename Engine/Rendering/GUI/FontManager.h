@@ -21,6 +21,8 @@ namespace Leviathan{ namespace Rendering{
 
 		DLLEXPORT static Ogre::Font* GetFontPtrFromName(const string &name);
 
+		DLLEXPORT void LoadAllFonts();
+
 		DLLEXPORT bool LoadFontByName(const wstring &name);
 		DLLEXPORT float CountTextLength(const wstring &font, const wstring &text, const float &textheight, OverlayMaster* overlay, const int &coordtype = 
 			GUI_POSITIONABLE_COORDTYPE_RELATIVE);

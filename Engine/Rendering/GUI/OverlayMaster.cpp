@@ -19,11 +19,12 @@ DLLEXPORT Leviathan::Rendering::OverlayMaster::OverlayMaster(Ogre::SceneManager*
 
 	MainOverlay->setZOrder(100);
 
-	// load fonts before any GUI objects //
-	if(!fontloader->LoadFontByName(L"Arial")){
+	// fonts are now loaded by default GUI instance
+	//// load fonts before any GUI objects //
+	//if(!fontloader->LoadFontByName(L"Arial")){
 
-		throw ExceptionNotFound(L"Arial font not found", 404, __WFUNCTION__, L"file", L"Arial.ttf");
-	}
+	//	throw ExceptionNotFound(L"Arial font not found", 404, __WFUNCTION__, L"file", L"Arial.ttf");
+	//}
 
 	// create panels for each window //
 	MainWindowPanel = static_cast<Ogre::OverlayContainer*>(tmpmanager.createOverlayElement("Panel", "MainWindowBasePanel00"));

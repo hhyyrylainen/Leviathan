@@ -384,6 +384,19 @@ wstring Leviathan::FileSystem::RemoveExtension(const wstring &file, bool delpath
 
 	return final;
 }
+
+
+DLLEXPORT string Leviathan::FileSystem::RemovePath(const string &filepath){
+	// start from last character and find last / or \ //
+	for(size_t i = filepath.size()-1; i < filepath.size(); i--){
+		if(filepath[i] == '/' || filepath[i] == '\\'){
+			if(i == filepath.size()-1)
+				return "";
+			return filepath.substr(i+1, filepath.size()-(i+1));
+		}
+	}
+	return filepath;
+}
 // ------------------ File operations ------------------ //
 int Leviathan::FileSystem::GetFileLength(wstring name){
 	wifstream file(name);
@@ -727,6 +740,66 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 //#endif
 	return Misc::EmptyString;
 }
+
+DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllMatchingFiles(FILEGROUP which, const wstring& regexname, 
+	const wstring &extensions, bool searchall /*= true*/)
+{
+	// generate info about the search file //
+	vector<int> ExtensionIDS;
+	GetExtensionIDS(extensions, ExtensionIDS);
+
+	// create regex //
+	basic_regex<wchar_t> usedregex(regexname);
+
+	vector<shared_ptr<FileDefinitionType>> foundfiles;
+
+	//
+
+	if(searchall){
+
+		_SearchForFilesInVec(AllFiles, foundfiles, ExtensionIDS, usedregex);
+
+	} else {
+		// specific vector //
+		vector<shared_ptr<FileDefinitionType>>* targetvector;
+
+		switch(which){
+		case FILEGROUP_MODEL:
+			{
+				targetvector = &ModelFiles;
+			}
+			break;
+		case FILEGROUP_TEXTURE:
+			{
+				targetvector = &TextureFiles;
+			}
+			break;
+		case FILEGROUP_SOUND:
+			{
+				targetvector = &SoundFiles;
+			}
+			break;
+		case FILEGROUP_SCRIPT:
+			{
+				targetvector = &ScriptFiles;
+			}
+			break;
+		case FILEGROUP_OTHER:
+			{
+				targetvector = &AllFiles;
+			}
+			break;
+		}
+
+		_SearchForFilesInVec(*targetvector, foundfiles, ExtensionIDS, usedregex);
+
+	}
+
+	// return what we found //
+	return foundfiles;
+}
+
+
 // ------------------------------------ //
 vector<shared_ptr<FileDefinitionType>>& Leviathan::FileSystem::GetModelFiles(){
 	return ModelFiles;
@@ -744,7 +817,9 @@ vector<shared_ptr<FileDefinitionType>>& Leviathan::FileSystem::GetScriptFiles(){
 	return ScriptFiles;
 }
 // ------------------------------------ //
-shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<int>& extensions, const wstring& name, bool UseIndexVector, vector<CharWithIndex*>* Index){
+shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<int>& extensions, 
+	const wstring& name, bool UseIndexVector, vector<CharWithIndex*>* Index)
+{
 	int StartSpot = 0;
 
 	// use index to get start spot for faster searching //
@@ -781,6 +856,25 @@ shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector
 	}
 	// nothing //
 	return NULL;
+}
+
+void Leviathan::FileSystem::_SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<shared_ptr<FileDefinitionType>>& results, 
+	vector<int>& extensions, const basic_regex<wchar_t> &regex)
+{
+	for(size_t i = 0; i < vec.size(); i++){
+		// if no extension specified skip checking them //
+		if(extensions.size() > 0){
+			// check does extension(s) match //
+			if(!DoesExtensionMatch(vec[i].get(), extensions))
+				continue;
+		}
+		// extensions match check name //
+		if(!regex_search(vec[i]->Name, regex))
+			continue;
+
+		// match //
+		results.push_back(vec[i]);
+	}
 }
 
 void Leviathan::FileSystem::_CreateIndexesIfMissing(vector<shared_ptr<FileDefinitionType>> &vec, vector<CharWithIndex*> &resultvec, bool &indexed, 
@@ -850,7 +944,19 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 
 	// possibly register addon folders //
 
+	// Rocket groups //
+	manager.createResourceGroup("Rocket");
 
+	folder = Convert::WstringToString(DataFolder+ScriptsFolder);
+	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
+	folder = Convert::WstringToString(DataFolder+TextureFolder);
+	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
+	folder = Convert::WstringToString(DataFolder+TextureFolder);
+	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
+	folder = Convert::WstringToString(DataFolder+L"Cache\\Rocket\\");
+	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
+	folder = ".\\";
+	manager.addResourceLocation(folder, "FileSystem", "Rocket", false, false);
 	// initialize the groups //
 	manager.initialiseAllResourceGroups();
 
@@ -863,6 +969,14 @@ DLLEXPORT  void Leviathan::FileSystem::RegisterOGREResourceLocation(const string
 	Ogre::ResourceGroupManager& manager = Ogre::ResourceGroupManager::getSingleton();
 
 	Ogre::String groupname = location+"_group";
+
+	// check does it exist //
+	auto groups = manager.getResourceGroups();
+
+	for(size_t i = 0; i < groups.size(); i++){
+		if(groups[i] == groupname)
+			return;
+	}
 
 	manager.createResourceGroup(groupname);
 

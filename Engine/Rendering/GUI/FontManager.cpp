@@ -9,6 +9,7 @@
 #include "Exceptions\ExceptionNotFound.h"
 #include "OverlayMaster.h"
 #include "Common\DataStoring\DataStore.h"
+#include <Rocket\Core.h>
 using namespace Leviathan;
 using namespace Leviathan::Rendering;
 // ------------------------------------ //
@@ -30,7 +31,7 @@ DLLEXPORT bool Leviathan::Rendering::FontManager::LoadFontByName(const wstring &
 
 
 	// load file matching this font //
-	wstring fontgenfile = FileSystem::Get()->SearchForFile(FILEGROUP_OTHER, name, L"ttf", true);
+	wstring fontgenfile = FileSystem::Get()->SearchForFile(FILEGROUP_OTHER, name, L"ttf|otf", true);
 
 	// look for it in registry //
 	if(fontgenfile.size() == 0){
@@ -62,6 +63,9 @@ DLLEXPORT bool Leviathan::Rendering::FontManager::LoadFontByName(const wstring &
 		Logger::Get()->Error(L"FontManager:  LoadFontByName: could not find font .ttf file", true);
 		return false;
 	}
+
+	// register rocket font //
+	Rocket::Core::FontDatabase::LoadFontFace(Convert::WstringToString(fontgenfile).c_str());
 
 	// create font //
 	Ogre::FontPtr tmpptr = Ogre::FontManager::getSingleton().create(Convert::WstringToString(name), 
@@ -231,6 +235,21 @@ DLLEXPORT float Leviathan::Rendering::FontManager::CalculateTextLengthAndLastFit
 DLLEXPORT float Leviathan::Rendering::FontManager::CalculateDotsSizeAtScale(Ogre::Font* font, const float &scale){
 
 	return (font->getGlyphAspectRatio(L'.')*scale)*3;
+}
+
+DLLEXPORT void Leviathan::Rendering::FontManager::LoadAllFonts(){
+	// load arial //
+	LoadFontByName(L"Arial");
+
+
+	// get all font files and load them //
+	std::vector<shared_ptr<FileDefinitionType>> files = FileSystem::Get()->FindAllMatchingFiles(FILEGROUP_OTHER, L".*", L"ttf|otf", false);
+
+	// load them all //
+	for(size_t i = 0; i < files.size(); i++){
+
+		LoadFontByName(files[i]->Name);
+	}
 }
 
 

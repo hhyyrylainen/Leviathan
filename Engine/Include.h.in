@@ -139,7 +139,7 @@ using namespace std;
 #define OBJECT_SMOOTH	4
 #define SHADER_DEBUG 1
 
-#define UNIT_SCALE		1000
+#define LEVIATHAN_UNIT_SCALE		1000
 // throw on Error message //
 //#define THROW_ON_PRINTERROR
 

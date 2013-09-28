@@ -48,8 +48,9 @@ DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(const wstring &nam
 	RegisteredValues[name] = shared_ptr<VariableBlock>(valuetokeep);
 }
 // ------------------------------------ //
-DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVariableList>> &HeaderVars){
-	//QUICKTIME_THISSCOPE;
+DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::ProcessObjectFile(const wstring &file, 
+	vector<shared_ptr<NamedVariableList>> &HeaderVars)
+{
 	vector<shared_ptr<ObjectFileObject>> returned;
 
 	// read the file entirely //
@@ -58,7 +59,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 	try{
 		FileSystem::ReadFileEntirely(file, filecontents);
 	}
-	catch (const ExceptionInvalidArguement &e){
+	catch(const ExceptionInvalidArguement &e){
 
 		Logger::Get()->Error(L"ObjectFileProcessor: ProcessObjectFile: file could not be read, exception:");
 		e.PrintToLog();
@@ -75,10 +76,8 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 	}
 
 	// remove excess spaces //
-
-	// TODO: REMOVE COMMENTS ALSO HERE ----------------------------------------------------------------------------------------------------------------
 	for(unsigned int i = 0; i < Lines.size(); i++){
-		//Misc::WstringRemovePreceedingTrailingSpaces(Lines[i]);
+
 		WstringIterator::StripPreceedingAndTrailingWhitespaceComments(Lines[i]);
 	}
 
@@ -89,7 +88,6 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 		// check is still valid //
 		if(Line >= (int)Lines.size()){
 			// not valid, "file" ended //
-			// can be valid //
 			break;
 		}
 
@@ -107,14 +105,12 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 		catch(...){
 
 			// end found //
-#ifdef _DEBUG
-			//Logger::Get()->Info(L"ObjectFileProcessor: Header ended because of line: "+Lines[Line]);
-#endif // _DEBUG
 			break;
 		}
-
 		Line++;
 	}
+
+	WstringIterator itr(NULL, false);
 
 	// read objects // // move to next line, on first iteration skips "objects {" part //
 	while(++Line < (int)Lines.size() && (!Misc::WstringStartsWith(Lines[Line], L"-!-"))){
@@ -124,11 +120,13 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 			continue;
 		}
 
-		// test for possible objects/structs and stuff //
-		wstring deftype;
-		Misc::WstringGetFirstWord(Lines[Line], deftype);
+		itr.ReInit(&Lines[Line], false);
 
-		if(deftype == L"o"){
+		// test for possible objects/structs and stuff //
+		unique_ptr<wstring> deftype = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_WHITESPACE);
+
+
+		if(*deftype == L"o"){
 			// there's a object //
 			shared_ptr<ObjectFileObject> objs = ReadObjectBlock(Line, Lines, file);
 			if(objs.get() != NULL){
@@ -139,15 +137,13 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 			}
 			continue;
 		}
-		if(deftype == L"s"){
+		if(*deftype == L"s"){
 			// script related //
+			deftype = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_WHITESPACE);
 
-			wstring second;
-			Misc::WstringGetSecondWord(Lines[Line], second);
-
-			if(second == L"run:"){
+			if(*deftype == L"run:"){
 				// run a script, like right now! //
-				wstring scriptinstructions = Misc::WstringRemoveFirstWords(Lines[Line], 2);
+				unique_ptr<wstring> scriptinstructions = itr.GetUntilEnd();
 
 				ScriptInterface* sinterface = ScriptInterface::Get();
 
@@ -161,7 +157,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 				// add sections to the module //
 
 				tmpmodule->GetBuilder().AddSectionFromMemory(Convert::WstringToString(file+L":"+Convert::IntToWstring(Line)).c_str(), 
-					("void Do(int Line){\n"+Convert::WstringToString(scriptinstructions)+"\nreturn;\n}").c_str(), Line);
+					("void Do(int Line){\n"+Convert::WstringToString(*scriptinstructions)+"\nreturn;\n}").c_str(), Line);
 
 				// compile the script //
 				int result = tmpmodule->GetBuilder().BuildModule();
@@ -196,77 +192,73 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 	return returned;
 }
 shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile){
-	// monitoring //
-
 	// this object's definition should be on the Line in Lines parameter //
 	shared_ptr<ObjectFileObject> obj(NULL);
-
-	// split definitions from first line //
-	vector<wstring> lineparts;
-	Misc::CutWstring(Lines[Line], L" ", lineparts);
 
 	// used for error reporting //
 	int StartLine = Line;
 
-	wstring Name(L"");
+	// split definitions from first line //
+	WstringIterator itr(&Lines[Line], false);
 
-	vector<wstring*> Prefixes;
+	unique_ptr<wstring> str(nullptr);
 
-	wstring TypeN(L"");
+	// cut ending {
+	str = itr.GetUntilNextCharacterOrNothing(L'{');
 
-	WstringIterator itr(NULL, false);
+	if(str->size() == 0){
 
-	for(size_t i = 0; i < lineparts.size(); i++){
-		if(lineparts[i].size() == 0){
+		Logger::Get()->Error(L"ObjectFileProcessor: ReadObjectBlock: no starting '{' found on line "+Convert::ToWstring(Line));
+		return NULL;
+	}
+	// re init to not have the brace (actually deleting the string after being done) //
+	itr.ReInit(str.release(), true);
 
-			Logger::Get()->Warning(L"FileLoader: ReadObjectBlock: empty object prefix, prefixes/line: "+Lines[Line], false);
-			continue;
-		}
-		if(lineparts[i].length() == 1){
-			// check is it o //
-			if(lineparts[i] == L"o"){
+	
+	unique_ptr<wstring> Name(nullptr);
+	unique_ptr<wstring> TypeN(nullptr);
+
+	vector<shared_ptr<wstring>> Prefixes;
+
+	while((str = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_WHITESPACE))->size() > 0){
+
+		if(str->length() == 1){
+			if(*str == L"o"){
 				// skip it //
 				continue;
 			}
 		}
-		if(lineparts[i][0] == L'{'){
-			break;
-		}
-		if(lineparts[i][0] == L'"'){
-			// must be the name //
-			if(Name.size() != 0){
-				Logger::Get()->Error(L"FileLoader: ReadObjectBlock: object has multiple names! "+Name);
-				continue;
-			}
-			// get the text inside " marks //
-			itr.ReInit(&lineparts[i], false);
 
-			// wstring iterator can be used to skip all sorts of junk outside quotes //
-			Name = *itr.GetStringInQuotes(QUOTETYPE_BOTH);
+		if(str->find_first_of(L'"') == 0){
+						// wstring iterator can be used to skip all sorts of junk outside quotes //
+			WstringIterator quoteget(str.get(), false);
+
+			// if name is already found this is a prefix //
+			if(Name.get() != NULL){
+
+				Prefixes.push_back(shared_ptr<wstring>(quoteget.GetStringInQuotes(QUOTETYPE_BOTH).release()));
+			} else {
+				Name = quoteget.GetStringInQuotes(QUOTETYPE_BOTH);
+			}
 			continue;
 		}
 		// if no type, must be it //
-		if(TypeN.size() == 0){
-			TypeN = lineparts[i];
+		if(TypeN.get() == NULL){
+			TypeN = unique_ptr<wstring>(str.release());
 			continue;
 		}
 
 		// just a prefix //
-		Prefixes.push_back(new wstring(lineparts[i]));
+		Prefixes.push_back(shared_ptr<wstring>(str.release()));
 	}
-	if(Name.size() == 0){
-		// don't leak memory //
-		SAFE_DELETE_VECTOR(Prefixes);
+	if(Name.get() == NULL || Name->size() == 0){
 
 		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: object doesn't have a name! prefixes "+ Misc::WstringStitchTogether(Prefixes, L" , ")
 			+L" line ", Line, true);
 		return NULL;
 	}
 
-	obj = shared_ptr<ObjectFileObject>(new ObjectFileObject(Name, TypeN));
-	obj->Prefixes = Prefixes;
-	// pointers have been copied to the object's vector //
-	Prefixes.clear();
+	obj = shared_ptr<ObjectFileObject>(new ObjectFileObject(*Name, *TypeN, Prefixes));
 
 	// process blocks contents //
 	int Level = 0, Something = 0, Handleindex = 0;
@@ -328,7 +320,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 		// update iterator //
 		itr.ReInit(&Lines[Line], false);
 		
-		shared_ptr<wstring> start = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE);
+		shared_ptr<wstring> start = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
 
 		if(*start == L"l"){
 			// data list //
@@ -336,7 +328,8 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 			Level++;
 
 			// handle first line of object //
-			obj->Contents.push_back(new ObjectFileList(*itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE)));
+			obj->Contents.push_back(new ObjectFileList(*itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES 
+				| UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS)));
 			Handleindex = obj->Contents.size()-1;
 
 			continue;
@@ -348,7 +341,8 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 			Level++;
 
 			// handle first line of object //
-			obj->TextBlocks.push_back(new ObjectFileTextBlock(*itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE)));
+			obj->TextBlocks.push_back(new ObjectFileTextBlock(*itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES 
+				| UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS)));
 			Handleindex = obj->TextBlocks.size()-1;
 
 			continue;
@@ -362,7 +356,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 	}
 
 	if(Level != -1){
-		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: no matching bracket found in o "+Name+L" line ", StartLine, true);
+		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: no matching bracket found in o "+*Name+L" line ", StartLine, true);
 	}
 
 	// returning smart pointer //
@@ -375,7 +369,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line,
 	// update iterator //
 	itr.ReInit(&Lines[Line], false);
 
-	unique_ptr<wstring> linegot = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE);
+	unique_ptr<wstring> linegot = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
 
 	// check for end //
 	if(*linegot == L"}"){
@@ -638,7 +632,7 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 
 		// starting line //
 		if(temp->Prefixes.size() != 0){
-			writer << L"	o " << temp->TName << L" " << Misc::VectorValuesToSingle<wstring>(temp->Prefixes, L" ", true) << L" \"" 
+			writer << L"	o " << temp->TName << L" " << Misc::VectorValuesToSingleSmartPTR<wstring>(temp->Prefixes, L" ", true) << L" \"" 
 				<< temp->Name << L"\" {" << endl;
 		} else {
 			writer << L"	o " << temp->TName << L" \"" << temp->Name << L"\" {" << endl;

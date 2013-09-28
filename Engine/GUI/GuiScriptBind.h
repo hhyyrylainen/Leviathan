@@ -5,49 +5,50 @@
 #include "angelscript.h"
 #include "GuiAnimation.h"
 #include "GuiScriptInterface.h"
-#include "GUI\Objects\TextLabel.h"
+#include "BaseGuiObject.h"
 
 bool BindGUIObjects(asIScriptEngine* engine){
 
-	// bind animation action //
-	if(engine->RegisterObjectType("AnimationAction", 0, asOBJ_REF) < 0){
-		Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
+	// bind GuiCollection action, this is released by gui object //
+	if(engine->RegisterObjectType("GuiCollection", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("AnimationAction", asBEHAVE_FACTORY, "AnimationAction@ f(float xtarget, float ytarget, int whichfirst, "
-		"float speed, bool allowsimult = false)", asFUNCTION(Gui::CreateAnimationActionMove), asCALL_CDECL) < 0){
-			Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
-	}
-	if(engine->RegisterObjectBehaviour("AnimationAction", asBEHAVE_FACTORY, "AnimationAction@ f(bool visible)", 
-		asFUNCTION(Gui::CreateAnimationActionVisibility), asCALL_CDECL) < 0){
-			Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
-	}
-
-	if(engine->RegisterObjectBehaviour("AnimationAction", asBEHAVE_ADDREF, "void f()", asMETHOD(Gui::AnimationAction, AddRefProxy), asCALL_THISCALL) < 0){
-		Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
-	}
-	if(engine->RegisterObjectBehaviour("AnimationAction", asBEHAVE_RELEASE, "void f()", asMETHOD(Gui::AnimationAction, ReleaseProxy), asCALL_THISCALL) < 0){
-		Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
-	}
+	//if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_FACTORY, "AnimationAction@ f(float xtarget, float ytarget, int whichfirst, "
+	//	"float speed, bool allowsimult = false)", asFUNCTION(Gui::CreateAnimationActionMove), asCALL_CDECL) < 0){
+	//		Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
+	//}
+	//if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_FACTORY, "AnimationAction@ f(bool visible)", 
+	//	asFUNCTION(Gui::CreateAnimationActionVisibility), asCALL_CDECL) < 0){
+	//		Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
+	//}
 
 
-	// bind TextLabel //
-	if(engine->RegisterObjectType("TextLabel", 0, asOBJ_REF) < 0){
-		Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
+	// bind BaseGuiObject //
+	if(engine->RegisterObjectType("BaseGuiObject", 0, asOBJ_REF) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
 	}
 	// no factory function to prevent scripts from creating these functions //
 
-	if(engine->RegisterObjectBehaviour("TextLabel", asBEHAVE_ADDREF, "void f()", asMETHOD(Gui::TextLabel, AddRefProxy), asCALL_THISCALL) < 0){
-		Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
+	if(engine->RegisterObjectBehaviour("BaseGuiObject", asBEHAVE_ADDREF, "void f()", asMETHOD(Gui::BaseGuiObject, AddRefProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("TextLabel", asBEHAVE_RELEASE, "void f()", asMETHOD(Gui::TextLabel, ReleaseProxy), asCALL_THISCALL) < 0){
-		Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
+	if(engine->RegisterObjectBehaviour("BaseGuiObject", asBEHAVE_RELEASE, "void f()", asMETHOD(Gui::BaseGuiObject, ReleaseProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("TextLabel", "void QueueAction(AnimationAction@ AnimActionToTake)", asMETHOD(Gui::TextLabel, QueueActionProxy), 
-		asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("BaseGuiObject", "int GetID()", asMETHOD(Gui::BaseGuiObject, GetID), asCALL_THISCALL) < 0)
 	{
-		Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
+		ANGELSCRIPT_REGISTERFAIL;
 	}
+	if(engine->RegisterObjectMethod("BaseGuiObject", "int SetInternalElementRML(string rmlcode)", asMETHOD(Gui::BaseGuiObject, SetInternalRMLWrapper), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("BaseGuiObject", "VariableBlock@ GetAndPopFirstUpdated()", asMETHOD(Gui::BaseGuiObject, SetInternalRMLWrapper), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	
 
 	
 
@@ -130,6 +131,13 @@ bool BindGUIScriptCommon(asIScriptEngine* engine){
 
 	// succeeded //
 	return true;
+}
+
+
+void RegisterGUIScriptTypeNames(asIScriptEngine* engine, std::map<int, wstring> &typeids){
+
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("GuiCollection"), L"GuiCollection"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("BaseGuiObject"), L"BaseGuiObject"));
 }
 
 #endif

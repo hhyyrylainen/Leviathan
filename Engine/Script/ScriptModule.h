@@ -18,11 +18,14 @@ namespace Leviathan{
 	enum SCRIPTBUILDSTATE{SCRIPTBUILDSTATE_EMPTY, SCRIPTBUILDSTATE_READYTOBUILD, SCRIPTBUILDSTATE_BUILT};
 
 
-#define LISTENERNAME_ONSHOW		L"OnShow"
-#define LISTENERNAME_ONHIDE		L"OnHide"
+#define LISTENERNAME_ONSHOW				L"OnShow"
+#define LISTENERNAME_ONHIDE				L"OnHide"
+#define LISTENERNAME_ONLISTENUPDATE		L"OnListenUpdate"
+	
 
-#define LISTENERVALUE_ONSHOW	100
-#define LISTENERVALUE_ONHIDE	101
+#define LISTENERVALUE_ONSHOW			100
+#define LISTENERVALUE_ONHIDE			101
+#define LISTENERVALUE_ONLISTENUPDATE	102
 
 
 	// used to store function's parameter info //
@@ -81,6 +84,7 @@ namespace Leviathan{
 		DLLEXPORT void DeleteThisModule();
 
 		DLLEXPORT bool DoesListenersContainSpecificListener(const wstring &listenername);
+		DLLEXPORT void GetListOfListeners(std::vector<wstring> &receiver);
 
 		DLLEXPORT wstring GetInfoWstring();
 
@@ -92,7 +96,7 @@ namespace Leviathan{
 		DLLEXPORT void PrintFunctionsInModule();
 
 		// static map that contains listener names //
-		static const map<wstring, int> ListenerNameType;
+		static const std::map<wstring, int> ListenerNameType;
 
 	private:
 
@@ -112,16 +116,13 @@ namespace Leviathan{
 
 		CScriptBuilder* ScriptBuilder; 
 
-		vector<FunctionParameterInfo*> FuncParameterInfos;
+		std::vector<FunctionParameterInfo*> FuncParameterInfos;
 		// ------------------------------------ //
 
 		// map of found listener functions //
-		map<wstring, shared_ptr<ValidListenerData>> FoundListenerFunctions;
+		std::map<wstring, shared_ptr<ValidListenerData>> FoundListenerFunctions;
 
 		static int LatestAssigned;
-		// map of type name and engine type id //
-		static map<int, wstring> EngineTypeIDS;
-
 	};
 
 }

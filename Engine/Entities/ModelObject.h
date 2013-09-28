@@ -22,39 +22,19 @@ namespace Leviathan{ namespace GameObject{
 		DLLEXPORT Model::Model();
 		DLLEXPORT Model::~Model();
 
-		DLLEXPORT virtual bool Render(Graphics* renderer, int mspassed);
-
-		DLLEXPORT bool VerifyResourcesLoaded(Graphics* renderer);
-
-		DLLEXPORT void SetTexturesToLoad(vector<shared_ptr<wstring>> files, MultiFlag flags);
-		DLLEXPORT void SetModelToLoad(const wstring &file);
-
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();
 
-		// animations //
+		DLLEXPORT virtual bool Render(Graphics* renderer, int mspassed);
 
-		// animated textures //
+		DLLEXPORT void SetModelToLoad(const wstring &file);
 
-		// static utility //
-		DLLEXPORT static int GetFlagFromTextureTypeName(const wstring &name);
-		DLLEXPORT static wstring TextureFlagToTypeName(int flag);
 	protected:
 
-		void CheckTextures();
-		void CheckModelObject();
 		// ------------------------ //
 		bool Inited;
 
 		wstring ModelPath;
-		vector<shared_ptr<wstring>> TexturePath;
-		vector<int> TextureIDS;
-		vector<int> TextureTypes;
-
-
-		// pointer to model object //
-
-		// animation data //
 	};
 
 }}

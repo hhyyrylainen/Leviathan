@@ -18,6 +18,10 @@
 #define TEXTUREMANAGER_SEARCH_UTILITY				4
 #define TEXTUREMANAGER_SEARCH_VOLATILEGENERATED		5
 
+#define TEXTURE_INACTIVETIME		30
+#define TEXTURE_UNLOADTIME			30000
+
+
 namespace Leviathan{
 	// small forward declaration //
 	class Graphics;
@@ -27,7 +31,7 @@ namespace Leviathan{
 		DLLEXPORT TextureManager::TextureManager(bool Main, Graphics* graph);
 		DLLEXPORT TextureManager::~TextureManager();
 
-		DLLEXPORT bool Init(const wstring &basedir, int texttimeout, int textunload);
+		DLLEXPORT bool Init(const wstring &basedir);
 		DLLEXPORT void Release();
 
 		DLLEXPORT void TimePass(int mspassed);
@@ -38,7 +42,6 @@ namespace Leviathan{
 
 		DLLEXPORT int LoadTexture(wstring& path, const TEXTURETYPE &type, bool loadnow = false);
 
-		DLLEXPORT ID3D11ShaderResourceView* GetTextureView(int id, int whichfirst, bool nooldsearch = false);
 		DLLEXPORT shared_ptr<ManagedTexture> GetTexture(int id, int whichfirst, bool nooldsearch = false);
 		// compares supplied pointer with the error texture's pointer //
 		DLLEXPORT inline bool IsTextureError(const ManagedTexture* possibleerrorptr){
@@ -48,9 +51,6 @@ namespace Leviathan{
 
 	private:
 		Graphics* GraphInter;
-
-		int InActiveTime;
-		int UnLoadTime;
 		wstring BaseDir;
 
 		// storage arrays //

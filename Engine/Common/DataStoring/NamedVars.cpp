@@ -478,6 +478,10 @@ DLLEXPORT Leviathan::NamedVars::NamedVars(const wstring &datadump) : Variables()
 	}
 }
 
+DLLEXPORT Leviathan::NamedVars::NamedVars(const vector<shared_ptr<NamedVariableList>> &variables) : Variables(variables){
+
+}
+
 Leviathan::NamedVars::~NamedVars(){
 	// no need to release due to smart pointers //
 }

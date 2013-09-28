@@ -30,7 +30,7 @@ bool TestMiscCutWstring(const int &tests){
 	} else {
 		for(unsigned int ind = 0; ind < exampleresult.size(); ind++){
 			if(result[ind] != exampleresult[ind])
-				Failed = true;
+				TESTFAIL;
 		}
 	}
 	if(Failed){
@@ -59,7 +59,7 @@ bool TestMiscReplace(const int &tests){
 	result = Misc::Replace(teststring, L"-ql-", L"hey_whatsthis?");
 	// check result //
 	if(result != correctresult){
-		Failed = true;
+		TESTFAIL;
 	}
 	if(Failed){
 		Logger::Get()->Error(L"EngineTest FAILED: on Misc::Replace wrong result");
@@ -86,7 +86,7 @@ bool TestMiscWstringRemovePreceedingTrailingSpaces(const int &tests){
 	Misc::WstringRemovePreceedingTrailingSpaces(teststringandresult);
 	// check result //
 	if(teststringandresult != correctresult){
-		Failed = true;
+		TESTFAIL;
 	}
 	if(Failed){
 		Logger::Get()->Error(L"EngineTest FAILED: on Misc::WstringRemovePreceedingTrailingSpaces wrong result");
@@ -115,7 +115,7 @@ bool TestMiscWstringGetSecondWord(const int &tests){
 	Misc::WstringGetSecondWord(teststring, result);
 	// check result //
 	if(result != correctresult){
-		Failed = true;
+		TESTFAIL;
 	}
 	if(Failed){
 		Logger::Get()->Error(L"EngineTest FAILED: on Misc::WstringGetSecondWord wrong result");
@@ -141,7 +141,7 @@ bool TestMiscWstringGetFirstWord(const int &tests){
 	Misc::WstringGetFirstWord(teststring, result);
 	// check result //
 	if(result != correctresult){
-		Failed = true;
+		TESTFAIL;
 	}
 	if(Failed){
 		Logger::Get()->Error(L"EngineTest FAILED: on Misc::WstringGetFirstWord wrong result");
@@ -190,7 +190,7 @@ bool TestAutoUpdateableFunctions(const int& tests, Engine* engine){
 	// check did all objects receive it //
 	for(int i = 0; i < tests; i++){
 		if(!Objects[i]->HasUpdated()){
-			Failed = true;
+			TESTFAIL;
 		}
 	}
 
@@ -234,7 +234,7 @@ bool TestEventsFunctions(const int& tests, Engine* engine){
 	// check did all objects receive it //
 	for(int i = 0; i < tests; i++){
 		if(!Objects[i]->IsEvented){
-			Failed = true;
+			TESTFAIL;
 		}
 	}
 
@@ -288,7 +288,7 @@ bool TestMultiFlag(const int &tests){
 	{
 
 		Logger::Get()->Error(L"EngineTest FAILED: TestMultiFlag flags not working properly");
-		return true;
+		return false;
 	}
 
 	SAFE_DELETE(mflag);
@@ -334,10 +334,10 @@ bool TestNamedVars(const int &tests){
 
 	if(!ptry->GetValueDirect()->ConvertAndAssingToVariable<wstring>(emptystr)){
 
-		Failed = true;
+		TESTFAIL;
 	} else {
 		if(emptystr != L"not this"){
-			Failed = true;
+			TESTFAIL;
 		}
 	}
 
@@ -348,24 +348,24 @@ bool TestNamedVars(const int &tests){
 
 	if(!ptry->GetValueDirect()->ConvertAndAssingToVariable<int>(checkval)){
 
-		Failed = true;
+		TESTFAIL;
 	} else {
 		if(checkval != 2){
-			Failed = true;
+			TESTFAIL;
 		}
 	}
 
 	if(!holder->GetValueAndConvertTo<int>(L"var3", checkval)){
 
-		Failed = true;
+		TESTFAIL;
 
 	} else {
 		if(checkval != 3)
-			Failed = true;
+			TESTFAIL;
 	}
 
 	if((holder->Find(L"var66") < 0) || (holder->Find(L"var2") > -1)){
-		Failed = true;
+		TESTFAIL;
 	}
 
 	// advanced variable testing //
@@ -376,21 +376,21 @@ bool TestNamedVars(const int &tests){
 	// make sure that size is right and types are correct //
 	if(advlist.GetVariableCount() != 4){
 		
-		Failed = true;	
+		TESTFAIL;
 	} else {
 		// check values //
 
 		if(advlist.GetValueDirect(0)->GetBlockConst()->Type != DATABLOCK_TYPE_FLOAT){
-			Failed = true;
+			TESTFAIL;
 		}
 		if(advlist.GetValueDirect(1)->GetBlockConst()->Type != DATABLOCK_TYPE_INT){
-			Failed = true;
+			TESTFAIL;
 		}
 		if(advlist.GetValueDirect(2)->GetBlockConst()->Type != DATABLOCK_TYPE_BOOL){
-			Failed = true;
+			TESTFAIL;
 		}
 		if(advlist.GetValueDirect(3)->GetBlockConst()->Type != DATABLOCK_TYPE_WSTRING){
-			Failed = true;
+			TESTFAIL;
 		}
 	}
 
@@ -463,7 +463,7 @@ bool MD5Testing(const int &tests){
 
 		// check //
 		if(result != "a59e6c8c49baf73cb6c15dbc18967812"){
-			Failed = true;
+			TESTFAIL;
 		}
 	}
 
@@ -505,13 +505,12 @@ bool LineTokenizerTest(const int &tests){
 	Leviathan::LineTokeNizer::TokeNizeLine(teststr, TokenSplit);
 
 	if(Propersplit.size() != TokenSplit.size()){
-		Failed = true;
-		
+		TESTFAIL;
 	}
 
 	for(unsigned int i = 0; i < Propersplit.size(); i++){
 		if(Propersplit[i] != *TokenSplit[i]){
-			Failed = true;
+			TESTFAIL;
 		}
 	}
 
@@ -530,121 +529,121 @@ bool LineTokenizerTest(const int &tests){
 		case 0:
 			{
 				if(Tokens.size() != 1){
-					Failed = true;
+					TESTFAIL;
 					continue;
 				}
 				
 				if(Tokens[0]->GetData() != L"This")
-					Failed = true;
+					TESTFAIL;
 			}
 		break;
 		case 1:
 			{
 				if(Tokens.size() != 1){
-					Failed = true;
+					TESTFAIL;
 					continue;
 				}
 
 				if(Tokens[0]->GetData() != L"is")
-					Failed = true;
+					TESTFAIL;
 			}
 		break;
 		case 2:
 			{
 				if(Tokens.size() != 1){
-					Failed = true;
+					TESTFAIL;
 					continue;
 				}
 
 				if(Tokens[0]->GetData() != L"line")
-					Failed = true;
+					TESTFAIL;
 			}
 		break;
 		case 3:
 			{
 				if(Tokens.size() != 1){
-					Failed = true;
+					TESTFAIL;
 					continue;
 				}
 
 				if(Tokens[0]->GetData() != L"that")
-					Failed = true;
+					TESTFAIL;
 			}
 		break;
 		case 4:
 			{
 				if(Tokens.size() != 1){
-					Failed = true;
+					TESTFAIL;
 					continue;
 				}
 
 				if(Tokens[0]->GetData() != L"needs")
-					Failed = true;
+					TESTFAIL;
 			}
 		break;
 		case 5:
 			{
 				if(Tokens.size() != 1){
-					Failed = true;
+					TESTFAIL;
 					continue;
 				}
 
 				if(Tokens[0]->GetData() != L"to")
-					Failed = true;
+					TESTFAIL;
 			}
 		break;
 		case 6:
 			{
 				if(Tokens.size() != 1){
-					Failed = true;
+					TESTFAIL;
 					continue;
 				}
 
 				if(Tokens[0]->GetData() != L"be")
-					Failed = true;
+					TESTFAIL;
 			}
 		break;
 		case 7:
 			{
 				if(Tokens.size() != 1){
-					Failed = true;
+					TESTFAIL;
 					continue;
 				}
 				if(Tokens[0]->GetData() != L"tokenized")
-					Failed = true;
+					TESTFAIL;
 			}
 		break;
 		case 8:
 			{
 				if(Tokens.size() != 5){
-					Failed = true;
+					TESTFAIL;
 					continue;
 				}
 				if((Tokens[1]->GetData() != L"to nice") || (Tokens[2]->GetData() != L"2") || (Tokens[3]->GetData() != L"that work") 
 					|| (Tokens[4]->GetData() != L"2567") || (Tokens[0]->GetSubTokenCount() != 4))
 				{
-					Failed = true;
+					TESTFAIL;
 				}
 				// check final function //
 				LineTokeNizer::SplitTokenToValues(Tokens[4]->GetData(), ValueTokens);
 				if(ValueTokens.size() != 1){
-					Failed = true;
+					TESTFAIL;
 					continue;
 				}
 				int Value = Convert::WstringToInt(ValueTokens[0]);
 				if(Value != 2567)
-					Failed = true;
+					TESTFAIL;
 			}
 		break;
 		case 9:
 			{
 				if(Tokens.size() != 1){
-					Failed = true;
+					TESTFAIL;
 					continue;
 				}
 
 				if(Tokens[0]->GetData() != L"lol")
-					Failed = true;
+					TESTFAIL;
 			}
 		break;
 
@@ -690,12 +689,10 @@ bool ObjectFileParserTest(const int &tests){
 	// check integrity //
 	if(HeaderVars.size() == 4){
 		if(!HeaderVars[0]->CompareName(L"FileType")){
-			QUICK_ERROR_MESSAGE;
-			Failed = true;
+			TESTFAIL;
 		}
 		if(!HeaderVars[3]->CompareName(L"Why")){
-			QUICK_ERROR_MESSAGE;
-			Failed = true;
+			TESTFAIL;
 		}
 		wstring valuescheck = L"";
 
@@ -703,28 +700,24 @@ bool ObjectFileParserTest(const int &tests){
 
 		if(!HeaderVars[1]->GetValueDirect()->ConvertAndAssingToVariable<wstring>(valuescheck)){
 
-			QUICK_ERROR_MESSAGE;
-			Failed = true;
+			TESTFAIL;
 			
 		} else {
 
 			if(valuescheck != L"lol"){
-				QUICK_ERROR_MESSAGE;
-				Failed = true;
+				TESTFAIL;
 			}
 		}
 
 		if(!HeaderVars[3]->GetValueDirect()->ConvertAndAssingToVariable<bool>(ivaluecheck)){
 
-			QUICK_ERROR_MESSAGE;
-			Failed = true;
+			TESTFAIL;
 			
 		} else {
 
 			if(ivaluecheck != true){
 				// value should be "true" (1) //
-				QUICK_ERROR_MESSAGE;
-				Failed = true;
+				TESTFAIL;
 			}
 		}
 
@@ -732,62 +725,73 @@ bool ObjectFileParserTest(const int &tests){
 			ObjectFileObject* obj = objects[0].get();
 			// check name and prefixes //
 			if(obj->Name != L"Test1"){
-				QUICK_ERROR_MESSAGE;
-				Failed = true;
+				TESTFAIL;
 			}
 			if(obj->TName != L"TestData"){
-				QUICK_ERROR_MESSAGE;
-				Failed = true;
+				TESTFAIL;
 			}
 
 			if(obj->Prefixes.size() == 2){
 				if((*obj->Prefixes[0]) != L"nice_prefix"){
-					QUICK_ERROR_MESSAGE;
-					Failed = true;
+					TESTFAIL;
 				}
 
 				if((*obj->Prefixes[1]) != L"type1_special"){
-					QUICK_ERROR_MESSAGE;
-					Failed = true;
+					TESTFAIL;
 				}
 
 			} else {
 				
-				QUICK_ERROR_MESSAGE;
-				Failed = true;
+				TESTFAIL;
 			}
 			// check contents just so that they seem right //
 			if(obj->TextBlocks.size() != 1){
-				QUICK_ERROR_MESSAGE;
-				Failed = true;
+				TESTFAIL;
 			}
 			if(obj->Contents.size() != 1){
-				QUICK_ERROR_MESSAGE;
-				Failed = true;
+				TESTFAIL;
 			}
 
 			// check for proper script //
 			if(obj->Script.get() != NULL){
 				if(obj->Script->GetModule()->GetName() != L"TestScript"){
-					QUICK_ERROR_MESSAGE;
-					Failed = true;
+					TESTFAIL;
 				}
 			} else {
 				
-				QUICK_ERROR_MESSAGE;
-				Failed = true;
+				TESTFAIL;
+			}
+			// second object test //
+			obj = objects[1].get();
+
+			if(obj->Name != L"Something"){
+				TESTFAIL;
+			}
+			if(obj->TName != L"Just"){
+				TESTFAIL;
 			}
 
+			if(obj->Prefixes.size() == 2){
+				if((*obj->Prefixes[0]) != L"nice wow"){
+					TESTFAIL;
+				}
+
+				if((*obj->Prefixes[1]) != L"ID(29)"){
+					TESTFAIL;
+				}
+
+			} else {
+
+				TESTFAIL;
+			}
 
 		} else {
 			
-			QUICK_ERROR_MESSAGE;
-			Failed = true;
+			TESTFAIL;
 		}
 	} else {
 
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
+		TESTFAIL;
 	}
 
 	// cleanup not required //
@@ -827,7 +831,7 @@ bool TestRSAEncrypting(const int &tests){
 		return Failed;
 	} else {
 		Logger::Get()->Error(Convert::StringToWstring(source)+L" does not match "+Convert::StringToWstring(decrypted));
-		Failed = true;
+		TESTFAIL;
 	}
 
 	// stress test? //
@@ -847,30 +851,26 @@ bool TestFloatsCasts(){
 	// check to  see if values are correct //
 	bool Failed = false;
 	
-	Failed == (*ptr != fl.X) && (fl[0] == fl.GetX());
-	if(Failed)
-		return Failed;
+	if((*ptr != fl.X) && (fl[0] == fl.GetX()))
+		TESTFAIL;
+
 	// second value //
-	Failed == (*(ptr+1) != fl.Y) && (fl[1] == fl.GetY());
-	if(Failed)
-		return Failed;
+	if((*(ptr+1) != fl.Y) && (fl[1] == fl.GetY()))
+		TESTFAIL;
 	// third //
-	Failed == (*(ptr+2) != fl.Z) && (fl[2] == fl.GetZ());
-	if(Failed)
-		return Failed;
+	if((*(ptr+2) != fl.Z) && (fl[2] == fl.GetZ()))
+		TESTFAIL;
 	// final value //
-	Failed == (*(ptr+3) != fl.W) && (fl[3] == fl.GetW());
-	if(Failed)
-		return Failed;
+	if((*(ptr+3) != fl.W) && (fl[3] == fl.GetW()))
+		TESTFAIL;
 
 	// check first of UINT4 too //
 	UINT4 u4(25, 12, 35, 12);
 
 	UINT* uptr = u4;
 
-	Failed = (*uptr != u4.X);
-	if(Failed)
-		return Failed;
+	if(*uptr != u4.X)
+		TESTFAIL;
 
 	// if got here it succeeded, but return anyways //
 	return Failed;
@@ -890,14 +890,11 @@ bool TestWstringIterator(const int &tests){
 	results = itr.GetStringInQuotes(QUOTETYPE_DOUBLEQUOTES);
 
 	if(*results != L" this stuff in here\\\" which has 'stuff' "){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
+		TESTFAIL;
 	}
 	// we should now be on "_" //
 	if(itr.GetCurrentCharacter() != L'_'){
-
-		Failed = true;
+		TESTFAIL;
 	}
 
 	itr.ReInit(L";quick testcase for \\;not getting anything!");
@@ -907,41 +904,64 @@ bool TestWstringIterator(const int &tests){
 	results = itr.GetUntilNextCharacterOrNothing(L';');
 	//Logger::Get()->Save();
 	if(results->size() > 0){
-
 		TESTFAIL;
 	}
 
 
 	itr.ReInit(L"		teesti_ess y");
 
-	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE);
+	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
 
 	if(*results != L"teesti_ess"){
-		Failed = true;
+		TESTFAIL;
 	}
+
+
+	itr.ReInit(L" o object type");
+
+	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+
+	if(*results != L"o"){
+		TESTFAIL;
+	}
+
+	itr.ReInit(L"get-this nice_prefix[but not this!");
+
+	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+
+	if(*results != L"get-this"){
+		TESTFAIL;
+	}
+
+	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+
+	if(*results != L"nice_prefix"){
+		TESTFAIL;
+	}
+
 
 	itr.ReInit(L"aib val: = 243.12al toi() a 2456,12.5");
 
 	results = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 	if(*results != L"243.12"){
-		Failed = true;
+		TESTFAIL;
 	}
 
 	results = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 	if(*results != L"2456"){
-		Failed = true;
+		TESTFAIL;
 	}
 
 	results = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
 	if(*results != L"12.5"){
-		Failed = true;
+		TESTFAIL;
 	}
 
 	itr.ReInit(L"	aib val: = 243.12al toi() a 2456,12.5");
 
 	results = itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_EQUALITY);
 	if(*results != L"aib val:"){
-		Failed = true;
+		TESTFAIL;
 	}
 
 	//itr.SetDebugMode(true);
@@ -950,40 +970,40 @@ bool TestWstringIterator(const int &tests){
 
 	results = itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_EQUALITY);
 	if(*results != L"StartCount"){
-		Failed = true;
+		TESTFAIL;
 	}
 	itr.SkipWhiteSpace();
 
 	results = itr.GetUntilNextCharacterOrAll(L';');
 	Logger::Get()->Save();
 	if(*results != L"[[245]]"){
-		Failed = true;
+		TESTFAIL;
 	}
 	
 	itr.ReInit(L" adis told as\\; this still ; and no this");
 
 	results = itr.GetUntilNextCharacterOrNothing(L';');
 	if(*results != L" adis told as\\; this still "){
-		Failed = true;
+		TESTFAIL;
 	}
 
 	itr.ReInit(L"not][ this<out>");
 
 	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 	if(*results != L"not"){
-		Failed = true;
+		TESTFAIL;
 	}
 
 	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 	if(*results != L" this"){
-		Failed = true;
+		TESTFAIL;
 	}
 
 	// some specific cases //
 	itr.ReInit(L"\"JellyCube\";");
 	results = itr.GetUntilNextCharacterOrAll(L';');
 	if(*results != L"\"JellyCube\""){
-		Failed = true;
+		TESTFAIL;
 	}
 
 

@@ -6,7 +6,41 @@
 #endif
 // ------------------------------------ //
 
-enum KEYSPECIAL{ KEYSPECIAL_NONE = 0, KEYSPECIAL_SHIFT, KEYSPECIAL_ALT, KEYSPECIAL_CTRL, KEYSPECIAL_SHIFT_ALT, KEYSPECIAL_SHIFT_CTRL, KEYSPECIAL_ALT_CTRL , KEYSPECIAL_ALL};
+enum KEYSPECIAL {
+	KEYSPECIAL_SHIFT = 0x1, 
+	KEYSPECIAL_ALT = 0x2, 
+	KEYSPECIAL_CTRL = 0x4, 
+	KEYSPECIAL_WIN = 0x8,
+	KEYSPECIAL_SCROLL = 0x10, 
+	KEYSPECIAL_CAPS = 0x20
+	//0x40
+	//0x80 // first byte full
+	//0x100
+	//0x200
+	//0x400
+	//0x800
+	//0x1000
+	//0x2000
+	//0x4000
+	//0x8000 // second byte full (int range might stop here(
+	//0x10000
+	//0x20000
+	//0x40000
+	//0x80000
+	//0x100000
+	//0x200000
+	//0x400000
+	//0x800000 // third byte full
+	//0x1000000
+	//0x2000000
+	//0x4000000
+	//0x8000000
+	//0x10000000
+	//0x20000000
+	//0x40000000
+	//0x80000000 // fourth byte full (will need QWORD here)
+	//0x100000000
+};
 
 namespace Leviathan{
 
@@ -17,7 +51,7 @@ namespace Leviathan{
 		}
 
 	protected:
-		static map<int, wstring> KeySpecialStringRepresentationMap;
+		//static map<int, wstring> KeySpecialStringRepresentationMap;
 	};
 
 
@@ -25,10 +59,10 @@ namespace Leviathan{
 	class Key : public BaseKey{
 	public:
 		DLLEXPORT inline Key<T>(){
-			Extras = KEYSPECIAL_NONE;
-			Character = (T)L"!";
+			Extras = 0;
+			Character = (T)0;
 		}
-		DLLEXPORT inline Key<T>(const T &character, const KEYSPECIAL &additional){
+		DLLEXPORT inline Key<T>(const T &character, const short &additional){
 			Extras = additional;
 			Character = character;
 		}
@@ -38,24 +72,33 @@ namespace Leviathan{
 		DLLEXPORT inline bool Match(const Key<T> &other, bool strict = false) const{
 			if(other.Character != this->Character)
 				return false;
-			if(other.Extras == KEYSPECIAL_ALL)
-				return true;
 			if(strict){
 				if(other.Extras != this->Extras)
 					return false;
 			} else {
-				bool Shift = false;
-				bool Alt = false;
-				bool Ctrl = false;
-				bool Shift2 = false;
-				bool Alt2 = false;
-				bool Ctrl2 = false;
 
-				DeConstructSpecial(this->Extras, Shift, Alt, Ctrl);
-				DeConstructSpecial(other.Extras, Shift2, Alt2, Ctrl2);
-
-				if(((Shift == Shift2) || Shift == 0) && (Alt == Alt2 || Alt == 0) && (Ctrl == Ctrl2 || Ctrl == 0)){
+				if((((Extras & KEYSPECIAL_SHIFT) == (other.Extras & KEYSPECIAL_SHIFT)) || (Extras & KEYSPECIAL_SHIFT) == 0) && 
+					((Extras & KEYSPECIAL_ALT) == (other.Extras & KEYSPECIAL_ALT) || (Extras & KEYSPECIAL_ALT) == 0) && 
+					((Extras & KEYSPECIAL_CTRL) == (other.Extras & KEYSPECIAL_CTRL) || (Extras & KEYSPECIAL_CTRL) == 0)){
 					return true;
+				}
+				return false;
+			}
+			return true;
+		}
+
+		DLLEXPORT inline bool Match(const OIS::KeyCode &key, int specialmodifiers, bool strict = false) const{
+			if(key != this->Character)
+				return false;
+			if(strict){
+				if((short)specialmodifiers != this->Extras)
+					return false;
+			} else {
+
+				if((((Extras & KEYSPECIAL_SHIFT) == (specialmodifiers & OIS::Keyboard::Shift)) || (Extras & KEYSPECIAL_SHIFT) == 0) && 
+					((Extras & KEYSPECIAL_ALT) == (specialmodifiers & OIS::Keyboard::Alt) || (Extras & KEYSPECIAL_ALT) == 0) && 
+					((Extras & KEYSPECIAL_CTRL) == (specialmodifiers & OIS::Keyboard::Ctrl) || (Extras & KEYSPECIAL_CTRL) == 0)){
+						return true;
 				}
 				return false;
 			}
@@ -66,19 +109,10 @@ namespace Leviathan{
 			// create a string that represents this key //
 			if(style == 0){
 				// debug string //
-				UINT translated = MapVirtualKey((UINT)Character, MAPVK_VK_TO_CHAR);
-
-				wstring resultstr = L"Key["+Convert::ToWstring<wchar_t>((wchar_t)Character)+L":"+Convert::ToWstring(translated)+L"]=";
+				wstring resultstr = L"Key["+Convert::ToWstring<wchar_t>((wchar_t)Character)+L"]=";
 
 				resultstr += Convert::ToWstring<T>(Character);
 				resultstr += L"(0x"+Convert::ToHexadecimalWstring<T>(Character)+L")+";
-
-				resultstr += KeySpecialStringRepresentationMap[Extras];
-				resultstr += L" :trsld_";
-				// don't want to add a null terminator to the string //
-				if(translated != 0)
-					resultstr += Convert::ToWstring<wchar_t>(wchar_t(translated));
-				resultstr += L"!";
 
 				return resultstr;
 			}
@@ -87,7 +121,7 @@ namespace Leviathan{
 			return L"error";
 		}
 
-		DLLEXPORT bool Match(const T &chara, const KEYSPECIAL &additional, bool strict = false) const{
+		DLLEXPORT bool Match(const T &chara, const short &additional, bool strict = false) const{
 			return Match(Key<T>(chara, additional), strict);
 		}
 
@@ -101,94 +135,61 @@ namespace Leviathan{
 		DLLEXPORT T GetCharacter() const{
 			return Character;
 		}
-		DLLEXPORT KEYSPECIAL GetAdditional() const{
+		DLLEXPORT short GetAdditional() const{
 			return Extras;
 		}
 
-
-		DLLEXPORT void Set(const T &character, const KEYSPECIAL &additional){
+		DLLEXPORT void Set(const T &character, const short &additional){
 			Character = character;
 			Extras = additional;
 		}
 
-		DLLEXPORT void SetAdditional(const KEYSPECIAL &additional){
+		DLLEXPORT void SetAdditional(const short &additional){
 
 			Extras = additional;
 		}
 
+		DLLEXPORT static void DeConstructSpecial(short keyspes, bool &Shift, bool &Alt, bool &Ctrl){
+
+			if(keyspes & KEYSPECIAL_SHIFT)
+				Shift = true;
+			if(keyspes & KEYSPECIAL_ALT)
+				Alt = true;
+			if(keyspes & KEYSPECIAL_CTRL)
+				Ctrl = true;
+		}
+
+		DLLEXPORT static Key<T> GenerateKeyFromString(const wstring &representation){
+
+			WstringIterator itr(representation);
+
+			unique_ptr<wstring> str = itr.GetUntilNextCharacterOrAll(L'+');
+
+			T character = Window::CharacterToOISConvert[str->at(0)];
+			short special = 0;
+
+			while((str = itr.GetUntilNextCharacterOrAll(L'+'))->size() > 0){
+
+				if(Misc::WstringCompareInsensitiveRefs(*str, L"alt")){
+					special |= KEYSPECIAL_ALT;
+				}
+				if(Misc::WstringCompareInsensitiveRefs(*str, L"shift")){
+					special |= KEYSPECIAL_SHIFT;
+				}
+				if(Misc::WstringCompareInsensitiveRefs(*str, L"ctrl")){
+					special |= KEYSPECIAL_CTRL;
+				}
+				if(Misc::WstringCompareInsensitiveRefs(*str, L"win")){
+					special |= KEYSPECIAL_WIN;
+				}
+			}
+
+			return Key<T>(character, special);
+		}
+
 	private:
-		KEYSPECIAL Extras;
+		short Extras;
 		T Character;
-
-
-	public:
-		DLLEXPORT static KEYSPECIAL ConstructSpecial(bool Shift, bool Alt, bool Ctrl){
-			if((!Shift) && (!Alt) && (!Ctrl))
-				return KEYSPECIAL_NONE;
-			if((Shift) && (Alt) && (Ctrl))
-				return KEYSPECIAL_ALL;
-
-			if((Shift) && (!Alt) && (!Ctrl))
-				return KEYSPECIAL_SHIFT;
-			if((!Shift) && (Alt) && (!Ctrl))
-				return KEYSPECIAL_ALT;
-			if((!Shift) && (!Alt) && (Ctrl))
-				return KEYSPECIAL_CTRL;
-
-			if((Shift) && (Alt) && (!Ctrl))
-				return KEYSPECIAL_SHIFT_ALT;
-			if((!Shift) && (Alt) && (Ctrl))
-				return KEYSPECIAL_ALT_CTRL;
-			if((Shift) && (!Alt) && (Ctrl))
-				return KEYSPECIAL_SHIFT_CTRL;
-
-			return KEYSPECIAL_NONE;
-		}
-
-		DLLEXPORT static void DeConstructSpecial(KEYSPECIAL keyspes, bool &Shift, bool &Alt, bool &Ctrl){
-			if(keyspes == KEYSPECIAL_NONE){
-				Shift = false;
-				Alt = false;
-				Ctrl = false;
-			}
-			if(keyspes == KEYSPECIAL_ALL){
-				Shift = true;
-				Alt = true;
-				Ctrl = true;
-			}
-
-			if(keyspes == KEYSPECIAL_SHIFT){
-				Shift = true;
-				Alt = false;
-				Ctrl = false;
-			}
-			if(keyspes == KEYSPECIAL_ALT){
-				Shift = false;
-				Alt = true;
-				Ctrl = false;
-			}
-			if(keyspes == KEYSPECIAL_CTRL){
-				Shift = false;
-				Alt = false;
-				Ctrl = true;
-			}
-
-			if(keyspes == KEYSPECIAL_SHIFT_ALT){
-				Shift = true;
-				Alt = true;
-				Ctrl = false;
-			}
-			if(keyspes == KEYSPECIAL_SHIFT_CTRL){
-				Shift = true;
-				Alt = false;
-				Ctrl = true;
-			}
-			if(keyspes == KEYSPECIAL_ALT_CTRL){
-				Shift = false;
-				Alt = true;
-				Ctrl = true;
-			}
-		}
 	};
 
 }

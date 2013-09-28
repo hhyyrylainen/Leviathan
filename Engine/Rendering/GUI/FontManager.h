@@ -4,7 +4,6 @@
 #ifndef LEVIATHAN_DEFINE
 #include "Define.h"
 #endif
-#include "GUI\Components\GuiPositionable.h"
 // ------------------------------------ //
 // ---- includes ---- //
 #include "OgreFont.h"
@@ -24,8 +23,8 @@ namespace Leviathan{ namespace Rendering{
 		DLLEXPORT void LoadAllFonts();
 
 		DLLEXPORT bool LoadFontByName(const wstring &name);
-		DLLEXPORT float CountTextLength(const wstring &font, const wstring &text, const float &textheight, OverlayMaster* overlay, const int &coordtype = 
-			GUI_POSITIONABLE_COORDTYPE_RELATIVE);
+		//DLLEXPORT float CountTextLength(const wstring &font, const wstring &text, const float &textheight, OverlayMaster* overlay, const int &coordtype = 
+		//	GUI_POSITIONABLE_COORDTYPE_RELATIVE);
 
 		// salvaged from the old TextRenderer/RenderingFont and made to work with Ogre overlay text //
 		DLLEXPORT static bool AdjustTextSizeToFitBox(Ogre::Font* font, const Float2 &BoxToFit, const wstring &text, 

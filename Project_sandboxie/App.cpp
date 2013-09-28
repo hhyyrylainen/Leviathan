@@ -10,21 +10,10 @@ App::App(){
 }
 // ------------------------------------ //
 void App::CustomizeEnginePostLoad(){
+	// load GUI documents //
+	Gui::GuiManager::Get()->LoadGUIFile(FileSystem::GetScriptsFolder()+L"MainGui.txt");
 
-	// lets add few more //
-	//vector<GameObject::Model*> temp = engine->GetObjectLoader()->LoadModelFile(L"SimpleBone", true);
-	////vector<GameObject::Model*> temp = engine->GetObjectLoader()->LoadModelFile(L"SimpleBonedCube", true);
-	//for(unsigned int i = 0; i < temp.size(); i++){
-	//	if(temp[i] == NULL)
-	//		continue;
-	//	// non null, add //
-	//	//engine->AddObject(temp[i]);
-	//	// before animations can play, model must be loaded //
-	//	//temp[i]->VerifyResourcesLoaded(this->engine->GetGraphics());
-	//	// play animation MODELNAME[]Animation //
-	//	//temp[i]->StartPlayingAnimation(this->engine->GetAnimationManager()->GetAnimation(L"SimpleBone[]SimpleBone_ANIMREPLACE"));
-	//}
-	//SAFE_DELETE_VECTOR(temp);
+	Gui::GuiManager::Get()->SetMouseFile(FileSystem::GetScriptsFolder()+L"cursor.rml");
 }
 // ------------------------------------ //
 

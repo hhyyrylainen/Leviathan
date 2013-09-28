@@ -99,14 +99,14 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetStringInQuotes(QUOT
 }
 
 
-DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextCharacterSequence(UNNORMALCHARACTER stopcase){
+DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextCharacterSequence(int stopcaseflags){
 	// iterate over the string and return what is wanted //
 	IteratorPositionData data;
 	data.Positions.SetData(-1, -1);
 
 	// iterate over the string getting the proper part //
 
-	StartIterating(FindNextNormalCharacterString, (Object*)&data, (int)stopcase);
+	StartIterating(FindNextNormalCharacterString, (Object*)&data, (int)stopcaseflags);
 
 	// create substring of the wanted part //
 	unique_ptr<wstring> resultstr;
@@ -213,7 +213,7 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEqualityAssign
 // ------------------------------------ //
 DLLEXPORT void Leviathan::WstringIterator::SkipWhiteSpace(){
 	// iterate over the string skipping until hit something that doesn't need to be skipped //
-	StartIterating(SkipSomething, NULL, (int)UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE);
+	StartIterating(SkipSomething, NULL, (int)UNNORMALCHARACTER_TYPE_LOWCODES);
 }
 // ------------------------------------ //
 DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEnd(){
@@ -275,8 +275,10 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilNextCharacterO
 	}
 #endif // _DEBUG
 
-	// create substring of the wanted part //
-	unique_ptr<wstring> resultstr;
+	if(data.Positions.X == -1 || data.Positions.Y == -1){
+		// return empty string //
+		return unique_ptr<wstring>(new wstring());
+	}
 
 	// return wanted part //
 	if(IsPtrUsed){
@@ -576,7 +578,9 @@ DLLEXPORT bool Leviathan::WstringIterator::MoveToNext(){
 }
 
 DLLEXPORT void Leviathan::WstringIterator::ReInit(wstring* text, bool TakesOwnership /*= false*/){
-	// copied from ctor //
+	// delete old if applicable //
+	if(HandlesDelete)
+		SAFE_DELETE(Data);
 
 	// only delete if wanted //
 	HandlesDelete = TakesOwnership;
@@ -593,6 +597,10 @@ DLLEXPORT void Leviathan::WstringIterator::ReInit(wstring* text, bool TakesOwner
 }
 
 DLLEXPORT void Leviathan::WstringIterator::ReInit(const wstring& text){
+	// delete old if applicable //
+	if(HandlesDelete)
+		SAFE_DELETE(Data);
+
 	// copied from ctor //
 	HandlesDelete = false;
 	Data = NULL;
@@ -796,63 +804,39 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIter
 	// check is current element a valid element //
 	wchar_t CurChar(instance->GetCurrentCharacter());
 
-	bool IsValid = false;
-
-	// check for number //
-	UNNORMALCHARACTER stoptype = (UNNORMALCHARACTER)parameters;
+	bool IsValid = true;
 
 	IteratorPositionData* tmpdata = static_cast<IteratorPositionData*>(IteratorData);
 
-	int charvalue = (int) CurChar;
-
-	if(stoptype == UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE){
-		// check for whitespace //
-		if(charvalue < 33){
+	if((parameters & UNNORMALCHARACTER_TYPE_LOWCODES || parameters & UNNORMALCHARACTER_TYPE_WHITESPACE) 
+		&& !instance->CurrentFlags->IsSet(WSTRINGITERATOR_INSIDE_STRING))
+	{
+		if(CurChar <= L' '){
 			IsValid = false;
-		} else {
-			IsValid = true;
-		}
-	} else {
-		if(((charvalue >= 32) && (charvalue <= 57)) || ((charvalue >= 63) && (charvalue <= 90)) || ((charvalue >= 96) && (charvalue <= 122))){
-			// is just a ascii char with some text characters included //
-
-			if(stoptype == UNNORMALCHARACTER_TYPE_NON_NAMEVALID_WITHWHITESPACE){
-
-				if((charvalue >= 48 && charvalue <= 57) || (charvalue >= 64 && charvalue <= 90) || (charvalue >= 97 && charvalue <= 122)){
-					IsValid = true;
-				}
-
-			} else {
-				IsValid = true;
-			}
-			
-		} else {
-			if((stoptype != UNNORMALCHARACTER_TYPE_NON_ASCII)){
-				// we can check if it allows some other characters //
-				if(stoptype == UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS){
-					// skip if this character is to be ignored //
-					if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL)){
-
-						IsValid = true;
-					} else {
-						if(!((charvalue >= 91) && (charvalue <= 93)) && !((charvalue >= 58) && (charvalue <= 62)) && ((charvalue < 123) 
-							&& (charvalue >= 32)))
-						{
-							// is still valid! //
-							IsValid = true;
-						}
-					}
-				} else if (stoptype == UNNORMALCHARACTER_TYPE_NON_NAMEVALID_WITHWHITESPACE){
-					// check for whitespace //
-					if(charvalue >= 2 && charvalue <= 32){
-
-						IsValid = true;
-					}
-				}
-			}
+			goto invalidcodelabelunnormalcharacter;
 		}
 	}
 
+	if(parameters & UNNORMALCHARACTER_TYPE_NON_ASCII){
+
+		if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_INSIDE_STRING) || !(
+			(CurChar >= L'0' && CurChar <= L'9') || (CurChar >= L'A' && CurChar <= L'Z') || (CurChar >= L'a' && CurChar <= L'z')))
+		{
+			IsValid = false;
+			goto invalidcodelabelunnormalcharacter;
+		}
+	}
+
+	if(parameters & UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS && !instance->CurrentFlags->IsSet(WSTRINGITERATOR_INSIDE_STRING)
+		&& !instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL))
+	{
+		if(((CurChar <= L'/' && CurChar >= L'!') || (CurChar <= L'@' && CurChar >= L':') || (CurChar <= L'`' && CurChar >= L'[')
+			|| (CurChar <= L'~' && CurChar >= L'{')) && !(CurChar == L'_' || CurChar == L'-'))
+		{
+			IsValid = false;
+			goto invalidcodelabelunnormalcharacter;
+		}
+	}
 
 	if(IsValid){
 		// check is this first character //
@@ -863,6 +847,10 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIter
 		}
 
 	} else {
+
+invalidcodelabelunnormalcharacter:
+
+
 		// check for end //
 		if(tmpdata->Positions.X != -1){
 			// ended //
@@ -1050,17 +1038,11 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::SkipSomething(WstringIterator*
 
 	UNNORMALCHARACTER stoptype = (UNNORMALCHARACTER)parameters;
 
-	switch(stoptype){
-	case UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE:
-		{
-			if(curchara <= 32)
-				return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
-		}
-		break;
-
-	default:
-		return ITERATORCALLBACK_RETURNTYPE_STOP;
+	if(parameters & UNNORMALCHARACTER_TYPE_LOWCODES){
+		if(curchara <= 32)
+			return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 	}
+
 	// didn't match to be skipped characters //
 	return ITERATORCALLBACK_RETURNTYPE_STOP;
 }

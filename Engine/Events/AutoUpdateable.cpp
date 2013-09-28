@@ -16,7 +16,7 @@ Leviathan::AutoUpdateableObject::~AutoUpdateableObject(){
 	}
 }
 // ------------------------------------ //
-void Leviathan::AutoUpdateableObject::StartMonitoring(vector<shared_ptr<VariableBlock>> &IndexesAndNamesToListen){
+void Leviathan::AutoUpdateableObject::StartMonitoring(const std::vector<VariableBlock*> &IndexesAndNamesToListen){
 
 	// loop through wanted listen indexes and names //
 	for(size_t i = 0; i < IndexesAndNamesToListen.size(); i++){
@@ -28,10 +28,7 @@ void Leviathan::AutoUpdateableObject::StartMonitoring(vector<shared_ptr<Variable
 			DataStore::Get()->RegisterListener(this, new DataListener(-1, false, (wstring)*IndexesAndNamesToListen[i]));
 
 			// add to listened things //
-			MonitoredValues.push_back(IndexesAndNamesToListen[i]);
-			//// erase from original //
-			//IndexesAndNamesToListen.erase(IndexesAndNamesToListen.begin()+i);
-			//i--;
+			MonitoredValues.push_back(shared_ptr<VariableBlock>(new VariableBlock(IndexesAndNamesToListen[i]->GetBlockConst()->AllocateNewFromThis())));
 
 			continue;
 		}
@@ -53,12 +50,6 @@ void Leviathan::AutoUpdateableObject::StartMonitoring(vector<shared_ptr<Variable
 
 		// add to listened things //
 		MonitoredValues.push_back(shared_ptr<VariableBlock>(new VariableBlock(tmpindex)));
-
-		//// erase from original //
-		//IndexesAndNamesToListen.erase(IndexesAndNamesToListen.begin()+i);
-		//i--;
-
-
 	}
 }
 void Leviathan::AutoUpdateableObject::StopMonitoring(vector<shared_ptr<VariableBlock>> &unregisterindexandnames, bool all /*= false*/){

@@ -15,7 +15,7 @@ static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function"
 
 
 DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, bool vsync) : OWindow(owindow), VerticalSync(vsync), m_hwnd(NULL), 
-	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDonwMouseButtons(0)
+	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0)
 {
 
 	// update focused this way //
@@ -270,7 +270,15 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 	CheckInputState();
 	// pass event to active Rocket context //
 
-	inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers);
+	if(inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
+		if(!Gui::GuiManager::Get()->ProcessKeyDown(arg.key, SpecialKeyModifiers)){
+
+			// TODO: after not even GUI wanting update input object
+		}
+	}
+
+
+
 	// don't really know what to return
 	return true;
 }
@@ -278,7 +286,10 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 bool Leviathan::Window::keyReleased(const OIS::KeyEvent &arg){
 	CheckInputState();
 	// pass event to active Rocket context //
-	inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers);
+	if(inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
+		// TODO: after not even GUI wanting update input object
+
+	}
 	// don't really know what to return
 	return true;
 }
@@ -290,7 +301,7 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
 	const OIS::MouseState& mstate = arg.state;
 
 	inputreceiver->ProcessMouseMove(mstate.X.abs, mstate.Y.abs, SpecialKeyModifiers);
-	inputreceiver->ProcessMouseWheel(mstate.Z.abs, SpecialKeyModifiers);
+	inputreceiver->ProcessMouseWheel(-mstate.Z.rel, SpecialKeyModifiers);
 
 	// don't really know what to return
 	return true;
@@ -299,7 +310,7 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
 bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id){
 	CheckInputState();
 	// pass event to active Rocket context //
-	int differences = arg.state.buttons^LastFrameDonwMouseButtons;
+	int differences = arg.state.buttons^LastFrameDownMouseButtons;
 
 	// find differences //
 	unsigned long index = 0;
@@ -307,7 +318,7 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 	_BitScanForward(&index, differences);
 
 	// update old state //
-	LastFrameDonwMouseButtons |= 1 << index;
+	LastFrameDownMouseButtons |= 1 << index;
 
 	//wstring message = L"mouse number: "+Convert::ToWstring(index)+L" pressed; ";
 
@@ -329,7 +340,7 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id){
 	CheckInputState();
 	// pass event to active Rocket context //
-	int differences = arg.state.buttons^LastFrameDonwMouseButtons;
+	int differences = arg.state.buttons^LastFrameDownMouseButtons;
 
 	// find differences //
 	unsigned long index = 0;
@@ -337,7 +348,7 @@ bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButt
 	_BitScanForward(&index, differences);
 
 	// update old state //
-	LastFrameDonwMouseButtons ^= 1 << index;
+	LastFrameDownMouseButtons ^= 1 << index;
 
 	//wstring message = L"mouse number: "+Convert::ToWstring(index)+L" released; ";
 
@@ -373,17 +384,75 @@ bool Leviathan::Window::axisMoved(const OIS::JoyStickEvent &arg, int axis){
 	return true;
 }
 
+DLLEXPORT string Leviathan::Window::GetOISCharacterAsText(const OIS::KeyCode &code){
+	return WindowKeyboard->getAsString(code);
+}
 // ------------------ WindowPassData ------------------ //
 Leviathan::WindowPassData::WindowPassData(Window* wind, LeviathanApplication* appinterface){
 	OwningWindow = wind;
 	Appinterface = appinterface;
 }
-
-
-
 // ------------------ KeyCode conversion map ------------------ //
 #define QUICKKEYPAIR(x, y) OIS::x, Rocket::Core::Input::y
+#define SIMPLEPAIR(x, y)	L##x, OIS::y
 #define QUICKONETOONEPAIR(x) OIS::KC_##x, Rocket::Core::Input::KI_##x
+
+std::map<wchar_t, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = boost::assign::map_list_of
+	(SIMPLEPAIR('a', KC_A))
+	(SIMPLEPAIR('b', KC_B))
+	(SIMPLEPAIR('c', KC_C))
+	(SIMPLEPAIR('d', KC_D))
+	(SIMPLEPAIR('e', KC_E))
+	(SIMPLEPAIR('f', KC_F))
+	(SIMPLEPAIR('g', KC_G))
+	(SIMPLEPAIR('h', KC_H))
+	(SIMPLEPAIR('i', KC_I))
+	(SIMPLEPAIR('j', KC_J))
+	(SIMPLEPAIR('k', KC_K))
+	(SIMPLEPAIR('l', KC_L))
+	(SIMPLEPAIR('m', KC_M))
+	(SIMPLEPAIR('n', KC_N))
+	(SIMPLEPAIR('o', KC_O))
+	(SIMPLEPAIR('p', KC_P))
+	(SIMPLEPAIR('q', KC_Q))
+	(SIMPLEPAIR('r', KC_R))
+	(SIMPLEPAIR('s', KC_S))
+	(SIMPLEPAIR('t', KC_T))
+	(SIMPLEPAIR('u', KC_U))
+	(SIMPLEPAIR('v', KC_V))
+	(SIMPLEPAIR('w', KC_W))
+	(SIMPLEPAIR('x', KC_X))
+	(SIMPLEPAIR('y', KC_Y))
+	(SIMPLEPAIR('z', KC_Z))
+
+	(SIMPLEPAIR('A', KC_A))
+	(SIMPLEPAIR('B', KC_B))
+	(SIMPLEPAIR('C', KC_C))
+	(SIMPLEPAIR('D', KC_D))
+	(SIMPLEPAIR('E', KC_E))
+	(SIMPLEPAIR('F', KC_F))
+	(SIMPLEPAIR('G', KC_G))
+	(SIMPLEPAIR('H', KC_H))
+	(SIMPLEPAIR('I', KC_I))
+	(SIMPLEPAIR('J', KC_J))
+	(SIMPLEPAIR('K', KC_K))
+	(SIMPLEPAIR('L', KC_L))
+	(SIMPLEPAIR('M', KC_M))
+	(SIMPLEPAIR('N', KC_N))
+	(SIMPLEPAIR('O', KC_O))
+	(SIMPLEPAIR('P', KC_P))
+	(SIMPLEPAIR('Q', KC_Q))
+	(SIMPLEPAIR('R', KC_R))
+	(SIMPLEPAIR('S', KC_S))
+	(SIMPLEPAIR('T', KC_T))
+	(SIMPLEPAIR('U', KC_U))
+	(SIMPLEPAIR('V', KC_V))
+	(SIMPLEPAIR('W', KC_W))
+	(SIMPLEPAIR('X', KC_X))
+	(SIMPLEPAIR('Y', KC_Y))
+	(SIMPLEPAIR('Z', KC_Z))
+;
+
 
 map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> Leviathan::Window::OISRocketKeyConvert = boost::assign::map_list_of
 	(QUICKKEYPAIR(KC_UNASSIGNED, KI_UNKNOWN))

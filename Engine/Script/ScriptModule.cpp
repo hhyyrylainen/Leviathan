@@ -31,10 +31,9 @@ ScriptModule::~ScriptModule(){
 }
 
 int Leviathan::ScriptModule::LatestAssigned = 0;
-map<int, wstring> Leviathan::ScriptModule::EngineTypeIDS;
 
 const map<wstring, int> Leviathan::ScriptModule::ListenerNameType = boost::assign::map_list_of(LISTENERNAME_ONSHOW, LISTENERVALUE_ONSHOW)
-	(LISTENERNAME_ONHIDE, LISTENERVALUE_ONHIDE);
+	(LISTENERNAME_ONHIDE, LISTENERVALUE_ONHIDE) (LISTENERNAME_ONLISTENUPDATE, LISTENERVALUE_ONSHOW);
 
 // ------------------------------------ //
 FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScriptFunction* func){
@@ -56,22 +55,6 @@ FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScrip
 
 	// fill it with data //
 	asIScriptModule* module = ScriptBuilder->GetModule();
-
-	if(EngineTypeIDS.size() == 0){
-		// put basic types //
-
-		int itype = module->GetTypeIdByDecl("int");
-		int ftype = module->GetTypeIdByDecl("float");
-		int btype = module->GetTypeIdByDecl("bool");
-		int stype = module->GetTypeIdByDecl("string");
-		int vtype = module->GetTypeIdByDecl("void");
-		// add //
-		EngineTypeIDS.insert(make_pair(itype, L"int"));
-		EngineTypeIDS.insert(make_pair(ftype, L"float"));
-		EngineTypeIDS.insert(make_pair(btype, L"bool"));
-		EngineTypeIDS.insert(make_pair(stype, L"string"));
-		EngineTypeIDS.insert(make_pair(vtype, L"void"));
-	}
 
 	// space is already reserved and objects allocated //
 	for(UINT i = 0; i < parameterc; i++){
@@ -98,11 +81,11 @@ void Leviathan::ScriptModule::_FillParameterDataObject(int typeofas, asUINT* par
 	*paramtypeid = typeofas;
 	// try to find name //
 
-	auto finder = EngineTypeIDS.find(typeofas);
+	auto finder = ScriptExecutor::EngineTypeIDS.find(typeofas);
 
-	if(finder != EngineTypeIDS.end()){
+	if(finder != ScriptExecutor::EngineTypeIDS.end()){
 
-		*paramdecl = EngineTypeIDS[typeofas];
+		*paramdecl = ScriptExecutor::EngineTypeIDS[typeofas];
 		// check for matching datablock //
 
 		int blocktypeid = Convert::WstringTypeNameCheck(*paramdecl);
@@ -135,6 +118,7 @@ DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(){
 	if(ScriptState == SCRIPTBUILDSTATE_READYTOBUILD){
 		// build it //
 		int result = ScriptBuilder->BuildModule();
+		Logger::Get()->Save();
 		if(result < 0){
 			// failed to build //
 			Logger::Get()->Error(L"ScriptModule: GetModule: failed to build unbuilt module, "+GetInfoWstring());
@@ -169,6 +153,20 @@ DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(con
 	// no matching listener //
 	return false;
 }
+
+DLLEXPORT void Leviathan::ScriptModule::GetListOfListeners(std::vector<wstring> &receiver){
+	// build info if not built //
+	if(!ListenerDataBuilt)
+		_BuildListenerList();
+	// reserve space to be more efficient //
+	receiver.reserve(FoundListenerFunctions.size());
+	
+
+	for(auto iter = FoundListenerFunctions.begin(); iter != FoundListenerFunctions.end(); ++iter) {
+		receiver.push_back(iter->first);
+	}
+}
+
 // ------------------------------------ //
 DLLEXPORT wstring Leviathan::ScriptModule::GetInfoWstring(){
 	return L"ScriptModule("+Convert::ToWstring(ID)+L") "+Name+L", from: "+Convert::StringToWstring(Source);
@@ -183,6 +181,11 @@ void Leviathan::ScriptModule::_BuildListenerList(){
 
 	// we need to find functions with metadata specifying which listener it is //
 	asIScriptModule* mod = GetModule();
+
+	if(!mod){
+		// module failed to build //
+		return;
+	}
 
 	asUINT funccount = mod->GetFunctionCount();
 	// loop all and check the ones with promising names //

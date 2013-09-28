@@ -6,6 +6,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 #include "Application\Application.h"
+#include "Rendering\TextureManager.h"
 
 Leviathan::Engine::Engine() : LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL){
 
@@ -153,6 +154,10 @@ bool Leviathan::Engine::Init(AppDef* definition){
 	// key listening //
 	KeyListener = new KeyPressManager();
 	CLASS_ALLOC_CHECK(KeyListener);
+
+	// make angel script make list of registered stuff //
+	MainScript->GetExecutor()->ScanAngelScriptTypes();
+
 
 	// Gui //
 	GManager = new Gui::GuiManager();
@@ -376,9 +381,6 @@ void Leviathan::Engine::RenderFrame(){
 	RenderTimer->RenderingStart();
 
 	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN, new int(SinceLastFrame)));
-
-	// Gui object animations //
-	GManager->AnimationTick(SinceLastFrame);
 
 	// update simulations will go here, or not //
 

@@ -29,10 +29,8 @@ TextureManager::~TextureManager(){
 	Release();
 }
 // ------------------------------------ //
-bool TextureManager::Init(const wstring &basedir, int texttimeout, int textunload){
+bool TextureManager::Init(const wstring &basedir){
 	BaseDir = basedir;
-	InActiveTime = texttimeout;
-	UnLoadTime = textunload;
 	return true;
 }
 void TextureManager::Release(){
@@ -60,7 +58,7 @@ void TextureManager::TimePass(int mspassed){
 	for(unsigned int i = 0; i < Expiring.size(); i++){
 		Expiring[i]->UnusedTime += mspassed;
 		// check should it be moved to tertiary vector //
-		if(Expiring[i]->UnusedTime > UnLoadTime){
+		if(Expiring[i]->UnusedTime > TEXTURE_UNLOADTIME){
 			// unload and move to unloaded vector //
 			Expiring[i]->UnLoad(false);
 			Unloaded.push_back(Expiring[i]);
@@ -73,7 +71,7 @@ void TextureManager::TimePass(int mspassed){
 	for(unsigned int i = 0; i < LastUsed.size(); i++){
 		LastUsed[i]->UnusedTime += mspassed;
 		// check should it be moved to secondary vector //
-		if(LastUsed[i]->UnusedTime > InActiveTime){
+		if(LastUsed[i]->UnusedTime > TEXTURE_INACTIVETIME){
 			// move to expiring vector //
 			Expiring.push_back(LastUsed[i]);
 			LastUsed.erase(LastUsed.begin()+i);
@@ -104,12 +102,6 @@ void TextureManager::TimePass(int mspassed){
 	// utility vector won't be processed because it SHOULDN'T be moved anywhere //
 }
 // ------------------------------------ //
-ID3D11ShaderResourceView* TextureManager::GetTextureView(int id, int whichfirst, bool nooldsearch){
-	// call the other finding functions and just change output a little //
-	ID3D11ShaderResourceView* temp = GetTexture(id, whichfirst, nooldsearch)->GetView();
-
-	return temp;
-}
 shared_ptr<ManagedTexture> TextureManager::GetTexture(int id, int whichfirst, bool nooldsearch){
 	if(!nooldsearch){
 		// check TEXTUREMANAGER_LATEST_SEARCH_SIZE latest founds //

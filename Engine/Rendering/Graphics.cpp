@@ -3,9 +3,6 @@
 #ifndef LEVIATHAN_GRAPHICS
 #include "Graphics.h"
 #endif
-using namespace Leviathan;
-using namespace Rendering;
-// ------------------------------------ //
 #include "Application\AppDefine.h"
 #include "Application\Application.h"
 #include "Utility\ComplainOnce.h"
@@ -14,12 +11,17 @@ using namespace Rendering;
 #include <OgreMeshManager.h>
 #include "GUI/OverlayMaster.h"
 #include "GUI/FontManager.h"
+#include <OgreManualObject.h>
+#include <OgreFrameListener.h>
+#include "TextureManager.h"
+using namespace Leviathan;
+using namespace Rendering;
+// ------------------------------------ //
+
 
 DLLEXPORT Leviathan::Graphics::Graphics() : Light(NULL), TextureKeeper(NULL), ORoot(nullptr), MainCamera(NULL), MainCameraNode(NULL), MainViewport(NULL)
 	/*, Terrain(NULL)*/, Overlays(NULL), Fonts(NULL)
 {
-	GuiSmooth = 5;
-
 	Staticaccess = this;
 	Initialized = false;
 }
@@ -36,9 +38,6 @@ bool Graphics::Init(AppDef* appdef){
 	// save definition pointer //
 	AppDefinition = appdef;
 
-	// smoothness factor //
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(AppDef::GetDefault()->GetValues(), L"GuiSmooth", GuiSmooth, 5, false);
-
 	// create ogre renderer //
 	if(!InitializeOgre(AppDefinition)){
 
@@ -52,7 +51,7 @@ bool Graphics::Init(AppDef* appdef){
 		Logger::Get()->Error(L"Graphics: Init: 008");
 		return false;
 	}
-	if(!TextureKeeper->Init(FileSystem::GetTextureFolder(), TEXTURE_INACTIVE_TIME, TEXTURE_UNLOAD_TIME)){
+	if(!TextureKeeper->Init(FileSystem::GetTextureFolder())){
 
 		Logger::Get()->Error(L"Graphics: Init: TextureKeeper failed to init");
 		return false;
@@ -78,18 +77,6 @@ bool Graphics::Init(AppDef* appdef){
 }
 
 DLLEXPORT void Leviathan::Graphics::Release(){
-	// these use everything and need to be deleted before anything //
-#ifdef _DEBUG
-	// check if any have any other references, if they do throw error //
-	for(size_t i = 0; i < GuiObjs.size(); i++){
-		if(GuiObjs[i].use_count() != 1){
-
-			Logger::Get()->Error(L"Graphics: Release: render bridge has other references, "+Convert::ToWstring(GuiObjs[i]->GetID()));
-		}
-	}
-#endif // _DEBUG
-
-	GuiObjs.clear();
 
 	//SAFE_DELETE(Terrain);
 	// release overlay //
@@ -520,10 +507,7 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 		if(objects[i]->IsHidden())
 			continue;
 		DEBUG_BREAK;
-
 	}
-
-	DrawRenderActions();
 
 	// we can now actually render the window //
 	Ogre::RenderWindow* tmpwindow = AppDefinition->GetWindow()->GetOgreWindow();
@@ -547,42 +531,5 @@ bool Graphics::Render(int mspassed, vector<BaseRenderable*> &objects){
 	return true;
 }
 // ------------------------------------------- //
-void Graphics::SubmitRenderBridge(const shared_ptr<RenderBridge> &brdg){
-	GuiObjs.push_back(brdg);
-}
-
-shared_ptr<RenderBridge> Graphics::GetBridgeForGui(int actionid){
-	for(size_t i = 0; i < GuiObjs.size(); i++){
-		// purge at the same time if we happen to find dead objects //
-		if(GuiObjs[i]->DoesWantToClose()){
-			GuiObjs.erase(GuiObjs.begin()+i);
-			i--;
-			continue;
-		}
-		if(GuiObjs[i]->GetID() == actionid)
-			return GuiObjs[i];
-	}
-	return NULL;
-}
-
-void Graphics::PurgeGuiArray(){
-	for(size_t i = 0; i < GuiObjs.size(); i++){
-		if(GuiObjs[i]->DoesWantToClose()){
-			GuiObjs.erase(GuiObjs.begin()+i);
-			i--;
-			continue;
-		}
-	}
-}
-// ------------------------------------------- //
-void Leviathan::Graphics::DrawRenderActions(/*RenderingPassInfo* pass*/){
-	// so no dead objects exist //
-	PurgeGuiArray();
-
-	// all the render bridges now manage drawing order through overlays (we can just render the vector) //
-	for(size_t i = 0; i < GuiObjs.size(); i++){
-		GuiObjs[i]->RenderActions(Overlays);
-	}
-}
 
 

@@ -75,8 +75,11 @@ namespace Leviathan{
 		virtual bool buttonReleased(const OIS::JoyStickEvent &arg, int button);
 		virtual bool axisMoved(const OIS::JoyStickEvent &arg, int axis);
 
+		DLLEXPORT string GetOISCharacterAsText(const OIS::KeyCode &code);
+
 		// map that converts OIS::KeyCode to Rocket key codes //
 		static std::map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> OISRocketKeyConvert;
+		static std::map<wchar_t, OIS::KeyCode> CharacterToOISConvert;
 
 	private:
 
@@ -98,7 +101,7 @@ namespace Leviathan{
 		// this is temporarily stored during input gathering //
 		Rocket::Core::Context* inputreceiver;
 		bool ThisFrameHandledCreate;
-		int LastFrameDonwMouseButtons;
+		int LastFrameDownMouseButtons;
 		// this is updated every time input is gathered //
 		int SpecialKeyModifiers;
 

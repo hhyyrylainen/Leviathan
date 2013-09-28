@@ -63,7 +63,7 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 	itr.MoveToNext();
 
 	// get the console main command type //
-	unique_ptr<wstring> ccmd = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES_WHITESPACE);
+	unique_ptr<wstring> ccmd = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
 
 	// check if the length is too long or too short to actually be any specific command //
 	CONSOLECOMMANDTYPE commandtype = CONSOLECOMMANDTYPE_NONE;

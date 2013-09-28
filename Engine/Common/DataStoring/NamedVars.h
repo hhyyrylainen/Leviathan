@@ -132,6 +132,7 @@ namespace Leviathan{
 		DLLEXPORT NamedVars();
 		DLLEXPORT NamedVars(const NamedVars &other);
 		DLLEXPORT NamedVars(const wstring &datadump);
+		DLLEXPORT NamedVars(const vector<shared_ptr<NamedVariableList>> &variables);
 		DLLEXPORT ~NamedVars();
 		// ------------------------------------ //
 		DLLEXPORT bool SetValue(const wstring &name, const VariableBlock &value1);

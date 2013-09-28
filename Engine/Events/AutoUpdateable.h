@@ -15,7 +15,7 @@ namespace Leviathan{
 		DLLEXPORT AutoUpdateableObject::AutoUpdateableObject();
 		DLLEXPORT virtual AutoUpdateableObject::~AutoUpdateableObject();
 
-		DLLEXPORT virtual void StartMonitoring(vector<shared_ptr<VariableBlock>> &IndexesAndNamesToListen);
+		DLLEXPORT virtual void StartMonitoring(const vector<VariableBlock*> &IndexesAndNamesToListen);
 		DLLEXPORT virtual void StopMonitoring(vector<shared_ptr<VariableBlock>> &unregisterindexandnames, bool all = false);
 
 		DLLEXPORT virtual bool OnUpdate(const shared_ptr<NamedVariableList> &updated);

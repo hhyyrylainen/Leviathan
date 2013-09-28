@@ -253,6 +253,8 @@ namespace Leviathan{
 	class EngineComponent;
 }
 
+//typedef std::vector vector;
+
 #include "Common\ErrorTypes.h"
 
 #include "Logger.h"

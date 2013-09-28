@@ -30,7 +30,7 @@ namespace Leviathan{
 
 		// function to shorten value loading in many places //
 		template<class T>
-		DLLEXPORT static void LoadValueFromNamedVars(NamedVars* block, const wstring &varname, T &receiver, const T &defaultvalue, bool ReportError 
+		DLLEXPORT static bool LoadValueFromNamedVars(NamedVars* block, const wstring &varname, T &receiver, const T &defaultvalue, bool ReportError 
 			= false, const wstring &errorprefix = L"")
 		{
 			// try to get value and convert to receiver //
@@ -41,13 +41,17 @@ namespace Leviathan{
 					Logger::Get()->Error(errorprefix+L" invalid variable "+varname+L", not found/wrong type");
 				// set value to provided default //
 				receiver = defaultvalue;
+
+				return false;
 			}
+			return true;
 		}
 		// function to call the one before //
 		template<class T>
-		static __forceinline void LoadValueFromNamedVars(NamedVars &block, const wstring &varname, T &receiver, const T &defaultvalue, bool ReportError 
-			= false, const wstring &errorprefix = L""){
-				LoadValueFromNamedVars<T>(&block, varname, receiver, defaultvalue, ReportError, errorprefix);
+		static __forceinline bool LoadValueFromNamedVars(NamedVars &block, const wstring &varname, T &receiver, const T &defaultvalue, bool ReportError 
+			= false, const wstring &errorprefix = L"")
+		{
+				return LoadValueFromNamedVars<T>(&block, varname, receiver, defaultvalue, ReportError, errorprefix);
 		}
 
 

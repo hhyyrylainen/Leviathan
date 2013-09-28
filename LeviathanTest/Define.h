@@ -6,7 +6,15 @@ using namespace Leviathan;
 #define GAME_VERSION VERSION
 #define GAME_VERSIONS VERSIONS
 
+#define BREAKONFAIL
+
+
+#ifdef BREAKONFAIL
+#define TESTFAIL {Failed = true; QUICK_ERROR_MESSAGE; DEBUG_BREAK;}
+#else
 #define TESTFAIL {Failed = true; QUICK_ERROR_MESSAGE;}
+#endif // BREAKONFAIL
+
 
 // ------------------------------------ //
 //LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)

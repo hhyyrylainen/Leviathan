@@ -7,8 +7,8 @@ file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
 file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
 file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
 file(GLOB GroupGUI "GUI/*.cpp" "GUI/*.h")
-file(GLOB GroupGUIObjects "GUI/Objects/*.cpp" "GUI/Objects/*.h")
-file(GLOB GroupGUIComponents "GUI/Components/*.cpp" "GUI/Components/*.h")
+#file(GLOB GroupGUIObjects "GUI/Objects/*.cpp" "GUI/Objects/*.h")
+#file(GLOB GroupGUIComponents "GUI/Components/*.cpp" "GUI/Components/*.h")
 file(GLOB GroupEntities "Entities/*.cpp" "Entities/*.h")
 file(GLOB GroupEntitiesBases "Entities/Bases/*.cpp" "Entities/Bases/*.h")
 file(GLOB GroupUtility "Utility/*.cpp" "Utility/*.h")
@@ -47,8 +47,8 @@ source_group("Utility\\Iterators" FILES ${GroupUtilityIte})
 source_group("Utility\\FileRelated" FILES ${GroupUtilityFile})
 
 source_group("GUI" FILES ${GroupGUI})
-source_group("GUI\\Objects" FILES ${GroupGUIObjects})
-source_group("GUI\\Components" FILES ${GroupGUIComponents})
+#source_group("GUI\\Objects" FILES ${GroupGUIObjects})
+#source_group("GUI\\Components" FILES ${GroupGUIComponents})
 
 source_group("Core" FILES ${GroupCore})
 source_group("Core\\Events" FILES ${GroupEvents})
@@ -66,10 +66,12 @@ source_group("Rendering\\GUI" FILES ${GroupRenderingGUI})
 
 # collect all files to one group
 set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics} ${GroupMath} ${GroupSound}
-    ${GroupLeap} ${GroupScript} ${GroupGUI} ${GroupGUIObjects} ${GroupGUIComponents} ${GroupEvents}
+    ${GroupLeap} ${GroupScript} ${GroupGUI}  ${GroupEvents}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
     ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI})
+    
+#${GroupGUIObjects} ${GroupGUIComponents}
     
 # precompiled headers
 # remove from list before adding back

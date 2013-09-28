@@ -5,13 +5,15 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-ObjectFileObject::ObjectFileObject(const wstring &name, const wstring &typesname) : Name(name), TName(typesname), Script(NULL){
+DLLEXPORT Leviathan::ObjectFileObject::ObjectFileObject(const wstring &name, const wstring &typesname, vector<shared_ptr<wstring>> 
+	prefix /*= vector<shared_ptr<wstring>>()*/) : Name(name), TName(typesname), Script(NULL), Prefixes(prefix)
+{
 
 }
 
 ObjectFileObject::~ObjectFileObject(){
 	// release held memory //
-	SAFE_DELETE_VECTOR(Prefixes);
+	Prefixes.clear();
 	SAFE_DELETE_VECTOR(Contents);
 	SAFE_DELETE_VECTOR(TextBlocks);
 }

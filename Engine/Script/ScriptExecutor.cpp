@@ -20,6 +20,7 @@ using namespace Leviathan;
 
 // include various headers that bind functions and classes //
 #include "GUI\GuiScriptBind.h"
+#include "CommonEngineBind.h"
 #include <add_on\scripthelper\scripthelper.h>
 #include "add_on\scriptdictionary\scriptdictionary.h"
 
@@ -77,6 +78,13 @@ bool ScriptExecutor::Init(){
 		return false;
 	}
 
+	// binding Event DataStore DataBlock and others //
+	if(!BindEngineCommonScriptIterface(engine)){
+		// failed //
+		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register Engine object things failed");
+		return false;
+	}
+
 	// binding TextLabel and other objects to be elements //
 	if(!BindGUIObjects(engine)){
 		// failed //
@@ -94,7 +102,7 @@ void ScriptExecutor::Release(){
 	SAFE_RELEASE(engine);
 
 	// release these to stop VLD complains //
-	ScriptModule::EngineTypeIDS.clear();
+	EngineTypeIDS.clear();
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptScript* scriptobject, ScriptRunningSetup* parameters){
@@ -329,4 +337,23 @@ DLLEXPORT void Leviathan::ScriptExecutor::DeleteModule(ScriptModule* ptrtomatch)
 		}
 	}
 }
+
+DLLEXPORT void Leviathan::ScriptExecutor::ScanAngelScriptTypes(){
+	if(EngineTypeIDS.size() == 0){
+		// put basic types //
+		EngineTypeIDS.insert(make_pair(engine->GetTypeIdByDecl("int"), L"int"));
+		EngineTypeIDS.insert(make_pair(engine->GetTypeIdByDecl("float"), L"float"));
+		EngineTypeIDS.insert(make_pair(engine->GetTypeIdByDecl("bool"), L"bool"));
+		EngineTypeIDS.insert(make_pair(engine->GetTypeIdByDecl("string"), L"string"));
+		EngineTypeIDS.insert(make_pair(engine->GetTypeIdByDecl("void"), L"void"));
+	}
+	// call some callbacks //
+	RegisterGUIScriptTypeNames(engine, EngineTypeIDS);
+	RegisterEngineScriptTypes(engine, EngineTypeIDS);
+
+	// TODO: call Engine::Get()->NotifyLinkObjectScriptTypes()
+
+}
+
+std::map<int, wstring> Leviathan::ScriptExecutor::EngineTypeIDS;
 

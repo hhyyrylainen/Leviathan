@@ -14,15 +14,16 @@ namespace Leviathan{
 
 	class ObjectFileObject : public Object{
 	public:
-		DLLEXPORT ObjectFileObject::ObjectFileObject(const wstring &name, const wstring &typesname);
+		DLLEXPORT ObjectFileObject::ObjectFileObject(const wstring &name, const wstring &typesname, vector<shared_ptr<wstring>> prefix = 
+			vector<shared_ptr<wstring>>());
 		DLLEXPORT ObjectFileObject::~ObjectFileObject();
 
 		wstring Name;
 		wstring TName;
 
-		vector<wstring*> Prefixes;
-		vector<ObjectFileList*> Contents;
-		vector<ObjectFileTextBlock*> TextBlocks;
+		std::vector<shared_ptr<wstring>> Prefixes;
+		std::vector<ObjectFileList*> Contents;
+		std::vector<ObjectFileTextBlock*> TextBlocks;
 
 		shared_ptr<ScriptScript> Script;
 	};

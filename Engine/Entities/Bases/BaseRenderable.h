@@ -6,25 +6,24 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "..\GameWorld.h"
 
 namespace Leviathan{
 
-	class Graphics; // forward declaration to make this work //
-
 	class BaseRenderable{
 	public:
-		DLLEXPORT BaseRenderable::BaseRenderable();
-		DLLEXPORT virtual BaseRenderable::~BaseRenderable();
+		DLLEXPORT BaseRenderable(bool hidden);
+		DLLEXPORT virtual ~BaseRenderable();
 
-		DLLEXPORT virtual bool Render(Graphics* renderer, int mspassed) = 0;
+		DLLEXPORT virtual bool CheckRender(GraphicalInputEntity* graphics, int mspassed) = 0;
 
-		DLLEXPORT bool IsHidden();
+		DLLEXPORT inline bool IsHidden(){
+			return Hidden;
+		}
 
 
 	protected:
-		int Frames;
 		bool Hidden;
-		bool Updated;
 	};
 
 }

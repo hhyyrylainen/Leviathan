@@ -58,7 +58,7 @@ namespace Leviathan{
 
 		DLLEXPORT static wchar_t ToLower(const wchar_t &chara);
 		DLLEXPORT static void ToLower(const wstring &source, wstring &target);
-
+		DLLEXPORT static void ToCapital(const wstring &source, wstring &target);
 
 		// type checks //
 		DLLEXPORT static int WstringTypeCheck(const wstring& data, int typecheckfor);

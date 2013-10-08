@@ -64,16 +64,11 @@ namespace Leviathan{
 		DLLEXPORT ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id, const wstring &source, const TEXTURETYPE &type);
 		DLLEXPORT ManagedTexture::~ManagedTexture();
 
-		DLLEXPORT bool Load(ID3D11Device* dev);
 		DLLEXPORT void UnLoad(bool force);
 
 		// quick access inline functions //
 		DLLEXPORT inline shared_ptr<wstring> GetSourceFile(){
 			return FromFile;
-		}
-
-		DLLEXPORT inline ID3D11ShaderResourceView* GetView(){
-			return Texture;
 		}
 		DLLEXPORT inline int GetErrorState() const{
 			return ErrorState;
@@ -101,11 +96,7 @@ namespace Leviathan{
 		bool LoadedFromMemory;
 		TEXTURETYPE TextureType;
 
-		// shared_ptr<ID3D11ShaderResourceView>(NULL, SafeReleaser<ID3D11ShaderResourceView>);
-		// texture needs to be ->released //
-		ID3D11ShaderResourceView* Texture;
 		shared_ptr<wstring> FromFile;
-
 	};
 
 }

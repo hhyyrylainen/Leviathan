@@ -21,22 +21,16 @@ namespace Leviathan{
 		DLLEXPORT virtual void Release();
 		// sets should quit to true so that the main thread will stop everything and close //
 		DLLEXPORT virtual void StartRelease();
-		
-		// functions called when certain events happen //
-		DLLEXPORT virtual void OnLoseFocus();
-		DLLEXPORT virtual void OnGainFocus();
-		DLLEXPORT virtual void OnResize(const int &width, const int &height);
 
 
 		// perform actions //
-		DLLEXPORT virtual void DoResizeWindow(const int &newwidth, const int &newheight);
 		DLLEXPORT virtual int RunMessageLoop();
 		DLLEXPORT virtual void Render();
 		DLLEXPORT void PassCommandLine(const wstring &params);
 		
 		// getting data from the class //
 		DLLEXPORT bool Quitting(){ return Quit; };
-		DLLEXPORT Engine* GetEngine(){ return engine;};
+		DLLEXPORT Engine* GetEngine(){ return _Engine;};
 		DLLEXPORT AppDef* GetDefinition(){ return ApplicationConfiguration;};
 
 		// static access method for getting instance of this class //
@@ -50,7 +44,7 @@ namespace Leviathan{
 		bool Quit;
 		bool ShouldQuit;
 
-		Engine* engine;
+		Engine* _Engine;
 		AppDef* ApplicationConfiguration;
 
 		// static part //

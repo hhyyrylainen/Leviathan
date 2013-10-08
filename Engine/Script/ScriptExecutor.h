@@ -37,6 +37,16 @@ namespace Leviathan{
 			return engine;
 		}
 
+		DLLEXPORT inline int GetAngelScriptTypeID(const wstring &typesname){
+
+			auto iter = EngineTypeIDSInverted.find(typesname);
+
+			if(iter != EngineTypeIDSInverted.end()){
+				return iter->second;
+			}
+			return -1;
+		}
+
 		// script running commands //
 		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptScript* scriptobject, ScriptRunningSetup* parameters);
 
@@ -50,6 +60,8 @@ namespace Leviathan{
 
 		// map of type name and engine type id //
 		static std::map<int, wstring> EngineTypeIDS;
+		// inverted of the former for better performance //
+		static std::map<wstring, int> EngineTypeIDSInverted;
 	};
 
 }

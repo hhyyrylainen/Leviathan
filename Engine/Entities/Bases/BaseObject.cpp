@@ -5,9 +5,10 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-BaseObject::BaseObject(){
-	Type = OBJECT_TYPE_BASE;
+DLLEXPORT Leviathan::BaseObject::BaseObject(int id) : ID(id){
+
 }
+
 BaseObject::~BaseObject(){
 
 }

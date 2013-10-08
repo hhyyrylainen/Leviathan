@@ -7,10 +7,12 @@ file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
 file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
 file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
 file(GLOB GroupGUI "GUI/*.cpp" "GUI/*.h")
+file(GLOB GroupNewton "Newton/*.cpp" "Newton/*.h")
 #file(GLOB GroupGUIObjects "GUI/Objects/*.cpp" "GUI/Objects/*.h")
 #file(GLOB GroupGUIComponents "GUI/Components/*.cpp" "GUI/Components/*.h")
 file(GLOB GroupEntities "Entities/*.cpp" "Entities/*.h")
 file(GLOB GroupEntitiesBases "Entities/Bases/*.cpp" "Entities/Bases/*.h")
+file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
 file(GLOB GroupUtility "Utility/*.cpp" "Utility/*.h")
 file(GLOB GroupUtilityIte "Utility/Iterators/*.cpp" "Utility/Iterators/*.h")
 file(GLOB GroupUtilityFile "Utility/FileRelated/*.cpp" "Utility/FileRelated/*.h")
@@ -40,6 +42,8 @@ source_group("Scripting\\AngelAddons" FILES ${GroupScriptAddons})
 
 source_group("Entities" FILES ${GroupEntities})
 source_group("Entities\\Bases" FILES ${GroupEntitiesBases})
+source_group("Entities\\Objects" FILES ${GroupEntitiesObjects})
+
 
 source_group("Utility" FILES ${GroupUtility})
 source_group("Utility\\Statistics" FILES ${GroupStatistics})
@@ -54,6 +58,7 @@ source_group("Core" FILES ${GroupCore})
 source_group("Core\\Events" FILES ${GroupEvents})
 source_group("Core\\Input" FILES ${GroupInput})
 source_group("Core\\Handlers" FILES ${GroupHandlers})
+source_group("Newton" FILES ${GroupNewton})
 
 source_group("Common" FILES ${GroupCommon})
 source_group("Common\\Application" FILES ${GroupApplication})
@@ -69,7 +74,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${GroupLeap} ${GroupScript} ${GroupGUI}  ${GroupEvents}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
-    ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI})
+    ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects})
     
 #${GroupGUIObjects} ${GroupGUIComponents}
     
@@ -77,14 +82,11 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
 # remove from list before adding back
 file(GLOB PrecompiledHeaderName "Include.h")
 file(GLOB PrecompiledSourceName "Include.cpp")
-
 list(REMOVE_ITEM EngineFiles ${PrecompiledSourceName})
 
 # precompiled header
-
-#ADD_MSVC_PRECOMPILED_HEADER(${PrecompiledHeaderName} ${PrecompiledSourceName} EngineFiles)
 ADD_MSVC_PRECOMPILED_HEADER("Include.h" ${PrecompiledSourceName} EngineFiles)
-#ADD_MSVC_PRECOMPILED_HEADER("Include.h" "Include.cpp" EngineFiles)
+
 
 # engine exporting define
 add_definitions(-DENGINE_EXPORTS)

@@ -17,13 +17,13 @@
 #include "GuiCollection.h"
 #include "Common\DataStoring\DataStore.h"
 #include "Common\DataStoring\DataBlock.h"
+#include "Common\GraphicalInputEntity.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
 Leviathan::Gui::GuiManager::GuiManager() : ID(IDFactory::GetID()), RocketRenderer(NULL), RocketInternals(NULL), WindowContext(NULL), Visible(true),
 	Cursor(NULL)
 {
-	ObjectAmountChanged = false;
 
 	staticaccess = this;
 }
@@ -37,13 +37,14 @@ GuiManager* Leviathan::Gui::GuiManager::Get(){
 	return staticaccess; 
 }
 // ------------------------------------ //
-bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph){
+bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalInputEntity* window){
 
-	ThisRenderer = graph;
+	ThisWindow = window;
 
+	Window* wind = window->GetWindow();
 
 	// create renderer for Rocket GUI //
-	RocketRenderer = new RenderInterfaceOgre3D(graph->GetOwningWindow()->GetWidth(), graph->GetOwningWindow()->GetHeight());
+	RocketRenderer = new RenderInterfaceOgre3D(wind->GetWidth(), wind->GetHeight());
 
 	Rocket::Core::SetRenderInterface(RocketRenderer);
 
@@ -61,18 +62,18 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph){
 	graph->GetFontManager()->LoadAllFonts();
 
 	// create context for this window //
-	WindowContext = Rocket::Core::CreateContext("window01_context", Rocket::Core::Vector2i(graph->GetOwningWindow()->GetWidth(), 
-		graph->GetOwningWindow()->GetHeight())/*, static_cast<Rocket::Core::RenderInterface*>RocketRenderer*/);
+	WindowContext = Rocket::Core::CreateContext("window01_context", Rocket::Core::Vector2i(wind->GetWidth(), wind->GetHeight()));
 	
 	Rocket::Debugger::Initialise(WindowContext);
 
 	Rocket::Debugger::SetVisible(true);
 
 
-
 	// we render during Ogre overlay //
-	graph->GetWindowScene()->addRenderQueueListener(this);
+	wind->GetOverlayScene()->addRenderQueueListener(this);
 
+	// set to be rendered in right viewport //
+	Graphics::Get()->GetOverlayMaster()->SetGUIVisibleInViewport(this, ThisWindow->GetWindow()->GetOverlayViewport());
 
 	return true;
 }
@@ -84,13 +85,15 @@ void Leviathan::Gui::GuiManager::Release(){
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		// object's release function will do everything needed (even deleted if last reference) //
 		SAFE_RELEASE(Objects[i]);
-
-		Objects.erase(Objects.begin()+i);
-		i--;
 	}
+	Objects.clear();
 
-	SAFE_DELETE_VECTOR(Collections);
-	// unload sheets //
+	// GuiCollections are now also reference counted //
+	for(size_t i = 0; i < Collections.size(); i++){
+		SAFE_RELEASE(Collections[i]);
+	}
+	Collections.clear();
+
 	GuiSheets.clear();
 
 
@@ -101,6 +104,9 @@ void Leviathan::Gui::GuiManager::Release(){
 
 	SAFE_DELETE(RocketInternals);
 	SAFE_DELETE(RocketRenderer);
+
+	// we can clear this too //
+	BaseGuiObject::LeviathanToRocketEventTranslate.clear();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(OIS::KeyCode key, int specialmodifiers){
@@ -123,13 +129,9 @@ void Leviathan::Gui::GuiManager::GuiTick(int mspassed){
 }
 
 void Leviathan::Gui::GuiManager::Render(){
-	UpdateArrays();
-
-	
-
 
 	// update Rocket input //
-	ThisRenderer->GetOwningWindow()->GatherInput(WindowContext);
+	ThisWindow->GetWindow()->GatherInput(WindowContext);
 }
 // ------------------------------------ //
 void Leviathan::Gui::GuiManager::OnResize(){
@@ -141,8 +143,6 @@ void Leviathan::Gui::GuiManager::OnResize(){
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiManager::AddGuiObject(BaseGuiObject* obj){
-	ObjectAmountChanged = true;
-
 	Objects.push_back(obj);
 	return true;
 }
@@ -150,7 +150,6 @@ bool Leviathan::Gui::GuiManager::AddGuiObject(BaseGuiObject* obj){
 void Leviathan::Gui::GuiManager::DeleteObject(int id){
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		if(Objects[i]->GetID() == id){
-			ObjectAmountChanged = true;
 
 			SAFE_RELEASE(Objects[i]);
 			Objects.erase(Objects.begin()+i);
@@ -197,8 +196,9 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 	shared_ptr<GuiLoadedSheet> sheet;
 	
 	try{
-		sheet = shared_ptr<GuiLoadedSheet>(new GuiLoadedSheet(WindowContext, Convert::WstringToString(FileSystem::GetScriptsFolder()+relativepath)));
-
+		sheet = shared_ptr<GuiLoadedSheet>(new GuiLoadedSheet(WindowContext, Convert::WstringToString(FileSystem::GetScriptsFolder()+relativepath)),
+		//	std::mem_fun_ref(&GuiLoadedSheet::ReleaseProxy));
+			[](GuiLoadedSheet* p){p->Release();});
 		if(!sheet.get()){
 
 			return false;
@@ -221,9 +221,9 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 
 	for(size_t i = 0; i < data.size(); i++){
 		// check what type the object is //
-		if(data[i]->TName == L"Collection"){
+		if(data[i]->TName == L"GuiCollection" || data[i]->TName == L"Collection"){
 
-			if(!GuiCollection::LoadCollection(this, *data[i], sheet)){
+			if(!GuiCollection::LoadCollection(this, *data[i], sheet.get())){
 
 				// report error //
 				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load collection, named "+data[i]->Name);
@@ -235,7 +235,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 		if(data[i]->TName == L"GuiObject"){
 
 			// try to load //
-			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *data[i], sheet)){
+			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *data[i], sheet.get())){
 
 				// report error //
 				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load GuiObject, named "+data[i]->Name);
@@ -253,6 +253,8 @@ guiprocessguifileloopdeleteprocessedobject:
 		data.erase(data.begin()+i);
 		i--;
 	}
+
+	GuiSheets.push_back(sheet);
 
 	for(size_t i = 0; i < TempOs.size(); i++){
 
@@ -273,7 +275,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFile(const wstring &file){
 			Cursor = NULL;
 		}
 		// show default window cursor //
-		Engine::GetEngine()->GetDefinition()->GetWindow()->SetHideCursor(false);
+		ThisWindow->GetWindow()->SetHideCursor(false);
 		if(file == L"none")
 			return;
 	}
@@ -284,20 +286,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFile(const wstring &file){
 
 		Cursor->Hide();
 		// hide window cursor //
-		Engine::GetEngine()->GetDefinition()->GetWindow()->SetHideCursor(true);
-	}
-}
-// ------------------------------------ //
-void Leviathan::Gui::GuiManager::UpdateArrays(){
-	if(!ObjectAmountChanged)
-		return;
-
-	ObjectAmountChanged = false;
-	for(unsigned int i = 0; i < Objects.size(); i++){
-		// check does it contain renderable data //
-		if(Objects[i]->ObjectFlags & GUIOBJECTHAS_RENDERABLE){
-
-		}
+		ThisWindow->GetWindow()->SetHideCursor(true);
 	}
 }
 // ----------------- event handler part --------------------- //
@@ -435,9 +424,9 @@ void Leviathan::Gui::GuiManager::BuildProjectionMatrix(Ogre::Matrix4& projection
 	projection_matrix = Ogre::Matrix4::ZERO;
 
 	// Set up matrices.
-	projection_matrix[0][0] = 2.0f / ThisRenderer->GetOwningWindow()->GetWidth();
+	projection_matrix[0][0] = 2.0f / ThisWindow->GetWindow()->GetWidth();
 	projection_matrix[0][3]= -1.0000000f;
-	projection_matrix[1][1]= -2.0f / ThisRenderer->GetOwningWindow()->GetHeight();
+	projection_matrix[1][1]= -2.0f / ThisWindow->GetWindow()->GetHeight();
 	projection_matrix[1][3]= 1.0000000f;
 	projection_matrix[2][2]= -2.0f / (z_far - z_near);
 	projection_matrix[3][3]= 1.0000000f;

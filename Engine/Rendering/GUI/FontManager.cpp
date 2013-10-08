@@ -67,32 +67,32 @@ DLLEXPORT bool Leviathan::Rendering::FontManager::LoadFontByName(const wstring &
 	// register rocket font //
 	Rocket::Core::FontDatabase::LoadFontFace(Convert::WstringToString(fontgenfile).c_str());
 
-	// create font //
-	Ogre::FontPtr tmpptr = Ogre::FontManager::getSingleton().create(Convert::WstringToString(name), 
-		Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	//// create font //
+	//Ogre::FontPtr tmpptr = Ogre::FontManager::getSingleton().create(Convert::WstringToString(name), 
+	//	Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
-	// always has to be true type //
-	tmpptr->setType(Ogre::FT_TRUETYPE);
+	//// always has to be true type //
+	//tmpptr->setType(Ogre::FT_TRUETYPE);
 
 
-	// set source //
+	//// set source //
 
-	Ogre::String str = Convert::WstringToString(fontgenfile);
+	//Ogre::String str = Convert::WstringToString(fontgenfile);
 
-	// set as a path //
-	FileSystem::RegisterOGREResourceLocation(str.substr(0, str.find_last_of('\\')+1));
+	//// set as a path //
+	//FileSystem::RegisterOGREResourceLocation(str.substr(0, str.find_last_of('\\')+1));
 
-	// we want to cut down to just the filename //
-	tmpptr->setSource(str.substr(str.find_last_of('\\')+1, str.length()-str.find_last_of('\\')));
+	//// we want to cut down to just the filename //
+	//tmpptr->setSource(str.substr(str.find_last_of('\\')+1, str.length()-str.find_last_of('\\')));
 
-	// set generated quality //
-	tmpptr->setTrueTypeSize(32.f);
-	tmpptr->setTrueTypeResolution(96);
+	//// set generated quality //
+	//tmpptr->setTrueTypeSize(32.f);
+	//tmpptr->setTrueTypeResolution(96);
 
-	// no idea what characters should be loaded //
-	tmpptr->addCodePointRange(Ogre::Font::CodePointRange(33, 255));
+	//// no idea what characters should be loaded //
+	//tmpptr->addCodePointRange(Ogre::Font::CodePointRange(33, 255));
 
-	tmpptr->load();
+	//tmpptr->load();
 
 	return true;
 }

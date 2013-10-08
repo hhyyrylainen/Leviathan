@@ -4,6 +4,7 @@
 #ifndef LEVIATHAN_DEFINE
 #include "Define.h"
 #endif
+#include "Common\ReferenceCounted.h"
 // ------------------------------------ //
 // ---- includes ---- //
 
@@ -105,6 +106,15 @@ namespace Leviathan{
 			}
 			// different types, cannot be returned as pointer //
 			return false;
+		}
+	};
+
+	// templates for getting AngelScript type id from template //
+	template<class TypeToFetchID>
+	struct TypeToAngelScriptIDConverter{
+
+		static inline int GetTypeIDFromTemplated(){
+			return -1;
 		}
 	};
 
@@ -655,6 +665,17 @@ namespace Leviathan{
 			return true;
 		}
 
+		template<class ConvertT>
+		DLLEXPORT inline ConvertT ConvertAndReturnVariable() const{
+			// return if not allowed conversion //
+			if(!IsConversionAllowedNonPtr<ConvertT>()){
+				//Logger::Get()->Warning(L"VariableBlock: conversion not allowed");
+				return ConvertT(0);
+			}
+			// return conversion result //
+			return (ConvertT)*this;
+		}
+
 	protected:
 		// data storing //
 		DataBlockAll* BlockData;
@@ -692,6 +713,38 @@ namespace Leviathan{
 	protected:
 
 		wstring Name;
+	};
+
+	// NOTE: Do NOT use smart pointers with this class //
+	// reference counted version for scripts //
+	class ScriptSafeVariableBlock : public NamedVariableBlock, public ReferenceCounted{
+	public:
+
+		template<class BlockBaseType>
+		DLLEXPORT ScriptSafeVariableBlock(DataBlock<BlockBaseType>* block, const wstring &name) : NamedVariableBlock(block, name){
+			// getting typeid //
+			ASTypeID = TypeToAngelScriptIDConverter<BlockBaseType>::GetTypeIDFromTemplated();
+		}
+
+		DLLEXPORT ScriptSafeVariableBlock(VariableBlock* copyfrom, const wstring &name);
+
+
+		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(ScriptSafeVariableBlock);
+
+
+		DLLEXPORT bool IsValidType(){
+			return ASTypeID > 0 ? true: false;
+		}
+
+		// script proxy functions //
+		int ConvertAndReturnProxyInt(){
+			return ConvertAndReturnVariable<int>();
+		}
+
+	protected:
+
+
+		int ASTypeID;
 	};
 
 

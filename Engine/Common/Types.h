@@ -369,6 +369,12 @@ namespace Leviathan{
 			Y = other.Y;
 			Z = other.Z;
 		}
+		DLLEXPORT Float3(const Ogre::Vector3 &vec){
+			// copy values //
+			X = vec.x;
+			Y = vec.y;
+			Z = vec.z;
+		}
 
 		// access operator //
 		DLLEXPORT inline float& operator[](const int &nindex){
@@ -407,6 +413,12 @@ namespace Leviathan{
 		// multiply  by scalar f //
 		DLLEXPORT inline Float3 operator*(float f) const{
 			return Float3(X*f, Y*f, Z*f);
+		}
+		DLLEXPORT inline Float3* operator*=(float f){
+			X *= f;
+			Y *= f;
+			Z *= f;
+			return this;
 		}
 		// divides all elements //
 		DLLEXPORT inline Float3 operator/(const Float3 &val) const{
@@ -587,6 +599,13 @@ namespace Leviathan{
 		}
 		DLLEXPORT explicit Float4(float val){
 			X = Y = Z = val;
+		}
+		DLLEXPORT Float4(const Ogre::Quaternion &quat){
+			// copy values //
+			X = quat.x;
+			Y = quat.y;
+			Z = quat.z;
+			W = quat.w;
 		}
 
 		// access operator //

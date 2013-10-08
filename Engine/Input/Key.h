@@ -77,12 +77,15 @@ namespace Leviathan{
 					return false;
 			} else {
 
-				if((((Extras & KEYSPECIAL_SHIFT) == (other.Extras & KEYSPECIAL_SHIFT)) || (Extras & KEYSPECIAL_SHIFT) == 0) && 
-					((Extras & KEYSPECIAL_ALT) == (other.Extras & KEYSPECIAL_ALT) || (Extras & KEYSPECIAL_ALT) == 0) && 
-					((Extras & KEYSPECIAL_CTRL) == (other.Extras & KEYSPECIAL_CTRL) || (Extras & KEYSPECIAL_CTRL) == 0)){
-					return true;
+				if((Extras & KEYSPECIAL_SHIFT) && !(other.Extras & KEYSPECIAL_SHIFT)){
+					return false;
 				}
-				return false;
+				if((Extras & KEYSPECIAL_ALT) && !(other.Extras & KEYSPECIAL_ALT)){
+					return false;
+				}
+				if((Extras & KEYSPECIAL_CTRL) && !(other.Extras & KEYSPECIAL_CTRL)){
+					return false;
+				}
 			}
 			return true;
 		}
@@ -91,16 +94,19 @@ namespace Leviathan{
 			if(key != this->Character)
 				return false;
 			if(strict){
-				if((short)specialmodifiers != this->Extras)
-					return false;
+				// TODO: this needs fixing
+				DEBUG_BREAK;
 			} else {
-
-				if((((Extras & KEYSPECIAL_SHIFT) == (specialmodifiers & OIS::Keyboard::Shift)) || (Extras & KEYSPECIAL_SHIFT) == 0) && 
-					((Extras & KEYSPECIAL_ALT) == (specialmodifiers & OIS::Keyboard::Alt) || (Extras & KEYSPECIAL_ALT) == 0) && 
-					((Extras & KEYSPECIAL_CTRL) == (specialmodifiers & OIS::Keyboard::Ctrl) || (Extras & KEYSPECIAL_CTRL) == 0)){
-						return true;
+				
+				if((Extras & KEYSPECIAL_SHIFT) && !(specialmodifiers & Rocket::Core::Input::KM_SHIFT)){
+					return false;
 				}
-				return false;
+				if((Extras & KEYSPECIAL_ALT) && !(specialmodifiers & Rocket::Core::Input::KM_ALT)){
+					return false;
+				}
+				if((Extras & KEYSPECIAL_CTRL) && !(specialmodifiers & Rocket::Core::Input::KM_CTRL)){
+					return false;
+				}
 			}
 			return true;
 		}
@@ -163,9 +169,13 @@ namespace Leviathan{
 
 			WstringIterator itr(representation);
 
+			wstring converted;
+
 			unique_ptr<wstring> str = itr.GetUntilNextCharacterOrAll(L'+');
 
-			T character = Window::CharacterToOISConvert[str->at(0)];
+			Convert::ToCapital(*str, converted);
+
+			T character = Window::CharacterToOISConvert[converted];
 			short special = 0;
 
 			while((str = itr.GetUntilNextCharacterOrAll(L'+'))->size() > 0){
@@ -179,7 +189,7 @@ namespace Leviathan{
 				if(Misc::WstringCompareInsensitiveRefs(*str, L"ctrl")){
 					special |= KEYSPECIAL_CTRL;
 				}
-				if(Misc::WstringCompareInsensitiveRefs(*str, L"win")){
+				if(Misc::WstringCompareInsensitiveRefs(*str, L"win") || Misc::WstringCompareInsensitiveRefs(*str, L"meta")){
 					special |= KEYSPECIAL_WIN;
 				}
 			}

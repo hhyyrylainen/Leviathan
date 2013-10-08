@@ -240,7 +240,7 @@ shared_ptr<ManagedTexture> TextureManager::SearchLastUsed(int id){
 #ifdef _DEBUG
 				Logger::Get()->Info(L"TextureManager: Initializing GetTextureView value");
 #endif
-				LastUsed[i]->Load(NULL);
+				//LastUsed[i]->Load(NULL);
 				RemoveFromUninitialized(id);
 			}
 			AddToLatest(LastUsed[i]);
@@ -260,7 +260,7 @@ shared_ptr<ManagedTexture> TextureManager::SearchExpiring(int id){
 #ifdef _DEBUG
 				Logger::Get()->Info(L"TextureManager: Initializing GetTextureView value");
 #endif
-				Expiring[i]->Load(NULL);
+				//Expiring[i]->Load(NULL);
 				RemoveFromUninitialized(id);
 			}
 			LastUsed.push_back(Expiring[i]);
@@ -281,7 +281,7 @@ shared_ptr<ManagedTexture> TextureManager::SearchUnloaded(int id){
 #ifdef _DEBUG
 				Logger::Get()->Info(L"TextureManager: Initializing GetTextureView value");
 #endif
-				Unloaded[i]->Load(NULL);
+				//Unloaded[i]->Load(NULL);
 				RemoveFromUninitialized(id);
 			}
 			LastUsed.push_back(Unloaded[i]);
@@ -301,7 +301,7 @@ shared_ptr<ManagedTexture> TextureManager::SearchUtility(int id){
 #ifdef _DEBUG
 				Logger::Get()->Info(L"TextureManager: Initializing GetTextureView value");
 #endif
-				Utility[i]->Load(NULL);
+				//Utility[i]->Load(NULL);
 				RemoveFromUninitialized(id);
 			}
 			AddToLatest(Utility[i]);
@@ -389,7 +389,7 @@ int TextureManager::LoadTexture(wstring& path, const TEXTURETYPE &type, bool loa
 		NonInitialized.push_back(tempptr);
 	} else {
 		// call texture to load itself //
-		temp->Load(NULL);
+		//temp->Load(NULL);
 	}
 
 	return id;

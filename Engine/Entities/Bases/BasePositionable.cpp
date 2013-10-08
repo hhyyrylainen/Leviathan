@@ -5,87 +5,66 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-BasePositionable::BasePositionable(){
-	X = 0;
-	Y = 0;
-	Z = 0;
-	Pitch = 0;
-	Yaw = 0;
-	Roll = 0;
+BasePositionable::BasePositionable() : QuatRotation(Float4::IdentityQuaternion()), Position(Float3(0)){
+
 }
 BasePositionable::~BasePositionable(){
 
 }
 // ------------------------------------ //
 void BasePositionable::SetPosX(const float &x){
-	X = x;
+	Position.X = x;
 	PosUpdated();
 }
 void BasePositionable::SetPosY(const float &y){
-	Y = y;
+	Position.Y = y;
 	PosUpdated();
 }
 void BasePositionable::SetPosZ(const float &z){
-	Z = z;
+	Position.Z = z;
 	PosUpdated();
 }
 // ------------------------------------ //
-void BasePositionable::SetPitch(int pitch){
-	Pitch = pitch;
-	OrientationUpdated();
+Float4 BasePositionable::GetOrientation(){
+	return QuatRotation;
 }
-void BasePositionable::SetYaw(int yaw){
-	Yaw = yaw;
-	OrientationUpdated();
-}
-void BasePositionable::SetRoll(int roll){
-	Roll = roll;
-	OrientationUpdated();
-}
-// ------------------------------------ //
-void BasePositionable::GetOrientation(int &outpitch, int &outyaw, int &outroll){
-	outpitch = Pitch;
-	outyaw = Yaw;
-	outroll = Roll;
-}
-int BasePositionable::GetPitch(){
-	return Pitch;
-}
-int BasePositionable::GetYaw(){
-	return Yaw;
-}
-int BasePositionable::GetRoll(){
-	return Roll;
-}
-
-
 // ------------------------------------ //
 void BasePositionable::GetPos(float &outx, float &outy, float &outz){
-	outx = X;
-	outy = Y;
-	outz = Z;
+	outx = Position.X;
+	outy = Position.Y;
+	outz = Position.Z;
 }
+
+DLLEXPORT Float3 Leviathan::BasePositionable::GetPos(){
+	return Position;
+}
+
+
 float BasePositionable::GetXPos(){
-	return X;
+	return Position.X;
 }
 float BasePositionable::GetYPos(){
-	return Y;
+	return Position.Y;
 }
 float BasePositionable::GetZPos(){
-	return Z;
+	return Position.Z;
 }
 
 DLLEXPORT void Leviathan::BasePositionable::SetPos(const float &x, const float &y, const float &z){
-	X = x;
-	Y = y;
-	Z = z;
+	Position.X = x;
+	Position.Y = y;
+	Position.Z = z;
 	PosUpdated();
 }
 
-DLLEXPORT void Leviathan::BasePositionable::SetOrientation(int pitch, int yaw, int roll){
-	Pitch = pitch;
-	Yaw = yaw;
-	Roll = roll;
+DLLEXPORT void Leviathan::BasePositionable::SetPos(const Float3 &pos){
+	Position = pos;
+	PosUpdated();
+}
+
+DLLEXPORT void Leviathan::BasePositionable::SetOrientation(const Float4 &quat){
+	QuatRotation = quat;
+	OrientationUpdated();
 }
 
 void Leviathan::BasePositionable::PosUpdated(){

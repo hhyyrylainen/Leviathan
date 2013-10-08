@@ -6,10 +6,11 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Entities\ModelObject.h"
 #include "ObjectFiles\ObjectFileProcessor.h"
 #include "FileSystem.h"
 #include "Rendering\TextureDefinition.h"
+#include "Entities\GameWorld.h"
+
 
 namespace Leviathan{
 
@@ -20,8 +21,8 @@ namespace Leviathan{
 	public:
 		DLLEXPORT ObjectLoader::ObjectLoader(Engine* engine);
 
-		DLLEXPORT vector<GameObject::Model*> LoadModelFile(const wstring &file, bool finishnow = true);
-		DLLEXPORT TextureDefinition* LoadTextureDefinitionFile(const wstring &file);
+
+		DLLEXPORT int LoadPropToWorld(const wstring &name, GameWorld* world);
 
 
 		DLLEXPORT void CreateTestCubeToScene(Ogre::SceneManager* scene, string meshname);

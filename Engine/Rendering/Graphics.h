@@ -6,18 +6,16 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Entities\ViewerCameraPos.h"
 #include "Entities\Bases\BaseRenderable.h"
 
-#include "Light.h"
-#include "Common\Window.h"
+#include "Common\GraphicalInputEntity.h"
 #include "Application\AppDefine.h"
+#include "GUI\OverlayMaster.h"
 
 namespace Leviathan{
 	// forward declarations to avoid having tons of headers here that aren't necessary //
 	namespace Rendering{
 	class ShaderManager;
-	class OverlayMaster;
 	class FontManager;
 	}
 
@@ -32,47 +30,31 @@ namespace Leviathan{
 		DLLEXPORT void Release();
 
 
-		DLLEXPORT bool Frame(int mspassed, ViewerCameraPos* camerapostouse, vector<BaseRenderable*> &objects);
+		DLLEXPORT bool Frame();
 
 
 		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt);
 
-		DLLEXPORT void SaveScreenShot(const string &filename);
-
-
-		DLLEXPORT inline Window* GetOwningWindow(){
-			return AppDefinition->GetWindow();
-		}
-
 		DLLEXPORT inline TextureManager* GetTextureManager(){
 			return TextureKeeper;
-		}
-		DLLEXPORT inline Rendering::OverlayMaster* GetOverlayMaster(){
-			return Overlays;
 		}
 		DLLEXPORT inline Rendering::FontManager* GetFontManager(){
 			return Fonts;
 		}
+		DLLEXPORT inline Rendering::OverlayMaster* GetOverlayMaster(){
+			return Overlays;
+		}
 		DLLEXPORT inline AppDef* GetDefinitionObject(){
 			return AppDefinition;
 		}
-		DLLEXPORT inline Ogre::SceneManager* GetWindowScene(){
-			return MainScene;
+		DLLEXPORT inline Ogre::Root* GetOgreRoot(){
+			return ORoot.get();
 		}
-
-		RenderingLight* Light;
 
 		DLLEXPORT static Graphics* Get();
 	private:
-		bool Render(int mspassed, vector<BaseRenderable*> &objects);
 
-		void DrawRenderActions();
 		bool InitializeOgre(AppDef* appdef);
-		bool CreateDefaultRenderView();
-		bool CreateCameraAndNodesForScene();
-		void CreateTestObject();
-		void PurgeGuiArray();
-		void ConfigureTestRendering();
 		bool InitializeOverlay();
 		// ------------------------ //
 		bool Initialized;
@@ -83,13 +65,8 @@ namespace Leviathan{
 		// OGRE //
 		unique_ptr<Ogre::Root> ORoot;
 		Ogre::Log* OLog;
-		Ogre::SceneManager* MainScene;
-		Ogre::Camera* MainCamera;
-		Ogre::SceneNode* MainCameraNode;
-		Ogre::Viewport* MainViewport;
-
-		Rendering::OverlayMaster* Overlays;
 		Rendering::FontManager* Fonts;
+		Rendering::OverlayMaster* Overlays;
 
 		// static //
 		static Graphics* Staticaccess;

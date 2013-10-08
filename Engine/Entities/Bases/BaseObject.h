@@ -8,25 +8,21 @@
 // ---- includes ---- //
 
 
-#define OBJECT_TYPE_BASE				1
-#define OBJECT_TYPE_FLYING_CAMERA		1000
-#define OBJECT_TYPE_MODEL				20000
-
-
 namespace Leviathan{
 
 	class BaseObject{
 	public:
-		DLLEXPORT BaseObject::BaseObject();
-		DLLEXPORT virtual BaseObject::~BaseObject();
+		DLLEXPORT BaseObject(int id);
+		DLLEXPORT virtual ~BaseObject();
 		
 
+		DLLEXPORT inline int GetID(){
+			return ID;
+		}
+
+
+	protected:
 		int ID;
-		int Type;
-
-
-	private:
-
 	};
 
 }

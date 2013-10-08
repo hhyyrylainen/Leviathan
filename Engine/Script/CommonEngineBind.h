@@ -38,20 +38,26 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 
 
 	// bind datablock //
-	if(engine->RegisterObjectType("VariableBlock", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+	if(engine->RegisterObjectType("ScriptSafeVariableBlock", 0, asOBJ_REF) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_ADDREF, "void f()", asMETHOD(ScriptSafeVariableBlock, AddRefProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_RELEASE, "void f()", asMETHOD(ScriptSafeVariableBlock, ReleaseProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	// conversion functions //
+	if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "int ConvertAndReturnInt()", asMETHOD(ScriptSafeVariableBlock, ConvertAndReturnProxyInt), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	// type check //
+	if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "bool IsValidType()", asMETHOD(ScriptSafeVariableBlock, IsValidType), asCALL_THISCALL) < 0)
+	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->SetDefaultNamespace("VariableBlock") < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterGlobalFunction("int GetValueAsInt(VariableBlock@ block)", asFUNCTION(WrapperForDataBlockToInt), asCALL_CDECL) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	// restore namespace //
-	if(engine->SetDefaultNamespace("") < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
 
 
 
@@ -61,6 +67,6 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 void RegisterEngineScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){
 
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("Event"), L"Event"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("DataBlock"), L"DataBlock"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("DataStore"), L"DataStore"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("ScriptSafeVariableBlock"), L"ScriptSafeVariableBlock"));
+	//typeids.insert(make_pair(engine->GetTypeIdByDecl("DataStore"), L"DataStore"));
 }

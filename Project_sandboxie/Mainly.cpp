@@ -1,8 +1,11 @@
 #include "Define.h"
 #include "App.h"
 
+#ifdef LEVIATHAN_USES_VLD
 // visual leak detector //
 #include <vld.h>
+#endif // LEVIATHAN_USES_VLD
+
 
 
 
@@ -25,8 +28,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		//LeviathanApplication* instance = LeviathanApplication::GetApp(); 
 		//if(instance != NULL){
 
+#ifdef LEVIATHAN_USES_VLD
 		// now that we are in code we can start tracking //
+
 		VLDEnable();
+#endif // LEVIATHAN_USES_VLD
+
 
 		// create app //
 		SandBoxie::App app = SandBoxie::App();
@@ -52,13 +59,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			Logger::Get()->Info(L"Engine successfully initialized", true);
 			Return = app.RunMessageLoop();
 		} else {
-			Logger::Get()->Error(L"App init failed, closing",0, true);
+			Logger::Get()->Error(L"App init failed, closing", true);
 			app.Release();
 			Return = 005;
 		}
 	}
 
+#ifdef LEVIATHAN_USES_VLD
 	VLDReportLeaks();
+#endif // LEVIATHAN_USES_VLD
 	//_CrtDumpMemoryLeaks();
 
 	CoUninitialize();

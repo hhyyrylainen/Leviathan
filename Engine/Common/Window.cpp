@@ -14,10 +14,12 @@ using namespace Leviathan;
 static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function");
 
 
-DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, bool vsync) : OWindow(owindow), VerticalSync(vsync), m_hwnd(NULL), 
-	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0)
+DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner, bool vsync) : OWindow(owindow), VerticalSync(vsync), 
+	m_hwnd(NULL), WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0), 
+	ForceMouseVisible(false), CursorState(true)
 {
 
+	OwningWindow = owner;
 	// update focused this way //
 	Focused = (m_hwnd = GetRenderWindowHandle(OWindow)) == GetForegroundWindow() ? true: false;
 
@@ -25,9 +27,10 @@ DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, bool vsync) : O
 	Ogre::WindowEventUtilities::addWindowEventListener(OWindow, this);
 
 	// cursor on top of window's windows isn't hidden //
-	CursorHidden = false;
+	ApplicationWantCursorState = false;
 
 	SetupOISForThisWindow();
+	_CreateOverlayScene();
 }
 
 DLLEXPORT Leviathan::Window::~Window(){
@@ -35,16 +38,26 @@ DLLEXPORT Leviathan::Window::~Window(){
 	Ogre::WindowEventUtilities::removeWindowEventListener(OWindow, this);
 	// close window (might be closed already) //
 	//OWindow->destroy();
+
+	// release Ogre resources //
+	Ogre::Root::getSingleton().destroySceneManager(OverlayScene);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
-	if(toset == CursorHidden)
-		return;
-	CursorHidden = toset;
-	if(CursorHidden){
-		ShowCursor(FALSE);
+	ApplicationWantCursorState = toset;
+
+	if(!ApplicationWantCursorState || ForceMouseVisible){
+		// show cursor //
+		if(!CursorState){
+			CursorState = true;
+			ShowCursor(TRUE);
+		}
 	} else {
-		ShowCursor(TRUE);
+		// hide cursor //
+		if(CursorState){
+			CursorState = false;
+			ShowCursor(FALSE);
+		}
 	}
 }
 
@@ -82,22 +95,42 @@ DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
 	x = p.x;
 	y = p.y;
 }
+
+
+DLLEXPORT bool Leviathan::Window::IsMouseOutsideWindowClientArea(){
+	int X, Y;
+	GetRelativeMouse(X, Y);
+	// check the coordinates //
+	if(X < 0 || Y < 0 || X > GetWidth() || Y > GetHeight()){
+		return true;
+	}
+	return false;
+}
+
+
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Window::CloseDown(){
+	// release view ports, etc. //
+	Ogre::Root::getSingleton().destroySceneManager(OverlayScene);
+	OGRE_DELETE OverlayViewport;
+	OverlayScene = NULL;
+	OverlayViewport = NULL;
 	// close the window //
 	OWindow->destroy();
+
+
 	ReleaseOIS();
 }
 
 DLLEXPORT void Leviathan::Window::ResizeWindow(const int &width, const int &height){
-	// make ogre window resize //
+	// make ogre resize window //
 	OWindow->resize(width, height);
 }
 // ------------------------------------ //
 void Leviathan::Window::windowResized(Ogre::RenderWindow* rw){
-	// notify engine //
-	Engine::GetEngine()->OnResize(GetWidth(), GetHeight());
-
+	// TODO: add callback notification
+	OwningWindow->OnResize(GetWidth(), GetHeight());
+	
 	UpdateOISMouseWindowSize();
 }
 
@@ -109,7 +142,7 @@ void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
 	Focused = m_hwnd == GetForegroundWindow() ? true: false;
 	
 	// update engine focus state (TODO: add a list of focuses to support multiple windows) //
-	Focused ? Engine::GetEngine()->GainFocus(): Engine::GetEngine()->LoseFocus();
+	//Focused ? Engine::GetEngine()->GainFocus(): Engine::GetEngine()->LoseFocus();
 
 	wstring message = L"Window focus is now ";
 	message += Focused ? L"true": L"false";
@@ -219,6 +252,8 @@ DLLEXPORT void Leviathan::Window::GatherInput(Rocket::Core::Context* context){
 	ThisFrameHandledCreate = false;
 	inputreceiver = context;
 
+	OwningWindow->GetInputController()->StartInputGather();
+
 	// capture inputs and send events //
 	WindowMouse->capture();
 
@@ -270,13 +305,19 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 	CheckInputState();
 	// pass event to active Rocket context //
 
+	bool SentToController = false;
+
 	if(inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
 		if(!Gui::GuiManager::Get()->ProcessKeyDown(arg.key, SpecialKeyModifiers)){
 
-			// TODO: after not even GUI wanting update input object
+			SentToController = true;
+			OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, true);
 		}
 	}
 
+	if(!SentToController){
+		OwningWindow->GetInputController()->OnBlockedInput(arg.key, SpecialKeyModifiers, true);
+	}
 
 
 	// don't really know what to return
@@ -288,8 +329,12 @@ bool Leviathan::Window::keyReleased(const OIS::KeyEvent &arg){
 	// pass event to active Rocket context //
 	if(inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
 		// TODO: after not even GUI wanting update input object
-
+		OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, false);
+	} else {
+		OwningWindow->GetInputController()->OnBlockedInput(arg.key, SpecialKeyModifiers, false);
 	}
+
+
 	// don't really know what to return
 	return true;
 }
@@ -302,6 +347,17 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
 
 	inputreceiver->ProcessMouseMove(mstate.X.abs, mstate.Y.abs, SpecialKeyModifiers);
 	inputreceiver->ProcessMouseWheel(-mstate.Z.rel, SpecialKeyModifiers);
+
+	// force cursor visible check //
+	if(IsMouseOutsideWindowClientArea()){
+
+		ForceMouseVisible = true;
+	} else {
+
+		ForceMouseVisible = false;
+	}
+	// update cursor state //
+	SetHideCursor(ApplicationWantCursorState);
 
 	// don't really know what to return
 	return true;
@@ -387,70 +443,73 @@ bool Leviathan::Window::axisMoved(const OIS::JoyStickEvent &arg, int axis){
 DLLEXPORT string Leviathan::Window::GetOISCharacterAsText(const OIS::KeyCode &code){
 	return WindowKeyboard->getAsString(code);
 }
-// ------------------ WindowPassData ------------------ //
-Leviathan::WindowPassData::WindowPassData(Window* wind, LeviathanApplication* appinterface){
-	OwningWindow = wind;
-	Appinterface = appinterface;
+
+void Leviathan::Window::_CreateOverlayScene(){
+	// create scene manager //
+	OverlayScene = Ogre::Root::getSingleton().createSceneManager(Ogre::ST_EXTERIOR_FAR, "Overlay_forWindow_");
+
+	// also needs a viewport that is last to be drawn //
+	float ViewWidth = 1.f;
+	float ViewHeight = 1.f;
+	float ViewLeft = (1.f-ViewWidth)*0.5f;
+	float ViewTop = (1.f-ViewHeight)*0.5f;
+
+	USHORT ZOrder = 120;
+
+	Ogre::Camera* camera = OverlayScene->createCamera("empty camera");
+
+	OverlayViewport = OWindow->addViewport(camera, ZOrder, ViewLeft, ViewTop, ViewWidth, ViewHeight);
+
+	OverlayScene->getRootSceneNode()->createChildSceneNode()->attachObject(camera);
+	
+
+	// set default viewport colour //
+	OverlayViewport->setBackgroundColour(Ogre::ColourValue(0.f, 0.f, 0.f, 0.f));
+	//OverlayViewport->setBackgroundColour(Ogre::ColourValue(0.8f, 0.2f, 0.5f, 1.f));
+
+	// we want a transparent viewport //
+	OverlayViewport->setClearEveryFrame(true, Ogre::FBT_DEPTH | Ogre::FBT_STENCIL);
+
+	// automatic updating //
+	OverlayViewport->setAutoUpdated(true);
 }
 // ------------------ KeyCode conversion map ------------------ //
 #define QUICKKEYPAIR(x, y) OIS::x, Rocket::Core::Input::y
 #define SIMPLEPAIR(x, y)	L##x, OIS::y
 #define QUICKONETOONEPAIR(x) OIS::KC_##x, Rocket::Core::Input::KI_##x
 
-std::map<wchar_t, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = boost::assign::map_list_of
-	(SIMPLEPAIR('a', KC_A))
-	(SIMPLEPAIR('b', KC_B))
-	(SIMPLEPAIR('c', KC_C))
-	(SIMPLEPAIR('d', KC_D))
-	(SIMPLEPAIR('e', KC_E))
-	(SIMPLEPAIR('f', KC_F))
-	(SIMPLEPAIR('g', KC_G))
-	(SIMPLEPAIR('h', KC_H))
-	(SIMPLEPAIR('i', KC_I))
-	(SIMPLEPAIR('j', KC_J))
-	(SIMPLEPAIR('k', KC_K))
-	(SIMPLEPAIR('l', KC_L))
-	(SIMPLEPAIR('m', KC_M))
-	(SIMPLEPAIR('n', KC_N))
-	(SIMPLEPAIR('o', KC_O))
-	(SIMPLEPAIR('p', KC_P))
-	(SIMPLEPAIR('q', KC_Q))
-	(SIMPLEPAIR('r', KC_R))
-	(SIMPLEPAIR('s', KC_S))
-	(SIMPLEPAIR('t', KC_T))
-	(SIMPLEPAIR('u', KC_U))
-	(SIMPLEPAIR('v', KC_V))
-	(SIMPLEPAIR('w', KC_W))
-	(SIMPLEPAIR('x', KC_X))
-	(SIMPLEPAIR('y', KC_Y))
-	(SIMPLEPAIR('z', KC_Z))
 
-	(SIMPLEPAIR('A', KC_A))
-	(SIMPLEPAIR('B', KC_B))
-	(SIMPLEPAIR('C', KC_C))
-	(SIMPLEPAIR('D', KC_D))
-	(SIMPLEPAIR('E', KC_E))
-	(SIMPLEPAIR('F', KC_F))
-	(SIMPLEPAIR('G', KC_G))
-	(SIMPLEPAIR('H', KC_H))
-	(SIMPLEPAIR('I', KC_I))
-	(SIMPLEPAIR('J', KC_J))
-	(SIMPLEPAIR('K', KC_K))
-	(SIMPLEPAIR('L', KC_L))
-	(SIMPLEPAIR('M', KC_M))
-	(SIMPLEPAIR('N', KC_N))
-	(SIMPLEPAIR('O', KC_O))
-	(SIMPLEPAIR('P', KC_P))
-	(SIMPLEPAIR('Q', KC_Q))
-	(SIMPLEPAIR('R', KC_R))
-	(SIMPLEPAIR('S', KC_S))
-	(SIMPLEPAIR('T', KC_T))
-	(SIMPLEPAIR('U', KC_U))
-	(SIMPLEPAIR('V', KC_V))
-	(SIMPLEPAIR('W', KC_W))
-	(SIMPLEPAIR('X', KC_X))
-	(SIMPLEPAIR('Y', KC_Y))
-	(SIMPLEPAIR('Z', KC_Z))
+#define SIMPLEONETOONE(x)	WSTRINGIFY(x), OIS::KC_##x
+
+std::map<wstring, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = boost::assign::map_list_of
+	(SIMPLEONETOONE(A))
+	(SIMPLEONETOONE(B))
+	(SIMPLEONETOONE(C))
+	(SIMPLEONETOONE(D))
+	(SIMPLEONETOONE(E))
+	(SIMPLEONETOONE(F))
+	(SIMPLEONETOONE(G))
+	(SIMPLEONETOONE(H))
+	(SIMPLEONETOONE(I))
+	(SIMPLEONETOONE(J))
+	(SIMPLEONETOONE(K))
+	(SIMPLEONETOONE(L))
+	(SIMPLEONETOONE(M))
+	(SIMPLEONETOONE(N))
+	(SIMPLEONETOONE(O))
+	(SIMPLEONETOONE(P))
+	(SIMPLEONETOONE(Q))
+	(SIMPLEONETOONE(R))
+	(SIMPLEONETOONE(S))
+	(SIMPLEONETOONE(T))
+	(SIMPLEONETOONE(U))
+	(SIMPLEONETOONE(V))
+	(SIMPLEONETOONE(W))
+	(SIMPLEONETOONE(X))
+	(SIMPLEONETOONE(Y))
+	(SIMPLEONETOONE(Z))
+
+	(SIMPLEONETOONE(F1))
 ;
 
 

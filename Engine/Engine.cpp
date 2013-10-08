@@ -7,8 +7,12 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "Application\Application.h"
 #include "Rendering\TextureManager.h"
+#include "Entities\GameWorld.h"
 
-Leviathan::Engine::Engine() : LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL){
+Leviathan::Engine::Engine() : LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), _NewtonManager(NULL){
+
+	// create this here //
+	IDDefaultInstance = IDFactory::Get();
 
 	Mainlog = NULL;
 	Inited = false;
@@ -18,13 +22,11 @@ Leviathan::Engine::Engine() : LeapData(NULL), MainConsole(NULL), MainFileHandler
 	MainRandom = NULL;
 	RenderTimer = NULL;
 
-	Inputs = NULL;
 	Sound = NULL;
 
 	TimePassed = 0;
 	LastFrame = 0;
 
-	GManager = NULL;
 	Mainstore = NULL;
 	MainScript = NULL;
 
@@ -32,13 +34,9 @@ Leviathan::Engine::Engine() : LeapData(NULL), MainConsole(NULL), MainFileHandler
 	TickTime = 0;
 	FrameCount = 0;
 
-	MainCamera = NULL;
-	KeyListener = NULL;
 	MainEvents = NULL;
-	GObjects = NULL;
 	Loader = NULL;
 	OutOMemory = NULL;
-	AnimManager = NULL;
 
 	Focused = true;
 	MouseCaptured = false;
@@ -95,13 +93,6 @@ bool Leviathan::Engine::Init(AppDef* definition){
 		return false;
 	}
 
-	// object holder //
-	GObjects = new ObjectManager();
-	CLASS_ALLOC_CHECK(GObjects);
-	if(!GObjects->Init()){
-		Logger::Get()->Error(L"Failed to init Engine, Init ObjectManager failed!");
-		return false;
-	}
 	// timing object //
 	MTimer = new Timer();
 
@@ -137,37 +128,16 @@ bool Leviathan::Engine::Init(AppDef* definition){
 		return false;
 	}
 
+	// create newton manager before any newton resources are needed //
+	_NewtonManager = new NewtonManager();
 
-	// set height/width values //
-	Mainstore->SetHeight(definition->GetWindow()->GetHeight());
-	Mainstore->SetWidth(definition->GetWindow()->GetWidth());
+	// create window //
+	GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
 
-
-	// 3d model animations //
-	AnimManager = new AnimationManager();
-	CLASS_ALLOC_CHECK(AnimManager);
-	if(!AnimManager->Init()){
-		Logger::Get()->Error(L"Failed to init Engine, AnimationManager init failed");
-		return false;
-	}
-
-	// key listening //
-	KeyListener = new KeyPressManager();
-	CLASS_ALLOC_CHECK(KeyListener);
 
 	// make angel script make list of registered stuff //
 	MainScript->GetExecutor()->ScanAngelScriptTypes();
 
-
-	// Gui //
-	GManager = new Gui::GuiManager();
-	CLASS_ALLOC_CHECK(GManager);
-
-	if(!GManager->Init(definition, Graph)){
-
-		Logger::Get()->Error(L"Failed to init Engine, Gui init failed");
-		return false;
-	}
 
 	// create leap controller //
 	LeapData = new LeapManager(this);
@@ -187,29 +157,12 @@ bool Leviathan::Engine::Init(AppDef* definition){
 		Logger::Get()->Error(L"Engine: Init: Leap threw something, even without leap this shouldn't happen; continuing anyway");
 	}
 
-	// create camera that always exists //
-	MainCamera = new ViewerCameraPos();
-	//MainCamera->SetPos(Float3(0, 0, 5));
-	MainCamera->SetPos(Float3(0, 300, 60));
-	
-	// set camera to be last one to receive key presses because it will ALWAYS consume them //
-	MainCamera->BecomeMainListeningCamera();
-
 	// sound device //
 	Sound = new SoundDevice();
 	CLASS_ALLOC_CHECK(Sound);
 	if(!Sound->Init()){
 
 		Logger::Get()->Error(L"Failed to init Engine, sound init failed");
-		return false;
-	}
-	
-	Inputs = new Input();
-	CLASS_ALLOC_CHECK(Inputs);
-	// load control structures //
-	if(!Inputs->Init(Define->HInstance, Mainstore->GetWidth(), Mainstore->GetHeight())){
-
-		Logger::Get()->Error(L"Failed to init Engine, input init failed");
 		return false;
 	}
 
@@ -237,10 +190,6 @@ void Leviathan::Engine::PostLoad(){
 	// get time //
 	LastFrame = Misc::GetTimeMs64();
 
-	//// it is preferable that mouse isn't captured on start //
-	SetGuiActive(true);
-	//SetGuiActive(false);
-
 	// increase start count //
 	int startcounts = 0;
 
@@ -256,22 +205,22 @@ void Leviathan::Engine::PostLoad(){
 }
 
 void Leviathan::Engine::Release(){
-	// set inited to false to cause all engine functions just return //
-	Inited = false;
 
-	// objects WILL contain things that want to do everything before shutting down //
-	SAFE_RELEASEDEL(GObjects);
+	// destroy worlds //
+	GameWorlds.clear();
 
-	// Gui is very picky about delete order
-	SAFE_RELEASEDEL(GManager);
+	// make windows clear their stored objects //
+	GraphicalEntity1->ReleaseLinked();
 
-	// clears all running timers that might have accidentally been left running //
-	TimingMonitor::ClearTimers();
+	// destroy windows //
+	SAFE_DELETE(GraphicalEntity1);
+
+	// release newton //
+	SAFE_DELETE(_NewtonManager);
 
 	SAFE_RELEASEDEL(LeapData);
-	SAFE_DELETE(MainCamera);
 
-	// console needs to be before script release //
+	// console needs to be released before script release //
 	SAFE_RELEASEDEL(MainConsole);
 
 	SAFE_RELEASEDEL(MainScript);
@@ -279,18 +228,13 @@ void Leviathan::Engine::Release(){
 	Mainlog->Save();
 
 	SAFE_DELETE(Loader);
-
-	SAFE_RELEASEDEL(AnimManager);
 	SAFE_RELEASEDEL(Graph);
 	SAFE_DELETE(RenderTimer);
 
-	SAFE_RELEASEDEL(Inputs);
 	SAFE_RELEASEDEL(Sound);
 	SAFE_DELETE(Mainstore);
 
 	SAFE_RELEASEDEL(MainEvents);
-
-	SAFE_DELETE(KeyListener);
 
 
 	SAFE_DELETE(MTimer);
@@ -302,8 +246,13 @@ void Leviathan::Engine::Release(){
 	ObjectFileProcessor::Release();
 	SAFE_RELEASEDEL(MainFileHandler);
 
+	// clears all running timers that might have accidentally been left running //
+	TimingMonitor::ClearTimers();
+
 	// safe to delete this here //
 	SAFE_DELETE(OutOMemory);
+
+	SAFE_DELETE(IDDefaultInstance);
 }
 // ------------------------------------ //
 void Leviathan::Engine::Tick(){
@@ -324,20 +273,13 @@ void Leviathan::Engine::Tick(){
 	TickCount++;
 	
 	// update input //
-	Inputs->Update();
 	LeapData->OnTick(TimePassed);
 
 	// sound tick //
 	Sound->Tick(TimePassed);
 
-	if(Focused){
-		KeyListener->ProcessInput(Inputs);
-	} else {
-		// send this so that all keys are set as up //
-		KeyListener->RunUnfocusedProcess(Inputs);
-	}
-
-	GManager->GuiTick(TimePassed);
+	// update windows //
+	GraphicalEntity1->Tick(TimePassed);
 
 	// update texture usage times, to allow unused textures to be unloaded //
 	Graph->GetTextureManager()->TimePass(TimePassed);
@@ -373,88 +315,21 @@ void Leviathan::Engine::RenderFrame(){
 	// since last frame is in microseconds 10^-6 convert to milliseconds //
 	// SinceLastFrame is always more than 1000 (always 1 ms or more) //
 	SinceLastFrame /= 1000;
-
 	FrameCount++;
 
-	// update monitor objects //
 	// advanced statistic start monitoring //
 	RenderTimer->RenderingStart();
 
 	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN, new int(SinceLastFrame)));
 
-	// update simulations will go here, or not //
-
-	// Gui //
-	GManager->Render();
-
 	// render //
-	vector<BaseRenderable*>* objects = GObjects->GetRenderableObjects();
-	Graph->Frame(SinceLastFrame, MainCamera, *objects);
+	GraphicalEntity1->Render(SinceLastFrame);
+	Graph->Frame();
 
 	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_END, new int(FrameCount)));
 
 	// advanced statistics frame has ended //
 	RenderTimer->RenderingEnd();
-}
-// ------------------------------------ //
-bool Leviathan::Engine::DoWindowResize(int width, int height){
-	// tell window class to resize the real windows window //
-	Define->GetWindow()->ResizeWindow(width, height);
-	// window class updates engine's values //
-
-	return true;
-}
-void Leviathan::Engine::OnResize(int width, int height){
-	// skip if width and height are the same //
-	if((Mainstore->GetWidth() == width) && (Mainstore->GetHeight() == height)){
-		return;
-	}
-
-	// update values in DataStore and call resize functions of things //
-	Mainstore->SetWidth(width);
-	Mainstore->SetHeight(height);
-
-	// update rendering stuff //
-
-
-	// update Gui //
-	GManager->OnResize();
-
-	// inputs manager size //
-	Inputs->ResolutionUpdated(width, height);
-}
-// ------------------------------------ //
-void Leviathan::Engine::CaptureMouse(bool toset){
-	MouseCaptured = toset;
-
-	Define->GetWindow()->SetHideCursor(toset);
-
-	Inputs->SetMouseCapture(toset);
-	WantsToCapture = toset;
-}
-void Leviathan::Engine::SetGuiActive(bool toset){
-	GuiActive = toset;
-	if(GuiActive){
-		CaptureMouse(false);
-
-	} else {
-		Define->GetWindow()->SetMouseToCenter();
-		CaptureMouse(true);
-	}
-	Mainstore->SetGUiActive(GuiActive);
-}
-
-void Leviathan::Engine::LoseFocus(){
-	Inputs->SetMouseCapture(false);
-	Focused = false;
-}
-void Leviathan::Engine::GainFocus(){
-	Focused = true;
-	if(!GuiActive){
-		Inputs->SetMouseCapture(true);
-	}
-
-	//SaveScreenShot();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(const wstring &commands){
@@ -475,7 +350,40 @@ DLLEXPORT void Leviathan::Engine::SaveScreenShot(){
 	const wstring fileprefix = MainFileHandler->GetDataFolder()+L"Screenshots\\Captured_frame_";
 
 
-	Graph->SaveScreenShot(Convert::WstringToString(fileprefix));
+	GraphicalEntity1->SaveScreenShot(Convert::WstringToString(fileprefix));
+}
+
+DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
+	int openwindows = 0;
+
+	if(GraphicalEntity1->GetWindow()->IsOpen())
+		openwindows++;
+
+	return openwindows;
+}
+
+DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(){
+	shared_ptr<GameWorld> tmp(new GameWorld(Graph->GetOgreRoot()));
+
+	GameWorlds.push_back(tmp);
+	return GameWorlds.back();
+}
+
+DLLEXPORT void Leviathan::Engine::PhysicsUpdate(){
+	// go through all worlds and simulate updates //
+	for(size_t i = 0; i < GameWorlds.size(); i++){
+
+		GameWorlds[i]->SimulateWorld();
+	}
+
+}
+
+DLLEXPORT void Leviathan::Engine::ResetPhysicsTime(){
+	// go through all worlds and set last update time to this moment //
+	for(size_t i = 0; i < GameWorlds.size(); i++){
+
+		GameWorlds[i]->ClearSimulatePassedTime();
+	}
 }
 
 // ------------------------------------ //

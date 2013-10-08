@@ -85,6 +85,7 @@ namespace Leviathan{
 
 		DLLEXPORT bool DoesListenersContainSpecificListener(const wstring &listenername);
 		DLLEXPORT void GetListOfListeners(std::vector<wstring> &receiver);
+		DLLEXPORT string GetListeningFunctionName(const wstring &listenername);
 
 		DLLEXPORT wstring GetInfoWstring();
 

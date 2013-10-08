@@ -5,6 +5,7 @@
 #endif
 #include "Exceptions\ExceptionInvalidArguement.h"
 #include "Utility\Iterators\WstringIterator.h"
+#include "Script\ScriptInterface.h"
 using namespace Leviathan;
 // ------------------------------------ //
 #define TEST_IVALUE_INDBLOCKS		254676
@@ -119,7 +120,21 @@ DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
 	return false;
 }
 
+//
+// Template specifications should be fine being in here without causing any issues
+// should also improve compilation speed and reduce the mess in the header and
+// allow includes that are needed and couldn't be in the header
+//
 
+// templates for getting AngelScript type id from template //
+#define TYPEIDGETTEMPLATEINSTANTIATION(TypeForTemplate, StringToUse) template<> struct TypeToAngelScriptIDConverter<TypeForTemplate>{static inline int GetTypeIDFromTemplated(){ return ScriptInterface::Get()->GetExecutor()->GetAngelScriptTypeID(L"int"); }};
+
+
+TYPEIDGETTEMPLATEINSTANTIATION(int, L"int");
+TYPEIDGETTEMPLATEINSTANTIATION(bool, L"int");
+TYPEIDGETTEMPLATEINSTANTIATION(float, L"int");
+TYPEIDGETTEMPLATEINSTANTIATION(char, L"int");
+TYPEIDGETTEMPLATEINSTANTIATION(string, L"string");
 // ------------------------------------ //
 DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined) throw(...){
 	// the text should have all preceding and trailing spaces removed //
@@ -199,3 +214,38 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wst
 	// should be plain old int //
 	BlockData = new IntBlock(Convert::WstringTo<int>(valuetoparse));
 }
+
+
+// ------------------ ScriptSafeVariableBlock ------------------ //
+Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyfrom, const wstring &name) : NamedVariableBlock(
+	copyfrom->GetBlock()->AllocateNewFromThis(), name){
+		// we need to copy all settings from the block //
+		switch(copyfrom->GetBlock()->Type){
+		case DATABLOCK_TYPE_INT: ASTypeID = TypeToAngelScriptIDConverter<int>::GetTypeIDFromTemplated(); break;
+		case DATABLOCK_TYPE_FLOAT: ASTypeID = TypeToAngelScriptIDConverter<float>::GetTypeIDFromTemplated(); break;
+		case DATABLOCK_TYPE_BOOL: ASTypeID = TypeToAngelScriptIDConverter<bool>::GetTypeIDFromTemplated(); break;
+		case DATABLOCK_TYPE_WSTRING:
+			{
+				// we'll use automatic conversion here //
+				unique_ptr<DataBlockAll> tmp(new StringBlock(ConvertAndReturnVariable<string>()));
+
+				SAFE_DELETE(BlockData);
+				BlockData = tmp.release();
+
+				ASTypeID = TypeToAngelScriptIDConverter<string>::GetTypeIDFromTemplated(); break;
+			}
+		break;
+		case DATABLOCK_TYPE_STRING: ASTypeID = TypeToAngelScriptIDConverter<string>::GetTypeIDFromTemplated(); break;
+		case DATABLOCK_TYPE_CHAR: ASTypeID = TypeToAngelScriptIDConverter<char>::GetTypeIDFromTemplated(); break;
+		case DATABLOCK_TYPE_DOUBLE: ASTypeID = TypeToAngelScriptIDConverter<double>::GetTypeIDFromTemplated(); break;
+
+		default:
+			throw ExceptionInvalidArguement(L"cannot convert non-named, generic type block to script safe block", copyfrom->GetBlock()->Type,
+				__WFUNCTION__, L"copyfrom", L"invalid block type");
+		}
+}
+
+
+
+
+

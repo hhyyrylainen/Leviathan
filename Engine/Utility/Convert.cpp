@@ -113,6 +113,21 @@ DLLEXPORT void Leviathan::Convert::ToLower(const wstring &source, wstring &targe
 	}
 }
 
+DLLEXPORT void Leviathan::Convert::ToCapital(const wstring &source, wstring &target){
+	// make sizes match //
+	target.resize(source.size());
+
+	for(size_t i = 0; i < source.size(); i++){
+		if(source[i] >= L'a' && source[i] <= L'z'){
+
+			target[i] = ((int)source[i])-32;
+		} else {
+			// just copy value //
+			target[i] = source[i];
+		}
+	}
+}
+
 wchar_t Convert::ToLower(const wchar_t &chara){
 	int val = (int)chara;
 

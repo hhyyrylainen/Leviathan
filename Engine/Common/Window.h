@@ -15,20 +15,12 @@ namespace Leviathan{
 	// for storing in pass to window //
 	class LeviathanApplication;
 	class Window;
-
-	// data to pass to wndproc //
-	struct WindowPassData{
-		WindowPassData(Window* wind, LeviathanApplication* appinterface);
-
-
-		LeviathanApplication* Appinterface;
-		Window* OwningWindow;
-	};
+	class GraphicalInputEntity;
 
 	// window class //
 	class Window : public Ogre::WindowEventListener, OIS::KeyListener, OIS::MouseListener, OIS::JoyStickListener{
 	public:
-		DLLEXPORT Window(Ogre::RenderWindow* owindow, bool vsync);
+		DLLEXPORT Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner, bool vsync);
 		DLLEXPORT ~Window();
 
 		DLLEXPORT void CloseDown();
@@ -49,6 +41,7 @@ namespace Leviathan{
 
 		DLLEXPORT void GetRelativeMouse(int& x, int& y);
 		DLLEXPORT void SetMouseToCenter();
+		DLLEXPORT bool IsMouseOutsideWindowClientArea();
 
 		DLLEXPORT void GatherInput(Rocket::Core::Context* context);
 
@@ -77,9 +70,15 @@ namespace Leviathan{
 
 		DLLEXPORT string GetOISCharacterAsText(const OIS::KeyCode &code);
 
+		DLLEXPORT inline Ogre::SceneManager* GetOverlayScene(){
+			return OverlayScene;
+		}
+		DLLEXPORT inline Ogre::Viewport* GetOverlayViewport(){
+			return OverlayViewport;
+		}
 		// map that converts OIS::KeyCode to Rocket key codes //
 		static std::map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> OISRocketKeyConvert;
-		static std::map<wchar_t, OIS::KeyCode> CharacterToOISConvert;
+		static std::map<wstring, OIS::KeyCode> CharacterToOISConvert;
 
 	private:
 
@@ -88,10 +87,15 @@ namespace Leviathan{
 		void UpdateOISMouseWindowSize();
 
 		void CheckInputState();
+		void _CreateOverlayScene();
 		// ------------------------------------ //
 
 		HWND m_hwnd;
 		Ogre::RenderWindow* OWindow;
+		Ogre::SceneManager* OverlayScene;
+		Ogre::Viewport* OverlayViewport;
+
+		GraphicalInputEntity* OwningWindow;
 
 		OIS::InputManager* WindowsInputManager;
 		OIS::Mouse* WindowMouse;
@@ -107,7 +111,9 @@ namespace Leviathan{
 
 		bool VerticalSync;
 		bool Focused;
-		bool CursorHidden;
+		bool ApplicationWantCursorState;
+		bool ForceMouseVisible;
+		bool CursorState;
 	};
 
 

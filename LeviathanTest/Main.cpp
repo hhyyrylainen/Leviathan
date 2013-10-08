@@ -1,8 +1,12 @@
 #include "Define.h"
 #include "TestFunction.h"
 
+#ifdef LEVIATHAN_USES_VLD
 // visual leak detector //
 #include <vld.h>
+#endif // LEVIATHAN_USES_VLD
+
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
 #if defined(DEBUG) | defined(_DEBUG)
@@ -16,8 +20,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (SUCCEEDED(CoInitialize(NULL))){
 
+#ifdef LEVIATHAN_USES_VLD
 		// now that we are in code we can start tracking //
 		VLDEnable();
+#endif // LEVIATHAN_USES_VLD
 
 		wstring tittle = L"LeviathanTest for version ";
 		tittle += VERSIONS;

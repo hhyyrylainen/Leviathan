@@ -9,8 +9,8 @@
 #include <boost\assign\list_of.hpp>
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int flags, int fakeid, shared_ptr<ScriptScript> 
-	script /*= NULL*/) : OwningInstance(owner), ObjectFlags(flags), FileID(fakeid), Name(name), Scripting(script), Element(NULL)
+DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, shared_ptr<ScriptScript> 
+	script /*= NULL*/) : OwningInstance(owner), FileID(fakeid), Name(name), Scripting(script), Element(NULL)
 {
 	ID = IDFactory::GetID();
 }
@@ -23,7 +23,7 @@ DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects, 
-	ObjectFileObject& dataforthis, shared_ptr<GuiLoadedSheet> sheet)
+	ObjectFileObject& dataforthis, GuiLoadedSheet* sheet)
 {
 	// parse fake id from prefixes //
 	int fakeid = 0;
@@ -42,7 +42,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 		}
 	}
 
-	unique_ptr<BaseGuiObject> tmpptr(new BaseGuiObject(owner, dataforthis.Name, 0, fakeid, dataforthis.Script));
+	unique_ptr<BaseGuiObject> tmpptr(new BaseGuiObject(owner, dataforthis.Name, fakeid, dataforthis.Script));
 
 	Rocket::Core::Element* element = NULL;
 
@@ -137,15 +137,17 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::OnUpdate(const shared_ptr<NamedVar
 	Event* tmpevent = new Event(EVENT_TYPE_LISTENERVALUEUPDATED, NULL, false);
 	
 	OnEvent(&tmpevent);
+
+	tmpevent->Release();
 	return true;
 }
 
 
 
 void Leviathan::Gui::BaseGuiObject::OnDetach(Rocket::Core::Element* element){
-	Element = NULL;
-	// don't want to accidentally do unhooking //
-	HookedRocketEvents.clear();
+	//Element = NULL;
+	//// don't want to accidentally do unhooking //
+	//HookedRocketEvents.clear();
 }
 
 void Leviathan::Gui::BaseGuiObject::ProcessEvent(Rocket::Core::Event& event){
@@ -154,23 +156,48 @@ void Leviathan::Gui::BaseGuiObject::ProcessEvent(Rocket::Core::Event& event){
 }
 
 void Leviathan::Gui::BaseGuiObject::_UnhookAllRocketListeners(){
-	for(auto iter = HookedRocketEvents.begin(); iter != HookedRocketEvents.end(); ++iter){
+	if(HookedRocketEvents.empty() || Element == NULL)
+		return;
+	for(std::list<Rocket::Core::String>::iterator iter = HookedRocketEvents.begin(); iter != HookedRocketEvents.end(); iter++){
 
-		Element->RemoveEventListener(*iter, this);
+		Rocket::Core::String unregister = *iter;
+
+		Element->RemoveEventListener(unregister, this);
 	}
 	HookedRocketEvents.clear();
 }
 
-void Leviathan::Gui::BaseGuiObject::_CallScriptListener(GUIOBJECT_LISTENERTYPE type){
+void Leviathan::Gui::BaseGuiObject::_CallScriptListener(GUIOBJECT_LISTENERTYPE type, Event** pEvent){
 
 	switch(type){
 	case GUIOBJECT_LISTENERTYPE_LISTENERVALUE:
 		{
+			// check does the script contain right listeners //
+			ScriptModule* mod = Scripting->GetModule();
 
+			if(mod->DoesListenersContainSpecificListener(LISTENERNAME_ONLISTENUPDATE)){
+				// setup parameters //
+				vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
+					(new NamedVariableBlock(new VoidPtrBlock(*pEvent), L"Event"));
+				// we are returning ourselves so increase refcount
+				AddRef();
+				(*pEvent)->AddRef();
+
+				ScriptRunningSetup sargs;
+				sargs.SetEntrypoint(mod->GetListeningFunctionName(LISTENERNAME_ONLISTENUPDATE)).SetArguements(Args);
+				// run the script //
+				shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
+				// do something with result //
+			}
 		}
 		break;
 	}
 
+}
+
+DLLEXPORT bool Leviathan::Gui::BaseGuiObject::SetInternalRMLWrapper(string rmlcode){
+	Element->SetInnerRML(rmlcode.c_str());
+	return true;
 }
 
 // ------------------------------------ //

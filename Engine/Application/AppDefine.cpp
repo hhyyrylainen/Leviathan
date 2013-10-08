@@ -7,7 +7,7 @@
 #include "Application\Application.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) : ConfigurationValues(new NamedVars()), RWindow(NULL), HInstance(NULL){
+DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) : ConfigurationValues(new NamedVars()), HInstance(NULL){
 	if(isdef){
 		Defaultconf = this;
 	}
@@ -17,8 +17,6 @@ AppDef::~AppDef(){
 	// reset static access if this is it //
 	if(Defaultconf == this)
 		Defaultconf = NULL;
-	// we need to release the memory allocated with windows //
-	SAFE_DELETE(RWindow);
 }
 
 AppDef* Leviathan::AppDef::Defaultconf = NULL;

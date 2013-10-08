@@ -72,11 +72,6 @@ bool ScriptExecutor::Init(){
 	}
 
 	// use various binding functions //
-	if(!BindGUIScriptCommon(engine)){
-		// failed //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register GUI things failed");
-		return false;
-	}
 
 	// binding Event DataStore DataBlock and others //
 	if(!BindEngineCommonScriptIterface(engine)){
@@ -103,6 +98,7 @@ void ScriptExecutor::Release(){
 
 	// release these to stop VLD complains //
 	EngineTypeIDS.clear();
+	EngineTypeIDSInverted.clear();
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptScript* scriptobject, ScriptRunningSetup* parameters){
@@ -353,7 +349,15 @@ DLLEXPORT void Leviathan::ScriptExecutor::ScanAngelScriptTypes(){
 
 	// TODO: call Engine::Get()->NotifyLinkObjectScriptTypes()
 
+
+	// invert the got list, since it should be final //
+	for(auto iter = EngineTypeIDS.begin(); iter != EngineTypeIDS.end(); ++iter){
+
+		EngineTypeIDSInverted.insert(make_pair(iter->second, iter->first));
+	}
 }
+
+std::map<wstring, int> Leviathan::ScriptExecutor::EngineTypeIDSInverted;
 
 std::map<int, wstring> Leviathan::ScriptExecutor::EngineTypeIDS;
 

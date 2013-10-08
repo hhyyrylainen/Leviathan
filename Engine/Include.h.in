@@ -1,6 +1,15 @@
 #ifndef LEVIATHAN_INCLUDE
 #define LEVIATHAN_INCLUDE
 
+#define L_VLD_STATE @L_VLD_STATE@
+#if L_VLD_STATE == 0
+#undef L_VLD_STATE
+#endif
+#ifdef L_VLD_STATE
+// define actual macro
+#define LEVIATHAN_USES_VLD
+#endif
+
 #include <stdio.h>
 
 // we need to disable this warning to stop stdint and instsafe causing errors //
@@ -61,9 +70,6 @@
 #include <OgreRenderWindow.h>
 #include <OgreConfigFile.h>
 
-// temporarily have this here to reduce compile errors
-#include <D3D11.h>
-
 // pragma include libraries
 
 #ifdef ENGINE_EXPORTS
@@ -87,6 +93,10 @@
 #pragma comment(lib, "RocketCore_d.lib")
 #pragma comment(lib, "RocketControls_d.lib")
 #pragma comment(lib, "RocketDebugger_d.lib")
+#pragma comment(lib, "newton_d.lib")
+
+#pragma comment(lib, "sfml-audio-d.lib")
+#pragma comment(lib, "sfml-network-d.lib")
 #else
 // release libraries
 #pragma comment(lib, "angelscript.lib")
@@ -107,6 +117,10 @@
 #pragma comment(lib, "RocketCore.lib")
 #pragma comment(lib, "RocketControls.lib")
 #pragma comment(lib, "RocketDebugger.lib")
+#pragma comment(lib, "newton.lib")
+
+#pragma comment(lib, "sfml-audio.lib")
+#pragma comment(lib, "sfml-network.lib")
 #endif
 #else
 // include engine lib
@@ -228,7 +242,9 @@ using namespace std;
 
 #define __SWLINE__ WIDEN(__SLINE__)
 
-
+#define STRINGGIFY2(x) #x
+#define STRINGGIFY(x) STRINGGIFY2(x)
+#define WSTRINGIFY(x) WIDEN(STRINGGIFY(x))
 
 #define __WDATE__ WIDEN(__DATE__)
 #define __WTIME__ WIDEN(__TIME__)

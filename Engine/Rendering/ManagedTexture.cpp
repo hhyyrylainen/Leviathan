@@ -6,7 +6,7 @@
 #include "Utility\ComplainOnce.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::ManagedTexture::ManagedTexture() : Texture(NULL), FromFile(NULL){
+DLLEXPORT Leviathan::ManagedTexture::ManagedTexture() : FromFile(NULL){
 	// set right "error" state //
 	ErrorState = TEXTURE_ERROR_STATE_NON_LOADED;
 	Loaded = false;
@@ -16,7 +16,7 @@ DLLEXPORT Leviathan::ManagedTexture::ManagedTexture() : Texture(NULL), FromFile(
 }
 
 DLLEXPORT Leviathan::ManagedTexture::ManagedTexture(const wstring &file, const int &id, const TEXTURETYPE &type) : FromFile(new wstring(file)), ID(id), 
-	TextureType(type), Texture(NULL)
+	TextureType(type)
 {
 	// set right "error" state //
 	ErrorState = TEXTURE_ERROR_STATE_NON_LOADED;
@@ -32,7 +32,6 @@ DLLEXPORT Leviathan::ManagedTexture::ManagedTexture(unsigned char* buffer, int b
 	// load the texture from memory
 	HRESULT hr = E_FAIL;
 	ComplainOnce::PrintWarningOnce(L"no textureloading", L"no textureloading in" __WFUNCTION__);
-	Texture = NULL;
 	if(FAILED(hr)){
 
 		Logger::Get()->Error(L"ManagedTexture: CTor: Failed to load texture from memory("+Convert::ToHexadecimalWstring<void*>((void*)buffer)+L"): \""
@@ -63,35 +62,8 @@ DLLEXPORT Leviathan::ManagedTexture::~ManagedTexture(){
 //	LoadedFromMemory = true;
 //}
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ManagedTexture::Load(ID3D11Device* dev){
-	// loads the texture //
-	if(Loaded){
-		// already loaded //
-		return true;
-	}
-
-	// load the texture from file
-	HRESULT hr = E_FAIL;
-	if(FAILED(hr)){
-
-		Logger::Get()->Error(L"Failed to load texture from file: \""+*FromFile+L"\" loaded error texture");
-		ErrorState = TEXTURE_ERROR_STATE_USE_ERROR;
-		Loaded = true;
-		return false;
-	}
-
-	ErrorState = TEXTURE_ERROR_STATE_NONE;
-	Loaded = true;
-	return true;
-}
-
 DLLEXPORT void Leviathan::ManagedTexture::UnLoad(bool force){
 	// check is this still valid //
-	if(Texture == NULL){
-		if(!force)
-			Logger::Get()->Error(L"ManagedTexture: UnLoad: already unloaded texture, ID: "+Convert::ToWstring(ID), true);
-		return;
-	}
 	
 	// implement feature to not unload generated textures //
 	// TODO: implement a callback system that allows this function to call callback that tells if it can be unloaded //

@@ -20,6 +20,7 @@ class RenderInterfaceOgre3D;
 
 
 namespace Leviathan {
+	class GraphicalInputEntity;
 	class Graphics;
 namespace Gui{
 
@@ -32,7 +33,7 @@ namespace Gui{
 		DLLEXPORT GuiManager::GuiManager();
 		DLLEXPORT GuiManager::~GuiManager();
 
-		DLLEXPORT bool Init(AppDef* vars, Graphics* graph);
+		DLLEXPORT bool Init(AppDef* vars, Graphics* graph, GraphicalInputEntity* window);
 		DLLEXPORT void Release();
 
 		DLLEXPORT void GuiTick(int mspassed);
@@ -41,6 +42,9 @@ namespace Gui{
 		// key press receiving from listener //
 		DLLEXPORT bool ProcessKeyDown(OIS::KeyCode key, int specialmodifiers);
 
+		DLLEXPORT inline void SetVisible(bool visible){
+			Visible = visible;
+		}
 
 		DLLEXPORT void OnResize();
 
@@ -69,14 +73,10 @@ namespace Gui{
 		DLLEXPORT int CallEventOnObject(BaseGuiObject* receive, Event* pEvent);
 
 		DLLEXPORT static GuiManager* Get();
-		DLLEXPORT Graphics* GetGraph(){return ThisRenderer; };
 
 		virtual void renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation);
 
 	private:
-		// should be called before every vector operation //
-		void UpdateArrays(); 
-
 		// rendering //
 		void BuildProjectionMatrix(Ogre::Matrix4& projection_matrix);
 		void ConfigureRenderSystem();
@@ -94,12 +94,10 @@ namespace Gui{
 		Rocket::Core::ElementDocument* Cursor;
 
 
-		Graphics* ThisRenderer;
+		GraphicalInputEntity* ThisWindow;
 
 		// Gui elements //
 		vector<BaseGuiObject*> Objects;
-		// used to determine when to update (and sort) //
-		bool ObjectAmountChanged : 1;
 
 
 		// we will soon need a GuiManager for each window //

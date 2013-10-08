@@ -40,11 +40,6 @@ namespace Leviathan{
 		DLLEXPORT NamedVars* GetValues();
 
 		// named constructor functions //
-		DLLEXPORT AppDef& SetRenderingWindow(Window* wind){
-
-			RWindow = wind;
-			return *this;
-		}
 		DLLEXPORT AppDef& SetHInstance(HINSTANCE instance){
 
 			HInstance = instance;
@@ -71,10 +66,6 @@ namespace Leviathan{
 			ObjectFileProcessor::LoadValueFromNamedVars(*ConfigurationValues, L"Vsync", vsync, false, false);
 			return vsync;
 		}
-		DLLEXPORT Window* GetWindow(){
-
-			return RWindow;
-		}
 
 		DLLEXPORT static AppDef* GenerateAppdefine();
 		DLLEXPORT void StoreWindowDetails(const wstring &title, const bool &windowborder, HICON icon, LeviathanApplication* appvirtualptr);
@@ -84,14 +75,8 @@ namespace Leviathan{
 		unique_ptr<NamedVars> ConfigurationValues;
 		HINSTANCE HInstance;
 
-		Window* RWindow;
-
 		// details used to create a window //
 		WindowDataDetails WDetails;
-
-
-		
-
 
 		// ------------------------------------ //
 		static AppDef* Defaultconf;

@@ -59,6 +59,8 @@ DLLEXPORT void Leviathan::Logger::Write(const wstring &data, const bool &save /*
 	// if debug build send it to debug output //
 	DEBUG_OUTPUT(message);
 
+	PendingLog += message;
+
 	_LogUpdateEndPart(save, guard);
 }
 // ------------------------------------ //

@@ -4,8 +4,6 @@
 #include "LeviathanMainDll.h"
 #include "resource.h"
 
-//#include <vld.h>
-
 //using namespace Leviathan;
 
 #define GAME_VERSION 0.1010

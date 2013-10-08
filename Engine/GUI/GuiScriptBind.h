@@ -7,20 +7,43 @@
 #include "GuiScriptInterface.h"
 #include "BaseGuiObject.h"
 
+
+void RocketProxyAddEventReference(Rocket::Core::Event* evt){
+
+	evt->AddReference();
+}
+void RocketProxyReleaseEventReference(Rocket::Core::Event* evt){
+
+	evt->RemoveReference();
+}
+
+void RocketProxyAddElementReference(Rocket::Core::Element* element){
+
+	element->AddReference();
+}
+void RocketProxyReleaseElementReference(Rocket::Core::Element* element){
+
+	element->RemoveReference();
+}
+void RocketElementProxySetProperty(Rocket::Core::Element* element, string propertyname, string valuetoset){
+	element->SetProperty(propertyname.c_str(), valuetoset.c_str());
+}
+
 bool BindGUIObjects(asIScriptEngine* engine){
 
 	// bind GuiCollection action, this is released by gui object //
-	if(engine->RegisterObjectType("GuiCollection", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+	if(engine->RegisterObjectType("GuiCollection", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	//if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_FACTORY, "AnimationAction@ f(float xtarget, float ytarget, int whichfirst, "
-	//	"float speed, bool allowsimult = false)", asFUNCTION(Gui::CreateAnimationActionMove), asCALL_CDECL) < 0){
-	//		Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
-	//}
-	//if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_FACTORY, "AnimationAction@ f(bool visible)", 
-	//	asFUNCTION(Gui::CreateAnimationActionVisibility), asCALL_CDECL) < 0){
-	//		Logger::Get()->Error(L"ScriptExecutor: AngelScript: register script interface: failed, file: " __WFILE__ L", line: " __SWLINE__, false);
-	//}
+
+	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_ADDREF, "void f()", asMETHOD(Gui::GuiCollection, AddRefProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_RELEASE, "void f()", asMETHOD(Gui::GuiCollection, ReleaseProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+
 
 
 	// bind BaseGuiObject //
@@ -44,92 +67,56 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("BaseGuiObject", "VariableBlock@ GetAndPopFirstUpdated()", asMETHOD(Gui::BaseGuiObject, SetInternalRMLWrapper), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("BaseGuiObject", "ScriptSafeVariableBlock@ GetAndPopFirstUpdated()", asMETHOD(Gui::BaseGuiObject, GetAndPopFirstUpdated), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	
-
+	// rocket objects //
+	if(engine->RegisterObjectType("RocketEvent", 0, asOBJ_REF) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("RocketEvent", asBEHAVE_ADDREF, "void f()", asFUNCTION(RocketProxyAddEventReference), asCALL_CDECL_OBJFIRST) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("RocketEvent", asBEHAVE_RELEASE, "void f()", asFUNCTION(RocketProxyReleaseEventReference), asCALL_CDECL_OBJFIRST) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	// rocket element //
+	if(engine->RegisterObjectType("RocketElement", 0, asOBJ_REF) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("RocketElement", asBEHAVE_ADDREF, "void f()", asFUNCTION(RocketProxyAddElementReference), asCALL_CDECL_OBJFIRST) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("RocketElement", asBEHAVE_RELEASE, "void f()", asFUNCTION(RocketProxyReleaseElementReference), asCALL_CDECL_OBJFIRST) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("RocketElement", "void SetProperty(string property, string value)", asFUNCTION(RocketElementProxySetProperty), asCALL_CDECL_OBJFIRST) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
 	
+	
+	// bind sheets //
+	if(engine->RegisterObjectType("GuiLoadedSheet", 0, asOBJ_REF) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectBehaviour("GuiLoadedSheet", asBEHAVE_ADDREF, "void f()", asMETHOD(Gui::GuiLoadedSheet, AddRefProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("GuiLoadedSheet", asBEHAVE_RELEASE, "void f()", asMETHOD(Gui::GuiLoadedSheet, ReleaseProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	
+	if(engine->RegisterObjectMethod("GuiLoadedSheet", "RocketElement@ GetElementByID(string id)", asMETHOD(Gui::GuiLoadedSheet, GetElementByIDProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("GuiCollection", "GuiLoadedSheet@ GetOwningSheet()", asMETHOD(Gui::GuiCollection, GetOwningSheetProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
 
 
-	return true;
-}
-
-
-bool BindGUIScriptCommon(asIScriptEngine* engine){
-	// register GUI_ANIMATION_ACTION enum and it's values //
-	if(engine->RegisterEnum("GUI_ANIMATION_ACTION") < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	if(engine->RegisterEnumValue("GUI_ANIMATION_ACTION", "GUI_ANIMATION_ERROR", Gui::GUI_ANIMATION_ERROR) < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	if(engine->RegisterEnumValue("GUI_ANIMATION_ACTION", "GUI_ANIMATION_FADE_OUT", Gui::GUI_ANIMATION_FADE_OUT) < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	if(engine->RegisterEnumValue("GUI_ANIMATION_ACTION", "GUI_ANIMATION_GENERAL", Gui::GUI_ANIMATION_GENERAL) < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	if(engine->RegisterEnumValue("GUI_ANIMATION_ACTION", "GUI_ANIMATION_FADE_IN", Gui::GUI_ANIMATION_FADE_IN) < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	if(engine->RegisterEnumValue("GUI_ANIMATION_ACTION", "GUI_ANIMATION_MOVE", Gui::GUI_ANIMATION_MOVE) < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	if(engine->RegisterEnumValue("GUI_ANIMATION_ACTION", "GUI_ANIMATION_GLOW", Gui::GUI_ANIMATION_GLOW) < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	if(engine->RegisterEnumValue("GUI_ANIMATION_ACTION", "GUI_ANIMATION_HIDE", Gui::GUI_ANIMATION_HIDE) < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	if(engine->RegisterEnumValue("GUI_ANIMATION_ACTION", "GUI_ANIMATION_SHOW", Gui::GUI_ANIMATION_SHOW) < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	// end of Gui enum action enum
-	// register Gui type move Enum //
-	if(engine->RegisterEnum("GUI_ANIMATION_TYPEMOVE_PRIORITY") < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	if(engine->RegisterEnumValue("GUI_ANIMATION_TYPEMOVE_PRIORITY", "GUI_ANIMATION_TYPEMOVE_PRIORITY_X", GUI_ANIMATION_TYPEMOVE_PRIORITY_X) < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	if(engine->RegisterEnumValue("GUI_ANIMATION_TYPEMOVE_PRIORITY", "GUI_ANIMATION_TYPEMOVE_PRIORITY_Y", GUI_ANIMATION_TYPEMOVE_PRIORITY_Y) < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	if(engine->RegisterEnumValue("GUI_ANIMATION_TYPEMOVE_PRIORITY", "GUI_ANIMATION_TYPEMOVE_PRIORITY_SLOPE", GUI_ANIMATION_TYPEMOVE_PRIORITY_SLOPE) < 0){
-		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);
-		return false;
-	}
-	// end of Gui type move enum //
-
-
-	// succeeded //
 	return true;
 }
 
@@ -138,6 +125,7 @@ void RegisterGUIScriptTypeNames(asIScriptEngine* engine, std::map<int, wstring> 
 
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("GuiCollection"), L"GuiCollection"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("BaseGuiObject"), L"BaseGuiObject"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("RocketEvent"), L"RocketEvent"));
 }
 
 #endif

@@ -167,6 +167,21 @@ DLLEXPORT void Leviathan::ScriptModule::GetListOfListeners(std::vector<wstring> 
 	}
 }
 
+DLLEXPORT string Leviathan::ScriptModule::GetListeningFunctionName(const wstring &listenername){
+	// build info if not built //
+	if(!ListenerDataBuilt)
+		_BuildListenerList();
+
+	// find from the map //
+	auto itr = FoundListenerFunctions.find(listenername);
+
+	if(itr != FoundListenerFunctions.end()){
+		// get name from pointer //
+		return string(itr->second->FuncPtr->GetName());
+	}
+	return "";
+}
+
 // ------------------------------------ //
 DLLEXPORT wstring Leviathan::ScriptModule::GetInfoWstring(){
 	return L"ScriptModule("+Convert::ToWstring(ID)+L") "+Name+L", from: "+Convert::StringToWstring(Source);

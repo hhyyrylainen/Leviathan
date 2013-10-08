@@ -1,55 +1,45 @@
 #include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_LEVIATHAN_IDFACTORY
+#ifndef LEVIATHAN_IDFACTORY
 #include "IDFactory.h"
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "Logger.h"
-IDFactory::IDFactory(){
 
+IDFactory::IDFactory() : SystemID(1), GlobalID(1){
+	Instance = this;
 }
 IDFactory::~IDFactory(){
-
+	Instance = NULL;
 }
 
-int IDFactory::SystemID = 1;
-int IDFactory::GlobalID = 1;
-
-bool IDFactory::Busy = false;
+IDFactory* Leviathan::IDFactory::Instance = NULL;
 // ------------------------------------ //
-int IDFactory::GetID(){
-	Wait();
-	Busy = true;
-
+DLLEXPORT int Leviathan::IDFactory::ProduceID(boost::strict_lock<IDFactory> &guard){
+	VerifyLock(guard);
+	// we are safely locked and can perform the action //
 	GlobalID++;
 	if(GlobalID == INT_MAX){
 		Logger::Get()->Error(L"IDFactory GlobalID overflow", INT_MAX);
 	}
 
-	Busy = false;
 	return GlobalID;
 }
 
-int IDFactory::GetSystemID(){
-	Wait();
-	Busy = true;
-
+DLLEXPORT int Leviathan::IDFactory::ProduceSystemID(boost::strict_lock<IDFactory> &guard){
+	VerifyLock(guard);
+	// we are safely locked and can perform the action //
 	SystemID++;
-
-	Busy = false;
 	return SystemID;
 }
-// ------------------------------------ //
-void IDFactory::Wait(){
-	int Waittime = 0;
-	while(Busy){
-		Waittime++;
-		if(Waittime > 100){
-			Logger::Get()->Error(L"IDFactory waiting too long!", Waittime);
-			break;
-		}
-		Sleep(1);
+
+DLLEXPORT IDFactory* Leviathan::IDFactory::Get(){
+	// create instance if doesn't exist //
+	if(!Instance){
+		Instance = new IDFactory();
 	}
+	return Instance;
 }
+
+
 // ------------------------------------ //

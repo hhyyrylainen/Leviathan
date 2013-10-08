@@ -9,16 +9,19 @@
 #include "GuiManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
-Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, shared_ptr<GuiLoadedSheet> sheet, int id, const wstring &toggle, 
-	bool strict /*= false*/, bool enabled /*= true*/) : Name(name), ID(id), Enabled(enabled), Strict(strict), 
-	ContainedInSheet(sheet)
+Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiLoadedSheet* sheet, int id, const wstring &toggle, 
+	bool strict /*= false*/, bool enabled /*= true*/, bool keepgui) : Name(name), ID(id), Enabled(enabled), Strict(strict), 
+	ContainedInSheet(sheet), KeepsGuiOn(keepgui)
 {
+	ContainedInSheet->AddRef();
 	Toggle = GKey::GenerateKeyFromString(toggle);
 }
 
 Leviathan::Gui::GuiCollection::~GuiCollection(){
 	// release script //
 
+	// release reference //
+	ContainedInSheet->Release();
 }
 // ------------------------------------ //
 
@@ -27,35 +30,42 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 	// call script //
 	ScriptScript* tmpscript = Scripting.get();
 
-	DEBUG_BREAK;
-
 	if(tmpscript){
 		// check does the script contain right listeners //
 		ScriptModule* mod = tmpscript->GetModule();
 
-		const wstring &listenername = newstate ? L"OnEnable": L"OnDisable";
-
+		const wstring &listenername = newstate ? LISTENERNAME_ONSHOW: LISTENERNAME_ONHIDE;
+		
 		if(mod->DoesListenersContainSpecificListener(listenername)){
+			// create event to use //
+			Event* onevent = new Event(EVENT_TYPE_SHOW, NULL, false);
+
 			// call it //
-			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new IntBlock(0), L"source"))
-				(new NamedVariableBlock(new IntBlock(ID), L"Instance"));
+			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"GuiCollection"))
+				(new NamedVariableBlock(new VoidPtrBlock(onevent), L"Event"));
+
+			onevent->AddRef();
+			AddRef();
 
 			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(Convert::WstringToString(listenername)).SetArguements(Args);
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguements(Args);
 
 			ScriptInterface::Get()->ExecuteScript(tmpscript, &sargs);
+
+			onevent->Release();
 		}
 	}
 
 	Enabled = newstate;
 }
 // ------------------------------------ //
-bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data, shared_ptr<GuiLoadedSheet> sheet){
+bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data, GuiLoadedSheet* sheet){
 	// load a GuiCollection from the structure //
 
 	wstring Toggle = L"";
 	bool Enabled = true;
 	bool Strict = false;
+	bool GuiOn = false;
 
 	for(size_t a = 0; a < data.Contents.size(); a++){
 
@@ -67,12 +77,15 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 			ObjectFileProcessor::LoadValueFromNamedVars<bool>(data.Contents[a]->Variables, L"Enabled", Enabled, false, true,
 				L"GuiCollection: LoadCollection:");
 
+			ObjectFileProcessor::LoadValueFromNamedVars<bool>(data.Contents[a]->Variables, L"KeepsGUIOn", GuiOn, false, true,
+				L"GuiCollection: LoadCollection:");
+
 			continue;
 		}
 	}
 
 	// allocate new Collection object //
-	GuiCollection* cobj = new GuiCollection(data.Name, sheet, IDFactory::GetID(),Toggle, Strict, Enabled);
+	GuiCollection* cobj = new GuiCollection(data.Name, sheet, IDFactory::GetID(),Toggle, Strict, Enabled, GuiOn);
 	// copy script data over //
 	cobj->Scripting = data.Script;
 	// add to collection list //

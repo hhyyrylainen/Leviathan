@@ -6,8 +6,11 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
+#ifdef LEVIATHAN_USES_VLD
 // visual leak detector //
 #include <vld.h>
+#endif // LEVIATHAN_USES_VLD
+
 
 
 

@@ -5,19 +5,10 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-BaseRenderable::BaseRenderable(){
-	Frames = 0;
-	Updated = true;
-}
-BaseRenderable::~BaseRenderable(){
+DLLEXPORT Leviathan::BaseRenderable::BaseRenderable(bool hidden) : Hidden(hidden){
 
 }
-// ------------------------------------ //
-bool BaseRenderable::IsHidden(){
-	return Hidden;
+
+DLLEXPORT Leviathan::BaseRenderable::~BaseRenderable(){
+
 }
-// ------------------------------------ //
-
-// ------------------------------------ //
-
-// ------------------------------------ //

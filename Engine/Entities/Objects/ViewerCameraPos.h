@@ -31,16 +31,23 @@ namespace Leviathan{
 		DLLEXPORT void SetPos(const Float3 &pos);
 		DLLEXPORT void SetRotation(const Float3 &orientation);
 
-		//DLLEXPORT virtual bool OnEvent(InputEvent** pEvent, InputReceiver* pending);
+		// sound receiving //
+		// Warning: only have one of these set at a time to avoid weird sound issues //
+		DLLEXPORT void BecomeSoundPerceiver();
+		DLLEXPORT void StopSoundPerceiving();
 
 	private:
 		void SideWays(int dir);
 		void Forward(int dir);
 		void Vertical(int dir);
 
+		void SendPositionIfSet();
+
 		// reduces amount of code //
 		static void RollValueTowards(float &value, const float &changeamount, const bool &maxvalue, const float &limitvalue);
 		// ------------------------------------ //
+
+		bool SendSoundPosition;
 
 		float FrameTime;
 

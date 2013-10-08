@@ -3,10 +3,11 @@
 #ifndef LEVIATHAN_OBJECT_CAMERAPOS
 #include "ViewerCameraPos.h"
 #endif
+#include "Sound\SoundDevice.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
-ViewerCameraPos::ViewerCameraPos() : BaseObject(IDFactory::GetID()), Orientation(0), Position(0){
+ViewerCameraPos::ViewerCameraPos() : BaseObject(IDFactory::GetID()), Orientation(0), Position(0), SendSoundPosition(false){
 
 	// set all to zeros //
 	FrameTime = forward = backward = left = right = zup = zdown = xmoved = ymoved = 0;
@@ -64,6 +65,8 @@ void ViewerCameraPos::UpdatePos(int mspassed){
 	SideWays(m_SideWays);
 	Forward(m_Forward);
 	Vertical(m_Vertical);
+
+	SendPositionIfSet();
 }
 
 void ViewerCameraPos::SideWays(int dir){
@@ -204,4 +207,19 @@ DLLEXPORT void Leviathan::ViewerCameraPos::SetPos(const Float3 &pos){
 
 DLLEXPORT void Leviathan::ViewerCameraPos::SetRotation(const Float3 &orientation){
 	Orientation = orientation;
+}
+
+void Leviathan::ViewerCameraPos::SendPositionIfSet(){
+	if(!SendSoundPosition)
+		return;
+	// send own position to sound device for 3d sound //
+	SoundDevice::Get()->SetSoundListenerPosition(Position, Orientation);
+}
+
+DLLEXPORT void Leviathan::ViewerCameraPos::BecomeSoundPerceiver(){
+	SendSoundPosition = true;
+}
+
+DLLEXPORT void Leviathan::ViewerCameraPos::StopSoundPerceiving(){
+	SendSoundPosition = false;
 }

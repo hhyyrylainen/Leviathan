@@ -36,6 +36,8 @@ void App::CustomizeEnginePostLoad(){
 
 	window1->LinkCamera(MainCamera);
 	window1->LinkWorld(world1);
+	// sound listening camera //
+	MainCamera->BecomeSoundPerceiver();
 
 	// link window input to camera //
 	window1->GetInputController()->LinkReceiver(MainCamera.get());

@@ -10,6 +10,7 @@
 #include "FileSystem.h"
 #include "Rendering\TextureDefinition.h"
 #include "Entities\GameWorld.h"
+#include "Entities\Objects\Brush.h"
 
 
 namespace Leviathan{
@@ -22,8 +23,11 @@ namespace Leviathan{
 		DLLEXPORT ObjectLoader::ObjectLoader(Engine* engine);
 
 
-		DLLEXPORT int LoadPropToWorld(const wstring &name, GameWorld* world);
-
+		DLLEXPORT int LoadPropToWorld(GameWorld* world, const wstring &name);
+		// creates a brush with physical component and sets mass (use 0.f for static object) //
+		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::BRUSHCREATESTYLE style, const float &mass);
+		// same as above but no physics initialization (you must do your own if you want this brush to interact with objects) //
+		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::BRUSHCREATESTYLE style);
 
 		DLLEXPORT void CreateTestCubeToScene(Ogre::SceneManager* scene, string meshname);
 		DLLEXPORT void AddTestCubeToScenePositions(Ogre::SceneManager* scene, vector<Float3> &positions, const string &meshname);

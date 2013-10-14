@@ -924,6 +924,10 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 
 	manager.addResourceLocation(folder, "FileSystem", "MainTexturesFolder", true);
 
+	folder = Convert::WstringToString(DataFolder+ScriptsFolder);
+
+	manager.addResourceLocation(folder, "FileSystem", "MainTexturesFolder", true);
+
 	// shaders //
 	manager.createResourceGroup("ShadersFolder");
 

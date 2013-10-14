@@ -51,7 +51,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile, GameWorld
 
 	wstring ogrefile;
 
-	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist, L"Model-Graphical", ogrefile, L"error", true, L"Prop: Init: no model file!: ");
+	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist, L"Model-Graphical", ogrefile, L"error", true, L"Prop: Init: no model file!:");
 
 	// load the Ogre entity //
 	GraphicalObject = world->GetScene()->createEntity(Convert::WstringToString(ogrefile));
@@ -118,15 +118,6 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile, GameWorld
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::CheckRender(GraphicalInputEntity* graphics, int mspassed){
 
-	// check has physics update occurred //
-
-	return false;
-
-	// fetch position from newton //
-
-
-	// set position to ogre objects //
-
 
 	return true;
 }
@@ -149,6 +140,12 @@ void Leviathan::Entity::Prop::_UpdatePhysicsObjectLocation(){
 
 	// update body //
 	NewtonBodySetMatrix(Body, &tmatrix[0][0]);
+
+	//// update graphical object location to have it always match up (only for static objects) //
+	//if(Immovable){
+	//	ObjectsNode->setOrientation(quat);
+	//	ObjectsNode->setPosition(position);
+	//}
 }
 
 // ------------------------------------ //

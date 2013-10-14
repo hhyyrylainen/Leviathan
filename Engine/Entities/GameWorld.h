@@ -36,7 +36,7 @@ namespace Leviathan{
 		DLLEXPORT void AddObject(BaseObject* obj);
 		DLLEXPORT void AddObject(shared_ptr<BaseObject> obj);
 
-		DLLEXPORT shared_ptr<BaseObject> GetObject(int ID);
+		DLLEXPORT shared_ptr<BaseObject> GetWorldObject(int ID);
 
 		// Ogre get functions //
 		DLLEXPORT inline Ogre::SceneManager* GetScene(){

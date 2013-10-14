@@ -78,9 +78,11 @@ file(GLOB NewtonMoveFilesDebug "Newton/bin/Debug/*")
 file(COPY ${NewtonMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 # smfl
-file(GLOB SMFLMoveFilesRelease "SFML/bin/openal32.dll" "SFML/bin/sfml-audio-2.dll" "SFML/bin/sfml-network-2.dll")
+file(GLOB SMFLMoveFilesRelease "SFML/bin/openal32.dll" "SFML/bin/libsndfile-1.dll" "SFML/bin/sfml-audio-2.dll" "SFML/bin/sfml-system-2.dll"
+    "SFML/bin/sfml-network-2.dll")
 file(COPY ${SMFLMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-file(GLOB SMFLMoveFilesDebug "SFML/bin/sfml-audio-d-2.dll" "SFML/bin/sfml-network-d-2.dll")
+file(GLOB SMFLMoveFilesDebug "SFML/bin/sfml-audio-d-2.dll" "SFML/bin/sfml-system-d-2.dll"
+    "SFML/bin/sfml-network-d-2.dll")
 file(COPY ${SMFLMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 message(STATUS "Done copying")

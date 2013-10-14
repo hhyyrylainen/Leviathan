@@ -13,9 +13,12 @@ DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld() : LastSimulatedTime(0), Pass
 
 	// set physics accuracy //
 	// most accurate mode //
-	NewtonSetSolverModel(World, 0);
+
+	// TODO: figure out how to use this exact mode //
+	//NewtonSetSolverModel(World, 0);
 	//// fast mode //
 	//NewtonSetSolverModel(World, 1);
+	NewtonSetSolverModel(World, 4);
 
 	// set size //
 	//NewtonSetWorldSize();

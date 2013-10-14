@@ -25,11 +25,12 @@ void App::CustomizeEnginePostLoad(){
 	// setup world //
 	shared_ptr<GameWorld> world1 = Engine::GetEngine()->CreateWorld();
 
+	ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
 
 
 	// camera //
 	shared_ptr<ViewerCameraPos> MainCamera(new ViewerCameraPos());
-	MainCamera->SetPos(Float3(0, 0, 0));
+	MainCamera->SetPos(Float3(-1.f, 2.5f, 10.f));
 
 	// link world and camera to a window //
 	GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
@@ -44,68 +45,56 @@ void App::CustomizeEnginePostLoad(){
 
 
 	// load test objects //
-	auto prop1holder = world1->GetObject(Engine::GetEngine()->GetObjectLoader()->LoadPropToWorld(L"Cube", world1.get()));
+	auto prop1holder = world1->GetWorldObject(loader->LoadPropToWorld(world1.get(), L"Cube"));
 
 	if(prop1holder.get() != NULL){
 		Entity::Prop* tmp = static_cast<Entity::Prop*>(prop1holder.get());
 		// set position //
 
-		tmp->SetPos(3.f, -1.f, -10.f);
+		//tmp->SetPos(3.f, 4.f, -14.f);
+		tmp->SetPos(-2.f, 4.f, 0.f);
 	}
 
+	// create brush for the block to fall onto //
+	auto brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(14.f, 1.f, 14.f), Entity::BRUSHCREATESTYLE_CENTER, 0.f));
+
+	if(brush1.get() != NULL){
+		// set position //
+		Entity::Brush* tmp = static_cast<Entity::Brush*>(brush1.get());
+
+		tmp->SetPos(0.f, -0.5f, 0.f);
+	}
+
+
+	auto brush2 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), Entity::BRUSHCREATESTYLE_CENTER, 100.f));
+
+	if(brush2.get() != NULL){
+		// set position //
+		Entity::Brush* tmp = static_cast<Entity::Brush*>(brush2.get());
+
+		tmp->SetPos(1.f, 3.f, 0.f);
+	}
+
+	brush2 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), Entity::BRUSHCREATESTYLE_CENTER, 100.f));
+
+	if(brush2.get() != NULL){
+		// set position //
+		Entity::Brush* tmp = static_cast<Entity::Brush*>(brush2.get());
+
+		tmp->SetPos(0.f, 7.f, 0.f);
+	}
+
+	brush2 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), Entity::BRUSHCREATESTYLE_CENTER, 100.f));
+
+	if(brush2.get() != NULL){
+		// set position //
+		Entity::Brush* tmp = static_cast<Entity::Brush*>(brush2.get());
+
+		tmp->SetPos(-1.f, 10.f, -1.f);
+	}
 	
 	// after loading reset time sensitive timers //
 	Engine::GetEngine()->ResetPhysicsTime();
-	
-
-
-	//Float3 startpos(0, 300, 60);
-
-
-	//string CubeName = "DefaultTestCube";
-
-	//vector<Float3> positions(5);
-	//// create several meshes //
-	//for(int i = 0; i < 5; ++i){
-
-	//	float offset = (float)(1+i*2-5);
-	//	positions[i] = startpos+Float3(offset, offset, -14.f);
-	//}
-
-	//// create it and create instances //
-	//Engine::GetEngine()->GetObjectLoader()->CreateTestCubeToScene(MainScene, CubeName);
-
-	//Engine::GetEngine()->GetObjectLoader()->AddTestCubeToScenePositions(MainScene, positions, CubeName);
-
-	//// create test model //
-	//try{
-	//	Ogre::Entity* ModelEntity = MainScene->createEntity("Cube.mesh");
-	//	// casts shadows //
-	//	ModelEntity->setCastShadows(true);
-
-	//	// attach to new node //
-	//	Ogre::SceneNode* mnode = MainScene->getRootSceneNode()->createChildSceneNode();
-
-	//	mnode->attachObject(ModelEntity);
-	//	// set position //
-	//	mnode->setPosition(startpos+Float3(0.f, -2.f, -5.f));
-	//}
-	//catch(const Ogre::FileNotFoundException &e){
-
-	//	Logger::Get()->Error(L"[EXCEPTION] "+Convert::StringToWstring(e.getFullDescription()));
-	//}
-
-	//// plane for bottom //
-	//Ogre::Plane ground(Ogre::Vector3::UNIT_Y, Ogre::Vector3(startpos-Float3(0, 2, 0)));
-	//Ogre::MeshManager::getSingleton().createPlane("ground", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-	//	ground, 300, 300, 20, 20, true, 1, 65, 65, Ogre::Vector3::UNIT_Z);
-
-	//// platform that receives shadows //
-	//Ogre::Entity* groundentity = MainScene->createEntity("GroundEntity", "ground");
-	//MainScene->getRootSceneNode()->createChildSceneNode()->attachObject(groundentity);
-
-	//// set nice stone material //
-	//groundentity->setMaterialName("Material.001");
 
 
 	//// test render to texture //

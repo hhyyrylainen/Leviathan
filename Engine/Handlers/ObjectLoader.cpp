@@ -8,6 +8,7 @@ using namespace Leviathan;
 #include "Statistics\TimingMonitor.h"
 #include "OgreManualObject.h"
 #include "Entities\Objects\Prop.h"
+#include "Entities\Objects\Brush.h"
 
 Leviathan::ObjectLoader::ObjectLoader(Engine* engine){
 	m_Engine = engine;
@@ -143,7 +144,7 @@ DLLEXPORT void Leviathan::ObjectLoader::AddTestCubeToScenePositions(Ogre::SceneM
 
 
 // ------------------------------------ //
-DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(const wstring &name, GameWorld* world){
+DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const wstring &name){
 
 	unique_ptr<Entity::Prop> prop(new Entity::Prop(false));
 
@@ -159,6 +160,41 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(const wstring &name, Game
 
 	// add to world //
 	world->AddObject(prop.release());
+
+	return id;
+}
+
+DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::BRUSHCREATESTYLE style, 
+	const float &mass)
+{
+	unique_ptr<Entity::Brush> brush(new Entity::Brush(false));
+
+	// initialize the brush //
+	brush->Init(world, size, style, material, mass == 0.f ? true: false);
+
+	int id = brush->GetID();
+
+	// optional physics init //
+	if(mass != 0.f){
+		brush->AddPhysicalObject(mass);
+	}
+
+	// add to world //
+	world->AddObject(brush.release());
+
+	return id;
+}
+
+DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::BRUSHCREATESTYLE style){
+	unique_ptr<Entity::Brush> brush(new Entity::Brush(false));
+
+	// initialize the brush //
+	brush->Init(world, size, style, material, false);
+
+	int id = brush->GetID();
+
+	// add to world //
+	world->AddObject(brush.release());
 
 	return id;
 }

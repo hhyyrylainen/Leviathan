@@ -37,6 +37,9 @@ void SoundDevice::Tick(int PassedMs){
 
 	for(size_t i = 0; i < LoadedSoundObjects.size(); i++){
 
+		if(!LoadedSoundObjects[i])
+			continue;
+
 		LoadedSoundObjects[i]->PassTimeIfNotPlaying(PassedMs);
 
 		if(delmore){

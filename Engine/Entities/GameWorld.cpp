@@ -150,7 +150,7 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(shared_ptr<BaseObject> obj){
 	Objects.push_back(obj);
 }
 
-DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetObject(int ID){
+DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
 	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
 		if((*iter)->GetID() == ID){
 			return *iter;

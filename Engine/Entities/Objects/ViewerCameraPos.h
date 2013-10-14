@@ -31,6 +31,11 @@ namespace Leviathan{
 		DLLEXPORT void SetPos(const Float3 &pos);
 		DLLEXPORT void SetRotation(const Float3 &orientation);
 
+
+		// input receiving //
+		DLLEXPORT virtual bool ReceiveInput(OIS::KeyCode key, int modifiers, bool down);
+		DLLEXPORT virtual void ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down);
+
 		// sound receiving //
 		// Warning: only have one of these set at a time to avoid weird sound issues //
 		DLLEXPORT void BecomeSoundPerceiver();

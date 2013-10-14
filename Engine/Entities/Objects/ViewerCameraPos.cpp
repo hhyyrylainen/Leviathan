@@ -135,26 +135,7 @@ void ViewerCameraPos::Vertical(int dir){
 	Position.Y -= zdown*DEFAULTMOVEMENTMODIFIER;
 }
 // ------------------------------------ //
-//DLLEXPORT bool Leviathan::ViewerCameraPos::OnEvent(InputEvent** pEvent, InputReceiver* pending){
-//
-//	if(pending == this){
-//		// shouldn't happen, since this doesn't use pending //
-//		DEBUG_BREAK;
-//	}
-//
-//	// update control based on event //
-//
-//	switch((*pEvent)->GetType()){
-//	case EVENT_TYPE_EVENT_SEQUENCE_BEGIN:
-//		{
-//			// clear all //
-//			xmoved = 0;
-//			ymoved = 0;
-//			m_SideWays = 0;
-//			m_Forward = 0;
-//			m_Vertical = 0;
-//		}
-//		return false;
+
 //	case EVENT_TYPE_MOUSEMOVED:
 //		{
 //
@@ -164,11 +145,7 @@ void ViewerCameraPos::Vertical(int dir){
 //			ymoved /= 3.0f;
 //		}
 //		goto cameraposoneventendreleaseevent;
-//	case EVENT_TYPE_KEYDOWN:
-//	case EVENT_TYPE_KEYPRESS:
-//		{
-//			// switch on Vkey code //
-//
+
 //			int &VKey = *(int*)(*pEvent)->Data;
 //			// handle keys //
 //			switch(VKey){
@@ -178,19 +155,31 @@ void ViewerCameraPos::Vertical(int dir){
 //			case (int)L'S': m_Forward = -1; goto cameraposoneventendreleaseevent;
 //			case VK_SPACE: m_Vertical = 1; goto cameraposoneventendreleaseevent;
 //			case VK_CONTROL: m_Vertical = -1; goto cameraposoneventendreleaseevent;
-//			}
-//		}
-//		return false;
-//	default:
-//		return false;
-//	}
-//
-//cameraposoneventendreleaseevent:
-//	// delete event to indicate that it has been processed //
-//	SAFE_DELETE(*pEvent);
-//	// no pending //
-//	return false;
-//}
+
+
+DLLEXPORT bool Leviathan::ViewerCameraPos::ReceiveInput(OIS::KeyCode key, int modifiers, bool down){
+	switch(key){
+	case OIS::KC_A: if(!down) m_SideWays = 0; else m_SideWays = -1; return true;
+	case OIS::KC_D: if(!down) m_SideWays = 0; else m_SideWays = 1; return true;
+	case OIS::KC_W: if(!down) m_Forward = 0; else m_Forward = 1; return true;
+	case OIS::KC_S: if(!down) m_Forward = 0; else m_Forward = -1; return true;
+	case OIS::KC_SPACE: if(!down) m_Vertical = 0; else m_Vertical = 1; return true;
+	case OIS::KC_LCONTROL: if(!down) m_Vertical = 0; else m_Vertical = -1; return true;
+	}
+	return false;
+}
+
+DLLEXPORT void Leviathan::ViewerCameraPos::ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down){
+	// reset control state of any keys received //
+	switch(key){
+	case OIS::KC_A: if(!down) m_SideWays = 0; break;
+	case OIS::KC_D: if(!down) m_SideWays = 0; break;
+	case OIS::KC_W: if(!down) m_Forward = 0; break;
+	case OIS::KC_S: if(!down) m_Forward = 0; break;
+	case OIS::KC_SPACE: if(!down) m_Vertical = 0; break;
+	case OIS::KC_LCONTROL: if(!down) m_Vertical = 0; break;
+	}
+}
 // ------------------------------------ //
 void Leviathan::ViewerCameraPos::RollValueTowards(float &value, const float &changeamount, const bool &maxvalue, const float &limitvalue){
 	value += changeamount;
@@ -223,3 +212,5 @@ DLLEXPORT void Leviathan::ViewerCameraPos::BecomeSoundPerceiver(){
 DLLEXPORT void Leviathan::ViewerCameraPos::StopSoundPerceiving(){
 	SendSoundPosition = false;
 }
+
+

@@ -24,20 +24,32 @@ DLLEXPORT void Leviathan::InputController::StartInputGather(){
 	// tell listeners that new frame begins //
 	for(size_t i = 0; i < ConnectedReceivers.size(); i++){
 
-
+		ConnectedReceivers[i]->BeginNewReceiveQueue();
 	}
 }
 
 DLLEXPORT void Leviathan::InputController::OnInputGet(OIS::KeyCode key, int specialmodifiers, bool down){
 	// call on first that gets it //
+	bool received = false;
 
+	for(size_t i = 0; i < ConnectedReceivers.size(); i++){
+
+		if(received){
+
+			ConnectedReceivers[i]->ReceiveBlockedInput(key, specialmodifiers, down);
+			continue;
+		}
+
+		if(ConnectedReceivers[i]->ReceiveInput(key, specialmodifiers, down))
+			received = true;
+	}
 }
 
 DLLEXPORT void Leviathan::InputController::OnBlockedInput(OIS::KeyCode key, int specialmodifiers, bool down){
 	// call on all //
 	for(size_t i = 0; i < ConnectedReceivers.size(); i++){
 
-
+		ConnectedReceivers[i]->ReceiveBlockedInput(key, specialmodifiers, down);
 	}
 }
 // ------------------------------------ //
@@ -74,4 +86,8 @@ void Leviathan::InputReceiver::_OnConnected(InputController* owner){
 
 void Leviathan::InputReceiver::_OnDisconnect(InputController* owner){
 	ConnectedTo = NULL;
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::InputReceiver::BeginNewReceiveQueue(){
+
 }

@@ -63,116 +63,145 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(GameWorld* world, const Float3 &di
 
 	// we do not want to update this later //
 	TestModel->setDynamic(false);
-	TestModel->estimateVertexCount(8);
-	TestModel->estimateIndexCount(8);
+	TestModel->estimateVertexCount(24);
+	TestModel->estimateIndexCount(24);
 
 	TestModel->begin(material, Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 	switch(style){
 	case BRUSHCREATESTYLE_CENTER:
 		{
-			// bottom left //
-			TestModel->position(dimensions.X/-2.f, dimensions.Y/-2.f, dimensions.Z/-2.f);
-			TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+			// loops to avoid redundant code //
+			float yval = dimensions.Y/-2.f;
 
-			// right point //
-			TestModel->position(dimensions.X/2.f, dimensions.Y/-2.f, dimensions.Z/-2.f);
-			TestModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+			for(int i = 0; i < 2; i++){
+				// loop three times on all points for each side that has that point //
 
-			// right up //
-			TestModel->position(dimensions.X/2.f, dimensions.Y/-2.f, dimensions.Z/2.f);
-			TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+				// bottom left //
+				for(int a = 0; a < 3; a++){
 
-			// left up //
-			TestModel->position(dimensions.X/-2.f, dimensions.Y/-2.f, dimensions.Z/2.f);
-			TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+					TestModel->position(dimensions.X/-2.f, yval, dimensions.Z/-2.f);
 
-			// second layer //
-			// left bottom //
-			TestModel->position(dimensions.X/-2.f, dimensions.Y/2.f, dimensions.Z/-2.f);
-			TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+					// first is bottom or top face //
+					if(a == 0){
 
-			// right point //
-			TestModel->position(dimensions.X/2.f, dimensions.Y/2.f, dimensions.Z/-2.f);
-			TestModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+						TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+						TestModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+						
+					} else if (a == 1){
+						// second is the face that is on the right when looking from the corner to the center of the cube //
+						TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+						TestModel->normal(Float3(0.f, 0.f, 1.f));
 
-			// right up //
-			TestModel->position(dimensions.X/2.f, dimensions.Y/2.f, dimensions.Z/2.f);
-			TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+					} else {
+						// and third is on the left when looking to the center //
+						TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+						TestModel->normal(Float3(-1.f, 0.f, 0.f));
+					}
+				}
 
-			// left up //
-			TestModel->position(dimensions.X/-2.f, dimensions.Y/2.f, dimensions.Z/2.f);
-			TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+				// right point //
+				for(int a = 0; a < 3; a++){
 
+					TestModel->position(dimensions.X/2.f, yval, dimensions.Z/-2.f);
+
+					// first is bottom or top face //
+					if(a == 0){
+
+						TestModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+						TestModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+
+					} else if (a == 1){
+						// second is the face that is on the right when looking from the corner to the center of the cube //
+						TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+						TestModel->normal(Float3(1.f, 0.f, 0.f));
+
+					} else {
+						// and third is on the left when looking to the center //
+						TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+						TestModel->normal(Float3(0.f, 0.f, 1.f));
+					}
+				}
+
+				// right up //
+				for(int a = 0; a < 3; a++){
+
+					TestModel->position(dimensions.X/2.f, yval, dimensions.Z/2.f);
+
+					// first is bottom or top face //
+					if(a == 0){
+
+						TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+						TestModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+
+					} else if (a == 1){
+						// second is the face that is on the right when looking from the corner to the center of the cube //
+						TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+						TestModel->normal(Float3(0.f, 0.f, -1.f));
+
+					} else {
+						// and third is on the left when looking to the center //
+						TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+						TestModel->normal(Float3(1.f, 0.f, 0.f));
+
+					}
+				}
+				// left up //
+				for(int a = 0; a < 3; a++){
+
+					TestModel->position(dimensions.X/-2.f, yval, dimensions.Z/2.f);
+
+					// first is bottom or top face //
+					if(a == 0){
+
+						TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+						TestModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+
+					} else if (a == 1){
+						// second is the face that is on the right when looking from the corner to the center of the cube //
+						TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+						TestModel->normal(Float3(0.f, -1.f, 0.f));
+
+					} else {
+						// and third is on the left when looking to the center //
+						TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+						TestModel->normal(Float3(0.f, 0.f, -1.f));
+					}
+				}
+				
+				// move to next layer for next loop //
+				yval = dimensions.Y/2.f;
+			}
 		}
 		break;
 	case BRUSHCREATESTYLE_CORNER:
 		{
 			// TODO: change physics creation code //
 			DEBUG_BREAK;
-			// origin point //
-			TestModel->position(0.f, 0.f, 0.f);
-			TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
-
-			// right point //
-			TestModel->position(dimensions.X, 0.f, 0.f);
-			TestModel->textureCoord(Ogre::Vector2(1.f, 0.f));
-
-			// right up //
-			TestModel->position(dimensions.X, 0.f, dimensions.Z);
-			TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
-
-			// left up //
-			TestModel->position(0.f, 0.f, dimensions.Z);
-			TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
-
-			// second layer //
-			// left bottom //
-			TestModel->position(0.f, dimensions.Y, 0.f);
-			TestModel->textureCoord(Ogre::Vector2(1.f, 0.f));
-
-			// right point //
-			TestModel->position(dimensions.X, dimensions.Y, 0.f);
-			TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
-
-			// right up //
-			TestModel->position(dimensions.X, dimensions.Y, dimensions.Z);
-			TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
-
-			// left up //
-			TestModel->position(0.f, dimensions.Y, dimensions.Z);
-			TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
 		}
 		break;
 	}
 	// quads are both same //
 	// base //
-	TestModel->quad(0, 1, 2, 3);
-	//TestModel->quad(3, 2, 1, 0);
+	TestModel->quad(0, 3, 6, 9);
 
 	// front side //
-	//TestModel->quad(0, 1, 5, 4);
-	TestModel->quad(4, 5, 1, 0);
+	TestModel->quad(13, 17, 5, 1);
 
 	// right side //
-	//TestModel->quad(1, 2, 6, 5);
-	TestModel->quad(5, 6, 2, 1);
+	TestModel->quad(16, 20, 8, 4);
 
 	// left side //
-	TestModel->quad(0, 3, 7, 4);
-	//TestModel->quad(4, 7, 3, 0);
+	TestModel->quad(2, 10, 22, 14);
 
 	// back side //
-	//TestModel->quad(2, 3, 7, 6);
-	TestModel->quad(6, 7, 3, 2);
+	TestModel->quad(19, 23, 11, 7);
 
 	// top //
-	//TestModel->quad(4, 5, 6, 7);
-	TestModel->quad(7, 6, 5, 4);
+	TestModel->quad(21, 18, 15, 12);
 
+	// end and turn into a mesh //
 	TestModel->end();
-
-	// convert to mesh for instancing //
 	TestModel->convertToMesh(MeshName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
 	// create instance //

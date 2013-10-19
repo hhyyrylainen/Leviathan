@@ -22,7 +22,7 @@ using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
 Leviathan::Gui::GuiManager::GuiManager() : ID(IDFactory::GetID()), RocketRenderer(NULL), RocketInternals(NULL), WindowContext(NULL), Visible(true),
-	Cursor(NULL)
+	Cursor(NULL), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true)
 {
 
 	staticaccess = this;
@@ -63,11 +63,12 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 
 	// create context for this window //
 	WindowContext = Rocket::Core::CreateContext("window01_context", Rocket::Core::Vector2i(wind->GetWidth(), wind->GetHeight()));
-	
-	Rocket::Debugger::Initialise(WindowContext);
 
-	Rocket::Debugger::SetVisible(true);
-
+	// initialize debugger only once //
+	if(!RocketDebuggerInitialized){
+		Rocket::Debugger::Initialise(WindowContext);
+		RocketDebuggerInitialized = true;
+	}
 
 	// we render during Ogre overlay //
 	wind->GetOverlayScene()->addRenderQueueListener(this);
@@ -122,10 +123,70 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(OIS::KeyCode key, int 
 
 	return false;
 }
+
+DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionStateProxy(string name, bool state){
+	// call the actual function //
+	SetCollectionState(Convert::StringToWstring(name), state);
+}
+
+DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const wstring &name, bool state){
+	// find collection with name and set it's state //
+	for(size_t i = 0; i < Collections.size(); i++){
+		if(Collections[i]->GetName() == name){
+			// set state //
+			if(Collections[i]->GetState() != state){
+				Collections[i]->ToggleState();
+			}
+			return;
+		}
+	}
+}
 // ------------------------------------ //
 void Leviathan::Gui::GuiManager::GuiTick(int mspassed){
 	// send tick event //
 
+
+
+	// check if we want mouse //
+	if(GuiMouseUseUpdated){
+		GuiMouseUseUpdated = false;
+
+		// scan if any collections keep GUI active //
+		bool active = false;
+
+
+		for(size_t i = 0; i < Collections.size(); i++){
+
+			if(Collections[i]->KeepsGUIActive()){
+				active = true;
+				break;
+			}
+		}
+
+		if(active != GuiDisallowMouseCapture){
+			// state updated //
+			GuiDisallowMouseCapture = active;
+
+			if(GuiDisallowMouseCapture){
+				// disable mouse capture //
+				ThisWindow->SetMouseCapture(false);
+
+			} else {
+
+				// activate direct mouse capture //
+				if(!ThisWindow->SetMouseCapture(true)){
+					// failed, GUI must be forced to stay on //
+					OnForceGUIOn();
+					GuiDisallowMouseCapture = true;
+					GuiMouseUseUpdated = true;
+				}
+			}
+		}
+	}
+}
+
+DLLEXPORT void Leviathan::Gui::GuiManager::OnForceGUIOn(){
+	DEBUG_BREAK;
 }
 
 void Leviathan::Gui::GuiManager::Render(){
@@ -134,12 +195,12 @@ void Leviathan::Gui::GuiManager::Render(){
 	ThisWindow->GetWindow()->GatherInput(WindowContext);
 }
 // ------------------------------------ //
-void Leviathan::Gui::GuiManager::OnResize(){
+void Leviathan::Gui::GuiManager::OnResize(int width, int height){
 	// call events //
-	this->CallEvent(new Event(EVENT_TYPE_WINDOW_RESIZE, (void*)new Int2(DataStore::Get()->GetWidth(), DataStore::Get()->GetHeight())));
+	this->CallEvent(new Event(EVENT_TYPE_WINDOW_RESIZE, (void*)new Int2(width, height)));
 
 	// resize Rocket on this window //
-	WindowContext->SetDimensions(Rocket::Core::Vector2i(DataStore::Get()->GetWidth(), DataStore::Get()->GetHeight()));
+	WindowContext->SetDimensions(Rocket::Core::Vector2i(width, height));
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiManager::AddGuiObject(BaseGuiObject* obj){
@@ -282,13 +343,29 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFile(const wstring &file){
 
 
 	Cursor = WindowContext->LoadMouseCursor(Convert::WstringToString(file).c_str());
+
 	if(Cursor){
 
-		Cursor->Hide();
+		Cursor->Show();
 		// hide window cursor //
 		ThisWindow->GetWindow()->SetHideCursor(true);
 	}
 }
+
+DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFileVisibleState(bool state){
+
+	WindowContext->ShowMouseCursor(state);
+}
+
+DLLEXPORT void Leviathan::Gui::GuiManager::SetDebuggerOnThisContext(){
+
+	Rocket::Debugger::SetContext(WindowContext);
+}
+
+DLLEXPORT void Leviathan::Gui::GuiManager::SetDebuggerVisibility(bool visible){
+	Rocket::Debugger::SetVisible(visible);
+}
+
 // ----------------- event handler part --------------------- //
 bool Leviathan::Gui::GuiManager::CallEvent(Event* pEvent){
 	// loop through listeners and call events //
@@ -431,3 +508,11 @@ void Leviathan::Gui::GuiManager::BuildProjectionMatrix(Ogre::Matrix4& projection
 	projection_matrix[2][2]= -2.0f / (z_far - z_near);
 	projection_matrix[3][3]= 1.0000000f;
 }
+
+
+
+
+
+bool Leviathan::Gui::GuiManager::RocketDebuggerInitialized = false;
+
+

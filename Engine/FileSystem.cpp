@@ -410,14 +410,24 @@ int Leviathan::FileSystem::GetFileLength(wstring name){
 	return -1; // not found
 }
 
-bool Leviathan::FileSystem::FileExists(wstring name){
-	bool Ex=FALSE;
+DLLEXPORT bool Leviathan::FileSystem::FileExists( const wstring &name){
+	bool existed=false;
 	wifstream file(name);
 	if(file.is_open()){
-		Ex=TRUE;
+		existed=true;
 	}
 	file.close();
-	return Ex;
+	return existed;
+}
+
+DLLEXPORT bool Leviathan::FileSystem::FileExists(const string &name){
+	bool existed=false;
+	ifstream file(name);
+	if(file.is_open()){
+		existed=true;
+	}
+	file.close();
+	return existed;
 }
 
 bool Leviathan::FileSystem::WriteToFile(const string &data, const string &filename){
@@ -666,9 +676,6 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 				// found //
 				return result.get()->RelativePath;
 			}
-#ifdef _DEBUG
-			Logger::Get()->Info(L"SearchForFile: Not found in primary vector "+Convert::IntToWstring((int)which), true);
-#endif // _DEBUG
 		}
 	break;
 	case FILEGROUP_TEXTURE:
@@ -678,9 +685,6 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 				// found //
 				return result.get()->RelativePath;
 			}
-#ifdef _DEBUG
-			Logger::Get()->Info(L"SearchForFile: Not found in primary vector "+Convert::IntToWstring((int)which), true);
-#endif // _DEBUG
 		}
 		break;
 	case FILEGROUP_SOUND:
@@ -690,9 +694,6 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 				// found //
 				return result.get()->RelativePath;
 			}
-#ifdef _DEBUG
-			Logger::Get()->Info(L"SearchForFile: Not found in primary vector "+Convert::IntToWstring((int)which), true);
-#endif // _DEBUG
 		}
 		break;
 	case FILEGROUP_SCRIPT:
@@ -702,9 +703,6 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 				// found //
 				return result.get()->RelativePath;
 			}
-#ifdef _DEBUG
-			Logger::Get()->Info(L"SearchForFile: Not found in primary vector "+Convert::IntToWstring((int)which), true);
-#endif // _DEBUG
 		}
 	break;
 	case FILEGROUP_OTHER:
@@ -714,9 +712,6 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 				// found //
 				return result.get()->RelativePath;
 			}
-#ifdef _DEBUG
-			Logger::Get()->Info(L"SearchForFile: Not found in primary vector "+Convert::IntToWstring((int)which), true);
-#endif // _DEBUG
 		}
 	break;
 	}
@@ -729,14 +724,10 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 			// found //
 			return result.get()->RelativePath;
 		}
-#ifdef _DEBUG
-		Logger::Get()->Info(L"SearchForFile: Not found in AllFiles vector ", true);
-#endif // _DEBUG
-
 	}
 	// not found return empty and if debug build warn //
 //#ifdef _DEBUG
-	Logger::Get()->Error(L"FileSystem: File not found: "+name+L"."+extensions, (bool)true);
+	Logger::Get()->Error(L"FileSystem: File not found: "+name+L"."+extensions, true);
 //#endif
 	return Misc::EmptyString;
 }

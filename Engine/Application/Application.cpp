@@ -24,7 +24,7 @@ DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration
 
 
 	// init engine //
-	_Engine = new Engine();
+	_Engine = new Engine(this);
 	if(!_Engine->Init(ApplicationConfiguration))
 		return false;
 	_InternalInit();
@@ -77,5 +77,14 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 	Release();
 
 	return 0; 
+}
+
+// ------------------ Default callbacks that do nothing ------------------ //
+DLLEXPORT void Leviathan::LeviathanApplication::InitLoadCustomScriptTypes(asIScriptEngine* engine){
+
+}
+
+DLLEXPORT void Leviathan::LeviathanApplication::RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){
+
 }
 // ------------------------------------ //

@@ -97,6 +97,18 @@ DLLEXPORT bool Leviathan::MMath::IsEqual(float x, float y){
 	const double epsilon = 1e-5;
 	return abs(x - y) <= epsilon * abs(x);
 }
+
+DLLEXPORT Float3 Leviathan::MMath::CalculateNormal(const Float3 &p1, const Float3 &p2, const Float3 &p3){
+	// according to OpenGL wiki //
+
+	// some vectors for calculating final normal //
+	const Float3 VecU = p2-p1;
+	const Float3 VecV = p3-p1;
+
+	// normalize before returning //
+	return Float3(VecU.Y*VecV.Z-VecU.Z*VecV.Y, VecU.Z*VecV.X-VecU.X*VecV.Z, VecU.X*VecV.Y-VecU.Y*VecV.X).Normalize();
+}
+
 /*--------------------------------------
 Original Function written by Philip J. Erdelsky October 25, 2001 (revised August 22, 2002)
 Code Edited by Henri Hyyryläinen

@@ -158,13 +158,51 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::Tick(int mspassed){
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::OnResize(int width, int height){
-
+	// send to GUI //
+	WindowsGui->OnResize(width, height);
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::UnlinkAll(){
 	LinkedWorld.reset();
 	LinkedCamera.reset();
 }
+
+DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state){
+	if(MouseCaptureState == state)
+		return true;
+
+	MouseCaptureState = state;
+
+	// handle changing state //
+	if(!MouseCaptureState){
+
+		// set mouse visible and disable capturing //
+		WindowsGui->SetMouseFileVisibleState(true);
+		DisplayWindow->SetCaptureMouse(false);
+
+		// reset pointer to indicate that this object no longer captures mouse to this window //
+		InputCapturer = NULL;
+
+	} else {
+
+		if(InputCapturer != this && InputCapturer != NULL){
+			// another window has input //
+			MouseCaptureState = false;
+			return false;
+		}
+
+		// hide mouse and tell window to capture //
+		WindowsGui->SetMouseFileVisibleState(false);
+		DisplayWindow->SetCaptureMouse(true);
+		DisplayWindow->SetMouseToCenter();
+
+		// set static ptr to this //
+		InputCapturer = this;
+	}
+	return true;
+}
+
+GraphicalInputEntity* Leviathan::GraphicalInputEntity::InputCapturer = NULL;
 
 int Leviathan::GraphicalInputEntity::GlobalWindowCount = 0;
 

@@ -33,9 +33,10 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT virtual int OnEvent(Event** pEvent);
 		DLLEXPORT virtual bool OnUpdate(const shared_ptr<NamedVariableList> &updated);
 		// rocket events //
-		virtual void ProcessEvent(Rocket::Core::Event& event);
+		virtual void ProcessEvent(Rocket::Core::Event& receivedevent);
 		virtual void OnDetach(Rocket::Core::Element* element);
-		
+		virtual void OnAttach(Rocket::Core::Element* element);
+
 		DLLEXPORT inline int GetID(){
 			return ID;
 		}
@@ -44,13 +45,14 @@ namespace Leviathan{ namespace Gui{
 
 		DLLEXPORT ScriptSafeVariableBlock* GetAndPopFirstUpdated(){
 
-			UpdatedValues[0]->GetValueDirect();
-
 			auto tmp = new ScriptSafeVariableBlock(UpdatedValues[0]->GetValueDirect(), UpdatedValues[0]->GetName());
-
 			UpdatedValues.erase(UpdatedValues.begin());
 
 			return tmp;
+		}
+
+		DLLEXPORT GuiManager* GetOwningManager(){
+			return OwningInstance;
 		}
 
 		static std::map<wstring, Rocket::Core::String> LeviathanToRocketEventTranslate;

@@ -101,7 +101,8 @@ namespace Leviathan{
 
 		// file operations //
 		DLLEXPORT static int GetFileLength(wstring name);
-		DLLEXPORT static bool FileExists(wstring name);
+		DLLEXPORT static bool FileExists(const wstring &name);
+		DLLEXPORT static bool FileExists(const string &name);
 		DLLEXPORT static bool WriteToFile(const string &data, const string &filename);
 		DLLEXPORT static bool WriteToFile(const wstring &data, const wstring &filename);
 		DLLEXPORT static bool AppendToFile(const wstring &data, const wstring &filepath);

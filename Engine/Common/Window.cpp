@@ -16,7 +16,7 @@ static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function"
 
 DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner, bool vsync) : OWindow(owindow), VerticalSync(vsync), 
 	m_hwnd(NULL), WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0), 
-	ForceMouseVisible(false), CursorState(true)
+	ForceMouseVisible(false), CursorState(true), MouseCaptured(false)
 {
 
 	OwningWindow = owner;
@@ -230,9 +230,12 @@ void Leviathan::Window::ReleaseOIS(){
 		WindowJoysticks.erase(WindowJoysticks.begin());
 	}
 
-	
+	MouseCaptured = false;
 
 	OIS::InputManager::destroyInputSystem(WindowsInputManager);
+	// clear pointers //
+	WindowKeyboard = NULL;
+	WindowMouse = NULL;
 }
 
 void Leviathan::Window::UpdateOISMouseWindowSize(){
@@ -248,6 +251,13 @@ void Leviathan::Window::UpdateOISMouseWindowSize(){
 }
 
 DLLEXPORT void Leviathan::Window::GatherInput(Rocket::Core::Context* context){
+	// quit if window closed //
+	if(OWindow->isClosed() || !WindowKeyboard || !WindowMouse){
+
+		Logger::Get()->Warning(L"Window: GatherInput: skipping due to closed input window");
+		return;
+	}
+
 	// set parameters that listener functions need //
 	ThisFrameHandledCreate = false;
 	inputreceiver = context;
@@ -272,6 +282,25 @@ DLLEXPORT void Leviathan::Window::GatherInput(Rocket::Core::Context* context){
 	ThisFrameHandledCreate = false;
 	// everything is now processed //
 	inputreceiver = NULL;
+
+	// we need to just handle our own mouse capture function //
+	if(MouseCaptured && Focused){
+
+		// get mouse relative to window center //
+		int xmoved = 0, ymoved = 0;
+
+		GetRelativeMouse(xmoved, ymoved);
+
+		// subtract center of window //
+		xmoved -= GetWidth()/2;
+		ymoved -= GetHeight()/2;
+
+		// reset to center of window //
+		SetMouseToCenter();
+
+		// pass input //
+		OwningWindow->GetInputController()->SendMouseMovement(xmoved, ymoved);
+	}
 }
 
 void Leviathan::Window::CheckInputState(){
@@ -308,7 +337,7 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 	bool SentToController = false;
 
 	if(inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
-		if(!Gui::GuiManager::Get()->ProcessKeyDown(arg.key, SpecialKeyModifiers)){
+		if(!OwningWindow->GetGUI()->ProcessKeyDown(arg.key, SpecialKeyModifiers)){
 
 			SentToController = true;
 			OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, true);
@@ -345,9 +374,11 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
 	// send all mouse related things (except buttons) //
 	const OIS::MouseState& mstate = arg.state;
 
-	inputreceiver->ProcessMouseMove(mstate.X.abs, mstate.Y.abs, SpecialKeyModifiers);
-	inputreceiver->ProcessMouseWheel(-mstate.Z.rel, SpecialKeyModifiers);
-
+	if(!MouseCaptured){
+		// only pass this data if we aren't going to pass our own captured mouse //
+		inputreceiver->ProcessMouseMove(mstate.X.abs, mstate.Y.abs, SpecialKeyModifiers);
+		inputreceiver->ProcessMouseWheel(-mstate.Z.rel, SpecialKeyModifiers);
+	}
 	// force cursor visible check //
 	if(IsMouseOutsideWindowClientArea()){
 
@@ -386,8 +417,8 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 
 
 	int Keynumber = index;
-
-	inputreceiver->ProcessMouseButtonDown(Keynumber, SpecialKeyModifiers);
+	if(!MouseCaptured)
+		inputreceiver->ProcessMouseButtonDown(Keynumber, SpecialKeyModifiers);
 
 	// don't really know what to return
 	return true;
@@ -473,6 +504,11 @@ void Leviathan::Window::_CreateOverlayScene(){
 	// automatic updating //
 	OverlayViewport->setAutoUpdated(true);
 }
+
+DLLEXPORT void Leviathan::Window::SendCloseMessage(){
+	OWindow->destroy();
+}
+
 // ------------------ KeyCode conversion map ------------------ //
 #define QUICKKEYPAIR(x, y) OIS::x, Rocket::Core::Input::y
 #define SIMPLEPAIR(x, y)	L##x, OIS::y

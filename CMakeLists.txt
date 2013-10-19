@@ -144,6 +144,9 @@ add_subdirectory(LeviathanTest)
 # sandboxie example project
 add_subdirectory(Project_sandboxie)
 
+# pong example game
+add_subdirectory(Pong)
+
 # install support
 
 # data folders

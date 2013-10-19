@@ -7,15 +7,6 @@
 using namespace Leviathan;
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Include.h"
-#include "Define.h"
-#include "Common\Types.h"
-#include "Common\Misc.h"
-#include "Logger.h"
-#include "Common\Window.h"
-#include "Engine.h"
-
-
 #include "Application\Application.h"
 
 

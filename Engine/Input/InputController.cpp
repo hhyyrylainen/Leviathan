@@ -52,6 +52,16 @@ DLLEXPORT void Leviathan::InputController::OnBlockedInput(OIS::KeyCode key, int 
 		ConnectedReceivers[i]->ReceiveBlockedInput(key, specialmodifiers, down);
 	}
 }
+
+
+DLLEXPORT void Leviathan::InputController::SendMouseMovement(int xmoved, int ymoved){
+	// call on first that gets it //
+	for(size_t i = 0; i < ConnectedReceivers.size(); i++){
+
+		if(ConnectedReceivers[i]->OnMouseMove(xmoved, ymoved))
+			return;
+	}
+}
 // ------------------------------------ //
 DLLEXPORT void Leviathan::InputController::LinkReceiver(InputReceiver* object){
 	// just add to list and call link function //

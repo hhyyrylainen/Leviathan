@@ -29,12 +29,16 @@
 
 
 namespace Leviathan{
+
+	// for storing pointer to owner //
+	class LeviathanApplication;
+
 	class Engine : public Object{
 		// friend so that window can update size //
 		friend Window;
 		friend Gui::GuiManager;
 	public:
-		DLLEXPORT Engine();
+		DLLEXPORT Engine(LeviathanApplication* owner);
 
 		DLLEXPORT bool Init(AppDef* definition);
 		DLLEXPORT void Release();
@@ -65,6 +69,7 @@ namespace Leviathan{
 		DLLEXPORT AppDef* GetDefinition(){ return Define;};
 		DLLEXPORT GraphicalInputEntity* GetWindowEntity(){ return GraphicalEntity1; };
 		DLLEXPORT NewtonManager* GetNewtonManager(){ return _NewtonManager; };
+		DLLEXPORT LeviathanApplication* GetOwningApplication(){ return Owner; };
 		// static access //
 		DLLEXPORT static Engine* GetEngine();
 
@@ -93,7 +98,7 @@ namespace Leviathan{
 		NewtonManager* _NewtonManager;
 
 		IDFactory* IDDefaultInstance;
-
+		LeviathanApplication* Owner;
 		// world data //
 		std::vector<shared_ptr<GameWorld>> GameWorlds;
 

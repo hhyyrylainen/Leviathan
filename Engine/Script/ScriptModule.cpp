@@ -6,6 +6,7 @@
 #include "ScriptInterface.h"
 #include <boost\assign\list_of.hpp>
 #include "Utility\Iterators\WstringIterator.h"
+#include "FileSystem.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -18,6 +19,9 @@ ScriptModule::ScriptModule(asIScriptEngine* engine, const wstring &name, int id,
 	
 	// module will always be started //
 	ScriptBuilder->StartNewModule(engine, ModuleName.c_str());
+
+	// setup include resolver //
+	ScriptBuilder->SetIncludeCallback(ScriptModuleIncludeCallback, this);
 
 	ListenerDataBuilt = false;
 }
@@ -33,7 +37,7 @@ ScriptModule::~ScriptModule(){
 int Leviathan::ScriptModule::LatestAssigned = 0;
 
 const map<wstring, int> Leviathan::ScriptModule::ListenerNameType = boost::assign::map_list_of(LISTENERNAME_ONSHOW, LISTENERVALUE_ONSHOW)
-	(LISTENERNAME_ONHIDE, LISTENERVALUE_ONHIDE) (LISTENERNAME_ONLISTENUPDATE, LISTENERVALUE_ONSHOW);
+	(LISTENERNAME_ONHIDE, LISTENERVALUE_ONHIDE) (LISTENERNAME_ONLISTENUPDATE, LISTENERVALUE_ONSHOW) (LISTENERNAME_ONCLICK, LISTENERVALUE_ONCLICK);
 
 // ------------------------------------ //
 FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScriptFunction* func){
@@ -292,6 +296,59 @@ DLLEXPORT void Leviathan::ScriptModule::PrintFunctionsInModule(){
 	Logger::Get()->Write(L"[END]");
 }
 
+DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam){
+	// by default we need to try to add include to from path and try to open it //
+	string file(include);
+	string infile(from);
+
+	ScriptModule* module = reinterpret_cast<ScriptModule*>(userParam);
+
+	// if it is prefixed with ".\" then just look for the file with it's relative path //
+	if(file.find(".\\") == 0){
+
+		return builder->AddSectionFromFile(file.c_str());
+	}
+
+	size_t lastpathseparator = infile.find_last_of('/');
+	if(lastpathseparator != string::npos){
+		string justpath = infile.substr(0, lastpathseparator+1); 
+
+		string completefile = justpath += file;
+
+		if(FileSystem::FileExists(completefile)){
+			// completed search //
+			return builder->AddSectionFromFile(completefile.c_str());
+		} else {
+			
+			goto trytofindinscriptfolderincludecallback;
+		}
+	} else {
+trytofindinscriptfolderincludecallback:
+
+		wstring wfile = Convert::StringToWstring(file);
+
+		// try to find in script folder //
+		wstring extension = FileSystem::GetExtension(wfile);
+
+		wstring name = FileSystem::RemoveExtension(wfile, true);
+
+		// search //
+		wstring finalpath = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, name, extension, false);
+
+		if(finalpath.size() > 0){
+
+			return builder->AddSectionFromFile(Convert::WstringToString(finalpath).c_str());
+		} else {
+
+			Logger::Get()->Error(L"ScriptModule: IncludeCallback: couldn't resolve include (even with full search), file: "+wfile
+				+L" in "+module->GetInfoWstring());
+		}
+	}
+
+	// if we got here the file couldn't be found //
+	return -1;
+}
+// ------------------ ValidListenerData ------------------ //
 Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, unique_ptr<wstring> metadataend) : FuncPtr(funcptr){
 	// take ownership of the unique pointer //
 	RestOfMeta.swap(metadataend);

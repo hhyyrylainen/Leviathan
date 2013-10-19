@@ -179,7 +179,6 @@ using namespace std;
 
 #ifndef DEBUG_OUTPUT_AUTO
 #if defined( DEBUG ) || defined( _DEBUG )
-//#define DEBUG_OUTPUT_AUTO(s)	{Logger::SendDebugMessage(wstring(L"[INFO] "L#s L"\n"));}
 #define DEBUG_OUTPUT_AUTO(s)	{Logger::SendDebugMessage(wstring(L"[INFO] "+s+L"\n"));}
 #else
 #define DEBUG_OUTPUT_AUTO(s)   {}

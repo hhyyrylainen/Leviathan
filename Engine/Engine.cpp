@@ -9,7 +9,9 @@ using namespace Leviathan;
 #include "Rendering\TextureManager.h"
 #include "Entities\GameWorld.h"
 
-Leviathan::Engine::Engine() : LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), _NewtonManager(NULL){
+DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), 
+	_NewtonManager(NULL), GraphicalEntity1(NULL)
+{
 
 	// create this here //
 	IDDefaultInstance = IDFactory::Get();
@@ -37,12 +39,8 @@ Leviathan::Engine::Engine() : LeapData(NULL), MainConsole(NULL), MainFileHandler
 	MainEvents = NULL;
 	Loader = NULL;
 	OutOMemory = NULL;
-
-	Focused = true;
-	MouseCaptured = false;
-	WantsToCapture = false;
-
 }
+
 Engine* Leviathan::Engine::instance = NULL;
 
 Engine* Leviathan::Engine::GetEngine(){
@@ -209,8 +207,10 @@ void Leviathan::Engine::Release(){
 	// destroy worlds //
 	GameWorlds.clear();
 
-	// make windows clear their stored objects //
-	GraphicalEntity1->ReleaseLinked();
+	if(GraphicalEntity1){
+		// make windows clear their stored objects //
+		GraphicalEntity1->ReleaseLinked();
+	}
 
 	// destroy windows //
 	SAFE_DELETE(GraphicalEntity1);

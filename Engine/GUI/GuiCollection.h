@@ -33,6 +33,10 @@ namespace Leviathan{ namespace Gui{
 				tmp->AddReference();
 			return tmp;
 		}
+		// makes the document the topmost one //
+		DLLEXPORT void PullSheetToFront();
+		// makes the document bottom most one //
+		DLLEXPORT void PushSheetToBack();
 
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GuiLoadedSheet);
@@ -45,11 +49,14 @@ namespace Leviathan{ namespace Gui{
 
 	class GuiCollection : public Object, public ReferenceCounted{
 	public:
-		GuiCollection(const wstring &name, GuiLoadedSheet* sheet, int id, const wstring &toggle, bool strict = false, 
+		GuiCollection(const wstring &name, GuiLoadedSheet* sheet, GuiManager* manager, int id, const wstring &toggle, bool strict = false, 
 			bool enabled = true, bool keepgui = false);
 		~GuiCollection();
 
 		DLLEXPORT void UpdateState(bool newstate);
+		DLLEXPORT inline bool GetState(){
+			return Enabled;
+		}
 		DLLEXPORT inline void ToggleState(){
 			UpdateState(!Enabled);
 		}
@@ -88,6 +95,7 @@ namespace Leviathan{ namespace Gui{
 		bool KeepsGuiOn;
 
 		GKey Toggle;
+		GuiManager* OwningManager;
 
 		shared_ptr<ScriptScript> Scripting;
 		GuiLoadedSheet* ContainedInSheet;

@@ -6,6 +6,7 @@
 #include "GuiAnimation.h"
 #include "GuiScriptInterface.h"
 #include "BaseGuiObject.h"
+#include "GuiManager.h"
 
 
 void RocketProxyAddEventReference(Rocket::Core::Event* evt){
@@ -43,6 +44,16 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
+	// GuiManager needed to use some functionality, registered so that it cannot be stored //
+	if(engine->RegisterObjectType("GuiManager", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectMethod("GuiManager", "bool SetCollectionState(string name, bool state = false)", asMETHOD(Gui::GuiManager, SetCollectionStateProxy), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
 
 
 
@@ -68,6 +79,10 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectMethod("BaseGuiObject", "ScriptSafeVariableBlock@ GetAndPopFirstUpdated()", asMETHOD(Gui::BaseGuiObject, GetAndPopFirstUpdated), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("BaseGuiObject", "GuiManager& GetOwningManager()", asMETHOD(Gui::BaseGuiObject, GetOwningManager), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -108,6 +123,14 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	if(engine->RegisterObjectBehaviour("GuiLoadedSheet", asBEHAVE_RELEASE, "void f()", asMETHOD(Gui::GuiLoadedSheet, ReleaseProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+	if(engine->RegisterObjectMethod("GuiLoadedSheet", "void PullSheetToFront()", asMETHOD(Gui::GuiLoadedSheet, PullSheetToFront), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("GuiLoadedSheet", "void PushSheetToBack()", asMETHOD(Gui::GuiLoadedSheet, PushSheetToBack), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
 	
 	if(engine->RegisterObjectMethod("GuiLoadedSheet", "RocketElement@ GetElementByID(string id)", asMETHOD(Gui::GuiLoadedSheet, GetElementByIDProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
@@ -115,6 +138,11 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	if(engine->RegisterObjectMethod("GuiCollection", "GuiLoadedSheet@ GetOwningSheet()", asMETHOD(Gui::GuiCollection, GetOwningSheetProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+
+
+	
+		
 
 
 	return true;

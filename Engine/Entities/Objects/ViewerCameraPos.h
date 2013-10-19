@@ -35,11 +35,17 @@ namespace Leviathan{
 		// input receiving //
 		DLLEXPORT virtual bool ReceiveInput(OIS::KeyCode key, int modifiers, bool down);
 		DLLEXPORT virtual void ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down);
+		// clears mouse movement //
+		DLLEXPORT virtual void BeginNewReceiveQueue();
+
+		DLLEXPORT virtual bool OnMouseMove(int xmove, int ymove);
 
 		// sound receiving //
 		// Warning: only have one of these set at a time to avoid weird sound issues //
 		DLLEXPORT void BecomeSoundPerceiver();
 		DLLEXPORT void StopSoundPerceiving();
+
+
 
 	private:
 		void SideWays(int dir);
@@ -50,6 +56,7 @@ namespace Leviathan{
 
 		// reduces amount of code //
 		static void RollValueTowards(float &value, const float &changeamount, const bool &maxvalue, const float &limitvalue);
+
 		// ------------------------------------ //
 
 		bool SendSoundPosition;

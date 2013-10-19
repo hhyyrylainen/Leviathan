@@ -28,6 +28,9 @@ namespace Leviathan{
 		// greatest common divisor, courtesy of Wikipedia
 		DLLEXPORT static int GreatestCommonDivisor(int a, int b);
 
+		// calculates a normal for triangle and returns in normalized //
+		DLLEXPORT static Float3 CalculateNormal(const Float3 &p1, const Float3 &p2, const Float3 &p3);
+
 		/*--------------------------------------
 		Original Function written by Philip J. Erdelsky October 25, 2001 (revised August 22, 2002)
 		Code Edited by Henri Hyyryläinen

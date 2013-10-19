@@ -135,49 +135,42 @@ void ViewerCameraPos::Vertical(int dir){
 	Position.Y -= zdown*DEFAULTMOVEMENTMODIFIER;
 }
 // ------------------------------------ //
-
-//	case EVENT_TYPE_MOUSEMOVED:
-//		{
-//
-//			xmoved = (float)(((Int2*)(*pEvent)->Data))->X;
-//			ymoved = (float)(((Int2*)(*pEvent)->Data))->Y;
-//			xmoved /= 3.0f;
-//			ymoved /= 3.0f;
-//		}
-//		goto cameraposoneventendreleaseevent;
-
-//			int &VKey = *(int*)(*pEvent)->Data;
-//			// handle keys //
-//			switch(VKey){
-//			case (int)L'A': m_SideWays = -1; goto cameraposoneventendreleaseevent;
-//			case (int)L'D': m_SideWays = 1; goto cameraposoneventendreleaseevent;
-//			case (int)L'W': m_Forward = 1; goto cameraposoneventendreleaseevent;
-//			case (int)L'S': m_Forward = -1; goto cameraposoneventendreleaseevent;
-//			case VK_SPACE: m_Vertical = 1; goto cameraposoneventendreleaseevent;
-//			case VK_CONTROL: m_Vertical = -1; goto cameraposoneventendreleaseevent;
-
-
 DLLEXPORT bool Leviathan::ViewerCameraPos::ReceiveInput(OIS::KeyCode key, int modifiers, bool down){
+	// reset state only if the state is the same that the key would set //
 	switch(key){
-	case OIS::KC_A: if(!down) m_SideWays = 0; else m_SideWays = -1; return true;
-	case OIS::KC_D: if(!down) m_SideWays = 0; else m_SideWays = 1; return true;
-	case OIS::KC_W: if(!down) m_Forward = 0; else m_Forward = 1; return true;
-	case OIS::KC_S: if(!down) m_Forward = 0; else m_Forward = -1; return true;
-	case OIS::KC_SPACE: if(!down) m_Vertical = 0; else m_Vertical = 1; return true;
-	case OIS::KC_LCONTROL: if(!down) m_Vertical = 0; else m_Vertical = -1; return true;
+	case OIS::KC_A: if(!down && m_SideWays == -1) m_SideWays = 0; else if(down) m_SideWays = -1; return true;
+	case OIS::KC_D: if(!down && m_SideWays == 1) m_SideWays = 0; else if(down) m_SideWays = 1; return true;
+	case OIS::KC_W: if(!down && m_Forward == 1) m_Forward = 0; else if(down) m_Forward = 1; return true;
+	case OIS::KC_S: if(!down && m_Forward == -1) m_Forward = 0; else if(down) m_Forward = -1; return true;
+	case OIS::KC_SPACE: if(!down && m_Vertical == 1) m_Vertical = 0; else if(down) m_Vertical = 1; return true;
+	case OIS::KC_LCONTROL: if(!down && m_Vertical == -1) m_Vertical = 0; else if(down) m_Vertical = -1; return true;
 	}
 	return false;
 }
 
+DLLEXPORT bool Leviathan::ViewerCameraPos::OnMouseMove(int xmove, int ymove){
+	// set internal moved variable //
+	xmoved = (float)xmove;
+	ymoved = (float)ymove;
+
+	// always processed //
+	return true;
+}
+
+DLLEXPORT void Leviathan::ViewerCameraPos::BeginNewReceiveQueue(){
+	xmoved = ymoved = 0;
+}
+
 DLLEXPORT void Leviathan::ViewerCameraPos::ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down){
 	// reset control state of any keys received //
+	// reset state only if the state is the same that the key would set //
 	switch(key){
-	case OIS::KC_A: if(!down) m_SideWays = 0; break;
-	case OIS::KC_D: if(!down) m_SideWays = 0; break;
-	case OIS::KC_W: if(!down) m_Forward = 0; break;
-	case OIS::KC_S: if(!down) m_Forward = 0; break;
-	case OIS::KC_SPACE: if(!down) m_Vertical = 0; break;
-	case OIS::KC_LCONTROL: if(!down) m_Vertical = 0; break;
+	case OIS::KC_A: if(!down && m_SideWays == -1) m_SideWays = 0; break;
+	case OIS::KC_D: if(!down && m_SideWays == 1) m_SideWays = 0; break;
+	case OIS::KC_W: if(!down && m_Forward == 1) m_Forward = 0; break;
+	case OIS::KC_S: if(!down && m_Forward == -1) m_Forward = 0; break;
+	case OIS::KC_SPACE: if(!down && m_Vertical == 1) m_Vertical = 0; break;
+	case OIS::KC_LCONTROL: if(!down && m_Vertical == -1) m_Vertical = 0; break;
 	}
 }
 // ------------------------------------ //
@@ -212,5 +205,7 @@ DLLEXPORT void Leviathan::ViewerCameraPos::BecomeSoundPerceiver(){
 DLLEXPORT void Leviathan::ViewerCameraPos::StopSoundPerceiving(){
 	SendSoundPosition = false;
 }
+
+
 
 

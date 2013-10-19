@@ -166,7 +166,10 @@ namespace Leviathan{
 		}
 
 		DLLEXPORT static Key<T> GenerateKeyFromString(const wstring &representation){
-
+			if(representation.size() == 0){
+				// empty, nothing to do //
+				return Key<T>((T)0, 0);
+			}
 			WstringIterator itr(representation);
 
 			wstring converted;

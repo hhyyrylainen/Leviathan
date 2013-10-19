@@ -35,6 +35,9 @@ namespace Leviathan{
 			LinkedCamera = camera;
 		}
 
+		// returns true if succeeds, false if another window has input //
+		DLLEXPORT bool SetMouseCapture(bool state);
+
 		DLLEXPORT void ReleaseLinked();
 
 		DLLEXPORT void UnlinkAll();
@@ -71,6 +74,8 @@ namespace Leviathan{
 		// this count variable is needed to parse resource groups after first window //
 		static int GlobalWindowCount;
 
+		bool MouseCaptureState;
+		static GraphicalInputEntity* InputCapturer;
 	};
 
 }

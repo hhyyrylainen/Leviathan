@@ -150,9 +150,48 @@ void Leviathan::Gui::BaseGuiObject::OnDetach(Rocket::Core::Element* element){
 	//HookedRocketEvents.clear();
 }
 
-void Leviathan::Gui::BaseGuiObject::ProcessEvent(Rocket::Core::Event& event){
+void Leviathan::Gui::BaseGuiObject::OnAttach(Rocket::Core::Element* element){
+	// attached //
+	Logger::Get()->Info(L"GuiObject: "+Name+L" has been attached");
+}
+
+void Leviathan::Gui::BaseGuiObject::ProcessEvent(Rocket::Core::Event& receivedevent){
 	// call script to handle the event //
-	DEBUG_BREAK;
+	const Rocket::Core::String& eventtype = receivedevent.GetType();
+
+	// handle specific Rocket events //
+	if(eventtype == "click"){
+		// check does the script contain right listeners //
+		ScriptModule* mod = Scripting->GetModule();
+
+		if(mod->DoesListenersContainSpecificListener(LISTENERNAME_ONCLICK)){
+			// setup parameters //
+			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
+				(new NamedVariableBlock(new VoidPtrBlock(&receivedevent), L"RocketEvent"));
+			// we are returning ourselves so increase refcount
+			AddRef();
+			receivedevent.AddReference();
+
+			ScriptRunningSetup sargs;
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(LISTENERNAME_ONCLICK)).SetArguements(Args);
+			// run the script //
+			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
+			// do something with result //
+
+			int res = -1;
+			if(result->ConvertAndAssingToVariable(res)){
+
+				if(res == 1)
+					receivedevent.StopPropagation();
+			}
+
+		}
+
+		return;
+	}
+
+
+
 }
 
 void Leviathan::Gui::BaseGuiObject::_UnhookAllRocketListeners(){
@@ -200,15 +239,12 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::SetInternalRMLWrapper(string rmlco
 	return true;
 }
 
+
+
 // ------------------------------------ //
-
-
-
-
-
 std::map<wstring, Rocket::Core::String> Leviathan::Gui::BaseGuiObject::LeviathanToRocketEventTranslate = boost::assign::map_list_of
 	(LISTENERNAME_ONSHOW, "show")
 	(LISTENERNAME_ONHIDE, "hide")
-
+	(LISTENERNAME_ONCLICK, "click")
 ;
 

@@ -24,7 +24,8 @@ namespace Leviathan{
 		DLLEXPORT ~Window();
 
 		DLLEXPORT void CloseDown();
-
+		// tells the Ogre window to close //
+		DLLEXPORT void SendCloseMessage();
 
 		DLLEXPORT void ResizeWindow(const int &width, const int &height);
 
@@ -55,6 +56,11 @@ namespace Leviathan{
 		DLLEXPORT inline bool IsOpen() const{
 
 			return !OWindow->isClosed();
+		}
+
+		// TODO: add a way to force only one window to have mouse captured //
+		DLLEXPORT inline void SetCaptureMouse(bool state){
+			MouseCaptured = state;
 		}
 
 		DLLEXPORT static HWND GetRenderWindowHandle(Ogre::RenderWindow* owindow);
@@ -114,6 +120,8 @@ namespace Leviathan{
 		bool ApplicationWantCursorState;
 		bool ForceMouseVisible;
 		bool CursorState;
+
+		bool MouseCaptured;
 	};
 
 

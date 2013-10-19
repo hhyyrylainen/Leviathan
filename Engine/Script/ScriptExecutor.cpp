@@ -23,6 +23,7 @@ using namespace Leviathan;
 #include "CommonEngineBind.h"
 #include <add_on\scripthelper\scripthelper.h>
 #include "add_on\scriptdictionary\scriptdictionary.h"
+#include "Application\Application.h"
 
 ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
 }
@@ -86,6 +87,9 @@ bool ScriptExecutor::Init(){
 		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register GUI object things failed");
 		return false;
 	}
+
+	// bind application specific //
+	Engine::GetEngine()->GetOwningApplication()->InitLoadCustomScriptTypes(engine);
 
 	return true;
 }
@@ -346,6 +350,8 @@ DLLEXPORT void Leviathan::ScriptExecutor::ScanAngelScriptTypes(){
 	// call some callbacks //
 	RegisterGUIScriptTypeNames(engine, EngineTypeIDS);
 	RegisterEngineScriptTypes(engine, EngineTypeIDS);
+
+	Engine::GetEngine()->GetOwningApplication()->RegisterCustomScriptTypes(engine, EngineTypeIDS);
 
 	// TODO: call Engine::Get()->NotifyLinkObjectScriptTypes()
 

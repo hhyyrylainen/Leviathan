@@ -46,7 +46,7 @@ namespace Gui{
 			Visible = visible;
 		}
 
-		DLLEXPORT void OnResize();
+		DLLEXPORT void OnResize(int width, int height);
 
 		// internal Gui element managing //
 		DLLEXPORT bool AddGuiObject(BaseGuiObject* obj);
@@ -62,11 +62,24 @@ namespace Gui{
 		DLLEXPORT bool LoadGUIFile(const wstring &file);
 		// set to "none" to use default //
 		DLLEXPORT void SetMouseFile(const wstring &file);
+		DLLEXPORT void SetMouseFileVisibleState(bool state);
 
+		// switches debugger to this context //
+		DLLEXPORT void SetDebuggerOnThisContext();
+		// sets debugger visibility //
+		DLLEXPORT static void SetDebuggerVisibility(bool visible);
 
 		// collection managing //
 		DLLEXPORT void AddCollection(GuiCollection* add);
 		DLLEXPORT GuiCollection* GetCollection(const int &id, const wstring &name = L"");
+
+		DLLEXPORT void SetCollectionStateProxy(string name, bool state);
+		DLLEXPORT void SetCollectionState(const wstring &name, bool state);
+		DLLEXPORT inline void PossiblyGUIMouseDisable(){
+			GuiMouseUseUpdated = true;
+		}
+		// called when mouse cannot be captured (should force at least one collection on) //
+		DLLEXPORT void OnForceGUIOn();
 
 		// events //
 		DLLEXPORT bool CallEvent(Event* pEvent);
@@ -88,10 +101,15 @@ namespace Gui{
 
 		// TODO: implement this in OverlayMaster to hide GUI in view ports that don't need it //
 		bool Visible;
+		// used to determine when to scan collections for active ones //
+		bool GuiMouseUseUpdated;
+		// set when containing window of the GUI shouldn't be allowed to capture mouse //
+		bool GuiDisallowMouseCapture;
 
 		Rocket::Core::Context* WindowContext;
 		// stored to use cursor visibility //
 		Rocket::Core::ElementDocument* Cursor;
+
 
 
 		GraphicalInputEntity* ThisWindow;
@@ -108,6 +126,7 @@ namespace Gui{
 		std::vector<shared_ptr<GuiLoadedSheet>> GuiSheets;
 		// ------------------------------------ //
 		static GuiManager* staticaccess;
+		static bool RocketDebuggerInitialized;
 	};
 
 }}

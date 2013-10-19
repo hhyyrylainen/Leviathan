@@ -21,11 +21,13 @@ namespace Leviathan{
 #define LISTENERNAME_ONSHOW				L"OnShow"
 #define LISTENERNAME_ONHIDE				L"OnHide"
 #define LISTENERNAME_ONLISTENUPDATE		L"OnListenUpdate"
+#define LISTENERNAME_ONCLICK			L"OnClick"
 	
 
 #define LISTENERVALUE_ONSHOW			100
 #define LISTENERVALUE_ONHIDE			101
 #define LISTENERVALUE_ONLISTENUPDATE	102
+#define LISTENERVALUE_ONCLICK			103
 
 
 	// used to store function's parameter info //
@@ -98,6 +100,9 @@ namespace Leviathan{
 
 		// static map that contains listener names //
 		static const std::map<wstring, int> ListenerNameType;
+
+		// static include resolver for scripts //
+		DLLEXPORT static int ScriptModuleIncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam);
 
 	private:
 

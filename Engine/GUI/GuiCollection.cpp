@@ -9,9 +9,9 @@
 #include "GuiManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
-Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiLoadedSheet* sheet, int id, const wstring &toggle, 
+Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiLoadedSheet* sheet, GuiManager* manager, int id, const wstring &toggle, 
 	bool strict /*= false*/, bool enabled /*= true*/, bool keepgui) : Name(name), ID(id), Enabled(enabled), Strict(strict), 
-	ContainedInSheet(sheet), KeepsGuiOn(keepgui)
+	ContainedInSheet(sheet), KeepsGuiOn(keepgui), OwningManager(manager)
 {
 	ContainedInSheet->AddRef();
 	Toggle = GKey::GenerateKeyFromString(toggle);
@@ -23,8 +23,6 @@ Leviathan::Gui::GuiCollection::~GuiCollection(){
 	// release reference //
 	ContainedInSheet->Release();
 }
-// ------------------------------------ //
-
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 	// call script //
@@ -57,6 +55,9 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 	}
 
 	Enabled = newstate;
+
+	// notify GUI //
+	OwningManager->PossiblyGUIMouseDisable();
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data, GuiLoadedSheet* sheet){
@@ -71,21 +72,19 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 
 		if(data.Contents[a]->Name == L"params"){
 			// get values //
-			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(data.Contents[a]->Variables, L"ToggleOn", Toggle, L"", true,
-				L"GuiCollection: LoadCollection:");
+			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(data.Contents[a]->Variables, L"ToggleOn", Toggle, L"", false);
 
 			ObjectFileProcessor::LoadValueFromNamedVars<bool>(data.Contents[a]->Variables, L"Enabled", Enabled, false, true,
 				L"GuiCollection: LoadCollection:");
 
-			ObjectFileProcessor::LoadValueFromNamedVars<bool>(data.Contents[a]->Variables, L"KeepsGUIOn", GuiOn, false, true,
-				L"GuiCollection: LoadCollection:");
+			ObjectFileProcessor::LoadValueFromNamedVars<bool>(data.Contents[a]->Variables, L"KeepsGUIOn", GuiOn, false);
 
 			continue;
 		}
 	}
 
 	// allocate new Collection object //
-	GuiCollection* cobj = new GuiCollection(data.Name, sheet, IDFactory::GetID(),Toggle, Strict, Enabled, GuiOn);
+	GuiCollection* cobj = new GuiCollection(data.Name, sheet, gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn);
 	// copy script data over //
 	cobj->Scripting = data.Script;
 	// add to collection list //
@@ -114,6 +113,14 @@ Leviathan::Gui::GuiLoadedSheet::~GuiLoadedSheet(){
 DLLEXPORT Rocket::Core::Element* Leviathan::Gui::GuiLoadedSheet::GetElementByID(const string &id){
 
 	return Document->GetElementById(id.c_str());
+}
+
+DLLEXPORT void Leviathan::Gui::GuiLoadedSheet::PullSheetToFront(){
+	Document->PullToFront();
+}
+
+DLLEXPORT void Leviathan::Gui::GuiLoadedSheet::PushSheetToBack(){
+	Document->PushToBack();
 }
 
 

@@ -27,6 +27,8 @@ namespace Leviathan{
 		DLLEXPORT virtual bool ReceiveInput(OIS::KeyCode key, int modifiers, bool down) = 0;
 		DLLEXPORT virtual void ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down) = 0;
 
+		// when mouse is captured and is moved (relative movement is passed) //
+		DLLEXPORT virtual bool OnMouseMove(int xmove, int ymove) = 0;
 
 	protected:
 		// called by input controller when certain events happen //
@@ -55,7 +57,7 @@ namespace Leviathan{
 		// this is called when input is not received, basically everything should be reseted to not received //
 		DLLEXPORT void OnBlockedInput(OIS::KeyCode key, int specialmodifiers, bool down);
 
-
+		DLLEXPORT void SendMouseMovement(int xmoved, int ymoved);
 
 	protected:
 		// called by input controllers if they unlink //

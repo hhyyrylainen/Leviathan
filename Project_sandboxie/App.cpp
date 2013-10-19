@@ -22,6 +22,7 @@ void App::CustomizeEnginePostLoad(){
 	manager->SetMouseFile(FileSystem::GetScriptsFolder()+L"cursor.rml");
 
 
+
 	// setup world //
 	shared_ptr<GameWorld> world1 = Engine::GetEngine()->CreateWorld();
 
@@ -96,6 +97,8 @@ void App::CustomizeEnginePostLoad(){
 	// after loading reset time sensitive timers //
 	Engine::GetEngine()->ResetPhysicsTime();
 
+	// we want to capture mouse to main window //
+	Engine::GetEngine()->GetWindowEntity()->SetMouseCapture(true);
 
 	//// test render to texture //
 	//Ogre::TextureManager& tmptextures = Ogre::TextureManager::getSingleton();

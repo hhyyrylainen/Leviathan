@@ -15,12 +15,24 @@ namespace Leviathan{
 		DLLEXPORT CallableObject::CallableObject();
 		DLLEXPORT virtual CallableObject::~CallableObject();
 
-		DLLEXPORT virtual void OnEvent(Event** pEvent) = 0;
+		DLLEXPORT virtual int OnEvent(Event** pEvent) = 0;
+		DLLEXPORT virtual int OnGenericEvent(GenericEvent** pevent) = 0;
+
+		// returns event type from wstring (invalid event type is returned if matches none) //
+		// NOTE: if invalid type is returned type should be registered as generic event //
+		DLLEXPORT static EVENT_TYPE ResolveStringToType(const wstring &type);
 
 
 	protected:
-		void Leviathan::CallableObject::UnRegister(EVENT_TYPE from, bool all = false);
-		void Leviathan::CallableObject::RegisterForEvent(EVENT_TYPE toregister);
+		void UnRegister(EVENT_TYPE from, bool all = false);
+		void UnRegister(const wstring &genericname, bool all = false);
+		void RegisterForEvent(EVENT_TYPE toregister);
+		void RegisterForEvent(const wstring &genericname);
+		void UnRegisterAllEvents();
+		// ------------------------------------ //
+
+		vector<EVENT_TYPE> RegisteredTypes;
+		vector<unique_ptr<wstring>> RegisteredGenerics;
 
 	};
 

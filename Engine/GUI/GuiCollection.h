@@ -38,12 +38,17 @@ namespace Leviathan{ namespace Gui{
 		// makes the document bottom most one //
 		DLLEXPORT void PushSheetToBack();
 
+		DLLEXPORT inline int GetID(){
+			return ID;
+		}
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GuiLoadedSheet);
 
 	private:
 		// used for finding by ID //
 		Rocket::Core::ElementDocument* Document;
+		// automatically generated ID //
+		int ID;
 	};
 
 
@@ -74,6 +79,11 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT inline const wstring& GetName(){
 			return Name;
 		}
+
+		string GetNameProxy(){
+			return Convert::WstringToString(Name);
+		}
+
 		DLLEXPORT GuiLoadedSheet* GetOwningSheet(){
 			return ContainedInSheet;
 		}

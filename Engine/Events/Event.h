@@ -36,5 +36,11 @@ namespace Leviathan{
 		DLLEXPORT EVENT_TYPE GetType();
 	};
 
+	class GenericEvent : public ReferenceCounted{
+
+
+
+	};
+
 }
 #endif

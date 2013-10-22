@@ -94,7 +94,7 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 	return true;
 }
 // ------------------ GuiLoadedSheet ------------------ //
-Leviathan::Gui::GuiLoadedSheet::GuiLoadedSheet(Rocket::Core::Context* context, const string &documentfile){
+Leviathan::Gui::GuiLoadedSheet::GuiLoadedSheet(Rocket::Core::Context* context, const string &documentfile) : ID(IDFactory::GetID()){
 	// load the Rocket file here //
 	Document = context->LoadDocument(documentfile.c_str());
 

@@ -135,6 +135,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const wstring &nam
 		if(Collections[i]->GetName() == name){
 			// set state //
 			if(Collections[i]->GetState() != state){
+				Logger::Get()->Info(L"Setting Collection "+Collections[i]->GetName()+L" state "+Convert::ToWstring(state));
 				Collections[i]->ToggleState();
 			}
 			return;
@@ -315,7 +316,7 @@ guiprocessguifileloopdeleteprocessedobject:
 		i--;
 	}
 
-	GuiSheets.push_back(sheet);
+	GuiSheets.insert(make_pair(sheet->GetID(), sheet));
 
 	for(size_t i = 0; i < TempOs.size(); i++){
 
@@ -369,10 +370,9 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetDebuggerVisibility(bool visible){
 // ----------------- event handler part --------------------- //
 bool Leviathan::Gui::GuiManager::CallEvent(Event* pEvent){
 	// loop through listeners and call events //
-	int returval = 0;
 	for(size_t i = 0; i < Objects.size(); i++){
 		// call
-		returval = Objects[i]->OnEvent(&pEvent);
+		Objects[i]->OnEvent(&pEvent);
 		// check for deletion and end if event got deleted //
 		if(!pEvent){
 			return true;
@@ -382,7 +382,7 @@ bool Leviathan::Gui::GuiManager::CallEvent(Event* pEvent){
 	// delete object ourselves //
 	SAFE_DELETE(pEvent);
 	// nobody wanted the event //
-	return returval > 0 ? true: false;
+	return false;
 }
 // used to send hide events to individual objects //
 int GuiManager::CallEventOnObject(BaseGuiObject* receive, Event* pEvent){
@@ -507,6 +507,13 @@ void Leviathan::Gui::GuiManager::BuildProjectionMatrix(Ogre::Matrix4& projection
 	projection_matrix[1][3]= 1.0000000f;
 	projection_matrix[2][2]= -2.0f / (z_far - z_near);
 	projection_matrix[3][3]= 1.0000000f;
+}
+
+DLLEXPORT void Leviathan::Gui::GuiManager::GUIObjectsCheckRocketLinkage(){
+	for(size_t i = 0; i < Objects.size(); i++){
+
+		Objects[i]->CheckObjectLinkage();
+	}
 }
 
 

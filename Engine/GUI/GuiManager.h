@@ -57,6 +57,8 @@ namespace Gui{
 		// function split into peaces //
 		DLLEXPORT bool LoadCollection(vector<shared_ptr<ObjectFileObject>> &data, ObjectFileObject &collectiondata);
 
+		// Hooks objects to Rocket objects if they have been added after loading (call this when you have added new elements to sheet that need scripts) //
+		DLLEXPORT void GUIObjectsCheckRocketLinkage();
 
 		// file loading //
 		DLLEXPORT bool LoadGUIFile(const wstring &file);
@@ -86,6 +88,19 @@ namespace Gui{
 		DLLEXPORT int CallEventOnObject(BaseGuiObject* receive, Event* pEvent);
 
 		DLLEXPORT static GuiManager* Get();
+
+		DLLEXPORT inline Rocket::Core::Context* GetContext(){
+			return WindowContext;
+		}
+		DLLEXPORT inline shared_ptr<GuiLoadedSheet> GetSheet(int id){
+			try{
+
+				return GuiSheets[id];
+
+			} catch (...){
+				return nullptr;
+			}
+		}
 
 		virtual void renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation);
 
@@ -123,7 +138,7 @@ namespace Gui{
 
 		// collections //
 		std::vector<GuiCollection*> Collections;
-		std::vector<shared_ptr<GuiLoadedSheet>> GuiSheets;
+		std::map<int, shared_ptr<GuiLoadedSheet>> GuiSheets;
 		// ------------------------------------ //
 		static GuiManager* staticaccess;
 		static bool RocketDebuggerInitialized;

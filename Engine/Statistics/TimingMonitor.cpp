@@ -55,15 +55,13 @@ Leviathan::TimingMonitor::~TimingMonitor(){
 }
 
 DLLEXPORT void Leviathan::TimingMonitor::ClearTimers(){
-	// just clear all timers vector and they will delete automatically //
-	if(Timers.size() == 0)
-		return;
 
-	Logger::Get()->Info(L"TimingMonitor: leaked timers! names:");
 	for(size_t i = 0; i < Timers.size(); i++){
-
+		if(i == 0)
+			Logger::Get()->Info(L"TimingMonitor: leaked timers! names:");
 		Logger::Get()->Write(Timers[i]->Name);
 	}
+	// just clear all timers vector and they will delete automatically //
 	Timers.clear();
 }
 

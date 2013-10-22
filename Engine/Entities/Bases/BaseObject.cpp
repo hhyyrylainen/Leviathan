@@ -9,6 +9,10 @@ DLLEXPORT Leviathan::BaseObject::BaseObject(int id) : ID(id){
 
 }
 
+DLLEXPORT void Leviathan::BaseObject::Release(){
+	// default release, do nothing //
+}
+
 BaseObject::~BaseObject(){
 
 }

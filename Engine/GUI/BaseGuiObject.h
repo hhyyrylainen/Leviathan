@@ -12,6 +12,7 @@
 #include "Events\Event.h"
 #include "GuiCollection.h"
 #include "Events\AutoUpdateable.h"
+#include "Events\CallableObject.h"
 
 namespace Leviathan{ namespace Gui{
 	// object types //
@@ -22,21 +23,29 @@ namespace Leviathan{ namespace Gui{
 
 	class GuiManager;
 	// this class' functions are thread safe (*should* be) //// mutex for reference counting and possibly for other functions for thread safety //
-	class BaseGuiObject : public Object, public ReferenceCounted, public AutoUpdateableObject, public Rocket::Core::EventListener{
+	// TODO: make the above statement true...
+	class BaseGuiObject : public ReferenceCounted, public AutoUpdateableObject, public Rocket::Core::EventListener, public CallableObject{
 		friend GuiManager;
 	public:
-		DLLEXPORT BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, shared_ptr<ScriptScript> script = NULL);
+		DLLEXPORT BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, int sheetid, shared_ptr<ScriptScript> script = NULL);
 		DLLEXPORT virtual ~BaseGuiObject();
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(BaseGuiObject);
 
 		DLLEXPORT virtual int OnEvent(Event** pEvent);
+		DLLEXPORT virtual int OnGenericEvent(GenericEvent** pevent);
 		DLLEXPORT virtual bool OnUpdate(const shared_ptr<NamedVariableList> &updated);
 		// rocket events //
 		virtual void ProcessEvent(Rocket::Core::Event& receivedevent);
 		virtual void OnDetach(Rocket::Core::Element* element);
 		virtual void OnAttach(Rocket::Core::Element* element);
 
+		// should be called by GuiManager when objects in sheets have been updated //
+		DLLEXPORT bool CheckObjectLinkage();
+
+		DLLEXPORT inline int GetSheetID(){
+			return SheetID;
+		}
 		DLLEXPORT inline int GetID(){
 			return ID;
 		}
@@ -61,15 +70,20 @@ namespace Leviathan{ namespace Gui{
 			GuiLoadedSheet* sheet);
 	protected:
 		// this function will try to hook all wanted listeners to Rocket element //
-		void _HookRocketListeners();
-		void _UnhookAllRocketListeners();
+		void _HookListeners(bool onlyrocket = false);
+		void _UnhookAllListeners();
 		void _CallScriptListener(GUIOBJECT_LISTENERTYPE type, Event** pEvent);
 		// ------------------------------------ //
 
 		int ID;
 		int FileID;
+		// stores the sheet ID for fetching it again //
+		int SheetID;
+
+		bool ManualDetach;
 
 		wstring Name;
+		wstring RocketObjectName;
 
 		Rocket::Core::Element* Element;
 		GuiManager* OwningInstance;

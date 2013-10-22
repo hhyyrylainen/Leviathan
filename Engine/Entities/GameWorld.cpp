@@ -20,14 +20,30 @@ DLLEXPORT Leviathan::GameWorld::GameWorld(Ogre::Root* ogre) : WorldSceneCamera(N
 
 
 DLLEXPORT Leviathan::GameWorld::~GameWorld(){
+
+}
+
+
+DLLEXPORT void Leviathan::GameWorld::Release(){
 	// release objects //
+	for(size_t i = 0; i < Objects.size(); i++){
+
+		Objects[i]->Release();
+	}
+
 	Objects.clear();
 
 
 	// release Ogre resources //
 	Ogre::Root::getSingleton().destroySceneManager(WorldsScene);
-}
+	WorldsScene = NULL;
 
+
+
+	// some smart ptrs need releasing //
+	_PhysicalWorld.reset();
+
+}
 
 // ------------------------------------ //
 
@@ -158,6 +174,15 @@ DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
 	}
 	return nullptr;
 }
+
+
+DLLEXPORT void Leviathan::GameWorld::ClearObjects(){
+	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
+		// TODO: add world unlink function to BaseObject
+	}
+	Objects.clear();
+}
+
 
 DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
 	// TODO: take position into account //

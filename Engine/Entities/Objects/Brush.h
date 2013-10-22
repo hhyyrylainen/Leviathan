@@ -17,16 +17,17 @@ namespace Leviathan{
 
 namespace Leviathan{ namespace Entity{
 
-	enum BRUSHCREATESTYLE{BRUSHCREATESTYLE_CORNER, BRUSHCREATESTYLE_CENTER};
 
 	class Brush : public BaseObject, public BaseRenderable, public BasePositionable{
 	public:
 		DLLEXPORT Brush(bool hidden);
 		DLLEXPORT virtual ~Brush();
 
+		DLLEXPORT virtual void Release();
+
 		// different initialization functions for different box styles //
 		// NOTE: leaving createphysics true creates a immovable box (uses mass = 0) //
-		DLLEXPORT bool Init(GameWorld* world, const Float3 &dimensions, BRUSHCREATESTYLE style, const string &material, bool createphysics = true);
+		DLLEXPORT bool Init(GameWorld* world, const Float3 &dimensions, const string &material, bool createphysics = true);
 
 		// call if you want to have this interact with other physical objects (set mass to 0 to be static) //
 		DLLEXPORT void AddPhysicalObject(const float &mass = 0.f);

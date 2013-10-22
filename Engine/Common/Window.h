@@ -94,6 +94,8 @@ namespace Leviathan{
 
 		void CheckInputState();
 		void _CreateOverlayScene();
+		void _CheckMouseVisibilityStates();
+		void _CustomMouseMakeSureMouseIsRight(Rocket::Core::Context* context);
 		// ------------------------------------ //
 
 		HWND m_hwnd;
@@ -120,6 +122,8 @@ namespace Leviathan{
 		bool ApplicationWantCursorState;
 		bool ForceMouseVisible;
 		bool CursorState;
+
+		bool FirstInput;
 
 		bool MouseCaptured;
 	};

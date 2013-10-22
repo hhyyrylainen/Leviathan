@@ -22,6 +22,9 @@ namespace Leviathan{
 		DLLEXPORT GameWorld(Ogre::Root* ogre);
 		DLLEXPORT ~GameWorld();
 
+		// release to not use Ogre when deleting //
+		DLLEXPORT void Release();
+
 		DLLEXPORT void UpdateCameraAspect(GraphicalInputEntity* rendertarget);
 		DLLEXPORT void SetFog();
 		DLLEXPORT void SetSkyBox(const string &materialname);
@@ -37,6 +40,8 @@ namespace Leviathan{
 		DLLEXPORT void AddObject(shared_ptr<BaseObject> obj);
 
 		DLLEXPORT shared_ptr<BaseObject> GetWorldObject(int ID);
+		// clears all objects from the world //
+		DLLEXPORT void ClearObjects();
 
 		// Ogre get functions //
 		DLLEXPORT inline Ogre::SceneManager* GetScene(){

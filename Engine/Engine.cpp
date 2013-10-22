@@ -205,7 +205,11 @@ void Leviathan::Engine::PostLoad(){
 void Leviathan::Engine::Release(){
 
 	// destroy worlds //
-	GameWorlds.clear();
+	while(GameWorlds.size()){
+
+		GameWorlds[0]->Release();
+		GameWorlds.erase(GameWorlds.begin());
+	}
 
 	if(GraphicalEntity1){
 		// make windows clear their stored objects //

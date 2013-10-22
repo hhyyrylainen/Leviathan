@@ -17,6 +17,9 @@ DLLEXPORT Leviathan::Entity::Prop::Prop(bool hidden) : BaseRenderable(hidden), B
 
 DLLEXPORT Leviathan::Entity::Prop::~Prop(){
 
+}
+
+DLLEXPORT void Leviathan::Entity::Prop::Release(){
 	// release Ogre entity //
 	ObjectsNode->removeAndDestroyAllChildren();
 	LinkedToWorld->GetScene()->destroySceneNode(ObjectsNode);
@@ -29,9 +32,6 @@ DLLEXPORT Leviathan::Entity::Prop::~Prop(){
 
 	GraphicalObject = NULL;
 	LinkedToWorld = NULL;
-
-
-
 }
 // ------------------------------------ //
 

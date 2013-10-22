@@ -16,7 +16,7 @@ static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function"
 
 DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner, bool vsync) : OWindow(owindow), VerticalSync(vsync), 
 	m_hwnd(NULL), WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0), 
-	ForceMouseVisible(false), CursorState(true), MouseCaptured(false)
+	ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true)
 {
 
 	OwningWindow = owner;
@@ -148,6 +148,11 @@ void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
 	message += Focused ? L"true": L"false";
 
 	Logger::Get()->Info(message);
+
+	// update mouse //
+	_CheckMouseVisibilityStates();
+	// little hack to get the context //
+	_CustomMouseMakeSureMouseIsRight(OwningWindow->GetGUI()->GetContext());
 }
 // ------------------------------------ //
 HWND Leviathan::Window::GetRenderWindowHandle(Ogre::RenderWindow* owindow){
@@ -256,6 +261,14 @@ DLLEXPORT void Leviathan::Window::GatherInput(Rocket::Core::Context* context){
 
 		Logger::Get()->Warning(L"Window: GatherInput: skipping due to closed input window");
 		return;
+	}
+
+	// on first frame we want to manually force mouse position send //
+	if(FirstInput){
+		FirstInput = false;
+		
+		_CustomMouseMakeSureMouseIsRight(context);
+		_CheckMouseVisibilityStates();
 	}
 
 	// set parameters that listener functions need //
@@ -379,16 +392,7 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
 		inputreceiver->ProcessMouseMove(mstate.X.abs, mstate.Y.abs, SpecialKeyModifiers);
 		inputreceiver->ProcessMouseWheel(-mstate.Z.rel, SpecialKeyModifiers);
 	}
-	// force cursor visible check //
-	if(IsMouseOutsideWindowClientArea()){
-
-		ForceMouseVisible = true;
-	} else {
-
-		ForceMouseVisible = false;
-	}
-	// update cursor state //
-	SetHideCursor(ApplicationWantCursorState);
+	_CheckMouseVisibilityStates();
 
 	// don't really know what to return
 	return true;
@@ -507,6 +511,27 @@ void Leviathan::Window::_CreateOverlayScene(){
 
 DLLEXPORT void Leviathan::Window::SendCloseMessage(){
 	OWindow->destroy();
+}
+
+void Leviathan::Window::_CheckMouseVisibilityStates(){
+	// force cursor visible check (if outside client area or mouse is unfocused on the window) //
+	if(IsMouseOutsideWindowClientArea() || !Focused){
+
+		ForceMouseVisible = true;
+	} else {
+
+		ForceMouseVisible = false;
+	}
+	// update cursor state //
+	SetHideCursor(ApplicationWantCursorState);
+}
+
+void Leviathan::Window::_CustomMouseMakeSureMouseIsRight(Rocket::Core::Context* context){
+	// custom mouse get //
+	int absx = 0, absy = 0;
+	GetRelativeMouse(absx, absy);
+
+	context->ProcessMouseMove(absx, absy, 0);
 }
 
 // ------------------ KeyCode conversion map ------------------ //

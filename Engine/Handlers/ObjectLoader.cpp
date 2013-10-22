@@ -164,13 +164,12 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const w
 	return id;
 }
 
-DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::BRUSHCREATESTYLE style, 
-	const float &mass)
+DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, const float &mass)
 {
 	unique_ptr<Entity::Brush> brush(new Entity::Brush(false));
 
 	// initialize the brush //
-	brush->Init(world, size, style, material, mass == 0.f ? true: false);
+	brush->Init(world, size, material, mass == 0.f ? true: false);
 
 	int id = brush->GetID();
 
@@ -185,11 +184,11 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const 
 	return id;
 }
 
-DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::BRUSHCREATESTYLE style){
+DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size){
 	unique_ptr<Entity::Brush> brush(new Entity::Brush(false));
 
 	// initialize the brush //
-	brush->Init(world, size, style, material, false);
+	brush->Init(world, size, material, false);
 
 	int id = brush->GetID();
 

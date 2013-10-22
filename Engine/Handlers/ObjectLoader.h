@@ -25,9 +25,9 @@ namespace Leviathan{
 
 		DLLEXPORT int LoadPropToWorld(GameWorld* world, const wstring &name);
 		// creates a brush with physical component and sets mass (use 0.f for static object) //
-		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::BRUSHCREATESTYLE style, const float &mass);
+		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, const float &mass);
 		// same as above but no physics initialization (you must do your own if you want this brush to interact with objects) //
-		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::BRUSHCREATESTYLE style);
+		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size);
 
 		DLLEXPORT void CreateTestCubeToScene(Ogre::SceneManager* scene, string meshname);
 		DLLEXPORT void AddTestCubeToScenePositions(Ogre::SceneManager* scene, vector<Float3> &positions, const string &meshname);

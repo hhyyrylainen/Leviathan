@@ -20,8 +20,8 @@ namespace Leviathan{ namespace Entity{
 		DLLEXPORT virtual ~Prop();
 		
 		DLLEXPORT bool Init(const wstring &modelfile, GameWorld* world);
-		DLLEXPORT void Release();
-		
+		DLLEXPORT virtual void Release();
+
 		DLLEXPORT virtual bool CheckRender(GraphicalInputEntity* graphics, int mspassed);
 
 		// static movement update from physics //

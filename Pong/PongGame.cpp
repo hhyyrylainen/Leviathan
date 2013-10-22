@@ -1,15 +1,31 @@
+#include "PongIncludes.h"
 // ------------------------------------ //
-#ifndef PONG
+#ifndef PONG_GAME
 #include "PongGame.h"
 #endif
 #include "Entities\Objects\ViewerCameraPos.h"
 #include "Entities\GameWorld.h"
 #include "Entities\Objects\Prop.h"
 #include "..\Engine\Script\ScriptExecutor.h"
+#include "Arena.h"
 using namespace Pong;
 // ------------------------------------ //
-Pong::PongGame::PongGame(){
+Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerList(4){
 	StaticAccess = this;
+
+	// fill the player list with the player 1 and empty slots //
+	PlayerList[0] = new PlayerSlot(0, PLAYERTYPE_HUMAN, 1, PLAYERCONTROLS_WASD, 0);
+	// other slots as empty //
+	for(size_t i = 1; i < PlayerList.size(); i++){
+
+		PlayerList[i] = new PlayerSlot(i, true);
+	}
+
+}
+
+Pong::PongGame::~PongGame(){
+	// delete memory //
+	SAFE_DELETE_VECTOR(PlayerList);
 }
 // ------------------------------------ //
 void Pong::PongGame::CustomizeEnginePostLoad(){
@@ -33,12 +49,15 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 	// set skybox to have some sort of visuals //
 	world1->SetSkyBox("NiceDaySky");
 
+	// create playing field manager with the world //
+	GameArena = unique_ptr<Arena>(new Arena(world1));
+
 	ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
 
 
 	// camera //
 	shared_ptr<ViewerCameraPos> MainCamera(new ViewerCameraPos());
-	MainCamera->SetPos(Float3(0.f, 10.f, 0.f));
+	MainCamera->SetPos(Float3(0.f, 22.f*BASE_ARENASCALE, 0.f));
 
 	// camera should always point down towards the play field //
 	MainCamera->SetRotation(Float3(0.f, -90.f, 0.f));
@@ -94,6 +113,12 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+
+	if(engine->RegisterObjectMethod("PongGame", "string GetErrorString()", asMETHOD(PongGame, GetErrorString), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	
 	
 
 
@@ -111,12 +136,34 @@ PongGame* Pong::PongGame::Get(){
 }
 
 int Pong::PongGame::TryStartGame(){
-	Logger::Get()->Info(L"Starting game!");
-	return -1;
+
+	int activeplycount = 0;
+	int maxsplit = 0;
+	for(size_t i = 0; i < PlayerList.size(); i++){
+		if(PlayerList[i]->IsSlotActive())
+			activeplycount++;
+		int split = PlayerList[i]->GetSplitCount();
+		if(split > maxsplit)
+			maxsplit = split;
+	}
+
+	if(!GameArena->GenerateArena(this, PlayerList, activeplycount, maxsplit, true)){
+
+		return -3;
+	}
+
+	// TODO: link input //
+
+	// succeeded //
+	return 1;
 }
 
 void Pong::PongGame::ScriptCloseGame(){
 	Engine::GetEngine()->GetWindowEntity()->GetWindow()->SendCloseMessage();
+}
+
+string Pong::PongGame::GetErrorString(){
+	return ErrorState;
 }
 
 PongGame* Pong::PongGame::StaticAccess = NULL;

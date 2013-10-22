@@ -9,15 +9,30 @@ file(GLOB PHeaderFiles *.h)
 # resource files
 file(GLOB PResourceFiles "resource.h" "*.rc")
 
+# additional .txts
+file(GLOB Additional "*.txt")
+file(GLOB CMakeListFile "CmakeLists.txt")
+
+list(REMOVE_ITEM Additional ${CMakeListFile})
+
 # file grouping
 source_group("Source" FILES ${PSourceFiles})
 source_group("Header" FILES ${PHeaderFiles})
 source_group("resources" FILES ${PResourceFiles})
-
+source_group("Additional" FILES ${Additional})
 
 
 # all Pong files in one list
-set(PongFiles ${PSourceFiles} ${PHeaderFiles} ${PResourceFiles})
+set(PongFiles ${PSourceFiles} ${PHeaderFiles} ${PResourceFiles} ${Additional})
+
+# precompiled headers
+# remove from list before adding back
+file(GLOB PrecompiledHeaderName "PongIncludes.h")
+file(GLOB PrecompiledSourceName "PreCompiled.cpp")
+list(REMOVE_ITEM PongFiles ${PrecompiledSourceName})
+
+# precompiled header
+ADD_MSVC_PRECOMPILED_HEADER("PongIncludes.h" ${PrecompiledSourceName} PongFiles)
 
 add_executable(Pong WIN32 ${PongFiles})
 set_target_properties(Pong PROPERTIES DEBUG_POSTFIX D)

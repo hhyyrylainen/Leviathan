@@ -15,10 +15,6 @@
 #include "Events\CallableObject.h"
 
 namespace Leviathan{ namespace Gui{
-	// object types //
-#define GUIOBJECTTYPE_TEXTLABEL		1000
-
-	enum GUIOBJECT_LISTENERTYPE{GUIOBJECT_LISTENERTYPE_LISTENERVALUE};
 
 
 	class GuiManager;
@@ -72,7 +68,7 @@ namespace Leviathan{ namespace Gui{
 		// this function will try to hook all wanted listeners to Rocket element //
 		void _HookListeners(bool onlyrocket = false);
 		void _UnhookAllListeners();
-		void _CallScriptListener(GUIOBJECT_LISTENERTYPE type, Event** pEvent);
+		void _CallScriptListener(Event** pEvent, GenericEvent** event2);
 		// ------------------------------------ //
 
 		int ID;

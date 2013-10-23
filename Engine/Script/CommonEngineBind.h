@@ -36,6 +36,17 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
+	// bind generic event //
+	if(engine->RegisterObjectType("GenericEvent", 0, asOBJ_REF) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("GenericEvent", asBEHAVE_ADDREF, "void f()", asMETHOD(GenericEvent, AddRefProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("GenericEvent", asBEHAVE_RELEASE, "void f()", asMETHOD(GenericEvent, ReleaseProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
 
 	// bind datablock //
 	if(engine->RegisterObjectType("ScriptSafeVariableBlock", 0, asOBJ_REF) < 0){
@@ -67,6 +78,6 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 void RegisterEngineScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){
 
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("Event"), L"Event"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("GenericEvent"), L"GenericEvent"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("ScriptSafeVariableBlock"), L"ScriptSafeVariableBlock"));
-	//typeids.insert(make_pair(engine->GetTypeIdByDecl("DataStore"), L"DataStore"));
 }

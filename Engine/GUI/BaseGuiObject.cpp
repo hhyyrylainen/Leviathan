@@ -90,14 +90,25 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 	// first we need to get probably right listeners and register with them //
 	ScriptModule* mod = Scripting->GetModule();
 
-	std::vector<wstring> containedlisteners;
+	std::vector<shared_ptr<ValidListenerData>> containedlisteners;
 
 	mod->GetListOfListeners(containedlisteners);
 
 	for(size_t i = 0; i < containedlisteners.size(); i++){
+		// generics cannot be rocket events //
+		if(containedlisteners[i]->GenericTypeName){
+			if(onlyrocket)
+				continue;
+				// custom event listener //
+
+			RegisterForEvent(*containedlisteners[i]->GenericTypeName);
+
+			continue;
+		}
+
 		Rocket::Core::String tohook;
 		try{
-			tohook = LeviathanToRocketEventTranslate[containedlisteners[i]];
+			tohook = LeviathanToRocketEventTranslate[*containedlisteners[i]->ListenerName];
 
 			if(tohook.Length() > 0){
 				throw exception("check the other");
@@ -109,10 +120,24 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 				continue;
 			// non-Rocket listener //
 
+			// check for specific case //
+			if(*containedlisteners[i]->ListenerName == L"Init"){
+				// call now the init event //
+
+			} else if(*containedlisteners[i]->ListenerName == L"Release"){
+				// call later the release event //
+
+			}
+
 			// look for global events //
+			EVENT_TYPE etype = ResolveStringToType(*containedlisteners[i]->ListenerName);
+			if(etype != EVENT_TYPE_ERROR){
 
-			// custom event //
+				RegisterForEvent(etype);
+				continue;
+			}
 
+			Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: unknown event type "+*containedlisteners[i]->ListenerName+L", did you intent to use Generic type?");
 			continue;
 		}
 		if(Element){
@@ -123,7 +148,7 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 			
 		} else {
 			// warn about this //
-			Logger::Get()->Warning(L"BaseGuiObject: _HookRocketListeners: couldn't hook Rocket event "+Convert::StringToWstring(tohook.CString()));
+			Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: couldn't hook Rocket event "+Convert::StringToWstring(tohook.CString()));
 		}
 	}
 }
@@ -131,16 +156,15 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 DLLEXPORT int Leviathan::Gui::BaseGuiObject::OnEvent(Event** pEvent){
 
 	// call script to handle the event //
+	_CallScriptListener(pEvent, NULL);
 
-	switch((*pEvent)->GetType()){
+	return 0;
+}
 
-	case EVENT_TYPE_LISTENERVALUEUPDATED:
-		{
-			_CallScriptListener(GUIOBJECT_LISTENERTYPE_LISTENERVALUE, pEvent);
-		}
-	break;
 
-	}
+DLLEXPORT int Leviathan::Gui::BaseGuiObject::OnGenericEvent(GenericEvent** pevent){
+	// call script to handle the event //
+	_CallScriptListener(NULL, pevent);
 
 	return 0;
 }
@@ -159,9 +183,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::OnUpdate(const shared_ptr<NamedVar
 	tmpevent->Release();
 	return true;
 }
-
-
-
+// ------------------ Rocket callbacks ------------------ //
 void Leviathan::Gui::BaseGuiObject::OnDetach(Rocket::Core::Element* element){
 	// unset when Rocket destroys the element //
 	if(!ManualDetach){
@@ -253,7 +275,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::CheckObjectLinkage(){
 
 	// not linked check if we can get valid object with our id //
 	shared_ptr<GuiLoadedSheet> sheet = OwningInstance->GetSheet(SheetID);
-	if(tmp){
+	if(sheet){
 		// search //
 		Element = sheet->GetElementByID(Convert::WstringToString(RocketObjectName));
 	}
@@ -261,35 +283,53 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::CheckObjectLinkage(){
 	if(Element){
 		// link just Rocket events //
 		_HookListeners(true);
+		return true;
 	}
+
+	return false;
 }
 // ------------------------------------ //
-void Leviathan::Gui::BaseGuiObject::_CallScriptListener(GUIOBJECT_LISTENERTYPE type, Event** pEvent){
+void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericEvent** event2){
 
-	switch(type){
-	case GUIOBJECT_LISTENERTYPE_LISTENERVALUE:
-		{
-			// check does the script contain right listeners //
-			ScriptModule* mod = Scripting->GetModule();
+	ScriptModule* mod = Scripting->GetModule();
 
-			if(mod->DoesListenersContainSpecificListener(LISTENERNAME_ONLISTENUPDATE)){
-				// setup parameters //
-				vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
-					(new NamedVariableBlock(new VoidPtrBlock(*pEvent), L"Event"));
-				// we are returning ourselves so increase refcount
-				AddRef();
-				(*pEvent)->AddRef();
+	if(pEvent){
+		// Get the listener name from the event type //
+		wstring listenername = GetListenerNameFromType((*pEvent)->GetType());
 
-				ScriptRunningSetup sargs;
-				sargs.SetEntrypoint(mod->GetListeningFunctionName(LISTENERNAME_ONLISTENUPDATE)).SetArguements(Args);
-				// run the script //
-				shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
-				// do something with result //
-			}
+		// check does the script contain right listeners //
+		if(mod->DoesListenersContainSpecificListener(listenername)){
+			// setup parameters //
+			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
+				(new NamedVariableBlock(new VoidPtrBlock(*pEvent), L"Event"));
+			// we are returning ourselves so increase refcount
+			AddRef();
+			(*pEvent)->AddRef();
+
+			ScriptRunningSetup sargs;
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguements(Args);
+			// run the script //
+			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
+			// do something with result //
 		}
-		break;
-	}
+		return;
+	} else {
+		// generic event is passed //
+		if(mod->DoesListenersContainSpecificListener(L"", (*event2)->TypeStr)){
+			// setup parameters //
+			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
+				(new NamedVariableBlock(new VoidPtrBlock(*pEvent), L"GenericEvent"));
+			// we are returning ourselves so increase refcount
+			AddRef();
+			(*event2)->AddRef();
 
+			ScriptRunningSetup sargs;
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->TypeStr)).SetArguements(Args);
+			// run the script //
+			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
+			// do something with result //
+		}
+	}
 }
 
 DLLEXPORT bool Leviathan::Gui::BaseGuiObject::SetInternalRMLWrapper(string rmlcode){

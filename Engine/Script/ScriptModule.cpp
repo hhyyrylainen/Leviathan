@@ -140,14 +140,10 @@ DLLEXPORT shared_ptr<ScriptScript> Leviathan::ScriptModule::GetScriptInstance(){
 	return shared_ptr<ScriptScript>(new ScriptScript(ID, ScriptInterface::Get()->GetExecutor()->GetModule(ID)));
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(const wstring &listenername){
-	// build info if not built //
-	if(!ListenerDataBuilt)
-		_BuildListenerList();
-
+DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(const wstring &listenername, const wstring* generictype /*= NULL*/){
 
 	// find from the map //
-	auto itr = FoundListenerFunctions.find(listenername);
+	auto itr = _GetIteratorOfListener(listenername, generictype);
 
 	if(itr != FoundListenerFunctions.end()){
 
@@ -158,7 +154,7 @@ DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(con
 	return false;
 }
 
-DLLEXPORT void Leviathan::ScriptModule::GetListOfListeners(std::vector<wstring> &receiver){
+DLLEXPORT void Leviathan::ScriptModule::GetListOfListeners(std::vector<shared_ptr<ValidListenerData>> &receiver){
 	// build info if not built //
 	if(!ListenerDataBuilt)
 		_BuildListenerList();
@@ -167,22 +163,20 @@ DLLEXPORT void Leviathan::ScriptModule::GetListOfListeners(std::vector<wstring> 
 	
 
 	for(auto iter = FoundListenerFunctions.begin(); iter != FoundListenerFunctions.end(); ++iter) {
-		receiver.push_back(iter->first);
+		receiver.push_back(iter->second);
 	}
 }
 
-DLLEXPORT string Leviathan::ScriptModule::GetListeningFunctionName(const wstring &listenername){
-	// build info if not built //
-	if(!ListenerDataBuilt)
-		_BuildListenerList();
-
-	// find from the map //
-	auto itr = FoundListenerFunctions.find(listenername);
+DLLEXPORT string Leviathan::ScriptModule::GetListeningFunctionName(const wstring &listenername, const wstring* generictype /*= NULL*/){
+	// call search function and check if it found anything //
+	auto itr = _GetIteratorOfListener(listenername, generictype);
+	
 
 	if(itr != FoundListenerFunctions.end()){
 		// get name from pointer //
 		return string(itr->second->FuncPtr->GetName());
 	}
+	// nothing found //
 	return "";
 }
 
@@ -255,6 +249,27 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, a
 			// get string in quotes to find out what it is //
 			unique_ptr<wstring> listenername = itr.GetStringInQuotes(QUOTETYPE_BOTH);
 
+			// if it is generic listener we need to get it's type //
+			if(*listenername == L"Generic"){
+
+				unique_ptr<wstring> generictype = itr.GetStringInQuotes(QUOTETYPE_BOTH);
+
+				if(generictype->size() == 0){
+
+					Logger::Get()->Warning(L"ScriptModule: ProcessMetadata: Generic listener has no type defined (expected declaration like \""
+						L"[@Listener=\"Generic\", @Type=\"ScoreUpdated\"]\"");
+					return;
+				}
+
+				// mash together a name //
+				wstring mangledname = L"Generic:"+*generictype+L";";
+				auto restofmeta = itr.GetUntilEnd();
+				FoundListenerFunctions[mangledname] = shared_ptr<ValidListenerData>(new ValidListenerData(func, listenername, restofmeta, generictype));
+
+				return;
+			}
+
+
 			// make iterator to skip spaces //
 			itr.SkipWhiteSpace();
 
@@ -263,7 +278,8 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, a
 
 			if(positerator != ListenerNameType.end()){
 				// found a match, store info //
-				FoundListenerFunctions[*listenername] = shared_ptr<ValidListenerData>(new ValidListenerData(func, itr.GetUntilEnd()));
+				auto restofmeta = itr.GetUntilEnd();
+				FoundListenerFunctions[*listenername] = shared_ptr<ValidListenerData>(new ValidListenerData(func, listenername, restofmeta));
 
 				return;
 			}
@@ -276,6 +292,38 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, a
 }
 
 
+std::map<wstring, shared_ptr<ValidListenerData>>::iterator Leviathan::ScriptModule::_GetIteratorOfListener(const wstring &listenername, 
+	const wstring* generictype /*= NULL*/)
+{
+	// build info if not built //
+	if(!ListenerDataBuilt)
+		_BuildListenerList();
+
+	// find from the map //
+	std::map<wstring, shared_ptr<ValidListenerData>>::iterator itr = FoundListenerFunctions.end();
+
+	// different implementations for generic finding, because the name isn't usable as is //
+	if(!generictype){
+		// default find is fine for known types //
+		itr = FoundListenerFunctions.find(listenername);
+	} else {
+		// we need to find the right one by comparing strings inside the objects //
+		for(auto iter = FoundListenerFunctions.begin(); iter != FoundListenerFunctions.end(); ++iter){
+			// strings are sorted alphabetically so we can skip until "Generic" //
+			if(iter->first.at(0) != L'G')
+				continue;
+			// check for matching generic name //
+			if(*iter->second->GenericTypeName == *generictype){
+				// found right one, copy iterator and return //
+				itr = iter;
+				break;
+			}
+		}
+
+	}
+	// return whatever we might have found at this point //
+	return itr;
+}
 
 DLLEXPORT void Leviathan::ScriptModule::PrintFunctionsInModule(){
 	// list consoles' global variables //
@@ -349,8 +397,22 @@ trytofindinscriptfolderincludecallback:
 	return -1;
 }
 // ------------------ ValidListenerData ------------------ //
-Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, unique_ptr<wstring> metadataend) : FuncPtr(funcptr){
-	// take ownership of the unique pointer //
+Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, unique_ptr<wstring> &name, unique_ptr<wstring> &metadataend) 
+	: FuncPtr(funcptr)
+{
+	// apparently unique pointers have to be swapped
+	ListenerName.swap(name);
+	RestOfMeta.swap(metadataend);
+	// increase references //
+	FuncPtr->AddRef();
+}
+
+Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, unique_ptr<wstring> &name, unique_ptr<wstring> &metadataend, 
+	unique_ptr<wstring> &generictypename) : FuncPtr(funcptr)
+{
+	// apparently unique pointers have to be swapped
+	ListenerName.swap(name);
+	GenericTypeName.swap(generictypename);
 	RestOfMeta.swap(metadataend);
 	// increase references //
 	FuncPtr->AddRef();

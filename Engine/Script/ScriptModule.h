@@ -22,12 +22,15 @@ namespace Leviathan{
 #define LISTENERNAME_ONHIDE				L"OnHide"
 #define LISTENERNAME_ONLISTENUPDATE		L"OnListenUpdate"
 #define LISTENERNAME_ONCLICK			L"OnClick"
-	
+#define LISTENERNAME_ONINIT				L"OnInit"
+#define LISTENERNAME_ONRELEASE			L"OnRelease"	
 
 #define LISTENERVALUE_ONSHOW			100
 #define LISTENERVALUE_ONHIDE			101
 #define LISTENERVALUE_ONLISTENUPDATE	102
 #define LISTENERVALUE_ONCLICK			103
+#define LISTENERVALUE_ONINIT			104
+#define LISTENERVALUE_ONRELEASE			105
 
 
 	// used to store function's parameter info //
@@ -48,11 +51,14 @@ namespace Leviathan{
 	};
 	// some data that is stored when a listener is found //
 	struct ValidListenerData{
-		ValidListenerData(asIScriptFunction* funcptr, unique_ptr<wstring> metadataend);
+		ValidListenerData(asIScriptFunction* funcptr, unique_ptr<wstring> &name, unique_ptr<wstring> &metadataend);
+		ValidListenerData(asIScriptFunction* funcptr, unique_ptr<wstring> &name, unique_ptr<wstring> &metadataend, unique_ptr<wstring> &generictypename);
 		~ValidListenerData();
 
 		asIScriptFunction* FuncPtr;
+		unique_ptr<wstring> ListenerName;
 		unique_ptr<wstring> RestOfMeta;
+		unique_ptr<wstring> GenericTypeName;
 	};
 
 	// holds everything related to "one" script needed to run it an build it //
@@ -85,9 +91,9 @@ namespace Leviathan{
 
 		DLLEXPORT void DeleteThisModule();
 
-		DLLEXPORT bool DoesListenersContainSpecificListener(const wstring &listenername);
-		DLLEXPORT void GetListOfListeners(std::vector<wstring> &receiver);
-		DLLEXPORT string GetListeningFunctionName(const wstring &listenername);
+		DLLEXPORT bool DoesListenersContainSpecificListener(const wstring &listenername, const wstring* generictype = NULL);
+		DLLEXPORT void GetListOfListeners(std::vector<shared_ptr<ValidListenerData>> &receiver);
+		DLLEXPORT string GetListeningFunctionName(const wstring &listenername, const wstring* generictype = NULL);
 
 		DLLEXPORT wstring GetInfoWstring();
 
@@ -109,6 +115,7 @@ namespace Leviathan{
 		void _FillParameterDataObject(int typeofas, asUINT* paramtypeid, wstring* paramdecl, int* datablocktype);
 		void _BuildListenerList();
 		void _ProcessMetadataForFunc(asIScriptFunction* func, asIScriptModule* mod);
+		std::map<wstring, shared_ptr<ValidListenerData>>::iterator _GetIteratorOfListener(const wstring &listenername, const wstring* generictype = NULL);
 		// ------------------------------------ //
 		wstring Name;
 		string ModuleName;

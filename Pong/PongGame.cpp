@@ -80,7 +80,7 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 
 	// I like the debugger //
 	window1->GetGUI()->SetDebuggerOnThisContext();
-	window1->GetGUI()->SetDebuggerVisibility(true);
+	//window1->GetGUI()->SetDebuggerVisibility(true);
 	
 	// after loading reset time sensitive timers //
 	Engine::GetEngine()->ResetPhysicsTime();
@@ -153,6 +153,10 @@ int Pong::PongGame::TryStartGame(){
 	}
 
 	// TODO: link input //
+
+	// send start event //
+	Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"GameStart"), new NamedVars(shared_ptr<NamedVariableList>(new
+		NamedVariableList(L"PlayerCount", new Leviathan::VariableBlock(activeplycount))))));
 
 	// succeeded //
 	return 1;

@@ -72,6 +72,7 @@ namespace Leviathan{
 		DLLEXPORT LeviathanApplication* GetOwningApplication(){ return Owner; };
 		// static access //
 		DLLEXPORT static Engine* GetEngine();
+		DLLEXPORT static Engine* Get();
 
 	private:
 		// after load function //

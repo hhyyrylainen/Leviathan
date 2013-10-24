@@ -46,6 +46,10 @@ Engine* Leviathan::Engine::instance = NULL;
 Engine* Leviathan::Engine::GetEngine(){
 	return instance;
 }
+
+DLLEXPORT Engine* Leviathan::Engine::Get(){
+	return instance;
+}
 // ------------------------------------ //
 bool Leviathan::Engine::Init(AppDef* definition){
 	// get time, for monitoring how long load takes //

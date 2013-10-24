@@ -482,6 +482,11 @@ DLLEXPORT Leviathan::NamedVars::NamedVars(const vector<shared_ptr<NamedVariableL
 
 }
 
+DLLEXPORT Leviathan::NamedVars::NamedVars(shared_ptr<NamedVariableList> variable) : Variables(1){
+	// store the single variable //
+	Variables[0] = variable;
+}
+
 Leviathan::NamedVars::~NamedVars(){
 	// no need to release due to smart pointers //
 }

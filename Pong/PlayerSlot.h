@@ -33,6 +33,13 @@ namespace Pong{
 
 		int GetSlotNumber();
 
+		shared_ptr<Leviathan::BaseObject> GetPaddle(){
+			return PaddleObject;
+		}
+		void SetPaddleObject(shared_ptr<Leviathan::BaseObject> obj){
+			PaddleObject = obj;
+		}
+
 		// returns true if player type isn't empty or closed //
 		inline bool IsSlotActive(){
 
@@ -42,6 +49,10 @@ namespace Pong{
 		// recursively looks through children and counts maximum depth (usually 0 or 1) //
 		int GetSplitCount();
 
+		PlayerSlot* GetSplit(){
+			return SplitSlot;
+		}
+
 	private:
 		// data //
 		int Slot;
@@ -49,6 +60,8 @@ namespace Pong{
 		int PlayerIdentifier;
 		PLAYERCONTROLS ControlType;
 		int ControlIdentifier;
+
+		shared_ptr<Leviathan::BaseObject> PaddleObject;
 
 		// slot splitting //
 		PlayerSlot* SplitSlot;

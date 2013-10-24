@@ -7,8 +7,8 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "Statistics\TimingMonitor.h"
 #include "OgreManualObject.h"
-#include "Entities\Objects\Prop.h"
 #include "Entities\Objects\Brush.h"
+#include "Entities\Objects\Prop.h"
 
 Leviathan::ObjectLoader::ObjectLoader(Engine* engine){
 	m_Engine = engine;
@@ -144,17 +144,17 @@ DLLEXPORT void Leviathan::ObjectLoader::AddTestCubeToScenePositions(Ogre::SceneM
 
 
 // ------------------------------------ //
-DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const wstring &name){
+DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const wstring &name, Entity::Prop** createdinstance){
 
-	unique_ptr<Entity::Prop> prop(new Entity::Prop(false));
+	unique_ptr<Entity::Prop> prop(new Entity::Prop(false, world));
 
-
+	(*createdinstance) = prop.get();
 
 	// get relative path //
 	wstring path = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL, name, L"levmd", false);
 
 	// initialize the model //
-	prop->Init(path, world);
+	prop->Init(path);
 
 	int id = prop->GetID();
 
@@ -164,12 +164,15 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const w
 	return id;
 }
 
-DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, const float &mass)
+DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, const float &mass, 
+	Entity::Brush** createdinstance)
 {
-	unique_ptr<Entity::Brush> brush(new Entity::Brush(false));
+	unique_ptr<Entity::Brush> brush(new Entity::Brush(false, world));
+
+	(*createdinstance) = brush.get();
 
 	// initialize the brush //
-	brush->Init(world, size, material, mass == 0.f ? true: false);
+	brush->Init(size, material, mass == 0.f ? true: false);
 
 	int id = brush->GetID();
 
@@ -184,11 +187,13 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const 
 	return id;
 }
 
-DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size){
-	unique_ptr<Entity::Brush> brush(new Entity::Brush(false));
+DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::Brush** createdinstance){
+	unique_ptr<Entity::Brush> brush(new Entity::Brush(false, world));
+
+	(*createdinstance) = brush.get();
 
 	// initialize the brush //
-	brush->Init(world, size, material, false);
+	brush->Init(size, material, false);
 
 	int id = brush->GetID();
 

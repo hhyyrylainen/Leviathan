@@ -7,7 +7,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
-ViewerCameraPos::ViewerCameraPos() : BaseObject(IDFactory::GetID()), Orientation(0), Position(0), SendSoundPosition(false){
+ViewerCameraPos::ViewerCameraPos() : BaseObject(IDFactory::GetID(), NULL), Orientation(0), Position(0), SendSoundPosition(false){
 
 	// set all to zeros //
 	FrameTime = forward = backward = left = right = zup = zdown = xmoved = ymoved = 0;

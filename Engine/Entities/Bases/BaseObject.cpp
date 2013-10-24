@@ -5,7 +5,7 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::BaseObject::BaseObject(int id) : ID(id){
+DLLEXPORT Leviathan::BaseObject::BaseObject(int id, GameWorld* worldptr) : ID(id), LinkedToWorld(worldptr){
 
 }
 

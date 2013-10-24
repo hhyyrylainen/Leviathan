@@ -6,11 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "ObjectFiles\ObjectFileProcessor.h"
-#include "FileSystem.h"
 #include "Rendering\TextureDefinition.h"
 #include "Entities\GameWorld.h"
-#include "Entities\Objects\Brush.h"
+
 
 
 namespace Leviathan{
@@ -18,16 +16,25 @@ namespace Leviathan{
 	// forward declaration //
 	class Engine;
 
+	namespace Entity{
+		class Prop;
+		class Brush;
+	}
+
+
 	class ObjectLoader : public Object{
 	public:
 		DLLEXPORT ObjectLoader::ObjectLoader(Engine* engine);
 
 
-		DLLEXPORT int LoadPropToWorld(GameWorld* world, const wstring &name);
+		// Note: the object pointer the load methods set is NOT safe to use after a while (it *should* be safe to call some method on the ptr after
+		// the function returns 
+
+		DLLEXPORT int LoadPropToWorld(GameWorld* world, const wstring &name, Entity::Prop** createdinstance);
 		// creates a brush with physical component and sets mass (use 0.f for static object) //
-		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, const float &mass);
+		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, const float &mass, Entity::Brush** createdinstance);
 		// same as above but no physics initialization (you must do your own if you want this brush to interact with objects) //
-		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size);
+		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::Brush** createdinstance);
 
 		DLLEXPORT void CreateTestCubeToScene(Ogre::SceneManager* scene, string meshname);
 		DLLEXPORT void AddTestCubeToScenePositions(Ogre::SceneManager* scene, vector<Float3> &positions, const string &meshname);

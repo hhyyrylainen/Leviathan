@@ -51,8 +51,8 @@ namespace Leviathan{
 	};
 	// some data that is stored when a listener is found //
 	struct ValidListenerData{
-		ValidListenerData(asIScriptFunction* funcptr, unique_ptr<wstring> &name, unique_ptr<wstring> &metadataend);
-		ValidListenerData(asIScriptFunction* funcptr, unique_ptr<wstring> &name, unique_ptr<wstring> &metadataend, unique_ptr<wstring> &generictypename);
+		ValidListenerData(asIScriptFunction* funcptr, wstring* name, wstring* metadataend);
+		ValidListenerData(asIScriptFunction* funcptr, wstring* name, wstring* metadataend, wstring* generictypename);
 		~ValidListenerData();
 
 		asIScriptFunction* FuncPtr;

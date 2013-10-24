@@ -9,7 +9,7 @@
 using namespace Leviathan;
 using namespace Leviathan::Entity;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Entity::Prop::Prop(bool hidden) : BaseRenderable(hidden), BaseObject(IDFactory::GetID()), LinkedToWorld(NULL), 
+DLLEXPORT Leviathan::Entity::Prop::Prop(bool hidden, GameWorld* world) : BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), 
 	GraphicalObject(NULL)
 {
 
@@ -25,23 +25,14 @@ DLLEXPORT void Leviathan::Entity::Prop::Release(){
 	LinkedToWorld->GetScene()->destroySceneNode(ObjectsNode);
 
 	// physical entity //
-	NewtonDestroyCollision(Collision);
-	NewtonDestroyBody(Body);
-	Body = NULL;
-	Collision = NULL;
+	AggressiveConstraintUnlink();
+	_DestroyPhysicalBody();
 
 	GraphicalObject = NULL;
 	LinkedToWorld = NULL;
 }
 // ------------------------------------ //
-
-// ------------------------------------ //
-
-// ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile, GameWorld* world){
-	QUICKTIME_THISSCOPE;
-	// store world //
-	LinkedToWorld = world;
+DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 
 	// parse file //
 	vector<shared_ptr<NamedVariableList>> headervar;
@@ -54,10 +45,10 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile, GameWorld
 	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist, L"Model-Graphical", ogrefile, L"error", true, L"Prop: Init: no model file!:");
 
 	// load the Ogre entity //
-	GraphicalObject = world->GetScene()->createEntity(Convert::WstringToString(ogrefile));
+	GraphicalObject = LinkedToWorld->GetScene()->createEntity(Convert::WstringToString(ogrefile));
 
 	// create scene node for positioning //
-	ObjectsNode = world->GetScene()->getRootSceneNode()->createChildSceneNode(Convert::WstringToString(modelfile)+"_basenode");
+	ObjectsNode = LinkedToWorld->GetScene()->getRootSceneNode()->createChildSceneNode(Convert::WstringToString(modelfile)+"_basenode");
 
 	// attach for deletion and valid display //
 	ObjectsNode->attachObject(GraphicalObject);
@@ -67,7 +58,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile, GameWorld
 	// create a test box //
 	Ogre::AxisAlignedBox bbox = GraphicalObject->getBoundingBox();
 
-	NewtonWorld* tmpworld = world->GetPhysicalWorld()->GetWorld();
+	NewtonWorld* tmpworld = LinkedToWorld->GetPhysicalWorld()->GetWorld();
 
 	Ogre::Vector3 sizes = bbox.getMaximum()-bbox.getMinimum();
 
@@ -87,7 +78,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile, GameWorld
 	Body = NewtonCreateDynamicBody(tmpworld, Collision, &tlocrot[0][0]);
 	
 	// add this as user data //
-	NewtonBodySetUserData(Body, this);
+	NewtonBodySetUserData(Body, static_cast<BasePhysicsObject*>(this));
 
 	// first calculate inertia and center of mass points //
 	Float3 inertia;
@@ -105,8 +96,8 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile, GameWorld
 
 	// callbacks //
 	NewtonBodySetTransformCallback(Body, Prop::PropPhysicsMovedEvent);
-	NewtonBodySetForceAndTorqueCallback(Body, Prop::ApplyForceAndTorgueEvent);
-	NewtonBodySetDestructorCallback(Body, Prop::DestroyBodyCallback);
+	NewtonBodySetForceAndTorqueCallback(Body, BasePhysicsObject::ApplyForceAndTorgueEvent);
+	NewtonBodySetDestructorCallback(Body, BasePhysicsObject::DestroyBodyCallback);
 
 	// tweaking parameters //
 	
@@ -169,42 +160,13 @@ void Leviathan::Entity::Prop::PropPhysicsMovedEvent(const NewtonBody* const body
 	Float4 quat(tmat.extractQuaternion());
 
 	// apply to graphical object //
-	Prop* tmp = static_cast<Prop*>(NewtonBodyGetUserData(body));
+	Prop* tmp = static_cast<Prop*>(reinterpret_cast<BasePhysicsObject*>(NewtonBodyGetUserData(body)));
 
 	tmp->ObjectsNode->setOrientation(quat);
 	tmp->ObjectsNode->setPosition(position);
 	// also update these so if only one is updated it doesn't force last value to rotation or location //
 	tmp->Position = position;
 	tmp->QuatRotation = quat;
-}
-
-void Leviathan::Entity::Prop::ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat timestep, int threadIndex){
-	// apply gravity //
-	Float3 Torque(0, 0, 0);
-
-	// get properties from newton //
-	float mass; 
-	float Ixx; 
-	float Iyy; 
-	float Izz; 
-
-	NewtonBodyGetMassMatrix(body, &mass, &Ixx, &Iyy, &Izz);
-
-
-
-	Prop* tmp = static_cast<Prop*>(NewtonBodyGetUserData(body));
-
-	// get gravity force and apply mass to it //
-	Float3 Force = tmp->LinkedToWorld->GetGravityAtPosition(tmp->Position)*mass;
-	
-
-	NewtonBodyAddForce(body, &Force.X);
-	NewtonBodyAddTorque(body, &Torque.X);
-}
-
-void Leviathan::Entity::Prop::DestroyBodyCallback(const NewtonBody* body){
-	// no user data to destroy //
-
 }
 
 

@@ -13,8 +13,8 @@ using namespace Entity;
 
 
 
-DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden) : BaseRenderable(hidden), BaseObject(IDFactory::GetID()), LinkedToWorld(NULL), 
-	GraphicalObject(NULL), MeshName(), ObjectsNode(NULL), Collision(NULL), Body(NULL), Immovable(true), Sizes(0)
+DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) : BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), 
+	GraphicalObject(NULL), MeshName(), ObjectsNode(NULL), Sizes(0)
 {
 
 }
@@ -35,29 +35,16 @@ DLLEXPORT void Leviathan::Entity::Brush::Release(){
 	}
 
 	// physical entity //
-	_DestroyPhysics();
+	AggressiveConstraintUnlink();
+	_DestroyPhysicalBody();
 
 	GraphicalObject = NULL;
 	LinkedToWorld = NULL;
 }
-
-
-void Leviathan::Entity::Brush::_DestroyPhysics(){
-	if(Collision)
-		NewtonDestroyCollision(Collision);
-	if(Body)
-		NewtonDestroyBody(Body);
-	Body = NULL;
-	Collision = NULL;
-}
-
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::Brush::Init(GameWorld* world, const Float3 &dimensions, const string &material, 
+DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const string &material, 
 	bool createphysics /*= true*/)
 {
-	// copy world link //
-	LinkedToWorld = world;
-
 	Sizes = dimensions;
 
 	// create unique name for mesh //
@@ -311,9 +298,10 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(GameWorld* world, const Float3 &di
 }
 
 DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*= 0.f*/){
-	QUICKTIME_THISSCOPE;
 	// destroy old first //
-	_DestroyPhysics();
+	AggressiveConstraintUnlink();
+	_DestroyPhysicalBody();
+
 
 	// create a newton object which is always a box //
 
@@ -335,7 +323,7 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 	_UpdatePhysicsObjectLocation();
 
 	// add this as user data //
-	NewtonBodySetUserData(Body, this);
+	NewtonBodySetUserData(Body, static_cast<BasePhysicsObject*>(this));
 
 	// set as movable if has mass //
 	if(mass != 0){
@@ -349,19 +337,20 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 		// apply mass to inertia 
 		inertia *= mass;
 
-
 		Immovable = false;
 
 		NewtonBodySetMassMatrix(Body, mass, inertia.X, inertia.Y, inertia.Z);
 		NewtonBodySetCentreOfMass(Body, &centerofmass.X);
 
 		// gravity callback //
-		NewtonBodySetForceAndTorqueCallback(Body, Brush::ApplyForceAndTorgueEvent);
+		NewtonBodySetForceAndTorqueCallback(Body, BasePhysicsObject::ApplyForceAndTorgueEvent);
+	} else {
+		Immovable = true;
 	}
 
 	// callbacks //
-	NewtonBodySetTransformCallback(Body, Brush::PropPhysicsMovedEvent);
-	NewtonBodySetDestructorCallback(Body, Brush::DestroyBodyCallback);
+	NewtonBodySetTransformCallback(Body, Brush::BrushPhysicsMovedEvent);
+	NewtonBodySetDestructorCallback(Body, BasePhysicsObject::DestroyBodyCallback);
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Brush::CheckRender(GraphicalInputEntity* graphics, int mspassed){
@@ -369,14 +358,6 @@ DLLEXPORT bool Leviathan::Entity::Brush::CheckRender(GraphicalInputEntity* graph
 	return true;
 }
 // ------------------------------------ //
-void Leviathan::Entity::Brush::PosUpdated(){
-	_UpdatePhysicsObjectLocation();
-}
-
-void Leviathan::Entity::Brush::OrientationUpdated(){
-	_UpdatePhysicsObjectLocation();
-}
-
 void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(){
 	// update physics object location which will in turn change graphical object location //
 
@@ -395,13 +376,10 @@ void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(){
 	}
 }
 // ------------------------------------ //
-void Leviathan::Entity::Brush::PropPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix, int threadIndex){
+void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix, int threadIndex){
 	// first create Ogre 4x4 matrix from the matrix //
 	Ogre::Matrix4 mat(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6], matrix[7], matrix[8], matrix[9], matrix[10],
 		matrix[11], matrix[12], matrix[13], matrix[14], matrix[15]);
-
-	// this might be "cleaner" way to do this //
-	//memcpy(&mat[0][0], matrix, sizeof(float)*16);
 
 	// needs to convert from d3d style matrix to OpenGL style matrix //
 	Ogre::Matrix4 tmat = mat.transpose();
@@ -413,7 +391,7 @@ void Leviathan::Entity::Brush::PropPhysicsMovedEvent(const NewtonBody* const bod
 	Float4 quat(tmat.extractQuaternion());
 
 	// apply to graphical object //
-	Brush* tmp = static_cast<Brush*>(NewtonBodyGetUserData(body));
+	Brush* tmp = static_cast<Brush*>(reinterpret_cast<BasePhysicsObject*>(NewtonBodyGetUserData(body)));
 
 	tmp->ObjectsNode->setOrientation(quat);
 	tmp->ObjectsNode->setPosition(position);
@@ -422,33 +400,3 @@ void Leviathan::Entity::Brush::PropPhysicsMovedEvent(const NewtonBody* const bod
 	tmp->QuatRotation = quat;
 }
 
-void Leviathan::Entity::Brush::ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat timestep, int threadIndex){
-	// get object from body //
-	Brush* tmp = static_cast<Brush*>(NewtonBodyGetUserData(body));
-	// check if physics can't apply //
-	if(tmp->Immovable)
-		return;
-
-	// apply gravity //
-	Float3 Torque(0, 0, 0);
-
-	// get properties from newton //
-	float mass; 
-	float Ixx; 
-	float Iyy; 
-	float Izz; 
-
-	NewtonBodyGetMassMatrix(body, &mass, &Ixx, &Iyy, &Izz);
-
-	// get gravity force and apply mass to it //
-	Float3 Force = tmp->LinkedToWorld->GetGravityAtPosition(tmp->Position)*mass;
-
-
-	NewtonBodyAddForce(body, &Force.X);
-	NewtonBodyAddTorque(body, &Torque.X);
-}
-
-void Leviathan::Entity::Brush::DestroyBodyCallback(const NewtonBody* body){
-	// no user data to destroy //
-
-}

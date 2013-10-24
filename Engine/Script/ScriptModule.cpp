@@ -249,6 +249,8 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, a
 			// get string in quotes to find out what it is //
 			unique_ptr<wstring> listenername = itr.GetStringInQuotes(QUOTETYPE_BOTH);
 
+			wstring localname = *listenername;
+
 			// if it is generic listener we need to get it's type //
 			if(*listenername == L"Generic"){
 
@@ -264,7 +266,8 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, a
 				// mash together a name //
 				wstring mangledname = L"Generic:"+*generictype+L";";
 				auto restofmeta = itr.GetUntilEnd();
-				FoundListenerFunctions[mangledname] = shared_ptr<ValidListenerData>(new ValidListenerData(func, listenername, restofmeta, generictype));
+				FoundListenerFunctions[mangledname] = shared_ptr<ValidListenerData>(new ValidListenerData(func, listenername.release(), 
+					restofmeta.release(), generictype.release()));
 
 				return;
 			}
@@ -279,7 +282,8 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, a
 			if(positerator != ListenerNameType.end()){
 				// found a match, store info //
 				auto restofmeta = itr.GetUntilEnd();
-				FoundListenerFunctions[*listenername] = shared_ptr<ValidListenerData>(new ValidListenerData(func, listenername, restofmeta));
+				FoundListenerFunctions[localname] = shared_ptr<ValidListenerData>(new ValidListenerData(func, listenername.release(), 
+					restofmeta.release()));
 
 				return;
 			}
@@ -397,23 +401,16 @@ trytofindinscriptfolderincludecallback:
 	return -1;
 }
 // ------------------ ValidListenerData ------------------ //
-Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, unique_ptr<wstring> &name, unique_ptr<wstring> &metadataend) 
-	: FuncPtr(funcptr)
+Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, wstring* name, wstring* metadataend) 
+	: FuncPtr(funcptr), ListenerName(name), RestOfMeta(metadataend)
 {
-	// apparently unique pointers have to be swapped
-	ListenerName.swap(name);
-	RestOfMeta.swap(metadataend);
 	// increase references //
 	FuncPtr->AddRef();
 }
 
-Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, unique_ptr<wstring> &name, unique_ptr<wstring> &metadataend, 
-	unique_ptr<wstring> &generictypename) : FuncPtr(funcptr)
+Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, wstring* name, wstring* metadataend, wstring* generictypename) 
+	: FuncPtr(funcptr), ListenerName(name), GenericTypeName(generictypename), RestOfMeta(metadataend)
 {
-	// apparently unique pointers have to be swapped
-	ListenerName.swap(name);
-	GenericTypeName.swap(generictypename);
-	RestOfMeta.swap(metadataend);
 	// increase references //
 	FuncPtr->AddRef();
 }

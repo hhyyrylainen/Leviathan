@@ -10,6 +10,8 @@
 #include "..\Bases\BaseObject.h"
 #include "..\Bases\BaseRenderable.h"
 #include "..\Bases\BasePositionable.h"
+#include "..\Bases\BasePhysicsObject.h"
+#include "..\Bases\BaseContraintable.h"
 
 namespace Leviathan{
 	class GameWorld;
@@ -18,47 +20,32 @@ namespace Leviathan{
 namespace Leviathan{ namespace Entity{
 
 
-	class Brush : public BaseObject, public BaseRenderable, public BasePositionable{
+	class Brush : virtual public BaseObject, public BaseRenderable, public BaseContraintable{
 	public:
-		DLLEXPORT Brush(bool hidden);
+		DLLEXPORT Brush(bool hidden, GameWorld* world);
 		DLLEXPORT virtual ~Brush();
 
 		DLLEXPORT virtual void Release();
 
 		// different initialization functions for different box styles //
 		// NOTE: leaving createphysics true creates a immovable box (uses mass = 0) //
-		DLLEXPORT bool Init(GameWorld* world, const Float3 &dimensions, const string &material, bool createphysics = true);
+		DLLEXPORT bool Init(const Float3 &dimensions, const string &material, bool createphysics = true);
 
 		// call if you want to have this interact with other physical objects (set mass to 0 to be static) //
 		DLLEXPORT void AddPhysicalObject(const float &mass = 0.f);
 
 		DLLEXPORT virtual bool CheckRender(GraphicalInputEntity* graphics, int mspassed);
 
-		// static movement update from physics //
-		static void PropPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix, int threadIndex);
-		static void ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat timestep, int threadIndex);
-		static void DestroyBodyCallback(const NewtonBody* body);
+		static void BrushPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix, int threadIndex);
 
 	protected:
-		// for setting new values to graphical object and physical object //
-		virtual void PosUpdated();
-		virtual void OrientationUpdated();
-		void _UpdatePhysicsObjectLocation();
-		void _DestroyPhysics();
-		// ------------------------ //
-		GameWorld* LinkedToWorld;
-
+		virtual void _UpdatePhysicsObjectLocation();
+		// ------------------------------------ //
 		string MeshName;
 		Float3 Sizes;
 
 		Ogre::Entity* GraphicalObject;
 		Ogre::SceneNode* ObjectsNode;
-
-		// physics //
-		NewtonCollision* Collision;
-		NewtonBody* Body;
-
-		bool Immovable;
 	};
 
 }}

@@ -10,7 +10,7 @@
 
 namespace Leviathan{
 
-	class BasePositionable /*: public Object these classes are "components" and shouldn't inherit anything */{
+	class BasePositionable{
 	public:
 		DLLEXPORT BasePositionable::BasePositionable();
 		DLLEXPORT virtual BasePositionable::~BasePositionable();

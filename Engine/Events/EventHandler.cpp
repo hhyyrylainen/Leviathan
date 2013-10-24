@@ -12,6 +12,10 @@ EventHandler::~EventHandler(){
 
 }
 
+DLLEXPORT EventHandler* Leviathan::EventHandler::Get(){
+	return main;
+}
+
 EventHandler* Leviathan::EventHandler::main = NULL;
 // ------------------------------------ //
 bool EventHandler::Init(){
@@ -45,7 +49,7 @@ DLLEXPORT void Leviathan::EventHandler::CallEvent(GenericEvent* pEvent){
 
 		if(GenericEventListeners[i]->Type == *pEvent->TypeStr){
 
-			EventListeners[i]->Receiver->OnGenericEvent(&pEvent);
+			GenericEventListeners[i]->Receiver->OnGenericEvent(&pEvent);
 			if((pEvent) == NULL)
 				// callable destroyed message //
 				break;
@@ -92,4 +96,7 @@ DLLEXPORT void Leviathan::EventHandler::Unregister(CallableObject* caller, const
 		}
 	}
 }
+
+
+
 // ------------------------------------ //

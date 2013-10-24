@@ -48,9 +48,7 @@ namespace Leviathan{
 		DLLEXPORT void Unregister(CallableObject* caller, EVENT_TYPE type, bool all = false);
 		DLLEXPORT void Unregister(CallableObject* caller, const wstring &genericname, bool all = false);
 
-		DLLEXPORT static inline EventHandler* Get(){
-			return main;
-		}
+		DLLEXPORT static EventHandler* Get();
 
 	private:
 		std::vector<RegisteredCallback*> EventListeners;

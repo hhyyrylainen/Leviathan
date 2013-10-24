@@ -7,7 +7,7 @@
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Entity::SoundEmitter::SoundEmitter() : BaseObject(IDFactory::GetID()){
+DLLEXPORT Leviathan::Entity::SoundEmitter::SoundEmitter() : BaseObject(IDFactory::GetID(), NULL){
 
 }
 

@@ -96,10 +96,10 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 
 	for(size_t i = 0; i < containedlisteners.size(); i++){
 		// generics cannot be rocket events //
-		if(containedlisteners[i]->GenericTypeName){
+		if(containedlisteners[i]->GenericTypeName && containedlisteners[i]->GenericTypeName->size() > 0){
 			if(onlyrocket)
 				continue;
-				// custom event listener //
+			// custom event listener //
 
 			RegisterForEvent(*containedlisteners[i]->GenericTypeName);
 
@@ -110,7 +110,7 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 		try{
 			tohook = LeviathanToRocketEventTranslate[*containedlisteners[i]->ListenerName];
 
-			if(tohook.Length() > 0){
+			if(tohook.Length() == 0){
 				throw exception("check the other");
 			}
 
@@ -138,6 +138,7 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 			}
 
 			Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: unknown event type "+*containedlisteners[i]->ListenerName+L", did you intent to use Generic type?");
+			
 			continue;
 		}
 		if(Element){
@@ -318,7 +319,7 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 		if(mod->DoesListenersContainSpecificListener(L"", (*event2)->TypeStr)){
 			// setup parameters //
 			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
-				(new NamedVariableBlock(new VoidPtrBlock(*pEvent), L"GenericEvent"));
+				(new NamedVariableBlock(new VoidPtrBlock(*event2), L"GenericEvent"));
 			// we are returning ourselves so increase refcount
 			AddRef();
 			(*event2)->AddRef();

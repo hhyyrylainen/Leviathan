@@ -22,6 +22,8 @@ namespace Pong{
 		// Generates an arena to the world //
 		bool GenerateArena(PongGame* game, vector<PlayerSlot*> &players, int plycount, int maximumsplit, bool clearfirst = true);
 
+		void ServeBall();
+
 	private:
 
 		void _ClearPointers();
@@ -35,6 +37,8 @@ namespace Pong{
 		// Arena bottom //
 		shared_ptr<Leviathan::BaseObject> BottomBrush;
 
+		// ball prop //
+		shared_ptr<Leviathan::BaseObject> Ball;
 
 	};
 

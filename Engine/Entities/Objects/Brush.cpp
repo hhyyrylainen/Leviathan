@@ -369,11 +369,10 @@ void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(){
 	// update body //
 	NewtonBodySetMatrix(Body, &tmatrix[0][0]);
 
-	// update graphical object location to have it always match up (only for static objects) //
-	if(Immovable){
-		ObjectsNode->setOrientation(QuatRotation);
-		ObjectsNode->setPosition(Position);
-	}
+	// update graphical object location to have it always match up //
+	ObjectsNode->setOrientation(QuatRotation);
+	ObjectsNode->setPosition(Position);
+	
 }
 // ------------------------------------ //
 void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix, int threadIndex){

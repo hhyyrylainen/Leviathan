@@ -174,14 +174,15 @@ bool TestAutoUpdateableFunctions(const int& tests, Engine* engine){
 	DataStore::Get()->AddVar(new NamedVariableList(SemanticName, new VariableBlock(new IntBlock(25000))));
 
 
-	vector<shared_ptr<VariableBlock>> listenneededindexes(1);
-	listenneededindexes[0] = shared_ptr<VariableBlock>(new VariableBlock(SemanticName));
+	vector<VariableBlock*> listenneededindexes(1);
+	listenneededindexes[0] = new VariableBlock(SemanticName);
 
 	// register all listeners //
 	for(int i = 0; i < tests; i++){
 		Objects[i]->StartMonitoring(listenneededindexes);
 	}
 
+	SAFE_DELETE_VECTOR(listenneededindexes);
 
 	// send event //
 	DataStore::Get()->SetValue(SemanticName, new VariableBlock(new IntBlock(25001)));

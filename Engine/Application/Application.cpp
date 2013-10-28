@@ -87,4 +87,9 @@ DLLEXPORT void Leviathan::LeviathanApplication::InitLoadCustomScriptTypes(asIScr
 DLLEXPORT void Leviathan::LeviathanApplication::RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){
 
 }
+
+DLLEXPORT void Leviathan::LeviathanApplication::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager* manager){
+
+}
+
 // ------------------------------------ //

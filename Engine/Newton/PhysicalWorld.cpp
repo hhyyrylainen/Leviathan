@@ -18,7 +18,7 @@ DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld() : LastSimulatedTime(0), Pass
 	//NewtonSetSolverModel(World, 0);
 	//// fast mode //
 	//NewtonSetSolverModel(World, 1);
-	NewtonSetSolverModel(World, 4);
+	NewtonSetSolverModel(World, 2);
 
 	// set size //
 	//NewtonSetWorldSize();

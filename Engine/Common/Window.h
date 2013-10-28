@@ -86,6 +86,9 @@ namespace Leviathan{
 		static std::map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> OISRocketKeyConvert;
 		static std::map<wstring, OIS::KeyCode> CharacterToOISConvert;
 
+		// method for other DLLs to call the maps //
+		DLLEXPORT static OIS::KeyCode ConvertWstringToOISKeyCode(const wstring &str);
+
 	private:
 
 		bool SetupOISForThisWindow();

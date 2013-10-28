@@ -5,6 +5,7 @@
 #include "Entities\Objects\ViewerCameraPos.h"
 #include "Entities\GameWorld.h"
 #include "Entities\Objects\Prop.h"
+#include "Entities\Objects\Brush.h"
 //using namespace Leviathan;
 using namespace SandBoxie;
 // ------------------------------------ //
@@ -46,51 +47,43 @@ void App::CustomizeEnginePostLoad(){
 
 
 	// load test objects //
-	auto prop1holder = world1->GetWorldObject(loader->LoadPropToWorld(world1.get(), L"Cube"));
+	Entity::Prop* tmpprop;
+	auto prop1holder = world1->GetWorldObject(loader->LoadPropToWorld(world1.get(), L"Cube", &tmpprop));
 
 	if(prop1holder.get() != NULL){
-		Entity::Prop* tmp = static_cast<Entity::Prop*>(prop1holder.get());
 		// set position //
-
-		//tmp->SetPos(3.f, 4.f, -14.f);
-		tmp->SetPos(-2.f, 4.f, 0.f);
+		tmpprop->SetPos(-2.f, 4.f, 0.f);
 	}
 
+	Entity::Brush* tmp;
+
 	// create brush for the block to fall onto //
-	auto brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(14.f, 1.f, 14.f), Entity::BRUSHCREATESTYLE_CENTER, 0.f));
+	auto brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(14.f, 1.f, 14.f), 0.f, &tmp));
 
 	if(brush1.get() != NULL){
 		// set position //
-		Entity::Brush* tmp = static_cast<Entity::Brush*>(brush1.get());
-
 		tmp->SetPos(0.f, -0.5f, 0.f);
 	}
 
 
-	auto brush2 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), Entity::BRUSHCREATESTYLE_CENTER, 100.f));
+	brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), 100.f, &tmp));
 
-	if(brush2.get() != NULL){
+	if(brush1.get() != NULL){
 		// set position //
-		Entity::Brush* tmp = static_cast<Entity::Brush*>(brush2.get());
-
 		tmp->SetPos(1.f, 3.f, 0.f);
 	}
 
-	brush2 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), Entity::BRUSHCREATESTYLE_CENTER, 100.f));
+	brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), 100.f, &tmp));
 
-	if(brush2.get() != NULL){
+	if(brush1.get() != NULL){
 		// set position //
-		Entity::Brush* tmp = static_cast<Entity::Brush*>(brush2.get());
-
 		tmp->SetPos(0.f, 7.f, 0.f);
 	}
 
-	brush2 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), Entity::BRUSHCREATESTYLE_CENTER, 100.f));
+	brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), 100.f, &tmp));
 
-	if(brush2.get() != NULL){
+	if(brush1.get() != NULL){
 		// set position //
-		Entity::Brush* tmp = static_cast<Entity::Brush*>(brush2.get());
-
 		tmp->SetPos(-1.f, 10.f, -1.f);
 	}
 	

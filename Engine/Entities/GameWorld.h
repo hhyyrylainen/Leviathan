@@ -38,6 +38,7 @@ namespace Leviathan{
 		// this takes the object to be deleted by this //
 		DLLEXPORT void AddObject(BaseObject* obj);
 		DLLEXPORT void AddObject(shared_ptr<BaseObject> obj);
+		DLLEXPORT void DestroyObject(int ID);
 
 		DLLEXPORT shared_ptr<BaseObject> GetWorldObject(int ID);
 		// clears all objects from the world //

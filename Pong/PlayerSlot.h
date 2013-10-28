@@ -8,11 +8,16 @@
 // ---- includes ---- //
 
 
+#define INPUTFORCE_APPLYSCALE		20.f
+
 namespace Pong{
 
 	enum PLAYERTYPE {PLAYERTYPE_HUMAN, PLAYERTYPE_COMPUTER, PLAYERTYPE_EMPTY, PLAYERTYPE_CLOSED};
 	enum PLAYERCONTROLS {PLAYERCONTROLS_NONE, PLAYERCONTROLS_AI, PLAYERCONTROLS_WASD, PLAYERCONTROLS_ARROWS, PLAYERCONTROLS_IJKL,
 		PLAYERCONTROLS_NUMPAD, PLAYERCONTROLS_CONTROLLER};
+	enum CONTROLKEYACTION {CONTROLKEYACTION_LEFT, CONTROLKEYACTION_RIGHT, CONTROLKEYACTION_POWERUPDOWN, CONTROLKEYACTION_POWERUPUP};
+
+	// TODO: implement powerups
 
 	class PlayerSlot{
 	public:
@@ -32,6 +37,14 @@ namespace Pong{
 		int GetControlIdentifier();
 
 		int GetSlotNumber();
+		int GetScore();
+		inline void SetScore(int score){
+			Score = score;
+		}
+		// active should be if the key is down (or false if it is up) //
+		void PassInputAction(CONTROLKEYACTION actiontoperform, bool active);
+		// resets all input state //
+		void InputDisabled();
 
 		shared_ptr<Leviathan::BaseObject> GetPaddle(){
 			return PaddleObject;
@@ -60,6 +73,10 @@ namespace Pong{
 		int PlayerIdentifier;
 		PLAYERCONTROLS ControlType;
 		int ControlIdentifier;
+
+		int Score;
+
+		int MoveState;
 
 		shared_ptr<Leviathan::BaseObject> PaddleObject;
 

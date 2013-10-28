@@ -36,7 +36,7 @@ namespace Leviathan{
 		// callback functions called during engine initialization at appropriate times //
 		DLLEXPORT virtual void InitLoadCustomScriptTypes(asIScriptEngine* engine);
 		DLLEXPORT virtual void RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids);
-
+		DLLEXPORT virtual void RegisterApplicationPhysicalMaterials(PhysicsMaterialManager* manager);
 
 		// static access method for getting instance of this class //
 		DLLEXPORT static inline LeviathanApplication* GetApp(){

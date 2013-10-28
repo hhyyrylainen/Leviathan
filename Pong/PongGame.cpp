@@ -13,10 +13,15 @@ using namespace Pong;
 Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerList(4){
 	StaticAccess = this;
 
+	GameInputHandler = new GameInputController();
+
 	// fill the player list with the player 1 and empty slots //
 	PlayerList[0] = new PlayerSlot(0, PLAYERTYPE_HUMAN, 1, PLAYERCONTROLS_WASD, 0);
+	PlayerList[1] = new PlayerSlot(1, true);
+	PlayerList[2] = new PlayerSlot(2, PLAYERTYPE_HUMAN, 3, PLAYERCONTROLS_ARROWS, 0);
+
 	// other slots as empty //
-	for(size_t i = 1; i < PlayerList.size(); i++){
+	for(size_t i = 3; i < PlayerList.size(); i++){
 
 		PlayerList[i] = new PlayerSlot(i, true);
 	}
@@ -25,6 +30,7 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 
 Pong::PongGame::~PongGame(){
 	// delete memory //
+	SAFE_DELETE(GameInputHandler);
 	SAFE_DELETE_VECTOR(PlayerList);
 }
 // ------------------------------------ //
@@ -35,11 +41,11 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 
 	manager->LoadGUIFile(FileSystem::GetScriptsFolder()+L"PongMenus.txt");
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	// load debug panel, too //
 
 	manager->LoadGUIFile(FileSystem::GetScriptsFolder()+L"DebugPanel.txt");
-#endif // _DEBUG
+//#endif // _DEBUG
 
 	manager->SetMouseFile(FileSystem::GetScriptsFolder()+L"cursor.rml");
 
@@ -72,8 +78,8 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 	// sound listening camera //
 	MainCamera->BecomeSoundPerceiver();
 
-	// link window input to camera //
-	window1->GetInputController()->LinkReceiver(MainCamera.get());
+	// link window input to game logic //
+	window1->GetInputController()->LinkReceiver(GameInputHandler);
 
 	// load GUI background //
 
@@ -119,6 +125,36 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 		SCRIPT_REGISTERFAIL;
 	}
 	
+	// PlayerSlot //
+	if(engine->RegisterObjectType("PlayerSlot", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+		SCRIPT_REGISTERFAIL;
+	}
+
+	// get function //
+	if(engine->RegisterObjectMethod("PongGame", "PlayerSlot@ GetSlot(int number)", asMETHOD(PongGame, GetPlayerSlot), asCALL_THISCALL) < 0){
+		SCRIPT_REGISTERFAIL;
+	}
+
+	// functions //
+	if(engine->RegisterObjectMethod("PlayerSlot", "bool IsActive()", asMETHOD(PlayerSlot, IsSlotActive), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectMethod("PlayerSlot", "int GetPlayerNumber()", asMETHOD(PlayerSlot, GetPlayerIdentifier), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectMethod("PlayerSlot", "int GetScore()", asMETHOD(PlayerSlot, GetScore), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectMethod("PlayerSlot", "PlayerSlot@ GetSplit()", asMETHOD(PlayerSlot, GetSplit), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
 	
 
 
@@ -152,14 +188,25 @@ int Pong::PongGame::TryStartGame(){
 		return -3;
 	}
 
-	// TODO: link input //
+	GameInputHandler->StartReceivingInput(PlayerList);
+	GameInputHandler->SetBlockState(false);
 
 	// send start event //
 	Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"GameStart"), new NamedVars(shared_ptr<NamedVariableList>(new
 		NamedVariableList(L"PlayerCount", new Leviathan::VariableBlock(activeplycount))))));
 
+	// now that we are ready to start let's serve the ball //
+	GameArena->ServeBall();
+
 	// succeeded //
 	return 1;
+}
+
+void Pong::PongGame::GameMatchEnded(){
+	GameInputHandler->UnlinkPlayers();
+	GameInputHandler->SetBlockState(true);
+
+
 }
 
 void Pong::PongGame::ScriptCloseGame(){
@@ -169,5 +216,20 @@ void Pong::PongGame::ScriptCloseGame(){
 string Pong::PongGame::GetErrorString(){
 	return ErrorState;
 }
+
+void Pong::PongGame::ProcessPlayerInputsAndState(){
+	DEBUG_OUTPUT_AUTO(wstring(L"Handling AI think and game 'update' logic!"));
+}
+
+PlayerSlot* Pong::PongGame::GetPlayerSlot(int id){
+	return PlayerList[id];
+}
+
+void Pong::PongGame::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager* manager){
+	// TODO: implement loading from files //
+
+}
+
+
 
 PongGame* Pong::PongGame::StaticAccess = NULL;

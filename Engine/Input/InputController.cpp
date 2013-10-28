@@ -84,6 +84,10 @@ void Leviathan::InputController::_OnChildUnlink(InputReceiver* child){
 
 
 // ------------------ InputReceiver ------------------ //
+DLLEXPORT Leviathan::InputReceiver::InputReceiver() : ConnectedTo(NULL){
+
+}
+
 Leviathan::InputReceiver::~InputReceiver(){
 	// tell owner that we no longer exist //
 	if(ConnectedTo)
@@ -101,3 +105,5 @@ void Leviathan::InputReceiver::_OnDisconnect(InputController* owner){
 DLLEXPORT void Leviathan::InputReceiver::BeginNewReceiveQueue(){
 
 }
+
+

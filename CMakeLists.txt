@@ -2,21 +2,19 @@
 cmake_minimum_required(VERSION 2.8)
 
 # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, higher memory for compiling
-add_definitions(-DUNICODE -D_UNICODE -Gm -fp:except /ZI -Zm162)
+add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm162)
 
-#set(LINKER_REQUIRED_FLAGS "/NODEFAULTLIB:LIBCMTD")
-
-# linker flag
-SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_REQUIRED_FLAGS}")
+# program database flag for debug
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
 
 project(Leviathan)
 
 set(WORK_DIR "${PROJECT_BINARY_DIR}/bin")
 set(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/Install")
-#set(PATHS_OGRE_COPY_DLL_PATH "H:/c++ resources/OgreSDK_vc10_v1-9-0unstable/bin" CACHE PATH "path for ogre binarie/bin dir")
 
 option(INSTALL_ONLY_RELEASE "For creating release folders" ON)
 option(USE_VLD "For including vld in the projects" ON)
+
 
 if(USE_VLD)
 set(L_VLD_STATE 1)
@@ -27,8 +25,8 @@ endif(USE_VLD)
 # version number
 set(LEVIATHAN_VERSION_STABLE 0)
 set(LEVIATHAN_VERSION_MAJOR 5)
-set(LEVIATHAN_VERSION_MINOR 5)
-set(LEVIATHAN_VERSION_PATCH 0)
+set(LEVIATHAN_VERSION_MINOR 6)
+set(LEVIATHAN_VERSION_PATCH 1)
 
 set(LEVIATHAN_VERSION_STR ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}.${LEVIATHAN_VERSION_MINOR}.${LEVIATHAN_VERSION_PATCH})
 set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LEVIATHAN_VERSION_MINOR}${LEVIATHAN_VERSION_PATCH})
@@ -152,6 +150,20 @@ add_subdirectory(Pong)
 # data folders
 file(GLOB DataMoveFiles "bin/Data/*.*")
 install(FILES ${DataMoveFiles} DESTINATION bin/Data)
+install(FILES "bin/EngineConf.conf" DESTINATION bin)
+# we need to specifically install the directories
+install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)
+install(DIRECTORY "bin/Data/Models" DESTINATION bin/Data)
+install(DIRECTORY "bin/Data/Scripts" DESTINATION bin/Data)
+install(DIRECTORY "bin/Data/Sound" DESTINATION bin/Data)
+install(DIRECTORY "bin/Data/Textures" DESTINATION bin/Data)
+install(DIRECTORY "bin/Data/Screenshots" DESTINATION bin/Data)
+install(DIRECTORY "bin/Data/Cache" DESTINATION bin/Data)
+# ogre tools
+file(GLOB OgreTools "OGRE/bin/Release/*.exe")
+file(GLOB SampleBrowserFile "OGRE/bin/Release/SampleBrowser.exe")
+list(REMOVE_ITEM OgreTools ${SampleBrowserFile})
+install(FILES ${OgreTools} DESTINATION tools)
 
 if(INSTALL_ONLY_RELEASE)
 # only release versions of everything
@@ -189,24 +201,24 @@ install(FILES ${SMFLMoveFilesRelease} DESTINATION bin)
 # CPack support
 include(InstallRequiredSystemLibraries)
 
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Leviathan game engine")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Leviathan Game Engine")
 SET(CPACK_PACKAGE_VENDOR "Me, myself, and I")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md")
 set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/License.txt")
-set(CPACK_PACKAGE_VERSION_MAJOR "${LEVIATHAN_VERSION_STABLE}")
-set(CPACK_PACKAGE_VERSION_MINOR "${LEVIATHAN_VERSION_MAJOR}")
-set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_MAJOR "${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${LEVIATHAN_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}")
+
 
 if(WIN32)
   # There is a bug in NSI that does not handle full unix paths properly. Make
   # sure there is at least one set of four (4) backlasshes.
-  set(CPACK_PACKAGE_ICON "${CMake_SOURCE_DIR}/Utilities/Release\\\\InstallIcon.bmp")
-  set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\MyExecutable.exe")
-  set(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} My Famous Project")
-  set(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.my-project-home-page.org")
-  set(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.my-personal-home-page.com")
+  set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}\\\\LeviathanIcon.bmp")
+  set(CPACK_NSIS_DISPLAY_NAME "Leviathan Game Engine")
+  set(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.boostslair.com/projects/Leviathan/Help.php")
+  set(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.boostslair.com/projects/Leviathan/")
   set(CPACK_NSIS_CONTACT "boost@boostslair.com")
-  set(CPACK_NSIS_MODIFY_PATH ON)
+  set(CPACK_NSIS_MODIFY_PATH OFF)
 else(WIN32)
 
 endif(WIN32)

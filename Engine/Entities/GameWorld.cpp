@@ -202,4 +202,15 @@ DLLEXPORT void Leviathan::GameWorld::ClearSimulatePassedTime(){
 	_PhysicalWorld->ClearTimers();
 }
 
+DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
+	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
+		if((*iter)->GetID() == ID){
+			// release the object and then erase our reference //
+			(*iter)->Release();
+			Objects.erase(iter);
+			return;
+		}
+	}
+}
+
 

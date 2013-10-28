@@ -16,8 +16,8 @@ namespace Leviathan{
 	class InputReceiver{
 		friend InputController;
 	public:
-
-		virtual ~InputReceiver();
+		DLLEXPORT InputReceiver();
+		DLLEXPORT virtual ~InputReceiver();
 
 		// called at the beginning of key press receive sequence (you shouldn't reset anything, since you will get blocked input if keys are released
 		// while the object isn't getting input

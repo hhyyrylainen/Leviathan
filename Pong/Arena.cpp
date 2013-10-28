@@ -5,6 +5,7 @@
 #endif
 #include "PongGame.h"
 #include "Entities\Objects\Brush.h"
+#include "Entities\Objects\Prop.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::Arena::Arena(shared_ptr<Leviathan::GameWorld> world) : TargetWorld(world){
@@ -215,6 +216,28 @@ addplayerpaddlelabel:
 void Pong::Arena::_ClearPointers(){
 	BottomBrush.reset();
 }
+
+void Pong::Arena::ServeBall(){
+	if(Ball){
+		// destroy old //
+		TargetWorld->DestroyObject(Ball->GetID());
+		Ball.reset();
+	}
+
+	// we want to load our ball prop into the world //
+	Leviathan::Entity::Prop* prop;
+	auto tmpprop = TargetWorld->GetWorldObject(Leviathan::Engine::Get()->GetObjectLoader()->LoadPropToWorld(TargetWorld.get(), L"PongBall", &prop));
+
+	// set to center of board //
+	prop->SetPos(Float3(0.f, 0.5f, 0.f));
+
+	// TODO: queue send event //
+
+	// should get a random direction... but just serve left //
+	// because the body is centered at the position (the center point is at the center of the sphere the point can be zero) //
+	prop->GiveImpulse(Float3(-100.f, 0.f, 0.f));
+}
+
 // ------------------------------------ //
 
 // ------------------------------------ //

@@ -21,7 +21,7 @@
 #include "Utility\Random.h"
 #include "Common\GraphicalInputEntity.h"
 #include "Newton\NewtonManager.h"
-
+#include "Newton\PhysicalMaterialManager.h"
 
 
 #define TICKSPEED 60
@@ -70,6 +70,7 @@ namespace Leviathan{
 		DLLEXPORT GraphicalInputEntity* GetWindowEntity(){ return GraphicalEntity1; };
 		DLLEXPORT NewtonManager* GetNewtonManager(){ return _NewtonManager; };
 		DLLEXPORT LeviathanApplication* GetOwningApplication(){ return Owner; };
+		DLLEXPORT PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
 		// static access //
 		DLLEXPORT static Engine* GetEngine();
 		DLLEXPORT static Engine* Get();
@@ -97,6 +98,7 @@ namespace Leviathan{
 		Random* MainRandom;
 		OutOfMemoryHandler* OutOMemory;
 		NewtonManager* _NewtonManager;
+		PhysicsMaterialManager* PhysMaterials;
 
 		IDFactory* IDDefaultInstance;
 		LeviathanApplication* Owner;

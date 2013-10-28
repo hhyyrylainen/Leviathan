@@ -571,7 +571,30 @@ std::map<wstring, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = boost
 	(SIMPLEONETOONE(Z))
 
 	(SIMPLEONETOONE(F1))
+
+	(SIMPLEONETOONE(NUMPAD0))
+	(SIMPLEONETOONE(NUMPAD1))
+	(SIMPLEONETOONE(NUMPAD2))
+	(SIMPLEONETOONE(NUMPAD3))
+	(SIMPLEONETOONE(NUMPAD4))
+	(SIMPLEONETOONE(NUMPAD5))
+	(SIMPLEONETOONE(NUMPAD6))
+	(SIMPLEONETOONE(NUMPAD7))
+	(SIMPLEONETOONE(NUMPAD8))
+	(SIMPLEONETOONE(NUMPAD9))
+
+	// some more "special" keys //
+	(L"LEFTARROW", OIS::KC_LEFT)
+	(L"RIGHTARROW", OIS::KC_RIGHT)
+	(L"UPARROW", OIS::KC_UP)
+	(L"DOWNARROW", OIS::KC_DOWN)
 ;
+
+
+DLLEXPORT OIS::KeyCode Leviathan::Window::ConvertWstringToOISKeyCode(const wstring &str){
+	return CharacterToOISConvert[str];
+}
+
 
 
 map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> Leviathan::Window::OISRocketKeyConvert = boost::assign::map_list_of

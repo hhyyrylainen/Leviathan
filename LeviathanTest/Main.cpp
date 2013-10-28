@@ -92,11 +92,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if(Passed){
 				// CMake testing will detect this
 				Logger::Get()->Info(L"***************** Testing completed succesfully *****************", true);
-				cout << "testing completed succesfully" << endl;
+				cout << "testing completed successfully" << endl;
 			}
 
 			// finish //
-			app.GetEngine()->GetDefinition()->GetWindow()->CloseDown();
+			app.GetEngine()->GetWindowEntity()->GetWindow()->SendCloseMessage();
 			// receive close message //
 			Return = app.RunMessageLoop();
 		} else {

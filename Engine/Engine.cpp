@@ -10,7 +10,7 @@ using namespace Leviathan;
 #include "Entities\GameWorld.h"
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), 
-	_NewtonManager(NULL), GraphicalEntity1(NULL)
+	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL)
 {
 
 	// create this here //
@@ -133,6 +133,11 @@ bool Leviathan::Engine::Init(AppDef* definition){
 	// create newton manager before any newton resources are needed //
 	_NewtonManager = new NewtonManager();
 
+	// next force application to load physical surface materials //
+	PhysMaterials = new PhysicsMaterialManager(_NewtonManager);
+
+
+
 	// create window //
 	GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
 
@@ -224,6 +229,7 @@ void Leviathan::Engine::Release(){
 	SAFE_DELETE(GraphicalEntity1);
 
 	// release newton //
+	SAFE_RELEASEDEL(PhysMaterials);
 	SAFE_DELETE(_NewtonManager);
 
 	SAFE_RELEASEDEL(LeapData);

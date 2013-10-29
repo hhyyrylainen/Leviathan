@@ -58,6 +58,11 @@ namespace Leviathan{
 		// Sets the absolute velocity of the object //
 		DLLEXPORT void SetBodyVelocity(const Float3 &velocities);
 
+		// Physical material setting in wstring form for your convenience //
+		DLLEXPORT bool SetPhysicalMaterial(const wstring &materialname);
+		// Higher performance material set if you use it in batches and you have fetched the material id from PhysicalMaterialManager //
+		DLLEXPORT void SetPhysicalMaterialID(int ID);
+
 		// default physics callbacks that are fine in most cases //
 		// Don't forget to pass the user data as base object if using these //
 		static void ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat timestep, int threadIndex);

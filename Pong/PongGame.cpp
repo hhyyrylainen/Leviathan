@@ -228,6 +228,20 @@ PlayerSlot* Pong::PongGame::GetPlayerSlot(int id){
 void Pong::PongGame::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager* manager){
 	// TODO: implement loading from files //
 
+
+
+	// load predefined materials //
+	unique_ptr<Leviathan::PhysicalMaterial> PaddleMaterial(new Leviathan::PhysicalMaterial(L"PaddleMaterial"));
+	unique_ptr<Leviathan::PhysicalMaterial> ArenaMaterial(new Leviathan::PhysicalMaterial(L"ArenaMaterial"));
+	unique_ptr<Leviathan::PhysicalMaterial> BallMaterial(new Leviathan::PhysicalMaterial(L"BallMaterial"));
+	unique_ptr<Leviathan::PhysicalMaterial> GoalAreaMaterial(new Leviathan::PhysicalMaterial(L"GoalAreaMaterial"));
+
+
+	PaddleMaterial->FormPairWith(*BallMaterial).SetSoftness(1.f).SetElasticity(1.f);
+	PaddleMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
+	PaddleMaterial->FormPairWith(*ArenaMaterial).SetElasticity(0.f).SetSoftness(0.f);
+	ArenaMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
+	ArenaMaterial->FormPairWith(*BallMaterial).SetFriction(0.f, 0.f).SetSoftness(0.f);
 }
 
 

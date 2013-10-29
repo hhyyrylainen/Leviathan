@@ -4,6 +4,7 @@
 #include "BasePhysicsObject.h"
 #endif
 #include "../GameWorld.h"
+#include "Newton/PhysicalMaterialManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 // I hope that this virtual constructor isn't actually called //
@@ -135,6 +136,25 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::RemoveApplyForce(const wstring &nam
 	}
 
 	return false;
+}
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::BasePhysicsObject::SetPhysicalMaterial(const wstring &materialname){
+	// Fetches the ID and calls the direct material ID setting function //
+	int id = PhysicsMaterialManager::Get()->GetMaterialIDForWorld(materialname, LinkedToWorld->GetPhysicalWorld()->GetWorld());
+
+	if(id == -1){
+		// invalid name //
+		return false;
+	}
+	// Apply it //
+	SetPhysicalMaterialID(id);
+	return true;
+}
+
+DLLEXPORT void Leviathan::BasePhysicsObject::SetPhysicalMaterialID(int ID){
+	assert(Body != NULL && "calling set material ID without having physical model loaded");
+
+	NewtonBodySetMaterialGroupID(Body, ID);
 }
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const Float3 &forces, bool addmass, bool persist /*= true*/, wstring* name /*= NULL*/) : 

@@ -4,6 +4,7 @@
 #include "PhysicalWorld.h"
 #endif
 #include <Newton.h>
+#include "PhysicalMaterialManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld() : LastSimulatedTime(0), PassedTimeTotal(0){
@@ -23,6 +24,8 @@ DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld() : LastSimulatedTime(0), Pass
 	// set size //
 	//NewtonSetWorldSize();
 
+	// Create materials for this world //
+	PhysicsMaterialManager::Get()->CreateActualMaterialsForWorld(World);
 }
 
 DLLEXPORT Leviathan::PhysicalWorld::~PhysicalWorld(){

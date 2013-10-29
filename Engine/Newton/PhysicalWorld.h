@@ -17,6 +17,7 @@ namespace Leviathan{
 
 	class PhysicalWorld : public Object{
 	public:
+		// The constructor also builds the material list for the world, so it is rather expensive //
 		DLLEXPORT PhysicalWorld();
 		DLLEXPORT ~PhysicalWorld();
 

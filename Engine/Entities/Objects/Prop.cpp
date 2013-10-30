@@ -269,6 +269,8 @@ void Leviathan::Entity::Prop::PropPhysicsMovedEvent(const NewtonBody* const body
 	tmp->Position = position;
 	tmp->QuatRotation = quat;
 }
-
-
-
+// ------------------------------------ //
+void Leviathan::Entity::Prop::_OnHiddenStateUpdated(){
+	// Set scene node visibility //
+	ObjectsNode->setVisible(!Hidden);
+}

@@ -136,6 +136,7 @@ bool Leviathan::Engine::Init(AppDef* definition){
 	// next force application to load physical surface materials //
 	PhysMaterials = new PhysicsMaterialManager(_NewtonManager);
 
+	Owner->RegisterApplicationPhysicalMaterials(PhysMaterials);
 
 
 	// create window //
@@ -229,7 +230,7 @@ void Leviathan::Engine::Release(){
 	SAFE_DELETE(GraphicalEntity1);
 
 	// release newton //
-	SAFE_RELEASEDEL(PhysMaterials);
+	SAFE_DELETE(PhysMaterials);
 	SAFE_DELETE(_NewtonManager);
 
 	SAFE_RELEASEDEL(LeapData);
@@ -279,9 +280,6 @@ void Leviathan::Engine::Tick(){
 		return;
 	}
 
-	// update focus state //
-
-
 	//LastFrame = CurTime;
 	LastFrame += TICKSPEED;
 	TickCount++;
@@ -311,6 +309,9 @@ void Leviathan::Engine::Tick(){
 
 	// send tick event //
 	MainEvents->CallEvent(new Event(EVENT_TYPE_ENGINE_TICK, new int(TickCount)));
+
+	// Call the default app tick //
+	Owner->Tick(TimePassed);
 
 	TickTime = (int)(Misc::GetTimeMs64()-LastFrame);
 }

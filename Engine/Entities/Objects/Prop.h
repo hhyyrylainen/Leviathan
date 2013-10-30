@@ -36,6 +36,7 @@ namespace Leviathan{ namespace Entity{
 		virtual void PosUpdated();
 		virtual void OrientationUpdated();
 		void _UpdatePhysicsObjectLocation();
+		virtual void _OnHiddenStateUpdated();
 		// ------------------------ //
 		Ogre::Entity* GraphicalObject;
 		Ogre::SceneNode* ObjectsNode;

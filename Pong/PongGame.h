@@ -25,6 +25,7 @@ namespace Pong{
 		// function called after input has been received (should be just before rendering) //
 		void ProcessPlayerInputsAndState();
 
+		virtual void Tick(int mspassed);
 
 		void CustomizeEnginePostLoad();
 
@@ -57,6 +58,9 @@ namespace Pong{
 
 		// stores last error string for easy access from scripts //
 		string ErrorState;
+
+		// Used to count ticks to not have to call set apply force every tick //
+		int Tickcount;
 
 		static PongGame* StaticAccess;
 	};

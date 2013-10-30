@@ -57,6 +57,8 @@ namespace Leviathan{
 		DLLEXPORT bool RemoveApplyForce(const wstring &name);
 		// Sets the absolute velocity of the object //
 		DLLEXPORT void SetBodyVelocity(const Float3 &velocities);
+		// Gets the velocity of this object //
+		DLLEXPORT Float3 GetBodyVelocity();
 
 		// Physical material setting in wstring form for your convenience //
 		DLLEXPORT bool SetPhysicalMaterial(const wstring &materialname);

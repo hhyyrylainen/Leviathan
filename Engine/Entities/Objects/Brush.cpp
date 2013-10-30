@@ -398,4 +398,9 @@ void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const bo
 	tmp->Position = position;
 	tmp->QuatRotation = quat;
 }
+// ------------------------------------ //
+void Leviathan::Entity::Brush::_OnHiddenStateUpdated(){
+	// Set scene node visibility //
+	ObjectsNode->setVisible(!Hidden);
+}
 

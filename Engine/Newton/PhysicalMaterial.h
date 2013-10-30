@@ -6,12 +6,11 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+// Pretty much no choice but to include this, or fill this file with all the defines //
+#include "Newton.h"
 #include "ObjectFiles\ObjectFileObject.h"
 
 
-// Forward declarations for newton //
-
-class NewtonWorld;
 
 // Returning 0 (as opposed to 1) disables the collision between the objects //
 typedef int  (*PhysicsMaterialAABBCallback) (const NewtonMaterial* material, const NewtonBody* body0, const NewtonBody* body1, int threadIndex);
@@ -25,7 +24,9 @@ namespace Leviathan{
 
 	// Defines properties between two materials //
 	struct PhysMaterialDataPair{
-		DLLEXPORT inline PhysMaterialDataPair(const wstring &othername) : OtherName(othername), AABBCallback(NULL), ContactCallback(NULL){
+		DLLEXPORT inline PhysMaterialDataPair(const wstring &othername) : OtherName(othername), AABBCallback(NULL), ContactCallback(NULL), 
+			Collidable(true), Elasticity(0.4f), StaticFriction(0.9f), DynamicFriction(0.5f), Softness(0.15f)
+		{
 
 		}
 		// ------------------ Property setting functions ------------------ //
@@ -54,6 +55,14 @@ namespace Leviathan{
 			StaticFriction = staticfriction;
 			return *this;
 		}
+		// Sets the callback functions that are called when the material interacts //
+		DLLEXPORT inline PhysMaterialDataPair& SetCallbacks(const PhysicsMaterialAABBCallback aabb, const PhysicsMaterialContactCallback contact){
+
+			AABBCallback = aabb;
+			ContactCallback = contact;
+			return *this;
+		}
+
 
 		// Creates the material to the world, value changes won't apply after this //
 		void ApplySettingsToWorld(NewtonWorld* world, int thisid, int otherid, PhysicalMaterial* materialowner);

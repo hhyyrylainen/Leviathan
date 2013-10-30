@@ -3,7 +3,6 @@
 #ifndef LEVIATHAN_PHYSICALMATERIAL
 #include "PhysicalMaterial.h"
 #endif
-#include "Newton.h"
 #include "PhysicalMaterialManager.h"
 using namespace Leviathan;
 // ------------------------------------ //

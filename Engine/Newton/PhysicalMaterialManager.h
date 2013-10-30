@@ -7,10 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "PhysicalMaterial.h"
-
-// newton forward declarations to avoid including it here //
-class NewtonManager;
-class NewtonWorld;
+#include "NewtonManager.h"
 
 namespace Leviathan{
 

@@ -59,6 +59,13 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 	string sidematerialshort = "Material.001";
 	string materialclosedpaddlearea = "Material.001";
 
+	NewtonWorld* nworld = TargetWorld->GetPhysicalWorld()->GetWorld();
+
+	int ArenaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"ArenaMaterial", nworld);
+	int PaddleID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"PaddleMaterial", nworld);
+	int GoalAreaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"GoalAreaMaterial", nworld);
+	int ArenaBaseID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"ArenaBottomMaterial", nworld);
+
 	// create brushes //
 
 	Leviathan::ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
@@ -72,7 +79,15 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 	BottomBrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), materialbase, Float3(width, bottomthickness, height), 0.f,
 		&castedbottombrush));
 	castedbottombrush->SetPos(0.f, -bottomthickness/2.f, 0.f);
-	
+	castedbottombrush->SetPhysicalMaterialID(ArenaBaseID);
+
+	// Arena ceiling that keeps the ball in //
+	auto topbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), "", Float3(width, bottomthickness, height), 0.f,
+		&castedbottombrush));
+	castedbottombrush->SetPos(0.f, paddleheight+bottomthickness/2.f+BASE_ARENASCALE/2.f, 0.f);
+	castedbottombrush->SetPhysicalMaterialID(ArenaBaseID);
+	castedbottombrush->SetHiddenState(true);
+
 	// arena sides //
 
 	// left top //
@@ -80,65 +95,66 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 	auto tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
 		0.f, &tmp));
 	tmp->SetPos(-width/2.f+sidexsize/2.f, mheight/2.f, -height/2.f+sideysize/2.f);
-	
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
 	tmp->SetPos(-width/2.f+sidexsize*1.5f, sideheight/2.f, -height/2.f+sideysize/2.f);
-	
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize),
 		0.f, &tmp));
 	tmp->SetPos(-width/2.f+sidexsize/2.f, sideheight/2.f, -height/2.f+sideysize*1.5f);
-	
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	// top right //
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
 		0.f, &tmp));
 	tmp->SetPos(width/2.f-sidexsize/2.f, mheight/2.f, -height/2.f+sideysize/2.f);
-	
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
 	tmp->SetPos(width/2.f-sidexsize*1.5f, sideheight/2.f, -height/2.f+sideysize/2.f);
-	
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
 	tmp->SetPos(width/2.f-sidexsize/2.f, sideheight/2.f, -height/2.f+sideysize*1.5f);
-	
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 
 	// bottom left //
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
 		0.f, &tmp));
 	tmp->SetPos(-width/2.f+sidexsize/2.f, mheight/2.f, height/2.f-sideysize/2.f);
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
 	tmp->SetPos(-width/2.f+sidexsize*1.5f, sideheight/2.f, height/2.f-sideysize/2.f);
-	
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
 	tmp->SetPos(-width/2.f+sidexsize/2.f, sideheight/2.f, height/2.f-sideysize*1.5f);
-	
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	// bottom right //
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
 		0.f, &tmp));
 	tmp->SetPos(width/2.f-sidexsize/2.f, mheight/2.f, height/2.f-sideysize/2.f);
-	
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
 	tmp->SetPos(width/2.f-sidexsize*1.5f, sideheight/2.f, height/2.f-sideysize/2.f);
-
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
 	tmp->SetPos(width/2.f-sidexsize/2.f, sideheight/2.f, height/2.f-sideysize*1.5f);
-
+	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	// fill empty paddle spaces //
 	if(plycount < 2){
@@ -147,6 +163,7 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 		tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
 			Float3(sidexsize, sideheight/2, sideysize*16.f), 0.f, &tmp));
 		tmp->SetPos(-width/2.f+sidexsize/2.f, sideheight/4.f, 0);
+		tmp->SetPhysicalMaterialID(ArenaMatID);
 	}
 
 	if(plycount < 3){
@@ -155,6 +172,7 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 		tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
 			Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, &tmp));
 		tmp->SetPos(0, sideheight/4.f, height/2.f-sideysize/2.f);
+		tmp->SetPhysicalMaterialID(ArenaMatID);
 	}
 	if(plycount < 4){
 
@@ -162,6 +180,7 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 		tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
 			Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, &tmp));
 		tmp->SetPos(0, sideheight/4.f, -height/2.f+sideysize/2.f);
+		tmp->SetPhysicalMaterialID(ArenaMatID);
 	}
 
 
@@ -190,6 +209,7 @@ addplayerpaddlelabel:
 		case 2: tmp->SetPos(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, 0);break;
 		case 3: tmp->SetPos(0, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust); break;
 		}
+		tmp->SetPhysicalMaterialID(PaddleID);
 
 		// setup joints //
 		if(!tmp->CreateConstraintWith<Leviathan::Entity::SliderConstraint>(castedbottombrush)->SetParameters(
@@ -202,6 +222,21 @@ addplayerpaddlelabel:
 
 		if(secondary)
 			continue;
+		// Create goal area for this slot //
+		auto goalarea = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), materialclosedpaddlearea, 
+			Float3((i == 0 || i == 2) ? paddlethickness: width, sideheight, (i == 0 || i == 2) ? height: paddlethickness), 0.f, &tmp));
+		tmp->SetPhysicalMaterialID(GoalAreaMatID);
+		
+		switch(i){
+		case 0: tmp->SetPos(width/2.f+paddlethickness/2.f, sideheight/2.f, 0); break;
+		case 1: tmp->SetPos(0, sideheight/2.f, width/2.f+paddlethickness/2.f); break;
+		case 2: tmp->SetPos(-width/2.f-paddlethickness/2.f, sideheight/2.f, 0);break;
+		case 3: tmp->SetPos(0, sideheight/2.f, -width/2.f-paddlethickness/2.f); break;
+		}
+
+		// Set to slot //
+		players[i]->SetGoalAreaObject(goalarea);
+
 		// loop again if has secondary //
 		if(players[i]->GetSplit() != NULL){
 			secondary = true;
@@ -226,20 +261,40 @@ void Pong::Arena::ServeBall(){
 
 	// we want to load our ball prop into the world //
 	Leviathan::Entity::Prop* prop;
-	auto tmpprop = TargetWorld->GetWorldObject(Leviathan::Engine::Get()->GetObjectLoader()->LoadPropToWorld(TargetWorld.get(), L"PongBall", &prop));
+	Ball = TargetWorld->GetWorldObject(Leviathan::Engine::Get()->GetObjectLoader()->LoadPropToWorld(TargetWorld.get(), L"PongBall", &prop));
 
 	// set to center of board //
 	prop->SetPos(Float3(0.f, 0.5f, 0.f));
+
+	// Set material //
+	prop->SetPhysicalMaterial(L"BallMaterial");
 
 	// TODO: queue send event //
 
 	// should get a random direction... but just serve left //
 	// because the body is centered at the position (the center point is at the center of the sphere the point can be zero) //
-	prop->GiveImpulse(Float3(-100.f, 0.f, 0.f));
+	prop->GiveImpulse(Float3(-25.f, 0.f, 0.f));
 }
-
 // ------------------------------------ //
+void Pong::Arena::GiveBallSpeed(float mult){
+	if(Ball){
 
+		// Cast //
+		Leviathan::Entity::Prop* tmpball = dynamic_cast<Leviathan::Entity::Prop*>(Ball.get());
+		if(tmpball != NULL){
+			// Get current velocity //
+			Float3 targetspeed = tmpball->GetBodyVelocity();
+			// Don't want to apply any Y directional force //
+			targetspeed.Y = 0;
+			// We want the direction //
+			targetspeed = targetspeed.Normalize();
+			// Add the factor //
+			targetspeed *= mult;
+
+			tmpball->ApplyForce(new ApplyForceInfo(targetspeed, true, true, new wstring(L"BallPush")));
+		}
+	}
+}
 // ------------------------------------ //
 
 

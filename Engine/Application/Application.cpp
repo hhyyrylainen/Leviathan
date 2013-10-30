@@ -92,4 +92,8 @@ DLLEXPORT void Leviathan::LeviathanApplication::RegisterApplicationPhysicalMater
 
 }
 
+DLLEXPORT void Leviathan::LeviathanApplication::Tick(int mspassed){
+
+}
+
 // ------------------------------------ //

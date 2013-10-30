@@ -40,6 +40,7 @@ namespace Leviathan{ namespace Entity{
 
 	protected:
 		virtual void _UpdatePhysicsObjectLocation();
+		virtual void _OnHiddenStateUpdated();
 		// ------------------------------------ //
 		string MeshName;
 		Float3 Sizes;

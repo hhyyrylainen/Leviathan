@@ -79,6 +79,15 @@ DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyVelocity(const Float3 &veloc
 		NewtonBodySetVelocity(Body, &velocities.X);
 	}
 }
+
+DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyVelocity(){
+	if(Body){
+		Float3 vel(0);
+		NewtonBodyGetVelocity(Body, &vel.X);
+		return vel;
+	}
+	return (Float3)0;
+}
 // ------------------------------------ //
 Leviathan::Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(){
 	// return if just an empty list //

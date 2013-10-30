@@ -10,7 +10,7 @@
 #include "Arena.h"
 using namespace Pong;
 // ------------------------------------ //
-Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerList(4){
+Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0){
 	StaticAccess = this;
 
 	GameInputHandler = new GameInputController();
@@ -233,16 +233,48 @@ void Pong::PongGame::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager
 	// load predefined materials //
 	unique_ptr<Leviathan::PhysicalMaterial> PaddleMaterial(new Leviathan::PhysicalMaterial(L"PaddleMaterial"));
 	unique_ptr<Leviathan::PhysicalMaterial> ArenaMaterial(new Leviathan::PhysicalMaterial(L"ArenaMaterial"));
+	unique_ptr<Leviathan::PhysicalMaterial> ArenaBottomMaterial(new Leviathan::PhysicalMaterial(L"ArenaBottomMaterial"));
 	unique_ptr<Leviathan::PhysicalMaterial> BallMaterial(new Leviathan::PhysicalMaterial(L"BallMaterial"));
 	unique_ptr<Leviathan::PhysicalMaterial> GoalAreaMaterial(new Leviathan::PhysicalMaterial(L"GoalAreaMaterial"));
 
 
-	PaddleMaterial->FormPairWith(*BallMaterial).SetSoftness(1.f).SetElasticity(1.f);
+	PaddleMaterial->FormPairWith(*BallMaterial).SetSoftness(1.f).SetElasticity(2.0f).SetFriction(1.f, 1.f);
 	PaddleMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
 	PaddleMaterial->FormPairWith(*ArenaMaterial).SetElasticity(0.f).SetSoftness(0.f);
+	PaddleMaterial->FormPairWith(*ArenaBottomMaterial).SetCollidable(false).SetSoftness(0.f).SetFriction(0.f, 0.f).SetElasticity(0.f);
 	ArenaMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
-	ArenaMaterial->FormPairWith(*BallMaterial).SetFriction(0.f, 0.f).SetSoftness(0.f);
+	ArenaMaterial->FormPairWith(*BallMaterial).SetFriction(0.f, 0.f).SetSoftness(1.f).SetElasticity(1.f);
+	ArenaBottomMaterial->FormPairWith(*BallMaterial).SetElasticity(0.f).SetFriction(0.f, 0.f).SetSoftness(0.f);
+	ArenaBottomMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
+
+	// Add the materials // 
+	Leviathan::PhysicsMaterialManager* tmp = Leviathan::PhysicsMaterialManager::Get();
+
+	tmp->LoadedMaterialAdd(PaddleMaterial.release());
+	tmp->LoadedMaterialAdd(ArenaMaterial.release());
+	tmp->LoadedMaterialAdd(BallMaterial.release());
+	tmp->LoadedMaterialAdd(GoalAreaMaterial.release());
+	tmp->LoadedMaterialAdd(ArenaBottomMaterial.release());
 }
+
+void Pong::PongGame::Tick(int mspassed){
+	Tickcount++;
+	// Let the AI think //
+
+
+	// Update logic //
+
+
+
+	// Give the ball more speed //
+	GameArena->GiveBallSpeed(2.5f);
+}
+
+
+// ------------------ Physics callbacks for game logic ------------------ //
+
+
+
 
 
 

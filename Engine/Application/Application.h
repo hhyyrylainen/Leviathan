@@ -27,6 +27,7 @@ namespace Leviathan{
 		DLLEXPORT virtual int RunMessageLoop();
 		DLLEXPORT virtual void Render();
 		DLLEXPORT void PassCommandLine(const wstring &params);
+		DLLEXPORT virtual void Tick(int mspassed);
 		
 		// getting data from the class //
 		DLLEXPORT bool Quitting(){ return Quit; };

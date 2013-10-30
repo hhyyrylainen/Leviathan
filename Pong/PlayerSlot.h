@@ -52,6 +52,12 @@ namespace Pong{
 		void SetPaddleObject(shared_ptr<Leviathan::BaseObject> obj){
 			PaddleObject = obj;
 		}
+		shared_ptr<Leviathan::BaseObject> GetGoalArea(){
+			return GoalAreaObject;
+		}
+		void SetGoalAreaObject(shared_ptr<Leviathan::BaseObject> obj){
+			GoalAreaObject = obj;
+		}
 
 		// returns true if player type isn't empty or closed //
 		inline bool IsSlotActive(){
@@ -79,6 +85,7 @@ namespace Pong{
 		int MoveState;
 
 		shared_ptr<Leviathan::BaseObject> PaddleObject;
+		shared_ptr<Leviathan::BaseObject> GoalAreaObject;
 
 		// slot splitting //
 		PlayerSlot* SplitSlot;

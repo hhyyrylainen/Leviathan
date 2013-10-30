@@ -21,8 +21,12 @@ namespace Leviathan{
 			return Hidden;
 		}
 
+		DLLEXPORT void SetHiddenState(bool hidden);
 
 	protected:
+
+		virtual void _OnHiddenStateUpdated() = 0;
+		// ------------------------------------ //
 		bool Hidden;
 	};
 

@@ -24,6 +24,8 @@ namespace Pong{
 
 		void ServeBall();
 
+		void GiveBallSpeed(float mult);
+
 	private:
 
 		void _ClearPointers();

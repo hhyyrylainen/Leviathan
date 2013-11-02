@@ -10,6 +10,7 @@
 
 
 #define BASE_ARENASCALE		1.f	
+#define BALL_SPEED_MAX		40
 
 namespace Pong{
 
@@ -23,8 +24,14 @@ namespace Pong{
 		bool GenerateArena(PongGame* game, vector<PlayerSlot*> &players, int plycount, int maximumsplit, bool clearfirst = true);
 
 		void ServeBall();
+		// Does what ever is needed to ditch old ball //
+		void LetGoOfBall();
 
 		void GiveBallSpeed(float mult);
+
+		inline shared_ptr<Leviathan::BaseObject> GetBallPtr(){
+			return Ball;
+		}
 
 	private:
 

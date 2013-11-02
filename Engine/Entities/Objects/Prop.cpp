@@ -48,7 +48,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 	GraphicalObject = LinkedToWorld->GetScene()->createEntity(Convert::WstringToString(ogrefile));
 
 	// create scene node for positioning //
-	ObjectsNode = LinkedToWorld->GetScene()->getRootSceneNode()->createChildSceneNode(Convert::WstringToString(modelfile)+"_basenode");
+	ObjectsNode = LinkedToWorld->GetScene()->getRootSceneNode()->createChildSceneNode(Convert::WstringToString(modelfile)+"_basenode_"+Convert::ToString(ID));
 
 	// attach for deletion and valid display //
 	ObjectsNode->attachObject(GraphicalObject);

@@ -460,6 +460,10 @@ namespace Leviathan{
 		DLLEXPORT inline float HAdd() const{
 			return X+Y+Z;
 		}
+		// Add all elements together absoluted (abs()) //
+		DLLEXPORT inline float HAddAbs() const{
+			return abs(X)+abs(Y)+abs(Z);
+		}
 		// getting min and max of objects //
 		DLLEXPORT inline Float3 MinElements(const Float3 &other) const{
 			return Float3(X < other.X ? X : other.X, Y < other.Y ? Y : other.Y, Z < other.Z ? Z : other.Z);

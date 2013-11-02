@@ -92,5 +92,7 @@ namespace Leviathan{
 
 }
 
+// Using for shorter apply force calls //
+using Leviathan::ApplyForceInfo;
 
 #endif

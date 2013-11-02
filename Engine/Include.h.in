@@ -126,8 +126,12 @@
 // include engine lib
 #ifdef _DEBUG
 #pragma comment(lib, "EngineD.lib")
+// Also link the Newton library because it seems to be needed for some things //
+#pragma comment(lib, "newton_d.lib")
 #else
 #pragma comment(lib, "Engine.lib")
+// Also link the Newton library because it seems to be needed for some things //
+#pragma comment(lib, "newton.lib")
 #endif
 
 #endif // ENGINE_EXPORTS

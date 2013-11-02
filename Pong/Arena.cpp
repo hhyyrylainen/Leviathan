@@ -226,6 +226,7 @@ addplayerpaddlelabel:
 		auto goalarea = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), materialclosedpaddlearea, 
 			Float3((i == 0 || i == 2) ? paddlethickness: width, sideheight, (i == 0 || i == 2) ? height: paddlethickness), 0.f, &tmp));
 		tmp->SetPhysicalMaterialID(GoalAreaMatID);
+		tmp->SetHiddenState(true);
 		
 		switch(i){
 		case 0: tmp->SetPos(width/2.f+paddlethickness/2.f, sideheight/2.f, 0); break;
@@ -286,15 +287,28 @@ void Pong::Arena::GiveBallSpeed(float mult){
 			Float3 targetspeed = tmpball->GetBodyVelocity();
 			// Don't want to apply any Y directional force //
 			targetspeed.Y = 0;
-			// We want the direction //
-			targetspeed = targetspeed.Normalize();
+			//// We want the direction //
+			//targetspeed = targetspeed.Normalize();
 			// Add the factor //
 			targetspeed *= mult;
 
-			tmpball->ApplyForce(new ApplyForceInfo(targetspeed, true, true, new wstring(L"BallPush")));
+			// Limit maximum speed //
+			if(targetspeed.HAddAbs() >= BALL_SPEED_MAX){
+
+				tmpball->RemoveApplyForce(L"BallPush");
+			} else {
+				tmpball->ApplyForce(new ApplyForceInfo(targetspeed, true, true, new wstring(L"BallPush")));
+			}
 		}
 	}
 }
+
+void Pong::Arena::LetGoOfBall(){
+	// We can just reset the pointer to fool the system //
+	Ball.reset();
+
+}
+
 // ------------------------------------ //
 
 

@@ -6,7 +6,7 @@
 #include "Entities\GameWorld.h"
 #include "Entities\Objects\Prop.h"
 #include "Entities\Objects\Brush.h"
-//using namespace Leviathan;
+using namespace Leviathan;
 using namespace SandBoxie;
 // ------------------------------------ //
 App::App(){

@@ -6,6 +6,7 @@
 #include "PongGame.h"
 #include "Entities\Objects\Brush.h"
 #include "Entities\Objects\Prop.h"
+#include "Entities\Objects\TrackEntityController.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::Arena::Arena(shared_ptr<Leviathan::GameWorld> world) : TargetWorld(world){
@@ -219,6 +220,50 @@ addplayerpaddlelabel:
 
 		// link //
 		secondary ? players[i]->GetSplit()->SetPaddleObject(plypaddle): players[i]->SetPaddleObject(plypaddle);
+
+		// Create the track controller //
+		std::vector<Leviathan::Entity::TrackControllerPosition> MovementPositions(2);
+
+		switch(i){
+		case 0:
+			{
+				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
+					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, height/2.f-sideysize-paddlewidth/2.f));
+				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
+					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, -height/2.f+sideysize+paddlewidth/2.f));
+			}
+			break;
+		case 1:
+			{
+				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
+					Float3(width/2.f-sidexsize-paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust));
+				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
+					Float3(-width/2.f+sidexsize+paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust));
+			}
+			break;
+		case 2:
+			{
+				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
+					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, height/2.f-sideysize-paddlewidth/2.f));
+				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
+					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, -height/2.f+sideysize+paddlewidth/2.f));
+			}
+			break;
+		case 3:
+			{
+				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
+					Float3(width/2.f-sidexsize-paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust));
+				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
+					Float3(-width/2.f+sidexsize+paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust));
+			}
+			break;
+		}
+		Leviathan::Entity::TrackEntityController* controller;
+		auto track = TargetWorld->GetWorldObject(loader->LoadTrackEntityControllerToWorld(TargetWorld.get(), MovementPositions, tmp, &controller));
+
+		// Set //
+		secondary ? players[i]->GetSplit()->SetTrackObject(track, controller): players[i]->SetTrackObject(track, controller);
+
 
 		if(secondary)
 			continue;

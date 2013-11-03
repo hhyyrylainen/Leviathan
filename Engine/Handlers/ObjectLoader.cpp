@@ -9,6 +9,7 @@ using namespace Leviathan;
 #include "OgreManualObject.h"
 #include "Entities\Objects\Brush.h"
 #include "Entities\Objects\Prop.h"
+#include "Entities\Objects\TrackEntityController.h"
 
 Leviathan::ObjectLoader::ObjectLoader(Engine* engine){
 	m_Engine = engine;
@@ -202,6 +203,41 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const 
 
 	return id;
 }
+// ------------------ Complex entity loading ------------------ //
+DLLEXPORT int Leviathan::ObjectLoader::LoadTrackEntityControllerToWorld(GameWorld* world, std::vector<TrackControllerPosition> &initialtrack, 
+	BaseNotifiable* controllable, TrackEntityController** createdinstance)
+{
+	// Construct the object //
+	unique_ptr<TrackEntityController> tmpptr(new TrackEntityController(world));
+
+	// Set nodes //
+	for(auto iter = initialtrack.begin(); iter != initialtrack.end(); ++iter){
+		// Add position //
+		tmpptr->AddLocationToTrack(iter->Pos, iter->Orientation);
+	}
+
+	// Link object //
+	tmpptr->ConnectToNotifiable(controllable);
+
+	// Initialize //
+	if(!tmpptr->Init()){
+
+		DEBUG_BREAK;
+		return -1;
+	}
+
+	// Copy ID for returning //
+	int retid = tmpptr->GetID();
+
+	// Copy instance ptr //
+	*createdinstance = tmpptr.get();
+
+	// Add to world //
+	world->AddObject(tmpptr.release());
+
+	return retid;
+}
+
 // ------------------------------------ //
 
 // ------------------------------------ //

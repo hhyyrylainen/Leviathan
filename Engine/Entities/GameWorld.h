@@ -11,7 +11,7 @@
 #include "Bases\BaseObject.h"
 
 
-#define PHYSICS_BASE_GRAVITY		-1.f
+#define PHYSICS_BASE_GRAVITY		-9.81f
 
 namespace Leviathan{
 
@@ -39,6 +39,7 @@ namespace Leviathan{
 		DLLEXPORT void AddObject(BaseObject* obj);
 		DLLEXPORT void AddObject(shared_ptr<BaseObject> obj);
 		DLLEXPORT void DestroyObject(int ID);
+		DLLEXPORT void QueueDestroyObject(int ID);
 
 		DLLEXPORT shared_ptr<BaseObject> GetWorldObject(int ID);
 		// clears all objects from the world //
@@ -60,6 +61,7 @@ namespace Leviathan{
 	private:
 
 		void _CreateOgreResources(Ogre::Root* ogre);
+		void _HandleDelayedDelete();
 		// ------------------------------------ //
 		Ogre::Camera* WorldSceneCamera;
 		Ogre::SceneNode* CameraLocationNode;
@@ -72,7 +74,11 @@ namespace Leviathan{
 		shared_ptr<PhysicalWorld> _PhysicalWorld;
 
 		// objects //
+		// TODO: maybe change this to a map //
 		std::vector<shared_ptr<BaseObject>> Objects;
+
+		// This vector is used for delayed deletion //
+		std::vector<int> DelayedDeleteIDS;
 	};
 
 }

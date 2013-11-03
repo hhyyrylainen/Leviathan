@@ -8,6 +8,11 @@ using namespace Leviathan;
 BasePositionable::BasePositionable() : QuatRotation(Float4::IdentityQuaternion()), Position(Float3(0)){
 
 }
+
+DLLEXPORT Leviathan::BasePositionable::BasePositionable(const Float3 &pos, const Float4 &orientation) : Position(pos), QuatRotation(orientation){
+
+}
+
 BasePositionable::~BasePositionable(){
 
 }

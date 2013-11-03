@@ -6,6 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "Entities\Objects\TrackEntityController.h"
 
 
 #define INPUTFORCE_APPLYSCALE		20.f
@@ -58,6 +59,10 @@ namespace Pong{
 		void SetGoalAreaObject(shared_ptr<Leviathan::BaseObject> obj){
 			GoalAreaObject = obj;
 		}
+		void SetTrackObject(shared_ptr<Leviathan::BaseObject> obj, Leviathan::Entity::TrackEntityController* direct){
+			TrackObject = obj;
+			TrackDirectptr = direct;
+		}
 
 		// returns true if player type isn't empty or closed //
 		inline bool IsSlotActive(){
@@ -86,6 +91,9 @@ namespace Pong{
 
 		shared_ptr<Leviathan::BaseObject> PaddleObject;
 		shared_ptr<Leviathan::BaseObject> GoalAreaObject;
+
+		shared_ptr<Leviathan::BaseObject> TrackObject;
+		Leviathan::Entity::TrackEntityController* TrackDirectptr;
 
 		// slot splitting //
 		PlayerSlot* SplitSlot;

@@ -44,11 +44,6 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 	_PhysicalWorld.reset();
 
 }
-
-// ------------------------------------ //
-
-// ------------------------------------ //
-
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::UpdateCameraAspect(GraphicalInputEntity* rendertarget){
 	// set aspect ratio to the same as the view port (this makes it look realistic) //
@@ -189,19 +184,19 @@ DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
 	// create force without mass applied //
 	return Float3(0.f, PHYSICS_BASE_GRAVITY, 0.f);
 }
-
-
-
-
+// ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SimulateWorld(){
-	
+	// This is probably the best place to remove dead objects //
+	_HandleDelayedDelete();
+
+
 	_PhysicalWorld->SimulateWorld();
 }
 
 DLLEXPORT void Leviathan::GameWorld::ClearSimulatePassedTime(){
 	_PhysicalWorld->ClearTimers();
 }
-
+// ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
 	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
 		if((*iter)->GetID() == ID){
@@ -211,6 +206,50 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
 			return;
 		}
 	}
+}
+
+DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(int ID){
+	DelayedDeleteIDS.push_back(ID);
+}
+
+void Leviathan::GameWorld::_HandleDelayedDelete(){
+	// Return right away if no objects to delete //
+	if(DelayedDeleteIDS.size() == 0)
+		return;
+
+	// Search all objects and find the ones that need to be deleted //
+	for(auto iter = Objects.begin(); iter != Objects.end(); ){
+
+		// Check does id match any //
+		int curid = (*iter)->GetID();
+		bool delthis = false;
+
+		for(auto iterids = DelayedDeleteIDS.begin(); iterids != DelayedDeleteIDS.end(); ){
+
+			if(*iterids == curid){
+				// Remove this as it will get deleted //
+				delthis = true;
+				DelayedDeleteIDS.erase(iterids);
+				break;
+
+			} else {
+				++iterids;
+			}
+		}
+
+		if(delthis){
+
+			(*iter)->Release();
+			iter = Objects.erase(iter);
+			// Check for end //
+			if(DelayedDeleteIDS.size() == 0)
+				return;
+
+		} else {
+			++iter;
+		}
+	}
+
 }
 
 

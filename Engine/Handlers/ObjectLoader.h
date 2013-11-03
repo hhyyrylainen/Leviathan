@@ -15,10 +15,13 @@ namespace Leviathan{
 
 	// forward declaration //
 	class Engine;
+	class BaseNotifiable;
 
 	namespace Entity{
 		class Prop;
 		class Brush;
+		struct TrackControllerPosition;
+		class TrackEntityController;
 	}
 
 
@@ -36,6 +39,12 @@ namespace Leviathan{
 		// same as above but no physics initialization (you must do your own if you want this brush to interact with objects) //
 		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::Brush** createdinstance);
 
+		// ------------------ Complex entity loading ------------------ //
+		DLLEXPORT int LoadTrackEntityControllerToWorld(GameWorld* world, vector<TrackControllerPosition> &initialtrack, BaseNotifiable* controllable, 
+			TrackEntityController** createdinstance);
+
+
+		// ------------------ Test object adding ------------------ //
 		DLLEXPORT void CreateTestCubeToScene(Ogre::SceneManager* scene, string meshname);
 		DLLEXPORT void AddTestCubeToScenePositions(Ogre::SceneManager* scene, vector<Float3> &positions, const string &meshname);
 

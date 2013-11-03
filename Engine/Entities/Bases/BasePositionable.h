@@ -12,8 +12,10 @@ namespace Leviathan{
 
 	class BasePositionable{
 	public:
-		DLLEXPORT BasePositionable::BasePositionable();
-		DLLEXPORT virtual BasePositionable::~BasePositionable();
+		DLLEXPORT BasePositionable();
+		// Uses provided values in the initializer list //
+		DLLEXPORT BasePositionable(const Float3 &pos, const Float4 &orientation);
+		DLLEXPORT virtual ~BasePositionable();
 
 		DLLEXPORT virtual void SetPos(const float &x, const float &y, const float &z);
 		DLLEXPORT virtual void SetPos(const Float3 &pos);

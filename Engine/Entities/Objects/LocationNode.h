@@ -22,6 +22,7 @@ namespace Leviathan{ namespace Entity{
 		DLLEXPORT LocationNode(GameWorld* world, const Float3 &pos, const Float4 &orientation, bool deleteifnoowner = true);
 		DLLEXPORT ~LocationNode();
 
+		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
 	protected:
 		// Function which sends a message to update the parent object that position of this object has changed //

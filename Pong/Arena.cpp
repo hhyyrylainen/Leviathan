@@ -228,33 +228,33 @@ addplayerpaddlelabel:
 		case 0:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, height/2.f-sideysize-paddlewidth/2.f));
+					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, height/2.f-sideysize-paddlewidth/2.f), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, -height/2.f+sideysize+paddlewidth/2.f));
+					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, -height/2.f+sideysize+paddlewidth/2.f), Float4::IdentityQuaternion());
 			}
 			break;
 		case 1:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-sidexsize-paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust));
+					Float3(width/2.f-sidexsize-paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+sidexsize+paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust));
+					Float3(-width/2.f+sidexsize+paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust), Float4::IdentityQuaternion());
 			}
 			break;
 		case 2:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, height/2.f-sideysize-paddlewidth/2.f));
+					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, height/2.f-sideysize-paddlewidth/2.f), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, -height/2.f+sideysize+paddlewidth/2.f));
+					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, -height/2.f+sideysize+paddlewidth/2.f), Float4::IdentityQuaternion());
 			}
 			break;
 		case 3:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-sidexsize-paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust));
+					Float3(width/2.f-sidexsize-paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+sidexsize+paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust));
+					Float3(-width/2.f+sidexsize+paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust), Float4::IdentityQuaternion());
 			}
 			break;
 		}

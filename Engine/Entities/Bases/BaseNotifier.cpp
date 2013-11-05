@@ -5,7 +5,8 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::BaseNotifier::BaseNotifier(){
+// Virtual base constructor shouldn't be called //
+DLLEXPORT Leviathan::BaseNotifier::BaseNotifier() : BaseObject(-1, NULL){
 
 }
 
@@ -19,9 +20,9 @@ DLLEXPORT void Leviathan::BaseNotifier::ReleaseChildHooks(){
 	// Go through all and unhook them //
 	for(auto iter = ConnectedChilds.begin(); iter != ConnectedChilds.end(); ++iter){
 		// Call unhook on the child //
-		iter->_OnUnhookNotifiable(this);
+		(*iter)->_OnUnhookNotifier(this);
 		// Remove it //
-		_OnNotifiableDisconnected(&(*iter));
+		_OnNotifiableDisconnected(*iter);
 	}
 	// Clear all at once //
 	ConnectedChilds.clear();
@@ -45,11 +46,11 @@ DLLEXPORT bool Leviathan::BaseNotifier::UnConnectFromNotifiable(BaseNotifiable* 
 	// Remove from list and call functions //
 	for(auto iter = ConnectedChilds.begin(); iter != ConnectedChilds.end(); ++iter){
 
-		if(&(*iter) == childtoremove){
+		if(*iter == unhookfrom){
 			// Call unhook on the child //
-			iter->_OnUnhookNotifiable(this);
+			(*iter)->_OnUnhookNotifier(this);
 			// Remove it //
-			_OnNotifiableDisconnected(childtoremove);
+			_OnNotifiableDisconnected(unhookfrom);
 			ConnectedChilds.erase(iter);
 			return true;
 		}
@@ -61,9 +62,9 @@ DLLEXPORT bool Leviathan::BaseNotifier::UnConnectFromNotifiable(int id){
 	// Find child matching the provided id //
 	for(auto iter = ConnectedChilds.begin(); iter != ConnectedChilds.end(); ++iter){
 
-		if(iter->GetID() == id){
+		if((*iter)->GetID() == id){
 			// Remove it //
-			return UnConnectFromNotifiable(&(*iter));
+			return UnConnectFromNotifiable(*iter);
 		}
 	}
 	return false;
@@ -73,7 +74,7 @@ void Leviathan::BaseNotifier::_OnUnhookNotifiable(BaseNotifiable* childtoremove)
 	// Remove from list //
 	for(auto iter = ConnectedChilds.begin(); iter != ConnectedChilds.end(); ++iter){
 
-		if(&(*iter) == childtoremove){
+		if(*iter == childtoremove){
 			// Remove it //
 			_OnNotifiableDisconnected(childtoremove);
 			ConnectedChilds.erase(iter);

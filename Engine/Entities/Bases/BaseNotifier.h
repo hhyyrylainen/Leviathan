@@ -12,6 +12,7 @@
 namespace Leviathan{
 
 	class BaseNotifier : virtual public BaseObject{
+		friend BaseNotifiable;
 	public:
 		DLLEXPORT BaseNotifier();
 		DLLEXPORT virtual ~BaseNotifier();

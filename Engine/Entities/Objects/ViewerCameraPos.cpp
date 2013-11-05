@@ -206,6 +206,10 @@ DLLEXPORT void Leviathan::ViewerCameraPos::StopSoundPerceiving(){
 	SendSoundPosition = false;
 }
 
+DLLEXPORT bool Leviathan::ViewerCameraPos::SendCustomMessage(int entitycustommessagetype, void* dataptr){
+	return false;
+}
+
 
 
 

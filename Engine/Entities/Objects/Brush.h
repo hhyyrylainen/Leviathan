@@ -12,6 +12,7 @@
 #include "..\Bases\BasePositionable.h"
 #include "..\Bases\BasePhysicsObject.h"
 #include "..\Bases\BaseContraintable.h"
+#include "..\Bases\BaseNotifiable.h"
 
 namespace Leviathan{
 	class GameWorld;
@@ -20,7 +21,7 @@ namespace Leviathan{
 namespace Leviathan{ namespace Entity{
 
 
-	class Brush : virtual public BaseObject, public BaseRenderable, public BaseContraintable{
+	class Brush : virtual public BaseObject, public BaseRenderable, public BaseContraintable, public BaseNotifiable{
 	public:
 		DLLEXPORT Brush(bool hidden, GameWorld* world);
 		DLLEXPORT virtual ~Brush();
@@ -33,6 +34,9 @@ namespace Leviathan{ namespace Entity{
 
 		// call if you want to have this interact with other physical objects (set mass to 0 to be static) //
 		DLLEXPORT void AddPhysicalObject(const float &mass = 0.f);
+
+
+		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
 		DLLEXPORT virtual bool CheckRender(GraphicalInputEntity* graphics, int mspassed);
 

@@ -8,8 +8,10 @@
 // ---- includes ---- //
 
 
-enum ENTITYCUSTOMMESSAGETYPE {ENTITYCUSTOMMESSAGETYPE_LOCATIONDATA_UPDATED, ENTITYCUSTOMMESSAGETYPE_POSITIONUPDATED, 
-	ENTITYCUSTOMMESSAGETYPE_ORIENTATIONUPDATED};
+// This cannot be enum because it need to be able to be extended with new values //
+#define ENTITYCUSTOMMESSAGETYPE_LOCATIONDATA_UPDATED			1
+#define ENTITYCUSTOMMESSAGETYPE_POSITIONUPDATED					2
+#define ENTITYCUSTOMMESSAGETYPE_ORIENTATIONUPDATED				3
 
 namespace Leviathan{
 
@@ -32,7 +34,7 @@ namespace Leviathan{
 
 		// This function is used to avoid explicit dynamic casts when trying to call features on entities that they might not have //
 		// Should return true if the message is acknowledged so that the caller can avoid calling more general types //
-		DLLEXPORT virtual bool SendCustomMessage(ENTITYCUSTOMMESSAGETYPE type, void* dataptr) = 0;
+		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr) = 0;
 
 
 	protected:

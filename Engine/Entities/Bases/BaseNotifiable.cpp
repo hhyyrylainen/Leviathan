@@ -3,9 +3,10 @@
 #ifndef LEVIATHAN_BASENOTIFIABLE
 #include "BaseNotifiable.h"
 #endif
+#include "BaseNotifier.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::BaseNotifiable::BaseNotifiable(){
+DLLEXPORT Leviathan::BaseNotifiable::BaseNotifiable() : BaseObject(-1, NULL){
 
 }
 
@@ -19,9 +20,9 @@ DLLEXPORT void Leviathan::BaseNotifiable::ReleaseParentHooks(){
 	// Go through all and unhook them //
 	for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ++iter){
 		// Call unhook on the child //
-		iter->_OnUnhookNotifiable(this);
+		(*iter)->_OnUnhookNotifiable(this);
 		// Remove it //
-		_OnNotifierDisconnected(&(*iter));
+		_OnNotifierDisconnected(*iter);
 	}
 	// Clear all at once //
 	ConnectedToParents.clear();
@@ -45,9 +46,9 @@ DLLEXPORT bool Leviathan::BaseNotifiable::UnConnectFromNotifier(BaseNotifier* sp
 	// Remove from list and call functions //
 	for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ++iter){
 
-		if(&(*iter) == specificnotifier){
+		if(*iter == specificnotifier){
 			// Call unhook on the child //
-			iter->_OnUnhookNotifiable(this);
+			(*iter)->_OnUnhookNotifiable(this);
 			// Remove it //
 			_OnNotifierDisconnected(specificnotifier);
 			ConnectedToParents.erase(iter);
@@ -61,9 +62,9 @@ DLLEXPORT bool Leviathan::BaseNotifiable::UnConnectFromNotifier(int id){
 	// Find child matching the provided id //
 	for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ++iter){
 
-		if(iter->GetID() == id){
+		if((*iter)->GetID() == id){
 			// Remove it //
-			return UnConnectFromNotifier(&(*iter));
+			return UnConnectFromNotifier(*iter);
 		}
 	}
 	return false;
@@ -73,10 +74,10 @@ void Leviathan::BaseNotifiable::_OnUnhookNotifier(BaseNotifier* parent){
 	// Remove from list //
 	for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ++iter){
 
-		if(&(*iter) == parent){
+		if(*iter == parent){
 			// Remove it //
 			_OnNotifierDisconnected(parent);
-			ConnectedChilds.erase(iter);
+			ConnectedToParents.erase(iter);
 			return;
 		}
 	}

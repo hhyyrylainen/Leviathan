@@ -3,6 +3,9 @@
 #ifndef LEVIATHAN_LOCATIONNODEENTITY
 #include "LocationNode.h"
 #endif
+#include "..\GameWorld.h"
+#include "..\Bases\BaseObject.h"
+#include "Entities\Bases\BaseNotifier.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
@@ -26,7 +29,7 @@ void Leviathan::Entity::LocationNode::_NotifyParentOfPosition(){
 	// Send update notification to the parent //
 	for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ++iter){
 
-		iter->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_LOCATIONDATA_UPDATED, static_cast<BasePositionable*>(this));
+		(*iter)->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_LOCATIONDATA_UPDATED, static_cast<BasePositionable*>(this));
 	}
 }
 // ------------------------------------ //
@@ -43,6 +46,10 @@ void Leviathan::Entity::LocationNode::_OnNotifierDisconnected(BaseNotifier* pare
 
 		LinkedToWorld->QueueDestroyObject(ID);
 	}
+}
+
+DLLEXPORT bool Leviathan::Entity::LocationNode::SendCustomMessage(int entitycustommessagetype, void* dataptr){
+	return false;
 }
 
 

@@ -274,3 +274,8 @@ void Leviathan::Entity::Prop::_OnHiddenStateUpdated(){
 	// Set scene node visibility //
 	ObjectsNode->setVisible(!Hidden);
 }
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessagetype, void* dataptr){
+	DEBUG_BREAK;
+	return false;
+}

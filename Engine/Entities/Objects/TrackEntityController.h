@@ -1,5 +1,5 @@
-#ifndef LEVIATHAN_FILEREPLACENAME
-#define LEVIATHAN_FILEREPLACENAME
+#ifndef LEVIATHAN_TRACKENTITYCONTROLLER
+#define LEVIATHAN_TRACKENTITYCONTROLLER
 // ------------------------------------ //
 #ifndef LEVIATHAN_DEFINE
 #include "Define.h"
@@ -37,14 +37,20 @@ namespace Leviathan{ namespace Entity{
 
 		// Events are used to receive when render is about to happen and update positions //
 		DLLEXPORT virtual int OnEvent(Event** pEvent);
+		// This function doesn't do anything (except return -1) //
 		DLLEXPORT virtual int OnGenericEvent(GenericEvent** pevent);
 
 		// Directly sets the progress towards next node (if set to 1.f goes to next node) //
 		DLLEXPORT void SetProgressTowardsNextNode(float progress);
 		// Gets the progress towards next node, if at 1.f then last node is reached //
-		DLLEXPORT float GetProgressTowardsNextNode();
+		DLLEXPORT float GetProgressTowardsNextNode(){
+			return NodeProgress;
+		}
 
+		// This function creates a new node to the world and ads it to the track of this object //
 		DLLEXPORT void AddLocationToTrack(const Float3 &pos, const Float4 &dir);
+
+		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
 		// When called updates the entity positions (You probably don't have to manually call this) //
 		DLLEXPORT virtual void UpdateControlledPositions(int mspassed);
@@ -61,7 +67,7 @@ namespace Leviathan{ namespace Entity{
 		int ReachedNode;
 
 		// Percentage between ReachedNode and next node (1.f being next node reached and progress reset to 0) //
-
+		float NodeProgress;
 
 		// List of positions that form the track //
 		// Note these nodes are also on the inherited child object list //

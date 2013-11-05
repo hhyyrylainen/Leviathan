@@ -5,7 +5,7 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::BaseControllable::BaseControllable(){
+DLLEXPORT Leviathan::BaseControllable::BaseControllable() : BaseObject(-1, NULL){
 
 }
 

@@ -40,8 +40,8 @@ namespace Leviathan{
 		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::Brush** createdinstance);
 
 		// ------------------ Complex entity loading ------------------ //
-		DLLEXPORT int LoadTrackEntityControllerToWorld(GameWorld* world, vector<TrackControllerPosition> &initialtrack, BaseNotifiable* controllable, 
-			TrackEntityController** createdinstance);
+		DLLEXPORT int LoadTrackEntityControllerToWorld(GameWorld* world, vector<Entity::TrackControllerPosition> &initialtrack, BaseNotifiable* controllable, 
+			Entity::TrackEntityController** createdinstance);
 
 
 		// ------------------ Test object adding ------------------ //

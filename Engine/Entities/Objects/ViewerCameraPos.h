@@ -32,6 +32,9 @@ namespace Leviathan{
 		DLLEXPORT void SetRotation(const Float3 &orientation);
 
 
+		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
+
+
 		// input receiving //
 		DLLEXPORT virtual bool ReceiveInput(OIS::KeyCode key, int modifiers, bool down);
 		DLLEXPORT virtual void ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down);

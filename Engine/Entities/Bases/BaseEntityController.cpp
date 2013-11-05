@@ -5,7 +5,7 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::BaseEntityController::BaseEntityController(){
+DLLEXPORT Leviathan::BaseEntityController::BaseEntityController() : BaseObject(-1, NULL){
 
 }
 

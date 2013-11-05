@@ -403,4 +403,9 @@ void Leviathan::Entity::Brush::_OnHiddenStateUpdated(){
 	// Set scene node visibility //
 	ObjectsNode->setVisible(!Hidden);
 }
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessagetype, void* dataptr){
+	DEBUG_BREAK;
+	return false;
+}
 

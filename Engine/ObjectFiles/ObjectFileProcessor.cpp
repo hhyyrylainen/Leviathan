@@ -514,13 +514,13 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 						// use NamedVar constructor to parse this line //
 
 						// we first need to get just the value //
-						WstringIterator itr(&Lines[Line], false);
+						WstringIterator nameitr(&Lines[Line], false);
 
-						itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_ALL);
+						nameitr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_ALL);
 						// skip whitespace and we should be at right spot //
-						itr.SkipWhiteSpace();
+						nameitr.SkipWhiteSpace();
 
-						unique_ptr<wstring> nameval = itr.GetUntilNextCharacterOrAll(L';');
+						unique_ptr<wstring> nameval = nameitr.GetUntilNextCharacterOrAll(L';');
 
 						VariableBlock tmpnamedvar(*nameval, NULL);
 

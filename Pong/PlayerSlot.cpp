@@ -88,65 +88,15 @@ void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool ac
 
 	}
 
-	// update apply force //
-	if(MoveState == 0){
-
-		if(PaddleObject){
-
-			// paddle should be fine to cast dynamically to physics object //
-			Leviathan::BasePhysicsObject* tmp = dynamic_cast<Leviathan::BasePhysicsObject*>(PaddleObject.get());
-			if(tmp != NULL){
-				tmp->RemoveApplyForce(L"");
-				// stop the paddle //
-				tmp->SetBodyVelocity(Float3(0));
-			}
-		}
-
-	} else {
-
-		Float3 dir;
-
-		if(MoveState == -1){
-			// if this is player 0 or 3 flip directions //
-			if(Slot == 0 || Slot == 2){
-				dir = Float3(0.f, 0.f, 1.f)*INPUTFORCE_APPLYSCALE;
-			} else {
-				dir = Float3(-1.f, 0.f, 0.f)*INPUTFORCE_APPLYSCALE;
-			}
-
-		} else {
-			// MoveState == 1 should be true here //
-			// if this is player 0 or 3 flip directions //
-			if(Slot == 0 || Slot == 2){
-				dir = Float3(0.f, 0.f, -1.f)*INPUTFORCE_APPLYSCALE;
-			} else {
-				dir = Float3(1.f, 0.f, 0.f)*INPUTFORCE_APPLYSCALE;
-			}
-
-		}
-
-		// apply to object //
-		if(PaddleObject){
-
-			// paddle should be fine to cast dynamically to physics object //
-			Leviathan::BasePhysicsObject* tmp = dynamic_cast<Leviathan::BasePhysicsObject*>(PaddleObject.get());
-			if(tmp != NULL){
-				
-				tmp->ApplyForce(new Leviathan::ApplyForceInfo(dir, true, true, NULL));
-			}
-		}
-	}
+	// Set the track speed based on move direction //
+	TrackDirectptr->SetTrackAdvanceSpeed(MoveState*INPUT_TRACK_ADVANCESPEED);
 }
 
 void Pong::PlayerSlot::InputDisabled(){
 	// set apply force to zero //
 	if(PaddleObject){
 
-		// paddle should be fine to cast dynamically to physics object //
-		Leviathan::BasePhysicsObject* tmp = dynamic_cast<Leviathan::BasePhysicsObject*>(PaddleObject.get());
-		if(tmp != NULL){
-			tmp->RemoveApplyForce(L"");
-		}
+		TrackDirectptr->SetTrackAdvanceSpeed(0.f);
 	}
 
 	// reset control state //

@@ -247,7 +247,7 @@ void Pong::PongGame::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager
 	BallMaterial->FormPairWith(*GoalAreaMaterial).SetCallbacks(BallAABBCallbackGoalArea, NULL);
 
 	PaddleMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
-	PaddleMaterial->FormPairWith(*ArenaMaterial).SetElasticity(0.f).SetSoftness(0.f);
+	PaddleMaterial->FormPairWith(*ArenaMaterial).SetCollidable(false).SetElasticity(0.f).SetSoftness(0.f);
 	PaddleMaterial->FormPairWith(*ArenaBottomMaterial).SetCollidable(false).SetSoftness(0.f).SetFriction(0.f, 0.f).SetElasticity(0.f);
 	ArenaMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
 	ArenaMaterial->FormPairWith(*BallMaterial).SetFriction(0.f, 0.f).SetSoftness(1.f).SetElasticity(1.f);

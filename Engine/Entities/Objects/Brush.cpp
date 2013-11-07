@@ -26,10 +26,10 @@ DLLEXPORT Leviathan::Entity::Brush::~Brush(){
 DLLEXPORT void Leviathan::Entity::Brush::Release(){
 	// release Ogre entity //
 	ObjectsNode->removeAndDestroyAllChildren();
-	LinkedToWorld->GetScene()->destroySceneNode(ObjectsNode);
+	OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
 	// the model won't be used anymore //
 	if(MeshName.size()){
-		LinkedToWorld->GetScene()->destroyManualObject(MeshName+"_manual");
+		OwnedByWorld->GetScene()->destroyManualObject(MeshName+"_manual");
 		// this might not work as intended //
 		Ogre::MeshManager::getSingleton().destroyResourcePool(MeshName);
 	}
@@ -39,7 +39,7 @@ DLLEXPORT void Leviathan::Entity::Brush::Release(){
 	_DestroyPhysicalBody();
 
 	GraphicalObject = NULL;
-	LinkedToWorld = NULL;
+	OwnedByWorld = NULL;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const string &material, 
@@ -51,7 +51,7 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 	MeshName = "Brush_"+Convert::ToString(ID);
 
 	// create the graphical box //
-	Ogre::ManualObject* TestModel = LinkedToWorld->GetScene()->createManualObject(MeshName+"_manual");
+	Ogre::ManualObject* TestModel = OwnedByWorld->GetScene()->createManualObject(MeshName+"_manual");
 
 	// we do not want to update this later //
 	TestModel->setDynamic(false);
@@ -282,10 +282,10 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 
 	// create instance //
 	// load the Ogre entity //
-	GraphicalObject = LinkedToWorld->GetScene()->createEntity(MeshName);
+	GraphicalObject = OwnedByWorld->GetScene()->createEntity(MeshName);
 
 	// create scene node for positioning //
-	ObjectsNode = LinkedToWorld->GetScene()->getRootSceneNode()->createChildSceneNode(MeshName+"_basenode");
+	ObjectsNode = OwnedByWorld->GetScene()->getRootSceneNode()->createChildSceneNode(MeshName+"_basenode");
 
 	// attach for deletion and valid display //
 	ObjectsNode->attachObject(GraphicalObject);
@@ -305,7 +305,7 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 
 	// create a newton object which is always a box //
 
-	NewtonWorld* tmpworld = LinkedToWorld->GetPhysicalWorld()->GetWorld();
+	NewtonWorld* tmpworld = OwnedByWorld->GetPhysicalWorld()->GetWorld();
 
 	// possible offset //
 	Ogre::Matrix4 offset = Ogre::Matrix4::IDENTITY;
@@ -405,7 +405,23 @@ void Leviathan::Entity::Brush::_OnHiddenStateUpdated(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessagetype, void* dataptr){
-	DEBUG_BREAK;
+	// First check if it is a request //
+	if(entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_DATAREQUEST){
+		// Check through components //
+		ObjectDataRequest* tmprequest = reinterpret_cast<ObjectDataRequest*>(dataptr);
+
+		BASEPOSITIONAL_CUSTOMMESSAGE_GET_CHECK;
+		BASEPHYSICS_CUSTOMMESSAGE_GET_CHECK;
+
+		return false;
+	}
+
+	// Check through components //
+	BASEPOSITIONAL_CUSTOMMESSAGE_DATA_CHECK;
+	BASEPHYSICS_CUSTOMMESSAGE_DATA_CHECK;
+
+	// This specific //
+
 	return false;
 }
 

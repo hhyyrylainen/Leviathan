@@ -10,6 +10,7 @@
 
 
 #define INPUTFORCE_APPLYSCALE		20.f
+#define INPUT_TRACK_ADVANCESPEED	1.2f
 
 namespace Pong{
 

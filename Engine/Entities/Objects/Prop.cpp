@@ -22,14 +22,14 @@ DLLEXPORT Leviathan::Entity::Prop::~Prop(){
 DLLEXPORT void Leviathan::Entity::Prop::Release(){
 	// release Ogre entity //
 	ObjectsNode->removeAndDestroyAllChildren();
-	LinkedToWorld->GetScene()->destroySceneNode(ObjectsNode);
+	OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
 
 	// physical entity //
 	AggressiveConstraintUnlink();
 	_DestroyPhysicalBody();
 
 	GraphicalObject = NULL;
-	LinkedToWorld = NULL;
+	OwnedByWorld = NULL;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
@@ -45,10 +45,10 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist, L"Model-Graphical", ogrefile, L"error", true, L"Prop: Init: no model file!:");
 
 	// load the Ogre entity //
-	GraphicalObject = LinkedToWorld->GetScene()->createEntity(Convert::WstringToString(ogrefile));
+	GraphicalObject = OwnedByWorld->GetScene()->createEntity(Convert::WstringToString(ogrefile));
 
 	// create scene node for positioning //
-	ObjectsNode = LinkedToWorld->GetScene()->getRootSceneNode()->createChildSceneNode(Convert::WstringToString(modelfile)+"_basenode_"+Convert::ToString(ID));
+	ObjectsNode = OwnedByWorld->GetScene()->getRootSceneNode()->createChildSceneNode(Convert::WstringToString(modelfile)+"_basenode_"+Convert::ToString(ID));
 
 	// attach for deletion and valid display //
 	ObjectsNode->attachObject(GraphicalObject);
@@ -77,7 +77,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 		return true;
 	}
 
-	NewtonWorld* tmpworld = LinkedToWorld->GetPhysicalWorld()->GetWorld();
+	NewtonWorld* tmpworld = OwnedByWorld->GetPhysicalWorld()->GetWorld();
 
 	// first get the type //
 	wstring ptype;
@@ -276,6 +276,22 @@ void Leviathan::Entity::Prop::_OnHiddenStateUpdated(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessagetype, void* dataptr){
-	DEBUG_BREAK;
+	// First check if it is a request //
+	if(entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_DATAREQUEST){
+		// Check through components //
+		ObjectDataRequest* tmprequest = reinterpret_cast<ObjectDataRequest*>(dataptr);
+
+		BASEPOSITIONAL_CUSTOMMESSAGE_GET_CHECK;
+		BASEPHYSICS_CUSTOMMESSAGE_GET_CHECK;
+
+		return false;
+	}
+
+	// Check through components //
+	BASEPOSITIONAL_CUSTOMMESSAGE_DATA_CHECK;
+	BASEPHYSICS_CUSTOMMESSAGE_DATA_CHECK;
+
+	// This specific //
+
 	return false;
 }

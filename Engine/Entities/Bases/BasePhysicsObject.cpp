@@ -51,9 +51,9 @@ void Leviathan::BasePhysicsObject::ApplyForceAndTorgueEvent(const NewtonBody* co
 	NewtonBodyGetMassMatrix(body, &mass, &Ixx, &Iyy, &Izz);
 
 	// get gravity force and apply mass to it //
-	Float3 Force = tmp->LinkedToWorld->GetGravityAtPosition(tmp->Position)*mass;
+	Float3 Force = tmp->OwnedByWorld->GetGravityAtPosition(tmp->Position)*mass;
 	// add other forces //
-	Force += tmp->_GatherApplyForces();
+	Force += tmp->_GatherApplyForces(mass);
 
 
 	NewtonBodyAddForce(body, &Force.X);
@@ -89,15 +89,10 @@ DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyVelocity(){
 	return (Float3)0;
 }
 // ------------------------------------ //
-Leviathan::Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(){
+Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(const float &mass){
 	// return if just an empty list //
 	if(ApplyForceList.size() == 0)
 		return Float3(0);
-
-	// we probably need the mass from the body, because some forces want to multiply by mass //
-	float mass; 
-	float Ixx, Iyy, Izz;
-	NewtonBodyGetMassMatrix(Body, &mass, &Ixx, &Iyy, &Izz);
 
 	Float3 total(0);
 
@@ -149,7 +144,7 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::RemoveApplyForce(const wstring &nam
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::BasePhysicsObject::SetPhysicalMaterial(const wstring &materialname){
 	// Fetches the ID and calls the direct material ID setting function //
-	int id = PhysicsMaterialManager::Get()->GetMaterialIDForWorld(materialname, LinkedToWorld->GetPhysicalWorld()->GetWorld());
+	int id = PhysicsMaterialManager::Get()->GetMaterialIDForWorld(materialname, OwnedByWorld->GetPhysicalWorld()->GetWorld());
 
 	if(id == -1){
 		// invalid name //
@@ -165,6 +160,46 @@ DLLEXPORT void Leviathan::BasePhysicsObject::SetPhysicalMaterialID(int ID){
 
 	NewtonBodySetMaterialGroupID(Body, ID);
 }
+// ------------------------------------ //
+bool Leviathan::BasePhysicsObject::BasePhysicsCustomMessage(int message, void* data){
+	switch(message){
+	case ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE:
+		{
+			// Add force by copying into a new apply force object //
+			ApplyForceInfo* todestroyinfo = reinterpret_cast<ApplyForceInfo*>(data);
+			
+			// Copy to new and add the apply force //
+			ApplyForce(new ApplyForceInfo(*todestroyinfo));
+
+			return true;
+		}
+	case ENTITYCUSTOMMESSAGETYPE_REMOVEAPPLYFORCE:
+		{
+			// Remove force by name //
+			wstring* tmpstring = reinterpret_cast<wstring*>(data);
+
+			RemoveApplyForce(*tmpstring);
+
+			return true;
+		}
+	case  ENTITYCUSTOMMESSAGETYPE_SETVELOCITY:
+		{
+			// Set the velocity from the data ptr //
+			SetBodyVelocity(*reinterpret_cast<Float3*>(data));
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Leviathan::BasePhysicsObject::BasePhysicsCustomGetData(ObjectDataRequest* data){
+	switch(data->RequestObjectPart){
+	//case ENTITYDATA_REQUESTTYPE_WORLDPOSITION: data->RequestResult = &Position; return true;
+
+	}
+
+	return false;
+}
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const Float3 &forces, bool addmass, bool persist /*= true*/, wstring* name /*= NULL*/) : 
 	ForcesToApply(forces), Persist(persist), MultiplyByMass(addmass), OptionalName(name)
@@ -173,8 +208,11 @@ DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const Float3 &forces, bool a
 
 }
 
-DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const ApplyForceInfo& other){
-	assert(false && "don't call this constructor!");
+DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(ApplyForceInfo &other) : ForcesToApply(other.ForcesToApply), Persist(other.Persist), 
+	MultiplyByMass(other.MultiplyByMass)
+{
+	// Swap the pointers //
+	OptionalName.swap(other.OptionalName);
 }
 
 DLLEXPORT Leviathan::ApplyForceInfo::~ApplyForceInfo(){
@@ -191,3 +229,6 @@ DLLEXPORT ApplyForceInfo& Leviathan::ApplyForceInfo::operator=(ApplyForceInfo &o
 
 	return *this;
 }
+
+
+

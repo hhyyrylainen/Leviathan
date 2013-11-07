@@ -22,7 +22,7 @@ namespace Leviathan{
 		EVENT_TYPE_MOUSEMOVED, EVENT_TYPE_MOUSEPOSITION,
 		EVENT_TYPE_GUIDISABLE, EVENT_TYPE_GUIENABLE, EVENT_TYPE_WINDOW_RESIZE, EVENT_TYPE_RESIZE, EVENT_TYPE_TEST,
 		EVENT_TYPE_LISTENERVALUEUPDATED,
-		EVENT_TYPE_FRAME_BEGIN, EVENT_TYPE_FRAME_END, EVENT_TYPE_ENGINE_TICK, EVENT_TYPE_INIT, EVENT_TYPE_RELEASE, 
+		EVENT_TYPE_FRAME_BEGIN, EVENT_TYPE_FRAME_END, EVENT_TYPE_ENGINE_TICK, EVENT_TYPE_INIT, EVENT_TYPE_PHYSICS_BEGIN, EVENT_TYPE_RELEASE, 
 		EVENT_TYPE_ALL};
 
 	static const std::map<wstring, EVENT_TYPE> EventListenerNameToEventMap =  boost::assign::map_list_of
@@ -32,6 +32,15 @@ namespace Leviathan{
 		(LISTENERNAME_ONLISTENUPDATE, EVENT_TYPE_LISTENERVALUEUPDATED)
 		(LISTENERNAME_ONINIT, EVENT_TYPE_INIT)
 		(LISTENERNAME_ONRELEASE, EVENT_TYPE_RELEASE);
+
+	// Different event value types //
+	struct PhysicsStartEventData{
+		PhysicsStartEventData(const float &time, void* worldptr) : TimeStep(time), GameWorldPtr(worldptr){
+		}
+
+		float TimeStep;
+		void* GameWorldPtr;
+	};
 
 
 	class Event : public ReferenceCounted{

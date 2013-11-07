@@ -19,8 +19,8 @@ namespace Leviathan{
 
 
 
-		// Callback which is called when rendering is about to occur, used for updating positions //
-		DLLEXPORT virtual void UpdateControlledPositions(int mspassed) = 0;
+		// Callback which is called when physics update is about to occur, used for updating positions //
+		DLLEXPORT virtual void UpdateControlledPositions(float timestep) = 0;
 
 
 	protected:

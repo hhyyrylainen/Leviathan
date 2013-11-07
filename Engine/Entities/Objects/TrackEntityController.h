@@ -10,6 +10,7 @@
 #include "LocationNode.h"
 #include "Events\CallableObject.h"
 
+#define TRACKCONTROLLER_DEFAULT_APPLYFORCE		12.f
 
 namespace Leviathan{ namespace Entity{
 
@@ -47,18 +48,27 @@ namespace Leviathan{ namespace Entity{
 			return NodeProgress;
 		}
 
+		// Controls the speed at which the entity moves along the track (set to negative to go backwards and 0.f to stop) //
+		DLLEXPORT inline void SetTrackAdvanceSpeed(const float &speed){
+			ChangeSpeed = speed;
+		}
+		DLLEXPORT inline float GetTrackAdvanceSpeed(){
+			return ChangeSpeed;
+		}
+
 		// This function creates a new node to the world and ads it to the track of this object //
 		DLLEXPORT void AddLocationToTrack(const Float3 &pos, const Float4 &dir);
 
 		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
 		// When called updates the entity positions (You probably don't have to manually call this) //
-		DLLEXPORT virtual void UpdateControlledPositions(int mspassed);
+		DLLEXPORT virtual void UpdateControlledPositions(float timestep);
 
 	protected:
 		// Internal function for making all data valid (checks for invalid reached node and progress) //
 		void _SanityCheckNodeProgress();
-
+		// Updates the controlled object //
+		void _ApplyTrackPositioning(float timestep);
 
 		// Callback for detecting node unlinks //
 		virtual void _OnNotifiableDisconnected(BaseNotifiable* childtoremove);
@@ -68,6 +78,12 @@ namespace Leviathan{ namespace Entity{
 
 		// Percentage between ReachedNode and next node (1.f being next node reached and progress reset to 0) //
 		float NodeProgress;
+
+		// The speed at which the node progress changes //
+		float ChangeSpeed;
+
+		// The amount of speed/force used to move the entities towards the track position //
+		float ForceTowardsPoint;
 
 		// List of positions that form the track //
 		// Note these nodes are also on the inherited child object list //

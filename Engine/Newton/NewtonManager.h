@@ -18,7 +18,7 @@ namespace Leviathan{
 		DLLEXPORT ~NewtonManager();
 		
 		// creates a new world that will release itself when no more references //
-		DLLEXPORT shared_ptr<PhysicalWorld> CreateWorld();
+		DLLEXPORT shared_ptr<PhysicalWorld> CreateWorld(GameWorld* owningworld);
 
 
 		DLLEXPORT static inline NewtonManager* Get(){

@@ -7,8 +7,12 @@
 // ------------------------------------ //
 // ---- includes ---- //
 
+#define BASEPOSITIONAL_CUSTOMMESSAGE_DATA_CHECK		{if(entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_CHANGEWORLDPOSITION){if(BasePositionableCustomMessage(entitycustommessagetype, dataptr)) return true;}}
+#define BASEPOSITIONAL_CUSTOMMESSAGE_GET_CHECK		{if(tmprequest->RequestObjectPart == ENTITYDATA_REQUESTTYPE_WORLDPOSITION){if(BasePositionableCustomGetData(tmprequest)) return true;}}
 
 namespace Leviathan{
+
+	struct ObjectDataRequest;
 
 	class BasePositionable{
 	public:
@@ -37,6 +41,9 @@ namespace Leviathan{
 	protected:
 		virtual void PosUpdated();
 		virtual void OrientationUpdated();
+
+		bool BasePositionableCustomMessage(int message, void* data);
+		bool BasePositionableCustomGetData(ObjectDataRequest* data);
 		// ------------- //
 		Float3 Position;
 		Float4 QuatRotation;

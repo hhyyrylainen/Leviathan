@@ -410,6 +410,16 @@ namespace Leviathan{
 		DLLEXPORT inline Float3 operator*(const Float3 &val) const{
 			return Float3(X*val.X, Y*val.Y, Z*val.Z);
 		}
+		// Divides all elements by float //
+		DLLEXPORT inline Float3 operator/(const float &val) const{
+			return Float3(X/val, Y/val, Z/val);
+		}
+		DLLEXPORT inline Float3* operator/=(const float &val){
+			X /= val;
+			Y /= val;
+			Z /= val;
+			return this;
+		}
 		// multiply  by scalar f //
 		DLLEXPORT inline Float3 operator*(float f) const{
 			return Float3(X*f, Y*f, Z*f);

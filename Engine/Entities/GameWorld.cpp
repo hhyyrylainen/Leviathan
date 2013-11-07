@@ -14,7 +14,7 @@ DLLEXPORT Leviathan::GameWorld::GameWorld(Ogre::Root* ogre) : WorldSceneCamera(N
 	_CreateOgreResources(ogre);
 
 	// acquire physics engine world //
-	_PhysicalWorld = NewtonManager::Get()->CreateWorld();
+	_PhysicalWorld = NewtonManager::Get()->CreateWorld(this);
 
 }
 

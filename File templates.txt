@@ -262,3 +262,20 @@ namespace SandBoxie{
 
 #endif
 
+
+DLLEXPORT bool ::SendCustomMessage(int entitycustommessagetype, void* dataptr){
+	// First check if it is a request //
+	if(entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_DATAREQUEST){
+		// Check through components //
+        ObjectDataRequest* tmprequest = reinterpret_cast<ObjectDataRequest*>(dataptr);
+
+		return false;
+	}
+
+	// Check through components //
+
+
+	// This specific //
+
+	return false;
+}

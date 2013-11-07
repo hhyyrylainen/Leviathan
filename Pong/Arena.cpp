@@ -60,12 +60,26 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 	string sidematerialshort = "Material.001";
 	string materialclosedpaddlearea = "Material.001";
 
-	NewtonWorld* nworld = TargetWorld->GetPhysicalWorld()->GetWorld();
+	bool infiniteloop = false;
+
+newtonmaterialfetchstartlabel:
+
+
+	NewtonWorld* nworld = TargetWorld->GetPhysicalWorld()->GetNewtonWorld();
 
 	int ArenaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"ArenaMaterial", nworld);
 	int PaddleID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"PaddleMaterial", nworld);
 	int GoalAreaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"GoalAreaMaterial", nworld);
 	int ArenaBaseID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"ArenaBottomMaterial", nworld);
+
+	if(ArenaMatID == -1){
+		// All are probably invalid, force world adding //
+		assert(!infiniteloop && "Stuck infinitely regenerating materials");
+		Logger::Get()->Warning(L"Arena: GenerateArena: world doesn't have materials, regenerating");
+		Leviathan::PhysicsMaterialManager::Get()->CreateActualMaterialsForWorld(nworld);
+		infiniteloop = true;
+		goto newtonmaterialfetchstartlabel;
+	}
 
 	// create brushes //
 
@@ -215,7 +229,7 @@ addplayerpaddlelabel:
 		// setup joints //
 		if(!tmp->CreateConstraintWith<Leviathan::Entity::SliderConstraint>(castedbottombrush)->SetParameters(
 			(i == 0 || i == 2) ? Float3(0.f, 0.f, -1.f): Float3(1.f, 0.f, 0.f))->Init()){
-			Logger::Get()->Error(L"Arena: GenerateArena: failed to create slider for paddle "+Convert::ToWstring(i+1));
+				Logger::Get()->Error(L"Arena: GenerateArena: failed to create slider for paddle "+Convert::ToWstring(i+1));
 		}
 
 		// link //
@@ -228,33 +242,33 @@ addplayerpaddlelabel:
 		case 0:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, height/2.f-sideysize-paddlewidth/2.f), Float4::IdentityQuaternion());
+					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, height/2.f-sideysize*2-paddlewidth/2.f), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, -height/2.f+sideysize+paddlewidth/2.f), Float4::IdentityQuaternion());
+					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, -height/2.f+sideysize*2+paddlewidth/2.f), Float4::IdentityQuaternion());
 			}
 			break;
 		case 1:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-sidexsize-paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust), Float4::IdentityQuaternion());
+					Float3(width/2.f-sidexsize*2-paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+sidexsize+paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust), Float4::IdentityQuaternion());
+					Float3(-width/2.f+sidexsize*2+paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust), Float4::IdentityQuaternion());
 			}
 			break;
 		case 2:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, height/2.f-sideysize-paddlewidth/2.f), Float4::IdentityQuaternion());
+					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, height/2.f-sideysize*2-paddlewidth/2.f), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, -height/2.f+sideysize+paddlewidth/2.f), Float4::IdentityQuaternion());
+					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, -height/2.f+sideysize*2+paddlewidth/2.f), Float4::IdentityQuaternion());
 			}
 			break;
 		case 3:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-sidexsize-paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust), Float4::IdentityQuaternion());
+					Float3(width/2.f-sidexsize*2-paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+sidexsize+paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust), Float4::IdentityQuaternion());
+					Float3(-width/2.f+sidexsize*2+paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust), Float4::IdentityQuaternion());
 			}
 			break;
 		}
@@ -264,6 +278,8 @@ addplayerpaddlelabel:
 		// Set //
 		secondary ? players[i]->GetSplit()->SetTrackObject(track, controller): players[i]->SetTrackObject(track, controller);
 
+		// Paddle should be in the middle by default, so set progress to 50% //
+		controller->SetProgressTowardsNextNode(0.5f);
 
 		if(secondary)
 			continue;

@@ -5,9 +5,10 @@
 #endif
 #include <Newton.h>
 #include "PhysicalMaterialManager.h"
+#include "Events\EventHandler.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld() : LastSimulatedTime(0), PassedTimeTotal(0){
+DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) : LastSimulatedTime(0), PassedTimeTotal(0), OwningWorld(owner){
 
 	// create newton world //
 	World = NewtonCreate();
@@ -51,6 +52,9 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(){
 			PassedTimeTotal = 100000;
 		}
 
+		// Call event //
+		EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_BEGIN, new PhysicsStartEventData(NEWTON_TIMESTEP, OwningWorld)));
+
 		NewtonUpdate(World, NEWTON_TIMESTEP);
 		PassedTimeTotal -= (int)NEWTON_FPS_IN_MICROSECONDS;
 	}
@@ -61,7 +65,9 @@ DLLEXPORT void Leviathan::PhysicalWorld::ClearTimers(){
 	PassedTimeTotal = 0;
 }
 // ------------------------------------ //
-
+DLLEXPORT NewtonWorld* Leviathan::PhysicalWorld::GetNewtonWorld(){
+	return World;
+}
 // ------------------------------------ //
 
 // ------------------------------------ //

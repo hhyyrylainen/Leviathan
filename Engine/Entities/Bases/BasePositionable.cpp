@@ -3,6 +3,7 @@
 #ifndef LEVIATHAN_BASE_POSITIONABLE
 #include "BasePositionable.h"
 #endif
+#include "BaseObject.h"
 using namespace Leviathan;
 // ------------------------------------ //
 BasePositionable::BasePositionable() : QuatRotation(Float4::IdentityQuaternion()), Position(Float3(0)){
@@ -79,5 +80,23 @@ void Leviathan::BasePositionable::PosUpdated(){
 void Leviathan::BasePositionable::OrientationUpdated(){
 
 }
+// ------------------------------------ //
+bool Leviathan::BasePositionable::BasePositionableCustomMessage(int message, void* data){
+	switch(message){
+	case ENTITYCUSTOMMESSAGETYPE_CHANGEWORLDPOSITION: {Position = *reinterpret_cast<Float3*>(data); PosUpdated(); return true;}
 
+
+	}
+	return false;
+}
+
+bool Leviathan::BasePositionable::BasePositionableCustomGetData(ObjectDataRequest* data){
+
+	switch(data->RequestObjectPart){
+	case ENTITYDATA_REQUESTTYPE_WORLDPOSITION: data->RequestResult = &Position; return true;
+
+	}
+
+	return false;
+}
 // ------------------------------------ //

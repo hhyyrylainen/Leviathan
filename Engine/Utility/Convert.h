@@ -27,6 +27,7 @@ namespace Leviathan{
 		DLLEXPORT static string WstringToString(const wstring &str);
 		DLLEXPORT static wstring CharToWstring(const char &i);
 
+		DLLEXPORT static wstring Float3ToSWstring(const Float3 &data);
 
 		DLLEXPORT static int WstringFromBoolToInt(const wstring &i);
 		DLLEXPORT static int StringFromBoolToInt(const string &i);

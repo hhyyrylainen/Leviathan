@@ -15,10 +15,12 @@
 
 namespace Leviathan{
 
+	class GameWorld;
+
 	class PhysicalWorld : public Object{
 	public:
 		// The constructor also builds the material list for the world, so it is rather expensive //
-		DLLEXPORT PhysicalWorld();
+		DLLEXPORT PhysicalWorld(GameWorld* owner);
 		DLLEXPORT ~PhysicalWorld();
 
 		DLLEXPORT void SimulateWorld();
@@ -28,12 +30,15 @@ namespace Leviathan{
 			return World;
 		}
 
+		DLLEXPORT NewtonWorld* GetNewtonWorld();
+
 	protected:
 
 		__int64 LastSimulatedTime;
 		int PassedTimeTotal;
 
 		NewtonWorld* World;
+		GameWorld* OwningWorld;
 	};
 
 }

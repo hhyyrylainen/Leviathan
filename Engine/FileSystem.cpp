@@ -201,8 +201,8 @@ DLLEXPORT bool Leviathan::FileSystem::DoesExtensionMatch(FileDefinitionType* fil
 // ------------------------------------ //
 void Leviathan::FileSystem::GetWindowsFolder(wstring &path){
 	wchar_t winddir[MAX_PATH];
-	GetWindowsDirectoryW(winddir, MAX_PATH);
-	path = winddir;
+	if(GetWindowsDirectoryW(winddir, MAX_PATH) > 0)
+		path = winddir;
 	if(path.back() != L'\\')
 		path += L'\\';
 }
@@ -388,7 +388,7 @@ wstring Leviathan::FileSystem::RemoveExtension(const wstring &file, bool delpath
 
 DLLEXPORT string Leviathan::FileSystem::RemovePath(const string &filepath){
 	// start from last character and find last / or \ //
-	for(size_t i = filepath.size()-1; i < filepath.size(); i--){
+	for(int i = (int)filepath.size()-1; i > -1; i--){
 		if(filepath[i] == '/' || filepath[i] == '\\'){
 			if(i == filepath.size()-1)
 				return "";
@@ -752,7 +752,7 @@ DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllM
 
 	} else {
 		// specific vector //
-		vector<shared_ptr<FileDefinitionType>>* targetvector;
+		vector<shared_ptr<FileDefinitionType>>* targetvector = NULL;
 
 		switch(which){
 		case FILEGROUP_MODEL:

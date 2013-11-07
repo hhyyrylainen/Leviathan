@@ -36,9 +36,9 @@ DLLEXPORT Leviathan::NewtonManager::~NewtonManager(){
 
 NewtonManager* Leviathan::NewtonManager::Staticaccess = NULL;
 // ------------------------------------ //
-DLLEXPORT shared_ptr<PhysicalWorld> Leviathan::NewtonManager::CreateWorld(){
+DLLEXPORT shared_ptr<PhysicalWorld> Leviathan::NewtonManager::CreateWorld(GameWorld* owningworld){
 	// we are probably initialized at this point so it should be safe to just call the constructor //
-	return shared_ptr<PhysicalWorld>(new PhysicalWorld());
+	return shared_ptr<PhysicalWorld>(new PhysicalWorld(owningworld));
 }
 // ------------------------------------ //
 

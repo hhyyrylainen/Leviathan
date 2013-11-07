@@ -11,6 +11,10 @@
 #include "BaseObject.h"
 
 
+#define BASEPHYSICS_CUSTOMMESSAGE_DATA_CHECK	{if(entitycustommessagetype >= ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE && entitycustommessagetype <= ENTITYCUSTOMMESSAGETYPE_SETVELOCITY){if(BasePhysicsCustomMessage(entitycustommessagetype, dataptr)) return true;}}
+#define BASEPHYSICS_CUSTOMMESSAGE_GET_CHECK		{if(false){if(BasePhysicsCustomGetData(tmprequest)) return true;}}
+
+
 namespace Leviathan{
 
 	// fill this to apply a force //
@@ -18,6 +22,7 @@ namespace Leviathan{
 	public:
 		// Note: look at the class for what parameters do, and pass NULL for name if not used (avoid passing empty strings) //
 		DLLEXPORT ApplyForceInfo(const Float3 &forces, bool addmass, bool persist = true, wstring* name = NULL);
+		DLLEXPORT ApplyForceInfo(ApplyForceInfo &other);
 		DLLEXPORT ~ApplyForceInfo();
 
 		DLLEXPORT ApplyForceInfo& operator =(ApplyForceInfo &other);
@@ -31,8 +36,8 @@ namespace Leviathan{
 		// finally the amount to apply to each direction //
 		Float3 ForcesToApply;
 	private:
-		// don't want this constructor to be called
-		DLLEXPORT ApplyForceInfo(const ApplyForceInfo& other);
+		//// don't want this constructor to be called
+		//DLLEXPORT ApplyForceInfo(const ApplyForceInfo &other);
 	};
 
 
@@ -78,7 +83,10 @@ namespace Leviathan{
 		// this function should update physics object location or if Immovable set, directly graphical objects //
 		virtual void _UpdatePhysicsObjectLocation() = 0;
 		// Adds all applied forces together //
-		Float3 _GatherApplyForces();
+		Float3 _GatherApplyForces(const float &mass);
+
+		bool BasePhysicsCustomMessage(int message, void* data);
+		bool BasePhysicsCustomGetData(ObjectDataRequest* data);
 		// ------------------------------------ //
 		NewtonCollision* Collision;
 		NewtonBody* Body;

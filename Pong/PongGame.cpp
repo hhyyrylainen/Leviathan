@@ -11,7 +11,9 @@
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
-Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1){
+Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), ScoreLimit(20),
+	BallLastPos(0.f), DeadAxis(0.f)
+{
 	StaticAccess = this;
 
 	GameInputHandler = new GameInputController();
@@ -74,8 +76,7 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 	// link world and camera to a window //
 	GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
 
-	window1->LinkCamera(MainCamera);
-	window1->LinkWorld(world1);
+	window1->LinkObjects(MainCamera, world1);
 	// sound listening camera //
 	MainCamera->BecomeSoundPerceiver();
 
@@ -125,6 +126,12 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+
+	if(engine->RegisterObjectMethod("PongGame", "void GameMatchEnded()", asMETHOD(PongGame, GameMatchEnded), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	
 	
 	// PlayerSlot //
 	if(engine->RegisterObjectType("PlayerSlot", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
@@ -166,6 +173,7 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 void Pong::PongGame::RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){
 	// we have registered just a one type, add it //
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("PongGame"), L"PongGame"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("PlayerSlot"), L"PlayerSlot"));
 }
 // ------------------------------------ //
 PongGame* Pong::PongGame::Get(){
@@ -173,13 +181,18 @@ PongGame* Pong::PongGame::Get(){
 }
 
 int Pong::PongGame::TryStartGame(){
+	// Destroy old game world //
+	GameArena->GetWorld()->ClearObjects();
 
 	int activeplycount = 0;
 	int maxsplit = 0;
 	for(size_t i = 0; i < PlayerList.size(); i++){
+		PlayerList[i]->SetScore(0);
 		if(PlayerList[i]->IsSlotActive())
 			activeplycount++;
 		int split = PlayerList[i]->GetSplitCount();
+		if(PlayerList[i]->GetSplit())
+			PlayerList[i]->GetSplit()->SetScore(0);
 		if(split > maxsplit)
 			maxsplit = split;
 	}
@@ -192,11 +205,26 @@ int Pong::PongGame::TryStartGame(){
 	GameInputHandler->StartReceivingInput(PlayerList);
 	GameInputHandler->SetBlockState(false);
 
+	// Setup dead angle //
+	if(!PlayerList[0]->IsSlotActive() && !PlayerList[2]->IsSlotActive()){
+
+		DeadAxis = Float3(1.f, 0.f, 0.f);
+
+	} else if(!PlayerList[1]->IsSlotActive() && !PlayerList[3]->IsSlotActive()){
+
+		DeadAxis = Float3(0.f, 0.f, 1.f);
+	}
+	
+
+
 	// send start event //
 	Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"GameStart"), new NamedVars(shared_ptr<NamedVariableList>(new
 		NamedVariableList(L"PlayerCount", new Leviathan::VariableBlock(activeplycount))))));
 
-	//// We need to set the static ID values for material collision callbacks //
+	// Set the camera location //
+	auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
+	cam->SetPos(Float3(0.f, 22.f*BASE_ARENASCALE, 0.f));
+	cam->SetRotation(Float3(0.f, -90.f, 0.f));
 
 	// now that we are ready to start let's serve the ball //
 	GameArena->ServeBall();
@@ -244,7 +272,7 @@ void Pong::PongGame::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager
 	//BallMaterial->FormPairWith(*PaddleMaterial).SetSoftness(1.f).SetElasticity(2.0f).SetFriction(1.f, 1.f).
 	BallMaterial->FormPairWith(*PaddleMaterial).SetSoftness(1.f).SetElasticity(1.0f).SetFriction(1.f, 1.f).
 		SetCallbacks(BallAABBCallbackPaddle, BallContactCallbackPaddle);
-	BallMaterial->FormPairWith(*GoalAreaMaterial).SetCallbacks(BallAABBCallbackGoalArea, NULL);
+	BallMaterial->FormPairWith(*GoalAreaMaterial).SetCallbacks(BallAABBCallbackGoalArea, BallContactCallbackGoalArea);
 
 	PaddleMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
 	PaddleMaterial->FormPairWith(*ArenaMaterial).SetCollidable(false).SetElasticity(0.f).SetSoftness(0.f);
@@ -273,22 +301,61 @@ void Pong::PongGame::Tick(int mspassed){
 	// Update logic //
 
 
-	// Check if ball is too far away //
+	// Check if ball is too far away (also check if it is vertically stuck or horizontally) //
 
 	if(GameArena->GetBallPtr()){
 		Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*>(GameArena->GetBallPtr().get());
-		if(castedptr->GetPos().HAddAbs() > 100){
+
+		Float3 ballcurpos = castedptr->GetPos();
+
+		if(ballcurpos.HAddAbs() > 100*BASE_ARENASCALE){
 			// Tell arena to let go of old ball //
 			GameArena->LetGoOfBall();
 
+			// Don't forget to reset this //
+			LastPlayerHitBallID = -1;
+
 			// Serve new ball //
 			GameArena->ServeBall();
+		}
+
+		// Only check this every couple of ticks to allow the ball to move a decent amount //
+		if(DataStore::Get()->GetTickCount() % 4 == 0){
+
+			Float3 ballmoved = ballcurpos-BallLastPos;
+			BallLastPos = ballcurpos;
+
+			if(DeadAxis.HAddAbs() != 0){
+				// Check //
+				float axisamount = 0.f;
+
+				if(DeadAxis[0] && ballmoved[0])
+					axisamount += abs(ballmoved[0]);
+				if(DeadAxis[1] && ballmoved[1])
+					axisamount += abs(ballmoved[1]);
+				if(DeadAxis[2] && ballmoved[2])
+					axisamount += abs(ballmoved[2]);
+				
+				if(axisamount < BALLSTUCK_THRESHOLD){
+
+					//Logger::Get()->Info(L"Ball stuck!");
+					//// Tell arena to let go of old ball //
+					//GameArena->LetGoOfBall();
+
+					//// Don't forget to reset this //
+					//LastPlayerHitBallID = -1;
+
+					//// Serve new ball //
+					//GameArena->ServeBall();
+				}
+			}
 		}
 	}
 
 
 	// We can clear this map since physic update shouldn't be in progress //
 	ThreadIDStoredBodyPtrsMap.clear();
+	ThreadIDStoredBallGoalHitPtrsMap.clear();
 
 
 	// Give the ball more speed //
@@ -329,12 +396,38 @@ void Pong::PongGame::BallContactCallbackPaddle(const NewtonJoint* contact, dFloa
 
 int Pong::PongGame::BallAABBCallbackGoalArea(const NewtonMaterial* material, const NewtonBody* body0, const NewtonBody* body1, int threadIndex){
 
-	return 	StaticAccess->_BallEnterGoalArea(reinterpret_cast<Leviathan::BasePhysicsObject*>(NewtonBodyGetUserData(body1)), 
-		reinterpret_cast<Leviathan::BasePhysicsObject*>(NewtonBodyGetUserData(body0)));
+	// Store the pointers //
+	StaticAccess->ThreadIDStoredBallGoalHitPtrsMap[threadIndex] = StoredCollisionData(body0, body1);
+
+	// We want the other callback called any way //
+	return 1;
+}
+
+void Pong::PongGame::BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep, int threadIndex){
+
+	// Fetch the bodies //
+	auto iter = StaticAccess->ThreadIDStoredBallGoalHitPtrsMap.find(threadIndex);
+
+	if(iter != StaticAccess->ThreadIDStoredBallGoalHitPtrsMap.end()){
+
+		const StoredCollisionData& ptrstore = iter->second;
+
+		const NewtonBody* body0 = ptrstore.Body0;
+		const NewtonBody* body1 = ptrstore.Body1;
+
+		// Set contact state //
+		//NewtonJointSetCollisionState(contact, StaticAccess->_BallEnterGoalArea(reinterpret_cast<Leviathan::BasePhysicsObject*>(NewtonBodyGetUserData(body1)), 
+		//	reinterpret_cast<Leviathan::BasePhysicsObject*>(NewtonBodyGetUserData(body0))));
+		NewtonJointSetCollisionState(contact, StaticAccess->_BallEnterGoalArea(reinterpret_cast<Leviathan::BasePhysicsObject*>(
+			NewtonBodyGetUserData(NewtonJointGetBody0(contact))), reinterpret_cast<Leviathan::BasePhysicsObject*>(
+			NewtonBodyGetUserData(NewtonJointGetBody1(contact)))));
+	}
 }
 
 void Pong::PongGame::_SetLastPaddleHit(Leviathan::BasePhysicsObject* objptr, Leviathan::BasePhysicsObject* objptr2){
 	// Note: the object pointers can be in any order they want //
+
+	Leviathan::BasePhysicsObject* realballptr = dynamic_cast<Leviathan::BasePhysicsObject*>(GameArena->GetBallPtr().get());
 
 	// Look through all players and compare paddle ptrs //
 	for(size_t i = 0; i < PlayerList.size(); i++){
@@ -345,7 +438,7 @@ void Pong::PongGame::_SetLastPaddleHit(Leviathan::BasePhysicsObject* objptr, Lev
 
 			Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*>(slotptr->GetPaddle().get());
 
-			if(objptr == castedptr || objptr2 == castedptr){
+			if((objptr == castedptr && objptr2 == realballptr) || (objptr2 == castedptr && objptr == realballptr)){
 				// Found right player //
 				LastPlayerHitBallID = slotptr->GetPlayerIdentifier();
 				return;
@@ -372,8 +465,8 @@ int Pong::PongGame::_BallEnterGoalArea(Leviathan::BasePhysicsObject* goal, Levia
 }
 
 int Pong::PongGame::PlayerScored(Leviathan::BasePhysicsObject* goalptr){
-	// Don't count if the player whose goal the ball is in is the last one to touch it //
-	if(PlayerIDMatchesGoalAreaID(LastPlayerHitBallID, goalptr)){
+	// Don't count if the player whose goal the ball is in is the last one to touch it or if none have touched it //
+	if(PlayerIDMatchesGoalAreaID(LastPlayerHitBallID, goalptr) || LastPlayerHitBallID == -1){
 
 		return 1;
 	}
@@ -414,6 +507,9 @@ playrscorelistupdateendlabel:
 	// Serve new ball //
 	GameArena->ServeBall();
 
+	// Check for game end //
+	CheckForGameEnd();
+
 	return 0;
 }
 
@@ -439,6 +535,81 @@ bool Pong::PongGame::PlayerIDMatchesGoalAreaID(int plyid, Leviathan::BasePhysics
 	}
 	// Not found //
 	return false;
+}
+
+int Pong::PongGame::GetScoreLimit(){
+	return ScoreLimit;
+}
+
+void Pong::PongGame::SetScoreLimit(int scorelimit){
+	ScoreLimit = scorelimit;
+}
+
+void Pong::PongGame::CheckForGameEnd(){
+	// Look through all players and see if any team/player has reached score limit // //
+	for(size_t i = 0; i < PlayerList.size(); i++){
+
+		PlayerSlot* slotptr = PlayerList[i];
+
+		int totalteamscore = 0;
+
+		while(slotptr){
+
+			totalteamscore += slotptr->GetScore();
+			slotptr = slotptr->GetSplit();
+		}
+
+		if(totalteamscore >= ScoreLimit){
+			// Team has won //
+			Logger::Get()->Info(L"Team "+Convert::ToWstring(i)+L" has won the match!");
+
+
+			// Do various activities related to winning the game //
+
+
+			// Set the camera location //
+			auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
+
+			switch(i){
+			case 0:
+				{
+					cam->SetPos(Float3(4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
+					cam->SetRotation(Float3(-90.f, -30.f, 0.f));
+				}
+				break;
+			case 1:
+				{
+					cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
+					cam->SetRotation(Float3(-180.f, -30.f, 0.f));
+				}
+				break;
+			case 2:
+				{
+					cam->SetPos(Float3(-4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
+					cam->SetRotation(Float3(90.f, -30.f, 0.f));
+				}
+				break;
+			case 3:
+				{
+					cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
+					cam->SetRotation(Float3(0.f, -30.f, 0.f));
+				}
+				break;
+			}
+
+			// Send the game end event which should trigger proper menus //
+			Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"MatchEnded"), new NamedVars(shared_ptr<NamedVariableList>(new
+				NamedVariableList(L"WinningTeam", new Leviathan::VariableBlock((int)i))))));
+
+			// And finally destroy the ball //
+			GameArena->LetGoOfBall();
+
+			// (Don't block input so players can wiggle around //
+
+
+			return;
+		}
+	}
 }
 
 

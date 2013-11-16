@@ -13,6 +13,7 @@
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return;
 
+#define BALLSTUCK_THRESHOLD		0.03f
 #define SCOREPOINT_AMOUNT		1
 
 namespace Pong{
@@ -29,6 +30,7 @@ namespace Pong{
 	};
 
 	class PongGame : public Leviathan::LeviathanApplication{
+		friend Arena;
 	public:
 		PongGame();
 		~PongGame();
@@ -60,7 +62,12 @@ namespace Pong{
 		}
 		string GetErrorString();
 
+		int GetScoreLimit();
+		void SetScoreLimit(int scorelimit);
+
 		bool PlayerIDMatchesGoalAreaID(int plyid, Leviathan::BasePhysicsObject* goalptr);
+
+		void CheckForGameEnd();
 
 		// customized callbacks //
 		virtual void InitLoadCustomScriptTypes(asIScriptEngine* engine);
@@ -71,6 +78,7 @@ namespace Pong{
 		static int BallAABBCallbackPaddle(const NewtonMaterial* material, const NewtonBody* body0, const NewtonBody* body1, int threadIndex);
 		static void BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep, int threadIndex);
 		static int BallAABBCallbackGoalArea(const NewtonMaterial* material, const NewtonBody* body0, const NewtonBody* body1, int threadIndex);
+		static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep, int threadIndex);
 
 	protected:
 
@@ -85,6 +93,8 @@ namespace Pong{
 
 		int LastPlayerHitBallID;
 
+		int ScoreLimit;
+
 		vector<PlayerSlot*> PlayerList;
 		GameInputController* GameInputHandler;
 
@@ -93,9 +103,14 @@ namespace Pong{
 
 		// Used to count ticks to not have to call set apply force every tick //
 		int Tickcount;
+		// Ball's position during last tick. This is used to see if the ball is "stuck" //
+		Float3 BallLastPos;
+		// Direction in which the ball can get stuck //
+		Float3 DeadAxis;
 
 		// Map for storing collision data between the callbacks //
 		std::map<int, StoredCollisionData> ThreadIDStoredBodyPtrsMap;
+		std::map<int, StoredCollisionData> ThreadIDStoredBallGoalHitPtrsMap;
 
 		static PongGame* StaticAccess;
 	};

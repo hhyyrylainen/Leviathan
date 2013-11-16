@@ -331,11 +331,41 @@ void Pong::Arena::ServeBall(){
 	// Set material //
 	prop->SetPhysicalMaterial(L"BallMaterial");
 
-	// TODO: queue send event //
+	Float3 dir(0);
 
-	// should get a random direction... but just serve left //
-	// because the body is centered at the position (the center point is at the center of the sphere the point can be zero) //
-	prop->GiveImpulse(Float3(-25.f, 0.f, 0.f));
+	// Add some randomness //
+	int count = Leviathan::Random::Get()->GetNumber(0, 15);
+
+	PongGame* game = PongGame::Get();
+
+	while(count > -1){
+
+		for(size_t i = 0; i < game->PlayerList.size(); i++){
+
+			if(game->PlayerList[i]->IsSlotActive()){
+				count--;
+				if(count < 0){
+					// Set direction //
+
+					switch(i){
+					case 0: dir = Float3(1.f, 0.f, 0.f); break;
+					case 1: dir = Float3(0.f, 0.f, 1.f); break;
+					case 2: dir = Float3(-1.f, 0.f, 0.f); break;
+					case 3: dir = Float3(0.f, 0.f, -1.f); break;
+					}
+
+					break;
+				}
+			}
+		}
+	}
+	
+	// Add base speed //
+	dir *= 25.f;
+
+
+	// TODO: queue send event //
+	prop->GiveImpulse(dir);
 }
 // ------------------------------------ //
 void Pong::Arena::GiveBallSpeed(float mult){
@@ -365,9 +395,9 @@ void Pong::Arena::GiveBallSpeed(float mult){
 }
 
 void Pong::Arena::LetGoOfBall(){
-	// We can just reset the pointer to fool the system //
+	// We should delete it (but after this physics update is done) //
+	Ball->GetWorld()->QueueDestroyObject(Ball->GetID());
 	Ball.reset();
-
 }
 
 // ------------------------------------ //

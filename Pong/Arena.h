@@ -27,6 +27,10 @@ namespace Pong{
 		// Does what ever is needed to ditch old ball //
 		void LetGoOfBall();
 
+		inline shared_ptr<Leviathan::GameWorld> GetWorld(){
+			return TargetWorld;
+		}
+
 		void GiveBallSpeed(float mult);
 
 		inline shared_ptr<Leviathan::BaseObject> GetBallPtr(){

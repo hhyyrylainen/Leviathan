@@ -84,7 +84,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	ORoot = unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, ""));
 
 
-	vector<Ogre::String> PluginNames = boost::assign::list_of("RenderSystem_GL")/*("RenderSystem_Direct3D11")*/("Plugin_ParticleFX")
+	vector<Ogre::String> PluginNames = boost::assign::list_of("RenderSystem_GL")("RenderSystem_Direct3D11")("Plugin_ParticleFX")
 		("Plugin_CgProgramManager")("Plugin_OctreeSceneManager")/*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
 
 	for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++){
@@ -107,7 +107,33 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 		return false;
 	}
 
-	Ogre::RenderSystem* selectedrendersystem = RSystemList[0];
+	// Create the regular expression it must match //
+	string rendersystemname;
+
+	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), L"RenderSystemName", rendersystemname, "OpenGL", true, 
+		L"Graphics: Init: no selected render system,");
+
+	basic_regex<char> rendersystemnameregex(rendersystemname);
+	Ogre::RenderSystem* selectedrendersystem = NULL;
+
+	// Choose the right render system //
+	for(size_t i = 0; i < RSystemList.size(); i++){
+
+		if(regex_search(RSystemList[i]->getName(), rendersystemnameregex)){
+
+			// Matched //
+			Ogre::RenderSystem* selectedrendersystem = RSystemList[i];
+			break;
+		}
+	}
+
+	if(!selectedrendersystem){
+		// Select the first one since none matched //
+		Logger::Get()->Warning(L"Graphics: Init: no render system matched regex, choosing default: "+Convert::StringToWstring(RSystemList[0]->getName()));
+		selectedrendersystem = RSystemList[0];
+	}
+
+	// TODO: add device selecting feature //
 
 	Ogre::ConfigOptionMap& rconfig = selectedrendersystem->getConfigOptions();
 	if(rconfig.find("RTT Preferred Mode") != rconfig.end()){
@@ -142,8 +168,6 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 	return true;
 }
-// ------------------------------------ //
-
 // ------------------------------------------- //
 DLLEXPORT bool Leviathan::Graphics::Frame(){
 
@@ -164,7 +188,6 @@ bool Leviathan::Graphics::InitializeOverlay(){
 	Overlays = new Rendering::OverlayMaster();
 	return true;
 }
-
 // ------------------------------------------- //
 
 

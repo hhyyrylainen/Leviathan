@@ -218,7 +218,8 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wst
 
 // ------------------ ScriptSafeVariableBlock ------------------ //
 Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyfrom, const wstring &name) : NamedVariableBlock(
-	copyfrom->GetBlock()->AllocateNewFromThis(), name){
+	copyfrom->GetBlock()->AllocateNewFromThis(), name)
+{
 		// we need to copy all settings from the block //
 		switch(copyfrom->GetBlock()->Type){
 		case DATABLOCK_TYPE_INT: ASTypeID = TypeToAngelScriptIDConverter<int>::GetTypeIDFromTemplated(); break;

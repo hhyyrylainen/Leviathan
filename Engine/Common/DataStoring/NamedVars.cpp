@@ -742,3 +742,19 @@ DLLEXPORT int Leviathan::NamedVars::Find(const wstring &name) const{
 	}
 	return -1;
 }
+// ------------------ Script compatible functions ------------------ //
+ScriptSafeVariableBlock* Leviathan::NamedVars::GetScriptCompatibleValue(string name){
+	// Use a try block to not throw exceptions to the script engine //
+	try{
+		wstring wstrname = Convert::StringToWstring(name);
+		VariableBlock& tmpblock = GetValueNonConst(wstrname);
+
+		// Create script safe version //
+		return new ScriptSafeVariableBlock(&tmpblock, wstrname);
+
+
+	} catch(...){
+		// Something failed, return empty handle //
+		return NULL;
+	}
+}

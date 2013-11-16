@@ -271,6 +271,10 @@ void Leviathan::Engine::Release(){
 }
 // ------------------------------------ //
 void Leviathan::Engine::Tick(){
+	// Because this is checked very often we can check for physics update here //
+	PhysicsUpdate();
+
+
 	// get time since last update //
 	__int64 CurTime = Misc::GetTimeMs64();
 	TimePassed = (int)(CurTime-LastFrame);

@@ -34,7 +34,6 @@ THE SOFTWARE.
 #include "OgreMesh.h"
 #include "OgreLodStrategy.h"
 #include "OgreHeaderPrefix.h"
-#include "OgreVector3.h"
 
 namespace Ogre {
 

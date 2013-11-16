@@ -89,7 +89,7 @@ void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre){
 
 DLLEXPORT void Leviathan::GameWorld::SetSkyBox(const string &materialname){
 	try{
-		WorldsScene->setSkyBox(true, "NiceDaySky");
+		WorldsScene->setSkyBox(true, materialname);
 	}
 	catch(const Ogre::InvalidParametersException &e){
 
@@ -173,8 +173,10 @@ DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
 
 DLLEXPORT void Leviathan::GameWorld::ClearObjects(){
 	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
-		// TODO: add world unlink function to BaseObject
+		// Release the object //
+		(*iter)->Release();
 	}
+	// Release our reference //
 	Objects.clear();
 }
 

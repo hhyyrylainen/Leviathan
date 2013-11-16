@@ -21,15 +21,15 @@ DLLEXPORT Leviathan::Entity::Prop::~Prop(){
 
 DLLEXPORT void Leviathan::Entity::Prop::Release(){
 	// release Ogre entity //
-	ObjectsNode->removeAndDestroyAllChildren();
 	OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
+	OwnedByWorld->GetScene()->destroyEntity(GraphicalObject);
+
+	GraphicalObject = NULL;
+	OwnedByWorld = NULL;
 
 	// physical entity //
 	AggressiveConstraintUnlink();
 	_DestroyPhysicalBody();
-
-	GraphicalObject = NULL;
-	OwnedByWorld = NULL;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){

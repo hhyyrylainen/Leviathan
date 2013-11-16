@@ -50,9 +50,12 @@ DLLEXPORT Leviathan::GenericEvent::GenericEvent(wstring* takeownershipstr, Named
 DLLEXPORT Leviathan::GenericEvent::~GenericEvent(){
 	// release memory //
 	SAFE_DELETE(TypeStr);
-	SAFE_DELETE(Variables);
+	SAFE_RELEASE(Variables);
 }
 // ------------------------------------ //
-
+DLLEXPORT NamedVars* Leviathan::GenericEvent::GetNamedVarsRefCounted(){
+	Variables->AddRef();
+	return Variables;
+}
 
 

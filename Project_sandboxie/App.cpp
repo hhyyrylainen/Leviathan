@@ -37,8 +37,7 @@ void App::CustomizeEnginePostLoad(){
 	// link world and camera to a window //
 	GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
 
-	window1->LinkCamera(MainCamera);
-	window1->LinkWorld(world1);
+	window1->LinkObjects(MainCamera, world1);
 	// sound listening camera //
 	MainCamera->BecomeSoundPerceiver();
 

@@ -25,8 +25,12 @@ DLLEXPORT Leviathan::Entity::Brush::~Brush(){
 
 DLLEXPORT void Leviathan::Entity::Brush::Release(){
 	// release Ogre entity //
-	ObjectsNode->removeAndDestroyAllChildren();
 	OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
+	OwnedByWorld->GetScene()->destroyEntity(GraphicalObject);
+
+	ObjectsNode = NULL;
+	GraphicalObject = NULL;
+
 	// the model won't be used anymore //
 	if(MeshName.size()){
 		OwnedByWorld->GetScene()->destroyManualObject(MeshName+"_manual");
@@ -34,12 +38,11 @@ DLLEXPORT void Leviathan::Entity::Brush::Release(){
 		Ogre::MeshManager::getSingleton().destroyResourcePool(MeshName);
 	}
 
+	OwnedByWorld = NULL;
+
 	// physical entity //
 	AggressiveConstraintUnlink();
 	_DestroyPhysicalBody();
-
-	GraphicalObject = NULL;
-	OwnedByWorld = NULL;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const string &material, 

@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "Exceptions\ExceptionInvalidArguement.h"
 #include "Common\DataStoring\DataBlock.h"
+#include "..\ReferenceCounted.h"
 
 namespace Leviathan{
 
@@ -127,7 +128,7 @@ namespace Leviathan{
 
 
 	// holds a vector of NamedVariableLists and provides searching functions //
-	class NamedVars{
+	class NamedVars : public ReferenceCounted{
 	public:
 		DLLEXPORT NamedVars();
 		DLLEXPORT NamedVars(const NamedVars &other);
@@ -175,6 +176,12 @@ namespace Leviathan{
 
 		DLLEXPORT vector<VariableBlock*>* GetValues(const wstring &name) throw(...);
 
+		// Script accessible functions //
+		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(NamedVars);
+
+		// Uses the find functions to get first value from the found value //
+		// Warning: uses reference counting for return value //
+		ScriptSafeVariableBlock* GetScriptCompatibleValue(string name);
 		// ------------------------------------ //
 		DLLEXPORT int GetVariableType(const wstring &name) const;
 		DLLEXPORT int GetVariableType(unsigned int index) const;

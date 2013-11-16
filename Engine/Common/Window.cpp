@@ -14,8 +14,8 @@ using namespace Leviathan;
 static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function");
 
 
-DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner, bool vsync) : OWindow(owindow), VerticalSync(vsync), 
-	m_hwnd(NULL), WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0), 
+DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner) : OWindow(owindow), m_hwnd(NULL), 
+	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0), 
 	ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true)
 {
 

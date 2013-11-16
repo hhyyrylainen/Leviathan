@@ -13,6 +13,21 @@ int WrapperForDataBlockToInt(VariableBlock* obj){
 
 bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 
+	// Bind NamedVars //
+
+	// TODO: make this safe to be passed to the script //
+	if(engine->RegisterObjectType("NamedVars", 0, asOBJ_REF) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("NamedVars", asBEHAVE_ADDREF, "void f()", asMETHOD(NamedVars, AddRefProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("NamedVars", asBEHAVE_RELEASE, "void f()", asMETHOD(NamedVars, ReleaseProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	
+
+
 	// bind event type enum //
 	if(engine->RegisterEnum("EVENT_TYPE") < 0){
 		ANGELSCRIPT_REGISTERFAIL;
@@ -46,6 +61,12 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectBehaviour("GenericEvent", asBEHAVE_RELEASE, "void f()", asMETHOD(GenericEvent, ReleaseProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+	// Data get function //
+	if(engine->RegisterObjectMethod("GenericEvent", "NamedVars@ GetNamedVars()", asMETHOD(GenericEvent, GetNamedVarsRefCounted), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
 
 
 	// bind datablock //
@@ -70,6 +91,10 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	}
 
 
+	if(engine->RegisterObjectMethod("NamedVars", "ScriptSafeVariableBlock@ GetSingleValueByName(string name)", asMETHOD(NamedVars, GetScriptCompatibleValue), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
 
 
 	return true;
@@ -80,4 +105,5 @@ void RegisterEngineScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("Event"), L"Event"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("GenericEvent"), L"GenericEvent"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("ScriptSafeVariableBlock"), L"ScriptSafeVariableBlock"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("NamedVars"), L"NamedVars"));
 }

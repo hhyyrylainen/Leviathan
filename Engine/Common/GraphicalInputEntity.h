@@ -20,20 +20,14 @@ namespace Leviathan{
 		DLLEXPORT GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties);
 		DLLEXPORT ~GraphicalInputEntity();
 
-
 		DLLEXPORT void Tick(int mspassed);
 
-		DLLEXPORT void Render(int mspassed, GameWorld* worldtorender, ViewerCameraPos* viewlocation);
-		// uses stored objects //
+		// This function uses the LinkObjects function objects //
 		DLLEXPORT void Render(int mspassed);
 
 		// object linking //
-		DLLEXPORT inline void LinkWorld(shared_ptr<GameWorld> world){
-			LinkedWorld = world;
-		}
-		DLLEXPORT inline void LinkCamera(shared_ptr<ViewerCameraPos> camera){
-			LinkedCamera = camera;
-		}
+		// This function also updates the camera aspect ratio //
+		DLLEXPORT void LinkObjects(shared_ptr<ViewerCameraPos> camera, shared_ptr<GameWorld> world);
 
 		// returns true if succeeds, false if another window has input //
 		DLLEXPORT bool SetMouseCapture(bool state);
@@ -59,6 +53,9 @@ namespace Leviathan{
 		}
 		DLLEXPORT inline InputController* GetInputController(){
 			return TertiaryReceiver;
+		}
+		DLLEXPORT inline shared_ptr<ViewerCameraPos> GetLinkedCamera(){
+			return LinkedCamera;
 		}
 	protected:
 

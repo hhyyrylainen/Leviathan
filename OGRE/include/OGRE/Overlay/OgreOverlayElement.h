@@ -166,9 +166,6 @@ namespace Ogre {
         // Zorder for when sending to render queue
         // Derived from parent
         ushort mZOrder;
-		// this Zorder is used to set this element's Zorder relative to it's parent
-		// when rendering this is added to mZOrder
-		ushort mParentRelativeZOrder;
 
         // world transforms
         Matrix4 mXForm;
@@ -254,12 +251,6 @@ namespace Ogre {
         void setTop(Real Top);
         /** Gets the top of this element in relation to the screen (where 0 = top, 1.0 = bottom)  */
         Real getTop(void) const;
-
-		/** Sets this element's Zorder relative to it's parent (this is used to have container elements drawn
-		in certain order)*/
-		void SetRelativeZOrder(const ushort &zorder);
-		/** Gets this element's Zorder relative to it's parent (same as calling _getFinalElementZOrder(false))  */
-		ushort GetRelativeZOrder() const;
 
         /** Gets the left of this element in relation to the screen (where 0 = far left, 1.0 = far right)  */
         Real _getLeft(void) const { return mLeft; }
@@ -347,12 +338,6 @@ namespace Ogre {
 		child (more if those children are also containers).
         */
         virtual ushort _notifyZOrder(ushort newZOrder);
-
-		/** Internal method that gets the total Zorder of this element and all of it's parents. Can also be useful for other purposes.
-        @remarks
-		This result is added to the mZOrder variable when queuing for rendering.
-        */
-		virtual ushort _getFinalElementZOrder(const bool &recurse = true);
 
         /** Internal method to notify the element when it's world transform
          of parent overlay has changed.

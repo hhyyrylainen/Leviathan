@@ -20,7 +20,7 @@ namespace Leviathan{
 	// window class //
 	class Window : public Ogre::WindowEventListener, OIS::KeyListener, OIS::MouseListener, OIS::JoyStickListener{
 	public:
-		DLLEXPORT Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner, bool vsync);
+		DLLEXPORT Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner);
 		DLLEXPORT ~Window();
 
 		DLLEXPORT void CloseDown();
@@ -50,7 +50,7 @@ namespace Leviathan{
 		DLLEXPORT inline HWND GetHandle(){ return (m_hwnd = GetRenderWindowHandle(OWindow)); };
 		DLLEXPORT inline int GetWidth() const{ return OWindow->getWidth(); };
 		DLLEXPORT inline int GetHeight() const{ return OWindow->getHeight(); };
-		DLLEXPORT inline bool GetVsync() const{ return VerticalSync;};
+		DLLEXPORT inline bool GetVsync() const{ return OWindow->isVSyncEnabled();};
 		DLLEXPORT inline Ogre::RenderWindow* GetOgreWindow() const{ return OWindow; };
 
 		DLLEXPORT inline bool IsOpen() const{
@@ -119,8 +119,6 @@ namespace Leviathan{
 		int LastFrameDownMouseButtons;
 		// this is updated every time input is gathered //
 		int SpecialKeyModifiers;
-
-		bool VerticalSync;
 		bool Focused;
 		bool ApplicationWantCursorState;
 		bool ForceMouseVisible;

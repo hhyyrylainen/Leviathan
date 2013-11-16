@@ -42,7 +42,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	}
 
 	// create the actual window //
-	DisplayWindow = new Window(tmpwindow, this, vsync);
+	DisplayWindow = new Window(tmpwindow, this);
 	// apply style settings (mainly ICON) //
 	WData.ApplyIconToHandle(DisplayWindow->GetHandle());
 	tmpwindow->setDeactivateOnFocusChange(false);
@@ -113,9 +113,9 @@ DLLEXPORT float Leviathan::GraphicalInputEntity::GetViewportAspectRatio(){
 	return MainViewport->getActualWidth()/(float)MainViewport->getActualHeight();
 }
 
-DLLEXPORT void Leviathan::GraphicalInputEntity::Render(int mspassed, GameWorld* worldtorender, ViewerCameraPos* viewlocation){
-	worldtorender->UpdateCameraAspect(this);
-	worldtorender->UpdateCameraLocation(mspassed, viewlocation);
+DLLEXPORT void Leviathan::GraphicalInputEntity::Render(int mspassed){
+
+	LinkedWorld->UpdateCameraLocation(mspassed, LinkedCamera.get());
 
 	// update input before each frame //
 	WindowsGui->Render();
@@ -136,16 +136,15 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::Render(int mspassed, GameWorld* 
 	// update special view ports //
 
 	// finish rendering the window //
-	tmpwindow->swapBuffers(DisplayWindow->GetVsync());
+	tmpwindow->swapBuffers(/*DisplayWindow->GetVsync()*/);
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(shared_ptr<ViewerCameraPos> camera, shared_ptr<GameWorld> world){
+	LinkedCamera = camera;
+	LinkedWorld = world;
 
-DLLEXPORT void Leviathan::GraphicalInputEntity::Render(int mspassed){
-	// call the overload with stored values //
-	Render(mspassed, LinkedWorld.get(), LinkedCamera.get());
+	LinkedWorld->UpdateCameraAspect(this);
 }
-
-
-
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::SaveScreenShot(const string &filename){
 	// uses render target's capability to save it's contents //

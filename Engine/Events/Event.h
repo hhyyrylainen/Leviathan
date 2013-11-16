@@ -67,6 +67,9 @@ namespace Leviathan{
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GenericEvent);
 
+		// Warning this function returns the pointer with reference count increased //
+		DLLEXPORT NamedVars* GetNamedVarsRefCounted();
+
 		wstring* TypeStr;
 		NamedVars* Variables;
 	};

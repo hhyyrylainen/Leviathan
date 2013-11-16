@@ -18,7 +18,14 @@ set(LeviathanTestFiles ${LTSourceFiles} ${LTHeaderFiles})
 add_executable(LeviathanTest WIN32 ${LeviathanTestFiles})
 set_target_properties(LeviathanTest PROPERTIES DEBUG_POSTFIX D)
 
-install(TARGETS LeviathanTest DESTINATION bin)
+# Possible debug installs
+set(InstallConfigurationNames "Release")
+if(NOT INSTALL_ONLY_RELEASE)
+# Append the Debug configuration if we don't want only release release
+list(APPEND InstallConfigurationNames "Debug")
+endif(NOT INSTALL_ONLY_RELEASE)
+
+install(TARGETS LeviathanTest DESTINATION bin CONFIGURATIONS ${InstallConfigurationNames})
 
 # linking to engine
 target_link_libraries(LeviathanTest Engine)

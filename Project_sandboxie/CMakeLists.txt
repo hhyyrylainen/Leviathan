@@ -22,7 +22,14 @@ set(Sandboxiefiles ${SBSourceFiles} ${SBHeaderFiles} ${SBResourceFiles})
 add_executable(Sandboxie WIN32 ${Sandboxiefiles})
 set_target_properties(Sandboxie PROPERTIES DEBUG_POSTFIX D)
 
-install(TARGETS Sandboxie DESTINATION bin)
+# Possible debug installs
+set(InstallConfigurationNames "Release")
+if(NOT INSTALL_ONLY_RELEASE)
+# Append the Debug configuration if we don't want only release release
+list(APPEND InstallConfigurationNames "Debug")
+endif(NOT INSTALL_ONLY_RELEASE)
+
+install(TARGETS Sandboxie DESTINATION bin CONFIGURATIONS ${InstallConfigurationNames})
 
 # linking to engine
 target_link_libraries(Sandboxie Engine)

@@ -37,7 +37,14 @@ ADD_MSVC_PRECOMPILED_HEADER("PongIncludes.h" ${PrecompiledSourceName} PongFiles)
 add_executable(Pong WIN32 ${PongFiles})
 set_target_properties(Pong PROPERTIES DEBUG_POSTFIX D)
 
-install(TARGETS Pong DESTINATION bin)
+# Possible debug installs
+set(InstallConfigurationNames "Release")
+if(NOT INSTALL_ONLY_RELEASE)
+# Append the Debug configuration if we don't want only release release
+list(APPEND InstallConfigurationNames "Debug")
+endif(NOT INSTALL_ONLY_RELEASE)
+
+install(TARGETS Pong DESTINATION bin CONFIGURATIONS ${InstallConfigurationNames})
 
 # linking to engine
 target_link_libraries(Pong Engine)

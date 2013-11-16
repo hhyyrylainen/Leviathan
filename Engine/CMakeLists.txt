@@ -94,7 +94,14 @@ add_definitions(-DENGINE_EXPORTS)
 # create library with all the files
 add_library(Engine SHARED ${EngineFiles})
 
-install(TARGETS Engine DESTINATION bin)
+# Possible debug installs
+set(InstallConfigurationNames "Release")
+if(NOT INSTALL_ONLY_RELEASE)
+# Append the Debug configuration if we don't want only release release
+list(APPEND InstallConfigurationNames "Debug")
+endif(NOT INSTALL_ONLY_RELEASE)
+
+install(TARGETS Engine DESTINATION bin CONFIGURATIONS ${InstallConfigurationNames})
 
 # post build copy
 ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND copy ARGS 

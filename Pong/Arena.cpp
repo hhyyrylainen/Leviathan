@@ -400,6 +400,22 @@ void Pong::Arena::LetGoOfBall(){
 	Ball.reset();
 }
 
+bool Pong::Arena::IsBallInPaddleArea(){
+
+	// Cast //
+	Leviathan::Entity::Prop* tmpball = dynamic_cast<Leviathan::Entity::Prop*>(Ball.get());
+
+	if(tmpball == NULL)
+		return false;
+	
+	// Get pos //
+	Float3 pos = tmpball->GetPos();
+
+	if(abs(pos.X) >= 8.5f*BASE_ARENASCALE || abs(pos.Z) >= 8.5f*BASE_ARENASCALE)
+		return true;
+	return false;
+}
+
 // ------------------------------------ //
 
 

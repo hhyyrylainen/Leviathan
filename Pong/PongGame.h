@@ -13,21 +13,11 @@
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return;
 
-#define BALLSTUCK_THRESHOLD		0.03f
+#define BALLSTUCK_THRESHOLD		0.025f
+#define BALLSTUCK_COUNT			8
 #define SCOREPOINT_AMOUNT		1
 
 namespace Pong{
-
-	struct StoredCollisionData{
-		// Used to store pointers in AABB callback to be used in Contact callback //
-		StoredCollisionData() : Body0(NULL), Body1(NULL){
-		};
-		StoredCollisionData(const NewtonBody* body, const NewtonBody* body2) : Body0(body), Body1(body2){
-		};
-
-		const NewtonBody* Body0;
-		const NewtonBody* Body1;
-	};
 
 	class PongGame : public Leviathan::LeviathanApplication{
 		friend Arena;
@@ -37,9 +27,6 @@ namespace Pong{
 
 		int TryStartGame();
 		void GameMatchEnded();
-
-		// function called after input has been received (should be just before rendering) //
-		void ProcessPlayerInputsAndState();
 
 		virtual void Tick(int mspassed);
 
@@ -54,6 +41,8 @@ namespace Pong{
 		// Called when scored, will handle everything //
 		int PlayerScored(Leviathan::BasePhysicsObject* goalptr);
 
+		// Will determine if a paddle could theoretically hit the ball //
+		bool IsBallInGoalArea();
 
 		PlayerSlot* GetPlayerSlot(int id);
 
@@ -75,9 +64,7 @@ namespace Pong{
 		virtual void RegisterApplicationPhysicalMaterials(Leviathan::PhysicsMaterialManager* manager);
 
 		// Ball handling callback //
-		static int BallAABBCallbackPaddle(const NewtonMaterial* material, const NewtonBody* body0, const NewtonBody* body1, int threadIndex);
 		static void BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep, int threadIndex);
-		static int BallAABBCallbackGoalArea(const NewtonMaterial* material, const NewtonBody* body0, const NewtonBody* body1, int threadIndex);
 		static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep, int threadIndex);
 
 	protected:
@@ -86,6 +73,8 @@ namespace Pong{
 		void _SetLastPaddleHit(Leviathan::BasePhysicsObject* objptr, Leviathan::BasePhysicsObject* objptr2);
 		// Handles score increase from scoring and destruction of ball. The second parameter is used to ensuring it is the right ball //
 		int _BallEnterGoalArea(Leviathan::BasePhysicsObject* goal, Leviathan::BasePhysicsObject* ballobject);
+
+		void _DisposeOldBall();
 		// ------------------------------------ //
 
 		// game objects //
@@ -107,10 +96,7 @@ namespace Pong{
 		Float3 BallLastPos;
 		// Direction in which the ball can get stuck //
 		Float3 DeadAxis;
-
-		// Map for storing collision data between the callbacks //
-		std::map<int, StoredCollisionData> ThreadIDStoredBodyPtrsMap;
-		std::map<int, StoredCollisionData> ThreadIDStoredBallGoalHitPtrsMap;
+		int StuckThresshold;
 
 		static PongGame* StaticAccess;
 	};

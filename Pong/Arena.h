@@ -10,7 +10,7 @@
 
 
 #define BASE_ARENASCALE		1.f	
-#define BALL_SPEED_MAX		40
+#define BALL_SPEED_MAX		35
 
 namespace Pong{
 
@@ -36,6 +36,9 @@ namespace Pong{
 		inline shared_ptr<Leviathan::BaseObject> GetBallPtr(){
 			return Ball;
 		}
+
+		// Checks based on generated arena if ball intersects (or could) with a paddle area //
+		bool IsBallInPaddleArea();
 
 	private:
 

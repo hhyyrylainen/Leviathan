@@ -12,7 +12,7 @@ using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
 Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), ScoreLimit(20),
-	BallLastPos(0.f), DeadAxis(0.f)
+	BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0)
 {
 	StaticAccess = this;
 
@@ -98,7 +98,6 @@ std::wstring Pong::PongGame::GenerateWindowTitle(){
 	return wstring(L"Pong version " GAME_VERSIONS L" Leviathan " LEVIATHAN_VERSIONS);
 }
 // ------------------------------------ //
-// TODO: register game objects for use in scripts //
 void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 
 	// register PongGame type //
@@ -248,18 +247,12 @@ string Pong::PongGame::GetErrorString(){
 	return ErrorState;
 }
 
-void Pong::PongGame::ProcessPlayerInputsAndState(){
-	DEBUG_OUTPUT_AUTO(wstring(L"Handling AI think and game 'update' logic!"));
-}
-
 PlayerSlot* Pong::PongGame::GetPlayerSlot(int id){
 	return PlayerList[id];
 }
 
 void Pong::PongGame::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager* manager){
 	// TODO: implement loading from files //
-
-
 
 	// load predefined materials //
 	unique_ptr<Leviathan::PhysicalMaterial> PaddleMaterial(new Leviathan::PhysicalMaterial(L"PaddleMaterial"));
@@ -269,10 +262,9 @@ void Pong::PongGame::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager
 	unique_ptr<Leviathan::PhysicalMaterial> GoalAreaMaterial(new Leviathan::PhysicalMaterial(L"GoalAreaMaterial"));
 
 	// Set callbacks //
-	//BallMaterial->FormPairWith(*PaddleMaterial).SetSoftness(1.f).SetElasticity(2.0f).SetFriction(1.f, 1.f).
 	BallMaterial->FormPairWith(*PaddleMaterial).SetSoftness(1.f).SetElasticity(1.0f).SetFriction(1.f, 1.f).
-		SetCallbacks(BallAABBCallbackPaddle, BallContactCallbackPaddle);
-	BallMaterial->FormPairWith(*GoalAreaMaterial).SetCallbacks(BallAABBCallbackGoalArea, BallContactCallbackGoalArea);
+		SetCallbacks(NULL, BallContactCallbackPaddle);
+	BallMaterial->FormPairWith(*GoalAreaMaterial).SetCallbacks(NULL, BallContactCallbackGoalArea);
 
 	PaddleMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
 	PaddleMaterial->FormPairWith(*ArenaMaterial).SetCollidable(false).SetElasticity(0.f).SetSoftness(0.f);
@@ -298,9 +290,6 @@ void Pong::PongGame::Tick(int mspassed){
 	// Let the AI think //
 
 
-	// Update logic //
-
-
 	// Check if ball is too far away (also check if it is vertically stuck or horizontally) //
 
 	if(GameArena->GetBallPtr()){
@@ -309,119 +298,69 @@ void Pong::PongGame::Tick(int mspassed){
 		Float3 ballcurpos = castedptr->GetPos();
 
 		if(ballcurpos.HAddAbs() > 100*BASE_ARENASCALE){
-			// Tell arena to let go of old ball //
-			GameArena->LetGoOfBall();
 
-			// Don't forget to reset this //
-			LastPlayerHitBallID = -1;
+			_DisposeOldBall();
 
 			// Serve new ball //
 			GameArena->ServeBall();
 		}
 
-		// Only check this every couple of ticks to allow the ball to move a decent amount //
-		if(DataStore::Get()->GetTickCount() % 4 == 0){
+		// Check is the ball stuck on the dead axis (where no paddle can hit it) //
+		
+		Float3 ballspeed = castedptr->GetBodyVelocity();
+		ballspeed.X = abs(ballspeed.X);
+		ballspeed.Y = 0;
+		ballspeed.Z = abs(ballspeed.Z);
+		ballspeed = ballspeed.Normalize();
 
-			Float3 ballmoved = ballcurpos-BallLastPos;
-			BallLastPos = ballcurpos;
+		if(DeadAxis.HAddAbs() != 0 && ballspeed.HAddAbs() > BALLSTUCK_THRESHOLD){
+			// Compare directions //
 
-			if(DeadAxis.HAddAbs() != 0){
-				// Check //
-				float axisamount = 0.f;
+			float veldifference = (ballspeed-DeadAxis).HAddAbs();
 
-				if(DeadAxis[0] && ballmoved[0])
-					axisamount += abs(ballmoved[0]);
-				if(DeadAxis[1] && ballmoved[1])
-					axisamount += abs(ballmoved[1]);
-				if(DeadAxis[2] && ballmoved[2])
-					axisamount += abs(ballmoved[2]);
-				
-				if(axisamount < BALLSTUCK_THRESHOLD){
+			if(veldifference < BALLSTUCK_THRESHOLD){
 
-					//Logger::Get()->Info(L"Ball stuck!");
-					//// Tell arena to let go of old ball //
-					//GameArena->LetGoOfBall();
+				StuckThresshold++;
 
-					//// Don't forget to reset this //
-					//LastPlayerHitBallID = -1;
+				DEBUG_OUTPUT_AUTO(wstring(L"Thresshold: "+Convert::ToWstring(StuckThresshold)));
 
-					//// Serve new ball //
-					//GameArena->ServeBall();
+				if(StuckThresshold >= BALLSTUCK_COUNT){
+					// Check is ball in a goal area //
+					if(IsBallInGoalArea()){
+						StuckThresshold = 0;
+						Logger::Get()->Info(L"Skipping stuck because ball is in paddle area");
+					} else {
+						Logger::Get()->Info(L"Ball stuck!");
+
+						_DisposeOldBall();
+						// Serve new ball //
+						GameArena->ServeBall();
+					}
 				}
+			} else {
+				if(StuckThresshold >= 1)
+					StuckThresshold--;
 			}
 		}
 	}
 
-
-	// We can clear this map since physic update shouldn't be in progress //
-	ThreadIDStoredBodyPtrsMap.clear();
-	ThreadIDStoredBallGoalHitPtrsMap.clear();
-
-
 	// Give the ball more speed //
-	//GameArena->GiveBallSpeed(2.5f);
-	GameArena->GiveBallSpeed(1.0001f);
+	GameArena->GiveBallSpeed(1.00001f);
 }
 // ------------------ Physics callbacks for game logic ------------------ //
-int Pong::PongGame::BallAABBCallbackPaddle(const NewtonMaterial* material, const NewtonBody* body0, const NewtonBody* body1, int threadIndex){
-
-	// Store the pointers //
-	StaticAccess->ThreadIDStoredBodyPtrsMap[threadIndex] = StoredCollisionData(body0, body1);
-
-	// We want collision always //
-	return 1;
-}
-
 void Pong::PongGame::BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep, int threadIndex){
 
-
-	// Fetch the bodies //
-	auto iter = StaticAccess->ThreadIDStoredBodyPtrsMap.find(threadIndex);
-
-	if(iter != StaticAccess->ThreadIDStoredBodyPtrsMap.end()){
-
-		const StoredCollisionData& ptrstore = iter->second;
-
-		const NewtonBody* body0 = ptrstore.Body0;
-		const NewtonBody* body1 = ptrstore.Body1;
-
-		// Call the callback //
-		StaticAccess->_SetLastPaddleHit(reinterpret_cast<Leviathan::BasePhysicsObject*>(NewtonBodyGetUserData(body1)), 
-			reinterpret_cast<Leviathan::BasePhysicsObject*>(NewtonBodyGetUserData(body0)));
-
-		// Remove, since it isn't needed anymore //
-		StaticAccess->ThreadIDStoredBodyPtrsMap.erase(iter);
-	}
-}
-
-int Pong::PongGame::BallAABBCallbackGoalArea(const NewtonMaterial* material, const NewtonBody* body0, const NewtonBody* body1, int threadIndex){
-
-	// Store the pointers //
-	StaticAccess->ThreadIDStoredBallGoalHitPtrsMap[threadIndex] = StoredCollisionData(body0, body1);
-
-	// We want the other callback called any way //
-	return 1;
+	// Call the callback //
+	StaticAccess->_SetLastPaddleHit(reinterpret_cast<Leviathan::BasePhysicsObject*>(
+		NewtonBodyGetUserData(NewtonJointGetBody0(contact))), reinterpret_cast<Leviathan::BasePhysicsObject*>(
+		NewtonBodyGetUserData(NewtonJointGetBody1(contact))));
 }
 
 void Pong::PongGame::BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep, int threadIndex){
-
-	// Fetch the bodies //
-	auto iter = StaticAccess->ThreadIDStoredBallGoalHitPtrsMap.find(threadIndex);
-
-	if(iter != StaticAccess->ThreadIDStoredBallGoalHitPtrsMap.end()){
-
-		const StoredCollisionData& ptrstore = iter->second;
-
-		const NewtonBody* body0 = ptrstore.Body0;
-		const NewtonBody* body1 = ptrstore.Body1;
-
-		// Set contact state //
-		//NewtonJointSetCollisionState(contact, StaticAccess->_BallEnterGoalArea(reinterpret_cast<Leviathan::BasePhysicsObject*>(NewtonBodyGetUserData(body1)), 
-		//	reinterpret_cast<Leviathan::BasePhysicsObject*>(NewtonBodyGetUserData(body0))));
-		NewtonJointSetCollisionState(contact, StaticAccess->_BallEnterGoalArea(reinterpret_cast<Leviathan::BasePhysicsObject*>(
-			NewtonBodyGetUserData(NewtonJointGetBody0(contact))), reinterpret_cast<Leviathan::BasePhysicsObject*>(
-			NewtonBodyGetUserData(NewtonJointGetBody1(contact)))));
-	}
+	// Call the function and set the collision state as the last one //
+	NewtonJointSetCollisionState(contact, StaticAccess->_BallEnterGoalArea(reinterpret_cast<Leviathan::BasePhysicsObject*>(
+		NewtonBodyGetUserData(NewtonJointGetBody0(contact))), reinterpret_cast<Leviathan::BasePhysicsObject*>(
+		NewtonBodyGetUserData(NewtonJointGetBody1(contact)))));
 }
 
 void Pong::PongGame::_SetLastPaddleHit(Leviathan::BasePhysicsObject* objptr, Leviathan::BasePhysicsObject* objptr2){
@@ -499,10 +438,7 @@ playrscorelistupdateendlabel:
 	Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"ScoreUpdated"), new NamedVars(shared_ptr<NamedVariableList>(new
 		NamedVariableList(L"ScoredPlayer", new Leviathan::VariableBlock(LastPlayerHitBallID))))));
 
-	LastPlayerHitBallID = -1;
-
-	// Tell arena to let go of old ball //
-	GameArena->LetGoOfBall();
+	_DisposeOldBall();
 
 	// Serve new ball //
 	GameArena->ServeBall();
@@ -610,6 +546,21 @@ void Pong::PongGame::CheckForGameEnd(){
 			return;
 		}
 	}
+}
+
+void Pong::PongGame::_DisposeOldBall(){
+
+	// Tell arena to let go of old ball //
+	GameArena->LetGoOfBall();
+
+	// Reset variables //
+	LastPlayerHitBallID = -1;
+	StuckThresshold = 0;
+}
+
+bool Pong::PongGame::IsBallInGoalArea(){
+	// Tell arena to handle this //
+	return GameArena->IsBallInPaddleArea();
 }
 
 

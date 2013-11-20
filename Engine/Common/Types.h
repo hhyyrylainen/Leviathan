@@ -264,6 +264,10 @@ namespace Leviathan{
 		DLLEXPORT inline float HAdd() const{
 			return X+Y;
 		}
+		// Add all elements together after abs() is called on each element //
+		DLLEXPORT inline float HAddAbs() const{
+			return abs(X)+abs(Y);
+		}
 		// getting min and max of objects //
 		DLLEXPORT inline Float2 MinElements(const Float2 &other) const{
 			return Float2(X < other.X ? X : other.X, Y < other.Y ? Y : other.Y);
@@ -709,6 +713,10 @@ namespace Leviathan{
 		// add all elements together //
 		DLLEXPORT inline float HAdd() const{
 			return X+Y+Z+W;
+		}
+		// Add all elements together after abs() is called on each element //
+		DLLEXPORT inline float HAddAbs() const{
+			return abs(X)+abs(Y)+abs(Z)+abs(W);
 		}
 		// getting min and max of objects //
 		DLLEXPORT inline Float4 MinElements(const Float4 &other) const{

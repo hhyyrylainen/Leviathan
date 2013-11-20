@@ -70,6 +70,22 @@ DLLEXPORT bool Leviathan::BaseNotifier::UnConnectFromNotifiable(int id){
 	return false;
 }
 // ------------------------------------ //
+DLLEXPORT bool Leviathan::BaseNotifier::SendCustomMessageToChildren(int messagetype, void* data, bool callonall /*= true*/){
+	// If the loop won't stop to first successful call this is needed to know if any calls succeeded //
+	bool called = false;
+
+	for(auto iter = ConnectedChilds.begin(); iter != ConnectedChilds.end(); ++iter){
+
+		if((*iter)->SendCustomMessage(messagetype, data)){
+			called = true;
+			if(!callonall)
+				return true;
+		}
+	}
+
+	return called;
+}
+// ------------------------------------ //
 void Leviathan::BaseNotifier::_OnUnhookNotifiable(BaseNotifiable* childtoremove){
 	// Remove from list //
 	for(auto iter = ConnectedChilds.begin(); iter != ConnectedChilds.end(); ++iter){
@@ -96,3 +112,5 @@ void Leviathan::BaseNotifier::_OnNotifiableConnected(BaseNotifiable* childadded)
 void Leviathan::BaseNotifier::_OnNotifiableDisconnected(BaseNotifiable* childtoremove){
 
 }
+
+

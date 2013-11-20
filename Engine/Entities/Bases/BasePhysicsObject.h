@@ -41,7 +41,7 @@ namespace Leviathan{
 	};
 
 
-	class BasePhysicsObject : public BasePositionable, virtual public BaseObject{
+	class BasePhysicsObject : virtual public BasePositionable, virtual public BaseObject{
 	public:
 		DLLEXPORT BasePhysicsObject();
 		DLLEXPORT virtual ~BasePhysicsObject();

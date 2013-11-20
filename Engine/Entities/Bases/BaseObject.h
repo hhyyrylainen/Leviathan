@@ -25,7 +25,11 @@
 #define ENTITYCUSTOMMESSAGETYPE_SETVELOCITY						6
 // For this type ptr should be Float3* which doesn't need deleting //
 #define ENTITYCUSTOMMESSAGETYPE_CHANGEWORLDPOSITION				7
-
+// ------------------ These are sent by parent objects (only non-physical parenting) ------------------ //
+// Sent when the position of the parent object has updated, for this type the ptr should be BasePositionable* which doesn't need deleting //
+#define ENTITYCUSTOMMESSAGETYPE_PARENTPOSITIONUPDATED			8
+// Sent when parent has connected (won't be send when child connects to a parent), for this type ptr should be BasePositionable* which doesn't need deleting //
+#define ENTITYCUSTOMMESSAGETYPE_PARENTCONNECTED					9
 
 // This message type is used for requesting data, if cannot be handled just return false, but if it can return the right type in the void ptr //
 #define ENTITYCUSTOMMESSAGETYPE_DATAREQUEST						9999

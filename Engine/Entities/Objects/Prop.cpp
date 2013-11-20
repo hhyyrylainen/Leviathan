@@ -206,20 +206,6 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 	return true;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::Prop::CheckRender(GraphicalInputEntity* graphics, int mspassed){
-
-
-	return true;
-}
-// ------------------------------------ //
-void Leviathan::Entity::Prop::PosUpdated(){
-	_UpdatePhysicsObjectLocation();
-}
-
-void Leviathan::Entity::Prop::OrientationUpdated(){
-	_UpdatePhysicsObjectLocation();
-}
-
 void Leviathan::Entity::Prop::_UpdatePhysicsObjectLocation(){
 	// update physics object location which will in turn change graphical object location //
 
@@ -233,11 +219,12 @@ void Leviathan::Entity::Prop::_UpdatePhysicsObjectLocation(){
 		NewtonBodySetMatrix(Body, &tmatrix[0][0]);
 	}
 
-	//// update graphical object location to have it always match up (only for static objects) //
-	//if(Immovable){
-	//	ObjectsNode->setOrientation(quat);
-	//	ObjectsNode->setPosition(position);
-	//}
+	// update graphical object location to have it always match up (only for static objects) //
+	ObjectsNode->setOrientation(QuatRotation);
+	ObjectsNode->setPosition(Position);
+	// Update potential children //
+	_ParentableNotifyLocationDataUpdated();
+	
 }
 
 // ------------------------------------ //
@@ -268,6 +255,8 @@ void Leviathan::Entity::Prop::PropPhysicsMovedEvent(const NewtonBody* const body
 	// also update these so if only one is updated it doesn't force last value to rotation or location //
 	tmp->Position = position;
 	tmp->QuatRotation = quat;
+	// Update potential children //
+	tmp->_ParentableNotifyLocationDataUpdated();
 }
 // ------------------------------------ //
 void Leviathan::Entity::Prop::_OnHiddenStateUpdated(){
@@ -283,6 +272,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessag
 
 		BASEPOSITIONAL_CUSTOMMESSAGE_GET_CHECK;
 		BASEPHYSICS_CUSTOMMESSAGE_GET_CHECK;
+		BASEPARENTABLE_CUSTOMMESSAGE_GET_CHECK;
 
 		return false;
 	}
@@ -290,6 +280,8 @@ DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessag
 	// Check through components //
 	BASEPOSITIONAL_CUSTOMMESSAGE_DATA_CHECK;
 	BASEPHYSICS_CUSTOMMESSAGE_DATA_CHECK;
+	BASEPARENTABLE_CUSTOMMESSAGE_DATA_CHECK;
+
 
 	// This specific //
 

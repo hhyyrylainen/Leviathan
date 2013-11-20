@@ -356,11 +356,6 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 	NewtonBodySetDestructorCallback(Body, BasePhysicsObject::DestroyBodyCallback);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::Brush::CheckRender(GraphicalInputEntity* graphics, int mspassed){
-
-	return true;
-}
-// ------------------------------------ //
 void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(){
 	// update physics object location which will in turn change graphical object location //
 
@@ -375,7 +370,8 @@ void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(){
 	// update graphical object location to have it always match up //
 	ObjectsNode->setOrientation(QuatRotation);
 	ObjectsNode->setPosition(Position);
-	
+	// Update potential children //
+	_ParentableNotifyLocationDataUpdated();
 }
 // ------------------------------------ //
 void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix, int threadIndex){
@@ -400,6 +396,8 @@ void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const bo
 	// also update these so if only one is updated it doesn't force last value to rotation or location //
 	tmp->Position = position;
 	tmp->QuatRotation = quat;
+	// Update potential children //
+	tmp->_ParentableNotifyLocationDataUpdated();
 }
 // ------------------------------------ //
 void Leviathan::Entity::Brush::_OnHiddenStateUpdated(){
@@ -415,6 +413,7 @@ DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessa
 
 		BASEPOSITIONAL_CUSTOMMESSAGE_GET_CHECK;
 		BASEPHYSICS_CUSTOMMESSAGE_GET_CHECK;
+		BASEPARENTABLE_CUSTOMMESSAGE_GET_CHECK;
 
 		return false;
 	}
@@ -422,6 +421,7 @@ DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessa
 	// Check through components //
 	BASEPOSITIONAL_CUSTOMMESSAGE_DATA_CHECK;
 	BASEPHYSICS_CUSTOMMESSAGE_DATA_CHECK;
+	BASEPARENTABLE_CUSTOMMESSAGE_DATA_CHECK;
 
 	// This specific //
 

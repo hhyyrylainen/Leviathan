@@ -15,8 +15,6 @@ namespace Leviathan{
 		DLLEXPORT BaseRenderable(bool hidden);
 		DLLEXPORT virtual ~BaseRenderable();
 
-		DLLEXPORT virtual bool CheckRender(GraphicalInputEntity* graphics, int mspassed) = 0;
-
 		DLLEXPORT inline bool IsHidden(){
 			return Hidden;
 		}

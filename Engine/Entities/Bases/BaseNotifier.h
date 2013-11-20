@@ -27,6 +27,8 @@ namespace Leviathan{
 		// This searches the connected notifiable objects and calls the above function with it's pointer //
 		DLLEXPORT bool UnConnectFromNotifiable(int id);
 
+		// Calls the custom message function on children (set callonall to false to stop calling after first working call) //
+		DLLEXPORT bool SendCustomMessageToChildren(int messagetype, void* data, bool callonall = true);
 
 	protected:
 

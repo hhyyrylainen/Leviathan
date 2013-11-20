@@ -12,7 +12,7 @@
 #include "..\Bases\BasePositionable.h"
 #include "..\Bases\BasePhysicsObject.h"
 #include "..\Bases\BaseContraintable.h"
-#include "..\Bases\BaseNotifiable.h"
+#include "..\Bases\BaseParentable.h"
 
 namespace Leviathan{
 	class GameWorld;
@@ -21,7 +21,7 @@ namespace Leviathan{
 namespace Leviathan{ namespace Entity{
 
 
-	class Brush : virtual public BaseObject, public BaseRenderable, public BaseContraintable, public BaseNotifiable{
+	class Brush : virtual public BaseObject, public BaseRenderable, public BaseContraintable, public BaseParentable{
 	public:
 		DLLEXPORT Brush(bool hidden, GameWorld* world);
 		DLLEXPORT virtual ~Brush();
@@ -37,8 +37,6 @@ namespace Leviathan{ namespace Entity{
 
 
 		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
-
-		DLLEXPORT virtual bool CheckRender(GraphicalInputEntity* graphics, int mspassed);
 
 		static void BrushPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix, int threadIndex);
 

@@ -10,6 +10,7 @@ using namespace Leviathan;
 #include "Entities\Objects\Brush.h"
 #include "Entities\Objects\Prop.h"
 #include "Entities\Objects\TrackEntityController.h"
+#include "Entities\Objects\TrailEmitter.h"
 
 Leviathan::ObjectLoader::ObjectLoader(Engine* engine){
 	m_Engine = engine;
@@ -238,6 +239,29 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadTrackEntityControllerToWorld(GameWorl
 	return retid;
 }
 
+DLLEXPORT int Leviathan::ObjectLoader::LoadTrailToWorld(GameWorld* world, const string &material, const Entity::TrailProperties &properties, 
+	bool allowupdatelater, Entity::TrailEmitter** createdinstance)
+{
+	// Construct the object //
+	unique_ptr<Entity::TrailEmitter> tmpptr(new Entity::TrailEmitter(world));
+
+	// Initialize //
+	if(!tmpptr->Init(material, properties, allowupdatelater)){
+
+		return -1;
+	}
+
+	// Copy ID for returning //
+	int retid = tmpptr->GetID();
+
+	// Copy instance ptr //
+	*createdinstance = tmpptr.get();
+
+	// Add to world //
+	world->AddObject(tmpptr.release());
+
+	return retid;
+}
 // ------------------------------------ //
 
 // ------------------------------------ //

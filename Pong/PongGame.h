@@ -36,6 +36,9 @@ namespace Pong{
 		// posts a quit message to quit after script has returned //
 		void ScriptCloseGame();
 
+		// Updates the ball trail based on the player colour //
+		void SetBallLastHitColour();
+
 		static PongGame* Get();
 
 		// Called when scored, will handle everything //

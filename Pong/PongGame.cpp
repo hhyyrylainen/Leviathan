@@ -19,9 +19,9 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 	GameInputHandler = new GameInputController();
 
 	// fill the player list with the player 1 and empty slots //
-	PlayerList[0] = new PlayerSlot(0, PLAYERTYPE_HUMAN, 1, PLAYERCONTROLS_WASD, 0);
+	PlayerList[0] = new PlayerSlot(0, PLAYERTYPE_HUMAN, 1, PLAYERCONTROLS_WASD, 0, Float4(1.f, 0.f, 0.f, 1.f));
 	PlayerList[1] = new PlayerSlot(1, true);
-	PlayerList[2] = new PlayerSlot(2, PLAYERTYPE_HUMAN, 3, PLAYERCONTROLS_ARROWS, 0);
+	PlayerList[2] = new PlayerSlot(2, PLAYERTYPE_HUMAN, 3, PLAYERCONTROLS_ARROWS, 0, Float4(0.f, 1.f, 0.f, 1.f));
 
 	// other slots as empty //
 	for(size_t i = 3; i < PlayerList.size(); i++){
@@ -195,8 +195,12 @@ int Pong::PongGame::TryStartGame(){
 		if(split > maxsplit)
 			maxsplit = split;
 	}
+	try{
+		if(!GameArena->GenerateArena(this, PlayerList, activeplycount, maxsplit, true)){
 
-	if(!GameArena->GenerateArena(this, PlayerList, activeplycount, maxsplit, true)){
+			return -3;
+		}
+	} catch(const Ogre::InvalidParametersException &e){
 
 		return -3;
 	}
@@ -213,8 +217,6 @@ int Pong::PongGame::TryStartGame(){
 
 		DeadAxis = Float3(0.f, 0.f, 1.f);
 	}
-	
-
 
 	// send start event //
 	Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"GameStart"), new NamedVars(shared_ptr<NamedVariableList>(new
@@ -380,6 +382,7 @@ void Pong::PongGame::_SetLastPaddleHit(Leviathan::BasePhysicsObject* objptr, Lev
 			if((objptr == castedptr && objptr2 == realballptr) || (objptr2 == castedptr && objptr == realballptr)){
 				// Found right player //
 				LastPlayerHitBallID = slotptr->GetPlayerIdentifier();
+				SetBallLastHitColour();
 				return;
 			}
 
@@ -547,6 +550,29 @@ void Pong::PongGame::CheckForGameEnd(){
 		}
 	}
 }
+// ------------------------------------ //
+void Pong::PongGame::SetBallLastHitColour(){
+	// Find the player with the last hit identifier and apply that player's colour //
+	for(size_t i = 0; i < PlayerList.size(); i++){
+
+		PlayerSlot* slotptr = PlayerList[i];
+
+		while(slotptr){
+
+			if(LastPlayerHitBallID == slotptr->GetPlayerIdentifier()){
+				// Set colour //
+				GameArena->ColourTheBallTrail(slotptr->GetColour());
+				return;
+			}
+
+			slotptr = slotptr->GetSplit();
+		}
+	}
+
+
+	// No other colour is applied so set the default colour //
+	GameArena->ColourTheBallTrail(Float4(1.f));
+}
 
 void Pong::PongGame::_DisposeOldBall(){
 
@@ -556,12 +582,16 @@ void Pong::PongGame::_DisposeOldBall(){
 	// Reset variables //
 	LastPlayerHitBallID = -1;
 	StuckThresshold = 0;
+	// This should reset the ball trail colour //
+	SetBallLastHitColour();
 }
 
 bool Pong::PongGame::IsBallInGoalArea(){
 	// Tell arena to handle this //
 	return GameArena->IsBallInPaddleArea();
 }
+
+
 
 
 

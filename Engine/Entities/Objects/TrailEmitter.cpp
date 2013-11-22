@@ -15,11 +15,10 @@ DLLEXPORT Leviathan::Entity::TrailEmitter::TrailEmitter(GameWorld* world, bool h
 }
 
 DLLEXPORT Leviathan::Entity::TrailEmitter::~TrailEmitter(){
-	// Just in case call this //
-	Release();
+
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::TrailEmitter::Init(const string materialname, const TrailProperties &variables){
+DLLEXPORT bool Leviathan::Entity::TrailEmitter::Init(const string &materialname, const TrailProperties &variables, bool allowupdate /*= true*/){
 	// Create Ogre objects //
 	Ogre::SceneManager* tmpmanager = OwnedByWorld->GetScene();
 
@@ -30,12 +29,20 @@ DLLEXPORT bool Leviathan::Entity::TrailEmitter::Init(const string materialname, 
 	TrailEntity = tmpmanager->createRibbonTrail("TrailEmitter_"+Convert::ToString(ID));
 	TrailEntity->setMaterialName(materialname);
 
-	
+	// Set dynamic update if wanted //
+	if(allowupdate){
+		TrailEntity->setDynamic(true);
+	}
+
+	// Apply the settings //
+	SetTrailProperties(variables);
+
+	// This node adding might allocate the buffers and make the entity unchangeable after this //
+	TrailEntity->addNode(TrailLocation);
+
 	// Add to root node to include in the scene //
 	tmpmanager->getRootSceneNode()->attachObject(TrailEntity);
 
-	// Apply settings after creating //
-	SetTrailProperties(variables);
 
 	return true;
 }
@@ -54,9 +61,6 @@ DLLEXPORT void Leviathan::Entity::TrailEmitter::Release(){
 DLLEXPORT bool Leviathan::Entity::TrailEmitter::SetTrailProperties(const TrailProperties &variables){
 	if(!TrailEntity)
 		return false;
-	// Just in case if called multiple times //
-	// TODO: allow an option to not do this
-	TrailEntity->removeNode(TrailLocation);
 
 	// Apply the properties //
 	TrailEntity->setUseVertexColours(true);
@@ -77,8 +81,6 @@ DLLEXPORT bool Leviathan::Entity::TrailEmitter::SetTrailProperties(const TrailPr
 			TrailEntity->setWidthChange(i, tmp->SizeChange);
 		}
 	}
-
-	TrailEntity->addNode(TrailLocation);
 
 	return true;
 }

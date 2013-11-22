@@ -7,6 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "PlayerSlot.h"
+#include "Entities\Objects\TrailEmitter.h"
 
 
 #define BASE_ARENASCALE		1.f	
@@ -33,6 +34,8 @@ namespace Pong{
 
 		void GiveBallSpeed(float mult);
 
+		void ColourTheBallTrail(const Float4 &colour);
+
 		inline shared_ptr<Leviathan::BaseObject> GetBallPtr(){
 			return Ball;
 		}
@@ -52,6 +55,10 @@ namespace Pong{
 
 		// Arena bottom //
 		shared_ptr<Leviathan::BaseObject> BottomBrush;
+
+		// The ball trail object //
+		shared_ptr<Leviathan::BaseObject> TrailKeeper;
+		Leviathan::Entity::TrailEmitter* DirectTrail;
 
 		// ball prop //
 		shared_ptr<Leviathan::BaseObject> Ball;

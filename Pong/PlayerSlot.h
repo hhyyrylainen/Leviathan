@@ -26,7 +26,7 @@ namespace Pong{
 		// creates an empty slot //
 		PlayerSlot(int slotnumber, bool empty);
 		// Creates fully customized slot, Control identifier is for choosing controller number
-		PlayerSlot(int slotnumber, PLAYERTYPE type, int playeridentifier, PLAYERCONTROLS controltype, int ctrlidentifier);
+		PlayerSlot(int slotnumber, PLAYERTYPE type, int playeridentifier, PLAYERCONTROLS controltype, int ctrlidentifier, const Float4 &playercolour);
 
 		~PlayerSlot();
 
@@ -65,6 +65,13 @@ namespace Pong{
 			TrackDirectptr = direct;
 		}
 
+		inline Float4 GetColour(){
+			return Colour;
+		}
+		void SetColour(const Float4 &colour){
+			Colour = colour;
+		}
+
 		// returns true if player type isn't empty or closed //
 		inline bool IsSlotActive(){
 
@@ -85,6 +92,8 @@ namespace Pong{
 		int PlayerIdentifier;
 		PLAYERCONTROLS ControlType;
 		int ControlIdentifier;
+
+		Float4 Colour;
 
 		int Score;
 

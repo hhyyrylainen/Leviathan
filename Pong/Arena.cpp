@@ -9,7 +9,7 @@
 #include "Entities\Objects\TrackEntityController.h"
 using namespace Pong;
 // ------------------------------------ //
-Pong::Arena::Arena(shared_ptr<Leviathan::GameWorld> world) : TargetWorld(world){
+Pong::Arena::Arena(shared_ptr<Leviathan::GameWorld> world) : TargetWorld(world), DirectTrail(NULL){
 
 }
 
@@ -35,6 +35,18 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 		TargetWorld->ClearObjects();
 		_ClearPointers();
 	}
+
+	// Fast access to objects //
+	NewtonWorld* nworld = TargetWorld->GetPhysicalWorld()->GetNewtonWorld();
+	Leviathan::ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
+
+	Leviathan::Entity::TrailProperties balltrailproperties(15, 10, 100, false);
+	// Set up all elements //
+	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(Float4(1.f, 1.f, 1.f, 1.f), Float4(0.1f, 0.1f, 0.1f, 0), 15.f, 0.01f);
+
+	// Create the trail //
+	TrailKeeper = TargetWorld->GetWorldObject(loader->LoadTrailToWorld(TargetWorld.get(), "PongBallTrail", balltrailproperties,	true, &DirectTrail));
+
 
 	// calculate sizes //
 	float width = 20*BASE_ARENASCALE;
@@ -65,7 +77,7 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 newtonmaterialfetchstartlabel:
 
 
-	NewtonWorld* nworld = TargetWorld->GetPhysicalWorld()->GetNewtonWorld();
+
 
 	int ArenaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"ArenaMaterial", nworld);
 	int PaddleID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"PaddleMaterial", nworld);
@@ -83,7 +95,7 @@ newtonmaterialfetchstartlabel:
 
 	// create brushes //
 
-	Leviathan::ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
+
 
 	// WARNING: Huge mess ahead!
 	// GetWorldObject is used because the ptr returned by load is not "safe" to use, so we get a shared ptr to the same object, this avoids dynamic
@@ -312,6 +324,8 @@ addplayerpaddlelabel:
 // ------------------------------------ //
 void Pong::Arena::_ClearPointers(){
 	BottomBrush.reset();
+	TrailKeeper.reset();
+	DirectTrail = NULL;
 }
 
 void Pong::Arena::ServeBall(){
@@ -330,6 +344,10 @@ void Pong::Arena::ServeBall(){
 
 	// Set material //
 	prop->SetPhysicalMaterial(L"BallMaterial");
+
+	// Parent the trail to the ball //
+	DirectTrail->AddNonPhysicsParent(prop);
+
 
 	Float3 dir(0);
 
@@ -415,7 +433,16 @@ bool Pong::Arena::IsBallInPaddleArea(){
 		return true;
 	return false;
 }
-
 // ------------------------------------ //
+void Pong::Arena::ColourTheBallTrail(const Float4 &colour){
+	// Adjust the trail parameters //
+	Leviathan::Entity::TrailProperties balltrailproperties(15, 10, 100, false);
+	// Set up all elements //
+	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(colour, Float4(0.1f, 0.1f, 0.1f, 0), 15.f, 0.01f);
 
+	if(DirectTrail){
+
+		DirectTrail->SetTrailProperties(balltrailproperties);
+	}
+}
 

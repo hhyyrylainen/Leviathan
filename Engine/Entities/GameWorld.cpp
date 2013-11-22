@@ -162,6 +162,12 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(shared_ptr<BaseObject> obj){
 }
 
 DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
+	// ID shouldn't be under zero //
+	if(ID == -1){
+
+		Logger::Get()->Warning(L"GameWorld: GetWorldObject: trying to find object with ID == -1 (IDs shouldn't be negative)");
+		return nullptr;
+	}
 	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
 		if((*iter)->GetID() == ID){
 			return *iter;

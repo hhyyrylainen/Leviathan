@@ -34,8 +34,8 @@ namespace Leviathan{ namespace Entity{
 
 	struct TrailProperties{
 	public:
-		TrailProperties(int maxelements, float lenght, float maxdistance, bool castshadows = false) : ElementProperties(maxelements), 
-			TrailLenght(lenght), MaxDistance(maxdistance), CastShadows(castshadows)
+		TrailProperties(size_t maxelements, float lenght, float maxdistance, bool castshadows = false) : ElementProperties(1), 
+			TrailLenght(lenght), MaxDistance(maxdistance), CastShadows(castshadows), MaxChainElements(maxelements)
 		{
 		}
 		~TrailProperties(){
@@ -45,7 +45,7 @@ namespace Leviathan{ namespace Entity{
 
 		float TrailLenght;
 		float MaxDistance;
-		int MaxChainElements;
+		size_t MaxChainElements;
 		bool CastShadows;
 
 		std::vector<TrailElementProperties*> ElementProperties;
@@ -56,8 +56,8 @@ namespace Leviathan{ namespace Entity{
 		DLLEXPORT TrailEmitter(GameWorld* world, bool hidden = false);
 		DLLEXPORT virtual ~TrailEmitter();
 
-		// Creates the actual trail object //
-		DLLEXPORT bool Init(const string materialname, const TrailProperties &variables);
+		// Creates the actual trail object. Set the allowupdate to true if you want to use SetTrailProperties later //
+		DLLEXPORT bool Init(const string &materialname, const TrailProperties &variables, bool allowupdate = true);
 		DLLEXPORT virtual void Release();
 
 		// Sets properties on the trail object (called by init) //

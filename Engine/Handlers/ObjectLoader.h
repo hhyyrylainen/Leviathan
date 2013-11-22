@@ -22,6 +22,8 @@ namespace Leviathan{
 		class Brush;
 		struct TrackControllerPosition;
 		class TrackEntityController;
+		struct TrailProperties;
+		class TrailEmitter;
 	}
 
 
@@ -42,6 +44,10 @@ namespace Leviathan{
 		// ------------------ Complex entity loading ------------------ //
 		DLLEXPORT int LoadTrackEntityControllerToWorld(GameWorld* world, vector<Entity::TrackControllerPosition> &initialtrack, BaseNotifiable* controllable, 
 			Entity::TrackEntityController** createdinstance);
+
+		// Creates a trail entity to a world. Set the dynamic property if you want to update the properties later //
+		DLLEXPORT int LoadTrailToWorld(GameWorld* world, const string &material, const Entity::TrailProperties &properties, bool allowupdatelater, 
+			Entity::TrailEmitter** createdinstance);
 
 
 		// ------------------ Test object adding ------------------ //

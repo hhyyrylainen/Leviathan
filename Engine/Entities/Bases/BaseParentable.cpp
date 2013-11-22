@@ -5,7 +5,7 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::BaseParentable::BaseParentable() : BaseObject(-1, NULL){
+DLLEXPORT Leviathan::BaseParentable::BaseParentable() : BaseObject(-1, NULL), ParentOldPos(0), ParentOldRot(Float4::IdentityQuaternion()){
 
 }
 
@@ -56,7 +56,6 @@ bool Leviathan::BaseParentable::BaseParentableCustomMessage(int message, void* d
 			BasePositionable* parentpos = reinterpret_cast<BasePositionable*>(data);
 			// Apply parent positioning //
 			Float3 posdifference = parentpos->GetPos()-ParentOldPos;
-			Float4 orientdifference = (parentpos->GetOrientation()-ParentOldRot).Normalize();
 
 			// Update old //
 			ParentOldRot = parentpos->GetOrientation();
@@ -66,9 +65,9 @@ bool Leviathan::BaseParentable::BaseParentableCustomMessage(int message, void* d
 			Position += posdifference;
 
 			// Apply rotation if applicable //
-			if(orientdifference.HAddAbs() != 0){
+			if(ParentOldRot != parentpos->GetOrientation()){
 
-				QuatRotation = QuatRotation*orientdifference;
+				QuatRotation = QuatRotation.QuaternionMultiply(ParentOldRot.QuaternionReverse().QuaternionMultiply(parentpos->GetOrientation()));
 			}
 
 			// Call callbacks //

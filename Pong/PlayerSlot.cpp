@@ -7,14 +7,14 @@
 using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, bool empty) : Slot(slotnumber), PlayerType(PLAYERTYPE_EMPTY), PlayerIdentifier(-1), 
-	ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(-1), SplitSlot(NULL), Score(0), MoveState(0), TrackDirectptr(NULL)
+	ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(-1), SplitSlot(NULL), Score(0), MoveState(0), TrackDirectptr(NULL), Colour(0.f)
 {
 
 }
 
-Pong::PlayerSlot::PlayerSlot(int slotnumber, PLAYERTYPE type, int playeridentifier, PLAYERCONTROLS controltype, int ctrlidentifier): Slot(slotnumber), 
-	PlayerType(type), PlayerIdentifier(playeridentifier), ControlType(controltype), ControlIdentifier(ctrlidentifier), SplitSlot(NULL), Score(0), 
-	MoveState(0), TrackDirectptr(NULL)
+Pong::PlayerSlot::PlayerSlot(int slotnumber, PLAYERTYPE type, int playeridentifier, PLAYERCONTROLS controltype, int ctrlidentifier, 
+	const Float4 &playercolour): Slot(slotnumber), PlayerType(type), PlayerIdentifier(playeridentifier), ControlType(controltype), 
+	ControlIdentifier(ctrlidentifier), SplitSlot(NULL), Score(0), MoveState(0), TrackDirectptr(NULL), Colour(playercolour)
 {
 
 }

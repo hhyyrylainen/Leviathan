@@ -324,13 +324,10 @@ void Pong::PongGame::Tick(int mspassed){
 
 				StuckThresshold++;
 
-				DEBUG_OUTPUT_AUTO(wstring(L"Thresshold: "+Convert::ToWstring(StuckThresshold)));
-
 				if(StuckThresshold >= BALLSTUCK_COUNT){
 					// Check is ball in a goal area //
 					if(IsBallInGoalArea()){
 						StuckThresshold = 0;
-						Logger::Get()->Info(L"Skipping stuck because ball is in paddle area");
 					} else {
 						Logger::Get()->Info(L"Ball stuck!");
 
@@ -571,7 +568,7 @@ void Pong::PongGame::SetBallLastHitColour(){
 
 
 	// No other colour is applied so set the default colour //
-	GameArena->ColourTheBallTrail(Float4(1.f));
+	GameArena->ColourTheBallTrail(Float4(1.f, 1.f, 1.f, 1.f));
 }
 
 void Pong::PongGame::_DisposeOldBall(){

@@ -40,7 +40,7 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 	NewtonWorld* nworld = TargetWorld->GetPhysicalWorld()->GetNewtonWorld();
 	Leviathan::ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
 
-	Leviathan::Entity::TrailProperties balltrailproperties(15, 10, 100, false);
+	Leviathan::Entity::TrailProperties balltrailproperties(30, 10, 100, false);
 	// Set up all elements //
 	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(Float4(1.f, 1.f, 1.f, 1.f), Float4(0.1f, 0.1f, 0.1f, 0), 15.f, 0.01f);
 
@@ -67,7 +67,6 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 	//float paddlemass = 0.f;
 
 	string materialbase = "Material.001";
-	string materialpaddle = "BaseWhite";
 	string sidematerialtall = "Material.001";
 	string sidematerialshort = "Material.001";
 	string materialclosedpaddlearea = "Material.001";
@@ -221,6 +220,10 @@ newtonmaterialfetchstartlabel:
 		bool secondary = false;
 addplayerpaddlelabel:
 
+		// Create the material name //
+		string materialpaddle = "PongPaddleMaterial_"+Convert::ToString(secondary ? players[i]->GetSplit()->GetPlayerIdentifier(): 
+			players[i]->GetPlayerIdentifier());
+
 		// add paddle based on loop index //
 		auto plypaddle = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), materialpaddle, 
 			Float3((i == 0 || i == 2) ? paddlethickness: paddlewidth, paddleheight, (i == 0 || i == 2) ? paddlewidth: paddlethickness), paddlemass,
@@ -293,6 +296,13 @@ addplayerpaddlelabel:
 		// Paddle should be in the middle by default, so set progress to 50% //
 		controller->SetProgressTowardsNextNode(0.5f);
 
+		// Finally set the colour //
+		Float4 colour = secondary ? players[i]->GetSplit()->GetColour(): players[i]->GetColour();
+
+		// Quite an ugly hack but let's go with it //
+		// TODO: add a more elegant way
+		tmp->SetDefaultSubDefaultPassDiffuse(colour);
+
 		if(secondary)
 			continue;
 		// Create goal area for this slot //
@@ -348,6 +358,8 @@ void Pong::Arena::ServeBall(){
 	// Parent the trail to the ball //
 	DirectTrail->AddNonPhysicsParent(prop);
 
+	// Update trail colour //
+	ColourTheBallTrail(Float4(1));
 
 	Float3 dir(0);
 

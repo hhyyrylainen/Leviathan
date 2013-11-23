@@ -9,8 +9,7 @@
 using namespace Leviathan;
 using namespace Leviathan::Entity;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Entity::Prop::Prop(bool hidden, GameWorld* world) : BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), 
-	GraphicalObject(NULL)
+DLLEXPORT Leviathan::Entity::Prop::Prop(bool hidden, GameWorld* world) : BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world)
 {
 
 }
@@ -257,11 +256,6 @@ void Leviathan::Entity::Prop::PropPhysicsMovedEvent(const NewtonBody* const body
 	tmp->QuatRotation = quat;
 	// Update potential children //
 	tmp->_ParentableNotifyLocationDataUpdated();
-}
-// ------------------------------------ //
-void Leviathan::Entity::Prop::_OnHiddenStateUpdated(){
-	// Set scene node visibility //
-	ObjectsNode->setVisible(!Hidden);
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessagetype, void* dataptr){

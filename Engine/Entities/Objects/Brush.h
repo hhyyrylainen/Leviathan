@@ -18,6 +18,9 @@ namespace Leviathan{
 	class GameWorld;
 }
 
+#pragma warning(push)
+#pragma warning(disable : 4250)
+
 namespace Leviathan{ namespace Entity{
 
 
@@ -42,14 +45,13 @@ namespace Leviathan{ namespace Entity{
 
 	protected:
 		virtual void _UpdatePhysicsObjectLocation();
-		virtual void _OnHiddenStateUpdated();
 		// ------------------------------------ //
 		string MeshName;
 		Float3 Sizes;
-
-		Ogre::Entity* GraphicalObject;
-		Ogre::SceneNode* ObjectsNode;
 	};
 
 }}
+
+#pragma warning(pop)
+
 #endif

@@ -14,7 +14,7 @@ using namespace Entity;
 
 
 DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) : BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), 
-	GraphicalObject(NULL), MeshName(), ObjectsNode(NULL), Sizes(0)
+	MeshName(), Sizes(0)
 {
 
 }
@@ -398,11 +398,6 @@ void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const bo
 	tmp->QuatRotation = quat;
 	// Update potential children //
 	tmp->_ParentableNotifyLocationDataUpdated();
-}
-// ------------------------------------ //
-void Leviathan::Entity::Brush::_OnHiddenStateUpdated(){
-	// Set scene node visibility //
-	ObjectsNode->setVisible(!Hidden);
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessagetype, void* dataptr){

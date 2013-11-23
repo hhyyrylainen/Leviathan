@@ -16,6 +16,10 @@
 #include "FileSystem.h"
 #include "..\Bases\BaseParentable.h"
 
+#pragma warning(push)
+#pragma warning(disable : 4250)
+
+
 namespace Leviathan{ namespace Entity{
 	
 
@@ -34,11 +38,12 @@ namespace Leviathan{ namespace Entity{
 	protected:
 		// for setting new values to graphical object and physical object //
 		void _UpdatePhysicsObjectLocation();
-		virtual void _OnHiddenStateUpdated();
 		// ------------------------------------ //
-		Ogre::Entity* GraphicalObject;
-		Ogre::SceneNode* ObjectsNode;
+
 	};
 
 }}
+
+#pragma warning(pop)
+
 #endif

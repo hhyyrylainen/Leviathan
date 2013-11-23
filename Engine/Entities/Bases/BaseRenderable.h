@@ -21,11 +21,22 @@ namespace Leviathan{
 
 		DLLEXPORT void SetHiddenState(bool hidden);
 
+		// Returns the Graphical object //
+		DLLEXPORT virtual Ogre::Entity* GetOgreEntity();
+
+		// Messing with the materials //
+
+		// TODO: add some more sophisticated methods //
+		DLLEXPORT void SetDefaultSubDefaultPassDiffuse(const Float4 &newdiffuse) throw(...);
+
 	protected:
 
-		virtual void _OnHiddenStateUpdated() = 0;
+		virtual void _OnHiddenStateUpdated();
 		// ------------------------------------ //
 		bool Hidden;
+
+		Ogre::Entity* GraphicalObject;
+		Ogre::SceneNode* ObjectsNode;
 	};
 
 }

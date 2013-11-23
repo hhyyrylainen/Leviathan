@@ -15,12 +15,12 @@ namespace Leviathan{ namespace Entity{
 
 	struct TrailElementProperties{
 
-		TrailElementProperties(const Float4 &initialcolour, const Float4 &colourchange, const float &initialsize, const float &sizechange) : 
+		DLLEXPORT TrailElementProperties(const Float4 &initialcolour, const Float4 &colourchange, const float &initialsize, const float &sizechange) : 
 			InitialColour(initialcolour), ColourChange(colourchange), InitialSize(initialsize), SizeChange(sizechange)
 		{
 
 		}
-		TrailElementProperties(const Float4 &initialcolour, const float &initialsize) : 
+		DLLEXPORT TrailElementProperties(const Float4 &initialcolour, const float &initialsize) : 
 			InitialColour(initialcolour), ColourChange(0), InitialSize(initialsize), SizeChange(0)
 		{
 
@@ -34,14 +34,19 @@ namespace Leviathan{ namespace Entity{
 
 	struct TrailProperties{
 	public:
-		TrailProperties(size_t maxelements, float lenght, float maxdistance, bool castshadows = false) : ElementProperties(1), 
+		DLLEXPORT TrailProperties(size_t maxelements, float lenght, float maxdistance, bool castshadows = false) : ElementProperties(1), 
 			TrailLenght(lenght), MaxDistance(maxdistance), CastShadows(castshadows), MaxChainElements(maxelements)
 		{
 		}
-		~TrailProperties(){
+		// Empty constructor //
+		DLLEXPORT TrailProperties(){}
+
+		DLLEXPORT ~TrailProperties(){
 			// Delete memory //
 			SAFE_DELETE_VECTOR(ElementProperties);
 		}
+		// Needs a custom assignment operator //
+		DLLEXPORT TrailProperties& operator =(const TrailProperties &other);
 
 		float TrailLenght;
 		float MaxDistance;
@@ -60,8 +65,8 @@ namespace Leviathan{ namespace Entity{
 		DLLEXPORT bool Init(const string &materialname, const TrailProperties &variables, bool allowupdate = true);
 		DLLEXPORT virtual void Release();
 
-		// Sets properties on the trail object (called by init) //
-		DLLEXPORT bool SetTrailProperties(const TrailProperties &variables);
+		// Sets properties on the trail object (called by init). If force is set to true all settings will be applied //
+		DLLEXPORT bool SetTrailProperties(const TrailProperties &variables, bool force = false);
 
 		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
@@ -77,6 +82,10 @@ namespace Leviathan{ namespace Entity{
 		Ogre::RibbonTrail* TrailEntity;
 		// This node controls where the trail appears (as the actual entity is in the root node) //
 		Ogre::SceneNode* TrailLocation;
+
+		// Some settings need caching to avoid having to destroy the old trail object //
+		TrailProperties CachedSettings;
+
 	};
 
 }}

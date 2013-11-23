@@ -616,7 +616,7 @@ namespace Leviathan{
 			W = f4;
 		}
 		DLLEXPORT explicit Float4(float val){
-			X = Y = Z = val;
+			X = Y = Z = W = val;
 		}
 		DLLEXPORT Float4(const Ogre::Quaternion &quat){
 			// copy values //

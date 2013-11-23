@@ -34,11 +34,8 @@ DLLEXPORT bool Leviathan::Entity::TrailEmitter::Init(const string &materialname,
 		TrailEntity->setDynamic(true);
 	}
 
-	// Apply the settings //
-	SetTrailProperties(variables);
-
-	// This node adding might allocate the buffers and make the entity unchangeable after this //
-	TrailEntity->addNode(TrailLocation);
+	// Apply the settings, this also adds the node to the trail //
+	SetTrailProperties(variables, true);
 
 	// Add to root node to include in the scene //
 	tmpmanager->getRootSceneNode()->attachObject(TrailEntity);
@@ -58,16 +55,31 @@ DLLEXPORT void Leviathan::Entity::TrailEmitter::Release(){
 	TrailLocation = NULL;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::TrailEmitter::SetTrailProperties(const TrailProperties &variables){
+DLLEXPORT bool Leviathan::Entity::TrailEmitter::SetTrailProperties(const TrailProperties &variables, bool force /*= false*/){
 	if(!TrailEntity)
 		return false;
 
-	// Apply the properties //
-	TrailEntity->setUseVertexColours(true);
-	TrailEntity->setRenderingDistance(variables.MaxDistance);
-	TrailEntity->setMaxChainElements(variables.MaxChainElements);
-	TrailEntity->setCastShadows(variables.CastShadows);
-	TrailEntity->setTrailLength(variables.TrailLenght);
+	// Set if we unconnected the node and we should reconnect it afterwards //
+	bool ConnectAgain = false;
+
+	// Determine if we need to unconnect the node //
+	if(force || variables.MaxChainElements != CachedSettings.MaxChainElements){
+
+		// This to avoid Ogre bug //
+		TrailEntity->removeNode(TrailLocation);
+		ConnectAgain = true;
+
+		// Apply the properties //
+		TrailEntity->setUseVertexColours(true);
+		TrailEntity->setRenderingDistance(variables.MaxDistance);
+		TrailEntity->setMaxChainElements(variables.MaxChainElements);
+		TrailEntity->setCastShadows(variables.CastShadows);
+		TrailEntity->setTrailLength(variables.TrailLenght);
+
+	}
+
+	// Update cached settings //
+	CachedSettings = variables;
 
 	// Apply per element properties //
 	for(size_t i = 0; i < variables.ElementProperties.size(); i++){
@@ -81,6 +93,10 @@ DLLEXPORT bool Leviathan::Entity::TrailEmitter::SetTrailProperties(const TrailPr
 			TrailEntity->setWidthChange(i, tmp->SizeChange);
 		}
 	}
+
+	// More bug avoiding //
+	if(ConnectAgain)	
+		TrailEntity->addNode(TrailLocation);
 
 	return true;
 }
@@ -127,4 +143,20 @@ void Leviathan::Entity::TrailEmitter::_OnHiddenStateUpdated(){
 
 		TrailLocation->setVisible(!Hidden);
 	}
+}
+// ------------------ TrailProperties ------------------ //
+DLLEXPORT TrailProperties& Leviathan::Entity::TrailProperties::operator=(const TrailProperties &other){
+	TrailLenght = other.TrailLenght;
+	MaxDistance = other.MaxDistance;
+	MaxChainElements = other.MaxChainElements;
+	CastShadows = other.CastShadows;
+	// We need to allocate new vector for us //
+	SAFE_DELETE_VECTOR(ElementProperties);
+	ElementProperties.resize(other.ElementProperties.size());
+	for(size_t i = 0; i < ElementProperties.size(); i++){
+
+		ElementProperties[i] = new TrailElementProperties(*other.ElementProperties[i]);
+	}
+
+	return *this;
 }

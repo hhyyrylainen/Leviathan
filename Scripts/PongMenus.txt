@@ -1,0 +1,372 @@
+FileType: Script;
+script-type: gui;
+script-name: PongMenus;
+RocketScript: Pong.rml
+
+objects {
+    // this keeps the GUI always on //
+    o GuiCollection "OnKeeper"{
+        l params{
+            Enabled = true;
+            KeepsGUIOn = true;
+        }
+    }
+    // keeps the menu background visible while in menus //
+    o GuiCollection "Menus"{
+        l params{
+            Enabled = true;
+        }
+        s scripts{
+            inl type(script){
+                name = MenuScript;
+                body{
+                    // we can just include our common code //
+                    string ROCKETOBJECTID("menubody");
+                    
+                    #include "DefaultCollectionScript.as";
+                    
+                @%};
+            }
+        }
+    }
+    // groups together the top level menu //
+    o GuiCollection "MainMenu"{
+        l params{
+            Enabled = true;
+        }
+        s scripts{
+            inl type(script){
+                name = MainMenuScript;
+                body{
+                    // we can just include our common code //
+                    string ROCKETOBJECTID("topmenu");
+                    
+                    #include "DefaultCollectionScript.as";
+                    
+                @%};
+            }
+        }
+    }
+    
+    o GuiCollection "GameSetupScreen"{
+        l params{
+            Enabled = false;
+        }
+        s scripts{
+            inl type(script){
+                name = GameSetupScreenScript;
+                body{
+                    // we can just include our common code //
+                    string ROCKETOBJECTID("gamesetupscreen");
+                    
+                    #include "DefaultCollectionScript.as";
+                    
+                @%};
+            }
+        }
+    }
+    
+    o GuiCollection "MatchScoresScreen"{
+        l params{
+            Enabled = false;
+        }
+        s scripts{
+            inl type(script){
+                name = MatchScoresScreen;
+                body{
+                    // we can just include our common code //
+                    string ROCKETOBJECTID("matchendscreen");
+                    
+                    #include "DefaultCollectionScript.as";
+                    
+                @%};
+            }
+        }
+    }
+    
+    o GuiObject ID(100) "GameStartButton"{
+        l params{
+            RocketID = "GameStartBtn";
+        }
+        s scripts{
+            inl type(script){
+                name = GameStarterScriptButton;
+                body{
+                    [@Listener="OnClick"]
+                    int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                        // try to start the game if possible //
+                        
+                        int result = GetPongGame().StartGame();
+                        if(result < 0){
+                            // something failed //
+                            string error = "<span class=\"Inline\" style=\"color: #93002F;\">Error: ";
+                            error += GetPongGame().GetErrorString();
+                            Instance.SetInternalElementRML(error+"</span>");
+                        } else {
+                            // hide game setup screen, display during game GUI //
+                            Instance.GetOwningManager().SetCollectionState("GameSetupScreen", false);
+                            Instance.GetOwningManager().SetCollectionState("Menus", false);
+                            Instance.GetOwningManager().SetCollectionState("GameplayHUD", true);
+                        }
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+    o GuiObject ID(101) "GameQuitButton"{
+        l params{
+            RocketID = "QuitButton";
+        }
+        s scripts{
+            inl type(script){
+                name = GameStarterScriptButton;
+                body{
+                    [@Listener="OnClick"]
+                    int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                        // close the game //
+                        GetPongGame().Quit();
+
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+    o GuiObject ID(103) "ToSetupScreenButton"{
+        l params{
+            RocketID = "GameSetupScreenBtn";
+        }
+        s scripts{
+            inl type(script){
+                name = GameStarterScriptButton;
+                body{
+                    [@Listener="OnClick"]
+                    int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                        // hide other collections and display the game setup screen //
+                        Instance.GetOwningManager().SetCollectionState("GameSetupScreen", true);
+                        Instance.GetOwningManager().SetCollectionState("MainMenu", false);
+
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+    o GuiObject ID(104) "BackFromGameSetupScreen"{
+        l params{
+            RocketID = "SetupScreenBack";
+        }
+        s scripts{
+            inl type(script){
+                name = GameStarterScriptButton;
+                body{
+                    [@Listener="OnClick"]
+                    int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                        // hide other collections and display the main menu screen //
+                        Instance.GetOwningManager().SetCollectionState("GameSetupScreen", false);
+                        Instance.GetOwningManager().SetCollectionState("MainMenu", true);
+
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+    
+    o GuiObject ID(105) "PlayerSetup1Handler"{
+        l params{
+            RocketID = "PlayerSetup1";
+        }
+        s scripts{
+            inl type(script){
+                name = Player1SetupHandlingScript;
+                body{
+                    [@Listener="OnShow"]
+                    int OnShow(BaseGuiObject@ Instance, RocketEvent@ event){
+                        // message that we got it //
+                        Print("Should update Player1 status");
+                        return 0;
+                    }
+                @%};
+            }    
+        }
+    }
+    
+    // during game HUD //
+    o GuiCollection "GameplayHUD"{
+        l params{
+            Enabled = false;
+        }
+        s scripts{
+            inl type(script){
+                name = GameHUDScript;
+                body{
+                    // we can just include our common code //
+                    string ROCKETOBJECTID("hudmain");
+                    
+                    #include "DefaultCollectionScript.as";
+                    
+                @%};
+            }
+        }
+    }
+    
+    o GuiObject ID(200) "PlayerScoresHandler"{
+        l params{
+            RocketID = "scorelist";
+        }
+        s scripts{
+            inl type(script){
+                name = GameScoreUpdater;
+                body{
+                    #include "ScoreboardUpdateScript.as";
+                
+                    // we use generic event to receive game start and score update events //
+                    [@Listener="Generic", @Type="GameStart"]
+                    int OnGameStarted(BaseGuiObject@ Instance, GenericEvent@ event){
+                        // Call update function which handless everything related to scoreboard //
+                        UpdateScoreboard(Instance);
+                        return 1;
+                    }
+                    
+                    [@Listener="Generic", @Type="ScoreUpdated"]
+                    int OnScoresUpdated(BaseGuiObject@ Instance, GenericEvent@ event){
+                        // Call update function which handless everything related to scoreboard //
+                        UpdateScoreboard(Instance);
+                        return 1;
+                    }
+                    
+                @%};
+            }
+        }
+    }
+    // ------------------ Game setup screen ------------------ //
+    o GuiObject ID(500) "LocalGameSetupScreenTable"{
+        l params{
+            RocketID = "LocalGameSetupOptions";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                @%};
+            }
+        }
+    }
+    
+    
+    
+    // ------------------ Match end screen ------------------ //
+    o GuiObject ID(300) "WinningPlayersHandler"{
+        l params{
+            RocketID = "playerwinnerlist";
+        }
+        s scripts{
+            inl type(script){
+                name = GameWinnersUpdater;
+                body{
+                    // Generics event to detect game end //
+                    [@Listener="Generic", @Type="MatchEnded"]
+                    int OnGameEnd(BaseGuiObject@ Instance, GenericEvent@ event){
+                        // We can get the winning team number for the event //
+                        int winningteam = event.GetNamedVars().GetSingleValueByName("WinningTeam").
+                            ConvertAndReturnInt();
+                        
+                        string text = "<p>Team "+winningteam;
+                        
+                        // Find the players in the winning team //
+                        PlayerSlot@ slot = GetPongGame().GetSlot(winningteam);
+                        // Loop through and print all players in the team //
+                        while(true){
+                            // get score //
+                            int score = slot.GetScore();
+                            int number = slot.GetPlayerNumber();
+                            text += "<p style='padding-left: 10px;'>Player "+number+": "+score+"</p>";
+
+                            @slot = slot.GetSplit();
+                            if(slot is null)
+                                break;
+                        }
+                        text += "</p>";
+                        Instance.SetInternalElementRML(text);
+                        // Make it visible //
+                        Instance.GetOwningManager().SetCollectionState("MatchScoresScreen", true);
+                        Instance.GetOwningManager().SetCollectionState("GameplayHUD", false);
+                        return 1;
+                    }
+                @%};
+            }
+        }
+    }
+    
+    o GuiObject ID(301) "WinningScreenScoreboard"{
+        l params{
+            RocketID = "winnerscreenscorelist";
+        }
+        s scripts{
+            inl type(script){
+                name = WinningScreenScoreboardUpdater;
+                body{
+                    #include "ScoreboardUpdateScript.as";
+                    
+                    // Generic event to detect game end //
+                    [@Listener="Generic", @Type="MatchEnded"]
+                    int OnGameEnd(BaseGuiObject@ Instance, GenericEvent@ event){
+                        // Call update function which handless everything related to scoreboard //
+                        UpdateScoreboard(Instance);
+                        return 1;
+                    }
+                @%};
+            }
+        }
+    }
+    
+    o GuiObject ID(302) "WinningGameBackToMenuButton"{
+        l params{
+            RocketID = "WinScreenMenuButton";
+        }
+        s scripts{
+            inl type(script){
+                name = GameStarterScriptButton;
+                body{
+                    [@Listener="OnClick"]
+                    int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                        // hide other collections and display the main menu screen //
+                        Instance.GetOwningManager().SetCollectionState("MatchScoresScreen", false);
+                        Instance.GetOwningManager().SetCollectionState("MainMenu", true);
+                        Instance.GetOwningManager().SetCollectionState("Menus", true);
+                        
+                        GetPongGame().GameMatchEnded();
+                        
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+    
+    o GuiObject ID(303) "GameQuitFromWinScreen"{
+        l params{
+            RocketID = "WinScreenQuitButton";
+        }
+        s scripts{
+            inl type(script){
+                name = GameStarterScriptButton;
+                body{
+
+                    [@Listener="OnClick"]
+                    int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                        // close the game //
+                        GetPongGame().Quit();
+
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+    
+}

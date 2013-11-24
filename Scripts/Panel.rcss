@@ -1,0 +1,143 @@
+body
+{
+	font-family: Simonetta;
+	font-weight: normal;
+	font-style: normal;
+	font-size: 15;
+	color: black;
+}
+
+body.Panel
+{
+	min-width: 250px;
+	max-width: 1200px;
+	
+	min-height: 135px;
+	max-height: 1080px;
+}
+
+
+div.TitleBar
+{
+    z-index: 1;
+    
+    height: 56px;
+    width: auto;
+    margin-bottom: 1px;
+    
+    background-decorator: tiled-horizontal;
+	background-left-image: GuiBluePanel.png 98px 91px 107px 119px;
+	background-center-image: GuiBluePanel.png stretch 220px 91px 275px 119px;
+	background-right-image: GuiBluePanel.png 282px 91px 304px 119px;
+}
+
+span.PanelIcon, span.PanelTitle
+{
+    height: 56px;
+}
+
+span.PanelTitle
+{
+    padding-left: 70px;
+    padding-rigth: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    
+    text-align: left;
+    font-size: 35;
+	font-weight: bold;
+    
+    outline-font-effect: outline;
+	outline-width: 1px;
+	outline-color: red;
+}
+
+span.PanelIcon
+{
+    position: absolute;
+    width: 56px;
+    left: 0px;
+    top: 0px;
+    
+    padding-top-bottom: 0px;
+    
+    padding-left: 10px;
+    
+    icon-decorator: image;
+    icon-image: GuiBluePanel.png 922px 922px 1024px 1024px;
+}
+
+div.PanelContent
+{
+	width: auto;
+	padding: 10px 15px;
+    
+	background-decorator: tiled-box;
+	background-top-left-image: invader.tga 0px 0px 133px 140px;
+	background-top-right-image: invader.tga 136px 0px 146px 140px;
+	background-top-image: invader.tga stretch 134px 0px 135px 140px;
+	background-bottom-left-image: invader.tga 0px 140px 11px 151px;
+	background-bottom-right-image: invader.tga 136px 140px 146px 151px;
+	background-bottom-image: invader.tga stretch 11px 140px 12px 151px;
+	background-left-image: invader.tga stretch 0px 139px 10px 140px;
+	background-center-image: invader.tga stretch 11px 139px 12px 140px;
+}
+
+span.WindowPanel
+{
+	display: block;
+    min-width: 250px;
+	max-width: 400px;
+	
+	min-height: 135px;
+	max-height: 400px;
+    text-colour: black;
+    
+    width: auto;
+    height: auto;
+    
+    z-index: 2;
+    text-align: center;
+}
+
+
+
+div
+{
+	display: block;
+}
+
+p
+{
+	display: block;
+}
+
+h1
+{
+	display: block;
+}
+
+em
+{
+	font-style: italic;
+}
+
+strong
+{
+	font-weight: bold;
+}
+
+datagrid
+{
+	display: block;
+}
+
+select, dataselect, datacombo
+{
+	text-align: left;
+}
+
+tabset, tabs
+{
+	display: block;
+}

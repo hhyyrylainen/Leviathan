@@ -24,9 +24,9 @@ endif(USE_VLD)
 
 # version number
 set(LEVIATHAN_VERSION_STABLE 0)
-set(LEVIATHAN_VERSION_MAJOR 5)
-set(LEVIATHAN_VERSION_MINOR 9)
-set(LEVIATHAN_VERSION_PATCH 3)
+set(LEVIATHAN_VERSION_MAJOR 6)
+set(LEVIATHAN_VERSION_MINOR 0)
+set(LEVIATHAN_VERSION_PATCH 0)
 
 set(LEVIATHAN_VERSION_STR ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}.${LEVIATHAN_VERSION_MINOR}.${LEVIATHAN_VERSION_PATCH})
 set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LEVIATHAN_VERSION_MINOR}${LEVIATHAN_VERSION_PATCH})
@@ -52,6 +52,10 @@ file(COPY ${VLDMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 # copy data directory
 file(GLOB DataMoveFiles "bin/Data/*")
 file(COPY ${DataMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
+
+# Copy data from the scripts folder to the bin folder
+file(GLOB ScriptsMoveFiles "Scripts/*")
+file(COPY ${ScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data/Scripts")
 
 # leap DLLs
 file(GLOB LeapMoveFiles "Leap/lib/x86/Leap.dll" "Leap/lib/x86/Leapd.dll")
@@ -150,6 +154,8 @@ add_subdirectory(Pong)
 # data folders
 file(GLOB DataMoveFiles "bin/Data/*.*")
 install(FILES ${DataMoveFiles} DESTINATION bin/Data)
+# The script files folder
+install(DIRECTORY "Scripts" DESTINATION bin/Data)
 install(FILES "bin/EngineConf.conf" DESTINATION bin)
 # we need to specifically install the directories
 install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)

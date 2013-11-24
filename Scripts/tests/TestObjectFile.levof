@@ -1,0 +1,64 @@
+FileType: TestParse;
+Name = "lol";
+Name2 = lol;
+Why = true;
+
+objects {
+    o TestData nice_prefix type1_special "Test1" {
+        l list {
+            this= not this;
+            oh=2;
+            no:false;
+            <t> why?;
+        }
+        t block {
+            great story here
+            which spans
+            multiple lines
+            !
+        }
+        s scripts {
+            inl type(script) {
+                name = TestScript;
+                body {
+                    int GetRandomNumber(){
+                        // good choice //
+                        return 1;
+                    }
+                @%};
+            }       
+        }
+    }
+    o Just "Something" "nice wow" ID(29){ lol
+        t why{
+            even bother
+            putting
+            stuff = here;
+        }
+        l list {
+            this= not this;
+            oh=2;
+            no:false;
+            <t> why?;
+        }
+        t why{
+            even bother
+            putting
+            stuff = here;
+        }
+        l list {
+            this= not this;
+            oh=2;
+            no:false;
+            <t> why?;
+        }
+    }
+}
+
+-!-
+oh gee hopefully no errors
+are found here! or something
+
+o This "ShouldNotLoad"{
+    lol
+}

@@ -1,0 +1,153 @@
+FileType: Script;
+script-type: gui;
+script-name: DebugPanel;
+RocketScript: Debug.rml
+// --------------- HEADER ENDS AFTER THIS LINE ------------- //
+objects {
+    o GuiCollection "Debug"{
+        l params{
+            ToggleOn = "D+ALT";
+            Enabled = false;
+            Strict = false;
+            KeepsGUIOn = false;
+        }
+        s scripts{
+            inl type(script){
+                name = DebugCollectionScript;
+                body{
+                    void HandleSet(GuiCollection@ Instance, bool hidden){
+                        // fetch pointers
+                        GuiLoadedSheet@ tmpsheet = Instance.GetOwningSheet();
+                        RocketElement@ maincontainer = tmpsheet.GetElementByID("debugwindow");
+                        
+                        if(hidden){
+                            maincontainer.SetProperty("visibility", "hidden");
+                            maincontainer.SetProperty("display", "none");
+                            tmpsheet.PushSheetToBack();
+                        } else {
+                            maincontainer.SetProperty("visibility", "visible");
+                            maincontainer.SetProperty("display", "block");
+                            tmpsheet.PullSheetToFront();
+                        }
+                    }
+                
+                    [@Listener="OnHide"]
+                    int OnHide(GuiCollection@ Instance, Event@ event){
+                        // we need to hide our elements //
+                        HandleSet(Instance, true);
+                        return 1;
+                    }
+                    [@Listener="OnShow"]
+                    int OnShow(GuiCollection@ Instance, Event@ event){
+                        // we need to show our elements //
+                        HandleSet(Instance, false);
+                        return 1;
+                    }
+                @%};
+            }
+        }
+    }
+    
+    o GuiObject ID(25) "lTickTimeD"{
+        l params{
+            RocketID = "ticktimelabel";
+            ListenOn = [[DATAINDEX_TICKTIME]];
+        }
+        s scripts{
+            inl type(script){
+                name = DEBUGScreenTickCounter;
+                body{
+                    [@Listener="OnListenUpdate"]
+                    int OnValueUpdated(BaseGuiObject@ Instance, Event@ event){
+                        // get first updated value //
+                        int time = Instance.GetAndPopFirstUpdated().ConvertAndReturnInt();
+                        
+                        string code = time;
+                        
+                        Instance.SetInternalElementRML(code);
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+    
+    o GuiObject ID(24) "lTickCountD"{
+        l params{
+            RocketID = "tickcountlabel";
+            ListenOn = [[DATAINDEX_TICKCOUNT]];
+        }
+        s scripts{
+            inl type(script){
+                name = DEBUGScreenTickCounter;
+                body{
+                    [@Listener="OnListenUpdate"]
+                    int OnValueUpdated(BaseGuiObject@ Instance, Event@ event){
+                        // get first updated value //
+                        int time = Instance.GetAndPopFirstUpdated().ConvertAndReturnInt();
+                        
+                        string code = time;
+                        
+                        Instance.SetInternalElementRML(code);
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+    
+    o GuiObject ID(23) "lFrameTimeD"{
+        l params{
+            RocketID = "frametimelabel";
+            ListenOn = [[DATAINDEX_FRAMETIME_AVERAGE]];
+        }
+        s scripts{
+            inl type(script){
+                name = DEBUGScreenTickCounter;
+                body{
+                    [@Listener="OnListenUpdate"]
+                    int OnValueUpdated(BaseGuiObject@ Instance, Event@ event){
+                        // get first updated value //
+                        int time = Instance.GetAndPopFirstUpdated().ConvertAndReturnInt();
+                        
+                        string code = time;
+                        
+                        Instance.SetInternalElementRML(code);
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+
+    o GuiObject ID(22) "lFPSD"{
+        l params{
+            RocketID = "fpslabel";
+            ListenOn = [[DATAINDEX_FPS_AVERAGE]];
+        }
+        s scripts{
+            inl type(script){
+                name = DEBUGScreenTickCounter;
+                body{
+                    [@Listener="OnListenUpdate"]
+                    int OnValueUpdated(BaseGuiObject@ Instance, Event@ event){
+                        // get first updated value //
+                        int time = Instance.GetAndPopFirstUpdated().ConvertAndReturnInt();
+                        
+                        string code = time;
+                        
+                        Instance.SetInternalElementRML(code);
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+}
+// running scripts while parsing, need to be on a single line //
+s run: Print("[INFO] DebugPanel.txt has been loaded"); 
+
+// file end, not required but you can make read end before last line
+-!-
+so that this doesn't cause any errors or
+anything

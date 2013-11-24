@@ -1,0 +1,56 @@
+<rml>
+	<head>
+		<title>Menu</title>
+        <link type="text/rcss" href="Pong.rcss"/>
+	</head>
+	<body>
+        <div class="Menu" id="menubody">
+            <span style="position: absolute; left: 20px; top: 10px; font-weight: bold; font-size: 125; z-index: 1;">
+            Pong
+            </span>
+            
+            <div class="MenuContent" id="topmenu">
+                <span class="SpaceTaker"></span>
+                <span class="MenuOption"><p id="GameSetupScreenBtn">Local Game</p></span>
+                <span class="DisabledMenuOption"><p id="GameMultiplayerList">Internet Game</p></span>
+                <span class="MenuOption DangerousMenu"><p id="QuitButton">Quit</p></span>
+            </div>
+            <div class="MenuContent Hidden" id="gamesetupscreen">
+                <span class="SpaceTaker"></span>
+                <h1 class="MenuTitle">Setup local game</h1>
+                <hr class="MenuLine"></hr>
+                
+                <span class="InlineBlock MenuTable" style="margin-left: auto;" id="LocalGameSetupOptions">
+                Menu not updated
+                </span>
+                <hr class="MenuLine"></hr>
+                <span class="MenuOption"><p id="GameStartBtn">Start Game</p></span>
+                <span class="MenuOption"><p id="SetupScreenBack">Back</p></span>
+            </div>
+        </div>
+        <div class="Hidden" id="hudmain">
+            <span style="paddin-left: 5px; position: absolute; top: 5%; left: 5%; width: 20%; min-height: 100px; background-color: #21845766;">
+            <p>Scores:</p>
+            <p id="scorelist">
+                <p>Player list unset...</p>
+            </p>
+            </span>
+        </div>
+        <div class="Hidden" id="matchendscreen">
+            <div class="MenuContent">
+            <h1 class="MenuTitle">Match has ended</h1>
+            <hr class="MenuLine"></hr>
+            <h2 class="MenuTitle">Winners</h2>
+            <p class="GoldenText" id="playerwinnerlist">
+            </p>
+            <hr class="MenuLine"></hr>
+            <h2 class="MenuTitle">Final scores</h2>
+            <p id="winnerscreenscorelist">
+            TODO: update this
+            </p>
+            <span class="MenuOption"><p id="WinScreenMenuButton">Main menu</p></span>
+            <span class="MenuOption DangerousMenu"><p id="WinScreenQuitButton">Quit game</p></span>
+            </div>
+        </div>
+	</body>
+</rml>

@@ -1,0 +1,244 @@
+body
+{
+	font-family: Simonetta;
+	font-weight: normal;
+	font-style: normal;
+	font-size: 30;
+	color: white;
+}
+
+.Menu
+{
+    width: auto;
+    margin: auto;
+}
+
+.MenuOption
+{
+    background-color: #00B060;
+    margin-left: 15%;
+    margin-right: 15%;
+    width: auto;
+}
+
+.DisabledMenuOption
+{
+    background-color: #21845766;    
+    color: gray;
+    margin-left: 15%;
+    margin-right: 15%;
+    width: auto;
+}
+
+.GoldenText
+{
+    color: #FFAC40;
+
+}
+
+.MenuTitle
+{
+    color: #FFAC40;
+    header-font-effect: outline;
+    header-width: 2px;
+    header-color: #BF813077;
+}
+
+.MenuOption:hover
+{
+    background-color: #61D8A2;
+}
+
+.DangerousMenu:hover
+{
+    background-color: #93002F; 
+}
+
+.Hidden
+{
+    display: none;
+    visibility: hidden;
+}
+
+.SpaceTaker
+{
+    Height: 200px;
+}
+
+div.MenuContent
+{
+    z-index: 2;
+    margin: auto;
+    padding: 30px;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    /*height: 600px;*/
+    max-height: 100%;
+    overflow: auto;
+    
+    
+    text-align: center;
+
+}
+
+hr.MenuLine
+{
+    width: 80%;
+    border-color: #A65E00;
+    margin: auto;
+}
+
+.MenuTable
+{
+    background-color: #0A64A4;
+    padding: 2px;
+    margin: auto;
+    width: 20%;
+}
+
+.InlineBlock
+{
+    display: inline-block;
+}
+
+.Inline
+{
+    display: inline;
+}
+
+
+scrollbarvertical
+{
+    margin-top: 25px;
+	margin-bottom: 25px;
+	margin-right: 27px;
+	width: 27px;
+}
+
+scrollbarvertical slidertrack
+{
+	background-decorator: tiled-vertical;
+	background-top-image: invader.tga 70px 199px 97px 201px;
+	background-center-image: invader.tga stretch 70px 201px 97px 202px;
+	background-bottom-image: invader.tga 70px 203px 97px 204px;
+}
+
+scrollbarvertical sliderbar
+{
+	margin-left: 4px;
+	width: 23px;
+	min-height: 46px;
+
+	background-decorator: tiled-vertical;
+	background-top-image: invader.tga 56px 152px 79px 175px;
+	background-center-image: invader.tga stretch 56px 175px 79px 175px;
+	background-bottom-image: invader.tga 56px 176px 79px 198px;
+}
+
+scrollbarvertical sliderbar:hover
+{
+	background-top-image-s: 80px 103px;
+	background-center-image-s: 80px 103px;
+	background-bottom-image-s: 80px 103px;
+}
+
+scrollbarvertical sliderbar:active
+{
+	background-top-image-s: 104px 127px;
+	background-center-image-s: 104px 127px;
+	background-bottom-image-s: 104px 127px;
+}
+
+scrollbarvertical sliderarrowdec
+{
+	width: 27px;
+	height: 24px;
+	
+	icon-decorator: image;
+	icon-image: invader.tga 0px 152px 27px 176px;
+}
+
+scrollbarvertical sliderarrowdec:hover,
+scrollbarvertical sliderarrowinc:hover
+{
+	icon-image-t: 177px 201px;
+}
+
+scrollbarvertical sliderarrowdec:active,
+scrollbarvertical sliderarrowinc:active
+{
+	icon-image-t: 202px 226px;
+}
+
+scrollbarvertical sliderarrowinc
+{
+	width: 27px;
+	height: 24px;
+	
+	icon-decorator: image;
+	icon-image: invader.tga 28px 152px 55px 176px;
+}
+
+
+
+scrollbarhorizontal
+{
+	width: 0px;
+	height: 0px;
+}
+
+span
+{
+    display: block;
+}
+
+body, div,
+h1, h2, h3, h4,
+h5, h6, p,
+hr, pre, datagrid,
+tabset tabs, tr
+{
+	display: block;
+}
+
+em
+{
+	font-style: italic;
+}
+
+h1, h2, h3, h4,
+h5, h6, strong
+{
+	font-weight: bold;
+}
+
+em
+{
+	font-style: italic;
+}
+
+pre
+{
+	white-space: pre;
+}
+
+hr
+{
+	border-width: 1px;
+}
+
+datagrid
+{
+	display: block;
+}
+
+select, dataselect, datacombo
+{
+	text-align: left;
+}
+
+tabset, tabs
+{
+	display: block;
+}

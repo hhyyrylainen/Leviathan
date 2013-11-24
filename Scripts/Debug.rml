@@ -1,0 +1,43 @@
+<rml>
+	<head>
+		<title>Debug panel</title>
+        <link type="text/rcss" href="Panel.rcss"/>
+		<style>
+			body
+			{
+            
+				width: 35%;
+				height: auto;
+				
+				margin: auto;
+                margin-top: 20%;
+                margin-left: 10%;
+			}
+		</style>
+	</head>
+	<body class="Panel" id="debugwindow" style="visibility: hidden; display: none;">
+    <div class="TitleBar">
+		<handle move_target="#document" style="width: 100%;">
+			<span class="PanelIcon"></span>
+			<span class="PanelTitle">Debug values</span>
+		</handle>
+	</div>
+    <div class="PanelContent">
+        <span class="WindowPanel">
+        <p>
+        Tick time is: <span id="ticktimelabel">0</span>
+        </p>
+        <p>
+        Tick count is: <span id="tickcountlabel">0</span>
+        </p>
+        <p>
+        Frame time is: <span id="frametimelabel">0</span>
+        </p>
+        <p>
+        FPS is: <span id="fpslabel">0</span>
+        </p>
+        </span>
+	</div>
+    <handle size_target="#document" style="position: absolute; width: 16px; height: 16px; bottom: 0px; right: 0px;"></handle>
+	</body>
+</rml>

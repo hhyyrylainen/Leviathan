@@ -20,7 +20,7 @@
                 <h1 class="MenuTitle">Setup local game</h1>
                 <hr class="MenuLine"></hr>
                 
-                <span class="InlineBlock MenuTable" style="margin-left: auto;" id="LocalGameSetupOptions">
+                <span style="margin-left-right: auto;" id="LocalGameSetupOptions">
                 Menu not updated
                 </span>
                 <hr class="MenuLine"></hr>

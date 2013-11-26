@@ -12,7 +12,7 @@ using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
 Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), ScoreLimit(20),
-	BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0)
+	BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData("GameConfiguration")
 {
 	StaticAccess = this;
 
@@ -29,6 +29,45 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 		PlayerList[i] = new PlayerSlot(i, true);
 	}
 
+	// Setup match setup screen data //
+	GameConfigurationData.AddValue(L"Colours", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(0,0,255)"))))
+		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Blue")))))));
+	GameConfigurationData.AddValue(L"Colours", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(255,0,0)"))))
+		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Red")))))));
+	GameConfigurationData.AddValue(L"Colours", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(0,255,0)"))))
+		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Green")))))));
+
+	// Add base controls //
+	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("ARROWS"))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
+	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("WASD"))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
+	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("AI"))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
+	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("IJKL"))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
+	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("NUMPAD"))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
+	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("CONTROLLER"))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
 }
 
 Pong::PongGame::~PongGame(){
@@ -83,12 +122,12 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 	// link window input to game logic //
 	window1->GetInputController()->LinkReceiver(GameInputHandler);
 
-	// load GUI background //
-
-
 	// I like the debugger //
+#ifdef _DEBUG
 	window1->GetGUI()->SetDebuggerOnThisContext();
-	//window1->GetGUI()->SetDebuggerVisibility(true);
+	window1->GetGUI()->SetDebuggerVisibility(true);
+#endif // _DEBUG
+
 	
 	// after loading reset time sensitive timers //
 	Engine::GetEngine()->ResetPhysicsTime();
@@ -130,8 +169,66 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+
+	// For getting the game database //
+	if(engine->RegisterObjectMethod("PongGame", "SimpleDatabase& GetGameDatabase()", asMETHOD(PongGame, GetGameDatabase), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
 	
+	// Type enums //
+	if(engine->RegisterEnum("PLAYERTYPE") < 0){
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("EVENT_TYPE", "PLAYERTYPE_CLOSED", PLAYERTYPE_CLOSED) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("EVENT_TYPE", "PLAYERTYPE_COMPUTER", PLAYERTYPE_COMPUTER) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("EVENT_TYPE", "PLAYERTYPE_EMPTY", PLAYERTYPE_EMPTY) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("EVENT_TYPE", "PLAYERTYPE_HUMAN", PLAYERTYPE_HUMAN) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
 	
+	if(engine->RegisterEnum("PLAYERCONTROLS") < 0){
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_NONE", PLAYERCONTROLS_NONE) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_AI", PLAYERCONTROLS_AI) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_WASD", PLAYERCONTROLS_WASD) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_ARROWS", PLAYERCONTROLS_ARROWS) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_IJKL", PLAYERCONTROLS_IJKL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_NUMPAD", PLAYERCONTROLS_NUMPAD) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_CONTROLLER", PLAYERCONTROLS_CONTROLLER) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+
 	// PlayerSlot //
 	if(engine->RegisterObjectType("PlayerSlot", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
 		SCRIPT_REGISTERFAIL;
@@ -162,6 +259,18 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "PLAYERCONTROLS GetControlType()", asMETHOD(PlayerSlot, GetControlType), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "void SetColourFromRML(string rmlcolour)", asMETHOD(PlayerSlot, SetColourFromRML), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+
+	
+
+	
 	
 
 
@@ -586,6 +695,10 @@ void Pong::PongGame::_DisposeOldBall(){
 bool Pong::PongGame::IsBallInGoalArea(){
 	// Tell arena to handle this //
 	return GameArena->IsBallInPaddleArea();
+}
+
+Leviathan::SimpleDatabase* Pong::PongGame::GetGameDatabase(){
+	return &GameConfigurationData;
 }
 
 

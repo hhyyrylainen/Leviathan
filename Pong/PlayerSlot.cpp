@@ -107,5 +107,43 @@ int Pong::PlayerSlot::GetScore(){
 	return Score;
 }
 
+void Pong::PlayerSlot::SetColourFromRML(string rml){
+
+	Float4 colourparsed(1.f, 1.f, 1.f, 1.f);
+
+	WstringIterator iter(Convert::StringToWstring(rml));
+
+	auto ret = iter.GetNextNumber(Leviathan::DECIMALSEPARATORTYPE_DOT);
+
+	if(ret){
+
+		colourparsed.X = Convert::WstringToFloat(*ret)/255.f;
+	}
+
+	ret = iter.GetNextNumber(Leviathan::DECIMALSEPARATORTYPE_DOT);
+
+	if(ret){
+
+		colourparsed.Y = Convert::WstringToFloat(*ret)/255.f;
+	}
+
+	ret = iter.GetNextNumber(Leviathan::DECIMALSEPARATORTYPE_DOT);
+
+	if(ret){
+
+		colourparsed.Z = Convert::WstringToFloat(*ret)/255.f;
+	}
+
+	ret = iter.GetNextNumber(Leviathan::DECIMALSEPARATORTYPE_DOT);
+
+	if(ret){
+
+		colourparsed.W = Convert::WstringToFloat(*ret)/255.f;
+	}
+
+	// Set the actual colour //
+	SetColour(colourparsed);
+}
+
 
 

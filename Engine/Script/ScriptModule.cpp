@@ -37,7 +37,8 @@ ScriptModule::~ScriptModule(){
 int Leviathan::ScriptModule::LatestAssigned = 0;
 
 const map<wstring, int> Leviathan::ScriptModule::ListenerNameType = boost::assign::map_list_of(LISTENERNAME_ONSHOW, LISTENERVALUE_ONSHOW)
-	(LISTENERNAME_ONHIDE, LISTENERVALUE_ONHIDE) (LISTENERNAME_ONLISTENUPDATE, LISTENERVALUE_ONSHOW) (LISTENERNAME_ONCLICK, LISTENERVALUE_ONCLICK);
+	(LISTENERNAME_ONHIDE, LISTENERVALUE_ONHIDE) (LISTENERNAME_ONLISTENUPDATE, LISTENERVALUE_ONSHOW) (LISTENERNAME_ONCLICK, LISTENERVALUE_ONCLICK)
+	(LISTENERNAME_ONVALUECHANGE, LISTENERVALUE_ONVALUECHANGE);
 
 // ------------------------------------ //
 FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScriptFunction* func){

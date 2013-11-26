@@ -50,6 +50,8 @@ namespace Leviathan{
 
 		DLLEXPORT static EventHandler* Get();
 
+		DLLEXPORT void CallEventGenericProxy(GenericEvent* genericevent);
+
 	private:
 		std::vector<RegisteredCallback*> EventListeners;
 		std::vector<GenericRegisteredCallback*> GenericEventListeners;

@@ -56,10 +56,44 @@ objects {
             inl type(script){
                 name = GameSetupScreenScript;
                 body{
-                    // we can just include our common code //
-                    string ROCKETOBJECTID("gamesetupscreen");
-                    
-                    #include "DefaultCollectionScript.as";
+                    // Used to only create once //
+                    bool IsCreated = false;
+                    // We need some special functionality
+                    // set's the visibility of the object //
+                    void HandleSet(GuiCollection@ Instance, bool hidden){
+                        // fetch pointers
+                        GuiLoadedSheet@ tmpsheet = Instance.GetOwningSheet();
+                        RocketElement@ maincontainer = tmpsheet.GetElementByID("gamesetupscreen");
+                        
+                        if(hidden){
+                            //Print("Collection "+Instance.GetName()+" set hidden");
+                            maincontainer.SetProperty("visibility", "hidden");
+                            maincontainer.SetProperty("display", "none");
+                        } else {
+                            //Print("Collection "+Instance.GetName()+" set visible");
+                            maincontainer.SetProperty("visibility", "visible");
+                            maincontainer.SetProperty("display", "block");
+                        }
+                    }
+
+                    [@Listener="OnHide"]
+                    int OnHide(GuiCollection@ Instance, Event@ event){
+                        // we need to hide our elements //
+                        HandleSet(Instance, true);
+                        return 1;
+                    }
+
+                    [@Listener="OnShow"]
+                    int OnShow(GuiCollection@ Instance, Event@ event){
+                        // we need to show our elements //
+                        HandleSet(Instance, false);
+                        // Special event to let the GUI update everything
+                        if(!IsCreated){
+                            GetEventHandler().CallEvent(GenericEvent("UpdateLocalGameSetup"));
+                            IsCreated = true;
+                        }
+                        return 1;
+                    }
                     
                 @%};
             }
@@ -174,25 +208,6 @@ objects {
         }
     }
     
-    o GuiObject ID(105) "PlayerSetup1Handler"{
-        l params{
-            RocketID = "PlayerSetup1";
-        }
-        s scripts{
-            inl type(script){
-                name = Player1SetupHandlingScript;
-                body{
-                    [@Listener="OnShow"]
-                    int OnShow(BaseGuiObject@ Instance, RocketEvent@ event){
-                        // message that we got it //
-                        Print("Should update Player1 status");
-                        return 0;
-                    }
-                @%};
-            }    
-        }
-    }
-    
     // during game HUD //
     o GuiCollection "GameplayHUD"{
         l params{
@@ -251,6 +266,63 @@ objects {
                 name = LocalGameSetupScreenTableUpdater;
                 body{
                     #include "PongGameSetupMenu.as";
+                    
+                    [@Listener="Generic", @Type="UpdateLocalGameSetup"]
+                    int OnUpdateMenu(BaseGuiObject@ Instance, GenericEvent@ event){
+                        // Call the method in the included file //
+                        UpdateGameSetupScreen(Instance, "LocalGameSetup_");
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    
+    // Huge dump of objects for the setup screen handling //
+    // TODO: add template support
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Colour_0";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 0;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ColourChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(511) "LocalGameSetupScriptElement2"{
+        l params{
+            RocketID = "LocalGameSetup_Colour_2";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 2;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ColourChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
                     
                 @%};
             }

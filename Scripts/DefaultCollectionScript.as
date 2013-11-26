@@ -1,4 +1,4 @@
-// defauly function implementations for GuiCollection //
+// default function implementations for GuiCollection //
 // define string ROCKETOBJECTID("something") before including this file //
 
 // set's the visibility of the object //

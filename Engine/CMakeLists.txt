@@ -8,14 +8,13 @@ file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
 file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
 file(GLOB GroupGUI "GUI/*.cpp" "GUI/*.h")
 file(GLOB GroupNewton "Newton/*.cpp" "Newton/*.h")
-#file(GLOB GroupGUIObjects "GUI/Objects/*.cpp" "GUI/Objects/*.h")
-#file(GLOB GroupGUIComponents "GUI/Components/*.cpp" "GUI/Components/*.h")
 file(GLOB GroupEntities "Entities/*.cpp" "Entities/*.h")
 file(GLOB GroupEntitiesBases "Entities/Bases/*.cpp" "Entities/Bases/*.h")
 file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
 file(GLOB GroupUtility "Utility/*.cpp" "Utility/*.h")
 file(GLOB GroupUtilityIte "Utility/Iterators/*.cpp" "Utility/Iterators/*.h")
 file(GLOB GroupUtilityFile "Utility/FileRelated/*.cpp" "Utility/FileRelated/*.h")
+file(GLOB GroupUtilityData "Utility/DataHandling/*.cpp" "Utility/DataHandling/*.h")
 file(GLOB GroupMath "Math/*.cpp" "Math/*.h")
 file(GLOB GroupEvents "Events/*.cpp" "Events/*.h")
 file(GLOB GroupExceptions "Exceptions/*.cpp" "Exceptions/*.h")
@@ -49,10 +48,9 @@ source_group("Utility" FILES ${GroupUtility})
 source_group("Utility\\Statistics" FILES ${GroupStatistics})
 source_group("Utility\\Iterators" FILES ${GroupUtilityIte})
 source_group("Utility\\FileRelated" FILES ${GroupUtilityFile})
+source_group("Utility\\DataHandling" FILES ${GroupUtilityData})
 
 source_group("GUI" FILES ${GroupGUI})
-#source_group("GUI\\Objects" FILES ${GroupGUIObjects})
-#source_group("GUI\\Components" FILES ${GroupGUIComponents})
 
 source_group("Core" FILES ${GroupCore})
 source_group("Core\\Events" FILES ${GroupEvents})
@@ -74,9 +72,9 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${GroupLeap} ${GroupScript} ${GroupGUI}  ${GroupEvents}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
-    ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects})
-    
-#${GroupGUIObjects} ${GroupGUIComponents}
+    ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
+    ${GroupUtilityData})
+
     
 # precompiled headers
 # remove from list before adding back

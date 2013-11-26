@@ -94,6 +94,7 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 
 	mod->GetListOfListeners(containedlisteners);
 
+
 	for(size_t i = 0; i < containedlisteners.size(); i++){
 		// generics cannot be rocket events //
 		if(containedlisteners[i]->GenericTypeName && containedlisteners[i]->GenericTypeName->size() > 0){
@@ -203,30 +204,23 @@ void Leviathan::Gui::BaseGuiObject::ProcessEvent(Rocket::Core::Event& receivedev
 	// call script to handle the event //
 	const Rocket::Core::String& eventtype = receivedevent.GetType();
 
-	wstring listenername = L""; 
+	// Get the listener name //
+	VerifyInversedEventTranslateMap();
+
+	auto iter = RocketEventToLeviathanListenerTranslate.find(eventtype);
+
+	if(iter == RocketEventToLeviathanListenerTranslate.end()){
+
+		Logger::Get()->Warning(L"BaseGuiObject: ProcessEvent: cannot translate rocket event "+Convert::StringToWstring(eventtype.CString())+
+			L" to Leviathan listener value");
+		return;
+	}
 
 	// check does the script contain right listeners //
 	ScriptModule* mod = Scripting->GetModule();
 
-	// handle specific Rocket events //
-	if(eventtype == "click"){
-
-		if(mod->DoesListenersContainSpecificListener(LISTENERNAME_ONCLICK)){
-
-			listenername = LISTENERNAME_ONCLICK;
-		}
-
-	} else if(eventtype == "show"){
-
-		if(mod->DoesListenersContainSpecificListener(LISTENERNAME_ONSHOW)){
-
-			listenername = LISTENERNAME_ONSHOW;
-		}
-
-	}
-	// check if we want to call something //
-	if(listenername.size() > 0){
-
+	if(mod->DoesListenersContainSpecificListener(iter->second)){
+		// Call the script callback //
 		// setup parameters //
 		vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
 			(new NamedVariableBlock(new VoidPtrBlock(&receivedevent), L"RocketEvent"));
@@ -235,7 +229,7 @@ void Leviathan::Gui::BaseGuiObject::ProcessEvent(Rocket::Core::Event& receivedev
 		receivedevent.AddReference();
 
 		ScriptRunningSetup sargs;
-		sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguements(Args);
+		sargs.SetEntrypoint(mod->GetListeningFunctionName(iter->second)).SetArguements(Args);
 		// run the script //
 		shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
 
@@ -247,8 +241,6 @@ void Leviathan::Gui::BaseGuiObject::ProcessEvent(Rocket::Core::Event& receivedev
 				receivedevent.StopPropagation();
 		}
 	}
-
-
 }
 
 void Leviathan::Gui::BaseGuiObject::_UnhookAllListeners(){
@@ -273,7 +265,7 @@ void Leviathan::Gui::BaseGuiObject::_UnhookAllListeners(){
 DLLEXPORT bool Leviathan::Gui::BaseGuiObject::CheckObjectLinkage(){
 	if(Element)
 		return true;
-
+	
 	// not linked check if we can get valid object with our id //
 	shared_ptr<GuiLoadedSheet> sheet = OwningInstance->GetSheet(SheetID);
 	if(sheet){
@@ -284,6 +276,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::CheckObjectLinkage(){
 	if(Element){
 		// link just Rocket events //
 		_HookListeners(true);
+		Logger::Get()->Info(L"BaseGuiObject: CheckObjectLinkage: successfully linked with new object");
 		return true;
 	}
 
@@ -337,10 +330,27 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::SetInternalRMLWrapper(string rmlco
 	Element->SetInnerRML(rmlcode.c_str());
 	return true;
 }
+
 // ------------------------------------ //
 std::map<wstring, Rocket::Core::String> Leviathan::Gui::BaseGuiObject::LeviathanToRocketEventTranslate = boost::assign::map_list_of
 	(LISTENERNAME_ONSHOW, "show")
 	(LISTENERNAME_ONHIDE, "hide")
 	(LISTENERNAME_ONCLICK, "click")
+	(LISTENERNAME_ONVALUECHANGE, "change")
 ;
 
+// This starts off empty //
+std::map<Rocket::Core::String, wstring> Leviathan::Gui::BaseGuiObject::RocketEventToLeviathanListenerTranslate;
+
+// But this function fills it //
+DLLEXPORT void Leviathan::Gui::BaseGuiObject::VerifyInversedEventTranslateMap(){
+	if(RocketEventToLeviathanListenerTranslate.size() != 0)
+		return;
+
+	// Inverse the other map and insert it to this map //
+	for(auto iter = LeviathanToRocketEventTranslate.begin(); iter != LeviathanToRocketEventTranslate.end(); ++iter){
+
+		RocketEventToLeviathanListenerTranslate[iter->second] = iter->first;
+	}
+
+}

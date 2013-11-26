@@ -40,7 +40,7 @@ void EventHandler::CallEvent(Event* pEvent){
 
 		}
 	}
-	SAFE_DELETE(pEvent);
+	SAFE_RELEASE(pEvent);
 }
 
 DLLEXPORT void Leviathan::EventHandler::CallEvent(GenericEvent* pEvent){
@@ -56,7 +56,7 @@ DLLEXPORT void Leviathan::EventHandler::CallEvent(GenericEvent* pEvent){
 
 		}
 	}
-	SAFE_DELETE(pEvent);
+	SAFE_RELEASE(pEvent);
 }
 // ------------------------------------ //
 bool EventHandler::RegisterForEvent(CallableObject* toregister, EVENT_TYPE totype){
@@ -96,7 +96,7 @@ DLLEXPORT void Leviathan::EventHandler::Unregister(CallableObject* caller, const
 		}
 	}
 }
-
-
-
 // ------------------------------------ //
+DLLEXPORT void Leviathan::EventHandler::CallEventGenericProxy(GenericEvent* genericevent){
+	CallEvent(genericevent);
+}

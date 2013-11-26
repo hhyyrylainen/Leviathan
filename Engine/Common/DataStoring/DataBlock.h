@@ -740,6 +740,24 @@ namespace Leviathan{
 		int ConvertAndReturnProxyInt(){
 			return ConvertAndReturnVariable<int>();
 		}
+		string ConvertAndReturnProxyString(){
+
+			return ConvertAndReturnVariable<string>();
+		}
+
+		// More script proxies //
+		ScriptSafeVariableBlock* CreateNewWstringProxy(){
+
+			// Try to convert our block //
+			wstring wstrval;
+
+			if(ConvertAndAssingToVariable(wstrval)){
+
+				return new ScriptSafeVariableBlock(new WstringBlock(wstrval), Name);
+			}
+			// Conversion failed //
+			return NULL;
+		}
 
 	protected:
 

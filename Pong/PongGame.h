@@ -10,6 +10,7 @@
 #include "PlayerSlot.h"
 #include "GameInputController.h"
 #include "Entities\Bases\BasePhysicsObject.h"
+#include "Utility\DataHandling\SimpleDataBase.h"
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return;
 
@@ -61,6 +62,8 @@ namespace Pong{
 
 		void CheckForGameEnd();
 
+		Leviathan::SimpleDatabase* GetGameDatabase();
+
 		// customized callbacks //
 		virtual void InitLoadCustomScriptTypes(asIScriptEngine* engine);
 		virtual void RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids);
@@ -100,6 +103,9 @@ namespace Pong{
 		// Direction in which the ball can get stuck //
 		Float3 DeadAxis;
 		int StuckThresshold;
+
+		// Configuration data //
+		Leviathan::SimpleDatabase GameConfigurationData;
 
 		static PongGame* StaticAccess;
 	};

@@ -61,6 +61,10 @@ namespace Leviathan{ namespace Gui{
 		}
 
 		static std::map<wstring, Rocket::Core::String> LeviathanToRocketEventTranslate;
+		static std::map<Rocket::Core::String, wstring> RocketEventToLeviathanListenerTranslate;
+
+		// Call this function before using the above //
+		DLLEXPORT static void VerifyInversedEventTranslateMap();
 
 		DLLEXPORT static bool LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects,	ObjectFileObject& dataforthis,
 			GuiLoadedSheet* sheet);

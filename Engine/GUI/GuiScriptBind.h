@@ -18,6 +18,13 @@ void RocketProxyReleaseEventReference(Rocket::Core::Event* evt){
 	evt->RemoveReference();
 }
 
+string RocketProxyEventGetValue(Rocket::Core::Event* evt, string valuename){
+	// Get the parameter from the event //
+	auto strtype = evt->GetParameter(valuename.c_str(), Rocket::Core::String(""));
+	// Convert and return //
+	return string(strtype.CString());
+}
+
 void RocketProxyAddElementReference(Rocket::Core::Element* element){
 
 	element->AddReference();
@@ -57,6 +64,11 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+	if(engine->RegisterObjectMethod("GuiManager", "void GUIObjectsCheckRocketLinkage()", asMETHOD(Gui::GuiManager, GUIObjectsCheckRocketLinkage), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
 
 
 
@@ -101,6 +113,11 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	if(engine->RegisterObjectBehaviour("RocketEvent", asBEHAVE_RELEASE, "void f()", asFUNCTION(RocketProxyReleaseEventReference), asCALL_CDECL_OBJFIRST) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+	if(engine->RegisterObjectMethod("RocketEvent", "string GetValue(string name)", asFUNCTION(RocketProxyEventGetValue), asCALL_CDECL_OBJFIRST) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	
+
 	// rocket element //
 	if(engine->RegisterObjectType("RocketElement", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;

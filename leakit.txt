@@ -1,1 +1,0 @@
-ModelObject: on static Flags vectori jota ei vapauteta (ei vie paljon muistia ja tarvii aina kun tekee uuden - ei kannata vapauttaa)

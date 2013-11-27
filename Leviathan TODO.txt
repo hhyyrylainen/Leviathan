@@ -1,1 +1,0 @@
-vois muuttaa noissa shadereissa olevat projection ja viewmatriksit yhdeksi projviewmatriksiksi

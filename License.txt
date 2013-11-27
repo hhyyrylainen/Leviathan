@@ -1,8 +1,32 @@
 (c) Henri Hyyryläinen 2012-2013, alrights reserved for now
 
---End user licence--
+--End user license--
 
 1. You agree that you are only allowed to run the programs, you have no right to redistribute
     or do anything else to the programs either.
     1.B) However any complete installer file (in which you might be reading this) you are
-        Permitted to redistribute however you please.
+        Permitted to redistribute in any way you please.
+        
+--Library licenses--
+
+    Newton Game Dynamics: zlib license
+    
+    Boost libraries: Boost libraries license v1
+    
+    AngelScript: zlib license
+    
+    SFML libraries: zlib license
+    
+    Ogre3D: MIT license
+    
+    libRocket: MIT license
+    
+    OIS: zlib license
+    
+    Leap: non open source, redistributables included as part of the software
+    
+Full license texts available online.
+    
+(You may redistributed the included binary versions of these programs)
+    
+    

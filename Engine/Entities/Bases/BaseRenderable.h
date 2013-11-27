@@ -29,6 +29,8 @@ namespace Leviathan{
 		// TODO: add some more sophisticated methods //
 		DLLEXPORT void SetDefaultSubDefaultPassDiffuse(const Float4 &newdiffuse) throw(...);
 
+		DLLEXPORT void SetOgreMaterialName(const string &name);
+
 	protected:
 
 		virtual void _OnHiddenStateUpdated();

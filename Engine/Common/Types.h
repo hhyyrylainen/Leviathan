@@ -683,16 +683,10 @@ namespace Leviathan{
 		// ---- comparison operators ---- //
 		// element by element comparison with operators //
 		DLLEXPORT inline bool operator <(const Float4 &other) const{
-			return X < other.X && Y < other.Y && Z < other.Z && W < other.W;
-		};
-		DLLEXPORT inline bool operator <=(const Float4 &other) const{
-			return X <= other.X && Y <= other.Y && Z <= other.Z && W <= other.W;
+			return !(*this == other);
 		};
 		DLLEXPORT inline bool operator >(const Float4 &other) const{
-			return X > other.X && Y > other.Y && Z > other.Z && W > other.W;
-		};
-		DLLEXPORT inline bool operator >=(const Float4 &other) const{
-			return X >= other.X && Y >= other.Y && Z > other.Z && W >= other.W;
+			return !(*this == other);
 		};
 		DLLEXPORT inline bool operator ==(const Float4 &other) const{
 			return X == other.X && Y == other.Y && Z == other.Z && W == other.W;

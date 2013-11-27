@@ -12,7 +12,7 @@ using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
 Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), ScoreLimit(20),
-	BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData("GameConfiguration")
+	BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData("GameConfiguration"), GamePaused(false), GuiManagerAccess(NULL)
 {
 	StaticAccess = this;
 
@@ -79,26 +79,26 @@ Pong::PongGame::~PongGame(){
 void Pong::PongGame::CustomizeEnginePostLoad(){
 	// load GUI documents //
 
-	Gui::GuiManager* manager = Engine::GetEngine()->GetWindowEntity()->GetGUI();
+	GuiManagerAccess = Engine::GetEngine()->GetWindowEntity()->GetGUI();
 
-	manager->LoadGUIFile(FileSystem::GetScriptsFolder()+L"PongMenus.txt");
+	GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"PongMenus.txt");
 
 //#ifdef _DEBUG
 	// load debug panel, too //
 
-	manager->LoadGUIFile(FileSystem::GetScriptsFolder()+L"DebugPanel.txt");
+	GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"DebugPanel.txt");
 //#endif // _DEBUG
 
-	manager->SetMouseFile(FileSystem::GetScriptsFolder()+L"cursor.rml");
+	GuiManagerAccess->SetMouseFile(FileSystem::GetScriptsFolder()+L"cursor.rml");
 
 	// setup world //
-	shared_ptr<GameWorld> world1 = Engine::GetEngine()->CreateWorld();
+	WorldOfPong = Engine::GetEngine()->CreateWorld();
 
 	// set skybox to have some sort of visuals //
-	world1->SetSkyBox("NiceDaySky");
+	WorldOfPong->SetSkyBox("NiceDaySky");
 
 	// create playing field manager with the world //
-	GameArena = unique_ptr<Arena>(new Arena(world1));
+	GameArena = unique_ptr<Arena>(new Arena(WorldOfPong));
 
 	ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
 
@@ -115,7 +115,7 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 	// link world and camera to a window //
 	GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
 
-	window1->LinkObjects(MainCamera, world1);
+	window1->LinkObjects(MainCamera, WorldOfPong);
 	// sound listening camera //
 	MainCamera->BecomeSoundPerceiver();
 
@@ -125,7 +125,7 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 	// I like the debugger //
 #ifdef _DEBUG
 	window1->GetGUI()->SetDebuggerOnThisContext();
-	window1->GetGUI()->SetDebuggerVisibility(true);
+	//window1->GetGUI()->SetDebuggerVisibility(true);
 #endif // _DEBUG
 
 	
@@ -169,6 +169,13 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+
+	if(engine->RegisterObjectMethod("PongGame", "void SetPauseState(bool paused)", asMETHOD(PongGame, SetPauseState), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+
+	
 
 	// For getting the game database //
 	if(engine->RegisterObjectMethod("PongGame", "SimpleDatabase& GetGameDatabase()", asMETHOD(PongGame, GetGameDatabase), asCALL_THISCALL) < 0)
@@ -291,6 +298,7 @@ PongGame* Pong::PongGame::Get(){
 int Pong::PongGame::TryStartGame(){
 	// Destroy old game world //
 	GameArena->GetWorld()->ClearObjects();
+	GamePaused = false;
 
 	int activeplycount = 0;
 	int maxsplit = 0;
@@ -339,6 +347,9 @@ int Pong::PongGame::TryStartGame(){
 	// now that we are ready to start let's serve the ball //
 	GameArena->ServeBall();
 
+	// Allow pause menu //
+	GuiManagerAccess->SetCollectionAllowEnableState(L"PauseMenu", true);
+
 	// succeeded //
 	return 1;
 }
@@ -347,7 +358,10 @@ void Pong::PongGame::GameMatchEnded(){
 	GameInputHandler->UnlinkPlayers();
 	GameInputHandler->SetBlockState(true);
 
-
+	// This can be called from script so ensure that these are set //
+	GameArena->LetGoOfBall();
+	GuiManagerAccess->SetCollectionState(L"PauseMenu", false);
+	GuiManagerAccess->SetCollectionAllowEnableState(L"PauseMenu", true);
 }
 
 void Pong::PongGame::ScriptCloseGame(){
@@ -611,6 +625,9 @@ void Pong::PongGame::CheckForGameEnd(){
 
 			// Do various activities related to winning the game //
 
+			// Disable pause menu //
+			GuiManagerAccess->SetCollectionState(L"PauseMenu", false);
+			GuiManagerAccess->SetCollectionAllowEnableState(L"PauseMenu", true);
 
 			// Set the camera location //
 			auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
@@ -699,6 +716,13 @@ bool Pong::PongGame::IsBallInGoalArea(){
 
 Leviathan::SimpleDatabase* Pong::PongGame::GetGameDatabase(){
 	return &GameConfigurationData;
+}
+
+void Pong::PongGame::SetPauseState(bool paused){
+	// Set physics allow update //
+	GamePaused = paused;
+
+	WorldOfPong->SetWorldPhysicsFrozenState(GamePaused);
 }
 
 

@@ -11,6 +11,7 @@
 #include "GameInputController.h"
 #include "Entities\Bases\BasePhysicsObject.h"
 #include "Utility\DataHandling\SimpleDataBase.h"
+#include "GUI\GuiManager.h"
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return;
 
@@ -60,6 +61,8 @@ namespace Pong{
 
 		bool PlayerIDMatchesGoalAreaID(int plyid, Leviathan::BasePhysicsObject* goalptr);
 
+		void SetPauseState(bool paused);
+
 		void CheckForGameEnd();
 
 		Leviathan::SimpleDatabase* GetGameDatabase();
@@ -85,10 +88,16 @@ namespace Pong{
 
 		// game objects //
 		unique_ptr<Arena> GameArena;
+		shared_ptr<GameWorld> WorldOfPong;
+		Leviathan::Gui::GuiManager* GuiManagerAccess;
+
 
 		int LastPlayerHitBallID;
 
+		bool GamePaused;
 		int ScoreLimit;
+
+
 
 		vector<PlayerSlot*> PlayerList;
 		GameInputController* GameInputHandler;

@@ -55,7 +55,7 @@ namespace Leviathan{ namespace Gui{
 	class GuiCollection : public Object, public ReferenceCounted{
 	public:
 		GuiCollection(const wstring &name, GuiLoadedSheet* sheet, GuiManager* manager, int id, const wstring &toggle, bool strict = false, 
-			bool enabled = true, bool keepgui = false);
+			bool enabled = true, bool keepgui = false, bool allowenable = true);
 		~GuiCollection();
 
 		DLLEXPORT void UpdateState(bool newstate);
@@ -65,6 +65,15 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT inline void ToggleState(){
 			UpdateState(!Enabled);
 		}
+
+		DLLEXPORT void UpdateAllowEnable(bool newstate);
+		DLLEXPORT inline bool GetAllowEnable(){
+			return AllowEnable;
+		}
+		DLLEXPORT inline void ToggleAllowEnable(){
+			UpdateAllowEnable(!AllowEnable);
+		}
+
 
 		DLLEXPORT inline bool KeepsGUIActive(){
 			return Enabled && KeepsGuiOn;
@@ -103,6 +112,7 @@ namespace Leviathan{ namespace Gui{
 		bool Enabled;
 		bool Strict;
 		bool KeepsGuiOn;
+		bool AllowEnable;
 
 		GKey Toggle;
 		GuiManager* OwningManager;

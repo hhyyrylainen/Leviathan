@@ -10,8 +10,8 @@
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiLoadedSheet* sheet, GuiManager* manager, int id, const wstring &toggle, 
-	bool strict /*= false*/, bool enabled /*= true*/, bool keepgui) : Name(name), ID(id), Enabled(enabled), Strict(strict), 
-	ContainedInSheet(sheet), KeepsGuiOn(keepgui), OwningManager(manager)
+	bool strict /*= false*/, bool enabled /*= true*/, bool keepgui, bool allowenable) : Name(name), ID(id), Enabled(enabled), Strict(strict), 
+	ContainedInSheet(sheet), KeepsGuiOn(keepgui), OwningManager(manager), AllowEnable(allowenable)
 {
 	ContainedInSheet->AddRef();
 	Toggle = GKey::GenerateKeyFromString(toggle);
@@ -67,24 +67,29 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 	bool Enabled = true;
 	bool Strict = false;
 	bool GuiOn = false;
+	bool allowenable = true;
 
 	for(size_t a = 0; a < data.Contents.size(); a++){
 
 		if(data.Contents[a]->Name == L"params"){
 			// get values //
-			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(data.Contents[a]->Variables, L"ToggleOn", Toggle, L"", false);
+			if(!ObjectFileProcessor::LoadValueFromNamedVars<wstring>(data.Contents[a]->Variables, L"ToggleOn", Toggle, L"", false)){
+				// Extra name check //
+				ObjectFileProcessor::LoadValueFromNamedVars<wstring>(data.Contents[a]->Variables, L"Toggle", Toggle, L"", false);
+			}
 
 			ObjectFileProcessor::LoadValueFromNamedVars<bool>(data.Contents[a]->Variables, L"Enabled", Enabled, false, true,
 				L"GuiCollection: LoadCollection:");
 
 			ObjectFileProcessor::LoadValueFromNamedVars<bool>(data.Contents[a]->Variables, L"KeepsGUIOn", GuiOn, false);
+			ObjectFileProcessor::LoadValueFromNamedVars<bool>(data.Contents[a]->Variables, L"AllowEnable", allowenable, true);
 
 			continue;
 		}
 	}
 
 	// allocate new Collection object //
-	GuiCollection* cobj = new GuiCollection(data.Name, sheet, gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn);
+	GuiCollection* cobj = new GuiCollection(data.Name, sheet, gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn, allowenable);
 	// copy script data over //
 	cobj->Scripting = data.Script;
 	// add to collection list //
@@ -92,6 +97,10 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 
 	// loading succeeded //
 	return true;
+}
+
+DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
+	AllowEnable = newstate;
 }
 // ------------------ GuiLoadedSheet ------------------ //
 Leviathan::Gui::GuiLoadedSheet::GuiLoadedSheet(Rocket::Core::Context* context, const string &documentfile) : ID(IDFactory::GetID()){

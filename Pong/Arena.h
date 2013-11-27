@@ -32,6 +32,8 @@ namespace Pong{
 			return TargetWorld;
 		}
 
+		string GetMaterialNameForPlayerColour(const Float4 &colour);
+
 		void GiveBallSpeed(float mult);
 
 		void ColourTheBallTrail(const Float4 &colour);
@@ -62,6 +64,9 @@ namespace Pong{
 
 		// ball prop //
 		shared_ptr<Leviathan::BaseObject> Ball;
+
+		// Used to store already generated materials for paddles //
+		std::map<Float4, string> ColourMaterialName;
 
 	};
 

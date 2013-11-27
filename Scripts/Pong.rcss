@@ -20,6 +20,10 @@ body
     margin-right: 15%;
     width: auto;
 }
+.MenuOption:hover
+{
+    background-color: #61D8A2;
+}
 
 .DisabledMenuOption
 {
@@ -30,12 +34,6 @@ body
     width: auto;
 }
 
-.GoldenText
-{
-    color: #FFAC40;
-
-}
-
 .MenuTitle
 {
     color: #FFAC40;
@@ -44,25 +42,9 @@ body
     header-color: #BF813077;
 }
 
-.MenuOption:hover
-{
-    background-color: #61D8A2;
-}
-
 .DangerousMenu:hover
 {
     background-color: #93002F; 
-}
-
-.Hidden
-{
-    display: none;
-    visibility: hidden;
-}
-
-.SpaceTaker
-{
-    Height: 200px;
 }
 
 div.MenuContent
@@ -79,7 +61,6 @@ div.MenuContent
     
     
     text-align: center;
-
 }
 
 hr.MenuLine
@@ -89,12 +70,58 @@ hr.MenuLine
     margin: auto;
 }
 
-.MenuTable
+
+
+.PauseOption
 {
-    background-color: #0A64A4;
-    padding: 2px;
+    background-color: #00B060;
+    margin-left: auto;
+    margin-right: 5px;
+    width: auto;
+}
+.PauseOption:hover
+{
+    background-color: #61D8A2;
+}
+
+div.PauseContent
+{
+    z-index: 2;
     margin: auto;
-    width: 20%;
+    margin-right: 10%;
+    padding: 30px;
+    width: 50%;
+    max-width: 50%;
+    height: 100%;
+    max-height: 100%;
+    overflow: auto;
+    
+    text-align: right;
+}
+
+hr.PauseLine
+{
+    width: 100%;
+    border-color: #A65E00;
+    margin: auto;
+}
+
+
+.GoldenText
+{
+    color: #FFAC40;
+
+}
+
+.Hidden
+{
+    display: none;
+    visibility: hidden;
+}
+
+.SpaceTaker
+{
+    Height: 200px;
 }
 
 .InlineBlock

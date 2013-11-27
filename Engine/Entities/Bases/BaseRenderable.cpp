@@ -37,4 +37,8 @@ DLLEXPORT void Leviathan::BaseRenderable::SetDefaultSubDefaultPassDiffuse(const 
 	GraphicalObject->getSubEntity(0)->getMaterial()->getTechnique(0)->getPass(0)->setDiffuse(newdiffuse);
 }
 
+DLLEXPORT void Leviathan::BaseRenderable::SetOgreMaterialName(const string &name){
+	GraphicalObject->getSubEntity(0)->setMaterialName(name);
+}
+
 

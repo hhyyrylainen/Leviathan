@@ -3,6 +3,8 @@
 #ifndef LEVIATHAN_TEXTURE_GENERATOR
 #include "TextureGenerator.h"
 #endif
+#include "OgreMaterial.h"
+#include "OgreTechnique.h"
 using namespace Leviathan;
 // ------------------------------------ //
 TextureGenerator::TextureGenerator(){
@@ -93,7 +95,23 @@ ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, un
 	return result;
 }
 // ------------------------------------ //
+DLLEXPORT  bool Leviathan::TextureGenerator::LoadSolidColourLightMaterialToMemory(const string &name, const Float4 &diffusecolour/*= Float4(1)*/){
+	// Create it with ogre material manager //
+	Ogre::MaterialManager& manager = Ogre::MaterialManager::getSingleton();
 
+	Ogre::MaterialPtr mat = manager.create(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+	if(mat.isNull()){
+		// Probably failed to create it //
+		return false;
+	}
+	// Set settings //
+	Ogre::Pass* pass = mat->getTechnique(0)->getPass(0);
+	
+	pass->setDiffuse(diffusecolour);
+
+	mat->compile();
+}
 // ------------------------------------ //
 
 // ------------------------------------ //

@@ -128,13 +128,6 @@ DLLEXPORT void Leviathan::Convert::ToCapital(const wstring &source, wstring &tar
 	}
 }
 
-DLLEXPORT wstring Leviathan::Convert::Float3ToSWstring(const Float3 &data){
-	wstringstream stream;
-
-	stream << L"[" << data.X << L", " << data.Y << L", " << data.Z << L"]";
-	return stream.str();
-}
-
 wchar_t Convert::ToLower(const wchar_t &chara){
 	int val = (int)chara;
 

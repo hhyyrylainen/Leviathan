@@ -29,6 +29,58 @@ objects {
             }
         }
     }
+    // Pause menu, which can only be enabled during gameplay //
+    o GuiCollection "PauseMenu"{
+        l params{
+            Enabled = false;
+            AllowEnable = false;
+            ToggleOn = "ESC";
+        }
+        s scripts{
+            inl type(script){
+                name = MenuScript;
+                body{
+                    // We need some special functionality
+                    // set's the visibility of the object //
+                    void HandleSet(GuiCollection@ Instance, bool hidden){
+                        // fetch pointers
+                        GuiLoadedSheet@ tmpsheet = Instance.GetOwningSheet();
+                        RocketElement@ maincontainer = tmpsheet.GetElementByID("pausemenubody");
+                        
+                        if(hidden){
+                            //Print("Collection "+Instance.GetName()+" set hidden");
+                            maincontainer.SetProperty("visibility", "hidden");
+                            maincontainer.SetProperty("display", "none");
+                        } else {
+                            //Print("Collection "+Instance.GetName()+" set visible");
+                            maincontainer.SetProperty("visibility", "visible");
+                            maincontainer.SetProperty("display", "block");
+                        }
+                    }
+
+                    [@Listener="OnHide"]
+                    int OnHide(GuiCollection@ Instance, Event@ event){
+                        // we need to hide our elements //
+                        HandleSet(Instance, true);
+                        // Resume game //
+                        GetPongGame().SetPauseState(false);
+                        return 1;
+                    }
+
+                    [@Listener="OnShow"]
+                    int OnShow(GuiCollection@ Instance, Event@ event){
+                        // we need to show our elements //
+                        HandleSet(Instance, false);
+                        GetPongGame().SetPauseState(true);
+                        return 1;
+                    }
+                    
+                @%};
+            }
+        }
+    
+    }
+    
     // groups together the top level menu //
     o GuiCollection "MainMenu"{
         l params{
@@ -256,6 +308,71 @@ objects {
             }
         }
     }
+    
+    o GuiObject ID(203) "PauseBackToMenuButton"{
+        l params{
+            RocketID = "PauseScreenMenuButton";
+        }
+        s scripts{
+            inl type(script){
+                name = GameStarterScriptButton;
+                body{
+                    [@Listener="OnClick"]
+                    int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                        // hide other collections and display the main menu screen //
+                        Instance.GetOwningManager().SetCollectionState("MainMenu", true);
+                        Instance.GetOwningManager().SetCollectionState("Menus", true);
+                        Instance.GetOwningManager().SetCollectionState("GameplayHUD", false);
+                        Instance.GetOwningManager().SetCollectionState("PauseMenu", false);
+                        
+                        GetPongGame().GameMatchEnded();
+                        
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+    
+    o GuiObject ID(204) "PauseQuitFromWinScreen"{
+        l params{
+            RocketID = "PauseScreenQuitButton";
+        }
+        s scripts{
+            inl type(script){
+                name = GameStarterScriptButton;
+                body{
+
+                    [@Listener="OnClick"]
+                    int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                        // close the game //
+                        GetPongGame().Quit();
+
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+    o GuiObject ID(105) "ClosePauseMenu"{
+        l params{
+            RocketID = "PauseMenuClose";
+        }
+        s scripts{
+            inl type(script){
+                name = PauseMenuCloseScript;
+                body{
+                    [@Listener="OnClick"]
+                    int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                        // Hide the pause menu collection //
+                        Instance.GetOwningManager().SetCollectionState("PauseMenu", false);
+                        return 1;
+                    }
+                @%};
+            }    
+        }
+    }
+    
     // ------------------ Game setup screen ------------------ //
     o GuiObject ID(500) "LocalGameSetupScreenTable"{
         l params{

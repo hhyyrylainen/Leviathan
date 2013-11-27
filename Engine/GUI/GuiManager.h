@@ -77,6 +77,7 @@ namespace Gui{
 
 		DLLEXPORT void SetCollectionStateProxy(string name, bool state);
 		DLLEXPORT void SetCollectionState(const wstring &name, bool state);
+		DLLEXPORT void SetCollectionAllowEnableState(const wstring &name, bool allow = true);
 		DLLEXPORT inline void PossiblyGUIMouseDisable(){
 			GuiMouseUseUpdated = true;
 		}

@@ -8,7 +8,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld(Ogre::Root* ogre) : WorldSceneCamera(NULL), CameraLocationNode(NULL), WorldsScene(NULL),
-	Sunlight(NULL), SunLightNode(NULL)
+	Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false)
 {
 	// these are always required for worlds //
 	_CreateOgreResources(ogre);
@@ -197,8 +197,9 @@ DLLEXPORT void Leviathan::GameWorld::SimulateWorld(){
 	// This is probably the best place to remove dead objects //
 	_HandleDelayedDelete();
 
-
-	_PhysicalWorld->SimulateWorld();
+	// Only if not frozen run physics //
+	if(!WorldFrozen)
+		_PhysicalWorld->SimulateWorld();
 }
 
 DLLEXPORT void Leviathan::GameWorld::ClearSimulatePassedTime(){
@@ -258,6 +259,19 @@ void Leviathan::GameWorld::_HandleDelayedDelete(){
 		}
 	}
 
+}
+
+DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
+	// Skip if set to the same //
+	if(frozen == WorldFrozen)
+		return;
+
+	WorldFrozen = frozen;
+	// If unfrozen reset physics time //
+	if(!WorldFrozen){
+		if(_PhysicalWorld)
+			_PhysicalWorld->ClearTimers();
+	}
 }
 
 

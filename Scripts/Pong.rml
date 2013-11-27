@@ -52,5 +52,17 @@
             <span class="MenuOption DangerousMenu"><p id="WinScreenQuitButton">Quit game</p></span>
             </div>
         </div>
+        <div class="Hidden" id="pausemenubody">
+            <span class="SpaceTaker"></span>
+            <div class="PauseContent">
+            <h1 class="MenuTitle">Paused</h1>
+            <hr class="PauseLine"></hr>
+            <span class="PauseOption"><p id="PauseMenuClose">Resume</p></span>
+            <br></br>
+            <span class="PauseOption"><p id="PauseScreenMenuButton">Main menu</p></span>
+            <span class="PauseOption DangerousMenu"><p id="PauseScreenQuitButton">Quit game</p></span>
+            </div>
+        </div>
+        
 	</body>
 </rml>

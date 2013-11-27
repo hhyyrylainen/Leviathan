@@ -113,7 +113,7 @@ void Leviathan::Gui::GuiManager::Release(){
 DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(OIS::KeyCode key, int specialmodifiers){
 
 	for(unsigned int i = 0; i < Collections.size(); i++){
-		if(Collections[i]->GetTogglingKey().Match(key, specialmodifiers, false)){
+		if(Collections[i]->GetTogglingKey().Match(key, specialmodifiers, false) && Collections[i]->GetAllowEnable()){
 			// is a match, toggle //
 			Collections[i]->ToggleState();
 
@@ -137,6 +137,20 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const wstring &nam
 			if(Collections[i]->GetState() != state){
 				Logger::Get()->Info(L"Setting Collection "+Collections[i]->GetName()+L" state "+Convert::ToWstring(state));
 				Collections[i]->ToggleState();
+			}
+			return;
+		}
+	}
+}
+
+DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const wstring &name, bool allow /*= true*/){
+	// find collection with name and set it's allow enable state //
+	for(size_t i = 0; i < Collections.size(); i++){
+		if(Collections[i]->GetName() == name){
+			// set state //
+			if(Collections[i]->GetAllowEnable() != allow){
+				Logger::Get()->Info(L"Setting Collection "+Collections[i]->GetName()+L" allow enable state "+Convert::ToWstring(allow));
+				Collections[i]->ToggleAllowEnable();
 			}
 			return;
 		}

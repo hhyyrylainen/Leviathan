@@ -27,7 +27,23 @@ namespace Leviathan{
 		DLLEXPORT static string WstringToString(const wstring &str);
 		DLLEXPORT static wstring CharToWstring(const char &i);
 
-		DLLEXPORT static wstring Float3ToSWstring(const Float3 &data);
+		template<class StringStreamType, class ReturnType>
+		DLLEXPORT static ReturnType Float3ToSWstring(const Float3 &data){
+
+			StringStreamType stream;
+
+			stream << "[" << data.X << ", " << data.Y << ", " << data.Z << "]";
+			return stream.str();
+		}
+
+		template<class StringStreamType, class ReturnType>
+		DLLEXPORT static ReturnType Float4ToString(const Float4 &data){
+
+			StringStreamType stream;
+
+			stream << "[" << data.X << ", " << data.Y << ", " << data.Z << ", " << data.W << "]";
+			return stream.str();
+		}
 
 		DLLEXPORT static int WstringFromBoolToInt(const wstring &i);
 		DLLEXPORT static int StringFromBoolToInt(const string &i);

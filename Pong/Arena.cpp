@@ -7,6 +7,7 @@
 #include "Entities\Objects\Brush.h"
 #include "Entities\Objects\Prop.h"
 #include "Entities\Objects\TrackEntityController.h"
+#include "TextureGenerator.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::Arena::Arena(shared_ptr<Leviathan::GameWorld> world) : TargetWorld(world), DirectTrail(NULL){
@@ -303,9 +304,7 @@ addplayerpaddlelabel:
 		// Finally set the colour //
 		Float4 colour = secondary ? players[i]->GetSplit()->GetColour(): players[i]->GetColour();
 
-		// Quite an ugly hack but let's go with it //
-		// TODO: add a more elegant way
-		tmp->SetDefaultSubDefaultPassDiffuse(colour);
+		tmp->SetOgreMaterialName(GetMaterialNameForPlayerColour(colour));
 
 		if(secondary)
 			continue;
@@ -460,5 +459,24 @@ void Pong::Arena::ColourTheBallTrail(const Float4 &colour){
 
 		DirectTrail->SetTrailProperties(balltrailproperties);
 	}
+}
+// ------------------------------------ //
+std::string Pong::Arena::GetMaterialNameForPlayerColour(const Float4 &colour){
+
+	auto iter = ColourMaterialName.find(colour);
+
+	if(iter != ColourMaterialName.end()){
+
+		return iter->second;
+	}
+
+	// Create new //
+	string generatename = "Colour_"+Convert::Float4ToString<stringstream, string>(colour)+"_PaddleMaterial";
+
+	// Generate //
+	Leviathan::TextureGenerator::LoadSolidColourLightMaterialToMemory(generatename, colour);
+
+	ColourMaterialName[colour] = generatename;
+	return generatename;
 }
 

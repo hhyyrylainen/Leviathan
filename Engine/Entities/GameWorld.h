@@ -56,6 +56,8 @@ namespace Leviathan{
 			return _PhysicalWorld.get();
 		}
 
+		DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
+
 		DLLEXPORT void SimulateWorld();
 		DLLEXPORT void ClearSimulatePassedTime();
 	private:
@@ -72,6 +74,9 @@ namespace Leviathan{
 
 		// physics //
 		shared_ptr<PhysicalWorld> _PhysicalWorld;
+
+		// The world can be frozen to stop physics //
+		bool WorldFrozen;
 
 		// objects //
 		// TODO: maybe change this to a map //

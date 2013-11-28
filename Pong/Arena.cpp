@@ -23,7 +23,7 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 	QUICKTIME_THISSCOPE;
 
 	if(plycount == 0 || plycount > 4){
-		game->SetError("Player count must be between 1 and 4");
+		game->SetError("Player count must be over 1");
 		return false;
 	}
 
@@ -188,32 +188,56 @@ newtonmaterialfetchstartlabel:
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	// fill empty paddle spaces //
-	if(plycount < 2){
+	for(size_t i = 0; i < players.size(); i++){
 
-		// fill left with wall //
-		tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
-			Float3(sidexsize, sideheight/2, sideysize*16.f), 0.f, &tmp));
-		tmp->SetPos(-width/2.f+sidexsize/2.f, sideheight/4.f, 0);
-		tmp->SetPhysicalMaterialID(ArenaMatID);
+		if(!players[i]->IsSlotActive()){
+			// The sub slot can save this //
+			if(auto split = players[i]->GetSplit())
+				if(split->IsSlotActive())
+					continue;
+			// Fill the empty slot //
+			switch(i){
+			case 0:
+				{
+					// fill right with wall //
+					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
+						Float3(sidexsize, sideheight/2, sideysize*16.f), 0.f, &tmp));
+					tmp->SetPos(width/2.f-sidexsize/2.f, sideheight/4.f, 0);
+					tmp->SetPhysicalMaterialID(ArenaMatID);
+				}
+				break;
+			case 1:
+				{
+					// fill bottom with wall //
+					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
+						Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, &tmp));
+					tmp->SetPos(0, sideheight/4.f, height/2.f-sideysize/2.f);
+					tmp->SetPhysicalMaterialID(ArenaMatID);
+				}
+				break;
+			case 2:
+				{
+					// fill left with wall //
+					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
+						Float3(sidexsize, sideheight/2, sideysize*16.f), 0.f, &tmp));
+					tmp->SetPos(-width/2.f+sidexsize/2.f, sideheight/4.f, 0);
+					tmp->SetPhysicalMaterialID(ArenaMatID);
+				}
+				break;
+			case 3:
+				{
+					// fill top with wall //
+					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
+						Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, &tmp));
+					tmp->SetPos(0, sideheight/4.f, -height/2.f+sideysize/2.f);
+					tmp->SetPhysicalMaterialID(ArenaMatID);
+				}
+				break;
+
+			}
+
+		}
 	}
-
-	if(plycount < 3){
-
-		// fill bottom with wall //
-		tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
-			Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, &tmp));
-		tmp->SetPos(0, sideheight/4.f, height/2.f-sideysize/2.f);
-		tmp->SetPhysicalMaterialID(ArenaMatID);
-	}
-	if(plycount < 4){
-
-		// fill top with wall //
-		tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
-			Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, &tmp));
-		tmp->SetPos(0, sideheight/4.f, -height/2.f+sideysize/2.f);
-		tmp->SetPhysicalMaterialID(ArenaMatID);
-	}
-
 
 	// paddles and link slots to objects//
 
@@ -225,12 +249,11 @@ newtonmaterialfetchstartlabel:
 		bool secondary = false;
 addplayerpaddlelabel:
 
-		// Create the material name //
-		string materialpaddle = "PongPaddleMaterial_"+Convert::ToString(secondary ? players[i]->GetSplit()->GetPlayerIdentifier(): 
-			players[i]->GetPlayerIdentifier());
+		// Get the colour for the paddle //
+		Float4 colour = secondary ? players[i]->GetSplit()->GetColour(): players[i]->GetColour();
 
 		// add paddle based on loop index //
-		auto plypaddle = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), materialpaddle, 
+		auto plypaddle = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), GetMaterialNameForPlayerColour(colour), 
 			Float3((i == 0 || i == 2) ? paddlethickness: paddlewidth, paddleheight, (i == 0 || i == 2) ? paddlewidth: paddlethickness), paddlemass,
 			&tmp));
 		// setup position //
@@ -300,11 +323,6 @@ addplayerpaddlelabel:
 
 		// Paddle should be in the middle by default, so set progress to 50% //
 		controller->SetProgressTowardsNextNode(0.5f);
-
-		// Finally set the colour //
-		Float4 colour = secondary ? players[i]->GetSplit()->GetColour(): players[i]->GetColour();
-
-		tmp->SetOgreMaterialName(GetMaterialNameForPlayerColour(colour));
 
 		if(secondary)
 			continue;

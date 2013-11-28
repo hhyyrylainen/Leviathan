@@ -62,10 +62,10 @@ void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool ac
 	if(Slot == 0 || Slot == 2){
 
 		switch(actiontoperform){
-		case CONTROLKEYACTION_LEFT: actiontoperform = CONTROLKEYACTION_POWERUPDOWN; break;
-		case CONTROLKEYACTION_POWERUPDOWN: actiontoperform = CONTROLKEYACTION_LEFT; break;
-		case CONTROLKEYACTION_RIGHT: actiontoperform = CONTROLKEYACTION_POWERUPUP; break;
-		case  CONTROLKEYACTION_POWERUPUP: actiontoperform = CONTROLKEYACTION_RIGHT; break;
+		case CONTROLKEYACTION_LEFT: actiontoperform = CONTROLKEYACTION_POWERUPUP; break;
+		case CONTROLKEYACTION_POWERUPDOWN: actiontoperform = CONTROLKEYACTION_RIGHT; break;
+		case CONTROLKEYACTION_RIGHT: actiontoperform = CONTROLKEYACTION_POWERUPDOWN; break;
+		case  CONTROLKEYACTION_POWERUPUP: actiontoperform = CONTROLKEYACTION_LEFT; break;
 		}
 	}
 
@@ -73,16 +73,16 @@ void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool ac
 	if(active){
 
 		if(actiontoperform == CONTROLKEYACTION_LEFT){
-			MoveState = -1;
-		} else if(actiontoperform == CONTROLKEYACTION_RIGHT){
 			MoveState = 1;
+		} else if(actiontoperform == CONTROLKEYACTION_RIGHT){
+			MoveState = -1;
 		}
 
 	} else {
 
-		if(actiontoperform == CONTROLKEYACTION_LEFT && MoveState == -1){
+		if(actiontoperform == CONTROLKEYACTION_LEFT && MoveState == 1){
 			MoveState = 0;
-		} else if(actiontoperform == CONTROLKEYACTION_RIGHT && MoveState == 1){
+		} else if(actiontoperform == CONTROLKEYACTION_RIGHT && MoveState == -1){
 			MoveState = 0;
 		}
 

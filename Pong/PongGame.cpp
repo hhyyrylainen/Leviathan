@@ -19,12 +19,13 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 	GameInputHandler = new GameInputController();
 
 	// fill the player list with the player 1 and empty slots //
-	PlayerList[0] = new PlayerSlot(0, PLAYERTYPE_HUMAN, 1, PLAYERCONTROLS_WASD, 0, Float4(1.f, 0.f, 0.f, 1.f));
+	PlayerList[0] = new PlayerSlot(0, true);
+	PlayerList[1] = new PlayerSlot(1, PLAYERTYPE_HUMAN, 1, PLAYERCONTROLS_WASD, 0, Float4(1.f, 0.f, 0.f, 1.f));
 
 	PlayerSlot::CurrentPlayerIdentifier = 1;
 
 	// other slots as empty //
-	for(size_t i = 1; i < PlayerList.size(); i++){
+	for(size_t i = 2; i < PlayerList.size(); i++){
 
 		PlayerList[i] = new PlayerSlot(i, true);
 	}
@@ -342,13 +343,18 @@ int Pong::PongGame::TryStartGame(){
 
 	GameInputHandler->StartReceivingInput(PlayerList);
 	GameInputHandler->SetBlockState(false);
-
+	auto split0 = PlayerList[0]->GetSplit();
+	auto split1 = PlayerList[1]->GetSplit();
+	auto split2 = PlayerList[2]->GetSplit();
+	auto split3 = PlayerList[3]->GetSplit();
 	// Setup dead angle //
-	if(!PlayerList[0]->IsSlotActive() && !PlayerList[2]->IsSlotActive()){
+	DeadAxis = Float3(0.f);
+
+	if(!PlayerList[0]->IsSlotActive() && !PlayerList[2]->IsSlotActive() && (split0 ? !split0->IsSlotActive(): true) && (split2 ? !split2->IsSlotActive(): true)){
 
 		DeadAxis = Float3(1.f, 0.f, 0.f);
 
-	} else if(!PlayerList[1]->IsSlotActive() && !PlayerList[3]->IsSlotActive()){
+	} else if(!PlayerList[1]->IsSlotActive() && !PlayerList[3]->IsSlotActive() && (split1 ? !split1->IsSlotActive(): true) && (split3 ? !split3->IsSlotActive(): true)){
 
 		DeadAxis = Float3(0.f, 0.f, 1.f);
 	}

@@ -95,7 +95,7 @@ ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, un
 	return result;
 }
 // ------------------------------------ //
-DLLEXPORT  bool Leviathan::TextureGenerator::LoadSolidColourLightMaterialToMemory(const string &name, const Float4 &diffusecolour/*= Float4(1)*/){
+DLLEXPORT bool Leviathan::TextureGenerator::LoadSolidColourLightMaterialToMemory(const string &name, const Float4 &diffusecolour/*= Float4(1)*/){
 	// Create it with ogre material manager //
 	Ogre::MaterialManager& manager = Ogre::MaterialManager::getSingleton();
 
@@ -111,6 +111,8 @@ DLLEXPORT  bool Leviathan::TextureGenerator::LoadSolidColourLightMaterialToMemor
 	pass->setDiffuse(diffusecolour);
 
 	mat->compile();
+
+	return true;
 }
 // ------------------------------------ //
 

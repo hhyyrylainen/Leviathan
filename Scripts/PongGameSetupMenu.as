@@ -60,40 +60,26 @@ void UpdateGameSetupScreen(BaseGuiObject@ Instance, string nameprefix){
                 teamprinted = true;
                 code += "<p>Team "+i+"</p>";
             }
+            // Add the code for wrapping it //
+            code +="<p id='"+nameprefix+"Option_"+ControlIdentifier+"'>";
             
-            // Check for closed slots //
-            if(!slot.IsActive()){
-                // Add a join button //
-                code += "<p class='MenuOption' id='"+nameprefix+"Join_"+ControlIdentifier+"'>Click here to join!</p>";
-                
-            } else {
-                // Print info and controls //
-                code += "<p>Player "+slot.GetPlayerNumber();
-                // Options //
-                code += "<br></br>";
-                code += "<form>";
-                code += "<dataselect source='GameConfiguration.Colours' fields='Name,Colour' valuefield='Name'"
-                    "id='"+nameprefix+"Colour_"+ControlIdentifier+"'></dataselect>";
-                code += "<br></br>";
-                // TODO: the following really needs a formatter!
-                
-                string chosenctrl = GetPlayerControlsOptionNameFromType(slot.GetControlType());
-                code += "<dataselect source='GameConfiguration.Controls' fields='Type,ID' valuefield='Type'"
-                    "id='"+nameprefix+"Controls_"+ControlIdentifier+"' value='"+chosenctrl+"'></dataselect>";
-                code += "<br></br>";
-                code += "</form>";
-                code += "<p class='MenuOption DangerousMenu' id='"+nameprefix+"Quit_"+ControlIdentifier+"'>Close</p>";
-                code += "</p>";
-                code += "<br></br>";
-            }
+            code += GetCodeForInternalSlot(nameprefix, ControlIdentifier, slot);
+            
+            code += "</p>";
+            
             @slot = slot.GetSplit();
             if(slot is null){
                 // Add a split option
-                code += "<p class='MenuOption' id='"+nameprefix+"Split_"+ControlIdentifier+"'>Split this slot</p>";
+                if(ControlIdentifier < 10){
+                    code +="<p id='"+nameprefix+"Option_"+((ControlIdentifier+1)*10+ControlIdentifier)+"'>";
+                    code += "<p class='MenuOption' id='"+nameprefix+"Split_"+ControlIdentifier+
+                        "'>Split this slot</p>";
+                    code += "</p>";
+                }
                 break;
             }
             // We need a unique name for the split slot
-            ControlIdentifier += i*10;
+            ControlIdentifier += (i+1)*10;
         }
     }
     
@@ -122,10 +108,57 @@ PlayerSlot@ GetPlayerSlotFromControlIdentifier(int identifier){
                 break;
             }
             // We need a unique name for the split slot
-            ControlIdentifier += i*10;
+            ControlIdentifier += (i+1)*10;
         }
     }
     return null;
+}
+// ------------------ Partial printing ------------------ //
+string GetCodeForInternalSlot(string nameprefix, int ControlIdentifier, PlayerSlot@ slot){
+
+    string code;
+    // Check for closed slots //
+    if(!slot.IsActive()){
+        // Add a join button //
+        code += "<p class='MenuOption' id='"+nameprefix+"Join_"+ControlIdentifier+"'>Click here to join!</p>";
+        
+    } else {
+        // Print info and controls //
+        code += "<p>Player "+slot.GetPlayerNumber();
+        // Options //
+        code += "<br></br>";
+        code += "<form>";
+        code += "<dataselect source='GameConfiguration.Colours' fields='Name,Colour' valuefield='Name'"
+            "id='"+nameprefix+"Colour_"+ControlIdentifier+"'></dataselect>";
+        code += "<br></br>";
+        // TODO: the following really needs a formatter!
+        
+        string chosenctrl = GetPlayerControlsOptionNameFromType(slot.GetControlType());
+        code += "<dataselect source='GameConfiguration.Controls' fields='Type,ID' valuefield='Type'"
+            "id='"+nameprefix+"Controls_"+ControlIdentifier+"' value='"+chosenctrl+"'></dataselect>";
+        code += "<br></br>";
+        code += "</form>";
+        code += "<p class='MenuOption DangerousMenu' id='"+nameprefix+"Quit_"+ControlIdentifier+"'>Close</p>";
+        code += "</p>";
+        code += "<br></br>";
+    }
+    
+    return code;
+}
+
+void UpdateCodeForSlot(string nameprefix, int controlidentifier, BaseGuiObject@ objectinsheet){
+
+    // Get the target div //
+    string divid = nameprefix+"Option_"+controlidentifier;
+    // Get the slot //
+    PlayerSlot@ slot = GetPlayerSlotFromControlIdentifier(controlidentifier);
+    
+    RocketElement@ element = objectinsheet.GetOwningSheet().GetElementByID(divid);
+    if(element is null){
+        Print("Error: couldn't find element by id: "+divid);
+        return;
+    }
+    element.SetInternalRML(GetCodeForInternalSlot(nameprefix, controlidentifier, slot));
 }
 
 // ------------------ Setting update handling ------------------ //
@@ -146,6 +179,56 @@ void ColourChangeUpdated(int controlidentifier, string newvalue){
     slot.SetColourFromRML(colourvalue);
 }
 
+// Call when controls are changed //
+void ControlChangeUpdated(int controlidentifier, string newvalue){
+
+    Print("Setting "+controlidentifier+" controls to: "+newvalue);
+    // Get the slot from the identifier //
+    PlayerSlot@ slot = GetPlayerSlotFromControlIdentifier(controlidentifier);
+    
+    // Do inverse table lookup //
+    PLAYERCONTROLS actualtype = PLAYERCONTROLS(GetPongGame().GetGameDatabase()
+        .GetValueOnRow("Controls", "Type", ScriptSafeVariableBlock("Key", newvalue), 
+        "BaseType").ConvertAndReturnInt());
+        
+    // We also need the id with the control //
+    int id = GetPongGame().GetGameDatabase()
+        .GetValueOnRow("Controls", "Type", ScriptSafeVariableBlock("Key", newvalue), 
+        "ID").ConvertAndReturnInt();
+    
+    // Set the controls //
+    slot.SetControls(actualtype, id);
+}
+
+// Call when new sub slot needs to be added //
+void OnSlotSplit(int controlidentifier, string prefix, BaseGuiObject@ objectinsheet){
+    
+    PlayerSlot@ slot = GetPlayerSlotFromControlIdentifier(controlidentifier);
+    slot.AddEmptySubSlot();
+    
+    int FinalSlotIdentifier = (controlidentifier+1)*10+controlidentifier;
+    
+    UpdateCodeForSlot(prefix, FinalSlotIdentifier, objectinsheet);
+    
+    // We have added objects with IDs so we want to make gui check if everything is fine //
+    objectinsheet.GetOwningManager().GUIObjectsCheckRocketLinkage();
+}
+
+// Call when a player has joined //
+void OnPlayerJoined(int controlidentifier, string prefix, BaseGuiObject@ objectinsheet){
+
+    Print("Player "+controlidentifier+" joined the lobby");
+    // Get the slot from the identifier //
+    PlayerSlot@ slot = GetPlayerSlotFromControlIdentifier(controlidentifier);
+    
+    // Set as human player //
+    slot.SetPlayerAutoID(PLAYERTYPE_HUMAN);
+    // Update the controls //
+    UpdateCodeForSlot(prefix, controlidentifier, objectinsheet);
+    
+    // We have added objects with IDs so we want to make gui check if everything is fine //
+    objectinsheet.GetOwningManager().GUIObjectsCheckRocketLinkage();
+}
 
 
 

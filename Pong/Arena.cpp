@@ -236,7 +236,7 @@ addplayerpaddlelabel:
 		// setup position //
 		float horiadjust = 0;
 		if(maximumsplit >= 1)
-			horiadjust = secondary ? -paddlethickness: paddlethickness;
+			horiadjust = secondary ? 0: paddlethickness;
 
 		switch(i){
 		case 0: tmp->SetPos(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, 0); break;

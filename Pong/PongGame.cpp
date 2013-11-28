@@ -20,11 +20,11 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 
 	// fill the player list with the player 1 and empty slots //
 	PlayerList[0] = new PlayerSlot(0, PLAYERTYPE_HUMAN, 1, PLAYERCONTROLS_WASD, 0, Float4(1.f, 0.f, 0.f, 1.f));
-	PlayerList[1] = new PlayerSlot(1, true);
-	PlayerList[2] = new PlayerSlot(2, PLAYERTYPE_HUMAN, 3, PLAYERCONTROLS_ARROWS, 0, Float4(0.f, 1.f, 0.f, 1.f));
+
+	PlayerSlot::CurrentPlayerIdentifier = 1;
 
 	// other slots as empty //
-	for(size_t i = 3; i < PlayerList.size(); i++){
+	for(size_t i = 1; i < PlayerList.size(); i++){
 
 		PlayerList[i] = new PlayerSlot(i, true);
 	}
@@ -47,27 +47,33 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
 		boost::assign::map_list_of
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("ARROWS"))))
+		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_ARROWS))))
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
 	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
 		boost::assign::map_list_of
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("WASD"))))
-		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
+		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_WASD))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0))))));
 	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
 		boost::assign::map_list_of
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("AI"))))
-		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
+		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_AI))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0))))));
 	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
 		boost::assign::map_list_of
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("IJKL"))))
-		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
+		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_IJKL))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0))))));
 	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
 		boost::assign::map_list_of
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("NUMPAD"))))
-		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
+		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_NUMPAD))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0))))));
 	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
 		boost::assign::map_list_of
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("CONTROLLER"))))
-		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0")))))));
+		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_CONTROLLER))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0))))));
 }
 
 Pong::PongGame::~PongGame(){
@@ -187,19 +193,19 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	if(engine->RegisterEnum("PLAYERTYPE") < 0){
 		SCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterEnumValue("EVENT_TYPE", "PLAYERTYPE_CLOSED", PLAYERTYPE_CLOSED) < 0)
+	if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_CLOSED", PLAYERTYPE_CLOSED) < 0)
 	{
 		SCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterEnumValue("EVENT_TYPE", "PLAYERTYPE_COMPUTER", PLAYERTYPE_COMPUTER) < 0)
+	if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_COMPUTER", PLAYERTYPE_COMPUTER) < 0)
 	{
 		SCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterEnumValue("EVENT_TYPE", "PLAYERTYPE_EMPTY", PLAYERTYPE_EMPTY) < 0)
+	if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_EMPTY", PLAYERTYPE_EMPTY) < 0)
 	{
 		SCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterEnumValue("EVENT_TYPE", "PLAYERTYPE_HUMAN", PLAYERTYPE_HUMAN) < 0)
+	if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_HUMAN", PLAYERTYPE_HUMAN) < 0)
 	{
 		SCRIPT_REGISTERFAIL;
 	}
@@ -271,6 +277,18 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 		SCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectMethod("PlayerSlot", "void SetColourFromRML(string rmlcolour)", asMETHOD(PlayerSlot, SetColourFromRML), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "void AddEmptySubSlot()", asMETHOD(PlayerSlot, AddEmptySubSlot), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "void SetControls(PLAYERCONTROLS type, int identifier)", asMETHOD(PlayerSlot, SetControls), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "void SetPlayerAutoID(PLAYERTYPE type)", asMETHOD(PlayerSlot, SetPlayerProxy), asCALL_THISCALL) < 0)
 	{
 		SCRIPT_REGISTERFAIL;
 	}
@@ -394,6 +412,7 @@ void Pong::PongGame::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager
 	PaddleMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
 	PaddleMaterial->FormPairWith(*ArenaMaterial).SetCollidable(false).SetElasticity(0.f).SetSoftness(0.f);
 	PaddleMaterial->FormPairWith(*ArenaBottomMaterial).SetCollidable(false).SetSoftness(0.f).SetFriction(0.f, 0.f).SetElasticity(0.f);
+	PaddleMaterial->FormPairWith(*PaddleMaterial).SetCollidable(false);
 	ArenaMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
 	ArenaMaterial->FormPairWith(*BallMaterial).SetFriction(0.f, 0.f).SetSoftness(1.f).SetElasticity(1.f);
 	ArenaBottomMaterial->FormPairWith(*BallMaterial).SetElasticity(0.f).SetFriction(0.f, 0.f).SetSoftness(0.f);

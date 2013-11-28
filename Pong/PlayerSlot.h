@@ -31,6 +31,7 @@ namespace Pong{
 		~PlayerSlot();
 
 		void SetPlayer(PLAYERTYPE type, int identifier);
+		void SetPlayerProxy(PLAYERTYPE type);
 		PLAYERTYPE GetPlayerType();
 		int GetPlayerIdentifier();
 
@@ -43,6 +44,9 @@ namespace Pong{
 		inline void SetScore(int score){
 			Score = score;
 		}
+
+		void AddEmptySubSlot();
+
 		// active should be if the key is down (or false if it is up) //
 		void PassInputAction(CONTROLKEYACTION actiontoperform, bool active);
 		// resets all input state //
@@ -87,6 +91,8 @@ namespace Pong{
 			return SplitSlot;
 		}
 
+		static int CurrentPlayerIdentifier;
+
 	private:
 		// data //
 		int Slot;
@@ -94,6 +100,8 @@ namespace Pong{
 		int PlayerIdentifier;
 		PLAYERCONTROLS ControlType;
 		int ControlIdentifier;
+
+		
 
 		Float4 Colour;
 

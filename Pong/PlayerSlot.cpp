@@ -144,6 +144,16 @@ void Pong::PlayerSlot::SetColourFromRML(string rml){
 	// Set the actual colour //
 	SetColour(colourparsed);
 }
+// ------------------------------------ //
+void Pong::PlayerSlot::AddEmptySubSlot(){
+	SplitSlot = new PlayerSlot(this->Slot, true);
+}
+
+void Pong::PlayerSlot::SetPlayerProxy(PLAYERTYPE type){
+	SetPlayer(type, ++CurrentPlayerIdentifier);
+}
+
+int Pong::PlayerSlot::CurrentPlayerIdentifier = -1;
 
 
 

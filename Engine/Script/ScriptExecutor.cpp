@@ -260,10 +260,10 @@ scriptexecutorpassparamsinvalidconversionparam:
 
 			PrintException(ScriptContext, true);
 
-			Logger::Get()->Error(L"[SCRIPT] [EXCEPTION] "+Convert::StringToWstring(ScriptContext->GetExceptionString())+L"from function: "
+			Logger::Get()->Error(L"[SCRIPT] [EXCEPTION] "+Convert::StringToWstring(ScriptContext->GetExceptionString())+L" from function: "
 				+Convert::ToWstring(func->GetDeclaration())+L" "+scrptmodule->GetInfoWstring()
 				+L" line: "+Convert::ToWstring(ScriptContext->GetExceptionLineNumber())+L" section: "+
-				Convert::ToWstring(exceptionfunc->GetScriptSectionName()));
+				Convert::ToWstring(exceptionfunc->GetScriptSectionName()), 0, true);
 		}
 
 		SAFE_RELEASE(ScriptContext);

@@ -10,8 +10,9 @@
 #include "GUI\GuiManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, int sheetid, shared_ptr<ScriptScript> 
-	script /*= NULL*/) : OwningInstance(owner), FileID(fakeid), Name(name), Scripting(script), Element(NULL), SheetID(sheetid), ManualDetach(false)
+DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, GuiLoadedSheet* sheet, 
+	shared_ptr<ScriptScript> script /*= NULL*/) : OwningInstance(owner), FileID(fakeid), Name(name), Scripting(script), Element(NULL), 
+	ContainedInSheet(sheet), ManualDetach(false)
 {
 	ID = IDFactory::GetID();
 }
@@ -43,7 +44,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 		}
 	}
 
-	unique_ptr<BaseGuiObject> tmpptr(new BaseGuiObject(owner, dataforthis.Name, fakeid, sheet->GetID(), dataforthis.Script));
+	unique_ptr<BaseGuiObject> tmpptr(new BaseGuiObject(owner, dataforthis.Name, fakeid, sheet, dataforthis.Script));
 
 	Rocket::Core::Element* element = NULL;
 
@@ -150,7 +151,7 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 			
 		} else {
 			// warn about this //
-			Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: couldn't hook Rocket event "+Convert::StringToWstring(tohook.CString()));
+			//Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: couldn't hook Rocket event "+Convert::StringToWstring(tohook.CString()));
 		}
 	}
 }
@@ -266,12 +267,9 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::CheckObjectLinkage(){
 	if(Element)
 		return true;
 	
-	// not linked check if we can get valid object with our id //
-	shared_ptr<GuiLoadedSheet> sheet = OwningInstance->GetSheet(SheetID);
-	if(sheet){
-		// search //
-		Element = sheet->GetElementByID(Convert::WstringToString(RocketObjectName));
-	}
+	// search //
+	Element = ContainedInSheet->GetElementByID(Convert::WstringToString(RocketObjectName));
+	
 
 	if(Element){
 		// link just Rocket events //

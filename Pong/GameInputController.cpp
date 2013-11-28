@@ -20,29 +20,31 @@ bool Pong::GameInputController::StartReceivingInput(vector<PlayerSlot*> &PlayerL
 	// assign PlayerSlot pointers to control groups //
 	for(size_t i = 0; i < PlayerList.size(); i++){
 
-		bool linked = false;
+		PlayerSlot* slot = PlayerList[i];
 
-		// skip if doesn't need linking //
-		if(PlayerList[i]->GetControlType() == PLAYERCONTROLS_NONE || PlayerList[i]->GetControlType() == PLAYERCONTROLS_AI)
-			continue;
+		while(slot != NULL){
+			bool linked = false;
 
-		// TODO: add check for controller and while at it implement controller support //
-		//if(PlayerList[i]->GetControlType() == 
+			// TODO: add check for controller and while at it implement controller support //
+			//if(PlayerList[i]->GetControlType() == 
 
-		for(size_t a = 0; a < ControlGroups.size(); a++){
+			for(size_t a = 0; a < ControlGroups.size(); a++){
 
-			if(ControlGroups[a].CtrlGroup == PlayerList[i]->GetControlType()){
-				// link! //
-				ControlGroups[a].ControlledSlot = PlayerList[i];
-				linked = true;
-				Logger::Get()->Info(L"Player "+Convert::ToWstring(PlayerList[i]->GetSlotNumber())+L" linked!");
-				break;
+				if(ControlGroups[a].CtrlGroup == slot->GetControlType()){
+					// link! //
+					ControlGroups[a].ControlledSlot = slot;
+					linked = true;
+					Logger::Get()->Info(L"Player "+Convert::ToWstring(slot->GetPlayerIdentifier())+L" linked!");
+					break;
+				}
 			}
+			// complain //
+			if(!linked && !(slot->GetControlType() != PLAYERCONTROLS_NONE || slot->GetControlType() != PLAYERCONTROLS_AI))
+				Logger::Get()->Warning(L"GameInputController: StartReceivingInput: couldn't link player "+Convert::ToWstring(slot->GetPlayerIdentifier()));
+			
+			// Change to potential sub slots //
+			slot = slot->GetSplit();
 		}
-		if(linked)
-			continue;
-		// complain //
-		Logger::Get()->Warning(L"GameInputController: StartReceivingInput: couldn't link player "+Convert::ToWstring(PlayerList[i]->GetSlotNumber()));
 	}
 	return true;
 }
@@ -105,7 +107,7 @@ void Pong::GameInputController::_SetupControlGroups(){
 	ControlGroups[3].ControlKeys[Window::ConvertWstringToOISKeyCode(L"NUMPAD4")] = CONTROLKEYACTION_LEFT;
 	ControlGroups[3].ControlKeys[Window::ConvertWstringToOISKeyCode(L"NUMPAD6")] = CONTROLKEYACTION_RIGHT;
 	ControlGroups[3].ControlKeys[Window::ConvertWstringToOISKeyCode(L"NUMPAD8")] = CONTROLKEYACTION_POWERUPUP;
-	ControlGroups[3].ControlKeys[Window::ConvertWstringToOISKeyCode(L"NUMPAD2")] = CONTROLKEYACTION_POWERUPDOWN;
+	ControlGroups[3].ControlKeys[Window::ConvertWstringToOISKeyCode(L"NUMPAD5")] = CONTROLKEYACTION_POWERUPDOWN;
 }
 
 ControlGroup* Pong::GameInputController::_ResolveKeyToGroup(OIS::KeyCode key, CONTROLKEYACTION &returnaction){

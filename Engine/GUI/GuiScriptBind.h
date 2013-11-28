@@ -36,6 +36,11 @@ void RocketProxyReleaseElementReference(Rocket::Core::Element* element){
 void RocketElementProxySetProperty(Rocket::Core::Element* element, string propertyname, string valuetoset){
 	element->SetProperty(propertyname.c_str(), valuetoset.c_str());
 }
+void RocketElementProxySetInternalRML(Rocket::Core::Element* element, string rml){
+
+	element->SetInnerRML(rml.c_str());
+}
+
 
 bool BindGUIObjects(asIScriptEngine* engine){
 
@@ -102,6 +107,8 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+
 	
 	// rocket objects //
 	if(engine->RegisterObjectType("RocketEvent", 0, asOBJ_REF) < 0){
@@ -129,6 +136,9 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectMethod("RocketElement", "void SetProperty(string property, string value)", asFUNCTION(RocketElementProxySetProperty), asCALL_CDECL_OBJFIRST) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("RocketElement", "void SetInternalRML(string rml)", asFUNCTION(RocketElementProxySetInternalRML), asCALL_CDECL_OBJFIRST) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	
@@ -159,7 +169,9 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	if(engine->RegisterObjectMethod("GuiCollection", "GuiLoadedSheet@ GetOwningSheet()", asMETHOD(Gui::GuiCollection, GetOwningSheetProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-
+	if(engine->RegisterObjectMethod("BaseGuiObject", "GuiLoadedSheet@ GetOwningSheet()", asMETHOD(Gui::BaseGuiObject, GetOwningSheetProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
 
 
 	

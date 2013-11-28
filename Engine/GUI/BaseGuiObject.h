@@ -23,7 +23,7 @@ namespace Leviathan{ namespace Gui{
 	class BaseGuiObject : public ReferenceCounted, public AutoUpdateableObject, public Rocket::Core::EventListener, public CallableObject{
 		friend GuiManager;
 	public:
-		DLLEXPORT BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, int sheetid, shared_ptr<ScriptScript> script = NULL);
+		DLLEXPORT BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, GuiLoadedSheet* sheet, shared_ptr<ScriptScript> script = NULL);
 		DLLEXPORT virtual ~BaseGuiObject();
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(BaseGuiObject);
@@ -39,9 +39,6 @@ namespace Leviathan{ namespace Gui{
 		// should be called by GuiManager when objects in sheets have been updated //
 		DLLEXPORT bool CheckObjectLinkage();
 
-		DLLEXPORT inline int GetSheetID(){
-			return SheetID;
-		}
 		DLLEXPORT inline int GetID(){
 			return ID;
 		}
@@ -60,6 +57,16 @@ namespace Leviathan{ namespace Gui{
 			return OwningInstance;
 		}
 
+		// Warning this function increases the reference count! //
+		DLLEXPORT GuiLoadedSheet* GetOwningSheetProxy(){
+			ContainedInSheet->AddRef();
+			return ContainedInSheet;
+		}
+		DLLEXPORT GuiLoadedSheet* GetOwningSheet(){
+			return ContainedInSheet;
+		}
+
+
 		static std::map<wstring, Rocket::Core::String> LeviathanToRocketEventTranslate;
 		static std::map<Rocket::Core::String, wstring> RocketEventToLeviathanListenerTranslate;
 
@@ -77,8 +84,6 @@ namespace Leviathan{ namespace Gui{
 
 		int ID;
 		int FileID;
-		// stores the sheet ID for fetching it again //
-		int SheetID;
 
 		bool ManualDetach;
 
@@ -88,6 +93,8 @@ namespace Leviathan{ namespace Gui{
 		Rocket::Core::Element* Element;
 		GuiManager* OwningInstance;
 		shared_ptr<ScriptScript> Scripting;
+		// Stores the owning sheet for easy access //
+		GuiLoadedSheet* ContainedInSheet;
 
 		std::list<Rocket::Core::String> HookedRocketEvents;
 	};

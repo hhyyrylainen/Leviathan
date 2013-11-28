@@ -399,7 +399,7 @@ objects {
     
     // Huge dump of objects for the setup screen handling //
     // TODO: add template support
-    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+    o GuiObject ID(510) "LocalSetup_Colour0"{
         l params{
             RocketID = "LocalGameSetup_Colour_0";
         }
@@ -422,7 +422,30 @@ objects {
             }
         }
     }
-    o GuiObject ID(511) "LocalGameSetupScriptElement2"{
+    o GuiObject ID(510) "LocalSetup_Colour1"{
+        l params{
+            RocketID = "LocalGameSetup_Colour_1";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 1;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ColourChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(511) "LocalSetup_Colour2"{
         l params{
             RocketID = "LocalGameSetup_Colour_2";
         }
@@ -445,8 +468,590 @@ objects {
             }
         }
     }
+    o GuiObject ID(511) "LocalSetup_Colour3"{
+        l params{
+            RocketID = "LocalGameSetup_Colour_3";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 3;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ColourChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    
+    o GuiObject ID(510) "LocalSetup_Colour10"{
+        l params{
+            RocketID = "LocalGameSetup_Colour_10";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 10;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ColourChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalSetup_Colour21"{
+        l params{
+            RocketID = "LocalGameSetup_Colour_21";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 21;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ColourChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(511) "LocalSetup_Colour32"{
+        l params{
+            RocketID = "LocalGameSetup_Colour_32";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 32;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ColourChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(511) "LocalSetup_Colour43"{
+        l params{
+            RocketID = "LocalGameSetup_Colour_43";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 43;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ColourChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    
+    o GuiObject ID(510) "LocalSetup_Controls0"{
+        l params{
+            RocketID = "LocalGameSetup_Controls_0";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 0;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ControlChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalSetup_Controls1"{
+        l params{
+            RocketID = "LocalGameSetup_Controls_1";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 1;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ControlChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(511) "LocalSetup_Controls2"{
+        l params{
+            RocketID = "LocalGameSetup_Controls_2";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 2;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ControlChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(511) "LocalSetup_Controls3"{
+        l params{
+            RocketID = "LocalGameSetup_Controls_3";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 3;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ControlChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    
+    o GuiObject ID(510) "LocalSetup_Controls10"{
+        l params{
+            RocketID = "LocalGameSetup_Controls_10";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 10;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ControlChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalSetup_Controls21"{
+        l params{
+            RocketID = "LocalGameSetup_Controls_21";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 21;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ControlChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(511) "LocalSetup_Controls32"{
+        l params{
+            RocketID = "LocalGameSetup_Controls_32";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 32;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ControlChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(511) "LocalSetup_Controls43"{
+        l params{
+            RocketID = "LocalGameSetup_Controls_43";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 43;
+                    
+                    [@Listener="OnValueChange"]
+                    int OnvalueChanged(BaseGuiObject@ Instance, RocketEvent@ event){
+                        ControlChangeUpdated(ControlIdentifier, event.GetValue("value"));
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
     
     
+    
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Split_0";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 0;
+                    
+                    [@Listener="OnClick"]
+                    int OnSplitSlot(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnSlotSplit(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Split_1";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 1;
+                    
+                    [@Listener="OnClick"]
+                    int OnSplitSlot(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnSlotSplit(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Split_2";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 2;
+                    
+                    [@Listener="OnClick"]
+                    int OnSplitSlot(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnSlotSplit(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Split_3";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 3;
+                    
+                    [@Listener="OnClick"]
+                    int OnSplitSlot(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnSlotSplit(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+
+    
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Join_0";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 0;
+                    
+                    [@Listener="OnClick"]
+                    int ListenerJoin(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnPlayerJoined(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Join_1";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 1;
+                    
+                    [@Listener="OnClick"]
+                    int ListenerJoin(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnPlayerJoined(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Join_2";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 2;
+                    
+                    [@Listener="OnClick"]
+                    int ListenerJoin(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnPlayerJoined(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Join_3";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 3;
+                    
+                    [@Listener="OnClick"]
+                    int ListenerJoin(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnPlayerJoined(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Join_10";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 10;
+                    
+                    [@Listener="OnClick"]
+                    int ListenerJoin(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnPlayerJoined(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Join_21";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 21;
+                    
+                    [@Listener="OnClick"]
+                    int ListenerJoin(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnPlayerJoined(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Join_32";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 32;
+                    
+                    [@Listener="OnClick"]
+                    int ListenerJoin(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnPlayerJoined(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
+    o GuiObject ID(510) "LocalGameSetupScriptElement0"{
+        l params{
+            RocketID = "LocalGameSetup_Join_43";
+        }
+        s scripts{
+            inl type(script){
+                name = LocalGameSetupScreenTableUpdater;
+                body{
+                    #include "PongGameSetupMenu.as";
+                    
+                    int ControlIdentifier = 43;
+                    
+                    [@Listener="OnClick"]
+                    int ListenerJoin(BaseGuiObject@ Instance, RocketEvent@ event){
+                        OnPlayerJoined(ControlIdentifier, "LocalGameSetup_", Instance);
+                        return 1;
+                    }
+                    
+                    
+                @%};
+            }
+        }
+    }
     
     // ------------------ Match end screen ------------------ //
     o GuiObject ID(300) "WinningPlayersHandler"{

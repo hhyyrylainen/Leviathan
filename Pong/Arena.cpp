@@ -429,8 +429,10 @@ void Pong::Arena::GiveBallSpeed(float mult){
 
 void Pong::Arena::LetGoOfBall(){
 	// We should delete it (but after this physics update is done) //
-	Ball->GetWorld()->QueueDestroyObject(Ball->GetID());
-	Ball.reset();
+	if(Ball){
+		Ball->GetWorld()->QueueDestroyObject(Ball->GetID());
+		Ball.reset();
+	}
 }
 
 bool Pong::Arena::IsBallInPaddleArea(){

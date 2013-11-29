@@ -63,7 +63,8 @@ bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &player
 	float paddlewidth = 3*BASE_ARENASCALE;
 	float bottomthickness = 0.5*BASE_ARENASCALE;
 
-	float paddlethickness = maximumsplit == 0 ? 1*BASE_ARENASCALE: 0.5f*BASE_ARENASCALE;
+	float paddlethicknesswhole = 1*BASE_ARENASCALE; 
+	float paddlethicknesssplit = 0.5f*BASE_ARENASCALE;
 
 	float sidexsize = width/20.f;
 	float sideysize = height/20.f;
@@ -249,6 +250,13 @@ newtonmaterialfetchstartlabel:
 		bool secondary = false;
 addplayerpaddlelabel:
 
+		bool splitslotopen = false;
+		if(players[i]->GetSplit())
+			splitslotopen = players[i]->GetSplit()->IsSlotActive();
+
+		// Choose the thickness based on the split count of THIS slot //
+		float paddlethickness = secondary || splitslotopen ? paddlethicknesssplit: paddlethicknesswhole;
+
 		// Get the colour for the paddle //
 		Float4 colour = secondary ? players[i]->GetSplit()->GetColour(): players[i]->GetColour();
 
@@ -258,7 +266,7 @@ addplayerpaddlelabel:
 			&tmp));
 		// setup position //
 		float horiadjust = 0;
-		if(maximumsplit >= 1)
+		if(secondary || splitslotopen)
 			horiadjust = secondary ? 0: paddlethickness;
 
 		switch(i){

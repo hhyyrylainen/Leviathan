@@ -13,8 +13,8 @@ namespace Leviathan{
 	// macro for adding proxies to hopefully work with scripts //
 #define REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(classname) void AddRefProxy(){ this->AddRef(); }; void ReleaseProxy(){ this->Release(); };
 
-
-	class ReferenceCounted : virtual public ThreadSafe{
+	// TODO: implement generic calling convention and make this virtually inherited //
+	class ReferenceCounted : /*virtual*/ public ThreadSafe{
 	public:
 		ReferenceCounted();
 		virtual ~ReferenceCounted();

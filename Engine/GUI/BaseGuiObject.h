@@ -26,7 +26,16 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT virtual ~BaseGuiObject();
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(BaseGuiObject);
-		AUTOUPDATEABLEOBJECT_SCRIPTPROXIES;
+		//AUTOUPDATEABLEOBJECT_SCRIPTPROXIES;
+
+		DLLEXPORT ScriptSafeVariableBlock* GetAndPopFirstUpdated(){
+
+			auto tmp = new ScriptSafeVariableBlock(UpdatedValues[0]->GetValueDirect(), UpdatedValues[0]->GetName());
+			UpdatedValues.erase(UpdatedValues.begin());
+
+			return tmp;
+		}
+
 
 		// rocket events //
 		virtual void ProcessEvent(Rocket::Core::Event& receivedevent);

@@ -23,13 +23,7 @@ namespace Leviathan{
 
 		DLLEXPORT virtual bool OnUpdate(const shared_ptr<NamedVariableList> &updated);
 
-		DLLEXPORT ScriptSafeVariableBlock* GetAndPopFirstUpdated(){
 
-			auto tmp = new ScriptSafeVariableBlock(UpdatedValues[0]->GetValueDirect(), UpdatedValues[0]->GetName());
-			UpdatedValues.erase(UpdatedValues.begin());
-
-			return tmp;
-		}
 
 	protected:
 

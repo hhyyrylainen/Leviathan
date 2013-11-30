@@ -69,7 +69,10 @@ DLLEXPORT Leviathan::GameModule::GameModule(const wstring &modulename, const wst
 		throw ExceptionInvalidArgument(L"At least one source file expected in sourcefiles", sources->Lines.size(), __WFUNCTION__, L"modulename", modulename);
 	}
 
-	SourceFile = *sources->Lines[0];
+	wstring sourcefilename = FileSystem::RemoveExtension(*sources->Lines[0], true);
+	wstring extensions = FileSystem::GetExtension(*sources->Lines[0]);
+
+	SourceFile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, sourcefilename, extensions, false);
 }
 
 DLLEXPORT Leviathan::GameModule::~GameModule(){
@@ -82,10 +85,11 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 
 	if(!Scripting){
 
-		Scripting = ScriptInterface::Get()->GetExecutor()->CreateNewModule(L"GameModule("+Name+L") ScriptModule", SourceFile);
+		Scripting = shared_ptr<ScriptScript>(new ScriptScript(ScriptInterface::Get()->GetExecutor()->CreateNewModule(
+			L"GameModule("+Name+L") ScriptModule", Convert::WstringToString(SourceFile))));
 
 		// Get the newly created module //
-		mod =  = Scripting->GetModule();
+		mod = Scripting->GetModule();
 
 		mod->GetBuilder().AddSectionFromFile(Convert::WstringToString(SourceFile).c_str());
 		mod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
@@ -93,7 +97,7 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 
 	} else{
 		// Get already created module //
-		mod =  = Scripting->GetModule();
+		mod = Scripting->GetModule();
 	}
 
 	// Build the module (by creating a callback list) //

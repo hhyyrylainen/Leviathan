@@ -13,9 +13,10 @@ namespace Leviathan{
 	// holds a reference of script module //
 	class ScriptScript : public Object{
 	public:
-		DLLEXPORT ScriptScript::ScriptScript(const int &MID, weak_ptr<ScriptModule> wptr);
-		DLLEXPORT ScriptScript::ScriptScript(const ScriptScript &other);
-		DLLEXPORT ScriptScript::~ScriptScript();
+		DLLEXPORT ScriptScript(weak_ptr<ScriptModule> wptr);
+		DLLEXPORT ScriptScript(const int &MID, weak_ptr<ScriptModule> wptr);
+		DLLEXPORT ScriptScript(const ScriptScript &other);
+		DLLEXPORT ~ScriptScript();
 
 
 		DLLEXPORT inline ScriptModule* GetModule(){

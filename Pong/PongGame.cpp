@@ -14,7 +14,7 @@ using namespace Leviathan;
 Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), ScoreLimit(20),
 	BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData("GameConfiguration"), GamePaused(false), GuiManagerAccess(NULL)
 {
-	QUICKTIME_THISSCOPE;
+	//QUICKTIME_THISSCOPE;
 	StaticAccess = this;
 
 	GameInputHandler = new GameInputController();

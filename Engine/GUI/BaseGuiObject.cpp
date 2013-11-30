@@ -11,7 +11,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, GuiLoadedSheet* sheet, 
-	shared_ptr<ScriptScript> script /*= NULL*/) : OwningInstance(owner), FileID(fakeid), Name(name), Scripting(script), Element(NULL), 
+	shared_ptr<ScriptScript> script /*= NULL*/) : EventableScriptObject(script), OwningInstance(owner), FileID(fakeid), Name(name), Element(NULL), 
 	ContainedInSheet(sheet), ManualDetach(false)
 {
 	ID = IDFactory::GetID();
@@ -155,37 +155,6 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 		}
 	}
 }
-// ------------------------------------ //
-DLLEXPORT int Leviathan::Gui::BaseGuiObject::OnEvent(Event** pEvent){
-
-	// call script to handle the event //
-	_CallScriptListener(pEvent, NULL);
-
-	return 0;
-}
-
-
-DLLEXPORT int Leviathan::Gui::BaseGuiObject::OnGenericEvent(GenericEvent** pevent){
-	// call script to handle the event //
-	_CallScriptListener(NULL, pevent);
-
-	return 0;
-}
-
-DLLEXPORT bool Leviathan::Gui::BaseGuiObject::OnUpdate(const shared_ptr<NamedVariableList> &updated){
-	ValuesUpdated = true;
-
-	// push to update vector //
-	UpdatedValues.push_back(updated);
-
-	// fire an event //
-	Event* tmpevent = new Event(EVENT_TYPE_LISTENERVALUEUPDATED, NULL, false);
-	
-	OnEvent(&tmpevent);
-
-	tmpevent->Release();
-	return true;
-}
 // ------------------ Rocket callbacks ------------------ //
 void Leviathan::Gui::BaseGuiObject::OnDetach(Rocket::Core::Element* element){
 	// unset when Rocket destroys the element //
@@ -304,7 +273,6 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
 			// do something with result //
 		}
-		return;
 	} else {
 		// generic event is passed //
 		if(mod->DoesListenersContainSpecificListener(L"", (*event2)->TypeStr)){

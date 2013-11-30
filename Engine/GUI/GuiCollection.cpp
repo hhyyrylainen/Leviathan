@@ -108,7 +108,7 @@ Leviathan::Gui::GuiLoadedSheet::GuiLoadedSheet(Rocket::Core::Context* context, c
 	Document = context->LoadDocument(documentfile.c_str());
 
 	if(!Document)
-		throw ExceptionInvalidArguement(L"invalid file provided", 0, __WFUNCTION__, L"documentfile", Convert::StringToWstring(documentfile));
+		throw ExceptionInvalidArgument(L"invalid file provided", 0, __WFUNCTION__, L"documentfile", Convert::StringToWstring(documentfile));
 
 	Document->Show();
 }

@@ -33,6 +33,7 @@ namespace Pong{
 		virtual void Tick(int mspassed);
 
 		void CustomizeEnginePostLoad();
+		void EnginePreShutdown();
 
 		static wstring GenerateWindowTitle();
 		// posts a quit message to quit after script has returned //
@@ -90,6 +91,9 @@ namespace Pong{
 		unique_ptr<Arena> GameArena;
 		shared_ptr<GameWorld> WorldOfPong;
 		Leviathan::Gui::GuiManager* GuiManagerAccess;
+
+		// AI module //
+		GameModule* GameAI;
 
 
 		int LastPlayerHitBallID;

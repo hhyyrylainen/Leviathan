@@ -7,7 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Utility\Random.h"
-#include "Exceptions\ExceptionInvalidArguement.h"
+#include "Exceptions\ExceptionInvalidArgument.h"
 #include <iterator>
 
 #pragma warning( disable: 4005 4127 )

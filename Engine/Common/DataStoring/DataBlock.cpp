@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_DATABLOCK
 #include "DataBlock.h"
 #endif
-#include "Exceptions\ExceptionInvalidArguement.h"
+#include "Exceptions\ExceptionInvalidArgument.h"
 #include "Utility\Iterators\WstringIterator.h"
 #include "Script\ScriptInterface.h"
 using namespace Leviathan;
@@ -140,7 +140,7 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wst
 	// the text should have all preceding and trailing spaces removed //
 	if(valuetoparse.size() == 0){
 		// can't be anything //
-		throw ExceptionInvalidArguement(L"no data passed", valuetoparse.size(), __WFUNCTION__, L"valuetoparse", valuetoparse);
+		throw ExceptionInvalidArgument(L"no data passed", valuetoparse.size(), __WFUNCTION__, L"valuetoparse", valuetoparse);
 	}
 	// try to figure out what type of block is required for this variable //
 
@@ -241,7 +241,7 @@ Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyf
 		case DATABLOCK_TYPE_DOUBLE: ASTypeID = TypeToAngelScriptIDConverter<double>::GetTypeIDFromTemplated(); break;
 
 		default:
-			throw ExceptionInvalidArguement(L"cannot convert non-named, generic type block to script safe block", copyfrom->GetBlock()->Type,
+			throw ExceptionInvalidArgument(L"cannot convert non-named, generic type block to script safe block", copyfrom->GetBlock()->Type,
 				__WFUNCTION__, L"copyfrom", L"invalid block type");
 		}
 }

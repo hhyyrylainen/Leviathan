@@ -10,7 +10,7 @@
 
 namespace Leviathan{
 
-	class CallableObject : public Object{
+	class CallableObject{
 	public:
 		DLLEXPORT CallableObject::CallableObject();
 		DLLEXPORT virtual CallableObject::~CallableObject();

@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Exceptions\ExceptionInvalidArguement.h"
+#include "Exceptions\ExceptionInvalidArgument.h"
 #include "Common\DataStoring\DataBlock.h"
 #include "..\ReferenceCounted.h"
 

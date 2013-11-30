@@ -31,6 +31,7 @@ namespace Leviathan{
 		// module managing //
 		DLLEXPORT weak_ptr<ScriptModule> CreateNewModule(const wstring &name, const string &source, const int &modulesid = IDFactory::GetID());
 		DLLEXPORT void DeleteModule(ScriptModule* ptrtomatch); 
+		DLLEXPORT bool DeleteModuleIfNoExternalReferences(int ID);
 		DLLEXPORT weak_ptr<ScriptModule> GetModule(const int &ID);
 
 		DLLEXPORT inline asIScriptEngine* GetASEngine(){

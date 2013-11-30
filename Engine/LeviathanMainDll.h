@@ -33,6 +33,9 @@ using Leviathan::Window;
 using Leviathan::VariableBlock;
 using Leviathan::TimingMonitor;
 using Leviathan::ScopeTimer;
+using Leviathan::GameModule;
+using Leviathan::ObjectLock;
+
 
 
 

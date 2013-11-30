@@ -96,4 +96,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::Tick(int mspassed){
 
 }
 
+DLLEXPORT void Leviathan::LeviathanApplication::EnginePreShutdown(){
+
+}
 // ------------------------------------ //

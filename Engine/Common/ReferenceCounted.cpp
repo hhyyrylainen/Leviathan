@@ -8,12 +8,16 @@ using namespace Leviathan;
 Leviathan::ReferenceCounted::ReferenceCounted() : ToDelete(false), RefCount(1){
 
 }
+
+Leviathan::ReferenceCounted::~ReferenceCounted(){
+
+}
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ReferenceCounted::Release(){
 	// this scope so that we will delete AFTER mutex has released //
 	{
 		// we need to lock this object to ensure thread safety //
-		boost::strict_lock<ReferenceCounted> guard(*this);
+		ObjectLock guard(*this);
 
 		if(ToDelete){
 			// we really shouldn't be here //
@@ -44,11 +48,6 @@ guibaseselfcheckfordelete:
 		delete this;
 	}
 }
-
-Leviathan::ReferenceCounted::~ReferenceCounted(){
-
-}
-
 // ------------------------------------ //
 
 // ------------------------------------ //

@@ -493,7 +493,7 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wst
 		reader.close();
 		return;
 	}
-	throw ExceptionInvalidArguement(L"cannot read given file", GetLastError(), __WFUNCTION__, L"file", file);
+	throw ExceptionInvalidArgument(L"cannot read given file", GetLastError(), __WFUNCTION__, L"file", file);
 }
 // ------------------ Bitmap operations ------------------ //
 BYTE* Leviathan::FileSystem::LoadBMP( int* Width, int* Height, long* Size, LPCTSTR bmpfile ){

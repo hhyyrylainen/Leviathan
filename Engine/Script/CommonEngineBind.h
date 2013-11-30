@@ -5,6 +5,7 @@
 #include "ScriptExecutor.h"
 #include "Events/EventHandler.h"
 #include "Utility/DataHandling/SimpleDataBase.h"
+#include "Addons/GameModule.h"
 
 int WrapperForDataBlockToInt(VariableBlock* obj){
 
@@ -171,6 +172,24 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+	// Bind GameModule //
+	if(engine->RegisterObjectType("GameModule", 0, asOBJ_REF) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("GameModule", asBEHAVE_ADDREF, "void f()", asMETHOD(GameModule, AddRefProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("GameModule", asBEHAVE_RELEASE, "void f()", asMETHOD(GameModule, ReleaseProxy), asCALL_THISCALL) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	// Bind simple name get function //
+	if(engine->RegisterObjectMethod("GameModule", "string GetDescription(bool full = false)", asMETHOD(GameModule, GetDescriptionProxy), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+
 	
 
 	return true;
@@ -184,4 +203,5 @@ void RegisterEngineScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("NamedVars"), L"NamedVars"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("SimpleDatabase"), L"SimpleDatabase"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("string"), L"string"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("GameModule"), L"GameModule"));
 }

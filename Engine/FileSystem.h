@@ -7,7 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Common\DataStoring\NamedVars.h"
-#include "Exceptions\ExceptionInvalidArguement.h"
+#include "Exceptions\ExceptionInvalidArgument.h"
 
 namespace Leviathan{
 

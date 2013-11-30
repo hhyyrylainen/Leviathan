@@ -338,6 +338,26 @@ DLLEXPORT void Leviathan::ScriptExecutor::DeleteModule(ScriptModule* ptrtomatch)
 	}
 }
 
+DLLEXPORT bool Leviathan::ScriptExecutor::DeleteModuleIfNoExternalReferences(int ID){
+	// Find based on the id //
+	// find module based on pointer and remove //
+	for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
+		if(AllocatedScriptModules[i]->GetID() == ID){
+			// Check reference count //
+			if(AllocatedScriptModules[i].use_count() != 1){
+				// Other references exist //
+				return false;
+			}
+
+			// remove //
+			AllocatedScriptModules.erase(AllocatedScriptModules.begin()+i);
+			return true;
+		}
+	}
+	// Nothing found //
+	return false;
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::ScriptExecutor::ScanAngelScriptTypes(){
 	if(EngineTypeIDS.size() == 0){
 		// put basic types //

@@ -280,7 +280,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 			return false;
 		}
 	}
-	catch(const ExceptionInvalidArguement &e){
+	catch(const ExceptionInvalidArgument &e){
 		// something was thrown //
 		Logger::Get()->Error(L"GuiManager: LoadGUIFile: exit due to exception:");
 		e.PrintToLog();

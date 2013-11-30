@@ -8,11 +8,13 @@
 #include "Entities\Objects\Prop.h"
 #include "..\Engine\Script\ScriptExecutor.h"
 #include "Arena.h"
+#include "Addons\GameModule.h"
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
 Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), ScoreLimit(20),
-	BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData("GameConfiguration"), GamePaused(false), GuiManagerAccess(NULL)
+	BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData("GameConfiguration"), GamePaused(false), GuiManagerAccess(NULL),
+	GameAI(NULL)
 {
 	//QUICKTIME_THISSCOPE;
 	StaticAccess = this;
@@ -117,6 +119,7 @@ Pong::PongGame::~PongGame(){
 	// delete memory //
 	SAFE_DELETE(GameInputHandler);
 	SAFE_DELETE_VECTOR(PlayerList);
+	SAFE_DELETE(GameAI);
 }
 // ------------------------------------ //
 void Pong::PongGame::CustomizeEnginePostLoad(){
@@ -171,9 +174,22 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 	//window1->GetGUI()->SetDebuggerVisibility(true);
 #endif // _DEBUG
 
+	// Load the game AI //
+	GameAI = new GameModule(L"PongAIModule", L"PongGameCore");
+
+	if(!GameAI->Init()){
+		// No AI for the game //
+		Logger::Get()->Error(L"Failed to load AI!");
+		SAFE_DELETE(GameAI);
+	}
 	
 	// after loading reset time sensitive timers //
 	Engine::GetEngine()->ResetPhysicsTime();
+}
+
+void Pong::PongGame::EnginePreShutdown(){
+	// Only the AI needs this //
+	GameAI->ReleaseScript();
 }
 
 std::wstring Pong::PongGame::GenerateWindowTitle(){

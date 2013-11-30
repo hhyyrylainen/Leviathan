@@ -7,8 +7,11 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Common\DataStoring\NamedVars.h"
+#include "Common\DataStoring\DataBlock.h"
 
 namespace Leviathan{
+
+#define AUTOUPDATEABLEOBJECT_SCRIPTPROXIES DLLEXPORT ScriptSafeVariableBlock* GetAndPopFirstUpdatedProxy(){ return GetAndPopFirstUpdated(); };
 
 	class AutoUpdateableObject{
 	public:
@@ -20,7 +23,13 @@ namespace Leviathan{
 
 		DLLEXPORT virtual bool OnUpdate(const shared_ptr<NamedVariableList> &updated);
 
+		DLLEXPORT ScriptSafeVariableBlock* GetAndPopFirstUpdated(){
 
+			auto tmp = new ScriptSafeVariableBlock(UpdatedValues[0]->GetValueDirect(), UpdatedValues[0]->GetName());
+			UpdatedValues.erase(UpdatedValues.begin());
+
+			return tmp;
+		}
 
 	protected:
 

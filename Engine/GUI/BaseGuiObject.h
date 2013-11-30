@@ -11,8 +11,7 @@
 #include "Common\ReferenceCounted.h"
 #include "Events\Event.h"
 #include "GuiCollection.h"
-#include "Events\AutoUpdateable.h"
-#include "Events\CallableObject.h"
+#include "Events\EventableScriptObject.h"
 
 namespace Leviathan{ namespace Gui{
 
@@ -20,17 +19,15 @@ namespace Leviathan{ namespace Gui{
 	class GuiManager;
 	// this class' functions are thread safe (*should* be) //// mutex for reference counting and possibly for other functions for thread safety //
 	// TODO: make the above statement true...
-	class BaseGuiObject : public ReferenceCounted, public AutoUpdateableObject, public Rocket::Core::EventListener, public CallableObject{
+	class BaseGuiObject : public ReferenceCounted, public EventableScriptObject, public Rocket::Core::EventListener{
 		friend GuiManager;
 	public:
 		DLLEXPORT BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, GuiLoadedSheet* sheet, shared_ptr<ScriptScript> script = NULL);
 		DLLEXPORT virtual ~BaseGuiObject();
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(BaseGuiObject);
+		AUTOUPDATEABLEOBJECT_SCRIPTPROXIES;
 
-		DLLEXPORT virtual int OnEvent(Event** pEvent);
-		DLLEXPORT virtual int OnGenericEvent(GenericEvent** pevent);
-		DLLEXPORT virtual bool OnUpdate(const shared_ptr<NamedVariableList> &updated);
 		// rocket events //
 		virtual void ProcessEvent(Rocket::Core::Event& receivedevent);
 		virtual void OnDetach(Rocket::Core::Element* element);
@@ -45,13 +42,7 @@ namespace Leviathan{ namespace Gui{
 
 		DLLEXPORT bool SetInternalRMLWrapper(string rmlcode);
 
-		DLLEXPORT ScriptSafeVariableBlock* GetAndPopFirstUpdated(){
 
-			auto tmp = new ScriptSafeVariableBlock(UpdatedValues[0]->GetValueDirect(), UpdatedValues[0]->GetName());
-			UpdatedValues.erase(UpdatedValues.begin());
-
-			return tmp;
-		}
 
 		DLLEXPORT GuiManager* GetOwningManager(){
 			return OwningInstance;
@@ -79,7 +70,7 @@ namespace Leviathan{ namespace Gui{
 		// this function will try to hook all wanted listeners to Rocket element //
 		void _HookListeners(bool onlyrocket = false);
 		void _UnhookAllListeners();
-		void _CallScriptListener(Event** pEvent, GenericEvent** event2);
+		virtual void _CallScriptListener(Event** pEvent, GenericEvent** event2);
 		// ------------------------------------ //
 
 		int ID;
@@ -92,7 +83,6 @@ namespace Leviathan{ namespace Gui{
 
 		Rocket::Core::Element* Element;
 		GuiManager* OwningInstance;
-		shared_ptr<ScriptScript> Scripting;
 		// Stores the owning sheet for easy access //
 		GuiLoadedSheet* ContainedInSheet;
 

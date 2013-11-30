@@ -59,7 +59,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 	try{
 		FileSystem::ReadFileEntirely(file, filecontents);
 	}
-	catch(const ExceptionInvalidArguement &e){
+	catch(const ExceptionInvalidArgument &e){
 
 		Logger::Get()->Error(L"ObjectFileProcessor: ProcessObjectFile: file could not be read, exception:");
 		e.PrintToLog();
@@ -403,7 +403,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line,
 	try{
 		obj->Contents[Handleindex]->Variables.GetVec()->push_back(shared_ptr<NamedVariableList>(new NamedVariableList(Lines[Line], &RegisteredValues)));
 	}
-	catch (const ExceptionInvalidArguement &e){
+	catch (const ExceptionInvalidArgument &e){
 
 		Logger::Get()->Error(L"ObjectFileProcessor: ProcessObjectFileBlockListBlock: invalid variable on line "+Convert::IntToWstring(Line)+
 			L" caused an exception:", false);
@@ -533,7 +533,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 							Name = L"Invalid name";
 						}
 					}
-					catch(const ExceptionInvalidArguement &e){
+					catch(const ExceptionInvalidArgument &e){
 						// invalid definition //
 						Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid name line: "+Convert::IntToWstring(Line)+
 							L" in file"+sourcefile+L" see exception: ", true);

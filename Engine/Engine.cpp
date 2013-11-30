@@ -213,6 +213,9 @@ void Leviathan::Engine::PostLoad(){
 }
 
 void Leviathan::Engine::Release(){
+	// Let the game release it's resources //
+	Owner->EnginePreShutdown();
+
 
 	// destroy worlds //
 	while(GameWorlds.size()){

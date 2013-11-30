@@ -1,0 +1,17 @@
+
+Version = "0.0.0.1";
+
+
+objects{
+
+    o GameModule "PongAI"{
+        t sourcefiles{
+            
+            PongAI.as
+        }
+        l properties{
+            
+            
+        }
+    }
+}

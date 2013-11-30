@@ -162,16 +162,11 @@ DLLEXPORT void Leviathan::ViewerCameraPos::BeginNewReceiveQueue(){
 }
 
 DLLEXPORT void Leviathan::ViewerCameraPos::ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down){
+	// Return if key is going down (since we can't process it and we cannot release the key //
+	if(down)
+		return;
 	// reset control state of any keys received //
-	// reset state only if the state is the same that the key would set //
-	switch(key){
-	case OIS::KC_A: if(!down && m_SideWays == -1) m_SideWays = 0; break;
-	case OIS::KC_D: if(!down && m_SideWays == 1) m_SideWays = 0; break;
-	case OIS::KC_W: if(!down && m_Forward == 1) m_Forward = 0; break;
-	case OIS::KC_S: if(!down && m_Forward == -1) m_Forward = 0; break;
-	case OIS::KC_SPACE: if(!down && m_Vertical == 1) m_Vertical = 0; break;
-	case OIS::KC_LCONTROL: if(!down && m_Vertical == -1) m_Vertical = 0; break;
-	}
+	ReceiveInput(key, modifiers, false);
 }
 // ------------------------------------ //
 void Leviathan::ViewerCameraPos::RollValueTowards(float &value, const float &changeamount, const bool &maxvalue, const float &limitvalue){

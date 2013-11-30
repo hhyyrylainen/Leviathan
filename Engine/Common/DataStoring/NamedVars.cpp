@@ -50,7 +50,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 
 	if(name->size() < 1){
 		// no name //
-		throw ExceptionInvalidArguement(L"invalid data on line (invalid name)", name->size(), __WFUNCSIG__, L"line", line);
+		throw ExceptionInvalidArgument(L"invalid data on line (invalid name)", name->size(), __WFUNCSIG__, L"line", line);
 	}
 
 	// TODO: verify that this will be destructed if an exception happens //
@@ -65,7 +65,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 
 	if(tempvar->size() < 1){
 		// no variable //
-		throw ExceptionInvalidArguement(L"invalid data on line (no variable)", tempvar->size(), __WFUNCSIG__, L"line", line);
+		throw ExceptionInvalidArgument(L"invalid data on line (no variable)", tempvar->size(), __WFUNCSIG__, L"line", line);
 	}
 
 	// check does it have brackets (and need to be processed like so) //
@@ -83,7 +83,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 			SAFE_DELETE_VECTOR(tokens);
 
 			// might contain the base token, but cannot possibly have any values inside //
-			throw ExceptionInvalidArguement(L"invalid data on line (variable tokenization failed)", tokens.size(), __WFUNCSIG__, L"line", line);
+			throw ExceptionInvalidArgument(L"invalid data on line (variable tokenization failed)", tokens.size(), __WFUNCSIG__, L"line", line);
 		}
 
 		// first should be base token //
@@ -99,7 +99,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 				//Datas.push_back(new VariableBlock(new WstringBlock(tokens[0]->GetSubToken(i)->GetData())));
 				Datas[i] = new VariableBlock(tokens[0]->GetSubToken(i)->GetChangeableData(), predefined);
 			}
-			catch (const ExceptionInvalidArguement &e){
+			catch (const ExceptionInvalidArgument &e){
 				// release memory //
 				SAFE_DELETE_VECTOR(tokens);
 				SAFE_DELETE_VECTOR(Datas);
@@ -130,7 +130,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 			Datas[0] = new VariableBlock(*tempvar, predefined);
 		}
 	}
-	catch (const ExceptionInvalidArguement &e){
+	catch (const ExceptionInvalidArgument &e){
 		// release memory //
 		//SAFE_DELETE_VECTOR(Datas);
 
@@ -358,7 +358,7 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data,
 			shared_ptr<NamedVariableList> var(new NamedVariableList(*Lines[i], predefined));
 			vec.push_back(var);
 		}
-		catch (const ExceptionInvalidArguement &e){
+		catch (const ExceptionInvalidArgument &e){
 			// print to log //
 			e.PrintToLog();
 			// exception throws, must be invalid line //

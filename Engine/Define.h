@@ -4,6 +4,8 @@
 #include "Include.h"
 #endif
 
+#include "ForwardDeclarations.h"
+
 namespace Leviathan{
 	
 	template<class T>

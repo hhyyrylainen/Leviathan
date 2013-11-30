@@ -6,12 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Exceptions\ExceptionInvalidAccess.h"
-
-#include "boost/thread/thread.hpp"
-#include "boost/thread/lockable_adapter.hpp"
-#include "boost/thread/recursive_mutex.hpp"
-#include "boost/thread/strict_lock.hpp"
+#include "ThreadSafe.h"
 
 namespace Leviathan{
 
@@ -19,18 +14,12 @@ namespace Leviathan{
 #define REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(classname) void AddRefProxy(){ this->AddRef(); }; void ReleaseProxy(){ this->Release(); };
 
 
-	class ReferenceCounted : public boost::basic_lockable_adapter<boost::recursive_mutex>{
+	class ReferenceCounted : virtual public ThreadSafe{
 	public:
 		ReferenceCounted();
 		virtual ~ReferenceCounted();
 
-		__forceinline void VerifyLock(boost::strict_lock<ReferenceCounted> &guard) throw(...){
-			// ensure that lock is for this //
-			if(!guard.owns_lock(this))
-				throw ExceptionInvalidAccess(L"wrong lock owner", 0, __WFUNCTION__, L"lock", L"mismatching lock and object");
-		}
-
-		__forceinline void AddRef(boost::strict_lock<ReferenceCounted> &guard){
+		__forceinline void AddRef(ObjectLock &guard){
 			VerifyLock(guard);
 			// we are safely locked and can increment the reference count //
 			RefCount++;
@@ -38,7 +27,7 @@ namespace Leviathan{
 		// add a reference with internal locking //
 		DLLEXPORT inline void AddRef(){
 			// we need to lock this object to ensure thread safety //
-			boost::strict_lock<ReferenceCounted> guard(*this);
+			ObjectLock guard(*this);
 			AddRef(guard);
 		}
 		// removes a reference and deletes the object if reference count reaches zero //

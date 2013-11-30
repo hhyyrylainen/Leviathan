@@ -12,9 +12,6 @@
 
 namespace Leviathan{
 
-	class ScriptScript;
-	class ScriptExecutor;
-
 	enum SCRIPTBUILDSTATE{SCRIPTBUILDSTATE_EMPTY, SCRIPTBUILDSTATE_READYTOBUILD, SCRIPTBUILDSTATE_BUILT};
 
 

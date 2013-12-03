@@ -38,7 +38,7 @@ class AIDataCache{
         
         Prop@ ballptr = GetPongGame().GetBall();
         Float3 ballvelocity = ballptr.GetVelocity();
-        Float3 ballpos = ballptr.GetPosition()+(ballvelocity.Normalize()*2);
+        Float3 ballpos = ballptr.GetPosition()+(ballvelocity.Normalize()*1.1f);
         Float3 endpos = ballpos+(ballvelocity*10.f);
         
         // User raycasting to detect what the ball is going to hit //
@@ -47,16 +47,16 @@ class AIDataCache{
         Float3 hitpos = hit.GetPosition();
         
         // Stop moving if the ball is about to hit the paddle //
-        NewtonBody@ paddlebody = AISlot.GetPaddle().CustomMessageGetNewtonBody();
+        //NewtonBody@ paddlebody = AISlot.GetPaddle().CustomMessageGetNewtonBody();
         NewtonBody@ goalbody = AISlot.GetGoalArea().CustomMessageGetNewtonBody();
         
         float curprogress = AISlot.GetTrackProgress();
         
-        if(hit.DoesBodyMatchThisHit(paddlebody)){
+        /*if(hit.DoesBodyMatchThisHit(paddlebody)){
             NotMovedToBall = 0;
             TargetPercentage = AISlot.GetTrackProgress();
         
-        } else if(hit.DoesBodyMatchThisHit(goalbody)){
+        } else*/ if(hit.DoesBodyMatchThisHit(goalbody)){
             
             NotMovedToBall = 0;
             // We need to try to block the ball //
@@ -65,46 +65,29 @@ class AIDataCache{
             Float3 startpos = track.GetCurrentNodePosition();
             Float3 endpos = track.GetNextNodePosition();
             
-            Print("Hit: "+hitpos.GetX()+" "+hitpos.GetY()+" "+hitpos.GetZ());
+            float disttostart;
+            float disttoend;
             
-            float distance = 0;
+            if(abs(startpos.GetZ()-endpos.GetZ()) > abs(startpos.GetX()-endpos.GetX())){
+                // Only Z distance //
+                disttostart = abs((startpos-hitpos).GetZ());
+                disttoend = abs((endpos-hitpos).GetZ());
+            } else {
+                // Only X distance //
+                disttostart = abs((startpos-hitpos).GetX());
+                disttoend = abs((endpos-hitpos).GetX());
+            }
             
-            Float3 activeaxis = endpos-startpos;
-            Float3 tmp = hitpos-startpos;
-            // Figure out the distance //
-            if(activeaxis.GetX() != 0.f)
-                distance += abs(tmp.GetX());
-            if(activeaxis.GetZ() != 0.f)
-                distance += abs(tmp.GetZ());
-                
-            Print("Distance: "+distance);
-            
-            float tmptarget = distance/activeaxis.HAddAbs();
-            TargetPercentage = /*1.f-*/tmptarget;
-            
-            Print("Target: "+TargetPercentage);
+            TargetPercentage = disttostart/(disttostart+disttoend);
         }
-        
-        if(NotMovedToBall > 1000){
-            // Move to the center //
-            TargetPercentage = 0.5;
-            // Or maybe a random spot... //
-        }
-        if(TargetPercentage > 0.99f)
-            TargetPercentage = 0.99f;
-        AISlot.GetTrackController().SetProgressTowardsNextNode(TargetPercentage);
-        return;
-        
-        // Move towards the percentage //
-
         
         // Set right direction based on the target progress //
-        if(curprogress > TargetPercentage+0.01){
+        if(curprogress > TargetPercentage+0.04){
             
             AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_RIGHT), false);    
             AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_LEFT), true);
             
-        } else if(curprogress < TargetPercentage-0.01){
+        } else if(curprogress < TargetPercentage-0.04){
         
             AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_LEFT), false);
             AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_RIGHT), true);

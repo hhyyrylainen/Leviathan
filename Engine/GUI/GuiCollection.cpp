@@ -46,7 +46,7 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 			AddRef();
 
 			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguements(Args);
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
 
 			ScriptInterface::Get()->ExecuteScript(tmpscript, &sargs);
 

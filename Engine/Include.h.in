@@ -226,6 +226,8 @@ using namespace std;
 #define SAFE_DELETE_ARRAY( x ) {if(x){delete[] (x);(x)=NULL;}}
 #define EXISTS( x ) {( (x) != NULL )}
 
+#define SAFE_RELEASE_VECTOR(x) {for(auto iter = x.begin(); iter != x.end(); ++iter){(*iter)->Release();} x.clear();}
+
 #define ARR_INDEX_CHECK( x, y) if(((x) >= 0 ) && ((size_t)(x) < (y)))
 #define ARR_INDEX_CHECKINV( x, y) if(!(((x) >= 0 ) && ((size_t)(x) < (y))))
 #define VECTOR_LAST(x) (x).at((x).size()-1)
@@ -263,8 +265,6 @@ using namespace std;
 #define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: " __SWLINE__ ), true);}
 #define QUICK_MEMORY_ERROR_MESSAGE {Logger::Get()->Error((L"Out of memory error from: " __WFILE__ L" function: "__WFUNCTION__), true);}
 
-
-
 namespace Leviathan{
 	
 
@@ -301,6 +301,7 @@ namespace Leviathan{
 // angelscript //
 // AngelAddons use std style names
 #define AS_USE_STLNAMES     1
+
 
 //#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
 #include "angelscript.h"

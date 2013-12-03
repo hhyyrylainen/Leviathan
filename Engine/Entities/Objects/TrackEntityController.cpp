@@ -28,7 +28,7 @@ DLLEXPORT bool Leviathan::Entity::TrackEntityController::Init(){
 	return true;
 }
 
-DLLEXPORT void Leviathan::Entity::TrackEntityController::Release(){
+DLLEXPORT void Leviathan::Entity::TrackEntityController::ReleaseData(){
 	// Release the hooks //
 	ReleaseChildHooks();
 
@@ -247,6 +247,22 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
 
 	}
 
+}
+// ------------------------------------ //
+DLLEXPORT Float3 Leviathan::Entity::TrackEntityController::GetCurrentNodePosition(){
+	if(TrackNodes.size() < 1)
+		return Float3(0);
+
+	// Get the current reached nodes' position //
+	return TrackNodes[ReachedNode]->GetPos();
+}
+
+DLLEXPORT Float3 Leviathan::Entity::TrackEntityController::GetNextNodePosition(){
+	// Check if there is a next node //
+	if((size_t)(ReachedNode+1) >= TrackNodes.size())
+		return Float3(0);
+	// Return the position of the node //
+	return TrackNodes[ReachedNode+1]->GetPos();
 }
 
 

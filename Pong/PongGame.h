@@ -66,7 +66,11 @@ namespace Pong{
 
 		void CheckForGameEnd();
 
+		// Warning increases reference count //
+		Leviathan::Entity::Prop* GetBall();
+
 		Leviathan::SimpleDatabase* GetGameDatabase();
+		Leviathan::GameWorld* GetGameWorld();
 
 		// customized callbacks //
 		virtual void InitLoadCustomScriptTypes(asIScriptEngine* engine);

@@ -15,8 +15,6 @@
 
 namespace Leviathan{
 
-	class ScriptModule;
-
 	class ScriptExecutor : public EngineComponent{
 		friend ScriptModule;
 	public:
@@ -51,6 +49,10 @@ namespace Leviathan{
 		// script running commands //
 		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptScript* scriptobject, ScriptRunningSetup* parameters);
 
+		// Setup functions //
+
+
+		DLLEXPORT static ScriptExecutor* Get();
 	private:
 		// ------------------------------ //
 		// AngelScript engine script executing part //
@@ -63,6 +65,7 @@ namespace Leviathan{
 		static std::map<int, wstring> EngineTypeIDS;
 		// inverted of the former for better performance //
 		static std::map<wstring, int> EngineTypeIDSInverted;
+		static ScriptExecutor* instance;
 	};
 
 }

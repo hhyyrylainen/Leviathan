@@ -14,6 +14,8 @@ namespace Leviathan{
 		class GuiManager;
 	}
 
+	struct RayCastData;
+	class ScriptModule;
 	class ScriptScript;
 	class ScriptExecutor;
 	class GameWorld;
@@ -30,6 +32,7 @@ namespace Leviathan{
 	struct Int2;
 	struct Int3;
 	class LeviathanApplication;
+	class GraphicalInputEntity;
 	class WstringIterator;
 	class Window;
 	class VariableBlock;

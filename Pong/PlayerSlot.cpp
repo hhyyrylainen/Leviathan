@@ -153,6 +153,14 @@ void Pong::PlayerSlot::SetPlayerProxy(PLAYERTYPE type){
 	SetPlayer(type, ++CurrentPlayerIdentifier);
 }
 
+bool Pong::PlayerSlot::IsVerticalSlot(){
+	return Slot == 0 || Slot == 2;
+}
+
+float Pong::PlayerSlot::GetTrackProgress(){
+	return TrackDirectptr->GetProgressTowardsNextNode();
+}
+
 int Pong::PlayerSlot::CurrentPlayerIdentifier = -1;
 
 

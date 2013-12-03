@@ -26,6 +26,12 @@ namespace Leviathan{
 		// Returns a string describing this module //
 		DLLEXPORT wstring GetDescriptionForError(bool full = false);
 
+		// Used to actually use the module //
+
+		// Executes something on the module and returns the result. Adds the module as first parameter and existed is set to true if something was executed. //
+		DLLEXPORT shared_ptr<VariableBlock> ExecuteOnModule(const string &entrypoint, std::vector<shared_ptr<NamedVariableBlock>> &otherparams, 
+			bool &existed, bool fulldeclaration = false);
+
 
 		// Script proxies //
 

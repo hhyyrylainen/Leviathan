@@ -180,7 +180,7 @@ void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** e
 			(*pEvent)->AddRef();
 
 			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguements(Args);
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
 			// run the script //
 			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
 			// do something with result //
@@ -189,19 +189,38 @@ void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** e
 		// generic event is passed //
 		if(mod->DoesListenersContainSpecificListener(L"", (*event2)->TypeStr)){
 			// setup parameters //
-			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
+			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"GameModule"))
 				(new NamedVariableBlock(new VoidPtrBlock(*event2), L"GenericEvent"));
 			// we are returning ourselves so increase refcount
 			AddRef();
 			(*event2)->AddRef();
 
 			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->TypeStr)).SetArguements(Args);
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->TypeStr)).SetArguments(Args);
 			// run the script //
 			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
 			// do something with result //
 		}
 	}
+}
+// ------------------ Being an actual module ------------------ //
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(const string &entrypoint, std::vector<shared_ptr<NamedVariableBlock>> 
+	&otherparams, bool &existed, bool fulldeclaration /*= false*/)
+{
+	// Add this as parameter //
+	otherparams.insert(otherparams.begin(), shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new VoidPtrBlock(this), L"GameModule")));
+
+	// we are returning ourselves so increase refcount
+	AddRef();
+
+	ScriptRunningSetup setup;
+	setup.SetArguments(otherparams).SetEntrypoint(entrypoint).SetUseFullDeclaration(fulldeclaration);
+
+	auto result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &setup);
+
+	existed = setup.ScriptExisted;
+
+	return result;
 }
 // ------------------ Script proxies ------------------ //
 DLLEXPORT string Leviathan::GameModule::GetDescriptionProxy(bool full){

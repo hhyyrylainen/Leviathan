@@ -26,13 +26,26 @@ using namespace Leviathan;
 #include "Application\Application.h"
 
 ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
+	instance = this;
 }
 ScriptExecutor::~ScriptExecutor(){
+	instance = NULL;
+
 	if(engine)
 		// try to release engine //
 		Release();
 }
+
+DLLEXPORT ScriptExecutor* Leviathan::ScriptExecutor::Get(){
+	return instance;
+}
+
+
+ScriptExecutor* Leviathan::ScriptExecutor::instance = NULL;
+
+
 int Val_NOVALVAL_FORscriptptr = VAL_NOUPDATE;
+
 // ------------------------------------ //
 bool ScriptExecutor::Init(){
 	// initialize AngelScript //
@@ -51,7 +64,7 @@ bool ScriptExecutor::Init(){
 
 	// register script string type //
 	RegisterStdString(engine);
-	RegisterScriptArray(engine, false);
+	RegisterScriptArray(engine, true);
 	// register other script extensions //
 	RegisterStdStringUtils(engine);
 

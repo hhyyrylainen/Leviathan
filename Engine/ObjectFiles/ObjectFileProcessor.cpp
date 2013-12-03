@@ -174,7 +174,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 					vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new IntBlock(Line), L"FileLine"));
 
 					ScriptRunningSetup sargs;
-					sargs.SetEntrypoint("void Do(int Line)").SetArguements(Args).SetUseFullDeclaration(true);
+					sargs.SetEntrypoint("void Do(int Line)").SetArguments(Args).SetUseFullDeclaration(true);
 
 					ScriptInterface::Get()->ExecuteScript(tmpscrpptr.get(), &sargs);
 				}

@@ -199,7 +199,7 @@ void Leviathan::Gui::BaseGuiObject::ProcessEvent(Rocket::Core::Event& receivedev
 		receivedevent.AddReference();
 
 		ScriptRunningSetup sargs;
-		sargs.SetEntrypoint(mod->GetListeningFunctionName(iter->second)).SetArguements(Args);
+		sargs.SetEntrypoint(mod->GetListeningFunctionName(iter->second)).SetArguments(Args);
 		// run the script //
 		shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
 
@@ -268,7 +268,7 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 			(*pEvent)->AddRef();
 
 			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguements(Args);
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
 			// run the script //
 			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
 			// do something with result //
@@ -284,7 +284,7 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 			(*event2)->AddRef();
 
 			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->TypeStr)).SetArguements(Args);
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->TypeStr)).SetArguments(Args);
 			// run the script //
 			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
 			// do something with result //

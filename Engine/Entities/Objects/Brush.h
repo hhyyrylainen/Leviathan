@@ -29,7 +29,7 @@ namespace Leviathan{ namespace Entity{
 		DLLEXPORT Brush(bool hidden, GameWorld* world);
 		DLLEXPORT virtual ~Brush();
 
-		DLLEXPORT virtual void Release();
+		DLLEXPORT virtual void ReleaseData();
 
 		// different initialization functions for different box styles //
 		// NOTE: leaving createphysics true creates a immovable box (uses mass = 0) //

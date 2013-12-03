@@ -24,7 +24,7 @@ namespace Leviathan{
 			Entryfunction = epoint;
 			return *this;
 		}
-		DLLEXPORT inline ScriptRunningSetup& SetArguements(vector<shared_ptr<NamedVariableBlock>>  &args){
+		DLLEXPORT inline ScriptRunningSetup& SetArguments(vector<shared_ptr<NamedVariableBlock>>  &args){
 			// set //
 			Parameters = args;
 			return *this;

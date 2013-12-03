@@ -12,7 +12,7 @@
 
 
 #define BASEPHYSICS_CUSTOMMESSAGE_DATA_CHECK	{if(entitycustommessagetype >= ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE && entitycustommessagetype <= ENTITYCUSTOMMESSAGETYPE_SETVELOCITY){if(BasePhysicsCustomMessage(entitycustommessagetype, dataptr)) return true;}}
-#define BASEPHYSICS_CUSTOMMESSAGE_GET_CHECK		{if(false){if(BasePhysicsCustomGetData(tmprequest)) return true;}}
+#define BASEPHYSICS_CUSTOMMESSAGE_GET_CHECK		{if(tmprequest->RequestObjectPart == ENTITYDATA_REQUESTTYPE_NEWTONBODY){if(BasePhysicsCustomGetData(tmprequest)) return true;}}
 
 
 namespace Leviathan{

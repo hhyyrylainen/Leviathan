@@ -44,7 +44,7 @@ DLLEXPORT bool Leviathan::Entity::TrailEmitter::Init(const string &materialname,
 	return true;
 }
 
-DLLEXPORT void Leviathan::Entity::TrailEmitter::Release(){
+DLLEXPORT void Leviathan::Entity::TrailEmitter::ReleaseData(){
 	// Destroy the Ogre resources //
 	OwnedByWorld->GetScene()->destroySceneNode(TrailLocation);
 	// This might be needed //

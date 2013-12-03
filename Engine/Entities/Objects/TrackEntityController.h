@@ -34,7 +34,7 @@ namespace Leviathan{ namespace Entity{
 
 		// Init starts listening to events and verify parameters //
 		DLLEXPORT bool Init();
-		DLLEXPORT virtual void Release();
+		DLLEXPORT virtual void ReleaseData();
 
 		// Events are used to receive when render is about to happen and update positions //
 		DLLEXPORT virtual int OnEvent(Event** pEvent);
@@ -55,6 +55,11 @@ namespace Leviathan{ namespace Entity{
 		DLLEXPORT inline float GetTrackAdvanceSpeed(){
 			return ChangeSpeed;
 		}
+
+		// Gets the position of the current node (or Float3(0) if no nodes exist) //
+		DLLEXPORT Float3 GetCurrentNodePosition();
+		// Gets the position of the next node, or Float3(0) if final node is reached. Doesn't throw exceptions //
+		DLLEXPORT Float3 GetNextNodePosition();
 
 		// This function creates a new node to the world and ads it to the track of this object //
 		DLLEXPORT void AddLocationToTrack(const Float3 &pos, const Float4 &dir);

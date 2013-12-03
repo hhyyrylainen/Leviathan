@@ -6,6 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "Common\ReferenceCounted.h"
 
 
 // This cannot be enum because it need to be able to be extended with new values //
@@ -51,6 +52,7 @@ namespace Leviathan{
 
 // Expected result is Float3*, additional is NULL //
 #define ENTITYDATA_REQUESTTYPE_WORLDPOSITION		1
+#define ENTITYDATA_REQUESTTYPE_NEWTONBODY			2
 
 
 namespace Leviathan{
@@ -59,13 +61,13 @@ namespace Leviathan{
 
 
 
-	class BaseObject{
+	class BaseObject : public ReferenceCounted{
 	public:
 		DLLEXPORT BaseObject(int id, GameWorld* worldptr);
 		DLLEXPORT virtual ~BaseObject();
 		
 		// Called before deletion and should release objects that need to be deleted during world release phase (like graphical nodes) //
-		DLLEXPORT virtual void Release();
+		DLLEXPORT virtual void ReleaseData();
 
 		DLLEXPORT inline int GetID(){
 			return ID;

@@ -28,7 +28,7 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 	// release objects //
 	for(size_t i = 0; i < Objects.size(); i++){
 
-		Objects[i]->Release();
+		Objects[i]->ReleaseData();
 	}
 
 	Objects.clear();
@@ -154,7 +154,7 @@ DLLEXPORT void Leviathan::GameWorld::UpdateCameraLocation(int mspassed, ViewerCa
 }
 // ------------------ Object managing ------------------ //
 DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
-	AddObject(shared_ptr<BaseObject>(obj));
+	AddObject(shared_ptr<BaseObject>(obj, SharedPtrReleaseDeleter<BaseObject>::DoRelease));
 }
 
 DLLEXPORT void Leviathan::GameWorld::AddObject(shared_ptr<BaseObject> obj){
@@ -180,7 +180,7 @@ DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
 DLLEXPORT void Leviathan::GameWorld::ClearObjects(){
 	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
 		// Release the object //
-		(*iter)->Release();
+		(*iter)->ReleaseData();
 	}
 	// Release our reference //
 	Objects.clear();
@@ -210,7 +210,7 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
 	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
 		if((*iter)->GetID() == ID){
 			// release the object and then erase our reference //
-			(*iter)->Release();
+			(*iter)->ReleaseData();
 			Objects.erase(iter);
 			return;
 		}
@@ -248,7 +248,7 @@ void Leviathan::GameWorld::_HandleDelayedDelete(){
 
 		if(delthis){
 
-			(*iter)->Release();
+			(*iter)->ReleaseData();
 			iter = Objects.erase(iter);
 			// Check for end //
 			if(DelayedDeleteIDS.size() == 0)
@@ -260,7 +260,7 @@ void Leviathan::GameWorld::_HandleDelayedDelete(){
 	}
 
 }
-
+// ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 	// Skip if set to the same //
 	if(frozen == WorldFrozen)
@@ -274,4 +274,73 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 	}
 }
 
+DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float3 &from, const Float3 &to){
+	// Create a data object for the ray cast //
+	RayCastData data(1, from, to);
 
+	// Call the actual ray firing function //
+	NewtonWorldRayCast(_PhysicalWorld->GetNewtonWorld(), &from.X, &to.X, RayCallbackDataCallback, &data, NULL, 0);
+
+	// Check the result //
+	if(data.HitEntities.size() == 0){
+		// Nothing hit //
+		return new RayCastHitEntity();
+	}
+	// We need to increase reference count to not to accidentally delete the result while caller is using it //
+	data.HitEntities[0]->AddRef();
+	// Return the only hit //
+	return data.HitEntities[0];
+}
+
+dFloat Leviathan::GameWorld::RayCallbackDataCallback(const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam){
+	// Let's just store it as NewtonBody pointer //
+	RayCastData* data = reinterpret_cast<RayCastData*>(userData);
+
+	data->HitEntities.push_back(new RayCastHitEntity(body, intersectParam, data));
+
+	// Check for end //
+	if(data->HitEntities.size() >= (size_t)data->MaxCount)
+		return 0.f;
+
+	// Continue //
+	return 1.f;
+}
+
+DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHitProxy(Float3 from, Float3 to){
+	return CastRayGetFirstHit(from, to);
+}
+// ------------------ RayCastHitEntity ------------------ //
+DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/, const float &tvar, RayCastData* ownerptr) : HitEntity(ptr), 
+	HitVariable(tvar)
+{
+	if(ownerptr){
+		HitLocation = ownerptr->BaseHitLocationCalcVar*HitVariable;
+	} else {
+		HitLocation = (Float3)0;
+	}
+}
+
+DLLEXPORT bool Leviathan::RayCastHitEntity::HasHit(){
+	return HitEntity != NULL;
+}
+
+DLLEXPORT bool Leviathan::RayCastHitEntity::DoesBodyMatchThisHit(NewtonBody* other){
+	return HitEntity == other;
+}
+
+DLLEXPORT Float3 Leviathan::RayCastHitEntity::GetPosition(){
+	return HitLocation;
+}
+// ------------------ RayCastData ------------------ //
+DLLEXPORT Leviathan::RayCastData::RayCastData(int maxcount, const Float3 &from, const Float3 &to) : MaxCount(maxcount), 
+	// Formula based on helpful guy on Newton forums
+	BaseHitLocationCalcVar(from+(to-from))
+{
+	// Reserve memory for maximum number of objects //
+	HitEntities.reserve(maxcount);
+}
+
+DLLEXPORT Leviathan::RayCastData::~RayCastData(){
+	// We want to release all hit data //
+	SAFE_RELEASE_VECTOR(HitEntities);
+}

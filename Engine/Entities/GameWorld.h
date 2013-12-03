@@ -9,13 +9,48 @@
 #include "Objects\ViewerCameraPos.h"
 #include "Newton\PhysicalWorld.h"
 #include "Bases\BaseObject.h"
+#include "Common\ReferenceCounted.h"
 
 
 #define PHYSICS_BASE_GRAVITY		-9.81f
 
 namespace Leviathan{
 
-	class GraphicalInputEntity;
+
+
+	// Holds the returned object that was hit during ray casting //
+	class RayCastHitEntity : public ReferenceCounted{
+	public:
+		DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = NULL, const float &tvar = 0.f, RayCastData* ownerptr = NULL);
+
+		// Compares the hit entity with NULL //
+		DLLEXPORT bool HasHit();
+
+		DLLEXPORT Float3 GetPosition();
+
+		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(RayCastHitEntity);
+
+		DLLEXPORT bool DoesBodyMatchThisHit(NewtonBody* other);
+
+		// Stores the entity, typed as NewtonBody to make sure that user knows what should be compared with this //
+		const NewtonBody* HitEntity;
+		float HitVariable;
+		Float3 HitLocation;
+	};
+
+	// Internal object in ray casts //
+	struct RayCastData{
+		DLLEXPORT RayCastData(int maxcount, const Float3 &from, const Float3 &to);
+		DLLEXPORT ~RayCastData();
+
+		// All hit entities that pass checks //
+		std::vector<RayCastHitEntity*> HitEntities;
+		// Used to stop after certain amount of entities found //
+		int MaxCount;
+		// Used to efficiently calculate many hit locations //
+		Float3 BaseHitLocationCalcVar;
+	};
+
 
 	class GameWorld : public Object{
 	public:
@@ -34,9 +69,15 @@ namespace Leviathan{
 		DLLEXPORT void SetSunlight();
 		DLLEXPORT void RemoveSunlight();
 
+		// Casts a ray from point along a vector and returns the first physical object it hits //
+		// Warning: you need to call Release on the returned object once done //
+		DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to);
+
+
 		// object managing functions //
 		// this takes the object to be deleted by this //
 		DLLEXPORT void AddObject(BaseObject* obj);
+		// The smart pointer should have custom deleter to use Release //
 		DLLEXPORT void AddObject(shared_ptr<BaseObject> obj);
 		DLLEXPORT void DestroyObject(int ID);
 		DLLEXPORT void QueueDestroyObject(int ID);
@@ -60,6 +101,13 @@ namespace Leviathan{
 
 		DLLEXPORT void SimulateWorld();
 		DLLEXPORT void ClearSimulatePassedTime();
+
+		// Ray callbacks //
+		static dFloat RayCallbackDataCallback(const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam);
+
+		// Script proxies //
+		DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(Float3 from, Float3 to);
+
 	private:
 
 		void _CreateOgreResources(Ogre::Root* ogre);

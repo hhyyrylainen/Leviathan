@@ -9,7 +9,7 @@ DLLEXPORT Leviathan::BaseObject::BaseObject(int id, GameWorld* worldptr) : ID(id
 
 }
 
-DLLEXPORT void Leviathan::BaseObject::Release(){
+DLLEXPORT void Leviathan::BaseObject::ReleaseData(){
 	// default release, do nothing //
 }
 

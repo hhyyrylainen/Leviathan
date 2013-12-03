@@ -194,8 +194,7 @@ bool Leviathan::BasePhysicsObject::BasePhysicsCustomMessage(int message, void* d
 
 bool Leviathan::BasePhysicsObject::BasePhysicsCustomGetData(ObjectDataRequest* data){
 	switch(data->RequestObjectPart){
-	//case ENTITYDATA_REQUESTTYPE_WORLDPOSITION: data->RequestResult = &Position; return true;
-
+		case ENTITYDATA_REQUESTTYPE_NEWTONBODY: data->RequestResult = Body; return true;
 	}
 
 	return false;

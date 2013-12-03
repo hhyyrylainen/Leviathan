@@ -44,8 +44,11 @@ namespace Pong{
 		inline void SetScore(int score){
 			Score = score;
 		}
+		bool IsVerticalSlot();
 
 		void AddEmptySubSlot();
+
+		float GetTrackProgress();
 
 		// active should be if the key is down (or false if it is up) //
 		void PassInputAction(CONTROLKEYACTION actiontoperform, bool active);
@@ -55,11 +58,26 @@ namespace Pong{
 		shared_ptr<Leviathan::BaseObject> GetPaddle(){
 			return PaddleObject;
 		}
+		// Warning increases reference count //
+		Leviathan::BaseObject* GetPaddleProxy(){
+			PaddleObject->AddRef();
+			return PaddleObject.get();
+		}
+		// Warning increases reference count //
+		Leviathan::Entity::TrackEntityController* GetTrackController(){
+			TrackDirectptr->AddRef();
+			return TrackDirectptr;
+		}
 		void SetPaddleObject(shared_ptr<Leviathan::BaseObject> obj){
 			PaddleObject = obj;
 		}
 		shared_ptr<Leviathan::BaseObject> GetGoalArea(){
 			return GoalAreaObject;
+		}
+		// Warning increases reference count //
+		Leviathan::BaseObject* GetGoalAreaProxy(){
+			GoalAreaObject->AddRef();
+			return GoalAreaObject.get();
 		}
 		void SetGoalAreaObject(shared_ptr<Leviathan::BaseObject> obj){
 			GoalAreaObject = obj;

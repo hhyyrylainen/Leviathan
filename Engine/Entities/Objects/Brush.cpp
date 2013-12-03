@@ -23,7 +23,7 @@ DLLEXPORT Leviathan::Entity::Brush::~Brush(){
 	// delete memory that can wait until this //
 }
 
-DLLEXPORT void Leviathan::Entity::Brush::Release(){
+DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
 	// release Ogre entity //
 	OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
 	OwnedByWorld->GetScene()->destroyEntity(GraphicalObject);

@@ -189,7 +189,8 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 
 void Pong::PongGame::EnginePreShutdown(){
 	// Only the AI needs this //
-	GameAI->ReleaseScript();
+	if(GameAI)
+		GameAI->ReleaseScript();
 }
 
 std::wstring Pong::PongGame::GenerateWindowTitle(){
@@ -241,6 +242,16 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+	if(engine->RegisterObjectMethod("PongGame", "GameWorld& GetGameWorld()", asMETHOD(PongGame, GetGameWorld), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("PongGame", "Prop@ GetBall()", asMETHOD(PongGame, GetBall), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+
+
 	
 	// Type enums //
 	if(engine->RegisterEnum("PLAYERTYPE") < 0){
@@ -295,6 +306,27 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 		SCRIPT_REGISTERFAIL;
 	}
 
+
+	if(engine->RegisterEnum("CONTROLKEYACTION") < 0){
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_LEFT", CONTROLKEYACTION_LEFT) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_RIGHT", CONTROLKEYACTION_RIGHT) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_POWERUPDOWN", CONTROLKEYACTION_POWERUPDOWN) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_POWERUPUP", CONTROLKEYACTION_POWERUPUP) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+
 	// PlayerSlot //
 	if(engine->RegisterObjectType("PlayerSlot", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
 		SCRIPT_REGISTERFAIL;
@@ -345,8 +377,30 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
-
-	
+	if(engine->RegisterObjectMethod("PlayerSlot", "void PassInputAction(CONTROLKEYACTION actiontoperform, bool active)", asMETHOD(PlayerSlot, PassInputAction), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "bool IsVerticalSlot()", asMETHOD(PlayerSlot, IsVerticalSlot), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "float GetTrackProgress()", asMETHOD(PlayerSlot, GetTrackProgress), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "BaseObject@ GetPaddle()", asMETHOD(PlayerSlot, GetPaddleProxy), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "BaseObject@ GetGoalArea()", asMETHOD(PlayerSlot, GetGoalAreaProxy), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "TrackEntityController@ GetTrackController()", asMETHOD(PlayerSlot, GetTrackController), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
 
 	
 	
@@ -490,7 +544,34 @@ void Pong::PongGame::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager
 void Pong::PongGame::Tick(int mspassed){
 	Tickcount++;
 	// Let the AI think //
+	if(GameArena->GetBallPtr() && !GamePaused){
 
+		// Find AI slots //
+		for(size_t i = 0; i < PlayerList.size(); i++){
+
+			PlayerSlot* slotptr = PlayerList[i];
+
+			while(slotptr){
+
+				if(slotptr->GetControlType() == PLAYERCONTROLS_AI){
+
+					// Set the slot ptr as the argument and call function based on difficulty //
+					std::vector<shared_ptr<NamedVariableBlock>> scriptargs(2);
+					scriptargs[0] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new VoidPtrBlock(slotptr), L"PlayerSlot"));
+					scriptargs[1] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(mspassed), L"MSPassed"));
+
+					if(GameAI){
+						bool ran;
+						GameAI->ExecuteOnModule("SimpleAI", scriptargs, ran);
+					}
+
+				}
+
+				slotptr = slotptr->GetSplit();
+			}
+		}
+
+	}
 
 	// Check if ball is too far away (also check if it is vertically stuck or horizontally) //
 
@@ -800,6 +881,16 @@ void Pong::PongGame::SetPauseState(bool paused){
 	GamePaused = paused;
 
 	WorldOfPong->SetWorldPhysicsFrozenState(GamePaused);
+}
+
+Leviathan::GameWorld* Pong::PongGame::GetGameWorld(){
+	return WorldOfPong.get();
+}
+
+Leviathan::Entity::Prop* Pong::PongGame::GetBall(){
+	auto tmp = GameArena->GetBallPtr();
+	tmp->AddRef();
+	return dynamic_cast<Leviathan::Entity::Prop*>(tmp.get());
 }
 
 

@@ -29,7 +29,7 @@ namespace Leviathan{ namespace Entity{
 		DLLEXPORT virtual ~Prop();
 		
 		DLLEXPORT bool Init(const wstring &modelfile);
-		DLLEXPORT virtual void Release();
+		DLLEXPORT virtual void ReleaseData();
 
 		static void PropPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix, int threadIndex);
 

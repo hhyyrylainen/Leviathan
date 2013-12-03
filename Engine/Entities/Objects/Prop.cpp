@@ -18,7 +18,7 @@ DLLEXPORT Leviathan::Entity::Prop::~Prop(){
 
 }
 
-DLLEXPORT void Leviathan::Entity::Prop::Release(){
+DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
 	// release Ogre entity //
 	OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
 	OwnedByWorld->GetScene()->destroyEntity(GraphicalObject);

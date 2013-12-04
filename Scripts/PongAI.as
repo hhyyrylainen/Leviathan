@@ -13,8 +13,8 @@ CONTROLKEYACTION GetRealActionForSlot(PlayerSlot@ slot, REALDIRECTION absolutedi
         }
     } else {
         switch(absolutedir){
-            case REALDIRECTION_RIGHT: return CONTROLKEYACTION_RIGHT;
-            case REALDIRECTION_LEFT: return CONTROLKEYACTION_LEFT;
+            case REALDIRECTION_RIGHT: return CONTROLKEYACTION_LEFT;
+            case REALDIRECTION_LEFT: return CONTROLKEYACTION_RIGHT;
         }
     }
     Print("Don't do this");

@@ -81,6 +81,8 @@ namespace Pong{
 		static void BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep, int threadIndex);
 		static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep, int threadIndex);
 
+		int GetLastHitPlayer();
+
 	protected:
 
 		// This function sets the player ID who should get points for scoring //

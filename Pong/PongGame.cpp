@@ -93,9 +93,14 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0))))));
 	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
 		boost::assign::map_list_of
-		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("AI"))))
+		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("AI (Ray cast)"))))
 		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_AI))))
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0))))));
+	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("AI (Follower)"))))
+		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_AI))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(1))))));
 	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
 		boost::assign::map_list_of
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("IJKL"))))
@@ -234,6 +239,11 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+	if(engine->RegisterObjectMethod("PongGame", "int GetLastHitPlayer()", asMETHOD(PongGame, GetLastHitPlayer), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	
 
 	
 
@@ -401,6 +411,11 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "bool DoesPlayerIDMatchThisOrParent(int id)", asMETHOD(PlayerSlot, DoesPlayerIDMatchThisOrParent), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	
 
 	
 	
@@ -562,7 +577,13 @@ void Pong::PongGame::Tick(int mspassed){
 
 					if(GameAI){
 						bool ran;
-						GameAI->ExecuteOnModule("SimpleAI", scriptargs, ran);
+
+						// The identifier defines the AI type and they are set in the database //
+						switch(slotptr->GetControlIdentifier()){
+						case 1: GameAI->ExecuteOnModule("BallTrackerAI", scriptargs, ran); break;
+						case 0: default:
+							GameAI->ExecuteOnModule("SimpleAI", scriptargs, ran);
+						}
 					}
 
 				}
@@ -891,6 +912,10 @@ Leviathan::Entity::Prop* Pong::PongGame::GetBall(){
 	auto tmp = GameArena->GetBallPtr();
 	tmp->AddRef();
 	return dynamic_cast<Leviathan::Entity::Prop*>(tmp.get());
+}
+
+int Pong::PongGame::GetLastHitPlayer(){
+	return LastPlayerHitBallID;
 }
 
 

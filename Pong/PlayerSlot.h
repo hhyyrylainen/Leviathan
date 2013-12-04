@@ -48,6 +48,8 @@ namespace Pong{
 
 		void AddEmptySubSlot();
 
+		bool DoesPlayerIDMatchThisOrParent(int id);
+
 		float GetTrackProgress();
 
 		// active should be if the key is down (or false if it is up) //
@@ -135,6 +137,8 @@ namespace Pong{
 
 		// slot splitting //
 		PlayerSlot* SplitSlot;
+		// For quick lookups //
+		PlayerSlot* ParentSlot;
 	};
 
 }

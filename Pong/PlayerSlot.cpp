@@ -7,14 +7,14 @@
 using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, bool empty) : Slot(slotnumber), PlayerType(PLAYERTYPE_EMPTY), PlayerIdentifier(-1), 
-	ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(-1), SplitSlot(NULL), Score(0), MoveState(0), TrackDirectptr(NULL), Colour(0.f)
+	ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(-1), SplitSlot(NULL), Score(0), MoveState(0), TrackDirectptr(NULL), Colour(0.f), ParentSlot(NULL)
 {
 
 }
 
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PLAYERTYPE type, int playeridentifier, PLAYERCONTROLS controltype, int ctrlidentifier, 
 	const Float4 &playercolour): Slot(slotnumber), PlayerType(type), PlayerIdentifier(playeridentifier), ControlType(controltype), 
-	ControlIdentifier(ctrlidentifier), SplitSlot(NULL), Score(0), MoveState(0), TrackDirectptr(NULL), Colour(playercolour)
+	ControlIdentifier(ctrlidentifier), SplitSlot(NULL), Score(0), MoveState(0), TrackDirectptr(NULL), Colour(playercolour), ParentSlot(NULL)
 {
 
 }
@@ -147,6 +147,8 @@ void Pong::PlayerSlot::SetColourFromRML(string rml){
 // ------------------------------------ //
 void Pong::PlayerSlot::AddEmptySubSlot(){
 	SplitSlot = new PlayerSlot(this->Slot, true);
+	// Set this as the parent //
+	SplitSlot->ParentSlot = this;
 }
 
 void Pong::PlayerSlot::SetPlayerProxy(PLAYERTYPE type){
@@ -159,6 +161,16 @@ bool Pong::PlayerSlot::IsVerticalSlot(){
 
 float Pong::PlayerSlot::GetTrackProgress(){
 	return TrackDirectptr->GetProgressTowardsNextNode();
+}
+
+bool Pong::PlayerSlot::DoesPlayerIDMatchThisOrParent(int id){
+	if(id == PlayerIdentifier)
+		return true;
+	// Recurse to parent, if one exists //
+	if(ParentSlot)
+		return ParentSlot->DoesPlayerIDMatchThisOrParent(id);
+
+	return false;
 }
 
 int Pong::PlayerSlot::CurrentPlayerIdentifier = -1;

@@ -27,7 +27,6 @@ file(GLOB GroupInput "Input/*.cpp" "Input/*.h")
 file(GLOB GroupLeap "Leap/*.cpp" "Leap/*.h")
 file(GLOB GroupObjectFiles "ObjectFiles/*.cpp" "ObjectFiles/*.h")
 file(GLOB GroupHandlers "Handlers/*.cpp" "Handlers/*.h")
-file(GLOB GroupAddons "Addons/*.cpp" "Addons/*.h")
 
 # AngelScript addon sources
 file(GLOB_RECURSE GroupScriptAddons "${PROJECT_SOURCE_DIR}/AngelScript/add_on/*.cpp" "${PROJECT_SOURCE_DIR}/AngelScript/add_on/*.h")
@@ -39,7 +38,6 @@ source_group("Sound" FILES ${GroupSound})
 source_group("Leap" FILES ${GroupLeap})
 source_group("Scripting" FILES ${GroupScript})
 source_group("Scripting\\AngelAddons" FILES ${GroupScriptAddons})
-source_group("Addons" FILES ${GroupAddons})
 
 source_group("Entities" FILES ${GroupEntities})
 source_group("Entities\\Bases" FILES ${GroupEntitiesBases})
@@ -75,9 +73,10 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
     ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
-    ${GroupUtilityData} ${GroupAddons})
+    ${GroupUtilityData})
 
     
+if(WIN32)
 # precompiled headers
 # remove from list before adding back
 file(GLOB PrecompiledHeaderName "Include.h")
@@ -86,7 +85,7 @@ list(REMOVE_ITEM EngineFiles ${PrecompiledSourceName})
 
 # precompiled header
 ADD_MSVC_PRECOMPILED_HEADER("Include.h" ${PrecompiledSourceName} EngineFiles)
-
+endif(WIN32)
 
 # engine exporting define
 add_definitions(-DENGINE_EXPORTS)
@@ -104,7 +103,13 @@ endif(NOT INSTALL_ONLY_RELEASE)
 install(TARGETS Engine DESTINATION bin CONFIGURATIONS ${InstallConfigurationNames})
 
 # post build copy
+if(WIN32)
 ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND copy ARGS 
     "\"$(SolutionDir)Engine\\$(Configuration)\\$(TargetName).dll\" \"$(SolutionDir)bin\\$(TargetName).dll\""
 )
+else(WIN32)
+# makefile copy
+ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND cp ARGS "Engine/Debug/EngineD.os" "bin/EngineD.os"
+)
+endif(WIN32)
 

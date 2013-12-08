@@ -23,7 +23,10 @@
 #include <math.h>
 #include <assert.h>
 
+#ifdef _WIN32
 #include <SDKDDKVer.h>
+
+#endif
 
 // some special compiler settings //
 #ifdef ANALYZEBUILD
@@ -37,9 +40,14 @@
 // core libRocket (this is before windows headers to fix things) //
 #include <Rocket/Core.h>
 
+#ifdef _WIN32
 #include <Windows.h>
 #include <Windowsx.h>
 #include <wincodec.h>
+#else
+// For making SIGINT work as debug break on linux //
+#include <signal.h>
+#endif
 
 #include <iostream>
 #include <fstream>
@@ -57,8 +65,13 @@
 #include <set>
 #include <regex>
 
+#ifdef _WIN32
 #include <initguid.h>
 #include <shlobj.h>
+#else
+// For using SIGINT as breakpoints //
+	 
+#endif
 
 // common ogre files //
 #include <OgreCamera.h>
@@ -73,67 +86,140 @@
 // pragma include libraries
 
 #ifdef ENGINE_EXPORTS
-#ifdef _DEBUG
-// debug versions //
-#pragma comment(lib, "angelscriptd.lib")
-#pragma comment(lib, "Leapd.lib")
+#ifdef _WIN32
+	#ifdef _DEBUG
+	// debug versions //
 
-#pragma comment(lib, "OgreMain_d.lib")
-#pragma comment(lib, "OgreOverlay_d.lib")
-#pragma comment(lib, "OgrePaging_d.lib")
-#pragma comment(lib, "OgreTerrain_d.lib")
-#pragma comment(lib, "OgreRTShaderSystem_d.lib")
-#pragma comment(lib, "Plugin_CgProgramManager_d.lib")
-#pragma comment(lib, "Plugin_OctreeZone_d.lib")
-#pragma comment(lib, "Plugin_ParticleFX_d.lib")
-#pragma comment(lib, "RenderSystem_Direct3D11_d.lib")
-#pragma comment(lib, "RenderSystem_GL_d.lib")
-#pragma comment(lib, "RenderSystem_Direct3D11_d.lib")
+	#pragma comment(lib, "angelscriptd.lib")
+	#pragma comment(lib, "Leapd.lib")
+	
+	#pragma comment(lib, "OgreMain_d.lib")
+	#pragma comment(lib, "OgreOverlay_d.lib")
+	#pragma comment(lib, "OgrePaging_d.lib")
+	#pragma comment(lib, "OgreTerrain_d.lib")
+	#pragma comment(lib, "OgreRTShaderSystem_d.lib")
+	#pragma comment(lib, "Plugin_CgProgramManager_d.lib")
+	#pragma comment(lib, "Plugin_OctreeZone_d.lib")
+	#pragma comment(lib, "Plugin_ParticleFX_d.lib")
+	#pragma comment(lib, "RenderSystem_Direct3D11_d.lib")
+	#pragma comment(lib, "RenderSystem_GL_d.lib")
+	#pragma comment(lib, "RenderSystem_Direct3D11_d.lib")
+	
+	#pragma comment(lib, "OIS_d.lib")
+	#pragma comment(lib, "RocketCore_d.lib")
+	#pragma comment(lib, "RocketControls_d.lib")
+	#pragma comment(lib, "RocketDebugger_d.lib")
+	#pragma comment(lib, "newton_d.lib")
 
-#pragma comment(lib, "OIS_d.lib")
-#pragma comment(lib, "RocketCore_d.lib")
-#pragma comment(lib, "RocketControls_d.lib")
-#pragma comment(lib, "RocketDebugger_d.lib")
-#pragma comment(lib, "newton_d.lib")
+	#pragma comment(lib, "sfml-audio-d.lib")
+	#pragma comment(lib, "sfml-network-d.lib")
+	#else
+	// release libraries
+	#pragma comment(lib, "angelscript.lib")
+	#pragma comment(lib, "Leap.lib")
 
-#pragma comment(lib, "sfml-audio-d.lib")
-#pragma comment(lib, "sfml-network-d.lib")
+	#pragma comment(lib, "OgreMain.lib")
+	#pragma comment(lib, "OgreOverlay.lib")
+	#pragma comment(lib, "OgrePaging.lib")
+	#pragma comment(lib, "OgreTerrain.lib")
+	#pragma comment(lib, "OgreRTShaderSystem.lib")
+	#pragma comment(lib, "Plugin_CgProgramManager.lib")
+	#pragma comment(lib, "Plugin_OctreeZone.lib")
+	#pragma comment(lib, "Plugin_ParticleFX.lib")
+	#pragma comment(lib, "RenderSystem_Direct3D11.lib")
+	#pragma comment(lib, "RenderSystem_GL.lib")
+	#pragma comment(lib, "RenderSystem_Direct3D11.lib")
+
+	#pragma comment(lib, "OIS.lib")
+	#pragma comment(lib, "RocketCore.lib")
+	#pragma comment(lib, "RocketControls.lib")
+	#pragma comment(lib, "RocketDebugger.lib")
+	#pragma comment(lib, "newton.lib")
+
+	#pragma comment(lib, "sfml-audio.lib")
+	#pragma comment(lib, "sfml-network.lib")
+	#endif
 #else
-// release libraries
-#pragma comment(lib, "angelscript.lib")
-#pragma comment(lib, "Leap.lib")
+	// Linux libraries
+	#ifdef _DEBUG
+	// debug versions //
 
-#pragma comment(lib, "OgreMain.lib")
-#pragma comment(lib, "OgreOverlay.lib")
-#pragma comment(lib, "OgrePaging.lib")
-#pragma comment(lib, "OgreTerrain.lib")
-#pragma comment(lib, "OgreRTShaderSystem.lib")
-#pragma comment(lib, "Plugin_CgProgramManager.lib")
-#pragma comment(lib, "Plugin_OctreeZone.lib")
-#pragma comment(lib, "Plugin_ParticleFX.lib")
-#pragma comment(lib, "RenderSystem_Direct3D11.lib")
-#pragma comment(lib, "RenderSystem_GL.lib")
-#pragma comment(lib, "RenderSystem_Direct3D11.lib")
+	#pragma comment(lib, "libAngelscript.a")
+	#pragma comment(lib, "libLeap.so")
+	
+	#pragma comment(lib, "libOgreMain_d.so")
+	#pragma comment(lib, "libOgreOverlay_d.so")
+	#pragma comment(lib, "libOgrePaging_d.so")
+	#pragma comment(lib, "libOgreTerrain_d.so")
+	#pragma comment(lib, "libOgreRTShaderSystem_d.so")
+	#pragma comment(lib, "Plugin_CgProgramManager_d.so")
+	#pragma comment(lib, "Plugin_OctreeZone_d.so")
+	#pragma comment(lib, "Plugin_ParticleFX_d.so")
+	#pragma comment(lib, "RenderSystem_Direct3D11_d.so")
+	#pragma comment(lib, "RenderSystem_GL_d.so")
+	#pragma comment(lib, "RenderSystem_Direct3D11_d.so")
+	
+	#pragma comment(lib, "libOIS_d.so")
+	#pragma comment(lib, "libRocketCore_d.so")
+	#pragma comment(lib, "libRocketControls_d.so")
+	#pragma comment(lib, "libRocketDebugger_d.so")
+	#pragma comment(lib, "libNewton.so")
 
-#pragma comment(lib, "OIS.lib")
-#pragma comment(lib, "RocketCore.lib")
-#pragma comment(lib, "RocketControls.lib")
-#pragma comment(lib, "RocketDebugger.lib")
-#pragma comment(lib, "newton.lib")
+	#pragma comment(lib, "libsfml-audio.so")
+	#pragma comment(lib, "libsfml-network.so")
+	#else
+	// release libraries
+	#pragma comment(lib, "libAngelscript.a")
+	#pragma comment(lib, "libLeap.so")
+	
+	#pragma comment(lib, "libOgreMain.so")
+	#pragma comment(lib, "libOgreOverlay.so")
+	#pragma comment(lib, "libOgrePaging.so")
+	#pragma comment(lib, "libOgreTerrain.so")
+	#pragma comment(lib, "libOgreRTShaderSystem.so")
+	#pragma comment(lib, "Plugin_CgProgramManager.so")
+	#pragma comment(lib, "Plugin_OctreeZone.so")
+	#pragma comment(lib, "Plugin_ParticleFX.so")
+	#pragma comment(lib, "RenderSystem_Direct3D11.so")
+	#pragma comment(lib, "RenderSystem_GL.so")
+	#pragma comment(lib, "RenderSystem_Direct3D11.so")
+	
+	#pragma comment(lib, "libOIS.so")
+	#pragma comment(lib, "libRocketCore.so")
+	#pragma comment(lib, "libRocketControls.so")
+	#pragma comment(lib, "libRocketDebugger.so")
+	#pragma comment(lib, "libNewton.so")
 
-#pragma comment(lib, "sfml-audio.lib")
-#pragma comment(lib, "sfml-network.lib")
+	#pragma comment(lib, "libsfml-audio.so")
+	#pragma comment(lib, "libsfml-network.so")
+	#endif
+
+		
+	
 #endif
 #else
 // include engine lib
-#ifdef _DEBUG
-#pragma comment(lib, "EngineD.lib")
-// Also link the Newton library because it seems to be needed for some things //
-#pragma comment(lib, "newton_d.lib")
+#ifdef _WIN32
+	#ifdef _DEBUG
+	#pragma comment(lib, "EngineD.lib")
+	// Also link the Newton library because it seems to be needed for some things //
+	#pragma comment(lib, "newton_d.lib")
+	#else
+	#pragma comment(lib, "Engine.lib")
+	// Also link the Newton library because it seems to be needed for some things //
+	#pragma comment(lib, "newton.lib")
+	#endif
 #else
-#pragma comment(lib, "Engine.lib")
-// Also link the Newton library because it seems to be needed for some things //
-#pragma comment(lib, "newton.lib")
+// Linux things
+	#ifdef _DEBUG
+	#pragma comment(lib, "EngineD.so")
+	// Also link the Newton library because it seems to be needed for some things //
+	#pragma comment(lib, "libnewton.so")
+	#else
+	#pragma comment(lib, "Engine.so")
+	// Also link the Newton library because it seems to be needed for some things //
+	#pragma comment(lib, "newton.so")
+	#endif
 #endif
 
 #endif // ENGINE_EXPORTS
@@ -145,7 +231,7 @@ using namespace std;
 #define LEVIATHAN_VERSION @LEVIATHAN_VERSION@
 #define LEVIATHAN_VERSIONS @LEVIATHAN_VERSIONS@
 #define LEVIATHAN_VERSION_ANSIS @LEVIATHAN_VERSION_ANSIS@
-//#cmakedefine USE_MYMATH
+
 
 #define VERSION		LEVIATHAN_VERSION
 #define VERSIONS	LEVIATHAN_VERSIONS
@@ -165,15 +251,21 @@ using namespace std;
 
 #define FORCE_INLINE __forceinline
 
-#ifdef _MSC_VER
 #ifdef _DEBUG
-#define DEBUG_BREAK __debugbreak();
+#ifdef _MSC_VER
+	#define DEBUG_BREAK __debugbreak();
 #else
-#define DEBUG_BREAK 
-#endif //_DEBUG
+#ifdef __GNUG__
+// We are on linux (and this *should* work)
+	#define DEBUG_BREAK raise(SIGINT)
 #else
 #error Debug break won't work
-#endif //_MSC_VER
+#endif
+#else
+// Release mode
+#define DEBUG_BREAK
+#endif //_DEBUG
+
 
 #ifndef DEBUG_OUTPUT
 #if defined( DEBUG ) || defined( _DEBUG )
@@ -226,8 +318,6 @@ using namespace std;
 #define SAFE_DELETE_ARRAY( x ) {if(x){delete[] (x);(x)=NULL;}}
 #define EXISTS( x ) {( (x) != NULL )}
 
-#define SAFE_RELEASE_VECTOR(x) {for(auto iter = x.begin(); iter != x.end(); ++iter){(*iter)->Release();} x.clear();}
-
 #define ARR_INDEX_CHECK( x, y) if(((x) >= 0 ) && ((size_t)(x) < (y)))
 #define ARR_INDEX_CHECKINV( x, y) if(!(((x) >= 0 ) && ((size_t)(x) < (y))))
 #define VECTOR_LAST(x) (x).at((x).size()-1)
@@ -265,6 +355,8 @@ using namespace std;
 #define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: " __SWLINE__ ), true);}
 #define QUICK_MEMORY_ERROR_MESSAGE {Logger::Get()->Error((L"Out of memory error from: " __WFILE__ L" function: "__WFUNCTION__), true);}
 
+
+
 namespace Leviathan{
 	
 
@@ -301,7 +393,6 @@ namespace Leviathan{
 // angelscript //
 // AngelAddons use std style names
 #define AS_USE_STLNAMES     1
-
 
 //#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
 #include "angelscript.h"

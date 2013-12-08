@@ -10,6 +10,10 @@
 #define LEVIATHAN_USES_VLD
 #endif
 
+#ifndef __cplusplus
+#error C++ compiler required!
+#endif
+
 #include <stdio.h>
 
 // we need to disable this warning to stop stdint and instsafe causing errors //
@@ -70,7 +74,7 @@
 #include <shlobj.h>
 #else
 // For using SIGINT as breakpoints //
-	 
+	 #include <signal.h>
 #endif
 
 // common ogre files //
@@ -252,18 +256,19 @@ using namespace std;
 #define FORCE_INLINE __forceinline
 
 #ifdef _DEBUG
-#ifdef _MSC_VER
-	#define DEBUG_BREAK __debugbreak();
+	#ifdef _MSC_VER
+		#define DEBUG_BREAK __debugbreak();
+	#else
+		#ifdef __GNUC__
+		// We are on linux (and this *should* work)
+			#define DEBUG_BREAK raise(SIGINT)
+		#else
+		#error "Debug break won't work"
+		#endif
+	#endif
 #else
-#ifdef __GNUG__
-// We are on linux (and this *should* work)
-	#define DEBUG_BREAK raise(SIGINT)
-#else
-#error Debug break won't work
-#endif
-#else
-// Release mode
-#define DEBUG_BREAK
+	// Release mode
+	#define DEBUG_BREAK
 #endif //_DEBUG
 
 
@@ -368,20 +373,20 @@ namespace Leviathan{
 
 //typedef std::vector vector;
 
-#include "Common\ErrorTypes.h"
+#include "Common/ErrorTypes.h"
 
 #include "Logger.h"
 
-#include "Common\Types.h"
-#include "Common\Misc.h"
-#include "Math\CommonMath.h"
-#include "Utility\Convert.h"
+#include "Common/Types.h"
+#include "Common/Misc.h"
+#include "Math/CommonMath.h"
+#include "Utility/Convert.h"
 
-#include "Handlers\IDFactory.h"
+#include "Handlers/IDFactory.h"
 // exceptions //
-#include "Exceptions\ExceptionBase.h"
+#include "Exceptions/ExceptionBase.h"
 
-#include "Statistics\TimingMonitor.h"
+#include "Statistics/TimingMonitor.h"
 // speed up compile times with leap //
 #include "leap.h"
 // OIS compile speed up //

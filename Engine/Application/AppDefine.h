@@ -6,9 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Common\DataStoring\NamedVars.h"
-#include "Common\Window.h"
-#include "ObjectFiles\ObjectFileProcessor.h"
+#include "Common/DataStoring/NamedVars.h"
+#include "Common/Window.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 
 namespace Leviathan{
 

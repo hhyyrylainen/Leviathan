@@ -1,7 +1,7 @@
 #pragma once
 
 #include "angelscript.h"
-#include "Events\Event.h"
+#include "Events/Event.h"
 #include "ScriptExecutor.h"
 #include "Events/EventHandler.h"
 #include "Utility/DataHandling/SimpleDataBase.h"

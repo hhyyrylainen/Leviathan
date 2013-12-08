@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "..\GameWorld.h"
+#include "../GameWorld.h"
 
 namespace Leviathan{
 

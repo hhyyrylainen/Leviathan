@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_ANIMATIONMANAGER
 #include "AnimationManager.h"
 #endif
-#include "Common\DataStoring\NamedVars.h"
+#include "Common/DataStoring/NamedVars.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::AnimationManager::AnimationManager(){

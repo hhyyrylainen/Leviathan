@@ -3,8 +3,8 @@
 #ifndef LEVIATHAN_APPLICATIONDEFINE
 #include "AppDefine.h"
 #endif
-#include "ObjectFiles\ObjectFileProcessor.h"
-#include "Application\Application.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "Application/Application.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) : ConfigurationValues(new NamedVars()), HInstance(NULL){
@@ -30,7 +30,7 @@ DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(){
 	unique_ptr<AppDef> tmpptr(new AppDef(true));
 
 	// load variables from configuration file //
-	tmpptr->ConfigurationValues->LoadVarsFromFile(L".\\EngineConf.conf");
+	tmpptr->ConfigurationValues->LoadVarsFromFile(L"./EngineConf.conf");
 
 	return tmpptr.release();
 }

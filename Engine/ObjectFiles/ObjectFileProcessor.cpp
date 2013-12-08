@@ -4,8 +4,8 @@
 #include "ObjectFileProcessor.h"
 #endif
 #include "FileSystem.h"
-#include <boost\assign\list_of.hpp>
-#include "Common\DataStoring\DataStore.h"
+#include <boost/assign/list_of.hpp>
+#include "Common/DataStoring/DataStore.h"
 using namespace Leviathan;
 // ------------------------------------ //
 

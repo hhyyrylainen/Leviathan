@@ -1,12 +1,12 @@
 #include "TestAutoUpdateable.h"
 #include "TestCallable.h"
-#include "Utility\MD5Generator.h"
-#include "ObjectFiles\LineTokenizer.h"
-#include "ObjectFiles\ObjectFileProcessor.h"
-#include "Utility\RSAEncryption.h"
-#include "Utility\Iterators\WstringIterator.h"
-#include "Utility\DebugVariableNotifier.h"
-#include <boost\assign\list_of.hpp>
+#include "Utility/MD5Generator.h"
+#include "ObjectFiles/LineTokenizer.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "Utility/RSAEncryption.h"
+#include "Utility/Iterators/WstringIterator.h"
+#include "Utility/DebugVariableNotifier.h"
+#include <boost/assign/list_of.hpp>
 
 bool TestMiscCutWstring(const int &tests){
 	bool Failed = false;

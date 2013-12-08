@@ -3,8 +3,8 @@
 #ifndef LEVIATHAN_OVERLAYMASTER
 #include "OverlayMaster.h"
 #endif
-#include "Exceptions\ExceptionNotFound.h"
-#include "GUI\GuiManager.h"
+#include "Exceptions/ExceptionNotFound.h"
+#include "GUI/GuiManager.h"
 using namespace Leviathan;
 using namespace Rendering;
 // ------------------------------------ //

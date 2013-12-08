@@ -3,9 +3,9 @@
 #ifndef LEVIATHAN_LOCATIONNODEENTITY
 #include "LocationNode.h"
 #endif
-#include "..\GameWorld.h"
-#include "..\Bases\BaseObject.h"
-#include "Entities\Bases\BaseNotifier.h"
+#include "../GameWorld.h"
+#include "../Bases/BaseObject.h"
+#include "Entities/Bases/BaseNotifier.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //

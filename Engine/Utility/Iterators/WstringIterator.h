@@ -6,9 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Utility\MultiFlag.h"
-#include "Exceptions\ExceptionNULLPtr.h"
-#include "Utility\Iterators\IteratorData.h"
+#include "Utility/MultiFlag.h"
+#include "Exceptions/ExceptionNULLPtr.h"
+#include "Utility/Iterators/IteratorData.h"
 
 namespace Leviathan{
 

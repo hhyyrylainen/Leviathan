@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Script\ScriptModule.h"
+#include "Script/ScriptModule.h"
 #include "Common/ThreadSafe.h"
 #include "Events/EventableScriptObject.h"
 

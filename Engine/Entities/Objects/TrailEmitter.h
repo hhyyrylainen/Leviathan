@@ -6,9 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "..\Bases\BaseObject.h"
-#include "..\Bases\BaseParentable.h"
-#include "..\Bases\BaseRenderable.h"
+#include "../Bases/BaseObject.h"
+#include "../Bases/BaseParentable.h"
+#include "../Bases/BaseRenderable.h"
 
 
 namespace Leviathan{ namespace Entity{

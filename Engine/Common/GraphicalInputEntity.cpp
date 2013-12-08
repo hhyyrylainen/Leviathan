@@ -4,8 +4,8 @@
 #include "GraphicalInputEntity.h"
 #endif
 #include "OgreCommon.h"
-#include "Rendering\Graphics.h"
-#include "Entities\GameWorld.h"
+#include "Rendering/Graphics.h"
+#include "Entities/GameWorld.h"
 #include "FileSystem.h"
 using namespace Leviathan;
 // ------------------------------------ //

@@ -4,8 +4,8 @@
 #include "Window.h"
 #endif
 #include "Engine.h"
-#include "Rocket\Core\Context.h"
-#include <boost\assign\list_of.hpp>
+#include "Rocket/Core/Context.h"
+#include <boost/assign/list_of.hpp>
 using namespace Leviathan;
 // ------------------------------------ //
 // we must have an int of size 32 bits //

@@ -7,7 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "PlayerSlot.h"
-#include "Entities\Objects\TrailEmitter.h"
+#include "Entities/Objects/TrailEmitter.h"
 
 
 #define BASE_ARENASCALE		1.f	

@@ -7,11 +7,11 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "PerlinNoiseTerrainGenerator.h"
-#include <Terrain\OgreTerrain.h>
-#include <Terrain\OgreTerrainGroup.h>
-#include <Terrain\OgreTerrainPagedWorldSection.h>
-#include <Terrain\OgreTerrainPaging.h>
-#include <Paging\OgrePageManager.h>
+#include <Terrain/OgreTerrain.h>
+#include <Terrain/OgreTerrainGroup.h>
+#include <Terrain/OgreTerrainPagedWorldSection.h>
+#include <Terrain/OgreTerrainPaging.h>
+#include <Paging/OgrePageManager.h>
 
 // max ranges for terrain (max int16 values //
 #define ENDLESS_PAGE_MIN_X (-0x7FFF)

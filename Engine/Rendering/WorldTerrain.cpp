@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_WORLDTERRAIN
 #include "WorldTerrain.h"
 #endif
-#include "Terrain\OgreTerrainMaterialGeneratorA.h"
+#include "Terrain/OgreTerrainMaterialGeneratorA.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::WorldTerrain::WorldTerrain(Ogre::Light* l, Ogre::SceneManager* scene, Ogre::Camera* terrainloadingcamera) : mTerrainGroup(0), 

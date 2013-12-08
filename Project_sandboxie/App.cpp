@@ -2,10 +2,10 @@
 #ifndef SANDBOXIE_APP
 #include "App.h"
 #endif
-#include "Entities\Objects\ViewerCameraPos.h"
-#include "Entities\GameWorld.h"
-#include "Entities\Objects\Prop.h"
-#include "Entities\Objects\Brush.h"
+#include "Entities/Objects/ViewerCameraPos.h"
+#include "Entities/GameWorld.h"
+#include "Entities/Objects/Prop.h"
+#include "Entities/Objects/Brush.h"
 using namespace Leviathan;
 using namespace SandBoxie;
 // ------------------------------------ //

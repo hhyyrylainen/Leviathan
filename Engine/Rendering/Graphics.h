@@ -6,11 +6,11 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Entities\Bases\BaseRenderable.h"
+#include "Entities/Bases/BaseRenderable.h"
 
-#include "Common\GraphicalInputEntity.h"
-#include "Application\AppDefine.h"
-#include "GUI\OverlayMaster.h"
+#include "Common/GraphicalInputEntity.h"
+#include "Application/AppDefine.h"
+#include "GUI/OverlayMaster.h"
 
 namespace Leviathan{
 	// forward declarations to avoid having tons of headers here that aren't necessary //

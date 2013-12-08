@@ -6,10 +6,10 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Objects\ViewerCameraPos.h"
-#include "Newton\PhysicalWorld.h"
-#include "Bases\BaseObject.h"
-#include "Common\ReferenceCounted.h"
+#include "Objects/ViewerCameraPos.h"
+#include "Newton/PhysicalWorld.h"
+#include "Bases/BaseObject.h"
+#include "Common/ReferenceCounted.h"
 
 
 #define PHYSICS_BASE_GRAVITY		-9.81f

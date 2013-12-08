@@ -7,9 +7,9 @@
 using namespace Leviathan;
 // ------------------------------------ //
 #include "Logger.h"
-#include "Utility\Convert.h"
-#include "Common\DataStoring\DataBlock.h"
-#include "Statistics\TimingMonitor.h"
+#include "Utility/Convert.h"
+#include "Common/DataStoring/DataBlock.h"
+#include "Statistics/TimingMonitor.h"
 
 
 // string conversions

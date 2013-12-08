@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Common\DataStoring\NamedVars.h"
-#include "Common\DataStoring\DataBlock.h"
+#include "Common/DataStoring/NamedVars.h"
+#include "Common/DataStoring/DataBlock.h"
 
 namespace Leviathan{
 

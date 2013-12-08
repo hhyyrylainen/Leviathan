@@ -3,9 +3,9 @@
 #ifndef LEVIATHAN_GUICOLLECTION
 #include "GuiCollection.h"
 #endif
-#include <boost\assign\list_of.hpp>
-#include "Script\ScriptInterface.h"
-#include "ObjectFiles\ObjectFileProcessor.h"
+#include <boost/assign/list_of.hpp>
+#include "Script/ScriptInterface.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 #include "GuiManager.h"
 using namespace Leviathan;
 // ------------------------------------ //

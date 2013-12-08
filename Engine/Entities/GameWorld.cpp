@@ -3,8 +3,8 @@
 #ifndef LEVIATHAN_GAMEWORLD
 #include "GameWorld.h"
 #endif
-#include "Common\GraphicalInputEntity.h"
-#include "Newton\NewtonManager.h"
+#include "Common/GraphicalInputEntity.h"
+#include "Newton/NewtonManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld(Ogre::Root* ogre) : WorldSceneCamera(NULL), CameraLocationNode(NULL), WorldsScene(NULL),

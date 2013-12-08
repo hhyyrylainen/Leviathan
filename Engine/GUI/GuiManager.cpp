@@ -4,20 +4,20 @@
 #include "GuiManager.h"
 #endif
 #include "Engine.h"
-#include "Script\ScriptInterface.h"
+#include "Script/ScriptInterface.h"
 #include "FileSystem.h"
-#include "Rendering\Graphics.h"
-#include <boost\assign\list_of.hpp>
-#include <Rocket\Controls\Controls.h>
-#include <Rocket\Debugger\Debugger.h>
+#include "Rendering/Graphics.h"
+#include <boost/assign/list_of.hpp>
+#include <Rocket/Controls/Controls.h>
+#include <Rocket/Debugger/Debugger.h>
 #include <Rocket/Controls.h>
 #include <Rocket/Debugger.h>
-#include "Rendering\GUI\RenderInterfaceOgre3D.h"
+#include "Rendering/GUI/RenderInterfaceOgre3D.h"
 #include "Rendering/GUI/FontManager.h"
 #include "GuiCollection.h"
-#include "Common\DataStoring\DataStore.h"
-#include "Common\DataStoring\DataBlock.h"
-#include "Common\GraphicalInputEntity.h"
+#include "Common/DataStoring/DataStore.h"
+#include "Common/DataStoring/DataBlock.h"
+#include "Common/GraphicalInputEntity.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //

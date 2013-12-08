@@ -7,9 +7,9 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Window.h"
-#include "Input\InputController.h"
-#include "GUI\GuiManager.h"
-#include "Entities\Objects\ViewerCameraPos.h"
+#include "Input/InputController.h"
+#include "GUI/GuiManager.h"
+#include "Entities/Objects/ViewerCameraPos.h"
 
 namespace Leviathan{
 

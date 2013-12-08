@@ -3,12 +3,12 @@
 #ifndef PONG_GAME
 #include "PongGame.h"
 #endif
-#include "Entities\Objects\ViewerCameraPos.h"
-#include "Entities\GameWorld.h"
-#include "Entities\Objects\Prop.h"
-#include "..\Engine\Script\ScriptExecutor.h"
+#include "Entities/Objects/ViewerCameraPos.h"
+#include "Entities/GameWorld.h"
+#include "Entities/Objects/Prop.h"
+#include "../Engine/Script/ScriptExecutor.h"
 #include "Arena.h"
-#include "Addons\GameModule.h"
+#include "Addons/GameModule.h"
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //

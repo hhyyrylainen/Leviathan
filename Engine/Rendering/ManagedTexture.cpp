@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_RENDERING_MANAGEDTEXTURE
 #include "ManagedTexture.h"
 #endif
-#include "Utility\ComplainOnce.h"
+#include "Utility/ComplainOnce.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ManagedTexture::ManagedTexture() : FromFile(NULL){

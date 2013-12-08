@@ -7,7 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "PlayerSlot.h"
-#include "Input\InputController.h"
+#include "Input/InputController.h"
 
 
 namespace Pong{

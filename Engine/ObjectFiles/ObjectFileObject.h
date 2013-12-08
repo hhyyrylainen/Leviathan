@@ -6,9 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "ObjectFiles\ObjectFileList.h"
-#include "ObjectFiles\ObjectFileTextBlock.h"
-#include "Script\ScriptScript.h"
+#include "ObjectFiles/ObjectFileList.h"
+#include "ObjectFiles/ObjectFileTextBlock.h"
+#include "Script/ScriptScript.h"
 
 namespace Leviathan{
 

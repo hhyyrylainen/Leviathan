@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_SCALEABLEFREETYPEBITMAP
 #include "ScaleableFreeTypeBitmap.h"
 #endif
-#include "C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Samples\C++\Direct3D11\DDSWithoutD3DX11\DDS.h"
+#include "C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Samples/C++/Direct3D11/DDSWithoutD3DX11/DDS.h"
 using namespace Leviathan;
 // ------------------------------------ //
 // initialize to match size //

@@ -5,9 +5,9 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "Application\Application.h"
-#include "Rendering\TextureManager.h"
-#include "Entities\GameWorld.h"
+#include "Application/Application.h"
+#include "Rendering/TextureManager.h"
+#include "Entities/GameWorld.h"
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), 
 	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL)
@@ -369,7 +369,7 @@ void Leviathan::Engine::RunScrCommand(wstring command, wstring params){
 
 DLLEXPORT void Leviathan::Engine::SaveScreenShot(){
 
-	const wstring fileprefix = MainFileHandler->GetDataFolder()+L"Screenshots\\Captured_frame_";
+	const wstring fileprefix = MainFileHandler->GetDataFolder()+L"Screenshots/Captured_frame_";
 
 
 	GraphicalEntity1->SaveScreenShot(Convert::WstringToString(fileprefix));

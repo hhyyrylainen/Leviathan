@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Common\DataStoring\NamedVars.h"
-#include "Exceptions\ExceptionInvalidArgument.h"
+#include "Common/DataStoring/NamedVars.h"
+#include "Exceptions/ExceptionInvalidArgument.h"
 
 namespace Leviathan{
 

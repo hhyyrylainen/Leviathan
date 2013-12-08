@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Utility\FileRelated\DDsHandler.h"
-#include "Rendering\ManagedTexture.h"
+#include "Utility/FileRelated/DDsHandler.h"
+#include "Rendering/ManagedTexture.h"
 
 namespace Leviathan{
 

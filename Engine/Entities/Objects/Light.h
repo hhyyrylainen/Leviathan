@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "..\Bases\BasePositionable.h"
-#include "..\Bases\BaseObject.h"
+#include "../Bases/BasePositionable.h"
+#include "../Bases/BaseObject.h"
 
 
 namespace Leviathan{ namespace Entity{

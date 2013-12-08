@@ -7,9 +7,9 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "FileSystem.h"
-#include "Utility\Iterators\WstringIterator.h"
-#include "ObjectFiles\ObjectFileProcessor.h"
-#include "ObjectFiles\LineTokenizer.h"
+#include "Utility/Iterators/WstringIterator.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "ObjectFiles/LineTokenizer.h"
 
 namespace Leviathan{
 

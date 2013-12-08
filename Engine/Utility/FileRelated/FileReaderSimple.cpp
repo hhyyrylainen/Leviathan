@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_FILEREADERSIMPLE
 #include "FileReaderSimple.h"
 #endif
-#include "Exceptions\ExceptionInvalidArgument.h"
+#include "Exceptions/ExceptionInvalidArgument.h"
 using namespace Leviathan;
 // ------------------------------------ //
 

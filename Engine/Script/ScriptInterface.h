@@ -6,12 +6,12 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Common\DataStoring\DataBlock.h"
-#include "Common\DataStoring\NamedVars.h"
+#include "Common/DataStoring/DataBlock.h"
+#include "Common/DataStoring/NamedVars.h"
 
-#include "Script\ScriptScript.h"
-#include "Script\ScriptExecutor.h"
-#include "Script\ScriptRunningSetup.h"
+#include "Script/ScriptScript.h"
+#include "Script/ScriptExecutor.h"
+#include "Script/ScriptRunningSetup.h"
 
 
 namespace Leviathan{

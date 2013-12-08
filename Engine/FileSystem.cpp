@@ -37,7 +37,7 @@ DLLEXPORT bool Leviathan::FileSystem::Init(){
 
 	// use find files function on data folder and then save results to appropriate vectors //
 	vector<wstring> files;
-	GetFilesInDirectory(files, L".\\Data\\");
+	GetFilesInDirectory(files, L"./Data/");
 
 	if(files.size() < 1){
 
@@ -50,16 +50,16 @@ DLLEXPORT bool Leviathan::FileSystem::Init(){
 		// create new object for storing this //
 		shared_ptr<FileDefinitionType> tmpptr(new FileDefinitionType(this, files[i]));
 
-		if(files[i].find(L".\\Data\\Textures\\") == 0){
+		if(files[i].find(L"./Data/Textures/") == 0){
 			// add to texture files //
 			TextureFiles.push_back((tmpptr));
-		} else if(files[i].find(L".\\Data\\Models\\") == 0){
+		} else if(files[i].find(L"./Data/Models/") == 0){
 			// add to texture files //
 			ModelFiles.push_back(tmpptr);
-		} else if(files[i].find(L".\\Data\\Sound\\") == 0){
+		} else if(files[i].find(L"./Data/Sound/") == 0){
 			// add to texture files //
 			SoundFiles.push_back(tmpptr);
-		} else if(files[i].find(L".\\Data\\Scripts\\") == 0){
+		} else if(files[i].find(L"./Data/Scripts/") == 0){
 			// add to texture files //
 			ScriptFiles.push_back(tmpptr);
 		}
@@ -203,16 +203,16 @@ void Leviathan::FileSystem::GetWindowsFolder(wstring &path){
 	wchar_t winddir[MAX_PATH];
 	if(GetWindowsDirectoryW(winddir, MAX_PATH) > 0)
 		path = winddir;
-	if(path.back() != L'\\')
-		path += L'\\';
+	if(path.back() != L'/')
+		path += L'/';
 }
 
 void Leviathan::FileSystem::GetSpecialFolder(wstring &path, int specialtype){
 	wchar_t directory[MAX_PATH];
 	SHGetSpecialFolderPathW(NULL, directory, specialtype, FALSE);
 	path = directory;
-	if(path.back() != L'\\')
-		path += L'\\';
+	if(path.back() != L'/')
+		path += L'/';
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::FileSystem::SetDataFolder(const wstring &folder){
@@ -295,7 +295,7 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files
 
 			if(FileInfo.cFileName[0] != '.'){
 				FilePath.erase();
-				FilePath = dirpath + FileInfo.cFileName+L"\\";
+				FilePath = dirpath + FileInfo.cFileName+L"/";
 
 				if(FileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY){
 
@@ -372,7 +372,7 @@ wstring Leviathan::FileSystem::RemoveExtension(const wstring &file, bool delpath
 		if(!(i > -1 && i < (int)file.length())){
 			break;
 		}
-		if(((file[i] == L'/') | (file[i] == L'\\')) && (delpath))
+		if(((file[i] == L'/') || (file[i] == L'\\')) && (delpath))
 			break;
 		returnstr += file[i];
 	}
@@ -929,12 +929,12 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 	// Terrain group //
 	manager.createResourceGroup("Terrain");
 
-	folder = Convert::WstringToString(DataFolder+L"Cache\\Terrain\\");
+	folder = Convert::WstringToString(DataFolder+L"Cache/Terrain/");
 
 	manager.addResourceLocation(folder, "FileSystem", "Terrain", true, false);
 	
 	// add cache to general //
-	folder = Convert::WstringToString(DataFolder+L"Cache\\");
+	folder = Convert::WstringToString(DataFolder+L"Cache/");
 	manager.addResourceLocation(folder, "FileSystem", "General");
 
 	// possibly register addon folders //
@@ -948,9 +948,9 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
 	folder = Convert::WstringToString(DataFolder+TextureFolder);
 	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
-	folder = Convert::WstringToString(DataFolder+L"Cache\\Rocket\\");
+	folder = Convert::WstringToString(DataFolder+L"Cache/Rocket/");
 	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
-	folder = ".\\";
+	folder = "./";
 	manager.addResourceLocation(folder, "FileSystem", "Rocket", false, false);
 	// initialize the groups //
 	manager.initialiseAllResourceGroups();

@@ -6,9 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Common\DataStoring\NamedVars.h"
+#include "Common/DataStoring/NamedVars.h"
 #include "FileSystem.h"
-#include "Events\AutoUpdateable.h"
+#include "Events/AutoUpdateable.h"
 
 namespace Leviathan{
 

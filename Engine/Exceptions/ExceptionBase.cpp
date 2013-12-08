@@ -1,7 +1,7 @@
 #include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_EXCEPTIONBASE
-#include "Exceptions\ExceptionBase.h"
+#include "Exceptions/ExceptionBase.h"
 #endif
 using namespace Leviathan;
 // ------------------------------------ //

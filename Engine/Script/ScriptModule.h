@@ -7,7 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Angelscript.h"
-#include "add_on\scriptbuilder\scriptbuilder.h"
+#include "add_on/scriptbuilder/scriptbuilder.h"
 
 
 namespace Leviathan{

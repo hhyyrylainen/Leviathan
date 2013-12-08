@@ -6,10 +6,10 @@
 #include "OgreFontManager.h"
 #include "OgreFont.h"
 #include "FileSystem.h"
-#include "Exceptions\ExceptionNotFound.h"
+#include "Exceptions/ExceptionNotFound.h"
 #include "OverlayMaster.h"
-#include "Common\DataStoring\DataStore.h"
-#include <Rocket\Core.h>
+#include "Common/DataStoring/DataStore.h"
+#include <Rocket/Core.h>
 using namespace Leviathan;
 using namespace Leviathan::Rendering;
 // ------------------------------------ //
@@ -35,6 +35,7 @@ DLLEXPORT bool Leviathan::Rendering::FontManager::LoadFontByName(const wstring &
 
 	// look for it in registry //
 	if(fontgenfile.size() == 0){
+#ifdef _WIN32
 		// set name to arial because we can't find other fonts //
 		fontgenfile = L"Arial";
 
@@ -57,6 +58,10 @@ DLLEXPORT bool Leviathan::Rendering::FontManager::LoadFontByName(const wstring &
 			FileSystem::GetWindowsFolder(fontgenfile);
 			fontgenfile += L"Fonts\\";
 			fontgenfile += szBuffer;
+#else 
+#error Cannot read registry!
+#endif // _WIN32
+
 		}
 	}
 	if(!FileSystem::FileExists(fontgenfile)){

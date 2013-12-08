@@ -42,7 +42,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		wstring times = Convert::IntToWstring(tdate.wYear)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wDay)+L" "+Convert::IntToWstring(tdate.wHour)+L"."+Convert::IntToWstring(tdate.wMinute);
 
-		customlogger->SetSavePath(L".\\TestLog "+times+L".txt");
+		customlogger->SetSavePath(L"./TestLog "+times+L".txt");
 
 		// run pre-engine tests //
 		Logger::Get()->Info(tittle, false);

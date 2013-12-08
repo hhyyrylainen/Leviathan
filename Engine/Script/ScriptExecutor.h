@@ -6,10 +6,10 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Script\ScriptScript.h"
-#include "Common\DataStoring\DataBlock.h"
+#include "Script/ScriptScript.h"
+#include "Common/DataStoring/DataBlock.h"
 #include "angelscript.h"
-#include "Script\ScriptRunningSetup.h"
+#include "Script/ScriptRunningSetup.h"
 
 #define ANGELSCRIPT_REGISTERFAIL	Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return false;
 

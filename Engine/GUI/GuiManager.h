@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Application\AppDefine.h"
-#include "GUI\BaseGuiObject.h"
+#include "Application/AppDefine.h"
+#include "GUI/BaseGuiObject.h"
 
 
 // objects //

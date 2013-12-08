@@ -4,10 +4,10 @@
 #include "NamedVars.h"
 #endif
 #include "FileSystem.h"
-#include "Statistics\TimingMonitor.h"
-#include "Utility\Iterators\WstringIterator.h"
-#include "Exceptions\ExceptionInvalidType.h"
-#include "ObjectFiles\LineTokenizer.h"
+#include "Statistics/TimingMonitor.h"
+#include "Utility/Iterators/WstringIterator.h"
+#include "Exceptions/ExceptionInvalidType.h"
+#include "ObjectFiles/LineTokenizer.h"
 using namespace Leviathan;
 // ------------------------------------ //
 

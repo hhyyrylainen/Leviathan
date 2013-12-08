@@ -4,8 +4,8 @@
 #include "Constraints.h"
 #endif
 #include <Newton.h>
-#include "..\Bases\BaseContraintable.h"
-#include "..\GameWorld.h"
+#include "../Bases/BaseContraintable.h"
+#include "../GameWorld.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //

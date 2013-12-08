@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Rendering\TextureDefinition.h"
-#include "Entities\GameWorld.h"
+#include "Rendering/TextureDefinition.h"
+#include "Entities/GameWorld.h"
 
 
 

@@ -7,12 +7,12 @@
 
 // ------------------------------------ //
 // ---- includes ---- //
-#include "..\Bases\BaseObject.h"
-#include "..\Bases\BaseRenderable.h"
-#include "..\Bases\BasePositionable.h"
-#include "..\Bases\BasePhysicsObject.h"
-#include "..\Bases\BaseContraintable.h"
-#include "..\Bases\BaseParentable.h"
+#include "../Bases/BaseObject.h"
+#include "../Bases/BaseRenderable.h"
+#include "../Bases/BasePositionable.h"
+#include "../Bases/BasePhysicsObject.h"
+#include "../Bases/BaseContraintable.h"
+#include "../Bases/BaseParentable.h"
 
 namespace Leviathan{
 	class GameWorld;

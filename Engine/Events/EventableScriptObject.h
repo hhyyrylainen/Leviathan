@@ -8,7 +8,7 @@
 // ---- includes ---- //
 #include "AutoUpdateable.h"
 #include "CallableObject.h"
-#include "Script\ScriptScript.h"
+#include "Script/ScriptScript.h"
 
 
 namespace Leviathan{

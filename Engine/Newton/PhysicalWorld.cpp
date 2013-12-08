@@ -5,7 +5,7 @@
 #endif
 #include <Newton.h>
 #include "PhysicalMaterialManager.h"
-#include "Events\EventHandler.h"
+#include "Events/EventHandler.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) : LastSimulatedTime(0), PassedTimeTotal(0), OwningWorld(owner){

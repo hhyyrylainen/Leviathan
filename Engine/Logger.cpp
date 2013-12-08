@@ -7,7 +7,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "FileSystem.h"
 
-Leviathan::Logger::Logger(): FirstSaveDone(false), Saved(false), Autosave(false), Path(L".\\Log.txt"){
+Leviathan::Logger::Logger(): FirstSaveDone(false), Saved(false), Autosave(false), Path(L"./Log.txt"){
 	// get time for putting to beginning of log //
 	SYSTEMTIME tdate;
 	GetLocalTime(&tdate);
@@ -20,7 +20,7 @@ Leviathan::Logger::Logger(): FirstSaveDone(false), Saved(false), Autosave(false)
 	LatestLogger = this;
 }
 DLLEXPORT Leviathan::Logger::Logger(const wstring &start, const bool &autosave) : FirstSaveDone(false), Saved(false), Autosave(autosave), 
-	Path(L".\\Log.txt")
+	Path(L"./Log.txt")
 {
 	// use the argument as initial text //
 	SYSTEMTIME tdate;

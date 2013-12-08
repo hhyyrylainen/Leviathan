@@ -6,12 +6,12 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Script\ScriptInterface.h"
-#include "ObjectFiles\ObjectFileObject.h"
-#include "Statistics\TimingMonitor.h"
-#include "Utility\Iterators\WstringIterator.h"
-#include "ObjectFiles\LineTokenizer.h"
-#include "Common\DataStoring\DataBlock.h"
+#include "Script/ScriptInterface.h"
+#include "ObjectFiles/ObjectFileObject.h"
+#include "Statistics/TimingMonitor.h"
+#include "Utility/Iterators/WstringIterator.h"
+#include "ObjectFiles/LineTokenizer.h"
+#include "Common/DataStoring/DataBlock.h"
 
 namespace Leviathan{
 

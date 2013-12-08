@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Entities\Bases\BaseObject.h"
-#include "Input\InputController.h"
+#include "Entities/Bases/BaseObject.h"
+#include "Input/InputController.h"
 
 #define DEFAULTMOVEMENTMODIFIER		1.f
 #define TURBOMOVEMENTMODIFIER		20.f

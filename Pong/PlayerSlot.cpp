@@ -3,7 +3,7 @@
 #ifndef PONG_PLAYERSLOT
 #include "PlayerSlot.h"
 #endif
-#include "Entities\Bases\BasePhysicsObject.h"
+#include "Entities/Bases/BasePhysicsObject.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, bool empty) : Slot(slotnumber), PlayerType(PLAYERTYPE_EMPTY), PlayerIdentifier(-1), 

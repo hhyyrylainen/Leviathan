@@ -5,25 +5,25 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "Script\AngelScriptCommon.h"
-#include "Utility\Iterators\WstringIterator.h"
+#include "Script/AngelScriptCommon.h"
+#include "Utility/Iterators/WstringIterator.h"
 
-#include <add_on\scriptstdstring\scriptstdstring.h>
-#include <add_on\scriptarray\scriptarray.h>
-#include <add_on\scriptmath\scriptmathcomplex.h>
-#include <add_on\scriptmath\scriptmath.h>
-#include <add_on\scriptarray\scriptarray.h>
-#include <add_on\scriptstdstring\scriptstdstring.h>
+#include <add_on/scriptstdstring/scriptstdstring.h>
+#include <add_on/scriptarray/scriptarray.h>
+#include <add_on/scriptmath/scriptmathcomplex.h>
+#include <add_on/scriptmath/scriptmath.h>
+#include <add_on/scriptarray/scriptarray.h>
+#include <add_on/scriptstdstring/scriptstdstring.h>
 
 // headers that contains bind able functions //
-#include "GUI\GuiScriptInterface.h"
+#include "GUI/GuiScriptInterface.h"
 
 // include various headers that bind functions and classes //
-#include "GUI\GuiScriptBind.h"
+#include "GUI/GuiScriptBind.h"
 #include "CommonEngineBind.h"
-#include <add_on\scripthelper\scripthelper.h>
-#include "add_on\scriptdictionary\scriptdictionary.h"
-#include "Application\Application.h"
+#include <add_on/scripthelper/scripthelper.h>
+#include "add_on/scriptdictionary/scriptdictionary.h"
+#include "Application/Application.h"
 
 ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
 	instance = this;

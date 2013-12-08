@@ -1,8 +1,8 @@
 /********************************************************************
 	created:	2012/11/21
 	created:	21:11:2012   16:22
-	filename: 	C:\Users\OEM\Documents\Visual Studio 2010\Projects\Leviathan\Engine\Random.cpp
-	file path:	C:\Users\OEM\Documents\Visual Studio 2010\Projects\Leviathan\Engine
+	filename: 	Random.cpp
+	file path:	Engine
 	file base:	Random
 	file ext:	cpp
 	author:		Henri Hyyryläinen

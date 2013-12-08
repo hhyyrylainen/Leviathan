@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Utility\Random.h"
-#include "Exceptions\ExceptionInvalidArgument.h"
+#include "Utility/Random.h"
+#include "Exceptions/ExceptionInvalidArgument.h"
 #include <iterator>
 
 #pragma warning( disable: 4005 4127 )

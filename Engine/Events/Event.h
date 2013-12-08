@@ -7,10 +7,10 @@
 
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Common\ReferenceCounted.h"
-#include "Common\DataStoring\NamedVars.h"
-#include <boost\assign\list_of.hpp>
-#include "Script\ScriptModule.h"
+#include "Common/ReferenceCounted.h"
+#include "Common/DataStoring/NamedVars.h"
+#include <boost/assign/list_of.hpp>
+#include "Script/ScriptModule.h"
 
 
 

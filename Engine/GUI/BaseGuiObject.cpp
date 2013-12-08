@@ -3,11 +3,11 @@
 #ifndef LEVIATHAN_GUI_BASEOBJECT
 #include "BaseGuiObject.h"
 #endif
-#include "Utility\Iterators\WstringIterator.h"
-#include "ObjectFiles\ObjectFileProcessor.h"
-#include "Script\ScriptModule.h"
-#include <boost\assign\list_of.hpp>
-#include "GUI\GuiManager.h"
+#include "Utility/Iterators/WstringIterator.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "Script/ScriptModule.h"
+#include <boost/assign/list_of.hpp>
+#include "GUI/GuiManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, GuiLoadedSheet* sheet, 

@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_TEXTUREDEFINITION
 #include "TextureDefinition.h"
 #endif
-#include "Utility\MultiFlag.h"
+#include "Utility/MultiFlag.h"
 using namespace Leviathan;
 // ------------------------------------ //
 

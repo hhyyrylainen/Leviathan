@@ -3,9 +3,9 @@
 #ifndef LEVIATHAN_DATABLOCK
 #include "DataBlock.h"
 #endif
-#include "Exceptions\ExceptionInvalidArgument.h"
-#include "Utility\Iterators\WstringIterator.h"
-#include "Script\ScriptInterface.h"
+#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Utility/Iterators/WstringIterator.h"
+#include "Script/ScriptInterface.h"
 using namespace Leviathan;
 // ------------------------------------ //
 #define TEST_IVALUE_INDBLOCKS		254676

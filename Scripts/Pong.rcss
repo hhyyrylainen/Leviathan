@@ -7,6 +7,12 @@ body
 	color: white;
 }
 
+span
+{
+
+    display: inline-block;
+}
+
 .Menu
 {
     width: auto;
@@ -213,11 +219,6 @@ scrollbarhorizontal
 {
 	width: 0px;
 	height: 0px;
-}
-
-span
-{
-    display: block;
 }
 
 body, div,

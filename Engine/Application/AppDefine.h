@@ -9,11 +9,9 @@
 #include "Common\DataStoring\NamedVars.h"
 #include "Common\Window.h"
 #include "ObjectFiles\ObjectFileProcessor.h"
+#include "Networking\NetworkClient.h"
 
 namespace Leviathan{
-
-	class Engine;
-	class LeviathanApplication;
 
 	struct WindowDataDetails{
 		WindowDataDetails();
@@ -51,10 +49,20 @@ namespace Leviathan{
 			return *this;
 		}
 
+		DLLEXPORT AppDef& SetMasterServerParameters(const MasterServerInformation &info){
+
+			MasterServerInfo = info;
+			return *this;
+		}
+
 
 		DLLEXPORT WindowDataDetails& GetWindowDetails(){
 
 			return WDetails;
+		}
+		DLLEXPORT MasterServerInformation& GetMasterServerInfo(){
+
+			return MasterServerInfo;
 		}
 		DLLEXPORT inline static AppDef* GetDefault(){
 			return Defaultconf;
@@ -67,6 +75,8 @@ namespace Leviathan{
 			return vsync;
 		}
 
+
+
 		DLLEXPORT static AppDef* GenerateAppdefine();
 		DLLEXPORT void StoreWindowDetails(const wstring &title, const bool &windowborder, HICON icon, LeviathanApplication* appvirtualptr);
 
@@ -74,6 +84,8 @@ namespace Leviathan{
 		
 		unique_ptr<NamedVars> ConfigurationValues;
 		HINSTANCE HInstance;
+
+		MasterServerInformation MasterServerInfo;
 
 		// details used to create a window //
 		WindowDataDetails WDetails;

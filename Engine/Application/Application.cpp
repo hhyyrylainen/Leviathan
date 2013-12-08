@@ -8,7 +8,9 @@ using namespace Leviathan;
 #include "FileSystem.h"
 #include "OGRE/OgreWindowEventUtilities.h"
 
-DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), _Engine(NULL), ApplicationConfiguration(NULL), ShouldQuit(false){
+DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), _Engine(NULL), ApplicationConfiguration(NULL), ShouldQuit(false), 
+	Networking(NULL)
+{
 	Curapp = this;
 }
 
@@ -22,10 +24,12 @@ DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration
 	// store configuration //
 	ApplicationConfiguration = configuration;
 
+	// Create network handler before passing it to the engine //
+	Networking = new NetworkClient();
 
 	// init engine //
 	_Engine = new Engine(this);
-	if(!_Engine->Init(ApplicationConfiguration))
+	if(!_Engine->Init(ApplicationConfiguration, Networking))
 		return false;
 	_InternalInit();
 	return true;

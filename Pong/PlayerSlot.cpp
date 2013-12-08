@@ -173,6 +173,11 @@ bool Pong::PlayerSlot::DoesPlayerIDMatchThisOrParent(int id){
 	return false;
 }
 
+std::string Pong::PlayerSlot::GetColourAsRML(){
+	return "rgba("+Convert::ToString((int)(Colour.X*255))+", "+Convert::ToString((int)(Colour.Y*255))+", "
+		+Convert::ToString((int)(Colour.Z*255))+", "+Convert::ToString((int)(Colour.W*255))+")";
+}
+
 int Pong::PlayerSlot::CurrentPlayerIdentifier = -1;
 
 

@@ -25,8 +25,8 @@ endif(USE_VLD)
 # version number
 set(LEVIATHAN_VERSION_STABLE 0)
 set(LEVIATHAN_VERSION_MAJOR 6)
-set(LEVIATHAN_VERSION_MINOR 2)
-set(LEVIATHAN_VERSION_PATCH 4)
+set(LEVIATHAN_VERSION_MINOR 3)
+set(LEVIATHAN_VERSION_PATCH 0)
 
 set(LEVIATHAN_VERSION_STR ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}.${LEVIATHAN_VERSION_MINOR}.${LEVIATHAN_VERSION_PATCH})
 set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LEVIATHAN_VERSION_MINOR}${LEVIATHAN_VERSION_PATCH})
@@ -139,7 +139,6 @@ link_directories("${PROJECT_BINARY_DIR}/Engine/Release")
 add_subdirectory(Engine)
 
 # test project
-enable_testing()
 add_subdirectory(LeviathanTest)
 
 
@@ -148,6 +147,12 @@ add_subdirectory(Project_sandboxie)
 
 # pong example game
 add_subdirectory(Pong)
+
+# example pong server
+add_subdirectory(PongServer)
+
+# example pong master server
+add_subdirectory(PongMasterServer)
 
 # install support
 

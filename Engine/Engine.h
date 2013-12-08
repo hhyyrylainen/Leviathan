@@ -22,6 +22,8 @@
 #include "Common\GraphicalInputEntity.h"
 #include "Newton\NewtonManager.h"
 #include "Newton\PhysicalMaterialManager.h"
+#include "Networking\NetworkHandler.h"
+#include "Threading\ThreadingManager.h"
 
 
 #define TICKSPEED 60
@@ -40,7 +42,7 @@ namespace Leviathan{
 	public:
 		DLLEXPORT Engine(LeviathanApplication* owner);
 
-		DLLEXPORT bool Init(AppDef* definition);
+		DLLEXPORT bool Init(AppDef* definition, NetworkClient* networking);
 		DLLEXPORT void Release();
 
 		DLLEXPORT void Tick();
@@ -71,6 +73,8 @@ namespace Leviathan{
 		DLLEXPORT NewtonManager* GetNewtonManager(){ return _NewtonManager; };
 		DLLEXPORT LeviathanApplication* GetOwningApplication(){ return Owner; };
 		DLLEXPORT PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
+		DLLEXPORT NetworkHandler* GetNetworkHandler(){ return _NetworkHandler; };
+		DLLEXPORT ThreadingManager* GetThreadingManager(){ return _ThreadingManager; };
 		// static access //
 		DLLEXPORT static Engine* GetEngine();
 		DLLEXPORT static Engine* Get();
@@ -99,6 +103,8 @@ namespace Leviathan{
 		OutOfMemoryHandler* OutOMemory;
 		NewtonManager* _NewtonManager;
 		PhysicsMaterialManager* PhysMaterials;
+		NetworkHandler* _NetworkHandler;
+		ThreadingManager* _ThreadingManager;
 
 		IDFactory* IDDefaultInstance;
 		LeviathanApplication* Owner;

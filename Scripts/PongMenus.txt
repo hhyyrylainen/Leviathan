@@ -1062,6 +1062,8 @@ objects {
             inl type(script){
                 name = GameWinnersUpdater;
                 body{
+                    #include "ScoreboardUpdateScript.as"
+                    
                     // Generics event to detect game end //
                     [@Listener="Generic", @Type="MatchEnded"]
                     int OnGameEnd(BaseGuiObject@ Instance, GenericEvent@ event){
@@ -1075,10 +1077,7 @@ objects {
                         PlayerSlot@ slot = GetPongGame().GetSlot(winningteam);
                         // Loop through and print all players in the team //
                         while(true){
-                            // get score //
-                            int score = slot.GetScore();
-                            int number = slot.GetPlayerNumber();
-                            text += "<p style='padding-left: 10px;'>Player "+number+": "+score+"</p>";
+                            text += GenerateScoreboardPlayer(slot);
 
                             @slot = slot.GetSplit();
                             if(slot is null)

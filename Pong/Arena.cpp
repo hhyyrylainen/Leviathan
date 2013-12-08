@@ -407,10 +407,10 @@ void Pong::Arena::ServeBall(){
 					// Set direction //
 
 					switch(i){
-					case 0: dir = Float3(1.f, 0.f, 0.f); break;
-					case 1: dir = Float3(0.f, 0.f, 1.f); break;
-					case 2: dir = Float3(-1.f, 0.f, 0.f); break;
-					case 3: dir = Float3(0.f, 0.f, -1.f); break;
+					case 0: dir = Float3(25.f, 0.f, 0.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ? Float3(0.f, 0.f, 1.f): Float3(0.f, 0.f, -1.f)); break;
+					case 1: dir = Float3(0.f, 0.f, 25.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ? Float3(1.f, 0.f, 0.f): Float3(-1.f, 0.f, 0.f));; break;
+					case 2: dir = Float3(-25.f, 0.f, 0.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ? Float3(0.f, 0.f, 1.f): Float3(0.f, 0.f, -1.f));; break;
+					case 3: dir = Float3(0.f, 0.f, -25.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ? Float3(1.f, 0.f, 0.f): Float3(-1.f, 0.f, 0.f));; break;
 					}
 
 					break;
@@ -418,9 +418,6 @@ void Pong::Arena::ServeBall(){
 			}
 		}
 	}
-	
-	// Add base speed //
-	dir *= 25.f;
 
 
 	// TODO: queue send event //

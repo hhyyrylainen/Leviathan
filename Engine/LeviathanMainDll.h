@@ -16,6 +16,7 @@ using Leviathan::Engine;
 using Leviathan::Gui::GuiManager;
 using Leviathan::GameWorld;
 using Leviathan::AppDef;
+using Leviathan::MasterServerInformation;
 using Leviathan::Convert;
 using Leviathan::EventHandler;
 using Leviathan::Event;

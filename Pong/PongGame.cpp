@@ -79,6 +79,10 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 		boost::assign::map_list_of
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(255, 127, 0)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Dark orange")))))));
+	GameConfigurationData.AddValue(L"Colours", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(1, 1, 1)"))))
+		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Black")))))));
 
 	// Add base controls //
 	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
@@ -101,6 +105,11 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("AI (Follower)"))))
 		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_AI))))
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(1))))));
+	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
+		boost::assign::map_list_of
+		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("AI (Combined)"))))
+		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_AI))))
+		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(2))))));
 	GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
 		boost::assign::map_list_of
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("IJKL"))))
@@ -415,6 +424,11 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+	if(engine->RegisterObjectMethod("PlayerSlot", "string GetColourAsRML()", asMETHOD(PlayerSlot, GetColourAsRML), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	
 	
 
 	
@@ -581,6 +595,7 @@ void Pong::PongGame::Tick(int mspassed){
 						// The identifier defines the AI type and they are set in the database //
 						switch(slotptr->GetControlIdentifier()){
 						case 1: GameAI->ExecuteOnModule("BallTrackerAI", scriptargs, ran); break;
+						case 2: GameAI->ExecuteOnModule("CombinedAI", scriptargs, ran); break;
 						case 0: default:
 							GameAI->ExecuteOnModule("SimpleAI", scriptargs, ran);
 						}
@@ -832,7 +847,7 @@ void Pong::PongGame::CheckForGameEnd(){
 				break;
 			case 3:
 				{
-					cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
+					cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, -4.f*BASE_ARENASCALE));
 					cam->SetRotation(Float3(0.f, -30.f, 0.f));
 				}
 				break;

@@ -1,12 +1,10 @@
-#include "PongIncludes.h"
-#include "PongGame.h"
+#include "PongServerIncludes.h"
 
 #ifdef LEVIATHAN_USES_VLD
 // visual leak detector //
 #include <vld.h>
 #endif // LEVIATHAN_USES_VLD
 
-using namespace Pong;
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -33,10 +31,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		// create game object //
 		PongGame game;
 
+
+
 		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine());
 		// customize values //
-		ProgramDefinition->SetHInstance(hInstance).SetMasterServerParameters(MasterServerInformation(L"PongMasters.txt", L"Pong_" GAME_VERSIONS, 
-			L"http://boostslair.com/Pong/MastersList.php", L"PongCrecentials", false));
+		ProgramDefinition->SetHInstance(hInstance);
 
 		// create window parameters last //
 		ProgramDefinition->StoreWindowDetails(PongGame::GenerateWindowTitle(), true, LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)), &game);

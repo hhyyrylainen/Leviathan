@@ -29,7 +29,7 @@
             </div>
         </div>
         <div class="Hidden" id="hudmain">
-            <span style="paddin-left: 5px; position: absolute; top: 5%; left: 5%; width: 20%; min-height: 100px; background-color: #21845766;">
+            <span style="paddin-left: 5px; position: absolute; top: 5%; left: 5%; width: 20%; min-height: 100px; background-color: #00000033;">
             <p>Scores:</p>
             <p id="scorelist">
                 <p>Player list unset...</p>

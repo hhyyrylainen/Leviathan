@@ -1,4 +1,13 @@
 // common function for updating the scoreboard //
+
+string GenerateScoreboardPlayer(PlayerSlot@ slot){
+    // get score //
+    int score = slot.GetScore();
+    int number = slot.GetPlayerNumber();
+    return "<p style='padding-left: 10px;'>\n<b style='color: "+
+        slot.GetColourAsRML()+";'>\nPlayer "+number+"</b>\n: "+score+"</p>\n";
+}
+
 void UpdateScoreboard(BaseGuiObject@ element){
 
     string text = "";
@@ -19,10 +28,7 @@ void UpdateScoreboard(BaseGuiObject@ element){
                 text += "<p>Team "+i+": ";
             }
             
-            // get score //
-            int score = slot.GetScore();
-            int number = slot.GetPlayerNumber();
-            text += "<p style='padding-left: 10px;'>Player "+number+": "+score+"</p>";
+            text += GenerateScoreboardPlayer(slot);
             
             @slot = slot.GetSplit();
             if(slot is null)
@@ -33,6 +39,5 @@ void UpdateScoreboard(BaseGuiObject@ element){
             text += "</p>";
         }
     }
-
     element.SetInternalElementRML(text);
 }

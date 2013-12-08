@@ -14,6 +14,9 @@ namespace Leviathan{
 		class GuiManager;
 	}
 
+	class TaskThread;
+	class Engine;
+	class LeviathanApplication;
 	struct RayCastData;
 	class ScriptModule;
 	class ScriptScript;
@@ -40,7 +43,7 @@ namespace Leviathan{
 	class ScopeTimer;
 	class GameModule;
 	class ThreadSafe;
-
+	struct MasterServerInformation;
 
 }
 

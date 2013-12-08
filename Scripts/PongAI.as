@@ -35,12 +35,12 @@ class AIDataCache{
     void MoveTowardsProgress(){
         // Set right direction based on the target progress //
         float curprogress = AISlot.GetTrackProgress();
-        if(curprogress > TargetPercentage+0.04){
+        if(curprogress > TargetPercentage+0.01){
             
             AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_RIGHT), false);    
             AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_LEFT), true);
             
-        } else if(curprogress < TargetPercentage-0.04){
+        } else if(curprogress < TargetPercentage-0.01){
         
             AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_LEFT), false);
             AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_RIGHT), true);
@@ -54,8 +54,6 @@ class AIDataCache{
     
     // ------------------ The main AI think functions ------------------ //  
     void RunAINormal(int mspassed){
-        
-        
         
         Prop@ ballptr = GetPongGame().GetBall();
         Float3 ballvelocity = ballptr.GetVelocity();
@@ -157,6 +155,101 @@ class AIDataCache{
         TargetPercentage = disttostart/(disttostart+disttoend);
         MoveTowardsProgress();
     }
+    
+    void RunAICombined(int mspassed){
+        
+        Prop@ ballptr = GetPongGame().GetBall();
+        Float3 ballvelocity = ballptr.GetVelocity();
+        Float3 ballpos = ballptr.GetPosition()+(ballvelocity.Normalize()*1.1f);
+        Float3 endpos = ballpos+(ballvelocity*10.f);
+        
+        // User raycasting to detect what the ball is going to hit //
+        RayCastHitEntity@ hit = GetPongGame().GetGameWorld().CastRayGetFirstHit(ballpos, endpos);
+        
+        Float3 hitpos = hit.GetPosition();
+        
+        // Stop moving if the ball is about to hit the paddle //
+        NewtonBody@ paddlebody = AISlot.GetPaddle().CustomMessageGetNewtonBody();
+        NewtonBody@ goalbody = AISlot.GetGoalArea().CustomMessageGetNewtonBody();
+        
+        float curprogress = AISlot.GetTrackProgress();
+        
+        if(hit.DoesBodyMatchThisHit(paddlebody)){
+            NotMovedToBall = 0;
+            TargetPercentage = AISlot.GetTrackProgress();
+            // Set state //
+            AiState = AISTATE_BLOCKINGBALL;
+            
+        
+        } else if(hit.DoesBodyMatchThisHit(goalbody) && AiState != AISTATE_BLOCKINGBALL){
+            
+            NotMovedToBall = 0;
+            // We need to try to block the ball //
+            // Get track controller positions //
+            TrackEntityController@ track = AISlot.GetTrackController();
+            Float3 startpos = track.GetCurrentNodePosition();
+            Float3 endpos = track.GetNextNodePosition();
+            
+            // Change state //
+            AiState = AISTATE_BLOCKINGBALL;
+            
+            float disttostart;
+            float disttoend;
+            
+            if(abs(startpos.GetZ()-endpos.GetZ()) > abs(startpos.GetX()-endpos.GetX())){
+                // Only Z distance //
+                disttostart = abs((startpos-hitpos).GetZ());
+                disttoend = abs((endpos-hitpos).GetZ());
+            } else {
+                // Only X distance //
+                disttostart = abs((startpos-hitpos).GetX());
+                disttoend = abs((endpos-hitpos).GetX());
+            }
+            
+            TargetPercentage = disttostart/(disttostart+disttoend);
+        }
+        
+        if(AiState != AISTATE_IDLING){
+            NotMovedToBall += mspassed;
+            if(NotMovedToBall >= 1500){
+                NotMovedToBall = 0;
+                AiState = AISTATE_IDLING;
+                TargetPercentage = 0.5;
+            }
+        }
+        
+        if(AiState == AISTATE_IDLING){
+            // Get the ball location along our axis and set our progress //
+            
+            Prop@ ballptr = GetPongGame().GetBall();
+            Float3 ballpos = ballptr.GetPosition();
+            
+            float curprogress = AISlot.GetTrackProgress();
+            
+            // Get track controller positions //
+            TrackEntityController@ track = AISlot.GetTrackController();
+            Float3 startpos = track.GetCurrentNodePosition();
+            Float3 endpos = track.GetNextNodePosition();
+                
+            float disttostart;
+            float disttoend;
+                
+            if(abs(startpos.GetZ()-endpos.GetZ()) > abs(startpos.GetX()-endpos.GetX())){
+                // Only Z distance //
+                disttostart = abs((startpos-ballpos).GetZ());
+                disttoend = abs((endpos-ballpos).GetZ());
+            } else {
+                // Only X distance //
+                disttostart = abs((startpos-ballpos).GetX());
+                disttoend = abs((endpos-ballpos).GetX());
+            }
+                
+            TargetPercentage = disttostart/(disttostart+disttoend);
+        }
+        
+        
+        MoveTowardsProgress();
+    }
 
 
     // How long in milliseconds last time ball was coming towards our goal //
@@ -200,6 +293,11 @@ void SimpleAI(GameModule@ mod, PlayerSlot@ slot, int mspassed){
 void BallTrackerAI(GameModule@ mod, PlayerSlot@ slot, int mspassed){
     
     GetAIForSlot(slot).RunAITracker(mspassed);   
+}
+// Combined hax and raytrace AI //
+void CombinedAI(GameModule@ mod, PlayerSlot@ slot, int mspassed){
+
+    GetAIForSlot(slot).RunAICombined(mspassed); 
 }
 
 // ------------------ Listener Functions ------------------ //

@@ -10,7 +10,7 @@ using namespace Leviathan;
 #include "Entities\GameWorld.h"
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), 
-	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL)
+	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL)
 {
 
 	// create this here //
@@ -51,7 +51,7 @@ DLLEXPORT Engine* Leviathan::Engine::Get(){
 	return instance;
 }
 // ------------------------------------ //
-bool Leviathan::Engine::Init(AppDef* definition){
+bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 	// get time, for monitoring how long load takes //
 	__int64 InitStartTime = Misc::GetTimeMs64();
 	// set static access to this object //
@@ -73,6 +73,20 @@ bool Leviathan::Engine::Init(AppDef* definition){
 	// create randomizer //
 	MainRandom = new Random((int)InitStartTime);
 	MainRandom->SetAsMain();
+
+	// Create threading facilities //
+	_ThreadingManager = new ThreadingManager();
+	if(!_ThreadingManager->Init()){
+
+		Logger::Get()->Error(L"Engine: Init: cannot start threading");
+		return false;
+	}
+
+	// We want to send a request to the master server as soon as possible //
+	_NetworkHandler = new NetworkHandler(networking);
+
+	_NetworkHandler->Init(Define->GetMasterServerInfo());
+
 
 	// data storage //
 	Mainstore = new DataStore(true);
@@ -129,6 +143,9 @@ bool Leviathan::Engine::Init(AppDef* definition){
 		Logger::Get()->Error(L"Failed to init Engine, Init graphics failed! Aborting");
 		return false;
 	}
+
+	// Register threads to use graphical objects //
+	_ThreadingManager->MakeThreadsWorkWithOgre();
 
 	// create newton manager before any newton resources are needed //
 	_NewtonManager = new NewtonManager();
@@ -216,6 +233,11 @@ void Leviathan::Engine::Release(){
 	// Let the game release it's resources //
 	Owner->EnginePreShutdown();
 
+	// Wait for tasks to finish //
+	_ThreadingManager->WaitForAllTasksToFinish();
+
+	// Close all connections //
+	SAFE_RELEASEDEL(_NetworkHandler);
 
 	// destroy worlds //
 	while(GameWorlds.size()){
@@ -223,6 +245,8 @@ void Leviathan::Engine::Release(){
 		GameWorlds[0]->Release();
 		GameWorlds.erase(GameWorlds.begin());
 	}
+
+
 
 	if(GraphicalEntity1){
 		// make windows clear their stored objects //
@@ -263,6 +287,10 @@ void Leviathan::Engine::Release(){
 
 	ObjectFileProcessor::Release();
 	SAFE_RELEASEDEL(MainFileHandler);
+
+	// Stop threads //
+	_ThreadingManager->WaitForAllTasksToFinish();
+	SAFE_RELEASEDEL(_ThreadingManager);
 
 	// clears all running timers that might have accidentally been left running //
 	TimingMonitor::ClearTimers();

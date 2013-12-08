@@ -28,6 +28,8 @@ file(GLOB GroupLeap "Leap/*.cpp" "Leap/*.h")
 file(GLOB GroupObjectFiles "ObjectFiles/*.cpp" "ObjectFiles/*.h")
 file(GLOB GroupHandlers "Handlers/*.cpp" "Handlers/*.h")
 file(GLOB GroupAddons "Addons/*.cpp" "Addons/*.h")
+file(GLOB GroupNetworking "Networking/*.cpp" "Networking/*.h")
+file(GLOB GroupThreading "Threading/*.cpp" "Threading/*.h")
 
 # AngelScript addon sources
 file(GLOB_RECURSE GroupScriptAddons "${PROJECT_SOURCE_DIR}/AngelScript/add_on/*.cpp" "${PROJECT_SOURCE_DIR}/AngelScript/add_on/*.h")
@@ -40,6 +42,8 @@ source_group("Leap" FILES ${GroupLeap})
 source_group("Scripting" FILES ${GroupScript})
 source_group("Scripting\\AngelAddons" FILES ${GroupScriptAddons})
 source_group("Addons" FILES ${GroupAddons})
+source_group("Networking" FILES ${GroupNetworking})
+source_group("Threading" FILES ${GroupThreading})
 
 source_group("Entities" FILES ${GroupEntities})
 source_group("Entities\\Bases" FILES ${GroupEntitiesBases})
@@ -75,7 +79,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
     ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
-    ${GroupUtilityData} ${GroupAddons})
+    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading})
 
     
 # precompiled headers

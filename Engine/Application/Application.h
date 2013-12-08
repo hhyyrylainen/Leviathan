@@ -54,6 +54,9 @@ namespace Leviathan{
 		Engine* _Engine;
 		AppDef* ApplicationConfiguration;
 
+		// Default type connection handler //
+		NetworkClient* Networking;
+
 		// static part //
 		static LeviathanApplication* Curapp;
 	};

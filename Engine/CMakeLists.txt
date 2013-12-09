@@ -93,6 +93,12 @@ add_definitions(-DENGINE_EXPORTS)
 # create library with all the files
 add_library(Engine SHARED ${EngineFiles})
 
+if(NOT WIN32)
+# Link with X11
+target_link_libraries(Engine ${X11_LIBRARIES})
+
+endif(NOT WIN32)
+
 # Possible debug installs
 set(InstallConfigurationNames "Release")
 if(NOT INSTALL_ONLY_RELEASE)

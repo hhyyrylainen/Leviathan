@@ -4,6 +4,9 @@
 #include "DDsHandler.h"
 #endif
 using namespace Leviathan;
+#ifdef _WIN32
+#include "C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Samples/C++/Direct3D11/DDSWithoutD3DX11/DDS.h"
+#endif
 // ------------------------------------ //
 DDSHandler::DDSHandler(){
 
@@ -13,7 +16,7 @@ DDSHandler::~DDSHandler(){
 }
 // ------------------------------------ //
 void DDSHandler::WriteDDSFromGrayScale(wstring& file, vector<vector<unsigned char>> &data, int width, int height/*, DWORD datatype*/){
-
+#ifdef _WIN32
 	ofstream writer;
 	writer.open(Convert::WstringToString(file), ios::binary);
 
@@ -36,7 +39,7 @@ void DDSHandler::WriteDDSFromGrayScale(wstring& file, vector<vector<unsigned cha
 	header.dwPitchOrLinearSize = Pitch;
 	header.ddspf = DDSPF_R8G8B8;
 	header.dwSurfaceFlags = DDS_SURFACE_FLAGS_TEXTURE;
-	//header.dwCaps2 = 
+	//header.dwCaps2 =
 
 	writer.write((char*)&header, sizeof(header));
 
@@ -62,7 +65,7 @@ void DDSHandler::WriteDDSFromGrayScale(wstring& file, vector<vector<unsigned cha
 	for(y = 0; y < data.size(); y++){
 		for(x = 0; x < data[y].size(); x++){
 			int red = 255, green = 255, blue = 255;
-			
+
 			// sample gray scale to rgb
 			red = (int)data[y][x];
 			green = (int)data[y][x];
@@ -93,12 +96,13 @@ void DDSHandler::WriteDDSFromGrayScale(wstring& file, vector<vector<unsigned cha
 	//}
 	//delete Image;
 	//return;
+#endif
 }
 // ------------------------------------ //
 unsigned char* DDSHandler::GenerateRGBDDSToMemory(vector<vector<Int3>>& data, int width, int height, /*DWORD datatype,*/ int& resultedamount){
-	
-	unsigned char* buffer = NULL;
 
+	unsigned char* buffer = NULL;
+#ifdef _WIN32
 	int BitsPerPixel = 24;
 	int Pitch = (width * BitsPerPixel + 7)/8;
 
@@ -170,7 +174,7 @@ unsigned char* DDSHandler::GenerateRGBDDSToMemory(vector<vector<Int3>>& data, in
 	//writer.write((char*)buffer, size);
 
 	//writer.close();
-
+#endif
 	return buffer;
 }
 // ------------------------------------ //

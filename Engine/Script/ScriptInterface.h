@@ -18,8 +18,8 @@ namespace Leviathan{
 
 	class ScriptInterface : public EngineComponent{
 	public:
-		DLLEXPORT ScriptInterface::ScriptInterface();
-		DLLEXPORT ScriptInterface::~ScriptInterface();
+		DLLEXPORT ScriptInterface();
+		DLLEXPORT ~ScriptInterface();
 
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();

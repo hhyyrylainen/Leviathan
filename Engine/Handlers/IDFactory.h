@@ -27,12 +27,12 @@ namespace Leviathan{
 			return Get()->ProduceSystemID();
 		}
 
-		DLLEXPORT __forceinline int ProduceID(){
+		DLLEXPORT FORCE_INLINE int ProduceID(){
 			// we need to lock this object to ensure thread safety //
 			boost::strict_lock<IDFactory> guard(*this);
 			return ProduceID(guard);
 		}
-		DLLEXPORT __forceinline int ProduceSystemID(){
+		DLLEXPORT FORCE_INLINE int ProduceSystemID(){
 			// we need to lock this object to ensure thread safety //
 			boost::strict_lock<IDFactory> guard(*this);
 			return ProduceSystemID(guard);
@@ -45,7 +45,7 @@ namespace Leviathan{
 		DLLEXPORT static IDFactory* Get();
 
 	private:
-		__forceinline void VerifyLock(boost::strict_lock<IDFactory> &guard) throw(...){
+		FORCE_INLINE void VerifyLock(boost::strict_lock<IDFactory> &guard) THROWS{
 			// ensure that lock is for this //
 			if(!guard.owns_lock(this))
 				throw ExceptionInvalidAccess(L"wrong lock owner", 0, __WFUNCTION__, L"lock", L"mismatching lock and object");

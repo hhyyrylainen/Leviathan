@@ -10,15 +10,15 @@
 
 namespace Leviathan{
 	// base exception for other exceptions //
-	enum EXCEPTIONTYPE {EXCEPTIONTYPE_BASE, EXCEPTIONTYPE_NULLPTR, EXCEPTIONTYPE_INVALIDARGUEMENT, EXCEPTIONTYPE_INVALIDTYPE, 
+	enum EXCEPTIONTYPE {EXCEPTIONTYPE_BASE, EXCEPTIONTYPE_NULLPTR, EXCEPTIONTYPE_INVALIDARGUEMENT, EXCEPTIONTYPE_INVALIDTYPE,
 		EXCEPTIONTYPE_INVALIDACCESS, EXCEPTIONTYPE_NOTFOUND};
 
 	class ExceptionBase /*: public Object*/{
 	public:
-		DLLEXPORT ExceptionBase::ExceptionBase();
-		DLLEXPORT ExceptionBase::ExceptionBase(const wstring &message, int val, const wstring &source);
-		DLLEXPORT ExceptionBase::ExceptionBase(const ExceptionBase &other);
-		DLLEXPORT virtual ExceptionBase::~ExceptionBase();
+		DLLEXPORT ExceptionBase();
+		DLLEXPORT ExceptionBase(const wstring &message, int val, const wstring &source);
+		DLLEXPORT ExceptionBase(const ExceptionBase &other);
+		DLLEXPORT virtual ~ExceptionBase();
 
 		DLLEXPORT virtual wstring* GetMessage();
 		DLLEXPORT virtual wstring Get() const;

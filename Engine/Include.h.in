@@ -249,11 +249,33 @@ using namespace std;
 #define OBJECT_SMOOTH	4
 #define SHADER_DEBUG 1
 
+// Define common types that might be missing //
+#ifndef _WIN32
+#include <inttypes.h>
+#include <float.h>
+typedef unsigned int UINT;
+typedef long LONG;
+typedef int64_t __int64;
+typedef int32_t __int32;
+typedef char BYTE;
+
+
+
+#define __assume(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
+
+#define FORCE_INLINE __attribute__((always_inline))
+//#define FORCE_INLINE
+#define THROWS
+#else
+
+#define FORCE_INLINE	__forceinline
+#define THROWS		throw(...)
+#endif
+
+
 #define LEVIATHAN_UNIT_SCALE		1000
 // throw on Error message //
 //#define THROW_ON_PRINTERROR
-
-#define FORCE_INLINE __forceinline
 
 #ifdef _DEBUG
 	#ifdef _MSC_VER
@@ -290,7 +312,7 @@ using namespace std;
 
 #ifndef DEBUG_OUTPUT_AUTOPLAINTEXT
 #if defined( DEBUG ) || defined( _DEBUG )
-#define DEBUG_OUTPUT_AUTOPLAINTEXT(s)	{Logger::SendDebugMessage(wstring(L"[INFO] "L#s L"\n"));}
+#define DEBUG_OUTPUT_AUTOPLAINTEXT(s)	{Logger::SendDebugMessage(wstring(L"[INFO] " L#s L"\n"));}
 #else
 #define DEBUG_OUTPUT_AUTOPLAINTEXT(s)   {}
 #endif //DEBUG || _DEBUG
@@ -299,9 +321,14 @@ using namespace std;
 
 #ifndef DLLEXPORT
 #ifdef ENGINE_EXPORTS
-#define DLLEXPORT   __declspec( dllexport ) 
+#ifdef _WIN32
+#define DLLEXPORT  	 __declspec( dllexport )
 #else
-#define DLLEXPORT 
+// This might not be needed for gcc
+#define DLLEXPORT	__attribute__ ((visibility ("default")))
+#endif
+#else
+#define DLLEXPORT
 #endif // ENGINE_EXPORTS
 #endif
 
@@ -334,7 +361,12 @@ using namespace std;
 #define FORCE_POSITIVE(x) {if((x) < 0){ (x)*=-1; }}
 #define FORCE_POSITIVEF(x) {if((x) < 0){ (x)*=-1.0f; }}
 
+#ifdef _WIN32
 #define WIDEN2(x) L ## x
+#else
+// TODO: make this not kill performance
+#define WIDEN2(x) Convert::StringToWstring(x)
+#endif
 #define WIDEN(x) WIDEN2(x)
 #define __WFILE__ WIDEN(__FILE__)
 #define __WFUNCTION__ WIDEN(__FUNCTION__)
@@ -390,7 +422,7 @@ namespace Leviathan{
 
 #include "Statistics/TimingMonitor.h"
 // speed up compile times with leap //
-#include "leap.h"
+#include "Leap.h"
 // OIS compile speed up //
 #include <OISMouse.h>
 #include <OISKeyboard.h>

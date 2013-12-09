@@ -174,7 +174,7 @@ namespace Leviathan{
 			// copy type //
 			Type = otherdeepcopy.Type;
 		}
-		
+
 
 		DLLEXPORT virtual ~DataBlock(){
 			// erase memory //
@@ -352,7 +352,7 @@ namespace Leviathan{
 
 		DBlockT* Value;
 	};
-	
+
 
 
 	// define specific types //
@@ -428,7 +428,7 @@ namespace Leviathan{
 		DLLEXPORT VariableBlock(const char &var){
 			BlockData = (DataBlockAll*)new CharBlock(var);
 		}
-		
+
 
 
 
@@ -440,7 +440,7 @@ namespace Leviathan{
 		}
 
 		// constructor for creating this from wstring //
-		DLLEXPORT VariableBlock(wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined = NULL) throw(...);
+		DLLEXPORT VariableBlock(wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined = NULL) THROWS;
 
 		// non template constructor //
 		DLLEXPORT VariableBlock(DataBlockAll* block){
@@ -472,7 +472,7 @@ namespace Leviathan{
 			if(BlockData){
 				SAFE_DELETE(BlockData);
 			}
-			
+
 			// copy pointer //
 			BlockData = arg->BlockData;
 
@@ -660,7 +660,11 @@ namespace Leviathan{
 				return false;
 			}
 			// assign directly to the wanted value, should be faster than converting returning and then assigning //
+#ifdef _WIN32
 			var = (ConvertT)*this;
+#else
+            var = this->operator ConvertT();
+#endif
 			// assignment succeeded //
 			return true;
 		}
@@ -673,7 +677,11 @@ namespace Leviathan{
 				return ConvertT(0);
 			}
 			// return conversion result //
+#ifdef _WIN32
 			return (ConvertT)*this;
+#else
+            return this->operator ConvertT();
+#endif
 		}
 
 	protected:
@@ -772,7 +780,7 @@ namespace Leviathan{
 #define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCKDEFAULT(BlockTypeName, ToConvertTypeName) template<> class DataBlockConverter<BlockTypeName, ToConvertTypeName>{public: static inline ToConvertTypeName DoConvert(const BlockTypeName* block){ return (ToConvertTypeName)(*block->Value);}; static const bool AllowedConversion = true;};
 
 	// wstring and string conversions with templates //
-	template<class FromDataBlockType> 
+	template<class FromDataBlockType>
 	class DataBlockConverter<FromDataBlockType, wstring>{
 	public:
 		static inline wstring DoConvert(const FromDataBlockType* block){
@@ -780,7 +788,7 @@ namespace Leviathan{
 		}
 		static const bool AllowedConversion = true;
 	};
-	template<class FromDataBlockType> 
+	template<class FromDataBlockType>
 	class DataBlockConverter<FromDataBlockType, string>{
 	public:
 		static inline string DoConvert(const FromDataBlockType* block){

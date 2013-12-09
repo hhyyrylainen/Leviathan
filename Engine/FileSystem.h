@@ -49,7 +49,7 @@ namespace Leviathan{
 
 		DLLEXPORT int RegisterExtension(const wstring &extension);
 		DLLEXPORT void GetExtensionIDS(const wstring& extensions, vector<int>& ids);
-		
+
 
 		// loaded file searching functions //
 		DLLEXPORT wstring& SearchForFile(FILEGROUP which, const wstring& name, const wstring& extensions, bool searchall = true);
@@ -65,8 +65,8 @@ namespace Leviathan{
 		// ------------------ Static part ------------------ //
 		DLLEXPORT static bool OperatingOnVista();
 		DLLEXPORT static bool OperatingOnXP();
-		
-		
+
+
 		DLLEXPORT static wstring& GetDataFolder();
 		DLLEXPORT static wstring GetModelsFolder();
 		DLLEXPORT static wstring GetScriptsFolder();
@@ -106,10 +106,10 @@ namespace Leviathan{
 		DLLEXPORT static bool WriteToFile(const string &data, const string &filename);
 		DLLEXPORT static bool WriteToFile(const wstring &data, const wstring &filename);
 		DLLEXPORT static bool AppendToFile(const wstring &data, const wstring &filepath);
-		DLLEXPORT static void ReadFileEntirely(const wstring &file, wstring &resultreceiver) throw(...);
+		DLLEXPORT static void ReadFileEntirely(const wstring &file, wstring &resultreceiver) THROWS;
 
 		// bitmap stuff //
-		DLLEXPORT static BYTE* LoadBMP ( int* width, int* height, long* size, LPCTSTR bmpfile );
+		DLLEXPORT static BYTE* LoadBMP ( int* width, int* height, long* size, const char* bmpfile );
 		DLLEXPORT static BYTE* ConvertBMPToRGBBuffer ( BYTE* Buffer, int width, int height );
 
 		DLLEXPORT static inline FileSystem* Get(){
@@ -118,11 +118,11 @@ namespace Leviathan{
 
 	private:
 		// file search functions //
-		shared_ptr<FileDefinitionType> _SearchForFileInVec(vector<shared_ptr<FileDefinitionType>> &vec, vector<int> &extensions, 
+		shared_ptr<FileDefinitionType> _SearchForFileInVec(vector<shared_ptr<FileDefinitionType>> &vec, vector<int> &extensions,
 			const wstring &name, bool UseIndexVector, vector<CharWithIndex*>* Index);
-		void _SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<shared_ptr<FileDefinitionType>>& results, 
+		void _SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<shared_ptr<FileDefinitionType>>& results,
 			vector<int>& extensions, const basic_regex<wchar_t> &regex);
-		void _CreateIndexesIfMissing(vector<shared_ptr<FileDefinitionType>> &vec, vector<CharWithIndex*> &resultvec, bool &indexed, 
+		void _CreateIndexesIfMissing(vector<shared_ptr<FileDefinitionType>> &vec, vector<CharWithIndex*> &resultvec, bool &indexed,
 			const bool &force /*= false*/);
 		// ------------------------------------ //
 		// vector that holds string value of file extension and it's id code //
@@ -140,7 +140,7 @@ namespace Leviathan{
 		// index vectors //
 		bool IsAllIndexed;
 		vector<CharWithIndex*> AllIndexes;
-		
+
 		bool IsTextureIndexed;
 		vector<CharWithIndex*> TextureIndexes;
 

@@ -8,8 +8,8 @@ using namespace Leviathan;
 // ------------------------------------ //
 
 
-DLLEXPORT Leviathan::FileReaderSimple::FileReaderSimple(const wstring& source, UINT readbuffersize /*= FILEREADERSIMPLE_DEFAULT_READSIZE*/) 
-	throw (...) : SourceFile(source), FileIndexBlocks(0), ReadBufferSize(readbuffersize), LastReadAmount(0), 
+DLLEXPORT Leviathan::FileReaderSimple::FileReaderSimple(const wstring& source, UINT readbuffersize /*= FILEREADERSIMPLE_DEFAULT_READSIZE*/)
+	THROWS : SourceFile(source), FileIndexBlocks(0), ReadBufferSize(readbuffersize), LastReadAmount(0),
 	FileReadPosition(0), ReadingBuffer(NULL), FileSearchPosition(0), Reader(), FileLength(0)
 {
 	// set up for reading //
@@ -40,7 +40,7 @@ DLLEXPORT void Leviathan::FileReaderSimple::CloseNow(){
 	// everything else should be fine to be deleted in destructor //
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::FileReaderSimple::ReadNextLine(wstring& receiver)  throw (...) {
+DLLEXPORT bool Leviathan::FileReaderSimple::ReadNextLine(wstring& receiver)  THROWS {
 	//if(!IsFileOpen){
 	//	// well shit //
 	//	receiver = L"";
@@ -131,7 +131,7 @@ DLLEXPORT bool Leviathan::FileReaderSimple::ReadNextLine(wstring& receiver)  thr
 
 	return true;
 }
-DLLEXPORT void Leviathan::FileReaderSimple::ReadWholeFile(wstring &receiver) throw (...){
+DLLEXPORT void Leviathan::FileReaderSimple::ReadWholeFile(wstring &receiver) THROWS{
 	// return all data in all buffers //
 	receiver.clear();
 
@@ -153,7 +153,7 @@ DLLEXPORT void Leviathan::FileReaderSimple::ReadWholeFile(wstring &receiver) thr
 	// done //
 }
 
-DLLEXPORT void Leviathan::FileReaderSimple::ReadUntilEnd(wstring &receiver) throw (...){
+DLLEXPORT void Leviathan::FileReaderSimple::ReadUntilEnd(wstring &receiver) THROWS{
 
 }
 
@@ -259,7 +259,7 @@ bool Leviathan::FileReaderSimple::LoadFileSection(int index) throw(...){
 
 	// get position from reader //
 	FileReadPosition = Reader.tellg();
-	
+
 	if(FileReadPosition != tempptr->BlockEndReadPosition){
 
 		DEBUG_BREAK;

@@ -20,7 +20,7 @@ namespace Leviathan{
 		DLLEXPORT ThreadSafe();
 		DLLEXPORT virtual ~ThreadSafe();
 
-		__forceinline void VerifyLock(ObjectLock &guard) throw(...){
+		FORCE_INLINE void VerifyLock(ObjectLock &guard) THROWS{
 			// ensure that lock is for this //
 			if(!guard.owns_lock(this))
 				throw ExceptionInvalidAccess(L"wrong lock owner", 0, __WFUNCTION__, L"lock", L"mismatching lock and object");

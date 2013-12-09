@@ -12,9 +12,9 @@ namespace Leviathan{
 
 	class ObjectFileList : public Object{
 	public:
-		DLLEXPORT ObjectFileList::ObjectFileList();
-		DLLEXPORT ObjectFileList::ObjectFileList(const wstring &name);
-		DLLEXPORT ObjectFileList::~ObjectFileList();
+		DLLEXPORT ObjectFileList();
+		DLLEXPORT ObjectFileList(const wstring &name);
+		DLLEXPORT ~ObjectFileList();
 
 
 		wstring Name;

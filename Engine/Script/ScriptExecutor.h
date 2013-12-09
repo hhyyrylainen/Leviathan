@@ -18,8 +18,8 @@ namespace Leviathan{
 	class ScriptExecutor : public EngineComponent{
 		friend ScriptModule;
 	public:
-		DLLEXPORT ScriptExecutor::ScriptExecutor();
-		DLLEXPORT ScriptExecutor::~ScriptExecutor();
+		DLLEXPORT ScriptExecutor();
+		DLLEXPORT ~ScriptExecutor();
 
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();
@@ -28,7 +28,7 @@ namespace Leviathan{
 
 		// module managing //
 		DLLEXPORT weak_ptr<ScriptModule> CreateNewModule(const wstring &name, const string &source, const int &modulesid = IDFactory::GetID());
-		DLLEXPORT void DeleteModule(ScriptModule* ptrtomatch); 
+		DLLEXPORT void DeleteModule(ScriptModule* ptrtomatch);
 		DLLEXPORT bool DeleteModuleIfNoExternalReferences(int ID);
 		DLLEXPORT weak_ptr<ScriptModule> GetModule(const int &ID);
 

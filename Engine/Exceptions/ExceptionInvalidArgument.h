@@ -12,10 +12,9 @@ namespace Leviathan{
 	// base exception for other exceptions //
 	class ExceptionInvalidArgument : public ExceptionBase{
 	public:
-		DLLEXPORT ExceptionInvalidArgument::ExceptionInvalidArgument(const wstring &message, int val, const wstring& sourcefunction, 
-			const wstring &InvalidArg, const wstring &invalidvalue);
-		DLLEXPORT ExceptionInvalidArgument::ExceptionInvalidArgument(const ExceptionInvalidArgument &other);
-		DLLEXPORT ExceptionInvalidArgument::~ExceptionInvalidArgument();
+		DLLEXPORT ExceptionInvalidArgument(const wstring &message, int val, const wstring& sourcefunction, const wstring &InvalidArg, const wstring &invalidvalue);
+		DLLEXPORT ExceptionInvalidArgument(const ExceptionInvalidArgument &other);
+		DLLEXPORT ~ExceptionInvalidArgument();
 
 		DLLEXPORT const wstring* GetInvalidAsPtr() const;
 		DLLEXPORT wstring GetInvalid() const;

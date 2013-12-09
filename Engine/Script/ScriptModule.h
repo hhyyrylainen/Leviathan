@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Angelscript.h"
+#include "angelscript.h"
 #include "add_on/scriptbuilder/scriptbuilder.h"
 
 
@@ -34,7 +34,7 @@ namespace Leviathan{
 
 	// used to store function's parameter info //
 	struct FunctionParameterInfo{
-		FunctionParameterInfo(int id, int sizes) : FunctionID(id), ParameterTypeIDS(sizes), ParameterDeclarations(sizes), 
+		FunctionParameterInfo(int id, int sizes) : FunctionID(id), ParameterTypeIDS(sizes), ParameterDeclarations(sizes),
 			MatchingDataBlockTypes(sizes){};
 
 		int FunctionID;
@@ -126,7 +126,7 @@ namespace Leviathan{
 		// flag for determining do we need to update listener data //
 		bool ListenerDataBuilt;
 
-		CScriptBuilder* ScriptBuilder; 
+		CScriptBuilder* ScriptBuilder;
 
 		std::vector<FunctionParameterInfo*> FuncParameterInfos;
 		// ------------------------------------ //

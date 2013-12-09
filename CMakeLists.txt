@@ -1,6 +1,11 @@
 # CMake file for generating all project files
 cmake_minimum_required(VERSION 2.8)
 
+project(Leviathan)
+set(WORK_DIR "${PROJECT_BINARY_DIR}/bin")
+
+#######
+
 if(WIN32)
 # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, higher memory for compiling
 add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm162)
@@ -16,11 +21,12 @@ set(BOOST_INCLUDE_DIR "NOTFOUND" CACHE FILEPATH "Path to Boost include files")
 
 include_directories(${BOOST_INCLUDE_DIR})
 
+# We need X11 on linux for window class to work
+find_package(X11)
+
+include_directories(${X11_INCLUDE_DIRS})
+
 endif(WIN32)
-
-project(Leviathan)
-
-set(WORK_DIR "${PROJECT_BINARY_DIR}/bin")
 
 
 option(INSTALL_ONLY_RELEASE "For creating release folders" ON)

@@ -16,11 +16,8 @@ namespace Leviathan{
 
 	class MMath{
 	public:
-		static DLLEXPORT long double CoordinateDistance(POINT pos1,POINT pos2);
 		static DLLEXPORT float CoordinateDistance(float x1, float x2,float y1, float y2);
-		static DLLEXPORT double AngleBetweenPoints(POINT pos1, POINT pos2);
 		static DLLEXPORT double AngleBetweenPoints(float x1, float x2,float y1, float y2);
-		static DLLEXPORT POINT GetRelativeMousePos(HWND Hwnd);
 		static DLLEXPORT float RandomNumber(float Min, float Max);
 
 		DLLEXPORT static bool IsPointInsidePolygon(const vector<Float3>& polygon, const Float3& point);

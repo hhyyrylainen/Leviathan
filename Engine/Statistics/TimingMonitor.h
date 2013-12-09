@@ -45,9 +45,9 @@ namespace Leviathan{
 		DLLEXPORT static void ClearTimers();
 
 	private:
-		TimingMonitor::TimingMonitor();
-		TimingMonitor::TimingMonitor(const TimingMonitor& other);
-		TimingMonitor::~TimingMonitor();
+		TimingMonitor();
+		TimingMonitor(const TimingMonitor& other);
+		~TimingMonitor();
 
 		// ---------------------- //
 		static vector<shared_ptr<TimingMonitorClock>> Timers;

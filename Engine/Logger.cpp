@@ -9,25 +9,36 @@ using namespace Leviathan;
 
 Leviathan::Logger::Logger(): FirstSaveDone(false), Saved(false), Autosave(false), Path(L"./Log.txt"){
 	// get time for putting to beginning of log //
+#ifdef _WIN32
 	SYSTEMTIME tdate;
 	GetLocalTime(&tdate);
 
 	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "
 		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
+
+#else
+    wstring times = L"TODO: add time get";
+
+#endif
 
 	PendingLog = L"Start of Leviathan log for leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
 
 	LatestLogger = this;
 }
-DLLEXPORT Leviathan::Logger::Logger(const wstring &start, const bool &autosave) : FirstSaveDone(false), Saved(false), Autosave(autosave), 
+DLLEXPORT Leviathan::Logger::Logger(const wstring &start, const bool &autosave) : FirstSaveDone(false), Saved(false), Autosave(autosave),
 	Path(L"./Log.txt")
 {
-	// use the argument as initial text //
+#ifdef _WIN32
 	SYSTEMTIME tdate;
 	GetLocalTime(&tdate);
 
 	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "
 		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
+
+#else
+    wstring times = L"TODO: add time get";
+
+#endif
 
 	PendingLog = start+L"Start of Leviathan log for leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
 

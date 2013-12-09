@@ -29,7 +29,7 @@ namespace Leviathan{
 		ReferenceCounted();
 		virtual ~ReferenceCounted();
 
-		__forceinline void AddRef(ObjectLock &guard){
+		FORCE_INLINE void AddRef(ObjectLock &guard){
 			VerifyLock(guard);
 			// we are safely locked and can increment the reference count //
 			RefCount++;

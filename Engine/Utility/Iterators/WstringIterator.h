@@ -18,10 +18,10 @@ namespace Leviathan{
 	enum QUOTETYPE {QUOTETYPE_DOUBLEQUOTES, QUOTETYPE_SINGLEQUOTES, QUOTETYPE_BOTH};
 	enum DECIMALSEPARATORTYPE {DECIMALSEPARATORTYPE_DOT, DECIMALSEPARATORTYPE_COMMA, DECIMALSEPARATORTYPE_BOTH, DECIMALSEPARATORTYPE_NONE};
 
-	enum UNNORMALCHARACTER {UNNORMALCHARACTER_TYPE_NON_ASCII = 0x1, 
-		UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS = 0x2, 
+	enum UNNORMALCHARACTER {UNNORMALCHARACTER_TYPE_NON_ASCII = 0x1,
+		UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS = 0x2,
 		UNNORMALCHARACTER_TYPE_WHITESPACE = 0x4,
-		UNNORMALCHARACTER_TYPE_LOWCODES = 0x8, 
+		UNNORMALCHARACTER_TYPE_LOWCODES = 0x8,
 		UNNORMALCHARACTER_TYPE_NON_NAMEVALID = 0x10};
 
 	enum EQUALITYCHARACTER {EQUALITYCHARACTER_TYPE_EQUALITY, EQUALITYCHARACTER_TYPE_DOUBLEDOTSTYLE, EQUALITYCHARACTER_TYPE_ALL};
@@ -65,13 +65,13 @@ namespace Leviathan{
 		//************************************
 		// Method:    WstringIterator
 		// FullName:  Leviathan::WstringIterator::WstringIterator
-		// Access:    public 
+		// Access:    public
 		// Parameter: wstring * text
 		// Parameter: bool TakesOwnership
 		// Usage: Creates new instance. If TakesOwnership pointer is deleted in destructor
 		//************************************
-		DLLEXPORT WstringIterator::WstringIterator(wstring* text, bool TakesOwnership = false);
-		DLLEXPORT virtual WstringIterator::~WstringIterator();
+		DLLEXPORT WstringIterator(wstring* text, bool TakesOwnership = false);
+		DLLEXPORT virtual ~WstringIterator();
 
 		DLLEXPORT unique_ptr<wstring> GetStringInQuotes(QUOTETYPE quotes);
 		DLLEXPORT unique_ptr<wstring> GetNextNumber(DECIMALSEPARATORTYPE decimal);
@@ -92,7 +92,7 @@ namespace Leviathan{
 		DLLEXPORT bool MoveToNext();
 
 		DLLEXPORT Object* StartIterating(IteratorWstrCallBack functiontocall, Object* IteratorData, int parameters);
-		
+
 
 		DLLEXPORT bool IsOutOfBounds(unsigned long pos);
 		DLLEXPORT bool IsOutOfBounds();

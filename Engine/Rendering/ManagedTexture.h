@@ -19,11 +19,11 @@ namespace Leviathan{
 
 	// texture types //
 	enum TEXTURETYPE {
-		TEXTURETYPE_NORMAL = 0x1, 
-		TEXTURETYPE_BUMPMAP = 0x2, 
-		TEXTURETYPE_BLENDMAP = 0x4, 
+		TEXTURETYPE_NORMAL = 0x1,
+		TEXTURETYPE_BUMPMAP = 0x2,
+		TEXTURETYPE_BLENDMAP = 0x4,
 		TEXTURETYPE_LIGHTMAP = 0x8,
-		TEXTURETYPE_TEXT = 0x10, 
+		TEXTURETYPE_TEXT = 0x10,
 		//TEXTURETYPE_BASEGRAPHICAL = 0x20
 		//0x40
 		//0x80 // first byte full
@@ -60,9 +60,9 @@ namespace Leviathan{
 		friend TextureManager;
 	public:
 
-		DLLEXPORT ManagedTexture::ManagedTexture(const wstring &file, const int &id, const TEXTURETYPE &type);
-		DLLEXPORT ManagedTexture::ManagedTexture(unsigned char* buffer, int bufferelements, int id, const wstring &source, const TEXTURETYPE &type);
-		DLLEXPORT ManagedTexture::~ManagedTexture();
+		DLLEXPORT ManagedTexture(const wstring &file, const int &id, const TEXTURETYPE &type);
+		DLLEXPORT ManagedTexture(unsigned char* buffer, int bufferelements, int id, const wstring &source, const TEXTURETYPE &type);
+		DLLEXPORT ~ManagedTexture();
 
 		DLLEXPORT void UnLoad(bool force);
 
@@ -86,7 +86,7 @@ namespace Leviathan{
 		int UnusedTime;
 
 	private:
-		DLLEXPORT ManagedTexture::ManagedTexture();
+		DLLEXPORT ManagedTexture();
 		// ------------------------------------ //
 
 		int ID;

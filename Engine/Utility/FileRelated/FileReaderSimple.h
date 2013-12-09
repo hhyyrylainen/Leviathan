@@ -47,15 +47,15 @@ namespace Leviathan{
 
 	class FileReaderSimple : public Object{
 	public:
-		DLLEXPORT FileReaderSimple::FileReaderSimple(const wstring &source, UINT readbuffersize = FILEREADERSIMPLE_DEFAULT_READSIZE) throw (...);
+		DLLEXPORT FileReaderSimple::FileReaderSimple(const wstring &source, UINT readbuffersize = FILEREADERSIMPLE_DEFAULT_READSIZE) THROWS;
 		DLLEXPORT FileReaderSimple::~FileReaderSimple();
 
 		DLLEXPORT void CloseNow();
 
 		// public handling functions //
-		DLLEXPORT bool ReadNextLine(wstring &receiver) throw (...);
-		DLLEXPORT void ReadWholeFile(wstring &receiver) throw (...);
-		DLLEXPORT void ReadUntilEnd(wstring &receiver) throw (...);
+		DLLEXPORT bool ReadNextLine(wstring &receiver) THROWS;
+		DLLEXPORT void ReadWholeFile(wstring &receiver) THROWS;
+		DLLEXPORT void ReadUntilEnd(wstring &receiver) THROWS;
 
 		DLLEXPORT __int64 GetFilePointerPosition();
 		DLLEXPORT void SetFileSearchPosition(const __int64 &newpos);

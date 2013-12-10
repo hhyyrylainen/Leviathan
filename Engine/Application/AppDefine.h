@@ -17,13 +17,20 @@ namespace Leviathan{
 
 	struct WindowDataDetails{
 		WindowDataDetails();
-		WindowDataDetails(const wstring &title, const int &width, const int &height, const bool &windowed, const bool &windowborder, HICON icon, 
+#ifdef _WIN32
+		WindowDataDetails(const wstring &title, const int &width, const int &height, const bool &windowed, const bool &windowborder, HICON icon,
 			LeviathanApplication* appvirtualptr);
 
 		void ApplyIconToHandle(HWND hwnd) const;
 
+
+        HICON Icon;
+#else
+		WindowDataDetails(const wstring &title, const int &width, const int &height, const bool &windowed, const bool &windowborder,
+			LeviathanApplication* appvirtualptr);
+
+#endif
 		wstring Title;
-		HICON Icon;
 		int Height;
 		int Width;
 		bool Windowed;
@@ -34,7 +41,7 @@ namespace Leviathan{
 		friend Engine;
 	public:
 		DLLEXPORT AppDef(const bool &isdef = false);
-		DLLEXPORT AppDef::~AppDef();
+		DLLEXPORT ~AppDef();
 
 
 		DLLEXPORT NamedVars* GetValues();
@@ -60,18 +67,22 @@ namespace Leviathan{
 			return Defaultconf;
 		}
 		DLLEXPORT inline bool GetVSync(){
-			
+
 			bool vsync;
 
-			ObjectFileProcessor::LoadValueFromNamedVars(*ConfigurationValues, L"Vsync", vsync, false, false);
+			ObjectFileProcessor::LoadValueFromNamedVars<bool>(*ConfigurationValues, L"Vsync", vsync, false, false);
 			return vsync;
 		}
 
 		DLLEXPORT static AppDef* GenerateAppdefine();
+#ifdef _WIN32
 		DLLEXPORT void StoreWindowDetails(const wstring &title, const bool &windowborder, HICON icon, LeviathanApplication* appvirtualptr);
+#else
+		DLLEXPORT void StoreWindowDetails(const wstring &title, const bool &windowborder, LeviathanApplication* appvirtualptr);
+#endif
 
 	protected:
-		
+
 		unique_ptr<NamedVars> ConfigurationValues;
 		HINSTANCE HInstance;
 

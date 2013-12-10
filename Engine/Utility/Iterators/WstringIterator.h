@@ -61,7 +61,7 @@ namespace Leviathan{
 		friend ITERATORCALLBACK_RETURNTYPE SkipSomething(WstringIterator* instance, Object* notwanted, int parameters);
 
 		// ------------------------------------ //
-		DLLEXPORT WstringIterator::WstringIterator(const wstring& text);
+		DLLEXPORT WstringIterator(const wstring& text);
 		//************************************
 		// Method:    WstringIterator
 		// FullName:  Leviathan::WstringIterator::WstringIterator

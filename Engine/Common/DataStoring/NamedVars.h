@@ -162,8 +162,11 @@ namespace Leviathan{
 					return false;
 				}
 				if(!tmpblock->ConvertAndAssingToVariable<T>(receiver)){
-
+#ifdef _WIN32
 					throw exception("invalid");
+#else
+                    throw bad_exception();
+#endif
 				}
 			}
 			catch(...){

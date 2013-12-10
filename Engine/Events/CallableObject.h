@@ -12,8 +12,8 @@ namespace Leviathan{
 
 	class CallableObject{
 	public:
-		DLLEXPORT CallableObject::CallableObject();
-		DLLEXPORT virtual CallableObject::~CallableObject();
+		DLLEXPORT CallableObject();
+		DLLEXPORT virtual ~CallableObject();
 
 		DLLEXPORT virtual int OnEvent(Event** pEvent) = 0;
 		DLLEXPORT virtual int OnGenericEvent(GenericEvent** pevent) = 0;
@@ -36,7 +36,7 @@ namespace Leviathan{
 		vector<unique_ptr<wstring>> RegisteredGenerics;
 
 
-		
+
 
 	};
 

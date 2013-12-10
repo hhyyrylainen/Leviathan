@@ -16,6 +16,13 @@
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 #include "X11/Xlibint.h"
+
+// Need some magic to not confuse with GenericEvent macro with GenericEvent class //
+#define X11GenericEvent GenericEvent
+#undef GenericEvent
+#define X11Status Status
+#undef Status
+
 #endif
 
 namespace Leviathan{

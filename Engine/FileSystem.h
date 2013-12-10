@@ -63,9 +63,10 @@ namespace Leviathan{
 		DLLEXPORT vector<shared_ptr<FileDefinitionType>>& GetAllFiles();
 		DLLEXPORT vector<shared_ptr<FileDefinitionType>>& GetScriptFiles();
 		// ------------------ Static part ------------------ //
+#ifdef _WIN32
 		DLLEXPORT static bool OperatingOnVista();
 		DLLEXPORT static bool OperatingOnXP();
-
+#endif
 
 		DLLEXPORT static wstring& GetDataFolder();
 		DLLEXPORT static wstring GetModelsFolder();
@@ -79,10 +80,10 @@ namespace Leviathan{
 		DLLEXPORT static void RegisterOGREResourceLocation(const string &location);
 
 		DLLEXPORT static bool DoesExtensionMatch(FileDefinitionType* file, const vector<int>&Ids);
-
+#ifdef _WIN32
 		DLLEXPORT static void GetWindowsFolder(wstring &path);
 		DLLEXPORT static void GetSpecialFolder(wstring &path, int specialtype);
-
+#endif
 		DLLEXPORT static void SetDataFolder(const wstring &folder);
 		DLLEXPORT static void SetModelsFolder(const wstring &folder);
 		DLLEXPORT static void SetScriptsFolder(const wstring &folder);
@@ -91,7 +92,8 @@ namespace Leviathan{
 
 		// file handling //
 		DLLEXPORT static int LoadDataDump(const wstring &file, vector<shared_ptr<NamedVariableList>>& vec);
-		DLLEXPORT static bool GetFilesInDirectory(vector<wstring> &files, wstring dirpath, wstring pattern = L"*.*", bool recursive = true);
+		// Warning: TODO: linux version ignores the defined pattern //
+		DLLEXPORT static bool GetFilesInDirectory(vector<wstring> &files, const wstring &dirpath, const wstring &pattern = L"*.*", bool recursive = true);
 
 		// extension handling //
 		DLLEXPORT static wstring GetExtension(const wstring &path);
@@ -107,10 +109,6 @@ namespace Leviathan{
 		DLLEXPORT static bool WriteToFile(const wstring &data, const wstring &filename);
 		DLLEXPORT static bool AppendToFile(const wstring &data, const wstring &filepath);
 		DLLEXPORT static void ReadFileEntirely(const wstring &file, wstring &resultreceiver) THROWS;
-
-		// bitmap stuff //
-		DLLEXPORT static BYTE* LoadBMP ( int* width, int* height, long* size, const char* bmpfile );
-		DLLEXPORT static BYTE* ConvertBMPToRGBBuffer ( BYTE* Buffer, int width, int height );
 
 		DLLEXPORT static inline FileSystem* Get(){
 			return Staticaccess;

@@ -6,10 +6,9 @@
 using namespace Leviathan;
 // ------------------------------------ //
 #include "Application/Application.h"
-#include "Rendering/TextureManager.h"
 #include "Entities/GameWorld.h"
 
-DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), 
+DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL),
 	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL)
 {
 
@@ -205,7 +204,7 @@ void Leviathan::Engine::PostLoad(){
 		// increase //
 		Mainstore->SetValue(L"StartCount", new VariableBlock(new IntBlock(startcounts+1)));
 	} else {
-		
+
 		Mainstore->AddVar(new NamedVariableList(L"StartCount", new VariableBlock(1)));
 		// set as persistent //
 		Mainstore->SetPersistance(L"StartCount", true);
@@ -290,7 +289,7 @@ void Leviathan::Engine::Tick(){
 	//LastFrame = CurTime;
 	LastFrame += TICKSPEED;
 	TickCount++;
-	
+
 	// update input //
 	LeapData->OnTick(TimePassed);
 
@@ -301,14 +300,14 @@ void Leviathan::Engine::Tick(){
 	GraphicalEntity1->Tick(TimePassed);
 
 	// update texture usage times, to allow unused textures to be unloaded //
-	Graph->GetTextureManager()->TimePass(TimePassed);
+	//Graph->GetTextureManager()->TimePass(TimePassed);
 
 	// some dark magic here //
 	if(TickCount % 25 == 0){
 		// update values
 		Mainstore->SetTickCount(TickCount);
 		Mainstore->SetTickTime(TickTime);
-		
+
 
 		// send updated rendering statistics //
 		RenderTimer->ReportStats(Mainstore);
@@ -330,7 +329,7 @@ void Leviathan::Engine::RenderFrame(){
 	// limit check //
 	if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)){
 		// fps would go too high //
-		
+
 		return;
 	}
 

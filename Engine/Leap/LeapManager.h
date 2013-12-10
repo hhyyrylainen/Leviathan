@@ -22,8 +22,8 @@ namespace Leviathan{
 	class LeapManager : public EngineComponent{
 		friend LeapListener;
 	public:
-		DLLEXPORT LeapManager::LeapManager(Engine* engineinstance);
-		DLLEXPORT LeapManager::~LeapManager();
+		DLLEXPORT LeapManager(Engine* engineinstance);
+		DLLEXPORT ~LeapManager();
 		// actual methods //
 		DLLEXPORT virtual bool Init();
 		DLLEXPORT virtual void Release();

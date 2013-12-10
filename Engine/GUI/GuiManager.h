@@ -30,8 +30,8 @@ namespace Gui{
 
 	class GuiManager : public EngineComponent, public Ogre::RenderQueueListener{
 	public:
-		DLLEXPORT GuiManager::GuiManager();
-		DLLEXPORT GuiManager::~GuiManager();
+		DLLEXPORT GuiManager();
+		DLLEXPORT ~GuiManager();
 
 		DLLEXPORT bool Init(AppDef* vars, Graphics* graph, GraphicalInputEntity* window);
 		DLLEXPORT void Release();

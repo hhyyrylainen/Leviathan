@@ -77,8 +77,12 @@ Leviathan::WindowDataDetails::WindowDataDetails(){
 
 }
 
+#ifdef _WIN32
 void Leviathan::WindowDataDetails::ApplyIconToHandle(HWND hwnd) const{
 
 	// send set icon message //
 	SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)Icon);
 }
+#else
+
+#endif

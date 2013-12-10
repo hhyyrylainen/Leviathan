@@ -20,9 +20,9 @@ namespace Leviathan{
 
 	class Random : public Object{
 	public:
-		DLLEXPORT Random::Random();
-		DLLEXPORT Random::Random(int seed);
-		DLLEXPORT Random::~Random();
+		DLLEXPORT Random();
+		DLLEXPORT Random(int seed);
+		DLLEXPORT ~Random();
 
 		DLLEXPORT static Random* Get();
 

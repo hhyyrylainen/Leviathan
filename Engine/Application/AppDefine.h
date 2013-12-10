@@ -47,11 +47,15 @@ namespace Leviathan{
 		DLLEXPORT NamedVars* GetValues();
 
 		// named constructor functions //
+#ifdef _WIN32
 		DLLEXPORT AppDef& SetHInstance(HINSTANCE instance){
 
 			HInstance = instance;
 			return *this;
 		}
+#else
+        // TODO: linux equivalent
+#endif
 		DLLEXPORT AppDef& SetWindowDetails(const WindowDataDetails &det){
 
 			WDetails = det;
@@ -84,8 +88,11 @@ namespace Leviathan{
 	protected:
 
 		unique_ptr<NamedVars> ConfigurationValues;
+#ifdef _WIN32
 		HINSTANCE HInstance;
-
+#else
+        int HInstance;
+#endif
 		// details used to create a window //
 		WindowDataDetails WDetails;
 

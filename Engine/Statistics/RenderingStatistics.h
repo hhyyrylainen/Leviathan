@@ -12,8 +12,8 @@ namespace Leviathan{
 
 	class RenderingStatistics : public Object{
 	public:
-		DLLEXPORT RenderingStatistics::RenderingStatistics();
-		DLLEXPORT RenderingStatistics::~RenderingStatistics();
+		DLLEXPORT RenderingStatistics();
+		DLLEXPORT ~RenderingStatistics();
 
 		DLLEXPORT void RenderingStart();
 		DLLEXPORT void RenderingEnd();

@@ -17,8 +17,8 @@ namespace Leviathan{
 
 	class SoundDevice : public EngineComponent{
 	public:
-		DLLEXPORT SoundDevice::SoundDevice();
-		DLLEXPORT SoundDevice::~SoundDevice();
+		DLLEXPORT SoundDevice();
+		DLLEXPORT ~SoundDevice();
 
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();

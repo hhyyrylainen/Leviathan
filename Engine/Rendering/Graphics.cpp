@@ -7,7 +7,6 @@
 #include <OgreMeshManager.h>
 #include "GUI/FontManager.h"
 #include <OgreFrameListener.h>
-#include "TextureManager.h"
 #include "FileSystem.h"
 #include <boost/assign/list_of.hpp>
 #include "Engine.h"
@@ -16,7 +15,7 @@ using namespace Rendering;
 // ------------------------------------ //
 
 
-DLLEXPORT Leviathan::Graphics::Graphics() : TextureKeeper(NULL), ORoot(nullptr), Fonts(NULL), Overlays(NULL)
+DLLEXPORT Leviathan::Graphics::Graphics() : ORoot(nullptr), Fonts(NULL), Overlays(NULL)
 {
 	Staticaccess = this;
 	Initialized = false;
@@ -41,27 +40,14 @@ bool Graphics::Init(AppDef* appdef){
 		return false;
 	}
 
-	// create texture holder //
-	TextureKeeper = new TextureManager(true, this);
-	if(!TextureKeeper){
-		Logger::Get()->Error(L"Graphics: Init: 008");
-		return false;
-	}
-	if(!TextureKeeper->Init(FileSystem::GetTextureFolder())){
-
-		Logger::Get()->Error(L"Graphics: Init: TextureKeeper failed to init");
-		return false;
-	}
-
 
 	Initialized = true;
 	return true;
 }
 
 DLLEXPORT void Leviathan::Graphics::Release(){
-	
+
 	SAFE_DELETE(Fonts);
-	SAFE_RELEASEDEL(TextureKeeper);
 
 	ORoot.reset();
 
@@ -84,8 +70,11 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	ORoot = unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, ""));
 
 
-	vector<Ogre::String> PluginNames = boost::assign::list_of("RenderSystem_GL")("RenderSystem_Direct3D11")("Plugin_ParticleFX")
-		("Plugin_CgProgramManager")("Plugin_OctreeSceneManager")/*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
+	vector<Ogre::String> PluginNames = boost::assign::list_of("RenderSystem_GL")
+#ifdef _WIN32
+	("RenderSystem_Direct3D11")
+#endif
+        ("Plugin_ParticleFX")("Plugin_CgProgramManager")("Plugin_OctreeSceneManager")/*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
 
 	for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++){
 		// append "_d" if in debug mode //
@@ -110,7 +99,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	// Create the regular expression it must match //
 	string rendersystemname;
 
-	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), L"RenderSystemName", rendersystemname, "OpenGL", true, 
+	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), L"RenderSystemName", rendersystemname, "OpenGL", true,
 		L"Graphics: Init: no selected render system,");
 
 	basic_regex<char> rendersystemnameregex(rendersystemname);
@@ -176,7 +165,7 @@ DLLEXPORT bool Leviathan::Graphics::Frame(){
 }
 
 bool Leviathan::Graphics::frameRenderingQueued(const Ogre::FrameEvent& evt){
-	
+
 	// simulate physics for next frame //
 	Engine::GetEngine()->PhysicsUpdate();
 

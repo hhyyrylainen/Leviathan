@@ -27,7 +27,7 @@ namespace Leviathan{
 		// Messing with the materials //
 
 		// TODO: add some more sophisticated methods //
-		DLLEXPORT void SetDefaultSubDefaultPassDiffuse(const Float4 &newdiffuse) throw(...);
+		DLLEXPORT void SetDefaultSubDefaultPassDiffuse(const Float4 &newdiffuse) THROWS;
 
 		DLLEXPORT void SetOgreMaterialName(const string &name);
 

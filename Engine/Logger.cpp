@@ -174,14 +174,6 @@ DLLEXPORT void Leviathan::Logger::DirectWriteBuffer(const wstring &data){
 	Saved = false;
 }
 // ------------------------------------ //
-void Leviathan::Logger::CheckQueue(boost::strict_lock<Logger> &guard){
-	if(LatestLogger != NULL){
-		LatestLogger->PendingLog += QueuedLog;
-		// clear //
-		QueuedLog.resize(0);
-	}
-}
-
 void Leviathan::Logger::_LogUpdateEndPart(const bool &save, boost::strict_lock<Logger> &guard){
 	// check is something in queue //
 	CheckQueue(guard);

@@ -11,7 +11,7 @@ TextureGenerator::TextureGenerator(){
 
 }
 // ------------------------------------ //
-
+/*
 ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, unsigned int colours, int tilesperside, vector<Int3>& colors){
 	// lil hack, just call the other function //
 	return GenerateCheckerBoard(width, height, colours, tilesperside, tilesperside, colors);
@@ -83,17 +83,18 @@ ManagedTexture* TextureGenerator::GenerateCheckerBoard(int width, int height, un
 
 
 	int charsinbuffer = -1;
-	unique_ptr<unsigned char> tempbuffer(DDSHandler::GenerateRGBDDSToMemory(Pixels,width,height/*, DDS_RGB*/, charsinbuffer));
+	unique_ptr<unsigned char> tempbuffer(DDSHandler::GenerateRGBDDSToMemory(Pixels,width,height, charsinbuffer));
 	if(tempbuffer == NULL){
 
 		Logger::Get()->Error(L"TextureGenerator: GenerateCheckerBoard: failed to write memory buffer: DDSHandler::GenerateRGBDDSToMemory(Pixels,width,height, DDS_RGB, charsinbuffer)");
 		return result;
 	}
 
-	
+
 	result = new ManagedTexture(tempbuffer.get(), charsinbuffer, IDFactory::GetID(), L"TextureGenerator::Checkerboard", TEXTURETYPE_NORMAL);
 	return result;
 }
+*/
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::TextureGenerator::LoadSolidColourLightMaterialToMemory(const string &name, const Float4 &diffusecolour/*= Float4(1)*/){
 	// Create it with ogre material manager //
@@ -107,7 +108,7 @@ DLLEXPORT bool Leviathan::TextureGenerator::LoadSolidColourLightMaterialToMemory
 	}
 	// Set settings //
 	Ogre::Pass* pass = mat->getTechnique(0)->getPass(0);
-	
+
 	pass->setDiffuse(diffusecolour);
 
 	mat->compile();

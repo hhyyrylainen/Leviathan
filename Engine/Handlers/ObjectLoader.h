@@ -6,7 +6,6 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Rendering/TextureDefinition.h"
 #include "Entities/GameWorld.h"
 
 
@@ -29,11 +28,11 @@ namespace Leviathan{
 
 	class ObjectLoader : public Object{
 	public:
-		DLLEXPORT ObjectLoader::ObjectLoader(Engine* engine);
+		DLLEXPORT ObjectLoader(Engine* engine);
 
 
 		// Note: the object pointer the load methods set is NOT safe to use after a while (it *should* be safe to call some method on the ptr after
-		// the function returns 
+		// the function returns
 
 		DLLEXPORT int LoadPropToWorld(GameWorld* world, const wstring &name, Entity::Prop** createdinstance);
 		// creates a brush with physical component and sets mass (use 0.f for static object) //
@@ -42,11 +41,11 @@ namespace Leviathan{
 		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::Brush** createdinstance);
 
 		// ------------------ Complex entity loading ------------------ //
-		DLLEXPORT int LoadTrackEntityControllerToWorld(GameWorld* world, vector<Entity::TrackControllerPosition> &initialtrack, BaseNotifiable* controllable, 
+		DLLEXPORT int LoadTrackEntityControllerToWorld(GameWorld* world, vector<Entity::TrackControllerPosition> &initialtrack, BaseNotifiable* controllable,
 			Entity::TrackEntityController** createdinstance);
 
 		// Creates a trail entity to a world. Set the dynamic property if you want to update the properties later //
-		DLLEXPORT int LoadTrailToWorld(GameWorld* world, const string &material, const Entity::TrailProperties &properties, bool allowupdatelater, 
+		DLLEXPORT int LoadTrailToWorld(GameWorld* world, const string &material, const Entity::TrailProperties &properties, bool allowupdatelater,
 			Entity::TrailEmitter** createdinstance);
 
 

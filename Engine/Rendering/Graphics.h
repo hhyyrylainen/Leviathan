@@ -19,8 +19,6 @@ namespace Leviathan{
 	class FontManager;
 	}
 
-	class TextureManager;
-
 	class Graphics : public EngineComponent, Ogre::FrameListener{
 	public:
 		DLLEXPORT Graphics();
@@ -35,9 +33,6 @@ namespace Leviathan{
 
 		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt);
 
-		DLLEXPORT inline TextureManager* GetTextureManager(){
-			return TextureKeeper;
-		}
 		DLLEXPORT inline Rendering::FontManager* GetFontManager(){
 			return Fonts;
 		}
@@ -60,7 +55,6 @@ namespace Leviathan{
 		bool Initialized;
 
 		AppDef* AppDefinition;
-		TextureManager* TextureKeeper;
 
 		// OGRE //
 		unique_ptr<Ogre::Root> ORoot;

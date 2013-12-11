@@ -6,8 +6,8 @@
 	file base:	Random
 	file ext:	cpp
 	author:		Henri Hyyryläinen
-	
-	purpose:	Platform independent random number generator, based on implementation of Mersenne twister. Code written based on pseudocode on 
+
+	purpose:	Platform independent random number generator, based on implementation of Mersenne twister. Code written based on pseudocode on
 				http://en.wikipedia.org/wiki/Mersenne_twister MT19937 algorithm.
 *********************************************************************/
 #include "Include.h"
@@ -15,18 +15,30 @@
 #ifndef LEVIATHAN_RANDOM
 #include "Random.h"
 #endif
+#ifdef _WIN32
+#include <sys/time.h>
+#endif
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::Random::Random(){
 	Index = 0;
 
 	// no seed provided so we must use current system time as seed //
-
+#ifdef _WIN32
 	// structures to get time //
 	SYSTEMTIME time;
 	GetSystemTime(&time);
 	// just mash something together from current time //
 	Seed = 2500+time.wDay*25+time.wHour*15+time.wMilliseconds*50+time.wSecond*2;
+#else
+    timespec time;
+
+    clock_gettime(CLOCK_REALTIME, &time);
+
+    Seed = time.tv_nsec+time.tv_sec*2;
+
+#endif
+
 	// initialize numbers //
 	_InitializeGenerator();
 }

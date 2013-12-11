@@ -16,8 +16,8 @@ namespace Leviathan{
 		DLLEXPORT static bool PrintErrorOnce(const wstring& error, const wstring& message);
 
 	private:
-		ComplainOnce::ComplainOnce();
-		ComplainOnce::~ComplainOnce();
+		ComplainOnce();
+		~ComplainOnce();
 
 		// fired warnings/errors //
 		static vector<wstring*> FiredErrors;

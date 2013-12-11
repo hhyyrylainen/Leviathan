@@ -29,7 +29,7 @@ namespace Leviathan{
 	};
 
 	struct FileDefSorter{
-		DLLEXPORT bool operator()(shared_ptr<FileDefinitionType>& first, shared_ptr<FileDefinitionType>& second);
+		DLLEXPORT bool operator()(const shared_ptr<FileDefinitionType>& first, const shared_ptr<FileDefinitionType>& second);
 	};
 
 	class FileSystem{

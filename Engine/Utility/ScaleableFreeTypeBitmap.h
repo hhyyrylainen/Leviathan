@@ -65,19 +65,19 @@ namespace Leviathan{
 				return VerticalLineData[yactual];
 			}
 
-			void CopyDataFromOther(const BitmapVerticalLine &other, const int &YAdd = 0);	
+			void CopyDataFromOther(const BitmapVerticalLine &other, const int &YAdd = 0);
 			int NthLineFromLeft;
 			int LineStart;
 			vector<UCHAR> VerticalLineData;
 		};
 	public:
 		// the resulting image in DXGI_FORMAT_R8_UNORM format and initially zeroed out //
-		DLLEXPORT ScaleableFreeTypeBitmap::ScaleableFreeTypeBitmap(const int &initialwidth, const int &initialheight);
-		DLLEXPORT ScaleableFreeTypeBitmap::~ScaleableFreeTypeBitmap();
+		DLLEXPORT ScaleableFreeTypeBitmap(const int &initialwidth, const int &initialheight);
+		DLLEXPORT ~ScaleableFreeTypeBitmap();
 
 		DLLEXPORT bool RenderOtherIntoThis(ScaleableFreeTypeBitmap* img, const int &StartX, const int &StartY);
 		DLLEXPORT void RenderFTBitmapIntoThis(const int &xstart, const int &ystart, FT_Bitmap &bmap);
-		DLLEXPORT char* GenerateDDSToMemory(size_t &GeneratedSize, int &baselineinimage);
+		//DLLEXPORT char* GenerateDDSToMemory(size_t &GeneratedSize, int &baselineinimage);
 
 		DLLEXPORT int GetHeightOfLastLine();
 

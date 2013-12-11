@@ -261,6 +261,8 @@ typedef long LONG;
 typedef int64_t __int64;
 typedef int32_t __int32;
 typedef unsigned char BYTE;
+typedef unsigned char UCHAR;
+
 
 
 

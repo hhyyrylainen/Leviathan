@@ -987,6 +987,6 @@ Leviathan::FileDefinitionType::~FileDefinitionType(){
 
 }
 // ------------------ FileDefSorter ------------------ //
-bool Leviathan::FileDefSorter::operator()(shared_ptr<FileDefinitionType>& first, shared_ptr<FileDefinitionType>& second){
+bool Leviathan::FileDefSorter::operator()(const shared_ptr<FileDefinitionType>& first, const shared_ptr<FileDefinitionType>& second){
 	return (*first.get()) < *(second).get();
 }

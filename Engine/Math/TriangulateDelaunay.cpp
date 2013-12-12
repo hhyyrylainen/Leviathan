@@ -64,7 +64,11 @@ DLLEXPORT  vector<Float3> Leviathan::DelaunayTriangulator::RunTriangulation(cons
 		vector<Float3> result;
 
 		// this approach is wrong, don't use this //
+#ifdef _WIN32
 		throw exception("don't use this approach, just don't add new points");
+#else
+        throw bad_exception();
+#endif
 
 		//// get average point in polygon //
 		//Float3 average(0);
@@ -91,8 +95,11 @@ DLLEXPORT  vector<Float3> Leviathan::DelaunayTriangulator::RunTriangulation(cons
 		//return result;
 	}
 	// needs to run more advanced algorithm //
+#ifdef _WIN32
 	throw exception("this neithers");
-
+#else
+    throw bad_exception();
+#endif
 
 }
 // ------------------------------------ //

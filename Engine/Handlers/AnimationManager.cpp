@@ -258,7 +258,7 @@ int Leviathan::AnimationManager::VerifyAnimLoaded(const wstring &file){
 	//	// invalid file //
 	//	Logger::Get()->Error(L"AnimationManager: VerifyAnimLoaded: File is invalid, objects type is wrong, expected BoneAnimation, got: "+curobj->TName);
 	//	RetVal = 7;
-	//	
+	//
 	//	// cleanup not required //
 	//	return RetVal;
 	//}
@@ -631,7 +631,11 @@ wstring Leviathan::AnimationManager::GetAnimationNameFromFile(const wstring &fil
 	// needs to read lines until animation name has been found //
 
 	wifstream reader;
+#ifdef _WIN32
 	reader.open(file);
+#else
+    reader.open(Convert::WstringToString(file));
+#endif
 
 	wstring Name = L"";
 	wstring BaseModelName = L"";

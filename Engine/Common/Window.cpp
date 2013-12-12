@@ -18,58 +18,70 @@ static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function"
 // We must use GCC built ins
 // int __builtin_ffs (unsigned int x) Returns one plus the index of the least significant 1-bit of x, or if x is zero, returns zero.
 // So using __builtin_ffs(val)-1 should work
-
+#include <X11/Xlib.h>
 
 
 
         // X11 window focus find function //
-XID Leviathan::Window::GetForegroundWindow(){
+X11::XID Leviathan::Window::GetForegroundWindow(){
     // Method posted on stack overflow http://stackoverflow.com/questions/1014822/how-to-know-which-window-has-focus-and-how-to-change-it
+    using namespace X11;
     XID foo;
     XID win;
-    int bar;
+    int bari;
+    unsigned int bar;
+
+    //X11::Display olddisp = XDisplay;
+
+
 
     do{
-	XQueryPointer(d, DefaultRootWindow(d), &foo, &win, &bar, &bar, &bar, &bar, &bar);
+        XQueryPointer(XDisplay, DefaultRootWindow(XDisplay), &foo, &win, &bari, &bari, &bari, &bari, &bar);
     } while(win <= 0);
 
-    int n;
+    unsigned int n;
     XID *wins;
     XWindowAttributes xwa;
 
 
-    XQueryTree(d, win, &foo, &foo, &wins, &n);
+    XQueryTree(XDisplay, win, &foo, &foo, &wins, &n);
 
     bar=0;
     while(--n >= 0){
-        XGetWindowAttributes(d, wins[n], &xwa);
-        if((xwa.width * xwa.height) > bar){}
+        XGetWindowAttributes(XDisplay, wins[n], &xwa);
+        if((xwa.width * xwa.height) > bar){
             win = wins[n];
             bar = xwa.width * xwa.height;
         }
         n--;
     }
+
     XFree(wins);
 
 
-    return(win);
+
+    //assert((olddisp == XDisplay) && "X display changed in window");
+
+    return win;
 }
 
 
 #endif
 
 
-DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner) : OWindow(owindow), m_hwnd(NULL),
+DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner) : OWindow(owindow),
 	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0),
 	ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true)
 #ifdef __GNUC__
-    , XDisplay(NULL)
+    , XDisplay(NULL), m_hwnd(0)
+#else
+    , m_hwnd(NULL)
 #endif
 {
 
 	OwningWindow = owner;
 	// update focused this way //
-	VerifyRenderWindowHandle(OWindow);
+	VerifyRenderWindowHandle();
 	Focused = m_hwnd == GetForegroundWindow() ? true: false;
 
 	// register as listener to get update notifications //
@@ -114,7 +126,7 @@ DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
 			ShowCursor(FALSE);
 #else
             // Set nothing as our cursor
-            XDefineCursor(XDisplay, m_hwnd, NULL);
+            XDefineCursor(XDisplay, m_hwnd, 0);
 #endif
 		}
 	}
@@ -143,7 +155,7 @@ DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 
 	VerifyRenderWindowHandle();
     // Use the X11 function to warp the cursor //
-    XWarpPointer(XDisplay, NULL, m_hwnd, 0, 0, 0, 0, GetWidth()/2, GetHeight()/2);
+    XWarpPointer(XDisplay, 0, m_hwnd, 0, 0, 0, 0, GetWidth()/2, GetHeight()/2);
 }
 #endif
 
@@ -211,7 +223,7 @@ void Leviathan::Window::windowResized(Ogre::RenderWindow* rw){
 
 void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
 	// update handle to have it up to date //
-	m_hwnd = GetRenderWindowHandle(OWindow);
+	VerifyRenderWindowHandle();
 
 	//Focused = m_hwnd == GetFocus() ? true: false;
 	Focused = m_hwnd == GetForegroundWindow() ? true: false;
@@ -233,7 +245,7 @@ void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
 #ifdef _WIN32
 bool Leviathan::Window::VerifyRenderWindowHandle(){
 
-	unsigned int WindowHwnd(0);
+	void* WindowHwnd(0);
 
 	OWindow->getCustomAttribute(Ogre::String("WINDOW"), &WindowHwnd);
 
@@ -247,20 +259,21 @@ bool Leviathan::Window::VerifyRenderWindowHandle(){
 	return true;
 }
 #else
-void Leviathan::Window::VerifyRenderWindowHandle(){
+bool Leviathan::Window::VerifyRenderWindowHandle(){
 
-	unsigned int xidval(0);
+	void* xidval(0);
 
 	OWindow->getCustomAttribute(Ogre::String("WINDOW"), &xidval);
 
-	m_hwnd = reinterpret_cast<XID>(xidval);
+	m_hwnd = reinterpret_cast<X11::XID>(xidval);
 	// We need the display too //
-    unsigned int xdisplay(0);
+    void* xdisplay(0);
 
     OWindow->getCustomAttribute(Ogre::String("DISPLAY"), &xdisplay);
 
-	XDisplay = reinterpret_cast<Display>(xdisplay);
+	XDisplay = reinterpret_cast<X11::Display*>(xdisplay);
 
+    return true;
 }
 #endif
 // ------------------------------------ //

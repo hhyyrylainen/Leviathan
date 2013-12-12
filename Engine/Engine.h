@@ -7,7 +7,6 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Application/AppDefine.h"
-#include "Statistics/Timer.h"
 #include "Rendering/Graphics.h"
 #include "Events/EventHandler.h"
 #include "Handlers/ObjectLoader.h"
@@ -58,7 +57,7 @@ namespace Leviathan{
 		DLLEXPORT shared_ptr<GameWorld> CreateWorld();
 
 		DLLEXPORT void SaveScreenShot();
-		
+
 		DLLEXPORT Graphics* GetGraphics(){ return Graph; };
 		DLLEXPORT EventHandler* GetEventHandler(){ return MainEvents; };
 		DLLEXPORT ObjectLoader* GetObjectLoader(){return Loader;};
@@ -80,7 +79,6 @@ namespace Leviathan{
 		void PostLoad();
 		// ------------------------------------ //
 		Logger* Mainlog;
-		Timer* MTimer;
 		AppDef* Define;
 
 		RenderingStatistics* RenderTimer;

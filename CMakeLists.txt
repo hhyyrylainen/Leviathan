@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
 
 set(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/Install")
 else(WIN32)
-add_definitions(-std=c++11 -std=gnu++11)
+add_definitions(-std=c++11 -std=gnu++11 -fextended-identifiers)
 # We need to get the Boost include directory from the user
 set(BOOST_INCLUDE_DIR "NOTFOUND" CACHE FILEPATH "Path to Boost include files")
 

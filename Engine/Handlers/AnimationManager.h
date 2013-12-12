@@ -27,8 +27,8 @@ namespace Leviathan{
 
 	class AnimationManager : public EngineComponent{
 	public:
-		DLLEXPORT AnimationManager::AnimationManager();
-		DLLEXPORT AnimationManager::~AnimationManager();
+		DLLEXPORT AnimationManager();
+		DLLEXPORT ~AnimationManager();
 
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();

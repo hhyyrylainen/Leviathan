@@ -12,7 +12,7 @@ DLLEXPORT Leviathan::ExceptionBase::ExceptionBase() : Message(nullptr), SourceFu
 	type = EXCEPTIONTYPE_BASE;
 }
 
-DLLEXPORT Leviathan::ExceptionBase::ExceptionBase(const wstring& message, int val, const wstring &source) : Message(new wstring(message)), 
+DLLEXPORT Leviathan::ExceptionBase::ExceptionBase(const wstring& message, int val, const wstring &source) : Message(new wstring(message)),
 	SourceFunction(new wstring(source))
 {
 	ErrorValue = val;
@@ -23,8 +23,8 @@ DLLEXPORT Leviathan::ExceptionBase::ExceptionBase(const wstring& message, int va
 
 DLLEXPORT Leviathan::ExceptionBase::ExceptionBase(const ExceptionBase &other){
 	this->ErrorValue = other.ErrorValue;
-	this->Message(new wstring(*other.Message));
-	this->SourceFunction(new wstring(*other.SourceFunction));
+	this->Message = unique_ptr<wstring>(new wstring(*other.Message));
+	this->SourceFunction = unique_ptr<wstring>(new wstring(*other.SourceFunction));
 
 	// set type //
 	type = EXCEPTIONTYPE_BASE;

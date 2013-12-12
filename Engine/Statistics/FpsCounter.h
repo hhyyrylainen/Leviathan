@@ -6,8 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#pragma comment(lib, "winmm.lib")
-#include <mmsystem.h>
+
 
 namespace Leviathan{
 
@@ -22,7 +21,7 @@ namespace Leviathan{
 
 		bool ShouldRender(int passed, int maxfps);
 
-		
+
 	private:
 		int passedtime;
 		int MaxFps, MinFps;

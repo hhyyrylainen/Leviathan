@@ -15,9 +15,9 @@
 namespace Leviathan{ namespace Gui{
 
 	// structs for all animation action types, to hold specific data //
-	enum GUI_ANIMATION_ACTION{ GUI_ANIMATION_ERROR = 0, GUI_ANIMATION_FADE_OUT, GUI_ANIMATION_GENERAL , GUI_ANIMATION_FADE_IN, 
+	enum GUI_ANIMATION_ACTION{ GUI_ANIMATION_ERROR = 0, GUI_ANIMATION_FADE_OUT, GUI_ANIMATION_GENERAL , GUI_ANIMATION_FADE_IN,
 		GUI_ANIMATION_MOVE, GUI_ANIMATION_GLOW, GUI_ANIMATION_HIDE, GUI_ANIMATION_SHOW,
-	
+
 		GUI_ANIMATION_ALL};
 
 
@@ -32,9 +32,9 @@ namespace Leviathan{ namespace Gui{
 
 	class AnimationAction : public ReferenceCounted{
 	public:
-		DLLEXPORT AnimationAction::AnimationAction();
-		DLLEXPORT AnimationAction::AnimationAction(GUI_ANIMATION_ACTION type, void* data, int special, bool allowsimult);
-		DLLEXPORT AnimationAction::~AnimationAction();
+		DLLEXPORT AnimationAction();
+		DLLEXPORT AnimationAction(GUI_ANIMATION_ACTION type, void* data, int special, bool allowsimult);
+		DLLEXPORT ~AnimationAction();
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(AnimationAction);
 

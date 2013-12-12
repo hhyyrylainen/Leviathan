@@ -4,15 +4,18 @@
 #include "Events/Event.h"
 #include "ScriptExecutor.h"
 #include "Events/EventHandler.h"
-#include "Utility/DataHandling/SimpleDataBase.h"
+#include "Utility/DataHandling/SimpleDatabase.h"
 #include "Addons/GameModule.h"
 #include "Entities/Objects/Prop.h"
 #include "Entities/Objects/Brush.h"
 #include "Entities/Objects/TrackEntityController.h"
 
 int WrapperForDataBlockToInt(VariableBlock* obj){
-
-	return (int)obj->GetBlock();
+//#ifdef _WIN32
+	return (int)*obj;
+//#else
+//    return obj->operator int();
+//#endif
 }
 
 GenericEvent* WrapperGenericEventFactory(string name){
@@ -23,7 +26,7 @@ GenericEvent* WrapperGenericEventFactory(string name){
 
 ScriptSafeVariableBlock* SimpleDataBaseGetValueOnRowWhereSpecificValueProxy(SimpleDatabase* database, string tablename, string valuekeyname, ScriptSafeVariableBlock* wantedvalue, string wantedvaluekey){
 
-	shared_ptr<VariableBlock> tmp = database->GetValueOnRow(Convert::StringToWstring(tablename), Convert::StringToWstring(valuekeyname), 
+	shared_ptr<VariableBlock> tmp = database->GetValueOnRow(Convert::StringToWstring(tablename), Convert::StringToWstring(valuekeyname),
 		VariableBlock(wantedvalue->GetBlockConst()->AllocateNewFromThis()), Convert::StringToWstring(wantedvaluekey));
 
 	if(!tmp){
@@ -262,7 +265,7 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectBehaviour("NamedVars", asBEHAVE_RELEASE, "void f()", asMETHOD(NamedVars, ReleaseProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	
+
 
 
 	// bind event type enum //
@@ -275,7 +278,7 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	REGISTEREVENTTYPE(EVENT_TYPE_HIDE);
 	REGISTEREVENTTYPE(EVENT_TYPE_TICK);
 	REGISTEREVENTTYPE(EVENT_TYPE_LISTENERVALUEUPDATED);
-	
+
 
 	// bind event //
 	if(engine->RegisterObjectType("Event", 0, asOBJ_REF) < 0){
@@ -338,7 +341,7 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_FACTORY, "ScriptSafeVariableBlock@ f(string blockname, string value)", asFUNCTION(ScriptSafeVariableBlockFactoryString), asCALL_CDECL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	
+
 
 	// conversion functions //
 	if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "int ConvertAndReturnInt()", asMETHOD(ScriptSafeVariableBlock, ConvertAndReturnProxyInt), asCALL_THISCALL) < 0)
@@ -373,8 +376,8 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	// Getting functions //
-	if(engine->RegisterObjectMethod("SimpleDatabase", 
-		"ScriptSafeVariableBlock@ GetValueOnRow(string table, string valuekeyname, ScriptSafeVariableBlock@ wantedvalue, string wantedvaluekey)", 
+	if(engine->RegisterObjectMethod("SimpleDatabase",
+		"ScriptSafeVariableBlock@ GetValueOnRow(string table, string valuekeyname, ScriptSafeVariableBlock@ wantedvalue, string wantedvaluekey)",
 		asFUNCTION(SimpleDataBaseGetValueOnRowWhereSpecificValueProxy), asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;

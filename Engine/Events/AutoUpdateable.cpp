@@ -25,8 +25,11 @@ void Leviathan::AutoUpdateableObject::StartMonitoring(const std::vector<Variable
 			// start listening on named index //
 
 			// register new listener //
+#ifdef _WIN32
 			DataStore::Get()->RegisterListener(this, new DataListener(-1, false, (wstring)*IndexesAndNamesToListen[i]));
-
+#else
+			DataStore::Get()->RegisterListener(this, new DataListener(-1, false, IndexesAndNamesToListen[i]->operator wstring()));
+#endif
 			// add to listened things //
 			MonitoredValues.push_back(shared_ptr<VariableBlock>(new VariableBlock(IndexesAndNamesToListen[i]->GetBlockConst()->AllocateNewFromThis())));
 
@@ -36,9 +39,13 @@ void Leviathan::AutoUpdateableObject::StartMonitoring(const std::vector<Variable
 		// force to int //
 		if(!IndexesAndNamesToListen[i]->IsConversionAllowedNonPtr<int>()){
 			// cannot be listened to //
+#ifdef _WIN32
 			Logger::Get()->Warning(L"AutoUpdateableObject: StartMonitoring: cannot listen to index (not int/wstring)"
 				+(wstring)*IndexesAndNamesToListen[i]);
-
+#else
+			Logger::Get()->Warning(L"AutoUpdateableObject: StartMonitoring: cannot listen to index (not int/wstring)"
+				+IndexesAndNamesToListen[i]->operator wstring());
+#endif
 			continue;
 		}
 
@@ -95,7 +102,7 @@ void Leviathan::AutoUpdateableObject::StopMonitoring(vector<shared_ptr<VariableB
 
 DLLEXPORT bool Leviathan::AutoUpdateableObject::OnUpdate(const shared_ptr<NamedVariableList> &updated){
 	ValuesUpdated = true;
-	
+
 	// push to update vector //
 	UpdatedValues.push_back(updated);
 

@@ -11,12 +11,17 @@
 #include "OIS.h"
 
 #ifdef __GNUC__
-#include "X11/Xlib.h"
+// Preprocessor magic to not conflict with Window class //
+namespace X11{
+#include <X11/Xlib.h>
+
 // X11 additional includes
 #include <X11/Xutil.h>
-#include <X11/Xos.h>
 #include "X11/Xlibint.h"
-
+#include <X11/Xos.h>
+#include <X11/Xatom.h>
+// Don't want to define our window with the same name //
+}
 // Need some magic to not confuse with GenericEvent macro with GenericEvent class //
 #define X11GenericEvent GenericEvent
 #undef GenericEvent
@@ -63,10 +68,10 @@ namespace Leviathan{
 
 		DLLEXPORT inline bool IsWindowed() const{ return !OWindow->isFullScreen();};
 #ifdef _WIN32
-		DLLEXPORT inline HWND GetHandle(){ VerifyRenderWindowHandle(OWindow); return m_hwnd; };
+		DLLEXPORT inline HWND GetHandle(){ VerifyRenderWindowHandle(); return m_hwnd; };
 #else
         // X11 compatible handle //
-        DLLEXPORT inline XID GetX11Window(){ VerifyRenderWindowHandle(OWindow); return m_hwnd; }
+        DLLEXPORT inline X11::XID GetX11Window(){ VerifyRenderWindowHandle(); return m_hwnd; }
 #endif
 		DLLEXPORT inline int GetWidth() const{ return OWindow->getWidth(); };
 		DLLEXPORT inline int GetHeight() const{ return OWindow->getHeight(); };
@@ -83,7 +88,7 @@ namespace Leviathan{
 			MouseCaptured = state;
 		}
 
-		DLLEXPORT static bool VerifyRenderWindowHandle(Ogre::RenderWindow* owindow);
+		DLLEXPORT bool VerifyRenderWindowHandle();
 
 
 		virtual bool keyPressed(const OIS::KeyEvent &arg);
@@ -117,7 +122,7 @@ namespace Leviathan{
 		void UpdateOISMouseWindowSize();
 #ifdef __GNUC__
         // X11 window focus find function //
-        XID GetForegroundWindow();
+        X11::XID GetForegroundWindow();
 #endif
 		void CheckInputState();
 		void _CreateOverlayScene();
@@ -127,8 +132,8 @@ namespace Leviathan{
 #ifdef _WIN32
 		HWND m_hwnd;
 #else
-        XID m_hwnd;
-        Display XDisplay;
+        X11::XID m_hwnd;
+        X11::Display* XDisplay;
 #endif
 		Ogre::RenderWindow* OWindow;
 		Ogre::SceneManager* OverlayScene;

@@ -43,8 +43,12 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 
 	// create the actual window //
 	DisplayWindow = new Window(tmpwindow, this);
+#ifdef _WIN32
 	// apply style settings (mainly ICON) //
 	WData.ApplyIconToHandle(DisplayWindow->GetHandle());
+#else
+    // TODO: linux icon
+#endif
 	tmpwindow->setDeactivateOnFocusChange(false);
 
 	// set the main window to be active //

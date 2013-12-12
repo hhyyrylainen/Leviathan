@@ -97,8 +97,13 @@ DLLEXPORT Leviathan::ScopeTimer::~ScopeTimer(){
 	// kill this timer //
 	int ElapsedTime = TimingMonitor::StopTiming(TimerName, false);
 	// print data //
+#ifdef _WIN32
 	Logger::Get()->Info(L"ScopeTimer: "+Source+L" Stopped elapsed: "+Convert::IntToWstring(ElapsedTime)+L" µs ("+
 		Convert::FloatToWstring(ElapsedTime/1000000.f)+L" s)");
+#else
+	Logger::Get()->Info(L"ScopeTimer: "+Source+L" Stopped elapsed: "+Convert::IntToWstring(ElapsedTime)+L" \u00B5s ("+
+		Convert::FloatToWstring(ElapsedTime/1000000.f)+L" s)");
+#endif
 }
 
 int Leviathan::ScopeTimer::CurID = 42;

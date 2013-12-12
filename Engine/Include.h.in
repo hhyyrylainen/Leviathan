@@ -262,6 +262,7 @@ typedef int64_t __int64;
 typedef int32_t __int32;
 typedef unsigned char BYTE;
 typedef unsigned char UCHAR;
+typedef unsigned short USHORT;
 
 
 
@@ -367,29 +368,40 @@ typedef unsigned char UCHAR;
 #define FORCE_POSITIVEF(x) {if((x) < 0){ (x)*=-1.0f; }}
 
 #ifdef _WIN32
-#define WIDEN2(x) L ## x
-#else
-// TODO: make this not kill performance
-#define WIDEN2(x) Convert::StringToWstring(x)
-#endif
+#define WIDEN2(x) L##x
 #define WIDEN(x) WIDEN2(x)
-#define __WFILE__ WIDEN(__FILE__)
-#define __WFUNCTION__ WIDEN(__FUNCTION__)
+#else
+#define EXPAND(x) x
+#define WIDEN3(x) L ## x
+#define WIDEN2(x) WIDEN3(x)
+#define WIDEN(x) WIDEN2(EXPAND(x))
+#endif
+
+#ifdef __GNUC__
+#define __FUNCTION__ __func__
+#define __FUNCSIG__ __PRETTY_FUNCTION__
+#endif
+
+#define STRINGIFY3(x) #x
+#define STRINGGIFY2(x) STRINGIFY3(x)
+#define STRINGGIFY(x) STRINGGIFY2(x)
+#define WSTRINGIFY(x) WIDEN(STRINGGIFY(x))
+
+#define __WFILE__ WSTRINGIFY(__FILE__)
+#define __WFUNCTION__ WSTRINGIFY(__FUNCTION__)
 
 #define SSLINE2(x) #x
 #define SSLINE(x) SSLINE2(x)
 #define __SLINE__ SSLINE(__LINE__)
 
 
-#define __SWLINE__ WIDEN(__SLINE__)
+#define __SWLINE__ WSTRINGIFY(__SLINE__)
 
-#define STRINGGIFY2(x) #x
-#define STRINGGIFY(x) STRINGGIFY2(x)
-#define WSTRINGIFY(x) WIDEN(STRINGGIFY(x))
 
-#define __WDATE__ WIDEN(__DATE__)
-#define __WTIME__ WIDEN(__TIME__)
-#define __WFUNCSIG__ WIDEN(__FUNCSIG__)
+
+#define __WDATE__ WSTRINGIFY(__DATE__)
+#define __WTIME__ WSTRINGIFY(__TIME__)
+#define __WFUNCSIG__ WSTRINGIFY(__FUNCSIG__)
 
 #define SAFE_DELETE_VECTOR(x) while((x).size() != 0){if((x)[0]){delete (x)[0];}(x).erase((x).begin());}
 
@@ -440,5 +452,8 @@ namespace Leviathan{
 
 //#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
 #include "angelscript.h"
+
+// Undef stuff //
+#undef index
 
 #endif

@@ -6,7 +6,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
-DLLEXPORT Leviathan::ExceptionInvalidArgument::ExceptionInvalidArgument(const wstring &message, int val, const wstring& sourcefunction, 
+DLLEXPORT Leviathan::ExceptionInvalidArgument::ExceptionInvalidArgument(const wstring &message, int val, const wstring& sourcefunction,
 	const wstring &InvalidArg, const wstring &invalidvalue)  : ExceptionBase(message, val, sourcefunction), InvalidParameter(new wstring(InvalidArg)),
 	VisualizedValue(new wstring(invalidvalue))
 {
@@ -16,8 +16,8 @@ DLLEXPORT Leviathan::ExceptionInvalidArgument::ExceptionInvalidArgument(const ws
 
 DLLEXPORT Leviathan::ExceptionInvalidArgument::ExceptionInvalidArgument(const ExceptionInvalidArgument &other){
 	// copy this specific value, others should be handled by base class copy ctor //
-	this->InvalidParameter(new wstring(*other.InvalidParameter));
-	this->VisualizedValue(new wstring(*other.VisualizedValue));
+	this->InvalidParameter = unique_ptr<wstring>(new wstring(*other.InvalidParameter));
+	this->VisualizedValue = unique_ptr<wstring>(new wstring(*other.VisualizedValue));
 
 	// set type //
 	type = EXCEPTIONTYPE_INVALIDARGUEMENT;

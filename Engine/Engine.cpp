@@ -19,7 +19,6 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner),
 	Inited = false;
 	Graph = NULL;
 	Define = NULL;
-	MTimer = NULL;
 	MainRandom = NULL;
 	RenderTimer = NULL;
 
@@ -93,9 +92,6 @@ bool Leviathan::Engine::Init(AppDef* definition){
 		Logger::Get()->Error(L"Engine: Init: Init EventHandler failed!");
 		return false;
 	}
-
-	// timing object //
-	MTimer = new Timer();
 
 	// create script interface before renderer //
 	MainScript = new ScriptInterface();
@@ -253,8 +249,6 @@ void Leviathan::Engine::Release(){
 
 	SAFE_RELEASEDEL(MainEvents);
 
-
-	SAFE_DELETE(MTimer);
 	SAFE_DELETE(Mainlog);
 
 	// delete randomizer last, for obvious reasons //

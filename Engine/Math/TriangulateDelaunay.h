@@ -22,8 +22,8 @@ namespace Leviathan{
 		DLLEXPORT static vector<Float3> RunTriangulation(const vector<Float3> &inputface);
 
 	private:
-		DelaunayTriangulator::DelaunayTriangulator();
-		DelaunayTriangulator::~DelaunayTriangulator();
+		DelaunayTriangulator();
+		~DelaunayTriangulator();
 	};
 
 }

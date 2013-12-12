@@ -10,8 +10,8 @@
 #include "GUI/GuiManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, GuiLoadedSheet* sheet, 
-	shared_ptr<ScriptScript> script /*= NULL*/) : EventableScriptObject(script), OwningInstance(owner), FileID(fakeid), Name(name), Element(NULL), 
+DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, GuiLoadedSheet* sheet,
+	shared_ptr<ScriptScript> script /*= NULL*/) : EventableScriptObject(script), OwningInstance(owner), FileID(fakeid), Name(name), Element(NULL),
 	ContainedInSheet(sheet), ManualDetach(false)
 {
 	ID = IDFactory::GetID();
@@ -24,7 +24,7 @@ DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){
 	_UnhookAllListeners();
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects, 
+DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects,
 	ObjectFileObject& dataforthis, GuiLoadedSheet* sheet)
 {
 	// parse fake id from prefixes //
@@ -113,7 +113,8 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 			tohook = LeviathanToRocketEventTranslate[*containedlisteners[i]->ListenerName];
 
 			if(tohook.Length() == 0){
-				throw exception("check the other");
+			    // check the other //
+				throw exception();
 			}
 
 		} catch(...){
@@ -140,7 +141,7 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 			}
 
 			Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: unknown event type "+*containedlisteners[i]->ListenerName+L", did you intent to use Generic type?");
-			
+
 			continue;
 		}
 		if(Element){
@@ -148,7 +149,7 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 			Element->AddEventListener(tohook, this);
 			// store to be able to detach later //
 			HookedRocketEvents.push_back(tohook);
-			
+
 		} else {
 			// warn about this //
 			//Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: couldn't hook Rocket event "+Convert::StringToWstring(tohook.CString()));
@@ -235,10 +236,10 @@ void Leviathan::Gui::BaseGuiObject::_UnhookAllListeners(){
 DLLEXPORT bool Leviathan::Gui::BaseGuiObject::CheckObjectLinkage(){
 	if(Element)
 		return true;
-	
+
 	// search //
 	Element = ContainedInSheet->GetElementByID(Convert::WstringToString(RocketObjectName));
-	
+
 
 	if(Element){
 		// link just Rocket events //

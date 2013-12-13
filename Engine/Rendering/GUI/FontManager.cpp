@@ -58,11 +58,13 @@ DLLEXPORT bool Leviathan::Rendering::FontManager::LoadFontByName(const wstring &
 			FileSystem::GetWindowsFolder(fontgenfile);
 			fontgenfile += L"Fonts\\";
 			fontgenfile += szBuffer;
-#else 
-#error Cannot read registry!
-#endif // _WIN32
+        }
+#else
+            // This may or may not work on linux //
+        fontgenfile += L"/usr/share/fonts/Arial.ttf";
 
-		}
+
+#endif // _WIN32
 	}
 	if(!FileSystem::FileExists(fontgenfile)){
 		Logger::Get()->Error(L"FontManager:  LoadFontByName: could not find font .ttf file", true);
@@ -73,7 +75,7 @@ DLLEXPORT bool Leviathan::Rendering::FontManager::LoadFontByName(const wstring &
 	Rocket::Core::FontDatabase::LoadFontFace(Convert::WstringToString(fontgenfile).c_str());
 
 	//// create font //
-	//Ogre::FontPtr tmpptr = Ogre::FontManager::getSingleton().create(Convert::WstringToString(name), 
+	//Ogre::FontPtr tmpptr = Ogre::FontManager::getSingleton().create(Convert::WstringToString(name),
 	//	Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
 	//// always has to be true type //

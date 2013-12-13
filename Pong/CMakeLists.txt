@@ -56,6 +56,10 @@ install(TARGETS Pong DESTINATION bin CONFIGURATIONS ${InstallConfigurationNames}
 # linking to engine
 target_link_libraries(Pong Engine)
 
+if(NOT WIN32)
+target_link_libraries(Pong ${LINUX_LINK_LIBS_TOENGINE})
+endif(NOT WIN32)
+
 if(WIN32)
 # set working directory when we want to run this
 create_target_launcher(Pong RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/" WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin/")

@@ -161,6 +161,10 @@ DLLEXPORT void Leviathan::GameModule::ReleaseScript(){
 DLLEXPORT wstring Leviathan::GameModule::GetDescriptionForError(bool full /*= false*/){
 	return L"GameModule("+Name+(full ? L" v"+Version+L") ": L") ")+L" owned by: "+OwnerName+(full ? L", loaded from file: "+LoadedFromFile+L".": L".");
 }
+
+DLLEXPORT string Leviathan::GameModule::GetDescriptionProxy(bool full){
+    return GetDescriptionForError(full);
+}
 // ------------------------------------ //
 void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** event2){
 
@@ -204,7 +208,7 @@ void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** e
 	}
 }
 // ------------------ Being an actual module ------------------ //
-DLLEXPORT shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(const string &entrypoint, std::vector<shared_ptr<NamedVariableBlock>> 
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(const string &entrypoint, std::vector<shared_ptr<NamedVariableBlock>>
 	&otherparams, bool &existed, bool fulldeclaration /*= false*/)
 {
 	// Add this as parameter //

@@ -21,6 +21,59 @@ set(BOOST_INCLUDE_DIR "NOTFOUND" CACHE FILEPATH "Path to Boost include files")
 
 include_directories(${BOOST_INCLUDE_DIR})
 
+# Linux library linking
+#set(LINUX_LINK_LIBS_TOENGINE ${PROJECT_SOURCE_DIR}/Newton/lib/libNewton.so)
+set(LINUX_LINK_LIBS_TOENGINE Newton)
+
+
+#set(LINUX_LINK_LIBS_ENGINE_DEBUG ${PROJECT_SOURCE_DIR}libNewton.so ${PROJECT_SOURCE_DIR}/AngelScript/lib/libAngelscript.a
+#	${PROJECT_SOURCE_DIR}/Leap/lib/x64/libLeap.so ${PROJECT_SOURCE_DIR}/OGRE/lib/libOgreMain_d.so 
+#	${PROJECT_SOURCE_DIR}/OGRE/lib/libOgreOverlay_d.so ${PROJECT_SOURCE_DIR}/OGRE/lib/libOgrePaging_d.so
+#	${PROJECT_SOURCE_DIR}/OGRE/lib/libOgreTerrain_d.so ${PROJECT_SOURCE_DIR}/OGRE/lib/libOgreRTShaderSystem_d.so
+#	${PROJECT_SOURCE_DIR}/OGRE/lib/libPlugin_CgProgramManager_d.so ${PROJECT_SOURCE_DIR}/OGRE/lib/libPlugin_OctreeZone_d.so
+#	${PROJECT_SOURCE_DIR}/OGRE/lib/libPlugin_ParticleFX_d.so ${PROJECT_SOURCE_DIR}/OGRE/lib/libRenderSystem_Direct3D11_d.so
+#	${PROJECT_SOURCE_DIR}/OGRE/lib/libRenderSystem_GL_d.so ${PROJECT_SOURCE_DIR}/OIS/lib/libOIS_d.so 
+#	${PROJECT_SOURCE_DIR}/OGRE/lib/libRocketCore_d.so ${PROJECT_SOURCE_DIR}/libRocket/lib/libRocketControls_d.so 
+#	${PROJECT_SOURCE_DIR}/libRocket/lib/libRocketDebugger_d.so ${PROJECT_SOURCE_DIR}/SFML/lib/libsfml-audio.so 
+#	${PROJECT_SOURCE_DIR}/SFML/lib/libsfml-network.so)
+
+#set(LINUX_LINK_LIBS_ENGINE_RELEASE ${PROJECT_SOURCE_DIR}/AngelScript/lib/libAngelscript.a ${PROJECT_SOURCE_DIR}/Leap/lib/x64/libLeap.so 
+#	${PROJECT_SOURCE_DIR}/OGRE/lib/libOgreMain.so ${PROJECT_SOURCE_DIR}/OGRE/lib/libOgreOverlay.so 
+#	${PROJECT_SOURCE_DIR}/OGRE/lib/libOgrePaging.so ${PROJECT_SOURCE_DIR}/OGRE/lib/libOgreTerrain.so 
+#	${PROJECT_SOURCE_DIR}/OGRE/lib/libOgreRTShaderSystem.so ${PROJECT_SOURCE_DIR}/OGRE/lib/libPlugin_CgProgramManager.so
+#	${PROJECT_SOURCE_DIR}/OGRE/lib/libPlugin_OctreeZone.so ${PROJECT_SOURCE_DIR}/OGRE/lib/libPlugin_ParticleFX.so 
+#	${PROJECT_SOURCE_DIR}/OGRE/lib/libRenderSystem_Direct3D11.so ${PROJECT_SOURCE_DIR}/OGRE/lib/libRenderSystem_GL.so
+#	${PROJECT_SOURCE_DIR}/OIS/lib/libOIS.so 
+#	${PROJECT_SOURCE_DIR}/libRocket/lib/libRocketCore.so ${PROJECT_SOURCE_DIR}/libRocket/lib/libRocketControls.so 
+#	${PROJECT_SOURCE_DIR}/libRocket/lib/libRocketDebugger.so
+#	${PROJECT_SOURCE_DIR}/Newton/lib/libNewton.so ${PROJECT_SOURCE_DIR}/SFML/lib/libsfml-audio.so 
+#	${PROJECT_SOURCE_DIR}/SFML/lib/libsfml-network.so)
+
+#set(LINUX_LINK_LIBS_ENGINE_DEBUG libNewton.so libAngelscript.a libLeap.so libOgreMain_d.so libOgreOverlay_d.so libOgrePaging_d.so
+#	libOgreTerrain_d.so libOgreRTShaderSystem_d.so libPlugin_CgProgramManager_d.so libPlugin_OctreeZone_d.so libPlugin_ParticleFX_d.so
+#	libRenderSystem_Direct3D11_d.so libRenderSystem_GL_d.so libOIS_d.so libRocketCore_d.so
+#	libRocketControls_d.so libRocketDebugger_d.so libsfml-audio.so libsfml-network.so)
+
+#set(LINUX_LINK_LIBS_ENGINE_RELEASE libAngelscript.a libLeap.so libOgreMain.so libOgreOverlay.so libOgrePaging.so libOgreTerrain.so 
+#	libOgreRTShaderSystem.so libPlugin_CgProgramManager.so libPlugin_OctreeZone.so libPlugin_ParticleFX.so 
+#	libRenderSystem_Direct3D11.so libRenderSystem_GL.so libOIS.so libRocketCore.so libRocketControls.so libRocketDebugger.so
+#	libNewton.so libsfml-audio.so libsfml-network.so)
+
+#set(LINUX_LINK_LIBS_ENGINE_DEBUG Newton Angelscript Leap OgreMain_d OgreOverlay_d OgrePaging_d OgreTerrain_d OgreRTShaderSystem_d
+# 	Plugin_CgProgramManager_d Plugin_OctreeZone_d Plugin_ParticleFX_d RenderSystem_Direct3D11_d RenderSystem_GL_d 
+#	OIS_d RocketCore_d RocketControls_d RocketDebugger_d sfml-audio sfml-network)
+
+#set(LINUX_LINK_LIBS_ENGINE_RELEASE Angelscript Leap OgreMain OgreOverlay OgrePaging OgreTerrain OgreRTShaderSystem  
+#	Plugin_CgProgramManager Plugin_OctreeZone Plugin_ParticleFX RenderSystem_Direct3D11 RenderSystem_GL OIS RocketCore
+#	RocketControls RocketDebugger Newton sfml-audio sfml-network)
+
+set(LINUX_LINK_LIBS_ENGINE_DEBUG Newton Angelscript Leap OgreMain_d OgreOverlay_d OgrePaging_d OgreTerrain_d OgreRTShaderSystem_d
+ 	OIS_d RocketCore_d RocketControls_d RocketDebugger_d sfml-audio sfml-network)
+
+set(LINUX_LINK_LIBS_ENGINE_RELEASE Angelscript Leap OgreMain OgreOverlay OgrePaging OgreTerrain OgreRTShaderSystem  
+	OIS RocketCore RocketControls RocketDebugger Newton sfml-audio sfml-network)
+
+
 # We need X11 on linux for window class to work
 find_package(X11)
 

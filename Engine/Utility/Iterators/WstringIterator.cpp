@@ -176,7 +176,7 @@ getnextnumberfuncendreleaseresourceslabel:
 }
 
 DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase){
-	
+
 	// iterate over the string and return what is wanted //
 	IteratorAssignmentData data;
 	data.Positions.SetData(-1, -1);
@@ -539,7 +539,7 @@ DLLEXPORT unsigned int Leviathan::WstringIterator::GetWstringLength(){
 	if(IsPtrUsed){
 		if(Data == NULL){
 			//WstringIterator: GetWstringLength:
-			throw ExceptionNULLPtr(L"Text pointer is invalid ", NULL, __WFUNCTION__, (void*)Data);
+			throw ExceptionNULLPtr(L"Text pointer is invalid ", 0, __WFUNCTION__, (void*)Data);
 		}
 		return Data->size();
 
@@ -550,7 +550,7 @@ DLLEXPORT unsigned int Leviathan::WstringIterator::GetWstringLength(){
 }
 
 DLLEXPORT wchar_t Leviathan::WstringIterator::GetCurrentCharacter(){
-	
+
 	return GetCharacterAtPos(IteratorPosition);
 }
 
@@ -773,7 +773,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNumber(WstringIterator
 				IsValid = true;
 				tmpdata->DecimalFound = true;
 			}
-			
+
 		}
 	}
 
@@ -808,7 +808,7 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIter
 
 	IteratorPositionData* tmpdata = static_cast<IteratorPositionData*>(IteratorData);
 
-	if((parameters & UNNORMALCHARACTER_TYPE_LOWCODES || parameters & UNNORMALCHARACTER_TYPE_WHITESPACE) 
+	if((parameters & UNNORMALCHARACTER_TYPE_LOWCODES || parameters & UNNORMALCHARACTER_TYPE_WHITESPACE)
 		&& !instance->CurrentFlags->IsSet(WSTRINGITERATOR_INSIDE_STRING))
 	{
 		if(CurChar <= L' '){
@@ -939,27 +939,28 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindFromStartUntilCommentOrEnd
 		goto findfromstartuntilcommentorendfuncendlabel;
 		//return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 	}
-
-	int charvalue((int)instance->GetCurrentCharacter());
-	// check current character //
-	if(charvalue < 33){
-		// here's nothing to do //
-		return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
-	}
-	// check for some special cases //
-	if(charvalue == L'/'){
-		// check is next comment //
-		if(!instance->IsOutOfBounds(instance->IteratorPosition+1)){
-			// check for special ignore //
-			if(!instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL)){
-				// check it //
-				if(instance->GetCharacterAtPos(instance->IteratorPosition+1) == L'/'){
-					// comment started, done //
-					return ITERATORCALLBACK_RETURNTYPE_STOP;
-				}
-			}
-		}
-	}
+    {
+        int charvalue((int)instance->GetCurrentCharacter());
+        // check current character //
+        if(charvalue < 33){
+            // here's nothing to do //
+            return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+        }
+        // check for some special cases //
+        if(charvalue == L'/'){
+            // check is next comment //
+            if(!instance->IsOutOfBounds(instance->IteratorPosition+1)){
+                // check for special ignore //
+                if(!instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL)){
+                    // check it //
+                    if(instance->GetCharacterAtPos(instance->IteratorPosition+1) == L'/'){
+                        // comment started, done //
+                        return ITERATORCALLBACK_RETURNTYPE_STOP;
+                    }
+                }
+            }
+        }
+    }
 
 findfromstartuntilcommentorendfuncendlabel:
 	// get position data //

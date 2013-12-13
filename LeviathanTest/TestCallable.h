@@ -10,7 +10,7 @@ public:
 	}
 
 	DLLEXPORT virtual int OnGenericEvent(GenericEvent** pevent){
-		throw std::exception("The method or operation is not implemented.");
+		throw std::exception();
 	}
 
 	bool IsEvented;

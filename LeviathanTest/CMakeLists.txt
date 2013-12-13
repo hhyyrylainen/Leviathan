@@ -34,6 +34,10 @@ install(TARGETS LeviathanTest DESTINATION bin CONFIGURATIONS ${InstallConfigurat
 # linking to engine
 target_link_libraries(LeviathanTest Engine)
 
+if(NOT WIN32)
+target_link_libraries(LeviathanTest ${LINUX_LINK_LIBS_TOENGINE})
+endif(NOT WIN32)
+
 if(WIN32)
 # add as default startup project
 create_target_launcher(LeviathanTest RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/" WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin/")

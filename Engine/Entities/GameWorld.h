@@ -91,7 +91,7 @@ namespace Leviathan{
 			return WorldsScene;
 		}
 		// physics functions //
-		DLLEXPORT inline Float3 GetGravityAtPosition(const Float3 &pos);
+		DLLEXPORT Float3 GetGravityAtPosition(const Float3 &pos);
 
 		DLLEXPORT inline PhysicalWorld* GetPhysicalWorld(){
 			return _PhysicalWorld.get();

@@ -18,19 +18,9 @@ DLLEXPORT int Leviathan::LineTokeNizer::TokeNizeLine(const wstring& str, vector<
 	// check how many characters need to be copied to each token //
 	for(size_t i = 0; i < str.size(); i++){
 		// check for chars //
-		if(str[i] == L'\"'){
-			if(i-1 > -1){
-				// check for \
-				if(str[i-1] == L'\\'){
-					// not //
+		if(str[i] == L'\"')
+			(i-1 > -1) ? ((str[i-1] != L'\\') ? Misc::ToggleBool(InString): false): Misc::ToggleBool(InString);
 
-				} else {
-					Misc::ToggleBool(InString);
-				}
-			} else {
-				Misc::ToggleBool(InString);
-			}
-		}
 		if(!InString){
 			if(str[i] == L'('){
 				Level++;

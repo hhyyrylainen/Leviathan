@@ -146,63 +146,6 @@
 	#pragma comment(lib, "sfml-audio.lib")
 	#pragma comment(lib, "sfml-network.lib")
 	#endif
-#else
-	// Linux libraries
-	#ifdef _DEBUG
-	// debug versions //
-
-	#pragma comment(lib, "libAngelscript.a")
-	#pragma comment(lib, "libLeap.so")
-	
-	#pragma comment(lib, "libOgreMain_d.so")
-	#pragma comment(lib, "libOgreOverlay_d.so")
-	#pragma comment(lib, "libOgrePaging_d.so")
-	#pragma comment(lib, "libOgreTerrain_d.so")
-	#pragma comment(lib, "libOgreRTShaderSystem_d.so")
-	#pragma comment(lib, "Plugin_CgProgramManager_d.so")
-	#pragma comment(lib, "Plugin_OctreeZone_d.so")
-	#pragma comment(lib, "Plugin_ParticleFX_d.so")
-	#pragma comment(lib, "RenderSystem_Direct3D11_d.so")
-	#pragma comment(lib, "RenderSystem_GL_d.so")
-	#pragma comment(lib, "RenderSystem_Direct3D11_d.so")
-	
-	#pragma comment(lib, "libOIS_d.so")
-	#pragma comment(lib, "libRocketCore_d.so")
-	#pragma comment(lib, "libRocketControls_d.so")
-	#pragma comment(lib, "libRocketDebugger_d.so")
-	#pragma comment(lib, "libNewton.so")
-
-	#pragma comment(lib, "libsfml-audio.so")
-	#pragma comment(lib, "libsfml-network.so")
-	#else
-	// release libraries
-	#pragma comment(lib, "libAngelscript.a")
-	#pragma comment(lib, "libLeap.so")
-	
-	#pragma comment(lib, "libOgreMain.so")
-	#pragma comment(lib, "libOgreOverlay.so")
-	#pragma comment(lib, "libOgrePaging.so")
-	#pragma comment(lib, "libOgreTerrain.so")
-	#pragma comment(lib, "libOgreRTShaderSystem.so")
-	#pragma comment(lib, "Plugin_CgProgramManager.so")
-	#pragma comment(lib, "Plugin_OctreeZone.so")
-	#pragma comment(lib, "Plugin_ParticleFX.so")
-	#pragma comment(lib, "RenderSystem_Direct3D11.so")
-	#pragma comment(lib, "RenderSystem_GL.so")
-	#pragma comment(lib, "RenderSystem_Direct3D11.so")
-	
-	#pragma comment(lib, "libOIS.so")
-	#pragma comment(lib, "libRocketCore.so")
-	#pragma comment(lib, "libRocketControls.so")
-	#pragma comment(lib, "libRocketDebugger.so")
-	#pragma comment(lib, "libNewton.so")
-
-	#pragma comment(lib, "libsfml-audio.so")
-	#pragma comment(lib, "libsfml-network.so")
-	#endif
-
-		
-	
 #endif
 #else
 // include engine lib
@@ -215,17 +158,6 @@
 	#pragma comment(lib, "Engine.lib")
 	// Also link the Newton library because it seems to be needed for some things //
 	#pragma comment(lib, "newton.lib")
-	#endif
-#else
-// Linux things
-	#ifdef _DEBUG
-	#pragma comment(lib, "EngineD.so")
-	// Also link the Newton library because it seems to be needed for some things //
-	#pragma comment(lib, "libnewton.so")
-	#else
-	#pragma comment(lib, "Engine.so")
-	// Also link the Newton library because it seems to be needed for some things //
-	#pragma comment(lib, "newton.so")
 	#endif
 #endif
 
@@ -263,7 +195,7 @@ typedef int32_t __int32;
 typedef unsigned char BYTE;
 typedef unsigned char UCHAR;
 typedef unsigned short USHORT;
-
+typedef unsigned short UINT16;
 
 
 
@@ -408,9 +340,13 @@ typedef unsigned short USHORT;
 #define STDCONTAINERERASELAST_PTR(x) x->erase(x->begin()+x->size()-1)
 #define STDCONTAINERERASELAST(x) x.erase(x.begin()+x.size()-1)
 
-#define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: " __SWLINE__ ), true);}
 #define QUICK_MEMORY_ERROR_MESSAGE {Logger::Get()->Error((L"Out of memory error from: " __WFILE__ L" function: "__WFUNCTION__), true);}
 
+#ifdef _MVC_VER
+#define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: " __SWLINE__ ), true);}
+#else
+#define QUICK_ERROR_MESSAGE DEBUG_BREAK;
+#endif
 
 
 namespace Leviathan{

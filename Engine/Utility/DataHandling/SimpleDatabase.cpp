@@ -69,11 +69,11 @@ void Leviathan::SimpleDatabase::GetRow(Rocket::Core::StringList& row, const Rock
 	// Copy data //
 	for(size_t i = 0; i < columns.size(); i++){
 
-		
+
 		auto iter2 = datbaseentry.find(Convert::StringToWstring(columns[i].CString()));
 		if(iter2 != datbaseentry.end()){
 			// Add to result //
-			row.push_back(((string)*iter2->second).c_str());
+			row.push_back((iter2->second->operator string()).c_str());
 		}
 	}
 
@@ -110,7 +110,7 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::SimpleDatabase::GetValueOnRow(con
 
 		if(finditer == iter->second->at(i)->end())
 			continue;
-		
+
 		// Check does the value match //
 		if(*finditer->second == wantedvalue){
 			// Found match //
@@ -135,7 +135,7 @@ SimpleDatabaseObject::iterator Leviathan::SimpleDatabase::_EnsureTable(const wst
 		return iter;
 	}
 	// Ensure new database //
-	Database[name] = shared_ptr<std::vector<shared_ptr<std::map<wstring, shared_ptr<VariableBlock>>>>>(new 
+	Database[name] = shared_ptr<std::vector<shared_ptr<std::map<wstring, shared_ptr<VariableBlock>>>>>(new
 		std::vector<shared_ptr<std::map<wstring, shared_ptr<VariableBlock>>>>());
 
 	// Recurse, might want to avoid stack overflow //

@@ -33,7 +33,7 @@ DLLEXPORT Ogre::Entity* Leviathan::BaseRenderable::GetOgreEntity(){
 	return GraphicalObject;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::BaseRenderable::SetDefaultSubDefaultPassDiffuse(const Float4 &newdiffuse) throw(...){
+DLLEXPORT void Leviathan::BaseRenderable::SetDefaultSubDefaultPassDiffuse(const Float4 &newdiffuse) THROWS{
 	GraphicalObject->getSubEntity(0)->getMaterial()->getTechnique(0)->getPass(0)->setDiffuse(newdiffuse);
 }
 

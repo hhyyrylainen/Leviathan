@@ -125,7 +125,7 @@ DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
 // should also improve compilation speed and reduce the mess in the header and
 // allow includes that are needed and couldn't be in the header
 //
-
+namespace Leviathan{
 // templates for getting AngelScript type id from template //
 #define TYPEIDGETTEMPLATEINSTANTIATION(TypeForTemplate, StringToUse) template<> struct TypeToAngelScriptIDConverter<TypeForTemplate>{static inline int GetTypeIDFromTemplated(){ return ScriptInterface::Get()->GetExecutor()->GetAngelScriptTypeID(L"int"); }};
 
@@ -135,8 +135,9 @@ TYPEIDGETTEMPLATEINSTANTIATION(bool, L"int");
 TYPEIDGETTEMPLATEINSTANTIATION(float, L"int");
 TYPEIDGETTEMPLATEINSTANTIATION(char, L"int");
 TYPEIDGETTEMPLATEINSTANTIATION(string, L"string");
+}
 // ------------------------------------ //
-DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined) throw(...){
+DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined) THROWS{
 	// the text should have all preceding and trailing spaces removed //
 	if(valuetoparse.size() == 0){
 		// can't be anything //
@@ -171,7 +172,7 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wst
 
 			return;
 		}
-		
+
 		// check does some special value match it //
 		if(predefined != NULL){
 			// check do them match //
@@ -197,7 +198,7 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wst
 	if(decimalspot != wstring::npos){
 		// has decimal separator //
 
-		// check does it need more decimal digits than float has // 
+		// check does it need more decimal digits than float has //
 
 		if(valuetoparse.size()-1-decimalspot > FLT_DIG){
 			// create a double //

@@ -96,7 +96,8 @@ add_library(Engine SHARED ${EngineFiles})
 if(NOT WIN32)
 # Link with X11
 target_link_libraries(Engine ${X11_LIBRARIES})
-
+target_link_libraries(Engine debug ${LINUX_LINK_LIBS_ENGINE_DEBUG})
+target_link_libraries(Engine optimized ${LINUX_LINK_LIBS_ENGINE_RELEASE})
 endif(NOT WIN32)
 
 # Possible debug installs
@@ -114,8 +115,6 @@ ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND copy ARGS
     "\"$(SolutionDir)Engine\\$(Configuration)\\$(TargetName).dll\" \"$(SolutionDir)bin\\$(TargetName).dll\""
 )
 else(WIN32)
-# makefile copy
-ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND cp ARGS "Engine/Debug/EngineD.os" "bin/EngineD.os"
-)
+
 endif(WIN32)
 

@@ -293,7 +293,7 @@ DLLEXPORT int Leviathan::FileSystem::LoadDataDump(const wstring &file, vector<sh
 	return 0;
 }
 #ifdef _WIN32
-DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files, wstring dirpath, wstring pattern /*= L"*.*"*/, bool recursive /*= true*/){
+DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files, const wstring &dirpath, const wstring &pattern, bool recursive /*= true*/){
 	wstring FilePath;
 	wstring Pattern;
 	HANDLE hFile;

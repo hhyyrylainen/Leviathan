@@ -163,7 +163,7 @@ DLLEXPORT wstring Leviathan::GameModule::GetDescriptionForError(bool full /*= fa
 }
 
 DLLEXPORT string Leviathan::GameModule::GetDescriptionProxy(bool full){
-    return GetDescriptionForError(full);
+	return Convert::WstringToString(GetDescriptionForError(full));
 }
 // ------------------------------------ //
 void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** event2){
@@ -227,10 +227,7 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(const
 	return result;
 }
 // ------------------ Script proxies ------------------ //
-DLLEXPORT string Leviathan::GameModule::GetDescriptionProxy(bool full){
 
-	return Convert::WstringToString(GetDescriptionForError(full));
-}
 
 
 

@@ -15,7 +15,7 @@
 #ifndef LEVIATHAN_RANDOM
 #include "Random.h"
 #endif
-#ifdef _WIN32
+#ifndef _WIN32
 #include <sys/time.h>
 #endif
 using namespace Leviathan;

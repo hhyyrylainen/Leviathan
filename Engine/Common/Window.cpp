@@ -162,7 +162,7 @@ DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 #ifdef _WIN32
 DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
 	// update window handle before using //
-	m_hwnd = GetRenderWindowHandle(OWindow);
+	VerifyRenderWindowHandle();
 	if(m_hwnd == NULL){
 		// window has closed //
 		x = y = 0;
@@ -251,7 +251,7 @@ bool Leviathan::Window::VerifyRenderWindowHandle(){
 
 	m_hwnd = reinterpret_cast<HWND>(WindowHwnd);
 
-	if(!IsWindow(reswnd)){
+	if(!IsWindow(m_hwnd)){
 		// not a window! //
 		return false;
 	}

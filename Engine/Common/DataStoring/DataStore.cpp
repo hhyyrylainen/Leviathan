@@ -5,7 +5,7 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "ObjectFiles\ObjectFileProcessor.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 
 DLLEXPORT Leviathan::DataStore::DataStore(){
 	Load();
@@ -67,7 +67,7 @@ DLLEXPORT Leviathan::DataStore::~DataStore(){
 void Leviathan::DataStore::Load(){
 	// load //
 	vector<shared_ptr<NamedVariableList>> tempvec;
-	FileSystem::LoadDataDump(L".\\Persist.txt", tempvec);
+	FileSystem::LoadDataDump(L"./Persist.txt", tempvec);
 
 	Values.SetVec(tempvec);
 	Persistencestates.resize(tempvec.size());
@@ -89,7 +89,7 @@ void Leviathan::DataStore::Save(){
 		}
 
 	}
-	FileSystem::WriteToFile(tosave, L".\\Persist.txt");
+	FileSystem::WriteToFile(tosave, L"./Persist.txt");
 
 }
 

@@ -4,8 +4,8 @@
 #include "ObjectFileProcessor.h"
 #endif
 #include "FileSystem.h"
-#include <boost\assign\list_of.hpp>
-#include "Common\DataStoring\DataStore.h"
+#include <boost/assign/list_of.hpp>
+#include "Common/DataStoring/DataStore.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -14,7 +14,11 @@ ObjectFileProcessor::ObjectFileProcessor(){}
 Leviathan::ObjectFileProcessor::~ObjectFileProcessor(){}
 
 // quick macro to make this shorter //
-#define ADDDATANAMEINTDEFINITION(x) (L#x , new VariableBlock(new IntBlock(x)))
+#ifdef _MSC_VER
+#define ADDDATANAMEINTDEFINITION(x) (WSTRINGIFY(x), new VariableBlock(new IntBlock(x)))
+#else
+#define ADDDATANAMEINTDEFINITION(x) (WSTRINGIFY(x), shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(x))))
+#endif
 
 map<wstring, shared_ptr<VariableBlock>> Leviathan::ObjectFileProcessor::RegisteredValues = boost::assign::map_list_of
 	ADDDATANAMEINTDEFINITION(DATAINDEX_TICKTIME)
@@ -48,7 +52,7 @@ DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(const wstring &nam
 	RegisteredValues[name] = shared_ptr<VariableBlock>(valuetokeep);
 }
 // ------------------------------------ //
-DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::ProcessObjectFile(const wstring &file, 
+DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::ProcessObjectFile(const wstring &file,
 	vector<shared_ptr<NamedVariableList>> &HeaderVars)
 {
 	vector<shared_ptr<ObjectFileObject>> returned;
@@ -65,7 +69,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 		e.PrintToLog();
 		return returned;
 	}
-	
+
 
 	// file needs to be split to lines //
 	vector<wstring> Lines;
@@ -83,7 +87,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 
 	// set line //
 	UINT Line = 0;
-	
+
 	for(;;){
 		// check is still valid //
 		if(Line >= (int)Lines.size()){
@@ -114,9 +118,9 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 
 	// read objects // // move to next line, on first iteration skips "objects {" part //
 	while(++Line < (int)Lines.size() && (!Misc::WstringStartsWith(Lines[Line], L"-!-"))){
-		
+
 		// skip empty //
-		if(Lines[Line].size() == 0){ 
+		if(Lines[Line].size() == 0){
 			continue;
 		}
 
@@ -156,7 +160,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 				ScriptModule* tmpmodule = tmpscrpptr->GetModule();
 				// add sections to the module //
 
-				tmpmodule->GetBuilder().AddSectionFromMemory(Convert::WstringToString(file+L":"+Convert::IntToWstring(Line)).c_str(), 
+				tmpmodule->GetBuilder().AddSectionFromMemory(Convert::WstringToString(file+L":"+Convert::IntToWstring(Line)).c_str(),
 					("void Do(int Line){\n"+Convert::WstringToString(*scriptinstructions)+"\nreturn;\n}").c_str(), Line);
 
 				// compile the script //
@@ -214,7 +218,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 	// re init to not have the brace (actually deleting the string after being done) //
 	itr.ReInit(str.release(), true);
 
-	
+
 	unique_ptr<wstring> Name(nullptr);
 	unique_ptr<wstring> TypeN(nullptr);
 
@@ -319,7 +323,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 
 		// update iterator //
 		itr.ReInit(&Lines[Line], false);
-		
+
 		shared_ptr<wstring> start = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
 
 		if(*start == L"l"){
@@ -328,7 +332,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 			Level++;
 
 			// handle first line of object //
-			obj->Contents.push_back(new ObjectFileList(*itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES 
+			obj->Contents.push_back(new ObjectFileList(*itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES
 				| UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS)));
 			Handleindex = obj->Contents.size()-1;
 
@@ -341,7 +345,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 			Level++;
 
 			// handle first line of object //
-			obj->TextBlocks.push_back(new ObjectFileTextBlock(*itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES 
+			obj->TextBlocks.push_back(new ObjectFileTextBlock(*itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES
 				| UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS)));
 			Handleindex = obj->TextBlocks.size()-1;
 
@@ -363,7 +367,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 	return obj;
 }
 // ------------------------------------ //
-bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level,
 	shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr)
 {
 	// update iterator //
@@ -382,7 +386,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line,
 	// if begins with <t> is plain text //
 	if(*linegot == L"<t>"){
 		// store plain text //
-		
+
 		linegot = itr.GetUntilEnd();
 
 		if(linegot->back() == L';'){
@@ -414,7 +418,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockListBlock(UINT &Line,
 	return false;
 }
 
-bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level,
 	shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr)
 {
 	bool Working = true;
@@ -589,14 +593,14 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 	return true;
 }
 
-bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockTextBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockTextBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level,
 	shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr)
 {
 	// check for end //
 	if(Misc::WstringStartsWith(Lines[Line], L"}")){
 		// object ended //
 		//Level--; // no need to change here //
-		 
+
 		// ended //
 		return true;
 	}
@@ -614,7 +618,11 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockTextBlock(UINT &Line,
 DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const wstring &file, vector<shared_ptr<NamedVariableList>> &headervars,bool UseBinary /*= false*/){
 	// open file for writing //
 	wofstream writer;
+#ifdef _WIN32
 	writer.open(file);
+#else
+    writer.open(Convert::WstringToString(file));
+#endif
 	if(!writer.is_open()){
 		// write fail //
 		return 11;
@@ -632,7 +640,7 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 
 		// starting line //
 		if(temp->Prefixes.size() != 0){
-			writer << L"	o " << temp->TName << L" " << Misc::VectorValuesToSingleSmartPTR<wstring>(temp->Prefixes, L" ", true) << L" \"" 
+			writer << L"	o " << temp->TName << L" " << Misc::VectorValuesToSingleSmartPTR<wstring>(temp->Prefixes, L" ", true) << L" \""
 				<< temp->Name << L"\" {" << endl;
 		} else {
 			writer << L"	o " << temp->TName << L" \"" << temp->Name << L"\" {" << endl;

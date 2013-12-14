@@ -6,12 +6,12 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Script\ScriptScript.h"
-#include "ObjectFiles\ObjectFileObject.h"
-#include "Common\ReferenceCounted.h"
-#include "Events\Event.h"
+#include "Script/ScriptScript.h"
+#include "ObjectFiles/ObjectFileObject.h"
+#include "Common/ReferenceCounted.h"
+#include "Events/Event.h"
 #include "GuiCollection.h"
-#include "Events\EventableScriptObject.h"
+#include "Events/EventableScriptObject.h"
 
 namespace Leviathan{ namespace Gui{
 

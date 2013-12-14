@@ -8,20 +8,26 @@
 
 using namespace Pong;
 
-
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-	LPSTR lpCmdLine, int nCmdShow){
+#ifdef _WIN32
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
 #if defined(DEBUG) | defined(_DEBUG)
-	//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-	//_CrtSetReportMode( _CRT_ERROR, _CRTDBG_MODE_DEBUG);
-	_CrtSetReportMode( _CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+		//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+		//_CrtSetReportMode( _CRT_ERROR, _CRTDBG_MODE_DEBUG);
+		_CrtSetReportMode( _CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+#endif
+
+#else
+int main(int argcount, char* args[]){
 #endif
 
 	int Return = 0;
+#ifdef _WIN32
 	HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
 
+	if (SUCCEEDED(CoInitialize(NULL))){
+#else
 
-	if(SUCCEEDED(CoInitialize(NULL))){
+#endif
 
 #ifdef LEVIATHAN_USES_VLD
 		// now that we are in code we can start tracking //
@@ -34,16 +40,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		PongGame game;
 
 		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine());
-		// customize values //
-		ProgramDefinition->SetHInstance(hInstance).SetMasterServerParameters(MasterServerInformation(L"PongMasters.txt", L"Pong_" GAME_VERSIONS, 
-			L"http://boostslair.com/Pong/MastersList.php", L"PongCrecentials", false));
+		// customize values //#ifdef _WIN32
+		ProgramDefinition->SetHInstance(hInstance);
+#endif
+ProgramDefinition->SetMasterServerParameters(MasterServerInformation(L"PongMasters.txt", L"Pong_" GAME_VERSIONS, 
+			L"http://boostslair.com/Pong/MastersList.php", L"PongCrecentials", false));#endif
+		// create window last //
+		ProgramDefinition->StoreWindowDetails(PongGame::GenerateWindowTitle(), true,
+#ifdef _WIN32
+            LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)),
+#endif
+            &game);
 
-		// create window parameters last //
-		ProgramDefinition->StoreWindowDetails(PongGame::GenerateWindowTitle(), true, LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)), &game);
 
 
 		if(game.Initialize(ProgramDefinition.get())){
+#ifdef _WIN32
 			game.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
+#else
+            wstring commandline = L"";
+            for(int i = 1; i < argcount; i++){
+                commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
+            }
+			game.PassCommandLine(commandline);
+#endif
 			// this is where the game should customize the engine //
 			game.CustomizeEnginePostLoad();
 
@@ -54,8 +74,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			game.Release();
 			Return = 005;
 		}
+#ifdef _WIN32
 	}
-
+	//_CrtDumpMemoryLeaks();
 	CoUninitialize();
-	return Return;
-}
+#endif
+
+
+	return Return;}

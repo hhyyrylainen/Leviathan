@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_SOUNDEMITTER
 #include "SoundEmitter.h"
 #endif
-#include "Sound\SoundDevice.h"
+#include "Sound/SoundDevice.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //

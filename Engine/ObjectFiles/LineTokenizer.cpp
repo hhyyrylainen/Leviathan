@@ -16,21 +16,11 @@ DLLEXPORT int Leviathan::LineTokeNizer::TokeNizeLine(const wstring& str, vector<
 	// estimate token count //
 	CopyOperations.reserve(3);
 	// check how many characters need to be copied to each token //
-	for(unsigned int i = 0; i < str.size(); i++){
+	for(size_t i = 0; i < str.size(); i++){
 		// check for chars //
-		if(str[i] == L'\"'){
-			if(i-1 > -1){
-				// check for \ 
-				if(str[i-1] == L'\\'){
-					// not //
+		if(str[i] == L'\"')
+			(i-1 > -1) ? ((str[i-1] != L'\\') ? Misc::ToggleBool(InString): false): Misc::ToggleBool(InString);
 
-				} else {
-					Misc::ToggleBool(InString);
-				}
-			} else {
-				Misc::ToggleBool(InString);
-			}
-		}
 		if(!InString){
 			if(str[i] == L'('){
 				Level++;
@@ -73,7 +63,7 @@ DLLEXPORT int Leviathan::LineTokeNizer::TokeNizeLine(const wstring& str, vector<
 	for(unsigned int i = 0; i < CopyOperations.size(); i++){
 		// use wstring functions to get sub strings //
 		// second is actually length of substring (end-start positions) //
-		result.push_back(new wstring(str.substr((unsigned int)CopyOperations[i]->X, 
+		result.push_back(new wstring(str.substr((unsigned int)CopyOperations[i]->X,
 			(unsigned int)CopyOperations[i]->Y-CopyOperations[i]->X)));
 	}
 	// release memory //
@@ -169,7 +159,7 @@ DLLEXPORT int Leviathan::LineTokeNizer::SplitTokenToRTokens(const wstring& str, 
 
 			// set up copying of characters //
 			CurrentCharacters.Y = i-1;
-			
+
 
 
 			if((CurrentCharacters[0] != CurrentCharacters[1]) && (CurrentCharacters[0] != -1)){

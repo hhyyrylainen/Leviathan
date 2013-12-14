@@ -79,7 +79,11 @@ DLLEXPORT shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(c
 }
 
 DLLEXPORT shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(){
+#ifdef _WIN32
 	throw exception("not implemented");
+#else
+    throw bad_exception();
+#endif
 }
 
 DLLEXPORT void Leviathan::SoundDevice::SetSoundListenerPosition(const Float3 &pos, const Float3 &pitchyawroll){

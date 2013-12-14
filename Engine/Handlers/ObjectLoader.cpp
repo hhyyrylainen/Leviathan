@@ -5,12 +5,12 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "Statistics\TimingMonitor.h"
+#include "Statistics/TimingMonitor.h"
 #include "OgreManualObject.h"
-#include "Entities\Objects\Brush.h"
-#include "Entities\Objects\Prop.h"
-#include "Entities\Objects\TrackEntityController.h"
-#include "Entities\Objects\TrailEmitter.h"
+#include "Entities/Objects/Brush.h"
+#include "Entities/Objects/Prop.h"
+#include "Entities/Objects/TrackEntityController.h"
+#include "Entities/Objects/TrailEmitter.h"
 
 Leviathan::ObjectLoader::ObjectLoader(Engine* engine){
 	m_Engine = engine;

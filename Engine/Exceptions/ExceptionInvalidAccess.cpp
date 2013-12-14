@@ -6,7 +6,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
-DLLEXPORT Leviathan::ExceptionInvalidAccess::ExceptionInvalidAccess(const wstring &message, int val, const wstring& sourcefunction, 
+DLLEXPORT Leviathan::ExceptionInvalidAccess::ExceptionInvalidAccess(const wstring &message, int val, const wstring& sourcefunction,
 	const wstring &InvalidArg, const wstring &invalidvalue)  : ExceptionBase(message, val, sourcefunction), InvalidAccessType(new wstring(InvalidArg)),
 	InvalidDefinition(new wstring(invalidvalue))
 {
@@ -16,8 +16,8 @@ DLLEXPORT Leviathan::ExceptionInvalidAccess::ExceptionInvalidAccess(const wstrin
 
 DLLEXPORT Leviathan::ExceptionInvalidAccess::ExceptionInvalidAccess(const ExceptionInvalidAccess &other){
 	// copy this specific value, others should be handled by base class copy ctor //
-	this->InvalidAccessType(new wstring(*other.InvalidAccessType));
-	this->InvalidDefinition(new wstring(*other.InvalidDefinition));
+	this->InvalidAccessType = unique_ptr<wstring>(new wstring(*other.InvalidAccessType));
+	this->InvalidDefinition = unique_ptr<wstring>(new wstring(*other.InvalidDefinition));
 
 	// set type //
 	type = EXCEPTIONTYPE_INVALIDACCESS;

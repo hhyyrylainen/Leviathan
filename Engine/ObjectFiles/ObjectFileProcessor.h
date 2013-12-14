@@ -6,12 +6,12 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Script\ScriptInterface.h"
-#include "ObjectFiles\ObjectFileObject.h"
-#include "Statistics\TimingMonitor.h"
-#include "Utility\Iterators\WstringIterator.h"
-#include "ObjectFiles\LineTokenizer.h"
-#include "Common\DataStoring\DataBlock.h"
+#include "Script/ScriptInterface.h"
+#include "ObjectFiles/ObjectFileObject.h"
+#include "Statistics/TimingMonitor.h"
+#include "Utility/Iterators/WstringIterator.h"
+#include "ObjectFiles/LineTokenizer.h"
+#include "Common/DataStoring/DataBlock.h"
 
 namespace Leviathan{
 
@@ -30,7 +30,7 @@ namespace Leviathan{
 
 		// function to shorten value loading in many places //
 		template<class T>
-		DLLEXPORT static bool LoadValueFromNamedVars(NamedVars* block, const wstring &varname, T &receiver, const T &defaultvalue, bool ReportError 
+		DLLEXPORT static bool LoadValueFromNamedVars(NamedVars* block, const wstring &varname, T &receiver, const T &defaultvalue, bool ReportError
 			= false, const wstring &errorprefix = L"")
 		{
 			// try to get value and convert to receiver //
@@ -48,7 +48,7 @@ namespace Leviathan{
 		}
 		// function to call the one before //
 		template<class T>
-		static __forceinline bool LoadValueFromNamedVars(NamedVars &block, const wstring &varname, T &receiver, const T &defaultvalue, bool ReportError 
+		static FORCE_INLINE bool LoadValueFromNamedVars(NamedVars &block, const wstring &varname, T &receiver, const T &defaultvalue, bool ReportError
 			= false, const wstring &errorprefix = L"")
 		{
 				return LoadValueFromNamedVars<T>(&block, varname, receiver, defaultvalue, ReportError, errorprefix);
@@ -56,7 +56,7 @@ namespace Leviathan{
 
 
 		template<class RType, class SingleType, int VarCount>
-		DLLEXPORT static void LoadMultiPartValueFromNamedVars(NamedVars* block, const wstring &varname, RType &receiver, const RType &defaultvalue, bool ReportError 
+		DLLEXPORT static void LoadMultiPartValueFromNamedVars(NamedVars* block, const wstring &varname, RType &receiver, const RType &defaultvalue, bool ReportError
 			= false, const wstring &errorprefix = L"")
 		{
 			// get pointer to value list //
@@ -72,13 +72,13 @@ namespace Leviathan{
 			}
 			// call assigning function //
 			int varindex = 0;
-			LoadMultiPartValueFromNamedVariableList<RType, SingleType, VarCount>(curvalues.get(), varindex, receiver, defaultvalue, ReportError, 
+			LoadMultiPartValueFromNamedVariableList<RType, SingleType, VarCount>(curvalues.get(), varindex, receiver, defaultvalue, ReportError,
 				errorprefix);
 
 		}
 
 		template<class RType, class SingleType, int VarCount>
-		DLLEXPORT static bool LoadMultiPartValueFromNamedVariableList(NamedVariableList* block, int &valuestartindex, RType &receiver, 
+		DLLEXPORT static bool LoadMultiPartValueFromNamedVariableList(NamedVariableList* block, int &valuestartindex, RType &receiver,
 			const RType &defaultvalue, bool ReportError = false, const wstring &errorprefix = L"")
 		{
 			// make sure that size is right and types are correct //
@@ -109,7 +109,7 @@ namespace Leviathan{
 
 		// function to call the one before //
 		template<class RType, class SingleType, int VarCount>
-		static __forceinline void LoadMultiPartValueFromNamedVars(NamedVars &block, const wstring &varname, RType &receiver, const RType &defaultvalue, bool ReportError 
+		static FORCE_INLINE void LoadMultiPartValueFromNamedVars(NamedVars &block, const wstring &varname, RType &receiver, const RType &defaultvalue, bool ReportError
 			= false, const wstring &errorprefix = L"")
 		{
 			return LoadMultiPartValueFromNamedVars<RType, SingleType, VarCount>(&block, varname, receiver, defaultvalue, ReportError, errorprefix);
@@ -118,19 +118,19 @@ namespace Leviathan{
 	private:
 		static shared_ptr<ObjectFileObject> ReadObjectBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile);
 		// handling object blocks //
-		static bool ProcessObjectFileBlockListBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+		static bool ProcessObjectFileBlockListBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level,
 			shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr);
-		static bool ProcessObjectFileBlockScriptBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+		static bool ProcessObjectFileBlockScriptBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level,
 			shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr);
-		static bool ProcessObjectFileBlockTextBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level, 
+		static bool ProcessObjectFileBlockTextBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level,
 			shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr);
 
 
 		// ------------------------- //
 
 		// private constructor to prevent instantiating //
-		ObjectFileProcessor::ObjectFileProcessor();
-		ObjectFileProcessor::~ObjectFileProcessor();
+		ObjectFileProcessor();
+		~ObjectFileProcessor();
 
 		static map<wstring, shared_ptr<VariableBlock>> RegisteredValues;
 	};

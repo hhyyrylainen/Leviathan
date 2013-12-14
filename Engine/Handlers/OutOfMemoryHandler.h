@@ -14,8 +14,8 @@ namespace Leviathan{
 
 	class OutOfMemoryHandler /*: public Object*/{
 	public:
-		DLLEXPORT OutOfMemoryHandler::OutOfMemoryHandler();
-		DLLEXPORT OutOfMemoryHandler::~OutOfMemoryHandler();
+		DLLEXPORT OutOfMemoryHandler();
+		DLLEXPORT ~OutOfMemoryHandler();
 
 		DLLEXPORT static OutOfMemoryHandler* Get();
 

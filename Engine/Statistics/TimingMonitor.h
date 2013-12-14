@@ -10,7 +10,11 @@
 #define TIMINGMONITOR_STYLE_RESULT_DEFAULT	100
 #define TIMINGMONITOR_STYLE_RESULT_NONE		200
 
+#ifdef _MSC_VER
 #define ADDTIMERFROSCOPE(x,y) Leviathan::ScopeTimer thisscopetimer_##x##(y);
+#else
+#define ADDTIMERFROSCOPE(x,y) Leviathan::ScopeTimer thisscopetimer_(y);
+#endif
 
 #define ADDTIMEFORSCOPECALLER(x,y) ADDTIMERFROSCOPE(x, y)
 
@@ -45,9 +49,9 @@ namespace Leviathan{
 		DLLEXPORT static void ClearTimers();
 
 	private:
-		TimingMonitor::TimingMonitor();
-		TimingMonitor::TimingMonitor(const TimingMonitor& other);
-		TimingMonitor::~TimingMonitor();
+		TimingMonitor();
+		TimingMonitor(const TimingMonitor& other);
+		~TimingMonitor();
 
 		// ---------------------- //
 		static vector<shared_ptr<TimingMonitorClock>> Timers;

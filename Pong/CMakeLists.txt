@@ -11,7 +11,7 @@ file(GLOB PResourceFiles "resource.h" "*.rc")
 
 # additional .txts
 file(GLOB Additional "*.txt")
-file(GLOB CMakeListFile "CmakeLists.txt")
+file(GLOB CMakeListFile "CMakeLists.txt")
 
 list(REMOVE_ITEM Additional ${CMakeListFile})
 
@@ -25,6 +25,7 @@ source_group("Additional" FILES ${Additional})
 # all Pong files in one list
 set(PongFiles ${PSourceFiles} ${PHeaderFiles} ${PResourceFiles} ${Additional})
 
+if(WIN32)
 # precompiled headers
 # remove from list before adding back
 file(GLOB PrecompiledHeaderName "PongIncludes.h")
@@ -33,8 +34,14 @@ list(REMOVE_ITEM PongFiles ${PrecompiledSourceName})
 
 # precompiled header
 ADD_MSVC_PRECOMPILED_HEADER("PongIncludes.h" ${PrecompiledSourceName} PongFiles)
+endif(WIN32)
 
+if(WIN32)
 add_executable(Pong WIN32 ${PongFiles})
+else(WIN32)
+add_executable(Pong ${PongFiles})
+endif(WIN32)
+
 set_target_properties(Pong PROPERTIES DEBUG_POSTFIX D)
 
 # Possible debug installs
@@ -49,6 +56,11 @@ install(TARGETS Pong DESTINATION bin CONFIGURATIONS ${InstallConfigurationNames}
 # linking to engine
 target_link_libraries(Pong Engine)
 
+if(NOT WIN32)
+target_link_libraries(Pong ${LINUX_LINK_LIBS_TOENGINE})
+endif(NOT WIN32)
+
+if(WIN32)
 # set working directory when we want to run this
 create_target_launcher(Pong RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/" WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin/")
 
@@ -56,3 +68,8 @@ create_target_launcher(Pong RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/" WO
 ADD_CUSTOM_COMMAND(TARGET Pong POST_BUILD COMMAND copy ARGS 
     "\"$(SolutionDir)Pong\\$(Configuration)\\$(TargetName).exe\" \"$(SolutionDir)bin\\$(TargetName).exe\""
 )
+else(WIN32)
+
+
+endif(WIN32)
+

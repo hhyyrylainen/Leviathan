@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_CONSOLE
 #include "Script/Console.h"
 #endif
-#include "Utility\Iterators\WstringIterator.h"
+#include "Utility/Iterators/WstringIterator.h"
 #include "boost/assign.hpp"
 #include "add_on/scripthelper/scripthelper.h"
 using namespace Leviathan;

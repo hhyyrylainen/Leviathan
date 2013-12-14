@@ -7,27 +7,38 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "FileSystem.h"
 
-Leviathan::Logger::Logger(): FirstSaveDone(false), Saved(false), Autosave(false), Path(L".\\Log.txt"){
+Leviathan::Logger::Logger(): FirstSaveDone(false), Saved(false), Autosave(false), Path(L"./Log.txt"){
 	// get time for putting to beginning of log //
+#ifdef _WIN32
 	SYSTEMTIME tdate;
 	GetLocalTime(&tdate);
 
 	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "
 		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
+
+#else
+    wstring times = L"TODO: add time get";
+
+#endif
 
 	PendingLog = L"Start of Leviathan log for leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
 
 	LatestLogger = this;
 }
-DLLEXPORT Leviathan::Logger::Logger(const wstring &start, const bool &autosave) : FirstSaveDone(false), Saved(false), Autosave(autosave), 
-	Path(L".\\Log.txt")
+DLLEXPORT Leviathan::Logger::Logger(const wstring &start, const bool &autosave) : FirstSaveDone(false), Saved(false), Autosave(autosave),
+	Path(L"./Log.txt")
 {
-	// use the argument as initial text //
+#ifdef _WIN32
 	SYSTEMTIME tdate;
 	GetLocalTime(&tdate);
 
 	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "
 		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
+
+#else
+    wstring times = L"TODO: add time get";
+
+#endif
 
 	PendingLog = start+L"Start of Leviathan log for leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
 
@@ -163,14 +174,6 @@ DLLEXPORT void Leviathan::Logger::DirectWriteBuffer(const wstring &data){
 	Saved = false;
 }
 // ------------------------------------ //
-void Leviathan::Logger::CheckQueue(boost::strict_lock<Logger> &guard){
-	if(LatestLogger != NULL){
-		LatestLogger->PendingLog += QueuedLog;
-		// clear //
-		QueuedLog.resize(0);
-	}
-}
-
 void Leviathan::Logger::_LogUpdateEndPart(const bool &save, boost::strict_lock<Logger> &guard){
 	// check is something in queue //
 	CheckQueue(guard);

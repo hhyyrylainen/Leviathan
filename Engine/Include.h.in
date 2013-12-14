@@ -10,6 +10,10 @@
 #define LEVIATHAN_USES_VLD
 #endif
 
+#ifndef __cplusplus
+#error C++ compiler required!
+#endif
+
 #include <stdio.h>
 
 // we need to disable this warning to stop stdint and instsafe causing errors //
@@ -23,7 +27,10 @@
 #include <math.h>
 #include <assert.h>
 
+#ifdef _WIN32
 #include <SDKDDKVer.h>
+
+#endif
 
 // some special compiler settings //
 #ifdef ANALYZEBUILD
@@ -37,9 +44,17 @@
 // core libRocket (this is before windows headers to fix things) //
 #include <Rocket/Core.h>
 
+#ifdef _WIN32
 #include <Windows.h>
 #include <Windowsx.h>
 #include <wincodec.h>
+#else
+// For making SIGINT work as debug break on linux //
+#include <signal.h>
+#endif
+
+// Might have to only include this on linux //
+#include <limits>
 
 #include <iostream>
 #include <fstream>
@@ -57,8 +72,13 @@
 #include <set>
 #include <regex>
 
+#ifdef _WIN32
 #include <initguid.h>
 #include <shlobj.h>
+#else
+// For using SIGINT as breakpoints //
+	 #include <signal.h>
+#endif
 
 // common ogre files //
 #include <OgreCamera.h>
@@ -73,67 +93,72 @@
 // pragma include libraries
 
 #ifdef ENGINE_EXPORTS
-#ifdef _DEBUG
-// debug versions //
-#pragma comment(lib, "angelscriptd.lib")
-#pragma comment(lib, "Leapd.lib")
+#ifdef _WIN32
+	#ifdef _DEBUG
+	// debug versions //
 
-#pragma comment(lib, "OgreMain_d.lib")
-#pragma comment(lib, "OgreOverlay_d.lib")
-#pragma comment(lib, "OgrePaging_d.lib")
-#pragma comment(lib, "OgreTerrain_d.lib")
-#pragma comment(lib, "OgreRTShaderSystem_d.lib")
-#pragma comment(lib, "Plugin_CgProgramManager_d.lib")
-#pragma comment(lib, "Plugin_OctreeZone_d.lib")
-#pragma comment(lib, "Plugin_ParticleFX_d.lib")
-#pragma comment(lib, "RenderSystem_Direct3D11_d.lib")
-#pragma comment(lib, "RenderSystem_GL_d.lib")
-#pragma comment(lib, "RenderSystem_Direct3D11_d.lib")
+	#pragma comment(lib, "angelscriptd.lib")
+	#pragma comment(lib, "Leapd.lib")
+	
+	#pragma comment(lib, "OgreMain_d.lib")
+	#pragma comment(lib, "OgreOverlay_d.lib")
+	#pragma comment(lib, "OgrePaging_d.lib")
+	#pragma comment(lib, "OgreTerrain_d.lib")
+	#pragma comment(lib, "OgreRTShaderSystem_d.lib")
+	#pragma comment(lib, "Plugin_CgProgramManager_d.lib")
+	#pragma comment(lib, "Plugin_OctreeZone_d.lib")
+	#pragma comment(lib, "Plugin_ParticleFX_d.lib")
+	#pragma comment(lib, "RenderSystem_Direct3D11_d.lib")
+	#pragma comment(lib, "RenderSystem_GL_d.lib")
+	#pragma comment(lib, "RenderSystem_Direct3D11_d.lib")
+	
+	#pragma comment(lib, "OIS_d.lib")
+	#pragma comment(lib, "RocketCore_d.lib")
+	#pragma comment(lib, "RocketControls_d.lib")
+	#pragma comment(lib, "RocketDebugger_d.lib")
+	#pragma comment(lib, "newton_d.lib")
 
-#pragma comment(lib, "OIS_d.lib")
-#pragma comment(lib, "RocketCore_d.lib")
-#pragma comment(lib, "RocketControls_d.lib")
-#pragma comment(lib, "RocketDebugger_d.lib")
-#pragma comment(lib, "newton_d.lib")
+	#pragma comment(lib, "sfml-audio-d.lib")
+	#pragma comment(lib, "sfml-network-d.lib")
+	#else
+	// release libraries
+	#pragma comment(lib, "angelscript.lib")
+	#pragma comment(lib, "Leap.lib")
 
-#pragma comment(lib, "sfml-audio-d.lib")
-#pragma comment(lib, "sfml-network-d.lib")
-#else
-// release libraries
-#pragma comment(lib, "angelscript.lib")
-#pragma comment(lib, "Leap.lib")
+	#pragma comment(lib, "OgreMain.lib")
+	#pragma comment(lib, "OgreOverlay.lib")
+	#pragma comment(lib, "OgrePaging.lib")
+	#pragma comment(lib, "OgreTerrain.lib")
+	#pragma comment(lib, "OgreRTShaderSystem.lib")
+	#pragma comment(lib, "Plugin_CgProgramManager.lib")
+	#pragma comment(lib, "Plugin_OctreeZone.lib")
+	#pragma comment(lib, "Plugin_ParticleFX.lib")
+	#pragma comment(lib, "RenderSystem_Direct3D11.lib")
+	#pragma comment(lib, "RenderSystem_GL.lib")
+	#pragma comment(lib, "RenderSystem_Direct3D11.lib")
 
-#pragma comment(lib, "OgreMain.lib")
-#pragma comment(lib, "OgreOverlay.lib")
-#pragma comment(lib, "OgrePaging.lib")
-#pragma comment(lib, "OgreTerrain.lib")
-#pragma comment(lib, "OgreRTShaderSystem.lib")
-#pragma comment(lib, "Plugin_CgProgramManager.lib")
-#pragma comment(lib, "Plugin_OctreeZone.lib")
-#pragma comment(lib, "Plugin_ParticleFX.lib")
-#pragma comment(lib, "RenderSystem_Direct3D11.lib")
-#pragma comment(lib, "RenderSystem_GL.lib")
-#pragma comment(lib, "RenderSystem_Direct3D11.lib")
+	#pragma comment(lib, "OIS.lib")
+	#pragma comment(lib, "RocketCore.lib")
+	#pragma comment(lib, "RocketControls.lib")
+	#pragma comment(lib, "RocketDebugger.lib")
+	#pragma comment(lib, "newton.lib")
 
-#pragma comment(lib, "OIS.lib")
-#pragma comment(lib, "RocketCore.lib")
-#pragma comment(lib, "RocketControls.lib")
-#pragma comment(lib, "RocketDebugger.lib")
-#pragma comment(lib, "newton.lib")
-
-#pragma comment(lib, "sfml-audio.lib")
-#pragma comment(lib, "sfml-network.lib")
+	#pragma comment(lib, "sfml-audio.lib")
+	#pragma comment(lib, "sfml-network.lib")
+	#endif
 #endif
 #else
 // include engine lib
-#ifdef _DEBUG
-#pragma comment(lib, "EngineD.lib")
-// Also link the Newton library because it seems to be needed for some things //
-#pragma comment(lib, "newton_d.lib")
-#else
-#pragma comment(lib, "Engine.lib")
-// Also link the Newton library because it seems to be needed for some things //
-#pragma comment(lib, "newton.lib")
+#ifdef _WIN32
+	#ifdef _DEBUG
+	#pragma comment(lib, "EngineD.lib")
+	// Also link the Newton library because it seems to be needed for some things //
+	#pragma comment(lib, "newton_d.lib")
+	#else
+	#pragma comment(lib, "Engine.lib")
+	// Also link the Newton library because it seems to be needed for some things //
+	#pragma comment(lib, "newton.lib")
+	#endif
 #endif
 
 #endif // ENGINE_EXPORTS
@@ -145,7 +170,7 @@ using namespace std;
 #define LEVIATHAN_VERSION @LEVIATHAN_VERSION@
 #define LEVIATHAN_VERSIONS @LEVIATHAN_VERSIONS@
 #define LEVIATHAN_VERSION_ANSIS @LEVIATHAN_VERSION_ANSIS@
-//#cmakedefine USE_MYMATH
+
 
 #define VERSION		LEVIATHAN_VERSION
 #define VERSIONS	LEVIATHAN_VERSIONS
@@ -159,21 +184,53 @@ using namespace std;
 #define OBJECT_SMOOTH	4
 #define SHADER_DEBUG 1
 
+// Define common types that might be missing //
+#ifndef _WIN32
+#include <inttypes.h>
+#include <float.h>
+typedef unsigned int UINT;
+typedef long LONG;
+typedef int64_t __int64;
+typedef int32_t __int32;
+typedef unsigned char BYTE;
+typedef unsigned char UCHAR;
+typedef unsigned short USHORT;
+typedef unsigned short UINT16;
+
+
+
+#define __assume(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
+
+#define FORCE_INLINE __attribute__((always_inline))
+//#define FORCE_INLINE
+#define THROWS
+#else
+
+#define FORCE_INLINE	__forceinline
+#define THROWS		throw(...)
+#endif
+
+
 #define LEVIATHAN_UNIT_SCALE		1000
 // throw on Error message //
 //#define THROW_ON_PRINTERROR
 
-#define FORCE_INLINE __forceinline
-
-#ifdef _MSC_VER
 #ifdef _DEBUG
-#define DEBUG_BREAK __debugbreak();
+	#ifdef _MSC_VER
+		#define DEBUG_BREAK __debugbreak();
+	#else
+		#ifdef __GNUC__
+		// We are on linux (and this *should* work)
+			#define DEBUG_BREAK raise(SIGINT)
+		#else
+		#error "Debug break won't work"
+		#endif
+	#endif
 #else
-#define DEBUG_BREAK 
+	// Release mode
+	#define DEBUG_BREAK
 #endif //_DEBUG
-#else
-#error Debug break won't work
-#endif //_MSC_VER
+
 
 #ifndef DEBUG_OUTPUT
 #if defined( DEBUG ) || defined( _DEBUG )
@@ -193,7 +250,7 @@ using namespace std;
 
 #ifndef DEBUG_OUTPUT_AUTOPLAINTEXT
 #if defined( DEBUG ) || defined( _DEBUG )
-#define DEBUG_OUTPUT_AUTOPLAINTEXT(s)	{Logger::SendDebugMessage(wstring(L"[INFO] "L#s L"\n"));}
+#define DEBUG_OUTPUT_AUTOPLAINTEXT(s)	{Logger::SendDebugMessage(wstring(L"[INFO] " L#s L"\n"));}
 #else
 #define DEBUG_OUTPUT_AUTOPLAINTEXT(s)   {}
 #endif //DEBUG || _DEBUG
@@ -202,9 +259,14 @@ using namespace std;
 
 #ifndef DLLEXPORT
 #ifdef ENGINE_EXPORTS
-#define DLLEXPORT   __declspec( dllexport ) 
+#ifdef _WIN32
+#define DLLEXPORT  	 __declspec( dllexport )
 #else
-#define DLLEXPORT 
+// This might not be needed for gcc
+#define DLLEXPORT	__attribute__ ((visibility ("default")))
+#endif
+#else
+#define DLLEXPORT
 #endif // ENGINE_EXPORTS
 #endif
 
@@ -226,7 +288,7 @@ using namespace std;
 #define SAFE_DELETE_ARRAY( x ) {if(x){delete[] (x);(x)=NULL;}}
 #define EXISTS( x ) {( (x) != NULL )}
 
-#define SAFE_RELEASE_VECTOR(x) {for(auto iter = x.begin(); iter != x.end(); ++iter){(*iter)->Release();} x.clear();}
+#define SAFE_RELEASE_VECTOR(x) {for(auto iter = x.begin(); iter != x.end(); ++iter) if(*iter){ (*iter)->Release(); } x.clear();}
 
 #define ARR_INDEX_CHECK( x, y) if(((x) >= 0 ) && ((size_t)(x) < (y)))
 #define ARR_INDEX_CHECKINV( x, y) if(!(((x) >= 0 ) && ((size_t)(x) < (y))))
@@ -237,33 +299,55 @@ using namespace std;
 #define FORCE_POSITIVE(x) {if((x) < 0){ (x)*=-1; }}
 #define FORCE_POSITIVEF(x) {if((x) < 0){ (x)*=-1.0f; }}
 
-#define WIDEN2(x) L ## x
+#ifdef _WIN32
+#define WIDEN2(x) L##x
 #define WIDEN(x) WIDEN2(x)
-#define __WFILE__ WIDEN(__FILE__)
-#define __WFUNCTION__ WIDEN(__FUNCTION__)
+#else
+#define EXPAND(x) x
+#define WIDEN3(x) L ## x
+#define WIDEN2(x) WIDEN3(x)
+#define WIDEN(x) WIDEN2(EXPAND(x))
+#endif
+
+#ifdef __GNUC__
+#define __FUNCTION__ __func__
+#define __FUNCSIG__ __PRETTY_FUNCTION__
+#endif
+
+#define STRINGIFY3(x) #x
+#define STRINGGIFY2(x) STRINGIFY3(x)
+#define STRINGGIFY(x) STRINGGIFY2(x)
+#define WSTRINGIFY(x) WIDEN(STRINGGIFY(x))
+
+#define __WFILE__ WSTRINGIFY(__FILE__)
+#define __WFUNCTION__ WSTRINGIFY(__FUNCTION__)
 
 #define SSLINE2(x) #x
 #define SSLINE(x) SSLINE2(x)
 #define __SLINE__ SSLINE(__LINE__)
 
 
-#define __SWLINE__ WIDEN(__SLINE__)
+#define __SWLINE__ WSTRINGIFY(__SLINE__)
 
-#define STRINGGIFY2(x) #x
-#define STRINGGIFY(x) STRINGGIFY2(x)
-#define WSTRINGIFY(x) WIDEN(STRINGGIFY(x))
 
-#define __WDATE__ WIDEN(__DATE__)
-#define __WTIME__ WIDEN(__TIME__)
-#define __WFUNCSIG__ WIDEN(__FUNCSIG__)
+
+#define __WDATE__ WSTRINGIFY(__DATE__)
+#define __WTIME__ WSTRINGIFY(__TIME__)
+#define __WFUNCSIG__ WSTRINGIFY(__FUNCSIG__)
 
 #define SAFE_DELETE_VECTOR(x) while((x).size() != 0){if((x)[0]){delete (x)[0];}(x).erase((x).begin());}
 
 #define STDCONTAINERERASELAST_PTR(x) x->erase(x->begin()+x->size()-1)
 #define STDCONTAINERERASELAST(x) x.erase(x.begin()+x.size()-1)
 
-#define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: " __SWLINE__ ), true);}
 #define QUICK_MEMORY_ERROR_MESSAGE {Logger::Get()->Error((L"Out of memory error from: " __WFILE__ L" function: "__WFUNCTION__), true);}
+
+#ifdef _MVC_VER
+#define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: " __SWLINE__ ), true);}
+#else
+#define QUICK_ERROR_MESSAGE DEBUG_BREAK;
+#endif
+
 
 namespace Leviathan{
 	
@@ -276,22 +360,22 @@ namespace Leviathan{
 
 //typedef std::vector vector;
 
-#include "Common\ErrorTypes.h"
+#include "Common/ErrorTypes.h"
 
 #include "Logger.h"
 
-#include "Common\Types.h"
-#include "Common\Misc.h"
-#include "Math\CommonMath.h"
-#include "Utility\Convert.h"
+#include "Common/Types.h"
+#include "Common/Misc.h"
+#include "Math/CommonMath.h"
+#include "Utility/Convert.h"
 
-#include "Handlers\IDFactory.h"
+#include "Handlers/IDFactory.h"
 // exceptions //
-#include "Exceptions\ExceptionBase.h"
+#include "Exceptions/ExceptionBase.h"
 
-#include "Statistics\TimingMonitor.h"
+#include "Statistics/TimingMonitor.h"
 // speed up compile times with leap //
-#include "leap.h"
+#include "Leap.h"
 // OIS compile speed up //
 #include <OISMouse.h>
 #include <OISKeyboard.h>
@@ -302,8 +386,10 @@ namespace Leviathan{
 // AngelAddons use std style names
 #define AS_USE_STLNAMES     1
 
-
 //#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
 #include "angelscript.h"
+
+// Undef stuff //
+#undef index
 
 #endif

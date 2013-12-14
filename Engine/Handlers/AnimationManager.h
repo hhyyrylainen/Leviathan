@@ -7,9 +7,9 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "FileSystem.h"
-#include "Utility\Iterators\WstringIterator.h"
-#include "ObjectFiles\ObjectFileProcessor.h"
-#include "ObjectFiles\LineTokenizer.h"
+#include "Utility/Iterators/WstringIterator.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "ObjectFiles/LineTokenizer.h"
 
 namespace Leviathan{
 
@@ -27,8 +27,8 @@ namespace Leviathan{
 
 	class AnimationManager : public EngineComponent{
 	public:
-		DLLEXPORT AnimationManager::AnimationManager();
-		DLLEXPORT AnimationManager::~AnimationManager();
+		DLLEXPORT AnimationManager();
+		DLLEXPORT ~AnimationManager();
 
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();

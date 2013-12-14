@@ -6,11 +6,11 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Entities\Bases\BaseRenderable.h"
+#include "Entities/Bases/BaseRenderable.h"
 
-#include "Common\GraphicalInputEntity.h"
-#include "Application\AppDefine.h"
-#include "GUI\OverlayMaster.h"
+#include "Common/GraphicalInputEntity.h"
+#include "Application/AppDefine.h"
+#include "GUI/OverlayMaster.h"
 
 namespace Leviathan{
 	// forward declarations to avoid having tons of headers here that aren't necessary //
@@ -18,8 +18,6 @@ namespace Leviathan{
 	class ShaderManager;
 	class FontManager;
 	}
-
-	class TextureManager;
 
 	class Graphics : public EngineComponent, Ogre::FrameListener{
 	public:
@@ -35,9 +33,6 @@ namespace Leviathan{
 
 		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt);
 
-		DLLEXPORT inline TextureManager* GetTextureManager(){
-			return TextureKeeper;
-		}
 		DLLEXPORT inline Rendering::FontManager* GetFontManager(){
 			return Fonts;
 		}
@@ -60,7 +55,6 @@ namespace Leviathan{
 		bool Initialized;
 
 		AppDef* AppDefinition;
-		TextureManager* TextureKeeper;
 
 		// OGRE //
 		unique_ptr<Ogre::Root> ORoot;

@@ -19,7 +19,11 @@ source_group("resources" FILES ${SBResourceFiles})
 # all Sandboxie files in one list
 set(Sandboxiefiles ${SBSourceFiles} ${SBHeaderFiles} ${SBResourceFiles})
 
+if(WIN32)
 add_executable(Sandboxie WIN32 ${Sandboxiefiles})
+else(WIN32)
+add_executable(Sandboxie ${Sandboxiefiles})
+endif(WIN32)
 set_target_properties(Sandboxie PROPERTIES DEBUG_POSTFIX D)
 
 # Possible debug installs
@@ -34,6 +38,11 @@ install(TARGETS Sandboxie DESTINATION bin CONFIGURATIONS ${InstallConfigurationN
 # linking to engine
 target_link_libraries(Sandboxie Engine)
 
+if(NOT WIN32)
+target_link_libraries(Sandboxie ${LINUX_LINK_LIBS_TOENGINE})
+endif(NOT WIN32)
+
+if(WIN32)
 # set working directory when we want to run this
 create_target_launcher(Sandboxie RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/" WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin/")
 
@@ -41,3 +50,6 @@ create_target_launcher(Sandboxie RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin
 ADD_CUSTOM_COMMAND(TARGET Sandboxie POST_BUILD COMMAND copy ARGS 
     "\"$(SolutionDir)Project_sandboxie\\$(Configuration)\\$(TargetName).exe\" \"$(SolutionDir)bin\\$(TargetName).exe\""
 )
+else(WIN32)
+
+endif(WIN32)

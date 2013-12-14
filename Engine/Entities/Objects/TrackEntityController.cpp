@@ -3,8 +3,8 @@
 #ifndef LEVIATHAN_TRACKENTITYCONTROLLER
 #include "TrackEntityController.h"
 #endif
-#include "..\GameWorld.h"
-#include "..\Bases\BasePhysicsObject.h"
+#include "../GameWorld.h"
+#include "../Bases/BasePhysicsObject.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //

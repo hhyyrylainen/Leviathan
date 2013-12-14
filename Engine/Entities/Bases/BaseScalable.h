@@ -12,8 +12,8 @@ namespace Leviathan{
 
 	class BaseScalable /*: public Object these classes are "components" and shouldn't inherit anything */{
 	public:
-		DLLEXPORT BaseScalable::BaseScalable();
-		DLLEXPORT BaseScalable::~BaseScalable();
+		DLLEXPORT BaseScalable();
+		DLLEXPORT ~BaseScalable();
 
 		DLLEXPORT float GetScale();
 		DLLEXPORT void GetScale(float &outx, float &outy, float &outz);

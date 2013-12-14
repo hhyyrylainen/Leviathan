@@ -7,7 +7,7 @@
 #include "OgreVector3.h"
 #include "OgreQuaternion.h"
 namespace Leviathan{
-		
+
 
 #define NORMALIZATION_TOLERANCE	1e-6f
 
@@ -21,7 +21,8 @@ namespace Leviathan{
 		}
 		DLLEXPORT const wstring& GetBaseClassNames() const{
 
-			return wstring(Convert::StringToWstring(string(typeid(Base).name()+" , "+typeid(Base2).name())));
+			//return wstring(Convert::StringToWstring(string(typeid(Base).name()+" , "+typeid(Base2).name())));
+			return L"";
 		}
 	};
 
@@ -349,7 +350,7 @@ namespace Leviathan{
 
 
 		// data //
-		float X, Y; 
+		float X, Y;
 	};
 	struct Float3{
 	public:
@@ -582,7 +583,7 @@ namespace Leviathan{
 		DLLEXPORT inline operator Ogre::Vector3(){
 			return Ogre::Vector3(X, Y, Z);
 		}
-		
+
 
 		// ------------------------------------ //
 
@@ -641,7 +642,7 @@ namespace Leviathan{
 		//************************************
 		// Method:    operator float*
 		// FullName:  Leviathan::Float4::operator float*
-		// Access:    public 
+		// Access:    public
 		// Returns:   float*
 		// Qualifier:
 		// Usage: return first value of {X, Y, Z, W} as pointer, should be confirmed to work. D3DXMath10 has vector class that has this cast (implementation could be loaned)
@@ -840,7 +841,7 @@ namespace Leviathan{
 			quaternion.X = cosz*cosy*sinx-sinz*siny*cosx;
 			quaternion.Y = cosz*siny*cosx+sinz*cosy*sinx;
 			quaternion.Z = sinz*cosy*cosx-cosz*siny*sinx;
-			quaternion.W = cosz*cosy*cosx*sinz*siny*sinx; 
+			quaternion.W = cosz*cosy*cosx*sinz*siny*sinx;
 
 			return quaternion;
 		}
@@ -856,7 +857,7 @@ namespace Leviathan{
 
 			return result;
 		}
-		
+
 		DLLEXPORT inline Float4 QuaternionReverse(){
 			// reverse vector //
 			return Float4(-X, -Y, -Z, W);

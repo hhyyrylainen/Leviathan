@@ -6,7 +6,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
-DLLEXPORT Leviathan::ExceptionNotFound::ExceptionNotFound(const wstring &message, int val, const wstring& sourcefunction, 
+DLLEXPORT Leviathan::ExceptionNotFound::ExceptionNotFound(const wstring &message, int val, const wstring& sourcefunction,
 	const wstring &InvalidArg, const wstring &invalidvalue)  : ExceptionBase(message, val, sourcefunction), InvalidType(new wstring(InvalidArg)),
 	InvalidValue(new wstring(invalidvalue))
 {
@@ -16,8 +16,8 @@ DLLEXPORT Leviathan::ExceptionNotFound::ExceptionNotFound(const wstring &message
 
 DLLEXPORT Leviathan::ExceptionNotFound::ExceptionNotFound(const ExceptionNotFound &other){
 	// copy this specific value, others should be handled by base class copy ctor //
-	this->InvalidType(new wstring(*other.InvalidType));
-	this->InvalidValue(new wstring(*other.InvalidValue));
+	this->InvalidType = unique_ptr<wstring>(new wstring(*other.InvalidType));
+	this->InvalidValue = unique_ptr<wstring>(new wstring(*other.InvalidValue));
 
 	// set type //
 	type = EXCEPTIONTYPE_NOTFOUND;

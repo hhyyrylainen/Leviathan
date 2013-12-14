@@ -4,9 +4,9 @@
 #include "Arena.h"
 #endif
 #include "PongGame.h"
-#include "Entities\Objects\Brush.h"
-#include "Entities\Objects\Prop.h"
-#include "Entities\Objects\TrackEntityController.h"
+#include "Entities/Objects/Brush.h"
+#include "Entities/Objects/Prop.h"
+#include "Entities/Objects/TrackEntityController.h"
 #include "TextureGenerator.h"
 using namespace Pong;
 // ------------------------------------ //

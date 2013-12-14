@@ -1,12 +1,11 @@
 #include "TestAutoUpdateable.h"
 #include "TestCallable.h"
-#include "Utility\MD5Generator.h"
-#include "ObjectFiles\LineTokenizer.h"
-#include "ObjectFiles\ObjectFileProcessor.h"
-#include "Utility\RSAEncryption.h"
-#include "Utility\Iterators\WstringIterator.h"
-#include "Utility\DebugVariableNotifier.h"
-#include <boost\assign\list_of.hpp>
+#include "Utility/MD5Generator.h"
+#include "ObjectFiles/LineTokenizer.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "Utility/Iterators/WstringIterator.h"
+#include "Utility/DebugVariableNotifier.h"
+#include <boost/assign/list_of.hpp>
 
 bool TestMiscCutWstring(const int &tests){
 	bool Failed = false;
@@ -158,7 +157,7 @@ bool TestMiscWstringGetFirstWord(const int &tests){
 
 
 bool TestAutoUpdateableFunctions(const int& tests, Engine* engine){
-	// create count amount of 
+	// create count amount of
 	bool Failed = false;
 	vector<TestAutoUpdateable*> Objects;
 	Objects.reserve(tests);
@@ -209,7 +208,7 @@ bool TestAutoUpdateableFunctions(const int& tests, Engine* engine){
 }
 
 bool TestEventsFunctions(const int& tests, Engine* engine){
-	// create count amount of 
+	// create count amount of
 	bool Failed = false;
 	vector<TestCallable*> Objects;
 	Objects.reserve(tests);
@@ -284,7 +283,7 @@ bool TestMultiFlag(const int &tests){
 	mflag->SetFlag(Flag(2505));
 	mflag->UnsetFlag(Flag(2504));
 
-	if((!mflag->IsSet(2500)) || (!mflag->IsSet(2501)) || (!mflag->IsSet(2502)) || (!mflag->IsSet(2503)) || (!mflag->IsSet(2505)) 
+	if((!mflag->IsSet(2500)) || (!mflag->IsSet(2501)) || (!mflag->IsSet(2502)) || (!mflag->IsSet(2503)) || (!mflag->IsSet(2505))
 		|| (mflag->IsSet(2504)))
 	{
 
@@ -376,7 +375,7 @@ bool TestNamedVars(const int &tests){
 
 	// make sure that size is right and types are correct //
 	if(advlist.GetVariableCount() != 4){
-		
+
 		TESTFAIL;
 	} else {
 		// check values //
@@ -448,7 +447,7 @@ bool TestScripting(const int &tests, Engine* engine){
 	//	if(Value != 42){
 	//		// failed //
 	//		Failure = true;
-	//	}		
+	//	}
 	//}
 
 	//mod->DeleteThisModule();
@@ -533,7 +532,7 @@ bool LineTokenizerTest(const int &tests){
 					TESTFAIL;
 					continue;
 				}
-				
+
 				if(Tokens[0]->GetData() != L"This")
 					TESTFAIL;
 			}
@@ -620,7 +619,7 @@ bool LineTokenizerTest(const int &tests){
 					TESTFAIL;
 					continue;
 				}
-				if((Tokens[1]->GetData() != L"to nice") || (Tokens[2]->GetData() != L"2") || (Tokens[3]->GetData() != L"that work") 
+				if((Tokens[1]->GetData() != L"to nice") || (Tokens[2]->GetData() != L"2") || (Tokens[3]->GetData() != L"that work")
 					|| (Tokens[4]->GetData() != L"2567") || (Tokens[0]->GetSubTokenCount() != 4))
 				{
 					TESTFAIL;
@@ -702,7 +701,7 @@ bool ObjectFileParserTest(const int &tests){
 		if(!HeaderVars[1]->GetValueDirect()->ConvertAndAssingToVariable<wstring>(valuescheck)){
 
 			TESTFAIL;
-			
+
 		} else {
 
 			if(valuescheck != L"lol"){
@@ -713,7 +712,7 @@ bool ObjectFileParserTest(const int &tests){
 		if(!HeaderVars[3]->GetValueDirect()->ConvertAndAssingToVariable<bool>(ivaluecheck)){
 
 			TESTFAIL;
-			
+
 		} else {
 
 			if(ivaluecheck != true){
@@ -742,7 +741,7 @@ bool ObjectFileParserTest(const int &tests){
 				}
 
 			} else {
-				
+
 				TESTFAIL;
 			}
 			// check contents just so that they seem right //
@@ -759,7 +758,7 @@ bool ObjectFileParserTest(const int &tests){
 					TESTFAIL;
 				}
 			} else {
-				
+
 				TESTFAIL;
 			}
 			// second object test //
@@ -787,7 +786,7 @@ bool ObjectFileParserTest(const int &tests){
 			}
 
 		} else {
-			
+
 			TESTFAIL;
 		}
 	} else {
@@ -810,40 +809,6 @@ bool ObjectFileParserTest(const int &tests){
 	return Failed;
 }
 
-bool TestRSAEncrypting(const int &tests){
-
-	bool Failed = false;
-
-	typedef Rsa<512> Cipher;
-
-	// In this test program, we'll generate a new key every time. 512-bit keys
-	// should generate within 100 attempts or less, most of the time, so it'll
-	// be pretty quick. You would normally generate a new key only once, store
-	// the private key securely, and publish the public key.
-	Cipher c = Cipher::generate();
-
-	string source("This is a test message.");
-	string encrypted = c.encrypt(source);
-	string decrypted = c.decrypt(encrypted);
-
-	if(decrypted == source){
-		// succeeded //
-		Failed = false;
-		return Failed;
-	} else {
-		Logger::Get()->Error(Convert::StringToWstring(source)+L" does not match "+Convert::StringToWstring(decrypted));
-		TESTFAIL;
-	}
-
-	// stress test? //
-	for(int i = 0; i < tests; i++){
-		encrypted = c.encrypt(source);
-		decrypted = c.decrypt(encrypted);
-	}
-
-	return Failed;
-}
-
 bool TestFloatsCasts(){
 	// see if FloatX classes are properly castable //
 	Float4 fl(1.f, 2.f, 3.f, 4.f);
@@ -851,7 +816,7 @@ bool TestFloatsCasts(){
 	float* ptr = fl;
 	// check to  see if values are correct //
 	bool Failed = false;
-	
+
 	if((*ptr != fl.X) && (fl[0] == fl.GetX()))
 		TESTFAIL;
 
@@ -980,7 +945,7 @@ bool TestWstringIterator(const int &tests){
 	if(*results != L"[[245]]"){
 		TESTFAIL;
 	}
-	
+
 	itr.ReInit(L" adis told as\\; this still ; and no this");
 
 	results = itr.GetUntilNextCharacterOrNothing(L';');
@@ -1028,7 +993,7 @@ bool TestWstringIterator(const int &tests){
 //	float Hybrid;
 //
 //	Float2 AdjustedFinals(0);
-//	
+//
 //	font->AdjustTextSizeToFitBox(ImaginaryBox, texttotest, GUI_POSITIONABLE_COORDTYPE_RELATIVE, FitChar, EntirelyFit, Hybrid, AdjustedFinals, 0.4f);
 //
 //	wstring adjustedtext(texttotest.size()-1 == FitChar ? texttotest: texttotest.substr(0, 1+FitChar)+L"...");
@@ -1038,7 +1003,7 @@ bool TestWstringIterator(const int &tests){
 //	float DLLength = font->CalculateDotsSizeAtScale(Hybrid);
 //
 //
-//	float length = font->CalculateTextLengthAndLastFittingExpensive(Hybrid, GUI_POSITIONABLE_COORDTYPE_RELATIVE, adjustedtext, ImaginaryBox.X, 
+//	float length = font->CalculateTextLengthAndLastFittingExpensive(Hybrid, GUI_POSITIONABLE_COORDTYPE_RELATIVE, adjustedtext, ImaginaryBox.X,
 //		FitCharnew, DLLength);
 //
 //	float cheaplength = font->CalculateTextLengthAndLastFittingNonExpensive(Hybrid, GUI_POSITIONABLE_COORDTYPE_RELATIVE, adjustedtext, ImaginaryBox.X,

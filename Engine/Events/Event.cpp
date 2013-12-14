@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_EVENT
 #include "Event.h"
 #endif
-#include <boost\assign\list_of.hpp>
+#include <boost/assign/list_of.hpp>
 using namespace Leviathan;
 // ------------------------------------ //
 Event::Event(){

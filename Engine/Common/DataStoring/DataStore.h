@@ -6,9 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Common\DataStoring\NamedVars.h"
+#include "Common/DataStoring/NamedVars.h"
 #include "FileSystem.h"
-#include "Events\AutoUpdateable.h"
+#include "Events/AutoUpdateable.h"
 
 namespace Leviathan{
 
@@ -58,9 +58,9 @@ namespace Leviathan{
 
 	class DataStore : public Object{
 	public:
-		DLLEXPORT DataStore::DataStore();
-		DLLEXPORT DataStore::DataStore(bool main);
-		DLLEXPORT DataStore::~DataStore();
+		DLLEXPORT DataStore();
+		DLLEXPORT DataStore(bool main);
+		DLLEXPORT ~DataStore();
 
 		DLLEXPORT void SetPersistance(unsigned int index, bool toset);
 		DLLEXPORT void SetPersistance(const wstring &name, bool toset);
@@ -86,8 +86,11 @@ namespace Leviathan{
 			// use try block to catch all exceptions (not found and conversion fail //
 			try{
 				if(!Values.GetValue(name)->ConvertAndAssingToVariable<T>(receiver)){
-
+#ifdef _WIN32
 					throw exception("invalid");
+#else
+                    throw bad_exception();
+#endif
 				}
 			}
 			catch(...){
@@ -112,9 +115,9 @@ namespace Leviathan{
 		DLLEXPORT static DataStore* Get();
 
 		// variables //
-	public: 
+	public:
 		DLLEXPORT int GetTickTime() const;
-		DLLEXPORT int GetTickCount() const; 
+		DLLEXPORT int GetTickCount() const;
 		DLLEXPORT int GetFrameTime() const;
 		DLLEXPORT int GetFPS() const;
 		DLLEXPORT int GetHeight() const;

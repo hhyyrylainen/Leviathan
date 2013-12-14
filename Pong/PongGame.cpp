@@ -3,12 +3,12 @@
 #ifndef PONG_GAME
 #include "PongGame.h"
 #endif
-#include "Entities\Objects\ViewerCameraPos.h"
-#include "Entities\GameWorld.h"
-#include "Entities\Objects\Prop.h"
-#include "..\Engine\Script\ScriptExecutor.h"
+#include "Entities/Objects/ViewerCameraPos.h"
+#include "Entities/GameWorld.h"
+#include "Entities/Objects/Prop.h"
+#include "../Engine/Script/ScriptExecutor.h"
 #include "Arena.h"
-#include "Addons\GameModule.h"
+#include "Addons/GameModule.h"
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
@@ -29,7 +29,7 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 
 		PlayerList[i] = new PlayerSlot(i, true);
 	}
-
+#ifdef _MSC_VER
 	// Setup match setup screen data //
 	GameConfigurationData.AddValue(L"Colours", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
 		boost::assign::map_list_of
@@ -122,6 +122,10 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0))))));
 	// TODO: detect controllers and update this when controllers changed //
 
+#else
+
+#endif
+
 	//GameConfigurationData.AddValue(L"Controls", shared_ptr<Leviathan::SimpleDatabaseRowObject>(new Leviathan::SimpleDatabaseRowObject(
 	//	boost::assign::map_list_of
 	//	(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("CONTROLLER"))))
@@ -196,7 +200,7 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 		Logger::Get()->Error(L"Failed to load AI!");
 		SAFE_DELETE(GameAI);
 	}
-	
+
 	// after loading reset time sensitive timers //
 	Engine::GetEngine()->ResetPhysicsTime();
 }
@@ -252,10 +256,8 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
-	
 
 	
-
 	// For getting the game database //
 	if(engine->RegisterObjectMethod("PongGame", "SimpleDatabase& GetGameDatabase()", asMETHOD(PongGame, GetGameDatabase), asCALL_THISCALL) < 0)
 	{
@@ -424,14 +426,11 @@ void Pong::PongGame::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+
 	if(engine->RegisterObjectMethod("PlayerSlot", "string GetColourAsRML()", asMETHOD(PlayerSlot, GetColourAsRML), asCALL_THISCALL) < 0)
 	{
 		SCRIPT_REGISTERFAIL;
 	}
-	
-	
-
-	
 	
 
 
@@ -558,7 +557,6 @@ void Pong::PongGame::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager
 	ArenaMaterial->FormPairWith(*BallMaterial).SetFriction(0.f, 0.f).SetSoftness(1.f).SetElasticity(1.f);
 	ArenaBottomMaterial->FormPairWith(*BallMaterial).SetElasticity(0.f).SetFriction(0.f, 0.f).SetSoftness(0.f);
 	ArenaBottomMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
-	
 
 	// Add the materials // 
 	Leviathan::PhysicsMaterialManager* tmp = Leviathan::PhysicsMaterialManager::Get();
@@ -625,7 +623,6 @@ void Pong::PongGame::Tick(int mspassed){
 		}
 
 		// Check is the ball stuck on the dead axis (where no paddle can hit it) //
-		
 		Float3 ballspeed = castedptr->GetBodyVelocity();
 		ballspeed.X = abs(ballspeed.X);
 		ballspeed.Y = 0;
@@ -741,7 +738,6 @@ int Pong::PongGame::PlayerScored(Leviathan::BasePhysicsObject* goalptr){
 				// Found right player //
 				slotptr->SetScore(slotptr->GetScore()+SCOREPOINT_AMOUNT);
 				goto playrscorelistupdateendlabel;	
-			}
 
 			slotptr = slotptr->GetSplit();
 		}
@@ -847,7 +843,7 @@ void Pong::PongGame::CheckForGameEnd(){
 				break;
 			case 3:
 				{
-					cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, -4.f*BASE_ARENASCALE));
+					cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
 					cam->SetRotation(Float3(0.f, -30.f, 0.f));
 				}
 				break;

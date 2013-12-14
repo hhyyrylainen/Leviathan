@@ -7,18 +7,18 @@
 using namespace Leviathan;
 // ------------------------------------ //
 #include "Logger.h"
-#include "Utility\Convert.h"
-#include "Common\DataStoring\DataBlock.h"
-#include "Statistics\TimingMonitor.h"
+#include "Utility/Convert.h"
+#include "Common/DataStoring/DataBlock.h"
+#include "Statistics/TimingMonitor.h"
 
 
 // string conversions
 wstring Misc::EmptyString = L"";
 
-
+// Can't remember from where these methods are loaned...
 __int64 Misc::GetTimeMs64()
 {
-
+#ifdef _WIN32
 		/* Windows */
 	FILETIME ft;
 	LARGE_INTEGER li;
@@ -34,10 +34,28 @@ __int64 Misc::GetTimeMs64()
 	ret /= 10000; /* From 100 nano seconds (10^-7) to 1 millisecond (10^-3) intervals */
 
 	return ret;
+#elif defined __linux__
+        /* Linux */
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+
+    __int64 ret = tv.tv_usec;
+    /* Convert from micro seconds (10^-6) to milliseconds (10^-3) */
+    ret /= 1000;
+
+    /* Adds the seconds (10^0) after converting them to milliseconds (10^-3) */
+    ret += (tv.tv_sec * 1000);
+
+    return ret;
+#else
+#error no working get time on platform
+#endif
+
 }
 __int64 Misc::GetTimeMicro64()
 {
-
+#ifdef _WIN32
 		/* Windows */
 	FILETIME ft;
 	LARGE_INTEGER li;
@@ -53,6 +71,22 @@ __int64 Misc::GetTimeMicro64()
 	ret /= 10; /* From 100 nano seconds (10^-7) to 1 microsecond (10^-6) intervals */
 
 	return ret;
+#elif defined __linux__
+    /* Linux */
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+
+    __int64 ret = tv.tv_usec;
+
+    /* Adds the seconds (10^0) after converting them to microseconds (10^-6) */
+    ret += (tv.tv_sec * 1000000);
+
+    return ret;
+#else
+#error no working get time on platform
+#endif
+
 }
 ///string operations
 DLLEXPORT int Leviathan::Misc::CutWstring(const wstring& strtocut, const wstring &separator, vector<wstring>& vec){
@@ -364,7 +398,7 @@ wstring Misc::WstringRemoveFirstWords(wstring& data, int amount){
 			}
 			spaces = 0;
 		}
-		
+
 	}
 
 	return result;

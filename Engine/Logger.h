@@ -31,7 +31,7 @@ namespace Leviathan{
 
 		DLLEXPORT static void SendDebugMessage(const wstring& str);
 
-		// uses string for script compatibility // 
+		// uses string for script compatibility //
 		DLLEXPORT static void Print(string message, bool save = true);
 
 
@@ -53,7 +53,13 @@ namespace Leviathan{
 
 			CheckQueue(guard);
 		}
-		void inline CheckQueue(boost::strict_lock<Logger> &guard);
+		void inline CheckQueue(boost::strict_lock<Logger> &guard){
+            if(LatestLogger != NULL){
+                LatestLogger->PendingLog += QueuedLog;
+                // clear //
+                QueuedLog.resize(0);
+            }
+        }
 
 		void inline _LogUpdateEndPart(const bool &save, boost::strict_lock<Logger> &guard);
 

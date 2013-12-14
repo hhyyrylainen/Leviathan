@@ -4,10 +4,10 @@
 #include "NamedVars.h"
 #endif
 #include "FileSystem.h"
-#include "Statistics\TimingMonitor.h"
-#include "Utility\Iterators\WstringIterator.h"
-#include "Exceptions\ExceptionInvalidType.h"
-#include "ObjectFiles\LineTokenizer.h"
+#include "Statistics/TimingMonitor.h"
+#include "Utility/Iterators/WstringIterator.h"
+#include "Exceptions/ExceptionInvalidType.h"
+#include "ObjectFiles/LineTokenizer.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -24,7 +24,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, c
 	Datas[0] = new VariableBlock(val);
 }
 
-DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, vector<VariableBlock*> values_willclear) : 
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, vector<VariableBlock*> values_willclear) :
 	Datas(values_willclear.size()), Name(name)
 {
 	// set values //
@@ -145,7 +145,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 DLLEXPORT Leviathan::NamedVariableList::~NamedVariableList(){
 
 	SAFE_DELETE_VECTOR(Datas);
-	
+
 	//if(Deletedindexes.size() == 0)
 	//	Deletedindexes.reserve(2100);
 
@@ -190,7 +190,7 @@ DLLEXPORT void Leviathan::NamedVariableList::SetValue(const int &nindex, const V
 		Datas[nindex] = new VariableBlock(valuetoset);
 	} else {
 
-		if(Datas[nindex] != NULL){ 
+		if(Datas[nindex] != NULL){
 			// assign to existing value //
 			*Datas[nindex] = valuetoset;
 		} else {
@@ -210,7 +210,7 @@ DLLEXPORT void Leviathan::NamedVariableList::SetValue(const int &nindex, Variabl
 		Datas[nindex] = valuetoset;
 	} else {
 
-		if(Datas[nindex] != NULL){ 
+		if(Datas[nindex] != NULL){
 			// existing value needs to be deleted //
 			SAFE_DELETE(Datas[nindex]);
 		}
@@ -227,12 +227,12 @@ DLLEXPORT void Leviathan::NamedVariableList::SetValue(const vector<VariableBlock
 	Datas = values;
 }
 
-DLLEXPORT VariableBlock& Leviathan::NamedVariableList::GetValue() throw(...){
+DLLEXPORT VariableBlock& Leviathan::NamedVariableList::GetValue() THROWS{
 	// uses vector operator to get value, might throw something //
 	return *Datas[0];
 }
 
-DLLEXPORT VariableBlock& Leviathan::NamedVariableList::GetValue(const int &nindex) throw(...){
+DLLEXPORT VariableBlock& Leviathan::NamedVariableList::GetValue(const int &nindex) THROWS{
 	// uses vector operator to get value, might throw something //
 	return *Datas[nindex];
 }
@@ -286,7 +286,7 @@ DLLEXPORT wstring Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*
 		}
 		if(i != 0)
 			stringifiedval += L",";
-		stringifiedval += L"["+(wstring)*Datas[i]+L"]";
+		stringifiedval += L"["+Datas[i]->operator wstring()+L"]";
 	}
 
 
@@ -299,7 +299,7 @@ DLLEXPORT wstring Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*
 DLLEXPORT NamedVariableList& Leviathan::NamedVariableList::operator=(const NamedVariableList &other){
 	// copy values //
 	Name = other.Name;
-	
+
 	SAFE_DELETE_VECTOR(Datas);
 	Datas.resize(other.Datas.size());
 	// copy values over //
@@ -313,7 +313,7 @@ DLLEXPORT NamedVariableList& Leviathan::NamedVariableList::operator=(const Named
 }
 
 // ----------------- process functions ------------------- //
-DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVariableList>> &vec, 
+DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVariableList>> &vec,
 	map<wstring, shared_ptr<VariableBlock>>* predefined /*= NULL*/)
 {
 	//QUICKTIME_THISSCOPE;
@@ -394,7 +394,7 @@ DLLEXPORT  void Leviathan::NamedVariableList::SwitchValues(NamedVariableList &re
 	for(size_t i = 0; i < donator.Datas.size(); i++){
 
 		receiver.Datas[i] = donator.Datas[i];
-		
+
 	}
 	// clear donator data //
 	donator.Datas.clear();
@@ -449,7 +449,7 @@ DLLEXPORT int Leviathan::NamedVariableList::GetVariableType(const int &nindex) c
 	return Datas[nindex]->GetBlock()->Type;
 }
 
-DLLEXPORT VariableBlock& Leviathan::NamedVariableList::operator[](const int &nindex) throw(...){
+DLLEXPORT VariableBlock& Leviathan::NamedVariableList::operator[](const int &nindex) THROWS{
 	// will allow to throw any exceptions the vector wants //
 	return *Datas[nindex];
 }
@@ -542,7 +542,7 @@ DLLEXPORT bool Leviathan::NamedVars::SetValue(NamedVariableList &nameandvalues){
 	return true;
 }
 
-DLLEXPORT VariableBlock& Leviathan::NamedVars::GetValueNonConst(const wstring &name) throw(...){
+DLLEXPORT VariableBlock& Leviathan::NamedVars::GetValueNonConst(const wstring &name) THROWS{
 	int index = Find(name);
 
 	return Variables[index]->GetValue();
@@ -589,7 +589,7 @@ DLLEXPORT size_t Leviathan::NamedVars::GetValueCount(const wstring &name) const{
 	return Variables[index]->GetVariableCount();
 }
 
-DLLEXPORT vector<VariableBlock*>* Leviathan::NamedVars::GetValues(const wstring &name) throw(...){
+DLLEXPORT vector<VariableBlock*>* Leviathan::NamedVars::GetValues(const wstring &name) THROWS{
 	int index = Find(name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, Variables.size()){

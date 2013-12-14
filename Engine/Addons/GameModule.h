@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Script\ScriptModule.h"
+#include "Script/ScriptModule.h"
 #include "Common/ThreadSafe.h"
 #include "Events/EventableScriptObject.h"
 
@@ -34,9 +34,9 @@ namespace Leviathan{
 
 
 		// Script proxies //
-
-
 		DLLEXPORT string GetDescriptionProxy(bool full);
+
+
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GameModule);
 
 	private:

@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include <Terrain\OgreTerrainPagedWorldSection.h>
-#include "Utility\Random.h"
+#include <Terrain/OgreTerrainPagedWorldSection.h>
+#include "Utility/Random.h"
 
 
 // no idea what this is but the sdk example uses this constant //

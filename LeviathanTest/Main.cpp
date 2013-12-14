@@ -7,7 +7,7 @@
 #endif // LEVIATHAN_USES_VLD
 
 
-
+#ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
 #if defined(DEBUG) | defined(_DEBUG)
 		//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
@@ -15,10 +15,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		_CrtSetReportMode( _CRT_ASSERT, _CRTDBG_MODE_DEBUG);
 #endif
 
+#else
+int main(int argcount, char* args[]){
+#endif
+
 	int Return = 0;
+#ifdef _WIN32
 	HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
 
 	if (SUCCEEDED(CoInitialize(NULL))){
+#else
+
+#endif
 
 #ifdef LEVIATHAN_USES_VLD
 		// now that we are in code we can start tracking //
@@ -34,15 +42,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		// create custom logger //
 		Logger* customlogger = new Logger();
+
+#ifdef _WIN32
 		// set path //
 		SYSTEMTIME tdate;
 		GetLocalTime(&tdate);
 
-		bool Passed = true;
+
 
 		wstring times = Convert::IntToWstring(tdate.wYear)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wDay)+L" "+Convert::IntToWstring(tdate.wHour)+L"."+Convert::IntToWstring(tdate.wMinute);
 
-		customlogger->SetSavePath(L".\\TestLog "+times+L".txt");
+#else
+		wstring times = L"No time on linux";
+#endif
+		bool Passed = true;
+		customlogger->SetSavePath(L"./TestLog "+times+L".txt");
 
 		// run pre-engine tests //
 		Logger::Get()->Info(tittle, false);
@@ -63,21 +77,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine());
 		// customize values //
+#ifdef _WIN32
 		ProgramDefinition->SetHInstance(hInstance);
-
+#endif
 		// create window last //
-		ProgramDefinition->StoreWindowDetails(tittle, true, LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)), &app);
+		ProgramDefinition->StoreWindowDetails(tittle, true,
+#ifdef _WIN32
+            LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)),
+#endif
+            &app);
 
 
 
 		if(app.Initialize(ProgramDefinition.get())){
+#ifdef _WIN32
 			app.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
-
+#else
+            wstring commandline = L"";
+            for(int i = 1; i < argcount; i++){
+                commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
+            }
+			app.PassCommandLine(commandline);
+#endif
 			Logger::Get()->Info(L"Engine successfully initialized", false);
 
 			// run tests //
 			TimingMonitor::StartTiming(L"All tests timer");
-				
+
 			if(TestEngine(app.GetEngine())){
 				Logger::Get()->Write(L"\n\n", false);
 				Logger::Get()->Error(L"!----! Some Tests [Failed] !----!", true);
@@ -110,8 +136,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		//un-init
 		app.Release();
+#ifdef _WIN32
 	}
 	//_CrtDumpMemoryLeaks();
 	CoUninitialize();
+#endif
 	return Return;
 }

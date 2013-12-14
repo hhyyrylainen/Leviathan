@@ -1,7 +1,7 @@
 #include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_FPSCOUNTER
-#include "FpsCOunter.h"
+#include "FpsCounter.h"
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
@@ -87,7 +87,7 @@ bool FpsCounter::ShouldRender(int passed, int maxfps){
 	return false;
 
 
-	
+
 
 	//if(Framecount >= nowrend)
 	//	return false;

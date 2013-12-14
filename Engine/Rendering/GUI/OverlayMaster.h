@@ -6,9 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include <Overlay\OgreOverlay.h>
-#include <Overlay\OgreOverlayElement.h>
-#include <Overlay\OgreOverlaySystem.h>
+#include <Overlay/OgreOverlay.h>
+#include <Overlay/OgreOverlayElement.h>
+#include <Overlay/OgreOverlaySystem.h>
 #include <Overlay/OgrePanelOverlayElement.h>
 #include <OgreRenderTargetListener.h>
 #include "FontManager.h"

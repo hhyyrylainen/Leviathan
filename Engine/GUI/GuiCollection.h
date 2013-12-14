@@ -6,11 +6,11 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Input\Key.h"
-#include "Rocket\Core\ElementDocument.h"
-#include "Script\ScriptScript.h"
-#include "ObjectFiles\ObjectFileObject.h"
-#include "Common\ReferenceCounted.h"
+#include "Input/Key.h"
+#include "Rocket/Core/ElementDocument.h"
+#include "Script/ScriptScript.h"
+#include "ObjectFiles/ObjectFileObject.h"
+#include "Common/ReferenceCounted.h"
 
 namespace Leviathan{ namespace Gui{
 

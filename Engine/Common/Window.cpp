@@ -4,24 +4,85 @@
 #include "Window.h"
 #endif
 #include "Engine.h"
-#include "Rocket\Core\Context.h"
-#include <boost\assign\list_of.hpp>
+#include "Rocket/Core/Context.h"
+#include <boost/assign/list_of.hpp>
 using namespace Leviathan;
 // ------------------------------------ //
+
+#ifdef _WIN32
 // we must have an int of size 32 bits //
 #pragma intrinsic(_BitScanForward)
 
 static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function");
+#else
+// We must use GCC built ins
+// int __builtin_ffs (unsigned int x) Returns one plus the index of the least significant 1-bit of x, or if x is zero, returns zero.
+// So using __builtin_ffs(val)-1 should work
+#include <X11/Xlib.h>
 
 
-DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner) : OWindow(owindow), m_hwnd(NULL), 
-	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0), 
+
+        // X11 window focus find function //
+X11::XID Leviathan::Window::GetForegroundWindow(){
+    // Method posted on stack overflow http://stackoverflow.com/questions/1014822/how-to-know-which-window-has-focus-and-how-to-change-it
+    using namespace X11;
+    XID foo;
+    XID win;
+    int bari;
+    unsigned int bar;
+
+    //X11::Display olddisp = XDisplay;
+
+
+
+    do{
+        XQueryPointer(XDisplay, DefaultRootWindow(XDisplay), &foo, &win, &bari, &bari, &bari, &bari, &bar);
+    } while(win <= 0);
+
+    unsigned int n;
+    XID *wins;
+    XWindowAttributes xwa;
+
+
+    XQueryTree(XDisplay, win, &foo, &foo, &wins, &n);
+
+    bar=0;
+    while(--n >= 0){
+        XGetWindowAttributes(XDisplay, wins[n], &xwa);
+        if((xwa.width * xwa.height) > bar){
+            win = wins[n];
+            bar = xwa.width * xwa.height;
+        }
+        n--;
+    }
+
+    XFree(wins);
+
+
+
+    //assert((olddisp == XDisplay) && "X display changed in window");
+
+    return win;
+}
+
+
+#endif
+
+
+DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner) : OWindow(owindow),
+	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0),
 	ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true)
+#ifdef __GNUC__
+    , XDisplay(NULL), m_hwnd(0)
+#else
+    , m_hwnd(NULL)
+#endif
 {
 
 	OwningWindow = owner;
 	// update focused this way //
-	Focused = (m_hwnd = GetRenderWindowHandle(OWindow)) == GetForegroundWindow() ? true: false;
+	VerifyRenderWindowHandle();
+	Focused = m_hwnd == GetForegroundWindow() ? true: false;
 
 	// register as listener to get update notifications //
 	Ogre::WindowEventUtilities::addWindowEventListener(OWindow, this);
@@ -50,20 +111,32 @@ DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
 		// show cursor //
 		if(!CursorState){
 			CursorState = true;
+#ifdef _WIN32
 			ShowCursor(TRUE);
+#else
+            // Restore default cursor //
+            XUndefineCursor(XDisplay, m_hwnd);
+#endif
 		}
 	} else {
 		// hide cursor //
 		if(CursorState){
 			CursorState = false;
+#ifdef _WIN32
 			ShowCursor(FALSE);
+#else
+            // Set nothing as our cursor
+            XDefineCursor(XDisplay, m_hwnd, 0);
+#endif
 		}
 	}
 }
 
+#ifdef _WIN32
 DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 	// update window handle before using //
-	m_hwnd = GetRenderWindowHandle(OWindow);
+	VerifyRenderWindowHandle();
+
 	if(m_hwnd == NULL){
 		// window has closed //
 		return;
@@ -77,10 +150,19 @@ DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 
 	SetCursorPos(p.x, p.y);
 }
+#else
+DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 
+	VerifyRenderWindowHandle();
+    // Use the X11 function to warp the cursor //
+    XWarpPointer(XDisplay, 0, m_hwnd, 0, 0, 0, 0, GetWidth()/2, GetHeight()/2);
+}
+#endif
+
+#ifdef _WIN32
 DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
 	// update window handle before using //
-	m_hwnd = GetRenderWindowHandle(OWindow);
+	VerifyRenderWindowHandle();
 	if(m_hwnd == NULL){
 		// window has closed //
 		x = y = 0;
@@ -95,6 +177,11 @@ DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
 	x = p.x;
 	y = p.y;
 }
+#else
+DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
+    XQueryPointer(XDisplay, m_hwnd, NULL, NULL, NULL, NULL, &x, &y, NULL);
+}
+#endif
 
 
 DLLEXPORT bool Leviathan::Window::IsMouseOutsideWindowClientArea(){
@@ -130,17 +217,17 @@ DLLEXPORT void Leviathan::Window::ResizeWindow(const int &width, const int &heig
 void Leviathan::Window::windowResized(Ogre::RenderWindow* rw){
 	// TODO: add callback notification
 	OwningWindow->OnResize(GetWidth(), GetHeight());
-	
+
 	UpdateOISMouseWindowSize();
 }
 
 void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
 	// update handle to have it up to date //
-	m_hwnd = GetRenderWindowHandle(OWindow);
+	VerifyRenderWindowHandle();
 
 	//Focused = m_hwnd == GetFocus() ? true: false;
 	Focused = m_hwnd == GetForegroundWindow() ? true: false;
-	
+
 	// update engine focus state (TODO: add a list of focuses to support multiple windows) //
 	//Focused ? Engine::GetEngine()->GainFocus(): Engine::GetEngine()->LoseFocus();
 
@@ -155,21 +242,40 @@ void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
 	_CustomMouseMakeSureMouseIsRight(OwningWindow->GetGUI()->GetContext());
 }
 // ------------------------------------ //
-HWND Leviathan::Window::GetRenderWindowHandle(Ogre::RenderWindow* owindow){
+#ifdef _WIN32
+bool Leviathan::Window::VerifyRenderWindowHandle(){
 
-	unsigned int WindowHwnd(0);
+	void* WindowHwnd(0);
 
-	owindow->getCustomAttribute(Ogre::String("WINDOW"), &WindowHwnd);
+	OWindow->getCustomAttribute(Ogre::String("WINDOW"), &WindowHwnd);
 
-	HWND reswnd = reinterpret_cast<HWND>(WindowHwnd);
+	m_hwnd = reinterpret_cast<HWND>(WindowHwnd);
 
-	if(!IsWindow(reswnd)){
+	if(!IsWindow(m_hwnd)){
 		// not a window! //
-		return NULL;
+		return false;
 	}
 
-	return reswnd;
+	return true;
 }
+#else
+bool Leviathan::Window::VerifyRenderWindowHandle(){
+
+	void* xidval(0);
+
+	OWindow->getCustomAttribute(Ogre::String("WINDOW"), &xidval);
+
+	m_hwnd = reinterpret_cast<X11::XID>(xidval);
+	// We need the display too //
+    void* xdisplay(0);
+
+    OWindow->getCustomAttribute(Ogre::String("DISPLAY"), &xdisplay);
+
+	XDisplay = reinterpret_cast<X11::Display*>(xdisplay);
+
+    return true;
+}
+#endif
 // ------------------------------------ //
 bool Leviathan::Window::SetupOISForThisWindow(){
 	// creation parameters //
@@ -266,8 +372,9 @@ DLLEXPORT void Leviathan::Window::GatherInput(Rocket::Core::Context* context){
 	// on first frame we want to manually force mouse position send //
 	if(FirstInput){
 		FirstInput = false;
-		
+
 		_CustomMouseMakeSureMouseIsRight(context);
+		// TODO: do a full focus check here
 		_CheckMouseVisibilityStates();
 	}
 
@@ -404,20 +511,17 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 	int differences = arg.state.buttons^LastFrameDownMouseButtons;
 
 	// find differences //
+#ifdef _WIN32
 	unsigned long index = 0;
 
 	_BitScanForward(&index, differences);
 
+#else
+    int index = __builtin_ffs(differences)-1;
+#endif
+
 	// update old state //
 	LastFrameDownMouseButtons |= 1 << index;
-
-	//wstring message = L"mouse number: "+Convert::ToWstring(index)+L" pressed; ";
-
-	//wstringstream convert;
-	//convert << std::hex << LastFrameDonwMouseButtons;
-	//message += convert.str();
-
-	//DEBUG_OUTPUT_AUTO(message);
 
 
 	int Keynumber = index;
@@ -434,20 +538,17 @@ bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButt
 	int differences = arg.state.buttons^LastFrameDownMouseButtons;
 
 	// find differences //
+#ifdef _WIN32
 	unsigned long index = 0;
 
 	_BitScanForward(&index, differences);
 
+#else
+    int index = __builtin_ffs(differences)-1;
+#endif
+
 	// update old state //
 	LastFrameDownMouseButtons ^= 1 << index;
-
-	//wstring message = L"mouse number: "+Convert::ToWstring(index)+L" released; ";
-
-	//wstringstream convert;
-	//convert << std::hex << LastFrameDonwMouseButtons;
-	//message += convert.str();
-
-	//DEBUG_OUTPUT_AUTO(message);
 
 	int Keynumber = index;
 
@@ -496,7 +597,7 @@ void Leviathan::Window::_CreateOverlayScene(){
 	OverlayViewport = OWindow->addViewport(camera, ZOrder, ViewLeft, ViewTop, ViewWidth, ViewHeight);
 
 	OverlayScene->getRootSceneNode()->createChildSceneNode()->attachObject(camera);
-	
+
 
 	// set default viewport colour //
 	OverlayViewport->setBackgroundColour(Ogre::ColourValue(0.f, 0.f, 0.f, 0.f));

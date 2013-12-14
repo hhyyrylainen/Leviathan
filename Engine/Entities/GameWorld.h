@@ -6,10 +6,10 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Objects\ViewerCameraPos.h"
-#include "Newton\PhysicalWorld.h"
-#include "Bases\BaseObject.h"
-#include "Common\ReferenceCounted.h"
+#include "Objects/ViewerCameraPos.h"
+#include "Newton/PhysicalWorld.h"
+#include "Bases/BaseObject.h"
+#include "Common/ReferenceCounted.h"
 
 
 #define PHYSICS_BASE_GRAVITY		-9.81f
@@ -91,7 +91,7 @@ namespace Leviathan{
 			return WorldsScene;
 		}
 		// physics functions //
-		DLLEXPORT inline Float3 GetGravityAtPosition(const Float3 &pos);
+		DLLEXPORT Float3 GetGravityAtPosition(const Float3 &pos);
 
 		DLLEXPORT inline PhysicalWorld* GetPhysicalWorld(){
 			return _PhysicalWorld.get();

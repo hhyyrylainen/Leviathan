@@ -6,9 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Exceptions\ExceptionInvalidArgument.h"
-#include "Common\DataStoring\DataBlock.h"
-#include "..\ReferenceCounted.h"
+#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Common/DataStoring/DataBlock.h"
+#include "../ReferenceCounted.h"
 
 namespace Leviathan{
 
@@ -23,7 +23,7 @@ namespace Leviathan{
 		DLLEXPORT NamedVariableList(const wstring &name, const VariableBlock &val);
 		// warning the vector will be wiped clean after creating new variable //
 		DLLEXPORT NamedVariableList(const wstring &name, vector<VariableBlock*> values_willclear);
-		DLLEXPORT NamedVariableList(wstring &line, map<wstring, shared_ptr<VariableBlock>>* predefined = NULL) throw (...);
+		DLLEXPORT NamedVariableList(wstring &line, map<wstring, shared_ptr<VariableBlock>>* predefined = NULL) THROWS;
 		DLLEXPORT ~NamedVariableList();
 		// ------------------------------------ //
 		DLLEXPORT void SetValue(const VariableBlock &value1);
@@ -33,11 +33,11 @@ namespace Leviathan{
 		DLLEXPORT void SetValue(const int &nindex, VariableBlock* valuetoset);
 
 		DLLEXPORT VariableBlock* GetValueDirect();
-		DLLEXPORT VariableBlock& GetValue() throw(...);
+		DLLEXPORT VariableBlock& GetValue() THROWS;
 		DLLEXPORT VariableBlock* GetValueDirect(const int &nindex);
-		DLLEXPORT VariableBlock& GetValue(const int &nindex) throw(...);
+		DLLEXPORT VariableBlock& GetValue(const int &nindex) THROWS;
 		DLLEXPORT vector<VariableBlock*>& GetValues();
-		
+
 		DLLEXPORT size_t GetVariableCount() const;
 
 		DLLEXPORT int GetCommonType() const;
@@ -84,18 +84,18 @@ namespace Leviathan{
 		// ------------------------------------ //
 		DLLEXPORT wstring ToText(int WhichSeparator = 0) const;
 		// process functions //
-		DLLEXPORT static int ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVariableList>> &vec, 
+		DLLEXPORT static int ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVariableList>> &vec,
 			map<wstring, shared_ptr<VariableBlock>>* predefined = NULL);
 		// operators //
 		DLLEXPORT NamedVariableList& operator=(const NamedVariableList &other);
 
 		// element access operator //
-		DLLEXPORT VariableBlock& operator[](const int &nindex) throw(...);
+		DLLEXPORT VariableBlock& operator[](const int &nindex) THROWS;
 
 		//************************************
 		// Method:    SwitchValues
 		// FullName:  Leviathan::NamedVariableList::SwitchValues
-		// Access:    public static 
+		// Access:    public static
 		// Returns:   DLLEXPORT  void
 		// Qualifier:
 		// Parameter: NamedVariableList & receiver
@@ -145,7 +145,7 @@ namespace Leviathan{
 
 		DLLEXPORT size_t GetValueCount(const wstring &name) const;
 
-		DLLEXPORT VariableBlock& GetValueNonConst(const wstring &name) throw(...);
+		DLLEXPORT VariableBlock& GetValueNonConst(const wstring &name) THROWS;
 		DLLEXPORT const VariableBlock* GetValue(const wstring &name) const;
 		DLLEXPORT bool GetValue(const wstring &name, VariableBlock &receiver) const;
 		DLLEXPORT bool GetValue(const wstring &name, const int &nindex, VariableBlock &receiver) const;
@@ -162,8 +162,11 @@ namespace Leviathan{
 					return false;
 				}
 				if(!tmpblock->ConvertAndAssingToVariable<T>(receiver)){
-
+#ifdef _WIN32
 					throw exception("invalid");
+#else
+                    throw bad_exception();
+#endif
 				}
 			}
 			catch(...){
@@ -174,7 +177,7 @@ namespace Leviathan{
 			return true;
 		}
 
-		DLLEXPORT vector<VariableBlock*>* GetValues(const wstring &name) throw(...);
+		DLLEXPORT vector<VariableBlock*>* GetValues(const wstring &name) THROWS;
 
 		// Script accessible functions //
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(NamedVars);
@@ -188,7 +191,7 @@ namespace Leviathan{
 		DLLEXPORT int GetVariableTypeOfAll(const wstring &name) const;
 		DLLEXPORT int GetVariableTypeOfAll(unsigned int index) const;
 
-		DLLEXPORT wstring& GetName(unsigned int index) throw(...);
+		DLLEXPORT wstring& GetName(unsigned int index) THROWS;
 		DLLEXPORT bool GetName(unsigned int index, wstring &name) const;
 
 		DLLEXPORT void SetName(unsigned int index, const wstring &name);

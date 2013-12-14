@@ -4,8 +4,8 @@
 #include "ScriptModule.h"
 #endif
 #include "ScriptInterface.h"
-#include <boost\assign\list_of.hpp>
-#include "Utility\Iterators\WstringIterator.h"
+#include <boost/assign/list_of.hpp>
+#include "Utility/Iterators/WstringIterator.h"
 #include "FileSystem.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -357,8 +357,8 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
 
 	ScriptModule* module = reinterpret_cast<ScriptModule*>(userParam);
 
-	// if it is prefixed with ".\" then just look for the file with it's relative path //
-	if(file.find(".\\") == 0){
+	// if it is prefixed with ".\" or "./" then just look for the file with it's relative path //
+	if(file.find(".\\") == 0 || file.find("./") == 0){
 
 		return builder->AddSectionFromFile(file.c_str());
 	}

@@ -6,15 +6,15 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Exceptions\ExceptionBase.h"
+#include "Exceptions/ExceptionBase.h"
 
 namespace Leviathan{
 	// base exception for other exceptions //
 	class ExceptionNULLPtr : public ExceptionBase{
 	public:
-		DLLEXPORT ExceptionNULLPtr::ExceptionNULLPtr(const wstring& message, int val, const wstring& sourcefunction, void* InvalidPtr);
-		DLLEXPORT ExceptionNULLPtr::ExceptionNULLPtr(const ExceptionNULLPtr &other);
-		DLLEXPORT ExceptionNULLPtr::~ExceptionNULLPtr();
+		DLLEXPORT ExceptionNULLPtr(const wstring& message, int val, const wstring& sourcefunction, void* InvalidPtr);
+		DLLEXPORT ExceptionNULLPtr(const ExceptionNULLPtr &other);
+		DLLEXPORT ~ExceptionNULLPtr();
 
 		DLLEXPORT void* GetInvalidPtr() const;
 

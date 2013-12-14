@@ -10,8 +10,28 @@
 #include "OgreRenderWindow.h"
 #include "OIS.h"
 
+#ifdef __GNUC__
+// Preprocessor magic to not conflict with Window class //
+namespace X11{
+#include <X11/Xlib.h>
+
+// X11 additional includes
+#include <X11/Xutil.h>
+#include "X11/Xlibint.h"
+#include <X11/Xos.h>
+#include <X11/Xatom.h>
+// Don't want to define our window with the same name //
+}
+// Need some magic to not confuse with GenericEvent macro with GenericEvent class //
+#define X11GenericEvent GenericEvent
+#undef GenericEvent
+#define X11Status Status
+#undef Status
+
+#endif
+
 namespace Leviathan{
-	
+
 	// for storing in pass to window //
 	class LeviathanApplication;
 	class Window;
@@ -47,7 +67,12 @@ namespace Leviathan{
 		DLLEXPORT void GatherInput(Rocket::Core::Context* context);
 
 		DLLEXPORT inline bool IsWindowed() const{ return !OWindow->isFullScreen();};
-		DLLEXPORT inline HWND GetHandle(){ return (m_hwnd = GetRenderWindowHandle(OWindow)); };
+#ifdef _WIN32
+		DLLEXPORT inline HWND GetHandle(){ VerifyRenderWindowHandle(); return m_hwnd; };
+#else
+        // X11 compatible handle //
+        DLLEXPORT inline X11::XID GetX11Window(){ VerifyRenderWindowHandle(); return m_hwnd; }
+#endif
 		DLLEXPORT inline int GetWidth() const{ return OWindow->getWidth(); };
 		DLLEXPORT inline int GetHeight() const{ return OWindow->getHeight(); };
 		DLLEXPORT inline bool GetVsync() const{ return OWindow->isVSyncEnabled();};
@@ -63,7 +88,8 @@ namespace Leviathan{
 			MouseCaptured = state;
 		}
 
-		DLLEXPORT static HWND GetRenderWindowHandle(Ogre::RenderWindow* owindow);
+		DLLEXPORT bool VerifyRenderWindowHandle();
+
 
 		virtual bool keyPressed(const OIS::KeyEvent &arg);
 		virtual bool keyReleased(const OIS::KeyEvent &arg);
@@ -94,14 +120,21 @@ namespace Leviathan{
 		bool SetupOISForThisWindow();
 		void ReleaseOIS();
 		void UpdateOISMouseWindowSize();
-
+#ifdef __GNUC__
+        // X11 window focus find function //
+        X11::XID GetForegroundWindow();
+#endif
 		void CheckInputState();
 		void _CreateOverlayScene();
 		void _CheckMouseVisibilityStates();
 		void _CustomMouseMakeSureMouseIsRight(Rocket::Core::Context* context);
 		// ------------------------------------ //
-
+#ifdef _WIN32
 		HWND m_hwnd;
+#else
+        X11::XID m_hwnd;
+        X11::Display* XDisplay;
+#endif
 		Ogre::RenderWindow* OWindow;
 		Ogre::SceneManager* OverlayScene;
 		Ogre::Viewport* OverlayViewport;

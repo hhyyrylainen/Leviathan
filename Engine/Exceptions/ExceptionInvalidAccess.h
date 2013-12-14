@@ -6,16 +6,15 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Exceptions\ExceptionBase.h"
+#include "Exceptions/ExceptionBase.h"
 
 namespace Leviathan{
 	// base exception for other exceptions //
 	class ExceptionInvalidAccess : public ExceptionBase{
 	public:
-		DLLEXPORT ExceptionInvalidAccess::ExceptionInvalidAccess(const wstring &message, int val, const wstring& sourcefunction, 
-			const wstring &Invalidaccesstype, const wstring &invaliddefinition);
-		DLLEXPORT ExceptionInvalidAccess::ExceptionInvalidAccess(const ExceptionInvalidAccess &other);
-		DLLEXPORT ExceptionInvalidAccess::~ExceptionInvalidAccess();
+		DLLEXPORT ExceptionInvalidAccess(const wstring &message, int val, const wstring& sourcefunction, const wstring &Invalidaccesstype, const wstring &invaliddefinition);
+		DLLEXPORT ExceptionInvalidAccess(const ExceptionInvalidAccess &other);
+		DLLEXPORT ~ExceptionInvalidAccess();
 
 		DLLEXPORT wstring* GetInvalidAsPtr();
 		DLLEXPORT wstring GetInvalid() const;

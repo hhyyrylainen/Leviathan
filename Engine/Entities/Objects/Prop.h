@@ -6,15 +6,15 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Entities\Bases\BaseObject.h"
-#include "Entities\Bases\BaseRenderable.h"
-#include "Entities\Bases\BasePositionable.h"
-#include "Entities\Bases\BaseScalable.h"
-#include "..\Bases\BasePhysicsObject.h"
-#include "..\Bases\BaseContraintable.h"
-#include "ObjectFiles\ObjectFileProcessor.h"
+#include "Entities/Bases/BaseObject.h"
+#include "Entities/Bases/BaseRenderable.h"
+#include "Entities/Bases/BasePositionable.h"
+#include "Entities/Bases/BaseScalable.h"
+#include "../Bases/BasePhysicsObject.h"
+#include "../Bases/BaseContraintable.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 #include "FileSystem.h"
-#include "..\Bases\BaseParentable.h"
+#include "../Bases/BaseParentable.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4250)

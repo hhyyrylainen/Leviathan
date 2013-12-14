@@ -17,8 +17,8 @@ namespace Leviathan{
 
 
 	private:
-		RayTracing::RayTracing();
-		RayTracing::~RayTracing();
+		RayTracing();
+		~RayTracing();
 	};
 
 }

@@ -3,7 +3,6 @@
 #ifndef LEVIATHAN_SCALEABLEFREETYPEBITMAP
 #include "ScaleableFreeTypeBitmap.h"
 #endif
-#include "C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Samples\C++\Direct3D11\DDSWithoutD3DX11\DDS.h"
 using namespace Leviathan;
 // ------------------------------------ //
 // initialize to match size //
@@ -36,7 +35,7 @@ DLLEXPORT void Leviathan::ScaleableFreeTypeBitmap::RenderFTBitmapIntoThis(const 
 	}
 }
 // ------------------------------------ //
-DLLEXPORT char* Leviathan::ScaleableFreeTypeBitmap::GenerateDDSToMemory(size_t &GeneratedSize, int &baselineinimage){
+/*DLLEXPORT char* Leviathan::ScaleableFreeTypeBitmap::GenerateDDSToMemory(size_t &GeneratedSize, int &baselineinimage){
 	// calculate required size //
 	char* buffer = NULL;
 
@@ -163,7 +162,7 @@ DLLEXPORT char* Leviathan::ScaleableFreeTypeBitmap::GenerateDDSToMemory(size_t &
 
 	// return buffer //
 	return buffer;
-}
+}*/
 
 void Leviathan::ScaleableFreeTypeBitmap::UpdateStats(){
 	// first calculate width //
@@ -238,7 +237,7 @@ void Leviathan::ScaleableFreeTypeBitmap::RemoveEmptyBits(){
 				LastXToHaveData = curx;
 		}
 	}
-	
+
 	// erase lines that are before FirstXToHaveData or after LastXToHaveData //
 	for(size_t i = 0; i < BitmapData.size(); i++){
 		if(BitmapData[i]->NthLineFromLeft < FirstXToHaveData || BitmapData[i]->NthLineFromLeft > LastXToHaveData){
@@ -248,7 +247,7 @@ void Leviathan::ScaleableFreeTypeBitmap::RemoveEmptyBits(){
 	}
 
 
-	// TODO: determine if we want to adjust x values of lines (it can mess up font rendering as advance value is calculated with empty space before 
+	// TODO: determine if we want to adjust x values of lines (it can mess up font rendering as advance value is calculated with empty space before
 	// character (if there is any)
 
 
@@ -302,7 +301,7 @@ DLLEXPORT bool Leviathan::ScaleableFreeTypeBitmap::RenderOtherIntoThis(Scaleable
 DLLEXPORT bool Leviathan::ScaleableFreeTypeBitmap::OutPutToFile1And0(const wstring &file){
 	// write 1s and 0s to a file //
 	ofstream writer;
-	writer.open(file);
+	writer.open(Convert::WstringToString(file));
 
 	if(!writer.is_open()){
 		return false;

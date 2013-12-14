@@ -6,16 +6,16 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Exceptions\ExceptionBase.h"
+#include "Exceptions/ExceptionBase.h"
 
 namespace Leviathan{
 	// base exception for other exceptions //
 	class ExceptionNotFound : public ExceptionBase{
 	public:
-		DLLEXPORT ExceptionNotFound::ExceptionNotFound(const wstring &message, int val, const wstring& sourcefunction, 
+		DLLEXPORT ExceptionNotFound(const wstring &message, int val, const wstring& sourcefunction,
 			const wstring &invalidtype, const wstring &invalidvalue);
-		DLLEXPORT ExceptionNotFound::ExceptionNotFound(const ExceptionNotFound &other);
-		DLLEXPORT ExceptionNotFound::~ExceptionNotFound();
+		DLLEXPORT ExceptionNotFound(const ExceptionNotFound &other);
+		DLLEXPORT ~ExceptionNotFound();
 
 		DLLEXPORT const wstring* GetInvalidAsPtr() const;
 		DLLEXPORT wstring GetInvalid() const;

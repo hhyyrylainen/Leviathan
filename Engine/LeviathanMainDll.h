@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Application\Application.h"
+#include "Application/Application.h"
 
 // Some core classes that most likely won't conflict are brought to the global namespace here with 'using' statements //
 

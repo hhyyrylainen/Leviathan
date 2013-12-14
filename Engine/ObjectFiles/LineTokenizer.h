@@ -27,8 +27,8 @@ namespace Leviathan{
 
 	private:
 		// private constructors //
-		LineTokeNizer::LineTokeNizer();
-		LineTokeNizer::~LineTokeNizer();
+		LineTokeNizer();
+		~LineTokeNizer();
 
 		// private functions //
 		static bool TokenRTokenAddSubTokens(int curlevel, int maxlevel, Token* curtoken, vector<Token*>& destination);

@@ -4,6 +4,10 @@
 #include "FileSystem.h"
 #endif
 #include "OgreResourceGroupManager.h"
+#ifdef __GNUC__
+#include <dirent.h>
+#include <sys/stat.h>
+#endif
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::FileSystem::FileSystem(){
@@ -37,7 +41,7 @@ DLLEXPORT bool Leviathan::FileSystem::Init(){
 
 	// use find files function on data folder and then save results to appropriate vectors //
 	vector<wstring> files;
-	GetFilesInDirectory(files, L".\\Data\\");
+	GetFilesInDirectory(files, L"./Data/");
 
 	if(files.size() < 1){
 
@@ -50,16 +54,16 @@ DLLEXPORT bool Leviathan::FileSystem::Init(){
 		// create new object for storing this //
 		shared_ptr<FileDefinitionType> tmpptr(new FileDefinitionType(this, files[i]));
 
-		if(files[i].find(L".\\Data\\Textures\\") == 0){
+		if(files[i].find(L"./Data/Textures/") == 0){
 			// add to texture files //
 			TextureFiles.push_back((tmpptr));
-		} else if(files[i].find(L".\\Data\\Models\\") == 0){
+		} else if(files[i].find(L"./Data/Models/") == 0){
 			// add to texture files //
 			ModelFiles.push_back(tmpptr);
-		} else if(files[i].find(L".\\Data\\Sound\\") == 0){
+		} else if(files[i].find(L"./Data/Sound/") == 0){
 			// add to texture files //
 			SoundFiles.push_back(tmpptr);
-		} else if(files[i].find(L".\\Data\\Scripts\\") == 0){
+		} else if(files[i].find(L"./Data/Scripts/") == 0){
 			// add to texture files //
 			ScriptFiles.push_back(tmpptr);
 		}
@@ -122,6 +126,7 @@ DLLEXPORT bool Leviathan::FileSystem::ReSearchFiles(){
 	return Init();
 }
 // ------------------------------------ //
+#ifdef _WIN32
 bool Leviathan::FileSystem::OperatingOnVista(){
 
 	OSVERSIONINFO osver;
@@ -151,6 +156,7 @@ bool Leviathan::FileSystem::OperatingOnXP(){
 
 	return FALSE;
 }
+#endif
 // ------------------------------------ //
 wstring& Leviathan::FileSystem::GetDataFolder(){
 
@@ -192,28 +198,30 @@ DLLEXPORT bool Leviathan::FileSystem::DoesExtensionMatch(FileDefinitionType* fil
 	for(size_t i = 0; i < Ids.size(); i++){
 		if(file->ExtensionID == Ids[i]){
 			// match found //
-			return true; 
+			return true;
 		}
 	}
 	return false;
 }
 
 // ------------------------------------ //
+#ifdef _WIN32
 void Leviathan::FileSystem::GetWindowsFolder(wstring &path){
 	wchar_t winddir[MAX_PATH];
 	if(GetWindowsDirectoryW(winddir, MAX_PATH) > 0)
 		path = winddir;
-	if(path.back() != L'\\')
-		path += L'\\';
+	if(path.back() != L'/')
+		path += L'/';
 }
 
 void Leviathan::FileSystem::GetSpecialFolder(wstring &path, int specialtype){
 	wchar_t directory[MAX_PATH];
 	SHGetSpecialFolderPathW(NULL, directory, specialtype, FALSE);
 	path = directory;
-	if(path.back() != L'\\')
-		path += L'\\';
+	if(path.back() != L'/')
+		path += L'/';
 }
+#endif
 // ------------------------------------ //
 DLLEXPORT void Leviathan::FileSystem::SetDataFolder(const wstring &folder){
 
@@ -246,7 +254,11 @@ DLLEXPORT int Leviathan::FileSystem::LoadDataDump(const wstring &file, vector<sh
 	int Length = 0;
 	// get data //
 	wifstream stream;
-	stream.open(file, ios::in);
+#ifdef _WIN32
+	stream.open(file);
+#else
+	stream.open(Convert::WstringToString(file));
+#endif
 	if(!stream.good()){
 		// no file ! //
 		Logger::Get()->Error(L"FileSystem: LoadDataDumb: Failed to read file: "+file, false);
@@ -280,11 +292,11 @@ DLLEXPORT int Leviathan::FileSystem::LoadDataDump(const wstring &file, vector<sh
 	}
 	return 0;
 }
-
-DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files, wstring dirpath, wstring pattern /*= L"*.*"*/, bool recursive /*= true*/){
+#ifdef _WIN32
+DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files, const wstring &dirpath, const wstring &pattern, bool recursive /*= true*/){
 	wstring FilePath;
 	wstring Pattern;
-	HANDLE hFile;          
+	HANDLE hFile;
 	WIN32_FIND_DATA FileInfo;
 
 	Pattern = dirpath + pattern;
@@ -295,7 +307,7 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files
 
 			if(FileInfo.cFileName[0] != '.'){
 				FilePath.erase();
-				FilePath = dirpath + FileInfo.cFileName+L"\\";
+				FilePath = dirpath + FileInfo.cFileName+L"/";
 
 				if(FileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY){
 
@@ -318,6 +330,43 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files
 
 	return true;
 }
+#else
+DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files, const wstring &dirpath, const wstring &pattern /*= L"*.*"*/, bool recursive /*= true*/){
+
+    dirent* ent;
+    class stat st;
+
+    // Start searching //
+    string directory = Convert::WstringToString(dirpath);
+
+    DIR* dir = opendir(directory.c_str());
+    while((ent = readdir(dir)) != NULL){
+        const string file_name = ent->d_name;
+        const string full_file_name = directory + "/" + file_name;
+
+        // Get info to determine if it is a directory //
+        if(stat(full_file_name.c_str(), &st) == -1)
+            continue;
+
+        // Check if it is a directory //
+        if((st.st_mode & S_IFDIR) != 0){
+            // Return if not recursive //
+            // TODO: fix recursive detection //
+            if(!recursive){
+                closedir(dir);
+                return true;
+            }
+            continue;
+        }
+
+        files.push_back(Convert::StringToWstring(full_file_name));
+    }
+    closedir(dir);
+
+	return true;
+}
+#endif
+
 // ------------------------------------ //
 DLLEXPORT wstring Leviathan::FileSystem::GetExtension(const wstring &path){
 	wstring extension = L"";
@@ -354,7 +403,7 @@ DLLEXPORT  wstring Leviathan::FileSystem::ChangeExtension(const wstring& path, c
 
 wstring Leviathan::FileSystem::RemoveExtension(const wstring &file, bool delpath){
 	wstring returnstr = L"";
-	
+
 	bool found = false;
 	for(int i = (int)file.length()-1; (i > -1) && (i < (int)file.length()); ){
 		if(!found){
@@ -372,7 +421,7 @@ wstring Leviathan::FileSystem::RemoveExtension(const wstring &file, bool delpath
 		if(!(i > -1 && i < (int)file.length())){
 			break;
 		}
-		if(((file[i] == L'/') | (file[i] == L'\\')) && (delpath))
+		if(((file[i] == L'/') || (file[i] == L'\\')) && (delpath))
 			break;
 		returnstr += file[i];
 	}
@@ -399,7 +448,11 @@ DLLEXPORT string Leviathan::FileSystem::RemovePath(const string &filepath){
 }
 // ------------------ File operations ------------------ //
 int Leviathan::FileSystem::GetFileLength(wstring name){
+#ifdef _WIN32
 	wifstream file(name);
+#else
+	wifstream file(Convert::WstringToString(name));
+#endif
 	if(file.good()){
 		file.seekg(0, ios::end);
 		int returnval = (int)file.tellg();
@@ -410,9 +463,13 @@ int Leviathan::FileSystem::GetFileLength(wstring name){
 	return -1; // not found
 }
 
-DLLEXPORT bool Leviathan::FileSystem::FileExists( const wstring &name){
+DLLEXPORT bool Leviathan::FileSystem::FileExists(const wstring &name){
 	bool existed=false;
+#ifdef _WIN32
 	wifstream file(name);
+#else
+    wifstream file(Convert::WstringToString(name));
+#endif
 	if(file.is_open()){
 		existed=true;
 	}
@@ -444,7 +501,11 @@ bool Leviathan::FileSystem::WriteToFile(const string &data, const string &filena
 }
 
 bool Leviathan::FileSystem::WriteToFile(const wstring &data, const wstring &filename){
+#ifdef _WIN32
 	wofstream file(filename);
+#else
+	wofstream file(Convert::WstringToString(filename));
+#endif
 	if (file.is_open()){
 		file << data;
 
@@ -457,8 +518,11 @@ bool Leviathan::FileSystem::WriteToFile(const wstring &data, const wstring &file
 }
 
 bool Leviathan::FileSystem::AppendToFile(const wstring &data, const wstring &filepath){
+#ifdef _WIN32
 	wofstream file(filepath, wofstream::app);
-
+#else
+    wofstream file(Convert::WstringToString(filepath), wofstream::app);
+#endif
 	if (file.is_open()){
 		file << data;
 
@@ -470,8 +534,12 @@ bool Leviathan::FileSystem::AppendToFile(const wstring &data, const wstring &fil
 	return false;
 }
 
-DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wstring &resultreceiver) throw(...){
+DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wstring &resultreceiver) THROWS{
+#ifdef _WIN32
 	wifstream reader(file, ios::in);
+#else
+    wifstream reader(Convert::WstringToString(file), ios::in);
+#endif
 	if(reader){
 
 		// go to end to count length //
@@ -481,8 +549,11 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wst
 
 
 		// cannot be loaded //
+#ifdef _WIN32
 		assert(SIZE_T_MAX >= rpos);
-
+#else
+        assert(std::numeric_limits<size_t>::max() >= rpos);
+#endif
 		resultreceiver.resize((UINT)rpos);
 		// back to start //
 		reader.seekg(0, ios::beg);
@@ -493,97 +564,11 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wst
 		reader.close();
 		return;
 	}
+#ifdef _WIN32
 	throw ExceptionInvalidArgument(L"cannot read given file", GetLastError(), __WFUNCTION__, L"file", file);
-}
-// ------------------ Bitmap operations ------------------ //
-BYTE* Leviathan::FileSystem::LoadBMP( int* Width, int* Height, long* Size, LPCTSTR bmpfile ){
-	BITMAPFILEHEADER bmpheader;
-	BITMAPINFOHEADER bmpinfo;
-	DWORD bytesread;
-
-	HANDLE file = CreateFile ( bmpfile , GENERIC_READ, FILE_SHARE_READ,
-		 NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL );
-	if ( NULL == file )
-		return NULL;
-
-	if ( ReadFile ( file, &bmpheader, sizeof ( BITMAPFILEHEADER ), 
-		&bytesread, NULL ) == false )
-	{
-		CloseHandle ( file );
-		return NULL;
-	}
-
-	if ( ReadFile ( file, &bmpinfo, sizeof ( BITMAPINFOHEADER ), 
-		&bytesread, NULL ) == false )
-	{
-		CloseHandle ( file );
-		return NULL;
-	}
-
-	if ( bmpheader.bfType != 'MB' )
-	{
-		CloseHandle ( file );
-		return NULL;
-	}
-
-	if ( bmpinfo.biCompression != BI_RGB )
-	{
-		CloseHandle ( file );
-		return NULL;
-	}
-
-	if ( bmpinfo.biBitCount != 24 )
-	{
-		CloseHandle ( file );
-		return NULL;
-	}
-
-	*Width = bmpinfo.biWidth;
-	*Height = bmpinfo.biHeight;
-
-	*Size = bmpheader.bfSize - bmpheader.bfOffBits;
-
-	BYTE* Buffer = new BYTE[ *Size ];
-
-	SetFilePointer ( file, bmpheader.bfOffBits, NULL, FILE_BEGIN );
-
-	if ( ReadFile ( file, Buffer, *Size, &bytesread, NULL ) == false )
-	{
-		delete [] Buffer;
-		CloseHandle ( file );
-		return NULL;
-	}
-	CloseHandle ( file );
-	return Buffer;
-
-}
-BYTE* Leviathan::FileSystem::ConvertBMPToRGBBuffer ( BYTE* Buffer, int width, int height ){
-	if ( ( NULL == Buffer ) || ( width == 0 ) || ( height == 0 ) )
-		return NULL;
-
-	int padding = 0;
-	int scanlinebytes = width * 3;
-	while ( ( scanlinebytes + padding ) % 4 != 0 )
-		padding++;
-		
-	int psw = scanlinebytes + padding;
-	BYTE* newbuf = new BYTE[width*height*3];
-
-	long bufpos = 0;   
-	long newpos = 0;
-	for ( int y = 0; y < height; y++ )
-		for ( int x = 0; x < 3 * width; x+=3 )
-		{
-			newpos = y * 3 * width + x;     
-			bufpos = ( height - y - 1 ) * psw + x;
-
-			newbuf[newpos] = Buffer[bufpos + 2];       
-			newbuf[newpos + 1] = Buffer[bufpos+1]; 
-			newbuf[newpos + 2] = Buffer[bufpos];     
-		}
-
-	return newbuf;
-
+#else
+	throw ExceptionInvalidArgument(L"cannot read given file", 0, __WFUNCTION__, L"file", file);
+#endif
 }
 // ------------------ Non static part ------------------ //
 DLLEXPORT void Leviathan::FileSystem::SortFileVectors(){
@@ -732,7 +717,7 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 	return Misc::EmptyString;
 }
 
-DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllMatchingFiles(FILEGROUP which, const wstring& regexname, 
+DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllMatchingFiles(FILEGROUP which, const wstring& regexname,
 	const wstring &extensions, bool searchall /*= true*/)
 {
 	// generate info about the search file //
@@ -808,7 +793,7 @@ vector<shared_ptr<FileDefinitionType>>& Leviathan::FileSystem::GetScriptFiles(){
 	return ScriptFiles;
 }
 // ------------------------------------ //
-shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<int>& extensions, 
+shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<int>& extensions,
 	const wstring& name, bool UseIndexVector, vector<CharWithIndex*>* Index)
 {
 	int StartSpot = 0;
@@ -849,7 +834,7 @@ shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector
 	return NULL;
 }
 
-void Leviathan::FileSystem::_SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<shared_ptr<FileDefinitionType>>& results, 
+void Leviathan::FileSystem::_SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<shared_ptr<FileDefinitionType>>& results,
 	vector<int>& extensions, const basic_regex<wchar_t> &regex)
 {
 	for(size_t i = 0; i < vec.size(); i++){
@@ -868,7 +853,7 @@ void Leviathan::FileSystem::_SearchForFilesInVec(vector<shared_ptr<FileDefinitio
 	}
 }
 
-void Leviathan::FileSystem::_CreateIndexesIfMissing(vector<shared_ptr<FileDefinitionType>> &vec, vector<CharWithIndex*> &resultvec, bool &indexed, 
+void Leviathan::FileSystem::_CreateIndexesIfMissing(vector<shared_ptr<FileDefinitionType>> &vec, vector<CharWithIndex*> &resultvec, bool &indexed,
 	const bool &force /*= false*/)
 {
 	// we'll need to delete old ones if index creation is forced //
@@ -929,12 +914,12 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 	// Terrain group //
 	manager.createResourceGroup("Terrain");
 
-	folder = Convert::WstringToString(DataFolder+L"Cache\\Terrain\\");
+	folder = Convert::WstringToString(DataFolder+L"Cache/Terrain/");
 
 	manager.addResourceLocation(folder, "FileSystem", "Terrain", true, false);
-	
+
 	// add cache to general //
-	folder = Convert::WstringToString(DataFolder+L"Cache\\");
+	folder = Convert::WstringToString(DataFolder+L"Cache/");
 	manager.addResourceLocation(folder, "FileSystem", "General");
 
 	// possibly register addon folders //
@@ -948,9 +933,9 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
 	folder = Convert::WstringToString(DataFolder+TextureFolder);
 	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
-	folder = Convert::WstringToString(DataFolder+L"Cache\\Rocket\\");
+	folder = Convert::WstringToString(DataFolder+L"Cache/Rocket/");
 	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
-	folder = ".\\";
+	folder = "./";
 	manager.addResourceLocation(folder, "FileSystem", "Rocket", false, false);
 	// initialize the groups //
 	manager.initialiseAllResourceGroups();
@@ -1002,6 +987,6 @@ Leviathan::FileDefinitionType::~FileDefinitionType(){
 
 }
 // ------------------ FileDefSorter ------------------ //
-bool Leviathan::FileDefSorter::operator()(shared_ptr<FileDefinitionType>& first, shared_ptr<FileDefinitionType>& second){
+bool Leviathan::FileDefSorter::operator()(const shared_ptr<FileDefinitionType>& first, const shared_ptr<FileDefinitionType>& second){
 	return (*first.get()) < *(second).get();
 }

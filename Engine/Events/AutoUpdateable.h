@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Common\DataStoring\NamedVars.h"
-#include "Common\DataStoring\DataBlock.h"
+#include "Common/DataStoring/NamedVars.h"
+#include "Common/DataStoring/DataBlock.h"
 
 namespace Leviathan{
 
@@ -15,8 +15,8 @@ namespace Leviathan{
 
 	class AutoUpdateableObject{
 	public:
-		DLLEXPORT AutoUpdateableObject::AutoUpdateableObject();
-		DLLEXPORT virtual AutoUpdateableObject::~AutoUpdateableObject();
+		DLLEXPORT AutoUpdateableObject();
+		DLLEXPORT virtual ~AutoUpdateableObject();
 
 		DLLEXPORT virtual void StartMonitoring(const vector<VariableBlock*> &IndexesAndNamesToListen);
 		DLLEXPORT virtual void StopMonitoring(vector<shared_ptr<VariableBlock>> &unregisterindexandnames, bool all = false);

@@ -3,7 +3,7 @@
 
 bool TestPreEngine(){
 	bool Failed = false;
-	
+
 	int tests = FUNCTIONRUNS_BASE;
 	wstring timername = L"";
 
@@ -142,19 +142,6 @@ bool TestPreEngine(){
 
 	TimingMonitor::StopTiming(timername);
 
-
-	
-	// --------- RSA Function --------- //
-	timername = L"RSA test running "+Convert::IntToWstring(tests);
-
-	TimingMonitor::StartTiming(timername);
-	if(TestRSAEncrypting(tests)){
-		Logger::Get()->Error(L"Test did NOT succeed, test:");
-		Failed = true;
-	}
-
-	TimingMonitor::StopTiming(timername);
-
 	// -------------------- MD5Testing testing -------------------- //
 	timername = L"MD5Testing tests running "+Convert::IntToWstring(tests);
 
@@ -240,7 +227,7 @@ bool TestEngine(Leviathan::Engine* engine){
 
 	TimingMonitor::StopTiming(timername);
 
-	
+
 	// -------------------- Object files testing -------------------- //
 	Logger::Get()->Write(L"\n", false);
 	timername = L"Object files main tests running "+Convert::IntToWstring(tests);

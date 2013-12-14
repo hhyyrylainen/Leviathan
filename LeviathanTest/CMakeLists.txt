@@ -15,7 +15,11 @@ source_group("Header" FILES ${LTHeaderFiles})
 # all LeviathanTest files in one list
 set(LeviathanTestFiles ${LTSourceFiles} ${LTHeaderFiles})
 
+if(WIN32)
 add_executable(LeviathanTest WIN32 ${LeviathanTestFiles})
+else(WIN32)
+add_executable(LeviathanTest ${LeviathanTestFiles})
+endif(WIN32)
 set_target_properties(LeviathanTest PROPERTIES DEBUG_POSTFIX D)
 
 # Possible debug installs
@@ -30,6 +34,11 @@ install(TARGETS LeviathanTest DESTINATION bin CONFIGURATIONS ${InstallConfigurat
 # linking to engine
 target_link_libraries(LeviathanTest Engine)
 
+if(NOT WIN32)
+target_link_libraries(LeviathanTest ${LINUX_LINK_LIBS_TOENGINE})
+endif(NOT WIN32)
+
+if(WIN32)
 # add as default startup project
 create_target_launcher(LeviathanTest RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/" WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin/")
 
@@ -38,6 +47,9 @@ create_target_launcher(LeviathanTest RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}
 ADD_CUSTOM_COMMAND(TARGET LeviathanTest POST_BUILD COMMAND copy ARGS 
     "\"$(SolutionDir)LeviathanTest\\$(Configuration)\\$(TargetName).exe\" \"$(SolutionDir)bin\\$(TargetName).exe\""
 )
+else(WIN32)
+
+endif(WIN32)
 
 # testing
 add_test(LeviathanTestMainTest LeviathanTest CONFIGURATIONS Debug Release WORKING_DIRECTORY 

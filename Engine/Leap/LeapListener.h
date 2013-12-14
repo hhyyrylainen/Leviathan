@@ -13,8 +13,8 @@ namespace Leviathan{
 
 	class LeapListener : public Leap::Listener{
 	public:
-		LeapListener::LeapListener(LeapManager* owner);
-		LeapListener::~LeapListener();
+		LeapListener(LeapManager* owner);
+		~LeapListener();
 
 		// leap listener's virtual methods //
 		virtual void onInit(const Leap::Controller &control);

@@ -82,6 +82,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading})
 
     
+if(WIN32)
 # precompiled headers
 # remove from list before adding back
 file(GLOB PrecompiledHeaderName "Include.h")
@@ -90,13 +91,20 @@ list(REMOVE_ITEM EngineFiles ${PrecompiledSourceName})
 
 # precompiled header
 ADD_MSVC_PRECOMPILED_HEADER("Include.h" ${PrecompiledSourceName} EngineFiles)
-
+endif(WIN32)
 
 # engine exporting define
 add_definitions(-DENGINE_EXPORTS)
 
 # create library with all the files
 add_library(Engine SHARED ${EngineFiles})
+
+if(NOT WIN32)
+# Link with X11
+target_link_libraries(Engine ${X11_LIBRARIES})
+target_link_libraries(Engine debug ${LINUX_LINK_LIBS_ENGINE_DEBUG})
+target_link_libraries(Engine optimized ${LINUX_LINK_LIBS_ENGINE_RELEASE})
+endif(NOT WIN32)
 
 # Possible debug installs
 set(InstallConfigurationNames "Release")
@@ -108,7 +116,11 @@ endif(NOT INSTALL_ONLY_RELEASE)
 install(TARGETS Engine DESTINATION bin CONFIGURATIONS ${InstallConfigurationNames})
 
 # post build copy
+if(WIN32)
 ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND copy ARGS 
     "\"$(SolutionDir)Engine\\$(Configuration)\\$(TargetName).dll\" \"$(SolutionDir)bin\\$(TargetName).dll\""
 )
+else(WIN32)
+
+endif(WIN32)
 

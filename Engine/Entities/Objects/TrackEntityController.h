@@ -6,9 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "..\Bases\BaseEntityController.h"
+#include "../Bases/BaseEntityController.h"
 #include "LocationNode.h"
-#include "Events\CallableObject.h"
+#include "Events/CallableObject.h"
 
 #define TRACKCONTROLLER_DEFAULT_APPLYFORCE		12.f
 

@@ -5,13 +5,15 @@
 #include "Define.h"
 #endif
 // ------------------------------------ //
+#include "Common/Window.h"
+#include "Utility/Iterators/WstringIterator.h"
 
 enum KEYSPECIAL {
-	KEYSPECIAL_SHIFT = 0x1, 
-	KEYSPECIAL_ALT = 0x2, 
-	KEYSPECIAL_CTRL = 0x4, 
+	KEYSPECIAL_SHIFT = 0x1,
+	KEYSPECIAL_ALT = 0x2,
+	KEYSPECIAL_CTRL = 0x4,
 	KEYSPECIAL_WIN = 0x8,
-	KEYSPECIAL_SCROLL = 0x10, 
+	KEYSPECIAL_SCROLL = 0x10,
 	KEYSPECIAL_CAPS = 0x20
 	//0x40
 	//0x80 // first byte full
@@ -97,7 +99,7 @@ namespace Leviathan{
 				// TODO: this needs fixing
 				DEBUG_BREAK;
 			} else {
-				
+
 				if((Extras & KEYSPECIAL_SHIFT) && !(specialmodifiers & Rocket::Core::Input::KM_SHIFT)){
 					return false;
 				}
@@ -178,7 +180,7 @@ namespace Leviathan{
 
 			Convert::ToCapital(*str, converted);
 
-			T character = Window::CharacterToOISConvert[converted];
+			T character = Leviathan::Window::CharacterToOISConvert[converted];
 			short special = 0;
 
 			while((str = itr.GetUntilNextCharacterOrAll(L'+'))->size() > 0){

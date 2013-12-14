@@ -6,22 +6,21 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Application\AppDefine.h"
-#include "Statistics\Timer.h"
-#include "Rendering\Graphics.h"
-#include "Events\EventHandler.h"
-#include "Handlers\ObjectLoader.h"
-#include "Statistics\RenderingStatistics.h"
-#include "Leap\LeapManager.h"
-#include "Script\Console.h"
+#include "Application/AppDefine.h"
+#include "Rendering/Graphics.h"
+#include "Events/EventHandler.h"
+#include "Handlers/ObjectLoader.h"
+#include "Statistics/RenderingStatistics.h"
+#include "Leap/LeapManager.h"
+#include "Script/Console.h"
 #include "FileSystem.h"
-#include "Sound\SoundDevice.h"
-#include "Common\DataStoring\DataStore.h"
-#include "Handlers\OutOfMemoryHandler.h"
-#include "Utility\Random.h"
-#include "Common\GraphicalInputEntity.h"
-#include "Newton\NewtonManager.h"
-#include "Newton\PhysicalMaterialManager.h"
+#include "Sound/SoundDevice.h"
+#include "Common/DataStoring/DataStore.h"
+#include "Handlers/OutOfMemoryHandler.h"
+#include "Utility/Random.h"
+#include "Common/GraphicalInputEntity.h"
+#include "Newton/NewtonManager.h"
+#include "Newton/PhysicalMaterialManager.h"
 #include "Networking\NetworkHandler.h"
 #include "Threading\ThreadingManager.h"
 
@@ -60,7 +59,7 @@ namespace Leviathan{
 		DLLEXPORT shared_ptr<GameWorld> CreateWorld();
 
 		DLLEXPORT void SaveScreenShot();
-		
+
 		DLLEXPORT Graphics* GetGraphics(){ return Graph; };
 		DLLEXPORT EventHandler* GetEventHandler(){ return MainEvents; };
 		DLLEXPORT ObjectLoader* GetObjectLoader(){return Loader;};
@@ -84,7 +83,6 @@ namespace Leviathan{
 		void PostLoad();
 		// ------------------------------------ //
 		Logger* Mainlog;
-		Timer* MTimer;
 		AppDef* Define;
 
 		RenderingStatistics* RenderTimer;
@@ -129,5 +127,4 @@ namespace Leviathan{
 		static Engine* instance;
 	};
 
-}
-#endif
+}#endif

@@ -5,44 +5,17 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "Utility\Random.h"
+#include "Utility/Random.h"
 
 float MMath::RandomNumber(float Min, float Max)
 {
 	return ((float(rand()) / float(RAND_MAX)) * (Max - Min)) + Min;
 }
-long double MMath::CoordinateDistance(POINT pos1,POINT pos2){
-	long double pos1X=pos1.x;
-	long double pos1Y=pos1.y;
-	long double pos2X=pos2.x;
-	long double pos2Y=pos2.y;
-	long double Distance=0;
-	//int xdist=pos1X-pos2X;
-	//int ydist=pos1Y-pos2Y;
-	Distance=sqrt( (pos2X - pos1X)*(pos2X - pos1X) + (pos2Y - pos1Y)*(pos2Y - pos1Y));
-
-
-	return Distance;
-}
 float MMath::CoordinateDistance(float x1, float x2,float y1, float y2){
 	float Distance=0;
-	//int xdist=pos1X-pos2X;
-	//int ydist=pos1Y-pos2Y;
 	Distance=sqrt( (x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
 
-
 	return Distance;
-
-
-
-}
-double MMath::AngleBetweenPoints(POINT pos1, POINT pos2){
-	double angle = 0;
-
-	angle = atan2((float)pos2.y - (float)pos1.y, (float)pos2.x - (float)pos1.x);
-
-
-	return angle;
 }
 double MMath::AngleBetweenPoints(float x1, float x2,float y1, float y2){
 	double angle = 0;
@@ -54,13 +27,6 @@ double MMath::AngleBetweenPoints(float x1, float x2,float y1, float y2){
 
 
 }
-POINT MMath::GetRelativeMousePos(HWND Hwnd){
-	POINT MousePos;
-	GetCursorPos(&MousePos);
-	ScreenToClient(Hwnd,&MousePos);
-
-	return MousePos;
-}
 
 int MMath::GreatestCommonDivisor(int a, int b){
 	return (b == 0 ? a : GreatestCommonDivisor(b, a%b));
@@ -70,7 +36,7 @@ DLLEXPORT  bool Leviathan::MMath::IsPointInsidePolygon(const vector<Float3>& pol
 	//bool IsInside = false;
 	//int i,j;
 	//for(i = 0, j = polygon.size()-1; i < polygon.size(); j = i++){
-	//	if(((polygon[i].Y > point.Y) != (polygon[j].Y > point.Y)) 
+	//	if(((polygon[i].Y > point.Y) != (polygon[j].Y > point.Y))
 	//		&& (point.X < (polygon[j].X-polygon[i].X) * (point.Y-polygon[i].Y) / (polygon[j].Y-polygon[i].Y) + polygon[i].X))
 	//		IsInside = !IsInside;
 	//}

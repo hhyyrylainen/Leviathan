@@ -22,6 +22,7 @@ namespace Leviathan{
 		}
 		template<typename T>
 		DLLEXPORT static bool IsFiniteNumber(T& Value){
+#ifdef _WIN32
 			// fp class check //
 			switch (_fpclass(Value))
 			{
@@ -38,6 +39,9 @@ namespace Leviathan{
 			}
 
 			return (true);
+#else
+            return isfinite(Value);
+#endif
 		}
 		DLLEXPORT static inline bool ToggleBool(bool &Value){
 			if(Value){
@@ -146,7 +150,7 @@ namespace Leviathan{
 		DLLEXPORT static bool WstringCompareInsensitiveRefs(const wstring& data, const wstring &second);
 		DLLEXPORT static bool IsCharacterNumber(wchar_t chara);
 
-		
+
 
 		DLLEXPORT static inline wstring& GetErrString(){
 

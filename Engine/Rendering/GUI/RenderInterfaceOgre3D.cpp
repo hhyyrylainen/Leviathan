@@ -14,7 +14,7 @@
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,8 +25,9 @@
  *
  */
 #include "Include.h"
+#include "Define.h"
 #include "RenderInterfaceOgre3D.h"
-#include <Ogre/Ogre.h>
+#include <OGRE/Ogre.h>
 #include "FileSystem.h"
 
 struct RocketOgre3DVertex
@@ -235,14 +236,14 @@ bool RenderInterfaceOgre3D::GenerateTexture(Rocket::Core::TextureHandle& texture
 {
 	static int texture_id = 1;
 
-	Ogre::TexturePtr ogre_texture = Ogre::TextureManager::getSingleton().loadRawData(Rocket::Core::String(16, "%d", texture_id++).CString(),
-																					 "Rocket",
-																					 Ogre::DataStreamPtr(new Ogre::MemoryDataStream((void*) source, source_dimensions.x * source_dimensions.y * sizeof(unsigned int))),
-																					 source_dimensions.x,
-																					 source_dimensions.y,
-																					 Ogre::PF_A8B8G8R8,
-																					 Ogre::TEX_TYPE_2D,
-																					 0);
+    auto datastr = Ogre::DataStreamPtr(
+        new Ogre::MemoryDataStream((void*) source, source_dimensions.x * source_dimensions.y *
+        sizeof(unsigned int)));
+
+	Ogre::TexturePtr ogre_texture = Ogre::TextureManager::getSingleton().loadRawData(
+        Rocket::Core::String(16, "%d", texture_id++).CString(), "Rocket", datastr,
+        source_dimensions.x, source_dimensions.y, Ogre::PF_A8B8G8R8,
+		Ogre::TEX_TYPE_2D, 0);
 
 	if (ogre_texture.isNull())
 		return false;

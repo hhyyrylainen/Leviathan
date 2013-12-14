@@ -5,11 +5,10 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-#include "Application\Application.h"
-#include "Rendering\TextureManager.h"
-#include "Entities\GameWorld.h"
+#include "Application/Application.h"
+#include "Entities/GameWorld.h"
 
-DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), 
+DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL),
 	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL)
 {
 
@@ -20,7 +19,6 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner),
 	Inited = false;
 	Graph = NULL;
 	Define = NULL;
-	MTimer = NULL;
 	MainRandom = NULL;
 	RenderTimer = NULL;
 
@@ -108,9 +106,6 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 		Logger::Get()->Error(L"Engine: Init: Init EventHandler failed!");
 		return false;
 	}
-
-	// timing object //
-	MTimer = new Timer();
 
 	// create script interface before renderer //
 	MainScript = new ScriptInterface();
@@ -222,7 +217,7 @@ void Leviathan::Engine::PostLoad(){
 		// increase //
 		Mainstore->SetValue(L"StartCount", new VariableBlock(new IntBlock(startcounts+1)));
 	} else {
-		
+
 		Mainstore->AddVar(new NamedVariableList(L"StartCount", new VariableBlock(1)));
 		// set as persistent //
 		Mainstore->SetPersistance(L"StartCount", true);
@@ -278,8 +273,6 @@ void Leviathan::Engine::Release(){
 
 	SAFE_RELEASEDEL(MainEvents);
 
-
-	SAFE_DELETE(MTimer);
 	SAFE_DELETE(Mainlog);
 
 	// delete randomizer last, for obvious reasons //
@@ -318,7 +311,7 @@ void Leviathan::Engine::Tick(){
 	//LastFrame = CurTime;
 	LastFrame += TICKSPEED;
 	TickCount++;
-	
+
 	// update input //
 	LeapData->OnTick(TimePassed);
 
@@ -329,14 +322,14 @@ void Leviathan::Engine::Tick(){
 	GraphicalEntity1->Tick(TimePassed);
 
 	// update texture usage times, to allow unused textures to be unloaded //
-	Graph->GetTextureManager()->TimePass(TimePassed);
+	//Graph->GetTextureManager()->TimePass(TimePassed);
 
 	// some dark magic here //
 	if(TickCount % 25 == 0){
 		// update values
 		Mainstore->SetTickCount(TickCount);
 		Mainstore->SetTickTime(TickTime);
-		
+
 
 		// send updated rendering statistics //
 		RenderTimer->ReportStats(Mainstore);
@@ -358,7 +351,7 @@ void Leviathan::Engine::RenderFrame(){
 	// limit check //
 	if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)){
 		// fps would go too high //
-		
+
 		return;
 	}
 
@@ -397,7 +390,7 @@ void Leviathan::Engine::RunScrCommand(wstring command, wstring params){
 
 DLLEXPORT void Leviathan::Engine::SaveScreenShot(){
 
-	const wstring fileprefix = MainFileHandler->GetDataFolder()+L"Screenshots\\Captured_frame_";
+	const wstring fileprefix = MainFileHandler->GetDataFolder()+L"Screenshots/Captured_frame_";
 
 
 	GraphicalEntity1->SaveScreenShot(Convert::WstringToString(fileprefix));

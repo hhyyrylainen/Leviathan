@@ -34,7 +34,7 @@ DLLEXPORT void Leviathan::OutOfMemoryHandler::HandleException(std::bad_alloc &ex
 	// release reserved memory //
 	if(ReservedMemory == NULL){
 		// this is rather bad //
-		__debugbreak();
+		DEBUG_BREAK;
 	}
 
 	SAFE_DELETE(ReservedMemory);

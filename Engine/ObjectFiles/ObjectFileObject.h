@@ -6,17 +6,17 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "ObjectFiles\ObjectFileList.h"
-#include "ObjectFiles\ObjectFileTextBlock.h"
-#include "Script\ScriptScript.h"
+#include "ObjectFiles/ObjectFileList.h"
+#include "ObjectFiles/ObjectFileTextBlock.h"
+#include "Script/ScriptScript.h"
 
 namespace Leviathan{
 
 	class ObjectFileObject : public Object{
 	public:
-		DLLEXPORT ObjectFileObject::ObjectFileObject(const wstring &name, const wstring &typesname, vector<shared_ptr<wstring>> prefix = 
+		DLLEXPORT ObjectFileObject(const wstring &name, const wstring &typesname, vector<shared_ptr<wstring>> prefix =
 			vector<shared_ptr<wstring>>());
-		DLLEXPORT ObjectFileObject::~ObjectFileObject();
+		DLLEXPORT ~ObjectFileObject();
 
 		wstring Name;
 		wstring TName;

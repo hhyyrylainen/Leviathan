@@ -11,13 +11,13 @@ namespace Leviathan{
 
 	class ObjectFileTextBlock : public Object{
 	public:
-		DLLEXPORT ObjectFileTextBlock::ObjectFileTextBlock();
-		DLLEXPORT ObjectFileTextBlock::ObjectFileTextBlock(const wstring& name);
-		DLLEXPORT ObjectFileTextBlock::~ObjectFileTextBlock();
+		DLLEXPORT ObjectFileTextBlock();
+		DLLEXPORT ObjectFileTextBlock(const wstring& name);
+		DLLEXPORT ~ObjectFileTextBlock();
 
 		wstring Name;
 		vector<wstring*> Lines; // for storing plain text //
-	
+
 
 	};
 

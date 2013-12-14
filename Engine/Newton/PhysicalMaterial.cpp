@@ -11,7 +11,7 @@ DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(const wstring &name) : N
 }
 
 DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(shared_ptr<ObjectFileObject> fileobject){
-	throw std::exception("NOt implemented");
+	throw std::exception();
 }
 
 DLLEXPORT Leviathan::PhysicalMaterial::~PhysicalMaterial(){
@@ -47,7 +47,7 @@ void Leviathan::PhysicalMaterial::_ApplyMaterialPropertiesToWorld(NewtonWorld* w
 	// Loop interaction variables and apply their properties //
 	for(auto iter = InterractionVariables.begin(); iter != InterractionVariables.end(); ++iter){
 
-		(*iter)->ApplySettingsToWorld(world, GetMaterialIDIfLoaded(world), 
+		(*iter)->ApplySettingsToWorld(world, GetMaterialIDIfLoaded(world),
 			PhysicsMaterialManager::Get()->GetMaterial((*iter)->OtherName)->GetMaterialIDIfLoaded(world), this);
 	}
 }
@@ -59,7 +59,7 @@ void Leviathan::PhysMaterialDataPair::ApplySettingsToWorld(NewtonWorld* world, i
 	NewtonMaterialSetDefaultCollidable(world, thisid, otherid, Collidable);
 	NewtonMaterialSetDefaultFriction(world, thisid, otherid, StaticFriction, DynamicFriction);
 	NewtonMaterialSetDefaultSoftness(world, thisid, otherid, Softness);
-	
+
 	// Callback setting //
 	NewtonMaterialSetCollisionCallback(world, thisid, otherid, materialowner, AABBCallback, ContactCallback);
 }

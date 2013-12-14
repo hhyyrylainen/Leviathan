@@ -46,9 +46,9 @@ namespace Leviathan{
 
 	class MultiFlag : public Object{
 	public:
-		DLLEXPORT MultiFlag::MultiFlag();
-		DLLEXPORT MultiFlag::MultiFlag(vector<shared_ptr<Flag>>& toset);
-		DLLEXPORT MultiFlag::~MultiFlag();
+		DLLEXPORT MultiFlag();
+		DLLEXPORT MultiFlag(vector<shared_ptr<Flag>>& toset);
+		DLLEXPORT ~MultiFlag();
 
 		DLLEXPORT void SetFlag(const Flag &flag);
 		DLLEXPORT void UnsetFlag(const Flag &flag);

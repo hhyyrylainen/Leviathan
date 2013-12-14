@@ -12,9 +12,9 @@ namespace Leviathan{
 
 	class Token : public Object{
 	public:
-		DLLEXPORT Token::Token();
-		DLLEXPORT Token::Token(const wstring& data);
-		DLLEXPORT Token::~Token();
+		DLLEXPORT Token();
+		DLLEXPORT Token(const wstring& data);
+		DLLEXPORT ~Token();
 
 		DLLEXPORT bool CreateSubToken(Token* toadd);
 		DLLEXPORT Token* GetParentToken();

@@ -67,10 +67,11 @@ set(LINUX_LINK_LIBS_TOENGINE Newton)
 #	Plugin_CgProgramManager Plugin_OctreeZone Plugin_ParticleFX RenderSystem_Direct3D11 RenderSystem_GL OIS RocketCore
 #	RocketControls RocketDebugger Newton sfml-audio sfml-network)
 
-set(LINUX_LINK_LIBS_ENGINE_DEBUG Newton Angelscript Leap OgreMain_d OgreOverlay_d OgrePaging_d OgreTerrain_d OgreRTShaderSystem_d
+set(LINUX_LINK_LIBS_ENGINE_DEBUG OgreMain_d Newton Angelscript Leap 
+	OgreOverlay_d OgrePaging_d OgreRTShaderSystem_d
  	OIS_d RocketCore_d RocketControls_d RocketDebugger_d sfml-audio sfml-network)
 
-set(LINUX_LINK_LIBS_ENGINE_RELEASE Angelscript Leap OgreMain OgreOverlay OgrePaging OgreTerrain OgreRTShaderSystem  
+set(LINUX_LINK_LIBS_ENGINE_RELEASE OgreMain Angelscript Leap OgreOverlay OgrePaging OgreRTShaderSystem  
 	OIS RocketCore RocketControls RocketDebugger Newton sfml-audio sfml-network)
 
 

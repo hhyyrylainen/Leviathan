@@ -10,7 +10,11 @@
 #define TIMINGMONITOR_STYLE_RESULT_DEFAULT	100
 #define TIMINGMONITOR_STYLE_RESULT_NONE		200
 
+#ifdef _MSC_VER
 #define ADDTIMERFROSCOPE(x,y) Leviathan::ScopeTimer thisscopetimer_##x##(y);
+#else
+#define ADDTIMERFROSCOPE(x,y) Leviathan::ScopeTimer thisscopetimer_(y);
+#endif
 
 #define ADDTIMEFORSCOPECALLER(x,y) ADDTIMERFROSCOPE(x, y)
 

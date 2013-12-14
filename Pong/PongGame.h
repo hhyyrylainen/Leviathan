@@ -10,7 +10,7 @@
 #include "PlayerSlot.h"
 #include "GameInputController.h"
 #include "Entities/Bases/BasePhysicsObject.h"
-#include "Utility/DataHandling/SimpleDataBase.h"
+#include "Utility/DataHandling/SimpleDatabase.h"
 #include "GUI/GuiManager.h"
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return;

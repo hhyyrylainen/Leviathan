@@ -22,7 +22,7 @@ namespace Leviathan{
 		void ApplyIconToHandle(HWND hwnd) const;
 
 
-        HICON Icon;
+		HICON Icon;
 #else
 		WindowDataDetails(const wstring &title, const int &width, const int &height, const bool &windowed, const bool &windowborder,
 			LeviathanApplication* appvirtualptr);
@@ -52,7 +52,7 @@ namespace Leviathan{
 			return *this;
 		}
 #else
-        // TODO: linux equivalent
+		// TODO: linux equivalent
 #endif
 		DLLEXPORT AppDef& SetWindowDetails(const WindowDataDetails &det){
 
@@ -101,7 +101,7 @@ namespace Leviathan{
 #ifdef _WIN32
 		HINSTANCE HInstance;
 #else
-        int HInstance;
+		int HInstance;
 #endif
 		MasterServerInformation MasterServerInfo;
 
@@ -111,20 +111,6 @@ namespace Leviathan{
 		// ------------------------------------ //
 		static AppDef* Defaultconf;
 	};
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}#endif
+#endif

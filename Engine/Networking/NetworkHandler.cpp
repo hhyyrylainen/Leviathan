@@ -20,6 +20,8 @@ DLLEXPORT Leviathan::NetworkHandler::~NetworkHandler(){
 DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &info){
 	// Query master server //
 	QueryMasterServer(info);
+
+	return true;
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::Release(){
@@ -38,6 +40,7 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
 // ------------------------------------ //
 DLLEXPORT shared_ptr<DelayedResult> Leviathan::NetworkHandler::QueryMasterServer(const MasterServerInformation &info){
 
+	return NULL;
 }
 // ------------------------------------ //
 

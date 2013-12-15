@@ -42,6 +42,9 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 	// let engine release itself and then delete it //
 	SAFE_RELEASEDEL(_Engine);
 	// configuration object needs to be destroyed by the program main function //
+
+	// Destroy our networking //
+	SAFE_DELETE(Networking);
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){

@@ -29,6 +29,10 @@ namespace Leviathan{
 
 		DLLEXPORT void NotifyThread();
 
+		// Returns true if the thread has performed initialization //
+		DLLEXPORT bool HasStarted();
+		// Returns true if the thread has a task to run //
+		DLLEXPORT bool HasRunningTask();
 	private:
 
 		void _NewThreadEntryRegister(ObjectLock &guard);

@@ -3,8 +3,6 @@
 #ifndef LEVIATHAN_FILEREPLACENAME
 #include "FontManager.h"
 #endif
-#include "OgreFontManager.h"
-#include "OgreFont.h"
 #include "FileSystem.h"
 #include "Exceptions/ExceptionNotFound.h"
 #include "OverlayMaster.h"
@@ -20,10 +18,6 @@ DLLEXPORT Leviathan::Rendering::FontManager::FontManager(){
 
 DLLEXPORT Leviathan::Rendering::FontManager::~FontManager(){
 	// could add font unloading here //
-}
-// ------------------------------------ //
-DLLEXPORT Ogre::Font* Leviathan::Rendering::FontManager::GetFontPtrFromName(const string &name){
-	return static_cast<Ogre::Font*>((Ogre::FontManager::getSingleton().getByName(name)).get());
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Rendering::FontManager::LoadFontByName(const wstring &name){
@@ -58,10 +52,10 @@ DLLEXPORT bool Leviathan::Rendering::FontManager::LoadFontByName(const wstring &
 			FileSystem::GetWindowsFolder(fontgenfile);
 			fontgenfile += L"Fonts\\";
 			fontgenfile += szBuffer;
-        }
+		}
 #else
-            // This may or may not work on linux //
-        fontgenfile += L"/usr/share/fonts/Arial.ttf";
+		// This may or may not work on linux //
+		fontgenfile += L"/usr/share/fonts/Arial.ttf";
 
 
 #endif // _WIN32
@@ -73,33 +67,6 @@ DLLEXPORT bool Leviathan::Rendering::FontManager::LoadFontByName(const wstring &
 
 	// register rocket font //
 	Rocket::Core::FontDatabase::LoadFontFace(Convert::WstringToString(fontgenfile).c_str());
-
-	//// create font //
-	//Ogre::FontPtr tmpptr = Ogre::FontManager::getSingleton().create(Convert::WstringToString(name),
-	//	Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-	//// always has to be true type //
-	//tmpptr->setType(Ogre::FT_TRUETYPE);
-
-
-	//// set source //
-
-	//Ogre::String str = Convert::WstringToString(fontgenfile);
-
-	//// set as a path //
-	//FileSystem::RegisterOGREResourceLocation(str.substr(0, str.find_last_of('\\')+1));
-
-	//// we want to cut down to just the filename //
-	//tmpptr->setSource(str.substr(str.find_last_of('\\')+1, str.length()-str.find_last_of('\\')));
-
-	//// set generated quality //
-	//tmpptr->setTrueTypeSize(32.f);
-	//tmpptr->setTrueTypeResolution(96);
-
-	//// no idea what characters should be loaded //
-	//tmpptr->addCodePointRange(Ogre::Font::CodePointRange(33, 255));
-
-	//tmpptr->load();
 
 	return true;
 }

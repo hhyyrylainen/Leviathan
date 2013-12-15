@@ -40,17 +40,19 @@ int main(int argcount, char* args[]){
 		PongGame game;
 
 		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine());
-		// customize values //#ifdef _WIN32
+		// customize values //
+#ifdef _WIN32
 		ProgramDefinition->SetHInstance(hInstance);
 #endif
 ProgramDefinition->SetMasterServerParameters(MasterServerInformation(L"PongMasters.txt", L"Pong_" GAME_VERSIONS, 
-			L"http://boostslair.com/Pong/MastersList.php", L"PongCrecentials", false));#endif
+			L"http://boostslair.com/Pong/MastersList.php", L"PongCrecentials", false));
+
 		// create window last //
 		ProgramDefinition->StoreWindowDetails(PongGame::GenerateWindowTitle(), true,
 #ifdef _WIN32
-            LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)),
+			LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)),
 #endif
-            &game);
+			&game);
 
 
 
@@ -58,10 +60,10 @@ ProgramDefinition->SetMasterServerParameters(MasterServerInformation(L"PongMaste
 #ifdef _WIN32
 			game.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
 #else
-            wstring commandline = L"";
-            for(int i = 1; i < argcount; i++){
-                commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
-            }
+			wstring commandline = L"";
+			for(int i = 1; i < argcount; i++){
+				commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
+			}
 			game.PassCommandLine(commandline);
 #endif
 			// this is where the game should customize the engine //
@@ -81,4 +83,5 @@ ProgramDefinition->SetMasterServerParameters(MasterServerInformation(L"PongMaste
 #endif
 
 
-	return Return;}
+	return Return;
+}

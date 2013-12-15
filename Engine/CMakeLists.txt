@@ -102,9 +102,13 @@ add_library(Engine SHARED ${EngineFiles})
 if(NOT WIN32)
 # Link with X11
 target_link_libraries(Engine ${X11_LIBRARIES})
-target_link_libraries(Engine debug ${LINUX_LINK_LIBS_ENGINE_DEBUG})
-target_link_libraries(Engine optimized ${LINUX_LINK_LIBS_ENGINE_RELEASE})
+target_link_libraries(Engine ${LINUX_LINK_LIBS_ENGINE})
 endif(NOT WIN32)
+
+target_link_libraries(Engine ${Boost_LIBRARIES})
+target_link_libraries(Engine ${OGRE_LIBRARIES})
+target_link_libraries(Engine ${OIS_LIBRARIES})
+target_link_libraries(Engine ${ADDITIONAL_OGRE})
 
 # Possible debug installs
 set(InstallConfigurationNames "Release")
@@ -116,11 +120,11 @@ endif(NOT INSTALL_ONLY_RELEASE)
 install(TARGETS Engine DESTINATION bin CONFIGURATIONS ${InstallConfigurationNames})
 
 # post build copy
-if(WIN32)
+if(WIN32 AND NOT MINGW)
 ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND copy ARGS 
     "\"$(SolutionDir)Engine\\$(Configuration)\\$(TargetName).dll\" \"$(SolutionDir)bin\\$(TargetName).dll\""
 )
 else(WIN32)
-
-endif(WIN32)
+	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+endif(WIN32 AND NOT MINGW)
 

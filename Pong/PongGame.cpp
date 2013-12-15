@@ -737,7 +737,8 @@ int Pong::PongGame::PlayerScored(Leviathan::BasePhysicsObject* goalptr){
 			if(LastPlayerHitBallID == slotptr->GetPlayerIdentifier()){
 				// Found right player //
 				slotptr->SetScore(slotptr->GetScore()+SCOREPOINT_AMOUNT);
-				goto playrscorelistupdateendlabel;	
+				goto playrscorelistupdateendlabel;
+			}
 
 			slotptr = slotptr->GetSplit();
 		}

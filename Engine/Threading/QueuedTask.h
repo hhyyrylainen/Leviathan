@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include <boost\function.hpp>
+#include <boost/function.hpp>
 
 
 namespace Leviathan{
@@ -14,7 +14,7 @@ namespace Leviathan{
 	class QueuedTask{
 	public:
 		// Takes in the function which is ran when the Task is ran //
-		DLLEXPORT QueuedTask(boost::function<void> functorun);
+		DLLEXPORT QueuedTask(boost::function<void ()> functorun);
 		DLLEXPORT virtual ~QueuedTask();
 
 
@@ -26,7 +26,7 @@ namespace Leviathan{
 		// ------------------------------------ //
 
 		// The function to run //
-		boost::function<void> FunctionToRun;
+		boost::function<void ()> FunctionToRun;
 
 	};
 

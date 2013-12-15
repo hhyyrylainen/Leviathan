@@ -1,5 +1,5 @@
-#ifndef LEVIATHAN_FILEREPLACENAME
-#define LEVIATHAN_FILEREPLACENAME
+#ifndef LEVIATHAN_NETWORKREQUEST
+#define LEVIATHAN_NETWORKREQUEST
 // ------------------------------------ //
 #ifndef LEVIATHAN_DEFINE
 #include "Define.h"
@@ -10,10 +10,10 @@
 
 namespace Leviathan{
 
-	class FILEREPLACENAME : public Object{
+	class NetworkRequest{
 	public:
-		DLLEXPORT FILEREPLACENAME();
-		DLLEXPORT ~FILEREPLACENAME();
+		DLLEXPORT NetworkRequest();
+		DLLEXPORT ~NetworkRequest();
 
 
 	private:

@@ -139,9 +139,6 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 		return false;
 	}
 
-	// Register threads to use graphical objects //
-	_ThreadingManager->MakeThreadsWorkWithOgre();
-
 	// create newton manager before any newton resources are needed //
 	_NewtonManager = new NewtonManager();
 
@@ -150,9 +147,11 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 
 	Owner->RegisterApplicationPhysicalMaterials(PhysMaterials);
 
-
 	// create window //
 	GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
+
+	// Register threads to use graphical objects //
+	_ThreadingManager->MakeThreadsWorkWithOgre();
 
 
 	// make angel script make list of registered stuff //

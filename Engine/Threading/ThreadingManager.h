@@ -10,11 +10,16 @@
 #include "TaskThread.h"
 
 
-#define DEFAULT_THREADS_PER_CORE		4
+#define DEFAULT_THREADS_PER_CORE		2
 
 namespace Leviathan{
 
+
+	void RunTaskQueuerThread(ThreadingManager* manager);
+
+
 	class ThreadingManager : public EngineComponent, public ThreadSafe{
+		friend void RunTaskQueuerThread(ThreadingManager* manager);
 	public:
 		DLLEXPORT ThreadingManager(int basethreadspercore = DEFAULT_THREADS_PER_CORE);
 		DLLEXPORT ~ThreadingManager();
@@ -39,21 +44,20 @@ namespace Leviathan{
 		DLLEXPORT void MakeThreadsWorkWithOgre();
 
 
-		DLLEXPORT ThreadingManager* Get();
+		DLLEXPORT static ThreadingManager* Get();
 	protected:
 
-
-		// Mutexes controlling when to scan the queue //
-		boost::condition_variable_any TaskQueuerNotify;
-
 		bool AllowStartTasksFromQueue;
+		bool StopProcessing;
+
+		int WantedThreadCount;
 
 		std::list<shared_ptr<QueuedTask>> WaitingTasks;
-
+		boost::condition_variable_any TaskQueueNotify;
 		std::list<shared_ptr<TaskThread>> UsableThreads;
 
 		// Thread used to set tasks to threads //
-		TaskThread* WorkQueueHandler;
+		boost::thread WorkQueueHandler;
 
 		static ThreadingManager* staticaccess;
 	};

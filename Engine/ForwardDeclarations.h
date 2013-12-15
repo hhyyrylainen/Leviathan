@@ -14,6 +14,7 @@ namespace Leviathan{
 		class GuiManager;
 	}
 
+	class ThreadingManager;
 	class TaskThread;
 	class Engine;
 	class LeviathanApplication;

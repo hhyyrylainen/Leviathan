@@ -7,6 +7,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "Application/Application.h"
 #include "Entities/GameWorld.h"
+#include <boost/thread/future.hpp>
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL),
 	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL)
@@ -85,10 +86,24 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 
 	_NetworkHandler->Init(Define->GetMasterServerInfo());
 
+	// These should be fine to be threaded //
+	auto MainStoreCreateFunc = [](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+		
+		engine->Mainstore = new DataStore(true);
+		if(!engine->Mainstore){
+
+			Logger::Get()->Error(L"Engine: Init: failed to create main data store");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		returnvalue.set_value(true);
+	};
 
 	// data storage //
-	Mainstore = new DataStore(true);
-	CLASS_ALLOC_CHECK(Mainstore);
+	boost::promise<bool> MainStoreResult;
+	// Ref is OK to use since this task finishes before this function //
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>(MainStoreCreateFunc, boost::ref(MainStoreResult), this))));
 
 
 	// search data folder for files //
@@ -132,6 +147,18 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 
 	Graph = new Graphics();
 	CLASS_ALLOC_CHECK(Graph);
+
+
+	// We need to wait for all current tasks to finish //
+	_ThreadingManager->WaitForAllTasksToFinish();
+
+	// Check return values //
+	if(!MainStoreResult.get_future().get()){
+
+		Logger::Get()->Error(L"Engine: Init: one or more queued tasks failed");
+		return false;
+	}
+
 
 	// call init //
 	if(!Graph->Init(definition)){

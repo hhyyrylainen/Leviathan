@@ -151,6 +151,7 @@ DLLEXPORT void Leviathan::ThreadingManager::NotifyTaskFinished(shared_ptr<Queued
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
+	QUICKTIME_THISSCOPE;
 	// Disallow new tasks //
 	{
 		ObjectLock guard(*this);
@@ -218,6 +219,8 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 
 				// Queue a task //
 				shared_ptr<QueuedTask> tmptask = *manager->WaitingTasks.begin();
+				manager->WaitingTasks.pop_front();
+				(*iter)->SetTaskAndNotify(tmptask);
 
 			}
 		}

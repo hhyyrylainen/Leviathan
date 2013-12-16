@@ -39,12 +39,14 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 			// Relock for changing around //
 			guard.lock();
 
-			// Notify run finished //
-			ThreadingManager::Get()->NotifyTaskFinished(thisthread->SetTask);
-			// We need to hope that another thread finishes and we get a new task //
+			shared_ptr<QueuedTask> tmptask(thisthread->SetTask);
 
 			// Set our task away //
 			thisthread->SetTask.reset();
+
+			// Notify run finished //
+			ThreadingManager::Get()->NotifyTaskFinished(tmptask);
+			// We might have already gotten a new task //
 		}
 	}
 

@@ -74,7 +74,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 #ifdef _WIN32
 	("RenderSystem_Direct3D11")
 #endif
-        ("Plugin_ParticleFX")("Plugin_CgProgramManager")("Plugin_OctreeSceneManager")/*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
+		("Plugin_ParticleFX")("Plugin_CgProgramManager")("Plugin_OctreeSceneManager")/*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
 
 	for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++){
 		// append "_d" if in debug mode //
@@ -102,16 +102,18 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), L"RenderSystemName", rendersystemname, "OpenGL", true,
 		L"Graphics: Init: no selected render system,");
 
-	basic_regex<char> rendersystemnameregex(rendersystemname);
+	regex rendersystemnameregex(rendersystemname, regex_constants::icase);
 	Ogre::RenderSystem* selectedrendersystem = NULL;
 
 	// Choose the right render system //
 	for(size_t i = 0; i < RSystemList.size(); i++){
 
-		if(regex_search(RSystemList[i]->getName(), rendersystemnameregex)){
+		const Ogre::String& rsystemname = RSystemList[i]->getName();
+
+		if(regex_search(rsystemname, rendersystemnameregex)){
 
 			// Matched //
-			Ogre::RenderSystem* selectedrendersystem = RSystemList[i];
+			selectedrendersystem = RSystemList[i];
 			break;
 		}
 	}

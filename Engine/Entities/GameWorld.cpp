@@ -279,7 +279,7 @@ DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float
 	RayCastData data(1, from, to);
 
 	// Call the actual ray firing function //
-	NewtonWorldRayCast(_PhysicalWorld->GetNewtonWorld(), &from.X, &to.X, RayCallbackDataCallback, &data, NULL, 0);
+	NewtonWorldRayCast(_PhysicalWorld->GetNewtonWorld(), &from.X, &to.X, RayCallbackDataCallbackClosest, &data, NULL, 0);
 
 	// Check the result //
 	if(data.HitEntities.size() == 0){
@@ -291,19 +291,18 @@ DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float
 	// Return the only hit //
 	return data.HitEntities[0];
 }
-
-dFloat Leviathan::GameWorld::RayCallbackDataCallback(const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam){
+// TODO: improve this performance //
+dFloat Leviathan::GameWorld::RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam){
 	// Let's just store it as NewtonBody pointer //
 	RayCastData* data = reinterpret_cast<RayCastData*>(userData);
 
-	data->HitEntities.push_back(new RayCastHitEntity(body, intersectParam, data));
-
-	// Check for end //
-	if(data->HitEntities.size() >= (size_t)data->MaxCount)
-		return 0.f;
+	if(data->HitEntities.size() == 0)
+		data->HitEntities.push_back(new RayCastHitEntity(body, intersectParam, data));
+	else
+		*data->HitEntities[0] = RayCastHitEntity(body, intersectParam, data);
 
 	// Continue //
-	return 1.f;
+	return intersectParam;
 }
 
 DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHitProxy(Float3 from, Float3 to){
@@ -330,6 +329,14 @@ DLLEXPORT bool Leviathan::RayCastHitEntity::DoesBodyMatchThisHit(NewtonBody* oth
 
 DLLEXPORT Float3 Leviathan::RayCastHitEntity::GetPosition(){
 	return HitLocation;
+}
+
+DLLEXPORT RayCastHitEntity* Leviathan::RayCastHitEntity::operator=(const RayCastHitEntity& other){
+	HitEntity = other.HitEntity;
+	HitVariable = other.HitVariable;
+	HitLocation = other.HitLocation;
+
+	return this;
 }
 // ------------------ RayCastData ------------------ //
 DLLEXPORT Leviathan::RayCastData::RayCastData(int maxcount, const Float3 &from, const Float3 &to) : MaxCount(maxcount), 

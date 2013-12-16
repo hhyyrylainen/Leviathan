@@ -23,6 +23,8 @@ namespace Leviathan{
 	public:
 		DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = NULL, const float &tvar = 0.f, RayCastData* ownerptr = NULL);
 
+		DLLEXPORT RayCastHitEntity* operator =(const RayCastHitEntity& other);
+
 		// Compares the hit entity with NULL //
 		DLLEXPORT bool HasHit();
 
@@ -103,7 +105,7 @@ namespace Leviathan{
 		DLLEXPORT void ClearSimulatePassedTime();
 
 		// Ray callbacks //
-		static dFloat RayCallbackDataCallback(const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam);
+		static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam);
 
 		// Script proxies //
 		DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(Float3 from, Float3 to);

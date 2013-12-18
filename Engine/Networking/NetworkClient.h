@@ -7,7 +7,6 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "ConnectionInfo.h"
-#include "Threading\DelayedResult.h"
 
 namespace Leviathan{
 
@@ -15,14 +14,15 @@ namespace Leviathan{
 	struct MasterServerInformation{
 		MasterServerInformation() : RequireMaster(false){
 		}
-		MasterServerInformation(const wstring &masterslistfile, const wstring &identification, const wstring &masterserverlistaddress, 
-			const wstring &loginsession, bool requireconnection = false) : MasterListFetchAddress(masterserverlistaddress), StoredListFile(masterslistfile),
+		MasterServerInformation(const wstring &masterslistfile, const wstring &identification, const wstring &masterserverlistaddress, const wstring 
+			&masterserverlistpagename, const wstring &loginsession, bool requireconnection = false) : 
+			MasterListFetchServer(masterserverlistaddress), MasterListFetchPage(masterserverlistpagename), StoredListFile(masterslistfile),
 			MasterServerIdentificationString(identification), LoginStoreFile(loginsession), RequireMaster(requireconnection)
 		{
 
 		}
-
-		wstring MasterListFetchAddress;
+		wstring MasterListFetchServer;
+		wstring MasterListFetchPage;
 		wstring StoredListFile;
 		wstring MasterServerIdentificationString;
 		wstring LoginStoreFile;

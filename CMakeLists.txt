@@ -104,7 +104,8 @@ else(WIN32)
     # Linux library linking
     set(LINUX_LINK_LIBS_TOENGINE Newton)
 
-    set(LINUX_LINK_LIBS_ENGINE Angelscript Leap RocketCore RocketControls RocketDebugger Newton sfml-audio sfml-network)
+    set(LINUX_LINK_LIBS_ENGINE Angelscript Leap RocketCore RocketControls RocketDebugger Newton 
+        sfml-audio sfml-network sfml-system)
 
     # We need X11 on linux for window class to work
     find_package(X11)
@@ -211,11 +212,11 @@ else(WIN32)
     file(GLOB LeapMoveFiles "Leap/lib/x64/libLeap.so")
     file(COPY ${LeapMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
-    # ogre oses (this should be changed for public release to only copy required oses)
+    # ogre sos (this should be changed for public release to only copy required sos)
     file(GLOB OgreMoveFiles "${OGRE_BASEDIR}/lib/*.so")
     file(COPY ${OgreMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
-    # libRocket dlls
+    # libRocket sos
     file(GLOB RocketMoveFiles "libRocket/lib/*.so")
     file(COPY ${RocketMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
@@ -224,7 +225,7 @@ else(WIN32)
     file(COPY ${NewtonMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
     # smfl
-    file(GLOB SMFLMoveFiles "SFML/lib/libsfml-audio.so" "SFML/lib/libsfml-network.so" "SFML/lib/libsfml-network.so")
+    file(GLOB SMFLMoveFiles "SFML/lib/libsfml-audio.so" "SFML/lib/libsfml-network.so" "SFML/lib/libsfml-system.so")
     file(COPY ${SMFLMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 endif(WIN32)

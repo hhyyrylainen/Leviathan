@@ -37,6 +37,7 @@ namespace Leviathan{
 	class Engine : public Object{
 		// friend so that window can update size //
 		friend Window;
+		friend GraphicalInputEntity;
 		friend Gui::GuiManager;
 	public:
 		DLLEXPORT Engine(LeviathanApplication* owner);
@@ -81,6 +82,10 @@ namespace Leviathan{
 	private:
 		// after load function //
 		void PostLoad();
+
+		// Function called by first instance of Window class after creating a window to not error when registering threads to work with Ogre //
+		void _NotifyThreadsRegisterOgre();
+
 		// ------------------------------------ //
 		Logger* Mainlog;
 		AppDef* Define;

@@ -939,28 +939,28 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindFromStartUntilCommentOrEnd
 		goto findfromstartuntilcommentorendfuncendlabel;
 		//return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 	}
-    {
-        int charvalue((int)instance->GetCurrentCharacter());
-        // check current character //
-        if(charvalue < 33){
-            // here's nothing to do //
-            return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
-        }
-        // check for some special cases //
-        if(charvalue == L'/'){
-            // check is next comment //
-            if(!instance->IsOutOfBounds(instance->IteratorPosition+1)){
-                // check for special ignore //
-                if(!instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL)){
-                    // check it //
-                    if(instance->GetCharacterAtPos(instance->IteratorPosition+1) == L'/'){
-                        // comment started, done //
-                        return ITERATORCALLBACK_RETURNTYPE_STOP;
-                    }
-                }
-            }
-        }
-    }
+	{
+		int charvalue((int)instance->GetCurrentCharacter());
+		// check current character //
+		if(charvalue < 33){
+			// here's nothing to do //
+			return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+		}
+		// check for some special cases //
+		if(charvalue == L'/'){
+			// check is next comment //
+			if(!instance->IsOutOfBounds(instance->IteratorPosition+1)){
+				// check for special ignore //
+				if(!instance->CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL)){
+					// check it //
+					if(instance->GetCharacterAtPos(instance->IteratorPosition+1) == L'/'){
+						// comment started, done //
+						return ITERATORCALLBACK_RETURNTYPE_STOP;
+					}
+				}
+			}
+		}
+	}
 
 findfromstartuntilcommentorendfuncendlabel:
 	// get position data //

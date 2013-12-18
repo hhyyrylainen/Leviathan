@@ -150,6 +150,8 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	// load fonts before overlay //
 	Fonts = new Rendering::FontManager();
 
+
+
 	if(!InitializeOverlay()){
 		return false;
 	}

@@ -7,6 +7,7 @@
 #include "Rendering/Graphics.h"
 #include "Entities/GameWorld.h"
 #include "FileSystem.h"
+#include "Engine.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties){
@@ -38,6 +39,8 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 
 	// load resource groups since it is safe now //
 	if(++GlobalWindowCount == 1){
+		// Notify engine to register threads to work with Ogre //
+		Engine::GetEngine()->_NotifyThreadsRegisterOgre();
 		FileSystem::RegisterOGREResourceGroups();
 	}
 
@@ -47,7 +50,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	// apply style settings (mainly ICON) //
 	WData.ApplyIconToHandle(DisplayWindow->GetHandle());
 #else
-    // TODO: linux icon
+	// TODO: linux icon
 #endif
 	tmpwindow->setDeactivateOnFocusChange(false);
 

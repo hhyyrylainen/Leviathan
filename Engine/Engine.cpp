@@ -87,8 +87,12 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 	_NetworkHandler->Init(Define->GetMasterServerInfo());
 
 	// These should be fine to be threaded //
-	auto MainStoreCreateFunc = [](boost::promise<bool> &returnvalue, Engine* engine) -> void{
-		
+
+	// data storage //
+	boost::promise<bool> MainStoreResult;
+	// Ref is OK to use since this task finishes before this function //
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+
 		engine->Mainstore = new DataStore(true);
 		if(!engine->Mainstore){
 
@@ -98,66 +102,210 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 		}
 
 		returnvalue.set_value(true);
-	};
-
-	// data storage //
-	boost::promise<bool> MainStoreResult;
-	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>(MainStoreCreateFunc, boost::ref(MainStoreResult), this))));
+	}, boost::ref(MainStoreResult), this))));
 
 
 	// search data folder for files //
-	MainFileHandler = new FileSystem();
-	CLASS_ALLOC_CHECK(MainFileHandler);
-	MainFileHandler->Init();
+	boost::promise<bool> FileHandlerResult;
+	// Ref is OK to use since this task finishes before this function //
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+
+		engine->MainFileHandler = new FileSystem();
+		if(!engine->MainFileHandler){
+
+			Logger::Get()->Error(L"Engine: Init: failed to create FileSystem");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		if(!engine->MainFileHandler->Init()){
+
+			Logger::Get()->Error(L"Engine: Init: failed to init FileSystem");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		returnvalue.set_value(true);
+	}, boost::ref(FileHandlerResult), this))));
 
 	// file parsing //
-	ObjectFileProcessor::Initialize();
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([]() -> void{ ObjectFileProcessor::Initialize(); }))));
+	
 
 	// main program wide event dispatcher //
-	MainEvents = new EventHandler();
-	CLASS_ALLOC_CHECK(MainEvents);
-	if(!MainEvents->Init()){
-		Logger::Get()->Error(L"Engine: Init: Init EventHandler failed!");
-		return false;
-	}
+	boost::promise<bool> EventHandlerResult;
+	// Ref is OK to use since this task finishes before this function //
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+
+		engine->MainEvents = new EventHandler();
+		if(!engine->MainEvents){
+
+			Logger::Get()->Error(L"Engine: Init: failed to create MainEvents");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		if(!engine->MainEvents->Init()){
+
+			Logger::Get()->Error(L"Engine: Init: failed to init MainEvents");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		returnvalue.set_value(true);
+	}, boost::ref(EventHandlerResult), this))));
 
 	// create script interface before renderer //
-	MainScript = new ScriptInterface();
-	if(!MainScript){
+	boost::promise<bool> ScriptInterfaceResult;
+	// Ref is OK to use since this task finishes before this function //
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
 
-		Logger::Get()->Error(L"Engine: 008");
-		return false;
-	}
-	if(!MainScript->Init()){
-		Logger::Get()->Error(L"Failed to init Engine, Init ScriptInterface failed!");
-		return false;
-	}
+		engine->MainScript = new ScriptInterface();
+		if(!engine->MainScript){
 
-	// create console after script engine //
-	MainConsole = new ScriptConsole();
-	CLASS_ALLOC_CHECK(MainConsole);
+			Logger::Get()->Error(L"Engine: Init: failed to create ScriptInterface");
+			returnvalue.set_value(false);
+			return;
+		}
 
-	if(!MainConsole->Init(MainScript)){
+		if(!engine->MainScript->Init()){
 
-		Logger::Get()->Error(L"Engine: Init: failed to initialize Console, continuing anyway");
-	}
+			Logger::Get()->Error(L"Engine: Init: failed to init ScriptInterface");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		// create console after script engine //
+		engine->MainConsole = new ScriptConsole();
+		if(!engine->MainConsole){
+
+			Logger::Get()->Error(L"Engine: Init: failed to create ScriptConsole");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		if(!engine->MainConsole->Init(engine->MainScript)){
+
+			Logger::Get()->Error(L"Engine: Init: failed to initialize Console, continuing anyway");
+		}
+
+		returnvalue.set_value(true);
+	}, boost::ref(ScriptInterfaceResult), this))));
+
+	// create newton manager before any newton resources are needed //
+	boost::promise<bool> NewtonManagerResult;
+	// Ref is OK to use since this task finishes before this function //
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+
+		engine->_NewtonManager = new NewtonManager();
+		if(!engine->_NewtonManager){
+
+			Logger::Get()->Error(L"Engine: Init: failed to create NewtonManager");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		// next force application to load physical surface materials //
+		engine->PhysMaterials = new PhysicsMaterialManager(engine->_NewtonManager);
+		if(!engine->PhysMaterials){
+
+			Logger::Get()->Error(L"Engine: Init: failed to create PhysicsMaterialManager");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		engine->Owner->RegisterApplicationPhysicalMaterials(engine->PhysMaterials);
+
+		returnvalue.set_value(true);
+	}, boost::ref(NewtonManagerResult), this))));
+	
 
 	ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), L"MaxFPS", FrameLimit, 120, true, L"Graphics: Init:");
 
 	Graph = new Graphics();
 	CLASS_ALLOC_CHECK(Graph);
 
-
 	// We need to wait for all current tasks to finish //
 	_ThreadingManager->WaitForAllTasksToFinish();
 
 	// Check return values //
-	if(!MainStoreResult.get_future().get()){
+	if(!MainStoreResult.get_future().get() || !FileHandlerResult.get_future().get() || !EventHandlerResult.get_future().get() ||
+		!ScriptInterfaceResult.get_future().get())
+	{
 
 		Logger::Get()->Error(L"Engine: Init: one or more queued tasks failed");
 		return false;
 	}
+
+	// We can queue some more tasks //
+	// create leap controller //
+	boost::promise<bool> LeapControllerResult;
+	// Ref is OK to use since this task finishes before this function //
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+
+		engine->LeapData = new LeapManager(engine);
+		if(!engine->LeapData){
+			Logger::Get()->Error(L"Engine: Init: failed to create LeapManager");
+			returnvalue.set_value(false);
+			return;
+		}
+		// try here just in case //
+		try{
+			if(!engine->LeapData->Init()){
+
+				Logger::Get()->Info(L"Engine: Init: No Leap controller found, not using one");
+			}
+		}
+		catch(...){
+			// threw something //
+			Logger::Get()->Error(L"Engine: Init: Leap threw something, even without leap this shouldn't happen; continuing anyway");
+		}
+
+		returnvalue.set_value(true);
+	}, boost::ref(LeapControllerResult), this))));
+	
+
+	// sound device //
+	boost::promise<bool> SoundDeviceResult;
+	// Ref is OK to use since this task finishes before this function //
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+
+		engine->Sound = new SoundDevice();
+		if(!engine->Sound){
+			Logger::Get()->Error(L"Engine: Init: failed to create SoundDevice");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		if(!engine->Sound->Init()){
+
+			Logger::Get()->Error(L"Engine: Init: failed to init SoundDevice");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		// make angel script make list of registered stuff //
+		engine->MainScript->GetExecutor()->ScanAngelScriptTypes();
+
+		// measuring //
+		engine->RenderTimer = new RenderingStatistics();
+		if(!engine->RenderTimer){
+			Logger::Get()->Error(L"Engine: Init: failed to create RenderingStatistics");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		// create object loader //
+		engine->Loader = new ObjectLoader(engine);
+		if(!engine->Loader){
+			Logger::Get()->Error(L"Engine: Init: failed to create ObjectLoader");
+			returnvalue.set_value(false);
+			return;
+		}
+
+		returnvalue.set_value(true);
+	}, boost::ref(SoundDeviceResult), this))));
+
 
 
 	// call init //
@@ -166,76 +314,25 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 		return false;
 	}
 
-	// create newton manager before any newton resources are needed //
-	_NewtonManager = new NewtonManager();
-
-	// next force application to load physical surface materials //
-	PhysMaterials = new PhysicsMaterialManager(_NewtonManager);
-
-	Owner->RegisterApplicationPhysicalMaterials(PhysMaterials);
-
 	// create window //
 	GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
 
-	// Register threads to use graphical objects //
-	_ThreadingManager->MakeThreadsWorkWithOgre();
+	if(!LeapControllerResult.get_future().get() || !SoundDeviceResult.get_future().get()){
 
-
-	// make angel script make list of registered stuff //
-	MainScript->GetExecutor()->ScanAngelScriptTypes();
-
-
-	// create leap controller //
-	LeapData = new LeapManager(this);
-	if(!LeapData){
-		Logger::Get()->Error(L"Engine: 008");
-		return false;
-	}
-	// try here just in case //
-	try{
-		if(!LeapData->Init()){
-
-			Logger::Get()->Info(L"Engine: Init: No Leap controller found, not using one");
-		}
-	}
-	catch(...){
-		// threw something //
-		Logger::Get()->Error(L"Engine: Init: Leap threw something, even without leap this shouldn't happen; continuing anyway");
-	}
-
-	// sound device //
-	Sound = new SoundDevice();
-	CLASS_ALLOC_CHECK(Sound);
-	if(!Sound->Init()){
-
-		Logger::Get()->Error(L"Failed to init Engine, sound init failed");
+		Logger::Get()->Error(L"Engine: Init: leap manager or sound device queued tasks failed");
 		return false;
 	}
 
-	// create object loader //
-	Loader = new ObjectLoader(this);
-	CLASS_ALLOC_CHECK(Loader);
-
-	// measuring //
-	RenderTimer = new RenderingStatistics();
-	CLASS_ALLOC_CHECK(RenderTimer);
 
 	Inited = true;
 
 	PostLoad();
 
 	Logger::Get()->Info(L"Engine init took "+Convert::ToWstring(Misc::GetTimeMs64()-InitStartTime)+L" ms", false);
-
-	// let's send a debug message telling engine initialized //
-	Logger::Get()->Info(L"Engine initialized", true);
 	return true;
 }
 
 void Leviathan::Engine::PostLoad(){
-
-	// get time //
-	LastFrame = Misc::GetTimeMs64();
-
 	// increase start count //
 	int startcounts = 0;
 
@@ -248,17 +345,20 @@ void Leviathan::Engine::PostLoad(){
 		// set as persistent //
 		Mainstore->SetPersistance(L"StartCount", true);
 	}
+
+	// get time //
+	LastFrame = Misc::GetTimeMs64();
 }
 
 void Leviathan::Engine::Release(){
 	// Let the game release it's resources //
 	Owner->EnginePreShutdown();
 
-	// Wait for tasks to finish //
-	_ThreadingManager->WaitForAllTasksToFinish();
-
 	// Close all connections //
 	SAFE_RELEASEDEL(_NetworkHandler);
+
+	// Wait for tasks to finish //
+	_ThreadingManager->WaitForAllTasksToFinish();
 
 	// destroy worlds //
 	while(GameWorlds.size()){
@@ -454,9 +554,11 @@ DLLEXPORT void Leviathan::Engine::ResetPhysicsTime(){
 		GameWorlds[i]->ClearSimulatePassedTime();
 	}
 }
-
 // ------------------------------------ //
-
+void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
+	// Register threads to use graphical objects //
+	_ThreadingManager->MakeThreadsWorkWithOgre();
+}
 // ------------------------------------ //
 
 // ------------------------------------ //

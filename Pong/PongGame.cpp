@@ -141,17 +141,80 @@ Pong::PongGame::~PongGame(){
 }
 // ------------------------------------ //
 void Pong::PongGame::CustomizeEnginePostLoad(){
-	// load GUI documents //
+	QUICKTIME_THISSCOPE;
 
+
+
+//	_Engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](PongGame* game) -> void{
+//		// load GUI documents //
+//		game->GuiManagerAccess = Engine::GetEngine()->GetWindowEntity()->GetGUI();
+//
+//		game->GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"PongMenus.txt");
+//
+////#ifdef _DEBUG
+//		// load debug panel, too //
+//
+//		game->GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"DebugPanel.txt");
+////#endif // _DEBUG
+//
+//		game->GuiManagerAccess->SetMouseFile(FileSystem::GetScriptsFolder()+L"cursor.rml");
+//
+//	}, this))));
+//
+//	
+//	_Engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](PongGame* game) -> void{
+//		// setup world //
+//		game->WorldOfPong = Engine::GetEngine()->CreateWorld();
+//
+//		// set skybox to have some sort of visuals //
+//		game->WorldOfPong->SetSkyBox("NiceDaySky");
+//
+//		// create playing field manager with the world //
+//		game->GameArena = unique_ptr<Arena>(new Arena(game->WorldOfPong));
+//
+//	}, this))));
+//	
+//
+//	ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
+//
+	shared_ptr<ViewerCameraPos> MainCamera;
+
+	_Engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](shared_ptr<ViewerCameraPos>* MainCamera, PongGame* game) -> void{
+		// camera //
+		*MainCamera = shared_ptr<ViewerCameraPos>(new ViewerCameraPos());
+		(*MainCamera)->SetPos(Leviathan::Float3(0.f, 22.f*BASE_ARENASCALE, 0.f));
+
+		// camera should always point down towards the play field //
+		(*MainCamera)->SetRotation(Leviathan::Float3(0.f, -90.f, 0.f));
+
+		// sound listening camera //
+		(*MainCamera)->BecomeSoundPerceiver();
+
+	}, &MainCamera, this))));
+
+
+	_Engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](PongGame* game) -> void{
+		// Load the game AI //
+		game->GameAI = new GameModule(L"PongAIModule", L"PongGameCore");
+
+		if(!game->GameAI->Init()){
+			// No AI for the game //
+			Logger::Get()->Error(L"Failed to load AI!");
+			SAFE_DELETE(game->GameAI);
+		}
+
+	}, this))));
+
+	// load GUI documents //
 	GuiManagerAccess = Engine::GetEngine()->GetWindowEntity()->GetGUI();
 
 	GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"PongMenus.txt");
 
-//#ifdef _DEBUG
+	//#ifdef _DEBUG
 	// load debug panel, too //
 
 	GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"DebugPanel.txt");
-//#endif // _DEBUG
+	//#endif // _DEBUG
 
 	GuiManagerAccess->SetMouseFile(FileSystem::GetScriptsFolder()+L"cursor.rml");
 
@@ -164,42 +227,22 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 	// create playing field manager with the world //
 	GameArena = unique_ptr<Arena>(new Arena(WorldOfPong));
 
-	ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
-
-
-	// camera //
-	shared_ptr<ViewerCameraPos> MainCamera(new ViewerCameraPos());
-	MainCamera->SetPos(Float3(0.f, 22.f*BASE_ARENASCALE, 0.f));
-
-	// camera should always point down towards the play field //
-	MainCamera->SetRotation(Float3(0.f, -90.f, 0.f));
-
-
+	// Wait for everything to finish //
+	_Engine->GetThreadingManager()->WaitForAllTasksToFinish();
 
 	// link world and camera to a window //
 	GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
 
-	window1->LinkObjects(MainCamera, WorldOfPong);
-	// sound listening camera //
-	MainCamera->BecomeSoundPerceiver();
-
-	// link window input to game logic //
-	window1->GetInputController()->LinkReceiver(GameInputHandler);
-
-	// I like the debugger //
+		// I like the debugger //
 #ifdef _DEBUG
 	window1->GetGUI()->SetDebuggerOnThisContext();
 	//window1->GetGUI()->SetDebuggerVisibility(true);
 #endif // _DEBUG
 
-	// Load the game AI //
-	GameAI = new GameModule(L"PongAIModule", L"PongGameCore");
+	window1->LinkObjects(MainCamera, WorldOfPong);
 
-	if(!GameAI->Init()){
-		// No AI for the game //
-		Logger::Get()->Error(L"Failed to load AI!");
-		SAFE_DELETE(GameAI);
-	}
+	// link window input to game logic //
+	window1->GetInputController()->LinkReceiver(GameInputHandler);
 
 	// after loading reset time sensitive timers //
 	Engine::GetEngine()->ResetPhysicsTime();

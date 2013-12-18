@@ -45,7 +45,7 @@ int main(int argcount, char* args[]){
 		ProgramDefinition->SetHInstance(hInstance);
 #endif
 ProgramDefinition->SetMasterServerParameters(MasterServerInformation(L"PongMasters.txt", L"Pong_" GAME_VERSIONS, 
-			L"http://boostslair.com/Pong/MastersList.php", L"PongCrecentials", false));
+			L"http://boostslair.com/", L"/Pong/MastersList.php", L"PongCrecentials", false));
 
 		// create window last //
 		ProgramDefinition->StoreWindowDetails(PongGame::GenerateWindowTitle(), true,

@@ -21,6 +21,7 @@ namespace Leviathan{
 	struct RayCastData;
 	class ScriptModule;
 	class ScriptScript;
+	class NetworkHandler;
 	class ScriptExecutor;
 	class GameWorld;
 	class AppDef;
@@ -28,10 +29,6 @@ namespace Leviathan{
 	class EventHandler;
 	class Event;
 	class GenericEvent;
-	struct Float1;
-	struct Float2;
-	struct Float3;
-	struct Float4;
 	struct Int1;
 	struct Int2;
 	struct Int3;

@@ -143,6 +143,32 @@ DLLEXPORT void Leviathan::ThreadingManager::WaitForAllTasksToFinish(){
 		// Wait for update //
 		TaskQueueNotify.wait(lockit);
 	}
+
+	// Wait for threads to empty up //
+	bool allavailable = false;
+
+	// We want to skip wait on loop //
+	goto skipfirstwaitforthreadslabel2;
+
+	while(!allavailable){
+
+		// Wait for tasks to update //
+		TaskQueueNotify.wait(lockit);
+
+skipfirstwaitforthreadslabel2:
+
+
+		// Set to true until a thread is busy //
+		allavailable = true;
+
+		for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
+			if((*iter)->HasRunningTask()){
+				allavailable = false;
+				break;
+			}
+		}
+	}
+
 }
 
 DLLEXPORT void Leviathan::ThreadingManager::NotifyTaskFinished(shared_ptr<QueuedTask> task){

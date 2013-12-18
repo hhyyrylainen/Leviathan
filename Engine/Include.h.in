@@ -107,6 +107,7 @@
 
 	#pragma comment(lib, "sfml-audio-d.lib")
 	#pragma comment(lib, "sfml-network-d.lib")
+    #pragma comment(lib, "sfml-system-d.lib")
 	#else
 	// release libraries
 	#pragma comment(lib, "angelscript.lib")
@@ -119,6 +120,7 @@
 
 	#pragma comment(lib, "sfml-audio.lib")
 	#pragma comment(lib, "sfml-network.lib")
+    #pragma comment(lib, "sfml-system.lib")
 	#endif
 #endif
 #else
@@ -293,8 +295,13 @@ typedef unsigned short UINT16;
 #define STRINGGIFY(x) STRINGGIFY2(x)
 #define WSTRINGIFY(x) WIDEN(STRINGGIFY(x))
 
+#ifdef _MSC_VER
+	#define __WFUNCTION__ WIDEN(__FUNCTION__)
+    #define __WFILE__ WIDEN(__FILE__)
+#else
+	#define __WFUNCTION__ WSTRINGIFY(__FUNCTION__)
 #define __WFILE__ WSTRINGIFY(__FILE__)
-#define __WFUNCTION__ WSTRINGIFY(__FUNCTION__)
+#endif
 
 #define SSLINE2(x) #x
 #define SSLINE(x) SSLINE2(x)

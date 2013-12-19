@@ -612,16 +612,13 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockTextBlock(UINT &Line,
 	return false;
 }
 // ------------------------------------ //
-
-// ------------------------------------ //
-
 DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const wstring &file, vector<shared_ptr<NamedVariableList>> &headervars,bool UseBinary /*= false*/){
 	// open file for writing //
 	wofstream writer;
 #ifdef _WIN32
 	writer.open(file);
 #else
-    writer.open(Convert::WstringToString(file));
+	writer.open(Convert::WstringToString(file));
 #endif
 	if(!writer.is_open()){
 		// write fail //
@@ -631,6 +628,11 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 	for(unsigned int i = 0; i < headervars.size(); i++){
 		writer << headervars[i]->ToText(0) << endl;
 	}
+
+	// Quit if no objects //
+	if(objects.size() < 1)
+		return true;
+
 	// objects start //
 	writer << L"objects {" << endl;
 

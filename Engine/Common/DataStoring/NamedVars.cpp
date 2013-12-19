@@ -286,7 +286,15 @@ DLLEXPORT wstring Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*
 		}
 		if(i != 0)
 			stringifiedval += L",";
-		stringifiedval += L"["+Datas[i]->operator wstring()+L"]";
+		// Check if type is a string type //
+		int blocktype = Datas[i]->GetBlockConst()->Type;
+
+		if(blocktype == DATABLOCK_TYPE_WSTRING || blocktype == DATABLOCK_TYPE_STRING){
+			// Output in quotes //
+			stringifiedval += L"[\""+Datas[i]->operator wstring()+L"\"]";
+		} else {
+			stringifiedval += L"["+Datas[i]->operator wstring()+L"]";
+		}
 	}
 
 

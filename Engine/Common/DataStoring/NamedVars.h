@@ -165,7 +165,7 @@ namespace Leviathan{
 #ifdef _WIN32
 					throw exception("invalid");
 #else
-                    throw bad_exception();
+					throw bad_exception();
 #endif
 				}
 			}

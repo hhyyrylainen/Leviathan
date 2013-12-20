@@ -423,7 +423,8 @@ void Leviathan::Engine::Release(){
 void Leviathan::Engine::Tick(){
 	// Because this is checked very often we can check for physics update here //
 	PhysicsUpdate();
-
+	// We can also update networking //
+	_NetworkHandler->UpdateAllConnections();
 
 	// get time since last update //
 	__int64 CurTime = Misc::GetTimeMs64();
@@ -468,6 +469,11 @@ void Leviathan::Engine::Tick(){
 	Owner->Tick(TimePassed);
 
 	TickTime = (int)(Misc::GetTimeMs64()-LastFrame);
+}
+
+DLLEXPORT void Leviathan::Engine::PreFirstTick(){
+	// On first tick we need to do some cleanup //
+	_NetworkHandler->StopOwnUpdaterThread();
 }
 // ------------------------------------ //
 void Leviathan::Engine::RenderFrame(){
@@ -559,6 +565,9 @@ void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
 	// Register threads to use graphical objects //
 	_ThreadingManager->MakeThreadsWorkWithOgre();
 }
+
+
+
 // ------------------------------------ //
 
 // ------------------------------------ //

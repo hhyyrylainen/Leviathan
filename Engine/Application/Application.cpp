@@ -7,6 +7,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "FileSystem.h"
 #include "OGRE/OgreWindowEventUtilities.h"
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), _Engine(NULL), ApplicationConfiguration(NULL), ShouldQuit(false), 
 	Networking(NULL)
@@ -62,8 +63,15 @@ DLLEXPORT void Leviathan::LeviathanApplication::_InternalInit(){
 DLLEXPORT void Leviathan::LeviathanApplication::Render(){
 	_Engine->RenderFrame();
 }
+
+DLLEXPORT void Leviathan::LeviathanApplication::PreFirstTick(){
+
+	_Engine->PreFirstTick();
+}
 // ------------------------------------ //
 DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
+	// This is almost at tick so call this outside the loop for performance //
+	PreFirstTick();
 
 	while(_Engine->GetWindowOpenCount()){
 
@@ -79,6 +87,8 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 		// engine tick //
 		_Engine->Tick();
 		Render();
+		// We could potentially wait here //
+		boost::this_thread::sleep(boost::posix_time::microseconds(700));
 	}
 	// always release before quitting to avoid tons of memory leaks //
 	Release();

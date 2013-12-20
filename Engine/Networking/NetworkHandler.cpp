@@ -7,19 +7,31 @@
 #include "ObjectFiles\ObjectFileObject.h"
 #include "ObjectFiles\ObjectFileProcessor.h"
 #include "SFML\Network\Http.hpp"
+#include "NetworkRequest.h"
+#include "NetworkResponse.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NetworkClient* clientside) : IsClient(clientside), IsServer(NULL), CloseMasterServerConnection(false){
-
+DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NetworkClient* clientside) : IsClient(clientside), IsServer(NULL), CloseMasterServerConnection(false),
+	StopGetResponsesThread(false)
+{
+	instance = this;
 }
 
-DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NetworkServer* serverside) : IsServer(serverside), IsClient(NULL){
-
+DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NetworkServer* serverside) : IsServer(serverside), IsClient(NULL), CloseMasterServerConnection(false),
+	StopGetResponsesThread(false)
+{
+	instance = this;
 }
 
 DLLEXPORT Leviathan::NetworkHandler::~NetworkHandler(){
-
+	instance = NULL;
 }
+
+DLLEXPORT NetworkHandler* Leviathan::NetworkHandler::Get(){
+	return instance;
+}
+
+NetworkHandler* Leviathan::NetworkHandler::instance = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &info){
 	// Query master server //
@@ -30,6 +42,11 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 
 DLLEXPORT void Leviathan::NetworkHandler::Release(){
 	// Notify master server connection kill //
+	StopOwnUpdaterThread();
+	if(MasterServerConnection){
+
+		MasterServerConnection->ReleaseSocket();
+	}
 
 	// Close all connections //
 	if(IsClient){
@@ -45,6 +62,7 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
 
 	// Kill master server connection //
 	MasterServerConnectionThread.join();
+	TempGetResponsesThread.join();
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMasterServer(const MasterServerInformation &info){
@@ -121,12 +139,56 @@ DLLEXPORT wstring Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const
 	return wstring(addressmatch[1]);
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
+	ObjectLock guard(*this);
+	for(auto iter = ConnectionsToUpdate.begin(); iter != ConnectionsToUpdate.end(); ++iter){
+
+		(*iter)->UpdateListening();
+	}
+}
+
+DLLEXPORT void Leviathan::NetworkHandler::StopOwnUpdaterThread(){
+	ObjectLock guard(*this);
+	StopGetResponsesThread = true;
+}
+
+DLLEXPORT void Leviathan::NetworkHandler::StartOwnUpdaterThread(){
+	ObjectLock guard(*this);
+	StopGetResponsesThread = false;
+	// Start a thread for it //
+	TempGetResponsesThread = boost::thread(RunTemporaryUpdateConnections, this);
+}
+// ------------------------------------ //
+void Leviathan::NetworkHandler::_RegisterConnectionInfo(ConnectionInfo* tomanage){
+	ObjectLock guard(*this);
+	
+	ConnectionsToUpdate.push_back(tomanage);
+}
+
+void Leviathan::NetworkHandler::_UnregisterConnectionInfo(ConnectionInfo* unregisterme){
+	ObjectLock guard(*this);
+
+	for(auto iter = ConnectionsToUpdate.begin(); iter != ConnectionsToUpdate.end(); ++iter){
+
+		if((*iter) == unregisterme){
+			// Remove and don't cause iterator problems by returning //
+			ConnectionsToUpdate.erase(iter);
+			return;
+		}
+
+	}
+}
+// ------------------------------------ //
 void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar){
 	// Try to load master server list //
 
-	if(!instance->_LoadMasterServerList()){
+	// Might as well start this thread here //
+	instance->StartOwnUpdaterThread();
 
-		// We need to request a new list before we can do anything //
+	// To reduce duplicated code and namespace pollution use a lambda thread for this //
+	boost::thread DataUpdaterThread(boost::bind<void>([](NetworkHandler* instance) -> void{
+
+		Logger::Get()->Info(L"NetworkHandler: Fetching new master server list...");
 		sf::Http::Request request(Convert::WstringToString(instance->StoredMasterServerInfo.MasterListFetchPage), sf::Http::Request::Get);
 
 		sf::Http httpserver(Convert::WstringToString(instance->StoredMasterServerInfo.MasterListFetchServer));
@@ -138,14 +200,32 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 			// It should just be a list of master servers one on each line //
 			WstringIterator itr(Convert::StringToWstring(response.getBody()));
 
-			ObjectLock guard(*instance);
-
 			unique_ptr<wstring> data;
+
+			std::vector<shared_ptr<wstring>> tmplist;
 
 			while((data = itr.GetUntilNextCharacterOrAll(L'\n'))->size()){
 
-				instance->MasterServers.push_back(shared_ptr<wstring>(data.release()));
+				tmplist.push_back(shared_ptr<wstring>(data.release()));	
 			}
+
+			// Check //
+			if(tmplist.size() == 0){
+
+				Logger::Get()->Warning(L"NetworkHandler: retrieved an empty list of master servers, not updated");
+				return;
+			}
+
+			// Update real list //
+			ObjectLock guard(*instance);
+
+			instance->MasterServers.clear();
+			instance->MasterServers.reserve(tmplist.size());
+			for(auto iter = tmplist.begin(); iter != tmplist.end(); ++iter){
+
+				instance->MasterServers.push_back(*iter);
+			}
+			
 
 			// Notify successful fetch //
 			Logger::Get()->Info(L"NetworkHandler: Successfully fetched master server list:");
@@ -156,15 +236,99 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 			// Fail //
 			Logger::Get()->Error(L"NetworkHandler: failed to update master server list, using old list");
 		}
+
+
+	}, instance));
+
+	if(!instance->_LoadMasterServerList()){
+
+		// We need to request a new list before we can do anything //
+		Logger::Get()->Info(L"NetworkHandler: no stored list of master servers, waiting for update to finish");
+		DataUpdaterThread.join();
 	}
-	// We can just update the master server list in another thread //
 
 
+	// Try to find a master server to connect to //
+	for(size_t i = 0; i < instance->MasterServers.size(); i++){
 
-	resultvar->set_value(wstring(L"Not done!"));
+		shared_ptr<wstring> tmpaddress;
+
+		{
+			ObjectLock guard(*instance);
+
+			tmpaddress = instance->MasterServers[i];
+		}
+
+		// Try connection //
+		shared_ptr<ConnectionInfo> tmpinfo(new ConnectionInfo(tmpaddress, sf::Socket::AnyPort));
+
+		if(!tmpinfo->Init()){
+
+			Logger::Get()->Error(L"NetworkHandler: failed to bind a socket!");
+			continue;
+		}
+
+		// Create an identification request //
+		shared_ptr<NetworkRequest> inforequest(new NetworkRequest(NETWORKREQUESTTYPE_IDENTIFICATION, 850));
+
+		// Send and block until a request (or 5 fails) //
+		shared_ptr<NetworkResponse> serverinforesponse = tmpinfo->SendRequestAndBlockUntilDone(inforequest, 3);
+
+		if(!serverinforesponse){
+			// Failed to receive something from the server //
+			Logger::Get()->Warning(L"NetworkHandler: failed to receive a response from master server("+*tmpaddress+L")");
+			// Release connection //
+			tmpinfo->ReleaseSocket();
+			continue;
+		}
+
+		Logger::Get()->Warning(L"NetworkHandler: received a response from master server("+*tmpaddress+L"):");
+
+		wstring identificationstr, gamename, version, leviathanversion;
+
+		// Get data //
+		serverinforesponse->DecodeIdentificationStringResponse(identificationstr, gamename, version, leviathanversion);
+
+		// Ensure data validness //
+		Logger::Get()->Info(L"NetworkHandler: received a response from master server at"+*tmpaddress);
+
+		// TODO: verify that the data is sane //
+
+		{
+			// Set working server //
+			ObjectLock guard(*instance);
+			instance->MasterServerConnection = tmpinfo;
+		}
+
+		// Successfully connected //
+		resultvar->set_value(wstring(L"ConnectedToMasterServer = "+*tmpaddress+L";"));
+		goto RunGetResponseFromMasterprepareexit;
+	}
+
+	// If we got here, we haven't connected to anything //
+	Logger::Get()->Warning(L"NetworkHandler: could not connect to any fetched master servers, you can restart to use a new list");
+
+	// We can let whoever is waiting for us to go now, and finish some utility tasks after that //
+	resultvar->set_value(wstring(L"Failed to connect to master server"));
+
+RunGetResponseFromMasterprepareexit:
+
+
+	// This needs to be done here //
+	DataUpdaterThread.join();
 
 	// Output the current list //
 	instance->_SaveMasterServerList();
+}
+
+void Leviathan::RunTemporaryUpdateConnections(NetworkHandler* instance){
+
+	while(!instance->StopGetResponsesThread){
+
+		instance->UpdateAllConnections();
+		boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+	}
+
 }
 
 

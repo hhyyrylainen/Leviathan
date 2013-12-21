@@ -172,6 +172,7 @@ typedef unsigned char BYTE;
 typedef unsigned char UCHAR;
 typedef unsigned short USHORT;
 typedef unsigned short UINT16;
+typedef unsigned short USHORT;
 
 
 

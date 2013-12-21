@@ -49,6 +49,7 @@ namespace Leviathan{
 		DLLEXPORT void RenderFrame();
 		DLLEXPORT void PhysicsUpdate();
 		DLLEXPORT void ResetPhysicsTime();
+		DLLEXPORT void PreFirstTick();
 
 		DLLEXPORT int GetWindowOpenCount();
 

@@ -4,9 +4,9 @@
 #include "NetworkHandler.h"
 #endif
 #include "FileSystem.h"
-#include "ObjectFiles\ObjectFileObject.h"
-#include "ObjectFiles\ObjectFileProcessor.h"
-#include "SFML\Network\Http.hpp"
+#include "ObjectFiles/ObjectFileObject.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "SFML/Network/Http.hpp"
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
 using namespace Leviathan;
@@ -75,7 +75,7 @@ DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMa
 
 	// Run the task async //
 	MasterServerConnectionThread = boost::thread(RunGetResponseFromMaster, this, resultvalue);
-	
+
 	return resultvalue;
 }
 // ------------------------------------ //
@@ -94,7 +94,7 @@ void Leviathan::NetworkHandler::_SaveMasterServerList(){
 			vals.push_back(new VariableBlock(*MasterServers[i].get()));
 		}
 	}
-	
+
 
 	Values.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"MasterServers", vals)));
 
@@ -119,7 +119,7 @@ bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 			for(size_t i = 0; i < maxval; i++){
 				MasterServers.push_back(unique_ptr<wstring>(new wstring(Values[fi]->GetValueDirect(i)->ConvertAndReturnVariable<wstring>())));
 			}
-				
+
 			return true;
 		}
 	}
@@ -128,7 +128,7 @@ bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 // ------------------------------------ //
 DLLEXPORT wstring Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const wstring &fulladdress, const wstring &regextouse /*= L"http://.*?/"*/){
 	// Create a regex //
-	wregex findaddressregex(regextouse, regex_constants::icase); 
+	wregex findaddressregex(regextouse, regex_constants::icase);
 
 	match_results<const wchar_t*> addressmatch;
 
@@ -161,7 +161,7 @@ DLLEXPORT void Leviathan::NetworkHandler::StartOwnUpdaterThread(){
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_RegisterConnectionInfo(ConnectionInfo* tomanage){
 	ObjectLock guard(*this);
-	
+
 	ConnectionsToUpdate.push_back(tomanage);
 }
 
@@ -206,7 +206,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 
 			while((data = itr.GetUntilNextCharacterOrAll(L'\n'))->size()){
 
-				tmplist.push_back(shared_ptr<wstring>(data.release()));	
+				tmplist.push_back(shared_ptr<wstring>(data.release()));
 			}
 
 			// Check //
@@ -225,7 +225,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 
 				instance->MasterServers.push_back(*iter);
 			}
-			
+
 
 			// Notify successful fetch //
 			Logger::Get()->Info(L"NetworkHandler: Successfully fetched master server list:");

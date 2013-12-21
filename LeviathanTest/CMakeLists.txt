@@ -48,7 +48,7 @@ ADD_CUSTOM_COMMAND(TARGET LeviathanTest POST_BUILD COMMAND copy ARGS
     "\"$(SolutionDir)LeviathanTest\\$(Configuration)\\$(TargetName).exe\" \"$(SolutionDir)bin\\$(TargetName).exe\""
 )
 else(WIN32)
-
+	#set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 endif(WIN32)
 
 # testing

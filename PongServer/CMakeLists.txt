@@ -61,14 +61,14 @@ target_link_libraries(PongServer ${LINUX_LINK_LIBS_TOENGINE})
 endif(NOT WIN32)
 
 if(WIN32)
-# set working directory when we want to run this
-create_target_launcher(PongServer RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/" WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin/")
+	# set working directory when we want to run this
+	create_target_launcher(PongServer RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/" WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin/")
 
-# post build copy
-ADD_CUSTOM_COMMAND(TARGET PongServer POST_BUILD COMMAND copy ARGS 
-    "\"$(SolutionDir)PongServer\\$(Configuration)\\$(TargetName).exe\" \"$(SolutionDir)bin\\$(TargetName).exe\""
-)
+	# post build copy
+	ADD_CUSTOM_COMMAND(TARGET PongServer POST_BUILD COMMAND copy ARGS 
+	    "\"$(SolutionDir)PongServer\\$(Configuration)\\$(TargetName).exe\" \"$(SolutionDir)bin\\$(TargetName).exe\""
+	)
 else(WIN32)
 
-
+	#set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 endif(WIN32)

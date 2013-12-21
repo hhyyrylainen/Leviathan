@@ -19,7 +19,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #else
 int main(int argcount, char* args[]){
 #endif
-
+    cout << "entering!";
 	int Return = 0;
 #ifdef _WIN32
 	HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
@@ -44,7 +44,7 @@ int main(int argcount, char* args[]){
 #ifdef _WIN32
 		ProgramDefinition->SetHInstance(hInstance);
 #endif
-ProgramDefinition->SetMasterServerParameters(MasterServerInformation(L"PongMasters.txt", L"Pong_" GAME_VERSIONS, 
+ProgramDefinition->SetMasterServerParameters(MasterServerInformation(L"PongMasters.txt", L"Pong_" GAME_VERSIONS,
 			L"http://boostslair.com/", L"/Pong/MastersList.php", L"PongCrecentials", false));
 
 		// create window last //

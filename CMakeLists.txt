@@ -213,19 +213,18 @@ else(WIN32)
     file(COPY ${LeapMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
     # ogre sos (this should be changed for public release to only copy required sos)
-    file(GLOB OgreMoveFiles "${OGRE_BASEDIR}/lib/*.so")
+    file(GLOB OgreMoveFiles "${OGRE_BASEDIR}/*.so*" "${OGRE_BASEDIR}/../*Ogre*.so*" "${OGRE_BASEDIR}/../libOIS*.so")
     file(COPY ${OgreMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
     # libRocket sos
-    file(GLOB RocketMoveFiles "libRocket/lib/*.so")
+    file(GLOB RocketMoveFiles "libRocket/lib/*.so*")
     file(COPY ${RocketMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
     # newton
-    file(GLOB NewtonMoveFilesRelease "Newton/lib/*.so")
-    file(COPY ${NewtonMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    file(COPY "Newton/lib/libNewton.so" DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
     # smfl
-    file(GLOB SMFLMoveFiles "SFML/lib/libsfml-audio.so" "SFML/lib/libsfml-network.so" "SFML/lib/libsfml-system.so")
+    file(GLOB SMFLMoveFiles "SFML/lib/*.so*")
     file(COPY ${SMFLMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 endif(WIN32)
@@ -237,6 +236,14 @@ if(WIN32)
     include(SetPrecompiledHeaders)
 else(WIN32)
 
+    set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+    set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+
+    set(CMAKE_RPATH "$ORIGIN/")
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/")
+    set(CMAKE_BUILD_RPATH "$ORIGIN/")
+
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
 
 endif(WIN32)
 

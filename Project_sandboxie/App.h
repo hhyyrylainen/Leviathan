@@ -12,14 +12,9 @@ namespace SandBoxie{
 
 	class App : public Leviathan::LeviathanApplication{
 	public:
-		App::App();
-
-
-		static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+		App();
 
 		void CustomizeEnginePostLoad();
-
-
 	};
 
 }

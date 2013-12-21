@@ -128,7 +128,7 @@ DLLEXPORT bool Leviathan::TaskThread::HasRunningTask(){
 	// Get lock to wait for any possible action to finish //
 	ObjectLock guard(*this);
 
-	return SetTask;
+	return SetTask.get() != NULL;
 }
 
 

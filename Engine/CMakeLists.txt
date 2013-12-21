@@ -125,6 +125,6 @@ ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND copy ARGS
     "\"$(SolutionDir)Engine\\$(Configuration)\\$(TargetName).dll\" \"$(SolutionDir)bin\\$(TargetName).dll\""
 )
 else(WIN32)
-	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+	#set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 endif(WIN32 AND NOT MINGW)
 

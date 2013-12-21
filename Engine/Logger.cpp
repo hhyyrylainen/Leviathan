@@ -17,7 +17,7 @@ Leviathan::Logger::Logger(): FirstSaveDone(false), Saved(false), Autosave(false)
 		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
 
 #else
-    wstring times = L"TODO: add time get";
+	wstring times = L"TODO: add time get";
 
 #endif
 
@@ -36,7 +36,7 @@ DLLEXPORT Leviathan::Logger::Logger(const wstring &start, const bool &autosave) 
 		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
 
 #else
-    wstring times = L"TODO: add time get";
+	wstring times = L"TODO: add time get";
 
 #endif
 
@@ -148,7 +148,16 @@ void Leviathan::Logger::Print(string message, bool save){
 
 void Leviathan::Logger::SendDebugMessage(const wstring& str){
 #ifdef _DEBUG
+		
+#ifdef _WIN32
 	OutputDebugString(&*str.begin());
+#else
+	// Using cout should be fine for most other platforms //
+	cout << Convert::WstringToString(str);
+	// We could potentially use wide output here, it might work on linux //
+	//wcout << str;
+#endif // _WIN32
+
 #else
 	return;
 #endif
@@ -158,7 +167,7 @@ DLLEXPORT void Leviathan::Logger::QueueErrorMessage(const wstring& str){
 	Logger* tmp = GetIfExists();
 	if(tmp == NULL){
 		// add to queue //
-		QueuedLog += L"[ERROR] [DELAYED]"+str+L"\n";
+		QueuedLog += L"[ERROR][DELAYED] "+str+L"\n";
 		return;
 	}
 	// send to logger //

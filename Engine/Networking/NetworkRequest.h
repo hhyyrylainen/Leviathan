@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "SFML\Network\Packet.hpp"
+#include "SFML/Network/Packet.hpp"
 
 
 namespace Leviathan{

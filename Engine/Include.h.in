@@ -174,7 +174,7 @@ typedef unsigned short USHORT;
 typedef unsigned short UINT16;
 typedef unsigned short USHORT;
 
-
+#undef index
 
 #define __assume(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
 

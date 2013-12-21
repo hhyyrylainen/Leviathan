@@ -27,6 +27,10 @@ namespace X11{
 #undef GenericEvent
 #define X11Status Status
 #undef Status
+#define X11None None
+#undef None
+#define X11index index
+#undef index
 
 #endif
 

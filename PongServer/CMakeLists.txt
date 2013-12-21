@@ -11,7 +11,7 @@ file(GLOB PResourceFiles "resource.h" "*.rc")
 
 # additional .txts
 file(GLOB Additional "*.txt")
-file(GLOB CMakeListFile "CmakeLists.txt")
+file(GLOB CMakeListFile "CMakeLists.txt")
 
 list(REMOVE_ITEM Additional ${CMakeListFile})
 

@@ -24,7 +24,7 @@ if(UNIX)
         set(OGRE_BASEDIR "/usr/lib/OGRE/")
 	else(EXISTS "/usr/local/lib/OGRE")
         message(SEND_ERROR "Failed to find Ogre module path")
-	endif(EXISTS "/usr/local/lib/OGRE")
+	endif(EXISTS "/usr/local/lib/OGRE/cmake")
 endif(UNIX)
  
 if(CMAKE_BUILD_TYPE STREQUAL "")

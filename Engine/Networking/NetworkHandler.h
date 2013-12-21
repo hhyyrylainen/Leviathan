@@ -8,8 +8,8 @@
 // ---- includes ---- //
 #include "NetworkClient.h"
 #include "NetworkServer.h"
-#include <boost\thread\future.hpp>
-#include "Common\ThreadSafe.h"
+#include <boost/thread/future.hpp>
+#include "Common/ThreadSafe.h"
 #include "ConnectionInfo.h"
 
 
@@ -40,7 +40,7 @@ namespace Leviathan{
 		DLLEXPORT virtual void StartOwnUpdaterThread();
 
 		DLLEXPORT shared_ptr<boost::promise<wstring>> QueryMasterServer(const MasterServerInformation &info);
-		
+
 		// Common network functions //
 		// For example if passed http://boostslair.com/Pong/MastersList.php returns http://boostslair.com/ //
 		DLLEXPORT static wstring GetServerAddressPartOfAddress(const wstring &fulladdress, const wstring &regextouse = L"http://.*?/");
@@ -57,7 +57,7 @@ namespace Leviathan{
 		void _UnregisterConnectionInfo(ConnectionInfo* unregisterme);
 
 		// ------------------------------------ //
-		
+
 		// Internal listing of all connections //
 		std::vector<ConnectionInfo*> ConnectionsToUpdate;
 

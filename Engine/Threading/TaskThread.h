@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include <boost\thread\detail\thread.hpp>
-#include "Common\ThreadSafe.h"
+#include <boost/thread/detail/thread.hpp>
+#include "Common/ThreadSafe.h"
 #include "QueuedTask.h"
 
 namespace Leviathan{

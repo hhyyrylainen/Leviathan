@@ -9,7 +9,7 @@
 #include "Common/DataStoring/NamedVars.h"
 #include "Common/Window.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
-#include "Networking\NetworkClient.h"
+#include "Networking/NetworkClient.h"
 
 namespace Leviathan{
 

@@ -25,6 +25,7 @@ source_group("Additional" FILES ${Additional})
 # all Pong files in one list
 set(PongFiles ${PSourceFiles} ${PHeaderFiles} ${PResourceFiles} ${Additional})
 
+if(WIN32)
 # precompiled headers
 # remove from list before adding back
 file(GLOB PrecompiledHeaderName "PongServerIncludes.h")
@@ -33,8 +34,14 @@ list(REMOVE_ITEM PongFiles ${PrecompiledSourceName})
 
 # precompiled header
 ADD_MSVC_PRECOMPILED_HEADER("PongServerIncludes.h" ${PrecompiledSourceName} PongFiles)
+endif(WIN32)
 
+if(WIN32)
 add_executable(PongServer WIN32 ${PongFiles})
+else(WIN32)
+add_executable(PongServer ${PongFiles})
+endif(WIN32)
+
 set_target_properties(PongServer PROPERTIES DEBUG_POSTFIX D)
 
 # Possible debug installs
@@ -49,6 +56,11 @@ install(TARGETS PongServer DESTINATION bin CONFIGURATIONS ${InstallConfiguration
 # linking to engine
 target_link_libraries(PongServer Engine)
 
+if(NOT WIN32)
+target_link_libraries(PongServer ${LINUX_LINK_LIBS_TOENGINE})
+endif(NOT WIN32)
+
+if(WIN32)
 # set working directory when we want to run this
 create_target_launcher(PongServer RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/" WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin/")
 
@@ -56,3 +68,7 @@ create_target_launcher(PongServer RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bi
 ADD_CUSTOM_COMMAND(TARGET PongServer POST_BUILD COMMAND copy ARGS 
     "\"$(SolutionDir)PongServer\\$(Configuration)\\$(TargetName).exe\" \"$(SolutionDir)bin\\$(TargetName).exe\""
 )
+else(WIN32)
+
+
+endif(WIN32)

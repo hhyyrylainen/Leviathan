@@ -19,15 +19,15 @@ BEGIN_AS_NAMESPACE
 
 // The string pool will be kept as user data in the engine. We'll
 // need a specific type to identify the string pool user data.
-// We just define a number here that we assume nobody else is using for 
-// object type user data. The add-ons have reserved the numbers 1000 
+// We just define a number here that we assume nobody else is using for
+// object type user data. The add-ons have reserved the numbers 1000
 // through 1999 for this purpose, so we should be fine.
 const asPWORD STRING_POOL = 1001;
 
 // This global static variable is placed here rather than locally within the
 // StringFactory, due to memory leak detectors that don't see the deallocation
 // of global variables. By placing the variable globally it will be initialized
-// before the memory leak detector starts, thus it won't report the missing 
+// before the memory leak detector starts, thus it won't report the missing
 // deallocation. An example of this the Marmalade leak detector initialized with
 // IwGxInit() and finished with IwGxTerminate().
 static const string emptyString;
@@ -133,8 +133,8 @@ static void DestructString(string *thisPointer)
 
 static string &AddAssignStringToString(const string &str, string &dest)
 {
-	// We don't register the method directly because some compilers 
-	// and standard libraries inline the definition, resulting in the 
+	// We don't register the method directly because some compilers
+	// and standard libraries inline the definition, resulting in the
 	// linker being unable to find the declaration.
 	// Example: CLang/LLVM with XCode 4.3 on OSX 10.7
 	dest += str;
@@ -145,8 +145,8 @@ static string &AddAssignStringToString(const string &str, string &dest)
 // bool string::empty() // if AS_USE_STLNAMES == 1
 static bool StringIsEmpty(const string &str)
 {
-	// We don't register the method directly because some compilers 
-	// and standard libraries inline the definition, resulting in the 
+	// We don't register the method directly because some compilers
+	// and standard libraries inline the definition, resulting in the
 	// linker being unable to find the declaration
 	// Example: CLang/LLVM with XCode 4.3 on OSX 10.7
 	return str.empty();
@@ -331,7 +331,7 @@ static asUINT StringLength(const string &str)
 
 
 // AngelScript signature:
-// void string::resize(uint l) 
+// void string::resize(uint l)
 static void StringResize(asUINT l, string &str)
 {
 	// We don't register the method directly because the argument types change between 32bit and 64bit platforms
@@ -378,7 +378,7 @@ static string formatInt(asINT64 value, const string &options, asUINT width)
 	sprintf(&buf[0], fmt.c_str(), width, value);
 #endif
 	buf.resize(strlen(&buf[0]));
-	
+
 	return buf;
 }
 
@@ -414,7 +414,7 @@ static string formatFloat(double value, const string &options, asUINT width, asU
 	sprintf(&buf[0], fmt.c_str(), width, precision, value);
 #endif
 	buf.resize(strlen(&buf[0]));
-	
+
 	return buf;
 }
 
@@ -436,10 +436,10 @@ static asINT64 parseInt(const string &val, asUINT base, asUINT *byteCount)
 	if( *end == '-' )
 	{
 		sign = true;
-		*end++;
+		end++;
 	}
 	else if( *end == '+' )
-		*end++;
+		end++;
 
 	asINT64 res = 0;
 	if( base == 10 )
@@ -453,8 +453,8 @@ static asINT64 parseInt(const string &val, asUINT base, asUINT *byteCount)
 	else if( base == 16 )
 	{
 		while( (*end >= '0' && *end <= '9') ||
-			   (*end >= 'a' && *end <= 'f') ||
-			   (*end >= 'A' && *end <= 'F') )
+		       (*end >= 'a' && *end <= 'f') ||
+		       (*end >= 'A' && *end <= 'F') )
 		{
 			res *= 16;
 			if( *end >= '0' && *end <= '9' )
@@ -481,9 +481,9 @@ double parseFloat(const string &val, asUINT *byteCount)
 {
 	char *end;
 
-	// WinCE doesn't have setlocale. Some quick testing on my current platform
-	// still manages to parse the numbers such as "3.14" even if the decimal for the
-	// locale is ",".
+    // WinCE doesn't have setlocale. Some quick testing on my current platform
+    // still manages to parse the numbers such as "3.14" even if the decimal for the
+    // locale is ",".
 #if !defined(_WIN32_WCE) && !defined(ANDROID)
 	// Set the locale to C so that we are guaranteed to parse the float value correctly
 	char *orig = setlocale(LC_NUMERIC, 0);
@@ -521,12 +521,12 @@ static string StringSubString(asUINT start, int count, const string &str)
 // String equality comparison.
 // Returns true iff lhs is equal to rhs.
 //
-// For some reason gcc 4.7 has difficulties resolving the 
-// asFUNCTIONPR(operator==, (const string &, const string &) 
+// For some reason gcc 4.7 has difficulties resolving the
+// asFUNCTIONPR(operator==, (const string &, const string &)
 // makro, so this wrapper was introduced as work around.
 static bool StringEquals(const std::string& lhs, const std::string& rhs)
 {
-	return lhs == rhs;
+    return lhs == rhs;
 }
 
 void RegisterStdString_Native(asIScriptEngine *engine)
@@ -630,7 +630,7 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 }
 
 #if AS_USE_STRINGPOOL == 1
-static void StringFactoryGeneric(asIScriptGeneric *gen) 
+static void StringFactoryGeneric(asIScriptGeneric *gen)
 {
   asUINT length = gen->GetArgDWord(0);
   const char *s = (const char*)gen->GetArgAddress(1);
@@ -639,7 +639,7 @@ static void StringFactoryGeneric(asIScriptGeneric *gen)
   gen->SetReturnAddress(const_cast<string*>(&StringFactory(length, s)));
 }
 #else
-static void StringFactoryGeneric(asIScriptGeneric *gen) 
+static void StringFactoryGeneric(asIScriptGeneric *gen)
 {
   asUINT length = gen->GetArgDWord(0);
   const char *s = (const char*)gen->GetArgAddress(1);
@@ -649,24 +649,24 @@ static void StringFactoryGeneric(asIScriptGeneric *gen)
 }
 #endif
 
-static void ConstructStringGeneric(asIScriptGeneric * gen) 
+static void ConstructStringGeneric(asIScriptGeneric * gen)
 {
   new (gen->GetObject()) string();
 }
 
-static void CopyConstructStringGeneric(asIScriptGeneric * gen) 
+static void CopyConstructStringGeneric(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetArgObject(0));
   new (gen->GetObject()) string(*a);
 }
 
-static void DestructStringGeneric(asIScriptGeneric * gen) 
+static void DestructStringGeneric(asIScriptGeneric * gen)
 {
   string * ptr = static_cast<string *>(gen->GetObject());
   ptr->~string();
 }
 
-static void AssignStringGeneric(asIScriptGeneric *gen) 
+static void AssignStringGeneric(asIScriptGeneric *gen)
 {
   string * a = static_cast<string *>(gen->GetArgObject(0));
   string * self = static_cast<string *>(gen->GetObject());
@@ -674,7 +674,7 @@ static void AssignStringGeneric(asIScriptGeneric *gen)
   gen->SetReturnAddress(self);
 }
 
-static void AddAssignStringGeneric(asIScriptGeneric *gen) 
+static void AddAssignStringGeneric(asIScriptGeneric *gen)
 {
   string * a = static_cast<string *>(gen->GetArgObject(0));
   string * self = static_cast<string *>(gen->GetObject());
@@ -682,14 +682,14 @@ static void AddAssignStringGeneric(asIScriptGeneric *gen)
   gen->SetReturnAddress(self);
 }
 
-static void StringEqualsGeneric(asIScriptGeneric * gen) 
+static void StringEqualsGeneric(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetObject());
   string * b = static_cast<string *>(gen->GetArgAddress(0));
   *(bool*)gen->GetAddressOfReturnLocation() = (*a == *b);
 }
 
-static void StringCmpGeneric(asIScriptGeneric * gen) 
+static void StringCmpGeneric(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetObject());
   string * b = static_cast<string *>(gen->GetArgAddress(0));
@@ -701,7 +701,7 @@ static void StringCmpGeneric(asIScriptGeneric * gen)
   *(int*)gen->GetAddressOfReturnLocation() = cmp;
 }
 
-static void StringAddGeneric(asIScriptGeneric * gen) 
+static void StringAddGeneric(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetObject());
   string * b = static_cast<string *>(gen->GetArgAddress(0));
@@ -709,25 +709,25 @@ static void StringAddGeneric(asIScriptGeneric * gen)
   gen->SetReturnObject(&ret_val);
 }
 
-static void StringLengthGeneric(asIScriptGeneric * gen) 
+static void StringLengthGeneric(asIScriptGeneric * gen)
 {
   string * self = static_cast<string *>(gen->GetObject());
   *static_cast<asUINT *>(gen->GetAddressOfReturnLocation()) = (asUINT)self->length();
 }
 
-static void StringIsEmptyGeneric(asIScriptGeneric * gen) 
+static void StringIsEmptyGeneric(asIScriptGeneric * gen)
 {
   string * self = reinterpret_cast<string *>(gen->GetObject());
   *reinterpret_cast<bool *>(gen->GetAddressOfReturnLocation()) = StringIsEmpty(*self);
 }
 
-static void StringResizeGeneric(asIScriptGeneric * gen) 
+static void StringResizeGeneric(asIScriptGeneric * gen)
 {
   string * self = static_cast<string *>(gen->GetObject());
   self->resize(*static_cast<asUINT *>(gen->GetAddressOfArg(0)));
 }
 
-static void StringFindFirst_Generic(asIScriptGeneric * gen) 
+static void StringFindFirst_Generic(asIScriptGeneric * gen)
 {
 	string *find = reinterpret_cast<string*>(gen->GetArgAddress(0));
 	asUINT start = gen->GetArgDWord(1);
@@ -735,7 +735,7 @@ static void StringFindFirst_Generic(asIScriptGeneric * gen)
 	*reinterpret_cast<int *>(gen->GetAddressOfReturnLocation()) = StringFindFirst(*find, start, *self);
 }
 
-static void StringFindLast_Generic(asIScriptGeneric * gen) 
+static void StringFindLast_Generic(asIScriptGeneric * gen)
 {
 	string *find = reinterpret_cast<string*>(gen->GetArgAddress(0));
 	asUINT start = gen->GetArgDWord(1);
@@ -743,7 +743,7 @@ static void StringFindLast_Generic(asIScriptGeneric * gen)
 	*reinterpret_cast<int *>(gen->GetAddressOfReturnLocation()) = StringFindLast(*find, start, *self);
 }
 
-static void formatInt_Generic(asIScriptGeneric * gen) 
+static void formatInt_Generic(asIScriptGeneric * gen)
 {
 	asINT64 val = gen->GetArgQWord(0);
 	string *options = reinterpret_cast<string*>(gen->GetArgAddress(1));
@@ -751,7 +751,7 @@ static void formatInt_Generic(asIScriptGeneric * gen)
 	new(gen->GetAddressOfReturnLocation()) string(formatInt(val, *options, width));
 }
 
-static void formatFloat_Generic(asIScriptGeneric *gen) 
+static void formatFloat_Generic(asIScriptGeneric *gen)
 {
 	double val = gen->GetArgDouble(0);
 	string *options = reinterpret_cast<string*>(gen->GetArgAddress(1));
@@ -775,26 +775,26 @@ static void parseFloat_Generic(asIScriptGeneric *gen)
 	gen->SetReturnDouble(parseFloat(*str,byteCount));
 }
 
-static void StringCharAtGeneric(asIScriptGeneric * gen) 
+static void StringCharAtGeneric(asIScriptGeneric * gen)
 {
   unsigned int index = gen->GetArgDWord(0);
   string * self = static_cast<string *>(gen->GetObject());
 
-  if (index >= self->size()) 
+  if (index >= self->size())
   {
-	// Set a script exception
-	asIScriptContext *ctx = asGetActiveContext();
-	ctx->SetException("Out of range");
+    // Set a script exception
+    asIScriptContext *ctx = asGetActiveContext();
+    ctx->SetException("Out of range");
 
-	gen->SetReturnAddress(0);
-  } 
-  else 
+    gen->SetReturnAddress(0);
+  }
+  else
   {
-	gen->SetReturnAddress(&(self->operator [](index)));
+    gen->SetReturnAddress(&(self->operator [](index)));
   }
 }
 
-static void AssignInt2StringGeneric(asIScriptGeneric *gen) 
+static void AssignInt2StringGeneric(asIScriptGeneric *gen)
 {
 	int *a = static_cast<int*>(gen->GetAddressOfArg(0));
 	string *self = static_cast<string*>(gen->GetObject());
@@ -804,7 +804,7 @@ static void AssignInt2StringGeneric(asIScriptGeneric *gen)
 	gen->SetReturnAddress(self);
 }
 
-static void AssignUInt2StringGeneric(asIScriptGeneric *gen) 
+static void AssignUInt2StringGeneric(asIScriptGeneric *gen)
 {
 	unsigned int *a = static_cast<unsigned int*>(gen->GetAddressOfArg(0));
 	string *self = static_cast<string*>(gen->GetObject());
@@ -814,7 +814,7 @@ static void AssignUInt2StringGeneric(asIScriptGeneric *gen)
 	gen->SetReturnAddress(self);
 }
 
-static void AssignDouble2StringGeneric(asIScriptGeneric *gen) 
+static void AssignDouble2StringGeneric(asIScriptGeneric *gen)
 {
 	double *a = static_cast<double*>(gen->GetAddressOfArg(0));
 	string *self = static_cast<string*>(gen->GetObject());
@@ -824,7 +824,7 @@ static void AssignDouble2StringGeneric(asIScriptGeneric *gen)
 	gen->SetReturnAddress(self);
 }
 
-static void AssignBool2StringGeneric(asIScriptGeneric *gen) 
+static void AssignBool2StringGeneric(asIScriptGeneric *gen)
 {
 	bool *a = static_cast<bool*>(gen->GetAddressOfArg(0));
 	string *self = static_cast<string*>(gen->GetObject());
@@ -834,7 +834,7 @@ static void AssignBool2StringGeneric(asIScriptGeneric *gen)
 	gen->SetReturnAddress(self);
 }
 
-static void AddAssignDouble2StringGeneric(asIScriptGeneric * gen) 
+static void AddAssignDouble2StringGeneric(asIScriptGeneric * gen)
 {
   double * a = static_cast<double *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
@@ -844,7 +844,7 @@ static void AddAssignDouble2StringGeneric(asIScriptGeneric * gen)
   gen->SetReturnAddress(self);
 }
 
-static void AddAssignInt2StringGeneric(asIScriptGeneric * gen) 
+static void AddAssignInt2StringGeneric(asIScriptGeneric * gen)
 {
   int * a = static_cast<int *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
@@ -854,7 +854,7 @@ static void AddAssignInt2StringGeneric(asIScriptGeneric * gen)
   gen->SetReturnAddress(self);
 }
 
-static void AddAssignUInt2StringGeneric(asIScriptGeneric * gen) 
+static void AddAssignUInt2StringGeneric(asIScriptGeneric * gen)
 {
   unsigned int * a = static_cast<unsigned int *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
@@ -864,7 +864,7 @@ static void AddAssignUInt2StringGeneric(asIScriptGeneric * gen)
   gen->SetReturnAddress(self);
 }
 
-static void AddAssignBool2StringGeneric(asIScriptGeneric * gen) 
+static void AddAssignBool2StringGeneric(asIScriptGeneric * gen)
 {
   bool * a = static_cast<bool *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
@@ -874,7 +874,7 @@ static void AddAssignBool2StringGeneric(asIScriptGeneric * gen)
   gen->SetReturnAddress(self);
 }
 
-static void AddString2DoubleGeneric(asIScriptGeneric * gen) 
+static void AddString2DoubleGeneric(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetObject());
   double * b = static_cast<double *>(gen->GetAddressOfArg(0));
@@ -884,7 +884,7 @@ static void AddString2DoubleGeneric(asIScriptGeneric * gen)
   gen->SetReturnObject(&ret_val);
 }
 
-static void AddString2IntGeneric(asIScriptGeneric * gen) 
+static void AddString2IntGeneric(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetObject());
   int * b = static_cast<int *>(gen->GetAddressOfArg(0));
@@ -894,7 +894,7 @@ static void AddString2IntGeneric(asIScriptGeneric * gen)
   gen->SetReturnObject(&ret_val);
 }
 
-static void AddString2UIntGeneric(asIScriptGeneric * gen) 
+static void AddString2UIntGeneric(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetObject());
   unsigned int * b = static_cast<unsigned int *>(gen->GetAddressOfArg(0));
@@ -904,7 +904,7 @@ static void AddString2UIntGeneric(asIScriptGeneric * gen)
   gen->SetReturnObject(&ret_val);
 }
 
-static void AddString2BoolGeneric(asIScriptGeneric * gen) 
+static void AddString2BoolGeneric(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetObject());
   bool * b = static_cast<bool *>(gen->GetAddressOfArg(0));
@@ -914,7 +914,7 @@ static void AddString2BoolGeneric(asIScriptGeneric * gen)
   gen->SetReturnObject(&ret_val);
 }
 
-static void AddDouble2StringGeneric(asIScriptGeneric * gen) 
+static void AddDouble2StringGeneric(asIScriptGeneric * gen)
 {
   double* a = static_cast<double *>(gen->GetAddressOfArg(0));
   string * b = static_cast<string *>(gen->GetObject());
@@ -924,7 +924,7 @@ static void AddDouble2StringGeneric(asIScriptGeneric * gen)
   gen->SetReturnObject(&ret_val);
 }
 
-static void AddInt2StringGeneric(asIScriptGeneric * gen) 
+static void AddInt2StringGeneric(asIScriptGeneric * gen)
 {
   int* a = static_cast<int *>(gen->GetAddressOfArg(0));
   string * b = static_cast<string *>(gen->GetObject());
@@ -934,7 +934,7 @@ static void AddInt2StringGeneric(asIScriptGeneric * gen)
   gen->SetReturnObject(&ret_val);
 }
 
-static void AddUInt2StringGeneric(asIScriptGeneric * gen) 
+static void AddUInt2StringGeneric(asIScriptGeneric * gen)
 {
   unsigned int* a = static_cast<unsigned int *>(gen->GetAddressOfArg(0));
   string * b = static_cast<string *>(gen->GetObject());
@@ -944,7 +944,7 @@ static void AddUInt2StringGeneric(asIScriptGeneric * gen)
   gen->SetReturnObject(&ret_val);
 }
 
-static void AddBool2StringGeneric(asIScriptGeneric * gen) 
+static void AddBool2StringGeneric(asIScriptGeneric * gen)
 {
   bool* a = static_cast<bool *>(gen->GetAddressOfArg(0));
   string * b = static_cast<string *>(gen->GetObject());
@@ -956,16 +956,16 @@ static void AddBool2StringGeneric(asIScriptGeneric * gen)
 
 static void StringSubString_Generic(asIScriptGeneric *gen)
 {
-	// Get the arguments
-	string *str   = (string*)gen->GetObject();
-	asUINT  start = *(int*)gen->GetAddressOfArg(0);
-	int     count = *(int*)gen->GetAddressOfArg(1);
+    // Get the arguments
+    string *str   = (string*)gen->GetObject();
+    asUINT  start = *(int*)gen->GetAddressOfArg(0);
+    int     count = *(int*)gen->GetAddressOfArg(1);
 
 	// Return the substring
-	new(gen->GetAddressOfReturnLocation()) string(StringSubString(start, count, *str));
+    new(gen->GetAddressOfReturnLocation()) string(StringSubString(start, count, *str));
 }
 
-void RegisterStdString_Generic(asIScriptEngine *engine) 
+void RegisterStdString_Generic(asIScriptEngine *engine)
 {
 	int r;
 

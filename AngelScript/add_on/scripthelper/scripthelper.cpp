@@ -11,9 +11,9 @@ BEGIN_AS_NAMESPACE
 
 int CompareRelation(asIScriptEngine *engine, void *lobj, void *robj, int typeId, int &result)
 {
-	// TODO: If a lot of script objects are going to be compared, e.g. when sorting an array, 
-	//       then the method id and context should be cached between calls.
-	
+    // TODO: If a lot of script objects are going to be compared, e.g. when sorting an array,
+    //       then the method id and context should be cached between calls.
+
 	int retval = -1;
 	asIScriptFunction *func = 0;
 
@@ -31,7 +31,7 @@ int CompareRelation(asIScriptEngine *engine, void *lobj, void *robj, int typeId,
 				f->GetParamCount() == 1 )
 			{
 				int paramTypeId = f->GetParamTypeId(0, &flags);
-				
+
 				// The parameter must be an input reference of the same type
 				// If the reference is a inout reference, then it must also be read-only
 				if( !(flags & asTM_INREF) || typeId != paramTypeId || ((flags & asTM_OUTREF) && !(flags & asTM_CONST)) )
@@ -67,9 +67,9 @@ int CompareRelation(asIScriptEngine *engine, void *lobj, void *robj, int typeId,
 
 int CompareEquality(asIScriptEngine *engine, void *lobj, void *robj, int typeId, bool &result)
 {
-	// TODO: If a lot of script objects are going to be compared, e.g. when searching for an
+    // TODO: If a lot of script objects are going to be compared, e.g. when searching for an
 	//       entry in a set, then the method and context should be cached between calls.
-	
+
 	int retval = -1;
 	asIScriptFunction *func = 0;
 
@@ -87,7 +87,7 @@ int CompareEquality(asIScriptEngine *engine, void *lobj, void *robj, int typeId,
 				f->GetParamCount() == 1 )
 			{
 				int paramTypeId = f->GetParamTypeId(0, &flags);
-				
+
 				// The parameter must be an input reference of the same type
 				// If the reference is a inout reference, then it must also be read-only
 				if( !(flags & asTM_INREF) || typeId != paramTypeId || ((flags & asTM_OUTREF) && !(flags & asTM_CONST)) )
@@ -140,7 +140,7 @@ int ExecuteString(asIScriptEngine *engine, const char *code, void *ref, int refT
 	string funcCode = " ExecuteString() {\n";
 	funcCode += code;
 	funcCode += "\n;}";
-	
+
 	// Determine the return type based on the type of the ref arg
 	funcCode = engine->GetTypeDeclaration(refTypeId, true) + funcCode;
 
@@ -152,7 +152,7 @@ int ExecuteString(asIScriptEngine *engine, const char *code, void *ref, int refT
 		if( type )
 			type->AddRef();
 	}
-	
+
 	// If no module was provided, get a dummy from the engine
 	asIScriptModule *execMod = mod ? mod : engine->GetModule("ExecuteString", asGM_ALWAYS_CREATE);
 
@@ -201,7 +201,7 @@ int ExecuteString(asIScriptEngine *engine, const char *code, void *ref, int refT
 			memcpy(ref, execCtx->GetAddressOfReturnValue(), engine->GetSizeOfPrimitiveType(refTypeId));
 		}
 	}
-	
+
 	// Clean up
 	func->Release();
 	if( !ctx ) execCtx->Release();
@@ -214,8 +214,8 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	int c, n;
 
 	FILE *f = 0;
-#if _MSC_VER >= 1400 && !defined(__S3E__) 
-	// MSVC 8.0 / 2005 introduced new functions 
+#if _MSC_VER >= 1400 && !defined(__S3E__)
+	// MSVC 8.0 / 2005 introduced new functions
 	// Marmalade doesn't use these, even though it uses the MSVC compiler
 	fopen_s(&f, filename, "wt");
 #else
@@ -227,7 +227,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	asDWORD currAccessMask = 0;
 	string currNamespace = "";
 
-	// Make sure the default array type is expanded to the template form 
+	// Make sure the default array type is expanded to the template form
 	bool expandDefArrayToTempl = engine->GetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL) ? true : false;
 	engine->SetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL, true);
 
@@ -288,7 +288,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 		}
 		else
 		{
-			// Only the type flags are necessary. The application flags are application 
+			// Only the type flags are necessary. The application flags are application
 			// specific and doesn't matter to the offline compiler. The object size is also
 			// unnecessary for the offline compiler
 			fprintf(f, "objtype \"%s\" %u\n", engine->GetTypeDeclaration(type->GetTypeId()), (unsigned int)(type->GetFlags() & 0xFF));
@@ -336,7 +336,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 
 	// Write the object types members
 	fprintf(f, "\n// Type members\n");
-	
+
 	c = engine->GetObjectTypeCount();
 	for( n = 0; n < c; n++ )
 	{
@@ -478,7 +478,6 @@ void PrintException(asIScriptContext *ctx, bool printStack)
 {
 	if( ctx->GetState() != asEXECUTION_EXCEPTION ) return;
 
-	asIScriptEngine *engine = ctx->GetEngine();
 	const asIScriptFunction *function = ctx->GetExceptionFunction();
 	printf("func: %s\n", function->GetDeclaration());
 	printf("modl: %s\n", function->GetModuleName());
@@ -510,7 +509,7 @@ void PrintException(asIScriptContext *ctx, bool printStack)
 			{
 				// The context is being reused by the script engine for a nested call
 				printf("{...script engine...}\n");
-			}			
+			}
 		}
 	}
 }

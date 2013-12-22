@@ -27,6 +27,101 @@ CScriptDictionary::CScriptDictionary(asIScriptEngine *engine)
 	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetObjectTypeByName("dictionary"));
 }
 
+CScriptDictionary::CScriptDictionary(asBYTE *buffer)
+{
+	// We start with one reference
+	refCount = 1;
+	gcFlag = false;
+
+	// This constructor will always be called from a script
+	// so we can get the engine from the active context
+	asIScriptContext *ctx = asGetActiveContext();
+	engine = ctx->GetEngine();
+
+	// Notify the garbage collector of this object
+	// TODO: The type id should be cached
+	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetObjectTypeByName("dictionary"));
+
+	// Initialize the dictionary from the buffer
+	asUINT length = *(asUINT*)buffer;
+	buffer += 4;
+
+	while( length-- )
+	{
+		// Align the buffer pointer on a 4 byte boundary in 
+		// case previous value was smaller than 4 bytes
+		if( asPWORD(buffer) & 0x3 )
+			buffer += 4 - (asPWORD(buffer) & 0x3);
+
+		// Get the name value pair from the buffer and insert it in the dictionary
+		string name = *(string*)buffer;
+		buffer += sizeof(string);
+
+		// Get the type id of the value
+		int typeId = *(int*)buffer;
+		buffer += sizeof(int);
+
+		// Depending on the type id, the value will inline in the buffer or a pointer
+		void *ref = (void*)buffer;
+
+		if( typeId >= asTYPEID_INT8 && typeId <= asTYPEID_DOUBLE )
+		{
+			// Convert primitive values to either int64 or double, so we can use the overloaded Set methods
+			asINT64 i64;
+			double d;
+			switch( typeId )
+			{
+			case asTYPEID_INT8: i64 = *(char*)ref; break;
+			case asTYPEID_INT16: i64 = *(short*)ref; break;
+			case asTYPEID_INT32: i64 = *(int*)ref; break;
+			case asTYPEID_INT64: i64 = *(asINT64*)ref; break;
+			case asTYPEID_UINT8: i64 = *(unsigned char*)ref; break;
+			case asTYPEID_UINT16: i64 = *(unsigned short*)ref; break;
+			case asTYPEID_UINT32: i64 = *(unsigned int*)ref; break;
+			case asTYPEID_UINT64: i64 = *(asINT64*)ref; break;
+			case asTYPEID_FLOAT: d = *(float*)ref; break;
+			case asTYPEID_DOUBLE: d = *(double*)ref; break;
+			}
+			
+			if( typeId >= asTYPEID_FLOAT )
+				Set(name, d);
+			else
+				Set(name, i64);
+		}
+		else
+		{
+			if( (typeId & asTYPEID_MASK_OBJECT) && 
+				!(typeId & asTYPEID_OBJHANDLE) && 
+				(engine->GetObjectTypeById(typeId)->GetFlags() & asOBJ_REF) )
+			{
+				// Dereference the pointer to get the reference to the actual object
+				ref = *(void**)ref;
+			}
+
+			Set(name, ref, typeId);
+		}
+
+		// Advance the buffer pointer with the size of the value
+		if( typeId & asTYPEID_MASK_OBJECT )
+		{
+			asIObjectType *ot = engine->GetObjectTypeById(typeId);
+			if( ot->GetFlags() & asOBJ_VALUE )
+				buffer += ot->GetSize();
+			else
+				buffer += sizeof(void*);
+		}
+		else if( typeId == 0 )
+		{
+			// null pointer
+			buffer += sizeof(void*);
+		}
+		else
+		{
+			buffer += engine->GetSizeOfPrimitiveType(typeId);
+		}
+	}
+}
+
 CScriptDictionary::~CScriptDictionary()
 {
 	// Delete all keys and values
@@ -288,7 +383,7 @@ void CScriptDictionary::FreeValue(valueStruct &value)
 		value.typeId = 0;
 	}
 
-	// For primitives, there's nothing to do
+    // For primitives, there's nothing to do
 }
 
 CScriptArray* CScriptDictionary::GetKeys() const
@@ -320,6 +415,12 @@ CScriptArray* CScriptDictionary::GetKeys() const
 void ScriptDictionaryFactory_Generic(asIScriptGeneric *gen)
 {
 	*(CScriptDictionary**)gen->GetAddressOfReturnLocation() = new CScriptDictionary(gen->GetEngine());
+}
+
+void ScriptDictionaryListFactory_Generic(asIScriptGeneric *gen)
+{
+	asBYTE *buffer = (asBYTE*)gen->GetArgAddress(0);
+	*(CScriptDictionary**)gen->GetAddressOfReturnLocation() = new CScriptDictionary(buffer);
 }
 
 void ScriptDictionaryAddRef_Generic(asIScriptGeneric *gen)
@@ -468,7 +569,8 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 
 	r = engine->RegisterObjectType("dictionary", sizeof(CScriptDictionary), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
 	// Use the generic interface to construct the object since we need the engine pointer, we could also have retrieved the engine pointer from the active context
-	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FACTORY, "dictionary@ f()", asFUNCTION(ScriptDictionaryFactory_Generic), asCALL_GENERIC); assert( r>= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FACTORY, "dictionary@ f()", asFUNCTION(ScriptDictionaryFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_LIST_FACTORY, "dictionary @f(int &in) {repeat {string, ?}}", asFUNCTION(ScriptDictionaryListFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptDictionary,AddRef), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptDictionary,Release), asCALL_THISCALL); assert( r >= 0 );
 
@@ -482,7 +584,7 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 
 	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, double&in)", asMETHODPR(CScriptDictionary,Set,(const string&,double&),void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, double&out) const", asMETHODPR(CScriptDictionary,Get,(const string&,double&) const,bool), asCALL_THISCALL); assert( r >= 0 );
-	
+
 	r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in) const", asMETHOD(CScriptDictionary,Exists), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool isEmpty() const", asMETHOD(CScriptDictionary, IsEmpty), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "uint getSize() const", asMETHOD(CScriptDictionary, GetSize), asCALL_THISCALL); assert( r >= 0 );
@@ -516,6 +618,7 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 
 	r = engine->RegisterObjectType("dictionary", sizeof(CScriptDictionary), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FACTORY, "dictionary@ f()", asFUNCTION(ScriptDictionaryFactory_Generic), asCALL_GENERIC); assert( r>= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_LIST_FACTORY, "dictionary @f(int &in) {repeat {string, ?}}", asFUNCTION(ScriptDictionaryListFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptDictionaryAddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptDictionaryRelease_Generic), asCALL_GENERIC); assert( r >= 0 );
 
@@ -523,7 +626,7 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 
 	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, ?&in)", asFUNCTION(ScriptDictionarySet_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, ?&out) const", asFUNCTION(ScriptDictionaryGet_Generic), asCALL_GENERIC); assert( r >= 0 );
-	
+
 	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, int64&in)", asFUNCTION(ScriptDictionarySetInt_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, int64&out) const", asFUNCTION(ScriptDictionaryGetInt_Generic), asCALL_GENERIC); assert( r >= 0 );
 

@@ -342,6 +342,11 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files
     DIR* dir = opendir(directory.c_str());
     while((ent = readdir(dir)) != NULL){
         const string file_name = ent->d_name;
+
+        // Ignore if starts with a '.' //
+        if(file_name[0] == '.')
+            continue;
+
         const string full_file_name = directory + "/" + file_name;
 
         // Get info to determine if it is a directory //
@@ -350,11 +355,10 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files
 
         // Check if it is a directory //
         if((st.st_mode & S_IFDIR) != 0){
-            // Return if not recursive //
-            // TODO: fix recursive detection //
-            if(!recursive){
-                closedir(dir);
-                return true;
+            // Go into directory if recursive search //
+            if(recursive){
+                // TODO: fix performance //
+                GetFilesInDirectory(files, Convert::StringToWstring(full_file_name), pattern, recursive);
             }
             continue;
         }

@@ -130,7 +130,7 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 
 	// file parsing //
 	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([]() -> void{ ObjectFileProcessor::Initialize(); }))));
-	
+
 
 	// main program wide event dispatcher //
 	boost::promise<bool> EventHandlerResult;
@@ -218,12 +218,11 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 
 		returnvalue.set_value(true);
 	}, boost::ref(NewtonManagerResult), this))));
-	
+
 
 	ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), L"MaxFPS", FrameLimit, 120, true, L"Graphics: Init:");
 
 	Graph = new Graphics();
-	CLASS_ALLOC_CHECK(Graph);
 
 	// We need to wait for all current tasks to finish //
 	_ThreadingManager->WaitForAllTasksToFinish();
@@ -263,7 +262,7 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 
 		returnvalue.set_value(true);
 	}, boost::ref(LeapControllerResult), this))));
-	
+
 
 	// sound device //
 	boost::promise<bool> SoundDeviceResult;
@@ -306,7 +305,11 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 		returnvalue.set_value(true);
 	}, boost::ref(SoundDeviceResult), this))));
 
+    if(!Graph){
 
+        Logger::Get()->Error(L"Engine: Init: failed to create instance of Graphics");
+        return false;
+    }
 
 	// call init //
 	if(!Graph->Init(definition)){

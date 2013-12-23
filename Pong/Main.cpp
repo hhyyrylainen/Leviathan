@@ -19,7 +19,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #else
 int main(int argcount, char* args[]){
 #endif
-    cout << "entering!";
+    cout << "entering!" << __FILE__ << __LINE__ << endl;
 	int Return = 0;
 #ifdef _WIN32
 	HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);

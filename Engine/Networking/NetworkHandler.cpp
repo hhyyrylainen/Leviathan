@@ -63,6 +63,7 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
 	// Kill master server connection //
 	MasterServerConnectionThread.join();
 	TempGetResponsesThread.join();
+    TempGetResponsesThread.join();
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMasterServer(const MasterServerInformation &info){

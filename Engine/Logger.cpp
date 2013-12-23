@@ -68,7 +68,7 @@ DLLEXPORT void Leviathan::Logger::Write(const wstring &data, const bool &save /*
 	const wstring message = data + L"\n";
 
 	// if debug build send it to debug output //
-	DEBUG_OUTPUT(message);
+	SendDebugMessage(message);
 
 	PendingLog += message;
 
@@ -83,7 +83,7 @@ DLLEXPORT void Leviathan::Logger::Info(const wstring &data, const bool &save /*=
 	wstring message = L"[INFO] "+data + L"\n";
 
 	// if debug build send it to debug output //
-	DEBUG_OUTPUT(message);
+	SendDebugMessage(message);
 
 	PendingLog += message;
 
@@ -98,7 +98,7 @@ DLLEXPORT void Leviathan::Logger::Error(const wstring &data, const int &pvalue /
 	wstring message = L"[ERROR] "+data+L"\n";
 
 	// if debug build send it to debug output //
-	DEBUG_OUTPUT(message);
+	SendDebugMessage(message);
 	PendingLog += message;
 
 
@@ -113,7 +113,7 @@ DLLEXPORT void Leviathan::Logger::Warning(const wstring &data, bool save /*= fal
 	wstring message = L"[WARNING] "+data+L"\n";
 
 	// if debug build send it to debug output //
-	DEBUG_OUTPUT(message);
+	SendDebugMessage(message);
 	PendingLog += message;
 
 	_LogUpdateEndPart(save, guard);
@@ -147,8 +147,6 @@ void Leviathan::Logger::Print(string message, bool save){
 }
 
 void Leviathan::Logger::SendDebugMessage(const wstring& str){
-#ifdef _DEBUG
-		
 #ifdef _WIN32
 	OutputDebugString(&*str.begin());
 #else
@@ -157,10 +155,6 @@ void Leviathan::Logger::SendDebugMessage(const wstring& str){
 	// We could potentially use wide output here, it might work on linux //
 	//wcout << str;
 #endif // _WIN32
-
-#else
-	return;
-#endif
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::QueueErrorMessage(const wstring& str){

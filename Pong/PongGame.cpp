@@ -19,7 +19,6 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 	BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData("GameConfiguration"), GamePaused(false), GuiManagerAccess(NULL),
 	GameAI(NULL)
 {
-	//QUICKTIME_THISSCOPE;
 	StaticAccess = this;
 
 	GameInputHandler = new GameInputController();
@@ -127,197 +126,197 @@ Pong::PongGame::PongGame() : GameArena(nullptr), ErrorState("No error"), PlayerL
 
 #else
 
-    // Seems that template magic is harder to use //
-    shared_ptr<Leviathan::SimpleDatabaseRowObject> tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	// Seems that template magic is harder to use //
+	shared_ptr<Leviathan::SimpleDatabaseRowObject> tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
-        (L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(0,0,255)"))))
+	boost::assign::insert(*tmpobj.get())
+		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(0,0,255)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Blue"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(255,0,0)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Red"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(0,255,0)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Green"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(255,192,203)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Pink"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(139,58,98)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Hot pink"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(85,26,139)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Purple"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(39,64,139)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Royal blue"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(0,134,139)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Turquoise"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(0,139,69)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Spring green"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(85,107,47)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Dark olive green"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(238, 201, 0)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Gold"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(255, 127, 0)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Dark orange"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Colour", shared_ptr<VariableBlock>(new VariableBlock(string("rgb(1, 1, 1)"))))
 		(L"Name", shared_ptr<VariableBlock>(new VariableBlock(string("Black"))));
 
-    GameConfigurationData.AddValue(L"Colours", tmpobj);
+	GameConfigurationData.AddValue(L"Colours", tmpobj);
 
 	// Add base controls //
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("ARROWS"))))
 		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_ARROWS))))
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(string("0"))));
 
-    GameConfigurationData.AddValue(L"Controls", tmpobj);
+	GameConfigurationData.AddValue(L"Controls", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("WASD"))))
 		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_WASD))))
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0)));
 
-    GameConfigurationData.AddValue(L"Controls", tmpobj);
+	GameConfigurationData.AddValue(L"Controls", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("AI (Ray cast)"))))
 		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_AI))))
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0)));
 
-    GameConfigurationData.AddValue(L"Controls", tmpobj);
+	GameConfigurationData.AddValue(L"Controls", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("AI (Follower)"))))
 		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_AI))))
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(1)));
 
-    GameConfigurationData.AddValue(L"Controls", tmpobj);
+	GameConfigurationData.AddValue(L"Controls", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("AI (Combined)"))))
 		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_AI))))
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(2)));
 
-    GameConfigurationData.AddValue(L"Controls", tmpobj);
+	GameConfigurationData.AddValue(L"Controls", tmpobj);
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("IJKL"))))
 		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_IJKL))))
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0)));
 
-    tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
-       new Leviathan::SimpleDatabaseRowObject());
+	tmpobj = shared_ptr<Leviathan::SimpleDatabaseRowObject>(
+	   new Leviathan::SimpleDatabaseRowObject());
 
-    boost::assign::insert(*tmpobj.get())
+	boost::assign::insert(*tmpobj.get())
 		(L"Type", shared_ptr<VariableBlock>(new VariableBlock(string("NUMPAD"))))
 		(L"BaseType", shared_ptr<VariableBlock>(new VariableBlock(int(PLAYERCONTROLS_NUMPAD))))
 		(L"ID", shared_ptr<VariableBlock>(new VariableBlock(0)));
 
-    GameConfigurationData.AddValue(L"Controls", tmpobj);
+	GameConfigurationData.AddValue(L"Controls", tmpobj);
 
 
 #endif
@@ -429,7 +428,7 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 	// link world and camera to a window //
 	GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
 
-    // I like the debugger //
+	// I like the debugger //
 #ifdef _DEBUG
 	window1->GetGUI()->SetDebuggerOnThisContext();
 	//window1->GetGUI()->SetDebuggerVisibility(true);

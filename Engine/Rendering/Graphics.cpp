@@ -102,7 +102,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), L"RenderSystemName", rendersystemname, "OpenGL", true,
 		L"Graphics: Init: no selected render system,");
 
-	regex rendersystemnameregex(rendersystemname, regex_constants::icase);
+    boost::regex rendersystemnameregex(rendersystemname, boost::regex_constants::icase);
 	Ogre::RenderSystem* selectedrendersystem = NULL;
 
 	// Choose the right render system //
@@ -110,7 +110,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 		const Ogre::String& rsystemname = RSystemList[i]->getName();
 
-		if(regex_search(rsystemname, rendersystemnameregex)){
+		if(boost::regex_search(rsystemname, rendersystemnameregex)){
 
 			// Matched //
 			selectedrendersystem = RSystemList[i];

@@ -18,45 +18,43 @@ static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function"
 // We must use GCC built ins
 // int __builtin_ffs (unsigned int x) Returns one plus the index of the least significant 1-bit of x, or if x is zero, returns zero.
 // So using __builtin_ffs(val)-1 should work
-#include <X11/Xlib.h>
-
-
 
         // X11 window focus find function //
 X11::XID Leviathan::Window::GetForegroundWindow(){
     // Method posted on stack overflow http://stackoverflow.com/questions/1014822/how-to-know-which-window-has-focus-and-how-to-change-it
     using namespace X11;
-    XID foo;
+
     XID win;
-    int bari;
-    unsigned int bar;
 
-    //X11::Display olddisp = XDisplay;
+    int revert_to;
+    XGetInputFocus(XDisplay, &win, &revert_to); // see man
 
-
-
-    do{
-        XQueryPointer(XDisplay, DefaultRootWindow(XDisplay), &foo, &win, &bari, &bari, &bari, &bari, &bar);
-    } while(win <= 0);
-
-    unsigned int n;
-    XID *wins;
-    XWindowAttributes xwa;
-
-
-    XQueryTree(XDisplay, win, &foo, &foo, &wins, &n);
-
-    bar=0;
-    while(--n >= 0){
-        XGetWindowAttributes(XDisplay, wins[n], &xwa);
-        if((xwa.width * xwa.height) > bar){
-            win = wins[n];
-            bar = xwa.width * xwa.height;
-        }
-        n--;
-    }
-
-    XFree(wins);
+//    XID foo;
+//    int bari;
+//    unsigned int bar;
+//
+//    do{
+//        XQueryPointer(XDisplay, DefaultRootWindow(XDisplay), &foo, &win, &bari, &bari, &bari, &bari, &bar);
+//    } while(win <= 0);
+//
+//    unsigned int n;
+//    XID *wins;
+//    XWindowAttributes xwa;
+//
+//
+//    XQueryTree(XDisplay, win, &foo, &foo, &wins, &n);
+//
+//    bar=0;
+//    while(--n >= 0){
+//        XGetWindowAttributes(XDisplay, wins[n], &xwa);
+//        if((xwa.width * xwa.height) > bar){
+//            win = wins[n];
+//            bar = xwa.width * xwa.height;
+//        }
+//        n--;
+//    }
+//
+//    XFree(wins);
 
 
 
@@ -179,7 +177,12 @@ DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
 }
 #else
 DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
-    XQueryPointer(XDisplay, m_hwnd, NULL, NULL, NULL, NULL, &x, &y, NULL);
+    // To not segment fault on this, we need to pass in dummy pointers to unused values //
+    X11::XID spammyme;
+    int spamme;
+    unsigned int spammetoo;
+    // Should return the right position //
+    XQueryPointer(XDisplay, m_hwnd, &spammyme, &spammyme, &spamme, &spamme, &x, &y, &spammetoo);
 }
 #endif
 

@@ -41,7 +41,11 @@ DLLEXPORT bool Leviathan::FileSystem::Init(){
 
 	// use find files function on data folder and then save results to appropriate vectors //
 	vector<wstring> files;
+#ifdef _WIN32
 	GetFilesInDirectory(files, L"./Data/");
+#else
+	GetFilesInDirectory(files, L"./Data");
+#endif
 
 	if(files.size() < 1){
 
@@ -632,6 +636,9 @@ DLLEXPORT int Leviathan::FileSystem::RegisterExtension(const wstring &extension)
 	// add //
 	CurrentFileExtID++;
 	FileTypes.push_back(new IntWstring(extension, CurrentFileExtID));
+#ifdef SPAMME
+	Logger::Get()->Info(L"Registered extension type: "+extension+L"("+Convert::ToWstring(CurrentFileExtID)+L")");
+#endif
 	return CurrentFileExtID;
 }
 
@@ -729,11 +736,9 @@ DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllM
 	GetExtensionIDS(extensions, ExtensionIDS);
 
 	// create regex //
-	basic_regex<wchar_t> usedregex(regexname);
+	boost::wregex usedregex(regexname);
 
 	vector<shared_ptr<FileDefinitionType>> foundfiles;
-
-	//
 
 	if(searchall){
 
@@ -839,18 +844,20 @@ shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector
 }
 
 void Leviathan::FileSystem::_SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<shared_ptr<FileDefinitionType>>& results,
-	vector<int>& extensions, const basic_regex<wchar_t> &regex)
+	vector<int>& extensions, const boost::wregex &regex)
 {
 	for(size_t i = 0; i < vec.size(); i++){
 		// if no extension specified skip checking them //
 		if(extensions.size() > 0){
 			// check does extension(s) match //
-			if(!DoesExtensionMatch(vec[i].get(), extensions))
+			if(!DoesExtensionMatch(vec[i].get(), extensions)){
 				continue;
+            }
 		}
 		// extensions match check name //
-		if(!regex_search(vec[i]->Name, regex))
+		if(!boost::regex_search(vec[i]->Name, regex)){
 			continue;
+        }
 
 		// match //
 		results.push_back(vec[i]);

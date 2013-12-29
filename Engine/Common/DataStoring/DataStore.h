@@ -86,14 +86,11 @@ namespace Leviathan{
 			// use try block to catch all exceptions (not found and conversion fail //
 			try{
 				if(!Values.GetValue(name)->ConvertAndAssingToVariable<T>(receiver)){
-#ifdef _WIN32
-					throw exception("invalid");
-#else
-                    throw bad_exception();
-#endif
+                    // Couldn't convert or assign or find the value //
+                    return false;
 				}
 			}
-			catch(...){
+			catch(const ExceptionInvalidArgument &e){
 				// variable not found / wrong type //
 				return false;
 			}

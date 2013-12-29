@@ -34,7 +34,7 @@ Leviathan::Gui::GuiManager::~GuiManager(){
 
 GuiManager* Leviathan::Gui::GuiManager::staticaccess = NULL;
 GuiManager* Leviathan::Gui::GuiManager::Get(){
-	return staticaccess; 
+	return staticaccess;
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalInputEntity* window){
@@ -65,10 +65,12 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 	WindowContext = Rocket::Core::CreateContext("window01_context", Rocket::Core::Vector2i(wind->GetWidth(), wind->GetHeight()));
 
 	// initialize debugger only once //
+#ifdef _WIN32
 	if(!RocketDebuggerInitialized){
 		Rocket::Debugger::Initialise(WindowContext);
 		RocketDebuggerInitialized = true;
 	}
+#endif
 
 	// we render during Ogre overlay //
 	wind->GetOverlayScene()->addRenderQueueListener(this);
@@ -268,9 +270,9 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 
 		return false;
 	}
-	
+
 	shared_ptr<GuiLoadedSheet> sheet;
-	
+
 	try{
 		sheet = shared_ptr<GuiLoadedSheet>(new GuiLoadedSheet(WindowContext, Convert::WstringToString(FileSystem::GetScriptsFolder()+relativepath)),
 		//	std::mem_fun_ref(&GuiLoadedSheet::ReleaseProxy));
@@ -430,7 +432,7 @@ GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const ws
 		} else {
 			// name should be specified, check for it //
 			if(Collections[i]->GetName() != name){
-				continue; 
+				continue;
 			}
 		}
 

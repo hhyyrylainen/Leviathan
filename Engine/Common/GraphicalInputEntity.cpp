@@ -43,7 +43,6 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 		Engine::GetEngine()->_NotifyThreadsRegisterOgre();
 		FileSystem::RegisterOGREResourceGroups();
 	}
-
 	// create the actual window //
 	DisplayWindow = new Window(tmpwindow, this);
 #ifdef _WIN32

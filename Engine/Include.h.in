@@ -70,7 +70,7 @@
 #include <vector>
 #include <list>
 #include <set>
-#include <regex>
+#include "boost/regex.hpp"
 
 #ifdef _WIN32
 #include <initguid.h>

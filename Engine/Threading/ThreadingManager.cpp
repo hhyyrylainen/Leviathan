@@ -10,11 +10,12 @@ using namespace Leviathan;
 void RegisterOgreOnThread(){
 
 	Ogre::Root::getSingleton().getRenderSystem()->registerThread();
+	Logger::Get()->Info(L"Thread registered to work with Ogre");
 }
 
 
 // ------------------ ThreadingManager ------------------ //
-DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore /*= DEFAULT_THREADS_PER_CORE*/) : AllowStartTasksFromQueue(true), 
+DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore /*= DEFAULT_THREADS_PER_CORE*/) : AllowStartTasksFromQueue(true),
 	StopProcessing(false)
 {
 	WantedThreadCount = boost::thread::hardware_concurrency()*basethreadspercore;
@@ -42,7 +43,7 @@ DLLEXPORT bool Leviathan::ThreadingManager::Init(){
 
 
 	// Start appropriate amount of threads //
-	
+
 	for(int i = 0; i < WantedThreadCount; i++){
 
 
@@ -198,13 +199,20 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 
 		for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
 			(*iter)->SetTaskAndNotify(shared_ptr<QueuedTask>(new QueuedTask(boost::bind(RegisterOgreOnThread))));
-			//// Wait for it to end //
-			//while((*iter)->HasRunningTask()){
-			//	TaskQueueNotify.wait(guard);
-			//}
+			// Wait for it to end //
+#ifdef __GNUC__
+			while((*iter)->HasRunningTask()){
+			    try{
+                    TaskQueueNotify.wait(guard);
+			    }
+			    catch(...){
+                    Logger::Get()->Warning(L"ThreadingManager: MakeThreadsWorkWithOgre: wait interrupted");
+			    }
+			}
+#endif
 		}
 	}
-	
+
 	// Wait for threads to finish //
 	FlushActiveThreads();
 

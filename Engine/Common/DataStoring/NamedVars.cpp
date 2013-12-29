@@ -553,14 +553,20 @@ DLLEXPORT bool Leviathan::NamedVars::SetValue(NamedVariableList &nameandvalues){
 DLLEXPORT VariableBlock& Leviathan::NamedVars::GetValueNonConst(const wstring &name) THROWS{
 	int index = Find(name);
 
+    ARR_INDEX_CHECKINV(index, Variables.size()){
+
+		throw ExceptionInvalidArgument(L"value not found", index, __WFUNCTION__, L"name", name);
+	}
+
 	return Variables[index]->GetValue();
 }
 
-DLLEXPORT const VariableBlock* Leviathan::NamedVars::GetValue(const wstring &name) const{
+DLLEXPORT const VariableBlock* Leviathan::NamedVars::GetValue(const wstring &name) const THROWS{
 	int index = Find(name);
-	// index check //
-	ARR_INDEX_CHECKINV(index, Variables.size()){
-		return NULL;
+
+    ARR_INDEX_CHECKINV(index, Variables.size()){
+
+		throw ExceptionInvalidArgument(L"value not found", index, __WFUNCTION__, L"name", name);
 	}
 
 	return Variables[index]->GetValueDirect();

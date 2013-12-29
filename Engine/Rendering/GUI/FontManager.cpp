@@ -77,7 +77,7 @@ DLLEXPORT void Leviathan::Rendering::FontManager::LoadAllFonts(){
 
 
 	// get all font files and load them //
-	std::vector<shared_ptr<FileDefinitionType>> files = FileSystem::Get()->FindAllMatchingFiles(FILEGROUP_OTHER, L".*", L"ttf|otf", false);
+	std::vector<shared_ptr<FileDefinitionType>> files = FileSystem::Get()->FindAllMatchingFiles(FILEGROUP_OTHER, L".*", L"ttf|otf", true);
 
 	// load them all //
 	for(size_t i = 0; i < files.size(); i++){

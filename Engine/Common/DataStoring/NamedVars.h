@@ -146,7 +146,7 @@ namespace Leviathan{
 		DLLEXPORT size_t GetValueCount(const wstring &name) const;
 
 		DLLEXPORT VariableBlock& GetValueNonConst(const wstring &name) THROWS;
-		DLLEXPORT const VariableBlock* GetValue(const wstring &name) const;
+		DLLEXPORT const VariableBlock* GetValue(const wstring &name) const THROWS;
 		DLLEXPORT bool GetValue(const wstring &name, VariableBlock &receiver) const;
 		DLLEXPORT bool GetValue(const wstring &name, const int &nindex, VariableBlock &receiver) const;
 		DLLEXPORT bool GetValues(const wstring &name, vector<const VariableBlock*> &receiver) const;

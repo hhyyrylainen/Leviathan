@@ -129,12 +129,12 @@ bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 // ------------------------------------ //
 DLLEXPORT wstring Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const wstring &fulladdress, const wstring &regextouse /*= L"http://.*?/"*/){
 	// Create a regex //
-	wregex findaddressregex(regextouse, regex_constants::icase);
+	boost::wregex findaddressregex(regextouse, boost::regex_constants::icase);
 
-	match_results<const wchar_t*> addressmatch;
+	boost::match_results<const wchar_t*> addressmatch;
 
 	// Return the match //
-	regex_search(fulladdress.c_str(), addressmatch, findaddressregex);
+	boost::regex_search(fulladdress.c_str(), addressmatch, findaddressregex);
 
 
 	return wstring(addressmatch[1]);

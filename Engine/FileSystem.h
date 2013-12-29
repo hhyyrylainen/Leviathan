@@ -119,7 +119,7 @@ namespace Leviathan{
 		shared_ptr<FileDefinitionType> _SearchForFileInVec(vector<shared_ptr<FileDefinitionType>> &vec, vector<int> &extensions,
 			const wstring &name, bool UseIndexVector, vector<CharWithIndex*>* Index);
 		void _SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<shared_ptr<FileDefinitionType>>& results,
-			vector<int>& extensions, const basic_regex<wchar_t> &regex);
+			vector<int>& extensions, const boost::wregex &regex);
 		void _CreateIndexesIfMissing(vector<shared_ptr<FileDefinitionType>> &vec, vector<CharWithIndex*> &resultvec, bool &indexed,
 			const bool &force /*= false*/);
 		// ------------------------------------ //

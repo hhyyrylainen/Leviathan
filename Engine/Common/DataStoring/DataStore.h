@@ -86,8 +86,8 @@ namespace Leviathan{
 			// use try block to catch all exceptions (not found and conversion fail //
 			try{
 				if(!Values.GetValue(name)->ConvertAndAssingToVariable<T>(receiver)){
-                    // Couldn't convert or assign or find the value //
-                    return false;
+					// Couldn't convert or assign or find the value //
+					return false;
 				}
 			}
 			catch(const ExceptionInvalidArgument &e){

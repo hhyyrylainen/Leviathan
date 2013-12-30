@@ -10,7 +10,6 @@
 #include "ObjectFiles/LineTokenizer.h"
 using namespace Leviathan;
 // ------------------------------------ //
-
 Leviathan::NamedVariableList::NamedVariableList() : Datas(1), Name(L""){
 }
 
@@ -553,7 +552,7 @@ DLLEXPORT bool Leviathan::NamedVars::SetValue(NamedVariableList &nameandvalues){
 DLLEXPORT VariableBlock& Leviathan::NamedVars::GetValueNonConst(const wstring &name) THROWS{
 	int index = Find(name);
 
-    ARR_INDEX_CHECKINV(index, Variables.size()){
+	ARR_INDEX_CHECKINV(index, Variables.size()){
 
 		throw ExceptionInvalidArgument(L"value not found", index, __WFUNCTION__, L"name", name);
 	}
@@ -564,7 +563,7 @@ DLLEXPORT VariableBlock& Leviathan::NamedVars::GetValueNonConst(const wstring &n
 DLLEXPORT const VariableBlock* Leviathan::NamedVars::GetValue(const wstring &name) const THROWS{
 	int index = Find(name);
 
-    ARR_INDEX_CHECKINV(index, Variables.size()){
+	ARR_INDEX_CHECKINV(index, Variables.size()){
 
 		throw ExceptionInvalidArgument(L"value not found", index, __WFUNCTION__, L"name", name);
 	}
@@ -756,6 +755,10 @@ DLLEXPORT int Leviathan::NamedVars::Find(const wstring &name) const{
 	}
 	return -1;
 }
+// ------------------------------------ //
+
+
+
 // ------------------ Script compatible functions ------------------ //
 ScriptSafeVariableBlock* Leviathan::NamedVars::GetScriptCompatibleValue(string name){
 	// Use a try block to not throw exceptions to the script engine //

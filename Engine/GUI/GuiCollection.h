@@ -15,7 +15,6 @@
 namespace Leviathan{ namespace Gui{
 
 	// usability type define //
-	typedef Key<OIS::KeyCode> GKey;
 
 	class GuiManager;
 

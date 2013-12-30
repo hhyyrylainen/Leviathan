@@ -19,7 +19,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #else
 int main(int argcount, char* args[]){
 #endif
-    cout << "entering!" << __FILE__ << __LINE__ << endl;
 	int Return = 0;
 #ifdef _WIN32
 	HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
@@ -39,13 +38,14 @@ int main(int argcount, char* args[]){
 		// create game object //
 		PongGame game;
 
-		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine());
+		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"./EngineConf.conf", L"./Pong.conf", L"./PongKeys.conf", &PongGame::CheckGameConfigurationVariables,
+			&PongGame::CheckGameKeyConfigVariables));
 		// customize values //
 #ifdef _WIN32
 		ProgramDefinition->SetHInstance(hInstance);
 #endif
-ProgramDefinition->SetMasterServerParameters(MasterServerInformation(L"PongMasters.txt", L"Pong_" GAME_VERSIONS,
-			L"http://boostslair.com/", L"/Pong/MastersList.php", L"PongCrecentials", false));
+		ProgramDefinition->SetMasterServerParameters(MasterServerInformation(L"PongMasters.txt", L"Pong_" GAME_VERSIONS,
+			L"http://boostslair.com/", L"/Pong/MastersList.php", L"PongCrecentials.txt", false));
 
 		// create window last //
 		ProgramDefinition->StoreWindowDetails(PongGame::GenerateWindowTitle(), true,
@@ -74,7 +74,7 @@ ProgramDefinition->SetMasterServerParameters(MasterServerInformation(L"PongMaste
 		} else {
 			Logger::Get()->Error(L"App init failed, closing", true);
 			game.Release();
-			Return = 005;
+			Return = 5;
 		}
 #ifdef _WIN32
 	}

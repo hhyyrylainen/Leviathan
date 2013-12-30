@@ -36,6 +36,8 @@ using Leviathan::TimingMonitor;
 using Leviathan::ScopeTimer;
 using Leviathan::GameModule;
 using Leviathan::ObjectLock;
+using Leviathan::GameConfiguration;
+using Leviathan::KeyConfiguration;
 
 
 

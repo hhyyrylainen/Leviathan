@@ -180,7 +180,7 @@ namespace Leviathan{
 
 			Convert::ToCapital(*str, converted);
 
-			T character = Leviathan::Window::CharacterToOISConvert[converted];
+			T character = Leviathan::Window::ConvertWstringToOISKeyCode(converted);
 			short special = 0;
 
 			while((str = itr.GetUntilNextCharacterOrAll(L'+'))->size() > 0){
@@ -194,7 +194,7 @@ namespace Leviathan{
 				if(Misc::WstringCompareInsensitiveRefs(*str, L"ctrl")){
 					special |= KEYSPECIAL_CTRL;
 				}
-				if(Misc::WstringCompareInsensitiveRefs(*str, L"win") || Misc::WstringCompareInsensitiveRefs(*str, L"meta")){
+				if(Misc::WstringCompareInsensitiveRefs(*str, L"win") || Misc::WstringCompareInsensitiveRefs(*str, L"meta") || Misc::WstringCompareInsensitiveRefs(*str, L"super")){
 					special |= KEYSPECIAL_WIN;
 				}
 			}
@@ -202,10 +202,31 @@ namespace Leviathan{
 			return Key<T>(character, special);
 		}
 
+		DLLEXPORT wstring GenerateWstringFromKey(){
+
+			// First the actual key value //
+			wstring resultstr = Leviathan::Window::ConvertOISKeyCodeToWstring(Character);
+
+			// Add special modifiers //
+			if(Extras && KEYSPECIAL_ALT)
+				resultstr += L"+ALT";
+			if(Extras && KEYSPECIAL_CTRL)
+				resultstr += L"+CTRL";
+			if(Extras && KEYSPECIAL_SHIFT)
+				resultstr += L"+SHIFT";
+			if(Extras && KEYSPECIAL_WIN)
+				resultstr += L"+META";
+			// Result is done //
+			return resultstr;
+		}
+
 	private:
 		short Extras;
 		T Character;
 	};
+
+	// This is the most likely type //
+	typedef Key<OIS::KeyCode> GKey;
 
 }
 #endif

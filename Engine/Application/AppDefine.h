@@ -86,9 +86,8 @@ namespace Leviathan{
 			return vsync;
 		}
 
-
-
-		DLLEXPORT static AppDef* GenerateAppdefine();
+		DLLEXPORT static AppDef* GenerateAppdefine(const wstring &engineconfigfile, const wstring &gameconfig, const wstring &keyconfig, 
+			boost::function<void (GameConfiguration* configobj)> configchecker, boost::function<void (KeyConfiguration* keysobject)> keychecker);
 #ifdef _WIN32
 		DLLEXPORT void StoreWindowDetails(const wstring &title, const bool &windowborder, HICON icon, LeviathanApplication* appvirtualptr);
 #else
@@ -107,6 +106,10 @@ namespace Leviathan{
 
 		// details used to create a window //
 		WindowDataDetails WDetails;
+
+		// Game variables //
+		GameConfiguration* _GameConfiguration;
+		KeyConfiguration* _KeyConfiguration;
 
 		// ------------------------------------ //
 		static AppDef* Defaultconf;

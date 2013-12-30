@@ -337,39 +337,39 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files
 #else
 DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files, const wstring &dirpath, const wstring &pattern /*= L"*.*"*/, bool recursive /*= true*/){
 
-    dirent* ent;
-    class stat st;
+	dirent* ent;
+	class stat st;
 
-    // Start searching //
-    string directory = Convert::WstringToString(dirpath);
+	// Start searching //
+	string directory = Convert::WstringToString(dirpath);
 
-    DIR* dir = opendir(directory.c_str());
-    while((ent = readdir(dir)) != NULL){
-        const string file_name = ent->d_name;
+	DIR* dir = opendir(directory.c_str());
+	while((ent = readdir(dir)) != NULL){
+		const string file_name = ent->d_name;
 
-        // Ignore if starts with a '.' //
-        if(file_name[0] == '.')
-            continue;
+		// Ignore if starts with a '.' //
+		if(file_name[0] == '.')
+			continue;
 
-        const string full_file_name = directory + "/" + file_name;
+		const string full_file_name = directory + "/" + file_name;
 
-        // Get info to determine if it is a directory //
-        if(stat(full_file_name.c_str(), &st) == -1)
-            continue;
+		// Get info to determine if it is a directory //
+		if(stat(full_file_name.c_str(), &st) == -1)
+			continue;
 
-        // Check if it is a directory //
-        if((st.st_mode & S_IFDIR) != 0){
-            // Go into directory if recursive search //
-            if(recursive){
-                // TODO: fix performance //
-                GetFilesInDirectory(files, Convert::StringToWstring(full_file_name), pattern, recursive);
-            }
-            continue;
-        }
+		// Check if it is a directory //
+		if((st.st_mode & S_IFDIR) != 0){
+			// Go into directory if recursive search //
+			if(recursive){
+				// TODO: fix performance //
+				GetFilesInDirectory(files, Convert::StringToWstring(full_file_name), pattern, recursive);
+			}
+			continue;
+		}
 
-        files.push_back(Convert::StringToWstring(full_file_name));
-    }
-    closedir(dir);
+		files.push_back(Convert::StringToWstring(full_file_name));
+	}
+	closedir(dir);
 
 	return true;
 }
@@ -476,7 +476,7 @@ DLLEXPORT bool Leviathan::FileSystem::FileExists(const wstring &name){
 #ifdef _WIN32
 	wifstream file(name);
 #else
-    wifstream file(Convert::WstringToString(name));
+	wifstream file(Convert::WstringToString(name));
 #endif
 	if(file.is_open()){
 		existed=true;
@@ -529,7 +529,7 @@ bool Leviathan::FileSystem::AppendToFile(const wstring &data, const wstring &fil
 #ifdef _WIN32
 	wofstream file(filepath, wofstream::app);
 #else
-    wofstream file(Convert::WstringToString(filepath), wofstream::app);
+	wofstream file(Convert::WstringToString(filepath), wofstream::app);
 #endif
 	if (file.is_open()){
 		file << data;
@@ -546,7 +546,7 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wst
 #ifdef _WIN32
 	wifstream reader(file, ios::in);
 #else
-    wifstream reader(Convert::WstringToString(file), ios::in);
+	wifstream reader(Convert::WstringToString(file), ios::in);
 #endif
 	if(reader){
 
@@ -560,7 +560,7 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wst
 #ifdef _WIN32
 		assert(SIZE_T_MAX >= rpos);
 #else
-        assert(std::numeric_limits<size_t>::max() >= rpos);
+		assert(std::numeric_limits<size_t>::max() >= rpos);
 #endif
 		resultreceiver.resize((UINT)rpos);
 		// back to start //
@@ -852,12 +852,12 @@ void Leviathan::FileSystem::_SearchForFilesInVec(vector<shared_ptr<FileDefinitio
 			// check does extension(s) match //
 			if(!DoesExtensionMatch(vec[i].get(), extensions)){
 				continue;
-            }
+			}
 		}
 		// extensions match check name //
 		if(!boost::regex_search(vec[i]->Name, regex)){
 			continue;
-        }
+		}
 
 		// match //
 		results.push_back(vec[i]);

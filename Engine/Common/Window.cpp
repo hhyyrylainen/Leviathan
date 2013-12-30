@@ -6,6 +6,7 @@
 #include "Engine.h"
 #include "Rocket/Core/Context.h"
 #include <boost/assign/list_of.hpp>
+#include "Exceptions/ExceptionNotFound.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -19,15 +20,15 @@ static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function"
 // int __builtin_ffs (unsigned int x) Returns one plus the index of the least significant 1-bit of x, or if x is zero, returns zero.
 // So using __builtin_ffs(val)-1 should work
 
-        // X11 window focus find function //
+		// X11 window focus find function //
 X11::XID Leviathan::Window::GetForegroundWindow(){
-    // Method posted on stack overflow http://stackoverflow.com/questions/1014822/how-to-know-which-window-has-focus-and-how-to-change-it
-    using namespace X11;
+	// Method posted on stack overflow http://stackoverflow.com/questions/1014822/how-to-know-which-window-has-focus-and-how-to-change-it
+	using namespace X11;
 
-    XID win;
+	XID win;
 
-    int revert_to;
-    XGetInputFocus(XDisplay, &win, &revert_to); // see man
+	int revert_to;
+	XGetInputFocus(XDisplay, &win, &revert_to); // see man
 
 //    XID foo;
 //    int bari;
@@ -58,9 +59,9 @@ X11::XID Leviathan::Window::GetForegroundWindow(){
 
 
 
-    //assert((olddisp == XDisplay) && "X display changed in window");
+	//assert((olddisp == XDisplay) && "X display changed in window");
 
-    return win;
+	return win;
 }
 
 
@@ -71,9 +72,9 @@ DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputE
 	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0),
 	ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true)
 #ifdef __GNUC__
-    , XDisplay(NULL), m_hwnd(0)
+	, XDisplay(NULL), m_hwnd(0)
 #else
-    , m_hwnd(NULL)
+	, m_hwnd(NULL)
 #endif
 {
 
@@ -112,8 +113,8 @@ DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
 #ifdef _WIN32
 			ShowCursor(TRUE);
 #else
-            // Restore default cursor //
-            XUndefineCursor(XDisplay, m_hwnd);
+			// Restore default cursor //
+			XUndefineCursor(XDisplay, m_hwnd);
 #endif
 		}
 	} else {
@@ -123,8 +124,8 @@ DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
 #ifdef _WIN32
 			ShowCursor(FALSE);
 #else
-            // Set nothing as our cursor
-            XDefineCursor(XDisplay, m_hwnd, 0);
+			// Set nothing as our cursor
+			XDefineCursor(XDisplay, m_hwnd, 0);
 #endif
 		}
 	}
@@ -152,8 +153,8 @@ DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 
 	VerifyRenderWindowHandle();
-    // Use the X11 function to warp the cursor //
-    XWarpPointer(XDisplay, 0, m_hwnd, 0, 0, 0, 0, GetWidth()/2, GetHeight()/2);
+	// Use the X11 function to warp the cursor //
+	XWarpPointer(XDisplay, 0, m_hwnd, 0, 0, 0, 0, GetWidth()/2, GetHeight()/2);
 }
 #endif
 
@@ -177,12 +178,12 @@ DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
 }
 #else
 DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
-    // To not segment fault on this, we need to pass in dummy pointers to unused values //
-    X11::XID spammyme;
-    int spamme;
-    unsigned int spammetoo;
-    // Should return the right position //
-    XQueryPointer(XDisplay, m_hwnd, &spammyme, &spammyme, &spamme, &spamme, &x, &y, &spammetoo);
+	// To not segment fault on this, we need to pass in dummy pointers to unused values //
+	X11::XID spammyme;
+	int spamme;
+	unsigned int spammetoo;
+	// Should return the right position //
+	XQueryPointer(XDisplay, m_hwnd, &spammyme, &spammyme, &spamme, &spamme, &x, &y, &spammetoo);
 }
 #endif
 
@@ -270,13 +271,13 @@ bool Leviathan::Window::VerifyRenderWindowHandle(){
 
 	m_hwnd = reinterpret_cast<X11::XID>(xidval);
 	// We need the display too //
-    void* xdisplay(0);
+	void* xdisplay(0);
 
-    OWindow->getCustomAttribute(Ogre::String("DISPLAY"), &xdisplay);
+	OWindow->getCustomAttribute(Ogre::String("DISPLAY"), &xdisplay);
 
 	XDisplay = reinterpret_cast<X11::Display*>(xdisplay);
 
-    return true;
+	return true;
 }
 #endif
 // ------------------------------------ //
@@ -520,7 +521,7 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 	_BitScanForward(&index, differences);
 
 #else
-    int index = __builtin_ffs(differences)-1;
+	int index = __builtin_ffs(differences)-1;
 #endif
 
 	// update old state //
@@ -547,7 +548,7 @@ bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButt
 	_BitScanForward(&index, differences);
 
 #else
-    int index = __builtin_ffs(differences)-1;
+	int index = __builtin_ffs(differences)-1;
 #endif
 
 	// update old state //
@@ -646,7 +647,7 @@ void Leviathan::Window::_CustomMouseMakeSureMouseIsRight(Rocket::Core::Context* 
 
 #define SIMPLEONETOONE(x)	WSTRINGIFY(x), OIS::KC_##x
 
-std::map<wstring, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = boost::assign::map_list_of
+boost::bimap<wstring, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = boost::assign::list_of<boost::bimap<wstring, OIS::KeyCode>::relation>
 	(SIMPLEONETOONE(A))
 	(SIMPLEONETOONE(B))
 	(SIMPLEONETOONE(C))
@@ -700,7 +701,8 @@ std::map<wstring, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = boost
 	(SIMPLEONETOONE(F23))
 	(SIMPLEONETOONE(F24))*/
 
-	(SIMPLEONETOONE(ESCAPE))
+	// In a bidirectional map keys and values need to be unique //
+	//(SIMPLEONETOONE(ESCAPE))
 	(SIMPLEONETOONE(HOME))
 
 	(SIMPLEONETOONE(NUMPAD0))
@@ -724,7 +726,28 @@ std::map<wstring, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = boost
 
 
 DLLEXPORT OIS::KeyCode Leviathan::Window::ConvertWstringToOISKeyCode(const wstring &str){
-	return CharacterToOISConvert[str];
+
+	auto iter = CharacterToOISConvert.left.find(str);
+
+	if(iter == CharacterToOISConvert.left.end()){
+
+		throw ExceptionNotFound(L"value not found", 0, __WFUNCTION__, L"str", str);
+	}
+
+	return iter->second;
+}
+
+DLLEXPORT wstring Leviathan::Window::ConvertOISKeyCodeToWstring(const OIS::KeyCode &code){
+	
+	auto iter = CharacterToOISConvert.right.find(code);
+
+	if(iter == CharacterToOISConvert.right.end()){
+
+
+		throw ExceptionNotFound(L"value not found", 0, __WFUNCTION__, L"code", Convert::ToWstring(code));
+	}
+
+	return iter->second;
 }
 
 

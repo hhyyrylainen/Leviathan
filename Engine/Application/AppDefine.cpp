@@ -5,18 +5,26 @@
 #endif
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Application/Application.h"
+#include "GameConfiguration.h"
+#include "ForwardDeclarations.h"
+#include "KeyConfiguration.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) : ConfigurationValues(new NamedVars()), HInstance(NULL){
-	if(isdef){
+DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) : ConfigurationValues(new NamedVars()), HInstance(NULL), _GameConfiguration(NULL),
+	_KeyConfiguration(NULL)
+{
+	// If this is the default configuration set as the static access one //
+	if(isdef)
 		Defaultconf = this;
-	}
 }
 
 AppDef::~AppDef(){
 	// reset static access if this is it //
 	if(Defaultconf == this)
 		Defaultconf = NULL;
+
+	SAFE_RELEASEDEL(_GameConfiguration);
+	SAFE_RELEASEDEL(_KeyConfiguration);
 }
 
 AppDef* Leviathan::AppDef::Defaultconf = NULL;
@@ -25,15 +33,35 @@ NamedVars* Leviathan::AppDef::GetValues(){
 	return ConfigurationValues.get();
 }
 
-DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(){
+DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const wstring &engineconfigfile, const wstring &gameconfig, const wstring &keyconfig, 
+	boost::function<void (GameConfiguration* configobj)> configchecker, boost::function<void (KeyConfiguration* keysobject)> keychecker)
+{
 
 	unique_ptr<AppDef> tmpptr(new AppDef(true));
 
 	// load variables from configuration file //
-	tmpptr->ConfigurationValues->LoadVarsFromFile(L"./EngineConf.conf");
+	tmpptr->ConfigurationValues->LoadVarsFromFile(engineconfigfile);
+
+	// Load game configuration //
+	tmpptr->_GameConfiguration = new GameConfiguration(gameconfig);
+
+	if(!tmpptr->_GameConfiguration->Init(configchecker)){
+
+		return NULL;
+	}
+
+	// Load key configuration //
+	tmpptr->_KeyConfiguration = new KeyConfiguration(keyconfig);
+
+	if(!tmpptr->_KeyConfiguration->Init(keychecker)){
+
+		return NULL;
+	}
 
 	return tmpptr.release();
 }
+
+
 #ifdef _WIN32
 DLLEXPORT void Leviathan::AppDef::StoreWindowDetails(const wstring &title, const bool &windowborder, HICON icon, LeviathanApplication* appvirtualptr){
 
@@ -52,7 +80,7 @@ DLLEXPORT void Leviathan::AppDef::StoreWindowDetails(const wstring &title, const
 #ifdef _WIN32
 	this->SetWindowDetails(WindowDataDetails(title, width, height, window, windowborder, icon, appvirtualptr));
 #else
-    this->SetWindowDetails(WindowDataDetails(title, width, height, window, windowborder, appvirtualptr));
+	this->SetWindowDetails(WindowDataDetails(title, width, height, window, windowborder, appvirtualptr));
 #endif
 }
 

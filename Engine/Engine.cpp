@@ -305,11 +305,11 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 		returnvalue.set_value(true);
 	}, boost::ref(SoundDeviceResult), this))));
 
-    if(!Graph){
+	if(!Graph){
 
-        Logger::Get()->Error(L"Engine: Init: failed to create instance of Graphics");
-        return false;
-    }
+		Logger::Get()->Error(L"Engine: Init: failed to create instance of Graphics");
+		return false;
+	}
 
 	// call init //
 	if(!Graph->Init(definition)){

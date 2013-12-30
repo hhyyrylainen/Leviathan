@@ -9,6 +9,7 @@
 #include "OgreWindowEventUtilities.h"
 #include "OgreRenderWindow.h"
 #include "OIS.h"
+#include "boost/bimap.hpp"
 
 #ifdef __GNUC__
 // Preprocessor magic to not conflict with Window class //
@@ -74,8 +75,8 @@ namespace Leviathan{
 #ifdef _WIN32
 		DLLEXPORT inline HWND GetHandle(){ VerifyRenderWindowHandle(); return m_hwnd; };
 #else
-        // X11 compatible handle //
-        DLLEXPORT inline X11::XID GetX11Window(){ VerifyRenderWindowHandle(); return m_hwnd; }
+		// X11 compatible handle //
+		DLLEXPORT inline X11::XID GetX11Window(){ VerifyRenderWindowHandle(); return m_hwnd; }
 #endif
 		DLLEXPORT inline int GetWidth() const{ return OWindow->getWidth(); };
 		DLLEXPORT inline int GetHeight() const{ return OWindow->getHeight(); };
@@ -114,10 +115,11 @@ namespace Leviathan{
 		}
 		// map that converts OIS::KeyCode to Rocket key codes //
 		static std::map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> OISRocketKeyConvert;
-		static std::map<wstring, OIS::KeyCode> CharacterToOISConvert;
+		static boost::bimap<wstring, OIS::KeyCode> CharacterToOISConvert;
 
 		// method for other DLLs to call the maps //
 		DLLEXPORT static OIS::KeyCode ConvertWstringToOISKeyCode(const wstring &str);
+		DLLEXPORT static wstring ConvertOISKeyCodeToWstring(const OIS::KeyCode &code);
 
 	private:
 
@@ -125,8 +127,8 @@ namespace Leviathan{
 		void ReleaseOIS();
 		void UpdateOISMouseWindowSize();
 #ifdef __GNUC__
-        // X11 window focus find function //
-        X11::XID GetForegroundWindow();
+		// X11 window focus find function //
+		X11::XID GetForegroundWindow();
 #endif
 		void CheckInputState();
 		void _CreateOverlayScene();
@@ -136,8 +138,8 @@ namespace Leviathan{
 #ifdef _WIN32
 		HWND m_hwnd;
 #else
-        X11::XID m_hwnd;
-        X11::Display* XDisplay;
+		X11::XID m_hwnd;
+		X11::Display* XDisplay;
 #endif
 		Ogre::RenderWindow* OWindow;
 		Ogre::SceneManager* OverlayScene;

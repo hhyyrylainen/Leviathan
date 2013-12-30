@@ -212,6 +212,27 @@ namespace Leviathan{
 		// ------------------------------------ //
 		DLLEXPORT int Find(const wstring &name) const;
 
+
+		// ------------------------------------ //
+		template<class T>
+		DLLEXPORT bool ShouldAddValueIfNotFoundOrWrongType(const wstring &name){
+
+			int index = Find(name);
+
+			if(index < 0){
+				// Add //
+				return true;
+			}
+			// Check is type correct //
+			if(!Variables[(size_t)index]->CanAllBeCastedToType<T>()){
+				// Incorrect types in the variables //
+				return false;
+			}
+
+			// No need to do anything //
+			return false;
+		}
+
 	private:
 		vector<shared_ptr<NamedVariableList>> Variables;
 	};

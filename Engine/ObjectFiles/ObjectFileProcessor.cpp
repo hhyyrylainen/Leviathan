@@ -15,9 +15,9 @@ Leviathan::ObjectFileProcessor::~ObjectFileProcessor(){}
 
 // quick macro to make this shorter //
 #ifdef _MSC_VER
-#define ADDDATANAMEINTDEFINITION(x) (WSTRINGIFY(x), new VariableBlock(new IntBlock(x)))
+#define ADDDATANAMEINTDEFINITION(x) (WIDEN(#x), new VariableBlock(new IntBlock(x)))
 #else
-#define ADDDATANAMEINTDEFINITION(x) (WSTRINGIFY(x), shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(x))))
+#define ADDDATANAMEINTDEFINITION(x) (WIDEN(#x), shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(x))))
 #endif
 
 map<wstring, shared_ptr<VariableBlock>> Leviathan::ObjectFileProcessor::RegisteredValues = boost::assign::map_list_of
@@ -40,6 +40,15 @@ map<wstring, shared_ptr<VariableBlock>> Leviathan::ObjectFileProcessor::Register
 // ------------------------------------ //
 void Leviathan::ObjectFileProcessor::Initialize(){
 	// register basic types //
+
+	// Just out of curiosity check this //
+	auto iter = RegisteredValues.find(L"DATAINDEX_TICKTIME");
+
+	if(iter == RegisteredValues.end()){
+
+		Logger::Get()->Error(L"ObjectFileProcessor: RegisteredValues are messed up, DATAINDEX_TICKTIME is not defined, check the macros!");
+		return;
+	}
 
 }
 void Leviathan::ObjectFileProcessor::Release(){

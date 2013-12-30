@@ -334,6 +334,8 @@ Pong::PongGame::~PongGame(){
 	SAFE_DELETE_VECTOR(PlayerList);
 	SAFE_DELETE(GameAI);
 }
+
+PongGame* Pong::PongGame::StaticAccess = NULL;
 // ------------------------------------ //
 void Pong::PongGame::CustomizeEnginePostLoad(){
 	QUICKTIME_THISSCOPE;
@@ -1170,11 +1172,25 @@ int Pong::PongGame::GetLastHitPlayer(){
 
 
 
+// ------------------------------------ //
+void Pong::PongGame::CheckGameConfigurationVariables(GameConfiguration* configobj){
+	// Check for various variables //
+
+	ObjectLock lockit(*configobj);
+
+	NamedVars* vars = configobj->AccessVariables(lockit);
+
+	// Master server force localhost //
+	if(vars->ShouldAddValueIfNotFoundOrWrongType<bool>(L"MasterServerForceLocalhost")){
+		// Add new //
+		vars->AddVar(L"MasterServerForceLocalhost", new VariableBlock(false));
+		configobj->MarkModified();
+	}
 
 
 
+}
 
+void Pong::PongGame::CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj){
 
-
-
-PongGame* Pong::PongGame::StaticAccess = NULL;
+}

@@ -14,6 +14,8 @@ namespace Leviathan{
 		class GuiManager;
 	}
 
+	class GameConfiguration;
+	class KeyConfiguration;
 	class ThreadingManager;
 	class TaskThread;
 	class Engine;

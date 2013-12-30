@@ -663,7 +663,7 @@ namespace Leviathan{
 #ifdef _WIN32
 			var = (ConvertT)*this;
 #else
-            var = this->operator ConvertT();
+			var = this->operator ConvertT();
 #endif
 			// assignment succeeded //
 			return true;
@@ -680,7 +680,7 @@ namespace Leviathan{
 #ifdef _WIN32
 			return (ConvertT)*this;
 #else
-            return this->operator ConvertT();
+			return this->operator ConvertT();
 #endif
 		}
 

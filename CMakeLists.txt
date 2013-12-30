@@ -93,7 +93,7 @@ add_definitions(-DBOOST_ALL_NO_LIB)
 if(WIN32)
 # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
 # higher memory for compiling precompiled headers
-add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm182)
+add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm216)
 
 # program database flag for debug
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")

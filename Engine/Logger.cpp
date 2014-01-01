@@ -6,8 +6,9 @@
 using namespace Leviathan;
 // ------------------------------------ //
 #include "FileSystem.h"
+#include "Application\AppDefine.h"
 
-Leviathan::Logger::Logger(): FirstSaveDone(false), Saved(false), Autosave(false), Path(L"./Log.txt"){
+DLLEXPORT Leviathan::Logger::Logger(const wstring &file): FirstSaveDone(false), Saved(false), Autosave(false), Path(file){
 	// get time for putting to beginning of log //
 #ifdef _WIN32
 	SYSTEMTIME tdate;
@@ -25,8 +26,9 @@ Leviathan::Logger::Logger(): FirstSaveDone(false), Saved(false), Autosave(false)
 
 	LatestLogger = this;
 }
-DLLEXPORT Leviathan::Logger::Logger(const wstring &start, const bool &autosave) : FirstSaveDone(false), Saved(false), Autosave(autosave),
-	Path(L"./Log.txt")
+
+DLLEXPORT Leviathan::Logger::Logger(const wstring &file, const wstring &start, const bool &autosave) : FirstSaveDone(false), Saved(false), Autosave(autosave),
+	Path(file)
 {
 #ifdef _WIN32
 	SYSTEMTIME tdate;
@@ -149,6 +151,8 @@ void Leviathan::Logger::Print(string message, bool save){
 void Leviathan::Logger::SendDebugMessage(const wstring& str){
 #ifdef _WIN32
 	OutputDebugString(&*str.begin());
+	// We also want standard output messages //
+	wcout << str;
 #else
 	// Using cout should be fine for most other platforms //
 	cout << Convert::WstringToString(str);
@@ -196,7 +200,7 @@ DLLEXPORT Logger* Leviathan::Logger::Get(){
 		return LatestLogger;
 	}
 	// create emergency logger //
-	LatestLogger = new Logger(L"(W) ", true);
+	LatestLogger = new Logger(AppDef::GetDefault()->GetLogFile()+L".txt", L"(W) ", true);
 	return LatestLogger;
 }
 

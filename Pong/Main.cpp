@@ -38,7 +38,7 @@ int main(int argcount, char* args[]){
 		// create game object //
 		PongGame game;
 
-		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"./EngineConf.conf", L"./Pong.conf", L"./PongKeys.conf", &PongGame::CheckGameConfigurationVariables,
+		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"Pong", L"./EngineConf.conf", L"./Pong.conf", L"./PongKeys.conf", &PongGame::CheckGameConfigurationVariables,
 			&PongGame::CheckGameKeyConfigVariables));
 		// customize values //
 #ifdef _WIN32
@@ -54,20 +54,24 @@ int main(int argcount, char* args[]){
 #endif
 			&game);
 
-
+#ifdef _WIN32
+		game.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
+#else
+		wstring commandline = L"";
+		for(int i = 1; i < argcount; i++){
+			commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
+		}
+		game.PassCommandLine(commandline);
+#endif
 
 		if(game.Initialize(ProgramDefinition.get())){
-#ifdef _WIN32
-			game.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
-#else
-			wstring commandline = L"";
-			for(int i = 1; i < argcount; i++){
-				commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
-			}
-			game.PassCommandLine(commandline);
-#endif
+
 			// this is where the game should customize the engine //
 			game.CustomizeEnginePostLoad();
+
+			// After everything is ready the command line should be flushed //
+			game.FlushCommandLine();
+
 
 			Logger::Get()->Info(L"Engine successfully initialized", true);
 			Return = game.RunMessageLoop();

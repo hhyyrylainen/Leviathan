@@ -10,13 +10,12 @@ using namespace Leviathan;
 #include <boost/thread/future.hpp>
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL),
-	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL)
+	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false)
 {
 
 	// create this here //
 	IDDefaultInstance = IDFactory::Get();
 
-	Mainlog = NULL;
 	Inited = false;
 	Graph = NULL;
 	Define = NULL;
@@ -50,21 +49,13 @@ DLLEXPORT Engine* Leviathan::Engine::Get(){
 	return instance;
 }
 // ------------------------------------ //
-bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
+bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype){
 	// get time, for monitoring how long load takes //
 	__int64 InitStartTime = Misc::GetTimeMs64();
 	// set static access to this object //
 	instance = this;
 	// store parameters //
 	Define = definition;
-
-	// create logger object //
-	if(Logger::GetIfExists() != NULL){
-		// already exists //
-		Mainlog = Logger::Get();
-	} else {
-		Mainlog = new Logger();
-	}
 
 	// create //
 	OutOMemory = new OutOfMemoryHandler();
@@ -82,7 +73,7 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 	}
 
 	// We want to send a request to the master server as soon as possible //
-	_NetworkHandler = new NetworkHandler(networking);
+	_NetworkHandler = new NetworkHandler(ntype);
 
 	_NetworkHandler->Init(Define->GetMasterServerInfo());
 
@@ -220,10 +211,17 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 	}, boost::ref(NewtonManagerResult), this))));
 
 
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), L"MaxFPS", FrameLimit, 120, true, L"Graphics: Init:");
+	// Check if we don't want a window //
+	if(NoGui){
 
-	Graph = new Graphics();
+		Logger::Get()->Info(L"Engine: Init: starting in console mode (won't allocate graphical objects) ");
+	} else {
 
+		ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), L"MaxFPS", FrameLimit, 120, true, L"Graphics: Init:");
+
+		Graph = new Graphics();
+
+	}
 	// We need to wait for all current tasks to finish //
 	_ThreadingManager->WaitForAllTasksToFinish();
 
@@ -268,32 +266,34 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 	boost::promise<bool> SoundDeviceResult;
 	// Ref is OK to use since this task finishes before this function //
 	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+		if(!engine->NoGui){
+			engine->Sound = new SoundDevice();
+			if(!engine->Sound){
+				Logger::Get()->Error(L"Engine: Init: failed to create SoundDevice");
+				returnvalue.set_value(false);
+				return;
+			}
 
-		engine->Sound = new SoundDevice();
-		if(!engine->Sound){
-			Logger::Get()->Error(L"Engine: Init: failed to create SoundDevice");
-			returnvalue.set_value(false);
-			return;
-		}
+			if(!engine->Sound->Init()){
 
-		if(!engine->Sound->Init()){
-
-			Logger::Get()->Error(L"Engine: Init: failed to init SoundDevice");
-			returnvalue.set_value(false);
-			return;
+				Logger::Get()->Error(L"Engine: Init: failed to init SoundDevice");
+				returnvalue.set_value(false);
+				return;
+			}
 		}
 
 		// make angel script make list of registered stuff //
 		engine->MainScript->GetExecutor()->ScanAngelScriptTypes();
 
-		// measuring //
-		engine->RenderTimer = new RenderingStatistics();
-		if(!engine->RenderTimer){
-			Logger::Get()->Error(L"Engine: Init: failed to create RenderingStatistics");
-			returnvalue.set_value(false);
-			return;
+		if(!engine->NoGui){
+			// measuring //
+			engine->RenderTimer = new RenderingStatistics();
+			if(!engine->RenderTimer){
+				Logger::Get()->Error(L"Engine: Init: failed to create RenderingStatistics");
+				returnvalue.set_value(false);
+				return;
+			}
 		}
-
 		// create object loader //
 		engine->Loader = new ObjectLoader(engine);
 		if(!engine->Loader){
@@ -302,30 +302,38 @@ bool Leviathan::Engine::Init(AppDef* definition, NetworkClient* networking){
 			return;
 		}
 
+		if(engine->NoGui){
+			// Set object loader to gui mode //
+			// TODO: do this
+
+		}
+
 		returnvalue.set_value(true);
 	}, boost::ref(SoundDeviceResult), this))));
 
-	if(!Graph){
+	if(!NoGui){
+		if(!Graph){
 
-		Logger::Get()->Error(L"Engine: Init: failed to create instance of Graphics");
-		return false;
+			Logger::Get()->Error(L"Engine: Init: failed to create instance of Graphics");
+			return false;
+		}
+
+		// call init //
+		if(!Graph->Init(definition)){
+			Logger::Get()->Error(L"Failed to init Engine, Init graphics failed! Aborting");
+			return false;
+		}
+
+		// create window //
+		GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
+
+		if(!LeapControllerResult.get_future().get() || !SoundDeviceResult.get_future().get()){
+
+			Logger::Get()->Error(L"Engine: Init: leap manager or sound device queued tasks failed");
+			return false;
+		}
+
 	}
-
-	// call init //
-	if(!Graph->Init(definition)){
-		Logger::Get()->Error(L"Failed to init Engine, Init graphics failed! Aborting");
-		return false;
-	}
-
-	// create window //
-	GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
-
-	if(!LeapControllerResult.get_future().get() || !SoundDeviceResult.get_future().get()){
-
-		Logger::Get()->Error(L"Engine: Init: leap manager or sound device queued tasks failed");
-		return false;
-	}
-
 
 	Inited = true;
 
@@ -391,7 +399,7 @@ void Leviathan::Engine::Release(){
 
 	SAFE_RELEASEDEL(MainScript);
 	// save at this point (just in case it crashes before exiting) //
-	Mainlog->Save();
+	Logger::Get()->Save();
 
 	SAFE_DELETE(Loader);
 	SAFE_RELEASEDEL(Graph);
@@ -401,9 +409,6 @@ void Leviathan::Engine::Release(){
 	SAFE_DELETE(Mainstore);
 
 	SAFE_RELEASEDEL(MainEvents);
-
-	SAFE_DELETE(Mainlog);
-
 	// delete randomizer last, for obvious reasons //
 	SAFE_DELETE(MainRandom);
 
@@ -480,6 +485,9 @@ DLLEXPORT void Leviathan::Engine::PreFirstTick(){
 }
 // ------------------------------------ //
 void Leviathan::Engine::RenderFrame(){
+	// We want to totally ignore this if we are in text mode //
+	if(NoGui)
+		return;
 
 	int SinceLastFrame = -1;
 
@@ -510,19 +518,6 @@ void Leviathan::Engine::RenderFrame(){
 	RenderTimer->RenderingEnd();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(const wstring &commands){
-
-}
-void Leviathan::Engine::RunScrCommand(wstring command, wstring params){
-#ifdef _DEBUG
-	Mainlog->Info(L"[DEBUG] Running script command: "+command+L" with params "+params, false);
-#endif
-
-	// pass to console //
-	DEBUG_BREAK;
-
-}
-
 DLLEXPORT void Leviathan::Engine::SaveScreenShot(){
 
 	const wstring fileprefix = MainFileHandler->GetDataFolder()+L"Screenshots/Captured_frame_";
@@ -533,6 +528,10 @@ DLLEXPORT void Leviathan::Engine::SaveScreenShot(){
 
 DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 	int openwindows = 0;
+
+	// If we are in text only mode always return 1 //
+	if(NoGui)
+		return 1;
 
 	if(GraphicalEntity1->GetWindow()->IsOpen())
 		openwindows++;
@@ -568,9 +567,26 @@ void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
 	// Register threads to use graphical objects //
 	_ThreadingManager->MakeThreadsWorkWithOgre();
 }
-
-
-
 // ------------------------------------ //
+DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
+	// Split all flags and check for some flags that might be set //
+	WstringIterator itr(commands);
+	unique_ptr<wstring> splitval;
 
+	while((splitval = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_WHITESPACE))->size() > 0){
+
+		if(*splitval == L"--nogui"){
+			NoGui = true;
+			continue;
+		}
+		// Add (if not processed already) //
+		PassedCommands.push_back(move(splitval));
+	}
+}
+
+DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
+
+
+	PassedCommands.clear();
+}
 // ------------------------------------ //

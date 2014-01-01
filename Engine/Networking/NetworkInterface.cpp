@@ -1,27 +1,15 @@
 #include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_NETWORKSERVER
-#include "NetworkServer.h"
+#ifndef LEVIATHAN_NETWORKINTERFACE
+#include "NetworkInterface.h"
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkServer::NetworkServer(){
 
-}
-
-DLLEXPORT Leviathan::NetworkServer::~NetworkServer(){
-
-}
-// ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkServer::Release(){
-
-}
 // ------------------------------------ //
 
 // ------------------------------------ //
 
 // ------------------------------------ //
 
-
-
-
+// ------------------------------------ //

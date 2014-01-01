@@ -42,7 +42,7 @@ namespace Leviathan{
 	public:
 		DLLEXPORT Engine(LeviathanApplication* owner);
 
-		DLLEXPORT bool Init(AppDef* definition, NetworkClient* networking);
+		DLLEXPORT bool Init(AppDef* definition, NETWORKED_TYPE ntype);
 		DLLEXPORT void Release();
 
 		DLLEXPORT void Tick();
@@ -54,8 +54,10 @@ namespace Leviathan{
 		DLLEXPORT int GetWindowOpenCount();
 
 		// ------------------------------------ //
-		DLLEXPORT void ExecuteCommandLine(const wstring &commands);
-		DLLEXPORT void RunScrCommand(wstring command, wstring params);
+		// Passes the commands and preprocesses them, but also interprets commands like --nogui //
+		DLLEXPORT void PassCommandLine(const wstring &commands);
+		// Runs the normal commands passed by the PassCommandLine function //
+		DLLEXPORT void ExecuteCommandLine();
 
 
 		DLLEXPORT shared_ptr<GameWorld> CreateWorld();
@@ -88,7 +90,6 @@ namespace Leviathan{
 		void _NotifyThreadsRegisterOgre();
 
 		// ------------------------------------ //
-		Logger* Mainlog;
 		AppDef* Define;
 
 		RenderingStatistics* RenderTimer;
@@ -129,6 +130,10 @@ namespace Leviathan{
 		bool Focused : 1;
 		bool GuiActive : 1;
 		bool Inited : 1;
+		bool NoGui;
+
+		// Stores the command line before running it //
+		std::vector<unique_ptr<wstring>> PassedCommands;
 
 		static Engine* instance;
 	};

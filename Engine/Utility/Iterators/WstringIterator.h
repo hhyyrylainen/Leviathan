@@ -75,6 +75,7 @@ namespace Leviathan{
 
 		DLLEXPORT unique_ptr<wstring> GetStringInQuotes(QUOTETYPE quotes);
 		DLLEXPORT unique_ptr<wstring> GetNextNumber(DECIMALSEPARATORTYPE decimal);
+		// The argument passed should be created by using UNNORMALCHARACTER as bit flags inside the argument int //
 		DLLEXPORT unique_ptr<wstring> GetNextCharacterSequence(int stopcaseflags);
 		DLLEXPORT unique_ptr<wstring> GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase);
 		DLLEXPORT unique_ptr<wstring> GetUntilEnd();

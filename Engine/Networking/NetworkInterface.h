@@ -1,5 +1,5 @@
-#ifndef LEVIATHAN_NETWORKSERVER
-#define LEVIATHAN_NETWORKSERVER
+#ifndef LEVIATHAN_NETWORKINTERFACE
+#define LEVIATHAN_NETWORKINTERFACE
 // ------------------------------------ //
 #ifndef LEVIATHAN_DEFINE
 #include "Define.h"
@@ -10,12 +10,11 @@
 
 namespace Leviathan{
 
-	class NetworkServer : public Object{
+	class NetworkInterface{
 	public:
-		DLLEXPORT NetworkServer();
-		DLLEXPORT ~NetworkServer();
+		DLLEXPORT NetworkInterface();
+		DLLEXPORT ~NetworkInterface();
 
-		DLLEXPORT void Release();
 
 	private:
 

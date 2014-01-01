@@ -63,7 +63,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 	Ogre::LogManager* logMgr = new Ogre::LogManager();
 
-	OLog = Ogre::LogManager::getSingleton().createLog("LogOGRE.txt", true, true, false);
+	OLog = Ogre::LogManager::getSingleton().createLog(Convert::WstringToString(appdef->GetLogFile()+L"LogOGRE.txt"), true, true, false);
 	OLog->setDebugOutputEnabled(true);
 	OLog->setLogDetail(Ogre::LL_NORMAL);
 
@@ -102,7 +102,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), L"RenderSystemName", rendersystemname, "OpenGL", true,
 		L"Graphics: Init: no selected render system,");
 
-    boost::regex rendersystemnameregex(rendersystemname, boost::regex_constants::icase);
+	boost::regex rendersystemnameregex(rendersystemname, boost::regex_constants::icase);
 	Ogre::RenderSystem* selectedrendersystem = NULL;
 
 	// Choose the right render system //

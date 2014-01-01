@@ -5,8 +5,8 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int timeout /*= 1000*/) : ResponseID(IDFactory::GetID()), 
-	TypeOfRequest(type), TimeOutMS(timeout)
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
+	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(type), TimeOutValue(timeout), TimeOutStyle(style)
 {
 
 }
@@ -30,8 +30,12 @@ DLLEXPORT int Leviathan::NetworkRequest::GetExpectedResponseID(){
 	return ResponseID;
 }
 
-DLLEXPORT int Leviathan::NetworkRequest::GetTimeoutMilliseconds(){
-	return TimeOutMS;
+DLLEXPORT int Leviathan::NetworkRequest::GetTimeOutValue(){
+	return TimeOutValue;
+}
+
+DLLEXPORT PACKET_TIMEOUT_STYLE Leviathan::NetworkRequest::GetTimeOutType(){
+	return TimeOutStyle;
 }
 // ------------------------------------ //
 

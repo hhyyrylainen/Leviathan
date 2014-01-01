@@ -35,19 +35,19 @@ __int64 Misc::GetTimeMs64()
 
 	return ret;
 #elif defined __linux__
-        /* Linux */
-    struct timeval tv;
+		/* Linux */
+	struct timeval tv;
 
-    gettimeofday(&tv, NULL);
+	gettimeofday(&tv, NULL);
 
-    __int64 ret = tv.tv_usec;
-    /* Convert from micro seconds (10^-6) to milliseconds (10^-3) */
-    ret /= 1000;
+	__int64 ret = tv.tv_usec;
+	/* Convert from micro seconds (10^-6) to milliseconds (10^-3) */
+	ret /= 1000;
 
-    /* Adds the seconds (10^0) after converting them to milliseconds (10^-3) */
-    ret += (tv.tv_sec * 1000);
+	/* Adds the seconds (10^0) after converting them to milliseconds (10^-3) */
+	ret += (tv.tv_sec * 1000);
 
-    return ret;
+	return ret;
 #else
 #error no working get time on platform
 #endif
@@ -72,17 +72,17 @@ __int64 Misc::GetTimeMicro64()
 
 	return ret;
 #elif defined __linux__
-    /* Linux */
-    struct timeval tv;
+	/* Linux */
+	struct timeval tv;
 
-    gettimeofday(&tv, NULL);
+	gettimeofday(&tv, NULL);
 
-    __int64 ret = tv.tv_usec;
+	__int64 ret = tv.tv_usec;
 
-    /* Adds the seconds (10^0) after converting them to microseconds (10^-6) */
-    ret += (tv.tv_sec * 1000000);
+	/* Adds the seconds (10^0) after converting them to microseconds (10^-6) */
+	ret += (tv.tv_sec * 1000000);
 
-    return ret;
+	return ret;
 #else
 #error no working get time on platform
 #endif

@@ -6,6 +6,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 #include "ObjectFiles/ObjectFileProcessor.h"
+#include "Application/AppDefine.h"
 
 DLLEXPORT Leviathan::DataStore::DataStore(){
 	Load();
@@ -30,8 +31,8 @@ DLLEXPORT Leviathan::DataStore::DataStore(){
 
 }
 DLLEXPORT Leviathan::DataStore::DataStore(bool man){
-	if(!man)
-		assert(0 && "this shouldn't be called with false");
+
+	assert(man && "this shouldn't be called with false");
 
 	Staticaccess = this;
 
@@ -67,7 +68,7 @@ DLLEXPORT Leviathan::DataStore::~DataStore(){
 void Leviathan::DataStore::Load(){
 	// load //
 	vector<shared_ptr<NamedVariableList>> tempvec;
-	FileSystem::LoadDataDump(L"./Persist.txt", tempvec);
+	FileSystem::LoadDataDump(AppDef::GetDefault()->GetLogFile()+L"Persist.txt", tempvec);
 
 	Values.SetVec(tempvec);
 	Persistencestates.resize(tempvec.size());

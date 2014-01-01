@@ -134,6 +134,10 @@ DLLEXPORT void Leviathan::GameWorld::RemoveSunlight(){
 }
 
 DLLEXPORT void Leviathan::GameWorld::UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos){
+	// Skip if no camera //
+	if(camerapos == NULL)
+		return;
+
 	// update camera //
 	camerapos->UpdatePos(mspassed);
 

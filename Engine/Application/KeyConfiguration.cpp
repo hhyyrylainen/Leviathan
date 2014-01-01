@@ -9,6 +9,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::KeyConfiguration::KeyConfiguration(const wstring &configfile) : KeyStorageFile(configfile){
 	// The file is stored and the map waits for init before loading //
+	staticaccess = this;
 }
 
 DLLEXPORT Leviathan::KeyConfiguration::~KeyConfiguration(){
@@ -26,8 +27,11 @@ KeyConfiguration* Leviathan::KeyConfiguration::staticaccess = NULL;
 DLLEXPORT bool Leviathan::KeyConfiguration::Init(boost::function<void (KeyConfiguration* checkfrom)> functocheck){
 	ObjectLock guard(*this);
 
-	// Load the values from the file //
+	// Skip if not given a file //
+	if(KeyStorageFile.size() == 0)
+		return true;
 
+	// Load the values from the file //
 	std::vector<shared_ptr<NamedVariableList>> tmpvalues;
 
 	if(FileSystem::LoadDataDump(KeyStorageFile, tmpvalues) != 0){
@@ -75,6 +79,10 @@ DLLEXPORT void Leviathan::KeyConfiguration::Release(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::KeyConfiguration::Save(){
+	// Skip if not given a file //
+	if(KeyStorageFile.size() == 0)
+		return;
+
 	// First generate a string for this //
 	wstring savedata = L"";
 

@@ -6,17 +6,50 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "NetworkClient.h"
-#include "NetworkServer.h"
+#include "NetworkInterface.h"
 #include <boost/thread/future.hpp>
 #include "Common/ThreadSafe.h"
-#include "ConnectionInfo.h"
+#include "SFML/Network/UdpSocket.hpp"
 
 
 namespace Leviathan{
 
 	void RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar);
 	void RunTemporaryUpdateConnections(NetworkHandler* instance);
+
+	enum PACKET_TIMEOUT_STYLE {PACKAGE_TIMEOUT_STYLE_TIMEDMS, 
+		// This style marks packets lost after TimeOutMS amount of packets sent after this packet have been confirmed to received
+		// So if you set this to 1 this packet is resend if even a single packet send after this is received by the target host
+		PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED};
+
+
+	enum NETWORKED_TYPE {NETWORKED_TYPE_CLIENT, NETWORKED_TYPE_SERVER, NETWORKED_TYPE_MASTER};
+
+	// Used to pass master server info to the application //
+	struct MasterServerInformation{
+		MasterServerInformation(bool iammaster, const wstring &identificationstr) : RequireMaster(false), IAmMyOwnMaster(true), 
+			MasterServerIdentificationString(identificationstr)
+		{
+
+		}
+		MasterServerInformation() : RequireMaster(false){
+		}
+		MasterServerInformation(const wstring &masterslistfile, const wstring &identification, const wstring &masterserverlistaddress, const wstring 
+			&masterserverlistpagename, const wstring &loginsession, bool requireconnection = false) : 
+		MasterListFetchServer(masterserverlistaddress), MasterListFetchPage(masterserverlistpagename), StoredListFile(masterslistfile),
+			MasterServerIdentificationString(identification), LoginStoreFile(loginsession), RequireMaster(requireconnection)
+		{
+
+		}
+		wstring MasterListFetchServer;
+		wstring MasterListFetchPage;
+		wstring StoredListFile;
+		wstring MasterServerIdentificationString;
+		wstring LoginStoreFile;
+		bool RequireMaster;
+		bool IAmMyOwnMaster;
+	};
+
 
 	class NetworkHandler : public EngineComponent, public ThreadSafe{
 		friend void RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar);
@@ -25,8 +58,7 @@ namespace Leviathan{
 		friend ConnectionInfo;
 	public:
 		// Either a client or a server handler //
-		DLLEXPORT NetworkHandler(NetworkClient* clientside);
-		DLLEXPORT NetworkHandler(NetworkServer* serverside);
+		DLLEXPORT NetworkHandler(NETWORKED_TYPE ntype);
 		DLLEXPORT ~NetworkHandler();
 
 		DLLEXPORT virtual bool Init(const MasterServerInformation &info);
@@ -49,6 +81,9 @@ namespace Leviathan{
 
 	protected:
 
+		// Closes the socket //
+		void _ReleaseSocket();
+
 
 		void _SaveMasterServerList();
 		bool _LoadMasterServerList();
@@ -61,10 +96,11 @@ namespace Leviathan{
 		// Internal listing of all connections //
 		std::vector<ConnectionInfo*> ConnectionsToUpdate;
 
+		std::vector<shared_ptr<ConnectionInfo>> AutoOpenedConnections;
 
-		NetworkClient* IsClient;
-		NetworkServer* IsServer;
-
+		NETWORKED_TYPE AppType;
+		sf::UdpSocket _Socket;
+		USHORT PortNumber;
 
 		// The master server list //
 		std::vector<shared_ptr<wstring>> MasterServers;
@@ -81,6 +117,8 @@ namespace Leviathan{
 		// Temporary thread for getting responses while the game is starting //
 		boost::thread TempGetResponsesThread;
 		bool StopGetResponsesThread;
+
+		wstring MasterServerMustPassIdentification;
 
 		// Static access //
 		static NetworkHandler* instance;

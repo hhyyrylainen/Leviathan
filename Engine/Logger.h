@@ -16,8 +16,8 @@ namespace Leviathan{
 
 	class Logger : public boost::basic_lockable_adapter<boost::recursive_mutex>{
 	public:
-		DLLEXPORT Logger();
-		DLLEXPORT Logger(const wstring &start, const bool &autosave);
+		DLLEXPORT Logger(const wstring &file);
+		DLLEXPORT Logger(const wstring &file, const wstring &start, const bool &autosave);
 		DLLEXPORT ~Logger();
 
 		DLLEXPORT void Write(const wstring &data, const bool &save = false);

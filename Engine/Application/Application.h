@@ -27,6 +27,8 @@ namespace Leviathan{
 		DLLEXPORT virtual int RunMessageLoop();
 		DLLEXPORT virtual void Render();
 		DLLEXPORT void PassCommandLine(const wstring &params);
+		// Executes all pending command line arguments //
+		DLLEXPORT void FlushCommandLine();
 		DLLEXPORT virtual void Tick(int mspassed);
 		DLLEXPORT virtual void PreFirstTick();
 		
@@ -54,9 +56,6 @@ namespace Leviathan{
 
 		Engine* _Engine;
 		AppDef* ApplicationConfiguration;
-
-		// Default type connection handler //
-		NetworkClient* Networking;
 
 		// static part //
 		static LeviathanApplication* Curapp;

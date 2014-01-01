@@ -7,6 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "SFML/Network/Packet.hpp"
+#include "NetworkHandler.h"
 
 
 namespace Leviathan{
@@ -19,19 +20,24 @@ namespace Leviathan{
 
 	class NetworkRequest{
 	public:
-		DLLEXPORT NetworkRequest(NETWORKREQUESTTYPE type, int timeout = 1000);
+		DLLEXPORT NetworkRequest(NETWORKREQUESTTYPE type, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT ~NetworkRequest();
 
 
 		DLLEXPORT sf::Packet GeneratePacketForRequest();
 
 		DLLEXPORT int GetExpectedResponseID();
-		DLLEXPORT int GetTimeoutMilliseconds();
+		DLLEXPORT int GetTimeOutValue();
+
+		DLLEXPORT PACKET_TIMEOUT_STYLE GetTimeOutType();
 
 	protected:
 
 		int ResponseID;
-		int TimeOutMS;
+		int TimeOutValue;
+
+		PACKET_TIMEOUT_STYLE TimeOutStyle;
+
 		NETWORKREQUESTTYPE TypeOfRequest;
 		// TODO: data object //
 

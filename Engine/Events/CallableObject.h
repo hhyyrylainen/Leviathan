@@ -32,8 +32,8 @@ namespace Leviathan{
 		void UnRegisterAllEvents();
 		// ------------------------------------ //
 
-		vector<EVENT_TYPE> RegisteredTypes;
-		vector<unique_ptr<wstring>> RegisteredGenerics;
+		//vector<EVENT_TYPE> RegisteredTypes;
+		//vector<shared_ptr<wstring>> RegisteredGenerics;
 
 
 

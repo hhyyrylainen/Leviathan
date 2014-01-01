@@ -25,6 +25,7 @@ AppDef::~AppDef(){
 
 	SAFE_RELEASEDEL(_GameConfiguration);
 	SAFE_RELEASEDEL(_KeyConfiguration);
+	SAFE_DELETE(Mainlog);
 }
 
 AppDef* Leviathan::AppDef::Defaultconf = NULL;
@@ -33,11 +34,21 @@ NamedVars* Leviathan::AppDef::GetValues(){
 	return ConfigurationValues.get();
 }
 
-DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const wstring &engineconfigfile, const wstring &gameconfig, const wstring &keyconfig, 
+DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const wstring &logfile, const wstring &engineconfigfile, const wstring &gameconfig, const wstring &keyconfig, 
 	boost::function<void (GameConfiguration* configobj)> configchecker, boost::function<void (KeyConfiguration* keysobject)> keychecker)
 {
 
 	unique_ptr<AppDef> tmpptr(new AppDef(true));
+
+	tmpptr->LogFile = logfile;
+
+	// Create logger first if it doesn't exist //
+	if(Logger::GetIfExists() != NULL){
+		// already exists //
+		tmpptr->Mainlog = Logger::Get();
+	} else {
+		tmpptr->Mainlog = new Logger(logfile+L"Log.txt");
+	}
 
 	// load variables from configuration file //
 	tmpptr->ConfigurationValues->LoadVarsFromFile(engineconfigfile);

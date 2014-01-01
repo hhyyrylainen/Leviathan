@@ -9,16 +9,12 @@
 #include "SFML/Network/Http.hpp"
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
+#include "Application/GameConfiguration.h"
+#include "Utility/ComplainOnce.h"
+#include "ConnectionInfo.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NetworkClient* clientside) : IsClient(clientside), IsServer(NULL), CloseMasterServerConnection(false),
-	StopGetResponsesThread(false)
-{
-	instance = this;
-}
-
-DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NetworkServer* serverside) : IsServer(serverside), IsClient(NULL), CloseMasterServerConnection(false),
-	StopGetResponsesThread(false)
+DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype) : AppType(ntype), CloseMasterServerConnection(false), StopGetResponsesThread(false)
 {
 	instance = this;
 }
@@ -34,36 +30,95 @@ DLLEXPORT NetworkHandler* Leviathan::NetworkHandler::Get(){
 NetworkHandler* Leviathan::NetworkHandler::instance = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &info){
-	// Query master server //
-	QueryMasterServer(info);
+	ObjectLock guard(*this);
+
+	MasterServerMustPassIdentification = info.MasterServerIdentificationString;
+
+	if(AppType != NETWORKED_TYPE_MASTER){
+		// Query master server //
+		QueryMasterServer(info);
+
+	} else {
+		// We are our own master! //
+		
+		// Get out port number here //
+		ObjectLock lockit(*GameConfiguration::Get());
+
+		NamedVars* vars = GameConfiguration::Get()->AccessVariables(lockit);
+
+		int tmpport = 0;
+
+		if(!vars->GetValueAndConvertTo<int>(L"MasterServerPort", tmpport)){
+			// This is quite bad //
+			Logger::Get()->Error(L"NetworkHandler: Init: no port configured, config missing 'MasterServerPort' of type int");
+		}
+
+		PortNumber = (USHORT)tmpport;
+	}
+
+	if(AppType == NETWORKED_TYPE_CLIENT){
+		// We can use any port we get //
+		PortNumber = sf::Socket::AnyPort;
+	} else if(AppType == NETWORKED_TYPE_SERVER){
+		// We need to use a specific port //
+		ObjectLock lockit(*GameConfiguration::Get());
+
+		NamedVars* vars = GameConfiguration::Get()->AccessVariables(lockit);
+
+		int tmpport = 0;
+
+		if(!vars->GetValueAndConvertTo<int>(L"ServerPort", tmpport)){
+			// This is quite bad //
+			Logger::Get()->Error(L"NetworkHandler: Init: no port configured, config missing 'ServerPort' of type int");
+		}
+
+		PortNumber = (USHORT)tmpport;
+	}
+
+	// We want to receive responses //
+	if(_Socket.bind(PortNumber) != sf::Socket::Done){
+
+		Logger::Get()->Error(L"NetworkHandler: Init: failed to bind to a port "+Convert::ToWstring(PortNumber));
+		return false;
+	}
+
+	// Set the socket as non-blocking //
+	_Socket.setBlocking(false);
+
+	// Report success //
+	Logger::Get()->Info(L"NetworkHandler: running listening socket on port "+Convert::ToWstring(_Socket.getLocalPort()));
 
 	return true;
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::Release(){
+	ObjectLock guard(*this);
 	// Notify master server connection kill //
 	StopOwnUpdaterThread();
 	if(MasterServerConnection){
 
-		MasterServerConnection->ReleaseSocket();
+		MasterServerConnection->Release();
+	}
+	for(size_t i = 0; i < AutoOpenedConnections.size(); i++){
+
+		AutoOpenedConnections[i]->Release();
 	}
 
 	// Close all connections //
-	if(IsClient){
+	MasterServerConnection.reset();
+	AutoOpenedConnections.clear();
 
-		IsClient->Release();
-		IsClient = NULL;
-	}
-	if(IsServer){
-
-		IsServer->Release();
-		IsServer = NULL;
-	}
+	_ReleaseSocket();
 
 	// Kill master server connection //
 	MasterServerConnectionThread.join();
 	TempGetResponsesThread.join();
-    TempGetResponsesThread.join();
+	TempGetResponsesThread.join();
+}
+
+void Leviathan::NetworkHandler::_ReleaseSocket(){
+	// This should do the trick //
+	_Socket.unbind();
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMasterServer(const MasterServerInformation &info){
@@ -141,10 +196,61 @@ DLLEXPORT wstring Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
-	ObjectLock guard(*this);
-	for(auto iter = ConnectionsToUpdate.begin(); iter != ConnectionsToUpdate.end(); ++iter){
+	boost::unique_lock<NetworkHandler> guard(*this);
 
-		(*iter)->UpdateListening();
+	// Let's listen for things //
+	sf::Packet receivedpacket;
+
+	sf::IpAddress sender;
+	USHORT sentport;
+
+	// Loop through all received packets //
+	while(_Socket.receive(receivedpacket, sender, sentport) == sf::Socket::Done){
+		// Process packet //
+		Logger::Get()->Info(L"NetworkHandler: received a packet! from "+Convert::StringToWstring(sender.toString()));
+
+		// Pass to a connection //
+		bool Passed = false;
+
+		for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
+			// Keep passing until somebody handles it //
+			guard.unlock();
+			if(ConnectionsToUpdate[i]->IsThisYours(receivedpacket, sender, sentport)){
+				Passed = true;
+				break;
+			}
+			guard.lock();
+		}
+
+		if(!Passed){
+			// We might want to open a new connection to this client //
+			Logger::Get()->Info(L"Received a new connection from "+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
+
+			if(AppType != NETWORKED_TYPE_CLIENT){
+				// Accept the connection //
+				Logger::Get()->Info(L"\t> Connection accepted");
+
+				shared_ptr<ConnectionInfo> tmpconnect(new ConnectionInfo(sender, sentport));
+
+				AutoOpenedConnections.push_back(tmpconnect);
+
+				// Try to handle the packet //
+				guard.unlock();
+				if(!tmpconnect->IsThisYours(receivedpacket, sender, sentport)){
+					// That's an error //
+					Logger::Get()->Error(L"NetworkHandler: UpdateAllConnections: new connection refused to process it's packet from"
+						+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
+				}
+				guard.lock();
+			}
+		}
+	}
+	// Time-out requests //
+	for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
+		// This needs to be unlocked to avoid dreadlocking //
+		guard.unlock();
+		ConnectionsToUpdate[i]->UpdateListening();
+		guard.lock();
 	}
 }
 
@@ -260,12 +366,37 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 			tmpaddress = instance->MasterServers[i];
 		}
 
+		// We might want to try to connect to localhost //
+		{
+			ObjectLock lockit(*GameConfiguration::Get());
+			NamedVars* variables = GameConfiguration::Get()->AccessVariables(lockit);
+
+			bool uselocalhost = false;
+			if(variables->GetValueAndConvertTo<bool>(L"MasterServerForceLocalhost", uselocalhost) && uselocalhost){
+
+				// We might want to warn about this //
+				ComplainOnce::PrintWarningOnce(L"MasterServerForceLocalhostOn", L"Master server list forced to use localhost as address, might not be what you want");
+
+				WstringIterator itr(tmpaddress.get(), false);
+
+				auto tmpres = itr.GetUntilNextCharacterOrAll(L':');
+
+				// Right now the part we don't want is retrieved //
+				tmpres = itr.GetUntilEnd();
+
+				// The result now should have the ':' character and the possible port //
+
+				tmpaddress = shared_ptr<wstring>(new wstring(L"localhost"+*tmpres.get()));
+			}
+		}
+
+
 		// Try connection //
-		shared_ptr<ConnectionInfo> tmpinfo(new ConnectionInfo(tmpaddress, sf::Socket::AnyPort));
+		shared_ptr<ConnectionInfo> tmpinfo(new ConnectionInfo(tmpaddress));
 
 		if(!tmpinfo->Init()){
 
-			Logger::Get()->Error(L"NetworkHandler: failed to bind a socket!");
+			Logger::Get()->Error(L"NetworkHandler: failed to open a connection to target");
 			continue;
 		}
 
@@ -279,7 +410,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 			// Failed to receive something from the server //
 			Logger::Get()->Warning(L"NetworkHandler: failed to receive a response from master server("+*tmpaddress+L")");
 			// Release connection //
-			tmpinfo->ReleaseSocket();
+			tmpinfo->Release();
 			continue;
 		}
 
@@ -327,7 +458,11 @@ void Leviathan::RunTemporaryUpdateConnections(NetworkHandler* instance){
 	while(!instance->StopGetResponsesThread){
 
 		instance->UpdateAllConnections();
-		boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+		try{
+			boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+		} catch(...){
+			continue;
+		}
 	}
 
 }

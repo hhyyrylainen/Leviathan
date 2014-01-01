@@ -10,7 +10,7 @@
 #include "Engine.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties){
+DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties) : MouseCaptureState(false){
 
 	// create window //
 

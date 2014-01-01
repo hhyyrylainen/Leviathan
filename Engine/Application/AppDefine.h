@@ -9,7 +9,7 @@
 #include "Common/DataStoring/NamedVars.h"
 #include "Common/Window.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
-#include "Networking/NetworkClient.h"
+#include "Networking/NetworkHandler.h"
 
 namespace Leviathan{
 
@@ -86,7 +86,11 @@ namespace Leviathan{
 			return vsync;
 		}
 
-		DLLEXPORT static AppDef* GenerateAppdefine(const wstring &engineconfigfile, const wstring &gameconfig, const wstring &keyconfig, 
+		DLLEXPORT const wstring& GetLogFile(){
+			return LogFile;
+		}
+
+		DLLEXPORT static AppDef* GenerateAppdefine(const wstring &logfile, const wstring &engineconfigfile, const wstring &gameconfig, const wstring &keyconfig, 
 			boost::function<void (GameConfiguration* configobj)> configchecker, boost::function<void (KeyConfiguration* keysobject)> keychecker);
 #ifdef _WIN32
 		DLLEXPORT void StoreWindowDetails(const wstring &title, const bool &windowborder, HICON icon, LeviathanApplication* appvirtualptr);
@@ -110,6 +114,9 @@ namespace Leviathan{
 		// Game variables //
 		GameConfiguration* _GameConfiguration;
 		KeyConfiguration* _KeyConfiguration;
+
+		wstring LogFile;
+		Logger* Mainlog;
 
 		// ------------------------------------ //
 		static AppDef* Defaultconf;

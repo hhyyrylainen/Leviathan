@@ -9,8 +9,7 @@ using namespace Leviathan;
 #include "OGRE/OgreWindowEventUtilities.h"
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
-DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), _Engine(NULL), ApplicationConfiguration(NULL), ShouldQuit(false), 
-	Networking(NULL)
+DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), _Engine(NULL), ApplicationConfiguration(NULL), ShouldQuit(false)
 {
 	Curapp = this;
 }
@@ -25,12 +24,9 @@ DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration
 	// store configuration //
 	ApplicationConfiguration = configuration;
 
-	// Create network handler before passing it to the engine //
-	Networking = new NetworkClient();
-
 	// init engine //
 	_Engine = new Engine(this);
-	if(!_Engine->Init(ApplicationConfiguration, Networking))
+	if(!_Engine->Init(ApplicationConfiguration, NETWORKED_TYPE_CLIENT))
 		return false;
 	_InternalInit();
 	return true;
@@ -43,9 +39,6 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 	// let engine release itself and then delete it //
 	SAFE_RELEASEDEL(_Engine);
 	// configuration object needs to be destroyed by the program main function //
-
-	// Destroy our networking //
-	SAFE_DELETE(Networking);
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
@@ -53,7 +46,11 @@ DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::PassCommandLine(const wstring &params){
-	_Engine->ExecuteCommandLine(params);
+	_Engine->PassCommandLine(params);
+}
+
+DLLEXPORT void Leviathan::LeviathanApplication::FlushCommandLine(){
+	_Engine->ExecuteCommandLine();
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::_InternalInit(){
@@ -88,7 +85,11 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 		_Engine->Tick();
 		Render();
 		// We could potentially wait here //
-		boost::this_thread::sleep(boost::posix_time::microseconds(700));
+		try{
+			boost::this_thread::sleep(boost::posix_time::microseconds(700));
+		} catch(...){
+			continue;
+		}
 	}
 	// always release before quitting to avoid tons of memory leaks //
 	Release();

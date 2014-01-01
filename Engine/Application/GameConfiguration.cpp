@@ -7,11 +7,11 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameConfiguration::GameConfiguration(const wstring &configfile) : GameConfigFile(configfile), Modified(false){
-
+	staticaccess = this;
 }
 
 DLLEXPORT Leviathan::GameConfiguration::~GameConfiguration(){
-
+	staticaccess = NULL;
 }
 
 DLLEXPORT GameConfiguration* Leviathan::GameConfiguration::Get(){
@@ -27,7 +27,7 @@ DLLEXPORT bool Leviathan::GameConfiguration::Init(boost::function<void (GameConf
 
 	int res = GameVars->LoadVarsFromFile(GameConfigFile);
 
-	if(res != 404 && res != 1){
+	if(res != 404 && res != 0){
 		// Unknown error //
 		Logger::Get()->Error(L"GameConfiguration: Unknown error from LoadVarsFromFile, result code: "+Convert::ToWstring(res));
 		return false;

@@ -7,6 +7,7 @@
 #include "SFML/Network/IpAddress.hpp"
 #include "SFML/Network/Packet.hpp"
 #include "NetworkHandler.h"
+#include "Exceptions/ExceptionInvalidArgument.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(shared_ptr<wstring> hostname) : HostName(hostname), AddressGot(false), LastUsedID(-1), 
@@ -26,7 +27,7 @@ DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(shared_ptr<wstring> hostname
 }
 
 DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const sf::IpAddress &targetaddress, USHORT port) : HostName(nullptr), AddressGot(true), 
-	TargetPortNumber(port), TargetHost(targetaddress)
+	TargetPortNumber(port), TargetHost(targetaddress), LastUsedID(-1), LastSentConfirmID(-1), MaxAckReduntancy(1), MyLastSentReceived(-1)
 {
 
 }
@@ -37,9 +38,11 @@ DLLEXPORT Leviathan::ConnectionInfo::~ConnectionInfo(){
 // ------------------ Packet extensions ------------------ //
 sf::Packet& operator <<(sf::Packet& packet, const NetworkAckField &data){
 	// First set the trivial data //
-	packet << data.FirstPacketID << data.AckCount;
+	sf::Int8 tmpsize = data.Acks.size();
+
+	packet << data.FirstPacketID << tmpsize;
 	// Now to fill in the ack data //
-	for(char i = 0; i < data.AckCount/8; i++){
+	for(char i = 0; i < tmpsize; i++){
 		packet << data.Acks[i];
 	}
 
@@ -49,10 +52,11 @@ sf::Packet& operator <<(sf::Packet& packet, const NetworkAckField &data){
 sf::Packet& operator >>(sf::Packet& packet, NetworkAckField &data){
 	// Get data //
 	packet >> data.FirstPacketID;
-	packet >> data.AckCount;
+	sf::Int8 tmpsize = 0;
+	packet >> tmpsize;
 	// Fill in the acks from the packet //
-	data.Acks.resize(data.AckCount);
-	for(char i = 0; i < data.AckCount/8; i++){
+	data.Acks.resize(tmpsize);
+	for(char i = 0; i < tmpsize; i++){
 		packet >> data.Acks[i];
 	}
 
@@ -76,6 +80,9 @@ DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
 DLLEXPORT void Leviathan::ConnectionInfo::Release(){
 	// Remove us from the queue //
 	NetworkHandler::Get()->_UnregisterConnectionInfo(this);
+
+	Logger::Get()->Info(L"ConnectionInfo: disconnecting from "+Convert::StringToWstring(TargetHost.toString())+L" on port "
+		+Convert::ToWstring(TargetPortNumber));
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<NetworkResponse> Leviathan::ConnectionInfo::SendRequestAndBlockUntilDone(shared_ptr<NetworkRequest> request, int maxtries /*= 2*/){
@@ -84,10 +91,6 @@ DLLEXPORT shared_ptr<NetworkResponse> Leviathan::ConnectionInfo::SendRequestAndB
 
 	// Now we wait //
 	sentrequest->WaitForMe->get_future().get();
-
-	// Remove it //
-	ObjectLock guard(*this);
-	_PopMadeRequest(sentrequest, guard);
 
 	return sentrequest->GotResponse;
 }
@@ -105,9 +108,15 @@ DLLEXPORT shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacketToCo
 	// Add the data to the actual packet //
 	actualpackettosend.append(requestsdata.getData(), requestsdata.getDataSize());
 
+#ifdef SPAM_ME_SOME_PACKETS
+	Logger::Get()->Info(L"PacketSpam: Sending request packet ("+Convert::ToWstring(request->GetExpectedResponseID())+L", id"+
+		Convert::ToWstring(LastUsedID)+L") to "
+		+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
+
 	// We need to use the handlers socket //
 	{
-		ObjectLock guard(*NetworkHandler::Get());
+		auto guard(NetworkHandler::Get()->LockSocketForUse());
 		NetworkHandler::Get()->_Socket.send(actualpackettosend, TargetHost, TargetPortNumber);
 	}
 
@@ -119,20 +128,75 @@ DLLEXPORT shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacketToCo
 
 	return tmprequestinfo;
 }
-// ------------------------------------ //
-void Leviathan::ConnectionInfo::_PopMadeRequest(shared_ptr<SentNetworkThing> objectptr, ObjectLock &guard){
-	VerifyLock(guard);
 
-	for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ++iter){
 
-		if((*iter).get() == objectptr.get()){
+DLLEXPORT shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacketToConnection(shared_ptr<NetworkResponse> response, int maxtries){
+	ObjectLock guard(*this);
+	// Generate a packet from the request //
+	sf::Packet actualpackettosend;
+	// We need a complete header with acks and stuff //
+	_PreparePacketHeaderForPacket(++LastUsedID, actualpackettosend, false);
 
-			WaitingRequests.erase(iter);
-			return;
-		}
+	// Generate packet object for the request //
+	sf::Packet requestsdata = response->GeneratePacketForResponse();
+
+	// Add the data to the actual packet //
+	actualpackettosend.append(requestsdata.getData(), requestsdata.getDataSize());
+
+#ifdef SPAM_ME_SOME_PACKETS
+	Logger::Get()->Info(L"PacketSpam: Sending response packet ("+Convert::ToWstring(response->GetResponseID())+L", id"+
+		Convert::ToWstring(LastUsedID)+L") to "
+		+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
+
+	// We need to use the handlers socket //
+	{
+		auto guard(NetworkHandler::Get()->LockSocketForUse());
+		NetworkHandler::Get()->_Socket.send(actualpackettosend, TargetHost, TargetPortNumber);
 	}
+
+	// Add to the sent packets //
+	shared_ptr<SentNetworkThing> tmprequestinfo(new SentNetworkThing(LastUsedID, response, shared_ptr<boost::promise<bool>>(new 
+		boost::promise<bool>()), maxtries, response->GetTimeOutType(), response->GetTimeOutValue(), requestsdata, 1));
+
+	WaitingRequests.push_back(tmprequestinfo);
+
+	return tmprequestinfo;
 }
 
+DLLEXPORT void Leviathan::ConnectionInfo::SendKeepAlivePacket(){
+	ObjectLock guard(*this);
+	// Generate a packet from the request //
+	sf::Packet actualpackettosend;
+	// We need a complete header with acks and stuff //
+	_PreparePacketHeaderForPacket(++LastUsedID, actualpackettosend, false);
+
+	// Generate packet object for the request //
+	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 100));
+	response->GenerateKeepAliveResponse();
+	sf::Packet requestsdata = response->GeneratePacketForResponse();
+
+	// Add the data to the actual packet //
+	actualpackettosend.append(requestsdata.getData(), requestsdata.getDataSize());
+
+#ifdef SPAM_ME_SOME_PACKETS
+	Logger::Get()->Info(L"PacketSpam: Sending keepalive packet (id "+Convert::ToWstring(LastUsedID)+L") to "
+		+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
+
+	// We need to use the handlers socket //
+	{
+		auto guard(NetworkHandler::Get()->LockSocketForUse());
+		NetworkHandler::Get()->_Socket.send(actualpackettosend, TargetHost, TargetPortNumber);
+	}
+
+	// Add to the sent packets //
+	shared_ptr<SentNetworkThing> tmprequestinfo(new SentNetworkThing(LastUsedID, response, shared_ptr<boost::promise<bool>>(new 
+		boost::promise<bool>()), 1, response->GetTimeOutType(), response->GetTimeOutValue(), requestsdata, 1));
+
+	WaitingRequests.push_back(tmprequestinfo);
+}
+// ------------------------------------ //
 void Leviathan::ConnectionInfo::_ResendRequest(shared_ptr<SentNetworkThing> toresend, ObjectLock &guard){
 	VerifyLock(guard);
 #ifdef _DEBUG
@@ -146,11 +210,19 @@ void Leviathan::ConnectionInfo::_ResendRequest(shared_ptr<SentNetworkThing> tore
 	// Add the packet data //
 	tosend.append(toresend->AlmostCompleteData.getData(), toresend->AlmostCompleteData.getDataSize());
 
+#ifdef SPAM_ME_SOME_PACKETS
+	Logger::Get()->Info(L"PacketSpam: resending packet ("+Convert::ToWstring(toresend->PacketNumber)+L") to "
+		+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
+
 	// We need to use the handlers socket //
 	{
-		ObjectLock guard(*NetworkHandler::Get());
+		auto guard(NetworkHandler::Get()->LockSocketForUse());
 		NetworkHandler::Get()->_Socket.send(tosend, TargetHost, TargetPortNumber);
 	}
+
+	// Reset the time //
+	toresend->RequestStartTime = Misc::GetTimeMs64();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
@@ -159,30 +231,6 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 	__int64 timems = Misc::GetTimeMs64();
 
 	ObjectLock guard(*this);
-
-	// Verify current ack number //
-	// We only want to go back if there are ack objects that haven't made it to the receiver //
-	bool FoundSent = false;
-	for(int i = AcksNotConfirmedAsReceived.size()-1; i > -1; i--){
-		// If we have successfully sent earlier ack packets we can set send count to 0 to resend them //
-		if(FoundSent){
-			if(AcksNotConfirmedAsReceived[i]->Received){
-				AcksNotConfirmedAsReceived.erase(AcksNotConfirmedAsReceived.begin()+i);
-				continue;
-			}
-			// This needs resending //
-			AcksNotConfirmedAsReceived[i]->SendCount = 0;
-
-		} else {
-			// Check if we have sent this new packet //
-			if(AcksNotConfirmedAsReceived[i]->Received){
-				FoundSent = true;
-				AcksNotConfirmedAsReceived.erase(AcksNotConfirmedAsReceived.begin()+i);
-			}
-		}
-	}
-
-
 
 	for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ){
 		// Check is it already here //
@@ -193,6 +241,23 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 			// It is here! //
 			if(!(*iter)->IsArequest){
 				// It is now done! //
+#ifdef SPAM_ME_SOME_PACKETS
+				Logger::Get()->Info(L"PacketSpam: non-request packet successfully sent ("+Convert::ToWstring((*iter)->PacketNumber)+L") to "
+					+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
+				// We want to notify all waiters that it has been received //
+				(*iter)->WaitForMe->set_value(true);
+				iter = WaitingRequests.erase(iter);
+				continue;
+			}
+			// Check is the response received //
+			if((*iter)->GotResponse){
+#ifdef SPAM_ME_SOME_PACKETS
+				Logger::Get()->Info(L"PacketSpam: request packet successfully sent and got response ("+Convert::ToWstring((*iter)->PacketNumber)+L", "+
+					Convert::ToWstring((*iter)->ExpectedResponseID)+L") to "+Convert::StringToWstring(TargetHost.toString())+L":"
+					+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
+				// It has a proper response //
 				// We want to notify all waiters that it has been received //
 				(*iter)->WaitForMe->set_value(true);
 				iter = WaitingRequests.erase(iter);
@@ -213,7 +278,7 @@ movepacketsendattemptonexttry:
 						// Move to next try //
 						if(++(*iter)->AttempNumber > (*iter)->MaxTries && (*iter)->MaxTries > 0){
 
-							Logger::Get()->Warning(L"ConnectionInfo: request reached maximum tries");
+							Logger::Get()->Warning(L"ConnectionInfo: packet reached maximum tries");
 							// We want to notify all waiters that it failed //
 							(*iter)->WaitForMe->set_value(false);
 							iter = WaitingRequests.erase(iter);
@@ -239,6 +304,8 @@ movepacketsendattemptonexttry:
 		++iter;
 	}
 
+	bool AcksCouldBeSent = false;
+
 	// Check which ack packets have been received //
 	// Mark acks as successfully sent //
 	for(size_t i = 0; i < AcksNotConfirmedAsReceived.size(); i++){
@@ -247,7 +314,10 @@ movepacketsendattemptonexttry:
 
 
 		if(iter != SentPacketsConfirmedAsReceived.end() && iter->second){
-
+#ifdef SPAM_ME_SOME_PACKETS
+			Logger::Get()->Info(L"PacketSpam: acks successfully sent (first id "+Convert::ToWstring(AcksNotConfirmedAsReceived[i]->AcksInThePacket->FirstPacketID)+L") to "
+				+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
 			// Mark as properly sent //
 			AcksNotConfirmedAsReceived[i]->Received = true;
 
@@ -257,7 +327,53 @@ movepacketsendattemptonexttry:
 	}
 
 
+	// Verify current ack number //
+	// We only want to go back if there are ack objects that haven't made it to the receiver //
+	bool FoundSent = false;
+	for(int i = AcksNotConfirmedAsReceived.size()-1; i > -1; i--){
+		// If we have successfully sent earlier ack packets we can set send count to 0 to resend them //
+		if(FoundSent){
+			if(AcksNotConfirmedAsReceived[i]->Received){
+				AcksNotConfirmedAsReceived.erase(AcksNotConfirmedAsReceived.begin()+i);
+				continue;
+			}
+			// This needs resending //
+			AcksNotConfirmedAsReceived[i]->SendCount = 0;
+			AcksCouldBeSent = true;
+#ifdef SPAM_ME_SOME_PACKETS
+			Logger::Get()->Info(L"PacketSpam: acks missing (resending) (first id "+Convert::ToWstring(AcksNotConfirmedAsReceived[i]->AcksInThePacket->FirstPacketID)+L") to "
+				+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
+
+		} else {
+			// Check if we have sent this new packet //
+			if(AcksNotConfirmedAsReceived[i]->Received){
+				FoundSent = true;
+				AcksNotConfirmedAsReceived.erase(AcksNotConfirmedAsReceived.begin()+i);
+			}
+		}
+	}
+
+	// Check if we have unpacketed acks //
+	for(auto iter = ReceivedPacketsNotifiedAsReceivedByUs.begin(); iter != ReceivedPacketsNotifiedAsReceivedByUs.end(); ++iter){
+		if(!iter->second){
+			// Ack is not in any acket field //
+			AcksCouldBeSent = true;
+			break;
+		}
+
+	}
+
+
 	// TODO: send keep alive packet if it has been a while //
+	if(timems > LastSentPacketTime+KEEPALIVE_TIME){
+		// Send a keep alive packet //
+
+	} else if(AcksCouldBeSent && timems > LastSentPacketTime+ACKKEEPALIVE){
+		// Send some acks //
+
+
+	}
 
 }
 
@@ -293,23 +409,67 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 	}
 	// Rest of the data is now the actual thing //
 
+	{
+		ObjectLock guard(*this);
+
+		// Handle resends based on ack field //
+		otherreceivedpackages.SetPacketsReceivedIfNotSet(SentPacketsConfirmedAsReceived);
+
+		// Report the packet as received //
+		_VerifyAckPacketsAsSuccesfullyReceivedFromHost(packetnumber);
+	}
+
 	// Handle the packet (hopefully the handling function queues it or something to not stall execution) //
 	if(isrequest){
 		// Generate a request object and make the interface handle it //
-
+		shared_ptr<NetworkRequest> request(new NetworkRequest(packet));
+#ifdef SPAM_ME_SOME_PACKETS
+		Logger::Get()->Info(L"PacketSpam: received request ("+Convert::ToWstring(packetnumber)+L", request"+
+			Convert::ToWstring(request->GetExpectedResponseID())+L") to "+Convert::StringToWstring(TargetHost.toString())+L":"
+			+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
+		try{
+			NetworkHandler::GetInterface()->HandleRequestPacket(request, this);
+		} catch(const ExceptionInvalidArgument &e){
+			// We couldn't handle this packet //
+			Logger::Get()->Error(L"ConnectionInfo: couldn't handle request packet! :");
+			e.PrintToLog();
+		}
 
 	} else {
 		// Generate a response and pass to the interface //
+		shared_ptr<NetworkResponse> response(new NetworkResponse(packet));
+
+		// The response might have a corresponding request //
+		ObjectLock guard(*this);
+		shared_ptr<SentNetworkThing> possiblerequest = _GetPossibleRequestForResponse(response);
+
+		// See if interface wants to drop it //
+		if(!NetworkHandler::GetInterface()->PreHandleResponse(response, possiblerequest->OriginalRequest, this)){
+
+			Logger::Get()->Warning(L"ConnectionInfo: dropping packet due to interface not accepting response");
+			return true;
+		}
+
+#ifdef SPAM_ME_SOME_PACKETS
+		Logger::Get()->Info(L"PacketSpam: received response ("+Convert::ToWstring(packetnumber)+L", response"+
+			Convert::ToWstring(response->GetResponseID())+L") to "+Convert::StringToWstring(TargetHost.toString())+L":"
+			+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
+
+		if(possiblerequest){
+			// Add to the request //
+			possiblerequest->GotResponse = response;
+
+			// Notify all that it succeeded will be done by the update loop //
 
 
+		} else {
+			// Handle the response only packet //
+			NetworkHandler::GetInterface()->HandleResponseOnlyPacket(response, this);
+		}
 	}
-	ObjectLock guard(*this);
 
-	// Handle resends based on ack field //
-	otherreceivedpackages.SetPacketsReceivedIfNotSet(SentPacketsConfirmedAsReceived);
-
-	// Report the packet as received //
-	_VerifyAckPacketsAsSuccesfullyReceivedFromHost(packetnumber);
 
 	return true;
 }
@@ -322,6 +482,10 @@ void Leviathan::ConnectionInfo::_VerifyAckPacketsAsSuccesfullyReceivedFromHost(i
 	auto iter = ReceivedPacketsNotifiedAsReceivedByUs.find(packetreceived);
 
 	if(iter == ReceivedPacketsNotifiedAsReceivedByUs.end()){
+#ifdef SPAM_ME_SOME_PACKETS
+		Logger::Get()->Info(L"PacketSpam: packet is now marked as received ("+Convert::ToWstring(packetreceived)+L") from "
+			+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
 		// We set this to false to keep track if we have told the sender that we got this packet (then it is true and can be removed from the map) //
 		ReceivedPacketsNotifiedAsReceivedByUs[packetreceived] = false;
 	}
@@ -335,6 +499,9 @@ void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::
 
 	// Actually this can be skipped if we can send a ack packet again //
 	ObjectLock guard(*this);
+
+	// We have now made a new packet //
+	LastSentPacketTime = Misc::GetTimeMs64();
 
 	bool newrequired = true;
 
@@ -375,21 +542,55 @@ void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::
 		AcksNotConfirmedAsReceived.push_back(shared_ptr<SentAcks>(new SentAcks(packetid, new NetworkAckField(LastSentConfirmID, 
 			DEFAULT_ACKCOUNT, ReceivedPacketsNotifiedAsReceivedByUs))));
 
+#ifdef SPAM_ME_SOME_PACKETS
+		Logger::Get()->Info(L"PacketSpam: sending new acks (first id "+Convert::ToWstring(
+			AcksNotConfirmedAsReceived.back()->AcksInThePacket->FirstPacketID)+L", count"+
+			Convert::ToWstring(AcksNotConfirmedAsReceived.back()->AcksInThePacket->Acks.size())+L") to "
+			+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
+
 		// Put into the packet //
 		tofill << *AcksNotConfirmedAsReceived.back()->AcksInThePacket;
 
 		// We increment the last send, just for fun and to see what happens //
-		LastSentConfirmID++;
+		if(LastSentConfirmID != -1)
+			LastSentConfirmID++;
 	}
 
 	// Mark as request, if it is one //
 	tofill << isrequest;
 }
+
+shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::_GetPossibleRequestForResponse(shared_ptr<NetworkResponse> response){
+	// Return if it doesn't have a proper matching expected response id //
+	int lookingforid = response->GetResponseID();
+
+	if(lookingforid == -1)
+		return NULL;
+
+	ObjectLock guard(*this);
+
+	for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ++iter){
+
+		if((*iter)->ExpectedResponseID == lookingforid){
+#ifdef SPAM_ME_SOME_PACKETS
+			Logger::Get()->Info(L"PacketSpam: matching response to request ("+Convert::ToWstring(response->GetResponseID())+L") from "
+				+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+#endif // SPAM_ME_SOME_PACKETS
+			// Found matching object //
+			return *iter;
+		}
+	}
+
+	// Nothing found //
+	return NULL;
+}
 // ------------------ SentNetworkThing ------------------ //
 Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponseid, shared_ptr<NetworkRequest> request, shared_ptr<boost::promise<bool>> waitobject, 
 	int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) : PacketNumber(packetid),
 	ExpectedResponseID(expectedresponseid), OriginalRequest(request), WaitForMe(waitobject), MaxTries(maxtries), PacketTimeoutStyle(howtotimeout),
-	TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata), AttempNumber(attempnumber)
+	TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata), AttempNumber(attempnumber), RequestStartTime(Misc::GetTimeMs64()), ConfirmReceiveTime(0),
+	IsArequest(true)
 {
 
 }
@@ -397,12 +598,13 @@ Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponse
 Leviathan::SentNetworkThing::SentNetworkThing(int packetid, shared_ptr<NetworkResponse> response, shared_ptr<boost::promise<bool>> waitobject, 
 	int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) : PacketNumber(packetid),
 	ExpectedResponseID(-1), SentResponse(response), WaitForMe(waitobject), MaxTries(maxtries), PacketTimeoutStyle(howtotimeout),
-	TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata), AttempNumber(attempnumber)
+	TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata), AttempNumber(attempnumber), RequestStartTime(Misc::GetTimeMs64()), ConfirmReceiveTime(0),
+	IsArequest(false)
 {
 
 }
 // ------------------ NetworkAckField ------------------ //
-Leviathan::NetworkAckField::NetworkAckField(sf::Int32 firstpacketid, char maxacks, ReceivedPacketField &copyfrom) : FirstPacketID(firstpacketid), AckCount(0){
+Leviathan::NetworkAckField::NetworkAckField(sf::Int32 firstpacketid, char maxacks, ReceivedPacketField &copyfrom) : FirstPacketID(firstpacketid){
 
 	// Id is -1 nothing should be copied //
 	if(FirstPacketID == -1)
@@ -416,41 +618,43 @@ Leviathan::NetworkAckField::NetworkAckField(sf::Int32 firstpacketid, char maxack
 		}
 	}
 
+	if(iter == copyfrom.end()){
+		// No start ack found //
+		FirstPacketID = -1;
+		return;
+	}
 
 	// Reserve space for data //
-	Acks.reserve(maxacks);
+	Acks.reserve(maxacks/8);
 
 	// Start filling it //
 	for(char i = 0; i < maxacks; i++){
 
 		int curcheckacknumber = firstpacketid+i;
 
-		size_t vecelement = i/7;
+		size_t vecelement = i/8;
 
 		while(Acks.size() <= vecelement){
 
 			Acks.push_back(0);
 		}
 
-		// If reached the end just put zeroes //
+		// If reached the end just leave the zeroes //
 		if(iter == copyfrom.end()){
-			AckCount++;
-			continue;
+			break;
 		}
 
 		if(iter->first == curcheckacknumber){
+			// Mark it as copied to a ack field //
+			iter->second = true;
 			// Set it //
 setcurrentnumbertoackfield:
 
 			Acks[vecelement] |= (1 << (i-vecelement));
-
-			AckCount++;
 			++iter;
 
 		} else if(iter->first > curcheckacknumber){
 			// We are missing these packets so let them be zeroed out //
-			AckCount++;
-
 
 		} else {
 			// Advance iterator to reach this //
@@ -462,9 +666,8 @@ setcurrentnumbertoackfield:
 		}
 	}
 
-
 	// We need to reset FirstPacketID if no acks set //
-	if(AckCount == 0)
+	if(Acks.size() == 0)
 		FirstPacketID = -1;
 }
 

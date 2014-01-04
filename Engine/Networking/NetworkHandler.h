@@ -58,7 +58,7 @@ namespace Leviathan{
 		friend ConnectionInfo;
 	public:
 		// Either a client or a server handler //
-		DLLEXPORT NetworkHandler(NETWORKED_TYPE ntype);
+		DLLEXPORT NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler);
 		DLLEXPORT ~NetworkHandler();
 
 		DLLEXPORT virtual bool Init(const MasterServerInformation &info);
@@ -78,8 +78,11 @@ namespace Leviathan{
 		DLLEXPORT static wstring GetServerAddressPartOfAddress(const wstring &fulladdress, const wstring &regextouse = L"http://.*?/");
 
 		DLLEXPORT static NetworkHandler* Get();
+		DLLEXPORT static NetworkInterface* GetInterface();
 
 	protected:
+
+		shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>> LockSocketForUse();
 
 		// Closes the socket //
 		void _ReleaseSocket();
@@ -102,6 +105,9 @@ namespace Leviathan{
 		sf::UdpSocket _Socket;
 		USHORT PortNumber;
 
+		// Used to control the locking of the socket //
+		boost::basic_lockable_adapter<boost::recursive_mutex> SocketMutex;
+
 		// The master server list //
 		std::vector<shared_ptr<wstring>> MasterServers;
 
@@ -122,6 +128,7 @@ namespace Leviathan{
 
 		// Static access //
 		static NetworkHandler* instance;
+		static NetworkInterface* interfaceinstance;
 	};
 
 }

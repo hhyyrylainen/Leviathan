@@ -34,7 +34,7 @@ namespace Leviathan{
 	// for storing pointer to owner //
 	class LeviathanApplication;
 
-	class Engine : public Object{
+	class Engine : public Object, public ThreadSafe{
 		// friend so that window can update size //
 		friend Window;
 		friend GraphicalInputEntity;
@@ -78,9 +78,15 @@ namespace Leviathan{
 		DLLEXPORT PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
 		DLLEXPORT NetworkHandler* GetNetworkHandler(){ return _NetworkHandler; };
 		DLLEXPORT ThreadingManager* GetThreadingManager(){ return _ThreadingManager; };
+		DLLEXPORT bool GetNoGui(){ return NoGui; };
 		// static access //
 		DLLEXPORT static Engine* GetEngine();
 		DLLEXPORT static Engine* Get();
+
+		// For NoGui mode //
+#ifdef _WIN32
+		DLLEXPORT static void WinAllocateConsole();
+#endif
 
 	private:
 		// after load function //
@@ -134,6 +140,9 @@ namespace Leviathan{
 
 		// Stores the command line before running it //
 		std::vector<unique_ptr<wstring>> PassedCommands;
+
+		// NoGui input handler //
+		boost::thread CinThread;
 
 		static Engine* instance;
 	};

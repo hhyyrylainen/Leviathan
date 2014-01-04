@@ -17,30 +17,40 @@ namespace Leviathan{
 		NETWORKREQUESTTYPE_IDENTIFICATION
 	};
 
+	class BaseNetworkRequestData{
+	public:
+
+		DLLEXPORT virtual ~BaseNetworkRequestData(){};
+
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) = 0;
+	};
+
 
 	class NetworkRequest{
 	public:
 		DLLEXPORT NetworkRequest(NETWORKREQUESTTYPE type, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT ~NetworkRequest();
 
+		DLLEXPORT NetworkRequest(sf::Packet &frompacket);
 
 		DLLEXPORT sf::Packet GeneratePacketForRequest();
 
-		DLLEXPORT int GetExpectedResponseID();
-		DLLEXPORT int GetTimeOutValue();
+		DLLEXPORT NETWORKREQUESTTYPE GetType();
 
+		DLLEXPORT int GetExpectedResponseID();
+
+		DLLEXPORT int GetTimeOutValue();
 		DLLEXPORT PACKET_TIMEOUT_STYLE GetTimeOutType();
 
 	protected:
 
 		int ResponseID;
-		int TimeOutValue;
 
+		int TimeOutValue;
 		PACKET_TIMEOUT_STYLE TimeOutStyle;
 
 		NETWORKREQUESTTYPE TypeOfRequest;
-		// TODO: data object //
-
+		BaseNetworkRequestData* RequestData;
 	};
 
 }

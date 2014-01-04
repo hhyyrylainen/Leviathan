@@ -5,6 +5,7 @@
 #endif
 #include "Leap.h"
 #include "Engine.h"
+#include "Application\Application.h"
 using namespace Leviathan;
 using namespace Leap;
 // ------------------------------------ //
@@ -67,7 +68,8 @@ DLLEXPORT void Leviathan::LeapManager::OnTick(const int &mspassed){
 		Logger::Get()->Info(L"LeapManager: Input: downward swipe threshold passed, shutting down");
 
 		// close the window so the program quits after this //
-		EngineAccess->GetWindowEntity()->GetWindow()->SendCloseMessage();
+		ObjectLock guard(*Leviathan::LeviathanApplication::GetApp());
+		Leviathan::LeviathanApplication::GetApp()->StartRelease();
 	}
 }
 // ------------------------------------ //

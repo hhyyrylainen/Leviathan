@@ -17,7 +17,13 @@
 
 namespace Leviathan{
 
-#define DEFAULT_ACKCOUNT		24
+#define DEFAULT_ACKCOUNT		32
+#define KEEPALIVE_TIME			2000
+#define ACKKEEPALIVE			50
+
+
+// Makes the program spam a ton of debug info about packets //
+#define SPAM_ME_SOME_PACKETS	1
 
 	struct SentNetworkThing{
 
@@ -66,7 +72,7 @@ namespace Leviathan{
 
 		DLLEXPORT inline bool IsAckSet(size_t ackindex){
 			// We can use division to find out which vector element is wanted //
-			size_t vecelement = ackindex/7;
+			size_t vecelement = ackindex/8;
 
 			return (Acks[vecelement] & (1 << (ackindex-vecelement))) != 0;
 		}
@@ -78,8 +84,6 @@ namespace Leviathan{
 
 		// Data //
 		sf::Int32 FirstPacketID;
-		sf::Int8 AckCount;
-
 		vector<sf::Int8> Acks;
 	};
 
@@ -116,20 +120,24 @@ namespace Leviathan{
 		DLLEXPORT void UpdateListening();
 
 		DLLEXPORT shared_ptr<SentNetworkThing> SendPacketToConnection(shared_ptr<NetworkRequest> request, int maxretries);
+		DLLEXPORT shared_ptr<SentNetworkThing> SendPacketToConnection(shared_ptr<NetworkResponse> response, int maxtries);
 
 		// Data exchange functions //
 		DLLEXPORT shared_ptr<NetworkResponse> SendRequestAndBlockUntilDone(shared_ptr<NetworkRequest> request, int maxtries = 2);
 
+		DLLEXPORT void SendKeepAlivePacket();
 
 	private:
 
-		void _PopMadeRequest(shared_ptr<SentNetworkThing> objectptr, ObjectLock &guard);
+		//void _PopMadeRequest(shared_ptr<SentNetworkThing> objectptr, ObjectLock &guard);
 		void _ResendRequest(shared_ptr<SentNetworkThing> toresend, ObjectLock &guard);
 
 		// Marks the acks in packet received as successfully sent and erases them //
 		void _VerifyAckPacketsAsSuccesfullyReceivedFromHost(int packetreceived);
 
 		void _PreparePacketHeaderForPacket(int packetid, sf::Packet &tofill, bool isrequest);
+
+		shared_ptr<SentNetworkThing> _GetPossibleRequestForResponse(shared_ptr<NetworkResponse> response);
 		// ------------------------------------ //
 
 		// Packet sent and received data //
@@ -144,6 +152,8 @@ namespace Leviathan{
 
 		// How many times the same ack table is sent before new one is generated (usually 1 with good connections) //
 		int MaxAckReduntancy;
+
+		__int64 LastSentPacketTime;
 
 
 		// Sent packets that haven't been confirmed as arrived //

@@ -59,6 +59,11 @@ namespace Leviathan{
 			WDetails = det;
 			return *this;
 		}
+		DLLEXPORT AppDef& SetPacketHandler(NetworkInterface* networkhandler){
+
+			_NetworkInterface = networkhandler;
+			return *this;
+		}
 
 		DLLEXPORT AppDef& SetMasterServerParameters(const MasterServerInformation &info){
 
@@ -90,6 +95,11 @@ namespace Leviathan{
 			return LogFile;
 		}
 
+
+		DLLEXPORT NetworkInterface* GetPacketHandler(){
+			return _NetworkInterface;
+		}
+
 		DLLEXPORT static AppDef* GenerateAppdefine(const wstring &logfile, const wstring &engineconfigfile, const wstring &gameconfig, const wstring &keyconfig, 
 			boost::function<void (GameConfiguration* configobj)> configchecker, boost::function<void (KeyConfiguration* keysobject)> keychecker);
 #ifdef _WIN32
@@ -107,6 +117,8 @@ namespace Leviathan{
 		int HInstance;
 #endif
 		MasterServerInformation MasterServerInfo;
+
+		NetworkInterface* _NetworkInterface;
 
 		// details used to create a window //
 		WindowDataDetails WDetails;

@@ -82,7 +82,7 @@ DLLEXPORT shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound()
 #ifdef _WIN32
 	throw exception("not implemented");
 #else
-    throw bad_exception();
+	throw bad_exception();
 #endif
 }
 

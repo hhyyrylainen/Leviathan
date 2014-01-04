@@ -14,9 +14,11 @@
 #include "ConnectionInfo.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype) : AppType(ntype), CloseMasterServerConnection(false), StopGetResponsesThread(false)
+DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler) : AppType(ntype), 
+	CloseMasterServerConnection(false), StopGetResponsesThread(false)
 {
 	instance = this;
+	interfaceinstance = packethandler;
 }
 
 DLLEXPORT Leviathan::NetworkHandler::~NetworkHandler(){
@@ -27,7 +29,12 @@ DLLEXPORT NetworkHandler* Leviathan::NetworkHandler::Get(){
 	return instance;
 }
 
+DLLEXPORT NetworkInterface* Leviathan::NetworkHandler::GetInterface(){
+	return interfaceinstance;
+}
+
 NetworkHandler* Leviathan::NetworkHandler::instance = NULL;
+NetworkInterface* Leviathan::NetworkHandler::interfaceinstance = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &info){
 	ObjectLock guard(*this);
@@ -87,6 +94,9 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 
 	// Report success //
 	Logger::Get()->Info(L"NetworkHandler: running listening socket on port "+Convert::ToWstring(_Socket.getLocalPort()));
+
+	// Might as well start this thread here //
+	StartOwnUpdaterThread();
 
 	return true;
 }
@@ -196,7 +206,7 @@ DLLEXPORT wstring Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
-	boost::unique_lock<NetworkHandler> guard(*this);
+	ObjectLock guard(*this);
 
 	// Let's listen for things //
 	sf::Packet receivedpacket;
@@ -214,12 +224,10 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 
 		for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
 			// Keep passing until somebody handles it //
-			guard.unlock();
 			if(ConnectionsToUpdate[i]->IsThisYours(receivedpacket, sender, sentport)){
 				Passed = true;
 				break;
 			}
-			guard.lock();
 		}
 
 		if(!Passed){
@@ -235,22 +243,23 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 				AutoOpenedConnections.push_back(tmpconnect);
 
 				// Try to handle the packet //
-				guard.unlock();
 				if(!tmpconnect->IsThisYours(receivedpacket, sender, sentport)){
 					// That's an error //
 					Logger::Get()->Error(L"NetworkHandler: UpdateAllConnections: new connection refused to process it's packet from"
 						+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
 				}
-				guard.lock();
+			} else {
+				// Deny the connection //
+				Logger::Get()->Info(L"\t> Dropping connection due to not being a server");
+
 			}
 		}
 	}
 	// Time-out requests //
 	for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
-		// This needs to be unlocked to avoid dreadlocking //
-		guard.unlock();
+		//// This needs to be unlocked to avoid deadlocking //
+		// The callee needs to make sure to use the right locking function to not deadlock //
 		ConnectionsToUpdate[i]->UpdateListening();
-		guard.lock();
 	}
 }
 
@@ -285,12 +294,14 @@ void Leviathan::NetworkHandler::_UnregisterConnectionInfo(ConnectionInfo* unregi
 
 	}
 }
+
+shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>> Leviathan::NetworkHandler::LockSocketForUse(){
+	return shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>>(
+		new boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>(SocketMutex));
+}
 // ------------------------------------ //
 void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar){
 	// Try to load master server list //
-
-	// Might as well start this thread here //
-	instance->StartOwnUpdaterThread();
 
 	// To reduce duplicated code and namespace pollution use a lambda thread for this //
 	boost::thread DataUpdaterThread(boost::bind<void>([](NetworkHandler* instance) -> void{
@@ -401,10 +412,10 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 		}
 
 		// Create an identification request //
-		shared_ptr<NetworkRequest> inforequest(new NetworkRequest(NETWORKREQUESTTYPE_IDENTIFICATION, 850));
+		shared_ptr<NetworkRequest> inforequest(new NetworkRequest(NETWORKREQUESTTYPE_IDENTIFICATION, 1500, PACKAGE_TIMEOUT_STYLE_TIMEDMS));
 
 		// Send and block until a request (or 5 fails) //
-		shared_ptr<NetworkResponse> serverinforesponse = tmpinfo->SendRequestAndBlockUntilDone(inforequest, 3);
+		shared_ptr<NetworkResponse> serverinforesponse = tmpinfo->SendRequestAndBlockUntilDone(inforequest, 5);
 
 		if(!serverinforesponse){
 			// Failed to receive something from the server //
@@ -416,13 +427,18 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 
 		Logger::Get()->Warning(L"NetworkHandler: received a response from master server("+*tmpaddress+L"):");
 
-		wstring identificationstr, gamename, version, leviathanversion;
-
 		// Get data //
-		serverinforesponse->DecodeIdentificationStringResponse(identificationstr, gamename, version, leviathanversion);
+		NetworkResponseDataForIdentificationString* tmpresponse = serverinforesponse->GetResponseDataForIdentificationString();
+
+		if(!tmpresponse){
+			// Failed to receive valid response //
+			Logger::Get()->Warning(L"NetworkHandler: received an invalid response from master server("+*tmpaddress+L")");
+			// Release connection //
+			tmpinfo->Release();
+			continue;
+		}
 
 		// Ensure data validness //
-		Logger::Get()->Info(L"NetworkHandler: received a response from master server at"+*tmpaddress);
 
 		// TODO: verify that the data is sane //
 

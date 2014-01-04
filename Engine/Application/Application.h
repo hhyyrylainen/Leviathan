@@ -11,7 +11,7 @@
 
 namespace Leviathan{
 
-	class LeviathanApplication : public Object{
+	class LeviathanApplication : public Object, public ThreadSafe{
 	public:
 		// creation and initialization //
 		DLLEXPORT LeviathanApplication();

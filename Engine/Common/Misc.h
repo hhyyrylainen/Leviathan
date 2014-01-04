@@ -40,7 +40,7 @@ namespace Leviathan{
 
 			return (true);
 #else
-            return isfinite(Value);
+			return isfinite(Value);
 #endif
 		}
 		DLLEXPORT static inline bool ToggleBool(bool &Value){
@@ -123,6 +123,10 @@ namespace Leviathan{
 
 			return temp;
 		}
+
+		// Operating system independent functions //
+		DLLEXPORT static void KillThread(boost::thread &threadtokill);
+
 
 		///string operations
 		DLLEXPORT static int CutWstring(const wstring& strtocut,const wstring &separator, vector<wstring>& vec);

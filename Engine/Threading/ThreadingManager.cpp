@@ -154,7 +154,11 @@ DLLEXPORT void Leviathan::ThreadingManager::WaitForAllTasksToFinish(){
 	while(!allavailable){
 
 		// Wait for tasks to update //
-		TaskQueueNotify.wait(lockit);
+		try{
+			TaskQueueNotify.timed_wait(lockit, boost::posix_time::microseconds((50)));
+		} catch(...){
+
+		}
 
 skipfirstwaitforthreadslabel2:
 
@@ -202,12 +206,12 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 			// Wait for it to end //
 #ifdef __GNUC__
 			while((*iter)->HasRunningTask()){
-			    try{
-                    TaskQueueNotify.wait(guard);
-			    }
-			    catch(...){
-                    Logger::Get()->Warning(L"ThreadingManager: MakeThreadsWorkWithOgre: wait interrupted");
-			    }
+				try{
+					TaskQueueNotify.wait(guard);
+				}
+				catch(...){
+					Logger::Get()->Warning(L"ThreadingManager: MakeThreadsWorkWithOgre: wait interrupted");
+				}
 			}
 #endif
 		}

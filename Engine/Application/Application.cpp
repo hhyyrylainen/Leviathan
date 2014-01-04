@@ -9,7 +9,7 @@ using namespace Leviathan;
 #include "OGRE/OgreWindowEventUtilities.h"
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
-DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), _Engine(NULL), ApplicationConfiguration(NULL), ShouldQuit(false)
+DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), _Engine(new Engine(this)), ApplicationConfiguration(NULL), ShouldQuit(false)
 {
 	Curapp = this;
 }
@@ -21,11 +21,11 @@ DLLEXPORT Leviathan::LeviathanApplication::~LeviathanApplication(){
 LeviathanApplication* LeviathanApplication::Curapp = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration){
+	ObjectLock guard(*this);
 	// store configuration //
 	ApplicationConfiguration = configuration;
 
 	// init engine //
-	_Engine = new Engine(this);
 	if(!_Engine->Init(ApplicationConfiguration, NETWORKED_TYPE_CLIENT))
 		return false;
 	_InternalInit();
@@ -33,6 +33,7 @@ DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::Release(){
+	ObjectLock guard(*this);
 	// set as quitting //
 	Quit = true;
 
@@ -42,6 +43,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
+	ObjectLock guard(*this);
 	ShouldQuit = true;
 }
 
@@ -91,6 +93,7 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 			continue;
 		}
 	}
+	ObjectLock guard(*this);
 	// always release before quitting to avoid tons of memory leaks //
 	Release();
 

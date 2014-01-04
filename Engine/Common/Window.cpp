@@ -110,6 +110,7 @@ DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
 		// show cursor //
 		if(!CursorState){
 			CursorState = true;
+			Logger::Get()->Info(L"Showing cursor");
 #ifdef _WIN32
 			ShowCursor(TRUE);
 #else
@@ -121,6 +122,7 @@ DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
 		// hide cursor //
 		if(CursorState){
 			CursorState = false;
+			Logger::Get()->Info(L"Hiding cursor");
 #ifdef _WIN32
 			ShowCursor(FALSE);
 #else

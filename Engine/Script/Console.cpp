@@ -6,17 +6,16 @@
 #include "Utility/Iterators/WstringIterator.h"
 #include "boost/assign.hpp"
 #include "add_on/scripthelper/scripthelper.h"
+#include "Application/Application.h"
 using namespace Leviathan;
 // ------------------------------------ //
+DLLEXPORT Leviathan::ScriptConsole::ScriptConsole() : InterfaceInstance(NULL), ConsoleModule(), consoleemptyspam(0){
 
-DLLEXPORT Leviathan::ScriptConsole::ScriptConsole() : InterfaceInstance(NULL), ConsoleModule(){
-	consoleemptyspam = 0;
 }
 
 DLLEXPORT Leviathan::ScriptConsole::~ScriptConsole(){
 
 }
-
 
 map<wstring, CONSOLECOMMANDTYPE> Leviathan::ScriptConsole::CommandTypeDefinitions = boost::assign::map_list_of
 	(wstring(L"NONE"), CONSOLECOMMANDTYPE_NONE) (wstring(L"ADDVAR"), CONSOLECOMMANDTYPE_ADDVAR) (wstring(L"ADDFUNC"), CONSOLECOMMANDTYPE_ADDFUNC) 
@@ -24,6 +23,7 @@ map<wstring, CONSOLECOMMANDTYPE> Leviathan::ScriptConsole::CommandTypeDefinition
 
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptConsole::Init(ScriptInterface* MainScript){
+	ObjectLock guard(*this);
 	// store pointer //
 	InterfaceInstance = MainScript;
 
@@ -34,6 +34,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::Init(ScriptInterface* MainScript){
 }
 
 DLLEXPORT void Leviathan::ScriptConsole::Release(){
+	ObjectLock guard(*this);
 	// set the module to release itself since it won't be used anymore //
 	shared_ptr<ScriptModule> tmpptre(ConsoleModule.lock());
 	if(tmpptre.get() != NULL){
@@ -43,10 +44,36 @@ DLLEXPORT void Leviathan::ScriptConsole::Release(){
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &commandstr){
+	ObjectLock guard(*this);
 	// we use an iterator for going through the command //
 
+	// First thing to check is the user wanting help //
+	if(commandstr == L"help"){
+
+		ConsoleOutput(L"// ------------------ Help ------------------ //\n"
+			L"\t> All console command lines start with a '>' character followed by \n"
+			L"\t  a command type.\n"
+			L"\t> Commands without a type are directly executed on the \n"
+			L"\t  ScriptModule owned by the console.\n"
+			L"\t> Running command of a type: \">[TYPE=\"\"] [COMMAND]\" eg. \n"
+			L"\t  \">ADDVAR int newglobal = 25\"\n"
+			L"\t> Running arbitrary commands:\n "
+			L"\t  \"> for(int i = 0; i < 5; i++) GlobalFunc();\"\n"
+			L"\t> Multiline commands are done by putting '\\' to the end of each line.\n"
+			L"\t> For example:\n"
+			L"\t >ADDFUNC void MyFunc(int i){ Print(\"Val is: \"+i); }\n"
+			L"\t > for(int i = 0; i < 10; i++){ Print(i); }\n"
+			L"\t> Would output \"Val is: 0 Val is: 1 ...\"");
+		return CONSOLECOMMANDRESULTSTATE_SUCCEEDED;
+	} else if(commandstr == L"exit" || commandstr == L"quit"){
+
+		ConsoleOutput(L"Sending close signal to engine");
+		Leviathan::LeviathanApplication::GetApp()->StartRelease();
+		return CONSOLECOMMANDRESULTSTATE_SUCCEEDED;
+	}
+
 	// first check if ">" is first character, we can easily reject command if it is missing //
-	if(commandstr.size() < 1 || commandstr[0] != L'>'){
+	if(commandstr.size() < 1){
 		// invalid format //
 		ConsoleOutput(L"Invalid command format, missing starting '>' or empty command");
 		consoleemptyspam++;
@@ -59,27 +86,36 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 
 	WstringIterator itr(commandstr);
 
-	// skip first character since it is checked //
-	itr.MoveToNext();
+	if(commandstr[0] == L'>'){
+		// skip first character since it is checked //
+		itr.MoveToNext();
+	}
 
 	// get the console main command type //
 	unique_ptr<wstring> ccmd = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
 
 	// check if the length is too long or too short to actually be any specific command //
 	CONSOLECOMMANDTYPE commandtype = CONSOLECOMMANDTYPE_NONE;
-	if(ccmd->size() > 0 && ccmd->size() < 14){
+	if(ccmd->size() > 0){
 		// check for types //
 		auto matchpos = CommandTypeDefinitions.find(*ccmd);
 		if(matchpos == CommandTypeDefinitions.end()){
 			// not found //
-			commandtype = CONSOLECOMMANDTYPE_ERROR;
+			commandtype = CONSOLECOMMANDTYPE_NONE;
 		} else {
 			// set matching type //
 			commandtype = matchpos->second;
 		}
+	} else {
+		commandtype = CONSOLECOMMANDTYPE_ERROR;
 	}
 
 	unique_ptr<wstring> restofcommand = itr.GetUntilEnd();
+
+	if(restofcommand->size() == 0 && commandtype == CONSOLECOMMANDTYPE_NONE){
+
+		restofcommand.swap(ccmd);
+	}
 
 	// switch on type and handle rest //
 	switch (commandtype){
@@ -145,6 +181,7 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptConsole::ExecuteStringInstruction(string statement){
+	ObjectLock guard(*this);
 	// use ScriptHelper class to execute this statement in the module //
 	int result = ExecuteString(InterfaceInstance->GetExecutor()->GetASEngine(), statement.c_str(), ConsoleModule.lock()->GetModule());
 	if(result < 0){
@@ -163,6 +200,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::ExecuteStringInstruction(string stateme
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptConsole::AddVariableStringDefinition(string statement){
+	ObjectLock guard(*this);
 	// adds a variable using the method in the Console example of AngelScript SDK //
 
 	// force semicolon to the end of the statement //
@@ -180,6 +218,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::AddVariableStringDefinition(string stat
 }
 
 DLLEXPORT bool Leviathan::ScriptConsole::DeleteVariableStringDefinition(string statement){
+	ObjectLock guard(*this);
 	// deletes a variable using the method in the Console example of AngelScript SDK //
 	// get the variable by name //
 	asIScriptModule* mod = ConsoleModule.lock()->GetModule();
@@ -196,6 +235,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::DeleteVariableStringDefinition(string s
 }
 
 DLLEXPORT bool Leviathan::ScriptConsole::AddFunctionStringDefinition(string statement){
+	ObjectLock guard(*this);
 	// adds a function using the method in the Console example of AngelScript SDK //
 	bool result = false;
 
@@ -230,6 +270,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::AddFunctionStringDefinition(string stat
 }
 
 DLLEXPORT bool Leviathan::ScriptConsole::DeleteFunctionStringDefinition(string statement){
+	ObjectLock guard(*this);
 	// deletes a function using the method in the Console example of AngelScript SDK //
 	asIScriptModule* mod = ConsoleModule.lock()->GetModule();
 
@@ -270,6 +311,7 @@ funcdeletesucceedendgarbagecollectlabel:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ScriptConsole::ListFunctions(){
+	ObjectLock guard(*this);
 	// list global functions //
 	Logger::Get()->Info(L"Global functions: ");
 
@@ -300,7 +342,7 @@ DLLEXPORT void Leviathan::ScriptConsole::ListFunctions(){
 }
 
 DLLEXPORT void Leviathan::ScriptConsole::ListVariables(){
-
+	ObjectLock guard(*this);
 	// list global variables //
 	Logger::Get()->Info(L"Global script variables: ");
 

@@ -102,6 +102,7 @@ add_library(Engine SHARED ${EngineFiles})
 if(NOT WIN32)
 # Link with X11
 target_link_libraries(Engine ${X11_LIBRARIES})
+target_link_libraries(Engine ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(Engine ${LINUX_LINK_LIBS_ENGINE})
 endif(NOT WIN32)
 

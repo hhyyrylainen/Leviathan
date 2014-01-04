@@ -109,6 +109,7 @@ else(WIN32)
 
     # We need X11 on linux for window class to work
     find_package(X11)
+    find_package(Threads)
 
     include_directories(${X11_INCLUDE_DIRS})
 endif(WIN32)

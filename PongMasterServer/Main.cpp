@@ -5,6 +5,7 @@
 // visual leak detector //
 #include <vld.h>
 #endif // LEVIATHAN_USES_VLD
+#include "PongMasterNetworking.h"
 
 using namespace Pong;
 
@@ -37,6 +38,7 @@ int main(int argcount, char* args[]){
 
 		// create program object //
 		PongMasterServer app;
+		PongMasterNetworking network;
 
 
 		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"PongMaster", L"./EngineConf.conf", L"./Pong.conf", L"", &PongMasterServer::CheckGameConfigurationVariables,
@@ -45,7 +47,7 @@ int main(int argcount, char* args[]){
 #ifdef _WIN32
 		ProgramDefinition->SetHInstance(hInstance);
 #endif
-		ProgramDefinition->SetMasterServerParameters(MasterServerInformation(true, L"Pong_" GAME_VERSIONS));
+		ProgramDefinition->SetMasterServerParameters(MasterServerInformation(true, L"Pong_" GAME_VERSIONS)).SetPacketHandler(&network);
 
 		// create window last //
 		ProgramDefinition->StoreWindowDetails(PongMasterServer::GenerateWindowTitle(), true,

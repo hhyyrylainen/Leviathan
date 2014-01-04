@@ -127,6 +127,7 @@ namespace Leviathan{
 
 		// The world can be frozen to stop physics //
 		bool WorldFrozen;
+		bool GraphicalMode;
 
 		// objects //
 		// TODO: maybe change this to a map //

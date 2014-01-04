@@ -14,6 +14,8 @@ namespace Leviathan{
 		class GuiManager;
 	}
 
+	class NetworkRequest;
+	class NetworkResponse;
 	class ConnectionInfo;
 	class GameConfiguration;
 	class KeyConfiguration;

@@ -11,6 +11,10 @@ using namespace Leviathan;
 #include "Common/DataStoring/DataBlock.h"
 #include "Statistics/TimingMonitor.h"
 
+#ifdef __linux__
+#include <pthread.h>
+#include <signal.h>
+#endif
 
 // string conversions
 wstring Misc::EmptyString = L"";
@@ -88,6 +92,26 @@ __int64 Misc::GetTimeMicro64()
 #endif
 
 }
+
+
+
+DLLEXPORT void Leviathan::Misc::KillThread(boost::thread &threadtokill){
+#ifdef _WIN32
+
+	TerminateThread(threadtokill.native_handle(), 0);
+
+#elif defined __linux__
+
+	//pthread_kill(threadtokill.native_handle(), 
+	// This should work //
+	pthread_cancel(threadtokill.native_handle());
+
+#else
+#error no working kill thread on platform!
+#endif
+}
+
+
 ///string operations
 DLLEXPORT int Leviathan::Misc::CutWstring(const wstring& strtocut, const wstring &separator, vector<wstring>& vec){
 	// scan the input and gather positions for string copying //
@@ -627,5 +651,7 @@ DLLEXPORT bool Leviathan::Misc::WstringIsNumeric(const wstring &data){
 	// not found any non numeric characters //
 	return true;
 }
+
+
 
 

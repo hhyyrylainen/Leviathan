@@ -16,8 +16,8 @@ namespace Leviathan{
 		CONSOLECOMMANDTYPE_DELFUNC, CONSOLECOMMANDTYPE_ERROR};
 
 	// class used to execute script functions in the Console module //
-	// note: console is not thread safe
-	class ScriptConsole{
+	// note: console IS thread safe (at least should, work in progress)
+	class ScriptConsole : public ThreadSafe{
 	public:
 		DLLEXPORT ScriptConsole();
 		DLLEXPORT ~ScriptConsole();

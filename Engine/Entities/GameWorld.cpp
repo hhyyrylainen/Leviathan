@@ -8,10 +8,14 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld(Ogre::Root* ogre) : WorldSceneCamera(NULL), CameraLocationNode(NULL), WorldsScene(NULL),
-	Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false)
+	Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false), GraphicalMode(false)
 {
-	// these are always required for worlds //
-	_CreateOgreResources(ogre);
+	// Detecting non-GUI mode //
+	if(ogre){
+		GraphicalMode = true;
+		// these are always required for worlds //
+		_CreateOgreResources(ogre);
+	}
 
 	// acquire physics engine world //
 	_PhysicalWorld = NewtonManager::Get()->CreateWorld(this);
@@ -33,12 +37,11 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 
 	Objects.clear();
 
-
-	// release Ogre resources //
-	Ogre::Root::getSingleton().destroySceneManager(WorldsScene);
-	WorldsScene = NULL;
-
-
+	if(GraphicalMode){
+		// release Ogre resources //
+		Ogre::Root::getSingleton().destroySceneManager(WorldsScene);
+		WorldsScene = NULL;
+	}
 
 	// some smart ptrs need releasing //
 	_PhysicalWorld.reset();
@@ -46,6 +49,8 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::UpdateCameraAspect(GraphicalInputEntity* rendertarget){
+	if(!GraphicalMode)
+		return;
 	// set aspect ratio to the same as the view port (this makes it look realistic) //
 	WorldSceneCamera->setAspectRatio(rendertarget->GetViewportAspectRatio());
 	WorldSceneCamera->setAutoAspectRatio(true);

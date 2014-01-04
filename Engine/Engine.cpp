@@ -3,11 +3,19 @@
 #ifndef LEVIATHAN_ENGINE
 #include "Engine.h"
 #endif
-using namespace Leviathan;
-// ------------------------------------ //
 #include "Application/Application.h"
 #include "Entities/GameWorld.h"
 #include <boost/thread/future.hpp>
+#include <io.h>
+#include <fcntl.h>
+using namespace Leviathan;
+// ------------------------------------ //
+
+#ifdef _WIN32
+
+static const WORD MAX_CONSOLE_LINES = 500;
+
+#endif
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL),
 	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false)
@@ -49,7 +57,8 @@ DLLEXPORT Engine* Leviathan::Engine::Get(){
 	return instance;
 }
 // ------------------------------------ //
-bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype){
+DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype){
+	ObjectLock guard(*this);
 	// get time, for monitoring how long load takes //
 	__int64 InitStartTime = Misc::GetTimeMs64();
 	// set static access to this object //
@@ -64,6 +73,11 @@ bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype){
 	MainRandom = new Random((int)InitStartTime);
 	MainRandom->SetAsMain();
 
+	if(NoGui){
+		// Console might be the first thing we want //
+		WinAllocateConsole();
+	}
+
 	// Create threading facilities //
 	_ThreadingManager = new ThreadingManager();
 	if(!_ThreadingManager->Init()){
@@ -73,7 +87,7 @@ bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype){
 	}
 
 	// We want to send a request to the master server as soon as possible //
-	_NetworkHandler = new NetworkHandler(ntype);
+	_NetworkHandler = new NetworkHandler(ntype, Define->GetPacketHandler());
 
 	_NetworkHandler->Init(Define->GetMasterServerInfo());
 
@@ -326,13 +340,12 @@ bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype){
 
 		// create window //
 		GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
+	}
 
-		if(!LeapControllerResult.get_future().get() || !SoundDeviceResult.get_future().get()){
+	if(!LeapControllerResult.get_future().get() || !SoundDeviceResult.get_future().get()){
 
-			Logger::Get()->Error(L"Engine: Init: leap manager or sound device queued tasks failed");
-			return false;
-		}
-
+		Logger::Get()->Error(L"Engine: Init: leap manager or sound device queued tasks failed");
+		return false;
 	}
 
 	Inited = true;
@@ -357,11 +370,46 @@ void Leviathan::Engine::PostLoad(){
 		Mainstore->SetPersistance(L"StartCount", true);
 	}
 
+	// Start receiving input //
+	if(NoGui){
+
+		CinThread = boost::thread(boost::bind<void>([](Engine* engine) -> void{
+			// First get input //
+			wstring inputcommand;
+
+			while(true){
+
+				getline(wcin, inputcommand);
+				// Pass to various things //
+				ObjectLock guard(*engine);
+				auto tmpptr = engine->MainConsole;
+				if(tmpptr){
+
+					tmpptr->RunConsoleCommand(inputcommand);
+
+				} else {
+					Logger::Get()->Warning(L"No console handler attached, cannot run command");
+				}
+			}
+
+		}, this));
+	}
+
+
 	// get time //
 	LastFrame = Misc::GetTimeMs64();
 }
 
 void Leviathan::Engine::Release(){
+	ObjectLock guard(*this);
+
+	// Stop command handling first //
+	if(NoGui){
+		Misc::KillThread(CinThread);
+		CinThread.join();
+		Logger::Get()->Info(L"Successfully stopped command handling"); 
+	}
+
 	// Let the game release it's resources //
 	Owner->EnginePreShutdown();
 
@@ -429,6 +477,7 @@ void Leviathan::Engine::Release(){
 }
 // ------------------------------------ //
 void Leviathan::Engine::Tick(){
+	ObjectLock guard(*this);
 	// Because this is checked very often we can check for physics update here //
 	PhysicsUpdate();
 	// We can also update networking //
@@ -450,14 +499,16 @@ void Leviathan::Engine::Tick(){
 	// update input //
 	LeapData->OnTick(TimePassed);
 
-	// sound tick //
-	Sound->Tick(TimePassed);
+	if(!NoGui){
+		// sound tick //
+		Sound->Tick(TimePassed);
 
-	// update windows //
-	GraphicalEntity1->Tick(TimePassed);
+		// update windows //
+		GraphicalEntity1->Tick(TimePassed);
 
-	// update texture usage times, to allow unused textures to be unloaded //
-	//Graph->GetTextureManager()->TimePass(TimePassed);
+		// update texture usage times, to allow unused textures to be unloaded //
+		//Graph->GetTextureManager()->TimePass(TimePassed);
+	}
 
 	// some dark magic here //
 	if(TickCount % 25 == 0){
@@ -465,9 +516,10 @@ void Leviathan::Engine::Tick(){
 		Mainstore->SetTickCount(TickCount);
 		Mainstore->SetTickTime(TickTime);
 
-
-		// send updated rendering statistics //
-		RenderTimer->ReportStats(Mainstore);
+		if(!NoGui){
+			// send updated rendering statistics //
+			RenderTimer->ReportStats(Mainstore);
+		}
 	}
 
 	// send tick event //
@@ -490,7 +542,8 @@ void Leviathan::Engine::RenderFrame(){
 		return;
 
 	int SinceLastFrame = -1;
-
+	ObjectLock guard(*this);
+	
 	// limit check //
 	if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)){
 		// fps would go too high //
@@ -519,6 +572,8 @@ void Leviathan::Engine::RenderFrame(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::SaveScreenShot(){
+	assert(!NoGui && "really shouldn't try to screenshot in text-only mode");
+	ObjectLock guard(*this);
 
 	const wstring fileprefix = MainFileHandler->GetDataFolder()+L"Screenshots/Captured_frame_";
 
@@ -532,6 +587,7 @@ DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 	// If we are in text only mode always return 1 //
 	if(NoGui)
 		return 1;
+	ObjectLock guard(*this);
 
 	if(GraphicalEntity1->GetWindow()->IsOpen())
 		openwindows++;
@@ -540,14 +596,15 @@ DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 }
 
 DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(){
-	shared_ptr<GameWorld> tmp(new GameWorld(Graph->GetOgreRoot()));
-
+	shared_ptr<GameWorld> tmp(new GameWorld(NoGui ? NULL: Graph->GetOgreRoot()));
+	ObjectLock guard(*this);
 	GameWorlds.push_back(tmp);
 	return GameWorlds.back();
 }
 
 DLLEXPORT void Leviathan::Engine::PhysicsUpdate(){
 	// go through all worlds and simulate updates //
+	ObjectLock guard(*this);
 	for(size_t i = 0; i < GameWorlds.size(); i++){
 
 		GameWorlds[i]->SimulateWorld();
@@ -557,6 +614,7 @@ DLLEXPORT void Leviathan::Engine::PhysicsUpdate(){
 
 DLLEXPORT void Leviathan::Engine::ResetPhysicsTime(){
 	// go through all worlds and set last update time to this moment //
+	ObjectLock guard(*this);
 	for(size_t i = 0; i < GameWorlds.size(); i++){
 
 		GameWorlds[i]->ClearSimulatePassedTime();
@@ -564,11 +622,14 @@ DLLEXPORT void Leviathan::Engine::ResetPhysicsTime(){
 }
 // ------------------------------------ //
 void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
+	if(NoGui)
+		return;
 	// Register threads to use graphical objects //
 	_ThreadingManager->MakeThreadsWorkWithOgre();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
+	ObjectLock guard(*this);
 	// Split all flags and check for some flags that might be set //
 	WstringIterator itr(commands);
 	unique_ptr<wstring> splitval;
@@ -585,8 +646,66 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 }
 
 DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
-
+	ObjectLock guard(*this);
 
 	PassedCommands.clear();
 }
 // ------------------------------------ //
+#ifdef _WIN32
+DLLEXPORT void Leviathan::Engine::WinAllocateConsole(){
+	// Method as used on http://dslweb.nwnexus.com/~ast/dload/guicon.htm //
+	int hConHandle;
+
+	long lStdHandle;
+
+	CONSOLE_SCREEN_BUFFER_INFO coninfo;
+
+	FILE *fp;
+
+	// Allocate a console for this program //
+	AllocConsole();
+
+	// Set the wanted size //
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),	&coninfo);
+
+	coninfo.dwSize.Y = MAX_CONSOLE_LINES;
+
+	SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE),	coninfo.dwSize);
+
+	// Redirect STDOUT to the console //
+	lStdHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);
+
+	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+
+	fp = _fdopen(hConHandle, "w");
+
+	*stdout = *fp;
+
+	setvbuf(stdout, NULL, _IONBF, 0);
+
+	// Now redirect STDIN to the console //
+	lStdHandle = (long)GetStdHandle(STD_INPUT_HANDLE);
+
+	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+
+	fp = _fdopen( hConHandle, "r" );
+
+	*stdin = *fp;
+
+	setvbuf(stdin, NULL, _IONBF, 0);
+
+	// And finally STDERR to the console //
+	lStdHandle = (long)GetStdHandle(STD_ERROR_HANDLE);
+
+	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+
+	fp = _fdopen( hConHandle, "w" );
+
+	*stderr = *fp;
+
+	setvbuf(stderr, NULL, _IONBF, 0);
+
+	// Make std library output functions output to console, too //
+	ios::sync_with_stdio();
+}
+#endif

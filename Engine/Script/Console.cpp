@@ -19,7 +19,8 @@ DLLEXPORT Leviathan::ScriptConsole::~ScriptConsole(){
 
 map<wstring, CONSOLECOMMANDTYPE> Leviathan::ScriptConsole::CommandTypeDefinitions = boost::assign::map_list_of
 	(wstring(L"NONE"), CONSOLECOMMANDTYPE_NONE) (wstring(L"ADDVAR"), CONSOLECOMMANDTYPE_ADDVAR) (wstring(L"ADDFUNC"), CONSOLECOMMANDTYPE_ADDFUNC) 
-	(wstring(L"DELVAR"), CONSOLECOMMANDTYPE_DELVAR) (wstring(L"DELFUNC"), CONSOLECOMMANDTYPE_DELFUNC);
+	(wstring(L"DELVAR"), CONSOLECOMMANDTYPE_DELVAR) (wstring(L"DELFUNC"), CONSOLECOMMANDTYPE_DELFUNC)
+	(wstring(L"PRINTVAR"), CONSOLECOMMANDTYPE_PRINTVAR) (wstring(L"PRINTFUNC"), CONSOLECOMMANDTYPE_PRINTFUNC);
 
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptConsole::Init(ScriptInterface* MainScript){
@@ -171,6 +172,16 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 				CONSOLECOMMANDRESULTSTATE_FAILED;
 		}
 		break;
+	case CONSOLECOMMANDTYPE_PRINTFUNC:
+		{
+			ListFunctions();
+		}
+		break;
+	case CONSOLECOMMANDTYPE_PRINTVAR:
+		{
+			ListVariables();
+		}
+		break;
 	default:
 		{
 			ConsoleOutput(L"Invalid command type, if you don't know what a command type is you probably should add space after > like: \"> yourstuffhere();\"");
@@ -261,7 +272,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::AddFunctionStringDefinition(string stat
 		//}
 	}
 
-	// We must release the function object // (why?, I have no idea) //
+	// We must release the function object //
 	if(func)
 		func->Release();
 	if(result)
@@ -324,7 +335,7 @@ DLLEXPORT void Leviathan::ScriptConsole::ListFunctions(){
 
 		// Skip the functions that start with _ as these are not meant to be called explicitly by the user
 		if(func->GetName()[0] != '_')
-			Logger::Get()->Write(Convert::StringToWstring(func->GetDeclaration()));
+			Logger::Get()->Write(L"\t> "+Convert::StringToWstring(func->GetDeclaration()));
 	}
 	// list consoles' global variables //
 	Logger::Get()->Info(L"Console instance functions: ");
@@ -336,7 +347,7 @@ DLLEXPORT void Leviathan::ScriptConsole::ListFunctions(){
 		// get function //
 		asIScriptFunction* func = mod->GetFunctionByIndex(n);
 		// print the function //
-		Logger::Get()->Write(Convert::StringToWstring(func->GetDeclaration()));
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(func->GetDeclaration()));
 	}
 
 }
@@ -361,7 +372,7 @@ DLLEXPORT void Leviathan::ScriptConsole::ListVariables(){
 		decl += " ";
 		decl += name;
 		
-		Logger::Get()->Write(L"> "+Convert::StringToWstring(decl));
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(decl));
 	}
 	// list consoles' global variables //
 	Logger::Get()->Info(L"Console instance variables: ");
@@ -371,7 +382,7 @@ DLLEXPORT void Leviathan::ScriptConsole::ListVariables(){
 
 	for(asUINT n = 0; n < mod->GetGlobalVarCount(); n++ ){
 		// print //
-		Logger::Get()->Write(L"# "+Convert::StringToWstring(mod->GetGlobalVarDeclaration(n)));
+		Logger::Get()->Write(L"\t#> "+Convert::StringToWstring(mod->GetGlobalVarDeclaration(n)));
 	}
 }
 

@@ -3,8 +3,8 @@
 #ifndef PONG_MASTERSERVER
 #include "PongMasterServer.h"
 #endif
-#include "Common\DataStoring\NamedVars.h"
-#include "Application\GameConfiguration.h"
+#include "Common/DataStoring/NamedVars.h"
+#include "Application/GameConfiguration.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PongMasterServer::PongMasterServer(){

@@ -63,7 +63,7 @@ int main(int argcount, char* args[]){
 		for(int i = 1; i < argcount; i++){
 			commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
 		}
-		game.PassCommandLine(commandline);
+		app.PassCommandLine(commandline);
 #endif
 
 		if(app.Initialize(ProgramDefinition.get())){

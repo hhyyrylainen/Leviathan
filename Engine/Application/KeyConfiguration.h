@@ -6,10 +6,10 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Input\Key.h"
-#include <boost\function.hpp>
-#include "Common\ThreadSafe.h"
-#include <boost\bimap.hpp>
+#include "Input/Key.h"
+#include <boost/function.hpp>
+#include "Common/ThreadSafe.h"
+#include <boost/bimap.hpp>
 
 
 namespace Leviathan{
@@ -20,7 +20,7 @@ namespace Leviathan{
 		DLLEXPORT KeyConfiguration(const wstring &configfile);
 		DLLEXPORT ~KeyConfiguration();
 
-		// Loads the defined keys from a file, the function argument is called to verify that all required keys are defined 
+		// Loads the defined keys from a file, the function argument is called to verify that all required keys are defined
 		// and it can add missing keys
 		DLLEXPORT bool Init(boost::function<void (KeyConfiguration* checkfrom)> functocheck);
 		// Saves all modified keys //
@@ -31,7 +31,7 @@ namespace Leviathan{
 
 		// Resolves a control key string ("WalkForward") to a key (OIS::KC_W and modifiers SHIFT) //
 		DLLEXPORT shared_ptr<std::vector<GKey>> ResolveControlNameToKey(const wstring &controlkey);
-	
+
 		// Checks which configuration key string matches input key
 		// Warning this is quite costly function //
 		DLLEXPORT wstring ResolveKeyToControlName(const GKey &key);

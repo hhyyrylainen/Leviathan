@@ -5,7 +5,7 @@
 #endif
 #include "Leap.h"
 #include "Engine.h"
-#include "Application\Application.h"
+#include "Application/Application.h"
 using namespace Leviathan;
 using namespace Leap;
 // ------------------------------------ //

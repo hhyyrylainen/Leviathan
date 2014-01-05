@@ -6,7 +6,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 #include "FileSystem.h"
-#include "Application\AppDefine.h"
+#include "Application/AppDefine.h"
 
 DLLEXPORT Leviathan::Logger::Logger(const wstring &file): FirstSaveDone(false), Saved(false), Autosave(false), Path(file){
 	// get time for putting to beginning of log //

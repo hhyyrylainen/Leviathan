@@ -6,8 +6,10 @@
 #include "Application/Application.h"
 #include "Entities/GameWorld.h"
 #include <boost/thread/future.hpp>
+#ifdef _WIN32
 #include <io.h>
 #include <fcntl.h>
+#endif
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -75,7 +77,11 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 
 	if(NoGui){
 		// Console might be the first thing we want //
+#ifdef _WIN32
 		WinAllocateConsole();
+#else
+        // TODO: linux console alternative detection method //
+#endif
 	}
 
 	// Create threading facilities //
@@ -407,7 +413,7 @@ void Leviathan::Engine::Release(){
 	if(NoGui){
 		Misc::KillThread(CinThread);
 		CinThread.join();
-		Logger::Get()->Info(L"Successfully stopped command handling"); 
+		Logger::Get()->Info(L"Successfully stopped command handling");
 	}
 
 	// Let the game release it's resources //
@@ -543,7 +549,7 @@ void Leviathan::Engine::RenderFrame(){
 
 	int SinceLastFrame = -1;
 	ObjectLock guard(*this);
-	
+
 	// limit check //
 	if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)){
 		// fps would go too high //

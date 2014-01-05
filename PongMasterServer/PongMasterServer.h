@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Application\MasterServerApplication.h"
+#include "Application/MasterServerApplication.h"
 
 
 namespace Pong{

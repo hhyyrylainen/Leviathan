@@ -70,14 +70,14 @@ set(LEVIATHAN_BOOST_COMPONENTS chrono system regex)
 
 set(REQUIRED_BOOST_COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} ${OGRE_BOOST_COMPONENTS})
 
-find_package(Boost COMPONENTS ${REQUIRED_BOOST_COMPONENTS} QUIET)
+find_package(Boost COMPONENTS ${REQUIRED_BOOST_COMPONENTS})
 if(NOT Boost_FOUND)
     message("Boost not found, retrying with different settings")
     # Try again with the other type of libs
     set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
-    find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} QUIET)
+    find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS})
     
-    find_package(Boost QUIET)
+    find_package(Boost)
     
     if(NOT Boost_FOUND)
         message(SEND_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})        
@@ -88,7 +88,6 @@ endif(NOT Boost_FOUND)
 # Set up referencing of Boost
 include_directories(${Boost_INCLUDE_DIR})
 add_definitions(-DBOOST_ALL_NO_LIB)
-
   
 if(WIN32)
 # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
@@ -165,20 +164,20 @@ file(COPY ${DataMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
 file(GLOB ScriptsMoveFiles "Scripts/*")
 file(COPY ${ScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data/Scripts")
 
+# Boost files
+if(NOT Boost_USE_STATIC_LIBS)
+	set(BOOST_MOVE_FILES_RELEASE ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
+	  ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE} ${Boost_REGEX_LIBRARY_RELEASE})
+	set(BOOST_MOVE_FILES_DEBUG ${Boost_DATE_TIME_LIBRARY_DEBUG} ${Boost_CHRONO_LIBRARY_DEBUG}
+	  ${Boost_THREAD_LIBRARY_DEBUG} ${Boost_SYSTEM_LIBRARY_DEBUG} ${Boost_REGEX_LIBRARY_DEBUG})
+	  
+	file(COPY ${BOOST_MOVE_FILES_RELEASE} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+	file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
+endif(NOT Boost_USE_STATIC_LIBS)
 
 if(WIN32)
-    # Boost files
-    if(NOT Boost_USE_STATIC_LIBS)
-        set(BOOST_MOVE_FILES_RELEASE ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
-          ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE} ${Boost_REGEX_LIBRARY_RELEASE})
-        set(BOOST_MOVE_FILES_DEBUG ${Boost_DATE_TIME_LIBRARY_DEBUG} ${Boost_CHRONO_LIBRARY_DEBUG}
-          ${Boost_THREAD_LIBRARY_DEBUG} ${Boost_SYSTEM_LIBRARY_DEBUG} ${Boost_REGEX_LIBRARY_DEBUG})
-          
-        file(COPY ${BOOST_MOVE_FILES_RELEASE} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-        file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-    
-    endif(NOT Boost_USE_STATIC_LIBS)
+
     
     message(STATUS "Copying libs")
     
@@ -210,20 +209,6 @@ if(WIN32)
 
 else(WIN32)
     # linux variants of the copy functions
-
-    # Boost files
-    if(NOT Boost_USE_STATIC_LIBS)
-        set(BOOST_MOVE_FILES_RELEASE ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
-          ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE} ${Boost_REGEX_LIBRARY_RELEASE})
-        set(BOOST_MOVE_FILES_DEBUG ${Boost_DATE_TIME_LIBRARY_DEBUG} ${Boost_CHRONO_LIBRARY_DEBUG}
-          ${Boost_THREAD_LIBRARY_DEBUG} ${Boost_SYSTEM_LIBRARY_DEBUG} ${Boost_REGEX_LIBRARY_DEBUG})
-          
-        file(COPY ${BOOST_MOVE_FILES_RELEASE} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-        file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-    
-    endif(NOT Boost_USE_STATIC_LIBS)
-
-
     file(GLOB LeapMoveFiles "Leap/lib/x64/libLeap.so")
     file(COPY ${LeapMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 

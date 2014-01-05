@@ -4,7 +4,7 @@
 #include "KeyConfiguration.h"
 #endif
 #include "FileSystem.h"
-#include "Common\DataStoring\NamedVars.h"
+#include "Common/DataStoring/NamedVars.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::KeyConfiguration::KeyConfiguration(const wstring &configfile) : KeyStorageFile(configfile){
@@ -51,13 +51,13 @@ DLLEXPORT bool Leviathan::KeyConfiguration::Init(boost::function<void (KeyConfig
 			for(size_t i = 0; i < values.size(); i++){
 				// Parse a key //
 				if(values[i]->IsConversionAllowedNonPtr<wstring>()){
-					keys->push_back(GKey::GenerateKeyFromString(((wstring)*values[i])));
+					keys->push_back(GKey::GenerateKeyFromString(values[i]->operator wstring()));
 
 				} else {
 					// Warn about this //
 					Logger::Get()->Warning(L"KeyConfiguration: Warning key type is not convertible to wstring! name: "+name);
 				}
-				
+
 			}
 
 			// Assign to the map //

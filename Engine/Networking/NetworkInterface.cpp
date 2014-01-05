@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_NETWORKINTERFACE
 #include "NetworkInterface.h"
 #endif
-#include "Exceptions\ExceptionInvalidArgument.h"
+#include "Exceptions/ExceptionInvalidArgument.h"
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
 #include "ConnectionInfo.h"
@@ -39,8 +39,8 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 			// Let's send our identification string //
 			shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), PACKAGE_TIMEOUT_STYLE_TIMEDMS, 500));
 			// Set the right data //
-			tmpresponse->GenerateIdentificationStringResponse(new NetworkResponseDataForIdentificationString(L"TODO: this", L"TODO: fetch pong", 
-				L"TODO: get version", LEVIATHAN_VERSIONS)); 
+			tmpresponse->GenerateIdentificationStringResponse(new NetworkResponseDataForIdentificationString(L"TODO: this", L"TODO: fetch pong",
+				L"TODO: get version", LEVIATHAN_VERSIONS));
 			connectiontosendresult->SendPacketToConnection(tmpresponse, 10);
 
 			return true;

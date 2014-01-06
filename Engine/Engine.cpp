@@ -49,6 +49,12 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner),
 	OutOMemory = NULL;
 }
 
+DLLEXPORT Leviathan::Engine::~Engine(){
+    ObjectLock guard(*this);
+    // Reset the instance ptr //
+    instance = NULL;
+}
+
 Engine* Leviathan::Engine::instance = NULL;
 
 Engine* Leviathan::Engine::GetEngine(){
@@ -379,7 +385,7 @@ void Leviathan::Engine::PostLoad(){
 	// Start receiving input //
 	if(NoGui){
 
-		CinThread = boost::thread(boost::bind<void>([](Engine* engine) -> void{
+		CinThread = boost::thread(boost::bind<void>([]() -> void{
 			// First get input //
 			wstring inputcommand;
 
@@ -387,6 +393,7 @@ void Leviathan::Engine::PostLoad(){
 
 				getline(wcin, inputcommand);
 				// Pass to various things //
+				Engine* engine = Engine::Get();
 				ObjectLock guard(*engine);
 				auto tmpptr = engine->MainConsole;
 				if(tmpptr){
@@ -398,7 +405,7 @@ void Leviathan::Engine::PostLoad(){
 				}
 			}
 
-		}, this));
+		}));
 	}
 
 
@@ -412,7 +419,8 @@ void Leviathan::Engine::Release(){
 	// Stop command handling first //
 	if(NoGui){
 		Misc::KillThread(CinThread);
-		CinThread.join();
+		// We don't join the thread because we can't properly stop this on linux //
+		//CinThread.join();
 		Logger::Get()->Info(L"Successfully stopped command handling");
 	}
 

@@ -41,6 +41,7 @@ namespace Leviathan{
 		friend Gui::GuiManager;
 	public:
 		DLLEXPORT Engine(LeviathanApplication* owner);
+		DLLEXPORT ~Engine();
 
 		DLLEXPORT bool Init(AppDef* definition, NETWORKED_TYPE ntype);
 		DLLEXPORT void Release();

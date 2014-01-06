@@ -102,7 +102,8 @@ DLLEXPORT void Leviathan::Misc::KillThread(boost::thread &threadtokill){
 
 #elif defined __linux__
 
-	//pthread_kill(threadtokill.native_handle(), 
+	//pthread_kill(threadtokill.native_handle(), SIGIO);
+	//pthread_kill(threadtokill.native_handle(), SIGUSR1);
 	// This should work //
 	pthread_cancel(threadtokill.native_handle());
 

@@ -1,19 +1,36 @@
 #include "PongMasterServerIncludes.h"
 #include "PongMasterServer.h"
+#include "PongMasterNetworking.h"
+
+using namespace Pong;
+
+// ------------------ ProgramConfiguration ------------------ //
+
+#define PROGRAMCLASSNAME				PongMasterServer
+#define PROGRAMNETWORKINGNAME			PongMasterNetworking
+#define PROGRAMLOG						L"PongMaster"
+#define ENGINECONFIGURATION				L"./EngineConf.conf"
+#define PROGRAMCONFIGURATION			L"./Pong.conf"
+#define PROGRAMKEYCONFIGURATION			L""
+#define PROGRAMCHECKCONFIGFUNCNAME		PongMasterServer::CheckGameConfigurationVariables
+#define PROGRAMCHECKKEYCONFIGFUNCNAME	PongMasterServer::CheckGameKeyConfigVariables
+#define PROGRAMMASTERSERVERINFO			MasterServerInformation(true, L"Pong_" GAME_VERSIONS)
+#define WINDOWTITLEGENFUNCTION			PongMasterServer::GenerateWindowTitle()
+
+#define USERREADABLEIDENTIFICATION		L"Pong master version " GAME_VERSIONS
+#define GAMENAMEIDENTIFICATION			L"Pong"
+#define GAMEVERSIONIDENTIFICATION		GAME_VERSIONS
+
+// Don't look at the mess ahead, just set the previous things and customize using virtual functions //
 
 #ifdef LEVIATHAN_USES_VLD
 // visual leak detector //
 #include <vld.h>
 #endif // LEVIATHAN_USES_VLD
-#include "PongMasterNetworking.h"
-
-using namespace Pong;
 
 #ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
 #if defined(DEBUG) | defined(_DEBUG)
-	//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-	//_CrtSetReportMode( _CRT_ERROR, _CRTDBG_MODE_DEBUG);
 	_CrtSetReportMode( _CRT_ASSERT, _CRTDBG_MODE_DEBUG);
 #endif
 
@@ -30,63 +47,62 @@ int main(int argcount, char* args[]){
 #endif
 
 #ifdef LEVIATHAN_USES_VLD
-		// now that we are in code we can start tracking //
+	// now that we are in code we can start tracking //
 
-		VLDEnable();
+	VLDEnable();
 #endif // LEVIATHAN_USES_VLD
 
+	// create program object //
+	PROGRAMCLASSNAME app;
+	PROGRAMNETWORKINGNAME network;
 
-		// create program object //
-		PongMasterServer app;
-		PongMasterNetworking network;
-
-
-		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"PongMaster", L"./EngineConf.conf", L"./Pong.conf", L"", &PongMasterServer::CheckGameConfigurationVariables,
-			&PongMasterServer::CheckGameKeyConfigVariables));
-		// customize values //
+	unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(PROGRAMLOG, ENGINECONFIGURATION, PROGRAMCONFIGURATION, PROGRAMKEYCONFIGURATION, 
+		&PROGRAMCHECKCONFIGFUNCNAME, &PROGRAMCHECKKEYCONFIGFUNCNAME));
+	// customize values //
 #ifdef _WIN32
-		ProgramDefinition->SetHInstance(hInstance);
+	ProgramDefinition->SetHInstance(hInstance);
 #endif
-		ProgramDefinition->SetMasterServerParameters(MasterServerInformation(true, L"Pong_" GAME_VERSIONS)).SetPacketHandler(&network);
+	ProgramDefinition->SetMasterServerParameters(PROGRAMMASTERSERVERINFO).SetPacketHandler(&network).SetApplicationIdentification(
+		USERREADABLEIDENTIFICATION, GAMENAMEIDENTIFICATION, GAMEVERSIONIDENTIFICATION);
 
-		// create window last //
-		ProgramDefinition->StoreWindowDetails(PongMasterServer::GenerateWindowTitle(), true,
+	// create window last //
+	ProgramDefinition->StoreWindowDetails(WINDOWTITLEGENFUNCTION, true,
 #ifdef _WIN32
-			LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)),
+		LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)),
 #endif
-			&app);
+		&app);
 
 #ifdef _WIN32
-		app.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
+	app.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
 #else
-		wstring commandline = L"";
-		for(int i = 1; i < argcount; i++){
-			commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
-		}
-		app.PassCommandLine(commandline);
-#endif
-
-		if(app.Initialize(ProgramDefinition.get())){
-
-			// this is where the game should customize the engine //
-			app.CustomizeEnginePostLoad();
-
-			// After everything is ready the command line should be flushed //
-			app.FlushCommandLine();
-
-
-			Logger::Get()->Info(L"Engine successfully initialized", true);
-			Return = app.RunMessageLoop();
-		} else {
-			Logger::Get()->Error(L"App init failed, closing", true);
-			app.Release();
-			Return = 5;
-		}
-#ifdef _WIN32
+	wstring commandline = L"";
+	for(int i = 1; i < argcount; i++){
+		commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
 	}
-	//_CrtDumpMemoryLeaks();
-	CoUninitialize();
+	app.PassCommandLine(commandline);
 #endif
 
-	return Return;
+	if(app.Initialize(ProgramDefinition.get())){
+
+		// this is where the game should customize the engine //
+		app.CustomizeEnginePostLoad();
+
+		// After everything is ready the command line should be flushed //
+		app.FlushCommandLine();
+
+
+		Logger::Get()->Info(L"Engine successfully initialized", true);
+		Return = app.RunMessageLoop();
+	} else {
+		Logger::Get()->Error(L"App init failed, closing", true);
+		app.Release();
+		Return = 5;
+	}
+#ifdef _WIN32
+}
+//_CrtDumpMemoryLeaks();
+CoUninitialize();
+#endif
+
+return Return;
 }

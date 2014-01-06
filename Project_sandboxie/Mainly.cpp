@@ -1,75 +1,105 @@
 #include "Define.h"
 #include "App.h"
 
+using namespace SandBoxie;
+
+// ------------------ ProgramConfiguration ------------------ //
+
+#define PROGRAMCLASSNAME				App
+#define PROGRAMLOG						L"Sandboxie"
+#define ENGINECONFIGURATION				L"./EngineConf.conf"
+#define PROGRAMCONFIGURATION			L"./Sandboxie.conf"
+#define PROGRAMKEYCONFIGURATION			L"./SandboxieKeys.conf"
+#define PROGRAMCHECKCONFIGFUNCNAME		App::CheckGameConfigurationVariables
+#define PROGRAMCHECKKEYCONFIGFUNCNAME	App::CheckGameKeyConfigVariables
+#define PROGRAMMASTERSERVERINFO			MasterServerInformation()
+#define WINDOWTITLEGENFUNCTION			App::GenerateWindowTitle()
+
+#define USERREADABLEIDENTIFICATION		L"Sandboxie version " GAME_VERSIONS
+#define GAMENAMEIDENTIFICATION			L"Sandboxie"
+#define GAMEVERSIONIDENTIFICATION		GAME_VERSIONS
+
+// Don't look at the mess ahead, just set the previous things and customize using virtual functions //
+
 #ifdef LEVIATHAN_USES_VLD
 // visual leak detector //
 #include <vld.h>
 #endif // LEVIATHAN_USES_VLD
 
-
-
-
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-	LPSTR lpCmdLine, int nCmdShow){
+#ifdef _WIN32
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
 #if defined(DEBUG) | defined(_DEBUG)
-	//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-	//_CrtSetReportMode( _CRT_ERROR, _CRTDBG_MODE_DEBUG);
 	_CrtSetReportMode( _CRT_ASSERT, _CRTDBG_MODE_DEBUG);
 #endif
 
-
+#else
+int main(int argcount, char* args[]){
+#endif
 	int Return = 0;
+#ifdef _WIN32
 	HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
 
-	//_CrtSetBreakAlloc(5426);
-
 	if(SUCCEEDED(CoInitialize(NULL))){
+#else
 
-		//LeviathanApplication* instance = LeviathanApplication::GetApp(); 
-		//if(instance != NULL){
+#endif
 
 #ifdef LEVIATHAN_USES_VLD
-		// now that we are in code we can start tracking //
+	// now that we are in code we can start tracking //
 
-		VLDEnable();
+	VLDEnable();
 #endif // LEVIATHAN_USES_VLD
 
+	// create program object //
+	PROGRAMCLASSNAME app;
 
-		// create app //
-		SandBoxie::App app = SandBoxie::App();
+	unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(PROGRAMLOG, ENGINECONFIGURATION, PROGRAMCONFIGURATION, PROGRAMKEYCONFIGURATION, 
+		&PROGRAMCHECKCONFIGFUNCNAME, &PROGRAMCHECKKEYCONFIGFUNCNAME));
+	// customize values //
+#ifdef _WIN32
+	ProgramDefinition->SetHInstance(hInstance);
+#endif
+	ProgramDefinition->SetMasterServerParameters(PROGRAMMASTERSERVERINFO).SetPacketHandler(NULL).SetApplicationIdentification(
+		USERREADABLEIDENTIFICATION, GAMENAMEIDENTIFICATION, GAMEVERSIONIDENTIFICATION);
 
-		wstring tittle = L"wrkn SandBoxie v ";
-		tittle += GAME_VERSIONS;
-		tittle += L" Leviathan ";
-		tittle += VERSIONS;
+	// create window last //
+	ProgramDefinition->StoreWindowDetails(WINDOWTITLEGENFUNCTION, true,
+#ifdef _WIN32
+		LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)),
+#endif
+		&app);
 
-		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine());
-		// customize values //
-		ProgramDefinition->SetHInstance(hInstance);
-
-		// create window parameters last //
-		ProgramDefinition->StoreWindowDetails(tittle, true, LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)), &app);
-
-
-		if(app.Initialize(ProgramDefinition.get())){
-			app.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
-			// this is where the game should customize the engine //
-			app.CustomizeEnginePostLoad();
-
-			Logger::Get()->Info(L"Engine successfully initialized", true);
-			Return = app.RunMessageLoop();
-		} else {
-			Logger::Get()->Error(L"App init failed, closing", true);
-			app.Release();
-			Return = 005;
-		}
+#ifdef _WIN32
+	app.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
+#else
+	wstring commandline = L"";
+	for(int i = 1; i < argcount; i++){
+		commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
 	}
+	app.PassCommandLine(commandline);
+#endif
 
-#ifdef LEVIATHAN_USES_VLD
-	VLDReportLeaks();
-#endif // LEVIATHAN_USES_VLD
-	//_CrtDumpMemoryLeaks();
+	if(app.Initialize(ProgramDefinition.get())){
 
-	CoUninitialize();
-	return Return;
+		// this is where the game should customize the engine //
+		app.CustomizeEnginePostLoad();
+
+		// After everything is ready the command line should be flushed //
+		app.FlushCommandLine();
+
+
+		Logger::Get()->Info(L"Engine successfully initialized", true);
+		Return = app.RunMessageLoop();
+	} else {
+		Logger::Get()->Error(L"App init failed, closing", true);
+		app.Release();
+		Return = 5;
+	}
+#ifdef _WIN32
+}
+//_CrtDumpMemoryLeaks();
+CoUninitialize();
+#endif
+
+return Return;
 }

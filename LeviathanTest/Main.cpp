@@ -1,10 +1,34 @@
 #include "Define.h"
 #include "TestFunction.h"
 
+class DummyNetworkHandler : public Leviathan::NetworkInterface{
+public:
+	DLLEXPORT virtual void HandleResponseOnlyPacket(shared_ptr<NetworkResponse> message, ConnectionInfo* connection){
+		throw std::exception("The method or operation is not implemented.");
+	}
+};
+
+// ------------------ ProgramConfiguration ------------------ //
+	
+#define ENGINECONFIGURATION				L"./EngineConf.conf"
+#define PROGRAMCONFIGURATION			L"./Tests.conf"
+#define PROGRAMKEYCONFIGURATION			L""
+#define PROGRAMCHECKCONFIGFUNCNAME		LeviathanApplication::DummyGameConfigurationVariables
+#define PROGRAMCHECKKEYCONFIGFUNCNAME	LeviathanApplication::DummyGameKeyConfigVariables
+#define PROGRAMMASTERSERVERINFO			MasterServerInformation()
+#define WINDOWTITLEGENFUNCTION			L"LeviathanTest for version " VERSIONS L" built on " __WDATE__ L" " __WTIME__
+
+#define USERREADABLEIDENTIFICATION		L"Leviathan test" VERSIONS
+#define GAMENAMEIDENTIFICATION			L"Test"
+#define GAMEVERSIONIDENTIFICATION		VERSIONS
+
+
 #ifdef LEVIATHAN_USES_VLD
 // visual leak detector //
 #include <vld.h>
 #endif // LEVIATHAN_USES_VLD
+
+
 
 
 #ifdef _WIN32
@@ -33,16 +57,6 @@ int main(int argcount, char* args[]){
 		VLDEnable();
 #endif // LEVIATHAN_USES_VLD
 
-		wstring tittle = L"LeviathanTest for version ";
-		tittle += VERSIONS;
-		tittle += L" built on ";
-		tittle += __WDATE__ L" " __WTIME__;
-
-		LeviathanApplication app;
-
-		// create custom logger //
-		Logger* customlogger = new Logger();
-
 #ifdef _WIN32
 		// set path //
 		SYSTEMTIME tdate;
@@ -55,11 +69,23 @@ int main(int argcount, char* args[]){
 #else
 		wstring times = L"No time on linux";
 #endif
+
+		LeviathanApplication app;
+		DummyNetworkHandler network;
+
+		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(times, ENGINECONFIGURATION, PROGRAMCONFIGURATION, PROGRAMKEYCONFIGURATION, 
+			&PROGRAMCHECKCONFIGFUNCNAME, &PROGRAMCHECKKEYCONFIGFUNCNAME));
+		// customize values //
+#ifdef _WIN32
+		ProgramDefinition->SetHInstance(hInstance);
+#endif
+		ProgramDefinition->SetMasterServerParameters(PROGRAMMASTERSERVERINFO).SetPacketHandler(&network).SetApplicationIdentification(
+			USERREADABLEIDENTIFICATION, GAMENAMEIDENTIFICATION, GAMEVERSIONIDENTIFICATION);
+
 		bool Passed = true;
-		customlogger->SetSavePath(L"./TestLog "+times+L".txt");
 
 		// run pre-engine tests //
-		Logger::Get()->Info(tittle, false);
+		Logger::Get()->Info(WINDOWTITLEGENFUNCTION);
 		Logger::Get()->Info(L"-------------------- STARTING PRE-ENGINE TESTS --------------------\n\n\n", true);
 
 		TimingMonitor::StartTiming(L"All tests timer");
@@ -75,30 +101,29 @@ int main(int argcount, char* args[]){
 
 		TimingMonitor::StopTiming(L"All tests timer");
 
-		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine());
 		// customize values //
+		ProgramDefinition->StoreWindowDetails(WINDOWTITLEGENFUNCTION, true,
 #ifdef _WIN32
-		ProgramDefinition->SetHInstance(hInstance);
+			LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)),
 #endif
-		// create window last //
-		ProgramDefinition->StoreWindowDetails(tittle, true,
-#ifdef _WIN32
-            LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)),
-#endif
-            &app);
+			&app);
 
+#ifdef _WIN32
+		app.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
+#else
+		wstring commandline = L"";
+		for(int i = 1; i < argcount; i++){
+			commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
+		}
+		app.PassCommandLine(commandline);
+#endif
 
 
 		if(app.Initialize(ProgramDefinition.get())){
-#ifdef _WIN32
-			app.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
-#else
-            wstring commandline = L"";
-            for(int i = 1; i < argcount; i++){
-                commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
-            }
-			app.PassCommandLine(commandline);
-#endif
+
+			// After everything is ready the command line should be flushed //
+			app.FlushCommandLine();
+
 			Logger::Get()->Info(L"Engine successfully initialized", false);
 
 			// run tests //
@@ -122,9 +147,10 @@ int main(int argcount, char* args[]){
 			}
 
 			// finish //
-			app.GetEngine()->GetWindowEntity()->GetWindow()->SendCloseMessage();
+			app.StartRelease();
 			// receive close message //
 			Return = app.RunMessageLoop();
+
 		} else {
 			Logger::Get()->Error(L"App init failed, closing",0, true);
 			//app.Close();

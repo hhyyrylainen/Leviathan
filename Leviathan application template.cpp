@@ -1,24 +1,27 @@
-#include "PongIncludes.h"
-#include "PongGame.h"
-#include "PongNetHandler.h"
 
-using namespace Pong;
+// Put your includes here //
+
+// Also include file based on
+#include "ProgramIncludes.h"
+
+// I recommend using your namespace here
+using namespace ;
 
 // ------------------ ProgramConfiguration ------------------ //
 
-#define PROGRAMCLASSNAME				PongGame
-#define PROGRAMNETWORKINGNAME			PongNetHandler
-#define PROGRAMLOG						L"Pong"
+#define PROGRAMCLASSNAME				class
+#define PROGRAMNETWORKINGNAME			class
+#define PROGRAMLOG						L"ProgramLogPrexif"
 #define ENGINECONFIGURATION				L"./EngineConf.conf"
-#define PROGRAMCONFIGURATION			L"./Pong.conf"
-#define PROGRAMKEYCONFIGURATION			L"./PongKeys.conf"
-#define PROGRAMCHECKCONFIGFUNCNAME		PongGame::CheckGameConfigurationVariables
-#define PROGRAMCHECKKEYCONFIGFUNCNAME	PongGame::CheckGameKeyConfigVariables
-#define PROGRAMMASTERSERVERINFO			MasterServerInformation(L"PongMasters.txt", L"Pong_" GAME_VERSIONS, L"http://boostslair.com/", L"/Pong/MastersList.php", L"PongCrecentials.txt", false)
-#define WINDOWTITLEGENFUNCTION			PongGame::GenerateWindowTitle()
+#define PROGRAMCONFIGURATION			L"./Program.conf"
+#define PROGRAMKEYCONFIGURATION			L"./ProgramKeys.conf"
+#define PROGRAMCHECKCONFIGFUNCNAME		class::CheckGameConfigurationVariables
+#define PROGRAMCHECKKEYCONFIGFUNCNAME	class::CheckGameKeyConfigVariables
+#define PROGRAMMASTERSERVERINFO			MasterServerInformation(L"ProgramMasters.txt", L"Program_" GAME_VERSIONS, L"http://mywebsite.com/", L"/MastersList.php", L"ProgramCrecentials.txt", false)
+#define WINDOWTITLEGENFUNCTION			class::GenerateWindowTitle()
 
-#define USERREADABLEIDENTIFICATION		L"Pong client version " GAME_VERSIONS
-#define GAMENAMEIDENTIFICATION			L"Pong"
+#define USERREADABLEIDENTIFICATION		L"Game client|server|master version " GAME_VERSIONS
+#define GAMENAMEIDENTIFICATION			L"Program"
 #define GAMEVERSIONIDENTIFICATION		GAME_VERSIONS
 
 // Don't look at the mess ahead, just set the previous things and customize using virtual functions //

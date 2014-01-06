@@ -15,6 +15,11 @@ namespace SandBoxie{
 		App();
 
 		void CustomizeEnginePostLoad();
+		static wstring GenerateWindowTitle();
+
+		// Game configuration checkers //
+		static void CheckGameConfigurationVariables(GameConfiguration* configobj);
+		static void CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
 	};
 
 }

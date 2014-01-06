@@ -50,9 +50,9 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner),
 }
 
 DLLEXPORT Leviathan::Engine::~Engine(){
-    ObjectLock guard(*this);
-    // Reset the instance ptr //
-    instance = NULL;
+	ObjectLock guard(*this);
+	// Reset the instance ptr //
+	instance = NULL;
 }
 
 Engine* Leviathan::Engine::instance = NULL;
@@ -86,8 +86,11 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 #ifdef _WIN32
 		WinAllocateConsole();
 #else
-        // TODO: linux console alternative detection method //
+		// TODO: linux console alternative detection method //
 #endif
+
+		// Tell window title //
+		Logger::Get()->Write(L"// ------------------ "+Define->GetWindowDetails().Title+L" ------------------ //");
 	}
 
 	// Create threading facilities //
@@ -384,6 +387,7 @@ void Leviathan::Engine::PostLoad(){
 
 	// Start receiving input //
 	if(NoGui){
+
 
 		CinThread = boost::thread(boost::bind<void>([]() -> void{
 			// First get input //

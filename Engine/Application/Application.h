@@ -47,6 +47,10 @@ namespace Leviathan{
 		DLLEXPORT static inline LeviathanApplication* GetApp(){
 			return Curapp;
 		}
+		// Some dummy functions for ease of use //
+		DLLEXPORT static void DummyGameConfigurationVariables(GameConfiguration* configobj);
+		DLLEXPORT static void DummyGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
+
 	protected:
 		// called just before returning from initialization, and can be used setting start time etc. //
 		DLLEXPORT virtual void _InternalInit();

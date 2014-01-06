@@ -120,4 +120,12 @@ DLLEXPORT void Leviathan::LeviathanApplication::Tick(int mspassed){
 DLLEXPORT void Leviathan::LeviathanApplication::EnginePreShutdown(){
 
 }
+
+DLLEXPORT void Leviathan::LeviathanApplication::DummyGameConfigurationVariables(GameConfiguration* configobj){
+
+}
+
+DLLEXPORT void Leviathan::LeviathanApplication::DummyGameKeyConfigVariables(KeyConfiguration* keyconfigobj){
+
+}
 // ------------------------------------ //

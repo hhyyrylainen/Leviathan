@@ -70,7 +70,8 @@ namespace Leviathan{
 			MasterServerInfo = info;
 			return *this;
 		}
-
+		// Sets the version information of the application, leviathan version is set automatically //
+		DLLEXPORT AppDef& SetApplicationIdentification(const wstring &userreadable, const wstring &gamename, const wstring &gameversion);
 
 		DLLEXPORT WindowDataDetails& GetWindowDetails(){
 
@@ -129,6 +130,12 @@ namespace Leviathan{
 
 		wstring LogFile;
 		Logger* Mainlog;
+
+
+		wstring LeviathanVersion;
+		wstring GameVersion;
+		wstring Game;
+		wstring UserReadableGame;
 
 		// ------------------------------------ //
 		static AppDef* Defaultconf;

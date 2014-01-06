@@ -4,12 +4,12 @@
 class DummyNetworkHandler : public Leviathan::NetworkInterface{
 public:
 	DLLEXPORT virtual void HandleResponseOnlyPacket(shared_ptr<NetworkResponse> message, ConnectionInfo* connection){
-		throw std::exception("The method or operation is not implemented.");
+		throw std::exception();
 	}
 };
 
 // ------------------ ProgramConfiguration ------------------ //
-	
+
 #define ENGINECONFIGURATION				L"./EngineConf.conf"
 #define PROGRAMCONFIGURATION			L"./Tests.conf"
 #define PROGRAMKEYCONFIGURATION			L""
@@ -73,7 +73,7 @@ int main(int argcount, char* args[]){
 		LeviathanApplication app;
 		DummyNetworkHandler network;
 
-		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(times, ENGINECONFIGURATION, PROGRAMCONFIGURATION, PROGRAMKEYCONFIGURATION, 
+		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(times, ENGINECONFIGURATION, PROGRAMCONFIGURATION, PROGRAMKEYCONFIGURATION,
 			&PROGRAMCHECKCONFIGFUNCNAME, &PROGRAMCHECKKEYCONFIGFUNCNAME));
 		// customize values //
 #ifdef _WIN32

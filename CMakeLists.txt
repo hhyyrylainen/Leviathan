@@ -222,7 +222,8 @@ else(WIN32)
     file(COPY ${RocketMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
     # newton
-    file(COPY "Newton/lib/libNewton.so" DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    file(GLOB NewtonMoveFiles "Newton/lib/libNewton.so")
+    file(COPY ${NewtonMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
     # smfl
     file(GLOB SMFLMoveFiles "SFML/lib/*.so*")

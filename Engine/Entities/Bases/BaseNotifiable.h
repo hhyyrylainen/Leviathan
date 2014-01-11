@@ -14,7 +14,7 @@ namespace Leviathan{
 	// Forward declaration of the parent object to be able to include this in that file //
 	class BaseNotifier;
 
-	// This class is used to allow entities to connect to other entities safely (unhook events are called on both if either is destroyed) //
+	//! This class is used to allow entities to connect to other entities safely (unhook events are called on both if either is destroyed) //
 	class BaseNotifiable : virtual public BaseObject{
 		friend BaseNotifier;
 	public:

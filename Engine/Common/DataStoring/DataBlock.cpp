@@ -6,6 +6,7 @@
 #include "Exceptions/ExceptionInvalidArgument.h"
 #include "Utility/Iterators/WstringIterator.h"
 #include "Script/ScriptInterface.h"
+#include "../StringOperations.h"
 using namespace Leviathan;
 // ------------------------------------ //
 #define TEST_IVALUE_INDBLOCKS		254676
@@ -161,7 +162,7 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wst
 		return;
 	}
 	// check does it contain non numeric characters //
-	if(!Misc::WstringIsNumeric(valuetoparse)){
+	if(!StringOperations::IsStringNumeric<wstring, wchar_t>(valuetoparse)){
 
 		// check does it match true/false //
 		bool possiblevalue = false;

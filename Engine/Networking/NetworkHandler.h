@@ -71,7 +71,12 @@ namespace Leviathan{
 		DLLEXPORT virtual void StopOwnUpdaterThread();
 		DLLEXPORT virtual void StartOwnUpdaterThread();
 
+		DLLEXPORT virtual void RemoveClosedConnections(ObjectLock &guard);
+
 		DLLEXPORT shared_ptr<boost::promise<wstring>> QueryMasterServer(const MasterServerInformation &info);
+
+
+		DLLEXPORT virtual void SafelyCloseConnectionTo(ConnectionInfo* to);
 
 		// Common network functions //
 		// For example if passed http://boostslair.com/Pong/MastersList.php returns http://boostslair.com/ //
@@ -98,6 +103,7 @@ namespace Leviathan{
 
 		// Internal listing of all connections //
 		std::vector<ConnectionInfo*> ConnectionsToUpdate;
+		std::vector<ConnectionInfo*> ConnectionsToTerminate;
 
 		std::vector<shared_ptr<ConnectionInfo>> AutoOpenedConnections;
 

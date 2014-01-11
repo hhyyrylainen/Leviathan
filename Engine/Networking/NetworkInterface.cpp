@@ -7,6 +7,7 @@
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
 #include "ConnectionInfo.h"
+#include "RemoteConsole.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkInterface::NetworkInterface(){
@@ -45,7 +46,20 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 
 			return true;
 		}
+	case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE:
+		{
+			RemoteConsole::Get()->HandleRemoteConsoleRequestPacket(request, connectiontosendresult);
 
+			return true;
+		}
+#ifdef _DEBUG
+	case NETWORKREQUESTTYPE_OPENREMOTECONSOLETO:
+		{
+			// This should be handled directly by ConnectionInfo (at least at the current stage) //
+			DEBUG_BREAK;
+			return true;
+		}
+#endif // _DEBUG
 
 	}
 
@@ -53,19 +67,41 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 	return false;
 }
 // ------------------------------------ //
-bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection){
+bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived){
 	// Switch on type //
 	switch(message->GetTypeOfResponse()){
 	case NETWORKRESPONSETYPE_KEEPALIVE: case NETWORKRESPONSETYPE_NONE:
 		{
 			// Requires no handling //
+			// Also this should not be reported as received //
+			dontmarkasreceived = true;
+
+			// Actually might want to respond with a keepalive packet //
+			connection->CheckKeepAliveSend();
 			return true;
 		}
-
+	case NETWORKRESPONSETYPE_CLOSECONNECTION:
+		{
+			// This connection should be closed //
+			Logger::Get()->Info(L"NetworkInterface: dropping connection due to receiving a connection close packet");
+			NetworkHandler::Get()->SafelyCloseConnectionTo(connection);
+			return true;
+		}
+	//case NETWORKRESPONSETYPE_:
+		//{
+		//	// Pass to remote console //
+		//	RemoteConsole::Get()->HandleRemoteConsoleResponse(message, connection, NULL);
+		//	return true;
+		//}
 
 	}
 	// Not handled //
 	return false;
+}
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::NetworkInterface::CanConnectionTerminate(ConnectionInfo* connection){
+	// By default allow connections to close //
+	return true;
 }
 
 

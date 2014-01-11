@@ -29,7 +29,7 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
 
 	// Process based on the type //
 	switch(ResponseType){
-	case NETWORKRESPONSETYPE_NONE: case NETWORKRESPONSETYPE_KEEPALIVE:
+	case NETWORKRESPONSETYPE_NONE: case NETWORKRESPONSETYPE_KEEPALIVE: case NETWORKRESPONSETYPE_CLOSECONNECTION:
 		{
 			// There is no data in the packet //
 			ResponseData = NULL;
@@ -65,6 +65,12 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateKeepAliveResponse(){
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 }
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateCloseConnectionResponse(){
+	ResponseType = NETWORKRESPONSETYPE_CLOSECONNECTION;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+}
 // ------------------------------------ //
 DLLEXPORT sf::Packet Leviathan::NetworkResponse::GeneratePacketForResponse(){
 
@@ -72,7 +78,9 @@ DLLEXPORT sf::Packet Leviathan::NetworkResponse::GeneratePacketForResponse(){
 	// First thing is the header //
 	generatedpacket << ResponseID << (int)ResponseType;
 
-	if(ResponseType != NETWORKRESPONSETYPE_NONE){
+	// We don't need to enforce the type here //
+	//if(ResponseType != NETWORKRESPONSETYPE_NONE){
+	if(ResponseData){
 		// Add the data //
 		ResponseData->AddDataToPacket(generatedpacket);
 	}

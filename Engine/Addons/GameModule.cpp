@@ -5,6 +5,7 @@
 #endif
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "FileSystem.h"
+#include "Common/StringOperations.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameModule::GameModule(const wstring &modulename, const wstring &ownername, const wstring &extension /*= L"txt|levgm"*/) : OwnerName(ownername), LoadedFromFile(modulename){
@@ -69,8 +70,8 @@ DLLEXPORT Leviathan::GameModule::GameModule(const wstring &modulename, const wst
 		throw ExceptionInvalidArgument(L"At least one source file expected in sourcefiles", sources->Lines.size(), __WFUNCTION__, L"modulename", modulename);
 	}
 
-	wstring sourcefilename = FileSystem::RemoveExtension(*sources->Lines[0], true);
-	wstring extensions = FileSystem::GetExtension(*sources->Lines[0]);
+	wstring sourcefilename = StringOperations::RemoveExtensionWstring(*sources->Lines[0], true);
+	wstring extensions = StringOperations::GetExtensionWstring(*sources->Lines[0]);
 
 	SourceFile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, sourcefilename, extensions, false);
 }

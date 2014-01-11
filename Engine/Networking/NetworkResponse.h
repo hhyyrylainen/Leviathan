@@ -16,6 +16,7 @@ namespace Leviathan{
 		// Sent in response to a NETWORKREQUESTTYPE_IDENTIFICATION contains a user readable string, game name, game version and leviathan version strings //
 		NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS,
 		NETWORKRESPONSETYPE_KEEPALIVE,
+		NETWORKRESPONSETYPE_CLOSECONNECTION,
 		NETWORKRESPONSETYPE_NONE
 	};
 
@@ -55,6 +56,7 @@ namespace Leviathan{
 		// Named "constructors" for different types //
 		DLLEXPORT void GenerateIdentificationStringResponse(NetworkResponseDataForIdentificationString* newddata);
 		DLLEXPORT void GenerateKeepAliveResponse();
+		DLLEXPORT void GenerateCloseConnectionResponse();
 
 		DLLEXPORT NETWORKRESPONSETYPE GetTypeOfResponse();
 

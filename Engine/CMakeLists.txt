@@ -31,6 +31,9 @@ file(GLOB GroupAddons "Addons/*.cpp" "Addons/*.h")
 file(GLOB GroupNetworking "Networking/*.cpp" "Networking/*.h")
 file(GLOB GroupThreading "Threading/*.cpp" "Threading/*.h")
 
+file(GLOB GroupLZ4 "lz4/*.c" "lz4/*.cpp" "lz4/*.h")
+
+
 # AngelScript addon sources
 file(GLOB_RECURSE GroupScriptAddons "${PROJECT_SOURCE_DIR}/AngelScript/add_on/*.cpp" "${PROJECT_SOURCE_DIR}/AngelScript/add_on/*.h")
 
@@ -44,6 +47,8 @@ source_group("Scripting\\AngelAddons" FILES ${GroupScriptAddons})
 source_group("Addons" FILES ${GroupAddons})
 source_group("Networking" FILES ${GroupNetworking})
 source_group("Threading" FILES ${GroupThreading})
+
+source_group("Libraries\\lz4" FILES ${GroupLZ4})
 
 source_group("Entities" FILES ${GroupEntities})
 source_group("Entities\\Bases" FILES ${GroupEntitiesBases})
@@ -92,6 +97,9 @@ list(REMOVE_ITEM EngineFiles ${PrecompiledSourceName})
 # precompiled header
 ADD_MSVC_PRECOMPILED_HEADER("Include.h" ${PrecompiledSourceName} EngineFiles)
 endif(WIN32)
+
+# Don't use precompiled header on c source file
+set(EngineFiles ${EngineFiles} ${GroupLZ4})
 
 # engine exporting define
 add_definitions(-DENGINE_EXPORTS)

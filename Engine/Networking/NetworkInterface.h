@@ -37,8 +37,18 @@ namespace Leviathan{
 		//!
 		//! This is called when the host on the connection sends a response without a matching request. Usually the other program instance
 		//! wants us to do something without expecting a response, for example they could want us to add a new message to our inbox without
-		//! expecting a response (other than an ack which is automatically sent) from us. This function shouldn't throw any exceptions.
-		DLLEXPORT virtual void HandleResponseOnlyPacket(shared_ptr<NetworkResponse> message, ConnectionInfo* connection) = 0;
+		//! expecting a response (other than an ack which is automatically sent) from us. 
+		//! The function can optionally ignore keepalive acks (to reduce spam between clients) by setting dontmarkasreceived as true.
+		//! This function shouldn't throw any exceptions.
+		DLLEXPORT virtual void HandleResponseOnlyPacket(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived) = 0;
+
+
+		//! \brief Called by ConnectionInfo just before terminating an inactive connection
+		//!
+		//! Return true if you want to allow the connection to close (it will close before next packet receive update)
+		//! By default will allow all requesting connections to terminate.
+		DLLEXPORT virtual bool CanConnectionTerminate(ConnectionInfo* connection);
+
 
 	protected:
 
@@ -49,7 +59,7 @@ namespace Leviathan{
 		//! \brief Utility function for subclasses to call for default handling of non-request responses
 		//!
 		//! Handles default types of response packages and returns true if processed.
-		DLLEXPORT bool _HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection);
+		DLLEXPORT bool _HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived);
 
 
 	};

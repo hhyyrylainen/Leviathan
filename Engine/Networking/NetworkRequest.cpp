@@ -14,6 +14,19 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int
 	assert(type == NETWORKREQUESTTYPE_IDENTIFICATION && "trying to create a request which requires extra data without providing any extra data!");
 }
 
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
+	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_OPENREMOTECONSOLETO), 
+	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+{
+
+}
+
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
+	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/)
+{
+
+}
+
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket){
 	// Get the heading data //
 	if(!(frompacket >> ResponseID)){
@@ -29,11 +42,16 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket){
 
 	// Try to create the additional data if required for this type //
 	switch(TypeOfRequest){
-	//case :
-		//{
-			//RequestData = new (frompacket);
-		//}
-		//break;
+	case NETWORKREQUESTTYPE_OPENREMOTECONSOLETO:
+		{
+			RequestData = new RemoteConsoleOpenRequestDataTo(frompacket);
+		}
+		break;
+	case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE:
+		{
+			RequestData = new RemoteConsoleAccessRequestData(frompacket);
+		}
+		break;
 	default:
 		{
 			// Nothing to get //
@@ -78,7 +96,36 @@ DLLEXPORT NETWORKREQUESTTYPE Leviathan::NetworkRequest::GetType(){
 	return TypeOfRequest;
 }
 // ------------------------------------ //
+DLLEXPORT RemoteConsoleOpenRequestDataTo* Leviathan::NetworkRequest::GetRemoteConsoleOpenToDataIfPossible(){
+	if(TypeOfRequest == NETWORKREQUESTTYPE_OPENREMOTECONSOLETO)
+		return static_cast<RemoteConsoleOpenRequestDataTo*>(RequestData);
+	return NULL;
+}
+// ------------------ RemoteConsoleOpenRequestDataTo ------------------ //
+DLLEXPORT Leviathan::RemoteConsoleOpenRequestDataTo::RemoteConsoleOpenRequestDataTo(int token) : SessionToken(token){
 
-// ------------------------------------ //
+}
 
+DLLEXPORT Leviathan::RemoteConsoleOpenRequestDataTo::RemoteConsoleOpenRequestDataTo(sf::Packet &frompacket){
+	if(!(frompacket >> SessionToken)){
+		throw ExceptionInvalidArgument(L"invalid packet to RemoteConsoleOpenRequestDataTo", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+}
 
+DLLEXPORT void Leviathan::RemoteConsoleOpenRequestDataTo::AddDataToPacket(sf::Packet &packet){
+	packet << SessionToken;
+}
+// ------------------ RemoteConsoleAccess ------------------ //
+DLLEXPORT Leviathan::RemoteConsoleAccessRequestData::RemoteConsoleAccessRequestData(int token) : SessionToken(token){
+
+}
+
+DLLEXPORT Leviathan::RemoteConsoleAccessRequestData::RemoteConsoleAccessRequestData(sf::Packet &frompacket){
+	if(!(frompacket >> SessionToken)){
+		throw ExceptionInvalidArgument(L"invalid packet to RemoteConsoleOpenRequestDataTo", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+}
+
+DLLEXPORT void Leviathan::RemoteConsoleAccessRequestData::AddDataToPacket(sf::Packet &packet){
+	packet << SessionToken;
+}

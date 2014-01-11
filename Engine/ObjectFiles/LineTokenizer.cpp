@@ -5,8 +5,6 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-
-
 DLLEXPORT int Leviathan::LineTokeNizer::TokeNizeLine(const wstring& str, vector<wstring*> &result){
 	int TokenIndex = 0;
 	int Level = 0;
@@ -69,59 +67,6 @@ DLLEXPORT int Leviathan::LineTokeNizer::TokeNizeLine(const wstring& str, vector<
 	// release memory //
 	CopyOperations.clear();
 
-	// no error //
-	return 0;
-}
-
-DLLEXPORT  int Leviathan::LineTokeNizer::SplitTokenToValues(const wstring& str, vector<wstring> &result){
-	// scan the input and create an array of Int2 marking positions //
-	vector<unique_ptr<Int2>> CopyOperations;
-	// estimate token count //
-	CopyOperations.reserve(3);
-
-	bool CurrentStarted = false;
-
-	for(wstring::size_type i = 0; i < str.size(); i++){
-		if(!CurrentStarted){
-			// check is this proper position //
-			if(!Misc::IsCharacterNumber(str[i])){
-				// nope, need to skip more characters //
-				continue;
-			}
-
-			// add new Position marker //
-			CopyOperations.push_back(unique_ptr<Int2>(new Int2((int)i, -1)));
-			CurrentStarted = true;
-		}
-
-		if(!Misc::IsCharacterNumber(str[i])){
-currentstringend:
-
-			// current one ended //
-			CopyOperations.back()->Y = (int)i;
-			// start new one //
-			CurrentStarted = false;
-			continue;
-		}
-		// check for final loop run //
-		if(!(i+1 < str.length())){
-			// little trick to have correct length //
-			i++;
-			// final one, end the string //
-			goto currentstringend;
-		}
-	}
-
-	// reserve space //
-	result.clear();
-	result.reserve(CopyOperations.size());
-
-	for(unsigned int i = 0; i < CopyOperations.size(); i++){
-		// copy the substring from original string //
-
-		result.push_back(str.substr((unsigned int)CopyOperations[i]->X, /*length*/ (unsigned int)(CopyOperations[i]->Y-
-			CopyOperations[i]->X)));
-	}
 	// no error //
 	return 0;
 }
@@ -379,7 +324,6 @@ void Leviathan::LineTokeNizer::TokenRTokenRemoveAllSubTokensFromVec(Token* curto
 		TokenRTokenRemoveAllSubTokensFromVec(curtoken->GetSubToken(i), destination);
 	}
 }
-
 // ------------------------------------ //
 
 // ------------------------------------ //

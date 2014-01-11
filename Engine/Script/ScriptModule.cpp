@@ -7,6 +7,7 @@
 #include <boost/assign/list_of.hpp>
 #include "Utility/Iterators/WstringIterator.h"
 #include "FileSystem.h"
+#include "Common/StringOperations.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -382,9 +383,9 @@ trytofindinscriptfolderincludecallback:
 		wstring wfile = Convert::StringToWstring(file);
 
 		// try to find in script folder //
-		wstring extension = FileSystem::GetExtension(wfile);
+		wstring extension = StringOperations::GetExtensionWstring(wfile);
 
-		wstring name = FileSystem::RemoveExtension(wfile, true);
+		wstring name = StringOperations::RemoveExtensionWstring(wfile, true);
 
 		// search //
 		wstring finalpath = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, name, extension, false);

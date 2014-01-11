@@ -95,12 +95,6 @@ namespace Leviathan{
 		// Warning: TODO: linux version ignores the defined pattern //
 		DLLEXPORT static bool GetFilesInDirectory(vector<wstring> &files, const wstring &dirpath, const wstring &pattern = L"*.*", bool recursive = true);
 
-		// extension handling //
-		DLLEXPORT static wstring GetExtension(const wstring &path);
-		DLLEXPORT static wstring ChangeExtension(const wstring& path, const wstring &newext);
-		DLLEXPORT static wstring RemoveExtension(const wstring &file, bool delpath);
-		DLLEXPORT static string RemovePath(const string &filepath);
-
 		// file operations //
 		DLLEXPORT static int GetFileLength(wstring name);
 		DLLEXPORT static bool FileExists(const wstring &name);

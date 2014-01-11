@@ -13,6 +13,7 @@
 // objects //
 #include "RocketSysInternals.h"
 #include "OgreRenderQueueListener.h"
+#include "Common/ThreadSafe.h"
 
 
 
@@ -28,7 +29,7 @@ namespace Gui{
 	class GuiLoadedSheet;
 
 
-	class GuiManager : public EngineComponent, public Ogre::RenderQueueListener{
+	class GuiManager : public EngineComponent, public Ogre::RenderQueueListener, public ThreadSafe{
 	public:
 		DLLEXPORT GuiManager();
 		DLLEXPORT ~GuiManager();

@@ -7,6 +7,7 @@
 // ------------------------------------ //
 #include "Common/Window.h"
 #include "Utility/Iterators/WstringIterator.h"
+#include "Common/StringOperations.h"
 
 enum KEYSPECIAL {
 	KEYSPECIAL_SHIFT = 0x1,
@@ -185,16 +186,18 @@ namespace Leviathan{
 
 			while((str = itr.GetUntilNextCharacterOrAll(L'+'))->size() > 0){
 
-				if(Misc::WstringCompareInsensitiveRefs(*str, L"alt")){
+				if(StringOperations::CompareInsensitive(*str, wstring(L"alt"))){
 					special |= KEYSPECIAL_ALT;
 				}
-				if(Misc::WstringCompareInsensitiveRefs(*str, L"shift")){
+				if(StringOperations::CompareInsensitive(*str, wstring(L"shift"))){
 					special |= KEYSPECIAL_SHIFT;
 				}
-				if(Misc::WstringCompareInsensitiveRefs(*str, L"ctrl")){
+				if(StringOperations::CompareInsensitive(*str, wstring(L"ctrl"))){
 					special |= KEYSPECIAL_CTRL;
 				}
-				if(Misc::WstringCompareInsensitiveRefs(*str, L"win") || Misc::WstringCompareInsensitiveRefs(*str, L"meta") || Misc::WstringCompareInsensitiveRefs(*str, L"super")){
+				if(StringOperations::CompareInsensitive(*str, wstring(L"win")) ||StringOperations::CompareInsensitive(*str, wstring(L"meta")) || 
+					StringOperations::CompareInsensitive(*str, wstring(L"super")))
+				{
 					special |= KEYSPECIAL_WIN;
 				}
 			}

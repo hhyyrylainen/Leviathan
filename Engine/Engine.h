@@ -23,6 +23,7 @@
 #include "Newton/PhysicalMaterialManager.h"
 #include "Networking/NetworkHandler.h"
 #include "Threading/ThreadingManager.h"
+#include "Networking/RemoteConsole.h"
 
 
 #define TICKSPEED 60
@@ -117,6 +118,7 @@ namespace Leviathan{
 		PhysicsMaterialManager* PhysMaterials;
 		NetworkHandler* _NetworkHandler;
 		ThreadingManager* _ThreadingManager;
+		RemoteConsole* _RemoteConsole;
 
 		IDFactory* IDDefaultInstance;
 		LeviathanApplication* Owner;

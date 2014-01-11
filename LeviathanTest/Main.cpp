@@ -3,7 +3,7 @@
 
 class DummyNetworkHandler : public Leviathan::NetworkInterface{
 public:
-	DLLEXPORT virtual void HandleResponseOnlyPacket(shared_ptr<NetworkResponse> message, ConnectionInfo* connection){
+	DLLEXPORT virtual void HandleResponseOnlyPacket(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived){
 		throw std::exception();
 	}
 };

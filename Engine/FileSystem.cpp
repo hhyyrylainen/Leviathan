@@ -8,6 +8,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #endif
+#include "Common/StringOperations.h"
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::FileSystem::FileSystem(){
@@ -374,86 +375,6 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files
 	return true;
 }
 #endif
-
-// ------------------------------------ //
-DLLEXPORT wstring Leviathan::FileSystem::GetExtension(const wstring &path){
-	wstring extension = L"";
-
-	bool found = false;
-	for(int i = (int)path.length()-1; (i > -1) && (i < (int)path.length()); ){
-		if(!found){
-			i--;
-			if(path[i] == L'.'){
-				found = true;
-				i++;
-			}
-			continue;
-		}
-		extension += path[i];
-		i++;
-	}
-
-	return extension;
-}
-
-DLLEXPORT  wstring Leviathan::FileSystem::ChangeExtension(const wstring& path, const wstring &newext){
-	// get last dot in string //
-	size_t lastdot = path.find_last_of(L'.');
-
-	if(lastdot == wstring::npos){
-		// no dot!, just append to end and return //
-		return path+L'.'+newext;
-	}
-
-	// get substring from begin to dot and add new extension //
-	return path.substr(0, lastdot+1)+newext;
-}
-
-wstring Leviathan::FileSystem::RemoveExtension(const wstring &file, bool delpath){
-	wstring returnstr = L"";
-
-	bool found = false;
-	for(int i = (int)file.length()-1; (i > -1) && (i < (int)file.length()); ){
-		if(!found){
-			i--;
-			if(!(i > -1)){
-				return file;
-			}
-			if(file[i] == L'.'){
-				found = true;
-				//i--;
-			}
-			continue;
-		}
-		i--;
-		if(!(i > -1 && i < (int)file.length())){
-			break;
-		}
-		if(((file[i] == L'/') || (file[i] == L'\\')) && (delpath))
-			break;
-		returnstr += file[i];
-	}
-	// turn around //
-	wstring final = L"";
-	for(int i = (int)returnstr.size()-1; i > -1; i--){
-		final += returnstr[i];
-	}
-
-	return final;
-}
-
-
-DLLEXPORT string Leviathan::FileSystem::RemovePath(const string &filepath){
-	// start from last character and find last / or \ //
-	for(int i = (int)filepath.size()-1; i > -1; i--){
-		if(filepath[i] == '/' || filepath[i] == '\\'){
-			if(i == filepath.size()-1)
-				return "";
-			return filepath.substr(i+1, filepath.size()-(i+1));
-		}
-	}
-	return filepath;
-}
 // ------------------ File operations ------------------ //
 int Leviathan::FileSystem::GetFileLength(wstring name){
 #ifdef _WIN32
@@ -629,7 +550,7 @@ DLLEXPORT void Leviathan::FileSystem::CreateIndexesForVecs(bool ForceRe /*= fals
 DLLEXPORT int Leviathan::FileSystem::RegisterExtension(const wstring &extension){
 	// check does it exist //
 	for(unsigned int i = 0; i < FileTypes.size(); i++){
-		if(Misc::WstringCompareInsensitiveRefs(*FileTypes[i]->Wstr, extension))
+		if(StringOperations::CompareInsensitive(*FileTypes[i]->Wstr, extension))
 			return FileTypes[i]->Value;
 	}
 
@@ -645,7 +566,7 @@ DLLEXPORT int Leviathan::FileSystem::RegisterExtension(const wstring &extension)
 void Leviathan::FileSystem::GetExtensionIDS(const wstring& extensions, vector<int>& ids){
 	// generate info about the extensions //
 	vector<wstring> Exts;
-	Misc::CutWstring(extensions, L"|", Exts);
+	StringOperations::CutString(extensions, wstring(L"|"), Exts);
 	if(Exts.size() == 0){
 		// just one extension //
 		ids.push_back(RegisterExtension(extensions));
@@ -979,19 +900,17 @@ DLLEXPORT  void Leviathan::FileSystem::RegisterOGREResourceLocation(const string
 // ------------------ FileDefinitionType ------------------ //
 Leviathan::FileDefinitionType::FileDefinitionType(FileSystem* instance, const wstring &path) : RelativePath(path){
 	// get extension //
-	wstring tempexpt = FileSystem::GetExtension(path);
+	wstring tempexpt = StringOperations::GetExtension<wstring, wchar_t>(path);
 
 	// register extension and store id //
 	ExtensionID = instance->RegisterExtension(tempexpt);
 
 	// save name //
-	Name = FileSystem::RemoveExtension(path, true);
+	Name = StringOperations::RemoveExtension<wstring, wchar_t>(path, true);
 }
 
 bool Leviathan::FileDefinitionType::operator<(const FileDefinitionType& other) const{
-	int isfirst = Misc::IsWstringBeforeInAlphabet(this->Name, other.Name);
-
-	return (isfirst > 0);
+	return this->Name < other.Name;
 }
 
 Leviathan::FileDefinitionType::~FileDefinitionType(){

@@ -20,9 +20,8 @@ namespace Leviathan{
 			Int2 ToCopyCharacters;
 		};
 	public:
-		DLLEXPORT static int TokeNizeLine(const wstring& str, vector<wstring*> &result);
-		DLLEXPORT static int SplitTokenToValues(const wstring& str, vector<wstring> &result);
 
+		DLLEXPORT static int TokeNizeLine(const wstring& str, vector<wstring*> &result);
 		DLLEXPORT static int SplitTokenToRTokens(const wstring& str, vector<Token*> &result);
 
 	private:

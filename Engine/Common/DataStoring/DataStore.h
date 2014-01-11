@@ -90,7 +90,7 @@ namespace Leviathan{
 					return false;
 				}
 			}
-			catch(const ExceptionInvalidArgument &e){
+			catch(...){
 				// variable not found / wrong type //
 				return false;
 			}

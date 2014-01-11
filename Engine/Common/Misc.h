@@ -128,33 +128,8 @@ namespace Leviathan{
 		DLLEXPORT static void KillThread(boost::thread &threadtokill);
 
 
-		///string operations
-		DLLEXPORT static int CutWstring(const wstring& strtocut,const wstring &separator, vector<wstring>& vec);
-		DLLEXPORT static int CountOccuranceWstring(const wstring& data,wstring lookfor);
-		DLLEXPORT static wstring Replace(const wstring& data, const wstring &toreplace, const wstring &replacer);
-		DLLEXPORT static void ReplaceWord(wstring& data, wstring toreplace, wstring replacer);
-		DLLEXPORT static bool WstringContains(const wstring& data, wchar_t check);
-		DLLEXPORT static bool WstringContainsNumbers(const wstring& data);
-		DLLEXPORT static bool WstringIsNumeric(const wstring &data);
-		DLLEXPORT static int WstringGetSecondWord(const wstring& data, wstring& result);
-		DLLEXPORT static int WstringGetFirstWord(const wstring& data, wstring& result);
-		DLLEXPORT static bool WstringStartsWith(const wstring& data, const wstring& lookfor);
-		DLLEXPORT static wstring WstringRemoveFirstWords(wstring& data, int amount);
-		DLLEXPORT static wstring WstringStitchTogether(vector<wstring*> data, wstring separator);
-		DLLEXPORT static wstring WstringStitchTogether(vector<shared_ptr<wstring>> data, wstring separator);
-		DLLEXPORT static void WstringRemovePreceedingTrailingSpaces(wstring& str);
-
-		// returns 0 for equal 1 for str is before and -1 for tocompare to be before //
-		DLLEXPORT static int IsWstringBeforeInAlphabet(const wstring& str, const wstring& tocompare);
-
-		DLLEXPORT static bool inline IsCharacterWhiteSpace(const wchar_t chara);
 
 		DLLEXPORT static bool CompareDataBlockTypeToTHISNameCheck(int datablock, int typenamecheckresult);
-		DLLEXPORT static bool WstringCompareInsensitive(const wstring& data, wstring second);
-		DLLEXPORT static bool WstringCompareInsensitiveRefs(const wstring& data, const wstring &second);
-		DLLEXPORT static bool IsCharacterNumber(wchar_t chara);
-
-
 
 		DLLEXPORT static inline wstring& GetErrString(){
 
@@ -172,7 +147,6 @@ namespace Leviathan{
 
 			return Errstrings;
 		}
-		DLLEXPORT static wstring GetValidCharacters();
 
 		static wstring EmptyString;
 		static wstring ValidNumberCharacters;

@@ -38,6 +38,7 @@ GuiManager* Leviathan::Gui::GuiManager::Get(){
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalInputEntity* window){
+	ObjectLock guard(*this);
 
 	ThisWindow = window;
 
@@ -82,6 +83,7 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 }
 
 void Leviathan::Gui::GuiManager::Release(){
+	ObjectLock guard(*this);
 	// default mouse back //
 	SetMouseFile(L"none");
 
@@ -113,8 +115,8 @@ void Leviathan::Gui::GuiManager::Release(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(OIS::KeyCode key, int specialmodifiers){
-
-	for(unsigned int i = 0; i < Collections.size(); i++){
+	ObjectLock guard(*this);
+	for(size_t i = 0; i < Collections.size(); i++){
 		if(Collections[i]->GetTogglingKey().Match(key, specialmodifiers, false) && Collections[i]->GetAllowEnable()){
 			// is a match, toggle //
 			Collections[i]->ToggleState();
@@ -132,6 +134,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionStateProxy(string name, 
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const wstring &name, bool state){
+	ObjectLock guard(*this);
 	// find collection with name and set it's state //
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(Collections[i]->GetName() == name){
@@ -146,6 +149,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const wstring &nam
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const wstring &name, bool allow /*= true*/){
+	ObjectLock guard(*this);
 	// find collection with name and set it's allow enable state //
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(Collections[i]->GetName() == name){
@@ -160,6 +164,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const w
 }
 // ------------------------------------ //
 void Leviathan::Gui::GuiManager::GuiTick(int mspassed){
+	ObjectLock guard(*this);
 	// send tick event //
 
 
@@ -207,12 +212,13 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnForceGUIOn(){
 }
 
 void Leviathan::Gui::GuiManager::Render(){
-
+	ObjectLock guard(*this);
 	// update Rocket input //
 	ThisWindow->GetWindow()->GatherInput(WindowContext);
 }
 // ------------------------------------ //
 void Leviathan::Gui::GuiManager::OnResize(int width, int height){
+	ObjectLock guard(*this);
 	// call events //
 	this->CallEvent(new Event(EVENT_TYPE_WINDOW_RESIZE, (void*)new Int2(width, height)));
 
@@ -221,12 +227,14 @@ void Leviathan::Gui::GuiManager::OnResize(int width, int height){
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiManager::AddGuiObject(BaseGuiObject* obj){
+	ObjectLock guard(*this);
 	Objects.push_back(obj);
 	return true;
 }
 
 void Leviathan::Gui::GuiManager::DeleteObject(int id){
-	for(unsigned int i = 0; i < Objects.size(); i++){
+	ObjectLock guard(*this);
+	for(size_t i = 0; i < Objects.size(); i++){
 		if(Objects[i]->GetID() == id){
 
 			SAFE_RELEASE(Objects[i]);
@@ -237,7 +245,8 @@ void Leviathan::Gui::GuiManager::DeleteObject(int id){
 }
 
 int Leviathan::Gui::GuiManager::GetObjectIndexFromId(int id){
-	for(unsigned int i = 0; i < Objects.size(); i++){
+	ObjectLock guard(*this);
+	for(size_t i = 0; i < Objects.size(); i++){
 		if(Objects[i]->GetID() == id)
 			return i;
 	}
@@ -245,6 +254,7 @@ int Leviathan::Gui::GuiManager::GetObjectIndexFromId(int id){
 }
 
 BaseGuiObject* Leviathan::Gui::GuiManager::GetObject(unsigned int index){
+	ObjectLock guard(*this);
 	ARR_INDEX_CHECK(index, Objects.size()){
 		return Objects[index];
 	}
@@ -273,8 +283,15 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 
 	shared_ptr<GuiLoadedSheet> sheet;
 
+	wstring path = StringOperations::GetPathWstring(file);
+
+	wstring finalrocket = path+relativepath;
+
+	// We need to lock now //
+	ObjectLock guard(*this);
+
 	try{
-		sheet = shared_ptr<GuiLoadedSheet>(new GuiLoadedSheet(WindowContext, Convert::WstringToString(FileSystem::GetScriptsFolder()+relativepath)),
+		sheet = shared_ptr<GuiLoadedSheet>(new GuiLoadedSheet(WindowContext, Convert::WstringToString(finalrocket)),
 		//	std::mem_fun_ref(&GuiLoadedSheet::ReleaseProxy));
 			[](GuiLoadedSheet* p){p->Release();});
 		if(!sheet.get()){
@@ -344,6 +361,7 @@ guiprocessguifileloopdeleteprocessedobject:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFile(const wstring &file){
+	ObjectLock guard(*this);
 
 	if(file == L"none" || Cursor){
 
@@ -370,21 +388,21 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFile(const wstring &file){
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFileVisibleState(bool state){
-
+	ObjectLock guard(*this);
 	WindowContext->ShowMouseCursor(state);
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::SetDebuggerOnThisContext(){
-
+	ObjectLock guard(*this);
 	Rocket::Debugger::SetContext(WindowContext);
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::SetDebuggerVisibility(bool visible){
 	Rocket::Debugger::SetVisible(visible);
 }
-
 // ----------------- event handler part --------------------- //
 bool Leviathan::Gui::GuiManager::CallEvent(Event* pEvent){
+	ObjectLock guard(*this);
 	// loop through listeners and call events //
 	for(size_t i = 0; i < Objects.size(); i++){
 		// call
@@ -402,6 +420,7 @@ bool Leviathan::Gui::GuiManager::CallEvent(Event* pEvent){
 }
 // used to send hide events to individual objects //
 int GuiManager::CallEventOnObject(BaseGuiObject* receive, Event* pEvent){
+	ObjectLock guard(*this);
 	// find right object
 	int returval = -3;
 
@@ -419,9 +438,11 @@ int GuiManager::CallEventOnObject(BaseGuiObject* receive, Event* pEvent){
 }
 // ----------------- collection managing --------------------- //
 void GuiManager::AddCollection(GuiCollection* add){
+	ObjectLock guard(*this);
 	Collections.push_back(add);
 }
 GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const wstring &name){
+	ObjectLock guard(*this);
 	// look for collection based on id or name //
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(id >= 0){
@@ -447,7 +468,7 @@ GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const ws
 void Leviathan::Gui::GuiManager::renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation){
 	// we render Rocket at the same time with OGRE overlay //
 	if(queueGroupId == Ogre::RENDER_QUEUE_OVERLAY && Visible){
-
+		ObjectLock guard(*this);
 		WindowContext->Update();
 
 		ConfigureRenderSystem();
@@ -526,15 +547,12 @@ void Leviathan::Gui::GuiManager::BuildProjectionMatrix(Ogre::Matrix4& projection
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::GUIObjectsCheckRocketLinkage(){
+	ObjectLock guard(*this);
 	for(size_t i = 0; i < Objects.size(); i++){
 
 		Objects[i]->CheckObjectLinkage();
 	}
 }
-
-
-
-
 
 bool Leviathan::Gui::GuiManager::RocketDebuggerInitialized = false;
 

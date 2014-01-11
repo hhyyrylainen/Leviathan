@@ -20,7 +20,8 @@ static const WORD MAX_CONSOLE_LINES = 500;
 #endif
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL),
-	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false)
+	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
+	_RemoteConsole(NULL)
 {
 
 	// create this here //
@@ -100,6 +101,8 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 		Logger::Get()->Error(L"Engine: Init: cannot start threading");
 		return false;
 	}
+	// We could immediately receive a remote console request so this should be ready when networking is started //
+	_RemoteConsole = new RemoteConsole();
 
 	// We want to send a request to the master server as soon as possible //
 	_NetworkHandler = new NetworkHandler(ntype, Define->GetPacketHandler());
@@ -265,14 +268,11 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 
 	// We can queue some more tasks //
 	// create leap controller //
-	boost::promise<bool> LeapControllerResult;
-	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+	boost::thread leapinitthread(boost::bind<void>([](Engine* engine) -> void{
 
 		engine->LeapData = new LeapManager(engine);
 		if(!engine->LeapData){
 			Logger::Get()->Error(L"Engine: Init: failed to create LeapManager");
-			returnvalue.set_value(false);
 			return;
 		}
 		// try here just in case //
@@ -287,8 +287,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 			Logger::Get()->Error(L"Engine: Init: Leap threw something, even without leap this shouldn't happen; continuing anyway");
 		}
 
-		returnvalue.set_value(true);
-	}, boost::ref(LeapControllerResult), this))));
+	}, this));
 
 
 	// sound device //
@@ -357,13 +356,20 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 		GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
 	}
 
-	if(!LeapControllerResult.get_future().get() || !SoundDeviceResult.get_future().get()){
+	if(!SoundDeviceResult.get_future().get()){
 
-		Logger::Get()->Error(L"Engine: Init: leap manager or sound device queued tasks failed");
+		Logger::Get()->Error(L"Engine: Init: sound device queued tasks failed");
 		return false;
 	}
 
 	Inited = true;
+
+	// We can probably assume here that leap creation has stalled if the thread is running //
+	if(!leapinitthread.try_join_for(boost::chrono::milliseconds(5))){
+		// We can assume that it is running //
+		Logger::Get()->Warning(L"LeapController creation would have stalled the game!");
+		Misc::KillThread(leapinitthread);
+	}
 
 	PostLoad();
 
@@ -433,6 +439,9 @@ void Leviathan::Engine::Release(){
 
 	// Close all connections //
 	SAFE_RELEASEDEL(_NetworkHandler);
+
+	// Close remote console //
+	SAFE_DELETE(_RemoteConsole);
 
 	// Wait for tasks to finish //
 	_ThreadingManager->WaitForAllTasksToFinish();

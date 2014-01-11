@@ -22,7 +22,7 @@ bool TestMiscCutWstring(const int &tests){
 	// check function state //
 	vector<wstring> result;
 
-	Misc::CutWstring(teststring, L"-ql-", result);
+	StringOperations::CutString(teststring, wstring(L"-ql-"), result);
 	// check result //
 	if(result.size() != exampleresult.size()){
 		Failed = true;
@@ -40,7 +40,7 @@ bool TestMiscCutWstring(const int &tests){
 	for(int i = 0; i < tests; i++){
 		result.clear();
 
-		Misc::CutWstring(teststring, L"-ql-", result);
+		StringOperations::CutString(teststring, wstring(L"-ql-"), result);
 	}
 	return Failed;
 }
@@ -55,7 +55,7 @@ bool TestMiscReplace(const int &tests){
 	// check function state //
 	wstring result;
 
-	result = Misc::Replace(teststring, L"-ql-", L"hey_whatsthis?");
+	result = StringOperations::Replace<wstring>(teststring, L"-ql-", L"hey_whatsthis?");
 	// check result //
 	if(result != correctresult){
 		TESTFAIL;
@@ -67,7 +67,7 @@ bool TestMiscReplace(const int &tests){
 	// stress testing function //
 	for(int i = 0; i < tests; i++){
 
-		result = Misc::Replace(teststring, L"-ql-", L"hey_whatsthis?");
+		result = StringOperations::Replace<wstring>(teststring, L"-ql-", L"hey_whatsthis?");
 	}
 
 	return Failed;
@@ -82,7 +82,7 @@ bool TestMiscWstringRemovePreceedingTrailingSpaces(const int &tests){
 	wstring correctresult = L"a  asd	hey nice   ?!";
 
 	// check function state //
-	Misc::WstringRemovePreceedingTrailingSpaces(teststringandresult);
+	StringOperations::WstringRemovePreceedingTrailingSpaces(teststringandresult);
 	// check result //
 	if(teststringandresult != correctresult){
 		TESTFAIL;
@@ -94,67 +94,11 @@ bool TestMiscWstringRemovePreceedingTrailingSpaces(const int &tests){
 	// stress testing function //
 	for(int i = 0; i < tests; i++){
 		teststringandresult = ORIGINALVALUE_FOR_TEST;
-		Misc::WstringRemovePreceedingTrailingSpaces(teststringandresult);
+		StringOperations::WstringRemovePreceedingTrailingSpaces(teststringandresult);
 	}
 
 	return Failed;
 }
-
-
-
-bool TestMiscWstringGetSecondWord(const int &tests){
-	bool Failed = false;
-	// correct result //
-	wstring teststring = L"heyooo! nice string";
-	wstring correctresult = L"nice";
-
-	// check function state //
-	wstring result;
-
-	Misc::WstringGetSecondWord(teststring, result);
-	// check result //
-	if(result != correctresult){
-		TESTFAIL;
-	}
-	if(Failed){
-		Logger::Get()->Error(L"EngineTest FAILED: on Misc::WstringGetSecondWord wrong result");
-		return false;
-	}
-	// stress testing function //
-	for(int i = 0; i < tests; i++){
-		Misc::WstringGetSecondWord(teststring, result);
-	}
-
-	return Failed;
-}
-
-bool TestMiscWstringGetFirstWord(const int &tests){
-	bool Failed = false;
-	// correct result //
-	wstring teststring = L"heyooo! nice string";
-	wstring correctresult = L"heyooo!";
-
-	// check function state //
-	wstring result;
-
-	Misc::WstringGetFirstWord(teststring, result);
-	// check result //
-	if(result != correctresult){
-		TESTFAIL;
-	}
-	if(Failed){
-		Logger::Get()->Error(L"EngineTest FAILED: on Misc::WstringGetFirstWord wrong result");
-		return false;
-	}
-	// stress testing function //
-	for(int i = 0; i < tests; i++){
-		Misc::WstringGetFirstWord(teststring, result);
-	}
-
-	return Failed;
-}
-
-
 
 bool TestAutoUpdateableFunctions(const int& tests, Engine* engine){
 	// create count amount of
@@ -624,15 +568,6 @@ bool LineTokenizerTest(const int &tests){
 				{
 					TESTFAIL;
 				}
-				// check final function //
-				LineTokeNizer::SplitTokenToValues(Tokens[4]->GetData(), ValueTokens);
-				if(ValueTokens.size() != 1){
-					TESTFAIL;
-					continue;
-				}
-				int Value = Convert::WstringToInt(ValueTokens[0]);
-				if(Value != 2567)
-					TESTFAIL;
 			}
 		break;
 		case 9:
@@ -662,7 +597,6 @@ bool LineTokenizerTest(const int &tests){
 
 		Leviathan::LineTokeNizer::TokeNizeLine(teststr, TokenSplit);
 		LineTokeNizer::SplitTokenToRTokens(Propersplit[8], Tokens);
-		LineTokeNizer::SplitTokenToValues(L"525, 25", ValueTokens);
 	}
 
 cleanup:

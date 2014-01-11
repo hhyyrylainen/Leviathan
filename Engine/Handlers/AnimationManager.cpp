@@ -4,6 +4,7 @@
 #include "AnimationManager.h"
 #endif
 #include "Common/DataStoring/NamedVars.h"
+#include "Common/StringOperations.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::AnimationManager::AnimationManager(){
@@ -634,7 +635,7 @@ wstring Leviathan::AnimationManager::GetAnimationNameFromFile(const wstring &fil
 #ifdef _WIN32
 	reader.open(file);
 #else
-    reader.open(Convert::WstringToString(file));
+	reader.open(Convert::WstringToString(file));
 #endif
 
 	wstring Name = L"";
@@ -656,7 +657,7 @@ wstring Leviathan::AnimationManager::GetAnimationNameFromFile(const wstring &fil
 		wstring line(ReadCharacters.get());
 
 		// check is correct line //
-		if(Misc::WstringStartsWith(line, L"Animation-Name")){
+		if(StringOperations::StringStartsWith(line, wstring(L"Animation-Name"))){
 			// correct line //
 
 			// generate named var from this line //
@@ -677,7 +678,7 @@ wstring Leviathan::AnimationManager::GetAnimationNameFromFile(const wstring &fil
 			Found = true;
 			continue;
 		}
-		if(Misc::WstringStartsWith(line, L"Base-Model-Name")){
+		if(StringOperations::StringStartsWith(line, wstring(L"Base-Model-Name"))){
 			// correct line //
 
 			// generate named var from this line //

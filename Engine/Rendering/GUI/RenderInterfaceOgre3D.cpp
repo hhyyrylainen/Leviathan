@@ -29,6 +29,7 @@
 #include "RenderInterfaceOgre3D.h"
 #include <OGRE/Ogre.h>
 #include "FileSystem.h"
+#include "Common/StringOperations.h"
 
 struct RocketOgre3DVertex
 {
@@ -40,11 +41,25 @@ struct RocketOgre3DVertex
 // The structure created for each texture loaded by Rocket for Ogre.
 struct RocketOgre3DTexture
 {
-	RocketOgre3DTexture(Ogre::TexturePtr texture) : texture(texture)
+	RocketOgre3DTexture(Ogre::TexturePtr texture, bool amitheonlyone = false) : texture(texture), DisposeOnRemoveHandle(amitheonlyone)
 	{
 	}
 
+	~RocketOgre3DTexture(){
+		if(DisposeOnRemoveHandle){
+			// We have the only one of this texture and thus we should try to unload it //
+			Ogre::ResourcePtr tmpptr = texture;
+			texture.setNull();
+
+			Ogre::TextureManager::getSingleton().remove(tmpptr);
+			// TODO: improve this speed? //
+			//Ogre::TextureManager::getSingleton().remove(texture->getName());
+		}
+	}
+
+
 	Ogre::TexturePtr texture;
+	bool DisposeOnRemoveHandle;
 };
 
 // The structure created for each set of geometry that Rocket compiles. It stores the vertex and index buffers and the
@@ -212,22 +227,58 @@ void RenderInterfaceOgre3D::SetScissorRegion(int x, int y, int width, int height
 bool RenderInterfaceOgre3D::LoadTexture(Rocket::Core::TextureHandle& texture_handle, Rocket::Core::Vector2i& texture_dimensions, const Rocket::Core::String& source)
 {
 	Ogre::TextureManager* texture_manager = Ogre::TextureManager::getSingletonPtr();
-	// TODO: remove this just filename hack //
-	Ogre::String onlynamesource = Leviathan::FileSystem::RemovePath(source.CString());
 
-	Ogre::TexturePtr ogre_texture = texture_manager->getByName(onlynamesource);
+	std::ifstream filereadstream;
+	
 
-	if(ogre_texture.isNull()){
-		ogre_texture = texture_manager->load(onlynamesource, "Rocket", Ogre::TEX_TYPE_2D, 0);
+	// First try it as a absolute/relative path
+	filereadstream.open(source.CString(), std::ios::binary);
+	
+
+	Ogre::TexturePtr ogre_texture;
+
+	bool WeLoaded = false;
+
+	if(filereadstream.is_open()){
+
+		Ogre::FileStreamDataStream* pFS = new Ogre::FileStreamDataStream(&filereadstream, false);
+
+		Ogre::DataStreamPtr streamptr(pFS);
+
+		if(!streamptr->size() || streamptr->size() == 0xffffffff){
+			// It is invalid? //
+			goto trytoloadjustfromnamelabel;
+		}
+
+		Ogre::Image img;
+
+		string extension = Leviathan::StringOperations::GetExtensionString(source.CString());
+
+		img.load(streamptr, extension);
+		filereadstream.close();
+
+		// Add the image //
+		ogre_texture = texture_manager->loadImage("Rocket_texture_"+string(source.CString()), "Rocket", img);
+
+		WeLoaded = true;
+
+	} else {
+trytoloadjustfromnamelabel:
+
+		// We can't use the absolute/relative path so we must try to use Ogre resource loading //
+		Ogre::String onlynamesource = Leviathan::StringOperations::RemovePathString(source.CString());
+
+		ogre_texture = texture_manager->getByName(onlynamesource);
 	}
 
-	if (ogre_texture.isNull())
+
+	if(ogre_texture.isNull())
 		return false;
 
 	texture_dimensions.x = ogre_texture->getWidth();
 	texture_dimensions.y = ogre_texture->getHeight();
 
-	texture_handle = reinterpret_cast<Rocket::Core::TextureHandle>(new RocketOgre3DTexture(ogre_texture));
+	texture_handle = reinterpret_cast<Rocket::Core::TextureHandle>(new RocketOgre3DTexture(ogre_texture, WeLoaded));
 	return true;
 }
 
@@ -236,13 +287,13 @@ bool RenderInterfaceOgre3D::GenerateTexture(Rocket::Core::TextureHandle& texture
 {
 	static int texture_id = 1;
 
-    auto datastr = Ogre::DataStreamPtr(
-        new Ogre::MemoryDataStream((void*) source, source_dimensions.x * source_dimensions.y *
-        sizeof(unsigned int)));
+	auto datastr = Ogre::DataStreamPtr(
+		new Ogre::MemoryDataStream((void*) source, source_dimensions.x * source_dimensions.y *
+		sizeof(unsigned int)));
 
 	Ogre::TexturePtr ogre_texture = Ogre::TextureManager::getSingleton().loadRawData(
-        Rocket::Core::String(16, "%d", texture_id++).CString(), "Rocket", datastr,
-        source_dimensions.x, source_dimensions.y, Ogre::PF_A8B8G8R8,
+		Rocket::Core::String(16, "%d", texture_id++).CString(), "Rocket", datastr,
+		source_dimensions.x, source_dimensions.y, Ogre::PF_A8B8G8R8,
 		Ogre::TEX_TYPE_2D, 0);
 
 	if (ogre_texture.isNull())

@@ -65,17 +65,22 @@ DLLEXPORT Leviathan::DataStore::DataStore(bool man){
 DLLEXPORT Leviathan::DataStore::~DataStore(){
 	Save();
 }
+
+DataStore* Leviathan::DataStore::Staticaccess = NULL;
+
+DataStore* Leviathan::DataStore::Get(){
+	return Staticaccess;
+}
+// ------------------------------------ //
 void Leviathan::DataStore::Load(){
 	// load //
 	vector<shared_ptr<NamedVariableList>> tempvec;
 	FileSystem::LoadDataDump(AppDef::GetDefault()->GetLogFile()+L"Persist.txt", tempvec);
 
 	Values.SetVec(tempvec);
-	Persistencestates.resize(tempvec.size());
-	for(unsigned int i = 0; i < Persistencestates.size(); i++){
-		Persistencestates[i] = true;
-	}
 
+	// All loaded from file will also be saved again //
+	Persistencestates.resize(tempvec.size(), true);
 }
 void Leviathan::DataStore::Save(){
 	wstring tosave = L"";
@@ -90,12 +95,9 @@ void Leviathan::DataStore::Save(){
 		}
 
 	}
-	FileSystem::WriteToFile(tosave, L"./Persist.txt");
 
+	FileSystem::WriteToFile(tosave, AppDef::GetDefault()->GetLogFile()+L"Persist.txt");
 }
-
-DataStore* Leviathan::DataStore::Staticaccess = NULL;
-DataStore* Leviathan::DataStore::Get(){ return Staticaccess; };
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::DataStore::GetValue(const wstring &name, VariableBlock &receiver) const{
 	return Values.GetValue(name, receiver);

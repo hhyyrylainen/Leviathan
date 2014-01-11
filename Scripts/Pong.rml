@@ -4,63 +4,61 @@
         <link type="text/rcss" href="Pong.rcss"/>
 	</head>
 	<body>
-        <div class="Menu" id="menubody">
-            <span style="position: absolute; left: 20px; top: 10px; font-weight: bold; font-size: 125; z-index: 1;">
-            Pong
-            </span>
-            
-            <div class="MenuContent" id="topmenu">
-                <span class="SpaceTaker"></span>
-                <span class="MenuOption"><p id="GameSetupScreenBtn">Local Game</p></span>
-                <span class="DisabledMenuOption"><p id="GameMultiplayerList">Internet Game</p></span>
-                <span class="MenuOption DangerousMenu"><p id="QuitButton">Quit</p></span>
-            </div>
-            <div class="MenuContent Hidden" id="gamesetupscreen">
-                <span class="SpaceTaker"></span>
-                <h1 class="MenuTitle">Setup local game</h1>
-                <hr class="MenuLine"></hr>
-                
-                <span style="margin-left-right: auto;" id="LocalGameSetupOptions">
-                Menu not updated
+        <div class="Menu" id="MenuBody">
+            <div class="MenuContent" id="TopLevelMenu">
+                <span style="position: absolute; left: 20px; top: 10px; font-weight: bold; font-size: 125; z-index: 1;">
+                Pong
                 </span>
+                <span class="SpaceTaker"></span>
+                <span class="MenuOption"><p id="GameSetupScreenBtn">Start Game</p></span>
+                <span class="MenuOption Disabled"><p id="GameMultiplayerList">Browse Games</p></span>
+                <span class="MenuOption Disabled"><p id="GameDirectConnect">Direct Connect</p></span>
+                <span class="MenuOption Dangerous"><p id="QuitButton">Quit</p></span>
+            </div>
+            <div class="MenuContent Hidden" id="ServerStartScreen">
+                <h1 class="MenuTitle">Start a new game</h1>
+                <hr class="MenuLine"></hr>
+                Here's the server setup screen!
                 <hr class="MenuLine"></hr>
                 <span class="MenuOption"><p id="GameStartBtn">Start Game</p></span>
                 <span class="MenuOption"><p id="SetupScreenBack">Back</p></span>
             </div>
+            <div class="MenuContent Hidden" id="GameLobby">
+                You're in a lobby!
+            </div>
         </div>
-        <div class="Hidden" id="hudmain">
-            <span style="paddin-left: 5px; position: absolute; top: 5%; left: 5%; width: 20%; min-height: 100px; background-color: #00000033;">
-            <p>Scores:</p>
-            <p id="scorelist">
+        <div class="Hidden" id="HUDMain">
+            <span class="PlayerDisplayColour" style="paddin-left: 5px; position: absolute; top: 5%; left: 5%; width: 20%; min-height: 100px;">
+            <p id="ScoreList">
                 <p>Player list unset...</p>
             </p>
             </span>
         </div>
-        <div class="Hidden" id="matchendscreen">
+        <div class="Hidden" id="MatchEndScreen">
             <div class="MenuContent">
             <h1 class="MenuTitle">Match has ended</h1>
             <hr class="MenuLine"></hr>
             <h2 class="MenuTitle">Winners</h2>
-            <p class="GoldenText" id="playerwinnerlist">
-            </p>
+            
+            <p class="Golden PlayerDisplayColour" id="PlayerWinnerList"></p>
+            
             <hr class="MenuLine"></hr>
             <h2 class="MenuTitle">Final scores</h2>
-            <p id="winnerscreenscorelist">
-            TODO: update this
-            </p>
+            <p id="WinnerScreenScoreList"></p>
+            
             <span class="MenuOption"><p id="WinScreenMenuButton">Main menu</p></span>
-            <span class="MenuOption DangerousMenu"><p id="WinScreenQuitButton">Quit game</p></span>
+            <span class="MenuOption Dangerous"><p id="WinScreenQuitButton">Quit game</p></span>
             </div>
         </div>
-        <div class="Hidden" id="pausemenubody">
+        <div class="Hidden" id="PauseMenuBody">
             <span class="SpaceTaker"></span>
-            <div class="PauseContent">
+            <div class="MenuContent PauseContent">
             <h1 class="MenuTitle">Paused</h1>
-            <hr class="PauseLine"></hr>
-            <span class="PauseOption"><p id="PauseMenuClose">Resume</p></span>
+            <hr class="MenuLine PauseLine"></hr>
+            <span class="MenuOption PauseOption"><p id="PauseMenuClose">Resume</p></span>
             <br></br>
-            <span class="PauseOption"><p id="PauseScreenMenuButton">Main menu</p></span>
-            <span class="PauseOption DangerousMenu"><p id="PauseScreenQuitButton">Quit game</p></span>
+            <span class="MenuOption PauseOption"><p id="PauseScreenMenuButton">Main menu</p></span>
+            <span class="MenuOption PauseOption Dangerous"><p id="PauseScreenQuitButton">Quit game</p></span>
             </div>
         </div>
         

@@ -12,9 +12,9 @@ using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, GuiLoadedSheet* sheet,
 	shared_ptr<ScriptScript> script /*= NULL*/) : EventableScriptObject(script), OwningInstance(owner), FileID(fakeid), Name(name), Element(NULL),
-	ContainedInSheet(sheet), ManualDetach(false)
+	ContainedInSheet(sheet), ManualDetach(false), ID(IDFactory::GetID())
 {
-	ID = IDFactory::GetID();
+	
 }
 
 DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){

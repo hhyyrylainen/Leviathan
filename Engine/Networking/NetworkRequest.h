@@ -13,8 +13,10 @@
 namespace Leviathan{
 
 	enum NETWORKREQUESTTYPE {
-		// This is send first, expected result is like "PongServer running version 0.5.1.0, status: 0/20" //
-		NETWORKREQUESTTYPE_IDENTIFICATION
+		// This is sent first, expected result is like "PongServer running version 0.5.1.0, status: 0/20" //
+		NETWORKREQUESTTYPE_IDENTIFICATION,
+		NETWORKREQUESTTYPE_OPENREMOTECONSOLETO,
+		NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE
 	};
 
 	class BaseNetworkRequestData{
@@ -25,10 +27,33 @@ namespace Leviathan{
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) = 0;
 	};
 
+	class RemoteConsoleOpenRequestDataTo : public BaseNetworkRequestData{
+	public:
+		DLLEXPORT RemoteConsoleOpenRequestDataTo(int token);
+		DLLEXPORT RemoteConsoleOpenRequestDataTo(sf::Packet &frompacket);
+
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		int SessionToken;
+	};
+
+	// TODO: add security to this
+	class RemoteConsoleAccessRequestData : public BaseNetworkRequestData{
+	public:
+		DLLEXPORT RemoteConsoleAccessRequestData(int token);
+		DLLEXPORT RemoteConsoleAccessRequestData(sf::Packet &frompacket);
+
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		int SessionToken;
+	};
+
 
 	class NetworkRequest{
 	public:
 		DLLEXPORT NetworkRequest(NETWORKREQUESTTYPE type, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT ~NetworkRequest();
 
 		DLLEXPORT NetworkRequest(sf::Packet &frompacket);
@@ -36,6 +61,10 @@ namespace Leviathan{
 		DLLEXPORT sf::Packet GeneratePacketForRequest();
 
 		DLLEXPORT NETWORKREQUESTTYPE GetType();
+
+		// Specific type data get functions //
+		DLLEXPORT RemoteConsoleOpenRequestDataTo* GetRemoteConsoleOpenToDataIfPossible();
+
 
 		DLLEXPORT int GetExpectedResponseID();
 

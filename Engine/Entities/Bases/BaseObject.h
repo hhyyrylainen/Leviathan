@@ -63,6 +63,8 @@ namespace Leviathan{
 
 	class BaseObject : public ReferenceCounted{
 	public:
+		// Default constructor that should never be used for actual objects (is used by classed that aren't actually object, but accidentally inherit this) //
+		DLLEXPORT BaseObject();
 		DLLEXPORT BaseObject(int id, GameWorld* worldptr);
 		DLLEXPORT virtual ~BaseObject();
 		

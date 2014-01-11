@@ -42,6 +42,9 @@ namespace Leviathan{
 	};
 }
 
+// Standard type time durations //
+typedef boost::chrono::duration<__int64, boost::milli> MillisecondDuration;
+
 
 
 

@@ -409,40 +409,6 @@ DLLEXPORT  wstring Leviathan::FileSystem::ChangeExtension(const wstring& path, c
 	return path.substr(0, lastdot+1)+newext;
 }
 
-wstring Leviathan::FileSystem::RemoveExtension(const wstring &file, bool delpath){
-	wstring returnstr = L"";
-
-	bool found = false;
-	for(int i = (int)file.length()-1; (i > -1) && (i < (int)file.length()); ){
-		if(!found){
-			i--;
-			if(!(i > -1)){
-				return file;
-			}
-			if(file[i] == L'.'){
-				found = true;
-				//i--;
-			}
-			continue;
-		}
-		i--;
-		if(!(i > -1 && i < (int)file.length())){
-			break;
-		}
-		if(((file[i] == L'/') || (file[i] == L'\\')) && (delpath))
-			break;
-		returnstr += file[i];
-	}
-	// turn around //
-	wstring final = L"";
-	for(int i = (int)returnstr.size()-1; i > -1; i--){
-		final += returnstr[i];
-	}
-
-	return final;
-}
-
-
 DLLEXPORT string Leviathan::FileSystem::RemovePath(const string &filepath){
 	// start from last character and find last / or \ //
 	for(int i = (int)filepath.size()-1; i > -1; i--){

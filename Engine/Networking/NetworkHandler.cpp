@@ -12,6 +12,7 @@
 #include "Application/GameConfiguration.h"
 #include "Utility/ComplainOnce.h"
 #include "ConnectionInfo.h"
+#include "RemoteConsole.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler) : AppType(ntype), 
@@ -123,7 +124,6 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
 	// Kill master server connection //
 	MasterServerConnectionThread.join();
 	TempGetResponsesThread.join();
-	TempGetResponsesThread.join();
 }
 
 void Leviathan::NetworkHandler::_ReleaseSocket(){
@@ -208,6 +208,11 @@ DLLEXPORT wstring Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const
 DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 	ObjectLock guard(*this);
 
+	// Remove closed connections //
+	RemoveClosedConnections(guard);
+
+	RemoteConsole::Get()->UpdateStatus();
+
 	// Let's listen for things //
 	sf::Packet receivedpacket;
 
@@ -230,30 +235,52 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 			}
 		}
 
-		if(!Passed){
-			// We might want to open a new connection to this client //
-			Logger::Get()->Info(L"Received a new connection from "+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
+		if(Passed)
+			continue;
 
-			if(AppType != NETWORKED_TYPE_CLIENT){
-				// Accept the connection //
-				Logger::Get()->Info(L"\t> Connection accepted");
+		shared_ptr<ConnectionInfo> tmpconnect;
 
-				shared_ptr<ConnectionInfo> tmpconnect(new ConnectionInfo(sender, sentport));
+		// We might want to open a new connection to this client //
+		Logger::Get()->Info(L"Received a new connection from "+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
 
-				AutoOpenedConnections.push_back(tmpconnect);
+		if(AppType != NETWORKED_TYPE_CLIENT){
+			// Accept the connection //
+			Logger::Get()->Info(L"\t> Connection accepted");
 
-				// Try to handle the packet //
-				if(!tmpconnect->IsThisYours(receivedpacket, sender, sentport)){
-					// That's an error //
-					Logger::Get()->Error(L"NetworkHandler: UpdateAllConnections: new connection refused to process it's packet from"
-						+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
-				}
-			} else {
-				// Deny the connection //
-				Logger::Get()->Info(L"\t> Dropping connection due to not being a server");
+			tmpconnect = shared_ptr<ConnectionInfo>(new ConnectionInfo(sender, sentport));
 
+		} else if(RemoteConsole::Get()->IsAwaitingConnections()){
+			// We might allow a remote start remote console session //
+			Logger::Get()->Info(L"\t> Connection accepted for remote console receive");
+
+			tmpconnect = shared_ptr<ConnectionInfo>(new ConnectionInfo(sender, sentport));
+			// We need a special restriction for this connection //
+			tmpconnect->SetRestrictionMode(CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE);
+			
+		} else {
+			// Deny the connection //
+			Logger::Get()->Info(L"\t> Dropping connection due to not being a server (and not expecting a remote console session)");
+
+		}
+
+		if(tmpconnect){
+			// Try to handle with the new connection //
+			// We need to initialize the new connection first //
+			if(!tmpconnect->Init()){
+				// This should never happen //
+				assert(0 && "connection init function should never fail");
+			}
+
+			AutoOpenedConnections.push_back(tmpconnect);
+
+			// Try to handle the packet //
+			if(!tmpconnect->IsThisYours(receivedpacket, sender, sentport)){
+				// That's an error //
+				Logger::Get()->Error(L"NetworkHandler: UpdateAllConnections: new connection refused to process it's packet from"
+					+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
 			}
 		}
+
 	}
 	// Time-out requests //
 	for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
@@ -298,6 +325,33 @@ void Leviathan::NetworkHandler::_UnregisterConnectionInfo(ConnectionInfo* unregi
 shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>> Leviathan::NetworkHandler::LockSocketForUse(){
 	return shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>>(
 		new boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>(SocketMutex));
+}
+
+DLLEXPORT void Leviathan::NetworkHandler::SafelyCloseConnectionTo(ConnectionInfo* to){
+	ObjectLock guard(*this);
+
+	// Add to the queue //
+	ConnectionsToTerminate.push_back(to);
+}
+
+DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(ObjectLock &guard){
+	VerifyLock(guard);
+
+	// Go through the removed connection list and remove them //
+	for(size_t i = 0; i < ConnectionsToTerminate.size(); i++){
+
+		for(size_t a = 0; a < ConnectionsToUpdate.size(); i++){
+
+			if(ConnectionsToTerminate[i] == ConnectionsToUpdate[a]){
+				// Close it //
+				ConnectionsToUpdate[a]->Release();
+				ConnectionsToUpdate.erase(ConnectionsToUpdate.begin()+a);
+				break;
+			}
+		}
+	}
+	// All are handled, clear them //
+	ConnectionsToTerminate.clear();
 }
 // ------------------------------------ //
 void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar){

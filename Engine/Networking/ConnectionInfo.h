@@ -14,16 +14,20 @@
 #include "Common/ThreadSafe.h"
 #include <boost/thread/future.hpp>
 #include "NetworkHandler.h"
+#include "Entities/Bases/BaseNotifier.h"
 
 namespace Leviathan{
 
 #define DEFAULT_ACKCOUNT		32
-#define KEEPALIVE_TIME			2000
+#define KEEPALIVE_TIME			120000
+#define KEEPALIVE_RESPOND		30000
 #define ACKKEEPALIVE			50
 
 
 // Makes the program spam a ton of debug info about packets //
 #define SPAM_ME_SOME_PACKETS	1
+
+	enum CONNECTION_RESTRICTION {CONNECTION_RESTRICTION_NONE, CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE};
 
 	struct SentNetworkThing{
 
@@ -104,8 +108,10 @@ namespace Leviathan{
 		NetworkAckField* AcksInThePacket;
 	};
 
-
-	class ConnectionInfo : public ThreadSafe{
+	//! \brief Class that handles a single connection to another instance
+	//!
+	//! Note: this class does not use reference counting so it it safe to use shared_ptr with this class
+	class ConnectionInfo : public BaseNotifier{
 	public:
 		DLLEXPORT ConnectionInfo(shared_ptr<wstring> hostname);
 		DLLEXPORT ConnectionInfo(const sf::IpAddress &targetaddress, USHORT port);
@@ -115,7 +121,12 @@ namespace Leviathan{
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();
 
+		//! \brief Adds special restriction on the connection
+		DLLEXPORT void SetRestrictionMode(CONNECTION_RESTRICTION type);
+
 		DLLEXPORT bool IsThisYours(sf::Packet &packet, sf::IpAddress &sender, USHORT &sentport);
+		DLLEXPORT bool IsTargetHostLocalhost();
+
 
 		DLLEXPORT void UpdateListening();
 
@@ -125,7 +136,20 @@ namespace Leviathan{
 		// Data exchange functions //
 		DLLEXPORT shared_ptr<NetworkResponse> SendRequestAndBlockUntilDone(shared_ptr<NetworkRequest> request, int maxtries = 2);
 
-		DLLEXPORT void SendKeepAlivePacket();
+		DLLEXPORT void CheckKeepAliveSend();
+		DLLEXPORT void SendKeepAlivePacket(ObjectLock &guard);
+		DLLEXPORT FORCE_INLINE void SendKeepAlivePacket(){
+			ObjectLock guard(*this);
+			SendKeepAlivePacket(guard);
+		}
+		DLLEXPORT void SendCloseConnectionPacket(ObjectLock &guard);
+		DLLEXPORT FORCE_INLINE void SendCloseConnectionPacket(){
+			ObjectLock guard(*this);
+			SendCloseConnectionPacket(guard);
+		}
+
+		//! Don't call this
+		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
 	private:
 
@@ -150,10 +174,15 @@ namespace Leviathan{
 		// Holds the ID of the last sent packet //
 		int LastUsedID;
 
+		//! Connections might have special restrictions on them (mainly the accept only remote console feature) //
+		CONNECTION_RESTRICTION RestrictType;
+
+
 		// How many times the same ack table is sent before new one is generated (usually 1 with good connections) //
 		int MaxAckReduntancy;
 
 		__int64 LastSentPacketTime;
+		__int64 LastReceivedPacketTime;
 
 
 		// Sent packets that haven't been confirmed as arrived //

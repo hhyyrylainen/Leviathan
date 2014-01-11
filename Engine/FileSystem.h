@@ -98,7 +98,22 @@ namespace Leviathan{
 		// extension handling //
 		DLLEXPORT static wstring GetExtension(const wstring &path);
 		DLLEXPORT static wstring ChangeExtension(const wstring& path, const wstring &newext);
-		DLLEXPORT static wstring RemoveExtension(const wstring &file, bool delpath);
+		template<class StringTypeN>
+		DLLEXPORT static StringTypeN RemoveExtension(const StringTypeN &file, bool delpath){
+
+			size_t startcopy;
+			size_t endcopy;
+			
+			size_t lastdot = file.find_last_of(L'.');
+
+			if(lastdot == wstring::npos){
+				// no dot!, just append to end and return //
+				return path+L'.'+newext;
+			}
+
+			// return the wanted part //
+			return file.substr(startcopy, endcopy-startcopy+1);
+		}
 		DLLEXPORT static string RemovePath(const string &filepath);
 
 		// file operations //

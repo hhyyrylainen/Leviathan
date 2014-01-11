@@ -463,63 +463,6 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 		switch(IntendLevel){
 		case 0:
 			{
-				// check for script definition //
-				if(Misc::WstringStartsWith(Lines[Line], L"inl")){
-					// process script block definition//
-					vector<wstring*> Tokens;
-					// use token separator here //
-					LineTokeNizer::TokeNizeLine(Lines[Line], Tokens);
-
-					if(Tokens.size() == 0){
-						// invalid //
-						DEBUG_BREAK;
-					}
-
-					// first token is "inl" and can be skipped //
-
-					// get script type from this line //
-					for(size_t a = 1; a < Tokens.size(); a++){
-						if(Misc::WstringStartsWith(*Tokens[a], L"type")){
-							// type specification //
-							vector<Token*> linetokens;
-
-							LineTokeNizer::SplitTokenToRTokens(*Tokens[a], linetokens);
-
-							// token size should be 2 //
-							if(linetokens.size() != 2){
-								DEBUG_BREAK;
-								Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: inline has invalid type "+*Tokens[a]);
-								continue;
-							}
-							// second token is script type name //
-							ScriptType = linetokens[1]->GetChangeableData();
-							SAFE_DELETE_VECTOR(linetokens);
-							continue;
-						}
-						if(Misc::WstringStartsWith(*Tokens[a], L"{")){
-							// can't be anything important after this //
-							break;
-						}
-					}
-
-					// release tokens //
-					SAFE_DELETE_VECTOR(Tokens);
-
-					// go to next level //
-					IntendLevel++;
-					continue;
-				}
-
-				// check for block end //
-				if(Misc::WstringStartsWith(Lines[Line], L"}")){
-					Working = false;
-					//Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: Script body blob contained no definitions ");
-					break;
-				}
-			}
-		break;
-		case 1:
-			{
 				if(Misc::WstringStartsWith(Lines[Line], L"name")){
 
 					// this line should be a NamedVar object //
@@ -569,6 +512,12 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 					IntendLevel = 0;
 					continue;
 				}
+				// check for script definition //
+				if(Misc::WstringStartsWith(Lines[Line], L"inl")){
+					// This is deprecated now //
+					Logger::Get()->Warning(L"ObjectFileProcessor: file has old s scripts block format!, file: "+sourcefile);
+					continue;
+				}
 				DEBUG_BREAK;
 			}
 		break;
@@ -581,6 +530,12 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 			L"was found, began on line "+Convert::IntToWstring(CodeStartLine), true);
 
 		return true;
+	}
+
+	// We can create a generic name if one wasn't provided //
+	if(Name.size() == 0){
+
+		Name = L"Script for object "+obj->Name;
 	}
 
 	// create script //

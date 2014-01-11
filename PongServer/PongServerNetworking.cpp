@@ -13,9 +13,9 @@ Pong::PongServerNetworking::~PongServerNetworking(){
 
 }
 // ------------------------------------ //
-void Pong::PongServerNetworking::HandleResponseOnlyPacket(shared_ptr<Leviathan::NetworkResponse> message, Leviathan::ConnectionInfo* connection){
+void Pong::PongServerNetworking::HandleResponseOnlyPacket(shared_ptr<Leviathan::NetworkResponse> message, Leviathan::ConnectionInfo* connection, bool &dontmarkasreceived){
 	// Try default handling //
-	if(_HandleDefaultResponseOnly(message, connection))
+	if(_HandleDefaultResponseOnly(message, connection, dontmarkasreceived))
 		return;
 
 	// We couldn't handle it //

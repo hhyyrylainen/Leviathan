@@ -1,7 +1,7 @@
 FileType: Script;
 script-type: gui;
 script-name: PongMenus;
-RocketScript: Pong.rml
+RocketScript: Pong.rml;
 
 objects {
     // this keeps the GUI always on //

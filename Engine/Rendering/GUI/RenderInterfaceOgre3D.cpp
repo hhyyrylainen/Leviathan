@@ -29,6 +29,7 @@
 #include "RenderInterfaceOgre3D.h"
 #include <OGRE/Ogre.h>
 #include "FileSystem.h"
+#include "Common/StringOperations.h"
 
 struct RocketOgre3DVertex
 {
@@ -40,11 +41,25 @@ struct RocketOgre3DVertex
 // The structure created for each texture loaded by Rocket for Ogre.
 struct RocketOgre3DTexture
 {
-	RocketOgre3DTexture(Ogre::TexturePtr texture) : texture(texture)
+	RocketOgre3DTexture(Ogre::TexturePtr texture, bool amitheonlyone = false) : texture(texture), DisposeOnRemoveHandle(amitheonlyone)
 	{
 	}
 
+	~RocketOgre3DTexture(){
+		if(DisposeOnRemoveHandle){
+			// We have the only one of this texture and thus we should try to unload it //
+			Ogre::ResourcePtr tmpptr = texture;
+			texture.setNull();
+
+			Ogre::TextureManager::getSingleton().remove(tmpptr);
+			// TODO: improve this speed? //
+			//Ogre::TextureManager::getSingleton().remove(texture->getName());
+		}
+	}
+
+
 	Ogre::TexturePtr texture;
+	bool DisposeOnRemoveHandle;
 };
 
 // The structure created for each set of geometry that Rocket compiles. It stores the vertex and index buffers and the
@@ -222,6 +237,8 @@ bool RenderInterfaceOgre3D::LoadTexture(Rocket::Core::TextureHandle& texture_han
 
 	Ogre::TexturePtr ogre_texture;
 
+	bool WeLoaded = false;
+
 	if(filereadstream.is_open()){
 
 		Ogre::FileStreamDataStream* pFS = new Ogre::FileStreamDataStream(&filereadstream, false);
@@ -235,19 +252,21 @@ bool RenderInterfaceOgre3D::LoadTexture(Rocket::Core::TextureHandle& texture_han
 
 		Ogre::Image img;
 
-		string extension = Leviathan::FileSystem::RemoveExtension<string>(source.CString(), true);
+		string extension = Leviathan::StringOperations::GetExtensionString(source.CString());
 
 		img.load(streamptr, extension);
 		filereadstream.close();
 
 		// Add the image //
-		texture_manager->loadImage("Rocket_texture_"+string(source.CString()), "Rocket", img);
+		ogre_texture = texture_manager->loadImage("Rocket_texture_"+string(source.CString()), "Rocket", img);
+
+		WeLoaded = true;
 
 	} else {
 trytoloadjustfromnamelabel:
 
 		// We can't use the absolute/relative path so we must try to use Ogre resource loading //
-		Ogre::String onlynamesource = Leviathan::FileSystem::RemovePath(source.CString());
+		Ogre::String onlynamesource = Leviathan::StringOperations::RemovePathString(source.CString());
 
 		ogre_texture = texture_manager->getByName(onlynamesource);
 	}
@@ -259,7 +278,7 @@ trytoloadjustfromnamelabel:
 	texture_dimensions.x = ogre_texture->getWidth();
 	texture_dimensions.y = ogre_texture->getHeight();
 
-	texture_handle = reinterpret_cast<Rocket::Core::TextureHandle>(new RocketOgre3DTexture(ogre_texture));
+	texture_handle = reinterpret_cast<Rocket::Core::TextureHandle>(new RocketOgre3DTexture(ogre_texture, WeLoaded));
 	return true;
 }
 

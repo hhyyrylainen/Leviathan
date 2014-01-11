@@ -6,6 +6,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 #include "Common/DataStoring/DataBlock.h"
+#include "Common/StringOperations.h"
 
 double Convert::DegreesToRadians(float degrees){
 	return (degrees*(PI/180.f));
@@ -143,7 +144,7 @@ int Convert::WstringTypeCheck(const wstring& data, int typecheckfor){
 		{
 			wstring valid = L"1234567890-+";
 			for(unsigned int i = 0; i < data.length(); i++){
-				if(!Misc::WstringContains(valid, data[i]))
+				if(!valid.find(data[i]))
 					return 0;
 			}
 
@@ -154,7 +155,7 @@ int Convert::WstringTypeCheck(const wstring& data, int typecheckfor){
 		{
 			wstring valid = L"1234567890-+.,";
 			for(unsigned int i = 0; i < data.length(); i++){
-				if(!Misc::WstringContains(valid, data[i]))
+				if(!valid.find(data[i]))
 					return 0;
 			}
 
@@ -177,7 +178,7 @@ int Convert::WstringTypeCheck(const wstring& data, int typecheckfor){
 			unsigned int foundnumbparts = 0;
 			wstring valid = L"1234567890-+.,";
 			for(unsigned int i = 0; i < data.length(); i++){
-				if(Misc::WstringContains(valid, data[i]))
+				if(valid.find(data[i]))
 					foundnumbparts++;
 			}
 			if(foundnumbparts == data.length())
@@ -193,23 +194,23 @@ int Convert::WstringTypeCheck(const wstring& data, int typecheckfor){
 	return 007;
 }
 
-int Convert::WstringTypeNameCheck(const wstring& data){
-	if(Misc::WstringCompareInsensitive(data, L"int")){
+int Convert::WstringTypeNameCheck(const wstring &data){
+	if(StringOperations::CompareInsensitive(data, wstring(L"int"))){
 		return DATABLOCK_TYPE_INT;
 	}
-	if(Misc::WstringCompareInsensitive(data, L"float")){
+	if(StringOperations::CompareInsensitive(data, wstring(L"float"))){
 		return DATABLOCK_TYPE_FLOAT;
 	}
-	if(Misc::WstringCompareInsensitive(data, L"bool")){
+	if(StringOperations::CompareInsensitive(data, wstring(L"bool"))){
 		return DATABLOCK_TYPE_BOOL;
 	}
-	if(Misc::WstringCompareInsensitive(data, L"wstring")){
+	if(StringOperations::CompareInsensitive(data, wstring(L"wstring"))){
 		return DATABLOCK_TYPE_WSTRING;
 	}
-	if(Misc::WstringCompareInsensitive(data, L"wstring")){
+	if(StringOperations::CompareInsensitive(data, wstring(L"wstring"))){
 		return DATABLOCK_TYPE_WSTRING;
 	}
-	if(Misc::WstringCompareInsensitive(data, L"void*")){
+	if(StringOperations::CompareInsensitive(data, wstring(L"void*"))){
 		return DATABLOCK_TYPE_VOIDPTR;
 	}
 	return -1;

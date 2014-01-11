@@ -6,7 +6,7 @@
 	<body>
         <div class="Menu" id="MenuBody">
             <div class="MenuContent" id="TopLevelMenu">
-                <span style="position: absolute; left: 20px; top: 10px; font-weight: bold; font-size: 125; z-index: 1;">
+                <span style="position: absolute; left: 20px; top: 10px; text-align: left; font-weight: bold; font-size: 125; z-index: 1;">
                 Pong
                 </span>
                 <span class="SpaceTaker"></span>

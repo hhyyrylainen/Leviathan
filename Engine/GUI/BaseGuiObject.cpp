@@ -8,6 +8,7 @@
 #include "Script/ScriptModule.h"
 #include <boost/assign/list_of.hpp>
 #include "GUI/GuiManager.h"
+#include "Common/StringOperations.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, GuiLoadedSheet* sheet,
@@ -32,7 +33,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 
 	for(size_t i = 0; i < dataforthis.Prefixes.size(); i++){
 
-		if(Misc::WstringStartsWith(*dataforthis.Prefixes[i], L"ID")){
+		if(StringOperations::StringStartsWith(*dataforthis.Prefixes[i], wstring(L"ID"))){
 			// get id number //
 			WstringIterator itr(dataforthis.Prefixes[i].get(), false);
 
@@ -52,7 +53,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 
 	// setup listeners //
 	for(size_t i = 0; i < dataforthis.Contents.size(); i++){
-		if(Misc::WstringCompareInsensitiveRefs(dataforthis.Contents[i]->Name, L"params")){
+		if(StringOperations::StringStartsWith(dataforthis.Contents[i]->Name, wstring(L"params"))){
 
 			wstring rocketobjectname;
 

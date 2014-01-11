@@ -283,11 +283,15 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 
 	shared_ptr<GuiLoadedSheet> sheet;
 
+	wstring path = StringOperations::GetPathWstring(file);
+
+	wstring finalrocket = path+relativepath;
+
 	// We need to lock now //
 	ObjectLock guard(*this);
 
 	try{
-		sheet = shared_ptr<GuiLoadedSheet>(new GuiLoadedSheet(WindowContext, Convert::WstringToString(FileSystem::GetScriptsFolder()+relativepath)),
+		sheet = shared_ptr<GuiLoadedSheet>(new GuiLoadedSheet(WindowContext, Convert::WstringToString(finalrocket)),
 		//	std::mem_fun_ref(&GuiLoadedSheet::ReleaseProxy));
 			[](GuiLoadedSheet* p){p->Release();});
 		if(!sheet.get()){

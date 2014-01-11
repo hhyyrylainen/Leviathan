@@ -365,7 +365,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 	Inited = true;
 
 	// We can probably assume here that leap creation has stalled if the thread is running //
-	if(!leapinitthread.try_join_for(boost::chrono::milliseconds(1))){
+	if(!leapinitthread.try_join_for(boost::chrono::milliseconds(5))){
 		// We can assume that it is running //
 		Logger::Get()->Warning(L"LeapController creation would have stalled the game!");
 		Misc::KillThread(leapinitthread);

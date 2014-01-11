@@ -3,8 +3,8 @@
 
 class DummyNetworkHandler : public Leviathan::NetworkInterface{
 public:
-	DLLEXPORT virtual void HandleResponseOnlyPacket(shared_ptr<NetworkResponse> message, ConnectionInfo* connection){
-		throw std::exception("The method or operation is not implemented.");
+	DLLEXPORT virtual void HandleResponseOnlyPacket(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived){
+		throw std::exception();
 	}
 };
 

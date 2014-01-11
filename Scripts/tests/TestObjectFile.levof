@@ -18,15 +18,13 @@ objects {
             !
         }
         s scripts {
-            inl type(script) {
-                name = TestScript;
-                body {
-                    int GetRandomNumber(){
-                        // good choice //
-                        return 1;
-                    }
-                @%};
-            }       
+            name = TestScript;
+            body {
+                int GetRandomNumber(){
+                    // good choice //
+                    return 1;
+                }
+            @%};     
         }
     }
     o Just "Something" "nice wow" ID(29){ lol
@@ -51,6 +49,14 @@ objects {
             oh=2;
             no:false;
             <t> why?;
+        }
+        s scripts {
+            body {
+                int GetRandomNumber(){
+                    // good choice //
+                    return 42;
+                }
+            @%};     
         }
     }
 }

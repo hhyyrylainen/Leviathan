@@ -95,27 +95,6 @@ namespace Leviathan{
 		// Warning: TODO: linux version ignores the defined pattern //
 		DLLEXPORT static bool GetFilesInDirectory(vector<wstring> &files, const wstring &dirpath, const wstring &pattern = L"*.*", bool recursive = true);
 
-		// extension handling //
-		DLLEXPORT static wstring GetExtension(const wstring &path);
-		DLLEXPORT static wstring ChangeExtension(const wstring& path, const wstring &newext);
-		template<class StringTypeN>
-		DLLEXPORT static StringTypeN RemoveExtension(const StringTypeN &file, bool delpath){
-
-			size_t startcopy;
-			size_t endcopy;
-			
-			size_t lastdot = file.find_last_of(L'.');
-
-			if(lastdot == wstring::npos){
-				// no dot!, just append to end and return //
-				return path+L'.'+newext;
-			}
-
-			// return the wanted part //
-			return file.substr(startcopy, endcopy-startcopy+1);
-		}
-		DLLEXPORT static string RemovePath(const string &filepath);
-
 		// file operations //
 		DLLEXPORT static int GetFileLength(wstring name);
 		DLLEXPORT static bool FileExists(const wstring &name);

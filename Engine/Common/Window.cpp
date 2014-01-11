@@ -534,6 +534,8 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 	if(!MouseCaptured)
 		inputreceiver->ProcessMouseButtonDown(Keynumber, SpecialKeyModifiers);
 
+	_CheckMouseVisibilityStates();
+
 	// don't really know what to return
 	return true;
 }

@@ -6,6 +6,7 @@
 #include "FileSystem.h"
 #include <boost/assign/list_of.hpp>
 #include "Common/DataStoring/DataStore.h"
+#include "Common/StringOperations.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -83,9 +84,10 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 	// file needs to be split to lines //
 	vector<wstring> Lines;
 
-	if(Misc::CutWstring(filecontents, L"\n", Lines)){
-		// failed //
-		DEBUG_BREAK;
+	if(!StringOperations::CutString(filecontents, wstring(L"\n"), Lines)){
+
+		Lines.push_back(filecontents);
+		Logger::Get()->Warning(L"ObjectFileProcessor: file seems to be only a single line: "+filecontents);
 	}
 
 	// remove excess spaces //
@@ -126,7 +128,7 @@ DLLEXPORT vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::P
 	WstringIterator itr(NULL, false);
 
 	// read objects // // move to next line, on first iteration skips "objects {" part //
-	while(++Line < (int)Lines.size() && (!Misc::WstringStartsWith(Lines[Line], L"-!-"))){
+	while(++Line < (int)Lines.size() && (!StringOperations::StringStartsWith(Lines[Line], wstring(L"-!-")))){
 
 		// skip empty //
 		if(Lines[Line].size() == 0){
@@ -266,8 +268,8 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 	}
 	if(Name.get() == NULL || Name->size() == 0){
 
-		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: object doesn't have a name! prefixes "+ Misc::WstringStitchTogether(Prefixes, L" , ")
-			+L" line ", Line, true);
+		Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: object doesn't have a name! prefixes "+
+			StringOperations::StitchTogether(Prefixes, wstring(L" , "))+L" line ", Line, true);
 		return NULL;
 	}
 
@@ -323,7 +325,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::ReadObjectBlock(UIN
 			continue;
 		}
 
-		if(Misc::WstringStartsWith(Lines[Line], L"}")){
+		if(StringOperations::StringStartsWith(Lines[Line], wstring(L"}"))){
 			// object ended //
 			Level--;
 			// could as well be break here //
@@ -460,68 +462,63 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockScriptBlock(UINT &Lin
 			Instructions += Convert::WstringToString(Lines[Line]+L"\n");
 			continue;
 		}
-		switch(IntendLevel){
-		case 0:
-			{
-				if(Misc::WstringStartsWith(Lines[Line], L"name")){
+		if(StringOperations::StringStartsWith(Lines[Line], wstring(L"name"))){
 
-					// this line should be a NamedVar object //
-					try{
-						// use NamedVar constructor to parse this line //
+			// this line should be a NamedVar object //
+			try{
+				// use NamedVar constructor to parse this line //
 
-						// we first need to get just the value //
-						WstringIterator nameitr(&Lines[Line], false);
+				// we first need to get just the value //
+				WstringIterator nameitr(&Lines[Line], false);
 
-						nameitr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_ALL);
-						// skip whitespace and we should be at right spot //
-						nameitr.SkipWhiteSpace();
+				nameitr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_ALL);
+				// skip whitespace and we should be at right spot //
+				nameitr.SkipWhiteSpace();
 
-						unique_ptr<wstring> nameval = nameitr.GetUntilNextCharacterOrAll(L';');
+				unique_ptr<wstring> nameval = nameitr.GetUntilNextCharacterOrAll(L';');
 
-						VariableBlock tmpnamedvar(*nameval, NULL);
+				VariableBlock tmpnamedvar(*nameval, NULL);
 
-						// get variable value to name //
+				// get variable value to name //
 
-						if(!tmpnamedvar.ConvertAndAssingToVariable<wstring>(Name)){
+				if(!tmpnamedvar.ConvertAndAssingToVariable<wstring>(Name)){
 
-							Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid name line: "+Convert::IntToWstring(Line)+
-								L" in file"+sourcefile+L". Cannot be cast to wstring!", true);
-							Name = L"Invalid name";
-						}
-					}
-					catch(const ExceptionInvalidArgument &e){
-						// invalid definition //
-						Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid name line: "+Convert::IntToWstring(Line)+
-							L" in file"+sourcefile+L" see exception: ", true);
-						e.PrintToLog();
-						Name = L"Invalid name";
-					}
-
-					continue;
+					Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid name line: "+Convert::IntToWstring(Line)+
+						L" in file"+sourcefile+L". Cannot be cast to wstring!", true);
+					Name = L"Invalid name";
 				}
-
-				if(Misc::WstringStartsWith(Lines[Line], L"body")){
-					IntendLevel = 2;
-					Incode = true;
-					CodeStartLine = Line+1;
-					continue;
-				}
-
-				if(Misc::WstringStartsWith(Lines[Line], L"}")){
-					// go back to level 0 for processing lowest level end //
-					IntendLevel = 0;
-					continue;
-				}
-				// check for script definition //
-				if(Misc::WstringStartsWith(Lines[Line], L"inl")){
-					// This is deprecated now //
-					Logger::Get()->Warning(L"ObjectFileProcessor: file has old s scripts block format!, file: "+sourcefile);
-					continue;
-				}
-				DEBUG_BREAK;
 			}
-		break;
+			catch(const ExceptionInvalidArgument &e){
+				// invalid definition //
+				Logger::Get()->Error(L"ScriptInterface: ReadObjectBlock: script definition invalid name line: "+Convert::IntToWstring(Line)+
+					L" in file"+sourcefile+L" see exception: ", true);
+				e.PrintToLog();
+				Name = L"Invalid name";
+			}
+
+			continue;
 		}
+
+		if(StringOperations::StringStartsWith(Lines[Line], wstring(L"body"))){
+			IntendLevel = 1;
+			Incode = true;
+			CodeStartLine = Line+1;
+			continue;
+		}
+
+		if(StringOperations::StringStartsWith(Lines[Line], wstring(L"}"))){
+			// break out of indentation //
+			IntendLevel = -1;
+			Working = false;
+			break;
+		}
+		// check for script definition //
+		if(StringOperations::StringStartsWith(Lines[Line], wstring(L"inl"))){
+			// This is deprecated now //
+			Logger::Get()->Warning(L"ObjectFileProcessor: file has old s scripts block format!, file: "+sourcefile);
+			continue;
+		}
+		DEBUG_BREAK;
 	}
 
 	if(Incode){
@@ -561,7 +558,7 @@ bool Leviathan::ObjectFileProcessor::ProcessObjectFileBlockTextBlock(UINT &Line,
 	shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr)
 {
 	// check for end //
-	if(Misc::WstringStartsWith(Lines[Line], L"}")){
+	if(StringOperations::StringStartsWith(Lines[Line], wstring(L"}"))){
 		// object ended //
 		//Level--; // no need to change here //
 
@@ -659,11 +656,11 @@ DLLEXPORT  int Leviathan::ObjectFileProcessor::WriteObjectFile(vector<shared_ptr
 			writer << L"				name = " << scrpt->GetName() << L";" << endl;
 			writer << L"				body {" << endl;
 			// write instructions //
-			vector<wstring> SplitInstrLines;
-			Misc::CutWstring(Convert::StringToWstring(scrpt->GetIncompleteSourceCode()), L"\n", SplitInstrLines);
+			vector<string> SplitInstrLines;
+			StringOperations::CutString(scrpt->GetIncompleteSourceCode(), string("\n"), SplitInstrLines);
 			for(unsigned int e = 0; e < SplitInstrLines.size(); e++){
 				// write to file //
-				writer << L"					" << SplitInstrLines[i] << endl;
+				writer << L"					" << Convert::StringToWstring(SplitInstrLines[i]) << endl;
 			}
 			// body end //
 			writer << L"				@%};" << endl;

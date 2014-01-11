@@ -405,15 +405,15 @@ void Pong::PongGame::CustomizeEnginePostLoad(){
 	// load GUI documents //
 	GuiManagerAccess = Engine::GetEngine()->GetWindowEntity()->GetGUI();
 
-	GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"PongMenus.txt");
+	GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"GUI/PongMenus.txt");
 
 	//#ifdef _DEBUG
 	// load debug panel, too //
 
-	GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"DebugPanel.txt");
+	GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"GUI/DebugPanel.txt");
 	//#endif // _DEBUG
 
-	GuiManagerAccess->SetMouseFile(FileSystem::GetScriptsFolder()+L"cursor.rml");
+	GuiManagerAccess->SetMouseFile(FileSystem::GetScriptsFolder()+L"GUI/cursor.rml");
 
 	// setup world //
 	WorldOfPong = Engine::GetEngine()->CreateWorld();

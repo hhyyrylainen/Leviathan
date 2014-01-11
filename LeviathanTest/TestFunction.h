@@ -1,4 +1,5 @@
 #include "TestFunctions.h"
+#include "Common\StringOperations.h"
 #define FUNCTIONRUNS_BASE	10000
 
 bool TestPreEngine(){
@@ -15,6 +16,15 @@ bool TestPreEngine(){
 		Failed = true;
 	}
 
+	// --------- Float casting test --------- //
+	timername = L"StringOperations tests running "+Convert::IntToWstring(tests);
+
+	if(StringOperations::PerformTesting(tests)){
+		Logger::Get()->Error(L"Invalid string operations");
+		Failed = true;
+	}
+
+	TimingMonitor::StopTiming(timername);
 	// -------------------- MultiFlag testing -------------------- //
 	timername = L"MultiFlag tests running "+Convert::IntToWstring(tests);
 
@@ -106,30 +116,6 @@ bool TestPreEngine(){
 	}
 
 	TimingMonitor::StopTiming(timername);
-	// --------- WstringGetSecondWord Function --------- //
-	timername = L"WstringGetSecondWord test running "+Convert::IntToWstring(tests);
-
-	TimingMonitor::StartTiming(timername);
-
-	if(TestMiscWstringGetSecondWord(tests)){
-		Logger::Get()->Error(L"Test did NOT succeed, test:");
-		Failed = true;
-	}
-
-	TimingMonitor::StopTiming(timername);
-
-	// --------- WstringGetFirstWord Function --------- //
-	timername = L"WstringGetFirstWord test running "+Convert::IntToWstring(tests);
-
-	TimingMonitor::StartTiming(timername);
-
-	if(TestMiscWstringGetFirstWord(tests)){
-		Logger::Get()->Error(L"Test did NOT succeed, test:");
-		Failed = true;
-	}
-
-	TimingMonitor::StopTiming(timername);
-
 	// --------- TestMiscWstringRemovePreceedingTrailingSpaces Function --------- //
 	timername = L"TestMiscWstringRemovePreceedingTrailingSpaces test running "+Convert::IntToWstring(tests);
 

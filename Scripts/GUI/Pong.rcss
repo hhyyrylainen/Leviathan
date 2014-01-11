@@ -64,8 +64,8 @@ div.MenuContent
 
 .MenuTitle
 {
-    //color: #FFAC40;
-    color: 4A47FF;
+    /*color: #FFAC40;*/
+    color: #4A47FF;
     header-font-effect: outline;
     header-width: 2px;
     header-color: #BF813077;

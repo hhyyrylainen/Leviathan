@@ -6,6 +6,9 @@
 #include "OgreManualObject.h"
 #include "OgreMeshManager.h"
 #include "FileSystem.h"
+#include "OgreSceneManager.h"
+#include "OgreSceneNode.h"
+#include "OgreEntity.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //

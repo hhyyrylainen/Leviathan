@@ -130,7 +130,7 @@ namespace Leviathan{
 		bool GraphicalMode;
 
 		// objects //
-		// TODO: maybe change this to a map //
+		// \todo maybe change this to a map //
 		std::vector<shared_ptr<BaseObject>> Objects;
 
 		// This vector is used for delayed deletion //

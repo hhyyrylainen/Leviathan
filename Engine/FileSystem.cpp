@@ -7,8 +7,12 @@
 #ifdef __GNUC__
 #include <dirent.h>
 #include <sys/stat.h>
+#else
+#include <initguid.h>
+#include <shlobj.h>
 #endif
 #include "Common/StringOperations.h"
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::FileSystem::FileSystem(){
@@ -362,7 +366,7 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<wstring> &files
 		if((st.st_mode & S_IFDIR) != 0){
 			// Go into directory if recursive search //
 			if(recursive){
-				// TODO: fix performance //
+				// \todo fix performance //
 				GetFilesInDirectory(files, Convert::StringToWstring(full_file_name), pattern, recursive);
 			}
 			continue;

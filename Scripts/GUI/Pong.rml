@@ -4,34 +4,58 @@
         <link type="text/rcss" href="Pong.rcss"/>
 	</head>
 	<body>
-        <div class="Menu" id="MenuBody">
+        <div class="Menu" id="Menus">
             <div class="MenuContent" id="TopLevelMenu">
                 <span style="position: absolute; left: 20px; top: 10px; text-align: left; font-weight: bold; font-size: 125; z-index: 1;">
                 Pong
                 </span>
                 <span class="SpaceTaker"></span>
-                <span class="MenuOption"><p id="GameSetupScreenBtn">Start Game</p></span>
+                <span class="MenuOption"><p id="ToServerStartScreen">Start Server</p></span>
                 <span class="MenuOption Disabled"><p id="GameMultiplayerList">Browse Games</p></span>
                 <span class="MenuOption Disabled"><p id="GameDirectConnect">Direct Connect</p></span>
-                <span class="MenuOption Dangerous"><p id="QuitButton">Quit</p></span>
+                <span class="MenuOption Dangerous"><p id="GameQuitButton">Quit</p></span>
             </div>
             <div class="MenuContent Hidden" id="ServerStartScreen">
                 <h1 class="MenuTitle">Start a new game</h1>
                 <hr class="MenuLine"></hr>
                 Here's the server setup screen!
                 <hr class="MenuLine"></hr>
-                <span class="MenuOption"><p id="GameStartBtn">Start Game</p></span>
-                <span class="MenuOption"><p id="SetupScreenBack">Back</p></span>
-            </div>
-            <div class="MenuContent Hidden" id="GameLobby">
-                You're in a lobby!
+                <span class="MenuOption"><p id="ServerStartButton">Start Game</p></span>
+                <span class="MenuOption"><p id="BackFromServerStartScreen">Back</p></span>
             </div>
         </div>
-        <div class="Hidden" id="HUDMain">
+        <div class="Hidden" id="LobbyScreen">
+            You're in a lobby!
+            <tabset>
+            <tab>Overview</tab>
+            <panel>
+                Lobby overwiev, players and such.
+            </panel>
+            <tab>Player Slots</tab>
+            <panel>
+                Overview of players in slots
+            </panel>
+            <tab>Team 0</tab>
+            <panel>
+                Slot controls for team 0
+            </panel>
+            </tabset>
+            <!--All the chat and buttons and such under the tabs-->
+            <span class="PlayerDisplayColour" style="margin: auto; margin-left: 5%; margin-bottom: 2%; width: 45%; max-width: 45%; height: 33%; max-height: 33%;">
+            The chat goes here!
+            </span>
+            <span class="MenuOption Dangerous"><p id="LobbyDisconnect">Disconnect</p></span>
+        </div>
+        <div class="Hidden" id="ServerConnectScreen">
+            Waiting for connection
+            
+            <div class="ConnectStatus" id="ConnectionStatusUpdate">
+                Waiting for status update...
+            </div>
+        </div>
+        <div class="Hidden" id="GameplayHUD">
             <span class="PlayerDisplayColour" style="paddin-left: 5px; position: absolute; top: 5%; left: 5%; width: 20%; min-height: 100px;">
-            <p id="ScoreList">
-                <p>Player list unset...</p>
-            </p>
+            <p id="HUDPlayerScoreList"></p>
             </span>
         </div>
         <div class="Hidden" id="MatchEndScreen">
@@ -44,20 +68,22 @@
             
             <hr class="MenuLine"></hr>
             <h2 class="MenuTitle">Final scores</h2>
-            <p id="WinnerScreenScoreList"></p>
+            <p id="WinningScreenScoreboard"></p>
             
-            <span class="MenuOption"><p id="WinScreenMenuButton">Main menu</p></span>
-            <span class="MenuOption Dangerous"><p id="WinScreenQuitButton">Quit game</p></span>
+            <span class="MenuOption"><p id="WinningGameToLobby">Lobby</p></span>
+            <br></br>
+            <span class="MenuOption"><p id="WinningGameBackToMenuButton">Main menu</p></span>
+            <span class="MenuOption Dangerous"><p id="GameQuitFromWinScreen">Quit game</p></span>
             </div>
         </div>
-        <div class="Hidden" id="PauseMenuBody">
+        <div class="Hidden" id="PauseMenu">
             <span class="SpaceTaker"></span>
             <div class="MenuContent PauseContent">
-            <h1 class="MenuTitle">Paused</h1>
+            <h1 class="MenuTitle">(Potentially) Paused</h1>
             <hr class="MenuLine PauseLine"></hr>
-            <span class="MenuOption PauseOption"><p id="PauseMenuClose">Resume</p></span>
+            <span class="MenuOption PauseOption"><p id="ClosePauseMenu">Resume</p></span>
             <br></br>
-            <span class="MenuOption PauseOption"><p id="PauseScreenMenuButton">Main menu</p></span>
+            <span class="MenuOption PauseOption"><p id="PauseScreenBackToMenuButton">Main menu</p></span>
             <span class="MenuOption PauseOption Dangerous"><p id="PauseScreenQuitButton">Quit game</p></span>
             </div>
         </div>

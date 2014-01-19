@@ -55,17 +55,20 @@ DLLEXPORT int Leviathan::ExceptionBase::GetValue() const{
 	return ErrorValue;
 }
 // ------------------------------------ //
-//DLLEXPORT void Leviathan::ExceptionBase::PrintToLog(){
-//	if(ErrorValue != 0)
-//		return Logger::Get()->Error(L"[EXCEPTION] ExceptionBase \""+*Message+L"\" from "+*Source, ErrorValue);
-//	Logger::Get()->Error(L"[EXCEPTION] ExceptionBase \""+*Message+L"\" from "+*Source);
-//}
-// ------------------------------------ //
 DLLEXPORT EXCEPTIONTYPE Leviathan::ExceptionBase::GetType() const{
 	return type;
 }
 // ------------------------------------ //
+DLLEXPORT const char* Leviathan::ExceptionBase::what(){
 
+	ConvertUtility = Convert::WstringToString(*Message.get());
+
+	return ConvertUtility.c_str();
+}
+
+//DLLEXPORT const wchar_t* Leviathan::ExceptionBase::what() const{
+//	return Message->c_str();
+//}
 
 
 

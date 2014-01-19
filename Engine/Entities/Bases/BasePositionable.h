@@ -21,14 +21,14 @@ namespace Leviathan{
 		DLLEXPORT BasePositionable(const Float3 &pos, const Float4 &orientation);
 		DLLEXPORT virtual ~BasePositionable();
 
-		DLLEXPORT virtual void SetPos(const float &x, const float &y, const float &z);
+		DLLEXPORT virtual void SetPosComponents(const float &x, const float &y, const float &z);
 		DLLEXPORT virtual void SetPos(const Float3 &pos);
 		DLLEXPORT virtual void SetOrientation(const Float4 &quaternionrotation);
 
 		DLLEXPORT virtual Float4 GetOrientation();
 
 
-		DLLEXPORT virtual void GetPos(float &outx, float &outy, float &outz);
+		DLLEXPORT virtual void GetPosElements(float &outx, float &outy, float &outz);
 		DLLEXPORT virtual Float3 GetPos();
 		DLLEXPORT virtual float GetXPos();
 		DLLEXPORT virtual float GetYPos();

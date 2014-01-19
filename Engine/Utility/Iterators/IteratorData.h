@@ -51,5 +51,13 @@ namespace Leviathan{
 		bool SeparatorFound : 1;
 	};
 
+	class IteratorCharacterData : public Object{
+	public:
+		IteratorCharacterData(wchar_t chartouse) : CharacterToUse(chartouse){
+		}
+
+		wchar_t CharacterToUse;
+	};
+
 }
 #endif

@@ -9,17 +9,18 @@
 #include "NetworkHandler.h"
 #include "Exceptions/ExceptionInvalidArgument.h"
 #include "RemoteConsole.h"
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(shared_ptr<wstring> hostname) : HostName(hostname), AddressGot(false), LastUsedID(-1), 
+DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const wstring &hostname) : HostName(hostname), AddressGot(false), LastUsedID(-1), 
 	LastSentConfirmID(-1), MaxAckReduntancy(1), MyLastSentReceived(-1), LastReceivedPacketTime(0), RestrictType(CONNECTION_RESTRICTION_NONE)
 {
 	// We need to split the port number from the address //
-	WstringIterator itr(hostname.get(), false);
+	WstringIterator itr(hostname);
 
 	auto result = itr.GetUntilNextCharacterOrAll(L':');
 
-	HostName = shared_ptr<wstring>(result.release());
+	HostName = *result;
 
 	// We should be fine not skipping a letter //
 	result = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
@@ -27,7 +28,7 @@ DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(shared_ptr<wstring> hostname
 	TargetPortNumber = Convert::WstringToInt(*result.get());
 }
 
-DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const sf::IpAddress &targetaddress, USHORT port) : HostName(nullptr), AddressGot(true), 
+DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const sf::IpAddress &targetaddress, USHORT port) : HostName(), AddressGot(true), 
 	TargetPortNumber(port), TargetHost(targetaddress), LastUsedID(-1), LastSentConfirmID(-1), MaxAckReduntancy(1), MyLastSentReceived(-1),
 	LastReceivedPacketTime(0), RestrictType(CONNECTION_RESTRICTION_NONE)
 {
@@ -69,8 +70,16 @@ DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
 	ObjectLock guard(*this);
 	// This might do something //
 	if(!AddressGot){
-		TargetHost = sf::IpAddress(Convert::WstringToString(*HostName.get()));
+		TargetHost = sf::IpAddress(Convert::WstringToString(HostName));
 	}
+
+	// We fail if we got an invalid address //
+	if(TargetHost == sf::IpAddress::None){
+
+		Logger::Get()->Error(L"ConnectionInfo: Init: couldn't translate host name to a real address, host: "+HostName);
+		return false;
+	}
+
 	// Register us //
 	NetworkHandler::Get()->_RegisterConnectionInfo(this);
 
@@ -81,15 +90,17 @@ DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
 }
 
 DLLEXPORT void Leviathan::ConnectionInfo::Release(){
-	ObjectLock guard(*this);
+	{
+		ObjectLock guard(*this);
+
+		Logger::Get()->Info(L"ConnectionInfo: disconnecting from "+Convert::StringToWstring(TargetHost.toString())+L" on port "
+			+Convert::ToWstring(TargetPortNumber));
+
+		// Send a close packet //
+		SendCloseConnectionPacket(guard);
+	}
 	// Remove us from the queue //
 	NetworkHandler::Get()->_UnregisterConnectionInfo(this);
-
-	Logger::Get()->Info(L"ConnectionInfo: disconnecting from "+Convert::StringToWstring(TargetHost.toString())+L" on port "
-		+Convert::ToWstring(TargetPortNumber));
-
-	// Send a close packet //
-	SendCloseConnectionPacket(guard);
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<NetworkResponse> Leviathan::ConnectionInfo::SendRequestAndBlockUntilDone(shared_ptr<NetworkRequest> request, int maxtries /*= 2*/){
@@ -397,7 +408,7 @@ movepacketsendattemptonexttry:
 	}
 
 
-	// TODO: send keep alive packet if it has been a while //
+	// Send keep alive packet if it has been a while //
 	if(timems > LastSentPacketTime+KEEPALIVE_TIME){
 		// Send a keep alive packet //
 		Logger::Get()->Info(L"ConnectionInfo: sending keepalive packet (because"+Convert::ToWstring(timems-LastSentPacketTime)+L" since last sent has elapsed) to "
@@ -488,6 +499,8 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 				if(RemoteConsole::Get()->CanOpenNewConnection(this, request)){
 					// Successfully opened, connection should now be safe as a general purpose connection //
 					RestrictType = CONNECTION_RESTRICTION_NONE;
+					goto connectioninfoafterprocesslabel;
+
 				} else {
 					// We want to close //
 					Logger::Get()->Error(L"ConnectionInfo: received a non-valid packet to receive remote console connection socket, "
@@ -556,6 +569,10 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 			NetworkHandler::GetInterface()->HandleResponseOnlyPacket(response, this, ShouldNotBeMarkedAsReceived);
 		}
 	}
+
+
+connectioninfoafterprocesslabel:
+
 
 	{
 		ObjectLock guard(*this);

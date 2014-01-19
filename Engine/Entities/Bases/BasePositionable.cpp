@@ -35,7 +35,7 @@ Float4 BasePositionable::GetOrientation(){
 	return QuatRotation;
 }
 // ------------------------------------ //
-void BasePositionable::GetPos(float &outx, float &outy, float &outz){
+void BasePositionable::GetPosElements(float &outx, float &outy, float &outz){
 	outx = Position.X;
 	outy = Position.Y;
 	outz = Position.Z;
@@ -56,7 +56,7 @@ float BasePositionable::GetZPos(){
 	return Position.Z;
 }
 
-DLLEXPORT void Leviathan::BasePositionable::SetPos(const float &x, const float &y, const float &z){
+DLLEXPORT void Leviathan::BasePositionable::SetPosComponents(const float &x, const float &y, const float &z){
 	Position.X = x;
 	Position.Y = y;
 	Position.Z = z;

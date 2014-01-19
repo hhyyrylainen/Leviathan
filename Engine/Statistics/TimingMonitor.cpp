@@ -3,6 +3,10 @@
 #ifndef LEVIATHAN_TIMINGMONITOR
 #include "TimingMonitor.h"
 #endif
+#ifndef LEVIATHAN_DEFINE
+#include "Define.h"
+#endif
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 void Leviathan::TimingMonitor::StartTiming(const wstring& name, int style /*= TIMINGMONITOR_STYLE_RESULT_DEFAULT*/){

@@ -1,9 +1,7 @@
 #ifndef LEVIATHAN_TIMINGMONITOR
 #define LEVIATHAN_TIMINGMONITOR
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
+// Reduce bloat in precompiled header
 // ------------------------------------ //
 // ---- includes ---- //
 
@@ -37,9 +35,7 @@ namespace Leviathan{
 	};
 
 
-
-	// uninstantiable class aka "static" class //
-	class TimingMonitor /*: public Object*/{
+	class TimingMonitor{
 	public:
 		DLLEXPORT static void StartTiming(const wstring& name, int style = TIMINGMONITOR_STYLE_RESULT_DEFAULT);
 		DLLEXPORT static int GetCurrentElapsed(const wstring& name);

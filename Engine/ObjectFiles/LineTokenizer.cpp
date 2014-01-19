@@ -3,6 +3,7 @@
 #ifndef LEVIATHAN_LINETOKENIZER
 #include "LineTokenizer.h"
 #endif
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT int Leviathan::LineTokeNizer::TokeNizeLine(const wstring& str, vector<wstring*> &result){

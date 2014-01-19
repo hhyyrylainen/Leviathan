@@ -21,7 +21,7 @@ namespace Leviathan{ namespace Entity{
 		// NOTE: important to set usestreaming for long files to not freeze the program //
 		DLLEXPORT void SetFileToPlay(const wstring &file, bool usestreaming = false);
 
-		// TODO: implement stream playing //
+		// \todo implement stream playing //
 
 		// Audio controls //
 		DLLEXPORT void Stop();

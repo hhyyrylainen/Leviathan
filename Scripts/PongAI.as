@@ -55,13 +55,13 @@ class AIDataCache{
     // ------------------ The main AI think functions ------------------ //  
     void RunAINormal(int mspassed){
         
-        Prop@ ballptr = GetPongGame().GetBall();
+        Prop@ ballptr = GetPongBase().GetBall();
         Float3 ballvelocity = ballptr.GetVelocity();
         Float3 ballpos = ballptr.GetPosition()+(ballvelocity.Normalize()*1.1f);
         Float3 endpos = ballpos+(ballvelocity*10.f);
         
         // User raycasting to detect what the ball is going to hit //
-        RayCastHitEntity@ hit = GetPongGame().GetGameWorld().CastRayGetFirstHit(ballpos, endpos);
+        RayCastHitEntity@ hit = GetPongBase().GetGameWorld().CastRayGetFirstHit(ballpos, endpos);
         
         Float3 hitpos = hit.GetPosition();
         
@@ -106,7 +106,7 @@ class AIDataCache{
             TargetPercentage = disttostart/(disttostart+disttoend);
         } else {
             // Set to idle if we have hit the ball (or no one else has) //
-            int lasthitid = GetPongGame().GetLastHitPlayer();
+            int lasthitid = GetPongBase().GetLastHitPlayer();
             
             if(lasthitid == -1 || AISlot.DoesPlayerIDMatchThisOrParent(lasthitid)){
                 AiState = AISTATE_IDLING;
@@ -129,7 +129,7 @@ class AIDataCache{
         
         // Get the ball location along our axis and set our progress //
         
-        Prop@ ballptr = GetPongGame().GetBall();
+        Prop@ ballptr = GetPongBase().GetBall();
         Float3 ballpos = ballptr.GetPosition();
         
         float curprogress = AISlot.GetTrackProgress();
@@ -158,13 +158,13 @@ class AIDataCache{
     
     void RunAICombined(int mspassed){
         
-        Prop@ ballptr = GetPongGame().GetBall();
+        Prop@ ballptr = GetPongBase().GetBall();
         Float3 ballvelocity = ballptr.GetVelocity();
         Float3 ballpos = ballptr.GetPosition()+(ballvelocity.Normalize()*1.1f);
         Float3 endpos = ballpos+(ballvelocity*10.f);
         
         // User raycasting to detect what the ball is going to hit //
-        RayCastHitEntity@ hit = GetPongGame().GetGameWorld().CastRayGetFirstHit(ballpos, endpos);
+        RayCastHitEntity@ hit = GetPongBase().GetGameWorld().CastRayGetFirstHit(ballpos, endpos);
         
         Float3 hitpos = hit.GetPosition();
         
@@ -221,7 +221,7 @@ class AIDataCache{
         if(AiState == AISTATE_IDLING){
             // Get the ball location along our axis and set our progress //
             
-            Prop@ ballptr = GetPongGame().GetBall();
+            Prop@ ballptr = GetPongBase().GetBall();
             Float3 ballpos = ballptr.GetPosition();
             
             float curprogress = AISlot.GetTrackProgress();

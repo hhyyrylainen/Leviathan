@@ -1,5 +1,6 @@
-#include "PongServerIncludes.h"
+#include "../PongCommon/PongIncludes.h"
 #include "PongServer.h"
+#include "resource.h"
 #include "PongServerNetworking.h"
 
 using namespace Pong;
@@ -14,7 +15,7 @@ using namespace Pong;
 #define PROGRAMKEYCONFIGURATION			L""
 #define PROGRAMCHECKCONFIGFUNCNAME		PongServer::CheckGameConfigurationVariables
 #define PROGRAMCHECKKEYCONFIGFUNCNAME	PongServer::CheckGameKeyConfigVariables
-#define PROGRAMMASTERSERVERINFO			MasterServerInformation(L"PongMasters.txt", L"Pong_" GAME_VERSIONS, L"http://boostslair.com/", L"/Pong/MastersList.php", L"PongCrecentials.txt", false)
+#define PROGRAMMASTERSERVERINFO			MasterServerInformation(L"PongServer.txt", L"Pong_" GAME_VERSIONS, L"http://boostslair.com/", L"/Pong/MastersList.php", L"PongCrecentials.txt", false)
 #define WINDOWTITLEGENFUNCTION			PongServer::GenerateWindowTitle()
 
 #define USERREADABLEIDENTIFICATION		L"Pong server version " GAME_VERSIONS

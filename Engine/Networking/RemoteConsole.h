@@ -14,8 +14,10 @@ namespace Leviathan{
 
 	class RemoteConsoleSession{
 	public:
-		RemoteConsoleSession(const wstring &name, ConnectionInfo* connection, int token);
-		
+		DLLEXPORT RemoteConsoleSession(const wstring &name, ConnectionInfo* connection, int token);
+		DLLEXPORT ~RemoteConsoleSession();
+
+		DLLEXPORT ConnectionInfo* GetConnection();
 
 
 	private:
@@ -57,12 +59,19 @@ namespace Leviathan{
 		DLLEXPORT void HandleRemoteConsoleResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection, shared_ptr<NetworkRequest> potentialrequest);
 
 		//! Does everything needed to allow the client on the connection to connect to us
-		DLLEXPORT void OfferConnectionTo(const sf::IpAddress &targetip, USHORT port, const wstring &connectionname);
+		DLLEXPORT void OfferConnectionTo(ConnectionInfo* connectiontouse, const wstring &connectionname, int token);
 
 		//! \brief Returns true if connections are marked as awaiting
 		//!
 		//! Connections are marked as expected when the ExpectNewConnection function is called
 		DLLEXPORT bool IsAwaitingConnections();
+
+
+		//! \brief Sets the remote console to close the game if there are no connections
+		//!
+		//! \see CloseIfNoRemoteConsole
+		DLLEXPORT void SetCloseIfNoRemoteConsole(bool state);
+
 
 		DLLEXPORT bool CanOpenNewConnection(ConnectionInfo* connection, shared_ptr<NetworkRequest> request);
 
@@ -71,7 +80,7 @@ namespace Leviathan{
 
 		DLLEXPORT static RemoteConsole* Get();
 
-		//! Do not actually call this. TODO: create BaseNotifiable that is separate from BaseObject
+		//! Do not actually call this. \todo create BaseNotifiable that is separate from BaseObject
 		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
 	private:
@@ -86,6 +95,11 @@ namespace Leviathan{
 
 
 		std::vector<shared_ptr<RemoteConsoleExpect>> AwaitingConnections;
+
+		// Special command variables //
+		//! Sends a close signal to the application if has no AwaitingConnections or RemoteConsoleConnections
+		bool CloseIfNoRemoteConsole;
+
 
 		static RemoteConsole* staticinstance;
 	};

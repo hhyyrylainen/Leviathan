@@ -8,7 +8,6 @@
 // ---- includes ---- //
 #include "boost/thread/lockable_adapter.hpp"
 #include "boost/thread/recursive_mutex.hpp"
-#include "Exceptions/ExceptionInvalidAccess.h"
 
 namespace Leviathan{
 
@@ -45,11 +44,7 @@ namespace Leviathan{
 		DLLEXPORT static IDFactory* Get();
 
 	private:
-		FORCE_INLINE void VerifyLock(boost::strict_lock<IDFactory> &guard) THROWS{
-			// ensure that lock is for this //
-			if(!guard.owns_lock(this))
-				throw ExceptionInvalidAccess(L"wrong lock owner", 0, __WFUNCTION__, L"lock", L"mismatching lock and object");
-		}
+		void VerifyLock(boost::strict_lock<IDFactory> &guard) THROWS;
 		// ------------------------------------ //
 		int SystemID;
 		int GlobalID;

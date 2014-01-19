@@ -3,7 +3,7 @@
 #ifndef PONG_ARENA
 #include "Arena.h"
 #endif
-#include "PongGame.h"
+#include "CommonPong.h"
 #include "Entities/Objects/Brush.h"
 #include "Entities/Objects/Prop.h"
 #include "Entities/Objects/TrackEntityController.h"
@@ -18,7 +18,7 @@ Pong::Arena::~Arena(){
 
 }
 // ------------------------------------ //
-bool Pong::Arena::GenerateArena(PongGame* game, std::vector<PlayerSlot*> &players, int plycount, int maximumsplit, bool clearfirst /*= true*/){
+bool Pong::Arena::GenerateArena(BasePongParts* game, std::vector<PlayerSlot*> &players, int plycount, int maximumsplit, bool clearfirst /*= true*/){
 	// check sanity of values //
 	QUICKTIME_THISSCOPE;
 
@@ -110,13 +110,13 @@ newtonmaterialfetchstartlabel:
 	Leviathan::Entity::Brush* castedbottombrush;
 	BottomBrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), materialbase, Float3(width, bottomthickness, height), 0.f,
 		&castedbottombrush));
-	castedbottombrush->SetPos(0.f, -bottomthickness/2.f, 0.f);
+	castedbottombrush->SetPosComponents(0.f, -bottomthickness/2.f, 0.f);
 	castedbottombrush->SetPhysicalMaterialID(ArenaBaseID);
 
 	// Arena ceiling that keeps the ball in //
 	auto topbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), "", Float3(width, bottomthickness, height), 0.f,
 		&castedbottombrush));
-	castedbottombrush->SetPos(0.f, paddleheight+bottomthickness/2.f+BASE_ARENASCALE/2.f, 0.f);
+	castedbottombrush->SetPosComponents(0.f, paddleheight+bottomthickness/2.f+BASE_ARENASCALE/2.f, 0.f);
 	castedbottombrush->SetPhysicalMaterialID(ArenaBaseID);
 	castedbottombrush->SetHiddenState(true);
 
@@ -126,66 +126,66 @@ newtonmaterialfetchstartlabel:
 	Leviathan::Entity::Brush* tmp;
 	auto tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
 		0.f, &tmp));
-	tmp->SetPos(-width/2.f+sidexsize/2.f, mheight/2.f, -height/2.f+sideysize/2.f);
+	tmp->SetPosComponents(-width/2.f+sidexsize/2.f, mheight/2.f, -height/2.f+sideysize/2.f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
-	tmp->SetPos(-width/2.f+sidexsize*1.5f, sideheight/2.f, -height/2.f+sideysize/2.f);
+	tmp->SetPosComponents(-width/2.f+sidexsize*1.5f, sideheight/2.f, -height/2.f+sideysize/2.f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize),
 		0.f, &tmp));
-	tmp->SetPos(-width/2.f+sidexsize/2.f, sideheight/2.f, -height/2.f+sideysize*1.5f);
+	tmp->SetPosComponents(-width/2.f+sidexsize/2.f, sideheight/2.f, -height/2.f+sideysize*1.5f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	// top right //
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
 		0.f, &tmp));
-	tmp->SetPos(width/2.f-sidexsize/2.f, mheight/2.f, -height/2.f+sideysize/2.f);
+	tmp->SetPosComponents(width/2.f-sidexsize/2.f, mheight/2.f, -height/2.f+sideysize/2.f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
-	tmp->SetPos(width/2.f-sidexsize*1.5f, sideheight/2.f, -height/2.f+sideysize/2.f);
+	tmp->SetPosComponents(width/2.f-sidexsize*1.5f, sideheight/2.f, -height/2.f+sideysize/2.f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
-	tmp->SetPos(width/2.f-sidexsize/2.f, sideheight/2.f, -height/2.f+sideysize*1.5f);
+	tmp->SetPosComponents(width/2.f-sidexsize/2.f, sideheight/2.f, -height/2.f+sideysize*1.5f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 
 	// bottom left //
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
 		0.f, &tmp));
-	tmp->SetPos(-width/2.f+sidexsize/2.f, mheight/2.f, height/2.f-sideysize/2.f);
+	tmp->SetPosComponents(-width/2.f+sidexsize/2.f, mheight/2.f, height/2.f-sideysize/2.f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
-	tmp->SetPos(-width/2.f+sidexsize*1.5f, sideheight/2.f, height/2.f-sideysize/2.f);
+	tmp->SetPosComponents(-width/2.f+sidexsize*1.5f, sideheight/2.f, height/2.f-sideysize/2.f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
-	tmp->SetPos(-width/2.f+sidexsize/2.f, sideheight/2.f, height/2.f-sideysize*1.5f);
+	tmp->SetPosComponents(-width/2.f+sidexsize/2.f, sideheight/2.f, height/2.f-sideysize*1.5f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	// bottom right //
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
 		0.f, &tmp));
-	tmp->SetPos(width/2.f-sidexsize/2.f, mheight/2.f, height/2.f-sideysize/2.f);
+	tmp->SetPosComponents(width/2.f-sidexsize/2.f, mheight/2.f, height/2.f-sideysize/2.f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
-	tmp->SetPos(width/2.f-sidexsize*1.5f, sideheight/2.f, height/2.f-sideysize/2.f);
+	tmp->SetPosComponents(width/2.f-sidexsize*1.5f, sideheight/2.f, height/2.f-sideysize/2.f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
 		0.f, &tmp));
-	tmp->SetPos(width/2.f-sidexsize/2.f, sideheight/2.f, height/2.f-sideysize*1.5f);
+	tmp->SetPosComponents(width/2.f-sidexsize/2.f, sideheight/2.f, height/2.f-sideysize*1.5f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	// fill empty paddle spaces //
@@ -203,7 +203,7 @@ newtonmaterialfetchstartlabel:
 					// fill right with wall //
 					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
 						Float3(sidexsize, sideheight/2, sideysize*16.f), 0.f, &tmp));
-					tmp->SetPos(width/2.f-sidexsize/2.f, sideheight/4.f, 0);
+					tmp->SetPosComponents(width/2.f-sidexsize/2.f, sideheight/4.f, 0);
 					tmp->SetPhysicalMaterialID(ArenaMatID);
 				}
 				break;
@@ -212,7 +212,7 @@ newtonmaterialfetchstartlabel:
 					// fill bottom with wall //
 					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
 						Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, &tmp));
-					tmp->SetPos(0, sideheight/4.f, height/2.f-sideysize/2.f);
+					tmp->SetPosComponents(0, sideheight/4.f, height/2.f-sideysize/2.f);
 					tmp->SetPhysicalMaterialID(ArenaMatID);
 				}
 				break;
@@ -221,7 +221,7 @@ newtonmaterialfetchstartlabel:
 					// fill left with wall //
 					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
 						Float3(sidexsize, sideheight/2, sideysize*16.f), 0.f, &tmp));
-					tmp->SetPos(-width/2.f+sidexsize/2.f, sideheight/4.f, 0);
+					tmp->SetPosComponents(-width/2.f+sidexsize/2.f, sideheight/4.f, 0);
 					tmp->SetPhysicalMaterialID(ArenaMatID);
 				}
 				break;
@@ -230,7 +230,7 @@ newtonmaterialfetchstartlabel:
 					// fill top with wall //
 					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
 						Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, &tmp));
-					tmp->SetPos(0, sideheight/4.f, -height/2.f+sideysize/2.f);
+					tmp->SetPosComponents(0, sideheight/4.f, -height/2.f+sideysize/2.f);
 					tmp->SetPhysicalMaterialID(ArenaMatID);
 				}
 				break;
@@ -270,10 +270,10 @@ addplayerpaddlelabel:
 			horiadjust = secondary ? 0: paddlethickness;
 
 		switch(i){
-		case 0: tmp->SetPos(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, 0); break;
-		case 1: tmp->SetPos(0, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust); break;
-		case 2: tmp->SetPos(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, 0);break;
-		case 3: tmp->SetPos(0, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust); break;
+		case 0: tmp->SetPosComponents(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, 0); break;
+		case 1: tmp->SetPosComponents(0, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust); break;
+		case 2: tmp->SetPosComponents(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, 0);break;
+		case 3: tmp->SetPosComponents(0, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust); break;
 		}
 		tmp->SetPhysicalMaterialID(PaddleID);
 
@@ -341,10 +341,10 @@ addplayerpaddlelabel:
 		tmp->SetHiddenState(true);
 		
 		switch(i){
-		case 0: tmp->SetPos(width/2.f+paddlethickness/2.f, sideheight/2.f, 0); break;
-		case 1: tmp->SetPos(0, sideheight/2.f, width/2.f+paddlethickness/2.f); break;
-		case 2: tmp->SetPos(-width/2.f-paddlethickness/2.f, sideheight/2.f, 0);break;
-		case 3: tmp->SetPos(0, sideheight/2.f, -width/2.f-paddlethickness/2.f); break;
+		case 0: tmp->SetPosComponents(width/2.f+paddlethickness/2.f, sideheight/2.f, 0); break;
+		case 1: tmp->SetPosComponents(0, sideheight/2.f, width/2.f+paddlethickness/2.f); break;
+		case 2: tmp->SetPosComponents(-width/2.f-paddlethickness/2.f, sideheight/2.f, 0);break;
+		case 3: tmp->SetPosComponents(0, sideheight/2.f, -width/2.f-paddlethickness/2.f); break;
 		}
 
 		// Set to slot //
@@ -395,7 +395,7 @@ void Pong::Arena::ServeBall(){
 	// Add some randomness //
 	int count = Leviathan::Random::Get()->GetNumber(0, 15);
 
-	PongGame* game = PongGame::Get();
+	BasePongParts* game = BasePongParts::Get();
 
 	while(count > -1){
 

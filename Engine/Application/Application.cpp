@@ -18,6 +18,10 @@ DLLEXPORT Leviathan::LeviathanApplication::~LeviathanApplication(){
 	Curapp = NULL;
 }
 
+DLLEXPORT LeviathanApplication* Leviathan::LeviathanApplication::GetApp(){
+	return Curapp;
+}
+
 LeviathanApplication* LeviathanApplication::Curapp = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration){

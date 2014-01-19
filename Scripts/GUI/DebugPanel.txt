@@ -55,7 +55,7 @@ objects {
                 [@Listener="OnListenUpdate"]
                 int OnValueUpdated(BaseGuiObject@ Instance, Event@ event){
                     // get first updated value //
-                    int time = Instance.GetAndPopFirstUpdated().ConvertAndReturnInt();
+                    int time = Instance.GetAndPopFirstUpdated();
                     
                     string code = time;
                     
@@ -76,7 +76,7 @@ objects {
                 [@Listener="OnListenUpdate"]
                 int OnValueUpdated(BaseGuiObject@ Instance, Event@ event){
                     // get first updated value //
-                    int time = Instance.GetAndPopFirstUpdated().ConvertAndReturnInt();
+                    int time = Instance.GetAndPopFirstUpdated();
                     
                     string code = time;
                     
@@ -97,7 +97,7 @@ objects {
                 [@Listener="OnListenUpdate"]
                 int OnValueUpdated(BaseGuiObject@ Instance, Event@ event){
                     // get first updated value //
-                    int time = Instance.GetAndPopFirstUpdated().ConvertAndReturnInt();
+                    int time = Instance.GetAndPopFirstUpdated();
                     
                     string code = time;
                     
@@ -118,7 +118,7 @@ objects {
                 [@Listener="OnListenUpdate"]
                 int OnValueUpdated(BaseGuiObject@ Instance, Event@ event){
                     // get first updated value //
-                    int time = Instance.GetAndPopFirstUpdated().ConvertAndReturnInt();
+                    int time = Instance.GetAndPopFirstUpdated();
                     
                     string code = time;
                     

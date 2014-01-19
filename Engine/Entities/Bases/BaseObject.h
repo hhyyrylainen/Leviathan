@@ -83,6 +83,8 @@ namespace Leviathan{
 		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr) = 0;
 
 
+		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(BaseObject);
+
 	protected:
 		int ID;
 		// All objects should be in some world (even if not really in a world, then a dummy world) //

@@ -5,6 +5,7 @@
 #endif
 #include "OgreBillboardChain.h"
 #include "OgreRibbonTrail.h"
+#include "OgreSceneManager.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //

@@ -1,5 +1,6 @@
 #include "PongIncludes.h"
 #include "PongGame.h"
+#include "resource.h"
 #include "PongNetHandler.h"
 
 using namespace Pong;

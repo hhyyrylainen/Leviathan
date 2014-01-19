@@ -23,8 +23,8 @@ namespace Leviathan{
 		DLLEXPORT virtual ~SimpleDatabase();
 
 		// Rocket compatible get functions //
-		virtual void GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns);
-		virtual int GetNumRows(const Rocket::Core::String& table);
+		DLLEXPORT virtual void GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns);
+		DLLEXPORT virtual int GetNumRows(const Rocket::Core::String& table);
 
 		// Search functions //
 		DLLEXPORT shared_ptr<VariableBlock> GetValueOnRow(const wstring &table, const wstring &valuekeyname, const VariableBlock &wantedvalue, const wstring &wantedvaluekey);
@@ -32,6 +32,10 @@ namespace Leviathan{
 		// Managing functions //
 		DLLEXPORT bool AddValue(const wstring &database, shared_ptr<SimpleDatabaseRowObject> valuenamesandvalues);
 		DLLEXPORT bool RemoveValue(const wstring &database, int row);
+
+		// Loading and saving //
+		DLLEXPORT bool LoadFromFile(const wstring &file);
+		DLLEXPORT void SaveToFile(const wstring &file);
 
 	protected:
 		// TODO: implement file saving and loading

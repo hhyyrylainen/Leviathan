@@ -62,79 +62,64 @@
 #include <map>
 #include <list>
 #include <algorithm>
-
 #include <string>
-#include <time.h>
-#include <ctime>
-
 #include <vector>
-#include <list>
-#include <set>
-#include "boost/regex.hpp"
-
-#ifdef _WIN32
-#include <initguid.h>
-#include <shlobj.h>
-#else
-// For using SIGINT as breakpoints //
-	 #include <signal.h>
-#endif
-
-// common ogre files //
-#include <OgreCamera.h>
-#include <OgreEntity.h>
-#include <OgreLogManager.h>
-#include <OgreRoot.h>
-#include <OgreViewport.h>
-#include <OgreSceneManager.h>
-#include <OgreRenderWindow.h>
-#include <OgreConfigFile.h>
 
 // pragma include libraries
 
 #ifdef ENGINE_EXPORTS
 #ifdef _WIN32
-	#ifdef _DEBUG
-	// debug versions //
+#ifdef _DEBUG
+// debug versions //
 
-	#pragma comment(lib, "angelscriptd.lib")
-	#pragma comment(lib, "Leapd.lib")
-	
-	#pragma comment(lib, "RocketCore_d.lib")
-	#pragma comment(lib, "RocketControls_d.lib")
-	#pragma comment(lib, "RocketDebugger_d.lib")
-	#pragma comment(lib, "newton_d.lib")
+#pragma comment(lib, "angelscriptd.lib")
+#pragma comment(lib, "Leapd.lib")
 
-	#pragma comment(lib, "sfml-audio-d.lib")
-	#pragma comment(lib, "sfml-network-d.lib")
-    #pragma comment(lib, "sfml-system-d.lib")
-	#else
-	// release libraries
-	#pragma comment(lib, "angelscript.lib")
-	#pragma comment(lib, "Leap.lib")
+#pragma comment(lib, "RocketCore_d.lib")
+#pragma comment(lib, "RocketControls_d.lib")
+#pragma comment(lib, "RocketDebugger_d.lib")
+#pragma comment(lib, "newton_d.lib")
 
-	#pragma comment(lib, "RocketCore.lib")
-	#pragma comment(lib, "RocketControls.lib")
-	#pragma comment(lib, "RocketDebugger.lib")
-	#pragma comment(lib, "newton.lib")
+#pragma comment(lib, "sfml-audio-d.lib")
+#pragma comment(lib, "sfml-network-d.lib")
+#pragma comment(lib, "sfml-system-d.lib")
+#else
+// release libraries
+#pragma comment(lib, "angelscript.lib")
+#pragma comment(lib, "Leap.lib")
 
-	#pragma comment(lib, "sfml-audio.lib")
-	#pragma comment(lib, "sfml-network.lib")
-    #pragma comment(lib, "sfml-system.lib")
-	#endif
+#pragma comment(lib, "RocketCore.lib")
+#pragma comment(lib, "RocketControls.lib")
+#pragma comment(lib, "RocketDebugger.lib")
+#pragma comment(lib, "newton.lib")
+
+#pragma comment(lib, "sfml-audio.lib")
+#pragma comment(lib, "sfml-network.lib")
+#pragma comment(lib, "sfml-system.lib")
+#endif
 #endif
 #else
 // include engine lib
 #ifdef _WIN32
-	#ifdef _DEBUG
-	#pragma comment(lib, "EngineD.lib")
-	// Also link the Newton library because it seems to be needed for some things //
-	#pragma comment(lib, "newton_d.lib")
-	#else
-	#pragma comment(lib, "Engine.lib")
-	// Also link the Newton library because it seems to be needed for some things //
-	#pragma comment(lib, "newton.lib")
-	#endif
+#ifdef _DEBUG
+#pragma comment(lib, "EngineD.lib")
+// Also link the Newton library because it seems to be needed for some things //
+#pragma comment(lib, "newton_d.lib")
+// Leaving these out causes linker errors for some reason
+#pragma comment(lib, "RocketCore_d.lib")
+#pragma comment(lib, "RocketControls_d.lib")
+#pragma comment(lib, "RocketDebugger_d.lib")
+
+#else
+#pragma comment(lib, "Engine.lib")
+// Also link the Newton library because it seems to be needed for some things //
+#pragma comment(lib, "newton.lib")
+// Leaving these out causes linker errors for some reason
+#pragma comment(lib, "RocketCore.lib")
+#pragma comment(lib, "RocketControls.lib")
+#pragma comment(lib, "RocketDebugger.lib")
+
+#endif
 #endif
 
 #endif // ENGINE_EXPORTS
@@ -153,12 +138,9 @@ using namespace std;
 
 #define LEVIATHAN
 
-#define PI 3.14159265f
-#define DEGREES_TO_RADIANS  PI/180
-#define EPSILON		0.00000001f
-#define VAL_NOUPDATE	-1333678
-#define OBJECT_SMOOTH	4
-#define SHADER_DEBUG 1
+static const float PI = 3.14159265f;
+static const float DEGREES_TO_RADIANS = PI/180.f;
+static const float EPSILON = 0.00000001f;
 
 // Define common types that might be missing //
 #ifndef _WIN32
@@ -179,7 +161,6 @@ typedef unsigned short USHORT;
 #define __assume(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
 
 #define FORCE_INLINE __attribute__((always_inline))
-//#define FORCE_INLINE
 #define THROWS
 #else
 
@@ -187,25 +168,23 @@ typedef unsigned short USHORT;
 #define THROWS		throw(...)
 #endif
 
-
-#define LEVIATHAN_UNIT_SCALE		1000
 // throw on Error message //
 //#define THROW_ON_PRINTERROR
 
 #ifdef _DEBUG
-	#ifdef _MSC_VER
-		#define DEBUG_BREAK __debugbreak();
-	#else
-		#ifdef __GNUC__
-		// We are on linux (and this *should* work)
-			#define DEBUG_BREAK raise(SIGINT)
-		#else
-		#error "Debug break won't work"
-		#endif
-	#endif
+#ifdef _MSC_VER
+#define DEBUG_BREAK __debugbreak();
 #else
-	// Release mode
-	#define DEBUG_BREAK
+#ifdef __GNUC__
+// We are on linux (and this *should* work)
+#define DEBUG_BREAK raise(SIGINT)
+#else
+#error "Debug break won't work"
+#endif
+#endif
+#else
+// Release mode
+#define DEBUG_BREAK
 #endif //_DEBUG
 
 
@@ -271,7 +250,7 @@ typedef unsigned short USHORT;
 #define ARR_INDEX_CHECKINV( x, y) if(!(((x) >= 0 ) && ((size_t)(x) < (y))))
 #define VECTOR_LAST(x) (x).at((x).size()-1)
 #define VECTOR_LASTP(x) (x)->at((x)->size()-1)
-#define CLASS_ALLOC_CHECK(x) if(!(x)){Logger::Get()->Error(L"008");return false;}
+#define CLASS_ALLOC_CHECK(x) if(!(x)){Logger::Get()->Error(L"Out of memory error: " __WFUCNTION__);return false;}
 
 #define FORCE_POSITIVE(x) {if((x) < 0){ (x)*=-1; }}
 #define FORCE_POSITIVEF(x) {if((x) < 0){ (x)*=-1.0f; }}
@@ -297,10 +276,10 @@ typedef unsigned short USHORT;
 #define WSTRINGIFY(x) WIDEN(STRINGGIFY(x))
 
 #ifdef _MSC_VER
-	#define __WFUNCTION__ WIDEN(__FUNCTION__)
-    #define __WFILE__ WIDEN(__FILE__)
+#define __WFUNCTION__ WIDEN(__FUNCTION__)
+#define __WFILE__ WIDEN(__FILE__)
 #else
-	#define __WFUNCTION__ WSTRINGIFY(__FUNCTION__)
+#define __WFUNCTION__ WSTRINGIFY(__FUNCTION__)
 #define __WFILE__ WSTRINGIFY(__FILE__)
 #endif
 
@@ -308,10 +287,7 @@ typedef unsigned short USHORT;
 #define SSLINE(x) SSLINE2(x)
 #define __SLINE__ SSLINE(__LINE__)
 
-
 #define __SWLINE__ WSTRINGIFY(__SLINE__)
-
-
 
 #define __WDATE__ WSTRINGIFY(__DATE__)
 #define __WTIME__ WSTRINGIFY(__TIME__)
@@ -330,48 +306,17 @@ typedef unsigned short USHORT;
 #define QUICK_ERROR_MESSAGE DEBUG_BREAK;
 #endif
 
-
-namespace Leviathan{
-	
-
-	class Object;
-	
-
-	class EngineComponent;
-}
-
-//typedef std::vector vector;
-
-#include "Common/ErrorTypes.h"
-
 #include "Logger.h"
-
 #include "Common/Types.h"
-#include "Common/Misc.h"
-#include "Math/CommonMath.h"
 #include "Utility/Convert.h"
-
-#include "Handlers/IDFactory.h"
-// exceptions //
-#include "Exceptions/ExceptionBase.h"
-
 #include "Statistics/TimingMonitor.h"
-// speed up compile times with leap //
-#include "Leap.h"
-// OIS compile speed up //
-#include <OISMouse.h>
-#include <OISKeyboard.h>
-#include <OISJoyStick.h>
-#include <OISInputManager.h>
-
-// angelscript //
-// AngelAddons use std style names
-#define AS_USE_STLNAMES     1
-
-//#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
-#include "angelscript.h"
 
 // Undef stuff //
 #undef index
+
+// This is needed for compability reasons //
+// AngelAddons use std style names
+#define AS_USE_STLNAMES     1
+
 
 #endif

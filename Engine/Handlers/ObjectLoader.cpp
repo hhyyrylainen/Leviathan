@@ -11,6 +11,9 @@ using namespace Leviathan;
 #include "Entities/Objects/Prop.h"
 #include "Entities/Objects/TrackEntityController.h"
 #include "Entities/Objects/TrailEmitter.h"
+#include "OgreSceneManager.h"
+#include "OgreSceneNode.h"
+#include "OgreEntity.h"
 
 Leviathan::ObjectLoader::ObjectLoader(Engine* engine){
 	m_Engine = engine;

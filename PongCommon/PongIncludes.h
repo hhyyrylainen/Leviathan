@@ -2,7 +2,6 @@
 #define PONGINCLUDES
 
 #include "LeviathanMainDll.h"
-#include "resource.h"
 
 
 #define GAME_VERSION 0.1010

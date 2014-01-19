@@ -52,7 +52,7 @@ namespace Leviathan{
 			return *this;
 		}
 #else
-		// TODO: linux equivalent
+		// \todo linux equivalent
 #endif
 		DLLEXPORT AppDef& SetWindowDetails(const WindowDataDetails &det){
 

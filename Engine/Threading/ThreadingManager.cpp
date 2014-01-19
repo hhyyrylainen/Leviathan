@@ -3,6 +3,7 @@
 #ifndef LEVIATHAN_THREADINGMANAGER
 #include "ThreadingManager.h"
 #endif
+#include "OgreRoot.h"
 using namespace Leviathan;
 // ------------------------------------ //
 

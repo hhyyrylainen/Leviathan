@@ -1,30 +1,21 @@
+
 #ifndef LEVIATHAN_TYPES
 #define LEVIATHAN_TYPES
 // ----------------- //
-#ifndef LEVIATHAN_INCLUDE
-#include "Include.h"
-#endif
-#include "OgreVector3.h"
-#include "OgreQuaternion.h"
+// ------------------------------------ //
+
+// ------------------------------------ //
+// ---- includes ---- //
+#include "OGRE/OgreQuaternion.h"
+#include "OGRE/OgreColourValue.h"
+#include "OGRE/OgreVector3.h"
+#include "OGRE/OgreVector4.h"
+
+
 namespace Leviathan{
 
 
 #define NORMALIZATION_TOLERANCE	1e-6f
-
-
-	// a hacky combine class //
-	template<class Base, class Base2>
-	class CombinedClass : public Base, public Base2{
-	public:
-		DLLEXPORT void ThisIsCombinedClassType() const{
-			return;
-		}
-		DLLEXPORT const wstring& GetBaseClassNames() const{
-
-			//return wstring(Convert::StringToWstring(string(typeid(Base).name()+" , "+typeid(Base2).name())));
-			return L"";
-		}
-	};
 
 	// just a key index class //
 	class CharWithIndex{

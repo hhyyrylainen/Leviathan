@@ -51,33 +51,50 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 
 	shared_ptr<NamedVariableList> listenon;
 
+	wstring rocketobjectname;
+
 	// setup listeners //
 	for(size_t i = 0; i < dataforthis.Contents.size(); i++){
 		if(StringOperations::StringStartsWith(dataforthis.Contents[i]->Name, wstring(L"params"))){
 
-			wstring rocketobjectname;
+			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(dataforthis.Contents[i]->Variables, L"RocketID", rocketobjectname, L"", true,
+				L"BaseGuiObject: LoadFromFileStructure: ");
 
-			if(ObjectFileProcessor::LoadValueFromNamedVars<wstring>(dataforthis.Contents[i]->Variables, L"RocketID", rocketobjectname, L"", true,
-				L"BaseGuiObject: LoadFromFileStructure: "))
-			{
-				element = sheet->GetElementByID(Convert::WstringToString(rocketobjectname));
-				// set element id //
-				tmpptr->RocketObjectName = rocketobjectname;
-			}
 
 			listenon = dataforthis.Contents[i]->Variables.GetValueDirect(L"ListenOn");
 		}
 	}
+
+
+	if(rocketobjectname.size()){
+		element = sheet->GetElementByID(Convert::WstringToString(rocketobjectname));
+		// set element id //
+		tmpptr->RocketObjectName = rocketobjectname;
+	} else {
+		// Try with our name //
+		element = sheet->GetElementByID(Convert::WstringToString(tmpptr->Name));
+
+		if(element){
+#ifdef _DEBUG
+			//Logger::Get()->Info(L"BaseGuiObject: Linked to Rocket with object name");
+#endif // _DEBUG
+			tmpptr->RocketObjectName = tmpptr->Name;
+		} else {
+
+			element = NULL;
+		}
+	}
+
+
+
 	if(element){
 		tmpptr->Element = element;
-	}/* else {
-	 Logger::Get()->Warning(L"BaseGuiObject: LoadFromFileStructure: probably missing 'l params{' block in file, name: "+tmpptr->Name);
-	 }*/
+	}
+
 	// listening start //
 	if(listenon.get()){
 		tmpptr->StartMonitoring(listenon->GetValues());
 	}
-
 
 	if(tmpptr.get()){
 		tmpptr->_HookListeners();
@@ -153,7 +170,7 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 
 		} else {
 			// warn about this //
-			//Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: couldn't hook Rocket event "+Convert::StringToWstring(tohook.CString()));
+			Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: couldn't hook Rocket event "+Convert::StringToWstring(tohook.CString()));
 		}
 	}
 }
@@ -193,6 +210,7 @@ void Leviathan::Gui::BaseGuiObject::ProcessEvent(Rocket::Core::Event& receivedev
 
 	if(mod->DoesListenersContainSpecificListener(iter->second)){
 		// Call the script callback //
+		Logger::Get()->Info(L"BaseGuiObject: ProcessEvent: handling rocket event of type "+Convert::ToWstring(eventtype.CString())+L" on object "+Name);
 		// setup parameters //
 		vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
 			(new NamedVariableBlock(new VoidPtrBlock(&receivedevent), L"RocketEvent"));

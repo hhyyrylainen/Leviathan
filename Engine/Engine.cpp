@@ -10,6 +10,8 @@
 #include <io.h>
 #include <fcntl.h>
 #endif
+#include "Common/StringOperations.h"
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -87,7 +89,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 #ifdef _WIN32
 		WinAllocateConsole();
 #else
-		// TODO: linux console alternative detection method //
+		// \todo linux console alternative detection method //
 #endif
 
 		// Tell window title //
@@ -332,7 +334,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 
 		if(engine->NoGui){
 			// Set object loader to gui mode //
-			// TODO: do this
+			// \todo do this
 
 		}
 
@@ -437,11 +439,12 @@ void Leviathan::Engine::Release(){
 	// Let the game release it's resources //
 	Owner->EnginePreShutdown();
 
+	// Close remote console //
+	SAFE_DELETE(_RemoteConsole);
+
 	// Close all connections //
 	SAFE_RELEASEDEL(_NetworkHandler);
 
-	// Close remote console //
-	SAFE_DELETE(_RemoteConsole);
 
 	// Wait for tasks to finish //
 	_ThreadingManager->WaitForAllTasksToFinish();
@@ -656,6 +659,9 @@ void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
+
+	Logger::Get()->Info(L"Command line: "+commands);
+
 	ObjectLock guard(*this);
 	// Split all flags and check for some flags that might be set //
 	WstringIterator itr(commands);
@@ -665,7 +671,12 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 
 		if(*splitval == L"--nogui"){
 			NoGui = true;
+			Logger::Get()->Info(L"Engine starting in non-GUI mode");
 			continue;
+		}
+		if(*splitval == L"--nonothing"){
+			// Shouldn't try to open the console on windows //
+			DEBUG_BREAK;
 		}
 		// Add (if not processed already) //
 		PassedCommands.push_back(move(splitval));
@@ -674,6 +685,73 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 
 DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
 	ObjectLock guard(*this);
+
+	WstringIterator itr(NULL, false);
+
+	// Iterate over the commands and process them //
+	for(size_t i = 0; i < PassedCommands.size(); i++){
+		itr.ReInit(PassedCommands[i].get(), false);
+		// Skip the preceding '-'s //
+		itr.SkipCharacters(L'-');
+
+		// Get the command //
+		auto firstpart = itr.GetUntilNextCharacterOrAll(L':');
+
+		// Execute the wanted command //
+		if(StringOperations::CompareInsensitive<wstring>(*firstpart, L"RemoteConsole")){
+			
+			// Get the next command //
+			auto commandpart = itr.GetUntilNextCharacterOrAll(L':');
+
+			if(*commandpart == L"CloseIfNone"){
+				// Set the command //
+				RemoteConsole::Get()->SetCloseIfNoRemoteConsole(true);
+				Logger::Get()->Info(L"Engine will close when no active/waiting remote console sessions");
+
+			} else if(*commandpart == L"OpenTo"){
+				// Get the to part //
+				auto topart = itr.GetStringInQuotes(QUOTETYPE_BOTH);
+
+				int token = 0;
+
+				auto numberpart = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
+
+				if(numberpart->size() == 0){
+
+					Logger::Get()->Warning(L"Engine: ExecuteCommandLine: RemoteConsole: no token number provided");
+					continue;
+				}
+				// Convert to a real number. Maybe we could see if the token is complex enough here, but that isn't necessary //
+				token = Convert::WstringToInt(*numberpart);
+
+				if(token == 0){
+					// Invalid number? //
+					Logger::Get()->Warning(L"Engine: ExecuteCommandLine: RemoteConsole: couldn't parse token number, "+*numberpart);
+					continue;
+				}
+
+				// Create a connection //
+				shared_ptr<ConnectionInfo> tmpconnection = NetworkHandler::Get()->OpenConnectionTo(*topart);
+
+				// Tell remote console to open a command to it //
+				if(tmpconnection){
+
+					RemoteConsole::Get()->OfferConnectionTo(tmpconnection.get(), L"AutoOpen", token);
+
+				} else {
+					// Something funky happened... //
+					Logger::Get()->Warning(L"Engine: ExecuteCommandLine: RemoteConsole: couldn't open connection to "+*topart+L", couldn't resolve address");
+				}
+
+			} else {
+				// Unknown command //
+				Logger::Get()->Warning(L"Engine: ExecuteCommandLine: unknown RemoteConsole command: "+*commandpart+L", whole argument: "+
+					*PassedCommands[i]);
+			}
+		}
+
+	}
+
 
 	PassedCommands.clear();
 }

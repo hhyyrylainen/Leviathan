@@ -10,6 +10,9 @@
 #include "FileSystem.h"
 #include <boost/assign/list_of.hpp>
 #include "Engine.h"
+#include "OgreLogManager.h"
+#include "OgreMaterialManager.h"
+#include "OgreRoot.h"
 using namespace Leviathan;
 using namespace Rendering;
 // ------------------------------------ //
@@ -124,7 +127,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 		selectedrendersystem = RSystemList[0];
 	}
 
-	// TODO: add device selecting feature //
+	// \todo add device selecting feature //
 
 	Ogre::ConfigOptionMap& rconfig = selectedrendersystem->getConfigOptions();
 	if(rconfig.find("RTT Preferred Mode") != rconfig.end()){

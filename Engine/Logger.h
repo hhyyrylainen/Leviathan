@@ -1,12 +1,9 @@
 #ifndef	LEVIATHAN_LOGGER
 #define LEVIATHAN_LOGGER
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
+// To reduce bloat in precompiled header
 // ------------------------------------ //
 // ---- includes ---- //
-#include "boost/thread/thread.hpp"
 #include "boost/thread/lockable_adapter.hpp"
 #include "boost/thread/recursive_mutex.hpp"
 #include "boost/thread/strict_lock.hpp"

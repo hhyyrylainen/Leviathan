@@ -52,7 +52,7 @@ struct RocketOgre3DTexture
 			texture.setNull();
 
 			Ogre::TextureManager::getSingleton().remove(tmpptr);
-			// TODO: improve this speed? //
+			// \todo improve this speed? //
 			//Ogre::TextureManager::getSingleton().remove(texture->getName());
 		}
 	}

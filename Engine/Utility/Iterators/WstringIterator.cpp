@@ -215,6 +215,13 @@ DLLEXPORT void Leviathan::WstringIterator::SkipWhiteSpace(){
 	// iterate over the string skipping until hit something that doesn't need to be skipped //
 	StartIterating(SkipSomething, NULL, (int)UNNORMALCHARACTER_TYPE_LOWCODES);
 }
+
+DLLEXPORT void Leviathan::WstringIterator::SkipCharacters(wchar_t chartoskip){
+	IteratorCharacterData stufftoskip(chartoskip);
+
+	// iterate over the string skipping until hit something that doesn't need to be skipped //
+	StartIterating(SkipSomething, &stufftoskip, 0);
+}
 // ------------------------------------ //
 DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEnd(){
 	// just return the end of the string //
@@ -1042,6 +1049,16 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::SkipSomething(WstringIterator*
 	if(parameters & UNNORMALCHARACTER_TYPE_LOWCODES){
 		if(curchara <= 32)
 			return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+	}
+
+	if(notwanted){
+		// Should be a ptr to IteratorCharacterData
+		IteratorCharacterData* tmpptr = static_cast<IteratorCharacterData*>(notwanted);
+
+		if(curchara == tmpptr->CharacterToUse){
+			// We want to skip it //
+			return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+		}
 	}
 
 	// didn't match to be skipped characters //

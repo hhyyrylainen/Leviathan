@@ -8,6 +8,7 @@
 #include "Utility/Iterators/WstringIterator.h"
 #include "Exceptions/ExceptionInvalidType.h"
 #include "ObjectFiles/LineTokenizer.h"
+#include "../Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::NamedVariableList::NamedVariableList() : Datas(1), Name(L""){
@@ -52,7 +53,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 		throw ExceptionInvalidArgument(L"invalid data on line (invalid name)", name->size(), __WFUNCSIG__, L"line", line);
 	}
 
-	// TODO: verify that this will be destructed if an exception happens //
+	// \todo verify that this will be destructed if an exception happens //
 	Name = *name;
 
 	// skip whitespace //

@@ -4,6 +4,7 @@
 #include "PhysicalMaterial.h"
 #endif
 #include "PhysicalMaterialManager.h"
+#include "Handlers/IDFactory.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(const wstring &name) : Name(name), EngineID(IDFactory::GetID()){

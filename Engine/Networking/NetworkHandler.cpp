@@ -16,7 +16,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler) : AppType(ntype), 
-	CloseMasterServerConnection(false), StopGetResponsesThread(false)
+	CloseMasterServerConnection(false), StopGetResponsesThread(true)
 {
 	instance = this;
 	interfaceinstance = packethandler;
@@ -104,26 +104,27 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 
 DLLEXPORT void Leviathan::NetworkHandler::Release(){
 	ObjectLock guard(*this);
-	// Notify master server connection kill //
+
+	// Kill master server connection //
+	//MasterServerConnectionThread.join();
 	StopOwnUpdaterThread();
+	TempGetResponsesThread.join();
+
+	// Notify master server connection kill //
 	if(MasterServerConnection){
 
 		MasterServerConnection->Release();
 	}
+	// Close all connections //
 	for(size_t i = 0; i < AutoOpenedConnections.size(); i++){
 
 		AutoOpenedConnections[i]->Release();
 	}
 
-	// Close all connections //
 	MasterServerConnection.reset();
 	AutoOpenedConnections.clear();
 
 	_ReleaseSocket();
-
-	// Kill master server connection //
-	MasterServerConnectionThread.join();
-	TempGetResponsesThread.join();
 }
 
 void Leviathan::NetworkHandler::_ReleaseSocket(){
@@ -297,6 +298,9 @@ DLLEXPORT void Leviathan::NetworkHandler::StopOwnUpdaterThread(){
 
 DLLEXPORT void Leviathan::NetworkHandler::StartOwnUpdaterThread(){
 	ObjectLock guard(*this);
+	// Check if already running //
+	if(StopGetResponsesThread == false)
+		return;
 	StopGetResponsesThread = false;
 	// Start a thread for it //
 	TempGetResponsesThread = boost::thread(RunTemporaryUpdateConnections, this);
@@ -337,21 +341,38 @@ DLLEXPORT void Leviathan::NetworkHandler::SafelyCloseConnectionTo(ConnectionInfo
 DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(ObjectLock &guard){
 	VerifyLock(guard);
 
+	if(ConnectionsToUpdate.size() == 0 || ConnectionsToTerminate.size() == 0)
+		return;
+
 	// Go through the removed connection list and remove them //
 	for(size_t i = 0; i < ConnectionsToTerminate.size(); i++){
-
-		for(size_t a = 0; a < ConnectionsToUpdate.size(); i++){
-
-			if(ConnectionsToTerminate[i] == ConnectionsToUpdate[a]){
-				// Close it //
-				ConnectionsToUpdate[a]->Release();
-				ConnectionsToUpdate.erase(ConnectionsToUpdate.begin()+a);
-				break;
-			}
-		}
+		// Close it //
+		ConnectionsToTerminate[i]->Release();
+		// The connection will automatically remove itself from the vector //
 	}
+
 	// All are handled, clear them //
 	ConnectionsToTerminate.clear();
+}
+
+DLLEXPORT USHORT Leviathan::NetworkHandler::GetOurPort(){
+	ObjectLock guard(*this);
+	return _Socket.getLocalPort();
+}
+
+DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo(const wstring &targetaddress){
+	// Create object //
+	shared_ptr<ConnectionInfo> tmpconnection(new ConnectionInfo(targetaddress));
+
+	if(!tmpconnection || !tmpconnection->Init()){
+		// Failed //
+		return NULL;
+	}
+
+	// If succeeded add to the automatically managed connections //
+	AutoOpenedConnections.push_back(tmpconnection);
+
+	return tmpconnection;
 }
 // ------------------------------------ //
 void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar){
@@ -365,7 +386,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 
 		sf::Http httpserver(Convert::WstringToString(instance->StoredMasterServerInfo.MasterListFetchServer));
 
-		sf::Http::Response response = httpserver.sendRequest(request);
+		sf::Http::Response response = httpserver.sendRequest(request, sf::seconds(2.f));
 
 		if(response.getStatus() == sf::Http::Response::Ok){
 
@@ -457,7 +478,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 
 
 		// Try connection //
-		shared_ptr<ConnectionInfo> tmpinfo(new ConnectionInfo(tmpaddress));
+		shared_ptr<ConnectionInfo> tmpinfo(new ConnectionInfo(*tmpaddress));
 
 		if(!tmpinfo->Init()){
 
@@ -494,7 +515,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 
 		// Ensure data validness //
 
-		// TODO: verify that the data is sane //
+		// \todo verify that the data is sane //
 
 		{
 			// Set working server //

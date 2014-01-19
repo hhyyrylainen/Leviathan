@@ -11,6 +11,7 @@
 #include "Common/GraphicalInputEntity.h"
 #include "Application/AppDefine.h"
 #include "GUI/OverlayMaster.h"
+#include "OgreFrameListener.h"
 
 namespace Leviathan{
 	// forward declarations to avoid having tons of headers here that aren't necessary //

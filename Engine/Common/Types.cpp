@@ -3,6 +3,9 @@
 #ifndef LEVIATHAN_TYPES
 #include "Types.h"
 #endif
+#ifndef LEVIATHAN_DEFINE
+#include "Define.h"
+#endif
 using namespace Leviathan;
 // ------------------------------------ //
 // --- AllocatedBinaryBlock --- //
@@ -133,7 +136,6 @@ DLLEXPORT int Leviathan::Int3::AddAllTogether() const{
 }
 
 Leviathan::Int1::Int1(){
-	iVal = VAL_NOUPDATE;
 }
 
 Leviathan::Int1::Int1(int data){
@@ -143,10 +145,6 @@ Leviathan::Int1::Int1(int data){
 Leviathan::Int1 Leviathan::Int1::operator+(const Int1& val){
 	return Int1(val.GetIntValue());
 }
-
-//int Leviathan::Int1::operator[]() const{
-//	return iVal;
-//}
 
 Leviathan::Int1::operator int() const{
 	return iVal;

@@ -2,8 +2,9 @@
 
 
 # get all files in their groups
-file(GLOB PSourceFiles *.cpp)
-file(GLOB PHeaderFiles *.h) 
+file(GLOB PSourceFiles "*.cpp")
+file(GLOB PHeaderFiles "*.h") 
+file(GLOB Common "../PongCommon/*.h" "../PongCommon/*.cpp")
 
 
 # resource files
@@ -20,20 +21,22 @@ source_group("Source" FILES ${PSourceFiles})
 source_group("Header" FILES ${PHeaderFiles})
 source_group("resources" FILES ${PResourceFiles})
 source_group("Additional" FILES ${Additional})
+source_group("Common" FILES ${Common})
 
+include_directories("${PROJECT_SOURCE_DIR}/PongCommon")
 
 # all Pong files in one list
-set(PongFiles ${PSourceFiles} ${PHeaderFiles} ${PResourceFiles} ${Additional})
+set(PongFiles ${PSourceFiles} ${PHeaderFiles} ${PResourceFiles} ${Additional} ${Common})
 
 if(WIN32)
 # precompiled headers
 # remove from list before adding back
-file(GLOB PrecompiledHeaderName "PongIncludes.h")
-file(GLOB PrecompiledSourceName "PreCompiled.cpp")
-list(REMOVE_ITEM PongFiles ${PrecompiledSourceName})
+#file(GLOB PrecompiledHeaderName "../CommonPong/PongIncludes.h")
+#file(GLOB PrecompiledSourceName "PreCompiled.cpp")
+#list(REMOVE_ITEM PongFiles ${PrecompiledSourceName})
 
 # precompiled header
-ADD_MSVC_PRECOMPILED_HEADER("PongIncludes.h" ${PrecompiledSourceName} PongFiles)
+#ADD_MSVC_PRECOMPILED_HEADER("PongIncludes.h" ${PrecompiledSourceName} PongFiles)
 endif(WIN32)
 
 if(WIN32)

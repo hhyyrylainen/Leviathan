@@ -3,6 +3,7 @@
 #ifndef LEVIATHAN_ROCKETSYSINTERNALS
 #include "RocketSysInternals.h"
 #endif
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::RocketSysInternals::RocketSysInternals(){

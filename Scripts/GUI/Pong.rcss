@@ -57,6 +57,26 @@ div.MenuContent
     text-align: center;
 }
 
+div.ConnectStatus
+{
+    z-index: 2;
+    position: absolute;
+    margin: auto;
+    padding: 5px;
+    width: 80%;
+    max-width: 80%;
+    height: 30%;
+    max-height: 30%;
+    overflow: hidden;
+    margin-bottom: 10%;
+    
+
+    
+    text-align: center;
+    
+    background-color: #00000090;
+}
+
 .PlayerDisplayColour
 {
     background-color: #00000053;
@@ -213,8 +233,7 @@ scrollbarhorizontal
 body, div,
 h1, h2, h3, h4,
 h5, h6, p,
-hr, pre, datagrid,
-tabset tabs, tr
+hr, pre, datagrid, tr
 {
 	display: block;
 }
@@ -255,10 +274,41 @@ select, dataselect, datacombo
 	text-align: left;
 }
 
-tabset, tabs
+tabset
 {
 	display: block;
+    width: 90%;
+    margin-left-right: auto;
+    height: 60%;
+    margin-top: 2%;
+    margin-bottom: 3%;
 }
+
+tabset tabs
+{
+    display: block;
+    height: 20px;
+}
+
+tabset tab
+{
+    width: 50px;
+}
+
+tabset panels
+{
+	display: block;
+	height: 90%;
+    max-height: 90%;
+}
+
+tabset panels panel
+{
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
 
 input,
 select,

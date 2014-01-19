@@ -97,7 +97,7 @@ namespace Leviathan{
 			if(key != this->Character)
 				return false;
 			if(strict){
-				// TODO: this needs fixing
+				// \todo this needs fixing
 				DEBUG_BREAK;
 			} else {
 

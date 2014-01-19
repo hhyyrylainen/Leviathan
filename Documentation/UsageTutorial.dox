@@ -1,0 +1,31 @@
+/*! \page tutorials Tutorials index
+    \tableofcontents
+    \section gettingstartedsection Getting started
+    See first: \subpage prerequisites.
+    
+    Then you can move on to the tutorials.
+    \note It is recommended that you work through the tutorials in order.
+    
+    \subsection beginnertutorials Beginner tutorials
+    \subpage tutorial1
+    
+*/
+
+/*! \page tutorial1 Getting started tutorial
+  \tableofcontents
+  Leading text.
+  \section sec An example section
+  This page contains the subsections \ref subsection1 and \ref subsection2.
+  For more info see page \ref prerequisites.
+  \subsection subsection1 The first subsection
+  Text.
+  \subsection subsection2 The second subsection
+  More text.
+*/
+
+/*! \page prerequisites Prerequisites
+    
+    List of things needed to compile things...
+    
+    For a tutorial on what to do next see \ref tutorial1.
+*/

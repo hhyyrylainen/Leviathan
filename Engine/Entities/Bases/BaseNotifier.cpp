@@ -38,7 +38,7 @@ DLLEXPORT bool Leviathan::BaseNotifier::ConnectToNotifiable(BaseNotifiable* chil
 	// Finally call the callback //
 	_OnNotifiableConnected(child);
 
-	// TODO: return false and skip adding if already added //
+	// \todo return false and skip adding if already added //
 	return true;
 }
 

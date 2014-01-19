@@ -3,6 +3,7 @@
 #ifndef LEVIATHAN_COMPLAINONCE
 #include "ComplainOnce.h"
 #endif
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 // singleton class private constructors //

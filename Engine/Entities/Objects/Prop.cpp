@@ -6,6 +6,9 @@
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "OgreMatrix4.h"
 #include <Newton.h>
+#include "OgreSceneManager.h"
+#include "OgreSceneNode.h"
+#include "OgreEntity.h"
 using namespace Leviathan;
 using namespace Leviathan::Entity;
 // ------------------------------------ //

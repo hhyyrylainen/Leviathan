@@ -22,7 +22,8 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleOpenRequestData
 }
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
-	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/)
+	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE), 
+	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
 {
 
 }
@@ -99,6 +100,12 @@ DLLEXPORT NETWORKREQUESTTYPE Leviathan::NetworkRequest::GetType(){
 DLLEXPORT RemoteConsoleOpenRequestDataTo* Leviathan::NetworkRequest::GetRemoteConsoleOpenToDataIfPossible(){
 	if(TypeOfRequest == NETWORKREQUESTTYPE_OPENREMOTECONSOLETO)
 		return static_cast<RemoteConsoleOpenRequestDataTo*>(RequestData);
+	return NULL;
+}
+
+DLLEXPORT RemoteConsoleAccessRequestData* Leviathan::NetworkRequest::GetRemoteConsoleAccessRequestDataIfPossible(){
+	if(TypeOfRequest == NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE)
+		return static_cast<RemoteConsoleAccessRequestData*>(RequestData);
 	return NULL;
 }
 // ------------------ RemoteConsoleOpenRequestDataTo ------------------ //

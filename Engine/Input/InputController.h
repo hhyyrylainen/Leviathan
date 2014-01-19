@@ -6,6 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "OISKeyboard.h"
 
 
 namespace Leviathan{

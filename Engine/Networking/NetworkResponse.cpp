@@ -29,7 +29,7 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
 
 	// Process based on the type //
 	switch(ResponseType){
-	case NETWORKRESPONSETYPE_NONE: case NETWORKRESPONSETYPE_KEEPALIVE: case NETWORKRESPONSETYPE_CLOSECONNECTION:
+	case NETWORKRESPONSETYPE_NONE: case NETWORKRESPONSETYPE_KEEPALIVE: case NETWORKRESPONSETYPE_CLOSECONNECTION: case NETWORKRESPONSETYPE_REMOTECONSOLEOPENED:
 		{
 			// There is no data in the packet //
 			ResponseData = NULL;
@@ -68,6 +68,18 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateKeepAliveResponse(){
 
 DLLEXPORT void Leviathan::NetworkResponse::GenerateCloseConnectionResponse(){
 	ResponseType = NETWORKRESPONSETYPE_CLOSECONNECTION;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateRemoteConsoleOpenedResponse(){
+	ResponseType = NETWORKRESPONSETYPE_REMOTECONSOLEOPENED;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateEmptyResponse(){
+	ResponseType = NETWORKRESPONSETYPE_NONE;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 }

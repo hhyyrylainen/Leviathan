@@ -23,7 +23,7 @@ namespace Leviathan{
 		// NOTE: do not delete the ptr after calling this //
 		DLLEXPORT void LoadedMaterialAdd(PhysicalMaterial* ptrtotakeownership);
 
-		// TODO: file loading function //
+		// \todo file loading function //
 
 		// ------------------ Material ID fetching functions ------------------ //
 

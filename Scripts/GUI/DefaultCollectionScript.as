@@ -8,13 +8,13 @@ void HandleSet(GuiCollection@ Instance, bool hidden){
     RocketElement@ maincontainer = tmpsheet.GetElementByID(ROCKETOBJECTID);
     
     if(hidden){
-        //Print("Collection "+Instance.GetName()+" set hidden");
         maincontainer.SetProperty("visibility", "hidden");
         maincontainer.SetProperty("display", "none");
+        Print("Collection "+Instance.GetName()+" set hidden");
     } else {
-        //Print("Collection "+Instance.GetName()+" set visible");
         maincontainer.SetProperty("visibility", "visible");
         maincontainer.SetProperty("display", "block");
+        Print("Collection "+Instance.GetName()+" set visible");
     }
 }
 

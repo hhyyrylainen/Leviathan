@@ -75,6 +75,18 @@ namespace Leviathan{
 
 		DLLEXPORT shared_ptr<boost::promise<wstring>> QueryMasterServer(const MasterServerInformation &info);
 
+		//! \brief Opens a new connection to the provided address
+		//!
+		//! The input should be in a form that has address:port in it. The address should be like 'google.fi' or '192.168.1.1'
+		//! This function doesn't verify that there actually is something on the target. The connection will be managed by the handler
+		//! and will close if no response is received to a keep alive packet (which is sent after a couple of minutes)
+		DLLEXPORT shared_ptr<ConnectionInfo> OpenConnectionTo(const wstring &targetaddress);
+
+
+
+		//! Returns the port to which our socket has been bind //
+		DLLEXPORT USHORT GetOurPort();
+
 
 		DLLEXPORT virtual void SafelyCloseConnectionTo(ConnectionInfo* to);
 

@@ -8,8 +8,13 @@
 // ---- includes ---- //
 #include "Script/ScriptScript.h"
 #include "Common/DataStoring/DataBlock.h"
+
+// angelscript //
+
+//#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
 #include "angelscript.h"
 #include "Script/ScriptRunningSetup.h"
+#include "Handlers/IDFactory.h"
 
 #define ANGELSCRIPT_REGISTERFAIL	Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return false;
 
@@ -54,6 +59,9 @@ namespace Leviathan{
 
 		DLLEXPORT static ScriptExecutor* Get();
 	private:
+
+		void PrintAdditionalExcept(asIScriptContext *ctx);
+
 		// ------------------------------ //
 		// AngelScript engine script executing part //
 		asIScriptEngine* engine;

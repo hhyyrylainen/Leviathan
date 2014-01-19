@@ -79,6 +79,7 @@ set(Boost_ADDITIONAL_VERSIONS "1.55" "1.44" "1.44.0" "1.42" "1.42.0" "1.41.0" "1
 # Components that need linking (NB does not include header-only components like bind)
 set(OGRE_BOOST_COMPONENTS thread date_time)
 
+# Other than these that are required are header-only libraries
 set(LEVIATHAN_BOOST_COMPONENTS chrono system regex)
 
 set(REQUIRED_BOOST_COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} ${OGRE_BOOST_COMPONENTS})
@@ -114,7 +115,7 @@ else(WIN32)
     add_definitions(-std=c++11 -std=gnu++11 -fextended-identifiers)
 
     # Linux library linking
-    set(LINUX_LINK_LIBS_TOENGINE Newton)
+    set(LINUX_LINK_LIBS_TOENGINE Newton RocketCore RocketControls)
 
     set(LINUX_LINK_LIBS_ENGINE Angelscript Leap RocketCore RocketControls RocketDebugger Newton 
         sfml-audio sfml-network sfml-system)
@@ -146,6 +147,23 @@ set(CMAKE_DEBUG_POSTFIX "D")
 # create bin directory
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 
+configure_file("${PROJECT_SOURCE_DIR}/Engine/Include.h.in" "${PROJECT_SOURCE_DIR}/Engine/Include.h")
+
+# configure the doxygen file
+
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+    configure_file("${PROJECT_SOURCE_DIR}/LeviathanDoxy.in" "${PROJECT_BINARY_DIR}/LeviathanDoxy" @ONLY)
+    add_custom_target(doc
+    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/LeviathanDoxy
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
+endif(DOXYGEN_FOUND)
+
+
+
+
 message(STATUS "Copying files...")
 
 # copy data from bin directory
@@ -156,6 +174,10 @@ else(WIN32)
     file(GLOB VLDMoveFiles "bin/EngineConf.conf")
 endif(WIN32)
 file(COPY ${VLDMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+
+file(GLOB GameConfigsInBin "bin/Pong*.txt")
+file(COPY ${GameConfigsInBin} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+
 
 # copy data directory
 file(GLOB DataMoveFiles "bin/Data/*")
@@ -250,9 +272,7 @@ else(WIN32)
 
 endif(WIN32)
 
-configure_file(
-    "${PROJECT_SOURCE_DIR}/Engine/Include.h.in"
-    "${PROJECT_SOURCE_DIR}/Engine/Include.h")
+
 
 
 # additional include directories
@@ -294,14 +314,14 @@ add_subdirectory(LeviathanTest)
 # sandboxie example project
 add_subdirectory(Project_sandboxie)
 
-# pong example game
-add_subdirectory(Pong)
+# example pong master server
+add_subdirectory(PongMasterServer)
 
 # example pong server
 add_subdirectory(PongServer)
 
-# example pong master server
-add_subdirectory(PongMasterServer)
+# pong example game
+add_subdirectory(Pong)
 
 # install support
 
@@ -311,6 +331,7 @@ install(FILES ${DataMoveFiles} DESTINATION bin/Data)
 # The script files folder
 install(DIRECTORY "Scripts" DESTINATION bin/Data)
 install(FILES "bin/EngineConf.conf" DESTINATION bin)
+install(FILES ${GameConfigsInBin} DESTINATION bin)
 # we need to specifically install the directories
 install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)
 install(DIRECTORY "bin/Data/Models" DESTINATION bin/Data)

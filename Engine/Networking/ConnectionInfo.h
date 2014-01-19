@@ -24,9 +24,10 @@ namespace Leviathan{
 #define ACKKEEPALIVE			50
 
 
-// Makes the program spam a ton of debug info about packets //
-#define SPAM_ME_SOME_PACKETS	1
+//! Makes the program spam a ton of debug info about packets //
+//#define SPAM_ME_SOME_PACKETS	1
 
+	//! \brief Allows restricting connections to allow only certain packets
 	enum CONNECTION_RESTRICTION {CONNECTION_RESTRICTION_NONE, CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE};
 
 	struct SentNetworkThing{
@@ -113,7 +114,7 @@ namespace Leviathan{
 	//! Note: this class does not use reference counting so it it safe to use shared_ptr with this class
 	class ConnectionInfo : public BaseNotifier{
 	public:
-		DLLEXPORT ConnectionInfo(shared_ptr<wstring> hostname);
+		DLLEXPORT ConnectionInfo(const wstring &hostname);
 		DLLEXPORT ConnectionInfo(const sf::IpAddress &targetaddress, USHORT port);
 		DLLEXPORT ~ConnectionInfo();
 
@@ -191,7 +192,7 @@ namespace Leviathan{
 		std::vector<shared_ptr<SentAcks>> AcksNotConfirmedAsReceived;
 
 		USHORT TargetPortNumber;
-		shared_ptr<wstring> HostName;
+		wstring HostName;
 		sf::IpAddress TargetHost;
 		bool AddressGot;
 	};

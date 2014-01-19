@@ -17,6 +17,7 @@ namespace Leviathan{
 		NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS,
 		NETWORKRESPONSETYPE_KEEPALIVE,
 		NETWORKRESPONSETYPE_CLOSECONNECTION,
+		NETWORKRESPONSETYPE_REMOTECONSOLEOPENED,
 		NETWORKRESPONSETYPE_NONE
 	};
 
@@ -57,6 +58,8 @@ namespace Leviathan{
 		DLLEXPORT void GenerateIdentificationStringResponse(NetworkResponseDataForIdentificationString* newddata);
 		DLLEXPORT void GenerateKeepAliveResponse();
 		DLLEXPORT void GenerateCloseConnectionResponse();
+		DLLEXPORT void GenerateRemoteConsoleOpenedResponse();
+		DLLEXPORT void GenerateEmptyResponse();
 
 		DLLEXPORT NETWORKRESPONSETYPE GetTypeOfResponse();
 

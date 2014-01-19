@@ -383,7 +383,7 @@ void CScriptDictionary::FreeValue(valueStruct &value)
 		value.typeId = 0;
 	}
 
-    // For primitives, there's nothing to do
+	// For primitives, there's nothing to do
 }
 
 CScriptArray* CScriptDictionary::GetKeys() const

@@ -5,6 +5,7 @@
 #endif
 #include "../GameWorld.h"
 #include "../Bases/BasePhysicsObject.h"
+#include "Common/Misc.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
@@ -216,7 +217,7 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
 				continue;
 			}
 
-			// TODO: implement different types //
+			// \todo implement different types //
 			if(false){
 
 				// Apply force //
@@ -242,7 +243,7 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
 				(*iter)->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_CHANGEWORLDPOSITION, &TrackPos);
 			}
 
-			// TODO: apply rotation //
+			// \todo apply rotation //
 		}
 
 	}

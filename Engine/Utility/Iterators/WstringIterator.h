@@ -83,6 +83,7 @@ namespace Leviathan{
 		DLLEXPORT unique_ptr<wstring> GetUntilNextCharacterOrAll(wchar_t charactertolookfor);
 
 		DLLEXPORT void SkipWhiteSpace();
+		DLLEXPORT void SkipCharacters(wchar_t chartoskip);
 #ifdef _DEBUG
 		DLLEXPORT void SetDebugMode(const bool &mode);
 #endif

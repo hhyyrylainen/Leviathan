@@ -7,32 +7,41 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Application/ServerApplication.h"
-
+#include "CommonPong.h"
 
 namespace Pong{
 
-	class PongServer : public Leviathan::ServerApplication{
+	class PongServer : public CommonPongParts<Leviathan::ServerApplication, true>{
 	public:
 		PongServer();
 		~PongServer();
 
 		virtual void Tick(int mspassed);
 
-		void CustomizeEnginePostLoad();
-		void EnginePreShutdown();
+		void TryStartMatch();
+		void CheckForGameEnd();
+
 
 		static wstring GenerateWindowTitle();
-
-		// customized callbacks //
-		virtual void InitLoadCustomScriptTypes(asIScriptEngine* engine);
-		virtual void RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids);
-		virtual void RegisterApplicationPhysicalMaterials(Leviathan::PhysicsMaterialManager* manager);
+		
 
 		// Game configuration checkers //
 		static void CheckGameConfigurationVariables(GameConfiguration* configobj);
 		static void CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
 
 	protected:
+
+		virtual void ServerCheckEnd();
+		virtual void DoSpecialPostLoad();
+		virtual void CustomizedGameEnd();
+
+		virtual void MoreCustomScriptTypes(asIScriptEngine* engine);
+		virtual void MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids);
+
+		// Server specific connection handling //
+
+
+
 
 	};
 

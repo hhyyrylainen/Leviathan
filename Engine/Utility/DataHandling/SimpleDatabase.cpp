@@ -3,6 +3,9 @@
 #ifndef LEVIATHAN_SIMPLEDATABASE
 #include "SimpleDatabase.h"
 #endif
+#include "FileSystem.h"
+#include "Common\StringOperations.h"
+#include "..\Iterators\WstringIterator.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::SimpleDatabase::SimpleDatabase(const string &rocketname) : Rocket::Controls::DataSource(rocketname.c_str()){
@@ -142,9 +145,126 @@ SimpleDatabaseObject::iterator Leviathan::SimpleDatabase::_EnsureTable(const wst
 	return _EnsureTable(name);
 }
 // ------------------------------------ //
+DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
+	// The file should be able to be processed as named variable lists //
+	// read the file entirely //
+	wstring filecontents;
+
+	try{
+		FileSystem::ReadFileEntirely(file, filecontents);
+	}
+	catch(const ExceptionInvalidArgument &e){
+
+		Logger::Get()->Error(L"SimpleDatabase: LoadFromFile: file could not be read, exception:");
+		e.PrintToLog();
+		return false;
+	}
 
 
+	// file needs to be split to lines //
+	vector<wstring> Lines;
 
+	if(!StringOperations::CutString(filecontents, wstring(L"\n"), Lines)){
 
+		Lines.push_back(filecontents);
+		Logger::Get()->Warning(L"ObjectFileProcessor: file seems to be only a single line: "+filecontents);
+	}
 
+	// remove excess spaces //
+	for(size_t i = 0; i < Lines.size(); i++){
+
+		WstringIterator::StripPreceedingAndTrailingWhitespaceComments(Lines[i]);
+	}
+
+	SimpleDatabaseObject::iterator insertiter;
+
+	for(size_t i = 0; i < Lines.size(); i++){
+		// skip empty lines //
+		if(Lines[i].size() == 0){
+			continue;
+		}
+
+		// Check is this new table //
+		if(StringOperations::StringStartsWith<wstring>(Lines[i], L"TABLE")){
+			// Move to a new table //
+
+			WstringIterator itr(&Lines[i], false);
+
+			auto tablename = itr.GetStringInQuotes(QUOTETYPE_BOTH);
+
+			Database[*tablename] = shared_ptr<std::vector<shared_ptr<SimpleDatabaseRowObject>>>(new std::vector<shared_ptr<SimpleDatabaseRowObject>>());
+
+			// Change the iter //
+			insertiter = Database.find(*tablename);
+			continue;
+		}
+
+		// try to create a named var from this line //
+		try{
+			shared_ptr<NamedVariableList> namevar(new NamedVariableList(Lines[i], NULL));
+			// didn't cause an exception, is valid add //
+			
+			insertiter->second->push_back(shared_ptr<SimpleDatabaseRowObject>(new SimpleDatabaseRowObject()));
+
+			auto toinsert = insertiter->second->back();
+
+			if(namevar->GetVariableCount() % 2 != 0){
+
+				Logger::Get()->Warning(L"SimpleDatabase: LoadFromFile: file: "+file+L", line: "+Convert::ToWstring(i)+L" has invalid number of elements");
+				continue;
+			}
+
+			for(size_t namei = 0; namei < namevar->GetVariableCount(); namei += 2){
+
+				wstring name;
+
+				namevar->GetValueDirect(namei)->ConvertAndAssingToVariable<wstring>(name);
+
+				string blockdata;
+
+				if(!namevar->GetValueDirect(namei+1)->ConvertAndAssingToVariable<string>(blockdata)){
+					Logger::Get()->Warning(L"SimpleDatabase: LoadFromFile: file: "+file+L", line: "+Convert::ToWstring(i)+L" couldn't convert value to string");
+				}
+
+				(*toinsert)[name] = shared_ptr<VariableBlock>(new VariableBlock(blockdata));
+			}
+		}
+		catch(...){
+			continue;
+		}
+	}
+	// Is done //
+	return true;
+}
+
+DLLEXPORT void Leviathan::SimpleDatabase::SaveToFile(const wstring &file){
+
+	wstring datastr;
+	wstring tmpdata;
+
+	// Just iterate over everything and write them to file //
+	for(auto iter = Database.begin(); iter != Database.end(); ++iter){
+
+		datastr += L"TABLE = \""+iter->first+L"\";\n";
+		
+		for(auto iter2 = iter->second->begin(); iter2 != iter->second->end(); ++iter2){
+
+			datastr += L"n= [";
+
+			for(auto iter3 = (*iter2)->begin(); iter3 != (*iter2)->end(); ++iter3){
+
+				datastr += L"[\""+iter3->first+L"\"]";
+
+				if(!iter3->second->ConvertAndAssingToVariable<wstring>(tmpdata)){
+
+					assert(0 && "database has a value that cannot be stored as a string");
+				}
+				datastr += L"[\""+tmpdata+L"\"]";
+			}
+			datastr += L"];\n";
+		}
+	}
+
+	FileSystem::WriteToFile(datastr, file);
+}
 

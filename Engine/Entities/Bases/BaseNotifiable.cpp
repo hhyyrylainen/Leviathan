@@ -38,7 +38,7 @@ DLLEXPORT bool Leviathan::BaseNotifiable::ConnectToNotifier(BaseNotifier* owner)
 	// Finally call the callback //
 	_OnNotifierConnected(owner);
 
-	// TODO: return false and skip adding if already added //
+	// \todo return false and skip adding if already added //
 	return true;
 }
 

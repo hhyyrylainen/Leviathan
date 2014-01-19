@@ -37,7 +37,7 @@ namespace Leviathan{
 		int SessionToken;
 	};
 
-	// TODO: add security to this
+	// \todo add security to this
 	class RemoteConsoleAccessRequestData : public BaseNetworkRequestData{
 	public:
 		DLLEXPORT RemoteConsoleAccessRequestData(int token);
@@ -64,7 +64,7 @@ namespace Leviathan{
 
 		// Specific type data get functions //
 		DLLEXPORT RemoteConsoleOpenRequestDataTo* GetRemoteConsoleOpenToDataIfPossible();
-
+		DLLEXPORT RemoteConsoleAccessRequestData* GetRemoteConsoleAccessRequestDataIfPossible();
 
 		DLLEXPORT int GetExpectedResponseID();
 

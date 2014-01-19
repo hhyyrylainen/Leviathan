@@ -35,6 +35,11 @@ namespace X11{
 
 #endif
 
+#include <OISMouse.h>
+#include <OISKeyboard.h>
+#include <OISJoyStick.h>
+#include <OISInputManager.h>
+
 namespace Leviathan{
 
 	// for storing in pass to window //
@@ -88,7 +93,7 @@ namespace Leviathan{
 			return !OWindow->isClosed();
 		}
 
-		// TODO: add a way to force only one window to have mouse captured //
+		// \todo add a way to force only one window to have mouse captured //
 		DLLEXPORT inline void SetCaptureMouse(bool state){
 			MouseCaptured = state;
 		}

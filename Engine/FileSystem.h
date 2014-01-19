@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "Common/DataStoring/NamedVars.h"
 #include "Exceptions/ExceptionInvalidArgument.h"
+#include <boost/regex.hpp>
 
 namespace Leviathan{
 
@@ -92,7 +93,7 @@ namespace Leviathan{
 
 		// file handling //
 		DLLEXPORT static int LoadDataDump(const wstring &file, vector<shared_ptr<NamedVariableList>>& vec);
-		// Warning: TODO: linux version ignores the defined pattern //
+		// Warning: \todo linux version ignores the defined pattern //
 		DLLEXPORT static bool GetFilesInDirectory(vector<wstring> &files, const wstring &dirpath, const wstring &pattern = L"*.*", bool recursive = true);
 
 		// file operations //

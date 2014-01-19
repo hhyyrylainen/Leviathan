@@ -8,6 +8,7 @@
 #include "OgreMaterial.h"
 #include "OgreTechnique.h"
 #include "OgrePass.h"
+#include "OgreSceneNode.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseRenderable::BaseRenderable(bool hidden) : Hidden(hidden), GraphicalObject(NULL), ObjectsNode(NULL){

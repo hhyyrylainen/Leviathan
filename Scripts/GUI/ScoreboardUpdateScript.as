@@ -14,7 +14,7 @@ void UpdateScoreboard(BaseGuiObject@ element){
 
     // player count is always four (closed slots exist) //
     for(int i = 0; i < 4; i++){
-        PlayerSlot@ slot = GetPongGame().GetSlot(i);
+        PlayerSlot@ slot = GetPongBase().GetSlot(i);
         bool teamprinted = false;
         // for looping through split slots //
         while(true){

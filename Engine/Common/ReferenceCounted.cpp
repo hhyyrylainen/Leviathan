@@ -49,7 +49,9 @@ guibaseselfcheckfordelete:
 	}
 }
 // ------------------------------------ //
-
+DLLEXPORT void Leviathan::ReferenceCounted::UnsafeSetReferences(int value){
+	RefCount = value;
+}
 // ------------------------------------ //
 
 // ------------------------------------ //

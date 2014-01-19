@@ -6,84 +6,34 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Arena.h"
-#include "PlayerSlot.h"
 #include "GameInputController.h"
-#include "Entities/Bases/BasePhysicsObject.h"
-#include "Utility/DataHandling/SimpleDatabase.h"
 #include "GUI/GuiManager.h"
 #include "Application/GameConfiguration.h"
 #include "Application/KeyConfiguration.h"
-
-#define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return;
-
-#define BALLSTUCK_THRESHOLD		0.045f
-#define BALLSTUCK_COUNT			8
-#define SCOREPOINT_AMOUNT		1
+#include "CommonPong.h"
 
 namespace Pong{
 
-	class PongGame : public Leviathan::LeviathanApplication{
-		friend Arena;
+	class PongGame : public CommonPongParts<Leviathan::LeviathanApplication, false>{
 	public:
 		PongGame();
 		~PongGame();
 
-		int TryStartGame();
-		void GameMatchEnded();
+		int StartServer();
 
-		virtual void Tick(int mspassed);
+		//! \brief Called when game returns from win screen to the lobby screen
+		void MoveBackToLobby();
 
-		void CustomizeEnginePostLoad();
-		void EnginePreShutdown();
+		void StartInputHandling();
+
+		//! \brief Called when the game wants to exit current game/lobby
+		void Disconnect();
+
+		void AllowPauseMenu();
 
 		static wstring GenerateWindowTitle();
-		// posts a quit message to quit after script has returned //
-		void ScriptCloseGame();
-
-		// Updates the ball trail based on the player colour //
-		void SetBallLastHitColour();
 
 		static PongGame* Get();
-
-		// Called when scored, will handle everything //
-		int PlayerScored(Leviathan::BasePhysicsObject* goalptr);
-
-		// Will determine if a paddle could theoretically hit the ball //
-		bool IsBallInGoalArea();
-
-		PlayerSlot* GetPlayerSlot(int id);
-
-		void inline SetError(const string &error){
-			ErrorState = error;
-		}
-		string GetErrorString();
-
-		int GetScoreLimit();
-		void SetScoreLimit(int scorelimit);
-
-		bool PlayerIDMatchesGoalAreaID(int plyid, Leviathan::BasePhysicsObject* goalptr);
-
-		void SetPauseState(bool paused);
-
-		void CheckForGameEnd();
-
-		// Warning increases reference count //
-		Leviathan::Entity::Prop* GetBall();
-
-		Leviathan::SimpleDatabase* GetGameDatabase();
-		Leviathan::GameWorld* GetGameWorld();
-
-		// customized callbacks //
-		virtual void InitLoadCustomScriptTypes(asIScriptEngine* engine);
-		virtual void RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids);
-		virtual void RegisterApplicationPhysicalMaterials(Leviathan::PhysicsMaterialManager* manager);
-
-		// Ball handling callback //
-		static void BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep, int threadIndex);
-		static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep, int threadIndex);
-
-		int GetLastHitPlayer();
 
 		// Game configuration checkers //
 		static void CheckGameConfigurationVariables(GameConfiguration* configobj);
@@ -91,48 +41,23 @@ namespace Pong{
 
 	protected:
 
-		// This function sets the player ID who should get points for scoring //
-		void _SetLastPaddleHit(Leviathan::BasePhysicsObject* objptr, Leviathan::BasePhysicsObject* objptr2);
-		// Handles score increase from scoring and destruction of ball. The second parameter is used to ensuring it is the right ball //
-		int _BallEnterGoalArea(Leviathan::BasePhysicsObject* goal, Leviathan::BasePhysicsObject* ballobject);
+		virtual void DoSpecialPostLoad();
+		virtual void CustomizedGameEnd();
+		virtual void MoreCustomScriptTypes(asIScriptEngine* engine);
+		virtual void MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids);
 
-		void _DisposeOldBall();
 		// ------------------------------------ //
-
-		// game objects //
-		unique_ptr<Arena> GameArena;
-		shared_ptr<GameWorld> WorldOfPong;
 		Leviathan::Gui::GuiManager* GuiManagerAccess;
-
-		// AI module //
-		GameModule* GameAI;
-
-
-		int LastPlayerHitBallID;
-
-		bool GamePaused;
-		int ScoreLimit;
-
-
-
-		vector<PlayerSlot*> PlayerList;
 		GameInputController* GameInputHandler;
 
-		// stores last error string for easy access from scripts //
-		string ErrorState;
+#ifdef _WIN32
 
-		// Used to count ticks to not have to call set apply force every tick //
-		int Tickcount;
-		// Ball's position during last tick. This is used to see if the ball is "stuck" //
-		Float3 BallLastPos;
-		// Direction in which the ball can get stuck //
-		Float3 DeadAxis;
-		int StuckThresshold;
+		HANDLE ServerProcessHandle;
 
-		// Configuration data //
-		Leviathan::SimpleDatabase GameConfigurationData;
+#endif // _WIN32
 
-		static PongGame* StaticAccess;
+
+		static PongGame* StaticGame;
 	};
 
 }

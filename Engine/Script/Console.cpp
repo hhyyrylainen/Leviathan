@@ -79,7 +79,7 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 		ConsoleOutput(L"Invalid command format, missing starting '>' or empty command");
 		consoleemptyspam++;
 		if(consoleemptyspam > 5){
-			// TODO: tell user how to close console //
+			// \todo tell user how to close console //
 			ConsoleOutput(L"You seem to be spamming empty lines, maybe you'd like to close console? TODO: actually write help so that user could actually close the console");
 		}
 		return CONSOLECOMMANDRESULTSTATE_FAILED;
@@ -315,7 +315,7 @@ funcdeletesucceedendgarbagecollectlabel:
 
 	// Since functions can be recursive, we'll call the garbage
 	// collector to make sure the object is really freed
-	// TODO: make engine garbage collect stop all running scripts //
+	// \todo make engine garbage collect stop all running scripts //
 	InterfaceInstance->GetExecutor()->GetASEngine()->GarbageCollect();
 
 	return true;

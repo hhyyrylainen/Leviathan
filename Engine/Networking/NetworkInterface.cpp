@@ -46,21 +46,12 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 
 			return true;
 		}
-	case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE:
+	case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE: case NETWORKREQUESTTYPE_OPENREMOTECONSOLETO:
 		{
 			RemoteConsole::Get()->HandleRemoteConsoleRequestPacket(request, connectiontosendresult);
 
 			return true;
 		}
-#ifdef _DEBUG
-	case NETWORKREQUESTTYPE_OPENREMOTECONSOLETO:
-		{
-			// This should be handled directly by ConnectionInfo (at least at the current stage) //
-			DEBUG_BREAK;
-			return true;
-		}
-#endif // _DEBUG
-
 	}
 
 	// Unhandled //

@@ -5,6 +5,10 @@
 #endif
 #include "Common/GraphicalInputEntity.h"
 #include "Newton/NewtonManager.h"
+#include "OgreRoot.h"
+#include "OgreSceneManager.h"
+#include "OgreLight.h"
+#include "OgreSceneNode.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld(Ogre::Root* ogre) : WorldSceneCamera(NULL), CameraLocationNode(NULL), WorldsScene(NULL),
@@ -197,7 +201,7 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(){
 
 
 DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
-	// TODO: take position into account //
+	// \todo take position into account //
 	// create force without mass applied //
 	return Float3(0.f, PHYSICS_BASE_GRAVITY, 0.f);
 }
@@ -300,7 +304,7 @@ DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float
 	// Return the only hit //
 	return data.HitEntities[0];
 }
-// TODO: improve this performance //
+// \todo improve this performance //
 dFloat Leviathan::GameWorld::RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam){
 	// Let's just store it as NewtonBody pointer //
 	RayCastData* data = reinterpret_cast<RayCastData*>(userData);

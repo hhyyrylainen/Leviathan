@@ -5,6 +5,7 @@
 #endif
 #include "OgreMaterial.h"
 #include "OgreTechnique.h"
+#include "OgreMaterialManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 TextureGenerator::TextureGenerator(){

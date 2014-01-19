@@ -3,6 +3,7 @@
 #ifndef LEVIATHAN_RENDERINGSTATISTICS
 #include "RenderingStatistics.h"
 #endif
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::RenderingStatistics::RenderingStatistics(){

@@ -116,7 +116,7 @@ namespace Gui{
 		RenderInterfaceOgre3D* RocketRenderer;
 		RocketSysInternals* RocketInternals;
 
-		// TODO: implement this in OverlayMaster to hide GUI in view ports that don't need it //
+		// \todo implement this in OverlayMaster to hide GUI in view ports that don't need it //
 		bool Visible;
 		// used to determine when to scan collections for active ones //
 		bool GuiMouseUseUpdated;

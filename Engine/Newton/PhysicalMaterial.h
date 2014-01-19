@@ -92,7 +92,7 @@ namespace Leviathan{
 
 		DLLEXPORT int GetMaterialIDIfLoaded(NewtonWorld* world);
 
-		// TODO: file loading function //
+		// \todo file loading function //
 
 
 		DLLEXPORT inline wstring GetName(){

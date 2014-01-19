@@ -7,6 +7,9 @@
 #include "Rocket/Core/Context.h"
 #include <boost/assign/list_of.hpp>
 #include "Exceptions/ExceptionNotFound.h"
+#include "OgreRoot.h"
+#include "OgreSceneManager.h"
+#include "OgreViewport.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -155,6 +158,12 @@ DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 
 	VerifyRenderWindowHandle();
+
+	if(m_hwnd == NULL){
+		// window has closed //
+		return;
+	}
+
 	// Use the X11 function to warp the cursor //
 	XWarpPointer(XDisplay, 0, m_hwnd, 0, 0, 0, 0, GetWidth()/2, GetHeight()/2);
 }
@@ -197,10 +206,9 @@ DLLEXPORT bool Leviathan::Window::IsMouseOutsideWindowClientArea(){
 	if(X < 0 || Y < 0 || X > GetWidth() || Y > GetHeight()){
 		return true;
 	}
+
 	return false;
 }
-
-
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Window::CloseDown(){
 	// release view ports, etc. //
@@ -221,7 +229,7 @@ DLLEXPORT void Leviathan::Window::ResizeWindow(const int &width, const int &heig
 }
 // ------------------------------------ //
 void Leviathan::Window::windowResized(Ogre::RenderWindow* rw){
-	// TODO: add callback notification
+	// \todo add callback notification
 	OwningWindow->OnResize(GetWidth(), GetHeight());
 
 	UpdateOISMouseWindowSize();
@@ -233,9 +241,6 @@ void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
 
 	//Focused = m_hwnd == GetFocus() ? true: false;
 	Focused = m_hwnd == GetForegroundWindow() ? true: false;
-
-	// update engine focus state (TODO: add a list of focuses to support multiple windows) //
-	//Focused ? Engine::GetEngine()->GainFocus(): Engine::GetEngine()->LoseFocus();
 
 	wstring message = L"Window focus is now ";
 	message += Focused ? L"true": L"false";
@@ -380,7 +385,6 @@ DLLEXPORT void Leviathan::Window::GatherInput(Rocket::Core::Context* context){
 		FirstInput = false;
 
 		_CustomMouseMakeSureMouseIsRight(context);
-		// TODO: do a full focus check here
 		_CheckMouseVisibilityStates();
 	}
 
@@ -483,7 +487,7 @@ bool Leviathan::Window::keyReleased(const OIS::KeyEvent &arg){
 	CheckInputState();
 	// pass event to active Rocket context //
 	if(inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
-		// TODO: after not even GUI wanting update input object
+		// After not even GUI wanting update send to the input object //
 		OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, false);
 	} else {
 		OwningWindow->GetInputController()->OnBlockedInput(arg.key, SpecialKeyModifiers, false);
@@ -623,6 +627,10 @@ DLLEXPORT void Leviathan::Window::SendCloseMessage(){
 }
 
 void Leviathan::Window::_CheckMouseVisibilityStates(){
+	// Update focused here //
+	VerifyRenderWindowHandle();
+	Focused = m_hwnd == GetForegroundWindow() ? true: false;
+
 	// force cursor visible check (if outside client area or mouse is unfocused on the window) //
 	if(IsMouseOutsideWindowClientArea() || !Focused){
 

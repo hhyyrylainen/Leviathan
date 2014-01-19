@@ -39,6 +39,7 @@ using Leviathan::ObjectLock;
 using Leviathan::GameConfiguration;
 using Leviathan::KeyConfiguration;
 using Leviathan::NamedVars;
+using Leviathan::NamedVariableList;
 
 
 

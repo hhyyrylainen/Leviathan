@@ -1,9 +1,7 @@
 #ifndef LEVIATHAN_CONVERT
 #define LEVIATHAN_CONVERT
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
+// Reduce bloat in precompiled header
 // ------------------------------------ //
 // ---- includes ---- //
 namespace Leviathan{

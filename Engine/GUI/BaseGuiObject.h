@@ -18,7 +18,7 @@ namespace Leviathan{ namespace Gui{
 
 	class GuiManager;
 	// this class' functions are thread safe (*should* be) //// mutex for reference counting and possibly for other functions for thread safety //
-	// TODO: make the above statement true...
+	// \todo make the above statement true...
 	class BaseGuiObject : public ReferenceCounted, public EventableScriptObject, public Rocket::Core::EventListener{
 		friend GuiManager;
 	public:
@@ -57,7 +57,7 @@ namespace Leviathan{ namespace Gui{
 			return OwningInstance;
 		}
 
-		// Warning this function increases the reference count! //
+		//! \warning this function increases the reference count //
 		DLLEXPORT GuiLoadedSheet* GetOwningSheetProxy(){
 			ContainedInSheet->AddRef();
 			return ContainedInSheet;

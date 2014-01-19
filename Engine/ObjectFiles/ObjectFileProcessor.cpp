@@ -7,6 +7,7 @@
 #include <boost/assign/list_of.hpp>
 #include "Common/DataStoring/DataStore.h"
 #include "Common/StringOperations.h"
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 

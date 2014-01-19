@@ -8,6 +8,7 @@
 #include "Entities/GameWorld.h"
 #include "FileSystem.h"
 #include "Engine.h"
+#include "OgreRoot.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties) : MouseCaptureState(false){
@@ -49,7 +50,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	// apply style settings (mainly ICON) //
 	WData.ApplyIconToHandle(DisplayWindow->GetHandle());
 #else
-	// TODO: linux icon
+	// \todo linux icon
 #endif
 	tmpwindow->setDeactivateOnFocusChange(false);
 
@@ -91,7 +92,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	// create receiver interface //
 	TertiaryReceiver = new InputController();
 
-	// TODO: link to window //
+	// \todo link to window //
 
 }
 

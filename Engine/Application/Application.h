@@ -44,9 +44,7 @@ namespace Leviathan{
 		DLLEXPORT virtual void EnginePreShutdown();
 
 		// static access method for getting instance of this class //
-		DLLEXPORT static inline LeviathanApplication* GetApp(){
-			return Curapp;
-		}
+		DLLEXPORT static LeviathanApplication* GetApp();
 		// Some dummy functions for ease of use //
 		DLLEXPORT static void DummyGameConfigurationVariables(GameConfiguration* configobj);
 		DLLEXPORT static void DummyGameKeyConfigVariables(KeyConfiguration* keyconfigobj);

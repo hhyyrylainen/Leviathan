@@ -221,7 +221,7 @@ void Scene::updateSelectionAndContact( const Frame& frame )
 {
   const PointableList& pointables = frame.pointables();
 
-  if ( pointables.empty() && frame.hands().empty() )
+  if ( pointables.isEmpty() && frame.hands().isEmpty() )
   {
     queueDeselectAll();
   }

@@ -4,6 +4,7 @@
 #include "ViewerCameraPos.h"
 #endif
 #include "Sound/SoundDevice.h"
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 

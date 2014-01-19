@@ -6,6 +6,7 @@
 #include <Newton.h>
 #include "PhysicalMaterialManager.h"
 #include "Events/EventHandler.h"
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) : LastSimulatedTime(0), PassedTimeTotal(0), OwningWorld(owner){
@@ -16,7 +17,7 @@ DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) : LastSimula
 	// set physics accuracy //
 	// most accurate mode //
 
-	// TODO: figure out how to use this exact mode //
+	// \todo figure out how to use this exact mode //
 	//NewtonSetSolverModel(World, 0);
 	//// fast mode //
 	//NewtonSetSolverModel(World, 1);

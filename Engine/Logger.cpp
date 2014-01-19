@@ -3,6 +3,9 @@
 #ifndef LEVIATHAN_LOGGER
 #include "Logger.h"
 #endif
+#ifndef LEVIATHAN_DEFINE
+#include "Define.h"
+#endif
 using namespace Leviathan;
 // ------------------------------------ //
 #include "FileSystem.h"
@@ -18,6 +21,7 @@ DLLEXPORT Leviathan::Logger::Logger(const wstring &file): FirstSaveDone(false), 
 		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
 
 #else
+	// \todo Linux time get function
 	wstring times = L"TODO: add time get";
 
 #endif

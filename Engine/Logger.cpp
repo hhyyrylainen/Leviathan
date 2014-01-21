@@ -56,6 +56,9 @@ Leviathan::Logger::~Logger(){
 	// thread safety //
 	boost::strict_lock<Logger> guard(*this);
 
+	// Reset latest logger (this allows to create new logger, which is quite bad, but won't crash) //
+	LatestLogger = NULL;
+
 	// check is something in queue //
 	CheckQueue(guard);
 	// save if unsaved //

@@ -76,6 +76,9 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 	// This is almost at tick so call this outside the loop for performance //
 	PreFirstTick();
 
+	// For reporting wait failures //
+	int FailCount = 0;
+
 	while(_Engine->GetWindowOpenCount()){
 
 
@@ -92,12 +95,16 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 		Render();
 		// We could potentially wait here //
 		try{
-			boost::this_thread::sleep(boost::posix_time::microseconds(700));
+			boost::this_thread::sleep(boost::posix_time::milliseconds(1));
 		} catch(...){
-			continue;
+			FailCount++;
 		}
 	}
 	ObjectLock guard(*this);
+	// Report problems //
+	if(FailCount)
+		DEBUG_OUTPUT_AUTO(wstring(L"Application main loop sleep fails: "+Convert::ToWstring(FailCount)));
+
 	// always release before quitting to avoid tons of memory leaks //
 	Release();
 

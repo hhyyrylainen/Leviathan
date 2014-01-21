@@ -17,30 +17,33 @@ namespace Leviathan{
 
 	void RunTaskQueuerThread(ThreadingManager* manager);
 
-
+	//! \brief Manages delayed execution of functions through use of QueuedTask and subclasses
 	class ThreadingManager : public EngineComponent, public ThreadSafe{
 		friend void RunTaskQueuerThread(ThreadingManager* manager);
 	public:
 		DLLEXPORT ThreadingManager(int basethreadspercore = DEFAULT_THREADS_PER_CORE);
 		DLLEXPORT ~ThreadingManager();
 
-		// Sets up the work queue //
+		//! Sets up the work queue
 		DLLEXPORT virtual bool Init();
-		// This will take a long time, since it will wait until all tasks are done //
+		//! This will take a long time, since it will wait until all tasks are done
 		DLLEXPORT virtual void Release();
 
-		// Adds a task to the queue //
+		//! Adds a task to the queue
 		DLLEXPORT void QueueTask(shared_ptr<QueuedTask> task);
 
-		// This function waits for all tasks to complete //
+		//! This function waits for all tasks to complete
 		DLLEXPORT void FlushActiveThreads();
 
+		//! \brief Blocks until all queued tasks are finished
+		//!
+		//! \warning This function will ignore MustBeRanBefore return value by passing TASK_MUSTBERAN_BEFORE_EXIT
 		DLLEXPORT void WaitForAllTasksToFinish();
 
-		// Called by work threads when they are done //
+		//! Called by work threads when they are done
 		DLLEXPORT void NotifyTaskFinished(shared_ptr<QueuedTask> task);
 
-		// Makes the threads work with Ogre //
+		//! Makes the threads work with Ogre
 		DLLEXPORT void MakeThreadsWorkWithOgre();
 
 
@@ -52,11 +55,16 @@ namespace Leviathan{
 
 		int WantedThreadCount;
 
+		//! Used to allow QueuedTask::MustBeRanBefore function to work, shared between staticaccess worker thread and the main object
+		int TaksMustBeRanBeforeState;
+
+
+		//! List of the tasks queued by the application
 		std::list<shared_ptr<QueuedTask>> WaitingTasks;
 		boost::condition_variable_any TaskQueueNotify;
 		std::list<shared_ptr<TaskThread>> UsableThreads;
 
-		// Thread used to set tasks to threads //
+		//! Thread used to set tasks to threads
 		boost::thread WorkQueueHandler;
 
 		static ThreadingManager* staticaccess;

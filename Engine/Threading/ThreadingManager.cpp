@@ -4,6 +4,7 @@
 #include "ThreadingManager.h"
 #endif
 #include "OgreRoot.h"
+#include "QueuedTask.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -17,7 +18,7 @@ void RegisterOgreOnThread(){
 
 // ------------------ ThreadingManager ------------------ //
 DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore /*= DEFAULT_THREADS_PER_CORE*/) : AllowStartTasksFromQueue(true),
-	StopProcessing(false)
+	StopProcessing(false), TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT)
 {
 	WantedThreadCount = boost::thread::hardware_concurrency()*basethreadspercore;
 
@@ -178,6 +179,15 @@ skipfirstwaitforthreadslabel2:
 }
 
 DLLEXPORT void Leviathan::ThreadingManager::NotifyTaskFinished(shared_ptr<QueuedTask> task){
+	// We need locking for re-adding it //
+	if(task->IsRepeating()){
+		// Add back to queue //
+		ObjectLock guard(*this);
+
+		WaitingTasks.push_back(task);
+	}
+
+
 	// We probably don't need to acquire a lock for this //
 	TaskQueueNotify.notify_all();
 }
@@ -247,6 +257,11 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 			continue;
 		}
 
+		// Keep iterator consistent with the whole loop, (to avoid excessive calling of CanBeRan) //
+		auto taskiter = manager->WaitingTasks.begin();
+		// Used to iterate again, but just checking if they can be ran (allows more important tasks to run first) //
+		auto nonimportantiter = manager->WaitingTasks.begin();
+
 		// Find an empty thread and queue tasks //
 		for(auto iter = manager->UsableThreads.begin(); iter != manager->UsableThreads.end(); ++iter){
 
@@ -257,10 +272,57 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 					break;
 
 				// Queue a task //
-				shared_ptr<QueuedTask> tmptask = *manager->WaitingTasks.begin();
-				manager->WaitingTasks.pop_front();
-				(*iter)->SetTaskAndNotify(tmptask);
+				shared_ptr<QueuedTask> tmptask;
 
+				// Try to find a suitable one //
+				for( ; taskiter != manager->WaitingTasks.end(); ){
+
+					// Check does the task want to run now //
+					if((*taskiter)->MustBeRanBefore(manager->TaksMustBeRanBeforeState)){
+						// Check is allowed to run //
+						if((*taskiter)->CanBeRan()){
+							// Run it! //
+							tmptask = (*taskiter);
+							// Erase, might be temporary //
+							taskiter = manager->WaitingTasks.erase(taskiter);
+
+							// Just to be safe, TODO: performance could be improved //
+							nonimportantiter = taskiter;
+
+							break;
+						}
+					}
+					++iter;
+				}
+
+				if(!tmptask){
+					// Check with the other iterator, too //
+					for( ; nonimportantiter != manager->WaitingTasks.end(); ){
+						// Check does the task want to run now //
+						if((*nonimportantiter)->MustBeRanBefore(manager->TaksMustBeRanBeforeState)){
+							// Check is allowed to run //
+							if((*nonimportantiter)->CanBeRan()){
+								// Run it! //
+								tmptask = (*nonimportantiter);
+								// Erase, might be temporary //
+								nonimportantiter = manager->WaitingTasks.erase(nonimportantiter);
+
+								// Just to be safe, TODO: performance could be improved //
+								taskiter = nonimportantiter;
+
+								break;
+							}
+						}
+						++iter;
+					}
+				}
+
+				// If still nothing, nothing cannot run //
+				if(!tmptask)
+					break;
+
+				// This won't actually finish it so to re-queue it, if it repeats, we use the callback called when it is finished //
+				(*iter)->SetTaskAndNotify(tmptask);
 			}
 		}
 	}

@@ -23,10 +23,12 @@ Pong::PongGame::~PongGame(){
 	
 	// Wait for the child process to die and close the handle //
 #ifdef _WIN32
-	// Wait for the server to close for 1 second //
-	//WaitForSingleObject(ServerProcessHandle, 5000);
+	// Wait for the server to close for 5 seconds //
+#ifndef _DEBUG
+	WaitForSingleObject(ServerProcessHandle, 5000);
 
-	//TerminateProcess(ServerProcessHandle, -1);
+	TerminateProcess(ServerProcessHandle, -1);
+#endif
 
 	CloseHandle(ServerProcessHandle);
 	ServerProcessHandle = NULL;

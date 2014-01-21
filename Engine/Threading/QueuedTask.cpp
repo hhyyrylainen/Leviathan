@@ -24,9 +24,28 @@ void Leviathan::QueuedTask::_PreFunctionRun(){
 
 }
 // ------------------------------------ //
+DLLEXPORT bool Leviathan::QueuedTask::CanBeRan(){
+	return true;
+}
 
+DLLEXPORT bool Leviathan::QueuedTask::MustBeRanBefore(int eventtypeidentifier){
+	return eventtypeidentifier == TASK_MUSTBERAN_BEFORE_EXIT;
+}
 // ------------------------------------ //
 
 
 
+// ------------------ ConditionalTask ------------------ //
+DLLEXPORT Leviathan::ConditionalTask::ConditionalTask(boost::function<void ()> functorun, boost::function<bool ()> canberuncheck) : 
+	QueuedTask(functorun), TaskCheckingFunc(canberuncheck)
+{
 
+}
+
+DLLEXPORT Leviathan::ConditionalTask::~ConditionalTask(){
+
+}
+
+DLLEXPORT bool Leviathan::ConditionalTask::CanBeRan(){
+	return TaskCheckingFunc();
+}

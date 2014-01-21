@@ -14,6 +14,7 @@ namespace Leviathan{
 		class GuiManager;
 	}
 
+	class RemoteConsole;
 	class NetworkRequest;
 	class NetworkResponse;
 	class ConnectionInfo;

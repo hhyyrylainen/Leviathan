@@ -11,7 +11,16 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int
 	RequestData(NULL)
 {
 	// We need to make sure the type is correct for this kind of packet //
-	assert(type == NETWORKREQUESTTYPE_IDENTIFICATION && "trying to create a request which requires extra data without providing any extra data!");
+#ifdef _DEBUG
+	switch(TypeOfRequest){
+		// With these cases not having extra data is valid //
+	case NETWORKREQUESTTYPE_IDENTIFICATION: case NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE:
+		return;
+	default:
+		assert(0 && "trying to create a request which requires extra data without providing any extra data!");
+	}
+
+#endif // _DEBUG
 }
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 

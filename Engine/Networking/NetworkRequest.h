@@ -13,10 +13,11 @@
 namespace Leviathan{
 
 	enum NETWORKREQUESTTYPE {
-		// This is sent first, expected result is like "PongServer running version 0.5.1.0, status: 0/20" //
+		//! This is sent first, expected result is like "PongServer running version 0.5.1.0, status: 0/20"
 		NETWORKREQUESTTYPE_IDENTIFICATION,
 		NETWORKREQUESTTYPE_OPENREMOTECONSOLETO,
-		NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE
+		NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE,
+		NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE
 	};
 
 	class BaseNetworkRequestData{

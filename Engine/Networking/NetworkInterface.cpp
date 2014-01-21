@@ -46,7 +46,7 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 
 			return true;
 		}
-	case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE: case NETWORKREQUESTTYPE_OPENREMOTECONSOLETO:
+	case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE: case NETWORKREQUESTTYPE_OPENREMOTECONSOLETO: case NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE:
 		{
 			RemoteConsole::Get()->HandleRemoteConsoleRequestPacket(request, connectiontosendresult);
 
@@ -78,12 +78,12 @@ bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkR
 			NetworkHandler::Get()->SafelyCloseConnectionTo(connection);
 			return true;
 		}
-	//case NETWORKRESPONSETYPE_:
-		//{
-		//	// Pass to remote console //
-		//	RemoteConsole::Get()->HandleRemoteConsoleResponse(message, connection, NULL);
-		//	return true;
-		//}
+	case NETWORKRESPONSETYPE_REMOTECONSOLEOPENED: case NETWORKRESPONSETYPE_REMOTECONSOLECLOSED:
+		{
+			// Pass to remote console //
+			RemoteConsole::Get()->HandleRemoteConsoleResponse(message, connection, NULL);
+			return true;
+		}
 
 	}
 	// Not handled //

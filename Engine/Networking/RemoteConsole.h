@@ -13,20 +13,28 @@
 namespace Leviathan{
 
 	class RemoteConsoleSession{
+		friend RemoteConsole;
 	public:
 		DLLEXPORT RemoteConsoleSession(const wstring &name, ConnectionInfo* connection, int token);
 		DLLEXPORT ~RemoteConsoleSession();
 
 		DLLEXPORT ConnectionInfo* GetConnection();
+		DLLEXPORT void ResetConnection();
 
+		//! \brief Sets the connection as closing
+		DLLEXPORT void KillConnection();
 
 	private:
 		wstring ConnectionName;
 		int SessionToken;
 		ConnectionInfo* CorrespondingConnection;
 
-		// Marks if we can send stuff here //
+		//! Marks if we can send stuff here //
 		bool IsOpened;
+		//! \brief Sets connection as terminating
+		//!
+		//! Actual termination will happen next time RemoteConsole::UpdateStatus is called
+		bool TerminateSession;
 	};
 
 
@@ -72,6 +80,12 @@ namespace Leviathan{
 		//! \see CloseIfNoRemoteConsole
 		DLLEXPORT void SetCloseIfNoRemoteConsole(bool state);
 
+		//! \brief Gets a matching RemoteConsoleSession from ConnectionInfo
+		//!
+		//! \return Returns a valid pointer to a RemoteConsoleSession or NULL
+		//! \note The returned pointer will be guaranteed to be only valid while you have guard locked
+		//! \param guard ObjectLock with this RemoteConsole istance
+		DLLEXPORT RemoteConsoleSession* GetRemoteConsoleSessionForConnection(ConnectionInfo* connection, ObjectLock &guard);
 
 		DLLEXPORT bool CanOpenNewConnection(ConnectionInfo* connection, shared_ptr<NetworkRequest> request);
 

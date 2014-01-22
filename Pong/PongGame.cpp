@@ -18,6 +18,7 @@ Pong::PongGame::PongGame() : GuiManagerAccess(NULL)
 }
 
 Pong::PongGame::~PongGame(){
+	ObjectLock guard(*this);
 	// delete memory //
 	SAFE_DELETE(GameInputHandler);
 	
@@ -51,6 +52,7 @@ std::wstring Pong::PongGame::GenerateWindowTitle(){
 // ------------------------------------ //
 int Pong::PongGame::StartServer(){
 	// Start the server process //
+	ObjectLock guard(*this);
 
 #ifdef _DEBUG
 	wstring serverstartname = L"PongServerD";
@@ -126,6 +128,38 @@ int Pong::PongGame::StartServer(){
 
 	// Queue a task for this //
 
+	_Engine->GetThreadingManager()->QueueTask(shared_ptr<Leviathan::QueuedTask>(new Leviathan::ConditionalTask(
+		boost::bind<void>([](Leviathan::RemoteConsole* justforperformance) -> void
+	{
+		// No more waiting connections, see what happened //
+		if(justforperformance->GetActiveConnectionCount() == 0){
+			// Failed //
+			Logger::Get()->Error(L"Failed to receive a remote connection from the server");
+			StaticGame->Disconnect("Server failed to start properly");
+
+			// Kill the server //
+			TerminateProcess(StaticGame->ServerProcessHandle, -1);
+
+			ObjectLock guard(*StaticGame);
+
+			CloseHandle(StaticGame->ServerProcessHandle);
+			StaticGame->ServerProcessHandle = NULL;
+			return;
+		}
+
+		Logger::Get()->Info(L"Server started successfully");
+		EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+			new NamedVariableList(L"Message", new VariableBlock(string("Server started, awaiting proper startup")))))));
+
+
+	}, Leviathan::RemoteConsole::Get()), boost::bind<bool>([](Leviathan::RemoteConsole* justforperformance) -> bool{
+		
+		// Check if all remote console connections are timed out / connected // 
+		return !justforperformance->IsAwaitingConnections();
+		
+	}, Leviathan::RemoteConsole::Get()))));
+
+
 
 
 	// succeeded //
@@ -138,6 +172,7 @@ void Pong::PongGame::AllowPauseMenu(){
 }
 
 void Pong::PongGame::CustomizedGameEnd(){
+	ObjectLock guard(*this);
 	// Stop sending pointless input //
 	GameInputHandler->UnlinkPlayers();
 	GameInputHandler->SetBlockState(true);
@@ -148,6 +183,7 @@ void Pong::PongGame::CustomizedGameEnd(){
 }
 
 void Pong::PongGame::StartInputHandling(){
+	ObjectLock guard(*this);
 	GameInputHandler->StartReceivingInput(PlayerList);
 	GameInputHandler->SetBlockState(false);
 }
@@ -179,10 +215,12 @@ void Pong::PongGame::CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj)
 }
 // ------------------------------------ //
 void Pong::PongGame::MoveBackToLobby(){
+	ObjectLock guard(*this);
 	DEBUG_BREAK;
 }
 
-void Pong::PongGame::Disconnect(){
+void Pong::PongGame::Disconnect(const string &reasonstring){
+	ObjectLock guard(*this);
 	DEBUG_BREAK;
 }
 // ------------------------------------ //
@@ -258,7 +296,7 @@ void Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("PongGame", "void Disconnect()", WRAP_MFN(PongGame, Disconnect), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("PongGame", "void Disconnect(const string &in statusmessage)", WRAP_MFN(PongGame, Disconnect), asCALL_GENERIC) < 0)
 	{
 		SCRIPT_REGISTERFAIL;
 	}

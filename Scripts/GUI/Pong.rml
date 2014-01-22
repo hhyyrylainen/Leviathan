@@ -47,8 +47,9 @@
             <span class="MenuOption Dangerous"><p id="LobbyDisconnect">Disconnect</p></span>
         </div>
         <div class="Hidden" id="ServerConnectScreen">
-            Waiting for connection
-            
+            <div class="DeadCenter">
+                Starting a new server, hold on
+            </div>
             <div class="ConnectStatus" id="ConnectionStatusUpdate">
                 Waiting for status update...
             </div>

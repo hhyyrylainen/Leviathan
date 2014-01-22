@@ -68,14 +68,22 @@ div.ConnectStatus
     height: 30%;
     max-height: 30%;
     overflow: hidden;
-    margin-bottom: 10%;
-    
-
+    margin-top: 60%;
     
     text-align: center;
     
     background-color: #00000090;
 }
+
+
+div.DeadCenter
+{
+    width: auto;
+    height: auto;
+    margin: auto;
+    text-align: center;
+}
+
 
 .PlayerDisplayColour
 {

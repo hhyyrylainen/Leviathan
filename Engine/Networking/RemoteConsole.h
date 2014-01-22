@@ -75,6 +75,9 @@ namespace Leviathan{
 		DLLEXPORT bool IsAwaitingConnections();
 
 
+		//! \brief Returns active number of connections
+		DLLEXPORT size_t GetActiveConnectionCount();
+
 		//! \brief Sets the remote console to close the game if there are no connections
 		//!
 		//! \see CloseIfNoRemoteConsole
@@ -84,7 +87,7 @@ namespace Leviathan{
 		//!
 		//! \return Returns a valid pointer to a RemoteConsoleSession or NULL
 		//! \note The returned pointer will be guaranteed to be only valid while you have guard locked
-		//! \param guard ObjectLock with this RemoteConsole istance
+		//! \param guard ObjectLock with this RemoteConsole instance
 		DLLEXPORT RemoteConsoleSession* GetRemoteConsoleSessionForConnection(ConnectionInfo* connection, ObjectLock &guard);
 
 		DLLEXPORT bool CanOpenNewConnection(ConnectionInfo* connection, shared_ptr<NetworkRequest> request);

@@ -27,7 +27,7 @@ namespace Pong{
 		void StartInputHandling();
 
 		//! \brief Called when the game wants to exit current game/lobby
-		void Disconnect();
+		void Disconnect(const string &reasonstring);
 
 		void AllowPauseMenu();
 

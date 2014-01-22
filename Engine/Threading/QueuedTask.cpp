@@ -31,6 +31,10 @@ DLLEXPORT bool Leviathan::QueuedTask::CanBeRan(){
 DLLEXPORT bool Leviathan::QueuedTask::MustBeRanBefore(int eventtypeidentifier){
 	return eventtypeidentifier == TASK_MUSTBERAN_BEFORE_EXIT;
 }
+
+DLLEXPORT bool Leviathan::QueuedTask::IsRepeating(){
+	return false;
+}
 // ------------------------------------ //
 
 

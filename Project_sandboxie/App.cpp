@@ -51,7 +51,7 @@ void App::CustomizeEnginePostLoad(){
 
 	if(prop1holder.get() != NULL){
 		// set position //
-		tmpprop->SetPos(-2.f, 4.f, 0.f);
+		tmpprop->SetPosComponents(-2.f, 4.f, 0.f);
 	}
 
 	Entity::Brush* tmp;
@@ -61,7 +61,7 @@ void App::CustomizeEnginePostLoad(){
 
 	if(brush1.get() != NULL){
 		// set position //
-		tmp->SetPos(0.f, -0.5f, 0.f);
+		tmp->SetPosComponents(0.f, -0.5f, 0.f);
 	}
 
 
@@ -69,21 +69,21 @@ void App::CustomizeEnginePostLoad(){
 
 	if(brush1.get() != NULL){
 		// set position //
-		tmp->SetPos(1.f, 3.f, 0.f);
+		tmp->SetPosComponents(1.f, 3.f, 0.f);
 	}
 
 	brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), 100.f, &tmp));
 
 	if(brush1.get() != NULL){
 		// set position //
-		tmp->SetPos(0.f, 7.f, 0.f);
+		tmp->SetPosComponents(0.f, 7.f, 0.f);
 	}
 
 	brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), 100.f, &tmp));
 
 	if(brush1.get() != NULL){
 		// set position //
-		tmp->SetPos(-1.f, 10.f, -1.f);
+		tmp->SetPosComponents(-1.f, 10.f, -1.f);
 	}
 	
 	// after loading reset time sensitive timers //

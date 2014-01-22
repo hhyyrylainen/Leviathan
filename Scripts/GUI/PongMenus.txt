@@ -328,7 +328,7 @@ objects {
         s scripts{
             body{
                 // Generics event to detect update //
-                [@Listener="Generic", @Type="ConnectionStatusMessage"]
+                [@Listener="Generic", @Type="ConnectStatusMessage"]
                 int OnGameEnd(BaseGuiObject@ Instance, GenericEvent@ event){
                     // We can get the winning team number for the event //
                     string message = event.GetNamedVars().GetSingleValueByName("Message");

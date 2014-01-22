@@ -230,6 +230,10 @@ DLLEXPORT RemoteConsoleSession* Leviathan::RemoteConsole::GetRemoteConsoleSessio
 	// Didn't find a matching one //
 	return NULL;
 }
+
+DLLEXPORT size_t Leviathan::RemoteConsole::GetActiveConnectionCount(){
+	return RemoteConsoleConnections.size();
+}
 // ------------------ RemoteConsoleExpect ------------------ //
 Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const wstring &name, int token, bool onlylocalhost, const MillisecondDuration 
 	&timeout) : ConnectionName(name), SessionToken(token), OnlyLocalhost(onlylocalhost), TimeoutTime(boost::chrono::steady_clock::now()+timeout)

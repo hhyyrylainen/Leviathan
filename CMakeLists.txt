@@ -102,20 +102,23 @@ endif(NOT Boost_FOUND)
 # Set up referencing of Boost
 include_directories(${Boost_INCLUDE_DIR})
 add_definitions(-DBOOST_ALL_NO_LIB)
-  
+
+# Linking and platform specific
 if(WIN32)
-# we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
-# higher memory for compiling precompiled headers
-add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm216)
+    # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
+    # higher memory for compiling precompiled headers
+    add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm216)
 
-# program database flag for debug
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
+    # program database flag for debug
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
 
+    
+    
 else(WIN32)
     add_definitions(-std=c++11 -std=gnu++11 -fextended-identifiers)
 
     # Linux library linking
-    set(LINUX_LINK_LIBS_TOENGINE Newton RocketCore RocketControls)
+    #set(LINK_LIBS_TOENGINE Newton RocketCore RocketControls)
 
     set(LINUX_LINK_LIBS_ENGINE Angelscript Leap RocketCore RocketControls RocketDebugger Newton 
         sfml-audio sfml-network sfml-system)

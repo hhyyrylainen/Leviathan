@@ -13,7 +13,8 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const wstring &hostname) : HostName(hostname), AddressGot(false), LastUsedID(-1), 
-	LastSentConfirmID(-1), MaxAckReduntancy(1), MyLastSentReceived(-1), LastReceivedPacketTime(0), RestrictType(CONNECTION_RESTRICTION_NONE)
+	LastSentConfirmID(-1), MaxAckReduntancy(1), MyLastSentReceived(-1), LastReceivedPacketTime(-1), RestrictType(CONNECTION_RESTRICTION_NONE),
+	HasReceived(false)
 {
 	// We need to split the port number from the address //
 	WstringIterator itr(hostname);
@@ -30,7 +31,7 @@ DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const wstring &hostname) : H
 
 DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const sf::IpAddress &targetaddress, USHORT port) : HostName(), AddressGot(true), 
 	TargetPortNumber(port), TargetHost(targetaddress), LastUsedID(-1), LastSentConfirmID(-1), MaxAckReduntancy(1), MyLastSentReceived(-1),
-	LastReceivedPacketTime(0), RestrictType(CONNECTION_RESTRICTION_NONE)
+	LastReceivedPacketTime(-1), RestrictType(CONNECTION_RESTRICTION_NONE), HasReceived(false)
 {
 
 }
@@ -98,6 +99,9 @@ DLLEXPORT void Leviathan::ConnectionInfo::Release(){
 
 		// Send a close packet //
 		SendCloseConnectionPacket(guard);
+
+		// Destroy some of our stuff //
+		TargetHost == sf::IpAddress::None;
 	}
 	// Remove us from the queue //
 	NetworkHandler::Get()->_UnregisterConnectionInfo(this);
@@ -433,6 +437,12 @@ movepacketsendattemptonexttry:
 			NetworkHandler::Get()->SafelyCloseConnectionTo(this);
 		}
 
+	} else if(timems > LastSentPacketTime+KEEPALIVE_TIME/1.1f && !HasReceived){
+
+
+		Logger::Get()->Info(L"ConnectionInfo: timing out connection (nothing received) "+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+		// Mark us as closing //
+		NetworkHandler::Get()->SafelyCloseConnectionTo(this);
 	}
 
 }
@@ -483,6 +493,7 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 
 	// Mark as received a packet //
 	LastReceivedPacketTime = Misc::GetTimeMs64();
+	HasReceived = true;
 
 	bool ShouldNotBeMarkedAsReceived = false;
 
@@ -720,6 +731,11 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsTargetHostLocalhost(){
 	// Check does the address match localhost //
 	return TargetHost == sf::IpAddress::LocalHost;
 }
+
+DLLEXPORT wstring Leviathan::ConnectionInfo::GenerateFormatedAddressString() const{
+	return Convert::StringToWstring(TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
+}
+
 // ------------------ SentNetworkThing ------------------ //
 Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponseid, shared_ptr<NetworkRequest> request, shared_ptr<boost::promise<bool>> waitobject, 
 	int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) : PacketNumber(packetid),
@@ -736,6 +752,10 @@ Leviathan::SentNetworkThing::SentNetworkThing(int packetid, shared_ptr<NetworkRe
 	TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata), AttempNumber(attempnumber), RequestStartTime(Misc::GetTimeMs64()), ConfirmReceiveTime(0),
 	IsArequest(false)
 {
+
+}
+
+DLLEXPORT Leviathan::SentNetworkThing::~SentNetworkThing(){
 
 }
 // ------------------ NetworkAckField ------------------ //

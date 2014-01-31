@@ -6,6 +6,8 @@
 #include "Utility/Iterators/WstringIterator.h"
 #include "Utility/DebugVariableNotifier.h"
 #include <boost/assign/list_of.hpp>
+#include <boost/chrono/round.hpp>
+#include "Common/Misc.h"
 
 bool TestMiscCutWstring(const int &tests){
 	bool Failed = false;
@@ -909,6 +911,65 @@ bool TestWstringIterator(const int &tests){
 
 	return Failed;
 }
+
+
+bool TestTaskTiming(const int &tests, Engine* engine){
+
+	bool Failed = false;
+
+	// Make sure all are clear //
+	Engine::Get()->GetThreadingManager()->WaitForAllTasksToFinish();
+
+	int count = 0;
+
+	boost::promise<bool> Imdone;
+
+	vector<__int64> times;
+
+	// Queue some tasks //
+	engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new RepeatCountedDelayedTask(boost::bind<void>([](int &count, boost::promise<bool> &done,
+		__int64 starttime, vector<__int64>* times)
+	{
+		Logger::Get()->Info(L"Test function ran");
+		count++;
+
+		times->push_back(Misc::GetTimeMs64()-starttime);
+
+		if(count == 5)
+			done.set_value(true);
+
+	}, count, boost::ref(Imdone), Misc::GetTimeMs64(), &times), boost::chrono::milliseconds(100), 5)));
+
+	// Get time //
+	auto timenow = Misc::GetThreadSafeSteadyTimePoint();
+	__int64 StartMicro = Misc::GetTimeMs64();
+
+	// Wait for them to finish //
+
+	auto futureobj = Imdone.get_future();
+	
+	while(!futureobj.has_value()){
+		// Allow stuff to run //
+		engine->GetThreadingManager()->WaitForAllTasksToFinish();
+	}
+
+	// Check did it take long enough //
+	auto timepassed = Misc::GetThreadSafeSteadyTimePoint()-timenow;
+	__int64 micropassed = Misc::GetTimeMs64()-StartMicro;
+
+	MillisecondDuration timeasmilli = boost::chrono::round<MillisecondDuration>(timepassed);
+
+	__int64 timeasmilliplain = timeasmilli.count();
+
+	if(timepassed < boost::chrono::milliseconds(400) || timepassed > boost::chrono::milliseconds(600)){
+		// It failed //
+		TESTFAIL;
+	}
+
+
+	return Failed;
+}
+
 
 //bool TestTextRenderer(const int &tests, Engine* engine){
 //

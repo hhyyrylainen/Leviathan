@@ -32,9 +32,10 @@
 
 namespace Leviathan{
 
-	// for storing pointer to owner //
-	class LeviathanApplication;
-
+	//! \brief The main class of the Leviathan Game Engine
+	//!
+	//! Allocates a lot of classes and performs almost all startup operations.
+	//! \note Should be thread safe, but might not actually be
 	class Engine : public Object, public ThreadSafe{
 		// friend so that window can update size //
 		friend Window;
@@ -45,6 +46,7 @@ namespace Leviathan{
 		DLLEXPORT ~Engine();
 
 		DLLEXPORT bool Init(AppDef* definition, NETWORKED_TYPE ntype);
+		//! \todo Add a thread that monitors if the thing gets stuck on a task
 		DLLEXPORT void Release();
 
 		DLLEXPORT void Tick();

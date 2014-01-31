@@ -18,7 +18,7 @@ void RegisterOgreOnThread(){
 
 // ------------------ ThreadingManager ------------------ //
 DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore /*= DEFAULT_THREADS_PER_CORE*/) : AllowStartTasksFromQueue(true),
-	StopProcessing(false), TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT)
+	StopProcessing(false), TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT), AllowConditionalWait(true), AllowRepeats(true)
 {
 	WantedThreadCount = boost::thread::hardware_concurrency()*basethreadspercore;
 
@@ -143,8 +143,11 @@ DLLEXPORT void Leviathan::ThreadingManager::WaitForAllTasksToFinish(){
 	// See if empty right now and loop until it is //
 	while(WaitingTasks.size() != 0){
 
+		// Make the queuer run //
+		TaskQueueNotify.notify_all();
+
 		// Wait for update //
-		TaskQueueNotify.wait(lockit);
+		TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(10));
 	}
 
 	// Wait for threads to empty up //
@@ -184,7 +187,9 @@ DLLEXPORT void Leviathan::ThreadingManager::NotifyTaskFinished(shared_ptr<Queued
 		// Add back to queue //
 		ObjectLock guard(*this);
 
-		WaitingTasks.push_back(task);
+		// Or not if we should be quitting soon //
+		if(AllowRepeats)
+			WaitingTasks.push_back(task);
 	}
 
 
@@ -240,6 +245,19 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 		AllowStartTasksFromQueue = true;
 	}
 }
+
+DLLEXPORT void Leviathan::ThreadingManager::NotifyQueuerThread(){
+	ObjectLock guard(*this);
+	TaskQueueNotify.notify_all();
+}
+
+DLLEXPORT void Leviathan::ThreadingManager::SetDisallowRepeatingTasks(bool disallow){
+	AllowRepeats = disallow;
+}
+
+DLLEXPORT void Leviathan::ThreadingManager::SetDiscardConditionalTasks(bool discard){
+	AllowConditionalWait = !discard;
+}
 // ------------------------------------ //
 void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 
@@ -262,6 +280,9 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 		// Used to iterate again, but just checking if they can be ran (allows more important tasks to run first) //
 		auto nonimportantiter = manager->WaitingTasks.begin();
 
+		// We need some common values for tasks to use for checking if they can run //
+		QueuedTaskCheckValues commontaskcheck;
+
 		// Find an empty thread and queue tasks //
 		for(auto iter = manager->UsableThreads.begin(); iter != manager->UsableThreads.end(); ++iter){
 
@@ -280,7 +301,7 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 					// Check does the task want to run now //
 					if((*taskiter)->MustBeRanBefore(manager->TaksMustBeRanBeforeState)){
 						// Check is allowed to run //
-						if((*taskiter)->CanBeRan()){
+						if((*taskiter)->CanBeRan(&commontaskcheck)){
 							// Run it! //
 							tmptask = (*taskiter);
 							// Erase, might be temporary //
@@ -290,30 +311,44 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 							nonimportantiter = taskiter;
 
 							break;
+						} else if(!manager->AllowConditionalWait){
+							// Discard it //
+							taskiter = manager->WaitingTasks.erase(taskiter);
+							// Just to be safe, TODO: performance could be improved //
+							nonimportantiter = taskiter;
 						}
+					} else if(!manager->AllowConditionalWait){
+						// Discard it //
+						taskiter = manager->WaitingTasks.erase(taskiter);
+						// Just to be safe, TODO: performance could be improved //
+						nonimportantiter = taskiter;
 					}
-					++iter;
+
+					++taskiter;
 				}
 
 				if(!tmptask){
 					// Check with the other iterator, too //
 					for( ; nonimportantiter != manager->WaitingTasks.end(); ){
-						// Check does the task want to run now //
-						if((*nonimportantiter)->MustBeRanBefore(manager->TaksMustBeRanBeforeState)){
-							// Check is allowed to run //
-							if((*nonimportantiter)->CanBeRan()){
-								// Run it! //
-								tmptask = (*nonimportantiter);
-								// Erase, might be temporary //
-								nonimportantiter = manager->WaitingTasks.erase(nonimportantiter);
+						// Check is allowed to run //
+						if((*nonimportantiter)->CanBeRan(&commontaskcheck)){
+							// Run it! //
+							tmptask = (*nonimportantiter);
+							// Erase, might be temporary //
+							nonimportantiter = manager->WaitingTasks.erase(nonimportantiter);
 
-								// Just to be safe, TODO: performance could be improved //
-								taskiter = nonimportantiter;
+							// Just to be safe, TODO: performance could be improved //
+							taskiter = nonimportantiter;
 
-								break;
-							}
+							break;
+						} else if(!manager->AllowConditionalWait){
+							// Discard it //
+							nonimportantiter = manager->WaitingTasks.erase(taskiter);
+							// Just to be safe, TODO: performance could be improved //
+							taskiter = nonimportantiter;
 						}
-						++iter;
+
+						++nonimportantiter;
 					}
 				}
 

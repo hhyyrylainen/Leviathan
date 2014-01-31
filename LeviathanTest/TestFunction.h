@@ -147,6 +147,18 @@ bool TestEngine(Leviathan::Engine* engine){
 	bool Failed = false;
 	int tests = FUNCTIONRUNS_BASE;
 	wstring timername = L"";
+
+	// -------------------- Tasks Functions testing -------------------- //
+	timername = L"QueuedTasks tests running "+Convert::IntToWstring(tests);
+
+	TimingMonitor::StartTiming(timername);
+
+	if(TestTaskTiming(tests, engine)){
+		Logger::Get()->Error(L"Test did NOT succeed, test:");
+		Failed = true;
+	}
+
+	TimingMonitor::StopTiming(timername);
 	// -------------------- Autoupdateable Functions testing -------------------- //
 	timername = L"Autoupdateable tests running "+Convert::IntToWstring(tests);
 

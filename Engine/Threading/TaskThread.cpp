@@ -10,6 +10,9 @@ using namespace Leviathan;
 // ------------------------------------ //
 
 void Leviathan::RunNewThread(TaskThread* thisthread){
+	// First create the thread specific ptr object //
+	TaskThread::ThreadThreadPtr.reset(new ThreadSpecificData(thisthread));
+
 	// We want to have a lock always when running this function //
 
 	boost::unique_lock<ThreadSafe> guard(*thisthread);
@@ -38,17 +41,20 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 			// Run the task //
 			thisthread->SetTask->RunTask();
 
-			// Relock for changing around //
+			// Re-lock for changing around //
 			guard.lock();
 
-			shared_ptr<QueuedTask> tmptask(thisthread->SetTask);
+			// Copy our task to our data object //
+			TaskThread::ThreadThreadPtr->QuickTaskAccess = thisthread->SetTask;
 
 			// Set our task away //
 			thisthread->SetTask.reset();
 
+			guard.unlock();
 			// Notify run finished //
-			ThreadingManager::Get()->NotifyTaskFinished(tmptask);
+			ThreadingManager::Get()->NotifyTaskFinished(TaskThread::ThreadThreadPtr->QuickTaskAccess);
 			// We might have already gotten a new task //
+			guard.lock();
 		}
 	}
 
@@ -133,5 +139,12 @@ DLLEXPORT bool Leviathan::TaskThread::HasRunningTask(){
 	return SetTask.get() != NULL;
 }
 
+DLLEXPORT ThreadSpecificData* Leviathan::TaskThread::GetThreadSpecificThreadObject(){
+	return ThreadThreadPtr.get();
+}
 
+boost::thread_specific_ptr<ThreadSpecificData> Leviathan::TaskThread::ThreadThreadPtr;
 
+Leviathan::ThreadSpecificData::ThreadSpecificData(TaskThread* threadptr) : ThreadObject(threadptr){
+
+}

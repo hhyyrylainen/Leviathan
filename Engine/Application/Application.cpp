@@ -37,13 +37,25 @@ DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::Release(){
-	ObjectLock guard(*this);
-	// set as quitting //
-	Quit = true;
+	{
+		ObjectLock guard(*this);
+		// set as quitting //
+		Quit = true;
 
-	// let engine release itself and then delete it //
-	SAFE_RELEASEDEL(_Engine);
-	// configuration object needs to be destroyed by the program main function //
+		// Nothing else to do if no engine //
+		if(!_Engine)
+			return;
+	}
+
+	// This avoids deadlocking //
+	_Engine->Release();
+
+	{
+		ObjectLock guard(*this);
+		// Delete the already released engine //
+		delete _Engine;
+		_Engine = NULL;
+	}
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){

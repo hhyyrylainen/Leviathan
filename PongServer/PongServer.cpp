@@ -5,6 +5,8 @@
 #endif
 #include "Common/DataStoring/NamedVars.h"
 #include "Application/GameConfiguration.h"
+#include "PongServerNetworking.h"
+#include "Networking/NetworkResponse.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PongServer::PongServer(){
@@ -182,4 +184,13 @@ void Pong::PongServer::MoreCustomScriptTypes(asIScriptEngine* engine){
 
 void Pong::PongServer::MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids){
 
+}
+
+void Pong::PongServer::PreFirstTick(){
+	auto casted = static_cast<PongServerNetworking*>(Leviathan::NetworkHandler::GetInterface());
+	casted->SetServerAllowPlayers(true);
+	casted->SetServerStatus(Leviathan::NETWORKRESPONSE_SERVERSTATUS_RUNNING);
+
+	// Don't want to forget to call this //
+	_Engine->PreFirstTick();
 }

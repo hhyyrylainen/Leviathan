@@ -319,22 +319,22 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	// Implicit casts for normal types //
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_IMPLICIT_VALUE_CAST, "int f() const", 
-		WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<int>), asCALL_GENERIC) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_IMPLICIT_VALUE_CAST, "int8 f() const", 
-		WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<char>), asCALL_GENERIC) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_IMPLICIT_VALUE_CAST, "string f() const", 
+	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "string f() const", 
 		WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<string>), asCALL_GENERIC) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_IMPLICIT_VALUE_CAST, "float f() const", 
+	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "int f() const", 
+		WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<int>), asCALL_GENERIC) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "int8 f() const", 
+		WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<char>), asCALL_GENERIC) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "float f() const", 
 		WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<float>), asCALL_GENERIC) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;

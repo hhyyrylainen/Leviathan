@@ -14,7 +14,7 @@
 
 namespace Leviathan{
 
-
+	//! \todo Improve performance
 	void RunTaskQueuerThread(ThreadingManager* manager);
 
 	//! \brief Manages delayed execution of functions through use of QueuedTask and subclasses
@@ -38,7 +38,22 @@ namespace Leviathan{
 		//! \brief Blocks until all queued tasks are finished
 		//!
 		//! \warning This function will ignore MustBeRanBefore return value by passing TASK_MUSTBERAN_BEFORE_EXIT
+		//! \bug This doesn't properly handle tasks that are repeating
+		//! \todo Maybe add a global thread that runs the queuer once in a while
 		DLLEXPORT void WaitForAllTasksToFinish();
+
+
+		//! \brief Notifies the queuer thread to check task setting
+		DLLEXPORT void NotifyQueuerThread();
+
+
+		//! \brief Disallows repeating tasks to occur again
+		//! \note This should only be called by the Engine class just before quitting
+		DLLEXPORT void SetDisallowRepeatingTasks(bool disallow);
+
+		//! \brief Sets the task queuer to discard all conditional tasks
+		//! \note This should only be called by the Engine
+		DLLEXPORT void SetDiscardConditionalTasks(bool discard);
 
 		//! Called by work threads when they are done
 		DLLEXPORT void NotifyTaskFinished(shared_ptr<QueuedTask> task);
@@ -57,6 +72,12 @@ namespace Leviathan{
 
 		//! Used to allow QueuedTask::MustBeRanBefore function to work, shared between staticaccess worker thread and the main object
 		int TaksMustBeRanBeforeState;
+
+		//! Can tasks be repeated
+		bool AllowRepeats;
+
+		//! Controls whether tasks can be conditional. Setting this to false will remove all tasks that cannot be ran instantly
+		bool AllowConditionalWait;
 
 
 		//! List of the tasks queued by the application

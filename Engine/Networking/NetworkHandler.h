@@ -22,9 +22,6 @@ namespace Leviathan{
 		// So if you set this to 1 this packet is resend if even a single packet send after this is received by the target host
 		PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED};
 
-
-	enum NETWORKED_TYPE {NETWORKED_TYPE_CLIENT, NETWORKED_TYPE_SERVER, NETWORKED_TYPE_MASTER};
-
 	// Used to pass master server info to the application //
 	struct MasterServerInformation{
 		MasterServerInformation(bool iammaster, const wstring &identificationstr) : RequireMaster(false), IAmMyOwnMaster(true), 
@@ -50,7 +47,7 @@ namespace Leviathan{
 		bool IAmMyOwnMaster;
 	};
 
-
+	//! \brief Handles everything related to connections
 	class NetworkHandler : public EngineComponent, public ThreadSafe{
 		friend void RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar);
 		friend void RunTemporaryUpdateConnections(NetworkHandler* instance);
@@ -62,7 +59,7 @@ namespace Leviathan{
 		DLLEXPORT ~NetworkHandler();
 
 		DLLEXPORT virtual bool Init(const MasterServerInformation &info);
-		// This waits for all connections to terminate //
+		// \note This waits for all connections to terminate
 		DLLEXPORT virtual void Release();
 
 		// Call as often as possible to receive responses //
@@ -75,6 +72,11 @@ namespace Leviathan{
 
 		DLLEXPORT shared_ptr<boost::promise<wstring>> QueryMasterServer(const MasterServerInformation &info);
 
+		//! \brief Makes a raw pointer to an ConnectionInfo safe
+		//! \return Returns a safe ptr to the passed ConnectionInfo for using it thread safely
+		DLLEXPORT shared_ptr<ConnectionInfo> GetSafePointerToConnection(ConnectionInfo* unsafeptr);
+
+
 		//! \brief Opens a new connection to the provided address
 		//!
 		//! The input should be in a form that has address:port in it. The address should be like 'google.fi' or '192.168.1.1'
@@ -84,10 +86,18 @@ namespace Leviathan{
 
 
 
-		//! Returns the port to which our socket has been bind //
+		//! Returns the port to which our socket has been bind
 		DLLEXPORT USHORT GetOurPort();
 
+		//! \brief Gets the type of network this program uses
+		//!
+		//! Will usually be NETWORKED_TYPE_CLIENT or NETWORKED_TYPE_SERVER
+		DLLEXPORT NETWORKED_TYPE GetNetworkType();
 
+		//! \brief Marks a connection as closing
+		//!
+		//! The connection will actually close sometime before next packet handling.
+		//! \note If you don't want to segfault you should always call this when you want to close a connection
 		DLLEXPORT virtual void SafelyCloseConnectionTo(ConnectionInfo* to);
 
 		// Common network functions //

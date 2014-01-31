@@ -29,6 +29,10 @@ namespace Pong{
 		//! \brief Called when the game wants to exit current game/lobby
 		void Disconnect(const string &reasonstring);
 
+		//! \brief Connects to a server specified by an address string
+		//! \note Only allows connections to be made to one server at a time (excluding remote console connections)
+		void Connect(const wstring &address);
+
 		void AllowPauseMenu();
 
 		static wstring GenerateWindowTitle();

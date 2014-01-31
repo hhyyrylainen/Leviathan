@@ -12,16 +12,52 @@
 
 namespace Leviathan{
 
+	//! Defines in what way a request was invalid
+	enum NETWORKRESPONSE_INVALIDREASON{
+
+		//! Returned when the connection is anonymous (the other client hasn't requested verified connection)
+		NETWORKRESPONSE_INVALIDREASON_UNAUTHENTICATED,
+		//! Returned when we don't implement the wanted action (for example if we are asked our server status and we aren't a server)
+		NETWORKRESPONSE_INVALIDREASON_UNSUPPORTED
+	};
+
+	//! Defines server join protection status (who can join the server)
+	enum NETWORKRESPONSE_SERVERJOINRESTRICT{
+
+		//! Everyone can join the server 
+		NETWORKRESPONSE_SERVERJOINRESTRICT_NONE,
+		NETWORKRESPONSE_SERVERJOINRESTRICT_WHITELIST,
+		NETWORKRESPONSE_SERVERJOINRESTRICT_INVITE,
+		NETWORKRESPONSE_SERVERJOINRESTRICT_FRIENDS,
+		NETWORKRESPONSE_SERVERJOINRESTRICT_PERMISSIONS,
+		NETWORKRESPONSE_SERVERJOINRESTRICT_CUSTOM
+	};
+
+	//! Allows servers to tell clients what they are doing
+	enum NETWORKRESPONSE_SERVERSTATUS{
+
+		NETWORKRESPONSE_SERVERSTATUS_STARTING,
+		NETWORKRESPONSE_SERVERSTATUS_RUNNING,
+		NETWORKRESPONSE_SERVERSTATUS_SHUTDOWN,
+		NETWORKRESPONSE_SERVERSTATUS_RESTART
+	};
+
+
 	enum NETWORKRESPONSETYPE{
-		// Sent in response to a NETWORKREQUESTTYPE_IDENTIFICATION contains a user readable string, game name, game version and leviathan version strings //
+		//! Sent in response to a NETWORKREQUESTTYPE_IDENTIFICATION contains a user readable string, game name, game version and leviathan version strings
 		NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS,
 		NETWORKRESPONSETYPE_KEEPALIVE,
 		NETWORKRESPONSETYPE_CLOSECONNECTION,
 		NETWORKRESPONSETYPE_REMOTECONSOLECLOSED,
 		NETWORKRESPONSETYPE_REMOTECONSOLEOPENED,
+		NETWORKRESPONSETYPE_INVALIDREQUEST,
+		//! Returns anonymous data about the server
+		NETWORKRESPONSETYPE_SERVERSTATUS,
 		NETWORKRESPONSETYPE_NONE
 	};
 
+	//! Base class for all data objects that can be sent with the NETWORKRESPONSETYPE
+	//! \note Even though it cannot be required by the base class, sub classes should implement a constructor taking in a sf::Packet object
 	class BaseNetworkResponseData{
 	public:
 
@@ -30,6 +66,7 @@ namespace Leviathan{
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) = 0;
 	};
 
+	//! Stores data for NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS
 	class NetworkResponseDataForIdentificationString : public BaseNetworkResponseData{
 	public:
 		DLLEXPORT NetworkResponseDataForIdentificationString(sf::Packet &frompacket);
@@ -38,15 +75,57 @@ namespace Leviathan{
 
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 		
-	protected:
+
 		// Data //
 		wstring UserReadableData;
 		wstring GameName;
 		wstring GameVersionString;
 		wstring LeviathanVersionString;
-
-
 	};
+
+	//! Stores data for NETWORKRESPONSETYPE_INVALIDREQUEST
+	class NetworkResponseDataForInvalidRequest : public BaseNetworkResponseData{
+	public:
+		DLLEXPORT NetworkResponseDataForInvalidRequest(sf::Packet &frompacket);
+		DLLEXPORT NetworkResponseDataForInvalidRequest(NETWORKRESPONSE_INVALIDREASON reason, const wstring &additional = wstring());
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+
+		NETWORKRESPONSE_INVALIDREASON Invalidness;
+		wstring AdditionalInfo;
+	};
+
+	//! Stores data for NETWORKRESPONSETYPE_SERVERSTATUS
+	class NetworkResponseDataForServerStatus : public BaseNetworkResponseData{
+	public:
+		DLLEXPORT NetworkResponseDataForServerStatus(sf::Packet &frompacket);
+		DLLEXPORT NetworkResponseDataForServerStatus(const wstring &servername, bool isjoinable, NETWORKRESPONSE_SERVERJOINRESTRICT whocanjoin,
+			int players, int maxplayers, int bots, NETWORKRESPONSE_SERVERSTATUS currentstatus, int serverflags);
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! Contains the name of the server, should be limited to max 100 letters
+		wstring ServerNameString;
+		//! States if the server is joinable (has started, doesn't take slots into account)
+		bool Joinable;
+
+		//! Defines the type of join authentication the server uses (restricts who can join)
+		NETWORKRESPONSE_SERVERJOINRESTRICT JoinRestriction;
+
+		//! Current human players on the server
+		int Players;
+		//! Maximum human players
+		int MaxPlayers;
+
+		//! Current bots on the server
+		int Bots;
+
+		//! The current status of the server. Used to define what the server is doing
+		NETWORKRESPONSE_SERVERSTATUS ServerStatus;
+
+		//! The flags of the server. These can be used based on the game for example to define game mode or level requirements or something else
+		int AdditionalFlags;
+	};
+
 
 	class NetworkResponse : public Object{
 	public:
@@ -57,6 +136,8 @@ namespace Leviathan{
 
 		// Named "constructors" for different types //
 		DLLEXPORT void GenerateIdentificationStringResponse(NetworkResponseDataForIdentificationString* newddata);
+		DLLEXPORT void GenerateInvalidRequestResponse(NetworkResponseDataForInvalidRequest* newddata);
+		DLLEXPORT void GenerateServerStatusResponse(NetworkResponseDataForServerStatus* newddata);
 		DLLEXPORT void GenerateKeepAliveResponse();
 		DLLEXPORT void GenerateCloseConnectionResponse();
 		DLLEXPORT void GenerateRemoteConsoleOpenedResponse();
@@ -69,6 +150,7 @@ namespace Leviathan{
 		DLLEXPORT sf::Packet GeneratePacketForResponse();
 
 		DLLEXPORT NetworkResponseDataForIdentificationString* GetResponseDataForIdentificationString();
+		DLLEXPORT NetworkResponseDataForServerStatus* GetResponseDataForServerStatus();
 
 		DLLEXPORT int GetTimeOutValue();
 		DLLEXPORT PACKET_TIMEOUT_STYLE GetTimeOutType();

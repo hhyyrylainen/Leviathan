@@ -41,6 +41,16 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
 			ResponseData = new NetworkResponseDataForIdentificationString(receivedresponse);
 		}
 		break;
+	case NETWORKRESPONSETYPE_INVALIDREQUEST:
+		{
+			ResponseData = new NetworkResponseDataForInvalidRequest(receivedresponse);
+		}
+		break;
+	case NETWORKRESPONSETYPE_SERVERSTATUS:
+		{
+			ResponseData = new NetworkResponseDataForServerStatus(receivedresponse);
+		}
+		break;
 	default:
 		{
 			throw ExceptionInvalidArgument(L"packet has invalid type", 0, __WFUNCTION__, L"receivedresponse", Convert::ToWstring(ResponseType));
@@ -55,6 +65,24 @@ DLLEXPORT Leviathan::NetworkResponse::~NetworkResponse(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkResponse::GenerateIdentificationStringResponse(NetworkResponseDataForIdentificationString* newddata){
 	ResponseType = NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
+}
+
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateInvalidRequestResponse(NetworkResponseDataForInvalidRequest* newddata){
+	ResponseType = NETWORKRESPONSETYPE_INVALIDREQUEST;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
+}
+
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateServerStatusResponse(NetworkResponseDataForServerStatus* newddata){
+	ResponseType = NETWORKRESPONSETYPE_SERVERSTATUS;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 
@@ -130,6 +158,12 @@ DLLEXPORT NetworkResponseDataForIdentificationString* Leviathan::NetworkResponse
 		return static_cast<NetworkResponseDataForIdentificationString*>(ResponseData);
 	return NULL;
 }
+
+DLLEXPORT NetworkResponseDataForServerStatus* Leviathan::NetworkResponse::GetResponseDataForServerStatus(){
+	if(ResponseType == NETWORKRESPONSETYPE_SERVERSTATUS && ResponseData)
+		return static_cast<NetworkResponseDataForServerStatus*>(ResponseData);
+	return NULL;
+}
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForIdentificationString::NetworkResponseDataForIdentificationString(sf::Packet &frompacket){
 	// Extract the data from the packet //
@@ -160,4 +194,106 @@ DLLEXPORT Leviathan::NetworkResponseDataForIdentificationString::NetworkResponse
 
 DLLEXPORT void Leviathan::NetworkResponseDataForIdentificationString::AddDataToPacket(sf::Packet &packet){
 	packet << UserReadableData << GameName << GameVersionString << LeviathanVersionString;
+}
+// ------------------ NetworkResponseDataForInvalidRequest ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForInvalidRequest::NetworkResponseDataForInvalidRequest(NETWORKRESPONSE_INVALIDREASON reason, 
+	const wstring &additional /*= wstring()*/) : Invalidness(reason), AdditionalInfo(additional)
+{
+
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForInvalidRequest::NetworkResponseDataForInvalidRequest(sf::Packet &frompacket){
+	// Extract the data from the packet //
+	int tmpextract;
+
+	if(!(frompacket >> tmpextract)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	Invalidness = static_cast<NETWORKRESPONSE_INVALIDREASON>(tmpextract);
+
+	if(!(frompacket >> AdditionalInfo)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForInvalidRequest::AddDataToPacket(sf::Packet &packet){
+	packet << static_cast<int>(Invalidness) << AdditionalInfo;
+}
+// ------------------ NetworkResponseDataForServerStatus ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForServerStatus(const wstring &servername, bool isjoinable, 
+	NETWORKRESPONSE_SERVERJOINRESTRICT whocanjoin, int players, int maxplayers, int bots, NETWORKRESPONSE_SERVERSTATUS currentstatus, 
+	int serverflags) : ServerNameString(servername), Joinable(isjoinable), JoinRestriction(whocanjoin), Players(players), MaxPlayers(maxplayers),
+		Bots(bots), ServerStatus(currentstatus), AdditionalFlags(serverflags)
+{
+	// Check the length //
+	if(ServerNameString.length() > 100){
+
+		Logger::Get()->Warning(L"NetworkResponse: NetworkResponseDataForServerStatus: server name is too long, max 100 characters (is "+
+			Convert::ToWstring(ServerNameString.length())+L") : "+ServerNameString+L" will be truncated:");
+		ServerNameString.resize(100);
+		Logger::Get()->Write(L"\t> "+ServerNameString+L"\n");
+	}
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForServerStatus(sf::Packet &frompacket){
+	// Try to reverse the process //
+	int tmpextract;
+
+	if(!(frompacket >> ServerNameString)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	// Just in case we got an invalid packet check this //
+	if(ServerNameString.size() > 100){
+
+		ServerNameString.resize(100);
+		Logger::Get()->Warning(L"NetworkResponseDataForServerStatus: packet had too long server name string");
+	}
+
+	if(!(frompacket >> Joinable)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	if(!(frompacket >> tmpextract)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	JoinRestriction = static_cast<NETWORKRESPONSE_SERVERJOINRESTRICT>(tmpextract);
+
+	if(!(frompacket >> Players)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	if(!(frompacket >> MaxPlayers)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	if(!(frompacket >> Bots)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	if(!(frompacket >> tmpextract)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	ServerStatus = static_cast<NETWORKRESPONSE_SERVERSTATUS>(tmpextract);
+
+	if(!(frompacket >> AdditionalFlags)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForServerStatus::AddDataToPacket(sf::Packet &packet){
+	packet << ServerNameString << Joinable << static_cast<int>(JoinRestriction) << Players << MaxPlayers << Bots << static_cast<int>(ServerStatus) << AdditionalFlags;
 }

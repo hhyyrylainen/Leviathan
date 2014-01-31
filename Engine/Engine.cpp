@@ -447,6 +447,9 @@ void Leviathan::Engine::Release(){
 
 
 	// Wait for tasks to finish //
+	_ThreadingManager->SetDiscardConditionalTasks(true);
+	_ThreadingManager->SetDisallowRepeatingTasks(true);
+
 	_ThreadingManager->WaitForAllTasksToFinish();
 
 	// destroy worlds //
@@ -494,6 +497,7 @@ void Leviathan::Engine::Release(){
 	SAFE_RELEASEDEL(MainFileHandler);
 
 	// Stop threads //
+
 	_ThreadingManager->WaitForAllTasksToFinish();
 	SAFE_RELEASEDEL(_ThreadingManager);
 
@@ -558,12 +562,16 @@ void Leviathan::Engine::Tick(){
 	// Call the default app tick //
 	Owner->Tick(TimePassed);
 
+	_ThreadingManager->NotifyQueuerThread();
+
 	TickTime = (int)(Misc::GetTimeMs64()-LastFrame);
 }
 
 DLLEXPORT void Leviathan::Engine::PreFirstTick(){
 	// On first tick we need to do some cleanup //
 	_NetworkHandler->StopOwnUpdaterThread();
+
+	Logger::Get()->Info(L"Engine: PreFirstTick: everything fine to start running");
 }
 // ------------------------------------ //
 void Leviathan::Engine::RenderFrame(){
@@ -754,6 +762,11 @@ DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
 
 
 	PassedCommands.clear();
+
+
+	// Now we can set some things that require command line arguments //
+	_RemoteConsole->SetAllowClose();
+
 }
 // ------------------------------------ //
 #ifdef _WIN32

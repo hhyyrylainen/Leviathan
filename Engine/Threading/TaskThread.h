@@ -9,11 +9,21 @@
 #include <boost/thread/detail/thread.hpp>
 #include "Common/ThreadSafe.h"
 #include "QueuedTask.h"
+#include <boost/thread/tss.hpp>
 
 namespace Leviathan{
 
 	void RunNewThread(TaskThread* thisthread);
 
+	struct ThreadSpecificData{
+		ThreadSpecificData(TaskThread* threadptr);
+
+
+		TaskThread* ThreadObject;
+		shared_ptr<QueuedTask> QuickTaskAccess;
+	};
+
+	//! \brief Object used by ThreadingManager to easily create properly initialized threads
 	class TaskThread : public ThreadSafe{
 		friend void RunNewThread(TaskThread* thisthread);
 	public:
@@ -33,6 +43,10 @@ namespace Leviathan{
 		DLLEXPORT bool HasStarted();
 		// Returns true if the thread has a task to run //
 		DLLEXPORT bool HasRunningTask();
+
+		//! \brief Returns thread specific data about QueuedTask and TaskThread object
+		DLLEXPORT static ThreadSpecificData* GetThreadSpecificThreadObject();
+
 	private:
 
 		void _NewThreadEntryRegister(ObjectLock &guard);
@@ -49,6 +63,9 @@ namespace Leviathan{
 		bool StartUpDone;
 		bool KillSelf;
 		boost::thread ThisThread;
+
+		// Stores the thread object for the thread to access //
+		static boost::thread_specific_ptr<ThreadSpecificData> ThreadThreadPtr;
 	};
 
 }

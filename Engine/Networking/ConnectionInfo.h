@@ -32,11 +32,13 @@ namespace Leviathan{
 
 	struct SentNetworkThing{
 
-		// This is the signature for request packets //
-		SentNetworkThing(int packetid, int expectedresponseid, shared_ptr<NetworkRequest> request, shared_ptr<boost::promise<bool>> waitobject, 
+		//! This is the signature for request packets
+		DLLEXPORT SentNetworkThing(int packetid, int expectedresponseid, shared_ptr<NetworkRequest> request, shared_ptr<boost::promise<bool>> waitobject, 
 			int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber = 1);
+		//! Empty destructor to link this in
+		DLLEXPORT ~SentNetworkThing();
 		// This is the signature for response packets //
-		SentNetworkThing(int packetid, shared_ptr<NetworkResponse> response, shared_ptr<boost::promise<bool>> waitobject, int maxtries, 
+		DLLEXPORT SentNetworkThing(int packetid, shared_ptr<NetworkResponse> response, shared_ptr<boost::promise<bool>> waitobject, int maxtries, 
 			PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber = 1);
 
 
@@ -111,7 +113,7 @@ namespace Leviathan{
 
 	//! \brief Class that handles a single connection to another instance
 	//!
-	//! Note: this class does not use reference counting so it it safe to use shared_ptr with this class
+	//! \note this class does not use reference counting so it it safe to use shared_ptr with this class
 	class ConnectionInfo : public BaseNotifier{
 	public:
 		DLLEXPORT ConnectionInfo(const wstring &hostname);
@@ -149,6 +151,11 @@ namespace Leviathan{
 			SendCloseConnectionPacket(guard);
 		}
 
+		//! \brief Returns a nicely formated address string for this connection
+		//!
+		//! \return For example something like "0.0.0.127:2565"
+		DLLEXPORT wstring GenerateFormatedAddressString() const;
+
 		//! Don't call this
 		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
@@ -185,6 +192,8 @@ namespace Leviathan{
 		__int64 LastSentPacketTime;
 		__int64 LastReceivedPacketTime;
 
+		//! With this we can close connections that have never received anything //
+		bool HasReceived;
 
 		// Sent packets that haven't been confirmed as arrived //
 		std::list<shared_ptr<SentNetworkThing>> WaitingRequests;

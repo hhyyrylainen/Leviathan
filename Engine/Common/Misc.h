@@ -15,6 +15,10 @@ namespace Leviathan{
 		///time functions
 		DLLEXPORT static __int64 GetTimeMs64();
 		DLLEXPORT static __int64 GetTimeMicro64();
+
+		DLLEXPORT static boost::chrono::steady_clock::time_point GetThreadSafeSteadyTimePoint();
+
+
 		///reduce code
 		template<typename T>
 		DLLEXPORT static bool IsNumber(T& Value){

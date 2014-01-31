@@ -29,6 +29,9 @@ namespace Pong{
 		static void CheckGameConfigurationVariables(GameConfiguration* configobj);
 		static void CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
 
+		//! Used to set the server status as joinable (it has started)
+		virtual void PreFirstTick();
+
 	protected:
 
 		virtual void ServerCheckEnd();

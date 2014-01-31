@@ -36,7 +36,8 @@ namespace Pong{
 		friend Arena;
 	public:
 		BasePongParts(bool isserver) : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), ScoreLimit(20),
-			BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData("GameConfiguration"), GamePaused(false), GameAI(NULL)
+			BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData(new Leviathan::SimpleDatabase("GameConfiguration")), 
+			GamePaused(false), GameAI(NULL)
 		{
 			StaticAccess = this;
 
@@ -182,7 +183,7 @@ playrscorelistupdateendlabel:
 		}
 
 		Leviathan::SimpleDatabase* GetGameDatabase(){
-			return &GameConfigurationData;
+			return GameConfigurationData.get();
 		}
 		Leviathan::GameWorld* GetGameWorld(){
 			return WorldOfPong.get();
@@ -307,7 +308,7 @@ playrscorelistupdateendlabel:
 		int StuckThresshold;
 
 		// Configuration data //
-		Leviathan::SimpleDatabase GameConfigurationData;
+		shared_ptr<Leviathan::SimpleDatabase> GameConfigurationData;
 
 		vector<PlayerSlot*> PlayerList;
 
@@ -340,7 +341,9 @@ playrscorelistupdateendlabel:
 
 			QUICKTIME_THISSCOPE;
 
-			_Engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](Leviathan::SimpleDatabase &GameConfigurationData) -> void{
+			_Engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
+				shared_ptr<Leviathan::SimpleDatabase> GameConfigurationData) -> void
+			{
 
 				wstring savefile;
 
@@ -349,7 +352,7 @@ playrscorelistupdateendlabel:
 
 				assert(vars->GetValueAndConvertTo<wstring>(L"GameDatabase", savefile) && "invalid game variable configuration, no GameDatabase");
 
-				GameConfigurationData.LoadFromFile(savefile);
+				GameConfigurationData->LoadFromFile(savefile);
 				Logger::Get()->Info(L"Loaded game configuration database");
 
 			}, GameConfigurationData))));

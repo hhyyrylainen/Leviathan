@@ -8,6 +8,7 @@
 #include "NetworkResponse.h"
 #include "ConnectionInfo.h"
 #include "RemoteConsole.h"
+#include "Application/AppDefine.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkInterface::NetworkInterface(){
@@ -39,10 +40,16 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 		{
 			// Let's send our identification string //
 			shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), PACKAGE_TIMEOUT_STYLE_TIMEDMS, 500));
+
+			// Fetch the data from the configuration object //
+			wstring userreadable, gamename, gameversion;
+
+			AppDef::GetDefault()->GetGameIdentificationData(userreadable, gamename, gameversion);
+
 			// Set the right data //
-			tmpresponse->GenerateIdentificationStringResponse(new NetworkResponseDataForIdentificationString(L"TODO: this", L"TODO: fetch pong",
-				L"TODO: get version", LEVIATHAN_VERSIONS));
-			connectiontosendresult->SendPacketToConnection(tmpresponse, 10);
+			tmpresponse->GenerateIdentificationStringResponse(new NetworkResponseDataForIdentificationString(userreadable, gamename, gameversion, 
+				LEVIATHAN_VERSIONS));
+			connectiontosendresult->SendPacketToConnection(tmpresponse, 3);
 
 			return true;
 		}
@@ -74,7 +81,9 @@ bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkR
 	case NETWORKRESPONSETYPE_CLOSECONNECTION:
 		{
 			// This connection should be closed //
-			Logger::Get()->Info(L"NetworkInterface: dropping connection due to receiving a connection close packet");
+			Logger::Get()->Info(L"NetworkInterface: dropping connection due to receiving a connection close packet ("+
+				connection->GenerateFormatedAddressString()+L")");
+
 			NetworkHandler::Get()->SafelyCloseConnectionTo(connection);
 			return true;
 		}
@@ -94,6 +103,7 @@ DLLEXPORT bool Leviathan::NetworkInterface::CanConnectionTerminate(ConnectionInf
 	// By default allow connections to close //
 	return true;
 }
-
-
-
+// ------------------------------------ //
+void Leviathan::NetworkInterface::_SetNetworkType(NETWORKED_TYPE ntype){
+	OurNetworkType = ntype;
+}

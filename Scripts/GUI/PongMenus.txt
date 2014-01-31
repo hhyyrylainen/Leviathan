@@ -273,7 +273,7 @@ objects {
                     Instance.GetOwningManager().SetCollectionState("GameplayHUD", false);
                     Instance.GetOwningManager().SetCollectionState("PauseMenu", false);
                     
-                    GetPongGame().Disconnect();
+                    GetPongGame().Disconnect("Player disconnect button");
                     
                     return 1;
                 }
@@ -315,7 +315,7 @@ objects {
                 [@Listener="OnClick"]
                 int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
                     // close the game //
-                    GetPongGame().Disconnect();
+                    GetPongGame().Disconnect("Player disconnect button");
                     
                     return 1;
                 }
@@ -331,8 +331,8 @@ objects {
                 [@Listener="Generic", @Type="ConnectStatusMessage"]
                 int OnGameEnd(BaseGuiObject@ Instance, GenericEvent@ event){
                     // We can get the winning team number for the event //
-                    string message = event.GetNamedVars().GetSingleValueByName("Message");
-                    
+                    string message = string(event.GetNamedVars().GetSingleValueByName("Message"));
+                    Print("Got status message: "+message);
                     Instance.SetInternalElementRML(message);
                     return 1;
                 }
@@ -356,7 +356,7 @@ objects {
                 [@Listener="Generic", @Type="MatchEnded"]
                 int OnGameEnd(BaseGuiObject@ Instance, GenericEvent@ event){
                     // We can get the winning team number for the event //
-                    int winningteam = event.GetNamedVars().GetSingleValueByName("WinningTeam");
+                    int winningteam = int(event.GetNamedVars().GetSingleValueByName("WinningTeam"));
                     
                     string text = "<p>Team "+winningteam;
                     
@@ -427,7 +427,7 @@ objects {
                     Instance.GetOwningManager().SetCollectionState("MainMenu", true);
                     Instance.GetOwningManager().SetCollectionState("Menus", true);
                     
-                    GetPongGame().Disconnect();
+                    GetPongGame().Disconnect("Player disconnect button");
                     
                     return 1;
                 }

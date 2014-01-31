@@ -5,9 +5,10 @@
 #endif
 #include "ConnectionInfo.h"
 #include "Application\Application.h"
+#include "Common\Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::RemoteConsole::RemoteConsole() : CloseIfNoRemoteConsole(false){
+DLLEXPORT Leviathan::RemoteConsole::RemoteConsole() : CloseIfNoRemoteConsole(false), CanClose(false){
 	staticinstance = this;
 }
 
@@ -24,7 +25,7 @@ RemoteConsole* Leviathan::RemoteConsole::staticinstance = NULL;
 DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
 	ObjectLock guard(*this);
 	// Check awaiting connections //
-	auto timenow = boost::chrono::steady_clock::now();
+	auto timenow = Misc::GetThreadSafeSteadyTimePoint();
 
 	for(size_t i = 0; i < AwaitingConnections.size(); i++){
 		if(AwaitingConnections[i]->TimeoutTime < timenow){
@@ -37,7 +38,7 @@ DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
 	}
 
 	// Special checks //
-	if(CloseIfNoRemoteConsole){
+	if(CloseIfNoRemoteConsole && CanClose){
 		// Send close to application if no connection (or waiting for one) //
 		if(AwaitingConnections.size() == 0 && RemoteConsoleConnections.size() == 0){
 			// Time to close //
@@ -50,7 +51,7 @@ DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
 	for(auto iter = RemoteConsoleConnections.begin(); iter != RemoteConsoleConnections.end(); ){
 		if((*iter)->TerminateSession){
 
-			Logger::Get()->Info(L"RemoteConsole: removing kill-queued session, token: "+(*iter)->SessionToken);
+			Logger::Get()->Info(L"RemoteConsole: removing kill-queued session, token: "+Convert::ToWstring((*iter)->SessionToken));
 			iter = RemoteConsoleConnections.erase(iter);
 		} else {
 			++iter;
@@ -183,12 +184,10 @@ DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleRequestPacket(shared
 			Logger::Get()->Info(L"RemoteConsole: closing connection due to close request");
 		}
 		break;
-
+	default:
+		DEBUG_BREAK;
 
 	}
-
-
-	DEBUG_BREAK;
 }
 
 DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection, 
@@ -234,9 +233,27 @@ DLLEXPORT RemoteConsoleSession* Leviathan::RemoteConsole::GetRemoteConsoleSessio
 DLLEXPORT size_t Leviathan::RemoteConsole::GetActiveConnectionCount(){
 	return RemoteConsoleConnections.size();
 }
+
+DLLEXPORT ConnectionInfo* Leviathan::RemoteConsole::GetUnsafeConnectionForRemoteConsoleSession(const wstring &name){
+	ObjectLock guard(*this);
+	// Loop over and compare names //
+	for(size_t i = 0; i < RemoteConsoleConnections.size(); i++){
+		if(RemoteConsoleConnections[i]->ConnectionName == name){
+			// Found a matching one //
+			return RemoteConsoleConnections[i]->GetConnection();
+		}
+	}
+
+	// Didn't find a matching one //
+	return NULL;
+}
+// ------------------------------------ //
+void Leviathan::RemoteConsole::SetAllowClose(){
+	CanClose = true;
+}
 // ------------------ RemoteConsoleExpect ------------------ //
 Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const wstring &name, int token, bool onlylocalhost, const MillisecondDuration 
-	&timeout) : ConnectionName(name), SessionToken(token), OnlyLocalhost(onlylocalhost), TimeoutTime(boost::chrono::steady_clock::now()+timeout)
+	&timeout) : ConnectionName(name), SessionToken(token), OnlyLocalhost(onlylocalhost), TimeoutTime(Misc::GetThreadSafeSteadyTimePoint()+timeout)
 {
 
 }

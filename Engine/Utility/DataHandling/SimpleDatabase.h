@@ -15,10 +15,11 @@ namespace Leviathan{
 	typedef std::map<wstring, shared_ptr<std::vector<shared_ptr<SimpleDatabaseRowObject>>>> SimpleDatabaseObject;
 
 
-	// Class that can be used to pass databases to Rocket //
-	// TODO: make a version that doesn't use Rocket
+	//! A class that can be used to pass databases to Rocket and generally keeping simple databases 
+	//! \warning Do NOT use this class as non-pointer objects (because linking will fail)
 	class SimpleDatabase : public Object, public Rocket::Controls::DataSource{
 	public:
+		//! \brief Creates a new database. Should be used as pointer
 		DLLEXPORT SimpleDatabase(const string &rocketname);
 		DLLEXPORT virtual ~SimpleDatabase();
 

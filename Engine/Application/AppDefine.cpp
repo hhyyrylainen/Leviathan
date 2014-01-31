@@ -104,6 +104,12 @@ DLLEXPORT AppDef& Leviathan::AppDef::SetApplicationIdentification(const wstring 
 	return *this;
 }
 
+DLLEXPORT void Leviathan::AppDef::GetGameIdentificationData(wstring &userreadable, wstring &gamename, wstring &gameversion){
+	userreadable = UserReadableGame;
+	gamename = Game;
+	gameversion = GameVersion;
+}
+
 // ------------------ WindowDataDetails ------------------ //
 #ifdef _WIN32
 Leviathan::WindowDataDetails::WindowDataDetails(const wstring &title, const int &width, const int &height, const bool &windowed,

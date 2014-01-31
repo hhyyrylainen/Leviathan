@@ -93,6 +93,22 @@ __int64 Misc::GetTimeMicro64()
 
 }
 
+DLLEXPORT boost::chrono::steady_clock::time_point Leviathan::Misc::GetThreadSafeSteadyTimePoint(){
+	// The Boost function may assert so we need to pass error object to it //
+	boost::system::error_code timerror;
+
+	auto result = boost::chrono::steady_clock::now(timerror);
+
+	// Check error code //
+	if(timerror){
+		// Probably caused an error //
+		Logger::Get()->Warning(L"Misc: GetTHreadSafeSteadyTimePoint: failed to get system time from Boost, recursing");
+		// Let's fix this by recursing and causing a stack overflow
+		return GetThreadSafeSteadyTimePoint();
+	}
+
+	return result;
+}
 
 
 DLLEXPORT void Leviathan::Misc::KillThread(boost::thread &threadtokill){

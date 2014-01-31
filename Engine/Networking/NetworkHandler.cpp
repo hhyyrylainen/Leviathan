@@ -20,6 +20,8 @@ DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, Networ
 {
 	instance = this;
 	interfaceinstance = packethandler;
+	// Set our type to the NetworkInteface //
+	interfaceinstance->_SetNetworkType(AppType);
 }
 
 DLLEXPORT Leviathan::NetworkHandler::~NetworkHandler(){
@@ -330,7 +332,7 @@ shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mut
 	return shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>>(
 		new boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>(SocketMutex));
 }
-
+// ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkHandler::SafelyCloseConnectionTo(ConnectionInfo* to){
 	ObjectLock guard(*this);
 
@@ -349,17 +351,29 @@ DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(ObjectLock &gu
 		// Close it //
 		ConnectionsToTerminate[i]->Release();
 		// The connection will automatically remove itself from the vector //
+
+		// But if we have opened it we need to delete our pointer //
+		for(size_t a = 0; a < AutoOpenedConnections.size(); a++){
+			if(AutoOpenedConnections[a].get() == ConnectionsToTerminate[i]){
+				AutoOpenedConnections.erase(AutoOpenedConnections.begin()+a);
+				break;
+			}
+		}
 	}
 
 	// All are handled, clear them //
 	ConnectionsToTerminate.clear();
 }
-
+// ------------------------------------ //
 DLLEXPORT USHORT Leviathan::NetworkHandler::GetOurPort(){
 	ObjectLock guard(*this);
 	return _Socket.getLocalPort();
 }
 
+DLLEXPORT NETWORKED_TYPE Leviathan::NetworkHandler::GetNetworkType(){
+	return AppType;
+}
+// ------------------------------------ //
 DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo(const wstring &targetaddress){
 	// Create object //
 	shared_ptr<ConnectionInfo> tmpconnection(new ConnectionInfo(targetaddress));
@@ -373,6 +387,15 @@ DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo
 	AutoOpenedConnections.push_back(tmpconnection);
 
 	return tmpconnection;
+}
+
+DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetSafePointerToConnection(ConnectionInfo* unsafeptr){
+	for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
+		if(iter->get() == unsafeptr)
+			return *iter;
+	}
+
+	return NULL;
 }
 // ------------------------------------ //
 void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar){

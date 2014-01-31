@@ -14,7 +14,7 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int
 #ifdef _DEBUG
 	switch(TypeOfRequest){
 		// With these cases not having extra data is valid //
-	case NETWORKREQUESTTYPE_IDENTIFICATION: case NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE:
+	case NETWORKREQUESTTYPE_IDENTIFICATION: case NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE: case NETWORKREQUESTTYPE_SERVERSTATUS:
 		return;
 	default:
 		assert(0 && "trying to create a request which requires extra data without providing any extra data!");

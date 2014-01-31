@@ -10,7 +10,13 @@
 
 namespace Leviathan{
 
+
+	enum NETWORKED_TYPE {NETWORKED_TYPE_CLIENT, NETWORKED_TYPE_SERVER, NETWORKED_TYPE_MASTER};
+
+	//! \brief Class that encapsulates common networking functionality that is required by all networked programs
+	//! \see NetworkServerInterface
 	class NetworkInterface{
+		friend NetworkHandler;
 	public:
 		DLLEXPORT NetworkInterface();
 		DLLEXPORT virtual ~NetworkInterface();
@@ -50,6 +56,10 @@ namespace Leviathan{
 		DLLEXPORT virtual bool CanConnectionTerminate(ConnectionInfo* connection);
 
 
+
+
+
+
 	protected:
 
 		//! \brief Utility function for subclasses to call for default handling
@@ -60,6 +70,15 @@ namespace Leviathan{
 		//!
 		//! Handles default types of response packages and returns true if processed.
 		DLLEXPORT bool _HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived);
+
+
+		//! \brief Called by NetworkHandler to set our NETWORK_TYPE
+		//! \warning DO NOT change this value after starting
+		void _SetNetworkType(NETWORKED_TYPE ntype);
+
+		// ------------------------------------ //
+
+		NETWORKED_TYPE OurNetworkType;
 
 
 	};

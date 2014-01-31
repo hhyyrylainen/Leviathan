@@ -4,6 +4,7 @@
 #include "PongGame.h"
 #endif
 #include "add_on/autowrapper/aswrappedcall.h"
+#include "Networking/ConnectionInfo.h"
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
@@ -50,6 +51,11 @@ std::wstring Pong::PongGame::GenerateWindowTitle(){
 	return wstring(L"Pong version " GAME_VERSIONS L" Leviathan " LEVIATHAN_VERSIONS);
 }
 // ------------------------------------ //
+// This avoids using pointer to pointer (pointer/reference to shared_ptr) //
+struct TmpPassTaskObject{
+	shared_ptr<Leviathan::SentNetworkThing> PossibleRequest;
+};
+
 int Pong::PongGame::StartServer(){
 	// Start the server process //
 	ObjectLock guard(*this);
@@ -147,9 +153,103 @@ int Pong::PongGame::StartServer(){
 			return;
 		}
 
+		Leviathan::ConnectionInfo* tmpconnection = RemoteConsole::Get()->GetUnsafeConnectionForRemoteConsoleSession(L"ServerConsole");
+
 		Logger::Get()->Info(L"Server started successfully");
 		EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
 			new NamedVariableList(L"Message", new VariableBlock(string("Server started, awaiting proper startup")))))));
+
+		// Add repeating timed task that checks if the server is up and properly running //
+		Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<Leviathan::QueuedTask>(new Leviathan::RepeatingDelayedTask(boost::bind<void>(
+			[](Leviathan::ConnectionInfo* unsafeptr, shared_ptr<TmpPassTaskObject> taskdata) -> void
+		{
+			// Get a safe pointer //
+			auto safeptr = NetworkHandler::Get()->GetSafePointerToConnection(unsafeptr);
+
+			if(!safeptr){
+				// Destroy the attempt //
+
+				shared_ptr<QueuedTask> tmptask = TaskThread::GetThreadSpecificThreadObject()->QuickTaskAccess;
+
+				auto tmpptr = dynamic_cast<RepeatingDelayedTask*>(tmptask.get());
+				assert(tmpptr != NULL && "this is not what I wanted, passed wrong task object to task");
+
+				tmpptr->SetRepeatStatus(false);
+
+				// Queue disconnect //
+				EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+					new NamedVariableList(L"Message", new VariableBlock(string("Server connection closed unexpectedly")))))));
+
+				return;
+			}
+
+			// Send state request //
+			if(!taskdata->PossibleRequest){
+				// Send a new request //
+
+				shared_ptr<Leviathan::NetworkRequest> tmprequest(new NetworkRequest(NETWORKREQUESTTYPE_SERVERSTATUS));
+
+				taskdata->PossibleRequest = safeptr->SendPacketToConnection(tmprequest, 2);
+				return;
+			}
+
+			// Check if the request is ready //
+			if(taskdata->PossibleRequest->WaitForMe->get_future().has_value()){
+
+				auto response = taskdata->PossibleRequest->GotResponse;
+
+				if(response){
+					// Check what we got //
+					if(response->GetTypeOfResponse() == NETWORKRESPONSETYPE_SERVERSTATUS){
+
+						auto responsedata = response->GetResponseDataForServerStatus();
+
+						if(responsedata){
+							// Check is it joinable //
+							if(responsedata->Joinable){
+								// Stop repeating the task //
+								auto tmpptr = dynamic_cast<RepeatingDelayedTask*>(TaskThread::GetThreadSpecificThreadObject()->QuickTaskAccess.get());
+								assert(tmpptr != NULL && "this is not what I wanted, passed wrong task object to task");
+
+								tmpptr->SetRepeatStatus(false);
+
+								EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+									new NamedVariableList(L"Message", new VariableBlock(string("Attempting to connect in 1 second...")))))));
+
+
+								// Queue a connect to the server //
+								Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<Leviathan::QueuedTask>(new Leviathan::DelayedTask(
+									boost::bind(&PongGame::Connect, PongGame::Get(), wstring(safeptr->GenerateFormatedAddressString())), MillisecondDuration(1000))));
+
+							} else {
+								EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+									new NamedVariableList(L"Message", new VariableBlock(string("Server still starting")))))));
+							}
+
+						} else {
+							EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+								new NamedVariableList(L"Message", new VariableBlock(string("Invalid packet!")))))));
+						}
+					}
+
+				} else {
+
+					EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+						new NamedVariableList(L"Message", new VariableBlock(string("Request to server timed out, resending...")))))));
+				}
+
+				// Reset the sent request to resend it //
+				taskdata->PossibleRequest.reset();
+
+				return;
+			}
+
+			// We are waiting for the request //
+			EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+				new NamedVariableList(L"Message", new VariableBlock(string("Waiting for the server to respond to our status request")))))));
+
+
+		}, tmpconnection, shared_ptr<TmpPassTaskObject>(new TmpPassTaskObject())), boost::chrono::milliseconds(50))));
 
 
 	}, Leviathan::RemoteConsole::Get()), boost::bind<bool>([](Leviathan::RemoteConsole* justforperformance) -> bool{
@@ -304,4 +404,15 @@ void Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 
 void Pong::PongGame::MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids){
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("PongGame"), L"PongGame"));
+}
+
+void Pong::PongGame::Connect(const wstring &address){
+	Logger::Get()->Info(L"About to connect to address "+address);
+
+
+
+
+	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+		new NamedVariableList(L"Message", new VariableBlock(string("Opening connection to server at "+address)))))));
+
 }

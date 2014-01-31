@@ -46,10 +46,10 @@
             </span>
             <span class="MenuOption Dangerous"><p id="LobbyDisconnect">Disconnect</p></span>
         </div>
-        <div class="Hidden" id="ServerConnectScreen">
-            <div class="DeadCenter">
+        <div class="Hidden FullScreen" id="ServerConnectScreen">
+            <span class="DeadCenter" style="position: absolute;">
                 Starting a new server, hold on
-            </div>
+            </span>
             <div class="ConnectStatus" id="ConnectionStatusUpdate">
                 Waiting for status update...
             </div>

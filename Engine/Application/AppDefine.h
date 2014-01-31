@@ -109,6 +109,9 @@ namespace Leviathan{
 		DLLEXPORT void StoreWindowDetails(const wstring &title, const bool &windowborder, LeviathanApplication* appvirtualptr);
 #endif
 
+
+		DLLEXPORT void GetGameIdentificationData(wstring &userreadable, wstring &gamename, wstring &gameversion);
+
 	protected:
 
 		unique_ptr<NamedVars> ConfigurationValues;

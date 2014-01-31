@@ -42,6 +42,8 @@ namespace Leviathan{
 	//!
 	//! Doesn't actually use reference counting. Inherits BaseNotifiable to be able to receive messages when ConnectionInfo closes
 	class RemoteConsole : public BaseNotifiable{
+		friend Engine;
+
 		struct RemoteConsoleExpect{
 			RemoteConsoleExpect(const wstring &name, int token, bool onlylocalhost, const MillisecondDuration &timeout);
 
@@ -78,6 +80,11 @@ namespace Leviathan{
 		//! \brief Returns active number of connections
 		DLLEXPORT size_t GetActiveConnectionCount();
 
+
+		//! \brief Gets the corresponding ConnectionInfo object from a RemoteConsoleSession session indicated by name
+		//! \warning The object can be already released or maybe even deleted. Use NetworkHandler::GetSafePointerToConnection to make it safe to use
+		DLLEXPORT ConnectionInfo* GetUnsafeConnectionForRemoteConsoleSession(const wstring &name);
+
 		//! \brief Sets the remote console to close the game if there are no connections
 		//!
 		//! \see CloseIfNoRemoteConsole
@@ -100,6 +107,11 @@ namespace Leviathan{
 		//! Do not actually call this. \todo create BaseNotifiable that is separate from BaseObject
 		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
+	protected:
+
+		//! \brief Called by Engine after command line has been processed
+		void SetAllowClose();
+
 	private:
 
 		// Used to detect when a connection has closed //
@@ -116,6 +128,9 @@ namespace Leviathan{
 		// Special command variables //
 		//! Sends a close signal to the application if has no AwaitingConnections or RemoteConsoleConnections
 		bool CloseIfNoRemoteConsole;
+
+		//! Prevents the program from closing before receiving the wanted connection info
+		bool CanClose;
 
 
 		static RemoteConsole* staticinstance;

@@ -106,18 +106,18 @@
 // Also link the Newton library because it seems to be needed for some things //
 #pragma comment(lib, "newton_d.lib")
 // Leaving these out causes linker errors for some reason
-#pragma comment(lib, "RocketCore_d.lib")
-#pragma comment(lib, "RocketControls_d.lib")
-#pragma comment(lib, "RocketDebugger_d.lib")
+//#pragma comment(lib, "RocketCore_d.lib")
+//#pragma comment(lib, "RocketControls_d.lib")
+//#pragma comment(lib, "RocketDebugger_d.lib")
 
 #else
 #pragma comment(lib, "Engine.lib")
 // Also link the Newton library because it seems to be needed for some things //
 #pragma comment(lib, "newton.lib")
 // Leaving these out causes linker errors for some reason
-#pragma comment(lib, "RocketCore.lib")
-#pragma comment(lib, "RocketControls.lib")
-#pragma comment(lib, "RocketDebugger.lib")
+//#pragma comment(lib, "RocketCore.lib")
+//#pragma comment(lib, "RocketControls.lib")
+//#pragma comment(lib, "RocketDebugger.lib")
 
 #endif
 #endif

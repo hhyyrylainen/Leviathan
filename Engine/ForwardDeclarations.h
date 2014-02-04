@@ -14,6 +14,26 @@ namespace Leviathan{
 		class GuiManager;
 	}
 
+	namespace Entity{
+
+		class BaseNotifierEntity;
+		class BaseNotifiableEntity;
+		class Prop;
+		class Brush;
+		struct TrackControllerPosition;
+		class TrackEntityController;
+		struct TrailProperties;
+		class TrailEmitter;
+	}
+
+
+	class BaseEntityController;
+	class BaseNotifiableAll;
+	class BaseNotifierAll;
+	class BaseNotifierEntity;
+	class BaseNotifiableEntity;
+	template<class ParentType, class ChildType> class BaseNotifier;
+	template<class ParentType, class ChildType> class BaseNotifiable;
 	class RemoteConsole;
 	class NetworkRequest;
 	class NetworkResponse;

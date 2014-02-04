@@ -56,7 +56,10 @@ namespace Leviathan{
 		DLLEXPORT virtual bool CanConnectionTerminate(ConnectionInfo* connection);
 
 
-
+		//! \brief Should be used to update various network interfaces
+		//! \note This NetworkInterface doesn't need any ticking, but NetworkClientInterface does
+		//! \see NetworkClientInterface::UpdateClientStatus
+		DLLEXPORT virtual void TickIt() = 0;
 
 
 
@@ -75,7 +78,6 @@ namespace Leviathan{
 		//! \brief Called by NetworkHandler to set our NETWORK_TYPE
 		//! \warning DO NOT change this value after starting
 		void _SetNetworkType(NETWORKED_TYPE ntype);
-
 		// ------------------------------------ //
 
 		NETWORKED_TYPE OurNetworkType;

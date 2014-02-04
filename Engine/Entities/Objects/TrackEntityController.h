@@ -76,7 +76,7 @@ namespace Leviathan{ namespace Entity{
 		void _ApplyTrackPositioning(float timestep);
 
 		// Callback for detecting node unlinks //
-		virtual void _OnNotifiableDisconnected(BaseNotifiable* childtoremove);
+		virtual void _OnNotifiableDisconnected(BaseNotifiableEntity* childtoremove);
 		// ------------------------------------ //
 		// Number of the node that has been reached //
 		int ReachedNode;

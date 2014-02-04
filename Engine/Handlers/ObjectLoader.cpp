@@ -209,7 +209,7 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const 
 }
 // ------------------ Complex entity loading ------------------ //
 DLLEXPORT int Leviathan::ObjectLoader::LoadTrackEntityControllerToWorld(GameWorld* world, std::vector<Entity::TrackControllerPosition> &initialtrack, 
-	BaseNotifiable* controllable, Entity::TrackEntityController** createdinstance)
+	BaseNotifiableEntity* controllable, Entity::TrackEntityController** createdinstance)
 {
 	// Construct the object //
 	unique_ptr<Entity::TrackEntityController> tmpptr(new Entity::TrackEntityController(world));
@@ -221,7 +221,8 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadTrackEntityControllerToWorld(GameWorl
 	}
 
 	// Link object //
-	tmpptr->ConnectToNotifiable(controllable);
+	if(controllable)
+		tmpptr->ConnectToNotifiable(controllable);
 
 	// Initialize //
 	if(!tmpptr->Init()){

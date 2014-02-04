@@ -6,9 +6,9 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "BaseNotifiable.h"
-#include "BaseNotifier.h"
 #include "BasePositionable.h"
+#include "BaseNotifiableEntity.h"
+#include "BaseNotifierEntity.h"
 
 
 #define BASEPARENTABLE_CUSTOMMESSAGE_DATA_CHECK		{if(entitycustommessagetype >= ENTITYCUSTOMMESSAGETYPE_PARENTPOSITIONUPDATED && entitycustommessagetype <= ENTITYCUSTOMMESSAGETYPE_PARENTCONNECTED){if(BaseParentableCustomMessage(entitycustommessagetype, dataptr)) return true;}}
@@ -19,7 +19,7 @@ namespace Leviathan{
 
 	// This class can be inherited to be able to have non-physics controlled child objects and be parentable to other objects //
 	// \todo create physical version of this class using constraints
-	class BaseParentable : public BaseNotifiable, public BaseNotifier, virtual public BasePositionable{
+	class BaseParentable : public BaseNotifiableEntity, public BaseNotifierEntity, virtual public BasePositionable{
 	public:
 		DLLEXPORT BaseParentable();
 		DLLEXPORT virtual ~BaseParentable();

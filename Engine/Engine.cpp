@@ -738,8 +738,8 @@ DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
 					continue;
 				}
 
-				// Create a connection //
-				shared_ptr<ConnectionInfo> tmpconnection = NetworkHandler::Get()->OpenConnectionTo(*topart);
+				// Create a connection (or potentially use an existing one) //
+				shared_ptr<ConnectionInfo> tmpconnection = NetworkHandler::Get()->GetOrCreatePointerToConnection(*topart);
 
 				// Tell remote console to open a command to it //
 				if(tmpconnection){

@@ -14,7 +14,7 @@
 #include "Common/ThreadSafe.h"
 #include <boost/thread/future.hpp>
 #include "NetworkHandler.h"
-#include "Entities/Bases/BaseNotifier.h"
+#include "Common/BaseNotifier.h"
 
 namespace Leviathan{
 
@@ -114,7 +114,7 @@ namespace Leviathan{
 	//! \brief Class that handles a single connection to another instance
 	//!
 	//! \note this class does not use reference counting so it it safe to use shared_ptr with this class
-	class ConnectionInfo : public BaseNotifier{
+	class ConnectionInfo : public BaseNotifierAll{
 	public:
 		DLLEXPORT ConnectionInfo(const wstring &hostname);
 		DLLEXPORT ConnectionInfo(const sf::IpAddress &targetaddress, USHORT port);
@@ -154,6 +154,7 @@ namespace Leviathan{
 		//! \brief Returns a nicely formated address string for this connection
 		//!
 		//! \return For example something like "0.0.0.127:2565"
+		//! \todo this could be cached
 		DLLEXPORT wstring GenerateFormatedAddressString() const;
 
 		//! Don't call this

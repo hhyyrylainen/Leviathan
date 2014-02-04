@@ -6,13 +6,13 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "BaseNotifier.h"
 #include "BaseControllable.h"
+#include "BaseNotifierEntity.h"
 
 namespace Leviathan{
 
 	// Base class for all kinds of entity controllers to inherit from //
-	class BaseEntityController : public BaseNotifier{
+	class BaseEntityController : public BaseNotifierEntity{
 	public:
 		DLLEXPORT BaseEntityController();
 		DLLEXPORT ~BaseEntityController();

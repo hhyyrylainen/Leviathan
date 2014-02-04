@@ -40,6 +40,10 @@ void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> 
 	Logger::Get()->Error(L"Couldn't handle a packet");
 }
 
+void Pong::PongServerNetworking::TickIt(){
+	// Not a client, nothing to do //
+}
+
 // ------------------------------------ //
 
 // ------------------------------------ //

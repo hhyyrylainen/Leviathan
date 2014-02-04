@@ -6,18 +6,17 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "BaseNotifiable.h"
+#include "BaseNotifiableEntity.h"
 
 
 namespace Leviathan{
 
-	class BaseEntityController;
 
-	// Entities that can be controlled should inherit this class //
-	class BaseControllable : public BaseNotifiable{
+	//! Entities that can be controlled should inherit this class
+	class BaseControllable : public BaseNotifiableEntity{
 	public:
 		DLLEXPORT BaseControllable();
-		DLLEXPORT ~BaseControllable();
+		DLLEXPORT virtual ~BaseControllable();
 
 
 	protected:

@@ -6,8 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Entities/Bases/BaseNotifiable.h"
 #include "SFML/Network/IpAddress.hpp"
+#include "Common/BaseNotifiable.h"
 
 
 namespace Leviathan{
@@ -41,7 +41,7 @@ namespace Leviathan{
 	//! Class used to handle remote server commands and receiving messages
 	//!
 	//! Doesn't actually use reference counting. Inherits BaseNotifiable to be able to receive messages when ConnectionInfo closes
-	class RemoteConsole : public BaseNotifiable{
+	class RemoteConsole : public BaseNotifiableAll{
 		friend Engine;
 
 		struct RemoteConsoleExpect{
@@ -104,9 +104,6 @@ namespace Leviathan{
 
 		DLLEXPORT static RemoteConsole* Get();
 
-		//! Do not actually call this. \todo create BaseNotifiable that is separate from BaseObject
-		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
-
 	protected:
 
 		//! \brief Called by Engine after command line has been processed
@@ -115,7 +112,7 @@ namespace Leviathan{
 	private:
 
 		// Used to detect when a connection has closed //
-		virtual void _OnNotifierDisconnected(BaseNotifier* parenttoremove);
+		virtual void _OnNotifierDisconnected(ConnectionInfo* parenttoremove);
 		// ------------------------------------ //
 		// We need to store the requests until we get a response //
 		std::vector<shared_ptr<NetworkRequest>> WaitingRequests;

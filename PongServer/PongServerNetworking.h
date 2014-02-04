@@ -21,6 +21,7 @@ namespace Pong{
 		virtual void HandleResponseOnlyPacket(shared_ptr<Leviathan::NetworkResponse> message, Leviathan::ConnectionInfo* connection, bool &dontmarkasreceived);
 		virtual void HandleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
 
+		virtual void TickIt();
 
 	protected:
 

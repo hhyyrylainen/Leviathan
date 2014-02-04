@@ -63,12 +63,14 @@ namespace Leviathan{
 
 	class BaseObject : public ReferenceCounted{
 	public:
-		// Default constructor that should never be used for actual objects (is used by classed that aren't actually object, but accidentally inherit this) //
+		//! \brief Default constructor that should never be used for actual objects 
+		//!
+		//! This is used by classes that aren't actually objects, but virtually inherit this
 		DLLEXPORT BaseObject();
 		DLLEXPORT BaseObject(int id, GameWorld* worldptr);
 		DLLEXPORT virtual ~BaseObject();
 		
-		// Called before deletion and should release objects that need to be deleted during world release phase (like graphical nodes) //
+		//! Called before deletion and should release objects that need to be deleted during world release phase (like graphical nodes)
 		DLLEXPORT virtual void ReleaseData();
 
 		DLLEXPORT inline int GetID(){

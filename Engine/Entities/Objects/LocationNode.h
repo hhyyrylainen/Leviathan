@@ -7,14 +7,14 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "../Bases/BasePositionable.h"
-#include "../Bases/BaseNotifiable.h"
+#include "../Bases/BaseNotifiableEntity.h"
 
 
 namespace Leviathan{ namespace Entity{
 
-	// Class that is used for representing positions and orientations //
-	// This class is child notifier because it is meant to be included in other objects and not the other way around //
-	class LocationNode : public BasePositionable, public BaseNotifiable, virtual public BaseObject{
+	//! \brief Class that is used for representing positions and orientations
+	//! \note This class is child notifier because it is meant to be included in other objects and not the other way around
+	class LocationNode : public BasePositionable, public Leviathan::BaseNotifiableEntity, virtual public BaseObject{
 	public:
 		// Positions at origin and uses identity rotation //
 		DLLEXPORT LocationNode(GameWorld* world, bool deleteifnoowner = true);
@@ -31,7 +31,7 @@ namespace Leviathan{ namespace Entity{
 		virtual void PosUpdated();
 		virtual void OrientationUpdated();
 		// Potentially deletes this object if flags are right and no owner is connected //
-		virtual void _OnNotifierDisconnected(BaseNotifier* parenttoremove);
+		virtual void _OnNotifierDisconnected(BaseNotifierEntity* parenttoremove);
 		// ------------------------------------ //
 
 		// Dictates whether this node should delete itself without any parents attached //

@@ -53,7 +53,7 @@ namespace Leviathan{
 		Float3 BaseHitLocationCalcVar;
 	};
 
-
+	//! \brief Represents a world that contains entities
 	class GameWorld : public Object{
 	public:
 		DLLEXPORT GameWorld(Ogre::Root* ogre);

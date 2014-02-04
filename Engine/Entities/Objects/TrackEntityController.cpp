@@ -96,7 +96,7 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::UpdateControlledPositio
 	_ApplyTrackPositioning(timestep);
 }
 // ------------------------------------ //
-void Leviathan::Entity::TrackEntityController::_OnNotifiableDisconnected(BaseNotifiable* childtoremove){
+void Leviathan::Entity::TrackEntityController::_OnNotifiableDisconnected(BaseNotifiableEntity* childtoremove){
 	// Check does it match any nodes //
 	for(auto iter = TrackNodes.begin(); iter != TrackNodes.end(); ++iter){
 
@@ -192,7 +192,7 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
 	}
 
 	// Apply forces to all objects //
-	for(auto iter = ConnectedChilds.begin(); iter != ConnectedChilds.end(); ++iter){
+	for(auto iter = ConnectedChildren.begin(); iter != ConnectedChildren.end(); ++iter){
 		// Skip this child if it is a node //
 		bool skip = false;
 

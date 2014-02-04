@@ -76,15 +76,31 @@ namespace Leviathan{
 		//! \return Returns a safe ptr to the passed ConnectionInfo for using it thread safely
 		DLLEXPORT shared_ptr<ConnectionInfo> GetSafePointerToConnection(ConnectionInfo* unsafeptr);
 
+		//! \brief Creates a new connection or returns an existing connection to address
+		//! \warning This function is not aware of connections that are created without using NetworkHandler so there can be multiple connections to host
+		//! \todo Fix the warning and disallow that, it shouldn't happen but bugs would be found
+		//! \param address The address to connect to. Note this is compared by getting strings from ConnectionInfo objects
+		//! \note This is quite an expensive function and should be called very rarely
+		//! \see OpenConnectionTo
+		DLLEXPORT shared_ptr<ConnectionInfo> GetOrCreatePointerToConnection(const wstring &address);
+
 
 		//! \brief Opens a new connection to the provided address
 		//!
-		//! The input should be in a form that has address:port in it. The address should be like 'google.fi' or '192.168.1.1'
-		//! This function doesn't verify that there actually is something on the target. The connection will be managed by the handler
+		//! \param targetaddress The input should be in a form that has address:port in it. The address should be like 'google.fi' or '192.168.1.1'
+		//! \note This function doesn't verify that there actually is something on the target. The connection will be managed by the handler
 		//! and will close if no response is received to a keep alive packet (which is sent after a couple of minutes)
-		DLLEXPORT shared_ptr<ConnectionInfo> OpenConnectionTo(const wstring &targetaddress);
+		//! \warning This will always open a new connection. To avoid multiple connections to same target (and breaking both connections) see
+		//! GetOrCreatePointerToConnection
+		DLLEXPORT FORCE_INLINE shared_ptr<ConnectionInfo> OpenConnectionTo(const wstring &targetaddress){
+			// Lock and call the real function //
+			ObjectLock guard(*this);
+			return OpenConnectionTo(targetaddress, guard);
+		}
 
-
+		//! \brief Actual version of OpenConnectionTo
+		//! \see OpenConnectionTo
+		DLLEXPORT shared_ptr<ConnectionInfo> OpenConnectionTo(const wstring &targetaddress, ObjectLock &guard);
 
 		//! Returns the port to which our socket has been bind
 		DLLEXPORT USHORT GetOurPort();

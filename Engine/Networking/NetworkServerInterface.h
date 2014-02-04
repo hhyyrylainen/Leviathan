@@ -11,7 +11,8 @@
 
 namespace Leviathan{
 
-
+	//! \brief A class that represents a human player
+	//! \todo Implement this
 	class ConnectedPlayer{
 
 

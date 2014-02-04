@@ -291,6 +291,9 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 		// The callee needs to make sure to use the right locking function to not deadlock //
 		ConnectionsToUpdate[i]->UpdateListening();
 	}
+
+	// Interface might want to do something //
+	interfaceinstance->TickIt();
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::StopOwnUpdaterThread(){
@@ -374,10 +377,12 @@ DLLEXPORT NETWORKED_TYPE Leviathan::NetworkHandler::GetNetworkType(){
 	return AppType;
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo(const wstring &targetaddress){
+DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo(const wstring &targetaddress, ObjectLock &guard){
+	VerifyLock(guard);
 	// Create object //
 	shared_ptr<ConnectionInfo> tmpconnection(new ConnectionInfo(targetaddress));
 
+	// Initialize the connection //
 	if(!tmpconnection || !tmpconnection->Init()){
 		// Failed //
 		return NULL;
@@ -390,12 +395,26 @@ DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo
 }
 
 DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetSafePointerToConnection(ConnectionInfo* unsafeptr){
+	ObjectLock guard(*this);
+
 	for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
 		if(iter->get() == unsafeptr)
 			return *iter;
 	}
 
 	return NULL;
+}
+
+DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetOrCreatePointerToConnection(const wstring &address){
+	ObjectLock guard(*this);
+
+	for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
+		if((*iter)->GenerateFormatedAddressString() == address)
+			return *iter;
+	}
+
+	// We need to open a new connection //
+	return OpenConnectionTo(address, guard);
 }
 // ------------------------------------ //
 void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar){

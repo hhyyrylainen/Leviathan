@@ -54,6 +54,7 @@ std::wstring Pong::PongGame::GenerateWindowTitle(){
 // This avoids using pointer to pointer (pointer/reference to shared_ptr) //
 struct TmpPassTaskObject{
 	shared_ptr<Leviathan::SentNetworkThing> PossibleRequest;
+	boost::unique_future<bool> WaitForIt;
 };
 
 int Pong::PongGame::StartServer(){
@@ -190,11 +191,13 @@ int Pong::PongGame::StartServer(){
 				shared_ptr<Leviathan::NetworkRequest> tmprequest(new NetworkRequest(NETWORKREQUESTTYPE_SERVERSTATUS));
 
 				taskdata->PossibleRequest = safeptr->SendPacketToConnection(tmprequest, 2);
+
+				taskdata->WaitForIt = taskdata->PossibleRequest->WaitForMe->get_future();
 				return;
 			}
 
 			// Check if the request is ready //
-			if(taskdata->PossibleRequest->WaitForMe->get_future().has_value()){
+			if(taskdata->WaitForIt.has_value()){
 
 				auto response = taskdata->PossibleRequest->GotResponse;
 
@@ -409,10 +412,20 @@ void Pong::PongGame::MoreCustomScriptRegister(asIScriptEngine* engine, std::map<
 void Pong::PongGame::Connect(const wstring &address){
 	Logger::Get()->Info(L"About to connect to address "+address);
 
+	// Get a connection to use //
+	auto tmpconnection = Leviathan::NetworkHandler::Get()->GetOrCreatePointerToConnection(address);
 
+	if(!tmpconnection){
 
+		EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+			new NamedVariableList(L"Message", new VariableBlock(string("Tried to connect to an invalid address, ")+Convert::WstringToString(address)))))));
+		return;
+	}
 
 	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
-		new NamedVariableList(L"Message", new VariableBlock(string("Opening connection to server at "+address)))))));
+		new NamedVariableList(L"Message", new VariableBlock(string("Opening connection to server at ")+Convert::WstringToString(address)))))));
+
+	// We are a client and we can use our interface to handle the server connection functions //
+
 
 }

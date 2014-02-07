@@ -16,8 +16,6 @@ namespace Leviathan{
 
 	namespace Entity{
 
-		class BaseNotifierEntity;
-		class BaseNotifiableEntity;
 		class Prop;
 		class Brush;
 		struct TrackControllerPosition;
@@ -27,6 +25,8 @@ namespace Leviathan{
 	}
 
 
+	class NetworkClientInterface;
+	struct SentNetworkThing;
 	class BaseEntityController;
 	class BaseNotifiableAll;
 	class BaseNotifierAll;

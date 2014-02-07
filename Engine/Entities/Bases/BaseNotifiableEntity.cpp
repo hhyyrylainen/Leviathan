@@ -5,19 +5,13 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::BaseNotifiableEntity::BaseNotifiableEntity(){
+DLLEXPORT Leviathan::BaseNotifiableEntity::BaseNotifiableEntity() : BaseNotifiable(this){
 
 }
 
 DLLEXPORT Leviathan::BaseNotifiableEntity::~BaseNotifiableEntity(){
 
 }
-// ------------------------------------ //
-
-// ------------------------------------ //
-
-// ------------------------------------ //
-
 // ------------------------------------ //
 
 

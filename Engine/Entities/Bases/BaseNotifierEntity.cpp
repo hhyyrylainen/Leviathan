@@ -3,9 +3,11 @@
 #ifndef LEVIATHAN_BASENOTIFIERENTITY
 #include "BaseNotifierEntity.h"
 #endif
+#include "Common/BaseNotifiable.h"
+#include "BaseNotifiableEntity.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::BaseNotifierEntity::BaseNotifierEntity(){
+DLLEXPORT Leviathan::BaseNotifierEntity::BaseNotifierEntity() : BaseNotifier(this){
 
 }
 
@@ -19,7 +21,7 @@ DLLEXPORT bool Leviathan::BaseNotifierEntity::SendCustomMessageToChildren(int me
 
 	for(auto iter = ConnectedChildren.begin(); iter != ConnectedChildren.end(); ++iter){
 
-		if((*iter)->SendCustomMessage(messagetype, data)){
+		if((*iter)->GetActualPointerToNotifiableObject()->SendCustomMessage(messagetype, data)){
 			called = true;
 			if(!callonall)
 				return true;
@@ -28,10 +30,6 @@ DLLEXPORT bool Leviathan::BaseNotifierEntity::SendCustomMessageToChildren(int me
 
 	return called;
 }
-// ------------------------------------ //
-
-// ------------------------------------ //
-
 // ------------------------------------ //
 
 

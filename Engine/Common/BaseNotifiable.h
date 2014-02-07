@@ -22,12 +22,19 @@ namespace Leviathan{
 		//! \brief Release function which releases all hooks
 		DLLEXPORT void ReleaseParentHooks();
 
-		//! \brief Connects this to a notifier object calling all the needed functions
-		DLLEXPORT bool ConnectToNotifier(BaseNotifier<ParentType, ChildType>* owner);
+		//! \brief The actual implementation of UnConnectFromNotifier
+		DLLEXPORT bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier, ObjectLock &guard);
+
 		//! \brief Disconnects this from a previously connected notifier
-		DLLEXPORT bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier);
+		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier){
+			ObjectLock guard(*this);
+			return UnConnectFromNotifier(specificnotifier, guard);
+		}
 		//! \brief This searches the connected notifiers and calls the above function with it's pointer
 		DLLEXPORT bool UnConnectFromNotifier(int id);
+
+		//! \brief Connects this to a notifier object calling all the needed functions
+		DLLEXPORT bool ConnectToNotifier(BaseNotifier<ParentType, ChildType>* owner);
 
 
 		//! Callback called by the parent, used to not to call the unhook again on the parent
@@ -63,6 +70,9 @@ namespace Leviathan{
 		DLLEXPORT inline ~BaseNotifiableAll(){
 		}
 	};
-
 }
+
+// The implementations are included here to make this compile //
+#include "BaseNotifiableImpl.h"
+
 #endif

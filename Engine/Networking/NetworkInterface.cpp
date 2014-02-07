@@ -107,3 +107,7 @@ DLLEXPORT bool Leviathan::NetworkInterface::CanConnectionTerminate(ConnectionInf
 void Leviathan::NetworkInterface::_SetNetworkType(NETWORKED_TYPE ntype){
 	OurNetworkType = ntype;
 }
+
+DLLEXPORT void Leviathan::NetworkInterface::TickIt(){
+	return;
+}

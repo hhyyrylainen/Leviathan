@@ -72,7 +72,8 @@ namespace Leviathan{ namespace Entity{
 	protected:
 		// Internal function for making all data valid (checks for invalid reached node and progress) //
 		void _SanityCheckNodeProgress();
-		// Updates the controlled object //
+		//! \brief Updates the controlled object
+		//! \todo apply rotation
 		void _ApplyTrackPositioning(float timestep);
 
 		// Callback for detecting node unlinks //

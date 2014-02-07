@@ -5,6 +5,7 @@
 #endif
 #include "add_on/autowrapper/aswrappedcall.h"
 #include "Networking/ConnectionInfo.h"
+#include "Networking/NetworkClientInterface.h"
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
@@ -427,5 +428,11 @@ void Pong::PongGame::Connect(const wstring &address){
 
 	// We are a client and we can use our interface to handle the server connection functions //
 
+	if(!dynamic_cast<NetworkClientInterface*>(Leviathan::NetworkHandler::GetInterface())->JoinServer(tmpconnection)){
+		// Failed //
+		EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+			new NamedVariableList(L"Message", new VariableBlock(string("Failed to use the default connect method (")+Convert::WstringToString(address)+")"))))));
+	}
 
+	// Now it should be fine, waiting for messages //
 }

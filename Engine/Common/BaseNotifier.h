@@ -20,19 +20,27 @@ namespace Leviathan{
 		//! Release function that unhooks all child objects
 		DLLEXPORT void ReleaseChildHooks();
 
-		//! Connects this to a notifiable object for holding a reference to it //
+		//! Connects this to a notifiable object for holding a reference to it
 		//! \todo return false and skip adding if already added
-		DLLEXPORT bool ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child);
-		//! Disconnects from previously connected notifiable //
+		DLLEXPORT FORCE_INLINE bool ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child){
+			ObjectLock guard(*this);
+			return ConnectToNotifiable(child, guard);
+		}
+
+		//! \brief The actual implementation of ConnecToNotifiable
+		DLLEXPORT bool ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child, ObjectLock &guard);
+
+
+		//! Disconnects from previously connected notifiable
 		DLLEXPORT bool UnConnectFromNotifiable(BaseNotifiable<ParentType, ChildType>* unhookfrom);
-		//! This searches the connected notifiable objects and calls the above function with it's pointer //
+		//! This searches the connected notifiable objects and calls the above function with it's pointer
 		DLLEXPORT bool UnConnectFromNotifiable(int id);
 
 
-		// Callback called by the child, and doesn't call the unhook again on the child //
+		// Callback called by the child, and doesn't call the unhook again on the child
 		void _OnUnhookNotifiable(BaseNotifiable<ParentType, ChildType>* childtoremove);
 
-		// Called by child to hook, and doesn't call the child's functions //
+		// Called by child to hook, and doesn't call the child's functions
 		void _OnHookNotifiable(BaseNotifiable<ParentType, ChildType>* child);
 
 		//! \brief Gets the internal pointer to the actual object
@@ -61,6 +69,9 @@ namespace Leviathan{
 		DLLEXPORT inline ~BaseNotifierAll(){
 		}
 	};
-
 }
+
+// The implementations are included here to make this compile //
+#include "BaseNotifierImpl.h"
+
 #endif

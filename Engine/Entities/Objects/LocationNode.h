@@ -14,7 +14,7 @@ namespace Leviathan{ namespace Entity{
 
 	//! \brief Class that is used for representing positions and orientations
 	//! \note This class is child notifier because it is meant to be included in other objects and not the other way around
-	class LocationNode : public BasePositionable, public Leviathan::BaseNotifiableEntity, virtual public BaseObject{
+	class LocationNode : public BasePositionable, public BaseNotifiableEntity, virtual public BaseObject{
 	public:
 		// Positions at origin and uses identity rotation //
 		DLLEXPORT LocationNode(GameWorld* world, bool deleteifnoowner = true);

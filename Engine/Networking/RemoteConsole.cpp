@@ -210,10 +210,6 @@ DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleResponse(shared_ptr<
 	}
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::RemoteConsole::SendCustomMessage(int entitycustommessagetype, void* dataptr){
-	throw std::exception();
-}
-// ------------------------------------ //
 DLLEXPORT void Leviathan::RemoteConsole::SetCloseIfNoRemoteConsole(bool state){
 	CloseIfNoRemoteConsole = state;
 }

@@ -13,6 +13,7 @@
 
 namespace Pong{
 
+	//! \brief Pong specific NetworkClientInterface
 	class PongNetHandler : public Leviathan::NetworkInterface, public Leviathan::NetworkClientInterface{
 	public:
 		PongNetHandler();
@@ -24,6 +25,11 @@ namespace Pong{
 		virtual void TickIt();
 
 	protected:
+
+
+		//! \brief Used to fire GenericEvents to update GUI status
+		virtual void _OnNewConnectionStatusMessage(const wstring &message);
+
 
 	};
 

@@ -1,10 +1,12 @@
-#include "Include.h"
+//! \file This file is used to separate the declaration and implementation of BaseNotifier template class
+//! This is needed because BaseNotifiable requires BaseNotifier and BaseNotifier requires it and both are templates
+
 // ------------------------------------ //
-#ifndef LEVIATHAN_BASENOTIFIER
-#include "BaseNotifier.h"
-#endif
+#pragma once
+#ifndef LEVIATHAN_BASENOTIFIER_IMPL
+#define LEVIATHAN_BASENOTIFIER_IMPL
+
 #include "BaseNotifiable.h"
-using namespace Leviathan;
 // ------------------------------------ //
 template<class ParentType, class ChildType>
 Leviathan::BaseNotifier<ParentType, ChildType>::BaseNotifier(ParentType* ourptr) : PointerToOurNotifier(ourptr){
@@ -20,6 +22,7 @@ DLLEXPORT Leviathan::BaseNotifier<ParentType, ChildType>::~BaseNotifier(){
 // ------------------------------------ //
 template<class ParentType, class ChildType>
 DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::ReleaseChildHooks(){
+	ObjectLock guard(*this);
 	// Go through all and unhook them //
 	for(auto iter = ConnectedChildren.begin(); iter != ConnectedChildren.end(); ++iter){
 		// Call unhook on the child //
@@ -33,12 +36,13 @@ DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::ReleaseChildHooks
 // ------------------------------------ //
 template<class ParentType, class ChildType>
 DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::UnConnectFromNotifiable(int id){
+	ObjectLock guard(*this);
 	// Find child matching the provided id //
 	for(auto iter = ConnectedChildren.begin(); iter != ConnectedChildren.end(); ++iter){
 
 		if((*iter)->GetID() == id){
 			// Remove it //
-			return UnConnectFromNotifiable(iter);
+			return UnConnectFromNotifiable(iter, guard);
 		}
 	}
 	return false;
@@ -46,6 +50,7 @@ DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::UnConnectFromNoti
 
 template<class ParentType, class ChildType>
 DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::UnConnectFromNotifiable(BaseNotifiable<ParentType, ChildType>* unhookfrom){
+	ObjectLock guard(*this);
 	// Remove from list and call functions //
 	for(auto iter = ConnectedChildren.begin(); iter != ConnectedChildren.end(); ++iter){
 
@@ -62,7 +67,8 @@ DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::UnConnectFromNoti
 }
 
 template<class ParentType, class ChildType>
-DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child){
+DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child, ObjectLock &guard){
+	VerifyLock(guard);
 	// Call hook on child //
 	child->_OnHookNotifier(this);
 
@@ -77,6 +83,7 @@ DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::ConnectToNotifiab
 // ------------------------------------ //
 template<class ParentType, class ChildType>
 void Leviathan::BaseNotifier<ParentType, ChildType>::_OnHookNotifiable(BaseNotifiable<ParentType, ChildType>* child){
+	ObjectLock guard(*this);
 	// Add the object to the list of objects //
 	ConnectedChildren.push_back(child);
 	_OnNotifiableConnected(child->GetActualPointerToNotifiableObject());
@@ -84,6 +91,7 @@ void Leviathan::BaseNotifier<ParentType, ChildType>::_OnHookNotifiable(BaseNotif
 
 template<class ParentType, class ChildType>
 void Leviathan::BaseNotifier<ParentType, ChildType>::_OnUnhookNotifiable(BaseNotifiable<ParentType, ChildType>* childtoremove){
+	ObjectLock guard(*this);
 	// Remove from list //
 	for(auto iter = ConnectedChildren.begin(); iter != ConnectedChildren.end(); ++iter){
 
@@ -112,13 +120,13 @@ DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::_OnNotifiableConn
 
 }
 
-
+// No longer required //
 // ------------------ Template instances ------------------ //
-template class BaseNotifier<BaseNotifierAll, BaseNotifiableAll>;
-template class BaseNotifier<BaseNotifierEntity, BaseNotifiableEntity>;
+//template class BaseNotifier<BaseNotifierAll, BaseNotifiableAll>;
+//template class BaseNotifier<BaseNotifierEntity, BaseNotifiableEntity>;
 
 
-
+#endif
 
 
 

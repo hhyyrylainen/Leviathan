@@ -6,6 +6,7 @@
 #include "../GameWorld.h"
 #include "../Bases/BasePhysicsObject.h"
 #include "Common/Misc.h"
+#include "../Bases/BaseNotifiableEntity.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
@@ -97,10 +98,13 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::UpdateControlledPositio
 }
 // ------------------------------------ //
 void Leviathan::Entity::TrackEntityController::_OnNotifiableDisconnected(BaseNotifiableEntity* childtoremove){
+	// Cast to right type //
+	LocationNode* tmpptr = static_cast<LocationNode*>(childtoremove);
+
 	// Check does it match any nodes //
 	for(auto iter = TrackNodes.begin(); iter != TrackNodes.end(); ++iter){
 
-		if(static_cast<BaseNotifiable*>(*iter) == childtoremove){
+		if(*iter == tmpptr){
 			// Remove it //
 
 			TrackNodes.erase(iter);
@@ -196,9 +200,12 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
 		// Skip this child if it is a node //
 		bool skip = false;
 
+		// Cast to right type //
+		LocationNode* tmpptr = static_cast<LocationNode*>(*iter);
+
 		for(auto iternodes = TrackNodes.begin(); iternodes != TrackNodes.end(); ++iternodes){
 
-			if(static_cast<BaseNotifiable*>(*iternodes) == (*iter)){
+			if(*iternodes == tmpptr){
 				skip = true;
 				break;
 			}
@@ -209,7 +216,7 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
 			// Request position //
 			ObjectDataRequest request(ENTITYDATA_REQUESTTYPE_WORLDPOSITION);
 
-			(*iter)->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_DATAREQUEST, &request);
+			(*iter)->GetActualPointerToNotifiableObject()->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_DATAREQUEST, &request);
 
 			// If non positionable skip //
 			if(request.RequestResult == NULL){
@@ -225,7 +232,7 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
 
 				unique_ptr<ApplyForceInfo> tmpapply(new ApplyForceInfo(forcetoapply, true, true));
 
-				(*iter)->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE, tmpapply.get());
+				(*iter)->GetActualPointerToNotifiableObject()->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE, tmpapply.get());
 			} else if(true){
 				// Add velocity method //
 				Float3 wantedspeed = TrackPos-*reinterpret_cast<Float3*>(request.RequestResult);
@@ -233,17 +240,11 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
 
 				wantedspeed = wantedspeed*ForceTowardsPoint;
 
-				//wantedspeed.X = pow(wantedspeed.X, 3);
-				//wantedspeed.Y = pow(wantedspeed.Y, 3);
-				//wantedspeed.Z = pow(wantedspeed.Z, 3);
-
-				(*iter)->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_SETVELOCITY, &wantedspeed);
+				(*iter)->GetActualPointerToNotifiableObject()->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_SETVELOCITY, &wantedspeed);
 			} else {
 				// Set position method //
-				(*iter)->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_CHANGEWORLDPOSITION, &TrackPos);
+				(*iter)->GetActualPointerToNotifiableObject()->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_CHANGEWORLDPOSITION, &TrackPos);
 			}
-
-			// \todo apply rotation //
 		}
 
 	}

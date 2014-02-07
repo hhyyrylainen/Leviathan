@@ -14,7 +14,7 @@ namespace Leviathan{
 	enum NETWORKED_TYPE {NETWORKED_TYPE_CLIENT, NETWORKED_TYPE_SERVER, NETWORKED_TYPE_MASTER};
 
 	//! \brief Class that encapsulates common networking functionality that is required by all networked programs
-	//! \see NetworkServerInterface
+	//! \see NetworkServerInterface NetworkClientInterface
 	class NetworkInterface{
 		friend NetworkHandler;
 	public:
@@ -27,13 +27,13 @@ namespace Leviathan{
 		//! \brief Called by ConnectionInfo to handle incoming packets
 		//!
 		//! This function is responsible for interpreting the packet data and generating a response. If the response could take a long time to
-		//! generate it is recommended to queue a task to the ThreadingManager. The connection parameter shouldn't be stored since it can become
-		//! invalid after this function returns
+		//! generate it is recommended to queue a task to the ThreadingManager. 
+		//! \note The connection parameter shouldn't be stored since it can become invalid after this function returns
 		DLLEXPORT virtual void HandleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection) THROWS;
 
-		//! \brief Called by ConnectionInfo to verify that response is good.
+		//! \brief Called by ConnectionInfo to verify that a response is good.
 		//!
-		//! By default this will always return true, but can be overloaded to return false if response is no good.
+		//! By default this will always return true, but that can be overloaded to return false if the response is no good.
 		//! When returning false the connection will pretend that the response never arrived and possibly resends the request.
 		DLLEXPORT virtual bool PreHandleResponse(shared_ptr<NetworkResponse> response, shared_ptr<NetworkRequest> originalrequest, 
 			ConnectionInfo* connection);
@@ -59,7 +59,7 @@ namespace Leviathan{
 		//! \brief Should be used to update various network interfaces
 		//! \note This NetworkInterface doesn't need any ticking, but NetworkClientInterface does
 		//! \see NetworkClientInterface::UpdateClientStatus
-		DLLEXPORT virtual void TickIt() = 0;
+		DLLEXPORT virtual void TickIt();
 
 
 

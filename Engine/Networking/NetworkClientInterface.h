@@ -6,6 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "Common/BaseNotifiable.h"
 
 
 namespace Leviathan{
@@ -16,7 +17,7 @@ namespace Leviathan{
 	//!
 	//! More specific version of NetworkInterface and should be included additionally in client network interface classes.
 	//! \see NetworkInterface
-	class NetworkClientInterface{
+	class NetworkClientInterface : public BaseNotifiableAll{
 	public:
 		DLLEXPORT NetworkClientInterface();
 		DLLEXPORT virtual ~NetworkClientInterface();
@@ -52,11 +53,19 @@ namespace Leviathan{
 		DLLEXPORT virtual void _OnStartConnectToServer();
 		DLLEXPORT virtual void _OnFailedToConnectToServer(const wstring &reason);
 		DLLEXPORT virtual void _OnSuccessfullyConnectedToServer();
+		//! \brief Called when this class generates a new update message
+		DLLEXPORT virtual void _OnNewConnectionStatusMessage(const wstring &message);
+
+
+		//! \brief Callback used to know when our connection is closed
+		DLLEXPORT virtual void _OnNotifierDisconnected(BaseNotifiableAll* parenttoremove);
 
 
 		// ------------------------------------ //
 
 
+		//! This vector holds the made requests to allow using the response to do stuff
+		std::vector<shared_ptr<SentNetworkThing>> OurSentRequests;
 
 
 

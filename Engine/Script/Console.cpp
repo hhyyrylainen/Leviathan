@@ -197,7 +197,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::ExecuteStringInstruction(string stateme
 	int result = ExecuteString(InterfaceInstance->GetExecutor()->GetASEngine(), statement.c_str(), ConsoleModule.lock()->GetModule());
 	if(result < 0){
 
-		ConsoleOutput(L"Invalid command syntax, refer to AngelScript manual for right syntax or whatever tutorial(s) you may have found");
+		ConsoleOutput(L"Invalid command syntax, refer to the AngelScript manual for the right syntax or whatever tutorial(s) you may have found");
 		return false;
 
 	} else if(result == asEXECUTION_EXCEPTION){

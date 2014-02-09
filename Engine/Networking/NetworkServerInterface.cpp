@@ -57,7 +57,13 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(shared_pt
 			// Handled //
 			return true;
 		}
-
+	case NETWORKREQUESTTYPE_JOINSERVER:
+		{
+			// Call handling function //
+			Logger::Get()->Info(L"NetworkServerInterface: player on "+connectiontosendresult->GenerateFormatedAddressString()+L"is trying to connect");
+			
+			return true;
+		}
 	}
 	// We didn't know how to handle this packet //
 	return false;

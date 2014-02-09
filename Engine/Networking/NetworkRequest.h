@@ -18,7 +18,8 @@ namespace Leviathan{
 		NETWORKREQUESTTYPE_SERVERSTATUS,
 		NETWORKREQUESTTYPE_OPENREMOTECONSOLETO,
 		NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE,
-		NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE
+		NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE,
+		NETWORKREQUESTTYPE_JOINSERVER
 	};
 
 	class BaseNetworkRequestData{
@@ -39,7 +40,7 @@ namespace Leviathan{
 		int SessionToken;
 	};
 
-	// \todo add security to this
+	//! \todo add security to this
 	class RemoteConsoleAccessRequestData : public BaseNetworkRequestData{
 	public:
 		DLLEXPORT RemoteConsoleAccessRequestData(int token);
@@ -50,12 +51,26 @@ namespace Leviathan{
 		int SessionToken;
 	};
 
+	//! \todo Add security establishing functions
+	//! \todo Add security to the ConnectionInfo class
+	class JoinServerRequestData : public BaseNetworkRequestData{
+	public:
+		DLLEXPORT JoinServerRequestData(int outmasterid = -1);
+		DLLEXPORT JoinServerRequestData(sf::Packet &frompacket);
+
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! The ID given by the master server
+		int MasterServerID;
+	};
+
 
 	class NetworkRequest{
 	public:
 		DLLEXPORT NetworkRequest(NETWORKREQUESTTYPE type, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(JoinServerRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT ~NetworkRequest();
 
 		DLLEXPORT NetworkRequest(sf::Packet &frompacket);

@@ -741,7 +741,7 @@ Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponse
 	int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) : PacketNumber(packetid),
 	ExpectedResponseID(expectedresponseid), OriginalRequest(request), WaitForMe(waitobject), MaxTries(maxtries), PacketTimeoutStyle(howtotimeout),
 	TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata), AttempNumber(attempnumber), RequestStartTime(Misc::GetTimeMs64()), ConfirmReceiveTime(0),
-	IsArequest(true)
+	IsArequest(true), FutureFetched(false)
 {
 
 }
@@ -750,13 +750,23 @@ Leviathan::SentNetworkThing::SentNetworkThing(int packetid, shared_ptr<NetworkRe
 	int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) : PacketNumber(packetid),
 	ExpectedResponseID(-1), SentResponse(response), WaitForMe(waitobject), MaxTries(maxtries), PacketTimeoutStyle(howtotimeout),
 	TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata), AttempNumber(attempnumber), RequestStartTime(Misc::GetTimeMs64()), ConfirmReceiveTime(0),
-	IsArequest(false)
+	IsArequest(false), FutureFetched(false)
 {
 
 }
 
 DLLEXPORT Leviathan::SentNetworkThing::~SentNetworkThing(){
 
+}
+
+DLLEXPORT boost::unique_future<bool>& Leviathan::SentNetworkThing::GetFutureForThis(){
+	// Get a future if not already and return it //
+	if(!FutureFetched){
+
+		FutureValue = WaitForMe->get_future();
+		FutureFetched = true;
+	}
+	return FutureValue;
 }
 // ------------------ NetworkAckField ------------------ //
 Leviathan::NetworkAckField::NetworkAckField(sf::Int32 firstpacketid, char maxacks, ReceivedPacketField &copyfrom) : FirstPacketID(firstpacketid){

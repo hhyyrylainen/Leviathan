@@ -37,6 +37,13 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleAccessRequestDa
 
 }
 
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(JoinServerRequestData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
+	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_JOINSERVER), 
+	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+{
+
+}
+
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket){
 	// Get the heading data //
 	if(!(frompacket >> ResponseID)){
@@ -60,6 +67,11 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket){
 	case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE:
 		{
 			RequestData = new RemoteConsoleAccessRequestData(frompacket);
+		}
+		break;
+	case NETWORKREQUESTTYPE_JOINSERVER:
+		{
+			RequestData = new JoinServerRequestData(frompacket);
 		}
 		break;
 	default:
@@ -144,4 +156,18 @@ DLLEXPORT Leviathan::RemoteConsoleAccessRequestData::RemoteConsoleAccessRequestD
 
 DLLEXPORT void Leviathan::RemoteConsoleAccessRequestData::AddDataToPacket(sf::Packet &packet){
 	packet << SessionToken;
+}
+// ------------------ JoinServerRequestData ------------------ //
+DLLEXPORT Leviathan::JoinServerRequestData::JoinServerRequestData(int outmasterid /*= -1*/) : MasterServerID(outmasterid){
+
+}
+
+DLLEXPORT Leviathan::JoinServerRequestData::JoinServerRequestData(sf::Packet &frompacket){
+	if(!(frompacket >> MasterServerID)){
+		throw ExceptionInvalidArgument(L"invalid packet to RemoteConsoleOpenRequestDataTo", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+}
+
+DLLEXPORT void Leviathan::JoinServerRequestData::AddDataToPacket(sf::Packet &packet){
+	packet << MasterServerID;
 }

@@ -170,10 +170,9 @@ int Pong::PongGame::StartServer(){
 
 			if(!safeptr){
 				// Destroy the attempt //
-
-				shared_ptr<QueuedTask> tmptask = TaskThread::GetThreadSpecificThreadObject()->QuickTaskAccess;
-
-				auto tmpptr = dynamic_cast<RepeatingDelayedTask*>(tmptask.get());
+				auto threadspecific = TaskThread::GetThreadSpecificThreadObject();
+				auto taskobject = threadspecific->QuickTaskAccess;
+				auto tmpptr = dynamic_cast<RepeatingDelayedTask*>(taskobject.get());
 				assert(tmpptr != NULL && "this is not what I wanted, passed wrong task object to task");
 
 				tmpptr->SetRepeatStatus(false);
@@ -212,7 +211,9 @@ int Pong::PongGame::StartServer(){
 							// Check is it joinable //
 							if(responsedata->Joinable){
 								// Stop repeating the task //
-								auto tmpptr = dynamic_cast<RepeatingDelayedTask*>(TaskThread::GetThreadSpecificThreadObject()->QuickTaskAccess.get());
+								auto threadspecific = TaskThread::GetThreadSpecificThreadObject();
+								auto taskobject = threadspecific->QuickTaskAccess;
+								auto tmpptr = dynamic_cast<RepeatingDelayedTask*>(taskobject.get());
 								assert(tmpptr != NULL && "this is not what I wanted, passed wrong task object to task");
 
 								tmpptr->SetRepeatStatus(false);
@@ -325,7 +326,7 @@ void Pong::PongGame::MoveBackToLobby(){
 
 void Pong::PongGame::Disconnect(const string &reasonstring){
 	ObjectLock guard(*this);
-	DEBUG_BREAK;
+
 }
 // ------------------------------------ //
 void Pong::PongGame::DoSpecialPostLoad(){

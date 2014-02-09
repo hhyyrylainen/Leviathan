@@ -41,6 +41,7 @@ namespace Leviathan{
 		DLLEXPORT SentNetworkThing(int packetid, shared_ptr<NetworkResponse> response, shared_ptr<boost::promise<bool>> waitobject, int maxtries, 
 			PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber = 1);
 
+		DLLEXPORT boost::unique_future<bool>& GetFutureForThis();
 
 		int PacketNumber;
 
@@ -54,6 +55,9 @@ namespace Leviathan{
 		__int64 ConfirmReceiveTime;
 		int ExpectedResponseID;
 		shared_ptr<boost::promise<bool>> WaitForMe;
+		boost::unique_future<bool> FutureValue;
+		bool FutureFetched;
+
 
 		// This is stored for resending the data //
 		sf::Packet AlmostCompleteData;
@@ -114,6 +118,7 @@ namespace Leviathan{
 	//! \brief Class that handles a single connection to another instance
 	//!
 	//! \note this class does not use reference counting so it it safe to use shared_ptr with this class
+	//! \todo Internal security tokens to all packets
 	class ConnectionInfo : public BaseNotifierAll{
 	public:
 		DLLEXPORT ConnectionInfo(const wstring &hostname);

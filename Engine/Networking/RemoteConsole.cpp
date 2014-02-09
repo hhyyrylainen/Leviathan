@@ -147,7 +147,7 @@ DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(ConnectionInfo* conne
 	connectiontouse->SendPacketToConnection(tmprequest, 4);
 }
 // ------------------------------------ //
-void Leviathan::RemoteConsole::_OnNotifierDisconnected(ConnectionInfo* parenttoremove){
+void Leviathan::RemoteConsole::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
 	// Close the corresponding console session //
 
 	Logger::Get()->Info(L"RemoteConsole: detected connection closing, trying to close matching remote console session:");
@@ -164,7 +164,7 @@ void Leviathan::RemoteConsole::_OnNotifierDisconnected(ConnectionInfo* parenttor
 		}
 	}
 	// Not found //
-	Logger::Get()->Error(L"\t> RemoteConsole: didn't find matching connection, bug?");
+	Logger::Get()->Error(L"\t> RemoteConsole: didn't find a matching connection, bug?");
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection){
@@ -266,9 +266,15 @@ Leviathan::RemoteConsoleSession::~RemoteConsoleSession(){
 	// Send close request //
 	if(CorrespondingConnection){
 
-		shared_ptr<NetworkRequest> tmprequest(new NetworkRequest(NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE));
-		
-		CorrespondingConnection->SendPacketToConnection(tmprequest, 1);
+
+		auto safe = NetworkHandler::Get()->GetSafePointerToConnection(CorrespondingConnection);
+
+		if(safe){
+
+			shared_ptr<NetworkRequest> tmprequest(new NetworkRequest(NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE));
+
+			safe->SendPacketToConnection(tmprequest, 1);
+		}
 	}
 
 }

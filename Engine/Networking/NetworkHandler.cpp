@@ -339,6 +339,14 @@ shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mut
 DLLEXPORT void Leviathan::NetworkHandler::SafelyCloseConnectionTo(ConnectionInfo* to){
 	ObjectLock guard(*this);
 
+	// Make sure that it isn't there already //
+	for(auto iter = ConnectionsToTerminate.begin(); iter != ConnectionsToTerminate.end(); ++iter){
+		// Return if we found a match //
+		if(*iter == to)
+			return;
+	}
+
+
 	// Add to the queue //
 	ConnectionsToTerminate.push_back(to);
 }
@@ -351,6 +359,9 @@ DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(ObjectLock &gu
 
 	// Go through the removed connection list and remove them //
 	for(size_t i = 0; i < ConnectionsToTerminate.size(); i++){
+		// Send a close packet //
+		ConnectionsToTerminate[i]->SendCloseConnectionPacket();
+
 		// Close it //
 		ConnectionsToTerminate[i]->Release();
 		// The connection will automatically remove itself from the vector //

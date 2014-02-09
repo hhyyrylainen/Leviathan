@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "Common/BaseNotifiable.h"
 
+#define DEFAULT_MAXCONNECT_TRIES		5
 
 namespace Leviathan{
 
@@ -29,7 +30,14 @@ namespace Leviathan{
 		DLLEXPORT bool JoinServer(shared_ptr<ConnectionInfo> connectiontouse);
 
 		//! \brief Disconnects the client from the server or does nothing
-		DLLEXPORT void DisconnectFromServer();
+		//! \todo Add a check to not close the connection if it is used by RemoteConsole
+		DLLEXPORT FORCE_INLINE void DisconnectFromServer(const wstring &reason){
+			ObjectLock guard(*this);
+			DisconnectFromServer(guard, reason);
+		}
+
+		//! \brief Actual implementation of DisconnectFromServer
+		DLLEXPORT void DisconnectFromServer(ObjectLock &guard, const wstring &reason);
 
 	protected:
 
@@ -60,14 +68,20 @@ namespace Leviathan{
 		//! \brief Callback used to know when our connection is closed
 		DLLEXPORT virtual void _OnNotifierDisconnected(BaseNotifiableAll* parenttoremove);
 
+	private:
+		
+		void _SendConnectRequest(ObjectLock &guard);
 
-		// ------------------------------------ //
 
+	protected:
 
 		//! This vector holds the made requests to allow using the response to do stuff
 		std::vector<shared_ptr<SentNetworkThing>> OurSentRequests;
 
+		shared_ptr<ConnectionInfo> ServerConnection;
 
+		int ConnectTriesCount;
+		int MaxConnectTries;
 
 	};
 

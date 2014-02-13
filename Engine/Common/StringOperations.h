@@ -295,15 +295,15 @@ namespace Leviathan{
 
 			int count = 0;
 
-			for(size_t i = 0; i < strtocut.length(); i++){
-				if(strtocut[i] == lookfor[0]){
+			for(size_t i = 0; i < data.length(); i++){
+				if(data[i] == lookfor[0]){
 					// Found a possible match //
 					// test further //
 					size_t modifier = 0;
 					bool WasMatch = false;
-					while(strtocut[i+modifier] == lookfor[modifier]){
+					while(data[i+modifier] == lookfor[modifier]){
 						// check can it increase without going out of bounds //
-						if((strtocut.length() > i+modifier+1) && (lookfor.length() > modifier+1)){
+						if((data.length() > i+modifier+1) && (lookfor.length() > modifier+1)){
 							// increase modifier to move forward //
 							modifier++;
 						} else {
@@ -320,7 +320,7 @@ namespace Leviathan{
 					// skip the separator amount of characters, if it was found //
 					if(WasMatch)
 						// -1 here so that first character of next string won't be missing, because of the loop incrementation //
-						i += separator.length()-1;
+						i += lookfor.length()-1;
 				}
 			}
 			return count;

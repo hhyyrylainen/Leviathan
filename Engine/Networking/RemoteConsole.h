@@ -109,10 +109,13 @@ namespace Leviathan{
 		//! \brief Called by Engine after command line has been processed
 		void SetAllowClose();
 
+
+		//! \brief Used to detect when a connection has been closed
+		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
+
 	private:
 
-		// Used to detect when a connection has closed //
-		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
+
 		// ------------------------------------ //
 		// We need to store the requests until we get a response //
 		std::vector<shared_ptr<NetworkRequest>> WaitingRequests;

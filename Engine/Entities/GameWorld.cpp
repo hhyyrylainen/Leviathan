@@ -33,6 +33,8 @@ DLLEXPORT Leviathan::GameWorld::~GameWorld(){
 
 
 DLLEXPORT void Leviathan::GameWorld::Release(){
+	ObjectLock guard(*this);
+
 	// release objects //
 	for(size_t i = 0; i < Objects.size(); i++){
 
@@ -142,7 +144,8 @@ DLLEXPORT void Leviathan::GameWorld::RemoveSunlight(){
 	}
 }
 
-DLLEXPORT void Leviathan::GameWorld::UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos){
+DLLEXPORT void Leviathan::GameWorld::UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos, ObjectLock &guard){
+	VerifyLock(guard);
 	// Skip if no camera //
 	if(camerapos == NULL)
 		return;
@@ -171,6 +174,7 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
 }
 
 DLLEXPORT void Leviathan::GameWorld::AddObject(shared_ptr<BaseObject> obj){
+	ObjectLock guard(*this);
 	Objects.push_back(obj);
 }
 
@@ -181,6 +185,9 @@ DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
 		Logger::Get()->Warning(L"GameWorld: GetWorldObject: trying to find object with ID == -1 (IDs shouldn't be negative)");
 		return nullptr;
 	}
+
+	ObjectLock guard(*this);
+
 	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
 		if((*iter)->GetID() == ID){
 			return *iter;
@@ -190,7 +197,9 @@ DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
 }
 
 
-DLLEXPORT void Leviathan::GameWorld::ClearObjects(){
+DLLEXPORT void Leviathan::GameWorld::ClearObjects(ObjectLock &guard){
+	VerifyLock(guard);
+
 	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
 		// Release the object //
 		(*iter)->ReleaseData();
@@ -207,8 +216,9 @@ DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SimulateWorld(){
+	ObjectLock guard(*this);
 	// This is probably the best place to remove dead objects //
-	_HandleDelayedDelete();
+	_HandleDelayedDelete(guard);
 
 	// Only if not frozen run physics //
 	if(!WorldFrozen)
@@ -220,6 +230,7 @@ DLLEXPORT void Leviathan::GameWorld::ClearSimulatePassedTime(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
+	ObjectLock guard(*this);
 	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
 		if((*iter)->GetID() == ID){
 			// release the object and then erase our reference //
@@ -231,10 +242,25 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
 }
 
 DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(int ID){
+	ObjectLock guard(*this);
 	DelayedDeleteIDS.push_back(ID);
 }
 
-void Leviathan::GameWorld::_HandleDelayedDelete(){
+void Leviathan::GameWorld::_HandleDelayedDelete(ObjectLock &guard){
+
+	VerifyLock(guard);
+
+	// We might want to delete everything //
+	if(ClearAllObjects){
+
+
+		ClearObjects();
+
+		ClearAllObjects = false;
+		// All are now cleared //
+		return;
+	}
+
 	// Return right away if no objects to delete //
 	if(DelayedDeleteIDS.size() == 0)
 		return;
@@ -279,6 +305,8 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 	if(frozen == WorldFrozen)
 		return;
 
+	ObjectLock guard(*this);
+
 	WorldFrozen = frozen;
 	// If unfrozen reset physics time //
 	if(!WorldFrozen){
@@ -287,7 +315,8 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 	}
 }
 
-DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float3 &from, const Float3 &to){
+DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float3 &from, const Float3 &to, ObjectLock &guard){
+	VerifyLock(guard);
 	// Create a data object for the ray cast //
 	RayCastData data(1, from, to);
 
@@ -320,6 +349,10 @@ dFloat Leviathan::GameWorld::RayCallbackDataCallbackClosest(const NewtonBody* co
 
 DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHitProxy(Float3 from, Float3 to){
 	return CastRayGetFirstHit(from, to);
+}
+
+DLLEXPORT void Leviathan::GameWorld::MarkForClear(){
+	ClearAllObjects = true;
 }
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/, const float &tvar, RayCastData* ownerptr) : HitEntity(ptr), 

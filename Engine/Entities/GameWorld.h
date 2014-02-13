@@ -54,26 +54,39 @@ namespace Leviathan{
 	};
 
 	//! \brief Represents a world that contains entities
-	class GameWorld : public Object{
+	class GameWorld : public ThreadSafe{
 	public:
 		DLLEXPORT GameWorld(Ogre::Root* ogre);
 		DLLEXPORT ~GameWorld();
 
-		// release to not use Ogre when deleting //
+		//! Release to not use Ogre when deleting
 		DLLEXPORT void Release();
+
+		//! \brief Marks all objects to be deleted
+		DLLEXPORT void MarkForClear();
 
 		DLLEXPORT void UpdateCameraAspect(GraphicalInputEntity* rendertarget);
 		DLLEXPORT void SetFog();
 		DLLEXPORT void SetSkyBox(const string &materialname);
 
-		DLLEXPORT void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos);
+		DLLEXPORT FORCE_INLINE void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos){
+			ObjectLock guard(*this);
+			UpdateCameraLocation(mspassed, camerapos, guard);
+		}
+		DLLEXPORT void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos, ObjectLock &guard);
 
 		DLLEXPORT void SetSunlight();
 		DLLEXPORT void RemoveSunlight();
 
-		// Casts a ray from point along a vector and returns the first physical object it hits //
-		// Warning: you need to call Release on the returned object once done //
-		DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to);
+		//! \brief Casts a ray from point along a vector and returns the first physical object it hits
+		//! \warning You need to call Release on the returned object once done
+		DLLEXPORT FORCE_INLINE RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to){
+			ObjectLock guard(*this);
+			return CastRayGetFirstHit(from, to, guard);
+		}
+
+		//! \brief Actual implementation of CastRayGetFirsHit
+		DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to, ObjectLock &guard);
 
 
 		// object managing functions //
@@ -86,7 +99,11 @@ namespace Leviathan{
 
 		DLLEXPORT shared_ptr<BaseObject> GetWorldObject(int ID);
 		// clears all objects from the world //
-		DLLEXPORT void ClearObjects();
+		DLLEXPORT void ClearObjects(ObjectLock &guard);
+		DLLEXPORT FORCE_INLINE void ClearObjects(){
+			ObjectLock guard(*this);
+			ClearObjects(guard);
+		}
 
 		// Ogre get functions //
 		DLLEXPORT inline Ogre::SceneManager* GetScene(){
@@ -113,7 +130,7 @@ namespace Leviathan{
 	private:
 
 		void _CreateOgreResources(Ogre::Root* ogre);
-		void _HandleDelayedDelete();
+		void _HandleDelayedDelete(ObjectLock &guard);
 		// ------------------------------------ //
 		Ogre::Camera* WorldSceneCamera;
 		Ogre::SceneNode* CameraLocationNode;
@@ -125,9 +142,12 @@ namespace Leviathan{
 		// physics //
 		shared_ptr<PhysicalWorld> _PhysicalWorld;
 
-		// The world can be frozen to stop physics //
+		//! The world can be frozen to stop physics
 		bool WorldFrozen;
 		bool GraphicalMode;
+
+		//! Marks all objects to be released
+		bool ClearAllObjects;
 
 		// objects //
 		// \todo maybe change this to a map //

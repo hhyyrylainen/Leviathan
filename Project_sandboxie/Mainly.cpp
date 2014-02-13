@@ -92,7 +92,7 @@ int main(int argcount, char* args[]){
 		Return = app.RunMessageLoop();
 	} else {
 		Logger::Get()->Error(L"App init failed, closing", true);
-		app.Release();
+		app.ForceRelease();
 		Return = 5;
 	}
 #ifdef _WIN32

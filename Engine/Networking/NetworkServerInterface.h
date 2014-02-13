@@ -7,14 +7,25 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "NetworkResponse.h"
+#include "Common\BaseNotifiable.h"
 
 
 namespace Leviathan{
 
 	//! \brief A class that represents a human player
 	//! \todo Implement this
-	class ConnectedPlayer{
+	class ConnectedPlayer : public BaseNotifiableAll{
+	public:
+		ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance);
 
+	protected:
+		//! \brief Used to detect when a connection has been closed
+		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
+
+		// ------------------------------------ //
+
+		ConnectionInfo* CorrenspondingConnection;
+		NetworkServerInterface* Owner;
 
 	};
 
@@ -22,7 +33,7 @@ namespace Leviathan{
 	//!
 	//! More specific version of NetworkInterface and should be included additionally in server network interface classes.
 	//! \see NetworkInterface
-	class NetworkServerInterface{
+	class NetworkServerInterface : public virtual ThreadSafe{
 	public:
 		//! \brief Initializes some values to defaults and requires others to be provided by the subclass that inherits from this.
 		//!
@@ -51,6 +62,7 @@ namespace Leviathan{
 		//! \brief Sets whether the server allows new players
 		DLLEXPORT void SetServerAllowPlayers(bool allowingplayers);
 
+
 	protected:
 
 
@@ -64,17 +76,23 @@ namespace Leviathan{
 		//! Handles default types of response packages and returns true if processed.
 		DLLEXPORT bool _HandleServerResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived);
 
-
-
+		//! \brief Used to handle server join request packets
+		//! \todo Check connection security status
+		//! \todo Add basic connection checking and master server authentication check
+		DLLEXPORT void _HandleServerJoinRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
 
 		// Callback functions //
 
 		//! \brief Called when a player is about to connect
-		//! \todo Add basic connection checking and master server authentication check
-		DLLEXPORT virtual bool PlayerAllowedToConnect(ConnectionInfo* connection, shared_ptr<NetworkRequest> joinrequest);
+		DLLEXPORT virtual void PlayerPreconnect(ConnectionInfo* connection, shared_ptr<NetworkRequest> joinrequest);
 		DLLEXPORT virtual void _OnPlayerConnected(ConnectedPlayer* newplayer);
 		DLLEXPORT virtual void _OnPlayerDisconnect(ConnectedPlayer* newplayer);
 		DLLEXPORT virtual bool PlayerPotentiallyKicked(ConnectedPlayer* player);
+
+		//! \brief Called by _HandleServerJoinRequest to allow specific games to disallow players
+		//! \return true to allow join false to disallow join
+		//! \param message The error message to give back to the player
+		DLLEXPORT virtual bool AllowPlayerConnectVeto(shared_ptr<NetworkRequest> request, ConnectionInfo* connection, wstring &message);
 
 
 		// ------------------------------------ //

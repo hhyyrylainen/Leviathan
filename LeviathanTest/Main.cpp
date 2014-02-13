@@ -161,7 +161,7 @@ int main(int argcount, char* args[]){
 		}
 
 		//un-init
-		app.Release();
+		app.ForceRelease();
 #ifdef _WIN32
 	}
 	//_CrtDumpMemoryLeaks();

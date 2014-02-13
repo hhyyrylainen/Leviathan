@@ -73,7 +73,7 @@ DLLEXPORT void Leviathan::ThreadingManager::Release(){
 	}
 
 	// Wait for all to finish //
-	WaitForAllTasksToFinish();
+	//WaitForAllTasksToFinish();
 
 	{
 		ObjectLock guard(*this);
@@ -85,7 +85,7 @@ DLLEXPORT void Leviathan::ThreadingManager::Release(){
 
 	// Tell all threads to quit //
 	for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
-			(*iter)->NotifyKill();
+		(*iter)->NotifyKill();
 	}
 }
 // ------------------------------------ //
@@ -271,7 +271,9 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 
 		// Quickly continue if it is empty //
 		if(!manager->AllowStartTasksFromQueue || manager->WaitingTasks.size() == 0){
-
+			//// Quit the thread if not allowed to wait //
+			//if(!manager->AllowConditionalWait)
+			//	break;
 			continue;
 		}
 

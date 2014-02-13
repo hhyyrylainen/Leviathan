@@ -18,8 +18,13 @@ namespace Leviathan{
 		DLLEXPORT virtual ~LeviathanApplication();
 
 		DLLEXPORT virtual bool Initialize(AppDef* configuration);
-		DLLEXPORT virtual void Release();
-		// sets should quit to true so that the main thread will stop everything and close //
+
+		//! \brief Used to immediately terminate the program
+		//! \note Should be only called if initialization fails
+		DLLEXPORT void ForceRelease();
+
+		//! \brief Safely releases the Application //
+		//! \note This should be used instead of Release
 		DLLEXPORT virtual void StartRelease();
 
 
@@ -50,9 +55,15 @@ namespace Leviathan{
 		DLLEXPORT static void DummyGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
 
 	protected:
+
+		//! \brief Performs the final steps in the release process
+		//! \warning This should not be called directly
+		DLLEXPORT virtual void Release();
+
 		// called just before returning from initialization, and can be used setting start time etc. //
 		DLLEXPORT virtual void _InternalInit();
 		// ------------------------------------ //
+
 		bool Quit;
 		bool ShouldQuit;
 

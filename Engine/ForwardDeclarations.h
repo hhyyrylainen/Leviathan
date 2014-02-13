@@ -24,7 +24,7 @@ namespace Leviathan{
 		class TrailEmitter;
 	}
 
-
+	class NetworkServerInterface;
 	class NetworkClientInterface;
 	struct SentNetworkThing;
 	class BaseEntityController;

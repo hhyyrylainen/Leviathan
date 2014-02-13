@@ -23,7 +23,7 @@ static const WORD MAX_CONSOLE_LINES = 500;
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL),
 	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
-	_RemoteConsole(NULL)
+	_RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false)
 {
 
 	// create this here //
@@ -270,26 +270,28 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 
 	// We can queue some more tasks //
 	// create leap controller //
-	boost::thread leapinitthread(boost::bind<void>([](Engine* engine) -> void{
+	boost::thread leapinitthread;
+	if(!NoLeap)
+		leapinitthread = boost::thread(boost::bind<void>([](Engine* engine) -> void{
 
-		engine->LeapData = new LeapManager(engine);
-		if(!engine->LeapData){
-			Logger::Get()->Error(L"Engine: Init: failed to create LeapManager");
-			return;
-		}
-		// try here just in case //
-		try{
-			if(!engine->LeapData->Init()){
-
-				Logger::Get()->Info(L"Engine: Init: No Leap controller found, not using one");
+			engine->LeapData = new LeapManager(engine);
+			if(!engine->LeapData){
+				Logger::Get()->Error(L"Engine: Init: failed to create LeapManager");
+				return;
 			}
-		}
-		catch(...){
-			// threw something //
-			Logger::Get()->Error(L"Engine: Init: Leap threw something, even without leap this shouldn't happen; continuing anyway");
-		}
+			// try here just in case //
+			try{
+				if(!engine->LeapData->Init()){
 
-	}, this));
+					Logger::Get()->Info(L"Engine: Init: No Leap controller found, not using one");
+				}
+			}
+			catch(...){
+				// threw something //
+				Logger::Get()->Error(L"Engine: Init: Leap threw something, even without leap this shouldn't happen; continuing anyway");
+			}
+
+		}, this));
 
 
 	// sound device //
@@ -367,10 +369,10 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 	Inited = true;
 
 	// We can probably assume here that leap creation has stalled if the thread is running //
-	if(!leapinitthread.try_join_for(boost::chrono::milliseconds(5))){
+	if(!NoLeap && !leapinitthread.try_join_for(boost::chrono::milliseconds(5))){
 		// We can assume that it is running //
 		Logger::Get()->Warning(L"LeapController creation would have stalled the game!");
-		Misc::KillThread(leapinitthread);
+		//Misc::KillThread(leapinitthread);
 	}
 
 	PostLoad();
@@ -425,41 +427,22 @@ void Leviathan::Engine::PostLoad(){
 	LastFrame = Misc::GetTimeMs64();
 }
 
-void Leviathan::Engine::Release(){
+void Leviathan::Engine::Release(bool forced){
 	ObjectLock guard(*this);
 
-	// Stop command handling first //
-	if(NoGui){
-		Misc::KillThread(CinThread);
-		// We don't join the thread because we can't properly stop this on linux //
-		//CinThread.join();
-		Logger::Get()->Info(L"Successfully stopped command handling");
-	}
+	if(!forced)
+		assert(PreReleaseDone && "PreReleaseDone must be done before actual release!");
 
-	// Let the game release it's resources //
-	Owner->EnginePreShutdown();
-
-	// Close remote console //
-	SAFE_DELETE(_RemoteConsole);
-
-	// Close all connections //
-	SAFE_RELEASEDEL(_NetworkHandler);
-
-
-	// Wait for tasks to finish //
-	_ThreadingManager->SetDiscardConditionalTasks(true);
-	_ThreadingManager->SetDisallowRepeatingTasks(true);
-
-	_ThreadingManager->WaitForAllTasksToFinish();
-
-	// destroy worlds //
+	// Destroy worlds //
 	while(GameWorlds.size()){
 
 		GameWorlds[0]->Release();
 		GameWorlds.erase(GameWorlds.begin());
 	}
-
-
+	
+	// Wait for tasks to finish //
+	if(!forced)
+		_ThreadingManager->WaitForAllTasksToFinish();
 
 	if(GraphicalEntity1){
 		// make windows clear their stored objects //
@@ -497,8 +480,8 @@ void Leviathan::Engine::Release(){
 	SAFE_RELEASEDEL(MainFileHandler);
 
 	// Stop threads //
-
-	_ThreadingManager->WaitForAllTasksToFinish();
+	if(!forced)
+		_ThreadingManager->WaitForAllTasksToFinish();
 	SAFE_RELEASEDEL(_ThreadingManager);
 
 	// clears all running timers that might have accidentally been left running //
@@ -515,7 +498,17 @@ void Leviathan::Engine::Tick(){
 	// Because this is checked very often we can check for physics update here //
 	PhysicsUpdate();
 	// We can also update networking //
-	_NetworkHandler->UpdateAllConnections();
+	if(_NetworkHandler)
+		_NetworkHandler->UpdateAllConnections();
+
+	if(PreReleaseWaiting){
+
+		PreReleaseWaiting = false;
+		PreReleaseDone = true;
+
+		// Call last tick event //
+
+	}
 
 	// get time since last update //
 	__int64 CurTime = Misc::GetTimeMs64();
@@ -531,7 +524,8 @@ void Leviathan::Engine::Tick(){
 	TickCount++;
 
 	// update input //
-	LeapData->OnTick(TimePassed);
+	if(LeapData)
+		LeapData->OnTick(TimePassed);
 
 	if(!NoGui){
 		// sound tick //
@@ -609,6 +603,44 @@ void Leviathan::Engine::RenderFrame(){
 	RenderTimer->RenderingEnd();
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::Engine::PreRelease(){
+	ObjectLock guard(*this);
+	if(PreReleaseWaiting)
+		return;
+	PreReleaseWaiting = true;
+
+	// Stop command handling first //
+	if(NoGui){
+		Misc::KillThread(CinThread);
+		// We don't join the thread because we can't properly stop this on linux //
+		//CinThread.join();
+		Logger::Get()->Info(L"Successfully stopped command handling");
+	}
+
+	// Let the game release it's resources //
+	Owner->EnginePreShutdown();
+
+	// Close remote console //
+	SAFE_DELETE(_RemoteConsole);
+
+	// Close all connections //
+	SAFE_RELEASEDEL(_NetworkHandler);
+
+	// Set worlds to empty //
+	for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
+		// Set all objects to release //
+		(*iter)->MarkForClear();
+	}
+
+	// Set tasks to a proper state //
+	_ThreadingManager->SetDiscardConditionalTasks(true);
+	_ThreadingManager->SetDisallowRepeatingTasks(true);
+}
+
+DLLEXPORT bool Leviathan::Engine::HasPreRleaseBeenDone() const{
+	return PreReleaseDone;
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::SaveScreenShot(){
 	assert(!NoGui && "really shouldn't try to screenshot in text-only mode");
 	ObjectLock guard(*this);
@@ -680,6 +712,12 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 		if(*splitval == L"--nogui"){
 			NoGui = true;
 			Logger::Get()->Info(L"Engine starting in non-GUI mode");
+			continue;
+		}
+		if(*splitval == L"--noleap"){
+			NoLeap = true;
+
+			Logger::Get()->Info(L"Engine starting with LeapMotion disabled");
 			continue;
 		}
 		if(*splitval == L"--nonothing"){

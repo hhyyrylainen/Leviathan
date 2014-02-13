@@ -23,15 +23,6 @@ DLLEXPORT bool Leviathan::MasterServerApplication::Initialize(AppDef* configurat
 	_InternalInit();
 	return true;
 }
-
-DLLEXPORT void Leviathan::MasterServerApplication::Release(){
-	// set as quitting //
-	Quit = true;
-
-	// let engine release itself and then delete it //
-	SAFE_RELEASEDEL(_Engine);
-	// configuration object needs to be destroyed by the program main function //
-}
 // ------------------------------------ //
 
 // ------------------------------------ //

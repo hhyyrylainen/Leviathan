@@ -61,8 +61,22 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
 	ObjectLock guard(*this);
 	ShouldQuit = true;
-}
 
+	// Tell Engine to expect a Release soon //
+	_Engine->PreRelease();
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
+	ObjectLock guard(*this);
+	ShouldQuit = true;
+	Quit = true;
+
+	if(_Engine)
+		_Engine->Release(true);
+
+	SAFE_DELETE(_Engine);
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::LeviathanApplication::PassCommandLine(const wstring &params){
 	_Engine->PassCommandLine(params);
 }
@@ -91,19 +105,25 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 	// For reporting wait failures //
 	int FailCount = 0;
 
-	while(_Engine->GetWindowOpenCount()){
-
+	while(!_Engine->HasPreRleaseBeenDone()){
+		// Store this //
+		bool canprocess = _Engine->GetWindowOpenCount() != 0;
 
 		Ogre::WindowEventUtilities::messagePump();
 
-
-		if(ShouldQuit || Quit){
-			
-			break;
+		// Set as quitting //
+		if(!canprocess){
+			StartRelease();
 		}
 
 		// engine tick //
 		_Engine->Tick();
+
+		if(ShouldQuit || Quit){
+			// We need to have done a proper run after calling StartRelease //
+			continue;
+		}
+
 		Render();
 		// We could potentially wait here //
 		try{

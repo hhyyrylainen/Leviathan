@@ -12,13 +12,23 @@
 
 namespace Leviathan{
 
-	//! Defines in what way a request was invalid
+	
+
+	//! Defines in what way a request was invalid also
+	//! defines why a server disallowed a request
 	enum NETWORKRESPONSE_INVALIDREASON{
 
 		//! Returned when the connection is anonymous (the other client hasn't requested verified connection)
 		NETWORKRESPONSE_INVALIDREASON_UNAUTHENTICATED,
 		//! Returned when we don't implement the wanted action (for example if we are asked our server status and we aren't a server)
-		NETWORKRESPONSE_INVALIDREASON_UNSUPPORTED
+		NETWORKRESPONSE_INVALIDREASON_UNSUPPORTED,
+		//! Server has maximum number of players
+		NETWORKRESPONSE_INVALIDREASON_SERVERFULL,
+		//! Server is not accepting players
+		NETWORKRESPONSE_INVALIDREASON_SERVERNOTACCEPTINGPLAYERS,
+
+		//! The server has used a custom rule to disallow this
+		NETWORKRESPONSE_INVALIDREASON_SERVERCUSTOM
 	};
 
 	//! Defines server join protection status (who can join the server)
@@ -51,6 +61,10 @@ namespace Leviathan{
 		NETWORKRESPONSETYPE_REMOTECONSOLECLOSED,
 		NETWORKRESPONSETYPE_REMOTECONSOLEOPENED,
 		NETWORKRESPONSETYPE_INVALIDREQUEST,
+		//! \brief Sent by a server when it disallows a made request
+		NETWORKRESPONSETYPE_SERVERDISALLOW,
+		//! \brief Sent by a server when a request is allowed
+		NETWORKRESPONSETYPE_SERVERALLOW,
 		//! Returns anonymous data about the server
 		NETWORKRESPONSETYPE_SERVERSTATUS,
 		NETWORKRESPONSETYPE_NONE
@@ -126,6 +140,31 @@ namespace Leviathan{
 		int AdditionalFlags;
 	};
 
+	//! \brief Stores data about a server disallow response
+	class NetworkResponseDataForServerDisallow : public BaseNetworkResponseData{
+	public:
+		DLLEXPORT NetworkResponseDataForServerDisallow(sf::Packet &frompacket);
+		DLLEXPORT NetworkResponseDataForServerDisallow(NETWORKRESPONSE_INVALIDREASON reason, const wstring &message = L"Default disallow");
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! \brief An user readable disallow string
+		//! \note Should be limited to a maximum of 100 characters
+		wstring Message;
+
+		//! The reason why this request was dropped
+		NETWORKRESPONSE_INVALIDREASON Reason;
+	};
+
+	//! \brief Stores data about a server allow response
+	class NetworkResponseDataForServerAllow : public BaseNetworkResponseData{
+	public:
+		DLLEXPORT NetworkResponseDataForServerAllow(sf::Packet &frompacket);
+		DLLEXPORT NetworkResponseDataForServerAllow();
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+
+	};
+
 
 	class NetworkResponse : public Object{
 	public:
@@ -138,10 +177,14 @@ namespace Leviathan{
 		DLLEXPORT void GenerateIdentificationStringResponse(NetworkResponseDataForIdentificationString* newddata);
 		DLLEXPORT void GenerateInvalidRequestResponse(NetworkResponseDataForInvalidRequest* newddata);
 		DLLEXPORT void GenerateServerStatusResponse(NetworkResponseDataForServerStatus* newddata);
+		DLLEXPORT void GenerateServerDisallowResponse(NetworkResponseDataForServerDisallow* newddata);
+		DLLEXPORT void GenerateServerAllowResponse(NetworkResponseDataForServerAllow* newddata);
+
 		DLLEXPORT void GenerateKeepAliveResponse();
 		DLLEXPORT void GenerateCloseConnectionResponse();
 		DLLEXPORT void GenerateRemoteConsoleOpenedResponse();
 		DLLEXPORT void GenerateRemoteConsoleClosedResponse();
+
 
 		DLLEXPORT void GenerateEmptyResponse();
 

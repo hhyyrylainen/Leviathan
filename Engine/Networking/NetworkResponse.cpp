@@ -51,6 +51,16 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
 			ResponseData = new NetworkResponseDataForServerStatus(receivedresponse);
 		}
 		break;
+	case NETWORKRESPONSETYPE_SERVERALLOW:
+		{
+			ResponseData = new NetworkResponseDataForServerAllow(receivedresponse);
+		}
+		break;
+	case NETWORKRESPONSETYPE_SERVERDISALLOW:
+		{
+			ResponseData = new NetworkResponseDataForServerDisallow(receivedresponse);
+		}
+		break;
 	default:
 		{
 			throw ExceptionInvalidArgument(L"packet has invalid type", 0, __WFUNCTION__, L"receivedresponse", Convert::ToWstring(ResponseType));
@@ -83,6 +93,22 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateInvalidRequestResponse(Networ
 
 DLLEXPORT void Leviathan::NetworkResponse::GenerateServerStatusResponse(NetworkResponseDataForServerStatus* newddata){
 	ResponseType = NETWORKRESPONSETYPE_SERVERSTATUS;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateServerDisallowResponse(NetworkResponseDataForServerDisallow* newddata){
+	ResponseType = NETWORKRESPONSETYPE_SERVERDISALLOW;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateServerAllowResponse(NetworkResponseDataForServerAllow* newddata){
+	ResponseType = NETWORKRESPONSETYPE_SERVERALLOW;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 
@@ -296,4 +322,56 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
 
 DLLEXPORT void Leviathan::NetworkResponseDataForServerStatus::AddDataToPacket(sf::Packet &packet){
 	packet << ServerNameString << Joinable << static_cast<int>(JoinRestriction) << Players << MaxPlayers << Bots << static_cast<int>(ServerStatus) << AdditionalFlags;
+}
+// ------------------ NetworkResponseDataForServerDisallow ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataForServerDisallow(sf::Packet &frompacket){
+	int tmpextract;
+
+	if(!(frompacket >> tmpextract)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	Reason = static_cast<NETWORKRESPONSE_INVALIDREASON>(tmpextract);
+
+	if(!(frompacket >> Message)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	// Just in case we got an invalid packet check this //
+	if(Message.size() > 100){
+
+		Message.resize(100);
+		Logger::Get()->Warning(L"NetworkResponseDataForServerDisallow: packet had too long message string");
+	}
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataForServerDisallow(NETWORKRESPONSE_INVALIDREASON reason, 
+	const wstring &message /*= L"Default disallow"*/) : Reason(reason), Message(message)
+{
+	// Check the length //
+	if(Message.length() > 100){
+
+		Logger::Get()->Warning(L"NetworkResponse: NetworkResponseDataForServerDisallow: message is too long (is "+Convert::ToWstring(Message.length())
+			+L") : "+Message+L" will be truncated:");
+		Message.resize(100);
+		Logger::Get()->Write(L"\t> "+Message+L"\n");
+	}
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForServerDisallow::AddDataToPacket(sf::Packet &packet){
+	packet << Reason << Message;
+}
+// ------------------ NetworkResponseDataForServerAllow ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(sf::Packet &frompacket){
+
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(){
+
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForServerAllow::AddDataToPacket(sf::Packet &packet){
+
 }

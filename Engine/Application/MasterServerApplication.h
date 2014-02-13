@@ -18,7 +18,6 @@ namespace Leviathan{
 
 		// Overloaded functions to make this program actually a master server //
 		DLLEXPORT virtual bool Initialize(AppDef* configuration);
-		DLLEXPORT virtual void Release();
 
 
 

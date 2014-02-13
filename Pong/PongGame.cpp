@@ -143,15 +143,24 @@ int Pong::PongGame::StartServer(){
 		if(justforperformance->GetActiveConnectionCount() == 0){
 			// Failed //
 			Logger::Get()->Error(L"Failed to receive a remote connection from the server");
+			EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+				new NamedVariableList(L"Message", new VariableBlock(string("The server failed to start properly")))))));
 			StaticGame->Disconnect("Server failed to start properly");
 
 			// Kill the server //
+#ifdef _WIN32
 			TerminateProcess(StaticGame->ServerProcessHandle, -1);
+
+#endif // _WIN32
 
 			ObjectLock guard(*StaticGame);
 
+#ifdef WIN32
 			CloseHandle(StaticGame->ServerProcessHandle);
 			StaticGame->ServerProcessHandle = NULL;
+#endif // WIN32
+
+
 			return;
 		}
 
@@ -254,7 +263,7 @@ int Pong::PongGame::StartServer(){
 				new NamedVariableList(L"Message", new VariableBlock(string("Waiting for the server to respond to our status request")))))));
 
 
-		}, tmpconnection, shared_ptr<TmpPassTaskObject>(new TmpPassTaskObject())), boost::chrono::milliseconds(50))));
+		}, tmpconnection, shared_ptr<TmpPassTaskObject>(new TmpPassTaskObject())), MillisecondDuration(50))));
 
 
 	}, Leviathan::RemoteConsole::Get()), boost::bind<bool>([](Leviathan::RemoteConsole* justforperformance) -> bool{

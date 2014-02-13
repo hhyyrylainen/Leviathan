@@ -47,7 +47,15 @@ namespace Leviathan{
 
 		DLLEXPORT bool Init(AppDef* definition, NETWORKED_TYPE ntype);
 		//! \todo Add a thread that monitors if the thing gets stuck on a task
-		DLLEXPORT void Release();
+		DLLEXPORT void Release(bool forced = false);
+
+		//! \brief Sets objects ready to be released
+		//! \note The Tick function must be called after this but before Release
+		DLLEXPORT void PreRelease();
+
+		//! \brief Checks if PreRelease is done and Release can be called
+		//! \pre PreRelease is called
+		DLLEXPORT bool HasPreRleaseBeenDone() const;
 
 		DLLEXPORT void Tick();
 		DLLEXPORT void RenderFrame();
@@ -141,7 +149,15 @@ namespace Leviathan{
 		bool Focused : 1;
 		bool GuiActive : 1;
 		bool Inited : 1;
+		//! Set when PreRelease is called and Tick has happened
+		bool PreReleaseDone : 1;
+		//! Set when PreRelease called and waiting for Tick
+		//! see PreReleaseDone
+		bool PreReleaseWaiting : 1;
 		bool NoGui;
+		bool NoLeap;
+
+
 
 		// Stores the command line before running it //
 		std::vector<unique_ptr<wstring>> PassedCommands;

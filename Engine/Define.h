@@ -6,6 +6,7 @@
 
 #include "ForwardDeclarations.h"
 
+
 namespace Leviathan{
 	
 	template<class T>
@@ -45,6 +46,18 @@ namespace Leviathan{
 // Standard type time durations //
 typedef boost::chrono::duration<__int64, boost::milli> MillisecondDuration;
 typedef boost::chrono::duration<__int64, boost::micro> MicrosecondDuration;
+
+#include <boost/chrono/system_clocks.hpp>
+
+#ifdef BOOST_CHRONO_HAS_CLOCK_STEADY
+// This could also use the high_resolution_clock (because they both resolve to the same thing) //
+typedef boost::chrono::steady_clock WantedClockType;
+
+#else
+
+typedef boost::chrono::high_resolution_clock WantedClockType;
+
+#endif
 
 #include "Handlers/IDFactory.h"
 

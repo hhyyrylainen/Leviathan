@@ -93,11 +93,11 @@ __int64 Misc::GetTimeMicro64()
 
 }
 
-DLLEXPORT boost::chrono::steady_clock::time_point Leviathan::Misc::GetThreadSafeSteadyTimePoint(){
+DLLEXPORT WantedClockType::time_point Leviathan::Misc::GetThreadSafeSteadyTimePoint(){
 	// The Boost function may assert so we need to pass error object to it //
 	boost::system::error_code timerror;
 
-	auto result = boost::chrono::steady_clock::now(timerror);
+	auto result = WantedClockType::now(timerror);
 
 	// Check error code //
 	if(timerror){

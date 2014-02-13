@@ -52,7 +52,7 @@ namespace Leviathan{
 			int SessionToken;
 			bool OnlyLocalhost;
 
-			boost::chrono::steady_clock::time_point TimeoutTime;
+			WantedClockType::time_point TimeoutTime;
 		};
 	public:
 		DLLEXPORT RemoteConsole();

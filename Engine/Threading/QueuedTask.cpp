@@ -67,7 +67,7 @@ DLLEXPORT Leviathan::DelayedTask::DelayedTask(boost::function<void ()> functorun
 
 }
 
-DLLEXPORT Leviathan::DelayedTask::DelayedTask(boost::function<void ()> functorun, const boost::chrono::steady_clock::time_point &executetime) : 
+DLLEXPORT Leviathan::DelayedTask::DelayedTask(boost::function<void ()> functorun, const WantedClockType::time_point &executetime) : 
 	QueuedTask(functorun), ExecutionTime(executetime)
 {
 

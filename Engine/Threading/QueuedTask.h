@@ -27,7 +27,7 @@ namespace Leviathan{
 
 
 		//! Time the task set iteration started (may be slightly off, but it doesn't matter) //
-		boost::chrono::steady_clock::time_point CurrentTime;
+		WantedClockType::time_point CurrentTime;
 	};
 
 
@@ -105,7 +105,7 @@ namespace Leviathan{
 		//! Constructs a task that can be controlled when it can be ran
 		//! \param executetime Is used to control when the task can run
 		//! \see QueuedTask
-		DLLEXPORT DelayedTask(boost::function<void ()> functorun, const boost::chrono::steady_clock::time_point &executetime);
+		DLLEXPORT DelayedTask(boost::function<void ()> functorun, const WantedClockType::time_point &executetime);
 		DLLEXPORT virtual ~DelayedTask();
 
 
@@ -117,7 +117,7 @@ namespace Leviathan{
 	protected:
 
 		//! The time after which this task may be ran
-		boost::chrono::steady_clock::time_point ExecutionTime;
+		WantedClockType::time_point ExecutionTime;
 	};
 
 

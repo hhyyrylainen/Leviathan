@@ -16,7 +16,7 @@ namespace Leviathan{
 		DLLEXPORT static __int64 GetTimeMs64();
 		DLLEXPORT static __int64 GetTimeMicro64();
 
-		DLLEXPORT static boost::chrono::steady_clock::time_point GetThreadSafeSteadyTimePoint();
+		DLLEXPORT static WantedClockType::time_point GetThreadSafeSteadyTimePoint();
 
 
 		///reduce code

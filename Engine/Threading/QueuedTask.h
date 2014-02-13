@@ -7,7 +7,6 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include <boost/function.hpp>
-#include <boost/chrono/system_clocks.hpp>
 
 //! Default value to pass for ignoring this setting //
 #define TASK_MUSTBERAN_BEFORE_EXIT			0

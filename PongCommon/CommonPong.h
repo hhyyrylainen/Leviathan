@@ -29,11 +29,11 @@
 
 namespace Pong{
 
-    class BasePongParts;
-    //! \brief Should be in BasePongParts, used for static access
-    //!
-    //! Why is gcc so stupid on linux to not allow __declspec(selectany)
-    BasePongParts* BasepongStaticAccess;
+	class BasePongParts;
+	//! \brief Should be in BasePongParts, used for static access
+	//!
+	//! Why is gcc so stupid on linux that it does not allow __declspec(selectany)
+	BasePongParts* BasepongStaticAccess;
 
 	//! \brief A parent class for the CommonPongParts class to allow non-template use
 	//!
@@ -219,7 +219,7 @@ playrscorelistupdateendlabel:
 		}
 
 		static BasePongParts* Get(){
-			return StaticAccess;
+			return BasepongStaticAccess;
 		}
 
 		//! This function sets the player ID who should get points for scoring //
@@ -322,7 +322,7 @@ playrscorelistupdateendlabel:
 #ifdef _MVC_VER
 //	__declspec(selectany) BasePongParts* BasePongParts::StaticAccess = NULL;
 #else
-    // Apparently the above thing only works on Windows targets //
+	// Apparently the above thing only works on Windows targets //
 //    BasePongParts* BasePongParts::StaticAccess = NULL;
 #endif
 

@@ -9,6 +9,9 @@
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
+// Put this here, since nowhere else to put it //
+BasePongParts* Pong::BasepongStaticAccess = NULL;
+
 Pong::PongGame::PongGame() : GuiManagerAccess(NULL)
 #ifdef _WIN32
 	, ServerProcessHandle(NULL)

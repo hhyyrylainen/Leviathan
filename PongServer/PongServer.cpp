@@ -9,6 +9,9 @@
 #include "Networking/NetworkResponse.h"
 using namespace Pong;
 // ------------------------------------ //
+// Put this here, since nowhere else to put it //
+BasePongParts* Pong::BasepongStaticAccess = NULL;
+
 Pong::PongServer::PongServer(){
 
 }

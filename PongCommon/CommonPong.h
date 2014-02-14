@@ -33,7 +33,7 @@ namespace Pong{
 	//! \brief Should be in BasePongParts, used for static access
 	//!
 	//! Why is gcc so stupid on linux that it does not allow __declspec(selectany)
-	BasePongParts* BasepongStaticAccess;
+	extern BasePongParts* BasepongStaticAccess;
 
 	//! \brief A parent class for the CommonPongParts class to allow non-template use
 	//!

@@ -362,6 +362,14 @@ void Pong::PongGame::DoSpecialPostLoad(){
 	// Wait for everything to finish //
 	_Engine->GetThreadingManager()->WaitForAllTasksToFinish();
 
+#ifdef _DEBUG
+
+	// We are probably in text-only mode //
+	if(Engine::Get()->GetGraphics() == NULL)
+		return;
+
+#endif // _DEBUG
+
 	// load GUI documents //
 	GuiManagerAccess = Engine::GetEngine()->GetWindowEntity()->GetGUI();
 

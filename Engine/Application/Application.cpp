@@ -9,7 +9,8 @@ using namespace Leviathan;
 #include "OGRE/OgreWindowEventUtilities.h"
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
-DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), _Engine(new Engine(this)), ApplicationConfiguration(NULL), ShouldQuit(false)
+DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), _Engine(new Engine(this)), ApplicationConfiguration(NULL), 
+	ShouldQuit(false), QuitSometime(false)
 {
 	Curapp = this;
 }
@@ -112,7 +113,8 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 		Ogre::WindowEventUtilities::messagePump();
 
 		// Set as quitting //
-		if(!canprocess){
+		if((!canprocess || QuitSometime) && !ShouldQuit){
+			Logger::Get()->Info(L"Application: starting real close");
 			StartRelease();
 		}
 
@@ -170,5 +172,9 @@ DLLEXPORT void Leviathan::LeviathanApplication::DummyGameConfigurationVariables(
 
 DLLEXPORT void Leviathan::LeviathanApplication::DummyGameKeyConfigVariables(KeyConfiguration* keyconfigobj){
 
+}
+
+DLLEXPORT void Leviathan::LeviathanApplication::MarkAsClosing(){
+	QuitSometime = true;
 }
 // ------------------------------------ //

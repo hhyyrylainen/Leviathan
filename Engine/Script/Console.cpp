@@ -68,8 +68,8 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 		return CONSOLECOMMANDRESULTSTATE_SUCCEEDED;
 	} else if(commandstr == L"exit" || commandstr == L"quit"){
 
-		ConsoleOutput(L"Sending close signal to engine");
-		Leviathan::LeviathanApplication::GetApp()->StartRelease();
+		ConsoleOutput(L"Marking the program as closing");
+		Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
 		return CONSOLECOMMANDRESULTSTATE_SUCCEEDED;
 	}
 

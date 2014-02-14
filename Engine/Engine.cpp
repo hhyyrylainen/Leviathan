@@ -53,7 +53,6 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner),
 }
 
 DLLEXPORT Leviathan::Engine::~Engine(){
-	ObjectLock guard(*this);
 	// Reset the instance ptr //
 	instance = NULL;
 }
@@ -506,6 +505,8 @@ void Leviathan::Engine::Tick(){
 		PreReleaseWaiting = false;
 		PreReleaseDone = true;
 
+		Logger::Get()->Info(L"Engine: performing final release tick");
+
 		// Call last tick event //
 
 	}
@@ -635,6 +636,8 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 	// Set tasks to a proper state //
 	_ThreadingManager->SetDiscardConditionalTasks(true);
 	_ThreadingManager->SetDisallowRepeatingTasks(true);
+
+	Logger::Get()->Info(L"Engine: prerelease done, waiting for a tick");
 }
 
 DLLEXPORT bool Leviathan::Engine::HasPreRleaseBeenDone() const{

@@ -27,6 +27,10 @@ namespace Leviathan{
 		//! \note This should be used instead of Release
 		DLLEXPORT virtual void StartRelease();
 
+		//! \brief Thread safely marks the game to close sometime
+		//!
+		//! The closing should happen in around 2 ticks (100ms)
+		DLLEXPORT void MarkAsClosing();
 
 		// perform actions //
 		DLLEXPORT virtual int RunMessageLoop();
@@ -66,6 +70,8 @@ namespace Leviathan{
 
 		bool Quit;
 		bool ShouldQuit;
+		//! This can be quickly set anywhere to quit sometime in the future 
+		bool QuitSometime;
 
 		Engine* _Engine;
 		AppDef* ApplicationConfiguration;

@@ -69,7 +69,7 @@ DLLEXPORT void Leviathan::LeapManager::OnTick(const int &mspassed){
 
 		// close the window so the program quits after this //
 		ObjectLock guard(*Leviathan::LeviathanApplication::GetApp());
-		Leviathan::LeviathanApplication::GetApp()->StartRelease();
+		Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
 	}
 }
 // ------------------------------------ //

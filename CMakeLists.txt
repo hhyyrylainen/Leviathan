@@ -69,13 +69,8 @@ else(WIN32 OR APPLE)
     # Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
     set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
 endif(WIN32 OR APPLE)
-if(MINGW)
-    # this is probably a bug in CMake: the boost find module tries to look for
-    # boost libraries with name libboost_*, but CMake already prefixes library
-    # search names with "lib". This is the workaround.
-    set(CMAKE_FIND_LIBRARY_PREFIXES ${CMAKE_FIND_LIBRARY_PREFIXES} "")
-endif()
-set(Boost_ADDITIONAL_VERSIONS "1.55" "1.44" "1.44.0" "1.42" "1.42.0" "1.41.0" "1.41" "1.40.0" "1.40" "1.39.0" "1.39" "1.38.0" "1.38" "1.37.0" "1.37" )
+
+set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
 # Components that need linking (NB does not include header-only components like bind)
 set(OGRE_BOOST_COMPONENTS thread date_time)
 
@@ -90,8 +85,6 @@ if(NOT Boost_FOUND)
     # Try again with the other type of libs
     set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
     find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS})
-    
-    find_package(Boost)
     
     if(NOT Boost_FOUND)
         message(SEND_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})        
@@ -115,17 +108,17 @@ if(WIN32)
     
     
 else(WIN32)
-    add_definitions(-std=c++11 -std=gnu++11 -fextended-identifiers)
+    add_definitions(-std=c++11 -fextended-identifiers)
 
     # Linux library linking
-    #set(LINK_LIBS_TOENGINE Newton RocketCore RocketControls)
-
+    set(LINK_LIBS_TOENGINE Newton)
+    
     set(LINUX_LINK_LIBS_ENGINE Angelscript Leap RocketCore RocketControls RocketDebugger Newton 
         sfml-audio sfml-network sfml-system)
 
     # We need X11 on linux for window class to work
     find_package(X11)
-    find_package(Threads)
+    #find_package(Threads)
 
     include_directories(${X11_INCLUDE_DIRS})
 endif(WIN32)

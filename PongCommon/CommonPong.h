@@ -33,7 +33,7 @@ namespace Pong{
 	//! \brief Should be in BasePongParts, used for static access
 	//!
 	//! Why is gcc so stupid on linux that it does not allow __declspec(selectany)
-	BasePongParts* BasepongStaticAccess;
+	extern BasePongParts* BasepongStaticAccess;
 
 	//! \brief A parent class for the CommonPongParts class to allow non-template use
 	//!
@@ -100,7 +100,7 @@ namespace Pong{
 		//! \brief posts a quit message to quit after script has returned
 		void ScriptCloseGame(){
 
-			Leviathan::LeviathanApplication::GetApp()->StartRelease();
+			Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
 		}
 
 
@@ -319,7 +319,7 @@ playrscorelistupdateendlabel:
 		string ErrorState;
 
 	};
-#ifdef _MVC_VER
+#ifdef _MSC_VER
 //	__declspec(selectany) BasePongParts* BasePongParts::StaticAccess = NULL;
 #else
 	// Apparently the above thing only works on Windows targets //

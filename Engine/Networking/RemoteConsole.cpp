@@ -4,8 +4,8 @@
 #include "RemoteConsole.h"
 #endif
 #include "ConnectionInfo.h"
-#include "Application\Application.h"
-#include "Common\Misc.h"
+#include "Application/Application.h"
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::RemoteConsole::RemoteConsole() : CloseIfNoRemoteConsole(false), CanClose(false){
@@ -64,7 +64,7 @@ DLLEXPORT bool Leviathan::RemoteConsole::IsAwaitingConnections(){
 	return AwaitingConnections.size() != 0;
 }
 
-DLLEXPORT void Leviathan::RemoteConsole::ExpectNewConnection(int SessionToken, const wstring &assignname /*= L""*/, bool onlylocalhost /*= false*/, 
+DLLEXPORT void Leviathan::RemoteConsole::ExpectNewConnection(int SessionToken, const wstring &assignname /*= L""*/, bool onlylocalhost /*= false*/,
 	const MillisecondDuration &timeout /*= boost::chrono::seconds(30)*/)
 {
 	ObjectLock guard(*this);
@@ -137,7 +137,7 @@ DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* co
 DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(ConnectionInfo* connectiontouse, const wstring &connectionname, int token){
 	ObjectLock guard(*this);
 	// Add to the expected connections //
-	AwaitingConnections.push_back(shared_ptr<RemoteConsoleExpect>(new RemoteConsoleExpect(connectionname, token, 
+	AwaitingConnections.push_back(shared_ptr<RemoteConsoleExpect>(new RemoteConsoleExpect(connectionname, token,
 		connectiontouse->IsTargetHostLocalhost(), boost::chrono::seconds(15))));
 
 	// Send a request that the target connects to us //
@@ -192,7 +192,7 @@ DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleRequestPacket(shared
 	}
 }
 
-DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection, 
+DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection,
 	shared_ptr<NetworkRequest> potentialrequest)
 {
 	// We can detect close messages //
@@ -250,13 +250,13 @@ void Leviathan::RemoteConsole::SetAllowClose(){
 	CanClose = true;
 }
 // ------------------ RemoteConsoleExpect ------------------ //
-Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const wstring &name, int token, bool onlylocalhost, const MillisecondDuration 
+Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const wstring &name, int token, bool onlylocalhost, const MillisecondDuration
 	&timeout) : ConnectionName(name), SessionToken(token), OnlyLocalhost(onlylocalhost), TimeoutTime(Misc::GetThreadSafeSteadyTimePoint()+timeout)
 {
 
 }
 // ------------------ RemoteConsoleSession ------------------ //
-Leviathan::RemoteConsoleSession::RemoteConsoleSession(const wstring &name, ConnectionInfo* connection, int token) : ConnectionName(name), 
+Leviathan::RemoteConsoleSession::RemoteConsoleSession(const wstring &name, ConnectionInfo* connection, int token) : ConnectionName(name),
 	SessionToken(token), CorrespondingConnection(connection), TerminateSession(false)
 {
 

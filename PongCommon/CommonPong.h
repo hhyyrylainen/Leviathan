@@ -29,6 +29,12 @@
 
 namespace Pong{
 
+    class BasePongParts;
+    //! \brief Should be in BasePongParts, used for static access
+    //!
+    //! Why is gcc so stupid on linux to not allow __declspec(selectany)
+    BasePongParts* BasepongStaticAccess;
+
 	//! \brief A parent class for the CommonPongParts class to allow non-template use
 	//!
 	//! Mainly required for passing CommonPongParts to non-template functions
@@ -36,10 +42,10 @@ namespace Pong{
 		friend Arena;
 	public:
 		BasePongParts(bool isserver) : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), ScoreLimit(20),
-			BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData(new Leviathan::SimpleDatabase("GameConfiguration")), 
+			BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData(new Leviathan::SimpleDatabase("GameConfiguration")),
 			GamePaused(false), GameAI(NULL)
 		{
-			StaticAccess = this;
+			BasepongStaticAccess = this;
 
 			// Fill the player list with empty slots //
 			PlayerSlot::CurrentPlayerIdentifier = 0;
@@ -53,9 +59,10 @@ namespace Pong{
 		~BasePongParts(){
 			SAFE_DELETE_VECTOR(PlayerList);
 			SAFE_DELETE(GameAI);
+			BasepongStaticAccess = NULL;
 		}
 
-		
+
 
 		void GameMatchEnded(){
 			// This can be called from script so ensure that these are set //
@@ -261,10 +268,6 @@ playrscorelistupdateendlabel:
 	protected:
 
 
-		static BasePongParts* StaticAccess;
-
-
-
 		void _DisposeOldBall(){
 
 			// Tell arena to let go of old ball //
@@ -316,8 +319,13 @@ playrscorelistupdateendlabel:
 		string ErrorState;
 
 	};
+#ifdef _MVC_VER
+//	__declspec(selectany) BasePongParts* BasePongParts::StaticAccess = NULL;
+#else
+    // Apparently the above thing only works on Windows targets //
+//    BasePongParts* BasePongParts::StaticAccess = NULL;
+#endif
 
-	__declspec(selectany) BasePongParts* BasePongParts::StaticAccess = NULL;
 
 
 	//! \brief Class that contains common functions required both by Pong and PongServer
@@ -341,7 +349,7 @@ playrscorelistupdateendlabel:
 
 			QUICKTIME_THISSCOPE;
 
-			_Engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
+			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
 				shared_ptr<Leviathan::SimpleDatabase> GameConfigurationData) -> void
 			{
 
@@ -357,7 +365,7 @@ playrscorelistupdateendlabel:
 
 			}, GameConfigurationData))));
 
-			_Engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](CommonPongParts* game) -> void{
+			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](CommonPongParts* game) -> void{
 				// Load the game AI //
 				game->GameAI = new GameModule(L"PongAIModule", L"PongGameCore");
 
@@ -378,7 +386,7 @@ playrscorelistupdateendlabel:
 			DoSpecialPostLoad();
 
 			// Wait for everything to finish //
-			_Engine->GetThreadingManager()->WaitForAllTasksToFinish();
+			Engine::Get()->GetThreadingManager()->WaitForAllTasksToFinish();
 
 			// after loading reset time sensitive timers //
 			Engine::GetEngine()->ResetPhysicsTime();

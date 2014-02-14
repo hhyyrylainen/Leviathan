@@ -7,7 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "NetworkResponse.h"
-#include "Common\BaseNotifiable.h"
+#include "Common/BaseNotifiable.h"
 
 
 namespace Leviathan{
@@ -42,7 +42,7 @@ namespace Leviathan{
 		//! \param servername Sets the server's name visible in various listings
 		//! \param restricttype Controls who can join the server
 		//! \param additionalflags Sets the application specific flags for this server
-		DLLEXPORT NetworkServerInterface(int maxplayers, const wstring &servername, NETWORKRESPONSE_SERVERJOINRESTRICT restricttype = 
+		DLLEXPORT NetworkServerInterface(int maxplayers, const wstring &servername, NETWORKRESPONSE_SERVERJOINRESTRICT restricttype =
 			NETWORKRESPONSE_SERVERJOINRESTRICT_NONE, int additionalflags = 0);
 		//! Default destructor
 		DLLEXPORT virtual ~NetworkServerInterface();

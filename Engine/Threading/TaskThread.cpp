@@ -4,7 +4,7 @@
 #include "TaskThread.h"
 #endif
 #include "ThreadingManager.h"
-#include "Angelscript.h"
+#include "angelscript.h"
 #include "OgreRoot.h"
 using namespace Leviathan;
 // ------------------------------------ //

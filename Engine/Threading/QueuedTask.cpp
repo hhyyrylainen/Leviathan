@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_QUEUEDTASK
 #include "QueuedTask.h"
 #endif
-#include "Common\Misc.h"
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::QueuedTask::QueuedTask(boost::function<void ()> functorun) : FunctionToRun(functorun){
@@ -47,7 +47,7 @@ Leviathan::QueuedTaskCheckValues::QueuedTaskCheckValues() : CurrentTime(Misc::Ge
 
 }
 // ------------------ ConditionalTask ------------------ //
-DLLEXPORT Leviathan::ConditionalTask::ConditionalTask(boost::function<void ()> functorun, boost::function<bool ()> canberuncheck) : 
+DLLEXPORT Leviathan::ConditionalTask::ConditionalTask(boost::function<void ()> functorun, boost::function<bool ()> canberuncheck) :
 	QueuedTask(functorun), TaskCheckingFunc(canberuncheck)
 {
 
@@ -67,7 +67,7 @@ DLLEXPORT Leviathan::DelayedTask::DelayedTask(boost::function<void ()> functorun
 
 }
 
-DLLEXPORT Leviathan::DelayedTask::DelayedTask(boost::function<void ()> functorun, const WantedClockType::time_point &executetime) : 
+DLLEXPORT Leviathan::DelayedTask::DelayedTask(boost::function<void ()> functorun, const WantedClockType::time_point &executetime) :
 	QueuedTask(functorun), ExecutionTime(executetime)
 {
 
@@ -82,13 +82,13 @@ DLLEXPORT bool Leviathan::DelayedTask::CanBeRan(const QueuedTaskCheckValues* con
 	return checkvalues->CurrentTime >= ExecutionTime;
 }
 // ------------------ RepeatingDelayedTask ------------------ //
-DLLEXPORT Leviathan::RepeatingDelayedTask::RepeatingDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &bothdelays) : 
+DLLEXPORT Leviathan::RepeatingDelayedTask::RepeatingDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &bothdelays) :
 	DelayedTask(functorun, bothdelays), ShouldRunAgain(true), TimeBetweenExecutions(bothdelays)
 {
 
 }
 
-DLLEXPORT Leviathan::RepeatingDelayedTask::RepeatingDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay, 
+DLLEXPORT Leviathan::RepeatingDelayedTask::RepeatingDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay,
 	const MicrosecondDuration &followingduration) : DelayedTask(functorun, initialdelay), ShouldRunAgain(true), TimeBetweenExecutions(followingduration)
 {
 
@@ -111,14 +111,14 @@ void Leviathan::RepeatingDelayedTask::_PostFunctionRun(){
 	ExecutionTime = Misc::GetThreadSafeSteadyTimePoint()+TimeBetweenExecutions;
 }
 // ------------------ RunCountedDelayedTask ------------------ //
-DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &bothdelays, 
+DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &bothdelays,
 	int repeatcount) : DelayedTask(functorun, bothdelays), MaxRepeats(repeatcount), TimeBetweenExecutions(bothdelays), RepeatedCount(0)
 {
 
 }
 
-DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay, 
-	const MicrosecondDuration &followingduration, int repeatcount) : DelayedTask(functorun, initialdelay), MaxRepeats(repeatcount), 
+DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay,
+	const MicrosecondDuration &followingduration, int repeatcount) : DelayedTask(functorun, initialdelay), MaxRepeats(repeatcount),
 	TimeBetweenExecutions(followingduration), RepeatedCount(0)
 {
 

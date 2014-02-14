@@ -4,8 +4,8 @@
 #include "SimpleDatabase.h"
 #endif
 #include "FileSystem.h"
-#include "Common\StringOperations.h"
-#include "..\Iterators\WstringIterator.h"
+#include "Common/StringOperations.h"
+#include "../Iterators/WstringIterator.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::SimpleDatabase::SimpleDatabase(const string &rocketname) : Rocket::Controls::DataSource(rocketname.c_str()){
@@ -203,7 +203,7 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
 		try{
 			shared_ptr<NamedVariableList> namevar(new NamedVariableList(Lines[i], NULL));
 			// didn't cause an exception, is valid add //
-			
+
 			insertiter->second->push_back(shared_ptr<SimpleDatabaseRowObject>(new SimpleDatabaseRowObject()));
 
 			auto toinsert = insertiter->second->back();
@@ -246,7 +246,7 @@ DLLEXPORT void Leviathan::SimpleDatabase::SaveToFile(const wstring &file){
 	for(auto iter = Database.begin(); iter != Database.end(); ++iter){
 
 		datastr += L"TABLE = \""+iter->first+L"\";\n";
-		
+
 		for(auto iter2 = iter->second->begin(); iter2 != iter->second->end(); ++iter2){
 
 			datastr += L"n= [";

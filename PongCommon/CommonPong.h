@@ -749,13 +749,13 @@ playrscorelistupdateendlabel:
 		static void BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep, int threadIndex){
 
 			// Call the callback //
-			StaticAccess->_SetLastPaddleHit(reinterpret_cast<Leviathan::BasePhysicsObject*>(
+			BasepongStaticAccess->_SetLastPaddleHit(reinterpret_cast<Leviathan::BasePhysicsObject*>(
 				NewtonBodyGetUserData(NewtonJointGetBody0(contact))), reinterpret_cast<Leviathan::BasePhysicsObject*>(
 				NewtonBodyGetUserData(NewtonJointGetBody1(contact))));
 		}
 		static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep, int threadIndex){
 			// Call the function and set the collision state as the last one //
-			NewtonJointSetCollisionState(contact, StaticAccess->_BallEnterGoalArea(reinterpret_cast<Leviathan::BasePhysicsObject*>(
+			NewtonJointSetCollisionState(contact, BasepongStaticAccess->_BallEnterGoalArea(reinterpret_cast<Leviathan::BasePhysicsObject*>(
 				NewtonBodyGetUserData(NewtonJointGetBody0(contact))), reinterpret_cast<Leviathan::BasePhysicsObject*>(
 				NewtonBodyGetUserData(NewtonJointGetBody1(contact)))));
 		}

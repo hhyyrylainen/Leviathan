@@ -15,8 +15,12 @@ namespace Leviathan{
 		///time functions
 		DLLEXPORT static __int64 GetTimeMs64();
 		DLLEXPORT static __int64 GetTimeMicro64();
-
-		DLLEXPORT static WantedClockType::time_point GetThreadSafeSteadyTimePoint();
+        //! \brief Gets the current time in a thread safe way
+        //!
+        //! This should always be used when getting the time to avoid segfaulting
+        //! \note boost::chrono::high_resolution_clock should be the exact same thing as WantedClockType
+        //! it is used because Define.h can't be included in this file
+		DLLEXPORT static boost::chrono::high_resolution_clock::time_point GetThreadSafeSteadyTimePoint();
 
 
 		///reduce code

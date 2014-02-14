@@ -32,6 +32,8 @@ namespace X11{
 #undef None
 #define X11index index
 #undef index
+#define X11CurrentTime CurrentTime
+#undef CurrentTime
 
 #endif
 

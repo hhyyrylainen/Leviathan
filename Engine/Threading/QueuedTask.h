@@ -32,7 +32,7 @@ namespace Leviathan{
 
 	//! \brief Encapsulates a function that can later be ran in a free thread
 	//! \warning Function passed to this class should be thread safe
-	//! \warning This is not explicitly thread safe, it might be through Boost::Thread 
+	//! \warning This is not explicitly thread safe, it might be through Boost::Thread
 	class QueuedTask{
 	public:
 		//! Takes in the function which is ran when the Task is ran
@@ -49,7 +49,7 @@ namespace Leviathan{
 		DLLEXPORT virtual bool CanBeRan(const QueuedTaskCheckValues* const checkvalues);
 
 		//! \brief Function called by ThreadingManager before certain events to make proper tasks finish before certain operations
-		//! \return By default returns true when passed TASK_MUSTBERAN_BEFORE_EXIT, but child classes can store internal variables 
+		//! \return By default returns true when passed TASK_MUSTBERAN_BEFORE_EXIT, but child classes can store internal variables
 		//! to match only certain types
 		DLLEXPORT virtual bool MustBeRanBefore(int eventtypeidentifier);
 
@@ -122,7 +122,7 @@ namespace Leviathan{
 
 	//! \brief Encapsulates a function that is ran after a time period
 	//! \warning Function passed to this class should be thread safe
-	//! \warning The passed task will be repeatedly ran until SetRepeatStatus is called with false 
+	//! \warning The passed task will be repeatedly ran until SetRepeatStatus is called with false
 	//! (or ShouldRunAgain some other way set to false)
 	//! \see SetRepeatStatus
 	class RepeatingDelayedTask : public DelayedTask{
@@ -176,7 +176,7 @@ namespace Leviathan{
 		//! \param followingduration Is the time between following executions
 		//! \param repeatcount The task is ran this specified times, or the task calls StopRepeating before that
 		//! \see DelayedTask
-		DLLEXPORT RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay, const MicrosecondDuration 
+		DLLEXPORT RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay, const MicrosecondDuration
 			&followingduration, int repeatcount);
 
 		DLLEXPORT virtual ~RepeatCountedDelayedTask();

@@ -7,7 +7,7 @@
 #include "GuiScriptInterface.h"
 #include "BaseGuiObject.h"
 #include "GuiManager.h"
-#include "add_on\autowrapper\aswrappedcall.h"
+#include "add_on/autowrapper/aswrappedcall.h"
 
 string RocketProxyEventGetValue(Rocket::Core::Event* evt, string valuename){
 	// Get the parameter from the event //
@@ -98,7 +98,7 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	}
 
 
-	
+
 	// rocket objects //
 	if(engine->RegisterObjectType("RocketEvent", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
@@ -112,7 +112,7 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	if(engine->RegisterObjectMethod("RocketEvent", "string GetValue(string name)", WRAP_FN(RocketProxyEventGetValue), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	
+
 
 	// rocket element //
 	if(engine->RegisterObjectType("RocketElement", 0, asOBJ_REF) < 0){
@@ -130,8 +130,8 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	if(engine->RegisterObjectMethod("RocketElement", "void SetInternalRML(string &in rml)", asFUNCTION(RocketElementProxySetInternalRML), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	
-	
+
+
 	// bind sheets //
 	if(engine->RegisterObjectType("GuiLoadedSheet", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
@@ -151,7 +151,7 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	
+
 	if(engine->RegisterObjectMethod("GuiLoadedSheet", "RocketElement@ GetElementByID(string id)", WRAP_MFN(Gui::GuiLoadedSheet, GetElementByIDProxy), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -160,8 +160,8 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	}
 
 
-	
-		
+
+
 
 
 	return true;

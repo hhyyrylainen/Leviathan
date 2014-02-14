@@ -8,7 +8,7 @@
 
 
 namespace Leviathan{
-	
+
 	template<class T>
 	void SafeReleaser(T* obj){
 		SAFE_RELEASE(obj);
@@ -49,10 +49,10 @@ typedef boost::chrono::duration<__int64, boost::micro> MicrosecondDuration;
 
 #include <boost/chrono/system_clocks.hpp>
 
-#ifdef BOOST_CHRONO_HAS_CLOCK_STEADY
+#ifdef _WIN32
 // This could also use the high_resolution_clock (because they both resolve to the same thing) //
-typedef boost::chrono::steady_clock WantedClockType;
-
+//typedef boost::chrono::steady_clock WantedClockType;
+typedef boost::chrono::high_resolution_clock WantedClockType;
 #else
 
 typedef boost::chrono::high_resolution_clock WantedClockType;

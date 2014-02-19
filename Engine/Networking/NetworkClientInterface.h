@@ -71,7 +71,10 @@ namespace Leviathan{
 	private:
 		
 		void _SendConnectRequest(ObjectLock &guard);
-
+		void _ProcessCompletedRequest(shared_ptr<SentNetworkThing> tmpsendthing, ObjectLock &guard);
+		//! \brief Internally called when server has accepted us
+		//! \todo Call variable syncing from here
+		void _ProperlyConnectedToServer(ObjectLock &guard);
 
 	protected:
 
@@ -79,6 +82,8 @@ namespace Leviathan{
 		std::vector<shared_ptr<SentNetworkThing>> OurSentRequests;
 
 		shared_ptr<ConnectionInfo> ServerConnection;
+
+		bool ConnectedToServer;
 
 		int ConnectTriesCount;
 		int MaxConnectTries;

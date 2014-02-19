@@ -325,6 +325,14 @@ void Pong::PongGame::CheckGameConfigurationVariables(GameConfiguration* configob
 		vars->AddVar(L"GameDatabase", new VariableBlock(wstring(L"PongGameDatabase.txt")));
 		configobj->MarkModified();
 	}
+
+	// Default server port //
+	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>(L"DefaultServerPort")){
+		// Add new //
+		vars->AddVar(L"DefaultServerPort", new VariableBlock(int(53221)));
+		configobj->MarkModified();
+	}
+
 }
 
 void Pong::PongGame::CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj){
@@ -422,6 +430,10 @@ void Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 		SCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectMethod("PongGame", "void Disconnect(const string &in statusmessage)", WRAP_MFN(PongGame, Disconnect), asCALL_GENERIC) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("PongGame", "void Connect(const string &in address)", WRAP_MFN(PongGame, ConnectProxy), asCALL_GENERIC) < 0)
 	{
 		SCRIPT_REGISTERFAIL;
 	}

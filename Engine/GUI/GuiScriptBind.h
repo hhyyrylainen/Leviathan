@@ -9,11 +9,15 @@
 #include "GuiManager.h"
 #include "add_on/autowrapper/aswrappedcall.h"
 
-string RocketProxyEventGetValue(Rocket::Core::Event* evt, string valuename){
+void RocketProxyEventGetValue(asIScriptGeneric* gen){
+	//Rocket::Core::Event* evt, string valuename
+	Rocket::Core::Event* evt = reinterpret_cast<Rocket::Core::Event*>(gen->GetObject());
+	string* valuename = reinterpret_cast<string*>(gen->GetArgObject(0));
+
 	// Get the parameter from the event //
-	auto strtype = evt->GetParameter(valuename.c_str(), Rocket::Core::String(""));
+	auto strtype = evt->GetParameter(valuename->c_str(), Rocket::Core::String(""));
 	// Convert and return //
-	return string(strtype.CString());
+	new(gen->GetAddressOfReturnLocation()) std::string(strtype.CString());
 }
 
 void RocketElementProxySetProperty(asIScriptGeneric* gen){
@@ -109,7 +113,7 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	if(engine->RegisterObjectBehaviour("RocketEvent", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Rocket::Core::Event, RemoveReference), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("RocketEvent", "string GetValue(string name)", WRAP_FN(RocketProxyEventGetValue), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectMethod("RocketEvent", "string GetValue(string &in name)", asFUNCTION(RocketProxyEventGetValue), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
@@ -158,7 +162,9 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	if(engine->RegisterObjectMethod("GuiCollection", "GuiLoadedSheet@ GetOwningSheet()", WRAP_MFN(Gui::GuiCollection, GetOwningSheetProxy), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-
+	if(engine->RegisterObjectMethod("BaseGuiObject", "GuiLoadedSheet@ GetOwningSheet()", WRAP_MFN(Gui::BaseGuiObject, GetOwningSheetProxy), asCALL_GENERIC) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
 
 
 

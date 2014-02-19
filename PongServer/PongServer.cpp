@@ -35,12 +35,20 @@ void Pong::PongServer::CheckGameConfigurationVariables(GameConfiguration* config
 
 	NamedVars* vars = configobj->AccessVariables(lockit);
 
-	// Master server port //
-	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>(L"ServerPort")){
+	// Default server port //
+	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>(L"DefaultServerPort")){
 		// Add new //
-		vars->AddVar(L"ServerPort", new VariableBlock(53221));
+		vars->AddVar(L"DefaultServerPort", new VariableBlock(int(53221)));
 		configobj->MarkModified();
 	}
+
+	// Game configuration database //
+	if(vars->ShouldAddValueIfNotFoundOrWrongType<wstring>(L"GameDatabase")){
+		// Add new //
+		vars->AddVar(L"GameDatabase", new VariableBlock(wstring(L"PongGameDatabase.txt")));
+		configobj->MarkModified();
+	}
+
 }
 
 void Pong::PongServer::CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj){

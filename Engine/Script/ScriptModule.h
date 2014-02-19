@@ -22,6 +22,7 @@ namespace Leviathan{
 #define LISTENERNAME_ONINIT				L"OnInit"
 #define LISTENERNAME_ONRELEASE			L"OnRelease"
 #define LISTENERNAME_ONVALUECHANGE		L"OnValueChange"
+#define LISTENERNAME_ONSUBMIT			L"OnSubmit"
 
 #define LISTENERVALUE_ONSHOW			100
 #define LISTENERVALUE_ONHIDE			101
@@ -30,6 +31,7 @@ namespace Leviathan{
 #define LISTENERVALUE_ONINIT			104
 #define LISTENERVALUE_ONRELEASE			105
 #define LISTENERVALUE_ONVALUECHANGE		106
+#define LISTENERVALUE_ONSUBMIT			107
 
 
 	// used to store function's parameter info //

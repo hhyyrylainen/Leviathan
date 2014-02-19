@@ -89,6 +89,23 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(share
 		return;
 	}
 
+	// Check is the player already connected //
+	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ++iter){
+		// Check does it match //
+		if((*iter)->IsConnectionYours(connection)){
+			// Already connected //
+			shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), PACKAGE_TIMEOUT_STYLE_TIMEDMS, 2000));
+
+			// Set data //
+			tmpresponse->GenerateServerDisallowResponse(new NetworkResponseDataForServerDisallow(NETWORKRESPONSE_INVALIDREASON_SERVERALREADYCONNECTEDTOYOU, 
+				L"You are already connected to this server, disconnect first"));
+
+			connection->SendPacketToConnection(tmpresponse, 1);
+
+			return;
+		}
+	}
+
 	// Call this here, so this can potentially kick players for reserved slots //
 	PlayerPreconnect(connection, request);
 
@@ -133,6 +150,16 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(share
 	PlayerList.push_back(new ConnectedPlayer(connection, this));
 
 	_OnPlayerConnected(PlayerList.back());
+
+	Logger::Get()->Info(L"NetworkServerInterface: accepted a new player");
+
+	// Send connection notification back to the client //
+	shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), PACKAGE_TIMEOUT_STYLE_TIMEDMS, 2000));
+
+	// Set data //
+	tmpresponse->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE_CONNECT_ACCEPTED));
+
+	connection->SendPacketToConnection(tmpresponse, 3);
 }
 // ------------------ Default callbacks ------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::_OnPlayerConnected(ConnectedPlayer* newplayer){
@@ -165,4 +192,10 @@ Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, Ne
 void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
 
 	Logger::Get()->Info(L"ConnectedPlayer: player connection closed");
+}
+
+DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYours(ConnectionInfo* checkconnection){
+	ObjectLock guard(*this);
+
+	return CorrenspondingConnection->GenerateFormatedAddressString() == checkconnection->GenerateFormatedAddressString();
 }

@@ -323,6 +323,7 @@ std::map<wstring, Rocket::Core::String> Leviathan::Gui::BaseGuiObject::Leviathan
 	(LISTENERNAME_ONHIDE, "hide")
 	(LISTENERNAME_ONCLICK, "click")
 	(LISTENERNAME_ONVALUECHANGE, "change")
+	(LISTENERNAME_ONSUBMIT, "submit")
 ;
 
 // This starts off empty //

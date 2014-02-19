@@ -16,7 +16,11 @@ namespace Leviathan{
 	//! \todo Implement this
 	class ConnectedPlayer : public BaseNotifiableAll{
 	public:
-		ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance);
+		DLLEXPORT ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance);
+
+		//! \brief Checks is the given connection same as ours
+		//! \todo Fix performance
+		DLLEXPORT bool IsConnectionYours(ConnectionInfo* checkconnection);
 
 	protected:
 		//! \brief Used to detect when a connection has been closed

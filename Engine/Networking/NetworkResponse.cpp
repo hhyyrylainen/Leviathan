@@ -365,13 +365,22 @@ DLLEXPORT void Leviathan::NetworkResponseDataForServerDisallow::AddDataToPacket(
 }
 // ------------------ NetworkResponseDataForServerAllow ------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(sf::Packet &frompacket){
+	int tmpextract;
 
+	if(!(frompacket >> tmpextract)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	ServerAcceptedWhat = static_cast<NETWORKRESPONSE_SERVERACCEPTED_TYPE>(tmpextract);
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(){
+DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted) : 
+	ServerAcceptedWhat(whataccepted)
+{
 
 }
 
 DLLEXPORT void Leviathan::NetworkResponseDataForServerAllow::AddDataToPacket(sf::Packet &packet){
-
+	packet << ServerAcceptedWhat;
 }

@@ -12,16 +12,29 @@
                 <span class="SpaceTaker"></span>
                 <span class="MenuOption"><p id="ToServerStartScreen">Start Server</p></span>
                 <span class="MenuOption Disabled"><p id="GameMultiplayerList">Browse Games</p></span>
-                <span class="MenuOption Disabled"><p id="GameDirectConnect">Direct Connect</p></span>
+                <span class="MenuOption"><p id="ToGameDirectConnect">Direct Connect</p></span>
                 <span class="MenuOption Dangerous"><p id="GameQuitButton">Quit</p></span>
             </div>
             <div class="MenuContent Hidden" id="ServerStartScreen">
+                <span class="SpaceTaker"></span>
                 <h1 class="MenuTitle">Start a new game</h1>
                 <hr class="MenuLine"></hr>
                 Here's the server setup screen!
                 <hr class="MenuLine"></hr>
                 <span class="MenuOption"><p id="ServerStartButton">Start Game</p></span>
                 <span class="MenuOption"><p id="BackFromServerStartScreen">Back</p></span>
+            </div>
+            <div class="MenuContent Hidden" id="DirectConnectScreen">
+                <span class="SpaceTaker"></span>
+                <h1 class="MenuTitle">Connect to a server</h1>
+                <hr class="MenuLine"></hr>
+                <form id="DirectConnectForm" style="text-align: center; width: auto; margin: auto;">
+                <p id="DirectConnectFormErrorText">Type in the address of the server like this: "192.168.1.1:25543"</p>
+                <input style="font-size: 35; height: auto;" type="text" size="30" name="ServerAddress" 
+                    value="localhost:53221"></input>
+                <p><input type="submit">Connect</input></p>
+                </form>
+                <span class="MenuOption"><p id="BackFromDirectConnectScreen">Back</p></span>
             </div>
         </div>
         <div class="Hidden" id="LobbyScreen">
@@ -47,11 +60,14 @@
             <span class="MenuOption Dangerous"><p id="LobbyDisconnect">Disconnect</p></span>
         </div>
         <div class="Hidden FullScreen" id="ServerConnectScreen">
-            <span class="DeadCenter" style="position: absolute;">
-                Starting a new server, hold on
+            <span class="DeadCenter Absolute" style="widt: 100px; height: 100px;">
+                Connecting to a server
             </span>
             <div class="ConnectStatus" id="ConnectionStatusUpdate">
                 Waiting for status update...
+            </div>
+            <div class="BottomRightMenu Dangerous" style="width: 200px;" id="ServerConnectScreenDisconnect">
+                Disconnect
             </div>
         </div>
         <div class="Hidden" id="GameplayHUD">

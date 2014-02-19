@@ -466,11 +466,23 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 
 	bool SentToController = false;
 
-	if(inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
-		if(!OwningWindow->GetGUI()->ProcessKeyDown(arg.key, SpecialKeyModifiers)){
+	// Try to send text input to Rocket //
+	bool passedtext = false;
+	if((arg.text > 31 || arg.text == '	') && (arg.text <= 126 || arg.text > 127)){
+		// Try to pass it //
+		passedtext = !inputreceiver->ProcessTextInput(static_cast<Rocket::Core::word>(arg.text));
+	}
 
-			SentToController = true;
-			OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, true);
+	if(!passedtext){
+		// Now try sending key input //
+		if(inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
+
+			// Finally try sending it to GUI //
+			if(!OwningWindow->GetGUI()->ProcessKeyDown(arg.key, SpecialKeyModifiers)){
+
+				SentToController = true;
+				OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, true);
+			}
 		}
 	}
 
@@ -486,7 +498,7 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 bool Leviathan::Window::keyReleased(const OIS::KeyEvent &arg){
 	CheckInputState();
 	// pass event to active Rocket context //
-	if(inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
+	if(inputreceiver->ProcessKeyUp(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
 		// After not even GUI wanting update send to the input object //
 		OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, false);
 	} else {

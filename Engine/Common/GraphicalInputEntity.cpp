@@ -122,7 +122,8 @@ DLLEXPORT float Leviathan::GraphicalInputEntity::GetViewportAspectRatio(){
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::Render(int mspassed){
 
-	LinkedWorld->UpdateCameraLocation(mspassed, LinkedCamera.get());
+	if(LinkedWorld)
+		LinkedWorld->UpdateCameraLocation(mspassed, LinkedCamera.get());
 
 	// update input before each frame //
 	WindowsGui->Render();

@@ -32,6 +32,18 @@ span
     background-color: #61D8A2;
 }
 
+.BottomRightMenu
+{
+    position: absolute;
+    text-align: right;
+    width: auto;
+    height: 50px;
+    margin: auto;
+    margin-bottom: 5%;
+    margin-right: 5%;
+    background-color: #00B060;
+}
+
 .Disabled
 {
     background-color: #21845766;    
@@ -77,13 +89,13 @@ div.ConnectStatus
 }
 
 
-span.DeadCenter
+.DeadCenter
 {
+    text-align: center;
+    display: block;
     width: auto;
     height: auto;
     margin: auto;
-    text-align: center;
-    display: block;
 }
 
 div.FullScreen
@@ -102,8 +114,8 @@ div.FullScreen
 
 .MenuTitle
 {
-    /*color: #FFAC40;*/
-    color: #4A47FF;
+    color: #FFAC40;
+    /*color: #4A47FF;*/
     header-font-effect: outline;
     header-width: 2px;
     header-color: #BF813077;
@@ -167,6 +179,10 @@ hr.PauseLine
     display: inline;
 }
 
+.Absolute
+{
+    position: absolute;
+}
 
 scrollbarvertical
 {

@@ -82,7 +82,7 @@ checksentrequestsbeginlabel:
 		// Check can we handle it //
 		if((*iter)->GetFutureForThis().has_value()){
 			// Handle the request //
-			if(!(*iter)->GetFutureForThis().get()){
+			if(!(*iter)->GetFutureForThis().get() || !(*iter)->GotResponse){
 				// It failed //
 
 				Logger::Get()->Warning(L"NetworkClientInterface: request to server failed, possibly retrying:");
@@ -116,6 +116,9 @@ checksentrequestsbeginlabel:
 			}
 
 			Logger::Get()->Info(L"Received a response to client request");
+
+			// Handle it //
+			_ProcessCompletedRequest(*iter, guard);
 
 			// This is now received/handled //
 			iter = OurSentRequests.erase(iter);
@@ -151,6 +154,46 @@ void Leviathan::NetworkClientInterface::_SendConnectRequest(ObjectLock &guard){
 		Convert::ToWstring(ConnectTriesCount));
 }
 // ------------------------------------ //
+void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(shared_ptr<SentNetworkThing> tmpsendthing, ObjectLock &guard){
+	VerifyLock(guard);
+
+	// Handle it //
+	switch(tmpsendthing->OriginalRequest->GetType()){
+	case NETWORKREQUESTTYPE_JOINSERVER:
+		{
+			// Check what we got back //
+			switch(tmpsendthing->GotResponse->GetTypeOfResponse()){
+			default:
+			case NETWORKRESPONSETYPE_SERVERDISALLOW:
+				{
+					// We need to do something to fix this
+					DEBUG_BREAK;
+				}
+				break;
+			case NETWORKRESPONSETYPE_SERVERALLOW:
+				{
+					// Properly joined //
+					// \todo check what was the actual accepted thing
+					_ProperlyConnectedToServer(guard);
+				}
+				break;
+			}
+		}
+		break;
+	default:
+		Logger::Get()->Info(L"NetworkClientInterface: WE MADE AN INVALID REQUEST");
+		DEBUG_BREAK;
+	}
+}
+// ------------------------------------ //
+void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer(ObjectLock &guard){
+	VerifyLock(guard);
+
+	ConnectedToServer = true;
+
+	_OnNewConnectionStatusMessage(L"Connection established a connection with "+ServerConnection->GenerateFormatedAddressString());
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const wstring &reasonstring){
 
 }
@@ -170,3 +213,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnSuccessfullyConnectedToServ
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnNewConnectionStatusMessage(const wstring &message){
 
 }
+
+
+
+

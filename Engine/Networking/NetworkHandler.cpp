@@ -69,6 +69,7 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 	if(AppType == NETWORKED_TYPE_CLIENT){
 		// We can use any port we get //
 		PortNumber = sf::Socket::AnyPort;
+
 	} else if(AppType == NETWORKED_TYPE_SERVER){
 		// We need to use a specific port //
 		ObjectLock lockit(*GameConfiguration::Get());
@@ -77,7 +78,7 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 
 		int tmpport = 0;
 
-		if(!vars->GetValueAndConvertTo<int>(L"ServerPort", tmpport)){
+		if(!vars->GetValueAndConvertTo<int>(L"DefaultServerPort", tmpport)){
 			// This is quite bad //
 			Logger::Get()->Error(L"NetworkHandler: Init: no port configured, config missing 'ServerPort' of type int");
 		}

@@ -33,6 +33,10 @@ namespace Pong{
 		//! \note Only allows connections to be made to one server at a time (excluding remote console connections)
 		void Connect(const wstring &address);
 
+		void ConnectProxy(const string &address){
+			Connect(Convert::StringToWstring(address));
+		}
+
 		void AllowPauseMenu();
 
 		static wstring GenerateWindowTitle();

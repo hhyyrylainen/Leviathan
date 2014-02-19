@@ -27,8 +27,18 @@ namespace Leviathan{
 		//! Server is not accepting players
 		NETWORKRESPONSE_INVALIDREASON_SERVERNOTACCEPTINGPLAYERS,
 
+		//! The client has already connected to the server, and must disconnect before trying again
+		NETWORKRESPONSE_INVALIDREASON_SERVERALREADYCONNECTEDTOYOU,
+
 		//! The server has used a custom rule to disallow this
 		NETWORKRESPONSE_INVALIDREASON_SERVERCUSTOM
+	};
+
+	//! Defines what request the server accepted and any potential data
+	enum NETWORKRESPONSE_SERVERACCEPTED_TYPE{
+
+		//! Server has accepted your join request
+		NETWORKRESPONSE_SERVERACCEPTED_TYPE_CONNECT_ACCEPTED
 	};
 
 	//! Defines server join protection status (who can join the server)
@@ -159,9 +169,11 @@ namespace Leviathan{
 	class NetworkResponseDataForServerAllow : public BaseNetworkResponseData{
 	public:
 		DLLEXPORT NetworkResponseDataForServerAllow(sf::Packet &frompacket);
-		DLLEXPORT NetworkResponseDataForServerAllow();
+		DLLEXPORT NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted);
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
+		//! What the server accepted
+		NETWORKRESPONSE_SERVERACCEPTED_TYPE ServerAcceptedWhat;
 
 	};
 

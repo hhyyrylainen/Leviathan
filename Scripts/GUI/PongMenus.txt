@@ -101,6 +101,21 @@ objects {
         }
     }
     
+    // Screen that has direct connect to server controls //
+    o GuiCollection "DirectConnectScreen"{
+        l params{
+            Enabled = false;
+        }
+        s scripts{
+            body{
+                // we can just include our common code //
+                string ROCKETOBJECTID("DirectConnectScreen");
+                
+                #include "DefaultCollectionScript.as";
+            @%};
+        }
+    }
+    
     // Server settings configured here //
     o GuiCollection "ServerStartScreen"{
         l params{
@@ -220,6 +235,19 @@ objects {
         }
     }
     
+    o GuiObject "ToGameDirectConnect"{
+        s scripts{
+            body{
+                [@Listener="OnClick"]
+                int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                    Instance.GetOwningManager().SetCollectionState("DirectConnectScreen", true);
+                    Instance.GetOwningManager().SetCollectionState("TopLevelMenu", false);
+                    return 1;
+                }
+            @%};
+        }
+    }
+    
     o GuiObject "BackFromServerStartScreen"{
         s scripts{
             body{
@@ -322,6 +350,59 @@ objects {
             @%};
         }
     }
+    // ------------------ DirectConnectScreen ------------------ //
+    o GuiObject "BackFromDirectConnectScreen"{
+        s scripts{
+            body{
+                [@Listener="OnClick"]
+                int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                    Instance.GetOwningManager().SetCollectionState("TopLevelMenu", true);
+                    Instance.GetOwningManager().SetCollectionState("DirectConnectScreen", false);
+                    return 1;
+                }
+            @%};
+        }
+    }
+    
+    o GuiObject "DirectConnectForm"{
+        s scripts{
+            body{
+                [@Listener="OnSubmit"]
+                int OnFormProcess(BaseGuiObject@ Instance, RocketEvent@ event){
+                    // Get the server from the form //
+                    string serveraddress = event.GetValue("ServerAddress");
+                    
+                    Print("Checking direct connect address "+serveraddress);
+                    
+                    // Check it //
+                    if(serveraddress.length() < 2){
+                        // Set error text //
+                        RocketElement@ errorreceiver = Instance.GetOwningSheet().
+                            GetElementByID("DirectConnectFormErrorText");
+                        
+                        string error = "Error: the address is too short!";
+                            
+                        if(errorreceiver !is null)
+                            errorreceiver.SetInternalRML(error);
+                        
+                        return 1;
+                    }
+                    
+                    // Start connecting //
+                    Print("Going to connect to a server with IP: "+serveraddress);
+                    
+                    GetPongGame().Connect(serveraddress);
+                    
+                    // Change to the right GUI collection //
+                    Instance.GetOwningManager().SetCollectionState("ServerConnectScreen", true);
+                    Instance.GetOwningManager().SetCollectionState("Menus", false);
+                    Instance.GetOwningManager().SetCollectionState("DirectConnectScreen", false);
+                    
+                    return 1;
+                }
+            @%};
+        }
+    }
     
     // ------------------ Connection screen ------------------ //
     o GuiObject "ConnectionStatusUpdate"{
@@ -340,6 +421,22 @@ objects {
         }
     }
     
+    o GuiObject "ServerConnectScreenDisconnect"{
+        s scripts{
+            body{
+                [@Listener="OnClick"]
+                int OnClick(BaseGuiObject@ Instance, RocketEvent@ event){
+                    Instance.GetOwningManager().SetCollectionState("Menus", true);
+                    Instance.GetOwningManager().SetCollectionState("TopLevelMenu", true);
+                    Instance.GetOwningManager().SetCollectionState("ServerConnectScreen", false);
+                    
+                    GetPongGame().Disconnect("User disconnected");
+                    
+                    return 1;
+                }
+            @%};
+        }
+    }
     
     
     

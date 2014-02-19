@@ -34,23 +34,23 @@
 
 // some special compiler settings //
 #ifdef ANALYZEBUILD
-// this stop code analyze from breaking //
-#define _AFXDLL
-#pragma warning (disable:6387)
-#include <afxcontrolbars.h>
-#pragma warning (default:6387)
+    // this to stop code analyze from breaking //
+    #define _AFXDLL
+    #pragma warning (disable:6387)
+    #include <afxcontrolbars.h>
+    #pragma warning (default:6387)
 #endif
 
 // core libRocket (this is before windows headers to fix things) //
 #include <Rocket/Core.h>
 
 #ifdef _WIN32
-#include <Windows.h>
-#include <Windowsx.h>
-#include <wincodec.h>
+    #include <Windows.h>
+    #include <Windowsx.h>
+    #include <wincodec.h>
 #else
-// For making SIGINT work as debug break on linux //
-#include <signal.h>
+    // For making SIGINT work as debug break on linux //
+    #include <signal.h>
 #endif
 
 // Might have to only include this on linux //
@@ -65,64 +65,6 @@
 #include <string>
 #include <vector>
 
-// pragma include libraries
-
-#ifdef ENGINE_EXPORTS
-#ifdef _WIN32
-#ifdef _DEBUG
-// debug versions //
-
-#pragma comment(lib, "angelscriptd.lib")
-#pragma comment(lib, "Leapd.lib")
-
-#pragma comment(lib, "RocketCore_d.lib")
-#pragma comment(lib, "RocketControls_d.lib")
-#pragma comment(lib, "RocketDebugger_d.lib")
-#pragma comment(lib, "newton_d.lib")
-
-#pragma comment(lib, "sfml-audio-d.lib")
-#pragma comment(lib, "sfml-network-d.lib")
-#pragma comment(lib, "sfml-system-d.lib")
-#else
-// release libraries
-#pragma comment(lib, "angelscript.lib")
-#pragma comment(lib, "Leap.lib")
-
-#pragma comment(lib, "RocketCore.lib")
-#pragma comment(lib, "RocketControls.lib")
-#pragma comment(lib, "RocketDebugger.lib")
-#pragma comment(lib, "newton.lib")
-
-#pragma comment(lib, "sfml-audio.lib")
-#pragma comment(lib, "sfml-network.lib")
-#pragma comment(lib, "sfml-system.lib")
-#endif
-#endif
-#else
-// include engine lib
-#ifdef _WIN32
-#ifdef _DEBUG
-#pragma comment(lib, "EngineD.lib")
-// Also link the Newton library because it seems to be needed for some things //
-#pragma comment(lib, "newton_d.lib")
-// Leaving these out causes linker errors for some reason
-//#pragma comment(lib, "RocketCore_d.lib")
-//#pragma comment(lib, "RocketControls_d.lib")
-//#pragma comment(lib, "RocketDebugger_d.lib")
-
-#else
-#pragma comment(lib, "Engine.lib")
-// Also link the Newton library because it seems to be needed for some things //
-#pragma comment(lib, "newton.lib")
-// Leaving these out causes linker errors for some reason
-//#pragma comment(lib, "RocketCore.lib")
-//#pragma comment(lib, "RocketControls.lib")
-//#pragma comment(lib, "RocketDebugger.lib")
-
-#endif
-#endif
-
-#endif // ENGINE_EXPORTS
 
 using namespace std;
 // -------------------------- //
@@ -144,98 +86,99 @@ static const float EPSILON = 0.00000001f;
 
 // Define common types that might be missing //
 #ifndef _WIN32
-#include <inttypes.h>
-#include <float.h>
-typedef unsigned int UINT;
-typedef long LONG;
-typedef int64_t __int64;
-typedef int32_t __int32;
-typedef unsigned char BYTE;
-typedef unsigned char UCHAR;
-typedef unsigned short USHORT;
-typedef unsigned short UINT16;
-typedef unsigned short USHORT;
+    // Linux is missing many types used quite commonly //
+    #include <inttypes.h>
+    #include <float.h>
+    typedef unsigned int UINT;
+    typedef long LONG;
+    typedef int64_t __int64;
+    typedef int32_t __int32;
+    typedef unsigned char BYTE;
+    typedef unsigned char UCHAR;
+    typedef unsigned short USHORT;
+    typedef unsigned short UINT16;
+    typedef unsigned short USHORT;
 
-#undef index
+    #undef index
 
-#define __assume(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
+    #define __assume(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
 
-#define FORCE_INLINE __attribute__((always_inline))
-#define THROWS
+    #define FORCE_INLINE __attribute__((always_inline))
+    #define THROWS
+    
 #else
-
-#define FORCE_INLINE	__forceinline
-#define THROWS		throw(...)
-#endif
+    // Windows needs these //
+    #define FORCE_INLINE	__forceinline
+    #define THROWS		throw(...)
+    
+#endif //_WIN32
 
 // throw on Error message //
 //#define THROW_ON_PRINTERROR
 
 #ifdef _DEBUG
-#ifdef _MSC_VER
-#define DEBUG_BREAK __debugbreak();
+    #ifdef _MSC_VER
+        #define DEBUG_BREAK __debugbreak();
+    #elif defined __GNUC__
+        // We are on linux (and this *should* work)
+        #define DEBUG_BREAK raise(SIGINT)
+    #else
+        #error "Debug break won't work"
+    #endif
 #else
-#ifdef __GNUC__
-// We are on linux (and this *should* work)
-#define DEBUG_BREAK raise(SIGINT)
-#else
-#error "Debug break won't work"
-#endif
-#endif
-#else
-// Release mode
-#define DEBUG_BREAK
+    // Release mode
+    #define DEBUG_BREAK
 #endif //_DEBUG
 
 
 #ifndef DEBUG_OUTPUT
-#if defined( DEBUG ) || defined( _DEBUG )
-#define DEBUG_OUTPUT(s)	{Logger::SendDebugMessage(s);}
-#else
-#define DEBUG_OUTPUT(s)   {}
-#endif //DEBUG || _DEBUG
+    #ifdef _DEBUG
+        #define DEBUG_OUTPUT(s)	{Logger::SendDebugMessage(s);}
+    #else
+        #define DEBUG_OUTPUT(s)   {}
+    #endif //_DEBUG
 #endif
 
 #ifndef DEBUG_OUTPUT_AUTO
-#if defined( DEBUG ) || defined( _DEBUG )
-#define DEBUG_OUTPUT_AUTO(s)	{Logger::SendDebugMessage(wstring(L"[INFO] "+s+L"\n"));}
-#else
-#define DEBUG_OUTPUT_AUTO(s)   {}
-#endif //DEBUG || _DEBUG
+    #ifdef _DEBUG
+        #define DEBUG_OUTPUT_AUTO(s)	{Logger::SendDebugMessage(wstring(L"[INFO] "+s+L"\n"));}
+    #else
+        #define DEBUG_OUTPUT_AUTO(s)   {}
+    #endif //_DEBUG
 #endif
 
 #ifndef DEBUG_OUTPUT_AUTOPLAINTEXT
-#if defined( DEBUG ) || defined( _DEBUG )
-#define DEBUG_OUTPUT_AUTOPLAINTEXT(s)	{Logger::SendDebugMessage(wstring(L"[INFO] " L#s L"\n"));}
-#else
-#define DEBUG_OUTPUT_AUTOPLAINTEXT(s)   {}
-#endif //DEBUG || _DEBUG
+    #ifdef _DEBUG
+        #define DEBUG_OUTPUT_AUTOPLAINTEXT(s)	{Logger::SendDebugMessage(wstring(L"[INFO] " L#s L"\n"));}
+    #else
+        #define DEBUG_OUTPUT_AUTOPLAINTEXT(s)   {}
+    #endif //_DEBUG
 #endif
 
 
 #ifndef DLLEXPORT
-#ifdef ENGINE_EXPORTS
-#ifdef _WIN32
-#define DLLEXPORT  	 __declspec( dllexport )
-#else
-// This might not be needed for gcc
-#define DLLEXPORT	__attribute__ ((visibility ("default")))
-#endif
-#else
-#define DLLEXPORT
-#endif // ENGINE_EXPORTS
+    #ifdef ENGINE_EXPORTS
+        #ifdef _WIN32
+            #define DLLEXPORT  	 __declspec( dllexport )
+        #else
+            // This might not be needed for gcc
+            #define DLLEXPORT	__attribute__ ((visibility ("default")))
+        #endif
+    #else
+        #define DLLEXPORT
+    #endif // ENGINE_EXPORTS
 #endif
 
 
 #ifdef _DEBUG
-#define MONITOR_FUNCTION_TIME_FSTART wstring functiontimemonitorname = __WFUNCTION__ L" time monitor"; TimingMonitor::StartTiming(functiontimemonitorname);
+    #define MONITOR_FUNCTION_TIME_FSTART wstring functiontimemonitorname = __WFUNCTION__ L" time monitor"; TimingMonitor::StartTiming(functiontimemonitorname);
 #else
-#define MONITOR_FUNCTION_TIME_FSTART {}
+    #define MONITOR_FUNCTION_TIME_FSTART {}
 #endif
 #ifdef _DEBUG
-#define MONITOR_FUNCTION_TIME_FSTOP {TimingMonitor::StopTiming(functiontimemonitorname, true);}
+    #define MONITOR_FUNCTION_TIME_FSTOP {TimingMonitor::StopTiming(functiontimemonitorname, true);}
 #else
-#define MONITOR_FUNCTION_TIME_FSTOP {}
+    #define MONITOR_FUNCTION_TIME_FSTOP {}
 #endif
 
 #define SAFE_RELEASE( x ) {if(x){(x)->Release();(x)=NULL;}}
@@ -256,18 +199,18 @@ typedef unsigned short USHORT;
 #define FORCE_POSITIVEF(x) {if((x) < 0){ (x)*=-1.0f; }}
 
 #ifdef _WIN32
-#define WIDEN2(x) L##x
-#define WIDEN(x) WIDEN2(x)
+    #define WIDEN2(x) L##x
+    #define WIDEN(x) WIDEN2(x)
 #else
-#define EXPAND(x) x
-#define WIDEN3(x) L ## x
-#define WIDEN2(x) WIDEN3(x)
-#define WIDEN(x) WIDEN2(EXPAND(x))
+    #define EXPAND(x) x
+    #define WIDEN3(x) L ## x
+    #define WIDEN2(x) WIDEN3(x)
+    #define WIDEN(x) WIDEN2(EXPAND(x))
 #endif
 
 #ifdef __GNUC__
-#define __FUNCTION__ __func__
-#define __FUNCSIG__ __PRETTY_FUNCTION__
+    #define __FUNCTION__ __func__
+    #define __FUNCSIG__ __PRETTY_FUNCTION__
 #endif
 
 #define STRINGIFY3(x) #x
@@ -276,11 +219,11 @@ typedef unsigned short USHORT;
 #define WSTRINGIFY(x) WIDEN(STRINGGIFY(x))
 
 #ifdef _MSC_VER
-#define __WFUNCTION__ WIDEN(__FUNCTION__)
-#define __WFILE__ WIDEN(__FILE__)
+    #define __WFUNCTION__ WIDEN(__FUNCTION__)
+    #define __WFILE__ WIDEN(__FILE__)
 #else
-#define __WFUNCTION__ WSTRINGIFY(__FUNCTION__)
-#define __WFILE__ WSTRINGIFY(__FILE__)
+    #define __WFUNCTION__ WSTRINGIFY(__FUNCTION__)
+    #define __WFILE__ WSTRINGIFY(__FILE__)
 #endif
 
 #define SSLINE2(x) #x
@@ -301,9 +244,9 @@ typedef unsigned short USHORT;
 #define QUICK_MEMORY_ERROR_MESSAGE {Logger::Get()->Error((L"Out of memory error from: " __WFILE__ L" function: "__WFUNCTION__), true);}
 
 #ifdef _MVC_VER
-#define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: " __SWLINE__ ), true);}
+    #define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: " __SWLINE__ ), true);}
 #else
-#define QUICK_ERROR_MESSAGE DEBUG_BREAK;
+    #define QUICK_ERROR_MESSAGE DEBUG_BREAK;
 #endif
 
 #include "Logger.h"
@@ -315,7 +258,7 @@ typedef unsigned short USHORT;
 #undef index
 
 // This is needed for compability reasons //
-// AngelAddons use std style names
+// AngelAddons use std style names //
 #define AS_USE_STLNAMES     1
 
 

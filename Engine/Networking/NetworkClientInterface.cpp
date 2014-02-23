@@ -189,9 +189,18 @@ void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(shared_ptr<Sent
 void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer(ObjectLock &guard){
 	VerifyLock(guard);
 
+	// Set the variables //
 	ConnectedToServer = true;
-
+	
+	// Send connect message //
 	_OnNewConnectionStatusMessage(L"Connection established a connection with "+ServerConnection->GenerateFormatedAddressString());
+
+	// Call the callback //
+	_OnProperlyConnected();
+}
+
+DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
+
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const wstring &reasonstring){

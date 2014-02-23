@@ -38,6 +38,7 @@ namespace Leviathan{
 	//! More specific version of NetworkInterface and should be included additionally in server network interface classes.
 	//! \see NetworkInterface
 	class NetworkServerInterface : public virtual ThreadSafe{
+		friend ConnectedPlayer;
 	public:
 		//! \brief Initializes some values to defaults and requires others to be provided by the subclass that inherits from this.
 		//!
@@ -98,6 +99,9 @@ namespace Leviathan{
 		//! \param message The error message to give back to the player
 		DLLEXPORT virtual bool AllowPlayerConnectVeto(shared_ptr<NetworkRequest> request, ConnectionInfo* connection, wstring &message);
 
+
+		//! \brief Called by ConnectedPlayer when it's connection closes
+		void _OnReportCloseConnection(ConnectedPlayer* itsme);
 
 		// ------------------------------------ //
 

@@ -161,6 +161,10 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(share
 
 	connection->SendPacketToConnection(tmpresponse, 3);
 }
+
+
+
+
 // ------------------ Default callbacks ------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::_OnPlayerConnected(ConnectedPlayer* newplayer){
 
@@ -181,6 +185,27 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::AllowPlayerConnectVeto(shared_
 DLLEXPORT void Leviathan::NetworkServerInterface::PlayerPreconnect(ConnectionInfo* connection, shared_ptr<NetworkRequest> joinrequest){
 
 }
+
+void Leviathan::NetworkServerInterface::_OnReportCloseConnection(ConnectedPlayer* itsme){
+	ObjectLock guard(*this);
+
+	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ++iter){
+		// Check is it the player //
+		if((*iter) == itsme){
+			// The player has disconnected //
+			Logger::Get()->Info(L"NetworkServerInterface: player (TODO: get name) has closed their connection");
+
+			_OnPlayerDisconnect((*iter));
+
+			delete (*iter);
+			PlayerList.erase(iter);
+			return;
+		}
+	}
+
+	Logger::Get()->Warning(L"NetworkServerInterface: report closing connection, no matching player!");
+}
+
 // ------------------ ConnectedPlayer ------------------ //
 Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance) : 
 	CorrenspondingConnection(unsafeconnection), Owner(owninginstance)
@@ -190,8 +215,11 @@ Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, Ne
 }
 
 void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
+	ObjectLock guard(*this);
 
 	Logger::Get()->Info(L"ConnectedPlayer: player connection closed");
+
+	Owner->_OnReportCloseConnection(this);
 }
 
 DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYours(ConnectionInfo* checkconnection){

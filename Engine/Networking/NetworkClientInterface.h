@@ -68,6 +68,12 @@ namespace Leviathan{
 		//! \brief Callback used to know when our connection is closed
 		DLLEXPORT virtual void _OnNotifierDisconnected(BaseNotifiableAll* parenttoremove);
 
+		//! \brief Called when the server has confirmed the join and we are a player on the server
+		//!
+		//! By default this will synchronize game variables and call the _OnLobbyJoin function (which can then handle match joining)
+		//! \todo Do what this should do
+		DLLEXPORT virtual void _OnProperlyConnected();
+
 	private:
 		
 		void _SendConnectRequest(ObjectLock &guard);

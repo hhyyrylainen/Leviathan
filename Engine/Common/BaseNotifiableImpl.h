@@ -98,13 +98,16 @@ template<class ParentType, class ChildType>
 void Leviathan::BaseNotifiable<ParentType, ChildType>::_OnUnhookNotifier(BaseNotifier<ParentType, ChildType>* parent){
 	ObjectLock guard(*this);
 	// Remove from list //
-	for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ++iter){
+	for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ){
 
 		if(*iter == parent){
 			// Remove it //
 			_OnNotifierDisconnected((*iter)->GetActualPointerToNotifierObject());
-			ConnectedToParents.erase(iter);
+			iter = ConnectedToParents.erase(iter);
 			return;
+
+		} else {
+			++iter;
 		}
 	}
 }

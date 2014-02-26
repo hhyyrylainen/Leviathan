@@ -13,14 +13,20 @@
 namespace Leviathan{
 
 	//! \brief A class that represents a human player
-	//! \todo Implement this
+	//! \todo Add a kick method and use it in NetworkServerInterface::CloseDownServer
+	//! \todo Make _OnNotifierDisconnected set a disconnected flag that the server can kick based on upon
 	class ConnectedPlayer : public BaseNotifiableAll{
 	public:
 		DLLEXPORT ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance);
+		//! \brief Empty destructor for exporting
+		DLLEXPORT ~ConnectedPlayer();
 
 		//! \brief Checks is the given connection same as ours
 		//! \todo Fix performance
 		DLLEXPORT bool IsConnectionYours(ConnectionInfo* checkconnection);
+
+		//! \brief Returns whether the connection for this player is closed
+		DLLEXPORT bool IsConnectionClosed() const;
 
 	protected:
 		//! \brief Used to detect when a connection has been closed
@@ -30,6 +36,7 @@ namespace Leviathan{
 
 		ConnectionInfo* CorrenspondingConnection;
 		NetworkServerInterface* Owner;
+		bool ConnectionStatus;
 
 	};
 
@@ -53,6 +60,11 @@ namespace Leviathan{
 		DLLEXPORT virtual ~NetworkServerInterface();
 
 
+		//! \brief Updates status of the status of the server's clients
+		//!  
+		//! \note Should be called by NetworkInterface::TickIt
+		DLLEXPORT void UpdateServerStatus();
+
 		//! \brief Gets corresponding player from a connection
 		//! \return Returns a pointer from PlayerList
 		DLLEXPORT ConnectedPlayer* GetPlayerForConnection(ConnectionInfo* connection);
@@ -67,6 +79,9 @@ namespace Leviathan{
 		//! \brief Sets whether the server allows new players
 		DLLEXPORT void SetServerAllowPlayers(bool allowingplayers);
 
+		//! \brief Call this before shutting down the server to kick all players properly
+		//! \todo Actually call this, maybe make this an event listener
+		DLLEXPORT void CloseDownServer();
 
 	protected:
 
@@ -101,7 +116,7 @@ namespace Leviathan{
 
 
 		//! \brief Called by ConnectedPlayer when it's connection closes
-		void _OnReportCloseConnection(ConnectedPlayer* itsme);
+		std::vector<ConnectedPlayer*>::iterator _OnReportCloseConnection(const std::vector<ConnectedPlayer*>::iterator &iter, ObjectLock &guard);
 
 		// ------------------------------------ //
 
@@ -109,7 +124,7 @@ namespace Leviathan{
 		// Server variables //
 
 		//! Holds the list of currently connected players
-		vector<ConnectedPlayer*> PlayerList;
+		std::vector<ConnectedPlayer*> PlayerList;
 		//! Maximum allowed player count
 		int MaxPlayers;
 		//! Currently active bots

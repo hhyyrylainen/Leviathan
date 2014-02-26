@@ -24,14 +24,20 @@ template<class ParentType, class ChildType>
 DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::ReleaseChildHooks(){
 	ObjectLock guard(*this);
 	// Go through all and unhook them //
-	for(auto iter = ConnectedChildren.begin(); iter != ConnectedChildren.end(); ++iter){
+	while(ConnectedChildren.size()){
+		// Get the iterator //
+		auto iter = ConnectedChildren.begin();
+
+		auto tmpobj = (*iter);
+
 		// Call unhook on the child //
-		(*iter)->_OnUnhookNotifier(this);
+		tmpobj->_OnUnhookNotifier(this);
+
 		// Remove it //
-		_OnNotifiableDisconnected((*iter)->GetActualPointerToNotifiableObject());
+		_OnNotifiableDisconnected(tmpobj->GetActualPointerToNotifiableObject());
+		
+		ConnectedChildren.erase(iter);
 	}
-	// Clear all at once //
-	ConnectedChildren.clear();
 }
 // ------------------------------------ //
 template<class ParentType, class ChildType>

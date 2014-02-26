@@ -16,7 +16,31 @@ DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(int maxplaye
 }
 
 DLLEXPORT Leviathan::NetworkServerInterface::~NetworkServerInterface(){
+	// Release the memory //
+	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ){
 
+		delete (*iter);
+		// Can't report errors at this point //
+		//Logger::Get()->Warning(L"NetworkServerInterface: destructor has still active players, kicking must have failed");
+		iter = PlayerList.erase(iter);
+	}
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
+	ObjectLock guard(*this);
+
+	// Prevent new players //
+	ServerStatus = NETWORKRESPONSE_SERVERSTATUS_SHUTDOWN;
+	AllowJoin = false;
+
+	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ){
+
+		// Kick them //
+
+
+		delete (*iter);
+		iter = PlayerList.erase(iter);
+	}
 }
 // ------------------------------------ //
 DLLEXPORT ConnectedPlayer* Leviathan::NetworkServerInterface::GetPlayerForConnection(ConnectionInfo* connection){
@@ -161,10 +185,6 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(share
 
 	connection->SendPacketToConnection(tmpresponse, 3);
 }
-
-
-
-
 // ------------------ Default callbacks ------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::_OnPlayerConnected(ConnectedPlayer* newplayer){
 
@@ -186,44 +206,70 @@ DLLEXPORT void Leviathan::NetworkServerInterface::PlayerPreconnect(ConnectionInf
 
 }
 
-void Leviathan::NetworkServerInterface::_OnReportCloseConnection(ConnectedPlayer* itsme){
-	ObjectLock guard(*this);
+std::vector<ConnectedPlayer*>::iterator Leviathan::NetworkServerInterface::_OnReportCloseConnection(const std::vector<ConnectedPlayer*>::iterator 
+	&iter, ObjectLock &guard)
+{
+	VerifyLock(guard);
 
-	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ++iter){
-		// Check is it the player //
-		if((*iter) == itsme){
-			// The player has disconnected //
-			Logger::Get()->Info(L"NetworkServerInterface: player (TODO: get name) has closed their connection");
+	if(iter == PlayerList.end()){
 
-			_OnPlayerDisconnect((*iter));
-
-			delete (*iter);
-			PlayerList.erase(iter);
-			return;
-		}
+		Logger::Get()->Error(L"NetworkServerInterface: _OnReportCloseConnection: trying to use an invalid iterator");
+		return PlayerList.end();
 	}
 
-	Logger::Get()->Warning(L"NetworkServerInterface: report closing connection, no matching player!");
+	// The player has disconnected //
+	Logger::Get()->Info(L"NetworkServerInterface: player (TODO: get name) has closed their connection");
+
+	_OnPlayerDisconnect(*iter);
+
+	delete (*iter);
+	return PlayerList.erase(iter);
 }
 
+DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
+	ObjectLock guard(*this);
+	// Check for closed connections //
+
+	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ){
+		// Check is it the player //
+		if((*iter)->IsConnectionClosed()){
+			// The player has disconnected //
+			iter = _OnReportCloseConnection(iter, guard);
+
+		} else {
+			++iter;
+		}
+	}
+}
 // ------------------ ConnectedPlayer ------------------ //
 Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance) : 
-	CorrenspondingConnection(unsafeconnection), Owner(owninginstance)
+	CorrenspondingConnection(unsafeconnection), Owner(owninginstance), ConnectionStatus(true)
 {
 	// Register us //
 	this->ConnectToNotifier(unsafeconnection);
 }
 
 void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
-	ObjectLock guard(*this);
+	{
+		ObjectLock guard(*this);
 
-	Logger::Get()->Info(L"ConnectedPlayer: player connection closed");
+		// Set as closing //
+		ConnectionStatus = false;
+	}
 
-	Owner->_OnReportCloseConnection(this);
+	Logger::Get()->Info(L"ConnectedPlayer: connection marked as closed");
 }
 
 DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYours(ConnectionInfo* checkconnection){
 	ObjectLock guard(*this);
 
 	return CorrenspondingConnection->GenerateFormatedAddressString() == checkconnection->GenerateFormatedAddressString();
+}
+
+DLLEXPORT Leviathan::ConnectedPlayer::~ConnectedPlayer(){
+
+}
+
+DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionClosed() const{
+	return !ConnectionStatus;
 }

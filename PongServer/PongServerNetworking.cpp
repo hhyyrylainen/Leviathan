@@ -41,9 +41,9 @@ void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> 
 }
 
 void Pong::PongServerNetworking::TickIt(){
-	// Not a client, nothing to do //
+	// Tick the server //
+	UpdateServerStatus();
 }
-
 // ------------------------------------ //
 
 // ------------------------------------ //

@@ -110,30 +110,31 @@ add_library(Engine SHARED ${EngineFiles})
 if(NOT WIN32)
 # Link with X11
 target_link_libraries(Engine ${X11_LIBRARIES})
+# and threads
 target_link_libraries(Engine ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(Engine ${LINUX_LINK_LIBS_ENGINE})
 endif(NOT WIN32)
 
+
+target_link_libraries(Engine debug ${LINK_LIBS_ENGINE_DEBUG})
+target_link_libraries(Engine optimized ${LINK_LIBS_ENGINE_RELEASE})
 target_link_libraries(Engine ${Boost_LIBRARIES})
 target_link_libraries(Engine ${OGRE_LIBRARIES})
 target_link_libraries(Engine ${OIS_LIBRARIES})
 target_link_libraries(Engine ${ADDITIONAL_OGRE})
 
 # Possible debug installs
-set(InstallConfigurationNames "Release")
-if(NOT INSTALL_ONLY_RELEASE)
-# Append the Debug configuration if we don't want only release release
-list(APPEND InstallConfigurationNames "Debug")
-endif(NOT INSTALL_ONLY_RELEASE)
+if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
+    set(InstallConfigs "Release" "Debug")
+else()
+    set(InstallConfigs "Release")
+endif()
 
-install(TARGETS Engine DESTINATION bin CONFIGURATIONS ${InstallConfigurationNames})
+install(TARGETS Engine DESTINATION bin CONFIGURATIONS ${InstallConfigs})
 
 # post build copy
 if(WIN32 AND NOT MINGW)
 ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND copy ARGS 
-    "\"$(SolutionDir)Engine\\$(Configuration)\\$(TargetName).dll\" \"$(SolutionDir)bin\\$(TargetName).dll\""
+    "\"$(SolutionDir)bin\\$(Configuration)\\$(TargetName).dll\" \"$(SolutionDir)bin\\$(TargetName).dll\""
 )
-else(WIN32)
-	#set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 endif(WIN32 AND NOT MINGW)
 

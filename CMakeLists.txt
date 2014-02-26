@@ -7,7 +7,7 @@ project(Leviathan)
 set(LEVIATHAN_VERSION_STABLE 0)
 set(LEVIATHAN_VERSION_MAJOR 6)
 set(LEVIATHAN_VERSION_MINOR 4)
-set(LEVIATHAN_VERSION_PATCH 2)
+set(LEVIATHAN_VERSION_PATCH 3)
 
 set(LEVIATHAN_VERSION_STR ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}.${LEVIATHAN_VERSION_MINOR}.${LEVIATHAN_VERSION_PATCH})
 set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LEVIATHAN_VERSION_MINOR}${LEVIATHAN_VERSION_PATCH})
@@ -18,28 +18,32 @@ set(LEVIATHAN_VERSION_ANSIS "\"${LEVIATHAN_VERSION_STR}\"")
 set(WORK_DIR "${PROJECT_BINARY_DIR}/bin")
 
 # modules
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake" "${PROJECT_SOURCE_DIR}/LeviathanCMake")
 
-# Stuff from example ogre cmake configuration to hopefully fix linux build #
-if(WIN32)
-	set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{OGRE_HOME}/CMake/")
-    set(OGRE_BASEDIR "$ENV{OGRE_HOME}/")
-endif(WIN32)
+# Stuff from example ogre cmake configuration to hopefully fix linux build
 
-if(UNIX)
-	if(EXISTS "/usr/local/lib/OGRE/cmake")
+# locating the Ogre folder
+    if(WIN32)
+        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{OGRE_HOME}/CMake/")
+        set(OGRE_BASEDIR "$ENV{OGRE_HOME}/")
+    endif(WIN32)
 
-        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/local/lib/OGRE/cmake/")
-        set(OGRE_BASEDIR "/usr/local/lib/OGRE/")
-	elseif(EXISTS "/usr/lib/OGRE/cmake")
+    if(UNIX)
+        if(EXISTS "/usr/local/lib/OGRE/cmake")
 
-        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/lib/OGRE/cmake/")
-        set(OGRE_BASEDIR "/usr/lib/OGRE/")
-	else(EXISTS "/usr/local/lib/OGRE")
-        message(SEND_ERROR "Failed to find Ogre module path")
-	endif(EXISTS "/usr/local/lib/OGRE/cmake")
-endif(UNIX)
+            set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/local/lib/OGRE/cmake/")
+            set(OGRE_BASEDIR "/usr/local/lib/OGRE/")
+        elseif(EXISTS "/usr/lib/OGRE/cmake")
+
+            set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/lib/OGRE/cmake/")
+            set(OGRE_BASEDIR "/usr/lib/OGRE/")
+        else(EXISTS "/usr/local/lib/OGRE")
+            message(SEND_ERROR "Failed to find Ogre module path")
+        endif(EXISTS "/usr/local/lib/OGRE/cmake")
+    endif(UNIX)
+# Ogre folder fine
  
+# Make sure build type is good
 if(CMAKE_BUILD_TYPE STREQUAL "")
   # CMake defaults to leaving CMAKE_BUILD_TYPE empty. This screws up
   # differentiation between debug and release builds.
@@ -47,15 +51,19 @@ if(CMAKE_BUILD_TYPE STREQUAL "")
 endif(CMAKE_BUILD_TYPE STREQUAL "")
 
 # Find required libraries
+
+# Ogre is required
 find_package(OGRE REQUIRED Plugin_ParticleFX Plugin_CgProgramManager Plugin_OctreeZone Overlay Paging)
 
+# OIS is required for input
 find_package(OIS REQUIRED)
- 
+
+# check if it failed
 if(NOT OIS_FOUND)
 	message(SEND_ERROR "Failed to find OIS")
 endif(NOT OIS_FOUND)
 
-
+# Set the install folder
 set(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/Install")
 
 # set some additional libraries
@@ -63,37 +71,38 @@ set(ADDITIONAL_OGRE ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramM
     ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${Ogre_Paging_LIBRARIES})
 
 # Find Boost
-if(WIN32 OR APPLE)
-    set(Boost_USE_STATIC_LIBS TRUE)
-else(WIN32 OR APPLE)
-    # Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
-    set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
-endif(WIN32 OR APPLE)
+    if(WIN32 OR APPLE)
+        set(Boost_USE_STATIC_LIBS TRUE)
+    else(WIN32 OR APPLE)
+        # Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
+        set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
+    endif(WIN32 OR APPLE)
 
-set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
-# Components that need linking (NB does not include header-only components like bind)
-set(OGRE_BOOST_COMPONENTS thread date_time)
+    set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
+    # Components that need linking (NB does not include header-only components like bind)
+    set(OGRE_BOOST_COMPONENTS thread date_time)
 
-# Other than these that are required are header-only libraries
-set(LEVIATHAN_BOOST_COMPONENTS chrono system regex)
+    # Other than these that are required are header-only libraries
+    set(LEVIATHAN_BOOST_COMPONENTS chrono system regex)
 
-set(REQUIRED_BOOST_COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} ${OGRE_BOOST_COMPONENTS})
+    set(REQUIRED_BOOST_COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} ${OGRE_BOOST_COMPONENTS})
 
-find_package(Boost COMPONENTS ${REQUIRED_BOOST_COMPONENTS})
-if(NOT Boost_FOUND)
-    message("Boost not found, retrying with different settings")
-    # Try again with the other type of libs
-    set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
-    find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS})
-    
+    find_package(Boost COMPONENTS ${REQUIRED_BOOST_COMPONENTS})
     if(NOT Boost_FOUND)
-        message(SEND_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})        
+        message("Boost not found, retrying with different settings")
+        # Try again with the other type of libs
+        set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
+        find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS})
+        
+        if(NOT Boost_FOUND)
+            message(SEND_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})        
+        endif(NOT Boost_FOUND)
     endif(NOT Boost_FOUND)
-endif(NOT Boost_FOUND)
-
+# Boost is found or the configuration has already failed
 
 # Set up referencing of Boost
 include_directories(${Boost_INCLUDE_DIR})
+# All libs are linked by cmake
 add_definitions(-DBOOST_ALL_NO_LIB)
 
 # Linking and platform specific
@@ -110,43 +119,52 @@ if(WIN32)
 else(WIN32)
     add_definitions(-std=c++11 -fextended-identifiers)
 
-    # Linux library linking
-    set(LINK_LIBS_TOENGINE Newton)
-    
-    set(LINUX_LINK_LIBS_ENGINE Angelscript Leap RocketCore RocketControls RocketDebugger Newton 
-        sfml-audio sfml-network sfml-system)
-
     # We need X11 on linux for window class to work
     find_package(X11)
-    #find_package(Threads)
+    find_package(Threads)
 
     include_directories(${X11_INCLUDE_DIRS})
 endif(WIN32)
 
+# Library linking
+set(LINK_LIBS_TOENGINE_RELEASE Newton)
+set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap RocketCore RocketControls RocketDebugger Newton sfml-audio 
+    sfml-network sfml-system)
+        
+# Debu libraries
+set(LINK_LIBS_TOENGINE_DEBUG Newton_d)
+set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd RocketCore_d RocketControls_d RocketDebugger_d Newton_d sfml-audio-d 
+    sfml-network-d sfml-system-d)
 
+    ######### Options
+    
 option(INSTALL_ONLY_RELEASE "For creating release folders" ON)
-if(WIN32)
+# \todo this option to copy right libs
+option(INSTALL_CREATE_SDK   "For creating SDKs for developers" OFF)
 
-option(USE_VLD "For including vld in the projects" ON)
-endif(WIN32)
-
-if(USE_VLD)
-set(L_VLD_STATE 1)
-else(USE_VLD)
-set(L_VLD_STATE 0)
-endif(USE_VLD)
-
+# For making libs with right names
 set(CMAKE_DEBUG_POSTFIX "D")
 
+# VisualLeakDetector setting
+    if(WIN32)
+
+    option(USE_VLD "For including vld in the projects" ON)
+    endif(WIN32)
+
+    if(USE_VLD)
+    set(L_VLD_STATE 1)
+    else(USE_VLD)
+    set(L_VLD_STATE 0)
+    endif(USE_VLD)
 
 
-# create bin directory
+# create the bin directory
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 
+# Configure engine include file
 configure_file("${PROJECT_SOURCE_DIR}/Engine/Include.h.in" "${PROJECT_SOURCE_DIR}/Engine/Include.h")
 
 # configure the doxygen file
-
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
     configure_file("${PROJECT_SOURCE_DIR}/LeviathanDoxy.in" "${PROJECT_BINARY_DIR}/LeviathanDoxy" @ONLY)
@@ -158,22 +176,20 @@ if(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 
-
-
 message(STATUS "Copying files...")
 
 # copy data from bin directory
+
+# The bin-folder files
 if(WIN32)
-    file(GLOB VLDMoveFiles "bin/vld.ini" "bin/VLDExportSettings.txt" "bin/VLD data exporter.exe" 
-        "bin/EngineConf.conf")
+    file(GLOB RootFolderFiles "bin/*.ini" "bin/*.txt" "bin/VLD data exporter.exe" 
+        "bin/*.conf")
 else(WIN32)
-    file(GLOB VLDMoveFiles "bin/EngineConf.conf")
+    file(GLOB RootFolderFiles "bin/*.conf" "bin/*.txt")
 endif(WIN32)
-file(COPY ${VLDMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
-file(GLOB GameConfigsInBin "bin/Pong*.txt")
-file(COPY ${GameConfigsInBin} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-
+# Move files
+file(COPY ${RootFolderFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 # copy data directory
 file(GLOB DataMoveFiles "bin/Data/*")
@@ -184,71 +200,110 @@ file(GLOB ScriptsMoveFiles "Scripts/*")
 file(COPY ${ScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data/Scripts")
 
 # Boost files
-# On windows we'll use static Boost and on linux we can at least for now force people to install Boost separately
+# If we are not using static linking we need to copy everything
 if(NOT Boost_USE_STATIC_LIBS)
+    
+    message(STATUS "Copying Boost libs")
+
 	set(BOOST_MOVE_FILES_RELEASE ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
 	  ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE} ${Boost_REGEX_LIBRARY_RELEASE})
 	set(BOOST_MOVE_FILES_DEBUG ${Boost_DATE_TIME_LIBRARY_DEBUG} ${Boost_CHRONO_LIBRARY_DEBUG}
 	  ${Boost_THREAD_LIBRARY_DEBUG} ${Boost_SYSTEM_LIBRARY_DEBUG} ${Boost_REGEX_LIBRARY_DEBUG})
-	  
-	#file(COPY ${BOOST_MOVE_FILES_RELEASE} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-	#file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    # define a function for linux processing
+    function(ProcessBoostLibThing LIBNAME OUTPUTPLACE)
+        # remove variable 
+        string(REGEX REPLACE "so\.[\d\{1, 2}.]*" "so" TmpRegResult ${LIBNAME})
+        
+        set(OUTPUTPLACE ${OUTPUTPLACE} ${LIBNAME})
+    endfunction(ProcessBoostLibThing)
+      
+      
+    # We need to add the actual libraries on linux
+    if(NOT WIN32)
+        set(TMPRELEASEMOVE)
+        set(TMPDEBUGMOVE)
+        # loop them all
+        foreach(blib ${BOOST_MOVE_FILES_RELEASE})
+            ProcessBoostLibThing(${blib} ${TMPRELEASEMOVE})
+        endforeach()
+        foreach(blib ${BOOST_MOVE_FILES_DEBUG})
+            ProcessBoostLibThing(${blib} ${TMPDEBUGMOVE})
+        endforeach()
+        
+        # add to the real move things
+        set(BOOST_MOVE_FILES_RELEASE ${BOOST_MOVE_FILES_RELEASE} ${TMPRELEASEMOVE})
+        set(BOOST_MOVE_FILES_DEBUG ${BOOST_MOVE_FILES_DEBUG} ${TMPDEBUGMOVE})
+        
+    endif(NOT WIN32)
+      
+	file(COPY ${BOOST_MOVE_FILES_RELEASE} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
+        file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    endif(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
 
 endif(NOT Boost_USE_STATIC_LIBS)
 
+message(STATUS "Copying libs")
+
 if(WIN32)
 
-    
-    message(STATUS "Copying libs")
-    
     # leap DLLs
-    file(GLOB LeapMoveFiles "Leap/lib/x86/Leap.dll" "Leap/lib/x86/Leapd.dll")
-    file(COPY ${LeapMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    file(GLOB LeapMoveFilesRelease "Leap/lib/x86/Leap.dll")
+    file(GLOB LeapMoveFilesDebug "Leap/lib/x86/Leapd.dll")
 
     # libRocket dlls
-    file(GLOB RocketMoveFiles "libRocket/bin/*")
-    file(COPY ${RocketMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-    
+    file(GLOB RocketMoveFilesRelease "libRocket/bin/*")
+
     # smfl
     file(GLOB SMFLMoveFilesRelease "SFML/bin/openal32.dll" "SFML/bin/libsndfile-1.dll" "SFML/bin/sfml-audio-2.dll" "SFML/bin/sfml-system-2.dll"
         "SFML/bin/sfml-network-2.dll")
-    file(COPY ${SMFLMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+
     file(GLOB SMFLMoveFilesDebug "SFML/bin/sfml-audio-d-2.dll" "SFML/bin/sfml-system-d-2.dll"
         "SFML/bin/sfml-network-d-2.dll")
-    file(COPY ${SMFLMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
     
     # newton
     file(GLOB NewtonMoveFilesRelease "Newton/bin/Release/*")
-    file(COPY ${NewtonMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+
     file(GLOB NewtonMoveFilesDebug "Newton/bin/Debug/*")
-    file(COPY ${NewtonMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-    
+
     # ogre dlls (this should be changed for public release to only copy required dlls)
-    file(GLOB OgreMoveFiles "${OGRE_BASEDIR}bin/Debug/*.pdb" "OGRE/bin/Debug/*.dll" "OGRE/bin/Release/*.dll")
-    file(COPY ${OgreMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    file(GLOB OgreMoveFilesDebug "${OGRE_BASEDIR}/bin/Debug/*.pdb" "${OGRE_BASEDIR}/bin/Debug/*.dll")
+    file(GLOB OgreMoveFilesRelease "${OGRE_BASEDIR}/bin/Release/*.dll")
 
 else(WIN32)
     # linux variants of the copy functions
-    file(GLOB LeapMoveFiles "Leap/lib/x64/libLeap.so")
-    file(COPY ${LeapMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-
+    file(GLOB LeapMoveFilesRelease "Leap/lib/x64/libLeap.so")
+    file(GLOB LeapMoveFilesDebug "Leap/lib/x64/libLeapd.so")
+    
     # ogre sos (this should be changed for public release to only copy required sos)
-    file(GLOB OgreMoveFiles "${OGRE_BASEDIR}/*.so*" "${OGRE_BASEDIR}/../*Ogre*.so*" "${OGRE_BASEDIR}/../libOIS*.so")
-    file(COPY ${OgreMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    file(GLOB OgreMoveFilesRelease "${OGRE_BASEDIR}/*.so*" "${OGRE_BASEDIR}/../*Ogre*.so*" "${OGRE_BASEDIR}/../libOIS*.so")
 
     # libRocket sos
-    file(GLOB RocketMoveFiles "libRocket/lib/*.so*")
-    file(COPY ${RocketMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    file(GLOB RocketMoveFilesRelease "libRocket/lib/*.so*")
 
     # newton
-    file(GLOB NewtonMoveFiles "Newton/lib/libNewton.so")
-    file(COPY ${NewtonMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    file(GLOB NewtonMoveFilesRelease "Newton/lib/libNewton.so")
+    file(GLOB NewtonMoveFilesDebug "Newton/lib/libNewton_d.so")
 
     # smfl
-    file(GLOB SMFLMoveFiles "SFML/lib/*.so*")
-    file(COPY ${SMFLMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    # \todo fix this to split into debug and release
+    file(GLOB SMFLMoveFilesRelease "SFML/lib/*.so*")
 
 endif(WIN32)
+
+message(STATUS "Moving the bulk...")
+
+file(COPY ${RocketMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${RocketMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${LeapMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${LeapMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${SMFLMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${SMFLMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${NewtonMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${NewtonMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${OgreMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${OgreMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+
 message(STATUS "Done copying")
 
 # working directory setting
@@ -256,9 +311,6 @@ if(WIN32)
     include(CreateLaunchers)
     include(SetPrecompiledHeaders)
 else(WIN32)
-
-    set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-    set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
     set(CMAKE_RPATH "$ORIGIN/")
     set(CMAKE_INSTALL_RPATH "$ORIGIN/")
@@ -268,7 +320,8 @@ else(WIN32)
 
 endif(WIN32)
 
-
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 
 # additional include directories
@@ -297,8 +350,10 @@ endif(WIN32)
 
 # engine linking
 link_directories("${PROJECT_BINARY_DIR}")
+# these two might not be necessary anymore
 link_directories("${PROJECT_BINARY_DIR}/Engine/Debug")
 link_directories("${PROJECT_BINARY_DIR}/Engine/Release")
+link_directories("${PROJECT_BINARY_DIR}/bin")
 
 # engine project 
 add_subdirectory(Engine)
@@ -306,9 +361,8 @@ add_subdirectory(Engine)
 # test project
 add_subdirectory(LeviathanTest)
 
-
 # sandboxie example project
-add_subdirectory(Project_sandboxie)
+add_subdirectory(Sandboxie)
 
 # example pong master server
 add_subdirectory(PongMasterServer)
@@ -326,8 +380,7 @@ file(GLOB DataMoveFiles "bin/Data/*.*")
 install(FILES ${DataMoveFiles} DESTINATION bin/Data)
 # The script files folder
 install(DIRECTORY "Scripts" DESTINATION bin/Data)
-install(FILES "bin/EngineConf.conf" DESTINATION bin)
-install(FILES ${GameConfigsInBin} DESTINATION bin)
+install(FILES ${RootFolderFiles} DESTINATION bin)
 # we need to specifically install the directories
 install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)
 install(DIRECTORY "bin/Data/Models" DESTINATION bin/Data)
@@ -336,53 +389,42 @@ install(DIRECTORY "bin/Data/Sound" DESTINATION bin/Data)
 install(DIRECTORY "bin/Data/Textures" DESTINATION bin/Data)
 install(DIRECTORY "bin/Data/Screenshots" DESTINATION bin/Data)
 install(DIRECTORY "bin/Data/Cache" DESTINATION bin/Data)
+
 if(WIN32)
     # ogre tools
     file(GLOB OgreTools "${OGRE_BASEDIR}/bin/Release/*.exe")
     file(GLOB SampleBrowserFile "${OGRE_BASEDIR}/bin/Release/SampleBrowser.exe")
-    #list(REMOVE_ITEM OgreTools ${SampleBrowserFile})
     install(FILES ${OgreTools} DESTINATION tools)
+    
 endif(WIN32)
 
-if(INSTALL_ONLY_RELEASE)
-    # only release versions of everything
-    if(WIN32)
-        # change some file lists around
-        file(GLOB LeapMoveFiles "Leap/lib/x86/Leap.dll")
-        # only release dlls
-        file(GLOB OgreMoveFiles "${OGRE_BASEDIR}/bin/Release/*.dll")
-        # only release Rocket
-        file(GLOB RocketMoveFiles "libRocket/bin/RocketControls.dll" "libRocket/bin/RocketCore.dll" "libRocket/bin/RocketDebugger.dll")
-    endif(WIN32)
-
-else(INSTALL_ONLY_RELEASE)
+# Potentially install debug versions
+if(NOT INSTALL_ONLY_RELEASE)
     # install all files that debug distribution might need
-    if(WIN32)
-        install(FILES ${VLDMoveFiles} DESTINATION bin)
-
-        install(FILES ${NewtonMoveFilesDebug} DESTINATION bin)
-        install(FILES ${SMFLMoveFilesDebug} DESTINATION bin)
-        
-        if(NOT Boost_USE_STATIC_LIBS)
-            install(FILES ${BOOST_MOVE_FILES_DEBUG} DESTINATION bin)
-        endif(NOT Boost_USE_STATIC_LIBS)
-    endif(WIN32)
-
-endif(INSTALL_ONLY_RELEASE)
-
-install(FILES ${LeapMoveFiles} DESTINATION bin)
-install(FILES ${OgreMoveFiles} DESTINATION bin)
-install(FILES ${RocketMoveFiles} DESTINATION bin)
-if(WIN32)
-    install(FILES ${NewtonMoveFilesRelease} DESTINATION bin)
-    install(FILES ${SMFLMoveFilesRelease} DESTINATION bin)
+    install(FILES ${VLDMoveFiles} DESTINATION bin)
+    install(FILES ${LeapMoveFilesDebug} DESTINATION bin)
+    install(FILES ${NewtonMoveFilesDebug} DESTINATION bin)
+    install(FILES ${SMFLMoveFilesDebug} DESTINATION bin)
+    install(FILES ${OgreMoveFilesDebug} DESTINATION bin)
+    install(FILES ${RocketMoveFilesDebug} DESTINATION bin)
+    
     if(NOT Boost_USE_STATIC_LIBS)
-        install(FILES ${BOOST_MOVE_FILES_RELEASE} DESTINATION bin)
+        install(FILES ${BOOST_MOVE_FILES_DEBUG} DESTINATION bin)
     endif(NOT Boost_USE_STATIC_LIBS)
-else(WIN32)
-    install(FILES ${NewtonMoveFiles} DESTINATION bin)
-    install(FILES ${SMFLMoveFiles} DESTINATION bin)
-endif(WIN32)
+
+endif(NOT INSTALL_ONLY_RELEASE)
+
+# Always install release libraries
+install(FILES ${LeapMoveFilesRelease} DESTINATION bin)
+install(FILES ${OgreMoveFilesRelease} DESTINATION bin)
+install(FILES ${RocketMoveFilesRelease} DESTINATION bin)
+install(FILES ${NewtonMoveFilesRelease} DESTINATION bin)
+install(FILES ${SMFLMoveFilesRelease} DESTINATION bin)
+
+if(NOT Boost_USE_STATIC_LIBS)
+    install(FILES ${BOOST_MOVE_FILES_RELEASE} DESTINATION bin)
+endif(NOT Boost_USE_STATIC_LIBS)
+
 
 
 # testing support
@@ -392,11 +434,16 @@ endif(WIN32)
 include(InstallRequiredSystemLibraries)
 
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Leviathan Game Engine")
-SET(CPACK_PACKAGE_VENDOR "Me, myself, and I")
+SET(CPACK_PACKAGE_VENDOR "Henri Hyyryläinen")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.MD")
 set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/License.txt")
 set(CPACK_PACKAGE_VERSION_MAJOR "${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${LEVIATHAN_VERSION_MINOR}")
+
+if(INSTALL_CREATE_SDK)
+set(${LEVIATHAN_VERSION_PATCH} "${LEVIATHAN_VERSION_PATCH}_sdk")
+endif(INSTALL_CREATE_SDK)
+
 set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}")
 
 
@@ -405,15 +452,15 @@ if(WIN32)
   # sure there is at least one set of four (4) backlasshes.
   set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}\\\\LeviathanIcon.bmp")
   set(CPACK_NSIS_DISPLAY_NAME "Leviathan Game Engine")
-  set(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.boostslair.com/projects/Leviathan/Help.php")
-  set(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.boostslair.com/projects/Leviathan/")
+  set(CPACK_NSIS_HELP_LINK "http:\\\\\\\\boostslair.com/Projects/Leviathan/doxygen/")
+  set(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.boostslair.com/Projects/Leviathan/")
   set(CPACK_NSIS_CONTACT "boost@boostslair.com")
   set(CPACK_NSIS_MODIFY_PATH OFF)
 else(WIN32)
   set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}/LeviathanIcon.bmp")
   set(CPACK_NSIS_DISPLAY_NAME "Leviathan Game Engine")
-  set(CPACK_NSIS_HELP_LINK "http://www.boostslair.com/projects/Leviathan/Help.php")
-  set(CPACK_NSIS_URL_INFO_ABOUT "http://www.boostslair.com/projects/Leviathan/")
+  set(CPACK_NSIS_HELP_LINK "http://www.boostslair.com/Projects/Leviathan/doxygen/")
+  set(CPACK_NSIS_URL_INFO_ABOUT "http://www.boostslair.com/Projects/Leviathan/")
   set(CPACK_NSIS_CONTACT "boost@boostslair.com")
   set(CPACK_NSIS_MODIFY_PATH OFF)
 endif(WIN32)

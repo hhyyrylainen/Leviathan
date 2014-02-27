@@ -12,9 +12,7 @@
 
 namespace Leviathan{
 
-	class NamedVars;
-
-	// hosts one or more VariableBlocks keeping only one name for all of them //
+	//! \brief hosts one or more VariableBlocks keeping only one name for all of them
 	class NamedVariableList{
 	public:
 		DLLEXPORT NamedVariableList();

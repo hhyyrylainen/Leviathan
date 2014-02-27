@@ -24,6 +24,11 @@ namespace Leviathan{
 		class TrailEmitter;
 	}
 
+	class SyncedVariables;
+	class SyncedValue;
+	class NetworkInterface;
+	class NamedVars;
+	class NamedVariableList;
 	class NetworkServerInterface;
 	class NetworkClientInterface;
 	struct SentNetworkThing;

@@ -38,7 +38,9 @@ namespace Leviathan{
 	enum NETWORKRESPONSE_SERVERACCEPTED_TYPE{
 
 		//! Server has accepted your join request
-		NETWORKRESPONSE_SERVERACCEPTED_TYPE_CONNECT_ACCEPTED
+		NETWORKRESPONSE_SERVERACCEPTED_TYPE_CONNECT_ACCEPTED,
+		//! Server has accepted the request and will handle it soon
+		NETWORKRESPONSE_SERVERACCEPTED_TYPE_REQUEST_QUEUED
 	};
 
 	//! Defines server join protection status (who can join the server)
@@ -77,6 +79,13 @@ namespace Leviathan{
 		NETWORKRESPONSETYPE_SERVERALLOW,
 		//! Returns anonymous data about the server
 		NETWORKRESPONSETYPE_SERVERSTATUS,
+		//! Sends a update/new SyncedValue
+		//! \todo This needs to be implemented
+		NETWORKRESPONSETYPE_SYNCVALDATA,
+		//! Send after all NETWORKRESPONSETYPE_SYNCVALDATA has been sent and indicates whether they should have arrived correctly
+		NETWORKRESPONSETYPE_SYNCDATAEND,
+
+		//! Empty response, used for keeping alive/nothing
 		NETWORKRESPONSETYPE_NONE
 	};
 
@@ -169,12 +178,38 @@ namespace Leviathan{
 	class NetworkResponseDataForServerAllow : public BaseNetworkResponseData{
 	public:
 		DLLEXPORT NetworkResponseDataForServerAllow(sf::Packet &frompacket);
-		DLLEXPORT NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted);
+		DLLEXPORT NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted, const wstring &message = L"");
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
 		//! What the server accepted
 		NETWORKRESPONSE_SERVERACCEPTED_TYPE ServerAcceptedWhat;
 
+		//! \brief An user readable disallow string
+		//! \note Should be limited to a maximum of 100 characters
+		wstring Message;
+	};
+
+	//! \brief Stores data about a synced variable
+	class NetworkResponseDataForSyncValData : public BaseNetworkResponseData{
+	public:
+		DLLEXPORT NetworkResponseDataForSyncValData(sf::Packet &frompacket);
+		DLLEXPORT NetworkResponseDataForSyncValData(NamedVariableList* newddata);
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! The variable that is passed/received
+		shared_ptr<NamedVariableList> SyncValueData;
+	};
+
+
+	//! \brief Tells whether a variable sync all succeeded or failed
+	class NetworkResponseDataForSyncDataEnd : public BaseNetworkResponseData{
+	public:
+		DLLEXPORT NetworkResponseDataForSyncDataEnd(sf::Packet &frompacket);
+		DLLEXPORT NetworkResponseDataForSyncDataEnd(bool succeeded);
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+
+		bool Succeeded;
 	};
 
 
@@ -191,6 +226,9 @@ namespace Leviathan{
 		DLLEXPORT void GenerateServerStatusResponse(NetworkResponseDataForServerStatus* newddata);
 		DLLEXPORT void GenerateServerDisallowResponse(NetworkResponseDataForServerDisallow* newddata);
 		DLLEXPORT void GenerateServerAllowResponse(NetworkResponseDataForServerAllow* newddata);
+		DLLEXPORT void GenerateValueSyncResponse(NetworkResponseDataForSyncValData* newddata);
+		DLLEXPORT void GenerateValueSyncEndResponse(NetworkResponseDataForSyncDataEnd* newddata);
+
 
 		DLLEXPORT void GenerateKeepAliveResponse();
 		DLLEXPORT void GenerateCloseConnectionResponse();
@@ -200,19 +238,21 @@ namespace Leviathan{
 
 		DLLEXPORT void GenerateEmptyResponse();
 
-		DLLEXPORT NETWORKRESPONSETYPE GetTypeOfResponse();
+		DLLEXPORT NETWORKRESPONSETYPE GetTypeOfResponse() const;
+		DLLEXPORT NETWORKRESPONSETYPE GetType() const;
 
-		DLLEXPORT sf::Packet GeneratePacketForResponse();
+		DLLEXPORT sf::Packet GeneratePacketForResponse() const;
 
-		DLLEXPORT NetworkResponseDataForIdentificationString* GetResponseDataForIdentificationString();
-		DLLEXPORT NetworkResponseDataForServerStatus* GetResponseDataForServerStatus();
-
-		DLLEXPORT int GetTimeOutValue();
-		DLLEXPORT PACKET_TIMEOUT_STYLE GetTimeOutType();
+		DLLEXPORT int GetTimeOutValue() const;
+		DLLEXPORT PACKET_TIMEOUT_STYLE GetTimeOutType() const;
 
 		// De-coding functions //
+		DLLEXPORT NetworkResponseDataForIdentificationString* GetResponseDataForIdentificationString() const;
+		DLLEXPORT NetworkResponseDataForServerStatus* GetResponseDataForServerStatus() const;
+		DLLEXPORT NetworkResponseDataForSyncValData* GetResponseDataForValueSyncResponse() const;
+		DLLEXPORT NetworkResponseDataForSyncDataEnd* GetResponseDataForValueSyncEndResponse() const;
 
-		DLLEXPORT int GetResponseID();
+		DLLEXPORT int GetResponseID() const;
 
 	protected:
 

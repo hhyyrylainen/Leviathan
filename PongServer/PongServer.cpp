@@ -7,6 +7,7 @@
 #include "Application/GameConfiguration.h"
 #include "PongServerNetworking.h"
 #include "Networking/NetworkResponse.h"
+#include "Networking/SyncedVariables.h"
 using namespace Pong;
 // ------------------------------------ //
 // Put this here, since nowhere else to put it //
@@ -181,6 +182,10 @@ void Pong::PongServer::ServerCheckEnd(){
 }
 // ------------------------------------ //
 void Pong::PongServer::DoSpecialPostLoad(){
+	// Create all the server variables //
+	Leviathan::SyncedVariables* tmpvars = Leviathan::SyncedVariables::Get();
+
+	tmpvars->AddNewVariable(shared_ptr<SyncedValue>(new SyncedValue(new NamedVariableList(L"TheAnswer", new VariableBlock(42)))));
 
 }
 

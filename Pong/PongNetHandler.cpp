@@ -41,10 +41,16 @@ DLLEXPORT void Pong::PongNetHandler::TickIt(){
 	UpdateClientStatus();
 }
 // ------------------------------------ //
+void Pong::PongNetHandler::_OnStartApplicationConnect(){
+	Logger::Get()->Info(L"Pong ready to join the lobby or the game");
+
+}
+// ------------------------------------ //
 void Pong::PongNetHandler::_OnNewConnectionStatusMessage(const wstring &message){
 	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
 		new NamedVariableList(L"Message", new VariableBlock(Convert::WstringToString(message)))))));
 }
+
 
 
 

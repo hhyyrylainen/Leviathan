@@ -19,7 +19,9 @@ namespace Leviathan{
 		NETWORKREQUESTTYPE_OPENREMOTECONSOLETO,
 		NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE,
 		NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE,
-		NETWORKREQUESTTYPE_JOINSERVER
+		NETWORKREQUESTTYPE_JOINSERVER,
+		NETWORKREQUESTTYPE_GETSINGLESYNCVALUE,
+		NETWORKREQUESTTYPE_GETALLSYNCVALUES
 	};
 
 	class BaseNetworkRequestData{
@@ -65,12 +67,25 @@ namespace Leviathan{
 	};
 
 
+	class GetSingleSyncValueRequestData : public BaseNetworkRequestData{
+	public:
+		DLLEXPORT GetSingleSyncValueRequestData(const wstring &name);
+		DLLEXPORT GetSingleSyncValueRequestData(sf::Packet &frompacket);
+
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! The name of the wanted value
+		wstring NameOfValue;
+	};
+
+
 	class NetworkRequest{
 	public:
 		DLLEXPORT NetworkRequest(NETWORKREQUESTTYPE type, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(JoinServerRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT ~NetworkRequest();
 
 		DLLEXPORT NetworkRequest(sf::Packet &frompacket);

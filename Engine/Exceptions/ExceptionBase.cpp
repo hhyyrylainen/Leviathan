@@ -65,10 +65,12 @@ DLLEXPORT const char* Leviathan::ExceptionBase::what(){
 
 	return ConvertUtility.c_str();
 }
-
-//DLLEXPORT const wchar_t* Leviathan::ExceptionBase::what() const{
-//	return Message->c_str();
-//}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::ExceptionBase::PrintToLog() const{
+	if(ErrorValue != 0)
+		return Logger::Get()->Error(L"[EXCEPTION] Generic \""+*Message+L"\" from "+*SourceFunction, ErrorValue);
+	Logger::Get()->Error(L"[EXCEPTION] Generic \""+*Message+L"\" from "+*SourceFunction);
+}
 
 
 

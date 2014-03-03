@@ -324,8 +324,15 @@ movepacketsendattemptonexttry:
 
 						// Move to next try //
 						if(++(*iter)->AttempNumber > (*iter)->MaxTries && (*iter)->MaxTries > 0){
+#ifdef _DEBUG
+							// Ignore for keepalive packets //
+							if(!(*iter)->IsArequest && (*iter)->SentResponse && (*iter)->SentResponse->GetType() == NETWORKRESPONSETYPE_KEEPALIVE){
+								Logger::Get()->Info(L"ConnectionInfo: keepalive has been flushed from queue");
+							} else {
+								Logger::Get()->Warning(L"ConnectionInfo: packet reached maximum tries");
+							}
+#endif // _DEBUG
 
-							Logger::Get()->Warning(L"ConnectionInfo: packet reached maximum tries");
 							// We want to notify all waiters that it failed //
 							(*iter)->WaitForMe->set_value(false);
 							iter = WaitingRequests.erase(iter);
@@ -466,7 +473,6 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 		return false;
 	}
 	// It is mine //
-	Logger::Get()->Info(L"It is mine, in fact");
 
 	// Handle incoming packet //
 	int packetnumber = 0;

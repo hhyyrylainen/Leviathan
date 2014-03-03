@@ -4,9 +4,13 @@
 #ifndef LEVIATHAN_DEFINE
 #include "Define.h"
 #endif
-#include "Common/ReferenceCounted.h"
 // ------------------------------------ //
 // ---- includes ---- //
+#include "Common/ReferenceCounted.h"
+#include "SFML/Network/Packet.hpp"
+#include "Exceptions/ExceptionBase.h"
+#include "Exceptions/ExceptionInvalidArgument.h"
+
 
 #define DATABLOCK_TYPE_INT		3
 #define DATABLOCK_TYPE_FLOAT	4
@@ -166,6 +170,10 @@ namespace Leviathan{
 			// use templates to get type //
 			Type = DataBlockNameResolver<DBlockT>::TVal;
 		}
+
+		DLLEXPORT DataBlock(sf::Packet &packet);
+
+		DLLEXPORT void AddDataToPacket(sf::Packet &packet);
 
 		DLLEXPORT DataBlock(const DataBlock &otherdeepcopy) : Value(NULL){
 			// allocate new pointer from the other instance //
@@ -393,12 +401,9 @@ namespace Leviathan{
 	TVALRESOLVERTYPE(LeviathanObjectBlock, DATABLOCK_TYPE_OBJECTL);
 	TVALRESOLVERTYPE(VoidPtrBlock, DATABLOCK_TYPE_VOIDPTR);
 
-	// forward declaration to make one of the constructors work //
-	class NamedVariableBlock;
-
 
 	// DataBlock interface classes //
-	class VariableBlock : public Object{
+	class VariableBlock{
 	public:
 		// constructors that accept any type of DataBlock //
 		template<class DBRType>
@@ -429,8 +434,63 @@ namespace Leviathan{
 			BlockData = (DataBlockAll*)new CharBlock(var);
 		}
 
+		//! \brief Constructs from a packet
+		DLLEXPORT VariableBlock(sf::Packet &packet){
+			// Get the type //
+			int type;
+			packet >> type;
+
+			// Load the actual data based on the type //
+			switch(type){
+			case 0:
+				{
+					// No data //
+					BlockData = NULL;
+					return;
+				}
+			case DATABLOCK_TYPE_INT: { BlockData = new IntBlock(packet); return; }
+			case DATABLOCK_TYPE_FLOAT: { BlockData = new FloatBlock(packet); return; }
+			case DATABLOCK_TYPE_BOOL: { BlockData = new BoolBlock(packet); return; }
+			case DATABLOCK_TYPE_WSTRING: { BlockData = new WstringBlock(packet); return; }
+			case DATABLOCK_TYPE_STRING: { BlockData = new StringBlock(packet); return; }
+			case DATABLOCK_TYPE_CHAR: { BlockData = new CharBlock(packet); return; }
+			case DATABLOCK_TYPE_DOUBLE:	{ BlockData = new DoubleBlock(packet); return; }
+			}
+
+			// Invalid packet //
+			throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+		}
 
 
+		//! \brief Stores data to a packet
+		DLLEXPORT void AddDataToPacket(sf::Packet &packet){
+			// Set the type //
+			if(BlockData != NULL){
+				packet << BlockData->Type;
+			} else {
+				packet << 0;
+				return;
+			}
+
+			// Set the data //
+			if(BlockData->Type == DATABLOCK_TYPE_INT)
+				return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->AddDataToPacket(packet);
+			else if(BlockData->Type == DATABLOCK_TYPE_FLOAT)
+				return TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData)->AddDataToPacket(packet);
+			else if(BlockData->Type == DATABLOCK_TYPE_BOOL)
+				return TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData)->AddDataToPacket(packet);
+			else if(BlockData->Type == DATABLOCK_TYPE_WSTRING)
+				return TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData)->AddDataToPacket(packet);
+			else if(BlockData->Type == DATABLOCK_TYPE_STRING)
+				return TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData)->AddDataToPacket(packet);
+			else if(BlockData->Type == DATABLOCK_TYPE_CHAR)
+				return TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData)->AddDataToPacket(packet);
+			else if(BlockData->Type == DATABLOCK_TYPE_DOUBLE)
+				return TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData)->AddDataToPacket(packet);
+
+			// type that shouldn't be used is used //
+			throw ExceptionBase(L"unallowed datatype in datablock for writing to packet", 0, __WFUNCTION__);
+		}
 
 
 		// deep copy constructor //
@@ -510,8 +570,8 @@ namespace Leviathan{
 			return *this;
 		}
 
-		// comparison operator //
-		DLLEXPORT inline bool operator ==(const VariableBlock &other){
+		//! \brief comparison operator
+		DLLEXPORT inline bool operator ==(const VariableBlock &other) const{
 			// returns false if either block is NULL //
 			if(BlockData == NULL || other.BlockData == NULL)
 				return false;
@@ -537,6 +597,12 @@ namespace Leviathan{
 			// type that shouldn't be used is used //
 			assert(0 && "unallowed datatype in datablock");
 			return false;
+		}
+
+		//! \brief Opposite of the comparison operator
+		DLLEXPORT FORCE_INLINE bool operator !=(const VariableBlock &other) const{
+
+			return !(*this == other);
 		}
 
 
@@ -850,6 +916,19 @@ namespace Leviathan{
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, char, Convert::StringTo<char>(*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, int, Convert::StringTo<int>(*block->Value));
 
+
+
+	// ------------------ Loading/saving from/to packets ------------------ //
+#define DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(BlockTypeName, VarTypeName, TmpTypeName) template<> DLLEXPORT void BlockTypeName::AddDataToPacket(sf::Packet &packet){ \
+		packet << *Value; \
+	} \
+	template<> DLLEXPORT BlockTypeName::DataBlock(sf::Packet &packet){ \
+		TmpTypeName tmpval; \
+		if(!(packet >> tmpval)){ \
+			throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L""); \
+		} \
+		Value = new VarTypeName(tmpval); \
+	}
 
 
 

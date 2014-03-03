@@ -44,6 +44,8 @@ using Leviathan::KeyConfiguration;
 using Leviathan::NamedVars;
 using Leviathan::NamedVariableList;
 using Leviathan::NetworkClientInterface;
+using Leviathan::SyncedValue;
+
 
 
 

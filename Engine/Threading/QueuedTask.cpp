@@ -142,3 +142,11 @@ void Leviathan::RepeatCountedDelayedTask::_PostFunctionRun(){
 	// Set new execution point in time //
 	ExecutionTime = Misc::GetThreadSafeSteadyTimePoint()+TimeBetweenExecutions;
 }
+
+DLLEXPORT int Leviathan::RepeatCountedDelayedTask::GetRepeatCount() const{
+	return RepeatedCount;
+}
+
+DLLEXPORT bool Leviathan::RepeatCountedDelayedTask::IsThisLastRepeat() const{
+	return RepeatedCount+1 >= MaxRepeats;
+}

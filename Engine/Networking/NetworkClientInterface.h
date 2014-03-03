@@ -74,6 +74,11 @@ namespace Leviathan{
 		//! \todo Do what this should do
 		DLLEXPORT virtual void _OnProperlyConnected();
 
+
+		//! \brief Called when the player is on the server and everything that the Engine is concerned about is done
+		//! \note Here the application's connect data should be sent. The application specific conection routine should be done here
+		DLLEXPORT virtual void _OnStartApplicationConnect() = 0;
+
 	private:
 		
 		void _SendConnectRequest(ObjectLock &guard);

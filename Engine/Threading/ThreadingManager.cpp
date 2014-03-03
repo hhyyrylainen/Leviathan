@@ -52,16 +52,32 @@ DLLEXPORT bool Leviathan::ThreadingManager::Init(){
 		UsableThreads.push_back(shared_ptr<TaskThread>(new TaskThread()));
 	}
 
-	// Check that at least one thread is running //
-	for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
+	bool started = false;
+	int loopcount = 0;
 
-		if((*iter)->HasStarted())
-			return true;
+	// This might need to be repeated for a while //
+	while(!started){
+
+		// Check that at least one thread is running //
+		for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
+			// Check is this thread running //
+			if((*iter)->HasStarted()){
+				// Something has started //
+				started = true;
+				return true;
+			}
+		}
+
+		if(++loopcount > 1000){
+
+			Logger::Get()->Error(L"ThreadingManager: Init: no threads have started, after 1000 loops");
+
+			// No threads running //
+			return false;
+		}
 	}
 
-	Logger::Get()->Error(L"ThreadingManager: Init: no threads have started");
-
-	// No threads running //
+	assert(0 && "Shouldn't get out of that loop, 80");
 	return false;
 }
 

@@ -54,8 +54,13 @@ namespace Leviathan{
 		__int64 RequestStartTime;
 		__int64 ConfirmReceiveTime;
 		int ExpectedResponseID;
+
+
+		//! Marks this as received by the other
 		shared_ptr<boost::promise<bool>> WaitForMe;
+		//! The stored future that is returned when requested
 		boost::unique_future<bool> FutureValue;
+		//! Controls when the future will be fetched, it is safe to retrieve only once
 		bool FutureFetched;
 
 

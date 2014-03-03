@@ -29,7 +29,7 @@ namespace Leviathan{
 		DLLEXPORT virtual const char* what();
 		//DLLEXPORT virtual const wchar_t* what() const;
 
-		DLLEXPORT virtual void PrintToLog() const = 0;
+		DLLEXPORT virtual void PrintToLog() const;
 
 		DLLEXPORT virtual EXCEPTIONTYPE GetType() const;
 	protected:

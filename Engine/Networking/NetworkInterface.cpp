@@ -9,6 +9,7 @@
 #include "ConnectionInfo.h"
 #include "RemoteConsole.h"
 #include "Application/AppDefine.h"
+#include "SyncedVariables.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkInterface::NetworkInterface(){
@@ -34,6 +35,10 @@ DLLEXPORT bool Leviathan::NetworkInterface::PreHandleResponse(shared_ptr<Network
 // ------------------------------------ //
 bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult){
 	// Switch based on type //
+
+	// See if it is a sync packet //
+	if(SyncedVariables::Get()->HandleSyncRequests(request, connectiontosendresult))
+		return true;
 
 	switch(request->GetType()){
 	case NETWORKREQUESTTYPE_IDENTIFICATION:
@@ -66,6 +71,11 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 }
 // ------------------------------------ //
 bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived){
+
+	// See if it is a sync packet //
+	if(SyncedVariables::Get()->HandleResponseOnlySync(message, connection))
+		return true;
+
 	// Switch on type //
 	switch(message->GetTypeOfResponse()){
 	case NETWORKRESPONSETYPE_KEEPALIVE: case NETWORKRESPONSETYPE_NONE:

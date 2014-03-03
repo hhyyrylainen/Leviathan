@@ -35,6 +35,9 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 
 		// Check stuff //
 		if(thisthread->SetTask){
+			// Copy our task to our data object //
+			TaskThread::ThreadThreadPtr->QuickTaskAccess = thisthread->SetTask;
+
 			// Unlock for running //
 			guard.unlock();
 
@@ -43,9 +46,6 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 
 			// Re-lock for changing around //
 			guard.lock();
-
-			// Copy our task to our data object //
-			TaskThread::ThreadThreadPtr->QuickTaskAccess = thisthread->SetTask;
 
 			// Set our task away //
 			thisthread->SetTask.reset();

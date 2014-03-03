@@ -9,17 +9,23 @@
 #include "Exceptions/ExceptionInvalidArgument.h"
 #include "Common/DataStoring/DataBlock.h"
 #include "../ReferenceCounted.h"
+#include "SFML/Network/Packet.hpp"
 
 namespace Leviathan{
 
 	//! \brief hosts one or more VariableBlocks keeping only one name for all of them
 	class NamedVariableList{
+		friend NamedVars;
 	public:
 		DLLEXPORT NamedVariableList();
 		DLLEXPORT NamedVariableList(const NamedVariableList &other);
 		DLLEXPORT NamedVariableList(const wstring &name, VariableBlock* value1);
 		DLLEXPORT NamedVariableList(const wstring &name, const VariableBlock &val);
-		// warning the vector will be wiped clean after creating new variable //
+
+		//! \brief For receiving NamedVariableLists through the network
+		DLLEXPORT NamedVariableList(sf::Packet &packet);
+
+		//! \warning the vector will be wiped clean after creating new variable
 		DLLEXPORT NamedVariableList(const wstring &name, vector<VariableBlock*> values_willclear);
 		DLLEXPORT NamedVariableList(wstring &line, map<wstring, shared_ptr<VariableBlock>>* predefined = NULL) THROWS;
 		DLLEXPORT ~NamedVariableList();
@@ -37,6 +43,10 @@ namespace Leviathan{
 		DLLEXPORT vector<VariableBlock*>& GetValues();
 
 		DLLEXPORT size_t GetVariableCount() const;
+
+		//! \brief For passing NamedVariableLists to other instances through the network
+		DLLEXPORT void AddToPacket(sf::Packet &packet);
+
 
 		DLLEXPORT int GetCommonType() const;
 		template<class DBT>
@@ -87,42 +97,29 @@ namespace Leviathan{
 		// operators //
 		DLLEXPORT NamedVariableList& operator=(const NamedVariableList &other);
 
+		//! Compare values extensively
+		//!
+		//! If this returns true then the values are the same and assignment would have no visible effect.
+		DLLEXPORT bool operator==(const NamedVariableList &other) const;
+
+
 		// element access operator //
 		DLLEXPORT VariableBlock& operator[](const int &nindex) THROWS;
 
-		//************************************
-		// Method:    SwitchValues
-		// FullName:  Leviathan::NamedVariableList::SwitchValues
-		// Access:    public static
-		// Returns:   DLLEXPORT  void
-		// Qualifier:
-		// Parameter: NamedVariableList & receiver
-		// Parameter: NamedVariableList & donator
-		// Usage: Efficient way to copy new values to existing NamedVariableList, WARNING Will demolish the value that's values are copied
-		//************************************
+		//! \brief Switches values to a new instance
 		DLLEXPORT static void SwitchValues(NamedVariableList &receiver, NamedVariableList &donator);
 
 	private:
-		// utility functions //
-		inline void _DeleteAllButFirst(){
 
-			for(size_t i = 1; i < Datas.size(); i++){
-
-				SAFE_DELETE(Datas[i]);
-
-			}
-			if(Datas.size() > 1)
-				Datas.resize(1);
-		}
-
-
+		//! Data
 		vector<VariableBlock*> Datas;
 
+		//! Name
 		wstring Name;
-
-		// friends //
-		friend NamedVars;
 	};
+
+
+
 
 
 	// holds a vector of NamedVariableLists and provides searching functions //

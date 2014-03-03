@@ -190,6 +190,15 @@ namespace Leviathan{
 		//! \see ThreadSpecificData ThreadSpecificData::QuickTaskAccess
 		DLLEXPORT void StopRepeating();
 
+		//! \brief Gets the number of repeats done
+		//! \note This will only be accurate if IsRepeaTing is only called once per repeat
+		DLLEXPORT int GetRepeatCount() const;
+
+		//! \brief Checks if this is the last repeat
+		//!
+		//! This is done by checking RepeatedCount+1 >= MaxRepeats
+		DLLEXPORT bool IsThisLastRepeat() const;
+
 	protected:
 		//! \brief Used to update the time when to run the task again
 		virtual void _PostFunctionRun();

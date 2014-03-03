@@ -249,6 +249,22 @@ Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyf
 }
 
 
+// ------------------ Loading/saving from/to packets ------------------ //
+DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(IntBlock, int, int);
+DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(FloatBlock, float, float);
+DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(BoolBlock, bool, bool);
+DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(WstringBlock, wstring, wstring);
+DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(StringBlock, string, string);
+DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(DoubleBlock, double, double);
+DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(CharBlock, char, sf::Int8);
 
-
+// Fill in the gaps in the templates with these defaults //
+template<class DBlockT> DLLEXPORT void DataBlock<DBlockT>::AddDataToPacket(sf::Packet &packet){
+	// The default one cannot do anything, only the specialized functions can try to do something //
+	throw ExceptionBase(L"this type doesn't support saving to a packet", 0, __WFUNCTION__);
+}
+template<class DBlockT> DLLEXPORT DataBlock<DBlockT>::DataBlock(sf::Packet &packet){
+	// The default one cannot do anything, only the specialized functions can try to do something //
+	throw ExceptionBase(L"this type doesn't support loading from a packet", 0, __WFUNCTION__);
+}
 

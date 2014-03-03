@@ -13,6 +13,7 @@
 #include "Utility/ComplainOnce.h"
 #include "ConnectionInfo.h"
 #include "RemoteConsole.h"
+#include "SyncedVariables.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler) : AppType(ntype), 
@@ -22,10 +23,15 @@ DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, Networ
 	interfaceinstance = packethandler;
 	// Set our type to the NetworkInteface //
 	interfaceinstance->_SetNetworkType(AppType);
+
+	// Create the variable syncer //
+	VariableSyncer = new SyncedVariables(this, AppType == NETWORKED_TYPE_SERVER, interfaceinstance);
 }
 
 DLLEXPORT Leviathan::NetworkHandler::~NetworkHandler(){
 	instance = NULL;
+
+	SAFE_DELETE(VariableSyncer);
 }
 
 DLLEXPORT NetworkHandler* Leviathan::NetworkHandler::Get(){

@@ -33,7 +33,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, v
 	}
 }
 
-Leviathan::NamedVariableList::NamedVariableList(const NamedVariableList &other) : Datas(other.Datas.size()), Name(other.Name){
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const NamedVariableList &other) : Datas(other.Datas.size()), Name(other.Name){
 
 	// copy value over //
 	for(size_t i = 0; i < other.Datas.size(); i++){
@@ -141,36 +141,71 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 
 }
 
-//vector<unsigned int> Deletedindexes;
+// ------------------ Handling passing to packets ------------------ //
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(sf::Packet &packet){
+	// Unpack the data from the packet //
+	packet >> Name;
+
+	// First get the size //
+	int tmpsize = 0;
+
+	// Thousand is considered here the maximum number of elements //
+	if(!(packet >> tmpsize) || tmpsize > 1000 || tmpsize < 0){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	// Reserve enough space //
+	Datas.reserve((size_t)tmpsize);
+
+	// Loop and get the data //
+	for(int i = 0; i < tmpsize; i++){
+
+		Datas.push_back(new VariableBlock(packet));
+	}
+}
+
+DLLEXPORT void Leviathan::NamedVariableList::AddToPacket(sf::Packet &packet){
+	// Start adding data to the packet //
+	packet << Name;
+
+	// The vector passing //
+	int truncsize = (int)Datas.size();
+
+	if(truncsize > 1000){
+
+		// That's an error //
+		Logger::Get()->Error(L"NamedVariableList: AddToPacket: too many elements (sane maximum is 1000 values), got "+Convert::ToWstring(truncsize)+
+			L" values, truncated to first 1000");
+		truncsize = 1000;
+	}
+
+	packet << truncsize;
+
+	// Pass that number of elements //
+	for(int i = 0; i < truncsize; i++){
+
+		Datas[i]->AddDataToPacket(packet);
+	}
+
+	// Done setting //
+
+	// Potentially add a check sum here //
+}
+
 DLLEXPORT Leviathan::NamedVariableList::~NamedVariableList(){
 
 	SAFE_DELETE_VECTOR(Datas);
-
-	//if(Deletedindexes.size() == 0)
-	//	Deletedindexes.reserve(2100);
-
-	//// check is this already on deleted list //
-	//for(unsigned int i = 0; i < Deletedindexes.size(); i++){
-	//	if(Deletedindexes[i] == (unsigned int) this){
-	//		__debugbreak();
-	//	}
-	//}
-
-	//Deletedindexes.push_back((unsigned int)this);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NamedVariableList::SetValue(const VariableBlock &value1){
 	// clear old //
-	_DeleteAllButFirst();
-	// assign value //
-	if(Datas.size() == 0){
-		// create new //
-		Datas.push_back(new VariableBlock(value1));
+	SAFE_DELETE_VECTOR(Datas);
 
-	} else {
-		// assign to existing //
-		*Datas[0] = value1;
-	}
+	// assign value //
+
+	// create new //
+	Datas.push_back(new VariableBlock(value1));
 }
 
 DLLEXPORT void Leviathan::NamedVariableList::SetValue(VariableBlock* value1){
@@ -320,6 +355,25 @@ DLLEXPORT NamedVariableList& Leviathan::NamedVariableList::operator=(const Named
 	return *this;
 }
 
+DLLEXPORT bool Leviathan::NamedVariableList::operator==(const NamedVariableList &other) const{
+	// Make sure that names are the same //
+	if(Name != other.Name)
+		return false;
+
+	// Check variables //
+	if(Datas.size() != other.Datas.size())
+		return false;
+
+	// Compare data in the DataBlocks //
+	for(size_t i = 0; i < Datas.size(); i++){
+
+		if(*Datas[i] != *other.Datas[i])
+			return false;
+	}
+
+	// They truly are the same //
+	return true;
+}
 // ----------------- process functions ------------------- //
 DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVariableList>> &vec,
 	map<wstring, shared_ptr<VariableBlock>>* predefined /*= NULL*/)
@@ -465,7 +519,6 @@ DLLEXPORT VariableBlock& Leviathan::NamedVariableList::operator[](const int &nin
 DLLEXPORT vector<VariableBlock*>& Leviathan::NamedVariableList::GetValues(){
 	return Datas;
 }
-
 // ---------------------------- NamedVars --------------------------------- //
 Leviathan::NamedVars::NamedVars() : Variables(){
 	// nothing to initialize //

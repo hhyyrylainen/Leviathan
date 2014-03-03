@@ -6,6 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "Common/ThreadSafe.h"
+#include "NetworkResponse.h"
 
 
 namespace Leviathan{
@@ -37,7 +39,7 @@ namespace Leviathan{
 
 		//! \brief Sets the owner, which is very important
 		//! \return Returns false when the name is invalid
-		bool _MasterYouCalled(SyncedVariables* owner);
+		void _MasterYouCalled(SyncedVariables* owner);
 
 
 		// ------------------------------------ //
@@ -59,7 +61,10 @@ namespace Leviathan{
 	//! \brief Class that synchronizes some key variables with another instance
 	//!
 	//! By default this doesn't synchronize anything. You will have to manually add variables
-	class SyncedVariables{
+	//! \todo Events
+	//! \todo Add function to be able to check if sync completed successfully
+	class SyncedVariables : public ThreadSafe{
+		friend SyncedValue;
 	public:
 		//! \brief Construct an instance that must be owned by a NetworkHandler
 		DLLEXPORT SyncedVariables(NetworkHandler* owner, bool amiaserver, NetworkInterface* handlinginterface);
@@ -93,8 +98,31 @@ namespace Leviathan{
 		//! \brief Provided for NetworkServerInterface and NetworkClientInterface to access AddAnotherToSyncWith and other functions
 		DLLEXPORT static SyncedVariables* Get();
 
+		//! \brief Call before requesting full value sync
+		//! \note Without calling this IsSyncDone won't work
+		DLLEXPORT void PrepareForFullSync();
+
+		//! \brief Returns true if we have received a sync complete notification
+		//! \see PrepareForFullSync
+		DLLEXPORT bool IsSyncDone();
+
+		//! \brief Checks whether a name is already in use
+		DLLEXPORT bool IsVariableNameUsed(const wstring &name, ObjectLock &guard);
+
+		//! \brief Short version for IsVariableNameUsed
+		DLLEXPORT FORCE_INLINE bool IsVariableNameUsed(const wstring &name){
+			ObjectLock guard(*this);
+			return IsVariableNameUsed(name, guard);
+		}
+
+
 	protected:
 
+		//! \brief Sends update notifications about a variable
+		void _NotifyUpdatedValue(const SyncedValue* const valtosync, int useid = -1);
+		shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(ConnectionInfo* unsafeptr, const SyncedValue* const valtosync);
+
+		void _UpdateFromNetworkReceive(NetworkResponseDataForSyncValData* datatouse, ObjectLock &guard);
 
 		// ------------------------------------ //
 
@@ -107,6 +135,9 @@ namespace Leviathan{
 		//! Should be set to true when a server
 		//! \note This is used to control if multiple other instances are allowed and if changed values are sent
 		bool IsHost;
+
+		//! Set when sync complete packet is received
+		bool SyncDone;
 
 		//! Contains the values that are to be synced
 		std::vector<shared_ptr<SyncedValue>> ToSyncValues;

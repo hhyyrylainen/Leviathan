@@ -24,6 +24,7 @@ namespace Leviathan{
 		class TrailEmitter;
 	}
 
+	class NamedVariableBlock;
 	class SyncedVariables;
 	class SyncedValue;
 	class NetworkInterface;

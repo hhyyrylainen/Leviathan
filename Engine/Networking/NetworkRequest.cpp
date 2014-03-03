@@ -15,6 +15,7 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int
 	switch(TypeOfRequest){
 		// With these cases not having extra data is valid //
 	case NETWORKREQUESTTYPE_IDENTIFICATION: case NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE: case NETWORKREQUESTTYPE_SERVERSTATUS:
+	case NETWORKREQUESTTYPE_GETALLSYNCVALUES:
 		return;
 	default:
 		assert(0 && "trying to create a request which requires extra data without providing any extra data!");
@@ -39,6 +40,13 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleAccessRequestDa
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(JoinServerRequestData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
 	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_JOINSERVER), 
+	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+{
+
+}
+
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
+	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_GETSINGLESYNCVALUE), 
 	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
 {
 
@@ -72,6 +80,11 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket){
 	case NETWORKREQUESTTYPE_JOINSERVER:
 		{
 			RequestData = new JoinServerRequestData(frompacket);
+		}
+		break;
+	case NETWORKREQUESTTYPE_GETSINGLESYNCVALUE:
+		{
+			RequestData = new GetSingleSyncValueRequestData(frompacket);
 		}
 		break;
 	default:
@@ -136,7 +149,7 @@ DLLEXPORT Leviathan::RemoteConsoleOpenRequestDataTo::RemoteConsoleOpenRequestDat
 
 DLLEXPORT Leviathan::RemoteConsoleOpenRequestDataTo::RemoteConsoleOpenRequestDataTo(sf::Packet &frompacket){
 	if(!(frompacket >> SessionToken)){
-		throw ExceptionInvalidArgument(L"invalid packet to RemoteConsoleOpenRequestDataTo", 0, __WFUNCTION__, L"frompacket", L"");
+		throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"frompacket", L"");
 	}
 }
 
@@ -150,7 +163,7 @@ DLLEXPORT Leviathan::RemoteConsoleAccessRequestData::RemoteConsoleAccessRequestD
 
 DLLEXPORT Leviathan::RemoteConsoleAccessRequestData::RemoteConsoleAccessRequestData(sf::Packet &frompacket){
 	if(!(frompacket >> SessionToken)){
-		throw ExceptionInvalidArgument(L"invalid packet to RemoteConsoleOpenRequestDataTo", 0, __WFUNCTION__, L"frompacket", L"");
+		throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"frompacket", L"");
 	}
 }
 
@@ -164,10 +177,24 @@ DLLEXPORT Leviathan::JoinServerRequestData::JoinServerRequestData(int outmasteri
 
 DLLEXPORT Leviathan::JoinServerRequestData::JoinServerRequestData(sf::Packet &frompacket){
 	if(!(frompacket >> MasterServerID)){
-		throw ExceptionInvalidArgument(L"invalid packet to RemoteConsoleOpenRequestDataTo", 0, __WFUNCTION__, L"frompacket", L"");
+		throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"frompacket", L"");
 	}
 }
 
 DLLEXPORT void Leviathan::JoinServerRequestData::AddDataToPacket(sf::Packet &packet){
 	packet << MasterServerID;
+}
+// ------------------ JoinServerRequestData ------------------ //
+DLLEXPORT Leviathan::GetSingleSyncValueRequestData::GetSingleSyncValueRequestData(const wstring &name) : NameOfValue(name){
+
+}
+
+DLLEXPORT Leviathan::GetSingleSyncValueRequestData::GetSingleSyncValueRequestData(sf::Packet &frompacket){
+	if(!(frompacket >> NameOfValue)){
+		throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+}
+
+DLLEXPORT void Leviathan::GetSingleSyncValueRequestData::AddDataToPacket(sf::Packet &packet){
+	packet << NameOfValue;
 }

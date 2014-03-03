@@ -5,6 +5,9 @@
 #endif
 #include "NetworkHandler.h"
 #include "ConnectionInfo.h"
+#include "SyncedVariables.h"
+#include "Engine.h"
+#include "boost/thread/future.hpp"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() : MaxConnectTries(DEFAULT_MAXCONNECT_TRIES), ConnectTriesCount(0){
@@ -193,14 +196,59 @@ void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer(ObjectLock &g
 	ConnectedToServer = true;
 	
 	// Send connect message //
-	_OnNewConnectionStatusMessage(L"Connection established a connection with "+ServerConnection->GenerateFormatedAddressString());
+	_OnNewConnectionStatusMessage(L"Established a connection with "+ServerConnection->GenerateFormatedAddressString());
 
 	// Call the callback //
 	_OnProperlyConnected();
 }
 
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
+	// By default synchronize values and then pass to the pure virtual function for joining the match properly //
+	SyncedVariables::Get()->AddAnotherToSyncWith(ServerConnection.get());
 
+	// Send the request //
+	shared_ptr<NetworkRequest> tmprequest(new NetworkRequest(NETWORKREQUESTTYPE_GETALLSYNCVALUES));
+
+	// Prepare for sync //
+	SyncedVariables::Get()->PrepareForFullSync();
+
+	auto receivedata = ServerConnection->SendPacketToConnection(tmprequest, 3);
+
+	// Add a checking task //
+	Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new ConditionalTask(
+		boost::bind<void>([](shared_ptr<SentNetworkThing> maderequest, NetworkClientInterface* iptr) -> void
+	{
+		// Check the status //
+		if(!maderequest->GetFutureForThis().get()){
+			// Terminate the connection //
+			DEBUG_BREAK;
+			return;
+		}
+		
+		// We are now syncing the variables //
+		iptr->_OnNewConnectionStatusMessage(L"Syncing variables, TODO: how many ");
+
+		// Queue task that checks when it is done //
+		Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new ConditionalTask(
+			boost::bind<void>([](NetworkClientInterface* iptr) -> void
+		{
+			// Set the status to almost done //
+			iptr->_OnNewConnectionStatusMessage(L"Finalizing connection");
+
+			// We are now completely connected from the engines point of view so let the application know //
+			iptr->_OnStartApplicationConnect();
+
+
+		}, iptr), boost::bind<bool>([]() -> bool
+		{
+			return SyncedVariables::Get()->IsSyncDone();
+		}))));
+
+
+	}, receivedata, this), boost::bind<bool>([](shared_ptr<SentNetworkThing> maderequest) -> bool
+	{
+		return maderequest->GetFutureForThis().has_value();
+	}, receivedata))));
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const wstring &reasonstring){

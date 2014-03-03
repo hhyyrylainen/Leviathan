@@ -149,6 +149,10 @@ namespace Leviathan{
 		sf::UdpSocket _Socket;
 		USHORT PortNumber;
 
+		//! The syncable variable holder associated with this instance
+		SyncedVariables* VariableSyncer;
+
+
 		// Used to control the locking of the socket //
 		boost::basic_lockable_adapter<boost::recursive_mutex> SocketMutex;
 

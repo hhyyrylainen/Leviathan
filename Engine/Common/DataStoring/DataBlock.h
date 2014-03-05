@@ -12,6 +12,8 @@
 #include "Exceptions/ExceptionInvalidArgument.h"
 
 
+static_assert(sizeof(short) == 2, "Short must be 2 bytes for datablocks to work accross the network");
+
 #define DATABLOCK_TYPE_INT		3
 #define DATABLOCK_TYPE_FLOAT	4
 #define DATABLOCK_TYPE_BOOL		5
@@ -36,11 +38,11 @@ namespace Leviathan{
 	template<class T>
 	struct DataBlockNameResolver{
 
-		static const int TVal = DATABLOCK_TYPE_ERROR;
+		static const short TVal = DATABLOCK_TYPE_ERROR;
 	};
 	// specification values //
 
-#define NAMERESOLVERTEMPLATEINSTANTIATION(DType, TVALDEFINE) template<> struct DataBlockNameResolver<DType>{ static const int TVal = TVALDEFINE;};
+#define NAMERESOLVERTEMPLATEINSTANTIATION(DType, TVALDEFINE) template<> struct DataBlockNameResolver<DType>{ static const short TVal = TVALDEFINE;};
 
 	NAMERESOLVERTEMPLATEINSTANTIATION(int, DATABLOCK_TYPE_INT);
 	NAMERESOLVERTEMPLATEINSTANTIATION(float, DATABLOCK_TYPE_FLOAT);
@@ -142,7 +144,8 @@ namespace Leviathan{
 			return Type == other.Type;
 		}
 
-		int Type;
+		short Type;
+
 	protected:
 		// private constructor to make sure that no instances of this class exist //
 		DataBlockAll(){
@@ -437,7 +440,7 @@ namespace Leviathan{
 		//! \brief Constructs from a packet
 		DLLEXPORT VariableBlock(sf::Packet &packet){
 			// Get the type //
-			int type;
+			short type;
 			packet >> type;
 
 			// Load the actual data based on the type //
@@ -923,6 +926,7 @@ namespace Leviathan{
 		packet << *Value; \
 	} \
 	template<> DLLEXPORT BlockTypeName::DataBlock(sf::Packet &packet){ \
+		Type = DataBlockNameResolver<VarTypeName>::TVal; \
 		TmpTypeName tmpval; \
 		if(!(packet >> tmpval)){ \
 			throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L""); \

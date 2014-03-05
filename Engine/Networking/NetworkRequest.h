@@ -21,7 +21,9 @@ namespace Leviathan{
 		NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE,
 		NETWORKREQUESTTYPE_JOINSERVER,
 		NETWORKREQUESTTYPE_GETSINGLESYNCVALUE,
-		NETWORKREQUESTTYPE_GETALLSYNCVALUES
+		NETWORKREQUESTTYPE_GETALLSYNCVALUES,
+		//! Used for game specific requests
+		NETWORKREQUESTTYPE_CUSTOM
 	};
 
 	class BaseNetworkRequestData{
@@ -78,6 +80,18 @@ namespace Leviathan{
 		wstring NameOfValue;
 	};
 
+	class CustomRequestData : public BaseNetworkRequestData{
+	public:
+		DLLEXPORT CustomRequestData(GameSpecificPacketData* newddata);
+		DLLEXPORT CustomRequestData(BaseGameSpecificRequestPacket* newddata);
+		DLLEXPORT CustomRequestData(sf::Packet &frompacket);
+
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! The actual data 
+		shared_ptr<GameSpecificPacketData> ActualPacketData;
+	};
+
 
 	class NetworkRequest{
 	public:
@@ -86,6 +100,7 @@ namespace Leviathan{
 		DLLEXPORT NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(JoinServerRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(CustomRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT ~NetworkRequest();
 
 		DLLEXPORT NetworkRequest(sf::Packet &frompacket);
@@ -95,8 +110,9 @@ namespace Leviathan{
 		DLLEXPORT NETWORKREQUESTTYPE GetType();
 
 		// Specific type data get functions //
-		DLLEXPORT RemoteConsoleOpenRequestDataTo* GetRemoteConsoleOpenToDataIfPossible();
-		DLLEXPORT RemoteConsoleAccessRequestData* GetRemoteConsoleAccessRequestDataIfPossible();
+		DLLEXPORT RemoteConsoleOpenRequestDataTo* GetRemoteConsoleOpenToData();
+		DLLEXPORT RemoteConsoleAccessRequestData* GetRemoteConsoleAccessRequestData();
+		DLLEXPORT CustomRequestData* GetCustomRequestData();
 
 		DLLEXPORT int GetExpectedResponseID();
 

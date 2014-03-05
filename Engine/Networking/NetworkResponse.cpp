@@ -5,6 +5,7 @@
 #endif
 #include "Exceptions/ExceptionInvalidArgument.h"
 #include "Common/DataStoring/NamedVars.h"
+#include "GameSpecificPacketHandler.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(int inresponseto, PACKET_TIMEOUT_STYLE timeout, int timeoutvalue) : 
@@ -70,6 +71,11 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
 	case NETWORKRESPONSETYPE_SYNCDATAEND:
 		{
 			ResponseData = new NetworkResponseDataForSyncDataEnd(receivedresponse);
+		}
+		break;
+	case NETWORKRESPONSETYPE_CUSTOM:
+		{
+			ResponseData = new NetworkResponseDataForCustom(receivedresponse);
 		}
 		break;
 	default:
@@ -170,6 +176,14 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateEmptyResponse(){
 	SAFE_DELETE(ResponseData);
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkResponse::GenerateCustomResponse(GameSpecificPacketData* newdpacketdata){
+	ResponseType = NETWORKRESPONSETYPE_CUSTOM;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = new NetworkResponseDataForCustom(newdpacketdata);
+}
+// ------------------------------------ //
 DLLEXPORT sf::Packet Leviathan::NetworkResponse::GeneratePacketForResponse() const{
 
 	sf::Packet generatedpacket;
@@ -228,6 +242,12 @@ DLLEXPORT NetworkResponseDataForSyncValData* Leviathan::NetworkResponse::GetResp
 DLLEXPORT NetworkResponseDataForSyncDataEnd* Leviathan::NetworkResponse::GetResponseDataForValueSyncEndResponse() const{
 	if(ResponseType == NETWORKRESPONSETYPE_SYNCDATAEND && ResponseData)
 		return static_cast<NetworkResponseDataForSyncDataEnd*>(ResponseData);
+	return NULL;
+}
+
+DLLEXPORT NetworkResponseDataForCustom* Leviathan::NetworkResponse::GetResponseDataForGameSpecific() const{
+	if(ResponseType == NETWORKRESPONSETYPE_CUSTOM && ResponseData)
+		return static_cast<NetworkResponseDataForCustom*>(ResponseData);
 	return NULL;
 }
 // ------------------------------------ //
@@ -471,4 +491,28 @@ DLLEXPORT Leviathan::NetworkResponseDataForSyncDataEnd::NetworkResponseDataForSy
 
 DLLEXPORT void Leviathan::NetworkResponseDataForSyncDataEnd::AddDataToPacket(sf::Packet &packet){
 	packet << Succeeded;
+}
+// ------------------ NetworkResponseDataForGameSpecific ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForCustom::NetworkResponseDataForCustom(GameSpecificPacketData* newdpacketdata) : 
+	ActualPacketData(newdpacketdata)
+{
+
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForCustom::NetworkResponseDataForCustom(BaseGameSpecificResponsePacket* newddata) : 
+	ActualPacketData(new GameSpecificPacketData(newddata))
+{
+
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForCustom::NetworkResponseDataForCustom(sf::Packet &frompacket){
+	ActualPacketData = GameSpecificPacketHandler::Get()->ReadGameSpecificPacketFromPacket(true, frompacket);
+	if(!ActualPacketData){
+		// Because the above loading function doesn't throw, we should throw here
+		throw ExceptionInvalidArgument(L"invalid packet format for user defined response", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForCustom::AddDataToPacket(sf::Packet &packet){
+	GameSpecificPacketHandler::Get()->PassGameSpecificDataToPacket(ActualPacketData.get(), packet);
 }

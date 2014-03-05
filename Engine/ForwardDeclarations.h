@@ -24,6 +24,9 @@ namespace Leviathan{
 		class TrailEmitter;
 	}
 
+	class BaseGameSpecificRequestPacket;
+	class BaseGameSpecificResponsePacket;
+	class GameSpecificPacketData;
 	class NamedVariableBlock;
 	class SyncedVariables;
 	class SyncedValue;

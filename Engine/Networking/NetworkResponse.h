@@ -85,6 +85,10 @@ namespace Leviathan{
 		//! Send after all NETWORKRESPONSETYPE_SYNCVALDATA has been sent and indicates whether they should have arrived correctly
 		NETWORKRESPONSETYPE_SYNCDATAEND,
 
+		//! The packet is a game specific packet!
+		//! \see GameSpecificPacketHandler BaseGameSpecificFactory BaseGameSpecificResponsePacket
+		NETWORKRESPONSETYPE_CUSTOM,
+
 		//! Empty response, used for keeping alive/nothing
 		NETWORKRESPONSETYPE_NONE
 	};
@@ -212,6 +216,19 @@ namespace Leviathan{
 		bool Succeeded;
 	};
 
+	//! \brief Used for BaseGameSpecificResponsePacket storing
+	class NetworkResponseDataForCustom : public BaseNetworkResponseData{
+	public:
+		DLLEXPORT NetworkResponseDataForCustom(GameSpecificPacketData* newdpacketdata);
+		DLLEXPORT NetworkResponseDataForCustom(BaseGameSpecificResponsePacket* newddata);
+
+		DLLEXPORT NetworkResponseDataForCustom(sf::Packet &frompacket);
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+
+		shared_ptr<GameSpecificPacketData> ActualPacketData;
+	};
+
 
 	class NetworkResponse : public Object{
 	public:
@@ -229,6 +246,7 @@ namespace Leviathan{
 		DLLEXPORT void GenerateValueSyncResponse(NetworkResponseDataForSyncValData* newddata);
 		DLLEXPORT void GenerateValueSyncEndResponse(NetworkResponseDataForSyncDataEnd* newddata);
 
+		DLLEXPORT void GenerateCustomResponse(GameSpecificPacketData* newdpacketdata);
 
 		DLLEXPORT void GenerateKeepAliveResponse();
 		DLLEXPORT void GenerateCloseConnectionResponse();
@@ -251,6 +269,7 @@ namespace Leviathan{
 		DLLEXPORT NetworkResponseDataForServerStatus* GetResponseDataForServerStatus() const;
 		DLLEXPORT NetworkResponseDataForSyncValData* GetResponseDataForValueSyncResponse() const;
 		DLLEXPORT NetworkResponseDataForSyncDataEnd* GetResponseDataForValueSyncEndResponse() const;
+		DLLEXPORT NetworkResponseDataForCustom* GetResponseDataForGameSpecific() const;
 
 		DLLEXPORT int GetResponseID() const;
 

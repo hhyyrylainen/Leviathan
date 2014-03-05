@@ -4,6 +4,7 @@
 #include "NetworkRequest.h"
 #endif
 #include "Exceptions/ExceptionInvalidArgument.h"
+#include "GameSpecificPacketHandler.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
@@ -131,15 +132,21 @@ DLLEXPORT NETWORKREQUESTTYPE Leviathan::NetworkRequest::GetType(){
 	return TypeOfRequest;
 }
 // ------------------------------------ //
-DLLEXPORT RemoteConsoleOpenRequestDataTo* Leviathan::NetworkRequest::GetRemoteConsoleOpenToDataIfPossible(){
+DLLEXPORT RemoteConsoleOpenRequestDataTo* Leviathan::NetworkRequest::GetRemoteConsoleOpenToData(){
 	if(TypeOfRequest == NETWORKREQUESTTYPE_OPENREMOTECONSOLETO)
 		return static_cast<RemoteConsoleOpenRequestDataTo*>(RequestData);
 	return NULL;
 }
 
-DLLEXPORT RemoteConsoleAccessRequestData* Leviathan::NetworkRequest::GetRemoteConsoleAccessRequestDataIfPossible(){
+DLLEXPORT RemoteConsoleAccessRequestData* Leviathan::NetworkRequest::GetRemoteConsoleAccessRequestData(){
 	if(TypeOfRequest == NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE)
 		return static_cast<RemoteConsoleAccessRequestData*>(RequestData);
+	return NULL;
+}
+
+DLLEXPORT CustomRequestData* Leviathan::NetworkRequest::GetCustomRequestData(){
+	if(TypeOfRequest == NETWORKREQUESTTYPE_CUSTOM)
+		return static_cast<CustomRequestData*>(RequestData);
 	return NULL;
 }
 // ------------------ RemoteConsoleOpenRequestDataTo ------------------ //
@@ -197,4 +204,26 @@ DLLEXPORT Leviathan::GetSingleSyncValueRequestData::GetSingleSyncValueRequestDat
 
 DLLEXPORT void Leviathan::GetSingleSyncValueRequestData::AddDataToPacket(sf::Packet &packet){
 	packet << NameOfValue;
+}
+// ------------------ CustomRequestData ------------------ //
+DLLEXPORT Leviathan::CustomRequestData::CustomRequestData(GameSpecificPacketData* newddata) : ActualPacketData(newddata){
+
+}
+
+DLLEXPORT Leviathan::CustomRequestData::CustomRequestData(BaseGameSpecificRequestPacket* newddata) : 
+	ActualPacketData(new GameSpecificPacketData(newddata))
+{
+	
+}
+
+DLLEXPORT Leviathan::CustomRequestData::CustomRequestData(sf::Packet &frompacket){
+	ActualPacketData = GameSpecificPacketHandler::Get()->ReadGameSpecificPacketFromPacket(false, frompacket);
+	if(!ActualPacketData){
+		// Because the above loading function doesn't throw, we should throw here
+		throw ExceptionInvalidArgument(L"invalid packet format for user defined request", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+}
+
+DLLEXPORT void Leviathan::CustomRequestData::AddDataToPacket(sf::Packet &packet){
+	GameSpecificPacketHandler::Get()->PassGameSpecificDataToPacket(ActualPacketData.get(), packet);
 }

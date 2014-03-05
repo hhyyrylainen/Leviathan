@@ -77,9 +77,9 @@ DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* co
 	bool local = connection->IsTargetHostLocalhost();
 
 	// Get the token from the packet //
-	auto tmpdata = request->GetRemoteConsoleOpenToDataIfPossible();
+	auto tmpdata = request->GetRemoteConsoleOpenToData();
 
-	auto opennew = request->GetRemoteConsoleAccessRequestDataIfPossible();
+	auto opennew = request->GetRemoteConsoleAccessRequestData();
 
 	if(!tmpdata && !opennew){
 		// Invalid package data/type //

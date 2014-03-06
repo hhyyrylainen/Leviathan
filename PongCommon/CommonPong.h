@@ -20,6 +20,7 @@
 #include "add_on/autowrapper/aswrappedcall.h"
 #include "Application/GameConfiguration.h"
 #include "Application/Application.h"
+#include "PongPackets.h"
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return;
 
@@ -376,6 +377,14 @@ playrscorelistupdateendlabel:
 				}
 
 			}, this))));
+
+
+			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([]() -> void{
+				// Load Pong specific packets //
+				RegisterAllPongPacketTypes();
+				Logger::Get()->Info(L"Pong specific packets loaded");
+
+			}))));
 
 			// setup world //
 			WorldOfPong = Engine::GetEngine()->CreateWorld();

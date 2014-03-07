@@ -381,7 +381,7 @@ playrscorelistupdateendlabel:
 
 			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([]() -> void{
 				// Load Pong specific packets //
-				RegisterAllPongPacketTypes();
+				PongPackets::RegisterAllPongPacketTypes();
 				Logger::Get()->Info(L"Pong specific packets loaded");
 
 			}))));

@@ -152,6 +152,8 @@ namespace Leviathan{
 		//! The syncable variable holder associated with this instance
 		SyncedVariables* VariableSyncer;
 
+		//! Game specific packet handler that allows programs to register their own packets
+		GameSpecificPacketHandler* _GameSpecificPacketHandler;
 
 		// Used to control the locking of the socket //
 		boost::basic_lockable_adapter<boost::recursive_mutex> SocketMutex;

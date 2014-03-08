@@ -44,8 +44,15 @@ DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
 }
 // ------------------------------------ //
 DLLEXPORT ConnectedPlayer* Leviathan::NetworkServerInterface::GetPlayerForConnection(ConnectionInfo* connection){
-	DEBUG_BREAK;
+	ObjectLock guard(*this);
+	// Search through the connections //
+	for(size_t i = 0; i < PlayerList.size(); i++){
+		// Check with the pointer //
+		if(PlayerList[i]->IsConnectionYoursPtrCompare(connection))
+			return PlayerList[i];
+	}
 
+	// No matching one found //
 	return NULL;
 }
 // ------------------------------------ //
@@ -264,6 +271,10 @@ DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYours(ConnectionInfo* che
 	ObjectLock guard(*this);
 
 	return CorrenspondingConnection->GenerateFormatedAddressString() == checkconnection->GenerateFormatedAddressString();
+}
+
+DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYoursPtrCompare(ConnectionInfo* checkconnection){
+	return CorrenspondingConnection == checkconnection;
 }
 
 DLLEXPORT Leviathan::ConnectedPlayer::~ConnectedPlayer(){

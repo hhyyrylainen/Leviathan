@@ -247,6 +247,8 @@ namespace Leviathan{
 		DLLEXPORT void GenerateValueSyncEndResponse(NetworkResponseDataForSyncDataEnd* newddata);
 
 		DLLEXPORT void GenerateCustomResponse(GameSpecificPacketData* newdpacketdata);
+		DLLEXPORT void GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata);
+		
 
 		DLLEXPORT void GenerateKeepAliveResponse();
 		DLLEXPORT void GenerateCloseConnectionResponse();

@@ -183,6 +183,14 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateCustomResponse(GameSpecificPa
 
 	ResponseData = new NetworkResponseDataForCustom(newdpacketdata);
 }
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata){
+	ResponseType = NETWORKRESPONSETYPE_CUSTOM;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = new NetworkResponseDataForCustom(new GameSpecificPacketData(newdpacketdata));
+}
 // ------------------------------------ //
 DLLEXPORT sf::Packet Leviathan::NetworkResponse::GeneratePacketForResponse() const{
 

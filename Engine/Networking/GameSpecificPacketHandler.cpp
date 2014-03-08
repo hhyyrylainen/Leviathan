@@ -40,14 +40,39 @@ DLLEXPORT void Leviathan::GameSpecificPacketHandler::PassGameSpecificDataToPacke
 }
 
 DLLEXPORT shared_ptr<GameSpecificPacketData> Leviathan::GameSpecificPacketHandler::ReadGameSpecificPacketFromPacket(bool responsepacket, sf::Packet &packet){
-	// Try to find a factory for this //
+	// Get the basic data from the packet //
+	int typeidnumber = -1;
+	bool packetisrequest;
 
-	// Nothing found //
-	return NULL;
+	if(!(packet >> typeidnumber)){
 
-	// Load it through the factory and pass it out //
+		throw ExceptionInvalidArgument(L"invalid received custom packet base format", 0, __WFUNCTION__, L"packet", L"");
+	}
 
+	if(!(packet >> packetisrequest)){
 
+		throw ExceptionInvalidArgument(L"invalid received custom packet base format", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	if(packetisrequest != !responsepacket){
+		// The packet might be corrupted or something //
+		Logger::Get()->Warning(L"GameSpecificPacketHandler: packet has inconsistent request identifier, expected "+Convert::ToWstring(responsepacket)+
+			L" but packet was "+Convert::ToWstring(packetisrequest));
+		return NULL;
+	}
+
+	// Try to find a handler for this //
+	auto handlerobject = _FindFactoryForType(typeidnumber, packetisrequest);
+
+	if(!handlerobject){
+
+		Logger::Get()->Warning(L"GameSpecificPacketHandler: couldn't find a handler for a packet of type "+Convert::ToWstring(typeidnumber)+L" and"
+			L" request state: "+Convert::ToWstring(packetisrequest));
+		return NULL;
+	}
+
+	// Factory already knows what it does so let it do it //
+	return handlerobject->UnSerializeObjectFromPacket(packet);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameSpecificPacketHandler::RegisterNewTypeFactory(BaseGameSpecificPacketFactory* newdfactoryobject){

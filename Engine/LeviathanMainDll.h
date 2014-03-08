@@ -46,6 +46,8 @@ using Leviathan::NamedVariableList;
 using Leviathan::NetworkClientInterface;
 using Leviathan::SyncedValue;
 using Leviathan::GameSpecificPacketData;
+using Leviathan::SentNetworkThing;
+using Leviathan::QueuedTask;
 
 
 

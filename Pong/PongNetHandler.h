@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "Networking/NetworkInterface.h"
 #include "Networking/NetworkClientInterface.h"
+#include "PongPackets.h"
 
 
 
@@ -34,7 +35,8 @@ namespace Pong{
 		//! \brief Used to fire GenericEvents to update GUI status
 		virtual void _OnNewConnectionStatusMessage(const wstring &message);
 
-
+		bool OnAServer;
+		PONG_JOINGAMERESPONSE_TYPE ServerStatusIs;
 	};
 
 }

@@ -65,7 +65,11 @@ namespace Leviathan{
 		DLLEXPORT BaseGameSpecificPacketFactory(int typenumber, bool isrequesttype);
 		DLLEXPORT virtual ~BaseGameSpecificPacketFactory();
 
+		//! \brief Function for factories to pass their object data to a packet when requested
+		//! \note Should not throw anything
 		DLLEXPORT virtual bool SerializeToPacket(GameSpecificPacketData* data, sf::Packet &packet) = 0;
+		//! \brief Called when a factory needs to extract data from a packet
+		//! \note Should not throw, instead should return NULL when invalid data is encountered
 		DLLEXPORT virtual shared_ptr<GameSpecificPacketData> UnSerializeObjectFromPacket(sf::Packet &packet) = 0;
 
 		//! The integer identifying when this factory needs to be used

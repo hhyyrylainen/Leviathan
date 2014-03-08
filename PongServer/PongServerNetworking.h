@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "Networking/NetworkInterface.h"
 #include "Networking/NetworkServerInterface.h"
+#include "PongPackets.h"
 
 
 
@@ -25,6 +26,8 @@ namespace Pong{
 
 	protected:
 
+
+		PONG_JOINGAMERESPONSE_TYPE ServerStatusIs;
 	};
 
 }

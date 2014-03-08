@@ -22,8 +22,13 @@ namespace Leviathan{
 		DLLEXPORT ~ConnectedPlayer();
 
 		//! \brief Checks is the given connection same as ours
-		//! \todo Fix performance
+		//! \warning This has bad performance see if IsConnectionYoursPtrCompare suits your use case
 		DLLEXPORT bool IsConnectionYours(ConnectionInfo* checkconnection);
+
+		//! \brief Checks is a connection this player's connection
+		//! \note This compares the pointers and it should work but the IsConnectionYours is more secure (but it shouldn't be used)
+		//! \see IsConnectionYours
+		DLLEXPORT bool IsConnectionYoursPtrCompare(ConnectionInfo* checkconnection);
 
 		//! \brief Returns whether the connection for this player is closed
 		DLLEXPORT bool IsConnectionClosed() const;

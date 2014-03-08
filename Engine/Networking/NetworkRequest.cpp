@@ -53,6 +53,13 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(GetSingleSyncValueRequestDat
 
 }
 
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(CustomRequestData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
+	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_CUSTOM), 
+	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+{
+
+}
+
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket){
 	// Get the heading data //
 	if(!(frompacket >> ResponseID)){
@@ -86,6 +93,11 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket){
 	case NETWORKREQUESTTYPE_GETSINGLESYNCVALUE:
 		{
 			RequestData = new GetSingleSyncValueRequestData(frompacket);
+		}
+		break;
+	case NETWORKREQUESTTYPE_CUSTOM:
+		{
+			RequestData = new CustomRequestData(frompacket);
 		}
 		break;
 	default:

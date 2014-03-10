@@ -6,8 +6,8 @@ project(Leviathan)
 # version number
 set(LEVIATHAN_VERSION_STABLE 0)
 set(LEVIATHAN_VERSION_MAJOR 6)
-set(LEVIATHAN_VERSION_MINOR 5)
-set(LEVIATHAN_VERSION_PATCH 1)
+set(LEVIATHAN_VERSION_MINOR 6)
+set(LEVIATHAN_VERSION_PATCH 0)
 
 set(LEVIATHAN_VERSION_STR ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}.${LEVIATHAN_VERSION_MINOR}.${LEVIATHAN_VERSION_PATCH})
 set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LEVIATHAN_VERSION_MINOR}${LEVIATHAN_VERSION_PATCH})
@@ -23,32 +23,47 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake" "${PROJ
 # Stuff from example ogre cmake configuration to hopefully fix linux build
 
 # locating the Ogre folder
-    if(WIN32)
-        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{OGRE_HOME}/CMake/")
-        set(OGRE_BASEDIR "$ENV{OGRE_HOME}/")
-    endif(WIN32)
+if(WIN32)
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{OGRE_HOME}/CMake/")
+    set(OGRE_BASEDIR "$ENV{OGRE_HOME}/")
+endif(WIN32)
 
-    if(UNIX)
-        if(EXISTS "/usr/local/lib/OGRE/cmake")
+if(UNIX)
+    if(EXISTS "/usr/local/lib/OGRE/cmake")
 
-            set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/local/lib/OGRE/cmake/")
-            set(OGRE_BASEDIR "/usr/local/lib/OGRE/")
-        elseif(EXISTS "/usr/lib/OGRE/cmake")
+        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/local/lib/OGRE/cmake/")
+        set(OGRE_BASEDIR "/usr/local/lib/OGRE/")
+    elseif(EXISTS "/usr/lib/OGRE/cmake")
 
-            set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/lib/OGRE/cmake/")
-            set(OGRE_BASEDIR "/usr/lib/OGRE/")
-        else(EXISTS "/usr/local/lib/OGRE")
-            message(SEND_ERROR "Failed to find Ogre module path")
-        endif(EXISTS "/usr/local/lib/OGRE/cmake")
-    endif(UNIX)
+        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/lib/OGRE/cmake/")
+        set(OGRE_BASEDIR "/usr/lib/OGRE/")
+    else(EXISTS "/usr/local/lib/OGRE")
+        message(SEND_ERROR "Failed to find Ogre module path")
+    endif(EXISTS "/usr/local/lib/OGRE/cmake")
+endif(UNIX)
 # Ogre folder fine
  
-# Make sure build type is good
-if(CMAKE_BUILD_TYPE STREQUAL "")
-  # CMake defaults to leaving CMAKE_BUILD_TYPE empty. This screws up
-  # differentiation between debug and release builds.
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None (CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
-endif(CMAKE_BUILD_TYPE STREQUAL "")
+if(MSVC AND MSVC_BUILDTYPE STREQUAL "")
+    set(MSVC_BUILDTYPE CACHE STRING "Specify build type, build type in visual studio must match this" FORCE)
+    
+
+endif(MSVC AND MSVC_BUILDTYPE STREQUAL "")
+
+if(MSVC)
+    set(CMAKE_BUILD_TYPE ${MSVC_BUILDTYPE})
+    
+else(MSVC)
+    # Make sure build type is good
+    if(CMAKE_BUILD_TYPE STREQUAL "")
+      # CMake defaults to leaving CMAKE_BUILD_TYPE empty. This screws up
+      # differentiation between debug and release builds.
+      set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None (CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
+    endif(CMAKE_BUILD_TYPE STREQUAL "")
+
+endif(MSVC)
+
+
+message(STATUS "Build type is: " ${CMAKE_BUILD_TYPE})
 
 # Find required libraries
 
@@ -71,33 +86,33 @@ set(ADDITIONAL_OGRE ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramM
     ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${Ogre_Paging_LIBRARIES})
 
 # Find Boost
-    if(WIN32 OR APPLE)
-        set(Boost_USE_STATIC_LIBS TRUE)
-    else(WIN32 OR APPLE)
-        # Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
-        set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
-    endif(WIN32 OR APPLE)
+if(WIN32 OR APPLE)
+    set(Boost_USE_STATIC_LIBS TRUE)
+else(WIN32 OR APPLE)
+    # Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
+    set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
+endif(WIN32 OR APPLE)
 
-    set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
-    # Components that need linking (NB does not include header-only components like bind)
-    set(OGRE_BOOST_COMPONENTS thread date_time)
+set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
+# Components that need linking (NB does not include header-only components like bind)
+set(OGRE_BOOST_COMPONENTS thread date_time)
 
-    # Other than these that are required are header-only libraries
-    set(LEVIATHAN_BOOST_COMPONENTS chrono system regex)
+# Other than these that are required are header-only libraries
+set(LEVIATHAN_BOOST_COMPONENTS chrono system regex)
 
-    set(REQUIRED_BOOST_COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} ${OGRE_BOOST_COMPONENTS})
+set(REQUIRED_BOOST_COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} ${OGRE_BOOST_COMPONENTS})
 
-    find_package(Boost COMPONENTS ${REQUIRED_BOOST_COMPONENTS})
+find_package(Boost COMPONENTS ${REQUIRED_BOOST_COMPONENTS})
+if(NOT Boost_FOUND)
+    message("Boost not found, retrying with different settings")
+    # Try again with the other type of libs
+    set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
+    find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS})
+    
     if(NOT Boost_FOUND)
-        message("Boost not found, retrying with different settings")
-        # Try again with the other type of libs
-        set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
-        find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS})
-        
-        if(NOT Boost_FOUND)
-            message(SEND_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})        
-        endif(NOT Boost_FOUND)
+        message(SEND_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})        
     endif(NOT Boost_FOUND)
+endif(NOT Boost_FOUND)
 # Boost is found or the configuration has already failed
 
 # Set up referencing of Boost
@@ -126,17 +141,35 @@ else(WIN32)
     include_directories(${X11_INCLUDE_DIRS})
 endif(WIN32)
 
+option(USE_CEF_SANDBOX "For setting CEF sandbox mode on" ON)
+
+# the cef libraries will have different names on linux
+if(WIN32)
+    set(CEF_MAINLIB_NAME "libcef")
+else(WIN32)
+    set(CEF_MAINLIB_NAME "cef")
+endif(WIN32)
+
+if(USE_CEF_SANDBOX)
+    message(STATUS "Using CEF3 sandbox mode")
+    set(CEF_LIBS cef_sandbox ${CEF_MAINLIB_NAME})
+    
+else(USE_CEF_SANDBOX)
+
+    set(CEF_LIBS ${CEF_MAINLIB_NAME})
+endif(USE_CEF_SANDBOX)
+
 # Library linking
 set(LINK_LIBS_TOENGINE_RELEASE Newton)
 set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap RocketCore RocketControls RocketDebugger Newton sfml-audio 
-    sfml-network sfml-system)
+    sfml-network sfml-system ${CEF_LIBS})
         
 # Debu libraries
 set(LINK_LIBS_TOENGINE_DEBUG Newton_d)
 set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd RocketCore_d RocketControls_d RocketDebugger_d Newton_d sfml-audio-d 
-    sfml-network-d sfml-system-d)
+    sfml-network-d sfml-system-d ${CEF_LIBS})
 
-    ######### Options
+######### Options
     
 option(INSTALL_ONLY_RELEASE "For creating release folders" ON)
 # \todo this option to copy right libs
@@ -146,16 +179,18 @@ option(INSTALL_CREATE_SDK   "For creating SDKs for developers" OFF)
 set(CMAKE_DEBUG_POSTFIX "D")
 
 # VisualLeakDetector setting
-    if(WIN32)
+if(WIN32)
 
     option(USE_VLD "For including vld in the projects" ON)
-    endif(WIN32)
+endif(WIN32)
 
-    if(USE_VLD)
+if(USE_VLD)
     set(L_VLD_STATE 1)
-    else(USE_VLD)
+else(USE_VLD)
     set(L_VLD_STATE 0)
-    endif(USE_VLD)
+endif(USE_VLD)
+
+
 
 
 # create the bin directory
@@ -251,8 +286,9 @@ if(WIN32)
     file(GLOB LeapMoveFilesRelease "Leap/lib/x86/Leap.dll")
     file(GLOB LeapMoveFilesDebug "Leap/lib/x86/Leapd.dll")
 
-    # libRocket dlls
-    file(GLOB RocketMoveFilesRelease "libRocket/bin/*")
+    # CEF dlls
+    file(GLOB CEFMoveFilesRelease "CEF/Release/*.dll")
+    file(GLOB CEFMoveFilesDebug "CEF/Debug/*.dll")
 
     # smfl
     file(GLOB SMFLMoveFilesRelease "SFML/bin/openal32.dll" "SFML/bin/libsndfile-1.dll" "SFML/bin/sfml-audio-2.dll" "SFML/bin/sfml-system-2.dll"
@@ -278,8 +314,9 @@ else(WIN32)
     # ogre sos (this should be changed for public release to only copy required sos)
     file(GLOB OgreMoveFilesRelease "${OGRE_BASEDIR}/*.so*" "${OGRE_BASEDIR}/../*Ogre*.so*" "${OGRE_BASEDIR}/../libOIS*.so")
 
-    # libRocket sos
-    file(GLOB RocketMoveFilesRelease "libRocket/lib/*.so*")
+    # CEF sos
+    file(GLOB CEFMoveFilesRelease "CEF/Release/*.so")
+    file(GLOB CEFMoveFilesDebug "CEF/Debug/*.so")
 
     # newton
     file(GLOB NewtonMoveFilesRelease "Newton/lib/libNewton.so")
@@ -293,8 +330,11 @@ endif(WIN32)
 
 message(STATUS "Moving the bulk...")
 
-file(COPY ${RocketMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-file(COPY ${RocketMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    file(COPY ${CEFMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+else()
+    file(COPY ${CEFMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+endif()
 file(COPY ${LeapMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${LeapMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${SMFLMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
@@ -329,10 +369,17 @@ include_directories("${PROJECT_SOURCE_DIR}/AngelScript/include")
 include_directories("${PROJECT_SOURCE_DIR}/AngelScript")
 include_directories("${PROJECT_SOURCE_DIR}/Engine/")
 include_directories("${PROJECT_SOURCE_DIR}/Leap/include")
-include_directories("${PROJECT_SOURCE_DIR}/libRocket/include")
 include_directories("${PROJECT_SOURCE_DIR}/Newton/include")
 include_directories("${PROJECT_SOURCE_DIR}/SFML/include")
 include_directories(${OIS_INCLUDE_DIRS}	${OGRE_INCLUDE_DIRS})
+include_directories("${PROJECT_SOURCE_DIR}/CEF")
+
+# CEF has naming conflicts between configurations
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    link_directories("${PROJECT_SOURCE_DIR}/CEF/Debug")
+else()
+    link_directories("${PROJECT_SOURCE_DIR}/CEF/Release")
+endif()
 
 # libraries paths
 link_directories("${PROJECT_SOURCE_DIR}/AngelScript/lib")
@@ -406,7 +453,8 @@ if(NOT INSTALL_ONLY_RELEASE)
     install(FILES ${NewtonMoveFilesDebug} DESTINATION bin)
     install(FILES ${SMFLMoveFilesDebug} DESTINATION bin)
     install(FILES ${OgreMoveFilesDebug} DESTINATION bin)
-    install(FILES ${RocketMoveFilesDebug} DESTINATION bin)
+    install(FILES ${CEFMoveFilesDebug} DESTINATION bin/CEFDebug)
+    
     
     if(NOT Boost_USE_STATIC_LIBS)
         install(FILES ${BOOST_MOVE_FILES_DEBUG} DESTINATION bin)
@@ -417,7 +465,7 @@ endif(NOT INSTALL_ONLY_RELEASE)
 # Always install release libraries
 install(FILES ${LeapMoveFilesRelease} DESTINATION bin)
 install(FILES ${OgreMoveFilesRelease} DESTINATION bin)
-install(FILES ${RocketMoveFilesRelease} DESTINATION bin)
+install(FILES ${CEFMoveFilesRelease} DESTINATION bin)
 install(FILES ${NewtonMoveFilesRelease} DESTINATION bin)
 install(FILES ${SMFLMoveFilesRelease} DESTINATION bin)
 

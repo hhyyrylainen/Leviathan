@@ -23,3 +23,11 @@ Engine/Include.h
 bin/
 *.7z
 *.orig
+CEF/Resources/
+CEF/include/capi/
+Pong/Main.cpp
+Pong/PongIncludes.h
+PongMasterServer/Main.cpp
+PongMasterServer/PongMasterServerIncludes.h
+PongServer/Main.cpp
+PongServer/PongIncludes.h

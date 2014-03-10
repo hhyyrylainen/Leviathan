@@ -1,0 +1,12 @@
+#pragma once
+
+#include "LeviathanMainDll.h"
+
+
+#define @BaseProgramName@_VERSION   @PROGRAM_VERSION@
+#define @BaseProgramName@_VERSIONS  @PROGRAM_VERSIONS@
+
+#define GAME_VERSION    @BaseProgramName@_VERSION
+#define GAME_VERSIONS   @BaseProgramName@_VERSIONS
+
+

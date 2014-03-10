@@ -41,8 +41,7 @@
     #pragma warning (default:6387)
 #endif
 
-// core libRocket (this is before windows headers to fix things) //
-#include <Rocket/Core.h>
+#define CEF_ENABLE_SANDBOX @USE_CEF_SANDBOX@
 
 #ifdef _WIN32
     #include <Windows.h>

@@ -126,6 +126,9 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 			continue;
 		}
 
+		// Let possible CEF update itself //
+		GlobalCEFHandler::DoCEFMessageLoopWork();
+
 		Render();
 		// We could potentially wait here //
 		try{

@@ -10,7 +10,8 @@ namespace Leviathan{
 
 	namespace Gui{
 
-
+		class CefApplication;
+		class CefHandler;
 		class GuiManager;
 	}
 
@@ -24,6 +25,7 @@ namespace Leviathan{
 		class TrailEmitter;
 	}
 
+	class GlobalCEFHandler;
 	class GameSpecificPacketHandler;
 	class BaseGameSpecificRequestPacket;
 	class BaseGameSpecificResponsePacket;

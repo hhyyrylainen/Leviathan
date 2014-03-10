@@ -51,6 +51,11 @@ namespace Leviathan{
 			HInstance = instance;
 			return *this;
 		}
+
+		DLLEXPORT HINSTANCE GetHInstance(){
+
+			return HInstance;
+		}
 #else
 		// \todo linux equivalent
 #endif

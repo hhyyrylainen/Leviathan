@@ -11,13 +11,10 @@
 
 
 // objects //
-#include "RocketSysInternals.h"
 #include "OgreRenderQueueListener.h"
 #include "Common/ThreadSafe.h"
 
 
-
-class RenderInterfaceOgre3D;
 
 
 namespace Leviathan {
@@ -28,7 +25,8 @@ namespace Gui{
 	class GuiCollection;
 	class GuiLoadedSheet;
 
-
+	//! \brief Main GUI controller
+	//! \todo Add GUI window objects to this which are associated with different windows
 	class GuiManager : public EngineComponent, public Ogre::RenderQueueListener, public ThreadSafe{
 	public:
 		DLLEXPORT GuiManager();

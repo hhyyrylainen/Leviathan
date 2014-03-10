@@ -1,0 +1,116 @@
+#include "@ProgramIncludesHeader@"
+#include "@ProgramAppHeader@"
+#include "@ProgramNetHeader@"
+#include "resource.h"
+
+
+using namespace @ProgramNamespace@;
+
+
+// Don't look at the mess ahead, just set the variables in your cmake file //
+
+#ifdef LEVIATHAN_USES_VLD
+// visual leak detector //
+#include <vld.h>
+#endif // LEVIATHAN_USES_VLD
+
+#ifdef _WIN32
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
+#if defined(DEBUG) | defined(_DEBUG)
+    _CrtSetReportMode( _CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+#endif
+
+#else
+int main(int argcount, char* args[]){
+#endif
+    
+#ifdef _WIN32
+    wstring commandline = Convert::StringToWstringNonRef(lpCmdLine);
+#else    
+    wstring commandline = L"";
+    for(int i = 1; i < argcount; i++){
+        commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
+    }
+#endif
+    
+    int Return = 0;
+    
+    // We need to manage the lifetime of an object //
+    shared_ptr<Leviathan::CEFSandboxInfoKeeper> KeepThisSafe;
+    
+    // The default CEF handling needs to be the first thing in the program //
+    if(Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(commandline, Return, KeepThisSafe,
+#ifdef _WIN32
+            hInstance
+#endif
+        ))
+    {
+        // This was a child process, end it now //
+        return Return;
+    }
+    // This is the main process, continue normally //
+
+#ifdef _WIN32
+    HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
+
+    if(SUCCEEDED(CoInitialize(NULL))){
+#else
+
+#endif
+
+#ifdef LEVIATHAN_USES_VLD
+    // now that we are in code we can start tracking //
+
+    VLDEnable();
+#endif // LEVIATHAN_USES_VLD
+
+    // create program object //
+    @PROGRAMCLASSNAME@ app;
+    @PROGRAMNETWORKINGNAME@ network;
+
+    unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"@PROGRAMLOG@", L"@ENGINECONFIGURATION@", 
+        L"@PROGRAMCONFIGURATION@", L"@PROGRAMKEYCONFIGURATION@", &@PROGRAMCHECKCONFIGFUNCNAME@, &@PROGRAMCHECKKEYCONFIGFUNCNAME@));
+    // customize values //
+#ifdef _WIN32
+    ProgramDefinition->SetHInstance(hInstance);
+#endif
+    ProgramDefinition->SetMasterServerParameters(@PROGRAMMASTERSERVERINFO@).SetPacketHandler(&network).SetApplicationIdentification(
+        L"@USERREADABLEIDENTIFICATION@", L"@GAMENAMEIDENTIFICATION@", L"@GAMEVERSIONIDENTIFICATION@");
+
+    // create window last //
+    ProgramDefinition->StoreWindowDetails(@WINDOWTITLEGENFUNCTION@, true,
+#ifdef _WIN32
+        LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)),
+#endif
+        &app);
+
+    app.PassCommandLine(commandline);
+
+    if(app.Initialize(ProgramDefinition.get())){
+
+        // this is where the game should customize the engine //
+        app.CustomizeEnginePostLoad();
+
+        // After everything is ready the command line should be flushed //
+        app.FlushCommandLine();
+
+
+        Logger::Get()->Info(L"Engine successfully initialized", true);
+        Return = app.RunMessageLoop();
+    } else {
+        Logger::Get()->Error(L"App init failed, closing", true);
+        app.ForceRelease();
+        Return = 5;
+    }
+#ifdef _WIN32
+    }
+    //_CrtDumpMemoryLeaks();
+    CoUninitialize();
+#endif
+    // This needs to be called before quitting //
+    Leviathan::GlobalCEFHandler::CEFLastThingInProgram();
+    
+    // But the CEF application will go out of scope after this //
+    
+    return Return;
+}

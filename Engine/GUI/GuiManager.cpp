@@ -8,12 +8,8 @@
 #include "FileSystem.h"
 #include "Rendering/Graphics.h"
 #include <boost/assign/list_of.hpp>
-#include <Rocket/Controls/Controls.h>
-#include <Rocket/Debugger/Debugger.h>
-#include <Rocket/Controls.h>
-#include <Rocket/Debugger.h>
-#include "Rendering/GUI/RenderInterfaceOgre3D.h"
 #include "Rendering/GUI/FontManager.h"
+#include "include/cef_sandbox_win.h"
 #include "GuiCollection.h"
 #include "Common/DataStoring/DataStore.h"
 #include "Common/DataStoring/DataBlock.h"
@@ -24,7 +20,7 @@ using namespace Leviathan::Gui;
 Leviathan::Gui::GuiManager::GuiManager() : ID(IDFactory::GetID()), RocketRenderer(NULL), RocketInternals(NULL), WindowContext(NULL), Visible(true),
 	Cursor(NULL), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true)
 {
-
+	assert(staticaccess == NULL && "only one GuiManager allowed, TODO: add GUIWindow for having multiple windows");
 	staticaccess = this;
 }
 Leviathan::Gui::GuiManager::~GuiManager(){
@@ -43,38 +39,13 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 	ThisWindow = window;
 
 	Window* wind = window->GetWindow();
+	
 
-	// create renderer for Rocket GUI //
-	RocketRenderer = new RenderInterfaceOgre3D(wind->GetWidth(), wind->GetHeight());
 
-	Rocket::Core::SetRenderInterface(RocketRenderer);
-
-	RocketInternals = new RocketSysInternals();
-
-	Rocket::Core::SetSystemInterface(RocketInternals);
-
-	Rocket::Core::Initialise();
-	Rocket::Controls::Initialise();
-
-	// font database //
-	Rocket::Core::FontDatabase::Initialise();
-
-	// load fonts //
-	graph->GetFontManager()->LoadAllFonts();
-
-	// create context for this window //
-	WindowContext = Rocket::Core::CreateContext("window01_context", Rocket::Core::Vector2i(wind->GetWidth(), wind->GetHeight()));
-
-	// initialize debugger only once //
-#ifdef _WIN32
-	if(!RocketDebuggerInitialized){
-		Rocket::Debugger::Initialise(WindowContext);
-		RocketDebuggerInitialized = true;
-	}
-#endif
 
 	// we render during Ogre overlay //
 	wind->GetOverlayScene()->addRenderQueueListener(this);
+
 
 	// set to be rendered in right viewport //
 	Graphics::Get()->GetOverlayMaster()->SetGUIVisibleInViewport(this, ThisWindow->GetWindow()->GetOverlayViewport());

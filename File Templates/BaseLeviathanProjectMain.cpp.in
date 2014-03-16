@@ -75,7 +75,7 @@ int main(int argcount, char* args[]){
     ProgramDefinition->SetHInstance(hInstance);
 #endif
     ProgramDefinition->SetMasterServerParameters(@PROGRAMMASTERSERVERINFO@).SetPacketHandler(&network).SetApplicationIdentification(
-        L"@USERREADABLEIDENTIFICATION@", L"@GAMENAMEIDENTIFICATION@", L"@GAMEVERSIONIDENTIFICATION@");
+        @USERREADABLEIDENTIFICATION@, L"@GAMENAMEIDENTIFICATION@", L"@GAMEVERSIONIDENTIFICATION@");
 
     // create window last //
     ProgramDefinition->StoreWindowDetails(@WINDOWTITLEGENFUNCTION@, true,

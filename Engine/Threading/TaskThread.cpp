@@ -139,6 +139,10 @@ DLLEXPORT bool Leviathan::TaskThread::HasRunningTask(){
 	return SetTask.get() != NULL;
 }
 
+DLLEXPORT boost::thread& Leviathan::TaskThread::GetBoostThreadObject(){
+	return ThisThread;
+}
+
 DLLEXPORT ThreadSpecificData* Leviathan::TaskThread::GetThreadSpecificThreadObject(){
 	return ThreadThreadPtr.get();
 }

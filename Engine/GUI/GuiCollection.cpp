@@ -103,33 +103,12 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
 	AllowEnable = newstate;
 }
 // ------------------ GuiLoadedSheet ------------------ //
-Leviathan::Gui::GuiLoadedSheet::GuiLoadedSheet(Rocket::Core::Context* context, const string &documentfile) : ID(IDFactory::GetID()){
-	// load the Rocket file here //
-	Document = context->LoadDocument(documentfile.c_str());
+Leviathan::Gui::GuiLoadedSheet::GuiLoadedSheet() : ID(IDFactory::GetID()){
 
-	if(!Document)
-		throw ExceptionInvalidArgument(L"invalid file provided", 0, __WFUNCTION__, L"documentfile", Convert::StringToWstring(documentfile));
-
-	Document->Show();
 }
 
 Leviathan::Gui::GuiLoadedSheet::~GuiLoadedSheet(){
 	// remove the reference so that it gets unloaded at some point //
-	Document->RemoveReference();
-	Document = NULL;
-}
-
-DLLEXPORT Rocket::Core::Element* Leviathan::Gui::GuiLoadedSheet::GetElementByID(const string &id){
-
-	return Document->GetElementById(id.c_str());
-}
-
-DLLEXPORT void Leviathan::Gui::GuiLoadedSheet::PullSheetToFront(){
-	Document->PullToFront();
-}
-
-DLLEXPORT void Leviathan::Gui::GuiLoadedSheet::PushSheetToBack(){
-	Document->PushToBack();
 }
 
 

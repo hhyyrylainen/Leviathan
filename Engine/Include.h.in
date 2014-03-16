@@ -18,6 +18,8 @@
 
 // we need to disable this warning to stop stdint and instsafe causing errors //
 #pragma warning (disable: 4005)
+// This seems to get enabled when using CEF, and it needs to be disabled //
+#pragma warning (disable: 4355)
 
 // C RunTime Header Files
 #include <stdlib.h>
@@ -41,7 +43,7 @@
     #pragma warning (default:6387)
 #endif
 
-#define CEF_ENABLE_SANDBOX @USE_CEF_SANDBOX@
+#define CEF_ENABLE_SANDBOX @USE_CEF_SANDBOX_STATE@
 
 #ifdef _WIN32
     #include <Windows.h>
@@ -109,6 +111,12 @@ static const float EPSILON = 0.00000001f;
     // Windows needs these //
     #define FORCE_INLINE	__forceinline
     #define THROWS		throw(...)
+    
+    // Some undefines //
+    #define WinGetNextSibling GetNextSibling
+    #undef GetNextSibling
+    #define WinGetGetFirstChild GetFirstChild
+    #undef GetFirstChild
     
 #endif //_WIN32
 

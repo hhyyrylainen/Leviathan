@@ -7,7 +7,6 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Input/Key.h"
-#include "Rocket/Core/ElementDocument.h"
 #include "Script/ScriptScript.h"
 #include "ObjectFiles/ObjectFileObject.h"
 #include "Common/ReferenceCounted.h"
@@ -21,21 +20,9 @@ namespace Leviathan{ namespace Gui{
 	// this is used to pass Rocket pages to collections //
 	class GuiLoadedSheet : public ReferenceCounted{
 	public:
-		GuiLoadedSheet(Rocket::Core::Context* context, const string &documentfile);
+		GuiLoadedSheet();
 		~GuiLoadedSheet();
 
-		DLLEXPORT Rocket::Core::Element* GetElementByID(const string &id);
-		// warning this method increases reference count //
-		DLLEXPORT Rocket::Core::Element* GetElementByIDProxy(string id){
-			auto tmp = GetElementByID(id);
-			if(tmp)
-				tmp->AddReference();
-			return tmp;
-		}
-		// makes the document the topmost one //
-		DLLEXPORT void PullSheetToFront();
-		// makes the document bottom most one //
-		DLLEXPORT void PushSheetToBack();
 
 		DLLEXPORT inline int GetID(){
 			return ID;
@@ -45,7 +32,7 @@ namespace Leviathan{ namespace Gui{
 
 	private:
 		// used for finding by ID //
-		Rocket::Core::ElementDocument* Document;
+
 		// automatically generated ID //
 		int ID;
 	};

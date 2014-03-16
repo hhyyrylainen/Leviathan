@@ -7,7 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "include/cef_app.h"
-#include "include/client_app.h"
+
 
 namespace Leviathan{ namespace Gui{
 
@@ -36,7 +36,7 @@ namespace Leviathan{ namespace Gui{
 			NavigationType navigation_type,	bool is_redirect) OVERRIDE;
 
 		virtual void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,	CefRefPtr<CefV8Context> context) OVERRIDE;
-		virtual void OnContextReleased(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,C efRefPtr<CefV8Context> context) OVERRIDE;
+		virtual void OnContextReleased(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) OVERRIDE;
 
 
 		virtual CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() OVERRIDE { return this; }

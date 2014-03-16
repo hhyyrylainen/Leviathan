@@ -17,6 +17,13 @@ namespace Leviathan{
 	//! \todo Improve performance
 	void RunTaskQueuerThread(ThreadingManager* manager);
 
+#ifdef _WIN32
+
+	void SetThreadName(TaskThread* thread, const string &name);
+
+#endif // _WIN32
+
+
 	//! \brief Manages delayed execution of functions through use of QueuedTask and subclasses
 	class ThreadingManager : public EngineComponent, public ThreadSafe{
 		friend void RunTaskQueuerThread(ThreadingManager* manager);

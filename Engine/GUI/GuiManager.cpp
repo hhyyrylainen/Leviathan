@@ -14,23 +14,22 @@
 #include "Common/DataStoring/DataStore.h"
 #include "Common/DataStoring/DataBlock.h"
 #include "Common/GraphicalInputEntity.h"
+#include "Common/Window.h"
+#include "OgreSceneManager.h"
+#include "OgreRoot.h"
+#include "OgreManualObject.h"
+#include "OgreHardwarePixelBuffer.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
-Leviathan::Gui::GuiManager::GuiManager() : ID(IDFactory::GetID()), RocketRenderer(NULL), RocketInternals(NULL), WindowContext(NULL), Visible(true),
-	Cursor(NULL), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true)
+Leviathan::Gui::GuiManager::GuiManager() : ID(IDFactory::GetID()), Visible(true), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true),
+	CEFOverlayQuad(NULL)
 {
-	assert(staticaccess == NULL && "only one GuiManager allowed, TODO: add GUIWindow for having multiple windows");
-	staticaccess = this;
+	
 }
 Leviathan::Gui::GuiManager::~GuiManager(){
 
-	staticaccess = NULL;
-}
-
-GuiManager* Leviathan::Gui::GuiManager::staticaccess = NULL;
-GuiManager* Leviathan::Gui::GuiManager::Get(){
-	return staticaccess;
+	
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalInputEntity* window){
@@ -40,7 +39,12 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 
 	Window* wind = window->GetWindow();
 	
+	// Create Ogre resources //
+	if(!_CreateInternalOgreResources(window->GetWindow()->GetOverlayScene())){
 
+		Logger::Get()->Error(L"GuiManager: Init: failed to create internal Ogre resources");
+		return false;
+	}
 
 
 	// we render during Ogre overlay //
@@ -72,17 +76,7 @@ void Leviathan::Gui::GuiManager::Release(){
 
 	GuiSheets.clear();
 
-
-	// shutdown rocket //
-	WindowContext->RemoveReference();
-	Rocket::Core::Shutdown();
-	Rocket::Core::FontDatabase::Shutdown();
-
-	SAFE_DELETE(RocketInternals);
-	SAFE_DELETE(RocketRenderer);
-
-	// we can clear this too //
-	BaseGuiObject::LeviathanToRocketEventTranslate.clear();
+	_ReleaseOgreResources();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(OIS::KeyCode key, int specialmodifiers){
@@ -188,7 +182,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnForceGUIOn(){
 void Leviathan::Gui::GuiManager::Render(){
 	ObjectLock guard(*this);
 	// update Rocket input //
-	ThisWindow->GetWindow()->GatherInput(WindowContext);
+
 }
 // ------------------------------------ //
 void Leviathan::Gui::GuiManager::OnResize(int width, int height){
@@ -197,7 +191,7 @@ void Leviathan::Gui::GuiManager::OnResize(int width, int height){
 	this->CallEvent(new Event(EVENT_TYPE_WINDOW_RESIZE, (void*)new Int2(width, height)));
 
 	// resize Rocket on this window //
-	WindowContext->SetDimensions(Rocket::Core::Vector2i(width, height));
+
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiManager::AddGuiObject(BaseGuiObject* obj){
@@ -265,8 +259,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 	ObjectLock guard(*this);
 
 	try{
-		sheet = shared_ptr<GuiLoadedSheet>(new GuiLoadedSheet(WindowContext, Convert::WstringToString(finalrocket)),
-		//	std::mem_fun_ref(&GuiLoadedSheet::ReleaseProxy));
+		sheet = shared_ptr<GuiLoadedSheet>(new GuiLoadedSheet(),
 			[](GuiLoadedSheet* p){p->Release();});
 		if(!sheet.get()){
 
@@ -337,13 +330,8 @@ guiprocessguifileloopdeleteprocessedobject:
 DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFile(const wstring &file){
 	ObjectLock guard(*this);
 
-	if(file == L"none" || Cursor){
+	if(file == L"none"){
 
-		if(Cursor){
-			Cursor->Close();
-			Cursor->RemoveReference();
-			Cursor = NULL;
-		}
 		// show default window cursor //
 		ThisWindow->GetWindow()->SetHideCursor(false);
 		if(file == L"none")
@@ -351,28 +339,13 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFile(const wstring &file){
 	}
 
 
-	Cursor = WindowContext->LoadMouseCursor(Convert::WstringToString(file).c_str());
-
-	if(Cursor){
-
-		Cursor->Show();
-		// hide window cursor //
-		ThisWindow->GetWindow()->SetHideCursor(true);
-	}
+	// hide window cursor //
+	ThisWindow->GetWindow()->SetHideCursor(true);
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFileVisibleState(bool state){
 	ObjectLock guard(*this);
-	WindowContext->ShowMouseCursor(state);
-}
-
-DLLEXPORT void Leviathan::Gui::GuiManager::SetDebuggerOnThisContext(){
-	ObjectLock guard(*this);
-	Rocket::Debugger::SetContext(WindowContext);
-}
-
-DLLEXPORT void Leviathan::Gui::GuiManager::SetDebuggerVisibility(bool visible){
-	Rocket::Debugger::SetVisible(visible);
+	// Set mouse drawing flag //
 }
 // ----------------- event handler part --------------------- //
 bool Leviathan::Gui::GuiManager::CallEvent(Event* pEvent){
@@ -438,96 +411,118 @@ GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const ws
 	return NULL;
 }
 // -------------------------------------- //
-// code from Rocket Ogre sample //
+void Leviathan::Gui::GuiManager::preRenderQueues(){
+	ObjectLock guard(*this);
+	// Start updating the chrome material //
+
+
+}
+
 void Leviathan::Gui::GuiManager::renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation){
 	// we render Rocket at the same time with OGRE overlay //
-	if(queueGroupId == Ogre::RENDER_QUEUE_OVERLAY && Visible){
+	if(queueGroupId == Ogre::RENDER_QUEUE_OVERLAY){
 		ObjectLock guard(*this);
-		WindowContext->Update();
 
-		ConfigureRenderSystem();
-		WindowContext->Render();
+		// Make sure chrome material is right //
+
 	}
 }
+// -------------------------------------- //
+bool Leviathan::Gui::GuiManager::_CreateInternalOgreResources(Ogre::SceneManager* windowsscene){
 
-// Configures Ogre's rendering system for rendering Rocket.
-void Leviathan::Gui::GuiManager::ConfigureRenderSystem()
-{
-	Ogre::RenderSystem* render_system = Ogre::Root::getSingleton().getRenderSystem();
+	string materialname = "_ChromeOverlay_for_gui_"+Convert::ToString(ID);
+	string texturename = "_texture_"+materialname;
 
-	// Set up the projection and view matrices.
-	Ogre::Matrix4 projection_matrix;
-	BuildProjectionMatrix(projection_matrix);
-	render_system->_setProjectionMatrix(projection_matrix);
-	render_system->_setViewMatrix(Ogre::Matrix4::IDENTITY);
+	Window* wind = ThisWindow->GetWindow();
 
-	// Disable lighting, as all of Rocket's geometry is unlit.
-	render_system->setLightingEnabled(false);
-	// Disable depth-buffering; all of the geometry is already depth-sorted.
-	render_system->_setDepthBufferParams(false, false);
-	// Rocket generates anti-clockwise geometry, so enable clockwise-culling.
-	render_system->_setCullingMode(Ogre::CULL_CLOCKWISE);
-	// Disable fogging.
-	render_system->_setFog(Ogre::FOG_NONE);
-	// Enable writing to all four channels.
-	render_system->_setColourBufferWriteEnabled(true, true, true, true);
-	// Unbind any vertex or fragment programs bound previously by the application.
-	render_system->unbindGpuProgram(Ogre::GPT_FRAGMENT_PROGRAM);
-	render_system->unbindGpuProgram(Ogre::GPT_VERTEX_PROGRAM);
+	// Create a material and a texture that we can update //
+	Ogre::TexturePtr texture = Ogre::TextureManager::getSingleton().createManual(texturename, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+		Ogre::TEX_TYPE_2D, wind->GetWidth(), wind->GetHeight(), 0, Ogre::PF_B8G8R8A8, Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
 
-	// Set texture settings to clamp along both axes.
-	Ogre::TextureUnitState::UVWAddressingMode addressing_mode;
-	addressing_mode.u = Ogre::TextureUnitState::TAM_CLAMP;
-	addressing_mode.v = Ogre::TextureUnitState::TAM_CLAMP;
-	addressing_mode.w = Ogre::TextureUnitState::TAM_CLAMP;
-	render_system->_setTextureAddressingMode(0, addressing_mode);
+	// Fill in some test data //
+	Ogre::HardwarePixelBufferSharedPtr pixelbuf = texture->getBuffer();
 
-	// Set the texture coordinates for unit 0 to be read from unit 0.
-	render_system->_setTextureCoordSet(0, 0);
-	// Disable texture coordinate calculation.
-	render_system->_setTextureCoordCalculation(0, Ogre::TEXCALC_NONE);
-	// Enable linear filtering; images should be rendering 1 texel == 1 pixel, so point filtering could be used
-	// except in the case of scaling tiled decorators.
-	render_system->_setTextureUnitFiltering(0, Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_POINT);
-	// Disable texture coordinate transforms.
-	render_system->_setTextureMatrix(0, Ogre::Matrix4::IDENTITY);
-	// Reject pixels with an alpha of 0.
-	render_system->_setAlphaRejectSettings(Ogre::CMPF_GREATER, 0, false);
-	// Disable all texture units but the first.
-	render_system->_disableTextureUnitsFrom(1);
+	// Lock buffer and get a target box for writing //
+	pixelbuf->lock(Ogre::HardwareBuffer::HBL_DISCARD);
+	const Ogre::PixelBox& pixelbox = pixelbuf->getCurrentLock();
 
-	// Enable simple alpha blending.
-	render_system->_setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+	// Create a pointer to the destination //
+	UCHAR* destptr = static_cast<UCHAR*>(pixelbox.data);
 
-	// Disable depth bias.
-	render_system->_setDepthBias(0, 0);
-}
+	// Fill it with data //
+	for(size_t j = 0; j < pixelbox.getHeight(); j++){
+		for(size_t i = 0; i < pixelbox.getWidth(); i++){
+			// Set it completely empty //
+			*destptr++ = 0; // B
+			*destptr++ = 0; // G
+			*destptr++ = 0; // R
+			*destptr++ = 0; // A
+		}
 
-// Builds an OpenGL-style orthographic projection matrix.
-void Leviathan::Gui::GuiManager::BuildProjectionMatrix(Ogre::Matrix4& projection_matrix)
-{
-	float z_near = -1;
-	float z_far = 1;
-
-	projection_matrix = Ogre::Matrix4::ZERO;
-
-	// Set up matrices.
-	projection_matrix[0][0] = 2.0f / ThisWindow->GetWindow()->GetWidth();
-	projection_matrix[0][3]= -1.0000000f;
-	projection_matrix[1][1]= -2.0f / ThisWindow->GetWindow()->GetHeight();
-	projection_matrix[1][3]= 1.0000000f;
-	projection_matrix[2][2]= -2.0f / (z_far - z_near);
-	projection_matrix[3][3]= 1.0000000f;
-}
-
-DLLEXPORT void Leviathan::Gui::GuiManager::GUIObjectsCheckRocketLinkage(){
-	ObjectLock guard(*this);
-	for(size_t i = 0; i < Objects.size(); i++){
-
-		Objects[i]->CheckObjectLinkage();
+		destptr += pixelbox.getRowSkip() * Ogre::PixelUtil::getNumElemBytes(pixelbox.format);
 	}
+
+	// Unlock the buffer //
+	pixelbuf->unlock();
+
+
+	Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create(materialname, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+	material->getTechnique(0)->getPass(0)->createTextureUnitState(texturename);
+	material->getTechnique(0)->getPass(0)->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
+	material->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+
+
+	// Create a full screen quad for chrome render result displaying //
+	CEFOverlayQuad = windowsscene->createManualObject("GUI_chrome_quad");
+
+	// Use identity view/projection matrices for 2d rendering //
+	CEFOverlayQuad->setUseIdentityProjection(true);
+	CEFOverlayQuad->setUseIdentityView(true);
+
+	// Hopefully a triangle strip saves some performance //
+	CEFOverlayQuad->begin(materialname, Ogre::RenderOperation::OT_TRIANGLE_STRIP);
+
+	CEFOverlayQuad->position(-1.f, -1.f, 0.0f);
+	CEFOverlayQuad->position( 1.f, -1.f, 0.0f);
+	CEFOverlayQuad->position( 1.f,  1.f, 0.0f);
+	CEFOverlayQuad->position(-1.f,  1.f, 0.0f);
+
+	CEFOverlayQuad->index(0);
+	CEFOverlayQuad->index(1);
+	CEFOverlayQuad->index(3);
+	CEFOverlayQuad->index(2);
+
+	CEFOverlayQuad->end();
+
+	// We can use infinite AAB to not get culled //
+	Ogre::AxisAlignedBox aabInf;
+	aabInf.setInfinite();
+	CEFOverlayQuad->setBoundingBox(aabInf);
+
+	// Render just before overlays
+	CEFOverlayQuad->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY);
+
+	// Attach to scene
+	windowsscene->getRootSceneNode()->createChildSceneNode()->attachObject(CEFOverlayQuad);
+
+
+	// Create a quad for mouse displaying //
+
+	// Use RENDER_QUEUE_MAX to render on top of everything
+
+
+
+	return true;
 }
 
-bool Leviathan::Gui::GuiManager::RocketDebuggerInitialized = false;
+void Leviathan::Gui::GuiManager::_ReleaseOgreResources(){
+	// We probably don't need to do anything //
+
+	// The scene should handle deleting this //
+	CEFOverlayQuad = NULL;
+
+}
+
 
 

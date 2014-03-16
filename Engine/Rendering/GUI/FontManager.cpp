@@ -7,7 +7,6 @@
 #include "Exceptions/ExceptionNotFound.h"
 #include "OverlayMaster.h"
 #include "Common/DataStoring/DataStore.h"
-#include <Rocket/Core.h>
 using namespace Leviathan;
 using namespace Leviathan::Rendering;
 // ------------------------------------ //
@@ -65,8 +64,7 @@ DLLEXPORT bool Leviathan::Rendering::FontManager::LoadFontByName(const wstring &
 		return false;
 	}
 
-	// register rocket font //
-	Rocket::Core::FontDatabase::LoadFontFace(Convert::WstringToString(fontgenfile).c_str());
+	// register the font //
 
 	return true;
 }

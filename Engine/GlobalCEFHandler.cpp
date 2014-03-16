@@ -5,11 +5,16 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
+#include "include/cef_app.h"
+#include "GUI/GuiCEFApplication.h"
+#include "GUI/GuiCEFHandler.h"
+#include "include/cef_sandbox_win.h"
 
 
 DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(const wstring &commandline, int &returnvalue, 
 	shared_ptr<CEFSandboxInfoKeeper> &keeper,
-#ifdef _WIN32 HINSTANCE hInstance 
+#ifdef _WIN32
+	HINSTANCE hInstance 
 #endif // _WIN32 
 	)
 {
@@ -56,7 +61,7 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(const wstr
 #endif
 
 	// Initialize CEF.
-	CefInitialize(main_args, settings, app.get(), sandbox_info);
+	CefInitialize(main_args, settings, keeper->CEFApp.get(), sandbox_info);
 
 	CEFInitialized = true;
 
@@ -82,7 +87,7 @@ DLLEXPORT void Leviathan::GlobalCEFHandler::DoCEFMessageLoopWork(){
 	CefDoMessageLoopWork();
 }
 // ------------------------------------ //
-DLLEXPORT CEFSandboxInfoKeeper* Leviathan::GlobalCEFHandler::GetCEFObjects() const{
+DLLEXPORT CEFSandboxInfoKeeper* Leviathan::GlobalCEFHandler::GetCEFObjects(){
 	return AccessToThese;
 }
 
@@ -107,4 +112,8 @@ DLLEXPORT Leviathan::CEFSandboxInfoKeeper::~CEFSandboxInfoKeeper(){
 // ------------------------------------ //
 void* Leviathan::CEFSandboxInfoKeeper::GetPtr(){
 	return SandBoxAccess;
+}
+
+Gui::CefHandler* Leviathan::CEFSandboxInfoKeeper::GetCEFHandlerDirect() const{
+	return CEFHandler.get();
 }

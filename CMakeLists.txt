@@ -141,14 +141,20 @@ else(WIN32)
     include_directories(${X11_INCLUDE_DIRS})
 endif(WIN32)
 
-option(USE_CEF_SANDBOX "For setting CEF sandbox mode on" ON)
+option(USE_CEF_SANDBOX "For setting CEF sandbox mode on" OFF)
 
 # the cef libraries will have different names on linux
 if(WIN32)
-    set(CEF_MAINLIB_NAME "libcef")
+    set(CEF_MAINLIB_NAME "libcef_dll_wrapper" "libcef")
 else(WIN32)
-    set(CEF_MAINLIB_NAME "cef")
+    set(CEF_MAINLIB_NAME "cef_dll_wrapper" "cef")
 endif(WIN32)
+
+if(USE_CEF_SANDBOX)
+    
+    # That's an error
+    message(FATAL_ERROR "CEF sandbox is not supported on any platforms")
+endif(USE_CEF_SANDBOX)
 
 if(USE_CEF_SANDBOX)
     message(STATUS "Using CEF3 sandbox mode")
@@ -160,14 +166,33 @@ else(USE_CEF_SANDBOX)
 endif(USE_CEF_SANDBOX)
 
 # Library linking
-set(LINK_LIBS_TOENGINE_RELEASE Newton)
-set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap RocketCore RocketControls RocketDebugger Newton sfml-audio 
-    sfml-network sfml-system ${CEF_LIBS})
+set(LINK_LIBS_TOENGINE_RELEASE optimized Newton)
+set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap Newton sfml-audio sfml-network sfml-system ${CEF_LIBS})
         
-# Debu libraries
-set(LINK_LIBS_TOENGINE_DEBUG Newton_d)
-set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd RocketCore_d RocketControls_d RocketDebugger_d Newton_d sfml-audio-d 
-    sfml-network-d sfml-system-d ${CEF_LIBS})
+# Debug libraries
+set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
+set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd Newton_d sfml-audio-d sfml-network-d sfml-system-d ${CEF_LIBS})
+
+# Prepend the right keywords
+
+
+# define a temp value
+set(TmpProcessQueueList)
+
+foreach(curlibname ${LINK_LIBS_ENGINE_RELEASE})
+    set(TmpProcessQueueList ${TmpProcessQueueList} optimized ${curlibname})
+endforeach()
+
+set(LINK_LIBS_ENGINE_RELEASE ${TmpProcessQueueList})
+
+set(TmpProcessQueueList)
+
+foreach(curlibname ${LINK_LIBS_ENGINE_DEBUG})
+    set(TmpProcessQueueList ${TmpProcessQueueList} debug ${curlibname})
+endforeach()
+
+set(LINK_LIBS_ENGINE_DEBUG ${TmpProcessQueueList})
+
 
 ######### Options
     
@@ -192,7 +217,11 @@ endif(USE_VLD)
 
 
 
-
+if(USE_CEF_SANDBOX)
+    set(USE_CEF_SANDBOX_STATE 1)
+else(USE_CEF_SANDBOX)
+    set(USE_CEF_SANDBOX_STATE 0)
+endif(USE_CEF_SANDBOX)
 # create the bin directory
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 
@@ -223,8 +252,14 @@ else(WIN32)
     file(GLOB RootFolderFiles "bin/*.conf" "bin/*.txt")
 endif(WIN32)
 
+# Add the default CEF resources
+set(RootFolderFiles ${RootFolderFiles} "CEF/Resources/cef.pak" "CEF/Resources/devtools_resources.pak")
+file(GLOB CEFLocalesFiles "CEF/Resources/locales/*.*")
+
 # Move files
 file(COPY ${RootFolderFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+# Move the locales folder
+file(COPY ${CEFLocalesFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/locales")
 
 # copy data directory
 file(GLOB DataMoveFiles "bin/Data/*")
@@ -425,6 +460,9 @@ add_subdirectory(Pong)
 # data folders
 file(GLOB DataMoveFiles "bin/Data/*.*")
 install(FILES ${DataMoveFiles} DESTINATION bin/Data)
+# Install the locales folder
+install(DIRECTORY "CEF/Resources/locales" DESTINATION "bin/")
+
 # The script files folder
 install(DIRECTORY "Scripts" DESTINATION bin/Data)
 install(FILES ${RootFolderFiles} DESTINATION bin)

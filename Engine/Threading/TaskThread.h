@@ -27,7 +27,7 @@ namespace Leviathan{
 	class TaskThread : public ThreadSafe{
 		friend void RunNewThread(TaskThread* thisthread);
 	public:
-		// Warning this may only be called by the main thread and while no tasks are running, since this will register the thread in various places //
+		//! \warning this may only be called by the main thread and while no tasks are running, since this will register the thread in various places
 		DLLEXPORT TaskThread();
 
 		DLLEXPORT ~TaskThread();
@@ -39,13 +39,18 @@ namespace Leviathan{
 
 		DLLEXPORT void NotifyThread();
 
-		// Returns true if the thread has performed initialization //
+		//! \brief Returns true if the thread has performed initialization
 		DLLEXPORT bool HasStarted();
-		// Returns true if the thread has a task to run //
+		//! \brief Returns true if the thread has a task to run
 		DLLEXPORT bool HasRunningTask();
+
+		//! \brief Returns the internal ThisThread variable
+		DLLEXPORT boost::thread& GetBoostThreadObject();
 
 		//! \brief Returns thread specific data about QueuedTask and TaskThread object
 		DLLEXPORT static ThreadSpecificData* GetThreadSpecificThreadObject();
+
+
 
 	private:
 

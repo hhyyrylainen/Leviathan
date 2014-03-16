@@ -34,8 +34,9 @@ install(TARGETS ${CurrentProjectName} DESTINATION bin CONFIGURATIONS ${InstallCo
 # linking to engine
 target_link_libraries(${CurrentProjectName} Engine)
 
-target_link_libraries(${CurrentProjectName} optimized ${LINK_LIBS_TOENGINE_RELEASE})
-target_link_libraries(${CurrentProjectName} debug ${LINK_LIBS_TOENGINE_DEBUG})
+set(FinalTargetLinkLibraries ${LINK_LIBS_TOENGINE_RELEASE} ${LINK_LIBS_TOENGINE_DEBUG})
+
+target_link_libraries(${CurrentProjectName} ${FinalTargetLinkLibraries})
 
 
 # If the output directory is wrong then we need to use this

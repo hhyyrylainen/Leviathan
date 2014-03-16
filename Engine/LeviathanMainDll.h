@@ -49,7 +49,8 @@ using Leviathan::GameSpecificPacketData;
 using Leviathan::SentNetworkThing;
 using Leviathan::QueuedTask;
 
-
+// This is required for client applications to work //
+#include "GlobalCEFHandler.h"
 
 
 #endif

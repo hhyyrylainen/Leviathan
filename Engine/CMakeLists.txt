@@ -107,20 +107,20 @@ add_definitions(-DENGINE_EXPORTS)
 # create library with all the files
 add_library(Engine SHARED ${EngineFiles})
 
+
+
+set(FinalEngineLinkLibraries ${Boost_LIBRARIES} ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${ADDITIONAL_OGRE})
+
 if(NOT WIN32)
-# Link with X11
-target_link_libraries(Engine ${X11_LIBRARIES})
-# and threads
-target_link_libraries(Engine ${CMAKE_THREAD_LIBS_INIT})
+# Link with X11 and threads
+set(FinalEngineLinkLibraries ${FinalEngineLinkLibraries} ${X11_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
 endif(NOT WIN32)
 
+# Add the final libraries that have different debug and optimized values
+set(FinalEngineLinkLibraries ${FinalEngineLinkLibraries} ${LINK_LIBS_ENGINE_DEBUG} ${LINK_LIBS_ENGINE_RELEASE})
 
-target_link_libraries(Engine debug ${LINK_LIBS_ENGINE_DEBUG})
-target_link_libraries(Engine optimized ${LINK_LIBS_ENGINE_RELEASE})
-target_link_libraries(Engine ${Boost_LIBRARIES})
-target_link_libraries(Engine ${OGRE_LIBRARIES})
-target_link_libraries(Engine ${OIS_LIBRARIES})
-target_link_libraries(Engine ${ADDITIONAL_OGRE})
+target_link_libraries(Engine ${FinalEngineLinkLibraries})
 
 # Possible debug installs
 if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)

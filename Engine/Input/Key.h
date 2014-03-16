@@ -93,27 +93,6 @@ namespace Leviathan{
 			return true;
 		}
 
-		DLLEXPORT inline bool Match(const OIS::KeyCode &key, int specialmodifiers, bool strict = false) const{
-			if(key != this->Character)
-				return false;
-			if(strict){
-				// \todo this needs fixing
-				DEBUG_BREAK;
-			} else {
-
-				if((Extras & KEYSPECIAL_SHIFT) && !(specialmodifiers & Rocket::Core::Input::KM_SHIFT)){
-					return false;
-				}
-				if((Extras & KEYSPECIAL_ALT) && !(specialmodifiers & Rocket::Core::Input::KM_ALT)){
-					return false;
-				}
-				if((Extras & KEYSPECIAL_CTRL) && !(specialmodifiers & Rocket::Core::Input::KM_CTRL)){
-					return false;
-				}
-			}
-			return true;
-		}
-
 		DLLEXPORT inline wstring GenerateWstringMessage(const int &style = 0){
 			// create a string that represents this key //
 			if(style == 0){

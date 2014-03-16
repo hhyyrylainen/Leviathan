@@ -12,8 +12,8 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, GuiLoadedSheet* sheet,
-	shared_ptr<ScriptScript> script /*= NULL*/) : EventableScriptObject(script), OwningInstance(owner), FileID(fakeid), Name(name), Element(NULL),
-	ContainedInSheet(sheet), ManualDetach(false), ID(IDFactory::GetID())
+	shared_ptr<ScriptScript> script /*= NULL*/) : EventableScriptObject(script), OwningInstance(owner), FileID(fakeid), Name(name), 
+	ContainedInSheet(sheet), ID(IDFactory::GetID())
 {
 	
 }
@@ -21,8 +21,8 @@ DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const 
 DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){
 	// script has smart pointer //
 
-	// this should always be safe //
-	_UnhookAllListeners();
+	// unregister all non-Rocket events //
+	UnRegisterAllEvents();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects,
@@ -47,48 +47,14 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 
 	unique_ptr<BaseGuiObject> tmpptr(new BaseGuiObject(owner, dataforthis.Name, fakeid, sheet, dataforthis.Script));
 
-	Rocket::Core::Element* element = NULL;
-
 	shared_ptr<NamedVariableList> listenon;
 
-	wstring rocketobjectname;
-
-	// setup listeners //
+	// Get listeners //
 	for(size_t i = 0; i < dataforthis.Contents.size(); i++){
 		if(StringOperations::StringStartsWith(dataforthis.Contents[i]->Name, wstring(L"params"))){
 
-			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(dataforthis.Contents[i]->Variables, L"RocketID", rocketobjectname, L"", true,
-				L"BaseGuiObject: LoadFromFileStructure: ");
-
-
 			listenon = dataforthis.Contents[i]->Variables.GetValueDirect(L"ListenOn");
 		}
-	}
-
-
-	if(rocketobjectname.size()){
-		element = sheet->GetElementByID(Convert::WstringToString(rocketobjectname));
-		// set element id //
-		tmpptr->RocketObjectName = rocketobjectname;
-	} else {
-		// Try with our name //
-		element = sheet->GetElementByID(Convert::WstringToString(tmpptr->Name));
-
-		if(element){
-#ifdef _DEBUG
-			//Logger::Get()->Info(L"BaseGuiObject: Linked to Rocket with object name");
-#endif // _DEBUG
-			tmpptr->RocketObjectName = tmpptr->Name;
-		} else {
-
-			element = NULL;
-		}
-	}
-
-
-
-	if(element){
-		tmpptr->Element = element;
 	}
 
 	// listening start //
@@ -105,7 +71,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 	return false;
 }
 // ------------------------------------ //
-void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
+void Leviathan::Gui::BaseGuiObject::_HookListeners(){
 	// first we need to get probably right listeners and register with them //
 	ScriptModule* mod = Scripting->GetModule();
 
@@ -117,8 +83,6 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 	for(size_t i = 0; i < containedlisteners.size(); i++){
 		// generics cannot be rocket events //
 		if(containedlisteners[i]->GenericTypeName && containedlisteners[i]->GenericTypeName->size() > 0){
-			if(onlyrocket)
-				continue;
 			// custom event listener //
 
 			RegisterForEvent(*containedlisteners[i]->GenericTypeName);
@@ -126,148 +90,25 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(bool onlyrocket /*= false*/){
 			continue;
 		}
 
-		Rocket::Core::String tohook;
-		try{
-			tohook = LeviathanToRocketEventTranslate[*containedlisteners[i]->ListenerName];
+		// check for specific case //
+		if(*containedlisteners[i]->ListenerName == L"Init"){
+			// call now the init event //
 
-			if(tohook.Length() == 0){
-			    // check the other //
-				throw exception();
-			}
+		} else if(*containedlisteners[i]->ListenerName == L"Release"){
+			// call later the release event //
 
-		} catch(...){
+		}
 
-			if(onlyrocket)
-				continue;
-			// non-Rocket listener //
+		// look for global events //
+		EVENT_TYPE etype = ResolveStringToType(*containedlisteners[i]->ListenerName);
+		if(etype != EVENT_TYPE_ERROR){
 
-			// check for specific case //
-			if(*containedlisteners[i]->ListenerName == L"Init"){
-				// call now the init event //
-
-			} else if(*containedlisteners[i]->ListenerName == L"Release"){
-				// call later the release event //
-
-			}
-
-			// look for global events //
-			EVENT_TYPE etype = ResolveStringToType(*containedlisteners[i]->ListenerName);
-			if(etype != EVENT_TYPE_ERROR){
-
-				RegisterForEvent(etype);
-				continue;
-			}
-
-			Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: unknown event type "+*containedlisteners[i]->ListenerName+L", did you intent to use Generic type?");
-
+			RegisterForEvent(etype);
 			continue;
 		}
-		if(Element){
 
-			Element->AddEventListener(tohook, this);
-			// store to be able to detach later //
-			HookedRocketEvents.push_back(tohook);
-
-		} else {
-			// warn about this //
-			Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: couldn't hook Rocket event "+Convert::StringToWstring(tohook.CString()));
-		}
+		Logger::Get()->Warning(L"BaseGuiObject: _HookListeners: unknown event type "+*containedlisteners[i]->ListenerName+L", did you intent to use Generic type?");
 	}
-}
-// ------------------ Rocket callbacks ------------------ //
-void Leviathan::Gui::BaseGuiObject::OnDetach(Rocket::Core::Element* element){
-	// unset when Rocket destroys the element //
-	if(!ManualDetach){
-		Element = NULL;
-		// don't want to accidentally do unhooking //
-		HookedRocketEvents.clear();
-	}
-}
-
-void Leviathan::Gui::BaseGuiObject::OnAttach(Rocket::Core::Element* element){
-	// attached //
-	Logger::Get()->Info(L"GuiObject: "+Name+L" has been attached");
-}
-
-void Leviathan::Gui::BaseGuiObject::ProcessEvent(Rocket::Core::Event& receivedevent){
-	// call script to handle the event //
-	const Rocket::Core::String& eventtype = receivedevent.GetType();
-
-	// Get the listener name //
-	VerifyInversedEventTranslateMap();
-
-	auto iter = RocketEventToLeviathanListenerTranslate.find(eventtype);
-
-	if(iter == RocketEventToLeviathanListenerTranslate.end()){
-
-		Logger::Get()->Warning(L"BaseGuiObject: ProcessEvent: cannot translate rocket event "+Convert::StringToWstring(eventtype.CString())+
-			L" to Leviathan listener value");
-		return;
-	}
-
-	// check does the script contain right listeners //
-	ScriptModule* mod = Scripting->GetModule();
-
-	if(mod->DoesListenersContainSpecificListener(iter->second)){
-		// Call the script callback //
-		Logger::Get()->Info(L"BaseGuiObject: ProcessEvent: handling rocket event of type "+Convert::ToWstring(eventtype.CString())+L" on object "+Name);
-		// setup parameters //
-		vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
-			(new NamedVariableBlock(new VoidPtrBlock(&receivedevent), L"RocketEvent"));
-		// we are returning ourselves so increase refcount
-		AddRef();
-		receivedevent.AddReference();
-
-		ScriptRunningSetup sargs;
-		sargs.SetEntrypoint(mod->GetListeningFunctionName(iter->second)).SetArguments(Args);
-		// run the script //
-		shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
-
-		// handle return value //
-		int res = -1;
-		if(result->ConvertAndAssingToVariable(res)){
-
-			if(res == 1)
-				receivedevent.StopPropagation();
-		}
-	}
-}
-
-void Leviathan::Gui::BaseGuiObject::_UnhookAllListeners(){
-	// unregister all non-Rocket events //
-	UnRegisterAllEvents();
-
-	if(HookedRocketEvents.empty() || Element == NULL)
-		return;
-
-	ManualDetach = true;
-
-	for(std::list<Rocket::Core::String>::iterator iter = HookedRocketEvents.begin(); iter != HookedRocketEvents.end(); iter++){
-
-		Rocket::Core::String unregister = *iter;
-
-		Element->RemoveEventListener(unregister, this);
-	}
-	HookedRocketEvents.clear();
-	ManualDetach = false;
-}
-// ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::BaseGuiObject::CheckObjectLinkage(){
-	if(Element)
-		return true;
-
-	// search //
-	Element = ContainedInSheet->GetElementByID(Convert::WstringToString(RocketObjectName));
-
-
-	if(Element){
-		// link just Rocket events //
-		_HookListeners(true);
-		Logger::Get()->Info(L"BaseGuiObject: CheckObjectLinkage: successfully linked with new object");
-		return true;
-	}
-
-	return false;
 }
 // ------------------------------------ //
 void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericEvent** event2){
@@ -312,32 +153,4 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 	}
 }
 
-DLLEXPORT bool Leviathan::Gui::BaseGuiObject::SetInternalRMLWrapper(string rmlcode){
-	Element->SetInnerRML(rmlcode.c_str());
-	return true;
-}
 
-// ------------------------------------ //
-std::map<wstring, Rocket::Core::String> Leviathan::Gui::BaseGuiObject::LeviathanToRocketEventTranslate = boost::assign::map_list_of
-	(LISTENERNAME_ONSHOW, "show")
-	(LISTENERNAME_ONHIDE, "hide")
-	(LISTENERNAME_ONCLICK, "click")
-	(LISTENERNAME_ONVALUECHANGE, "change")
-	(LISTENERNAME_ONSUBMIT, "submit")
-;
-
-// This starts off empty //
-std::map<Rocket::Core::String, wstring> Leviathan::Gui::BaseGuiObject::RocketEventToLeviathanListenerTranslate;
-
-// But this function fills it //
-DLLEXPORT void Leviathan::Gui::BaseGuiObject::VerifyInversedEventTranslateMap(){
-	if(RocketEventToLeviathanListenerTranslate.size() != 0)
-		return;
-
-	// Inverse the other map and insert it to this map //
-	for(auto iter = LeviathanToRocketEventTranslate.begin(); iter != LeviathanToRocketEventTranslate.end(); ++iter){
-
-		RocketEventToLeviathanListenerTranslate[iter->second] = iter->first;
-	}
-
-}

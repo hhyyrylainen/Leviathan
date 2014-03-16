@@ -381,27 +381,12 @@ void Pong::PongGame::DoSpecialPostLoad(){
 	// load GUI documents //
 	GuiManagerAccess = Engine::GetEngine()->GetWindowEntity()->GetGUI();
 
-	GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"GUI/PongMenus.txt");
-
-	//#ifdef _DEBUG
-	// load debug panel, too //
-
-	GuiManagerAccess->LoadGUIFile(FileSystem::GetScriptsFolder()+L"GUI/DebugPanel.txt");
-	//#endif // _DEBUG
-
-	GuiManagerAccess->SetMouseFile(FileSystem::GetScriptsFolder()+L"GUI/cursor.rml");
 
 	// set skybox to have some sort of visuals //
 	WorldOfPong->SetSkyBox("NiceDaySky");
 
 	// link world and camera to a window //
 	GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
-
-	// I like the debugger //
-#ifdef _DEBUG
-	window1->GetGUI()->SetDebuggerOnThisContext();
-	//window1->GetGUI()->SetDebuggerVisibility(true);
-#endif // _DEBUG
 
 	window1->LinkObjects(MainCamera, WorldOfPong);
 

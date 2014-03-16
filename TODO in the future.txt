@@ -1,3 +1,4 @@
+- Add proper command line handling with tclap
 
 - Making ConnectionInfo properly thread safe
     - Either add a released parameter that is set after release and prevents doing anything after released

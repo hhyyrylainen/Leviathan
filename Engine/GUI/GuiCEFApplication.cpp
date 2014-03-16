@@ -16,7 +16,8 @@ DLLEXPORT Leviathan::Gui::CefApplication::~CefApplication(){
 bool Leviathan::Gui::CefApplication::OnBeforeNavigation(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefRequest> request,
 	NavigationType navigation_type, bool is_redirect)
 {
-	// Allow or block different types of navigation...
+	// Allow it //
+	return false;
 }
 // ------------------------------------ //
 void Leviathan::Gui::CefApplication::OnContextInitialized(){

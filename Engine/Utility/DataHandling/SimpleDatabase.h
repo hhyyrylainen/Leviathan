@@ -6,7 +6,6 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Rocket/Controls/DataSource.h"
 #include "Common/DataStoring/DataBlock.h"
 
 namespace Leviathan{
@@ -17,18 +16,19 @@ namespace Leviathan{
 
 	//! A class that can be used to pass databases to Rocket and generally keeping simple databases 
 	//! \warning Do NOT use this class as non-pointer objects (because linking will fail)
-	class SimpleDatabase : public Object, public Rocket::Controls::DataSource{
+	class SimpleDatabase : public Object{
 	public:
 		//! \brief Creates a new database. Should be used as pointer
-		DLLEXPORT SimpleDatabase(const string &rocketname);
+		DLLEXPORT SimpleDatabase(const wstring &databasename);
 		DLLEXPORT virtual ~SimpleDatabase();
 
-		// Rocket compatible get functions //
-		DLLEXPORT virtual void GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns);
-		DLLEXPORT virtual int GetNumRows(const Rocket::Core::String& table);
+		// Get functions for getting as strings Rocket compatible get functions //
+		DLLEXPORT virtual void GetRow(std::vector<wstring> &row, const wstring &table, int row_index, const std::vector<wstring> &columns);
+		DLLEXPORT virtual int GetNumRows(const wstring &table);
 
 		// Search functions //
-		DLLEXPORT shared_ptr<VariableBlock> GetValueOnRow(const wstring &table, const wstring &valuekeyname, const VariableBlock &wantedvalue, const wstring &wantedvaluekey);
+		DLLEXPORT shared_ptr<VariableBlock> GetValueOnRow(const wstring &table, const wstring &valuekeyname, const VariableBlock &wantedvalue, 
+			const wstring &wantedvaluekey);
 
 		// Managing functions //
 		DLLEXPORT bool AddValue(const wstring &database, shared_ptr<SimpleDatabaseRowObject> valuenamesandvalues);

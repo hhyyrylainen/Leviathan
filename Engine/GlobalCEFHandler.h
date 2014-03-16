@@ -6,9 +6,15 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "include/internal/cef_ptr.h"
 
+// Forward declare some things //
+class CefScopedSandboxInfo;
 
 namespace Leviathan{
+
+
+
 
 	//! \brief Keeps certain CEF objects allocated for long enough
 	class CEFSandboxInfoKeeper{
@@ -18,6 +24,8 @@ namespace Leviathan{
 		DLLEXPORT ~CEFSandboxInfoKeeper();
 
 		void* GetPtr();
+
+		Gui::CefHandler* GetCEFHandlerDirect() const;
 
 	protected:
 		shared_ptr<CefScopedSandboxInfo> ScopedInfo;
@@ -41,7 +49,7 @@ namespace Leviathan{
 			);
 
 		DLLEXPORT static void CEFLastThingInProgram();
-		DLLEXPORT static CEFSandboxInfoKeeper* GetCEFObjects() const;
+		DLLEXPORT static CEFSandboxInfoKeeper* GetCEFObjects();
 
 		DLLEXPORT static void DoCEFMessageLoopWork();
 

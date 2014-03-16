@@ -43,7 +43,7 @@ namespace Pong{
 		friend Arena;
 	public:
 		BasePongParts(bool isserver) : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), ScoreLimit(20),
-			BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData(new Leviathan::SimpleDatabase("GameConfiguration")),
+			BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData(new Leviathan::SimpleDatabase(L"GameConfiguration")),
 			GamePaused(false), GameAI(NULL)
 		{
 			BasepongStaticAccess = this;

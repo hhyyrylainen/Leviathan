@@ -8,7 +8,7 @@
 #include "../Iterators/WstringIterator.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::SimpleDatabase::SimpleDatabase(const string &rocketname) : Rocket::Controls::DataSource(rocketname.c_str()){
+DLLEXPORT Leviathan::SimpleDatabase::SimpleDatabase(const wstring &databasename){
 
 }
 
@@ -28,7 +28,8 @@ DLLEXPORT bool Leviathan::SimpleDatabase::AddValue(const wstring &database, shar
 	iter->second->push_back(valuenamesandvalues);
 
 	// Notify update //
-	NotifyRowAdd(Convert::WstringToString(database).c_str(), iter->second->size()-1, 1);
+
+
 	return true;
 }
 
@@ -48,13 +49,14 @@ DLLEXPORT bool Leviathan::SimpleDatabase::RemoveValue(const wstring &database, i
 	// Remove //
 	iter->second->erase(iter->second->begin()+(size_t)row);
 	// Notify update //
-	NotifyRowRemove(Convert::WstringToString(database).c_str(), row, 1);
+
+
 	return true;
 }
 // ------------------------------------ //
-void Leviathan::SimpleDatabase::GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns){
+DLLEXPORT void Leviathan::SimpleDatabase::GetRow(std::vector<wstring> &row, const wstring &table, int row_index, const std::vector<wstring> &columns){
 	// If we are missing the database we shouldn't add it //
-	SimpleDatabaseObject::iterator iter = Database.find(Convert::StringToWstring(table.CString()));
+	SimpleDatabaseObject::iterator iter = Database.find(table);
 
 	if(iter == Database.end()){
 		// No such database //
@@ -73,19 +75,19 @@ void Leviathan::SimpleDatabase::GetRow(Rocket::Core::StringList& row, const Rock
 	for(size_t i = 0; i < columns.size(); i++){
 
 
-		auto iter2 = datbaseentry.find(Convert::StringToWstring(columns[i].CString()));
+		auto iter2 = datbaseentry.find(columns[i]);
 		if(iter2 != datbaseentry.end()){
 			// Add to result //
-			row.push_back((iter2->second->operator string()).c_str());
+			row.push_back(iter2->second->operator wstring());
 		}
 	}
 
 
 }
 
-int Leviathan::SimpleDatabase::GetNumRows(const Rocket::Core::String& table){
+DLLEXPORT int Leviathan::SimpleDatabase::GetNumRows(const wstring &table){
 	// If we are missing the database we shouldn't add it //
-	SimpleDatabaseObject::iterator iter = Database.find(Convert::StringToWstring(table.CString()));
+	SimpleDatabaseObject::iterator iter = Database.find(table);
 
 	if(iter == Database.end()){
 		// No such database //

@@ -4,12 +4,16 @@
 #include "Window.h"
 #endif
 #include "Engine.h"
-#include "Rocket/Core/Context.h"
 #include <boost/assign/list_of.hpp>
 #include "Exceptions/ExceptionNotFound.h"
 #include "OgreRoot.h"
 #include "OgreSceneManager.h"
 #include "OgreViewport.h"
+#include "include/cef_browser.h"
+#include "chromium/KeyboardCodes.h"
+#include "include/cef_keyboard_handler.h"
+#include "GlobalCEFHandler.h"
+#include "GUI/GuiCEFHandler.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -33,37 +37,6 @@ X11::XID Leviathan::Window::GetForegroundWindow(){
 	int revert_to;
 	XGetInputFocus(XDisplay, &win, &revert_to); // see man
 
-//    XID foo;
-//    int bari;
-//    unsigned int bar;
-//
-//    do{
-//        XQueryPointer(XDisplay, DefaultRootWindow(XDisplay), &foo, &win, &bari, &bari, &bari, &bari, &bar);
-//    } while(win <= 0);
-//
-//    unsigned int n;
-//    XID *wins;
-//    XWindowAttributes xwa;
-//
-//
-//    XQueryTree(XDisplay, win, &foo, &foo, &wins, &n);
-//
-//    bar=0;
-//    while(--n >= 0){
-//        XGetWindowAttributes(XDisplay, wins[n], &xwa);
-//        if((xwa.width * xwa.height) > bar){
-//            win = wins[n];
-//            bar = xwa.width * xwa.height;
-//        }
-//        n--;
-//    }
-//
-//    XFree(wins);
-
-
-
-	//assert((olddisp == XDisplay) && "X display changed in window");
-
 	return win;
 }
 
@@ -72,8 +45,8 @@ X11::XID Leviathan::Window::GetForegroundWindow(){
 
 
 DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner) : OWindow(owindow),
-	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), inputreceiver(NULL), LastFrameDownMouseButtons(0),
-	ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true)
+	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), LastFrameDownMouseButtons(0),
+	ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true), InputProcessedByCEF(false)
 #ifdef __GNUC__
 	, XDisplay(NULL), m_hwnd(0)
 #else
@@ -250,7 +223,6 @@ void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
 	// update mouse //
 	_CheckMouseVisibilityStates();
 	// little hack to get the context //
-	_CustomMouseMakeSureMouseIsRight(OwningWindow->GetGUI()->GetContext());
 }
 // ------------------------------------ //
 #ifdef _WIN32
@@ -372,7 +344,7 @@ void Leviathan::Window::UpdateOISMouseWindowSize(){
 	ms.height = height;
 }
 
-DLLEXPORT void Leviathan::Window::GatherInput(Rocket::Core::Context* context){
+DLLEXPORT void Leviathan::Window::GatherInput(){
 	// quit if window closed //
 	if(OWindow->isClosed() || !WindowKeyboard || !WindowMouse){
 
@@ -384,13 +356,17 @@ DLLEXPORT void Leviathan::Window::GatherInput(Rocket::Core::Context* context){
 	if(FirstInput){
 		FirstInput = false;
 
-		_CustomMouseMakeSureMouseIsRight(context);
 		_CheckMouseVisibilityStates();
 	}
 
 	// set parameters that listener functions need //
 	ThisFrameHandledCreate = false;
-	inputreceiver = context;
+
+	// Set us as the input processor //
+	GlobalCEFHandler::GetCEFObjects()->GetCEFHandlerDirect()->SetCurrentInputHandlingWindow(this);
+
+	// Capture the browser variable //
+
 
 	OwningWindow->GetInputController()->StartInputGather();
 
@@ -431,31 +407,43 @@ DLLEXPORT void Leviathan::Window::GatherInput(Rocket::Core::Context* context){
 		// pass input //
 		OwningWindow->GetInputController()->SendMouseMovement(xmoved, ymoved);
 	}
+
+	// Reset the input processor //
+	GlobalCEFHandler::GetCEFObjects()->GetCEFHandlerDirect()->SetCurrentInputHandlingWindow(NULL);
 }
 
 void Leviathan::Window::CheckInputState(){
 	if(ThisFrameHandledCreate)
 		return;
 
+	const OIS::MouseState& mstate = WindowMouse->getMouseState();
+
 	// create keyboard special key states here //
 	SpecialKeyModifiers = 0;
 	if(WindowKeyboard->isModifierDown(OIS::Keyboard::Ctrl))
-		SpecialKeyModifiers |= Rocket::Core::Input::KM_CTRL;
-
+		SpecialKeyModifiers |= EVENTFLAG_CONTROL_DOWN;
 	if(WindowKeyboard->isModifierDown(OIS::Keyboard::Alt))
-		SpecialKeyModifiers |= Rocket::Core::Input::KM_ALT;
+		SpecialKeyModifiers |= EVENTFLAG_ALT_DOWN;
 	if(WindowKeyboard->isModifierDown(OIS::Keyboard::Shift))
-		SpecialKeyModifiers |= Rocket::Core::Input::KM_SHIFT;
+		SpecialKeyModifiers |= EVENTFLAG_SHIFT_DOWN;
 	if(WindowKeyboard->isKeyDown(OIS::KC_CAPITAL))
-		SpecialKeyModifiers |= Rocket::Core::Input::KM_CAPSLOCK;
+		SpecialKeyModifiers |= EVENTFLAG_CAPS_LOCK_ON;
 	if(WindowKeyboard->isKeyDown(OIS::KC_LWIN))
-		SpecialKeyModifiers |= Rocket::Core::Input::KM_META;
+		SpecialKeyModifiers |= EVENTFLAG_COMMAND_DOWN;
 	if(WindowKeyboard->isKeyDown(OIS::KC_NUMLOCK))
-		SpecialKeyModifiers |= Rocket::Core::Input::KM_NUMLOCK;
-	if(WindowKeyboard->isKeyDown(OIS::KC_SCROLL))
-		SpecialKeyModifiers |= Rocket::Core::Input::KM_SCROLLLOCK;
-
-
+		SpecialKeyModifiers |= EVENTFLAG_NUM_LOCK_ON;
+	if(WindowKeyboard->isKeyDown(OIS::KC_LEFT))
+		SpecialKeyModifiers |= EVENTFLAG_IS_LEFT;
+	if(WindowKeyboard->isKeyDown(OIS::KC_RIGHT))
+		SpecialKeyModifiers |= EVENTFLAG_IS_RIGHT;
+	if(mstate.buttonDown(OIS::MB_Left))
+		SpecialKeyModifiers |= EVENTFLAG_LEFT_MOUSE_BUTTON;
+	if(mstate.buttonDown(OIS::MB_Right))
+		SpecialKeyModifiers |= EVENTFLAG_RIGHT_MOUSE_BUTTON;
+	if(mstate.buttonDown(OIS::MB_Middle))
+		SpecialKeyModifiers |= EVENTFLAG_MIDDLE_MOUSE_BUTTON;
+	// TODO: add 
+	// EVENTFLAG_IS_KEY_PAD
 
 	ThisFrameHandledCreate = true;
 }
@@ -466,23 +454,30 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 
 	bool SentToController = false;
 
-	// Try to send text input to Rocket //
-	bool passedtext = false;
-	if((arg.text > 31 || arg.text == '	') && (arg.text <= 126 || arg.text > 127)){
-		// Try to pass it //
-		passedtext = !inputreceiver->ProcessTextInput(static_cast<Rocket::Core::word>(arg.text));
-	}
+	CefKeyEvent cevent;
 
-	if(!passedtext){
-		// Now try sending key input //
-		if(inputreceiver->ProcessKeyDown(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
+	cevent.modifiers = SpecialKeyModifiers;
+	cevent.windows_key_code = OISRocketKeyConvert[arg.key];
+	cevent.character = arg.text;
+	cevent.is_system_key = false;
 
-			// Finally try sending it to GUI //
-			if(!OwningWindow->GetGUI()->ProcessKeyDown(arg.key, SpecialKeyModifiers)){
+	InputProcessedByCEF = false;
 
-				SentToController = true;
-				OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, true);
-			}
+	// Pass it //
+	inputreceiver->SendKeyEvent(cevent);
+
+	// Check is it now handled or not and continue //
+	
+
+
+	// Now try sending key input //
+	if(!InputProcessedByCEF){
+
+		// Finally try sending it to GUI //
+		if(!OwningWindow->GetGUI()->ProcessKeyDown(arg.key, SpecialKeyModifiers)){
+
+			SentToController = true;
+			OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, true);
 		}
 	}
 
@@ -497,13 +492,10 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 
 bool Leviathan::Window::keyReleased(const OIS::KeyEvent &arg){
 	CheckInputState();
-	// pass event to active Rocket context //
-	if(inputreceiver->ProcessKeyUp(OISRocketKeyConvert[arg.key], SpecialKeyModifiers)){
-		// After not even GUI wanting update send to the input object //
-		OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, false);
-	} else {
-		OwningWindow->GetInputController()->OnBlockedInput(arg.key, SpecialKeyModifiers, false);
-	}
+	
+	// Apparently the only thing that wants this is the input controller //
+	OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, false);
+
 
 
 	// don't really know what to return
@@ -518,8 +510,19 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
 
 	if(!MouseCaptured){
 		// only pass this data if we aren't going to pass our own captured mouse //
-		inputreceiver->ProcessMouseMove(mstate.X.abs, mstate.Y.abs, SpecialKeyModifiers);
-		inputreceiver->ProcessMouseWheel(-mstate.Z.rel, SpecialKeyModifiers);
+		CefMouseEvent mevent;
+		mevent.modifiers = SpecialKeyModifiers;
+		mevent.x = mstate.X.abs;
+		mevent.y = mstate.Y.abs;
+
+		inputreceiver->SendMouseMoveEvent(mevent, IsMouseOutsideWindowClientArea());
+
+		CefMouseEvent second;
+		mevent.modifiers = SpecialKeyModifiers;
+		second.x = 0;
+		second.y = 0;
+
+		inputreceiver->SendMouseWheelEvent(second, 0, -mstate.Z.rel); 
 	}
 	_CheckMouseVisibilityStates();
 
@@ -529,8 +532,11 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
 
 bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id){
 	CheckInputState();
+
+	const OIS::MouseState& mstate = arg.state;
+
 	// pass event to active Rocket context //
-	int differences = arg.state.buttons^LastFrameDownMouseButtons;
+	int differences = mstate.buttons^LastFrameDownMouseButtons;
 
 	// find differences //
 #ifdef _WIN32
@@ -547,8 +553,29 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 
 
 	int Keynumber = index;
-	if(!MouseCaptured)
-		inputreceiver->ProcessMouseButtonDown(Keynumber, SpecialKeyModifiers);
+	if(!MouseCaptured){
+
+		CefMouseEvent mevent;
+		mevent.modifiers = SpecialKeyModifiers;
+		mevent.x = mstate.X.abs;
+		mevent.y = mstate.Y.abs;
+
+		cef_mouse_button_type_t btype = MBT_LEFT;
+
+		if(Keynumber == 1){
+			btype = MBT_RIGHT;
+
+		} else if(Keynumber == 2){
+			btype = MBT_MIDDLE;
+
+		} else {
+			// We actually don't want to pass this //
+			return true;
+		}
+
+		inputreceiver->SendMouseClickEvent(mevent, btype, false, 1);
+	}
+		
 
 	_CheckMouseVisibilityStates();
 
@@ -558,6 +585,9 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 
 bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id){
 	CheckInputState();
+
+	const OIS::MouseState& mstate = arg.state;
+
 	// pass event to active Rocket context //
 	int differences = arg.state.buttons^LastFrameDownMouseButtons;
 
@@ -576,7 +606,25 @@ bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButt
 
 	int Keynumber = index;
 
-	inputreceiver->ProcessMouseButtonUp(Keynumber, SpecialKeyModifiers);
+	CefMouseEvent mevent;
+	mevent.modifiers = SpecialKeyModifiers;
+	mevent.x = mstate.X.abs;
+	mevent.y = mstate.Y.abs;
+
+	cef_mouse_button_type_t btype = MBT_LEFT;
+
+	if(Keynumber == 1){
+		btype = MBT_RIGHT;
+
+	} else if(Keynumber == 2){
+		btype = MBT_MIDDLE;
+
+	} else {
+		// We actually don't want to pass this //
+		return true;
+	}
+
+	inputreceiver->SendMouseClickEvent(mevent, btype, false, 1);
 
 	// don't really know what to return
 	return true;
@@ -606,7 +654,7 @@ DLLEXPORT string Leviathan::Window::GetOISCharacterAsText(const OIS::KeyCode &co
 
 void Leviathan::Window::_CreateOverlayScene(){
 	// create scene manager //
-	OverlayScene = Ogre::Root::getSingleton().createSceneManager(Ogre::ST_EXTERIOR_FAR, "Overlay_forWindow_");
+	OverlayScene = Ogre::Root::getSingleton().createSceneManager(Ogre::ST_INTERIOR, "Overlay_forWindow_");
 
 	// also needs a viewport that is last to be drawn //
 	float ViewWidth = 1.f;
@@ -655,18 +703,13 @@ void Leviathan::Window::_CheckMouseVisibilityStates(){
 	SetHideCursor(ApplicationWantCursorState);
 }
 
-void Leviathan::Window::_CustomMouseMakeSureMouseIsRight(Rocket::Core::Context* context){
-	// custom mouse get //
-	int absx = 0, absy = 0;
-	GetRelativeMouse(absx, absy);
-
-	context->ProcessMouseMove(absx, absy, 0);
+void Leviathan::Window::ReportKeyEventAsUsed(){
+	InputProcessedByCEF = true;
 }
-
 // ------------------ KeyCode conversion map ------------------ //
-#define QUICKKEYPAIR(x, y) OIS::x, Rocket::Core::Input::y
+#define QUICKKEYPAIR(x, y) OIS::x, WebCore::y
 #define SIMPLEPAIR(x, y)	L##x, OIS::y
-#define QUICKONETOONEPAIR(x) OIS::KC_##x, Rocket::Core::Input::KI_##x
+#define QUICKONETOONEPAIR(x) OIS::KC_##x, WebCore::VKEY_##x
 
 
 #define SIMPLEONETOONE(x)	WSTRINGIFY(x), OIS::KC_##x
@@ -776,9 +819,9 @@ DLLEXPORT wstring Leviathan::Window::ConvertOISKeyCodeToWstring(const OIS::KeyCo
 
 
 
-map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> Leviathan::Window::OISRocketKeyConvert = boost::assign::map_list_of
-	(QUICKKEYPAIR(KC_UNASSIGNED, KI_UNKNOWN))
-	(QUICKKEYPAIR(KC_ESCAPE, KI_ESCAPE))
+map<OIS::KeyCode, int> Leviathan::Window::OISRocketKeyConvert = boost::assign::map_list_of
+	(QUICKKEYPAIR(KC_UNASSIGNED, VKEY_UNKNOWN))
+	(QUICKONETOONEPAIR(ESCAPE))
 	(QUICKONETOONEPAIR(1))
 	(QUICKONETOONEPAIR(2))
 	(QUICKONETOONEPAIR(3))
@@ -789,10 +832,10 @@ map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> Leviathan::Window::OISRock
 	(QUICKONETOONEPAIR(8))
 	(QUICKONETOONEPAIR(9))
 	(QUICKONETOONEPAIR(0))
-	(QUICKKEYPAIR(KC_MINUS, KI_OEM_MINUS))
-	(QUICKKEYPAIR(KC_EQUALS, KI_OEM_PLUS)) //
-	(QUICKKEYPAIR(KC_BACK, KI_BACK))
-	(QUICKKEYPAIR(KC_TAB, KI_TAB))
+	(QUICKKEYPAIR(KC_MINUS, VKEY_OEM_MINUS))
+	(QUICKKEYPAIR(KC_EQUALS, VKEY_OEM_PLUS)) //
+	(QUICKKEYPAIR(KC_BACK, VKEY_BACK))
+	(QUICKKEYPAIR(KC_TAB, VKEY_TAB))
 	(QUICKONETOONEPAIR(Q))
 	(QUICKONETOONEPAIR(W))
 	(QUICKONETOONEPAIR(E))
@@ -803,10 +846,10 @@ map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> Leviathan::Window::OISRock
 	(QUICKONETOONEPAIR(I))
 	(QUICKONETOONEPAIR(O))
 	(QUICKONETOONEPAIR(P))
-	(QUICKKEYPAIR(KC_LBRACKET, KI_OEM_4))
-	(QUICKKEYPAIR(KC_RBRACKET, KI_OEM_6))
-	(QUICKKEYPAIR(KC_RETURN, KI_RETURN))
-	(QUICKKEYPAIR(KC_LCONTROL, KI_LCONTROL))
+	(QUICKKEYPAIR(KC_LBRACKET, VKEY_OEM_4))
+	(QUICKKEYPAIR(KC_RBRACKET, VKEY_OEM_6))
+	(QUICKKEYPAIR(KC_RETURN, VKEY_RETURN))
+	(QUICKKEYPAIR(KC_LCONTROL, VKEY_LCONTROL))
 	(QUICKONETOONEPAIR(A))
 	(QUICKONETOONEPAIR(S))
 	(QUICKONETOONEPAIR(D))
@@ -816,11 +859,11 @@ map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> Leviathan::Window::OISRock
 	(QUICKONETOONEPAIR(J))
 	(QUICKONETOONEPAIR(K))
 	(QUICKONETOONEPAIR(L))
-	(QUICKKEYPAIR(KC_SEMICOLON, KI_OEM_1))
-	(QUICKKEYPAIR(KC_APOSTROPHE, KI_OEM_7)) //
-	(QUICKKEYPAIR(KC_GRAVE, KI_OEM_3))
-	(QUICKKEYPAIR(KC_LSHIFT, KI_LSHIFT))
-	(QUICKKEYPAIR(KC_BACKSLASH, KI_OEM_5))
+	(QUICKKEYPAIR(KC_SEMICOLON, VKEY_OEM_1))
+	(QUICKKEYPAIR(KC_APOSTROPHE, VKEY_OEM_7)) //
+	(QUICKKEYPAIR(KC_GRAVE, VKEY_OEM_3))
+	(QUICKKEYPAIR(KC_LSHIFT, VKEY_LSHIFT))
+	(QUICKKEYPAIR(KC_BACKSLASH, VKEY_OEM_5))
 	(QUICKONETOONEPAIR(Z))
 	(QUICKONETOONEPAIR(X))
 	(QUICKONETOONEPAIR(C))
@@ -828,14 +871,14 @@ map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> Leviathan::Window::OISRock
 	(QUICKONETOONEPAIR(B))
 	(QUICKONETOONEPAIR(N))
 	(QUICKONETOONEPAIR(M))
-	(QUICKKEYPAIR(KC_COMMA, KI_OEM_COMMA))
-	(QUICKKEYPAIR(KC_PERIOD, KI_OEM_PERIOD))
-	(QUICKKEYPAIR(KC_SLASH, KI_OEM_2))
-	(QUICKKEYPAIR(KC_RSHIFT, KI_RSHIFT))
-	(QUICKKEYPAIR(KC_MULTIPLY, KI_MULTIPLY))
-	(QUICKKEYPAIR(KC_LMENU, KI_LMENU))
-	(QUICKKEYPAIR(KC_SPACE, KI_SPACE))
-	(QUICKKEYPAIR(KC_CAPITAL, KI_CAPITAL))
+	(QUICKKEYPAIR(KC_COMMA, VKEY_OEM_COMMA))
+	(QUICKKEYPAIR(KC_PERIOD, VKEY_OEM_PERIOD))
+	(QUICKKEYPAIR(KC_SLASH, VKEY_OEM_2))
+	(QUICKKEYPAIR(KC_RSHIFT, VKEY_RSHIFT))
+	(QUICKKEYPAIR(KC_MULTIPLY, VKEY_MULTIPLY))
+	(QUICKKEYPAIR(KC_LMENU, VKEY_LMENU))
+	(QUICKKEYPAIR(KC_SPACE, VKEY_SPACE))
+	(QUICKKEYPAIR(KC_CAPITAL, VKEY_CAPITAL))
 	(QUICKONETOONEPAIR(F1))
 	(QUICKONETOONEPAIR(F2))
 	(QUICKONETOONEPAIR(F3))
@@ -846,230 +889,81 @@ map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> Leviathan::Window::OISRock
 	(QUICKONETOONEPAIR(F8))
 	(QUICKONETOONEPAIR(F9))
 	(QUICKONETOONEPAIR(F10))
-	(QUICKKEYPAIR(KC_NUMLOCK, KI_NUMLOCK))
-	(QUICKKEYPAIR(KC_SCROLL, KI_SCROLL))
+	(QUICKKEYPAIR(KC_NUMLOCK, VKEY_NUMLOCK))
+	(QUICKKEYPAIR(KC_SCROLL, VKEY_SCROLL))
 	(QUICKONETOONEPAIR(NUMPAD7))
 	(QUICKONETOONEPAIR(NUMPAD8))
 	(QUICKONETOONEPAIR(NUMPAD9))
-	(QUICKKEYPAIR(KC_SUBTRACT, KI_SUBTRACT))
+	(QUICKKEYPAIR(KC_SUBTRACT, VKEY_SUBTRACT))
 	(QUICKONETOONEPAIR(NUMPAD4))
 	(QUICKONETOONEPAIR(NUMPAD5))
 	(QUICKONETOONEPAIR(NUMPAD6))
-	(QUICKKEYPAIR(KC_ADD, KI_ADD))
+	(QUICKKEYPAIR(KC_ADD, VKEY_ADD))
 	(QUICKONETOONEPAIR(NUMPAD1))
 	(QUICKONETOONEPAIR(NUMPAD2))
 	(QUICKONETOONEPAIR(NUMPAD3))
 	(QUICKONETOONEPAIR(NUMPAD9))
-	(QUICKKEYPAIR(KC_DECIMAL, KI_DECIMAL))
-	(QUICKKEYPAIR(KC_OEM_102, KI_OEM_102))
+	(QUICKKEYPAIR(KC_DECIMAL, VKEY_DECIMAL))
+	(QUICKKEYPAIR(KC_OEM_102, VKEY_OEM_102))
 	(QUICKONETOONEPAIR(F11))
 	(QUICKONETOONEPAIR(F12))
 	(QUICKONETOONEPAIR(F13))
 	(QUICKONETOONEPAIR(F14))
 	(QUICKONETOONEPAIR(F15))
-	(QUICKKEYPAIR(KC_OEM_102, KI_OEM_102))
-	(QUICKKEYPAIR(KC_KANA, KI_KANA))
-	(QUICKKEYPAIR(KC_ABNT_C1, KI_OEM_2)) //
-	(QUICKKEYPAIR(KC_CONVERT, KI_CONVERT))
-	(QUICKKEYPAIR(KC_NOCONVERT, KI_NONCONVERT))
-	(QUICKKEYPAIR(KC_YEN, KI_UNKNOWN)) //
-	(QUICKKEYPAIR(KC_ABNT_C2, KI_DECIMAL))
-	(QUICKKEYPAIR(KC_NUMPADEQUALS, KI_OEM_NEC_EQUAL))
-	(QUICKKEYPAIR(KC_PREVTRACK, KI_MEDIA_PREV_TRACK))
-	(QUICKKEYPAIR(KC_AT, KI_OEM_8))
-	(QUICKKEYPAIR(KC_COLON, KI_OEM_1)) //
-	(QUICKKEYPAIR(KC_UNDERLINE, KI_OEM_MINUS)) //
-	(QUICKKEYPAIR(KC_KANJI, KI_KANJI))
-	(QUICKKEYPAIR(KC_STOP, KI_BROWSER_STOP)) //
-	(QUICKKEYPAIR(KC_AX, KI_OEM_AX))
-	(QUICKKEYPAIR(KC_UNLABELED, KI_UNKNOWN))
-	(QUICKKEYPAIR(KC_NEXTTRACK, KI_MEDIA_NEXT_TRACK))
-	(QUICKKEYPAIR(KC_NUMPADENTER, KI_NUMPADENTER))
-	(QUICKKEYPAIR(KC_RCONTROL, KI_RCONTROL))
-	(QUICKKEYPAIR(KC_MUTE, KI_VOLUME_MUTE))
-	(QUICKKEYPAIR(KC_CALCULATOR, KI_UNKNOWN))
-	(QUICKKEYPAIR(KC_PLAYPAUSE, KI_MEDIA_PLAY_PAUSE))
-	(QUICKKEYPAIR(KC_MEDIASTOP, KI_MEDIA_STOP))
-	(QUICKKEYPAIR(KC_VOLUMEDOWN, KI_VOLUME_DOWN))
-	(QUICKKEYPAIR(KC_VOLUMEUP, KI_VOLUME_UP))
-	(QUICKKEYPAIR(KC_WEBHOME, KI_BROWSER_HOME))
-	(QUICKKEYPAIR(KC_NUMPADCOMMA, KI_DECIMAL)) //
-	(QUICKKEYPAIR(KC_DIVIDE, KI_DIVIDE))
-	(QUICKKEYPAIR(KC_SYSRQ, KI_UNKNOWN)) //
-	(QUICKKEYPAIR(KC_RMENU, KI_RMENU))
-	(QUICKKEYPAIR(KC_PAUSE, KI_PAUSE))
-	(QUICKKEYPAIR(KC_HOME, KI_HOME))
-	(QUICKKEYPAIR(KC_UP, KI_UP))
-	(QUICKKEYPAIR(KC_PGUP, KI_PRIOR))
-	(QUICKKEYPAIR(KC_LEFT, KI_LEFT))
-	(QUICKKEYPAIR(KC_RIGHT, KI_RIGHT))
-	(QUICKKEYPAIR(KC_END, KI_END))
-	(QUICKKEYPAIR(KC_DOWN, KI_DOWN))
-	(QUICKKEYPAIR(KC_PGDOWN, KI_NEXT))
-	(QUICKKEYPAIR(KC_INSERT, KI_INSERT))
-	(QUICKKEYPAIR(KC_DELETE, KI_DELETE))
-	(QUICKKEYPAIR(KC_LWIN, KI_LWIN))
-	(QUICKKEYPAIR(KC_RWIN, KI_RWIN))
-	(QUICKKEYPAIR(KC_APPS, KI_APPS))
-	(QUICKKEYPAIR(KC_POWER, KI_POWER))
-	(QUICKKEYPAIR(KC_SLEEP, KI_SLEEP))
-	(QUICKKEYPAIR(KC_WAKE, KI_WAKE))
-	(QUICKKEYPAIR(KC_WEBSEARCH, KI_BROWSER_SEARCH))
-	(QUICKKEYPAIR(KC_WEBFAVORITES, KI_BROWSER_FAVORITES))
-	(QUICKKEYPAIR(KC_WEBREFRESH, KI_BROWSER_REFRESH))
-	(QUICKKEYPAIR(KC_WEBSTOP, KI_BROWSER_STOP))
-	(QUICKKEYPAIR(KC_WEBFORWARD, KI_BROWSER_FORWARD))
-	(QUICKKEYPAIR(KC_WEBBACK, KI_BROWSER_BACK))
-	(QUICKKEYPAIR(KC_MYCOMPUTER, KI_UNKNOWN)) //
-	(QUICKKEYPAIR(KC_MAIL, KI_LAUNCH_MAIL))
-	(QUICKKEYPAIR(KC_MEDIASELECT, KI_LAUNCH_MEDIA_SELECT))
+	(QUICKKEYPAIR(KC_OEM_102, VKEY_OEM_102))
+	(QUICKKEYPAIR(KC_KANA, VKEY_KANA))
+	(QUICKKEYPAIR(KC_ABNT_C1, VKEY_OEM_2)) //
+	(QUICKKEYPAIR(KC_CONVERT, VKEY_CONVERT))
+	(QUICKKEYPAIR(KC_NOCONVERT, VKEY_NONCONVERT))
+	(QUICKKEYPAIR(KC_YEN, VKEY_UNKNOWN)) //
+	(QUICKKEYPAIR(KC_ABNT_C2, VKEY_DECIMAL))
+	(QUICKKEYPAIR(KC_NUMPADEQUALS, VKEY_RETURN))
+	(QUICKKEYPAIR(KC_PREVTRACK, VKEY_MEDIA_PREV_TRACK))
+	(QUICKKEYPAIR(KC_AT, VKEY_OEM_8))
+	(QUICKKEYPAIR(KC_COLON, VKEY_OEM_1)) //
+	(QUICKKEYPAIR(KC_UNDERLINE, VKEY_OEM_MINUS)) //
+	(QUICKKEYPAIR(KC_KANJI, VKEY_KANJI))
+	(QUICKKEYPAIR(KC_STOP, VKEY_BROWSER_STOP)) //
+	(QUICKKEYPAIR(KC_AX, VKEY_UNKNOWN))
+	(QUICKKEYPAIR(KC_UNLABELED, VKEY_UNKNOWN))
+	(QUICKKEYPAIR(KC_NEXTTRACK, VKEY_MEDIA_NEXT_TRACK))
+	(QUICKKEYPAIR(KC_NUMPADENTER, VKEY_RETURN))
+	(QUICKKEYPAIR(KC_RCONTROL, VKEY_RCONTROL))
+	(QUICKKEYPAIR(KC_MUTE, VKEY_VOLUME_MUTE))
+	(QUICKKEYPAIR(KC_CALCULATOR, VKEY_UNKNOWN))
+	(QUICKKEYPAIR(KC_PLAYPAUSE, VKEY_MEDIA_PLAY_PAUSE))
+	(QUICKKEYPAIR(KC_MEDIASTOP, VKEY_MEDIA_STOP))
+	(QUICKKEYPAIR(KC_VOLUMEDOWN, VKEY_VOLUME_DOWN))
+	(QUICKKEYPAIR(KC_VOLUMEUP, VKEY_VOLUME_UP))
+	(QUICKKEYPAIR(KC_WEBHOME, VKEY_BROWSER_HOME))
+	(QUICKKEYPAIR(KC_NUMPADCOMMA, VKEY_DECIMAL)) //
+	(QUICKKEYPAIR(KC_DIVIDE, VKEY_DIVIDE))
+	(QUICKKEYPAIR(KC_SYSRQ, VKEY_UNKNOWN)) //
+	(QUICKKEYPAIR(KC_RMENU, VKEY_RMENU))
+	(QUICKKEYPAIR(KC_PAUSE, VKEY_PAUSE))
+	(QUICKKEYPAIR(KC_HOME, VKEY_HOME))
+	(QUICKKEYPAIR(KC_UP, VKEY_UP))
+	(QUICKKEYPAIR(KC_PGUP, VKEY_PRIOR))
+	(QUICKKEYPAIR(KC_LEFT, VKEY_LEFT))
+	(QUICKKEYPAIR(KC_RIGHT, VKEY_RIGHT))
+	(QUICKKEYPAIR(KC_END, VKEY_END))
+	(QUICKKEYPAIR(KC_DOWN, VKEY_DOWN))
+	(QUICKKEYPAIR(KC_PGDOWN, VKEY_NEXT))
+	(QUICKKEYPAIR(KC_INSERT, VKEY_INSERT))
+	(QUICKKEYPAIR(KC_DELETE, VKEY_DELETE))
+	(QUICKKEYPAIR(KC_LWIN, VKEY_LWIN))
+	(QUICKKEYPAIR(KC_RWIN, VKEY_RWIN))
+	(QUICKKEYPAIR(KC_APPS, VKEY_APPS))
+	(QUICKKEYPAIR(KC_POWER, VKEY_UNKNOWN))
+	(QUICKKEYPAIR(KC_SLEEP, VKEY_SLEEP))
+	(QUICKKEYPAIR(KC_WAKE, VKEY_UNKNOWN))
+	(QUICKKEYPAIR(KC_WEBSEARCH, VKEY_BROWSER_SEARCH))
+	(QUICKKEYPAIR(KC_WEBFAVORITES, VKEY_BROWSER_FAVORITES))
+	(QUICKKEYPAIR(KC_WEBREFRESH, VKEY_BROWSER_REFRESH))
+	(QUICKKEYPAIR(KC_WEBSTOP, VKEY_BROWSER_STOP))
+	(QUICKKEYPAIR(KC_WEBFORWARD, VKEY_BROWSER_FORWARD))
+	(QUICKKEYPAIR(KC_WEBBACK, VKEY_BROWSER_BACK))
+	(QUICKKEYPAIR(KC_MYCOMPUTER, VKEY_UNKNOWN)) //
+	(QUICKKEYPAIR(KC_MAIL, VKEY_MEDIA_LAUNCH_MAIL))
+	(QUICKKEYPAIR(KC_MEDIASELECT, VKEY_MEDIA_LAUNCH_MEDIA_SELECT))
 ;
-
-/*
-key_identifiers[OIS::KC_UNASSIGNED] = Rocket::Core::Input::KI_UNKNOWN;
-key_identifiers[OIS::KC_ESCAPE] = Rocket::Core::Input::KI_ESCAPE;
-key_identifiers[OIS::KC_1] = Rocket::Core::Input::KI_1;
-key_identifiers[OIS::KC_2] = Rocket::Core::Input::KI_2;
-key_identifiers[OIS::KC_3] = Rocket::Core::Input::KI_3;
-key_identifiers[OIS::KC_4] = Rocket::Core::Input::KI_4;
-key_identifiers[OIS::KC_5] = Rocket::Core::Input::KI_5;
-key_identifiers[OIS::KC_6] = Rocket::Core::Input::KI_6;
-key_identifiers[OIS::KC_7] = Rocket::Core::Input::KI_7;
-key_identifiers[OIS::KC_8] = Rocket::Core::Input::KI_8;
-key_identifiers[OIS::KC_9] = Rocket::Core::Input::KI_9;
-key_identifiers[OIS::KC_0] = Rocket::Core::Input::KI_0;
-key_identifiers[OIS::KC_MINUS] = Rocket::Core::Input::KI_OEM_MINUS;
-key_identifiers[OIS::KC_EQUALS] = Rocket::Core::Input::KI_OEM_PLUS;
-key_identifiers[OIS::KC_BACK] = Rocket::Core::Input::KI_BACK;
-key_identifiers[OIS::KC_TAB] = Rocket::Core::Input::KI_TAB;
-key_identifiers[OIS::KC_Q] = Rocket::Core::Input::KI_Q;
-key_identifiers[OIS::KC_W] = Rocket::Core::Input::KI_W;
-key_identifiers[OIS::KC_E] = Rocket::Core::Input::KI_E;
-key_identifiers[OIS::KC_R] = Rocket::Core::Input::KI_R;
-key_identifiers[OIS::KC_T] = Rocket::Core::Input::KI_T;
-key_identifiers[OIS::KC_Y] = Rocket::Core::Input::KI_Y;
-key_identifiers[OIS::KC_U] = Rocket::Core::Input::KI_U;
-key_identifiers[OIS::KC_I] = Rocket::Core::Input::KI_I;
-key_identifiers[OIS::KC_O] = Rocket::Core::Input::KI_O;
-key_identifiers[OIS::KC_P] = Rocket::Core::Input::KI_P;
-key_identifiers[OIS::KC_LBRACKET] = Rocket::Core::Input::KI_OEM_4;
-key_identifiers[OIS::KC_RBRACKET] = Rocket::Core::Input::KI_OEM_6;
-key_identifiers[OIS::KC_RETURN] = Rocket::Core::Input::KI_RETURN;
-key_identifiers[OIS::KC_LCONTROL] = Rocket::Core::Input::KI_LCONTROL;
-key_identifiers[OIS::KC_A] = Rocket::Core::Input::KI_A;
-key_identifiers[OIS::KC_S] = Rocket::Core::Input::KI_S;
-key_identifiers[OIS::KC_D] = Rocket::Core::Input::KI_D;
-key_identifiers[OIS::KC_F] = Rocket::Core::Input::KI_F;
-key_identifiers[OIS::KC_G] = Rocket::Core::Input::KI_G;
-key_identifiers[OIS::KC_H] = Rocket::Core::Input::KI_H;
-key_identifiers[OIS::KC_J] = Rocket::Core::Input::KI_J;
-key_identifiers[OIS::KC_K] = Rocket::Core::Input::KI_K;
-key_identifiers[OIS::KC_L] = Rocket::Core::Input::KI_L;
-key_identifiers[OIS::KC_SEMICOLON] = Rocket::Core::Input::KI_OEM_1;
-key_identifiers[OIS::KC_APOSTROPHE] = Rocket::Core::Input::KI_OEM_7;
-key_identifiers[OIS::KC_GRAVE] = Rocket::Core::Input::KI_OEM_3;
-key_identifiers[OIS::KC_LSHIFT] = Rocket::Core::Input::KI_LSHIFT;
-key_identifiers[OIS::KC_BACKSLASH] = Rocket::Core::Input::KI_OEM_5;
-key_identifiers[OIS::KC_Z] = Rocket::Core::Input::KI_Z;
-key_identifiers[OIS::KC_X] = Rocket::Core::Input::KI_X;
-key_identifiers[OIS::KC_C] = Rocket::Core::Input::KI_C;
-key_identifiers[OIS::KC_V] = Rocket::Core::Input::KI_V;
-key_identifiers[OIS::KC_B] = Rocket::Core::Input::KI_B;
-key_identifiers[OIS::KC_N] = Rocket::Core::Input::KI_N;
-key_identifiers[OIS::KC_M] = Rocket::Core::Input::KI_M;
-key_identifiers[OIS::KC_COMMA] = Rocket::Core::Input::KI_OEM_COMMA;
-key_identifiers[OIS::KC_PERIOD] = Rocket::Core::Input::KI_OEM_PERIOD;
-key_identifiers[OIS::KC_SLASH] = Rocket::Core::Input::KI_OEM_2;
-key_identifiers[OIS::KC_RSHIFT] = Rocket::Core::Input::KI_RSHIFT;
-key_identifiers[OIS::KC_MULTIPLY] = Rocket::Core::Input::KI_MULTIPLY;
-key_identifiers[OIS::KC_LMENU] = Rocket::Core::Input::KI_LMENU;
-key_identifiers[OIS::KC_SPACE] = Rocket::Core::Input::KI_SPACE;
-key_identifiers[OIS::KC_CAPITAL] = Rocket::Core::Input::KI_CAPITAL;
-key_identifiers[OIS::KC_F1] = Rocket::Core::Input::KI_F1;
-key_identifiers[OIS::KC_F2] = Rocket::Core::Input::KI_F2;
-key_identifiers[OIS::KC_F3] = Rocket::Core::Input::KI_F3;
-key_identifiers[OIS::KC_F4] = Rocket::Core::Input::KI_F4;
-key_identifiers[OIS::KC_F5] = Rocket::Core::Input::KI_F5;
-key_identifiers[OIS::KC_F6] = Rocket::Core::Input::KI_F6;
-key_identifiers[OIS::KC_F7] = Rocket::Core::Input::KI_F7;
-key_identifiers[OIS::KC_F8] = Rocket::Core::Input::KI_F8;
-key_identifiers[OIS::KC_F9] = Rocket::Core::Input::KI_F9;
-key_identifiers[OIS::KC_F10] = Rocket::Core::Input::KI_F10;
-key_identifiers[OIS::KC_NUMLOCK] = Rocket::Core::Input::KI_NUMLOCK;
-key_identifiers[OIS::KC_SCROLL] = Rocket::Core::Input::KI_SCROLL;
-key_identifiers[OIS::KC_NUMPAD7] = Rocket::Core::Input::KI_7;
-key_identifiers[OIS::KC_NUMPAD8] = Rocket::Core::Input::KI_8;
-key_identifiers[OIS::KC_NUMPAD9] = Rocket::Core::Input::KI_9;
-key_identifiers[OIS::KC_SUBTRACT] = Rocket::Core::Input::KI_SUBTRACT;
-key_identifiers[OIS::KC_NUMPAD4] = Rocket::Core::Input::KI_4;
-key_identifiers[OIS::KC_NUMPAD5] = Rocket::Core::Input::KI_5;
-key_identifiers[OIS::KC_NUMPAD6] = Rocket::Core::Input::KI_6;
-key_identifiers[OIS::KC_ADD] = Rocket::Core::Input::KI_ADD;
-key_identifiers[OIS::KC_NUMPAD1] = Rocket::Core::Input::KI_1;
-key_identifiers[OIS::KC_NUMPAD2] = Rocket::Core::Input::KI_2;
-key_identifiers[OIS::KC_NUMPAD3] = Rocket::Core::Input::KI_3;
-key_identifiers[OIS::KC_NUMPAD0] = Rocket::Core::Input::KI_0;
-key_identifiers[OIS::KC_DECIMAL] = Rocket::Core::Input::KI_DECIMAL;
-key_identifiers[OIS::KC_OEM_102] = Rocket::Core::Input::KI_OEM_102;
-key_identifiers[OIS::KC_F11] = Rocket::Core::Input::KI_F11;
-key_identifiers[OIS::KC_F12] = Rocket::Core::Input::KI_F12;
-key_identifiers[OIS::KC_F13] = Rocket::Core::Input::KI_F13;
-key_identifiers[OIS::KC_F14] = Rocket::Core::Input::KI_F14;
-key_identifiers[OIS::KC_F15] = Rocket::Core::Input::KI_F15;
-key_identifiers[OIS::KC_KANA] = Rocket::Core::Input::KI_KANA;
-key_identifiers[OIS::KC_ABNT_C1] = Rocket::Core::Input::KI_UNKNOWN;
-key_identifiers[OIS::KC_CONVERT] = Rocket::Core::Input::KI_CONVERT;
-key_identifiers[OIS::KC_NOCONVERT] = Rocket::Core::Input::KI_NONCONVERT;
-key_identifiers[OIS::KC_YEN] = Rocket::Core::Input::KI_UNKNOWN;
-key_identifiers[OIS::KC_ABNT_C2] = Rocket::Core::Input::KI_UNKNOWN;
-key_identifiers[OIS::KC_NUMPADEQUALS] = Rocket::Core::Input::KI_OEM_NEC_EQUAL;
-key_identifiers[OIS::KC_PREVTRACK] = Rocket::Core::Input::KI_MEDIA_PREV_TRACK;
-key_identifiers[OIS::KC_AT] = Rocket::Core::Input::KI_UNKNOWN;
-key_identifiers[OIS::KC_COLON] = Rocket::Core::Input::KI_OEM_1;
-key_identifiers[OIS::KC_UNDERLINE] = Rocket::Core::Input::KI_OEM_MINUS;
-key_identifiers[OIS::KC_KANJI] = Rocket::Core::Input::KI_KANJI;
-key_identifiers[OIS::KC_STOP] = Rocket::Core::Input::KI_UNKNOWN;
-key_identifiers[OIS::KC_AX] = Rocket::Core::Input::KI_OEM_AX;
-key_identifiers[OIS::KC_UNLABELED] = Rocket::Core::Input::KI_UNKNOWN;
-key_identifiers[OIS::KC_NEXTTRACK] = Rocket::Core::Input::KI_MEDIA_NEXT_TRACK;
-key_identifiers[OIS::KC_NUMPADENTER] = Rocket::Core::Input::KI_NUMPADENTER;
-key_identifiers[OIS::KC_RCONTROL] = Rocket::Core::Input::KI_RCONTROL;
-key_identifiers[OIS::KC_MUTE] = Rocket::Core::Input::KI_VOLUME_MUTE;
-key_identifiers[OIS::KC_CALCULATOR] = Rocket::Core::Input::KI_UNKNOWN;
-key_identifiers[OIS::KC_PLAYPAUSE] = Rocket::Core::Input::KI_MEDIA_PLAY_PAUSE;
-key_identifiers[OIS::KC_MEDIASTOP] = Rocket::Core::Input::KI_MEDIA_STOP;
-key_identifiers[OIS::KC_VOLUMEDOWN] = Rocket::Core::Input::KI_VOLUME_DOWN;
-key_identifiers[OIS::KC_VOLUMEUP] = Rocket::Core::Input::KI_VOLUME_UP;
-key_identifiers[OIS::KC_WEBHOME] = Rocket::Core::Input::KI_BROWSER_HOME;
-key_identifiers[OIS::KC_NUMPADCOMMA] = Rocket::Core::Input::KI_SEPARATOR;
-key_identifiers[OIS::KC_DIVIDE] = Rocket::Core::Input::KI_DIVIDE;
-key_identifiers[OIS::KC_SYSRQ] = Rocket::Core::Input::KI_SNAPSHOT;
-key_identifiers[OIS::KC_RMENU] = Rocket::Core::Input::KI_RMENU;
-key_identifiers[OIS::KC_PAUSE] = Rocket::Core::Input::KI_PAUSE;
-key_identifiers[OIS::KC_HOME] = Rocket::Core::Input::KI_HOME;
-key_identifiers[OIS::KC_UP] = Rocket::Core::Input::KI_UP;
-key_identifiers[OIS::KC_PGUP] = Rocket::Core::Input::KI_PRIOR;
-key_identifiers[OIS::KC_LEFT] = Rocket::Core::Input::KI_LEFT;
-key_identifiers[OIS::KC_RIGHT] = Rocket::Core::Input::KI_RIGHT;
-key_identifiers[OIS::KC_END] = Rocket::Core::Input::KI_END;
-key_identifiers[OIS::KC_DOWN] = Rocket::Core::Input::KI_DOWN;
-key_identifiers[OIS::KC_PGDOWN] = Rocket::Core::Input::KI_NEXT;
-key_identifiers[OIS::KC_INSERT] = Rocket::Core::Input::KI_INSERT;
-key_identifiers[OIS::KC_DELETE] = Rocket::Core::Input::KI_DELETE;
-key_identifiers[OIS::KC_LWIN] = Rocket::Core::Input::KI_LWIN;
-key_identifiers[OIS::KC_RWIN] = Rocket::Core::Input::KI_RWIN;
-key_identifiers[OIS::KC_APPS] = Rocket::Core::Input::KI_APPS;
-key_identifiers[OIS::KC_POWER] = Rocket::Core::Input::KI_POWER;
-key_identifiers[OIS::KC_SLEEP] = Rocket::Core::Input::KI_SLEEP;
-key_identifiers[OIS::KC_WAKE] = Rocket::Core::Input::KI_WAKE;
-key_identifiers[OIS::KC_WEBSEARCH] = Rocket::Core::Input::KI_BROWSER_SEARCH;
-key_identifiers[OIS::KC_WEBFAVORITES] = Rocket::Core::Input::KI_BROWSER_FAVORITES;
-key_identifiers[OIS::KC_WEBREFRESH] = Rocket::Core::Input::KI_BROWSER_REFRESH;
-key_identifiers[OIS::KC_WEBSTOP] = Rocket::Core::Input::KI_BROWSER_STOP;
-key_identifiers[OIS::KC_WEBFORWARD] = Rocket::Core::Input::KI_BROWSER_FORWARD;
-key_identifiers[OIS::KC_WEBBACK] = Rocket::Core::Input::KI_BROWSER_BACK;
-key_identifiers[OIS::KC_MYCOMPUTER] = Rocket::Core::Input::KI_UNKNOWN;
-key_identifiers[OIS::KC_MAIL] = Rocket::Core::Input::KI_LAUNCH_MAIL;
-key_identifiers[OIS::KC_MEDIASELECT] = Rocket::Core::Input::KI_LAUNCH_MEDIA_SELECT;
-
-*/

@@ -41,6 +41,7 @@ namespace X11{
 #include <OISKeyboard.h>
 #include <OISJoyStick.h>
 #include <OISInputManager.h>
+#include "include/cef_browser.h"
 
 namespace Leviathan{
 
@@ -49,7 +50,8 @@ namespace Leviathan{
 	class Window;
 	class GraphicalInputEntity;
 
-	// window class //
+	//! window class
+	//! \todo Implement global lock for input handling
 	class Window : public Ogre::WindowEventListener, OIS::KeyListener, OIS::MouseListener, OIS::JoyStickListener{
 	public:
 		DLLEXPORT Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner);
@@ -76,7 +78,7 @@ namespace Leviathan{
 		DLLEXPORT void SetMouseToCenter();
 		DLLEXPORT bool IsMouseOutsideWindowClientArea();
 
-		DLLEXPORT void GatherInput(Rocket::Core::Context* context);
+		DLLEXPORT void GatherInput();
 
 		DLLEXPORT inline bool IsWindowed() const{ return !OWindow->isFullScreen();};
 #ifdef _WIN32
@@ -121,12 +123,14 @@ namespace Leviathan{
 			return OverlayViewport;
 		}
 		// map that converts OIS::KeyCode to Rocket key codes //
-		static std::map<OIS::KeyCode, Rocket::Core::Input::KeyIdentifier> OISRocketKeyConvert;
+		static std::map<OIS::KeyCode, int> OISRocketKeyConvert;
 		static boost::bimap<wstring, OIS::KeyCode> CharacterToOISConvert;
 
 		// method for other DLLs to call the maps //
 		DLLEXPORT static OIS::KeyCode ConvertWstringToOISKeyCode(const wstring &str);
 		DLLEXPORT static wstring ConvertOISKeyCodeToWstring(const OIS::KeyCode &code);
+
+		void ReportKeyEventAsUsed();
 
 	private:
 
@@ -140,7 +144,6 @@ namespace Leviathan{
 		void CheckInputState();
 		void _CreateOverlayScene();
 		void _CheckMouseVisibilityStates();
-		void _CustomMouseMakeSureMouseIsRight(Rocket::Core::Context* context);
 		// ------------------------------------ //
 #ifdef _WIN32
 		HWND m_hwnd;
@@ -160,9 +163,14 @@ namespace Leviathan{
 		std::vector<OIS::JoyStick*> WindowJoysticks;
 
 		// this is temporarily stored during input gathering //
-		Rocket::Core::Context* inputreceiver;
+		CefRefPtr<CefBrowserHost> inputreceiver;
 		bool ThisFrameHandledCreate;
 		int LastFrameDownMouseButtons;
+
+		//! Allows CEF to report whether a key input was handled
+		//! Set by ReportKeyEventAsUsed
+		bool InputProcessedByCEF;
+
 		// this is updated every time input is gathered //
 		int SpecialKeyModifiers;
 		bool Focused;

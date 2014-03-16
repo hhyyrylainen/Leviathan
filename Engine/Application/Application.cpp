@@ -8,6 +8,7 @@ using namespace Leviathan;
 #include "FileSystem.h"
 #include "OGRE/OgreWindowEventUtilities.h"
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
+#include "GlobalCEFHandler.h"
 
 DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), _Engine(new Engine(this)), ApplicationConfiguration(NULL), 
 	ShouldQuit(false), QuitSometime(false)

@@ -18,12 +18,9 @@
 
 
 namespace Leviathan {
-	class GraphicalInputEntity;
-	class Graphics;
+
 namespace Gui{
 
-	class GuiCollection;
-	class GuiLoadedSheet;
 
 	//! \brief Main GUI controller
 	//! \todo Add GUI window objects to this which are associated with different windows
@@ -44,8 +41,10 @@ namespace Gui{
 		DLLEXPORT inline void SetVisible(bool visible){
 			Visible = visible;
 		}
-
-		DLLEXPORT void OnResize(int width, int height);
+		//! \brief Notifies internal browsers
+		DLLEXPORT void OnResize();
+		//! \brief Notifies internal browsers
+		DLLEXPORT void OnFocusChanged(bool focused);
 
 		// internal Gui element managing //
 		DLLEXPORT bool AddGuiObject(BaseGuiObject* obj);
@@ -113,7 +112,7 @@ namespace Gui{
 
 
 		// Rendering resources //
-		Ogre::ManualObject* CEFOverlayQuad;
+		Ogre::ManualObject* MouseQuad;
 
 
 		GraphicalInputEntity* ThisWindow;
@@ -121,6 +120,8 @@ namespace Gui{
 		//! Gui elements
 		vector<BaseGuiObject*> Objects;
 
+
+		std::vector<Gui::View*> ThissViews; 
 
 		//! we will soon need a GuiManager for each window
 		int ID;

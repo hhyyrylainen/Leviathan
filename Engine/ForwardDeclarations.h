@@ -7,12 +7,14 @@ namespace Leviathan{
 	class Logger;
 	class FileSystem;
 	class Engine;
+	class Graphics;
 
 	namespace Gui{
 
 		class CefApplication;
 		class CefHandler;
 		class GuiManager;
+		class View;
 	}
 
 	namespace Entity{
@@ -24,6 +26,7 @@ namespace Leviathan{
 		struct TrailProperties;
 		class TrailEmitter;
 	}
+
 
 	class GlobalCEFHandler;
 	class GameSpecificPacketHandler;

@@ -112,6 +112,22 @@ namespace Leviathan{
 		int X, Y, Z;
 	};
 
+	struct Int4{
+	public:
+		DLLEXPORT Int4();
+		DLLEXPORT Int4(int x, int y, int z, int w);
+		DLLEXPORT explicit Int4(int data);
+
+		// ------------------------------------ //
+		DLLEXPORT Int4& operator +(const Int4 &val);
+		DLLEXPORT int operator[](const int nIndex) const;
+		DLLEXPORT Int4& operator -(const Int4& val);
+		DLLEXPORT int AddAllTogether() const;
+		// ------------------------------------ //
+
+		int X, Y, Z, W;
+	};
+
 	struct UINT4{
 	public:
 		DLLEXPORT UINT4(UINT u1, UINT u2, UINT u3, UINT u4);

@@ -7,9 +7,14 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "include/internal/cef_ptr.h"
+#include "include/cef_task.h"
 
 // Forward declare some things //
 class CefScopedSandboxInfo;
+
+#define REQUIRE_UI_THREAD()   assert(CefCurrentlyOn(TID_UI));
+#define REQUIRE_IO_THREAD()   assert(CefCurrentlyOn(TID_IO));
+#define REQUIRE_FILE_THREAD() assert(CefCurrentlyOn(TID_FILE));
 
 namespace Leviathan{
 
@@ -25,12 +30,9 @@ namespace Leviathan{
 
 		void* GetPtr();
 
-		Gui::CefHandler* GetCEFHandlerDirect() const;
-
 	protected:
 		shared_ptr<CefScopedSandboxInfo> ScopedInfo;
 		CefRefPtr<Gui::CefApplication> CEFApp;
-		CefRefPtr<Gui::CefHandler> CEFHandler;
 		void* SandBoxAccess;
 	};
 

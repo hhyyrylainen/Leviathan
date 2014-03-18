@@ -7,7 +7,6 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "include/cef_app.h"
 #include "GUI/GuiCEFApplication.h"
-#include "GUI/GuiCEFHandler.h"
 #include "include/cef_sandbox_win.h"
 
 
@@ -65,8 +64,6 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(const wstr
 
 	CEFInitialized = true;
 
-	keeper->CEFHandler = CefRefPtr<Gui::CefHandler>(new Gui::CefHandler());
-
 	AccessToThese = keeper.get();
 
 	// Wasn't a sub process //
@@ -112,8 +109,4 @@ DLLEXPORT Leviathan::CEFSandboxInfoKeeper::~CEFSandboxInfoKeeper(){
 // ------------------------------------ //
 void* Leviathan::CEFSandboxInfoKeeper::GetPtr(){
 	return SandBoxAccess;
-}
-
-Gui::CefHandler* Leviathan::CEFSandboxInfoKeeper::GetCEFHandlerDirect() const{
-	return CEFHandler.get();
 }

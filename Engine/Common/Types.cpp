@@ -134,7 +134,49 @@ DLLEXPORT Int3 Leviathan::Int3::operator-(const Int3& other) const{
 DLLEXPORT int Leviathan::Int3::AddAllTogether() const{
 	return X+Y+Z;
 }
+// ------------------ Int4 ------------------ //
+DLLEXPORT Leviathan::Int4::Int4(){
+	X = Y = Z = W = 0;
+}
 
+DLLEXPORT Leviathan::Int4::Int4(int x, int y, int z, int w) : X(x), Y(y), Z(z), W(w){
+
+}
+
+DLLEXPORT Leviathan::Int4::Int4(int data){
+	X = Y = Z = W = data;
+}
+
+DLLEXPORT Int4& Leviathan::Int4::operator+(const Int4 &val){
+	X += val.X;
+	Y += val.Y;
+	Z += val.Z;
+	W += val.W;
+	return *this;
+}
+
+DLLEXPORT int Leviathan::Int4::operator[](const int nIndex) const{
+	switch(nIndex){
+	case 0: return X;
+	case 1: return Y;
+	case 2: return Z;
+	case 3: return W;
+	default: __assume(0);
+	}
+}
+
+DLLEXPORT Int4& Leviathan::Int4::operator-(const Int4& val){
+	X -= val.X;
+	Y -= val.Y;
+	Z -= val.Z;
+	W -= val.W;
+	return *this;
+}
+
+DLLEXPORT int Leviathan::Int4::AddAllTogether() const{
+	return X+Y+Z+W;
+}
+// ------------------ Int1 ------------------ //
 Leviathan::Int1::Int1(){
 }
 
@@ -219,3 +261,5 @@ const Float4 Leviathan::Float4::ColourTransparent = Float4(0, 0, 0, 0);
 const Float3 Leviathan::Float3::UnitVForward = Float3(0.f, 0.f, -1.f);
 
 const Float3 Leviathan::Float3::Zeroed = Float3::zero();
+
+

@@ -166,7 +166,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::Tick(int mspassed){
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::OnResize(int width, int height){
 	// send to GUI //
-	WindowsGui->OnResize(width, height);
+	WindowsGui->OnResize();
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::UnlinkAll(){
@@ -207,6 +207,10 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state){
 		InputCapturer = this;
 	}
 	return true;
+}
+
+DLLEXPORT void Leviathan::GraphicalInputEntity::OnFocusChange(bool focused){
+	WindowsGui->OnFocusChanged(focused);
 }
 
 GraphicalInputEntity* Leviathan::GraphicalInputEntity::InputCapturer = NULL;

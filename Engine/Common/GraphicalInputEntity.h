@@ -57,6 +57,9 @@ namespace Leviathan{
 		DLLEXPORT inline shared_ptr<ViewerCameraPos> GetLinkedCamera(){
 			return LinkedCamera;
 		}
+		DLLEXPORT void OnFocusChange(bool focused);
+
+
 	protected:
 
 

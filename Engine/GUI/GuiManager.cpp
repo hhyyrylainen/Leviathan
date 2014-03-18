@@ -19,11 +19,12 @@
 #include "OgreRoot.h"
 #include "OgreManualObject.h"
 #include "OgreHardwarePixelBuffer.h"
+#include "GuiView.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
 Leviathan::Gui::GuiManager::GuiManager() : ID(IDFactory::GetID()), Visible(true), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true),
-	CEFOverlayQuad(NULL)
+	MouseQuad(NULL)
 {
 	
 }
@@ -54,6 +55,19 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 	// set to be rendered in right viewport //
 	Graphics::Get()->GetOverlayMaster()->SetGUIVisibleInViewport(this, ThisWindow->GetWindow()->GetOverlayViewport());
 
+	// Add a test View //
+	ThissViews.push_back(new Gui::View(this, window->GetWindow()));
+	
+	// We store a reference //
+	ThissViews.back()->AddRef();
+
+	// Initialize it //
+	if(!ThissViews.back()->Init()){
+
+		DEBUG_BREAK;
+	}
+
+
 	return true;
 }
 
@@ -61,6 +75,13 @@ void Leviathan::Gui::GuiManager::Release(){
 	ObjectLock guard(*this);
 	// default mouse back //
 	SetMouseFile(L"none");
+
+	// Destroy the views //
+	for(size_t i = 0; i < ThissViews.size(); i++){
+
+		ThissViews[i]->ReleaseResources();
+		ThissViews[i]->Release();
+	}
 
 	for(unsigned int i = 0; i < Objects.size(); i++){
 		// object's release function will do everything needed (even deleted if last reference) //
@@ -181,17 +202,26 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnForceGUIOn(){
 
 void Leviathan::Gui::GuiManager::Render(){
 	ObjectLock guard(*this);
-	// update Rocket input //
-
+	// Update inputs //
+	ThisWindow->GetWindow()->GatherInput(ThissViews[0]->GetBrowserHost());
 }
 // ------------------------------------ //
-void Leviathan::Gui::GuiManager::OnResize(int width, int height){
+DLLEXPORT void Leviathan::Gui::GuiManager::OnResize(){
 	ObjectLock guard(*this);
-	// call events //
-	this->CallEvent(new Event(EVENT_TYPE_WINDOW_RESIZE, (void*)new Int2(width, height)));
 
-	// resize Rocket on this window //
+	// Resize all CEF browsers on this window //
+	for(size_t i = 0; i < ThissViews.size(); i++){
+		ThissViews[i]->NotifyWindowResized();
+	}
+}
 
+DLLEXPORT void Leviathan::Gui::GuiManager::OnFocusChanged(bool focused){
+	ObjectLock guard(*this);
+
+	// Notify all CEF browsers on this window //
+	for(size_t i = 0; i < ThissViews.size(); i++){
+		ThissViews[i]->NotifyFocusUpdate(focused);
+	}
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiManager::AddGuiObject(BaseGuiObject* obj){
@@ -430,81 +460,8 @@ void Leviathan::Gui::GuiManager::renderQueueStarted(Ogre::uint8 queueGroupId, co
 // -------------------------------------- //
 bool Leviathan::Gui::GuiManager::_CreateInternalOgreResources(Ogre::SceneManager* windowsscene){
 
-	string materialname = "_ChromeOverlay_for_gui_"+Convert::ToString(ID);
-	string texturename = "_texture_"+materialname;
+	// Well we don't anymore need anything here since GuiView handles this //
 
-	Window* wind = ThisWindow->GetWindow();
-
-	// Create a material and a texture that we can update //
-	Ogre::TexturePtr texture = Ogre::TextureManager::getSingleton().createManual(texturename, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-		Ogre::TEX_TYPE_2D, wind->GetWidth(), wind->GetHeight(), 0, Ogre::PF_B8G8R8A8, Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
-
-	// Fill in some test data //
-	Ogre::HardwarePixelBufferSharedPtr pixelbuf = texture->getBuffer();
-
-	// Lock buffer and get a target box for writing //
-	pixelbuf->lock(Ogre::HardwareBuffer::HBL_DISCARD);
-	const Ogre::PixelBox& pixelbox = pixelbuf->getCurrentLock();
-
-	// Create a pointer to the destination //
-	UCHAR* destptr = static_cast<UCHAR*>(pixelbox.data);
-
-	// Fill it with data //
-	for(size_t j = 0; j < pixelbox.getHeight(); j++){
-		for(size_t i = 0; i < pixelbox.getWidth(); i++){
-			// Set it completely empty //
-			*destptr++ = 0; // B
-			*destptr++ = 0; // G
-			*destptr++ = 0; // R
-			*destptr++ = 0; // A
-		}
-
-		destptr += pixelbox.getRowSkip() * Ogre::PixelUtil::getNumElemBytes(pixelbox.format);
-	}
-
-	// Unlock the buffer //
-	pixelbuf->unlock();
-
-
-	Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create(materialname, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-	material->getTechnique(0)->getPass(0)->createTextureUnitState(texturename);
-	material->getTechnique(0)->getPass(0)->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
-	material->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-
-
-	// Create a full screen quad for chrome render result displaying //
-	CEFOverlayQuad = windowsscene->createManualObject("GUI_chrome_quad");
-
-	// Use identity view/projection matrices for 2d rendering //
-	CEFOverlayQuad->setUseIdentityProjection(true);
-	CEFOverlayQuad->setUseIdentityView(true);
-
-	// Hopefully a triangle strip saves some performance //
-	CEFOverlayQuad->begin(materialname, Ogre::RenderOperation::OT_TRIANGLE_STRIP);
-
-	CEFOverlayQuad->position(-1.f, -1.f, 0.0f);
-	CEFOverlayQuad->position( 1.f, -1.f, 0.0f);
-	CEFOverlayQuad->position( 1.f,  1.f, 0.0f);
-	CEFOverlayQuad->position(-1.f,  1.f, 0.0f);
-
-	CEFOverlayQuad->index(0);
-	CEFOverlayQuad->index(1);
-	CEFOverlayQuad->index(3);
-	CEFOverlayQuad->index(2);
-
-	CEFOverlayQuad->end();
-
-	// We can use infinite AAB to not get culled //
-	Ogre::AxisAlignedBox aabInf;
-	aabInf.setInfinite();
-	CEFOverlayQuad->setBoundingBox(aabInf);
-
-	// Render just before overlays
-	CEFOverlayQuad->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY);
-
-	// Attach to scene
-	windowsscene->getRootSceneNode()->createChildSceneNode()->attachObject(CEFOverlayQuad);
 
 
 	// Create a quad for mouse displaying //
@@ -520,7 +477,7 @@ void Leviathan::Gui::GuiManager::_ReleaseOgreResources(){
 	// We probably don't need to do anything //
 
 	// The scene should handle deleting this //
-	CEFOverlayQuad = NULL;
+	MouseQuad = NULL;
 
 }
 

@@ -13,7 +13,6 @@
 #include "chromium/KeyboardCodes.h"
 #include "include/cef_keyboard_handler.h"
 #include "GlobalCEFHandler.h"
-#include "GUI/GuiCEFHandler.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -215,14 +214,10 @@ void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
 	//Focused = m_hwnd == GetFocus() ? true: false;
 	Focused = m_hwnd == GetForegroundWindow() ? true: false;
 
-	wstring message = L"Window focus is now ";
-	message += Focused ? L"true": L"false";
-
-	Logger::Get()->Info(message);
-
 	// update mouse //
 	_CheckMouseVisibilityStates();
-	// little hack to get the context //
+
+	OwningWindow->OnFocusChange(Focused);
 }
 // ------------------------------------ //
 #ifdef _WIN32
@@ -344,13 +339,15 @@ void Leviathan::Window::UpdateOISMouseWindowSize(){
 	ms.height = height;
 }
 
-DLLEXPORT void Leviathan::Window::GatherInput(){
+DLLEXPORT void Leviathan::Window::GatherInput(CefRefPtr<CefBrowserHost> browserinput){
 	// quit if window closed //
 	if(OWindow->isClosed() || !WindowKeyboard || !WindowMouse){
 
 		Logger::Get()->Warning(L"Window: GatherInput: skipping due to closed input window");
 		return;
 	}
+
+	inputreceiver = browserinput;
 
 	// on first frame we want to manually force mouse position send //
 	if(FirstInput){
@@ -362,12 +359,9 @@ DLLEXPORT void Leviathan::Window::GatherInput(){
 	// set parameters that listener functions need //
 	ThisFrameHandledCreate = false;
 
-	// Set us as the input processor //
-	GlobalCEFHandler::GetCEFObjects()->GetCEFHandlerDirect()->SetCurrentInputHandlingWindow(this);
+	// We should automatically be the input handler for this browser //
 
 	// Capture the browser variable //
-
-
 	OwningWindow->GetInputController()->StartInputGather();
 
 	// capture inputs and send events //
@@ -407,9 +401,6 @@ DLLEXPORT void Leviathan::Window::GatherInput(){
 		// pass input //
 		OwningWindow->GetInputController()->SendMouseMovement(xmoved, ymoved);
 	}
-
-	// Reset the input processor //
-	GlobalCEFHandler::GetCEFObjects()->GetCEFHandlerDirect()->SetCurrentInputHandlingWindow(NULL);
 }
 
 void Leviathan::Window::CheckInputState(){
@@ -706,6 +697,43 @@ void Leviathan::Window::_CheckMouseVisibilityStates(){
 void Leviathan::Window::ReportKeyEventAsUsed(){
 	InputProcessedByCEF = true;
 }
+// ------------------------------------ //
+DLLEXPORT Int4 Leviathan::Window::GetScreenPixelRect() const THROWS{
+#ifdef _WIN32
+	RECT rect;
+	// Call windows api to get this //
+	if(GetWindowRect(m_hwnd, &rect)){
+		// We need to translate the end coordinates to width and height //
+		return Int4(rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top);
+	}
+	// Failed //
+	throw ExceptionNotFound(L"could not get window rect, call failed", GetLastError(), __WFUNCTION__, L"invalid handle", L"m_hwnd");
+
+#else
+	return Int4(0, 0, GetWidth(), GetHeight());
+#endif // _WIN32
+}
+
+
+DLLEXPORT Int2 Leviathan::Window::TranslateClientPointToScreenPoint(const Int2 &point) const THROWS{
+#ifdef _WIN32
+
+	POINT pt = {point.X, point.Y};
+	// Windows api to the rescue //
+	if(ClientToScreen(m_hwnd, &pt)){
+		// Succeeded //
+		return Int2(pt.x, pt.y);
+	}
+
+	// Failed //
+	throw ExceptionNotFound(L"could not translate point to screen space", GetLastError(), __WFUNCTION__, L"invalid handle", L"m_hwnd");
+#else
+	return point;
+#endif // _WIN32
+}
+
+
+
 // ------------------ KeyCode conversion map ------------------ //
 #define QUICKKEYPAIR(x, y) OIS::x, WebCore::y
 #define SIMPLEPAIR(x, y)	L##x, OIS::y

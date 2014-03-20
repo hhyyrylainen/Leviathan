@@ -46,26 +46,8 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 		Logger::Get()->Error(L"GuiManager: Init: failed to create internal Ogre resources");
 		return false;
 	}
-
-
-	// we render during Ogre overlay //
-	wind->GetOverlayScene()->addRenderQueueListener(this);
-
-
-	// set to be rendered in right viewport //
-	Graphics::Get()->GetOverlayMaster()->SetGUIVisibleInViewport(this, ThisWindow->GetWindow()->GetOverlayViewport());
-
-	// Add a test View //
-	ThissViews.push_back(new Gui::View(this, window->GetWindow()));
 	
-	// We store a reference //
-	ThissViews.back()->AddRef();
-
-	// Initialize it //
-	if(!ThissViews.back()->Init()){
-
-		DEBUG_BREAK;
-	}
+	// All rendering is now handled by individual Views and the Window's Ogre scene //
 
 
 	return true;
@@ -93,9 +75,8 @@ void Leviathan::Gui::GuiManager::Release(){
 	for(size_t i = 0; i < Collections.size(); i++){
 		SAFE_RELEASE(Collections[i]);
 	}
-	Collections.clear();
 
-	GuiSheets.clear();
+	Collections.clear();
 
 	_ReleaseOgreResources();
 }
@@ -154,9 +135,6 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const w
 // ------------------------------------ //
 void Leviathan::Gui::GuiManager::GuiTick(int mspassed){
 	ObjectLock guard(*this);
-	// send tick event //
-
-
 
 	// check if we want mouse //
 	if(GuiMouseUseUpdated){
@@ -203,7 +181,8 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnForceGUIOn(){
 void Leviathan::Gui::GuiManager::Render(){
 	ObjectLock guard(*this);
 	// Update inputs //
-	ThisWindow->GetWindow()->GatherInput(ThissViews[0]->GetBrowserHost());
+	if(ThissViews.size())
+		ThisWindow->GetWindow()->GatherInput(ThissViews[0]->GetBrowserHost());
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiManager::OnResize(){
@@ -271,38 +250,46 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 	// we need to load the corresponding rocket file first //
 	wstring relativepath;
 	// get path //
-	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist, L"RocketScript", relativepath, L"", true,
-		L"GuiManager: LoadGUIFile: No Rocket script file attached: ");
+	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist, L"GUIBasePage", relativepath, L"", true,
+		L"GuiManager: LoadGUIFile: no base page defined (in "+file+L") : ");
 
 	if(!relativepath.size()){
 
 		return false;
 	}
 
-	shared_ptr<GuiLoadedSheet> sheet;
+	// Create the view //
+	Gui::View* LoadingView = new Gui::View(this, ThisWindow->GetWindow());
+
+	// We store a reference //
+	LoadingView->AddRef();
 
 	wstring path = StringOperations::GetPathWstring(file);
 
-	wstring finalrocket = path+relativepath;
+	// Create the final page //
+	wstring finalpath;
+
+	// If this is an internet page pass it unmodified //
+	if(relativepath.find(L"http://") < 2){
+
+		finalpath = relativepath;
+	} else {
+		// Local file, add to the end //
+		finalpath = L"file:///"+path+relativepath;
+	}
+
+	// Initialize it //
+	if(!LoadingView->Init(finalpath, varlist)){
+
+		LoadingView->ReleaseResources();
+		LoadingView->Release();
+
+		Logger::Get()->Error(L"GuiManager: LoadGUIFile: failed to initialize view for file: "+file);
+		return false;
+	}
 
 	// We need to lock now //
 	ObjectLock guard(*this);
-
-	try{
-		sheet = shared_ptr<GuiLoadedSheet>(new GuiLoadedSheet(),
-			[](GuiLoadedSheet* p){p->Release();});
-		if(!sheet.get()){
-
-			return false;
-		}
-	}
-	catch(const ExceptionInvalidArgument &e){
-		// something was thrown //
-		Logger::Get()->Error(L"GuiManager: LoadGUIFile: exit due to exception:");
-		e.PrintToLog();
-
-		return false;
-	}
 
 	// temporary object data stores //
 	vector<BaseGuiObject*> TempOs;
@@ -315,7 +302,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 		// check what type the object is //
 		if(data[i]->TName == L"GuiCollection" || data[i]->TName == L"Collection"){
 
-			if(!GuiCollection::LoadCollection(this, *data[i], sheet.get())){
+			if(!GuiCollection::LoadCollection(this, *data[i], LoadingView)){
 
 				// report error //
 				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load collection, named "+data[i]->Name);
@@ -327,7 +314,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 		if(data[i]->TName == L"GuiObject"){
 
 			// try to load //
-			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *data[i], sheet.get())){
+			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *data[i], LoadingView)){
 
 				// report error //
 				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load GuiObject, named "+data[i]->Name);
@@ -346,7 +333,9 @@ guiprocessguifileloopdeleteprocessedobject:
 		i--;
 	}
 
-	GuiSheets.insert(make_pair(sheet->GetID(), sheet));
+	// Add the page //
+	ThissViews.push_back(LoadingView);
+	
 
 	for(size_t i = 0; i < TempOs.size(); i++){
 
@@ -377,42 +366,6 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFileVisibleState(bool state){
 	ObjectLock guard(*this);
 	// Set mouse drawing flag //
 }
-// ----------------- event handler part --------------------- //
-bool Leviathan::Gui::GuiManager::CallEvent(Event* pEvent){
-	ObjectLock guard(*this);
-	// loop through listeners and call events //
-	for(size_t i = 0; i < Objects.size(); i++){
-		// call
-		Objects[i]->OnEvent(&pEvent);
-		// check for deletion and end if event got deleted //
-		if(!pEvent){
-			return true;
-		}
-	}
-
-	// delete object ourselves //
-	SAFE_DELETE(pEvent);
-	// nobody wanted the event //
-	return false;
-}
-// used to send hide events to individual objects //
-int GuiManager::CallEventOnObject(BaseGuiObject* receive, Event* pEvent){
-	ObjectLock guard(*this);
-	// find right object
-	int returval = -3;
-
-	for(size_t i = 0; i < Objects.size(); i++){
-		if(Objects[i] == receive){
-			// call
-			returval = Objects[i]->OnEvent(&pEvent);
-			break;
-		}
-	}
-
-	// delete object ourselves (if it still exists) //
-	SAFE_DELETE(pEvent);
-	return returval;
-}
 // ----------------- collection managing --------------------- //
 void GuiManager::AddCollection(GuiCollection* add){
 	ObjectLock guard(*this);
@@ -439,23 +392,6 @@ GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const ws
 	}
 
 	return NULL;
-}
-// -------------------------------------- //
-void Leviathan::Gui::GuiManager::preRenderQueues(){
-	ObjectLock guard(*this);
-	// Start updating the chrome material //
-
-
-}
-
-void Leviathan::Gui::GuiManager::renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation){
-	// we render Rocket at the same time with OGRE overlay //
-	if(queueGroupId == Ogre::RENDER_QUEUE_OVERLAY){
-		ObjectLock guard(*this);
-
-		// Make sure chrome material is right //
-
-	}
 }
 // -------------------------------------- //
 bool Leviathan::Gui::GuiManager::_CreateInternalOgreResources(Ogre::SceneManager* windowsscene){

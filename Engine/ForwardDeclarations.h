@@ -12,7 +12,6 @@ namespace Leviathan{
 	namespace Gui{
 
 		class CefApplication;
-		class CefHandler;
 		class GuiManager;
 		class View;
 	}

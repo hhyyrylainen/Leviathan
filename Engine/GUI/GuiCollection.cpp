@@ -7,9 +7,11 @@
 #include "Script/ScriptInterface.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "GuiManager.h"
+#include "GuiView.h"
 using namespace Leviathan;
+using namespace Gui;
 // ------------------------------------ //
-Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiLoadedSheet* sheet, GuiManager* manager, int id, const wstring &toggle, 
+Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, View* sheet, GuiManager* manager, int id, const wstring &toggle, 
 	bool strict /*= false*/, bool enabled /*= true*/, bool keepgui, bool allowenable) : Name(name), ID(id), Enabled(enabled), Strict(strict), 
 	ContainedInSheet(sheet), KeepsGuiOn(keepgui), OwningManager(manager), AllowEnable(allowenable)
 {
@@ -60,7 +62,7 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 	OwningManager->PossiblyGUIMouseDisable();
 }
 // ------------------------------------ //
-bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data, GuiLoadedSheet* sheet){
+bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data, View* sheet){
 	// load a GuiCollection from the structure //
 
 	wstring Toggle = L"";
@@ -101,14 +103,6 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 
 DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
 	AllowEnable = newstate;
-}
-// ------------------ GuiLoadedSheet ------------------ //
-Leviathan::Gui::GuiLoadedSheet::GuiLoadedSheet() : ID(IDFactory::GetID()){
-
-}
-
-Leviathan::Gui::GuiLoadedSheet::~GuiLoadedSheet(){
-	// remove the reference so that it gets unloaded at some point //
 }
 
 

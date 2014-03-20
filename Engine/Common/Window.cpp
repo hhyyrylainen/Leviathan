@@ -411,6 +411,7 @@ void Leviathan::Window::CheckInputState(){
 
 	// create keyboard special key states here //
 	SpecialKeyModifiers = 0;
+
 	if(WindowKeyboard->isModifierDown(OIS::Keyboard::Ctrl))
 		SpecialKeyModifiers |= EVENTFLAG_CONTROL_DOWN;
 	if(WindowKeyboard->isModifierDown(OIS::Keyboard::Alt))
@@ -447,21 +448,39 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 
 	CefKeyEvent cevent;
 
-	cevent.modifiers = SpecialKeyModifiers;
-	cevent.windows_key_code = OISRocketKeyConvert[arg.key];
-	cevent.character = arg.text;
-	cevent.is_system_key = false;
 
+
+	cevent.modifiers = SpecialKeyModifiers;
 	InputProcessedByCEF = false;
+
+	char vkey = 0;
+	if(arg.text >= 32 && arg.text <= 126){
+
+		vkey = arg.text;
+		cevent.type = KEYEVENT_CHAR;
+		cevent.windows_key_code = vkey;
+
+		inputreceiver->SendKeyEvent(cevent);
+		cevent.type = KEYEVENT_KEYDOWN;
+
+	} else {
+
+		//vkey = OISVKeyConvert[arg.key];
+		vkey = VkKeyScan(arg.text);
+		cevent.type = KEYEVENT_KEYDOWN;
+	}
+
+	cevent.windows_key_code = vkey;
+	cevent.native_key_code = 1 | (vkey << 16) | (SpecialKeyModifiers & EVENTFLAG_ALT_DOWN ? 1 << 29: 0 << 29) | (0 << 30) | (1 << 31);
+
+
+
 
 	// Pass it //
 	inputreceiver->SendKeyEvent(cevent);
 
+
 	// Check is it now handled or not and continue //
-	
-
-
-	// Now try sending key input //
 	if(!InputProcessedByCEF){
 
 		// Finally try sending it to GUI //
@@ -484,7 +503,31 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 bool Leviathan::Window::keyReleased(const OIS::KeyEvent &arg){
 	CheckInputState();
 	
-	// Apparently the only thing that wants this is the input controller //
+	// Send to CEF if GUI is active //
+	CefKeyEvent cevent;
+
+	cevent.modifiers = SpecialKeyModifiers;
+
+	char vkey = 0;
+	if(arg.text != 0){
+
+		vkey = arg.text;
+		cevent.type = KEYEVENT_CHAR;
+
+	} else {
+
+		vkey = OISVKeyConvert[arg.key];
+		cevent.type = KEYEVENT_KEYUP;
+	}
+
+	cevent.windows_key_code = vkey;
+	InputProcessedByCEF = false;
+
+	// Pass it //
+	inputreceiver->SendKeyEvent(cevent);
+
+
+	// This should always be passed here //
 	OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, false);
 
 
@@ -513,7 +556,7 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
 		second.x = 0;
 		second.y = 0;
 
-		inputreceiver->SendMouseWheelEvent(second, 0, -mstate.Z.rel); 
+		inputreceiver->SendMouseWheelEvent(second, 0, mstate.Z.rel); 
 	}
 	_CheckMouseVisibilityStates();
 
@@ -551,9 +594,12 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 		mevent.x = mstate.X.abs;
 		mevent.y = mstate.Y.abs;
 
-		cef_mouse_button_type_t btype = MBT_LEFT;
+		cef_mouse_button_type_t btype;
 
-		if(Keynumber == 1){
+		if(Keynumber == 0){
+			btype = MBT_LEFT;
+
+		} else if(Keynumber == 1){
 			btype = MBT_RIGHT;
 
 		} else if(Keynumber == 2){
@@ -602,9 +648,12 @@ bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButt
 	mevent.x = mstate.X.abs;
 	mevent.y = mstate.Y.abs;
 
-	cef_mouse_button_type_t btype = MBT_LEFT;
+	cef_mouse_button_type_t btype;
 
-	if(Keynumber == 1){
+	if(Keynumber == 0){
+		btype = MBT_LEFT;
+
+	} else if(Keynumber == 1){
 		btype = MBT_RIGHT;
 
 	} else if(Keynumber == 2){
@@ -615,7 +664,7 @@ bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButt
 		return true;
 	}
 
-	inputreceiver->SendMouseClickEvent(mevent, btype, false, 1);
+	inputreceiver->SendMouseClickEvent(mevent, btype, true, 1);
 
 	// don't really know what to return
 	return true;
@@ -847,7 +896,7 @@ DLLEXPORT wstring Leviathan::Window::ConvertOISKeyCodeToWstring(const OIS::KeyCo
 
 
 
-map<OIS::KeyCode, int> Leviathan::Window::OISRocketKeyConvert = boost::assign::map_list_of
+map<OIS::KeyCode, int> Leviathan::Window::OISVKeyConvert = boost::assign::map_list_of
 	(QUICKKEYPAIR(KC_UNASSIGNED, VKEY_UNKNOWN))
 	(QUICKONETOONEPAIR(ESCAPE))
 	(QUICKONETOONEPAIR(1))

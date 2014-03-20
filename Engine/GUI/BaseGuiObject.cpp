@@ -10,8 +10,9 @@
 #include "GUI/GuiManager.h"
 #include "Common/StringOperations.h"
 using namespace Leviathan;
+using namespace Gui;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, GuiLoadedSheet* sheet,
+DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, View* sheet,
 	shared_ptr<ScriptScript> script /*= NULL*/) : EventableScriptObject(script), OwningInstance(owner), FileID(fakeid), Name(name), 
 	ContainedInSheet(sheet), ID(IDFactory::GetID())
 {
@@ -26,7 +27,7 @@ DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects,
-	ObjectFileObject& dataforthis, GuiLoadedSheet* sheet)
+	ObjectFileObject& dataforthis, View* sheet)
 {
 	// parse fake id from prefixes //
 	int fakeid = 0;

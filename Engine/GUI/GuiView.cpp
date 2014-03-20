@@ -15,7 +15,9 @@
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Gui::View::View(GuiManager* owner, Window* window) : Wind(window), Owner(owner), ID(IDFactory::GetID()), CEFOverlayQuad(NULL){
+DLLEXPORT Leviathan::Gui::View::View(GuiManager* owner, Window* window) : Wind(window), Owner(owner), ID(IDFactory::GetID()), CEFOverlayQuad(NULL),
+	CEFSNode(NULL)
+{
 
 }
 
@@ -23,7 +25,7 @@ DLLEXPORT Leviathan::Gui::View::~View(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::View::Init(){
+DLLEXPORT bool Leviathan::Gui::View::Init(const wstring &filetoload, const NamedVars &headervars){
 
 	// Create the Ogre texture and material first //
 
@@ -104,7 +106,8 @@ DLLEXPORT bool Leviathan::Gui::View::Init(){
 	CEFOverlayQuad->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY);
 
 	// Attach to scene
-	Wind->GetOverlayScene()->getRootSceneNode()->createChildSceneNode()->attachObject(CEFOverlayQuad);
+	CEFSNode = Wind->GetOverlayScene()->getRootSceneNode()->createChildSceneNode();
+	CEFSNode->attachObject(CEFOverlayQuad);
 
 	// Now we can create the browser //
 	CefWindowInfo info;
@@ -119,7 +122,7 @@ DLLEXPORT bool Leviathan::Gui::View::Init(){
 	
 	// Created asynchronously, the pointer will be linked in the OnAfterCreated function //
 	// loads google just for fun //
-	CefBrowserHost::CreateBrowser(info, this, L"http://www.google.fi", settings, NULL);
+	CefBrowserHost::CreateBrowser(info, this, filetoload, settings, NULL);
 
 
 	return true;
@@ -134,8 +137,18 @@ DLLEXPORT void Leviathan::Gui::View::ReleaseResources(){
 	}
 
 	// We could leave the Ogre resources hanging, but it might be a good idea to release them right now and not wait for the program to exit //
+	// TODO: don't use names here and make it work somehow //
+	Ogre::TextureManager::getSingleton().remove(Texture->getName());
+	Ogre::MaterialManager::getSingleton().remove(Material->getName());
 
+	Material.setNull();
+	Texture.setNull();
 
+	// Destroy the manual object //
+	CEFSNode->removeAndDestroyAllChildren();
+
+	CEFOverlayQuad = NULL;
+	CEFSNode = NULL;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::View::NotifyWindowResized(){

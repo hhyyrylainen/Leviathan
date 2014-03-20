@@ -24,7 +24,7 @@ namespace Gui{
 
 	//! \brief Main GUI controller
 	//! \todo Add GUI window objects to this which are associated with different windows
-	class GuiManager : public EngineComponent, public Ogre::RenderQueueListener, public ThreadSafe{
+	class GuiManager : public EngineComponent, public ThreadSafe{
 	public:
 		DLLEXPORT GuiManager();
 		DLLEXPORT ~GuiManager();
@@ -38,6 +38,7 @@ namespace Gui{
 		// key press receiving from listener //
 		DLLEXPORT bool ProcessKeyDown(OIS::KeyCode key, int specialmodifiers);
 
+		//! \todo Actually pass this to Views
 		DLLEXPORT inline void SetVisible(bool visible){
 			Visible = visible;
 		}
@@ -74,26 +75,6 @@ namespace Gui{
 		// called when mouse cannot be captured (should force at least one collection on) //
 		DLLEXPORT void OnForceGUIOn();
 
-		// events //
-		DLLEXPORT bool CallEvent(Event* pEvent);
-		DLLEXPORT int CallEventOnObject(BaseGuiObject* receive, Event* pEvent);
-
-
-		DLLEXPORT inline shared_ptr<GuiLoadedSheet> GetSheet(int id){
-			try{
-
-				return GuiSheets[id];
-
-			} catch (...){
-				return nullptr;
-			}
-		}
-
-
-		//! \brief Used to update chrome before having to render it
-		virtual void preRenderQueues();
-
-		virtual void renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation);
 
 	private:
 		// rendering //
@@ -128,7 +109,6 @@ namespace Gui{
 
 		// collections //
 		std::vector<GuiCollection*> Collections;
-		std::map<int, shared_ptr<GuiLoadedSheet>> GuiSheets;
 	};
 
 }}

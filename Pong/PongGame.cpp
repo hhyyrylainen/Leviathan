@@ -381,6 +381,7 @@ void Pong::PongGame::DoSpecialPostLoad(){
 	// load GUI documents //
 	GuiManagerAccess = Engine::GetEngine()->GetWindowEntity()->GetGUI();
 
+	GuiManagerAccess->LoadGUIFile(L"./Data/Scripts/GUI/PongMenus.txt");
 
 	// set skybox to have some sort of visuals //
 	WorldOfPong->SetSkyBox("NiceDaySky");

@@ -1,4 +1,5 @@
-GUIBasePage = "file:///Data/Scripts/GUI/Pong.html"
+//GUIBasePage = "Pong.html";
+GUIBasePage = "http://www.google.fi/";
 GUISize = FULL;
 
 objects {

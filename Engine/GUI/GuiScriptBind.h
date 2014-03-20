@@ -66,28 +66,6 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	}
 
 
-	// bind sheets //
-	if(engine->RegisterObjectType("GuiLoadedSheet", 0, asOBJ_REF) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-
-	if(engine->RegisterObjectBehaviour("GuiLoadedSheet", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Gui::GuiLoadedSheet, AddRefProxy), asCALL_GENERIC) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("GuiLoadedSheet", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Gui::GuiLoadedSheet, ReleaseProxy), asCALL_GENERIC) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-
-	if(engine->RegisterObjectMethod("GuiCollection", "GuiLoadedSheet@ GetOwningSheet()", WRAP_MFN(Gui::GuiCollection, GetOwningSheetProxy), asCALL_GENERIC) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("BaseGuiObject", "GuiLoadedSheet@ GetOwningSheet()", WRAP_MFN(Gui::BaseGuiObject, GetOwningSheetProxy), asCALL_GENERIC) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-
-
-
-
 
 	return true;
 }

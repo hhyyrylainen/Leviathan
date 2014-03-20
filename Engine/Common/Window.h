@@ -137,7 +137,7 @@ namespace Leviathan{
 			return OverlayViewport;
 		}
 		// map that converts OIS::KeyCode to Rocket key codes //
-		static std::map<OIS::KeyCode, int> OISRocketKeyConvert;
+		static std::map<OIS::KeyCode, int> OISVKeyConvert;
 		static boost::bimap<wstring, OIS::KeyCode> CharacterToOISConvert;
 
 		// method for other DLLs to call the maps //

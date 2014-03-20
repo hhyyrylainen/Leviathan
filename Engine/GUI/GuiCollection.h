@@ -13,34 +13,10 @@
 
 namespace Leviathan{ namespace Gui{
 
-	// usability type define //
-
-	class GuiManager;
-
-	// this is used to pass Rocket pages to collections //
-	class GuiLoadedSheet : public ReferenceCounted{
-	public:
-		GuiLoadedSheet();
-		~GuiLoadedSheet();
-
-
-		DLLEXPORT inline int GetID(){
-			return ID;
-		}
-
-		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GuiLoadedSheet);
-
-	private:
-		// used for finding by ID //
-
-		// automatically generated ID //
-		int ID;
-	};
-
 
 	class GuiCollection : public Object, public ReferenceCounted{
 	public:
-		GuiCollection(const wstring &name, GuiLoadedSheet* sheet, GuiManager* manager, int id, const wstring &toggle, bool strict = false, 
+		GuiCollection(const wstring &name, View* sheet, GuiManager* manager, int id, const wstring &toggle, bool strict = false, 
 			bool enabled = true, bool keepgui = false, bool allowenable = true);
 		~GuiCollection();
 
@@ -79,19 +55,10 @@ namespace Leviathan{ namespace Gui{
 			return Convert::WstringToString(Name);
 		}
 
-		DLLEXPORT GuiLoadedSheet* GetOwningSheet(){
-			return ContainedInSheet;
-		}
-		// warning increases reference count //
-		GuiLoadedSheet* GetOwningSheetProxy(){
-			ContainedInSheet->AddRef();
-			return ContainedInSheet;
-		}
-
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GuiCollection);
 
-		DLLEXPORT static bool LoadCollection(GuiManager* gui, const ObjectFileObject &data, GuiLoadedSheet* sheet);
+		DLLEXPORT static bool LoadCollection(GuiManager* gui, const ObjectFileObject &data, View* sheet);
 	private:
 		wstring Name;
 		int ID;
@@ -104,7 +71,7 @@ namespace Leviathan{ namespace Gui{
 		GuiManager* OwningManager;
 
 		shared_ptr<ScriptScript> Scripting;
-		GuiLoadedSheet* ContainedInSheet;
+		View* ContainedInSheet;
 	};
 
 }}

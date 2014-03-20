@@ -32,7 +32,7 @@ namespace Leviathan{ namespace Gui{
 
 		//! \brief Must be called before using, initializes required Ogre resources
 		//! \return True when succeeds
-		DLLEXPORT bool Init();
+		DLLEXPORT bool Init(const wstring &filetoload, const NamedVars &headervars);
 
 		//! \brief Must be called before destroying to release allocated Ogre resources
 		DLLEXPORT void ReleaseResources();
@@ -170,6 +170,9 @@ namespace Leviathan{ namespace Gui{
 
 		//! The quad to which the browser is rendered
 		Ogre::ManualObject* CEFOverlayQuad;
+
+		//! Node that has the overlay, can be used to hide it //
+		Ogre::SceneNode* CEFSNode;
 
 		//! The direct texture pointer
 		Ogre::TexturePtr Texture;

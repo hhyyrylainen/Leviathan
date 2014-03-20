@@ -158,6 +158,7 @@ namespace Leviathan{
 		void CheckInputState();
 		void _CreateOverlayScene();
 		void _CheckMouseVisibilityStates();
+		void DoCEFInputPass(const OIS::KeyEvent &arg, bool down);
 		// ------------------------------------ //
 #ifdef _WIN32
 		HWND m_hwnd;

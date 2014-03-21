@@ -16,7 +16,7 @@ using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Gui::View::View(GuiManager* owner, Window* window) : Wind(window), Owner(owner), ID(IDFactory::GetID()), CEFOverlayQuad(NULL),
-	CEFSNode(NULL)
+	CEFSNode(NULL), OurFocus(false)
 {
 
 }
@@ -159,6 +159,9 @@ DLLEXPORT void Leviathan::Gui::View::NotifyWindowResized(){
 }
 
 DLLEXPORT void Leviathan::Gui::View::NotifyFocusUpdate(bool focused){
+	// Update our focus //
+	OurFocus = focused;
+
 	if(OurBrowser.get()){
 
 		OurBrowser->GetHost()->SendFocusEvent(focused);
@@ -335,6 +338,16 @@ void Leviathan::Gui::View::OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<
 
 void Leviathan::Gui::View::OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int httpStatusCode){
 	// A frame has finished loading content...
+
+	// Let's try fix some focusing issues //
+	if(frame->IsMain()){
+		// Store our original focus //
+		bool origfocus = OurFocus;
+		// Lose focus and then gain it if we have focus //
+		NotifyFocusUpdate(false);
+		if(origfocus)
+			NotifyFocusUpdate(true);
+	}
 }
 
 void Leviathan::Gui::View::OnLoadStart(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame){

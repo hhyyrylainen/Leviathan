@@ -343,6 +343,9 @@ guiprocessguifileloopdeleteprocessedobject:
 		AddGuiObject(TempOs[i]);
 	}
 
+	// Set focus to the new View //
+	ThissViews.back()->NotifyFocusUpdate(ThisWindow->GetWindow()->IsWindowFocused());
+
 	return true;
 }
 // ------------------------------------ //

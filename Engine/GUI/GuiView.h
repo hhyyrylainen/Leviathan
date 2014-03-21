@@ -124,6 +124,7 @@ namespace Leviathan{ namespace Gui{
 		// CefLoadHandler methods
 		virtual void OnLoadStart(CefRefPtr<CefBrowser> browser,
 			CefRefPtr<CefFrame> frame) OVERRIDE;
+		//! \todo Make that future multi Gui::View windows don't all get focus back
 		virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser,
 			CefRefPtr<CefFrame> frame,
 			int httpStatusCode) OVERRIDE;
@@ -157,6 +158,10 @@ namespace Leviathan{ namespace Gui{
 
 		//! Unique ID
 		int ID;
+
+
+		//! Current focus state, set with NotifyFocusUpdate
+		bool OurFocus;
 
 		//! Stored access to matching window
 		Window* Wind;

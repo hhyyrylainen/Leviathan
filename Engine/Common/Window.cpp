@@ -527,20 +527,6 @@ void Leviathan::Window::DoCEFInputPass(const OIS::KeyEvent &arg, bool down){
 	cef_event.modifiers = SpecialKeyModifiers;
 	InputProcessedByCEF = false;
 
-//	int text;
-//
-//	if(arg.text == 0){
-//		// We need to translate it ourselves //
-//#ifdef _WIN32
-//
-//		text = MapVirtualKey(OISVKeyConvert[arg.key], MAPVK_VK_TO_CHAR);
-//
-//#endif // _WIN32
-//
-//	} else {
-//		text = arg.text;
-//	}
-
 	// More slightly modified CEF (chromium embedded framework) code, see the license higher in this file (line 50ish) //
 #if defined(OS_WIN)
 
@@ -550,6 +536,9 @@ void Leviathan::Window::DoCEFInputPass(const OIS::KeyEvent &arg, bool down){
 	cef_event.native_key_code = (scanCode << 16) |  // key scan code
 		1;  // key repeat count
 #elif defined(OS_LINUX) || defined(OS_MACOSX)
+
+	// We need to manually translate the text if it isn't already translated //
+	static_assert(0, "TODO: write a conversion from OIS keycode to a character");
 
 #if defined(OS_LINUX)
 	if (arg.key == OIS::KC_BACK)
@@ -1102,6 +1091,10 @@ DLLEXPORT wstring Leviathan::Window::ConvertOISKeyCodeToWstring(const OIS::KeyCo
 	}
 
 	return iter->second;
+}
+
+DLLEXPORT bool Leviathan::Window::IsWindowFocused() const{
+	return Focused;
 }
 
 

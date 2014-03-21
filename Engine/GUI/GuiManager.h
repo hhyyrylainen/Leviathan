@@ -57,6 +57,9 @@ namespace Gui{
 		DLLEXPORT bool LoadCollection(vector<shared_ptr<ObjectFileObject>> &data, ObjectFileObject &collectiondata);
 
 		// file loading //
+
+		//! \brief Loads a GUI file
+		//! \todo don't auto focus it (the new View)
 		DLLEXPORT bool LoadGUIFile(const wstring &file);
 		// set to "none" to use default //
 		DLLEXPORT void SetMouseFile(const wstring &file);

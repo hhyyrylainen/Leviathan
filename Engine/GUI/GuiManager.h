@@ -56,6 +56,10 @@ namespace Gui{
 		// function split into peaces //
 		DLLEXPORT bool LoadCollection(vector<shared_ptr<ObjectFileObject>> &data, ObjectFileObject &collectiondata);
 
+
+		//! \todo This needs new purpose
+		DLLEXPORT void SetAllowPaintStatus(bool canpaint = true);
+
 		// file loading //
 
 		//! \brief Loads a GUI file
@@ -105,7 +109,8 @@ namespace Gui{
 		vector<BaseGuiObject*> Objects;
 
 
-		std::vector<Gui::View*> ThissViews; 
+		std::vector<Gui::View*> ThissViews;
+
 
 		//! we will soon need a GuiManager for each window
 		int ID;

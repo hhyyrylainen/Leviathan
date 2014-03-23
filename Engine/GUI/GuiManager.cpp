@@ -420,5 +420,13 @@ void Leviathan::Gui::GuiManager::_ReleaseOgreResources(){
 
 }
 
+DLLEXPORT void Leviathan::Gui::GuiManager::SetAllowPaintStatus(bool canpaint /*= true*/){
+	// Verify that Views can paint themselves //
+	for(size_t i = 0; i < ThissViews.size(); i++){
+
+		ThissViews[i]->SetAllowPaintStatus(canpaint);
+	}
+}
+
 
 

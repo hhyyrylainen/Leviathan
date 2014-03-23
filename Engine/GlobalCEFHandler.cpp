@@ -59,6 +59,9 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(const wstr
 	settings.no_sandbox = true;
 #endif
 
+	// Let's try to speed things up //
+	settings.multi_threaded_message_loop = true;
+
 	// Initialize CEF.
 	CefInitialize(main_args, settings, keeper->CEFApp.get(), sandbox_info);
 
@@ -81,7 +84,7 @@ DLLEXPORT void Leviathan::GlobalCEFHandler::CEFLastThingInProgram(){
 DLLEXPORT void Leviathan::GlobalCEFHandler::DoCEFMessageLoopWork(){
 	if(!CEFInitialized)
 		return;
-	CefDoMessageLoopWork();
+	//CefDoMessageLoopWork();
 }
 // ------------------------------------ //
 DLLEXPORT CEFSandboxInfoKeeper* Leviathan::GlobalCEFHandler::GetCEFObjects(){

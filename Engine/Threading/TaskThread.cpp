@@ -99,7 +99,7 @@ DLLEXPORT void Leviathan::TaskThread::NotifyThread(){
 }
 
 void Leviathan::TaskThread::_NewThreadEntryRegister(ObjectLock &guard){
-
+	
 }
 
 void Leviathan::TaskThread::_ThreadEndClean(ObjectLock &guard){

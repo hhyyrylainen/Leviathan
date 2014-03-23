@@ -38,8 +38,6 @@
 body
 {
 	font-family: Simonetta;
-	font-weight: normal;
-	font-style: normal;
 	font-size: 30;
 	color: white;
 }
@@ -49,19 +47,31 @@ span
     display: inline-block;
 }
 
-.Menu
+.GameTitle
 {
-    width: auto;
-    margin: auto;
-    text-align: center;
+    position: absolute;
+    left: 20px;
+    top: 10px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 125;
+    -webkit-font-smoothing: antialiased;
+    text-shadow: 1px 1px 2px black;
 }
 
 .MenuOption
 {
     background-color: #00B060;
-    margin-left: 15%;
-    margin-right: 15%;
-    width: auto;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    width: 30%;
+    height: auto;
 }
 
 .MenuOption:hover
@@ -83,8 +93,14 @@ span
 
 .Disabled
 {
-    background-color: #21845766;    
+    background-color: rgba(33, 132, 87, 0.7);
     color: gray;
+}
+
+.Disabled:hover
+{
+    background-color: rgba(21, 87, 57, 0.4);
+    color: lightgray;
 }
 
 .Dangerous:hover
@@ -94,15 +110,13 @@ span
 
 div.MenuContent
 {
-    z-index: 2;
     margin: auto;
-    padding: 30px;
+    margin-top: 10%;
     width: 100%;
     max-width: 100%;
-    height: 100%;
+    height: auto;
     max-height: 100%;
     overflow: auto;
-    
     text-align: center;
 }
 
@@ -125,7 +139,6 @@ div.ConnectStatus
     background-color: #00000090;
 }
 
-
 .DeadCenter
 {
     text-align: center;
@@ -133,15 +146,6 @@ div.ConnectStatus
     width: auto;
     height: auto;
     margin: auto;
-}
-
-div.FullScreen
-{
-    width: 100%;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%;
-    overflow: auto;
 }
 
 .PlayerDisplayColour
@@ -186,6 +190,20 @@ hr.PauseLine
     margin: auto;
 }
 
+.SmallError
+{
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+    width: 70%;
+    font-size: 22px;
+}
+
+span
+{
+    display: inline-block;
+}
+
 .Golden
 {
     color: #FFAC40;
@@ -194,12 +212,6 @@ hr.PauseLine
 .Hidden
 {
     display: none;
-    visibility: hidden;
-}
-
-.SpaceTaker
-{
-    Height: 200px;
 }
 
 .InlineBlock
@@ -215,4 +227,19 @@ hr.PauseLine
 .Absolute
 {
     position: absolute;
+}
+
+/* Scrollbar customizations */
+::-webkit-scrollbar {
+    width: 12px;
+}
+ 
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+    border-radius: 10px;
+}
+ 
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); 
 }

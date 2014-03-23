@@ -21,6 +21,9 @@ bool Leviathan::Gui::CefApplication::OnBeforeNavigation(CefRefPtr<CefBrowser> br
 }
 // ------------------------------------ //
 void Leviathan::Gui::CefApplication::OnContextInitialized(){
+	// Let's register this thread with everything //
+
+
 
 }
 

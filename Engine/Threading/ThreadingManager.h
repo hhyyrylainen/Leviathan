@@ -14,6 +14,9 @@
 
 namespace Leviathan{
 
+
+	DLLEXPORT void RegisterOgreOnThread();
+
 	//! \todo Improve performance
 	void RunTaskQueuerThread(ThreadingManager* manager);
 

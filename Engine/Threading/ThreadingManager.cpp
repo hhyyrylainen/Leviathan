@@ -9,7 +9,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 
 // ------------------ Utility functions for threads to run ------------------ //
-void RegisterOgreOnThread(){
+void Leviathan::RegisterOgreOnThread(){
 
 	Ogre::Root::getSingleton().getRenderSystem()->registerThread();
 	Logger::Get()->Info(L"Thread registered to work with Ogre");

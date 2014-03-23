@@ -2,109 +2,158 @@
 	<head>
         <meta charset="utf-8">
 		<title>Menu</title>
+        <link rel="stylesheet" href="./../jQuery/ui-lightness/jquery-ui-1.10.4.custom.css"/>
         <link rel="stylesheet" type="text/css" media="all" href="Pong.css"/>
-	</head>
-	<body>
-        <div class="Menu" id="Menus">
-            <div class="MenuContent" id="TopLevelMenu">
-                <span style="position: absolute; left: 20px; top: 10px; text-align: left; font-weight: bold; font-size: 125; z-index: 1;">
-                Pong
-                </span>
-                <span class="SpaceTaker"></span>
-                <span class="MenuOption"><p id="ToServerStartScreen">Start Server</p></span>
-                <span class="MenuOption Disabled"><p id="GameMultiplayerList">Browse Games</p></span>
-                <span class="MenuOption"><p id="ToGameDirectConnect">Direct Connect</p></span>
-                <span class="MenuOption Dangerous"><p id="GameQuitButton">Quit</p></span>
-            </div>
-            <div class="MenuContent Hidden" id="ServerStartScreen">
-                <span class="SpaceTaker"></span>
-                <h1 class="MenuTitle">Start a new game</h1>
-                <hr class="MenuLine"></hr>
-                Here's the server setup screen!
-                <hr class="MenuLine"></hr>
-                <span class="MenuOption"><p id="ServerStartButton">Start Game</p></span>
-                <span class="MenuOption"><p id="BackFromServerStartScreen">Back</p></span>
-            </div>
-            <div class="MenuContent Hidden" id="DirectConnectScreen">
-                <span class="SpaceTaker"></span>
-                <h1 class="MenuTitle">Connect to a server</h1>
-                <hr class="MenuLine"></hr>
-                <form id="DirectConnectForm" style="text-align: center; width: auto; margin: auto;">
-                <p id="DirectConnectFormErrorText">Type in the address of the server like this: "192.168.1.1:25543"</p>
-                <input style="font-size: 35; height: auto;" type="text" size="30" name="ServerAddress" 
-                    value="localhost:53221"></input>
-                <p><input type="submit">Connect</input></p>
-                </form>
-                <span class="MenuOption"><p id="BackFromDirectConnectScreen">Back</p></span>
-            </div>
-        </div>
-        <div class="Hidden" id="LobbyScreen">
-            You're in a lobby!
-            <tabset>
-            <tab>Overview</tab>
-            <panel>
-                Lobby overwiev, players and such.
-            </panel>
-            <tab>Player Slots</tab>
-            <panel>
-                Overview of players in slots
-            </panel>
-            <tab>Team 0</tab>
-            <panel>
-                Slot controls for team 0
-            </panel>
-            </tabset>
-            <!--All the chat and buttons and such under the tabs-->
-            <span class="PlayerDisplayColour" style="margin: auto; margin-left: 5%; margin-bottom: 2%; width: 45%; max-width: 45%; height: 33%; max-height: 33%;">
-            The chat goes here!
-            </span>
-            <span class="MenuOption Dangerous"><p id="LobbyDisconnect">Disconnect</p></span>
-        </div>
-        <div class="Hidden FullScreen" id="ServerConnectScreen">
-            <span class="DeadCenter Absolute" style="widt: 100px; height: 100px;">
-                Connecting to a server
-            </span>
-            <div class="ConnectStatus" id="ConnectionStatusUpdate">
-                Waiting for status update...
-            </div>
-            <div class="BottomRightMenu Dangerous" style="width: 200px;" id="ServerConnectScreenDisconnect">
-                Disconnect
-            </div>
-        </div>
-        <div class="Hidden" id="GameplayHUD">
-            <span class="PlayerDisplayColour" style="paddin-left: 5px; position: absolute; top: 5%; left: 5%; width: 20%; min-height: 100px;">
-            <p id="HUDPlayerScoreList"></p>
-            </span>
-        </div>
-        <div class="Hidden" id="MatchEndScreen">
-            <div class="MenuContent">
-            <h1 class="MenuTitle">Match has ended</h1>
-            <hr class="MenuLine"></hr>
-            <h2 class="MenuTitle">Winners</h2>
-            
-            <p class="Golden PlayerDisplayColour" id="PlayerWinnerList"></p>
-            
-            <hr class="MenuLine"></hr>
-            <h2 class="MenuTitle">Final scores</h2>
-            <p id="WinningScreenScoreboard"></p>
-            
-            <span class="MenuOption"><p id="WinningGameToLobby">Lobby</p></span>
-            <br></br>
-            <span class="MenuOption"><p id="WinningGameBackToMenuButton">Main menu</p></span>
-            <span class="MenuOption Dangerous"><p id="GameQuitFromWinScreen">Quit game</p></span>
-            </div>
-        </div>
-        <div class="Hidden" id="PauseMenu">
-            <span class="SpaceTaker"></span>
-            <div class="MenuContent PauseContent">
-            <h1 class="MenuTitle">(Potentially) Paused</h1>
-            <hr class="MenuLine PauseLine"></hr>
-            <span class="MenuOption PauseOption"><p id="ClosePauseMenu">Resume</p></span>
-            <br></br>
-            <span class="MenuOption PauseOption"><p id="PauseScreenBackToMenuButton">Main menu</p></span>
-            <span class="MenuOption PauseOption Dangerous"><p id="PauseScreenQuitButton">Quit game</p></span>
-            </div>
-        </div>
+
         
-	</body>
+        <!--Using jQuery, should probably change to min jQuery for release-->
+        <!--<script src="./../jQuery/jquery-2.1.0.min.js" type="text/javascript"></script>-->
+        <script src="./../jQuery/jquery-2.1.0.js"></script>
+        <!--<script src="./../jQuery/jquery-ui-1.10.4.custom.min.js" type="text/javascript"></script>-->
+        <script src="./../jQuery/jquery-ui-1.10.4.custom.js"></script>
+	</head>
+<body>
+    <script>
+    // ------------------ Ease of use functions ------------------ //
+    function GetErrorElementForError(errorstring, customclass){
+    
+        return "<div class='ui-state-error ui-corner-all "+customclass+"' style='padding: 0 .7em;'><p><span class='ui-icon ui-icon-alert' style='float: left; margin-right: .3em; vertical-align: middle;'></span>"+
+        "<strong>Error:</strong> "+errorstring+"</p></div>";
+    }
+    
+    
+    $(document).ready(function() {
+        // Register the listeners //
+        $(".GameTitle").on("click", function() {
+            $(this).fadeOut();
+        });
+        
+        // ------------------ TopLevelMenu ------------------ //
+        $("#ServerStartButton").on("click", function() {
+            $("#TopLevelMenu").slideUp();
+            $("#ServerStartScreen").slideDown();
+        });
+        $("#DirectConnectButton").on("click", function() {
+            $("#TopLevelMenu").slideUp();
+            $("#DirectConnectScreen").slideDown();
+        });
+        
+        // ------------------ ServerStartScreen ------------------ //
+        $("#BackFromServerStartScreen").on("click", function() {
+            $("#ServerStartScreen").slideUp();
+            $("#TopLevelMenu").slideDown();
+        });
+        
+        // ------------------ DirectConnectScreen ------------------ //
+        $("#BackFromDirectConnectScreen").on("click", function() {
+            $("#DirectConnectScreen").slideUp();
+            $("#TopLevelMenu").slideDown();
+        });
+        
+        $("#ServerConnectButton").button().click(function( event ) {
+            // prevent default and try to handle it //
+            event.preventDefault();
+            $("#DirectConnectFormErrorText").html(GetErrorElementForError("Not done yet...", "SmallError"));
+        });
+        
+    });
+    </script>
+    
+    <div id="Menus">
+        <div class="MenuContent" id="TopLevelMenu">
+            <span class="GameTitle">Pong</span>
+            
+            <div class="MenuOption" id="ServerStartButton">Start Server</div>
+            <div class="MenuOption Disabled">Browse Games</div>
+            <div class="MenuOption" id="DirectConnectButton">Direct Connect</div>
+            <div class="MenuOption Dangerous">Quit</div>
+        </div>
+        <div class="MenuContent Hidden" id="ServerStartScreen">
+            <h1 class="MenuTitle">Start a new game</h1>
+            <hr class="MenuLine">
+            Here's the server setup screen!
+            <hr class="MenuLine">
+            <span class="MenuOption" id="ServerStartButton">Start Game</span>
+            <span class="MenuOption" id="BackFromServerStartScreen">Back</span>
+        </div>
+        <div class="MenuContent Hidden" id="DirectConnectScreen">
+            <h1 class="MenuTitle">Connect to a server</h1>
+            <hr class="MenuLine">
+            <form id="DirectConnectForm" style="text-align: center; width: auto; margin: auto;">
+            <p id="DirectConnectFormErrorText">Type in the address of the server like this: "192.168.1.1:25543"</p>
+            <input style="font-size: 35; height: auto;" type="text" size="30" name="ServerAddress" 
+                value="localhost:53221">
+            <p><input type="submit" value="Connect" id="ServerConnectButton"></p>
+            </form>
+            <span class="MenuOption" id="BackFromDirectConnectScreen">Back</span>
+        </div>
+    </div>
+    <!--<div class="Hidden" id="LobbyScreen">
+        You're in a lobby!
+        <tabset>
+        <tab>Overview</tab>
+        <panel>
+            Lobby overwiev, players and such.
+        </panel>
+        <tab>Player Slots</tab>
+        <panel>
+            Overview of players in slots
+        </panel>
+        <tab>Team 0</tab>
+        <panel>
+            Slot controls for team 0
+        </panel>
+        </tabset>
+        <span class="PlayerDisplayColour" style="margin: auto; margin-left: 5%; margin-bottom: 2%; width: 45%; max-width: 45%; height: 33%; max-height: 33%;">
+        The chat goes here!
+        </span>
+        <span class="MenuOption Dangerous"><p id="LobbyDisconnect">Disconnect</p></span>
+    </div>
+    <div class="Hidden FullScreen" id="ServerConnectScreen">
+        <span class="DeadCenter Absolute" style="widt: 100px; height: 100px;">
+            Connecting to a server
+        </span>
+        <div class="ConnectStatus" id="ConnectionStatusUpdate">
+            Waiting for status update...
+        </div>
+        <div class="BottomRightMenu Dangerous" style="width: 200px;" id="ServerConnectScreenDisconnect">
+            Disconnect
+        </div>
+    </div>
+    <div class="Hidden" id="GameplayHUD">
+        <span class="PlayerDisplayColour" style="paddin-left: 5px; position: absolute; top: 5%; left: 5%; width: 20%; min-height: 100px;">
+        <p id="HUDPlayerScoreList"></p>
+        </span>
+    </div>
+    <div class="Hidden" id="MatchEndScreen">
+        <div class="MenuContent">
+        <h1 class="MenuTitle">Match has ended</h1>
+        <hr class="MenuLine"></hr>
+        <h2 class="MenuTitle">Winners</h2>
+        
+        <p class="Golden PlayerDisplayColour" id="PlayerWinnerList"></p>
+        
+        <hr class="MenuLine"></hr>
+        <h2 class="MenuTitle">Final scores</h2>
+        <p id="WinningScreenScoreboard"></p>
+        
+        <span class="MenuOption"><p id="WinningGameToLobby">Lobby</p></span>
+        <br></br>
+        <span class="MenuOption"><p id="WinningGameBackToMenuButton">Main menu</p></span>
+        <span class="MenuOption Dangerous"><p id="GameQuitFromWinScreen">Quit game</p></span>
+        </div>
+    </div>
+    <div class="Hidden" id="PauseMenu">
+        <span class="SpaceTaker"></span>
+        <div class="MenuContent PauseContent">
+        <h1 class="MenuTitle">(Potentially) Paused</h1>
+        <hr class="MenuLine PauseLine"></hr>
+        <span class="MenuOption PauseOption"><p id="ClosePauseMenu">Resume</p></span>
+        <br></br>
+        <span class="MenuOption PauseOption"><p id="PauseScreenBackToMenuButton">Main menu</p></span>
+        <span class="MenuOption PauseOption Dangerous"><p id="PauseScreenQuitButton">Quit game</p></span>
+        </div>
+    </div>
+    -->
+</body>
 </html>

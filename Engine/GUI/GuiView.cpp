@@ -12,11 +12,13 @@
 #include "GlobalCEFHandler.h"
 #include "include/cef_browser.h"
 #include "Exceptions/ExceptionNotFound.h"
+#include "Threading/ThreadingManager.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Gui::View::View(GuiManager* owner, Window* window) : Wind(window), Owner(owner), ID(IDFactory::GetID()), CEFOverlayQuad(NULL),
-	CEFSNode(NULL), OurFocus(false)
+DLLEXPORT Leviathan::Gui::View::View(GuiManager* owner, Window* window, VIEW_SECURITYLEVEL security /*= VIEW_SECURITYLEVEL_ACCESS_ALL*/) : Wind(window), 
+	Owner(owner), ID(IDFactory::GetID()), CEFOverlayQuad(NULL),	CEFSNode(NULL), OurFocus(false), ViewSecurity(security), CanPaint(false),
+	TextureToCopy(new RenderDataHolder(this))
 {
 
 }
@@ -26,6 +28,11 @@ DLLEXPORT Leviathan::Gui::View::~View(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::View::Init(const wstring &filetoload, const NamedVars &headervars){
+	// Lock our object //
+	ObjectLock guard1(*TextureToCopy.get());
+	
+	// Lock us //
+	ObjectLock guard(*this);
 
 	// Create the Ogre texture and material first //
 
@@ -124,11 +131,22 @@ DLLEXPORT bool Leviathan::Gui::View::Init(const wstring &filetoload, const Named
 	// loads google just for fun //
 	CefBrowserHost::CreateBrowser(info, this, filetoload, settings, NULL);
 
+	// It's now valid //
+	TextureToCopy->IsStillValid = true;
 
 	return true;
 }
 
 DLLEXPORT void Leviathan::Gui::View::ReleaseResources(){
+	// Lock our object //
+	ObjectLock guard1(*TextureToCopy.get());
+
+	// It's no longer valid //
+	TextureToCopy->IsStillValid = false;
+
+	// Lock us //
+	ObjectLock guard(*this);
+
 	// Destroy the browser first //
 
 	// Force release so nothing can stop it //
@@ -248,39 +266,93 @@ void Leviathan::Gui::View::OnScrollOffsetChanged(CefRefPtr<CefBrowser> browser){
 }
 // ------------------------------------ //
 void Leviathan::Gui::View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList& dirtyRects, const void* buffer, int width, int height){
+	// Seems like we need to pass this to another thread for handling //
 
-	if(type == PET_POPUP){
-		// We don't know how to paint this //
+	// Calculate the size of the buffer //
+	size_t newbufsize = width*height*Ogre::PixelUtil::getNumElemBytes(Ogre::PF_B8G8R8A8);
 
-		return;
+	{
+		// Lock the buffer //
+		ObjectLock guard1(*TextureToCopy.get());
+
+		// Lock us, just for fun //
+		ObjectLock guard(*this);
+
+		// We need to allocate a new buffer if it isn't the same size //
+		if(newbufsize != TextureToCopy->BufferSize){
+			// Delete the old buffer //
+			SAFE_DELETE(TextureToCopy->Buffer);
+
+			// Set new size //
+			TextureToCopy->BufferSize = newbufsize;
+
+			TextureToCopy->Buffer = new char[TextureToCopy->BufferSize];
+		}
+
+		// Set data //
+		TextureToCopy->Type = type;
+		TextureToCopy->Width = width;
+		TextureToCopy->Height = height;
+
+		// We probably need to copy the buffer over //
+		memcpy(TextureToCopy->Buffer, buffer, TextureToCopy->BufferSize);
 	}
 
-	// Make sure our texture is large enough //
-	if(Texture->getWidth() != width || Texture->getHeight() != height){
-		// Free resources and then change the size //
-		Texture->freeInternalResources();
-		Texture->setWidth(width);
-		Texture->setHeight(height);
-		Texture->createInternalResources();
+	// Queue the task //
+	ThreadingManager::Get()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](shared_ptr<RenderDataHolder> dataobj){
 
-		Logger::Get()->Info(L"GuiView: recreated texture for CEF browser");
-	}
+		// Lock it  //
+		ObjectLock guard1(*dataobj.get());
 
-	// Copy it to our texture buffer //
-	Ogre::HardwarePixelBufferSharedPtr pixelbuf = Texture->getBuffer();
+		// Check is it still valid //
+		if(!dataobj->IsStillValid)
+			return;
 
-	// Lock buffer and get a target box for writing //
-	pixelbuf->lock(Ogre::HardwareBuffer::HBL_DISCARD);
-	const Ogre::PixelBox& pixelbox = pixelbuf->getCurrentLock();
+		// Lock the object itself //
+		ObjectLock guard2(*dataobj->MyView);
 
-	// Copy out the pointer //
-	void* destptr = pixelbox.data;
+		// Copy it to the texture //
+		if(dataobj->Type == PET_POPUP){
+			// We don't know how to paint this //
 
-	// Copy the data over //
-	memcpy(destptr, buffer, width*height*Ogre::PixelUtil::getNumElemBytes(Ogre::PF_B8G8R8A8));
+			return;
+		}
 
-	// Unlock the buffer //
-	pixelbuf->unlock();
+		// Make sure our texture is large enough //
+		if(dataobj->MyView->Texture->getWidth() != dataobj->Width || dataobj->MyView->Texture->getHeight() != dataobj->Height){
+			// Free resources and then change the size //
+			dataobj->MyView->Texture->freeInternalResources();
+			dataobj->MyView->Texture->setWidth(dataobj->Width);
+			dataobj->MyView->Texture->setHeight(dataobj->Height);
+			dataobj->MyView->Texture->createInternalResources();
+
+			Logger::Get()->Info(L"GuiView: recreated texture for CEF browser");
+		}
+
+		// Copy it to our texture buffer //
+		Ogre::HardwarePixelBufferSharedPtr pixelbuf = dataobj->MyView->Texture->getBuffer();
+
+		// Lock buffer and get a target box for writing //
+		pixelbuf->lock(Ogre::HardwareBuffer::HBL_DISCARD);
+		const Ogre::PixelBox& pixelbox = pixelbuf->getCurrentLock();
+
+		// Copy out the pointer //
+		void* destptr = pixelbox.data;
+
+		// Copy the data over //
+		memcpy(destptr, dataobj->Buffer, dataobj->BufferSize);
+
+		// Unlock the buffer //
+		pixelbuf->unlock();
+
+
+
+
+
+	}, TextureToCopy))));
+}
+
+DLLEXPORT void Leviathan::Gui::View::CheckRender(){
 
 }
 // ------------------------------------ //
@@ -414,6 +486,19 @@ DLLEXPORT CefRefPtr<CefBrowserHost> Leviathan::Gui::View::GetBrowserHost(){
 	}
 
 	return NULL;
+}
+
+DLLEXPORT void Leviathan::Gui::View::SetAllowPaintStatus(bool canpaintnow){
+	if(CanPaint == canpaintnow)
+		return;
+	// Update //
+	CanPaint = canpaintnow;
+
+	if(CanPaint){
+		// Mark the whole area as dirty //
+		// This might be a better way to do this //
+		//OurBrowser->GetHost()->WasResized();
+	}
 }
 
 

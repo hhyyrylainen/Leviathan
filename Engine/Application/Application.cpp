@@ -112,6 +112,8 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 		bool canprocess = _Engine->GetWindowOpenCount() != 0;
 
 		Ogre::WindowEventUtilities::messagePump();
+		// Let possible CEF update itself //
+		GlobalCEFHandler::DoCEFMessageLoopWork();
 
 		// Set as quitting //
 		if((!canprocess || QuitSometime) && !ShouldQuit){
@@ -131,6 +133,10 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 		GlobalCEFHandler::DoCEFMessageLoopWork();
 
 		Render();
+
+		// Let possible CEF update itself //
+		GlobalCEFHandler::DoCEFMessageLoopWork();
+
 		// We could potentially wait here //
 		try{
 			boost::this_thread::sleep(boost::posix_time::milliseconds(1));

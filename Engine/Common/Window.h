@@ -45,11 +45,6 @@ namespace X11{
 
 namespace Leviathan{
 
-	// for storing in pass to window //
-	class LeviathanApplication;
-	class Window;
-	class GraphicalInputEntity;
-
 	//! window class
 	//! \todo Implement global lock for input handling
 	class Window : public Ogre::WindowEventListener, OIS::KeyListener, OIS::MouseListener, OIS::JoyStickListener{

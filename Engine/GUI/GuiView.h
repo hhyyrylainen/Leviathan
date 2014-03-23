@@ -14,15 +14,47 @@
 
 namespace Leviathan{ namespace Gui{
 
+	//! Controls what functions can be called from the page
+	enum VIEW_SECURITYLEVEL {
+		//! The page is not allowed to access anything
+		VIEW_SECURITYLEVEL_BLOCKED = 0,
+
+		//! The page can view minimal view only information and access some objects
+		//! \note This is recommended for external "unsafe" pages, like a web page displayed during connecting to a server
+		VIEW_SECURITYLEVEL_MINIMAL,
+
+		//! The page can view most settings and set some "safe" settings
+		VIEW_SECURITYLEVEL_NORMAL,
+
+		//! The page can access all internal functions
+		//! \note This is the recommended level for games' internal GUI page
+		VIEW_SECURITYLEVEL_ACCESS_ALL
+		 };
+
+
 	//! \brief A class that represents a single GUI layer that has it's own chromium browser
 	//!
 	//! GUI can be layered by setting the z coordinate of Views different
 	class View : public CefClient, public CefContextMenuHandler, public CefDisplayHandler, public CefDownloadHandler,	public CefDragHandler,
 		public CefGeolocationHandler, public CefKeyboardHandler, public CefLifeSpanHandler,	public CefLoadHandler, public CefRequestHandler,
-		public CefRenderHandler
+		public CefRenderHandler, public ThreadSafe
 	{
+		class RenderDataHolder : public ThreadSafe{
+		public:
+			RenderDataHolder(View* owner) : MyView(owner), IsStillValid(false), BufferSize(0), Buffer(NULL), Width(0), Height(0){
+
+			}
+
+			PaintElementType Type;
+			size_t BufferSize;
+			void* Buffer;
+			int Width;
+			int Height;
+			View* MyView;
+			bool IsStillValid;
+		};
 	public:
-		DLLEXPORT View(GuiManager* owner, Window* window);
+		DLLEXPORT View(GuiManager* owner, Window* window, VIEW_SECURITYLEVEL security = VIEW_SECURITYLEVEL_ACCESS_ALL);
 		DLLEXPORT ~View();
 
 		//! \brief Sets the order Views are drawn, higher value is draw under other Views
@@ -36,6 +68,12 @@ namespace Leviathan{ namespace Gui{
 
 		//! \brief Must be called before destroying to release allocated Ogre resources
 		DLLEXPORT void ReleaseResources();
+
+
+		//! \brief Updates the texture
+		//!
+		//! Should be called before rendering on the main thread
+		DLLEXPORT void CheckRender();
 
 		//! \brief Notifies the internal browser that the window has resized
 		//!
@@ -112,14 +150,21 @@ namespace Leviathan{ namespace Gui{
 			CefBrowserSettings& settings,
 			bool* no_javascript_access) OVERRIDE;
 
+		virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) OVERRIDE;
+		virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) OVERRIDE;
+
+
+
 		DLLEXPORT void SetCurrentInputHandlingWindow(Window* wind);
 
 		DLLEXPORT CefRefPtr<CefBrowserHost> GetBrowserHost();
 
-		virtual bool OnKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent& event, CefEventHandle os_event) OVERRIDE;
+		//! \brief Sets the CanPaint variable allowing or preventing this object from updating the texture
+		//! \note When setting to true the whole browser is invalidated and will be redrawn
+		//! \warning Doesn't actually do anything
+		DLLEXPORT void SetAllowPaintStatus(bool canpaintnow);
 
-		virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) OVERRIDE;
-		virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) OVERRIDE;
+		virtual bool OnKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent& event, CefEventHandle os_event) OVERRIDE;
 
 		// CefLoadHandler methods
 		virtual void OnLoadStart(CefRefPtr<CefBrowser> browser,
@@ -159,6 +204,9 @@ namespace Leviathan{ namespace Gui{
 		//! Unique ID
 		int ID;
 
+		//! This View's security level
+		//! \see VIEW_SECURITYLEVEL
+		VIEW_SECURITYLEVEL ViewSecurity;
 
 		//! Current focus state, set with NotifyFocusUpdate
 		bool OurFocus;
@@ -172,6 +220,10 @@ namespace Leviathan{ namespace Gui{
 		string MaterialName;
 		//! Name of the Ogre texture
 		string TextureName;
+
+
+		//! Prevents crashing from painting the window too soon
+		bool CanPaint;
 
 		//! The quad to which the browser is rendered
 		Ogre::ManualObject* CEFOverlayQuad;
@@ -187,6 +239,9 @@ namespace Leviathan{ namespace Gui{
 
 		CefRefPtr<CefBrowser> OurBrowser;
 
+
+		//! Holds the buffer before it is transferred into a texture
+		shared_ptr<RenderDataHolder> TextureToCopy;
 	};
 
 }}

@@ -38,6 +38,13 @@ set(USERREADABLEIDENTIFICATION		"L\"Pong server version \" GAME_VERSIONS")
 set(GAMENAMEIDENTIFICATION			Pong)
 set(GAMEVERSIONIDENTIFICATION		GAME_VERSIONS)
 
+# We don't use a custom JS interface
+set(PROGRAMUSE_CUSTOMJS             0)
+set(PROGRAMCUSTOMJS_INCLUDE         ".h")
+set(PROGRAMCUSTOMJS_CLASS           )
+set(PROGRAMCUSTOMJS_EXTFILE         ".js")
+
+
 # Configure the includes file
 configure_file("${PROJECT_SOURCE_DIR}/File Templates/BaseLeviathanProjectIncludes.h.in" 
     "${PROJECT_SOURCE_DIR}/${BaseSubFolder}/${BaseIncludeFileName}")

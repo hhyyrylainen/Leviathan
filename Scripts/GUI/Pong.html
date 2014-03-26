@@ -62,13 +62,14 @@
         });
         
         // Test some things //
-        GetPongVersion(function(response){$("body").append("<div class='WeakText' style='position: absolute; right: 0%; bottom: 0%;' id='PongVersion'>");
-            $("#PongVersion").html(response); },
-            function() {});
+        GetPongVersion(function(response){
+            $(".GameTitle").append("<p class='WeakText' style='margin-top: -15px; margin-left: 50px;'>"
+                +response+"</p>");
+        }, function() {});
 
         Leviathan.GetVersion(function(response){ 
-            $(".GameTitle").append("<p class='WeakText' style='margin-top: -15px; '>"
-                +"Leviathan "+response+"</p>");
+            $("body").append("<div class='WeakText' style='position: absolute; right: 0%; bottom: 0%;' id='PongVersion'>"
+                +"Leviathan "+response+"</div>");
         }, function() {});
         
         

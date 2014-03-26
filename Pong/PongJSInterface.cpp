@@ -32,7 +32,6 @@ bool CustomJSInterface::ProcessQuery(Leviathan::Gui::LeviathanJavaScriptAsync* c
     // Not handled //
     return false;
 }
-        
 
 void CustomJSInterface::CancelQuery(Leviathan::Gui::LeviathanJavaScriptAsync* caller, int64 queryid){
     // Remove the query matching caller and queryid //

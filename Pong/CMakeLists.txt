@@ -38,7 +38,7 @@ set(USERREADABLEIDENTIFICATION		"L\"Pong client version \" GAME_VERSIONS")
 set(GAMENAMEIDENTIFICATION			Pong)
 set(GAMEVERSIONIDENTIFICATION		GAME_VERSIONS)
 
-# We use custom JS interface
+# We use a custom JS interface
 set(PROGRAMUSE_CUSTOMJS             1)
 set(PROGRAMCUSTOMJS_INCLUDE         "PongJSInterface.h")
 set(PROGRAMCUSTOMJS_CLASS           CustomJSInterface)

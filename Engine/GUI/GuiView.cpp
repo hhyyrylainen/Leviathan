@@ -13,12 +13,13 @@
 #include "include/cef_browser.h"
 #include "Exceptions/ExceptionNotFound.h"
 #include "Threading/ThreadingManager.h"
+#include "LeviathanJavaScriptAsync.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Gui::View::View(GuiManager* owner, Window* window, VIEW_SECURITYLEVEL security /*= VIEW_SECURITYLEVEL_ACCESS_ALL*/) : Wind(window), 
 	Owner(owner), ID(IDFactory::GetID()), CEFOverlayQuad(NULL),	CEFSNode(NULL), OurFocus(false), ViewSecurity(security), CanPaint(false),
-	TextureToCopy(new RenderDataHolder(this))
+	RenderHolderForMain(new RenderDataHolder()), RenderHolderForPopUp(new RenderDataHolder()), OurBrowserSide(NULL), OurAPIHandler(new LeviathanJavaScriptAsync(this))
 {
 
 }
@@ -28,9 +29,6 @@ DLLEXPORT Leviathan::Gui::View::~View(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::View::Init(const wstring &filetoload, const NamedVars &headervars){
-	// Lock our object //
-	ObjectLock guard1(*TextureToCopy.get());
-	
 	// Lock us //
 	ObjectLock guard(*this);
 
@@ -131,28 +129,29 @@ DLLEXPORT bool Leviathan::Gui::View::Init(const wstring &filetoload, const Named
 	// loads google just for fun //
 	CefBrowserHost::CreateBrowser(info, this, filetoload, settings, NULL);
 
-	// It's now valid //
-	TextureToCopy->IsStillValid = true;
-
 	return true;
 }
 
 DLLEXPORT void Leviathan::Gui::View::ReleaseResources(){
-	// Lock our object //
-	ObjectLock guard1(*TextureToCopy.get());
-
-	// It's no longer valid //
-	TextureToCopy->IsStillValid = false;
-
 	// Lock us //
 	ObjectLock guard(*this);
 
+	// Kill the javascript async //
+	OurAPIHandler->BeforeRelease();
+
 	// Destroy the browser first //
+
 
 	// Force release so nothing can stop it //
 	if(OurBrowser.get()){
 		OurBrowser->GetHost()->CloseBrowser(true);
 	}
+
+	// Release our objects //
+	RenderHolderForMain.reset();
+	RenderHolderForPopUp.reset();
+
+	SAFE_DELETE(OurAPIHandler);
 
 	// We could leave the Ogre resources hanging, but it might be a good idea to release them right now and not wait for the program to exit //
 	// TODO: don't use names here and make it work somehow //
@@ -266,71 +265,102 @@ void Leviathan::Gui::View::OnScrollOffsetChanged(CefRefPtr<CefBrowser> browser){
 }
 // ------------------------------------ //
 void Leviathan::Gui::View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList& dirtyRects, const void* buffer, int width, int height){
-	// Seems like we need to pass this to another thread for handling //
+	// Seems like we need to wait for main thread to handle this //
 
 	// Calculate the size of the buffer //
 	size_t newbufsize = width*height*Ogre::PixelUtil::getNumElemBytes(Ogre::PF_B8G8R8A8);
 
-	{
-		// Lock the buffer //
-		ObjectLock guard1(*TextureToCopy.get());
+	// Lock us, just for fun //
+	ObjectLock guard(*this);
 
-		// Lock us, just for fun //
-		ObjectLock guard(*this);
+	RenderDataHolder* ptrtotarget;
 
-		// We need to allocate a new buffer if it isn't the same size //
-		if(newbufsize != TextureToCopy->BufferSize){
-			// Delete the old buffer //
-			SAFE_DELETE(TextureToCopy->Buffer);
-
-			// Set new size //
-			TextureToCopy->BufferSize = newbufsize;
-
-			TextureToCopy->Buffer = new char[TextureToCopy->BufferSize];
+	switch(type){
+	case PET_POPUP:
+		{
+			ptrtotarget = RenderHolderForPopUp.get();
+			ptrtotarget->Type = PET_POPUP;
 		}
-
-		// Set data //
-		TextureToCopy->Type = type;
-		TextureToCopy->Width = width;
-		TextureToCopy->Height = height;
-
-		// We probably need to copy the buffer over //
-		memcpy(TextureToCopy->Buffer, buffer, TextureToCopy->BufferSize);
+		break;
+	case PET_VIEW:
+		{
+			ptrtotarget = RenderHolderForMain.get();
+			ptrtotarget->Type = PET_VIEW;
+		}
+		break;
 	}
 
-	// Queue the task //
-	ThreadingManager::Get()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](shared_ptr<RenderDataHolder> dataobj){
+	// We need to allocate a new buffer if it isn't the same size //
+	if(newbufsize != ptrtotarget->BufferSize){
+		// Delete the old buffer //
+		SAFE_DELETE(ptrtotarget->Buffer);
 
-		// Lock it  //
-		ObjectLock guard1(*dataobj.get());
+		// Set new size //
+		ptrtotarget->BufferSize = newbufsize;
 
-		// Check is it still valid //
-		if(!dataobj->IsStillValid)
-			return;
+		ptrtotarget->Buffer = new char[ptrtotarget->BufferSize];
+	}
 
-		// Lock the object itself //
-		ObjectLock guard2(*dataobj->MyView);
+	// Set data //
+	ptrtotarget->Width = width;
+	ptrtotarget->Height = height;
 
-		// Copy it to the texture //
-		if(dataobj->Type == PET_POPUP){
-			// We don't know how to paint this //
+	// Mark as updated //
+	ptrtotarget->Updated = true;
 
-			return;
+	// We probably need to copy the buffer over //
+	memcpy(ptrtotarget->Buffer, buffer, ptrtotarget->BufferSize);
+}
+
+DLLEXPORT void Leviathan::Gui::View::CheckRender(){
+	// Lock us //
+	ObjectLock guard2(*this);
+
+	// Update all that are needed //
+	for(int i = 0; i < 2; i++){
+		RenderDataHolder* ptrtotarget;
+		if(i == 0)
+			ptrtotarget = RenderHolderForMain.get();
+		else if(i == 1)
+			ptrtotarget = RenderHolderForPopUp.get();
+
+		// Check and update the texture //
+		if(!ptrtotarget->Updated){
+			// No need to update //
+			continue;
 		}
 
+		// Get the right target //
+		Ogre::TexturePtr targettexture;
+
+		switch(i){
+		case 0:
+			{
+				targettexture = Texture;
+			}
+			break;
+		case 1:
+			{
+				// We don't know how to handle this //
+				continue;
+			}
+			break;
+		}
+
+
 		// Make sure our texture is large enough //
-		if(dataobj->MyView->Texture->getWidth() != dataobj->Width || dataobj->MyView->Texture->getHeight() != dataobj->Height){
+		if(targettexture->getWidth() != ptrtotarget->Width || targettexture->getHeight() != ptrtotarget->Height){
 			// Free resources and then change the size //
-			dataobj->MyView->Texture->freeInternalResources();
-			dataobj->MyView->Texture->setWidth(dataobj->Width);
-			dataobj->MyView->Texture->setHeight(dataobj->Height);
-			dataobj->MyView->Texture->createInternalResources();
+			targettexture->freeInternalResources();
+			targettexture->setWidth(ptrtotarget->Width);
+			targettexture->setHeight(ptrtotarget->Height);
+			targettexture->createInternalResources();
 
 			Logger::Get()->Info(L"GuiView: recreated texture for CEF browser");
 		}
 
 		// Copy it to our texture buffer //
-		Ogre::HardwarePixelBufferSharedPtr pixelbuf = dataobj->MyView->Texture->getBuffer();
+		Ogre::HardwarePixelBufferSharedPtr pixelbuf = targettexture->getBuffer();
 
 		// Lock buffer and get a target box for writing //
 		pixelbuf->lock(Ogre::HardwareBuffer::HBL_DISCARD);
@@ -340,20 +370,14 @@ void Leviathan::Gui::View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementTy
 		void* destptr = pixelbox.data;
 
 		// Copy the data over //
-		memcpy(destptr, dataobj->Buffer, dataobj->BufferSize);
+		memcpy(destptr, ptrtotarget->Buffer, ptrtotarget->BufferSize);
 
 		// Unlock the buffer //
 		pixelbuf->unlock();
 
-
-
-
-
-	}, TextureToCopy))));
-}
-
-DLLEXPORT void Leviathan::Gui::View::CheckRender(){
-
+		// Mark as no longer needs updating //
+		ptrtotarget->Updated = false;
+	}
 }
 // ------------------------------------ //
 CefRefPtr<CefRenderHandler> Leviathan::Gui::View::GetRenderHandler(){
@@ -402,6 +426,7 @@ void Leviathan::Gui::View::OnProtocolExecution(CefRefPtr<CefBrowser> browser, co
 
 void Leviathan::Gui::View::OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status){
 	// A render process has crashed...
+	OurBrowserSide->OnRenderProcessTerminated(browser);
 }
 
 void Leviathan::Gui::View::OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, ErrorCode errorCode, const CefString& errorText, const CefString& failedUrl){
@@ -429,11 +454,24 @@ void Leviathan::Gui::View::OnLoadStart(CefRefPtr<CefBrowser> browser, CefRefPtr<
 void Leviathan::Gui::View::OnBeforeClose(CefRefPtr<CefBrowser> browser){
 	// Browser window is closed, perform cleanup...
 	OurBrowser = NULL;
+
+	OurBrowserSide->OnBeforeClose(browser);
+
 }
 
 void Leviathan::Gui::View::OnAfterCreated(CefRefPtr<CefBrowser> browser){
 	// Browser window created successfully...
 	OurBrowser = browser;
+
+	// Create messaging functionality //
+	CefMessageRouterConfig config;
+	config.js_query_function = "cefQuery";
+	config.js_cancel_function = "cefQueryCancel";
+
+	OurBrowserSide = CefMessageRouterBrowserSide::Create(config);
+
+	OurBrowserSide->AddHandler(OurAPIHandler, true);
+
 }
 
 bool Leviathan::Gui::View::OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& target_url, const CefString& target_frame_name, const CefPopupFeatures& popupFeatures, CefWindowInfo& windowInfo, CefRefPtr<CefClient>& client, CefBrowserSettings& settings, bool* no_javascript_access){
@@ -456,7 +494,7 @@ void Leviathan::Gui::View::OnBeforeDownload(CefRefPtr<CefBrowser> browser, CefRe
 bool Leviathan::Gui::View::OnConsoleMessage(CefRefPtr<CefBrowser> browser, const CefString& message, const CefString& source, int line){
 	// Log a console message...
 	// Allow passing to default console //
-	Logger::Get()->Write(L"[CEF] "+wstring(message)+L"\n");
+	Logger::Get()->Write(L"[CEF] "+wstring(message)+L". \n\tIn: "+wstring(source)+L" ("+Convert::ToWstring(line)+L")");
 	return false;
 }
 
@@ -499,6 +537,53 @@ DLLEXPORT void Leviathan::Gui::View::SetAllowPaintStatus(bool canpaintnow){
 		// This might be a better way to do this //
 		//OurBrowser->GetHost()->WasResized();
 	}
+}
+
+bool Leviathan::Gui::View::OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefRequest> request, bool is_redirect){
+
+	OurBrowserSide->OnBeforeBrowse(browser, frame);
+	return false;
+}
+
+bool Leviathan::Gui::View::OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefRequest> request){
+	return false;
+}
+
+CefRefPtr<CefResourceHandler> Leviathan::Gui::View::GetResourceHandler(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefRequest> request){
+	return NULL;
+}
+
+void Leviathan::Gui::View::OnResourceRedirect(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& old_url, CefString& new_url){
+
+}
+
+bool Leviathan::Gui::View::GetAuthCredentials(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, bool isProxy, const CefString& host, int port, const CefString& realm, const CefString& scheme, CefRefPtr<CefAuthCallback> callback){
+	return false;
+}
+
+bool Leviathan::Gui::View::OnQuotaRequest(CefRefPtr<CefBrowser> browser, const CefString& origin_url, int64 new_size, CefRefPtr<CefQuotaCallback> callback){
+	return false;
+}
+
+bool Leviathan::Gui::View::OnCertificateError(cef_errorcode_t cert_error, const CefString& request_url, CefRefPtr<CefAllowCertificateErrorCallback> callback){
+	return false;
+}
+
+bool Leviathan::Gui::View::OnBeforePluginLoad(CefRefPtr<CefBrowser> browser, const CefString& url, const CefString& policy_url, CefRefPtr<CefWebPluginInfo> info){
+	return false;
+}
+
+void Leviathan::Gui::View::OnPluginCrashed(CefRefPtr<CefBrowser> browser, const CefString& plugin_path){
+
+}
+
+bool Leviathan::Gui::View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process, CefRefPtr<CefProcessMessage> message){
+	// Handle IPC messages from the render process...
+	if(OurBrowserSide->OnProcessMessageReceived(browser, source_process, message))
+		return true;
+
+	// Not handled //
+	return false;
 }
 
 

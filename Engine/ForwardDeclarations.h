@@ -14,6 +14,8 @@ namespace Leviathan{
 		class CefApplication;
 		class GuiManager;
 		class View;
+		class LeviathanJavaScriptAsync;
+		class JSAsyncCustom;
 	}
 
 	namespace Entity{

@@ -6,7 +6,7 @@
 #undef L_VLD_STATE
 #endif
 #ifdef L_VLD_STATE
-// define actual macro
+// Define the actual macro //
 #define LEVIATHAN_USES_VLD
 #endif
 

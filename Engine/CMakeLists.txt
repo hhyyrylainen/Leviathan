@@ -1,8 +1,17 @@
 # engine library Cmake file
 
+# Generate additional source files
+add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h
+   COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js\"" 
+   "\"${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h\""
+   DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js"
+)
 
 # get all files in their groups
-file(GLOB GroupCore "*.cpp" "*.h")
+set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
+    "GlobalCEFHandler.cpp" "GlobalCEFHandler.h" "Include.cpp" "Include.h" "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
+    "TextureGenerator.cpp" "TextureGenerator.h"
+)
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
 file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
 file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
@@ -31,7 +40,14 @@ file(GLOB GroupAddons "Addons/*.cpp" "Addons/*.h")
 file(GLOB GroupNetworking "Networking/*.cpp" "Networking/*.h")
 file(GLOB GroupThreading "Threading/*.cpp" "Threading/*.h")
 
+file(GLOB GeneratorInput "GeneratorInput/*.*")
+
 file(GLOB GroupLZ4 "lz4/*.c" "lz4/*.cpp" "lz4/*.h")
+file(GLOB GroupJsoncpp "jsoncpp/*.h" "jsoncpp/*.cpp")
+
+# Generated files
+set(GroupGeneratedFiles "${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h")
+
 
 
 # AngelScript addon sources
@@ -48,7 +64,11 @@ source_group("Addons" FILES ${GroupAddons})
 source_group("Networking" FILES ${GroupNetworking})
 source_group("Threading" FILES ${GroupThreading})
 
+source_group("GeneratorInput" FILES ${GeneratorInput})
+source_group("GeneratedFiles" FILES ${GroupGeneratedFiles})
+
 source_group("Libraries\\lz4" FILES ${GroupLZ4})
+source_group("Libraries\\json-cpp" FILES ${GroupJsoncpp})
 
 source_group("Entities" FILES ${GroupEntities})
 source_group("Entities\\Bases" FILES ${GroupEntitiesBases})
@@ -90,8 +110,8 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
 if(WIN32)
 # precompiled headers
 # remove from list before adding back
-file(GLOB PrecompiledHeaderName "Include.h")
-file(GLOB PrecompiledSourceName "Include.cpp")
+set(PrecompiledHeaderName "Include.h")
+set(PrecompiledSourceName "Include.cpp")
 list(REMOVE_ITEM EngineFiles ${PrecompiledSourceName})
 
 # precompiled header
@@ -99,7 +119,7 @@ ADD_MSVC_PRECOMPILED_HEADER("Include.h" ${PrecompiledSourceName} EngineFiles)
 endif(WIN32)
 
 # Don't use precompiled header on c source file
-set(EngineFiles ${EngineFiles} ${GroupLZ4})
+set(EngineFiles ${EngineFiles} ${GroupLZ4} ${GroupJsoncpp} ${GeneratorInput} ${GroupGeneratedFiles})
 
 # engine exporting define
 add_definitions(-DENGINE_EXPORTS)
@@ -121,6 +141,7 @@ endif(NOT WIN32)
 set(FinalEngineLinkLibraries ${FinalEngineLinkLibraries} ${LINK_LIBS_ENGINE_DEBUG} ${LINK_LIBS_ENGINE_RELEASE})
 
 target_link_libraries(Engine ${FinalEngineLinkLibraries})
+
 
 # Possible debug installs
 if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)

@@ -24,6 +24,7 @@ using namespace Leviathan;
 hddddd
 
 ------------------------------------------------------------------------
+#pragma once
 #ifndef LEVIATHAN_FILEREPLACENAME
 #define LEVIATHAN_FILEREPLACENAME
 // ------------------------------------ //
@@ -76,6 +77,7 @@ using namespace Leviathan::Gui;
 hddddd
 
 ------------------------------------------------------------------------
+#pragma once
 #ifndef LEVIATHAN_FILEREPLACENAME
 #define LEVIATHAN_FILEREPLACENAME
 // ------------------------------------ //
@@ -127,6 +129,7 @@ using namespace Leviathan::Rendering;
 hddddd
 
 ------------------------------------------------------------------------
+#pragma once
 #ifndef LEVIATHAN_FILEREPLACENAME
 #define LEVIATHAN_FILEREPLACENAME
 // ------------------------------------ //
@@ -180,6 +183,7 @@ using namespace Leviathan::GameObject;
 hddddd
 
 ------------------------------------------------------------------------
+#pragma once
 #ifndef LEVIATHAN_FILEREPLACENAME
 #define LEVIATHAN_FILEREPLACENAME
 // ------------------------------------ //
@@ -235,6 +239,7 @@ FILEREPLACENAME::~FILEREPLACENAME(){
 hddddd
 
 ------------------------------------------------------------------------
+#pragma once
 #ifndef SANDBOXIE_FILEREPLACENAME
 #define SANDBOXIE_FILEREPLACENAME
 // ------------------------------------ //

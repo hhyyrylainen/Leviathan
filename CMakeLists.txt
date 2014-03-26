@@ -437,6 +437,9 @@ link_directories("${PROJECT_BINARY_DIR}/Engine/Debug")
 link_directories("${PROJECT_BINARY_DIR}/Engine/Release")
 link_directories("${PROJECT_BINARY_DIR}/bin")
 
+# First project must be the file generator
+add_subdirectory(FileGenerator)
+
 # engine project 
 add_subdirectory(Engine)
 

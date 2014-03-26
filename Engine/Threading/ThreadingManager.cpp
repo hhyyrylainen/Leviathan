@@ -231,6 +231,9 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 		AllowStartTasksFromQueue = false;
 	}
 
+	// Set our main thread's name //
+	//SetThreadNameImpl(-1, "LeviathanMain");
+
 	// Wait for tasks to finish //
 	FlushActiveThreads();
 
@@ -413,12 +416,16 @@ void Leviathan::SetThreadName(TaskThread* thread, const string &name){
 	// Get the native handle //
 	DWORD nativehandle = GetThreadId(thread->GetBoostThreadObject().native_handle());
 
+	SetThreadNameImpl(nativehandle, name);
+}
+
+void Leviathan::SetThreadNameImpl(DWORD threadid, const string &name){
 	// Do this trick as shown on MSDN //
 	THREADNAME_INFO info;
 	info.dwType = 0x1000;
 	// Set the name //
 	info.szName = name.c_str();
-	info.dwThreadID = nativehandle;
+	info.dwThreadID = threadid;
 	info.dwFlags = 0;
 
 	__try
@@ -428,8 +435,6 @@ void Leviathan::SetThreadName(TaskThread* thread, const string &name){
 	__except(EXCEPTION_EXECUTE_HANDLER)
 	{
 	}
-
-
 }
 #endif // _WIN32
 

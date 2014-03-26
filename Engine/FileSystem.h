@@ -104,6 +104,7 @@ namespace Leviathan{
 		DLLEXPORT static bool WriteToFile(const wstring &data, const wstring &filename);
 		DLLEXPORT static bool AppendToFile(const wstring &data, const wstring &filepath);
 		DLLEXPORT static void ReadFileEntirely(const wstring &file, wstring &resultreceiver) THROWS;
+		DLLEXPORT static void ReadFileEntirely(const string &file, string &resultreceiver) THROWS;
 
 		DLLEXPORT static inline FileSystem* Get(){
 			return Staticaccess;

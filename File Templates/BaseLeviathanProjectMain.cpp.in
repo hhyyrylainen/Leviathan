@@ -4,6 +4,21 @@
 #include "resource.h"
 
 
+
+#define PROGRAMUSE_CUSTOMJS @PROGRAMUSE_CUSTOMJS@
+#if PROGRAMUSE_CUSTOMJS == 1
+// Define the actual macro //
+#define LEVIATHAN_USES_CUSTOMJS
+// Include required files //
+#include "GlobalCEFHandler.h"
+#include "GUI\GuiCEFApplication.h"
+#endif
+
+#ifdef LEVIATHAN_USES_CUSTOMJS
+// Include the header //
+#include "@PROGRAMCUSTOMJS_INCLUDE@"
+#endif
+
 using namespace @ProgramNamespace@;
 
 
@@ -85,7 +100,17 @@ int main(int argcount, char* args[]){
         &app);
 
     app.PassCommandLine(commandline);
-
+    
+    // Register our custom JS object if we are using one //
+#ifdef LEVIATHAN_USES_CUSTOMJS
+    Leviathan::GlobalCEFHandler::RegisterCustomJavaScriptQueryHandler(new @PROGRAMCUSTOMJS_CLASS@);
+    
+    // Register the custom file //
+    Leviathan::GlobalCEFHandler::GetCEFObjects()->GetCEFApp()->RegisterCustomExtensionFile("@PROGRAMCUSTOMJS_EXTFILE@"); 
+    
+#endif //LEVIATHAN_USES_CUSTOMJS
+    
+    
     if(app.Initialize(ProgramDefinition.get())){
 
         // this is where the game should customize the engine //

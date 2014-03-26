@@ -414,7 +414,7 @@ namespace Leviathan{
 
 			if(firstpos == 0){
 				// Didn't remove anything? //
-				return StringTypeN();
+				return data;
 			}
 
 			// Generate sub string from start to end //
@@ -474,7 +474,7 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN>
-		DLLEXPORT static void WstringRemovePreceedingTrailingSpaces(StringTypeN &str){
+		DLLEXPORT static void RemovePreceedingTrailingSpaces(StringTypeN &str){
 			Int2 CutPositions(-1,-1);
 
 			// search the right part of the string //

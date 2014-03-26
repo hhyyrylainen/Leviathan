@@ -503,6 +503,41 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wst
 	throw ExceptionInvalidArgument(L"cannot read given file", 0, __WFUNCTION__, L"file", file);
 #endif
 }
+
+DLLEXPORT void Leviathan::FileSystem::ReadFileEntirely(const string &file, string &resultreceiver) THROWS{
+
+	ifstream reader(file, ios::in);
+
+	if(reader){
+
+		// go to end to count length //
+		reader.seekg(0, ios::end);
+
+		streamoff rpos = reader.tellg();
+
+
+		// cannot be loaded //
+#ifdef _WIN32
+		assert(SIZE_T_MAX >= rpos);
+#else
+		assert(std::numeric_limits<size_t>::max() >= rpos);
+#endif
+		resultreceiver.resize((UINT)rpos);
+		// back to start //
+		reader.seekg(0, ios::beg);
+		// read the actual data //
+		reader.read(&resultreceiver[0], resultreceiver.size());
+
+		// done, cleanup //
+		reader.close();
+		return;
+	}
+#ifdef _WIN32
+	throw ExceptionInvalidArgument(L"cannot read given file", GetLastError(), __WFUNCTION__, L"file", Convert::StringToWstring(file));
+#else
+	throw ExceptionInvalidArgument(L"cannot read given file", 0, __WFUNCTION__, L"file", Convert::StringToWstring(file));
+#endif
+}
 // ------------------ Non static part ------------------ //
 DLLEXPORT void Leviathan::FileSystem::SortFileVectors(){
 	// check if already sorted //

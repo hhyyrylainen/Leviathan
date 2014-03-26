@@ -91,6 +91,65 @@ DLLEXPORT CEFSandboxInfoKeeper* Leviathan::GlobalCEFHandler::GetCEFObjects(){
 	return AccessToThese;
 }
 
+DLLEXPORT void Leviathan::GlobalCEFHandler::RegisterCustomJavaScriptQueryHandler(Gui::JSAsyncCustom* newdptr){
+	boost::unique_lock<boost::recursive_mutex> guard(JSCustomMutex);
+
+	// Add it //
+	CustomJSHandlers.push_back(shared_ptr<Gui::JSAsyncCustom>(newdptr));
+
+	// Notify all //
+	for(size_t i = 0; i < JSAsynToNotify.size(); i++){
+		JSAsynToNotify[i]->RegisterNewCustom(newdptr);
+	}
+}
+
+DLLEXPORT void Leviathan::GlobalCEFHandler::UnRegisterCustomJavaScriptQueryHandler(Gui::JSAsyncCustom* toremove){
+	boost::unique_lock<boost::recursive_mutex> guard(JSCustomMutex);
+
+	// Notify all objects //
+	for(size_t i = 0; i < JSAsynToNotify.size(); i++){
+		JSAsynToNotify[i]->UnregisterCustom(toremove);
+	}
+
+	// Compare pointers and remove it //
+	for(size_t i = 0; i < CustomJSHandlers.size(); i++){
+		if(CustomJSHandlers[i].get() == toremove){
+
+			CustomJSHandlers.erase(CustomJSHandlers.begin()+i);
+			return;
+		}
+	}
+}
+
+DLLEXPORT const std::vector<shared_ptr<Gui::JSAsyncCustom>>& Leviathan::GlobalCEFHandler::GetRegisteredCustomHandlers(){
+	return CustomJSHandlers;
+}
+
+DLLEXPORT void Leviathan::GlobalCEFHandler::RegisterJSAsync(Gui::LeviathanJavaScriptAsync* ptr){
+	boost::unique_lock<boost::recursive_mutex> guard(JSCustomMutex);
+
+	JSAsynToNotify.push_back(ptr);
+}
+
+DLLEXPORT void Leviathan::GlobalCEFHandler::UnRegisterJSAsync(Gui::LeviathanJavaScriptAsync* ptr){
+	boost::unique_lock<boost::recursive_mutex> guard(JSCustomMutex);
+
+	for(size_t i = 0; i < JSAsynToNotify.size(); i++){
+
+		if(JSAsynToNotify[i] == ptr){
+
+			JSAsynToNotify.erase(JSAsynToNotify.begin()+i);
+			return;
+		}
+	}
+}
+
+boost::recursive_mutex Leviathan::GlobalCEFHandler::JSCustomMutex;
+
+std::vector<Gui::LeviathanJavaScriptAsync*> Leviathan::GlobalCEFHandler::JSAsynToNotify;
+
+std::vector<shared_ptr<Gui::JSAsyncCustom>> Leviathan::GlobalCEFHandler::CustomJSHandlers;
+
 CEFSandboxInfoKeeper* Leviathan::GlobalCEFHandler::AccessToThese = NULL;
 
 bool Leviathan::GlobalCEFHandler::CEFInitialized = false;
@@ -112,4 +171,8 @@ DLLEXPORT Leviathan::CEFSandboxInfoKeeper::~CEFSandboxInfoKeeper(){
 // ------------------------------------ //
 void* Leviathan::CEFSandboxInfoKeeper::GetPtr(){
 	return SandBoxAccess;
+}
+
+CefRefPtr<Gui::CefApplication> Leviathan::CEFSandboxInfoKeeper::GetCEFApp() const{
+	return CEFApp;
 }

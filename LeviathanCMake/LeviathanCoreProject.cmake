@@ -12,6 +12,7 @@ if(WIN32)
     endif(${UsePrecompiledHeaderForProject})
 endif(WIN32)
 
+
 message(STATUS "Adding project: " ${CurrentProjectName})
 # Define the project
 if(WIN32)

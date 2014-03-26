@@ -59,6 +59,14 @@ span
     text-shadow: 1px 1px 2px black;
 }
 
+.WeakText
+{
+    color: rgba(153, 157, 161, 0.9);
+    font-size: 22px;
+    text-shadow: none;
+    font-weight: normal;
+}
+
 .MenuOption
 {
     background-color: #00B060;

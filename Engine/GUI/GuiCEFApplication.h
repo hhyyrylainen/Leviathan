@@ -7,11 +7,18 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "include/cef_app.h"
-
+#include "include/wrapper/cef_message_router.h"
 
 namespace Leviathan{ namespace Gui{
 
 	class CefApplication : public CefApp, public CefBrowserProcessHandler, public CefRenderProcessHandler{
+		struct CustomExtensionFileData{
+			CustomExtensionFileData(const string &file, const string &filecontents) : FileName(file), Contents(filecontents){
+			}
+
+			const string FileName;
+			const string Contents;
+		};
 	public:
 		CefApplication();
 		DLLEXPORT ~CefApplication();
@@ -39,13 +46,32 @@ namespace Leviathan{ namespace Gui{
 		virtual void OnContextReleased(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) OVERRIDE;
 
 
+		virtual bool OnProcessMessageReceived(
+			CefRefPtr<CefBrowser> browser,
+			CefProcessId source_process,
+			CefRefPtr<CefProcessMessage> message) OVERRIDE;
+
+
 		virtual CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() OVERRIDE { return this; }
 		virtual CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() OVERRIDE { return this; }
+
+
+		//! \brief Registers a custom file for all processes to load as V8 extension
+		//! \note Only one should ever be registered, for performance reasons
+		DLLEXPORT void RegisterCustomExtensionFile(const string &file);
+
 
 		IMPLEMENT_REFCOUNTING(CefApplication);
 
 	private:
 
+
+		CefRefPtr<CefMessageRouterRendererSide> RendererRouter;
+
+		// Custom extension storage //
+		std::vector<std::string> CustomExtensionFiles;
+
+		std::vector<unique_ptr<CustomExtensionFileData>> ExtensionContents;
 	};
 
 }}

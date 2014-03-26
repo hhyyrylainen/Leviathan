@@ -31,3 +31,4 @@ PongMasterServer/Main.cpp
 PongMasterServer/PongMasterServerIncludes.h
 PongServer/Main.cpp
 PongServer/PongIncludes.h
+Engine/Generated/

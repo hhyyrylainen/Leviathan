@@ -23,7 +23,7 @@ namespace Leviathan{
 #ifdef _WIN32
 
 	void SetThreadName(TaskThread* thread, const string &name);
-
+	void SetThreadNameImpl(DWORD threadid, const string &name);
 #endif // _WIN32
 
 

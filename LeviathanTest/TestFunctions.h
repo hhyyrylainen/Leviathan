@@ -84,7 +84,7 @@ bool TestMiscWstringRemovePreceedingTrailingSpaces(const int &tests){
 	wstring correctresult = L"a  asd	hey nice   ?!";
 
 	// check function state //
-	StringOperations::WstringRemovePreceedingTrailingSpaces(teststringandresult);
+	StringOperations::RemovePreceedingTrailingSpaces(teststringandresult);
 	// check result //
 	if(teststringandresult != correctresult){
 		TESTFAIL;
@@ -96,7 +96,7 @@ bool TestMiscWstringRemovePreceedingTrailingSpaces(const int &tests){
 	// stress testing function //
 	for(int i = 0; i < tests; i++){
 		teststringandresult = ORIGINALVALUE_FOR_TEST;
-		StringOperations::WstringRemovePreceedingTrailingSpaces(teststringandresult);
+		StringOperations::RemovePreceedingTrailingSpaces(teststringandresult);
 	}
 
 	return Failed;

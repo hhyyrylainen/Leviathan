@@ -183,6 +183,12 @@ void Leviathan::Gui::GuiManager::Render(){
 	// Update inputs //
 	if(ThissViews.size())
 		ThisWindow->GetWindow()->GatherInput(ThissViews[0]->GetBrowserHost());
+
+	// Update browser textures //
+	for(size_t i = 0; i < ThissViews.size(); i++){
+
+		ThissViews[i]->CheckRender();
+	}
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiManager::OnResize(){

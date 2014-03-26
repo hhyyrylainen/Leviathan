@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "include/internal/cef_ptr.h"
 #include "include/cef_task.h"
+#include "GUI/LeviathanJavaScriptAsync.h"
 
 // Forward declare some things //
 class CefScopedSandboxInfo;
@@ -27,6 +28,9 @@ namespace Leviathan{
 	public:
 		CEFSandboxInfoKeeper();
 		DLLEXPORT ~CEFSandboxInfoKeeper();
+
+		//! \brief Gets the corresponding Gui::CefApplication
+		DLLEXPORT CefRefPtr<Gui::CefApplication> GetCEFApp() const;
 
 		void* GetPtr();
 
@@ -55,6 +59,24 @@ namespace Leviathan{
 
 		DLLEXPORT static void DoCEFMessageLoopWork();
 
+		//! \brief Registers a new JavaScript query handler
+		//! \param newdptr Pass a newed object or NULL
+		//! \todo Add support for removing existing ones
+		DLLEXPORT static void RegisterCustomJavaScriptQueryHandler(Gui::JSAsyncCustom* newdptr);
+		//! \brief Unregisters a registered query handler
+		//! \see RegisterCustomJavaScriptQueryHandler
+		DLLEXPORT static void UnRegisterCustomJavaScriptQueryHandler(Gui::JSAsyncCustom* toremove);
+
+		//! \brief Mainly allows LeviathanJavaScriptAsync to access the list of handlers
+		DLLEXPORT static const std::vector<shared_ptr<Gui::JSAsyncCustom>>& GetRegisteredCustomHandlers();
+
+		//! \brief Registers a LeviathanJavaScriptAsync to receive notifications about JSAsyncCustom changes
+		DLLEXPORT static void RegisterJSAsync(Gui::LeviathanJavaScriptAsync* ptr);
+		//! \brief Unregisters a registered LeviathanJavaScriptAsync
+		//! \see RegisterJSAsync
+		DLLEXPORT static void UnRegisterJSAsync(Gui::LeviathanJavaScriptAsync* ptr);
+
+
 	private:
 		GlobalCEFHandler();
 		~GlobalCEFHandler();
@@ -63,6 +85,14 @@ namespace Leviathan{
 		//! A flag for making sure that functions are only ran if CEF is actually used
 		static bool CEFInitialized;
 		static CEFSandboxInfoKeeper* AccessToThese;
+
+		//! Stores all the custom handlers
+		static std::vector<shared_ptr<Gui::JSAsyncCustom>> CustomJSHandlers;
+
+		//! Stored to be able to notify all LeviathanJavaScriptAsync objects
+		static std::vector<Gui::LeviathanJavaScriptAsync*> JSAsynToNotify;
+
+		static boost::recursive_mutex JSCustomMutex;
 	};
 
 }

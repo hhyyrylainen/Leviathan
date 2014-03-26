@@ -11,6 +11,9 @@
 #include "OgreTexture.h"
 #include "OgreMaterial.h"
 #include "include/cef_client.h"
+#include "include/wrapper/cef_message_router.h"
+#include "Common/BaseNotifiable.h"
+
 
 namespace Leviathan{ namespace Gui{
 
@@ -29,7 +32,7 @@ namespace Leviathan{ namespace Gui{
 		//! The page can access all internal functions
 		//! \note This is the recommended level for games' internal GUI page
 		VIEW_SECURITYLEVEL_ACCESS_ALL
-		 };
+	};
 
 
 	//! \brief A class that represents a single GUI layer that has it's own chromium browser
@@ -39,10 +42,15 @@ namespace Leviathan{ namespace Gui{
 		public CefGeolocationHandler, public CefKeyboardHandler, public CefLifeSpanHandler,	public CefLoadHandler, public CefRequestHandler,
 		public CefRenderHandler, public ThreadSafe
 	{
-		class RenderDataHolder : public ThreadSafe{
-		public:
-			RenderDataHolder(View* owner) : MyView(owner), IsStillValid(false), BufferSize(0), Buffer(NULL), Width(0), Height(0){
+		friend LeviathanJavaScriptAsync;
 
+		class RenderDataHolder{
+		public:
+			RenderDataHolder() : BufferSize(0), Buffer(NULL), Width(0), Height(0), Updated(false){
+
+			}
+			~RenderDataHolder(){
+				SAFE_DELETE(Buffer);
 			}
 
 			PaintElementType Type;
@@ -50,8 +58,7 @@ namespace Leviathan{ namespace Gui{
 			void* Buffer;
 			int Width;
 			int Height;
-			View* MyView;
-			bool IsStillValid;
+			bool Updated;
 		};
 	public:
 		DLLEXPORT View(GuiManager* owner, Window* window, VIEW_SECURITYLEVEL security = VIEW_SECURITYLEVEL_ACCESS_ALL);
@@ -178,12 +185,68 @@ namespace Leviathan{ namespace Gui{
 			ErrorCode errorCode,
 			const CefString& errorText,
 			const CefString& failedUrl) OVERRIDE;
-		virtual void OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser,
-			TerminationStatus status) OVERRIDE;
 
 		virtual void OnProtocolExecution(CefRefPtr<CefBrowser> browser,
 			const CefString& url,
 			bool& allow_os_execution) OVERRIDE;
+
+		// Request handler methods //
+		virtual bool OnBeforeBrowse(CefRefPtr<CefBrowser> browser,
+			CefRefPtr<CefFrame> frame,
+			CefRefPtr<CefRequest> request,
+			bool is_redirect) OVERRIDE;
+
+		virtual bool OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,
+			CefRefPtr<CefFrame> frame,
+			CefRefPtr<CefRequest> request) OVERRIDE;
+
+		virtual CefRefPtr<CefResourceHandler> GetResourceHandler(
+			CefRefPtr<CefBrowser> browser,
+			CefRefPtr<CefFrame> frame,
+			CefRefPtr<CefRequest> request) OVERRIDE;
+
+		virtual void OnResourceRedirect(CefRefPtr<CefBrowser> browser,
+			CefRefPtr<CefFrame> frame,
+			const CefString& old_url,
+			CefString& new_url) OVERRIDE;
+
+		virtual bool GetAuthCredentials(CefRefPtr<CefBrowser> browser,
+			CefRefPtr<CefFrame> frame,
+			bool isProxy,
+			const CefString& host,
+			int port,
+			const CefString& realm,
+			const CefString& scheme,
+			CefRefPtr<CefAuthCallback> callback) OVERRIDE;
+
+		virtual bool OnQuotaRequest(CefRefPtr<CefBrowser> browser,
+			const CefString& origin_url,
+			int64 new_size,
+			CefRefPtr<CefQuotaCallback> callback) OVERRIDE;
+
+		virtual bool OnCertificateError(
+			cef_errorcode_t cert_error,
+			const CefString& request_url,
+			CefRefPtr<CefAllowCertificateErrorCallback> callback) OVERRIDE;
+
+		virtual bool OnBeforePluginLoad(CefRefPtr<CefBrowser> browser,
+			const CefString& url,
+			const CefString& policy_url,
+			CefRefPtr<CefWebPluginInfo> info) OVERRIDE;
+
+		virtual void OnPluginCrashed(CefRefPtr<CefBrowser> browser,
+			const CefString& plugin_path) OVERRIDE;
+
+		virtual void OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser,
+			TerminationStatus status) OVERRIDE;
+
+
+		virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+			CefProcessId source_process,
+			CefRefPtr<CefProcessMessage> message)
+			OVERRIDE;
+
+
 
 		virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() OVERRIDE;
 		virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() OVERRIDE;
@@ -240,8 +303,14 @@ namespace Leviathan{ namespace Gui{
 		CefRefPtr<CefBrowser> OurBrowser;
 
 
+		// Message passing //
+		CefRefPtr<CefMessageRouterBrowserSide> OurBrowserSide;
+		LeviathanJavaScriptAsync* OurAPIHandler;
+
+
 		//! Holds the buffer before it is transferred into a texture
-		shared_ptr<RenderDataHolder> TextureToCopy;
+		shared_ptr<RenderDataHolder> RenderHolderForMain;
+		shared_ptr<RenderDataHolder> RenderHolderForPopUp;
 	};
 
 }}

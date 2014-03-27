@@ -466,7 +466,7 @@ namespace Leviathan{
 
 
 		//! \brief Stores data to a packet
-		DLLEXPORT void AddDataToPacket(sf::Packet &packet){
+		DLLEXPORT void AddDataToPacket(sf::Packet &packet) const{
 			// Set the type //
 			if(BlockData != NULL){
 				packet << BlockData->Type;

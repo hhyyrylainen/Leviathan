@@ -45,7 +45,7 @@ namespace Leviathan{
 		DLLEXPORT size_t GetVariableCount() const;
 
 		//! \brief For passing NamedVariableLists to other instances through the network
-		DLLEXPORT void AddToPacket(sf::Packet &packet);
+		DLLEXPORT void AddToPacket(sf::Packet &packet) const;
 
 
 		DLLEXPORT int GetCommonType() const;
@@ -130,6 +130,10 @@ namespace Leviathan{
 		DLLEXPORT NamedVars(const wstring &datadump);
 		DLLEXPORT NamedVars(const vector<shared_ptr<NamedVariableList>> &variables);
 		DLLEXPORT NamedVars(shared_ptr<NamedVariableList> variable);
+
+		//! \brief Loads a NamedVars object from a packet
+		DLLEXPORT NamedVars(sf::Packet &packet);
+
 		DLLEXPORT ~NamedVars();
 		// ------------------------------------ //
 		DLLEXPORT bool SetValue(const wstring &name, const VariableBlock &value1);
@@ -145,6 +149,9 @@ namespace Leviathan{
 		DLLEXPORT bool GetValue(const wstring &name, VariableBlock &receiver) const;
 		DLLEXPORT bool GetValue(const wstring &name, const int &nindex, VariableBlock &receiver) const;
 		DLLEXPORT bool GetValues(const wstring &name, vector<const VariableBlock*> &receiver) const;
+
+		//! \brief Writes this NamedVars to a packet
+		DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
 
 		DLLEXPORT shared_ptr<NamedVariableList> GetValueDirect(const wstring &name) const;
 

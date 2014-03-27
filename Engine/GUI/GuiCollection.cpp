@@ -38,7 +38,7 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 		
 		if(mod->DoesListenersContainSpecificListener(listenername)){
 			// create event to use //
-			Event* onevent = new Event(EVENT_TYPE_SHOW, NULL, false);
+			Event* onevent = new Event(EVENT_TYPE_SHOW, new ShowEventData(false));
 
 			// call it //
 			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"GuiCollection"))

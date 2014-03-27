@@ -33,7 +33,7 @@ void EventHandler::CallEvent(Event* pEvent){
 	// Loop and call all listeners which have a valid type //
 	for(size_t i = 0; i < EventListeners.size(); i++){
 
-		if(EventListeners[i]->Type == pEvent->Type){
+		if(EventListeners[i]->Type == pEvent->GetType()){
 
 			EventListeners[i]->Receiver->OnEvent(&pEvent);
 			if((pEvent) == NULL)
@@ -50,7 +50,7 @@ DLLEXPORT void Leviathan::EventHandler::CallEvent(GenericEvent* pEvent){
 	// Loop generic listeners //
 	for(size_t i = 0; i < GenericEventListeners.size(); i++){
 
-		if(GenericEventListeners[i]->Type == *pEvent->TypeStr){
+		if(GenericEventListeners[i]->Type == pEvent->GetType()){
 
 			GenericEventListeners[i]->Receiver->OnGenericEvent(&pEvent);
 			if((pEvent) == NULL)

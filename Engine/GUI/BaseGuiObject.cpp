@@ -137,7 +137,7 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 		}
 	} else {
 		// generic event is passed //
-		if(mod->DoesListenersContainSpecificListener(L"", (*event2)->TypeStr)){
+		if(mod->DoesListenersContainSpecificListener(L"", (*event2)->GetTypePtr())){
 			// setup parameters //
 			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
 				(new NamedVariableBlock(new VoidPtrBlock(*event2), L"GenericEvent"));
@@ -146,7 +146,7 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 			(*event2)->AddRef();
 
 			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->TypeStr)).SetArguments(Args);
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->GetTypePtr())).SetArguments(Args);
 			// run the script //
 			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
 			// do something with result //

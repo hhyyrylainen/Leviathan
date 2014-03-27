@@ -73,7 +73,7 @@ namespace Leviathan{ namespace Gui{
 		CefApplication* Owner;
 
 		//! Stores all registered functions
-		std::vector<unique_ptr<JSListener>> RegisteredListeners;
+		std::vector<shared_ptr<JSListener>> RegisteredListeners;
 	};
 
 

@@ -340,6 +340,37 @@ bool TestNamedVars(const int &tests){
 		}
 	}
 
+	// Test passing through packets //
+	NamedVars packettestorig;
+
+	packettestorig.AddVar(L"MyVar1", new VariableBlock("string_block"));
+	packettestorig.AddVar(L"Secy", new VariableBlock(true));
+
+	// Add to packet //
+	sf::Packet packetdata;
+
+	packettestorig.AddDataToPacket(packetdata);
+
+	// Read from a packet //
+	NamedVars frompacket(packetdata);
+
+	if(frompacket.GetVec()->size() != packettestorig.GetVec()->size()){
+		TESTFAIL;
+	}
+
+	// Check values //
+	auto datablock = frompacket.GetValue(L"MyVar1");
+
+	if(!datablock || datablock->GetBlockConst()->Type != DATABLOCK_TYPE_STRING){
+		TESTFAIL;
+	}
+
+	VariableBlock receiver2(NULL);
+	frompacket.GetValue(L"", 1, receiver2);
+
+	if((bool)receiver2 != true){
+		TESTFAIL;
+	}
 
 
 
@@ -347,6 +378,9 @@ bool TestNamedVars(const int &tests){
 	for(int i = 0; i < tests; i++){
 		holder->Remove(holder->Find(L"var4"));
 		holder->AddVar(L"var4", new VariableBlock(25));
+		// Write to packet //
+		sf::Packet testpacket;
+		holder->AddDataToPacket(testpacket);
 	}
 	// release data //
 	Variables.clear();

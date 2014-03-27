@@ -165,7 +165,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(sf::Packet &packet){
 	}
 }
 
-DLLEXPORT void Leviathan::NamedVariableList::AddToPacket(sf::Packet &packet){
+DLLEXPORT void Leviathan::NamedVariableList::AddToPacket(sf::Packet &packet) const{
 	// Start adding data to the packet //
 	packet << Name;
 
@@ -550,6 +550,39 @@ DLLEXPORT Leviathan::NamedVars::NamedVars(shared_ptr<NamedVariableList> variable
 
 Leviathan::NamedVars::~NamedVars(){
 	// no need to release due to smart pointers //
+}
+// ------------------------------------ //
+DLLEXPORT Leviathan::NamedVars::NamedVars(sf::Packet &packet){
+	// First get the size //
+	int isize;
+
+	if(!(packet >> isize)){
+
+		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	// Reserve space //
+	Variables.reserve(isize);
+
+	for(int i = 0; i < isize; i++){
+
+		Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(packet)));
+	}
+
+
+}
+
+DLLEXPORT void Leviathan::NamedVars::AddDataToPacket(sf::Packet &packet) const{
+	// First write size //
+	int isize = (int)Variables.size();
+
+	packet << isize;
+
+	// Write each individual variable //
+	for(int i = 0; i < isize; i++){
+
+		Variables[i]->AddToPacket(packet);
+	}
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NamedVars::SetValue(const wstring &name, const VariableBlock &value1){

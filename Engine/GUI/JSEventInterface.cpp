@@ -48,7 +48,7 @@ bool Leviathan::Gui::JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<C
 		}
 
 		// Bind it //
-		unique_ptr<JSListener> tmplistener(new JSListener((*iter), arguments[1], CefV8Context::GetCurrentContext()));
+		shared_ptr<JSListener> tmplistener(new JSListener((*iter).second, arguments[1], CefV8Context::GetCurrentContext()));
 
 		ObjectLock guard(*this);
 
@@ -59,6 +59,9 @@ bool Leviathan::Gui::JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<C
 		Owner->StartListeningForEvent(tmplistener.get());
 
 		return true;
+	} else if(name == "LOnGeneric"){
+
+
 	}
 
 	// Not handled //

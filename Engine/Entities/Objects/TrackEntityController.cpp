@@ -46,8 +46,8 @@ DLLEXPORT int Leviathan::Entity::TrackEntityController::OnEvent(Event** pEvent){
 	if((*pEvent)->GetType() == EVENT_TYPE_PHYSICS_BEGIN){
 
 		// Get data //
-		PhysicsStartEventData* dataptr = reinterpret_cast<PhysicsStartEventData*>((*pEvent)->Data);
-
+		PhysicsStartEventData* dataptr = (*pEvent)->GetDataForPhysicsStartEvent();
+		assert(dataptr && "Invalid physics event");
 		// Skip if wrong world //
 		if(dataptr->GameWorldPtr != static_cast<void*>(OwnedByWorld)){
 			return 0;

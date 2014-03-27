@@ -652,6 +652,8 @@ DLLEXPORT int Leviathan::Gui::View::OnEvent(Event** pEvent){
 	args->SetBinary(0, CefBinaryValue::Create(tmppacket.getData(), tmppacket.getDataSize()));
 
 	OurBrowser->SendProcessMessage(PID_RENDERER, message);
+
+	return 3;
 }
 
 DLLEXPORT int Leviathan::Gui::View::OnGenericEvent(GenericEvent** pevent){
@@ -670,6 +672,8 @@ DLLEXPORT int Leviathan::Gui::View::OnGenericEvent(GenericEvent** pevent){
 	args->SetBinary(0, CefBinaryValue::Create(tmppacket.getData(), tmppacket.getDataSize()));
 
 	OurBrowser->SendProcessMessage(PID_RENDERER, message);
+
+	return 3;
 }
 
 

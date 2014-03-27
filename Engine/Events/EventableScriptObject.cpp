@@ -34,7 +34,7 @@ DLLEXPORT bool Leviathan::EventableScriptObject::OnUpdate(const shared_ptr<Named
 	UpdatedValues.push_back(updated);
 
 	// fire an event //
-	Event* tmpevent = new Event(EVENT_TYPE_LISTENERVALUEUPDATED, NULL, false);
+	Event* tmpevent = new Event(EVENT_TYPE_LISTENERVALUEUPDATED, NULL);
 
 	OnEvent(&tmpevent);
 

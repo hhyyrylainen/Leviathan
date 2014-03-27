@@ -552,7 +552,7 @@ void Leviathan::Engine::Tick(){
 	}
 
 	// send tick event //
-	MainEvents->CallEvent(new Event(EVENT_TYPE_ENGINE_TICK, new int(TickCount)));
+	MainEvents->CallEvent(new Event(EVENT_TYPE_ENGINE_TICK, new IntegerEventData(TickCount)));
 
 	// Call the default app tick //
 	Owner->Tick(TimePassed);
@@ -592,13 +592,13 @@ void Leviathan::Engine::RenderFrame(){
 	// advanced statistic start monitoring //
 	RenderTimer->RenderingStart();
 
-	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN, new int(SinceLastFrame)));
+	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN, new IntegerEventData(SinceLastFrame)));
 
 	// render //
 	GraphicalEntity1->Render(SinceLastFrame);
 	Graph->Frame();
 
-	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_END, new int(FrameCount)));
+	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_END, new IntegerEventData(FrameCount)));
 
 	// advanced statistics frame has ended //
 	RenderTimer->RenderingEnd();

@@ -133,6 +133,10 @@ DLLEXPORT bool Leviathan::Gui::View::Init(const wstring &filetoload, const Named
 }
 
 DLLEXPORT void Leviathan::Gui::View::ReleaseResources(){
+
+	// Stop all events //
+	UnRegisterAllEvents();
+
 	// Lock us //
 	ObjectLock guard(*this);
 
@@ -576,14 +580,96 @@ bool Leviathan::Gui::View::OnBeforePluginLoad(CefRefPtr<CefBrowser> browser, con
 void Leviathan::Gui::View::OnPluginCrashed(CefRefPtr<CefBrowser> browser, const CefString& plugin_path){
 
 }
-
+// ------------------------------------ //
 bool Leviathan::Gui::View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process, CefRefPtr<CefProcessMessage> message){
 	// Handle IPC messages from the render process...
 	if(OurBrowserSide->OnProcessMessageReceived(browser, source_process, message))
 		return true;
+	if(_PMCheckIsEvent(message))
+		return true;
+
 
 	// Not handled //
 	return false;
+}
+
+bool Leviathan::Gui::View::_PMCheckIsEvent(CefRefPtr<CefProcessMessage> &message){
+	// Check does name match something //
+	if(message->GetName() == "LGeneric"){
+		// Get the name of the event //
+		const wstring toregister = message->GetArgumentList()->GetString(0);
+
+		// Only add if not already added //
+		auto iter = RegisteredGenerics.find(toregister);
+
+		if(iter == RegisteredGenerics.end()){
+			// Add it //
+			RegisterForEvent(toregister);
+		}
+
+		return true;
+
+	} else if(message->GetName() == "LEvent"){
+		// Get the event that we need to register for //
+		EVENT_TYPE toregister = static_cast<EVENT_TYPE>(message->GetArgumentList()->GetInt(0));
+
+		// Only add if not already added //
+		auto iter = RegisteredEvents.find(toregister);
+
+		if(iter == RegisteredEvents.end()){
+			// Add it //
+			RegisterForEvent(toregister);
+		}
+
+
+		return true;
+
+	} else if(message->GetName() == "LEvents"){
+
+		// This always means "unregister all" //
+		UnRegisterAllEvents();
+		return true;
+	}
+
+
+	// Not handled //
+	return false;
+}
+
+DLLEXPORT int Leviathan::Gui::View::OnEvent(Event** pEvent){
+	// Serialize it to a packet //
+	sf::Packet tmppacket;
+
+	(*pEvent)->AddDataToPacket(tmppacket);
+
+	tmppacket.getData();
+
+	// Create the message //
+	CefRefPtr<CefProcessMessage> message = CefProcessMessage::Create("OnEvent");
+
+	CefRefPtr<CefListValue> args = message->GetArgumentList();
+	// Set the packet as binary data //
+	args->SetBinary(0, CefBinaryValue::Create(tmppacket.getData(), tmppacket.getDataSize()));
+
+	OurBrowser->SendProcessMessage(PID_RENDERER, message);
+}
+
+DLLEXPORT int Leviathan::Gui::View::OnGenericEvent(GenericEvent** pevent){
+	// Serialize it to a packet //
+	sf::Packet tmppacket;
+
+	(*pevent)->AddDataToPacket(tmppacket);
+
+	tmppacket.getData();
+
+	// Create the message //
+	CefRefPtr<CefProcessMessage> message = CefProcessMessage::Create("OnGeneric");
+
+	CefRefPtr<CefListValue> args = message->GetArgumentList();
+	// Set the packet as binary data //
+	args->SetBinary(0, CefBinaryValue::Create(tmppacket.getData(), tmppacket.getDataSize()));
+
+	OurBrowser->SendProcessMessage(PID_RENDERER, message);
 }
 
 

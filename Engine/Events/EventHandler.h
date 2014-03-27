@@ -32,7 +32,7 @@ namespace Leviathan{
 	};
 
 
-	class EventHandler : public EngineComponent{
+	class EventHandler : public EngineComponent, public ThreadSafe{
 	public:
 		DLLEXPORT EventHandler();
 		DLLEXPORT ~EventHandler();

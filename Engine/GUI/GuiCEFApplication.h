@@ -8,9 +8,12 @@
 // ---- includes ---- //
 #include "include/cef_app.h"
 #include "include/wrapper/cef_message_router.h"
+#include "JSEventInterface.h"
+
 
 namespace Leviathan{ namespace Gui{
 
+	//! \brief Handler for new render processes
 	class CefApplication : public CefApp, public CefBrowserProcessHandler, public CefRenderProcessHandler{
 		struct CustomExtensionFileData{
 			CustomExtensionFileData(const string &file, const string &filecontents) : FileName(file), Contents(filecontents){
@@ -56,6 +59,9 @@ namespace Leviathan{ namespace Gui{
 		virtual CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() OVERRIDE { return this; }
 
 
+		void StartListeningForEvent(JSNativeCoreAPI::JSListener* eventsinfo);
+		void StopListeningForEvents();
+
 		//! \brief Registers a custom file for all processes to load as V8 extension
 		//! \note Only one should ever be registered, for performance reasons
 		DLLEXPORT void RegisterCustomExtensionFile(const string &file);
@@ -66,9 +72,17 @@ namespace Leviathan{ namespace Gui{
 	private:
 
 
+		bool _PMCheckIsEvent(CefRefPtr<CefProcessMessage> &message);
+
+		// ------------------------------------ //
 		CefRefPtr<CefMessageRouterRendererSide> RendererRouter;
 
-		// Custom extension storage //
+		CefRefPtr<JSNativeCoreAPI> NativeCoreLeviathanAPI;
+
+		//! Store pointer to our browser
+		CefRefPtr<CefBrowser> OurBrowser;
+
+		//! Custom extension storage
 		std::vector<std::string> CustomExtensionFiles;
 
 		std::vector<unique_ptr<CustomExtensionFileData>> ExtensionContents;

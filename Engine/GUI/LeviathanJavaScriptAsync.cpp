@@ -67,6 +67,30 @@ bool Leviathan::Gui::LeviathanJavaScriptAsync::OnQuery(CefRefPtr<CefBrowser> bro
 		callback->Success("1");
 
 		return true;
+	} else {
+		// These requests are multi-part ones //
+		const wstring tmpstr(request);
+		WstringIterator itr(tmpstr);
+		
+		// Get the first part of it //
+		const wstring funcname = *itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_WHITESPACE).get();
+
+		// We can now compare the function name //
+
+
+		if(funcname == L"Not"){
+			// Security check //
+			JS_ACCESSCHECK(VIEW_SECURITYLEVEL_NORMAL);
+
+			// Get the event name //
+			const wstring argcontent = *itr.GetStringInQuotes(QUOTETYPE_BOTH).get();
+
+
+			// The window will now listen for it //
+			callback->Failure(2, "lol");
+
+			return true;
+		}
 	}
 
 	ObjectLock guard(*this);

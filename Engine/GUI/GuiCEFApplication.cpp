@@ -6,6 +6,7 @@
 #include "Common/StringOperations.h"
 #include "Generated/LeviathanV8CoreExt.h"
 #include "FileSystem.h"
+#include "Events/Event.h"
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::Gui::CefApplication::CefApplication() : RendererRouter(NULL){
@@ -37,22 +38,26 @@ void Leviathan::Gui::CefApplication::OnRegisterCustomSchemes(CefRefPtr<CefScheme
 
 void Leviathan::Gui::CefApplication::OnBrowserCreated(CefRefPtr<CefBrowser> browser){
 	// Browser created in this render process...
+	OurBrowser = browser;
 }
 
 void Leviathan::Gui::CefApplication::OnBrowserDestroyed(CefRefPtr<CefBrowser> browser){
 	// Browser destroyed in this render process...
+	OurBrowser = NULL;
 }
 // ------------------------------------ //
 void Leviathan::Gui::CefApplication::OnWebKitInitialized(){
 	// WebKit has been initialized, register V8 extensions...
 
-
 	// Register it //
-	// TODO: add native handler
 	const string levcoreext(LeviathanCoreV8ExtensionStr);
 
+	// Bind the event handling object //
+	NativeCoreLeviathanAPI = new JSNativeCoreAPI(this);
 
-	CefRegisterExtension("Leviathan/API", levcoreext, NULL);
+	CefRefPtr<CefV8Handler> tmpptr = NativeCoreLeviathanAPI;
+
+	CefRegisterExtension("Leviathan/API", levcoreext, tmpptr);
 
 	// Load custom extensions //
 	for(size_t i = 0; i < ExtensionContents.size(); i++){
@@ -68,12 +73,14 @@ void Leviathan::Gui::CefApplication::OnContextCreated(CefRefPtr<CefBrowser> brow
 	// JavaScript context created, add V8 bindings here...
 
 	RendererRouter->OnContextCreated(browser, frame, context);
+	
 }
 
 void Leviathan::Gui::CefApplication::OnContextReleased(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context){
 	// JavaScript context released, release V8 references here...
 
 	RendererRouter->OnContextReleased(browser, frame, context);
+	NativeCoreLeviathanAPI->ClearContextValues();
 }
 // ------------------------------------ //
 void Leviathan::Gui::CefApplication::OnRenderProcessThreadCreated(CefRefPtr<CefListValue> extra_info){
@@ -133,6 +140,9 @@ bool Leviathan::Gui::CefApplication::OnProcessMessageReceived(CefRefPtr<CefBrows
 	if(RendererRouter->OnProcessMessageReceived(browser, source_process, message))
 		return true;
 
+	if(_PMCheckIsEvent(message))
+		return true;
+
 	// Not handled //
 	return false;
 }
@@ -140,4 +150,83 @@ bool Leviathan::Gui::CefApplication::OnProcessMessageReceived(CefRefPtr<CefBrows
 DLLEXPORT void Leviathan::Gui::CefApplication::RegisterCustomExtensionFile(const string &file){
 	CustomExtensionFiles.push_back(file);
 }
+// ------------------------------------ //
+void Leviathan::Gui::CefApplication::StartListeningForEvent(JSNativeCoreAPI::JSListener* eventsinfo){
+	// Tell that we now want this event //
+	CefRefPtr<CefProcessMessage> message;
+	
+	if(eventsinfo->IsGeneric){
 
+		message = CefProcessMessage::Create("LGeneric");
+		message->GetArgumentList()->SetString(0, eventsinfo->EventName);
+
+	} else {
+
+		message = CefProcessMessage::Create("LEvent");
+		message->GetArgumentList()->SetInt(0, eventsinfo->EventsType);
+	}
+
+	// Send it //
+	OurBrowser->SendProcessMessage(PID_BROWSER, message);
+}
+
+void Leviathan::Gui::CefApplication::StopListeningForEvents(){
+	// Tell that we no longer want any //
+	CefRefPtr<CefProcessMessage> message = CefProcessMessage::Create("LEvents");
+
+	CefRefPtr<CefListValue> args = message->GetArgumentList();
+	// Indicate that we want to stop receiving all messages //
+	args->SetBool(0, true);
+
+	OurBrowser->SendProcessMessage(PID_BROWSER, message);
+}
+
+bool Leviathan::Gui::CefApplication::_PMCheckIsEvent(CefRefPtr<CefProcessMessage> &message){
+	// Check is it an event message //
+	if(message->GetName() == "OnEvent"){
+		// Get the packet //
+		sf::Packet tmppacket;
+
+		CefRefPtr<CefListValue> args = message->GetArgumentList();
+
+		CefRefPtr<CefBinaryValue> bval = args->GetBinary(0);
+
+		void* tmpdatablock = new char[bval->GetSize()];
+
+		bval->GetData(tmpdatablock, bval->GetSize(), 0);
+
+		tmppacket.append(tmpdatablock, bval->GetSize());
+
+		// Read the data from the packet //
+		Event received(tmppacket);
+
+		// Fire it //
+		NativeCoreLeviathanAPI->HandlePacket(received);
+
+		return true;
+
+	} else if(message->GetName() == "OnGeneric"){
+		// Get the packet //
+		sf::Packet tmppacket;
+
+		CefRefPtr<CefListValue> args = message->GetArgumentList();
+
+		CefRefPtr<CefBinaryValue> bval = args->GetBinary(0);
+
+		void* tmpdatablock = new char[bval->GetSize()];
+
+		bval->GetData(tmpdatablock, bval->GetSize(), 0);
+
+		tmppacket.append(tmpdatablock, bval->GetSize());
+
+		// Read the data from the packet //
+		GenericEvent received(tmppacket);
+
+		// Fire it //
+		NativeCoreLeviathanAPI->HandlePacket(received);
+
+		return true;
+	}
+
+	return false;
+}

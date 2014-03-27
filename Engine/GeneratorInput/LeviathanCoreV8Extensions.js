@@ -21,6 +21,18 @@ var Leviathan = {};
             onFailure: failurecallback});
     }
     
+    // Register the native functions //
+    //! Allows JavaScript to receive Engine events
+    Leviathan.OnEvent = function(){
+        native function LOnEvent();
+        return LOnEvent();
+    }
+    
+    //! Allows JavaScript to receive GenericEvents
+    Leviathan.OnGeneric = function(){
+        native function LOnGeneric();
+        return LOnGeneric();
+    }
     
     
 }());

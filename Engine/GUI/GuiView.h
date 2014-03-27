@@ -13,6 +13,7 @@
 #include "include/cef_client.h"
 #include "include/wrapper/cef_message_router.h"
 #include "Common/BaseNotifiable.h"
+#include "Events/CallableObject.h"
 
 
 namespace Leviathan{ namespace Gui{
@@ -40,7 +41,7 @@ namespace Leviathan{ namespace Gui{
 	//! GUI can be layered by setting the z coordinate of Views different
 	class View : public CefClient, public CefContextMenuHandler, public CefDisplayHandler, public CefDownloadHandler,	public CefDragHandler,
 		public CefGeolocationHandler, public CefKeyboardHandler, public CefLifeSpanHandler,	public CefLoadHandler, public CefRequestHandler,
-		public CefRenderHandler, public ThreadSafe
+		public CefRenderHandler, public ThreadSafe, public CallableObject
 	{
 		friend LeviathanJavaScriptAsync;
 
@@ -246,7 +247,10 @@ namespace Leviathan{ namespace Gui{
 			CefRefPtr<CefProcessMessage> message)
 			OVERRIDE;
 
-
+		//! \brief Passes events to the render process
+		DLLEXPORT virtual int OnEvent(Event** pEvent);
+		//! \brief Passes generic events to the render process
+		DLLEXPORT virtual int OnGenericEvent(GenericEvent** pevent);
 
 		virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() OVERRIDE;
 		virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() OVERRIDE;
@@ -263,6 +267,11 @@ namespace Leviathan{ namespace Gui{
 
 
 	protected:
+
+
+		bool _PMCheckIsEvent(CefRefPtr<CefProcessMessage> &message);
+
+		// ------------------------------------ //
 
 		//! Unique ID
 		int ID;
@@ -311,6 +320,13 @@ namespace Leviathan{ namespace Gui{
 		//! Holds the buffer before it is transferred into a texture
 		shared_ptr<RenderDataHolder> RenderHolderForMain;
 		shared_ptr<RenderDataHolder> RenderHolderForPopUp;
+
+		//! Keeps track of events that are registered
+		std::map<EVENT_TYPE, int> RegisteredEvents;
+
+		//! Keeps track of generic events
+		std::map<wstring, int> RegisteredGenerics;
+
 	};
 
 }}

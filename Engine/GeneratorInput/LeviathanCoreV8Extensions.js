@@ -23,15 +23,15 @@ var Leviathan = {};
     
     // Register the native functions //
     //! Allows JavaScript to receive Engine events
-    Leviathan.OnEvent = function(){
+    Leviathan.OnEvent = function(eventstypestr, callbackfunction){
         native function LOnEvent();
-        return LOnEvent();
+        return LOnEvent(eventstypestr, callbackfunction);
     }
     
     //! Allows JavaScript to receive GenericEvents
-    Leviathan.OnGeneric = function(){
+    Leviathan.OnGeneric = function(genericname, callbackfunction){
         native function LOnGeneric();
-        return LOnGeneric();
+        return LOnGeneric(genericname, callbackfunction);
     }
     
     

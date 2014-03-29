@@ -27,7 +27,7 @@ DLLEXPORT Leviathan::NetworkServerInterface::~NetworkServerInterface(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Prevent new players //
 	ServerStatus = NETWORKRESPONSE_SERVERSTATUS_SHUTDOWN;
@@ -44,7 +44,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
 }
 // ------------------------------------ //
 DLLEXPORT ConnectedPlayer* Leviathan::NetworkServerInterface::GetPlayerForConnection(ConnectionInfo* connection){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Search through the connections //
 	for(size_t i = 0; i < PlayerList.size(); i++){
 		// Check with the pointer //
@@ -106,7 +106,7 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shar
 }
 
 DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connection){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	if(!AllowJoin){
 
@@ -234,7 +234,7 @@ std::vector<ConnectedPlayer*>::iterator Leviathan::NetworkServerInterface::_OnRe
 }
 
 DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Check for closed connections //
 
 	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ){
@@ -258,7 +258,7 @@ Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, Ne
 
 void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 
 		// Set as closing //
 		ConnectionStatus = false;
@@ -268,7 +268,7 @@ void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parent
 }
 
 DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYours(ConnectionInfo* checkconnection){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	return CorrenspondingConnection->GenerateFormatedAddressString() == checkconnection->GenerateFormatedAddressString();
 }

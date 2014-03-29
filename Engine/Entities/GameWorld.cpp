@@ -33,7 +33,7 @@ DLLEXPORT Leviathan::GameWorld::~GameWorld(){
 
 
 DLLEXPORT void Leviathan::GameWorld::Release(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// release objects //
 	for(size_t i = 0; i < Objects.size(); i++){
@@ -174,7 +174,7 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
 }
 
 DLLEXPORT void Leviathan::GameWorld::AddObject(shared_ptr<BaseObject> obj){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	Objects.push_back(obj);
 }
 
@@ -186,7 +186,7 @@ DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
 		return nullptr;
 	}
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
 		if((*iter)->GetID() == ID){
@@ -216,7 +216,7 @@ DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SimulateWorld(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// This is probably the best place to remove dead objects //
 	_HandleDelayedDelete(guard);
 
@@ -230,7 +230,7 @@ DLLEXPORT void Leviathan::GameWorld::ClearSimulatePassedTime(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
 		if((*iter)->GetID() == ID){
 			// release the object and then erase our reference //
@@ -242,7 +242,7 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
 }
 
 DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(int ID){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	DelayedDeleteIDS.push_back(ID);
 }
 
@@ -305,7 +305,7 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 	if(frozen == WorldFrozen)
 		return;
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	WorldFrozen = frozen;
 	// If unfrozen reset physics time //

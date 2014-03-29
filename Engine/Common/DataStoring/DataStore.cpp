@@ -103,10 +103,6 @@ DLLEXPORT bool Leviathan::DataStore::GetValue(const wstring &name, VariableBlock
 	return Values.GetValue(name, receiver);
 }
 
-DLLEXPORT bool Leviathan::DataStore::GetValue(const wstring &name, const int &nindex, VariableBlock &receiver) const{
-	return Values.GetValue(name, nindex, receiver);
-}
-
 DLLEXPORT size_t Leviathan::DataStore::GetValueCount(const wstring &name) const{
 	return Values.GetValueCount(name);
 }

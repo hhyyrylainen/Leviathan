@@ -94,7 +94,7 @@ namespace Leviathan{
 		//! GetOrCreatePointerToConnection
 		DLLEXPORT FORCE_INLINE shared_ptr<ConnectionInfo> OpenConnectionTo(const wstring &targetaddress){
 			// Lock and call the real function //
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			return OpenConnectionTo(targetaddress, guard);
 		}
 

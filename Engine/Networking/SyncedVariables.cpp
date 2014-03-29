@@ -27,7 +27,7 @@ DLLEXPORT SyncedVariables* Leviathan::SyncedVariables::Get(){
 SyncedVariables* Leviathan::SyncedVariables::Staticaccess = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::SyncedVariables::AddNewVariable(shared_ptr<SyncedValue> newvalue){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Check do we already have a variable with that name //
 	if(IsVariableNameUsed(newvalue->GetVariableAccess()->GetName())){
@@ -46,7 +46,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::AddNewVariable(shared_ptr<SyncedValue
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::SyncedVariables::AddAnotherToSyncWith(ConnectionInfo* unsafeptr){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Report it //
 	for(auto iter = ConnectedToOthers.begin(); iter != ConnectedToOthers.end(); ++iter){
@@ -64,7 +64,7 @@ DLLEXPORT void Leviathan::SyncedVariables::AddAnotherToSyncWith(ConnectionInfo* 
 }
 
 DLLEXPORT void Leviathan::SyncedVariables::RemoveConnectionWithAnother(ConnectionInfo* unsafeptr){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Look for a matching pointer and remove it //
 	for(auto iter = ConnectedToOthers.begin(); iter != ConnectedToOthers.end(); ++iter){
@@ -120,7 +120,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
 					return;
 				}
 
-				ObjectLock guard(*instance);
+				GUARD_LOCK_OTHER_OBJECT(instance);
 
 				// Sync the value //
 				const SyncedValue* valtosend = instance->ToSyncValues[curpos].get();
@@ -229,7 +229,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 			}
 
 			// Call updating function //
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			_UpdateFromNetworkReceive(tmpptr, guard);
 			return true;
 		}
@@ -279,7 +279,7 @@ void Leviathan::SyncedVariables::_NotifyUpdatedValue(const SyncedValue* const va
 	// Report //
 	Logger::Get()->Info(L"SyncedVariables: syncing variable "+valtosync->GetVariableAccess()->GetName()+L" with everyone");
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Send it //
 	for(size_t i = 0; i < ConnectedToOthers.size(); i++){

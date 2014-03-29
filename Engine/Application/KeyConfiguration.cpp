@@ -25,7 +25,7 @@ DLLEXPORT KeyConfiguration* Leviathan::KeyConfiguration::Get(){
 KeyConfiguration* Leviathan::KeyConfiguration::staticaccess = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::KeyConfiguration::Init(boost::function<void (KeyConfiguration* checkfrom)> functocheck){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Skip if not given a file //
 	if(KeyStorageFile.size() == 0)
@@ -73,7 +73,7 @@ DLLEXPORT bool Leviathan::KeyConfiguration::Init(boost::function<void (KeyConfig
 }
 
 DLLEXPORT void Leviathan::KeyConfiguration::Release(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Save all the keys //
 	Save();
 }
@@ -86,7 +86,7 @@ DLLEXPORT void Leviathan::KeyConfiguration::Save(){
 	// First generate a string for this //
 	wstring savedata = L"";
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Loop through all keys and create string representations from them //
 	for(auto iter = KeyConfigurations.begin(); iter != KeyConfigurations.end(); ++iter){
@@ -114,7 +114,7 @@ DLLEXPORT void Leviathan::KeyConfiguration::Save(){
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<std::vector<GKey>> Leviathan::KeyConfiguration::ResolveControlNameToKey(const wstring &controlkey){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	auto iter = KeyConfigurations.find(controlkey);
 
 	if(iter != KeyConfigurations.end())
@@ -124,7 +124,7 @@ DLLEXPORT shared_ptr<std::vector<GKey>> Leviathan::KeyConfiguration::ResolveCont
 }
 
 DLLEXPORT wstring Leviathan::KeyConfiguration::ResolveKeyToControlName(const GKey &key){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// We need to loop through all the keys and see if any of them match //
 	for(auto iter = KeyConfigurations.begin(); iter != KeyConfigurations.end(); ++iter){
 

@@ -70,7 +70,7 @@ namespace Leviathan{
 		DLLEXPORT void SetSkyBox(const string &materialname);
 
 		DLLEXPORT FORCE_INLINE void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos){
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			UpdateCameraLocation(mspassed, camerapos, guard);
 		}
 		DLLEXPORT void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos, ObjectLock &guard);
@@ -81,7 +81,7 @@ namespace Leviathan{
 		//! \brief Casts a ray from point along a vector and returns the first physical object it hits
 		//! \warning You need to call Release on the returned object once done
 		DLLEXPORT FORCE_INLINE RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to){
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			return CastRayGetFirstHit(from, to, guard);
 		}
 
@@ -101,7 +101,7 @@ namespace Leviathan{
 		// clears all objects from the world //
 		DLLEXPORT void ClearObjects(ObjectLock &guard);
 		DLLEXPORT FORCE_INLINE void ClearObjects(){
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			ClearObjects(guard);
 		}
 

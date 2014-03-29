@@ -38,7 +38,7 @@ ThreadingManager* Leviathan::ThreadingManager::staticaccess = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ThreadingManager::Init(){
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Start the queuer //
 	WorkQueueHandler = boost::thread(RunTaskQueuerThread, this);
@@ -94,7 +94,7 @@ DLLEXPORT bool Leviathan::ThreadingManager::Init(){
 DLLEXPORT void Leviathan::ThreadingManager::Release(){
 	// Disallow new tasks //
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 		AllowStartTasksFromQueue = false;
 	}
 
@@ -102,7 +102,7 @@ DLLEXPORT void Leviathan::ThreadingManager::Release(){
 	//WaitForAllTasksToFinish();
 
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 		StopProcessing = true;
 	}
 	// Wait for the queuer to exit //
@@ -117,7 +117,7 @@ DLLEXPORT void Leviathan::ThreadingManager::Release(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ThreadingManager::QueueTask(shared_ptr<QueuedTask> task){
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 
 		WaitingTasks.push_back(task);
 	}
@@ -128,12 +128,12 @@ DLLEXPORT void Leviathan::ThreadingManager::QueueTask(shared_ptr<QueuedTask> tas
 DLLEXPORT void Leviathan::ThreadingManager::FlushActiveThreads(){
 	// Disallow new tasks //
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 		AllowStartTasksFromQueue = false;
 	}
 
 	// Wait until all threads are available again //
-	boost::unique_lock<ThreadSafe> lockit(*this);
+	UNIQUE_LOCK_OBJECT(this);
 
 	bool allavailable = false;
 
@@ -164,7 +164,7 @@ skipfirstwaitforthreadslabel:
 
 DLLEXPORT void Leviathan::ThreadingManager::WaitForAllTasksToFinish(){
 	// Use this lock the entire function //
-	boost::unique_lock<ThreadSafe> lockit(*this);
+	UNIQUE_LOCK_OBJECT(this);
 
 	// See if empty right now and loop until it is //
 	while(WaitingTasks.size() != 0){
@@ -211,7 +211,7 @@ DLLEXPORT void Leviathan::ThreadingManager::NotifyTaskFinished(shared_ptr<Queued
 	// We need locking for re-adding it //
 	if(task->IsRepeating()){
 		// Add back to queue //
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 
 		// Or not if we should be quitting soon //
 		if(AllowRepeats)
@@ -227,7 +227,7 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 	QUICKTIME_THISSCOPE;
 	// Disallow new tasks //
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 		AllowStartTasksFromQueue = false;
 	}
 
@@ -244,7 +244,7 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 
 	// Set the threads to run the register methods //
 	{
-		boost::unique_lock<ThreadSafe> guard(*this);
+		UNIQUE_LOCK_OBJECT(this);
 
 		for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
 			(*iter)->SetTaskAndNotify(shared_ptr<QueuedTask>(new QueuedTask(boost::bind(RegisterOgreOnThread))));
@@ -270,13 +270,13 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 
 	// Allow new threads //
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 		AllowStartTasksFromQueue = true;
 	}
 }
 
 DLLEXPORT void Leviathan::ThreadingManager::NotifyQueuerThread(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	TaskQueueNotify.notify_all();
 }
 
@@ -291,7 +291,7 @@ DLLEXPORT void Leviathan::ThreadingManager::SetDiscardConditionalTasks(bool disc
 void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 
 	// Lock the object //
-	boost::unique_lock<ThreadSafe> lockit(*manager);
+	UNIQUE_LOCK_OBJECT(manager);
 
 	while(!manager->StopProcessing){
 

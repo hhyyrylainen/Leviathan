@@ -410,7 +410,7 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data,
 	vec.reserve(Lines.size());
 
 	// fill values //
-	for(unsigned int i = 0; i < Lines.size(); i++){
+	for(size_t i = 0; i < Lines.size(); i++){
 		// skip empty lines //
 		if(Lines[i]->size() == 0)
 			continue;
@@ -526,7 +526,7 @@ Leviathan::NamedVars::NamedVars() : Variables(){
 Leviathan::NamedVars::NamedVars(const NamedVars& other){
 	// deep copy is required here //
 	Variables.reserve(other.Variables.size());
-	for(unsigned int i = 0; i < other.Variables.size(); i++){
+	for(size_t i = 0; i < other.Variables.size(); i++){
 		Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(*other.Variables[i])));
 	}
 }
@@ -573,6 +573,7 @@ DLLEXPORT Leviathan::NamedVars::NamedVars(sf::Packet &packet){
 }
 
 DLLEXPORT void Leviathan::NamedVars::AddDataToPacket(sf::Packet &packet) const{
+	GUARD_LOCK_THIS_OBJECT();
 	// First write size //
 	int isize = (int)Variables.size();
 
@@ -586,6 +587,7 @@ DLLEXPORT void Leviathan::NamedVars::AddDataToPacket(sf::Packet &packet) const{
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NamedVars::SetValue(const wstring &name, const VariableBlock &value1){
+	GUARD_LOCK_THIS_OBJECT();
 	int index = Find(name);
 
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -598,6 +600,7 @@ DLLEXPORT bool Leviathan::NamedVars::SetValue(const wstring &name, const Variabl
 }
 
 DLLEXPORT bool Leviathan::NamedVars::SetValue(const wstring &name, VariableBlock* value1){
+	GUARD_LOCK_THIS_OBJECT();
 	int index = Find(name);
 
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -610,6 +613,7 @@ DLLEXPORT bool Leviathan::NamedVars::SetValue(const wstring &name, VariableBlock
 }
 
 DLLEXPORT bool Leviathan::NamedVars::SetValue(const wstring &name, const vector<VariableBlock*> &values){
+	GUARD_LOCK_THIS_OBJECT();
 	int index = Find(name);
 
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -622,6 +626,7 @@ DLLEXPORT bool Leviathan::NamedVars::SetValue(const wstring &name, const vector<
 }
 
 DLLEXPORT bool Leviathan::NamedVars::SetValue(NamedVariableList &nameandvalues){
+	GUARD_LOCK_THIS_OBJECT();
 	int index = Find(nameandvalues.Name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, (int)Variables.size()){
@@ -637,6 +642,7 @@ DLLEXPORT bool Leviathan::NamedVars::SetValue(NamedVariableList &nameandvalues){
 }
 
 DLLEXPORT VariableBlock& Leviathan::NamedVars::GetValueNonConst(const wstring &name) THROWS{
+	GUARD_LOCK_THIS_OBJECT();
 	int index = Find(name);
 
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -648,6 +654,7 @@ DLLEXPORT VariableBlock& Leviathan::NamedVars::GetValueNonConst(const wstring &n
 }
 
 DLLEXPORT const VariableBlock* Leviathan::NamedVars::GetValue(const wstring &name) const THROWS{
+	GUARD_LOCK_THIS_OBJECT();
 	int index = Find(name);
 
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -659,6 +666,7 @@ DLLEXPORT const VariableBlock* Leviathan::NamedVars::GetValue(const wstring &nam
 }
 
 DLLEXPORT bool Leviathan::NamedVars::GetValue(const wstring &name, VariableBlock &receiver) const{
+	GUARD_LOCK_THIS_OBJECT();
 	int index = Find(name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -670,6 +678,8 @@ DLLEXPORT bool Leviathan::NamedVars::GetValue(const wstring &name, VariableBlock
 }
 
 DLLEXPORT bool Leviathan::NamedVars::GetValue(const wstring &name, const int &nindex, VariableBlock &receiver) const{
+	GUARD_LOCK_THIS_OBJECT();
+
 	int index = Find(name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -680,7 +690,19 @@ DLLEXPORT bool Leviathan::NamedVars::GetValue(const wstring &name, const int &ni
 	return true;
 }
 
+DLLEXPORT bool Leviathan::NamedVars::GetValue(const int &index, VariableBlock &receiver) const{
+	GUARD_LOCK_THIS_OBJECT();
+	// index check //
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+		return false;
+	}
+	// specific operator wanted here //
+	receiver = const_cast<const VariableBlock&>(Variables[index]->GetValue(0));
+	return true;
+}
+
 DLLEXPORT size_t Leviathan::NamedVars::GetValueCount(const wstring &name) const{
+	GUARD_LOCK_THIS_OBJECT();
 	int index = Find(name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -690,6 +712,7 @@ DLLEXPORT size_t Leviathan::NamedVars::GetValueCount(const wstring &name) const{
 }
 
 DLLEXPORT vector<VariableBlock*>* Leviathan::NamedVars::GetValues(const wstring &name) THROWS{
+	GUARD_LOCK_THIS_OBJECT();
 	int index = Find(name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -699,6 +722,7 @@ DLLEXPORT vector<VariableBlock*>* Leviathan::NamedVars::GetValues(const wstring 
 }
 
 DLLEXPORT bool Leviathan::NamedVars::GetValues(const wstring &name, vector<const VariableBlock*> &receiver) const{
+	GUARD_LOCK_THIS_OBJECT();
 	int index = Find(name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -718,6 +742,7 @@ DLLEXPORT bool Leviathan::NamedVars::GetValues(const wstring &name, vector<const
 }
 
 DLLEXPORT shared_ptr<NamedVariableList> Leviathan::NamedVars::GetValueDirect(const wstring &name) const{
+	GUARD_LOCK_THIS_OBJECT();
 	int index = Find(name);
 	// index check //
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -725,16 +750,15 @@ DLLEXPORT shared_ptr<NamedVariableList> Leviathan::NamedVars::GetValueDirect(con
 	}
 	return Variables[index];
 }
-
-// ------------------------------------ //
-
 // ------------------------------------ //
 DLLEXPORT int Leviathan::NamedVars::GetVariableType(const wstring &name) const{
+	GUARD_LOCK_THIS_OBJECT();
 	// call overload //
 	return GetVariableType((size_t)Find(name));
 }
 
-DLLEXPORT int Leviathan::NamedVars::GetVariableType(unsigned int index) const{
+DLLEXPORT int Leviathan::NamedVars::GetVariableType(size_t index) const{
+	GUARD_LOCK_THIS_OBJECT();
 	ARR_INDEX_CHECKINV(index, Variables.size()){
 		Logger::Get()->Error(L"NamedVars: GetVariableType: out of range", index);
 		return false;
@@ -743,11 +767,13 @@ DLLEXPORT int Leviathan::NamedVars::GetVariableType(unsigned int index) const{
 }
 
 DLLEXPORT int Leviathan::NamedVars::GetVariableTypeOfAll(const wstring &name) const{
+	GUARD_LOCK_THIS_OBJECT();
 	// call overload //
 	return GetVariableType((size_t)Find(name));
 }
 
-DLLEXPORT int Leviathan::NamedVars::GetVariableTypeOfAll(unsigned int index) const{
+DLLEXPORT int Leviathan::NamedVars::GetVariableTypeOfAll(size_t index) const{
+	GUARD_LOCK_THIS_OBJECT();
 	ARR_INDEX_CHECKINV(index, Variables.size()){
 		Logger::Get()->Error(L"NamedVars: GetVariableTypeOfAll: out of range", index);
 		return false;
@@ -755,7 +781,8 @@ DLLEXPORT int Leviathan::NamedVars::GetVariableTypeOfAll(unsigned int index) con
 	return Variables[index]->GetCommonType();
 }
 // ------------------------------------ //
-wstring& Leviathan::NamedVars::GetName(unsigned int index){
+wstring& Leviathan::NamedVars::GetName(size_t index){
+	GUARD_LOCK_THIS_OBJECT();
 	ARR_INDEX_CHECKINV(index, Variables.size()){
 		Logger::Get()->Error(L"NamedVars: GetName: out of range", index);
 		// "clever" way to avoid exceptions //
@@ -765,7 +792,8 @@ wstring& Leviathan::NamedVars::GetName(unsigned int index){
 	return Variables[index]->GetName();
 }
 
-DLLEXPORT bool Leviathan::NamedVars::GetName(unsigned int index, wstring &name) const{
+DLLEXPORT bool Leviathan::NamedVars::GetName(size_t index, wstring &name) const{
+	GUARD_LOCK_THIS_OBJECT();
 	ARR_INDEX_CHECKINV(index, Variables.size()){
 		Logger::Get()->Error(L"NamedVars: GetName: out of range", index);
 		return false;
@@ -775,7 +803,8 @@ DLLEXPORT bool Leviathan::NamedVars::GetName(unsigned int index, wstring &name) 
 	return true;
 }
 
-void Leviathan::NamedVars::SetName(unsigned int index, const wstring &name){
+void Leviathan::NamedVars::SetName(size_t index, const wstring &name){
+	GUARD_LOCK_THIS_OBJECT();
 	ARR_INDEX_CHECKINV(index, Variables.size()){
 		Logger::Get()->Error(L"NamedVars: SetName: out of range", index);
 		return;
@@ -784,10 +813,12 @@ void Leviathan::NamedVars::SetName(unsigned int index, const wstring &name){
 	Variables[index]->SetName(name);
 }
 void Leviathan::NamedVars::SetName(const wstring &oldname, const wstring &name){
+	GUARD_LOCK_THIS_OBJECT();
 	// call overload //
 	SetName(Find(oldname), name);
 }
-bool Leviathan::NamedVars::CompareName(unsigned int index, const wstring &name) const{
+bool Leviathan::NamedVars::CompareName(size_t index, const wstring &name) const{
+	GUARD_LOCK_THIS_OBJECT();
 	ARR_INDEX_CHECK(index, Variables.size())
 		return Variables[index]->CompareName(name);
 	// maybe throw an exception here //
@@ -796,21 +827,25 @@ bool Leviathan::NamedVars::CompareName(unsigned int index, const wstring &name) 
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NamedVars::AddVar(shared_ptr<NamedVariableList> values){
+	GUARD_LOCK_THIS_OBJECT();
 	// just add to vector //
 	Variables.push_back(values);
 }
 
 DLLEXPORT void Leviathan::NamedVars::AddVar(NamedVariableList* newvaluetoadd){
+	GUARD_LOCK_THIS_OBJECT();
 	// create new smart pointer and push back //
 	Variables.push_back(shared_ptr<NamedVariableList>(newvaluetoadd));
 }
 
 DLLEXPORT void Leviathan::NamedVars::AddVar(const wstring &name, VariableBlock* valuetosteal){
+	GUARD_LOCK_THIS_OBJECT();
 	// create new smart pointer and push back //
 	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(name, valuetosteal)));
 }
 
-void Leviathan::NamedVars::Remove(unsigned int index){
+void Leviathan::NamedVars::Remove(size_t index){
+	GUARD_LOCK_THIS_OBJECT();
 	ARR_INDEX_CHECKINV(index, Variables.size()){
 		Logger::Get()->Error(L"NamedVars: Remove: out of range", index);
 		return;
@@ -832,20 +867,17 @@ vector<shared_ptr<NamedVariableList>>* Leviathan::NamedVars::GetVec(){
 	return &Variables;
 }
 void Leviathan::NamedVars::SetVec(vector<shared_ptr<NamedVariableList>>& vec){
+	GUARD_LOCK_THIS_OBJECT();
 	Variables = vec;
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::NamedVars::Find(const wstring &name) const{
-	for(unsigned int i = 0; i < Variables.size(); i++){
+DLLEXPORT int Leviathan::NamedVars::Find(const wstring &name, ObjectLock &guard) const{
+	for(size_t i = 0; i < Variables.size(); i++){
 		if(Variables[i]->CompareName(name))
 			return i;
 	}
 	return -1;
 }
-// ------------------------------------ //
-
-
-
 // ------------------ Script compatible functions ------------------ //
 ScriptSafeVariableBlock* Leviathan::NamedVars::GetScriptCompatibleValue(string name){
 	// Use a try block to not throw exceptions to the script engine //

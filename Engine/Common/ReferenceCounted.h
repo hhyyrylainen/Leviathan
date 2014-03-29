@@ -37,7 +37,7 @@ namespace Leviathan{
 		//! add a reference with internal locking //
 		DLLEXPORT inline void AddRef(){
 			// we need to lock this object to ensure thread safety //
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			AddRef(guard);
 		}
 		//! removes a reference and deletes the object if reference count reaches zero //

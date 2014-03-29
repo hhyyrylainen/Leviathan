@@ -23,7 +23,7 @@ namespace Leviathan{
 		//! Connects this to a notifiable object for holding a reference to it
 		//! \todo return false and skip adding if already added
 		DLLEXPORT FORCE_INLINE bool ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child){
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			return ConnectToNotifiable(child, guard);
 		}
 

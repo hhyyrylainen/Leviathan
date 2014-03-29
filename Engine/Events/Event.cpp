@@ -87,7 +87,7 @@ DLLEXPORT ShowEventData* Leviathan::Event::GetDataForShowEvent() const{
 	return NULL;
 }
 
-DLLEXPORT IntegerEventData* Leviathan::Event::GetDataForTickEvent() const{
+DLLEXPORT IntegerEventData* Leviathan::Event::GetIntegerDataForEvent() const{
 	if(Type == EVENT_TYPE_TICK || Type == EVENT_TYPE_FRAME_BEGIN || Type == EVENT_TYPE_FRAME_END)
 		return static_cast<IntegerEventData*>(Data);
 	return NULL;

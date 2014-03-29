@@ -27,7 +27,7 @@ DLLEXPORT LeviathanApplication* Leviathan::LeviathanApplication::GetApp(){
 LeviathanApplication* LeviathanApplication::Curapp = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// store configuration //
 	ApplicationConfiguration = configuration;
 
@@ -40,7 +40,7 @@ DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration
 
 DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 		// set as quitting //
 		Quit = true;
 
@@ -53,7 +53,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 	_Engine->Release();
 
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 		// Delete the already released engine //
 		delete _Engine;
 		_Engine = NULL;
@@ -61,7 +61,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	ShouldQuit = true;
 
 	// Tell Engine to expect a Release soon //
@@ -69,7 +69,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	ShouldQuit = true;
 	Quit = true;
 
@@ -138,7 +138,7 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 			FailCount++;
 		}
 	}
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Report problems //
 	if(FailCount)
 		DEBUG_OUTPUT_AUTO(wstring(L"Application main loop sleep fails: "+Convert::ToWstring(FailCount)));

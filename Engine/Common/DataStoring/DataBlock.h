@@ -408,6 +408,12 @@ namespace Leviathan{
 	// DataBlock interface classes //
 	class VariableBlock{
 	public:
+
+		//! \brief Default empty constructor, block has no value of any kind
+		DLLEXPORT VariableBlock() : BlockData(NULL){
+
+		}
+
 		// constructors that accept any type of DataBlock //
 		template<class DBRType>
 		DLLEXPORT VariableBlock(DataBlock<DBRType>* block){

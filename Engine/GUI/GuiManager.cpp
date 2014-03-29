@@ -34,7 +34,7 @@ Leviathan::Gui::GuiManager::~GuiManager(){
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalInputEntity* window){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	ThisWindow = window;
 
@@ -54,7 +54,7 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 }
 
 void Leviathan::Gui::GuiManager::Release(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// default mouse back //
 	SetMouseFile(L"none");
 
@@ -82,7 +82,7 @@ void Leviathan::Gui::GuiManager::Release(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(OIS::KeyCode key, int specialmodifiers){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(Collections[i]->GetTogglingKey().Match(key, specialmodifiers, false) && Collections[i]->GetAllowEnable()){
 			// is a match, toggle //
@@ -102,7 +102,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionStateProxy(string name, 
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const wstring &name, bool state){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// find collection with name and set it's state //
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(Collections[i]->GetName() == name){
@@ -119,7 +119,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const wstring &nam
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const wstring &name, bool allow /*= true*/){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// find collection with name and set it's allow enable state //
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(Collections[i]->GetName() == name){
@@ -134,7 +134,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const w
 }
 // ------------------------------------ //
 void Leviathan::Gui::GuiManager::GuiTick(int mspassed){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// check if we want mouse //
 	if(GuiMouseUseUpdated){
@@ -179,7 +179,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnForceGUIOn(){
 }
 
 void Leviathan::Gui::GuiManager::Render(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Update inputs //
 	if(ThissViews.size())
 		ThisWindow->GetWindow()->GatherInput(ThissViews[0]->GetBrowserHost());
@@ -192,7 +192,7 @@ void Leviathan::Gui::GuiManager::Render(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiManager::OnResize(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Resize all CEF browsers on this window //
 	for(size_t i = 0; i < ThissViews.size(); i++){
@@ -201,7 +201,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnResize(){
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::OnFocusChanged(bool focused){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Notify all CEF browsers on this window //
 	for(size_t i = 0; i < ThissViews.size(); i++){
@@ -210,13 +210,13 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnFocusChanged(bool focused){
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiManager::AddGuiObject(BaseGuiObject* obj){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	Objects.push_back(obj);
 	return true;
 }
 
 void Leviathan::Gui::GuiManager::DeleteObject(int id){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	for(size_t i = 0; i < Objects.size(); i++){
 		if(Objects[i]->GetID() == id){
 
@@ -228,7 +228,7 @@ void Leviathan::Gui::GuiManager::DeleteObject(int id){
 }
 
 int Leviathan::Gui::GuiManager::GetObjectIndexFromId(int id){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	for(size_t i = 0; i < Objects.size(); i++){
 		if(Objects[i]->GetID() == id)
 			return i;
@@ -237,7 +237,7 @@ int Leviathan::Gui::GuiManager::GetObjectIndexFromId(int id){
 }
 
 BaseGuiObject* Leviathan::Gui::GuiManager::GetObject(unsigned int index){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	ARR_INDEX_CHECK(index, Objects.size()){
 		return Objects[index];
 	}
@@ -295,7 +295,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 	}
 
 	// We need to lock now //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// temporary object data stores //
 	vector<BaseGuiObject*> TempOs;
@@ -356,7 +356,7 @@ guiprocessguifileloopdeleteprocessedobject:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFile(const wstring &file){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	if(file == L"none"){
 
@@ -372,16 +372,16 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFile(const wstring &file){
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFileVisibleState(bool state){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Set mouse drawing flag //
 }
 // ----------------- collection managing --------------------- //
 void GuiManager::AddCollection(GuiCollection* add){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	Collections.push_back(add);
 }
 GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const wstring &name){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// look for collection based on id or name //
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(id >= 0){

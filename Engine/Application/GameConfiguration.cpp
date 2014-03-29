@@ -21,7 +21,7 @@ DLLEXPORT GameConfiguration* Leviathan::GameConfiguration::Get(){
 GameConfiguration* Leviathan::GameConfiguration::staticaccess = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GameConfiguration::Init(boost::function<void (GameConfiguration* configobj)> sanitycheckcallback){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	GameVars = new NamedVars();
 
@@ -40,7 +40,7 @@ DLLEXPORT bool Leviathan::GameConfiguration::Init(boost::function<void (GameConf
 }
 
 DLLEXPORT void Leviathan::GameConfiguration::Release(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	SaveCheck();
 
 	// We can now delete our variables //
@@ -52,7 +52,7 @@ DLLEXPORT void Leviathan::GameConfiguration::SaveCheck(){
 	wstring newfilecontents = L"";
 	// Writing to file doesn't need locking //
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 		// If not modified we don't need to save anything //
 		if(!Modified)
 			return;
@@ -71,7 +71,7 @@ DLLEXPORT void Leviathan::GameConfiguration::SaveCheck(){
 }
 
 DLLEXPORT void Leviathan::GameConfiguration::MarkModified(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	Modified = true;
 }

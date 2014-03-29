@@ -23,7 +23,7 @@ Pong::PongGame::PongGame() : GuiManagerAccess(NULL)
 }
 
 Pong::PongGame::~PongGame(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// delete memory //
 	SAFE_DELETE(GameInputHandler);
 	
@@ -63,7 +63,7 @@ struct TmpPassTaskObject{
 
 int Pong::PongGame::StartServer(){
 	// Start the server process //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 #ifdef _DEBUG
 	wstring serverstartname = L"PongServerD";
@@ -156,7 +156,7 @@ int Pong::PongGame::StartServer(){
 
 #endif // _WIN32
 
-			ObjectLock guard(*StaticGame);
+			GUARD_LOCK_OTHER_OBJECT(StaticGame);
 
 #ifdef WIN32
 			CloseHandle(StaticGame->ServerProcessHandle);
@@ -289,7 +289,7 @@ void Pong::PongGame::AllowPauseMenu(){
 }
 
 void Pong::PongGame::CustomizedGameEnd(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Stop sending pointless input //
 	GameInputHandler->UnlinkPlayers();
 	GameInputHandler->SetBlockState(true);
@@ -300,7 +300,7 @@ void Pong::PongGame::CustomizedGameEnd(){
 }
 
 void Pong::PongGame::StartInputHandling(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	GameInputHandler->StartReceivingInput(PlayerList);
 	GameInputHandler->SetBlockState(false);
 }
@@ -308,8 +308,7 @@ void Pong::PongGame::StartInputHandling(){
 void Pong::PongGame::CheckGameConfigurationVariables(GameConfiguration* configobj){
 	// Check for various variables //
 
-	ObjectLock lockit(*configobj);
-
+	GUARD_LOCK_OTHER_OBJECT_NAME(configobj, lockit);
 	NamedVars* vars = configobj->AccessVariables(lockit);
 
 	// Master server force localhost //
@@ -340,12 +339,12 @@ void Pong::PongGame::CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj)
 }
 // ------------------------------------ //
 void Pong::PongGame::MoveBackToLobby(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	DEBUG_BREAK;
 }
 
 void Pong::PongGame::Disconnect(const string &reasonstring){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 }
 // ------------------------------------ //

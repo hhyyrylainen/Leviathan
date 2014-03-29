@@ -24,7 +24,7 @@ map<wstring, CONSOLECOMMANDTYPE> Leviathan::ScriptConsole::CommandTypeDefinition
 
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptConsole::Init(ScriptInterface* MainScript){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// store pointer //
 	InterfaceInstance = MainScript;
 
@@ -35,7 +35,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::Init(ScriptInterface* MainScript){
 }
 
 DLLEXPORT void Leviathan::ScriptConsole::Release(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// set the module to release itself since it won't be used anymore //
 	shared_ptr<ScriptModule> tmpptre(ConsoleModule.lock());
 	if(tmpptre.get() != NULL){
@@ -45,7 +45,7 @@ DLLEXPORT void Leviathan::ScriptConsole::Release(){
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &commandstr){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// we use an iterator for going through the command //
 
 	// First thing to check is the user wanting help //
@@ -192,7 +192,7 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptConsole::ExecuteStringInstruction(string statement){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// use ScriptHelper class to execute this statement in the module //
 	int result = ExecuteString(InterfaceInstance->GetExecutor()->GetASEngine(), statement.c_str(), ConsoleModule.lock()->GetModule());
 	if(result < 0){
@@ -211,7 +211,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::ExecuteStringInstruction(string stateme
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptConsole::AddVariableStringDefinition(string statement){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// adds a variable using the method in the Console example of AngelScript SDK //
 
 	// force semicolon to the end of the statement //
@@ -229,7 +229,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::AddVariableStringDefinition(string stat
 }
 
 DLLEXPORT bool Leviathan::ScriptConsole::DeleteVariableStringDefinition(string statement){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// deletes a variable using the method in the Console example of AngelScript SDK //
 	// get the variable by name //
 	asIScriptModule* mod = ConsoleModule.lock()->GetModule();
@@ -246,7 +246,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::DeleteVariableStringDefinition(string s
 }
 
 DLLEXPORT bool Leviathan::ScriptConsole::AddFunctionStringDefinition(string statement){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// adds a function using the method in the Console example of AngelScript SDK //
 	bool result = false;
 
@@ -281,7 +281,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::AddFunctionStringDefinition(string stat
 }
 
 DLLEXPORT bool Leviathan::ScriptConsole::DeleteFunctionStringDefinition(string statement){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// deletes a function using the method in the Console example of AngelScript SDK //
 	asIScriptModule* mod = ConsoleModule.lock()->GetModule();
 
@@ -322,7 +322,7 @@ funcdeletesucceedendgarbagecollectlabel:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ScriptConsole::ListFunctions(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// list global functions //
 	Logger::Get()->Info(L"Global functions: ");
 
@@ -353,7 +353,7 @@ DLLEXPORT void Leviathan::ScriptConsole::ListFunctions(){
 }
 
 DLLEXPORT void Leviathan::ScriptConsole::ListVariables(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// list global variables //
 	Logger::Get()->Info(L"Global script variables: ");
 

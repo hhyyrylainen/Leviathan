@@ -147,7 +147,10 @@ namespace Leviathan{
 		DLLEXPORT VariableBlock& GetValueNonConst(const wstring &name) THROWS;
 		DLLEXPORT const VariableBlock* GetValue(const wstring &name) const THROWS;
 		DLLEXPORT bool GetValue(const wstring &name, VariableBlock &receiver) const;
-		DLLEXPORT bool GetValue(const wstring &name, const int &nindex, VariableBlock &receiver) const;
+		//! \brief Gets a VariableBlock from the specified index on the block matching name
+		DLLEXPORT bool GetValue(const wstring &name, const int &index, VariableBlock &receiver) const;
+		//! \brief Gets constant value from vector index
+		DLLEXPORT bool GetValue(const int &index, VariableBlock &receiver) const;
 		DLLEXPORT bool GetValues(const wstring &name, vector<const VariableBlock*> &receiver) const;
 
 		//! \brief Writes this NamedVars to a packet
@@ -189,22 +192,22 @@ namespace Leviathan{
 		ScriptSafeVariableBlock* GetScriptCompatibleValue(string name);
 		// ------------------------------------ //
 		DLLEXPORT int GetVariableType(const wstring &name) const;
-		DLLEXPORT int GetVariableType(unsigned int index) const;
+		DLLEXPORT int GetVariableType(size_t index) const;
 		DLLEXPORT int GetVariableTypeOfAll(const wstring &name) const;
-		DLLEXPORT int GetVariableTypeOfAll(unsigned int index) const;
+		DLLEXPORT int GetVariableTypeOfAll(size_t index) const;
 
-		DLLEXPORT wstring& GetName(unsigned int index) THROWS;
-		DLLEXPORT bool GetName(unsigned int index, wstring &name) const;
+		DLLEXPORT wstring& GetName(size_t index) THROWS;
+		DLLEXPORT bool GetName(size_t index, wstring &name) const;
 
-		DLLEXPORT void SetName(unsigned int index, const wstring &name);
+		DLLEXPORT void SetName(size_t index, const wstring &name);
 		DLLEXPORT void SetName(const wstring &oldname, const wstring &name);
 
-		DLLEXPORT bool CompareName(unsigned int index, const wstring &name) const;
+		DLLEXPORT bool CompareName(size_t index, const wstring &name) const;
 		// ------------------------------------ //
 		DLLEXPORT void AddVar(NamedVariableList* newvaluetoadd);
 		DLLEXPORT void AddVar(shared_ptr<NamedVariableList> values);
 		DLLEXPORT void AddVar(const wstring &name, VariableBlock* valuetosteal);
-		DLLEXPORT void Remove(unsigned int index);
+		DLLEXPORT void Remove(size_t index);
 		DLLEXPORT void Remove(const wstring &name);
 		// ------------------------------------ //
 		DLLEXPORT int LoadVarsFromFile(const wstring &file);
@@ -212,7 +215,13 @@ namespace Leviathan{
 		DLLEXPORT vector<shared_ptr<NamedVariableList>>* GetVec();
 		DLLEXPORT void SetVec(vector<shared_ptr<NamedVariableList>> &vec);
 		// ------------------------------------ //
-		DLLEXPORT int Find(const wstring &name) const;
+
+		DLLEXPORT inline int Find(const wstring &name) const{
+			GUARD_LOCK_THIS_OBJECT();
+			return Find(name, guard);
+		}
+
+		DLLEXPORT int Find(const wstring &name, ObjectLock &guard) const;
 
 
 		// ------------------------------------ //
@@ -236,7 +245,7 @@ namespace Leviathan{
 		}
 
 	private:
-		vector<shared_ptr<NamedVariableList>> Variables;
+		std::vector<shared_ptr<NamedVariableList>> Variables;
 	};
 
 }

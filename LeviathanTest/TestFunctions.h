@@ -343,7 +343,7 @@ bool TestNamedVars(const int &tests){
 	// Test passing through packets //
 	NamedVars packettestorig;
 
-	packettestorig.AddVar(L"MyVar1", new VariableBlock("string_block"));
+	packettestorig.AddVar(L"MyVar1", new VariableBlock((string)"string_block"));
 	packettestorig.AddVar(L"Secy", new VariableBlock(true));
 
 	// Add to packet //
@@ -365,8 +365,8 @@ bool TestNamedVars(const int &tests){
 		TESTFAIL;
 	}
 
-	VariableBlock receiver2(NULL);
-	frompacket.GetValue(L"", 1, receiver2);
+	VariableBlock receiver2;
+	frompacket.GetValue(1, receiver2);
 
 	if((bool)receiver2 != true){
 		TESTFAIL;

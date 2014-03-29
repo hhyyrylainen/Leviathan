@@ -73,7 +73,7 @@ int main(int argcount, char* args[]){
 		LeviathanApplication app;
 		DummyNetworkHandler network;
 
-		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(times, ENGINECONFIGURATION, PROGRAMCONFIGURATION, PROGRAMKEYCONFIGURATION,
+		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"Test_"+times, ENGINECONFIGURATION, PROGRAMCONFIGURATION, PROGRAMKEYCONFIGURATION,
 			&PROGRAMCHECKCONFIGFUNCNAME, &PROGRAMCHECKKEYCONFIGFUNCNAME));
 		// customize values //
 #ifdef _WIN32

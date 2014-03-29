@@ -14,7 +14,7 @@ DLLEXPORT Leviathan::ServerApplication::~ServerApplication(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ServerApplication::Initialize(AppDef* configuration){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// store configuration //
 	ApplicationConfiguration = configuration;
 

@@ -32,7 +32,7 @@ namespace Leviathan{
 		//! \brief Disconnects the client from the server or does nothing
 		//! \todo Add a check to not close the connection if it is used by RemoteConsole
 		DLLEXPORT FORCE_INLINE void DisconnectFromServer(const wstring &reason){
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			DisconnectFromServer(guard, reason);
 		}
 

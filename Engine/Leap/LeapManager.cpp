@@ -68,7 +68,7 @@ DLLEXPORT void Leviathan::LeapManager::OnTick(const int &mspassed){
 		Logger::Get()->Info(L"LeapManager: Input: downward swipe threshold passed, shutting down");
 
 		// close the window so the program quits after this //
-		ObjectLock guard(*Leviathan::LeviathanApplication::GetApp());
+		GUARD_LOCK_OTHER_OBJECT(Leviathan::LeviathanApplication::GetApp());
 		Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
 	}
 }

@@ -152,12 +152,12 @@ namespace Leviathan{
 		DLLEXPORT void CheckKeepAliveSend();
 		DLLEXPORT void SendKeepAlivePacket(ObjectLock &guard);
 		DLLEXPORT FORCE_INLINE void SendKeepAlivePacket(){
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			SendKeepAlivePacket(guard);
 		}
 		DLLEXPORT void SendCloseConnectionPacket(ObjectLock &guard);
 		DLLEXPORT FORCE_INLINE void SendCloseConnectionPacket(){
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			SendCloseConnectionPacket(guard);
 		}
 

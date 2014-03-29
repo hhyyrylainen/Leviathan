@@ -68,7 +68,7 @@ sf::Packet& operator >>(sf::Packet& packet, NetworkAckField &data){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// This might do something //
 	if(!AddressGot){
 		TargetHost = sf::IpAddress(Convert::WstringToString(HostName));
@@ -92,7 +92,7 @@ DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
 
 DLLEXPORT void Leviathan::ConnectionInfo::Release(){
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 
 		Logger::Get()->Info(L"ConnectionInfo: disconnecting from "+Convert::StringToWstring(TargetHost.toString())+L" on port "
 			+Convert::ToWstring(TargetPortNumber));
@@ -118,7 +118,7 @@ DLLEXPORT shared_ptr<NetworkResponse> Leviathan::ConnectionInfo::SendRequestAndB
 }
 
 DLLEXPORT shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacketToConnection(shared_ptr<NetworkRequest> request, int maxretries){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Generate a packet from the request //
 	sf::Packet actualpackettosend;
 	// We need a complete header with acks and stuff //
@@ -153,7 +153,7 @@ DLLEXPORT shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacketToCo
 
 
 DLLEXPORT shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacketToConnection(shared_ptr<NetworkResponse> response, int maxtries){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Generate a packet from the request //
 	sf::Packet actualpackettosend;
 	// We need a complete header with acks and stuff //
@@ -277,7 +277,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 	// Timeout stuff (if possible) //
 	__int64 timems = Misc::GetTimeMs64();
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ){
 		// Check is it already here //
@@ -455,7 +455,7 @@ movepacketsendattemptonexttry:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ConnectionInfo::CheckKeepAliveSend(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Check is a keepalive reasonable to send (don't want to end up spamming them between the instances) //
 	auto timenow = Misc::GetTimeMs64();
 	if(timenow > LastSentPacketTime+KEEPALIVE_RESPOND){
@@ -546,7 +546,7 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 		shared_ptr<NetworkResponse> response(new NetworkResponse(packet));
 
 		// The response might have a corresponding request //
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 		shared_ptr<SentNetworkThing> possiblerequest = _GetPossibleRequestForResponse(response);
 
 		// Restrict mode checking //
@@ -592,7 +592,7 @@ connectioninfoafterprocesslabel:
 
 
 	{
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 
 		// Handle resends based on ack field //
 		otherreceivedpackages.SetPacketsReceivedIfNotSet(SentPacketsConfirmedAsReceived);
@@ -611,7 +611,7 @@ connectioninfoafterprocesslabel:
 // ------------------------------------ //
 void Leviathan::ConnectionInfo::_VerifyAckPacketsAsSuccesfullyReceivedFromHost(int packetreceived){
 	// Mark it as received //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Only set if we haven't already set it //
 	auto iter = ReceivedPacketsNotifiedAsReceivedByUs.find(packetreceived);
@@ -633,7 +633,7 @@ void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::
 	// Now the hard part, creating the ack table //
 
 	// Actually this can be skipped if we can send a ack packet again //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// We have now made a new packet //
 	LastSentPacketTime = Misc::GetTimeMs64();
@@ -707,7 +707,7 @@ shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::_GetPossibleRequestForRe
 	if(lookingforid == -1)
 		return NULL;
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ++iter){
 

@@ -27,7 +27,7 @@ namespace Leviathan{
 
 		//! \brief Disconnects this from a previously connected notifier
 		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier){
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			return UnConnectFromNotifier(specificnotifier, guard);
 		}
 		//! \brief This searches the connected notifiers and calls the above function with it's pointer

@@ -14,13 +14,12 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 	TaskThread::ThreadThreadPtr.reset(new ThreadSpecificData(thisthread));
 
 	// We want to have a lock always when running this function //
-
-	boost::unique_lock<ThreadSafe> guard(*thisthread);
+	UNIQUE_LOCK_OBJECT(thisthread);
 
 	// Register the thread //
 	{
-		ObjectLock strictlock(*thisthread);
-		thisthread->_NewThreadEntryRegister(strictlock);
+		GUARD_LOCK_OTHER_OBJECT(thisthread);
+		thisthread->_NewThreadEntryRegister(guard);
 		thisthread->StartUpDone = true;
 	}
 
@@ -30,7 +29,7 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 		if(!thisthread->SetTask){
 
 			// Wait until something happens //
-			thisthread->ThreadNotify.wait(guard);
+			thisthread->ThreadNotify.wait(lockit);
 		}
 
 		// Check stuff //
@@ -39,29 +38,29 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 			TaskThread::ThreadThreadPtr->QuickTaskAccess = thisthread->SetTask;
 
 			// Unlock for running //
-			guard.unlock();
+			lockit.unlock();
 
 			// Run the task //
 			thisthread->SetTask->RunTask();
 
 			// Re-lock for changing around //
-			guard.lock();
+			lockit.lock();
 
 			// Set our task away //
 			thisthread->SetTask.reset();
 
-			guard.unlock();
+			lockit.unlock();
 			// Notify run finished //
 			ThreadingManager::Get()->NotifyTaskFinished(TaskThread::ThreadThreadPtr->QuickTaskAccess);
 			// We might have already gotten a new task //
-			guard.lock();
+			lockit.lock();
 		}
 	}
 
 	{
-		ObjectLock strictlock(*thisthread);
+		GUARD_LOCK_OTHER_OBJECT(thisthread);
 		// Unregister the thread //
-		thisthread->_ThreadEndClean(strictlock);
+		thisthread->_ThreadEndClean(guard);
 	}
 }
 
@@ -90,7 +89,7 @@ DLLEXPORT void Leviathan::TaskThread::NotifyKill(ObjectLock &guard){
 
 DLLEXPORT void Leviathan::TaskThread::NotifyKill(){
 	// Lock and call the other //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	NotifyKill(guard);
 }
 // ------------------------------------ //
@@ -116,7 +115,7 @@ void Leviathan::TaskThread::_ThreadEndClean(ObjectLock &guard){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::TaskThread::SetTaskAndNotify(shared_ptr<QueuedTask> task){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Set task //
 	SetTask = task;
@@ -127,14 +126,14 @@ DLLEXPORT void Leviathan::TaskThread::SetTaskAndNotify(shared_ptr<QueuedTask> ta
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::TaskThread::HasStarted(){
 	// Get lock to wait for any possible action to finish //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	return StartUpDone;
 }
 
 DLLEXPORT bool Leviathan::TaskThread::HasRunningTask(){
 	// Get lock to wait for any possible action to finish //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	return SetTask.get() != NULL;
 }

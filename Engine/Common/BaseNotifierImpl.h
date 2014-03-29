@@ -22,7 +22,7 @@ DLLEXPORT Leviathan::BaseNotifier<ParentType, ChildType>::~BaseNotifier(){
 // ------------------------------------ //
 template<class ParentType, class ChildType>
 DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::ReleaseChildHooks(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Go through all and unhook them //
 	while(ConnectedChildren.size()){
 		// Get the iterator //
@@ -42,7 +42,7 @@ DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::ReleaseChildHooks
 // ------------------------------------ //
 template<class ParentType, class ChildType>
 DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::UnConnectFromNotifiable(int id){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Find child matching the provided id //
 	for(auto iter = ConnectedChildren.begin(); iter != ConnectedChildren.end(); ++iter){
 
@@ -56,7 +56,7 @@ DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::UnConnectFromNoti
 
 template<class ParentType, class ChildType>
 DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::UnConnectFromNotifiable(BaseNotifiable<ParentType, ChildType>* unhookfrom){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Remove from list and call functions //
 	for(auto iter = ConnectedChildren.begin(); iter != ConnectedChildren.end(); ++iter){
 
@@ -89,7 +89,7 @@ DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::ConnectToNotifiab
 // ------------------------------------ //
 template<class ParentType, class ChildType>
 void Leviathan::BaseNotifier<ParentType, ChildType>::_OnHookNotifiable(BaseNotifiable<ParentType, ChildType>* child){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Add the object to the list of objects //
 	ConnectedChildren.push_back(child);
 	_OnNotifiableConnected(child->GetActualPointerToNotifiableObject());
@@ -97,7 +97,7 @@ void Leviathan::BaseNotifier<ParentType, ChildType>::_OnHookNotifiable(BaseNotif
 
 template<class ParentType, class ChildType>
 void Leviathan::BaseNotifier<ParentType, ChildType>::_OnUnhookNotifiable(BaseNotifiable<ParentType, ChildType>* childtoremove){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Remove from list //
 	for(auto iter = ConnectedChildren.begin(); iter != ConnectedChildren.end(); ++iter){
 

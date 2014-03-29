@@ -18,7 +18,7 @@ Leviathan::Gui::LeviathanJavaScriptAsync::LeviathanJavaScriptAsync(View* owner) 
 	// We need to register all current ones //
 	auto vec = GlobalCEFHandler::GetRegisteredCustomHandlers();
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	for(auto iter = vec.begin(); iter != vec.end(); ++iter){
 
@@ -27,13 +27,13 @@ Leviathan::Gui::LeviathanJavaScriptAsync::LeviathanJavaScriptAsync(View* owner) 
 }
 
 DLLEXPORT Leviathan::Gui::LeviathanJavaScriptAsync::~LeviathanJavaScriptAsync(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::LeviathanJavaScriptAsync::BeforeRelease(){
 	GlobalCEFHandler::UnRegisterJSAsync(this);
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Remove all //
 	while(RegisteredCustomHandlers.size()){
@@ -93,7 +93,7 @@ bool Leviathan::Gui::LeviathanJavaScriptAsync::OnQuery(CefRefPtr<CefBrowser> bro
 		}
 	}
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Try to use any custom handlers //
 	for(size_t i = 0; i < RegisteredCustomHandlers.size(); i++){
@@ -120,7 +120,7 @@ void Leviathan::Gui::LeviathanJavaScriptAsync::OnQueryCanceled(CefRefPtr<CefBrow
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::LeviathanJavaScriptAsync::RegisterNewCustom(JSAsyncCustom* newhandler){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	RegisteredCustomHandlers.push_back(newhandler);
 }
@@ -129,7 +129,7 @@ DLLEXPORT void Leviathan::Gui::LeviathanJavaScriptAsync::UnregisterCustom(JSAsyn
 	// Cancel all matching ones //
 	handler->CancelAllMine(this);
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	for(size_t i = 0; i < RegisteredCustomHandlers.size(); i++){
 

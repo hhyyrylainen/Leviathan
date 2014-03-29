@@ -17,7 +17,7 @@ DLLEXPORT void Leviathan::ReferenceCounted::Release(){
 	// this scope so that we will delete AFTER mutex has released //
 	{
 		// we need to lock this object to ensure thread safety //
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 
 		if(ToDelete){
 			// we really shouldn't be here //

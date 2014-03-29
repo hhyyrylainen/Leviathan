@@ -111,7 +111,7 @@ namespace Leviathan{
 
 		//! \brief Short version for IsVariableNameUsed
 		DLLEXPORT FORCE_INLINE bool IsVariableNameUsed(const wstring &name){
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 			return IsVariableNameUsed(name, guard);
 		}
 

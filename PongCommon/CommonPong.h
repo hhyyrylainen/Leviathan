@@ -356,8 +356,7 @@ playrscorelistupdateendlabel:
 
 				wstring savefile;
 
-				ObjectLock guard(*GameConfiguration::Get());
-				auto vars = GameConfiguration::Get()->AccessVariables(guard);
+				GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
 
 				assert(vars->GetValueAndConvertTo<wstring>(L"GameDatabase", savefile) && "invalid game variable configuration, no GameDatabase");
 

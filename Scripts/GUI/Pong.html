@@ -72,6 +72,18 @@
                 +"Leviathan "+response+"</div>");
         }, function() {});
         
+        // Testing events //
+        $("#BrowseGamesButton").on("click", function(event){
+            // Start listening for events //
+            Leviathan.OnEvent("OnTick", function(eventtypeid, eventival){
+                // Set the value to the element //
+                $("#BrowseGamesButton").html(eventival);
+            });
+            
+            // Unbind this listener //
+            $(this).unbind(event);
+        });
+
         
     });
     

@@ -22,14 +22,14 @@ bool EventHandler::Init(){
 	return true;
 }
 void EventHandler::Release(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// release listeners //
 	SAFE_DELETE_VECTOR(EventListeners);
 	SAFE_DELETE_VECTOR(GenericEventListeners);
 }
 // ------------------------------------ //
 void EventHandler::CallEvent(Event* pEvent){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Loop and call all listeners which have a valid type //
 	for(size_t i = 0; i < EventListeners.size(); i++){
 
@@ -46,7 +46,7 @@ void EventHandler::CallEvent(Event* pEvent){
 }
 
 DLLEXPORT void Leviathan::EventHandler::CallEvent(GenericEvent* pEvent){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Loop generic listeners //
 	for(size_t i = 0; i < GenericEventListeners.size(); i++){
 
@@ -63,19 +63,19 @@ DLLEXPORT void Leviathan::EventHandler::CallEvent(GenericEvent* pEvent){
 }
 // ------------------------------------ //
 bool EventHandler::RegisterForEvent(CallableObject* toregister, EVENT_TYPE totype){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	EventListeners.push_back(new RegisteredCallback(toregister, totype));
 	return true;
 }
 
 DLLEXPORT bool Leviathan::EventHandler::RegisterForEvent(CallableObject* toregister, const wstring &genericname){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	GenericEventListeners.push_back(new GenericRegisteredCallback(toregister, genericname));
 	return true;
 }
 
 void EventHandler::Unregister(CallableObject* caller, EVENT_TYPE type, bool all){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// loop and remove wanted objects //
 	for(size_t i = 0; i < EventListeners.size(); i++){
 		if(EventListeners[i]->Receiver == caller){
@@ -90,7 +90,7 @@ void EventHandler::Unregister(CallableObject* caller, EVENT_TYPE type, bool all)
 }
 
 DLLEXPORT void Leviathan::EventHandler::Unregister(CallableObject* caller, const wstring &genericname, bool all /*= false*/){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// loop and remove wanted objects //
 	for(size_t i = 0; i < GenericEventListeners.size(); i++){
 		if(GenericEventListeners[i]->Receiver == caller){

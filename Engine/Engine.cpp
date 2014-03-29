@@ -68,7 +68,7 @@ DLLEXPORT Engine* Leviathan::Engine::Get(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// get time, for monitoring how long load takes //
 	__int64 InitStartTime = Misc::GetTimeMs64();
 	// set static access to this object //
@@ -407,7 +407,7 @@ void Leviathan::Engine::PostLoad(){
 				getline(wcin, inputcommand);
 				// Pass to various things //
 				Engine* engine = Engine::Get();
-				ObjectLock guard(*engine);
+				GUARD_LOCK_OTHER_OBJECT(engine);
 				auto tmpptr = engine->MainConsole;
 				if(tmpptr){
 
@@ -427,7 +427,7 @@ void Leviathan::Engine::PostLoad(){
 }
 
 void Leviathan::Engine::Release(bool forced){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	if(!forced)
 		assert(PreReleaseDone && "PreReleaseDone must be done before actual release!");
@@ -493,7 +493,7 @@ void Leviathan::Engine::Release(bool forced){
 }
 // ------------------------------------ //
 void Leviathan::Engine::Tick(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Because this is checked very often we can check for physics update here //
 	PhysicsUpdate();
 	// We can also update networking //
@@ -552,7 +552,7 @@ void Leviathan::Engine::Tick(){
 	}
 
 	// send tick event //
-	MainEvents->CallEvent(new Event(EVENT_TYPE_ENGINE_TICK, new IntegerEventData(TickCount)));
+	MainEvents->CallEvent(new Event(EVENT_TYPE_TICK, new IntegerEventData(TickCount)));
 
 	// Call the default app tick //
 	Owner->Tick(TimePassed);
@@ -564,7 +564,8 @@ void Leviathan::Engine::Tick(){
 
 DLLEXPORT void Leviathan::Engine::PreFirstTick(){
 	// On first tick we need to do some cleanup //
-	_NetworkHandler->StopOwnUpdaterThread();
+	if(_NetworkHandler)
+		_NetworkHandler->StopOwnUpdaterThread();
 
 	Logger::Get()->Info(L"Engine: PreFirstTick: everything fine to start running");
 }
@@ -575,7 +576,7 @@ void Leviathan::Engine::RenderFrame(){
 		return;
 
 	int SinceLastFrame = -1;
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// limit check //
 	if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)){
@@ -605,7 +606,7 @@ void Leviathan::Engine::RenderFrame(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::PreRelease(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	if(PreReleaseWaiting)
 		return;
 	PreReleaseWaiting = true;
@@ -646,7 +647,7 @@ DLLEXPORT bool Leviathan::Engine::HasPreRleaseBeenDone() const{
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::SaveScreenShot(){
 	assert(!NoGui && "really shouldn't try to screenshot in text-only mode");
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	const wstring fileprefix = MainFileHandler->GetDataFolder()+L"Screenshots/Captured_frame_";
 
@@ -660,7 +661,7 @@ DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 	// If we are in text only mode always return 1 //
 	if(NoGui)
 		return 1;
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	if(GraphicalEntity1->GetWindow()->IsOpen())
 		openwindows++;
@@ -670,14 +671,14 @@ DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 
 DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(){
 	shared_ptr<GameWorld> tmp(new GameWorld(NoGui ? NULL: Graph->GetOgreRoot()));
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	GameWorlds.push_back(tmp);
 	return GameWorlds.back();
 }
 
 DLLEXPORT void Leviathan::Engine::PhysicsUpdate(){
 	// go through all worlds and simulate updates //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	for(size_t i = 0; i < GameWorlds.size(); i++){
 
 		GameWorlds[i]->SimulateWorld();
@@ -687,7 +688,7 @@ DLLEXPORT void Leviathan::Engine::PhysicsUpdate(){
 
 DLLEXPORT void Leviathan::Engine::ResetPhysicsTime(){
 	// go through all worlds and set last update time to this moment //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	for(size_t i = 0; i < GameWorlds.size(); i++){
 
 		GameWorlds[i]->ClearSimulatePassedTime();
@@ -705,7 +706,7 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 
 	Logger::Get()->Info(L"Command line: "+commands);
 
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Split all flags and check for some flags that might be set //
 	WstringIterator itr(commands);
 	unique_ptr<wstring> splitval;
@@ -733,7 +734,7 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 }
 
 DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	WstringIterator itr(NULL, false);
 

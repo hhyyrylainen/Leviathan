@@ -13,6 +13,26 @@
 
 namespace Leviathan{ namespace Gui{
 
+
+	//! \brief Provides an accessor interface for javascript for accessing NamedVars
+	class JSNamedVarsAccessor : public CefV8Accessor{
+	public:
+		JSNamedVarsAccessor(NamedVars* valueobject);
+		~JSNamedVarsAccessor();
+
+		virtual bool Get(const CefString& name, const CefRefPtr<CefV8Value> object, CefRefPtr<CefV8Value>& retval, CefString& exception);
+
+		virtual bool Set(const CefString& name, const CefRefPtr<CefV8Value> object, const CefRefPtr<CefV8Value> value, CefString& exception);
+
+
+		IMPLEMENT_REFCOUNTING(JSNamedVarsAccessor);
+
+	protected:
+
+		NamedVars* OurValues;
+	};
+
+
 	//! \brief Handles javascript functions that have native extensions //
 	class JSNativeCoreAPI : public CefV8Handler, public ThreadSafe{
 		friend CefApplication;
@@ -30,7 +50,7 @@ namespace Leviathan{ namespace Gui{
 			bool ExecutePredefined(const Event &eventdata);
 
 			//! \brief Executes this if this is a generic type
-			bool ExecuteGenericEvent(const GenericEvent &eventdata);
+			bool ExecuteGenericEvent(GenericEvent &eventdata);
 
 		protected:
 
@@ -64,7 +84,7 @@ namespace Leviathan{ namespace Gui{
 		//! \brief Handles a packet received by this process
 		void HandlePacket(const Event &eventdata);
 		//! \brief Handles a generic packet
-		void HandlePacket(const GenericEvent &eventdata);
+		void HandlePacket(GenericEvent &eventdata);
 
 		IMPLEMENT_REFCOUNTING(JSNativeCoreAPI);
 	protected:

@@ -22,7 +22,7 @@ namespace Leviathan{
 		EVENT_TYPE_MOUSEMOVED, EVENT_TYPE_MOUSEPOSITION,
 		EVENT_TYPE_GUIDISABLE, EVENT_TYPE_GUIENABLE, EVENT_TYPE_WINDOW_RESIZE, EVENT_TYPE_RESIZE, EVENT_TYPE_TEST,
 		EVENT_TYPE_LISTENERVALUEUPDATED,
-		EVENT_TYPE_FRAME_BEGIN, EVENT_TYPE_FRAME_END, EVENT_TYPE_ENGINE_TICK, EVENT_TYPE_INIT, EVENT_TYPE_PHYSICS_BEGIN, EVENT_TYPE_RELEASE,
+		EVENT_TYPE_FRAME_BEGIN, EVENT_TYPE_FRAME_END, EVENT_TYPE_INIT, EVENT_TYPE_PHYSICS_BEGIN, EVENT_TYPE_RELEASE,
 		EVENT_TYPE_ALL};
 
 	static const std::map<wstring, EVENT_TYPE> EventListenerNameToEventMap =  boost::assign::map_list_of
@@ -31,7 +31,8 @@ namespace Leviathan{
 		(LISTENERNAME_ONCLICK, EVENT_TYPE_ONCLICK)
 		(LISTENERNAME_ONLISTENUPDATE, EVENT_TYPE_LISTENERVALUEUPDATED)
 		(LISTENERNAME_ONINIT, EVENT_TYPE_INIT)
-		(LISTENERNAME_ONRELEASE, EVENT_TYPE_RELEASE);
+		(LISTENERNAME_ONRELEASE, EVENT_TYPE_RELEASE)
+		(LISTENERNAME_ONTICK, EVENT_TYPE_TICK);
 
 	//! \brief Base type for all event data types
 	//! \note Child classes constructors should contain one for creating from a packet
@@ -112,7 +113,8 @@ namespace Leviathan{
 		// Data getting functions //
 		DLLEXPORT PhysicsStartEventData* GetDataForPhysicsStartEvent() const;
 		DLLEXPORT ShowEventData* GetDataForShowEvent() const;
-		DLLEXPORT IntegerEventData* GetDataForTickEvent() const;
+		//! \brief Gets the data if this is an event that has only one integer data member
+		DLLEXPORT IntegerEventData* GetIntegerDataForEvent() const;
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(Event);
 	protected:

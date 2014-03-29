@@ -13,6 +13,9 @@
 
 namespace Leviathan{
 
+#define GAMECONFIGURATION_GET_VARIABLEACCESS(x) 	GUARD_LOCK_OTHER_OBJECT_NAME(GameConfiguration::Get(), lockitc); NamedVars* x = GameConfiguration::Get()->AccessVariables(lockitc);
+
+
 	class GameConfiguration : public ThreadSafe{
 	public:
 		DLLEXPORT GameConfiguration(const wstring &configfile);

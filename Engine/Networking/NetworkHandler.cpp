@@ -52,7 +52,7 @@ NetworkHandler* Leviathan::NetworkHandler::instance = NULL;
 NetworkInterface* Leviathan::NetworkHandler::interfaceinstance = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &info){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	MasterServerMustPassIdentification = info.MasterServerIdentificationString;
 
@@ -64,9 +64,7 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 		// We are our own master! //
 		
 		// Get out port number here //
-		ObjectLock lockit(*GameConfiguration::Get());
-
-		NamedVars* vars = GameConfiguration::Get()->AccessVariables(lockit);
+		GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
 
 		int tmpport = 0;
 
@@ -84,9 +82,7 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 
 	} else if(AppType == NETWORKED_TYPE_SERVER){
 		// We need to use a specific port //
-		ObjectLock lockit(*GameConfiguration::Get());
-
-		NamedVars* vars = GameConfiguration::Get()->AccessVariables(lockit);
+		GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
 
 		int tmpport = 0;
 
@@ -118,7 +114,7 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::Release(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Kill master server connection //
 	//MasterServerConnectionThread.join();
@@ -149,7 +145,7 @@ void Leviathan::NetworkHandler::_ReleaseSocket(){
 // ------------------------------------ //
 DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMasterServer(const MasterServerInformation &info){
 	// Might as well lock here //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Copy the data //
 	StoredMasterServerInfo = info;
 
@@ -170,7 +166,7 @@ void Leviathan::NetworkHandler::_SaveMasterServerList(){
 	vals.reserve(MasterServers.size());
 	{
 		// Only this scope requires locking //
-		ObjectLock guard(*this);
+		GUARD_LOCK_THIS_OBJECT();
 
 		for(size_t i = 0; i < MasterServers.size(); i++){
 			vals.push_back(new VariableBlock(*MasterServers[i].get()));
@@ -196,7 +192,7 @@ bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 			MasterServers.reserve(maxval);
 
 			// We need locking for this add //
-			ObjectLock guard(*this);
+			GUARD_LOCK_THIS_OBJECT();
 
 			for(size_t i = 0; i < maxval; i++){
 				MasterServers.push_back(unique_ptr<wstring>(new wstring(Values[fi]->GetValueDirect(i)->ConvertAndReturnVariable<wstring>())));
@@ -222,7 +218,7 @@ DLLEXPORT wstring Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Remove closed connections //
 	RemoveClosedConnections(guard);
@@ -310,12 +306,12 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::StopOwnUpdaterThread(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	StopGetResponsesThread = true;
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::StartOwnUpdaterThread(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	// Check if already running //
 	if(StopGetResponsesThread == false)
 		return;
@@ -325,13 +321,13 @@ DLLEXPORT void Leviathan::NetworkHandler::StartOwnUpdaterThread(){
 }
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_RegisterConnectionInfo(ConnectionInfo* tomanage){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	ConnectionsToUpdate.push_back(tomanage);
 }
 
 void Leviathan::NetworkHandler::_UnregisterConnectionInfo(ConnectionInfo* unregisterme){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	for(auto iter = ConnectionsToUpdate.begin(); iter != ConnectionsToUpdate.end(); ++iter){
 
@@ -350,7 +346,7 @@ shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mut
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkHandler::SafelyCloseConnectionTo(ConnectionInfo* to){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Make sure that it isn't there already //
 	for(auto iter = ConnectionsToTerminate.begin(); iter != ConnectionsToTerminate.end(); ++iter){
@@ -393,7 +389,7 @@ DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(ObjectLock &gu
 }
 // ------------------------------------ //
 DLLEXPORT USHORT Leviathan::NetworkHandler::GetOurPort(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 	return _Socket.getLocalPort();
 }
 
@@ -419,7 +415,7 @@ DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo
 }
 
 DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetSafePointerToConnection(ConnectionInfo* unsafeptr){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
 		if(iter->get() == unsafeptr)
@@ -430,7 +426,7 @@ DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetSafePointerTo
 }
 
 DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetOrCreatePointerToConnection(const wstring &address){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
 		if((*iter)->GenerateFormatedAddressString() == address)
@@ -476,7 +472,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 			}
 
 			// Update real list //
-			ObjectLock guard(*instance);
+			GUARD_LOCK_OTHER_OBJECT(instance);
 
 			instance->MasterServers.clear();
 			instance->MasterServers.reserve(tmplist.size());
@@ -513,15 +509,14 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 		shared_ptr<wstring> tmpaddress;
 
 		{
-			ObjectLock guard(*instance);
+			GUARD_LOCK_OTHER_OBJECT(instance);
 
 			tmpaddress = instance->MasterServers[i];
 		}
 
 		// We might want to try to connect to localhost //
 		{
-			ObjectLock lockit(*GameConfiguration::Get());
-			NamedVars* variables = GameConfiguration::Get()->AccessVariables(lockit);
+			GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
 
 			bool uselocalhost = false;
 			if(variables->GetValueAndConvertTo<bool>(L"MasterServerForceLocalhost", uselocalhost) && uselocalhost){
@@ -585,7 +580,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 
 		{
 			// Set working server //
-			ObjectLock guard(*instance);
+			GUARD_LOCK_OTHER_OBJECT(instance);
 			instance->MasterServerConnection = tmpinfo;
 		}
 

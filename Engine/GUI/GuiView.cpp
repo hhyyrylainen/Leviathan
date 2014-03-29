@@ -30,7 +30,7 @@ DLLEXPORT Leviathan::Gui::View::~View(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::View::Init(const wstring &filetoload, const NamedVars &headervars){
 	// Lock us //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Create the Ogre texture and material first //
 
@@ -138,7 +138,7 @@ DLLEXPORT void Leviathan::Gui::View::ReleaseResources(){
 	UnRegisterAllEvents();
 
 	// Lock us //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Kill the javascript async //
 	OurAPIHandler->BeforeRelease();
@@ -275,7 +275,7 @@ void Leviathan::Gui::View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementTy
 	size_t newbufsize = width*height*Ogre::PixelUtil::getNumElemBytes(Ogre::PF_B8G8R8A8);
 
 	// Lock us, just for fun //
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	RenderDataHolder* ptrtotarget;
 
@@ -318,7 +318,7 @@ void Leviathan::Gui::View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementTy
 
 DLLEXPORT void Leviathan::Gui::View::CheckRender(){
 	// Lock us //
-	ObjectLock guard2(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Update all that are needed //
 	for(int i = 0; i < 2; i++){

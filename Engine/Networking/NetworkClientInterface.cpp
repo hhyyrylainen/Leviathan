@@ -19,7 +19,7 @@ DLLEXPORT Leviathan::NetworkClientInterface::~NetworkClientInterface(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(shared_ptr<ConnectionInfo> connectiontouse){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Fail if already connected //
 	if(ServerConnection){
@@ -74,7 +74,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::UpdateClientStatus(){
-	ObjectLock guard(*this);
+	GUARD_LOCK_THIS_OBJECT();
 
 checksentrequestsbeginlabel:
 

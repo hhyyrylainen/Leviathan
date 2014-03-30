@@ -30,7 +30,6 @@ DLLEXPORT Leviathan::Logger::Logger(const wstring &file): FirstSaveDone(false), 
 
 	LatestLogger = this;
 }
-
 DLLEXPORT Leviathan::Logger::Logger(const wstring &file, const wstring &start, const bool &autosave) : FirstSaveDone(false), Saved(false), Autosave(autosave),
 	Path(file)
 {
@@ -158,14 +157,10 @@ void Leviathan::Logger::Print(string message, bool save){
 void Leviathan::Logger::SendDebugMessage(const wstring& str){
 #ifdef _WIN32
 	OutputDebugString(&*str.begin());
+#endif // _WIN32
 	// We also want standard output messages //
-	wcout << str;
-#else
 	// Using cout should be fine for most other platforms //
 	cout << Convert::WstringToString(str);
-	// We could potentially use wide output here, it might work on linux //
-	//wcout << str;
-#endif // _WIN32
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::QueueErrorMessage(const wstring& str){
@@ -207,7 +202,14 @@ DLLEXPORT Logger* Leviathan::Logger::Get(){
 		return LatestLogger;
 	}
 	// create emergency logger //
-	LatestLogger = new Logger(AppDef::GetDefault()->GetLogFile()+L".txt", L"(W) ", true);
+	if(!AppDef::GetDefault()){
+		// We need some dummy logger //
+		return NULL;
+	}
+
+	wstring ourlogfile = AppDef::GetDefault()->GetLogFile();
+	ourlogfile += L".txt";
+	LatestLogger = new Logger(ourlogfile, L"(W) ", true);
 	return LatestLogger;
 }
 

@@ -20,10 +20,12 @@ namespace Leviathan{ namespace Gui{
 		JSNamedVarsAccessor(NamedVars* valueobject);
 		~JSNamedVarsAccessor();
 
-		virtual bool Get(const CefString& name, const CefRefPtr<CefV8Value> object, CefRefPtr<CefV8Value>& retval, CefString& exception);
+		virtual bool Get(const CefString& name, const CefRefPtr<CefV8Value> object, CefRefPtr<CefV8Value>& retval, CefString& exception) OVERRIDE;
 
-		virtual bool Set(const CefString& name, const CefRefPtr<CefV8Value> object, const CefRefPtr<CefV8Value> value, CefString& exception);
+		virtual bool Set(const CefString& name, const CefRefPtr<CefV8Value> object, const CefRefPtr<CefV8Value> value, CefString& exception) OVERRIDE;
 
+
+		void AttachYourValues(CefRefPtr<CefV8Value> thisisyou);
 
 		IMPLEMENT_REFCOUNTING(JSNamedVarsAccessor);
 

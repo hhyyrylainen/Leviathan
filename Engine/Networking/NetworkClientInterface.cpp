@@ -153,7 +153,7 @@ void Leviathan::NetworkClientInterface::_SendConnectRequest(ObjectLock &guard){
 	OurSentRequests.push_back(sentthing);
 
 	// Send message //
-	_OnNewConnectionStatusMessage(L"Trying to connect to server on "+ServerConnection->GenerateFormatedAddressString()+L", attempt "+
+	_OnNewConnectionStatusMessage(L"Trying to connect to a server on "+ServerConnection->GenerateFormatedAddressString()+L", attempt "+
 		Convert::ToWstring(ConnectTriesCount));
 }
 // ------------------------------------ //

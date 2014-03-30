@@ -145,7 +145,7 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 			}
 		default:
 			// It failed //
-			instance->DisconnectFromServer(L"Received an invalid match status after join game request");
+			instance->DisconnectFromServer(L"Received an invalid match status after a join game request");
 		}
 
 	}, waitforthis, this), boost::bind<bool>([](shared_ptr<SentNetworkThing> packetobject) -> bool

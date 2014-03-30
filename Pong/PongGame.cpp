@@ -236,7 +236,7 @@ int Pong::PongGame::StartServer(){
 
 								// Queue a connect to the server //
 								Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<Leviathan::QueuedTask>(new Leviathan::DelayedTask(
-									boost::bind(&PongGame::Connect, PongGame::Get(), wstring(safeptr->GenerateFormatedAddressString())), MillisecondDuration(1000))));
+									boost::bind(&PongGame::ConnectProxy, PongGame::Get(), wstring(safeptr->GenerateFormatedAddressString())), MillisecondDuration(1000))));
 
 							} else {
 								EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
@@ -418,17 +418,17 @@ void Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("PongGame", "void Connect(const string &in address)", WRAP_MFN(PongGame, ConnectProxy), asCALL_GENERIC) < 0)
-	{
-		SCRIPT_REGISTERFAIL;
-	}
+	//if(engine->RegisterObjectMethod("PongGame", "void Connect(const string &in address)", WRAP_MFN(PongGame, ConnectProxy), asCALL_GENERIC) < 0)
+	//{
+	//	SCRIPT_REGISTERFAIL;
+	//}
 }
 
 void Pong::PongGame::MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids){
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("PongGame"), L"PongGame"));
 }
 
-void Pong::PongGame::Connect(const wstring &address){
+bool Pong::PongGame::Connect(const wstring &address, wstring &errorstr){
 	Logger::Get()->Info(L"About to connect to address "+address);
 
 	// Get a connection to use //
@@ -436,13 +436,15 @@ void Pong::PongGame::Connect(const wstring &address){
 
 	if(!tmpconnection){
 
+		errorstr = L"Tried to connect to an invalid address, "+address;
+
 		EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
-			new NamedVariableList(L"Message", new VariableBlock(string("Tried to connect to an invalid address, ")+Convert::WstringToString(address)))))));
-		return;
+			new NamedVariableList(L"Message", new VariableBlock(errorstr))))));
+		return false;
 	}
 
 	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
-		new NamedVariableList(L"Message", new VariableBlock(string("Opening connection to server at ")+Convert::WstringToString(address)))))));
+		new NamedVariableList(L"Message", new VariableBlock(L"Opening connection to server at "+address))))));
 
 	// We are a client and we can use our interface to handle the server connection functions //
 
@@ -451,4 +453,5 @@ void Pong::PongGame::Connect(const wstring &address){
 
 
 	// Now it should be fine, waiting for messages //
+	return true;
 }

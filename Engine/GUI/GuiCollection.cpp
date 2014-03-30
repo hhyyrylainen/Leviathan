@@ -105,4 +105,9 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
 	AllowEnable = newstate;
 }
 
+DLLEXPORT View* Leviathan::Gui::GuiCollection::GetContainingViewProxy(){
+	ContainedInSheet->AddRef();
+	return ContainedInSheet;
+}
+
 

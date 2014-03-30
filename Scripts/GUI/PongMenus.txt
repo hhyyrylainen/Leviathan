@@ -1,5 +1,4 @@
 GUIBasePage = "Pong.html";
-//GUIBasePage = "http://www.google.fi/";
 GUISize = FULL;
 
 objects {
@@ -8,6 +7,44 @@ objects {
         l params{
             Enabled = true;
             KeepsGUIOn = true;
+        }
+    }
+    
+    o GuiCollection "GameplayHUD"{
+        l params{
+            Enabled = false;
+        }
+        s script{
+            body{
+                string GUIOBJECTID("GameplayHUD");
+                #include "DefaultCollectionScript.as";
+            @%};
+        }
+    }
+    
+    o GuiCollection "MatchEndScreen"{
+        l params{
+            Enabled = false;
+        }
+        s script{
+            body{
+                string GUIOBJECTID("MatchEndScreen");
+                #include "DefaultCollectionScript.as";
+            @%};
+        }
+    }
+    
+    o GuiCollection "PauseMenu"{
+        l params{
+            Enabled = false;
+            AllowEnable = false;
+            ToggleOn = "ESC";
+        }
+        s script{
+            body{
+                string GUIOBJECTID("PauseMenu");
+                #include "DefaultCollectionScript.as";
+            @%};
         }
     }
 }

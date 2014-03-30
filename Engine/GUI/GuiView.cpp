@@ -675,5 +675,10 @@ DLLEXPORT int Leviathan::Gui::View::OnGenericEvent(GenericEvent** pevent){
 
 	return 3;
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Gui::View::ToggleElement(const string &name){
+	auto frame = OurBrowser->GetMainFrame();
+	frame->ExecuteJavaScript("$(\""+name+"\").toggle()", frame->GetURL(), 0);
+}
 
 

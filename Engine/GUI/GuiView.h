@@ -263,8 +263,20 @@ namespace Leviathan{ namespace Gui{
 		virtual CefRefPtr<CefRequestHandler> GetRequestHandler() OVERRIDE;
 		virtual CefRefPtr<CefRenderHandler> GetRenderHandler() OVERRIDE;
 
+
+		//! \brief Allows scripts to toggle gui elements
+		DLLEXPORT void ToggleElement(const string &name);
+
 		IMPLEMENT_REFCOUNTING(CefApplication);
 
+	public:
+		
+		void AddRefProxy(){
+			AddRef();
+		}
+		void ReleaseProxy(){
+			Release();
+		}
 
 	protected:
 

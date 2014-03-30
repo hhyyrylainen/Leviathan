@@ -31,10 +31,11 @@ namespace Pong{
 
 		//! \brief Connects to a server specified by an address string
 		//! \note Only allows connections to be made to one server at a time (excluding remote console connections)
-		void Connect(const wstring &address);
+		bool Connect(const wstring &address, wstring &errorstr);
 
-		void ConnectProxy(const string &address){
-			Connect(Convert::StringToWstring(address));
+		void ConnectProxy(const wstring &address){
+			wstring error;
+			Connect(address, error);
 		}
 
 		void AllowPauseMenu();

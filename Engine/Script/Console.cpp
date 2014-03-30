@@ -18,9 +18,10 @@ DLLEXPORT Leviathan::ScriptConsole::~ScriptConsole(){
 }
 
 map<wstring, CONSOLECOMMANDTYPE> Leviathan::ScriptConsole::CommandTypeDefinitions = boost::assign::map_list_of
-	(wstring(L"NONE"), CONSOLECOMMANDTYPE_NONE) (wstring(L"ADDVAR"), CONSOLECOMMANDTYPE_ADDVAR) (wstring(L"ADDFUNC"), CONSOLECOMMANDTYPE_ADDFUNC) 
+	(wstring(L"ADDVAR"), CONSOLECOMMANDTYPE_ADDVAR) (wstring(L"ADDFUNC"), CONSOLECOMMANDTYPE_ADDFUNC) 
 	(wstring(L"DELVAR"), CONSOLECOMMANDTYPE_DELVAR) (wstring(L"DELFUNC"), CONSOLECOMMANDTYPE_DELFUNC)
-	(wstring(L"PRINTVAR"), CONSOLECOMMANDTYPE_PRINTVAR) (wstring(L"PRINTFUNC"), CONSOLECOMMANDTYPE_PRINTFUNC);
+	(wstring(L"PRINTVAR"), CONSOLECOMMANDTYPE_PRINTVAR) (wstring(L"PRINTFUNC"), CONSOLECOMMANDTYPE_PRINTFUNC)
+	(wstring(L"LISTVAR"), CONSOLECOMMANDTYPE_PRINTVAR) (wstring(L"LISTFUNC"), CONSOLECOMMANDTYPE_PRINTFUNC);
 
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptConsole::Init(ScriptInterface* MainScript){
@@ -52,12 +53,11 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 	if(commandstr == L"help"){
 
 		ConsoleOutput(L"// ------------------ Help ------------------ //\n"
-			L"\t> All console command lines start with a '>' character followed by \n"
-			L"\t  a command type.\n"
-			L"\t> Commands without a type are directly executed on the \n"
-			L"\t  ScriptModule owned by the console.\n"
-			L"\t> Running command of a type: \">[TYPE=\"\"] [COMMAND]\" eg. \n"
+			L"\t> Console commands are a custom command followed by it's parameters\n"
+			L"\t  or AngelScript code. (Optionally starting with '>')\n"
+			L"\t> Running a custom command: \">[TYPE=\"\"] [COMMAND]\" eg. \n"
 			L"\t  \">ADDVAR int newglobal = 25\"\n"
+			L"\t You can view custom commands with the \"commands\" command.\n"
 			L"\t> Running arbitrary commands:\n "
 			L"\t  \"> for(int i = 0; i < 5; i++) GlobalFunc();\"\n"
 			L"\t> Multiline commands are done by putting '\\' to the end of each line.\n"
@@ -66,6 +66,28 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 			L"\t > for(int i = 0; i < 10; i++){ Print(i); }\n"
 			L"\t> Would output \"Val is: 0 Val is: 1 ...\"");
 		return CONSOLECOMMANDRESULTSTATE_SUCCEEDED;
+	} else if (commandstr == L"commands"){
+		// List custom commands //
+		ConsoleOutput(L"// ------------------ Custom commands ------------------ //\n"
+			L"Available custom commands are:\n");
+		
+		wstring messagecommand = L"";
+		bool first = true;
+
+		for(auto iter = CommandTypeDefinitions.begin(); iter != CommandTypeDefinitions.end(); ++iter){
+			// Add it's name //
+			if(!first){
+				messagecommand += L", ";
+			}
+			
+			messagecommand += iter->first;
+
+			first = false;
+		}
+
+		ConsoleOutput(L"\t> "+messagecommand);
+		return CONSOLECOMMANDRESULTSTATE_SUCCEEDED;
+	
 	} else if(commandstr == L"exit" || commandstr == L"quit"){
 
 		ConsoleOutput(L"Marking the program as closing");
@@ -76,11 +98,11 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 	// first check if ">" is first character, we can easily reject command if it is missing //
 	if(commandstr.size() < 1){
 		// invalid format //
-		ConsoleOutput(L"Invalid command format, missing starting '>' or empty command");
+		ConsoleOutput(L"Invalid command format, empty command");
 		consoleemptyspam++;
 		if(consoleemptyspam > 5){
 			// \todo tell user how to close console //
-			ConsoleOutput(L"You seem to be spamming empty lines, maybe you'd like to close console? TODO: actually write help so that user could actually close the console");
+			ConsoleOutput(L"You seem to be spamming empty lines, maybe you'd like to close the console? \"quit\" or \"help\" might help you on your quest.");
 		}
 		return CONSOLECOMMANDRESULTSTATE_FAILED;
 	}

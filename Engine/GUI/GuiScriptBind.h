@@ -3,7 +3,7 @@
 
 
 #include "angelscript.h"
-#include "GuiAnimation.h"
+#include "GuiView.h"
 #include "GuiScriptInterface.h"
 #include "BaseGuiObject.h"
 #include "GuiManager.h"
@@ -66,6 +66,31 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	}
 
 
+	// Bind Gui::View //
+	if(engine->RegisterObjectType("GuiView", 0, asOBJ_REF) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectBehaviour("GuiView", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Gui::View, AddRefProxy), asCALL_GENERIC) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("GuiView", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Gui::View, ReleaseProxy), asCALL_GENERIC) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	// Modifying elements //
+	if(engine->RegisterObjectMethod("GuiView", "void ToggleElement(string &in elementid)", WRAP_MFN(Gui::View, ToggleElement), asCALL_GENERIC) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+
+	// Getting view from collection //
+	if(engine->RegisterObjectMethod("GuiCollection", "GuiView@ GetContainingView()", WRAP_MFN(Gui::GuiCollection, GetContainingViewProxy), asCALL_GENERIC) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	
+
+
 
 	return true;
 }
@@ -75,6 +100,7 @@ void RegisterGUIScriptTypeNames(asIScriptEngine* engine, std::map<int, wstring> 
 
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("GuiCollection"), L"GuiCollection"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("BaseGuiObject"), L"BaseGuiObject"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("GuiView"), L"GuiView"));
 }
 
 #endif

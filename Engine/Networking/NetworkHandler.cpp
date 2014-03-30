@@ -483,8 +483,11 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 
 
 			// Notify successful fetch //
-			Logger::Get()->Info(L"NetworkHandler: Successfully fetched master server list:");
+			auto tmpget = Logger::Get();
+			if(tmpget)
+				tmpget->Info(L"NetworkHandler: Successfully fetched master server list:");
 			for(auto iter = instance->MasterServers.begin(); iter != instance->MasterServers.end(); ++iter)
+				if(tmpget)
 				Logger::Get()->Write(L"\t> "+*(*iter).get(), false);
 
 		} else {

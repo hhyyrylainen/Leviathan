@@ -92,10 +92,10 @@ span
     position: absolute;
     text-align: right;
     width: auto;
-    height: 50px;
+    height: auto;
     margin: auto;
-    margin-bottom: 5%;
-    margin-right: 5%;
+    right: 5%;
+    bottom: 5%;
     background-color: #00B060;
 }
 
@@ -130,21 +130,16 @@ div.MenuContent
 
 div.ConnectStatus
 {
-    z-index: 2;
     position: absolute;
-    margin: auto;
     padding: 5px;
+    padding-top: 15px;
     width: 80%;
-    max-width: 80%;
     height: 30%;
-    max-height: 30%;
-    overflow-y: hidden;
-    overflow-x: auto;
-    margin-top: 60%;
-    
+    overflow: hidden;
+    left: 10%;
+    bottom: 15%;
     text-align: center;
-    
-    background-color: #00000090;
+    background-color: rgba(0, 0, 0, 0.9);
 }
 
 .DeadCenter

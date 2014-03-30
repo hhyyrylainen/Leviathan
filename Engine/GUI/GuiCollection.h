@@ -55,6 +55,15 @@ namespace Leviathan{ namespace Gui{
 			return Convert::WstringToString(Name);
 		}
 
+		//! \brief Gets the View that owns this object
+		DLLEXPORT inline View* GetContainingView(){
+			return ContainedInSheet;
+		}
+
+		//! \brief Script proxy for GetContainingView
+		//! \warning Increases reference count
+		DLLEXPORT View* GetContainingViewProxy();
+
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GuiCollection);
 

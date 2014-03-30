@@ -123,7 +123,7 @@ Leviathan::Gui::JSNativeCoreAPI::JSListener::JSListener(EVENT_TYPE etype, CefRef
 
 }
 // ------------------------------------ //
-	bool Leviathan::Gui::JSNativeCoreAPI::JSListener::ExecuteGenericEvent(GenericEvent &eventdata){
+bool Leviathan::Gui::JSNativeCoreAPI::JSListener::ExecuteGenericEvent(GenericEvent &eventdata){
 	// Check does it match //
 	if(!IsGeneric || EventName != eventdata.GetType()){
 
@@ -140,11 +140,18 @@ Leviathan::Gui::JSNativeCoreAPI::JSListener::JSListener(EVENT_TYPE etype, CefRef
 	args.push_back(CefV8Value::CreateString(EventName));
 	
 	// Create a new accessor object //
-	CefRefPtr<CefV8Accessor> tmpaccess(new JSNamedVarsAccessor(eventdata.GetVariables()));
+	JSNamedVarsAccessor* directptr = new JSNamedVarsAccessor(eventdata.GetVariables());
+
+	CefRefPtr<CefV8Accessor> tmpaccess(directptr);
 
 	// Create the object //
-	args.push_back(CefV8Value::CreateObject(tmpaccess));
+	CefRefPtr<CefV8Value> arrayobjval = CefV8Value::CreateObject(tmpaccess);
 
+	// Attach the values //
+	directptr->AttachYourValues(arrayobjval);
+
+	// Add to the args //
+	args.push_back(arrayobjval);
 
 	// Invoke the function //
 	CefRefPtr<CefV8Value> retval = FunctionValueObject->ExecuteFunction(NULL, args);
@@ -158,7 +165,7 @@ Leviathan::Gui::JSNativeCoreAPI::JSListener::JSListener(EVENT_TYPE etype, CefRef
 	}
 
 
-	return false;
+	return true;
 }
 
 bool Leviathan::Gui::JSNativeCoreAPI::JSListener::ExecutePredefined(const Event &eventdata){
@@ -231,6 +238,17 @@ bool Leviathan::Gui::JSNamedVarsAccessor::Set(const CefString& name, const CefRe
 	// Disallow setting now //
 	exception = "Set unallowed for JSNamedVarsAccessor";
 	return true;
+}
+// ------------------------------------ //
+void Leviathan::Gui::JSNamedVarsAccessor::AttachYourValues(CefRefPtr<CefV8Value> thisisyou){
+	// All the values need to be attached for this to work properly //
+	auto vecval = OurValues->GetVec();
+
+	for(size_t i = 0; i < vecval->size(); i++){
+
+		// Bind the value //
+		thisisyou->SetValue(vecval->at(i)->GetName(), V8_ACCESS_CONTROL_DEFAULT, V8_PROPERTY_ATTRIBUTE_NONE);
+	}
 }
 
 

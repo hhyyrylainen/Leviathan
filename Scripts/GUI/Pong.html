@@ -58,10 +58,39 @@
         $("#ServerConnectButton").button().click(function( event ) {
             // prevent default and try to handle it //
             event.preventDefault();
-            $("#DirectConnectFormErrorText").html(GetErrorElementForError("Not done yet...", "SmallError"));
+            
+            // Try to start connecting //
+            ConnectToServer($("#ServerAddressBox").val(), function(){
+                // Change to the right place //
+                console.log("Trying to display server connect screen");
+                
+                $("#ServerConnectScreen").slideDown();
+                $("#DirectConnectScreen").slideUp();
+                
+            }, function(errorcode, errortext){
+                $("#DirectConnectFormErrorText").html(GetErrorElementForError(errortext, "SmallError"));
+            });
+            
+
         });
         
-        // Test some things //
+        // ------------------ ServerConnectScreen ------------------ //
+        $("#ServerConnectScreenDisconnect").on("click", function(){
+            // Display the menu //
+            $("#TopLevelMenu").slideDown();
+            $("#ServerConnectScreen").slideUp();
+            
+            // Disconnect //
+            Disconnect();
+        });
+        // Updating messages //
+        Leviathan.OnGeneric("ConnectStatusMessage", function(eventtypename, variables){
+            // Set the value to the text box //
+            $("#ConnectionStatusUpdate").html(variables.Message);
+        });
+        
+        
+        // Put version numbers //
         GetPongVersion(function(response){
             $(".GameTitle").append("<p class='WeakText' style='margin-top: -15px; margin-left: 50px;'>"
                 +response+"</p>");
@@ -72,17 +101,6 @@
                 +"Leviathan "+response+"</div>");
         }, function() {});
         
-        // Testing events //
-        $("#BrowseGamesButton").on("click", function(event){
-            // Start listening for events //
-            Leviathan.OnEvent("OnTick", function(eventtypeid, eventival){
-                // Set the value to the element //
-                $("#BrowseGamesButton").html(eventival);
-            });
-            
-            // Unbind this listener //
-            $(this).unbind(event);
-        });
 
         
     });
@@ -111,7 +129,7 @@
             <hr class="MenuLine">
             <form id="DirectConnectForm" style="text-align: center; width: auto; margin: auto;">
             <p id="DirectConnectFormErrorText">Type in the address of the server like this: "192.168.1.1:25543"</p>
-            <input style="font-size: 35; height: auto;" type="text" size="30" name="ServerAddress" 
+            <input id="ServerAddressBox" style="font-size: 35; height: auto;" type="text" size="30" name="ServerAddress" 
                 value="localhost:53221">
             <p><input type="submit" value="Connect" id="ServerConnectButton"></p>
             </form>
@@ -138,15 +156,15 @@
         The chat goes here!
         </span>
         <span class="MenuOption Dangerous"><p id="LobbyDisconnect">Disconnect</p></span>
-    </div>
-    <div class="Hidden FullScreen" id="ServerConnectScreen">
-        <span class="DeadCenter Absolute" style="widt: 100px; height: 100px;">
+    </div>-->
+    <div class="Hidden" id="ServerConnectScreen">
+        <span class="DeadCenter" style="margin-top: 10%; width: 100%;">
             Connecting to a server
         </span>
         <div class="ConnectStatus" id="ConnectionStatusUpdate">
-            Waiting for status update...
+            Waiting for a status update...
         </div>
-        <div class="BottomRightMenu Dangerous" style="width: 200px;" id="ServerConnectScreenDisconnect">
+        <div class="BottomRightMenu Dangerous" style="width: auto;" id="ServerConnectScreenDisconnect">
             Disconnect
         </div>
     </div>
@@ -184,7 +202,6 @@
         <span class="MenuOption PauseOption Dangerous"><p id="PauseScreenQuitButton">Quit game</p></span>
         </div>
     </div>
-    -->
     
 </body>
 </html>

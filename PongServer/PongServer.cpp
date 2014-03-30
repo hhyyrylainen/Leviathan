@@ -31,8 +31,7 @@ void Pong::PongServer::Tick(int mspassed){
 // ------------------------------------ //
 void Pong::PongServer::CheckGameConfigurationVariables(GameConfiguration* configobj){
 	// Check for various variables //
-
-	ObjectLock lockit(*configobj);
+	GUARD_LOCK_OTHER_OBJECT_NAME(configobj, lockit);
 
 	NamedVars* vars = configobj->AccessVariables(lockit);
 

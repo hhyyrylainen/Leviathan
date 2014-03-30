@@ -51,9 +51,12 @@ DLLEXPORT CefRefPtr<CefV8Value> Leviathan::JavaScriptHelper::ConvertVariableBloc
 		{
 			return CefV8Value::CreateBool(block->ConvertAndReturnVariable<bool>());
 		}
+	case DATABLOCK_TYPE_WSTRING:
+		{
+			return CefV8Value::CreateString(block->ConvertAndReturnVariable<wstring>());
+		}
 	case DATABLOCK_TYPE_CHAR:
 	case DATABLOCK_TYPE_STRING:
-	case DATABLOCK_TYPE_WSTRING:
 		{
 			return CefV8Value::CreateString(block->ConvertAndReturnVariable<string>());
 		}

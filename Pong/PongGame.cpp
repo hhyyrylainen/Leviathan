@@ -6,6 +6,8 @@
 #include "add_on/autowrapper/aswrappedcall.h"
 #include "Networking/ConnectionInfo.h"
 #include "Networking/NetworkClientInterface.h"
+#include "Networking/RemoteConsole.h"
+#include "Common/GraphicalInputEntity.h"
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
@@ -378,7 +380,9 @@ void Pong::PongGame::DoSpecialPostLoad(){
 #endif // _DEBUG
 
 	// load GUI documents //
-	GuiManagerAccess = Engine::GetEngine()->GetWindowEntity()->GetGUI();
+	GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
+
+	GuiManagerAccess = window1->GetGUI();
 
 	GuiManagerAccess->LoadGUIFile(L"./Data/Scripts/GUI/PongMenus.txt");
 
@@ -386,7 +390,7 @@ void Pong::PongGame::DoSpecialPostLoad(){
 	WorldOfPong->SetSkyBox("NiceDaySky");
 
 	// link world and camera to a window //
-	GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
+
 
 	window1->LinkObjects(MainCamera, WorldOfPong);
 

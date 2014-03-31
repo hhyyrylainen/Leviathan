@@ -50,7 +50,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 	GraphicalObject = OwnedByWorld->GetScene()->createEntity(Convert::WstringToString(ogrefile));
 
 	// create scene node for positioning //
-	ObjectsNode = OwnedByWorld->GetScene()->getRootSceneNode()->createChildSceneNode(Convert::WstringToString(modelfile)+"_basenode_"+Convert::ToString(ID));
+	ObjectsNode = OwnedByWorld->GetScene()->getRootSceneNode()->createChildSceneNode();
 
 	// attach for deletion and valid display //
 	ObjectsNode->attachObject(GraphicalObject);
@@ -99,8 +99,8 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 
 		} else if(offsettype == L"BoundingBoxCenter"){
 
-			Ogre::AxisAlignedBox bbox = GraphicalObject->getBoundingBox();
-			offset.setTrans(bbox.getCenter());
+			Ogre::Aabb bbox = GraphicalObject->getLocalAabb();
+			offset.setTrans(bbox.mCenter);
 
 		} else {
 			Logger::Get()->Error(L"Prop: Init: invalid offset type, use None or BoundingBoxCenter for most common cases, file: "+modelfile);
@@ -138,8 +138,9 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 
 			if(sizesourcename == L"GraphicalModel"){
 				// calculate radius from bounding box size //
-				Ogre::AxisAlignedBox bbox = GraphicalObject->getBoundingBox();
-				Ogre::Vector3 sizes = bbox.getMaximum()-bbox.getMinimum();
+				Ogre::Aabb bbox = GraphicalObject->getLocalAabb();
+				Ogre::Vector3 sizes = bbox.getSize();
+				
 
 				// little sanity check //
 				if(sizes.x != sizes.y || sizes.x != sizes.z){

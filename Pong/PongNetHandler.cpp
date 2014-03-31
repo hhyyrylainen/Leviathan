@@ -133,13 +133,13 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 			}
 		case PONG_JOINGAMERESPONSE_TYPE_MATCH:
 			{
-				// Show during game GUI //
+				// Show the during game GUI //
 				DEBUG_BREAK;
 				return;
 			}
 		case PONG_JOINGAMERESPONSE_TYPE_GAMEEND:
 			{
-				// Show match scores screen //
+				// Show the match scores screen //
 				DEBUG_BREAK;
 				return;
 			}

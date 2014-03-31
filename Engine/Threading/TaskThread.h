@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include <boost/thread/detail/thread.hpp>
+#include <boost/thread.hpp>
 #include "Common/ThreadSafe.h"
 #include "QueuedTask.h"
 #include <boost/thread/tss.hpp>

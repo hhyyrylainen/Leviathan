@@ -171,16 +171,13 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
 						// Failed to send it //
 
 						tmpresponddata = unique_ptr<NetworkResponseDataForSyncDataEnd>(new NetworkResponseDataForSyncDataEnd(false));
-						goto sendpacketforsyncdataendlabel;
+						break;
 					}
 				}
-#ifdef _DEBUG
-				assert(tmpresponddata.get() == NULL && "compiler not doing what I want");
-#endif // _DEBUG
-				// It succeeded //
-				tmpresponddata = unique_ptr<NetworkResponseDataForSyncDataEnd>(new NetworkResponseDataForSyncDataEnd(true));
 
-sendpacketforsyncdataendlabel:
+				// It succeeded (if not set already) //
+				if(!tmpresponddata)
+					tmpresponddata = unique_ptr<NetworkResponseDataForSyncDataEnd>(new NetworkResponseDataForSyncDataEnd(true));
 
 				// Send response //
 				shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 3000));

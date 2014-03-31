@@ -29,6 +29,14 @@ namespace Leviathan{
 	}
 
 
+	class ViewerCameraPos;
+	class NewtonManager;
+	class SoundDevice;
+	class PhysicsMaterialManager;
+	class NewtonManager;
+	class ScriptConsole;
+	class LeapManager;
+	class ObjectLoader;
 	class GlobalCEFHandler;
 	class GameSpecificPacketHandler;
 	class BaseGameSpecificRequestPacket;

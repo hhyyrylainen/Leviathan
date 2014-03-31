@@ -14,7 +14,13 @@
 
 #define PHYSICS_BASE_GRAVITY		-9.81f
 
+namespace Ogre{
+
+	class CompositorWorkspace;
+}
+
 namespace Leviathan{
+
 
 
 
@@ -56,8 +62,13 @@ namespace Leviathan{
 	//! \brief Represents a world that contains entities
 	class GameWorld : public ThreadSafe{
 	public:
-		DLLEXPORT GameWorld(Ogre::Root* ogre);
+		DLLEXPORT GameWorld();
 		DLLEXPORT ~GameWorld();
+
+
+		//! \brief Creates resources for the world to work
+		//! \post The world can be used after this
+		DLLEXPORT bool Init(GraphicalInputEntity* renderto, Ogre::Root* ogre);
 
 		//! Release to not use Ogre when deleting
 		DLLEXPORT void Release();
@@ -65,7 +76,6 @@ namespace Leviathan{
 		//! \brief Marks all objects to be deleted
 		DLLEXPORT void MarkForClear();
 
-		DLLEXPORT void UpdateCameraAspect(GraphicalInputEntity* rendertarget);
 		DLLEXPORT void SetFog();
 		DLLEXPORT void SetSkyBox(const string &materialname);
 
@@ -129,12 +139,16 @@ namespace Leviathan{
 
 	private:
 
-		void _CreateOgreResources(Ogre::Root* ogre);
+		void _CreateOgreResources(Ogre::Root* ogre, Window* rendertarget);
 		void _HandleDelayedDelete(ObjectLock &guard);
 		// ------------------------------------ //
 		Ogre::Camera* WorldSceneCamera;
-		Ogre::SceneNode* CameraLocationNode;
 		Ogre::SceneManager* WorldsScene;
+
+		Ogre::CompositorWorkspace* WorldWorkspace;
+
+		//! The world is now always linked to a window
+		GraphicalInputEntity* LinkedToWindow;
 
 		Ogre::Light* Sunlight;
 		Ogre::SceneNode* SunLightNode;

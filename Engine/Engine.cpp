@@ -6,6 +6,16 @@
 #include "Application/Application.h"
 #include "Entities/GameWorld.h"
 #include <boost/thread/future.hpp>
+#include "Rendering/Graphics.h"
+#include "Handlers/ObjectLoader.h"
+#include "Leap/LeapManager.h"
+#include "Script/Console.h"
+#include "Sound/SoundDevice.h"
+#include "Common/GraphicalInputEntity.h"
+#include "Newton/NewtonManager.h"
+#include "Newton/PhysicalMaterialManager.h"
+#include "Networking/NetworkHandler.h"
+#include "Networking/RemoteConsole.h"
 #ifdef _WIN32
 #include <io.h>
 #include <fcntl.h>
@@ -669,8 +679,11 @@ DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 	return openwindows;
 }
 
-DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(){
-	shared_ptr<GameWorld> tmp(new GameWorld(NoGui ? NULL: Graph->GetOgreRoot()));
+DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEntity* owningwindow, shared_ptr<ViewerCameraPos> worldscamera){
+	shared_ptr<GameWorld> tmp(new GameWorld());
+	tmp->Init(owningwindow, NoGui ? NULL: Graph->GetOgreRoot());
+	if(owningwindow)
+		owningwindow->LinkObjects(worldscamera, tmp);
 	GUARD_LOCK_THIS_OBJECT();
 	GameWorlds.push_back(tmp);
 	return GameWorlds.back();

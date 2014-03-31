@@ -22,7 +22,9 @@ Leviathan::ObjectLoader::ObjectLoader(Engine* engine){
 DLLEXPORT void Leviathan::ObjectLoader::CreateTestCubeToScene(Ogre::SceneManager* scene, string meshname){
 
 	// create object to scene manager //
-	Ogre::ManualObject* TestModel = scene->createManualObject(meshname+"_manual");
+	//Ogre::ManualObject* TestModel = scene->createManualObject(meshname+"_manual");
+	Ogre::ManualObject* TestModel = scene->createManualObject();
+	TestModel->setName(meshname+"_manual");
 
 	// we do not want to update this later //
 	TestModel->setDynamic(false);
@@ -102,7 +104,9 @@ DLLEXPORT void Leviathan::ObjectLoader::CreateTestCubeToScene(Ogre::SceneManager
 	// create manual quad //
 
 
-	Ogre::ManualObject* TestQuad = scene->createManualObject("RttQuad_manual");
+	//Ogre::ManualObject* TestQuad = scene->createManualObject("RttQuad_manual");
+	Ogre::ManualObject* TestQuad = scene->createManualObject();
+	TestQuad->setName("RttQuad_manual");
 	TestQuad->setDynamic(false);
 	TestQuad->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
@@ -132,7 +136,7 @@ DLLEXPORT void Leviathan::ObjectLoader::CreateTestCubeToScene(Ogre::SceneManager
 	Ogre::String QuadName = "RttQuad";
 	TestQuad->convertToMesh(QuadName);
 	// manual object no longer required //
-	scene->destroyManualObject(QuadName);
+	scene->destroyManualObject(TestQuad);
 
 }
 

@@ -855,11 +855,17 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 	// get the resource managing singleton //
 	Ogre::ResourceGroupManager& manager = Ogre::ResourceGroupManager::getSingleton();
 
+	// Internal resources
+	manager.createResourceGroup("LeviathanInternal");
+
+	Ogre::String folder = "CoreOgreScripts";
+
+	manager.addResourceLocation(folder, "FileSystem", "LeviathanInternal");
 
 	// Models folder //
 	manager.createResourceGroup("MainModelsFolder");
 
-	Ogre::String folder = Convert::WstringToString(DataFolder+ModelsFolder);
+	folder = Convert::WstringToString(DataFolder+ModelsFolder);
 
 	manager.addResourceLocation(folder, "FileSystem", "MainModelsFolder", true);
 

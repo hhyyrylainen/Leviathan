@@ -13,6 +13,9 @@
 #include "chromium/KeyboardCodes.h"
 #include "include/cef_keyboard_handler.h"
 #include "GlobalCEFHandler.h"
+#include "OgreSceneNode.h"
+#include "OgreCamera.h"
+#include "GraphicalInputEntity.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -125,7 +128,7 @@ int GetMacKeyCodeFromChar(int key_char) {
 // ------------------ Window ------------------ //
 DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner) : OWindow(owindow),
 	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), LastFrameDownMouseButtons(0),
-	ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true), InputProcessedByCEF(false)
+	ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true), InputProcessedByCEF(false), OverLayCamera(NULL)
 #ifdef __GNUC__
 	, XDisplay(NULL), m_hwnd(0)
 #else
@@ -263,11 +266,9 @@ DLLEXPORT bool Leviathan::Window::IsMouseOutsideWindowClientArea(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Window::CloseDown(){
-	// release view ports, etc. //
+	// Release the scene //
 	Ogre::Root::getSingleton().destroySceneManager(OverlayScene);
-	OGRE_DELETE OverlayViewport;
 	OverlayScene = NULL;
-	OverlayViewport = NULL;
 	// close the window //
 	OWindow->destroy();
 
@@ -893,7 +894,7 @@ DLLEXPORT string Leviathan::Window::GetOISCharacterAsText(const OIS::KeyCode &co
 
 void Leviathan::Window::_CreateOverlayScene(){
 	// create scene manager //
-	OverlayScene = Ogre::Root::getSingleton().createSceneManager(Ogre::ST_INTERIOR, "Overlay_forWindow_");
+	OverlayScene = Ogre::Root::getSingleton().createSceneManager(Ogre::ST_INTERIOR, 1, Ogre::INSTANCING_CULLING_SINGLETHREAD, "Overlay_forWindow_");
 
 	// also needs a viewport that is last to be drawn //
 	float ViewWidth = 1.f;
@@ -903,22 +904,7 @@ void Leviathan::Window::_CreateOverlayScene(){
 
 	USHORT ZOrder = 120;
 
-	Ogre::Camera* camera = OverlayScene->createCamera("empty camera");
-
-	OverlayViewport = OWindow->addViewport(camera, ZOrder, ViewLeft, ViewTop, ViewWidth, ViewHeight);
-
-	OverlayScene->getRootSceneNode()->createChildSceneNode()->attachObject(camera);
-
-
-	// set default viewport colour //
-	OverlayViewport->setBackgroundColour(Ogre::ColourValue(0.f, 0.f, 0.f, 0.f));
-	//OverlayViewport->setBackgroundColour(Ogre::ColourValue(0.8f, 0.2f, 0.5f, 1.f));
-
-	// we want a transparent viewport //
-	OverlayViewport->setClearEveryFrame(true, Ogre::FBT_DEPTH | Ogre::FBT_STENCIL);
-
-	// automatic updating //
-	OverlayViewport->setAutoUpdated(true);
+	OverLayCamera = OverlayScene->createCamera("empty camera");
 }
 
 DLLEXPORT void Leviathan::Window::SendCloseMessage(){

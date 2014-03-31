@@ -23,15 +23,15 @@ void App::CustomizeEnginePostLoad(){
 	manager->SetMouseFile(FileSystem::GetScriptsFolder()+L"cursor.rml");
 
 
+	shared_ptr<ViewerCameraPos> MainCamera(new ViewerCameraPos());
 
 	// setup world //
-	shared_ptr<GameWorld> world1 = Engine::GetEngine()->CreateWorld();
+	shared_ptr<GameWorld> world1 = Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), MainCamera);
 
 	ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
 
 
 	// camera //
-	shared_ptr<ViewerCameraPos> MainCamera(new ViewerCameraPos());
 	MainCamera->SetPos(Float3(-1.f, 2.5f, 10.f));
 
 	// link world and camera to a window //

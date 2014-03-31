@@ -8,6 +8,8 @@
 #include "Entities/Objects/Prop.h"
 #include "Entities/Objects/TrackEntityController.h"
 #include "TextureGenerator.h"
+#include "Handlers/ObjectLoader.h"
+#include "Newton/PhysicalMaterialManager.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::Arena::Arena(shared_ptr<Leviathan::GameWorld> world) : TargetWorld(world), DirectTrail(NULL){

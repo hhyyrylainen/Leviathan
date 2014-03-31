@@ -5,7 +5,6 @@
 #endif
 #include "FileSystem.h"
 #include "Exceptions/ExceptionNotFound.h"
-#include "OverlayMaster.h"
 #include "Common/DataStoring/DataStore.h"
 using namespace Leviathan;
 using namespace Leviathan::Rendering;

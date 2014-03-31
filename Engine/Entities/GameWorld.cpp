@@ -9,28 +9,40 @@
 #include "OgreSceneManager.h"
 #include "OgreLight.h"
 #include "OgreSceneNode.h"
+#include "OgreCamera.h"
+#include "OgreViewport.h"
+#include "Compositor/OgreCompositorWorkspace.h"
+#include "Compositor/OgreCompositorManager2.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameWorld::GameWorld(Ogre::Root* ogre) : WorldSceneCamera(NULL), CameraLocationNode(NULL), WorldsScene(NULL),
-	Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false), GraphicalMode(false)
+DLLEXPORT Leviathan::GameWorld::GameWorld() : WorldSceneCamera(NULL), WorldsScene(NULL), Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false), 
+	GraphicalMode(false), LinkedToWindow(NULL)
 {
+
+}
+
+DLLEXPORT Leviathan::GameWorld::~GameWorld(){
+
+}
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::GameWorld::Init(GraphicalInputEntity* renderto, Ogre::Root* ogre){
+
+	LinkedToWindow = renderto;
+
 	// Detecting non-GUI mode //
 	if(ogre){
+		if(!renderto)
+			return false;
 		GraphicalMode = true;
 		// these are always required for worlds //
-		_CreateOgreResources(ogre);
+		_CreateOgreResources(ogre, renderto->GetWindow());
 	}
 
 	// acquire physics engine world //
 	_PhysicalWorld = NewtonManager::Get()->CreateWorld(this);
 
+	return true;
 }
-
-
-DLLEXPORT Leviathan::GameWorld::~GameWorld(){
-
-}
-
 
 DLLEXPORT void Leviathan::GameWorld::Release(){
 	GUARD_LOCK_THIS_OBJECT();
@@ -44,8 +56,16 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 	Objects.clear();
 
 	if(GraphicalMode){
+		// TODO: notify our window that it no longer has a world workspace
+		LinkedToWindow = NULL;
+
 		// release Ogre resources //
-		Ogre::Root::getSingleton().destroySceneManager(WorldsScene);
+
+		// Destroy the compositor //
+		Ogre::Root& ogre = Ogre::Root::getSingleton();
+		ogre.getCompositorManager2()->removeWorkspace(WorldWorkspace);
+		WorldWorkspace = NULL;
+		ogre.destroySceneManager(WorldsScene);
 		WorldsScene = NULL;
 	}
 
@@ -54,30 +74,15 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::UpdateCameraAspect(GraphicalInputEntity* rendertarget){
-	if(!GraphicalMode)
-		return;
-	// set aspect ratio to the same as the view port (this makes it look realistic) //
-	WorldSceneCamera->setAspectRatio(rendertarget->GetViewportAspectRatio());
-	WorldSceneCamera->setAutoAspectRatio(true);
-
-	// link camera //
-	rendertarget->GetMainViewport()->setCamera(WorldSceneCamera);
-}
-// ------------------------------------ //
-void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre){
+void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre, Window* rendertarget){
 	// create scene manager //
-	WorldsScene = ogre->createSceneManager(Ogre::ST_EXTERIOR_FAR, "MainSceneManager");
+	WorldsScene = ogre->createSceneManager(Ogre::ST_EXTERIOR_FAR, 2, Ogre::INSTANCING_CULLING_THREADED, "MainSceneManager");
 
-	// set scene shadow types //
-	WorldsScene->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
+	WorldsScene->setShadowFarDistance(1000.f);
+	WorldsScene->setShadowDirectionalLightExtrusionDistance(10000.f);
 
 	// create camera //
 	WorldSceneCamera = WorldsScene->createCamera("Camera01");
-
-	// create node for camera and attach it //
-	CameraLocationNode = WorldsScene->getRootSceneNode()->createChildSceneNode("MainCameraNode");
-	CameraLocationNode->attachObject(WorldSceneCamera);
 
 	// near and far clipping planes //
 	WorldSceneCamera->setFOVy(Ogre::Radian(60.f*DEGREES_TO_RADIANS));
@@ -95,9 +100,13 @@ void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre){
 
 	// default sun //
 	SetSunlight();
-
+	
+	// Create the workspace for this scene //
+	// Which will be rendered before the overlay workspace //
+	WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene, rendertarget->GetOgreWindow(), 
+		WorldSceneCamera, "WorldsWorkspace", true, 0);
 }
-
+// ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SetSkyBox(const string &materialname){
 	try{
 		WorldsScene->setSkyBox(true, materialname);
@@ -116,7 +125,8 @@ DLLEXPORT void Leviathan::GameWorld::SetFog(){
 DLLEXPORT void Leviathan::GameWorld::SetSunlight(){
 	// create/update things if they are NULL //
 	if(!Sunlight){
-		Sunlight = WorldsScene->createLight("sunlight");
+		Sunlight = WorldsScene->createLight();
+		Sunlight->setName("sunlight");
 	}
 
 	Sunlight->setType(Ogre::Light::LT_DIRECTIONAL);
@@ -125,7 +135,8 @@ DLLEXPORT void Leviathan::GameWorld::SetSunlight(){
 
 	if(!SunLightNode){
 
-		SunLightNode = WorldsScene->getRootSceneNode()->createChildSceneNode("sunlight node");
+		SunLightNode = WorldsScene->getRootSceneNode()->createChildSceneNode();
+		SunLightNode->setName("sunlight node");
 
 		SunLightNode->attachObject(Sunlight);
 	}
@@ -154,7 +165,7 @@ DLLEXPORT void Leviathan::GameWorld::UpdateCameraLocation(int mspassed, ViewerCa
 	camerapos->UpdatePos(mspassed);
 
 	// set camera position //
-	CameraLocationNode->setPosition(camerapos->GetPosition());
+	WorldSceneCamera->setPosition(camerapos->GetPosition());
 
 	// convert rotation into a quaternion //
 	const Float3& angles = camerapos->GetRotation();

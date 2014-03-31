@@ -132,8 +132,8 @@ namespace Leviathan{
 		DLLEXPORT inline Ogre::SceneManager* GetOverlayScene(){
 			return OverlayScene;
 		}
-		DLLEXPORT inline Ogre::Viewport* GetOverlayViewport(){
-			return OverlayViewport;
+		DLLEXPORT inline Ogre::Camera* GetOverlayCamera() const{
+			return OverLayCamera;
 		}
 		// map that converts OIS::KeyCode to Rocket key codes //
 		static std::map<OIS::KeyCode, int> OISVKeyConvert;
@@ -155,6 +155,8 @@ namespace Leviathan{
 		X11::XID GetForegroundWindow();
 #endif
 		void CheckInputState();
+		//! \brief Creates an Ogre scene to display GUI on this window
+		//! \todo The window requires an ID member to make this unique
 		void _CreateOverlayScene();
 		void _CheckMouseVisibilityStates();
 		void DoCEFInputPass(const OIS::KeyEvent &arg, bool down);
@@ -167,7 +169,7 @@ namespace Leviathan{
 #endif
 		Ogre::RenderWindow* OWindow;
 		Ogre::SceneManager* OverlayScene;
-		Ogre::Viewport* OverlayViewport;
+		Ogre::Camera* OverLayCamera;
 
 		GraphicalInputEntity* OwningWindow;
 

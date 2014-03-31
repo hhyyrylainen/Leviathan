@@ -7,7 +7,7 @@ project(Leviathan)
 set(LEVIATHAN_VERSION_STABLE 0)
 set(LEVIATHAN_VERSION_MAJOR 6)
 set(LEVIATHAN_VERSION_MINOR 6)
-set(LEVIATHAN_VERSION_PATCH 1)
+set(LEVIATHAN_VERSION_PATCH 2)
 
 set(LEVIATHAN_VERSION_STR ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}.${LEVIATHAN_VERSION_MINOR}.${LEVIATHAN_VERSION_PATCH})
 set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LEVIATHAN_VERSION_MINOR}${LEVIATHAN_VERSION_PATCH})
@@ -269,6 +269,10 @@ file(COPY ${DataMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
 file(GLOB ScriptsMoveFiles "Scripts/*")
 file(COPY ${ScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data/Scripts")
 
+# Copy the crucial Ogre scripts
+file(GLOB CoreOgreScriptsMoveFiles "CoreOgreScripts/*")
+file(COPY ${CoreOgreScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/CoreOgreScripts")
+
 # Boost files
 # If we are not using static linking we need to copy everything
 if(NOT Boost_USE_STATIC_LIBS)
@@ -466,13 +470,14 @@ install(FILES ${DataMoveFiles} DESTINATION bin/Data)
 # Install the locales folder
 install(DIRECTORY "CEF/Resources/locales" DESTINATION "bin/")
 
+
 # The script files folder
 install(DIRECTORY "Scripts" DESTINATION bin/Data)
+install(DIRECTORY "CoreOgreScripts" DESTINATION bin)
 install(FILES ${RootFolderFiles} DESTINATION bin)
 # we need to specifically install the directories
 install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)
 install(DIRECTORY "bin/Data/Models" DESTINATION bin/Data)
-install(DIRECTORY "bin/Data/Scripts" DESTINATION bin/Data)
 install(DIRECTORY "bin/Data/Sound" DESTINATION bin/Data)
 install(DIRECTORY "bin/Data/Textures" DESTINATION bin/Data)
 install(DIRECTORY "bin/Data/Screenshots" DESTINATION bin/Data)

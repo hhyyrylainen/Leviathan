@@ -13,12 +13,13 @@
 #include "OgreLogManager.h"
 #include "OgreMaterialManager.h"
 #include "OgreRoot.h"
+#include "OgreTextureManager.h"
 using namespace Leviathan;
 using namespace Rendering;
 // ------------------------------------ //
 
 
-DLLEXPORT Leviathan::Graphics::Graphics() : ORoot(nullptr), Fonts(NULL), Overlays(NULL)
+DLLEXPORT Leviathan::Graphics::Graphics() : ORoot(nullptr), Fonts(NULL)
 {
 	Staticaccess = this;
 	Initialized = false;
@@ -54,8 +55,6 @@ DLLEXPORT void Leviathan::Graphics::Release(){
 
 	ORoot.reset();
 
-	SAFE_DELETE(Overlays);
-
 	Initialized = false;
 }
 // ------------------------------------------- //
@@ -77,7 +76,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 #ifdef _WIN32
 	("RenderSystem_Direct3D11")
 #endif
-		("Plugin_ParticleFX")("Plugin_CgProgramManager")("Plugin_OctreeSceneManager")/*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
+		("Plugin_ParticleFX")("Plugin_CgProgramManager")/*("Plugin_OctreeSceneManager")*//*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
 
 	for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++){
 		// append "_d" if in debug mode //
@@ -153,12 +152,6 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	// load fonts before overlay //
 	Fonts = new Rendering::FontManager();
 
-
-
-	if(!InitializeOverlay()){
-		return false;
-	}
-
 	// clear events that might have queued A LOT while starting up //
 	ORoot->clearEventTimes();
 
@@ -177,11 +170,6 @@ bool Leviathan::Graphics::frameRenderingQueued(const Ogre::FrameEvent& evt){
 	Engine::GetEngine()->PhysicsUpdate();
 
 
-	return true;
-}
-
-bool Leviathan::Graphics::InitializeOverlay(){
-	Overlays = new Rendering::OverlayMaster();
 	return true;
 }
 // ------------------------------------------- //

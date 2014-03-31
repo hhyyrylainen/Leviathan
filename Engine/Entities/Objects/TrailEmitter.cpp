@@ -27,7 +27,8 @@ DLLEXPORT bool Leviathan::Entity::TrailEmitter::Init(const string &materialname,
 	TrailLocation = tmpmanager->getRootSceneNode()->createChildSceneNode();
 
 	// Trail entity //
-	TrailEntity = tmpmanager->createRibbonTrail("TrailEmitter_"+Convert::ToString(ID));
+	TrailEntity = tmpmanager->createRibbonTrail();
+	TrailEntity->setName("TrailEmitter_"+Convert::ToString(ID));
 	TrailEntity->setMaterialName(materialname);
 
 	// Set dynamic update if wanted //

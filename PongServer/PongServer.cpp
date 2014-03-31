@@ -8,6 +8,7 @@
 #include "PongServerNetworking.h"
 #include "Networking/NetworkResponse.h"
 #include "Networking/SyncedVariables.h"
+#include "Common/GraphicalInputEntity.h"
 using namespace Pong;
 // ------------------------------------ //
 // Put this here, since nowhere else to put it //

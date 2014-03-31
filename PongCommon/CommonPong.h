@@ -21,6 +21,8 @@
 #include "Application/GameConfiguration.h"
 #include "Application/Application.h"
 #include "PongPackets.h"
+#include "Newton/PhysicalMaterial.h"
+#include "Newton/PhysicalMaterialManager.h"
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return;
 
@@ -386,7 +388,7 @@ playrscorelistupdateendlabel:
 			}))));
 
 			// setup world //
-			WorldOfPong = Engine::GetEngine()->CreateWorld();
+			WorldOfPong = Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), NULL);
 
 			// create playing field manager with the world //
 			GameArena = unique_ptr<Arena>(new Arena(WorldOfPong));

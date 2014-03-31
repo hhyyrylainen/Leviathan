@@ -14,6 +14,8 @@
 #include "Exceptions/ExceptionNotFound.h"
 #include "Threading/ThreadingManager.h"
 #include "LeviathanJavaScriptAsync.h"
+#include "OgreTechnique.h"
+#include "OgrePass.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
@@ -77,7 +79,9 @@ DLLEXPORT bool Leviathan::Gui::View::Init(const wstring &filetoload, const Named
 
 
 	// Create a full screen quad for chrome render result displaying //
-	CEFOverlayQuad = Wind->GetOverlayScene()->createManualObject("GUI_chrome_quad_"+Convert::ToString(ID));
+	CEFOverlayQuad = Wind->GetOverlayScene()->createManualObject();
+	CEFOverlayQuad->setName("GUI_chrome_quad_"+Convert::ToString(ID));
+
 
 	// Use identity view/projection matrices for 2d rendering //
 	CEFOverlayQuad->setUseIdentityProjection(true);
@@ -103,9 +107,7 @@ DLLEXPORT bool Leviathan::Gui::View::Init(const wstring &filetoload, const Named
 	CEFOverlayQuad->end();
 
 	// We can use infinite AAB to not get culled //
-	Ogre::AxisAlignedBox aabInf;
-	aabInf.setInfinite();
-	CEFOverlayQuad->setBoundingBox(aabInf);
+	CEFOverlayQuad->setLocalAabb(Ogre::Aabb::BOX_INFINITE);
 
 	// Render just before overlays
 	CEFOverlayQuad->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY);

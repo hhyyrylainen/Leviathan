@@ -1,0 +1,26 @@
+// This node renders the overlay scene on top of the render target
+compositor_node OverlayRenderNode
+{
+    in 0 renderwindow
+    
+    target renderwindow
+    {
+        // We don't want to clear it, since it already has stuff //
+        pass clear
+        {
+            depth_value 1.0
+            buffers depth stencil
+        }
+        pass render_scene
+        {
+            rq_first 0
+            rq_last max
+        }
+    }
+}
+
+
+workspace WindowMainWorkspace
+{
+    connect_output OverlayRenderNode 0
+}

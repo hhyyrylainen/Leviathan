@@ -17,7 +17,7 @@ using namespace Entity;
 
 
 DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) : BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), 
-	MeshName(), Sizes(0)
+	MeshName(), Sizes(0), BrushModel(NULL)
 {
 
 }
@@ -36,9 +36,7 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
 
 	// the model won't be used anymore //
 	if(MeshName.size()){
-		OwnedByWorld->GetScene()->destroyManualObject(MeshName+"_manual");
-		// this might not work as intended //
-		Ogre::MeshManager::getSingleton().destroyResourcePool(MeshName);
+		OwnedByWorld->GetScene()->destroyManualObject(BrushModel);
 	}
 
 	OwnedByWorld = NULL;
@@ -57,19 +55,20 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 	MeshName = "Brush_"+Convert::ToString(ID);
 
 	// create the graphical box //
-	Ogre::ManualObject* TestModel = OwnedByWorld->GetScene()->createManualObject(MeshName+"_manual");
+	BrushModel = OwnedByWorld->GetScene()->createManualObject();
+	BrushModel->setName(MeshName+"_manual");
 
 	// we do not want to update this later //
-	TestModel->setDynamic(false);
-	TestModel->estimateVertexCount(24);
-	TestModel->estimateIndexCount(24);
+	BrushModel->setDynamic(false);
+	BrushModel->estimateVertexCount(24);
+	BrushModel->estimateIndexCount(24);
 #ifdef BRUSH_CALCULATENORMALS
 	std::vector<Float3> tmpvertices;
 	tmpvertices.reserve(24);
 #endif // BRUSH_CALCULATENORMALS
 
 
-	TestModel->begin(material, Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	BrushModel->begin(material, Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 
 	// loops to avoid redundant code //
@@ -82,7 +81,7 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 		// bottom left //
 		for(int a = 0; a < 3; a++){
 
-			TestModel->position(dimensions.X/-2.f, yval, dimensions.Z/-2.f);
+			BrushModel->position(dimensions.X/-2.f, yval, dimensions.Z/-2.f);
 #ifdef BRUSH_CALCULATENORMALS
 			tmpvertices.push_back(Float3(dimensions.X/-2.f, yval, dimensions.Z/-2.f));
 #endif // BRUSH_CALCULATENORMALS
@@ -90,33 +89,33 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 			// bottom left //
 			if(a == 0){
 
-				TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
-				TestModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+				BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+				BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
 						
 			} else if (a == 1){
 				// second is the face that is on the right when looking from the corner to the center of the cube //
 				if(!up)
-					TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+					BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
 				else
-					TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+					BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
 
-				TestModel->normal(Float3(0.f, 0.f, -1.f));
+				BrushModel->normal(Float3(0.f, 0.f, -1.f));
 
 			} else {
 				// and third is on the left when looking to the center //
 				if(!up)
-					TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+					BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
 				else
-					TestModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+					BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
 
-				TestModel->normal(Float3(-1.f, 0.f, 0.f));
+				BrushModel->normal(Float3(-1.f, 0.f, 0.f));
 			}
 		}
 
 		// right point //
 		for(int a = 0; a < 3; a++){
 
-			TestModel->position(dimensions.X/2.f, yval, dimensions.Z/-2.f);
+			BrushModel->position(dimensions.X/2.f, yval, dimensions.Z/-2.f);
 #ifdef BRUSH_CALCULATENORMALS
 			tmpvertices.push_back(Float3(dimensions.X/2.f, yval, dimensions.Z/-2.f));
 #endif // BRUSH_CALCULATENORMALS
@@ -125,33 +124,33 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 			// first is bottom or top face //
 			if(a == 0){
 
-				TestModel->textureCoord(Ogre::Vector2(1.f, 0.f));
-				TestModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+				BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+				BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
 
 			} else if (a == 1){
 				// second is the face that is on the right when looking from the corner to the center of the cube //
 				if(!up)
-					TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+					BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
 				else
-					TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+					BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
 
-				TestModel->normal(Float3(1.f, 0.f, 0.f));
+				BrushModel->normal(Float3(1.f, 0.f, 0.f));
 
 			} else {
 				// and third is on the left when looking to the center //
 				if(!up)
-					TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+					BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
 				else
-					TestModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+					BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
 
-				TestModel->normal(Float3(0.f, 0.f, -1.f));
+				BrushModel->normal(Float3(0.f, 0.f, -1.f));
 			}
 		}
 
 		// right up //
 		for(int a = 0; a < 3; a++){
 
-			TestModel->position(dimensions.X/2.f, yval, dimensions.Z/2.f);
+			BrushModel->position(dimensions.X/2.f, yval, dimensions.Z/2.f);
 #ifdef BRUSH_CALCULATENORMALS
 			tmpvertices.push_back(Float3(dimensions.X/2.f, yval, dimensions.Z/2.f));
 #endif // BRUSH_CALCULATENORMALS
@@ -160,33 +159,33 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 			// first is bottom or top face //
 			if(a == 0){
 
-				TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
-				TestModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+				BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+				BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
 
 			} else if (a == 1){
 				// second is the face that is on the right when looking from the corner to the center of the cube //
 				if(!up)
-					TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+					BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
 				else
-					TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+					BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
 
-				TestModel->normal(Float3(0.f, 0.f, 1.f));
+				BrushModel->normal(Float3(0.f, 0.f, 1.f));
 
 			} else {
 				// and third is on the left when looking to the center //
 				if(!up)
-					TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+					BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
 				else
-					TestModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+					BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
 
-				TestModel->normal(Float3(1.f, 0.f, 0.f));
+				BrushModel->normal(Float3(1.f, 0.f, 0.f));
 
 			}
 		}
 		// left up //
 		for(int a = 0; a < 3; a++){
 
-			TestModel->position(dimensions.X/-2.f, yval, dimensions.Z/2.f);
+			BrushModel->position(dimensions.X/-2.f, yval, dimensions.Z/2.f);
 #ifdef BRUSH_CALCULATENORMALS
 			tmpvertices.push_back(Float3(dimensions.X/-2.f, yval, dimensions.Z/2.f));
 #endif // BRUSH_CALCULATENORMALS
@@ -195,26 +194,26 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 			// first is bottom or top face //
 			if(a == 0){
 
-				TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
-				TestModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+				BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+				BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
 
 			} else if (a == 1){
 				// second is the face that is on the right when looking from the corner to the center of the cube //
 				if(!up)
-					TestModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+					BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
 				else
-					TestModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+					BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
 
-				TestModel->normal(Float3(-1.f, 0.f, 0.f));
+				BrushModel->normal(Float3(-1.f, 0.f, 0.f));
 
 			} else {
 				// and third is on the left when looking to the center //
 				if(!up)
-					TestModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+					BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
 				else
-					TestModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+					BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
 
-				TestModel->normal(Float3(0.f, 0.f, 1.f));
+				BrushModel->normal(Float3(0.f, 0.f, 1.f));
 			}
 		}
 				
@@ -225,26 +224,26 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 
 	// quads are both same //
 	// base //
-	TestModel->quad(0, 3, 6, 9);
+	BrushModel->quad(0, 3, 6, 9);
 
 	// front side //
-	TestModel->quad(13, 17, 5, 1);
+	BrushModel->quad(13, 17, 5, 1);
 	//TestModel->quad(1, 13, 17, 5);
 
 	// right side //
-	TestModel->quad(16, 20, 8, 4);
+	BrushModel->quad(16, 20, 8, 4);
 	//TestModel->quad(4, 16, 20, 8);
 
 	// left side //
-	TestModel->quad(2, 10, 22, 14);
+	BrushModel->quad(2, 10, 22, 14);
 	//TestModel->quad(10, 22, 14, 2);
 
 	// back side //
-	TestModel->quad(19, 23, 11, 7);
+	BrushModel->quad(19, 23, 11, 7);
 	//TestModel->quad(7, 19, 23, 11);
 
 	// top //
-	TestModel->quad(21, 18, 15, 12);
+	BrushModel->quad(21, 18, 15, 12);
 	//TestModel->quad(12, 21, 18, 15);
 
 
@@ -283,15 +282,15 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 #endif // BRUSH_CALCULATENORMALS
 
 	// end and turn into a mesh //
-	TestModel->end();
-	TestModel->convertToMesh(MeshName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	BrushModel->end();
+	BrushModel->convertToMesh(MeshName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
 	// create instance //
 	// load the Ogre entity //
 	GraphicalObject = OwnedByWorld->GetScene()->createEntity(MeshName);
 
 	// create scene node for positioning //
-	ObjectsNode = OwnedByWorld->GetScene()->getRootSceneNode()->createChildSceneNode(MeshName+"_basenode");
+	ObjectsNode = OwnedByWorld->GetScene()->getRootSceneNode()->createChildSceneNode();
 
 	// attach for deletion and valid display //
 	ObjectsNode->attachObject(GraphicalObject);

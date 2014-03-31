@@ -7,23 +7,14 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Application/AppDefine.h"
-#include "Rendering/Graphics.h"
 #include "Events/EventHandler.h"
-#include "Handlers/ObjectLoader.h"
 #include "Statistics/RenderingStatistics.h"
-#include "Leap/LeapManager.h"
-#include "Script/Console.h"
 #include "FileSystem.h"
-#include "Sound/SoundDevice.h"
 #include "Common/DataStoring/DataStore.h"
 #include "Handlers/OutOfMemoryHandler.h"
 #include "Utility/Random.h"
-#include "Common/GraphicalInputEntity.h"
-#include "Newton/NewtonManager.h"
-#include "Newton/PhysicalMaterialManager.h"
-#include "Networking/NetworkHandler.h"
 #include "Threading/ThreadingManager.h"
-#include "Networking/RemoteConsole.h"
+
 
 
 #define TICKSPEED 60
@@ -72,7 +63,7 @@ namespace Leviathan{
 		DLLEXPORT void ExecuteCommandLine();
 
 
-		DLLEXPORT shared_ptr<GameWorld> CreateWorld();
+		DLLEXPORT shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow, shared_ptr<ViewerCameraPos> worldscamera);
 
 		DLLEXPORT void SaveScreenShot();
 

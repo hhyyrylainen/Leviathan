@@ -9,6 +9,9 @@
 #include "FileSystem.h"
 #include "Engine.h"
 #include "OgreRoot.h"
+#include "Compositor/OgreCompositorManager2.h"
+#include "Compositor/OgreCompositorWorkspace.h"
+#include "Compositor/OgreCompositorWorkspaceDef.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties) : MouseCaptureState(false){
@@ -38,11 +41,24 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	// quicker access to the window //
 	Ogre::RenderWindow* tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(wcaption, WData.Width, WData.Height, !WData.Windowed, &WParams);
 
+	Ogre::CompositorManager2* compositor = NULL;
+
 	// load resource groups since it is safe now //
 	if(++GlobalWindowCount == 1){
+		// Initialize the compositor //
+		windowcreater->GetOgreRoot()->initialiseCompositor();
+
 		// Notify engine to register threads to work with Ogre //
 		Engine::GetEngine()->_NotifyThreadsRegisterOgre();
 		FileSystem::RegisterOGREResourceGroups();
+
+		compositor = windowcreater->GetOgreRoot()->getCompositorManager2();
+
+		// These are loaded from files //
+		//// Create the definition for the main window workspace //
+		//Ogre::CompositorWorkspaceDef* maindef = compositor->addWorkspaceDefinition("WindowMainWorkspace");
+		//// Create the definition for world workspace //
+		//Ogre::CompositorWorkspaceDef* worlddef = compositor->addWorkspaceDefinition("WorldsWorkspace");
 	}
 	// create the actual window //
 	DisplayWindow = new Window(tmpwindow, this);
@@ -54,27 +70,18 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 #endif
 	tmpwindow->setDeactivateOnFocusChange(false);
 
+
 	// set the main window to be active //
 	tmpwindow->setActive(true);
 
-	// manual window updating //
-	tmpwindow->setAutoUpdated(false);
+	// We need to create a workspace for this window //
+	if(!compositor)
+		compositor = windowcreater->GetOgreRoot()->getCompositorManager2();
 
-	// create a window viewport //
-	float ViewWidth = 1.f;
-	float ViewHeight = 1.f;
-	float ViewLeft = (1.f-ViewWidth)*0.5f;
-	float ViewTop = (1.f-ViewHeight)*0.5f;
+	// Create the main window workspace //
+	Ogre::CompositorWorkspace* windwork = compositor->addWorkspace(DisplayWindow->GetOverlayScene(), DisplayWindow->GetOgreWindow(), 
+		DisplayWindow->GetOverlayCamera(), "WindowMainWorkspace", true, 1);
 
-	USHORT ZOrder = 100;
-
-	MainViewport = tmpwindow->addViewport(NULL, ZOrder, ViewLeft, ViewTop, ViewWidth, ViewHeight);
-
-	// set default viewport colour //
-	MainViewport->setBackgroundColour(Ogre::ColourValue(0.3f, 0.6f, 0.9f));
-
-	// automatic updating //
-	MainViewport->setAutoUpdated(true);
 
 	// create GUI //
 	WindowsGui = new Gui::GuiManager();
@@ -91,9 +98,6 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 
 	// create receiver interface //
 	TertiaryReceiver = new InputController();
-
-	// \todo link to window //
-
 }
 
 DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
@@ -111,15 +115,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::ReleaseLinked(){
 	LinkedWorld.reset();
 	LinkedCamera.reset();
 }
-
 // ------------------------------------ //
-
-// ------------------------------------ //
-
-DLLEXPORT float Leviathan::GraphicalInputEntity::GetViewportAspectRatio(){
-	return MainViewport->getActualWidth()/(float)MainViewport->getActualHeight();
-}
-
 DLLEXPORT void Leviathan::GraphicalInputEntity::Render(int mspassed){
 
 	if(LinkedWorld)
@@ -138,20 +134,13 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::Render(int mspassed){
 		return;
 	}
 
-	tmpwindow->update(false);
-	// all automatically updated view ports are updated //
-
-	// update special view ports //
-
 	// finish rendering the window //
-	tmpwindow->swapBuffers(/*DisplayWindow->GetVsync()*/);
+	tmpwindow->swapBuffers();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(shared_ptr<ViewerCameraPos> camera, shared_ptr<GameWorld> world){
 	LinkedCamera = camera;
 	LinkedWorld = world;
-
-	LinkedWorld->UpdateCameraAspect(this);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::SaveScreenShot(const string &filename){

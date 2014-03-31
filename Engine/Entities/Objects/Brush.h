@@ -46,6 +46,9 @@ namespace Leviathan{ namespace Entity{
 	protected:
 		virtual void _UpdatePhysicsObjectLocation();
 		// ------------------------------------ //
+
+		Ogre::ManualObject* BrushModel;
+
 		string MeshName;
 		Float3 Sizes;
 	};

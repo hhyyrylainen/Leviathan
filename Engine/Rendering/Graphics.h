@@ -10,7 +10,6 @@
 
 #include "Common/GraphicalInputEntity.h"
 #include "Application/AppDefine.h"
-#include "GUI/OverlayMaster.h"
 #include "OgreFrameListener.h"
 
 namespace Leviathan{
@@ -37,9 +36,6 @@ namespace Leviathan{
 		DLLEXPORT inline Rendering::FontManager* GetFontManager(){
 			return Fonts;
 		}
-		DLLEXPORT inline Rendering::OverlayMaster* GetOverlayMaster(){
-			return Overlays;
-		}
 		DLLEXPORT inline AppDef* GetDefinitionObject(){
 			return AppDefinition;
 		}
@@ -51,7 +47,6 @@ namespace Leviathan{
 	private:
 
 		bool InitializeOgre(AppDef* appdef);
-		bool InitializeOverlay();
 		// ------------------------ //
 		bool Initialized;
 
@@ -61,7 +56,6 @@ namespace Leviathan{
 		unique_ptr<Ogre::Root> ORoot;
 		Ogre::Log* OLog;
 		Rendering::FontManager* Fonts;
-		Rendering::OverlayMaster* Overlays;
 
 		// static //
 		static Graphics* Staticaccess;

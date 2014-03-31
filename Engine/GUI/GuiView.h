@@ -14,6 +14,7 @@
 #include "include/wrapper/cef_message_router.h"
 #include "Common/BaseNotifiable.h"
 #include "Events/CallableObject.h"
+#include "OgreSharedPtr.h"
 
 
 namespace Leviathan{ namespace Gui{

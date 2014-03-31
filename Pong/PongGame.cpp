@@ -7,7 +7,7 @@
 #include "Networking/ConnectionInfo.h"
 #include "Networking/NetworkClientInterface.h"
 #include "Networking/RemoteConsole.h"
-#include "Common/GraphicalInputEntity.h"
+#include "Rendering/GraphicalInputEntity.h"
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //

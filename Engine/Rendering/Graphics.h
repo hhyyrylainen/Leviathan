@@ -8,7 +8,7 @@
 // ---- includes ---- //
 #include "Entities/Bases/BaseRenderable.h"
 
-#include "Common/GraphicalInputEntity.h"
+#include "GraphicalInputEntity.h"
 #include "Application/AppDefine.h"
 #include "OgreFrameListener.h"
 

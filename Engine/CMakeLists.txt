@@ -10,7 +10,7 @@ add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8Core
 # get all files in their groups
 set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
     "GlobalCEFHandler.cpp" "GlobalCEFHandler.h" "Include.cpp" "Include.h" "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
-    "TextureGenerator.cpp" "TextureGenerator.h"
+    "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp"
 )
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
 file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")

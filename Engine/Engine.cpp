@@ -11,7 +11,7 @@
 #include "Leap/LeapManager.h"
 #include "Script/Console.h"
 #include "Sound/SoundDevice.h"
-#include "Common/GraphicalInputEntity.h"
+#include "Rendering/GraphicalInputEntity.h"
 #include "Newton/NewtonManager.h"
 #include "Newton/PhysicalMaterialManager.h"
 #include "Networking/NetworkHandler.h"

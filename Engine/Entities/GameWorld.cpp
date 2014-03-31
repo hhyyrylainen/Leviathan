@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_GAMEWORLD
 #include "GameWorld.h"
 #endif
-#include "Common/GraphicalInputEntity.h"
+#include "Rendering/GraphicalInputEntity.h"
 #include "Newton/NewtonManager.h"
 #include "OgreRoot.h"
 #include "OgreSceneManager.h"

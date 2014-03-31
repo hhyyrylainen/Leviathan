@@ -5,7 +5,7 @@
 #include "Define.h"
 #endif
 // ------------------------------------ //
-#include "Common/Window.h"
+#include "Window.h"
 #include "Utility/Iterators/WstringIterator.h"
 #include "Common/StringOperations.h"
 

@@ -4,7 +4,7 @@
 #include "GuiView.h"
 #endif
 #include "OgreTextureManager.h"
-#include "Common/Window.h"
+#include "Window.h"
 #include "OgreHardwarePixelBuffer.h"
 #include "OgreMaterialManager.h"
 #include "OgreSceneManager.h"

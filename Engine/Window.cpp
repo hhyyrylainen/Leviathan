@@ -15,7 +15,7 @@
 #include "GlobalCEFHandler.h"
 #include "OgreSceneNode.h"
 #include "OgreCamera.h"
-#include "GraphicalInputEntity.h"
+#include "Rendering/GraphicalInputEntity.h"
 using namespace Leviathan;
 // ------------------------------------ //
 

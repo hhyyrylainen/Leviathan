@@ -750,13 +750,7 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
 		mevent.y = mstate.Y.abs;
 
 		inputreceiver->SendMouseMoveEvent(mevent, IsMouseOutsideWindowClientArea());
-
-		CefMouseEvent second;
-		mevent.modifiers = SpecialKeyModifiers;
-		second.x = 0;
-		second.y = 0;
-
-		inputreceiver->SendMouseWheelEvent(second, 0, mstate.Z.rel); 
+		inputreceiver->SendMouseWheelEvent(mevent, 0, mstate.Z.rel); 
 	}
 	_CheckMouseVisibilityStates();
 
@@ -933,19 +927,17 @@ void Leviathan::Window::ReportKeyEventAsUsed(){
 }
 // ------------------------------------ //
 DLLEXPORT Int4 Leviathan::Window::GetScreenPixelRect() const THROWS{
-#ifdef _WIN32
-	RECT rect;
-	// Call windows api to get this //
-	if(GetWindowRect(m_hwnd, &rect)){
-		// We need to translate the end coordinates to width and height //
-		return Int4(rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top);
-	}
-	// Failed //
-	throw ExceptionNotFound(L"could not get window rect, call failed", GetLastError(), __WFUNCTION__, L"invalid handle", L"m_hwnd");
 
-#else
-	return Int4(0, 0, GetWidth(), GetHeight());
-#endif // _WIN32
+	Int4 result(0);
+	unsigned int unused;
+	unsigned int width;
+	unsigned int height;
+	// We can use Ogre to get the metrics
+	OWindow->getMetrics(width, height, unused, result.X, result.Y);
+	
+	result.Z = width;
+	result.W = height;
+	return result;
 }
 
 

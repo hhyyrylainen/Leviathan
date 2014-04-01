@@ -347,7 +347,13 @@ void Pong::PongGame::MoveBackToLobby(){
 
 void Pong::PongGame::Disconnect(const string &reasonstring){
 	GUARD_LOCK_THIS_OBJECT();
-
+	 
+	// Disconnect from active servers //
+	dynamic_cast<NetworkClientInterface*>(Leviathan::NetworkHandler::GetInterface())->DisconnectFromServer(Convert::StringToWstring(reasonstring));
+	
+	// Disable lobby screen //
+	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+		new NamedVariableList(L"State", new VariableBlock(string("Off")))))));
 }
 // ------------------------------------ //
 void Pong::PongGame::DoSpecialPostLoad(){

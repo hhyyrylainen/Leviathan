@@ -128,7 +128,12 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 		case PONG_JOINGAMERESPONSE_TYPE_LOBBY:
 			{
 				// Show the lobby screen //
-				instance->_OnNewConnectionStatusMessage(L"Server join completed, entering lobby... TODO: do this");
+				instance->_OnNewConnectionStatusMessage(L"Server join completed, entering lobby...");
+				
+				// Send event to enable the lobby screen //
+				EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+					new NamedVariableList(L"State", new VariableBlock(string("On")))))));
+
 				return;
 			}
 		case PONG_JOINGAMERESPONSE_TYPE_MATCH:

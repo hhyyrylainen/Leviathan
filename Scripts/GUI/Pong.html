@@ -89,7 +89,34 @@
             $("#ConnectionStatusUpdate").html(variables.Message);
         });
         
+        // ------------------ LobbyScreen ------------------ //
+        $("#LobbyDisconnect").on("click", function(){
+            // All the right ones will be automatically opened/closed //
+            
+            // Disconnect //
+            Disconnect();
+        });
         
+        // Create tabs //
+        $("#LobbyTabs").tabs({ event: "mouseover" });
+        
+        // Detect Lobby screen state update //
+        Leviathan.OnGeneric("LobbyScreenState", function(name, variables){
+            // Check is it going on or off //
+            if(variables.State == "On"){
+            
+                $("#LobbyScreen").slideDown();
+                $("#ServerConnectScreen").slideUp();
+                
+            } else if(variables.State == "Off"){
+                
+                $("#TopLevelMenu").slideDown();
+                $("#LobbyScreen").slideUp();
+            }
+        });
+        
+        
+        // ------------------------------------ //
         // Put version numbers //
         GetPongVersion(function(response){
             $(".GameTitle").append("<p class='WeakText' style='margin-top: -15px; margin-left: 50px;'>"
@@ -136,27 +163,78 @@
             <span class="MenuOption" id="BackFromDirectConnectScreen">Back</span>
         </div>
     </div>
-    <!--<div class="Hidden" id="LobbyScreen">
-        You're in a lobby!
-        <tabset>
-        <tab>Overview</tab>
-        <panel>
-            Lobby overwiev, players and such.
-        </panel>
-        <tab>Player Slots</tab>
-        <panel>
-            Overview of players in slots
-        </panel>
-        <tab>Team 0</tab>
-        <panel>
-            Slot controls for team 0
-        </panel>
-        </tabset>
-        <span class="PlayerDisplayColour" style="margin: auto; margin-left: 5%; margin-bottom: 2%; width: 45%; max-width: 45%; height: 33%; max-height: 33%;">
-        The chat goes here!
-        </span>
-        <span class="MenuOption Dangerous"><p id="LobbyDisconnect">Disconnect</p></span>
-    </div>-->
+    <div class="Hidden" id="LobbyScreen">
+        
+        <div id="LobbyTabs" class="LobbyTabs">
+            <ul>
+                <li><a href="#OverviewTab">Overview</a></li>
+                <li><a href="#SlotsTab">Player slots</a></li>
+                <li><a href="#Team0Tab">Team 0</a></li>
+                <li><a href="#Team1Tab">Team 1</a></li>
+                <li><a href="#Team2Tab">Team 2</a></li>
+                <li><a href="#Team3Tab">Team 3</a></li>
+                <li><a href="#TeamlessTab">Teamless players</a></li>
+            </ul>
+            <div class="LobbyTContent" id="OverviewTab">
+                <p>
+                    You are connected to a server.<br>
+                    Put team overviews here.
+                    Add start match button
+                </p>
+            </div>
+            <div class="LobbyTContent" id="SlotsTab">
+                <p>
+                    Add controls for slot splitting, open teams and AI adding
+                </p>
+            </div>
+            <div class="LobbyTContent" id="Team0Tab">
+                <p>
+                    Add buttons to join team 0
+                </p>
+            </div>
+            <div class="LobbyTContent" id="Team1Tab">
+                <p>
+                    Add buttons to join team 1
+                </p>
+            </div>
+            <div class="LobbyTContent" id="Team2Tab">
+                <p>
+                    Add buttons to join team 2
+                </p>
+            </div>
+            <div class="LobbyTContent" id="Team3Tab">
+                <p>
+                    Add buttons to join team 3
+                </p>
+            </div>
+            <div class="LobbyTContent" id="TeamlessTab">
+                <p>
+                    TODO: put teamless players here for easy checking if all players have joined
+                </p>
+            </div>
+        </div>
+        
+        <div id="LobbyChat" class="ChatBox">
+            Chat content goes here<br>
+            Lines like these<br>
+            many<br>
+            many<br>
+            many lines<br>
+            and then some<br>
+            come on be too long...<br>
+            .<br>
+            .<br>
+            .<br>
+            .<br>
+            .<br>
+            message<br>
+        </div>
+        
+        <span class="LobbyDisconnect Dangerous" id="LobbyDisconnect">Disconnect</span>
+        
+
+        
+    </div>
     <div class="Hidden" id="ServerConnectScreen">
         <span class="DeadCenter" style="margin-top: 10%; width: 100%;">
             Connecting to a server

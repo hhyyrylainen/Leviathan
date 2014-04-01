@@ -6,6 +6,10 @@
 #include "Entities/GameWorld.h"
 #include "Entities/Objects/Prop.h"
 #include "Entities/Objects/Brush.h"
+#include "Rendering/GraphicalInputEntity.h"
+#include "GUI/GuiManager.h"
+#include "Engine.h"
+#include "Handlers/ObjectLoader.h"
 using namespace Leviathan;
 using namespace SandBoxie;
 // ------------------------------------ //

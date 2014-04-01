@@ -8,6 +8,7 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/chrono/round.hpp>
 #include "Common/Misc.h"
+#include "Common/StringOperations.h"
 
 bool TestMiscCutWstring(const int &tests){
 	bool Failed = false;

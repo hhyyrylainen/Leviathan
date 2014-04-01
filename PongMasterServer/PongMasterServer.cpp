@@ -46,7 +46,7 @@ void Pong::PongMasterServer::RegisterApplicationPhysicalMaterials(Leviathan::Phy
 void Pong::PongMasterServer::CheckGameConfigurationVariables(GameConfiguration* configobj){
 	// Check for various variables //
 
-	ObjectLock lockit(*configobj);
+	GUARD_LOCK_OTHER_OBJECT_NAME(configobj, lockit);
 
 	NamedVars* vars = configobj->AccessVariables(lockit);
 

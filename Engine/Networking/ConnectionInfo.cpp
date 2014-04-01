@@ -26,6 +26,12 @@ DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const wstring &hostname) : H
 	// We should be fine not skipping a letter //
 	result = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
 
+	if(!result){
+		// Probably should get the default port number //
+		Logger::Get()->Warning(L"ConnectionInfo: no port defined, using default, hostname: "+hostname);
+		TargetPortNumber = 80;
+		return;
+	}
 	TargetPortNumber = Convert::WstringToInt(*result.get());
 }
 

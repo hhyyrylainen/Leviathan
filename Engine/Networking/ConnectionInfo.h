@@ -126,11 +126,14 @@ namespace Leviathan{
 	//! \todo Internal security tokens to all packets
 	class ConnectionInfo : public BaseNotifierAll{
 	public:
+		//! \brief Creates a new connection to hostname
+		//! \todo Add a option to game configuration for default port
 		DLLEXPORT ConnectionInfo(const wstring &hostname);
 		DLLEXPORT ConnectionInfo(const sf::IpAddress &targetaddress, USHORT port);
 		DLLEXPORT ~ConnectionInfo();
 
-		// Creates the address object //
+		//! Creates the address object
+		//! \todo Make calls to this threaded to avoid stalls
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();
 

@@ -8,6 +8,7 @@
 #include "NetworkHandler.h"
 #include "ConnectionInfo.h"
 #include "Engine.h"
+#include "Common/BaseNotifiable.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::SyncedVariables::SyncedVariables(NetworkHandler* owner, bool amiaserver, NetworkInterface* handlinginterface) : 
@@ -114,19 +115,30 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
 				// Get the value //
 				size_t curpos = (size_t)repeat;
 
-				if(curpos >= instance->ToSyncValues.size()){
+				GUARD_LOCK_OTHER_OBJECT(instance);
+
+				if(curpos >= instance->ToSyncValues.size() && curpos >= instance->ConnectedChildren.size()){
 
 					Logger::Get()->Error(L"SyncedVariables: queued task trying to sync variable that is out of vector range");
 					return;
 				}
 
-				GUARD_LOCK_OTHER_OBJECT(instance);
-
 				// Sync the value //
-				const SyncedValue* valtosend = instance->ToSyncValues[curpos].get();
+				if(curpos < instance->ToSyncValues.size()){
+					const SyncedValue* valtosend = instance->ToSyncValues[curpos].get();
 
-				// Send it //
-				data->SentThings.push_back(instance->_SendValueToSingleReceiver(connection, valtosend));
+					// Send it //
+					data->SentThings.push_back(instance->_SendValueToSingleReceiver(connection, valtosend));
+				}
+
+				// Sync the resource //
+				if(curpos < instance->ConnectedChildren.size()){
+
+					auto tmpvar = static_cast<SyncedResource*>(instance->ConnectedChildren[curpos]->GetActualPointerToNotifiableObject());
+
+					// Send it //
+					data->SentThings.push_back(instance->_SendValueToSingleReceiver(connection, tmpvar));
+				}
 
 				// Check is this the last one //
 				if(tmpptr->IsThisLastRepeat()){
@@ -136,7 +148,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
 				}
 
 
-			}, connection, this, taskdata), MillisecondDuration(100), MillisecondDuration(10), (int)ToSyncValues.size())));
+			}, connection, this, taskdata), MillisecondDuration(100), MillisecondDuration(10), (int)max(ToSyncValues.size(), ConnectedChildren.size()))));
 
 			// Queue a finish checking task //
 			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new RepeatingDelayedTask(
@@ -230,6 +242,26 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 			_UpdateFromNetworkReceive(tmpptr, guard);
 			return true;
 		}
+	case NETWORKRESPONSETYPE_SYNCRESOURCEDATA:
+		{
+			// We got custom sync data //
+			
+			NetworkResponseDataForSyncResourceData* data = response->GetResponseDataForSyncResourceResponse();
+			if(!data){
+				Logger::Get()->Error(L"SyncedVariables: received a resource sync response containing no data");
+				return true;
+			}
+
+			// Create the packet from the data //
+			sf::Packet ourdatapacket;
+			ourdatapacket.append(data->OurCustomData.c_str(), data->OurCustomData.size());
+
+			const wstring lookforname = SyncedResource::GetSyncedResourceNameFromPacket(ourdatapacket);
+
+			// Update the one matching the name //
+			_OnSyncedResourceReceived(lookforname, ourdatapacket);
+			return true;
+		}
 	case NETWORKRESPONSETYPE_SYNCDATAEND:
 		{
 			// Check if it succeeded or if it failed //
@@ -293,6 +325,42 @@ void Leviathan::SyncedVariables::_NotifyUpdatedValue(const SyncedValue* const va
 	}
 }
 
+void Leviathan::SyncedVariables::_NotifyUpdatedValue(SyncedResource* valtosync, int useid /*= -1*/){
+	// Only update if we are a host //
+	if(!IsHost)
+		return;
+
+	// Create an update packet //
+	shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 3000));
+
+	// Serialize it to a packet //
+	sf::Packet packet;
+
+	valtosync->AddDataToPacket(packet);
+
+	// Extract it from the packet //
+	tmpresponse->GenerateResourceSyncResponse(reinterpret_cast<const char*>(packet.getData()), packet.getDataSize());
+
+	// Report //
+	Logger::Get()->Info(L"SyncedVariables: syncing resource "+valtosync->Name+L" with everyone");
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Send it //
+	for(size_t i = 0; i < ConnectedToOthers.size(); i++){
+		// The connection might have closed so we need to retrieve the actual pointer //
+		auto safeptr = NetworkHandler::Get()->GetSafePointerToConnection(ConnectedToOthers[i]);
+
+		if(safeptr){
+			// Send to connection //
+			safeptr->SendPacketToConnection(tmpresponse, 100);
+
+		} else {
+			DEBUG_BREAK;
+		}
+	}
+}
+// ------------------------------------ //
 shared_ptr<SentNetworkThing> Leviathan::SyncedVariables::_SendValueToSingleReceiver(ConnectionInfo* unsafeptr, const SyncedValue* const valtosync){
 	// Create an update packet //
 	shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 3000));
@@ -311,8 +379,50 @@ shared_ptr<SentNetworkThing> Leviathan::SyncedVariables::_SendValueToSingleRecei
 
 	}
 
-	DEBUG_BREAK;
-	return nullptr;
+	return NULL;
+}
+
+shared_ptr<SentNetworkThing> Leviathan::SyncedVariables::_SendValueToSingleReceiver(ConnectionInfo* unsafeptr, SyncedResource* valtosync){
+	// Create an update packet //
+	shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 3000));
+
+	// Serialize it to a packet //
+	sf::Packet packet;
+
+	valtosync->AddDataToPacket(packet);
+
+	// Extract it from the packet //
+	tmpresponse->GenerateResourceSyncResponse(reinterpret_cast<const char*>(packet.getData()), packet.getDataSize());
+
+	// Report //
+	Logger::Get()->Info(L"SyncedVariables: syncing resource "+valtosync->Name+L" with specific");
+
+	// The connection might have closed so we need to retrieve the actual pointer //
+	auto safeptr = NetworkHandler::Get()->GetSafePointerToConnection(unsafeptr);
+
+	if(safeptr){
+		// Send to connection //
+		return safeptr->SendPacketToConnection(tmpresponse, 5);
+	}
+
+	return NULL;
+}
+// ------------------------------------ //
+void Leviathan::SyncedVariables::_OnSyncedResourceReceived(const wstring &name, sf::Packet &packetdata){
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Search through our SyncedResources //
+	for(size_t i = 0; i < ConnectedChildren.size(); i++){
+		// Check does it match the name //
+		auto tmpvar = static_cast<SyncedResource*>(ConnectedChildren[i]->GetActualPointerToNotifiableObject());
+
+		if(tmpvar->Name == name){
+			// It is this //
+			tmpvar->UpdateDataFromPacket(packetdata);
+			return;
+		}
+	}
+	Logger::Get()->Warning(L"SyncedVariables: synced resource with the name \""+name+L"\" was not found/updated");
 }
 // ------------------------------------ //
 void Leviathan::SyncedVariables::_UpdateFromNetworkReceive(NetworkResponseDataForSyncValData* datatouse, ObjectLock &guard){

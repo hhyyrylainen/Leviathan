@@ -56,9 +56,8 @@ namespace Leviathan{
 		//! Stores a pointer to the object that is inherited from this
 		ParentType* PointerToOurNotifier;
 
-		//! List of other objects that this is connected to
-		//! \todo Check if list is actually better than a vector
-		std::list<BaseNotifiable<ParentType, ChildType>*> ConnectedChildren;
+		//! Vector of other objects that this is connected to
+		std::vector<BaseNotifiable<ParentType, ChildType>*> ConnectedChildren;
 	};
 
 	//! \brief Specialized class for accepting all parent/child objects

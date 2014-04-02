@@ -23,6 +23,7 @@
 #include "PongPackets.h"
 #include "Newton/PhysicalMaterial.h"
 #include "Newton/PhysicalMaterialManager.h"
+#include "Networking/SyncedResource.h"
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return;
 
@@ -44,8 +45,9 @@ namespace Pong{
 	class BasePongParts{
 		friend Arena;
 	public:
-		BasePongParts(bool isserver) : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), ScoreLimit(20),
-			BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), GameConfigurationData(new Leviathan::SimpleDatabase(L"GameConfiguration")),
+		BasePongParts(bool isserver) : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), 
+			ScoreLimit(L"ScoreLimit", 20), BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), 
+			GameConfigurationData(new Leviathan::SimpleDatabase(L"GameConfiguration")),
 			GamePaused(false), GameAI(NULL)
 		{
 			BasepongStaticAccess = this;
@@ -303,7 +305,7 @@ playrscorelistupdateendlabel:
 		int LastPlayerHitBallID;
 
 		bool GamePaused;
-		int ScoreLimit;
+		SyncedPrimitive<int> ScoreLimit;
 
 		//! Used to count ticks to not have to call set apply force every tick
 		int Tickcount;

@@ -28,7 +28,8 @@ namespace Leviathan{
 		class TrailEmitter;
 	}
 
-
+	template<class DTypeName> class SyncedPrimitive;
+	class SyncedResource;
 	class ViewerCameraPos;
 	class NewtonManager;
 	class SoundDevice;

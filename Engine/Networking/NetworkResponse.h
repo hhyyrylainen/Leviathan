@@ -80,10 +80,11 @@ namespace Leviathan{
 		//! Returns anonymous data about the server
 		NETWORKRESPONSETYPE_SERVERSTATUS,
 		//! Sends a update/new SyncedValue
-		//! \todo This needs to be implemented
 		NETWORKRESPONSETYPE_SYNCVALDATA,
 		//! Send after all NETWORKRESPONSETYPE_SYNCVALDATA has been sent and indicates whether they should have arrived correctly
 		NETWORKRESPONSETYPE_SYNCDATAEND,
+		//! Contains SyncedResource update notification
+		NETWORKRESPONSETYPE_SYNCRESOURCEDATA,
 
 		//! The packet is a game specific packet!
 		//! \see GameSpecificPacketHandler BaseGameSpecificFactory BaseGameSpecificResponsePacket
@@ -216,6 +217,18 @@ namespace Leviathan{
 		bool Succeeded;
 	};
 
+	//! \brief Contains custom data for SyncedResource to handle
+	class NetworkResponseDataForSyncResourceData : public BaseNetworkResponseData{
+	public:
+		DLLEXPORT NetworkResponseDataForSyncResourceData(sf::Packet &frompacket);
+		DLLEXPORT NetworkResponseDataForSyncResourceData(const string &containeddata);
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! The packet's binary data is stored as characters
+		string OurCustomData;
+	};
+
+
 	//! \brief Used for BaseGameSpecificResponsePacket storing
 	class NetworkResponseDataForCustom : public BaseNetworkResponseData{
 	public:
@@ -245,6 +258,7 @@ namespace Leviathan{
 		DLLEXPORT void GenerateServerAllowResponse(NetworkResponseDataForServerAllow* newddata);
 		DLLEXPORT void GenerateValueSyncResponse(NetworkResponseDataForSyncValData* newddata);
 		DLLEXPORT void GenerateValueSyncEndResponse(NetworkResponseDataForSyncDataEnd* newddata);
+		DLLEXPORT void GenerateResourceSyncResponse(const char* dataptr, size_t datasize);
 
 		DLLEXPORT void GenerateCustomResponse(GameSpecificPacketData* newdpacketdata);
 		DLLEXPORT void GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata);
@@ -272,6 +286,7 @@ namespace Leviathan{
 		DLLEXPORT NetworkResponseDataForSyncValData* GetResponseDataForValueSyncResponse() const;
 		DLLEXPORT NetworkResponseDataForSyncDataEnd* GetResponseDataForValueSyncEndResponse() const;
 		DLLEXPORT NetworkResponseDataForCustom* GetResponseDataForGameSpecific() const;
+		DLLEXPORT NetworkResponseDataForSyncResourceData* GetResponseDataForSyncResourceResponse() const;
 
 		DLLEXPORT int GetResponseID() const;
 

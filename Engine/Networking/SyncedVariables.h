@@ -8,6 +8,8 @@
 // ---- includes ---- //
 #include "Common/ThreadSafe.h"
 #include "NetworkResponse.h"
+#include "SyncedResource.h"
+#include "Common/BaseNotifier.h"
 
 
 namespace Leviathan{
@@ -63,8 +65,9 @@ namespace Leviathan{
 	//! By default this doesn't synchronize anything. You will have to manually add variables
 	//! \todo Events
 	//! \todo Add function to be able to check if sync completed successfully
-	class SyncedVariables : public ThreadSafe{
+	class SyncedVariables : public BaseNotifierAll{
 		friend SyncedValue;
+		friend SyncedResource;
 	public:
 		//! \brief Construct an instance that must be owned by a NetworkHandler
 		DLLEXPORT SyncedVariables(NetworkHandler* owner, bool amiaserver, NetworkInterface* handlinginterface);
@@ -120,9 +123,18 @@ namespace Leviathan{
 
 		//! \brief Sends update notifications about a variable
 		void _NotifyUpdatedValue(const SyncedValue* const valtosync, int useid = -1);
+		void _NotifyUpdatedValue(SyncedResource* valtosync, int useid = -1);
+
 		shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(ConnectionInfo* unsafeptr, const SyncedValue* const valtosync);
+		shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(ConnectionInfo* unsafeptr, SyncedResource* valtosync);
 
 		void _UpdateFromNetworkReceive(NetworkResponseDataForSyncValData* datatouse, ObjectLock &guard);
+
+		//! \brief SyncedResource calls this when it is updated
+		void _IWasUpdated(SyncedResource* me);
+
+		//! \brief This is called when an update to a SyncedResource is received through the network
+		void _OnSyncedResourceReceived(const wstring &name, sf::Packet &packetdata);
 
 		// ------------------------------------ //
 
@@ -145,6 +157,7 @@ namespace Leviathan{
 		//! Keeps tract of other instances that are allowed to request from us
 		//!
 		//! New ones are added with the AddAnotherToSyncWith function or after querying the interface automatically
+		//! \note Variables of custom type and objects held by others are BaseNotifierAll in vectors
 		std::vector<ConnectionInfo*> ConnectedToOthers;
 
 

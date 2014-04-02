@@ -78,6 +78,11 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
 			ResponseData = new NetworkResponseDataForCustom(receivedresponse);
 		}
 		break;
+	case NETWORKRESPONSETYPE_SYNCRESOURCEDATA:
+		{
+			ResponseData = new NetworkResponseDataForSyncResourceData(receivedresponse);
+		}
+		break;
 	default:
 		{
 			throw ExceptionInvalidArgument(L"packet has invalid type", 0, __WFUNCTION__, L"receivedresponse", Convert::ToWstring(ResponseType));
@@ -144,6 +149,14 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateValueSyncEndResponse(NetworkR
 	SAFE_DELETE(ResponseData);
 
 	ResponseData = newddata;
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateResourceSyncResponse(const char* dataptr, size_t datasize){
+	ResponseType = NETWORKRESPONSETYPE_SYNCRESOURCEDATA;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = new NetworkResponseDataForSyncResourceData(string(dataptr, datasize));
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkResponse::GenerateKeepAliveResponse(){
@@ -256,6 +269,12 @@ DLLEXPORT NetworkResponseDataForSyncDataEnd* Leviathan::NetworkResponse::GetResp
 DLLEXPORT NetworkResponseDataForCustom* Leviathan::NetworkResponse::GetResponseDataForGameSpecific() const{
 	if(ResponseType == NETWORKRESPONSETYPE_CUSTOM && ResponseData)
 		return static_cast<NetworkResponseDataForCustom*>(ResponseData);
+	return NULL;
+}
+
+DLLEXPORT NetworkResponseDataForSyncResourceData* Leviathan::NetworkResponse::GetResponseDataForSyncResourceResponse() const{
+	if(ResponseType == NETWORKRESPONSETYPE_SYNCRESOURCEDATA && ResponseData)
+		return static_cast<NetworkResponseDataForSyncResourceData*>(ResponseData);
 	return NULL;
 }
 // ------------------------------------ //
@@ -523,4 +542,21 @@ DLLEXPORT Leviathan::NetworkResponseDataForCustom::NetworkResponseDataForCustom(
 
 DLLEXPORT void Leviathan::NetworkResponseDataForCustom::AddDataToPacket(sf::Packet &packet){
 	GameSpecificPacketHandler::Get()->PassGameSpecificDataToPacket(ActualPacketData.get(), packet);
+}
+// ------------------ NetworkResponseDataForCustom ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForSyncResourceData::NetworkResponseDataForSyncResourceData(sf::Packet &frompacket){
+	
+	if(!(frompacket >> OurCustomData)){
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForSyncResourceData::NetworkResponseDataForSyncResourceData(const string &containeddata) : 
+	OurCustomData(containeddata)
+{
+
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForSyncResourceData::AddDataToPacket(sf::Packet &packet){
+	packet << OurCustomData;
 }

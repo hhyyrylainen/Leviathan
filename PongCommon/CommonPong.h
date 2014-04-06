@@ -45,24 +45,22 @@ namespace Pong{
 	class BasePongParts{
 		friend Arena;
 	public:
-		BasePongParts(bool isserver) : GameArena(nullptr), ErrorState("No error"), PlayerList(4), Tickcount(0), LastPlayerHitBallID(-1), 
+
+		static void StatUpdater(PlayerList* list){
+			Get()->OnPlayerStatsUpdated(list);
+		}
+
+
+		BasePongParts(bool isserver) : GameArena(nullptr), ErrorState("No error"), Tickcount(0), LastPlayerHitBallID(-1), 
 			ScoreLimit(L"ScoreLimit", 20), BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), 
 			GameConfigurationData(new Leviathan::SimpleDatabase(L"GameConfiguration")),
-			GamePaused(false), GameAI(NULL)
+			GamePaused(L"GamePaused", false), GameAI(NULL), _PlayerList(boost::function<void (PlayerList*)>(&StatUpdater), 4)
 		{
 			BasepongStaticAccess = this;
-
-			// Fill the player list with empty slots //
-			PlayerSlot::CurrentPlayerIdentifier = 0;
-
-			for(size_t i = 0; i < PlayerList.size(); i++){
-
-				PlayerList[i] = new PlayerSlot(i, true);
-			}
 		}
 
 		~BasePongParts(){
-			SAFE_DELETE_VECTOR(PlayerList);
+
 			SAFE_DELETE(GameAI);
 			BasepongStaticAccess = NULL;
 		}
@@ -80,9 +78,11 @@ namespace Pong{
 		//! \brief Updates the ball trail based on the player colour
 		void SetBallLastHitColour(){
 			// Find the player with the last hit identifier and apply that player's colour //
-			for(size_t i = 0; i < PlayerList.size(); i++){
+			auto tmplist = _PlayerList.GetVec();
 
-				PlayerSlot* slotptr = PlayerList[i];
+			for(size_t i = 0; i < tmplist.size(); i++){
+
+				PlayerSlot* slotptr = tmplist[i];
 
 				while(slotptr){
 
@@ -95,8 +95,7 @@ namespace Pong{
 					slotptr = slotptr->GetSplit();
 				}
 			}
-
-
+			
 			// No other colour is applied so set the default colour //
 			GameArena->ColourTheBallTrail(Float4(1.f, 1.f, 1.f, 1.f));
 		}
@@ -120,9 +119,9 @@ namespace Pong{
 			// Add point to player who scored //
 
 			// Look through all players and compare PlayerIDs //
-			for(size_t i = 0; i < PlayerList.size(); i++){
+			for(size_t i = 0; i < _PlayerList.Size(); i++){
 
-				PlayerSlot* slotptr = PlayerList[i];
+				PlayerSlot* slotptr = _PlayerList[i];
 
 				while(slotptr){
 
@@ -162,17 +161,19 @@ playrscorelistupdateendlabel:
 			return GameArena->IsBallInPaddleArea();
 		}
 
+
+
 		bool PlayerIDMatchesGoalAreaID(int plyid, Leviathan::BasePhysicsObject* goalptr){
 			// Look through all players and compare find the right PlayerID and compare goal area ptr //
-			for(size_t i = 0; i < PlayerList.size(); i++){
+			for(size_t i = 0; i < _PlayerList.Size(); i++){
 
-				PlayerSlot* slotptr = PlayerList[i];
+				PlayerSlot* slotptr = _PlayerList[i];
 
 				while(slotptr){
 
 					if(plyid == slotptr->GetPlayerIdentifier()){
 						// Check if goal area matches //
-						Leviathan::BasePhysicsObject* tmpptr = dynamic_cast<Leviathan::BasePhysicsObject*>(PlayerList[i]->GetGoalArea().get());
+						Leviathan::BasePhysicsObject* tmpptr = dynamic_cast<Leviathan::BasePhysicsObject*>(slotptr->GetGoalArea().get());
 						if(tmpptr == goalptr){
 							// Found matching goal area //
 							return true;
@@ -206,7 +207,7 @@ playrscorelistupdateendlabel:
 
 		// Variable set/get //
 		PlayerSlot* GetPlayerSlot(int id){
-			return PlayerList[id];
+			return _PlayerList[id];
 		}
 
 		void inline SetError(const string &error){
@@ -234,9 +235,9 @@ playrscorelistupdateendlabel:
 			Leviathan::BasePhysicsObject* realballptr = dynamic_cast<Leviathan::BasePhysicsObject*>(GameArena->GetBallPtr().get());
 
 			// Look through all players and compare paddle ptrs //
-			for(size_t i = 0; i < PlayerList.size(); i++){
+			for(size_t i = 0; i < _PlayerList.Size(); i++){
 
-				PlayerSlot* slotptr = PlayerList[i];
+				PlayerSlot* slotptr = _PlayerList[i];
 
 				while(slotptr){
 
@@ -288,6 +289,7 @@ playrscorelistupdateendlabel:
 		// These should be overridden by the child class //
 		virtual void DoSpecialPostLoad() = 0;
 		virtual void CustomizedGameEnd() = 0;
+		virtual void OnPlayerStatsUpdated(PlayerList* list) = 0;
 
 		virtual void ServerCheckEnd(){
 
@@ -304,7 +306,7 @@ playrscorelistupdateendlabel:
 
 		int LastPlayerHitBallID;
 
-		bool GamePaused;
+		SyncedPrimitive<bool> GamePaused;
 		SyncedPrimitive<int> ScoreLimit;
 
 		//! Used to count ticks to not have to call set apply force every tick
@@ -318,7 +320,7 @@ playrscorelistupdateendlabel:
 		// Configuration data //
 		shared_ptr<Leviathan::SimpleDatabase> GameConfigurationData;
 
-		vector<PlayerSlot*> PlayerList;
+		PlayerList _PlayerList;
 
 		//! stores last error string for easy access from scripts
 		string ErrorState;
@@ -397,6 +399,11 @@ playrscorelistupdateendlabel:
 
 			DoSpecialPostLoad();
 
+			// Register the variables //
+			ScoreLimit.StartSync();
+			GamePaused.StartSync();
+			_PlayerList.StartSync();
+
 			// Wait for everything to finish //
 			Engine::Get()->GetThreadingManager()->WaitForAllTasksToFinish();
 
@@ -419,9 +426,9 @@ playrscorelistupdateendlabel:
 			if(GameArena->GetBallPtr() && !GamePaused){
 
 				// Find AI slots //
-				for(size_t i = 0; i < PlayerList.size(); i++){
+				for(size_t i = 0; i < _PlayerList.Size(); i++){
 
-					PlayerSlot* slotptr = PlayerList[i];
+					PlayerSlot* slotptr = _PlayerList[i];
 
 					while(slotptr){
 

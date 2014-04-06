@@ -69,7 +69,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_pt
 }
 
 DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived){
-	DEBUG_BREAK;
+	
 	return false;
 }
 // ------------------------------------ //

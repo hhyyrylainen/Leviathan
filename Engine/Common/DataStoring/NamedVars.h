@@ -130,6 +130,8 @@ namespace Leviathan{
 		DLLEXPORT NamedVars(const wstring &datadump);
 		DLLEXPORT NamedVars(const vector<shared_ptr<NamedVariableList>> &variables);
 		DLLEXPORT NamedVars(shared_ptr<NamedVariableList> variable);
+		//! \param takevariable New'd ptr that will be owned by this object
+		DLLEXPORT NamedVars(NamedVariableList* takevariable);
 
 		//! \brief Loads a NamedVars object from a packet
 		DLLEXPORT NamedVars(sf::Packet &packet);

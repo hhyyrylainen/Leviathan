@@ -55,6 +55,11 @@ namespace Pong{
 		virtual void MoreCustomScriptTypes(asIScriptEngine* engine);
 		virtual void MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids);
 
+
+		//! \brief Sends updates to the GUI
+		//! \todo Implement this
+		virtual void OnPlayerStatsUpdated(PlayerList* list);
+
 		// ------------------------------------ //
 		Leviathan::Gui::GuiManager* GuiManagerAccess;
 		GameInputController* GameInputHandler;

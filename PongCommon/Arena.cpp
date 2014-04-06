@@ -401,9 +401,9 @@ void Pong::Arena::ServeBall(){
 
 	while(count > -1){
 
-		for(size_t i = 0; i < game->PlayerList.size(); i++){
+		for(size_t i = 0; i < game->_PlayerList.Size(); i++){
 
-			if(game->PlayerList[i]->IsSlotActive()){
+			if(game->_PlayerList[i]->IsSlotActive()){
 				count--;
 				if(count < 0){
 					// Set direction //

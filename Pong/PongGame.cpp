@@ -303,7 +303,7 @@ void Pong::PongGame::CustomizedGameEnd(){
 
 void Pong::PongGame::StartInputHandling(){
 	GUARD_LOCK_THIS_OBJECT();
-	GameInputHandler->StartReceivingInput(PlayerList);
+	GameInputHandler->StartReceivingInput(_PlayerList.GetVec());
 	GameInputHandler->SetBlockState(false);
 }
 // ------------------------------------ //
@@ -464,4 +464,11 @@ bool Pong::PongGame::Connect(const wstring &address, wstring &errorstr){
 
 	// Now it should be fine, waiting for messages //
 	return true;
+}
+
+void Pong::PongGame::OnPlayerStatsUpdated(PlayerList* list){
+	// Fire an event to notify the GUI about this //
+	EventHandler::Get()->CallEvent(new GenericEvent(L"PlayerStatusUpdated", NamedVars(new NamedVariableList())));
+
+
 }

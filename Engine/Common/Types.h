@@ -917,6 +917,11 @@ namespace Leviathan{
 		static const Float4 ColourBlack;
 		static const Float4 ColourWhite;
 		static const Float4 ColourTransparent;
+
+		// Use these from other libraries/executables to avoid linker errors //
+		DLLEXPORT static const Float4& GetColourBlack();
+		DLLEXPORT static const Float4& GetColourWhite();
+		DLLEXPORT static const Float4& GetColourTransparent();
 	};
 
 

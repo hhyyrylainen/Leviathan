@@ -14,10 +14,11 @@
 #include "OgreMaterialManager.h"
 #include "OgreRoot.h"
 #include "OgreTextureManager.h"
+#include "Application/GameConfiguration.h"
 using namespace Leviathan;
 using namespace Rendering;
 // ------------------------------------ //
-
+#define OGRE_ALLOW_USEFULLOUTPUT
 
 DLLEXPORT Leviathan::Graphics::Graphics() : ORoot(nullptr), Fonts(NULL)
 {
@@ -67,8 +68,27 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 	OLog = Ogre::LogManager::getSingleton().createLog(Convert::WstringToString(appdef->GetLogFile()+L"LogOGRE.txt"), true, true, false);
 	OLog->setDebugOutputEnabled(true);
-	OLog->setLogDetail(Ogre::LL_NORMAL);
+#ifdef OGRE_ALLOW_USEFULLOUTPUT
 
+	bool usebore = false;
+	{
+		// Check if we want it //
+		GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
+
+		if(variables)
+			variables->GetValueAndConvertTo<bool>(L"OgreBoreMe", usebore);
+	}
+
+	if(usebore){
+		OLog->setLogDetail(Ogre::LL_BOREME);
+	} else {
+		OLog->setLogDetail(Ogre::LL_NORMAL);
+	}
+#else
+	OLog->setLogDetail(Ogre::LL_NORMAL);
+#endif // OGRE_USEFULLOUTPUT
+
+	
 	ORoot = unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, ""));
 
 

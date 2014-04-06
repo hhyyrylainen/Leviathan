@@ -6,6 +6,7 @@
 #include "FileSystem.h"
 #include "Common/StringOperations.h"
 #include "../Iterators/WstringIterator.h"
+#include "jsoncpp/json.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::SimpleDatabase::SimpleDatabase(const wstring &databasename){
@@ -17,6 +18,7 @@ DLLEXPORT Leviathan::SimpleDatabase::~SimpleDatabase(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::SimpleDatabase::AddValue(const wstring &database, shared_ptr<SimpleDatabaseRowObject> valuenamesandvalues){
+	GUARD_LOCK_THIS_OBJECT();
 	// Using the database object add a new value to correct vector //
 	auto iter = _EnsureTable(database);
 
@@ -34,6 +36,7 @@ DLLEXPORT bool Leviathan::SimpleDatabase::AddValue(const wstring &database, shar
 }
 
 DLLEXPORT bool Leviathan::SimpleDatabase::RemoveValue(const wstring &database, int row){
+	GUARD_LOCK_THIS_OBJECT();
 	// If we are missing the database we shouldn't add it //
 	SimpleDatabaseObject::iterator iter = Database.find(database);
 
@@ -55,6 +58,7 @@ DLLEXPORT bool Leviathan::SimpleDatabase::RemoveValue(const wstring &database, i
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::SimpleDatabase::GetRow(std::vector<wstring> &row, const wstring &table, int row_index, const std::vector<wstring> &columns){
+	GUARD_LOCK_THIS_OBJECT();
 	// If we are missing the database we shouldn't add it //
 	SimpleDatabaseObject::iterator iter = Database.find(table);
 
@@ -86,6 +90,7 @@ DLLEXPORT void Leviathan::SimpleDatabase::GetRow(std::vector<wstring> &row, cons
 }
 
 DLLEXPORT int Leviathan::SimpleDatabase::GetNumRows(const wstring &table){
+	GUARD_LOCK_THIS_OBJECT();
 	// If we are missing the database we shouldn't add it //
 	SimpleDatabaseObject::iterator iter = Database.find(table);
 
@@ -96,9 +101,9 @@ DLLEXPORT int Leviathan::SimpleDatabase::GetNumRows(const wstring &table){
 
 	return iter->second->size();
 }
-
-
+// ------------------------------------ //
 DLLEXPORT shared_ptr<VariableBlock> Leviathan::SimpleDatabase::GetValueOnRow(const wstring &table, const wstring &valuekeyname, const VariableBlock &wantedvalue, const wstring &wantedvaluekey){
+	GUARD_LOCK_THIS_OBJECT();
 	// Search the database for matching row and return another value from that row //
 	// If we are missing the database we shouldn't add it //
 	SimpleDatabaseObject::iterator iter = Database.find(table);
@@ -130,6 +135,67 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::SimpleDatabase::GetValueOnRow(con
 
 	return NULL;
 }
+
+
+DLLEXPORT bool Leviathan::SimpleDatabase::WriteTableToJson(const wstring &tablename, string &receiver, bool humanreadable /*= false*/){
+	// Holds the data //
+	Json::Value root;
+
+	// Add all the values to this //
+	Json::Value tablearray;
+
+	{
+		GUARD_LOCK_THIS_OBJECT();
+		// If we are missing the database we shouldn't add it //
+		SimpleDatabaseObject::iterator iter = Database.find(tablename);
+
+		if(iter == Database.end()){
+			// No such database //
+			return false;
+		}
+
+		// Loop all the values on this table //
+		for(size_t i = 0; i < iter->second->size(); i++){
+			// Create a value from this row //
+			Json::Value rowdata;
+
+			// Loop all values //
+			for(auto iter2 = iter->second->at(i)->begin(); iter2 != iter->second->at(i)->end(); ++iter2){
+				// We want to set it as the native data //
+				switch(iter2->second->GetBlockConst()->Type){
+				case DATABLOCK_TYPE_INT: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator int(); break;
+				case DATABLOCK_TYPE_FLOAT: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator float(); break;
+				case DATABLOCK_TYPE_BOOL: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator bool(); break;
+				case DATABLOCK_TYPE_WSTRING: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator string(); break;
+				case DATABLOCK_TYPE_STRING: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator string(); break;
+				case DATABLOCK_TYPE_CHAR: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator char(); break;
+				case DATABLOCK_TYPE_DOUBLE: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator double(); break;
+				default: assert(0 && "unallowed datablock type in SimpleDatabase");
+				}
+			}
+
+			// Set the value to the array //
+			tablearray.append(rowdata);
+		}
+
+	}
+	// The lock ends here since it is no longer needed //
+
+	// Add it and write //
+	root[Convert::WstringToString(tablename)] = tablearray;
+
+	// It succeeded //
+	if(!humanreadable){
+		Json::FastWriter writer;
+		receiver = writer.write(root);
+	} else {
+		Json::StyledWriter writer;
+		receiver = writer.write(root);
+	}
+	
+	return true;
+}
+
 // ------------------------------------ //
 SimpleDatabaseObject::iterator Leviathan::SimpleDatabase::_EnsureTable(const wstring &name){
 	// Try to find it //
@@ -177,6 +243,8 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
 
 		WstringIterator::StripPreceedingAndTrailingWhitespaceComments(Lines[i]);
 	}
+
+	GUARD_LOCK_THIS_OBJECT();
 
 	SimpleDatabaseObject::iterator insertiter;
 
@@ -243,27 +311,29 @@ DLLEXPORT void Leviathan::SimpleDatabase::SaveToFile(const wstring &file){
 
 	wstring datastr;
 	wstring tmpdata;
+	{
+		GUARD_LOCK_THIS_OBJECT();
+		// Just iterate over everything and write them to file //
+		for(auto iter = Database.begin(); iter != Database.end(); ++iter){
 
-	// Just iterate over everything and write them to file //
-	for(auto iter = Database.begin(); iter != Database.end(); ++iter){
+			datastr += L"TABLE = \""+iter->first+L"\";\n";
 
-		datastr += L"TABLE = \""+iter->first+L"\";\n";
+			for(auto iter2 = iter->second->begin(); iter2 != iter->second->end(); ++iter2){
 
-		for(auto iter2 = iter->second->begin(); iter2 != iter->second->end(); ++iter2){
+				datastr += L"n= [";
 
-			datastr += L"n= [";
+				for(auto iter3 = (*iter2)->begin(); iter3 != (*iter2)->end(); ++iter3){
 
-			for(auto iter3 = (*iter2)->begin(); iter3 != (*iter2)->end(); ++iter3){
+					datastr += L"[\""+iter3->first+L"\"]";
 
-				datastr += L"[\""+iter3->first+L"\"]";
+					if(!iter3->second->ConvertAndAssingToVariable<wstring>(tmpdata)){
 
-				if(!iter3->second->ConvertAndAssingToVariable<wstring>(tmpdata)){
-
-					assert(0 && "database has a value that cannot be stored as a string");
+						assert(0 && "database has a value that cannot be stored as a string");
+					}
+					datastr += L"[\""+tmpdata+L"\"]";
 				}
-				datastr += L"[\""+tmpdata+L"\"]";
+				datastr += L"];\n";
 			}
-			datastr += L"];\n";
 		}
 	}
 

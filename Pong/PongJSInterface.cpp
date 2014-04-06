@@ -4,10 +4,26 @@
 #include "PongJSInterface.h"
 #endif
 #include "PongGame.h"
+#include "jsoncpp\json.h"
 using namespace Pong;
 using namespace Leviathan;
 using namespace Gui;
 // ------------------------------------ //
+// ------------------ Local helper functions ------------------ //
+void PutPlayerDataToJSon(PlayerSlot* ply, Json::Value &root){
+	// Set all the data //
+	root["Type"] = ply->GetPlayerType();
+	root["Identifier"] = ply->GetPlayerIdentifier();
+	root["ControlType"] = ply->GetControlType();
+	root["ControlID"] = ply->GetControlIdentifier();
+	root["CControlID"] = ply->GetPlayerControllerID();
+	root["Slot"] = ply->GetSlotNumber();
+	root["Score"] = ply->GetScore();
+	root["IsSplit"] = ply->GetSplitCount();
+	root["Colour"] = ply->GetColourAsRML();
+	root["IsActive"] = ply->IsSlotActive();
+}
+// ------------------ CustomJSInterface ------------------ //
 CustomJSInterface::CustomJSInterface(){
 
 
@@ -67,6 +83,76 @@ bool CustomJSInterface::ProcessQuery(Leviathan::Gui::LeviathanJavaScriptAsync* c
 			// It worked //
 			callback->Success("1");
 
+			return true;
+		} else if(funcname == L"PongSlotInfo"){
+			// Get info about a game slot //
+			JS_ACCESSCHECKPTR(VIEW_SECURITYLEVEL_NORMAL, caller);
+
+			// Get the slot number //
+			auto numberstr = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
+
+			if(!numberstr){
+
+				callback->Failure(1, "Did not find the team number");
+				return true;
+			}
+
+			int team = Convert::WstringToInt(*numberstr);
+
+			if(team < 0 || team >= 4){
+
+				callback->Failure(1, "Invalid team number");
+				return true;
+			}
+
+			// Serialize the info to json //
+			PlayerSlot* ply = PongGame::Get()->GetPlayerSlot(team);
+
+
+			// Get the data and serialize it //
+			Json::Value root;
+			{
+				GUARD_LOCK_OTHER_OBJECT(ply);
+				PutPlayerDataToJSon(ply, root);
+				
+
+				PlayerSlot* split = ply->GetSplit();
+				if(split){
+					// We need to put it's data //
+					Json::Value childdata;
+
+					GUARD_LOCK_OTHER_OBJECT_NAME(split, guard2);
+
+					PutPlayerDataToJSon(split, childdata);
+
+					// Add it //
+					root["SplitSlot"] = childdata;
+				}
+			}
+
+			// Send the json //
+			Json::FastWriter writer;
+
+			const string text = writer.write(root);
+
+			callback->Success(text);
+			return true;
+		} else if(funcname == L"PongGameDBTable"){
+			JS_ACCESSCHECKPTR(VIEW_SECURITYLEVEL_NORMAL, caller);
+
+			// Try to get the table from the game database //
+			const wstring table = *itr.GetStringInQuotes(QUOTETYPE_BOTH).get();
+
+			string tabledata;
+			
+			if(!PongGame::Get()->GetGameDatabase()->WriteTableToJson(table, tabledata)){
+
+				callback->Failure(404, "Table with that name not found");
+				return true;
+			}
+
+
+			callback->Success(tabledata);
 			return true;
 		}
 	}

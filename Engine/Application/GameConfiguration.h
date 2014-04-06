@@ -13,7 +13,8 @@
 
 namespace Leviathan{
 
-#define GAMECONFIGURATION_GET_VARIABLEACCESS(x) 	GUARD_LOCK_OTHER_OBJECT_NAME(GameConfiguration::Get(), lockitc); NamedVars* x = GameConfiguration::Get()->AccessVariables(lockitc);
+#define GAMECONFIGURATION_GET_VARIABLEACCESS(x) 	NamedVars* x = NULL; unique_ptr<ObjectLock> varlockaccess; {GameConfiguration* configvar = GameConfiguration::Get(); \
+	if(configvar != NULL){ varlockaccess = unique_ptr<ObjectLock>(new ObjectLock(configvar->ObjectsLock)); x = configvar->AccessVariables(*varlockaccess.get());}}
 
 
 	class GameConfiguration : public ThreadSafe{

@@ -32,6 +32,11 @@ namespace Pong{
 		//! Used to set the server status as joinable (it has started)
 		virtual void PreFirstTick();
 
+		//! This doesn't need any handling
+		virtual void OnPlayerStatsUpdated(PlayerList* list){
+
+		}
+
 	protected:
 
 		virtual void ServerCheckEnd();

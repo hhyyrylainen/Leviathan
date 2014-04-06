@@ -21,6 +21,134 @@
         "<strong>Error:</strong> "+errorstring+"</p></div>";
     }
     
+    function GetControlKeysFromNumber(controlnumber, controlid){
+        
+        switch(controlnumber){
+            case 1: return "AI";
+            case 2: return "WASD";
+            case 3: return "ARROWS";
+            case 4: return "IJKL";
+            case 5: return "NUMPAD";
+            case 6: return "CONTROLLER("+controlid+")";
+            case 0:
+            default:
+                return "None";
+        }
+}
+    
+    (function ($) {
+        $.widget("custom.combobox", {
+            _create: function () {
+                this.wrapper = $("<span>")
+                    .addClass("custom-combobox")
+                    .insertAfter(this.element);
+                this.element.hide();
+                this._createAutocomplete();
+                this._createShowAllButton();
+            },
+            _createAutocomplete: function () {
+                var selected = this.element.children(":selected"),
+                    value = selected.val() ? selected.text() : "";
+                this.input = $("<input>")
+                    .appendTo(this.wrapper)
+                    .val(value)
+                    .attr("title", "")
+                    .addClass("custom-combobox-input ui-widget ui-widget-content ui-state-default ui-corner-left")
+                    .autocomplete({
+                        delay: 0,
+                        minLength: 0,
+                        source: $.proxy(this, "_source")
+                    })
+                    .tooltip({
+                        tooltipClass: "ui-state-highlight"
+                    });
+                this._on(this.input, {
+                    autocompleteselect: function (event, ui) {
+                        ui.item.option.selected = true;
+                        this._trigger("select", event, {
+                            item: ui.item.option
+                        });
+                    },
+                    autocompletechange: "_removeIfInvalid"
+                });
+            },
+            _createShowAllButton: function () {
+                var input = this.input,
+                    wasOpen = false;
+                $("<a>")
+                    .attr("tabIndex", -1)
+                    .attr("title", "Show All Items")
+                    .tooltip()
+                    .appendTo(this.wrapper)
+                    .button({
+                        icons: {
+                            primary: "ui-icon-triangle-1-s"
+                        },
+                        text: false
+                    })
+                    .removeClass("ui-corner-all")
+                    .addClass("custom-combobox-toggle ui-corner-right")
+                    .mousedown(function () {
+                        wasOpen = input.autocomplete("widget").is(":visible");
+                    })
+                    .click(function () {
+                        input.focus();
+                        // Close if already visible
+                        if (wasOpen) {
+                            return;
+                        }
+                        // Pass empty string as value to search for, displaying all results
+                        input.autocomplete("search", "");
+                    });
+            },
+            _source: function (request, response) {
+                var matcher = new RegExp($.ui.autocomplete.escapeRegex(request.term), "i");
+                response(this.element.children("option").map(function () {
+                    var text = $(this).text();
+                    if (this.value && (!request.term || matcher.test(text)))
+                        return {
+                            label: text,
+                            value: text,
+                            option: this
+                        };
+                }));
+            },
+            _removeIfInvalid: function (event, ui) {
+                // Selected an item, nothing to do
+                if (ui.item) {
+                    return;
+                }
+                // Search for a match (case-insensitive)
+                var value = this.input.val(),
+                    valueLowerCase = value.toLowerCase(),
+                    valid = false;
+                this.element.children("option").each(function () {
+                    if ($(this).text().toLowerCase() === valueLowerCase) {
+                        this.selected = valid = true;
+                        return false;
+                    }
+                });
+                // Found a match, nothing to do
+                if (valid) {
+                    return;
+                }
+                // Remove invalid value
+                this.input
+                    .val("")
+                    .attr("title", value + " didn't match any item")
+                    .tooltip("open");
+                this.element.val("");
+                this._delay(function () {
+                    this.input.tooltip("close").attr("title", "");
+                }, 2500);
+                this.input.data("ui-autocomplete").term = "";
+            },
+            _destroy: function () {
+                this.wrapper.remove();
+                this.element.show();
+            }
+        });
+    })(jQuery);
     
     $(document).ready(function() {
         // Register the listeners //
@@ -62,8 +190,6 @@
             // Try to start connecting //
             ConnectToServer($("#ServerAddressBox").val(), function(){
                 // Change to the right place //
-                console.log("Trying to display server connect screen");
-                
                 $("#ServerConnectScreen").slideDown();
                 $("#DirectConnectScreen").slideUp();
                 
@@ -73,6 +199,11 @@
             
 
         });
+        
+        // Testing switch bed //
+        //$("#TopLevelMenu").slideUp();
+        //$("#LobbyScreen").slideDown();
+        //$("#LobbyTabs").tabs({ event: "mouseover" });
         
         // ------------------ ServerConnectScreen ------------------ //
         $("#ServerConnectScreenDisconnect").on("click", function(){
@@ -112,6 +243,155 @@
                 
                 $("#TopLevelMenu").slideDown();
                 $("#LobbyScreen").slideUp();
+            }
+        });
+        
+        // Create the player stat objects //
+        (function(){
+            // These need to be repeated for all //
+            for(var i = 0; i < 4; i++){
+                $("#LobbyPlyControls"+i).html("Main player: <span id='LTeam"+i+"Slot0Info'>Nobody</span>"
+                    +"<div class='MenuOption Disabled' id='LTeam"+i+"Slot0Join'>Join</div>"
+                    +"<hr class='LobbyHR'>"
+                    +"<div id='LTeam"+i+"Slot0ControlContainer' class='Disabled ui-widget'>"
+                    +"Player controls: "
+                    +"<select id='LTeam"+i+"Slot0Controls'>"
+                    +"</select></div>"
+                    +"<hr class='LobbyHR'>"
+                    +"Secondary player: <span id='LTeam"+i+"Slot1Info' class='Disabled'>Nobody</span>"
+                    +"<div class='MenuOption Disabled' id='LTeam"+i+"Slot1Join'>Join</div>"
+                    +"<div id='LTeam"+i+"Slot1ControlContainer' class='Disabled  ui-widget'>"
+                    +"Player controls: "
+                    +"<select id='LTeam"+i+"Slot1Controls'>"
+                    +"</select></div>");
+                    
+                // Activate the controls //
+                var fillfunc = function(i, slot){
+                    
+                    // Get the database entries //
+                    GetGameDatabaseTable("Controls", function(stringdata){
+                        
+                        // Set the data //
+                        var objdata = JSON.parse(stringdata);
+                        
+                        var darray = objdata.Controls
+                        
+                        for(var a = 0; a < darray.length; a++){
+                            // Put the option //
+                            $("#LTeam"+i+"Slot"+slot+"Controls").append("<option value='"+darray[a].BaseType+"'>"+
+                                darray[a].Type+"</option>");
+                        }
+                        
+                        // Activate the box //
+                        $("#LTeam"+i+"Slot"+slot+"Controls").combobox();
+                        
+                    }, function(){});
+                    
+                    
+                };
+                
+                fillfunc(i, 0);
+                fillfunc(i, 1);
+                
+                // TODO: Load the colours //
+                
+            }
+        }());
+        
+        // Update player stats //
+        Leviathan.OnGeneric("PlayerStatusUpdated", function(name, variables){
+            // We need to update all the player data //
+            for(var i = 0; i < 4; i++){
+                (function(i){
+                    GetPongSlotInfo(i, function(response){
+                        // Update the data //
+                        var fromjson = JSON.parse(response);
+                        
+                        var slotn = "Slot0";
+                        
+                        var localobj = fromjson;
+                        
+                        var quickinfo = ""+localobj.Identifier+": ";
+                        
+                        // Loop the main slot and the split slot //
+                        for(var a = 0; a < 2; a++){
+                            
+                            if(!localobj.IsActive){
+                                // It isn't a kick button //
+                                $("#LTeam"+i+slotn+"Join").removeClass("Dangerous");
+                                $("#LTeam"+i+slotn+"Join").html("Join");
+                                // Write it as empty/closed //
+                                if(localobj.Type == 2){
+                                    // It is empty //
+                                    quickinfo += "EMPTY ";
+                                    
+                                    // Add join button //
+                                    $("#LTeam"+i+slotn+"Info").removeClass("Disabled");
+                                    $("#LTeam"+i+slotn+"Info").html("Empty");
+                                    $("#LTeam"+i+slotn+"Join").removeClass("Disabled");
+                                    
+                                } else {
+                                    // It is closed //
+                                    quickinfo += "CLOSED ";
+                                    
+                                    $("#LTeam"+i+slotn+"Info").addClass("Disabled");
+                                    $("#LTeam"+i+slotn+"Info").html("CLOSED");
+                                    $("#LTeam"+i+slotn+"Join").addClass("Disabled");
+                                }
+                                
+                            } else {
+                                // Now a kick button //
+                                $("#LTeam"+i+slotn+"Join").addClass("Dangerous");
+                                $("#LTeam"+i+slotn+"Join").html("Kick");
+                                
+                                // Check is it a human... //
+                                if(localobj.Type == 0){
+                                    
+                                    quickinfo += "Player using "+GetControlKeysFromNumber(localobj.ControlType, localobj.ControlID)
+                                        +"["+localobj.CControlID+"] ";
+                                    
+                                    // Enable setting controls //
+                                    
+                                    
+                                } else if(localobj.Type == 1){
+                                    // ... or a computer //
+                                    quickinfo += "AI("+localobj.ControlID+") ";
+                                    
+                                    // Change to setting AI level //
+                                    
+                                }
+                            }
+                            // Break if there is no subslot //
+                            if(!localobj.IsSplit){
+                                // Reset subslot html //
+                                $("#LTeam"+i+"Slot1Join").removeClass("Dangerous");
+                                $("#LTeam"+i+"Slot1Join").html("Join");
+                                $("#LTeam"+i+"Slot1Info").addClass("Disabled");
+                                $("#LTeam"+i+"Slot1Info").html("CLOSED");
+                                $("#LTeam"+i+"Slot1Join").addClass("Disabled");
+                                break;
+                            }
+                            // Add a linebreak //
+                            quickinfo += "<br>";
+                            
+                            slotn = "Slot1";
+                            
+                            // Set to point to the split slot //
+                            localobj = fromjson.SplitSlot;
+                            
+                            // Set the beginning //
+                            quickinfo += "    "+localobj.Identifier+": ";
+                        }
+                        
+                        $("#LobMainTabTeam"+i).html(quickinfo);
+                        
+                        
+                        
+                    }, function(code, string){
+                        // Set the error //
+                        $("#LobMainTabTeam"+i).html(GetErrorElementForError(string, "SmallError"));
+                    });
+                }(i));
             }
         });
         
@@ -168,7 +448,6 @@
         <div id="LobbyTabs" class="LobbyTabs">
             <ul>
                 <li><a href="#OverviewTab">Overview</a></li>
-                <li><a href="#SlotsTab">Player slots</a></li>
                 <li><a href="#Team0Tab">Team 0</a></li>
                 <li><a href="#Team1Tab">Team 1</a></li>
                 <li><a href="#Team2Tab">Team 2</a></li>
@@ -177,39 +456,41 @@
             </ul>
             <div class="LobbyTContent" id="OverviewTab">
                 <p>
-                    You are connected to a server.<br>
-                    Put team overviews here.
-                    Add start match button
-                </p>
-            </div>
-            <div class="LobbyTContent" id="SlotsTab">
-                <p>
-                    Add controls for slot splitting, open teams and AI adding
+                    <p>You are connected to.</p>
+                    
+                    <span class="LobbyTeamName">Team 0:</span>
+                        <p id="LobMainTabTeam0" class="LobbyTeamInfo">Fetching...</p>
+                    <span class="LobbyTeamName">Team 1:</span>
+                        <p id="LobMainTabTeam1" class="LobbyTeamInfo">Fetching...</p>
+                    <span class="LobbyTeamName">Team 2:</span>
+                        <p id="LobMainTabTeam2" class="LobbyTeamInfo">Fetching...</p>
+                    <span class="LobbyTeamName">Team 3:</span>
+                        <p id="LobMainTabTeam3" class="LobbyTeamInfo">Fetching...</p>
                 </p>
             </div>
             <div class="LobbyTContent" id="Team0Tab">
-                <p>
-                    Add buttons to join team 0
+                <p id="LobbyPlyControls0">
+                    Not updated...
                 </p>
             </div>
             <div class="LobbyTContent" id="Team1Tab">
-                <p>
-                    Add buttons to join team 1
+                <p id="LobbyPlyControls1">
+                    Not updated...
                 </p>
             </div>
             <div class="LobbyTContent" id="Team2Tab">
-                <p>
-                    Add buttons to join team 2
+                <p id="LobbyPlyControls2">
+                    Not updated...
                 </p>
             </div>
             <div class="LobbyTContent" id="Team3Tab">
-                <p>
-                    Add buttons to join team 3
+                <p id="LobbyPlyControls3">
+                   Not updated...
                 </p>
             </div>
             <div class="LobbyTContent" id="TeamlessTab">
                 <p>
-                    TODO: put teamless players here for easy checking if all players have joined
+                    TODO: put teamless players here for easy checking to see if all players have joined
                 </p>
             </div>
         </div>
@@ -231,7 +512,7 @@
         </div>
         
         <span class="LobbyDisconnect Dangerous" id="LobbyDisconnect">Disconnect</span>
-        
+        <div class="LobbyStart" id="LobbyStartMatchButton">Start Match</div>
 
         
     </div>

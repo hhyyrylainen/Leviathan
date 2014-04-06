@@ -8,12 +8,17 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::SyncedResource::SyncedResource(const wstring &uniquename) : Name(uniquename){
-
+	// Now we need to be registered later //
 }
 
 DLLEXPORT Leviathan::SyncedResource::~SyncedResource(){
 	// Unregister (if not already done) //
 	ReleaseParentHooks();
+}
+
+DLLEXPORT void Leviathan::SyncedResource::StartSync(){
+	// Register us //
+	ConnectToNotifier(SyncedVariables::Get());
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(sf::Packet &packet){

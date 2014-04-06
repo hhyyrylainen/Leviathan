@@ -146,7 +146,7 @@ license you like.
 /// to prevent private header inclusion.
 /// Remarks: it is automatically defined in the generated amalgated header.
 // #define JSON_IS_AMALGAMATION
-
+#include "Include.h"
 
 # ifdef JSON_IN_CPPTL
 #  include <cpptl/config.h>

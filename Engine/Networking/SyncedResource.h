@@ -14,11 +14,12 @@ namespace Leviathan{
 
 	//! \brief Base class for all values that are to be automatically synced between clients
 	//! \note The variable is not sent to other clients unless they allow new resources from the net and this SyncedResource is updated after adding
+	//! \warning The variable must be registered for syncing after SyncedVariables is created
+	//! \todo Possibly do a global static class that will automatically register all when single StartSync is called
 	class SyncedResource : public BaseNotifiableAll{
 		friend SyncedVariables;
 	public:
 		//! \brief Constructs a base class for synced variables that requires a unique name
-		//! \note This will also automatically register this with SyncedVariables for syncing
 		//! \todo Actually check if the name is actually unique
 		DLLEXPORT SyncedResource(const wstring &uniquename);
 		DLLEXPORT virtual ~SyncedResource();
@@ -34,6 +35,9 @@ namespace Leviathan{
 		//! \return False when the actual implementation throws
 		DLLEXPORT virtual bool UpdateDataFromPacket(sf::Packet &packet);
 
+		//! \brief Registers this resource with the SyncedVariables instance
+		//! \post The variable is now ready for use
+		DLLEXPORT virtual void StartSync();
 
 	protected:
 
@@ -66,6 +70,7 @@ namespace Leviathan{
 	//! \brief Template class for syncing basic types
 	//! \warning This will only work with primitive types like int, float, string etc. For other use you must inherit SyncedResource and create
 	//! a custom class
+	//! \see SyncedResource
 	template<class DTypeName>
 	class SyncedPrimitive : public SyncedResource{
 	public:

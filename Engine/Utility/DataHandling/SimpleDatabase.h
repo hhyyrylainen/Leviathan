@@ -16,7 +16,7 @@ namespace Leviathan{
 
 	//! A class that can be used to pass databases to Rocket and generally keeping simple databases 
 	//! \warning Do NOT use this class as non-pointer objects (because linking will fail)
-	class SimpleDatabase : public Object{
+	class SimpleDatabase : public ThreadSafe{
 	public:
 		//! \brief Creates a new database. Should be used as pointer
 		DLLEXPORT SimpleDatabase(const wstring &databasename);
@@ -38,14 +38,20 @@ namespace Leviathan{
 		DLLEXPORT bool LoadFromFile(const wstring &file);
 		DLLEXPORT void SaveToFile(const wstring &file);
 
-	protected:
-		// TODO: implement file saving and loading
+		//! \brief Serializes a single table to JSON
+		//!
+		//! The JSON structure creates an object that has a single array member named the same as the table
+		//! \return true if the table was found, false otherwise
+		DLLEXPORT bool WriteTableToJson(const wstring &tablename, string &receiver, bool humanreadable = false);
 
-		// Makes sure that a table is fine //
+	protected:
+		//! \brief Makes sure that a table is fine
+		//! \param name Name of the table that is to be created if it doesn't exist
 		SimpleDatabaseObject::iterator _EnsureTable(const wstring &name);
 
 		// ------------------------------------ //
-		// The main database structure //
+
+		//! The main database structure
 		SimpleDatabaseObject Database;
 	};
 

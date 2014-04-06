@@ -7,6 +7,8 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Entities/Objects/TrackEntityController.h"
+#include "Networking/SyncedResource.h"
+#include "Common/ThreadSafe.h"
 
 
 #define INPUTFORCE_APPLYSCALE		20.f
@@ -14,26 +16,40 @@
 
 namespace Pong{
 
-	enum PLAYERTYPE {PLAYERTYPE_HUMAN, PLAYERTYPE_COMPUTER, PLAYERTYPE_EMPTY, PLAYERTYPE_CLOSED};
-	enum PLAYERCONTROLS {PLAYERCONTROLS_NONE, PLAYERCONTROLS_AI, PLAYERCONTROLS_WASD, PLAYERCONTROLS_ARROWS, PLAYERCONTROLS_IJKL,
+	enum PLAYERTYPE {PLAYERTYPE_HUMAN = 0, PLAYERTYPE_COMPUTER, PLAYERTYPE_EMPTY, PLAYERTYPE_CLOSED};
+	enum PLAYERCONTROLS {PLAYERCONTROLS_NONE = 0, PLAYERCONTROLS_AI, PLAYERCONTROLS_WASD, PLAYERCONTROLS_ARROWS, PLAYERCONTROLS_IJKL,
 		PLAYERCONTROLS_NUMPAD, PLAYERCONTROLS_CONTROLLER};
 	enum CONTROLKEYACTION {CONTROLKEYACTION_LEFT, CONTROLKEYACTION_RIGHT, CONTROLKEYACTION_POWERUPDOWN, CONTROLKEYACTION_POWERUPUP};
 
-	// TODO: implement powerups
+	class PlayerList;
 
-	class PlayerSlot{
+	//! \todo implement powerups
+	class PlayerSlot : public Leviathan::ThreadSafe{
+		friend PlayerList;
 	public:
 		// creates an empty slot //
-		PlayerSlot(int slotnumber, bool empty);
-		// Creates fully customized slot, Control identifier is for choosing controller number
-		PlayerSlot(int slotnumber, PLAYERTYPE type, int playeridentifier, PLAYERCONTROLS controltype, int ctrlidentifier, const Float4 &playercolour);
-
+		PlayerSlot(int slotnumber, PlayerList* owner);
 		~PlayerSlot();
+
+
+		//! Call to set the startup parameters
+		//!
+		//! Doesn't actually initialize anything
+		void Init(PLAYERTYPE type = PLAYERTYPE_EMPTY, int playeridentifier = 0, PLAYERCONTROLS controltype = PLAYERCONTROLS_NONE, 
+			int ctrlidentifier = 0, int playercontrollerid = -1, const Float4 &playercolour = Float4::GetColourWhite());
+
+		//! Serializes this object to a packet
+		void AddDataToPacket(sf::Packet &packet);
+
+		//! Updates this object's data from a packet
+		void UpdateDataFromPacket(sf::Packet &packet);
 
 		void SetPlayer(PLAYERTYPE type, int identifier);
 		void SetPlayerProxy(PLAYERTYPE type);
 		PLAYERTYPE GetPlayerType();
 		int GetPlayerIdentifier();
+
+		int GetPlayerControllerID();
 
 		void SetControls(PLAYERCONTROLS type, int identifier);
 		PLAYERCONTROLS GetControlType();
@@ -99,7 +115,7 @@ namespace Pong{
 		// Parses a Float4 from rgb(x,y,z) //
 		void SetColourFromRML(string rml);
 
-		// returns true if player type isn't empty or closed //
+		//! returns true if player type isn't empty or closed
 		inline bool IsSlotActive(){
 
 			return PlayerType != PLAYERTYPE_CLOSED && PlayerType != PLAYERTYPE_EMPTY;
@@ -115,6 +131,12 @@ namespace Pong{
 		static int CurrentPlayerIdentifier;
 
 	private:
+
+		//! \brief Updates other client's objects, should be called when this is updated
+		void _NotifyListOfUpdate();
+
+		// ------------------------------------ //
+
 		// data //
 		int Slot;
 		PLAYERTYPE PlayerType;
@@ -122,10 +144,14 @@ namespace Pong{
 		PLAYERCONTROLS ControlType;
 		int ControlIdentifier;
 
-		
+		//! The control object identifier
+		//! \note This is used to detect which client should control which paddle
+		int PlayerControllerID;
 
 		Float4 Colour;
 
+		//! This is the player's points
+		//! \todo It would be more efficient to have a global points manager than resend all data when the slot is updated
 		int Score;
 
 		int MoveState;
@@ -136,11 +162,58 @@ namespace Pong{
 		shared_ptr<Leviathan::BaseObject> TrackObject;
 		Leviathan::Entity::TrackEntityController* TrackDirectptr;
 
-		// slot splitting //
+		//! Slot splitting
 		PlayerSlot* SplitSlot;
-		// For quick lookups //
+		//! For quick lookups
 		PlayerSlot* ParentSlot;
+
+		//! Notifying our parent of updates
+		PlayerList* Parent;
 	};
+
+
+	//! \brief Holds all the games' PlayerSlots and manages syncing them
+	//! \todo Improve performance somehow
+	//! \todo It should be possible to only update the slot that was updated
+	class PlayerList : public Leviathan::SyncedResource{
+	public:
+
+		PlayerList(boost::function<void (PlayerList*)> callback, size_t playercount = 4);
+		~PlayerList();
+
+
+		PlayerSlot* operator [](size_t index) THROWS{
+			return GamePlayers[index];
+		}
+
+		std::vector<PlayerSlot*>& GetVec(){
+			return GamePlayers;
+		}
+
+
+		size_t Size() const{
+			return GamePlayers.size();
+		}
+
+		virtual void UpdateCustomDataFromPacket(sf::Packet &packet) THROWS;
+
+		virtual void SerializeCustomDataToPacket(sf::Packet &packet);
+
+		virtual void OnValueUpdated();
+
+
+	protected:
+
+
+
+		//! The main list of our players
+		std::vector<PlayerSlot*> GamePlayers;
+
+		//! The function called when this is updated either through the network or locally
+		boost::function<void (PlayerList*)> CallbackFunc;
+	};
+
+
 
 }
 #endif

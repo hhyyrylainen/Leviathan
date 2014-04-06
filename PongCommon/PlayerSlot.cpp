@@ -6,26 +6,34 @@
 #include "Entities/Bases/BasePhysicsObject.h"
 using namespace Pong;
 // ------------------------------------ //
-Pong::PlayerSlot::PlayerSlot(int slotnumber, bool empty) : Slot(slotnumber), PlayerType(PLAYERTYPE_EMPTY), PlayerIdentifier(-1), 
-	ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(-1), SplitSlot(NULL), Score(0), MoveState(0), TrackDirectptr(NULL), Colour(0.f), ParentSlot(NULL)
+Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) : Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_EMPTY), 
+	PlayerIdentifier(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()), PlayerControllerID(0),
+	SplitSlot(NULL)
 {
-
-}
-
-Pong::PlayerSlot::PlayerSlot(int slotnumber, PLAYERTYPE type, int playeridentifier, PLAYERCONTROLS controltype, int ctrlidentifier, 
-	const Float4 &playercolour): Slot(slotnumber), PlayerType(type), PlayerIdentifier(playeridentifier), ControlType(controltype), 
-	ControlIdentifier(ctrlidentifier), SplitSlot(NULL), Score(0), MoveState(0), TrackDirectptr(NULL), Colour(playercolour), ParentSlot(NULL)
-{
-
+	
 }
 
 Pong::PlayerSlot::~PlayerSlot(){
 	SAFE_DELETE(SplitSlot);
 }
 // ------------------------------------ //
+void Pong::PlayerSlot::Init(PLAYERTYPE type /*= PLAYERTYPE_EMPTY*/, int playeridentifier /*= 0*/, PLAYERCONTROLS controltype /*= PLAYERCONTROLS_NONE*/,
+	int ctrlidentifier /*= 0*/, int playercontrollerid /*= -1*/, const Float4 &playercolour /*= Float4::GetColourWhite()*/)
+{
+	PlayerType = type;
+	PlayerIdentifier = playeridentifier;
+	ControlType = controltype;
+	ControlIdentifier = ctrlidentifier;
+	Colour = playercolour;
+	PlayerControllerID = playercontrollerid;
+
+	Parent->OnValueUpdated();
+}
+// ------------------------------------ //
 void Pong::PlayerSlot::SetPlayer(PLAYERTYPE type, int identifier){
 	PlayerType = type;
 	PlayerIdentifier = identifier;
+	Parent->OnValueUpdated();
 }
 
 Pong::PLAYERTYPE Pong::PlayerSlot::GetPlayerType(){
@@ -39,6 +47,7 @@ int Pong::PlayerSlot::GetPlayerIdentifier(){
 void Pong::PlayerSlot::SetControls(PLAYERCONTROLS type, int identifier){
 	ControlType = type;
 	ControlIdentifier = identifier;
+	Parent->OnValueUpdated();
 }
 
 Pong::PLAYERCONTROLS Pong::PlayerSlot::GetControlType(){
@@ -90,6 +99,8 @@ void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool ac
 
 	// Set the track speed based on move direction //
 	TrackDirectptr->SetTrackAdvanceSpeed(MoveState*INPUT_TRACK_ADVANCESPEED);
+
+	Parent->OnValueUpdated();
 }
 
 void Pong::PlayerSlot::InputDisabled(){
@@ -101,6 +112,7 @@ void Pong::PlayerSlot::InputDisabled(){
 
 	// reset control state //
 	MoveState = 0;
+	Parent->OnValueUpdated();
 }
 
 int Pong::PlayerSlot::GetScore(){
@@ -146,9 +158,11 @@ void Pong::PlayerSlot::SetColourFromRML(string rml){
 }
 // ------------------------------------ //
 void Pong::PlayerSlot::AddEmptySubSlot(){
-	SplitSlot = new PlayerSlot(this->Slot, true);
+	SplitSlot = new PlayerSlot(this->Slot, Parent);
 	// Set this as the parent //
 	SplitSlot->ParentSlot = this;
+
+	Parent->OnValueUpdated();
 }
 
 void Pong::PlayerSlot::SetPlayerProxy(PLAYERTYPE type){
@@ -178,7 +192,172 @@ std::string Pong::PlayerSlot::GetColourAsRML(){
 		+Convert::ToString((int)(Colour.Z*255))+", "+Convert::ToString((int)(Colour.W*255))+")";
 }
 
-int Pong::PlayerSlot::CurrentPlayerIdentifier = -1;
+int Pong::PlayerSlot::CurrentPlayerIdentifier = 0;
+// ------------------------------------ //
+void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
+	GUARD_LOCK_THIS_OBJECT();
 
+	// Write all our data to the packet //
+	packet << Slot << (int)PlayerType << PlayerIdentifier << ControlIdentifier << PlayerControllerID << Colour.X << Colour.Y << Colour.Z << Colour.W;
+	packet << Score << MoveState << (bool)(SplitSlot != NULL);
+
+	if(SplitSlot){
+		// Add our sub slot data //
+		SplitSlot->AddDataToPacket(packet);
+	}
+}
+
+void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
+	GUARD_LOCK_THIS_OBJECT();
+
+	int tmpival;
+
+	// Get our data from it //
+	if(!(packet >> Slot)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	if(!(packet >> tmpival)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	PlayerType = static_cast<PLAYERTYPE>(tmpival);
+
+	if(!(packet >> PlayerIdentifier)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	if(!(packet >> ControlIdentifier)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	if(!(packet >> PlayerControllerID)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	if(!(packet >> Colour.X >> Colour.Y >> Colour.Z >> Colour.W)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	if(!(packet >> Score)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	if(!(packet >> MoveState)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	bool wantedsplit;
+
+	if(!(packet >> wantedsplit)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	// Change our speed, if we can //
+	if(TrackDirectptr)
+		TrackDirectptr->SetTrackAdvanceSpeed(MoveState*INPUT_TRACK_ADVANCESPEED);
+
+	// Check do we need to change split //
+	if(wantedsplit && !SplitSlot){
+		SplitSlot = new PlayerSlot(this->Slot, Parent);
+		// Set this as the parent //
+		SplitSlot->ParentSlot = this;
+	} else if(!wantedsplit && SplitSlot){
+		SAFE_DELETE(SplitSlot);
+	}
+
+	// Update split value //
+	if(wantedsplit){
+
+		SplitSlot->UpdateDataFromPacket(packet);
+	}
+
+}
+
+int Pong::PlayerSlot::GetPlayerControllerID(){
+	return PlayerControllerID;
+}
+// ------------------ PlayerList ------------------ //
+Pong::PlayerList::PlayerList(boost::function<void (PlayerList*)> callback, size_t playercount /*= 4*/) : SyncedResource(L"PlayerList"), 
+	CallbackFunc(callback), GamePlayers(4)
+{
+
+	// Fill default player data //
+	for(int i = 0; i < 4; i++){
+
+		GamePlayers[i] = new PlayerSlot(i, this);
+	}
+
+}
+
+Pong::PlayerList::~PlayerList(){
+	SAFE_DELETE_VECTOR(GamePlayers);
+}
+// ------------------------------------ //
+void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet) THROWS{
+	
+	size_t vecsize;
+
+	if(!(packet >> vecsize)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	if(vecsize != GamePlayers.size()){
+		// We need to resize //
+		int difference = vecsize-GamePlayers.size();
+
+		if(difference < 0){
+
+			// Loop and delete items //
+			int deleted = 0;
+			while(deleted < difference){
+
+				SAFE_DELETE(GamePlayers[GamePlayers.size()-1]);
+				GamePlayers.pop_back();
+				deleted++;
+			}
+		} else {
+			// We need to add items //
+			for(int i = 0; i < difference; i++){
+
+				GamePlayers.push_back(new PlayerSlot(GamePlayers.size(), this));
+			}
+		}
+	}
+
+
+
+
+	// Notify update //
+	OnValueUpdated();
+}
+
+void Pong::PlayerList::SerializeCustomDataToPacket(sf::Packet &packet){
+	GUARD_LOCK_THIS_OBJECT();
+	// First put the size //
+	packet << GamePlayers.size();
+
+	// Loop through them and add them //
+	for(auto iter = GamePlayers.begin(); iter != GamePlayers.end(); ++iter){
+
+		// Serialize it //
+		(*iter)->AddDataToPacket(packet);
+	}
+}
+
+void Pong::PlayerList::OnValueUpdated(){
+	// Call our callback //
+	CallbackFunc(this);
+}
 
 

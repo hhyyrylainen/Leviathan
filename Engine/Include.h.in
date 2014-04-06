@@ -69,15 +69,15 @@
 
 using namespace std;
 // -------------------------- //
-#define CLASSNAME	L"LeviathanWindow"
+#define CLASSNAME   L"LeviathanWindow"
 
 #define LEVIATHAN_VERSION @LEVIATHAN_VERSION@
 #define LEVIATHAN_VERSIONS @LEVIATHAN_VERSIONS@
 #define LEVIATHAN_VERSION_ANSIS @LEVIATHAN_VERSION_ANSIS@
 
 
-#define VERSION		LEVIATHAN_VERSION
-#define VERSIONS	LEVIATHAN_VERSIONS
+#define VERSION     LEVIATHAN_VERSION
+#define VERSIONS    LEVIATHAN_VERSIONS
 
 #define LEVIATHAN
 
@@ -109,8 +109,8 @@ static const float EPSILON = 0.00000001f;
     
 #else
     // Windows needs these //
-    #define FORCE_INLINE	__forceinline
-    #define THROWS		throw(...)
+    #define FORCE_INLINE    __forceinline
+    #define THROWS      throw(...)
     
     // Some undefines //
     #define WinGetNextSibling GetNextSibling
@@ -140,7 +140,7 @@ static const float EPSILON = 0.00000001f;
 
 #ifndef DEBUG_OUTPUT
     #ifdef _DEBUG
-        #define DEBUG_OUTPUT(s)	{Logger::SendDebugMessage(s);}
+        #define DEBUG_OUTPUT(s) {Logger::SendDebugMessage(s);}
     #else
         #define DEBUG_OUTPUT(s)   {}
     #endif //_DEBUG
@@ -148,7 +148,7 @@ static const float EPSILON = 0.00000001f;
 
 #ifndef DEBUG_OUTPUT_AUTO
     #ifdef _DEBUG
-        #define DEBUG_OUTPUT_AUTO(s)	{Logger::SendDebugMessage(wstring(L"[INFO] "+s+L"\n"));}
+        #define DEBUG_OUTPUT_AUTO(s)    {Logger::SendDebugMessage(wstring(L"[INFO] "+s+L"\n"));}
     #else
         #define DEBUG_OUTPUT_AUTO(s)   {}
     #endif //_DEBUG
@@ -156,7 +156,7 @@ static const float EPSILON = 0.00000001f;
 
 #ifndef DEBUG_OUTPUT_AUTOPLAINTEXT
     #ifdef _DEBUG
-        #define DEBUG_OUTPUT_AUTOPLAINTEXT(s)	{Logger::SendDebugMessage(wstring(L"[INFO] " L#s L"\n"));}
+        #define DEBUG_OUTPUT_AUTOPLAINTEXT(s)   {Logger::SendDebugMessage(wstring(L"[INFO] " L#s L"\n"));}
     #else
         #define DEBUG_OUTPUT_AUTOPLAINTEXT(s)   {}
     #endif //_DEBUG
@@ -166,13 +166,16 @@ static const float EPSILON = 0.00000001f;
 #ifndef DLLEXPORT
     #ifdef ENGINE_EXPORTS
         #ifdef _WIN32
-            #define DLLEXPORT  	 __declspec( dllexport )
+            #define DLLEXPORT    __declspec( dllexport )
         #else
             // This might not be needed for gcc
-            #define DLLEXPORT	__attribute__ ((visibility ("default")))
+            #define DLLEXPORT   __attribute__ ((visibility ("default")))
         #endif
+        // Json-cpp //
+        #define JSON_DLL_BUILD
     #else
         #define DLLEXPORT
+        #define JSON_DLL
     #endif // ENGINE_EXPORTS
 #endif
 

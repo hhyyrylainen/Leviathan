@@ -263,3 +263,15 @@ const Float3 Leviathan::Float3::UnitVForward = Float3(0.f, 0.f, -1.f);
 const Float3 Leviathan::Float3::Zeroed = Float3::zero();
 
 
+
+DLLEXPORT const Float4& Leviathan::Float4::GetColourBlack(){
+	return ColourBlack;
+}
+
+DLLEXPORT const Float4& Leviathan::Float4::GetColourWhite(){
+	return ColourWhite;
+}
+
+DLLEXPORT const Float4& Leviathan::Float4::GetColourTransparent(){
+	return ColourTransparent;
+}

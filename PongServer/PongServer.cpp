@@ -63,18 +63,18 @@ void Pong::PongServer::TryStartMatch(){
 
 	int activeplycount = 0;
 	int maxsplit = 0;
-	for(size_t i = 0; i < PlayerList.size(); i++){
-		PlayerList[i]->SetScore(0);
-		if(PlayerList[i]->IsSlotActive())
+	for(size_t i = 0; i < _PlayerList.Size(); i++){
+		_PlayerList[i]->SetScore(0);
+		if(_PlayerList[i]->IsSlotActive())
 			activeplycount++;
-		int split = PlayerList[i]->GetSplitCount();
-		if(PlayerList[i]->GetSplit())
-			PlayerList[i]->GetSplit()->SetScore(0);
+		int split = _PlayerList[i]->GetSplitCount();
+		if(_PlayerList[i]->GetSplit())
+			_PlayerList[i]->GetSplit()->SetScore(0);
 		if(split > maxsplit)
 			maxsplit = split;
 	}
 	try{
-		if(!GameArena->GenerateArena(this, PlayerList, activeplycount, maxsplit, true)){
+		if(!GameArena->GenerateArena(this, _PlayerList.GetVec(), activeplycount, maxsplit, true)){
 			//! \todo send error //
 			return;
 		}
@@ -82,18 +82,18 @@ void Pong::PongServer::TryStartMatch(){
 		//! \todo send error //
 		return;
 	}
-	auto split0 = PlayerList[0]->GetSplit();
-	auto split1 = PlayerList[1]->GetSplit();
-	auto split2 = PlayerList[2]->GetSplit();
-	auto split3 = PlayerList[3]->GetSplit();
+	auto split0 = _PlayerList[0]->GetSplit();
+	auto split1 = _PlayerList[1]->GetSplit();
+	auto split2 = _PlayerList[2]->GetSplit();
+	auto split3 = _PlayerList[3]->GetSplit();
 	// Setup dead angle //
 	DeadAxis = Float3(0.f);
 
-	if(!PlayerList[0]->IsSlotActive() && !PlayerList[2]->IsSlotActive() && (split0 ? !split0->IsSlotActive(): true) && (split2 ? !split2->IsSlotActive(): true)){
+	if(!_PlayerList[0]->IsSlotActive() && !_PlayerList[2]->IsSlotActive() && (split0 ? !split0->IsSlotActive(): true) && (split2 ? !split2->IsSlotActive(): true)){
 
 		DeadAxis = Float3(1.f, 0.f, 0.f);
 
-	} else if(!PlayerList[1]->IsSlotActive() && !PlayerList[3]->IsSlotActive() && (split1 ? !split1->IsSlotActive(): true) && (split3 ? !split3->IsSlotActive(): true)){
+	} else if(!_PlayerList[1]->IsSlotActive() && !_PlayerList[3]->IsSlotActive() && (split1 ? !split1->IsSlotActive(): true) && (split3 ? !split3->IsSlotActive(): true)){
 
 		DeadAxis = Float3(0.f, 0.f, 1.f);
 	}
@@ -113,9 +113,9 @@ void Pong::PongServer::TryStartMatch(){
 
 void Pong::PongServer::CheckForGameEnd(){
 	// Look through all players and see if any team/player has reached score limit // //
-	for(size_t i = 0; i < PlayerList.size(); i++){
+	for(size_t i = 0; i < _PlayerList.Size(); i++){
 
-		PlayerSlot* slotptr = PlayerList[i];
+		PlayerSlot* slotptr = _PlayerList[i];
 
 		int totalteamscore = 0;
 

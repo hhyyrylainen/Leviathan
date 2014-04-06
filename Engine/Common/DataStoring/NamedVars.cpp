@@ -11,7 +11,7 @@
 #include "../Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
-Leviathan::NamedVariableList::NamedVariableList() : Datas(1), Name(L""){
+Leviathan::NamedVariableList::NamedVariableList() : Datas(0), Name(L""){
 }
 
 DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, VariableBlock* value1) : Datas(1), Name(name){
@@ -546,6 +546,10 @@ DLLEXPORT Leviathan::NamedVars::NamedVars(const vector<shared_ptr<NamedVariableL
 DLLEXPORT Leviathan::NamedVars::NamedVars(shared_ptr<NamedVariableList> variable) : Variables(1){
 	// store the single variable //
 	Variables[0] = variable;
+}
+
+DLLEXPORT Leviathan::NamedVars::NamedVars(NamedVariableList* takevariable) : Variables(1){
+	Variables[0] = shared_ptr<NamedVariableList>(takevariable);
 }
 
 Leviathan::NamedVars::~NamedVars(){

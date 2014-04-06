@@ -166,12 +166,33 @@ div.LobbyTabs
     margin-bottom: 5px;
     width: auto;
     height: 70%;
+    max-height: 70%;
+    overflow-y: auto;
 }
 
 .LobbyTContent
 {
 
     font-size: 26px;
+}
+
+.LobbyHR
+{
+    
+}
+
+.LobbyTeamInfo
+{
+    margin-left: 15px;
+    font-size: 14px;
+    margin-top: 0.2em;
+    margin-bottom: 0.5em;
+}
+
+.LobbyTeamName
+{
+    font-size: 16px;
+    
 }
 
 .LobbyDisconnect
@@ -181,10 +202,28 @@ div.LobbyTabs
     width: auto;
     height: auto;
     margin-right: 5%;
-    margin-top: 5%;
+    margin-top: 3%;
     padding: 4px;
     padding-left: 15px;
     background-color: #00B060;
+}
+
+.LobbyStart
+{
+    float: right;
+    text-align: right;
+    width: auto;
+    height: auto;
+    margin-right: 5%;
+    margin-top: 0%;
+    padding: 4px;
+    padding-left: 15px;
+    background-color: #00B060;
+}
+
+.LobbyStart:hover
+{
+    background-color: #61D8A2;
 }
 
 .DeadCenter
@@ -290,4 +329,24 @@ span
 ::-webkit-scrollbar-thumb {
     border-radius: 10px;
     -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5); 
+}
+
+/* Combobox creation */
+ .custom-combobox
+ {
+    position: relative;
+    display: inline-block;
+}
+.custom-combobox-toggle
+{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin-left: -1px;
+    padding: 0;
+}
+.custom-combobox-input
+{
+    margin: 0;
+    padding: 0.3em;
 }

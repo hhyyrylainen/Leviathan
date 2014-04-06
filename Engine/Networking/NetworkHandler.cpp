@@ -522,7 +522,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 			GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
 
 			bool uselocalhost = false;
-			if(variables->GetValueAndConvertTo<bool>(L"MasterServerForceLocalhost", uselocalhost) && uselocalhost){
+			if(variables && variables->GetValueAndConvertTo<bool>(L"MasterServerForceLocalhost", uselocalhost) && uselocalhost){
 
 				// We might want to warn about this //
 				ComplainOnce::PrintWarningOnce(L"MasterServerForceLocalhostOn", L"Master server list forced to use localhost as address, might not be what you want");

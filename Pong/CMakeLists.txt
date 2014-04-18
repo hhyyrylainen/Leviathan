@@ -87,9 +87,4 @@ include(LeviathanCoreProject)
 
 # The project is now defined
 
-# We need copy and install support for a single custom file
-file(GLOB Extensions "*.js")
-file(COPY ${Extensions} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-install(FILES ${Extensions} DESTINATION bin)
-
 

@@ -890,14 +890,6 @@ void Leviathan::Window::_CreateOverlayScene(){
 	// create scene manager //
 	OverlayScene = Ogre::Root::getSingleton().createSceneManager(Ogre::ST_INTERIOR, 1, Ogre::INSTANCING_CULLING_SINGLETHREAD, "Overlay_forWindow_");
 
-	// also needs a viewport that is last to be drawn //
-	float ViewWidth = 1.f;
-	float ViewHeight = 1.f;
-	float ViewLeft = (1.f-ViewWidth)*0.5f;
-	float ViewTop = (1.f-ViewHeight)*0.5f;
-
-	USHORT ZOrder = 120;
-
 	OverLayCamera = OverlayScene->createCamera("empty camera");
 }
 

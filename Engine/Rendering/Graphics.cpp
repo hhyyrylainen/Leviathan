@@ -167,7 +167,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(Ogre::TFO_ANISOTROPIC);
 	Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(7);
 
-	Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
+	//Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
 	// load fonts before overlay //
 	Fonts = new Rendering::FontManager();

@@ -51,8 +51,5 @@ using Leviathan::QueuedTask;
 using Leviathan::SyncedResource;
 using Leviathan::SyncedPrimitive;
 
-// This is required for client applications to work //
-#include "GlobalCEFHandler.h"
-
 
 #endif

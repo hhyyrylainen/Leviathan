@@ -7,15 +7,13 @@
 #include "Script/ScriptInterface.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "GuiManager.h"
-#include "GuiView.h"
 using namespace Leviathan;
 using namespace Gui;
 // ------------------------------------ //
-Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, View* sheet, GuiManager* manager, int id, const wstring &toggle, 
+Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, 
 	bool strict /*= false*/, bool enabled /*= true*/, bool keepgui, bool allowenable) : Name(name), ID(id), Enabled(enabled), Strict(strict), 
-	ContainedInSheet(sheet), KeepsGuiOn(keepgui), OwningManager(manager), AllowEnable(allowenable)
+	KeepsGuiOn(keepgui), OwningManager(manager), AllowEnable(allowenable)
 {
-	ContainedInSheet->AddRef();
 	Toggle = GKey::GenerateKeyFromString(toggle);
 }
 
@@ -23,7 +21,6 @@ Leviathan::Gui::GuiCollection::~GuiCollection(){
 	// release script //
 
 	// release reference //
-	ContainedInSheet->Release();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
@@ -62,7 +59,7 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 	OwningManager->PossiblyGUIMouseDisable();
 }
 // ------------------------------------ //
-bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data, View* sheet){
+bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data){
 	// load a GuiCollection from the structure //
 
 	wstring Toggle = L"";
@@ -91,7 +88,7 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 	}
 
 	// allocate new Collection object //
-	GuiCollection* cobj = new GuiCollection(data.Name, sheet, gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn, allowenable);
+	GuiCollection* cobj = new GuiCollection(data.Name, gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn, allowenable);
 	// copy script data over //
 	cobj->Scripting = data.Script;
 	// add to collection list //
@@ -104,10 +101,4 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
 	AllowEnable = newstate;
 }
-
-DLLEXPORT View* Leviathan::Gui::GuiCollection::GetContainingViewProxy(){
-	ContainedInSheet->AddRef();
-	return ContainedInSheet;
-}
-
 

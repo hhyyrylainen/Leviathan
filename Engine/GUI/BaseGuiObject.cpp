@@ -12,9 +12,9 @@
 using namespace Leviathan;
 using namespace Gui;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, View* sheet,
-	shared_ptr<ScriptScript> script /*= NULL*/) : EventableScriptObject(script), OwningInstance(owner), FileID(fakeid), Name(name), 
-	ContainedInSheet(sheet), ID(IDFactory::GetID())
+DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, shared_ptr<ScriptScript> script 
+	/*= NULL*/) : EventableScriptObject(script), OwningInstance(owner), FileID(fakeid), Name(name), 
+	ID(IDFactory::GetID())
 {
 	
 }
@@ -26,8 +26,8 @@ DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){
 	UnRegisterAllEvents();
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects,
-	ObjectFileObject& dataforthis, View* sheet)
+DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects, 
+	ObjectFileObject& dataforthis)
 {
 	// parse fake id from prefixes //
 	int fakeid = 0;
@@ -46,7 +46,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 		}
 	}
 
-	unique_ptr<BaseGuiObject> tmpptr(new BaseGuiObject(owner, dataforthis.Name, fakeid, sheet, dataforthis.Script));
+	unique_ptr<BaseGuiObject> tmpptr(new BaseGuiObject(owner, dataforthis.Name, fakeid, dataforthis.Script));
 
 	shared_ptr<NamedVariableList> listenon;
 

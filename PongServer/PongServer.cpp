@@ -9,6 +9,7 @@
 #include "Networking/NetworkResponse.h"
 #include "Networking/SyncedVariables.h"
 #include "Rendering/GraphicalInputEntity.h"
+#include "OgreException.h"
 using namespace Pong;
 // ------------------------------------ //
 // Put this here, since nowhere else to put it //

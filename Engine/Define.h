@@ -5,6 +5,7 @@
 #endif
 
 #include "ForwardDeclarations.h"
+#include <boost/ratio.hpp>
 
 
 namespace Leviathan{
@@ -46,6 +47,7 @@ namespace Leviathan{
 // Standard type time durations //
 typedef boost::chrono::duration<__int64, boost::milli> MillisecondDuration;
 typedef boost::chrono::duration<__int64, boost::micro> MicrosecondDuration;
+typedef boost::chrono::duration<float, boost::ratio<1>> SecondDuration;
 
 #include <boost/chrono/system_clocks.hpp>
 

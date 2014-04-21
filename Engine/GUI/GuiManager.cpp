@@ -9,7 +9,6 @@
 #include "Rendering/Graphics.h"
 #include <boost/assign/list_of.hpp>
 #include "Rendering/GUI/FontManager.h"
-#include "include/cef_sandbox_win.h"
 #include "GuiCollection.h"
 #include "Common/DataStoring/DataStore.h"
 #include "Common/DataStoring/DataBlock.h"
@@ -19,12 +18,15 @@
 #include "OgreRoot.h"
 #include "OgreManualObject.h"
 #include "OgreHardwarePixelBuffer.h"
-#include "GuiView.h"
+#include "CEGUI/System.h"
+#include "CEGUI/WindowManager.h"
+#include "Common/Misc.h"
+#include "CEGUI/RenderTarget.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
 Leviathan::Gui::GuiManager::GuiManager() : ID(IDFactory::GetID()), Visible(true), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true),
-	MouseQuad(NULL)
+	LastTimePulseTime(Misc::GetThreadSafeSteadyTimePoint()), MainGuiManager(false)
 {
 	
 }
@@ -38,8 +40,13 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 
 	ThisWindow = window;
 
+	// Detect if this is the first GuiManager //
+	if(GraphicalInputEntity::GetGlobalWindowCount() == 1)
+		MainGuiManager = true;
+
 	Window* wind = window->GetWindow();
-	
+
+
 	// Create Ogre resources //
 	if(!_CreateInternalOgreResources(window->GetWindow()->GetOverlayScene())){
 
@@ -47,8 +54,16 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 		return false;
 	}
 	
-	// All rendering is now handled by individual Views and the Window's Ogre scene //
+	// Setup this window's context //
+	GuiContext = &CEGUI::System::getSingleton().createGUIContext(ThisWindow->GetCEGUIRenderer()->getDefaultRenderTarget());
 
+
+	// Set Simonetta as the default font //
+	GuiContext->setDefaultFont("Simonetta-Regular");
+
+	// Set the taharez looks active //
+	SetMouseTheme(L"TaharezLook/MouseArrow");
+	GuiContext->setDefaultTooltipType("TaharezLook/Tooltip");
 
 	return true;
 }
@@ -56,17 +71,12 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 void Leviathan::Gui::GuiManager::Release(){
 	GUARD_LOCK_THIS_OBJECT();
 	// default mouse back //
-	SetMouseFile(L"none");
+	SetMouseTheme(L"none");
 
-	// Destroy the views //
-	for(size_t i = 0; i < ThissViews.size(); i++){
+	// Release objects first //
 
-		ThissViews[i]->ReleaseResources();
-		ThissViews[i]->Release();
-	}
-
-	for(unsigned int i = 0; i < Objects.size(); i++){
-		// object's release function will do everything needed (even deleted if last reference) //
+	for(size_t i = 0; i < Objects.size(); i++){
+		// object's release function will do everything needed (even deleting if last reference) //
 		SAFE_RELEASE(Objects[i]);
 	}
 	Objects.clear();
@@ -77,6 +87,11 @@ void Leviathan::Gui::GuiManager::Release(){
 	}
 
 	Collections.clear();
+
+
+	// Destroy the GUI //
+	CEGUI::System::getSingleton().destroyGUIContext(*GuiContext);
+	GuiContext = NULL;
 
 	_ReleaseOgreResources();
 }
@@ -180,33 +195,43 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnForceGUIOn(){
 
 void Leviathan::Gui::GuiManager::Render(){
 	GUARD_LOCK_THIS_OBJECT();
-	// Update inputs //
-	if(ThissViews.size())
-		ThisWindow->GetWindow()->GatherInput(ThissViews[0]->GetBrowserHost());
 
-	// Update browser textures //
-	for(size_t i = 0; i < ThissViews.size(); i++){
+	// Pass time //
+	auto newtime = Misc::GetThreadSafeSteadyTimePoint();
 
-		ThissViews[i]->CheckRender();
+	SecondDuration elapsed = newtime-LastTimePulseTime;
+
+	GuiContext->injectTimePulse(elapsed.count());
+
+	// Potentially pass to system //
+	if(MainGuiManager){
+
+		CEGUI::System::getSingleton().injectTimePulse(elapsed.count());
 	}
+
+	LastTimePulseTime = newtime;
+
+	// Update inputs //
+	ThisWindow->GetWindow()->GatherInput(GuiContext);
+
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiManager::OnResize(){
 	GUARD_LOCK_THIS_OBJECT();
 
-	// Resize all CEF browsers on this window //
-	for(size_t i = 0; i < ThissViews.size(); i++){
-		ThissViews[i]->NotifyWindowResized();
-	}
+	// Notify the CEGUI system //
+	CEGUI::System* const sys = CEGUI::System::getSingletonPtr();
+	if(sys)
+		sys->notifyDisplaySizeChanged(CEGUI::Sizef((float)ThisWindow->GetWindow()->GetWidth(), (float)ThisWindow->GetWindow()->GetHeight()));
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::OnFocusChanged(bool focused){
 	GUARD_LOCK_THIS_OBJECT();
+	
+	// Notify our context //
+	if(!focused)
+		GuiContext->injectMouseLeaves();
 
-	// Notify all CEF browsers on this window //
-	for(size_t i = 0; i < ThissViews.size(); i++){
-		ThissViews[i]->NotifyFocusUpdate(focused);
-	}
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiManager::AddGuiObject(BaseGuiObject* obj){
@@ -256,46 +281,30 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 	// we need to load the corresponding rocket file first //
 	wstring relativepath;
 	// get path //
-	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist, L"GUIBasePage", relativepath, L"", true,
-		L"GuiManager: LoadGUIFile: no base page defined (in "+file+L") : ");
+	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist, L"GUIBaseFile", relativepath, L"", true,
+		L"GuiManager: LoadGUIFile: no base file defined (in "+file+L") : ");
 
 	if(!relativepath.size()){
 
 		return false;
 	}
+	
+	// Load it //
+	CEGUI::Window* rootwindow = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(Convert::WstringToString(relativepath));
 
-	// Create the view //
-	Gui::View* LoadingView = new Gui::View(this, ThisWindow->GetWindow());
+	// Check did it work //
+	if(!rootwindow){
 
-	// We store a reference //
-	LoadingView->AddRef();
-
-	wstring path = StringOperations::GetPathWstring(file);
-
-	// Create the final page //
-	wstring finalpath;
-
-	// If this is an internet page pass it unmodified //
-	if(relativepath.find(L"http://") < 2){
-
-		finalpath = relativepath;
-	} else {
-		// Local file, add to the end //
-		finalpath = L"file:///"+path+relativepath;
-	}
-
-	// Initialize it //
-	if(!LoadingView->Init(finalpath, varlist)){
-
-		LoadingView->ReleaseResources();
-		LoadingView->Release();
-
-		Logger::Get()->Error(L"GuiManager: LoadGUIFile: failed to initialize view for file: "+file);
+		Logger::Get()->Error(L"GuiManager: LoadGUIFile: failed to parse layout file: "+relativepath);
 		return false;
 	}
 
 	// We need to lock now //
 	GUARD_LOCK_THIS_OBJECT();
+
+	// Set it as the visible sheet //
+	GuiContext->setRootWindow(rootwindow);
+
 
 	// temporary object data stores //
 	vector<BaseGuiObject*> TempOs;
@@ -308,7 +317,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 		// check what type the object is //
 		if(data[i]->TName == L"GuiCollection" || data[i]->TName == L"Collection"){
 
-			if(!GuiCollection::LoadCollection(this, *data[i], LoadingView)){
+			if(!GuiCollection::LoadCollection(this, *data[i])){
 
 				// report error //
 				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load collection, named "+data[i]->Name);
@@ -320,7 +329,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 		if(data[i]->TName == L"GuiObject"){
 
 			// try to load //
-			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *data[i], LoadingView)){
+			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *data[i])){
 
 				// report error //
 				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load GuiObject, named "+data[i]->Name);
@@ -338,9 +347,6 @@ guiprocessguifileloopdeleteprocessedobject:
 		data.erase(data.begin()+i);
 		i--;
 	}
-
-	// Add the page //
-	ThissViews.push_back(LoadingView);
 	
 
 	for(size_t i = 0; i < TempOs.size(); i++){
@@ -349,23 +355,22 @@ guiprocessguifileloopdeleteprocessedobject:
 		AddGuiObject(TempOs[i]);
 	}
 
-	// Set focus to the new View //
-	ThissViews.back()->NotifyFocusUpdate(ThisWindow->GetWindow()->IsWindowFocused());
-
 	return true;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFile(const wstring &file){
+DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseTheme(const wstring &tname){
 	GUARD_LOCK_THIS_OBJECT();
 
-	if(file == L"none"){
+	if(tname == L"none"){
 
 		// show default window cursor //
 		ThisWindow->GetWindow()->SetHideCursor(false);
-		if(file == L"none")
+		if(tname == L"none")
 			return;
 	}
 
+	// Set it active //
+	GuiContext->getMouseCursor().setDefaultImage(Convert::WstringToString(tname));
 
 	// hide window cursor //
 	ThisWindow->GetWindow()->SetHideCursor(true);
@@ -421,17 +426,6 @@ bool Leviathan::Gui::GuiManager::_CreateInternalOgreResources(Ogre::SceneManager
 void Leviathan::Gui::GuiManager::_ReleaseOgreResources(){
 	// We probably don't need to do anything //
 
-	// The scene should handle deleting this //
-	MouseQuad = NULL;
-
-}
-
-DLLEXPORT void Leviathan::Gui::GuiManager::SetAllowPaintStatus(bool canpaint /*= true*/){
-	// Verify that Views can paint themselves //
-	for(size_t i = 0; i < ThissViews.size(); i++){
-
-		ThissViews[i]->SetAllowPaintStatus(canpaint);
-	}
 }
 
 

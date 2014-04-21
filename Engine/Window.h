@@ -41,7 +41,8 @@ namespace X11{
 #include <OISKeyboard.h>
 #include <OISJoyStick.h>
 #include <OISInputManager.h>
-#include "include/cef_browser.h"
+#include "CEGUI/GUIContext.h"
+#include "CEGUI/InputEvent.h"
 
 namespace Leviathan{
 
@@ -53,7 +54,8 @@ namespace Leviathan{
 		DLLEXPORT ~Window();
 
 		DLLEXPORT void CloseDown();
-		// tells the Ogre window to close //
+
+		//! \brief Tells the Ogre window to close
 		DLLEXPORT void SendCloseMessage();
 
 		DLLEXPORT void ResizeWindow(const int &width, const int &height);
@@ -85,8 +87,7 @@ namespace Leviathan{
 		DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const THROWS;
 				
 		//! \brief Captures input for this window and passes it on
-		//! \bug Only the first browser is used, when the browser should be determined by getting the active one from the GuiManager
-		DLLEXPORT void GatherInput(CefRefPtr<CefBrowserHost> browserinput);
+		DLLEXPORT void GatherInput(CEGUI::GUIContext* receivercontext);
 
 
 		DLLEXPORT inline bool IsWindowed() const{ return !OWindow->isFullScreen();};
@@ -135,8 +136,8 @@ namespace Leviathan{
 		DLLEXPORT inline Ogre::Camera* GetOverlayCamera() const{
 			return OverLayCamera;
 		}
-		// map that converts OIS::KeyCode to Rocket key codes //
-		static std::map<OIS::KeyCode, int> OISVKeyConvert;
+		// map that converts OIS::KeyCode to CEGUI key codes, not required since the codes are the same! //
+		//static std::map<OIS::KeyCode, CEGUI::Key::Scan> OISCEGUIKeyConvert;
 		static boost::bimap<wstring, OIS::KeyCode> CharacterToOISConvert;
 
 		// method for other DLLs to call the maps //
@@ -159,13 +160,14 @@ namespace Leviathan{
 		//! \todo The window requires an ID member to make this unique
 		void _CreateOverlayScene();
 		void _CheckMouseVisibilityStates();
-		void DoCEFInputPass(const OIS::KeyEvent &arg, bool down);
 		// ------------------------------------ //
 #ifdef _WIN32
 		HWND m_hwnd;
 #else
 		X11::XID m_hwnd;
 		X11::Display* XDisplay;
+
+		X11::Cursor XInvCursor;
 #endif
 		Ogre::RenderWindow* OWindow;
 		Ogre::SceneManager* OverlayScene;
@@ -178,8 +180,9 @@ namespace Leviathan{
 		OIS::Keyboard* WindowKeyboard;
 		std::vector<OIS::JoyStick*> WindowJoysticks;
 
-		// this is temporarily stored during input gathering //
-		CefRefPtr<CefBrowserHost> inputreceiver;
+		//! This is temporarily stored during input gathering
+		CEGUI::GUIContext* inputreceiver;
+
 		bool ThisFrameHandledCreate;
 		int LastFrameDownMouseButtons;
 

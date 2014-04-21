@@ -10,7 +10,7 @@
 
 # get all files in their groups
 set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
-    "GlobalCEFHandler.cpp" "GlobalCEFHandler.h" "Include.cpp" "Include.h" "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
+    "Include.cpp" "Include.h" "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
     "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp"
 )
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")

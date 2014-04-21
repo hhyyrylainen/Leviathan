@@ -16,7 +16,7 @@ namespace Leviathan{ namespace Gui{
 
 	class GuiCollection : public Object, public ReferenceCounted{
 	public:
-		GuiCollection(const wstring &name, View* sheet, GuiManager* manager, int id, const wstring &toggle, bool strict = false, 
+		GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, bool strict = false, 
 			bool enabled = true, bool keepgui = false, bool allowenable = true);
 		~GuiCollection();
 
@@ -55,19 +55,10 @@ namespace Leviathan{ namespace Gui{
 			return Convert::WstringToString(Name);
 		}
 
-		//! \brief Gets the View that owns this object
-		DLLEXPORT inline View* GetContainingView(){
-			return ContainedInSheet;
-		}
-
-		//! \brief Script proxy for GetContainingView
-		//! \warning Increases reference count
-		DLLEXPORT View* GetContainingViewProxy();
-
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GuiCollection);
 
-		DLLEXPORT static bool LoadCollection(GuiManager* gui, const ObjectFileObject &data, View* sheet);
+		DLLEXPORT static bool LoadCollection(GuiManager* gui, const ObjectFileObject &data);
 	private:
 		wstring Name;
 		int ID;
@@ -80,7 +71,6 @@ namespace Leviathan{ namespace Gui{
 		GuiManager* OwningManager;
 
 		shared_ptr<ScriptScript> Scripting;
-		View* ContainedInSheet;
 	};
 
 }}

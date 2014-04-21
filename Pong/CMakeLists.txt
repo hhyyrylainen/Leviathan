@@ -38,12 +38,6 @@ set(USERREADABLEIDENTIFICATION		"L\"Pong client version \" GAME_VERSIONS")
 set(GAMENAMEIDENTIFICATION			Pong)
 set(GAMEVERSIONIDENTIFICATION		GAME_VERSIONS)
 
-# We use a custom JS interface
-set(PROGRAMUSE_CUSTOMJS             1)
-set(PROGRAMCUSTOMJS_INCLUDE         "PongJSInterface.h")
-set(PROGRAMCUSTOMJS_CLASS           CustomJSInterface)
-set(PROGRAMCUSTOMJS_EXTFILE         "PongV8Extension.js")
-
 
 # Configure the includes file
 configure_file("${PROJECT_SOURCE_DIR}/File Templates/BaseLeviathanProjectIncludes.h.in" 

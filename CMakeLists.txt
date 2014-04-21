@@ -70,12 +70,8 @@ set(ADDITIONAL_OGRE ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramM
     ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${Ogre_Paging_LIBRARIES})
 
 # Find Boost
-if(WIN32 OR APPLE)
-    set(Boost_USE_STATIC_LIBS TRUE)
-else(WIN32 OR APPLE)
-    # Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
-    set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
-endif(WIN32 OR APPLE)
+# Might be a good idea to dynamically link Boost
+set(Boost_USE_STATIC_LIBS FALSE)
 
 set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
 # Components that need linking (NB does not include header-only components like bind)
@@ -124,7 +120,7 @@ else(WIN32)
 endif(WIN32)
 
 # CEGUI libraries will have some suffixes
-set(CEGUI_ENGINE_RELEASE "CEGUIBase" "CEGUICommonDialogs" "CEGUICoreWindowRendererSet" "CEGUIExpatParser" "CEGUIOgreRenderer")
+set(CEGUI_ENGINE_RELEASE "CEGUIBase" "CEGUICommonDialogs" "CEGUIOgreRenderer")
 set(TmpProcessQueueList)
 set(CEGUI_ENGINE_DEBUG)
 
@@ -132,6 +128,13 @@ foreach(ceglib ${CEGUI_ENGINE_RELEASE})
     set(TmpProcessQueueList ${TmpProcessQueueList} ${ceglib}${CEGUI_SUFFIX})
     set(CEGUI_ENGINE_DEBUG ${CEGUI_ENGINE_DEBUG} ${ceglib}${CEGUI_SUFFIX}_d)
 endforeach()
+
+set(CEGUI_ENGINE_RELEASE ${TmpProcessQueueList})
+# Add the differently named ones
+set(CEGUI_ENGINE_RELEASE ${CEGUI_ENGINE_RELEASE} "CEGUICoreWindowRendererSet" "CEGUIExpatParser")
+set(CEGUI_ENGINE_DEBUG ${CEGUI_ENGINE_DEBUG} "CEGUICoreWindowRendererSet_d" "CEGUIExpatParser_d")
+
+
 
 # Library linking
 set(LINK_LIBS_TOENGINE_RELEASE optimized Newton)
@@ -168,14 +171,13 @@ option(INSTALL_ONLY_RELEASE "For creating release folders" ON)
 # \todo this option to copy right libs
 option(INSTALL_CREATE_SDK   "For creating SDKs for developers" OFF)
 
-# For making libs with right names
-set(CMAKE_DEBUG_POSTFIX "D")
-
 # VisualLeakDetector setting
 if(WIN32)
-
     option(USE_VLD "For including vld in the projects" ON)
-endif(WIN32)
+endif()
+
+# For making libs with right names
+set(CMAKE_DEBUG_POSTFIX "D")
 
 if(USE_VLD)
     set(L_VLD_STATE 1)
@@ -238,13 +240,37 @@ if(NOT Boost_USE_STATIC_LIBS)
 	  ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE} ${Boost_REGEX_LIBRARY_RELEASE})
 	set(BOOST_MOVE_FILES_DEBUG ${Boost_DATE_TIME_LIBRARY_DEBUG} ${Boost_CHRONO_LIBRARY_DEBUG}
 	  ${Boost_THREAD_LIBRARY_DEBUG} ${Boost_SYSTEM_LIBRARY_DEBUG} ${Boost_REGEX_LIBRARY_DEBUG})
+      
+    # Setup to target the actually wanted files
+    set(TmpDoStuff)
+    
+    foreach(libname ${BOOST_MOVE_FILES_RELEASE})
+        # Replace the library extension with the platform extension
+        get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
+        get_filename_component(LIBS_PATH ${libname} PATH)
+        if(WIN32)
+            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
+        else()
+            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.so)
+        endif()
+    endforeach()
+    
+    set(BOOST_MOVE_FILES_RELEASE ${TmpDoStuff})
+    set(TmpDoStuff)
+    foreach(libname ${BOOST_MOVE_FILES_DEBUG})
+        # Replace the library extension with the platform extension
+        get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
+        get_filename_component(LIBS_PATH ${libname} PATH)
+        if(WIN32)
+            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
+        else()
+            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.so)
+        endif()
+    endforeach()
+    
+    set(BOOST_MOVE_FILES_DEBUG ${TmpDoStuff})
+      
     # define a function for linux processing
-    function(ProcessBoostLibThing LIBNAME OUTPUTPLACE)
-        # remove variable 
-        string(REGEX REPLACE "so\.[\d\{1, 2}.]*" "so" TmpRegResult ${LIBNAME})
-        
-        set(OUTPUTPLACE ${OUTPUTPLACE} ${LIBNAME})
-    endfunction(ProcessBoostLibThing)
       
       
     # We need to add the actual libraries on linux
@@ -253,10 +279,14 @@ if(NOT Boost_USE_STATIC_LIBS)
         set(TMPDEBUGMOVE)
         # loop them all
         foreach(blib ${BOOST_MOVE_FILES_RELEASE})
-            ProcessBoostLibThing(${blib} ${TMPRELEASEMOVE})
+            # remove variable 
+            string(REGEX REPLACE "so\.[\d\{1, 2}.]*" "so" TmpRegResult ${blib})
+            ProcessBoostLibThing(TMPRELEASEMOVE ${TMPRELEASEMOVE} ${TmpRegResult})
         endforeach()
         foreach(blib ${BOOST_MOVE_FILES_DEBUG})
-            ProcessBoostLibThing(${blib} ${TMPDEBUGMOVE})
+            # remove variable 
+            string(REGEX REPLACE "so\.[\d\{1, 2}.]*" "so" TmpRegResult ${blib})
+            ProcessBoostLibThing(TMPRELEASEMOVE ${TMPRELEASEMOVE} ${TmpRegResult})
         endforeach()
         
         # add to the real move things
@@ -264,11 +294,9 @@ if(NOT Boost_USE_STATIC_LIBS)
         set(BOOST_MOVE_FILES_DEBUG ${BOOST_MOVE_FILES_DEBUG} ${TMPDEBUGMOVE})
         
     endif(NOT WIN32)
-      
+    
 	file(COPY ${BOOST_MOVE_FILES_RELEASE} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-    if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
-        file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-    endif(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
+    file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 endif(NOT Boost_USE_STATIC_LIBS)
 
@@ -456,7 +484,7 @@ if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
         install(FILES ${BOOST_MOVE_FILES_DEBUG} DESTINATION bin)
     endif(NOT Boost_USE_STATIC_LIBS)
 
-endif(NOT INSTALL_ONLY_RELEASE)
+endif(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
 
 # Always install release libraries
 install(FILES ${LeapMoveFilesRelease} DESTINATION bin)
@@ -467,6 +495,9 @@ install(FILES ${SMFLMoveFilesRelease} DESTINATION bin)
 
 if(NOT Boost_USE_STATIC_LIBS)
     install(FILES ${BOOST_MOVE_FILES_RELEASE} DESTINATION bin)
+    if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
+        install(FILES ${BOOST_MOVE_FILES_DEBUG} DESTINATION bin)
+    endif()
 endif(NOT Boost_USE_STATIC_LIBS)
 
 

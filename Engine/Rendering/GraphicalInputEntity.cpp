@@ -12,9 +12,14 @@
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorWorkspace.h"
 #include "Compositor/OgreCompositorWorkspaceDef.h"
+#include "CEGUI/RendererModules/Ogre/Renderer.h"
+#include "CEGUI/SchemeManager.h"
+#include "GUI/FontManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties) : MouseCaptureState(false){
+DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties) : MouseCaptureState(false), 
+	CEGUIRenderer(NULL)
+{
 
 	// create window //
 
@@ -48,6 +53,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 		// Initialize the compositor //
 		windowcreater->GetOgreRoot()->initialiseCompositor();
 
+		
 		// Notify engine to register threads to work with Ogre //
 		Engine::GetEngine()->_NotifyThreadsRegisterOgre();
 		FileSystem::RegisterOGREResourceGroups();
@@ -59,6 +65,21 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 		//Ogre::CompositorWorkspaceDef* maindef = compositor->addWorkspaceDefinition("WindowMainWorkspace");
 		//// Create the definition for world workspace //
 		//Ogre::CompositorWorkspaceDef* worlddef = compositor->addWorkspaceDefinition("WorldsWorkspace");
+
+		// Create the GUI system //
+
+
+		CEGUI::OgreRenderer& guirenderer = CEGUI::OgreRenderer::bootstrapSystem(*tmpwindow);
+		CEGUIRenderer = &guirenderer;
+
+		// Print the used renderer //
+		Logger::Get()->Info(L"GUI using CEGUI renderer: "+Convert::StringToWstring(guirenderer.getIdentifierString().c_str()));
+
+		// Load the taharez look //
+		CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
+
+		// Load the GUI fonts //
+		windowcreater->GetFontManager()->LoadAllFonts();
 	}
 	// create the actual window //
 	DisplayWindow = new Window(tmpwindow, this);
@@ -73,14 +94,6 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 
 	// set the main window to be active //
 	tmpwindow->setActive(true);
-
-	// We need to create a workspace for this window //
-	if(!compositor)
-		compositor = windowcreater->GetOgreRoot()->getCompositorManager2();
-
-	// Create the main window workspace //
-	Ogre::CompositorWorkspace* windwork = compositor->addWorkspace(DisplayWindow->GetOverlayScene(), DisplayWindow->GetOgreWindow(), 
-		DisplayWindow->GetOverlayCamera(), "WindowMainWorkspace", true, 1);
 
 
 	// create GUI //
@@ -206,3 +219,6 @@ GraphicalInputEntity* Leviathan::GraphicalInputEntity::InputCapturer = NULL;
 
 int Leviathan::GraphicalInputEntity::GlobalWindowCount = 0;
 
+DLLEXPORT int Leviathan::GraphicalInputEntity::GetGlobalWindowCount(){
+	return GlobalWindowCount;
+}

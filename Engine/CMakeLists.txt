@@ -1,15 +1,16 @@
 # engine library Cmake file
 
 # Generate additional source files
-add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h
-   COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js\"" 
-   "\"${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h\""
-   DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js"
-)
+# This is here as an example to make this work later
+#add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h
+#   COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/Generated.in.h\"" 
+#   "\"${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h\""
+#   DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/Generated.in.h"
+#)
 
 # get all files in their groups
 set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
-    "GlobalCEFHandler.cpp" "GlobalCEFHandler.h" "Include.cpp" "Include.h" "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
+    "Include.cpp" "Include.h" "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
     "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp"
 )
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
@@ -46,7 +47,8 @@ file(GLOB GroupLZ4 "lz4/*.c" "lz4/*.cpp" "lz4/*.h")
 file(GLOB GroupJsoncpp "jsoncpp/*.h" "jsoncpp/*.cpp")
 
 # Generated files
-set(GroupGeneratedFiles "${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h")
+set(GroupGeneratedFiles)
+#set(GroupGeneratedFiles ${GroupGeneratedFiles} "${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h")
 
 
 

@@ -13,6 +13,7 @@
 // objects //
 #include "OgreRenderQueueListener.h"
 #include "Common/ThreadSafe.h"
+#include "CEGUI/GUIContext.h"
 
 
 
@@ -43,6 +44,7 @@ namespace Gui{
 			Visible = visible;
 		}
 		//! \brief Notifies internal browsers
+		//! \todo Make CEGUI allow multiple windows
 		DLLEXPORT void OnResize();
 		//! \brief Notifies internal browsers
 		DLLEXPORT void OnFocusChanged(bool focused);
@@ -56,17 +58,13 @@ namespace Gui{
 		// function split into peaces //
 		DLLEXPORT bool LoadCollection(vector<shared_ptr<ObjectFileObject>> &data, ObjectFileObject &collectiondata);
 
-
-		//! \todo This needs new purpose
-		DLLEXPORT void SetAllowPaintStatus(bool canpaint = true);
-
 		// file loading //
 
 		//! \brief Loads a GUI file
 		//! \todo don't auto focus it (the new View)
 		DLLEXPORT bool LoadGUIFile(const wstring &file);
 		// set to "none" to use default //
-		DLLEXPORT void SetMouseFile(const wstring &file);
+		DLLEXPORT void SetMouseTheme(const wstring &tname);
 		DLLEXPORT void SetMouseFileVisibleState(bool state);
 
 		// collection managing //
@@ -99,18 +97,20 @@ namespace Gui{
 		bool GuiDisallowMouseCapture;
 
 
-		// Rendering resources //
-		Ogre::ManualObject* MouseQuad;
-
-
 		GraphicalInputEntity* ThisWindow;
 
 		//! Gui elements
 		vector<BaseGuiObject*> Objects;
 
+		//! The corresponding CEGUI context
+		CEGUI::GUIContext* GuiContext;
 
-		std::vector<Gui::View*> ThissViews;
+		//! Time of creation of this GuiManager
+		WantedClockType::time_point LastTimePulseTime;
 
+		//! Set when this is the first created gui manager
+		//! \detail Used for injecting time pulses into CEGUI
+		bool MainGuiManager;
 
 		//! we will soon need a GuiManager for each window
 		int ID;

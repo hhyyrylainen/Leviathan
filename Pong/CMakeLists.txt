@@ -38,12 +38,6 @@ set(USERREADABLEIDENTIFICATION		"L\"Pong client version \" GAME_VERSIONS")
 set(GAMENAMEIDENTIFICATION			Pong)
 set(GAMEVERSIONIDENTIFICATION		GAME_VERSIONS)
 
-# We use a custom JS interface
-set(PROGRAMUSE_CUSTOMJS             1)
-set(PROGRAMCUSTOMJS_INCLUDE         "PongJSInterface.h")
-set(PROGRAMCUSTOMJS_CLASS           CustomJSInterface)
-set(PROGRAMCUSTOMJS_EXTFILE         "PongV8Extension.js")
-
 
 # Configure the includes file
 configure_file("${PROJECT_SOURCE_DIR}/File Templates/BaseLeviathanProjectIncludes.h.in" 
@@ -86,10 +80,5 @@ set(CurrentProjectName Pong)
 include(LeviathanCoreProject)
 
 # The project is now defined
-
-# We need copy and install support for a single custom file
-file(GLOB Extensions "*.js")
-file(COPY ${Extensions} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-install(FILES ${Extensions} DESTINATION bin)
 
 

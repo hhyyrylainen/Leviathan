@@ -10,6 +10,7 @@
 #include "Input/InputController.h"
 #include "GUI/GuiManager.h"
 #include "Entities/Objects/ViewerCameraPos.h"
+#include "CEGUI/RendererModules/Ogre/Renderer.h"
 
 namespace Leviathan{
 
@@ -17,6 +18,7 @@ namespace Leviathan{
 
 	class GraphicalInputEntity : public Object{
 	public:
+		//! \warning You can only create one window at a time since this is not thread safe
 		DLLEXPORT GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties);
 		DLLEXPORT ~GraphicalInputEntity();
 
@@ -36,6 +38,10 @@ namespace Leviathan{
 
 		DLLEXPORT void UnlinkAll();
 
+		//! Returns how many windows have been created
+		//! \see GlobalWindowCount
+		DLLEXPORT static int GetGlobalWindowCount();
+
 		// graphics related //
 		DLLEXPORT float GetViewportAspectRatio();
 		DLLEXPORT void SaveScreenShot(const string &filename);
@@ -44,9 +50,6 @@ namespace Leviathan{
 
 		DLLEXPORT inline Window* GetWindow(){
 			return DisplayWindow;
-		}
-		DLLEXPORT inline Ogre::Viewport* GetMainViewport(){
-			return MainViewport;
 		}
 		DLLEXPORT inline Gui::GuiManager* GetGUI(){
 			return WindowsGui;
@@ -59,6 +62,9 @@ namespace Leviathan{
 		}
 		DLLEXPORT void OnFocusChange(bool focused);
 
+		DLLEXPORT CEGUI::OgreRenderer* GetCEGUIRenderer() const{
+			return CEGUIRenderer;
+		}
 
 	protected:
 
@@ -67,7 +73,8 @@ namespace Leviathan{
 		Window* DisplayWindow;
 		InputController* TertiaryReceiver;
 		Gui::GuiManager* WindowsGui;
-		Ogre::Viewport* MainViewport;
+		CEGUI::OgreRenderer* CEGUIRenderer;
+
 
 		shared_ptr<GameWorld> LinkedWorld;
 		shared_ptr<ViewerCameraPos> LinkedCamera;

@@ -20,6 +20,10 @@ namespace Leviathan{
 		FileDefinitionType(FileSystem* instance, const wstring &path); // just the path, everything else is worked out by the constructor //
 		~FileDefinitionType();
 
+		//! Returns the filename with the extension
+		//! \return The name in this format: "file.extension"
+		wstring GetNameWithExtension() const;
+
 		// operation for sorting //
 		bool operator < (const FileDefinitionType& other) const;
 
@@ -50,6 +54,9 @@ namespace Leviathan{
 
 		DLLEXPORT int RegisterExtension(const wstring &extension);
 		DLLEXPORT void GetExtensionIDS(const wstring& extensions, vector<int>& ids);
+		//! Returns the name of the extension from the id
+		//! \exception ExceptionNotFound when extension with id not registered
+		DLLEXPORT const wstring& GetExtensionName(int id) const THROWS;
 
 
 		// loaded file searching functions //

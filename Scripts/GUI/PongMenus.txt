@@ -1,5 +1,4 @@
-GUIBasePage = "Pong.html";
-GUISize = FULL;
+GUIBaseFile = "TestMenu.layout";
 
 objects {
     // this keeps the GUI always on //

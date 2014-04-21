@@ -500,6 +500,8 @@ void Leviathan::Engine::Release(bool forced){
 	SAFE_DELETE(OutOMemory);
 
 	SAFE_DELETE(IDDefaultInstance);
+
+	Logger::Get()->Write(L"Goodbye cruel world!");
 }
 // ------------------------------------ //
 void Leviathan::Engine::Tick(){

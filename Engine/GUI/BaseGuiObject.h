@@ -22,7 +22,7 @@ namespace Leviathan{ namespace Gui{
 	class BaseGuiObject : public ReferenceCounted, public EventableScriptObject{
 		friend GuiManager;
 	public:
-		DLLEXPORT BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, View* sheet, shared_ptr<ScriptScript> script = NULL);
+		DLLEXPORT BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, shared_ptr<ScriptScript> script = NULL);
 		DLLEXPORT virtual ~BaseGuiObject();
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(BaseGuiObject);
@@ -44,8 +44,7 @@ namespace Leviathan{ namespace Gui{
 			return OwningInstance;
 		}
 		
-		DLLEXPORT static bool LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects,	ObjectFileObject& dataforthis,
-			View* sheet);
+		DLLEXPORT static bool LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects,	ObjectFileObject& dataforthis);
 	protected:
 		// this function will try to hook all wanted listeners to Rocket element //
 		void _HookListeners();
@@ -58,8 +57,6 @@ namespace Leviathan{ namespace Gui{
 		wstring Name;
 
 		GuiManager* OwningInstance;
-		// Stores the owning sheet for easy access //
-		View* ContainedInSheet;
 	};
 
 }}

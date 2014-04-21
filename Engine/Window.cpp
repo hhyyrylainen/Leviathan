@@ -9,10 +9,6 @@
 #include "OgreRoot.h"
 #include "OgreSceneManager.h"
 #include "OgreViewport.h"
-#include "include/cef_browser.h"
-#include "chromium/KeyboardCodes.h"
-#include "include/cef_keyboard_handler.h"
-#include "GlobalCEFHandler.h"
 #include "OgreSceneNode.h"
 #include "OgreCamera.h"
 #include "Rendering/GraphicalInputEntity.h"
@@ -45,92 +41,11 @@ X11::XID Leviathan::Window::GetForegroundWindow(){
 
 #endif
 
-#if defined(OS_LINUX)
-#include <gdk/gdkkeysyms.h>
-#endif
-
-#if defined(OS_MACOSX)
-#include <Carbon/Carbon.h>
-#endif
-
-// Copyright (c) 2013 The Chromium Embedded Framework Authors. All rights
-// reserved. Use of this source code is governed by a BSD-style license that
-// can be found in the LICENSE file.
-#if defined(OS_MACOSX)
-// A convenient array for getting symbol characters on the number keys.
-const char kShiftCharsForNumberKeys[] = ")!@#$%^&*(";
-
-// Convert an ANSI character to a Mac key code.
-int GetMacKeyCodeFromChar(int key_char) {
-	switch (key_char) {
-	case ' ': return kVK_Space;
-
-	case '0': case ')': return kVK_ANSI_0;
-	case '1': case '!': return kVK_ANSI_1;
-	case '2': case '@': return kVK_ANSI_2;
-	case '3': case '#': return kVK_ANSI_3;
-	case '4': case '$': return kVK_ANSI_4;
-	case '5': case '%': return kVK_ANSI_5;
-	case '6': case '^': return kVK_ANSI_6;
-	case '7': case '&': return kVK_ANSI_7;
-	case '8': case '*': return kVK_ANSI_8;
-	case '9': case '(': return kVK_ANSI_9;
-
-	case 'a': case 'A': return kVK_ANSI_A;
-	case 'b': case 'B': return kVK_ANSI_B;
-	case 'c': case 'C': return kVK_ANSI_C;
-	case 'd': case 'D': return kVK_ANSI_D;
-	case 'e': case 'E': return kVK_ANSI_E;
-	case 'f': case 'F': return kVK_ANSI_F;
-	case 'g': case 'G': return kVK_ANSI_G;
-	case 'h': case 'H': return kVK_ANSI_H;
-	case 'i': case 'I': return kVK_ANSI_I;
-	case 'j': case 'J': return kVK_ANSI_J;
-	case 'k': case 'K': return kVK_ANSI_K;
-	case 'l': case 'L': return kVK_ANSI_L;
-	case 'm': case 'M': return kVK_ANSI_M;
-	case 'n': case 'N': return kVK_ANSI_N;
-	case 'o': case 'O': return kVK_ANSI_O;
-	case 'p': case 'P': return kVK_ANSI_P;
-	case 'q': case 'Q': return kVK_ANSI_Q;
-	case 'r': case 'R': return kVK_ANSI_R;
-	case 's': case 'S': return kVK_ANSI_S;
-	case 't': case 'T': return kVK_ANSI_T;
-	case 'u': case 'U': return kVK_ANSI_U;
-	case 'v': case 'V': return kVK_ANSI_V;
-	case 'w': case 'W': return kVK_ANSI_W;
-	case 'x': case 'X': return kVK_ANSI_X;
-	case 'y': case 'Y': return kVK_ANSI_Y;
-	case 'z': case 'Z': return kVK_ANSI_Z;
-
-		// U.S. Specific mappings.  Mileage may vary.
-	case ';': case ':': return kVK_ANSI_Semicolon;
-	case '=': case '+': return kVK_ANSI_Equal;
-	case ',': case '<': return kVK_ANSI_Comma;
-	case '-': case '_': return kVK_ANSI_Minus;
-	case '.': case '>': return kVK_ANSI_Period;
-	case '/': case '?': return kVK_ANSI_Slash;
-	case '`': case '~': return kVK_ANSI_Grave;
-	case '[': case '{': return kVK_ANSI_LeftBracket;
-	case '\\': case '|': return kVK_ANSI_Backslash;
-	case ']': case '}': return kVK_ANSI_RightBracket;
-	case '\'': case '"': return kVK_ANSI_Quote;
-	}
-
-	return -1;
-}
-#endif  // defined(OS_MACOSX)
-
-// ------------------ End of CEF code ------------------ //
-
-
-
-// ------------------ Window ------------------ //
 DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner) : OWindow(owindow),
 	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), LastFrameDownMouseButtons(0),
 	ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true), InputProcessedByCEF(false), OverLayCamera(NULL)
 #ifdef __GNUC__
-	, XDisplay(NULL), m_hwnd(0)
+	, XDisplay(NULL), m_hwnd(0), XInvCursor(0)
 #else
 	, m_hwnd(NULL)
 #endif
@@ -147,6 +62,17 @@ DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputE
 	// cursor on top of window's windows isn't hidden //
 	ApplicationWantCursorState = false;
 
+#ifdef __GNUC__
+	// Create an invisible cursor //
+	X11::XColor black;
+	static char noData[] = { 0,0,0,0,0,0,0,0 };
+	black.red = black.green = black.blue = 0;
+
+	X11::Pixmap bitmapNoData = XCreateBitmapFromData(XDisplay, m_hwnd, noData, 8, 8);
+	XInvCursor = X11::XCreatePixmapCursor(XDisplay, bitmapNoData, bitmapNoData, &black, &black, 0, 0);
+
+#endif
+
 	SetupOISForThisWindow();
 	_CreateOverlayScene();
 }
@@ -156,6 +82,12 @@ DLLEXPORT Leviathan::Window::~Window(){
 	Ogre::WindowEventUtilities::removeWindowEventListener(OWindow, this);
 	// close window (might be closed already) //
 	//OWindow->destroy();
+
+#ifdef __GNUC__
+	// Undefine the created cursor //
+	X11::XFreeCursor(XDisplay, XInvCursor);
+
+#endif
 
 	// release Ogre resources //
 	Ogre::Root::getSingleton().destroySceneManager(OverlayScene);
@@ -184,8 +116,8 @@ DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
 #ifdef _WIN32
 			ShowCursor(FALSE);
 #else
-			// Set nothing as our cursor
-			XDefineCursor(XDisplay, m_hwnd, 0);
+			// Set the invisible map as our cursor //
+			XDefineCursor(XDisplay, m_hwnd, XInvCursor);
 #endif
 		}
 	}
@@ -420,7 +352,7 @@ void Leviathan::Window::UpdateOISMouseWindowSize(){
 	ms.height = height;
 }
 
-DLLEXPORT void Leviathan::Window::GatherInput(CefRefPtr<CefBrowserHost> browserinput){
+DLLEXPORT void Leviathan::Window::GatherInput(CEGUI::GUIContext* receivercontext){
 	// quit if window closed //
 	if(OWindow->isClosed() || !WindowKeyboard || !WindowMouse){
 
@@ -428,7 +360,7 @@ DLLEXPORT void Leviathan::Window::GatherInput(CefRefPtr<CefBrowserHost> browseri
 		return;
 	}
 
-	inputreceiver = browserinput;
+	inputreceiver = receivercontext;
 
 	// on first frame we want to manually force mouse position send //
 	if(FirstInput){
@@ -488,224 +420,45 @@ void Leviathan::Window::CheckInputState(){
 	if(ThisFrameHandledCreate)
 		return;
 
-	const OIS::MouseState& mstate = WindowMouse->getMouseState();
-
 	// create keyboard special key states here //
 	SpecialKeyModifiers = 0;
 
 	if(WindowKeyboard->isModifierDown(OIS::Keyboard::Ctrl))
-		SpecialKeyModifiers |= EVENTFLAG_CONTROL_DOWN;
+		SpecialKeyModifiers |= KEYSPECIAL_CTRL;
 	if(WindowKeyboard->isModifierDown(OIS::Keyboard::Alt))
-		SpecialKeyModifiers |= EVENTFLAG_ALT_DOWN;
+		SpecialKeyModifiers |= KEYSPECIAL_ALT;
 	if(WindowKeyboard->isModifierDown(OIS::Keyboard::Shift))
-		SpecialKeyModifiers |= EVENTFLAG_SHIFT_DOWN;
+		SpecialKeyModifiers |= KEYSPECIAL_SHIFT;
 	if(WindowKeyboard->isKeyDown(OIS::KC_CAPITAL))
-		SpecialKeyModifiers |= EVENTFLAG_CAPS_LOCK_ON;
+		SpecialKeyModifiers |= KEYSPECIAL_CAPS;
 	if(WindowKeyboard->isKeyDown(OIS::KC_LWIN))
-		SpecialKeyModifiers |= EVENTFLAG_COMMAND_DOWN;
-	if(WindowKeyboard->isKeyDown(OIS::KC_NUMLOCK))
-		SpecialKeyModifiers |= EVENTFLAG_NUM_LOCK_ON;
-	if(WindowKeyboard->isKeyDown(OIS::KC_LEFT))
-		SpecialKeyModifiers |= EVENTFLAG_IS_LEFT;
-	if(WindowKeyboard->isKeyDown(OIS::KC_RIGHT))
-		SpecialKeyModifiers |= EVENTFLAG_IS_RIGHT;
-	if(mstate.buttonDown(OIS::MB_Left))
-		SpecialKeyModifiers |= EVENTFLAG_LEFT_MOUSE_BUTTON;
-	if(mstate.buttonDown(OIS::MB_Right))
-		SpecialKeyModifiers |= EVENTFLAG_RIGHT_MOUSE_BUTTON;
-	if(mstate.buttonDown(OIS::MB_Middle))
-		SpecialKeyModifiers |= EVENTFLAG_MIDDLE_MOUSE_BUTTON;
-	// TODO: add 
-	// EVENTFLAG_IS_KEY_PAD
+		SpecialKeyModifiers |= KEYSPECIAL_WIN;
+	if(WindowKeyboard->isKeyDown(OIS::KC_SCROLL))
+		SpecialKeyModifiers |= KEYSPECIAL_SCROLL;
 
 	ThisFrameHandledCreate = true;
 }
 // ------------------ Input listener functions ------------------ //
-void Leviathan::Window::DoCEFInputPass(const OIS::KeyEvent &arg, bool down){
-
-	CefKeyEvent cef_event;
-
-	cef_event.modifiers = SpecialKeyModifiers;
-	InputProcessedByCEF = false;
-
-	// More slightly modified CEF (chromium embedded framework) code, see the license higher in this file (line 50ish) //
-#if defined(OS_WIN)
-
-	//BYTE vkey = LOBYTE(VkKeyScan(text));
-	BYTE vkey = OISVKeyConvert[arg.key];
-	UINT scanCode = MapVirtualKey(vkey, MAPVK_VK_TO_VSC);
-	cef_event.native_key_code = (scanCode << 16) |  // key scan code
-		1;  // key repeat count
-#elif defined(OS_LINUX) || defined(OS_MACOSX)
-
-	// We need to manually translate the text if it isn't already translated //
-	static_assert(0, "TODO: write a conversion from OIS keycode to a character");
-
-#if defined(OS_LINUX)
-	if (arg.key == OIS::KC_BACK)
-		cef_event.native_key_code = GDK_BackSpace;
-	else if (arg.key == OIS::KC_DELETE)
-		cef_event.native_key_code = GDK_Delete;
-	else if (arg.key == OIS::KC_DOWN)
-		cef_event.native_key_code = GDK_Down;
-	else if (arg.key == OIS::KC_ENTER)
-		cef_event.native_key_code = GDK_KEY_KP_Enter;
-	else if (arg.key == OIS::KC_ESCAPE)
-		cef_event.native_key_code = GDK_Escape;
-	else if (arg.key == OIS::KC_LEFT)
-		cef_event.native_key_code = GDK_Left;
-	else if (arg.key == OIS::KC_RIGHT)
-		cef_event.native_key_code = GDK_Right;
-	else if (arg.key == OIS::KC_TAB)
-		cef_event.native_key_code = GDK_Tab;
-	else if (arg.key == OIS::KC_UP)
-		cef_event.native_key_code = GDK_Up;
-	else
-		cef_event.native_key_code = key_char;
-#elif defined(OS_MACOSX)
-	if (arg.key == OIS::KC_BACK) {
-		cef_event.native_key_code = kVK_Delete;
-		cef_event.unmodified_character = kBackspaceCharCode;
-	} else if (arg.key == OIS::KC_DELETE) {
-		cef_event.native_key_code = kVK_ForwardDelete;
-		cef_event.unmodified_character = kDeleteCharCode;
-	} else if (arg.key == OIS::KC_DOWN) {
-		cef_event.native_key_code = kVK_DownArrow;
-		cef_event.unmodified_character = /* NSDownArrowFunctionKey */ 0xF701;
-	} else if (arg.key == OIS::KC_RETURN) {
-		cef_event.native_key_code = kVK_Return;
-		cef_event.unmodified_character = kReturnCharCode;
-	} else if (arg.key == OIS::KC_ESCAPE) {
-		cef_event.native_key_code = kVK_Escape;
-		cef_event.unmodified_character = kEscapeCharCode;
-	} else if (arg.key == OIS::KC_LEFT) {
-		cef_event.native_key_code = kVK_LeftArrow;
-		cef_event.unmodified_character = /* NSLeftArrowFunctionKey */ 0xF702;
-	} else if (arg.key == OIS::KC_RIGHT) {
-		cef_event.native_key_code = kVK_RightArrow;
-		cef_event.unmodified_character = /* NSRightArrowFunctionKey */ 0xF703;
-	} else if (arg.key == OIS::KC_TAB) {
-		cef_event.native_key_code = kVK_Tab;
-		cef_event.unmodified_character = kTabCharCode;
-	} else if (arg.key == OIS::KC_UP) {
-		cef_event.native_key_code = kVK_UpArrow;
-		cef_event.unmodified_character = /* NSUpArrowFunctionKey */ 0xF700;
-	} else {
-		cef_event.native_key_code = GetMacKeyCodeFromChar(key_char);
-		if (cef_event.native_key_code == -1)
-			return;
-
-		cef_event.unmodified_character = key_char;
-	}
-
-	cef_event.character = cef_event.unmodified_character;
-
-	// Fill in |character| according to flags.
-	if (cef_event.modifiers & EVENTFLAG_SHIFT_DOWN) {
-		if (key_char >= '0' && key_char <= '9') {
-			cef_event.character = kShiftCharsForNumberKeys[key_char - '0'];
-		} else if (key_char >= 'A' && key_char <= 'Z') {
-			cef_event.character = 'A' + (key_char - 'A');
-		} else {
-			switch (cef_event.native_key_code) {
-			case kVK_ANSI_Grave:
-				cef_event.character = '~';
-				break;
-			case kVK_ANSI_Minus:
-				cef_event.character = '_';
-				break;
-			case kVK_ANSI_Equal:
-				cef_event.character = '+';
-				break;
-			case kVK_ANSI_LeftBracket:
-				cef_event.character = '{';
-				break;
-			case kVK_ANSI_RightBracket:
-				cef_event.character = '}';
-				break;
-			case kVK_ANSI_Backslash:
-				cef_event.character = '|';
-				break;
-			case kVK_ANSI_Semicolon:
-				cef_event.character = ':';
-				break;
-			case kVK_ANSI_Quote:
-				cef_event.character = '\"';
-				break;
-			case kVK_ANSI_Comma:
-				cef_event.character = '<';
-				break;
-			case kVK_ANSI_Period:
-				cef_event.character = '>';
-				break;
-			case kVK_ANSI_Slash:
-				cef_event.character = '?';
-				break;
-			default:
-				break;
-			}
-		}
-	}
-
-	// Control characters.
-	if (cef_event.modifiers & EVENTFLAG_CONTROL_DOWN) {
-		if (key_char >= 'A' && key_char <= 'Z')
-			cef_event.character = 1 + key_char - 'A';
-		else if (cef_event.native_key_code == kVK_ANSI_LeftBracket)
-			cef_event.character = 27;
-		else if (cef_event.native_key_code == kVK_ANSI_Backslash)
-			cef_event.character = 28;
-		else if (cef_event.native_key_code == kVK_ANSI_RightBracket)
-			cef_event.character = 29;
-	}
-#endif  // defined(OS_MACOSX)
-#endif  // defined(OS_LINUX) || defined(OS_MACOSX)
-
-	if (down) {
-#if defined(OS_WIN)
-		cef_event.windows_key_code = vkey;
-#endif
-		cef_event.type = KEYEVENT_RAWKEYDOWN;
-
-		// Pass the first //
-		inputreceiver->SendKeyEvent(cef_event);
-
-		// Send char event //
-		if(arg.text == 0)
-			return;
-#if defined(OS_WIN)
-		cef_event.windows_key_code = arg.text;
-#endif
-		cef_event.type = KEYEVENT_CHAR;
-
-	} else {
-#if defined(OS_WIN)
-		cef_event.windows_key_code = vkey;
-		// bits 30 and 31 should always be 1 for WM_KEYUP
-		cef_event.native_key_code |= 0xC0000000;
-#endif
-		cef_event.type = KEYEVENT_KEYUP;
-	}
-
-	// Pass it //
-	inputreceiver->SendKeyEvent(cef_event);
-}
-
 bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 	CheckInputState();
 
 	bool SentToController = false;
 
-	// Try to pass to CEF //
-	DoCEFInputPass(arg, true);
+	// First pass to CEGUI //
+	bool usedtext = false;
 
+	if(arg.text){
 
-	// Check is it now handled or not and continue //
-	if(!InputProcessedByCEF){
+		usedtext = inputreceiver->injectChar(arg.text);
+	}
 
-		// Finally try sending it to GUI //
+	bool usedkeydown = inputreceiver->injectKeyDown(static_cast<CEGUI::Key::Scan>(arg.key));
+
+	if(!usedkeydown && !usedtext){
+		// Then try disabling collections //
 		if(!OwningWindow->GetGUI()->ProcessKeyDown(arg.key, SpecialKeyModifiers)){
 
+			// Finally send to a controller //
 			SentToController = true;
 			OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, true);
 		}
@@ -716,23 +469,19 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 	}
 
 
-	// don't really know what to return
 	return true;
 }
 
 bool Leviathan::Window::keyReleased(const OIS::KeyEvent &arg){
 	CheckInputState();
-	
-	// Send to CEF if GUI is active //
-	DoCEFInputPass(arg, false);
 
+	// Pass it //
+	inputreceiver->injectKeyUp(static_cast<CEGUI::Key::Scan>(arg.key));
 
 	// This should always be passed here //
 	OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, false);
+	
 
-
-
-	// don't really know what to return
 	return true;
 }
 
@@ -742,19 +491,16 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
 	// send all mouse related things (except buttons) //
 	const OIS::MouseState& mstate = arg.state;
 
+	// only pass this data if we aren't going to pass our own captured mouse //
 	if(!MouseCaptured){
-		// only pass this data if we aren't going to pass our own captured mouse //
-		CefMouseEvent mevent;
-		mevent.modifiers = SpecialKeyModifiers;
-		mevent.x = mstate.X.abs;
-		mevent.y = mstate.Y.abs;
 
-		inputreceiver->SendMouseMoveEvent(mevent, IsMouseOutsideWindowClientArea());
-		inputreceiver->SendMouseWheelEvent(mevent, 0, mstate.Z.rel); 
+		// Pass both scroll and movement //
+		inputreceiver->injectMousePosition((float)mstate.X.abs, (float)mstate.Y.abs);
+		inputreceiver->injectMouseWheelChange((float)mstate.Z.rel);
 	}
-	_CheckMouseVisibilityStates();
 
-	// don't really know what to return
+	_CheckMouseVisibilityStates();
+	
 	return true;
 }
 
@@ -783,34 +529,31 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 	int Keynumber = index;
 	if(!MouseCaptured){
 
-		CefMouseEvent mevent;
-		mevent.modifiers = SpecialKeyModifiers;
-		mevent.x = mstate.X.abs;
-		mevent.y = mstate.Y.abs;
-
-		cef_mouse_button_type_t btype;
+		CEGUI::MouseButton pressed = CEGUI::NoButton;
 
 		if(Keynumber == 0){
-			btype = MBT_LEFT;
+			pressed = CEGUI::LeftButton;
 
 		} else if(Keynumber == 1){
-			btype = MBT_RIGHT;
+			pressed = CEGUI::RightButton;
 
 		} else if(Keynumber == 2){
-			btype = MBT_MIDDLE;
+			pressed = CEGUI::MiddleButton;
+
+		} else if (Keynumber == 3){
+			pressed = CEGUI::X1Button;
+
+		} else if (Keynumber == 3){
+			pressed = CEGUI::X2Button;
 
 		} else {
 			// We actually don't want to pass this //
 			return true;
 		}
 
-		inputreceiver->SendMouseClickEvent(mevent, btype, false, 1);
+		inputreceiver->injectMouseButtonDown(pressed);
 	}
-		
-
-	_CheckMouseVisibilityStates();
-
-	// don't really know what to return
+	
 	return true;
 }
 
@@ -837,28 +580,29 @@ bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButt
 
 	int Keynumber = index;
 
-	CefMouseEvent mevent;
-	mevent.modifiers = SpecialKeyModifiers;
-	mevent.x = mstate.X.abs;
-	mevent.y = mstate.Y.abs;
-
-	cef_mouse_button_type_t btype;
+	CEGUI::MouseButton pressed = CEGUI::NoButton;
 
 	if(Keynumber == 0){
-		btype = MBT_LEFT;
+		pressed = CEGUI::LeftButton;
 
 	} else if(Keynumber == 1){
-		btype = MBT_RIGHT;
+		pressed = CEGUI::RightButton;
 
 	} else if(Keynumber == 2){
-		btype = MBT_MIDDLE;
+		pressed = CEGUI::MiddleButton;
+
+	} else if (Keynumber == 3){
+		pressed = CEGUI::X1Button;
+
+	} else if (Keynumber == 3){
+		pressed = CEGUI::X2Button;
 
 	} else {
 		// We actually don't want to pass this //
 		return true;
 	}
 
-	inputreceiver->SendMouseClickEvent(mevent, btype, true, 1);
+	inputreceiver->injectMouseButtonUp(pressed);
 
 	// don't really know what to return
 	return true;
@@ -953,12 +697,9 @@ DLLEXPORT Int2 Leviathan::Window::TranslateClientPointToScreenPoint(const Int2 &
 
 
 // ------------------ KeyCode conversion map ------------------ //
-#define QUICKKEYPAIR(x, y) OIS::x, WebCore::y
 #define SIMPLEPAIR(x, y)	L##x, OIS::y
-#define QUICKONETOONEPAIR(x) OIS::KC_##x, WebCore::VKEY_##x
-
-
 #define SIMPLEONETOONE(x)	WSTRINGIFY(x), OIS::KC_##x
+
 
 boost::bimap<wstring, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = boost::assign::list_of<boost::bimap<wstring, OIS::KeyCode>::relation>
 	(SIMPLEONETOONE(A))
@@ -1013,9 +754,7 @@ boost::bimap<wstring, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = b
 	(SIMPLEONETOONE(F22))
 	(SIMPLEONETOONE(F23))
 	(SIMPLEONETOONE(F24))*/
-
-	// In a bidirectional map keys and values need to be unique //
-	//(SIMPLEONETOONE(ESCAPE))
+	
 	(SIMPLEONETOONE(HOME))
 
 	(SIMPLEONETOONE(NUMPAD0))
@@ -1066,154 +805,3 @@ DLLEXPORT wstring Leviathan::Window::ConvertOISKeyCodeToWstring(const OIS::KeyCo
 DLLEXPORT bool Leviathan::Window::IsWindowFocused() const{
 	return Focused;
 }
-
-
-
-map<OIS::KeyCode, int> Leviathan::Window::OISVKeyConvert = boost::assign::map_list_of
-	(QUICKKEYPAIR(KC_UNASSIGNED, VKEY_UNKNOWN))
-	(QUICKONETOONEPAIR(ESCAPE))
-	(QUICKONETOONEPAIR(1))
-	(QUICKONETOONEPAIR(2))
-	(QUICKONETOONEPAIR(3))
-	(QUICKONETOONEPAIR(4))
-	(QUICKONETOONEPAIR(5))
-	(QUICKONETOONEPAIR(6))
-	(QUICKONETOONEPAIR(7))
-	(QUICKONETOONEPAIR(8))
-	(QUICKONETOONEPAIR(9))
-	(QUICKONETOONEPAIR(0))
-	(QUICKKEYPAIR(KC_MINUS, VKEY_OEM_MINUS))
-	(QUICKKEYPAIR(KC_EQUALS, VKEY_OEM_PLUS)) //
-	(QUICKKEYPAIR(KC_BACK, VKEY_BACK))
-	(QUICKKEYPAIR(KC_TAB, VKEY_TAB))
-	(QUICKONETOONEPAIR(Q))
-	(QUICKONETOONEPAIR(W))
-	(QUICKONETOONEPAIR(E))
-	(QUICKONETOONEPAIR(R))
-	(QUICKONETOONEPAIR(T))
-	(QUICKONETOONEPAIR(Y))
-	(QUICKONETOONEPAIR(U))
-	(QUICKONETOONEPAIR(I))
-	(QUICKONETOONEPAIR(O))
-	(QUICKONETOONEPAIR(P))
-	(QUICKKEYPAIR(KC_LBRACKET, VKEY_OEM_4))
-	(QUICKKEYPAIR(KC_RBRACKET, VKEY_OEM_6))
-	(QUICKKEYPAIR(KC_RETURN, VKEY_RETURN))
-	(QUICKKEYPAIR(KC_LCONTROL, VKEY_LCONTROL))
-	(QUICKONETOONEPAIR(A))
-	(QUICKONETOONEPAIR(S))
-	(QUICKONETOONEPAIR(D))
-	(QUICKONETOONEPAIR(F))
-	(QUICKONETOONEPAIR(G))
-	(QUICKONETOONEPAIR(H))
-	(QUICKONETOONEPAIR(J))
-	(QUICKONETOONEPAIR(K))
-	(QUICKONETOONEPAIR(L))
-	(QUICKKEYPAIR(KC_SEMICOLON, VKEY_OEM_1))
-	(QUICKKEYPAIR(KC_APOSTROPHE, VKEY_OEM_7)) //
-	(QUICKKEYPAIR(KC_GRAVE, VKEY_OEM_3))
-	(QUICKKEYPAIR(KC_LSHIFT, VKEY_LSHIFT))
-	(QUICKKEYPAIR(KC_BACKSLASH, VKEY_OEM_5))
-	(QUICKONETOONEPAIR(Z))
-	(QUICKONETOONEPAIR(X))
-	(QUICKONETOONEPAIR(C))
-	(QUICKONETOONEPAIR(V))
-	(QUICKONETOONEPAIR(B))
-	(QUICKONETOONEPAIR(N))
-	(QUICKONETOONEPAIR(M))
-	(QUICKKEYPAIR(KC_COMMA, VKEY_OEM_COMMA))
-	(QUICKKEYPAIR(KC_PERIOD, VKEY_OEM_PERIOD))
-	(QUICKKEYPAIR(KC_SLASH, VKEY_OEM_2))
-	(QUICKKEYPAIR(KC_RSHIFT, VKEY_RSHIFT))
-	(QUICKKEYPAIR(KC_MULTIPLY, VKEY_MULTIPLY))
-	(QUICKKEYPAIR(KC_LMENU, VKEY_LMENU))
-	(QUICKKEYPAIR(KC_SPACE, VKEY_SPACE))
-	(QUICKKEYPAIR(KC_CAPITAL, VKEY_CAPITAL))
-	(QUICKONETOONEPAIR(F1))
-	(QUICKONETOONEPAIR(F2))
-	(QUICKONETOONEPAIR(F3))
-	(QUICKONETOONEPAIR(F4))
-	(QUICKONETOONEPAIR(F5))
-	(QUICKONETOONEPAIR(F6))
-	(QUICKONETOONEPAIR(F7))
-	(QUICKONETOONEPAIR(F8))
-	(QUICKONETOONEPAIR(F9))
-	(QUICKONETOONEPAIR(F10))
-	(QUICKKEYPAIR(KC_NUMLOCK, VKEY_NUMLOCK))
-	(QUICKKEYPAIR(KC_SCROLL, VKEY_SCROLL))
-	(QUICKONETOONEPAIR(NUMPAD7))
-	(QUICKONETOONEPAIR(NUMPAD8))
-	(QUICKONETOONEPAIR(NUMPAD9))
-	(QUICKKEYPAIR(KC_SUBTRACT, VKEY_SUBTRACT))
-	(QUICKONETOONEPAIR(NUMPAD4))
-	(QUICKONETOONEPAIR(NUMPAD5))
-	(QUICKONETOONEPAIR(NUMPAD6))
-	(QUICKKEYPAIR(KC_ADD, VKEY_ADD))
-	(QUICKONETOONEPAIR(NUMPAD1))
-	(QUICKONETOONEPAIR(NUMPAD2))
-	(QUICKONETOONEPAIR(NUMPAD3))
-	(QUICKONETOONEPAIR(NUMPAD9))
-	(QUICKKEYPAIR(KC_DECIMAL, VKEY_DECIMAL))
-	(QUICKKEYPAIR(KC_OEM_102, VKEY_OEM_102))
-	(QUICKONETOONEPAIR(F11))
-	(QUICKONETOONEPAIR(F12))
-	(QUICKONETOONEPAIR(F13))
-	(QUICKONETOONEPAIR(F14))
-	(QUICKONETOONEPAIR(F15))
-	(QUICKKEYPAIR(KC_OEM_102, VKEY_OEM_102))
-	(QUICKKEYPAIR(KC_KANA, VKEY_KANA))
-	(QUICKKEYPAIR(KC_ABNT_C1, VKEY_OEM_2)) //
-	(QUICKKEYPAIR(KC_CONVERT, VKEY_CONVERT))
-	(QUICKKEYPAIR(KC_NOCONVERT, VKEY_NONCONVERT))
-	(QUICKKEYPAIR(KC_YEN, VKEY_UNKNOWN)) //
-	(QUICKKEYPAIR(KC_ABNT_C2, VKEY_DECIMAL))
-	(QUICKKEYPAIR(KC_NUMPADEQUALS, VKEY_RETURN))
-	(QUICKKEYPAIR(KC_PREVTRACK, VKEY_MEDIA_PREV_TRACK))
-	(QUICKKEYPAIR(KC_AT, VKEY_OEM_8))
-	(QUICKKEYPAIR(KC_COLON, VKEY_OEM_1)) //
-	(QUICKKEYPAIR(KC_UNDERLINE, VKEY_OEM_MINUS)) //
-	(QUICKKEYPAIR(KC_KANJI, VKEY_KANJI))
-	(QUICKKEYPAIR(KC_STOP, VKEY_BROWSER_STOP)) //
-	(QUICKKEYPAIR(KC_AX, VKEY_UNKNOWN))
-	(QUICKKEYPAIR(KC_UNLABELED, VKEY_UNKNOWN))
-	(QUICKKEYPAIR(KC_NEXTTRACK, VKEY_MEDIA_NEXT_TRACK))
-	(QUICKKEYPAIR(KC_NUMPADENTER, VKEY_RETURN))
-	(QUICKKEYPAIR(KC_RCONTROL, VKEY_RCONTROL))
-	(QUICKKEYPAIR(KC_MUTE, VKEY_VOLUME_MUTE))
-	(QUICKKEYPAIR(KC_CALCULATOR, VKEY_UNKNOWN))
-	(QUICKKEYPAIR(KC_PLAYPAUSE, VKEY_MEDIA_PLAY_PAUSE))
-	(QUICKKEYPAIR(KC_MEDIASTOP, VKEY_MEDIA_STOP))
-	(QUICKKEYPAIR(KC_VOLUMEDOWN, VKEY_VOLUME_DOWN))
-	(QUICKKEYPAIR(KC_VOLUMEUP, VKEY_VOLUME_UP))
-	(QUICKKEYPAIR(KC_WEBHOME, VKEY_BROWSER_HOME))
-	(QUICKKEYPAIR(KC_NUMPADCOMMA, VKEY_DECIMAL)) //
-	(QUICKKEYPAIR(KC_DIVIDE, VKEY_DIVIDE))
-	(QUICKKEYPAIR(KC_SYSRQ, VKEY_UNKNOWN)) //
-	(QUICKKEYPAIR(KC_RMENU, VKEY_RMENU))
-	(QUICKKEYPAIR(KC_PAUSE, VKEY_PAUSE))
-	(QUICKKEYPAIR(KC_HOME, VKEY_HOME))
-	(QUICKKEYPAIR(KC_UP, VKEY_UP))
-	(QUICKKEYPAIR(KC_PGUP, VKEY_PRIOR))
-	(QUICKKEYPAIR(KC_LEFT, VKEY_LEFT))
-	(QUICKKEYPAIR(KC_RIGHT, VKEY_RIGHT))
-	(QUICKKEYPAIR(KC_END, VKEY_END))
-	(QUICKKEYPAIR(KC_DOWN, VKEY_DOWN))
-	(QUICKKEYPAIR(KC_PGDOWN, VKEY_NEXT))
-	(QUICKKEYPAIR(KC_INSERT, VKEY_INSERT))
-	(QUICKKEYPAIR(KC_DELETE, VKEY_DELETE))
-	(QUICKKEYPAIR(KC_LWIN, VKEY_LWIN))
-	(QUICKKEYPAIR(KC_RWIN, VKEY_RWIN))
-	(QUICKKEYPAIR(KC_APPS, VKEY_APPS))
-	(QUICKKEYPAIR(KC_POWER, VKEY_UNKNOWN))
-	(QUICKKEYPAIR(KC_SLEEP, VKEY_SLEEP))
-	(QUICKKEYPAIR(KC_WAKE, VKEY_UNKNOWN))
-	(QUICKKEYPAIR(KC_WEBSEARCH, VKEY_BROWSER_SEARCH))
-	(QUICKKEYPAIR(KC_WEBFAVORITES, VKEY_BROWSER_FAVORITES))
-	(QUICKKEYPAIR(KC_WEBREFRESH, VKEY_BROWSER_REFRESH))
-	(QUICKKEYPAIR(KC_WEBSTOP, VKEY_BROWSER_STOP))
-	(QUICKKEYPAIR(KC_WEBFORWARD, VKEY_BROWSER_FORWARD))
-	(QUICKKEYPAIR(KC_WEBBACK, VKEY_BROWSER_BACK))
-	(QUICKKEYPAIR(KC_MYCOMPUTER, VKEY_UNKNOWN)) //
-	(QUICKKEYPAIR(KC_MAIL, VKEY_MEDIA_LAUNCH_MAIL))
-	(QUICKKEYPAIR(KC_MEDIASELECT, VKEY_MEDIA_LAUNCH_MEDIA_SELECT))
-;

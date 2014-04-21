@@ -24,8 +24,6 @@ void App::CustomizeEnginePostLoad(){
 
 	manager->LoadGUIFile(FileSystem::GetScriptsFolder()+L"MainGui.txt");
 
-	manager->SetMouseFile(FileSystem::GetScriptsFolder()+L"cursor.rml");
-
 
 	shared_ptr<ViewerCameraPos> MainCamera(new ViewerCameraPos());
 

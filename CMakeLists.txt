@@ -6,8 +6,8 @@ project(Leviathan)
 # version number
 set(LEVIATHAN_VERSION_STABLE 0)
 set(LEVIATHAN_VERSION_MAJOR 6)
-set(LEVIATHAN_VERSION_MINOR 6)
-set(LEVIATHAN_VERSION_PATCH 2)
+set(LEVIATHAN_VERSION_MINOR 7)
+set(LEVIATHAN_VERSION_PATCH 0)
 
 set(LEVIATHAN_VERSION_STR ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}.${LEVIATHAN_VERSION_MINOR}.${LEVIATHAN_VERSION_PATCH})
 set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LEVIATHAN_VERSION_MINOR}${LEVIATHAN_VERSION_PATCH})
@@ -19,6 +19,10 @@ set(WORK_DIR "${PROJECT_BINARY_DIR}/bin")
 
 # modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake" "${PROJECT_SOURCE_DIR}/LeviathanCMake")
+
+# The CEGUI build might have some weird suffix
+set(CEGUI_SUFFIX "-0")
+#set(CEGUI_SUFFIX "")
 
 # Stuff from example ogre cmake configuration to hopefully fix linux build
 
@@ -33,37 +37,17 @@ if(UNIX)
 
         set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/local/lib/OGRE/cmake/")
         set(OGRE_BASEDIR "/usr/local/lib/OGRE/")
+        
     elseif(EXISTS "/usr/lib/OGRE/cmake")
-
+    
         set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/lib/OGRE/cmake/")
         set(OGRE_BASEDIR "/usr/lib/OGRE/")
     else(EXISTS "/usr/local/lib/OGRE")
         message(SEND_ERROR "Failed to find Ogre module path")
     endif(EXISTS "/usr/local/lib/OGRE/cmake")
 endif(UNIX)
+
 # Ogre folder fine
- 
-if(MSVC AND MSVC_BUILDTYPE STREQUAL "")
-    set(MSVC_BUILDTYPE CACHE STRING "Specify build type, build type in visual studio must match this" FORCE)
-    
-
-endif(MSVC AND MSVC_BUILDTYPE STREQUAL "")
-
-if(MSVC)
-    set(CMAKE_BUILD_TYPE ${MSVC_BUILDTYPE})
-    
-else(MSVC)
-    # Make sure build type is good
-    if(CMAKE_BUILD_TYPE STREQUAL "")
-      # CMake defaults to leaving CMAKE_BUILD_TYPE empty. This screws up
-      # differentiation between debug and release builds.
-      set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None (CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
-    endif(CMAKE_BUILD_TYPE STREQUAL "")
-
-endif(MSVC)
-
-
-message(STATUS "Build type is: " ${CMAKE_BUILD_TYPE})
 
 # Find required libraries
 
@@ -86,12 +70,8 @@ set(ADDITIONAL_OGRE ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramM
     ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${Ogre_Paging_LIBRARIES})
 
 # Find Boost
-if(WIN32 OR APPLE)
-    set(Boost_USE_STATIC_LIBS TRUE)
-else(WIN32 OR APPLE)
-    # Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
-    set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
-endif(WIN32 OR APPLE)
+# Might be a good idea to dynamically link Boost
+set(Boost_USE_STATIC_LIBS FALSE)
 
 set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
 # Components that need linking (NB does not include header-only components like bind)
@@ -125,11 +105,9 @@ if(WIN32)
     # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
     # higher memory for compiling precompiled headers
     add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm216)
-
+    
     # program database flag for debug
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
-
-    
     
 else(WIN32)
     add_definitions(-std=c++11 -fextended-identifiers)
@@ -141,37 +119,30 @@ else(WIN32)
     include_directories(${X11_INCLUDE_DIRS})
 endif(WIN32)
 
-option(USE_CEF_SANDBOX "For setting CEF sandbox mode on" OFF)
+# CEGUI libraries will have some suffixes
+set(CEGUI_ENGINE_RELEASE "CEGUIBase" "CEGUICommonDialogs" "CEGUIOgreRenderer")
+set(TmpProcessQueueList)
+set(CEGUI_ENGINE_DEBUG)
 
-# the cef libraries will have different names on linux
-if(WIN32)
-    set(CEF_MAINLIB_NAME "libcef_dll_wrapper" "libcef")
-else(WIN32)
-    set(CEF_MAINLIB_NAME "cef_dll_wrapper" "cef")
-endif(WIN32)
+foreach(ceglib ${CEGUI_ENGINE_RELEASE})
+    set(TmpProcessQueueList ${TmpProcessQueueList} ${ceglib}${CEGUI_SUFFIX})
+    set(CEGUI_ENGINE_DEBUG ${CEGUI_ENGINE_DEBUG} ${ceglib}${CEGUI_SUFFIX}_d)
+endforeach()
 
-if(USE_CEF_SANDBOX)
-    
-    # That's an error
-    message(FATAL_ERROR "CEF sandbox is not supported on any platforms")
-endif(USE_CEF_SANDBOX)
+set(CEGUI_ENGINE_RELEASE ${TmpProcessQueueList})
+# Add the differently named ones
+set(CEGUI_ENGINE_RELEASE ${CEGUI_ENGINE_RELEASE} "CEGUICoreWindowRendererSet" "CEGUIExpatParser")
+set(CEGUI_ENGINE_DEBUG ${CEGUI_ENGINE_DEBUG} "CEGUICoreWindowRendererSet_d" "CEGUIExpatParser_d")
 
-if(USE_CEF_SANDBOX)
-    message(STATUS "Using CEF3 sandbox mode")
-    set(CEF_LIBS cef_sandbox ${CEF_MAINLIB_NAME})
-    
-else(USE_CEF_SANDBOX)
 
-    set(CEF_LIBS ${CEF_MAINLIB_NAME})
-endif(USE_CEF_SANDBOX)
 
 # Library linking
 set(LINK_LIBS_TOENGINE_RELEASE optimized Newton)
-set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap Newton sfml-audio sfml-network sfml-system ${CEF_LIBS})
+set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap Newton sfml-audio sfml-network sfml-system ${CEGUI_ENGINE_RELEASE})
         
 # Debug libraries
 set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
-set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd Newton_d sfml-audio-d sfml-network-d sfml-system-d ${CEF_LIBS})
+set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd Newton_d sfml-audio-d sfml-network-d sfml-system-d ${CEGUI_ENGINE_DEBUG})
 
 # Prepend the right keywords
 
@@ -200,14 +171,13 @@ option(INSTALL_ONLY_RELEASE "For creating release folders" ON)
 # \todo this option to copy right libs
 option(INSTALL_CREATE_SDK   "For creating SDKs for developers" OFF)
 
-# For making libs with right names
-set(CMAKE_DEBUG_POSTFIX "D")
-
 # VisualLeakDetector setting
 if(WIN32)
-
     option(USE_VLD "For including vld in the projects" ON)
-endif(WIN32)
+endif()
+
+# For making libs with right names
+set(CMAKE_DEBUG_POSTFIX "D")
 
 if(USE_VLD)
     set(L_VLD_STATE 1)
@@ -215,13 +185,6 @@ else(USE_VLD)
     set(L_VLD_STATE 0)
 endif(USE_VLD)
 
-
-
-if(USE_CEF_SANDBOX)
-    set(USE_CEF_SANDBOX_STATE 1)
-else(USE_CEF_SANDBOX)
-    set(USE_CEF_SANDBOX_STATE 0)
-endif(USE_CEF_SANDBOX)
 # create the bin directory
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 
@@ -252,14 +215,8 @@ else(WIN32)
     file(GLOB RootFolderFiles "bin/*.conf" "bin/*.txt")
 endif(WIN32)
 
-# Add the default CEF resources
-set(RootFolderFiles ${RootFolderFiles} "CEF/Resources/cef.pak" "CEF/Resources/devtools_resources.pak")
-file(GLOB CEFLocalesFiles "CEF/Resources/locales/*.*")
-
 # Move files
 file(COPY ${RootFolderFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-# Move the locales folder
-file(COPY ${CEFLocalesFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/locales")
 
 # copy data directory
 file(GLOB DataMoveFiles "bin/Data/*")
@@ -283,13 +240,37 @@ if(NOT Boost_USE_STATIC_LIBS)
 	  ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE} ${Boost_REGEX_LIBRARY_RELEASE})
 	set(BOOST_MOVE_FILES_DEBUG ${Boost_DATE_TIME_LIBRARY_DEBUG} ${Boost_CHRONO_LIBRARY_DEBUG}
 	  ${Boost_THREAD_LIBRARY_DEBUG} ${Boost_SYSTEM_LIBRARY_DEBUG} ${Boost_REGEX_LIBRARY_DEBUG})
+      
+    # Setup to target the actually wanted files
+    set(TmpDoStuff)
+    
+    foreach(libname ${BOOST_MOVE_FILES_RELEASE})
+        # Replace the library extension with the platform extension
+        get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
+        get_filename_component(LIBS_PATH ${libname} PATH)
+        if(WIN32)
+            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
+        else()
+            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.so)
+        endif()
+    endforeach()
+    
+    set(BOOST_MOVE_FILES_RELEASE ${TmpDoStuff})
+    set(TmpDoStuff)
+    foreach(libname ${BOOST_MOVE_FILES_DEBUG})
+        # Replace the library extension with the platform extension
+        get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
+        get_filename_component(LIBS_PATH ${libname} PATH)
+        if(WIN32)
+            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
+        else()
+            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.so)
+        endif()
+    endforeach()
+    
+    set(BOOST_MOVE_FILES_DEBUG ${TmpDoStuff})
+      
     # define a function for linux processing
-    function(ProcessBoostLibThing LIBNAME OUTPUTPLACE)
-        # remove variable 
-        string(REGEX REPLACE "so\.[\d\{1, 2}.]*" "so" TmpRegResult ${LIBNAME})
-        
-        set(OUTPUTPLACE ${OUTPUTPLACE} ${LIBNAME})
-    endfunction(ProcessBoostLibThing)
       
       
     # We need to add the actual libraries on linux
@@ -298,10 +279,14 @@ if(NOT Boost_USE_STATIC_LIBS)
         set(TMPDEBUGMOVE)
         # loop them all
         foreach(blib ${BOOST_MOVE_FILES_RELEASE})
-            ProcessBoostLibThing(${blib} ${TMPRELEASEMOVE})
+            # remove variable 
+            string(REGEX REPLACE "so\.[\d\{1, 2}.]*" "so" TmpRegResult ${blib})
+            ProcessBoostLibThing(TMPRELEASEMOVE ${TMPRELEASEMOVE} ${TmpRegResult})
         endforeach()
         foreach(blib ${BOOST_MOVE_FILES_DEBUG})
-            ProcessBoostLibThing(${blib} ${TMPDEBUGMOVE})
+            # remove variable 
+            string(REGEX REPLACE "so\.[\d\{1, 2}.]*" "so" TmpRegResult ${blib})
+            ProcessBoostLibThing(TMPRELEASEMOVE ${TMPRELEASEMOVE} ${TmpRegResult})
         endforeach()
         
         # add to the real move things
@@ -309,11 +294,9 @@ if(NOT Boost_USE_STATIC_LIBS)
         set(BOOST_MOVE_FILES_DEBUG ${BOOST_MOVE_FILES_DEBUG} ${TMPDEBUGMOVE})
         
     endif(NOT WIN32)
-      
+    
 	file(COPY ${BOOST_MOVE_FILES_RELEASE} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-    if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
-        file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-    endif(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
+    file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 endif(NOT Boost_USE_STATIC_LIBS)
 
@@ -325,9 +308,12 @@ if(WIN32)
     file(GLOB LeapMoveFilesRelease "Leap/lib/x86/Leap.dll")
     file(GLOB LeapMoveFilesDebug "Leap/lib/x86/Leapd.dll")
 
-    # CEF dlls
-    file(GLOB CEFMoveFilesRelease "CEF/Release/*.dll")
-    file(GLOB CEFMoveFilesDebug "CEF/Debug/*.dll")
+    # CEGUI dlls
+    file(GLOB CEGUIMoveFilesDebug "CEGUI/bin/*_d.dll")
+    file(GLOB CEGUIMoveFilesRelease "CEGUI/bin/*.dll")
+    
+    # Remove the debug ones from the release ones
+    list(REMOVE_ITEM CEGUIMoveFilesRelease ${CEGUIMoveFilesDebug})
 
     # smfl
     file(GLOB SMFLMoveFilesRelease "SFML/bin/openal32.dll" "SFML/bin/libsndfile-1.dll" "SFML/bin/sfml-audio-2.dll" "SFML/bin/sfml-system-2.dll"
@@ -353,9 +339,12 @@ else(WIN32)
     # ogre sos (this should be changed for public release to only copy required sos)
     file(GLOB OgreMoveFilesRelease "${OGRE_BASEDIR}/*.so*" "${OGRE_BASEDIR}/../*Ogre*.so*" "${OGRE_BASEDIR}/../libOIS*.so")
 
-    # CEF sos
-    file(GLOB CEFMoveFilesRelease "CEF/Release/*.so")
-    file(GLOB CEFMoveFilesDebug "CEF/Debug/*.so")
+    # CEGUI sos
+    file(GLOB CEGUIMoveFilesDebug "CEGUI/bin/*_d.so")
+    file(GLOB CEGUIMoveFilesRelease "CEGUI/bin/*.so")
+    
+    # Remove the debug ones from the release ones
+    list(REMOVE_ITEM CEGUIMoveFilesRelease ${CEGUIMoveFilesDebug})
 
     # newton
     file(GLOB NewtonMoveFilesRelease "Newton/lib/libNewton.so")
@@ -369,11 +358,8 @@ endif(WIN32)
 
 message(STATUS "Moving the bulk...")
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    file(COPY ${CEFMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-else()
-    file(COPY ${CEFMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-endif()
+file(COPY ${CEGUIMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${CEGUIMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${LeapMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${LeapMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${SMFLMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
@@ -411,19 +397,13 @@ include_directories("${PROJECT_SOURCE_DIR}/Leap/include")
 include_directories("${PROJECT_SOURCE_DIR}/Newton/include")
 include_directories("${PROJECT_SOURCE_DIR}/SFML/include")
 include_directories(${OIS_INCLUDE_DIRS}	${OGRE_INCLUDE_DIRS})
-include_directories("${PROJECT_SOURCE_DIR}/CEF")
-
-# CEF has naming conflicts between configurations
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    link_directories("${PROJECT_SOURCE_DIR}/CEF/Debug")
-else()
-    link_directories("${PROJECT_SOURCE_DIR}/CEF/Release")
-endif()
+include_directories("${PROJECT_SOURCE_DIR}/CEGUI/include")
 
 # libraries paths
 link_directories("${PROJECT_SOURCE_DIR}/AngelScript/lib")
 link_directories("${PROJECT_SOURCE_DIR}/libRocket/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/SFML/lib/")
+link_directories("${PROJECT_SOURCE_DIR}/CEGUI/lib")
 
 if(WIN32)
     link_directories("${PROJECT_SOURCE_DIR}/Leap/lib/x86")
@@ -467,8 +447,6 @@ add_subdirectory(Pong)
 # data folders
 file(GLOB DataMoveFiles "bin/Data/*.*")
 install(FILES ${DataMoveFiles} DESTINATION bin/Data)
-# Install the locales folder
-install(DIRECTORY "CEF/Resources/locales" DESTINATION "bin/")
 
 
 # The script files folder
@@ -492,31 +470,34 @@ if(WIN32)
 endif(WIN32)
 
 # Potentially install debug versions
-if(NOT INSTALL_ONLY_RELEASE)
+if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
     # install all files that debug distribution might need
     install(FILES ${VLDMoveFiles} DESTINATION bin)
     install(FILES ${LeapMoveFilesDebug} DESTINATION bin)
     install(FILES ${NewtonMoveFilesDebug} DESTINATION bin)
     install(FILES ${SMFLMoveFilesDebug} DESTINATION bin)
     install(FILES ${OgreMoveFilesDebug} DESTINATION bin)
-    install(FILES ${CEFMoveFilesDebug} DESTINATION bin/CEFDebug)
+    install(FILES ${CEGUIMoveFilesDebug} DESTINATION bin)
     
     
     if(NOT Boost_USE_STATIC_LIBS)
         install(FILES ${BOOST_MOVE_FILES_DEBUG} DESTINATION bin)
     endif(NOT Boost_USE_STATIC_LIBS)
 
-endif(NOT INSTALL_ONLY_RELEASE)
+endif(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
 
 # Always install release libraries
 install(FILES ${LeapMoveFilesRelease} DESTINATION bin)
 install(FILES ${OgreMoveFilesRelease} DESTINATION bin)
-install(FILES ${CEFMoveFilesRelease} DESTINATION bin)
+install(FILES ${CEGUIMoveFilesRelease} DESTINATION bin)
 install(FILES ${NewtonMoveFilesRelease} DESTINATION bin)
 install(FILES ${SMFLMoveFilesRelease} DESTINATION bin)
 
 if(NOT Boost_USE_STATIC_LIBS)
     install(FILES ${BOOST_MOVE_FILES_RELEASE} DESTINATION bin)
+    if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
+        install(FILES ${BOOST_MOVE_FILES_DEBUG} DESTINATION bin)
+    endif()
 endif(NOT Boost_USE_STATIC_LIBS)
 
 

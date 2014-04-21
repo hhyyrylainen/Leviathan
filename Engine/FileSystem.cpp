@@ -13,6 +13,7 @@
 #endif
 #include "Common/StringOperations.h"
 #include "Common/Misc.h"
+#include "Exceptions/ExceptionNotFound.h"
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::FileSystem::FileSystem(){
@@ -588,7 +589,7 @@ DLLEXPORT void Leviathan::FileSystem::CreateIndexesForVecs(bool ForceRe /*= fals
 // ------------------------------------ //
 DLLEXPORT int Leviathan::FileSystem::RegisterExtension(const wstring &extension){
 	// check does it exist //
-	for(unsigned int i = 0; i < FileTypes.size(); i++){
+	for(size_t i = 0; i < FileTypes.size(); i++){
 		if(StringOperations::CompareInsensitive(*FileTypes[i]->Wstr, extension))
 			return FileTypes[i]->Value;
 	}
@@ -610,13 +611,21 @@ void Leviathan::FileSystem::GetExtensionIDS(const wstring& extensions, vector<in
 		// just one extension //
 		ids.push_back(RegisterExtension(extensions));
 		return;
-		//Logger::Get()->Info(L"FileSystem: GetExtensionIDS: warning extensions provided in invalid format should be separated by | not space."
-		//	L" Received: "+extensions+L" HINT: IT WORKED");
 	}
 
-	for(unsigned int i = 0; i < Exts.size(); i++){
+	for(size_t i = 0; i < Exts.size(); i++){
 		ids.push_back(RegisterExtension(Exts[i]));
 	}
+}
+
+DLLEXPORT const wstring& Leviathan::FileSystem::GetExtensionName(int id) const{
+	// Look for it //
+	for(size_t i = 0; i < FileTypes.size(); i++){
+		if(FileTypes[i]->Value == id)
+			return *FileTypes[i]->Wstr;
+	}
+	// Not found //
+	throw ExceptionNotFound(L"No extension with that id", 0, __WFUNCTION__, L"id", Convert::ToWstring(id));
 }
 // ------------------------------------ //
 DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const wstring& name, const wstring& extensions, bool searchall /*= true*/){
@@ -899,21 +908,30 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 	folder = Convert::WstringToString(DataFolder+L"Cache/");
 	manager.addResourceLocation(folder, "FileSystem", "General");
 
-	// possibly register addon folders //
 
-	// Rocket groups //
-	manager.createResourceGroup("Rocket");
+	// Script group //
+	manager.createResourceGroup("Scripts");
 
 	folder = Convert::WstringToString(DataFolder+ScriptsFolder);
-	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
-	folder = Convert::WstringToString(DataFolder+TextureFolder);
-	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
-	folder = Convert::WstringToString(DataFolder+TextureFolder);
-	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
-	folder = Convert::WstringToString(DataFolder+L"Cache/Rocket/");
-	manager.addResourceLocation(folder, "FileSystem", "Rocket", true, false);
-	folder = "./";
-	manager.addResourceLocation(folder, "FileSystem", "Rocket", false, false);
+
+	manager.addResourceLocation(folder, "FileSystem", "Scripts", true);
+	folder += "GUI/";
+
+	manager.addResourceLocation(folder, "FileSystem", "Scripts", true);
+
+	// Fonts group //
+	manager.createResourceGroup("Fonts");
+
+	folder = Convert::WstringToString(DataFolder+FontFolder);
+
+	manager.addResourceLocation(folder, "FileSystem", "Fonts", true);
+	folder += "Simonetta/";
+
+	manager.addResourceLocation(folder, "FileSystem", "Fonts", true);
+
+	// possibly register addon folders //
+
+	
 	// initialize the groups //
 	manager.initialiseAllResourceGroups();
 
@@ -941,7 +959,6 @@ DLLEXPORT  void Leviathan::FileSystem::RegisterOGREResourceLocation(const string
 
 	manager.initialiseResourceGroup(groupname);
 }
-
 // ------------------ FileDefinitionType ------------------ //
 Leviathan::FileDefinitionType::FileDefinitionType(FileSystem* instance, const wstring &path) : RelativePath(path){
 	// get extension //
@@ -960,6 +977,11 @@ bool Leviathan::FileDefinitionType::operator<(const FileDefinitionType& other) c
 
 Leviathan::FileDefinitionType::~FileDefinitionType(){
 
+}
+
+std::wstring Leviathan::FileDefinitionType::GetNameWithExtension() const{
+	// Add the extension text to the end of the name //
+	return Name+L"."+FileSystem::Get()->GetExtensionName(ExtensionID);
 }
 // ------------------ FileDefSorter ------------------ //
 bool Leviathan::FileDefSorter::operator()(const shared_ptr<FileDefinitionType>& first, const shared_ptr<FileDefinitionType>& second){

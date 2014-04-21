@@ -3,22 +3,6 @@
 #include "@ProgramNetHeader@"
 #include "resource.h"
 
-
-
-#define PROGRAMUSE_CUSTOMJS @PROGRAMUSE_CUSTOMJS@
-#if PROGRAMUSE_CUSTOMJS == 1
-// Define the actual macro //
-#define LEVIATHAN_USES_CUSTOMJS
-// Include required files //
-#include "GlobalCEFHandler.h"
-#include "GUI\GuiCEFApplication.h"
-#endif
-
-#ifdef LEVIATHAN_USES_CUSTOMJS
-// Include the header //
-#include "@PROGRAMCUSTOMJS_INCLUDE@"
-#endif
-
 using namespace @ProgramNamespace@;
 
 
@@ -50,21 +34,6 @@ int main(int argcount, char* args[]){
     
     int Return = 0;
     
-    // We need to manage the lifetime of an object //
-    shared_ptr<Leviathan::CEFSandboxInfoKeeper> KeepThisSafe;
-    
-    // The default CEF handling needs to be the first thing in the program //
-    if(Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(commandline, Return, KeepThisSafe,
-#ifdef _WIN32
-            hInstance
-#endif
-        ))
-    {
-        // This was a child process, end it now //
-        return Return;
-    }
-    // This is the main process, continue normally //
-
 #ifdef _WIN32
     HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
 
@@ -132,10 +101,6 @@ int main(int argcount, char* args[]){
     //_CrtDumpMemoryLeaks();
     CoUninitialize();
 #endif
-    // This needs to be called before quitting //
-    Leviathan::GlobalCEFHandler::CEFLastThingInProgram();
-    
-    // But the CEF application will go out of scope after this //
-    
+
     return Return;
 }

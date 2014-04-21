@@ -9,8 +9,7 @@
 
 
 namespace Leviathan{ namespace Rendering{
-
-	class OverlayMaster;
+	
 
 	class FontManager : public Object{
 	public:
@@ -18,8 +17,6 @@ namespace Leviathan{ namespace Rendering{
 		DLLEXPORT ~FontManager();
 
 		DLLEXPORT void LoadAllFonts();
-
-		DLLEXPORT bool LoadFontByName(const wstring &name);
 
 	private:
 

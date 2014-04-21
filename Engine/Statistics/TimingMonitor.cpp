@@ -31,9 +31,10 @@ int Leviathan::TimingMonitor::StopTiming(const wstring& name, bool printoutput /
 			// "end" the timer and return it's result which is the elapsed time //
 			// if specified print to log //
 			int time = Timers[i]->EndMonitoring();
+
 			if(printoutput){
-				Logger::Get()->Info(L"TimingMonitor: Timer \""+name+L"\" stopped elapsed "+Convert::IntToWstring(time)+L" micro seconds ("+
-					Convert::FloatToWstring(time/1000000.f)+L" s)", false);
+				Logger::Get()->Info(L"TimingMonitor: Timer \""+name+L"\" stopped elapsed "+Convert::ToWstring(time/1000000.f)+L" s ("+
+					Convert::ToWstring(time)+L" \u00B5s)");
 			}
 
 			// remove the timer because memory might be filled with stuff //
@@ -100,14 +101,10 @@ DLLEXPORT Leviathan::ScopeTimer::ScopeTimer(const wstring& source){
 DLLEXPORT Leviathan::ScopeTimer::~ScopeTimer(){
 	// kill this timer //
 	int ElapsedTime = TimingMonitor::StopTiming(TimerName, false);
+
 	// print data //
-#ifdef _WIN32
-	Logger::Get()->Info(L"ScopeTimer: "+Source+L" Stopped elapsed: "+Convert::IntToWstring(ElapsedTime)+L" µs ("+
-		Convert::FloatToWstring(ElapsedTime/1000000.f)+L" s)");
-#else
-	Logger::Get()->Info(L"ScopeTimer: "+Source+L" Stopped elapsed: "+Convert::IntToWstring(ElapsedTime)+L" \u00B5s ("+
-		Convert::FloatToWstring(ElapsedTime/1000000.f)+L" s)");
-#endif
+	Logger::Get()->Info(L"ScopeTimer: "+Source+L" Stopped elapsed: "+Convert::ToWstring(ElapsedTime/1000000.f)+L" s ("+
+		Convert::ToWstring(ElapsedTime)+L" \u00B5s)");
 }
 
 int Leviathan::ScopeTimer::CurID = 42;

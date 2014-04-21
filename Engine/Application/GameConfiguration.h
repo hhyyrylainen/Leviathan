@@ -23,21 +23,27 @@ namespace Leviathan{
 		DLLEXPORT ~GameConfiguration();
 
 
-		// This function loads the files from the defined file and calls the argument function afterwards
-		// to verify that all requires values are set //
+		//! This function loads the files from the defined file and calls the argument function afterwards
+		//! to verify that all requires values are set
 		DLLEXPORT bool Init(boost::function<void (GameConfiguration* configobj)> sanitycheckcallback);
-		// Tries to save the changes //
+
+		//! Tries to save the changes
 		DLLEXPORT void Release();
 
-		// Saves current values (if marked as unsaved) //
+		//! Saves current values (if marked as unsaved)
 		DLLEXPORT void SaveCheck();
 
-		// Gets the values. Note: you need to have locked this object while and after calling this (add ObjectLock guard(*config) to your code)
+		//! Gets the values
+		//! \note you need to have locked this object while and after calling this
+		//! \pre Call GAMECONFIGURATION_GET_VARIABLEACCESS(variables); to use this
 		DLLEXPORT NamedVars* AccessVariables(ObjectLock &guard);
 
-		// Call this when you have changed variables //
+		//! Call this when you have changed variables
 		DLLEXPORT void MarkModified();
 
+		//! Verifies that the global default values are added properly
+		//! \note This doesn't need to be called manually as it is called by Init
+		DLLEXPORT void VerifyGlobalVariables();
 
 		DLLEXPORT static GameConfiguration* Get();
 	private:

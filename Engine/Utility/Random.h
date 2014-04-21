@@ -18,6 +18,7 @@
 
 namespace Leviathan{
 
+	//! \brief Random number generator based on Mersenne Twister
 	class Random : public Object{
 	public:
 		DLLEXPORT Random();

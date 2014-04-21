@@ -139,8 +139,21 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
 }
 
 void Leviathan::NetworkHandler::_ReleaseSocket(){
+	// This might cause the game to hang... //
+
+	bool blockunbind = false;
+	
+	{
+		GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
+		variables->GetValueAndConvertTo<bool>(L"DisableSocketUnbind", blockunbind);
+	}
+
 	// This should do the trick //
-	_Socket.unbind();
+	if(!blockunbind){
+		_Socket.unbind();
+	} else {
+		Logger::Get()->Info(L"NetworkHandler: _ReleaseSocket: blocked unbind");
+	}
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMasterServer(const MasterServerInformation &info){

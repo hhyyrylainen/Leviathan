@@ -33,6 +33,8 @@ DLLEXPORT bool Leviathan::GameConfiguration::Init(boost::function<void (GameConf
 		return false;
 	}
 
+	// First verify the global variables //
+	VerifyGlobalVariables();
 
 	// Call the checking function //
 	sanitycheckcallback(this);
@@ -82,4 +84,16 @@ DLLEXPORT NamedVars* Leviathan::GameConfiguration::AccessVariables(ObjectLock &g
 	return GameVars;
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::GameConfiguration::VerifyGlobalVariables(){
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Socket unbind control //
+	if(GameVars->ShouldAddValueIfNotFoundOrWrongType<bool>(L"DisableSocketUnbind")){
+		// Add new //
+		GameVars->AddVar(L"DisableSocketUnbind", new VariableBlock(false));
+		MarkModified();
+	}
+
+
+}
 

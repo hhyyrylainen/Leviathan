@@ -211,6 +211,8 @@ namespace Leviathan{
 		DLLEXPORT void AddVar(const wstring &name, VariableBlock* valuetosteal);
 		DLLEXPORT void Remove(size_t index);
 		DLLEXPORT void Remove(const wstring &name);
+		//! \brief Removes a value with the given name if it exists
+		DLLEXPORT void RemoveIfExists(const wstring &name, ObjectLock &guard);
 		// ------------------------------------ //
 		DLLEXPORT int LoadVarsFromFile(const wstring &file);
 
@@ -239,7 +241,7 @@ namespace Leviathan{
 			// Check is type correct //
 			if(!Variables[(size_t)index]->CanAllBeCastedToType<T>()){
 				// Incorrect types in the variables //
-				return false;
+				return true;
 			}
 
 			// No need to do anything //

@@ -324,9 +324,13 @@ DLLEXPORT wstring Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*
 		// Check if type is a string type //
 		int blocktype = Datas[i]->GetBlockConst()->Type;
 
-		if(blocktype == DATABLOCK_TYPE_WSTRING || blocktype == DATABLOCK_TYPE_STRING){
+		if(blocktype == DATABLOCK_TYPE_WSTRING || blocktype == DATABLOCK_TYPE_STRING || blocktype == DATABLOCK_TYPE_CHAR){
 			// Output in quotes //
 			stringifiedval += L"[\""+Datas[i]->operator wstring()+L"\"]";
+		} else if(blocktype == DATABLOCK_TYPE_BOOL){
+			// Use true/false for this //
+			stringifiedval += L"["+(Datas[i]->operator bool() ? wstring(L"true"): wstring(L"false"))+L"]";
+
 		} else {
 			stringifiedval += L"["+Datas[i]->operator wstring()+L"]";
 		}
@@ -832,22 +836,25 @@ bool Leviathan::NamedVars::CompareName(size_t index, const wstring &name) const{
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NamedVars::AddVar(shared_ptr<NamedVariableList> values){
 	GUARD_LOCK_THIS_OBJECT();
+	RemoveIfExists(values->GetName(), guard);
 	// just add to vector //
 	Variables.push_back(values);
 }
 
 DLLEXPORT void Leviathan::NamedVars::AddVar(NamedVariableList* newvaluetoadd){
 	GUARD_LOCK_THIS_OBJECT();
+	RemoveIfExists(newvaluetoadd->GetName(), guard);
 	// create new smart pointer and push back //
 	Variables.push_back(shared_ptr<NamedVariableList>(newvaluetoadd));
 }
 
 DLLEXPORT void Leviathan::NamedVars::AddVar(const wstring &name, VariableBlock* valuetosteal){
 	GUARD_LOCK_THIS_OBJECT();
+	RemoveIfExists(name, guard);
 	// create new smart pointer and push back //
 	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(name, valuetosteal)));
 }
-
+// ------------------------------------ //
 void Leviathan::NamedVars::Remove(size_t index){
 	GUARD_LOCK_THIS_OBJECT();
 	ARR_INDEX_CHECKINV(index, Variables.size()){
@@ -861,6 +868,17 @@ void Leviathan::NamedVars::Remove(size_t index){
 DLLEXPORT void Leviathan::NamedVars::Remove(const wstring &name){
 	// call overload //
 	Remove(Find(name));
+}
+
+DLLEXPORT void Leviathan::NamedVars::RemoveIfExists(const wstring &name, ObjectLock &guard){
+	// Try  to find it //
+	size_t index = Find(name, guard);
+
+	ARR_INDEX_CHECK(index, Variables.size()){
+		// Remove the value //
+		Variables.erase(Variables.begin()+index);
+		return;
+	}
 }
 // ------------------------------------ //
 int Leviathan::NamedVars::LoadVarsFromFile(const wstring &file){

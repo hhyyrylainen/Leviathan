@@ -22,6 +22,7 @@
 #include "CEGUI/WindowManager.h"
 #include "Common/Misc.h"
 #include "CEGUI/RenderTarget.h"
+#include "CEGUI/Window.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
@@ -45,7 +46,6 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 		MainGuiManager = true;
 
 	Window* wind = window->GetWindow();
-
 
 	// Create Ogre resources //
 	if(!_CreateInternalOgreResources(window->GetWindow()->GetOverlayScene())){

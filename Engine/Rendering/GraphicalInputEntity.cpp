@@ -72,6 +72,11 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 		CEGUI::OgreRenderer& guirenderer = CEGUI::OgreRenderer::bootstrapSystem(*tmpwindow);
 		CEGUIRenderer = &guirenderer;
 
+		// Instantiate CEGUI script bridge //
+
+		// Link it //
+		CEGUI::System::getSingleton().setScriptingModule(0);
+
 		// Print the used renderer //
 		Logger::Get()->Info(L"GUI using CEGUI renderer: "+Convert::StringToWstring(guirenderer.getIdentifierString().c_str()));
 

@@ -1,24 +1,27 @@
 // default function implementations for GuiCollection //
-// define string GUIOBJECTID("something") before including this file //
 
-// set's the visibility of the object //
-void ToggleElement(GuiCollection@ Instance){
+// Set's the visibility of the Gui Window //
+void HandleSet(GuiCollection@ Instance, bool isvisible){
     // fetch pointers //
-    GuiView@ tmpsheet = Instance.GetContainingView();
+    GuiManager@ tmpmanager = Instance.GetOwningGuiManager();
     
-    tmpsheet.ToggleElement(GUIOBJECTID);
+    // Get the actual target object //
+    GuiWindow@ ourwind = tmpmanager.GetGuiWindowByName(Instance.GetWindowName());
+    
+    // Set it's visibility state //
+    ourwind.SetVisibility(isvisible);
 }
 
 [@Listener="OnHide"]
 int OnHide(GuiCollection@ Instance, Event@ event){
-    // we need to hide our elements //
-    HandleSet(Instance);
+    // We need to hide our elements //
+    HandleSet(Instance, false);
     return 1;
 }
 
 [@Listener="OnShow"]
 int OnShow(GuiCollection@ Instance, Event@ event){
-    // we need to show our elements //
-    HandleSet(Instance);
+    // We need to show our elements //
+    HandleSet(Instance, true);
     return 1;
 }

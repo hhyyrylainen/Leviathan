@@ -1,7 +1,14 @@
-FileType: TestParse;
+﻿FileType: TestParse;
 Name = "lol";
 Name2 = lol;
 Why = true;
+
+template<TemplatedName, TemplatedVariable> "ObjectTemplate" o TestObject "TemplatedName"{
+    l datalist{
+        
+        The Meaning = TemplatedVariable
+    }
+}
 
 objects {
     o TestData nice_prefix type1_special "Test1" {
@@ -27,39 +34,39 @@ objects {
             @%};     
         }
     }
-    o Just "Something" "nice wow" ID(29){ lol
-        t why{
-            even bother
-            putting
-            stuff = here;
-        }
-        l list {
-            this= not this;
-            oh=2;
-            no:false;
-            <t> why?;
-        }
-        t why{
-            even bother
-            putting
-            stuff = here;
-        }
-        l list {
-            this= not this;
-            oh=2;
-            no:false;
-            <t> why?;
-        }
-        s scripts {
-            body {
-                int GetRandomNumber(){
-                    // good choice //
-                    return 42;
-                }
-            @%};     
-        }
+}
+
+o Just "Something" "nice wow" ID(29){ lol
+    t why{
+        even bother
+        putting
+        stuff = here;
+    }
+    l list {
+        this= not this;
+        oh=2;
+        no:false
+        <t> why?;
+        <t> Is why:
+    }
+    t why{
+        even bother
+        putting
+        stuff = here;
+    }
+    s scripts {
+        body {
+            int GetRandomNumber(){
+                // good choice //
+                return 42;
+            }
+        @%};     
     }
 }
+
+// Template testing //
+template<> ObjectTemplate<TemplateGenObject, 42>
+template<> ObjectTemplate<"OtherTemplatedThing", "42">
 
 -!-
 oh gee hopefully no errors

@@ -1,49 +1,58 @@
-GUIBaseFile = "TestMenu.layout";
+GUIBaseFile = "PongMenu.layout";
 
-objects {
-    // this keeps the GUI always on //
-    o GuiCollection "OnKeeper"{
-        l params{
-            Enabled = true;
-            KeepsGUIOn = true;
-        }
+// ------------------ Templates for GUI objects ------------------ //
+template<GCollectName, GCollectEnabled> "PGCTemplate" o GuiCollection "GCollectName"{
+    l params{
+        Enabled = GCollectEnabled;
     }
-    
-    o GuiCollection "GameplayHUD"{
-        l params{
-            Enabled = false;
-        }
-        s script{
-            body{
-                string GUIOBJECTID("GameplayHUD");
-                #include "DefaultCollectionScript.as";
-            @%};
-        }
+    s script{
+        body{
+            #include "DefaultCollectionScript.as";
+        @%};
     }
-    
-    o GuiCollection "MatchEndScreen"{
-        l params{
-            Enabled = false;
-        }
-        s script{
-            body{
-                string GUIOBJECTID("MatchEndScreen");
-                #include "DefaultCollectionScript.as";
-            @%};
-        }
+}
+
+
+// ------------------ Non-functional objects ------------------ //
+// this keeps the GUI always on //
+o GuiCollection "OnKeeper"{
+    l params{
+        Enabled = true;
+        KeepsGUIOn = true;
     }
-    
-    o GuiCollection "PauseMenu"{
-        l params{
-            Enabled = false;
-            AllowEnable = false;
-            ToggleOn = "ESC";
-        }
-        s script{
-            body{
-                string GUIOBJECTID("PauseMenu");
-                #include "DefaultCollectionScript.as";
-            @%};
-        }
+}
+
+// ------------------ Main menu objects ------------------ //
+template<> PGCTemplate<TopLevelMenu, true>
+
+template<> PGCTemplate<StartServerMenu, false>
+
+template<> PGCTemplate<DirectConnectMenu, false>
+
+// ------------------ Connect screen objects ------------------ //
+template<> PGCTemplate<ConnectScreen, false>
+
+
+// ------------------ Lobby screen objects ------------------ //
+template<> PGCTemplate<LobbyScreen, false>
+
+
+// ------------------ During gameplay objects ------------------ //
+template<> PGCTemplate<GameplayHUD, false>
+
+// ------------------ Match end screen objects ------------------ //
+template<> PGCTemplate<MatchEndScreen, false>
+
+// ------------------ Pause menu objects ------------------ //
+o GuiCollection "PauseMenu"{
+    l params{
+        Enabled = false;
+        AllowEnable = false;
+        ToggleOn = "ESC";
+    }
+    s script{
+        body{
+            #include "DefaultCollectionScript.as";
+        @%};
     }
 }

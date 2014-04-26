@@ -648,14 +648,59 @@ cleanup:
 bool ObjectFileParserTest(const int &tests){
 	bool Failed = false;
 
+	// First test the minimal file //
+	wstring minfile = Engine::GetEngine()->GetFileSystem()->SearchForFile(FILEGROUP_SCRIPT, L"SimpleTest", L"levof", true);
+
+	if(minfile == L""){
+
+		Logger::Get()->Error(L"EngineTest FAILED: ObjectFileParserTest file SimpleTest.levof not found", false);
+		return true;
+	}
+
+	// Try to parse it //
+	std::vector<shared_ptr<NamedVariableList>> HeaderVars;
+	std::vector<shared_ptr<ObjectFileObject>> objects = ObjectFileProcessor::ProcessObjectFile(minfile, HeaderVars);
+
+
+	// Validate the output //
+	if(HeaderVars.size() != 4){
+
+		TESTFAIL;
+	} else {
+
+		if(HeaderVars[0]->GetVariableCount() == 0 || HeaderVars[0]->GetValueDirect(0)->ConvertAndReturnVariable<string>() != "SimpleTest")
+			TESTFAIL;
+
+		if(HeaderVars[1]->CanAllBeCastedToType<wstring>() != HeaderVars[2]->CanAllBeCastedToType<string>())
+			TESTFAIL;
+
+		if(HeaderVars[3]->GetVariableCount() == 0 || HeaderVars[3]->GetValueDirect(0)->GetBlockConst()->Type != DATABLOCK_TYPE_BOOL || 
+			HeaderVars[3]->GetValueDirect(0)->ConvertAndReturnVariable<bool>() != true)
+		{
+				TESTFAIL
+		}
+	}
+
+	if(objects.size() != 1){
+
+		TESTFAIL;
+	} else {
+
+	}
+
+	// Don't bother parsing the second file if the first failed //
+	if(Failed)
+		return Failed;
+
 	wstring TestFile = Engine::GetEngine()->GetFileSystem()->SearchForFile(FILEGROUP_SCRIPT, L"TestObjectFile", L"levof", true);
 	if(TestFile == L""){
 
 		Logger::Get()->Error(L"EngineTest FAILED: ObjectFileParserTest file TestObjectFile.levof not found", false);
 		return true;
 	}
-	vector<shared_ptr<NamedVariableList>> HeaderVars;
-	vector<shared_ptr<ObjectFileObject>> objects = ObjectFileProcessor::ProcessObjectFile(TestFile, HeaderVars);
+	
+	HeaderVars.clear();
+	objects = ObjectFileProcessor::ProcessObjectFile(TestFile, HeaderVars);
 
 	// check integrity //
 	if(HeaderVars.size() == 4){

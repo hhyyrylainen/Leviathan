@@ -1,0 +1,24 @@
+﻿FileType: SimpleTest;
+Name = "lol";
+Name2 = lol;
+Why = true;
+
+// A minimal required supported file for testing different parsers
+/* Proper parsers should also be able to handle TestObjectFile.levof */
+
+o TestData object_prefix "Named1" /* Our first data */ {
+    l list {
+        Answers = [["none"]["nope"]];
+        this= not this;
+        oh=2;
+        no:false;
+        <t> why?;
+    }
+    
+    t block2{
+        great story here
+        which spans
+        multiple lines
+        !
+    }
+}

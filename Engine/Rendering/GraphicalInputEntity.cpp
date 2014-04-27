@@ -15,6 +15,7 @@
 #include "CEGUI/RendererModules/Ogre/Renderer.h"
 #include "CEGUI/SchemeManager.h"
 #include "GUI/FontManager.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties) : MouseCaptureState(false), 

@@ -23,6 +23,7 @@
 #include "Common/Misc.h"
 #include "CEGUI/RenderTarget.h"
 #include "CEGUI/Window.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //

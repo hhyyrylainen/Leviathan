@@ -6,6 +6,7 @@
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "FileSystem.h"
 #include "Common/StringOperations.h"
+#include "Script/ScriptInterface.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameModule::GameModule(const wstring &modulename, const wstring &ownername, const wstring &extension /*= L"txt|levgm"*/) : OwnerName(ownername), LoadedFromFile(modulename){

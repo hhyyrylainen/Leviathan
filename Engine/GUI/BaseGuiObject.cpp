@@ -9,6 +9,8 @@
 #include <boost/assign/list_of.hpp>
 #include "GUI/GuiManager.h"
 #include "Common/StringOperations.h"
+#include "Script/ScriptRunningSetup.h"
+#include "Script/ScriptInterface.h"
 using namespace Leviathan;
 using namespace Gui;
 // ------------------------------------ //

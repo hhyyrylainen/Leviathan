@@ -30,6 +30,7 @@ namespace Leviathan{
 
 	template<class DTypeName> class SyncedPrimitive;
 	class SyncedResource;
+	class ScriptInterface;
 	class ViewerCameraPos;
 	class NewtonManager;
 	class SoundDevice;

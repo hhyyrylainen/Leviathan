@@ -11,7 +11,7 @@
 # get all files in their groups
 set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
     "Include.cpp" "Include.h" "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
-    "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp"
+    "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp" "utf8.h"
 )
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
 file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
@@ -45,6 +45,7 @@ file(GLOB GeneratorInput "GeneratorInput/*.*")
 
 file(GLOB GroupLZ4 "lz4/*.c" "lz4/*.cpp" "lz4/*.h")
 file(GLOB GroupJsoncpp "jsoncpp/*.h" "jsoncpp/*.cpp")
+file(GLOB Grouputf8 "utf8/*.h" "utf8/*.cpp")
 
 # Generated files
 set(GroupGeneratedFiles)
@@ -71,6 +72,7 @@ source_group("GeneratedFiles" FILES ${GroupGeneratedFiles})
 
 source_group("Libraries\\lz4" FILES ${GroupLZ4})
 source_group("Libraries\\json-cpp" FILES ${GroupJsoncpp})
+source_group("Libraries\\Grouputf8" FILES ${Grouputf8})
 
 source_group("Entities" FILES ${GroupEntities})
 source_group("Entities\\Bases" FILES ${GroupEntitiesBases})
@@ -121,7 +123,7 @@ ADD_MSVC_PRECOMPILED_HEADER("Include.h" ${PrecompiledSourceName} EngineFiles)
 endif(WIN32)
 
 # Don't use precompiled header on c source file
-set(EngineFiles ${EngineFiles} ${GroupLZ4} ${GroupJsoncpp} ${GeneratorInput} ${GroupGeneratedFiles})
+set(EngineFiles ${EngineFiles} ${GroupLZ4} ${GroupJsoncpp} ${GeneratorInput} ${GroupGeneratedFiles} ${Grouputf8})
 
 # engine exporting define
 add_definitions(-DENGINE_EXPORTS)

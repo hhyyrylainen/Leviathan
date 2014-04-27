@@ -18,12 +18,12 @@ namespace Leviathan{
 		DLLEXPORT static double RadiansToDegrees(float radians);
 
 
-		DLLEXPORT static wstring IntToWstring(const int &i);
-		DLLEXPORT static wstring FloatToWstring(const float &i);
-		DLLEXPORT static wstring StringToWstring(const string &str);
-		DLLEXPORT static wstring StringToWstringNonRef(const string str);
-		DLLEXPORT static string WstringToString(const wstring &str);
-		DLLEXPORT static wstring CharToWstring(const char &i);
+		DLLEXPORT static std::wstring IntToWstring(const int &i);
+		DLLEXPORT static std::wstring FloatToWstring(const float &i);
+		DLLEXPORT static std::wstring StringToWstring(const std::string &str);
+		DLLEXPORT static std::wstring StringToWstringNonRef(const std::string str);
+		DLLEXPORT static std::string WstringToString(const std::wstring &str);
+		DLLEXPORT static std::wstring CharToWstring(const char &i);
 
 		template<class StringStreamType, class ReturnType>
 		DLLEXPORT static ReturnType Float3ToSWstring(const Float3 &data){
@@ -43,13 +43,13 @@ namespace Leviathan{
 			return stream.str();
 		}
 
-		DLLEXPORT static int WstringFromBoolToInt(const wstring &i);
-		DLLEXPORT static int StringFromBoolToInt(const string &i);
+		DLLEXPORT static int WstringFromBoolToInt(const std::wstring &i);
+		DLLEXPORT static int StringFromBoolToInt(const std::string &i);
 
-		DLLEXPORT static bool IsWstringBool(const wstring &val, bool* valreceiver = NULL);
+		DLLEXPORT static bool IsWstringBool(const std::wstring &val, bool* valreceiver = NULL);
 
 		template<class T>
-		DLLEXPORT static inline T WstringTo(const wstring &str){
+		DLLEXPORT static inline T WstringTo(const std::wstring &str){
 			T tempval;
 			wstringstream stream;
 			stream.str(str.c_str());
@@ -57,7 +57,7 @@ namespace Leviathan{
 			return tempval;
 		}
 		template<class T>
-		DLLEXPORT static inline T StringTo(const string &str){
+		DLLEXPORT static inline T StringTo(const std::string &str){
 			T tempval;
 			stringstream stream;
 			stream.str(str.c_str());
@@ -67,31 +67,31 @@ namespace Leviathan{
 
 
 		// macro conversions //
-		STRINGTOSOMETHINGTEMPLATEALTERNATIVE(wstring, wstringstream, WstringToInt, int);
-		STRINGTOSOMETHINGTEMPLATEALTERNATIVE(wstring, wstringstream, WstringToFloat, float);
+		STRINGTOSOMETHINGTEMPLATEALTERNATIVE(std::wstring, std::wstringstream, WstringToInt, int);
+		STRINGTOSOMETHINGTEMPLATEALTERNATIVE(std::wstring, std::wstringstream, WstringToFloat, float);
 
 
 		DLLEXPORT static wchar_t ToLower(const wchar_t &chara);
-		DLLEXPORT static void ToLower(const wstring &source, wstring &target);
-		DLLEXPORT static void ToCapital(const wstring &source, wstring &target);
+		DLLEXPORT static void ToLower(const std::wstring &source, std::wstring &target);
+		DLLEXPORT static void ToCapital(const std::wstring &source, std::wstring &target);
 
 		// type checks //
-		DLLEXPORT static int WstringTypeCheck(const wstring& data, int typecheckfor);
-		DLLEXPORT static int WstringTypeNameCheck(const wstring &data);
+		DLLEXPORT static int WstringTypeCheck(const std::wstring& data, int typecheckfor);
+		DLLEXPORT static int WstringTypeNameCheck(const std::wstring &data);
 
 		// template functions //
 
 		template<typename T>
-		DLLEXPORT static wstring ToWstring(const T& val){
-			wstringstream stream;
+		DLLEXPORT static std::wstring ToWstring(const T& val){
+			std::wstringstream stream;
 			if(!(stream << val)){
 				return L"";
 			}
 			return stream.str();
 		}
 		template<typename T>
-		DLLEXPORT static string ToString(const T& val){
-			stringstream stream;
+		DLLEXPORT static std::string ToString(const T& val){
+			std::stringstream stream;
 			if(!(stream << val)){
 				return "";
 			}
@@ -99,8 +99,8 @@ namespace Leviathan{
 		}
 
 		template<class T>
-		DLLEXPORT static wstring ToHexadecimalWstring(const T& val){
-			wstringstream stream;
+		DLLEXPORT static std::wstring ToHexadecimalWstring(const T& val){
+			std::wstringstream stream;
 			if(!(stream << std::hex << val)){
 				return L"";
 			}

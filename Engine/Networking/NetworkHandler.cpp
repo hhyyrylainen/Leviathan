@@ -15,6 +15,7 @@
 #include "RemoteConsole.h"
 #include "SyncedVariables.h"
 #include "GameSpecificPacketHandler.h"
+#include "Utility/Iterators/WstringIterator.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler) : AppType(ntype), 
@@ -189,7 +190,7 @@ void Leviathan::NetworkHandler::_SaveMasterServerList(){
 
 	Values.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"MasterServers", vals)));
 
-	ObjectFileProcessor::WriteObjectFile(objects, StoredMasterServerInfo.StoredListFile, Values, false);
+	ObjectFileProcessor::WriteObjectFile(objects, StoredMasterServerInfo.StoredListFile, Values);
 }
 
 bool Leviathan::NetworkHandler::_LoadMasterServerList(){

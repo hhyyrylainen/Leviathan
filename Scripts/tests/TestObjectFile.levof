@@ -3,7 +3,7 @@ Name = "lol";
 Name2 = lol;
 Why = true;
 
-template<TemplatedName, TemplatedVariable> "ObjectTemplate" o TestObject "TemplatedName"{
+template<TemplatedName, TemplatedVariable> o TestObject "TemplatedName"{
     l datalist{
         
         The Meaning = TemplatedVariable

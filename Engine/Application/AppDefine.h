@@ -8,7 +8,6 @@
 // ---- includes ---- //
 #include "Common/DataStoring/NamedVars.h"
 #include "Window.h"
-#include "ObjectFiles/ObjectFileProcessor.h"
 #include "Networking/NetworkHandler.h"
 
 namespace Leviathan{
@@ -89,13 +88,7 @@ namespace Leviathan{
 		DLLEXPORT inline static AppDef* GetDefault(){
 			return Defaultconf;
 		}
-		DLLEXPORT inline bool GetVSync(){
-
-			bool vsync;
-
-			ObjectFileProcessor::LoadValueFromNamedVars<bool>(*ConfigurationValues, L"Vsync", vsync, false, false);
-			return vsync;
-		}
+		DLLEXPORT bool GetVSync();
 
 		DLLEXPORT const wstring& GetLogFile(){
 			return LogFile;

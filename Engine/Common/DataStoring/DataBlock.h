@@ -47,8 +47,8 @@ namespace Leviathan{
 	NAMERESOLVERTEMPLATEINSTANTIATION(int, DATABLOCK_TYPE_INT);
 	NAMERESOLVERTEMPLATEINSTANTIATION(float, DATABLOCK_TYPE_FLOAT);
 	NAMERESOLVERTEMPLATEINSTANTIATION(bool, DATABLOCK_TYPE_BOOL);
-	NAMERESOLVERTEMPLATEINSTANTIATION(wstring, DATABLOCK_TYPE_WSTRING);
-	NAMERESOLVERTEMPLATEINSTANTIATION(string, DATABLOCK_TYPE_STRING);
+	NAMERESOLVERTEMPLATEINSTANTIATION(std::wstring, DATABLOCK_TYPE_WSTRING);
+	NAMERESOLVERTEMPLATEINSTANTIATION(std::string, DATABLOCK_TYPE_STRING);
 	NAMERESOLVERTEMPLATEINSTANTIATION(char, DATABLOCK_TYPE_CHAR);
 	NAMERESOLVERTEMPLATEINSTANTIATION(double, DATABLOCK_TYPE_DOUBLE);
 	NAMERESOLVERTEMPLATEINSTANTIATION(Object*, DATABLOCK_TYPE_OBJECTL);
@@ -371,8 +371,8 @@ namespace Leviathan{
 	typedef DataBlock<int>			IntBlock;
 	typedef DataBlock<float>		FloatBlock;
 	typedef DataBlock<bool>			BoolBlock;
-	typedef DataBlock<wstring>		WstringBlock;
-	typedef DataBlock<string>		StringBlock;
+	typedef DataBlock<std::wstring>		WstringBlock;
+	typedef DataBlock<std::string>		StringBlock;
 	typedef DataBlock<char>			CharBlock;
 	typedef DataBlock<double>		DoubleBlock;
 	typedef DataBlock<Object*>		LeviathanObjectBlock;
@@ -427,10 +427,10 @@ namespace Leviathan{
 		DLLEXPORT VariableBlock(const bool &var){
 			BlockData = (DataBlockAll*)new BoolBlock(var);
 		}
-		DLLEXPORT VariableBlock(const string &var){
+		DLLEXPORT VariableBlock(const std::string &var){
 			BlockData = (DataBlockAll*)new StringBlock(var);
 		}
-		DLLEXPORT VariableBlock(const wstring &var){
+		DLLEXPORT VariableBlock(const std::wstring &var){
 			BlockData = (DataBlockAll*)new WstringBlock(var);
 		}
 		DLLEXPORT VariableBlock(const double &var){
@@ -508,8 +508,8 @@ namespace Leviathan{
 			BlockData = arg.BlockData->AllocateNewFromThis();
 		}
 
-		// constructor for creating this from wstring //
-		DLLEXPORT VariableBlock(wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined = NULL) THROWS;
+		// constructor for creating this from std::wstring //
+		DLLEXPORT VariableBlock(std::wstring &valuetoparse, std::map<std::wstring, shared_ptr<VariableBlock>>* predefined = NULL) THROWS;
 
 		// non template constructor //
 		DLLEXPORT VariableBlock(DataBlockAll* block){
@@ -771,31 +771,31 @@ namespace Leviathan{
 	public:
 		// constructors that accept any type of DataBlock //
 		template<class DBRType>
-		DLLEXPORT NamedVariableBlock(DataBlock<DBRType>* block, const wstring &name): VariableBlock(block), Name(name){
+		DLLEXPORT NamedVariableBlock(DataBlock<DBRType>* block, const std::wstring &name): VariableBlock(block), Name(name){
 
 		}
 		// non template constructor //
-		DLLEXPORT NamedVariableBlock(DataBlockAll* block, const wstring &name) : VariableBlock(block), Name(name){
+		DLLEXPORT NamedVariableBlock(DataBlockAll* block, const std::wstring &name) : VariableBlock(block), Name(name){
 
 		}
 
-		DLLEXPORT inline wstring GetName() const{
+		DLLEXPORT inline std::wstring GetName() const{
 			return Name;
 		}
 
-		DLLEXPORT inline bool CompareName(const wstring &str) const{
+		DLLEXPORT inline bool CompareName(const std::wstring &str) const{
 
 			return Name == str;
 		}
 
-		DLLEXPORT inline wstring& GetNameChangeable(){
+		DLLEXPORT inline std::wstring& GetNameChangeable(){
 
 			return Name;
 		}
 
 	protected:
 
-		wstring Name;
+		std::wstring Name;
 	};
 
 	// NOTE: Do NOT use smart pointers with this class //
@@ -804,12 +804,12 @@ namespace Leviathan{
 	public:
 
 		template<class BlockBaseType>
-		DLLEXPORT ScriptSafeVariableBlock(DataBlock<BlockBaseType>* block, const wstring &name) : NamedVariableBlock(block, name){
+		DLLEXPORT ScriptSafeVariableBlock(DataBlock<BlockBaseType>* block, const std::wstring &name) : NamedVariableBlock(block, name){
 			// getting typeid //
 			ASTypeID = TypeToAngelScriptIDConverter<BlockBaseType>::GetTypeIDFromTemplated();
 		}
 
-		DLLEXPORT ScriptSafeVariableBlock(VariableBlock* copyfrom, const wstring &name);
+		DLLEXPORT ScriptSafeVariableBlock(VariableBlock* copyfrom, const std::wstring &name);
 
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(ScriptSafeVariableBlock);
@@ -823,16 +823,16 @@ namespace Leviathan{
 		int ConvertAndReturnProxyInt(){
 			return ConvertAndReturnVariable<int>();
 		}
-		string ConvertAndReturnProxyString(){
+		std::string ConvertAndReturnProxyString(){
 
-			return ConvertAndReturnVariable<string>();
+			return ConvertAndReturnVariable<std::string>();
 		}
 
 		// More script proxies //
 		ScriptSafeVariableBlock* CreateNewWstringProxy(){
 
 			// Try to convert our block //
-			wstring wstrval;
+			std::wstring wstrval;
 
 			if(ConvertAndAssingToVariable(wstrval)){
 
@@ -854,19 +854,19 @@ namespace Leviathan{
 #define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(BlockTypeName, ToConvertTypeName, ConvertActionToDo) template<> class DataBlockConverter<BlockTypeName, ToConvertTypeName>{public: static inline ToConvertTypeName DoConvert(const BlockTypeName* block){ return ConvertActionToDo;}; static const bool AllowedConversion = true;};
 #define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCKDEFAULT(BlockTypeName, ToConvertTypeName) template<> class DataBlockConverter<BlockTypeName, ToConvertTypeName>{public: static inline ToConvertTypeName DoConvert(const BlockTypeName* block){ return (ToConvertTypeName)(*block->Value);}; static const bool AllowedConversion = true;};
 
-	// wstring and string conversions with templates //
+	// std::wstring and std::string conversions with templates //
 	template<class FromDataBlockType>
-	class DataBlockConverter<FromDataBlockType, wstring>{
+	class DataBlockConverter<FromDataBlockType, std::wstring>{
 	public:
-		static inline wstring DoConvert(const FromDataBlockType* block){
+		static inline std::wstring DoConvert(const FromDataBlockType* block){
 			return Convert::ToWstring(*block->Value);
 		}
 		static const bool AllowedConversion = true;
 	};
 	template<class FromDataBlockType>
-	class DataBlockConverter<FromDataBlockType, string>{
+	class DataBlockConverter<FromDataBlockType, std::string>{
 	public:
-		static inline string DoConvert(const FromDataBlockType* block){
+		static inline std::string DoConvert(const FromDataBlockType* block){
 			return Convert::ToString(*block->Value);
 		}
 		static const bool AllowedConversion = true;
@@ -907,18 +907,18 @@ namespace Leviathan{
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCKDEFAULT(DoubleBlock, char);
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCKDEFAULT(DoubleBlock, float);
 
-	// little different string block definitions //
+	// little different std::string block definitions //
 	// ------------------ WstringBlock conversions ------------------ //
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, wstring, (*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, string, Convert::WstringToString(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, std::wstring, (*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, std::string, Convert::WstringToString(*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, bool, Convert::WstringFromBoolToInt(*block->Value) != 0);
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, float, Convert::WstringTo<float>(*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, double, Convert::WstringTo<double>(*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, char, (char)Convert::WstringTo<wchar_t>(*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, int, Convert::WstringTo<int>(*block->Value));
 	//// ------------------ StringBlock conversions ------------------ //
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, string, (*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, wstring, Convert::StringToWstring(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, std::string, (*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, std::wstring, Convert::StringToWstring(*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, bool, Convert::StringFromBoolToInt(*block->Value) != 0);
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, float, Convert::StringTo<float>(*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, double, Convert::StringTo<double>(*block->Value));

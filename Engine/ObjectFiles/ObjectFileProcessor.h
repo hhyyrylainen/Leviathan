@@ -6,27 +6,32 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Script/ScriptInterface.h"
 #include "ObjectFiles/ObjectFileObject.h"
-#include "Statistics/TimingMonitor.h"
-#include "Utility/Iterators/WstringIterator.h"
-#include "ObjectFiles/LineTokenizer.h"
 #include "Common/DataStoring/DataBlock.h"
 
 namespace Leviathan{
 
-	class ObjectFileProcessor/* : public Object*/{
+	class ObjectFileProcessor{
 	public:
 		DLLEXPORT static void Initialize();
 		DLLEXPORT static void Release();
-		DLLEXPORT static vector<shared_ptr<ObjectFileObject>> ProcessObjectFile(const wstring &file, vector<shared_ptr<NamedVariableList>> &HeaderVars);
+		DLLEXPORT static std::vector<shared_ptr<ObjectFileObject>> ProcessObjectFile(const std::wstring &file, 
+			vector<shared_ptr<NamedVariableList>> &HeaderVars);
 
 
+
+
+		DLLEXPORT static int WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const std::wstring &file, 
+			std::vector<shared_ptr<NamedVariableList>> &headervars);
+
+		//! \brief Registers a new value alias for the processor
+		//! \warning Calling this while files are being parsed will cause undefined behavior
 		DLLEXPORT static void RegisterValue(const wstring &name, VariableBlock* valuetokeep);
 
-		DLLEXPORT static int WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const wstring &file, vector<shared_ptr<NamedVariableList>> &headervars,bool UseBinary = false);
 
-		// static loading utility //
+
+		// Utility functions //
+
 
 		// function to shorten value loading in many places //
 		template<class T>
@@ -116,17 +121,6 @@ namespace Leviathan{
 		}
 
 	private:
-		static shared_ptr<ObjectFileObject> ReadObjectBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile);
-		// handling object blocks //
-		static bool ProcessObjectFileBlockListBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level,
-			shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr);
-		static bool ProcessObjectFileBlockScriptBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level,
-			shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr);
-		static bool ProcessObjectFileBlockTextBlock(UINT &Line, vector<wstring> &Lines, const wstring& sourcefile, int &Level,
-			shared_ptr<ObjectFileObject> obj, int &Handleindex, WstringIterator &itr);
-
-
-		// ------------------------- //
 
 		// private constructor to prevent instantiating //
 		ObjectFileProcessor();

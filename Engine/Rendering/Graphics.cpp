@@ -15,6 +15,7 @@
 #include "OgreRoot.h"
 #include "OgreTextureManager.h"
 #include "Application/GameConfiguration.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 using namespace Leviathan;
 using namespace Rendering;
 // ------------------------------------ //

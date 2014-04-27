@@ -12,7 +12,6 @@
 #include "Entities/Bases/BaseScalable.h"
 #include "../Bases/BasePhysicsObject.h"
 #include "../Bases/BaseContraintable.h"
-#include "ObjectFiles/ObjectFileProcessor.h"
 #include "FileSystem.h"
 #include "../Bases/BaseParentable.h"
 

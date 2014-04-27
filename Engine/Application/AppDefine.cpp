@@ -110,6 +110,13 @@ DLLEXPORT void Leviathan::AppDef::GetGameIdentificationData(wstring &userreadabl
 	gameversion = GameVersion;
 }
 
+DLLEXPORT bool Leviathan::AppDef::GetVSync(){
+	bool vsync;
+
+	ObjectFileProcessor::LoadValueFromNamedVars<bool>(*ConfigurationValues, L"Vsync", vsync, false, false);
+	return vsync;
+}
+
 // ------------------ WindowDataDetails ------------------ //
 #ifdef _WIN32
 Leviathan::WindowDataDetails::WindowDataDetails(const wstring &title, const int &width, const int &height, const bool &windowed,

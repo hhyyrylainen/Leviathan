@@ -22,6 +22,7 @@
 #endif
 #include "Common/StringOperations.h"
 #include "Common/Misc.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 using namespace Leviathan;
 // ------------------------------------ //
 

@@ -197,6 +197,21 @@ BOOST_FUSION_ADAPT_STRUCT(
 typedef boost::variant<HeaderDefinition, ObjectFileDefinition, ObjectTemplateInstance, ObjectTemplateDef> SingleLineDef;
 typedef std::vector<SingleLineDef> ResultIntermediateType;
 
+// ------------------ Helper classes for on_error ------------------ //
+struct ErrorReporter{
+	template <class Val, class First, class Last>
+	struct result { typedef void type; };
+
+
+	template<class Val, class First, class Last>
+	void operator()(Val& errorstr, First errorpos, Last endpos) const {
+		
+		stringstream strs;
+		strs << "Parsing error! Expecting " << errorstr << " here: \"" << std::string(errorpos, endpos) << "\"";
+		Logger::Get()->Error(Convert::StringToWstring(strs.str()));
+	}
+};
+
 
 // ------------------ The grammar and rules ------------------ //
 //! The main grammar class for handling the entire file
@@ -287,6 +302,12 @@ public:
 
 		// Parses sequentially all definitions in the file //
 		MainStructure %= *(SingleLineDefinitionProcess);
+
+		// Error reporting //
+
+
+		on_error<fail>(MainStructure, (ErrorReportObjFunc(qi::_4, qi::_3, qi::_2)));
+
 	}
 
 	// Main processing rules //
@@ -309,6 +330,9 @@ public:
 	rule<Iterator, char()> EscapedCharacter;
 	rule<Iterator, std::string()> BlockName;
 	rule<Iterator, std::string()> QuotedString;
+
+	// Handling phoenix functions
+	boost::phoenix::function<ErrorReporter> ErrorReportObjFunc;
 };
 
 

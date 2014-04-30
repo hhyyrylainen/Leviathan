@@ -322,7 +322,7 @@ public:
 
 		BlockName %= lexeme[+(~char_('{') -eol | EscapedCharacter)] > '{';
 
-		QuotedString %= (lit('"') | lit('\'')) > +(~char_("\"'") | EscapedCharacter) > (lit('"') | lit('\''));
+		QuotedString %= lit('"') >> *(~char_('"') | EscapedCharacter) > lit('"');
 
 		// Then the main rules //
 
@@ -336,7 +336,9 @@ public:
 		// Then the more difficult thing: loading objects //
 
 		// This parses the first name line //
-		ObjectNameParser %= lexeme[+(char_ -' ')] >> -(lit('<') > (lexeme[+(~char_(", >"))] % ',') > lit('>')) > QuotedString > lit('{');
+		//ObjectNameParser %= +(~char_(' <')) >> (lit('<') >> (+(~char_(", >")) % ',') > lit('>')) | skip[*(+char_)] > QuotedString > lit('{');
+		ObjectNameParser %= +alnum >> skip[*(+char_)] > QuotedString > lit('{');
+
 
 		ObjectBlockParser %= 
 			// The first initial line 
@@ -376,8 +378,8 @@ public:
 
 
 		// Try to parse any type on every line starting something //
-		SingleLineDefinitionProcess %= (TemplateDefinitionParser | TemplateInstantiation | ObjectDefinitionParser | HeaderVariableParser);
-
+		//SingleLineDefinitionProcess %= (TemplateDefinitionParser | TemplateInstantiation | ObjectDefinitionParser | HeaderVariableParser);
+		SingleLineDefinitionProcess %= ObjectDefinitionParser;
 
 
 		// Parses sequentially all definitions in the file //

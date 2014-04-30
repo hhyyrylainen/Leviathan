@@ -195,6 +195,10 @@ void Leviathan::NetworkHandler::_SaveMasterServerList(){
 
 bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 
+	// Skip if there is no file defined //
+	if(!StoredMasterServerInfo.StoredListFile.size())
+		return false;
+
 	vector<shared_ptr<NamedVariableList>> Values;
 	ObjectFileProcessor::ProcessObjectFile(StoredMasterServerInfo.StoredListFile, Values);
 

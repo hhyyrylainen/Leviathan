@@ -3,6 +3,8 @@
 #ifndef LEVIATHAN_OBJECTFILEPROCESSOR
 #include "ObjectFileProcessor.h"
 #endif
+#define BOOST_SPIRIT_UNICODE
+
 #include "FileSystem.h"
 #include <boost/assign/list_of.hpp>
 #include "Common/DataStoring/DataStore.h"
@@ -13,6 +15,11 @@
 #include "boost/spirit/home/qi.hpp"
 #include "boost/fusion/adapted/struct/adapt_struct.hpp"
 #include <boost/spirit/repository/include/qi_confix.hpp>
+#include "boost/spirit/home/support/iterators/line_pos_iterator.hpp"
+#include <boost/regex/pending/unicode_iterator.hpp>
+#include "boost/spirit/home/karma.hpp"
+#include <boost/fusion/adapted/adt/adapt_adt.hpp>
+#include "utf8/core.h"
 using namespace Leviathan;
 // ------------------------------------ //
 ObjectFileProcessor::ObjectFileProcessor(){}
@@ -89,6 +96,12 @@ namespace Leviathan{
 
 		std::string NameContent;
 		std::string UnParsedValue;
+
+
+		std::ostream & operator<<(std::ostream &os){
+			// Serialize this class partially here //
+			return os << "stringy";
+		}
 	};
 
 	//! Temporary class for holding template expansion information
@@ -96,6 +109,11 @@ namespace Leviathan{
 
 		std::string TemplateName;
 		std::vector<std::string> TemplateArguments;
+
+		std::ostream & operator<<(std::ostream &os){
+			// Serialize this class partially here //
+			return os << "stringy";
+		}
 	};
 
 
@@ -106,6 +124,11 @@ namespace Leviathan{
 
 		std::string Name;
 		ListLineData Variables;
+
+		std::ostream & operator<<(std::ostream &os){
+			// Serialize this class partially here //
+			return os << "stringy";
+		}
 	};
 
 	//! Temporary class for holding text block data
@@ -113,12 +136,18 @@ namespace Leviathan{
 
 		std::string Name;
 		std::vector<std::string> Lines;
+
+		std::ostream & operator<<(std::ostream &os){
+			// Serialize this class partially here //
+			return os << "stringy";
+		}
 	};
 
 
 	struct ObjectFileDefinition;
 
-	typedef boost::recursive_wrapper<Leviathan::ObjectFileDefinition> ChildObjectsType;
+	//typedef boost::recursive_wrapper<Leviathan::ObjectFileDefinition> ChildObjectsType;
+	typedef Leviathan::ObjectFileDefinition ChildObjectsType;
 
 	typedef boost::variant<Leviathan::ListDataHolder, Leviathan::TextBlockDataHolder> SingleObjectContent;
 
@@ -128,6 +157,11 @@ namespace Leviathan{
 		std::string TypeName;
 		std::vector<std::string> Prefixes;
 		std::string Name;
+
+		std::ostream & operator<<(std::ostream &os){
+			// Serialize this class partially here //
+			return os << "stringy";
+		}
 	};
 
 	//! Temporary class for holding an object during parsing
@@ -144,6 +178,12 @@ namespace Leviathan{
 
 		//! Child objects of the same type
 		std::vector<ChildObjectsType> ChildObjects;
+
+
+		std::ostream & operator<<(std::ostream &os){
+			// Serialize this class partially here //
+			return os << "stringy";
+		}
 	};
 
 	//! Temporary class for holding an template definition and the matching object file definition
@@ -151,6 +191,11 @@ namespace Leviathan{
 
 		std::vector<std::string> TemplateArguments;
 		ObjectFileDefinition ObjectInstance;
+
+		std::ostream & operator<<(std::ostream &os){
+			// Serialize this class partially here //
+			return os << "stringy";
+		}
 	};
 }
 // ------------------ Adapt fusion classes ------------------ //
@@ -197,20 +242,52 @@ BOOST_FUSION_ADAPT_STRUCT(
 typedef boost::variant<HeaderDefinition, ObjectFileDefinition, ObjectTemplateInstance, ObjectTemplateDef> SingleLineDef;
 typedef std::vector<SingleLineDef> ResultIntermediateType;
 
+
+// ------------------ Printing functions for helper structs ------------------ //
+
+std::ostream & operator<<(std::ostream &os, const HeaderDefinition &object){
+	using namespace boost::spirit::karma;
+
+	std::string generated;
+	std::back_insert_iterator<std::string> sink(generated);
+
+	bool result = generate(sink, 
+		// Output format //
+		karma::string << ' = ' << karma::string << ';'
+		, object.NameContent, object.UnParsedValue);
+
+	if(result)
+		os << generated;
+
+	return os;
+}
+
+
 // ------------------ Helper classes for on_error ------------------ //
 struct ErrorReporter{
-	template <class Val, class First, class Last>
+	template<class Val, class FFirst, class First, class Last>
 	struct result { typedef void type; };
 
+	ErrorReporter(const std::string &file) : ContainingFile(file){
 
-	template<class Val, class First, class Last>
-	void operator()(Val& errorstr, First errorpos, Last endpos) const {
+	}
+
+	template<class Val, class FFirst, class First, class Last>
+	void operator()(Val& errorstr, FFirst filebegin, First errorpos, Last endpos) const {
 		
 		stringstream strs;
-		strs << "Parsing error! Expecting " << errorstr << " here: \"" << std::string(errorpos, endpos) << "\"";
+		size_t errorline = errorpos.base().position();
+		size_t beginline = filebegin.base().position();
+		size_t endline = endpos.base().position();
+
+		strs << "ObjectFile Parsing error. Expecting " << errorstr << " in " << ContainingFile << 
+			"(" << errorline << ") here: \"" << std::string(errorpos, endpos) << "\"";
 		Logger::Get()->Error(Convert::StringToWstring(strs.str()));
 	}
+
+	std::string ContainingFile;
 };
+
 
 
 // ------------------ The grammar and rules ------------------ //
@@ -219,10 +296,11 @@ template<typename Iterator, typename Skipper = OFSkipper<Iterator>>
 struct ObjectFileGrammar : grammar<Iterator, ResultIntermediateType(), Skipper>{
 public:
 
-	ObjectFileGrammar() : ObjectFileGrammar::base_type(MainStructure, "MainStructure"){
+	ObjectFileGrammar(const std::string &file) : ObjectFileGrammar::base_type(MainStructure, "MainStructure"), ErrorReportObjFunc(file){
+
 		// Set rule names for better error support //
 		MainStructure.name("MainStructure");
-		SingleLineDefinitionProcess.name("SingleObject");
+		SingleLineDefinitionProcess.name("SingleLineBlockStart");
 		HeaderVariableParser.name("HeaderVariable");
 		ObjectDefinitionParser.name("ObjectDefinition");
 		TemplateInstantiation.name("TemplateInstantiation");
@@ -232,10 +310,12 @@ public:
 		ObjectDataContentParser.name("ObjectData");
 		ObjectListDataParser.name("VariableList");
 		ObjectTextBlockParser.name("TextBlock");
+		ObjectNameParser.name("EntityName");
 
 		EscapedCharacter.name("EscapedCharacter");
 		BlockName.name("Name");
 		QuotedString.name("QuotedString");
+
 
 		// First the utility rules //
 		EscapedCharacter %= '\\' >> char_("\\{};:=()\"'");
@@ -256,7 +336,7 @@ public:
 		// Then the more difficult thing: loading objects //
 
 		// This parses the first name line //
-		ObjectNameParser %= lexeme[+(char_ -' ')] >> *(lexeme[+(char_ -' ')]) > QuotedString > lit('{');
+		ObjectNameParser %= lexeme[+(char_ -' ')] >> -(lit('<') > (lexeme[+(~char_(", >"))] % ',') > lit('>')) > QuotedString > lit('{');
 
 		ObjectBlockParser %= 
 			// The first initial line 
@@ -296,7 +376,7 @@ public:
 
 
 		// Try to parse any type on every line starting something //
-		SingleLineDefinitionProcess %= (HeaderVariableParser | ObjectDefinitionParser | TemplateInstantiation | TemplateDefinitionParser);
+		SingleLineDefinitionProcess %= (TemplateDefinitionParser | TemplateInstantiation | ObjectDefinitionParser | HeaderVariableParser);
 
 
 
@@ -306,8 +386,24 @@ public:
 		// Error reporting //
 
 
-		on_error<fail>(MainStructure, (ErrorReportObjFunc(qi::_4, qi::_3, qi::_2)));
+		on_error<fail>(MainStructure, (ErrorReportObjFunc(qi::_4, qi::_1, qi::_3, qi::_2)));
 
+
+		// Debug EVERYTHING //
+		debug(MainStructure);
+		debug(SingleLineDefinitionProcess);
+		debug(HeaderVariableParser);
+		debug(ObjectDefinitionParser);
+		debug(TemplateInstantiation);
+		debug(TemplateDefinitionParser);
+		debug(ObjectBlockParser);
+		debug(ObjectDataContentParser);
+		debug(ObjectListDataParser);
+		debug(ObjectTextBlockParser);
+		debug(ObjectNameParser);
+		debug(EscapedCharacter);
+		debug(BlockName);
+		debug(QuotedString);
 	}
 
 	// Main processing rules //
@@ -345,8 +441,10 @@ DLLEXPORT std::vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcess
 	// read the file entirely //
 	std::string filecontents;
 
+	std::string fileansi = Convert::WstringToString(file);
+
 	try{
-		FileSystem::ReadFileEntirely(Convert::WstringToString(file), filecontents);
+		FileSystem::ReadFileEntirely(fileansi, filecontents);
 	}
 	catch(const ExceptionInvalidArgument &e){
 
@@ -361,14 +459,30 @@ DLLEXPORT std::vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcess
 		Logger::Get()->Warning(L"ObjectFileProcessor: file is empty, "+file);
 		return returned;
 	}
-	
-	// Parse the entire file using Boost::Spirit //
-	ObjectFileGrammar<std::string::iterator> objectfilegrammar;
-	OFSkipper<std::string::iterator> skipper;
 
-	auto first = filecontents.begin();
-	auto last = filecontents.end();
-	bool succeeded = phrase_parse(first, last, objectfilegrammar, skipper);
+	// Skip the BOM if there is one //
+	if(utf8::starts_with_bom(filecontents.begin(), filecontents.end())){
+
+		// Pop the first 3 bytes //
+		filecontents = filecontents.substr(3, filecontents.size()-3);
+	}
+
+
+	typedef boost::spirit::line_pos_iterator<std::string::const_iterator> source_iterator;
+
+	typedef boost::u8_to_u32_iterator<source_iterator> iterator_type;
+
+	source_iterator soi(filecontents.begin()), eoi(filecontents.end());
+	iterator_type first(soi), last(eoi);
+
+
+	// Parse the entire file using Boost::Spirit //
+	ObjectFileGrammar<iterator_type> objectfilegrammar(fileansi);
+	OFSkipper<iterator_type> skipper;
+
+
+	ResultIntermediateType ParsedStructure;
+	bool succeeded = phrase_parse(first, last, objectfilegrammar, skipper, ParsedStructure);
 
 	if(!succeeded || first != last){
 
@@ -382,12 +496,32 @@ DLLEXPORT std::vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcess
 	WstringIterator itr(NULL, false);
 
 
+	for(size_t i = 0; i < ParsedStructure.size(); i++){
+
+		// Try to get all the pointers //
+		HeaderDefinition* otype1 = boost::get<HeaderDefinition>(&ParsedStructure[i]);
+		ObjectFileDefinition* otype2 = boost::get<ObjectFileDefinition>(&ParsedStructure[i]);
+		ObjectTemplateInstance* otype3 = boost::get<ObjectTemplateInstance>(&ParsedStructure[i]);
+		ObjectTemplateDef* otype4 = boost::get<ObjectTemplateDef>(&ParsedStructure[i]);
+
+		if(otype1){
+
+		}
+	}
+
+
 	return returned;
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::ObjectFileProcessor::WriteObjectFile(std::vector<shared_ptr<ObjectFileObject>> &objects, const std::wstring &file, 
 	std::vector<shared_ptr<NamedVariableList>> &headervars)
 {
+	// The output string which will then be written to the file //
+	std::string generated;
+	std::back_insert_iterator<std::string> sink(generated);
+
+
+
 	return false;
 }
 

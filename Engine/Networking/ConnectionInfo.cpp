@@ -17,7 +17,7 @@ DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const wstring &hostname) : H
 	HasReceived(false)
 {
 	// We need to split the port number from the address //
-	WstringIterator itr(hostname);
+	StringIterator itr(hostname);
 
 	auto result = itr.GetUntilNextCharacterOrAll(L':');
 

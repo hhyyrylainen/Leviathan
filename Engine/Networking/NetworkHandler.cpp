@@ -471,7 +471,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 		if(response.getStatus() == sf::Http::Response::Ok){
 
 			// It should just be a list of master servers one on each line //
-			WstringIterator itr(Convert::StringToWstring(response.getBody()));
+			StringIterator itr(Convert::StringToWstring(response.getBody()));
 
 			unique_ptr<wstring> data;
 
@@ -545,7 +545,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 				// We might want to warn about this //
 				ComplainOnce::PrintWarningOnce(L"MasterServerForceLocalhostOn", L"Master server list forced to use localhost as address, might not be what you want");
 
-				WstringIterator itr(tmpaddress.get(), false);
+				StringIterator itr(tmpaddress.get(), false);
 
 				auto tmpres = itr.GetUntilNextCharacterOrAll(L':');
 

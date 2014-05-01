@@ -107,7 +107,7 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 		return CONSOLECOMMANDRESULTSTATE_FAILED;
 	}
 
-	WstringIterator itr(commandstr);
+	StringIterator itr(commandstr);
 
 	if(commandstr[0] == L'>'){
 		// skip first character since it is checked //

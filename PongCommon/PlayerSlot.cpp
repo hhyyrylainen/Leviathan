@@ -123,7 +123,7 @@ void Pong::PlayerSlot::SetColourFromRML(string rml){
 
 	Float4 colourparsed(1.f, 1.f, 1.f, 1.f);
 
-	WstringIterator iter(Convert::StringToWstring(rml));
+	StringIterator iter(Convert::StringToWstring(rml));
 
 	auto ret = iter.GetNextNumber(Leviathan::DECIMALSEPARATORTYPE_DOT);
 

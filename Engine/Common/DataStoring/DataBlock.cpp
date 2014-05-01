@@ -151,7 +151,7 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wst
 		// it's a string //
 
 		// use iterator to get data inside quotes //
-		WstringIterator itr(&valuetoparse, false);
+		StringIterator itr(&valuetoparse, false);
 
 		unique_ptr<wstring> tempdata = itr.GetStringInQuotes(QUOTETYPE_DOUBLEQUOTES);
 

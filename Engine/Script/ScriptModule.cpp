@@ -236,7 +236,7 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, a
 		// some specific special function, check which //
 
 		// we need some iterating here //
-		WstringIterator itr(new wstring(Convert::StringToWstring(meta)), true);
+		StringIterator itr(new wstring(Convert::StringToWstring(meta)), true);
 
 		// need to skip first character don't want @ to be in the name //
 		itr.MoveToNext();

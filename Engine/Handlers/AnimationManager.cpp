@@ -44,7 +44,7 @@ DLLEXPORT void Leviathan::AnimationManager::Release(){
 DLLEXPORT shared_ptr<IndexedAnimation> Leviathan::AnimationManager::GetAnimation(const wstring& name){
 	// try to find correct animation //
 	// need to split name and base model name //
-	WstringIterator itr(name);
+	StringIterator itr(name);
 
 	unique_ptr<wstring> modelname = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 	unique_ptr<wstring> animationname = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);

@@ -29,7 +29,7 @@ using Leviathan::Int1;
 using Leviathan::Int2;
 using Leviathan::Int3;
 using Leviathan::LeviathanApplication;
-using Leviathan::WstringIterator;
+using Leviathan::StringIterator;
 using Leviathan::NetworkRequest;
 using Leviathan::NetworkResponse;
 using Leviathan::ConnectionInfo;

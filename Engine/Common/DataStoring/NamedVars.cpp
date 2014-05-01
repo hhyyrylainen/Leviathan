@@ -44,7 +44,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const NamedVariableLis
 
 DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wstring, shared_ptr<VariableBlock>>* predefined /*= NULL*/) : Datas(1){
 	// using WstringIterator makes this shorter //
-	WstringIterator itr(&line, false);
+	StringIterator itr(&line, false);
 
 	unique_ptr<wstring> name = itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_ALL);
 
@@ -386,7 +386,7 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data,
 	// split to lines //
 	vector<shared_ptr<wstring>> Lines;
 
-	WstringIterator itr(data);
+	StringIterator itr(data);
 
 	// use wstring iterator to get the lines that are separated by ; //
 	unique_ptr<wstring> curline;

@@ -862,7 +862,7 @@ bool TestWstringIterator(const int &tests){
 	bool Failed = false;
 
 
-	WstringIterator itr(NULL, false);
+	StringIterator itr(NULL, false);
 	unique_ptr<wstring> results(nullptr);
 
 	// test each one of WstringIterator's get functions and verify that they work correctly //

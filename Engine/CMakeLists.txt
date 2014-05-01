@@ -22,7 +22,6 @@ file(GLOB GroupEntities "Entities/*.cpp" "Entities/*.h")
 file(GLOB GroupEntitiesBases "Entities/Bases/*.cpp" "Entities/Bases/*.h")
 file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
 file(GLOB GroupUtility "Utility/*.cpp" "Utility/*.h")
-file(GLOB GroupUtilityIte "Utility/Iterators/*.cpp" "Utility/Iterators/*.h")
 file(GLOB GroupUtilityFile "Utility/FileRelated/*.cpp" "Utility/FileRelated/*.h")
 file(GLOB GroupUtilityData "Utility/DataHandling/*.cpp" "Utility/DataHandling/*.h")
 file(GLOB GroupMath "Math/*.cpp" "Math/*.h")
@@ -40,6 +39,7 @@ file(GLOB GroupHandlers "Handlers/*.cpp" "Handlers/*.h")
 file(GLOB GroupAddons "Addons/*.cpp" "Addons/*.h")
 file(GLOB GroupNetworking "Networking/*.cpp" "Networking/*.h")
 file(GLOB GroupThreading "Threading/*.cpp" "Threading/*.h")
+file(GLOB GroupIterators "Iterators/*.cpp" "Iterators/*.h")
 
 file(GLOB GeneratorInput "GeneratorInput/*.*")
 
@@ -81,7 +81,7 @@ source_group("Entities\\Objects" FILES ${GroupEntitiesObjects})
 
 source_group("Utility" FILES ${GroupUtility})
 source_group("Utility\\Statistics" FILES ${GroupStatistics})
-source_group("Utility\\Iterators" FILES ${GroupUtilityIte})
+source_group("Iterators" FILES ${GroupIterators})
 source_group("Utility\\FileRelated" FILES ${GroupUtilityFile})
 source_group("Utility\\DataHandling" FILES ${GroupUtilityData})
 
@@ -108,7 +108,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
     ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
-    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading})
+    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators})
 
     
 if(WIN32)

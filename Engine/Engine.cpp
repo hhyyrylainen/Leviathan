@@ -724,7 +724,7 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 
 	GUARD_LOCK_THIS_OBJECT();
 	// Split all flags and check for some flags that might be set //
-	WstringIterator itr(commands);
+	StringIterator itr(commands);
 	unique_ptr<wstring> splitval;
 
 	while((splitval = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_WHITESPACE))->size() > 0){
@@ -752,7 +752,7 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
 	GUARD_LOCK_THIS_OBJECT();
 
-	WstringIterator itr(NULL, false);
+	StringIterator itr(NULL, false);
 
 	// Iterate over the commands and process them //
 	for(size_t i = 0; i < PassedCommands.size(); i++){

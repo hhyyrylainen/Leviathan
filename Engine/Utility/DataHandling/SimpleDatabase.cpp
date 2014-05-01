@@ -5,7 +5,7 @@
 #endif
 #include "FileSystem.h"
 #include "Common/StringOperations.h"
-#include "../Iterators/WstringIterator.h"
+#include "../Iterators/StringIterator.h"
 #include "jsoncpp/json.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -241,7 +241,7 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
 	// remove excess spaces //
 	for(size_t i = 0; i < Lines.size(); i++){
 
-		WstringIterator::StripPreceedingAndTrailingWhitespaceComments(Lines[i]);
+		StringIterator::StripPreceedingAndTrailingWhitespaceComments(Lines[i]);
 	}
 
 	GUARD_LOCK_THIS_OBJECT();
@@ -258,7 +258,7 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
 		if(StringOperations::StringStartsWith<wstring>(Lines[i], L"TABLE")){
 			// Move to a new table //
 
-			WstringIterator itr(&Lines[i], false);
+			StringIterator itr(&Lines[i], false);
 
 			auto tablename = itr.GetStringInQuotes(QUOTETYPE_BOTH);
 

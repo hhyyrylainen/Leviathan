@@ -152,7 +152,7 @@ namespace Leviathan{
 				// empty, nothing to do //
 				return Key<T>((T)0, 0);
 			}
-			WstringIterator itr(representation);
+			StringIterator itr(representation);
 
 			wstring converted;
 

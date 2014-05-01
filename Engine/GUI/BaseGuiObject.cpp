@@ -38,7 +38,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 
 		if(StringOperations::StringStartsWith(*dataforthis.Prefixes[i], wstring(L"ID"))){
 			// get id number //
-			WstringIterator itr(dataforthis.Prefixes[i].get(), false);
+			StringIterator itr(dataforthis.Prefixes[i].get(), false);
 
 			auto tempnumber = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
 

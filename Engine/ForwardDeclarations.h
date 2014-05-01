@@ -86,7 +86,7 @@ namespace Leviathan{
 	struct Int3;
 	class LeviathanApplication;
 	class GraphicalInputEntity;
-	class WstringIterator;
+	class StringIterator;
 	class Window;
 	class VariableBlock;
 	class TimingMonitor;

@@ -1,63 +1,42 @@
 #include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_WSTRINGITERATOR
-#include "WstringIterator.h"
+#ifndef LEVIATHAN_STRINGITERATOR
+#include "StringIterator.h"
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::WstringIterator::WstringIterator(const wstring& text) : ConstData(text), CurrentFlags(new MultiFlag()){
-	HandlesDelete = false;
-	Data = NULL;
-
-	// start from beginning of string //
-	IteratorPosition = 0;
-
+DLLEXPORT Leviathan::StringIterator::StringIterator(StringDataIterator* iterator, bool TakesOwnership = false) : CurrentFlags(0), 
+	HandlesDelete(TakesOwnership), DataIterator(iterator)
+{
 #ifdef _DEBUG
 	DebugMode = false;
 #endif // _DEBUG
-
-
-	// set right type //
-	IsPtrUsed = false;
 }
 
-DLLEXPORT Leviathan::WstringIterator::WstringIterator(wstring* text, bool TakesOwnership /*= false*/) : CurrentFlags(new MultiFlag()){
-	// only delete if wanted //
-	HandlesDelete = TakesOwnership;
-	Data = text;
-
-	// start from beginning of string //
-	IteratorPosition = 0;
-
+DLLEXPORT Leviathan::StringIterator::StringIterator(const string &text) : CurrentFlags(0), HandlesDelete(true), 
+	DataIterator(new StringClassDataIterator<string>(text))
+{
 #ifdef _DEBUG
 	DebugMode = false;
 #endif // _DEBUG
-
-	// set right type //
-	IsPtrUsed = true;
 }
 
-DLLEXPORT Leviathan::WstringIterator::~WstringIterator(){
+DLLEXPORT Leviathan::StringIterator::StringIterator(const wstring &text) : CurrentFlags(0), HandlesDelete(true), 
+	DataIterator(new StringClassDataIterator<wstring>(text))
+{
+#ifdef _DEBUG
+	DebugMode = false;
+#endif // _DEBUG
+}
+
+DLLEXPORT Leviathan::StringIterator::~StringIterator(){
 	if(HandlesDelete){
 
-		SAFE_DELETE(Data);
+		SAFE_DELETE(DataIterator);
 	}
 }
 // ------------------------------------ //
-DLLEXPORT unsigned long Leviathan::WstringIterator::GetPosition(){
-	return IteratorPosition;
-}
-
-DLLEXPORT void Leviathan::WstringIterator::SetPosition(unsigned long pos){
-	if(IsOutOfBounds(pos)){
-
-		DEBUG_BREAK;
-	}
-	// update position //
-	IteratorPosition = pos;
-}
-// ------------------------------------ //
-DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetStringInQuotes(QUOTETYPE quotes){
+DLLEXPORT unique_ptr<wstring> Leviathan::StringIterator::GetStringInQuotes(QUOTETYPE quotes){
 	// iterate over the string and return what is wanted //
 	IteratorPositionData* data = new IteratorPositionData();
 	data->Positions.SetData(-1, -1);
@@ -99,7 +78,7 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetStringInQuotes(QUOT
 }
 
 
-DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextCharacterSequence(int stopcaseflags){
+DLLEXPORT unique_ptr<wstring> Leviathan::StringIterator::GetNextCharacterSequence(int stopcaseflags){
 	// iterate over the string and return what is wanted //
 	IteratorPositionData data;
 	data.Positions.SetData(-1, -1);
@@ -135,7 +114,7 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextCharacterSequen
 	return resultstr;
 }
 
-DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetNextNumber(DECIMALSEPARATORTYPE decimal){
+DLLEXPORT unique_ptr<wstring> Leviathan::StringIterator::GetNextNumber(DECIMALSEPARATORTYPE decimal){
 	// iterate over the string and return what is wanted //
 	IteratorNumberFindData* data = new IteratorNumberFindData();
 
@@ -175,7 +154,7 @@ getnextnumberfuncendreleaseresourceslabel:
 	return resultstr;
 }
 
-DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase){
+DLLEXPORT unique_ptr<wstring> Leviathan::StringIterator::GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase){
 
 	// iterate over the string and return what is wanted //
 	IteratorAssignmentData data;
@@ -211,19 +190,19 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEqualityAssign
 	return resultstr;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::WstringIterator::SkipWhiteSpace(){
+DLLEXPORT void Leviathan::StringIterator::SkipWhiteSpace(){
 	// iterate over the string skipping until hit something that doesn't need to be skipped //
 	StartIterating(SkipSomething, NULL, (int)UNNORMALCHARACTER_TYPE_LOWCODES);
 }
 
-DLLEXPORT void Leviathan::WstringIterator::SkipCharacters(wchar_t chartoskip){
+DLLEXPORT void Leviathan::StringIterator::SkipCharacters(wchar_t chartoskip){
 	IteratorCharacterData stufftoskip(chartoskip);
 
 	// iterate over the string skipping until hit something that doesn't need to be skipped //
 	StartIterating(SkipSomething, &stufftoskip, 0);
 }
 // ------------------------------------ //
-DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEnd(){
+DLLEXPORT unique_ptr<wstring> Leviathan::StringIterator::GetUntilEnd(){
 	// just return the end of the string //
 	if(IsPtrUsed){
 
@@ -233,7 +212,7 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilEnd(){
 	return unique_ptr<wstring>(new wstring(ConstData.substr(IteratorPosition, ConstData.size()-IteratorPosition)));
 }
 
-DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilNextCharacterOrNothing(wchar_t charactertolookfor){
+DLLEXPORT unique_ptr<wstring> Leviathan::StringIterator::GetUntilNextCharacterOrNothing(wchar_t charactertolookfor){
 	// iterate over the string and return what is wanted //
 	IteratorFindUntilData data;
 	data.Positions.SetData(-1, -1);
@@ -267,7 +246,7 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilNextCharacterO
 	}
 }
 
-DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilNextCharacterOrAll(wchar_t charactertolookfor){
+DLLEXPORT unique_ptr<wstring> Leviathan::StringIterator::GetUntilNextCharacterOrAll(wchar_t charactertolookfor){
 	// iterate over the string and return what is wanted //
 	IteratorFindUntilData data;
 	data.Positions.SetData(-1, -1);
@@ -298,7 +277,7 @@ DLLEXPORT unique_ptr<wstring> Leviathan::WstringIterator::GetUntilNextCharacterO
 }
 
 // ------------------------------------ //
-DLLEXPORT Object* Leviathan::WstringIterator::StartIterating(IteratorWstrCallBack functiontocall, Object* IteratorData, int parameters){
+DLLEXPORT Object* Leviathan::StringIterator::StartIterating(IteratorWstrCallBack functiontocall, Object* IteratorData, int parameters){
 	// loop over string using handle iteration function //
 
 	// we want to skip multiple checks on same character so we skip checks on first character when starting except the beginning of the string //
@@ -321,7 +300,7 @@ DLLEXPORT Object* Leviathan::WstringIterator::StartIterating(IteratorWstrCallBac
 	return IteratorData;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::WstringIterator::HandleSpecialCharacters(){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialCharacters(){
 	// check should this special character be ignored //
 	if(CurrentFlags->IsSet(WSTRINGITERATOR_IGNORE_SPECIAL))
 		return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
@@ -400,7 +379,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::WstringIterator::HandleSpecial
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::WstringIterator::CheckActiveFlags(){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFlags(){
 	if(CurrentFlags->IsSet(WSTRINGITERATOR_STOP))
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 
@@ -471,7 +450,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::WstringIterator::CheckActiveFl
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-int Leviathan::WstringIterator::HandleCurrentIteration(IteratorWstrCallBack functiontocall, Object* IteratorData, int parameters, bool &firstiter){
+int Leviathan::StringIterator::HandleCurrentIteration(IteratorWstrCallBack functiontocall, Object* IteratorData, int parameters, bool &firstiter){
 	// first iteration of call is same as last iterations last call //
 	if(!firstiter){
 #ifdef _DEBUG
@@ -520,7 +499,7 @@ int Leviathan::WstringIterator::HandleCurrentIteration(IteratorWstrCallBack func
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-DLLEXPORT bool Leviathan::WstringIterator::IsOutOfBounds(unsigned long pos){
+DLLEXPORT bool Leviathan::StringIterator::IsOutOfBounds(unsigned long pos){
 	// switch on wstring type
 	if(IsPtrUsed){
 		if(Data == NULL){
@@ -537,11 +516,11 @@ DLLEXPORT bool Leviathan::WstringIterator::IsOutOfBounds(unsigned long pos){
 	return false;
 }
 
-DLLEXPORT bool Leviathan::WstringIterator::IsOutOfBounds(){
+DLLEXPORT bool Leviathan::StringIterator::IsOutOfBounds(){
 	return IsOutOfBounds(IteratorPosition);
 }
 
-DLLEXPORT unsigned int Leviathan::WstringIterator::GetWstringLength(){
+DLLEXPORT unsigned int Leviathan::StringIterator::GetWstringLength(){
 	// switch on wstring type
 	if(IsPtrUsed){
 		if(Data == NULL){
@@ -556,12 +535,12 @@ DLLEXPORT unsigned int Leviathan::WstringIterator::GetWstringLength(){
 	}
 }
 
-DLLEXPORT wchar_t Leviathan::WstringIterator::GetCurrentCharacter(){
+DLLEXPORT wchar_t Leviathan::StringIterator::GetCurrentCharacter(){
 
 	return GetCharacterAtPos(IteratorPosition);
 }
 
-DLLEXPORT wchar_t Leviathan::WstringIterator::GetCharacterAtPos(size_t pos){
+DLLEXPORT wchar_t Leviathan::StringIterator::GetCharacterAtPos(size_t pos){
 	// TODO: put a index check here //
 	if(IsPtrUsed){
 
@@ -572,7 +551,7 @@ DLLEXPORT wchar_t Leviathan::WstringIterator::GetCharacterAtPos(size_t pos){
 	}
 }
 
-DLLEXPORT bool Leviathan::WstringIterator::MoveToNext(){
+DLLEXPORT bool Leviathan::StringIterator::MoveToNext(){
 	IteratorPosition++;
 	// return true if it is still valid //
 	if(IsPtrUsed){
@@ -584,7 +563,7 @@ DLLEXPORT bool Leviathan::WstringIterator::MoveToNext(){
 	}
 }
 
-DLLEXPORT void Leviathan::WstringIterator::ReInit(wstring* text, bool TakesOwnership /*= false*/){
+DLLEXPORT void Leviathan::StringIterator::ReInit(wstring* text, bool TakesOwnership /*= false*/){
 	// delete old if applicable //
 	if(HandlesDelete)
 		SAFE_DELETE(Data);
@@ -603,7 +582,7 @@ DLLEXPORT void Leviathan::WstringIterator::ReInit(wstring* text, bool TakesOwner
 	CurrentFlags->ClearFlags();
 }
 
-DLLEXPORT void Leviathan::WstringIterator::ReInit(const wstring& text){
+DLLEXPORT void Leviathan::StringIterator::ReInit(const wstring& text){
 	// delete old if applicable //
 	if(HandlesDelete)
 		SAFE_DELETE(Data);
@@ -624,9 +603,9 @@ DLLEXPORT void Leviathan::WstringIterator::ReInit(const wstring& text){
 	CurrentFlags->ClearFlags();
 }
 
-DLLEXPORT void Leviathan::WstringIterator::StripPreceedingAndTrailingWhitespaceComments(wstring &str){
+DLLEXPORT void Leviathan::StringIterator::StripPreceedingAndTrailingWhitespaceComments(wstring &str){
 	// create iterator for finding the right parts //
-	WstringIterator itr(&str, false);
+	StringIterator itr(&str, false);
 
 	// iterate over the string and return what is wanted //
 	IteratorPositionData data(-1, -1);
@@ -652,13 +631,13 @@ DLLEXPORT void Leviathan::WstringIterator::StripPreceedingAndTrailingWhitespaceC
 }
 
 #ifdef _DEBUG
-DLLEXPORT void Leviathan::WstringIterator::SetDebugMode(const bool &mode){
+DLLEXPORT void Leviathan::StringIterator::SetDebugMode(const bool &mode){
 	DebugMode = true;
 }
 #endif
 
 // ------------------------------------ //
-ITERATORCALLBACK_RETURNTYPE Leviathan::FindFirstQuotedString(WstringIterator* instance, Object* IteratorData, int parameters){
+ITERATORCALLBACK_RETURNTYPE Leviathan::FindFirstQuotedString(StringIterator* instance, Object* IteratorData, int parameters){
 	// check is current element a quote //
 	wchar_t CurChar(instance->GetCurrentCharacter());
 
@@ -747,7 +726,7 @@ ITERATORCALLBACK_RETURNTYPE Leviathan::FindFirstQuotedString(WstringIterator* in
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNumber(WstringIterator* instance, Object* IteratorData, int parameters){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNumber(StringIterator* instance, Object* IteratorData, int parameters){
 	// check is current element a part of number //
 	wchar_t CurChar(instance->GetCurrentCharacter());
 
@@ -807,7 +786,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNumber(WstringIterator
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(WstringIterator* instance, Object* IteratorData, int parameters){
+ITERATORCALLBACK_RETURNTYPE Leviathan::FindNextNormalCharacterString(StringIterator* instance, Object* IteratorData, int parameters){
 	// check is current element a valid element //
 	wchar_t CurChar(instance->GetCurrentCharacter());
 
@@ -869,7 +848,7 @@ invalidcodelabelunnormalcharacter:
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilEquality(WstringIterator* instance, Object* IteratorData, int parameters){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilEquality(StringIterator* instance, Object* IteratorData, int parameters){
 	// check is current element a valid element //
 	int charvalue((int)instance->GetCurrentCharacter());
 
@@ -939,7 +918,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilEquality(WstringItera
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindFromStartUntilCommentOrEnd(WstringIterator* instance, Object* IteratorData, int parameters){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindFromStartUntilCommentOrEnd(StringIterator* instance, Object* IteratorData, int parameters){
 	// we can just return if we are inside a string //
 	if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_INSIDE_STRING)){
 		// position is always valid inside string, goto end for this being valid //
@@ -992,7 +971,7 @@ findfromstartuntilcommentorendfuncendlabel:
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilSpecificCharacter(WstringIterator* instance, Object* IteratorData, int parameters){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilSpecificCharacter(StringIterator* instance, Object* IteratorData, int parameters){
 	// get position data //
 	IteratorFindUntilData* tmpdata = static_cast<IteratorFindUntilData*>(IteratorData);
 
@@ -1035,7 +1014,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::FindUntilSpecificCharacter(Wst
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::SkipSomething(WstringIterator* instance, Object* notwanted, int parameters){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::SkipSomething(StringIterator* instance, Object* notwanted, int parameters){
 
 	// we can just return if we are inside a string //
 	if(instance->CurrentFlags->IsSet(WSTRINGITERATOR_INSIDE_STRING)){

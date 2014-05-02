@@ -45,10 +45,9 @@ bool Leviathan::UTF8DataIterator::GetNextCharCode(int &codepointreceiver, size_t
 	auto shouldbepos = Current;
 
 
-	for(forward; forward != 0; --forward){
+	utf8::advance(shouldbepos, forward, End);
 
-		codepointreceiver = utf8::next(shouldbepos, End);
-	}
+	codepointreceiver = utf8::next(shouldbepos, End);
 
 	return true;
 }
@@ -71,4 +70,8 @@ size_t Leviathan::UTF8DataIterator::CurrentIteratorPosition() const{
 
 bool Leviathan::UTF8DataIterator::IsPositionValid() const{
 	return Current != End;
+}
+// ------------------------------------ //
+size_t Leviathan::UTF8DataIterator::GetLastValidIteratorPosition() const{
+	return OurString.size()-1;
 }

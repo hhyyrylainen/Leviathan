@@ -26,7 +26,7 @@ namespace Leviathan{
 		IteratorFindUntilData(int val1, int val2) : Positions(val1, val2), FoundEnd(false){
 
 		}
-		IteratorFindUntilData() : Positions(), FoundEnd(false){}
+		IteratorFindUntilData() : Positions(-1, -1), FoundEnd(false){}
 
 		Int2 Positions;
 		bool FoundEnd;
@@ -35,28 +35,32 @@ namespace Leviathan{
 
 	class IteratorNumberFindData : public Object{
 	public:
-		IteratorNumberFindData();
+		IteratorNumberFindData() : Positions(-1, -1), DigitsFound(0), DecimalFound(false), NegativeFound(false){
+		}
 
 		// data //
 		Int2 Positions;
 		int DigitsFound;
-		bool DecimalFound : 1;
-		bool NegativeFound : 1;
+		bool DecimalFound;
+		bool NegativeFound;
 	};
 
 	class IteratorAssignmentData : public Object{
 	public:
-		Int2 Positions;
+		IteratorAssignmentData() : Positions(-1, -1) : SeparatorFound(false){
+		}
 
-		bool SeparatorFound : 1;
+
+		Int2 Positions;
+		bool SeparatorFound;
 	};
 
 	class IteratorCharacterData : public Object{
 	public:
-		IteratorCharacterData(wchar_t chartouse) : CharacterToUse(chartouse){
+		IteratorCharacterData(int chartouse) : CharacterToUse(chartouse){
 		}
 
-		wchar_t CharacterToUse;
+		int CharacterToUse;
 	};
 
 }

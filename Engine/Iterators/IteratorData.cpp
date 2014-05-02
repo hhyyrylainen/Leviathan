@@ -7,12 +7,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 
 // ------------------------------------ //
-Leviathan::IteratorNumberFindData::IteratorNumberFindData() : Positions(-1, -1){
-	// default values //
-	DigitsFound = 0;
-	DecimalFound = false;
-	NegativeFound = false;
-}
+
 // ------------------------------------ //
 
 // ------------------------------------ //

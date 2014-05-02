@@ -43,6 +43,10 @@ namespace Leviathan{
 		//! \brief Gets the position of the iterator, for use with ReturnSubString and others
 		virtual size_t CurrentIteratorPosition() const = 0;
 
+		//! \brief Gets the last valid index of the underlying string (not the last character but the last byte)
+		virtual size_t GetLastValidIteratorPosition() const = 0;
+
+
 		//! \brief Returns true when the iterator is still valid
 		virtual bool IsPositionValid() const = 0;
 
@@ -117,6 +121,11 @@ namespace Leviathan{
 			Current < End ? return true: return false;
 		}
 
+		virtual size_t GetLastValidIteratorPosition(){
+
+			return End-1;
+		}
+
 
 
 	protected:
@@ -146,6 +155,7 @@ namespace Leviathan{
 
 		virtual bool IsPositionValid() const;
 
+		virtual size_t GetLastValidIteratorPosition() const;
 
 
 	protected:

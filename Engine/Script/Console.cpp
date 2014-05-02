@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_CONSOLE
 #include "Script/Console.h"
 #endif
-#include "Utility/Iterators/WstringIterator.h"
+#include "Iterators/StringIterator.h"
 #include "boost/assign.hpp"
 #include "add_on/scripthelper/scripthelper.h"
 #include "Application/Application.h"
@@ -115,7 +115,7 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 	}
 
 	// get the console main command type //
-	unique_ptr<wstring> ccmd = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
+	auto ccmd = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
 
 	// check if the length is too long or too short to actually be any specific command //
 	CONSOLECOMMANDTYPE commandtype = CONSOLECOMMANDTYPE_NONE;
@@ -133,7 +133,7 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 		commandtype = CONSOLECOMMANDTYPE_ERROR;
 	}
 
-	unique_ptr<wstring> restofcommand = itr.GetUntilEnd();
+	auto restofcommand = itr.GetUntilEnd<wstring>();
 
 	if(restofcommand->size() == 0 && commandtype == CONSOLECOMMANDTYPE_NONE){
 

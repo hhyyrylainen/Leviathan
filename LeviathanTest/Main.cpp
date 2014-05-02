@@ -87,20 +87,20 @@ int main(int argcount, char* args[]){
 		// run pre-engine tests //
 		Logger::Get()->Info(WINDOWTITLEGENFUNCTION);
 
-		//Logger::Get()->Info(L"-------------------- STARTING PRE-ENGINE TESTS --------------------\n\n\n", true);
+		Logger::Get()->Info(L"-------------------- STARTING PRE-ENGINE TESTS --------------------\n\n\n", true);
 
-		//TimingMonitor::StartTiming(L"All tests timer");
+		TimingMonitor::StartTiming(L"All tests timer");
 
-		//if(TestPreEngine()){
-		//	Logger::Get()->Write(L"\n\n", false);
-		//	Logger::Get()->Error(L"!----! Some Tests [Failed] !----!", true);
-		//	Passed = false;
-		//} else {
-		//	Logger::Get()->Write(L"\n\n", false);
-		//	Logger::Get()->Info(L"-------------------- ALL TESTS PASSED --------------------\n", true);
-		//}
+		if(TestPreEngine()){
+			Logger::Get()->Write(L"\n\n", false);
+			Logger::Get()->Error(L"!----! Some Tests [Failed] !----!", true);
+			Passed = false;
+		} else {
+			Logger::Get()->Write(L"\n\n", false);
+			Logger::Get()->Info(L"-------------------- ALL TESTS PASSED --------------------\n", true);
+		}
 
-		//TimingMonitor::StopTiming(L"All tests timer");
+		TimingMonitor::StopTiming(L"All tests timer");
 
 		// customize values //
 		ProgramDefinition->StoreWindowDetails(WINDOWTITLEGENFUNCTION, true,

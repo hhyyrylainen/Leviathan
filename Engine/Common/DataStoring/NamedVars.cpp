@@ -5,7 +5,7 @@
 #endif
 #include "FileSystem.h"
 #include "Statistics/TimingMonitor.h"
-#include "Utility/Iterators/WstringIterator.h"
+#include "Iterators/StringIterator.h"
 #include "Exceptions/ExceptionInvalidType.h"
 #include "ObjectFiles/LineTokenizer.h"
 #include "../Misc.h"
@@ -44,11 +44,11 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const NamedVariableLis
 
 DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wstring, shared_ptr<VariableBlock>>* predefined /*= NULL*/) : Datas(1){
 	// using WstringIterator makes this shorter //
-	StringIterator itr(&line, false);
+	StringIterator itr(&line);
 
-	unique_ptr<wstring> name = itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_ALL);
+	auto name = itr.GetUntilEqualityAssignment<wstring>(EQUALITYCHARACTER_TYPE_ALL);
 
-	if(name->size() < 1){
+	if(!name){
 		// no name //
 		throw ExceptionInvalidArgument(L"invalid data on line (invalid name)", name->size(), __WFUNCSIG__, L"line", line);
 	}
@@ -61,9 +61,9 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 
 	// get last part of it //
 	//unique_ptr<wstring> tempvar = itr.GetUntilEnd();
-	unique_ptr<wstring> tempvar = itr.GetUntilNextCharacterOrAll(L';');
+	auto tempvar = itr.GetUntilNextCharacterOrAll<wstring>(L';');
 
-	if(tempvar->size() < 1){
+	if(!tempvar || tempvar->size() < 1){
 		// no variable //
 		throw ExceptionInvalidArgument(L"invalid data on line (no variable)", tempvar->size(), __WFUNCSIG__, L"line", line);
 	}
@@ -392,7 +392,10 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data,
 	unique_ptr<wstring> curline;
 	int linelength = 0;
 	do {
-		curline = itr.GetUntilNextCharacterOrNothing(L';');
+		curline = itr.GetUntilNextCharacterOrNothing<wstring>(L';');
+		if(!curline)
+			continue;
+
 		linelength = curline->size();
 
 		wstring* tmp = curline.release();

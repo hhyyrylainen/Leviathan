@@ -6,7 +6,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 #include "Script/AngelScriptCommon.h"
-#include "Utility/Iterators/WstringIterator.h"
+#include "Iterators/StringIterator.h"
 
 #include <add_on/scriptstdstring/scriptstdstring.h>
 #include <add_on/scriptarray/scriptarray.h>

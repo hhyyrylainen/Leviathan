@@ -15,7 +15,7 @@
 #include "RemoteConsole.h"
 #include "SyncedVariables.h"
 #include "GameSpecificPacketHandler.h"
-#include "Utility/Iterators/WstringIterator.h"
+#include "Iterators/StringIterator.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler) : AppType(ntype), 
@@ -477,7 +477,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 
 			std::vector<shared_ptr<wstring>> tmplist;
 
-			while((data = itr.GetUntilNextCharacterOrAll(L'\n'))->size()){
+			while((data = itr.GetUntilNextCharacterOrAll<wstring>(L'\n'))->size()){
 
 				tmplist.push_back(shared_ptr<wstring>(data.release()));
 			}
@@ -545,12 +545,12 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 				// We might want to warn about this //
 				ComplainOnce::PrintWarningOnce(L"MasterServerForceLocalhostOn", L"Master server list forced to use localhost as address, might not be what you want");
 
-				StringIterator itr(tmpaddress.get(), false);
+				StringIterator itr(tmpaddress.get());
 
-				auto tmpres = itr.GetUntilNextCharacterOrAll(L':');
+				auto tmpres = itr.GetUntilNextCharacterOrAll<wstring>(L':');
 
 				// Right now the part we don't want is retrieved //
-				tmpres = itr.GetUntilEnd();
+				tmpres = itr.GetUntilEnd<wstring>();
 
 				// The result now should have the ':' character and the possible port //
 

@@ -3,12 +3,13 @@
 #include "Utility/MD5Generator.h"
 #include "ObjectFiles/LineTokenizer.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
-#include "Utility/Iterators/WstringIterator.h"
 #include "Utility/DebugVariableNotifier.h"
 #include <boost/assign/list_of.hpp>
 #include <boost/chrono/round.hpp>
 #include "Common/Misc.h"
 #include "Common/StringOperations.h"
+#include "Iterators/StringIterator.h"
+#include "Utility/MultiFlag.h"
 
 bool TestMiscCutWstring(const int &tests){
 	bool Failed = false;
@@ -858,24 +859,26 @@ bool TestFloatsCasts(){
 	return Failed;
 }
 
-bool TestWstringIterator(const int &tests){
+bool TestStringIterator(const int &tests){
 	bool Failed = false;
 
 
-	StringIterator itr(NULL, false);
+	StringIterator itr((string*)NULL);
 	unique_ptr<wstring> results(nullptr);
+
+	itr.SetDebugMode(true);
 
 	// test each one of WstringIterator's get functions and verify that they work correctly //
 	itr.ReInit(L" get \" this stuff in here\\\" which has 'stuff' \"_ and not this");
 
 
-	results = itr.GetStringInQuotes(QUOTETYPE_DOUBLEQUOTES);
+	results = itr.GetStringInQuotes<wstring>(QUOTETYPE_DOUBLEQUOTES);
 
 	if(*results != L" this stuff in here\\\" which has 'stuff' "){
 		TESTFAIL;
 	}
 	// we should now be on "_" //
-	if(itr.GetCurrentCharacter() != L'_'){
+	if(itr.GetCharacter() != L'_'){
 		TESTFAIL;
 	}
 
@@ -883,7 +886,7 @@ bool TestWstringIterator(const int &tests){
 
 	//itr.SetDebugMode(true);
 
-	results = itr.GetUntilNextCharacterOrNothing(L';');
+	results = itr.GetUntilNextCharacterOrNothing<wstring>(L';');
 	//Logger::Get()->Save();
 	if(results->size() > 0){
 		TESTFAIL;
@@ -892,7 +895,7 @@ bool TestWstringIterator(const int &tests){
 
 	itr.ReInit(L"		teesti_ess y");
 
-	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
+	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
 
 	if(*results != L"teesti_ess"){
 		TESTFAIL;
@@ -901,7 +904,7 @@ bool TestWstringIterator(const int &tests){
 
 	itr.ReInit(L" o object type");
 
-	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
 	if(*results != L"o"){
 		TESTFAIL;
@@ -909,13 +912,13 @@ bool TestWstringIterator(const int &tests){
 
 	itr.ReInit(L"get-this nice_prefix[but not this!");
 
-	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
 	if(*results != L"get-this"){
 		TESTFAIL;
 	}
 
-	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
 	if(*results != L"nice_prefix"){
 		TESTFAIL;
@@ -924,39 +927,37 @@ bool TestWstringIterator(const int &tests){
 
 	itr.ReInit(L"aib val: = 243.12al toi() a 2456,12.5");
 
-	results = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
+	results = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_DOT);
 	if(*results != L"243.12"){
 		TESTFAIL;
 	}
 
-	results = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
+	results = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_DOT);
 	if(*results != L"2456"){
 		TESTFAIL;
 	}
 
-	results = itr.GetNextNumber(DECIMALSEPARATORTYPE_DOT);
+	results = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_DOT);
 	if(*results != L"12.5"){
 		TESTFAIL;
 	}
 
 	itr.ReInit(L"	aib val: = 243.12al toi() a 2456,12.5");
 
-	results = itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_EQUALITY);
+	results = itr.GetUntilEqualityAssignment<wstring>(EQUALITYCHARACTER_TYPE_EQUALITY);
 	if(*results != L"aib val:"){
 		TESTFAIL;
 	}
 
-	//itr.SetDebugMode(true);
-
 	itr.ReInit(L"StartCount = [[245]];");
 
-	results = itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_EQUALITY);
+	results = itr.GetUntilEqualityAssignment<wstring>(EQUALITYCHARACTER_TYPE_EQUALITY);
 	if(*results != L"StartCount"){
 		TESTFAIL;
 	}
 	itr.SkipWhiteSpace();
 
-	results = itr.GetUntilNextCharacterOrAll(L';');
+	results = itr.GetUntilNextCharacterOrAll<wstring>(L';');
 	Logger::Get()->Save();
 	if(*results != L"[[245]]"){
 		TESTFAIL;
@@ -964,26 +965,26 @@ bool TestWstringIterator(const int &tests){
 
 	itr.ReInit(L" adis told as\\; this still ; and no this");
 
-	results = itr.GetUntilNextCharacterOrNothing(L';');
+	results = itr.GetUntilNextCharacterOrNothing<wstring>(L';');
 	if(*results != L" adis told as\\; this still "){
 		TESTFAIL;
 	}
 
 	itr.ReInit(L"not][ this<out>");
 
-	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 	if(*results != L"not"){
 		TESTFAIL;
 	}
 
-	results = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 	if(*results != L" this"){
 		TESTFAIL;
 	}
 
 	// some specific cases //
 	itr.ReInit(L"\"JellyCube\";");
-	results = itr.GetUntilNextCharacterOrAll(L';');
+	results = itr.GetUntilNextCharacterOrAll<wstring>(L';');
 	if(*results != L"\"JellyCube\""){
 		TESTFAIL;
 	}

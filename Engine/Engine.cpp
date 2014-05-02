@@ -727,7 +727,7 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 	StringIterator itr(commands);
 	unique_ptr<wstring> splitval;
 
-	while((splitval = itr.GetNextCharacterSequence(UNNORMALCHARACTER_TYPE_WHITESPACE))->size() > 0){
+	while((splitval = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_WHITESPACE)) != NULL){
 
 		if(*splitval == L"--nogui"){
 			NoGui = true;
@@ -756,18 +756,18 @@ DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
 
 	// Iterate over the commands and process them //
 	for(size_t i = 0; i < PassedCommands.size(); i++){
-		itr.ReInit(PassedCommands[i].get(), false);
+		itr.ReInit(PassedCommands[i].get());
 		// Skip the preceding '-'s //
 		itr.SkipCharacters(L'-');
 
 		// Get the command //
-		auto firstpart = itr.GetUntilNextCharacterOrAll(L':');
+		auto firstpart = itr.GetUntilNextCharacterOrAll<wstring>(L':');
 
 		// Execute the wanted command //
 		if(StringOperations::CompareInsensitive<wstring>(*firstpart, L"RemoteConsole")){
 			
 			// Get the next command //
-			auto commandpart = itr.GetUntilNextCharacterOrAll(L':');
+			auto commandpart = itr.GetUntilNextCharacterOrAll<wstring>(L':');
 
 			if(*commandpart == L"CloseIfNone"){
 				// Set the command //
@@ -776,11 +776,11 @@ DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
 
 			} else if(*commandpart == L"OpenTo"){
 				// Get the to part //
-				auto topart = itr.GetStringInQuotes(QUOTETYPE_BOTH);
+				auto topart = itr.GetStringInQuotes<wstring>(QUOTETYPE_BOTH);
 
 				int token = 0;
 
-				auto numberpart = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
+				auto numberpart = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE);
 
 				if(numberpart->size() == 0){
 

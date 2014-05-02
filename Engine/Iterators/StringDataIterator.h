@@ -98,7 +98,7 @@ namespace Leviathan{
 			// Don't forget to increment these //
 			++CurrentCharacterNumber;
 			// There might be a better way to check this //
-			const int curcode;
+			int curcode;
 			if(GetNextCharCode(curcode, 0)){
 				if(curcode == (int)'\n')
 					++CurrentLineNumber;
@@ -118,10 +118,12 @@ namespace Leviathan{
 		}
 
 		virtual bool IsPositionValid() const{
-			Current < End ? return true: return false;
+			if(Current < End)
+				return true;
+			return false;
 		}
 
-		virtual size_t GetLastValidIteratorPosition(){
+		virtual size_t GetLastValidIteratorPosition() const{
 
 			return End-1;
 		}
@@ -130,7 +132,75 @@ namespace Leviathan{
 
 	protected:
 
-		const& STRType OurString;
+		STRType OurString;
+
+		//! The current position of the iterator
+		ITType Current;
+		//! The end of the string
+		ITType End;
+	};
+
+
+	//! Iterator that doesn't hold own copy of a string
+	template<class STRType>
+	class StringClassPointerIterator : public StringDataIterator{
+		typedef size_t ITType;
+	public:
+
+		//! Wraps a string reference for StringIterator
+		//! \note The string should not be changed while the iterator is used
+		DLLEXPORT StringClassPointerIterator(STRType* str) : OurString(str), Current(0), End(str->size()){
+
+		}
+
+		virtual bool GetNextCharCode(int &codepointreceiver, size_t forward){
+			if(Current+forward >= End)
+				return false;
+			// Copy the character //
+			codepointreceiver = static_cast<int>(OurString->at(Current+forward));
+			return true;
+		}
+
+		virtual void MoveToNextCharacter(){
+			++Current;
+			// Don't forget to increment these //
+			++CurrentCharacterNumber;
+			// There might be a better way to check this //
+			int curcode;
+			if(GetNextCharCode(curcode, 0)){
+				if(curcode == (int)'\n')
+					++CurrentLineNumber;
+			}
+		}
+
+		virtual bool ReturnSubString(size_t startpos, size_t endpos, STRType &receiver){
+			if(startpos >= End || endpos >= End || endpos > startpos)
+				return false;
+
+			receiver = OurString->substr(startpos, endpos-startpos+1);
+			return true;
+		}
+
+		virtual size_t CurrentIteratorPosition() const{
+			return Current;
+		}
+
+		virtual bool IsPositionValid() const{
+			if(Current < End)
+				return true;
+			return false;
+		}
+
+		virtual size_t GetLastValidIteratorPosition() const{
+
+			return End-1;
+		}
+
+
+
+	protected:
+
+		STRType* OurString;
 
 		//! The current position of the iterator
 		ITType Current;
@@ -160,7 +230,7 @@ namespace Leviathan{
 
 	protected:
 
-		const& string OurString;
+		string OurString;
 
 		//! The current position of the iterator
 		ITType Current;

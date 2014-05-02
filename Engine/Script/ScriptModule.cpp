@@ -5,7 +5,7 @@
 #endif
 #include "ScriptInterface.h"
 #include <boost/assign/list_of.hpp>
-#include "Utility/Iterators/WstringIterator.h"
+#include "Iterators/StringIterator.h"
 #include "FileSystem.h"
 #include "Common/StringOperations.h"
 using namespace Leviathan;
@@ -236,28 +236,28 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, a
 		// some specific special function, check which //
 
 		// we need some iterating here //
-		StringIterator itr(new wstring(Convert::StringToWstring(meta)), true);
+		StringIterator itr(Convert::StringToWstring(meta));
 
 		// need to skip first character don't want @ to be in the name //
 		itr.MoveToNext();
 
 
 		// get until assignment //
-		unique_ptr<wstring> metaname = itr.GetUntilEqualityAssignment(EQUALITYCHARACTER_TYPE_EQUALITY);
+		auto metaname = itr.GetUntilEqualityAssignment<wstring>(EQUALITYCHARACTER_TYPE_EQUALITY);
 
 		// check name //
 		if(*metaname == L"Listener"){
 			// it's a listener function //
 
 			// get string in quotes to find out what it is //
-			unique_ptr<wstring> listenername = itr.GetStringInQuotes(QUOTETYPE_BOTH);
+			auto listenername = itr.GetStringInQuotes<wstring>(QUOTETYPE_BOTH);
 
 			wstring localname = *listenername;
 
 			// if it is generic listener we need to get it's type //
 			if(*listenername == L"Generic"){
 
-				unique_ptr<wstring> generictype = itr.GetStringInQuotes(QUOTETYPE_BOTH);
+				auto generictype = itr.GetStringInQuotes<wstring>(QUOTETYPE_BOTH);
 
 				if(generictype->size() == 0){
 
@@ -268,7 +268,7 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, a
 
 				// mash together a name //
 				wstring mangledname = L"Generic:"+*generictype+L";";
-				auto restofmeta = itr.GetUntilEnd();
+				auto restofmeta = itr.GetUntilEnd<wstring>();
 				FoundListenerFunctions[mangledname] = shared_ptr<ValidListenerData>(new ValidListenerData(func, listenername.release(), 
 					restofmeta.release(), generictype.release()));
 
@@ -284,7 +284,7 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, a
 
 			if(positerator != ListenerNameType.end()){
 				// found a match, store info //
-				auto restofmeta = itr.GetUntilEnd();
+				auto restofmeta = itr.GetUntilEnd<wstring>();
 				FoundListenerFunctions[localname] = shared_ptr<ValidListenerData>(new ValidListenerData(func, listenername.release(), 
 					restofmeta.release()));
 

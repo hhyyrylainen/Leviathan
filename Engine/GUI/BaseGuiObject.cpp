@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_GUI_BASEOBJECT
 #include "BaseGuiObject.h"
 #endif
-#include "Utility/Iterators/WstringIterator.h"
+#include "Iterators/StringIterator.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Script/ScriptModule.h"
 #include <boost/assign/list_of.hpp>
@@ -38,9 +38,9 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 
 		if(StringOperations::StringStartsWith(*dataforthis.Prefixes[i], wstring(L"ID"))){
 			// get id number //
-			StringIterator itr(dataforthis.Prefixes[i].get(), false);
+			StringIterator itr(dataforthis.Prefixes[i].get());
 
-			auto tempnumber = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
+			auto tempnumber = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE);
 
 			fakeid = Convert::WstringToInt(*tempnumber);
 			// nothing more to find //

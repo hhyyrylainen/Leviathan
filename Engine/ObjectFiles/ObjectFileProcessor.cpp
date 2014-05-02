@@ -8,7 +8,7 @@
 #include "Common/DataStoring/DataStore.h"
 #include "Common/DataStoring/DataBlock.h"
 #include "Common/StringOperations.h"
-#include "Utility/Iterators/WstringIterator.h"
+#include "Iterators/StringIterator.h"
 #include "Common/Misc.h"
 #include "utf8/core.h"
 #include "boost/regex/pending/unicode_iterator.hpp"

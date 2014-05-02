@@ -1,6 +1,7 @@
 #include "TestFunctions.h"
 #include "Common\StringOperations.h"
-#define FUNCTIONRUNS_BASE	10000
+#define FUNCTIONRUNS_BASE	1
+//#define FUNCTIONRUNS_BASE	10000
 
 bool TestPreEngine(){
 	bool Failed = false;
@@ -41,7 +42,7 @@ bool TestPreEngine(){
 	timername = L"TestWstringIterator running "+Convert::IntToWstring(tests);
 
 	TimingMonitor::StartTiming(timername);
-	if(TestWstringIterator(tests)){
+	if(TestStringIterator(tests)){
 		Logger::Get()->Error(L"Test did NOT succeed, test:");
 		Failed = true;
 	}

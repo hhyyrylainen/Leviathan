@@ -4,7 +4,7 @@
 #include "DataBlock.h"
 #endif
 #include "Exceptions/ExceptionInvalidArgument.h"
-#include "Utility/Iterators/WstringIterator.h"
+#include "Iterators/StringIterator.h"
 #include "Script/ScriptInterface.h"
 #include "../StringOperations.h"
 using namespace Leviathan;
@@ -151,13 +151,13 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wst
 		// it's a string //
 
 		// use iterator to get data inside quotes //
-		StringIterator itr(&valuetoparse, false);
+		StringIterator itr(&valuetoparse);
 
-		unique_ptr<wstring> tempdata = itr.GetStringInQuotes(QUOTETYPE_DOUBLEQUOTES);
+		unique_ptr<wstring> tempdata = itr.GetStringInQuotes<wstring>(QUOTETYPE_DOUBLEQUOTES);
 
 		// set data //
 		// WstringBlock takes the pointer as it's own here //
-		BlockData = new WstringBlock(tempdata.release());
+		BlockData = new WstringBlock(tempdata ? tempdata.release(): new wstring());
 
 		return;
 	}

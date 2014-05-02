@@ -3,6 +3,7 @@
 #ifndef LEVIATHAN_STRINGDATAITERATOR
 #include "StringDataIterator.h"
 #endif
+#include "utf8\checked.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::StringDataIterator::StringDataIterator() : CurrentCharacterNumber(0), CurrentLineNumber(1){
@@ -14,10 +15,12 @@ DLLEXPORT Leviathan::StringDataIterator::~StringDataIterator(){
 }
 // ------------------------------------ //
 bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos, string &receiver){
+	DEBUG_BREAK;
 	return false;
 }
 
 bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos, wstring &receiver){
+	DEBUG_BREAK;
 	return false;
 }
 // ------------------------------------ //
@@ -57,7 +60,7 @@ void Leviathan::UTF8DataIterator::MoveToNextCharacter(){
 	// Don't forget to increment these //
 	++CurrentCharacterNumber;
 	// There might be a better way to check this //
-	const int curcode;
+	int curcode;
 	if(GetNextCharCode(curcode, 0)){
 		if(curcode == (int)'\n')
 			++CurrentLineNumber;

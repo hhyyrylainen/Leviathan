@@ -5,7 +5,7 @@
 #endif
 #include "FileSystem.h"
 #include "Common/StringOperations.h"
-#include "../Iterators/StringIterator.h"
+#include "Iterators/StringIterator.h"
 #include "jsoncpp/json.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -238,12 +238,6 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
 		Logger::Get()->Warning(L"ObjectFileProcessor: file seems to be only a single line: "+filecontents);
 	}
 
-	// remove excess spaces //
-	for(size_t i = 0; i < Lines.size(); i++){
-
-		StringIterator::StripPreceedingAndTrailingWhitespaceComments(Lines[i]);
-	}
-
 	GUARD_LOCK_THIS_OBJECT();
 
 	SimpleDatabaseObject::iterator insertiter;
@@ -258,9 +252,9 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
 		if(StringOperations::StringStartsWith<wstring>(Lines[i], L"TABLE")){
 			// Move to a new table //
 
-			StringIterator itr(&Lines[i], false);
+			StringIterator itr(&Lines[i]);
 
-			auto tablename = itr.GetStringInQuotes(QUOTETYPE_BOTH);
+			auto tablename = itr.GetStringInQuotes<wstring>(QUOTETYPE_BOTH);
 
 			Database[*tablename] = shared_ptr<std::vector<shared_ptr<SimpleDatabaseRowObject>>>(new std::vector<shared_ptr<SimpleDatabaseRowObject>>());
 

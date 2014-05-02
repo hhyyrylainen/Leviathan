@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 #include "Window.h"
-#include "Utility/Iterators/WstringIterator.h"
+#include "Iterators/StringIterator.h"
 #include "Common/StringOperations.h"
 
 enum KEYSPECIAL {
@@ -156,14 +156,14 @@ namespace Leviathan{
 
 			wstring converted;
 
-			unique_ptr<wstring> str = itr.GetUntilNextCharacterOrAll(L'+');
+			auto str = itr.GetUntilNextCharacterOrAll<wstring>(L'+');
 
 			Convert::ToCapital(*str, converted);
 
 			T character = Leviathan::Window::ConvertWstringToOISKeyCode(converted);
 			short special = 0;
 
-			while((str = itr.GetUntilNextCharacterOrAll(L'+'))->size() > 0){
+			while((str = itr.GetUntilNextCharacterOrAll<wstring>(L'+'))->size() > 0){
 
 				if(StringOperations::CompareInsensitive(*str, wstring(L"alt"))){
 					special |= KEYSPECIAL_ALT;

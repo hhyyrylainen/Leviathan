@@ -47,7 +47,7 @@ namespace Leviathan{
 
 	class IteratorAssignmentData : public Object{
 	public:
-		IteratorAssignmentData() : Positions(-1, -1) : SeparatorFound(false){
+		IteratorAssignmentData() : Positions(-1, -1), SeparatorFound(false){
 		}
 
 

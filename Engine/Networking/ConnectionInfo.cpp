@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_CONNECTIONINFO
 #include "ConnectionInfo.h"
 #endif
-#include "Utility/Iterators/WstringIterator.h"
+#include "Iterators/StringIterator.h"
 #include "SFML/Network/IpAddress.hpp"
 #include "SFML/Network/Packet.hpp"
 #include "NetworkHandler.h"
@@ -19,12 +19,12 @@ DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const wstring &hostname) : H
 	// We need to split the port number from the address //
 	StringIterator itr(hostname);
 
-	auto result = itr.GetUntilNextCharacterOrAll(L':');
+	auto result = itr.GetUntilNextCharacterOrAll<wstring>(L':');
 
 	HostName = *result;
 
 	// We should be fine not skipping a letter //
-	result = itr.GetNextNumber(DECIMALSEPARATORTYPE_NONE);
+	result = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE);
 
 	if(!result){
 		// Probably should get the default port number //

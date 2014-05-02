@@ -16,6 +16,7 @@
 #include "CEGUI/SchemeManager.h"
 #include "GUI/FontManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
+#include "Exceptions/ExceptionNULLPtr.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties) : MouseCaptureState(false), 

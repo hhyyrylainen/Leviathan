@@ -95,14 +95,36 @@ DLLEXPORT std::vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcess
 		filecontents = filecontents.substr(3, filecontents.size()-3);
 	}
 
-	typedef std::string::const_iterator iterator_type;
-
-	// Iterators that move through the string //
-	iterator_type first(filecontents.begin());
-	iterator_type last(filecontents.end());
-
 
 	bool succeeded = true;
+
+	// Create an UTF8 supporting iterator //
+	StringIterator itr(new UTF8DataIterator(filecontents), true);
+
+	while(!itr.IsOutOfBounds()){
+		// First get the first thing defining what the following object/thing will be //
+		auto thingtype = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+
+		if(!thingtype)
+			continue;
+
+		if(*thingtype == "template"){
+			// Either a template definition or a template instantiation //
+
+				
+			continue;
+		} else if(*thingtype == "o"){
+			// Process an object //
+
+			continue;
+		} else {
+			// It should be a named variable //
+
+		}
+
+		// It is something that cannot be handled //
+
+	}
 
 
 	// Start looping through the characters //
@@ -110,7 +132,7 @@ DLLEXPORT std::vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcess
 
 
 
-	if(!succeeded || first != last){
+	if(!succeeded || !itr.IsOutOfBounds()){
 
 		// It failed //
 		Logger::Get()->Error(L"ObjectFileProcessor: could not parse file: "+file);

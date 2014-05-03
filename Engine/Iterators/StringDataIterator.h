@@ -27,6 +27,10 @@ namespace Leviathan{
 		//! \return Returns true when the input is still valid
 		virtual bool GetNextCharCode(int &codepointreceiver, size_t forward) = 0;
 
+		//! \brief Gets the previous character code point
+		//! \return True when succeeded false when this is the first character and there is nothing before it
+		//! \see GetNextCharCode
+		virtual bool GetPreviousCharacter(int &receiver) = 0;
 
 		//! \brief Moves the iterator forward
 		virtual void MoveToNextCharacter() = 0;
@@ -90,6 +94,15 @@ namespace Leviathan{
 				return false;
 			// Copy the character //
 			codepointreceiver = static_cast<int>(OurString[Current+forward]);
+			return true;
+		}
+
+		virtual bool GetPreviousCharacter(int &receiver){
+			if(Current-1 >= End)
+				return false;
+
+			// Copy the character //
+			codepointreceiver = static_cast<int>(OurString[Current-1]);
 			return true;
 		}
 
@@ -161,6 +174,15 @@ namespace Leviathan{
 			return true;
 		}
 
+		virtual bool GetPreviousCharacter(int &receiver){
+			if(Current-1 >= End)
+				return false;
+
+			// Copy the character //
+			codepointreceiver = static_cast<int>(OurString->at(Current-1));
+			return true;
+		}
+
 		virtual void MoveToNextCharacter(){
 			++Current;
 			// Don't forget to increment these //
@@ -218,6 +240,8 @@ namespace Leviathan{
 		DLLEXPORT UTF8DataIterator(const string &str);
 
 		virtual bool GetNextCharCode(int &codepointreceiver, size_t forward);
+
+		virtual bool GetPreviousCharacter(int &receiver);
 
 		virtual void MoveToNextCharacter();
 

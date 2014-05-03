@@ -61,6 +61,25 @@ bool Leviathan::UTF8DataIterator::GetNextCharCode(int &codepointreceiver, size_t
 
 	return true;
 }
+
+bool Leviathan::UTF8DataIterator::GetPreviousCharacter(int &receiver){
+	
+	// Try to get the prior code point //
+	auto shouldbepos = Current;
+
+	try{
+		// Try to copy the previous code point into the receiver //
+		receiver = utf8::prior(shouldbepos, BeginPos);
+
+	} catch(const utf8::not_enough_room &e1){
+		return false;
+	} catch(const utf8::invalid_utf8 &e2){
+		return false;
+	}
+
+	// If it didn't throw it worked //
+	return true;
+}
 // ------------------------------------ //
 void Leviathan::UTF8DataIterator::MoveToNextCharacter(){
 	// We need to move whole code points //

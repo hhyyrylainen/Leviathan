@@ -28,6 +28,15 @@ namespace Leviathan{
 
 	enum ITERATORCALLBACK_RETURNTYPE {ITERATORCALLBACK_RETURNTYPE_STOP, ITERATORCALLBACK_RETURNTYPE_CONTINUE};
 
+	//! Special case handling flags for iterator
+	enum SPECIAL_ITERATOR{
+
+		SPECIAL_ITERATOR_ONNEWLINE_STOP = 0x4,
+		SPECIAL_ITERATOR_ONNEWLINE_WHITESPACE = 0x8,
+		//! Causes comments to be handled as whitespace/delimiting
+		SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING = 0x10,
+
+	};
 
 	//! Set flags for the iterator, this is changed to this for performance
 	enum ITERATORFLAG_SET{
@@ -133,13 +142,13 @@ namespace Leviathan{
 		//! This function will skip until it finds a quote (either " or ' specified by quotes) and then returns the content inside
 		//! \return The string found or NULL
 		template<class RStrType>
-		DLLEXPORT unique_ptr<RStrType> GetStringInQuotes(QUOTETYPE quotes){
+		DLLEXPORT unique_ptr<RStrType> GetStringInQuotes(QUOTETYPE quotes, int specialflags = 0){
 
 			// Setup the result object //
 			IteratorPositionData data(-1, -1);
 
 			// Iterate with our getting function //
-			StartIterating(boost::bind(&StringIterator::FindFirstQuotedString, this, &data, quotes));
+			StartIterating(boost::bind(&StringIterator::FindFirstQuotedString, this, &data, quotes, specialflags));
 
 			// Create the substring from the result //
 			unique_ptr<RStrType> resultstr;
@@ -159,14 +168,14 @@ namespace Leviathan{
 		//! If the type is DECIMALSEPARATORTYPE_NONE decimal numbers are only read until the dot
 		//! \return The string found or NULL
 		template<class RStrType>
-		DLLEXPORT unique_ptr<RStrType> GetNextNumber(DECIMALSEPARATORTYPE decimal){
+		DLLEXPORT unique_ptr<RStrType> GetNextNumber(DECIMALSEPARATORTYPE decimal, int specialflags = 0){
 
 			// Setup the result object //
 			IteratorNumberFindData data;
 
 			// iterate over the string getting the proper part //
 			// Iterate with our getting function //
-			StartIterating(boost::bind(&StringIterator::FindNextNumber, this, &data, decimal));
+			StartIterating(boost::bind(&StringIterator::FindNextNumber, this, &data, decimal, specialflags));
 
 			// Check for nothing found //
 			if(data.Positions.X == -1){
@@ -189,14 +198,14 @@ namespace Leviathan{
 		//! Should be created by using UNNORMALCHARACTER as bit flags inside the argument int
 		//! \return The string found or NULL
 		template<class RStrType>
-		DLLEXPORT unique_ptr<RStrType> GetNextCharacterSequence(int stopcaseflags){
+		DLLEXPORT unique_ptr<RStrType> GetNextCharacterSequence(int stopcaseflags, int specialflags = 0){
 
 			// Setup the result object //
 			IteratorPositionData data(-1, -1);
 
 
 			// Iterate with our getting function //
-			StartIterating(boost::bind(&StringIterator::FindNextNormalCharacterString, this, &data, stopcaseflags));
+			StartIterating(boost::bind(&StringIterator::FindNextNormalCharacterString, this, &data, stopcaseflags, specialflags));
 
 			// create substring of the wanted part //
 			unique_ptr<wstring> resultstr;
@@ -221,13 +230,13 @@ namespace Leviathan{
 		//! This function will read until either : or = is encountered specified by stopcase
 		//! \return The string found or NULL
 		template<class RStrType>
-		DLLEXPORT unique_ptr<RStrType> GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase){
+		DLLEXPORT unique_ptr<RStrType> GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase, int specialflags = 0){
 			
 			// Setup the result object //
 			IteratorAssignmentData data;
 
 			// Iterate with our getting function //
-			StartIterating(boost::bind(&StringIterator::FindUntilEquality, this, &data, stopcase));
+			StartIterating(boost::bind(&StringIterator::FindUntilEquality, this, &data, stopcase, specialflags));
 
 
 			// Check for validity //
@@ -262,9 +271,9 @@ namespace Leviathan{
 		//! \return The string found or NULL
 		//! \see GetUntilNextCharacterOrAll
 		template<class RStrType>
-		DLLEXPORT unique_ptr<RStrType> GetUntilNextCharacterOrNothing(int charactertolookfor){
+		DLLEXPORT unique_ptr<RStrType> GetUntilNextCharacterOrNothing(int charactertolookfor, int specialflags = 0){
 
-			auto data = GetPositionsUntilACharacter(charactertolookfor);
+			auto data = GetPositionsUntilACharacter(charactertolookfor, specialflags);
 
 			// Check was the end found //
 			if(!data.FoundEnd || data.Positions.X == -1){
@@ -283,9 +292,9 @@ namespace Leviathan{
 		//! \return The string found or NULL if there are no valid characters left
 		//! \see GetUntilNextCharacterOrAll GetUntilEnd
 		template<class RStrType>
-		DLLEXPORT unique_ptr<RStrType> GetUntilNextCharacterOrAll(int charactertolookfor){
+		DLLEXPORT unique_ptr<RStrType> GetUntilNextCharacterOrAll(int charactertolookfor, int specialflags = 0){
 
-			auto data = GetPositionsUntilACharacter(charactertolookfor);
+			auto data = GetPositionsUntilACharacter(charactertolookfor, specialflags);
 
 			if(data.Positions.X == -1 || data.Positions.Y == -1){
 				// return empty string //
@@ -313,12 +322,12 @@ namespace Leviathan{
 		//! \param chartoskip The code point to skip
 		//! \param additionalflag Flag composing of UNNORMALCHARACTER_TYPE which defines additional things to skip
 		//! \see SkipWhiteSpace
-		DLLEXPORT void SkipCharacters(int chartoskip, int additionalflag = 0){
+		DLLEXPORT void SkipCharacters(int chartoskip, int additionalflag = 0, int specialflags = 0){
 
 			IteratorCharacterData stufftoskip(chartoskip);
 
 			// Iterate over the string skipping until hit something that doesn't need to be skipped //
-			StartIterating(boost::bind(&StringIterator::SkipSomething, this, &stufftoskip, additionalflag));
+			StartIterating(boost::bind(&StringIterator::SkipSomething, this, &stufftoskip, additionalflag, specialflags));
 		}
 
 		// Utility functions //
@@ -334,6 +343,9 @@ namespace Leviathan{
 
 		//! \brief Gets the character in the position current + forward
 		DLLEXPORT int GetCharacter(size_t forward = 0);
+
+		//! \brief Gets the previous character
+		DLLEXPORT int GetPreviousCharacter();
 
 		//! \brief Returns the last valid index on the iterator
 		DLLEXPORT size_t GetLastValidCharIndex() const;
@@ -366,12 +378,12 @@ namespace Leviathan{
 
 
 		//! \brief Gets the position of the current character and the specified character
-		DLLEXPORT IteratorFindUntilData GetPositionsUntilACharacter(int character){
+		DLLEXPORT IteratorFindUntilData GetPositionsUntilACharacter(int character, int specialflags = 0){
 			// Setup the result object //
 			IteratorFindUntilData data;
 
 			// Iterate with our getting function //
-			StartIterating(boost::bind(&StringIterator::FindUntilSpecificCharacter, this, &data, character));
+			StartIterating(boost::bind(&StringIterator::FindUntilSpecificCharacter, this, &data, character, specialflags));
 
 #ifdef _DEBUG
 			if(DebugMode){
@@ -418,12 +430,12 @@ namespace Leviathan{
 
 		// Iteration functions //
 
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindFirstQuotedString(IteratorPositionData* data, QUOTETYPE quotes);
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(IteratorPositionData* data, int stopflags);
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindNextNumber(IteratorNumberFindData* data, DECIMALSEPARATORTYPE decimal);
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilEquality(IteratorAssignmentData* data, EQUALITYCHARACTER equality);
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE SkipSomething(IteratorCharacterData* data, int additionalskip);
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilSpecificCharacter(IteratorFindUntilData* data, int character);
+		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindFirstQuotedString(IteratorPositionData* data, QUOTETYPE quotes, int specialflags);
+		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(IteratorPositionData* data, int stopflags, int specialflags);
+		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindNextNumber(IteratorNumberFindData* data, DECIMALSEPARATORTYPE decimal, int specialflags);
+		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilEquality(IteratorAssignmentData* data, EQUALITYCHARACTER equality, int specialflags);
+		DLLEXPORT ITERATORCALLBACK_RETURNTYPE SkipSomething(IteratorCharacterData* data, int additionalskip, int specialflags);
+		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilSpecificCharacter(IteratorFindUntilData* data, int character, int specialflags);
 
 	};
 

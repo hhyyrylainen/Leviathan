@@ -171,7 +171,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 
 #ifdef _DEBUG
 			if(DebugMode){
-				Logger::Get()->Write(L"Iterator: setting: WSTRINGITERATOR_IGNORE_SPECIAL");
+				Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_IGNORE_SPECIAL");
 			}
 #endif // _DEBUG
 		}
@@ -182,11 +182,11 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 			if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE)){
 #ifdef _DEBUG
 				if(DebugMode){
-					Logger::Get()->Write(L"Iterator: setting: WSTRINGITERATOR_INSIDE_STRING_DOUBLE");
+					Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
 				}
 
 				if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
-					Logger::Get()->Write(L"Iterator: setting: WSTRINGITERATOR_INSIDE_STRING");
+					Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
 				}
 #endif // _DEBUG
 				// set //
@@ -198,7 +198,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 			} else {
 #ifdef _DEBUG
 				if(DebugMode){
-					Logger::Get()->Write(L"Iterator: set flag end: WSTRINGITERATOR_INSIDE_STRING_DOUBLE");
+					Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
 				}
 #endif // _DEBUG
 				// set ending flag //
@@ -212,11 +212,11 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 			if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE)){
 #ifdef _DEBUG
 				if(DebugMode){
-					Logger::Get()->Write(L"Iterator: setting: WSTRINGITERATOR_INSIDE_STRING_SINGLE");
+					Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
 				}
 
 				if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
-					Logger::Get()->Write(L"Iterator: setting: WSTRINGITERATOR_INSIDE_STRING");
+					Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
 				}
 #endif // _DEBUG
 				// set //
@@ -228,7 +228,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 			} else {
 #ifdef _DEBUG
 				if(DebugMode){
-					Logger::Get()->Write(L"Iterator: set flag end: WSTRINGITERATOR_INSIDE_STRING_SINGLE");
+					Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
 				}
 #endif // _DEBUG
 
@@ -236,7 +236,77 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 			}
 		}
 		break;
+	case '/':
+		{
+			// There might be a comment beginning //
+			int nextchar = GetCharacter(1);
 
+			if(nextchar == '/'){
+				// C++-style comment starts //
+				if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT)){
+#ifdef _DEBUG
+					if(DebugMode){
+						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_CPPCOMMENT");
+					}
+
+					if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
+					}
+#endif // _DEBUG
+					CurrentFlags |= ITERATORFLAG_SET_INSIDE_CPPCOMMENT;
+					CurrentFlags |= ITERATORFLAG_SET_INSIDE_COMMENT;
+				}
+
+
+			} else if(nextchar == '*'){
+				// C-style comment starts //
+				if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT)){
+#ifdef _DEBUG
+					if(DebugMode){
+						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_CCOMMENT");
+					}
+
+					if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
+					}
+#endif // _DEBUG
+					CurrentFlags |= ITERATORFLAG_SET_INSIDE_CCOMMENT;
+					CurrentFlags |= ITERATORFLAG_SET_INSIDE_COMMENT;
+				}
+
+			} else if(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT){
+				// C-style comment might end //
+
+				int previouschar = GetPreviousCharacter();
+
+				if(previouschar == '*'){
+					
+					// Set as ending //
+					CurrentFlags |= ITERATORFLAG_SET_CCOMMENT_END;
+#ifdef _DEBUG
+					if(DebugMode){
+						Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_CCOMMENT_END");
+					}
+#endif // _DEBUG
+				}
+			}
+
+		}
+		break;
+	case '\n':
+		{
+			// A C++-style comment might end //
+			if(CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT){
+				// Set as ending //
+				CurrentFlags |= ITERATORFLAG_SET_CPPCOMMENT_END;
+#ifdef _DEBUG
+				if(DebugMode){
+					Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_CPPCOMMENT_END");
+				}
+#endif // _DEBUG
+			}
+		}
+		break;
 	}
 
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
@@ -268,7 +338,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 		} else {
 #ifdef _DEBUG
 			if(DebugMode){
-				Logger::Get()->Write(L"Iterator: flag ends next character: WSTRINGITERATOR_IGNORE_SPECIAL");
+				Logger::Get()->Write(L"Iterator: flag ends next character: ITERATORFLAG_SET_IGNORE_SPECIAL");
 			}
 #endif // _DEBUG
 			// set to end next character //
@@ -280,7 +350,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 	if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END){
 #ifdef _DEBUG
 		if(DebugMode){
-			Logger::Get()->Write(L"Iterator: flag ends: WSTRINGITERATOR_INSIDE_STRING_DOUBLE");
+			Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
 		}
 #endif // _DEBUG
 		// unset flag //
@@ -291,7 +361,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 	if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END){
 #ifdef _DEBUG
 		if(DebugMode){
-			Logger::Get()->Write(L"Iterator: flag ends: WSTRINGITERATOR_INSIDE_STRING_SINGLE");
+			Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
 		}
 #endif // _DEBUG
 		// unset flag //
@@ -304,11 +374,48 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 		if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE) && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE)){
 	#ifdef _DEBUG
 			if(DebugMode){
-				Logger::Get()->Write(L"Iterator: flag ends: WSTRINGITERATOR_INSIDE_STRING");
+				Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING");
 			}
 	#endif // _DEBUG
 			// can unset this //
 			CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_STRING;
+		}
+	}
+
+	// Unsetting comment flags //
+	if(CurrentFlags & ITERATORFLAG_SET_CPPCOMMENT_END){
+#ifdef _DEBUG
+		if(DebugMode){
+			Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_CPPCOMMENT_END");
+		}
+#endif // _DEBUG
+		// unset flag //
+		CurrentFlags &= ~ITERATORFLAG_SET_CPPCOMMENT_END;
+		CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_CPPCOMMENT;
+	}
+
+	// C-style flag //
+	if(CurrentFlags & ITERATORFLAG_SET_CCOMMENT_END){
+#ifdef _DEBUG
+		if(DebugMode){
+			Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_CCOMMENT_END");
+		}
+#endif // _DEBUG
+		// unset flag //
+		CurrentFlags &= ~ITERATORFLAG_SET_CCOMMENT_END;
+		CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_CCOMMENT;
+	}
+
+	// Check can we unset the whole comment flag //
+	if(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT){
+		if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT) && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT)){
+#ifdef _DEBUG
+			if(DebugMode){
+				Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_INSIDE_COMMENT");
+			}
+#endif // _DEBUG
+			// can unset this //
+			CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_COMMENT;
 		}
 	}
 
@@ -340,9 +447,18 @@ DLLEXPORT int Leviathan::StringIterator::GetCharacter(size_t forward /*= 0*/){
 	}
 
 	// Get the character from our iterator and store it to a temporary value and then return it //
-	int tmpval;
+	int tmpval = -1;
 	DataIterator->GetNextCharCode(tmpval, forward);
 
+	return tmpval;
+}
+
+DLLEXPORT int Leviathan::StringIterator::GetPreviousCharacter(){
+	int tmpval = -1;
+	if(!DataIterator->GetPreviousCharacter(tmpval)){
+		// Darn //
+		return 0;
+	}
 	return tmpval;
 }
 // ------------------------------------ //
@@ -371,6 +487,10 @@ DLLEXPORT bool Leviathan::StringIterator::MoveToNext(){
 DLLEXPORT size_t Leviathan::StringIterator::GetPosition(){
 	return DataIterator->CurrentIteratorPosition();
 }
+
+DLLEXPORT bool Leviathan::StringIterator::IsOutOfBounds(){
+	return !DataIterator->IsPositionValid();
+}
 // ------------------ Iterating functions ------------------ //
 #ifdef _DEBUG
 #define ITR_FUNCDEBUG(x) {\
@@ -386,7 +506,9 @@ DLLEXPORT size_t Leviathan::StringIterator::GetPosition(){
 
 
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuotedString(IteratorPositionData* data, QUOTETYPE quotes){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuotedString(IteratorPositionData* data, QUOTETYPE quotes, 
+	int specialflags)
+{
 
 	int currentcharacter = GetCharacter();
 
@@ -480,7 +602,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuote
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNormalCharacterString(IteratorPositionData* data, int stopflags){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNormalCharacterString(IteratorPositionData* data, int stopflags, 
+	int specialflags)
+{
 
 	int currentcharacter = GetCharacter();
 
@@ -542,7 +666,9 @@ invalidcodelabelunnormalcharacter:
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber(IteratorNumberFindData* data, DECIMALSEPARATORTYPE decimal){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber(IteratorNumberFindData* data, DECIMALSEPARATORTYPE decimal, 
+	int specialflags)
+{
 
 	// Check is the current element a part of a number //
 
@@ -594,7 +720,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEquality(IteratorAssignmentData* data, EQUALITYCHARACTER equality){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEquality(IteratorAssignmentData* data, EQUALITYCHARACTER equality, 
+	int specialflags)
+{
 	// check is current element a valid element //
 	int charvalue = GetCharacter();
 
@@ -666,8 +794,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::SkipSomething(IteratorCharacterData* data, int additionalskip){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::SkipSomething(IteratorCharacterData* data, int additionalskip, 
+	int specialflags)
+{
 
 	// We can just return if we are inside a string //
 	if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING){
@@ -692,7 +821,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::SkipSomething(
 	return ITERATORCALLBACK_RETURNTYPE_STOP;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpecificCharacter(IteratorFindUntilData* data, int character){
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpecificCharacter(IteratorFindUntilData* data, int character, 
+	int specialflags)
+{
 
 	// Can this character be added //
 	bool ValidChar = true;

@@ -989,6 +989,28 @@ bool TestStringIterator(const int &tests){
 		TESTFAIL;
 	}
 
+
+	// Comment handling test //
+	itr.ReInit("asdf // This is a comment! //\n 25.44 /*2 .*/\n12\n\n// 1\n  a /*42.1*/12");
+
+	auto sresults = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT);
+
+	if(!sresults || *sresults != "25.44"){
+		TESTFAIL;
+	}
+
+	sresults = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT);
+
+	if(!sresults || *sresults != "12"){
+		TESTFAIL;
+	}
+
+	sresults = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT);
+
+	if(!sresults || *sresults != "12"){
+		TESTFAIL;
+	}
+
 	// Test UTF8 string handling //
 
 	std::vector<int> unicodeholder = boost::assign::list_of(0x00E4)('_')(0x0503)(0x04E8)(0x0A06)(0x1304)(0xAC93)(0x299D);

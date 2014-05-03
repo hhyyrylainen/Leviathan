@@ -106,7 +106,7 @@ namespace Leviathan{
 		}
 
 		virtual bool ReturnSubString(size_t startpos, size_t endpos, STRType &receiver){
-			if(startpos >= End || endpos >= End || endpos > startpos)
+			if(startpos >= End || endpos >= End || startpos > endpos)
 				return false;
 
 			receiver = OurString.substr(startpos, endpos-startpos+1);
@@ -149,8 +149,8 @@ namespace Leviathan{
 
 		//! Wraps a string reference for StringIterator
 		//! \note The string should not be changed while the iterator is used
-		DLLEXPORT StringClassPointerIterator(STRType* str) : OurString(str), Current(0), End(str->size()){
-
+		DLLEXPORT StringClassPointerIterator(STRType* str) : OurString(str), Current(0){
+			End = str ? str->size(): 0;
 		}
 
 		virtual bool GetNextCharCode(int &codepointreceiver, size_t forward){
@@ -174,7 +174,7 @@ namespace Leviathan{
 		}
 
 		virtual bool ReturnSubString(size_t startpos, size_t endpos, STRType &receiver){
-			if(startpos >= End || endpos >= End || endpos > startpos)
+			if(startpos >= End || endpos >= End || startpos > endpos)
 				return false;
 
 			receiver = OurString->substr(startpos, endpos-startpos+1);
@@ -211,7 +211,7 @@ namespace Leviathan{
 
 	//! Unicode iterator for utf8 on top of string
 	class UTF8DataIterator : public StringDataIterator{
-		typedef std::string::const_iterator ITType;
+		typedef std::string::iterator ITType;
 	public:
 
 		//! Wraps an utf8 encoded string for StringIterator
@@ -227,6 +227,7 @@ namespace Leviathan{
 
 		virtual size_t GetLastValidIteratorPosition() const;
 
+		virtual bool ReturnSubString(size_t startpos, size_t endpos, string &receiver);
 
 	protected:
 
@@ -236,6 +237,10 @@ namespace Leviathan{
 		ITType Current;
 		//! The end of the string
 		ITType End;
+
+		//! The starting point for distance checking
+		ITType BeginPos;
+
 
 	};
 

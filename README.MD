@@ -1,5 +1,7 @@
 Leviathan game engine repository
 
+-- Potential bugs that should be fixed --
+    - Many places that use StringIterator don't bother to check if they get null pointers
 
 -- Content For games --
 opengameart.org

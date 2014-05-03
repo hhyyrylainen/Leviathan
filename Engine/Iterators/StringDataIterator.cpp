@@ -15,11 +15,15 @@ DLLEXPORT Leviathan::StringDataIterator::~StringDataIterator(){
 }
 // ------------------------------------ //
 bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos, string &receiver){
+	Logger::Get()->Error(L"StringDataIterator doesn't support getting with type: string, make sure your provided data source string "
+		L"type is the same as the request template type");
 	DEBUG_BREAK;
 	return false;
 }
 
 bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos, wstring &receiver){
+	Logger::Get()->Error(L"StringDataIterator doesn't support getting with type: wstring, make sure your provided data source string "
+		L"type is the same as the request template type");
 	DEBUG_BREAK;
 	return false;
 }
@@ -32,11 +36,14 @@ size_t Leviathan::StringDataIterator::GetCurrentLineNumber() const{
 	return CurrentLineNumber;
 }
 // ------------------ UTF8DataIterator ------------------ //
-Leviathan::UTF8DataIterator::UTF8DataIterator(const string &str) : OurString(str), Current(str.begin()), End(str.end()){
-
+Leviathan::UTF8DataIterator::UTF8DataIterator(const string &str) : OurString(str){
+	Current = OurString.begin();
+	End = OurString.end();
+	BeginPos = OurString.begin();
 }
 // ------------------------------------ //
 bool Leviathan::UTF8DataIterator::GetNextCharCode(int &codepointreceiver, size_t forward){
+
 	// We can just peek the next character if forward is 0 //
 	if(!forward){
 
@@ -56,9 +63,15 @@ bool Leviathan::UTF8DataIterator::GetNextCharCode(int &codepointreceiver, size_t
 }
 // ------------------------------------ //
 void Leviathan::UTF8DataIterator::MoveToNextCharacter(){
-	++Current;
+	// We need to move whole code points //
+	utf8::advance(Current, 1, End);
+
 	// Don't forget to increment these //
 	++CurrentCharacterNumber;
+
+	// Return if position is not valid //
+	if(!IsPositionValid())
+		return;
 	// There might be a better way to check this //
 	int curcode;
 	if(GetNextCharCode(curcode, 0)){
@@ -68,7 +81,7 @@ void Leviathan::UTF8DataIterator::MoveToNextCharacter(){
 }
 // ------------------------------------ //
 size_t Leviathan::UTF8DataIterator::CurrentIteratorPosition() const{
-	return Current-OurString.begin();
+	return std::distance(BeginPos, Current);
 }
 
 bool Leviathan::UTF8DataIterator::IsPositionValid() const{
@@ -77,4 +90,12 @@ bool Leviathan::UTF8DataIterator::IsPositionValid() const{
 // ------------------------------------ //
 size_t Leviathan::UTF8DataIterator::GetLastValidIteratorPosition() const{
 	return OurString.size()-1;
+}
+// ------------------------------------ //
+bool Leviathan::UTF8DataIterator::ReturnSubString(size_t startpos, size_t endpos, string &receiver){
+	if(startpos >= OurString.size() || endpos >= OurString.size() || startpos > endpos)
+		return false;
+
+	receiver = OurString.substr(startpos, endpos-startpos+1);
+	return true;
 }

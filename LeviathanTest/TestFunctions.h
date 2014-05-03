@@ -10,6 +10,7 @@
 #include "Common/StringOperations.h"
 #include "Iterators/StringIterator.h"
 #include "Utility/MultiFlag.h"
+#include "utf8/checked.h"
 
 bool TestMiscCutWstring(const int &tests){
 	bool Failed = false;
@@ -866,8 +867,6 @@ bool TestStringIterator(const int &tests){
 	StringIterator itr((string*)NULL);
 	unique_ptr<wstring> results(nullptr);
 
-	itr.SetDebugMode(true);
-
 	// test each one of WstringIterator's get functions and verify that they work correctly //
 	itr.ReInit(L" get \" this stuff in here\\\" which has 'stuff' \"_ and not this");
 
@@ -877,6 +876,7 @@ bool TestStringIterator(const int &tests){
 	if(*results != L" this stuff in here\\\" which has 'stuff' "){
 		TESTFAIL;
 	}
+
 	// we should now be on "_" //
 	if(itr.GetCharacter() != L'_'){
 		TESTFAIL;
@@ -888,7 +888,7 @@ bool TestStringIterator(const int &tests){
 
 	results = itr.GetUntilNextCharacterOrNothing<wstring>(L';');
 	//Logger::Get()->Save();
-	if(results->size() > 0){
+	if(results && results->size() > 0){
 		TESTFAIL;
 	}
 
@@ -897,7 +897,7 @@ bool TestStringIterator(const int &tests){
 
 	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
 
-	if(*results != L"teesti_ess"){
+	if(!results || *results != L"teesti_ess"){
 		TESTFAIL;
 	}
 
@@ -906,7 +906,7 @@ bool TestStringIterator(const int &tests){
 
 	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
-	if(*results != L"o"){
+	if(!results || *results != L"o"){
 		TESTFAIL;
 	}
 
@@ -914,13 +914,13 @@ bool TestStringIterator(const int &tests){
 
 	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
-	if(*results != L"get-this"){
+	if(!results || *results != L"get-this"){
 		TESTFAIL;
 	}
 
 	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
-	if(*results != L"nice_prefix"){
+	if(!results || *results != L"nice_prefix"){
 		TESTFAIL;
 	}
 
@@ -928,66 +928,123 @@ bool TestStringIterator(const int &tests){
 	itr.ReInit(L"aib val: = 243.12al toi() a 2456,12.5");
 
 	results = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_DOT);
-	if(*results != L"243.12"){
+	if(!results || *results != L"243.12"){
 		TESTFAIL;
 	}
 
 	results = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_DOT);
-	if(*results != L"2456"){
+	if(!results || *results != L"2456"){
 		TESTFAIL;
 	}
 
 	results = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_DOT);
-	if(*results != L"12.5"){
+	if(!results || *results != L"12.5"){
 		TESTFAIL;
 	}
 
 	itr.ReInit(L"	aib val: = 243.12al toi() a 2456,12.5");
 
+
 	results = itr.GetUntilEqualityAssignment<wstring>(EQUALITYCHARACTER_TYPE_EQUALITY);
-	if(*results != L"aib val:"){
+	if(!results || *results != L"aib val:"){
 		TESTFAIL;
 	}
 
 	itr.ReInit(L"StartCount = [[245]];");
 
 	results = itr.GetUntilEqualityAssignment<wstring>(EQUALITYCHARACTER_TYPE_EQUALITY);
-	if(*results != L"StartCount"){
+	if(!results || *results != L"StartCount"){
 		TESTFAIL;
 	}
 	itr.SkipWhiteSpace();
 
 	results = itr.GetUntilNextCharacterOrAll<wstring>(L';');
-	Logger::Get()->Save();
-	if(*results != L"[[245]]"){
+	if(!results || *results != L"[[245]]"){
 		TESTFAIL;
 	}
 
 	itr.ReInit(L" adis told as\\; this still ; and no this");
 
 	results = itr.GetUntilNextCharacterOrNothing<wstring>(L';');
-	if(*results != L" adis told as\\; this still "){
+	if(!results || *results != L" adis told as\\; this still "){
 		TESTFAIL;
 	}
 
 	itr.ReInit(L"not][ this<out>");
 
 	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
-	if(*results != L"not"){
+	if(!results || *results != L"not"){
 		TESTFAIL;
 	}
 
 	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
-	if(*results != L" this"){
+	if(!results || *results != L" this"){
 		TESTFAIL;
 	}
 
 	// some specific cases //
 	itr.ReInit(L"\"JellyCube\";");
 	results = itr.GetUntilNextCharacterOrAll<wstring>(L';');
-	if(*results != L"\"JellyCube\""){
+	if(!results || *results != L"\"JellyCube\""){
 		TESTFAIL;
 	}
+
+	// Test UTF8 string handling //
+
+	std::vector<int> unicodeholder = boost::assign::list_of(0x00E4)('_')(0x0503)(0x04E8)(0x0A06)(0x1304)(0xAC93)(0x299D);
+
+	string toutf8;
+
+	utf8::utf32to8(unicodeholder.begin(), unicodeholder.end(), back_inserter(toutf8));
+
+	wstring resultuni16;
+
+	utf8::utf8to16(toutf8.begin(), toutf8.end(), back_inserter(resultuni16));
+
+	
+	itr.ReInit(new UTF8DataIterator(toutf8), true);
+
+	auto shouldbethesame = itr.GetUntilNextCharacterOrAll<string>('a');
+
+	if(*shouldbethesame != toutf8){
+		TESTFAIL;
+	}
+	
+	itr.ReInit(new UTF8DataIterator("My Super nice \\= unicode is this : \""+toutf8+"\""), true);
+	itr.GetUntilEqualityAssignment<string>(EQUALITYCHARACTER_TYPE_ALL);
+
+	// Now get the UTF8 sequence //
+	auto utf8encoded = itr.GetStringInQuotes<string>(QUOTETYPE_DOUBLEQUOTES);
+
+	// Convert to utf 16 and compare //
+	if(!utf8encoded){
+		TESTFAIL;
+	} else {
+		wstring cvrtsy;
+
+		utf8::utf8to16(utf8encoded->begin(), utf8encoded->end(), back_inserter(cvrtsy));
+
+		if(cvrtsy != resultuni16){
+			TESTFAIL;
+		}
+	}
+
+	// Do some stress testing //
+	wstring justsimple = L"This is 'just' \"a simple \\= test\": string for stuff \"to get to this' nice\"";
+
+	StringIterator itr2((string*)NULL);
+	itr2.SetDebugMode(true);
+
+	for(int i = 0; i < tests; i++){
+
+		itr2.ReInit(justsimple);
+		itr2.GetUntilEqualityAssignment<wstring>(EQUALITYCHARACTER_TYPE_ALL);
+		auto strresult = itr2.GetStringInQuotes<wstring>(QUOTETYPE_DOUBLEQUOTES);
+		if(!strresult || *strresult != L"to get to this' nice")
+			TESTFAIL;
+	}
+
+
 
 
 	return Failed;

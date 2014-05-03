@@ -28,6 +28,7 @@ namespace Leviathan{
 		class TrailEmitter;
 	}
 
+	class UTF8DataIterator;
 	template<class DTypeName> class SyncedPrimitive;
 	class SyncedResource;
 	class ScriptInterface;

@@ -70,17 +70,8 @@ int main(int argcount, char* args[]){
 		wstring times = L"No time on linux";
 #endif
 
-		LeviathanApplication app;
-		DummyNetworkHandler network;
-
-		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"Test_"+times, ENGINECONFIGURATION, PROGRAMCONFIGURATION, PROGRAMKEYCONFIGURATION,
-			&PROGRAMCHECKCONFIGFUNCNAME, &PROGRAMCHECKKEYCONFIGFUNCNAME));
-		// customize values //
-#ifdef _WIN32
-		ProgramDefinition->SetHInstance(hInstance);
-#endif
-		ProgramDefinition->SetMasterServerParameters(PROGRAMMASTERSERVERINFO).SetPacketHandler(&network).SetApplicationIdentification(
-			USERREADABLEIDENTIFICATION, GAMENAMEIDENTIFICATION, GAMEVERSIONIDENTIFICATION);
+		// Create our own logger first //
+		unique_ptr<Logger> Mainlog(new Logger(L"Test_"+times+L"Log.txt"));
 
 		bool Passed = true;
 
@@ -101,6 +92,19 @@ int main(int argcount, char* args[]){
 		}
 
 		TimingMonitor::StopTiming(L"All tests timer");
+
+		Logger::Get()->Info(L"-------------------- Starting Engine init --------------------", true);
+		LeviathanApplication app;
+		DummyNetworkHandler network;
+
+		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"Test_"+times, ENGINECONFIGURATION, PROGRAMCONFIGURATION, PROGRAMKEYCONFIGURATION,
+			&PROGRAMCHECKCONFIGFUNCNAME, &PROGRAMCHECKKEYCONFIGFUNCNAME));
+		// customize values //
+#ifdef _WIN32
+		ProgramDefinition->SetHInstance(hInstance);
+#endif
+		ProgramDefinition->SetMasterServerParameters(PROGRAMMASTERSERVERINFO).SetPacketHandler(&network).SetApplicationIdentification(
+			USERREADABLEIDENTIFICATION, GAMENAMEIDENTIFICATION, GAMEVERSIONIDENTIFICATION);
 
 		// customize values //
 		ProgramDefinition->StoreWindowDetails(WINDOWTITLEGENFUNCTION, true,

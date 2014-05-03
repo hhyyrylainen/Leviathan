@@ -394,8 +394,8 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data,
 	do {
 		curline = itr.GetUntilNextCharacterOrNothing<wstring>(L';');
 		if(!curline)
-			continue;
-
+			break;
+		
 		linelength = curline->size();
 
 		wstring* tmp = curline.release();

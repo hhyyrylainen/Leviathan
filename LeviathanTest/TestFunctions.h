@@ -993,21 +993,63 @@ bool TestStringIterator(const int &tests){
 	// Comment handling test //
 	itr.ReInit("asdf // This is a comment! //\n 25.44 /*2 .*/\n12\n\n// 1\n  a /*42.1*/12");
 
-	auto sresults = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT);
+	auto sresults = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT, SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
 	if(!sresults || *sresults != "25.44"){
 		TESTFAIL;
 	}
 
-	sresults = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT);
+	sresults = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT, SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
 	if(!sresults || *sresults != "12"){
 		TESTFAIL;
 	}
 
-	sresults = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT);
+	sresults = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT, SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
 	if(!sresults || *sresults != "12"){
+		TESTFAIL;
+	}
+
+	// End line testing //
+	itr.ReInit(L"Don\\'t get anything from here\n42, but here it is1\n4 get until this\n and not this[as\n;] \"how it cu\nts\"");
+
+	results = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE, SPECIAL_ITERATOR_ONNEWLINE_STOP);
+
+	if(results){
+		TESTFAIL;
+	}
+
+
+	results = itr.GetUntilNextCharacterOrNothing<wstring>(',');
+
+	if(!results){
+		TESTFAIL;
+	}
+
+	results = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE, SPECIAL_ITERATOR_ONNEWLINE_STOP);
+
+	if(!results || *results != L"1"){
+		TESTFAIL;
+	}
+
+	results = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS, SPECIAL_ITERATOR_ONNEWLINE_STOP);
+
+	if(!results || *results != L"4 get until this"){
+		TESTFAIL;
+	}
+
+	results = itr.GetUntilNextCharacterOrNothing<wstring>('[');
+
+	results = itr.GetUntilNextCharacterOrNothing<wstring>(';', SPECIAL_ITERATOR_ONNEWLINE_STOP);
+
+	if(results){
+		TESTFAIL;
+	}
+
+	results = itr.GetStringInQuotes<wstring>(QUOTETYPE_BOTH, SPECIAL_ITERATOR_ONNEWLINE_STOP);
+
+	if(!results || *results != L"how it cu"){
 		TESTFAIL;
 	}
 

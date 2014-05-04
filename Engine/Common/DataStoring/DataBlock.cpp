@@ -138,7 +138,7 @@ TYPEIDGETTEMPLATEINSTANTIATION(char, L"int");
 TYPEIDGETTEMPLATEINSTANTIATION(string, L"string");
 }
 // ------------------------------------ //
-DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined) THROWS{
+DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined) THROWS{
 	// the text should have all preceding and trailing spaces removed //
 	if(valuetoparse.size() == 0){
 		// can't be anything //
@@ -151,7 +151,7 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(wstring &valuetoparse, map<wst
 		// it's a string //
 
 		// use iterator to get data inside quotes //
-		StringIterator itr(&valuetoparse);
+		StringIterator itr(valuetoparse);
 
 		unique_ptr<wstring> tempdata = itr.GetStringInQuotes<wstring>(QUOTETYPE_DOUBLEQUOTES);
 

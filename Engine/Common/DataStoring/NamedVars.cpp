@@ -53,7 +53,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 		throw ExceptionInvalidArgument(L"invalid data on line (invalid name)", name->size(), __WFUNCSIG__, L"line", line);
 	}
 
-	// \todo verify that this will be destructed if an exception happens //
+
 	Name = *name;
 
 	// skip whitespace //
@@ -68,22 +68,41 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 		throw ExceptionInvalidArgument(L"invalid data on line (no variable)", tempvar->size(), __WFUNCSIG__, L"line", line);
 	}
 
+	ConstructValuesForObject(*tempvar, predefined);
+}
+
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, const wstring &valuestr, map<wstring, shared_ptr<VariableBlock>>* 
+	predefined /*= NULL*/) THROWS
+{
+	// We already have the name provided for us //
+	Name = name;
+
+	// The value needs to be parsed //
+	ConstructValuesForObject(valuestr, predefined);
+}
+
+DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const wstring &variablestr, map<wstring, shared_ptr<VariableBlock>>* 
+	predefined) THROWS
+{
+	if(variablestr.size() == 0){
+		throw ExceptionInvalidArgument(L"invalid variable string, 0 length", 0, __WFUNCTION__, L"variablestr", variablestr);
+	}
 	// check does it have brackets (and need to be processed like so) //
-	//tempvar->find_first_of(L'[') != wstring::npos
-	if(tempvar->at(0) == L'['){
+	if(variablestr[0] == L'['){
 
 		// needs to be tokenized //
 
 		vector<Token*> tokens;
 		// split to tokens //
-		LineTokeNizer::SplitTokenToRTokens(*tempvar, tokens);
+		LineTokeNizer::SplitTokenToRTokens(variablestr, tokens);
 
 		if(tokens.size() < 2){
 			// release tokens to not leak any memory //
 			SAFE_DELETE_VECTOR(tokens);
 
 			// might contain the base token, but cannot possibly have any values inside //
-			throw ExceptionInvalidArgument(L"invalid data on line (variable tokenization failed)", tokens.size(), __WFUNCSIG__, L"line", line);
+			throw ExceptionInvalidArgument(L"invalid variable string (variable tokenization failed)", tokens.size(), __WFUNCTION__, 
+				L"variablestr", variablestr);
 		}
 
 		// first should be base token //
@@ -95,8 +114,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 		for(int i = 0; i < tokens[0]->GetSubTokenCount(); i++){
 
 			try{
-				// try to create new VariableBlock //
-				//Datas.push_back(new VariableBlock(new WstringBlock(tokens[0]->GetSubToken(i)->GetData())));
+				// Try to create a new VariableBlock //
 				Datas[i] = new VariableBlock(tokens[0]->GetSubToken(i)->GetChangeableData(), predefined);
 			}
 			catch (const ExceptionInvalidArgument &e){
@@ -119,15 +137,16 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 		// don't want to fall to single value processing //
 		return;
 	}
+
 	// just one value //
 	try{
 		// try to create new VariableBlock //
 		// it should always have one element //
 		if(Datas.size() == 0){
-			Datas.push_back(new VariableBlock(*tempvar, predefined));
+			Datas.push_back(new VariableBlock(variablestr, predefined));
 		} else {
 			SAFE_DELETE(Datas[0]);
-			Datas[0] = new VariableBlock(*tempvar, predefined);
+			Datas[0] = new VariableBlock(variablestr, predefined);
 		}
 	}
 	catch (const ExceptionInvalidArgument &e){
@@ -138,8 +157,9 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 		if(e.GetInvalidValueAsPtr()->size())
 			throw;
 	}
-
 }
+
+
 
 // ------------------ Handling passing to packets ------------------ //
 DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(sf::Packet &packet){

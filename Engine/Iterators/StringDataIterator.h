@@ -102,7 +102,7 @@ namespace Leviathan{
 				return false;
 
 			// Copy the character //
-			codepointreceiver = static_cast<int>(OurString[Current-1]);
+			receiver = static_cast<int>(OurString[Current-1]);
 			return true;
 		}
 
@@ -179,7 +179,7 @@ namespace Leviathan{
 				return false;
 
 			// Copy the character //
-			codepointreceiver = static_cast<int>(OurString->at(Current-1));
+			receiver = static_cast<int>(OurString->at(Current-1));
 			return true;
 		}
 

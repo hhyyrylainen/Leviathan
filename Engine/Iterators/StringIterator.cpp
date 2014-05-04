@@ -86,8 +86,12 @@ DLLEXPORT void Leviathan::StringIterator::ReInit(string* text){
 	ReInit(new StringClassPointerIterator<string>(text), true);
 }
 // ------------------------------------ //
-void Leviathan::StringIterator::StartIterating(boost::function<ITERATORCALLBACK_RETURNTYPE()> functorun){
-
+void Leviathan::StringIterator::StartIterating(boost::function<ITERATORCALLBACK_RETURNTYPE()> functorun, int specialflagcopy){
+#ifdef _DEBUG
+	if(DebugMode){
+		Logger::Get()->Write(L"Iterator: begin ----------------------");
+	}
+#endif // _DEBUG
 	// We want to skip multiple checks on same character so we skip checks on first character when starting except the beginning of the string //
 	bool IsStartUpLoop = GetPosition() == 0 ? true: false;
 
@@ -96,6 +100,8 @@ void Leviathan::StringIterator::StartIterating(boost::function<ITERATORCALLBACK_
 		firstiter = false;
 
 	for(; DataIterator->IsPositionValid(); DataIterator->MoveToNextCharacter()){
+
+		int chara = GetCharacter();
 #ifdef _DEBUG
 		if(DebugMode){
 			// Convert to UTF8 //
@@ -103,7 +109,6 @@ void Leviathan::StringIterator::StartIterating(boost::function<ITERATORCALLBACK_
 			wstring datathing = L"Iterator: iterating: "+Convert::ToWstring(GetPosition())+L" (";
 
 			// Encode the character //
-			int chara = GetCharacter();
 			try{
 				string tmputf8;
 				utf8::utf32to8(&chara, (&chara)+1, back_inserter(tmputf8));
@@ -139,6 +144,8 @@ void Leviathan::StringIterator::StartIterating(boost::function<ITERATORCALLBACK_
 
 		firstiter = false;
 
+		// Check for special cases //
+
 #ifdef _DEBUG
 		if(DebugMode){
 			Logger::Get()->Write(L"Iterator: handle: call check function");
@@ -166,128 +173,139 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 	switch(character){
 	case '\\':
 		{
-			// ignore next special character //
-			CurrentFlags |= ITERATORFLAG_SET_IGNORE_SPECIAL;
+			if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+				// ignore next special character //
+				CurrentFlags |= ITERATORFLAG_SET_IGNORE_SPECIAL;
 
 #ifdef _DEBUG
-			if(DebugMode){
-				Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_IGNORE_SPECIAL");
-			}
+				if(DebugMode){
+					Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_IGNORE_SPECIAL");
+				}
 #endif // _DEBUG
+			}
 		}
 	break;
 	case '"':
 		{
-			// a string //
-			if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE)){
+			// Strings cannot be inside comments //
+			if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+				// a string //
+				if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE)){
 #ifdef _DEBUG
-				if(DebugMode){
-					Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
-				}
+					if(DebugMode){
+						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
+					}
 
-				if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
-					Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
-				}
+					if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
+						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
+					}
 #endif // _DEBUG
-				// set //
-				CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_DOUBLE;
+					// set //
+					CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_DOUBLE;
 
-				// set as inside string //
-				CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING;
+					// set as inside string //
+					CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING;
 
-			} else {
+				} else {
 #ifdef _DEBUG
-				if(DebugMode){
-					Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
-				}
+					if(DebugMode){
+						Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
+					}
 #endif // _DEBUG
-				// set ending flag //
-				CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END;
+					// set ending flag //
+					CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END;
+				}
 			}
 		}
 	break;
 	case '\'':
 		{
-			// a string //
-			if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE)){
+			// Strings cannot be inside comments //
+			if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+				// a string //
+				if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE)){
 #ifdef _DEBUG
-				if(DebugMode){
-					Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
-				}
+					if(DebugMode){
+						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
+					}
 
-				if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
-					Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
-				}
+					if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
+						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
+					}
 #endif // _DEBUG
-				// set //
-				CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_SINGLE;
+					// set //
+					CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_SINGLE;
 
-				// set as inside string //
-				CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING;
+					// set as inside string //
+					CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING;
 
-			} else {
+				} else {
 #ifdef _DEBUG
-				if(DebugMode){
-					Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
-				}
+					if(DebugMode){
+						Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
+					}
 #endif // _DEBUG
 
-				CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END;
+					CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END;
+				}
 			}
 		}
 		break;
 	case '/':
 		{
-			// There might be a comment beginning //
-			int nextchar = GetCharacter(1);
+			// Comments cannot be inside strings //
+			if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
+				// There might be a comment beginning //
+				int nextchar = GetCharacter(1);
 
-			if(nextchar == '/'){
-				// C++-style comment starts //
-				if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT)){
+				if(nextchar == '/'){
+					// C++-style comment starts //
+					if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT)){
 #ifdef _DEBUG
-					if(DebugMode){
-						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_CPPCOMMENT");
-					}
+						if(DebugMode){
+							Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_CPPCOMMENT");
+						}
 
-					if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
-						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
-					}
+						if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+							Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
+						}
 #endif // _DEBUG
-					CurrentFlags |= ITERATORFLAG_SET_INSIDE_CPPCOMMENT;
-					CurrentFlags |= ITERATORFLAG_SET_INSIDE_COMMENT;
-				}
+						CurrentFlags |= ITERATORFLAG_SET_INSIDE_CPPCOMMENT;
+						CurrentFlags |= ITERATORFLAG_SET_INSIDE_COMMENT;
+					}
 
 
-			} else if(nextchar == '*'){
-				// C-style comment starts //
-				if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT)){
+				} else if(nextchar == '*'){
+					// C-style comment starts //
+					if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT)){
 #ifdef _DEBUG
-					if(DebugMode){
-						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_CCOMMENT");
-					}
+						if(DebugMode){
+							Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_CCOMMENT");
+						}
 
-					if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
-						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
-					}
+						if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+							Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
+						}
 #endif // _DEBUG
-					CurrentFlags |= ITERATORFLAG_SET_INSIDE_CCOMMENT;
-					CurrentFlags |= ITERATORFLAG_SET_INSIDE_COMMENT;
-				}
+						CurrentFlags |= ITERATORFLAG_SET_INSIDE_CCOMMENT;
+						CurrentFlags |= ITERATORFLAG_SET_INSIDE_COMMENT;
+					}
 
-			} else if(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT){
-				// C-style comment might end //
+				} else if(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT){
+					// C-style comment might end //
 
-				int previouschar = GetPreviousCharacter();
+					int previouschar = GetPreviousCharacter();
 
-				if(previouschar == '*'){
-					
-					// Set as ending //
-					CurrentFlags |= ITERATORFLAG_SET_CCOMMENT_END;
+					if(previouschar == '*'){
+
+						// Set as ending //
+						CurrentFlags |= ITERATORFLAG_SET_CCOMMENT_END;
 #ifdef _DEBUG
-					if(DebugMode){
-						Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_CCOMMENT_END");
-					}
+						if(DebugMode){
+							Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_CCOMMENT_END");
+						}
 #endif // _DEBUG
+					}
 				}
 			}
 
@@ -465,6 +483,8 @@ DLLEXPORT int Leviathan::StringIterator::GetPreviousCharacter(){
 DLLEXPORT bool Leviathan::StringIterator::MoveToNext(){
 	DataIterator->MoveToNextCharacter();
 	bool valid = DataIterator->IsPositionValid();
+	// It's important to reset this //
+	CurrentStored = false;
 
 	// We need to handle the flags on this position if we aren't on the first character //
 	if(valid && DataIterator->CurrentIteratorPosition() != 0){
@@ -486,6 +506,10 @@ DLLEXPORT bool Leviathan::StringIterator::MoveToNext(){
 
 DLLEXPORT size_t Leviathan::StringIterator::GetPosition(){
 	return DataIterator->CurrentIteratorPosition();
+}
+
+DLLEXPORT size_t Leviathan::StringIterator::GetCurrentLine(){
+	return DataIterator->GetCurrentLineNumber();
 }
 
 DLLEXPORT bool Leviathan::StringIterator::IsOutOfBounds(){
@@ -515,6 +539,30 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuote
 	bool TakeChar = true;
 	bool End = false;
 
+
+	if(currentcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+		ITR_FUNCDEBUG(L"Stopping to new line");
+
+		if(data->Positions.X != -1){
+			// Set the last character to two before this (skip the current and " and end there) //
+			int previouscheck = GetPreviousCharacter();
+			
+			// Check do we need to go back 2 characters or just one //
+			if(quotes == QUOTETYPE_BOTH && (previouscheck == '"' || previouscheck == '\'') || 
+				quotes == QUOTETYPE_DOUBLEQUOTES && previouscheck == '"' || quotes == QUOTETYPE_SINGLEQUOTES && previouscheck == '\'')
+			{
+				ITR_FUNCDEBUG(L"Going back over an extra quote character");
+				data->Positions.Y = GetPosition()-2;
+			} else {
+				data->Positions.Y = GetPosition()-1;
+			}
+
+			ITR_FUNCDEBUG(L"Ending to new line, end is now: "+Convert::ToWstring(data->Positions.Y));
+		}
+
+		MoveToNext();
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
+	}
 
 	switch(quotes){
 	case QUOTETYPE_BOTH:
@@ -610,6 +658,26 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNormal
 
 	bool IsValid = true;
 
+	if(currentcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+		ITR_FUNCDEBUG(L"Stopping to new line");
+
+		if(data->Positions.X != -1){
+			// ended //
+			data->Positions.Y = GetPosition()-1;
+			ITR_FUNCDEBUG(L"Ending to new line, end is now: "+Convert::ToWstring(data->Positions.Y));
+		}
+
+		MoveToNext();
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
+	}
+
+
+	// If set this is invalid inside comments //
+	if((specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) && (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+		IsValid = false;
+		goto invalidcodelabelunnormalcharacter;
+	}
+
 
 	if((stopflags & UNNORMALCHARACTER_TYPE_LOWCODES || stopflags & UNNORMALCHARACTER_TYPE_WHITESPACE)
 		&& !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING))
@@ -648,6 +716,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNormal
 		if(data->Positions.X == -1){
 			// first position! //
 			data->Positions.X = GetPosition();
+			ITR_FUNCDEBUG(L"Started: "+Convert::ToWstring(data->Positions.X));
 		}
 
 	} else {
@@ -659,6 +728,7 @@ invalidcodelabelunnormalcharacter:
 		if(data->Positions.X != -1){
 			// ended //
 			data->Positions.Y = GetPosition()-1;
+			ITR_FUNCDEBUG(L"End now: "+Convert::ToWstring(data->Positions.Y));
 			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 	}
@@ -676,27 +746,45 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber
 
 	bool IsValid = false;
 
+	if(currentcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+		ITR_FUNCDEBUG(L"Stopping to new line");
 
-	if((currentcharacter >= 48) && (currentcharacter <= 57)){
-		// Is a plain old digit //
-		IsValid = true;
+		if(data->Positions.X != -1){
+			// ended //
+			data->Positions.Y = GetPosition()-1;
+			ITR_FUNCDEBUG(L"Ending to new line, end is now: "+Convert::ToWstring(data->Positions.Y));
+		}
 
-	} else {
-		// Check is it a decimal separator (1 allowed) or a negativity sign in front //
-		if(currentcharacter == '+' || currentcharacter == '-'){
+		MoveToNext();
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
+	}
 
-			if((data->DigitsFound < 1) && (!data->NegativeFound)){
-				IsValid = true;
-			}
-			data->NegativeFound = true;
-		} else if (((currentcharacter == '.') && ((decimal == DECIMALSEPARATORTYPE_DOT) || (decimal == DECIMALSEPARATORTYPE_BOTH))) ||
-			((currentcharacter == ',') && ((decimal == DECIMALSEPARATORTYPE_COMMA) || (decimal == DECIMALSEPARATORTYPE_BOTH))))
-		{
-			if((!data->DecimalFound) && (data->DigitsFound > 0)){
-				IsValid = true;
-				data->DecimalFound = true;
+	// Comments might be skipped //
+	if(!(specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) || !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+
+		if((currentcharacter >= 48) && (currentcharacter <= 57)){
+			// Is a plain old digit //
+			IsValid = true;
+
+		} else {
+			// Check is it a decimal separator (1 allowed) or a negativity sign in front //
+			if(currentcharacter == '+' || currentcharacter == '-'){
+
+				if((data->DigitsFound < 1) && (!data->NegativeFound)){
+					IsValid = true;
+				}
+				data->NegativeFound = true;
+			} else if (((currentcharacter == '.') && ((decimal == DECIMALSEPARATORTYPE_DOT) || (decimal == DECIMALSEPARATORTYPE_BOTH))) ||
+				((currentcharacter == ',') && ((decimal == DECIMALSEPARATORTYPE_COMMA) || (decimal == DECIMALSEPARATORTYPE_BOTH))))
+			{
+				if((!data->DecimalFound) && (data->DigitsFound > 0)){
+					IsValid = true;
+					data->DecimalFound = true;
+				}
 			}
 		}
+	} else {
+		ITR_FUNCDEBUG(L"Ignoring inside a comment");
 	}
 
 	if(IsValid){
@@ -706,6 +794,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber
 			// first position! //
 
 			data->Positions.X = GetPosition();
+			ITR_FUNCDEBUG(L"Data started: "+Convert::ToWstring(data->Positions.X));
 		}
 
 	} else {
@@ -713,6 +802,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber
 		if(data->Positions.X != -1){
 			// ended //
 			data->Positions.Y = GetPosition()-1;
+			ITR_FUNCDEBUG(L"End now: "+Convert::ToWstring(data->Positions.Y));
 			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 
@@ -729,38 +819,53 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 	bool IsValid = true;
 	bool IsStop = false;
 
+	if(charvalue == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+		ITR_FUNCDEBUG(L"Stopping to new line");
 
-	// Skip if this is a space //
-	if(charvalue < 33){
-		// Not allowed in a name //
-		ITR_FUNCDEBUG(L"Whitespace skipped");
-		IsValid = false;
+		MoveToNext();
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
 
-	if(equality == EQUALITYCHARACTER_TYPE_ALL){
-		// check for all possible value separators //
-		if(charvalue == '=' || charvalue == ':'){
+	// Comments cannot be part of this //
+	if((specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) && (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+		// Not valid inside a comment //
+		ITR_FUNCDEBUG(L"Comment skipped");
+		IsValid = false;
 
-			if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
-				// If ignored don't stop //
-				ITR_FUNCDEBUG(L"Found = or :");
-				IsStop = true;
-			}
+	} else {
+
+		// Skip if this is a space //
+		if(charvalue < 33){
+			// Not allowed in a name //
+			ITR_FUNCDEBUG(L"Whitespace skipped");
+			IsValid = false;
 		}
-	} else if(equality == EQUALITYCHARACTER_TYPE_EQUALITY){
-		// Check for an equality sign //
-		if(charvalue == '='){
-			if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
-				ITR_FUNCDEBUG(L"Found =");
-				IsStop = true;
+
+		if(equality == EQUALITYCHARACTER_TYPE_ALL){
+			// check for all possible value separators //
+			if(charvalue == '=' || charvalue == ':'){
+
+				if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
+					// If ignored don't stop //
+					ITR_FUNCDEBUG(L"Found = or :");
+					IsStop = true;
+				}
 			}
-		}
-	} else if (equality == EQUALITYCHARACTER_TYPE_DOUBLEDOTSTYLE){
-		// Check does it match the characters //
-		if(charvalue == ':'){
-			if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
-				ITR_FUNCDEBUG(L"Found :");
-				IsStop = true;
+		} else if(equality == EQUALITYCHARACTER_TYPE_EQUALITY){
+			// Check for an equality sign //
+			if(charvalue == '='){
+				if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
+					ITR_FUNCDEBUG(L"Found =");
+					IsStop = true;
+				}
+			}
+		} else if (equality == EQUALITYCHARACTER_TYPE_DOUBLEDOTSTYLE){
+			// Check does it match the characters //
+			if(charvalue == ':'){
+				if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
+					ITR_FUNCDEBUG(L"Found :");
+					IsStop = true;
+				}
 			}
 		}
 	}
@@ -798,12 +903,27 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::SkipSomething(
 	int specialflags)
 {
 
+	int curchara = GetCharacter();
+
+
+	if(curchara == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+		ITR_FUNCDEBUG(L"Stopping to new line");
+
+		MoveToNext();
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
+	}
+
+
+	// We can probably always skip inside a comment //
+	if((specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) && (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+
+		return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+	}
+
 	// We can just return if we are inside a string //
 	if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING){
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
-
-	int curchara = GetCharacter();
 
 	// cCheck does the character match what is being skipped //
 
@@ -828,10 +948,28 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 	// Can this character be added //
 	bool ValidChar = true;
 
+	int tmpchara = GetCharacter();
+
+	if(tmpchara == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+		ITR_FUNCDEBUG(L"Stopping to new line");
+
+		if(data->Positions.X != -1){
+			// This should be fine to get here //
+			data->Positions.Y = GetPosition()-1;
+			ITR_FUNCDEBUG(L"Ending to new line, end is now: "+Convert::ToWstring(data->Positions.Y));
+		}
+
+		MoveToNext();
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
+	}
+
 	// We can just continue if we are inside a string //
-	if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
+	if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING) && !((specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) 
+		&& (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)))
+	{
 		// Check did we encounter stop character //
-		if(GetCharacter() == character){
+		ITR_FUNCDEBUG(wstring(L"Trying to match: ")+((wchar_t)tmpchara)+wstring(L"==")+((wchar_t)character));
+		if(tmpchara == character){
 			// Skip if ignoring special characters //
 			if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
 				// Not valid character //
@@ -845,6 +983,15 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 				}
 			}
 		}
+	} else {
+#ifdef _DEBUG
+		if((CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
+			ITR_FUNCDEBUG(L"Ignoring inside string");
+		}
+		if((specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) && (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+			ITR_FUNCDEBUG(L"Ignoring inside comment");
+		}
+#endif // _DEBUG
 	}
 
 	if(ValidChar){

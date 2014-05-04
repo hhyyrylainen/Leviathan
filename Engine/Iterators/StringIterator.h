@@ -32,11 +32,15 @@ namespace Leviathan{
 	enum SPECIAL_ITERATOR{
 
 		SPECIAL_ITERATOR_ONNEWLINE_STOP = 0x4,
-		SPECIAL_ITERATOR_ONNEWLINE_WHITESPACE = 0x8,
+		//SPECIAL_ITERATOR_ONNEWLINE_WHITESPACE = 0x8,
 		//! Causes comments to be handled as whitespace/delimiting
 		SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING = 0x10,
 
 	};
+
+	//! Common flag for file handling
+#define SPECIAL_ITERATOR_FILEHANDLING SPECIAL_ITERATOR_ONNEWLINE_STOP | SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING
+
 
 	//! Set flags for the iterator, this is changed to this for performance
 	enum ITERATORFLAG_SET{
@@ -148,7 +152,7 @@ namespace Leviathan{
 			IteratorPositionData data(-1, -1);
 
 			// Iterate with our getting function //
-			StartIterating(boost::bind(&StringIterator::FindFirstQuotedString, this, &data, quotes, specialflags));
+			StartIterating(boost::bind(&StringIterator::FindFirstQuotedString, this, &data, quotes, specialflags), specialflags);
 
 			// Create the substring from the result //
 			unique_ptr<RStrType> resultstr;
@@ -175,7 +179,7 @@ namespace Leviathan{
 
 			// iterate over the string getting the proper part //
 			// Iterate with our getting function //
-			StartIterating(boost::bind(&StringIterator::FindNextNumber, this, &data, decimal, specialflags));
+			StartIterating(boost::bind(&StringIterator::FindNextNumber, this, &data, decimal, specialflags), specialflags);
 
 			// Check for nothing found //
 			if(data.Positions.X == -1){
@@ -205,7 +209,7 @@ namespace Leviathan{
 
 
 			// Iterate with our getting function //
-			StartIterating(boost::bind(&StringIterator::FindNextNormalCharacterString, this, &data, stopcaseflags, specialflags));
+			StartIterating(boost::bind(&StringIterator::FindNextNormalCharacterString, this, &data, stopcaseflags, specialflags), specialflags);
 
 			// create substring of the wanted part //
 			unique_ptr<wstring> resultstr;
@@ -236,7 +240,7 @@ namespace Leviathan{
 			IteratorAssignmentData data;
 
 			// Iterate with our getting function //
-			StartIterating(boost::bind(&StringIterator::FindUntilEquality, this, &data, stopcase, specialflags));
+			StartIterating(boost::bind(&StringIterator::FindUntilEquality, this, &data, stopcase, specialflags), specialflags);
 
 
 			// Check for validity //
@@ -313,9 +317,9 @@ namespace Leviathan{
 
 		//! \brief Skips until characters that are not whitespace are found
 		//! \see SkipCharacters
-		DLLEXPORT void inline SkipWhiteSpace(){
+		DLLEXPORT void inline SkipWhiteSpace(int specialflags = 0){
 
-			SkipCharacters(32, UNNORMALCHARACTER_TYPE_LOWCODES);
+			SkipCharacters(32, UNNORMALCHARACTER_TYPE_LOWCODES, specialflags);
 		}
 
 		//! \brief Skips until chartoskip doesn't match the current character
@@ -327,7 +331,7 @@ namespace Leviathan{
 			IteratorCharacterData stufftoskip(chartoskip);
 
 			// Iterate over the string skipping until hit something that doesn't need to be skipped //
-			StartIterating(boost::bind(&StringIterator::SkipSomething, this, &stufftoskip, additionalflag, specialflags));
+			StartIterating(boost::bind(&StringIterator::SkipSomething, this, &stufftoskip, additionalflag, specialflags), specialflags);
 		}
 
 		// Utility functions //
@@ -340,6 +344,9 @@ namespace Leviathan{
 		//! \brief Returns the current reading position
 		//! \note This might be expensiveish operation based on the underlying StringDataIterator class (mostly expensive for UTF8 strings)
 		DLLEXPORT size_t GetPosition();
+
+		//! \brief Returns the current line the processing is happening
+		DLLEXPORT size_t GetCurrentLine();
 
 		//! \brief Gets the character in the position current + forward
 		DLLEXPORT int GetCharacter(size_t forward = 0);
@@ -383,7 +390,7 @@ namespace Leviathan{
 			IteratorFindUntilData data;
 
 			// Iterate with our getting function //
-			StartIterating(boost::bind(&StringIterator::FindUntilSpecificCharacter, this, &data, character, specialflags));
+			StartIterating(boost::bind(&StringIterator::FindUntilSpecificCharacter, this, &data, character, specialflags), specialflags);
 
 #ifdef _DEBUG
 			if(DebugMode){
@@ -402,7 +409,8 @@ namespace Leviathan{
 		inline ITERATORCALLBACK_RETURNTYPE CheckActiveFlags();
 
 		//! \brief Loops over the string using functorun to handle continuing
-		DLLEXPORT void StartIterating(boost::function<ITERATORCALLBACK_RETURNTYPE()> functorun);
+		//! \param specialflagcopy Depending on set flags this can cause the iterator to treat line ends as if they were end of input
+		DLLEXPORT void StartIterating(boost::function<ITERATORCALLBACK_RETURNTYPE()> functorun, int specialflagcopy);
 
 
 		// ------------------------------------ //

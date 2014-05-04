@@ -28,6 +28,11 @@ namespace Leviathan{
 		//! \warning the vector will be wiped clean after creating new variable
 		DLLEXPORT NamedVariableList(const wstring &name, vector<VariableBlock*> values_willclear);
 		DLLEXPORT NamedVariableList(wstring &line, map<wstring, shared_ptr<VariableBlock>>* predefined = NULL) THROWS;
+		DLLEXPORT NamedVariableList(const wstring &name, const wstring &valuestr, map<wstring, shared_ptr<VariableBlock>>* predefined = NULL) THROWS;
+
+		//! \brief Helper function for constructing values
+		DLLEXPORT void ConstructValuesForObject(const wstring &variablestr, map<wstring, shared_ptr<VariableBlock>>* predefined) THROWS;
+
 		DLLEXPORT ~NamedVariableList();
 		// ------------------------------------ //
 		DLLEXPORT void SetValue(const VariableBlock &value1);

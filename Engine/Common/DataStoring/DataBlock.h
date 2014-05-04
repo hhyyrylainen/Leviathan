@@ -509,7 +509,7 @@ namespace Leviathan{
 		}
 
 		// constructor for creating this from std::wstring //
-		DLLEXPORT VariableBlock(std::wstring &valuetoparse, std::map<std::wstring, shared_ptr<VariableBlock>>* predefined = NULL) THROWS;
+		DLLEXPORT VariableBlock(const std::wstring &valuetoparse, std::map<std::wstring, shared_ptr<VariableBlock>>* predefined) THROWS;
 
 		// non template constructor //
 		DLLEXPORT VariableBlock(DataBlockAll* block){

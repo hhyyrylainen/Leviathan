@@ -6,23 +6,25 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "ObjectFiles/ObjectFileObject.h"
-#include "Common/DataStoring/DataBlock.h"
+#include "ObjectFile.h"
 
 namespace Leviathan{
 
+	//! \brief Static class for handling ObjectFiles
 	class ObjectFileProcessor{
 	public:
 		DLLEXPORT static void Initialize();
 		DLLEXPORT static void Release();
-		DLLEXPORT static std::vector<shared_ptr<ObjectFileObject>> ProcessObjectFile(const std::wstring &file, 
-			vector<shared_ptr<NamedVariableList>> &HeaderVars);
+
+		//! \brief Reads an ObjectFile to an in-memory data structure
+		DLLEXPORT static unique_ptr<ObjectFile> ProcessObjectFile(const std::wstring &file);
 
 
+		//! \brief Writes an ObjectFile's data structure to a file
+		//! \warning Using the process and this function will erase ALL comments, which is not optimal for files. It is recommended to only append
+		//! to an existing file to keep comments intact
+		DLLEXPORT static int WriteObjectFile(ObjectFile &data, const std::wstring &file);
 
-
-		DLLEXPORT static int WriteObjectFile(vector<shared_ptr<ObjectFileObject>> &objects, const std::wstring &file, 
-			std::vector<shared_ptr<NamedVariableList>> &headervars);
 
 		//! \brief Registers a new value alias for the processor
 		//! \warning Calling this while files are being parsed will cause undefined behavior
@@ -121,6 +123,12 @@ namespace Leviathan{
 		}
 
 	private:
+
+		//! \brief Handling function for NamedVariables
+		static bool TryToLoadNamedVariables(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding);
+
+
+
 
 		// private constructor to prevent instantiating //
 		ObjectFileProcessor();

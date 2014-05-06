@@ -62,10 +62,8 @@ DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(const wstring &nam
 	RegisteredValues[name] = shared_ptr<VariableBlock>(valuetokeep);
 }
 // ------------------ Processing function ------------------ //
-DLLEXPORT std::vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcessor::ProcessObjectFile(const std::wstring &file,
-	std::vector<shared_ptr<NamedVariableList>> &HeaderVars)
-{
-	std::vector<shared_ptr<ObjectFileObject>> returned;
+DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFile(const std::wstring &file){
+	
 
 	// read the file entirely //
 	std::string filecontents;
@@ -79,14 +77,14 @@ DLLEXPORT std::vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcess
 
 		Logger::Get()->Error(L"ObjectFileProcessor: ProcessObjectFile: file could not be read, exception:");
 		e.PrintToLog();
-		return returned;
+		return NULL;
 	}
 	
 	// Skip empty files //
 	if(filecontents.size() == 0){
 
 		Logger::Get()->Warning(L"ObjectFileProcessor: file is empty, "+file);
-		return returned;
+		return NULL;
 	}
 
 	// Skip the BOM if there is one //
@@ -97,7 +95,8 @@ DLLEXPORT std::vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcess
 	}
 
 
-
+	// Create the target object //
+	unique_ptr<ObjectFile> ofile(new ObjectFile());
 
 
 
@@ -279,56 +278,13 @@ DLLEXPORT std::vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcess
 			continue;
 		} else {
 			// It should be a named variable //
-			//itr.SetDebugMode(true);
-			
-			// This is often empty //
-			auto restofname = itr.GetUntilEqualityAssignment<string>(EQUALITYCHARACTER_TYPE_ALL, SPECIAL_ITERATOR_FILEHANDLING);
+			if(TryToLoadNamedVariables(file, itr, *ofile, *thingtype)){
 
-			// We need to skip whitespace //
-			itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
-
-			// Get the value //
-			auto valuestr = itr.GetUntilNextCharacterOrNothing<string>(';', SPECIAL_ITERATOR_FILEHANDLING);
-
-			if(valuestr){
-				// Try to construct a named variable //
-
-				// Put the name together //
-				string varname = *thingtype+ (restofname ? *restofname: string());
-
-				// Use the name and the variable string to try to create one //
-				shared_ptr<NamedVariableList> tmpval;
-
-				try{
-
-					wstring convname;
-					convname.reserve(varname.size());
-
-					utf8::utf8to16(varname.begin(), varname.end(), back_inserter(convname));
-
-					wstring convval;
-					convval.reserve(valuestr->size());
-
-					utf8::utf8to16(valuestr->begin(), valuestr->end(), back_inserter(convval));
-
-					tmpval = shared_ptr<NamedVariableList>(new NamedVariableList(convname, convval, &RegisteredValues));
-
-					// It surprisingly worked! //
-
-					// Add to the object //
-
-
-					// This was a valid definition //
-					continue;
-
-				} catch(const utf8::invalid_code_point &ec){
-					
-					DEBUG_BREAK;
-				} catch(const ExceptionInvalidArgument &e){
-
-					DEBUG_BREAK;
-				}
+				Logger::Get()->Error(L"ObjectFileProcessor: processing a NamedVariableList has failed");
+				succeeded = false;
+				break;
 			}
+
 		}
 
 		// It is something that cannot be handled //
@@ -347,25 +303,79 @@ DLLEXPORT std::vector<shared_ptr<ObjectFileObject>> Leviathan::ObjectFileProcess
 		// It failed //
 		Logger::Get()->Error(L"ObjectFileProcessor: could not parse file: "+file+L" parsing has ended on line: "+
 			Convert::ToWstring(itr.GetCurrentLine()));
-		return returned;
+		return NULL;
 	}
 
 	// Generate the template instantiations and it's done //
 
 
-	return returned;
+	return ofile;
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::ObjectFileProcessor::WriteObjectFile(std::vector<shared_ptr<ObjectFileObject>> &objects, const std::wstring &file, 
-	std::vector<shared_ptr<NamedVariableList>> &headervars)
-{
-	// The output string which will then be written to the file //
+bool Leviathan::ObjectFileProcessor::TryToLoadNamedVariables(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding){
+	// Try to load a named variable of format: "Variable = myvalue;" //
+
+	// Next thing after the preceeding is rest of the name until the '=' character //
+
+	// This is often empty //
+	auto restofname = itr.GetUntilEqualityAssignment<string>(EQUALITYCHARACTER_TYPE_ALL, SPECIAL_ITERATOR_FILEHANDLING);
+
+	// We need to skip whitespace //
+	itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+	// Get the value //
+	auto valuestr = itr.GetUntilNextCharacterOrNothing<string>(';', SPECIAL_ITERATOR_FILEHANDLING);
+
+	if(valuestr){
+		// Try to construct a named variable //
+
+		// Put the name together //
+		string varname = preceeding+ (restofname ? *restofname: string());
+
+		// Try to use the name and the variable string to try to create one named variable //
+
+		try{
+
+			wstring convname;
+			convname.reserve(varname.size());
+
+			utf8::utf8to16(varname.begin(), varname.end(), back_inserter(convname));
+
+			wstring convval;
+			convval.reserve(valuestr->size());
+
+			utf8::utf8to16(valuestr->begin(), valuestr->end(), back_inserter(convval));
+
+			shared_ptr<NamedVariableList> tmpval = shared_ptr<NamedVariableList>(new NamedVariableList(convname, convval, &RegisteredValues));
+
+			// It surprisingly worked! //
+
+			// Add to the object //
 
 
+			// This was a valid definition //
+			return true;
+
+		} catch(const utf8::invalid_code_point &ec){
+
+			Logger::Get()->Error(L"ObjectFileProcessor: invalid UTF8 sequence, file: "+file+L"("+
+				Convert::ToWstring(itr.GetCurrentLine())+L"):");
+			Logger::Get()->Write(L"\t> "+Convert::StringToWstring(ec.what()));
+			return false;
+		} catch(const ExceptionInvalidArgument &e){
+
+			Logger::Get()->Error(L"ObjectFileProcessor: invalid UTF8 sequence, file: "+file+L"("+
+				Convert::ToWstring(itr.GetCurrentLine())+L"):");
+			e.PrintToLog();
+			return false;
+		}
+	}
 
 
+	// Failed //
 	return false;
 }
+// ------------------------------------ //
 
 
 

@@ -488,7 +488,7 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wst
 #else
 		assert(std::numeric_limits<size_t>::max() >= rpos);
 #endif
-		resultreceiver.resize((UINT)rpos);
+		resultreceiver.resize(static_cast<size_t>(rpos));
 		// back to start //
 		reader.seekg(0, ios::beg);
 		// read the actual data //
@@ -523,7 +523,7 @@ DLLEXPORT void Leviathan::FileSystem::ReadFileEntirely(const string &file, strin
 #else
 		assert(std::numeric_limits<size_t>::max() >= rpos);
 #endif
-		resultreceiver.resize((UINT)rpos);
+		resultreceiver.resize(static_cast<size_t>(rpos));
 		// back to start //
 		reader.seekg(0, ios::beg);
 		// read the actual data //

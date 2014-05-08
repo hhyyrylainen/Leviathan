@@ -20,6 +20,17 @@ namespace Leviathan{
 		DLLEXPORT ~ObjectFile();
 
 
+		//! \brief Adds a NamedVariableList to this file
+		//! \return False when the variable is not added, only when the name is already used
+		DLLEXPORT bool AddNamedVariable(shared_ptr<NamedVariableList> var);
+
+		//! \brief Adds a NamedVariableList to this file
+		//! \note This is a shorthand for AddNamedVariable defined above
+		//! \warning The pointer given will be deleted by this
+		//! \see AddNamedVariable
+		DLLEXPORT bool AddNamedVariable(NamedVariableList* var);
+
+
 
 
 

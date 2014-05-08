@@ -127,6 +127,24 @@ namespace Leviathan{
 		//! \brief Handling function for NamedVariables
 		static bool TryToLoadNamedVariables(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding);
 
+		//! \brief Handling function for template definitions and instantiations
+		static bool TryToHandleTemplate(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding);
+
+		//! \brief Handling function for loading whole objects
+		static bool TryToLoadObject(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding);
+
+
+		// Object loading split into parts //
+		//! \brief Loading variable lists
+		static bool TryToLoadVariableList(const wstring &file, StringIterator &itr, ObjectFile &obj, size_t startline);
+
+
+		//! \brief Loading text blocks
+		static bool TryToLoadTextBlock(const wstring &file, StringIterator &itr, ObjectFile &obj, size_t startline);
+
+
+		//! \brief Loading script blocks
+		static bool TryToLoadScriptBlock(const wstring &file, StringIterator &itr, ObjectFile &obj, size_t startline);
 
 
 

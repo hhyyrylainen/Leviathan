@@ -5,11 +5,9 @@ template<GCollectName, GCollectEnabled> "PGCTemplate" o GuiCollection "GCollectN
     l params{
         Enabled = GCollectEnabled;
     }
-    s script{
-        body{
-            #include "DefaultCollectionScript.as";
-        @%};
-    }
+    s{
+        #include "DefaultCollectionScript.as";
+    @%};
 }
 
 

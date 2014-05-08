@@ -116,162 +116,23 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 
 		if(*thingtype == "template"){
 			// Either a template definition or a template instantiation //
+			
+			if(TryToHandleTemplate(file, itr, *ofile, *thingtype)){
 
-			// Get to the first character //
-			if(itr.GetCharacter(0) != '<'){
-
-				itr.GetUntilNextCharacterOrNothing<string>('<', SPECIAL_ITERATOR_FILEHANDLING);
-			}
-
-			// Move from the '<' to the actual content //
-			itr.MoveToNext();
-
-			// Now process the template arguments //
-			auto tmplarg = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
-				SPECIAL_ITERATOR_FILEHANDLING);
-
-			// Check where we are right now //
-			if(itr.GetCharacter() == ' '){
-				// Go somewhere proper //
-				itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
-			}
-
-			std::vector<string*> templateargs;
-
-			if(tmplarg && tmplarg->size()){
-				templateargs.push_back(tmplarg.release());
-			}
-
-			size_t startline = itr.GetCurrentLine();
-
-			while(itr.GetCharacter() == ','){
-
-				// More arguments //
-				tmplarg = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
-					SPECIAL_ITERATOR_FILEHANDLING);
-
-				if(tmplarg && tmplarg->size()){
-					templateargs.push_back(tmplarg.release());
-				}
-
-				// Potentially more //
-				itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
-
-				if(itr.IsOutOfBounds()){
-					// Failed //
-					Logger::Get()->Error(L"ObjectFile template has invalid argument list (specifically the one looking like \"template<arg1, arg2>\")"
-						L", started file: "+file+L"("+Convert::ToWstring(startline)+L")");
-					succeeded = false;
-					break;
-				}
-			}
-
-			// We should now be at the '>' character //
-			if(itr.GetCharacter() != '>'){
-
-				DEBUG_BREAK;
-			}
-
-			// Move over it //
-			itr.MoveToNext();
-
-			itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
-
-			// Now should be the name //
-			auto name = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
-				SPECIAL_ITERATOR_FILEHANDLING);
-
-			if(!name || name->size() < 3){
-
-				Logger::Get()->Error(L"ObjectFile template has too short name (has to be a minimum of 3 characters), file: "+file+L"("
-					+Convert::ToWstring(itr.GetCurrentLine())+L")");
+				Logger::Get()->Error(L"ObjectFileProcessor: processing a template definitions/instantiation has failed");
 				succeeded = false;
 				break;
 			}
-
-			if(!templateargs.size()){
-				// This is a template instantiation //
-
-				DEBUG_BREAK;
-				continue;
-			}
-
-			// Handle the template definition //
-			if(itr.GetCharacter() != ':'){
-
-				Logger::Get()->Error(L"ObjectFile template definition has no ':' after name (template and following object must be separated), "
-					L"file: "+file+L"("	+Convert::ToWstring(itr.GetCurrentLine())+L")");
-				succeeded = false;
-				break;
-			}
-
-			// Now there should be an object definition //
-			DEBUG_BREAK;
 			
 			continue;
 		} else if(*thingtype == "o"){
 			// Process an object //
+			if(TryToLoadObject(file, itr, *ofile, *thingtype)){
 
-			auto typesname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
-				SPECIAL_ITERATOR_FILEHANDLING);
-
-			if(!typesname || !typesname->size()){
-
-				Logger::Get()->Error(L"ObjectFile object definition has no typename (or anything valid, for that matter, after 'o'), file: "+file+L"("
-					+Convert::ToWstring(itr.GetCurrentLine())+L")");
+				Logger::Get()->Error(L"ObjectFileProcessor: processing an object has failed");
 				succeeded = false;
 				break;
 			}
-
-			itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
-			
-			size_t startline = itr.GetCurrentLine();
-
-			std::vector<string*> prefixesvec;
-
-			// Now there should be variable number of prefixes followed by a name //
-			while(itr.GetCharacter() != '"'){
-
-				auto oprefix = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
-					SPECIAL_ITERATOR_FILEHANDLING);
-
-				if(oprefix && oprefix->size()){
-					prefixesvec.push_back(oprefix.release());
-				}
-
-				if(itr.IsOutOfBounds()){
-					// Failed //
-					Logger::Get()->Error(L"ObjectFile object doesn't have a name, because prefixes are messed up"
-						L"(expected quoted string like this: \"o Type Prefix \'MyName\'\")"
-						L", started file: "+file+L"("+Convert::ToWstring(startline)+L")");
-					succeeded = false;
-					break;
-				}
-			}
-
-			// Now try to get the name //
-			auto oname = itr.GetStringInQuotes<string>(QUOTETYPE_BOTH, SPECIAL_ITERATOR_FILEHANDLING);
-
-			if(!oname || !oname->size()){
-
-				Logger::Get()->Error(L"ObjectFile object doesn't have a name (expected quoted string like this: \"o Type Prefix \'MyName\'\")"
-					L", started file: "+file+L"("+Convert::ToWstring(startline)+L")");
-				succeeded = false;
-				break;
-			}
-
-			// There should now be a { //
-			itr.GetUntilNextCharacterOrNothing<string>('{', SPECIAL_ITERATOR_FILEHANDLING);
-
-			if(itr.GetCharacter() != '{'){
-				// There is a missing brace //
-
-				Logger::Get()->Error(L"ObjectFile object is missing a '{' after it's name, file: "+file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
-				succeeded = false;
-				break;
-			}
-
-			// Now there should be the object contents //
 
 
 
@@ -351,7 +212,12 @@ bool Leviathan::ObjectFileProcessor::TryToLoadNamedVariables(const wstring &file
 			// It surprisingly worked! //
 
 			// Add to the object //
+			if(!obj.AddNamedVariable(tmpval)){
 
+				Logger::Get()->Error(L"ObjectFileProcessor: variable name already in use, file: "+file+L"("+
+					Convert::ToWstring(itr.GetCurrentLine())+L"):");
+				return false;
+			}
 
 			// This was a valid definition //
 			return true;
@@ -364,7 +230,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadNamedVariables(const wstring &file
 			return false;
 		} catch(const ExceptionInvalidArgument &e){
 
-			Logger::Get()->Error(L"ObjectFileProcessor: invalid UTF8 sequence, file: "+file+L"("+
+			Logger::Get()->Error(L"ObjectFileProcessor: invalid named variable, file: "+file+L"("+
 				Convert::ToWstring(itr.GetCurrentLine())+L"):");
 			e.PrintToLog();
 			return false;
@@ -376,6 +242,394 @@ bool Leviathan::ObjectFileProcessor::TryToLoadNamedVariables(const wstring &file
 	return false;
 }
 // ------------------------------------ //
+bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding){
+	// Get to the first character //
+	if(itr.GetCharacter(0) != '<'){
+
+		itr.GetUntilNextCharacterOrNothing<string>('<', SPECIAL_ITERATOR_FILEHANDLING);
+	}
+
+	// Move from the '<' to the actual content //
+	itr.MoveToNext();
+
+	// Now process the template arguments //
+	auto tmplarg = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+		SPECIAL_ITERATOR_FILEHANDLING);
+
+	// Check where we are right now //
+	if(itr.GetCharacter() == ' '){
+		// Go somewhere proper //
+		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+	}
+
+	std::vector<string*> templateargs;
+
+	if(tmplarg && tmplarg->size()){
+		templateargs.push_back(tmplarg.release());
+	}
+
+	size_t startline = itr.GetCurrentLine();
+
+	while(itr.GetCharacter() == ','){
+
+		// More arguments //
+		tmplarg = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+			SPECIAL_ITERATOR_FILEHANDLING);
+
+		if(tmplarg && tmplarg->size()){
+			templateargs.push_back(tmplarg.release());
+		}
+
+		// Potentially more //
+		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+		if(itr.IsOutOfBounds()){
+			// Failed //
+			Logger::Get()->Error(L"ObjectFile template has invalid argument list (specifically the one looking like \"template<arg1, arg2>\")"
+				L", started file: "+file+L"("+Convert::ToWstring(startline)+L")");
+			return false;
+		}
+	}
+
+	// We should now be at the '>' character //
+	if(itr.GetCharacter() != '>'){
+
+		DEBUG_BREAK;
+	}
+
+	// Move over it //
+	itr.MoveToNext();
+
+	itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+	// Now should be the name //
+	auto name = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+		SPECIAL_ITERATOR_FILEHANDLING);
+
+	if(!name || name->size() < 3){
+
+		Logger::Get()->Error(L"ObjectFile template has too short name (has to be a minimum of 3 characters), file: "+file+L"("
+			+Convert::ToWstring(itr.GetCurrentLine())+L")");
+		return false;
+	}
+
+	if(!templateargs.size()){
+		// This is a template instantiation //
+		
+		DEBUG_BREAK;
+		return true;
+	}
+
+	// Handle the template definition //
+	if(itr.GetCharacter() != ':'){
+
+		Logger::Get()->Error(L"ObjectFile template definition has no ':' after name (template and following object must be separated), "
+			L"file: "+file+L"("	+Convert::ToWstring(itr.GetCurrentLine())+L")");
+		return false;
+	}
+
+	// Now there should be an object definition //
+	DEBUG_BREAK;
+
+	return true;
+}
+// ------------------------------------ //
+bool Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding){
+	auto typesname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+		SPECIAL_ITERATOR_FILEHANDLING);
+
+	if(!typesname || !typesname->size()){
+
+		Logger::Get()->Error(L"ObjectFile object definition has no typename (or anything valid, for that matter, after 'o'), file: "+file+L"("
+			+Convert::ToWstring(itr.GetCurrentLine())+L")");
+		return false;
+	}
+
+	itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+	size_t startline = itr.GetCurrentLine();
+
+	std::vector<string*> prefixesvec;
+
+	// Now there should be variable number of prefixes followed by a name //
+	while(itr.GetCharacter() != '"'){
+
+		auto oprefix = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+			SPECIAL_ITERATOR_FILEHANDLING);
+
+		if(oprefix && oprefix->size()){
+			prefixesvec.push_back(oprefix.release());
+		}
+
+		if(itr.IsOutOfBounds()){
+			// Failed //
+			Logger::Get()->Error(L"ObjectFile object doesn't have a name, because prefixes are messed up"
+				L"(expected quoted string like this: \"o Type Prefix \'MyName\'\")"
+				L", started file: "+file+L"("+Convert::ToWstring(startline)+L")");
+			SAFE_DELETE_VECTOR(prefixesvec);
+			return false;
+		}
+	}
+
+	// Now try to get the name //
+	auto oname = itr.GetStringInQuotes<string>(QUOTETYPE_BOTH, SPECIAL_ITERATOR_FILEHANDLING);
+
+	if(!oname || !oname->size()){
+
+		Logger::Get()->Error(L"ObjectFile object doesn't have a name (expected quoted string like this: \"o Type Prefix \'MyName\'\")"
+			L", started file: "+file+L"("+Convert::ToWstring(startline)+L")");
+		SAFE_DELETE_VECTOR(prefixesvec);
+		return false;
+	}
+
+	// There should now be a { //
+	itr.GetUntilNextCharacterOrNothing<string>('{', SPECIAL_ITERATOR_FILEHANDLING);
+
+	if(itr.GetCharacter() != '{'){
+		// There is a missing brace //
+
+		Logger::Get()->Error(L"ObjectFile object is missing a '{' after it's name, file: "+file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
+		SAFE_DELETE_VECTOR(prefixesvec);
+		return false;
+	}
+
+	// Create a new ObjectFileObject to hold our contents //
+
+
+
+	// Now there should be the object contents //
+	itr.MoveToNext();
+
+	while(itr.GetCharacter() != '}'){
+		// First skip whitespace //
+		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+		// Then check the character //
+		int curcharacter = itr.GetCharacter();
+		size_t ourline = itr.GetCurrentLine();
+
+		switch(curcharacter){
+		case 'l':
+			{
+				if(!TryToLoadVariableList(file, itr, obj, startline)){
+
+					Logger::Get()->Error(L"ObjectFile object contains an invalid variable list, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
+					SAFE_DELETE_VECTOR(prefixesvec);
+					return false;
+				}
+			}
+			break;
+		case 't':
+			{
+				if(!TryToLoadTextBlock(file, itr, obj, startline)){
+
+					Logger::Get()->Error(L"ObjectFile object contains an invalid text block, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
+					SAFE_DELETE_VECTOR(prefixesvec);
+					return false;
+				}
+			}
+			break;
+		case 's':
+			{
+				if(!TryToLoadScriptBlock(file, itr, obj, startline)){
+
+					Logger::Get()->Error(L"ObjectFile object contains an invalid script block, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
+					SAFE_DELETE_VECTOR(prefixesvec);
+					return false;
+				}
+			}
+			break;
+		case '}':
+			{
+				// The object ended properly //
+
+				// Add the object to the file's object //
+				DEBUG_BREAK;
+
+				return true;
+			}
+			break;
+		}
+
+	}
+
+	// It didn't end properly //
+	Logger::Get()->Error(L"ObjectFile object is missing a closing '}' after it's contents, file: "+file+L"("+Convert::ToWstring(startline)+L")");
+	SAFE_DELETE_VECTOR(prefixesvec);
+	return false;
+}
+// ------------------------------------ //
+bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, StringIterator &itr, ObjectFile &obj, size_t startline){
+	// First thing is the name //
+	auto ourname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+		SPECIAL_ITERATOR_FILEHANDLING);
+
+	// Check is it valid //
+	if(!ourname || ourname->size() == 0){
+
+		Logger::Get()->Error(L"ObjectFile variable list has an invalid name, file: "+file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
+		return false;
+	}
+
+	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
+
+	// There should be a '{' character here //
+	if(itr.GetCharacter() != '{'){
+		// There is a missing brace //
+
+		Logger::Get()->Error(L"ObjectFile variable list is missing '{' after it's name, file: "+file+L"("+
+			Convert::ToWstring(itr.GetCurrentLine())+L")");
+		return false;
+	}
+
+	// Still on the first line //
+	size_t ourstartline = itr.GetCurrentLine();
+
+	itr.MoveToNext();
+
+	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
+
+	// Create us //
+
+
+	// Now we should get named variables until a } //
+	while(itr.GetCharacter() != '}'){
+		// First skip whitespace //
+		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+		if(itr.GetCharacter() == '}'){
+			// Valid //
+
+			// Add us to the object //
+
+			return true;
+		}
+
+		// Add a variable to us //
+
+		//TryToLoadNamedVariables
+	}
+
+
+	Logger::Get()->Error(L"ObjectFile variable list is missing the closing '}', file: "+file+L"("+Convert::ToWstring(ourstartline)+L")");
+	// It failed //
+	return false;
+}
+
+bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const wstring &file, StringIterator &itr, ObjectFile &obj, size_t startline){
+	// First thing is the name //
+	auto ourname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+		SPECIAL_ITERATOR_FILEHANDLING);
+
+	// Check is it valid //
+	if(!ourname || ourname->size() == 0){
+
+		Logger::Get()->Error(L"ObjectFile variable list has an invalid name, file: "+file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
+		return false;
+	}
+
+	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
+
+	// There should be a '{' character here //
+	if(itr.GetCharacter() != '{'){
+		// There is a missing brace //
+
+		Logger::Get()->Error(L"ObjectFile variable list is missing '{' after it's name, file: "+file+L"("+
+			Convert::ToWstring(itr.GetCurrentLine())+L")");
+		return false;
+	}
+
+	// Still on the first line //
+	size_t ourstartline = itr.GetCurrentLine();
+
+	itr.MoveToNext();
+
+	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
+
+	// Create us //
+
+
+	// Now we should get named variables until a } //
+	while(itr.GetCharacter() != '}'){
+		// First skip whitespace //
+		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+		if(itr.GetCharacter() == '}'){
+			// Valid //
+
+			// Add us to the object //
+
+			return true;
+		}
+
+		// Add a variable to us //
+
+		//TryToLoadNamedVariables
+	}
+
+
+	Logger::Get()->Error(L"ObjectFile variable list is missing the closing '}', file: "+file+L"("+Convert::ToWstring(ourstartline)+L")");
+	// It failed //
+	return false;
+}
+
+bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, StringIterator &itr, ObjectFile &obj, size_t startline){
+	// First thing is the name //
+	auto ourname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+		SPECIAL_ITERATOR_FILEHANDLING);
+
+	// Check is it valid //
+	if(!ourname || ourname->size() == 0){
+		// Auto generate our name //
+
+
+	}
+
+	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
+
+	// There should be a '{' character here //
+	if(itr.GetCharacter() != '{'){
+		// There is a missing brace //
+
+		Logger::Get()->Error(L"ObjectFile script block is missing '{' after it's name, file: "+file+L"("+
+			Convert::ToWstring(itr.GetCurrentLine())+L")");
+		return false;
+	}
+
+	// Still on the first line //
+	size_t ourstartline = itr.GetCurrentLine();
+
+	itr.MoveToNext();
+
+	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
+
+	// Create us //
+
+
+	// Now we should get named variables until a } //
+	while(itr.GetCharacter() != '}'){
+		// First skip whitespace //
+		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+		if(itr.GetCharacter() == '}'){
+			// Valid //
+
+			// Add us to the object //
+
+			return true;
+		}
+
+		// Add a variable to us //
+
+		//TryToLoadNamedVariables
+	}
+
+
+	Logger::Get()->Error(L"ObjectFile variable list is missing the closing '}', file: "+file+L"("+Convert::ToWstring(ourstartline)+L")");
+	// It failed //
+	return false;
+}
+
 
 
 

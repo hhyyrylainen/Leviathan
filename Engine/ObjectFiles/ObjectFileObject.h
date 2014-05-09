@@ -32,6 +32,10 @@ namespace Leviathan{
 		DLLEXPORT virtual bool AddTextBlock(shared_ptr<ObjectFileTextBlock> tblock) = 0;
 
 
+		//! \brief Add a script block to this object
+		//! \note Only the last set ScriptScript will remain
+		DLLEXPORT virtual void AddScriptScript(shared_ptr<ScriptScript> script) = 0;
+
 
 	protected:
 

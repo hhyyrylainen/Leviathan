@@ -268,6 +268,37 @@ namespace Leviathan{
 			return GetSubstringFromIndexes<RStrType>(GetPosition(), GetLastValidCharIndex());
 		}
 
+		//! \brief Gets all characters until a line end
+		//!
+		//! This function will read until a new line character and end after it
+		//! \return The string found or NULL
+		template<class RStrType>
+		DLLEXPORT unique_ptr<RStrType> GetUntilLineEnd(){
+
+			// Setup the result object //
+			IteratorPositionData data;
+
+			// Iterate with our getting function //
+			StartIterating(boost::bind(&StringIterator::FindUntilNewLine, this, &data), 0);
+
+
+			// Check for validity //
+			if(data.Positions.X == -1){
+				// Nothing found //
+				return NULL;
+			}
+
+			if(data.Positions.Y == -1){
+				// Set to end of string //
+				data.Positions.Y = GetLastValidCharIndex();
+			}
+
+			// Return the wanted part //
+			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+		}
+
+
+
 		//! \brief Gets characters until a character or nothing if the specified character is not found
 		//!
 		//! This function will read until charactertolookfor and return the string without charactertolookfor, or if not found nothing
@@ -309,6 +340,36 @@ namespace Leviathan{
 			if(!data.FoundEnd){
 
 				return GetSubstringFromIndexes<RStrType>(data.Positions.X, GetLastValidCharIndex());
+			}
+
+			// Return the wanted part //
+			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+		}
+
+		//! \brief Gets all characters until a sequence is matched
+		//! \return The string found or NULL
+		//! \bug Finding until an UTF-8 sequence doesn't work, the findstr parameter should be a StringDataIterator for it to work
+		template<class RStrType>
+		DLLEXPORT unique_ptr<RStrType> GetUntilCharacterSequence(const RStrType &findstr, int specialflags = 0){
+
+			// Setup the result object //
+			IteratorUntilSequenceData<RStrType> data;
+
+			// Iterate with our getting function //
+			StartIterating(boost::bind(&StringIterator::FindUntilSequence<RStrType>, this, &data, specialflags), specialflags);
+
+
+			// Check for validity //
+			if(data.Positions.X == -1){
+				// Nothing found //
+				return NULL;
+			}
+
+			// This only happens when the string ends with a partial match //
+			// Example: look for "this", string is like this: my super nice th
+			if(data.Positions.Y == -1){
+				// Set to end of string //
+				data.Positions.Y = GetLastValidCharIndex();
 			}
 
 			// Return the wanted part //
@@ -444,6 +505,70 @@ namespace Leviathan{
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilEquality(IteratorAssignmentData* data, EQUALITYCHARACTER equality, int specialflags);
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE SkipSomething(IteratorCharacterData* data, int additionalskip, int specialflags);
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilSpecificCharacter(IteratorFindUntilData* data, int character, int specialflags);
+		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilNewLine(IteratorPositionData* data);
+
+		template<class AcceptStr>
+		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilSequence(IteratorUntilSequenceData<AcceptStr>* data, int specialflags){
+
+			// First check if this is a line end //
+			int curcharacter = GetCharacter();
+
+			if(curcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+
+				// Set the end to one before this, if found any //
+				if(data->Positions.X != -1){
+
+					data->Positions.Y = GetPosition()-1;
+				}
+
+				return ITERATORCALLBACK_RETURNTYPE_STOP;
+			}
+
+			// We may not be inside strings nor comments for checking //
+			if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING) && (!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT) || 
+				!(specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING)))
+			{
+				// Check do we match the current position //
+				if(curcharacter == data->StringToMatch[data->CurMatchedIndex]){
+
+					// Found a matching character //
+
+					// Move to next match position and don't yet verify if this is a valid character //
+					++data->CurMatchedIndex;
+
+					if(data->CurMatchedIndex >= data->StringToMatch.size()){
+
+						// End found //
+						return ITERATORCALLBACK_RETURNTYPE_STOP;
+					}
+
+				} else {
+
+					// Go back to beginning of matching //
+					data->CurMatchedIndex = 0;
+				}
+
+			} else {
+
+				// Go back to beginning of matching //
+				data->CurMatchedIndex = 0;
+			}
+
+
+			// All is fine //
+			if(data->Positions.X == -1){
+
+				data->Positions.X = GetPosition();
+				data->Positions.Y = data->Positions.X;
+			} else {
+
+				// This might be poisonous to performance, but this gets the job done //
+				data->Positions.Y = GetPosition();
+			}
+
+			return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+		}
+
 
 	};
 

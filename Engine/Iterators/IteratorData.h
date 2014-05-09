@@ -63,5 +63,17 @@ namespace Leviathan{
 		int CharacterToUse;
 	};
 
+	template<class StrType>
+	class IteratorUntilSequenceData : public Object{
+	public:
+		IteratorUntilSequenceData(const StrType &finduntil) : StringToMatch(finduntil), Positions(-1, -1), EndFound(false){
+		}
+
+		StrType StringToMatch;
+		size_t CurMatchedIndex;
+		Int2 Positions;
+		bool EndFound;
+	};
+
 }
 #endif

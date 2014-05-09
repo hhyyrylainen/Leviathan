@@ -1014,3 +1014,49 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 	// haven't found anything, we'll need to find something //
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
+
+DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilNewLine(IteratorPositionData* data){
+	// Continue if the current character is a new line character //
+	int curcharacter = GetCharacter();
+
+	bool winmulti = false;
+
+	if(curcharacter == '\r' && GetCharacter(1) == '\n')
+		winmulti = true;
+
+	// All line separator characters should be here //
+	if(curcharacter == '\n' || winmulti || curcharacter == 0x0085 || curcharacter == 0x2028 || curcharacter == 0x2029){
+
+		size_t useendpos = GetPosition()-1;
+
+		// This is a new line character //
+		if(winmulti){
+			// Two characters have to be skipped \r\n //
+			MoveToNext();
+			MoveToNext();
+
+		} else {
+			// Move out of the newline character //
+			MoveToNext();
+		}
+
+
+		// End if start is found //
+		if(data->Positions.X != -1){
+
+			// End before this character //
+			data->Positions.Y = useendpos;
+			return ITERATORCALLBACK_RETURNTYPE_STOP;
+		}
+	}
+
+
+	// Set position //
+	if(data->Positions.X != -1){
+
+		// End before this character //
+		data->Positions.X = GetPosition;
+	}
+
+	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+}

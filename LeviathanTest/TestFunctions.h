@@ -1053,6 +1053,53 @@ bool TestStringIterator(const int &tests){
 		TESTFAIL;
 	}
 
+	// Getting until line end //
+	itr.ReInit(L"This is my line \r that has some things\r\n that are cut off");
+
+	results = itr.GetUntilLineEnd<wstring>();
+
+	if(!results || *results != L"This is my line \r that has some things"){
+		TESTFAIL;
+	}
+
+	itr.ReInit(L"This is another line\nwith the right separator\nlast thing...");
+
+	results = itr.GetUntilLineEnd<wstring>();
+
+	if(!results || *results != L"This is another line"){
+		TESTFAIL;
+	}
+
+	results = itr.GetUntilLineEnd<wstring>();
+
+	if(!results || *results != L"with the right separator"){
+		TESTFAIL;
+	}
+
+	results = itr.GetUntilLineEnd<wstring>();
+
+	if(!results || *results != L"last thing..."){
+		TESTFAIL;
+	}
+
+	// Test until string handling //
+	itr.ReInit(L"Get until ('bird') the word bird to remove junkwords");
+
+	results = itr.GetUntilCharacterSequence<wstring>(L"bird");
+
+	if(!results || *results != L"Get until ('bird') the word "){
+		TESTFAIL;
+	}
+
+	itr.MoveToNext();
+
+	results = itr.GetUntilCharacterSequence<wstring>(L"word");
+
+	if(!results || *results != L" to remove junk"){
+		TESTFAIL;
+	}
+
+
 	// Test UTF8 string handling //
 
 	std::vector<int> unicodeholder = boost::assign::list_of(0x00E4)('_')(0x0503)(0x04E8)(0x0A06)(0x1304)(0xAC93)(0x299D);

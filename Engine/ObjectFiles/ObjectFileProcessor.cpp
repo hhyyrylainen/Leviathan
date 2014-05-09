@@ -593,10 +593,10 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const wstring &file, Str
 		}
 
 		// Read a single line //
-
+		auto linething = itr.GetUntilLineEnd<string>();
 
 		// Add it to us //
-		ourobj->AddTextLine();
+		ourobj->AddTextLine(*linething);
 	}
 
 
@@ -628,38 +628,48 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, S
 		return false;
 	}
 
-	// Still on the first line //
+	// Move to the next line //
+	itr.GetUntilLineEnd<string>();
+
+	// This is the line the script block starts //
 	size_t ourstartline = itr.GetCurrentLine();
 
-	itr.MoveToNext();
+	// Get until the ending sequence //
+	auto scriptdata = itr.GetUntilCharacterSequence<string>("@%};", SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
-	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
+	if(!scriptdata){
 
-	// Create us //
+		Logger::Get()->Error(L"ObjectFile script block is missing the source code, file: "+file+L"("+
+			Convert::ToWstring(ourstartline)+L")");
+		return false;
+	}
 
+	// Check was it terminated properly, the last character processed should be ';' //
+	if(itr.GetCharacter() != ';'){
 
-	// Now we should get named variables until a } //
-	while(itr.GetCharacter() != '}'){
-		// First skip whitespace //
-		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
-
-		if(itr.GetCharacter() == '}'){
-			// Valid //
-
-			// Add us to the object //
-
-			return true;
-		}
-
-		// Add a variable to us //
-
-		//TryToLoadNamedVariables
+		Logger::Get()->Error(L"ObjectFile script block is missing the ending sequence (\"@%};\"), file: "+file+L"("+
+			Convert::ToWstring(ourstartline)+L")");
+		return false;
 	}
 
 
-	Logger::Get()->Error(L"ObjectFile variable list is missing the closing '}', file: "+file+L"("+Convert::ToWstring(ourstartline)+L")");
-	// It failed //
-	return false;
+	// Create us //
+	shared_ptr<ScriptScript> ourobj = make_shared<ScriptScript>(ScriptInterface::Get()->GetExecutor()->CreateNewModule(*ourname, file+L"("+
+		Convert::ToWstring(ourstartline)+L")"));
+	
+	// Add the source to the script //
+	auto ourmod = ourobj->GetModule();
+	
+
+	ourmod->GetBuilder().AddSectionFromMemory(Convert::WstringToString(file), scriptdata->c_str(), ourstartline);
+	ourmod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
+
+
+	// Add to the object //
+	obj.AddScriptScript(ourobj);
+
+
+	return true;
 }
 
 

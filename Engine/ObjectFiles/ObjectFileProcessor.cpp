@@ -64,8 +64,7 @@ DLLEXPORT  void Leviathan::ObjectFileProcessor::RegisterValue(const wstring &nam
 // ------------------ Processing function ------------------ //
 DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFile(const std::wstring &file){
 	
-
-	// read the file entirely //
+	// First read the file entirely //
 	std::string filecontents;
 
 	std::string fileansi = Convert::WstringToString(file);
@@ -139,11 +138,21 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 			continue;
 		} else {
 			// It should be a named variable //
-			if(TryToLoadNamedVariables(file, itr, *ofile, *thingtype)){
+
+			auto ptr = TryToLoadNamedVariables(file, itr, *ofile, *thingtype);
+			if(!ptr){
 
 				Logger::Get()->Error(L"ObjectFileProcessor: processing a NamedVariableList has failed");
 				succeeded = false;
 				break;
+			}
+
+			// Add to the object //
+			if(!ofile->AddNamedVariable(ptr)){
+
+				Logger::Get()->Error(L"ObjectFileProcessor: variable name already in use, file: "+file+L"("+
+					Convert::ToWstring(itr.GetCurrentLine())+L"):");
+				return false;
 			}
 
 		}
@@ -173,7 +182,9 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 	return ofile;
 }
 // ------------------------------------ //
-bool Leviathan::ObjectFileProcessor::TryToLoadNamedVariables(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding){
+shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVariables(const wstring &file, StringIterator &itr, ObjectFile &obj, 
+	const string &preceeding)
+{
 	// Try to load a named variable of format: "Variable = myvalue;" //
 
 	// Next thing after the preceeding is rest of the name until the '=' character //
@@ -207,39 +218,29 @@ bool Leviathan::ObjectFileProcessor::TryToLoadNamedVariables(const wstring &file
 
 			utf8::utf8to16(valuestr->begin(), valuestr->end(), back_inserter(convval));
 
-			shared_ptr<NamedVariableList> tmpval = shared_ptr<NamedVariableList>(new NamedVariableList(convname, convval, &RegisteredValues));
-
 			// It surprisingly worked! //
 
-			// Add to the object //
-			if(!obj.AddNamedVariable(tmpval)){
-
-				Logger::Get()->Error(L"ObjectFileProcessor: variable name already in use, file: "+file+L"("+
-					Convert::ToWstring(itr.GetCurrentLine())+L"):");
-				return false;
-			}
-
 			// This was a valid definition //
-			return true;
+			return make_shared<NamedVariableList>(convname, convval, &RegisteredValues);
 
 		} catch(const utf8::invalid_code_point &ec){
 
 			Logger::Get()->Error(L"ObjectFileProcessor: invalid UTF8 sequence, file: "+file+L"("+
 				Convert::ToWstring(itr.GetCurrentLine())+L"):");
 			Logger::Get()->Write(L"\t> "+Convert::StringToWstring(ec.what()));
-			return false;
+			return NULL;
 		} catch(const ExceptionInvalidArgument &e){
 
 			Logger::Get()->Error(L"ObjectFileProcessor: invalid named variable, file: "+file+L"("+
 				Convert::ToWstring(itr.GetCurrentLine())+L"):");
 			e.PrintToLog();
-			return false;
+			return NULL;
 		}
 	}
 
 
 	// Failed //
-	return false;
+	return NULL;
 }
 // ------------------------------------ //
 bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding){
@@ -334,7 +335,9 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 	return true;
 }
 // ------------------------------------ //
-bool Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding){
+shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, StringIterator &itr, ObjectFile &obj, 
+	const string &preceeding)
+{
 	auto typesname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
 		SPECIAL_ITERATOR_FILEHANDLING);
 
@@ -342,7 +345,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, String
 
 		Logger::Get()->Error(L"ObjectFile object definition has no typename (or anything valid, for that matter, after 'o'), file: "+file+L"("
 			+Convert::ToWstring(itr.GetCurrentLine())+L")");
-		return false;
+		return NULL;
 	}
 
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
@@ -367,7 +370,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, String
 				L"(expected quoted string like this: \"o Type Prefix \'MyName\'\")"
 				L", started file: "+file+L"("+Convert::ToWstring(startline)+L")");
 			SAFE_DELETE_VECTOR(prefixesvec);
-			return false;
+			return NULL;
 		}
 	}
 
@@ -379,7 +382,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, String
 		Logger::Get()->Error(L"ObjectFile object doesn't have a name (expected quoted string like this: \"o Type Prefix \'MyName\'\")"
 			L", started file: "+file+L"("+Convert::ToWstring(startline)+L")");
 		SAFE_DELETE_VECTOR(prefixesvec);
-		return false;
+		return NULL;
 	}
 
 	// There should now be a { //
@@ -390,11 +393,14 @@ bool Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, String
 
 		Logger::Get()->Error(L"ObjectFile object is missing a '{' after it's name, file: "+file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
 		SAFE_DELETE_VECTOR(prefixesvec);
-		return false;
+		return NULL;
 	}
 
 	// Create a new ObjectFileObject to hold our contents //
+	shared_ptr<ObjectFileObject> ourobj = make_shared<ObjectFileObjectProper>(*oname, *typesname, prefixesvec);
 
+	// These are now managed by the object //
+	prefixesvec.clear();
 
 
 	// Now there should be the object contents //
@@ -411,7 +417,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, String
 		switch(curcharacter){
 		case 'l':
 			{
-				if(!TryToLoadVariableList(file, itr, obj, startline)){
+				if(!TryToLoadVariableList(file, itr, *ourobj, startline)){
 
 					Logger::Get()->Error(L"ObjectFile object contains an invalid variable list, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
 					SAFE_DELETE_VECTOR(prefixesvec);
@@ -421,7 +427,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, String
 			break;
 		case 't':
 			{
-				if(!TryToLoadTextBlock(file, itr, obj, startline)){
+				if(!TryToLoadTextBlock(file, itr, *ourobj, startline)){
 
 					Logger::Get()->Error(L"ObjectFile object contains an invalid text block, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
 					SAFE_DELETE_VECTOR(prefixesvec);
@@ -431,7 +437,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, String
 			break;
 		case 's':
 			{
-				if(!TryToLoadScriptBlock(file, itr, obj, startline)){
+				if(!TryToLoadScriptBlock(file, itr, *ourobj, startline)){
 
 					Logger::Get()->Error(L"ObjectFile object contains an invalid script block, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
 					SAFE_DELETE_VECTOR(prefixesvec);
@@ -444,9 +450,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, String
 				// The object ended properly //
 
 				// Add the object to the file's object //
-				DEBUG_BREAK;
-
-				return true;
+				return ourobj;
 			}
 			break;
 		}
@@ -456,10 +460,10 @@ bool Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, String
 	// It didn't end properly //
 	Logger::Get()->Error(L"ObjectFile object is missing a closing '}' after it's contents, file: "+file+L"("+Convert::ToWstring(startline)+L")");
 	SAFE_DELETE_VECTOR(prefixesvec);
-	return false;
+	return NULL;
 }
 // ------------------------------------ //
-bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, StringIterator &itr, ObjectFile &obj, size_t startline){
+bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, StringIterator &itr, ObjectFileObject &obj, size_t startline){
 	// First thing is the name //
 	auto ourname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
 		SPECIAL_ITERATOR_FILEHANDLING);
@@ -490,6 +494,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, 
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
 	// Create us //
+	shared_ptr<ObjectFileList> ourobj = make_shared<ObjectFileListProper>(*ourname);
 
 
 	// Now we should get named variables until a } //
@@ -501,13 +506,32 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, 
 			// Valid //
 
 			// Add us to the object //
+			if(!obj.AddVariableList(ourobj)){
 
+				Logger::Get()->Error(L"ObjectFile variable list has conflicting name inside it's object, file: "+file+L"("+
+					Convert::ToWstring(ourstartline)+L")");
+				return false;
+			}
 			return true;
 		}
 
-		// Add a variable to us //
+		// Try to load a named variable //
+		auto loadvar = TryToLoadNamedVariables(file, itr, obj, "");
 
-		//TryToLoadNamedVariables
+		if(!loadvar){
+
+			Logger::Get()->Error(L"ObjectFile variable list has an invalid variable, file: "+file+L"("+
+				Convert::ToWstring(itr.GetCurrentLine())+L")");
+			return false;
+		}
+
+		// Add a variable to us //
+		if(!ourobj->AddVariable(loadvar)){
+
+			Logger::Get()->Error(L"ObjectFile variable list has conflicting name inside it's object, file: "+file+L"("+
+				Convert::ToWstring(itr.GetCurrentLine())+L")");
+			return false;
+		}
 	}
 
 
@@ -516,7 +540,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, 
 	return false;
 }
 
-bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const wstring &file, StringIterator &itr, ObjectFile &obj, size_t startline){
+bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const wstring &file, StringIterator &itr, ObjectFileObject &obj, size_t startline){
 	// First thing is the name //
 	auto ourname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
 		SPECIAL_ITERATOR_FILEHANDLING);
@@ -547,6 +571,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const wstring &file, Str
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
 	// Create us //
+	shared_ptr<ObjectFileTextBlock> ourobj = make_shared<ObjectFileTextBlockProper>(*ourname);
 
 
 	// Now we should get named variables until a } //
@@ -558,22 +583,29 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const wstring &file, Str
 			// Valid //
 
 			// Add us to the object //
+			if(!obj.AddTextBlock(ourobj)){
+
+					Logger::Get()->Error(L"ObjectFile variable list is missing the closing '}', file: "+file+L"("+Convert::ToWstring(ourstartline)+L")");
+				return false;
+			}
 
 			return true;
 		}
 
-		// Add a variable to us //
+		// Read a single line //
 
-		//TryToLoadNamedVariables
+
+		// Add it to us //
+		ourobj->AddTextLine();
 	}
 
 
-	Logger::Get()->Error(L"ObjectFile variable list is missing the closing '}', file: "+file+L"("+Convert::ToWstring(ourstartline)+L")");
+	Logger::Get()->Error(L"ObjectFile text block is missing the closing '}', file: "+file+L"("+Convert::ToWstring(ourstartline)+L")");
 	// It failed //
 	return false;
 }
 
-bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, StringIterator &itr, ObjectFile &obj, size_t startline){
+bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, StringIterator &itr, ObjectFileObject &obj, size_t startline){
 	// First thing is the name //
 	auto ourname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
 		SPECIAL_ITERATOR_FILEHANDLING);
@@ -581,9 +613,9 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, S
 	// Check is it valid //
 	if(!ourname || ourname->size() == 0){
 		// Auto generate our name //
-
-
+		ourname = unique_ptr<wstring>(new wstring(obj.GetName()+L"'s_script"));
 	}
+
 
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 

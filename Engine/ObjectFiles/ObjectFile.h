@@ -30,6 +30,14 @@ namespace Leviathan{
 		//! \see AddNamedVariable
 		DLLEXPORT bool AddNamedVariable(NamedVariableList* var);
 
+		//! \brief Adds a ObjectFileObject to this file
+		//! \return True when properly added, false if the name collides
+		DLLEXPORT bool AddObject(shared_ptr<ObjectFileObject> obj);
+
+		//! \brief Adds a ObjectFileObject to this file
+		//! \note The pointer will be deleted by this
+		//! \see AddObject
+		DLLEXPORT bool AddObject(ObjectFileObject* obj);
 
 
 

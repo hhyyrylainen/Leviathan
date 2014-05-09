@@ -10,16 +10,41 @@
 
 namespace Leviathan{
 
+	//! \brief Interface for object file lists to implement
+	//! \see ObjectFileListProper
 	class ObjectFileList : public Object{
 	public:
-		DLLEXPORT ObjectFileList();
-		DLLEXPORT ObjectFileList(const wstring &name);
-		DLLEXPORT ~ObjectFileList();
 
+		DLLEXPORT virtual ~ObjectFileList();
+
+		//! \brief Adds a new variable
+		//! \return False when the name conflicts, True otherwise
+		DLLEXPORT virtual bool AddVariable(shared_ptr<NamedVariableList> var) = 0;
+
+
+
+
+	protected:
+
+		ObjectFileList();
+
+
+	};
+
+
+	//! \brief Implementation of ObjectFileList
+	class ObjectFileListProper : public ObjectFileList{
+	public:
+
+		DLLEXPORT ObjectFileListProper(const wstring &name);
+
+
+
+	protected:
 
 		wstring Name;
-		NamedVars/***/ Variables;
-		vector<wstring*> Lines; // for storing plain text //
+		NamedVars Variables;
+
 	};
 
 }

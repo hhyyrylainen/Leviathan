@@ -34,38 +34,42 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 	// parse fake id from prefixes //
 	int fakeid = 0;
 
-	for(size_t i = 0; i < dataforthis.Prefixes.size(); i++){
+	for(size_t i = 0; i < dataforthis.GetPrefixesCount(); i++){
 
-		if(StringOperations::StringStartsWith(*dataforthis.Prefixes[i], wstring(L"ID"))){
+		auto str = dataforthis.GetPrefix(i);
+
+		if(StringOperations::StringStartsWith(str, wstring(L"ID"))){
 			// get id number //
-			StringIterator itr(dataforthis.Prefixes[i].get());
+			StringIterator itr(str);
 
 			auto tempnumber = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE);
 
 			fakeid = Convert::WstringToInt(*tempnumber);
-			// nothing more to find //
+
+			// Nothing more to find //
 			break;
 		}
 	}
 
-	unique_ptr<BaseGuiObject> tmpptr(new BaseGuiObject(owner, dataforthis.Name, fakeid, dataforthis.Script));
+	unique_ptr<BaseGuiObject> tmpptr(new BaseGuiObject(owner, dataforthis.GetName(), fakeid, dataforthis.GetScript()));
 
 	shared_ptr<NamedVariableList> listenon;
 
 	// Get listeners //
-	for(size_t i = 0; i < dataforthis.Contents.size(); i++){
-		if(StringOperations::StringStartsWith(dataforthis.Contents[i]->Name, wstring(L"params"))){
+	auto paramlist = dataforthis.GetListWithName(L"params");
 
-			listenon = dataforthis.Contents[i]->Variables.GetValueDirect(L"ListenOn");
+	if(paramlist){
+
+		listenon = paramlist->GetVariables().GetValueDirect(L"ListenOn");
+	}
+
+	if(tmpptr){
+		
+		// Listening start //
+		if(listenon){
+			tmpptr->StartMonitoring(listenon->GetValues());
 		}
-	}
 
-	// listening start //
-	if(listenon.get()){
-		tmpptr->StartMonitoring(listenon->GetValues());
-	}
-
-	if(tmpptr.get()){
 		tmpptr->_HookListeners();
 		tempobjects.push_back(tmpptr.release());
 		return true;

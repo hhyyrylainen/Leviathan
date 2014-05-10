@@ -68,30 +68,30 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 	bool GuiOn = false;
 	bool allowenable = true;
 
-	for(size_t a = 0; a < data.Contents.size(); a++){
+	auto varlist = data.GetListWithName(L"params");
 
-		if(data.Contents[a]->Name == L"params"){
-			// get values //
-			if(!ObjectFileProcessor::LoadValueFromNamedVars<wstring>(data.Contents[a]->Variables, L"ToggleOn", Toggle, L"", false)){
-				// Extra name check //
-				ObjectFileProcessor::LoadValueFromNamedVars<wstring>(data.Contents[a]->Variables, L"Toggle", Toggle, L"", false);
-			}
+	if(varlist){
 
-			ObjectFileProcessor::LoadValueFromNamedVars<bool>(data.Contents[a]->Variables, L"Enabled", Enabled, false, true,
-				L"GuiCollection: LoadCollection:");
-
-			ObjectFileProcessor::LoadValueFromNamedVars<bool>(data.Contents[a]->Variables, L"KeepsGUIOn", GuiOn, false);
-			ObjectFileProcessor::LoadValueFromNamedVars<bool>(data.Contents[a]->Variables, L"AllowEnable", allowenable, true);
-
-			continue;
+		// get values //
+		if(!ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist->GetVariables(), L"ToggleOn", Toggle, L"", false)){
+			// Extra name check //
+			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist->GetVariables(), L"Toggle", Toggle, L"", false);
 		}
+
+		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"Enabled", Enabled, false, true,
+			L"GuiCollection: LoadCollection:");
+
+		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"KeepsGUIOn", GuiOn, false);
+		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"AllowEnable", allowenable, true);
 	}
 
+
 	// allocate new Collection object //
-	GuiCollection* cobj = new GuiCollection(data.Name, gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn, allowenable);
+	GuiCollection* cobj = new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn, allowenable);
 	// copy script data over //
-	cobj->Scripting = data.Script;
-	// add to collection list //
+	cobj->Scripting = data.GetScript();
+
+	// Add to the collection list //
 	gui->AddCollection(cobj);
 
 	// loading succeeded //

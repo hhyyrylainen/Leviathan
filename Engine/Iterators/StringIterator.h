@@ -353,7 +353,7 @@ namespace Leviathan{
 		DLLEXPORT unique_ptr<RStrType> GetUntilCharacterSequence(const RStrType &findstr, int specialflags = 0){
 
 			// Setup the result object //
-			IteratorUntilSequenceData<RStrType> data;
+			IteratorUntilSequenceData<RStrType> data(findstr);
 
 			// Iterate with our getting function //
 			StartIterating(boost::bind(&StringIterator::FindUntilSequence<RStrType>, this, &data, specialflags), specialflags);

@@ -13,6 +13,8 @@
 #include "utf8/core.h"
 #include "boost/regex/pending/unicode_iterator.hpp"
 #include "utf8/checked.h"
+#include "Script/ScriptInterface.h"
+#include "Script/ScriptScript.h"
 using namespace Leviathan;
 // ------------------------------------ //
 ObjectFileProcessor::ObjectFileProcessor(){}
@@ -139,7 +141,7 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 		} else {
 			// It should be a named variable //
 
-			auto ptr = TryToLoadNamedVariables(file, itr, *ofile, *thingtype);
+			auto ptr = TryToLoadNamedVariables(file, itr, *thingtype);
 			if(!ptr){
 
 				Logger::Get()->Error(L"ObjectFileProcessor: processing a NamedVariableList has failed");
@@ -182,7 +184,7 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 	return ofile;
 }
 // ------------------------------------ //
-shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVariables(const wstring &file, StringIterator &itr, ObjectFile &obj, 
+shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVariables(const wstring &file, StringIterator &itr, 
 	const string &preceeding)
 {
 	// Try to load a named variable of format: "Variable = myvalue;" //
@@ -516,7 +518,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, 
 		}
 
 		// Try to load a named variable //
-		auto loadvar = TryToLoadNamedVariables(file, itr, obj, "");
+		auto loadvar = TryToLoadNamedVariables(file, itr, "");
 
 		if(!loadvar){
 
@@ -653,15 +655,20 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, S
 	}
 
 
+	wstring modname;
+	modname.reserve(ourname->size());
+
+	utf8::utf8to16(ourname->begin(), ourname->end(), back_inserter(modname));
+
 	// Create us //
-	shared_ptr<ScriptScript> ourobj = make_shared<ScriptScript>(ScriptInterface::Get()->GetExecutor()->CreateNewModule(*ourname, file+L"("+
-		Convert::ToWstring(ourstartline)+L")"));
+	shared_ptr<ScriptScript> ourobj(new ScriptScript(ScriptInterface::Get()->GetExecutor()->CreateNewModule(modname, Convert::WstringToString(file)
+		+"("+Convert::ToString(ourstartline)+")")));
 	
 	// Add the source to the script //
 	auto ourmod = ourobj->GetModule();
 	
 
-	ourmod->GetBuilder().AddSectionFromMemory(Convert::WstringToString(file), scriptdata->c_str(), ourstartline);
+	ourmod->GetBuilder().AddSectionFromMemory(Convert::WstringToString(file).c_str(), scriptdata->c_str(), ourstartline);
 	ourmod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
 
 

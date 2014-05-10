@@ -271,13 +271,15 @@ BaseGuiObject* Leviathan::Gui::GuiManager::GetObject(unsigned int index){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
-	// header flag definitions //
-	vector<shared_ptr<NamedVariableList>> headerdata;
 
-	// parse file to structure //
-	vector<shared_ptr<ObjectFileObject>> data = ObjectFileProcessor::ProcessObjectFile(file, headerdata);
+	// Parse the file //
+	auto data = ObjectFileProcessor::ProcessObjectFile(file);
 
-	NamedVars varlist(headerdata);
+	if(!data){
+		return false;
+	}
+
+	NamedVars& varlist = *data->GetVariables();
 
 	// we need to load the corresponding rocket file first //
 	wstring relativepath;
@@ -311,42 +313,41 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 	vector<BaseGuiObject*> TempOs;
 
 	// reserve space //
-	TempOs.reserve(data.size());
+	size_t totalcount = data->GetTotalObjectCount();
+
+	TempOs.reserve(totalcount);
 
 
-	for(size_t i = 0; i < data.size(); i++){
-		// check what type the object is //
-		if(data[i]->TName == L"GuiCollection" || data[i]->TName == L"Collection"){
+	for(size_t i = 0; i < totalcount; i++){
 
-			if(!GuiCollection::LoadCollection(this, *data[i])){
+		auto objecto = data->GetObjectFromIndex(i);
+
+		// Check what type the of the object is //
+		if(objecto->GetTypeName() == L"GuiCollection"){
+
+			if(!GuiCollection::LoadCollection(this, *objecto)){
 
 				// report error //
 				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load collection, named "+data[i]->Name);
 				continue;
 			}
-			// delete rest of the object //
-			goto guiprocessguifileloopdeleteprocessedobject;
-		}
-		if(data[i]->TName == L"GuiObject"){
+
+			continue;
+
+		} else if(objecto->GetTypeName() == L"GuiObject"){
 
 			// try to load //
-			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *data[i])){
+			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *objecto)){
 
 				// report error //
 				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load GuiObject, named "+data[i]->Name);
 				continue;
 			}
-			// delete rest of the object //
-			goto guiprocessguifileloopdeleteprocessedobject;
+
+			continue;
 		}
 
 		Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: Unrecognized type! typename: "+data[i]->TName);
-
-guiprocessguifileloopdeleteprocessedobject:
-
-		// delete current //
-		data.erase(data.begin()+i);
-		i--;
 	}
 	
 

@@ -12,23 +12,29 @@
 
 namespace Leviathan{
 
+	//! \brief Represents a scriptable part of a program
 	class GameModule : public Object, public ReferenceCounted, public EventableScriptObject{
 	public:
-		// Warning: quite expensive constructor since it loads the definition file //
+
+		//! \warning Quite expensive constructor since it loads the definition file
+		//! \todo Make load all source files, instead of loading just the first
 		DLLEXPORT GameModule(const wstring &modulename, const wstring &ownername, const wstring &extension = L"txt|levgm");
 		DLLEXPORT ~GameModule();
 
-		// Call right after constructor, makes the scripts usable //
+		//! \brief Makes the scripts usable
 		DLLEXPORT bool Init();
-		// Releases the script, use to release script before releasing any other objects //
+
+		//! \brief Releases the script
+		//! 
+		//! Use to release script before releasing any other objects
 		DLLEXPORT void ReleaseScript();
 
-		// Returns a string describing this module //
+		//! \brief Returns a string describing this module
 		DLLEXPORT wstring GetDescriptionForError(bool full = false);
 
 		// Used to actually use the module //
 
-		// Executes something on the module and returns the result. Adds the module as first parameter and existed is set to true if something was executed. //
+		//! Executes something on the module and returns the result. Adds the module as first parameter and existed is set to true if something was executed
 		DLLEXPORT shared_ptr<VariableBlock> ExecuteOnModule(const string &entrypoint, std::vector<shared_ptr<NamedVariableBlock>> &otherparams, 
 			bool &existed, bool fulldeclaration = false);
 

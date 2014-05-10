@@ -22,6 +22,8 @@ namespace Leviathan{
 		DLLEXPORT virtual bool AddVariable(shared_ptr<NamedVariableList> var) = 0;
 
 
+		//! \brief Gets a reference to the underlying variables
+		DLLEXPORT virtual NamedVars& GetVariables() const;
 
 
 	protected:

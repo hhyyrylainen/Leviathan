@@ -173,9 +173,6 @@ DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMa
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_SaveMasterServerList(){
 	// Set up the values //
-	vector<shared_ptr<ObjectFileObject>> objects;
-	vector<shared_ptr<NamedVariableList>> Values;
-
 	vector<VariableBlock*> vals;
 	vals.reserve(MasterServers.size());
 	{
@@ -187,10 +184,10 @@ void Leviathan::NetworkHandler::_SaveMasterServerList(){
 		}
 	}
 
+	ObjectFile file(NamedVars(new NamedVariableList(L"MasterServers", vals)));
 
-	Values.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"MasterServers", vals)));
 
-	ObjectFileProcessor::WriteObjectFile(objects, StoredMasterServerInfo.StoredListFile, Values);
+	ObjectFileProcessor::WriteObjectFile(file, StoredMasterServerInfo.StoredListFile);
 }
 
 bool Leviathan::NetworkHandler::_LoadMasterServerList(){
@@ -199,27 +196,29 @@ bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 	if(!StoredMasterServerInfo.StoredListFile.size())
 		return false;
 
-	vector<shared_ptr<NamedVariableList>> Values;
-	ObjectFileProcessor::ProcessObjectFile(StoredMasterServerInfo.StoredListFile, Values);
+	auto fileobj = ObjectFileProcessor::ProcessObjectFile(StoredMasterServerInfo.StoredListFile);
 
-	// Load the values from the value //
-	for(size_t fi = 0; fi < Values.size(); fi++){
-		if(Values[fi]->CompareName(L"MasterServers")){
-			// Found value, load //
-			size_t maxval = Values[fi]->GetVariableCount();
-			MasterServers.reserve(maxval);
+	if(!fileobj)
+		return false;
 
-			// We need locking for this add //
-			GUARD_LOCK_THIS_OBJECT();
+	// Try to get the right variable with the name //
+	auto foundvar = fileobj->GetVariables()->GetValueDirectRaw(L"MasterServers");
 
-			for(size_t i = 0; i < maxval; i++){
-				MasterServers.push_back(unique_ptr<wstring>(new wstring(Values[fi]->GetValueDirect(i)->ConvertAndReturnVariable<wstring>())));
-			}
+	if(!foundvar)
+		return false;
 
-			return true;
-		}
+	// Found value, load //
+	size_t maxval = foundvar->GetVariableCount();
+	MasterServers.reserve(maxval);
+
+	// We need locking for this add //
+	GUARD_LOCK_THIS_OBJECT();
+
+	for(size_t i = 0; i < maxval; i++){
+		MasterServers.push_back(unique_ptr<wstring>(new wstring(foundvar->GetValueDirect(i)->ConvertAndReturnVariable<wstring>())));
 	}
-	return false;
+
+	return true;
 }
 // ------------------------------------ //
 DLLEXPORT wstring Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const wstring &fulladdress, const wstring &regextouse /*= L"http://.*?/"*/){

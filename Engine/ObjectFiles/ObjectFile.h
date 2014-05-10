@@ -17,6 +17,11 @@ namespace Leviathan{
 	class ObjectFile : public Object{
 	public:
 		DLLEXPORT ObjectFile();
+
+		//! \brief Constructs a ObjectFile with predefined variables
+		//! \note The NamedVariables passed in will be empty after this
+		DLLEXPORT ObjectFile(NamedVars &stealfrom);
+
 		DLLEXPORT ~ObjectFile();
 
 
@@ -40,7 +45,22 @@ namespace Leviathan{
 		DLLEXPORT bool AddObject(ObjectFileObject* obj);
 
 
+		//! \brief Returns a raw pointer to HeaderVars
+		//! \warning You need to make sure you hold a reference to this to not delete the variables
+		DLLEXPORT NamedVars* GetVariables() const;
 
+		//! \brief Gets the total number of objects (objects + template instances)
+		DLLEXPORT size_t GetTotalObjectCount() const;
+
+		//! \brief Gets an ObjectFileObject from an index
+		//! \except ExceptionInvalidArgument when the index is out of bounds
+		//! \see GetTotalObjectCount
+		DLLEXPORT ObjectFileObject* GetObjectFromIndex(size_t index) const THROWS;
+
+		//! \brief Gets an ObjectFileObject matching the type name
+		//! \note Only the first object is returned matching the type
+		//! \todo Add a function which returns all that matched the type
+		DLLEXPORT ObjectFileObject* GetObjectWithType(const wstring &typestr) const;
 
 
 	protected:
@@ -56,7 +76,7 @@ namespace Leviathan{
 
 
 		//! Holds all the named variables that were in the file
-		std::vector<shared_ptr<NamedVariableList>> HeaderVars;
+		NamedVars HeaderVars;
 
 
 	};

@@ -22,6 +22,14 @@ namespace Leviathan{
 		DLLEXPORT virtual void AddTextLine(const string &line) = 0;
 
 
+		//! \brief Returns the number of text lines
+		DLLEXPORT virtual size_t GetLineCount() const = 0;
+
+		//! \brief Gets a line from index
+		//! \except ExceptionInvalidArgument when the index is out of bounds
+		//! \see GetLineCount
+		DLLEXPORT virtual const wstring& GetLine(size_t index) const = 0 THROWS;
+
 
 	protected:
 		ObjectFileTextBlock();

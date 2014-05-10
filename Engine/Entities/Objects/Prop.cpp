@@ -36,49 +36,44 @@ DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 
-	// parse file //
-	std::vector<shared_ptr<NamedVariableList>> headervar;
-	std::vector<shared_ptr<ObjectFileObject>>  objects = ObjectFileProcessor::ProcessObjectFile(modelfile,  headervar);
+	// Parse the file //
+	auto file = ObjectFileProcessor::ProcessObjectFile(modelfile);
 
-	NamedVars varlist(headervar);
+	if(!file){
+
+		return false;
+	}
 
 	wstring ogrefile;
 
-	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist, L"Model-Graphical", ogrefile, L"error", true, L"Prop: Init: no model file!:");
+	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(file->GetVariables(), L"Model-Graphical", ogrefile, L"error", true, 
+		L"Prop: Init: no model file");
 
-	// load the Ogre entity //
+	// Load the Ogre entity //
 	GraphicalObject = OwnedByWorld->GetScene()->createEntity(Convert::WstringToString(ogrefile));
 
-	// create scene node for positioning //
+	// Create scene node for positioning //
 	ObjectsNode = OwnedByWorld->GetScene()->getRootSceneNode()->createChildSceneNode();
 
 	// attach for deletion and valid display //
 	ObjectsNode->attachObject(GraphicalObject);
 
 	
-	// find the physics object //
-	ObjectFileList* physicspropertieslist = NULL;
+	// Find the physics object definition //
+	auto phyobj = file->GetObjectWithType(L"PhysicalModel");
 
-	// loop through the file and try to find it //
-	for(size_t i = 0; i < objects.size(); i++){
-
-		if(objects[i]->TName == L"PhysicalModel"){
-			// loop it's contents and find "properties" //
-			for(size_t a = 0; a < objects[i]->Contents.size(); a++){
-				if(objects[i]->Contents[a]->Name == L"properties"){
-
-					physicspropertieslist = objects[i]->Contents[a];
-					break;
-				}
-			}
-		}
-	}
-
-	if(!physicspropertieslist){
-		// no physics model associated with this model, no further processing required //
+	if(!phyobj){
+		// Nothing else to handle //
 		return true;
 	}
 
+	auto proplist = phyobj->GetListWithName(L"properties");
+
+	if(!proplist){
+		// Physical properties don't have to be processed //
+		return true;
+	}
+	
 	NewtonWorld* tmpworld = OwnedByWorld->GetPhysicalWorld()->GetWorld();
 
 	// first get the type //
@@ -89,8 +84,8 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 	Ogre::Matrix4 offset = Ogre::Matrix4::IDENTITY;
 	// this is useful when the origin is at the bottom of the model and you don't take this into account in newton primitive (using Convex hull
 	// should not require this) //
-	if(ObjectFileProcessor::LoadValueFromNamedVars<wstring>(physicspropertieslist->Variables, L"Offset", offsettype, L"", true, 
-		L"Prop: Init: CreatePhysicsModel:"))
+	if(ObjectFileProcessor::LoadValueFromNamedVars<wstring>(proplist->GetVariables(), L"Offset", offsettype, L"", true, 
+		L"Prop: Init: CreatePhysicsModel"))
 	{
 
 		if(offsettype == L"None"){
@@ -107,46 +102,49 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 			return false;
 		}
 	}
-	// Newton uses different handed matrices
+
+	// Newton uses different handed matrices...
 	Ogre::Matrix4 toffset = offset.transpose();
 
 
-	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(physicspropertieslist->Variables, L"PrimitiveType", ptype, L"Convex");
+	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(proplist->GetVariables(), L"PrimitiveType", ptype, L"Convex");
 
-	// process first the most complicated one, Convex hull which is basically a prop that we need to load //
+	// Process first the most complicated one, Convex hull which is basically a prop that we need to load //
 	if(ptype == L"Convex"){
 
 		Logger::Get()->Error(L"Prop: Init: physical object Convex hull loading is not implemented!");
 		return false;
-	}
-	if(ptype == L"Sphere" || ptype == L"Ball"){
-		// sphere primitive type, now we just need to load the size parameter or count it from the object bounding box //
 
+	} else if(ptype == L"Sphere" || ptype == L"Ball"){
+
+		// Sphere primitive type, now we just need to load the size parameter or count it from the object bounding box //
 		float radius = 0.f;
-		if(!ObjectFileProcessor::LoadValueFromNamedVars<float>(physicspropertieslist->Variables, L"Size", radius, 0.f)){
+
+		if(!ObjectFileProcessor::LoadValueFromNamedVars<float>(proplist->GetVariables(), L"Size", radius, 0.f)){
 			// it should be string type //
 			wstring sizesourcename;
 			
-			if(!ObjectFileProcessor::LoadValueFromNamedVars<wstring>(physicspropertieslist->Variables, L"Size", sizesourcename, L"", true, 
+			if(!ObjectFileProcessor::LoadValueFromNamedVars<wstring>(proplist->GetVariables(), L"Size", sizesourcename, L"", true, 
 				L"Prop: Init: CreatePhysicsModel:"))
 			{
 				Logger::Get()->Error(L"Prop: Init: physical model has no size! at least specify \"Size = GraphicalModel;\", file: "+modelfile);
 				return false;
 			}
 
-			// process based on source name //
-
+			// Process based on the source name //
 			if(sizesourcename == L"GraphicalModel"){
-				// calculate radius from bounding box size //
+
+				// Calculate the radius from bounding box size //
 				Ogre::Aabb bbox = GraphicalObject->getLocalAabb();
 				Ogre::Vector3 sizes = bbox.getSize();
-				
 
-				// little sanity check //
+				// A little sanity check //
 				if(sizes.x != sizes.y || sizes.x != sizes.z){
 					// it's not cube //
 					Logger::Get()->Warning(L"Prop: Init: physical model sphere, the bounding box of graphical model is not cube, continuing anyways");
 				}
+
+				radius = sizes.x;
 
 
 			} else {
@@ -172,7 +170,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 	}
 
 
-	// create the body //
+	// Create the body //
 	Ogre::Matrix4 locrot = Ogre::Matrix4::IDENTITY;
 	locrot.makeTransform(Position, Float3(1, 1, 1), QuatRotation);
 
@@ -185,7 +183,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 
 	// Get mass //
 	float Mass = 0;
-	ObjectFileProcessor::LoadValueFromNamedVars<float>(physicspropertieslist->Variables, L"Mass", Mass, 0.f, true,	L"Prop: Init: CreatePhysicsModel:");
+	ObjectFileProcessor::LoadValueFromNamedVars<float>(proplist->GetVariables(), L"Mass", Mass, 0.f, true,	L"Prop: Init: CreatePhysicsModel:");
 
 	// first calculate inertia and center of mass points //
 	Float3 inertia;

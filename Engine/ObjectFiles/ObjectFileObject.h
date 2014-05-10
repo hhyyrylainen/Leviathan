@@ -37,6 +37,31 @@ namespace Leviathan{
 		DLLEXPORT virtual void AddScriptScript(shared_ptr<ScriptScript> script) = 0;
 
 
+		//! \brief Gets the name of the type
+		DLLEXPORT virtual const wstring& GetTypeName() const = 0;
+
+
+		//! \brief Gets an ObjectFileList that matches the name
+		//! \return The object if it exists or NULL
+		DLLEXPORT virtual ObjectFileList* GetListWithName(const wstring &name) const = 0;
+
+
+		//! \brief Gets an ObjectFileTextBlock that matches the name
+		//! \return The object if it exists or NULL
+		DLLEXPORT virtual ObjectFileTextBlock* GetTextBlockWithName(const wstring &name) const = 0;
+
+		//! \brief Returns a shared_ptr to our script
+		DLLEXPORT virtual shared_ptr<ScriptScript> GetScript() const = 0;
+
+
+		//! \brief Gets the number of prefixes
+		DLLEXPORT virtual size_t GetPrefixesCount() const = 0;
+
+		//! \brief Gets a prefix prom an index
+		//! \except ExceptionInvalidArgument when the index is out of bounds
+		//! \see GetPrefixesCount
+		DLLEXPORT virtual const wstring& GetPrefix(size_t index) const = 0 THROWS;
+
 	protected:
 
 		ObjectFileObject();

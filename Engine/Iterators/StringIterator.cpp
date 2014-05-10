@@ -1055,7 +1055,7 @@ DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilNewLin
 	if(data->Positions.X != -1){
 
 		// End before this character //
-		data->Positions.X = GetPosition;
+		data->Positions.X = GetPosition();
 	}
 
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;

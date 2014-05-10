@@ -125,7 +125,7 @@ namespace Leviathan{
 	private:
 
 		//! \brief Handling function for NamedVariables
-		static shared_ptr<NamedVariableList> TryToLoadNamedVariables(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding);
+		static shared_ptr<NamedVariableList> TryToLoadNamedVariables(const wstring &file, StringIterator &itr, const string &preceeding);
 
 		//! \brief Handling function for template definitions and instantiations
 		static bool TryToHandleTemplate(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding);

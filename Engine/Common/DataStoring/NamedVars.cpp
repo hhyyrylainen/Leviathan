@@ -557,6 +557,11 @@ Leviathan::NamedVars::NamedVars(const NamedVars& other){
 		Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(*other.Variables[i])));
 	}
 }
+
+DLLEXPORT Leviathan::NamedVars::NamedVars(NamedVars* stealfrom) : Variables(stealfrom->Variables){
+	stealfrom->Variables.clear();
+}
+
 DLLEXPORT Leviathan::NamedVars::NamedVars(const wstring &datadump) : Variables(){
 
 	// load data directly to vector //
@@ -780,6 +785,17 @@ DLLEXPORT shared_ptr<NamedVariableList> Leviathan::NamedVars::GetValueDirect(con
 		return NULL;
 	}
 	return Variables[index];
+}
+
+DLLEXPORT NamedVariableList* Leviathan::NamedVars::GetValueDirectRaw(const wstring &name) const{
+	GUARD_LOCK_THIS_OBJECT();
+	int index = Find(name);
+	// index check //
+	ARR_INDEX_CHECKINV(index, Variables.size()){
+		return NULL;
+	}
+
+	return Variables[index].get();
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::NamedVars::GetVariableType(const wstring &name) const{

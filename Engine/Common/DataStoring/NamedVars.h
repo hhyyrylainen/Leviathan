@@ -131,6 +131,11 @@ namespace Leviathan{
 	class NamedVars : public ReferenceCounted{
 	public:
 		DLLEXPORT NamedVars();
+
+		//! \brief Constructs a NamedVars by stealing variables from another
+		//! \note The other object will be empty after this
+		DLLEXPORT NamedVars(NamedVars* stealfrom);
+
 		DLLEXPORT NamedVars(const NamedVars &other);
 		DLLEXPORT NamedVars(const wstring &datadump);
 		DLLEXPORT NamedVars(const vector<shared_ptr<NamedVariableList>> &variables);
@@ -164,6 +169,10 @@ namespace Leviathan{
 		DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
 
 		DLLEXPORT shared_ptr<NamedVariableList> GetValueDirect(const wstring &name) const;
+
+		//! \warning You need to make sure that this is valid while the pointer is used
+		DLLEXPORT NamedVariableList* GetValueDirectRaw(const wstring &name) const;
+
 
 		template<class T>
 		DLLEXPORT bool GetValueAndConvertTo(const wstring &name, T &receiver) const{

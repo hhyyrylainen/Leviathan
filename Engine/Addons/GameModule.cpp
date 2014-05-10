@@ -22,43 +22,30 @@ DLLEXPORT Leviathan::GameModule::GameModule(const wstring &modulename, const wst
 	// Load the file //
 	std::vector<shared_ptr<NamedVariableList>> headervars;
 
-	std::vector<shared_ptr<ObjectFileObject>> objects = ObjectFileProcessor::ProcessObjectFile(file, headervars);
+	auto ofile = ObjectFileProcessor::ProcessObjectFile(file);
+
+	if(!ofile){
+
+		throw ExceptionInvalidArgument(L"File is invalid", 0, __WFUNCTION__, L"modulename", modulename);
+	}
 
 	// Process the objects //
-	if(objects.size() != 1){
+	if(ofile->GetTotalObjectCount() != 1){
 
-		throw ExceptionInvalidArgument(L"File contains invalid number of objects, single GameModule expected", objects.size(), __WFUNCTION__, L"modulename", modulename);
+		throw ExceptionInvalidArgument(L"File contains invalid number of objects, single GameModule expected", ofile->GetTotalObjectCount(), 
+			__WFUNCTION__, L"modulename", modulename);
 	}
 
 	// Get various data from the header //
-	NamedVars tmpvars(headervars);
+	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(ofile->GetVariables(), L"Version", Name, L"-1", true, L"GameModule:");
 
+	auto gmobject = ofile->GetObjectFromIndex(0);
 
-	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(tmpvars, L"Version", Name, L"-1", true, L"GameModule:");
-
-	Name = objects[0]->Name;
+	Name = gmobject->GetName();
 
 	// handle the single object //
-	ObjectFileList* properties = NULL;
-	ObjectFileTextBlock* sources = NULL;
-
-	for(size_t i = 0; i < objects[0]->Contents.size(); i++){
-
-		if(objects[0]->Contents[i]->Name == L"properties"){
-
-			properties = objects[0]->Contents[i];
-			break;
-		}
-	}
-
-	for(size_t i = 0; i < objects[0]->TextBlocks.size(); i++){
-
-		if(objects[0]->TextBlocks[i]->Name == L"sourcefiles"){
-
-			sources = objects[0]->TextBlocks[i];
-			break;
-		}
-	}
+	ObjectFileList* properties = gmobject->GetListWithName(L"properties");
+	ObjectFileTextBlock* sources = gmobject->GetTextBlockWithName(L"sourcefiles");
 
 	if(!properties || !sources){
 
@@ -66,13 +53,14 @@ DLLEXPORT Leviathan::GameModule::GameModule(const wstring &modulename, const wst
 	}
 
 	// Copy data //
-	if(sources->Lines.size() < 1){
+	if(sources->GetLineCount() < 1){
 
-		throw ExceptionInvalidArgument(L"At least one source file expected in sourcefiles", sources->Lines.size(), __WFUNCTION__, L"modulename", modulename);
+		throw ExceptionInvalidArgument(L"At least one source file expected in sourcefiles", sources->GetLineCount(), __WFUNCTION__, L"modulename", modulename);
 	}
 
-	wstring sourcefilename = StringOperations::RemoveExtensionWstring(*sources->Lines[0], true);
-	wstring extensions = StringOperations::GetExtensionWstring(*sources->Lines[0]);
+
+	wstring sourcefilename = StringOperations::RemoveExtensionWstring(sources->GetLine(0), true);
+	wstring extensions = StringOperations::GetExtensionWstring(sources->GetLine(0));
 
 	SourceFile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, sourcefilename, extensions, false);
 }

@@ -33,21 +33,26 @@ namespace Leviathan{
 		//! \note This is a shorthand for AddNamedVariable defined above
 		//! \warning The pointer given will be deleted by this
 		//! \see AddNamedVariable
-		DLLEXPORT bool AddNamedVariable(NamedVariableList* var);
+		DLLEXPORT FORCE_INLINE bool AddNamedVariable(NamedVariableList* var){
+			return AddNamedVariable(shared_ptr<NamedVariableList>(var));
+		}
 
 		//! \brief Adds a ObjectFileObject to this file
 		//! \return True when properly added, false if the name collides
+		//! \todo Disallow adding templates with this function
 		DLLEXPORT bool AddObject(shared_ptr<ObjectFileObject> obj);
 
 		//! \brief Adds a ObjectFileObject to this file
-		//! \note The pointer will be deleted by this
+		//! \warning The pointer will be deleted by this
 		//! \see AddObject
-		DLLEXPORT bool AddObject(ObjectFileObject* obj);
+		DLLEXPORT FORCE_INLINE bool AddObject(ObjectFileObject* obj){
+			return AddObject(shared_ptr<ObjectFileObject>(obj));
+		}
 
 
 		//! \brief Returns a raw pointer to HeaderVars
 		//! \warning You need to make sure you hold a reference to this to not delete the variables
-		DLLEXPORT NamedVars* GetVariables() const;
+		DLLEXPORT NamedVars* GetVariables();
 
 		//! \brief Gets the total number of objects (objects + template instances)
 		DLLEXPORT size_t GetTotalObjectCount() const;
@@ -61,6 +66,10 @@ namespace Leviathan{
 		//! \note Only the first object is returned matching the type
 		//! \todo Add a function which returns all that matched the type
 		DLLEXPORT ObjectFileObject* GetObjectWithType(const wstring &typestr) const;
+
+		//! \brief Checks whether the given name is in use
+		//! \todo Check template names
+		DLLEXPORT bool IsObjectNameInUse(const wstring &name) const;
 
 
 	protected:

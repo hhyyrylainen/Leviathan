@@ -23,7 +23,8 @@ namespace Leviathan{
 		//! \brief Writes an ObjectFile's data structure to a file
 		//! \warning Using the process and this function will erase ALL comments, which is not optimal for files. It is recommended to only append
 		//! to an existing file to keep comments intact
-		DLLEXPORT static int WriteObjectFile(ObjectFile &data, const std::wstring &file);
+		//! \return True when the file has been written, false if something failed
+		DLLEXPORT static bool WriteObjectFile(ObjectFile &data, const std::wstring &file);
 
 
 		//! \brief Registers a new value alias for the processor

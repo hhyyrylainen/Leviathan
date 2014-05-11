@@ -72,8 +72,10 @@ bool Leviathan::UTF8DataIterator::GetPreviousCharacter(int &receiver){
 		receiver = utf8::prior(shouldbepos, BeginPos);
 
 	} catch(const utf8::not_enough_room &e1){
+		e1;
 		return false;
 	} catch(const utf8::invalid_utf8 &e2){
+		e2;
 		return false;
 	}
 

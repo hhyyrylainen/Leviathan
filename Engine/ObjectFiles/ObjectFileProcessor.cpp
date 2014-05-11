@@ -566,7 +566,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, 
 	}
 
 	// Create us //
-	shared_ptr<ObjectFileList> ourobj = make_shared<ObjectFileListProper>(wstrname);
+	unique_ptr<ObjectFileList> ourobj(new ObjectFileListProper(wstrname));
 
 
 	// Now we should get named variables until a } //
@@ -664,7 +664,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const wstring &file, Str
 	}
 
 	// Create us //
-	shared_ptr<ObjectFileTextBlock> ourobj = make_shared<ObjectFileTextBlockProper>(wstrname);
+	unique_ptr<ObjectFileTextBlock> ourobj(new ObjectFileTextBlockProper(wstrname));
 
 
 	// Now we should get named variables until a } //
@@ -786,10 +786,10 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, S
 
 	return true;
 }
+// ------------------------------------ //
+DLLEXPORT  bool Leviathan::ObjectFileProcessor::WriteObjectFile(ObjectFile &data, const std::wstring &file){
 
 
-
-
-
-
+	return false;
+}
 

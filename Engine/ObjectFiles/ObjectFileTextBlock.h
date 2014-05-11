@@ -19,7 +19,8 @@ namespace Leviathan{
 
 		//! \brief Adds an UTF8 encoded line
 		//! \note The line will be converted into wstring (utf16)
-		DLLEXPORT virtual void AddTextLine(const string &line) = 0;
+		//! \return True when added, false if the UTF8 encoding is invalid
+		DLLEXPORT virtual bool AddTextLine(const string &line) = 0;
 
 
 		//! \brief Returns the number of text lines
@@ -30,9 +31,13 @@ namespace Leviathan{
 		//! \see GetLineCount
 		DLLEXPORT virtual const wstring& GetLine(size_t index) const THROWS = 0;
 
+		//! \brief Gets the name of this text block
+		DLLEXPORT virtual const wstring& GetName() const = 0;
+
 
 	protected:
-		ObjectFileTextBlock();
+
+		ObjectFileTextBlock(){};
 
 
 	};
@@ -44,12 +49,15 @@ namespace Leviathan{
 	public:
 
 		DLLEXPORT ObjectFileTextBlockProper(const wstring &name);
+		DLLEXPORT ~ObjectFileTextBlockProper();
 
-		DLLEXPORT virtual void AddTextLine(const string &line);
+		DLLEXPORT virtual bool AddTextLine(const string &line);
 
 		DLLEXPORT virtual size_t GetLineCount() const;
 
 		DLLEXPORT virtual const wstring& GetLine(size_t index) const THROWS;
+
+		DLLEXPORT virtual const wstring& GetName() const;
 
 
 

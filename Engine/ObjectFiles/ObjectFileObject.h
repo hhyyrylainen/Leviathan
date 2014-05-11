@@ -24,12 +24,14 @@ namespace Leviathan{
 
 		//! \brief Add a variable list to this object
 		//! \return False when the name collides
-		DLLEXPORT virtual bool AddVariableList(shared_ptr<ObjectFileList> list) = 0;
+		//! \post The list variable will be empty
+		DLLEXPORT virtual bool AddVariableList(unique_ptr<ObjectFileList> &list) = 0;
 
 
 		//! \brief Add a text block to this object
 		//! \return False when the name collides
-		DLLEXPORT virtual bool AddTextBlock(shared_ptr<ObjectFileTextBlock> tblock) = 0;
+		//! \post The tblock variable will be empty
+		DLLEXPORT virtual bool AddTextBlock(unique_ptr<ObjectFileTextBlock> &tblock) = 0;
 
 
 		//! \brief Add a script block to this object
@@ -64,7 +66,7 @@ namespace Leviathan{
 
 	protected:
 
-		ObjectFileObject();
+		ObjectFileObject(){};
 	};
 
 
@@ -78,9 +80,9 @@ namespace Leviathan{
 
 		DLLEXPORT virtual const wstring& GetName() const;
 
-		DLLEXPORT virtual bool AddVariableList(shared_ptr<ObjectFileList> list);
+		DLLEXPORT virtual bool AddVariableList(unique_ptr<ObjectFileList> &list);
 
-		DLLEXPORT virtual bool AddTextBlock(shared_ptr<ObjectFileTextBlock> tblock);
+		DLLEXPORT virtual bool AddTextBlock(unique_ptr<ObjectFileTextBlock> &tblock);
 
 		DLLEXPORT virtual void AddScriptScript(shared_ptr<ScriptScript> script);
 

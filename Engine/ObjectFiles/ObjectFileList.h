@@ -25,10 +25,13 @@ namespace Leviathan{
 		//! \brief Gets a reference to the underlying variables
 		DLLEXPORT virtual NamedVars& GetVariables() = 0;
 
+		//! \brief Gets the name of this list
+		DLLEXPORT virtual const wstring& GetName() const = 0;
+
 
 	protected:
 
-		ObjectFileList();
+		ObjectFileList(){};
 
 
 	};
@@ -44,6 +47,8 @@ namespace Leviathan{
 		DLLEXPORT virtual bool AddVariable(shared_ptr<NamedVariableList> var);
 
 		DLLEXPORT virtual NamedVars& GetVariables();
+
+		DLLEXPORT virtual const wstring& GetName() const;
 
 
 

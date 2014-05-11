@@ -246,7 +246,7 @@ static const float EPSILON = 0.00000001f;
 #define __WTIME__ WSTRINGIFY(__TIME__)
 #define __WFUNCSIG__ WSTRINGIFY(__FUNCSIG__)
 
-#define SAFE_DELETE_VECTOR(x) while((x).size() != 0){if((x)[0]){delete (x)[0];}(x).erase((x).begin());}
+#define SAFE_DELETE_VECTOR(x) for(size_t vdind = 0; vdind < x.size(); ++vdind){if(x[vdind]){delete x[vdind];}}; x.clear();
 
 #define STDCONTAINERERASELAST_PTR(x) x->erase(x->begin()+x->size()-1)
 #define STDCONTAINERERASELAST(x) x.erase(x.begin()+x.size()-1)

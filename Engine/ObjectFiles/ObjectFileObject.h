@@ -60,7 +60,7 @@ namespace Leviathan{
 		//! \brief Gets a prefix prom an index
 		//! \except ExceptionInvalidArgument when the index is out of bounds
 		//! \see GetPrefixesCount
-		DLLEXPORT virtual const wstring& GetPrefix(size_t index) const = 0 THROWS;
+		DLLEXPORT virtual const wstring& GetPrefix(size_t index) const THROWS = 0;
 
 	protected:
 
@@ -70,10 +70,31 @@ namespace Leviathan{
 
 
 	//! \brief Fully defined ObjectFileObject
+	//! \see ObjectFileObject
 	class ObjectFileObjectProper : public ObjectFileObject{
 	public:
 		DLLEXPORT ObjectFileObjectProper(const wstring &name, const wstring &typesname, vector<wstring*> prefix);
 		DLLEXPORT ~ObjectFileObjectProper();
+
+		DLLEXPORT virtual const wstring& GetName() const;
+
+		DLLEXPORT virtual bool AddVariableList(shared_ptr<ObjectFileList> list);
+
+		DLLEXPORT virtual bool AddTextBlock(shared_ptr<ObjectFileTextBlock> tblock);
+
+		DLLEXPORT virtual void AddScriptScript(shared_ptr<ScriptScript> script);
+
+		DLLEXPORT virtual const wstring& GetTypeName() const;
+
+		DLLEXPORT virtual ObjectFileList* GetListWithName(const wstring &name) const;
+
+		DLLEXPORT virtual ObjectFileTextBlock* GetTextBlockWithName(const wstring &name) const;
+
+		DLLEXPORT virtual shared_ptr<ScriptScript> GetScript() const;
+
+		DLLEXPORT virtual size_t GetPrefixesCount() const;
+
+		DLLEXPORT virtual const wstring& GetPrefix(size_t index) const THROWS;
 
 
 	protected:

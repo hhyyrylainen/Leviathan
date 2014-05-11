@@ -398,8 +398,56 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 		return NULL;
 	}
 
+	// Convert the loaded utf8 strings to wide strings //
+	std::vector<wstring*> convprefix;
+	wstring wstrname;
+	wstring wstrtname;
+
+	try{
+		wstrname.reserve(oname->size());
+
+		utf8::utf8to16(oname->begin(), oname->end(), back_inserter(wstrname));
+
+	
+		wstrtname.reserve(typesname->size());
+
+		utf8::utf8to16(typesname->begin(), typesname->end(), back_inserter(wstrtname));
+
+		// Convert the prefixes //
+		convprefix.reserve(prefixesvec.size());
+
+		for(size_t i = 0; i < prefixesvec.size(); i++){
+
+			unique_ptr<wstring> resstr(new wstring());
+			resstr->reserve(prefixesvec[i]->size());
+
+			utf8::utf8to16(prefixesvec[i]->begin(), prefixesvec[i]->end(), back_inserter(*resstr));
+
+			convprefix.push_back(resstr.release());
+		}
+
+	} catch(const utf8::invalid_utf8 &e1){
+
+		SAFE_DELETE_VECTOR(prefixesvec);
+		SAFE_DELETE_VECTOR(convprefix);
+
+		Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e1.what()));
+		return false;
+
+	} catch(const utf8::not_enough_room &e2){
+
+		SAFE_DELETE_VECTOR(prefixesvec);
+		SAFE_DELETE_VECTOR(convprefix);
+
+		Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e2.what()));
+		return false;
+	}
+
+
 	// Create a new ObjectFileObject to hold our contents //
-	shared_ptr<ObjectFileObject> ourobj = make_shared<ObjectFileObjectProper>(*oname, *typesname, prefixesvec);
+	shared_ptr<ObjectFileObject> ourobj = make_shared<ObjectFileObjectProper>(wstrname, wstrtname, convprefix);
 
 	// These are now managed by the object //
 	prefixesvec.clear();
@@ -495,8 +543,30 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, 
 
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
+
+	// Convert the loaded utf8 strings to wide strings //
+	wstring wstrname;
+
+	try{
+		wstrname.reserve(ourname->size());
+
+		utf8::utf8to16(ourname->begin(), ourname->end(), back_inserter(wstrname));
+
+	} catch(const utf8::invalid_utf8 &e1){
+
+		Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e1.what()));
+		return false;
+
+	} catch(const utf8::not_enough_room &e2){
+
+		Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e2.what()));
+		return false;
+	}
+
 	// Create us //
-	shared_ptr<ObjectFileList> ourobj = make_shared<ObjectFileListProper>(*ourname);
+	shared_ptr<ObjectFileList> ourobj = make_shared<ObjectFileListProper>(wstrname);
 
 
 	// Now we should get named variables until a } //
@@ -572,8 +642,29 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const wstring &file, Str
 
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
+	// Convert the loaded utf8 strings to wide strings //
+	wstring wstrname;
+
+	try{
+		wstrname.reserve(ourname->size());
+
+		utf8::utf8to16(ourname->begin(), ourname->end(), back_inserter(wstrname));
+
+	} catch(const utf8::invalid_utf8 &e1){
+
+		Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e1.what()));
+		return false;
+
+	} catch(const utf8::not_enough_room &e2){
+
+		Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e2.what()));
+		return false;
+	}
+
 	// Create us //
-	shared_ptr<ObjectFileTextBlock> ourobj = make_shared<ObjectFileTextBlockProper>(*ourname);
+	shared_ptr<ObjectFileTextBlock> ourobj = make_shared<ObjectFileTextBlockProper>(wstrname);
 
 
 	// Now we should get named variables until a } //
@@ -612,10 +703,12 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, S
 	auto ourname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
 		SPECIAL_ITERATOR_FILEHANDLING);
 
+	wstring modname;
+
 	// Check is it valid //
 	if(!ourname || ourname->size() == 0){
 		// Auto generate our name //
-		ourname = unique_ptr<wstring>(new wstring(obj.GetName()+L"'s_script"));
+		modname = obj.GetName()+L"'s_script";
 	}
 
 
@@ -653,12 +746,27 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, S
 			Convert::ToWstring(ourstartline)+L")");
 		return false;
 	}
+	
+	// Only do conversion if the name hasn't been generated into a wstring already //
+	if(ourname || ourname->size() > 0){
+		try{
+			modname.reserve(ourname->size());
 
+			utf8::utf8to16(ourname->begin(), ourname->end(), back_inserter(modname));
 
-	wstring modname;
-	modname.reserve(ourname->size());
+		} catch(const utf8::invalid_utf8 &e1){
 
-	utf8::utf8to16(ourname->begin(), ourname->end(), back_inserter(modname));
+			Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
+			Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e1.what()));
+			return false;
+
+		} catch(const utf8::not_enough_room &e2){
+
+			Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
+			Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e2.what()));
+			return false;
+		}
+	}
 
 	// Create us //
 	shared_ptr<ScriptScript> ourobj(new ScriptScript(ScriptInterface::Get()->GetExecutor()->CreateNewModule(modname, Convert::WstringToString(file)

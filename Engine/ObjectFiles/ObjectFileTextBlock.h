@@ -28,7 +28,7 @@ namespace Leviathan{
 		//! \brief Gets a line from index
 		//! \except ExceptionInvalidArgument when the index is out of bounds
 		//! \see GetLineCount
-		DLLEXPORT virtual const wstring& GetLine(size_t index) const = 0 THROWS;
+		DLLEXPORT virtual const wstring& GetLine(size_t index) const THROWS = 0;
 
 
 	protected:
@@ -44,6 +44,12 @@ namespace Leviathan{
 	public:
 
 		DLLEXPORT ObjectFileTextBlockProper(const wstring &name);
+
+		DLLEXPORT virtual void AddTextLine(const string &line);
+
+		DLLEXPORT virtual size_t GetLineCount() const;
+
+		DLLEXPORT virtual const wstring& GetLine(size_t index) const THROWS;
 
 
 

@@ -328,7 +328,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 			if(!GuiCollection::LoadCollection(this, *objecto)){
 
 				// report error //
-				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load collection, named "+data[i]->Name);
+				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load collection, named "+objecto->GetName());
 				continue;
 			}
 
@@ -340,14 +340,14 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *objecto)){
 
 				// report error //
-				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load GuiObject, named "+data[i]->Name);
+				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load GuiObject, named "+objecto->GetName());
 				continue;
 			}
 
 			continue;
 		}
 
-		Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: Unrecognized type! typename: "+data[i]->TName);
+		Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: Unrecognized type! typename: "+objecto->GetTypeName());
 	}
 	
 

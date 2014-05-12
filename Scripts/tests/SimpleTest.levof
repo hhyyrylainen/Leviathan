@@ -12,7 +12,6 @@ o TestData object_prefix "Named1" /* Our first data */ {
         this= not this;
         oh=2;
         no:false;
-        <t> why?;
     }
     
     t block2{

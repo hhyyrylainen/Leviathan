@@ -11,7 +11,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) : ConfigurationValues(new NamedVars()), HInstance(NULL), _GameConfiguration(NULL),
-	_KeyConfiguration(NULL)
+	_KeyConfiguration(NULL), DeleteLog(false)
 {
 	// If this is the default configuration set as the static access one //
 	if(isdef)
@@ -25,7 +25,9 @@ AppDef::~AppDef(){
 
 	SAFE_RELEASEDEL(_GameConfiguration);
 	SAFE_RELEASEDEL(_KeyConfiguration);
-	SAFE_DELETE(Mainlog);
+
+	if(DeleteLog)
+		SAFE_DELETE(Mainlog);
 }
 
 AppDef* Leviathan::AppDef::Defaultconf = NULL;
@@ -46,8 +48,12 @@ DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const wstring &logfile, c
 	if(Logger::GetIfExists() != NULL){
 		// already exists //
 		tmpptr->Mainlog = Logger::Get();
+		tmpptr->DeleteLog = false;
+
 	} else {
 		tmpptr->Mainlog = new Logger(logfile+L"Log.txt");
+		// We created a new one //
+		tmpptr->DeleteLog = true;
 	}
 
 	// load variables from configuration file //

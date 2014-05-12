@@ -133,6 +133,10 @@ namespace Leviathan{
 		Logger* Mainlog;
 
 
+		//! Controls whether the destructor deletes Mainlog
+		//! \note Used to not delete loggers that weren't created by this instance
+		bool DeleteLog;
+
 		wstring LeviathanVersion;
 		wstring GameVersion;
 		wstring Game;

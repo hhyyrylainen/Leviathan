@@ -1015,17 +1015,31 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilNewLine(IteratorPositionData* data){
+DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilNewLine(IteratorFindUntilData* data){
 	// Continue if the current character is a new line character //
 	int curcharacter = GetCharacter();
 
 	bool winmulti = false;
 
+	// Ignore if ignoring special characters //
+	if(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL){
+
+		goto positionisvalidlabelstringiteratorfindnewline;
+	}
+
+
 	if(curcharacter == '\r' && GetCharacter(1) == '\n')
 		winmulti = true;
 
 	// All line separator characters should be here //
-	if(curcharacter == '\n' || winmulti || curcharacter == 0x0085 || curcharacter == 0x2028 || curcharacter == 0x2029){
+	if(curcharacter == '\r' || curcharacter == '\n' || winmulti || curcharacter == 0x0085 || curcharacter == 0x2028 || curcharacter == 0x2029){
+
+		if(!data->FoundEnd){
+			// Ignore the first new line //
+			data->FoundEnd = true;
+			ITR_FUNCDEBUG(L"Ignoring first newline character");
+			goto positionisvalidlabelstringiteratorfindnewline;
+		}
 
 		size_t useendpos = GetPosition()-1;
 
@@ -1039,23 +1053,25 @@ DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilNewLin
 			// Move out of the newline character //
 			MoveToNext();
 		}
+		ITR_FUNCDEBUG(L"Found newline character");
 
+		// End before this character //
+		data->Positions.Y = useendpos;
+		ITR_FUNCDEBUG(L"Ending here: "+Convert::ToWstring(data->Positions.Y));
 
-		// End if start is found //
-		if(data->Positions.X != -1){
-
-			// End before this character //
-			data->Positions.Y = useendpos;
-			return ITERATORCALLBACK_RETURNTYPE_STOP;
-		}
+		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
+
+positionisvalidlabelstringiteratorfindnewline:
 
 
 	// Set position //
-	if(data->Positions.X != -1){
+	if(data->Positions.X == -1){
 
 		// End before this character //
 		data->Positions.X = GetPosition();
+		data->FoundEnd = true;
+		ITR_FUNCDEBUG(L"Data started: "+Convert::ToWstring(data->Positions.X));
 	}
 
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;

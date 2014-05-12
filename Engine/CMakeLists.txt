@@ -96,8 +96,9 @@ source_group("Newton" FILES ${GroupNewton})
 source_group("Common" FILES ${GroupCommon})
 source_group("Common\\Application" FILES ${GroupApplication})
 source_group("Common\\Exceptions" FILES ${GroupExceptions})
-source_group("Common\\ObjectFiles" FILES ${GroupObjectFiles})
 source_group("Common\\DataStoring" FILES ${GroupCommonData})
+
+source_group("ObjectFiles" FILES ${GroupObjectFiles})
 
 source_group("Rendering" FILES ${GroupRendering})
 source_group("Rendering\\GUI" FILES ${GroupRenderingGUI})

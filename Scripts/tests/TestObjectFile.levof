@@ -16,7 +16,6 @@ objects {
             this= not this;
             oh=2;
             no:false;
-            <t> why?;
         }
         t block {
             great story here
@@ -46,8 +45,6 @@ o Just "Something" "nice wow" ID(29){ lol
         this= not this;
         oh=2;
         no:false
-        <t> why?;
-        <t> Is why:
     }
     t why{
         even bother
@@ -67,11 +64,3 @@ o Just "Something" "nice wow" ID(29){ lol
 // Template testing //
 template<> ObjectTemplate<TemplateGenObject, 42>
 template<> ObjectTemplate<"OtherTemplatedThing", "42">
-
--!-
-oh gee hopefully no errors
-are found here! or something
-
-o This "ShouldNotLoad"{
-    lol
-}

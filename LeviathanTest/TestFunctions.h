@@ -376,6 +376,16 @@ bool TestNamedVars(const int &tests){
 	}
 
 
+	wstring line = L"oh=2;";
+	
+	ptry = shared_ptr<NamedVariableList>(new NamedVariableList(line, NULL));
+
+	if(!ptry || ptry->GetName() != L"oh"){
+
+		TESTFAIL;
+	}
+
+
 
 	// stress testing //
 	for(int i = 0; i < tests; i++){
@@ -660,30 +670,17 @@ bool ObjectFileParserTest(const int &tests){
 	}
 
 	// Try to parse it //
-	std::vector<shared_ptr<NamedVariableList>> HeaderVars;
-	std::vector<shared_ptr<ObjectFileObject>> objects = ObjectFileProcessor::ProcessObjectFile(minfile, HeaderVars);
+	auto ofile = ObjectFileProcessor::ProcessObjectFile(minfile);
 
-
-	// Validate the output //
-	if(HeaderVars.size() != 4){
+	if(!ofile){
 
 		TESTFAIL;
-	} else {
-
-		if(HeaderVars[0]->GetVariableCount() == 0 || HeaderVars[0]->GetValueDirect(0)->ConvertAndReturnVariable<string>() != "SimpleTest")
-			TESTFAIL;
-
-		if(HeaderVars[1]->CanAllBeCastedToType<wstring>() != HeaderVars[2]->CanAllBeCastedToType<string>())
-			TESTFAIL;
-
-		if(HeaderVars[3]->GetVariableCount() == 0 || HeaderVars[3]->GetValueDirect(0)->GetBlockConst()->Type != DATABLOCK_TYPE_BOOL || 
-			HeaderVars[3]->GetValueDirect(0)->ConvertAndReturnVariable<bool>() != true)
-		{
-				TESTFAIL
-		}
 	}
 
-	if(objects.size() != 1){
+	const NamedVars& HeaderVars = *ofile->GetVariables();
+
+	// Validate the output //
+	if(HeaderVars.GetVariableCount() != 4){
 
 		TESTFAIL;
 	} else {
@@ -701,127 +698,13 @@ bool ObjectFileParserTest(const int &tests){
 		return true;
 	}
 	
-	HeaderVars.clear();
-	objects = ObjectFileProcessor::ProcessObjectFile(TestFile, HeaderVars);
 
-	// check integrity //
-	if(HeaderVars.size() == 4){
-		if(!HeaderVars[0]->CompareName(L"FileType")){
-			TESTFAIL;
-		}
-		if(!HeaderVars[3]->CompareName(L"Why")){
-			TESTFAIL;
-		}
-		wstring valuescheck = L"";
+	// Load the file to memory and only process from memory to test actual performance //
 
-		bool ivaluecheck = false;
-
-		if(!HeaderVars[1]->GetValueDirect()->ConvertAndAssingToVariable<wstring>(valuescheck)){
-
-			TESTFAIL;
-
-		} else {
-
-			if(valuescheck != L"lol"){
-				TESTFAIL;
-			}
-		}
-
-		if(!HeaderVars[3]->GetValueDirect()->ConvertAndAssingToVariable<bool>(ivaluecheck)){
-
-			TESTFAIL;
-
-		} else {
-
-			if(ivaluecheck != true){
-				// value should be "true" (1) //
-				TESTFAIL;
-			}
-		}
-
-		if(objects.size() == 2){
-			ObjectFileObject* obj = objects[0].get();
-			// check name and prefixes //
-			if(obj->Name != L"Test1"){
-				TESTFAIL;
-			}
-			if(obj->TName != L"TestData"){
-				TESTFAIL;
-			}
-
-			if(obj->Prefixes.size() == 2){
-				if((*obj->Prefixes[0]) != L"nice_prefix"){
-					TESTFAIL;
-				}
-
-				if((*obj->Prefixes[1]) != L"type1_special"){
-					TESTFAIL;
-				}
-
-			} else {
-
-				TESTFAIL;
-			}
-			// check contents just so that they seem right //
-			if(obj->TextBlocks.size() != 1){
-				TESTFAIL;
-			}
-			if(obj->Contents.size() != 1){
-				TESTFAIL;
-			}
-
-			// check for proper script //
-			if(obj->Script.get() != NULL){
-				if(obj->Script->GetModule()->GetName() != L"TestScript"){
-					TESTFAIL;
-				}
-			} else {
-
-				TESTFAIL;
-			}
-			// second object test //
-			obj = objects[1].get();
-
-			if(obj->Name != L"Something"){
-				TESTFAIL;
-			}
-			if(obj->TName != L"Just"){
-				TESTFAIL;
-			}
-
-			if(obj->Prefixes.size() == 2){
-				if((*obj->Prefixes[0]) != L"nice wow"){
-					TESTFAIL;
-				}
-
-				if((*obj->Prefixes[1]) != L"ID(29)"){
-					TESTFAIL;
-				}
-
-			} else {
-
-				TESTFAIL;
-			}
-
-		} else {
-
-			TESTFAIL;
-		}
-	} else {
-
-		TESTFAIL;
-	}
-
-	// cleanup not required //
-	// clear old data //
-	objects.clear();
-	HeaderVars.clear();
 
 	for(int i = 0; i < tests; i++){
-		objects = ObjectFileProcessor::ProcessObjectFile(TestFile, HeaderVars);
+		
 
-		objects.clear();
-		HeaderVars.clear();
 	}
 
 	return Failed;
@@ -1053,12 +936,31 @@ bool TestStringIterator(const int &tests){
 		TESTFAIL;
 	}
 
+	itr.ReInit(L"oh=2;");
+
+	results = itr.GetUntilEqualityAssignment<wstring>(EQUALITYCHARACTER_TYPE_ALL);
+
+	if(!results || *results != L"oh"){
+
+		TESTFAIL;
+	}
+
+	itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+
+	results = itr.GetUntilNextCharacterOrNothing<wstring>(';');
+
+	if(!results || *results != L"2"){
+
+		TESTFAIL;
+	}
+
 	// Getting until line end //
-	itr.ReInit(L"This is my line \r that has some things\r\n that are cut off");
+	itr.ReInit(L"This is my line \\\r that has some things\r\n that are cut off");
 
 	results = itr.GetUntilLineEnd<wstring>();
 
-	if(!results || *results != L"This is my line \r that has some things"){
+	if(!results || *results != L"This is my line \\\r that has some things"){
 		TESTFAIL;
 	}
 
@@ -1071,7 +973,7 @@ bool TestStringIterator(const int &tests){
 	}
 
 	results = itr.GetUntilLineEnd<wstring>();
-
+	
 	if(!results || *results != L"with the right separator"){
 		TESTFAIL;
 	}
@@ -1144,7 +1046,6 @@ bool TestStringIterator(const int &tests){
 	wstring justsimple = L"This is 'just' \"a simple \\= test\": string for stuff \"to get to this' nice\"";
 
 	StringIterator itr2((string*)NULL);
-	itr2.SetDebugMode(true);
 
 	for(int i = 0; i < tests; i++){
 

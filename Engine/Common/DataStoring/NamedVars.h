@@ -232,6 +232,10 @@ namespace Leviathan{
 
 		DLLEXPORT vector<shared_ptr<NamedVariableList>>* GetVec();
 		DLLEXPORT void SetVec(vector<shared_ptr<NamedVariableList>> &vec);
+
+		//! \brief Returns the size of the internal variable vector
+		DLLEXPORT size_t GetVariableCount() const;
+
 		// ------------------------------------ //
 
 		DLLEXPORT inline int Find(const wstring &name) const{

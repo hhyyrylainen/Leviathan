@@ -955,3 +955,7 @@ ScriptSafeVariableBlock* Leviathan::NamedVars::GetScriptCompatibleValue(string n
 		return NULL;
 	}
 }
+
+DLLEXPORT size_t Leviathan::NamedVars::GetVariableCount() const{
+	return Variables.size();
+}

@@ -1,7 +1,7 @@
 GUIBaseFile = "PongMenu.layout";
 
 // ------------------ Templates for GUI objects ------------------ //
-template<GCollectName, GCollectEnabled> "PGCTemplate" o GuiCollection "GCollectName"{
+template<GCollectName, GCollectEnabled> PGCTemplate: o GuiCollection "GCollectName"{
     l params{
         Enabled = GCollectEnabled;
     }

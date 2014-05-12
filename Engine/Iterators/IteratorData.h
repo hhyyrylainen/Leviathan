@@ -15,7 +15,7 @@ namespace Leviathan{
 		IteratorPositionData(int val1, int val2) : Positions(val1, val2){
 
 		}
-		IteratorPositionData() : Positions(){}
+		IteratorPositionData() : Positions(-1, -1){}
 
 		Int2 Positions;
 
@@ -66,7 +66,7 @@ namespace Leviathan{
 	template<class StrType>
 	class IteratorUntilSequenceData : public Object{
 	public:
-		IteratorUntilSequenceData(const StrType &finduntil) : StringToMatch(finduntil), Positions(-1, -1), EndFound(false){
+		IteratorUntilSequenceData(const StrType &finduntil) : CurMatchedIndex(0), StringToMatch(finduntil), Positions(-1, -1), EndFound(false){
 		}
 
 		StrType StringToMatch;

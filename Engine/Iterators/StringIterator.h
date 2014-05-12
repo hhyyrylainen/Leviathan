@@ -276,7 +276,7 @@ namespace Leviathan{
 		DLLEXPORT unique_ptr<RStrType> GetUntilLineEnd(){
 
 			// Setup the result object //
-			IteratorPositionData data;
+			IteratorFindUntilData data;
 
 			// Iterate with our getting function //
 			StartIterating(boost::bind(&StringIterator::FindUntilNewLine, this, &data), 0);
@@ -505,7 +505,7 @@ namespace Leviathan{
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilEquality(IteratorAssignmentData* data, EQUALITYCHARACTER equality, int specialflags);
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE SkipSomething(IteratorCharacterData* data, int additionalskip, int specialflags);
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilSpecificCharacter(IteratorFindUntilData* data, int character, int specialflags);
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilNewLine(IteratorPositionData* data);
+		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilNewLine(IteratorFindUntilData* data);
 
 		template<class AcceptStr>
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilSequence(IteratorUntilSequenceData<AcceptStr>* data, int specialflags){
@@ -542,18 +542,14 @@ namespace Leviathan{
 						return ITERATORCALLBACK_RETURNTYPE_STOP;
 					}
 
-				} else {
+					return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 
-					// Go back to beginning of matching //
-					data->CurMatchedIndex = 0;
 				}
 
-			} else {
-
-				// Go back to beginning of matching //
-				data->CurMatchedIndex = 0;
 			}
 
+			// Go back to beginning of matching //
+			data->CurMatchedIndex = 0;
 
 			// All is fine //
 			if(data->Positions.X == -1){

@@ -126,18 +126,32 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 			}
 			
 			continue;
+
 		} else if(*thingtype == "o"){
+			// Store the starting line for error reporting //
+			size_t objectstartline = itr.GetCurrentLine();
+
 			// Process an object //
-			if(TryToLoadObject(file, itr, *ofile, *thingtype)){
+			auto tmpobj = TryToLoadObject(file, itr, *ofile, *thingtype);
+
+			if(!tmpobj){
 
 				Logger::Get()->Error(L"ObjectFileProcessor: processing an object has failed");
 				succeeded = false;
 				break;
 			}
 
+			if(!ofile->AddObject(tmpobj)){
+
+				Logger::Get()->Error(L"ObjectFileProcessor: object has a conflicting name, name: \""+tmpobj->GetName()+L"\", file: "+file+L"("
+					+Convert::ToWstring(objectstartline)+L"), current line: "+Convert::ToWstring(itr.GetCurrentLine()));
+				succeeded = false;
+				break;
+			}
 
 
 			continue;
+
 		} else {
 			// It should be a named variable //
 
@@ -157,6 +171,7 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 				return false;
 			}
 
+			continue;
 		}
 
 		// It is something that cannot be handled //
@@ -194,6 +209,12 @@ shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVari
 	// This is often empty //
 	auto restofname = itr.GetUntilEqualityAssignment<string>(EQUALITYCHARACTER_TYPE_ALL, SPECIAL_ITERATOR_FILEHANDLING);
 
+	if(!restofname && preceeding.size() == 0){
+		// No name //
+		Logger::Get()->Error(L"ObjectFile named variable has no name ,file: "+file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
+		return NULL;
+	}
+
 	// We need to skip whitespace //
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
 
@@ -201,6 +222,9 @@ shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVari
 	auto valuestr = itr.GetUntilNextCharacterOrNothing<string>(';', SPECIAL_ITERATOR_FILEHANDLING);
 
 	if(valuestr){
+		// Skip the ';' //
+		itr.MoveToNext();
+
 		// Try to construct a named variable //
 
 		// Put the name together //
@@ -259,16 +283,13 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 	auto tmplarg = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
 		SPECIAL_ITERATOR_FILEHANDLING);
 
-	// Check where we are right now //
-	if(itr.GetCharacter() == ' '){
-		// Go somewhere proper //
-		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
-	}
+	// Go somewhere proper //
+	itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
 
-	std::vector<string*> templateargs;
+	std::vector<unique_ptr<string>> templateargs;
 
 	if(tmplarg && tmplarg->size()){
-		templateargs.push_back(tmplarg.release());
+		templateargs.push_back(move(tmplarg));
 	}
 
 	size_t startline = itr.GetCurrentLine();
@@ -280,7 +301,7 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 			SPECIAL_ITERATOR_FILEHANDLING);
 
 		if(tmplarg && tmplarg->size()){
-			templateargs.push_back(tmplarg.release());
+			templateargs.push_back(move(tmplarg));
 		}
 
 		// Potentially more //
@@ -288,8 +309,8 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 
 		if(itr.IsOutOfBounds()){
 			// Failed //
-			Logger::Get()->Error(L"ObjectFile template has invalid argument list (specifically the one looking like \"template<arg1, arg2>\")"
-				L", started file: "+file+L"("+Convert::ToWstring(startline)+L")");
+			Logger::Get()->Error(L"ObjectFile template has an invalid argument list (specifically the one looking like \"template<arg1, arg2>\")"
+				L", file: "+file+L"("+Convert::ToWstring(startline)+L")");
 			return false;
 		}
 	}
@@ -297,7 +318,9 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 	// We should now be at the '>' character //
 	if(itr.GetCharacter() != '>'){
 
-		DEBUG_BREAK;
+		Logger::Get()->Error(L"ObjectFile template has an invalid argument list (missing the ending '>') , file: "+file
+			+L"("+Convert::ToWstring(startline)+L")");
+		return false;
 	}
 
 	// Move over it //
@@ -318,8 +341,63 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 
 	if(!templateargs.size()){
 		// This is a template instantiation //
-		
-		DEBUG_BREAK;
+
+		// Next should be the argument list //
+		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+		// We should now be at the '<' character //
+		if(itr.GetCharacter() != '<'){
+
+			Logger::Get()->Error(L"ObjectFile template instance has an invalid argument list (missing starting '<' after name) , file: "+file
+				+L"("+Convert::ToWstring(startline)+L")");
+			return false;
+		}
+
+		// Load all the arguments //
+		auto instarg = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+			SPECIAL_ITERATOR_FILEHANDLING);
+
+		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+		std::vector<unique_ptr<string>> instanceargs;
+
+		if(instarg && instarg->size()){
+			instanceargs.push_back(move(instarg));
+		}
+
+		while(itr.GetCharacter() == ','){
+
+			// More arguments //
+			instarg = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+				SPECIAL_ITERATOR_FILEHANDLING);
+
+			if(instarg && instarg->size()){
+				instanceargs.push_back(move(instarg));
+			}
+
+			// Potentially more //
+			itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+
+			if(itr.IsOutOfBounds()){
+
+				// Failed //
+				Logger::Get()->Error(L"ObjectFile template has an invalid argument list (specifically the one after the name)"
+					L", file: "+file+L"("+Convert::ToWstring(startline)+L")");
+				return false;
+			}
+		}
+
+		// We should now be at the '>' character //
+		if(itr.GetCharacter() != '>'){
+
+			Logger::Get()->Error(L"ObjectFile template has an invalid argument list (missing the ending '>') , file: "+file
+				+L"("+Convert::ToWstring(startline)+L")");
+			return false;
+		}
+
+		// Create a template instantiation and add it to the file //
+
+
 		return true;
 	}
 
@@ -327,12 +405,36 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 	if(itr.GetCharacter() != ':'){
 
 		Logger::Get()->Error(L"ObjectFile template definition has no ':' after name (template and following object must be separated), "
-			L"file: "+file+L"("	+Convert::ToWstring(itr.GetCurrentLine())+L")");
+			L"file: "+file+L"("	+Convert::ToWstring(startline)+L")");
 		return false;
 	}
 
+	// Skip the o //
+	auto justchecking = itr.GetUntilNextCharacterOrNothing<string>('o', SPECIAL_ITERATOR_FILEHANDLING);
+
+	if(!justchecking){
+
+		Logger::Get()->Error(L"ObjectFile template definition is missing 'o' after ':', "
+			L"file: "+file+L"("	+Convert::ToWstring(startline)+L")");
+		return false;
+	}
+
+	// Move over it and the object should start there //
+	itr.MoveToNext();
+
 	// Now there should be an object definition //
-	DEBUG_BREAK;
+	auto templatesobject = TryToLoadObject(file, itr, obj, "");
+
+	if(!templatesobject){
+
+		Logger::Get()->Error(L"ObjectFile template definition has an invalid object, "
+			L"file: "+file+L"("	+Convert::ToWstring(startline)+L")");
+		return false;
+	}
+
+
+	// Create a template definition from the object //
+
 
 	return true;
 }
@@ -354,7 +456,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 
 	size_t startline = itr.GetCurrentLine();
 
-	std::vector<string*> prefixesvec;
+	std::vector<unique_ptr<string>> prefixesvec;
 
 	// Now there should be variable number of prefixes followed by a name //
 	while(itr.GetCharacter() != '"'){
@@ -363,15 +465,16 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 			SPECIAL_ITERATOR_FILEHANDLING);
 
 		if(oprefix && oprefix->size()){
-			prefixesvec.push_back(oprefix.release());
+			prefixesvec.push_back(move(oprefix));
 		}
+
+		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
 
 		if(itr.IsOutOfBounds()){
 			// Failed //
 			Logger::Get()->Error(L"ObjectFile object doesn't have a name, because prefixes are messed up"
 				L"(expected quoted string like this: \"o Type Prefix \'MyName\'\")"
 				L", started file: "+file+L"("+Convert::ToWstring(startline)+L")");
-			SAFE_DELETE_VECTOR(prefixesvec);
 			return NULL;
 		}
 	}
@@ -383,7 +486,6 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 
 		Logger::Get()->Error(L"ObjectFile object doesn't have a name (expected quoted string like this: \"o Type Prefix \'MyName\'\")"
 			L", started file: "+file+L"("+Convert::ToWstring(startline)+L")");
-		SAFE_DELETE_VECTOR(prefixesvec);
 		return NULL;
 	}
 
@@ -394,7 +496,6 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 		// There is a missing brace //
 
 		Logger::Get()->Error(L"ObjectFile object is missing a '{' after it's name, file: "+file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
-		SAFE_DELETE_VECTOR(prefixesvec);
 		return NULL;
 	}
 
@@ -403,19 +504,19 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 	wstring wstrname;
 	wstring wstrtname;
 
+	// Reserve space //
+	wstrname.reserve(oname->size());
+	wstrtname.reserve(typesname->size());
+	convprefix.reserve(prefixesvec.size());
+
 	try{
-		wstrname.reserve(oname->size());
+
 
 		utf8::utf8to16(oname->begin(), oname->end(), back_inserter(wstrname));
-
-	
-		wstrtname.reserve(typesname->size());
-
+		
 		utf8::utf8to16(typesname->begin(), typesname->end(), back_inserter(wstrtname));
 
 		// Convert the prefixes //
-		convprefix.reserve(prefixesvec.size());
-
 		for(size_t i = 0; i < prefixesvec.size(); i++){
 
 			unique_ptr<wstring> resstr(new wstring());
@@ -428,7 +529,6 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 
 	} catch(const utf8::invalid_utf8 &e1){
 
-		SAFE_DELETE_VECTOR(prefixesvec);
 		SAFE_DELETE_VECTOR(convprefix);
 
 		Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
@@ -436,8 +536,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 		return false;
 
 	} catch(const utf8::not_enough_room &e2){
-
-		SAFE_DELETE_VECTOR(prefixesvec);
+		
 		SAFE_DELETE_VECTOR(convprefix);
 
 		Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
@@ -449,8 +548,8 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 	// Create a new ObjectFileObject to hold our contents //
 	shared_ptr<ObjectFileObject> ourobj = make_shared<ObjectFileObjectProper>(wstrname, wstrtname, convprefix);
 
-	// These are now managed by the object //
-	prefixesvec.clear();
+	// These are now managed by the object (so we don't need to delete these) //
+	convprefix.clear();
 
 
 	// Now there should be the object contents //
@@ -464,13 +563,15 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 		int curcharacter = itr.GetCharacter();
 		size_t ourline = itr.GetCurrentLine();
 
+		// We want to be on the next character to continue processing //
+		itr.MoveToNext();
+
 		switch(curcharacter){
 		case 'l':
 			{
 				if(!TryToLoadVariableList(file, itr, *ourobj, startline)){
 
 					Logger::Get()->Error(L"ObjectFile object contains an invalid variable list, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
-					SAFE_DELETE_VECTOR(prefixesvec);
 					return false;
 				}
 			}
@@ -480,7 +581,6 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 				if(!TryToLoadTextBlock(file, itr, *ourobj, startline)){
 
 					Logger::Get()->Error(L"ObjectFile object contains an invalid text block, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
-					SAFE_DELETE_VECTOR(prefixesvec);
 					return false;
 				}
 			}
@@ -490,7 +590,6 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 				if(!TryToLoadScriptBlock(file, itr, *ourobj, startline)){
 
 					Logger::Get()->Error(L"ObjectFile object contains an invalid script block, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
-					SAFE_DELETE_VECTOR(prefixesvec);
 					return false;
 				}
 			}
@@ -509,7 +608,6 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 
 	// It didn't end properly //
 	Logger::Get()->Error(L"ObjectFile object is missing a closing '}' after it's contents, file: "+file+L"("+Convert::ToWstring(startline)+L")");
-	SAFE_DELETE_VECTOR(prefixesvec);
 	return NULL;
 }
 // ------------------------------------ //
@@ -572,10 +670,12 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, 
 	// Now we should get named variables until a } //
 	while(itr.GetCharacter() != '}'){
 		// First skip whitespace //
-		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+		itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
 		if(itr.GetCharacter() == '}'){
 			// Valid //
+			// Skip it so the object doesn't end here //
+			itr.MoveToNext();
 
 			// Add us to the object //
 			if(!obj.AddVariableList(ourobj)){
@@ -600,8 +700,8 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, 
 		// Add a variable to us //
 		if(!ourobj->AddVariable(loadvar)){
 
-			Logger::Get()->Error(L"ObjectFile variable list has conflicting name inside it's object, file: "+file+L"("+
-				Convert::ToWstring(itr.GetCurrentLine())+L")");
+			Logger::Get()->Error(L"ObjectFile variable list has conflicting name inside it's object, name: \""+loadvar->GetName()+
+				L"\", file: "+file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
 			return false;
 		}
 	}
@@ -675,10 +775,13 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const wstring &file, Str
 		if(itr.GetCharacter() == '}'){
 			// Valid //
 
+			// Skip it so the object doesn't end here //
+			itr.MoveToNext();
+
 			// Add us to the object //
 			if(!obj.AddTextBlock(ourobj)){
 
-					Logger::Get()->Error(L"ObjectFile variable list is missing the closing '}', file: "+file+L"("+Convert::ToWstring(ourstartline)+L")");
+				Logger::Get()->Error(L"ObjectFile text block has a conflicting name, file: "+file+L"("+Convert::ToWstring(ourstartline)+L")");
 				return false;
 			}
 

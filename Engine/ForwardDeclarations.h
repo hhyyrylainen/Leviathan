@@ -28,6 +28,9 @@ namespace Leviathan{
 		class TrailEmitter;
 	}
 
+	class ObjectFileTemplateInstance;
+	class ObjectFileTemplateDefinition;
+
 	class UTF8DataIterator;
 	template<class DTypeName> class SyncedPrimitive;
 	class SyncedResource;

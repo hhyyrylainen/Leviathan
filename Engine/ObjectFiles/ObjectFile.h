@@ -42,6 +42,15 @@ namespace Leviathan{
 		//! \todo Disallow adding templates with this function
 		DLLEXPORT bool AddObject(shared_ptr<ObjectFileObject> obj);
 
+
+		//! \brief Adds a ObjectFileTemplateInstance to this file
+		DLLEXPORT void AddTemplateInstance(shared_ptr<ObjectFileTemplateInstance> tiobj);
+
+		//! \brief Adds a ObjectFileTemplateInstance to this file
+		//! \return True when properly added, false if the name collides
+		DLLEXPORT bool AddTemplate(shared_ptr<ObjectFileTemplateDefinition> templatedef);
+
+
 		//! \brief Adds a ObjectFileObject to this file
 		//! \warning The pointer will be deleted by this
 		//! \see AddObject
@@ -72,16 +81,22 @@ namespace Leviathan{
 		DLLEXPORT bool IsObjectNameInUse(const wstring &name) const;
 
 
+		//! \brief Instantiates all all templates to actual objects
+		//! \return True when all templates had a parent (all names were valid) and no errors occurred
+		DLLEXPORT bool GenerateTemplatedObjects();
+
+
 	protected:
 
 		//! Holds the defined objects
 		std::vector<shared_ptr<ObjectFileObject>> DefinedObjects;
 
 		//! Holds all the template definitions
-		int TemplateDefinitions;
+		std::vector<shared_ptr<ObjectFileTemplateDefinition>> TemplateDefinitions;
+
 
 		//! Holds all objects that are template instantiations
-		int TemplateInstantiations;
+		std::vector<shared_ptr<ObjectFileTemplateInstance>> TemplateInstantiations;
 
 
 		//! Holds all the named variables that were in the file

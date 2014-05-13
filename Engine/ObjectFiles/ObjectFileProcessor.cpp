@@ -15,6 +15,7 @@
 #include "utf8/checked.h"
 #include "Script/ScriptInterface.h"
 #include "Script/ScriptScript.h"
+#include "ObjectFileTemplates.h"
 using namespace Leviathan;
 // ------------------------------------ //
 ObjectFileProcessor::ObjectFileProcessor(){}
@@ -194,7 +195,11 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 	}
 
 	// Generate the template instantiations and it's done //
+	if(!ofile->GenerateTemplatedObjects()){
 
+		Logger::Get()->Error(L"ObjectFileProcessor: file has invalid templates (either bad names, or instances without definitions), file: "+file);
+		return NULL;
+	}
 
 	return ofile;
 }
@@ -396,6 +401,10 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 		}
 
 		// Create a template instantiation and add it to the file //
+		auto ourval = make_shared<ObjectFileTemplateInstance>(*name, instanceargs);
+
+		// Add it //
+		obj.AddTemplateInstance(ourval);
 
 
 		return true;
@@ -434,6 +443,23 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 
 
 	// Create a template definition from the object //
+	auto createdtemplate = ObjectFileTemplateDefinition::CreateFromObject(*name, templatesobject.get(), templateargs);
+
+	if(!createdtemplate){
+
+		Logger::Get()->Error(L"ObjectFile template failed to create from an object, file: "+file+L"("+Convert::ToWstring(startline)+L")");
+		return false;
+	}
+
+
+	// Now add it //
+	if(!obj.AddTemplate(createdtemplate)){
+
+
+		Logger::Get()->Error(L"ObjectFile template has a conflicting name, name: \""+Convert::StringToWstring(*name)+L"\", "
+			L"file: "+file+L"("	+Convert::ToWstring(startline)+L")");
+		return false;
+	}
 
 
 	return true;

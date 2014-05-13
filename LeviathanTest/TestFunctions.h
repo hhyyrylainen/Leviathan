@@ -698,6 +698,9 @@ bool ObjectFileParserTest(const int &tests){
 		return true;
 	}
 	
+	// Make sure the loading is correct //
+	ofile = ObjectFileProcessor::ProcessObjectFile(TestFile);
+
 
 	// Load the file to memory and only process from memory to test actual performance //
 

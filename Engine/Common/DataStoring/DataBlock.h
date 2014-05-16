@@ -155,7 +155,8 @@ namespace Leviathan{
 	};
 
 
-	// main DataBlock class //
+	//! \brief Main DataBlock class
+	//! \todo Add move constructor and move assignment operators
 	template<class DBlockT>
 	class DataBlock : public DataBlockAll{
 	public:
@@ -269,7 +270,8 @@ namespace Leviathan{
 		DBlockT* Value;
 	};
 
-	// pointer specialized version //
+	//! A pointer specialized version of DataBlock
+	//! \todo Add support for move operators to this too
 	template<class DBlockT>
 	class DataBlock<DBlockT*> : public DataBlockAll{
 	public:
@@ -405,7 +407,7 @@ namespace Leviathan{
 	TVALRESOLVERTYPE(VoidPtrBlock, DATABLOCK_TYPE_VOIDPTR);
 
 
-	// DataBlock interface classes //
+	//! \brief Non-template class for working with all types of DataBlocks
 	class VariableBlock{
 	public:
 

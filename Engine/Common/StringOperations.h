@@ -332,8 +332,8 @@ namespace Leviathan{
 			StringTypeN out;
 
 			if(toreplace.size() < 1){
-				// Might want to assert here //
-				return StringTypeN();
+				// Don't replace anything //
+				return data;
 			}
 
 			int copystart = -1;

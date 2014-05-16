@@ -15,6 +15,7 @@ namespace Leviathan{
 	//! \brief Interface for object file objects to implement
 	//! \see ObjectFileObjectProper
 	class ObjectFileObject : public Object{
+		friend ObjectFileTemplateDefinition;
 	public:
 		
 		DLLEXPORT virtual ~ObjectFileObject();
@@ -47,10 +48,24 @@ namespace Leviathan{
 		//! \return The object if it exists or NULL
 		DLLEXPORT virtual ObjectFileList* GetListWithName(const wstring &name) const = 0;
 
+		//! \brief Gets the number of lists in this object
+		DLLEXPORT virtual size_t GetListCount() const = 0;
+
+		//! \brief Gets a list from an index
+		//! \except ExceptionInvalidArgument when the index is out of bounds
+		DLLEXPORT virtual ObjectFileList* GetList(size_t index) const THROWS = 0;
+
 
 		//! \brief Gets an ObjectFileTextBlock that matches the name
 		//! \return The object if it exists or NULL
 		DLLEXPORT virtual ObjectFileTextBlock* GetTextBlockWithName(const wstring &name) const = 0;
+
+		//! \brief Gets the number of text blocks in this object
+		DLLEXPORT virtual size_t GetTextBlockCount() const = 0;
+
+		//! \brief Gets a text block from an index
+		//! \except ExceptionInvalidArgument when the index is out of bounds
+		DLLEXPORT virtual ObjectFileTextBlock* GetTextBlock(size_t index) const THROWS = 0;
 
 		//! \brief Returns a shared_ptr to our script
 		DLLEXPORT virtual shared_ptr<ScriptScript> GetScript() const = 0;

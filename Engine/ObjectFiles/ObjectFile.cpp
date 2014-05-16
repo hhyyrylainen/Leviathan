@@ -91,3 +91,8 @@ DLLEXPORT ObjectFileObject* Leviathan::ObjectFile::GetObjectWithType(const wstri
 	// Nothing found //
 	return NULL;
 }
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::ObjectFile::GenerateTemplatedObjects(){
+	// Empty methods fail //
+	return false;
+}

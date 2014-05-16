@@ -10,6 +10,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 #include "Common/DataStoring/DataBlock.h"
 #include "Common/StringOperations.h"
+#include "utf8/checked.h"
 
 double Convert::DegreesToRadians(float degrees){
 	return (degrees*(PI/180.f));
@@ -139,6 +140,55 @@ wchar_t Convert::ToLower(const wchar_t &chara){
 		return (wchar_t)(val+32);
 	}
 	return chara;
+}
+// ------------------------------------ //
+DLLEXPORT std::wstring Leviathan::Convert::Utf8ToUtf16(const string &utf8str){
+
+	// Store enough memory for the result //
+	wstring results;
+	results.reserve(utf8str.size());
+
+	try {
+
+	utf8::utf8to16(utf8str.begin(), utf8str.end(), back_inserter(results));
+
+	} catch(utf8::invalid_code_point &e1){
+
+		e1;
+		return wstring();
+
+	} catch(utf8::not_enough_room &e2){
+
+		e2;
+		return wstring();
+	}
+
+	// The result is now done //
+	return results;
+}
+
+DLLEXPORT std::string Leviathan::Convert::Utf16ToUtf8(const wstring &utf16str){
+	// Store enough memory for the result //
+	string results;
+	results.reserve(utf16str.size());
+
+	try {
+
+		utf8::utf16to8(utf16str.begin(), utf16str.end(), back_inserter(results));
+
+	} catch(utf8::invalid_code_point &e1){
+
+		e1;
+		return string();
+
+	} catch(utf8::not_enough_room &e2){
+
+		e2;
+		return string();
+	}
+
+	// The result is now done //
+	return results;
 }
 // ----------------- type checks ------------------- //
 int Convert::WstringTypeCheck(const wstring& data, int typecheckfor){

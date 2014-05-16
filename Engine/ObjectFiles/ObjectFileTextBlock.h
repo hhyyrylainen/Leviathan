@@ -22,6 +22,8 @@ namespace Leviathan{
 		//! \return True when added, false if the UTF8 encoding is invalid
 		DLLEXPORT virtual bool AddTextLine(const string &line) = 0;
 
+		//! \brief Adds an UTF16 encoded line
+		DLLEXPORT virtual void AddTextLine(const wstring &line) = 0;
 
 		//! \brief Returns the number of text lines
 		DLLEXPORT virtual size_t GetLineCount() const = 0;

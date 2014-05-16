@@ -194,12 +194,12 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse, m
 		return;
 	}
 
-	// try to figure out what kind of number it is //
+	// Try to figure out what kind of a number it is //
 	size_t decimalspot = valuetoparse.find_first_of(L'.');
 	if(decimalspot != wstring::npos){
 		// has decimal separator //
 
-		// check does it need more decimal digits than float has //
+		// check does it need more decimal digits than a float has //
 
 		if(valuetoparse.size()-1-decimalspot > FLT_DIG){
 			// create a double //
@@ -213,7 +213,8 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse, m
 
 		return;
 	}
-	// should be plain old int //
+
+	// Should be a plain old int //
 	BlockData = new IntBlock(Convert::WstringTo<int>(valuetoparse));
 }
 

@@ -5,9 +5,9 @@
 #endif
 #include "ObjectFileObject.h"
 #include "Common\StringOperations.h"
+#include "Script\ScriptInterface.h"
 using namespace Leviathan;
 // ------------------------------------ //
-
 DLLEXPORT Leviathan::ObjectFileTemplateDefinition::ObjectFileTemplateDefinition(const string &name, std::vector<unique_ptr<string>> &parameters, 
 	unique_ptr<ObjectFileObject> obj) : Name(name), Parameters(move(parameters)), RepresentingObject(move(obj))
 {
@@ -23,6 +23,10 @@ DLLEXPORT Leviathan::ObjectFileTemplateDefinition::ObjectFileTemplateDefinition(
 
 }
 // ------------------------------------ //
+DLLEXPORT const string& Leviathan::ObjectFileTemplateDefinition::GetName() const{
+	return Name;
+}
+// ------------------------------------ //
 DLLEXPORT shared_ptr<ObjectFileTemplateDefinition> Leviathan::ObjectFileTemplateDefinition::CreateFromObject(const string &name, ObjectFileObject* 
 	obj, std::vector<unique_ptr<string>> &templateargs)
 {
@@ -35,6 +39,12 @@ DLLEXPORT shared_ptr<ObjectFileTemplateDefinition> Leviathan::ObjectFileTemplate
 DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefinition::CreateInstanceFromThis(const ObjectFileTemplateInstance 
 	&instanceargs)
 {
+	// First make sure that template counts match, return NULL otherwise //
+	if(Parameters.size() != instanceargs.Arguments.size() || WParameters.size() != instanceargs.WArguments.size()){
+
+		return NULL;
+	}
+
 
 	// Make sure these are not templated //
 	wstring newname = RepresentingObject->GetName();
@@ -42,21 +52,21 @@ DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefi
 
 	std::vector<wstring*> newprefixes;
 
-	ReplaceWstringWithTemplateArguments(newname, instanceargs.Arguments);
-	ReplaceWstringWithTemplateArguments(newtype, instanceargs.Arguments);
+	ReplaceWstringWithTemplateArguments(newname, instanceargs.WArguments);
+	ReplaceWstringWithTemplateArguments(newtype, instanceargs.WArguments);
 
 	for(size_t i = 0; i < RepresentingObject->GetPrefixesCount(); i++){
 
 		unique_ptr<wstring> newprefix(new wstring(RepresentingObject->GetPrefix(i)));
 
-		ReplaceWstringWithTemplateArguments(*newprefix, instanceargs.Arguments);
+		ReplaceWstringWithTemplateArguments(*newprefix, instanceargs.WArguments);
 
 		newprefixes.push_back(newprefix.release());
 	}
 
 
 	// We somehow need to detect all places that might have the template parameters and change them //
-	unique_ptr<ObjectFileObject> internalobj(new ObjectFileObjectProper(newname, newtype, newprefixes));
+	unique_ptr<ObjectFileTemplateObject> internalobj(new ObjectFileTemplateObject(newname, newtype, newprefixes));
 
 	// Do the contents the same way //
 	for(size_t i = 0; i < RepresentingObject->GetListCount(); i++){
@@ -66,7 +76,7 @@ DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefi
 
 		wstring actlistname = curlist->GetName();
 
-		ReplaceWstringWithTemplateArguments(actlistname, instanceargs.Arguments);
+		ReplaceWstringWithTemplateArguments(actlistname, instanceargs.WArguments);
 
 		unique_ptr<ObjectFileList> listobj(new ObjectFileListProper(actlistname));
 
@@ -80,7 +90,7 @@ DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefi
 			// First check the name //
 			wstring newvarlistname = vallist[a]->GetName();
 
-			ReplaceWstringWithTemplateArguments(newvarlistname, instanceargs.Arguments);
+			ReplaceWstringWithTemplateArguments(newvarlistname, instanceargs.WArguments);
 
 			vector<VariableBlock*> newvaluesforthing;
 			newvaluesforthing.reserve(vallist[a]->GetVariableCount());
@@ -109,7 +119,7 @@ DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefi
 					}
 
 					// Try to replace //
-					ReplaceWstringWithTemplateArguments(valstring, instanceargs.Arguments);
+					ReplaceWstringWithTemplateArguments(valstring, instanceargs.WArguments);
 
 					// Parse the result into a variable block //
 					try{
@@ -148,7 +158,7 @@ DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefi
 
 		wstring actblockname = curblock->GetName();
 
-		ReplaceWstringWithTemplateArguments(actblockname, instanceargs.Arguments);
+		ReplaceWstringWithTemplateArguments(actblockname, instanceargs.WArguments);
 
 		unique_ptr<ObjectFileTextBlock> textblock(new ObjectFileTextBlockProper(actblockname));
 
@@ -160,7 +170,7 @@ DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefi
 			wstring curline = curblock->GetLine(a);
 
 
-			ReplaceWstringWithTemplateArguments(curline, instanceargs.Arguments);
+			ReplaceWstringWithTemplateArguments(curline, instanceargs.WArguments);
 
 			textblock->AddTextLine(curline);
 		}
@@ -173,11 +183,46 @@ DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefi
 	Logger::Get()->Warning(L"ObjectFile templates are still missing script block source template replacing");
 
 
+
+	// Only the first segment should be used //
+	auto scrptwrap = internalobj->GetScript();
+	if(scrptwrap){
+
+		auto scrptmodule = scrptwrap->GetModuleSafe();
+
+		if(scrptmodule && scrptmodule->GetScriptSegmentCount() > 0){
+
+			// We can try to specialize the code //
+			auto onlysegment = scrptmodule->GetScriptSegment(0);
+
+			const string& resultingsource = *onlysegment->SourceCode;
+
+			const string& newsource = ReplaceStringTemplateArguments(resultingsource, instanceargs.Arguments);
+
+
+			shared_ptr<ScriptScript> newscript(new ScriptScript(ScriptInterface::Get()->GetExecutor()->CreateNewModule(scrptmodule->GetName(), 
+				scrptmodule->GetSource())));
+
+			// Add the new script to the object //
+			shared_ptr<ScriptSourceFileData> newsourcesegment(new ScriptSourceFileData(onlysegment->SourceFile, onlysegment->StartLine, 
+				newsource));
+
+			auto newmod = newscript->GetModuleSafe();
+			
+			newmod->AddScriptSegment(newsourcesegment);
+			newmod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
+
+			internalobj->AddScriptScript(newscript);
+		}
+	}
+
+
+
 	// Return the object //
-	return unique_ptr<ObjectFileTemplateObject>(new ObjectFileTemplateObject(internalobj));
+	return internalobj;
 }
 // ------------------------------------ //
-void Leviathan::ObjectFileTemplateDefinition::ReplaceWstringWithTemplateArguments(wstring &target, const std::vector<unique_ptr<string>> &args){
+void Leviathan::ObjectFileTemplateDefinition::ReplaceWstringWithTemplateArguments(wstring &target, const std::vector<unique_ptr<wstring>> &args){
 
 	assert(WParameters.size() == args.size() && "Wrong number of args passed to ReplaceWstringWithTemplateArguments, doesn't match with master template");
 
@@ -186,6 +231,26 @@ void Leviathan::ObjectFileTemplateDefinition::ReplaceWstringWithTemplateArgument
 
 		target = StringOperations::Replace<wstring>(target, *WParameters[i], *args[i]);
 	}
+}
+
+std::string Leviathan::ObjectFileTemplateDefinition::ReplaceStringTemplateArguments(const string &target, const std::vector<unique_ptr<string>> &args){
+
+	assert(Parameters.size() == args.size() && "Wrong number of args passed to ReplaceStringTemplateArguments, doesn't match with master template");
+
+	string result;
+
+	if(Parameters.size() == 0)
+		return target;
+
+	result = StringOperations::Replace<string>(target, *Parameters[0], *args[0]);
+
+	// Look for strings matching our parameters //
+	for(size_t i = 1; i < Parameters.size(); i++){
+
+		result = StringOperations::Replace<string>(result, *Parameters[i], *args[i]);
+	}
+
+	return result;
 }
 // ------------------ ObjectFileTemplateInstance ------------------ //
 DLLEXPORT Leviathan::ObjectFileTemplateInstance::ObjectFileTemplateInstance(const string &mastertmplname, std::vector<unique_ptr<string>> 
@@ -201,6 +266,8 @@ DLLEXPORT Leviathan::ObjectFileTemplateInstance::ObjectFileTemplateInstance(cons
 	}
 }
 // ------------------ ObjectFileTemplateObject ------------------ //
-DLLEXPORT Leviathan::ObjectFileTemplateObject::ObjectFileTemplateObject(unique_ptr<ObjectFileObject> &intobj) : IntObject(move(intobj)){
+DLLEXPORT Leviathan::ObjectFileTemplateObject::ObjectFileTemplateObject(const wstring &name, const wstring &typesname, vector<wstring*> prefix) : 
+	ObjectFileObjectProper(name, typesname, prefix)
+{
 
 }

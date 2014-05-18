@@ -86,6 +86,11 @@ namespace Leviathan{
 		DLLEXPORT bool GenerateTemplatedObjects();
 
 
+		//! \brief Finds the template definition matching the name
+		//! \return The found object or NULL
+		//! \todo Allow template overloading with different number of parameters
+		DLLEXPORT shared_ptr<ObjectFileTemplateDefinition> FindTemplateDefinition(const string &name) const;
+
 	protected:
 
 		//! Holds the defined objects

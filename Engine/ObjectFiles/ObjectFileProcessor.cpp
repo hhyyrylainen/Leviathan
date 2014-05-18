@@ -905,7 +905,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, S
 	auto ourmod = ourobj->GetModule();
 	
 
-	ourmod->GetBuilder().AddSectionFromMemory(Convert::WstringToString(file).c_str(), scriptdata->c_str(), ourstartline);
+	ourmod->AddScriptSegment(Convert::WstringToString(file), ourstartline, *scriptdata);
 	ourmod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
 
 

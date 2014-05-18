@@ -12,7 +12,7 @@
 
 namespace Leviathan{
 
-	enum SCRIPTBUILDSTATE{SCRIPTBUILDSTATE_EMPTY, SCRIPTBUILDSTATE_READYTOBUILD, SCRIPTBUILDSTATE_BUILT};
+	enum SCRIPTBUILDSTATE{SCRIPTBUILDSTATE_EMPTY, SCRIPTBUILDSTATE_READYTOBUILD, SCRIPTBUILDSTATE_BUILT, SCRIPTBUILDSTATE_FAILED};
 
 
 #define LISTENERNAME_ONSHOW				L"OnShow"
@@ -36,7 +36,7 @@ namespace Leviathan{
 #define LISTENERVALUE_ONTICK			108
 
 
-	// used to store function's parameter info //
+	//! used to store function's parameter info
 	struct FunctionParameterInfo{
 		FunctionParameterInfo(int id, int sizes) : FunctionID(id), ParameterTypeIDS(sizes), ParameterDeclarations(sizes),
 			MatchingDataBlockTypes(sizes){};
@@ -52,7 +52,8 @@ namespace Leviathan{
 		wstring ReturnTypeDeclaration;
 		int ReturnMatchingDataBlock;
 	};
-	// some data that is stored when a listener is found //
+
+	//! some data that is stored when a listener is found
 	struct ValidListenerData{
 		ValidListenerData(asIScriptFunction* funcptr, wstring* name, wstring* metadataend);
 		ValidListenerData(asIScriptFunction* funcptr, wstring* name, wstring* metadataend, wstring* generictypename);
@@ -64,7 +65,22 @@ namespace Leviathan{
 		unique_ptr<wstring> GenericTypeName;
 	};
 
-	// holds everything related to "one" script needed to run it an build it //
+	//! \brief Represents a section of script source file
+	struct ScriptSourceFileData{
+
+		ScriptSourceFileData(const string &file, int line, const string &code);
+
+
+		string SourceFile;
+		int StartLine;
+
+		//! The source is stored here to allow saving it to a file
+		//! This being a shared pointer allows for more efficient copying
+		shared_ptr<string> SourceCode;
+	};
+
+
+	// \brief Holds everything related to "one" script needed to run it an build it
 	class ScriptModule{
 		// friend to be able to delete static objects //
 		friend ScriptExecutor;
@@ -73,18 +89,23 @@ namespace Leviathan{
 		DLLEXPORT ~ScriptModule();
 
 		DLLEXPORT FunctionParameterInfo* GetParamInfoForFunction(asIScriptFunction* func);
-		// builds the script if applicable and returns the associated module //
+
+		//! \brief Builds the script if applicable
+		//! \return The associated module or NULL if build fails
 		DLLEXPORT asIScriptModule* GetModule();
+
 		DLLEXPORT shared_ptr<ScriptScript> GetScriptInstance();
 
-		DLLEXPORT inline CScriptBuilder& GetBuilder(){
-			return *ScriptBuilder;
-		}
+
 		DLLEXPORT inline wstring GetName(){
 			return Name;
 		}
 		DLLEXPORT inline int GetID(){
 			return ID;
+		}
+
+		DLLEXPORT const string& GetSource() const{
+			return Source;
 		}
 
 		DLLEXPORT inline const string& GetIncompleteSourceCode(){
@@ -103,6 +124,30 @@ namespace Leviathan{
 		DLLEXPORT inline void SetBuildState(const SCRIPTBUILDSTATE &state){
 			ScriptState = state;
 		}
+		
+		//! \brief Gets the number of code segments
+		//! \see GetScriptSegment
+		DLLEXPORT size_t GetScriptSegmentCount() const;
+
+		//! \brief Gets the data associated with a code segment
+		//! \param index The index of the segment in the vector, use GetScriptSegmentCount to get max index
+		//! \return The segments data or NULL
+		DLLEXPORT shared_ptr<ScriptSourceFileData> GetScriptSegment(size_t index) const;
+
+
+		//! \brief Adds a new script section
+		//! \return True when the file is not included already (and it got added), false otherwise
+		DLLEXPORT FORCE_INLINE bool AddScriptSegment(const string &file, int line, const string &code){
+
+			return AddScriptSegment(shared_ptr<ScriptSourceFileData>(new ScriptSourceFileData(file, line, code)));
+		}
+
+		//! \brief The actual implementation of AddScriptSegment
+		DLLEXPORT bool AddScriptSegment(shared_ptr<ScriptSourceFileData> data);
+
+		//! \brief Adds an entire file as a script segment
+		//! \return True when the file is added, false if the file was already added
+		DLLEXPORT bool AddScriptSegmentFromFile(const string &file);
 
 
 		DLLEXPORT void PrintFunctionsInModule();
@@ -119,25 +164,36 @@ namespace Leviathan{
 		void _BuildListenerList();
 		void _ProcessMetadataForFunc(asIScriptFunction* func, asIScriptModule* mod);
 		std::map<wstring, shared_ptr<ValidListenerData>>::iterator _GetIteratorOfListener(const wstring &listenername, const wstring* generictype = NULL);
+
 		// ------------------------------------ //
+
 		wstring Name;
 		string ModuleName;
 		string Source;
 		string ObjectFileLoadedScriptCode;
 		int ID;
 
-		SCRIPTBUILDSTATE ScriptState;
-		// flag for determining do we need to update listener data //
+
+		//! Flag for determining if we need to update listener data
 		bool ListenerDataBuilt;
 
+		SCRIPTBUILDSTATE ScriptState;
 		CScriptBuilder* ScriptBuilder;
 
-		std::vector<FunctionParameterInfo*> FuncParameterInfos;
-		// ------------------------------------ //
 
-		// map of found listener functions //
+		//! The raw script source code for returning to writing to files
+		std::vector<shared_ptr<ScriptSourceFileData>> ScriptSourceSegments;
+
+
+
+		std::vector<FunctionParameterInfo*> FuncParameterInfos;
+
+
+		//! Map of found listener functions
 		std::map<wstring, shared_ptr<ValidListenerData>> FoundListenerFunctions;
 
+
+		//! Last ID of a ScriptModule, used to generate unique IDs for modules
 		static int LatestAssigned;
 	};
 

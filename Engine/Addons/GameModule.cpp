@@ -81,7 +81,7 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 		// Get the newly created module //
 		mod = Scripting->GetModule();
 
-		mod->GetBuilder().AddSectionFromFile(Convert::WstringToString(SourceFile).c_str());
+		mod->AddScriptSegmentFromFile(Convert::WstringToString(SourceFile));
 		mod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
 
 

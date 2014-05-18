@@ -18,10 +18,20 @@ namespace Leviathan{
 		DLLEXPORT ScriptScript(const ScriptScript &other);
 		DLLEXPORT ~ScriptScript();
 
-
+		//! \brief Returns an unsafe pointer to the module
+		//! \deprecated GetModuleSafe should be used instead, will probably be around for a while
 		DLLEXPORT inline ScriptModule* GetModule(){
 			return ScriptsModule.lock().get();
 		}
+
+
+		//! \brief Locks the weak pointer and returns the shared_ptr
+		//! \note This should be used instead of GetModule if some methods are called on the pointer
+		DLLEXPORT inline shared_ptr<ScriptModule> GetModuleSafe(){
+
+			return ScriptsModule.lock();
+		}
+
 
 
 	private:

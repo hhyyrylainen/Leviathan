@@ -123,18 +123,37 @@ void Leviathan::ScriptModule::_FillParameterDataObject(int typeofas, asUINT* par
 DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(){
 	// we need to check build state //
 	if(ScriptState == SCRIPTBUILDSTATE_READYTOBUILD){
-		// build it //
+		// Add the source files before building //
+
+		for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
+			if(ScriptBuilder->AddSectionFromMemory(ScriptSourceSegments[i]->SourceFile.c_str(), ScriptSourceSegments[i]->SourceCode->c_str(),
+				ScriptSourceSegments[i]->StartLine) < 0)
+			{
+				Logger::Get()->Error(L"ScriptModule: GetModule: failed to build unbuilt module (adding source files failed), "+GetInfoWstring());
+				ScriptState = SCRIPTBUILDSTATE_FAILED;
+				return NULL;
+			}
+		}
+
+
+		// Build it //
 		int result = ScriptBuilder->BuildModule();
 		Logger::Get()->Save();
 		if(result < 0){
 			// failed to build //
 			Logger::Get()->Error(L"ScriptModule: GetModule: failed to build unbuilt module, "+GetInfoWstring());
+			ScriptState = SCRIPTBUILDSTATE_FAILED;
 			return NULL;
 		}
 
 		ScriptState = SCRIPTBUILDSTATE_BUILT;
+
+	} else if(ScriptState == SCRIPTBUILDSTATE_FAILED){
+
+		return NULL;
 	}
-	// get module from engine //
+
+	// Get module from the engine //
 	return ScriptInterface::Get()->GetExecutor()->GetASEngine()->GetModule(ModuleName.c_str(), asGM_ONLY_IF_EXISTS);
 }
 // ------------------------------------ //
@@ -403,6 +422,49 @@ trytofindinscriptfolderincludecallback:
 	// if we got here the file couldn't be found //
 	return -1;
 }
+// ------------------------------------ //
+DLLEXPORT size_t Leviathan::ScriptModule::GetScriptSegmentCount() const{
+	return ScriptSourceSegments.size();
+}
+
+DLLEXPORT shared_ptr<ScriptSourceFileData> Leviathan::ScriptModule::GetScriptSegment(size_t index) const{
+	if(index >= ScriptSourceSegments.size())
+		return NULL;
+
+	return ScriptSourceSegments[index];
+}
+
+DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegment(shared_ptr<ScriptSourceFileData> data){
+	// Check is it already there //
+	for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
+
+		if(ScriptSourceSegments[i]->SourceFile == data->SourceFile && (abs(ScriptSourceSegments[i]->StartLine-data->StartLine) <= 2)){
+
+			return false;
+		}
+	}
+
+	ScriptSourceSegments.push_back(data);
+	return true;
+}
+
+DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const string &file){
+	// Check is it already there //
+	for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
+
+		if(ScriptSourceSegments[i]->SourceFile == file){
+
+			return false;
+		}
+	}
+
+	// Load the source code from the file //
+	string scriptdata;
+	FileSystem::ReadFileEntirely(file, scriptdata);
+
+	ScriptSourceSegments.push_back(shared_ptr<ScriptSourceFileData>(new ScriptSourceFileData(file, 1, scriptdata)));
+	return true;
+}
 // ------------------ ValidListenerData ------------------ //
 Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, wstring* name, wstring* metadataend) 
 	: FuncPtr(funcptr), ListenerName(name), RestOfMeta(metadataend)
@@ -421,4 +483,10 @@ Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, wstr
 Leviathan::ValidListenerData::~ValidListenerData(){
 	// decrease reference  //
 	FuncPtr->Release();
+}
+// ------------------ ScriptSourceFileData ------------------ //
+Leviathan::ScriptSourceFileData::ScriptSourceFileData(const string &file, int line, const string &code) : SourceFile(file), StartLine(line), 
+	SourceCode(new string(code))
+{
+
 }

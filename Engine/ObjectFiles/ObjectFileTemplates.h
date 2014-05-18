@@ -48,46 +48,19 @@ namespace Leviathan{
 
 
 	//! \brief Class that represents an object created from a template
-	class ObjectFileTemplateObject : public ObjectFileObject{
+	class ObjectFileTemplateObject : public ObjectFileObjectProper{
 	public:
 
 		//! \brief Creates an ObjectFileTemplateObject as a wrapper around an ObjectFileObject
-		DLLEXPORT ObjectFileTemplateObject(unique_ptr<ObjectFileObject> &intobj);
+		//! \see ObjectFileObjectProper
+		DLLEXPORT ObjectFileTemplateObject(const wstring &name, const wstring &typesname, vector<wstring*> prefix);
+		
 
 
-		DLLEXPORT virtual const wstring& GetName() const;
+		DLLEXPORT virtual bool IsThisTemplated() const{
 
-		DLLEXPORT virtual bool AddVariableList(unique_ptr<ObjectFileList> &list){
-			return false;
+			return true;
 		}
-
-		DLLEXPORT virtual bool AddTextBlock(unique_ptr<ObjectFileTextBlock> &tblock){
-			return false;
-		}
-
-		DLLEXPORT virtual void AddScriptScript(shared_ptr<ScriptScript> script){
-			return;
-		}
-
-		DLLEXPORT virtual const wstring& GetTypeName() const;
-
-		DLLEXPORT virtual ObjectFileList* GetListWithName(const wstring &name) const;
-
-		DLLEXPORT virtual ObjectFileTextBlock* GetTextBlockWithName(const wstring &name) const;
-
-		DLLEXPORT virtual shared_ptr<ScriptScript> GetScript() const;
-
-		DLLEXPORT virtual size_t GetPrefixesCount() const;
-
-		DLLEXPORT virtual const wstring& GetPrefix(size_t index) const THROWS;
-
-
-	protected:
-
-
-		//! The internal object that holds most of our data
-		unique_ptr<ObjectFileObject> IntObject;
-
 
 	};
 
@@ -100,6 +73,11 @@ namespace Leviathan{
 
 		DLLEXPORT ObjectFileTemplateInstance(const string &mastertmplname, std::vector<unique_ptr<string>> &templateargs);
 
+
+		DLLEXPORT inline const string& GetNameOfParentTemplate() const{
+
+			return TemplatesName;
+		}
 
 
 	protected:
@@ -127,6 +105,8 @@ namespace Leviathan{
 		//! \warning CreateFromObject might change in the future so please don't use this function directly
 		DLLEXPORT ObjectFileTemplateDefinition(const string &name, std::vector<unique_ptr<string>> &parameters, unique_ptr<ObjectFileObject> obj);
 
+		//! \brief Gets the name of this template
+		DLLEXPORT const string& GetName() const;
 
 
 		//! \brief Creates a ObjectFileTemplateDefinition from an ObjectFileObject and a parameter list
@@ -143,8 +123,8 @@ namespace Leviathan{
 
 	protected:
 
-		void ReplaceWstringWithTemplateArguments(wstring &target, const std::vector<unique_ptr<string>> &args);
-
+		void ReplaceWstringWithTemplateArguments(wstring &target, const std::vector<unique_ptr<wstring>> &args);
+		string ReplaceStringTemplateArguments(const string &target, const std::vector<unique_ptr<string>> &args);
 
 		// ------------------------------------ //
 

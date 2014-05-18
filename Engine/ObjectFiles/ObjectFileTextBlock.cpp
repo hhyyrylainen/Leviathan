@@ -56,6 +56,11 @@ DLLEXPORT bool Leviathan::ObjectFileTextBlockProper::AddTextLine(const string &l
 	Lines.push_back(converted.release());
 	return true;
 }
+
+DLLEXPORT void Leviathan::ObjectFileTextBlockProper::AddTextLine(const wstring &line){
+	Lines.push_back(new wstring(line));
+}
+
 // ------------------ ObjectFileTextBlock ------------------ //
 DLLEXPORT Leviathan::ObjectFileTextBlock::~ObjectFileTextBlock(){
 

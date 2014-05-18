@@ -55,6 +55,8 @@ namespace Leviathan{
 
 		DLLEXPORT virtual bool AddTextLine(const string &line);
 
+		DLLEXPORT virtual void AddTextLine(const wstring &line);
+
 		DLLEXPORT virtual size_t GetLineCount() const;
 
 		DLLEXPORT virtual const wstring& GetLine(size_t index) const THROWS;

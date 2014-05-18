@@ -108,6 +108,39 @@ DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlockWi
 	// Not found //
 	return NULL;
 }
+
+DLLEXPORT size_t Leviathan::ObjectFileObjectProper::GetListCount() const{
+	return Contents.size();
+}
+
+DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetList(size_t index) const THROWS{
+	// Check the index //
+	if(index >= Contents.size()){
+
+		throw ExceptionInvalidArgument(L"index is out of range", index, __WFUNCTION__, L"index", Convert::ToWstring(index));
+	}
+
+	return Contents[index];
+}
+
+DLLEXPORT size_t Leviathan::ObjectFileObjectProper::GetTextBlockCount() const{
+	return TextBlocks.size();
+}
+
+DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlock(size_t index) const THROWS{
+	// Check the index //
+	if(index >= TextBlocks.size()){
+
+		throw ExceptionInvalidArgument(L"index is out of range", index, __WFUNCTION__, L"index", Convert::ToWstring(index));
+	}
+
+	return TextBlocks[index];
+}
+
+DLLEXPORT bool Leviathan::ObjectFileObjectProper::IsThisTemplated() const{
+	return false;
+}
+
 // ------------------ ObjectFileObject ------------------ //
 DLLEXPORT Leviathan::ObjectFileObject::~ObjectFileObject(){
 

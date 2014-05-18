@@ -79,6 +79,13 @@ namespace Leviathan{
 		//! \see GetPrefixesCount
 		DLLEXPORT virtual const wstring& GetPrefix(size_t index) const THROWS = 0;
 
+
+		//! \brief Returns true when this is a templated object
+		//!
+		//! This is used while saving to a file to avoid writing template objects
+		DLLEXPORT virtual bool IsThisTemplated() const = 0;
+
+
 	protected:
 
 		ObjectFileObject(){};
@@ -113,6 +120,15 @@ namespace Leviathan{
 
 		DLLEXPORT virtual const wstring& GetPrefix(size_t index) const THROWS;
 
+		DLLEXPORT virtual bool IsThisTemplated() const;
+
+		DLLEXPORT virtual size_t GetListCount() const;
+
+		DLLEXPORT virtual ObjectFileList* GetList(size_t index) const THROWS;
+
+		DLLEXPORT virtual size_t GetTextBlockCount() const;
+
+		DLLEXPORT virtual ObjectFileTextBlock* GetTextBlock(size_t index) const THROWS;
 
 	protected:
 

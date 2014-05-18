@@ -9,7 +9,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ObjectFileTemplateDefinition::ObjectFileTemplateDefinition(const string &name, std::vector<unique_ptr<string>> &parameters, 
-	unique_ptr<ObjectFileObject> obj) : Name(name), Parameters(move(parameters)), RepresentingObject(move(obj))
+	shared_ptr<ObjectFileObject> obj) : Name(name), Parameters(move(parameters)), RepresentingObject(obj)
 {
 	// Convert the Parameters //
 	WParameters.reserve(Parameters.size());
@@ -27,11 +27,11 @@ DLLEXPORT const string& Leviathan::ObjectFileTemplateDefinition::GetName() const
 	return Name;
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<ObjectFileTemplateDefinition> Leviathan::ObjectFileTemplateDefinition::CreateFromObject(const string &name, ObjectFileObject* 
-	obj, std::vector<unique_ptr<string>> &templateargs)
+DLLEXPORT  shared_ptr<ObjectFileTemplateDefinition> Leviathan::ObjectFileTemplateDefinition::CreateFromObject(const string &name, 
+	shared_ptr<ObjectFileObject> obj, std::vector<unique_ptr<string>> &templateargs)
 {
 	// This could be changed to a function that tears down the object and creates mess of templating objects //
-	shared_ptr<ObjectFileTemplateDefinition> resultobj(new ObjectFileTemplateDefinition(name, templateargs, unique_ptr<ObjectFileObject>(obj)));
+	shared_ptr<ObjectFileTemplateDefinition> resultobj(new ObjectFileTemplateDefinition(name, templateargs, obj));
 
 	return resultobj;
 }
@@ -180,8 +180,6 @@ DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefi
 	}
 
 	// Process the script source //
-	Logger::Get()->Warning(L"ObjectFile templates are still missing script block source template replacing");
-
 
 
 	// Only the first segment should be used //

@@ -6,36 +6,31 @@ Why = true;
 template<TemplatedName, TemplatedVariable> ObjectTemplate: o TestObject "TemplatedName"{
     l datalist{
         
-        The Meaning = TemplatedVariable
+        The Meaning = TemplatedVariable;
     }
 }
 
-objects {
-    o TestData nice_prefix type1_special "Test1" {
-        l list {
-            this= not this;
-            oh=2;
-            no:false;
-        }
-        t block {
-            great story here
-            which spans
-            multiple lines
-            !
-        }
-        s scripts {
-            name = TestScript;
-            body {
-                int GetRandomNumber(){
-                    // good choice //
-                    return 1;
-                }
-            @%};     
-        }
+o TestData nice_prefix type1_special "Test1" {
+    l list {
+        this= not this;
+        oh=2;
+        no:false;
     }
+    t block {
+        great story here
+        which spans
+        multiple lines
+        !
+    }
+    s TestScript{
+        int GetRandomNumber(){
+            // good choice //
+            return 1;
+        }
+    @%};
 }
 
-o Just "Something" "nice wow" ID(29){ lol
+o Just Something ID(29) "nice wow"{
     t why{
         even bother
         putting
@@ -44,23 +39,18 @@ o Just "Something" "nice wow" ID(29){ lol
     l list {
         this= not this;
         oh=2;
-        no:false
+        no:false;
     }
-    t why{
-        even bother
-        putting
-        stuff = here;
-    }
-    s scripts {
-        body {
-            int GetRandomNumber(){
-                // good choice //
-                return 42;
-            }
-        @%};     
-    }
+    s {
+        int GetRandomNumber(){
+            // A good choice //
+            return 42;
+        }
+    @%};
 }
 
 // Template testing //
 template<> ObjectTemplate<TemplateGenObject, 42>
 template<> ObjectTemplate<"OtherTemplatedThing", "42">
+
+

@@ -699,7 +699,7 @@ bool ObjectFileParserTest(const int &tests){
 	}
 	
 	// Make sure the loading is correct //
-	ofile = ObjectFileProcessor::ProcessObjectFile(TestFile);
+	auto rofile = ObjectFileProcessor::ProcessObjectFile(TestFile);
 
 
 	// Load the file to memory and only process from memory to test actual performance //
@@ -1080,10 +1080,9 @@ bool TestTaskTiming(const int &tests, Engine* engine){
 	vector<__int64> times;
 
 	// Queue some tasks //
-	engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new RepeatCountedDelayedTask(boost::bind<void>([](int &count, boost::promise<bool> &done,
-		__int64 starttime, vector<__int64>* times)
+	engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new RepeatCountedDelayedTask(boost::bind<void>([](int &count, 
+		boost::promise<bool> &done, __int64 starttime, vector<__int64>* times)
 	{
-		Logger::Get()->Info(L"Test function ran");
 		count++;
 
 		times->push_back(Misc::GetTimeMs64()-starttime);
@@ -1114,7 +1113,7 @@ bool TestTaskTiming(const int &tests, Engine* engine){
 
 	__int64 timeasmilliplain = timeasmilli.count();
 
-	if(timepassed < boost::chrono::milliseconds(400) || timepassed > boost::chrono::milliseconds(600)){
+	if(timepassed < boost::chrono::milliseconds(400) || timepassed > boost::chrono::milliseconds(610)){
 		// It failed //
 		TESTFAIL;
 	}

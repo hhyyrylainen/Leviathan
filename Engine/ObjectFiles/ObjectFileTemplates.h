@@ -103,7 +103,7 @@ namespace Leviathan{
 
 		//! \brief Creates a ObjectFileTemplateDefinition
 		//! \warning CreateFromObject might change in the future so please don't use this function directly
-		DLLEXPORT ObjectFileTemplateDefinition(const string &name, std::vector<unique_ptr<string>> &parameters, unique_ptr<ObjectFileObject> obj);
+		DLLEXPORT ObjectFileTemplateDefinition(const string &name, std::vector<unique_ptr<string>> &parameters, shared_ptr<ObjectFileObject> obj);
 
 		//! \brief Gets the name of this template
 		DLLEXPORT const string& GetName() const;
@@ -111,7 +111,7 @@ namespace Leviathan{
 
 		//! \brief Creates a ObjectFileTemplateDefinition from an ObjectFileObject and a parameter list
 		//! \param obj The object from which to construct the template, the pointer will be deleted by this
-		DLLEXPORT static shared_ptr<ObjectFileTemplateDefinition> CreateFromObject(const string &name, ObjectFileObject* obj, 
+		DLLEXPORT static shared_ptr<ObjectFileTemplateDefinition> CreateFromObject(const string &name, shared_ptr<ObjectFileObject> obj, 
 			std::vector<unique_ptr<string>> &templateargs);
 
 		//! \brief Creates an instance from this template
@@ -140,7 +140,7 @@ namespace Leviathan{
 
 
 		//! The object from which the instances are created
-		unique_ptr<ObjectFileObject> RepresentingObject;
+		shared_ptr<ObjectFileObject> RepresentingObject;
 	};
 
 

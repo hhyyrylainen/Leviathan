@@ -11,20 +11,24 @@
 #include "Common/StringOperations.h"
 #include "Script/ScriptRunningSetup.h"
 #include "Script/ScriptInterface.h"
+#include "CEGUI/widgets/PushButton.h"
 using namespace Leviathan;
 using namespace Gui;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, shared_ptr<ScriptScript> script 
 	/*= NULL*/) : EventableScriptObject(script), OwningInstance(owner), FileID(fakeid), Name(name), 
-	ID(IDFactory::GetID())
+	ID(IDFactory::GetID()), TargetElement(NULL)
 {
 	
 }
 
 DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){
+	// Unregister events to avoid access violations //
+	_UnsubscribeAllEvents();
+
 	// script has smart pointer //
 
-	// unregister all non-Rocket events //
+	// unregister all non-CEGUI events //
 	UnRegisterAllEvents();
 }
 // ------------------------------------ //
@@ -70,7 +74,19 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 			tmpptr->StartMonitoring(listenon->GetValues());
 		}
 
+		// Find the CEGUI object //
+
+		auto foundobject = owner->GetMainContext()->getRootWindow()->getChild(Convert::WstringToString(tmpptr->Name));
+
+		if(foundobject){
+			// Set the object //
+			tmpptr->ConnectElement(foundobject);
+		}
+
 		tmpptr->_HookListeners();
+
+
+
 		tempobjects.push_back(tmpptr.release());
 		return true;
 	}
@@ -97,14 +113,10 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(){
 			continue;
 		}
 
-		// check for specific case //
-		if(*containedlisteners[i]->ListenerName == L"Init"){
-			// call now the init event //
+		// Check is this a CEGUI event which will be registered //
+		if(_HookCEGUIEvent(Name))
+			continue;
 
-		} else if(*containedlisteners[i]->ListenerName == L"Release"){
-			// call later the release event //
-
-		}
 
 		// look for global events //
 		EVENT_TYPE etype = ResolveStringToType(*containedlisteners[i]->ListenerName);
@@ -137,9 +149,9 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 
 			ScriptRunningSetup sargs;
 			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
-			// run the script //
+
+			// Run the script //
 			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
-			// do something with result //
 		}
 	} else {
 		// generic event is passed //
@@ -153,11 +165,128 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 
 			ScriptRunningSetup sargs;
 			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->GetTypePtr())).SetArguments(Args);
-			// run the script //
+
+			// Run the script //
 			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
-			// do something with result //
 		}
 	}
+}
+// ------------------------------------ //
+std::map<wstring, const CEGUI::String*> Leviathan::Gui::BaseGuiObject::CEGUIEventNames;
+
+void Leviathan::Gui::BaseGuiObject::ReleaseCEGUIEventNames(){
+
+	boost::strict_lock<boost::mutex> lockthis(CEGUIEventMutex);
+
+	CEGUIEventNames.clear();
+}
+
+void Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine(boost::strict_lock<boost::mutex> &locked){
+	// Return if it already has data //
+	if(CEGUIEventNames.size())
+		return;
+
+
+	// Fill the map //
+	CEGUIEventNames = boost::assign::map_list_of
+		(L"OnClick", &CEGUI::PushButton::EventClicked);
+
+
+}
+
+boost::mutex Leviathan::Gui::BaseGuiObject::CEGUIEventMutex;
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Gui::BaseGuiObject::ConnectElement(CEGUI::Window* windojb){
+	GUARD_LOCK_THIS_OBJECT();
+	// Unconnect from previous ones //
+	if(TargetElement){
+
+		DEBUG_BREAK;
+	}
+
+	// Store the pointer //
+	TargetElement = windojb;
+
+	// Register for the destruction event //
+	TargetElement->subscribeEvent(CEGUI::Window::EventDestructionStarted, CEGUI::Event::Subscriber(&BaseGuiObject::EventDestroyWindow, this));
+}
+
+
+bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const wstring &name){
+
+	boost::strict_lock<boost::mutex> lockthis(CEGUIEventMutex);
+	// Try to match the name //
+
+	auto iter = CEGUIEventNames.find(name);
+
+	if(iter == CEGUIEventNames.end())
+		return false;
+
+	// It is a valid event name //
+	GUARD_LOCK_THIS_OBJECT();
+
+
+	// Return if we have no element //
+	if(!TargetElement){
+
+		// It is a CEGUI event so return true even though it isn't handled //
+		return true;
+	}
+
+	// Switch on special cases where special handling can be used //
+	CEGUI::Event::Connection createdconnection;
+
+
+	if(iter->second == &CEGUI::PushButton::EventClicked){
+		createdconnection = TargetElement->subscribeEvent(*iter->second, CEGUI::Event::Subscriber(&BaseGuiObject::EventOnClick, this));
+	} else {
+		createdconnection = TargetElement->subscribeEvent(*iter->second, CEGUI::Event::Subscriber(&BaseGuiObject::EventGenericCEGUI, this));
+	}
+
+	CEGUIRegisteredEvents.push_back(createdconnection);
+
+	return true;
+}
+
+
+void Leviathan::Gui::BaseGuiObject::_UnsubscribeAllEvents(){
+	GUARD_LOCK_THIS_OBJECT();
+	// Loop an disconnect them all //
+	for(auto iter = CEGUIRegisteredEvents.begin(); iter != CEGUIRegisteredEvents.end(); ++iter){
+
+		(*iter)->disconnect();
+	}
+
+	CEGUIRegisteredEvents.clear();
+}
+// ------------------------------------ //
+void Leviathan::Gui::BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &args){
+	GUARD_LOCK_THIS_OBJECT();
+
+	// This should be safe //
+	auto res = static_cast<const CEGUI::WindowEventArgs&>(args);
+
+	assert(res.window == TargetElement && "BaseGuiObject received destruction notification for unsubscribed window");
+
+
+	// Clear our target and unsubscribe from all, by just clearing the vector //
+	CEGUIRegisteredEvents.clear();
+
+	TargetElement = NULL;
+
+}
+
+void Leviathan::Gui::BaseGuiObject::EventGenericCEGUI(const CEGUI::EventArgs &args){
+	// Pass to a script listener //
+
+
+
+}
+
+void Leviathan::Gui::BaseGuiObject::EventOnClick(const CEGUI::EventArgs &args){
+	// Pass the click event to the script //
+
+
 }
 
 

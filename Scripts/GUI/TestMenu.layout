@@ -30,5 +30,7 @@
 			<Property name="Text" value="" />
 			<Property name="TooltipText" value="World Location X" />
 		</Window>
+        <Window name="TestButton" type="TaharezLook/Button">
+        </Window>
 	</Window>
 </GUILayout>

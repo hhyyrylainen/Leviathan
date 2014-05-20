@@ -55,6 +55,10 @@ namespace Gui{
 		DLLEXPORT int GetObjectIndexFromId(int id);
 		DLLEXPORT BaseGuiObject* GetObject(unsigned int index);
 
+
+		//! \brief Returns the main GUI context
+		DLLEXPORT CEGUI::GUIContext* GetMainContext();
+
 		// function split into peaces //
 		DLLEXPORT bool LoadCollection(vector<shared_ptr<ObjectFileObject>> &data, ObjectFileObject &collectiondata);
 

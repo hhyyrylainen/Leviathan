@@ -1121,64 +1121,6 @@ bool TestTaskTiming(const int &tests, Engine* engine){
 
 	return Failed;
 }
-
-
-//bool TestTextRenderer(const int &tests, Engine* engine){
-//
-//	bool Failed = false;
-//
-//	const int TestRenderedID = IDFactory::GetID();
-//
-//	const Float2 ImaginaryBox(0.8f, 0.4f);
-//
-//	const wstring texttotest(L"this text should have adjusted length inside box the same as rendered length");
-//
-//	RenderingFont* font = engine->GetGraphics()->GetTextRenderer()->GetFontFromName(L"Arial");
-//
-//	size_t FitChar = 0;
-//	float EntirelyFit;
-//	float Hybrid;
-//
-//	Float2 AdjustedFinals(0);
-//
-//	font->AdjustTextSizeToFitBox(ImaginaryBox, texttotest, GUI_POSITIONABLE_COORDTYPE_RELATIVE, FitChar, EntirelyFit, Hybrid, AdjustedFinals, 0.4f);
-//
-//	wstring adjustedtext(texttotest.size()-1 == FitChar ? texttotest: texttotest.substr(0, 1+FitChar)+L"...");
-//
-//	size_t FitCharnew = 0;
-//
-//	float DLLength = font->CalculateDotsSizeAtScale(Hybrid);
-//
-//
-//	float length = font->CalculateTextLengthAndLastFittingExpensive(Hybrid, GUI_POSITIONABLE_COORDTYPE_RELATIVE, adjustedtext, ImaginaryBox.X,
-//		FitCharnew, DLLength);
-//
-//	float cheaplength = font->CalculateTextLengthAndLastFittingNonExpensive(Hybrid, GUI_POSITIONABLE_COORDTYPE_RELATIVE, adjustedtext, ImaginaryBox.X,
-//		FitCharnew, DLLength);
-//
-//	int elength = (int)(length*DataStore::Get()->GetWidth());
-//	int clength = (int)(cheaplength*DataStore::Get()->GetWidth());
-//
-//	Int2 rbox(0);
-//	int baselinereceiver;
-//	// now render it and check does the length match //
-//	font->RenderSentenceToTexture(TestRenderedID, Hybrid, adjustedtext, rbox, baselinereceiver);
-//
-//	DebugVariableNotifier::PrintVariables();
-//
-//	Float2 RenderedToBox = Float2(rbox.X/(float)DataStore::Get()->GetWidth(), rbox.Y/(float)DataStore::Get()->GetHeight());
-//
-//	// check stuff //
-//	if(RenderedToBox.X > length){
-//
-//		Failed = true;
-//	}
-//
-//
-//	return Failed;
-//}
-
-
 // --------------------------------------------- //
 bool TestFunc(const int &tests){
 	bool Failed = false;

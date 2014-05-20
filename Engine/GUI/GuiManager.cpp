@@ -382,6 +382,10 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseFileVisibleState(bool state){
 	GUARD_LOCK_THIS_OBJECT();
 	// Set mouse drawing flag //
 }
+// ------------------------------------ //
+DLLEXPORT CEGUI::GUIContext* Leviathan::Gui::GuiManager::GetMainContext(){
+	return GuiContext;
+}
 // ----------------- collection managing --------------------- //
 void GuiManager::AddCollection(GuiCollection* add){
 	GUARD_LOCK_THIS_OBJECT();

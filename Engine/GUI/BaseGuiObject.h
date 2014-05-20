@@ -16,9 +16,7 @@
 namespace Leviathan{ namespace Gui{
 
 
-	class GuiManager;
-	// this class' functions are thread safe (*should* be) //// mutex for reference counting and possibly for other functions for thread safety //
-	// \todo make the above statement true...
+	//! \brief Represents a single GUI element that can use scripts to react to events
 	class BaseGuiObject : public ReferenceCounted, public EventableScriptObject{
 		friend GuiManager;
 	public:
@@ -45,11 +43,29 @@ namespace Leviathan{ namespace Gui{
 		}
 		
 		DLLEXPORT static bool LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects,	ObjectFileObject& dataforthis);
+
+
+		//! \brief Sets this objects target CEGUI widget
+		//!
+		//! This will also register the widget for unconnect events to not use deleted pointers
+		DLLEXPORT void ConnectElement(CEGUI::Window* windojb);
+
+
 	protected:
-		// this function will try to hook all wanted listeners to Rocket element //
+
+		// this function will try to hook all wanted listeners to CEGUI elements //
 		void _HookListeners();
 		virtual void _CallScriptListener(Event** pEvent, GenericEvent** event2);
+
+		//! \brief Registers for an event if it is a CEGUI event
+		bool _HookCEGUIEvent(const wstring &name);
+
+
+		//! \brief Clears CEGUIRegisteredEvents and unsubscribes from all
+		void _UnsubscribeAllEvents();
+
 		// ------------------------------------ //
+
 
 		int ID;
 		int FileID;
@@ -57,6 +73,43 @@ namespace Leviathan{ namespace Gui{
 		wstring Name;
 
 		GuiManager* OwningInstance;
+
+		//! The element that this script wrapper targets
+		CEGUI::Window* TargetElement;
+
+
+		//! List of registered CEGUI events. This is used for unsubscribing
+		std::vector<CEGUI::Event::Connection> CEGUIRegisteredEvents;
+
+		// ------------------------------------ //
+		//! This map collects all the available CEGUI events which can be hooked into
+		static std::map<wstring, const CEGUI::String*> CEGUIEventNames;
+
+	public:
+
+		//! \brief Frees CEGUIEventNames
+		//!
+		//! Only call this right before the Engine shuts down
+		static void ReleaseCEGUIEventNames();
+
+		//! \brief Constructs CEGUIEventNames
+		//!
+		//! This is safe to call at any time since the map is only filled once
+		static void MakeSureCEGUIEventsAreFine(boost::strict_lock<boost::mutex> &locked);
+
+
+		//! The mutex required for MakeSureCEGUIEventsAreFine
+		static boost::mutex CEGUIEventMutex;
+
+
+	protected:
+
+
+		void EventDestroyWindow(const CEGUI::EventArgs &args);
+
+		void EventGenericCEGUI(const CEGUI::EventArgs &args);
+
+		void EventOnClick(const CEGUI::EventArgs &args);
 	};
 
 }}

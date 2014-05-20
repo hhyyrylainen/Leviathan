@@ -20,6 +20,21 @@ o GuiCollection "OnKeeper"{
     }
 }
 
+// ------------------ Testing ------------------ //
+o GuiObject ID(200) "DemoWindow/TestButton"{
+    s{
+        // A test script for CEGUI events //
+        [@Listener="OnClick"]
+        int TestPrint(CEGUI::Event@ event){
+            
+            Print("Test function!");
+            Print("Event type: "+event.getType());
+            return 1;
+        }
+        
+    @%};
+}
+
 // ------------------ Main menu objects ------------------ //
 template<> PGCTemplate<TopLevelMenu, true>
 

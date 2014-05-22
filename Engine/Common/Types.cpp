@@ -35,41 +35,33 @@ unsigned char* AllocatedBinaryBlock::Get(int& Elements){
 
 
 // ---- IntWstring ---- //
-IntWstring::IntWstring(){
-	Wstr = NULL;
-	Value = -1;
+IntWstring::IntWstring() : Value(-1){
+	
 }
-IntWstring::IntWstring(const wstring& wstr, int value){
-	Wstr = new wstring(wstr);
-	Value = value;
+
+IntWstring::IntWstring(const wstring& wstr, int value) : Wstr(new wstring(wstr)), Value(value){
+
 }
 IntWstring::~IntWstring(){
-	if(Wstr){
-		delete Wstr;
-		Wstr = NULL;
-	}
+
 }
 
 wstring* IntWstring::GetString(){
-	return Wstr;
+	return Wstr.get();
 }
 
 int IntWstring::GetValue(){
 	return Value;
 }
 
-void IntWstring::SetString(wstring& wstr){
-	if(Wstr){
-		delete Wstr;
-		Wstr = NULL;
-	}
-	Wstr = new wstring(wstr);
+void IntWstring::SetString(const wstring& wstr){
+
+	Wstr = shared_ptr<wstring>(new wstring(wstr));
 }
 
 void IntWstring::SetValue(int value){
 	Value = value;
 }
-
 // ---- Int2 ---- //
 Int2::Int2(){
 	X = 0;

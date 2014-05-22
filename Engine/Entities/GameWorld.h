@@ -29,7 +29,7 @@ namespace Leviathan{
 	public:
 		DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = NULL, const float &tvar = 0.f, RayCastData* ownerptr = NULL);
 
-		DLLEXPORT RayCastHitEntity* operator =(const RayCastHitEntity& other);
+		DLLEXPORT RayCastHitEntity& operator =(const RayCastHitEntity& other);
 
 		// Compares the hit entity with NULL //
 		DLLEXPORT bool HasHit();

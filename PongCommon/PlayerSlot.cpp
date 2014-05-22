@@ -4,6 +4,7 @@
 #include "PlayerSlot.h"
 #endif
 #include "Entities/Bases/BasePhysicsObject.h"
+#include "Iterators/StringIterator.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) : Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_EMPTY), 
@@ -118,44 +119,6 @@ void Pong::PlayerSlot::InputDisabled(){
 int Pong::PlayerSlot::GetScore(){
 	return Score;
 }
-
-void Pong::PlayerSlot::SetColourFromRML(string rml){
-
-	Float4 colourparsed(1.f, 1.f, 1.f, 1.f);
-
-	StringIterator iter(Convert::StringToWstring(rml));
-
-	auto ret = iter.GetNextNumber(Leviathan::DECIMALSEPARATORTYPE_DOT);
-
-	if(ret){
-
-		colourparsed.X = Convert::WstringToFloat(*ret)/255.f;
-	}
-
-	ret = iter.GetNextNumber(Leviathan::DECIMALSEPARATORTYPE_DOT);
-
-	if(ret){
-
-		colourparsed.Y = Convert::WstringToFloat(*ret)/255.f;
-	}
-
-	ret = iter.GetNextNumber(Leviathan::DECIMALSEPARATORTYPE_DOT);
-
-	if(ret){
-
-		colourparsed.Z = Convert::WstringToFloat(*ret)/255.f;
-	}
-
-	ret = iter.GetNextNumber(Leviathan::DECIMALSEPARATORTYPE_DOT);
-
-	if(ret){
-
-		colourparsed.W = Convert::WstringToFloat(*ret)/255.f;
-	}
-
-	// Set the actual colour //
-	SetColour(colourparsed);
-}
 // ------------------------------------ //
 void Pong::PlayerSlot::AddEmptySubSlot(){
 	SplitSlot = new PlayerSlot(this->Slot, Parent);
@@ -185,11 +148,6 @@ bool Pong::PlayerSlot::DoesPlayerIDMatchThisOrParent(int id){
 		return ParentSlot->DoesPlayerIDMatchThisOrParent(id);
 
 	return false;
-}
-
-std::string Pong::PlayerSlot::GetColourAsRML(){
-	return "rgba("+Convert::ToString((int)(Colour.X*255))+", "+Convert::ToString((int)(Colour.Y*255))+", "
-		+Convert::ToString((int)(Colour.Z*255))+", "+Convert::ToString((int)(Colour.W*255))+")";
 }
 
 int Pong::PlayerSlot::CurrentPlayerIdentifier = 0;

@@ -1,4 +1,5 @@
-GUIBaseFile = "PongMenu.layout";
+//GUIBaseFile = "PongMenu.layout";
+GUIBaseFile = "TestMenu.layout";
 
 // ------------------ Templates for GUI objects ------------------ //
 template<GCollectName, GCollectEnabled> PGCTemplate: o GuiCollection "GCollectName"{
@@ -21,14 +22,13 @@ o GuiCollection "OnKeeper"{
 }
 
 // ------------------ Testing ------------------ //
-o GuiObject ID(200) "DemoWindow/TestButton"{
+o GuiObject ID(200) "TestButton"{
     s{
         // A test script for CEGUI events //
         [@Listener="OnClick"]
-        int TestPrint(CEGUI::Event@ event){
+        int TestPrint(GuiObject@ instance){
             
             Print("Test function!");
-            Print("Event type: "+event.getType());
             return 1;
         }
         

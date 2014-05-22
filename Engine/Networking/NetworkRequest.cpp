@@ -60,7 +60,7 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(CustomRequestData* newddata,
 
 }
 
-DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket){
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket) : TimeOutValue(-1){
 	// Get the heading data //
 	if(!(frompacket >> ResponseID)){
 

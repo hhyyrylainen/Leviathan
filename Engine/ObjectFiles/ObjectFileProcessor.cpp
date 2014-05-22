@@ -219,9 +219,21 @@ shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVari
 
 	if(!restofname && preceeding.size() == 0){
 		// No name //
-		Logger::Get()->Error(L"ObjectFile named variable has no name, file: "+file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
+		Logger::Get()->Error(L"ObjectFile named variable is malformed, unknown block?, file: "+file+L"("+
+			Convert::ToWstring(itr.GetCurrentLine())+L")");
 		return NULL;
 	}
+
+	// There needs to be a separator, the last character should be it //
+	int lastchar = itr.GetPreviousCharacter();
+
+	if(lastchar != '=' && lastchar != ':'){
+
+		// Invalid format //
+		Logger::Get()->Error(L"ObjectFile block isn't a named variable, unknown block?, file: "+file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
+		return NULL;
+	}
+
 
 	size_t startline = itr.GetCurrentLine();
 
@@ -707,7 +719,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const wstring &file, 
 
 
 	// Now we should get named variables until a } //
-	while(itr.GetCharacter() != '}'){
+	while(!itr.IsOutOfBounds()){
 		// First skip whitespace //
 		itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
@@ -808,7 +820,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const wstring &file, Str
 
 
 	// Now we should get named variables until a } //
-	while(itr.GetCharacter() != '}'){
+	while(!itr.IsOutOfBounds()){
 		// First skip whitespace //
 		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
 

@@ -20,8 +20,6 @@ DLLEXPORT Leviathan::GameModule::GameModule(const wstring &modulename, const wst
 	}
 
 	// Load the file //
-	std::vector<shared_ptr<NamedVariableList>> headervars;
-
 	auto ofile = ObjectFileProcessor::ProcessObjectFile(file);
 
 	if(!ofile){

@@ -37,10 +37,10 @@ namespace Leviathan{
 		wstring* GetString();
 		int GetValue();
 
-		void SetString(wstring& wstr);
+		void SetString(const wstring& wstr);
 		void SetValue(int value);
 
-		wstring* Wstr;
+		shared_ptr<wstring> Wstr;
 		int Value;
 	};
 

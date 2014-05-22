@@ -11,7 +11,7 @@ using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Entity::TrackEntityController::TrackEntityController(GameWorld* world) : BaseObject(IDFactory::GetID(), world), ReachedNode(-1),
-	NodeProgress(0.f), ChangeSpeed(0.f), ForceTowardsPoint(TRACKCONTROLLER_DEFAULT_APPLYFORCE)
+	NodeProgress(0.f), ChangeSpeed(0.f), ForceTowardsPoint(TRACKCONTROLLER_DEFAULT_APPLYFORCE), RequiresUpdate(true)
 {
 
 }

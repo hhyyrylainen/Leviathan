@@ -543,7 +543,7 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 		} else if (Keynumber == 3){
 			pressed = CEGUI::X1Button;
 
-		} else if (Keynumber == 3){
+		} else if (Keynumber == 4){
 			pressed = CEGUI::X2Button;
 
 		} else {
@@ -559,8 +559,6 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 
 bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id){
 	CheckInputState();
-
-	const OIS::MouseState& mstate = arg.state;
 
 	// pass event to active Rocket context //
 	int differences = arg.state.buttons^LastFrameDownMouseButtons;
@@ -594,7 +592,7 @@ bool Leviathan::Window::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButt
 	} else if (Keynumber == 3){
 		pressed = CEGUI::X1Button;
 
-	} else if (Keynumber == 3){
+	} else if (Keynumber == 4){
 		pressed = CEGUI::X2Button;
 
 	} else {

@@ -114,7 +114,7 @@ int main(int argcount, char* args[]){
 			&app);
 
 #ifdef _WIN32
-		app.PassCommandLine(Convert::StringToWstringNonRef(lpCmdLine));
+		app.PassCommandLine(Convert::StringToWstring(lpCmdLine));
 #else
 		wstring commandline = L"";
 		for(int i = 1; i < argcount; i++){

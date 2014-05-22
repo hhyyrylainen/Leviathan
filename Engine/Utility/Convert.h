@@ -19,15 +19,15 @@ namespace Leviathan{
 		DLLEXPORT static std::wstring FloatToWstring(const float &i);
 		DLLEXPORT static std::wstring CharToWstring(const char &i);
 
-		//! \brief Function That converts a string to wide string preserving character codes (not utf8)
+		//! \brief Converts a string to wide string preserving character codes (not utf8)
 		//! \see Utf8ToUtf16
 		DLLEXPORT static std::wstring StringToWstring(const std::string &str);
 
-		//! \brief Function That converts a string to wide string preserving character codes (not utf8)
+		//! \brief Converts a char* string to a wstring (no utf8 translation)
 		//! \see Utf8ToUtf16
-		DLLEXPORT static std::wstring StringToWstringNonRef(const std::string str);
+		DLLEXPORT static std::wstring CharPtrToWstring(const char* charsource);
 
-		//! \brief Function that converts a wstring to a string (potentially messing up characters)
+		//! \brief Converts a wstring to a string (potentially messing up characters)
 		//! \see Utf16ToWstring
 		DLLEXPORT static std::string WstringToString(const std::wstring &str);
 

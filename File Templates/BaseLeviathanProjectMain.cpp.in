@@ -24,11 +24,11 @@ int main(int argcount, char* args[]){
 #endif
     
 #ifdef _WIN32
-    wstring commandline = Convert::StringToWstringNonRef(lpCmdLine);
-#else    
+    wstring commandline = Convert::StringToWstring(lpCmdLine);
+#else
     wstring commandline = L"";
     for(int i = 1; i < argcount; i++){
-        commandline += L" "+Leviathan::Convert::StringToWstring(args[i]);
+        commandline += L" "+Leviathan::Convert::CharPtrToWstring(args[i]);
     }
 #endif
     

@@ -5,22 +5,8 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-FpsCounter::FpsCounter(){
-	passedtime = 0;
-	SinceLast = 0;
-}
-// ------------------------------------ //
-bool FpsCounter::Init(){
+FpsCounter::FpsCounter() : 	passedtime(0), MaxFps(0), MinFps(0), Fps(0), Framecount(0), SinceLast(0){
 
-	passedtime = 0;
-	MaxFps = 0;
-	MinFps = 0;
-	Fps = 0;
-	Framecount = 0;
-
-	SinceLast = 0;
-
-	return true;
 }
 // ------------------------------------ //
 void FpsCounter::Frame(int timepassed){

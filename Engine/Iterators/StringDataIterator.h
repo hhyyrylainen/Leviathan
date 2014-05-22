@@ -86,7 +86,12 @@ namespace Leviathan{
 		//! Wraps a string reference for StringIterator
 		//! \note The string should not be changed while the iterator is used
 		DLLEXPORT StringClassDataIterator(const STRType &str) : OurString(str), Current(0), End(str.size()){
-			
+			// If the first character is a newline the line number needs to be incremented immediately //
+			if(OurString.size() && OurString[0] == '\n'){
+
+				++CurrentLineNumber;
+			}
+
 		}
 
 		virtual bool GetNextCharCode(int &codepointreceiver, size_t forward){
@@ -164,6 +169,12 @@ namespace Leviathan{
 		//! \note The string should not be changed while the iterator is used
 		DLLEXPORT StringClassPointerIterator(STRType* str) : OurString(str), Current(0){
 			End = str ? str->size(): 0;
+
+			// If the first character is a newline the line number needs to be incremented immediately //
+			if(OurString && OurString->size() && OurString->at(0) == '\n'){
+
+				++CurrentLineNumber;
+			}
 		}
 
 		virtual bool GetNextCharCode(int &codepointreceiver, size_t forward){

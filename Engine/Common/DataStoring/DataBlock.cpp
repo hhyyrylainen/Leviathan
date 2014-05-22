@@ -107,12 +107,12 @@ DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
 
 		return true;
 	}
-
+    int values;
 	// stress testing //
 	for(int i = 0; i < tests; i++){
 
 		unique_ptr<VariableBlock> tempnewblock(new VariableBlock(new IntBlock(2524646)));
-		int values = *tempnewblock;
+		values = *tempnewblock;
 
 		*tempnewblock = new FloatBlock(2546);
 

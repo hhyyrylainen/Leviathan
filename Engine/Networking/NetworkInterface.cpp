@@ -12,7 +12,7 @@
 #include "SyncedVariables.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkInterface::NetworkInterface(){
+DLLEXPORT Leviathan::NetworkInterface::NetworkInterface() : OurNetworkType(NETWORKED_TYPE_BASE_ERROR){
 
 }
 

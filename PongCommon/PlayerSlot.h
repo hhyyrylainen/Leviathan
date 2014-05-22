@@ -111,9 +111,7 @@ namespace Pong{
 		void SetColour(const Float4 &colour){
 			Colour = colour;
 		}
-		string GetColourAsRML();
-		// Parses a Float4 from rgb(x,y,z) //
-		void SetColourFromRML(string rml);
+
 
 		//! returns true if player type isn't empty or closed
 		inline bool IsSlotActive(){

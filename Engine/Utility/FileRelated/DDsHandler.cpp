@@ -64,12 +64,11 @@ void DDSHandler::WriteDDSFromGrayScale(wstring& file, vector<vector<unsigned cha
 	unsigned int x = 0;
 	for(y = 0; y < data.size(); y++){
 		for(x = 0; x < data[y].size(); x++){
-			int red = 255, green = 255, blue = 255;
 
 			// sample gray scale to rgb
-			red = (int)data[y][x];
-			green = (int)data[y][x];
-			blue = (int)data[y][x];
+			int red = (int)data[y][x];
+			int green = (int)data[y][x];
+			int blue = (int)data[y][x];
 
 			Color[0] = (BYTE)red;
 			Color[1] = (BYTE)green;

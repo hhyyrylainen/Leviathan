@@ -59,7 +59,7 @@ namespace Leviathan{
 
 
 		// Disable copy and copy constructor usage //
-		SyncedResource* operator=(const SyncedResource &other);
+		SyncedResource& operator=(const SyncedResource &other);
 		SyncedResource(const SyncedResource &other);
 		// ------------------------------------ //
 

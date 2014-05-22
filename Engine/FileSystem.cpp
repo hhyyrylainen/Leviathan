@@ -259,8 +259,8 @@ void Leviathan::FileSystem::SetTextureFolder(const wstring &folder){
 }
 // ------------------ File handling ------------------ //
 DLLEXPORT int Leviathan::FileSystem::LoadDataDump(const wstring &file, vector<shared_ptr<NamedVariableList>>& vec){
+
 	wstring filecontents = L"";
-	wstring construct = L"";
 	int Length = 0;
 	// get data //
 	wifstream stream;

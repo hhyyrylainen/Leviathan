@@ -11,7 +11,7 @@ DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(const wstring &name) : N
 
 }
 
-DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(shared_ptr<ObjectFileObject> fileobject){
+DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(shared_ptr<ObjectFileObject> fileobject) : EngineID(IDFactory::GetID()){
 	throw std::exception();
 }
 

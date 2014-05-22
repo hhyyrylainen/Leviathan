@@ -163,7 +163,7 @@ namespace Leviathan{
 			T character = Leviathan::Window::ConvertWstringToOISKeyCode(converted);
 			short special = 0;
 
-			while((str = itr.GetUntilNextCharacterOrAll<wstring>(L'+'))->size() > 0){
+			while((str = itr.GetUntilNextCharacterOrAll<wstring>(L'+')) && (str->size() > 0)){
 
 				if(StringOperations::CompareInsensitive(*str, wstring(L"alt"))){
 					special |= KEYSPECIAL_ALT;

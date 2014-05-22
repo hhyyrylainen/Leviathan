@@ -50,7 +50,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 
 	if(!name){
 		// no name //
-		throw ExceptionInvalidArgument(L"invalid data on line (invalid name)", name->size(), __WFUNCSIG__, L"line", line);
+		throw ExceptionInvalidArgument(L"invalid data on line (invalid name)", 0, __WFUNCSIG__, L"line", line);
 	}
 
 

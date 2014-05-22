@@ -128,6 +128,9 @@ namespace Leviathan{
 
 		NETWORKREQUESTTYPE TypeOfRequest;
 		BaseNetworkRequestData* RequestData;
+        
+    private:
+        NetworkRequest(const NetworkRequest &other){}
 	};
 
 }

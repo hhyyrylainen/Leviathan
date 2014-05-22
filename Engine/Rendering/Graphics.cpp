@@ -21,7 +21,7 @@ using namespace Rendering;
 // ------------------------------------ //
 #define OGRE_ALLOW_USEFULLOUTPUT
 
-DLLEXPORT Leviathan::Graphics::Graphics() : ORoot(nullptr), Fonts(NULL)
+DLLEXPORT Leviathan::Graphics::Graphics() : ORoot(nullptr), Fonts(NULL), AppDefinition(NULL)
 {
 	Staticaccess = this;
 	Initialized = false;
@@ -66,8 +66,9 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	Ogre::String PluginsFileName = "";
 
 	Ogre::LogManager* logMgr = new Ogre::LogManager();
-
-	OLog = Ogre::LogManager::getSingleton().createLog(Convert::WstringToString(appdef->GetLogFile()+L"LogOGRE.txt"), true, true, false);
+    
+    // Could also use the singleton access method here //
+	OLog = logMgr->createLog(Convert::WstringToString(appdef->GetLogFile()+L"LogOGRE.txt"), true, true, false);
 	OLog->setDebugOutputEnabled(true);
 #ifdef OGRE_ALLOW_USEFULLOUTPUT
 

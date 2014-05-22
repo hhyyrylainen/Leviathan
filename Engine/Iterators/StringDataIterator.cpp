@@ -40,6 +40,15 @@ Leviathan::UTF8DataIterator::UTF8DataIterator(const string &str) : OurString(str
 	Current = OurString.begin();
 	End = OurString.end();
 	BeginPos = OurString.begin();
+
+	int checkchar;
+
+	if(GetNextCharCode(checkchar, 0) && checkchar == '\n'){
+
+		// If the first character is a newline the line number needs to be incremented immediately //
+		++CurrentLineNumber;
+	}
+
 }
 // ------------------------------------ //
 bool Leviathan::UTF8DataIterator::GetNextCharCode(int &codepointreceiver, size_t forward){

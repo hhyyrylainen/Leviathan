@@ -470,15 +470,16 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 		if(response.getStatus() == sf::Http::Response::Ok){
 
 			// It should just be a list of master servers one on each line //
-			StringIterator itr(Convert::StringToWstring(response.getBody()));
+			StringIterator itr(response.getBody());
 
-			unique_ptr<wstring> data;
+			unique_ptr<string> data;
 
-			std::vector<shared_ptr<wstring>> tmplist;
+			std::vector<unique_ptr<string>> tmplist;
 
-			while((data = itr.GetUntilNextCharacterOrAll<wstring>(L'\n'))->size()){
 
-				tmplist.push_back(shared_ptr<wstring>(data.release()));
+			while((data = itr.GetUntilNextCharacterOrAll<string>(L'\n')) && (data->size())){
+
+				tmplist.push_back(move(data));
 			}
 
 			// Check //
@@ -495,7 +496,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 			instance->MasterServers.reserve(tmplist.size());
 			for(auto iter = tmplist.begin(); iter != tmplist.end(); ++iter){
 
-				instance->MasterServers.push_back(*iter);
+				instance->MasterServers.push_back(shared_ptr<wstring>(new wstring(Convert::StringToWstring(*(*iter)))));
 			}
 
 
@@ -546,10 +547,10 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 
 				StringIterator itr(tmpaddress.get());
 
-				auto tmpres = itr.GetUntilNextCharacterOrAll<wstring>(L':');
+				itr.GetUntilNextCharacterOrAll<wstring>(L':');
 
 				// Right now the part we don't want is retrieved //
-				tmpres = itr.GetUntilEnd<wstring>();
+				auto tmpres = itr.GetUntilEnd<wstring>();
 
 				// The result now should have the ':' character and the possible port //
 

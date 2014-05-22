@@ -6,7 +6,9 @@
 #include "FileSystem.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameConfiguration::GameConfiguration(const wstring &configfile) : GameConfigFile(configfile), Modified(false){
+DLLEXPORT Leviathan::GameConfiguration::GameConfiguration(const wstring &configfile) : GameConfigFile(configfile), Modified(false),
+	GameVars(NULL)
+{
 	staticaccess = this;
 }
 

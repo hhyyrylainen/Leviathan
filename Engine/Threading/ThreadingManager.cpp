@@ -167,7 +167,7 @@ DLLEXPORT void Leviathan::ThreadingManager::WaitForAllTasksToFinish(){
 	UNIQUE_LOCK_OBJECT(this);
 
 	// See if empty right now and loop until it is //
-	while(WaitingTasks.size() != 0){
+	while(!WaitingTasks.empty()){
 
 		// Make the queuer run //
 		TaskQueueNotify.notify_all();
@@ -299,10 +299,8 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 		manager->TaskQueueNotify.wait(lockit);
 
 		// Quickly continue if it is empty //
-		if(!manager->AllowStartTasksFromQueue || manager->WaitingTasks.size() == 0){
-			//// Quit the thread if not allowed to wait //
-			//if(!manager->AllowConditionalWait)
-			//	break;
+		if(!manager->AllowStartTasksFromQueue || manager->WaitingTasks.empty()){
+            
 			continue;
 		}
 
@@ -320,7 +318,7 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 			if(!(*iter)->HasRunningTask()){
 
 				// Break if no tasks //
-				if(manager->WaitingTasks.size() == 0)
+				if(manager->WaitingTasks.empty())
 					break;
 
 				// Queue a task //

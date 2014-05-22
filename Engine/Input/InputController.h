@@ -65,7 +65,6 @@ namespace Leviathan{
 		void _OnChildUnlink(InputReceiver* child);
 
 		// ------------------------------------ //
-		bool SentBlockedEvent;
 
 		std::vector<InputReceiver*> ConnectedReceivers;
 	};

@@ -48,8 +48,6 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	// quicker access to the window //
 	Ogre::RenderWindow* tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(wcaption, WData.Width, WData.Height, !WData.Windowed, &WParams);
 
-	Ogre::CompositorManager2* compositor = NULL;
-
 	// load resource groups since it is safe now //
 	if(++GlobalWindowCount == 1){
 		// Initialize the compositor //
@@ -60,7 +58,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 		Engine::GetEngine()->_NotifyThreadsRegisterOgre();
 		FileSystem::RegisterOGREResourceGroups();
 
-		compositor = windowcreater->GetOgreRoot()->getCompositorManager2();
+		//Ogre::CompositorManager2* compositor = windowcreater->GetOgreRoot()->getCompositorManager2();
 
 		// These are loaded from files //
 		//// Create the definition for the main window workspace //

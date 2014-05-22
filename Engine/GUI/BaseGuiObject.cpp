@@ -25,10 +25,8 @@ DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const 
 DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){
 	// Unregister events to avoid access violations //
 	_UnsubscribeAllEvents();
-
-	// script has smart pointer //
-
-	// unregister all non-CEGUI events //
+	
+	// Unregister all non-CEGUI events //
 	UnRegisterAllEvents();
 }
 // ------------------------------------ //
@@ -114,7 +112,7 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(){
 		}
 
 		// Check is this a CEGUI event which will be registered //
-		if(_HookCEGUIEvent(Name))
+		if(_HookCEGUIEvent(*containedlisteners[i]->ListenerName))
 			continue;
 
 
@@ -183,7 +181,7 @@ void Leviathan::Gui::BaseGuiObject::ReleaseCEGUIEventNames(){
 
 void Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine(boost::strict_lock<boost::mutex> &locked){
 	// Return if it already has data //
-	if(CEGUIEventNames.size())
+	if(!CEGUIEventNames.empty())
 		return;
 
 
@@ -208,16 +206,22 @@ DLLEXPORT void Leviathan::Gui::BaseGuiObject::ConnectElement(CEGUI::Window* wind
 	TargetElement = windojb;
 
 	// Register for the destruction event //
-	TargetElement->subscribeEvent(CEGUI::Window::EventDestructionStarted, CEGUI::Event::Subscriber(&BaseGuiObject::EventDestroyWindow, this));
+	auto unhookevent = TargetElement->subscribeEvent(CEGUI::Window::EventDestructionStarted, 
+		CEGUI::Event::Subscriber(&BaseGuiObject::EventDestroyWindow, this));
+
+	// Apparently this also has to be disconnected //
+	CEGUIRegisteredEvents.push_back(unhookevent);
 }
 
-
-bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const wstring &name){
+bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const wstring &listenername){
 
 	boost::strict_lock<boost::mutex> lockthis(CEGUIEventMutex);
+
+	MakeSureCEGUIEventsAreFine(lockthis);
+
 	// Try to match the name //
 
-	auto iter = CEGUIEventNames.find(name);
+	auto iter = CEGUIEventNames.find(listenername);
 
 	if(iter == CEGUIEventNames.end())
 		return false;
@@ -248,7 +252,6 @@ bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const wstring &name){
 	return true;
 }
 
-
 void Leviathan::Gui::BaseGuiObject::_UnsubscribeAllEvents(){
 	GUARD_LOCK_THIS_OBJECT();
 	// Loop an disconnect them all //
@@ -260,7 +263,7 @@ void Leviathan::Gui::BaseGuiObject::_UnsubscribeAllEvents(){
 	CEGUIRegisteredEvents.clear();
 }
 // ------------------------------------ //
-void Leviathan::Gui::BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &args){
+bool Leviathan::Gui::BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &args){
 	GUARD_LOCK_THIS_OBJECT();
 
 	// This should be safe //
@@ -269,24 +272,27 @@ void Leviathan::Gui::BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &a
 	assert(res.window == TargetElement && "BaseGuiObject received destruction notification for unsubscribed window");
 
 
-	// Clear our target and unsubscribe from all, by just clearing the vector //
-	CEGUIRegisteredEvents.clear();
+
+	// This might be required to not leak memory //
+	_UnsubscribeAllEvents();
 
 	TargetElement = NULL;
 
+	return false;
 }
 
-void Leviathan::Gui::BaseGuiObject::EventGenericCEGUI(const CEGUI::EventArgs &args){
+bool Leviathan::Gui::BaseGuiObject::EventGenericCEGUI(const CEGUI::EventArgs &args){
 	// Pass to a script listener //
 
 
-
+	return false;
 }
 
-void Leviathan::Gui::BaseGuiObject::EventOnClick(const CEGUI::EventArgs &args){
+bool Leviathan::Gui::BaseGuiObject::EventOnClick(const CEGUI::EventArgs &args){
 	// Pass the click event to the script //
 
 
+	return true;
 }
 
 

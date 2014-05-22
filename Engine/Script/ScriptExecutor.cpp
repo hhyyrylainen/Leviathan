@@ -394,7 +394,7 @@ void Leviathan::ScriptExecutor::PrintAdditionalExcept(asIScriptContext *ctx){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ScriptExecutor::ScanAngelScriptTypes(){
-	if(EngineTypeIDS.size() == 0){
+	if(EngineTypeIDS.empty()){
 		// put basic types //
 		EngineTypeIDS.insert(make_pair(engine->GetTypeIdByDecl("int"), L"int"));
 		EngineTypeIDS.insert(make_pair(engine->GetTypeIdByDecl("float"), L"float"));

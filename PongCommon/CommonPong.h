@@ -669,10 +669,6 @@ playrscorelistupdateendlabel:
 			{
 				SCRIPT_REGISTERFAIL;
 			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "void SetColourFromRML(string rmlcolour)", WRAP_MFN(PlayerSlot, SetColourFromRML), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
 			if(engine->RegisterObjectMethod("PlayerSlot", "void AddEmptySubSlot()", WRAP_MFN(PlayerSlot, AddEmptySubSlot), asCALL_GENERIC) < 0)
 			{
 				SCRIPT_REGISTERFAIL;
@@ -714,10 +710,6 @@ playrscorelistupdateendlabel:
 				SCRIPT_REGISTERFAIL;
 			}
 
-			if(engine->RegisterObjectMethod("PlayerSlot", "string GetColourAsRML()", WRAP_MFN(PlayerSlot, GetColourAsRML), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
 
 			MoreCustomScriptTypes(engine);
 		}

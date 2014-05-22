@@ -11,7 +11,9 @@
 namespace Leviathan{
 
 
-	enum NETWORKED_TYPE {NETWORKED_TYPE_CLIENT, NETWORKED_TYPE_SERVER, NETWORKED_TYPE_MASTER};
+	enum NETWORKED_TYPE {NETWORKED_TYPE_CLIENT, NETWORKED_TYPE_SERVER, NETWORKED_TYPE_MASTER, 
+		//! Only set when the derived class forgot to set it
+		NETWORKED_TYPE_BASE_ERROR};
 
 	//! \brief Class that encapsulates common networking functionality that is required by all networked programs
 	//! \see NetworkServerInterface NetworkClientInterface

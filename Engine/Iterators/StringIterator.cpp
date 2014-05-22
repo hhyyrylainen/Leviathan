@@ -524,7 +524,6 @@ DLLEXPORT bool Leviathan::StringIterator::IsOutOfBounds(){
 }
 #else
 #define ITR_FUNCDEBUG(x) {}
-}
 #endif // _DEBUG
 
 

@@ -8,7 +8,7 @@ using namespace Leviathan;
 MultiFlag::MultiFlag(){
 
 }
-MultiFlag::MultiFlag(vector<shared_ptr<Flag>>& toset) : Flags(toset){
+MultiFlag::MultiFlag(vector<shared_ptr<Flag>>& toset) : Flags(toset), CombinedVal(0){
 }
 MultiFlag::~MultiFlag(){
 	// no need to clear //

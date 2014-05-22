@@ -13,8 +13,8 @@ namespace Leviathan{
 	class FpsCounter : public EngineComponent{
 	public:
 		FpsCounter();
+		
 
-		bool Init();
 		void FakeFrame(int mspassed);
 		void Frame(int timepassed);
 		int GetFps();

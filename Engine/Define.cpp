@@ -18,21 +18,21 @@ using namespace Leviathan;
 
 //Object* Object::LApp = NULL;
 bool Object::IsThis(Object* compare){
-	return this == compare;
+    return this == compare;
 }
 //Object* Object::GetApp(){
-//	return LApp;
+//  return LApp;
 //
 //}
 //void Object::SetApp(Object* app){
-//	LApp = app;
+//  LApp = app;
 //}
 
-EngineComponent::EngineComponent(){
-
+EngineComponent::EngineComponent() : Inited(false){
+    
 }
 bool EngineComponent::Init(){
-	return true;
+    return true;
 }
 void EngineComponent::Release(){
 }
@@ -46,5 +46,5 @@ DLLEXPORT Leviathan::Object::~Object(){
 }
 
 //DLLEXPORT bool Leviathan::Object::IsThis(Object* compare){
-//	return this == compare;
+//  return this == compare;
 //}

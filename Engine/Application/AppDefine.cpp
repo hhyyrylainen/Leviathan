@@ -11,7 +11,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) : ConfigurationValues(new NamedVars()), HInstance(NULL), _GameConfiguration(NULL),
-	_KeyConfiguration(NULL), DeleteLog(false)
+	_KeyConfiguration(NULL), DeleteLog(false), _NetworkInterface(NULL), Mainlog(NULL)
 {
 	// If this is the default configuration set as the static access one //
 	if(isdef)

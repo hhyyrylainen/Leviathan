@@ -29,12 +29,13 @@ namespace Leviathan{
 		{
 
 		}
-		MasterServerInformation() : RequireMaster(false){
+		MasterServerInformation() : RequireMaster(false), IAmMyOwnMaster(false){
 		}
 		MasterServerInformation(const wstring &masterslistfile, const wstring &identification, const wstring &masterserverlistaddress, const wstring 
 			&masterserverlistpagename, const wstring &loginsession, bool requireconnection = false) : 
 		MasterListFetchServer(masterserverlistaddress), MasterListFetchPage(masterserverlistpagename), StoredListFile(masterslistfile),
-			MasterServerIdentificationString(identification), LoginStoreFile(loginsession), RequireMaster(requireconnection)
+			MasterServerIdentificationString(identification), LoginStoreFile(loginsession), RequireMaster(requireconnection),
+            IAmMyOwnMaster(false)
 		{
 
 		}

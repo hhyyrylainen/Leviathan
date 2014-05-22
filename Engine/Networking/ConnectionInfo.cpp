@@ -14,7 +14,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const wstring &hostname) : HostName(hostname), AddressGot(false), LastUsedID(-1), 
 	LastSentConfirmID(-1), MaxAckReduntancy(1), MyLastSentReceived(-1), LastReceivedPacketTime(-1), RestrictType(CONNECTION_RESTRICTION_NONE),
-	HasReceived(false)
+	HasReceived(false), LastSentPacketTime(0)
 {
 	// We need to split the port number from the address //
 	StringIterator itr(hostname);
@@ -662,7 +662,7 @@ void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::
 	if(newrequired){
 		// First we need to determine which received packet to use as first value //
 
-		if(ReceivedPacketsNotifiedAsReceivedByUs.size() > 0){
+		if(!ReceivedPacketsNotifiedAsReceivedByUs.empty()){
 
 			bool foundstartval = ReceivedPacketsNotifiedAsReceivedByUs.find(LastSentConfirmID) != ReceivedPacketsNotifiedAsReceivedByUs.end();
 			int lastval = ReceivedPacketsNotifiedAsReceivedByUs.rbegin()->first;

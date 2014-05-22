@@ -28,7 +28,7 @@ using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
 Leviathan::Gui::GuiManager::GuiManager() : ID(IDFactory::GetID()), Visible(true), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true),
-	LastTimePulseTime(Misc::GetThreadSafeSteadyTimePoint()), MainGuiManager(false)
+	LastTimePulseTime(Misc::GetThreadSafeSteadyTimePoint()), MainGuiManager(false), ThisWindow(NULL), GuiContext(NULL)
 {
 	
 }
@@ -45,9 +45,8 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 	// Detect if this is the first GuiManager //
 	if(GraphicalInputEntity::GetGlobalWindowCount() == 1)
 		MainGuiManager = true;
-
-	Window* wind = window->GetWindow();
-
+		
+		
 	// Create Ogre resources //
 	if(!_CreateInternalOgreResources(window->GetWindow()->GetOverlayScene())){
 
@@ -293,7 +292,17 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 	}
 	
 	// Load it //
-	CEGUI::Window* rootwindow = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(Convert::WstringToString(relativepath));
+	CEGUI::Window* rootwindow = NULL;
+	try{
+
+		rootwindow = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(Convert::WstringToString(relativepath));
+
+	} catch(const Ogre::Exception &e){
+
+		Logger::Get()->Error(L"GuiManager: LoadGUIFile: failed to locate file: "+relativepath+L":");
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e.what()));
+		return false;
+	}
 
 	// Check did it work //
 	if(!rootwindow){

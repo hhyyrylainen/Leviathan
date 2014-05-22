@@ -16,7 +16,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld() : WorldSceneCamera(NULL), WorldsScene(NULL), Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false), 
-	GraphicalMode(false), LinkedToWindow(NULL)
+	GraphicalMode(false), LinkedToWindow(NULL), WorldWorkspace(NULL), ClearAllObjects(false)
 {
 
 }
@@ -388,12 +388,12 @@ DLLEXPORT Float3 Leviathan::RayCastHitEntity::GetPosition(){
 	return HitLocation;
 }
 
-DLLEXPORT RayCastHitEntity* Leviathan::RayCastHitEntity::operator=(const RayCastHitEntity& other){
+DLLEXPORT RayCastHitEntity& Leviathan::RayCastHitEntity::operator=(const RayCastHitEntity& other){
 	HitEntity = other.HitEntity;
 	HitVariable = other.HitVariable;
 	HitLocation = other.HitLocation;
 
-	return this;
+	return *this;
 }
 // ------------------ RayCastData ------------------ //
 DLLEXPORT Leviathan::RayCastData::RayCastData(int maxcount, const Float3 &from, const Float3 &to) : MaxCount(maxcount), 

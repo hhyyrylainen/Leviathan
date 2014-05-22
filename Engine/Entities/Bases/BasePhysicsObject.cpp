@@ -8,7 +8,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 // I hope that this virtual constructor isn't actually called //
-DLLEXPORT Leviathan::BasePhysicsObject::BasePhysicsObject() : BaseObject(-1, NULL), Body(NULL), Collision(NULL), Immovable(false){
+DLLEXPORT Leviathan::BasePhysicsObject::BasePhysicsObject() : BaseObject(-1, NULL), Body(NULL), Collision(NULL), Immovable(false), ApplyGravity(false){
 
 }
 
@@ -91,7 +91,7 @@ DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyVelocity(){
 // ------------------------------------ //
 Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(const float &mass){
 	// return if just an empty list //
-	if(ApplyForceList.size() == 0)
+	if(ApplyForceList.empty())
 		return Float3(0);
 
 	Float3 total(0);

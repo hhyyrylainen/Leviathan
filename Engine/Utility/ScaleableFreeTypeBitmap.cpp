@@ -6,7 +6,9 @@
 using namespace Leviathan;
 // ------------------------------------ //
 // initialize to match size //
-DLLEXPORT Leviathan::ScaleableFreeTypeBitmap::ScaleableFreeTypeBitmap(const int &initialwidth, const int &initialheight){
+DLLEXPORT Leviathan::ScaleableFreeTypeBitmap::ScaleableFreeTypeBitmap(const int &initialwidth, const int &initialheight) : 
+	LastAccessed(0), MinYValue(0), MaxYValue(0), BaseLineFromBitmapTop(0), MaxXValue(0)
+{
 
 	MaxWidth = initialwidth;
 	MaxHeight = initialheight;

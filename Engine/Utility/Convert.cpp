@@ -38,19 +38,17 @@ wstring Convert::FloatToWstring(const float &i){
 	return replace;
 }
 wstring Convert::StringToWstring(const string &str){
-	//wstring stri;
-	//stri.assign((str).begin(),(str).end());
-	////stri.assign(str._my,(str).end());
 	wstringstream strm;
 	strm << str.c_str();
 	return strm.str();
 }
-wstring Convert::StringToWstringNonRef(const string str){
-	wstring stri;
-	stri.assign(str.begin(),str.end());
 
-	return stri;
+DLLEXPORT std::wstring Leviathan::Convert::CharPtrToWstring(const char* charsource){
+	wstringstream strm;
+	strm << charsource;
+	return strm.str();
 }
+
 string Convert::WstringToString(const wstring &str){
 	string stri;
 	stri.assign(str.begin(),str.end());

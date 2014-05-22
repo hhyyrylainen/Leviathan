@@ -38,7 +38,7 @@
 namespace Leviathan{
 
 	struct ObjectDataRequest{
-		ObjectDataRequest(int wantedtype) : RequestObjectPart(wantedtype), RequestResult(NULL){
+		ObjectDataRequest(int wantedtype) : RequestObjectPart(wantedtype), RequestResult(NULL), AdditionalInfo(NULL){
 		}
 
 		// See the following bunch of defines for values //

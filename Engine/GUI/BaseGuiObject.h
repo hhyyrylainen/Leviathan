@@ -12,6 +12,7 @@
 #include "Events/Event.h"
 #include "GuiCollection.h"
 #include "Events/EventableScriptObject.h"
+#include "boost/thread/mutex.hpp"
 
 namespace Leviathan{ namespace Gui{
 
@@ -58,7 +59,7 @@ namespace Leviathan{ namespace Gui{
 		virtual void _CallScriptListener(Event** pEvent, GenericEvent** event2);
 
 		//! \brief Registers for an event if it is a CEGUI event
-		bool _HookCEGUIEvent(const wstring &name);
+		bool _HookCEGUIEvent(const wstring &listenername);
 
 
 		//! \brief Clears CEGUIRegisteredEvents and unsubscribes from all
@@ -105,11 +106,11 @@ namespace Leviathan{ namespace Gui{
 	protected:
 
 
-		void EventDestroyWindow(const CEGUI::EventArgs &args);
+		bool EventDestroyWindow(const CEGUI::EventArgs &args);
 
-		void EventGenericCEGUI(const CEGUI::EventArgs &args);
+		bool EventGenericCEGUI(const CEGUI::EventArgs &args);
 
-		void EventOnClick(const CEGUI::EventArgs &args);
+		bool EventOnClick(const CEGUI::EventArgs &args);
 	};
 
 }}

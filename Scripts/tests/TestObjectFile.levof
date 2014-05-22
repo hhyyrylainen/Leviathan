@@ -47,6 +47,10 @@ o Just Something ID(29) "nice wow"{
             return 42;
         }
     @%};
+    l emptystuff{
+        
+        
+    }
 }
 
 // Template testing //

@@ -148,7 +148,7 @@ namespace Leviathan{
 
 	protected:
 		// private constructor to make sure that no instances of this class exist //
-		DataBlockAll(){
+		DataBlockAll() : Type(-1){
 
 		}
 
@@ -212,7 +212,7 @@ namespace Leviathan{
 		// function used in deep copy //
 		DLLEXPORT virtual DataBlockAll* AllocateNewFromThis() const{
 
-			return (DataBlockAll*)(new DataBlock<DBlockT>(const_cast<const DataBlock<DBlockT>&>(*this)));
+			return static_cast<DataBlockAll*>((new DataBlock<DBlockT>(const_cast<const DataBlock<DBlockT>&>(*this))));
 		}
 
 		// shallow copy operator //
@@ -311,7 +311,7 @@ namespace Leviathan{
 		// function used in deep copy //
 		DLLEXPORT virtual DataBlockAll* AllocateNewFromThis() const{
 
-			return (DataBlockAll*)(new DataBlock<DBlockT*>(const_cast<const DataBlock<DBlockT*>&>(*this)));
+			return static_cast<DataBlockAll*>((new DataBlock<DBlockT*>(const_cast<const DataBlock<DBlockT*>&>(*this))));
 		}
 
 		// shallow copy operator //
@@ -420,29 +420,29 @@ namespace Leviathan{
 		template<class DBRType>
 		DLLEXPORT VariableBlock(DataBlock<DBRType>* block){
 
-			BlockData = (DataBlockAll*)block;
+			BlockData = static_cast<DataBlockAll*>(block);
 		}
 		// constructors that accept basic types //
 		DLLEXPORT VariableBlock(const int &var){
-			BlockData = (DataBlockAll*)new IntBlock(var);
+			BlockData = static_cast<DataBlockAll*>(new IntBlock(var));
 		}
 		DLLEXPORT VariableBlock(const bool &var){
-			BlockData = (DataBlockAll*)new BoolBlock(var);
+			BlockData = static_cast<DataBlockAll*>(new BoolBlock(var));
 		}
 		DLLEXPORT VariableBlock(const std::string &var){
-			BlockData = (DataBlockAll*)new StringBlock(var);
+			BlockData = static_cast<DataBlockAll*>(new StringBlock(var));
 		}
 		DLLEXPORT VariableBlock(const std::wstring &var){
-			BlockData = (DataBlockAll*)new WstringBlock(var);
+			BlockData = static_cast<DataBlockAll*>(new WstringBlock(var));
 		}
 		DLLEXPORT VariableBlock(const double &var){
-			BlockData = (DataBlockAll*)new DoubleBlock(var);
+			BlockData = static_cast<DataBlockAll*>(new DoubleBlock(var));
 		}
 		DLLEXPORT VariableBlock(const float &var){
-			BlockData = (DataBlockAll*)new FloatBlock(var);
+			BlockData = static_cast<DataBlockAll*>(new FloatBlock(var));
 		}
 		DLLEXPORT VariableBlock(const char &var){
-			BlockData = (DataBlockAll*)new CharBlock(var);
+			BlockData = static_cast<DataBlockAll*>(new CharBlock(var));
 		}
 
 		//! \brief Constructs from a packet
@@ -561,7 +561,7 @@ namespace Leviathan{
 			}
 
 			// copy pointer //
-			BlockData = (DataBlockAll*)arg;
+			BlockData = static_cast<DataBlockAll*>(arg);
 
 			// avoid performance issues //
 			return *this;

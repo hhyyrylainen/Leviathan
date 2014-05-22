@@ -258,6 +258,7 @@ namespace Leviathan{
 			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
 		}
 
+
 		//! \brief Gets all characters until the end
 		//! \note This does not advance the iterator so this object can still be used after this
 		//! \return The string found or NULL if the read position is invalid
@@ -464,6 +465,8 @@ namespace Leviathan{
 		}
 
 	private:
+
+		StringIterator(const StringIterator &other){}
 
 
 		inline ITERATORCALLBACK_RETURNTYPE HandleSpecialCharacters();

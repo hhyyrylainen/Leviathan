@@ -39,7 +39,7 @@ namespace Leviathan{
 	//! used to store function's parameter info
 	struct FunctionParameterInfo{
 		FunctionParameterInfo(int id, int sizes) : FunctionID(id), ParameterTypeIDS(sizes), ParameterDeclarations(sizes),
-			MatchingDataBlockTypes(sizes){};
+			MatchingDataBlockTypes(sizes), ReturnMatchingDataBlock(-1){};
 
 		int FunctionID;
 
@@ -159,7 +159,9 @@ namespace Leviathan{
 		DLLEXPORT static int ScriptModuleIncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam);
 
 	private:
-
+		
+		ScriptModule(const ScriptModule &other){}
+		
 		void _FillParameterDataObject(int typeofas, asUINT* paramtypeid, wstring* paramdecl, int* datablocktype);
 		void _BuildListenerList();
 		void _ProcessMetadataForFunc(asIScriptFunction* func, asIScriptModule* mod);

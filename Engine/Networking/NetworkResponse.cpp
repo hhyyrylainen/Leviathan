@@ -14,7 +14,7 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(int inresponseto, PACKET_T
 
 }
 
-DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedresponse){
+DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedresponse) : TimeOutValue(-1){
 	// First thing is the response ID //
 	if(!(receivedresponse >> ResponseID)){
 

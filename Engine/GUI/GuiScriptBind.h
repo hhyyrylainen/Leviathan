@@ -11,6 +11,8 @@
 
 bool BindGUIObjects(asIScriptEngine* engine){
 
+
+
 	// bind GuiCollection action, this is released by gui object //
 	if(engine->RegisterObjectType("GuiCollection", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
@@ -38,35 +40,50 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	}
 
 
-	// bind BaseGuiObject //
-	if(engine->RegisterObjectType("BaseGuiObject", 0, asOBJ_REF) < 0){
+	// bind GuiObject //
+	if(engine->RegisterObjectType("GuiObject", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	// no factory function to prevent scripts from creating these functions //
 
-	if(engine->RegisterObjectBehaviour("BaseGuiObject", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Gui::BaseGuiObject, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Gui::BaseGuiObject, AddRefProxy), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("BaseGuiObject", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Gui::BaseGuiObject, ReleaseProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Gui::BaseGuiObject, ReleaseProxy), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("BaseGuiObject", "int GetID()", WRAP_MFN(Gui::BaseGuiObject, GetID), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "int GetID()", WRAP_MFN(Gui::BaseGuiObject, GetID), asCALL_GENERIC) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("BaseGuiObject", "ScriptSafeVariableBlock@ GetAndPopFirstUpdated()", WRAP_MFN(Gui::BaseGuiObject, GetAndPopFirstUpdated), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "ScriptSafeVariableBlock@ GetAndPopFirstUpdated()", WRAP_MFN(Gui::BaseGuiObject, GetAndPopFirstUpdated), asCALL_GENERIC) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("BaseGuiObject", "GuiManager& GetOwningManager()", WRAP_MFN(Gui::BaseGuiObject, GetOwningManager), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "GuiManager& GetOwningManager()", WRAP_MFN(Gui::BaseGuiObject, GetOwningManager), asCALL_GENERIC) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
 	
+	if(engine->SetDefaultNamespace("CEGUI") < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	//if(engine->RegisterObjectType("Event", 0, asOBJ_REF) < 0){
+	//	ANGELSCRIPT_REGISTERFAIL;
+	//}
 
 
+
+
+	// Restore the namespace //
+	if(engine->SetDefaultNamespace("") < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
 
 	return true;
 }
@@ -75,7 +92,7 @@ bool BindGUIObjects(asIScriptEngine* engine){
 void RegisterGUIScriptTypeNames(asIScriptEngine* engine, std::map<int, wstring> &typeids){
 
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("GuiCollection"), L"GuiCollection"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("BaseGuiObject"), L"BaseGuiObject"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("GuiObject"), L"GuiObject"));
 }
 
 #endif

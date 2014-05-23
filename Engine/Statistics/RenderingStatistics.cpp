@@ -6,7 +6,8 @@
 #include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
-Leviathan::RenderingStatistics::RenderingStatistics(){
+Leviathan::RenderingStatistics::RenderingStatistics() : LastMinuteFPS(80), LastMinuteRenderTimes(320){
+
 	Frames = 0;
 
 	FPS = 0;
@@ -27,6 +28,10 @@ Leviathan::RenderingStatistics::RenderingStatistics(){
 
 	DoubtfulCancel = 0;
 
+	LastMinuteFPSPos = 0;
+	LastMinuteRenderTimesPos = 0;
+
+
 
 	IsFirstFrame = true;
 	EraseOld = true;
@@ -41,28 +46,23 @@ void Leviathan::RenderingStatistics::RenderingStart(){
 
 	Frames++;
 }
+
 void Leviathan::RenderingStatistics::RenderingEnd(){
 	RenderingEndTime = Misc::GetTimeMicro64();
 
 	RenderMCRSeconds = (int)(RenderingEndTime-RenderingStartTime);
 
-	LastMinuteRenderTimes.push_back(RenderMCRSeconds);
 
-	//// check is second passed //
-	//if(RenderingEndTime > SecondStartTime+1000000){
-	//	// second passed //
-	//	SecondStartTime = RenderingEndTime;
-	//	//DEBUG_OUTPUT(L"second pass\n");
+	MakeSureHasEnoughRoom(LastMinuteRenderTimes, LastMinuteRenderTimesPos);
 
-	//	SecondMark();
-	//}
+	LastMinuteRenderTimes[LastMinuteRenderTimesPos] = RenderMCRSeconds;
+	++LastMinuteRenderTimesPos;
+
 	// half minute check //
 	if(RenderingEndTime > HalfMinuteStartTime+(1000000*30)){
 
 		HalfMinuteStartTime = RenderingEndTime;
 		HalfMinuteMark();
-
-		//DEBUG_OUTPUT(L"half pass\n");
 	}
 
 	if(IsFirstFrame)
@@ -85,41 +85,42 @@ void Leviathan::RenderingStatistics::ReportStats(DataStore* dstore){
 void Leviathan::RenderingStatistics::HalfMinuteMark(){
 	EraseOld = true;
 
-	// calculate averages //
+	// Calculate the averages //
 	int fpses = 0;
 
-	//// if first frame pop first values //
-	//if(IsFirstFrame){
-	//	IsFirstFrame = false;
-
-	//	LastMinuteFPS.erase(LastMinuteFPS.begin());
-	//	LastMinuteRenderTimes.erase(LastMinuteRenderTimes.begin());
-
-	//	if((LastMinuteFPS.size() == 0) || (LastMinuteRenderTimes.size() == 0))
-	//		return;
-	//}
-
-	for(unsigned int i = 0; i < LastMinuteFPS.size(); i++){
+	for(size_t i = 0; i < LastMinuteFPSPos+1; i++){
 		fpses += LastMinuteFPS[i];
 	}
-	if(LastMinuteFPS.size() == 0){
+
+	if(LastMinuteFPSPos == 0){
+
 		AverageFps = 0;
+
 	} else {
-		AverageFps = fpses/(int)LastMinuteFPS.size();
+
+		AverageFps = fpses/LastMinuteFPSPos+1;
 	}
 
-
-	// frame time averages //
+	// Frame time averages //
 	int frametimes = 0;
-	for(unsigned int i = 0; i < LastMinuteRenderTimes.size(); i++){
+
+
+	for(unsigned int i = 0; i < LastMinuteRenderTimesPos+1; i++){
+		
 		frametimes += LastMinuteRenderTimes[i];
 	}
-	if(LastMinuteRenderTimes.size() == 0){
+
+	if(LastMinuteRenderTimesPos == 0){
+		
 		AverageRenderTime = 0;
 	} else {
-		AverageRenderTime = frametimes/(int)LastMinuteRenderTimes.size();
+		
+		AverageRenderTime = frametimes/LastMinuteRenderTimesPos+1;
 	}
 
+	// Reset the insert positions //
+	LastMinuteRenderTimesPos = 0;
+	LastMinuteFPSPos = 0;
 }
 
 void Leviathan::RenderingStatistics::SecondMark(){
@@ -140,14 +141,14 @@ void Leviathan::RenderingStatistics::SecondMark(){
 	if((RenderMCRSeconds < MinFrameTime) || (EraseOld)){
 		MinFrameTime = RenderMCRSeconds;
 	}
+	
+	MakeSureHasEnoughRoom(LastMinuteFPS, LastMinuteFPSPos);
 
-	LastMinuteFPS.push_back(FPS);
+	LastMinuteFPS[LastMinuteFPSPos] = FPS;
+	++LastMinuteFPSPos;
 
 	EraseOld = false;
 }
-
-
-
 // ------------------------------------ //
 bool Leviathan::RenderingStatistics::CanRenderNow(int maxfps, int& TimeSinceLastFrame){
 
@@ -179,16 +180,8 @@ bool Leviathan::RenderingStatistics::CanRenderNow(int maxfps, int& TimeSinceLast
 		return true;
 	}
 
-	//// check is second passed //
-	//if((TimeFromLastSecond > 1000000) || (TimeFromLastSecond < -1)){
-	//	// second passed //
-	//	SecondStartTime = CurrentTime;
-	//	//DEBUG_OUTPUT(L"second pass\n");
-	//	TimeFromLastSecond = 0;
-
-	//	SecondMark();
-	//}
-	// check has a second passed //
+	
+	// Check has a second passed //
 	bool Set = false;
 	while(TimeFromLastSecond > 1000000){
 		TimeFromLastSecond -= 1000000;
@@ -197,10 +190,10 @@ bool Leviathan::RenderingStatistics::CanRenderNow(int maxfps, int& TimeSinceLast
 	}
 
 	if(Set){
+
 		// second passed //
 		SecondStartTime = CurrentTime;
-		//DEBUG_OUTPUT(L"second pass\n");
-				SecondMark();
+		SecondMark();
 	}
 
 	// send back time before last frame in microseconds //
@@ -214,41 +207,11 @@ bool Leviathan::RenderingStatistics::CanRenderNow(int maxfps, int& TimeSinceLast
 
 	// check do we have enough frames, if we don't we can render 1 //
 	// or if a second has passed render then //
-	if((Frames < FramesShouldBe)){
-		//// check here that are there too many frames rendered, if there are, skip //
-		//int CurrAverage = 0;
-		//int fpses = 0;
-		//for(unsigned int i = 0; i < LastMinuteFPS.size(); i++){
-		//	fpses += LastMinuteFPS[i];
-		//}
-		//CurrAverage = fpses/(int)LastMinuteFPS.size();
-
-		//if(CurrAverage > maxfps+3){
-		//	// average might go over max fps, do emergency cancel render //
-		//	DoubtfulCancel++;
-
-		//	if(DoubtfulCancel > 4){
-		//		DoubtfulCancel = 0;
-		//		return false;
-		//	}
-		//}
+	if(Frames <= FramesShouldBe){
 
 
 		return true;
 	}
-
-	//// rendering might fail, just check the average before making the call //
-	//int CurrAverage = 0;
-	//int fpses = 0;
-	//for(unsigned int i = 0; i < LastMinuteFPS.size(); i++){
-	//	fpses += LastMinuteFPS[i];
-	//}
-	//CurrAverage = fpses/(int)LastMinuteFPS.size();
-
-	//if((CurrAverage < maxfps)){
-	//	// average might fall below max fps, do emergency render //
-	//	return true;
-	//}
 
 
 	return false;

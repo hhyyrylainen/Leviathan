@@ -107,7 +107,7 @@ DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
 
 		return true;
 	}
-    int values;
+	int values;
 	// stress testing //
 	for(int i = 0; i < tests; i++){
 
@@ -132,11 +132,13 @@ namespace Leviathan{
 
 
 TYPEIDGETTEMPLATEINSTANTIATION(int, L"int");
-TYPEIDGETTEMPLATEINSTANTIATION(bool, L"int");
-TYPEIDGETTEMPLATEINSTANTIATION(float, L"int");
-TYPEIDGETTEMPLATEINSTANTIATION(char, L"int");
+TYPEIDGETTEMPLATEINSTANTIATION(bool, L"bool");
+TYPEIDGETTEMPLATEINSTANTIATION(float, L"float");
+TYPEIDGETTEMPLATEINSTANTIATION(char, L"char");
 TYPEIDGETTEMPLATEINSTANTIATION(string, L"string");
+
 }
+
 // ------------------------------------ //
 DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined) THROWS{
 	// the text should have all preceding and trailing spaces removed //

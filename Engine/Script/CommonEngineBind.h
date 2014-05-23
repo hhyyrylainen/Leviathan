@@ -10,6 +10,7 @@
 #include "Entities/Objects/Brush.h"
 #include "Entities/Objects/TrackEntityController.h"
 #include "add_on/autowrapper/aswrappedcall.h"
+#include "Engine.h"
 
 GenericEvent* WrapperGenericEventFactory(string name){
 
@@ -527,6 +528,21 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_REF_CAST, "TrackEntityController@ f()", WRAP_FN((DoReferenceCastDynamic<BaseObject, TrackEntityController>)), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+
+
+#ifdef _DEBUG
+
+
+	if(engine->RegisterGlobalFunction("void DumpMemoryLeaks()", asFUNCTION(Engine::DumpMemoryLeaks), asCALL_CDECL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	
+
+#endif // _DEBUG
+
 
 	return true;
 }

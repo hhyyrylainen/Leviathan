@@ -100,7 +100,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::Release(){
 	{
 		GUARD_LOCK_THIS_OBJECT();
 
-		Logger::Get()->Info(L"ConnectionInfo: disconnecting from "+Convert::StringToWstring(TargetHost.toString())+L" on port "
+		Logger::Get()->Info(L"ConnectionInfo: disconnecting from "+Convert::StringToWstring(TargetHost.toString())+L":"
 			+Convert::ToWstring(TargetPortNumber));
 
 		// Send a close packet //

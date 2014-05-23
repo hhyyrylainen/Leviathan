@@ -94,6 +94,12 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 		Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
 		return CONSOLECOMMANDRESULTSTATE_SUCCEEDED;
 	}
+#ifdef _DEBUG
+	// Memory leak dump command //
+
+
+#endif // _DEBUG
+
 
 	// first check if ">" is first character, we can easily reject command if it is missing //
 	if(commandstr.size() < 1){

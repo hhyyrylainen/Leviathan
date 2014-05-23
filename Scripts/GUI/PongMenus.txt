@@ -22,17 +22,39 @@ o GuiCollection "OnKeeper"{
 }
 
 // ------------------ Testing ------------------ //
-o GuiObject ID(200) "TestButton"{
+o GuiObject ID(200) "Tree/TestButton"{
     s{
         // A test script for CEGUI events //
         [@Listener="OnClick"]
-        int TestPrint(GuiObject@ instance){
+        bool TestPrint(GuiObject@ instance){
             
             Print("Test function!");
-            return 1;
+            instance.GetOwningManager().SetCollectionState("TestCollection", true);
+            return true;
         }
         
     @%};
+}
+
+o GuiObject ID(201) "Tree/TestButton2"{
+    s{
+        // A test script for CEGUI events //
+        [@Listener="OnClick"]
+        bool TestPrint(GuiObject@ instance){
+            
+            Print("Another test thing");
+            instance.GetOwningManager().SetCollectionState("TestCollection", false);
+            return true;
+        }
+        
+    @%};
+}
+
+o GuiCollection "TestCollection"{
+    l params{
+        Enabled = false;
+        AutoTarget = "Tree/TestButton2";
+    }
 }
 
 // ------------------ Main menu objects ------------------ //

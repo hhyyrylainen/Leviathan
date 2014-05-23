@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 <GUILayout version="4">
 	<Window name="DemoWindow" type="TaharezLook/FrameWindow">
 		<Property name="MaxSize" value="{{1,0},{1,0}}" />
@@ -11,13 +11,25 @@
 		<Property name="FrameEnabled" value="True" />
 		<Property name="RollUpEnabled" value="True" />
 		<Property name="SizingBorderThickness" value="8.0" />
-
+        <Property name="TooltipText" value="This is the window." />
+        
         <Window name="Tree" type="TaharezLook/Tree">
 			<Property name="ID" value="1" />
 			<Property name="MaxSize" value="{{1,0},{1,0}}" />
 		
 			<Property name="Size" value="{{0.96,0},{0.90,0}}" />
 			<Property name="Position" value="{{0.02,0},{0.02,0}}" />
+            
+            <Window name="TestButton" type="TaharezLook/Button">
+                <Property name="Text" value="Push me"/>
+                <Property name="TooltipText" value="Push this when your body is ready." />
+            </Window>
+            <Window name="TestButton2" type="TaharezLook/Button">
+                <Property name="Text" value="Nooooooo!"/>
+                <Property name="VerticalAlignment" value="Bottom"/>
+                <Property name="Visible" value="False"/>
+            </Window>
+            
 		</Window>
 
 		<Window name="Editbox" type="TaharezLook/Editbox">
@@ -26,11 +38,8 @@
 			<Property name="MinSize" value="{{0.1,0},{0.04,0}}" />
 			<Property name="Size" value="{{0.96,0},{0.05,0}}" />
 			<Property name="Position" value="{{0.02,0},{-0.02,0}}" />
-			<Property name="ReadOnly" value="True" />
-			<Property name="Text" value="" />
-			<Property name="TooltipText" value="World Location X" />
+			<Property name="ReadOnly" value="False"/>
+			<Property name="Text" value="Some test script here" />
 		</Window>
-        <Window name="TestButton" type="TaharezLook/Button">
-        </Window>
 	</Window>
 </GUILayout>

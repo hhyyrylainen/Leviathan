@@ -65,6 +65,11 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 	SetMouseTheme(L"TaharezLook/MouseArrow");
 	GuiContext->setDefaultTooltipType("TaharezLook/Tooltip");
 
+
+	// Store the initial time //
+	LastTimePulseTime = Misc::GetThreadSafeSteadyTimePoint();
+
+
 	return true;
 }
 
@@ -198,15 +203,17 @@ void Leviathan::Gui::GuiManager::Render(){
 
 	// Pass time //
 	auto newtime = Misc::GetThreadSafeSteadyTimePoint();
-
+	
 	SecondDuration elapsed = newtime-LastTimePulseTime;
 
-	GuiContext->injectTimePulse(elapsed.count());
+	float changval = elapsed.count();
+
+	GuiContext->injectTimePulse(changval);
 
 	// Potentially pass to system //
 	if(MainGuiManager){
 
-		CEGUI::System::getSingleton().injectTimePulse(elapsed.count());
+		CEGUI::System::getSingleton().injectTimePulse(changval);
 	}
 
 	LastTimePulseTime = newtime;
@@ -301,6 +308,11 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 
 		Logger::Get()->Error(L"GuiManager: LoadGUIFile: failed to locate file: "+relativepath+L":");
 		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e.what()));
+		return false;
+	} catch(const CEGUI::GenericException &e2){
+
+		Logger::Get()->Error(L"GuiManager: LoadGUIFile: failed to parse CEGUI layout: "+relativepath+L":");
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e2.what()));
 		return false;
 	}
 

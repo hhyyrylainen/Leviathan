@@ -17,7 +17,7 @@ namespace Leviathan{ namespace Gui{
 	class GuiCollection : public Object, public ReferenceCounted{
 	public:
 		GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, bool strict = false, 
-			bool enabled = true, bool keepgui = false, bool allowenable = true);
+			bool enabled = true, bool keepgui = false, bool allowenable = true, const wstring &autotarget = L"");
 		~GuiCollection();
 
 		DLLEXPORT void UpdateState(bool newstate);
@@ -66,6 +66,11 @@ namespace Leviathan{ namespace Gui{
 		bool Strict;
 		bool KeepsGuiOn;
 		bool AllowEnable;
+
+		//! The CEGUI window that is automatically controlled
+		//! \todo Allow script to be called after this
+		wstring AutoTarget;
+
 
 		GKey Toggle;
 		GuiManager* OwningManager;

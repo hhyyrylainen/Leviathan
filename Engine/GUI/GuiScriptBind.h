@@ -18,13 +18,13 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Gui::GuiCollection, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_ADDREF, "void f()", asMETHOD(Gui::GuiCollection, AddRefProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Gui::GuiCollection, ReleaseProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_RELEASE, "void f()", asMETHOD(Gui::GuiCollection, ReleaseProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("GuiCollection", "string GetName()", WRAP_MFN(Gui::GuiCollection, GetNameProxy), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("GuiCollection", "string GetName()", asMETHOD(Gui::GuiCollection, GetNameProxy), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -34,7 +34,7 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiManager", "bool SetCollectionState(string name, bool state = false)", WRAP_MFN(Gui::GuiManager, SetCollectionStateProxy), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("GuiManager", "bool SetCollectionState(string name, bool state = false)", asMETHOD(Gui::GuiManager, SetCollectionStateProxy), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -46,22 +46,22 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	}
 	// no factory function to prevent scripts from creating these functions //
 
-	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Gui::BaseGuiObject, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_ADDREF, "void f()", asMETHOD(Gui::BaseGuiObject, AddRefProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Gui::BaseGuiObject, ReleaseProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_RELEASE, "void f()", asMETHOD(Gui::BaseGuiObject, ReleaseProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiObject", "int GetID()", WRAP_MFN(Gui::BaseGuiObject, GetID), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "int GetID()", asMETHOD(Gui::BaseGuiObject, GetID), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("GuiObject", "ScriptSafeVariableBlock@ GetAndPopFirstUpdated()", WRAP_MFN(Gui::BaseGuiObject, GetAndPopFirstUpdated), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "ScriptSafeVariableBlock@ GetAndPopFirstUpdated()", asMETHOD(Gui::BaseGuiObject, GetAndPopFirstUpdated), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("GuiObject", "GuiManager& GetOwningManager()", WRAP_MFN(Gui::BaseGuiObject, GetOwningManager), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "GuiManager& GetOwningManager()", asMETHOD(Gui::BaseGuiObject, GetOwningManager), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}

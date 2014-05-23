@@ -23,6 +23,9 @@
 #include "Common/StringOperations.h"
 #include "Common/Misc.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
+#ifdef LEVIATHAN_USES_VLD
+#include <vld.h>
+#endif // LEVIATHAN_USES_VLD
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -823,7 +826,9 @@ DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
 
 
 	// Now we can set some things that require command line arguments //
-	_RemoteConsole->SetAllowClose();
+	// _RemoteConsole might be NULL //
+	if(_RemoteConsole)
+		_RemoteConsole->SetAllowClose();
 
 }
 // ------------------------------------ //
@@ -884,4 +889,15 @@ DLLEXPORT void Leviathan::Engine::WinAllocateConsole(){
 	// Make std library output functions output to console, too //
 	ios::sync_with_stdio();
 }
+
+DLLEXPORT void Leviathan::Engine::DumpMemoryLeaks(){
+#ifdef _DEBUG
+#ifdef LEVIATHAN_USES_VLD
+
+	VLDReportLeaks();
+
+#endif // LEVIATHAN_USES_VLD
+#endif // _DEBUG
+}
+
 #endif

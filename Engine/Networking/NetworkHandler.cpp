@@ -503,14 +503,14 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 			// Notify successful fetch //
 			auto tmpget = Logger::Get();
 			if(tmpget)
-				tmpget->Info(L"NetworkHandler: Successfully fetched master server list:");
+				tmpget->Info(L"NetworkHandler: Successfully fetched a master server list:");
 			for(auto iter = instance->MasterServers.begin(); iter != instance->MasterServers.end(); ++iter)
 				if(tmpget)
 				Logger::Get()->Write(L"\t> "+*(*iter).get(), false);
 
 		} else {
 			// Fail //
-			Logger::Get()->Error(L"NetworkHandler: failed to update master server list, using old list");
+			Logger::Get()->Error(L"NetworkHandler: failed to update the master server list, using the old list");
 		}
 
 
@@ -519,7 +519,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 	if(!instance->_LoadMasterServerList()){
 
 		// We need to request a new list before we can do anything //
-		Logger::Get()->Info(L"NetworkHandler: no stored list of master servers, waiting for update to finish");
+		Logger::Get()->Info(L"NetworkHandler: no stored list of master servers, waiting for the update to finish");
 		DataUpdaterThread.join();
 	}
 

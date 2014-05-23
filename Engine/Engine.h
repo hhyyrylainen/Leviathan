@@ -48,6 +48,10 @@ namespace Leviathan{
 		//! \pre PreRelease is called
 		DLLEXPORT bool HasPreRleaseBeenDone() const;
 
+
+		//! \brief Causes VLD to dump current memory leaks
+		DLLEXPORT static void DumpMemoryLeaks();
+
 		DLLEXPORT void Tick();
 		DLLEXPORT void RenderFrame();
 		DLLEXPORT void PhysicsUpdate();

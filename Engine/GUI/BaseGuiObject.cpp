@@ -73,8 +73,17 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 		}
 
 		// Find the CEGUI object //
+		CEGUI::Window* foundobject = NULL;
+		try{
 
-		auto foundobject = owner->GetMainContext()->getRootWindow()->getChild(Convert::WstringToString(tmpptr->Name));
+			foundobject = owner->GetMainContext()->getRootWindow()->getChild(Convert::WstringToString(tmpptr->Name));
+
+		} catch(const CEGUI::UnknownObjectException &e){
+
+			// Not found //
+			Logger::Get()->Error(L"BaseGuiObject: couldn't find a CEGUI window with name: "+tmpptr->Name+L":");
+			Logger::Get()->Write(L"\t> "+Convert::CharPtrToWstring(e.what()));
+		}
 
 		if(foundobject){
 			// Set the object //
@@ -139,7 +148,7 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 		// check does the script contain right listeners //
 		if(mod->DoesListenersContainSpecificListener(listenername)){
 			// setup parameters //
-			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
+			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"GuiObject"))
 				(new NamedVariableBlock(new VoidPtrBlock(*pEvent), L"Event"));
 			// we are returning ourselves so increase refcount
 			AddRef();
@@ -155,7 +164,7 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 		// generic event is passed //
 		if(mod->DoesListenersContainSpecificListener(L"", (*event2)->GetTypePtr())){
 			// setup parameters //
-			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"BaseGuiObject"))
+			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"GuiObject"))
 				(new NamedVariableBlock(new VoidPtrBlock(*event2), L"GenericEvent"));
 			// we are returning ourselves so increase refcount
 			AddRef();
@@ -244,7 +253,11 @@ bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const wstring &listenername)
 	if(iter->second == &CEGUI::PushButton::EventClicked){
 		createdconnection = TargetElement->subscribeEvent(*iter->second, CEGUI::Event::Subscriber(&BaseGuiObject::EventOnClick, this));
 	} else {
-		createdconnection = TargetElement->subscribeEvent(*iter->second, CEGUI::Event::Subscriber(&BaseGuiObject::EventGenericCEGUI, this));
+		// Generic listeners aren't supported since we would have no way of knowing which script listener would have to be called //
+		Logger::Get()->Error(L"BaseGuiObject: _HookCEGUIEvent: event is missing a specific clause, name: "+listenername);
+		Logger::Get()->Save();
+		assert(0 && "Unsupported CEGUI listener type is being called");
+		return true;
 	}
 
 	CEGUIRegisteredEvents.push_back(createdconnection);
@@ -261,6 +274,35 @@ void Leviathan::Gui::BaseGuiObject::_UnsubscribeAllEvents(){
 	}
 
 	CEGUIRegisteredEvents.clear();
+}
+// ------------------------------------ //
+bool Leviathan::Gui::BaseGuiObject::_CallCEGUIListener(const wstring &name){
+	// There should be one as it is registered //
+	ScriptModule* mod = Scripting->GetModule();
+
+	if(!mod)
+		return false;
+
+	// Setup the parameters //
+	vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"GuiObject"));
+
+	// We are returning ourselves so increase refcount
+	AddRef();
+
+	ScriptRunningSetup sargs;
+	sargs.SetEntrypoint(mod->GetListeningFunctionName(name)).SetArguments(Args);
+
+
+	// Run the script //
+	shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
+
+	if(!result || !result->IsConversionAllowedNonPtr<bool>()){
+
+		return false;
+	}
+
+	// Return the value returned by the script //
+	return result->ConvertAndReturnVariable<bool>();
 }
 // ------------------------------------ //
 bool Leviathan::Gui::BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &args){
@@ -281,18 +323,10 @@ bool Leviathan::Gui::BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &a
 	return false;
 }
 
-bool Leviathan::Gui::BaseGuiObject::EventGenericCEGUI(const CEGUI::EventArgs &args){
-	// Pass to a script listener //
-
-
-	return false;
-}
-
 bool Leviathan::Gui::BaseGuiObject::EventOnClick(const CEGUI::EventArgs &args){
 	// Pass the click event to the script //
 
-
-	return true;
+	return _CallCEGUIListener(L"OnClick");
 }
 
 

@@ -65,6 +65,12 @@ namespace Leviathan{ namespace Gui{
 		//! \brief Clears CEGUIRegisteredEvents and unsubscribes from all
 		void _UnsubscribeAllEvents();
 
+
+		//! \brief Calls the script for a specific CEGUI event listener
+		//! \return The scripts return value changed to an int
+		bool _CallCEGUIListener(const wstring &name);
+
+
 		// ------------------------------------ //
 
 
@@ -107,8 +113,6 @@ namespace Leviathan{ namespace Gui{
 
 
 		bool EventDestroyWindow(const CEGUI::EventArgs &args);
-
-		bool EventGenericCEGUI(const CEGUI::EventArgs &args);
 
 		bool EventOnClick(const CEGUI::EventArgs &args);
 	};

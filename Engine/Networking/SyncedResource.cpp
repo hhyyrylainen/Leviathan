@@ -17,8 +17,14 @@ DLLEXPORT Leviathan::SyncedResource::~SyncedResource(){
 }
 
 DLLEXPORT void Leviathan::SyncedResource::StartSync(){
+	// The SyncedVariables might be unloaded at this point //
+	auto sync = SyncedVariables::Get();
+
+	if(!sync)
+		return;
+
 	// Register us //
-	ConnectToNotifier(SyncedVariables::Get());
+	ConnectToNotifier(sync);
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(sf::Packet &packet){

@@ -7,12 +7,15 @@
 #include "Script/ScriptInterface.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "GuiManager.h"
+#include "CEGUI/GUIContext.h"
+#include "CEGUI/Window.h"
 using namespace Leviathan;
 using namespace Gui;
 // ------------------------------------ //
 Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, 
-	bool strict /*= false*/, bool enabled /*= true*/, bool keepgui, bool allowenable) : Name(name), ID(id), Enabled(enabled), Strict(strict), 
-	KeepsGuiOn(keepgui), OwningManager(manager), AllowEnable(allowenable)
+	bool strict /*= false*/, bool enabled /*= true*/, bool keepgui, bool allowenable, const wstring &autotarget) : 
+	Name(name), ID(id), Enabled(enabled), Strict(strict), KeepsGuiOn(keepgui), OwningManager(manager), AllowEnable(allowenable), 
+		AutoTarget(autotarget)
 {
 	Toggle = GKey::GenerateKeyFromString(toggle);
 }
@@ -24,7 +27,46 @@ Leviathan::Gui::GuiCollection::~GuiCollection(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
-	// call script //
+	// First update the object //
+	Enabled = newstate;
+
+	// notify GUI //
+	OwningManager->PossiblyGUIMouseDisable();
+
+
+	// Set the auto target visibility if the target is set //
+	if(!AutoTarget.empty()){
+
+		// Find it and set it //
+		// Find the CEGUI object //
+		CEGUI::Window* foundobject = NULL;
+		try{
+
+			foundobject = OwningManager->GetMainContext()->getRootWindow()->getChild(Convert::WstringToString(AutoTarget));
+
+		} catch(const CEGUI::UnknownObjectException &e){
+
+			// Not found //
+			Logger::Get()->Error(L"GuiCollection: couldn't find an AutoTarget CEGUI window with name: "+AutoTarget+L":");
+			Logger::Get()->Write(L"\t> "+Convert::CharPtrToWstring(e.what()));
+		}
+
+		if(foundobject){
+
+			// Set it's visible flag //
+			foundobject->setVisible(Enabled);
+
+
+		} else {
+
+			// Call script?
+		}
+
+		return;
+	}
+
+
+	// Call the script //
 	ScriptScript* tmpscript = Scripting.get();
 
 	if(tmpscript){
@@ -35,7 +77,7 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 		
 		if(mod->DoesListenersContainSpecificListener(listenername)){
 			// create event to use //
-			Event* onevent = new Event(EVENT_TYPE_SHOW, new ShowEventData(false));
+			Event* onevent = new Event(EVENT_TYPE_SHOW, new ShowEventData(newstate));
 
 			// call it //
 			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"GuiCollection"))
@@ -52,11 +94,6 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 			onevent->Release();
 		}
 	}
-
-	Enabled = newstate;
-
-	// notify GUI //
-	OwningManager->PossiblyGUIMouseDisable();
 }
 // ------------------------------------ //
 bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data){
@@ -67,6 +104,7 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 	bool Strict = false;
 	bool GuiOn = false;
 	bool allowenable = true;
+	wstring autotarget = L"";
 
 	auto varlist = data.GetListWithName(L"params");
 
@@ -83,11 +121,13 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 
 		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"KeepsGUIOn", GuiOn, false);
 		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"AllowEnable", allowenable, true);
+
+		ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist->GetVariables(), L"AutoTarget", autotarget, L"");
 	}
 
 
 	// allocate new Collection object //
-	GuiCollection* cobj = new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn, allowenable);
+	GuiCollection* cobj = new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn, allowenable, autotarget);
 	// copy script data over //
 	cobj->Scripting = data.GetScript();
 

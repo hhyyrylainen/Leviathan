@@ -390,7 +390,11 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
 	GuiManagerAccess = window1->GetGUI();
 
-	GuiManagerAccess->LoadGUIFile(L"./Data/Scripts/GUI/PongMenus.txt");
+	if(!GuiManagerAccess->LoadGUIFile(L"./Data/Scripts/GUI/PongMenus.txt")){
+
+		Logger::Get()->Error(L"Pong: failed to load the GuiFile, quitting");
+		LeviathanApplication::GetApp()->StartRelease();
+	}
 
 	// set skybox to have some sort of visuals //
 	WorldOfPong->SetSkyBox("NiceDaySky");

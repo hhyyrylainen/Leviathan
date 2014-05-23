@@ -10,6 +10,7 @@
 
 namespace Leviathan{
 
+	//! \brief Mainly a FPS limiter
 	class RenderingStatistics : public Object{
 	public:
 		DLLEXPORT RenderingStatistics();
@@ -23,10 +24,36 @@ namespace Leviathan{
 		DLLEXPORT void ReportStats(DataStore* dstore);
 
 	private:
+
+
 		void HalfMinuteMark();
 		void SecondMark();
 
-		// ---------------------- //
+		FORCE_INLINE static void MakeSureHasEnoughRoom(std::vector<int> &tarvec, const size_t &accessspot){
+			
+			if(tarvec.size() <= accessspot+1){
+
+#ifdef _DEBUG
+				Logger::Get()->Warning(L"RenderingStatistics: performance warning: having to increase frame counter storage");
+#endif // _DEBUG				
+
+				if(tarvec.size() > 500){
+
+
+					tarvec.resize((size_t)(tarvec.size()*1.2f));
+					Logger::Get()->Warning(L"RenderingStatistics: large frame time tracking buffer is getting larger, size: "+
+						Convert::ToWstring(tarvec.size()));
+
+				} else {
+
+					tarvec.resize((size_t)(tarvec.size()*1.5f));
+				}
+			}
+
+
+		}
+
+		// ------------------------------------ //
 		__int64 HalfMinuteStartTime;
 		__int64 SecondStartTime;
 		__int64 RenderingStartTime;
@@ -50,8 +77,12 @@ namespace Leviathan{
 		bool IsFirstFrame;
 
 		// stored values //
-		vector<int> LastMinuteFPS;
-		vector<int> LastMinuteRenderTimes;
+		std::vector<int> LastMinuteFPS;
+		size_t LastMinuteFPSPos;
+
+		std::vector<int> LastMinuteRenderTimes;
+		size_t LastMinuteRenderTimesPos;
+
 
 		bool EraseOld;
 

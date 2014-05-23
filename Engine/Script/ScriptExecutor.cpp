@@ -119,7 +119,7 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptSc
 	ScriptModule* scrptmodule = scriptobject->GetModule();
 	if(!scrptmodule){
 		// report error and exit //
-		Logger::Get()->Error(L"ScriptExecutor: RunSetUp: trying to run empty module");
+		Logger::Get()->Error(L"ScriptExecutor: RunSetUp: trying to run an empty module");
 		return shared_ptr<VariableBlock>(new VariableBlock(-1));
 	}
 
@@ -127,22 +127,27 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptSc
 	asIScriptModule* Module = scrptmodule->GetModule();
 	if(!Module){
 		// report error and exit //
-		Logger::Get()->Error(L"ScriptExecutor: RunSetUp: cannot run invalid script module: "+scrptmodule->GetInfoWstring(), true);
+		Logger::Get()->Error(L"ScriptExecutor: RunSetUp: cannot run an invalid script module: "+scrptmodule->GetInfoWstring(), true);
 		return shared_ptr<VariableBlock>(new VariableBlock(-1));
 	}
 
-	// get function pointer to start function //
+	// get function pointer to the start function //
 	asIScriptFunction *func = NULL;
-	// get entry function from the module //
+
+	// Get the entry function from the module //
 	if(!parameters->FullDeclaration){
+
 		func = Module->GetFunctionByName(parameters->Entryfunction.c_str());
 	} else {
+
 		func = Module->GetFunctionByDecl(parameters->Entryfunction.c_str());
 	}
+
 	if(func == NULL){
-		// set exists state //
+		// Set exists state //
 		parameters->ScriptExisted = false;
-		// check should we print an error //
+
+		// Check should we print an error //
 		if(parameters->PrintErrors && parameters->ErrorOnNonExistingFunction){
 			Logger::Get()->Error(L"ScriptExecutor: RunScript: Could not find starting function: "+Convert::StringToWstring(parameters->Entryfunction)+
 				L" in: "+scrptmodule->GetInfoWstring(), true);
@@ -152,24 +157,27 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptSc
 		return shared_ptr<VariableBlock>(new VariableBlock(-1));
 	}
 
-	// create running context for the function //
+	// Create a running context for the function //
 	asIScriptContext* ScriptContext = engine->CreateContext();
+
 	if(!ScriptContext){
-		Logger::Get()->Error(L"ScriptExecutor: RunScript: Failed to create context ", true);
+		Logger::Get()->Error(L"ScriptExecutor: RunScript: Failed to create a context ", true);
 		SAFE_RELEASE(ScriptContext);
 		return shared_ptr<VariableBlock>(new VariableBlock(-1));
 	}
 
-	// set exists state //
+	// Set exists state //
 	parameters->ScriptExisted = true;
 
 	if(ScriptContext->Prepare(func) < 0){
-		Logger::Get()->Error(L"ScriptExecutor: RunScript: prepare context failed func: "+Convert::StringToWstring(parameters->Entryfunction)+
+		Logger::Get()->Error(L"ScriptExecutor: RunScript: prepare context failed, func: "+Convert::StringToWstring(parameters->Entryfunction)+
 			L" in: "+scrptmodule->GetInfoWstring(), true);
 		SAFE_RELEASE(ScriptContext);
 		return shared_ptr<VariableBlock>(new VariableBlock(-1));
 	}
-	// pass arguments //
+
+
+	// Pass the arguments //
 
 	// figure out if arguments match function declaration //
 	FunctionParameterInfo* paraminfo = scrptmodule->GetParamInfoForFunction(func);
@@ -180,7 +188,8 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptSc
 	for(int i = 0; i < parameterc; i++){
 		if(i >= (int)parameters->Parameters.size()) // no more parameters //
 			break;
-		// try to pass the parameter //
+
+		// Try to pass the parameter //
 		switch(paraminfo->MatchingDataBlockTypes[i]){
 			case DATABLOCK_TYPE_INT:
 				{
@@ -228,6 +237,7 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptSc
 			case DATABLOCK_TYPE_VOIDPTR:
 				{
 					// we need to make sure that script object name matches engine object name //
+					//if(paraminfo->ParameterDeclarations[i] != parameters->Parameters[i]->GetName()){
 					if(paraminfo->ParameterDeclarations[i] != parameters->Parameters[i]->GetName()){
 						// non matching pointer types //
 						Logger::Get()->Error(L"Mismatching ptr types, comparing "+paraminfo->ParameterDeclarations[i]+L" to passed type of "
@@ -251,11 +261,12 @@ scriptexecutorpassparamsinvalidconversionparam:
 
 		Logger::Get()->Error(L"ScriptExecutor: RunScript: pass parameters failed func: "+Convert::StringToWstring(parameters->Entryfunction)+
 			L" param number: "+Convert::IntToWstring(i)+L" in: "+scrptmodule->GetInfoWstring(), true);
-		return shared_ptr<VariableBlock>(new VariableBlock(80000800));
+		return shared_ptr<VariableBlock>(new VariableBlock(-1));
 	}
 
-	// run script //
-	// could use timeout here //
+	// Run the script //
+
+	// Could use a timeout here //
 	int retcode = ScriptContext->Execute();
 	if(retcode != asEXECUTION_FINISHED){
 		// something went wrong //

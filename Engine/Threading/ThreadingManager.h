@@ -10,7 +10,7 @@
 #include "TaskThread.h"
 
 
-#define DEFAULT_THREADS_PER_CORE		3
+#define DEFAULT_THREADS_PER_CORE		2
 
 namespace Leviathan{
 

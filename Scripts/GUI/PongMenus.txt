@@ -1,19 +1,16 @@
-//GUIBaseFile = "PongMenu.layout";
-GUIBaseFile = "TestMenu.layout";
+﻿GUIBaseFile = "PongMenu.layout";
 
 // ------------------ Templates for GUI objects ------------------ //
-template<GCollectName, GCollectEnabled> PGCTemplate: o GuiCollection "GCollectName"{
-    l params{
-        Enabled = GCollectEnabled;
+template<GCollectName, CEGUITargetWind, GCollectEnabled> PGCTemplate: 
+    o GuiCollection "GCollectName"{
+        l params{
+            Enabled = GCollectEnabled;
+            AutoTarget = "CEGUITargetWind";
+        }
     }
-    s{
-        #include "DefaultCollectionScript.as";
-    @%};
-}
-
 
 // ------------------ Non-functional objects ------------------ //
-// this keeps the GUI always on //
+// This keeps the GUI always on //
 o GuiCollection "OnKeeper"{
     l params{
         Enabled = true;
@@ -21,62 +18,27 @@ o GuiCollection "OnKeeper"{
     }
 }
 
-// ------------------ Testing ------------------ //
-o GuiObject ID(200) "Tree/TestButton"{
-    s{
-        // A test script for CEGUI events //
-        [@Listener="OnClick"]
-        bool TestPrint(GuiObject@ instance){
-            
-            Print("Test function!");
-            instance.GetOwningManager().SetCollectionState("TestCollection", true);
-            return true;
-        }
-        
-    @%};
-}
-
-o GuiObject ID(201) "Tree/TestButton2"{
-    s{
-        // A test script for CEGUI events //
-        [@Listener="OnClick"]
-        bool TestPrint(GuiObject@ instance){
-            
-            Print("Another test thing");
-            instance.GetOwningManager().SetCollectionState("TestCollection", false);
-            return true;
-        }
-        
-    @%};
-}
-
-o GuiCollection "TestCollection"{
-    l params{
-        Enabled = false;
-        AutoTarget = "Tree/TestButton2";
-    }
-}
 
 // ------------------ Main menu objects ------------------ //
-template<> PGCTemplate<TopLevelMenu, true>
+template<> PGCTemplate<TopLevelMenu, "", true>
 
-template<> PGCTemplate<StartServerMenu, false>
+template<> PGCTemplate<StartServerMenu, "", false>
 
-template<> PGCTemplate<DirectConnectMenu, false>
+template<> PGCTemplate<DirectConnectMenu, "", false>
 
 // ------------------ Connect screen objects ------------------ //
-template<> PGCTemplate<ConnectScreen, false>
+template<> PGCTemplate<ConnectScreen, "", false>
 
 
 // ------------------ Lobby screen objects ------------------ //
-template<> PGCTemplate<LobbyScreen, false>
+template<> PGCTemplate<LobbyScreen, "", false>
 
 
 // ------------------ During gameplay objects ------------------ //
-template<> PGCTemplate<GameplayHUD, false>
+template<> PGCTemplate<GameplayHUD, "", false>
 
 // ------------------ Match end screen objects ------------------ //
-template<> PGCTemplate<MatchEndScreen, false>
+template<> PGCTemplate<MatchEndScreen, "", false>
 
 // ------------------ Pause menu objects ------------------ //
 o GuiCollection "PauseMenu"{
@@ -84,6 +46,7 @@ o GuiCollection "PauseMenu"{
         Enabled = false;
         AllowEnable = false;
         ToggleOn = "ESC";
+        AutoTarget = "";
     }
     s script{
         body{
@@ -91,3 +54,4 @@ o GuiCollection "PauseMenu"{
         @%};
     }
 }
+

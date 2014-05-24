@@ -55,6 +55,8 @@ DLLEXPORT bool Leviathan::ThreadingManager::Init(){
 	bool started = false;
 	int loopcount = 0;
 
+	boost::thread::yield();
+
 	// This might need to be repeated for a while //
 	while(!started){
 
@@ -85,9 +87,11 @@ DLLEXPORT bool Leviathan::ThreadingManager::Init(){
 			// No threads running //
 			return false;
 		}
+
+		boost::thread::yield();
 	}
 
-	assert(0 && "Shouldn't get out of that loop, 80");
+	assert(0 && "Shouldn't get out of that loop");
 	return false;
 }
 
@@ -300,7 +304,7 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 
 		// Quickly continue if it is empty //
 		if(!manager->AllowStartTasksFromQueue || manager->WaitingTasks.empty()){
-            
+			
 			continue;
 		}
 

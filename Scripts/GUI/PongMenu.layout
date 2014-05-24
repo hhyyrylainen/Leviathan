@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<GUILayout version="4">
+	<Window name="DemoWindow" type="TaharezLook/FrameWindow">
+    
+	</Window>
+</GUILayout>

@@ -1,0 +1,46 @@
+GUIBaseFile = "TestMenu.layout";
+
+// ------------------ Non-functional objects ------------------ //
+// This keeps the GUI always on //
+o GuiCollection "OnKeeper"{
+    l params{
+        Enabled = true;
+        KeepsGUIOn = true;
+    }
+}
+
+// ------------------ Testing ------------------ //
+o GuiObject ID(200) "Tree/TestButton"{
+    s{
+        // A test script for CEGUI events //
+        [@Listener="OnClick"]
+        bool TestPrint(GuiObject@ instance){
+            
+            Print("Test function!");
+            instance.GetOwningManager().SetCollectionState("TestCollection", true);
+            return true;
+        }
+        
+    @%};
+}
+
+o GuiObject ID(201) "Tree/TestButton2"{
+    s{
+        // A test script for CEGUI events //
+        [@Listener="OnClick"]
+        bool TestPrint(GuiObject@ instance){
+            
+            Print("Another test thing");
+            instance.GetOwningManager().SetCollectionState("TestCollection", false);
+            return true;
+        }
+        
+    @%};
+}
+
+o GuiCollection "TestCollection"{
+    l params{
+        Enabled = false;
+        AutoTarget = "Tree/TestButton2";
+    }
+}

@@ -22,10 +22,24 @@ o GuiCollection "OnKeeper"{
 
 
 // ------------------ Main menu objects ------------------ //
-template<> PGCTemplate<TopLevelMenu, "TopLevelMenu", true>
-template<> PGCTemplate<MenuWindow, "MenuWindow", true>
+template<> PGCTemplate<TopLevelMenu, "MenuWindow/TopLevelMenu", true>
+
+o GuiObject "MenuWindow/TopLevelMenu/StartServerButton"{
+    s{
+        [@Listener="OnClick"]
+        bool SetVersion(GuiObject@ instance){
+        
+            // Go to the StartServerMenu //
+            instance.GetOwningManager().SetCollectionState("StartServerMenu", true);
+            instance.GetOwningManager().SetCollectionState("TopLevelMenu", false);
+            return true;
+        }
+    @%};
+}
 
 // ------------------ MenuWindow ------------------ //
+template<> PGCTemplate<MenuWindow, "MenuWindow", true>
+
 o GuiObject "MenuWindow/PongVersion"{
     s{
         [@Listener="OnInit"]
@@ -56,10 +70,39 @@ o GuiObject "MenuWindow/LeviathanVersion"{
         }
     @%};
 }
+// ------------------ Server start screen ------------------ //
+template<> PGCTemplate<StartServerMenu, "MenuWindow/StartServerMenu", false>
 
-template<> PGCTemplate<StartServerMenu, "", false>
+o GuiObject "MenuWindow/StartServerMenu"{
+    s{
+        [@Listener="OnCloseClicked"]
+        bool GoBackToMainMenu(GuiObject@ instance){
+            
+            // Go back to the main menu //
+            instance.GetOwningManager().SetCollectionState("TopLevelMenu", true);
+            instance.GetOwningManager().SetCollectionState("StartServerMenu", false);
+            return true;
+        }
+    @%};
+}
 
+o GuiObject "MenuWindow/StartServerMenu/BackToMainButton"{
+    s{
+        [@Listener="OnClick"]
+        bool GoBackToMainMenu(GuiObject@ instance){
+            
+            // Go back to the main menu //
+            instance.GetOwningManager().SetCollectionState("TopLevelMenu", true);
+            instance.GetOwningManager().SetCollectionState("StartServerMenu", false);
+            return true;
+        }
+    @%};
+}
+
+
+// ------------------ Server connection screen ------------------ //
 template<> PGCTemplate<DirectConnectMenu, "", false>
+
 
 // ------------------ Connect screen objects ------------------ //
 template<> PGCTemplate<ConnectScreen, "", false>

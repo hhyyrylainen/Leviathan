@@ -76,16 +76,62 @@
             <Property name="Position" value="{{0.35, 0}, {0.2, 0}}"/>
             
             <!-- Main menu buttons -->
-            <Window name="StartServerButton" type="TaharezLook/PushButton">
+            <Window name="StartServerButton" type="TaharezLook/Button">
+                
+                <Property name="Size" value="{{0.82, 0}, {0.2, 0}}"/>
+                <Property name="Position" value="{{0, 0}, {0.05, 0}}"/>
+                <Property name="HorizontalAlignment" value="Centre"/>
+                
+                <Property name="Font" value="Simonetta-Black-Large"/>
+                
+                <Property name="Text" value="Start Server"/>
+                <Property name="TooltipText" value="Start a new local server for playing solo or with others"/>
                 
                 
-            
             </Window>
             
             
         </Window>
     
+        <!-- Server start screen -->
+        <Window name="StartServerMenu" type="TaharezLook/FrameWindow">
+            
+            <Property name="Visible" value="False"/>
+            <Property name="CloseButtonEnabled" value="True"/>
+            <Property name="RollUpEnabled" value="False"/>
+            <Property name="SizingEnabled" value="False"/>
+            <Property name="SizingBorderThickness" value="3.0"/>
+            <Property name="AlwaysOnTop" value="True"/>
+            <Property name="DragMovingEnabled" value="False"/>
+            
+            
+            <Property name="Text" value="Start a local server"/>
+            
+            <Property name="Area" value="{{0.1, 0}, {0.1, 0}, {0.9, 0}, {0.9, 0}}"/>
+            
+            <!-- Server configure controls -->
+            
+            <!-- The back button -->
+            <Window name="BackToMainButton" type="TaharezLook/Button">
+                
+                <Property name="Size" value="{{0.4, 0}, {0.13, 0}}"/>
+                <Property name="HorizontalAlignment" value="Right"/>
+                <Property name="VerticalAlignment" value="Bottom"/>
+                
+                <Property name="Font" value="Simonetta-Regular-Large"/>
+                
+                <Property name="Text" value="Back"/>
+                <Property name="TooltipText" value="Back to the Main menu. You could also hit the 'x' in the corner"/>
+                
+                
+                
+                
+            </Window>
+            
+            
+        </Window>
     
+        
     
     </Window>
     

@@ -14,4 +14,11 @@
     
     Write this too.
     
- */
+    \section generaltopics General topics
+    
+    See these pages for common tasks:
+    
+    \ref eventinscripts Adding a new event type to AngelScript
+    
+    
+*/

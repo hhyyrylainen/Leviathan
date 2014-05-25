@@ -118,6 +118,8 @@ namespace Leviathan{ namespace Gui{
 		bool EventDestroyWindow(const CEGUI::EventArgs &args);
 
 		bool EventOnClick(const CEGUI::EventArgs &args);
+
+		bool EventOnCloseClicked(const CEGUI::EventArgs &args);
 	};
 
 }}

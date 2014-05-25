@@ -25,6 +25,7 @@ namespace Leviathan{
 		EVENT_TYPE_FRAME_BEGIN, EVENT_TYPE_FRAME_END, EVENT_TYPE_INIT, EVENT_TYPE_PHYSICS_BEGIN, EVENT_TYPE_RELEASE,
 		EVENT_TYPE_ALL};
 
+	//! \brief A map of name of listener event type pairs, used by GUI to hook to events
 	static const std::map<wstring, EVENT_TYPE> EventListenerNameToEventMap =  boost::assign::map_list_of
 		(LISTENERNAME_ONSHOW, EVENT_TYPE_SHOW)
 		(LISTENERNAME_ONHIDE, EVENT_TYPE_HIDE)

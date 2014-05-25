@@ -1,0 +1,64 @@
+/*! \page eventinscripts Support of event types in scripts
+    
+    \section addnewscripttype Adding a new event type to the Engine
+    
+    First add a new entry to the list of LISTENERNAMEs and LISTENERVALUEs in ScriptModule.h at the top of the file.
+    For example like this:
+    \code
+        #define LISTENERNAME_ONCLOSECLICKED			L"OnCloseClicked"
+        
+        #define LISTENERVALUE_ONCLOSECLICKED		109
+    \endcode
+    
+    Then in add them to the map in ScriptModule.cpp (around line 40)
+    \code
+        (LISTENERNAME_ONCLOSECLICKED, LISTENERVALUE_ONCLOSECLICKED);
+    \endcode
+    
+    Then finally (if the event is for CEGUI) add it to Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine in BaseGuiObject.cpp
+    \code
+        (L"OnCloseClicked", &CEGUI::FrameWindow::EventCloseClicked);
+    \endcode
+    Matching the CEGUI event name it needs to be added to a couple of places:
+    
+    \subsection addnewceguisupport Add support functions for a new CEGUI event
+    
+    \subsubsection addnewceguisupportfunction Add a new function
+    You will need to add a new function to the end of Leviathan::Gui::BaseGuiObject in BaseGuiObject.h.
+    Following this syntax:
+    \code
+        bool EventOn/*put the name of the new event here*/(const CEGUI::EventArgs &args);
+    \endcode
+    and the implementation like this:
+    \code
+        bool Leviathan::Gui::BaseGuiObject::EventOn/*something*/(const CEGUI::EventArgs &args){
+            // Pass the event to the script //
+
+            return _CallCEGUIListener(L"OnCloseClicked");
+        }
+    \endcode
+    Replacing the OnCloseClicked with the name used in the maps where the event was previously added.
+    
+    \subsubsection addnewceguisupportelse Add an else-if clause for the new event
+    Goto the function Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent and find the huge mess of a conditional statement.
+    And add the event to the end.
+    \code
+        else if(iter->second == &CEGUI::FrameWindow::EventCloseClicked){
+
+            createdconnection = TargetElement->subscribeEvent(*iter->second, 
+                CEGUI::Event::Subscriber(&BaseGuiObject::EventOnCloseClicked, this));
+        }
+    
+    \endcode
+    Of course replacing EventCloseClicked with the name and Leviathan::Gui::BaseGuiObject::EventOnCloseClicked with the function created earlier.
+    And that should do it!
+    
+    
+    \section scriptaddnewengineevent Adding support for a new Engine Event
+    Alternatively if it is a predefined Leviathan event it may need to be added to Leviathan::EventListenerNameToEventMap
+    Like this:
+    \code
+        (LISTENERNAME_ONTICK, EVENT_TYPE_TICK);
+    \endcode
+    
+*/

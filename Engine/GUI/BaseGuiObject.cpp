@@ -12,6 +12,7 @@
 #include "Script/ScriptRunningSetup.h"
 #include "Script/ScriptInterface.h"
 #include "CEGUI/widgets/PushButton.h"
+#include "CEGUI/widgets/FrameWindow.h"
 using namespace Leviathan;
 using namespace Gui;
 // ------------------------------------ //
@@ -205,8 +206,8 @@ void Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine(boost::strict_loc
 
 	// Fill the map //
 	CEGUIEventNames = boost::assign::map_list_of
-		(L"OnClick", &CEGUI::PushButton::EventClicked);
-
+		(L"OnClick", &CEGUI::PushButton::EventClicked)
+		(L"OnCloseClicked", &CEGUI::FrameWindow::EventCloseClicked);
 
 }
 
@@ -258,10 +259,16 @@ bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const wstring &listenername)
 	// Switch on special cases where special handling can be used //
 	CEGUI::Event::Connection createdconnection;
 
-
+	
 	if(iter->second == &CEGUI::PushButton::EventClicked){
 		createdconnection = TargetElement->subscribeEvent(*iter->second, CEGUI::Event::Subscriber(&BaseGuiObject::EventOnClick, this));
+
+	} else if(iter->second == &CEGUI::FrameWindow::EventCloseClicked){
+
+		createdconnection = TargetElement->subscribeEvent(*iter->second, CEGUI::Event::Subscriber(&BaseGuiObject::EventOnCloseClicked, this));
+
 	} else {
+
 		// Generic listeners aren't supported since we would have no way of knowing which script listener would have to be called //
 		Logger::Get()->Error(L"BaseGuiObject: _HookCEGUIEvent: event is missing a specific clause, name: "+listenername);
 		Logger::Get()->Save();
@@ -336,5 +343,11 @@ bool Leviathan::Gui::BaseGuiObject::EventOnClick(const CEGUI::EventArgs &args){
 	// Pass the click event to the script //
 
 	return _CallCEGUIListener(L"OnClick");
+}
+
+bool Leviathan::Gui::BaseGuiObject::EventOnCloseClicked(const CEGUI::EventArgs &args){
+	// Pass the event to the script //
+
+	return _CallCEGUIListener(L"OnCloseClicked");
 }
 

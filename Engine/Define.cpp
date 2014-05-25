@@ -32,7 +32,7 @@ EngineComponent::EngineComponent() : Inited(false){
     
 }
 bool EngineComponent::Init(){
-    return true;
+    return false;
 }
 void EngineComponent::Release(){
 }

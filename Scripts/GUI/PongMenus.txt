@@ -1,4 +1,6 @@
 ﻿GUIBaseFile = "PongMenu.layout";
+GUIAnimations = [["PongMenus.anims"]];
+
 
 // ------------------ Templates for GUI objects ------------------ //
 template<GCollectName, CEGUITargetWind, GCollectEnabled> PGCTemplate: 
@@ -10,6 +12,7 @@ template<GCollectName, CEGUITargetWind, GCollectEnabled> PGCTemplate:
     }
 
 // ------------------ Non-functional objects ------------------ //
+
 // This keeps the GUI always on //
 o GuiCollection "OnKeeper"{
     l params{

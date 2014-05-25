@@ -183,6 +183,7 @@ namespace Leviathan{
 			return filepath.substr(startcopy, endcopy-startcopy+1);
 		}
 
+		//! \brief Returns the path part of a path+filename
 		template<class StringTypeN, typename CharType>
 		DLLEXPORT static const StringTypeN GetPath(const StringTypeN &filepath){
 			size_t startcopy = 0;

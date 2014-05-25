@@ -81,6 +81,7 @@ void Pong::PongServer::TryStartMatch(){
 		}
 	} catch(const Ogre::InvalidParametersException &e){
 		//! \todo send error //
+		e;
 		return;
 	}
 	auto split0 = _PlayerList[0]->GetSplit();

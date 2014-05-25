@@ -23,12 +23,14 @@
 #include "Common/Misc.h"
 #include "CEGUI/RenderTarget.h"
 #include "CEGUI/Window.h"
+#include "CEGUI/AnimationManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
+#include "Handlers/ResourceRefreshHandler.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
 Leviathan::Gui::GuiManager::GuiManager() : ID(IDFactory::GetID()), Visible(true), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true),
-	LastTimePulseTime(Misc::GetThreadSafeSteadyTimePoint()), MainGuiManager(false), ThisWindow(NULL), GuiContext(NULL)
+	LastTimePulseTime(Misc::GetThreadSafeSteadyTimePoint()), MainGuiManager(false), ThisWindow(NULL), GuiContext(NULL), FileChangeID(0)
 {
 	
 }
@@ -75,6 +77,20 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 
 void Leviathan::Gui::GuiManager::Release(){
 	GUARD_LOCK_THIS_OBJECT();
+
+	// Stop with the file updates //
+	if(FileChangeID){
+
+
+		auto tmphandler = ResourceRefreshHandler::Get();
+
+		if(tmphandler){
+
+			tmphandler->StopListeningForFileChanges(FileChangeID);
+		}
+		FileChangeID = 0;
+	}
+
 	// default mouse back //
 	SetMouseTheme(L"none");
 
@@ -276,7 +292,7 @@ BaseGuiObject* Leviathan::Gui::GuiManager::GetObject(unsigned int index){
 	return NULL;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
+DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file, bool nochangelistener /*= false*/){
 
 	// Parse the file //
 	auto data = ObjectFileProcessor::ProcessObjectFile(file);
@@ -285,6 +301,8 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 		return false;
 	}
 
+	MainGUIFile = file;
+
 	NamedVars& varlist = *data->GetVariables();
 
 	// we need to load the corresponding rocket file first //
@@ -292,6 +310,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 	// get path //
 	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist, L"GUIBaseFile", relativepath, L"", true,
 		L"GuiManager: LoadGUIFile: no base file defined (in "+file+L") : ");
+
 
 	if(!relativepath.size()){
 
@@ -325,6 +344,57 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 
 	// We need to lock now //
 	GUARD_LOCK_THIS_OBJECT();
+
+
+
+	// Look for animation files //
+	auto animslist = varlist.GetValueDirectRaw(L"GUIAnimations");
+
+	if(animslist){
+
+		if(!animslist->CanAllBeCastedToType<wstring>()){
+
+			Logger::Get()->Warning(L"GuiManager: LoadGUIFile: gui file has defined gui animation files in wrong format (expected list of strings), file: "+relativepath);
+
+		} else {
+
+			// Load them //
+			for(size_t i = 0; i < animslist->GetVariableCount(); i++){
+
+				wstring curfile;
+				animslist->GetValue(i).ConvertAndAssingToVariable<wstring>(curfile);
+
+				// Check is the file already loaded //
+				{
+					ObjectLock gguard(GlobalGUIMutex);
+
+					if(IsAnimationFileLoaded(gguard, curfile)){
+
+						// Don't load again //
+						continue;
+					}
+
+					// Set as loaded //
+					SetAnimationFileLoaded(gguard, curfile);
+				}
+
+				try{
+
+					CEGUI::AnimationManager::getSingleton().loadAnimationsFromXML(Convert::WstringToString(curfile));
+
+				} catch(const Ogre::Exception &e){
+
+					Logger::Get()->Warning(L"GuiManager: LoadGUIFile: failed to locate gui animation file: "+curfile+L":");
+					Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e.what()));
+
+				} catch(const CEGUI::GenericException &e2){
+
+					Logger::Get()->Error(L"GuiManager: LoadGUIFile: failed to parse CEGUI animation file layout: "+curfile+L":");
+					Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e2.what()));
+				}
+			}
+		}
+	}
 
 	// Set it as the visible sheet //
 	GuiContext->setRootWindow(rootwindow);
@@ -378,7 +448,50 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file){
 		AddGuiObject(TempOs[i]);
 	}
 
+	// This avoids having more and more change listeners each reload //
+	if(!nochangelistener){
+		// Listen for file changes //
+		auto tmphandler = ResourceRefreshHandler::Get();
+	
+		if(tmphandler){
+
+			// \todo Detect if the files are in different folders and start multiple listeners
+			std::vector<const wstring*> targetfiles = boost::assign::list_of(&file)(&relativepath);
+
+			tmphandler->ListenForFileChanges(targetfiles, boost::bind(&GuiManager::_FileChanged, this, _1, _2), FileChangeID);
+		}
+	}
+
+
+
 	return true;
+}
+
+DLLEXPORT void Leviathan::Gui::GuiManager::UnLoadGUIFile(){
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Unload all objects //
+	for(size_t i = 0; i < Objects.size(); i++){
+		
+		SAFE_RELEASE(Objects[i]);
+	}
+	Objects.clear();
+
+	// Unload all collections //
+	for(size_t i = 0; i < Collections.size(); i++){
+		SAFE_RELEASE(Collections[i]);
+	}
+
+	Collections.clear();
+
+
+	// Unload the CEGUI file //
+	auto curroot = GuiContext->getRootWindow();
+
+	CEGUI::WindowManager::getSingleton().destroyWindow(curroot);
+
+	GuiContext->setRootWindow(NULL);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseTheme(const wstring &tname){
@@ -454,6 +567,55 @@ void Leviathan::Gui::GuiManager::_ReleaseOgreResources(){
 	// We probably don't need to do anything //
 
 }
+// ------------------------------------ //
+void Leviathan::Gui::GuiManager::_FileChanged(const wstring &file, ResourceFolderListener &caller){
+	// Any updated file will cause whole reload //
+
+	UnLoadGUIFile();
+
+	// Now load it //
+	if(!LoadGUIFile(MainGUIFile, true)){
+
+		Logger::Get()->Error(L"GuiManager: file changed: couldn't load updated file: "+MainGUIFile);
+	}
 
 
 
+	// Mark everything as non-updated //
+	caller.MarkAllAsNotUpdated();
+
+}
+// ------------------ Static part ------------------ //
+std::vector<wstring> Leviathan::Gui::GuiManager::LoadedAnimationFiles;
+
+boost::recursive_mutex Leviathan::Gui::GuiManager::GlobalGUIMutex;
+
+bool Leviathan::Gui::GuiManager::IsAnimationFileLoaded(ObjectLock &lock, const wstring &file){
+	assert(lock.owns_lock(&GlobalGUIMutex) && "Wrong object locked in GuiManager::IsAnimationFileLoaded");
+
+	for(size_t i = 0; i < LoadedAnimationFiles.size(); i++){
+
+		if(LoadedAnimationFiles[i] == file){
+
+			return true;
+		}
+	}
+
+	// Not found, must not be loaded then //
+	return true;
+}
+
+void Leviathan::Gui::GuiManager::SetAnimationFileLoaded(ObjectLock &lock, const wstring &file){
+	assert(lock.owns_lock(&GlobalGUIMutex) && "Wrong object locked in GuiManager::IsAnimationFileLoaded");
+
+	LoadedAnimationFiles.push_back(file);
+}
+
+DLLEXPORT void Leviathan::Gui::GuiManager::KillGlobalCache(){
+	ObjectLock guard(GlobalGUIMutex);
+
+	// Release the memory to not look like a leak //
+	LoadedAnimationFiles.clear();
+
+	CEGUI::AnimationManager::getSingleton().destroyAllAnimations();
+}

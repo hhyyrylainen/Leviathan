@@ -52,6 +52,14 @@ DLLEXPORT bool Leviathan::ThreadingManager::Init(){
 		UsableThreads.push_back(shared_ptr<TaskThread>(new TaskThread()));
 	}
 
+	return true;
+}
+
+DLLEXPORT bool Leviathan::ThreadingManager::CheckInit(){
+	// Check are there running threads //
+	GUARD_LOCK_THIS_OBJECT();
+
+
 	bool started = false;
 	int loopcount = 0;
 
@@ -82,7 +90,7 @@ DLLEXPORT bool Leviathan::ThreadingManager::Init(){
 
 		if(++loopcount > 1000){
 
-			Logger::Get()->Error(L"ThreadingManager: Init: no threads have started, after 1000 loops");
+			Logger::Get()->Error(L"ThreadingManager: CheckInit: no threads have started, after 1000 loops");
 
 			// No threads running //
 			return false;
@@ -93,7 +101,11 @@ DLLEXPORT bool Leviathan::ThreadingManager::Init(){
 
 	assert(0 && "Shouldn't get out of that loop");
 	return false;
+
+
 }
+
+
 
 DLLEXPORT void Leviathan::ThreadingManager::Release(){
 	// Disallow new tasks //

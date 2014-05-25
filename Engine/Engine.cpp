@@ -26,6 +26,7 @@
 #ifdef LEVIATHAN_USES_VLD
 #include <vld.h>
 #endif // LEVIATHAN_USES_VLD
+#include "Handlers/ResourceRefreshHandler.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -37,7 +38,7 @@ static const WORD MAX_CONSOLE_LINES = 500;
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL),
 	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
-	_RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false)
+	_RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false), _ResourceRefreshHandler(NULL)
 {
 
 	// create this here //
@@ -93,6 +94,14 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 	// create //
 	OutOMemory = new OutOfMemoryHandler();
 
+	// Create threading facilities //
+	_ThreadingManager = new ThreadingManager();
+	if(!_ThreadingManager->Init()){
+
+		Logger::Get()->Error(L"Engine: Init: cannot start threading");
+		return false;
+	}
+
 	// create randomizer //
 	MainRandom = new Random((int)InitStartTime);
 	MainRandom->SetAsMain();
@@ -108,14 +117,8 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 		// Tell window title //
 		Logger::Get()->Write(L"// ------------------ "+Define->GetWindowDetails().Title+L" ------------------ //");
 	}
+	
 
-	// Create threading facilities //
-	_ThreadingManager = new ThreadingManager();
-	if(!_ThreadingManager->Init()){
-
-		Logger::Get()->Error(L"Engine: Init: cannot start threading");
-		return false;
-	}
 	// We could immediately receive a remote console request so this should be ready when networking is started //
 	_RemoteConsole = new RemoteConsole();
 
@@ -126,72 +129,59 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 
 	// These should be fine to be threaded //
 
-	// data storage //
-	boost::promise<bool> MainStoreResult;
-	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+	// File change listener //
+	_ResourceRefreshHandler = new ResourceRefreshHandler();
+	if(!_ResourceRefreshHandler->Init()){
 
-		engine->Mainstore = new DataStore(true);
-		if(!engine->Mainstore){
+		Logger::Get()->Error(L"Engine: Init: cannot start resource monitor");
+		return false;
+	}
 
-			Logger::Get()->Error(L"Engine: Init: failed to create main data store");
-			returnvalue.set_value(false);
-			return;
-		}
+	// Data storage //
+	Mainstore = new DataStore(true);
+	if(!Mainstore){
 
-		returnvalue.set_value(true);
-	}, boost::ref(MainStoreResult), this))));
+		Logger::Get()->Error(L"Engine: Init: failed to create main data store");
+		return false;
+	}
 
+	// Search data folder for files //
+	MainFileHandler = new FileSystem();
+	if(!MainFileHandler){
 
-	// search data folder for files //
-	boost::promise<bool> FileHandlerResult;
-	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+		Logger::Get()->Error(L"Engine: Init: failed to create FileSystem");
+		return false;
+	}
 
-		engine->MainFileHandler = new FileSystem();
-		if(!engine->MainFileHandler){
+	if(!MainFileHandler->Init()){
 
-			Logger::Get()->Error(L"Engine: Init: failed to create FileSystem");
-			returnvalue.set_value(false);
-			return;
-		}
+		Logger::Get()->Error(L"Engine: Init: failed to init FileSystem");
+		return false;
+	}
 
-		if(!engine->MainFileHandler->Init()){
+	// File parsing //
+	ObjectFileProcessor::Initialize();
 
-			Logger::Get()->Error(L"Engine: Init: failed to init FileSystem");
-			returnvalue.set_value(false);
-			return;
-		}
+	// Main program wide event dispatcher //
+	MainEvents = new EventHandler();
+	if(!MainEvents){
 
-		returnvalue.set_value(true);
-	}, boost::ref(FileHandlerResult), this))));
+		Logger::Get()->Error(L"Engine: Init: failed to create MainEvents");
+		return false;
+	}
 
-	// file parsing //
-	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([]() -> void{ ObjectFileProcessor::Initialize(); }))));
+	if(!MainEvents->Init()){
 
+		Logger::Get()->Error(L"Engine: Init: failed to init MainEvents");
+		return false;
+	}
 
-	// main program wide event dispatcher //
-	boost::promise<bool> EventHandlerResult;
-	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+	// Check is threading properly started //
+	if(!_ThreadingManager->CheckInit()){
 
-		engine->MainEvents = new EventHandler();
-		if(!engine->MainEvents){
-
-			Logger::Get()->Error(L"Engine: Init: failed to create MainEvents");
-			returnvalue.set_value(false);
-			return;
-		}
-
-		if(!engine->MainEvents->Init()){
-
-			Logger::Get()->Error(L"Engine: Init: failed to init MainEvents");
-			returnvalue.set_value(false);
-			return;
-		}
-
-		returnvalue.set_value(true);
-	}, boost::ref(EventHandlerResult), this))));
+		Logger::Get()->Error(L"Engine: Init: threading start failed");
+		return false;
+	}
 
 	// create script interface before renderer //
 	boost::promise<bool> ScriptInterfaceResult;
@@ -273,8 +263,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 	_ThreadingManager->WaitForAllTasksToFinish();
 
 	// Check return values //
-	if(!MainStoreResult.get_future().get() || !FileHandlerResult.get_future().get() || !EventHandlerResult.get_future().get() ||
-		!ScriptInterfaceResult.get_future().get())
+	if(!ScriptInterfaceResult.get_future().get() || !NewtonManagerResult.get_future().get())
 	{
 
 		Logger::Get()->Error(L"Engine: Init: one or more queued tasks failed");
@@ -512,6 +501,7 @@ void Leviathan::Engine::Tick(){
 	GUARD_LOCK_THIS_OBJECT();
 	// Because this is checked very often we can check for physics update here //
 	PhysicsUpdate();
+
 	// We can also update networking //
 	if(_NetworkHandler)
 		_NetworkHandler->UpdateAllConnections();
@@ -527,20 +517,21 @@ void Leviathan::Engine::Tick(){
 
 	}
 
-	// get time since last update //
+	// Get the passed time since the last update //
 	__int64 CurTime = Misc::GetTimeMs64();
 	TimePassed = (int)(CurTime-LastFrame);
 
+
 	if((TimePassed < TICKSPEED)){
-		// no tick time yet //
+		// It's not tick time yet //
 		return;
 	}
 
-	//LastFrame = CurTime;
+
 	LastFrame += TICKSPEED;
 	TickCount++;
 
-	// update input //
+	// Update input //
 	if(LeapData)
 		LeapData->OnTick(TimePassed);
 
@@ -551,11 +542,10 @@ void Leviathan::Engine::Tick(){
 		// update windows //
 		GraphicalEntity1->Tick(TimePassed);
 
-		// update texture usage times, to allow unused textures to be unloaded //
-		//Graph->GetTextureManager()->TimePass(TimePassed);
 	}
 
-	// some dark magic here //
+
+	// Some dark magic here //
 	if(TickCount % 25 == 0){
 		// update values
 		Mainstore->SetTickCount(TickCount);
@@ -565,15 +555,20 @@ void Leviathan::Engine::Tick(){
 			// send updated rendering statistics //
 			RenderTimer->ReportStats(Mainstore);
 		}
+
+
+		_ThreadingManager->NotifyQueuerThread();
 	}
 
-	// send tick event //
+	// Update file listeners //
+	if(_ResourceRefreshHandler)
+		_ResourceRefreshHandler->CheckFileStatus();
+
+	// Send the tick event //
 	MainEvents->CallEvent(new Event(EVENT_TYPE_TICK, new IntegerEventData(TickCount)));
 
 	// Call the default app tick //
 	Owner->Tick(TimePassed);
-
-	_ThreadingManager->NotifyQueuerThread();
 
 	TickTime = (int)(Misc::GetTimeMs64()-LastFrame);
 }
@@ -582,6 +577,9 @@ DLLEXPORT void Leviathan::Engine::PreFirstTick(){
 	// On first tick we need to do some cleanup //
 	if(_NetworkHandler)
 		_NetworkHandler->StopOwnUpdaterThread();
+
+
+	_ThreadingManager->NotifyQueuerThread();
 
 	Logger::Get()->Info(L"Engine: PreFirstTick: everything fine to start running");
 }
@@ -643,6 +641,8 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 
 	// Close all connections //
 	SAFE_RELEASEDEL(_NetworkHandler);
+
+	SAFE_RELEASEDEL(_ResourceRefreshHandler);
 
 	// Set worlds to empty //
 	for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){

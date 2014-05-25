@@ -28,8 +28,7 @@ namespace Leviathan{
 	//! Allocates a lot of classes and performs almost all startup operations.
 	//! \note Should be thread safe, but might not actually be
 	class Engine : public Object, public ThreadSafe{
-		// friend so that window can update size //
-		friend Window;
+		
 		friend GraphicalInputEntity;
 		friend Gui::GuiManager;
 	public:
@@ -85,8 +84,11 @@ namespace Leviathan{
 		DLLEXPORT PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
 		DLLEXPORT NetworkHandler* GetNetworkHandler(){ return _NetworkHandler; };
 		DLLEXPORT ThreadingManager* GetThreadingManager(){ return _ThreadingManager; };
+		DLLEXPORT ResourceRefreshHandler* GetResourceRefreshHandler(){ return _ResourceRefreshHandler; };
+
 		DLLEXPORT bool GetNoGui(){ return NoGui; };
-		// static access //
+
+		// Static access //
 		DLLEXPORT static Engine* GetEngine();
 		DLLEXPORT static Engine* Get();
 
@@ -124,6 +126,8 @@ namespace Leviathan{
 		NetworkHandler* _NetworkHandler;
 		ThreadingManager* _ThreadingManager;
 		RemoteConsole* _RemoteConsole;
+		ResourceRefreshHandler* _ResourceRefreshHandler;
+
 
 		IDFactory* IDDefaultInstance;
 		LeviathanApplication* Owner;

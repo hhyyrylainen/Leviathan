@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<Animations>
+
+    <AnimationDefinition name="SinkAway" duration="0.3" replayMode="once">
+        <Affector property="Alpha" interpolator="float">
+            <KeyFrame position="0" value="1"/>
+            <KeyFrame position="0.3" value="0.25" progression="quadratic accelerating"/>
+        </Affector>
+        <Affector property="UnifiedYPosition" interpolator="UDim" applicationMethod="relative" replayMode="once">
+            <KeyFrame position="0" value="{0.0, 0.0}"/>
+            <KeyFrame position="0.3" value="{0.08, 0.0}" progression="quadratic decelerating"/>
+        </Affector>
+        <Affector property="Visible" interpolator="bool">
+            <KeyFrame position="0" value="True"/>
+            <KeyFrame position="0.3" value="False"/>
+        </Affector>
+    </AnimationDefinition>
+</Animations>

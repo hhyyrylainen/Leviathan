@@ -31,6 +31,8 @@ namespace Leviathan{
 	class ObjectFileTemplateInstance;
 	class ObjectFileTemplateDefinition;
 
+	class ResourceFolderListener;
+	class ResourceRefreshHandler;
 	class UTF8DataIterator;
 	template<class DTypeName> class SyncedPrimitive;
 	class SyncedResource;

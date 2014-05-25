@@ -1,6 +1,90 @@
 <?xml version="1.0"?>
 <GUILayout version="4">
-	<Window name="DemoWindow" type="TaharezLook/FrameWindow">
+	<Window name="GUIRoot" type="DefaultWindow">
+    
+    <!-- The main window for all stuff considered menu items -->
+    <Window name="MenuWindow" type="DefaultWindow">
+        
+        <!-- The huge texts in the corners of all menus -->
+        <!-- Name of the game -->
+        <Window name="HugePong" type="TaharezLook/StaticText">
+            
+            <Property name="Visible" value="True"/>
+            <Property name="BackgroundEnabled" value="False"/>
+            <Property name="FrameEnabled" value="False"/>
+            <Property name="MousePassThroughEnabled" value="True"/>
+            
+            <Property name="Text" value="Pong"/>
+            <Property name="Font" value="Simonetta-Black-Title"/>
+            <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFA0A0A0 br:FFA0A0A0"/>
+            
+            <Property name="Position" value="{{0, 20}, {0, 5}}"/>
+            <Property name="Size" value="{{0.23, 0}, {0.23, 0}}"/>
+            
+        </Window>
+        
+        <!-- The Pong version number -->
+        <Window name="PongVersion" type="TaharezLook/StaticText">
+            
+            <Property name="Visible" value="True"/>
+            <Property name="BackgroundEnabled" value="False"/>
+            <Property name="FrameEnabled" value="False"/>
+            <Property name="MousePassThroughEnabled" value="True"/>
+            <Property name="AlwaysOnTop" value="True"/>
+            
+            <Property name="Text" value="0.0.0.0"/>
+            <Property name="Font" value="Simonetta-Bold"/>
+            <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
+            
+            <Property name="Position" value="{{0, 35}, {0.138, 0}}"/>
+            
+        </Window>
+        
+        <!-- The Leviathan version number -->
+        <Window name="LeviathanVersion" type="TaharezLook/StaticText">
+            
+            <Property name="Visible" value="True"/>
+            <Property name="BackgroundEnabled" value="False"/>
+            <Property name="FrameEnabled" value="False"/>
+            <Property name="MousePassThroughEnabled" value="True"/>
+            
+            <Property name="Text" value="Leviathan 0.0.0.0"/>
+            <Property name="Font" value="Simonetta-Regular"/>
+            <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
+            <Property name="HorizontalAlignment" value="Right"/>
+            <Property name="VerticalAlignment" value="Bottom"/>
+            
+            <Property name="Size" value="{{0.11, 0}, {0.04, 0}}"/>
+        </Window>
+        
+        
+        <!-- The main menu screen -->
+        <Window name="TopLevelMenu" type="TaharezLook/FrameWindow">
+            
+            <Property name="Visible" value="True"/>
+            <Property name="CloseButtonEnabled" value="False"/>
+            <Property name="RollUpEnabled" value="False"/>
+            <Property name="SizingEnabled" value="False"/>
+            <Property name="SizingBorderThickness" value="3.0"/>
+            <Property name="AlwaysOnTop" value="True"/>
+            <Property name="DragMovingEnabled" value="False"/>
+            
+            
+            <Property name="Text" value="Main Menu"/>
+            
+            <Property name="Size" value="{{0.4, 0}, {0.7, 0}}"/>
+            <Property name="Position" value="{{0.35, 0}, {0.2, 0}}"/>
+            
+            
+            
+        </Window>
+    
+    
+    
+    </Window>
+    
+    
+    
     
 	</Window>
 </GUILayout>

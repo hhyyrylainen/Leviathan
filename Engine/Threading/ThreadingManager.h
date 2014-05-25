@@ -36,6 +36,9 @@ namespace Leviathan{
 
 		//! Sets up the work queue
 		DLLEXPORT virtual bool Init();
+		//! \brief Checks has Init worked
+		DLLEXPORT virtual bool CheckInit();
+
 		//! This will take a long time, since it will wait until all tasks are done
 		//! \todo Do something about unfinished tasks here
 		DLLEXPORT virtual void Release();

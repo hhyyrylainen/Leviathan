@@ -446,11 +446,11 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 	}
 
 	// Skip the o //
-	auto justchecking = itr.GetUntilNextCharacterOrNothing<string>('o', SPECIAL_ITERATOR_FILEHANDLING);
+	auto justchecking = itr.GetUntilNextCharacterOrNothing<string>('o', SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
 	if(!justchecking){
 
-		Logger::Get()->Error(L"ObjectFile template definition is missing 'o' after ':' (or maybe there is a missing space), "
+		Logger::Get()->Error(L"ObjectFile template definition is missing 'o' after ':' (or maybe there is a missing space?), "
 			L"file: "+file+L"("	+Convert::ToWstring(startline)+L")");
 		return false;
 	}

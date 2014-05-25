@@ -33,6 +33,9 @@ namespace Gui{
 		DLLEXPORT bool Init(AppDef* vars, Graphics* graph, GraphicalInputEntity* window);
 		DLLEXPORT void Release();
 
+		//! \brief Called by Engine during Release to destroy static variables
+		DLLEXPORT static void KillGlobalCache();
+
 		DLLEXPORT void GuiTick(int mspassed);
 		DLLEXPORT void Render();
 
@@ -65,8 +68,11 @@ namespace Gui{
 		// file loading //
 
 		//! \brief Loads a GUI file
-		//! \todo don't auto focus it (the new View)
-		DLLEXPORT bool LoadGUIFile(const wstring &file);
+		DLLEXPORT bool LoadGUIFile(const wstring &file, bool nochangelistener = false);
+
+		//! \brief Unloads the currently loaded file
+		DLLEXPORT void UnLoadGUIFile();
+
 		// set to "none" to use default //
 		DLLEXPORT void SetMouseTheme(const wstring &tname);
 		DLLEXPORT void SetMouseFileVisibleState(bool state);
@@ -90,6 +96,8 @@ namespace Gui{
 		bool _CreateInternalOgreResources(Ogre::SceneManager* windowsscene);
 		void _ReleaseOgreResources();
 
+		void _FileChanged(const wstring &file, ResourceFolderListener &caller);
+
 		// ------------------------------------ //
 
 
@@ -112,6 +120,9 @@ namespace Gui{
 		//! Time of creation of this GuiManager
 		WantedClockType::time_point LastTimePulseTime;
 
+		//! The main file of the GUI from which is loaded from
+		wstring MainGUIFile;
+
 		//! Set when this is the first created gui manager
 		//! \detail Used for injecting time pulses into CEGUI
 		bool MainGuiManager;
@@ -119,8 +130,24 @@ namespace Gui{
 		//! we will soon need a GuiManager for each window
 		int ID;
 
+		//! Used to stop listening for file changes
+		int FileChangeID;
+
 		// collections //
 		std::vector<GuiCollection*> Collections;
+
+
+		// ------------------------------------ //
+		// Static animation files //
+		//! Holds the loaded animation files, used to prevent loading a single file multiple times
+		static std::vector<wstring> LoadedAnimationFiles;
+
+		static boost::recursive_mutex GlobalGUIMutex;
+
+		static bool IsAnimationFileLoaded(ObjectLock &lock, const wstring &file);
+
+		//! \warning Won't check if the file is already in the vector, use IsAnimationFileLoaded
+		static void SetAnimationFileLoaded(ObjectLock &lock, const wstring &file);
 	};
 
 }}

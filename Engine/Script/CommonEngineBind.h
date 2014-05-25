@@ -17,35 +17,6 @@ GenericEvent* WrapperGenericEventFactory(string name){
 	return new GenericEvent(Convert::StringToWstring(name), NamedVars());
 }
 
-//! \note Expected signature is string tablename, string valuekeyname, ScriptSafeVariableBlock* wantedvalue, string wantedvaluekey
-//! Returns ScriptSafeVariableBlock
-void SimpleDataBaseGetValueOnRowWhereSpecificValueProxy(asIScriptGeneric* gen){
-	// Get arguments //
-	SimpleDatabase* database = reinterpret_cast<SimpleDatabase*>(gen->GetObject());
-	string* tablename = reinterpret_cast<string*>(gen->GetArgObject(0));
-	string* valuekeyname = reinterpret_cast<string*>(gen->GetArgObject(1));
-	ScriptSafeVariableBlock* wantedvalue = reinterpret_cast<ScriptSafeVariableBlock*>(gen->GetArgObject(2));
-	string* wantedvaluekey = reinterpret_cast<string*>(gen->GetArgObject(3));
-
-	shared_ptr<VariableBlock> tmp = database->GetValueOnRow(Convert::StringToWstring(*tablename), Convert::StringToWstring(*valuekeyname),
-		VariableBlock(wantedvalue->GetBlockConst()->AllocateNewFromThis()), Convert::StringToWstring(*wantedvaluekey));
-
-	if(!tmp){
-		// If not found return empty handle //
-		gen->SetReturnObject(NULL);
-		return;
-	}
-
-	// Create result //
-	auto tmpresult = new ScriptSafeVariableBlock(tmp.get(), L"Result");
-
-	// Set the return value //
-	gen->SetReturnObject(tmpresult);
-
-	// Automatically increases the return reference count, so we need to decrease the reference count //
-	tmpresult->Release();
-}
-
 ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryString(string blockname, string valuestr){
 
 	return new ScriptSafeVariableBlock(new StringBlock(valuestr), Convert::StringToWstring(blockname));
@@ -148,6 +119,11 @@ To* DoReferenceCastStatic(From* ptr){
 
 	// Return the ptr (which might be invalid) //
 	return newptr;
+}
+
+string GetLeviathanVersionProxy(){
+
+	return LEVIATHAN_VERSION_ANSIS;
 }
 
 
@@ -368,13 +344,6 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectType("SimpleDatabase", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	// Getting functions //
-	if(engine->RegisterObjectMethod("SimpleDatabase",
-		"ScriptSafeVariableBlock@ GetValueOnRow(string &in table, string &in valuekeyname, ScriptSafeVariableBlock@ wantedvalue, string &in wantedvaluekey)",
-		asFUNCTION(SimpleDataBaseGetValueOnRowWhereSpecificValueProxy), asCALL_GENERIC) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
 
 	// Bind GameModule //
 	if(engine->RegisterObjectType("GameModule", 0, asOBJ_REF) < 0){
@@ -529,7 +498,7 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-
+	// ------------------ Global functions ------------------ //
 
 #ifdef _DEBUG
 
@@ -542,6 +511,14 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	
 
 #endif // _DEBUG
+
+
+	if(engine->RegisterGlobalFunction("string GetLeviathanVersion()", asFUNCTION(GetLeviathanVersionProxy), asCALL_CDECL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+
 
 
 	return true;

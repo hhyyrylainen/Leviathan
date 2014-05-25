@@ -13,7 +13,7 @@ DLLEXPORT Leviathan::Event::Event(EVENT_TYPE type, BaseEventData* data) : Type(t
 	if(!Data){
 		// Check that the event has data //
 		assert(Type != EVENT_TYPE_PHYSICS_BEGIN && Type != EVENT_TYPE_SHOW && Type != EVENT_TYPE_FRAME_BEGIN && Type != EVENT_TYPE_FRAME_END &&
-			Type != EVENT_TYPE_TICK && "Event that requires data didn't get it");
+			Type != EVENT_TYPE_TICK && "Event that requires data, didn't get it");
 	}
 
 #endif // _DEBUG

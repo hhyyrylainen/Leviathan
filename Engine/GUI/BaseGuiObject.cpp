@@ -30,6 +30,10 @@ DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){
 	UnRegisterAllEvents();
 }
 // ------------------------------------ //
+DLLEXPORT string Leviathan::Gui::BaseGuiObject::GetNameAsString(){
+	return Convert::WstringToString(Name);
+}
+// ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects, 
 	ObjectFileObject& dataforthis)
 {
@@ -65,40 +69,45 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 		listenon = paramlist->GetVariables().GetValueDirect(L"ListenOn");
 	}
 
-	if(tmpptr){
+	if(!tmpptr){
+
+		return false;
+	}
 		
-		// Listening start //
-		if(listenon){
-			tmpptr->StartMonitoring(listenon->GetValues());
-		}
-
-		// Find the CEGUI object //
-		CEGUI::Window* foundobject = NULL;
-		try{
-
-			foundobject = owner->GetMainContext()->getRootWindow()->getChild(Convert::WstringToString(tmpptr->Name));
-
-		} catch(const CEGUI::UnknownObjectException &e){
-
-			// Not found //
-			Logger::Get()->Error(L"BaseGuiObject: couldn't find a CEGUI window with name: "+tmpptr->Name+L":");
-			Logger::Get()->Write(L"\t> "+Convert::CharPtrToWstring(e.what()));
-		}
-
-		if(foundobject){
-			// Set the object //
-			tmpptr->ConnectElement(foundobject);
-		}
-
-		tmpptr->_HookListeners();
-
-
-
-		tempobjects.push_back(tmpptr.release());
-		return true;
+	// Listening start //
+	if(listenon){
+		tmpptr->StartMonitoring(listenon->GetValues());
 	}
 
-	return false;
+	// Find the CEGUI object //
+	CEGUI::Window* foundobject = NULL;
+	try{
+
+		foundobject = owner->GetMainContext()->getRootWindow()->getChild(Convert::WstringToString(tmpptr->Name));
+
+	} catch(const CEGUI::UnknownObjectException &e){
+
+		// Not found //
+		Logger::Get()->Error(L"BaseGuiObject: couldn't find a CEGUI window with name: "+tmpptr->Name+L":");
+		Logger::Get()->Write(L"\t> "+Convert::CharPtrToWstring(e.what()));
+	}
+
+	if(foundobject){
+		// Set the object //
+		tmpptr->ConnectElement(foundobject);
+	}
+
+	tmpptr->_HookListeners();
+
+	// Call the Init function //
+	Event initevent(EVENT_TYPE_INIT, NULL);
+	Event* eptr = &initevent;
+
+	tmpptr->OnEvent(&eptr);
+
+
+	tempobjects.push_back(tmpptr.release());
+	return true;
 }
 // ------------------------------------ //
 void Leviathan::Gui::BaseGuiObject::_HookListeners(){
@@ -328,5 +337,4 @@ bool Leviathan::Gui::BaseGuiObject::EventOnClick(const CEGUI::EventArgs &args){
 
 	return _CallCEGUIListener(L"OnClick");
 }
-
 

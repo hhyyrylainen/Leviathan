@@ -51,6 +51,9 @@ namespace Leviathan{ namespace Gui{
 		//! This will also register the widget for unconnect events to not use deleted pointers
 		DLLEXPORT void ConnectElement(CEGUI::Window* windojb);
 
+		//! \brief Gets the name of this object as a string
+		DLLEXPORT string GetNameAsString();
+
 
 	protected:
 

@@ -3,10 +3,11 @@
 #include "LeviathanMainDll.h"
 
 
-#define @BaseProgramName@_VERSION   @PROGRAM_VERSION@
-#define @BaseProgramName@_VERSIONS  @PROGRAM_VERSIONS@
+#define @BaseProgramName@_VERSION           @PROGRAM_VERSION@
+#define @BaseProgramName@_VERSIONS          @PROGRAM_VERSIONS@
+#define @BaseProgramName@_VERSIONS_ANSI     @PROGRAM_VERSIONS_ANSI@
 
-#define GAME_VERSION    @BaseProgramName@_VERSION
-#define GAME_VERSIONS   @BaseProgramName@_VERSIONS
-
+#define GAME_VERSION        @BaseProgramName@_VERSION
+#define GAME_VERSIONS       @BaseProgramName@_VERSIONS
+#define GAME_VERSIONS_ANSI  @BaseProgramName@_VERSIONS_ANSI
 

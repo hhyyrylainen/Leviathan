@@ -12,7 +12,6 @@ template<GCollectName, CEGUITargetWind, GCollectEnabled> PGCTemplate:
     }
 
 // ------------------ Non-functional objects ------------------ //
-
 // This keeps the GUI always on //
 o GuiCollection "OnKeeper"{
     l params{
@@ -23,7 +22,40 @@ o GuiCollection "OnKeeper"{
 
 
 // ------------------ Main menu objects ------------------ //
-template<> PGCTemplate<TopLevelMenu, "", true>
+template<> PGCTemplate<TopLevelMenu, "TopLevelMenu", true>
+template<> PGCTemplate<MenuWindow, "MenuWindow", true>
+
+// ------------------ MenuWindow ------------------ //
+o GuiObject "MenuWindow/PongVersion"{
+    s{
+        [@Listener="OnInit"]
+        int SetVersion(GuiObject@ instance, Event@ event){
+            // Set the text as the current Pong version //
+            
+            string newtext = GetPongVersion();
+           
+            instance.GetOwningManager().GetWindowByName(instance.GetName()).SetText(newtext);
+            
+            return 1;
+        }
+    @%};
+}
+
+o GuiObject "MenuWindow/LeviathanVersion"{
+    s{
+        [@Listener="OnInit"]
+        int SetVersion(GuiObject@ instance, Event@ event){
+        
+            // Set the text as the current version //
+            string newtext = "Leviathan "+GetLeviathanVersion();
+            
+            instance.GetOwningManager().GetWindowByName(instance.GetName()).SetText(newtext);
+            
+            
+            return 1;
+        }
+    @%};
+}
 
 template<> PGCTemplate<StartServerMenu, "", false>
 

@@ -278,9 +278,11 @@ scriptexecutorpassparamsinvalidconversionparam:
 			// script caused an exception //
 			const asIScriptFunction* exceptionfunc = ScriptContext->GetExceptionFunction();
 
+			int linenumber = ScriptContext->GetExceptionLineNumber();
+
 			Logger::Get()->Error(L"[SCRIPT] [EXCEPTION] "+Convert::StringToWstring(ScriptContext->GetExceptionString())+L", function: "
-				+Convert::ToWstring(func->GetDeclaration())+L"\n\t in "+Convert::ToWstring(exceptionfunc->GetScriptSectionName())+L" ("+
-				Convert::ToWstring(ScriptContext->GetExceptionLineNumber()+L") "+scrptmodule->GetInfoWstring()));
+				+Convert::ToWstring(func->GetDeclaration())+L"\n\t in "+Convert::ToWstring(exceptionfunc->GetScriptSectionName())+L"("+
+				Convert::ToWstring(linenumber)+L") "+scrptmodule->GetInfoWstring());
 
 
 			PrintAdditionalExcept(ScriptContext);

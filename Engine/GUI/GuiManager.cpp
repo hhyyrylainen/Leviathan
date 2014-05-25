@@ -617,5 +617,20 @@ DLLEXPORT void Leviathan::Gui::GuiManager::KillGlobalCache(){
 	// Release the memory to not look like a leak //
 	LoadedAnimationFiles.clear();
 
-	CEGUI::AnimationManager::getSingleton().destroyAllAnimations();
+	auto single = CEGUI::AnimationManager::getSingletonPtr();
+
+	if(single)
+		single->destroyAllAnimations();
+}
+// ------------------------------------ //
+DLLEXPORT CEGUI::Window* Leviathan::Gui::GuiManager::GetWindowByStringName(const string &namepath){
+	try{
+
+		return GuiContext->getRootWindow()->getChild(namepath);
+
+	} catch(const CEGUI::UnknownObjectException &e){
+
+		// Not found //
+		return NULL;
+	}
 }

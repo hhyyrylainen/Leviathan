@@ -90,6 +90,10 @@ namespace Gui{
 		// called when mouse cannot be captured (should force at least one collection on) //
 		DLLEXPORT void OnForceGUIOn();
 
+		//! \brief Returns a single CEGUI::Window matching the name
+		//! \todo Allow error reporting
+		DLLEXPORT CEGUI::Window* GetWindowByStringName(const string &namepath);
+
 
 	private:
 		// rendering //

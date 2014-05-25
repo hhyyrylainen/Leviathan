@@ -7,6 +7,14 @@
 #include "BaseGuiObject.h"
 #include "GuiManager.h"
 #include "add_on/autowrapper/aswrappedcall.h"
+#include "CEGUI/Window.h"
+
+
+void CEGUIWindowSetTextProxy(CEGUI::Window* obj, const string &text){
+	
+	obj->setText(text);
+}
+
 
 
 bool BindGUIObjects(asIScriptEngine* engine){
@@ -57,14 +65,22 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
 	if(engine->RegisterObjectMethod("GuiObject", "ScriptSafeVariableBlock@ GetAndPopFirstUpdated()", asMETHOD(Gui::BaseGuiObject, GetAndPopFirstUpdated), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
 	if(engine->RegisterObjectMethod("GuiObject", "GuiManager& GetOwningManager()", asMETHOD(Gui::BaseGuiObject, GetOwningManager), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+	if(engine->RegisterObjectMethod("GuiObject", "string GetName()", asMETHOD(Gui::BaseGuiObject, GetNameAsString), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	
 
 	
 	if(engine->SetDefaultNamespace("CEGUI") < 0)
@@ -72,15 +88,22 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	//if(engine->RegisterObjectType("Event", 0, asOBJ_REF) < 0){
-	//	ANGELSCRIPT_REGISTERFAIL;
-	//}
+	if(engine->RegisterObjectType("Window", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
 
-
-
+	if(engine->RegisterObjectMethod("Window", "void SetText(const string &in newtext)", asFUNCTION(CEGUIWindowSetTextProxy), asCALL_CDECL_OBJFIRST) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
 
 	// Restore the namespace //
 	if(engine->SetDefaultNamespace("") < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectMethod("GuiManager", "CEGUI::Window& GetWindowByName(const string &in namepath)", asMETHOD(Gui::GuiManager, GetWindowByStringName), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}

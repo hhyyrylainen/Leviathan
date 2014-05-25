@@ -408,6 +408,13 @@ void Pong::PongGame::DoSpecialPostLoad(){
 	window1->GetInputController()->LinkReceiver(GameInputHandler);
 }
 // ------------------------------------ //
+string GetPongVersionProxy(){
+
+	return GAME_VERSIONS_ANSI;
+}
+
+
+// ------------------------------------ //
 void Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 
 	if(engine->RegisterObjectType("PongGame", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
@@ -436,6 +443,13 @@ void Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 	//{
 	//	SCRIPT_REGISTERFAIL;
 	//}
+
+
+	// Version getting function //
+	if(engine->RegisterGlobalFunction("string GetPongVersion()", asFUNCTION(GetPongVersionProxy), asCALL_CDECL) < 0){
+		SCRIPT_REGISTERFAIL;
+	}
+
 }
 
 void Pong::PongGame::MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids){

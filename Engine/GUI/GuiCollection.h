@@ -16,8 +16,10 @@ namespace Leviathan{ namespace Gui{
 
 	class GuiCollection : public Object, public ReferenceCounted{
 	public:
-		GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, bool strict = false, 
-			bool enabled = true, bool keepgui = false, bool allowenable = true, const wstring &autotarget = L"");
+		GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, bool strict = false, bool enabled = true, 
+			bool keepgui = false, bool allowenable = true, const wstring &autotarget = L"", 
+			std::vector<unique_ptr<wstring>> &inanimations = std::vector<unique_ptr<wstring>>(), 
+			std::vector<unique_ptr<wstring>> &outanimations = std::vector<unique_ptr<wstring>>());
 		~GuiCollection();
 
 		DLLEXPORT void UpdateState(bool newstate);
@@ -60,6 +62,11 @@ namespace Leviathan{ namespace Gui{
 
 		DLLEXPORT static bool LoadCollection(GuiManager* gui, const ObjectFileObject &data);
 	private:
+
+		void _PlayAnimations(const std::vector<unique_ptr<wstring>> &anims);
+
+		// ------------------------------------ //
+
 		wstring Name;
 		int ID;
 		bool Enabled;
@@ -70,6 +77,12 @@ namespace Leviathan{ namespace Gui{
 		//! The CEGUI window that is automatically controlled
 		//! \todo Allow script to be called after this
 		wstring AutoTarget;
+
+		//! The CEGUI animations that are automatically used
+		std::vector<unique_ptr<wstring>> AutoAnimationOnEnable;
+		std::vector<unique_ptr<wstring>> AutoAnimationOnDisable;
+
+
 
 
 		GKey Toggle;

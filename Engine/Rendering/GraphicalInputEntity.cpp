@@ -134,7 +134,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::ReleaseLinked(){
 	LinkedCamera.reset();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GraphicalInputEntity::Render(int mspassed){
+DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed){
 
 	if(LinkedWorld)
 		LinkedWorld->UpdateCameraLocation(mspassed, LinkedCamera.get());
@@ -149,11 +149,13 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::Render(int mspassed){
 	if(tmpwindow->isClosed()){
 
 		Logger::Get()->Warning(L"GraphicalInputEntity: Render: skipping render due to window being closed");
-		return;
+		return false;
 	}
 
 	// finish rendering the window //
 	tmpwindow->swapBuffers();
+
+	return true;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(shared_ptr<ViewerCameraPos> camera, shared_ptr<GameWorld> world){

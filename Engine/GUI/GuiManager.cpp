@@ -24,6 +24,7 @@
 #include "CEGUI/RenderTarget.h"
 #include "CEGUI/Window.h"
 #include "CEGUI/AnimationManager.h"
+#include "CEGUI/AnimationInstance.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Handlers/ResourceRefreshHandler.h"
 using namespace Leviathan;
@@ -602,7 +603,7 @@ bool Leviathan::Gui::GuiManager::IsAnimationFileLoaded(ObjectLock &lock, const w
 	}
 
 	// Not found, must not be loaded then //
-	return true;
+	return false;
 }
 
 void Leviathan::Gui::GuiManager::SetAnimationFileLoaded(ObjectLock &lock, const wstring &file){
@@ -628,9 +629,40 @@ DLLEXPORT CEGUI::Window* Leviathan::Gui::GuiManager::GetWindowByStringName(const
 
 		return GuiContext->getRootWindow()->getChild(namepath);
 
-	} catch(const CEGUI::UnknownObjectException &e){
+	} catch(const CEGUI::UnknownObjectException&){
 
 		// Not found //
 		return NULL;
 	}
+}
+
+DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindow(const string &windowname, const string &animationname){
+	// First get the window //
+	auto wind = GetWindowByStringName(windowname);
+
+	if(!wind)
+		return false;
+
+	// Next create the animation instance //
+	CEGUI::AnimationInstance* createdanim = NULL;
+	try {
+		createdanim = CEGUI::AnimationManager::getSingleton().instantiateAnimation(animationname);
+
+	} catch(const CEGUI::UnknownObjectException &e){
+		
+		return false;
+	}
+
+	if(!createdanim)
+		return false;
+
+	createdanim->setTargetWindow(wind);
+
+	createdanim->start();
+
+	return true;
+}
+
+DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindowProxy(const string &windowname, const string &animationname){
+	return PlayAnimationOnWindow(windowname, animationname);
 }

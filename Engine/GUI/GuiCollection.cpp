@@ -12,10 +12,12 @@
 using namespace Leviathan;
 using namespace Gui;
 // ------------------------------------ //
-Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, 
-	bool strict /*= false*/, bool enabled /*= true*/, bool keepgui, bool allowenable, const wstring &autotarget) : 
+Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, bool strict /*= false*/, 
+	bool enabled /*= true*/, bool keepgui /*= false*/, bool allowenable /*= true*/, const wstring &autotarget /*= L""*/, 
+	std::vector<unique_ptr<wstring>> &inanimations /*= std::vector<unique_ptr<wstring>>()*/, 
+	std::vector<unique_ptr<wstring>> &outanimations /*= std::vector<unique_ptr<wstring>>()*/) : 
 	Name(name), ID(id), Enabled(enabled), Strict(strict), KeepsGuiOn(keepgui), OwningManager(manager), AllowEnable(allowenable), 
-		AutoTarget(autotarget)
+	AutoTarget(autotarget), AutoAnimationOnEnable(move(inanimations)), AutoAnimationOnDisable(move(outanimations))
 {
 	Toggle = GKey::GenerateKeyFromString(toggle);
 }
@@ -27,15 +29,36 @@ Leviathan::Gui::GuiCollection::~GuiCollection(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
+	// Don't do anything if the state didn't actually change //
+	if(Enabled == newstate)
+		return;
+
 	// First update the object //
 	Enabled = newstate;
 
 	// notify GUI //
 	OwningManager->PossiblyGUIMouseDisable();
 
+	// Are we using auto animations for this? //
+
+	if(Enabled && !AutoAnimationOnEnable.empty()){
+
+		// Play the animations //
+		_PlayAnimations(AutoAnimationOnEnable);
+		return;
+
+	} else if(!Enabled && !AutoAnimationOnDisable.empty()){
+		
+		// Play the animations //
+		_PlayAnimations(AutoAnimationOnDisable);
+		return;
+	}
 
 	// Set the auto target visibility if the target is set //
 	if(!AutoTarget.empty()){
+
+
+
 
 		// Find it and set it //
 		// Find the CEGUI object //
@@ -105,6 +128,8 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 	bool GuiOn = false;
 	bool allowenable = true;
 	wstring autotarget = L"";
+	std::vector<unique_ptr<wstring>> autoinanimation;
+	std::vector<unique_ptr<wstring>> autooutanimation;
 
 	auto varlist = data.GetListWithName(L"params");
 
@@ -123,11 +148,18 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"AllowEnable", allowenable, true);
 
 		ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist->GetVariables(), L"AutoTarget", autotarget, L"");
+		
+
+		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<wstring>(varlist->GetVariables(), L"AutoAnimationIn", autoinanimation, 2);
+		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<wstring>(varlist->GetVariables(), L"AutoAnimationOut", autooutanimation, 2);
+
+
 	}
 
 
 	// allocate new Collection object //
-	GuiCollection* cobj = new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn, allowenable, autotarget);
+	GuiCollection* cobj = new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn, allowenable, autotarget, 
+		autoinanimation, autooutanimation);
 	// copy script data over //
 	cobj->Scripting = data.GetScript();
 
@@ -140,5 +172,32 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 
 DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
 	AllowEnable = newstate;
+}
+// ------------------------------------ //
+void Leviathan::Gui::GuiCollection::_PlayAnimations(const std::vector<unique_ptr<wstring>> &anims){
+#ifdef _DEBUG
+	assert(anims.size() % 2 == 0 && "_PlayAnimations has invalid vector, size non dividable by 2");
+#endif // _DEBUG
+
+	// Loop the animations and start them //
+	for(size_t i = 0; i < anims.size(); i += 2){
+
+		const wstring& targetanim = *anims[i];
+
+		if(targetanim == L"AutoTarget"){
+
+			if(!OwningManager->PlayAnimationOnWindow(AutoTarget, *anims[i+1])){
+
+				Logger::Get()->Error(L"GuiCollection: _PlayAnimations: failed to play animation("+*anims[i+1]+L") on window "+AutoTarget);
+			}
+
+		} else {
+
+			if(!OwningManager->PlayAnimationOnWindow(targetanim, *anims[i+1])){
+
+				Logger::Get()->Error(L"GuiCollection: _PlayAnimations: failed to play animation("+*anims[i+1]+L") on window "+targetanim);
+			}
+		}
+	}
 }
 

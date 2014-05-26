@@ -123,6 +123,36 @@ namespace Leviathan{
 			return LoadMultiPartValueFromNamedVars<RType, SingleType, VarCount>(&block, varname, receiver, defaultvalue, ReportError, errorprefix);
 		}
 
+
+		//! \brief Loads a vector of type from a NamedVars
+		template<class T>
+		static bool LoadVectorOfTypeUPtrFromNamedVars(NamedVars &block, const wstring &varname, std::vector<unique_ptr<T>> &receiver, 
+			size_t mustbedivisableby = 1, bool ReportError = false, const wstring &errorprefix = L"")
+		{
+			NamedVariableList* inanimlist = block.GetValueDirectRaw(varname);
+
+			if(inanimlist && inanimlist->GetVariableCount() && inanimlist->GetVariableCount() % mustbedivisableby == 0 
+				&& inanimlist->CanAllBeCastedToType<T>())
+			{
+
+				receiver.reserve(inanimlist->GetVariableCount());
+
+				for(size_t i = 0; i < inanimlist->GetVariableCount(); i++){
+
+					const T tmpresult = inanimlist->GetValueDirect(i)->ConvertAndReturnVariable<T>();
+
+					receiver.push_back(move(unique_ptr<T>(new T(tmpresult))));
+				}
+
+				return true;
+			}
+
+			// Something isn't right //
+			if(ReportError)
+				Logger::Get()->Error(errorprefix+L" invalid variable list "+varname+L", not found/wrong type/wrong amount");
+			return false;
+		}
+
 	private:
 
 		//! \brief Handling function for NamedVariables

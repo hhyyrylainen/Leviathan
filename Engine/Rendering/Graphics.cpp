@@ -66,8 +66,8 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	Ogre::String PluginsFileName = "";
 
 	Ogre::LogManager* logMgr = new Ogre::LogManager();
-    
-    // Could also use the singleton access method here //
+	
+	// Could also use the singleton access method here //
 	OLog = logMgr->createLog(Convert::WstringToString(appdef->GetLogFile()+L"LogOGRE.txt"), true, true, false);
 	OLog->setDebugOutputEnabled(true);
 #ifdef OGRE_ALLOW_USEFULLOUTPUT

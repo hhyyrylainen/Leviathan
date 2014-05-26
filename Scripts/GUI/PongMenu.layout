@@ -33,7 +33,7 @@
             <Property name="AlwaysOnTop" value="True"/>
             
             <Property name="Text" value="0.0.0.0"/>
-            <Property name="Font" value="Simonetta-Bold"/>
+            <Property name="Font" value="Simonetta-Black"/>
             <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
             
             <Property name="Position" value="{{0, 35}, {0.138, 0}}"/>

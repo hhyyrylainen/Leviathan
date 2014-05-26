@@ -95,6 +95,17 @@ namespace Gui{
 		DLLEXPORT CEGUI::Window* GetWindowByStringName(const string &namepath);
 
 
+		//! \brief Creates an plays an animation on a CEGUI Window
+		DLLEXPORT bool PlayAnimationOnWindow(const string &windowname, const string &animationname);
+		
+		//! \brief Overload of PlayAnimationOnWindow using string conversion
+		DLLEXPORT FORCE_INLINE bool PlayAnimationOnWindow(const wstring &windowname, const wstring &animationname){
+			return PlayAnimationOnWindow(Convert::WstringToString(windowname), Convert::WstringToString(animationname));
+		}
+
+		//! \brief Proxy overload for PlayAnimationOnWindow
+		DLLEXPORT bool PlayAnimationOnWindowProxy(const string &windowname, const string &animationname);
+
 	private:
 		// rendering //
 		bool _CreateInternalOgreResources(Ogre::SceneManager* windowsscene);

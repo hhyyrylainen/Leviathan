@@ -611,9 +611,16 @@ void Leviathan::Engine::RenderFrame(){
 
 	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN, new IntegerEventData(SinceLastFrame)));
 
-	// render //
-	GraphicalEntity1->Render(SinceLastFrame);
-	Graph->Frame();
+
+	bool shouldrender = false;
+
+	// Render //
+	if(GraphicalEntity1->Render(SinceLastFrame))
+		shouldrender = true;
+
+
+	if(shouldrender)
+		Graph->Frame();
 
 	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_END, new IntegerEventData(FrameCount)));
 

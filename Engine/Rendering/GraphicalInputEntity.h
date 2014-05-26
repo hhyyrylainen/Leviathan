@@ -25,7 +25,7 @@ namespace Leviathan{
 		DLLEXPORT void Tick(int mspassed);
 
 		// This function uses the LinkObjects function objects //
-		DLLEXPORT void Render(int mspassed);
+		DLLEXPORT bool Render(int mspassed);
 
 		// object linking //
 		// This function also updates the camera aspect ratio //

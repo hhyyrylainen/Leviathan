@@ -22,7 +22,14 @@ o GuiCollection "OnKeeper"{
 
 
 // ------------------ Main menu objects ------------------ //
-template<> PGCTemplate<TopLevelMenu, "MenuWindow/TopLevelMenu", true>
+o GuiCollection "TopLevelMenu"{
+    l params{
+        Enabled = true;
+        AutoTarget = "MenuWindow/TopLevelMenu";
+        AutoAnimationIn = [[AutoTarget], [PopIn]];
+        AutoAnimationOut = [[AutoTarget], [SinkAway]];
+    }
+}
 
 o GuiObject "MenuWindow/TopLevelMenu/StartServerButton"{
     s{
@@ -39,6 +46,7 @@ o GuiObject "MenuWindow/TopLevelMenu/StartServerButton"{
 
 // ------------------ MenuWindow ------------------ //
 template<> PGCTemplate<MenuWindow, "MenuWindow", true>
+
 
 o GuiObject "MenuWindow/PongVersion"{
     s{
@@ -71,7 +79,14 @@ o GuiObject "MenuWindow/LeviathanVersion"{
     @%};
 }
 // ------------------ Server start screen ------------------ //
-template<> PGCTemplate<StartServerMenu, "MenuWindow/StartServerMenu", false>
+o GuiCollection "StartServerMenu"{
+    l params{
+        Enabled = false;
+        AutoTarget = "MenuWindow/StartServerMenu";
+        AutoAnimationIn = [[AutoTarget], [PopIn]];
+        AutoAnimationOut = [[AutoTarget], [SinkAway]];
+    }
+}
 
 o GuiObject "MenuWindow/StartServerMenu"{
     s{

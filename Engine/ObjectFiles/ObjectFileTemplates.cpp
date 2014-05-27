@@ -183,7 +183,7 @@ DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefi
 
 
 	// Only the first segment should be used //
-	auto scrptwrap = internalobj->GetScript();
+	auto scrptwrap = RepresentingObject->GetScript();
 	if(scrptwrap){
 
 		auto scrptmodule = scrptwrap->GetModuleSafe();

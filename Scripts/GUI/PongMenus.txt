@@ -10,6 +10,37 @@ template<GCollectName, CEGUITargetWind, GCollectEnabled> PGCTemplate:
             AutoTarget = "CEGUITargetWind";
         }
     }
+    
+// Close button support for all kinds of windows //
+template<NameOfTarget, CollectionToGoTo, CollectionToDisable> GUIFrameWindowCloseButtonDefault: 
+    o GuiObject "NameOfTarget"{
+        s{
+            [@Listener="OnCloseClicked"]
+            bool GoBackToMainMenu(GuiObject@ instance){
+                
+                // Go back to the main menu //
+                instance.GetOwningManager().SetCollectionState("CollectionToGoTo", true);
+                instance.GetOwningManager().SetCollectionState("CollectionToDisable", false);
+                return true;
+            }
+        @%};
+    }
+    
+// Back button for menus //
+template<NameOfTarget, CollectionToGoTo, CollectionToDisable> GUIMenuBackButtonDefault: 
+    o GuiObject "NameOfTarget"{
+        s{
+            [@Listener="OnClick"]
+            bool GoBackToMainMenu(GuiObject@ instance){
+                
+                // Go back to the main menu //
+                instance.GetOwningManager().SetCollectionState("CollectionToGoTo", true);
+                instance.GetOwningManager().SetCollectionState("CollectionToDisable", false);
+                return true;
+            }
+        @%};
+    }
+
 
 // ------------------ Non-functional objects ------------------ //
 // This keeps the GUI always on //
@@ -19,31 +50,6 @@ o GuiCollection "OnKeeper"{
         KeepsGUIOn = true;
     }
 }
-
-
-// ------------------ Main menu objects ------------------ //
-o GuiCollection "TopLevelMenu"{
-    l params{
-        Enabled = true;
-        AutoTarget = "MenuWindow/TopLevelMenu";
-        AutoAnimationIn = [[AutoTarget], [PopIn]];
-        AutoAnimationOut = [[AutoTarget], [SinkAway]];
-    }
-}
-
-o GuiObject "MenuWindow/TopLevelMenu/StartServerButton"{
-    s{
-        [@Listener="OnClick"]
-        bool SetVersion(GuiObject@ instance){
-        
-            // Go to the StartServerMenu //
-            instance.GetOwningManager().SetCollectionState("StartServerMenu", true);
-            instance.GetOwningManager().SetCollectionState("TopLevelMenu", false);
-            return true;
-        }
-    @%};
-}
-
 // ------------------ MenuWindow ------------------ //
 template<> PGCTemplate<MenuWindow, "MenuWindow", true>
 
@@ -78,41 +84,83 @@ o GuiObject "MenuWindow/LeviathanVersion"{
         }
     @%};
 }
+
+// ------------------ Main menu objects ------------------ //
+o GuiCollection "TopLevelMenu"{
+    l params{
+        Enabled = true;
+        AutoTarget = "MenuWindow/TopLevelMenu";
+        AutoAnimationIn = [[AutoTarget], [PopIn], ["MenuWindow/TopLevelMenu/StartServerButton"], [PopIn],
+            ["MenuWindow/TopLevelMenu/BrowseGamesButton"], [PopIn]];
+        AutoAnimationOut = [[AutoTarget], [SinkAway], ["MenuWindow/TopLevelMenu/StartServerButton"], [SinkAway],
+            ["MenuWindow/TopLevelMenu/BrowseGamesButton"], [SinkAway]];
+    }
+}
+// To the server start screen button //
+o GuiObject "MenuWindow/TopLevelMenu/StartServerButton"{
+    s{
+        [@Listener="OnClick"]
+        bool SetVersion(GuiObject@ instance){
+        
+            // Go to the StartServerMenu //
+            instance.GetOwningManager().SetCollectionState("StartServerMenu", true);
+            instance.GetOwningManager().SetCollectionState("TopLevelMenu", false);
+            return true;
+        }
+    @%};
+}
+// To the server browser screen button //
+o GuiObject "MenuWindow/TopLevelMenu/BrowseGamesButton"{
+    s{
+        [@Listener="OnClick"]
+        bool SetVersion(GuiObject@ instance){
+        
+            // Go to the StartServerMenu //
+            instance.GetOwningManager().SetCollectionState("ServerBrowserMenu", true);
+            instance.GetOwningManager().SetCollectionState("TopLevelMenu", false);
+            return true;
+        }
+    @%};
+}
+// To the direct connect screen button //
+
+
+// To the options menu //
+
+
+// Quit the game //
+
+
 // ------------------ Server start screen ------------------ //
 o GuiCollection "StartServerMenu"{
     l params{
         Enabled = false;
         AutoTarget = "MenuWindow/StartServerMenu";
-        AutoAnimationIn = [[AutoTarget], [PopIn]];
-        AutoAnimationOut = [[AutoTarget], [SinkAway]];
+        AutoAnimationIn = [[AutoTarget], [PopIn], ["MenuWindow/StartServerMenu/BackToMainButton"], [PopIn]];
+        AutoAnimationOut = [[AutoTarget], [SinkAway], ["MenuWindow/StartServerMenu/BackToMainButton"], [SinkAway]];
     }
 }
 
-o GuiObject "MenuWindow/StartServerMenu"{
-    s{
-        [@Listener="OnCloseClicked"]
-        bool GoBackToMainMenu(GuiObject@ instance){
-            
-            // Go back to the main menu //
-            instance.GetOwningManager().SetCollectionState("TopLevelMenu", true);
-            instance.GetOwningManager().SetCollectionState("StartServerMenu", false);
-            return true;
-        }
-    @%};
+
+// Normal closing things //
+template<> GUIFrameWindowCloseButtonDefault<"MenuWindow/StartServerMenu", "TopLevelMenu", "StartServerMenu">
+template<> GUIMenuBackButtonDefault<"MenuWindow/StartServerMenu/BackToMainButton", "TopLevelMenu", "StartServerMenu">
+
+// ------------------ Server browser screen ------------------ //
+o GuiCollection "ServerBrowserMenu"{
+    l params{
+        Enabled = false;
+        AutoTarget = "MenuWindow/ServerBrowserMenu";
+        AutoAnimationIn = [[AutoTarget], [PopIn], ["MenuWindow/ServerBrowserMenu/BackToMainButton"], [PopIn],
+            ["MenuWindow/ServerBrowserMenu/NotDone"], [PopIn]];
+        AutoAnimationOut = [[AutoTarget], [SinkAway], ["MenuWindow/ServerBrowserMenu/BackToMainButton"], [SinkAway],
+            ["MenuWindow/ServerBrowserMenu/NotDone"], [SinkAway]];
+    }
 }
 
-o GuiObject "MenuWindow/StartServerMenu/BackToMainButton"{
-    s{
-        [@Listener="OnClick"]
-        bool GoBackToMainMenu(GuiObject@ instance){
-            
-            // Go back to the main menu //
-            instance.GetOwningManager().SetCollectionState("TopLevelMenu", true);
-            instance.GetOwningManager().SetCollectionState("StartServerMenu", false);
-            return true;
-        }
-    @%};
-}
+// Normal closing things //
+template<> GUIFrameWindowCloseButtonDefault<"MenuWindow/ServerBrowserMenu", "TopLevelMenu", "ServerBrowserMenu">
+template<> GUIMenuBackButtonDefault<"MenuWindow/ServerBrowserMenu/BackToMainButton", "TopLevelMenu", "ServerBrowserMenu">
 
 
 // ------------------ Server connection screen ------------------ //
@@ -140,11 +188,6 @@ o GuiCollection "PauseMenu"{
         AllowEnable = false;
         ToggleOn = "ESC";
         AutoTarget = "";
-    }
-    s script{
-        body{
-            #include "DefaultCollectionScript.as";
-        @%};
     }
 }
 

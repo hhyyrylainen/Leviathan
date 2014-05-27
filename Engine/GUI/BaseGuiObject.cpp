@@ -113,6 +113,8 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 // ------------------------------------ //
 void Leviathan::Gui::BaseGuiObject::_HookListeners(){
 	// first we need to get probably right listeners and register with them //
+	if(!Scripting)
+		return;
 	ScriptModule* mod = Scripting->GetModule();
 
 	std::vector<shared_ptr<ValidListenerData>> containedlisteners;
@@ -148,7 +150,8 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(){
 }
 // ------------------------------------ //
 void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericEvent** event2){
-
+	if(!Scripting)
+		return;
 	ScriptModule* mod = Scripting->GetModule();
 
 	if(pEvent){

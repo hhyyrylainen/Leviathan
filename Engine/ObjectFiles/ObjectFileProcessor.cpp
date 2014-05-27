@@ -241,7 +241,7 @@ shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVari
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
 
 	// Get the value //
-	auto valuestr = itr.GetUntilNextCharacterOrNothing<string>(';', SPECIAL_ITERATOR_FILEHANDLING);
+	auto valuestr = itr.GetUntilNextCharacterOrNothing<string>(';', SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
 	if(!valuestr){
 		// No ';' //
@@ -352,6 +352,29 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 		}
 	}
 
+	StringIterator quoteremover(NULL, false);
+
+	// Remove any quotes from the arguments //
+	for(size_t i = 0; i < templateargs.size(); i++){
+
+		auto chartype = templateargs[i]->at(0);
+
+		if(chartype == '"' || chartype == '\''){
+			// Remove the quotes //
+			quoteremover.ReInit(new UTF8DataIterator(*templateargs[i]), true);
+			auto newstr = quoteremover.GetStringInQuotes<string>(QUOTETYPE_BOTH);
+			if(!newstr || newstr->empty()){
+
+				Logger::Get()->Warning(L"ObjectFileProcessor: Template: failed to remove quotes from template argument, "+
+					Convert::StringToWstring(*templateargs[i]));
+				continue;
+			}
+
+			templateargs[i] = move(newstr);
+		}
+	}
+
+
 	// We should now be at the '>' character //
 
 	// Move over it //
@@ -423,6 +446,29 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 			// Potentially more //
 			itr3.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 		}
+
+		// Remove any quotes from the arguments //
+		for(size_t i = 0; i < instanceargs.size(); i++){
+
+			auto chartype = instanceargs[i]->at(0);
+
+			if(chartype == '"' || chartype == '\''){
+				// Remove the quotes //
+				quoteremover.ReInit(new UTF8DataIterator(*instanceargs[i]), true);
+				auto newstr = quoteremover.GetStringInQuotes<string>(QUOTETYPE_BOTH);
+				if(!newstr || newstr->empty()){
+
+					if(instanceargs[i]->size() > 2){
+						Logger::Get()->Warning(L"ObjectFileProcessor: Template: failed to remove quotes from template argument, "+
+							Convert::StringToWstring(*instanceargs[i]));
+					}
+					continue;
+				}
+
+				instanceargs[i] = move(newstr);
+			}
+		}
+
 
 		// We should now be at the '>' character //
 		itr.MoveToNext();

@@ -36,7 +36,7 @@
             <Property name="Font" value="Simonetta-Black"/>
             <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
             
-            <Property name="Position" value="{{0, 35}, {0.138, 0}}"/>
+            <Property name="Position" value="{{0, 35}, {0.138, 5}}"/>
             
         </Window>
         
@@ -86,8 +86,17 @@
                 
                 <Property name="Text" value="Start Server"/>
                 <Property name="TooltipText" value="Start a new local server for playing solo or with others"/>
+            </Window>
+            <Window name="BrowseGamesButton" type="TaharezLook/Button">
                 
+                <Property name="Size" value="{{0.82, 0}, {0.2, 0}}"/>
+                <Property name="Position" value="{{0, 0}, {0.26, 0}}"/>
+                <Property name="HorizontalAlignment" value="Centre"/>
                 
+                <Property name="Font" value="Simonetta-Black-Large"/>
+                
+                <Property name="Text" value="Browse Servers"/>
+                <Property name="TooltipText" value="Browse all available servers. NOT DONE!"/>
             </Window>
             
             
@@ -122,16 +131,55 @@
                 
                 <Property name="Text" value="Back"/>
                 <Property name="TooltipText" value="Back to the Main menu. You could also hit the 'x' in the corner"/>
-                
-                
-                
-                
             </Window>
             
             
         </Window>
     
+        <!-- Server browser screen -->
+        <Window name="ServerBrowserMenu" type="TaharezLook/FrameWindow">
+            <Property name="Visible" value="False"/>
+            <Property name="CloseButtonEnabled" value="True"/>
+            <Property name="RollUpEnabled" value="False"/>
+            <Property name="SizingEnabled" value="False"/>
+            <Property name="SizingBorderThickness" value="3.0"/>
+            <Property name="AlwaysOnTop" value="True"/>
+            <Property name="DragMovingEnabled" value="False"/>
+            
+            
+            <Property name="Text" value="Available servers"/>
+            
+            <Property name="Area" value="{{0.1, 0}, {0.1, 0}, {0.9, 0}, {0.9, 0}}"/>
+            
+            <Window name="NotDone" type="TaharezLook/StaticText">
+            
+                <Property name="Visible" value="True"/>
+                <Property name="BackgroundEnabled" value="False"/>
+                <Property name="FrameEnabled" value="False"/>
+                
+                <Property name="Text" value="Not done..."/>
+                <Property name="Font" value="Simonetta-Black-Large"/>
+                <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFA0A0A0 br:FFA0A0A0"/>
+                
+                <Property name="Position" value="{{0.05, 0}, {0.05, 0}}"/>
+                <Property name="Size" value="{{0.9, 0}, {0.4, 0}}"/>
+                
+            </Window>
+            
+            <Window name="BackToMainButton" type="TaharezLook/Button">
+                
+                <Property name="Size" value="{{0.4, 0}, {0.13, 0}}"/>
+                <Property name="HorizontalAlignment" value="Right"/>
+                <Property name="VerticalAlignment" value="Bottom"/>
+                
+                <Property name="Font" value="Simonetta-Regular-Large"/>
+                
+                <Property name="Text" value="Back"/>
+                <Property name="TooltipText" value="Back to the Main menu. You could also hit the 'x' in the corner"/>
+            </Window>
         
+        
+        </Window>
     
     </Window>
     

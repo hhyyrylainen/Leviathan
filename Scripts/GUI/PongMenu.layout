@@ -20,6 +20,7 @@
             
             <Property name="Position" value="{{0, 20}, {0, 5}}"/>
             <Property name="Size" value="{{0.23, 0}, {0.23, 0}}"/>
+            <Property name="VertFormatting" value="TopAligned"/>
             
         </Window>
         
@@ -36,8 +37,31 @@
             <Property name="Font" value="Simonetta-Black"/>
             <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
             
-            <Property name="Position" value="{{0, 35}, {0.138, 5}}"/>
+            <Property name="Position" value="{{0, 35}, {0.18, 5}}"/>
+            <Property name="HorzFormatting" value="LeftAligned"/>
+            <Property name="VertFormatting" value="TopAligned"/>
             
+        </Window>
+        
+        <!-- The FPS counter -->
+        <Window name="FPSDisplay" type="TaharezLook/StaticText">
+            
+            <Property name="Visible" value="True"/>
+            <Property name="BackgroundEnabled" value="False"/>
+            <Property name="FrameEnabled" value="False"/>
+            <Property name="MousePassThroughEnabled" value="True"/>
+            <Property name="AlwaysOnTop" value="True"/>
+            
+            <Property name="Text" value="0"/>
+            <Property name="Font" value="Simonetta-Regular-Large"/>
+            <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
+            
+            <Property name="VerticalAlignment" value="Top"/>
+            <Property name="HorizontalAlignment" value="Right"/>
+            <Property name="HorzFormatting" value="RightAligned"/>
+            <Property name="VertFormatting" value="TopAligned"/>
+            
+            <Property name="Size" value="{{0.05, 0}, {0.1, 0}}"/>
         </Window>
         
         <!-- The Leviathan version number -->
@@ -53,6 +77,9 @@
             <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
             <Property name="HorizontalAlignment" value="Right"/>
             <Property name="VerticalAlignment" value="Bottom"/>
+            
+            <Property name="HorzFormatting" value="RightAligned"/>
+            <Property name="VertFormatting" value="BottomAligned"/>
             
             <Property name="Size" value="{{0.11, 0}, {0.04, 0}}"/>
         </Window>
@@ -78,7 +105,7 @@
             <!-- Main menu buttons -->
             <Window name="StartServerButton" type="TaharezLook/Button">
                 
-                <Property name="Size" value="{{0.82, 0}, {0.2, 0}}"/>
+                <Property name="Size" value="{{0.82, 0}, {0.15, 0}}"/>
                 <Property name="Position" value="{{0, 0}, {0.05, 0}}"/>
                 <Property name="HorizontalAlignment" value="Centre"/>
                 
@@ -89,14 +116,48 @@
             </Window>
             <Window name="BrowseGamesButton" type="TaharezLook/Button">
                 
-                <Property name="Size" value="{{0.82, 0}, {0.2, 0}}"/>
-                <Property name="Position" value="{{0, 0}, {0.26, 0}}"/>
+                <Property name="Size" value="{{0.82, 0}, {0.15, 0}}"/>
+                <Property name="Position" value="{{0, 0}, {0.21, 0}}"/>
                 <Property name="HorizontalAlignment" value="Centre"/>
                 
                 <Property name="Font" value="Simonetta-Black-Large"/>
                 
                 <Property name="Text" value="Browse Servers"/>
                 <Property name="TooltipText" value="Browse all available servers. NOT DONE!"/>
+            </Window>
+            <Window name="ConnectToAddressButton" type="TaharezLook/Button">
+                
+                <Property name="Size" value="{{0.82, 0}, {0.15, 0}}"/>
+                <Property name="Position" value="{{0, 0}, {0.37, 0}}"/>
+                <Property name="HorizontalAlignment" value="Centre"/>
+                
+                <Property name="Font" value="Simonetta-Black-Large"/>
+                
+                <Property name="Text" value="Direct Connect"/>
+                <Property name="TooltipText" value="Connect to a specific address"/>
+            </Window>
+            <Window name="SettingsButton" type="TaharezLook/Button">
+                
+                <Property name="Size" value="{{0.82, 0}, {0.15, 0}}"/>
+                <Property name="Position" value="{{0, 0}, {0.53, 0}}"/>
+                <Property name="HorizontalAlignment" value="Centre"/>
+                <Property name="Disabled" value="True"/>
+                
+                <Property name="Font" value="Simonetta-Black-Large"/>
+                
+                <Property name="Text" value="Options"/>
+                <Property name="TooltipText" value="Connect to a specific address"/>
+            </Window>
+            <Window name="QuitGameButton" type="TaharezLook/Button">
+                
+                <Property name="Size" value="{{0.82, 0}, {0.15, 0}}"/>
+                <Property name="Position" value="{{0, 0}, {0.69, 0}}"/>
+                <Property name="HorizontalAlignment" value="Centre"/>
+                
+                <Property name="Font" value="Simonetta-Black-Large"/>
+                
+                <Property name="Text" value="Quit"/>
+                <Property name="TooltipText" value="close the game already"/>
             </Window>
             
             

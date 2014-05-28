@@ -107,6 +107,10 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+	if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetElement()", asMETHOD(Gui::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
 
 	return true;
 }

@@ -27,6 +27,8 @@ namespace Leviathan{ namespace Gui{
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(BaseGuiObject);
 
 		DLLEXPORT ScriptSafeVariableBlock* GetAndPopFirstUpdated(){
+			if(UpdatedValues.empty())
+				return NULL;
 
 			auto tmp = new ScriptSafeVariableBlock(UpdatedValues[0]->GetValueDirect(), UpdatedValues[0]->GetName());
 			UpdatedValues.erase(UpdatedValues.begin());
@@ -54,6 +56,9 @@ namespace Leviathan{ namespace Gui{
 		//! \brief Gets the name of this object as a string
 		DLLEXPORT string GetNameAsString();
 
+
+		//! \brief Returns the TargetElement CEGUI window which might be NULL
+		DLLEXPORT CEGUI::Window* GetTargetWindow() const;
 
 	protected:
 

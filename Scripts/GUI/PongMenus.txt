@@ -85,6 +85,31 @@ o GuiObject "MenuWindow/LeviathanVersion"{
     @%};
 }
 
+
+// The FPS display //
+
+
+o GuiObject "MenuWindow/FPSDisplay"{
+    l params{
+        
+        ListenOn = DATAINDEX_FPS;
+    }
+    s{
+        [@Listener="OnListenUpdate"]
+        int UpdateFPS(GuiObject@ instance, Event@ event){
+            // The new FPS is the first value //
+            ScriptSafeVariableBlock@ newvalue = instance.GetAndPopFirstUpdated();
+            if(newvalue is null)
+                return 0;
+                
+            // Set the value //
+            instance.GetTargetElement().SetText(string(newvalue));
+            
+            return 1;
+        }
+    @%};
+}
+
 // ------------------ Main menu objects ------------------ //
 o GuiCollection "TopLevelMenu"{
     l params{

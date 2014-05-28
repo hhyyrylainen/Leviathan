@@ -34,6 +34,10 @@ DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){
 DLLEXPORT string Leviathan::Gui::BaseGuiObject::GetNameAsString(){
 	return Convert::WstringToString(Name);
 }
+
+DLLEXPORT CEGUI::Window* Leviathan::Gui::BaseGuiObject::GetTargetWindow() const{
+	return TargetElement;
+}
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*> &tempobjects, 
 	ObjectFileObject& dataforthis)
@@ -353,4 +357,3 @@ bool Leviathan::Gui::BaseGuiObject::EventOnCloseClicked(const CEGUI::EventArgs &
 
 	return _CallCEGUIListener(L"OnCloseClicked");
 }
-

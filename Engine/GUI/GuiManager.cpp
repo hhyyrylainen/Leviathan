@@ -334,6 +334,11 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file, bool
 		Logger::Get()->Error(L"GuiManager: LoadGUIFile: failed to parse CEGUI layout: "+relativepath+L":");
 		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e2.what()));
 		return false;
+	} catch(const CEGUI::InvalidRequestException &e3){
+
+		Logger::Get()->Error(L"GuiManager: LoadGUIFile: failed to parse CEGUI layout: "+relativepath+L":");
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e3.what()));
+		return false;
 	}
 
 	// Check did it work //

@@ -71,6 +71,23 @@ DLLEXPORT bool Leviathan::StringOperations::PerformTesting(const int &tests){
 		return true;
 	}
 
+	// Line end changing //
+	wstring pathtestoriginal = L"My text is quite nice\nand has\n multiple\r\n lines\n that are separated\n";
+
+	wstring pathresult = ChangeLineEndsToWindowsWstring(pathtestoriginal);
+
+	if(pathresult != L"My text is quite nice\r\nand has\r\n multiple\r\n lines\r\n that are separated\r\n"){
+
+		return true;
+	}
+
+	wstring backlinetest = ChangeLineEndsToUniversalWstring(pathresult);
+
+	if(backlinetest != L"My text is quite nice\nand has\n multiple\n lines\n that are separated\n"){
+
+		return true;
+	}
+
 
 	// Stress testing //
 	for(int i = 0; i < tests; i++){
@@ -85,18 +102,10 @@ DLLEXPORT bool Leviathan::StringOperations::PerformTesting(const int &tests){
 }
 // ------------------------------------ //
 
-// ------------------ StringConstants definitions ------------------ //
-template<> const wchar_t WstringConstants::DotCharacter = L'.';
-template<> const wchar_t WstringConstants::UniversalPathSeparator = L'/';
-template<> const wchar_t WstringConstants::WindowsPathSeparator = L'\\';
-template<> const wchar_t WstringConstants::SpaceCharacter = L' ';
 
-template<> const wchar_t WstringConstants::FirstNumber = L'0';
-template<> const wchar_t WstringConstants::LastNumber = L'9';
-template<> const wchar_t WstringConstants::Dash = L'-';
-template<> const wchar_t WstringConstants::PlusSymbol = L'+';
-// ------------------------------------ //
+template<> const wstring Leviathan::StringConstants<wstring, wchar_t>::WindowsLineSeparator = L"\r\n";
+template<> const wstring Leviathan::StringConstants<wstring, wchar_t>::UniversalLineSeparator = L"\n";
 
-// ------------------------------------ //
 
-// ------------------------------------ //
+template<> const string Leviathan::StringConstants<string, char>::WindowsLineSeparator = "\r\n";
+template<> const string Leviathan::StringConstants<string, char>::UniversalLineSeparator = "\n";

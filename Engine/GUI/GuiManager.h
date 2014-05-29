@@ -23,6 +23,41 @@ namespace Leviathan {
 namespace Gui{
 
 
+	//! \brief A class for handling system clipboard interaction
+	class GuiClipboardHandler;
+
+
+	//! \brief Holds the state of some collections stored by name
+	struct GuiCollectionStates{
+	private:
+		//! \brief Helper struct that allows keeping all the data in a single vector
+		struct SingleCollectionEntry{
+			//! \brief Constructs a new entry for a single GuiCollection
+			SingleCollectionEntry(const wstring &name, bool enabled) : Name(new wstring(name)), IsEnabled(enabled){
+
+			}
+
+			bool IsEnabled;
+			unique_ptr<wstring> Name;
+		};
+
+	public:
+		//! \brief Creates an empty list of GUI state
+		GuiCollectionStates(size_t expectedcount = 0){
+			CollectionNames.reserve(expectedcount);
+		}
+
+		//! \brief Adds a new entry to the list
+		inline void AddNewEntry(const wstring &name, bool state){
+
+			CollectionNames.push_back(move(unique_ptr<SingleCollectionEntry>(new SingleCollectionEntry(name, state))));
+		}
+
+
+		std::vector<unique_ptr<SingleCollectionEntry>> CollectionNames;
+	};
+
+
 	//! \brief Main GUI controller
 	//! \todo Add GUI window objects to this which are associated with different windows
 	class GuiManager : public EngineComponent, public ThreadSafe{
@@ -73,6 +108,15 @@ namespace Gui{
 		//! \brief Unloads the currently loaded file
 		DLLEXPORT void UnLoadGUIFile();
 
+		//! \brief Creates an object representing the state of all GuiCollections
+		DLLEXPORT unique_ptr<GuiCollectionStates> GetGuiStates() const;
+
+		//! \brief Applies a stored set of states to the GUI
+		//! \param states A pointer to an object holding the state, the object should be obtained by calling GetGuiStates
+		//! \see GetGuiStates
+		DLLEXPORT void ApplyGuiStates(const GuiCollectionStates* states);
+
+
 		// set to "none" to use default //
 		DLLEXPORT void SetMouseTheme(const wstring &tname);
 		DLLEXPORT void SetMouseFileVisibleState(bool state);
@@ -95,16 +139,39 @@ namespace Gui{
 		DLLEXPORT CEGUI::Window* GetWindowByStringName(const string &namepath);
 
 
+		//! \brief Returns a string containing names of types that don't look good/break something when animated
+		//!
+		//! For use with PlayAnimationOnWindow the ignoretypenames parameter if you just want to avoid breaking some rendering
+		DLLEXPORT FORCE_INLINE static string GetCEGUITypesWithBadAnimations(){
+			return "";
+		}
+
+
 		//! \brief Creates an plays an animation on a CEGUI Window
-		DLLEXPORT bool PlayAnimationOnWindow(const string &windowname, const string &animationname);
+		//! \param applyrecursively Applies the same animation to the child windows
+		DLLEXPORT bool PlayAnimationOnWindow(const string &windowname, const string &animationname, bool applyrecursively = false, const string 
+			&ignoretypenames = "");
 		
 		//! \brief Overload of PlayAnimationOnWindow using string conversion
-		DLLEXPORT FORCE_INLINE bool PlayAnimationOnWindow(const wstring &windowname, const wstring &animationname){
-			return PlayAnimationOnWindow(Convert::WstringToString(windowname), Convert::WstringToString(animationname));
+		DLLEXPORT FORCE_INLINE bool PlayAnimationOnWindow(const wstring &windowname, const wstring &animationname, bool applyrecursively = false,
+			const string &ignoretypenames = ""){
+			return PlayAnimationOnWindow(Convert::WstringToString(windowname), Convert::WstringToString(animationname), applyrecursively,
+				ignoretypenames);
 		}
 
 		//! \brief Proxy overload for PlayAnimationOnWindow
 		DLLEXPORT bool PlayAnimationOnWindowProxy(const string &windowname, const string &animationname);
+
+
+		//! \brief Tries to inject a paste request to CEGUI
+		DLLEXPORT bool InjectPasteRequest();
+
+		//! \brief Tries to inject a copy request to CEGUI
+		DLLEXPORT bool InjectCopyRequest();
+
+		//! \brief Tries to inject a cut request to CEGUI
+		DLLEXPORT bool InjectCutRequest();
+
 
 	private:
 		// rendering //
@@ -112,6 +179,9 @@ namespace Gui{
 		void _ReleaseOgreResources();
 
 		void _FileChanged(const wstring &file, ResourceFolderListener &caller);
+
+		//! The implementation of PlayAnimationOnWindow
+		void _PlayAnimationOnWindow(CEGUI::Window* targetwind, CEGUI::Animation* animdefinition, bool recurse, const string &ignoretypenames);
 
 		// ------------------------------------ //
 
@@ -151,6 +221,9 @@ namespace Gui{
 		// collections //
 		std::vector<GuiCollection*> Collections;
 
+
+		//! The clipboard access object
+		GuiClipboardHandler* _GuiClipboardHandler;
 
 		// ------------------------------------ //
 		// Static animation files //

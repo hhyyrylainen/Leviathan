@@ -19,7 +19,7 @@ namespace Leviathan{ namespace Gui{
 		GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, bool strict = false, bool enabled = true, 
 			bool keepgui = false, bool allowenable = true, const wstring &autotarget = L"", 
 			std::vector<unique_ptr<wstring>> &inanimations = std::vector<unique_ptr<wstring>>(), 
-			std::vector<unique_ptr<wstring>> &outanimations = std::vector<unique_ptr<wstring>>());
+			std::vector<unique_ptr<wstring>> &outanimations = std::vector<unique_ptr<wstring>>(), bool applyanimstochildren = false);
 		~GuiCollection();
 
 		DLLEXPORT void UpdateState(bool newstate);
@@ -81,6 +81,9 @@ namespace Leviathan{ namespace Gui{
 		//! The CEGUI animations that are automatically used
 		std::vector<unique_ptr<wstring>> AutoAnimationOnEnable;
 		std::vector<unique_ptr<wstring>> AutoAnimationOnDisable;
+
+		//! Flag for using the same animations in AutoAnimationOnEnable for their child windows
+		bool ApplyAnimationsToChildren;
 
 
 

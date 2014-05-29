@@ -87,8 +87,6 @@ o GuiObject "MenuWindow/LeviathanVersion"{
 
 
 // The FPS display //
-
-
 o GuiObject "MenuWindow/FPSDisplay"{
     l params{
         
@@ -109,18 +107,17 @@ o GuiObject "MenuWindow/FPSDisplay"{
         }
     @%};
 }
-
 // ------------------ Main menu objects ------------------ //
 o GuiCollection "TopLevelMenu"{
     l params{
         Enabled = true;
         AutoTarget = "MenuWindow/TopLevelMenu";
-        AutoAnimationIn = [[AutoTarget], [PopIn], ["MenuWindow/TopLevelMenu/StartServerButton"], [PopIn],
-            ["MenuWindow/TopLevelMenu/BrowseGamesButton"], [PopIn]];
-        AutoAnimationOut = [[AutoTarget], [SinkAway], ["MenuWindow/TopLevelMenu/StartServerButton"], [SinkAway],
-            ["MenuWindow/TopLevelMenu/BrowseGamesButton"], [SinkAway]];
+        AutoAnimateChildren = true;
+        AutoAnimationIn = [[AutoTarget], [PopIn]];
+        AutoAnimationOut = [[AutoTarget], [SinkAway]];
     }
 }
+
 // To the server start screen button //
 o GuiObject "MenuWindow/TopLevelMenu/StartServerButton"{
     s{
@@ -134,6 +131,7 @@ o GuiObject "MenuWindow/TopLevelMenu/StartServerButton"{
         }
     @%};
 }
+
 // To the server browser screen button //
 o GuiObject "MenuWindow/TopLevelMenu/BrowseGamesButton"{
     s{
@@ -147,22 +145,42 @@ o GuiObject "MenuWindow/TopLevelMenu/BrowseGamesButton"{
         }
     @%};
 }
+
 // To the direct connect screen button //
-
-
+o GuiObject "MenuWindow/TopLevelMenu/ConnectToAddressButton"{
+    s{
+        [@Listener="OnClick"]
+        bool SetVersion(GuiObject@ instance){
+        
+            // Go to the StartServerMenu //
+            instance.GetOwningManager().SetCollectionState("DirectConnectScreen", true);
+            instance.GetOwningManager().SetCollectionState("TopLevelMenu", false);
+            return true;
+        }
+    @%};
+}
 // To the options menu //
 
 
 // Quit the game //
-
-
+o GuiObject "MenuWindow/TopLevelMenu/QuitGameButton"{
+    s{
+        [@Listener="OnClick"]
+        bool QuitIt(GuiObject@ instance){
+            // Close the game //
+            GetPongBase().Quit();
+            return true;
+        }
+    @%};
+}
 // ------------------ Server start screen ------------------ //
 o GuiCollection "StartServerMenu"{
     l params{
         Enabled = false;
         AutoTarget = "MenuWindow/StartServerMenu";
-        AutoAnimationIn = [[AutoTarget], [PopIn], ["MenuWindow/StartServerMenu/BackToMainButton"], [PopIn]];
-        AutoAnimationOut = [[AutoTarget], [SinkAway], ["MenuWindow/StartServerMenu/BackToMainButton"], [SinkAway]];
+        AutoAnimateChildren = true;
+        AutoAnimationIn = [[AutoTarget], [PopIn]];
+        AutoAnimationOut = [[AutoTarget], [SinkAway]];
     }
 }
 
@@ -170,24 +188,34 @@ o GuiCollection "StartServerMenu"{
 // Normal closing things //
 template<> GUIFrameWindowCloseButtonDefault<"MenuWindow/StartServerMenu", "TopLevelMenu", "StartServerMenu">
 template<> GUIMenuBackButtonDefault<"MenuWindow/StartServerMenu/BackToMainButton", "TopLevelMenu", "StartServerMenu">
-
 // ------------------ Server browser screen ------------------ //
 o GuiCollection "ServerBrowserMenu"{
     l params{
         Enabled = false;
         AutoTarget = "MenuWindow/ServerBrowserMenu";
-        AutoAnimationIn = [[AutoTarget], [PopIn], ["MenuWindow/ServerBrowserMenu/BackToMainButton"], [PopIn],
-            ["MenuWindow/ServerBrowserMenu/NotDone"], [PopIn]];
-        AutoAnimationOut = [[AutoTarget], [SinkAway], ["MenuWindow/ServerBrowserMenu/BackToMainButton"], [SinkAway],
-            ["MenuWindow/ServerBrowserMenu/NotDone"], [SinkAway]];
+        AutoAnimateChildren = true;
+        AutoAnimationIn = [[AutoTarget], [PopIn]];
+        AutoAnimationOut = [[AutoTarget], [SinkAway]];
     }
 }
 
 // Normal closing things //
 template<> GUIFrameWindowCloseButtonDefault<"MenuWindow/ServerBrowserMenu", "TopLevelMenu", "ServerBrowserMenu">
 template<> GUIMenuBackButtonDefault<"MenuWindow/ServerBrowserMenu/BackToMainButton", "TopLevelMenu", "ServerBrowserMenu">
+// ------------------ Direct connect to address screen ------------------ //
+o GuiCollection "DirectConnectScreen"{
+    l params{
+        Enabled = false;
+        AutoTarget = "MenuWindow/DirectConnectScreen";
+        AutoAnimateChildren = true;
+        AutoAnimationIn = [[AutoTarget], [PopIn]];
+        AutoAnimationOut = [[AutoTarget], [SinkAway]];
+    }
+}
 
-
+// Normal closing things //
+template<> GUIFrameWindowCloseButtonDefault<"MenuWindow/DirectConnectScreen", "TopLevelMenu", "DirectConnectScreen">
+template<> GUIMenuBackButtonDefault<"MenuWindow/DirectConnectScreen/BackToMainButton", "TopLevelMenu", "DirectConnectScreen">
 // ------------------ Server connection screen ------------------ //
 template<> PGCTemplate<DirectConnectMenu, "", false>
 

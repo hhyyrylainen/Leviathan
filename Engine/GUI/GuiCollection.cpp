@@ -15,9 +15,11 @@ using namespace Gui;
 Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, bool strict /*= false*/, 
 	bool enabled /*= true*/, bool keepgui /*= false*/, bool allowenable /*= true*/, const wstring &autotarget /*= L""*/, 
 	std::vector<unique_ptr<wstring>> &inanimations /*= std::vector<unique_ptr<wstring>>()*/, 
-	std::vector<unique_ptr<wstring>> &outanimations /*= std::vector<unique_ptr<wstring>>()*/) : 
+	std::vector<unique_ptr<wstring>> &outanimations /*= std::vector<unique_ptr<wstring>>()*/,
+	bool applyanimstochildren) : 
 	Name(name), ID(id), Enabled(enabled), Strict(strict), KeepsGuiOn(keepgui), OwningManager(manager), AllowEnable(allowenable), 
-	AutoTarget(autotarget), AutoAnimationOnEnable(move(inanimations)), AutoAnimationOnDisable(move(outanimations))
+	AutoTarget(autotarget), AutoAnimationOnEnable(move(inanimations)), AutoAnimationOnDisable(move(outanimations)), 
+	ApplyAnimationsToChildren(applyanimstochildren)
 {
 	Toggle = GKey::GenerateKeyFromString(toggle);
 }
@@ -130,6 +132,7 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 	wstring autotarget = L"";
 	std::vector<unique_ptr<wstring>> autoinanimation;
 	std::vector<unique_ptr<wstring>> autooutanimation;
+	bool recursiveanims = false;
 
 	auto varlist = data.GetListWithName(L"params");
 
@@ -153,13 +156,14 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<wstring>(varlist->GetVariables(), L"AutoAnimationIn", autoinanimation, 2);
 		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<wstring>(varlist->GetVariables(), L"AutoAnimationOut", autooutanimation, 2);
 
-
+		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"AutoAnimateChildren", recursiveanims, false);
+		
 	}
 
 
 	// allocate new Collection object //
 	GuiCollection* cobj = new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn, allowenable, autotarget, 
-		autoinanimation, autooutanimation);
+		autoinanimation, autooutanimation, recursiveanims);
 	// copy script data over //
 	cobj->Scripting = data.GetScript();
 
@@ -186,14 +190,18 @@ void Leviathan::Gui::GuiCollection::_PlayAnimations(const std::vector<unique_ptr
 
 		if(targetanim == L"AutoTarget"){
 
-			if(!OwningManager->PlayAnimationOnWindow(AutoTarget, *anims[i+1])){
+			if(!OwningManager->PlayAnimationOnWindow(AutoTarget, *anims[i+1], ApplyAnimationsToChildren, 
+				GuiManager::GetCEGUITypesWithBadAnimations()))
+			{
 
 				Logger::Get()->Error(L"GuiCollection: _PlayAnimations: failed to play animation("+*anims[i+1]+L") on window "+AutoTarget);
 			}
 
 		} else {
 
-			if(!OwningManager->PlayAnimationOnWindow(targetanim, *anims[i+1])){
+			if(!OwningManager->PlayAnimationOnWindow(targetanim, *anims[i+1], ApplyAnimationsToChildren, 
+				GuiManager::GetCEGUITypesWithBadAnimations()))
+			{
 
 				Logger::Get()->Error(L"GuiCollection: _PlayAnimations: failed to play animation("+*anims[i+1]+L") on window "+targetanim);
 			}

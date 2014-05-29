@@ -366,8 +366,15 @@ DLLEXPORT void Leviathan::Window::GatherInput(CEGUI::GUIContext* receivercontext
 	if(FirstInput){
 		FirstInput = false;
 
+		int x, y;
+		GetRelativeMouse(x, y);
+
+		// Pass the initial position //
+		inputreceiver->injectMousePosition((float)x, (float)y);
+
 		_CheckMouseVisibilityStates();
 	}
+
 
 	// set parameters that listener functions need //
 	ThisFrameHandledCreate = false;
@@ -408,10 +415,10 @@ DLLEXPORT void Leviathan::Window::GatherInput(CEGUI::GUIContext* receivercontext
 		xmoved -= GetWidth()/2;
 		ymoved -= GetHeight()/2;
 
-		// reset to center of window //
+		// Reset to the center of the window //
 		SetMouseToCenter();
 
-		// pass input //
+		// Pass input //
 		OwningWindow->GetInputController()->SendMouseMovement(xmoved, ymoved);
 	}
 }
@@ -445,16 +452,44 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 	bool SentToController = false;
 
 	// First pass to CEGUI //
+	bool usedkeydown = false;
+
+	// Try to create a paste/cut/copy request //
+	if(arg.key == OIS::KC_C){
+
+		if(inputreceiver->injectCopyRequest()){
+
+			usedkeydown = true;
+		}
+
+	} else if(arg.key == OIS::KC_V){
+
+		if(inputreceiver->injectPasteRequest()){
+
+			usedkeydown = true;
+		}
+
+	} else if(arg.key == OIS::KC_X){
+
+		if(inputreceiver->injectCutRequest()){
+
+			usedkeydown = true;
+		}
+	}
+
 	bool usedtext = false;
 
-	if(arg.text){
+	if(arg.text && !usedkeydown){
 
 		usedtext = inputreceiver->injectChar(arg.text);
 	}
 
-	bool usedkeydown = inputreceiver->injectKeyDown(static_cast<CEGUI::Key::Scan>(arg.key));
+	// If copy/paste/cut failed try to pass it as a normal key press //
+	if(!usedkeydown)
+		usedkeydown = inputreceiver->injectKeyDown(static_cast<CEGUI::Key::Scan>(arg.key));
 
 	if(!usedkeydown && !usedtext){
+
 		// Then try disabling collections //
 		if(!OwningWindow->GetGUI()->ProcessKeyDown(arg.key, SpecialKeyModifiers)){
 

@@ -26,6 +26,10 @@ namespace Leviathan{
 		static const ElementType Dash;
 		static const ElementType PlusSymbol;
 
+		static const StringWanted WindowsLineSeparator;
+		static const StringWanted UniversalLineSeparator;
+
+
 	private:
 		StringConstants();
 		~StringConstants();
@@ -36,15 +40,17 @@ namespace Leviathan{
 	typedef StringConstants<string, char> NarrowStringConstants;
 
 	// ------------------ StringConstants definitions for new types that comply with char ------------------ //
-	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::DotCharacter = '.';
-	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::UniversalPathSeparator = '/';
-	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::WindowsPathSeparator = '\\';
-	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::SpaceCharacter = ' ';
+	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::DotCharacter = (ElementType)(int)'.';
+	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::UniversalPathSeparator = (ElementType)(int)'/';
+	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::WindowsPathSeparator = (ElementType)(int)'\\';
+	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::SpaceCharacter = (ElementType)(int)' ';
 	
-	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::FirstNumber = '0';
-	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::LastNumber = '9';
-	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::Dash = '-';
-	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::PlusSymbol = '+';
+	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::FirstNumber = (ElementType)(int)'0';
+	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::LastNumber = (ElementType)(int)'9';
+	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::Dash = (ElementType)(int)'-';
+	template<class StringWanted, typename ElementType> const ElementType StringConstants<StringWanted, ElementType>::PlusSymbol = (ElementType)(int)'+';
+
+
 
 
 	//! \brief Singleton class that has string processing functions
@@ -217,6 +223,88 @@ namespace Leviathan{
 
 			// return the wanted part //
 			return filepath.substr(startcopy, endcopy-startcopy+1);
+		}
+
+
+
+		//! \brief Changes all line separators to Windows line separators
+		template<class StringTypeN, typename CharType>
+		DLLEXPORT static const StringTypeN ChangeLineEndsToWindows(const StringTypeN &input){
+
+			StringTypeN results;
+
+			// Try to find path strings and replace them //
+			size_t copystart = 0;
+			size_t copyend = 0;
+
+			for(size_t i = 0; i < input.size(); i++){
+				if(input[i] == StringConstants<StringTypeN, CharType>::UniversalLineSeparator[0] && i > 0 && input[i-1] != 
+					StringConstants<StringTypeN, CharType>::WindowsLineSeparator[0])
+				{
+					// Found a line separator //
+					// Copy the current thing //
+					if(copyend >= copystart && copystart-copyend > 1)
+						results += input.substr(copystart, copyend-copystart+1);
+
+					results += StringConstants<StringTypeN, CharType>::WindowsLineSeparator;
+
+					copystart = i+1 < input.size() ? i+1: i;
+					copyend = copystart;
+
+					i += 1;
+
+					continue;
+				}
+				
+				// Change the end copy //
+				copyend = i;
+			}
+
+			if(copyend >= copystart && copystart-copyend > 1)
+				results += input.substr(copystart, copyend-copystart+1);
+
+
+			return results;
+		}
+
+		//! \brief Changes all line separators to universal line separators
+		template<class StringTypeN, typename CharType>
+		DLLEXPORT static const StringTypeN ChangeLineEndsToUniversal(const StringTypeN &input){
+
+			StringTypeN results;
+
+			// Try to find path strings and replace them //
+			size_t copystart = 0;
+			size_t copyend = 0;
+
+			for(size_t i = 0; i < input.size(); i++){
+				if(input[i] == StringConstants<StringTypeN, CharType>::WindowsLineSeparator[0] && i+1 < input.size() &&
+					input[i+1] == StringConstants<StringTypeN, CharType>::WindowsLineSeparator[1])
+				{
+					// Found a line separator //
+					// Copy the current thing //
+					if(copyend >= copystart && copystart-copyend > 1)
+						results += input.substr(copystart, copyend-copystart+1);
+
+					results += StringConstants<StringTypeN, CharType>::UniversalLineSeparator;
+
+					copystart = i+2 < input.size() ? i+2: i;
+					copyend = copystart;
+
+					i += 2;
+
+					continue;
+				}
+
+				// Change the end copy //
+				copyend = i;
+			}
+
+			if(copyend >= copystart && copystart-copyend > 1)
+				results += input.substr(copystart, copyend-copystart+1);
+
+
+			return results;
 		}
 
 
@@ -602,6 +690,21 @@ namespace Leviathan{
 			return RemovePath<string, char>(filepath);
 		}
 
+		
+			
+		DLLEXPORT FORCE_INLINE static const wstring ChangeLineEndsToUniversalWstring(const wstring &input){
+				return ChangeLineEndsToUniversal<wstring, wchar_t>(input);
+		}
+		DLLEXPORT FORCE_INLINE static const string ChangeLineEndsToUniversalString(const string &input){
+			return ChangeLineEndsToUniversal<string, char>(input);
+		}
+
+		DLLEXPORT FORCE_INLINE static const wstring ChangeLineEndsToWindowsWstring(const wstring &input){
+			return ChangeLineEndsToWindows<wstring, wchar_t>(input);
+		}
+		DLLEXPORT FORCE_INLINE static const string ChangeLineEndsToWindowsString(const string &input){
+			return ChangeLineEndsToWindows<string, char>(input);
+		}
 
 	private:
 		StringOperations();

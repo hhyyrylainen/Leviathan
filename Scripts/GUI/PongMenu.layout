@@ -19,7 +19,7 @@
             <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFA0A0A0 br:FFA0A0A0"/>
             
             <Property name="Position" value="{{0, 20}, {0, 5}}"/>
-            <Property name="Size" value="{{0.23, 0}, {0.23, 0}}"/>
+            <Property name="Size" value="{{0.65, 0}, {0.23, 0}}"/>
             <Property name="VertFormatting" value="TopAligned"/>
             
         </Window>
@@ -146,7 +146,7 @@
                 <Property name="Font" value="Simonetta-Black-Large"/>
                 
                 <Property name="Text" value="Options"/>
-                <Property name="TooltipText" value="Connect to a specific address"/>
+                <Property name="TooltipText" value="Change the settings when they're done"/>
             </Window>
             <Window name="QuitGameButton" type="TaharezLook/Button">
                 
@@ -213,8 +213,7 @@
             <Property name="Area" value="{{0.1, 0}, {0.1, 0}, {0.9, 0}, {0.9, 0}}"/>
             
             <Window name="NotDone" type="TaharezLook/StaticText">
-            
-                <Property name="Visible" value="True"/>
+
                 <Property name="BackgroundEnabled" value="False"/>
                 <Property name="FrameEnabled" value="False"/>
                 
@@ -223,7 +222,6 @@
                 <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFA0A0A0 br:FFA0A0A0"/>
                 
                 <Property name="Position" value="{{0.05, 0}, {0.05, 0}}"/>
-                <Property name="Size" value="{{0.9, 0}, {0.4, 0}}"/>
                 
             </Window>
             
@@ -238,8 +236,77 @@
                 <Property name="Text" value="Back"/>
                 <Property name="TooltipText" value="Back to the Main menu. You could also hit the 'x' in the corner"/>
             </Window>
+        </Window>
         
-        
+        <!-- Direct connect to address screen -->
+        <Window name="DirectConnectScreen" type="TaharezLook/FrameWindow">
+            <Property name="Visible" value="False"/>
+            <Property name="CloseButtonEnabled" value="True"/>
+            <Property name="SizingEnabled" value="True"/>
+            <Property name="SizingBorderThickness" value="3.0"/>
+            <Property name="AlwaysOnTop" value="True"/>
+            
+            
+            <Property name="Text" value="Connect to an address"/>
+            
+            <Property name="Area" value="{{0.3, 0}, {0.3, 0}, {0.7, 0}, {0.6, 0}}"/>
+            
+            <Window name="HelpText" type="TaharezLook/StaticText">
+            
+                <Property name="Area" value="{{0.01, 0}, {0.02, 0}, {0.98, 0}, {0.4, 0}}"/>
+                
+                <Property name="HorzFormatting" value="WordWrapLeftAligned"/>
+                <Property name="VertFormatting" value="CenterAligned"/>
+                
+                <Property name="Font" value="Simonetta-Regular"/>
+                <Property name="Text" value="Type the address of the server in here, like this: [font='Simonetta-Black']'localhost:53221'"/>
+            </Window>
+            
+            <Window name="ServerAddress" type="TaharezLook/Editbox">
+                
+                <Property name="Text" value="localhost:53221"/>
+                <Property name="Font" value="Simonetta-Black"/>
+                
+                <Property name="TextParsingEnabled" value="False"/>
+                <Property name="Area" value="{{0.03, 0}, {0.44, 0}, {0.97, 0}, {0.62, 0}}"/>
+                
+            </Window>
+            
+            <Window name="ErrorText" type="TaharezLook/StaticText">
+            
+                <Property name="Area" value="{{0.01, 0}, {0.64, 0}, {0.98, 0}, {0.75, 0}}"/>
+                
+                <Property name="BackgroundEnabled" value="False"/>
+                <Property name="FrameEnabled" value="False"/>
+                
+                <Property name="Text" value="Error: no errors"/>
+                <Property name="Font" value="Simonetta-Black"/>
+                <Property name="TextColours" value="tl:FFFF0033 tr:FFFF4C7F bl:AAFF0033 br:AAFF4C7F"/>
+            </Window>
+            
+            <Window name="ConnectButton" type="TaharezLook/Button">
+                
+                <Property name="Size" value="{{0.34, 0}, {0.2, 0}}"/>
+                <Property name="HorizontalAlignment" value="Centre"/>
+                <Property name="VerticalAlignment" value="Bottom"/>
+                
+                <Property name="Font" value="Simonetta-Regular-Large"/>
+                
+                <Property name="Text" value="Connect"/>
+                <Property name="TooltipText" value="Connect to the server"/>
+            </Window>
+            
+            <Window name="BackToMainButton" type="TaharezLook/Button">
+                
+                <Property name="Size" value="{{0.28, 0}, {0.2, 0}}"/>
+                <Property name="HorizontalAlignment" value="Right"/>
+                <Property name="VerticalAlignment" value="Bottom"/>
+                
+                <Property name="Font" value="Simonetta-Regular-Large"/>
+                
+                <Property name="Text" value="Back"/>
+                <Property name="TooltipText" value="Back to the Main menu. You could also hit the 'x' in the corner"/>
+            </Window>
         </Window>
     
     </Window>

@@ -279,7 +279,6 @@
                 <Property name="BackgroundEnabled" value="False"/>
                 <Property name="FrameEnabled" value="False"/>
                 
-                <Property name="Text" value="Error: no errors"/>
                 <Property name="Font" value="Simonetta-Black"/>
                 <Property name="TextColours" value="tl:FFFF0033 tr:FFFF4C7F bl:AAFF0033 br:AAFF4C7F"/>
             </Window>

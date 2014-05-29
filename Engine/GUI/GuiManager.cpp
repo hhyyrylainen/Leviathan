@@ -46,10 +46,15 @@ using namespace Leviathan::Gui;
 class Leviathan::Gui::GuiClipboardHandler : public CEGUI::NativeClipboardProvider{
 public:
 #ifdef WIN32
-	GuiClipboardHandler(Window* windprovider) : HWNDSource(windprovider){
+	GuiClipboardHandler(Window* windprovider) : HWNDSource(windprovider), OurOwnedBuffer(NULL){
 	}
 
 #endif // WIN32
+
+	~GuiClipboardHandler(){
+
+		SAFE_DELETE(OurOwnedBuffer);
+	}
 
 	//! \brief Returns true when this object can manage the clipboard on this platform
 	static bool WorksOnPlatform(){
@@ -72,7 +77,7 @@ public:
 
 	virtual void sendToClipboard(const CEGUI::String& mimeType, void* buffer, size_t size){
 		// Ignore non-text setting //
-		if(mimeType != "Text"){
+		if(mimeType != "text/plain"){
 
 			return;
 		}
@@ -93,19 +98,17 @@ public:
 
 		// Convert the line endings //
 		string convertedstring = StringOperations::ChangeLineEndsToWindowsString(string(reinterpret_cast<char*>(buffer), size));
-
-		const char* sourcechars = convertedstring.c_str();
-
-		size_t requireddata = strlen(sourcechars)+1;
+		
 
 		// Allocate global data for the text //
-		HGLOBAL globaldata = GlobalAlloc(GMEM_FIXED, requireddata);
+		HGLOBAL globaldata = GlobalAlloc(GMEM_FIXED, convertedstring.size()+1);
 
-		strcpy_s((char*)globaldata, requireddata-1, sourcechars);
+		memcpy_s(globaldata, convertedstring.size()+1, convertedstring.c_str(), convertedstring.size());
 
+		reinterpret_cast<char*>(globaldata)[convertedstring.size()] = 0;
 
-		// For the appropriate data formats...
-		if(::SetClipboardData(CF_TEXT, globaldata ) == NULL){
+		// Set the text data //
+		if(::SetClipboardData(CF_TEXT, globaldata) == NULL){
 
 			Logger::Get()->Error(L"GuiClipboardHandler: failed to set the clipboard contents", GetLastError());
 			CloseClipboard();
@@ -113,6 +116,7 @@ public:
 			return;
 		}
 
+		// All done, close clipboard to allow others to use it, too //
 		CloseClipboard();
 	}
 
@@ -139,14 +143,21 @@ public:
 			// Convert line ends to something nice //
 			fromclipdata = StringOperations::ChangeLineEndsToUniversalString(fromclipdata);
 
-			// Return the data //
-			buffer = new char[fromclipdata.size()+1];
+			// Clear old data //
+			SAFE_DELETE(OurOwnedBuffer);
 
+			// Create a new data buffer //
+			OurOwnedBuffer = new char[fromclipdata.size()+1];
+
+			// Return the data //
+			buffer = OurOwnedBuffer;
+
+			memcpy_s(buffer, fromclipdata.size()+1, fromclipdata.c_str(), fromclipdata.size());
 
 			// Make sure there is a null terminator //
 			reinterpret_cast<char*>(buffer)[fromclipdata.size()] = 0;
 
-			mimeType = "Text";
+			mimeType = "text/plain";
 			size = fromclipdata.size()+1;
 		}
 	}
@@ -175,6 +186,9 @@ private:
 
 #endif // WIN32
 
+
+	//! The owned buffer, which has to be deleted by this
+	void* OurOwnedBuffer;
 
 };
 

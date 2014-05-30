@@ -33,9 +33,13 @@ namespace Pong{
 		//! \note Only allows connections to be made to one server at a time (excluding remote console connections)
 		bool Connect(const wstring &address, wstring &errorstr);
 
-		void ConnectProxy(const wstring &address){
-			wstring error;
-			Connect(address, error);
+		bool ConnectProxy(const string &address, string &error);
+
+		//! \brief Connect method with no result and no error return
+		void Connect(const wstring &address){
+
+			wstring errorcatcher;
+			Connect(address);
 		}
 
 		void AllowPauseMenu();

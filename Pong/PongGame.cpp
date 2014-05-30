@@ -238,7 +238,7 @@ int Pong::PongGame::StartServer(){
 
 								// Queue a connect to the server //
 								Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<Leviathan::QueuedTask>(new Leviathan::DelayedTask(
-									boost::bind(&PongGame::ConnectProxy, PongGame::Get(), wstring(safeptr->GenerateFormatedAddressString())), MillisecondDuration(1000))));
+									boost::bind(&PongGame::Connect, PongGame::Get(), wstring(safeptr->GenerateFormatedAddressString())), MillisecondDuration(1000))));
 
 							} else {
 								EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
@@ -439,10 +439,10 @@ void Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
-	//if(engine->RegisterObjectMethod("PongGame", "void Connect(const string &in address)", WRAP_MFN(PongGame, ConnectProxy), asCALL_GENERIC) < 0)
-	//{
-	//	SCRIPT_REGISTERFAIL;
-	//}
+	if(engine->RegisterObjectMethod("PongGame", "bool Connect(const string &in address, string &out errormessage)", asMETHOD(PongGame, ConnectProxy), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
 
 
 	// Version getting function //
@@ -458,6 +458,11 @@ void Pong::PongGame::MoreCustomScriptRegister(asIScriptEngine* engine, std::map<
 
 bool Pong::PongGame::Connect(const wstring &address, wstring &errorstr){
 	Logger::Get()->Info(L"About to connect to address "+address);
+
+	// Send an event about the server name //
+	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ServerInfoUpdate", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+		new NamedVariableList(L"Name", new VariableBlock(address))))));
+
 
 	// Get a connection to use //
 	auto tmpconnection = Leviathan::NetworkHandler::Get()->GetOrCreatePointerToConnection(address);
@@ -489,4 +494,13 @@ void Pong::PongGame::OnPlayerStatsUpdated(PlayerList* list){
 	EventHandler::Get()->CallEvent(new GenericEvent(L"PlayerStatusUpdated", NamedVars(new NamedVariableList())));
 
 
+}
+
+bool Pong::PongGame::ConnectProxy(const string &address, string &error){
+	wstring werror;
+
+	bool result = Connect(Convert::StringToWstring(address), werror);
+
+	error = Convert::WstringToString(werror);
+	return result;
 }

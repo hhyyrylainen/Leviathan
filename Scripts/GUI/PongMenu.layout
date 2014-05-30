@@ -256,7 +256,7 @@
                 <Property name="Area" value="{{0.01, 0}, {0.02, 0}, {0.98, 0}, {0.4, 0}}"/>
                 
                 <Property name="HorzFormatting" value="WordWrapLeftAligned"/>
-                <Property name="VertFormatting" value="CenterAligned"/>
+                <Property name="VertFormatting" value="CentreAligned"/>
                 
                 <Property name="Font" value="Simonetta-Regular"/>
                 <Property name="Text" value="Type the address of the server in here, like this: [font='Simonetta-Black']'localhost:53221'"/>
@@ -310,7 +310,53 @@
     
     </Window>
     
-    
+    <!-- The server connection screen displayed after connection has been opened -->
+    <Window name="ConnectionScreen" type="DefaultWindow">
+        
+        <Property name="Visible" value="False"/>
+        
+        <!--Text indicating the address of the server -->
+        <Window name="ServerName" type="TaharezLook/StaticText">
+        
+            <Property name="Area" value="{{0.05, 0}, {0.03, 0}, {0.95, 0}, {0.5, 0}}"/>
+            
+            <Property name="BackgroundEnabled" value="False"/>
+            <Property name="FrameEnabled" value="False"/>
+            
+            <Property name="HorzFormatting" value="WordWrapCentreAligned"/>
+            <Property name="VertFormatting" value="TopAligned"/>
+            
+            <Property name="Font" value="Simonetta-Regular-Large"/>
+            <Property name="Text" value="Connecting to..."/>
+        </Window>
+        
+        <!--The box that displays the status of the connection -->
+        <Window name="Status" type="TaharezLook/StaticText">
+        
+            <Property name="Area" value="{{0.15, 0}, {0.5, 0}, {0.85, 0}, {0.75, 0}}"/>
+            
+            <Property name="HorzFormatting" value="WordWrapCentreAligned"/>
+            <Property name="VertFormatting" value="CentreAligned"/>
+            
+            <Property name="Font" value="Simonetta-Black"/>
+            <Property name="Text" value="Server connection status goes here"/>
+        </Window>
+        
+        
+        <!-- The disconnect button -->
+        <Window name="DisconnectButton" type="TaharezLook/Button">
+            
+            <Property name="Size" value="{{0.4, 0}, {0.13, 0}}"/>
+            <Property name="HorizontalAlignment" value="Right"/>
+            <Property name="VerticalAlignment" value="Bottom"/>
+            
+            <Property name="Font" value="Simonetta-Regular-Large"/>
+            
+            <Property name="Text" value="Disconnect"/>
+            <Property name="TooltipText" value="Abort connection and go back to Main Menu"/>
+        </Window>
+            
+    </Window>
     
     
 	</Window>

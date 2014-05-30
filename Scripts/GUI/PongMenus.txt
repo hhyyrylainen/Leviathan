@@ -213,13 +213,91 @@ o GuiCollection "DirectConnectScreen"{
     }
 }
 
+
+// Try to connect //
+o GuiObject "MenuWindow/DirectConnectScreen/ConnectButton"{
+    s{
+        [@Listener="OnClick"]
+        bool ConnectIt(GuiObject@ instance){
+            // Try to connect //
+            string address = instance.GetOwningManager().GetWindowByName(
+                "MenuWindow/DirectConnectScreen/ServerAddress").GetText();
+            
+            string errormessage;
+            
+            if(!GetPongGame().Connect(address, errormessage)){
+                // Display the error //
+                instance.GetOwningManager().GetWindowByName(
+                    "MenuWindow/DirectConnectScreen/ErrorText").SetText(errormessage);
+                return true;
+            }
+            
+            // Change to the connect screen //
+            instance.GetOwningManager().SetCollectionState("ConnectionScreen", true);
+            instance.GetOwningManager().SetCollectionState("DirectConnectScreen", false);
+            instance.GetOwningManager().SetCollectionState("MenuWindow", false);
+            return true;
+        }
+    @%};
+}
+
 // Normal closing things //
 template<> GUIFrameWindowCloseButtonDefault<"MenuWindow/DirectConnectScreen", "TopLevelMenu", "DirectConnectScreen">
 template<> GUIMenuBackButtonDefault<"MenuWindow/DirectConnectScreen/BackToMainButton", "TopLevelMenu", "DirectConnectScreen">
 // ------------------ Server connection screen ------------------ //
-template<> PGCTemplate<DirectConnectMenu, "", false>
+template<> PGCTemplate<ConnectionScreen, "ConnectionScreen", false>
 
 
+
+
+// Connect status message listener //
+o GuiObject "ConnectionScreen/Status"{
+    s{
+        [@Listener="Generic",@Type="ConnectStatusMessage"]
+        bool ConnectIt(GuiObject@ instance, GenericEvent@ event){
+            // Get the message //
+            string message = string(event.GetNamedVars().GetSingleValueByName("Message"));
+            
+            
+            // Set it as the current text //
+            instance.GetTargetElement().SetText(message);
+            return true;
+        }
+    @%};
+}
+
+// Server name updater //
+o GuiObject "ConnectionScreen/ServerName"{
+    s{
+        [@Listener="Generic",@Type="ServerInfoUpdate"]
+        bool ConnectIt(GuiObject@ instance, GenericEvent@ event){
+            // Get the name //
+            string message = string(event.GetNamedVars().GetSingleValueByName("Name"));
+            
+            
+            // Set it as the current text //
+            instance.GetTargetElement().SetText(message);
+            return true;
+        }
+    @%};
+}
+
+// The disconnect button //
+o GuiObject "ConnectionScreen/DisconnectButton"{
+    s{
+        [@Listener="OnClick"]
+        bool Disconnect(GuiObject@ instance){
+
+            GetPongGame().Disconnect("User pressed Disconnect");
+            
+            // Change to the connect screen //
+            instance.GetOwningManager().SetCollectionState("TopLevelMenu", true);
+            instance.GetOwningManager().SetCollectionState("MenuWindow", true);
+            instance.GetOwningManager().SetCollectionState("ConnectionScreen", false);
+            return true;
+        }
+    @%};
+}
 // ------------------ Connect screen objects ------------------ //
 template<> PGCTemplate<ConnectScreen, "", false>
 

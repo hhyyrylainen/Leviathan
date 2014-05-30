@@ -15,6 +15,12 @@ void CEGUIWindowSetTextProxy(CEGUI::Window* obj, const string &text){
 	obj->setText(text);
 }
 
+string CEGUIWindowGetTextProxy(CEGUI::Window* obj, const string &text){
+
+	return string(obj->getText().c_str());
+}
+
+
 
 
 bool BindGUIObjects(asIScriptEngine* engine){
@@ -96,6 +102,12 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+	if(engine->RegisterObjectMethod("Window", "string GetText()", asFUNCTION(CEGUIWindowGetTextProxy), asCALL_CDECL_OBJFIRST) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
 
 	// Restore the namespace //
 	if(engine->SetDefaultNamespace("") < 0)

@@ -103,7 +103,7 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 		if(!packetobject->GetFutureForThis().get() || !packetobject->GotResponse){
 
 			// It failed //
-			instance->DisconnectFromServer(L"Failed to receive response to join lobby/match request");
+			instance->DisconnectFromServer(L"Failed to receive response to a join lobby/match request");
 			return;
 		}
 
@@ -115,7 +115,7 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 			directdata->ActualPacketData->TypeIDNumber != PONG_PACKET_JOINGAME_RESPONSE)
 		{
 			// It failed //
-			instance->DisconnectFromServer(L"Received an invalid response to join game request");
+			instance->DisconnectFromServer(L"Received an invalid response to a join game request");
 			return;
 		}
 
@@ -128,7 +128,7 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 		case PONG_JOINGAMERESPONSE_TYPE_LOBBY:
 			{
 				// Show the lobby screen //
-				instance->_OnNewConnectionStatusMessage(L"Server join completed, entering lobby...");
+				instance->_OnNewConnectionStatusMessage(L"Server join completed, entering the lobby...");
 				
 				// Send event to enable the lobby screen //
 				EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState", Leviathan::NamedVars(shared_ptr<NamedVariableList>(

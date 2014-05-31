@@ -359,5 +359,26 @@
     </Window>
     
     
+    <!-- The lobby screen -->
+    <Window name="LobbyScreen" type="DefaultWindow">
+        
+        <Property name="Visible" value="False"/>
+        
+        <Window name="DisconnectButton" type="TaharezLook/Button">
+            
+            <Property name="Size" value="{{0.22, 0}, {0.08, 0}}"/>
+            <Property name="HorizontalAlignment" value="Right"/>
+            <Property name="VerticalAlignment" value="Bottom"/>
+            
+            <Property name="Font" value="Simonetta-Black"/>
+            
+            <Property name="Text" value="Exit"/>
+            <Property name="TooltipText" value="Leave the server"/>
+        </Window>
+        
+        
+    </Window>
+    
+    
 	</Window>
 </GUILayout>

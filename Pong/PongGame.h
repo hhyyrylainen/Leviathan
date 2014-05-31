@@ -37,9 +37,9 @@ namespace Pong{
 
 		//! \brief Connect method with no result and no error return
 		void Connect(const wstring &address){
-
+			
 			wstring errorcatcher;
-			Connect(address);
+			Connect(address, errorcatcher);
 		}
 
 		void AllowPauseMenu();

@@ -35,7 +35,7 @@ namespace Leviathan{
 		// perform actions //
 		DLLEXPORT virtual int RunMessageLoop();
 		DLLEXPORT virtual void Render();
-		DLLEXPORT void PassCommandLine(const wstring &params);
+		DLLEXPORT virtual void PassCommandLine(const wstring &params);
 		// Executes all pending command line arguments //
 		DLLEXPORT void FlushCommandLine();
 		DLLEXPORT virtual void Tick(int mspassed);

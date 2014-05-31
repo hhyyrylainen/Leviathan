@@ -254,14 +254,14 @@ template<> PGCTemplate<ConnectionScreen, "ConnectionScreen", false>
 o GuiObject "ConnectionScreen/Status"{
     s{
         [@Listener="Generic",@Type="ConnectStatusMessage"]
-        bool ConnectIt(GuiObject@ instance, GenericEvent@ event){
+        int ConnectIt(GuiObject@ instance, GenericEvent@ event){
             // Get the message //
             string message = string(event.GetNamedVars().GetSingleValueByName("Message"));
             
             
             // Set it as the current text //
             instance.GetTargetElement().SetText(message);
-            return true;
+            return 1;
         }
     @%};
 }
@@ -270,14 +270,14 @@ o GuiObject "ConnectionScreen/Status"{
 o GuiObject "ConnectionScreen/ServerName"{
     s{
         [@Listener="Generic",@Type="ServerInfoUpdate"]
-        bool ConnectIt(GuiObject@ instance, GenericEvent@ event){
+        int ConnectIt(GuiObject@ instance, GenericEvent@ event){
             // Get the name //
             string message = string(event.GetNamedVars().GetSingleValueByName("Name"));
             
             
             // Set it as the current text //
             instance.GetTargetElement().SetText(message);
-            return true;
+            return 1;
         }
     @%};
 }
@@ -290,7 +290,7 @@ o GuiObject "ConnectionScreen/DisconnectButton"{
 
             GetPongGame().Disconnect("User pressed Disconnect");
             
-            // Change to the connect screen //
+            // Change to the main menu //
             instance.GetOwningManager().SetCollectionState("TopLevelMenu", true);
             instance.GetOwningManager().SetCollectionState("MenuWindow", true);
             instance.GetOwningManager().SetCollectionState("ConnectionScreen", false);
@@ -298,14 +298,50 @@ o GuiObject "ConnectionScreen/DisconnectButton"{
         }
     @%};
 }
-// ------------------ Connect screen objects ------------------ //
-template<> PGCTemplate<ConnectScreen, "", false>
-
-
 // ------------------ Lobby screen objects ------------------ //
-template<> PGCTemplate<LobbyScreen, "", false>
+template<> PGCTemplate<LobbyScreen, "LobbyScreen", false>
 
 
+// Lobby screen state request handler //
+o GuiObject "_LobbyScreenSetter"{
+    s{
+        [@Listener="Generic",@Type="LobbyScreenState"]
+        int SetStateRight(GuiObject@ instance, GenericEvent@ event){
+            // Get the state //
+            string statestr = string(event.GetNamedVars().GetSingleValueByName("State"));
+            
+            if(statestr == "On"){
+                // Enable //
+                instance.GetOwningManager().SetCollectionState("LobbyScreen", true);
+                // This might not be enabled, but it should still tried to be disabled every time //
+                instance.GetOwningManager().SetCollectionState("ConnectionScreen", false);
+                
+            } else {
+                // Disable //
+                instance.GetOwningManager().SetCollectionState("LobbyScreen", false);
+                
+            }
+            return 1;
+        }
+    @%};
+}
+
+
+// The exit button //
+o GuiObject "LobbyScreen/DisconnectButton"{
+    s{
+        [@Listener="OnClick"]
+        bool Disconnect(GuiObject@ instance){
+            
+            GetPongGame().Disconnect("User left the lobby");
+            
+            // Change to the main menu //
+            instance.GetOwningManager().SetCollectionState("TopLevelMenu", true);
+            instance.GetOwningManager().SetCollectionState("MenuWindow", true);
+            return true;
+        }
+    @%};
+}
 // ------------------ During gameplay objects ------------------ //
 template<> PGCTemplate<GameplayHUD, "", false>
 

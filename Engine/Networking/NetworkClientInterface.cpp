@@ -237,7 +237,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
 			// Set the status to almost done //
 			iptr->_OnNewConnectionStatusMessage(L"Finalizing connection");
 
-			// We are now completely connected from the engines point of view so let the application know //
+			// We are now completely connected from the engine's point of view so let the application know //
 			iptr->_OnStartApplicationConnect();
 
 

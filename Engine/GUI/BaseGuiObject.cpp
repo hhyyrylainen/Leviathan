@@ -87,8 +87,8 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 	// Find the CEGUI object //
 	CEGUI::Window* foundobject = NULL;
 	try{
-
-		foundobject = owner->GetMainContext()->getRootWindow()->getChild(Convert::WstringToString(tmpptr->Name));
+		if(tmpptr->Name.find_first_of(L'_') != 0)
+			foundobject = owner->GetMainContext()->getRootWindow()->getChild(Convert::WstringToString(tmpptr->Name));
 
 	} catch(const CEGUI::UnknownObjectException &e){
 

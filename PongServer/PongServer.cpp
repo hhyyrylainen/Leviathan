@@ -212,3 +212,16 @@ void Pong::PongServer::PreFirstTick(){
 	// Don't want to forget to call this //
 	_Engine->PreFirstTick();
 }
+
+void Pong::PongServer::PassCommandLine(const wstring &params){
+	// Add "--nogui" if not found //
+	if(params.find(L"--nogui") == wstring::npos){
+
+		_Engine->PassCommandLine(params+L" --nogui");
+		return;
+	}
+
+	// Now pass it //
+	_Engine->PassCommandLine(params);
+
+}

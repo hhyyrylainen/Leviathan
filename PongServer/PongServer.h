@@ -32,6 +32,10 @@ namespace Pong{
 		//! Used to set the server status as joinable (it has started)
 		virtual void PreFirstTick();
 
+
+		//! Makes sure doesn't start in GUI mode
+		virtual void PassCommandLine(const wstring &params);
+
 		//! This doesn't need any handling
 		virtual void OnPlayerStatsUpdated(PlayerList* list){
 

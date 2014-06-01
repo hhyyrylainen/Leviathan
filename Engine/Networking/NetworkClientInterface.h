@@ -39,6 +39,14 @@ namespace Leviathan{
 		//! \brief Actual implementation of DisconnectFromServer
 		DLLEXPORT void DisconnectFromServer(ObjectLock &guard, const wstring &reason);
 
+
+		//! \brief Called directly by SyncedVariables to update the status string
+		DLLEXPORT void OnUpdateFullSynchronizationState(size_t variablesgot, size_t expectedvariables);
+
+
+		//! \brief Returns a pointer to an instance if this application is a client
+		DLLEXPORT static NetworkClientInterface* GetIfExists();
+
 	protected:
 
 		//! \brief Utility function for subclasses to call for default handling of server packets
@@ -76,7 +84,7 @@ namespace Leviathan{
 
 
 		//! \brief Called when the player is on the server and everything that the Engine is concerned about is done
-		//! \note Here the application's connect data should be sent. The application specific conection routine should be done here
+		//! \note Here the application's connect data should be sent. The application specific connection routine should be done here
 		DLLEXPORT virtual void _OnStartApplicationConnect() = 0;
 
 	private:
@@ -98,6 +106,9 @@ namespace Leviathan{
 
 		int ConnectTriesCount;
 		int MaxConnectTries;
+
+		//! Static access for utility classes
+		static NetworkClientInterface* Staticaccess;
 
 	};
 

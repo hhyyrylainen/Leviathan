@@ -43,27 +43,6 @@
             
         </Window>
         
-        <!-- The FPS counter -->
-        <Window name="FPSDisplay" type="TaharezLook/StaticText">
-            
-            <Property name="Visible" value="True"/>
-            <Property name="BackgroundEnabled" value="False"/>
-            <Property name="FrameEnabled" value="False"/>
-            <Property name="MousePassThroughEnabled" value="True"/>
-            <Property name="AlwaysOnTop" value="True"/>
-            
-            <Property name="Text" value="0"/>
-            <Property name="Font" value="Simonetta-Regular-Large"/>
-            <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
-            
-            <Property name="VerticalAlignment" value="Top"/>
-            <Property name="HorizontalAlignment" value="Right"/>
-            <Property name="HorzFormatting" value="RightAligned"/>
-            <Property name="VertFormatting" value="TopAligned"/>
-            
-            <Property name="Size" value="{{0.05, 0}, {0.1, 0}}"/>
-        </Window>
-        
         <!-- The Leviathan version number -->
         <Window name="LeviathanVersion" type="TaharezLook/StaticText">
             
@@ -310,6 +289,29 @@
     
     </Window>
     
+    
+    
+    <!-- The FPS counter -->
+    <Window name="FPSDisplay" type="TaharezLook/StaticText">
+        
+        <Property name="Visible" value="True"/>
+        <Property name="BackgroundEnabled" value="False"/>
+        <Property name="FrameEnabled" value="False"/>
+        <Property name="MousePassThroughEnabled" value="True"/>
+        <Property name="AlwaysOnTop" value="True"/>
+        
+        <Property name="Text" value="0"/>
+        <Property name="Font" value="Simonetta-Regular-Large"/>
+        <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
+        
+        <Property name="VerticalAlignment" value="Top"/>
+        <Property name="HorizontalAlignment" value="Right"/>
+        <Property name="HorzFormatting" value="RightAligned"/>
+        <Property name="VertFormatting" value="TopAligned"/>
+        
+        <Property name="Size" value="{{0.05, 0}, {0.1, 0}}"/>
+    </Window>
+    
     <!-- The server connection screen displayed after connection has been opened -->
     <Window name="ConnectionScreen" type="DefaultWindow">
         
@@ -376,7 +378,167 @@
             <Property name="TooltipText" value="Leave the server"/>
         </Window>
         
+        <!-- The chat box -->
+        <Window name="ChatBox" type="TaharezLook/FrameWindow">
+            
+            <Property name="Area" value="{{0.02, 0}, {0.70, 0}, {0.76, 0}, {1, 0}}"/>
+            
+            <Property name="Text" value="Chat"/>
+            <Property name="Font" value="Simonetta-Regular"/>
+            
+            <Property name="CloseButtonEnabled" value="False"/>
+            <Property name="RollUpEnabled" value="False"/>
+            <Property name="SizingEnabled" value="False"/>
+            <Property name="DragMovingEnabled" value="False"/>
+            
+            
+            
+            
+        </Window>
         
+        
+        <!-- The start button -->
+        <Window name="StartButton" type="TaharezLook/Button">
+            
+            <Property name="Size" value="{{0.22, 0}, {0.10, 0}}"/>
+            <Property name="Position" value="{{0, 0}, {-0.085, 0}}"/>
+            
+            <Property name="HorizontalAlignment" value="Right"/>
+            <Property name="VerticalAlignment" value="Bottom"/>
+            
+            <Property name="Font" value="Simonetta-Black"/>
+            
+            <Property name="Text" value="Start"/>
+            <Property name="TooltipText" value="Starts the game if you are allowed to start the game"/>
+        </Window>
+        
+        <!-- The ready button -->
+        <Window name="ReadyButton" type="TaharezLook/Button">
+            
+            <Property name="Size" value="{{0.22, 0}, {0.11, 0}}"/>
+            <Property name="Position" value="{{0, 0}, {-0.185, 0}}"/>
+            
+            <Property name="HorizontalAlignment" value="Right"/>
+            <Property name="VerticalAlignment" value="Bottom"/>
+            
+            <Property name="Font" value="Simonetta-Black-Large"/>
+            
+            <Property name="Text" value="Ready"/>
+            <Property name="TooltipText" value="Indicate that you are ready"/>
+        </Window>
+        
+        
+        <!-- The tab control containing the GUI pages -->
+        <Window name="LobbyTabs" type="TaharezLook/TabControl">
+            <Property name="TabHeight" value="{0,-1}"/>
+            <Property name="TabPanePosition" value="Top"/>
+            <Property name="Area" value="{{0.02, 0}, {0, 0}, {0.98, 0}, {0.69, 0}}"/>
+            
+            <!-- The general info tab -->
+            <Window name="InfoTab" type="DefaultWindow">
+                <Window name="Text" type="TaharezLook/StaticText">
+                    
+                    
+                    <Property name="Size" value="{{0.5, 0}, {0.145, 0}}"/>
+                    
+                    <Property name="HorzFormatting" value="CentreAligned"/>
+                    
+                    <Property name="HorizontalAlignment" value="Centre"/>
+                    <Property name="VerticalAlignment" value="Top"/>
+                    
+                    <Property name="Font" value="Simonetta-Black-Large"/>
+                    <Property name="Text" value="Server status"/>
+                </Window>
+            </Window>
+            
+            <!-- The player overview tab -->
+            <Window name="PlayersTab" type="DefaultWindow">
+                <Window name="Text" type="TaharezLook/StaticText">
+                    
+                    
+                    <Property name="Area" value="{{0.15, 0}, {0.5, 0}, {0.85, 0}, {0.75, 0}}"/>
+                    
+                    <Property name="HorzFormatting" value="WordWrapCentreAligned"/>
+                    <Property name="VertFormatting" value="CentreAligned"/>
+                    
+                    <Property name="Font" value="Simonetta-Black"/>
+                    <Property name="Text" value="I'm an another tab"/>
+                </Window>
+            </Window>
+            
+            <!-- Team 0 tab -->
+            <Window name="Team0Tab" type="DefaultWindow">
+                <Window name="TeamName" type="TaharezLook/StaticText">
+                
+                    <Property name="Size" value="{{0.15, 0}, {0.3, 0}}"/>
+
+                    <Property name="HorizontalAlignment" value="Left"/>
+                    <Property name="VerticalAlignment" value="Top"/>
+                    <Property name="BackgroundEnabled" value="False"/>
+                    <Property name="FrameEnabled" value="False"/>
+                    <Property name="HorzFormatting" value="LeftAligned"/>
+                    <Property name="VertFormatting" value="TopAligned"/>
+                    
+                    <Property name="Font" value="Simonetta-Black"/>
+                    <Property name="Text" value="Team 0"/>
+                </Window>
+            </Window>
+            
+            <!-- Team 1 tab -->
+            <Window name="Team1Tab" type="DefaultWindow">
+                <Window name="TeamName" type="TaharezLook/StaticText">
+                
+                    <Property name="Size" value="{{0.15, 0}, {0.3, 0}}"/>
+
+                    <Property name="HorizontalAlignment" value="Left"/>
+                    <Property name="VerticalAlignment" value="Top"/>
+                    <Property name="BackgroundEnabled" value="False"/>
+                    <Property name="FrameEnabled" value="False"/>
+                    <Property name="HorzFormatting" value="LeftAligned"/>
+                    <Property name="VertFormatting" value="TopAligned"/>
+                    
+                    <Property name="Font" value="Simonetta-Black"/>
+                    <Property name="Text" value="Team 1"/>
+                </Window>
+            </Window>
+            
+            <!-- Team 2 tab -->
+            <Window name="Team2Tab" type="DefaultWindow">
+                <Window name="TeamName" type="TaharezLook/StaticText">
+                
+                    <Property name="Size" value="{{0.15, 0}, {0.3, 0}}"/>
+
+                    <Property name="HorizontalAlignment" value="Left"/>
+                    <Property name="VerticalAlignment" value="Top"/>
+                    <Property name="BackgroundEnabled" value="False"/>
+                    <Property name="FrameEnabled" value="False"/>
+                    <Property name="HorzFormatting" value="LeftAligned"/>
+                    <Property name="VertFormatting" value="TopAligned"/>
+                    
+                    <Property name="Font" value="Simonetta-Black"/>
+                    <Property name="Text" value="Team 2"/>
+                </Window>
+            </Window>
+            
+            <!-- Team 3 tab -->
+            <Window name="Team3Tab" type="DefaultWindow">
+                <Window name="TeamName" type="TaharezLook/StaticText">
+                
+                    <Property name="Size" value="{{0.15, 0}, {0.3, 0}}"/>
+
+                    <Property name="HorizontalAlignment" value="Left"/>
+                    <Property name="VerticalAlignment" value="Top"/>
+                    <Property name="BackgroundEnabled" value="False"/>
+                    <Property name="FrameEnabled" value="False"/>
+                    <Property name="HorzFormatting" value="LeftAligned"/>
+                    <Property name="VertFormatting" value="TopAligned"/>
+                    
+                    <Property name="Font" value="Simonetta-Black"/>
+                    <Property name="Text" value="Team 3"/>
+                </Window>
+            </Window>
+            
+        </Window>
     </Window>
     
     

@@ -287,7 +287,7 @@ namespace Leviathan{
 		DLLEXPORT NetworkResponseDataForSyncDataEnd* GetResponseDataForValueSyncEndResponse() const;
 		DLLEXPORT NetworkResponseDataForCustom* GetResponseDataForGameSpecific() const;
 		DLLEXPORT NetworkResponseDataForSyncResourceData* GetResponseDataForSyncResourceResponse() const;
-
+		DLLEXPORT NetworkResponseDataForServerAllow* GetResponseDataForServerAllowResponse() const;
 		DLLEXPORT int GetResponseID() const;
 
 	protected:

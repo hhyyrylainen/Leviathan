@@ -9,10 +9,11 @@
 #include "ConnectionInfo.h"
 #include "Engine.h"
 #include "Common/BaseNotifiable.h"
+#include "NetworkClientInterface.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::SyncedVariables::SyncedVariables(NetworkHandler* owner, bool amiaserver, NetworkInterface* handlinginterface) : 
-	IsHost(amiaserver), CorrespondingInterface(handlinginterface), Owner(owner), SyncDone(false)
+	IsHost(amiaserver), CorrespondingInterface(handlinginterface), Owner(owner), SyncDone(false), ExpectedThingCount(0), ActualGotThingCount(0)
 {
 	Staticaccess = this;
 }
@@ -86,7 +87,9 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
 			// Notify that we accepted this //
 			shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));
 
-			tmpresponse->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE_REQUEST_QUEUED, L"-1"));
+			// Send the number of values as the string parameter //
+			tmpresponse->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE_REQUEST_QUEUED, 
+				Convert::ToWstring(ToSyncValues.size()+ConnectedChildren.size())));
 
 			connection->SendPacketToConnection(tmpresponse, 5);
 
@@ -148,7 +151,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
 				}
 
 
-			}, connection, this, taskdata), MillisecondDuration(100), MillisecondDuration(10), (int)max(ToSyncValues.size(), ConnectedChildren.size()))));
+			}, connection, this, taskdata), MillisecondDuration(10), MillisecondDuration(5), (int)max(ToSyncValues.size(), ConnectedChildren.size()))));
 
 			// Queue a finish checking task //
 			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new RepeatingDelayedTask(
@@ -199,7 +202,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
 
 				safeconnection->SendPacketToConnection(tmpresponse, 3);
 
-			}, connection, this, taskdata), MillisecondDuration(1000), MillisecondDuration(250))));
+			}, connection, this, taskdata), MillisecondDuration(100), MillisecondDuration(50))));
 
 			return true;
 		}
@@ -240,6 +243,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 			// Call updating function //
 			GUARD_LOCK_THIS_OBJECT();
 			_UpdateFromNetworkReceive(tmpptr, guard);
+
 			return true;
 		}
 	case NETWORKRESPONSETYPE_SYNCRESOURCEDATA:
@@ -419,6 +423,12 @@ void Leviathan::SyncedVariables::_OnSyncedResourceReceived(const wstring &name, 
 		if(tmpvar->Name == name){
 			// It is this //
 			tmpvar->UpdateDataFromPacket(packetdata);
+
+			// Do some updating if we are doing a full sync //
+			if(!SyncDone){
+
+				_UpdateReceiveCount(name);
+			}
 			return;
 		}
 	}
@@ -448,6 +458,12 @@ void Leviathan::SyncedVariables::_UpdateFromNetworkReceive(NetworkResponseDataFo
 
 			// Set it //
 			*tmpaccess = *tmpptr;
+
+			// Do some updating if we are doing a full sync //
+			if(!SyncDone){
+
+				_UpdateReceiveCount(tmpptr->GetName());
+			}
 		}
 	}
 
@@ -459,11 +475,39 @@ void Leviathan::SyncedVariables::_UpdateFromNetworkReceive(NetworkResponseDataFo
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::SyncedVariables::PrepareForFullSync(){
+	// Reset some variables //
 	SyncDone = false;
+	ExpectedThingCount = 0;
+	ValueNamesUpdated.clear();
+	ActualGotThingCount = 0;
 }
 
 DLLEXPORT bool Leviathan::SyncedVariables::IsSyncDone(){
 	return SyncDone;
+}
+
+void Leviathan::SyncedVariables::_UpdateReceiveCount(const wstring &nameofthing){
+	// Check is it already updated (values can update while a sync is being done) //
+	for(size_t i = 0; i < ValueNamesUpdated.size(); i++){
+
+		if(*ValueNamesUpdated[i] == nameofthing)
+			return;
+	}
+
+	// Add it //
+	ValueNamesUpdated.push_back(move(unique_ptr<wstring>(new wstring(nameofthing))));
+
+	// Increment count and notify //
+	++ActualGotThingCount;
+
+
+	auto iface = NetworkClientInterface::GetIfExists();
+	if(iface)
+		iface->OnUpdateFullSynchronizationState(ActualGotThingCount, ExpectedThingCount);
+}
+
+DLLEXPORT void Leviathan::SyncedVariables::SetExpectedNumberOfVariablesReceived(size_t amount){
+	ExpectedThingCount = amount;
 }
 // ------------------ SyncedValue ------------------ //
 DLLEXPORT Leviathan::SyncedValue::SyncedValue(NamedVariableList* newddata, bool passtoclients /*= true*/, bool allowevents /*= true*/) : 

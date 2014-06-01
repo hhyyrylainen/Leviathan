@@ -62,9 +62,7 @@ namespace Leviathan{
 		//! \note This NetworkInterface doesn't need any ticking, but NetworkClientInterface does
 		//! \see NetworkClientInterface::UpdateClientStatus
 		DLLEXPORT virtual void TickIt();
-
-
-
+		
 	protected:
 
 		//! \brief Utility function for subclasses to call for default handling

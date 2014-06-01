@@ -60,6 +60,21 @@ namespace Leviathan{ namespace Gui{
 		//! \brief Returns the TargetElement CEGUI window which might be NULL
 		DLLEXPORT CEGUI::Window* GetTargetWindow() const;
 
+
+		//! \brief Prints the window layout starting from TargetElement
+		//! \param target The target window or NULL if TargetElement should be used
+		//! \note Passing only the guard will work if you want to start from the target element
+		DLLEXPORT void PrintWindowsRecursive(ObjectLock &guard, CEGUI::Window* target = NULL, size_t level = 0) const;
+
+		//! \brief No parameters version of PrintWindowsRecursive
+		DLLEXPORT FORCE_INLINE void PrintWindowsRecursive() const{
+			GUARD_LOCK_THIS_OBJECT();
+			PrintWindowsRecursive(guard);
+		}
+
+		//! \brief Proxy for PrintWindowsRecursive
+		DLLEXPORT void PrintWindowsRecursiveProxy();
+
 	protected:
 
 		// this function will try to hook all wanted listeners to CEGUI elements //

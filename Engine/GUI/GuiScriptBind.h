@@ -8,7 +8,7 @@
 #include "GuiManager.h"
 #include "add_on/autowrapper/aswrappedcall.h"
 #include "CEGUI/Window.h"
-
+#include "CEGUI/widgets/TabControl.h"
 
 void CEGUIWindowSetTextProxy(CEGUI::Window* obj, const string &text){
 	
@@ -20,6 +20,55 @@ string CEGUIWindowGetTextProxy(CEGUI::Window* obj, const string &text){
 	return string(obj->getText().c_str());
 }
 
+CEGUI::Window* CEGUIWindowGetChildWindowProxy(CEGUI::Window* obj, const string &text){
+
+	return obj->getChild(text);
+}
+
+void CEGUIWindowSetSizeProxy(CEGUI::Window* obj, float width, float widthpixels, float height, float heightpixels){
+
+	obj->setSize(CEGUI::USize(CEGUI::UDim(width, widthpixels), CEGUI::UDim(height, heightpixels)));
+}
+
+void CEGUIWindowInvalidateProxy(CEGUI::Window* obj, bool recursive){
+
+	obj->invalidate(recursive);
+}
+
+
+void CEGUITabControlSetActiveTabIndex(CEGUI::Window* obj, int index){
+
+	CEGUI::TabControl* convtabs = dynamic_cast<CEGUI::TabControl*>(obj);
+	if(convtabs != NULL){
+		
+		convtabs->setSelectedTabAtIndex(index);
+	}
+}
+
+
+template<class From, class To>
+To* DoReferenceCastDynamicNoRef(From* ptr){
+	// If already invalid just return it //
+	if(!ptr)
+		return NULL;
+
+	To* newptr = dynamic_cast<To*>(ptr);
+
+	// Return the ptr (which might be invalid) //
+	return newptr;
+}
+
+template<class From, class To>
+To* DoReferenceCastStaticNoRef(From* ptr){
+	// If already invalid just return it //
+	if(!ptr)
+		return NULL;
+
+	To* newptr = static_cast<To*>(ptr);
+
+	// Return the ptr (which might be invalid) //
+	return newptr;
+}
 
 
 
@@ -87,6 +136,10 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	
+	if(engine->RegisterObjectMethod("GuiObject", "void PrintWindowsRecursive()", asMETHOD(Gui::BaseGuiObject, PrintWindowsRecursiveProxy), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
 
 	
 	if(engine->SetDefaultNamespace("CEGUI") < 0)
@@ -108,6 +161,27 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
+	if(engine->RegisterObjectMethod("Window", "Window& GetChildWindow(const string &in namepath)", asFUNCTION(CEGUIWindowGetChildWindowProxy), asCALL_CDECL_OBJFIRST) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectMethod("Window", "void SetSize(float width, float widthpixels, float height, float heightpixels)", 
+		asFUNCTION(CEGUIWindowSetSizeProxy), asCALL_CDECL_OBJFIRST) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectMethod("Window", "void Invalidate(bool recursive = false)", asFUNCTION(CEGUIWindowInvalidateProxy), asCALL_CDECL_OBJFIRST) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectMethod("Window", "void SetSelectedTabIndex(int index)", asFUNCTION(CEGUITabControlSetActiveTabIndex), asCALL_CDECL_OBJFIRST) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
 
 	// Restore the namespace //
 	if(engine->SetDefaultNamespace("") < 0)
@@ -120,6 +194,10 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetElement()", asMETHOD(Gui::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetWindow()", asMETHOD(Gui::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}

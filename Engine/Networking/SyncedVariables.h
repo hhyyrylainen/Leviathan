@@ -118,6 +118,12 @@ namespace Leviathan{
 			return IsVariableNameUsed(name, guard);
 		}
 
+		//! \brief Sets the expected number of variables received
+		//! \pre PrepareForFullSync must be called before this
+		//!
+		//! This is usually called by NetworkClientInterface when it receives a response to a full sync request
+		DLLEXPORT void SetExpectedNumberOfVariablesReceived(size_t amount);
+
 
 	protected:
 
@@ -136,6 +142,9 @@ namespace Leviathan{
 		//! \brief This is called when an update to a SyncedResource is received through the network
 		void _OnSyncedResourceReceived(const wstring &name, sf::Packet &packetdata);
 
+		//! \brief Updates the number of synced values received during SyncDone
+		void _UpdateReceiveCount(const wstring &nameofthing);
+
 		// ------------------------------------ //
 
 		//! Interface used to ask for permission to do many things (like add new client when they request it)
@@ -150,6 +159,18 @@ namespace Leviathan{
 
 		//! Set when sync complete packet is received
 		bool SyncDone;
+
+		//! List of variables that have been updated while SyncDone is false
+		//!
+		//! This is used to keep track of how many values have been updated
+		//! \todo Potentially use a map here
+		std::vector<unique_ptr<wstring>> ValueNamesUpdated;
+
+		//! The expected number of variables to receive during SyncDone is false
+		size_t ExpectedThingCount;
+
+		//! The number of variables received thus far
+		size_t ActualGotThingCount;
 
 		//! Contains the values that are to be synced
 		std::vector<shared_ptr<SyncedValue>> ToSyncValues;

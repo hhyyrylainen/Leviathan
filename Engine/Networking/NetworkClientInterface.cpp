@@ -13,12 +13,19 @@ using namespace Leviathan;
 DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() : MaxConnectTries(DEFAULT_MAXCONNECT_TRIES), ConnectTriesCount(0), 
 	ConnectedToServer(false)
 {
-
+	Staticaccess = this;
 }
 
 DLLEXPORT Leviathan::NetworkClientInterface::~NetworkClientInterface(){
 
+	Staticaccess = NULL;
 }
+
+DLLEXPORT NetworkClientInterface* Leviathan::NetworkClientInterface::GetIfExists(){
+	return Staticaccess;
+}
+
+NetworkClientInterface* Leviathan::NetworkClientInterface::Staticaccess = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(shared_ptr<ConnectionInfo> connectiontouse){
 	GUARD_LOCK_THIS_OBJECT();
@@ -221,14 +228,33 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
 		boost::bind<void>([](shared_ptr<SentNetworkThing> maderequest, NetworkClientInterface* iptr) -> void
 	{
 		// Check the status //
-		if(!maderequest->GetFutureForThis().get()){
+		if(!maderequest->GetFutureForThis().get() || !maderequest->GotResponse){
 			// Terminate the connection //
 			DEBUG_BREAK;
 			return;
 		}
+
+		// This will have the maximum number of variables we are going to receive //
+		NetworkResponseDataForServerAllow* tmpresponse = maderequest->GotResponse->GetResponseDataForServerAllowResponse();
+		
+		if(!tmpresponse){
+
+			Logger::Get()->Warning(L"NetworkClientInterface: connect sync: variable sync request returned and invalid response, expected ServerAllow,"
+				L"unknown count of synced variables");
+		} else {
+
+			// Set the maximum number of things //
+			size_t toreceive = Convert::WstringTo<size_t>(tmpresponse->Message);
+
+			SyncedVariables::Get()->SetExpectedNumberOfVariablesReceived(toreceive);
+
+			Logger::Get()->Info(L"NetworkClientInterface: sync variables: now expecting "+Convert::ToWstring(toreceive)+L" variables");
+		}
+
+
 		
 		// We are now syncing the variables //
-		iptr->_OnNewConnectionStatusMessage(L"Syncing variables, TODO: how many ");
+		iptr->_OnNewConnectionStatusMessage(L"Syncing variables, waiting for response...");
 
 		// Queue task that checks when it is done //
 		Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new ConditionalTask(
@@ -253,6 +279,11 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
 	}, receivedata))));
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkClientInterface::OnUpdateFullSynchronizationState(size_t variablesgot, size_t expectedvariables){
+
+	_OnNewConnectionStatusMessage(L"Syncing variables, "+Convert::ToWstring(variablesgot)+L"/"+Convert::ToWstring(expectedvariables));
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const wstring &reasonstring){
 
 }
@@ -272,6 +303,8 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnSuccessfullyConnectedToServ
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnNewConnectionStatusMessage(const wstring &message){
 
 }
+
+
 
 
 

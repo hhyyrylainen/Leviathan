@@ -87,6 +87,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 	// Find the CEGUI object //
 	CEGUI::Window* foundobject = NULL;
 	try{
+		// Names starting with '_' are not considered to be targeting specific CEGUI windows //
 		if(tmpptr->Name.find_first_of(L'_') != 0)
 			foundobject = owner->GetMainContext()->getRootWindow()->getChild(Convert::WstringToString(tmpptr->Name));
 
@@ -219,6 +220,40 @@ void Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine(boost::strict_loc
 }
 
 boost::mutex Leviathan::Gui::BaseGuiObject::CEGUIEventMutex;
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Gui::BaseGuiObject::PrintWindowsRecursive(ObjectLock &guard, CEGUI::Window* target /*= NULL*/, size_t level /*= 0*/) const{
+
+	VerifyLock(guard);
+
+	// Print the heading if this is the first level //
+	if(level == 0)
+		Logger::Get()->Write(L"\n// ------------------ Layout of object \""+Name+L"\" ------------------ //");
+
+	CEGUI::Window* actualtarget = target != NULL ? target: TargetElement;
+
+	if(!actualtarget)
+		return;
+
+	// Print this window //
+	for(size_t i = 0; i < level; i++){
+
+		Logger::Get()->DirectWriteBuffer(L"\t");
+	}
+
+	Logger::Get()->Write(L"\t> "+Convert::Utf8ToUtf16(actualtarget->getName().c_str()));
+
+	// Recurse to child windows //
+	for(size_t i = 0; i < actualtarget->getChildCount(); i++){
+		auto newtarget = actualtarget->getChildAtIdx(i);
+
+		PrintWindowsRecursive(guard, newtarget, level+1);
+	}
+}
+
+DLLEXPORT void Leviathan::Gui::BaseGuiObject::PrintWindowsRecursiveProxy(){
+	GUARD_LOCK_THIS_OBJECT();
+	PrintWindowsRecursive(guard);
+}
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Gui::BaseGuiObject::ConnectElement(CEGUI::Window* windojb){
 	GUARD_LOCK_THIS_OBJECT();
@@ -357,3 +392,4 @@ bool Leviathan::Gui::BaseGuiObject::EventOnCloseClicked(const CEGUI::EventArgs &
 
 	return _CallCEGUIListener(L"OnCloseClicked");
 }
+

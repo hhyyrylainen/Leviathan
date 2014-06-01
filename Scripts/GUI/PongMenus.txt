@@ -50,44 +50,11 @@ o GuiCollection "OnKeeper"{
         KeepsGUIOn = true;
     }
 }
-// ------------------ MenuWindow ------------------ //
-template<> PGCTemplate<MenuWindow, "MenuWindow", true>
 
 
-o GuiObject "MenuWindow/PongVersion"{
-    s{
-        [@Listener="OnInit"]
-        int SetVersion(GuiObject@ instance, Event@ event){
-            // Set the text as the current Pong version //
-            
-            string newtext = GetPongVersion();
-           
-            instance.GetOwningManager().GetWindowByName(instance.GetName()).SetText(newtext);
-            
-            return 1;
-        }
-    @%};
-}
-
-o GuiObject "MenuWindow/LeviathanVersion"{
-    s{
-        [@Listener="OnInit"]
-        int SetVersion(GuiObject@ instance, Event@ event){
-        
-            // Set the text as the current version //
-            string newtext = "Leviathan "+GetLeviathanVersion();
-            
-            instance.GetOwningManager().GetWindowByName(instance.GetName()).SetText(newtext);
-            
-            
-            return 1;
-        }
-    @%};
-}
-
-
+// ------------------ Debug helpers ------------------ //
 // The FPS display //
-o GuiObject "MenuWindow/FPSDisplay"{
+o GuiObject "FPSDisplay"{
     l params{
         
         ListenOn = DATAINDEX_FPS;
@@ -102,6 +69,41 @@ o GuiObject "MenuWindow/FPSDisplay"{
                 
             // Set the value //
             instance.GetTargetElement().SetText(string(newvalue));
+            
+            return 1;
+        }
+    @%};
+}
+
+// ------------------ MenuWindow ------------------ //
+template<> PGCTemplate<MenuWindow, "MenuWindow", true>
+
+
+o GuiObject "MenuWindow/PongVersion"{
+    s{
+        [@Listener="OnInit"]
+        int SetVersion(GuiObject@ instance, Event@ event){
+            // Set the text as the current Pong version //
+            
+            string newtext = GetPongVersion();
+           
+            instance.GetTargetElement().SetText(newtext);
+            
+            return 1;
+        }
+    @%};
+}
+
+o GuiObject "MenuWindow/LeviathanVersion"{
+    s{
+        [@Listener="OnInit"]
+        int SetVersion(GuiObject@ instance, Event@ event){
+        
+            // Set the text as the current version //
+            string newtext = "Leviathan "+GetLeviathanVersion();
+            
+            instance.GetTargetElement().SetText(newtext);
+            
             
             return 1;
         }
@@ -321,6 +323,29 @@ o GuiObject "_LobbyScreenSetter"{
                 instance.GetOwningManager().SetCollectionState("LobbyScreen", false);
                 
             }
+            return 1;
+        }
+    @%};
+}
+
+// Tab thing //
+o GuiObject "LobbyScreen/LobbyTabs"{
+    s{
+        [@Listener="OnInit"]
+        int PrintStuff(GuiObject@ instance, Event@ event){
+            //instance.PrintWindowsRecursive();
+            
+            // Set the texts //
+            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnInfoTab").SetText("Info");
+            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnPlayersTab").SetText("Players");
+            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnTeam0Tab").SetText("Team0");
+            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnTeam1Tab").SetText("Team1");
+            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnTeam2Tab").SetText("Team2");
+            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnTeam3Tab").SetText("Team3");
+            
+            // Fix the size issues //
+            instance.GetTargetElement().SetSelectedTabIndex(0);
+            
             return 1;
         }
     @%};

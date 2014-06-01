@@ -35,7 +35,7 @@ namespace Leviathan{
 			&masterserverlistpagename, const wstring &loginsession, bool requireconnection = false) : 
 		MasterListFetchServer(masterserverlistaddress), MasterListFetchPage(masterserverlistpagename), StoredListFile(masterslistfile),
 			MasterServerIdentificationString(identification), LoginStoreFile(loginsession), RequireMaster(requireconnection),
-            IAmMyOwnMaster(false)
+			IAmMyOwnMaster(false)
 		{
 
 		}

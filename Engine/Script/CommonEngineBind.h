@@ -88,6 +88,11 @@ BaseObject* CastBrushToBaseObjectProxy(Entity::Brush* object){
 	return dynamic_cast<BaseObject*>(object);
 }
 
+string GetLeviathanVersionProxy(){
+
+	return LEVIATHAN_VERSION_ANSIS;
+}
+
 
 template<class From, class To>
 To* DoReferenceCastDynamic(From* ptr){
@@ -119,11 +124,6 @@ To* DoReferenceCastStatic(From* ptr){
 
 	// Return the ptr (which might be invalid) //
 	return newptr;
-}
-
-string GetLeviathanVersionProxy(){
-
-	return LEVIATHAN_VERSION_ANSIS;
 }
 
 

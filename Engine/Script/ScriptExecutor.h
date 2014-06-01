@@ -20,6 +20,7 @@
 
 namespace Leviathan{
 
+
 	class ScriptExecutor : public EngineComponent{
 		friend ScriptModule;
 	public:

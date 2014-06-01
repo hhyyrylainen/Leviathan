@@ -277,6 +277,12 @@ DLLEXPORT NetworkResponseDataForSyncResourceData* Leviathan::NetworkResponse::Ge
 		return static_cast<NetworkResponseDataForSyncResourceData*>(ResponseData);
 	return NULL;
 }
+
+DLLEXPORT NetworkResponseDataForServerAllow* Leviathan::NetworkResponse::GetResponseDataForServerAllowResponse() const{
+	if(ResponseType == NETWORKRESPONSETYPE_SERVERALLOW && ResponseData)
+		return static_cast<NetworkResponseDataForServerAllow*>(ResponseData);
+	return NULL;
+}
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForIdentificationString::NetworkResponseDataForIdentificationString(sf::Packet &frompacket){
 	// Extract the data from the packet //

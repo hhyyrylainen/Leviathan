@@ -7,6 +7,9 @@
 #include "PongPackets.h"
 #include "Networking\NetworkRequest.h"
 #include "Networking\ConnectionInfo.h"
+#include "Engine.h"
+#include "Rendering\GraphicalInputEntity.h"
+#include "GUI\GuiManager.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PongNetHandler::PongNetHandler() : OnAServer(false), ServerStatusIs(PONG_JOINGAMERESPONSE_TYPE_LOBBY){
@@ -164,6 +167,32 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 void Pong::PongNetHandler::_OnNewConnectionStatusMessage(const wstring &message){
 	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
 		new NamedVariableList(L"Message", new VariableBlock(Convert::WstringToString(message)))))));
+}
+// ------------------------------------ //
+void Pong::PongNetHandler::CloseDown(){
+	OnCloseClient();
+}
+
+void Pong::PongNetHandler::_OnDisconnectFromServer(const wstring &reasonstring, bool donebyus){
+
+	// Ignore if the reason is us //
+	if(donebyus){
+
+		return;
+	}
+	
+	Logger::Get()->Info(L"The server kicked us, showing the reason");
+
+	// Disable the lobby screen //
+	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+		new NamedVariableList(L"State", new VariableBlock(string("Off")))))));
+
+
+	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+		new NamedVariableList(L"Message", new VariableBlock(L"Server kicked us, reason: "+reasonstring))))));
+
+	// Enable the connection screen to display this message //
+	Engine::Get()->GetWindowEntity()->GetGUI()->SetCollectionState(L"ConnectionScreen", true);
 }
 
 

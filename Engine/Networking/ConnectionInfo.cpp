@@ -43,7 +43,7 @@ DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const sf::IpAddress &targeta
 }
 
 DLLEXPORT Leviathan::ConnectionInfo::~ConnectionInfo(){
-
+	GUARD_LOCK_THIS_OBJECT();
 }
 // ------------------ Packet extensions ------------------ //
 sf::Packet& operator <<(sf::Packet& packet, const NetworkAckField &data){
@@ -90,7 +90,7 @@ DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
 	// Register us //
 	NetworkHandler::Get()->_RegisterConnectionInfo(this);
 
-	Logger::Get()->Info(L"ConnectionInfo: opening connection to host on "+Convert::StringToWstring(TargetHost.toString())+L" to port "
+	Logger::Get()->Info(L"ConnectionInfo: opening connection to host on "+Convert::StringToWstring(TargetHost.toString())+L":"
 		+Convert::ToWstring(TargetPortNumber));
 
 	return true;
@@ -108,6 +108,9 @@ DLLEXPORT void Leviathan::ConnectionInfo::Release(){
 
 		// Destroy some of our stuff //
 		TargetHost == sf::IpAddress::None;
+
+		// Release all the listeners //
+		ReleaseChildHooks();
 	}
 	// Remove us from the queue //
 	NetworkHandler::Get()->_UnregisterConnectionInfo(this);

@@ -102,7 +102,9 @@ void Pong::PongServerNetworking::TickIt(){
 	UpdateServerStatus();
 }
 // ------------------------------------ //
-
+void Pong::PongServerNetworking::CloseDown(){
+	CloseDownServer();
+}
 // ------------------------------------ //
 
 // ------------------------------------ //

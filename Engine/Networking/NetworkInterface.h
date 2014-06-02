@@ -62,6 +62,12 @@ namespace Leviathan{
 		//! \note This NetworkInterface doesn't need any ticking, but NetworkClientInterface does
 		//! \see NetworkClientInterface::UpdateClientStatus
 		DLLEXPORT virtual void TickIt();
+
+
+		//! \brief Called when the program is closing
+		//!
+		//! This should be used to call network interface type based functions (NetworkServerInterface::CloseDownServer() etc.)
+		DLLEXPORT virtual void CloseDown() = 0;
 		
 	protected:
 

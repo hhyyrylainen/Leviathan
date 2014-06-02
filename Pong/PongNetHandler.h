@@ -28,11 +28,18 @@ namespace Pong{
 		//! \brief Joins the lobby or the match when connection is confirmed
 		virtual void _OnStartApplicationConnect();
 
+
+		virtual void CloseDown();
+
 	protected:
 
 
 		//! \brief Used to fire GenericEvents to update GUI status
 		virtual void _OnNewConnectionStatusMessage(const wstring &message);
+
+		//! \brief This detects when the server kicks us and displays the reason
+		virtual void _OnDisconnectFromServer(const wstring &reasonstring, bool donebyus);
+
 
 		bool OnAServer;
 		PONG_JOINGAMERESPONSE_TYPE ServerStatusIs;

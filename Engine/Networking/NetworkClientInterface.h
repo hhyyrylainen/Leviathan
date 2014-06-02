@@ -47,6 +47,10 @@ namespace Leviathan{
 		//! \brief Returns a pointer to an instance if this application is a client
 		DLLEXPORT static NetworkClientInterface* GetIfExists();
 
+
+		//! \brief Closes all client related things
+		DLLEXPORT void OnCloseClient();
+
 	protected:
 
 		//! \brief Utility function for subclasses to call for default handling of server packets
@@ -65,7 +69,7 @@ namespace Leviathan{
 		DLLEXPORT void UpdateClientStatus();
 
 		// Callbacks for child classes to implement //
-		DLLEXPORT virtual void _OnDisconnectFromServer(const wstring &reasonstring);
+		DLLEXPORT virtual void _OnDisconnectFromServer(const wstring &reasonstring, bool donebyus);
 		DLLEXPORT virtual void _OnStartConnectToServer();
 		DLLEXPORT virtual void _OnFailedToConnectToServer(const wstring &reason);
 		DLLEXPORT virtual void _OnSuccessfullyConnectedToServer();
@@ -74,7 +78,7 @@ namespace Leviathan{
 
 
 		//! \brief Callback used to know when our connection is closed
-		DLLEXPORT virtual void _OnNotifierDisconnected(BaseNotifiableAll* parenttoremove);
+		DLLEXPORT virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
 
 		//! \brief Called when the server has confirmed the join and we are a player on the server
 		//!

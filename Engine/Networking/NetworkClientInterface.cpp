@@ -69,7 +69,9 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLoc
 	NetworkHandler::Get()->SafelyCloseConnectionTo(ServerConnection.get());
 	ServerConnection.reset();
 
-	_OnDisconnectFromServer(reason);
+	ConnectedToServer = false;
+
+	_OnDisconnectFromServer(reason, true);
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult){
@@ -142,8 +144,28 @@ checksentrequestsbeginlabel:
 	}
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnNotifierDisconnected(BaseNotifiableAll* parenttoremove){
-	DEBUG_BREAK;
+DLLEXPORT void Leviathan::NetworkClientInterface::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Get the close reason from it //
+	wstring closereason;
+
+	if(closereason.empty())
+		closereason = L"Other side requested close";
+
+	// Disconnect if got to the connected state //
+	if(ServerConnection){
+		// Send disconnect message to server //
+		_OnNewConnectionStatusMessage(L"Disconnected from "+ServerConnection->GenerateFormatedAddressString()+L", reason: "+closereason);
+
+		// Call the disconnect callback //
+		_OnDisconnectFromServer(closereason, false);
+
+		ConnectedToServer = false;
+
+		// Let go of the connection //
+		ServerConnection.reset();
+	}
 }
 // ------------------------------------ //
 void Leviathan::NetworkClientInterface::_SendConnectRequest(ObjectLock &guard){
@@ -284,7 +306,17 @@ DLLEXPORT void Leviathan::NetworkClientInterface::OnUpdateFullSynchronizationSta
 	_OnNewConnectionStatusMessage(L"Syncing variables, "+Convert::ToWstring(variablesgot)+L"/"+Convert::ToWstring(expectedvariables));
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const wstring &reasonstring){
+DLLEXPORT void Leviathan::NetworkClientInterface::OnCloseClient(){
+	GUARD_LOCK_THIS_OBJECT();
+
+	if(ServerConnection){
+
+
+		DisconnectFromServer(guard, L"Game closing");
+	}
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const wstring &reasonstring, bool donebyus){
 
 }
 

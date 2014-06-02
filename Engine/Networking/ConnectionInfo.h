@@ -158,6 +158,9 @@ namespace Leviathan{
 			GUARD_LOCK_THIS_OBJECT();
 			SendKeepAlivePacket(guard);
 		}
+
+		//! \brief Sends a packet that tells the other side to disconnect
+		//! \todo Add a message parameter for the reason
 		DLLEXPORT void SendCloseConnectionPacket(ObjectLock &guard);
 		DLLEXPORT FORCE_INLINE void SendCloseConnectionPacket(){
 			GUARD_LOCK_THIS_OBJECT();

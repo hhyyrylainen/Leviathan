@@ -24,6 +24,8 @@ namespace Pong{
 
 		virtual void TickIt();
 
+		virtual void CloseDown();
+
 	protected:
 
 

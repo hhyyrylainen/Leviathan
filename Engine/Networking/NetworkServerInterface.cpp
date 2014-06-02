@@ -36,7 +36,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
 	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ){
 
 		// Kick them //
-
+		(*iter)->OnKicked(L"Server closing");
 
 		delete (*iter);
 		iter = PlayerList.erase(iter);
@@ -262,6 +262,8 @@ void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parent
 
 		// Set as closing //
 		ConnectionStatus = false;
+
+		CorrenspondingConnection = NULL;
 	}
 
 	Logger::Get()->Info(L"ConnectedPlayer: connection marked as closed");
@@ -283,4 +285,26 @@ DLLEXPORT Leviathan::ConnectedPlayer::~ConnectedPlayer(){
 
 DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionClosed() const{
 	return !ConnectionStatus;
+}
+
+DLLEXPORT void Leviathan::ConnectedPlayer::OnKicked(const wstring &reason){
+	{
+		// Send a close connection packet //
+		GUARD_LOCK_THIS_OBJECT();
+
+		auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrenspondingConnection);
+
+		if(connection){
+
+			// \todo Add the reason here
+			connection->SendCloseConnectionPacket();
+		}
+
+
+		// No longer connected //
+		ConnectionStatus = false;
+	}
+
+	// Broadcast a kick message on the server here //
+
 }

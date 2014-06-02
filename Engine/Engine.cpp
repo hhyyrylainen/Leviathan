@@ -115,7 +115,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype)
 #endif
 
 		// Tell window title //
-		Logger::Get()->Write(L"// ------------------ "+Define->GetWindowDetails().Title+L" ------------------ //");
+		Logger::Get()->Write(L"// ----------- "+Define->GetWindowDetails().Title+L" ----------- //");
 	}
 	
 
@@ -557,9 +557,6 @@ void Leviathan::Engine::Tick(){
 			// send updated rendering statistics //
 			RenderTimer->ReportStats(Mainstore);
 		}
-
-
-		_ThreadingManager->NotifyQueuerThread();
 	}
 
 	// Update file listeners //
@@ -571,6 +568,11 @@ void Leviathan::Engine::Tick(){
 
 	// Call the default app tick //
 	Owner->Tick(TimePassed);
+
+
+	// Make queued tasks execute //
+	_ThreadingManager->NotifyQueuerThread();
+
 
 	TickTime = (int)(Misc::GetTimeMs64()-LastFrame);
 }
@@ -641,6 +643,10 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 		//CinThread.join();
 		Logger::Get()->Info(L"Successfully stopped command handling");
 	}
+
+	// Then kill the network //
+	_NetworkHandler->GetInterface()->CloseDown();
+
 
 	// Let the game release it's resources //
 	Owner->EnginePreShutdown();

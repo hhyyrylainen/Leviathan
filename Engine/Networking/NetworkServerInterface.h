@@ -33,6 +33,10 @@ namespace Leviathan{
 		//! \brief Returns whether the connection for this player is closed
 		DLLEXPORT bool IsConnectionClosed() const;
 
+		//! \brief Call this when the player is kicked
+		//! \todo Add the reason to the packet
+		DLLEXPORT void OnKicked(const wstring &reason);
+
 	protected:
 		//! \brief Used to detect when a connection has been closed
 		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);

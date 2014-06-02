@@ -488,10 +488,12 @@
             
             <!-- Team 0 tab -->
             <Window name="Team0Tab" type="DefaultWindow">
+            
                 <Window name="TeamName" type="TaharezLook/StaticText">
                 
                     <Property name="Size" value="{{0.15, 0}, {0.3, 0}}"/>
-
+                    <Property name="Position" value="{{0, 5}, {0, 5}}"/>
+                    
                     <Property name="HorizontalAlignment" value="Left"/>
                     <Property name="VerticalAlignment" value="Top"/>
                     <Property name="BackgroundEnabled" value="False"/>
@@ -502,6 +504,40 @@
                     <Property name="Font" value="Simonetta-Black"/>
                     <Property name="Text" value="Team 0"/>
                 </Window>
+                
+                <!-- First slot -->
+                <Window name="SlotIdentifier11" type="TaharezLook/StaticText">
+                
+                    <Property name="Size" value="{{0.15, 0}, {0.2, 0}}"/>
+                    <Property name="Position" value="{{0.1, 0}, {0.125, 0}}"/>
+                    
+                    <Property name="BackgroundEnabled" value="False"/>
+                    <Property name="FrameEnabled" value="False"/>
+                    
+                    <Property name="Font" value="Simonetta-Regular"/>
+                    <Property name="Text" value="Slot 1:"/>
+                </Window>
+                
+                <!-- Open/join button -->
+                
+                
+                <!-- Control choosing list -->
+                
+                
+                <!-- Second slot -->
+                <Window name="SlotIdentifier11" type="TaharezLook/StaticText">
+                
+                    <Property name="Size" value="{{0.15, 0}, {0.2, 0}}"/>
+                    <Property name="Position" value="{{0.1, 0}, {0.35, 0}}"/>
+                    
+                    <Property name="BackgroundEnabled" value="False"/>
+                    <Property name="FrameEnabled" value="False"/>
+                    
+                    <Property name="Font" value="Simonetta-Regular"/>
+                    <Property name="Text" value="Slot 2:"/>
+                </Window>
+                
+                
             </Window>
             
             <!-- Team 1 tab -->

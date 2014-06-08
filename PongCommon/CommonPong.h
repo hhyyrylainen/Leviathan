@@ -652,6 +652,12 @@ playrscorelistupdateendlabel:
 				SCRIPT_REGISTERFAIL;
 			}
 
+			if(engine->RegisterObjectMethod("PlayerSlot", "PLAYERTYPE GetPlayerType()", asMETHOD(PlayerSlot, GetPlayerType), asCALL_THISCALL) < 0)
+			{
+				SCRIPT_REGISTERFAIL;
+			}
+			
+
 			if(engine->RegisterObjectMethod("PlayerSlot", "int GetPlayerNumber()", WRAP_MFN(PlayerSlot, GetPlayerIdentifier), asCALL_GENERIC) < 0)
 			{
 				SCRIPT_REGISTERFAIL;

@@ -8,6 +8,8 @@
 #include "SyncedVariables.h"
 #include "Engine.h"
 #include "boost/thread/future.hpp"
+#include "Exceptions/ExceptionInvalidState.h"
+#include "NetworkRequest.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() : MaxConnectTries(DEFAULT_MAXCONNECT_TRIES), ConnectTriesCount(0), 
@@ -52,7 +54,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(shared_ptr<Connecti
 	return true;
 }
 
-DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLock &guard, const wstring &reason){
+DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLock &guard, const wstring &reason, bool connectiontimedout){
 	VerifyLock(guard);
 
 	// Return if no connection //
@@ -71,7 +73,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLoc
 
 	ConnectedToServer = false;
 
-	_OnDisconnectFromServer(reason, true);
+	_OnDisconnectFromServer(reason, connectiontimedout ? false: true);
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult){
@@ -105,27 +107,9 @@ checksentrequestsbeginlabel:
 				shared_ptr<SentNetworkThing> tmpsendthing = (*iter);
 				iter = OurSentRequests.erase(iter);
 
-				// Do some checks based on request type //
-				switch(tmpsendthing->OriginalRequest->GetType()){
-				case NETWORKREQUESTTYPE_JOINSERVER:
-					{
-						if(ConnectTriesCount < MaxConnectTries){
+				_ProcessFailedRequest(tmpsendthing, guard);
 
-							Logger::Get()->Write(L"\t> Retrying connect");
-							_SendConnectRequest(guard);
-
-						} else {
-
-							Logger::Get()->Write(L"\t> Maximum connect tries reached");
-							DisconnectFromServer(guard, L"Connection timed out after "+Convert::ToWstring(ConnectTriesCount)+L" tries");
-						}
-					}
-					break;
-				default:
-					Logger::Get()->Write(L"\t> Unknown request type, probably not important, dropping request");
-				}
-
-				// We need to loop again, because our iterator is now invalid //
+				// We need to loop again, because our iterator is now invalid, because quite often failed things are retried //
 				goto checksentrequestsbeginlabel;
 			}
 
@@ -214,9 +198,45 @@ void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(shared_ptr<Sent
 			}
 		}
 		break;
+	case NETWORKREQUESTTYPE_REQUESTEXECUTION:
+		{
+			// It doesn't matter what we got back since the only important thing is that the packet made it there //
+		}
+		break;
 	default:
 		Logger::Get()->Info(L"NetworkClientInterface: WE MADE AN INVALID REQUEST");
 		DEBUG_BREAK;
+	}
+}
+
+void Leviathan::NetworkClientInterface::_ProcessFailedRequest(shared_ptr<SentNetworkThing> tmpsendthing, ObjectLock &guard){
+	VerifyLock(guard);
+
+	// First do some checks based on the request type //
+	switch(tmpsendthing->OriginalRequest->GetType()){
+	case NETWORKREQUESTTYPE_JOINSERVER:
+		{
+			if(ConnectTriesCount < MaxConnectTries){
+
+				Logger::Get()->Write(L"\t> Retrying connect");
+				_SendConnectRequest(guard);
+
+			} else {
+
+				Logger::Get()->Write(L"\t> Maximum connect tries reached");
+				DisconnectFromServer(guard, L"Connection timed out after "+Convert::ToWstring(ConnectTriesCount)+L" tries", true);
+			}
+		}
+		break;
+	case NETWORKREQUESTTYPE_REQUESTEXECUTION:
+		{
+			// This may never fail, connection needs to be terminated //
+			DisconnectFromServer(guard, L"command/chat packet failed", true);
+			Logger::Get()->Write(L"\t> Terminating connection since it shouldn't have been able to fail");
+		}
+		break;
+	default:
+		Logger::Get()->Write(L"\t> Unknown request type, probably not important, dropping request");
 	}
 }
 // ------------------------------------ //
@@ -316,6 +336,35 @@ DLLEXPORT void Leviathan::NetworkClientInterface::OnCloseClient(){
 	}
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkClientInterface::SendCommandStringToServer(const string &messagestr){
+	// Make sure that we are connected to a server //
+	if(!ConnectedToServer){
+
+		throw ExceptionInvalidState(L"cannot send command because we aren't connected to a server", 0, __WFUNCTION__, L"not connected");
+	}
+
+
+	// Check the length //
+	if(messagestr.length() >= MAX_SERVERCOMMAND_LENGTH){
+
+		throw ExceptionInvalidArgument(L"server command is too long", messagestr.size(), __WFUNCTION__, L"messagestr", Convert::Utf8ToUtf16(messagestr));
+	}
+
+	// Create a packet //
+	shared_ptr<NetworkRequest> sendrequest(new NetworkRequest(new RequestCommandExecutionData(messagestr)));
+
+	// Send it //
+	auto sendthing = ServerConnection->SendPacketToConnection(sendrequest, 10);
+
+
+	// The packet may not fail so we need to monitor the response //
+	OurSentRequests.push_back(sendthing);
+}
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::NetworkClientInterface::IsConnected() const{
+	return ConnectedToServer;
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const wstring &reasonstring, bool donebyus){
 
 }
@@ -335,6 +384,9 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnSuccessfullyConnectedToServ
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnNewConnectionStatusMessage(const wstring &message){
 
 }
+
+
+
 
 
 

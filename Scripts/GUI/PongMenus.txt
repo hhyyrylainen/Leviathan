@@ -367,6 +367,39 @@ o GuiObject "LobbyScreen/DisconnectButton"{
         }
     @%};
 }
+
+
+// First team controls //
+template<TabAndName, TSlotNumber> LobbyFirstPlayerButton: o GuiObject "LobbyScreen/LobbyTabs/__auto_TabPane__/TabAndName"
+{
+    s{
+        [@Listener="OnClick"]
+        bool TryToJoinOrOpen(GuiObject@ instance){
+            
+            PongBase@ base = GetPongBase();
+            
+            // Check is it closed or empty
+            if(base.GetSlot(TSlotNumber).GetPlayerType() == PLAYERTYPE_CLOSED){
+                // Open it //
+                GetPongGame().SendServerCommand("open "+TSlotNumber);
+                
+            } else if(base.GetSlot(TSlotNumber).GetPlayerType() == PLAYERTYPE_EMPTY){
+                // Join //
+                GetPongGame().SendServerCommand("join "+TSlotNumber);
+                
+            } else {
+                // Somebody is in it already, potentially send a chat message here to indicate that or maybe
+                // just disable the button
+                
+            }
+            
+            return true;
+        }
+    @%};
+}
+
+template<> LobbyFirstPlayerButton<"Team0Tab/Player00JoinOpen", 0>
+
 // ------------------ During gameplay objects ------------------ //
 template<> PGCTemplate<GameplayHUD, "", false>
 

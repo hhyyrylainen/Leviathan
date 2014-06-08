@@ -60,6 +60,13 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(CustomRequestData* newddata,
 
 }
 
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestCommandExecutionData* newddata, int timeout /*= 10*/, PACKET_TIMEOUT_STYLE style 
+	/*= PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_REQUESTEXECUTION), 
+	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+{
+
+}
+
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket) : TimeOutValue(-1){
 	// Get the heading data //
 	if(!(frompacket >> ResponseID)){
@@ -98,6 +105,11 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket) : Ti
 	case NETWORKREQUESTTYPE_CUSTOM:
 		{
 			RequestData = new CustomRequestData(frompacket);
+		}
+		break;
+	case NETWORKREQUESTTYPE_REQUESTEXECUTION:
+		{
+			RequestData = new RequestCommandExecutionData(frompacket);
 		}
 		break;
 	default:
@@ -159,6 +171,12 @@ DLLEXPORT RemoteConsoleAccessRequestData* Leviathan::NetworkRequest::GetRemoteCo
 DLLEXPORT CustomRequestData* Leviathan::NetworkRequest::GetCustomRequestData(){
 	if(TypeOfRequest == NETWORKREQUESTTYPE_CUSTOM)
 		return static_cast<CustomRequestData*>(RequestData);
+	return NULL;
+}
+
+DLLEXPORT RequestCommandExecutionData* Leviathan::NetworkRequest::GetCommandExecutionRequestData(){
+	if(TypeOfRequest == NETWORKREQUESTTYPE_REQUESTEXECUTION)
+		return static_cast<RequestCommandExecutionData*>(RequestData);
 	return NULL;
 }
 // ------------------ RemoteConsoleOpenRequestDataTo ------------------ //
@@ -238,4 +256,28 @@ DLLEXPORT Leviathan::CustomRequestData::CustomRequestData(sf::Packet &frompacket
 
 DLLEXPORT void Leviathan::CustomRequestData::AddDataToPacket(sf::Packet &packet){
 	GameSpecificPacketHandler::Get()->PassGameSpecificDataToPacket(ActualPacketData.get(), packet);
+}
+// ------------------ RequestCommandExecution ------------------ //
+DLLEXPORT Leviathan::RequestCommandExecutionData::RequestCommandExecutionData(const string &commandstr) : Command(commandstr){
+
+	if(Command.length() > MAX_SERVERCOMMAND_LENGTH){
+
+		Logger::Get()->Warning(L"NetworkRequest: RequestCommandExecution: command is too long (is "+Convert::ToWstring(Command.length())
+			+L") : "+Convert::StringToWstring(Command)+L" will be truncated:");
+
+		// Cut it to fit //
+		Command.resize(MAX_SERVERCOMMAND_LENGTH);
+
+		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(Command)+L"\n");
+	}
+}
+
+DLLEXPORT Leviathan::RequestCommandExecutionData::RequestCommandExecutionData(sf::Packet &frompacket){
+	if(!(frompacket >> Command)){
+		throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+}
+
+DLLEXPORT void Leviathan::RequestCommandExecutionData::AddDataToPacket(sf::Packet &packet){
+	packet << Command;
 }

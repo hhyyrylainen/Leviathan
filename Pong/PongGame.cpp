@@ -443,6 +443,11 @@ void Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+	if(engine->RegisterObjectMethod("PongGame", "bool SendServerCommand(const string &in command)", asMETHOD(PongGame, SendServerCommand), asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+	
 
 
 	// Version getting function //
@@ -503,4 +508,29 @@ bool Pong::PongGame::ConnectProxy(const string &address, string &error){
 
 	error = Convert::WstringToString(werror);
 	return result;
+}
+
+bool Pong::PongGame::SendServerCommand(const string &command){
+
+	NetworkClientInterface* clientinterface = NetworkClientInterface::GetIfExists();
+	if(clientinterface != NULL){
+		
+		if(!clientinterface->IsConnected())
+			return false;
+
+		try{
+			clientinterface->SendCommandStringToServer(command);
+
+		} catch(const ExceptionBase &e){
+
+			Logger::Get()->Warning(L"Failed to send command to the server: ");
+			e.PrintToLog();
+			return false;
+		}
+
+		// Nothing failed so it should have worked //
+		return true;
+	}
+
+	return false;
 }

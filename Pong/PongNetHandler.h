@@ -25,7 +25,7 @@ namespace Pong{
 
 		virtual void TickIt();
 
-		//! \brief Joins the lobby or the match when connection is confirmed
+		//! \brief Joins the lobby or the match when the connection is confirmed
 		virtual void _OnStartApplicationConnect();
 
 

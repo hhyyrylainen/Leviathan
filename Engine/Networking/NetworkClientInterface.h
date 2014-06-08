@@ -10,6 +10,7 @@
 
 #define DEFAULT_MAXCONNECT_TRIES		5
 
+
 namespace Leviathan{
 
 
@@ -31,17 +32,28 @@ namespace Leviathan{
 
 		//! \brief Disconnects the client from the server or does nothing
 		//! \todo Add a check to not close the connection if it is used by RemoteConsole
-		DLLEXPORT FORCE_INLINE void DisconnectFromServer(const wstring &reason){
+		DLLEXPORT FORCE_INLINE void DisconnectFromServer(const wstring &reason, bool connectiontimedout = false){
 			GUARD_LOCK_THIS_OBJECT();
-			DisconnectFromServer(guard, reason);
+			DisconnectFromServer(guard, reason, connectiontimedout);
 		}
 
 		//! \brief Actual implementation of DisconnectFromServer
-		DLLEXPORT void DisconnectFromServer(ObjectLock &guard, const wstring &reason);
+		DLLEXPORT void DisconnectFromServer(ObjectLock &guard, const wstring &reason, bool connectiontimedout = false);
 
 
 		//! \brief Called directly by SyncedVariables to update the status string
 		DLLEXPORT void OnUpdateFullSynchronizationState(size_t variablesgot, size_t expectedvariables);
+
+
+		//! \brief Sends a command string to the server
+		//!
+		//! It should always be assumed that this function works. If it doesn't it is guaranteed that the client kicks itself because 
+		//! the connection is lost.
+		//! \exception ExceptionInvalidState if not connected to a server
+		//! \param messagestr The UTF8 encoded string containing the command. This specifically uses utf8 to save space when sending long chat messages
+		//! The maximum length is MAX_SERVERCOMMAND_LENGTH should be around 550 characters.
+		//! \exception ExceptionInvalidArgument when the message string is too long
+		DLLEXPORT void SendCommandStringToServer(const string &messagestr);
 
 
 		//! \brief Returns a pointer to an instance if this application is a client
@@ -50,6 +62,11 @@ namespace Leviathan{
 
 		//! \brief Closes all client related things
 		DLLEXPORT void OnCloseClient();
+
+		//! \brief Returns true if the client is connected to a server
+		//!
+		//! This will be true when the server has responded to our join request and allowed us to join, we aren't actually yet playing on the server
+		DLLEXPORT bool IsConnected() const;
 
 	protected:
 
@@ -94,7 +111,13 @@ namespace Leviathan{
 	private:
 		
 		void _SendConnectRequest(ObjectLock &guard);
+
+		//! \brief Handles succeeded requests, removes clutter from other places
 		void _ProcessCompletedRequest(shared_ptr<SentNetworkThing> tmpsendthing, ObjectLock &guard);
+
+		//! \brief Handles failed requests, removes clutter from other places
+		void _ProcessFailedRequest(shared_ptr<SentNetworkThing> tmpsendthing, ObjectLock &guard);
+
 		//! \brief Internally called when server has accepted us
 		//! \todo Call variable syncing from here
 		void _ProperlyConnectedToServer(ObjectLock &guard);

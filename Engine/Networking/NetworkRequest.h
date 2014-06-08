@@ -10,6 +10,8 @@
 #include "NetworkHandler.h"
 
 
+#define MAX_SERVERCOMMAND_LENGTH		550
+
 namespace Leviathan{
 
 	enum NETWORKREQUESTTYPE {
@@ -22,6 +24,8 @@ namespace Leviathan{
 		NETWORKREQUESTTYPE_JOINSERVER,
 		NETWORKREQUESTTYPE_GETSINGLESYNCVALUE,
 		NETWORKREQUESTTYPE_GETALLSYNCVALUES,
+		//! Used to request the server to run a command, used for chat and other things
+		NETWORKREQUESTTYPE_REQUESTEXECUTION,
 		//! Used for game specific requests
 		NETWORKREQUESTTYPE_CUSTOM
 	};
@@ -80,6 +84,17 @@ namespace Leviathan{
 		wstring NameOfValue;
 	};
 
+	class RequestCommandExecutionData : public BaseNetworkRequestData{
+	public:
+		DLLEXPORT RequestCommandExecutionData(const string &commandstr);
+		DLLEXPORT RequestCommandExecutionData(sf::Packet &frompacket);
+
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! The command to execute
+		string Command;
+	};
+
 	class CustomRequestData : public BaseNetworkRequestData{
 	public:
 		DLLEXPORT CustomRequestData(GameSpecificPacketData* newddata);
@@ -101,6 +116,7 @@ namespace Leviathan{
 		DLLEXPORT NetworkRequest(JoinServerRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(CustomRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(RequestCommandExecutionData* newddata, int timeout = 10, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED);
 		DLLEXPORT ~NetworkRequest();
 
 		DLLEXPORT NetworkRequest(sf::Packet &frompacket);
@@ -113,6 +129,7 @@ namespace Leviathan{
 		DLLEXPORT RemoteConsoleOpenRequestDataTo* GetRemoteConsoleOpenToData();
 		DLLEXPORT RemoteConsoleAccessRequestData* GetRemoteConsoleAccessRequestData();
 		DLLEXPORT CustomRequestData* GetCustomRequestData();
+		DLLEXPORT RequestCommandExecutionData* GetCommandExecutionRequestData();
 
 		DLLEXPORT int GetExpectedResponseID();
 
@@ -128,9 +145,9 @@ namespace Leviathan{
 
 		NETWORKREQUESTTYPE TypeOfRequest;
 		BaseNetworkRequestData* RequestData;
-        
-    private:
-        NetworkRequest(const NetworkRequest &other){}
+		
+	private:
+		NetworkRequest(const NetworkRequest &other){}
 	};
 
 }

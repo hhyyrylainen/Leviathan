@@ -42,6 +42,11 @@ namespace Pong{
 			Connect(address, errorcatcher);
 		}
 
+
+		//! \brief Sends a command to the current server if connected
+		//! \return True if connected, false otherwise
+		bool SendServerCommand(const string &command);
+
 		void AllowPauseMenu();
 
 		static wstring GenerateWindowTitle();

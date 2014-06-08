@@ -506,10 +506,68 @@
                 </Window>
                 
                 <!-- First slot -->
-                <Window name="SlotIdentifier11" type="TaharezLook/StaticText">
+                <Window name="SlotIdentifier0" type="TaharezLook/StaticText">
                 
                     <Property name="Size" value="{{0.15, 0}, {0.2, 0}}"/>
-                    <Property name="Position" value="{{0.1, 0}, {0.125, 0}}"/>
+                    <Property name="Position" value="{{0.1, 0}, {0.105, 0}}"/>
+                    
+                    <Property name="BackgroundEnabled" value="False"/>
+                    <Property name="FrameEnabled" value="False"/>
+                    
+                    <Property name="Font" value="Simonetta-Regular"/>
+                    <Property name="Text" value="Slot 0:"/>
+                </Window>
+                
+                <!-- Info string synchronized by the server -->
+                <Window name="Player00" type="TaharezLook/StaticText">
+                
+                    <Property name="Size" value="{{0.3, 0}, {0.2, 0}}"/>
+                    <Property name="Position" value="{{0.3, 0}, {0.125, 0}}"/>
+                    
+                    
+                    <Property name="BackgroundEnabled" value="True"/>
+                    <Property name="FrameEnabled" value="True"/>
+                    <Property name="HorzFormatting" value="WordWrappedLeftAligned"/>
+                    <Property name="VertFormatting" value="TopAligned"/>
+                    
+                    <Property name="Font" value="Simonetta-Regular"/>
+                    <Property name="Text" value="Nobody, the server hasn't decided yet"/>
+                </Window>
+                
+                <!-- Open/join button -->
+                <Window name="Player00JoinOpen" type="TaharezLook/Button">
+                    
+                    <Property name="Size" value="{{0.18, 0}, {0.10, 0}}"/>
+                    <Property name="Position" value="{{-0.05, 0}, {0.15, 0}}"/>
+                    
+                    
+                    <Property name="HorizontalAlignment" value="Right"/>
+                    <Property name="Font" value="Simonetta-Black"/>
+                    <Property name="Text" value="Join"/>
+                    
+                </Window>
+                
+                <!-- Control choosing list -->
+                <Window name="Player00TypeSelect" type="TaharezLook/Combobox">
+                    
+                    <Property name="Area" value="{{0.17, 0}, {0.34, 0}, {0.5, 0}, {0.5, 0}}"/>
+                    <Property name="Disabled" value="True"/>
+                    
+                    <Property name="AlwaysOnTop" value="True"/>
+                    
+                    <Property name="ForceVertScrollbar" value="True"/>
+                    
+                    <Property name="Font" value="Simonetta-Black"/>
+                    <Property name="Text" value="Choose controls/AI"/>
+                    
+                </Window>
+                
+                
+                <!-- Second slot -->
+                <Window name="SlotIdentifier1" type="TaharezLook/StaticText">
+                
+                    <Property name="Size" value="{{0.15, 0}, {0.2, 0}}"/>
+                    <Property name="Position" value="{{0.1, 0}, {0.45, 0}}"/>
                     
                     <Property name="BackgroundEnabled" value="False"/>
                     <Property name="FrameEnabled" value="False"/>
@@ -518,26 +576,49 @@
                     <Property name="Text" value="Slot 1:"/>
                 </Window>
                 
-                <!-- Open/join button -->
+                <!-- Info string synchronized by the server -->
+                <Window name="Player01" type="TaharezLook/StaticText">
                 
-                
-                <!-- Control choosing list -->
-                
-                
-                <!-- Second slot -->
-                <Window name="SlotIdentifier11" type="TaharezLook/StaticText">
-                
-                    <Property name="Size" value="{{0.15, 0}, {0.2, 0}}"/>
-                    <Property name="Position" value="{{0.1, 0}, {0.35, 0}}"/>
+                    <Property name="Size" value="{{0.3, 0}, {0.2, 0}}"/>
+                    <Property name="Position" value="{{0.3, 0}, {0.50, 0}}"/>
                     
-                    <Property name="BackgroundEnabled" value="False"/>
-                    <Property name="FrameEnabled" value="False"/>
+                    
+                    <Property name="BackgroundEnabled" value="True"/>
+                    <Property name="FrameEnabled" value="True"/>
+                    <Property name="HorzFormatting" value="WordWrappedLeftAligned"/>
+                    <Property name="VertFormatting" value="TopAligned"/>
                     
                     <Property name="Font" value="Simonetta-Regular"/>
-                    <Property name="Text" value="Slot 2:"/>
+                    <Property name="Text" value="Closed, the server hasn't decided yet"/>
                 </Window>
                 
+                <!-- Open/join button -->
+                <Window name="Player01JoinOpen" type="TaharezLook/Button">
+                    
+                    <Property name="Size" value="{{0.18, 0}, {0.10, 0}}"/>
+                    <Property name="Position" value="{{-0.05, 0}, {0.55, 0}}"/>
+                    
+                    
+                    <Property name="HorizontalAlignment" value="Right"/>
+                    <Property name="Font" value="Simonetta-Black"/>
+                    <Property name="Text" value="Open"/>
+                    
+                </Window>
                 
+                <!-- Control choosing list -->
+                <Window name="Player01TypeSelect" type="TaharezLook/Combobox">
+                    
+                    <Property name="Area" value="{{0.17, 0}, {0.72, 0}, {0.5, 0}, {0.83, 0}}"/>
+                    <Property name="Disabled" value="True"/>
+                    
+                    <Property name="AlwaysOnTop" value="True"/>
+                    
+                    <Property name="ForceVertScrollbar" value="True"/>
+                    
+                    <Property name="Font" value="Simonetta-Black"/>
+                    <Property name="Text" value="Choose controls/AI"/>
+                    
+                </Window>
             </Window>
             
             <!-- Team 1 tab -->

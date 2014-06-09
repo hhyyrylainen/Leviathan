@@ -39,6 +39,11 @@ namespace Leviathan{
 		//! \post The variable is now ready for use
 		DLLEXPORT virtual void StartSync();
 
+		//! \brief Notify that this is changed and we want a local message too
+		//!
+		//! If you do not want a local message call UpdateOurNetworkValue directly
+		DLLEXPORT void NotifyUpdatedValue();
+
 	protected:
 
 		//! \brief Should load the custom data from a packet

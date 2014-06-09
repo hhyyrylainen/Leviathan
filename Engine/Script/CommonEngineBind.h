@@ -127,6 +127,7 @@ To* DoReferenceCastStatic(From* ptr){
 }
 
 
+//! \todo Create a wrapper around NewtonBody which has reference counting
 bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 
 	// Register common float types //

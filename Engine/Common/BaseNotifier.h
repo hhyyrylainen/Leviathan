@@ -31,9 +31,21 @@ namespace Leviathan{
 		DLLEXPORT bool ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child, ObjectLock &guard);
 
 
-		//! Disconnects from previously connected notifiable
-		DLLEXPORT bool UnConnectFromNotifiable(BaseNotifiable<ParentType, ChildType>* unhookfrom);
-		//! This searches the connected notifiable objects and calls the above function with it's pointer
+		//! \brief Notifies the children about something
+		//!
+		//! This will call the BaseNotifiable::OnNotified on all the child objects
+		DLLEXPORT virtual void NotifyAll();
+
+
+		//! \brief Disconnects from previously connected notifiable
+		DLLEXPORT bool UnConnectFromNotifiable(BaseNotifiable<ParentType, ChildType>* unhookfrom, ObjectLock &guard);
+
+		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifiable(BaseNotifiable<ParentType, ChildType>* child){
+			GUARD_LOCK_THIS_OBJECT();
+			return UnConnectFromNotifiable(child, guard);
+		}
+
+		//! \brief Searches the connected notifiable objects and calls the above function with it's pointer
 		DLLEXPORT bool UnConnectFromNotifiable(int id);
 
 
@@ -45,6 +57,12 @@ namespace Leviathan{
 
 		//! \brief Gets the internal pointer to the actual object
 		DLLEXPORT ParentType* GetActualPointerToNotifierObject();
+
+		//! \brief Called when one of our children notifies us about something
+		//! \note Both the child and this object has been locked when this is called
+		//! \warning Do not directly call this if you don't know what you are doing!
+		virtual void OnNotified();
+
 
 	protected:
 

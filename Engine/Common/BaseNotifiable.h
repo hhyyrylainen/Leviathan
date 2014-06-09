@@ -25,17 +25,25 @@ namespace Leviathan{
 		//! \brief The actual implementation of UnConnectFromNotifier
 		DLLEXPORT bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier, ObjectLock &guard);
 
+		//! \brief Notifies all the parents of this object about something
+		//!
+		//! This will call the BaseNotifier::OnNotified on all the child objects
+		DLLEXPORT virtual void NotifyAll();
+
 		//! \brief Disconnects this from a previously connected notifier
 		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier){
+			// The parent has to be locked before this object //
+			GUARD_LOCK_OTHER_OBJECT_NAME(specificnotifier, guard2);
 			GUARD_LOCK_THIS_OBJECT();
 			return UnConnectFromNotifier(specificnotifier, guard);
 		}
+
 		//! \brief This searches the connected notifiers and calls the above function with it's pointer
 		DLLEXPORT bool UnConnectFromNotifier(int id);
 
 		//! \brief Connects this to a notifier object calling all the needed functions
+		//! \todo return false and skip adding if already added
 		DLLEXPORT bool ConnectToNotifier(BaseNotifier<ParentType, ChildType>* owner);
-
 
 		//! Callback called by the parent, used to not to call the unhook again on the parent
 		void _OnUnhookNotifier(BaseNotifier<ParentType, ChildType>* parent);
@@ -45,6 +53,12 @@ namespace Leviathan{
 
 		//! \brief Gets the internal pointer to the actual object
 		DLLEXPORT ChildType* GetActualPointerToNotifiableObject();
+
+		//! \brief Called when our parent notifies us about something
+		//! \note Both the parent and this object has been locked when this is called
+		//! \warning Do not directly call this if you don't know what you are doing!
+		virtual void OnNotified();
+
 
 	protected:
 
@@ -58,6 +72,8 @@ namespace Leviathan{
 
 		//! Vector of other objects that this is connected to
 		std::vector<BaseNotifier<ParentType, ChildType>*> ConnectedToParents;
+
+		//! This lock is used to keep locked while an operation needs this object to stay 
 	};
 
 

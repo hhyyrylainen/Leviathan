@@ -466,6 +466,10 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const string &f
 	ScriptSourceSegments.push_back(shared_ptr<ScriptSourceFileData>(new ScriptSourceFileData(file, 1, scriptdata)));
 	return true;
 }
+
+DLLEXPORT const string& Leviathan::ScriptModule::GetModuleName() const{
+	return ModuleName;
+}
 // ------------------ ValidListenerData ------------------ //
 Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, wstring* name, wstring* metadataend) 
 	: FuncPtr(funcptr), ListenerName(name), RestOfMeta(metadataend)

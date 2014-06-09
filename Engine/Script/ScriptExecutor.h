@@ -37,6 +37,7 @@ namespace Leviathan{
 		DLLEXPORT void DeleteModule(ScriptModule* ptrtomatch);
 		DLLEXPORT bool DeleteModuleIfNoExternalReferences(int ID);
 		DLLEXPORT weak_ptr<ScriptModule> GetModule(const int &ID);
+		DLLEXPORT weak_ptr<ScriptModule> GetModuleByAngelScriptName(const char* nameofmodule);
 
 		DLLEXPORT inline asIScriptEngine* GetASEngine(){
 			return engine;
@@ -53,7 +54,14 @@ namespace Leviathan{
 		}
 
 		// script running commands //
+
+		//! \brief Runs a script
+		//! \todo Make the module finding more efficient, store the module pointer in the ScriptModule class
 		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptScript* scriptobject, ScriptRunningSetup* parameters);
+
+		//! \brief Runs a script function whose pointer is passed in
+		//! \todo Make the module finding more efficient, store module IDs in all call sites
+		DLLEXPORT shared_ptr<VariableBlock> RunFunctionSetUp(asIScriptFunction* function, ScriptRunningSetup* parameters);
 
 		// Setup functions //
 
@@ -62,6 +70,28 @@ namespace Leviathan{
 	private:
 
 		void PrintAdditionalExcept(asIScriptContext *ctx);
+
+		//! \brief Handles the return type and return value of a function
+		shared_ptr<VariableBlock> _GetScriptReturnedVariable(int retcode, asIScriptContext* ScriptContext, ScriptRunningSetup* parameters, 
+			asIScriptFunction* func, ScriptModule* scrptmodule, FunctionParameterInfo* paraminfo);
+
+		//! \brief Handles passing parameters to a context
+		bool _SetScriptParameters(asIScriptContext* ScriptContext, ScriptRunningSetup* parameters, ScriptModule* scrptmodule, 
+			FunctionParameterInfo* paraminfo);
+
+		//! \brief Checks whether a function is a valid pointer
+		bool _CheckScriptFunctionPtr(asIScriptFunction* func, ScriptRunningSetup* parameters, ScriptModule* scrptmodule);
+
+		//! \brief Prepares a context for usage
+		bool _PrepareContextForPassingParameters(asIScriptFunction* func, asIScriptContext* ScriptContext, ScriptRunningSetup* parameters, 
+			ScriptModule* scrptmodule);
+
+		//! \brief Called when a context is required for script execution
+		//! \todo Add a pool from which these are retrieved
+		asIScriptContext* _GetContextForExecution();
+
+		//! \brief Called after a script has been executed and the context is no longer needed
+		void _DoneWithContext(asIScriptContext* context);
 
 		// ------------------------------ //
 		// AngelScript engine script executing part //

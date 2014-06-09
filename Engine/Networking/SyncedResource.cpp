@@ -41,9 +41,24 @@ DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(sf::Packet &packe
 
 	// Notify us about the update //
 	OnValueUpdated();
+
+	// Notify listeners //
+	NotifyAll();
 	return true;
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::SyncedResource::NotifyUpdatedValue(){
+	// Update the networked value //
+	UpdateOurNetworkValue();
 
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Notify us about the update //
+	OnValueUpdated();
+
+	// Notify listeners //
+	NotifyAll();
+}
 // ------------------------------------ //
 void Leviathan::SyncedResource::OnValueUpdated(){
 

@@ -368,8 +368,45 @@ o GuiObject "LobbyScreen/DisconnectButton"{
     @%};
 }
 
+// Button and text state updater which is updated every time the server sends us a new list of players //
+o GuiObject "_LobbyStatusPlayerUpdater"{
+    s{
+        ScriptNotifier@ UpdateListener;
+        
+        
+        [@Listener="OnInit"]
+        int SetupData(GuiObject@ instance, Event@ event){
+            
+            @UpdateListener = @ScriptNotifier(CheckIsSomethingActuallyUpdated);
+            
+            // Connect it //
+            GetPongBase().GetPlayerChanges().ConnectToNotifier(UpdateListener);
+            
+            return 1;
+        }
+        
+        [@Listener="OnRelease"]
+        int ReleaseData(GuiObject@ instance, Event@ event){
+            
+            // Let the listener be released //
+            @UpdateListener = null;
+            
+            return 1;
+        }
+        
+        void CheckIsSomethingActuallyUpdated(){
+            // Go through all the current data and check if any of it has changed //
+            Print("Player states have been updated, updating GUI...");
+            
+            
+        }
+        
+    
+    @%};
+}
 
-// First team controls //
+
+// Templates for the tabs //
 template<TabAndName, TSlotNumber> LobbyFirstPlayerButton: o GuiObject "LobbyScreen/LobbyTabs/__auto_TabPane__/TabAndName"
 {
     s{
@@ -398,6 +435,7 @@ template<TabAndName, TSlotNumber> LobbyFirstPlayerButton: o GuiObject "LobbyScre
     @%};
 }
 
+// First team controls //
 template<> LobbyFirstPlayerButton<"Team0Tab/Player00JoinOpen", 0>
 
 // ------------------ During gameplay objects ------------------ //

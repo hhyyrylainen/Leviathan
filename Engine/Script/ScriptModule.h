@@ -102,6 +102,10 @@ namespace Leviathan{
 		DLLEXPORT inline wstring GetName(){
 			return Name;
 		}
+
+		//! \brief Gets the name of the internal AngelScript module
+		DLLEXPORT const string& GetModuleName() const;
+
 		DLLEXPORT inline int GetID(){
 			return ID;
 		}
@@ -168,7 +172,6 @@ namespace Leviathan{
 		void _BuildListenerList();
 		void _ProcessMetadataForFunc(asIScriptFunction* func, asIScriptModule* mod);
 		std::map<wstring, shared_ptr<ValidListenerData>>::iterator _GetIteratorOfListener(const wstring &listenername, const wstring* generictype = NULL);
-
 		// ------------------------------------ //
 
 		wstring Name;

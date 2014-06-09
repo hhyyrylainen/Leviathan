@@ -15,6 +15,8 @@ Leviathan::BaseNotifiable<ParentType, ChildType>::BaseNotifiable(ChildType* ourp
 
 template<class ParentType, class ChildType>
 DLLEXPORT Leviathan::BaseNotifiable<ParentType, ChildType>::~BaseNotifiable(){
+	GUARD_LOCK_THIS_OBJECT();
+
 	// Last chance to unhook if not already //
 	if(ConnectedToParents.size())
 		ReleaseParentHooks();
@@ -22,39 +24,69 @@ DLLEXPORT Leviathan::BaseNotifiable<ParentType, ChildType>::~BaseNotifiable(){
 // ------------------------------------ //
 template<class ParentType, class ChildType>
 DLLEXPORT void Leviathan::BaseNotifiable<ParentType, ChildType>::ReleaseParentHooks(){
-	GUARD_LOCK_THIS_OBJECT();
+	// This needs a bit of trickery since the lock order must be parent, child so we may not lock ourselves
+	UNIQUE_LOCK_THIS_OBJECT();
 
-	// Go through all and unhook them //
-	for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ++iter){
-		// Call unhook on the child //
-		(*iter)->_OnUnhookNotifiable(this);
+	while(!ConnectedToParents.empty()){
+
+		// Get the parent and erase it from the vector, this should avoid problems during this object is unlocked //
+		auto parentptr = *ConnectedToParents.begin();
+		ConnectedToParents.erase(ConnectedToParents.begin());
+
+		lockit.unlock();
+
+		// Lock the parent //
+		GUARD_LOCK_OTHER_OBJECT(parentptr);
+
+		// Now that the parent is locked we can re-lock ourselves //
+		lockit.lock();
+
+		parentptr->_OnUnhookNotifiable(this);
+
 		// Remove it //
-		_OnNotifierDisconnected((*iter)->GetActualPointerToNotifierObject());
+		_OnNotifierDisconnected(parentptr->GetActualPointerToNotifierObject());
 	}
-	// Clear all at once //
-	ConnectedToParents.clear();
 }
 // ------------------------------------ //
 template<class ParentType, class ChildType>
 DLLEXPORT bool Leviathan::BaseNotifiable<ParentType, ChildType>::UnConnectFromNotifier(int id){
-	GUARD_LOCK_THIS_OBJECT();
 
-	// Find child matching the provided id //
-	for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ++iter){
+	// Used to force the specific locking order //
+	BaseNotifier<ParentType, ChildType>* foundtarget = NULL;
 
-		if((*iter)->GetID() == id){
-			// Remove it //
-			return UnConnectFromNotifier(iter, guard);
+	{
+		GUARD_LOCK_THIS_OBJECT();
+
+		// Find child matching the provided id //
+		for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ++iter){
+
+			if((*iter)->GetID() == id){
+				// Found the target //
+				foundtarget = *iter;
+			}
 		}
 	}
-	return false;
+
+	if(!foundtarget){
+		// Didn't find it //
+		return false;
+	}
+
+	// Found a target, do the locking in the right order //
+
+	GUARD_LOCK_OTHER_OBJECT_NAME(foundtarget, guard2);
+	GUARD_LOCK_THIS_OBJECT();
+
+	return UnConnectFromNotifier(iter, guard);
 }
 
 template<class ParentType, class ChildType>
-DLLEXPORT bool Leviathan::BaseNotifiable<ParentType, ChildType>::UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier, ObjectLock &guard){
+DLLEXPORT bool Leviathan::BaseNotifiable<ParentType, ChildType>::UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier, 
+	ObjectLock &guard)
+{
 	VerifyLock(guard);
 
-	// Remove from list and call functions //
+	// Remove from the list and call functions //
 	for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ++iter){
 
 		if(*iter == specificnotifier){
@@ -71,24 +103,26 @@ DLLEXPORT bool Leviathan::BaseNotifiable<ParentType, ChildType>::UnConnectFromNo
 
 template<class ParentType, class ChildType>
 DLLEXPORT bool Leviathan::BaseNotifiable<ParentType, ChildType>::ConnectToNotifier(BaseNotifier<ParentType, ChildType>* owner){
+	// Lock the other first //
+	GUARD_LOCK_OTHER_OBJECT_NAME(owner, guard2);
 	GUARD_LOCK_THIS_OBJECT();
 
-	// Call hook on parent //
+	// Call hook on the parent //
 	owner->_OnHookNotifiable(this);
 
-	// Add to list //
+	// Add to the list //
 	ConnectedToParents.push_back(owner);
 
 	// Finally call the callback //
 	_OnNotifierConnected(owner->GetActualPointerToNotifierObject());
 
-	// \todo return false and skip adding if already added //
+
 	return true;
 }
 // ------------------------------------ //
 template<class ParentType, class ChildType>
 void Leviathan::BaseNotifiable<ParentType, ChildType>::_OnHookNotifier(BaseNotifier<ParentType, ChildType>* parent){
-	GUARD_LOCK_THIS_OBJECT();
+
 	// Add the object to the list of objects //
 	ConnectedToParents.push_back(parent);
 	_OnNotifierConnected(parent->GetActualPointerToNotifierObject());
@@ -96,7 +130,7 @@ void Leviathan::BaseNotifiable<ParentType, ChildType>::_OnHookNotifier(BaseNotif
 
 template<class ParentType, class ChildType>
 void Leviathan::BaseNotifiable<ParentType, ChildType>::_OnUnhookNotifier(BaseNotifier<ParentType, ChildType>* parent){
-	GUARD_LOCK_THIS_OBJECT();
+
 	// Remove from list //
 	for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ){
 
@@ -126,10 +160,52 @@ template<class ParentType, class ChildType>
 DLLEXPORT ChildType* Leviathan::BaseNotifiable<ParentType, ChildType>::GetActualPointerToNotifiableObject(){
 	return PointerToOurNotifiable;
 }
+// ------------------------------------ //
+template<class ParentType, class ChildType>
+DLLEXPORT void Leviathan::BaseNotifiable<ParentType, ChildType>::NotifyAll(){
+	// More trickery needed here to keep the locking order //
+	UNIQUE_LOCK_THIS_OBJECT();
 
-// No longer required //
-// ------------------ Template instances ------------------ //
-//template class BaseNotifiable<BaseNotifierAll, BaseNotifiableAll>;
-//template class BaseNotifiable<BaseNotifierEntity, BaseNotifiableEntity>;
+	auto currentparent = *ConnectedToParents.begin();
+
+	while(currentparent){
+		
+		// Now we need to unlock and the lock the parent //
+		lockit.unlock();
+		{
+			GUARD_LOCK_OTHER_OBJECT(currentparent);
+
+			// Now that the parent is locked we can re-lock ourselves //
+			lockit.lock();
+
+			// Notify now //
+			currentparent->OnNotified();
+
+		}
+		// The current parent doesn't need to be locked while we change to a different parent //
+
+		// Seek back to the current position //
+		for(auto iter = ConnectedToParents.begin(); iter != ConnectedToParents.end(); ){
+			// Check did we find the parent we are after, otherwise continue //
+			if(*iter == currentparent){
+				// The next parent will be the next target //
+				++iter;
+
+				currentparent = iter != ConnectedToParents.end() ? *iter: NULL;
+				break;
+
+			} else {
+				++iter;
+			}
+		}
+	}
+}
+
+template<class ParentType, class ChildType>
+void Leviathan::BaseNotifiable<ParentType, ChildType>::OnNotified(){
+
+}
+
+
 
 #endif

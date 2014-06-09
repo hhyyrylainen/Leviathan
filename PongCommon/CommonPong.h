@@ -224,6 +224,11 @@ playrscorelistupdateendlabel:
 			ScoreLimit = scorelimit;
 		}
 
+		BaseNotifiableAll* GetPlayersAsNotifiable(){
+
+			return static_cast<BaseNotifiableAll*>(&_PlayerList);
+		}
+
 		static BasePongParts* Get(){
 			return BasepongStaticAccess;
 		}
@@ -556,6 +561,11 @@ playrscorelistupdateendlabel:
 				SCRIPT_REGISTERFAIL;
 			}
 			if(engine->RegisterObjectMethod("PongBase", "Prop@ GetBall()", WRAP_MFN(BasePongParts, GetBall), asCALL_GENERIC) < 0)
+			{
+				SCRIPT_REGISTERFAIL;
+			}
+
+			if(engine->RegisterObjectMethod("PongBase", "BaseNotifiableAll& GetPlayerChanges()", asMETHOD(BasePongParts, GetPlayersAsNotifiable), asCALL_THISCALL) < 0)
 			{
 				SCRIPT_REGISTERFAIL;
 			}

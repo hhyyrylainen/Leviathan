@@ -51,6 +51,8 @@ using Leviathan::QueuedTask;
 using Leviathan::SyncedResource;
 using Leviathan::SyncedPrimitive;
 using Leviathan::UTF8DataIterator;
+using Leviathan::BaseNotifiableAll;
+using Leviathan::BaseNotifierAll;
 
 
 #endif

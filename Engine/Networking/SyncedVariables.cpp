@@ -54,7 +54,7 @@ DLLEXPORT void Leviathan::SyncedVariables::AddAnotherToSyncWith(ConnectionInfo* 
 	for(auto iter = ConnectedToOthers.begin(); iter != ConnectedToOthers.end(); ++iter){
 		if(*iter == unsafeptr){
 
-			Logger::Get()->Warning(L"SyncedVariables: AddAnotherToSyncWith: already connected to the specified one (could try to get the address here...)");
+			Logger::Get()->Info(L"SyncedVariables: AddAnotherToSyncWith: already connected to the specified one (could try to get the address here...)");
 			return;
 		}
 	}
@@ -72,7 +72,7 @@ DLLEXPORT void Leviathan::SyncedVariables::RemoveConnectionWithAnother(Connectio
 	for(auto iter = ConnectedToOthers.begin(); iter != ConnectedToOthers.end(); ++iter){
 		if(*iter == unsafeptr){
 
-			Logger::Get()->Warning(L"SyncedVariables: RemoveConnectionWithAnother: removed a connection (could try to get the address here...)");
+			Logger::Get()->Info(L"SyncedVariables: RemoveConnectionWithAnother: removed a connection (could try to get the address here...)");
 			ConnectedToOthers.erase(iter);
 			return;
 		}
@@ -151,7 +151,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
 				}
 
 
-			}, connection, this, taskdata), MillisecondDuration(10), MillisecondDuration(5), (int)max(ToSyncValues.size(), ConnectedChildren.size()))));
+			}, connection, this, taskdata), MillisecondDuration(50), MillisecondDuration(10), (int)max(ToSyncValues.size(), ConnectedChildren.size()))));
 
 			// Queue a finish checking task //
 			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new RepeatingDelayedTask(

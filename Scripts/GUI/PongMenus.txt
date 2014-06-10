@@ -371,37 +371,8 @@ o GuiObject "LobbyScreen/DisconnectButton"{
 // Button and text state updater which is updated every time the server sends us a new list of players //
 o GuiObject "_LobbyStatusPlayerUpdater"{
     s{
-        ScriptNotifier@ UpdateListener;
+        #include "PongLobbyPlayerUpdater.as"
         
-        
-        [@Listener="OnInit"]
-        int SetupData(GuiObject@ instance, Event@ event){
-            
-            @UpdateListener = @ScriptNotifier(CheckIsSomethingActuallyUpdated);
-            
-            // Connect it //
-            GetPongBase().GetPlayerChanges().ConnectToNotifier(UpdateListener);
-            
-            return 1;
-        }
-        
-        [@Listener="OnRelease"]
-        int ReleaseData(GuiObject@ instance, Event@ event){
-            
-            // Let the listener be released //
-            @UpdateListener = null;
-            
-            return 1;
-        }
-        
-        void CheckIsSomethingActuallyUpdated(){
-            // Go through all the current data and check if any of it has changed //
-            Print("Player states have been updated, updating GUI...");
-            
-            
-        }
-        
-    
     @%};
 }
 

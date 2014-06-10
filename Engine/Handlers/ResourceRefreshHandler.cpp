@@ -78,6 +78,8 @@ DLLEXPORT void Leviathan::ResourceRefreshHandler::StopListeningForFileChanges(in
 		if((*iter)->GetID() == idoflistener){
 
 			(*iter)->StopThread();
+			ActiveFileListeners.erase(iter);
+			return;
 		}
 	}
 }

@@ -10,6 +10,7 @@
 #include "add_on/scriptbuilder/scriptbuilder.h"
 #include "Common/ThreadSafe.h"
 #include "boost/thread/mutex.hpp"
+#include "ScriptArgumentsProvider.h"
 
 #define SCRIPTMODULE_LISTENFORFILECHANGES
 
@@ -175,6 +176,9 @@ namespace Leviathan{
 		//! \todo Add calls to OnRelease and OnInit events, just needs a way for the script owner to provide parameters
 		DLLEXPORT bool ReLoadModuleCode();
 
+		//! \brief Sets the module as invalid to avoid usage
+		DLLEXPORT void SetAsInvalid();
+
 
 		DLLEXPORT void PrintFunctionsInModule();
 
@@ -184,6 +188,10 @@ namespace Leviathan{
 		// static include resolver for scripts //
 		DLLEXPORT static int ScriptModuleIncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam);
 
+
+		//! \brief Call when this module is added to a bridge
+		//! \return True when this is not in a bridge and it is added, false if this is removed from the bridge
+		DLLEXPORT bool OnAddedToBridge(shared_ptr<ScriptArgumentsProviderBridge> bridge);
 
 	private:
 		
@@ -253,6 +261,8 @@ namespace Leviathan{
 		//! Only one module can build code at a time so this mutex has to be locked while building
 		static boost::mutex ModuleBuildingMutex;
 
+		//! A connection to an object that provides us with parameters for automatically called script functions
+		shared_ptr<ScriptArgumentsProviderBridge> ArgsBridge;
 
 
 		// Data for file listening //

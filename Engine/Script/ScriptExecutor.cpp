@@ -131,12 +131,22 @@ void ScriptExecutor::Release(){
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptScript* scriptobject, ScriptRunningSetup* parameters){
-	// Get a ScriptModule for the script //
+	// Get the ScriptModule for the script //
 	ScriptModule* scrptmodule = scriptobject->GetModule();
 	if(!scrptmodule){
 		// report error and exit //
 		Logger::Get()->Error(L"ScriptExecutor: RunSetUp: trying to run an empty module");
 		return shared_ptr<VariableBlock>(new VariableBlock(-1));
+	}
+
+	// Use the actual running function //
+	return RunSetUp(scrptmodule, parameters);
+}
+
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptModule* scrptmodule, ScriptRunningSetup* parameters){
+	if(!scrptmodule){
+		Logger::Get()->Error(L"ScriptExecutor: RunSetUp: trying to run without a module");
+		return NULL;
 	}
 
 	// Load the actual script //
@@ -203,7 +213,6 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptSc
 	// Return the returned value //
 	return returnvalue;
 }
-
 
 DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunFunctionSetUp(asIScriptFunction* function, ScriptRunningSetup* parameters){
 	// Find a script module by the name //

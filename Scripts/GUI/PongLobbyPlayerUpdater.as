@@ -4,8 +4,8 @@ ScriptNotifier@ UpdateListener = null;
 // Determines if any data is stored, on first update will default to false
 bool OldDataCaptured = false;
 
+// Contains the stored data which is used to determine what has changed //
 PlayerDataHolder@ StoredData = @PlayerDataHolder();
-
 
 // This is for accessing the GUI windows for changing their data //
 GuiObject@ Us;

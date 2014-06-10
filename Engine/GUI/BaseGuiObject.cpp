@@ -24,11 +24,39 @@ DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const 
 }
 
 DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){
+
+
+}
+
+DLLEXPORT void Leviathan::Gui::BaseGuiObject::ReleaseData(){
+
 	// Unregister events to avoid access violations //
 	_UnsubscribeAllEvents();
-	
+
 	// Unregister all non-CEGUI events //
 	UnRegisterAllEvents();
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	_LeaveBondBridge();
+
+	// Make sure that the module doesn't use us //
+	if(Scripting){
+
+		auto module = Scripting->GetModuleSafe();
+
+		if(module){
+
+			module->SetAsInvalid();
+
+			auto directptr = module.get();
+			Scripting.reset();
+			module.reset();
+
+			// The module should be destroyed sometime //
+			ScriptExecutor::Get()->DeleteModule(directptr);
+		}
+	}
 }
 // ------------------------------------ //
 DLLEXPORT string Leviathan::Gui::BaseGuiObject::GetNameAsString(){
@@ -126,6 +154,9 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(){
 
 	mod->GetListOfListeners(containedlisteners);
 
+	// Allow the module to hot-reload our files //
+	_BondWithModule(mod);
+
 
 	for(size_t i = 0; i < containedlisteners.size(); i++){
 		// generics cannot be rocket events //
@@ -161,7 +192,7 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 
 	if(pEvent){
 		// Get the listener name from the event type //
-		wstring listenername = GetListenerNameFromType((*pEvent)->GetType());
+		const wstring& listenername = GetListenerNameFromType((*pEvent)->GetType());
 
 		// check does the script contain right listeners //
 		if(mod->DoesListenersContainSpecificListener(listenername)){
@@ -195,6 +226,28 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
 		}
 	}
+}
+// ------------------------------------ //
+DLLEXPORT unique_ptr<ScriptRunningSetup> Leviathan::Gui::BaseGuiObject::GetParametersForInit(){
+	return _GetArgsForAutoFunc();
+}
+
+DLLEXPORT unique_ptr<ScriptRunningSetup> Leviathan::Gui::BaseGuiObject::GetParametersForRelease(){
+	return _GetArgsForAutoFunc();
+}
+
+unique_ptr<ScriptRunningSetup> Leviathan::Gui::BaseGuiObject::_GetArgsForAutoFunc(){
+	// Setup the parameters //
+	vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"GuiObject"))
+		(new NamedVariableBlock(new VoidPtrBlock((Event*)nullptr), L"Event"));
+
+	// we are returning ourselves so increase refcount
+	AddRef();
+
+	unique_ptr<ScriptRunningSetup> sargs(new ScriptRunningSetup);
+	sargs->SetArguments(Args);
+
+	return sargs;
 }
 // ------------------------------------ //
 std::map<wstring, const CEGUI::String*> Leviathan::Gui::BaseGuiObject::CEGUIEventNames;

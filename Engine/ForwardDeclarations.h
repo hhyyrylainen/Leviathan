@@ -31,6 +31,8 @@ namespace Leviathan{
 	class ObjectFileTemplateInstance;
 	class ObjectFileTemplateDefinition;
 
+
+	class ScriptArgumentsProviderBridge;
 	class ResourceFolderListener;
 	class ResourceRefreshHandler;
 	class UTF8DataIterator;

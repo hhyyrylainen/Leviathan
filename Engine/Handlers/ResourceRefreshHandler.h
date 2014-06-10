@@ -103,6 +103,7 @@ namespace Leviathan{
 	//!
 	//! Mainly used for quickly reloading GUI files after minor changes
 	//! \note This class has lots of platform specific features which might not be available on non-windows platforms
+	//! \todo Combine listeners with the same file into a single thing
 	class ResourceRefreshHandler : public EngineComponent, public ThreadSafe{
 	public:
 		DLLEXPORT ResourceRefreshHandler();

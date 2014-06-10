@@ -56,8 +56,10 @@ namespace Leviathan{
 		// script running commands //
 
 		//! \brief Runs a script
-		//! \todo Make the module finding more efficient, store the module pointer in the ScriptModule class
 		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptScript* scriptobject, ScriptRunningSetup* parameters);
+
+		//! \brief Runs a script
+		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptModule* scrptmodule, ScriptRunningSetup* parameters);
 
 		//! \brief Runs a script function whose pointer is passed in
 		//! \todo Make the module finding more efficient, store module IDs in all call sites

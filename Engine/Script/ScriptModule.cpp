@@ -10,6 +10,7 @@
 #include "Common/StringOperations.h"
 #include "Handlers/ResourceRefreshHandler.h"
 #include "add_on/serializer/serializer.h"
+#include "Events/CallableObject.h"
 using namespace Leviathan;
 // ------------------------------------ //
 ScriptModule::ScriptModule(asIScriptEngine* engine, const wstring &name, int id, const string &source) : FuncParameterInfos(), 
@@ -37,6 +38,11 @@ ScriptModule::~ScriptModule(){
 DLLEXPORT void Leviathan::ScriptModule::Release(){
 	GUARD_LOCK_THIS_OBJECT();
 
+	// Leave from the bridge //
+	if(ArgsBridge)
+		ArgsBridge->LeaveModule();
+
+
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
 	_StopFileMonitoring();
@@ -50,6 +56,7 @@ DLLEXPORT void Leviathan::ScriptModule::Release(){
 	// And then delete the builder //
 	SAFE_DELETE(ScriptBuilder);
 	SAFE_DELETE_VECTOR(FuncParameterInfos);
+	ListenerDataBuilt = false;
 }
 
 int Leviathan::ScriptModule::LatestAssigned = 0;
@@ -255,14 +262,10 @@ void Leviathan::ScriptModule::_BuildListenerList(ObjectLock &guard){
 
 		asIScriptFunction* tmpfunc = mod->GetFunctionByIndex(i);
 
-		// check does name start with 'O' // 
-		//if(tmpfunc->GetName()[0] == 'O'){
-		//	// get metadata for this and process //
-			_ProcessMetadataForFunc(tmpfunc, mod);
-		//}
-	}
 
-	//PrintFunctionsInModule();
+		// get metadata for this and process //
+		_ProcessMetadataForFunc(tmpfunc, mod);
+	}
 
 	// data is now built //
 	ListenerDataBuilt = true;
@@ -516,16 +519,41 @@ DLLEXPORT const string& Leviathan::ScriptModule::GetModuleName() const{
 	return ModuleName;
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::ScriptModule::SetAsInvalid(){
+	GUARD_LOCK_THIS_OBJECT();
+
+	ScriptState = SCRIPTBUILDSTATE_DISCARDED;
+}
+// ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptModule::ReLoadModuleCode(){
 
 	GUARD_LOCK_THIS_OBJECT();
 
 	// The module must be still valid //
-	if(!GetModule())
+	if(ScriptState != SCRIPTBUILDSTATE_BUILT || !GetModule())
 		return false;
 
 
 	Logger::Get()->Info(L"Reloading "+GetInfoWstring());
+
+	if(ArgsBridge){
+
+		// Do a OnRelease event call //
+		const wstring& listenername = CallableObject::GetListenerNameFromType(EVENT_TYPE_RELEASE);
+
+		// check does the script contain right listeners //
+		if(DoesListenersContainSpecificListener(listenername)){
+
+			// Get the parameters //
+			auto sargs = ArgsBridge->GetProvider()->GetParametersForRelease();
+			sargs->SetEntrypoint(GetListeningFunctionName(listenername));
+
+			// Run the script //
+			ScriptExecutor::Get()->RunSetUp(this, sargs.get());
+
+			Logger::Get()->Info(L"ScriptModule: ran auto release");
+		}
+	}
 
 
 	// Store the old values //
@@ -561,7 +589,28 @@ DLLEXPORT bool Leviathan::ScriptModule::ReLoadModuleCode(){
 	}
 
 	// Restore the data //
-	backup.Restore(GetModule());
+	//backup.Restore(GetModule());
+
+	//Logger::Get()->Info(L"Successfully restored "+GetInfoWstring());
+
+	if(ArgsBridge){
+
+		// Do a OnRelease event call //
+		const wstring& listenername = CallableObject::GetListenerNameFromType(EVENT_TYPE_INIT);
+
+		// check does the script contain right listeners //
+		if(DoesListenersContainSpecificListener(listenername)){
+
+			// Get the parameters //
+			auto sargs = ArgsBridge->GetProvider()->GetParametersForInit();
+			sargs->SetEntrypoint(GetListeningFunctionName(listenername));
+
+			// Run the script //
+			ScriptExecutor::Get()->RunSetUp(this, sargs.get());
+
+			Logger::Get()->Info(L"ScriptModule: ran auto init after restore");
+		}
+	}
 
 
 	// Succeeded //
@@ -730,6 +779,19 @@ void Leviathan::ScriptModule::_BuildTheModule(){
 	}
 
 	ScriptState = SCRIPTBUILDSTATE_BUILT;
+}
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::ScriptModule::OnAddedToBridge(shared_ptr<ScriptArgumentsProviderBridge> bridge){
+
+	assert(this == bridge->GetModule() && "OnAddedToBridge it's not ours!");
+
+	if(ArgsBridge){
+
+		return false;
+	}
+	
+	ArgsBridge = bridge;
+	return true;
 }
 // ------------------------------------ //
 boost::mutex Leviathan::ScriptModule::ModuleBuildingMutex;

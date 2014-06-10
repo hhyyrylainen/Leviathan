@@ -50,6 +50,7 @@ guibaseselfcheckfordelete:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ReferenceCounted::UnsafeSetReferences(int value){
+	GUARD_LOCK_THIS_OBJECT();
 	RefCount = value;
 }
 // ------------------------------------ //

@@ -277,7 +277,8 @@ void Leviathan::Gui::GuiManager::Release(){
 	// Release objects first //
 
 	for(size_t i = 0; i < Objects.size(); i++){
-		// object's release function will do everything needed (even deleting if last reference) //
+
+		Objects[i]->ReleaseData();
 		SAFE_RELEASE(Objects[i]);
 	}
 	Objects.clear();
@@ -450,6 +451,7 @@ void Leviathan::Gui::GuiManager::DeleteObject(int id){
 	for(size_t i = 0; i < Objects.size(); i++){
 		if(Objects[i]->GetID() == id){
 
+			Objects[i]->ReleaseData();
 			SAFE_RELEASE(Objects[i]);
 			Objects.erase(Objects.begin()+i);
 			return;
@@ -661,8 +663,10 @@ DLLEXPORT void Leviathan::Gui::GuiManager::UnLoadGUIFile(){
 	// Unload all objects //
 	for(size_t i = 0; i < Objects.size(); i++){
 		
+		Objects[i]->ReleaseData();
 		SAFE_RELEASE(Objects[i]);
 	}
+
 	Objects.clear();
 
 	// Unload all collections //
@@ -757,6 +761,7 @@ void Leviathan::Gui::GuiManager::_ReleaseOgreResources(){
 // ------------------------------------ //
 void Leviathan::Gui::GuiManager::_FileChanged(const wstring &file, ResourceFolderListener &caller){
 	// Any updated file will cause whole reload //
+	GUARD_LOCK_THIS_OBJECT();
 
 	// Store the current state //
 	auto currentstate = GetGuiStates();

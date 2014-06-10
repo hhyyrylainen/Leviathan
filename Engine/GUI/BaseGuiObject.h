@@ -13,12 +13,14 @@
 #include "GuiCollection.h"
 #include "Events/EventableScriptObject.h"
 #include "boost/thread/mutex.hpp"
+#include "Script/ScriptArgumentsProvider.h"
 
 namespace Leviathan{ namespace Gui{
 
 
 	//! \brief Represents a single GUI element that can use scripts to react to events
-	class BaseGuiObject : public ReferenceCounted, public EventableScriptObject{
+	//! \todo Add a script module destruction queue
+	class BaseGuiObject : public ReferenceCounted, public EventableScriptObject, public ScriptArgumentsProvider{
 		friend GuiManager;
 	public:
 		DLLEXPORT BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid, shared_ptr<ScriptScript> script = NULL);
@@ -57,6 +59,9 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT string GetNameAsString();
 
 
+		//! \brief Releases the data held onto by this object
+		DLLEXPORT void ReleaseData();
+
 		//! \brief Returns the TargetElement CEGUI window which might be NULL
 		DLLEXPORT CEGUI::Window* GetTargetWindow() const;
 
@@ -74,6 +79,11 @@ namespace Leviathan{ namespace Gui{
 
 		//! \brief Proxy for PrintWindowsRecursive
 		DLLEXPORT void PrintWindowsRecursiveProxy();
+		
+		DLLEXPORT virtual unique_ptr<ScriptRunningSetup> GetParametersForInit();
+
+		DLLEXPORT virtual unique_ptr<ScriptRunningSetup> GetParametersForRelease();
+
 
 	protected:
 
@@ -92,6 +102,8 @@ namespace Leviathan{ namespace Gui{
 		//! \brief Calls the script for a specific CEGUI event listener
 		//! \return The scripts return value changed to an int
 		bool _CallCEGUIListener(const wstring &name);
+
+		unique_ptr<ScriptRunningSetup> _GetArgsForAutoFunc();
 
 
 		// ------------------------------------ //

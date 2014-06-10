@@ -197,8 +197,11 @@ DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefi
 
 			const string& newsource = ReplaceStringTemplateArguments(resultingsource, instanceargs.Arguments);
 
+			wstring newname = scrptmodule->GetName();
 
-			shared_ptr<ScriptScript> newscript(new ScriptScript(ScriptInterface::Get()->GetExecutor()->CreateNewModule(scrptmodule->GetName(), 
+			ReplaceWstringWithTemplateArguments(newname, instanceargs.WArguments);
+
+			shared_ptr<ScriptScript> newscript(new ScriptScript(ScriptInterface::Get()->GetExecutor()->CreateNewModule(newname, 
 				scrptmodule->GetSource())));
 
 			// Add the new script to the object //

@@ -8,16 +8,19 @@
 #include "Iterators/StringIterator.h"
 #include "FileSystem.h"
 #include "Common/StringOperations.h"
+#include "Handlers/ResourceRefreshHandler.h"
+#include "add_on/serializer/serializer.h"
 using namespace Leviathan;
 // ------------------------------------ //
-
-
 ScriptModule::ScriptModule(asIScriptEngine* engine, const wstring &name, int id, const string &source) : FuncParameterInfos(), 
 	ScriptBuilder(new CScriptBuilder()), Source(source), ID(id), Name(name), ScriptState(SCRIPTBUILDSTATE_EMPTY), 
-	ModuleName(source+"_;"+Convert::ToString<int>(LatestAssigned))
+	ModuleName(source+"_;"+Convert::ToString<int>(LatestAssigned)), ASModule(NULL)
 {
-	LatestAssigned++;
-	
+	{
+		boost::unique_lock<boost::mutex> lock(ModuleBuildingMutex);
+		LatestAssigned++;
+	}
+
 	// module will always be started //
 	ScriptBuilder->StartNewModule(engine, ModuleName.c_str());
 
@@ -28,9 +31,23 @@ ScriptModule::ScriptModule(asIScriptEngine* engine, const wstring &name, int id,
 }
 
 ScriptModule::~ScriptModule(){
-	// we'll need to destroy the module from the engine //
+
+}
+
+DLLEXPORT void Leviathan::ScriptModule::Release(){
+	GUARD_LOCK_THIS_OBJECT();
+
+#ifdef SCRIPTMODULE_LISTENFORFILECHANGES
+
+	_StopFileMonitoring();
+
+#endif // SCRIPTMODULE_LISTENFORFILECHANGES
+
+	// We'll need to destroy the module from the engine //
+	ASModule = NULL;
 	ScriptInterface::Get()->GetExecutor()->GetASEngine()->DiscardModule(ModuleName.c_str());
-	// and then delete the builder //
+
+	// And then delete the builder //
 	SAFE_DELETE(ScriptBuilder);
 	SAFE_DELETE_VECTOR(FuncParameterInfos);
 }
@@ -122,40 +139,45 @@ void Leviathan::ScriptModule::_FillParameterDataObject(int typeofas, asUINT* par
 }
 // ------------------------------------ //
 DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(){
+	GUARD_LOCK_THIS_OBJECT();
+
 	// we need to check build state //
 	if(ScriptState == SCRIPTBUILDSTATE_READYTOBUILD){
-		// Add the source files before building //
 
-		for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
-			if(ScriptBuilder->AddSectionFromMemory(ScriptSourceSegments[i]->SourceFile.c_str(), ScriptSourceSegments[i]->SourceCode->c_str(),
-				ScriptSourceSegments[i]->StartLine) < 0)
-			{
-				Logger::Get()->Error(L"ScriptModule: GetModule: failed to build unbuilt module (adding source files failed), "+GetInfoWstring());
-				ScriptState = SCRIPTBUILDSTATE_FAILED;
-				return NULL;
-			}
-		}
+		_BuildTheModule();
 
+#ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
-		// Build it //
-		int result = ScriptBuilder->BuildModule();
-		Logger::Get()->Save();
-		if(result < 0){
-			// failed to build //
-			Logger::Get()->Error(L"ScriptModule: GetModule: failed to build unbuilt module, "+GetInfoWstring());
-			ScriptState = SCRIPTBUILDSTATE_FAILED;
+		_StartMonitoringFiles();
+
+#endif // SCRIPTMODULE_LISTENFORFILECHANGES
+
+		if(ScriptState != SCRIPTBUILDSTATE_BUILT){
+
+			Logger::Get()->Error(L"ScriptModule: GetModule: unbuilt module failed to build, "+GetInfoWstring());
 			return NULL;
 		}
 
-		ScriptState = SCRIPTBUILDSTATE_BUILT;
-
-	} else if(ScriptState == SCRIPTBUILDSTATE_FAILED){
+	} else if(ScriptState == SCRIPTBUILDSTATE_FAILED || ScriptState == SCRIPTBUILDSTATE_DISCARDED){
 
 		return NULL;
 	}
 
-	// Get module from the engine //
-	return ScriptInterface::Get()->GetExecutor()->GetASEngine()->GetModule(ModuleName.c_str(), asGM_ONLY_IF_EXISTS);
+	// Return the saved pointer or fetch the pointer //
+	if(!ASModule){
+		// Get module from the engine //
+		ASModule = ScriptInterface::Get()->GetExecutor()->GetASEngine()->GetModule(ModuleName.c_str(), asGM_ONLY_IF_EXISTS);
+
+		if(!ASModule){
+
+			// The module is invalid //
+			Logger::Get()->Error(L"ScriptModule: GetModule: module is no longer anywhere to be found in the AS engine");
+			ScriptState = SCRIPTBUILDSTATE_DISCARDED;
+			return NULL;
+		}
+	}
+
+	return ASModule;
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<ScriptScript> Leviathan::ScriptModule::GetScriptInstance(){
@@ -164,9 +186,9 @@ DLLEXPORT shared_ptr<ScriptScript> Leviathan::ScriptModule::GetScriptInstance(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(const wstring &listenername, const wstring* generictype /*= NULL*/){
-
+	GUARD_LOCK_THIS_OBJECT();
 	// find from the map //
-	auto itr = _GetIteratorOfListener(listenername, generictype);
+	auto itr = _GetIteratorOfListener(guard, listenername, generictype);
 
 	if(itr != FoundListenerFunctions.end()){
 
@@ -178,9 +200,10 @@ DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(con
 }
 
 DLLEXPORT void Leviathan::ScriptModule::GetListOfListeners(std::vector<shared_ptr<ValidListenerData>> &receiver){
+	GUARD_LOCK_THIS_OBJECT();
 	// build info if not built //
 	if(!ListenerDataBuilt)
-		_BuildListenerList();
+		_BuildListenerList(guard);
 	// reserve space to be more efficient //
 	receiver.reserve(FoundListenerFunctions.size());
 	
@@ -191,8 +214,9 @@ DLLEXPORT void Leviathan::ScriptModule::GetListOfListeners(std::vector<shared_pt
 }
 
 DLLEXPORT string Leviathan::ScriptModule::GetListeningFunctionName(const wstring &listenername, const wstring* generictype /*= NULL*/){
+	GUARD_LOCK_THIS_OBJECT();
 	// call search function and check if it found anything //
-	auto itr = _GetIteratorOfListener(listenername, generictype);
+	auto itr = _GetIteratorOfListener(guard, listenername, generictype);
 	
 
 	if(itr != FoundListenerFunctions.end()){
@@ -202,18 +226,20 @@ DLLEXPORT string Leviathan::ScriptModule::GetListeningFunctionName(const wstring
 	// nothing found //
 	return "";
 }
-
 // ------------------------------------ //
 DLLEXPORT wstring Leviathan::ScriptModule::GetInfoWstring(){
 	return L"ScriptModule("+Convert::ToWstring(ID)+L") "+Name+L", from: "+Convert::StringToWstring(Source);
 }
 
 DLLEXPORT void Leviathan::ScriptModule::DeleteThisModule(){
+	GUARD_LOCK_THIS_OBJECT();
 	// tell script interface to unload this //
 	ScriptInterface::Get()->GetExecutor()->DeleteModule(this);
 }
 // ------------------------------------ //
-void Leviathan::ScriptModule::_BuildListenerList(){
+void Leviathan::ScriptModule::_BuildListenerList(ObjectLock &guard){
+
+	VerifyLock(guard);
 
 	// we need to find functions with metadata specifying which listener it is //
 	asIScriptModule* mod = GetModule();
@@ -319,12 +345,10 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, a
 }
 
 
-std::map<wstring, shared_ptr<ValidListenerData>>::iterator Leviathan::ScriptModule::_GetIteratorOfListener(const wstring &listenername, 
-	const wstring* generictype /*= NULL*/)
-{
+std::map<wstring, shared_ptr<ValidListenerData>>::iterator Leviathan::ScriptModule::_GetIteratorOfListener(ObjectLock &guard, const wstring &listenername, const wstring* generictype /*= NULL*/){
 	// build info if not built //
 	if(!ListenerDataBuilt)
-		_BuildListenerList();
+		_BuildListenerList(guard);
 
 	// find from the map //
 	std::map<wstring, shared_ptr<ValidListenerData>>::iterator itr = FoundListenerFunctions.end();
@@ -353,6 +377,8 @@ std::map<wstring, shared_ptr<ValidListenerData>>::iterator Leviathan::ScriptModu
 }
 
 DLLEXPORT void Leviathan::ScriptModule::PrintFunctionsInModule(){
+
+	GUARD_LOCK_THIS_OBJECT();
 	// list consoles' global variables //
 	Logger::Get()->Info(Name+L" instance functions: ");
 
@@ -378,8 +404,15 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
 
 	ScriptModule* module = reinterpret_cast<ScriptModule*>(userParam);
 
+	GUARD_LOCK_OTHER_OBJECT(module);
+
 	// if it is prefixed with ".\" or "./" then just look for the file with it's relative path //
 	if(file.find(".\\") == 0 || file.find("./") == 0){
+
+#ifdef SCRIPTMODULE_LISTENFORFILECHANGES
+
+		module->_AddFileToMonitorIfNotAlready(file);
+#endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
 		return builder->AddSectionFromFile(file.c_str());
 	}
@@ -392,6 +425,11 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
 
 		if(FileSystem::FileExists(completefile)){
 			// completed search //
+#ifdef SCRIPTMODULE_LISTENFORFILECHANGES
+
+			module->_AddFileToMonitorIfNotAlready(completefile);
+#endif // SCRIPTMODULE_LISTENFORFILECHANGES
+
 			return builder->AddSectionFromFile(completefile.c_str());
 		} else {
 			
@@ -411,6 +449,11 @@ trytofindinscriptfolderincludecallback:
 		wstring finalpath = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, name, extension, false);
 
 		if(finalpath.size() > 0){
+
+#ifdef SCRIPTMODULE_LISTENFORFILECHANGES
+
+			module->_AddFileToMonitorIfNotAlready(Convert::WstringToString(finalpath));
+#endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
 			return builder->AddSectionFromFile(Convert::WstringToString(finalpath).c_str());
 		} else {
@@ -436,6 +479,7 @@ DLLEXPORT shared_ptr<ScriptSourceFileData> Leviathan::ScriptModule::GetScriptSeg
 }
 
 DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegment(shared_ptr<ScriptSourceFileData> data){
+	GUARD_LOCK_THIS_OBJECT();
 	// Check is it already there //
 	for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
 
@@ -450,6 +494,7 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegment(shared_ptr<ScriptSource
 }
 
 DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const string &file){
+	GUARD_LOCK_THIS_OBJECT();
 	// Check is it already there //
 	for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
 
@@ -470,6 +515,225 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const string &f
 DLLEXPORT const string& Leviathan::ScriptModule::GetModuleName() const{
 	return ModuleName;
 }
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::ScriptModule::ReLoadModuleCode(){
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	// The module must be still valid //
+	if(!GetModule())
+		return false;
+
+
+	Logger::Get()->Info(L"Reloading "+GetInfoWstring());
+
+
+	// Store the old values //
+	CSerializer backup;
+	backup.Store(ASModule);
+
+	// Discard the old module //
+
+	ASModule = NULL;
+	ScriptInterface::Get()->GetExecutor()->GetASEngine()->DiscardModule(ModuleName.c_str());
+
+	// The builder must be created again //
+	SAFE_DELETE(ScriptBuilder);
+	SAFE_DELETE_VECTOR(FuncParameterInfos);
+
+	// Setup the new builder //
+	ScriptBuilder = new CScriptBuilder();
+
+
+	asIScriptEngine* engine = ScriptExecutor::Get()->GetASEngine();
+
+	ScriptBuilder->StartNewModule(engine, ModuleName.c_str());
+	ScriptBuilder->SetIncludeCallback(ScriptModuleIncludeCallback, this);
+	ListenerDataBuilt = false;
+
+	// Build the module //
+	_BuildTheModule();
+
+	if(ScriptState != SCRIPTBUILDSTATE_BUILT || !GetModule()){
+
+		// Failed to build //
+		return false;
+	}
+
+	// Restore the data //
+	backup.Restore(GetModule());
+
+
+	// Succeeded //
+	return true;
+}
+
+#ifdef SCRIPTMODULE_LISTENFORFILECHANGES
+
+void Leviathan::ScriptModule::_StartMonitoringFiles(){
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	// First add all the known source files //
+	auto end = ScriptSourceSegments.end();
+	for(auto iter = ScriptSourceSegments.begin(); iter != end; ++iter){
+
+
+		_AddFileToMonitorIfNotAlready((*iter)->SourceFile);
+	}
+
+	// The others should already have been included //
+	// Create listeners and we are good to go //
+	auto tmphandler = ResourceRefreshHandler::Get();
+
+	if(!tmphandler){
+
+		return;
+	}
+
+
+	auto end2 = AlreadyMonitoredFiles.end();
+	for(auto iter = AlreadyMonitoredFiles.begin(); iter != end2; ++iter){
+
+		// Skip if already added //
+		if((*iter)->Added)
+			continue;
+
+		std::vector<const wstring*> targetfiles;
+
+		// Add our file //
+		targetfiles.push_back((*iter)->File.get());
+
+		// Set this as added to avoid duplicates //
+		(*iter)->Added = true;
+
+		// Find all files that are in the same folder //
+		wstring basepath = StringOperations::GetPathWstring(*(*iter)->File);
+
+		for(auto iter2 = iter+1; iter2 != end2; ++iter2){
+
+			if(basepath == StringOperations::GetPathWstring(*(*iter2)->File) && !(*iter2)->Added){
+				
+				// This is in the same folder and thus can be monitored by the same listener //
+				targetfiles.push_back((*iter2)->File.get());
+
+				// This, too, is now added //
+				(*iter2)->Added = true;
+			}
+		}
+
+
+		// Start monitoring for them //
+		int listenerid;
+		tmphandler->ListenForFileChanges(targetfiles, boost::bind(&ScriptModule::_FileChanged, this, _1, _2), listenerid);
+
+		FileListeners.push_back(listenerid);
+	}
+}
+
+void Leviathan::ScriptModule::_StopFileMonitoring(){
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	auto tmphandler = ResourceRefreshHandler::Get();
+
+	if(tmphandler){
+
+		// Stop listening for all the files at once //
+		auto end = FileListeners.end();
+		for(auto iter = FileListeners.begin(); iter != end; ++iter){
+
+			tmphandler->StopListeningForFileChanges(*iter);
+		}
+
+		FileListeners.clear();
+
+
+	}
+
+	AlreadyMonitoredFiles.clear();
+
+
+	// Everything should be cleared now //
+
+}
+
+void Leviathan::ScriptModule::_AddFileToMonitorIfNotAlready(const string &file){
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	auto wfile = Convert::StringToWstring(file);
+
+	// Look for a matching string //
+	auto end = AlreadyMonitoredFiles.end();
+	for(auto iter = AlreadyMonitoredFiles.begin(); iter != end; ++iter){
+
+		if(*(*iter)->File == wfile)
+			return;
+	}
+
+
+	// Add it as it isn't there yet //
+	AlreadyMonitoredFiles.push_back(move(unique_ptr<AutomonitoredFile>(new AutomonitoredFile(file))));
+}
+
+void Leviathan::ScriptModule::_FileChanged(const wstring &file, ResourceFolderListener &caller){
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	// This ignores multiple messages //
+	if(!caller.IsAFileStillUpdated())
+		return;
+
+	// Mark everything as not updated //
+	auto tmphandler = ResourceRefreshHandler::Get();
+
+	if(tmphandler){
+
+		tmphandler->MarkListenersAsNotUpdated(FileListeners);
+	}
+
+	// Reload the module //
+	if(!ReLoadModuleCode()){
+
+		Logger::Get()->Error(L"ScriptModule: FileChanged: failed to reload the module, "+GetInfoWstring());
+	}
+}
+
+#endif // SCRIPTMODULE_LISTENFORFILECHANGES
+// ------------------------------------ //
+void Leviathan::ScriptModule::_BuildTheModule(){
+	// Add the source files before building //
+	for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
+		if(ScriptBuilder->AddSectionFromMemory(ScriptSourceSegments[i]->SourceFile.c_str(), ScriptSourceSegments[i]->SourceCode->c_str(),
+			ScriptSourceSegments[i]->StartLine) < 0)
+		{
+			Logger::Get()->Error(L"ScriptModule: GetModule: failed to build unbuilt module (adding source files failed), "+GetInfoWstring());
+			ScriptState = SCRIPTBUILDSTATE_FAILED;
+			return;
+		}
+	}
+
+	// Build it //
+	int result;
+	{
+		// Only one script can be built at a time so a lock is required //
+		boost::unique_lock<boost::mutex> lock(ModuleBuildingMutex);
+		result = ScriptBuilder->BuildModule();
+	}
+
+	if(result < 0){
+		// failed to build //
+		Logger::Get()->Error(L"ScriptModule: GetModule: failed to build unbuilt module, "+GetInfoWstring());
+		ScriptState = SCRIPTBUILDSTATE_FAILED;
+		return;
+	}
+
+	ScriptState = SCRIPTBUILDSTATE_BUILT;
+}
+// ------------------------------------ //
+boost::mutex Leviathan::ScriptModule::ModuleBuildingMutex;
+
 // ------------------ ValidListenerData ------------------ //
 Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, wstring* name, wstring* metadataend) 
 	: FuncPtr(funcptr), ListenerName(name), RestOfMeta(metadataend)

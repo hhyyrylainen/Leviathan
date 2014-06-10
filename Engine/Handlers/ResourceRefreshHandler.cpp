@@ -96,7 +96,28 @@ DLLEXPORT void Leviathan::ResourceRefreshHandler::CheckFileStatus(){
 		NextUpdateTime = Misc::GetThreadSafeSteadyTimePoint()+MillisecondDuration(1000);
 	}
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::ResourceRefreshHandler::MarkListenersAsNotUpdated(const std::vector<int> &ids){
 
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Find any listeners matching any of the ids //
+	auto end = ActiveFileListeners.end();
+	for(auto iter = ActiveFileListeners.begin(); iter != end; ++iter){
+
+		const int& curid = (*iter)->GetID();
+
+		// Check against all the ids //
+		auto end2 = ids.end();
+		for(auto iter2 = ids.begin(); iter2 != end2; ++iter2){ 
+			if(curid == *iter2){
+
+				(*iter)->MarkAllAsNotUpdated();
+				break;
+			}
+		}
+	}
+}
 // ------------------ ResourceFolderListener ------------------ //
 Leviathan::ResourceFolderListener::ResourceFolderListener(const std::vector<const wstring*> &filestowatch, 
 	boost::function<void (const wstring &, ResourceFolderListener&)> notifyfunction) : CallbackFunction(notifyfunction), 
@@ -374,4 +395,19 @@ void Leviathan::ResourceFolderListener::MarkAllAsNotUpdated(){
 
 		(*iter) = false;
 	}
+}
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::ResourceFolderListener::IsAFileStillUpdated() const{
+	// Try to find a set bool //
+	auto end = UpdatedFiles.end();
+	for(auto iter = UpdatedFiles.begin(); iter != end; ++iter){
+
+		if((*iter)){
+
+			return true;
+		}
+	}
+
+	// No file is marked as updated //
+	return false;
 }

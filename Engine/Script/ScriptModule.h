@@ -8,11 +8,19 @@
 // ---- includes ---- //
 #include "angelscript.h"
 #include "add_on/scriptbuilder/scriptbuilder.h"
+#include "Common/ThreadSafe.h"
+#include "boost/thread/mutex.hpp"
+
+#define SCRIPTMODULE_LISTENFORFILECHANGES
+
 
 
 namespace Leviathan{
 
-	enum SCRIPTBUILDSTATE{SCRIPTBUILDSTATE_EMPTY, SCRIPTBUILDSTATE_READYTOBUILD, SCRIPTBUILDSTATE_BUILT, SCRIPTBUILDSTATE_FAILED};
+	enum SCRIPTBUILDSTATE{SCRIPTBUILDSTATE_EMPTY, SCRIPTBUILDSTATE_READYTOBUILD, SCRIPTBUILDSTATE_BUILT, SCRIPTBUILDSTATE_FAILED,
+		//! Only set when the module can no longer be retrieved, and the whole ScriptModule needs to be recreated
+		SCRIPTBUILDSTATE_DISCARDED
+	};
 
 
 #define LISTENERNAME_ONSHOW					L"OnShow"
@@ -83,7 +91,7 @@ namespace Leviathan{
 
 
 	// \brief Holds everything related to "one" script needed to run it an build it
-	class ScriptModule{
+	class ScriptModule : public ThreadSafe{
 		// friend to be able to delete static objects //
 		friend ScriptExecutor;
 	public:
@@ -102,6 +110,10 @@ namespace Leviathan{
 		DLLEXPORT inline wstring GetName(){
 			return Name;
 		}
+
+
+		//! \brief Releases the internal resources
+		DLLEXPORT void Release();
 
 		//! \brief Gets the name of the internal AngelScript module
 		DLLEXPORT const string& GetModuleName() const;
@@ -151,9 +163,17 @@ namespace Leviathan{
 		//! \brief The actual implementation of AddScriptSegment
 		DLLEXPORT bool AddScriptSegment(shared_ptr<ScriptSourceFileData> data);
 
+
 		//! \brief Adds an entire file as a script segment
 		//! \return True when the file is added, false if the file was already added
 		DLLEXPORT bool AddScriptSegmentFromFile(const string &file);
+
+
+		//! \brief Rebuilds the module and tries to restore data
+		//!
+		//! Not all data can be restored (things changing types, application owned handles etc...)
+		//! \todo Add calls to OnRelease and OnInit events, just needs a way for the script owner to provide parameters
+		DLLEXPORT bool ReLoadModuleCode();
 
 
 		DLLEXPORT void PrintFunctionsInModule();
@@ -164,14 +184,37 @@ namespace Leviathan{
 		// static include resolver for scripts //
 		DLLEXPORT static int ScriptModuleIncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam);
 
+
 	private:
 		
 		ScriptModule(const ScriptModule &other){}
 		
 		void _FillParameterDataObject(int typeofas, asUINT* paramtypeid, wstring* paramdecl, int* datablocktype);
-		void _BuildListenerList();
+		void _BuildListenerList(ObjectLock &guard);
 		void _ProcessMetadataForFunc(asIScriptFunction* func, asIScriptModule* mod);
-		std::map<wstring, shared_ptr<ValidListenerData>>::iterator _GetIteratorOfListener(const wstring &listenername, const wstring* generictype = NULL);
+		std::map<wstring, shared_ptr<ValidListenerData>>::iterator _GetIteratorOfListener(ObjectLock &guard, const wstring &listenername, const wstring* generictype = NULL);
+
+
+		//! \brief Tries to build the module and sets the state accordingly
+		void _BuildTheModule();
+
+#ifdef SCRIPTMODULE_LISTENFORFILECHANGES
+
+		//! \brief Starts monitoring for changes to all script segments and all included files
+		//! \see ReLoadModuleCode
+		void _StartMonitoringFiles();
+
+		//! \brief Releases file listeners
+		//! \note This will need to be called before deleting this object unless the user wants access violations
+		void _StopFileMonitoring();
+
+
+		//! \brief Adds a new file to monitor, if required
+		void _AddFileToMonitorIfNotAlready(const string &file);
+
+#endif // SCRIPTMODULE_LISTENFORFILECHANGES
+
+
 		// ------------------------------------ //
 
 		wstring Name;
@@ -192,6 +235,9 @@ namespace Leviathan{
 		std::vector<shared_ptr<ScriptSourceFileData>> ScriptSourceSegments;
 
 
+		//! THe direct pointer to the module, this is stored to avoid searching
+		asIScriptModule* ASModule;
+
 
 		std::vector<FunctionParameterInfo*> FuncParameterInfos;
 
@@ -202,6 +248,40 @@ namespace Leviathan{
 
 		//! Last ID of a ScriptModule, used to generate unique IDs for modules
 		static int LatestAssigned;
+
+
+		//! Only one module can build code at a time so this mutex has to be locked while building
+		static boost::mutex ModuleBuildingMutex;
+
+
+
+		// Data for file listening //
+#ifdef SCRIPTMODULE_LISTENFORFILECHANGES
+
+		//! The list of file listeners used to release them when this module is about to be deleted
+		std::vector<int> FileListeners;
+
+
+		//! \brief Holds data related to a monitored script file
+		//! \todo Cache the file path to allow faster lookup
+		struct AutomonitoredFile{
+
+			AutomonitoredFile(const string &file) : File(new wstring(Convert::StringToWstring(file))), Added(false){
+			}
+
+			unique_ptr<wstring> File;
+			bool Added;
+		};
+
+		//! List of files that are already monitored, used to avoid duplicates
+		std::vector<unique_ptr<AutomonitoredFile>> AlreadyMonitoredFiles;
+
+
+		//! The function that is called when one of our files change
+		void _FileChanged(const wstring &file, ResourceFolderListener &caller);
+
+#endif // SCRIPTMODULE_LISTENFORFILECHANGES
+
 	};
 
 }

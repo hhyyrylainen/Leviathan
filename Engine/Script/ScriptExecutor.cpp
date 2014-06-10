@@ -112,6 +112,13 @@ bool ScriptExecutor::Init(){
 	return true;
 }
 void ScriptExecutor::Release(){
+
+	auto end = AllocatedScriptModules.end();
+	for(auto iter = AllocatedScriptModules.begin(); iter != end; ++iter){
+
+		(*iter)->Release();
+	}
+
 	// release/delete all modules //
 	AllocatedScriptModules.clear();
 
@@ -491,6 +498,8 @@ DLLEXPORT void Leviathan::ScriptExecutor::DeleteModule(ScriptModule* ptrtomatch)
 	// find module based on pointer and remove //
 	for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
 		if(AllocatedScriptModules[i].get() == ptrtomatch){
+
+			AllocatedScriptModules[i]->Release();
 			// remove //
 			AllocatedScriptModules.erase(AllocatedScriptModules.begin()+i);
 			return;
@@ -500,7 +509,6 @@ DLLEXPORT void Leviathan::ScriptExecutor::DeleteModule(ScriptModule* ptrtomatch)
 
 DLLEXPORT bool Leviathan::ScriptExecutor::DeleteModuleIfNoExternalReferences(int ID){
 	// Find based on the id //
-	// find module based on pointer and remove //
 	for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
 		if(AllocatedScriptModules[i]->GetID() == ID){
 			// Check reference count //
@@ -508,6 +516,8 @@ DLLEXPORT bool Leviathan::ScriptExecutor::DeleteModuleIfNoExternalReferences(int
 				// Other references exist //
 				return false;
 			}
+
+			AllocatedScriptModules[i]->Release();
 
 			// remove //
 			AllocatedScriptModules.erase(AllocatedScriptModules.begin()+i);

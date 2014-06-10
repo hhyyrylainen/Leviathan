@@ -26,7 +26,7 @@ namespace Leviathan{
 		~ResourceFolderListener();
 
 		//! \brief Gets the ID of this object
-		int GetID() const;
+		DLLEXPORT int GetID() const;
 
 		//! \brief Starts a listening thread
 		//! \see StopThread
@@ -42,7 +42,10 @@ namespace Leviathan{
 		//! \brief Marks all files as not updated
 		//!
 		//! Useful for getting just one notification from all the files
-		void MarkAllAsNotUpdated();
+		DLLEXPORT void MarkAllAsNotUpdated();
+
+		//! \brief Checks whether a file is still marked as updated
+		DLLEXPORT bool IsAFileStillUpdated() const;
 
 	protected:
 
@@ -129,6 +132,10 @@ namespace Leviathan{
 
 		//! \brief Called by Engine to check are updated files available
 		DLLEXPORT void CheckFileStatus();
+
+
+		//! \brief Marks all files in all listeners matching any of the IDs as not updated
+		DLLEXPORT void MarkListenersAsNotUpdated(const std::vector<int> &ids);
 
 
 		DLLEXPORT static ResourceRefreshHandler* Get();

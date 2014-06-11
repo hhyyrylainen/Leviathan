@@ -9,6 +9,10 @@
 #include "NetworkResponse.h"
 #include "Common/BaseNotifiable.h"
 
+//! Defines the interval between heartbeats
+//! Should be the same as CLIENT_HEARTBEATS_MILLISECOND
+#define SERVER_HEARTBEATS_MILLISECOND			250
+
 
 namespace Leviathan{
 
@@ -37,6 +41,16 @@ namespace Leviathan{
 		//! \todo Add the reason to the packet
 		DLLEXPORT void OnKicked(const wstring &reason);
 
+
+		//! \brief Starts requiring the player to send heartbeats
+		DLLEXPORT void StartHeartbeats();
+
+		//! \brief Call this when a heartbeat is received
+		DLLEXPORT void HeartbeatReceived();
+
+		//! \brief Call this at any appropriate time to update heartbeat statistics
+		DLLEXPORT void UpdateHeartbeats();
+
 	protected:
 		//! \brief Used to detect when a connection has been closed
 		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
@@ -46,6 +60,23 @@ namespace Leviathan{
 		ConnectionInfo* CorrenspondingConnection;
 		NetworkServerInterface* Owner;
 		bool ConnectionStatus;
+
+
+		//! The last time a heartbeat packet was received
+		WantedClockType::time_point LastReceivedHeartbeat;
+
+		//! Marks whether heartbeats are in use
+		bool UsingHeartbeats;
+
+
+		//! Gets set when a heartbeat hasn't been received for a while, this will be set before the player is kicked
+		bool IsControlLost;
+
+		//! How long it has been since a heartbeat
+		float SecondsWithoutConnection;
+
+		//! The last time a heartbeat was sent
+		WantedClockType::time_point LastSentHeartbeat;
 
 	};
 

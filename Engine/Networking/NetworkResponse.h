@@ -86,6 +86,12 @@ namespace Leviathan{
 		//! Contains SyncedResource update notification
 		NETWORKRESPONSETYPE_SYNCRESOURCEDATA,
 
+		//! A server heartbeat packet
+		NETWORKRESPONSETYPE_SERVERHEARTBEAT,
+
+		//! Marks that the client is required to send heartbeats
+		NETWORKRESPONSETYPE_STARTHEARTBEATS,
+
 		//! The packet is a game specific packet!
 		//! \see GameSpecificPacketHandler BaseGameSpecificFactory BaseGameSpecificResponsePacket
 		NETWORKRESPONSETYPE_CUSTOM,
@@ -268,6 +274,8 @@ namespace Leviathan{
 		DLLEXPORT void GenerateCloseConnectionResponse();
 		DLLEXPORT void GenerateRemoteConsoleOpenedResponse();
 		DLLEXPORT void GenerateRemoteConsoleClosedResponse();
+		DLLEXPORT void GenerateHeartbeatResponse();
+		DLLEXPORT void GenerateStartHeartbeatsResponse();
 
 
 		DLLEXPORT void GenerateEmptyResponse();

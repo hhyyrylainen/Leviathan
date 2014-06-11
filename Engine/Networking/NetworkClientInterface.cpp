@@ -10,10 +10,11 @@
 #include "boost/thread/future.hpp"
 #include "Exceptions/ExceptionInvalidState.h"
 #include "NetworkRequest.h"
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() : MaxConnectTries(DEFAULT_MAXCONNECT_TRIES), ConnectTriesCount(0), 
-	ConnectedToServer(false)
+	ConnectedToServer(false), UsingHeartbeats(false), SecondsWithoutConnection(0.f)
 {
 	Staticaccess = this;
 }
@@ -81,8 +82,25 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_pt
 	return false;
 }
 
-DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived){
-	
+DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection,
+	bool &dontmarkasreceived)
+{
+	switch(message->GetType()){
+	case NETWORKRESPONSETYPE_SERVERHEARTBEAT:
+		{
+			// We got a heartbeat //
+			_OnHeartbeat();
+			return true;
+		}
+	case NETWORKRESPONSETYPE_STARTHEARTBEATS:
+		{
+			// We need to start sending heartbeats //
+			_OnStartHeartbeats();
+			return true;
+		}
+	}
+
+
 	return false;
 }
 // ------------------------------------ //
@@ -126,6 +144,10 @@ checksentrequestsbeginlabel:
 		// Can't handle, continue looping //
 		++iter;
 	}
+
+	// Send heartbeats //
+	_UpdateHeartbeats();
+
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
@@ -365,6 +387,62 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::IsConnected() const{
 	return ConnectedToServer;
 }
 // ------------------------------------ //
+void Leviathan::NetworkClientInterface::_OnStartHeartbeats(){
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Ignore if already started /
+	if(UsingHeartbeats)
+		return;
+
+	// Reset heartbeat variables //
+	LastReceivedHeartbeat = Misc::GetThreadSafeSteadyTimePoint();
+	LastSentHeartbeat = LastReceivedHeartbeat;
+
+	SecondsWithoutConnection = 0.f;
+
+	// And start using them //
+	UsingHeartbeats = true;
+}
+
+void Leviathan::NetworkClientInterface::_OnHeartbeat(){
+	GUARD_LOCK_THIS_OBJECT();
+	// Reset the times //
+	LastReceivedHeartbeat = Misc::GetThreadSafeSteadyTimePoint();
+	SecondsWithoutConnection = 0.f;
+}
+
+void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
+	// Skip if not in use //
+	if(!UsingHeartbeats)
+		return;
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Check do we need to send one //
+	auto timenow = Misc::GetThreadSafeSteadyTimePoint();
+
+	if(timenow >= LastSentHeartbeat+MillisecondDuration(CLIENT_HEARTBEATS_MILLISECOND)){
+
+		// Send one //
+		shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
+		response->GenerateHeartbeatResponse();
+
+		ServerConnection->SendPacketToConnection(response, 1);
+
+		LastSentHeartbeat = timenow;
+	}
+
+	// Update the time without a response //
+	SecondsWithoutConnection = SecondDuration(timenow-LastSentHeartbeat).count();
+
+	// Do something if the time is too high //
+	if(SecondsWithoutConnection >= 2.f){
+
+
+
+	}
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const wstring &reasonstring, bool donebyus){
 
 }
@@ -384,6 +462,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnSuccessfullyConnectedToServ
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnNewConnectionStatusMessage(const wstring &message){
 
 }
+
 
 
 

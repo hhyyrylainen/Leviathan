@@ -65,7 +65,11 @@ void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> 
 		case PONG_PACKET_JOINGAME_REQUEST:
 			{
 				// Disallow if not connected //
-				if(!GetPlayerForConnection(connection)){
+				GUARD_LOCK_THIS_OBJECT();
+
+				Leviathan::ConnectedPlayer* ply = GetPlayerForConnection(connection);
+
+				if(!ply){
 
 					shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), 
 						Leviathan::PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));
@@ -78,6 +82,8 @@ void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> 
 				}
 
 				// Move the player to the proper state and send that state back to the player //
+				// We now require the player to send heartbeat packets //
+				ply->StartHeartbeats();
 
 				shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), 
 					Leviathan::PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));

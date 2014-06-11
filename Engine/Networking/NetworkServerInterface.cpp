@@ -5,6 +5,7 @@
 #endif
 #include "NetworkRequest.h"
 #include "ConnectionInfo.h"
+#include "Common\Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(int maxplayers, const wstring &servername, 
@@ -96,12 +97,32 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(shared_pt
 			return true;
 		}
 	}
+
 	// We didn't know how to handle this packet //
 	return false;
 }
 
-DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived){
-	// We don't know any handling for this //
+DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, 
+	bool &dontmarkasreceived)
+{
+	switch(message->GetType()){
+	case NETWORKRESPONSETYPE_SERVERHEARTBEAT:
+		{
+			// Notify the matching player object about a heartbeat //
+			ConnectedPlayer* ply = GetPlayerForConnection(connection);
+
+			if(!ply){
+
+				Logger::Get()->Warning(L"NetworkServerInterface: received a heartbeat packet from a nonexisting player");
+				return true;
+			}
+
+			ply->HeartbeatReceived();
+
+			return true;
+		}
+	}
+
 	return false;
 }
 
@@ -244,13 +265,17 @@ DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
 			iter = _OnReportCloseConnection(iter, guard);
 
 		} else {
+
+			(*iter)->UpdateHeartbeats();
+
 			++iter;
 		}
 	}
 }
 // ------------------ ConnectedPlayer ------------------ //
 Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance) : 
-	CorrenspondingConnection(unsafeconnection), Owner(owninginstance), ConnectionStatus(true)
+	CorrenspondingConnection(unsafeconnection), Owner(owninginstance), ConnectionStatus(true), UsingHeartbeats(false), IsControlLost(false),
+	SecondsWithoutConnection(0.f)
 {
 	// Register us //
 	this->ConnectToNotifier(unsafeconnection);
@@ -307,4 +332,86 @@ DLLEXPORT void Leviathan::ConnectedPlayer::OnKicked(const wstring &reason){
 
 	// Broadcast a kick message on the server here //
 
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::ConnectedPlayer::StartHeartbeats(){
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Send a start packet //
+	auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrenspondingConnection);
+
+	if(!connection){
+
+		ConnectionStatus = false;
+		return;
+	}
+
+	// Create the packet and THEN send it //
+	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));
+	response->GenerateStartHeartbeatsResponse();
+
+	connection->SendPacketToConnection(response, 7);
+
+	// Reset our variables //
+	UsingHeartbeats = true;
+
+	LastReceivedHeartbeat = Misc::GetThreadSafeSteadyTimePoint();
+	LastSentHeartbeat = LastReceivedHeartbeat;
+	SecondsWithoutConnection = 0.f;
+}
+
+DLLEXPORT void Leviathan::ConnectedPlayer::HeartbeatReceived(){
+	// Reset all timers //
+	GUARD_LOCK_THIS_OBJECT();
+
+	LastReceivedHeartbeat = Misc::GetThreadSafeSteadyTimePoint();
+
+	// Re-acquire controls, if lost in the first place //
+	if(IsControlLost){
+
+		DEBUG_BREAK;
+		IsControlLost = false;
+	}
+
+}
+
+DLLEXPORT void Leviathan::ConnectedPlayer::UpdateHeartbeats(){
+	// Skip if not used //
+	if(!UsingHeartbeats)
+		return;
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Check do we need to send one //
+	auto timenow = Misc::GetThreadSafeSteadyTimePoint();
+
+	if(timenow >= LastSentHeartbeat+MillisecondDuration(SERVER_HEARTBEATS_MILLISECOND)){
+
+		auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrenspondingConnection);
+
+		if(!connection){
+
+			ConnectionStatus = false;
+			return;
+		}
+
+		// Send one //
+		shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
+		response->GenerateHeartbeatResponse();
+
+		connection->SendPacketToConnection(response, 1);
+
+		LastSentHeartbeat = timenow;
+	}
+
+	// Update the time without a response //
+	SecondsWithoutConnection = SecondDuration(timenow-LastSentHeartbeat).count();
+
+	// Do something if the time is too high //
+	if(SecondsWithoutConnection >= 2.f){
+
+
+		IsControlLost = true;
+		DEBUG_BREAK;
+	}
 }

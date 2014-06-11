@@ -11,6 +11,11 @@
 #define DEFAULT_MAXCONNECT_TRIES		5
 
 
+//! Defines the interval between heartbeats
+//! Should be the same as SERVER_HEARTBEATS_MILLISECOND
+#define CLIENT_HEARTBEATS_MILLISECOND			250
+
+
 namespace Leviathan{
 
 
@@ -122,6 +127,17 @@ namespace Leviathan{
 		//! \todo Call variable syncing from here
 		void _ProperlyConnectedToServer(ObjectLock &guard);
 
+		//! \brief Called when we receive a start heartbeat packet
+		void _OnStartHeartbeats();
+
+
+		//! \brief Called when a heartbeat is received
+		void _OnHeartbeat();
+
+
+		//! \brief Updates the heartbeat states
+		void _UpdateHeartbeats();
+
 	protected:
 
 		//! This vector holds the made requests to allow using the response to do stuff
@@ -133,6 +149,21 @@ namespace Leviathan{
 
 		int ConnectTriesCount;
 		int MaxConnectTries;
+
+
+		//! Marks whether heartbeats are in use
+		bool UsingHeartbeats;
+
+		//! The last time a heartbeat packet was received
+		WantedClockType::time_point LastReceivedHeartbeat;
+
+		//! The last time a heartbeat was sent
+		WantedClockType::time_point LastSentHeartbeat;
+
+
+		//! Holds the time for how long we have been without a heartbeat
+		float SecondsWithoutConnection;
+
 
 		//! Static access for utility classes
 		static NetworkClientInterface* Staticaccess;

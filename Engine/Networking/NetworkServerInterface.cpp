@@ -113,11 +113,14 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shar
 
 			if(!ply){
 
-				Logger::Get()->Warning(L"NetworkServerInterface: received a heartbeat packet from a nonexisting player");
+				Logger::Get()->Warning(L"NetworkServerInterface: received a heartbeat packet from a non-existing player");
 				return true;
 			}
 
 			ply->HeartbeatReceived();
+			
+			// Avoid spamming packets back //
+			//dontmarkasreceived = true;
 
 			return true;
 		}
@@ -405,7 +408,7 @@ DLLEXPORT void Leviathan::ConnectedPlayer::UpdateHeartbeats(){
 	}
 
 	// Update the time without a response //
-	SecondsWithoutConnection = SecondDuration(timenow-LastSentHeartbeat).count();
+	SecondsWithoutConnection = SecondDuration(timenow-LastReceivedHeartbeat).count();
 
 	// Do something if the time is too high //
 	if(SecondsWithoutConnection >= 2.f){

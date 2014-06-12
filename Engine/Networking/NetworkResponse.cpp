@@ -190,7 +190,7 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateHeartbeatResponse(){
 }
 
 DLLEXPORT void Leviathan::NetworkResponse::GenerateStartHeartbeatsResponse(){
-	ResponseType = NETWORKRESPONSETYPE_SERVERHEARTBEAT;
+	ResponseType = NETWORKRESPONSETYPE_STARTHEARTBEATS;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 }

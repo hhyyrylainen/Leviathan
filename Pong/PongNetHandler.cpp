@@ -37,15 +37,14 @@ void Pong::PongNetHandler::HandleResponseOnlyPacket(shared_ptr<Leviathan::Networ
 		if(data->IsRequest)
 			return;
 
-		switch(data->TypeIDNumber){
-		case PONG_PACKET_JOINGAME_RESPONSE:
-			{
-				assert(0 && "shouldn't get this packet");
-			}
-			break;
-		}
+		//switch(data->TypeIDNumber){
+		//case PONG_PACKET_JOINGAME_RESPONSE:
+		//	{
+		//		return;
+		//	}
+		//}
 
-		return;
+
 	}
 
 	// We couldn't handle it //
@@ -70,14 +69,12 @@ void Pong::PongNetHandler::HandleRequestPacket(shared_ptr<NetworkRequest> reques
 		if(!data->IsRequest)
 			return;
 
-		switch(data->TypeIDNumber){
-		case PONG_PACKET_JOINGAME_REQUEST:
-			{
-				assert(0 && "shouldn't get this packet");
-			}
-			break;
-		}
-		return;
+		//switch(data->TypeIDNumber){
+		//case PONG_PACKET_JOINGAME_REQUEST:
+		//	{
+		//		return;
+		//	}
+		//}
 	}
 
 	// We couldn't handle it //

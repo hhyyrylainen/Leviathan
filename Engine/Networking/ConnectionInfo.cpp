@@ -354,7 +354,9 @@ movepacketsendattemptonexttry:
 				break;
 			case PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED:
 				{
-					if((*iter)->PacketNumber+(*iter)->TimeOutMS < SentPacketsConfirmedAsReceived.rbegin()->first){
+					if(!SentPacketsConfirmedAsReceived.empty() && 
+						(*iter)->PacketNumber+(*iter)->TimeOutMS < SentPacketsConfirmedAsReceived.rbegin()->first)
+					{
 
 						goto movepacketsendattemptonexttry;
 					}

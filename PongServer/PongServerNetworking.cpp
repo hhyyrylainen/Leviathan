@@ -34,10 +34,9 @@ void Pong::PongServerNetworking::HandleResponseOnlyPacket(shared_ptr<Leviathan::
 		if(data->IsRequest)
 			return;
 
-		switch(data->TypeIDNumber){
-		}
+		//switch(data->TypeIDNumber){
+		//}
 
-		return;
 	}
 
 	// We couldn't handle it //
@@ -91,11 +90,10 @@ void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> 
 				tmpresponse->GenerateCustomResponse(new PongJoinGameResponse(ServerStatusIs));
 
 				connection->SendPacketToConnection(tmpresponse, 3);
-
+				
+				return;
 			}
-			break;
 		}
-		return;
 	}
 
 

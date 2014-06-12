@@ -11,7 +11,7 @@
 
 //! Defines the interval between heartbeats
 //! Should be the same as CLIENT_HEARTBEATS_MILLISECOND
-#define SERVER_HEARTBEATS_MILLISECOND			250
+#define SERVER_HEARTBEATS_MILLISECOND			200
 
 
 namespace Leviathan{

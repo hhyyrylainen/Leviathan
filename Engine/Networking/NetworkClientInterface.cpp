@@ -90,6 +90,8 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
 		{
 			// We got a heartbeat //
 			_OnHeartbeat();
+			// Avoid spamming keepalive packets //
+			//dontmarkasreceived = true;
 			return true;
 		}
 	case NETWORKRESPONSETYPE_STARTHEARTBEATS:
@@ -418,6 +420,9 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
 
 	GUARD_LOCK_THIS_OBJECT();
 
+	if(!ServerConnection)
+		return;
+
 	// Check do we need to send one //
 	auto timenow = Misc::GetThreadSafeSteadyTimePoint();
 
@@ -439,7 +444,7 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
 	if(SecondsWithoutConnection >= 2.f){
 
 
-
+		DEBUG_BREAK;
 	}
 }
 // ------------------------------------ //

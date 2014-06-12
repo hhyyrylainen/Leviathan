@@ -21,7 +21,7 @@ namespace Leviathan{
 #define DEFAULT_ACKCOUNT		32
 #define KEEPALIVE_TIME			120000
 #define KEEPALIVE_RESPOND		30000
-#define ACKKEEPALIVE			50
+#define ACKKEEPALIVE			220
 
 
 //! Makes the program spam a ton of debug info about packets //

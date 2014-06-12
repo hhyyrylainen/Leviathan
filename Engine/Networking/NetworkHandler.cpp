@@ -251,7 +251,7 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 	// Loop through all received packets //
 	while(_Socket.receive(receivedpacket, sender, sentport) == sf::Socket::Done){
 		// Process packet //
-		Logger::Get()->Info(L"NetworkHandler: received a packet! from "+Convert::StringToWstring(sender.toString()));
+		//Logger::Get()->Info(L"NetworkHandler: received a packet! from "+Convert::StringToWstring(sender.toString()));
 
 		// Pass to a connection //
 		bool Passed = false;
@@ -268,6 +268,10 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 			continue;
 
 		shared_ptr<ConnectionInfo> tmpconnect;
+
+		// \todo Check is it a close or a keepalive packet //
+
+
 
 		// We might want to open a new connection to this client //
 		Logger::Get()->Info(L"Received a new connection from "+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));

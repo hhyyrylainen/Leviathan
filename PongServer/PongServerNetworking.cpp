@@ -6,6 +6,7 @@
 #include "Networking/NetworkRequest.h"
 #include "Networking/ConnectionInfo.h"
 #include "Networking/NetworkResponse.h"
+#include "Gameplay/CustomCommandHandler.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PongServerNetworking::PongServerNetworking() : NetworkServerInterface(8, L"Local pong game", Leviathan::NETWORKRESPONSE_SERVERJOINRESTRICT_NONE),
@@ -110,7 +111,9 @@ void Pong::PongServerNetworking::CloseDown(){
 	CloseDownServer();
 }
 // ------------------------------------ //
-
+void Pong::PongServerNetworking::RegisterCustomCommandHandlers(CommandHandler* addhere){
+	addhere->RegisterCustomCommandHandler(unique_ptr<Leviathan::CustomCommandHandler>(new PongCommandHandler(this)));
+}
 // ------------------------------------ //
 
 

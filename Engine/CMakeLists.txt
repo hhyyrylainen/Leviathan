@@ -41,6 +41,11 @@ file(GLOB GroupNetworking "Networking/*.cpp" "Networking/*.h")
 file(GLOB GroupThreading "Threading/*.cpp" "Threading/*.h")
 file(GLOB GroupIterators "Iterators/*.cpp" "Iterators/*.h")
 
+file(GLOB GroupGameplay "Gameplay/*.cpp" "Gameplay/*.h")
+file(GLOB GroupPermissions "Gameplay/Permissions/*.cpp" "Gameplay/Permissions/*.h")
+
+
+
 file(GLOB GeneratorInput "GeneratorInput/*.*")
 
 file(GLOB GroupLZ4 "lz4/*.c" "lz4/*.cpp" "lz4/*.h")
@@ -97,6 +102,8 @@ source_group("Common" FILES ${GroupCommon})
 source_group("Common\\Application" FILES ${GroupApplication})
 source_group("Common\\Exceptions" FILES ${GroupExceptions})
 source_group("Common\\DataStoring" FILES ${GroupCommonData})
+source_group("Gameplay" FILES ${GroupGameplay})
+source_group("Gameplay\\Permissions" FILES ${GroupPermissions})
 
 source_group("ObjectFiles" FILES ${GroupObjectFiles})
 
@@ -109,7 +116,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
     ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
-    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators})
+    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators} ${GroupGameplay} ${GroupPermissions})
 
     
 if(WIN32)

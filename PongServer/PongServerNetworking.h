@@ -1,15 +1,15 @@
 #ifndef PONGSERVERNETWORKING
 #define PONGSERVERNETWORKING
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
+#ifndef PONGINCLUDES
+#include "PongIncludes.h"
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Networking/NetworkInterface.h"
 #include "Networking/NetworkServerInterface.h"
 #include "PongPackets.h"
-
+#include "PongCommandHandler.h"
 
 
 namespace Pong{
@@ -26,7 +26,11 @@ namespace Pong{
 
 		virtual void CloseDown();
 
+
+
 	protected:
+
+		virtual void RegisterCustomCommandHandlers(CommandHandler* addhere);
 
 
 		PONG_JOINGAMERESPONSE_TYPE ServerStatusIs;

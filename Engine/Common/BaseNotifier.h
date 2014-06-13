@@ -12,7 +12,7 @@
 namespace Leviathan{
 
 	template<class ParentType, class ChildType>
-	class BaseNotifier : public ThreadSafe{
+	class BaseNotifier : public virtual ThreadSafe{
 	public:
 		DLLEXPORT BaseNotifier(ParentType* ourptr);
 		DLLEXPORT virtual ~BaseNotifier();

@@ -8,10 +8,11 @@
 // ---- includes ---- //
 #include "NetworkResponse.h"
 #include "Common/BaseNotifiable.h"
+#include "Gameplay/CommandHandler.h"
 
 //! Defines the interval between heartbeats
 //! Should be the same as CLIENT_HEARTBEATS_MILLISECOND
-#define SERVER_HEARTBEATS_MILLISECOND			200
+#define SERVER_HEARTBEATS_MILLISECOND			180
 
 
 namespace Leviathan{
@@ -19,7 +20,7 @@ namespace Leviathan{
 	//! \brief A class that represents a human player
 	//! \todo Add a kick method and use it in NetworkServerInterface::CloseDownServer
 	//! \todo Make _OnNotifierDisconnected set a disconnected flag that the server can kick based on upon
-	class ConnectedPlayer : public BaseNotifiableAll{
+	class ConnectedPlayer : public BaseNotifiableAll, public CommandSender{
 	public:
 		DLLEXPORT ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance);
 		//! \brief Empty destructor for exporting
@@ -55,6 +56,14 @@ namespace Leviathan{
 		//! \brief Used to detect when a connection has been closed
 		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
 
+		DLLEXPORT virtual const string& GetUniqueName();
+
+		DLLEXPORT virtual const string& GetNickname();
+
+		DLLEXPORT virtual COMMANDSENDER_PERMISSIONMODE GetPermissionMode();
+
+		DLLEXPORT virtual bool SendMessage(const string &message);
+
 		// ------------------------------------ //
 
 		ConnectionInfo* CorrenspondingConnection;
@@ -67,6 +76,14 @@ namespace Leviathan{
 
 		//! Marks whether heartbeats are in use
 		bool UsingHeartbeats;
+
+
+		//! The unique identifier of the player, might be a steam id or something else
+		string UniqueName;
+
+
+		//! The display name of the player
+		string DisplayName;
 
 
 		//! Gets set when a heartbeat hasn't been received for a while, this will be set before the player is kicked
@@ -149,6 +166,9 @@ namespace Leviathan{
 		DLLEXPORT virtual void _OnPlayerDisconnect(ConnectedPlayer* newplayer);
 		DLLEXPORT virtual bool PlayerPotentiallyKicked(ConnectedPlayer* player);
 
+		//! \brief Called when the application should register custom command handling providers
+		DLLEXPORT virtual void RegisterCustomCommandHandlers(CommandHandler* addhere);
+
 		//! \brief Called by _HandleServerJoinRequest to allow specific games to disallow players
 		//! \return true to allow join false to disallow join
 		//! \param message The error message to give back to the player
@@ -183,6 +203,11 @@ namespace Leviathan{
 
 		//! This can contain anything the specific game wants
 		int ExtraServerFlags;
+
+
+		//! The object used to handle all player submitted commands
+		CommandHandler* _CommandHandler;
+
 	};
 
 }

@@ -5,13 +5,14 @@
 #endif
 #include "NetworkRequest.h"
 #include "ConnectionInfo.h"
-#include "Common\Misc.h"
+#include "Common/Misc.h"
+#include "Gameplay/CommandHandler.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(int maxplayers, const wstring &servername, 
 	NETWORKRESPONSE_SERVERJOINRESTRICT restricttype /*= NETWORKRESPONSE_SERVERJOINRESTRICT_NONE*/, int additionalflags /*= 0*/) : MaxPlayers(maxplayers),
-		ServerName(servername), JoinRestrict(restricttype), ExtraServerFlags(additionalflags), AllowJoin(false), 
-		ServerStatus(NETWORKRESPONSE_SERVERSTATUS_STARTING)
+	ServerName(servername), JoinRestrict(restricttype), ExtraServerFlags(additionalflags), AllowJoin(false), 
+	ServerStatus(NETWORKRESPONSE_SERVERSTATUS_STARTING), _CommandHandler(new CommandHandler(this))
 {
 
 }
@@ -25,6 +26,8 @@ DLLEXPORT Leviathan::NetworkServerInterface::~NetworkServerInterface(){
 		//Logger::Get()->Warning(L"NetworkServerInterface: destructor has still active players, kicking must have failed");
 		iter = PlayerList.erase(iter);
 	}
+
+	SAFE_DELETE(_CommandHandler);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
@@ -83,6 +86,39 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SetServerAllowPlayers(bool all
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult){
 	switch(request->GetType()){
+	case NETWORKREQUESTTYPE_REQUESTEXECUTION:
+		{
+			// Get the matching player //
+			auto ply = GetPlayerForConnection(connectiontosendresult);
+
+			// Drop it if no matching players //
+			if(!ply)
+				return true;
+
+			// Extract the command //
+			auto data = request->GetCommandExecutionRequestData();
+
+			if(!data)
+				return true;
+
+			{
+				// We need to lock the player object for the adding process //
+				GUARD_LOCK_OTHER_OBJECT_NAME(ply, lock2);
+
+				// Execute it //
+				_CommandHandler->QueueCommand(data->Command, ply);
+			}
+
+			// Send a response to the sender //
+			shared_ptr<NetworkResponse> fineresponse(new NetworkResponse(request->GetExpectedResponseID(), 
+				PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 40));
+
+			fineresponse->GenerateEmptyResponse();
+
+			connectiontosendresult->SendPacketToConnection(fineresponse, 4);
+
+			return true;
+		}
 	case NETWORKREQUESTTYPE_SERVERSTATUS:
 		{
 			RespondToServerStatusRequest(request, connectiontosendresult);
@@ -120,7 +156,7 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shar
 			ply->HeartbeatReceived();
 			
 			// Avoid spamming packets back //
-			//dontmarkasreceived = true;
+			dontmarkasreceived = true;
 
 			return true;
 		}
@@ -237,6 +273,10 @@ DLLEXPORT void Leviathan::NetworkServerInterface::PlayerPreconnect(ConnectionInf
 
 }
 
+DLLEXPORT void Leviathan::NetworkServerInterface::RegisterCustomCommandHandlers(CommandHandler* addhere){
+
+}
+// ------------------------------------ //
 std::vector<ConnectedPlayer*>::iterator Leviathan::NetworkServerInterface::_OnReportCloseConnection(const std::vector<ConnectedPlayer*>::iterator 
 	&iter, ObjectLock &guard)
 {
@@ -256,24 +296,30 @@ std::vector<ConnectedPlayer*>::iterator Leviathan::NetworkServerInterface::_OnRe
 	delete (*iter);
 	return PlayerList.erase(iter);
 }
-
+// ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
-	GUARD_LOCK_THIS_OBJECT();
-	// Check for closed connections //
+	{
+		GUARD_LOCK_THIS_OBJECT();
+		// Check for closed connections //
 
-	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ){
-		// Check is it the player //
-		if((*iter)->IsConnectionClosed()){
-			// The player has disconnected //
-			iter = _OnReportCloseConnection(iter, guard);
+		for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ){
+			// Check is it the player //
+			if((*iter)->IsConnectionClosed()){
+				// The player has disconnected //
+				iter = _OnReportCloseConnection(iter, guard);
 
-		} else {
+			} else {
 
-			(*iter)->UpdateHeartbeats();
+				(*iter)->UpdateHeartbeats();
 
-			++iter;
+				++iter;
+			}
 		}
 	}
+
+
+	// Update the command handling //
+	_CommandHandler->UpdateStatus();
 }
 // ------------------ ConnectedPlayer ------------------ //
 Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance) : 
@@ -308,7 +354,8 @@ DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYoursPtrCompare(Connectio
 }
 
 DLLEXPORT Leviathan::ConnectedPlayer::~ConnectedPlayer(){
-
+	GUARD_LOCK_THIS_OBJECT();
+	_OnReleaseParentCommanders(guard);
 }
 
 DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionClosed() const{
@@ -372,7 +419,7 @@ DLLEXPORT void Leviathan::ConnectedPlayer::HeartbeatReceived(){
 	// Re-acquire controls, if lost in the first place //
 	if(IsControlLost){
 
-		DEBUG_BREAK;
+		
 		IsControlLost = false;
 	}
 
@@ -399,7 +446,7 @@ DLLEXPORT void Leviathan::ConnectedPlayer::UpdateHeartbeats(){
 		}
 
 		// Send one //
-		shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
+		shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 30));
 		response->GenerateHeartbeatResponse();
 
 		connection->SendPacketToConnection(response, 1);
@@ -415,6 +462,23 @@ DLLEXPORT void Leviathan::ConnectedPlayer::UpdateHeartbeats(){
 
 
 		IsControlLost = true;
-		DEBUG_BREAK;
 	}
+}
+// ------------------------------------ //
+DLLEXPORT const string& Leviathan::ConnectedPlayer::GetUniqueName(){
+	return UniqueName;
+}
+
+DLLEXPORT const string& Leviathan::ConnectedPlayer::GetNickname(){
+	return DisplayName;
+}
+
+DLLEXPORT COMMANDSENDER_PERMISSIONMODE Leviathan::ConnectedPlayer::GetPermissionMode(){
+	return COMMANDSENDER_PERMISSIONMODE_NORMAL;
+}
+
+DLLEXPORT bool Leviathan::ConnectedPlayer::SendMessage(const string &message){
+	
+	Logger::Get()->Write(L"Probably should implement a ChatManager");
+	return false;
 }

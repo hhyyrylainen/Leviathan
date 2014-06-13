@@ -20,6 +20,7 @@ namespace Leviathan{
 #define GUARD_LOCK_THIS_OBJECT_CAST(BaseClass)			ObjectLock guard(static_cast<BaseClass*>(this)->ObjectsLock);
 #define GUARD_LOCK_OTHER_OBJECT(x)						ObjectLock guard(x->ObjectsLock);
 #define GUARD_LOCK_OTHER_OBJECT_NAME(x,y)				ObjectLock y(x->ObjectsLock);
+#define GUARD_LOCK_OTHER_OBJECT_UNIQUE_PTR_NAME(x, y)	unique_ptr<ObjectLock> y(new ObjectLock(x->ObjectsLock));
 #define UNIQUE_LOCK_OBJECT(x)							UniqueObjectLock lockit(x->ObjectsLock);
 #define UNIQUE_LOCK_THIS_OBJECT()						UniqueObjectLock lockit(this->ObjectsLock);
 

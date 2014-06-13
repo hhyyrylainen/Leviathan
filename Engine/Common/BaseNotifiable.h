@@ -14,7 +14,7 @@ namespace Leviathan{
 	//! 
 	//! This works by using unhook events that are called on both if either one is destroyed
 	template<class ParentType, class ChildType>
-	class BaseNotifiable : public ThreadSafe{
+	class BaseNotifiable : public virtual ThreadSafe{
 	public:
 		DLLEXPORT BaseNotifiable(ChildType* ourptr);
 		DLLEXPORT virtual ~BaseNotifiable();

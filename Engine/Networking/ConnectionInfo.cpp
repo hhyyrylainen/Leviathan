@@ -442,7 +442,6 @@ movepacketsendattemptonexttry:
 		Logger::Get()->Info(L"ConnectionInfo: sending keepalive packet (because"+Convert::ToWstring(timems-LastSentPacketTime)+L" passed and acks await) to "
 			+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
 		SendKeepAlivePacket();
-
 	}
 
 	// Check for connection close //

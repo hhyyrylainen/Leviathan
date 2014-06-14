@@ -32,6 +32,9 @@ namespace Pong{
 
 		virtual void RegisterCustomCommandHandlers(CommandHandler* addhere);
 
+		//! \brief Removes the player from the game
+		virtual void _OnPlayerDisconnect(Leviathan::ConnectedPlayer* newplayer);
+
 
 		PONG_JOINGAMERESPONSE_TYPE ServerStatusIs;
 	};

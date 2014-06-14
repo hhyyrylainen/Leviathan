@@ -200,7 +200,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::SendKeepAlivePacket(ObjectLock &guard)
 	// Generate a packet from the request //
 	sf::Packet actualpackettosend;
 	// We need a complete header with acks and stuff //
-	_PreparePacketHeaderForPacket(++LastUsedID, actualpackettosend, false);
+	_PreparePacketHeaderForPacket(++LastUsedID, actualpackettosend, false, true);
 
 	// Generate packet object for the request //
 	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 100));
@@ -419,6 +419,7 @@ movepacketsendattemptonexttry:
 		}
 	}
 
+
 	// Check if we have unpacketed acks //
 	for(auto iter = ReceivedPacketsNotifiedAsReceivedByUs.begin(); iter != ReceivedPacketsNotifiedAsReceivedByUs.end(); ++iter){
 		if(!iter->second){
@@ -426,7 +427,6 @@ movepacketsendattemptonexttry:
 			AcksCouldBeSent = true;
 			break;
 		}
-
 	}
 
 
@@ -439,9 +439,13 @@ movepacketsendattemptonexttry:
 
 	} else if(AcksCouldBeSent && timems > LastSentPacketTime+ACKKEEPALIVE){
 		// Send some acks //
-		Logger::Get()->Info(L"ConnectionInfo: sending keepalive packet (because"+Convert::ToWstring(timems-LastSentPacketTime)+L" passed and acks await) to "
-			+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
-		SendKeepAlivePacket();
+		//Logger::Get()->Info(L"ConnectionInfo: sending packet (because"+Convert::ToWstring(timems-LastSentPacketTime)+L" passed and acks await) to "
+		//	+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+
+		shared_ptr<NetworkResponse> emptyresponse(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));
+		emptyresponse->GenerateEmptyResponse();
+
+		SendPacketToConnection(emptyresponse, 1);
 	}
 
 	// Check for connection close //
@@ -592,8 +596,13 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 
 
 		} else {
-			// Handle the response only packet //
-			NetworkHandler::GetInterface()->HandleResponseOnlyPacket(response, this, ShouldNotBeMarkedAsReceived);
+
+			// Just discard if it is an empty response //
+			if(response->GetType() != NETWORKRESPONSETYPE_NONE){
+
+				// Handle the response only packet //
+				NetworkHandler::GetInterface()->HandleResponseOnlyPacket(response, this, ShouldNotBeMarkedAsReceived);
+			}
 		}
 	}
 
@@ -636,7 +645,7 @@ void Leviathan::ConnectionInfo::_VerifyAckPacketsAsSuccesfullyReceivedFromHost(i
 	}
 }
 
-void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::Packet &tofill, bool isrequest){
+void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::Packet &tofill, bool isrequest, bool dontsendacks /*= false*/){
 	// First thing is the packet number //
 	tofill << packetid;
 
@@ -648,62 +657,70 @@ void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::
 	// We have now made a new packet //
 	LastSentPacketTime = Misc::GetTimeMs64();
 
-	bool newrequired = true;
 
-	for(size_t i = 0; i < AcksNotConfirmedAsReceived.size(); i++){
-		if(AcksNotConfirmedAsReceived[i]->SendCount < MaxAckReduntancy){
+	if(dontsendacks){
 
-			AcksNotConfirmedAsReceived[i]->SendCount++;
+		tofill << sf::Int32(-1) << sf::Int8(0);
 
-			tofill << *AcksNotConfirmedAsReceived[i]->AcksInThePacket;
+	} else {
 
-			newrequired = false;
-			break;
-		}
+		bool newrequired = true;
 
-	}
+		for(size_t i = 0; i < AcksNotConfirmedAsReceived.size(); i++){
+			if(AcksNotConfirmedAsReceived[i]->SendCount < MaxAckReduntancy){
 
-	if(newrequired){
-		// First we need to determine which received packet to use as first value //
+				AcksNotConfirmedAsReceived[i]->SendCount++;
 
-		if(!ReceivedPacketsNotifiedAsReceivedByUs.empty()){
+				tofill << *AcksNotConfirmedAsReceived[i]->AcksInThePacket;
 
-			bool foundstartval = ReceivedPacketsNotifiedAsReceivedByUs.find(LastSentConfirmID) != ReceivedPacketsNotifiedAsReceivedByUs.end();
-			int lastval = ReceivedPacketsNotifiedAsReceivedByUs.rbegin()->first;
-
-			if(LastSentConfirmID != -1 && foundstartval && (LastSentConfirmID+DEFAULT_ACKCOUNT <= lastval || 
-				ReceivedPacketsNotifiedAsReceivedByUs.size() < (size_t)(1.5f*DEFAULT_ACKCOUNT)) && (LastSentConfirmID+4 <= lastval || 
-				ReceivedPacketsNotifiedAsReceivedByUs.size() < (size_t)(6)))
-			{
-				// Current last sent is ok //
-
-			} else {
-				// Go back to beginning //
-				LastSentConfirmID = ReceivedPacketsNotifiedAsReceivedByUs.begin()->first;
+				newrequired = false;
+				break;
 			}
+
 		}
 
-		// Create the ack field //
-		shared_ptr<SentAcks> tmpacks(new SentAcks(packetid, new NetworkAckField(LastSentConfirmID, DEFAULT_ACKCOUNT, 
-			ReceivedPacketsNotifiedAsReceivedByUs)));
+		if(newrequired){
+			// First we need to determine which received packet to use as first value //
 
-		// Add to acks that actually matter if it has anything //
-		if(tmpacks->AcksInThePacket->Acks.size() > 0)
-			AcksNotConfirmedAsReceived.push_back(tmpacks);
+			if(!ReceivedPacketsNotifiedAsReceivedByUs.empty()){
+
+				bool foundstartval = ReceivedPacketsNotifiedAsReceivedByUs.find(LastSentConfirmID) != ReceivedPacketsNotifiedAsReceivedByUs.end();
+				int lastval = ReceivedPacketsNotifiedAsReceivedByUs.rbegin()->first;
+
+				if(LastSentConfirmID != -1 && foundstartval && (LastSentConfirmID+DEFAULT_ACKCOUNT <= lastval || 
+					ReceivedPacketsNotifiedAsReceivedByUs.size() < (size_t)(1.5f*DEFAULT_ACKCOUNT)) && (LastSentConfirmID+4 <= lastval || 
+					ReceivedPacketsNotifiedAsReceivedByUs.size() < (size_t)(6)))
+				{
+					// Current last sent is ok //
+
+				} else {
+					// Go back to beginning //
+					LastSentConfirmID = ReceivedPacketsNotifiedAsReceivedByUs.begin()->first;
+				}
+			}
+
+			// Create the ack field //
+			shared_ptr<SentAcks> tmpacks(new SentAcks(packetid, new NetworkAckField(LastSentConfirmID, DEFAULT_ACKCOUNT, 
+				ReceivedPacketsNotifiedAsReceivedByUs)));
+
+			// Add to acks that actually matter if it has anything //
+			if(tmpacks->AcksInThePacket->Acks.size() > 0)
+				AcksNotConfirmedAsReceived.push_back(tmpacks);
 
 #ifdef SPAM_ME_SOME_PACKETS
-		Logger::Get()->Info(L"PacketSpam: sending new acks (first id "+Convert::ToWstring(
-			tmpacks->AcksInThePacket->FirstPacketID)+L", count "+
-			Convert::ToWstring(tmpacks->AcksInThePacket->Acks.size())+L") to "
-			+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+			Logger::Get()->Info(L"PacketSpam: sending new acks (first id "+Convert::ToWstring(
+				tmpacks->AcksInThePacket->FirstPacketID)+L", count "+
+				Convert::ToWstring(tmpacks->AcksInThePacket->Acks.size())+L") to "
+				+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 
-		// Put into the packet //
-		tofill << *tmpacks->AcksInThePacket;
+			// Put into the packet //
+			tofill << *tmpacks->AcksInThePacket;
 
-		// We increment the last send, just for fun and to see what happens //
-		if(LastSentConfirmID != -1)
-			LastSentConfirmID++;
+			// We increment the last send, just for fun and to see what happens //
+			if(LastSentConfirmID != -1)
+				LastSentConfirmID++;
+		}
 	}
 
 	// Mark as request, if it is one //

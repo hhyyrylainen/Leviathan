@@ -35,8 +35,7 @@ namespace Leviathan{
 		DLLEXPORT virtual COMMANDSENDER_PERMISSIONMODE GetPermissionMode() = 0;
 
 		//! \brief This should send a message to this entity for them to see what happened when they executed a command
-		//! \return Return false when unable to send (the message will them appear in the server log where someone hopefully will see it)
-		DLLEXPORT virtual bool SendPrivateMessage(const string &message) = 0;
+		DLLEXPORT virtual void SendPrivateMessage(const string &message);
 
 
 		//! \brief Marks the start of a time period during which this object needs to report if it is released
@@ -52,6 +51,11 @@ namespace Leviathan{
 
 		//! \brief Call when releasing, this is only required if StartOwnership and EndOwnership aren't overloaded
 		DLLEXPORT virtual void _OnReleaseParentCommanders(ObjectLock &guard);
+
+
+		//! \brief Should be the actual implementation of SendPrivateMessage
+		//! \return Return false when unable to send (the message will them appear in the server log where someone hopefully will see it)
+		DLLEXPORT virtual bool _OnSendPrivateMessage(const string &message) = 0;
 
 
 		//! Holds the command handler parents that we need to notify

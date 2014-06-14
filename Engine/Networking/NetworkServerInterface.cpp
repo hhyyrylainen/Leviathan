@@ -7,6 +7,7 @@
 #include "ConnectionInfo.h"
 #include "Common/Misc.h"
 #include "Gameplay/CommandHandler.h"
+#include "SyncedVariables.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(int maxplayers, const wstring &servername, 
@@ -95,6 +96,14 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(shared_pt
 			if(!ply)
 				return true;
 
+			// Send a response to the sender //
+			shared_ptr<NetworkResponse> fineresponse(new NetworkResponse(request->GetExpectedResponseID(), 
+				PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 40));
+
+			fineresponse->GenerateEmptyResponse();
+
+			connectiontosendresult->SendPacketToConnection(fineresponse, 4);
+
 			// Extract the command //
 			auto data = request->GetCommandExecutionRequestData();
 
@@ -108,14 +117,6 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(shared_pt
 				// Execute it //
 				_CommandHandler->QueueCommand(data->Command, ply);
 			}
-
-			// Send a response to the sender //
-			shared_ptr<NetworkResponse> fineresponse(new NetworkResponse(request->GetExpectedResponseID(), 
-				PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 40));
-
-			fineresponse->GenerateEmptyResponse();
-
-			connectiontosendresult->SendPacketToConnection(fineresponse, 4);
 
 			return true;
 		}
@@ -156,7 +157,7 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shar
 			ply->HeartbeatReceived();
 			
 			// Avoid spamming packets back //
-			dontmarkasreceived = true;
+			//dontmarkasreceived = true;
 
 			return true;
 		}
@@ -239,6 +240,8 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(share
 	// Player joined! //
 
 	PlayerList.push_back(new ConnectedPlayer(connection, this));
+
+	SyncedVariables::Get()->AddAnotherToSyncWith(connection);
 
 	_OnPlayerConnected(PlayerList.back());
 
@@ -333,6 +336,9 @@ Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, Ne
 void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
 	{
 		GUARD_LOCK_THIS_OBJECT();
+
+		// Stop syncing values with this client //
+		SyncedVariables::Get()->RemoveConnectionWithAnother(CorrenspondingConnection);
 
 		// Set as closing //
 		ConnectionStatus = false;
@@ -477,8 +483,12 @@ DLLEXPORT COMMANDSENDER_PERMISSIONMODE Leviathan::ConnectedPlayer::GetPermission
 	return COMMANDSENDER_PERMISSIONMODE_NORMAL;
 }
 
-DLLEXPORT bool Leviathan::ConnectedPlayer::SendPrivateMessage(const string &message){
+DLLEXPORT bool Leviathan::ConnectedPlayer::_OnSendPrivateMessage(const string &message){
 	
 	Logger::Get()->Write(L"Probably should implement a ChatManager");
 	return false;
+}
+
+DLLEXPORT ConnectionInfo* Leviathan::ConnectedPlayer::GetConnection(){
+	return CorrenspondingConnection;
 }

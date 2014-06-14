@@ -21,7 +21,7 @@ namespace Leviathan{
 #define DEFAULT_ACKCOUNT		32
 #define KEEPALIVE_TIME			120000
 #define KEEPALIVE_RESPOND		30000
-#define ACKKEEPALIVE			220
+#define ACKKEEPALIVE			200
 
 
 //! Makes the program spam a ton of debug info about packets //
@@ -184,7 +184,7 @@ namespace Leviathan{
 		// Marks the acks in packet received as successfully sent and erases them //
 		void _VerifyAckPacketsAsSuccesfullyReceivedFromHost(int packetreceived);
 
-		void _PreparePacketHeaderForPacket(int packetid, sf::Packet &tofill, bool isrequest);
+		void _PreparePacketHeaderForPacket(int packetid, sf::Packet &tofill, bool isrequest, bool dontsendacks = false);
 
 		shared_ptr<SentNetworkThing> _GetPossibleRequestForResponse(shared_ptr<NetworkResponse> response);
 		// ------------------------------------ //

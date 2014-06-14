@@ -20,6 +20,9 @@ DLLEXPORT Leviathan::SyncedVariables::SyncedVariables(NetworkHandler* owner, boo
 
 DLLEXPORT Leviathan::SyncedVariables::~SyncedVariables(){
 	Staticaccess = NULL;
+
+	ReleaseParentHooks();
+	ReleaseChildHooks();
 }
 
 DLLEXPORT SyncedVariables* Leviathan::SyncedVariables::Get(){
@@ -59,21 +62,26 @@ DLLEXPORT void Leviathan::SyncedVariables::AddAnotherToSyncWith(ConnectionInfo* 
 		}
 	}
 
+	ConnectToNotifier(unsafeptr);
+
 	// Add the new one //
 	ConnectedToOthers.push_back(unsafeptr);
 	Logger::Get()->Warning(L"SyncedVariables: AddAnotherToSyncWith: connected to a new other one (could try to get the address here...)");
 	return;
 }
 
-DLLEXPORT void Leviathan::SyncedVariables::RemoveConnectionWithAnother(ConnectionInfo* unsafeptr){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT void Leviathan::SyncedVariables::RemoveConnectionWithAnother(ConnectionInfo* ptr, ObjectLock &guard, bool alreadyunhooking){
+	VerifyLock(guard);
 
 	// Look for a matching pointer and remove it //
 	for(auto iter = ConnectedToOthers.begin(); iter != ConnectedToOthers.end(); ++iter){
-		if(*iter == unsafeptr){
+		if(*iter == ptr){
 
 			Logger::Get()->Info(L"SyncedVariables: RemoveConnectionWithAnother: removed a connection (could try to get the address here...)");
 			ConnectedToOthers.erase(iter);
+
+			if(!alreadyunhooking)
+				UnConnectFromNotifier(ptr);
 			return;
 		}
 	}
@@ -249,7 +257,14 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 	case NETWORKRESPONSETYPE_SYNCRESOURCEDATA:
 		{
 			// We got custom sync data //
-			
+			if(IsHost){
+
+				Logger::Get()->Warning(L"SyncedVariables: HandleResponseOnlySync: we are a host and got update data, ignoring "
+					L"(use server commands to change data on the server)");
+				return true;
+			}
+
+
 			NetworkResponseDataForSyncResourceData* data = response->GetResponseDataForSyncResourceResponse();
 			if(!data){
 				Logger::Get()->Error(L"SyncedVariables: received a resource sync response containing no data");
@@ -316,16 +331,9 @@ void Leviathan::SyncedVariables::_NotifyUpdatedValue(const SyncedValue* const va
 
 	// Send it //
 	for(size_t i = 0; i < ConnectedToOthers.size(); i++){
-		// The connection might have closed so we need to retrieve the actual pointer //
-		auto safeptr = NetworkHandler::Get()->GetSafePointerToConnection(ConnectedToOthers[i]);
 
-		if(safeptr){
-			// Send to connection //
-			safeptr->SendPacketToConnection(tmpresponse, 100);
-
-		} else {
-			DEBUG_BREAK;
-		}
+		// Send to connection //
+		ConnectedToOthers[i]->SendPacketToConnection(tmpresponse, 100);
 	}
 }
 
@@ -352,16 +360,9 @@ void Leviathan::SyncedVariables::_NotifyUpdatedValue(SyncedResource* valtosync, 
 
 	// Send it //
 	for(size_t i = 0; i < ConnectedToOthers.size(); i++){
-		// The connection might have closed so we need to retrieve the actual pointer //
-		auto safeptr = NetworkHandler::Get()->GetSafePointerToConnection(ConnectedToOthers[i]);
 
-		if(safeptr){
-			// Send to connection //
-			safeptr->SendPacketToConnection(tmpresponse, 100);
-
-		} else {
-			DEBUG_BREAK;
-		}
+		// Send to connection //
+		ConnectedToOthers[i]->SendPacketToConnection(tmpresponse, 100);
 	}
 }
 // ------------------------------------ //
@@ -374,16 +375,8 @@ shared_ptr<SentNetworkThing> Leviathan::SyncedVariables::_SendValueToSingleRecei
 	// Report //
 	Logger::Get()->Info(L"SyncedVariables: syncing variable "+valtosync->GetVariableAccess()->GetName()+L" with specific");
 
-	// The connection might have closed so we need to retrieve the actual pointer //
-	auto safeptr = NetworkHandler::Get()->GetSafePointerToConnection(unsafeptr);
-
-	if(safeptr){
-		// Send to connection //
-		return safeptr->SendPacketToConnection(tmpresponse, 5);
-
-	}
-
-	return NULL;
+	// Send to connection //
+	return unsafeptr->SendPacketToConnection(tmpresponse, 5);
 }
 
 shared_ptr<SentNetworkThing> Leviathan::SyncedVariables::_SendValueToSingleReceiver(ConnectionInfo* unsafeptr, SyncedResource* valtosync){
@@ -401,15 +394,8 @@ shared_ptr<SentNetworkThing> Leviathan::SyncedVariables::_SendValueToSingleRecei
 	// Report //
 	Logger::Get()->Info(L"SyncedVariables: syncing resource "+valtosync->Name+L" with specific");
 
-	// The connection might have closed so we need to retrieve the actual pointer //
-	auto safeptr = NetworkHandler::Get()->GetSafePointerToConnection(unsafeptr);
-
-	if(safeptr){
-		// Send to connection //
-		return safeptr->SendPacketToConnection(tmpresponse, 5);
-	}
-
-	return NULL;
+	// Send to connection //
+	return unsafeptr->SendPacketToConnection(tmpresponse, 5);
 }
 // ------------------------------------ //
 void Leviathan::SyncedVariables::_OnSyncedResourceReceived(const wstring &name, sf::Packet &packetdata){
@@ -508,6 +494,13 @@ void Leviathan::SyncedVariables::_UpdateReceiveCount(const wstring &nameofthing)
 
 DLLEXPORT void Leviathan::SyncedVariables::SetExpectedNumberOfVariablesReceived(size_t amount){
 	ExpectedThingCount = amount;
+}
+
+void Leviathan::SyncedVariables::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
+	GUARD_LOCK_THIS_OBJECT();
+
+	Logger::Get()->Info(L"SyncedVariables: stopping sync with specific, because connection is closing");
+	RemoveConnectionWithAnother(static_cast<ConnectionInfo*>(parenttoremove), guard, true);
 }
 // ------------------ SyncedValue ------------------ //
 DLLEXPORT Leviathan::SyncedValue::SyncedValue(NamedVariableList* newddata, bool passtoclients /*= true*/, bool allowevents /*= true*/) : 

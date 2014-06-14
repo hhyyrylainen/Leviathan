@@ -41,6 +41,15 @@ namespace Pong{
 
 		}
 
+
+		PlayerList* GetPlayers(){
+
+			return &_PlayerList;
+		}
+
+
+		static PongServer* Get(); 
+
 	protected:
 
 		virtual void ServerCheckEnd();
@@ -54,7 +63,7 @@ namespace Pong{
 
 
 
-
+		static PongServer* Staticaccess;
 	};
 
 }

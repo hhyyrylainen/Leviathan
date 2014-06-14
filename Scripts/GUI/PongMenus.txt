@@ -307,7 +307,7 @@ template<> PGCTemplate<LobbyScreen, "LobbyScreen", false>
 // Lobby screen state request handler //
 o GuiObject "_LobbyScreenSetter"{
     s{
-        [@Listener="Generic",@Type="LobbyScreenState"]
+        [@Listener="Generic", @Type="LobbyScreenState"]
         int SetStateRight(GuiObject@ instance, GenericEvent@ event){
             // Get the state //
             string statestr = string(event.GetNamedVars().GetSingleValueByName("State"));
@@ -389,11 +389,11 @@ template<TabAndName, TSlotNumber> LobbyFirstPlayerButton: o GuiObject "LobbyScre
             // Check is it closed or empty
             if(base.GetSlot(TSlotNumber).GetPlayerType() == PLAYERTYPE_CLOSED){
                 // Open it //
-                GetPongGame().SendServerCommand("open "+TSlotNumber);
+                GetPongGame().SendServerCommand("open "+TSlotNumber+" 0");
                 
             } else if(base.GetSlot(TSlotNumber).GetPlayerType() == PLAYERTYPE_EMPTY){
                 // Join //
-                GetPongGame().SendServerCommand("join "+TSlotNumber);
+                GetPongGame().SendServerCommand("join "+TSlotNumber+" 0");
                 
             } else {
                 // Somebody is in it already, potentially send a chat message here to indicate that or maybe

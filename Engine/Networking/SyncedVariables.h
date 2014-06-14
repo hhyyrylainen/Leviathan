@@ -65,7 +65,7 @@ namespace Leviathan{
 	//! By default this doesn't synchronize anything. You will have to manually add variables
 	//! \todo Events
 	//! \todo Add function to be able to check if sync completed successfully
-	class SyncedVariables : public BaseNotifierAll{
+	class SyncedVariables : public BaseNotifierAll, public BaseNotifiableAll{
 		friend SyncedValue;
 		friend SyncedResource;
 	public:
@@ -94,9 +94,20 @@ namespace Leviathan{
 
 
 		//! \brief Adds another instance to sync with
+		//! \note The ConnectionInfo parameter should be locked during this call
 		DLLEXPORT void AddAnotherToSyncWith(ConnectionInfo* unsafeptr);
 
-		DLLEXPORT void RemoveConnectionWithAnother(ConnectionInfo* unsafeptr);
+		DLLEXPORT FORCE_INLINE void RemoveConnectionWithAnother(ConnectionInfo* ptr){
+
+			GUARD_LOCK_THIS_OBJECT();
+			RemoveConnectionWithAnother(ptr, guard);
+		}
+
+
+		//! \brief Stops updating with a single other
+		//! \param alreadyunhooking Used internally don't set to true unless you know what you are doing
+		DLLEXPORT void RemoveConnectionWithAnother(ConnectionInfo* ptr, ObjectLock &guard, bool alreadyunhooking = false);
+
 
 		//! \brief Provided for NetworkServerInterface and NetworkClientInterface to access AddAnotherToSyncWith and other functions
 		DLLEXPORT static SyncedVariables* Get();
@@ -144,6 +155,10 @@ namespace Leviathan{
 
 		//! \brief Updates the number of synced values received during SyncDone
 		void _UpdateReceiveCount(const wstring &nameofthing);
+
+
+		//! \brief Used to remove connections that are no longer active
+		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
 
 		// ------------------------------------ //
 

@@ -5,6 +5,9 @@
 #endif
 #include "Iterators/StringIterator.h"
 #include "Gameplay/CommandHandler.h"
+#include "PlayerSlot.h"
+#include "PongServer.h"
+#include "Networking/NetworkServerInterface.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PongCommandHandler::PongCommandHandler(PongServerNetworking* owner) : Owner(owner){
@@ -81,6 +84,34 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 			return;
 		}
 
+		PlayerList* slots = PongServer::Get()->GetPlayers();
+
+		// Check is the slot empty //
+		auto chosenslot = slots->GetSlot(slotnumber);
+
+		if(split)
+			chosenslot = chosenslot->GetSplit();
+
+		if(!chosenslot){
+
+			sender->SendPrivateMessage("The chosen slot/sub-slot is not open/created.");
+			return;
+		}
+
+		if(chosenslot->GetPlayerType() != PLAYERTYPE_EMPTY){
+
+			// Somebody has taken it //
+			sender->SendPrivateMessage("that slot is already taken");
+			return;
+		}
+
+		// Add this player to the slot //
+		chosenslot->SlotJoinPlayer(dynamic_cast<Leviathan::ConnectedPlayer*>(sender));
+
+		Logger::Get()->Info(L"Player joined slot "+Convert::ToWstring(slotnumber)+L", split "+Convert::ToWstring<int>(split)+L" named "
+			+Convert::Utf8ToUtf16(sender->GetNickname()));
+
+		slots->NotifyUpdatedValue();
 	}
 
 

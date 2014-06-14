@@ -7,6 +7,8 @@
 #include "Networking/ConnectionInfo.h"
 #include "Networking/NetworkResponse.h"
 #include "Gameplay/CustomCommandHandler.h"
+#include "PongServer.h"
+#include "PlayerSlot.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PongServerNetworking::PongServerNetworking() : NetworkServerInterface(8, L"Local pong game", Leviathan::NETWORKRESPONSE_SERVERJOINRESTRICT_NONE),
@@ -115,6 +117,24 @@ void Pong::PongServerNetworking::RegisterCustomCommandHandlers(CommandHandler* a
 	addhere->RegisterCustomCommandHandler(make_shared<PongCommandHandler>(this));
 }
 // ------------------------------------ //
+void Pong::PongServerNetworking::_OnPlayerDisconnect(Leviathan::ConnectedPlayer* newplayer){
+
+	auto veccy = PongServer::Get()->GetPlayers()->GetVec();
+
+	auto end = veccy.end();
+	for(auto iter = veccy.begin(); iter != end; ++iter){
+
+		if((*iter)->GetConnectedPlayer() == newplayer){
+
+			(*iter)->SlotLeavePlayer();
+			PongServer::Get()->GetPlayers()->NotifyUpdatedValue();
+
+			// \todo If the game is in progress update the level to block of the slot
+			return;
+		}
+	}
+}
+
 
 
 

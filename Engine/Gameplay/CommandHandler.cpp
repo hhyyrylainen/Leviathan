@@ -253,5 +253,12 @@ DLLEXPORT void Leviathan::CommandSender::_OnReleaseParentCommanders(ObjectLock &
 	// Clear all at once for hopefully better performance //
 	CommandHandlersToNotify.clear();
 }
+// ------------------ CommandSender ------------------ //
+DLLEXPORT void Leviathan::CommandSender::SendPrivateMessage(const string &message){
+	if(!_OnSendPrivateMessage(message)){
+		// Print to the log as a backup //
+		Logger::Get()->Write(L"[MESSAGE] => "+Convert::Utf8ToUtf16(GetNickname())+L": "+Convert::Utf8ToUtf16(message));
+	}
+}
 
 

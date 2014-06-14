@@ -9,7 +9,7 @@ using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) : Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_EMPTY), 
 	PlayerIdentifier(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()), PlayerControllerID(0),
-	SplitSlot(NULL)
+	SplitSlot(NULL), SlotsPlayer(NULL)
 {
 	
 }
@@ -244,6 +244,18 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 int Pong::PlayerSlot::GetPlayerControllerID(){
 	return PlayerControllerID;
 }
+
+void Pong::PlayerSlot::SlotJoinPlayer(Leviathan::ConnectedPlayer* ply){
+	SlotsPlayer = ply;
+
+	PlayerType = PLAYERTYPE_HUMAN;
+}
+
+void Pong::PlayerSlot::SlotLeavePlayer(){
+	SlotsPlayer = NULL;
+	ControlType = PLAYERCONTROLS_NONE;
+	PlayerType = PLAYERTYPE_EMPTY;
+}
 // ------------------ PlayerList ------------------ //
 Pong::PlayerList::PlayerList(boost::function<void (PlayerList*)> callback, size_t playercount /*= 4*/) : SyncedResource(L"PlayerList"), 
 	CallbackFunc(callback), GamePlayers(4)
@@ -316,6 +328,13 @@ void Pong::PlayerList::SerializeCustomDataToPacket(sf::Packet &packet){
 void Pong::PlayerList::OnValueUpdated(){
 	// Call our callback //
 	CallbackFunc(this);
+}
+
+PlayerSlot* Pong::PlayerList::GetSlot(size_t index) THROWS{
+	if(index >= GamePlayers.size())
+		throw Leviathan::ExceptionInvalidArgument(L"index is out of range", GamePlayers.size(), __WFUNCTION__, L"index", Convert::ToWstring(index));
+
+	return GamePlayers[index];
 }
 
 

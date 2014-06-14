@@ -68,6 +68,8 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLoc
 	// Send disconnect message to server //
 	_OnNewConnectionStatusMessage(L"Disconnected from "+ServerConnection->GenerateFormatedAddressString()+L", reason: "+reason);
 
+	SyncedVariables::Get()->RemoveConnectionWithAnother(ServerConnection.get());
+
 	// Close connection //
 	NetworkHandler::Get()->SafelyCloseConnectionTo(ServerConnection.get());
 	ServerConnection.reset();
@@ -91,7 +93,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
 			// We got a heartbeat //
 			_OnHeartbeat();
 			// Avoid spamming keepalive packets //
-			dontmarkasreceived = true;
+			//dontmarkasreceived = true;
 			return true;
 		}
 	case NETWORKRESPONSETYPE_STARTHEARTBEATS:
@@ -269,7 +271,10 @@ void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer(ObjectLock &g
 
 	// Set the variables //
 	ConnectedToServer = true;
-	
+
+	// By default synchronize values and then pass to the pure virtual function for joining the match properly //
+	SyncedVariables::Get()->AddAnotherToSyncWith(ServerConnection.get());
+
 	// Send connect message //
 	_OnNewConnectionStatusMessage(L"Established a connection with "+ServerConnection->GenerateFormatedAddressString());
 
@@ -278,8 +283,6 @@ void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer(ObjectLock &g
 }
 
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
-	// By default synchronize values and then pass to the pure virtual function for joining the match properly //
-	SyncedVariables::Get()->AddAnotherToSyncWith(ServerConnection.get());
 
 	// Send the request //
 	shared_ptr<NetworkRequest> tmprequest(new NetworkRequest(NETWORKREQUESTTYPE_GETALLSYNCVALUES));

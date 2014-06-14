@@ -126,6 +126,20 @@ namespace Pong{
 			return SplitSlot;
 		}
 
+
+		void SlotJoinPlayer(Leviathan::ConnectedPlayer* ply);
+
+
+		void SlotLeavePlayer();
+
+
+		Leviathan::ConnectedPlayer* GetConnectedPlayer(){
+
+			return SlotsPlayer;
+		}
+
+
+
 		static int CurrentPlayerIdentifier;
 
 	private:
@@ -165,6 +179,11 @@ namespace Pong{
 		//! For quick lookups
 		PlayerSlot* ParentSlot;
 
+		//! For access to all player specific data, if a player is in this slot
+		Leviathan::ConnectedPlayer* SlotsPlayer;
+
+
+
 		//! Notifying our parent of updates
 		PlayerList* Parent;
 	};
@@ -198,6 +217,9 @@ namespace Pong{
 		virtual void SerializeCustomDataToPacket(sf::Packet &packet);
 
 		virtual void OnValueUpdated();
+
+		//! \exception Leviathan::ExceptionInvalidArgument when out of range
+		PlayerSlot* GetSlot(size_t index) THROWS;
 
 
 	protected:

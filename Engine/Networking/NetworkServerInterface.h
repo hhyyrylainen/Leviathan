@@ -52,6 +52,8 @@ namespace Leviathan{
 		//! \brief Call this at any appropriate time to update heartbeat statistics
 		DLLEXPORT void UpdateHeartbeats();
 
+		DLLEXPORT ConnectionInfo* GetConnection();
+
 
 		DLLEXPORT virtual const string& GetUniqueName();
 
@@ -59,11 +61,13 @@ namespace Leviathan{
 
 		DLLEXPORT virtual COMMANDSENDER_PERMISSIONMODE GetPermissionMode();
 
-		DLLEXPORT virtual bool SendPrivateMessage(const string &message);
+		
 
 	protected:
 		//! \brief Used to detect when a connection has been closed
 		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
+
+		DLLEXPORT virtual bool _OnSendPrivateMessage(const string &message);
 
 		// ------------------------------------ //
 

@@ -16,15 +16,23 @@ using namespace Pong;
 BasePongParts* Pong::BasepongStaticAccess = NULL;
 
 Pong::PongServer::PongServer(){
-
+	Staticaccess = this;
 }
 
 Pong::PongServer::~PongServer(){
-
+	Staticaccess = NULL;
 }
 
 std::wstring Pong::PongServer::GenerateWindowTitle(){
 	return wstring(L"PongServer for version " GAME_VERSIONS L" Leviathan " LEVIATHAN_VERSIONS);
+}
+
+
+PongServer* Pong::PongServer::Staticaccess = NULL;
+
+
+PongServer* Pong::PongServer::Get(){
+	return Staticaccess;
 }
 // ------------------------------------ //
 void Pong::PongServer::Tick(int mspassed){

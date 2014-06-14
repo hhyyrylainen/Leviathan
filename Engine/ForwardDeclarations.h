@@ -31,6 +31,7 @@ namespace Leviathan{
 	class ObjectFileTemplateInstance;
 	class ObjectFileTemplateDefinition;
 
+	class ConnectedPlayer;
 	class CommandSender;
 	class CommandHandler;
 	class ScriptArgumentsProviderBridge;

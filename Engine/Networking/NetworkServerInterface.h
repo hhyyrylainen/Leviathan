@@ -52,9 +52,6 @@ namespace Leviathan{
 		//! \brief Call this at any appropriate time to update heartbeat statistics
 		DLLEXPORT void UpdateHeartbeats();
 
-	protected:
-		//! \brief Used to detect when a connection has been closed
-		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
 
 		DLLEXPORT virtual const string& GetUniqueName();
 
@@ -62,7 +59,11 @@ namespace Leviathan{
 
 		DLLEXPORT virtual COMMANDSENDER_PERMISSIONMODE GetPermissionMode();
 
-		DLLEXPORT virtual bool SendMessage(const string &message);
+		DLLEXPORT virtual bool SendPrivateMessage(const string &message);
+
+	protected:
+		//! \brief Used to detect when a connection has been closed
+		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
 
 		// ------------------------------------ //
 
@@ -167,6 +168,7 @@ namespace Leviathan{
 		DLLEXPORT virtual bool PlayerPotentiallyKicked(ConnectedPlayer* player);
 
 		//! \brief Called when the application should register custom command handling providers
+		//! \note If you actually want to use this call to this should be added to your subclass constructor
 		DLLEXPORT virtual void RegisterCustomCommandHandlers(CommandHandler* addhere);
 
 		//! \brief Called by _HandleServerJoinRequest to allow specific games to disallow players

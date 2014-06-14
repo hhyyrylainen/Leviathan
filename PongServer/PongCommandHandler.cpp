@@ -68,7 +68,7 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 			slotnumber = -1;
 		} else {
 
-			int tmpvar = Convert::StringTo<int>(*targetsplit);
+			int tmpvar = Convert::StringTo<int>(*targetslot);
 
 			slotnumber = tmpvar;
 		}
@@ -77,7 +77,7 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 		// Check are the values right //
 		if(slotnumber < 0 || slotnumber > 3){
 
-			sender->SendMessage("invalid slot number");
+			sender->SendPrivateMessage("invalid slot number");
 			return;
 		}
 

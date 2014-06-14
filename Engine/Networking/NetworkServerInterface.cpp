@@ -477,7 +477,7 @@ DLLEXPORT COMMANDSENDER_PERMISSIONMODE Leviathan::ConnectedPlayer::GetPermission
 	return COMMANDSENDER_PERMISSIONMODE_NORMAL;
 }
 
-DLLEXPORT bool Leviathan::ConnectedPlayer::SendMessage(const string &message){
+DLLEXPORT bool Leviathan::ConnectedPlayer::SendPrivateMessage(const string &message){
 	
 	Logger::Get()->Write(L"Probably should implement a ChatManager");
 	return false;

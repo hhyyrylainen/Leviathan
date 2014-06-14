@@ -4,8 +4,40 @@
 #include "CommandHandler.h"
 #endif
 #include "Iterators/StringIterator.h"
+#include "Threading/ThreadingManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
+
+//! \brief Runs the thing
+//! \param sender The sender to pass to the handler, this will be verified to be still valid before usage
+void RunCustomHandler(shared_ptr<CustomCommandHandler> handler, shared_ptr<string> command, CommandSender* sender){
+
+	unique_ptr<ObjectLock> cmdlock;
+
+	auto cmdhandler = CommandHandler::Get(cmdlock);
+
+	// Cannot do anything if the handler no longer exist //
+	if(!cmdhandler)
+		return;
+
+
+	// Check that the sender is still valid //
+	unique_ptr<ObjectLock> senderlock;
+	if(!cmdhandler->IsSenderStillValid(sender, senderlock)){
+
+		// it isn't there anymore //
+		return;
+	}
+
+	handler->ExecuteCommand(*command, sender);
+
+	// The sender is now no longer required //
+	cmdhandler->SenderNoLongerRequired(sender, senderlock);
+}
+
+
+
+// ------------------ CommandHandler ------------------ //
 DLLEXPORT Leviathan::CommandHandler::CommandHandler(NetworkServerInterface* owneraccess) : Owner(owneraccess){
 	Staticaccess = this;
 }
@@ -71,14 +103,23 @@ DLLEXPORT void Leviathan::CommandHandler::QueueCommand(const string &command, Co
 	}
 
 	// Loop through and check the custom command handlers //
-	DEBUG_BREAK;
+	auto end = CustomHandlers.end();
+	for(auto iter = CustomHandlers.begin(); iter != end; ++iter){
+
+		if((*iter)->CanHandleCommand(*firstword)){
+			// Queue the command handler //
+			ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind(&RunCustomHandler, *iter, 
+				make_shared<string>(command), issuer)));
 
 
-	// Queue the command handler //
+			// And take good care of the object while the command handler is waiting //
+			_AddSender(issuer, guard);
+			return;
+		}
+	}
 
-
-	// And take good care of the object while the command handler is waiting //
-	_AddSender(issuer, guard);
+	// Couldn't find a handler for command //
+	issuer->SendPrivateMessage("Unknown command \""+*firstword+"\"");
 }
 
 DLLEXPORT void Leviathan::CommandHandler::RemoveMe(CommandSender* object){
@@ -162,12 +203,12 @@ void Leviathan::CommandHandler::_AddSender(CommandSender* object, ObjectLock &gu
 	SendersInUse.push_back(object);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::CommandHandler::RegisterCustomCommandHandler(unique_ptr<CustomCommandHandler> handler){
+DLLEXPORT bool Leviathan::CommandHandler::RegisterCustomCommandHandler(shared_ptr<CustomCommandHandler> handler){
 	// Might be unnecessary to check this, but it's a way to return false sometimes //
 	if(!handler)
 		return false;
 
-	CustomHandlers.push_back(move(handler));
+	CustomHandlers.push_back(handler);
 	return true;
 }
 

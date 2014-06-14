@@ -12,7 +12,7 @@ using namespace Pong;
 Pong::PongServerNetworking::PongServerNetworking() : NetworkServerInterface(8, L"Local pong game", Leviathan::NETWORKRESPONSE_SERVERJOINRESTRICT_NONE),
 	ServerStatusIs(PONG_JOINGAMERESPONSE_TYPE_LOBBY)
 {
-
+	RegisterCustomCommandHandlers(_CommandHandler);
 }
 
 Pong::PongServerNetworking::~PongServerNetworking(){
@@ -112,7 +112,7 @@ void Pong::PongServerNetworking::CloseDown(){
 }
 // ------------------------------------ //
 void Pong::PongServerNetworking::RegisterCustomCommandHandlers(CommandHandler* addhere){
-	addhere->RegisterCustomCommandHandler(unique_ptr<Leviathan::CustomCommandHandler>(new PongCommandHandler(this)));
+	addhere->RegisterCustomCommandHandler(make_shared<PongCommandHandler>(this));
 }
 // ------------------------------------ //
 

@@ -36,7 +36,7 @@ namespace Leviathan{
 
 		//! \brief This should send a message to this entity for them to see what happened when they executed a command
 		//! \return Return false when unable to send (the message will them appear in the server log where someone hopefully will see it)
-		DLLEXPORT virtual bool SendMessage(const string &message) = 0;
+		DLLEXPORT virtual bool SendPrivateMessage(const string &message) = 0;
 
 
 		//! \brief Marks the start of a time period during which this object needs to report if it is released
@@ -100,7 +100,7 @@ namespace Leviathan{
 		//! \brief Registers a new custom command handler
 		//! \param handler The object to use for handling. The object will be owned by this and will be deleted when it is no longer used
 		//! \see CustomCommandHandler
-		DLLEXPORT virtual bool RegisterCustomCommandHandler(unique_ptr<CustomCommandHandler> handler);
+		DLLEXPORT virtual bool RegisterCustomCommandHandler(shared_ptr<CustomCommandHandler> handler);
 
 
 
@@ -135,7 +135,7 @@ namespace Leviathan{
 
 
 		//! All the custom command providers
-		std::vector<unique_ptr<CustomCommandHandler>> CustomHandlers;
+		std::vector<shared_ptr<CustomCommandHandler>> CustomHandlers;
 
 
 		//! A static access member for command executing functions

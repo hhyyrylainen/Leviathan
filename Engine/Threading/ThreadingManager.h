@@ -46,6 +46,12 @@ namespace Leviathan{
 		//! Adds a task to the queue
 		DLLEXPORT void QueueTask(shared_ptr<QueuedTask> task);
 
+		//! \brief Adds a task to the queue
+		//! \param newdtask The task to queue, the pointer will be deleted by this
+		DLLEXPORT FORCE_INLINE void QueueTask(QueuedTask* newdtask){
+			QueueTask(shared_ptr<QueuedTask>(newdtask));
+		}
+
 		//! This function waits for all tasks to complete
 		DLLEXPORT void FlushActiveThreads();
 

@@ -333,18 +333,20 @@ o GuiObject "LobbyScreen/LobbyTabs"{
     s{
         [@Listener="OnInit"]
         int PrintStuff(GuiObject@ instance, Event@ event){
-            //instance.PrintWindowsRecursive();
             
             // Set the texts //
             instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnInfoTab").SetText("Info");
             instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnPlayersTab").SetText("Players");
-            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnTeam0Tab").SetText("Team0");
-            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnTeam1Tab").SetText("Team1");
-            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnTeam2Tab").SetText("Team2");
-            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnTeam3Tab").SetText("Team3");
+            
+            instance.GetTargetElement().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team0", "TNumber", "0");
+            instance.GetTargetElement().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team1", "TNumber", "1");
+            instance.GetTargetElement().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team2", "TNumber", "2");
+            instance.GetTargetElement().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team3", "TNumber", "3");
             
             // Fix the size issues //
             instance.GetTargetElement().SetSelectedTabIndex(0);
+            
+            //instance.PrintWindowsRecursive();
             
             return 1;
         }
@@ -407,7 +409,7 @@ template<TabAndName, TSlotNumber> LobbyFirstPlayerButton: o GuiObject "LobbyScre
 }
 
 // First team controls //
-template<> LobbyFirstPlayerButton<"Team0Tab/Player00JoinOpen", 0>
+template<> LobbyFirstPlayerButton<"Team0/Player00JoinOpen", 0>
 
 // ------------------ During gameplay objects ------------------ //
 template<> PGCTemplate<GameplayHUD, "", false>

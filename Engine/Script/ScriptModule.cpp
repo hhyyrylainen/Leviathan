@@ -530,7 +530,7 @@ DLLEXPORT bool Leviathan::ScriptModule::ReLoadModuleCode(){
 	GUARD_LOCK_THIS_OBJECT();
 
 	// The module must be still valid //
-	if(ScriptState != SCRIPTBUILDSTATE_BUILT || !GetModule())
+	if(ScriptState == SCRIPTBUILDSTATE_DISCARDED || !GetModule() && ScriptState != SCRIPTBUILDSTATE_FAILED)
 		return false;
 
 
@@ -557,13 +557,13 @@ DLLEXPORT bool Leviathan::ScriptModule::ReLoadModuleCode(){
 
 
 	// Store the old values //
-	CSerializer backup;
-	backup.Store(ASModule);
+	//CSerializer backup;
+	//backup.Store(ASModule);
 
 	// Discard the old module //
-
 	ASModule = NULL;
-	ScriptInterface::Get()->GetExecutor()->GetASEngine()->DiscardModule(ModuleName.c_str());
+	if(GetModule())
+		ScriptInterface::Get()->GetExecutor()->GetASEngine()->DiscardModule(ModuleName.c_str());
 
 	// The builder must be created again //
 	SAFE_DELETE(ScriptBuilder);
@@ -574,6 +574,9 @@ DLLEXPORT bool Leviathan::ScriptModule::ReLoadModuleCode(){
 
 
 	asIScriptEngine* engine = ScriptExecutor::Get()->GetASEngine();
+
+	// Add 'R' to the module name to mark reload //
+	ModuleName += "R";
 
 	ScriptBuilder->StartNewModule(engine, ModuleName.c_str());
 	ScriptBuilder->SetIncludeCallback(ScriptModuleIncludeCallback, this);
@@ -778,6 +781,7 @@ void Leviathan::ScriptModule::_BuildTheModule(){
 		return;
 	}
 
+	ASModule = ScriptBuilder->GetModule();
 	ScriptState = SCRIPTBUILDSTATE_BUILT;
 }
 // ------------------------------------ //

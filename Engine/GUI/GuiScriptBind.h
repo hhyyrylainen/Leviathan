@@ -9,6 +9,8 @@
 #include "add_on/autowrapper/aswrappedcall.h"
 #include "CEGUI/Window.h"
 #include "CEGUI/widgets/TabControl.h"
+#include "CEGUI/WindowManager.h"
+#include "FileSystem.h"
 
 void CEGUIWindowSetTextProxy(CEGUI::Window* obj, const string &text){
 	
@@ -36,13 +38,70 @@ void CEGUIWindowInvalidateProxy(CEGUI::Window* obj, bool recursive){
 }
 
 
-void CEGUITabControlSetActiveTabIndex(CEGUI::Window* obj, int index){
+bool CEGUITabControlSetActiveTabIndex(CEGUI::Window* obj, int index){
 
 	CEGUI::TabControl* convtabs = dynamic_cast<CEGUI::TabControl*>(obj);
 	if(convtabs != NULL){
 		
 		convtabs->setSelectedTabAtIndex(index);
+		return true;
 	}
+
+	return false;
+}
+
+bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const string &filename, const string &tabname, const string &lookfor, const string &replacer){
+
+	// Find the file //
+	const wstring tmpfile = Convert::Utf8ToUtf16(filename);
+
+	const wstring wfilename = StringOperations::RemoveExtensionWstring(tmpfile, true);
+
+	const wstring& targetfile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, wfilename, StringOperations::GetExtensionWstring(tmpfile), true);
+
+	if(targetfile.empty()){
+
+		// The file wasn't found //
+		return false;
+	}
+
+
+	CEGUI::TabControl* convtabs = dynamic_cast<CEGUI::TabControl*>(obj);
+	if(convtabs == NULL){
+
+		// Failed the conversion //
+		return false;
+	}
+
+
+	// Load the file to memory //
+	string filecontents;
+
+	FileSystem::ReadFileEntirely(Convert::WstringToString(targetfile), filecontents);
+
+	if(filecontents.empty())
+		return false;
+
+	// Replace the thing //
+	filecontents = StringOperations::Replace<string>(filecontents, lookfor, replacer);
+
+	if(filecontents.empty())
+		return false;
+
+	auto newwindow = CEGUI::WindowManager::getSingleton().loadLayoutFromString(filecontents);
+
+	if(!newwindow)
+		return false;
+
+	// Add as a tab //
+	convtabs->addTab(newwindow);
+
+
+	// This makes sure that the name is right //
+	convtabs->getChild(CEGUI::String("__auto_TabPane__Buttons/__auto_btn")+newwindow->getName())->setText(tabname);
+
+	// Succeeded //
+	return true;
 }
 
 
@@ -177,10 +236,19 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("Window", "void SetSelectedTabIndex(int index)", asFUNCTION(CEGUITabControlSetActiveTabIndex), asCALL_CDECL_OBJFIRST) < 0)
+	if(engine->RegisterObjectMethod("Window", "bool SetSelectedTabIndex(int index)", asFUNCTION(CEGUITabControlSetActiveTabIndex), asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+	// Quite an expensive method //
+	if(engine->RegisterObjectMethod("Window", 
+		"bool LoadAndCustomizeTabFromFile(const string &in filename, const string &in tabname, const string &in lookfor, const string &in replacer)",
+		asFUNCTION(CEGUIAdvancedCreateTabFromFile), asCALL_CDECL_OBJFIRST) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
 
 
 	// Restore the namespace //

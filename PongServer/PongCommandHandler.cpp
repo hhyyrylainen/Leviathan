@@ -112,6 +112,11 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 			+Convert::Utf8ToUtf16(sender->GetNickname()));
 
 		slots->NotifyUpdatedValue();
+	} else if(*cmd == "Open"){
+
+		DEBUG_BREAK;
+
+
 	}
 
 

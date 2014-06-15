@@ -7,7 +7,7 @@
 #include "Iterators/StringIterator.h"
 using namespace Pong;
 // ------------------------------------ //
-Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) : Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_EMPTY), 
+Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) : Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_CLOSED), 
 	PlayerIdentifier(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()), PlayerControllerID(0),
 	SplitSlot(NULL), SlotsPlayer(NULL)
 {

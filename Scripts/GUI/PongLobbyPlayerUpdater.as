@@ -51,6 +51,20 @@ void CheckIsSomethingActuallyUpdated(){
     StoredData.UpdateDataIfChanged();
 }
 
+// Converts a player type to a string //
+string PlayerTypeToString(PLAYERTYPE type){
+    if(type == PLAYERTYPE_EMPTY)
+        return "Empty";
+    if(type == PLAYERTYPE_HUMAN)
+        return "Human";
+    if(type == PLAYERTYPE_COMPUTER)
+        return "Computer";
+    if(type == PLAYERTYPE_CLOSED)
+        return "Closed";
+    return "Unknown";
+}
+
+
 // This keeps a single player's data safe //
 class PlayerData{
     
@@ -128,8 +142,12 @@ class PlayerData{
         
         // Set the proper texts //
         Print("Updating player type, for: " +SlotNumber+", split: "+IsSplitSlot);
+        string targetthing = "LobbyScreen/LobbyTabs/__auto_TabPane__/Team"+SlotNumber+"/Player"+
+            SlotNumber+(IsSplitSlot ? "1": "0");
         
+        Print("Updating target thing: "+targetthing);
         
+        Us.GetOwningManager().GetWindowByName(targetthing).SetText(PlayerTypeToString(PlayerType));
     }
     
     void ScoreUpdated(){

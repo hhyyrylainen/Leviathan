@@ -174,6 +174,10 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 
 				// Add a new sub-slot //
 				chosenslot->AddEmptySubSlot();
+
+				// And set it as open //
+				chosenslot->GetSplit()->SetPlayer(PLAYERTYPE_EMPTY, 0);
+
 				Logger::Get()->Info(L"New split slot opened, "+Convert::ToWstring(slotnumber));
 				slots->NotifyUpdatedValue();
 				return;

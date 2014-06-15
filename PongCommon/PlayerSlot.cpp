@@ -125,7 +125,7 @@ void Pong::PlayerSlot::AddEmptySubSlot(){
 	// Set this as the parent //
 	SplitSlot->ParentSlot = this;
 
-	Parent->OnValueUpdated();
+
 }
 
 void Pong::PlayerSlot::SetPlayerProxy(PLAYERTYPE type){
@@ -217,9 +217,8 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 
 	// Check do we need to change split //
 	if(wantedsplit && !SplitSlot){
-		SplitSlot = new PlayerSlot(this->Slot, Parent);
-		// Set this as the parent //
-		SplitSlot->ParentSlot = this;
+		AddEmptySubSlot();
+
 	} else if(!wantedsplit && SplitSlot){
 		SAFE_DELETE(SplitSlot);
 	}

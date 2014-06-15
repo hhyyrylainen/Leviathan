@@ -40,7 +40,7 @@ void CheckIsSomethingActuallyUpdated(){
     
     if(!OldDataCaptured){
     
-        OldDataCaptured = false;
+        OldDataCaptured = true;
         
         // Update everything //
         StoredData.UpdateAllData();
@@ -145,9 +145,23 @@ class PlayerData{
         string targetthing = "LobbyScreen/LobbyTabs/__auto_TabPane__/Team"+SlotNumber+"/Player"+
             SlotNumber+(IsSplitSlot ? "1": "0");
         
-        Print("Updating target thing: "+targetthing);
-        
         Us.GetOwningManager().GetWindowByName(targetthing).SetText(PlayerTypeToString(PlayerType));
+        
+        string othertarget = "LobbyScreen/LobbyTabs/__auto_TabPane__/Team"+SlotNumber+"/Player"+
+            SlotNumber+(IsSplitSlot ? "1": "0")+"JoinOpen";
+            
+        if(PlayerType == PLAYERTYPE_HUMAN || PlayerType == PLAYERTYPE_COMPUTER){
+        
+            Us.GetOwningManager().GetWindowByName(othertarget).SetText("Kick");
+            
+        } else if(PlayerType == PLAYERTYPE_EMPTY){
+            
+            Us.GetOwningManager().GetWindowByName(othertarget).SetText("Join");
+            
+        } else {
+            
+            Us.GetOwningManager().GetWindowByName(othertarget).SetText("Open");
+        }
     }
     
     void ScoreUpdated(){

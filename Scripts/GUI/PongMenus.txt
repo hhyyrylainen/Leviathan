@@ -380,36 +380,57 @@ o GuiObject "_LobbyStatusPlayerUpdater"{
 
 
 // Templates for the tabs //
-template<TabAndName, TSlotNumber> LobbyFirstPlayerButton: o GuiObject "LobbyScreen/LobbyTabs/__auto_TabPane__/TabAndName"
-{
-    s{
-        [@Listener="OnClick"]
-        bool TryToJoinOrOpen(GuiObject@ instance){
-            
-            PongBase@ base = GetPongBase();
-            
-            // Check is it closed or empty
-            if(base.GetSlot(TSlotNumber).GetPlayerType() == PLAYERTYPE_CLOSED){
-                // Open it //
-                GetPongGame().SendServerCommand("open "+TSlotNumber+" 0");
+template<TabAndName, TSlotNumber, SplitInt> LobbyJoinOpenButtonThing: 
+    o GuiObject "LobbyScreen/LobbyTabs/__auto_TabPane__/TabAndName"{
+        s{
+            [@Listener="OnClick"]
+            bool TryToJoinOrOpen(GuiObject@ instance){
                 
-            } else if(base.GetSlot(TSlotNumber).GetPlayerType() == PLAYERTYPE_EMPTY){
-                // Join //
-                GetPongGame().SendServerCommand("join "+TSlotNumber+" 0");
+                PongBase@ base = GetPongBase();
                 
-            } else {
-                // Somebody is in it already, potentially send a chat message here to indicate that or maybe
-                // just disable the button
+                PlayerSlot@ targetply = base.GetSlot(TSlotNumber);
                 
+                // Switch to the sub-slot if this is SplitInt //
+                if(SplitInt == 1){
+                    
+                    @targetply = targetply.GetSplit();
+                }
+                
+                // Check is it closed or empty
+                if(targetply is null || targetply.GetPlayerType() == PLAYERTYPE_CLOSED){
+                    // Open it //
+                    GetPongGame().SendServerCommand("open "+TSlotNumber+" "+SplitInt);
+                    
+                } else if(targetply.GetPlayerType() == PLAYERTYPE_EMPTY){
+                    // Join //
+                    GetPongGame().SendServerCommand("join "+TSlotNumber+" "+SplitInt);
+                    
+                } else {
+                    // Somebody is in it already, potentially send a chat message here to indicate that or maybe
+                    // just disable the button
+                    GetPongGame().SendServerCommand("kickslot "+TSlotNumber+" "+SplitInt);
+                }
+                
+                return true;
             }
-            
-            return true;
-        }
-    @%};
-}
+        @%};
+    }
 
 // First team controls //
-template<> LobbyFirstPlayerButton<"Team0/Player00JoinOpen", 0>
+template<> LobbyJoinOpenButtonThing<"Team0/Player00JoinOpen", 0, 0>
+template<> LobbyJoinOpenButtonThing<"Team0/Player01JoinOpen", 0, 1>
+
+// Second Team controls
+template<> LobbyJoinOpenButtonThing<"Team1/Player10JoinOpen", 0, 0>
+template<> LobbyJoinOpenButtonThing<"Team1/Player11JoinOpen", 0, 1>
+
+// Third team controls //
+template<> LobbyJoinOpenButtonThing<"Team2/Player20JoinOpen", 0, 0>
+template<> LobbyJoinOpenButtonThing<"Team2/Player21JoinOpen", 0, 1>
+
+// Fourth team controls //
+template<> LobbyJoinOpenButtonThing<"Team3/Player30JoinOpen", 0, 0>
+template<> LobbyJoinOpenButtonThing<"Team3/Player31JoinOpen", 0, 1>
 
 // ------------------ During gameplay objects ------------------ //
 template<> PGCTemplate<GameplayHUD, "", false>

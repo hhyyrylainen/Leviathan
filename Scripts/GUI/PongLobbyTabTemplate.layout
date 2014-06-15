@@ -27,7 +27,7 @@
         <Property name="FrameEnabled" value="False"/>
         
         <Property name="Font" value="Simonetta-Regular"/>
-        <Property name="Text" value="Slot TNumber:"/>
+        <Property name="Text" value="Slot 0:"/>
     </Window>
     
     <!-- Info string synchronized by the server -->
@@ -43,7 +43,7 @@
         <Property name="VertFormatting" value="TopAligned"/>
         
         <Property name="Font" value="Simonetta-Regular"/>
-        <Property name="Text" value="Nobody, the server hasn't decided yet"/>
+        <Property name="Text" value="This shouldn't be here, the server hasn't updated us yet"/>
     </Window>
     
     <!-- Open/join button -->
@@ -101,7 +101,7 @@
         <Property name="VertFormatting" value="TopAligned"/>
         
         <Property name="Font" value="Simonetta-Regular"/>
-        <Property name="Text" value="Closed, the server hasn't decided yet"/>
+        <Property name="Text" value="Closed"/>
     </Window>
     
     <!-- Open/join button -->

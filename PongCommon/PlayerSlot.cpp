@@ -9,7 +9,7 @@ using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) : Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_CLOSED), 
 	PlayerIdentifier(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()), PlayerControllerID(0),
-	SplitSlot(NULL), SlotsPlayer(NULL)
+	SplitSlot(NULL), SlotsPlayer(NULL), TrackDirectptr(NULL)
 {
 	
 }
@@ -157,7 +157,7 @@ void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
 
 	// Write all our data to the packet //
 	packet << Slot << (int)PlayerType << PlayerIdentifier << ControlIdentifier << PlayerControllerID << Colour.X << Colour.Y << Colour.Z << Colour.W;
-	packet << Score << MoveState << (bool)(SplitSlot != NULL);
+	packet << Score << (bool)(SplitSlot != NULL);
 
 	if(SplitSlot){
 		// Add our sub slot data //
@@ -208,21 +208,12 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
 	}
 
-	if(!(packet >> MoveState)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
 	bool wantedsplit;
 
 	if(!(packet >> wantedsplit)){
 
 		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
 	}
-
-	// Change our speed, if we can //
-	if(TrackDirectptr)
-		TrackDirectptr->SetTrackAdvanceSpeed(MoveState*INPUT_TRACK_ADVANCESPEED);
 
 	// Check do we need to change split //
 	if(wantedsplit && !SplitSlot){
@@ -305,7 +296,12 @@ void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet) THROWS{
 		}
 	}
 
+	// Update the data //
+	auto end = GamePlayers.end();
+	for(auto iter = GamePlayers.begin(); iter != end; ++iter){
 
+		(*iter)->UpdateDataFromPacket(packet);
+	}
 
 
 	// Notify update //

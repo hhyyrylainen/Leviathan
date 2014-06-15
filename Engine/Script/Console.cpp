@@ -88,7 +88,7 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 		ConsoleOutput(L"\t> "+messagecommand);
 		return CONSOLECOMMANDRESULTSTATE_SUCCEEDED;
 	
-	} else if(commandstr == L"exit" || commandstr == L"quit"){
+	} else if(commandstr == L"exit" || commandstr == L"quit" || commandstr == L"q"){
 
 		ConsoleOutput(L"Marking the program as closing");
 		Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
@@ -141,7 +141,7 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 
 	auto restofcommand = itr.GetUntilEnd<wstring>();
 
-	if(restofcommand->size() == 0 && commandtype == CONSOLECOMMANDTYPE_NONE){
+	if((!restofcommand || restofcommand->empty()) && commandtype == CONSOLECOMMANDTYPE_NONE){
 
 		restofcommand.swap(ccmd);
 	}

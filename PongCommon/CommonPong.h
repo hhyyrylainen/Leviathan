@@ -86,7 +86,7 @@ namespace Pong{
 
 				while(slotptr){
 
-					if(LastPlayerHitBallID == slotptr->GetPlayerIdentifier()){
+					if(LastPlayerHitBallID == slotptr->GetPlayerNumber()){
 						// Set colour //
 						GameArena->ColourTheBallTrail(slotptr->GetColour());
 						return;
@@ -126,7 +126,7 @@ namespace Pong{
 				while(slotptr){
 
 
-					if(LastPlayerHitBallID == slotptr->GetPlayerIdentifier()){
+					if(LastPlayerHitBallID == slotptr->GetPlayerNumber()){
 						// Found right player //
 						slotptr->SetScore(slotptr->GetScore()+SCOREPOINT_AMOUNT);
 						goto playrscorelistupdateendlabel;
@@ -171,7 +171,7 @@ playrscorelistupdateendlabel:
 
 				while(slotptr){
 
-					if(plyid == slotptr->GetPlayerIdentifier()){
+					if(plyid == slotptr->GetPlayerNumber()){
 						// Check if goal area matches //
 						Leviathan::BasePhysicsObject* tmpptr = dynamic_cast<Leviathan::BasePhysicsObject*>(slotptr->GetGoalArea().get());
 						if(tmpptr == goalptr){
@@ -250,7 +250,7 @@ playrscorelistupdateendlabel:
 
 					if((objptr == castedptr && objptr2 == realballptr) || (objptr2 == castedptr && objptr == realballptr)){
 						// Found right player //
-						LastPlayerHitBallID = slotptr->GetPlayerIdentifier();
+						LastPlayerHitBallID = slotptr->GetPlayerNumber();
 						SetBallLastHitColour();
 						return;
 					}
@@ -668,7 +668,7 @@ playrscorelistupdateendlabel:
 			}
 			
 
-			if(engine->RegisterObjectMethod("PlayerSlot", "int GetPlayerNumber()", WRAP_MFN(PlayerSlot, GetPlayerIdentifier), asCALL_GENERIC) < 0)
+			if(engine->RegisterObjectMethod("PlayerSlot", "int GetPlayerNumber()", WRAP_MFN(PlayerSlot, GetPlayerNumber), asCALL_GENERIC) < 0)
 			{
 				SCRIPT_REGISTERFAIL;
 			}
@@ -722,10 +722,16 @@ playrscorelistupdateendlabel:
 			{
 				SCRIPT_REGISTERFAIL;
 			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "bool DoesPlayerIDMatchThisOrParent(int id)", WRAP_MFN(PlayerSlot, DoesPlayerIDMatchThisOrParent), asCALL_GENERIC) < 0)
+			if(engine->RegisterObjectMethod("PlayerSlot", "bool DoesPlayerNumberMatchThisOrParent(int number)", asMETHOD(PlayerSlot, DoesPlayerNumberMatchThisOrParent), asCALL_THISCALL) < 0)
 			{
 				SCRIPT_REGISTERFAIL;
 			}
+			if(engine->RegisterObjectMethod("PlayerSlot", "int GetPlayerID()", asMETHOD(PlayerSlot, GetPlayerID), asCALL_THISCALL) < 0)
+			{
+				SCRIPT_REGISTERFAIL;
+			}
+
+			
 
 
 			MoreCustomScriptTypes(engine);

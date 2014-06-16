@@ -11,10 +11,16 @@
 #include "Exceptions/ExceptionInvalidState.h"
 #include "NetworkRequest.h"
 #include "Common/Misc.h"
+#include "Iterators/StringIterator.h"
 using namespace Leviathan;
 // ------------------------------------ //
+
+
+
+
+// ------------------ NetworkClientInterface ------------------ //
 DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() : MaxConnectTries(DEFAULT_MAXCONNECT_TRIES), ConnectTriesCount(0), 
-	ConnectedToServer(false), UsingHeartbeats(false), SecondsWithoutConnection(0.f)
+	ConnectedToServer(false), UsingHeartbeats(false), SecondsWithoutConnection(0.f), OurPlayerID(-1)
 {
 	Staticaccess = this;
 }
@@ -75,6 +81,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLoc
 	ServerConnection.reset();
 
 	ConnectedToServer = false;
+	OurPlayerID = -1;
 
 	_OnDisconnectFromServer(reason, connectiontimedout ? false: true);
 }
@@ -217,8 +224,36 @@ void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(shared_ptr<Sent
 			case NETWORKRESPONSETYPE_SERVERALLOW:
 				{
 					// Properly joined //
-					// \todo check what was the actual accepted thing
-					_ProperlyConnectedToServer(guard);
+					{
+						// Get our ID from the message //
+						auto resdata = tmpsendthing->GotResponse->GetResponseDataForServerAllowResponse();
+
+						if(!resdata)
+							goto networkresponseserverallowinvalidreponseformatthinglabel;
+
+						// We need to parse our ID from the response //
+						StringIterator itr(resdata->Message);
+
+						auto numberthing = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE);
+
+						// Invalid format //
+						if(!numberthing || numberthing->empty())
+							goto networkresponseserverallowinvalidreponseformatthinglabel;
+
+						OurPlayerID = Convert::WstringTo<int>(*numberthing);
+
+						if(OurPlayerID < 0)
+							goto networkresponseserverallowinvalidreponseformatthinglabel;
+
+						Logger::Get()->Info(L"NetworkClientInterface: our player ID is now: "+Convert::ToWstring(OurPlayerID));
+
+						_ProperlyConnectedToServer(guard);
+						return;
+					}
+networkresponseserverallowinvalidreponseformatthinglabel:
+
+					Logger::Get()->Error(L"NetworkClientInterface: server join response has invalid format, disconnecting");
+					DisconnectFromServer(guard, L"Server sent an invalid response to join request", true);
 				}
 				break;
 			}
@@ -451,6 +486,10 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
 	}
 }
 // ------------------------------------ //
+DLLEXPORT int Leviathan::NetworkClientInterface::GetOurID() const{
+	return OurPlayerID;
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const wstring &reasonstring, bool donebyus){
 
 }
@@ -470,6 +509,8 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnSuccessfullyConnectedToServ
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnNewConnectionStatusMessage(const wstring &message){
 
 }
+
+
 
 
 

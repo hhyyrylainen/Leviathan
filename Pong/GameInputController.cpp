@@ -34,13 +34,13 @@ bool Pong::GameInputController::StartReceivingInput(vector<PlayerSlot*> &PlayerL
 					// link! //
 					ControlGroups[a].ControlledSlot = slot;
 					linked = true;
-					Logger::Get()->Info(L"Player "+Convert::ToWstring(slot->GetPlayerIdentifier())+L" linked!");
+					Logger::Get()->Info(L"Player "+Convert::ToWstring(slot->GetPlayerControllerID())+L" linked!");
 					break;
 				}
 			}
 			// complain //
 			if(!linked && !(slot->GetControlType() != PLAYERCONTROLS_NONE || slot->GetControlType() != PLAYERCONTROLS_AI))
-				Logger::Get()->Warning(L"GameInputController: StartReceivingInput: couldn't link player "+Convert::ToWstring(slot->GetPlayerIdentifier()));
+				Logger::Get()->Warning(L"GameInputController: StartReceivingInput: couldn't link player "+Convert::ToWstring(slot->GetPlayerControllerID()));
 			
 			// Change to potential sub slots //
 			slot = slot->GetSplit();

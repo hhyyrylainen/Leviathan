@@ -5,11 +5,15 @@
 #endif
 #include "Entities/Bases/BasePhysicsObject.h"
 #include "Iterators/StringIterator.h"
+#include "Networking/NetworkServerInterface.h"
+#ifdef PONG_VERSION
+#include "PongGame.h"
+#endif //PONG_VERSION
 using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) : Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_CLOSED), 
-	PlayerIdentifier(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()), PlayerControllerID(0),
-	SplitSlot(NULL), SlotsPlayer(NULL), TrackDirectptr(NULL)
+	PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()), PlayerControllerID(0),
+	SplitSlot(NULL), SlotsPlayer(NULL), TrackDirectptr(NULL), PlayerID(-1)
 {
 	
 }
@@ -18,37 +22,33 @@ Pong::PlayerSlot::~PlayerSlot(){
 	SAFE_DELETE(SplitSlot);
 }
 // ------------------------------------ //
-void Pong::PlayerSlot::Init(PLAYERTYPE type /*= PLAYERTYPE_EMPTY*/, int playeridentifier /*= 0*/, PLAYERCONTROLS controltype /*= PLAYERCONTROLS_NONE*/,
+void Pong::PlayerSlot::Init(PLAYERTYPE type /*= PLAYERTYPE_EMPTY*/, int PlayerNumber /*= 0*/, PLAYERCONTROLS controltype /*= PLAYERCONTROLS_NONE*/,
 	int ctrlidentifier /*= 0*/, int playercontrollerid /*= -1*/, const Float4 &playercolour /*= Float4::GetColourWhite()*/)
 {
 	PlayerType = type;
-	PlayerIdentifier = playeridentifier;
+	PlayerNumber = PlayerNumber;
 	ControlType = controltype;
 	ControlIdentifier = ctrlidentifier;
 	Colour = playercolour;
 	PlayerControllerID = playercontrollerid;
-
-	Parent->OnValueUpdated();
 }
 // ------------------------------------ //
 void Pong::PlayerSlot::SetPlayer(PLAYERTYPE type, int identifier){
 	PlayerType = type;
-	PlayerIdentifier = identifier;
-	Parent->OnValueUpdated();
+	PlayerNumber = identifier;
 }
 
 Pong::PLAYERTYPE Pong::PlayerSlot::GetPlayerType(){
 	return PlayerType;
 }
 
-int Pong::PlayerSlot::GetPlayerIdentifier(){
-	return PlayerIdentifier;
+int Pong::PlayerSlot::GetPlayerNumber(){
+	return PlayerNumber;
 }
 // ------------------------------------ //
 void Pong::PlayerSlot::SetControls(PLAYERCONTROLS type, int identifier){
 	ControlType = type;
 	ControlIdentifier = identifier;
-	Parent->OnValueUpdated();
 }
 
 Pong::PLAYERCONTROLS Pong::PlayerSlot::GetControlType(){
@@ -113,7 +113,6 @@ void Pong::PlayerSlot::InputDisabled(){
 
 	// reset control state //
 	MoveState = 0;
-	Parent->OnValueUpdated();
 }
 
 int Pong::PlayerSlot::GetScore(){
@@ -129,7 +128,7 @@ void Pong::PlayerSlot::AddEmptySubSlot(){
 }
 
 void Pong::PlayerSlot::SetPlayerProxy(PLAYERTYPE type){
-	SetPlayer(type, ++CurrentPlayerIdentifier);
+	SetPlayer(type, ++CurrentPlayerNumber);
 }
 
 bool Pong::PlayerSlot::IsVerticalSlot(){
@@ -140,24 +139,24 @@ float Pong::PlayerSlot::GetTrackProgress(){
 	return TrackDirectptr->GetProgressTowardsNextNode();
 }
 
-bool Pong::PlayerSlot::DoesPlayerIDMatchThisOrParent(int id){
-	if(id == PlayerIdentifier)
+bool Pong::PlayerSlot::DoesPlayerNumberMatchThisOrParent(int number){
+	if(number == PlayerNumber)
 		return true;
 	// Recurse to parent, if one exists //
 	if(ParentSlot)
-		return ParentSlot->DoesPlayerIDMatchThisOrParent(id);
+		return ParentSlot->DoesPlayerNumberMatchThisOrParent(number);
 
 	return false;
 }
 
-int Pong::PlayerSlot::CurrentPlayerIdentifier = 0;
+int Pong::PlayerSlot::CurrentPlayerNumber = 0;
 // ------------------------------------ //
 void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
 	GUARD_LOCK_THIS_OBJECT();
 
 	// Write all our data to the packet //
-	packet << Slot << (int)PlayerType << PlayerIdentifier << ControlIdentifier << PlayerControllerID << Colour.X << Colour.Y << Colour.Z << Colour.W;
-	packet << Score << (bool)(SplitSlot != NULL);
+	packet << Slot << (int)PlayerType << PlayerNumber << ControlIdentifier << PlayerControllerID << Colour.X << Colour.Y << Colour.Z << Colour.W;
+	packet << PlayerID << Score << (bool)(SplitSlot != NULL);
 
 	if(SplitSlot){
 		// Add our sub slot data //
@@ -183,7 +182,7 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 
 	PlayerType = static_cast<PLAYERTYPE>(tmpival);
 
-	if(!(packet >> PlayerIdentifier)){
+	if(!(packet >> PlayerNumber)){
 
 		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
 	}
@@ -199,6 +198,11 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 	}
 
 	if(!(packet >> Colour.X >> Colour.Y >> Colour.Z >> Colour.W)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	if(!(packet >> PlayerID)){
 
 		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
 	}
@@ -229,6 +233,18 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 		SplitSlot->UpdateDataFromPacket(packet);
 	}
 
+#ifdef PONG_VERSION
+
+	if(PlayerID == PongGame::Get()->GetOurID()){
+
+		// Hook a networked input receiver to the server //
+		DEBUG_BREAK;
+	}
+
+
+#endif //PONG_VERSION
+
+
 }
 
 int Pong::PlayerSlot::GetPlayerControllerID(){
@@ -237,6 +253,8 @@ int Pong::PlayerSlot::GetPlayerControllerID(){
 
 void Pong::PlayerSlot::SlotJoinPlayer(Leviathan::ConnectedPlayer* ply){
 	SlotsPlayer = ply;
+
+	PlayerID = SlotsPlayer->GetID();
 
 	PlayerType = PLAYERTYPE_HUMAN;
 }

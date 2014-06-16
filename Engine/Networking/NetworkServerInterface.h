@@ -22,7 +22,7 @@ namespace Leviathan{
 	//! \todo Make _OnNotifierDisconnected set a disconnected flag that the server can kick based on upon
 	class ConnectedPlayer : public BaseNotifiableAll, public CommandSender{
 	public:
-		DLLEXPORT ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance);
+		DLLEXPORT ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance, int plyid);
 		//! \brief Empty destructor for exporting
 		DLLEXPORT ~ConnectedPlayer();
 
@@ -54,6 +54,9 @@ namespace Leviathan{
 
 		DLLEXPORT ConnectionInfo* GetConnection();
 
+		//! \brief Gets the unique identifier of the player, valid for this session
+		DLLEXPORT int GetID() const;
+
 
 		DLLEXPORT virtual const string& GetUniqueName();
 
@@ -68,7 +71,6 @@ namespace Leviathan{
 		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
 
 		DLLEXPORT virtual bool _OnSendPrivateMessage(const string &message);
-
 		// ------------------------------------ //
 
 		ConnectionInfo* CorrenspondingConnection;
@@ -99,6 +101,10 @@ namespace Leviathan{
 
 		//! The last time a heartbeat was sent
 		WantedClockType::time_point LastSentHeartbeat;
+
+
+		//! The unique identifier for this player, lasts only this session
+		int ID;
 
 	};
 
@@ -209,6 +215,9 @@ namespace Leviathan{
 
 		//! This can contain anything the specific game wants
 		int ExtraServerFlags;
+
+		//! Player ID counter for assigning unique ids for all players
+		static int CurrentPlayerID;
 
 
 		//! The object used to handle all player submitted commands

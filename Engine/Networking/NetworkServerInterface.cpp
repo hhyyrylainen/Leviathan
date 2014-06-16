@@ -238,20 +238,23 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(share
 	}
 
 	// Player joined! //
+	int newid = ++CurrentPlayerID;
 
-	PlayerList.push_back(new ConnectedPlayer(connection, this));
+
+	PlayerList.push_back(new ConnectedPlayer(connection, this, newid));
 
 	SyncedVariables::Get()->AddAnotherToSyncWith(connection);
 
 	_OnPlayerConnected(PlayerList.back());
 
-	Logger::Get()->Info(L"NetworkServerInterface: accepted a new player");
+	Logger::Get()->Info(L"NetworkServerInterface: accepted a new player, ID: "+Convert::ToWstring(newid));
 
 	// Send connection notification back to the client //
 	shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), PACKAGE_TIMEOUT_STYLE_TIMEDMS, 2000));
 
 	// Set data //
-	tmpresponse->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE_CONNECT_ACCEPTED));
+	tmpresponse->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE_CONNECT_ACCEPTED, 
+		L"Allowed, ID: "+Convert::ToWstring(newid)));
 
 	connection->SendPacketToConnection(tmpresponse, 3);
 }
@@ -324,15 +327,22 @@ DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
 	// Update the command handling //
 	_CommandHandler->UpdateStatus();
 }
+
+int Leviathan::NetworkServerInterface::CurrentPlayerID = 1000;
 // ------------------ ConnectedPlayer ------------------ //
-Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance) : 
+Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance, int plyid) : 
 	CorrenspondingConnection(unsafeconnection), Owner(owninginstance), ConnectionStatus(true), UsingHeartbeats(false), IsControlLost(false),
-	SecondsWithoutConnection(0.f)
+	SecondsWithoutConnection(0.f), ID(plyid)
 {
 	// Register us //
 	this->ConnectToNotifier(unsafeconnection);
 }
 
+DLLEXPORT Leviathan::ConnectedPlayer::~ConnectedPlayer(){
+	GUARD_LOCK_THIS_OBJECT();
+	_OnReleaseParentCommanders(guard);
+}
+// ------------------------------------ //
 void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
 	{
 		GUARD_LOCK_THIS_OBJECT();
@@ -357,11 +367,6 @@ DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYours(ConnectionInfo* che
 
 DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYoursPtrCompare(ConnectionInfo* checkconnection){
 	return CorrenspondingConnection == checkconnection;
-}
-
-DLLEXPORT Leviathan::ConnectedPlayer::~ConnectedPlayer(){
-	GUARD_LOCK_THIS_OBJECT();
-	_OnReleaseParentCommanders(guard);
 }
 
 DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionClosed() const{
@@ -491,4 +496,8 @@ DLLEXPORT bool Leviathan::ConnectedPlayer::_OnSendPrivateMessage(const string &m
 
 DLLEXPORT ConnectionInfo* Leviathan::ConnectedPlayer::GetConnection(){
 	return CorrenspondingConnection;
+}
+
+DLLEXPORT int Leviathan::ConnectedPlayer::GetID() const{
+	return ID;
 }

@@ -9,6 +9,8 @@
 #include "add_on/autowrapper/aswrappedcall.h"
 #include "CEGUI/Window.h"
 #include "CEGUI/widgets/TabControl.h"
+#include "CEGUI/widgets/Combobox.h"
+#include "CEGUI/widgets/ListboxItem.h"
 #include "CEGUI/WindowManager.h"
 #include "FileSystem.h"
 

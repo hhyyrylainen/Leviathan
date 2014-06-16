@@ -35,7 +35,7 @@ namespace Pong{
 		//! Call to set the startup parameters
 		//!
 		//! Doesn't actually initialize anything
-		void Init(PLAYERTYPE type = PLAYERTYPE_EMPTY, int playeridentifier = 0, PLAYERCONTROLS controltype = PLAYERCONTROLS_NONE, 
+		void Init(PLAYERTYPE type = PLAYERTYPE_EMPTY, int PlayerNumber = 0, PLAYERCONTROLS controltype = PLAYERCONTROLS_NONE, 
 			int ctrlidentifier = 0, int playercontrollerid = -1, const Float4 &playercolour = Float4::GetColourWhite());
 
 		//! Serializes this object to a packet
@@ -47,7 +47,7 @@ namespace Pong{
 		void SetPlayer(PLAYERTYPE type, int identifier);
 		void SetPlayerProxy(PLAYERTYPE type);
 		PLAYERTYPE GetPlayerType();
-		int GetPlayerIdentifier();
+		int GetPlayerNumber();
 
 		int GetPlayerControllerID();
 
@@ -64,7 +64,7 @@ namespace Pong{
 
 		void AddEmptySubSlot();
 
-		bool DoesPlayerIDMatchThisOrParent(int id);
+		bool DoesPlayerNumberMatchThisOrParent(int number);
 
 		float GetTrackProgress();
 
@@ -127,6 +127,12 @@ namespace Pong{
 		}
 
 
+		inline int GetPlayerID() const{
+
+			return PlayerID;
+		}
+
+
 		void SlotJoinPlayer(Leviathan::ConnectedPlayer* ply);
 
 
@@ -140,7 +146,7 @@ namespace Pong{
 
 
 
-		static int CurrentPlayerIdentifier;
+		static int CurrentPlayerNumber;
 
 	private:
 
@@ -152,7 +158,7 @@ namespace Pong{
 		// data //
 		int Slot;
 		PLAYERTYPE PlayerType;
-		int PlayerIdentifier;
+		int PlayerNumber;
 		PLAYERCONTROLS ControlType;
 		int ControlIdentifier;
 
@@ -179,8 +185,11 @@ namespace Pong{
 		//! For quick lookups
 		PlayerSlot* ParentSlot;
 
-		//! For access to all player specific data, if a player is in this slot
+		//! For access to all player specific data, if a player is in this slot, this is only available on the server
 		Leviathan::ConnectedPlayer* SlotsPlayer;
+
+		//! The ID of the player which can be used for lookups, exists on all clients and the server
+		int PlayerID;
 
 
 

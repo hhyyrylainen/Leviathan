@@ -113,6 +113,11 @@ namespace Leviathan{
 		//! \note Here the application's connect data should be sent. The application specific connection routine should be done here
 		DLLEXPORT virtual void _OnStartApplicationConnect() = 0;
 
+
+		//! \brief Returns the ID that the server has assigned to us
+		DLLEXPORT virtual int GetOurID() const;
+
+
 	private:
 		
 		void _SendConnectRequest(ObjectLock &guard);
@@ -163,6 +168,10 @@ namespace Leviathan{
 
 		//! Holds the time for how long we have been without a heartbeat
 		float SecondsWithoutConnection;
+
+
+		//! Our player id, this is required for some requests
+		int OurPlayerID;
 
 
 		//! Static access for utility classes

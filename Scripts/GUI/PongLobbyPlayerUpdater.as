@@ -52,11 +52,11 @@ void CheckIsSomethingActuallyUpdated(){
 }
 
 // Converts a player type to a string //
-string PlayerTypeToString(PLAYERTYPE type){
+string PlayerTypeToString(PLAYERTYPE type, int humanid){
     if(type == PLAYERTYPE_EMPTY)
         return "Empty";
     if(type == PLAYERTYPE_HUMAN)
-        return "Human";
+        return "Human, PlayerID: "+humanid;
     if(type == PLAYERTYPE_COMPUTER)
         return "Computer";
     if(type == PLAYERTYPE_CLOSED)
@@ -82,12 +82,14 @@ class PlayerData{
     void CheckUpdates(PlayerSlot@ slot, bool forceupdate = false){
         
         PLAYERTYPE newtype = slot.GetPlayerType();
+        int newid = slot.GetlayerID();
         
         // Check has it updated //
-        if(forceupdate || PlayerType != newtype){
+        if(forceupdate || PlayerType != newtype || HumanPlayerID != newid){
             
             // It has! store the new value and notify about this //
             PlayerType = newtype;
+            HumanPlayerID = newid;
             PlayerTypeUpdated();
         }
         
@@ -127,6 +129,7 @@ class PlayerData{
     // The split handle //
     PlayerData@ SplitData;
     
+    int HumanPlayerID = -1;
     
     // The number of the slot 0-3
     int SlotNumber;
@@ -145,7 +148,7 @@ class PlayerData{
         string targetthing = "LobbyScreen/LobbyTabs/__auto_TabPane__/Team"+SlotNumber+"/Player"+
             SlotNumber+(IsSplitSlot ? "1": "0");
         
-        Us.GetOwningManager().GetWindowByName(targetthing).SetText(PlayerTypeToString(PlayerType));
+        Us.GetOwningManager().GetWindowByName(targetthing).SetText(PlayerTypeToString(PlayerType, HumanPlayerID));
         
         string othertarget = "LobbyScreen/LobbyTabs/__auto_TabPane__/Team"+SlotNumber+"/Player"+
             SlotNumber+(IsSplitSlot ? "1": "0")+"JoinOpen";

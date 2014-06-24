@@ -8,6 +8,7 @@
 #include "Networking/NetworkServerInterface.h"
 #ifdef PONG_VERSION
 #include "PongGame.h"
+#include "PongNetHandler.h"
 #endif //PONG_VERSION
 using namespace Pong;
 // ------------------------------------ //
@@ -235,7 +236,7 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 
 #ifdef PONG_VERSION
 
-	if(PlayerID == PongGame::Get()->GetOurID()){
+	if(PlayerID == PongGame::Get()->GetInterface()->GetOurID()){
 
 		// Hook a networked input receiver to the server //
 		DEBUG_BREAK;

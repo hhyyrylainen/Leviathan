@@ -197,6 +197,11 @@ void Pong::PongServer::DoSpecialPostLoad(){
 
 	tmpvars->AddNewVariable(shared_ptr<SyncedValue>(new SyncedValue(new NamedVariableList(L"TheAnswer", new VariableBlock(42)))));
 
+
+	// Register an input handler here for passing input to other places //
+	DEBUG_BREAK;
+
+
 }
 
 void Pong::PongServer::CustomizedGameEnd(){

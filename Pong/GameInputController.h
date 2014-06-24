@@ -1,57 +1,76 @@
 #ifndef PONG_INPUTCONTROLLER
 #define PONG_INPUTCONTROLLER
 // ------------------------------------ //
-#ifndef PONGINCLUDES
 #include "PongIncludes.h"
-#endif
 // ------------------------------------ //
 // ---- includes ---- //
 #include "PlayerSlot.h"
-#include "Input/InputController.h"
+#include "Networking/NetworkedInputHandler.h"
+#include "Networking/NetworkedInput.h"
 
 
 namespace Pong{
+	
 
-	struct ControlGroup{
-		ControlGroup() : ControlledSlot(NULL), CtrlGroup(PLAYERCONTROLS_NONE), ControlKeys(){
-		}
 
-		PlayerSlot* ControlledSlot;
-		PLAYERCONTROLS CtrlGroup;
-		std::map<OIS::KeyCode, CONTROLKEYACTION> ControlKeys;
+	//! \brief The factory that handles creating the things
+	class PongInputFactory : public Leviathan::NetworkInputFactory{
+	public:
+
+
+
+
+
+		//! \brief Returns the static instance
+		static PongInputFactory* Get();
+
+
+	protected:
+
+
+
+		static PongInputFactory* Staticinstance;
 	};
 
-	class GameInputController : public Leviathan::InputReceiver{
+
+	//! \brief A single input receiver that handles a group of keys
+	class PongNInputter : public Leviathan::NetworkedInput{
+	public:
+
+
+
+
+
+	protected:
+
+		//! The slot that this controls, maybe NULL if the factory is doing something wonky
+		PlayerSlot* ControlledSlot;
+
+		//! Used for finding the right keys
+		PLAYERCONTROLS CtrlGroup;
+	};
+
+
+
+
+	class GameInputController : public Leviathan::NetworkedInputHandler{
 	public:
 		GameInputController();
 		~GameInputController();
 
 
-		bool StartReceivingInput(vector<PlayerSlot*> &PlayerList);
 
-		// sets whether all input is blocked //
-		void SetBlockState(bool state);
-
-		// call when ending the match to stop input handling //
-		void UnlinkPlayers();
-
-
-		virtual bool ReceiveInput(OIS::KeyCode key, int modifiers, bool down);
-		virtual void ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down);
-		virtual bool OnMouseMove(int xmove, int ymove);
+		std::map<OIS::KeyCode, CONTROLKEYACTION>& MapControlsToKeyGrouping(PLAYERCONTROLS controls);
+		
 
 	protected:
 		void _SetupControlGroups();
-		ControlGroup* _ResolveKeyToGroup(OIS::KeyCode key, CONTROLKEYACTION &returnaction);
 
 		// ------------------------------------ //
-		std::vector<ControlGroup> ControlGroups;
 
 
-		bool Blocked;
-		// TODO: add grouping for controller players //
-
-
+		//! Translates a control group to a map of keys that correspond to that group
+		std::map<PLAYERCONTROLS, std::map<OIS::KeyCode, CONTROLKEYACTION>> GroupToKeyMap;
 	};
 
 }

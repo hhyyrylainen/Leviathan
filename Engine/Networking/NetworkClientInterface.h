@@ -73,6 +73,18 @@ namespace Leviathan{
 		//! This will be true when the server has responded to our join request and allowed us to join, we aren't actually yet playing on the server
 		DLLEXPORT bool IsConnected() const;
 
+		//! \brief Returns the ID that the server has assigned to us
+		DLLEXPORT virtual int GetOurID() const;
+
+
+		//! \brief Enables the use of a NetworkedInputHandler
+		//! \param handler The object that implements the networked input interface, this has to be guaranteed to stay allocated as long as it is
+		//! still attached. 
+		//! \note Usually this will work just fine since input handler will get deleted when the window closes but the engine *usually*
+		//! stops networking before deleting the main window, be careful when working with multiple windows as the handler might get deleted too soon
+		//! \todo Add a unregister function
+		DLLEXPORT virtual bool RegisterNetworkedInput(NetworkedInputHandler* handler);
+
 	protected:
 
 		//! \brief Utility function for subclasses to call for default handling of server packets
@@ -112,10 +124,6 @@ namespace Leviathan{
 		//! \brief Called when the player is on the server and everything that the Engine is concerned about is done
 		//! \note Here the application's connect data should be sent. The application specific connection routine should be done here
 		DLLEXPORT virtual void _OnStartApplicationConnect() = 0;
-
-
-		//! \brief Returns the ID that the server has assigned to us
-		DLLEXPORT virtual int GetOurID() const;
 
 
 	private:

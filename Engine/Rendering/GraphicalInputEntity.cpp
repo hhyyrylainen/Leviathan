@@ -119,6 +119,8 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 }
 
 DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
+	GUARD_LOCK_THIS_OBJECT();
+
 	// GUI is very picky about delete order
 	SAFE_RELEASEDEL(WindowsGui);
 
@@ -135,7 +137,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::ReleaseLinked(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed){
-
+	GUARD_LOCK_THIS_OBJECT();
 	if(LinkedWorld)
 		LinkedWorld->UpdateCameraLocation(mspassed, LinkedCamera.get());
 
@@ -163,6 +165,14 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(shared_ptr<ViewerCam
 	LinkedWorld = world;
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::GraphicalInputEntity::SetCustomInputController(InputController* controller){
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	SAFE_DELETE(TertiaryReceiver);
+	TertiaryReceiver = controller;
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::SaveScreenShot(const string &filename){
 	// uses render target's capability to save it's contents //
 	DisplayWindow->GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
@@ -186,6 +196,8 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::UnlinkAll(){
 DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state){
 	if(MouseCaptureState == state)
 		return true;
+
+	GUARD_LOCK_THIS_OBJECT();
 
 	MouseCaptureState = state;
 
@@ -229,3 +241,4 @@ int Leviathan::GraphicalInputEntity::GlobalWindowCount = 0;
 DLLEXPORT int Leviathan::GraphicalInputEntity::GetGlobalWindowCount(){
 	return GlobalWindowCount;
 }
+

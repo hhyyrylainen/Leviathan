@@ -327,6 +327,11 @@ DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
 	// Update the command handling //
 	_CommandHandler->UpdateStatus();
 }
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::NetworkServerInterface::RegisterNetworkedInput(NetworkedInputHandler* handler){
+	DEBUG_BREAK;
+}
+// ------------------------------------ //
 
 int Leviathan::NetworkServerInterface::CurrentPlayerID = 1000;
 // ------------------ ConnectedPlayer ------------------ //

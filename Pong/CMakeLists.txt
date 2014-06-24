@@ -4,7 +4,7 @@
 set(PROGRAM_VERSION_STABLE 0)
 set(PROGRAM_VERSION_MAJOR 3)
 set(PROGRAM_VERSION_MINOR 2)
-set(PROGRAM_VERSION_PATCH 2)
+set(PROGRAM_VERSION_PATCH 3)
 
 set(PROGRAM_VERSION_STR ${PROGRAM_VERSION_STABLE}.${PROGRAM_VERSION_MAJOR}.${PROGRAM_VERSION_MINOR}.${PROGRAM_VERSION_PATCH})
 set(PROGRAM_VERSION ${PROGRAM_VERSION_STABLE}.${PROGRAM_VERSION_MAJOR}${PROGRAM_VERSION_MINOR}${PROGRAM_VERSION_PATCH})
@@ -31,7 +31,7 @@ set(PROGRAMCONFIGURATION			"./Pong.conf")
 set(PROGRAMKEYCONFIGURATION			"./PongKeys.conf")
 set(PROGRAMCHECKCONFIGFUNCNAME		"PongGame::CheckGameConfigurationVariables")
 set(PROGRAMCHECKKEYCONFIGFUNCNAME	"PongGame::CheckGameKeyConfigVariables")
-set(PROGRAMMASTERSERVERINFO			"MasterServerInformation(L\"PongMasters.txt\", L\"Pong_\" GAME_VERSIONS, L\"http://boostslair.com/\", L\"/Pong/MastersList.php\", L\"PongCrecentials.txt\", false)")
+set(PROGRAMMASTERSERVERINFO			"MasterServerInformation(L\"PongMasters.txt\", L\"Pong_\" GAME_VERSIONS, L\"http://boostslair.com/\", L\"/Pong/MastersList.txt\", L\"PongCrecentials.txt\", false)")
 set(WINDOWTITLEGENFUNCTION			"PongGame::GenerateWindowTitle()")
 
 set(USERREADABLEIDENTIFICATION		"L\"Pong client version \" GAME_VERSIONS")
@@ -70,6 +70,8 @@ source_group("Additional" FILES ${Additional})
 source_group("Common" FILES ${Common})
 
 include_directories("${PROJECT_SOURCE_DIR}/PongCommon")
+
+include_directories(${CMAKE_CURRENT_LIST_DIR})
 
 # all Pong files in one list
 set(AllProjectFiles ${PSourceFiles} ${PHeaderFiles} ${PResourceFiles} ${Additional} ${Common})

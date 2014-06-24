@@ -14,6 +14,9 @@
 
 namespace Pong{
 
+	class PongNetHandler;
+
+
 	class PongGame : public CommonPongParts<Leviathan::LeviathanApplication, false>{
 	public:
 		PongGame();
@@ -49,6 +52,14 @@ namespace Pong{
 
 		void AllowPauseMenu();
 
+
+
+
+		PongNetHandler* GetInterface() const{
+
+			return ClientInterface;
+		}
+
 		static wstring GenerateWindowTitle();
 
 		static PongGame* Get();
@@ -56,6 +67,9 @@ namespace Pong{
 		// Game configuration checkers //
 		static void CheckGameConfigurationVariables(GameConfiguration* configobj);
 		static void CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
+
+
+
 
 	protected:
 
@@ -72,6 +86,10 @@ namespace Pong{
 		// ------------------------------------ //
 		Leviathan::Gui::GuiManager* GuiManagerAccess;
 		GameInputController* GameInputHandler;
+
+
+		//! Cached version of client network interface
+		PongNetHandler* ClientInterface;
 
 #ifdef _WIN32
 

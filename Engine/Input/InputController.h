@@ -52,17 +52,17 @@ namespace Leviathan{
 
 		DLLEXPORT void LinkReceiver(InputReceiver* object);
 
-		DLLEXPORT void StartInputGather();
+		DLLEXPORT virtual void StartInputGather();
 
-		DLLEXPORT void OnInputGet(OIS::KeyCode key, int specialmodifiers, bool down);
+		DLLEXPORT virtual void OnInputGet(OIS::KeyCode key, int specialmodifiers, bool down);
 		// this is called when input is not received, basically everything should be reseted to not received //
-		DLLEXPORT void OnBlockedInput(OIS::KeyCode key, int specialmodifiers, bool down);
+		DLLEXPORT virtual void OnBlockedInput(OIS::KeyCode key, int specialmodifiers, bool down);
 
-		DLLEXPORT void SendMouseMovement(int xmoved, int ymoved);
+		DLLEXPORT virtual void SendMouseMovement(int xmoved, int ymoved);
 
 	protected:
 		// called by input controllers if they unlink //
-		void _OnChildUnlink(InputReceiver* child);
+		virtual void _OnChildUnlink(InputReceiver* child);
 
 		// ------------------------------------ //
 

@@ -14,9 +14,8 @@
 
 namespace Leviathan{
 
-	class GameWorld;
-
-	class GraphicalInputEntity : public Object{
+	//! \brief Represents a collection of objects that represents everything related to a single game's Windows window
+	class GraphicalInputEntity : public ThreadSafe{
 	public:
 		//! \warning You can only create one window at a time since this is not thread safe
 		DLLEXPORT GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties);
@@ -65,6 +64,12 @@ namespace Leviathan{
 		DLLEXPORT CEGUI::OgreRenderer* GetCEGUIRenderer() const{
 			return CEGUIRenderer;
 		}
+
+
+		//! \brief Overwrites the default InputController with a custom one
+		//! \warning The controller will be deleted by this and there is no way to release it without deleting after this call
+		DLLEXPORT void SetCustomInputController(InputController* controller);
+
 
 	protected:
 

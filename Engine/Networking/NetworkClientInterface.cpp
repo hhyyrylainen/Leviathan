@@ -486,6 +486,10 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
 	}
 }
 // ------------------------------------ //
+DLLEXPORT bool Leviathan::NetworkClientInterface::RegisterNetworkedInput(NetworkedInputHandler* handler){
+	DEBUG_BREAK;
+}
+// ------------------------------------ //
 DLLEXPORT int Leviathan::NetworkClientInterface::GetOurID() const{
 	return OurPlayerID;
 }

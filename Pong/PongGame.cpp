@@ -8,6 +8,7 @@
 #include "Networking/NetworkClientInterface.h"
 #include "Networking/RemoteConsole.h"
 #include "Rendering/GraphicalInputEntity.h"
+#include "PongNetHandler.h"
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
@@ -21,6 +22,7 @@ Pong::PongGame::PongGame() : GuiManagerAccess(NULL)
 
 {
 	GameInputHandler = new GameInputController();
+
 	StaticGame = this;
 }
 
@@ -349,7 +351,7 @@ void Pong::PongGame::Disconnect(const string &reasonstring){
 	GUARD_LOCK_THIS_OBJECT();
 	 
 	// Disconnect from active servers //
-	dynamic_cast<NetworkClientInterface*>(Leviathan::NetworkHandler::GetInterface())->DisconnectFromServer(Convert::StringToWstring(reasonstring));
+	ClientInterface->DisconnectFromServer(Convert::StringToWstring(reasonstring));
 	
 	// Disable lobby screen //
 	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
@@ -358,6 +360,7 @@ void Pong::PongGame::Disconnect(const string &reasonstring){
 // ------------------------------------ //
 void Pong::PongGame::DoSpecialPostLoad(){
 
+	ClientInterface = dynamic_cast<PongNetHandler*>(Leviathan::NetworkHandler::GetInterface());
 
 	shared_ptr<ViewerCameraPos> MainCamera;
 
@@ -405,15 +408,17 @@ void Pong::PongGame::DoSpecialPostLoad(){
 	window1->LinkObjects(MainCamera, WorldOfPong);
 
 	// link window input to game logic //
-	window1->GetInputController()->LinkReceiver(GameInputHandler);
+	auto networkedinput = new GameInputController();
+
+	// The window will delete this eventually //
+	window1->SetCustomInputController(networkedinput);
+	ClientInterface->RegisterNetworkedInput(networkedinput);
 }
 // ------------------------------------ //
 string GetPongVersionProxy(){
 
 	return GAME_VERSIONS_ANSI;
 }
-
-
 // ------------------------------------ //
 void Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 

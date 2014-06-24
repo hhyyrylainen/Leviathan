@@ -151,6 +151,13 @@ namespace Leviathan{
 		//! \todo Actually call this, maybe make this an event listener
 		DLLEXPORT void CloseDownServer();
 
+
+		//! \brief Enables the use of a NetworkedInputHandler
+		//! \param handler The object that implements the networked input interface, this has to be guaranteed to stay allocated as long as it is
+		//! still attached. 
+		DLLEXPORT virtual bool RegisterNetworkedInput(NetworkedInputHandler* handler);
+
+
 	protected:
 
 

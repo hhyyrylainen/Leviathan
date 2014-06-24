@@ -13,7 +13,6 @@ namespace Leviathan{
 
 		class CefApplication;
 		class GuiManager;
-		class View;
 		class LeviathanJavaScriptAsync;
 		class JSAsyncCustom;
 	}
@@ -31,6 +30,8 @@ namespace Leviathan{
 	class ObjectFileTemplateInstance;
 	class ObjectFileTemplateDefinition;
 
+	class NetworkedInput;
+	class NetworkedInputHandler;
 	class ConnectedPlayer;
 	class CommandSender;
 	class CommandHandler;

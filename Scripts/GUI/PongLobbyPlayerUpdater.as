@@ -82,7 +82,7 @@ class PlayerData{
     void CheckUpdates(PlayerSlot@ slot, bool forceupdate = false){
         
         PLAYERTYPE newtype = slot.GetPlayerType();
-        int newid = slot.GetlayerID();
+        int newid = slot.GetPlayerID();
         
         // Check has it updated //
         if(forceupdate || PlayerType != newtype || HumanPlayerID != newid){

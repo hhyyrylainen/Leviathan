@@ -108,7 +108,7 @@ class AIDataCache{
             // Set to idle if we have hit the ball (or no one else has) //
             int lasthitid = GetPongBase().GetLastHitPlayer();
             
-            if(lasthitid == -1 || AISlot.DoesPlayerIDMatchThisOrParent(lasthitid)){
+            if(lasthitid == -1 || AISlot.DoesPlayerNumberMatchThisOrParent(lasthitid)){
                 AiState = AISTATE_IDLING;
             }
         }

@@ -18,12 +18,19 @@ namespace Leviathan{
 	class NetworkInputFactory{
 	public:
 
+		//! \brief Won't actually be called by the engine but this should be used locally to create new instances
 		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForLocalStart(int inputid, bool isclient) = 0;
 
 
-
+		//! \brief Called when a new input needs to be created through a networked packet
+		//! \note The returned object will get custom data from the packet after this call so it isn't necessary to fill in all the data
 		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForReplication(int inputid) = 0;
 
+
+		//! \brief Called when an input is no longer needed
+		//!
+		//! This can be used, for example, to remove hooks from physics objects or character controllers
+		DLLEXPORT virtual void NoLongerNeeded(NetworkedInput &todiscard) = 0;
 	};
 
 

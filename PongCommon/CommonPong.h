@@ -24,6 +24,7 @@
 #include "Newton/PhysicalMaterial.h"
 #include "Newton/PhysicalMaterialManager.h"
 #include "Networking/SyncedResource.h"
+#include "GameInputController.h"
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return;
 
@@ -276,6 +277,11 @@ playrscorelistupdateendlabel:
 		}
 
 
+
+		static PongInputFactory* GetInputFactory(){
+			return InputFactory;
+		}
+
 	protected:
 
 
@@ -330,13 +336,9 @@ playrscorelistupdateendlabel:
 		//! stores last error string for easy access from scripts
 		string ErrorState;
 
+
+		static PongInputFactory* InputFactory;
 	};
-#ifdef _MSC_VER
-//	__declspec(selectany) BasePongParts* BasePongParts::StaticAccess = NULL;
-#else
-	// Apparently the above thing only works on Windows targets //
-//    BasePongParts* BasePongParts::StaticAccess = NULL;
-#endif
 
 
 

@@ -3,9 +3,23 @@
 #ifndef PONG_INPUTCONTROLLER
 #include "GameInputController.h"
 #endif
+#ifdef PONG_VERSION
+#include "PongGame.h"
+#include "PongNetHandler.h"
+#else
+#include "PongServer.h"
+#include "PongServerNetworking.h"
+#endif // PONG_VERSION
 using namespace Pong;
 // ------------------------------------ //
-Pong::GameInputController::GameInputController(){
+Pong::GameInputController::GameInputController() : NetworkedInputHandler(PongInputFactory::Get(), 
+#ifdef PONG_VERSION
+	PongGame::Get()->GetInterface()
+#else
+	PongServer::Get()->GetServerNetworkInterface()
+#endif // PONG_VERSION
+	)
+{
 	// Create the default control groups //
 	_SetupControlGroups();
 }
@@ -48,4 +62,21 @@ std::map<OIS::KeyCode, CONTROLKEYACTION>& Pong::GameInputController::MapControls
 
 	return GroupToKeyMap[controls];
 }
+// ------------------ PongInputFactory ------------------ //
+DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceForLocalStart(int inputid, bool isclient){
+	throw std::exception("The method or operation is not implemented.");
+}
 
+DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceForReplication(int inputid){
+	throw std::exception("The method or operation is not implemented.");
+}
+
+DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard){
+	throw std::exception("The method or operation is not implemented.");
+}
+// ------------------------------------ //
+PongInputFactory* Pong::PongInputFactory::Get(){
+	return Staticinstance;
+}
+
+PongInputFactory* Pong::PongInputFactory::Staticinstance = new PongInputFactory();

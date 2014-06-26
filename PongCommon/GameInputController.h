@@ -24,6 +24,12 @@ namespace Pong{
 		//! \brief Returns the static instance
 		static PongInputFactory* Get();
 
+		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForLocalStart(int inputid, bool isclient);
+
+		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForReplication(int inputid);
+
+		DLLEXPORT virtual void NoLongerNeeded(NetworkedInput &todiscard);
+
 
 	protected:
 

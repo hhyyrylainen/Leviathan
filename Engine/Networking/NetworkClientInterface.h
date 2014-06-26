@@ -86,6 +86,10 @@ namespace Leviathan{
 		//! \warning The deletion of the old handler isn't thread safe so be careful when switching handlers
 		DLLEXPORT virtual bool RegisterNetworkedInput(NetworkedInputHandler* handler);
 
+		//! \brief Returns the active networked input handler or NULL
+		DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
+
+
 	protected:
 
 		//! \brief Utility function for subclasses to call for default handling of server packets

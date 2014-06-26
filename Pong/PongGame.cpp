@@ -296,19 +296,10 @@ void Pong::PongGame::AllowPauseMenu(){
 
 void Pong::PongGame::CustomizedGameEnd(){
 	GUARD_LOCK_THIS_OBJECT();
-	// Stop sending pointless input //
-	GameInputHandler->UnlinkPlayers();
-	GameInputHandler->SetBlockState(true);
 
 	// Disable pause menu //
 	GuiManagerAccess->SetCollectionState(L"PauseMenu", false);
-	GuiManagerAccess->SetCollectionAllowEnableState(L"PauseMenu", true);
-}
-
-void Pong::PongGame::StartInputHandling(){
-	GUARD_LOCK_THIS_OBJECT();
-	GameInputHandler->StartReceivingInput(_PlayerList.GetVec());
-	GameInputHandler->SetBlockState(false);
+	GuiManagerAccess->SetCollectionAllowEnableState(L"PauseMenu", false);
 }
 // ------------------------------------ //
 void Pong::PongGame::CheckGameConfigurationVariables(GameConfiguration* configobj){
@@ -541,5 +532,3 @@ bool Pong::PongGame::SendServerCommand(const string &command){
 
 	return false;
 }
-
-Pong::PongInputFactory Pong::PongGame::InputFactory;

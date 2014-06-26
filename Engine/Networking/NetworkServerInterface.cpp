@@ -355,6 +355,10 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::RegisterNetworkedInput(Network
 	PotentialInputHandler = handler;
 	return true;
 }
+
+DLLEXPORT NetworkedInputHandler* Leviathan::NetworkServerInterface::GetNetworkedInput(){
+	return PotentialInputHandler;
+}
 // ------------------------------------ //
 
 int Leviathan::NetworkServerInterface::CurrentPlayerID = 1000;

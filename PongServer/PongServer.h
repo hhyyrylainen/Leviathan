@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "Application/ServerApplication.h"
 #include "CommonPong.h"
+#include "GameInputController.h"
 
 namespace Pong{
 
@@ -47,6 +48,11 @@ namespace Pong{
 			return &_PlayerList;
 		}
 
+		PongServerNetworking* GetServerNetworkInterface(){
+
+			return _PongServerNetworking;
+		}
+
 
 		static PongServer* Get(); 
 
@@ -61,6 +67,10 @@ namespace Pong{
 
 		// Server specific connection handling //
 
+
+		PongServerNetworking* _PongServerNetworking;
+
+		GameInputController* ServerInputHandler;
 
 
 		static PongServer* Staticaccess;

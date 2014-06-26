@@ -60,7 +60,7 @@ namespace Pong{
 
 
 
-		std::map<OIS::KeyCode, CONTROLKEYACTION>& MapControlsToKeyGrouping(PLAYERCONTROLS controls);
+		std::map<OIS::KeyCode, CONTROLKEYACTION>& MapControlsToKeyGrouping(PLAYERCONTROLS controls) THROWS;
 		
 
 	protected:

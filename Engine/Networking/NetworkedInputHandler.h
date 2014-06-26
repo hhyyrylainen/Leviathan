@@ -50,7 +50,13 @@ namespace Leviathan{
 		//!
 		//! The packet might cause creation of additional objects, delete existing or just alter state of them
 		//! \return Returns true when the packet is a networked input related packet even if it ISN'T handled
-		DLLEXPORT virtual bool HandleInputPacket();
+		DLLEXPORT virtual bool HandleInputPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
+
+		//! \brief Handles an input update packet
+		//!
+		//! The packet might cause creation of additional objects, delete existing or just alter state of them
+		//! \return Returns true when the packet is a networked input related packet even if it ISN'T handled
+		DLLEXPORT virtual bool HandleInputPacket(shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
 
 
 		//! \brief Sends update packets
@@ -67,6 +73,10 @@ namespace Leviathan{
 		//! callback is called
 		DLLEXPORT virtual void GetNextInputIDNumber(boost::function<void (int)> onsuccess, boost::function<void ()> onfailure);
 
+		//! \brief Returns the server's next input ID
+		//! \warning This function ONLY works on the server
+		DLLEXPORT virtual int GetNextInputIDNumberOnServer();
+
 
 		//! \brief Creates a new input source for syncing
 		//!
@@ -75,11 +85,11 @@ namespace Leviathan{
 		//! \warning This is only available on a client
 		//! \note The object should be created with the passed factory's NetworkInputFactory::CreateNewInstanceForLocalStart method. OR if the user
 		//! knows that the factory won't do anything too important you can create this object directly
-		//! \param iobject This is an instance of a custom subclass of NetworkedInput that implements the required methods. This pointer will be 
-		//! deleted by this object. Also the ID should be fetched using the   method
+		//! \param iobject This is an instance of a custom subclass of NetworkedInput that implements the required methods. Also the ID should be 
+		//! authorized by the server, either by directly requesting one or receiving one from the server
 		//! \return True when it is added. However it can later be discarded by the server not accepting us hooking the input to the global pool of
 		//! input objects on the server
-		DLLEXPORT virtual bool RegisterNewLocalGlobalReflectingInputSource(NetworkedInput* iobject);
+		DLLEXPORT virtual bool RegisterNewLocalGlobalReflectingInputSource(shared_ptr<NetworkedInput> iobject);
 
 
 	protected:
@@ -87,7 +97,6 @@ namespace Leviathan{
 
 		//! True if this is a server's object
 		bool IsOnTheServer;
-
 
 		// Server only part //
 

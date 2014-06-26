@@ -108,6 +108,11 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 		// Add this player to the slot //
 		chosenslot->SlotJoinPlayer(dynamic_cast<Leviathan::ConnectedPlayer*>(sender));
 
+		// Create a controller id for this player //
+		int newid = PongServer::Get()->GetServerNetworkInterface()->GetNetworkedInput()->GetNextInputIDNumberOnServer();
+
+		chosenslot->SetPlayerControllerID(newid);
+
 		Logger::Get()->Info(L"Player joined slot "+Convert::ToWstring(slotnumber)+L", split "+Convert::ToWstring<int>(split)+L" named "
 			+Convert::Utf8ToUtf16(sender->GetNickname()));
 

@@ -68,8 +68,14 @@ namespace Pong{
 		static void CheckGameConfigurationVariables(GameConfiguration* configobj);
 		static void CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
 
+		static PongInputFactory* GetInputFactory(){
+			return &InputFactory;
+		}
 
+		GameInputController* GetInputController(){
 
+			return GameInputHandler;
+		}
 
 	protected:
 
@@ -99,6 +105,7 @@ namespace Pong{
 
 
 		static PongGame* StaticGame;
+		static PongInputFactory InputFactory;
 	};
 
 }

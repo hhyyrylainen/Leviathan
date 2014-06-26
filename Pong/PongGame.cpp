@@ -23,6 +23,8 @@ Pong::PongGame::PongGame() : GuiManagerAccess(NULL)
 {
 	GameInputHandler = new GameInputController();
 
+	dynamic_cast<NetworkClientInterface*>(NetworkHandler::Get()->GetInterface())->RegisterNetworkedInput(GameInputHandler);
+
 	StaticGame = this;
 }
 
@@ -539,3 +541,5 @@ bool Pong::PongGame::SendServerCommand(const string &command){
 
 	return false;
 }
+
+Pong::PongInputFactory Pong::PongGame::InputFactory;

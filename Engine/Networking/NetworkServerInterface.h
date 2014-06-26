@@ -154,9 +154,13 @@ namespace Leviathan{
 
 		//! \brief Enables the use of a NetworkedInputHandler
 		//! \param handler The object that implements the networked input interface, this has to be guaranteed to stay allocated as long as it is
-		//! still attached. 
+		//! still attached.
+		//! \warning The deletion of the old handler isn't thread safe so be careful when switching handlers
 		DLLEXPORT virtual bool RegisterNetworkedInput(NetworkedInputHandler* handler);
 
+
+		//! \brief Returns the active networked input handler or NULL
+		DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
 
 	protected:
 
@@ -204,10 +208,16 @@ namespace Leviathan{
 
 		//! Holds the list of currently connected players
 		std::vector<ConnectedPlayer*> PlayerList;
+
 		//! Maximum allowed player count
 		int MaxPlayers;
+
 		//! Currently active bots
 		vector<int> ActiveBots;
+
+		//! This isn't always used, but when it is this will handle some packets
+		NetworkedInputHandler* PotentialInputHandler;
+
 
 		//! Name displayed in the server list
 		wstring ServerName;

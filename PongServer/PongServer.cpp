@@ -10,12 +10,22 @@
 #include "Networking/SyncedVariables.h"
 #include "Rendering/GraphicalInputEntity.h"
 #include "OgreException.h"
+#include "Networking/NetworkServerInterface.h"
+#include "Networking/NetworkHandler.h"
 using namespace Pong;
 // ------------------------------------ //
 // Put this here, since nowhere else to put it //
 BasePongParts* Pong::BasepongStaticAccess = NULL;
 
 Pong::PongServer::PongServer(){
+
+	ServerInputHandler = new GameInputController();
+
+	dynamic_cast<NetworkServerInterface*>(NetworkHandler::GetInterface())->RegisterNetworkedInput(ServerInputHandler);
+
+	_PongServerNetworking = dynamic_cast<PongServerNetworking*>(NetworkHandler::GetInterface());
+
+
 	Staticaccess = this;
 }
 

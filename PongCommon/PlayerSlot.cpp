@@ -14,7 +14,7 @@ using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) : Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_CLOSED), 
 	PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()), PlayerControllerID(0),
-	SplitSlot(NULL), SlotsPlayer(NULL), TrackDirectptr(NULL), PlayerID(-1)
+	SplitSlot(NULL), SlotsPlayer(NULL), TrackDirectptr(NULL), PlayerID(-1), NetworkedInputID(-1)
 {
 	
 }
@@ -156,7 +156,8 @@ void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
 	GUARD_LOCK_THIS_OBJECT();
 
 	// Write all our data to the packet //
-	packet << Slot << (int)PlayerType << PlayerNumber << ControlIdentifier << PlayerControllerID << Colour.X << Colour.Y << Colour.Z << Colour.W;
+	packet << Slot << (int)PlayerType << PlayerNumber << NetworkedInputID << ControlIdentifier << PlayerControllerID 
+		<< Colour.X << Colour.Y << Colour.Z << Colour.W;
 	packet << PlayerID << Score << (bool)(SplitSlot != NULL);
 
 	if(SplitSlot){
@@ -188,6 +189,11 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
 	}
 
+	if(!(packet >> NetworkedInputID)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+	
 	if(!(packet >> ControlIdentifier)){
 
 		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
@@ -239,7 +245,8 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 	if(PlayerID == PongGame::Get()->GetInterface()->GetOurID()){
 
 		// Hook a networked input receiver to the server //
-		DEBUG_BREAK;
+		PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
+			PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(NetworkedInputID, true));
 	}
 
 

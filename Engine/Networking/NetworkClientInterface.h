@@ -83,6 +83,7 @@ namespace Leviathan{
 		//! \note Usually this will work just fine since input handler will get deleted when the window closes but the engine *usually*
 		//! stops networking before deleting the main window, be careful when working with multiple windows as the handler might get deleted too soon
 		//! \todo Add a unregister function
+		//! \warning The deletion of the old handler isn't thread safe so be careful when switching handlers
 		DLLEXPORT virtual bool RegisterNetworkedInput(NetworkedInputHandler* handler);
 
 	protected:
@@ -162,6 +163,9 @@ namespace Leviathan{
 
 		int ConnectTriesCount;
 		int MaxConnectTries;
+
+		//! This isn't always used, but when it is this will handle some packets
+		NetworkedInputHandler* PotentialInputHandler;
 
 
 		//! Marks whether heartbeats are in use

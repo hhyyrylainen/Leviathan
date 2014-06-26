@@ -112,6 +112,16 @@ namespace Pong{
 			Colour = colour;
 		}
 
+		//! This should only be called on the server
+		void SetNetworkedInputID(int id){
+			NetworkedInputID = id;
+		}
+
+		int GetNetworkedInputID() const{
+
+			return NetworkedInputID;
+		}
+
 
 		//! returns true if player type isn't empty or closed
 		inline bool IsSlotActive(){
@@ -191,6 +201,10 @@ namespace Pong{
 		//! The ID of the player which can be used for lookups, exists on all clients and the server
 		int PlayerID;
 
+
+		//! The control ID of the player's input this exists on the server and on ALL of the clients.
+		//! This is used to hook right input objects to right world objects
+		int NetworkedInputID;
 
 
 		//! Notifying our parent of updates

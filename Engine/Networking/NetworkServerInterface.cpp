@@ -8,17 +8,21 @@
 #include "Common/Misc.h"
 #include "Gameplay/CommandHandler.h"
 #include "SyncedVariables.h"
+#include "NetworkedInputHandler.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(int maxplayers, const wstring &servername, 
 	NETWORKRESPONSE_SERVERJOINRESTRICT restricttype /*= NETWORKRESPONSE_SERVERJOINRESTRICT_NONE*/, int additionalflags /*= 0*/) : MaxPlayers(maxplayers),
 	ServerName(servername), JoinRestrict(restricttype), ExtraServerFlags(additionalflags), AllowJoin(false), 
-	ServerStatus(NETWORKRESPONSE_SERVERSTATUS_STARTING), _CommandHandler(new CommandHandler(this))
+	ServerStatus(NETWORKRESPONSE_SERVERSTATUS_STARTING), _CommandHandler(new CommandHandler(this)), PotentialInputHandler(NULL)
 {
 
 }
 
 DLLEXPORT Leviathan::NetworkServerInterface::~NetworkServerInterface(){
+
+	SAFE_DELETE(PotentialInputHandler);
+
 	// Release the memory //
 	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ){
 
@@ -86,6 +90,12 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SetServerAllowPlayers(bool all
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult){
+	// Try to handle input packet if we have the proper handler //
+	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(request, connectiontosendresult)){
+		
+		return true;
+	}
+
 	switch(request->GetType()){
 	case NETWORKREQUESTTYPE_REQUESTEXECUTION:
 		{
@@ -142,6 +152,12 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(shared_pt
 DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, 
 	bool &dontmarkasreceived)
 {
+	// Try to handle input packet if we have the proper handler //
+	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(message, connection)){
+
+		return true;
+	}
+
 	switch(message->GetType()){
 	case NETWORKRESPONSETYPE_SERVERHEARTBEAT:
 		{
@@ -326,10 +342,18 @@ DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
 
 	// Update the command handling //
 	_CommandHandler->UpdateStatus();
+
+
+	// Update networked input handling //
+	if(PotentialInputHandler)
+		PotentialInputHandler->UpdateInputStatus();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkServerInterface::RegisterNetworkedInput(NetworkedInputHandler* handler){
-	DEBUG_BREAK;
+
+	SAFE_DELETE(PotentialInputHandler);
+	PotentialInputHandler = handler;
+	return true;
 }
 // ------------------------------------ //
 

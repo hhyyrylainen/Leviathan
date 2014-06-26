@@ -12,6 +12,7 @@
 #include "NetworkRequest.h"
 #include "Common/Misc.h"
 #include "Iterators/StringIterator.h"
+#include "NetworkedInputHandler.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -20,12 +21,14 @@ using namespace Leviathan;
 
 // ------------------ NetworkClientInterface ------------------ //
 DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() : MaxConnectTries(DEFAULT_MAXCONNECT_TRIES), ConnectTriesCount(0), 
-	ConnectedToServer(false), UsingHeartbeats(false), SecondsWithoutConnection(0.f), OurPlayerID(-1)
+	ConnectedToServer(false), UsingHeartbeats(false), SecondsWithoutConnection(0.f), OurPlayerID(-1), PotentialInputHandler(NULL)
 {
 	Staticaccess = this;
 }
 
 DLLEXPORT Leviathan::NetworkClientInterface::~NetworkClientInterface(){
+
+	SAFE_DELETE(PotentialInputHandler);
 
 	Staticaccess = NULL;
 }
@@ -87,13 +90,25 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLoc
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult){
-	DEBUG_BREAK;
+	// Try to handle input packet if we have the proper handler //
+	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(request, connectiontosendresult)){
+
+		return true;
+	}
+
+
 	return false;
 }
 
 DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection,
 	bool &dontmarkasreceived)
 {
+	// Try to handle input packet if we have the proper handler //
+	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(message, connection)){
+
+		return true;
+	}
+
 	switch(message->GetType()){
 	case NETWORKRESPONSETYPE_SERVERHEARTBEAT:
 		{
@@ -158,6 +173,10 @@ checksentrequestsbeginlabel:
 
 	// Send heartbeats //
 	_UpdateHeartbeats();
+
+	// Update networked input handling //
+	if(PotentialInputHandler)
+		PotentialInputHandler->UpdateInputStatus();
 
 }
 // ------------------------------------ //
@@ -487,7 +506,10 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::RegisterNetworkedInput(NetworkedInputHandler* handler){
-	DEBUG_BREAK;
+	
+	SAFE_DELETE(PotentialInputHandler);
+	PotentialInputHandler = handler;
+	return true;
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::NetworkClientInterface::GetOurID() const{

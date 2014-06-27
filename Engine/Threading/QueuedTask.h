@@ -93,6 +93,34 @@ namespace Leviathan{
 		boost::function<bool ()> TaskCheckingFunc;
 	};
 
+
+	//! \brief Encapsulates a function that can later be ran in a free thread
+	//! \warning Function passed to this class should be thread safe
+	class ConditionalDelayedTask : public QueuedTask{
+	public:
+		//! Constructs a task that can be controlled when it can be ran with an additional check to skip checking too often
+		//! \param delaytime The time between checks; time that needs to pass before checking again
+		//! \param canberuncheck Is ran when CanBeRan is called, so it should be relatively cheap to call
+		DLLEXPORT ConditionalDelayedTask(boost::function<void ()> functorun, boost::function<bool ()> canberuncheck, 
+			const MicrosecondDuration &delaytime);
+		DLLEXPORT virtual ~ConditionalDelayedTask();
+
+
+		//! \brief Calls the checking function to see if the task can be ran
+		DLLEXPORT virtual bool CanBeRan(const QueuedTaskCheckValues* const checkvalues);
+
+	protected:
+
+		//! The function for checking if the task is allowed to be run
+		boost::function<bool ()> TaskCheckingFunc;
+
+		//! The time after which this task may be checked again
+		WantedClockType::time_point CheckingTime;
+
+		//! The delay between checks
+		MicrosecondDuration DelayBetweenChecks;
+	};
+
 	//! \brief Encapsulates a function that is ran after a time period
 	//! \warning Function passed to this class should be thread safe
 	class DelayedTask : public QueuedTask{

@@ -14,12 +14,41 @@
 
 namespace Leviathan{
 
+	//! \brief Defines the state of an input object
+	enum NETWORKEDINPUT_STATE{
+		//! This is the initial state
+		NETWOKREDINPUT_STATE_READY,
+		//! The state while waiting for server response
+		NETWORKEDINPUT_STATE_WAITING,
+		//! The state when successfully connected
+		NETWORKEDINPUT_STATE_CONNECTED,
+		//! The state when something has failed
+		NETWORKEDINPUT_STATE_FAILED,
+		//! The state when the server has closed the connection
+		NETWORKEDINPUT_STATE_CLOSED
+	};
+
+
+	//! If any of these bits are check the object should be discarded
+#define NETWORKEDINPUT_STATE_TODISCARD			(NETWORKEDINPUT_STATE_CLOSED | NETWORKEDINPUT_STATE_FAILED)
+
+
+
+
 
 	//! \brief Represents a single input source (group of keys) that are an input method that is to be synchronized between the server and the clients
 	//! \note This class inherits from InputReceiver and you will need to implement it's input processing methods
 	class NetworkedInput : public InputReceiver{
 	public:
-		DLLEXPORT NetworkedInput(int ownerid);
+
+		//! \brief Base class constructor for NetworkedInputs
+		//! \param ownerid The ID of the owning player object
+		//! \param networkid The ID retrieved from the server's NetworkedInputHandler
+		DLLEXPORT NetworkedInput(int ownerid, int networkid);
+
+		//! \brief Initializes data with information from create request
+		DLLEXPORT NetworkedInput(sf::Packet &packet);
+
 		DLLEXPORT virtual ~NetworkedInput();
 
 
@@ -31,7 +60,7 @@ namespace Leviathan{
 		DLLEXPORT virtual void AddChangesToPacket(sf::Packet &packet);
 
 
-
+		//! \brief Used to set the initial data after receiving create notification
 		DLLEXPORT virtual void LoadDataFromFullPacket(sf::Packet &packet);
 
 
@@ -44,6 +73,22 @@ namespace Leviathan{
 
 		//! \brief Call to establish a connection with the server
 		DLLEXPORT virtual bool ConnectToServersideInput();
+
+
+		//! \brief Called when this is connected to a networked input handler
+		DLLEXPORT virtual void NowOwnedBy(NetworkedInputHandler* owner);
+
+
+		//! \brief Called when the handler or the network is no longer available and all connections should be stopped
+		DLLEXPORT virtual void OnParentNoLongerAvailable();
+
+
+		//! \brief Returns the state of this object
+		DLLEXPORT NETWORKEDINPUT_STATE GetState() const;
+
+
+		//! \brief Called when this is created locally, should set the initial data
+		DLLEXPORT virtual void InitializeLocal() = 0;
 
 
 	protected:
@@ -83,6 +128,13 @@ namespace Leviathan{
 		//! \todo The server needs to be asked about this ID
 		int InputID;
 
+
+		//! A pointer to the owning handler instance
+		NetworkedInputHandler* OwningHandler;
+
+
+		//! The current state of the object
+		NETWORKEDINPUT_STATE CurrentState;
 	};
 
 }

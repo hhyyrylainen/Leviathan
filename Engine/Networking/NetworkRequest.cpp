@@ -5,6 +5,7 @@
 #endif
 #include "Exceptions/ExceptionInvalidArgument.h"
 #include "GameSpecificPacketHandler.h"
+#include "NetworkedInput.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
@@ -67,6 +68,13 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestCommandExecutionData*
 
 }
 
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestConnectInputData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
+	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_CONNECTINPUT), 
+	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+{
+
+}
+
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket) : TimeOutValue(-1){
 	// Get the heading data //
 	if(!(frompacket >> ResponseID)){
@@ -110,6 +118,11 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket) : Ti
 	case NETWORKREQUESTTYPE_REQUESTEXECUTION:
 		{
 			RequestData = new RequestCommandExecutionData(frompacket);
+		}
+		break;
+	case  NETWORKREQUESTTYPE_CONNECTINPUT:
+		{
+			RequestData = new RequestConnectInputData(frompacket);
 		}
 		break;
 	default:
@@ -280,4 +293,25 @@ DLLEXPORT Leviathan::RequestCommandExecutionData::RequestCommandExecutionData(sf
 
 DLLEXPORT void Leviathan::RequestCommandExecutionData::AddDataToPacket(sf::Packet &packet){
 	packet << Command;
+}
+// ------------------ RequestConnectInputData ------------------ //
+DLLEXPORT Leviathan::RequestConnectInputData::RequestConnectInputData(NetworkedInput &tosend){
+	// Copy the data to our packet //
+
+	tosend.AddFullDataToPacket(DataForObject);
+}
+
+DLLEXPORT Leviathan::RequestConnectInputData::RequestConnectInputData(sf::Packet &frompacket){
+	// Load the packet from the packet, packetception? //
+	string tmpstr;
+	frompacket >> tmpstr;
+
+	// Fill the actual packet //
+	DataForObject.append(tmpstr.c_str(), tmpstr.size());
+}
+
+DLLEXPORT void Leviathan::RequestConnectInputData::AddDataToPacket(sf::Packet &packet){
+
+
+	packet << string(reinterpret_cast<const char*>(DataForObject.getData()), DataForObject.getDataSize());
 }

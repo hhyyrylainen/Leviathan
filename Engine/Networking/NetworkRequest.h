@@ -26,6 +26,9 @@ namespace Leviathan{
 		NETWORKREQUESTTYPE_GETALLSYNCVALUES,
 		//! Used to request the server to run a command, used for chat and other things
 		NETWORKREQUESTTYPE_REQUESTEXECUTION,
+		//! Sent when a player requests the server to connect a NetworkedInput
+		NETWORKREQUESTTYPE_CONNECTINPUT,
+
 		//! Used for game specific requests
 		NETWORKREQUESTTYPE_CUSTOM
 	};
@@ -95,6 +98,17 @@ namespace Leviathan{
 		string Command;
 	};
 
+	class RequestConnectInputData : public BaseNetworkRequestData{
+	public:
+		DLLEXPORT RequestConnectInputData(NetworkedInput &tosend);
+		DLLEXPORT RequestConnectInputData(sf::Packet &frompacket);
+
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! This contains the data required to create the object
+		sf::Packet DataForObject;
+	};
+
 	class CustomRequestData : public BaseNetworkRequestData{
 	public:
 		DLLEXPORT CustomRequestData(GameSpecificPacketData* newddata);
@@ -117,6 +131,8 @@ namespace Leviathan{
 		DLLEXPORT NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(CustomRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(RequestCommandExecutionData* newddata, int timeout = 10, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED);
+		DLLEXPORT NetworkRequest(RequestConnectInputData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		
 		DLLEXPORT ~NetworkRequest();
 
 		DLLEXPORT NetworkRequest(sf::Packet &frompacket);

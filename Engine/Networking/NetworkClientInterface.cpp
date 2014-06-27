@@ -519,6 +519,10 @@ DLLEXPORT int Leviathan::NetworkClientInterface::GetOurID() const{
 DLLEXPORT NetworkedInputHandler* Leviathan::NetworkClientInterface::GetNetworkedInput(){
 	return PotentialInputHandler;
 }
+
+DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkClientInterface::GetServerConnection(){
+	return ServerConnection;
+}
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const wstring &reasonstring, bool donebyus){
 

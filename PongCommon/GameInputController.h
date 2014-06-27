@@ -46,6 +46,11 @@ namespace Pong{
 
 
 
+		virtual bool ReceiveInput(OIS::KeyCode key, int modifiers, bool down);
+
+		virtual void ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down);
+
+		virtual bool OnMouseMove(int xmove, int ymove);
 
 	protected:
 

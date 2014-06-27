@@ -89,6 +89,9 @@ namespace Leviathan{
 		//! \brief Returns the active networked input handler or NULL
 		DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
 
+		//! \brief Returns the active server connection or NULL
+		DLLEXPORT virtual shared_ptr<ConnectionInfo> GetServerConnection();
+
 
 	protected:
 
@@ -129,7 +132,6 @@ namespace Leviathan{
 		//! \brief Called when the player is on the server and everything that the Engine is concerned about is done
 		//! \note Here the application's connect data should be sent. The application specific connection routine should be done here
 		DLLEXPORT virtual void _OnStartApplicationConnect() = 0;
-
 
 	private:
 		

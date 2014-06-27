@@ -60,6 +60,29 @@ DLLEXPORT Leviathan::ConditionalTask::~ConditionalTask(){
 DLLEXPORT bool Leviathan::ConditionalTask::CanBeRan(const QueuedTaskCheckValues* const checkvalues){
 	return TaskCheckingFunc();
 }
+// ------------------ ConditionalDelayedTask ------------------ //
+DLLEXPORT Leviathan::ConditionalDelayedTask::ConditionalDelayedTask(boost::function<void ()> functorun, boost::function<bool ()> canberuncheck, 
+	const MicrosecondDuration &delaytime) : QueuedTask(functorun), TaskCheckingFunc(canberuncheck), 
+	CheckingTime(Misc::GetThreadSafeSteadyTimePoint()+delaytime), DelayBetweenChecks(delaytime)
+{
+
+}
+
+DLLEXPORT Leviathan::ConditionalDelayedTask::~ConditionalDelayedTask(){
+
+}
+
+DLLEXPORT bool Leviathan::ConditionalDelayedTask::CanBeRan(const QueuedTaskCheckValues* const checkvalues){
+	// Check is it too early //
+	if(checkvalues->CurrentTime < CheckingTime)
+		return false;
+
+	// Adjust the next check time //
+	CheckingTime = Misc::GetThreadSafeSteadyTimePoint()+DelayBetweenChecks;
+
+	// Run the checking function //
+	return TaskCheckingFunc();
+}
 // ------------------ DelayedTask ------------------ //
 DLLEXPORT Leviathan::DelayedTask::DelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &delaytime) : QueuedTask(functorun),
 	ExecutionTime(Misc::GetThreadSafeSteadyTimePoint()+delaytime)
@@ -150,3 +173,4 @@ DLLEXPORT int Leviathan::RepeatCountedDelayedTask::GetRepeatCount() const{
 DLLEXPORT bool Leviathan::RepeatCountedDelayedTask::IsThisLastRepeat() const{
 	return RepeatedCount+1 >= MaxRepeats;
 }
+

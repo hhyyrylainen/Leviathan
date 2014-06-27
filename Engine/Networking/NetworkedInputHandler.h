@@ -9,6 +9,7 @@
 // ---- includes ---- //
 #include "Input/InputController.h"
 #include "boost/function.hpp"
+#include "Common/ThreadSafe.h"
 
 
 
@@ -41,13 +42,16 @@ namespace Leviathan{
 	//! the NetworkClientInterface or the NetworkServerInterface depending on whether this is a server
 	//! \note As a server usually doesn't have a window nor it's own input setting this to the GraphicalInputEntity can be skipped as such entity
 	//! might not have even been created in non-GUI mode
-	class NetworkedInputHandler : public InputController{
+	class NetworkedInputHandler : public InputController, public ThreadSafe{
+		friend NetworkedInput;
 	public:
 
 		//! \brief Creates a NetworkedInputHandler for client applications
+		//! \param objectcreater The factory object used to instantiate objects, the pointer won't be released by this
 		DLLEXPORT NetworkedInputHandler(NetworkInputFactory* objectcreater, NetworkClientInterface* isclient);
 
 		//! \brief Creates a NetworkedInputHandler for server applications
+		//! \param objectcreater The factory object used to instantiate objects, the pointer won't be released by this
 		DLLEXPORT NetworkedInputHandler(NetworkInputFactory* objectcreater, NetworkServerInterface* isserver);
 
 		DLLEXPORT virtual ~NetworkedInputHandler();
@@ -98,9 +102,18 @@ namespace Leviathan{
 		//! input objects on the server
 		DLLEXPORT virtual bool RegisterNewLocalGlobalReflectingInputSource(shared_ptr<NetworkedInput> iobject);
 
+		//! \brief Queues a NetworkedInput instance to be destroyed
+		DLLEXPORT void QueueDeleteInput(NetworkedInput* inputobj);
+
+
+		// Input receiving parts that aren't needed as the default implementations work just fine //
+
 
 	protected:
 
+		//! \brief Overloaded to allow us discard stuff from GlobalOrLocalListeners
+		virtual void _OnChildUnlink(InputReceiver* child);
+		// ------------------------------------ //
 
 		//! True if this is a server's object
 		bool IsOnTheServer;
@@ -111,7 +124,18 @@ namespace Leviathan{
 		int LastInputSourceID;
 
 		//! On the server this has the list of global input listeners, on a local 
-		std::vector<unique_ptr<NetworkedInput>> GlobalOrLocalListeners;
+		std::vector<shared_ptr<NetworkedInput>> GlobalOrLocalListeners;
+
+
+		//! The factory used for stuff
+		NetworkInputFactory* _NetworkInputFactory;
+
+		//! Pointer to the network interface when on a client
+		NetworkClientInterface* ClientInterface;
+
+		//! Pointer to the network interface when on a server
+		NetworkServerInterface* ServerInterface;
+
 
 	};
 

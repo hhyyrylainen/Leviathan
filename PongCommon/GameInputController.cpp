@@ -11,6 +11,7 @@
 #include "PongServerNetworking.h"
 #endif // PONG_VERSION
 using namespace Pong;
+#include "Exceptions/ExceptionInvalidArgument.h"
 // ------------------------------------ //
 Pong::GameInputController::GameInputController() : NetworkedInputHandler(PongInputFactory::Get(), 
 #ifdef PONG_VERSION
@@ -22,10 +23,11 @@ Pong::GameInputController::GameInputController() : NetworkedInputHandler(PongInp
 {
 	// Create the default control groups //
 	_SetupControlGroups();
+	Staticistance = this;
 }
 
 Pong::GameInputController::~GameInputController(){
-
+	Staticistance = NULL;
 }
 // ------------------------------------ //
 
@@ -62,9 +64,60 @@ std::map<OIS::KeyCode, CONTROLKEYACTION>& Pong::GameInputController::MapControls
 
 	return GroupToKeyMap[controls];
 }
+
+GameInputController* Pong::GameInputController::Get(){
+	return Staticistance;
+}
+
+GameInputController* Pong::GameInputController::Staticistance = NULL;
+
 // ------------------ PongInputFactory ------------------ //
 DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceForLocalStart(int inputid, bool isclient){
-	throw std::exception("The method or operation is not implemented.");
+#ifdef PONG_VERSION
+	// We need to find the corresponding player with the control id matching this and then stealing it here //
+	auto plylist = BasePongParts::Get()->GetPlayers();
+
+	GUARD_LOCK_OTHER_OBJECT(plylist);
+
+
+	std::vector<PlayerSlot*>& plys = plylist->GetVec();
+
+
+	PlayerSlot* curplayer;
+	PLAYERCONTROLS activecontrols;
+	int playerid = -1;
+
+	for(size_t i = 0; i < plys.size(); i++){
+
+		if(plys[i]->GetNetworkedInputID() == inputid){
+
+			// Store the data and set us as this slot's thing //
+			curplayer = plys[i];
+			activecontrols = curplayer->GetControlType();
+			playerid = curplayer->GetPlayerID();
+
+			
+
+			break;
+		}
+	}
+
+	if(playerid == -1){
+
+		Logger::Get()->Error(L"Pong input thing failed to find player ID");
+		return NULL;
+	}
+	
+	unique_ptr<PongNInputter> tmpobj(new PongNInputter(playerid, inputid, curplayer, activecontrols));
+
+	curplayer->SetInputThatSendsControls(tmpobj.get());
+
+	return unique_ptr<NetworkedInput>(tmpobj.release());
+#else
+
+	assert(0 && "Cannot call this on the server");
+	return NULL;
+#endif // PONG_VERSION
 }
 
 DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceForReplication(int inputid){
@@ -72,7 +125,18 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
 }
 
 DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard){
-	throw std::exception("The method or operation is not implemented.");
+	// Must still be the same type //
+	PongNInputter* tmpobj = dynamic_cast<PongNInputter*>(&todiscard);
+
+	// Unset the target if it is still set //
+	GUARD_LOCK_OTHER_OBJECT(tmpobj);
+
+
+	if(tmpobj->ControlledSlot){
+
+		tmpobj->ControlledSlot->SetInputThatSendsControls(NULL, tmpobj);
+		tmpobj->ControlledSlot = NULL;
+	}
 }
 // ------------------------------------ //
 PongInputFactory* Pong::PongInputFactory::Get(){
@@ -80,3 +144,180 @@ PongInputFactory* Pong::PongInputFactory::Get(){
 }
 
 PongInputFactory* Pong::PongInputFactory::Staticinstance = new PongInputFactory();
+// ------------------ PongNInputter ------------------ //
+Pong::PongNInputter::PongNInputter(int ownerid, int networkid, PlayerSlot* controlthis, PLAYERCONTROLS typetoreceive) : 
+	Leviathan::NetworkedInput(ownerid, networkid), ControlledSlot(controlthis), CtrlGroup(typetoreceive), CreatedByUs(false), ControlStates(0)
+{
+	
+}
+
+Pong::PongNInputter::~PongNInputter(){
+	GUARD_LOCK_THIS_OBJECT();
+	if(ControlledSlot){
+		
+		
+		ControlledSlot->SetInputThatSendsControls(NULL, this);
+		ControlledSlot = NULL;
+	}
+}
+
+void Pong::PongNInputter::StopSendingInput(PlayerSlot* tohere){
+	GUARD_LOCK_THIS_OBJECT();
+	ControlledSlot = NULL;
+}
+// ------------------------------------ //
+DLLEXPORT void Pong::PongNInputter::InitializeLocal(){
+	GUARD_LOCK_THIS_OBJECT();
+
+	CreatedByUs = true;
+}
+// ------------------------------------ //
+void Pong::PongNInputter::_OnInputChanged(){
+	GUARD_LOCK_THIS_OBJECT();
+	
+	if(ControlledSlot){
+		// Check which keys have changed //
+		char differences = ChangedKeys^ControlStates;
+
+
+
+		// Send our input actions //
+
+		// Check is each control changed and if it is send the new value //
+		if(differences & PONG_INPUT_FLAGS_LEFT){
+			ControlledSlot->PassInputAction(CONTROLKEYACTION_LEFT, ChangedKeys & PONG_INPUT_FLAGS_LEFT ? true: false);
+		}
+
+		if(differences & PONG_INPUT_FLAGS_RIGHT){
+			ControlledSlot->PassInputAction(CONTROLKEYACTION_RIGHT, ChangedKeys & PONG_INPUT_FLAGS_RIGHT ? true: false);
+		}
+
+		if(differences & PONG_INPUT_FLAGS_POWERDOWN){
+			ControlledSlot->PassInputAction(CONTROLKEYACTION_POWERUPDOWN, ChangedKeys & PONG_INPUT_FLAGS_POWERDOWN ? true: false);
+		}
+
+		if(differences & PONG_INPUT_FLAGS_POWERUP){
+			ControlledSlot->PassInputAction(CONTROLKEYACTION_POWERUPUP, ChangedKeys & PONG_INPUT_FLAGS_POWERUP ? true: false);
+		}
+		
+
+		// All changes are now processed //
+		ControlStates = ChangedKeys;
+	}
+}
+// ------------------------------------ //
+void Pong::PongNInputter::OnAddFullCustomDataToPacket(sf::Packet &packet){
+	GUARD_LOCK_THIS_OBJECT();
+
+	packet << (int)CtrlGroup << ControlStates;
+}
+
+void Pong::PongNInputter::OnLoadCustomFullDataFrompacket(sf::Packet &packet){
+	GUARD_LOCK_THIS_OBJECT();
+
+	int tmpgroup;
+
+	if(!(packet >> tmpgroup)){
+
+		throw ExceptionInvalidArgument(L"invalid pong control packet", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	CtrlGroup = static_cast<PLAYERCONTROLS>(tmpgroup);
+	
+
+	if(!(packet >> *reinterpret_cast<sf::Int8*>(&ControlStates))){
+
+		throw ExceptionInvalidArgument(L"invalid pong control packet", 0, __WFUNCTION__, L"packet", L"");
+	}
+}
+// ------------------------------------ //
+void Pong::PongNInputter::OnAddUpdateCustomDataToPacket(sf::Packet &packet){
+	GUARD_LOCK_THIS_OBJECT();
+
+	packet << ChangedKeys;
+}
+
+void Pong::PongNInputter::OnLoadCustomUpdateDataFrompacket(sf::Packet &packet){
+	GUARD_LOCK_THIS_OBJECT();
+
+	if(!(packet >> *reinterpret_cast<sf::Int8*>(&ChangedKeys))){
+
+		throw ExceptionInvalidArgument(L"invalid pong control packet", 0, __WFUNCTION__, L"packet", L"");
+	}
+}
+// ------------------------------------ //
+bool Pong::PongNInputter::ReceiveInput(OIS::KeyCode key, int modifiers, bool down){
+	// Reject if not local input //
+	if(!CreatedByUs)
+		return false;
+
+	return _HandleKeyThing(key, down);
+}
+
+void Pong::PongNInputter::ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down){
+	// Ignore if not local input also ignore if it is going down //
+	if(!CreatedByUs || down)
+		return;
+
+	_HandleKeyThing(key, false);
+}
+
+bool Pong::PongNInputter::OnMouseMove(int xmove, int ymove){
+	// Reject if not local input //
+	if(!CreatedByUs)
+		return false;
+
+	// We don't use mouse input //
+	return false;
+}
+// ------------------------------------ //
+bool Pong::PongNInputter::_HandleKeyThing(OIS::KeyCode key, bool down){
+	// This might be the case if input hasn't been chosen //
+	if(CtrlGroup == PLAYERCONTROLS_NONE)
+		return false;
+
+
+	// Get the map which contains the keys that we are monitoring //
+	std::map<OIS::KeyCode, CONTROLKEYACTION>& mapref = GameInputController::Get()->MapControlsToKeyGrouping(CtrlGroup);
+	auto iter = mapref.find(key);
+
+	// The iter is valid if this is a key we should be concerned by //
+	if(iter == mapref.end()){
+
+		// Not one of our keys //
+		return false;
+	}
+
+	// It is our key //
+	CONTROLKEYACTION newaction = iter->second;
+
+	char targetbit;
+
+	// Set the bit //
+	switch(newaction){
+	case CONTROLKEYACTION_LEFT: targetbit = PONG_INPUT_FLAGS_LEFT; break;
+	case CONTROLKEYACTION_RIGHT: targetbit = PONG_INPUT_FLAGS_RIGHT; break;
+	case CONTROLKEYACTION_POWERUPDOWN: targetbit = PONG_INPUT_FLAGS_POWERDOWN; break;
+	case CONTROLKEYACTION_POWERUPUP: targetbit = PONG_INPUT_FLAGS_POWERUP; break;
+	}
+
+	// Set/unset the changed bit //
+	if(down){
+
+		ChangedKeys |= 1 << targetbit;
+
+	} else {
+
+		ChangedKeys &= ~(1 << targetbit);
+	}
+
+
+	// Our thing has changed! //
+	if(ChangedKeys != ControlStates)
+		OnUpdateInputStates();
+
+
+	// It was our key which we handled //
+	return true;
+}
+

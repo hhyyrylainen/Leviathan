@@ -14,12 +14,13 @@ using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) : Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_CLOSED), 
 	PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()), PlayerControllerID(0),
-	SplitSlot(NULL), SlotsPlayer(NULL), TrackDirectptr(NULL), PlayerID(-1), NetworkedInputID(-1)
+	SplitSlot(NULL), SlotsPlayer(NULL), TrackDirectptr(NULL), PlayerID(-1), NetworkedInputID(-1), InputObj(NULL)
 {
 	
 }
 
 Pong::PlayerSlot::~PlayerSlot(){
+	_ResetNetworkInput();
 	SAFE_DELETE(SplitSlot);
 }
 // ------------------------------------ //
@@ -69,6 +70,8 @@ int Pong::PlayerSlot::GetSplitCount(){
 }
 
 void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool active){
+	GUARD_LOCK_THIS_OBJECT();
+
 	// if this is player 0 or 3 flip inputs //
 	if(Slot == 0 || Slot == 2){
 
@@ -100,9 +103,8 @@ void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool ac
 	}
 
 	// Set the track speed based on move direction //
-	TrackDirectptr->SetTrackAdvanceSpeed(MoveState*INPUT_TRACK_ADVANCESPEED);
-
-	Parent->OnValueUpdated();
+	if(TrackDirectptr)
+		TrackDirectptr->SetTrackAdvanceSpeed(MoveState*INPUT_TRACK_ADVANCESPEED);
 }
 
 void Pong::PlayerSlot::InputDisabled(){
@@ -244,6 +246,8 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 
 	if(PlayerID == PongGame::Get()->GetInterface()->GetOurID()){
 
+		_ResetNetworkInput();
+
 		// Hook a networked input receiver to the server //
 		PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
 			PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(NetworkedInputID, true));
@@ -272,6 +276,28 @@ void Pong::PlayerSlot::SlotLeavePlayer(){
 	ControlType = PLAYERCONTROLS_NONE;
 	PlayerType = PLAYERTYPE_EMPTY;
 }
+
+void Pong::PlayerSlot::SetInputThatSendsControls(PongNInputter* input, PongNInputter* oldcheck /*= NULL*/){
+	GUARD_LOCK_THIS_OBJECT();
+	if(oldcheck && InputObj != oldcheck)
+		return;
+
+	_ResetNetworkInput();
+
+	InputObj = input;
+}
+
+void Pong::PlayerSlot::_ResetNetworkInput(){
+	GUARD_LOCK_THIS_OBJECT();
+	if(InputObj){
+
+
+		InputObj->StopSendingInput(this);
+	}
+
+	InputObj = NULL;
+}
+
 // ------------------ PlayerList ------------------ //
 Pong::PlayerList::PlayerList(boost::function<void (PlayerList*)> callback, size_t playercount /*= 4*/) : SyncedResource(L"PlayerList"), 
 	CallbackFunc(callback), GamePlayers(4)

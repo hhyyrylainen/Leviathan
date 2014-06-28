@@ -43,12 +43,6 @@ namespace Pong{
 
 		}
 
-
-		PlayerList* GetPlayers(){
-
-			return &_PlayerList;
-		}
-
 		PongServerNetworking* GetServerNetworkInterface(){
 
 			return _PongServerNetworking;

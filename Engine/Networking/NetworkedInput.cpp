@@ -64,6 +64,7 @@ DLLEXPORT void Leviathan::NetworkedInput::LoadUpdatesFromPacket(sf::Packet &pack
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::OnUpdateInputStates(){
 	// Send updates through the network //
+	DEBUG_BREAK;
 
 	// Notify local update //
 	_OnInputChanged();

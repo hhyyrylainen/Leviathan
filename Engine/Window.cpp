@@ -455,25 +455,27 @@ bool Leviathan::Window::keyPressed(const OIS::KeyEvent &arg){
 	bool usedkeydown = false;
 
 	// Try to create a paste/cut/copy request //
-	if(arg.key == OIS::KC_C){
+	if(SpecialKeyModifiers & KEYSPECIAL_CTRL){
+		if(arg.key == OIS::KC_C){
 
-		if(inputreceiver->injectCopyRequest()){
+			if(inputreceiver->injectCopyRequest()){
 
-			usedkeydown = true;
-		}
+				usedkeydown = true;
+			}
 
-	} else if(arg.key == OIS::KC_V){
+		} else if(arg.key == OIS::KC_V){
 
-		if(inputreceiver->injectPasteRequest()){
+			if(inputreceiver->injectPasteRequest()){
 
-			usedkeydown = true;
-		}
+				usedkeydown = true;
+			}
 
-	} else if(arg.key == OIS::KC_X){
+		} else if(arg.key == OIS::KC_X){
 
-		if(inputreceiver->injectCutRequest()){
+			if(inputreceiver->injectCutRequest()){
 
-			usedkeydown = true;
+				usedkeydown = true;
+			}
 		}
 	}
 

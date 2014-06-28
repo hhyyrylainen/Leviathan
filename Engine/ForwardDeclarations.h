@@ -27,6 +27,10 @@ namespace Leviathan{
 		class TrailEmitter;
 	}
 
+
+	class ExceptionInvalidArgument;
+
+
 	class ObjectFileTemplateInstance;
 	class ObjectFileTemplateDefinition;
 

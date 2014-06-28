@@ -19,9 +19,10 @@ namespace Pong{
 	enum PLAYERTYPE {PLAYERTYPE_HUMAN = 0, PLAYERTYPE_COMPUTER, PLAYERTYPE_EMPTY, PLAYERTYPE_CLOSED};
 	enum PLAYERCONTROLS {PLAYERCONTROLS_NONE = 0, PLAYERCONTROLS_AI, PLAYERCONTROLS_WASD, PLAYERCONTROLS_ARROWS, PLAYERCONTROLS_IJKL,
 		PLAYERCONTROLS_NUMPAD, PLAYERCONTROLS_CONTROLLER};
-	enum CONTROLKEYACTION {CONTROLKEYACTION_LEFT, CONTROLKEYACTION_RIGHT, CONTROLKEYACTION_POWERUPDOWN, CONTROLKEYACTION_POWERUPUP};
+	enum CONTROLKEYACTION {CONTROLKEYACTION_LEFT = 1, CONTROLKEYACTION_RIGHT, CONTROLKEYACTION_POWERUPDOWN, CONTROLKEYACTION_POWERUPUP};
 
 	class PlayerList;
+	class PongNInputter;
 
 	//! \todo implement powerups
 	class PlayerSlot : public Leviathan::ThreadSafe{
@@ -155,6 +156,13 @@ namespace Pong{
 		}
 
 
+		//! \brief Sets the input object that sends input here
+		//!
+		//! This is used to notify it that we are no longer available
+		//! \param input The input object or NULL if the value needs to be reset
+		//! \param oldcheck If not NULL will only clear if the current one matches, useful to stop accidentally clearing new inputs
+		void SetInputThatSendsControls(PongNInputter* input, PongNInputter* oldcheck = NULL);
+
 
 		static int CurrentPlayerNumber;
 
@@ -162,6 +170,9 @@ namespace Pong{
 
 		//! \brief Updates other client's objects, should be called when this is updated
 		void _NotifyListOfUpdate();
+
+		//! \brief Resets the active network input
+		void _ResetNetworkInput();
 
 		// ------------------------------------ //
 
@@ -194,6 +205,11 @@ namespace Pong{
 		PlayerSlot* SplitSlot;
 		//! For quick lookups
 		PlayerSlot* ParentSlot;
+
+
+		//! The controller attached to this slot, this will be not-NULL when a human is controlling this player
+		PongNInputter* InputObj;
+
 
 		//! For access to all player specific data, if a player is in this slot, this is only available on the server
 		Leviathan::ConnectedPlayer* SlotsPlayer;

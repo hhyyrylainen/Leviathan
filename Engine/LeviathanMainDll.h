@@ -56,7 +56,9 @@ using Leviathan::BaseNotifierAll;
 using Leviathan::CommandSender;
 using Leviathan::CommandHandler;
 using Leviathan::NetworkedInput;
+using Leviathan::ThreadSafe;
 
+using Leviathan::ExceptionInvalidArgument;
 
 
 #endif

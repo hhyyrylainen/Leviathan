@@ -276,7 +276,10 @@ playrscorelistupdateendlabel:
 			return 0;
 		}
 
+		PlayerList* GetPlayers(){
 
+			return &_PlayerList;
+		}
 
 		static PongInputFactory* GetInputFactory(){
 			return InputFactory;

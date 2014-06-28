@@ -84,7 +84,7 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 			return;
 		}
 
-		PlayerList* slots = PongServer::Get()->GetPlayers();
+		PlayerList* slots = BasePongParts::Get()->GetPlayers();
 
 		// Check is the slot empty //
 		auto chosenslot = slots->GetSlot(slotnumber);
@@ -167,7 +167,7 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 			return;
 		}
 
-		PlayerList* slots = PongServer::Get()->GetPlayers();
+		PlayerList* slots = BasePongParts::Get()->GetPlayers();
 
 		// Check is the slot empty //
 		auto chosenslot = slots->GetSlot(slotnumber);

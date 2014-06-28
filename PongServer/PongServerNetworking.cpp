@@ -119,7 +119,7 @@ void Pong::PongServerNetworking::RegisterCustomCommandHandlers(CommandHandler* a
 // ------------------------------------ //
 void Pong::PongServerNetworking::_OnPlayerDisconnect(Leviathan::ConnectedPlayer* newplayer){
 
-	auto veccy = PongServer::Get()->GetPlayers()->GetVec();
+	auto veccy = BasePongParts::Get()->GetPlayers()->GetVec();
 
 	auto end = veccy.end();
 	for(auto iter = veccy.begin(); iter != end; ++iter){
@@ -127,7 +127,7 @@ void Pong::PongServerNetworking::_OnPlayerDisconnect(Leviathan::ConnectedPlayer*
 		if((*iter)->GetConnectedPlayer() == newplayer){
 
 			(*iter)->SlotLeavePlayer();
-			PongServer::Get()->GetPlayers()->NotifyUpdatedValue();
+			BasePongParts::Get()->GetPlayers()->NotifyUpdatedValue();
 
 			// \todo If the game is in progress update the level to block of the slot
 			return;

@@ -111,9 +111,10 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 		// Create a controller id for this player //
 		int newid = PongServer::Get()->GetServerNetworkInterface()->GetNetworkedInput()->GetNextInputIDNumberOnServer();
 
-		chosenslot->SetPlayerControllerID(newid);
+		chosenslot->SetNetworkedInputID(newid);
 
-		Logger::Get()->Info(L"Player joined slot "+Convert::ToWstring(slotnumber)+L", split "+Convert::ToWstring<int>(split)+L" named "
+		Logger::Get()->Info(L"Player joined slot "+Convert::ToWstring(slotnumber)+L", split "+Convert::ToWstring<int>(split)+L" (networked control: "+
+			Convert::ToWstring(newid)+L") named "
 			+Convert::Utf8ToUtf16(sender->GetNickname()));
 
 		slots->NotifyUpdatedValue();

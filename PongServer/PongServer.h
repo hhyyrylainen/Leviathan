@@ -9,6 +9,7 @@
 #include "Application/ServerApplication.h"
 #include "CommonPong.h"
 #include "GameInputController.h"
+#include "PongServerNetworking.h"
 
 namespace Pong{
 

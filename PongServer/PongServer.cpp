@@ -17,14 +17,7 @@ using namespace Pong;
 // Put this here, since nowhere else to put it //
 BasePongParts* Pong::BasepongStaticAccess = NULL;
 
-Pong::PongServer::PongServer(){
-
-	ServerInputHandler = new GameInputController();
-
-	dynamic_cast<NetworkServerInterface*>(NetworkHandler::GetInterface())->RegisterNetworkedInput(ServerInputHandler);
-
-	_PongServerNetworking = dynamic_cast<PongServerNetworking*>(NetworkHandler::GetInterface());
-
+Pong::PongServer::PongServer() : ServerInputHandler(NULL), _PongServerNetworking(NULL){
 
 	Staticaccess = this;
 }
@@ -202,16 +195,19 @@ void Pong::PongServer::ServerCheckEnd(){
 }
 // ------------------------------------ //
 void Pong::PongServer::DoSpecialPostLoad(){
+
+	// Setup receiving networked controls from players //
+	ServerInputHandler = new GameInputController();
+
+	dynamic_cast<Leviathan::NetworkServerInterface*>(Leviathan::NetworkHandler::GetInterface())->RegisterNetworkedInput(ServerInputHandler);
+
+	_PongServerNetworking = dynamic_cast<PongServerNetworking*>(Leviathan::NetworkHandler::GetInterface());
+
+
 	// Create all the server variables //
 	Leviathan::SyncedVariables* tmpvars = Leviathan::SyncedVariables::Get();
 
 	tmpvars->AddNewVariable(shared_ptr<SyncedValue>(new SyncedValue(new NamedVariableList(L"TheAnswer", new VariableBlock(42)))));
-
-
-	// Register an input handler here for passing input to other places //
-	DEBUG_BREAK;
-
-
 }
 
 void Pong::PongServer::CustomizedGameEnd(){

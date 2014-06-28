@@ -15,15 +15,12 @@ using namespace Leviathan;
 // Put this here, since nowhere else to put it //
 BasePongParts* Pong::BasepongStaticAccess = NULL;
 
-Pong::PongGame::PongGame() : GuiManagerAccess(NULL)
+Pong::PongGame::PongGame() : GuiManagerAccess(NULL), GameInputHandler(NULL)
 #ifdef _WIN32
 	, ServerProcessHandle(NULL)
 #endif // _WIN32
 
 {
-	GameInputHandler = new GameInputController();
-
-	dynamic_cast<NetworkClientInterface*>(NetworkHandler::Get()->GetInterface())->RegisterNetworkedInput(GameInputHandler);
 
 	StaticGame = this;
 }
@@ -31,7 +28,6 @@ Pong::PongGame::PongGame() : GuiManagerAccess(NULL)
 Pong::PongGame::~PongGame(){
 	GUARD_LOCK_THIS_OBJECT();
 	// delete memory //
-	SAFE_DELETE(GameInputHandler);
 	
 	// Wait for the child process to die and close the handle //
 #ifdef _WIN32
@@ -354,6 +350,10 @@ void Pong::PongGame::Disconnect(const string &reasonstring){
 void Pong::PongGame::DoSpecialPostLoad(){
 
 	ClientInterface = dynamic_cast<PongNetHandler*>(Leviathan::NetworkHandler::GetInterface());
+
+	GameInputHandler = new GameInputController();
+
+	dynamic_cast<NetworkClientInterface*>(NetworkHandler::Get()->GetInterface())->RegisterNetworkedInput(GameInputHandler);
 
 	shared_ptr<ViewerCameraPos> MainCamera;
 

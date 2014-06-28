@@ -112,7 +112,7 @@ namespace Leviathan{
 	protected:
 
 		//! \brief Overloaded to allow us discard stuff from GlobalOrLocalListeners
-		virtual void _OnChildUnlink(InputReceiver* child);
+		DLLEXPORT virtual void _OnChildUnlink(InputReceiver* child);
 		// ------------------------------------ //
 
 		//! True if this is a server's object

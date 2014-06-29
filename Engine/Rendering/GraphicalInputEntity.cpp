@@ -115,7 +115,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 
 
 	// create receiver interface //
-	TertiaryReceiver = new InputController();
+	TertiaryReceiver = shared_ptr<InputController>(new InputController());
 }
 
 DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
@@ -126,7 +126,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
 
 
 	SAFE_DELETE(DisplayWindow);
-	SAFE_DELETE(TertiaryReceiver);
+	TertiaryReceiver.reset();
 }
 
 // ------------------------------------ //
@@ -165,11 +165,10 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(shared_ptr<ViewerCam
 	LinkedWorld = world;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GraphicalInputEntity::SetCustomInputController(InputController* controller){
+DLLEXPORT void Leviathan::GraphicalInputEntity::SetCustomInputController(shared_ptr<InputController> controller){
 
 	GUARD_LOCK_THIS_OBJECT();
-
-	SAFE_DELETE(TertiaryReceiver);
+	
 	TertiaryReceiver = controller;
 }
 // ------------------------------------ //

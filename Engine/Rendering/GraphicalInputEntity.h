@@ -54,7 +54,7 @@ namespace Leviathan{
 			return WindowsGui;
 		}
 		DLLEXPORT inline InputController* GetInputController(){
-			return TertiaryReceiver;
+			return TertiaryReceiver.get();
 		}
 		DLLEXPORT inline shared_ptr<ViewerCameraPos> GetLinkedCamera(){
 			return LinkedCamera;
@@ -68,7 +68,7 @@ namespace Leviathan{
 
 		//! \brief Overwrites the default InputController with a custom one
 		//! \warning The controller will be deleted by this and there is no way to release it without deleting after this call
-		DLLEXPORT void SetCustomInputController(InputController* controller);
+		DLLEXPORT void SetCustomInputController(shared_ptr<InputController> controller);
 
 
 	protected:
@@ -76,7 +76,7 @@ namespace Leviathan{
 
 
 		Window* DisplayWindow;
-		InputController* TertiaryReceiver;
+		shared_ptr<InputController> TertiaryReceiver;
 		Gui::GuiManager* WindowsGui;
 		CEGUI::OgreRenderer* CEGUIRenderer;
 

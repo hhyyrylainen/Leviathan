@@ -28,7 +28,7 @@ DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() : MaxConne
 
 DLLEXPORT Leviathan::NetworkClientInterface::~NetworkClientInterface(){
 
-	SAFE_DELETE(PotentialInputHandler);
+	PotentialInputHandler.reset();
 
 	Staticaccess = NULL;
 }
@@ -505,9 +505,8 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::NetworkClientInterface::RegisterNetworkedInput(NetworkedInputHandler* handler){
+DLLEXPORT bool Leviathan::NetworkClientInterface::RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler){
 	
-	SAFE_DELETE(PotentialInputHandler);
 	PotentialInputHandler = handler;
 	return true;
 }
@@ -517,7 +516,7 @@ DLLEXPORT int Leviathan::NetworkClientInterface::GetOurID() const{
 }
 
 DLLEXPORT NetworkedInputHandler* Leviathan::NetworkClientInterface::GetNetworkedInput(){
-	return PotentialInputHandler;
+	return PotentialInputHandler.get();
 }
 
 DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkClientInterface::GetServerConnection(){

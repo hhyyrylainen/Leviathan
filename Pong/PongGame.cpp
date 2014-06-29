@@ -351,9 +351,7 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
 	ClientInterface = dynamic_cast<PongNetHandler*>(Leviathan::NetworkHandler::GetInterface());
 
-	GameInputHandler = new GameInputController();
-
-	dynamic_cast<NetworkClientInterface*>(NetworkHandler::Get()->GetInterface())->RegisterNetworkedInput(GameInputHandler);
+	GameInputHandler = shared_ptr<GameInputController>(new GameInputController());
 
 	shared_ptr<ViewerCameraPos> MainCamera;
 
@@ -401,11 +399,8 @@ void Pong::PongGame::DoSpecialPostLoad(){
 	window1->LinkObjects(MainCamera, WorldOfPong);
 
 	// link window input to game logic //
-	auto networkedinput = new GameInputController();
-
-	// The window will delete this eventually //
-	window1->SetCustomInputController(networkedinput);
-	ClientInterface->RegisterNetworkedInput(networkedinput);
+	window1->SetCustomInputController(GameInputHandler);
+	ClientInterface->RegisterNetworkedInput(GameInputHandler);
 }
 // ------------------------------------ //
 string GetPongVersionProxy(){

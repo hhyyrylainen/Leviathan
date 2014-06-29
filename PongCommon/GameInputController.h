@@ -27,9 +27,13 @@ namespace Pong{
 
 		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForLocalStart(int inputid, bool isclient);
 
-		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForReplication(int inputid);
+		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForReplication(int inputid, int ownerid);
 
 		DLLEXPORT virtual void NoLongerNeeded(NetworkedInput &todiscard);
+
+		DLLEXPORT virtual bool DoesServerAllowCreate(NetworkedInput* input, ConnectionInfo* connection);
+
+		DLLEXPORT virtual void ReplicationFinalized(NetworkedInput* input);
 
 
 	protected:
@@ -63,6 +67,9 @@ namespace Pong{
 
 		//! \brief Called by a PlayerSlot to prevent us using an invalid pointer
 		void StopSendingInput(PlayerSlot* tohere);
+
+		//! \brief Adds a PlayerSlot later
+		void StartSendingInput(PlayerSlot* target);
 
 
 		// The default functions that need overloading //

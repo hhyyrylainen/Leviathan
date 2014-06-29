@@ -192,6 +192,12 @@ DLLEXPORT RequestCommandExecutionData* Leviathan::NetworkRequest::GetCommandExec
 		return static_cast<RequestCommandExecutionData*>(RequestData);
 	return NULL;
 }
+
+DLLEXPORT RequestConnectInputData* Leviathan::NetworkRequest::GetConnectInputRequestData(){
+	if(TypeOfRequest == NETWORKREQUESTTYPE_CONNECTINPUT)
+		return static_cast<RequestConnectInputData*>(RequestData);
+	return NULL;
+}
 // ------------------ RemoteConsoleOpenRequestDataTo ------------------ //
 DLLEXPORT Leviathan::RemoteConsoleOpenRequestDataTo::RemoteConsoleOpenRequestDataTo(int token) : SessionToken(token){
 

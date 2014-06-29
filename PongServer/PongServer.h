@@ -65,7 +65,7 @@ namespace Pong{
 
 		PongServerNetworking* _PongServerNetworking;
 
-		GameInputController* ServerInputHandler;
+		shared_ptr<GameInputController> ServerInputHandler;
 
 
 		static PongServer* Staticaccess;

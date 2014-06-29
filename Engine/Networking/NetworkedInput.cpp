@@ -48,6 +48,18 @@ DLLEXPORT void Leviathan::NetworkedInput::LoadDataFromFullPacket(sf::Packet &pac
 	// And then the custom data //
 	OnLoadCustomFullDataFrompacket(packet);
 }
+
+DLLEXPORT void Leviathan::NetworkedInput::LoadHeaderDataFromPacket(sf::Packet &packet, int &ownerid, int &inputid) THROWS{
+	// First our common information //
+	if(!(packet >> ownerid)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+	}
+	if(!(packet >> inputid)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+	}
+}
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::AddChangesToPacket(sf::Packet &packet){
 
@@ -152,6 +164,10 @@ DLLEXPORT void Leviathan::NetworkedInput::OnParentNoLongerAvailable(){
 // ------------------------------------ //
 DLLEXPORT NETWORKEDINPUT_STATE Leviathan::NetworkedInput::GetState() const{
 	return CurrentState;
+}
+
+DLLEXPORT int Leviathan::NetworkedInput::GetID() const{
+	return InputID;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::_OnRemovedConnection(){

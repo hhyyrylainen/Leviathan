@@ -39,6 +39,7 @@ namespace Leviathan{
 	//! \brief Represents a single input source (group of keys) that are an input method that is to be synchronized between the server and the clients
 	//! \note This class inherits from InputReceiver and you will need to implement it's input processing methods
 	class NetworkedInput : public InputReceiver{
+		friend NetworkedInputHandler;
 	public:
 
 		//! \brief Base class constructor for NetworkedInputs
@@ -87,9 +88,14 @@ namespace Leviathan{
 		DLLEXPORT NETWORKEDINPUT_STATE GetState() const;
 
 
+		DLLEXPORT static void LoadHeaderDataFromPacket(sf::Packet &packet, int &ownerid, int &inputid) THROWS;
+
+
 		//! \brief Called when this is created locally, should set the initial data
 		DLLEXPORT virtual void InitializeLocal() = 0;
 
+
+		DLLEXPORT int GetID() const;
 
 	protected:
 

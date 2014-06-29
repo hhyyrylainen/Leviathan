@@ -70,7 +70,7 @@ namespace Pong{
 
 		GameInputController* GetInputController(){
 
-			return GameInputHandler;
+			return GameInputHandler.get();
 		}
 
 	protected:
@@ -87,7 +87,7 @@ namespace Pong{
 
 		// ------------------------------------ //
 		Leviathan::Gui::GuiManager* GuiManagerAccess;
-		GameInputController* GameInputHandler;
+		shared_ptr<GameInputController> GameInputHandler;
 
 
 		//! Cached version of client network interface

@@ -21,7 +21,7 @@ DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(int maxplaye
 
 DLLEXPORT Leviathan::NetworkServerInterface::~NetworkServerInterface(){
 
-	SAFE_DELETE(PotentialInputHandler);
+	PotentialInputHandler.reset();
 
 	// Release the memory //
 	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ){
@@ -349,15 +349,14 @@ DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
 		PotentialInputHandler->UpdateInputStatus();
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::NetworkServerInterface::RegisterNetworkedInput(NetworkedInputHandler* handler){
+DLLEXPORT bool Leviathan::NetworkServerInterface::RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler){
 
-	SAFE_DELETE(PotentialInputHandler);
 	PotentialInputHandler = handler;
 	return true;
 }
 
 DLLEXPORT NetworkedInputHandler* Leviathan::NetworkServerInterface::GetNetworkedInput(){
-	return PotentialInputHandler;
+	return PotentialInputHandler.get();
 }
 // ------------------------------------ //
 

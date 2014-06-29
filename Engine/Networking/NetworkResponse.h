@@ -26,6 +26,8 @@ namespace Leviathan{
 		NETWORKRESPONSE_INVALIDREASON_SERVERFULL,
 		//! Server is not accepting players
 		NETWORKRESPONSE_INVALIDREASON_SERVERNOTACCEPTINGPLAYERS,
+		//! The client isn't properly authenticated for that action or the server received mismatching security/id numbers
+		NETWORKRESPONSE_INVALIDREASON_NOT_AUTHORIZED,
 
 		//! The client has already connected to the server, and must disconnect before trying again
 		NETWORKRESPONSE_INVALIDREASON_SERVERALREADYCONNECTEDTOYOU,

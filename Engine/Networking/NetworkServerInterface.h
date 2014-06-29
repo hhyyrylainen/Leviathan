@@ -156,7 +156,7 @@ namespace Leviathan{
 		//! \param handler The object that implements the networked input interface, this has to be guaranteed to stay allocated as long as it is
 		//! still attached.
 		//! \warning The deletion of the old handler isn't thread safe so be careful when switching handlers
-		DLLEXPORT virtual bool RegisterNetworkedInput(NetworkedInputHandler* handler);
+		DLLEXPORT virtual bool RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler);
 
 
 		//! \brief Returns the active networked input handler or NULL
@@ -216,7 +216,7 @@ namespace Leviathan{
 		vector<int> ActiveBots;
 
 		//! This isn't always used, but when it is this will handle some packets
-		NetworkedInputHandler* PotentialInputHandler;
+		shared_ptr<NetworkedInputHandler> PotentialInputHandler;
 
 
 		//! Name displayed in the server list

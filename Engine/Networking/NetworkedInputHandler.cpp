@@ -6,6 +6,7 @@
 #include "NetworkedInput.h"
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
+#include "ConnectionInfo.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkedInputHandler::NetworkedInputHandler(NetworkInputFactory* objectcreater, NetworkClientInterface* isclient) : 
@@ -40,11 +41,9 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 	switch(request->GetType()){
 	case NETWORKREQUESTTYPE_CONNECTINPUT:
 		{
-			DEBUG_BREAK;
-
+			_HandleConnectRequestPacket(request, connection);
 			return true;
 		}
-
 	}
 
 	// Type didn't match anything that we should be concerned with //
@@ -57,6 +56,79 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 
 	// Type didn't match anything that we should be concerned with //
 	return false;
+}
+// ------------------------------------ //
+void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection){
+	{
+		GUARD_LOCK_THIS_OBJECT();
+
+		// Verify that it is allowed //
+		bool allowed = true;
+
+		// If the packet is valid it should contain this //
+		RequestConnectInputData* data = request->GetConnectInputRequestData();
+
+		if(!data)
+			goto notallowedfailedlabel;
+
+
+
+
+		// We need to partially load the data here //
+		int ownerid, inputid;
+
+		NetworkedInput::LoadHeaderDataFromPacket(data->DataForObject, ownerid, inputid);
+
+
+		// Create a temporary object from the packet //
+		auto ournewobject = _NetworkInputFactory->CreateNewInstanceForReplication(inputid, ownerid);
+
+		if(!ournewobject)
+			goto notallowedfailedlabel;
+
+		// Check is it allowed //
+		allowed = _NetworkInputFactory->DoesServerAllowCreate(ournewobject.get(), connection);
+
+
+		if(!allowed)
+			goto notallowedfailedlabel;
+
+
+		// It got accepted so finish adding the data //
+		ournewobject->OnLoadCustomFullDataFrompacket(data->DataForObject);
+
+		// Add it to us //
+		LinkReceiver(ournewobject.get());
+		ournewobject->NowOwnedBy(this);
+
+		GlobalOrLocalListeners.push_back(shared_ptr<NetworkedInput>(ournewobject.release()));
+
+		_NetworkInputFactory->ReplicationFinalized(GlobalOrLocalListeners.back().get());
+
+		// Notify that we accepted it //
+		shared_ptr<NetworkResponse> tmpresp(new NetworkResponse(NETWORKRESPONSETYPE_SERVERALLOW, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1500));
+
+		tmpresp->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE_CONNECT_ACCEPTED));
+
+		connection->SendPacketToConnection(tmpresp, 4);
+
+
+		// Send messages to other clients //
+		DEBUG_BREAK;
+
+		return;
+	}
+
+notallowedfailedlabel:
+
+	// Notify about we disallowing this connection //
+	shared_ptr<NetworkResponse> tmpresp(new NetworkResponse(NETWORKRESPONSETYPE_SERVERDISALLOW, 
+		PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1));
+
+	tmpresp->GenerateServerDisallowResponse(new 
+		NetworkResponseDataForServerDisallow(NETWORKRESPONSE_INVALIDREASON_NOT_AUTHORIZED, L"Not allowed to create input with that ID"));
+
+	connection->SendPacketToConnection(tmpresp, 1);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInputHandler::UpdateInputStatus(){

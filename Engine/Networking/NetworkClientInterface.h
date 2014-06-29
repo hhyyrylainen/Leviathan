@@ -78,13 +78,9 @@ namespace Leviathan{
 
 
 		//! \brief Enables the use of a NetworkedInputHandler
-		//! \param handler The object that implements the networked input interface, this has to be guaranteed to stay allocated as long as it is
-		//! still attached. 
-		//! \note Usually this will work just fine since input handler will get deleted when the window closes but the engine *usually*
-		//! stops networking before deleting the main window, be careful when working with multiple windows as the handler might get deleted too soon
-		//! \todo Add a unregister function
+		//! \param handler The object that implements the networked input interface
 		//! \warning The deletion of the old handler isn't thread safe so be careful when switching handlers
-		DLLEXPORT virtual bool RegisterNetworkedInput(NetworkedInputHandler* handler);
+		DLLEXPORT virtual bool RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler);
 
 		//! \brief Returns the active networked input handler or NULL
 		DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
@@ -171,7 +167,7 @@ namespace Leviathan{
 		int MaxConnectTries;
 
 		//! This isn't always used, but when it is this will handle some packets
-		NetworkedInputHandler* PotentialInputHandler;
+		shared_ptr<NetworkedInputHandler> PotentialInputHandler;
 
 
 		//! Marks whether heartbeats are in use

@@ -12,6 +12,8 @@
 #endif // PONG_VERSION
 using namespace Pong;
 #include "Exceptions/ExceptionInvalidArgument.h"
+#include "PlayerSlot.h"
+#include "Networking/NetworkServerInterface.h"
 // ------------------------------------ //
 Pong::GameInputController::GameInputController() : NetworkedInputHandler(PongInputFactory::Get(), 
 #ifdef PONG_VERSION
@@ -120,8 +122,38 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
 #endif // PONG_VERSION
 }
 
-DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceForReplication(int inputid){
-	throw std::exception("The method or operation is not implemented.");
+DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceForReplication(int inputid, int ownerid){
+	// We still don't know whether this will be accepted or not so we avoid expensive linking here //
+	return unique_ptr<NetworkedInput>(new PongNInputter(ownerid, inputid, NULL, PLAYERCONTROLS_NONE));
+}
+
+DLLEXPORT void Pong::PongInputFactory::ReplicationFinalized(NetworkedInput* input){
+	// Now add the proper player pointer to it //
+	auto plylist = BasePongParts::Get()->GetPlayers();
+
+	GUARD_LOCK_OTHER_OBJECT(plylist);
+
+
+	std::vector<PlayerSlot*>& plys = plylist->GetVec();
+
+
+	PongNInputter* tmpobj = dynamic_cast<PongNInputter*>(input);
+	
+	for(size_t i = 0; i < plys.size(); i++){
+
+		if(plys[i]->GetNetworkedInputID() == input->GetID()){
+
+			// Store the data and set us as this slot's thing //
+			PlayerSlot* curplayer = plys[i];
+
+			tmpobj->StartSendingInput(curplayer);
+			curplayer->SetInputThatSendsControls(tmpobj);
+			break;
+		}
+	}
+
+
+	Logger::Get()->Error(L"Pong input thing failed to link from network");
 }
 
 DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard){
@@ -143,10 +175,43 @@ PongInputFactory* Pong::PongInputFactory::Get(){
 	return Staticinstance;
 }
 
+DLLEXPORT bool Pong::PongInputFactory::DoesServerAllowCreate(NetworkedInput* input, ConnectionInfo* connection){
+	// Check does the input id match the player's input that is associated with the connection //
+	auto plylist = BasePongParts::Get()->GetPlayers();
+
+	GUARD_LOCK_OTHER_OBJECT(plylist);
+
+
+	std::vector<PlayerSlot*>& plys = plylist->GetVec();
+
+	for(size_t i = 0; i < plys.size(); i++){
+
+		if(plys[i]->GetNetworkedInputID() == input->GetID()){
+
+			GUARD_LOCK_OTHER_OBJECT_NAME(plys[i], guard2);
+
+			if(plys[i]->GetConnectedPlayer()->GetConnection() == connection){
+
+				// It is allowed //
+				return true;
+			} else {
+
+				// Not allowed //
+				return false;
+			}
+		}
+	}
+
+	Logger::Get()->Error(L"Pong input thing failed to find target for allow request");
+	// Failed to find the target //
+	return false;
+}
+
 PongInputFactory* Pong::PongInputFactory::Staticinstance = new PongInputFactory();
 // ------------------ PongNInputter ------------------ //
 Pong::PongNInputter::PongNInputter(int ownerid, int networkid, PlayerSlot* controlthis, PLAYERCONTROLS typetoreceive) : 
-	Leviathan::NetworkedInput(ownerid, networkid), ControlledSlot(controlthis), CtrlGroup(typetoreceive), CreatedByUs(false), ControlStates(0)
+	Leviathan::NetworkedInput(ownerid, networkid), ControlledSlot(controlthis), CtrlGroup(typetoreceive), CreatedByUs(false), ControlStates(0),
+	ChangedKeys(0)
 {
 	
 }
@@ -319,5 +384,18 @@ bool Pong::PongNInputter::_HandleKeyThing(OIS::KeyCode key, bool down){
 
 	// It was our key which we handled //
 	return true;
+}
+
+void Pong::PongNInputter::StartSendingInput(PlayerSlot* target){
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	if(ControlledSlot){
+
+		ControlledSlot->SetInputThatSendsControls(NULL, this);
+	}
+
+	ControlledSlot = target;
+	// The SetInputThatSendsControls should be called by our caller //
 }
 

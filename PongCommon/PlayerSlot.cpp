@@ -10,6 +10,7 @@
 #include "PongGame.h"
 #include "PongNetHandler.h"
 #endif //PONG_VERSION
+#include "GameInputController.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) : Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_CLOSED), 
@@ -158,7 +159,7 @@ void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
 	GUARD_LOCK_THIS_OBJECT();
 
 	// Write all our data to the packet //
-	packet << Slot << (int)PlayerType << PlayerNumber << NetworkedInputID << ControlIdentifier << PlayerControllerID 
+	packet << Slot << (int)PlayerType << PlayerNumber << NetworkedInputID << ControlIdentifier << (int)ControlType << PlayerControllerID 
 		<< Colour.X << Colour.Y << Colour.Z << Colour.W;
 	packet << PlayerID << Score << (bool)(SplitSlot != NULL);
 
@@ -200,6 +201,13 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 
 		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
 	}
+
+	if(!(packet >> tmpival)){
+
+		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+	}
+
+	ControlType = static_cast<PLAYERCONTROLS>(tmpival);
 
 	if(!(packet >> PlayerControllerID)){
 
@@ -244,6 +252,7 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 
 #ifdef PONG_VERSION
 
+	// Update everything related to input //
 	if(PlayerID == PongGame::Get()->GetInterface()->GetOurID()){
 
 		_ResetNetworkInput();
@@ -293,6 +302,7 @@ void Pong::PlayerSlot::_ResetNetworkInput(){
 
 
 		InputObj->StopSendingInput(this);
+		GameInputController::Get()->QueueDeleteInput(InputObj);
 	}
 
 	InputObj = NULL;

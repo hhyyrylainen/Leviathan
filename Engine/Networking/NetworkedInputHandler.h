@@ -25,13 +25,24 @@ namespace Leviathan{
 
 		//! \brief Called when a new input needs to be created through a networked packet
 		//! \note The returned object will get custom data from the packet after this call so it isn't necessary to fill in all the data
-		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForReplication(int inputid) = 0;
+		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForReplication(int inputid, int ownerid) = 0;
+
+
+		//! \brief Called when a input is finally accepted and the construction should be finished
+		//! \note This is after it has been filled with data from the packet so you should only link this to other objects here
+		//! \see CreateNewInstanceForReplication
+		DLLEXPORT virtual void ReplicationFinalized(NetworkedInput* input) = 0;
 
 
 		//! \brief Called when an input is no longer needed
 		//!
 		//! This can be used, for example, to remove hooks from physics objects or character controllers
 		DLLEXPORT virtual void NoLongerNeeded(NetworkedInput &todiscard) = 0;
+
+
+		//! \brief Called on the server to verify whether a new input object can be created
+		DLLEXPORT virtual bool DoesServerAllowCreate(NetworkedInput* input, ConnectionInfo* connection) = 0;
+
 	};
 
 
@@ -113,6 +124,11 @@ namespace Leviathan{
 
 		//! \brief Overloaded to allow us discard stuff from GlobalOrLocalListeners
 		DLLEXPORT virtual void _OnChildUnlink(InputReceiver* child);
+
+
+
+		void _HandleConnectRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
+
 		// ------------------------------------ //
 
 		//! True if this is a server's object

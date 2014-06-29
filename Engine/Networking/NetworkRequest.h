@@ -146,6 +146,7 @@ namespace Leviathan{
 		DLLEXPORT RemoteConsoleAccessRequestData* GetRemoteConsoleAccessRequestData();
 		DLLEXPORT CustomRequestData* GetCustomRequestData();
 		DLLEXPORT RequestCommandExecutionData* GetCommandExecutionRequestData();
+		DLLEXPORT RequestConnectInputData* GetConnectInputRequestData();
 
 		DLLEXPORT int GetExpectedResponseID();
 

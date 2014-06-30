@@ -359,6 +359,25 @@ DLLEXPORT NetworkedInputHandler* Leviathan::NetworkServerInterface::GetNetworked
 	return PotentialInputHandler.get();
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(shared_ptr<NetworkResponse> response, ConnectionInfo* skipme, int resendcount 
+	/*= 4*/)
+{
+	GUARD_LOCK_THIS_OBJECT();
+
+
+	// Loop the players and send to their connections //
+	auto end = PlayerList.end();
+	for(auto iter = PlayerList.begin(); iter != end; ++iter){
+
+		ConnectionInfo* curconnection = (*iter)->GetConnection();
+
+		if(curconnection != skipme){
+
+			curconnection->SendPacketToConnection(response, resendcount);
+		}
+	}
+}
+// ------------------------------------ //
 
 int Leviathan::NetworkServerInterface::CurrentPlayerID = 1000;
 // ------------------ ConnectedPlayer ------------------ //

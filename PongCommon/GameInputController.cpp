@@ -147,7 +147,6 @@ DLLEXPORT void Pong::PongInputFactory::ReplicationFinalized(NetworkedInput* inpu
 			PlayerSlot* curplayer = plys[i];
 
 			tmpobj->StartSendingInput(curplayer);
-			curplayer->SetInputThatSendsControls(tmpobj);
 			break;
 		}
 	}

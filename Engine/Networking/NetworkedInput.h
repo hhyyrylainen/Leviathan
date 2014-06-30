@@ -29,10 +29,6 @@ namespace Leviathan{
 	};
 
 
-	//! If any of these bits are check the object should be discarded
-#define NETWORKEDINPUT_STATE_TODISCARD			(NETWORKEDINPUT_STATE_CLOSED | NETWORKEDINPUT_STATE_FAILED)
-
-
 
 
 
@@ -56,7 +52,7 @@ namespace Leviathan{
 
 
 		DLLEXPORT virtual void AddFullDataToPacket(sf::Packet &packet);
-
+		
 
 		DLLEXPORT virtual void AddChangesToPacket(sf::Packet &packet);
 
@@ -86,6 +82,9 @@ namespace Leviathan{
 
 		//! \brief Returns the state of this object
 		DLLEXPORT NETWORKEDINPUT_STATE GetState() const;
+
+		//! \brief Sets state for an instance created from a packet
+		DLLEXPORT void SetNetworkReceivedState();
 
 
 		DLLEXPORT static void LoadHeaderDataFromPacket(sf::Packet &packet, int &ownerid, int &inputid) THROWS;

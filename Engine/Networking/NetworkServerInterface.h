@@ -159,6 +159,9 @@ namespace Leviathan{
 		DLLEXPORT virtual bool RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler);
 
 
+		//! \brief Sends a response packet to all players except for the player(s) whose connection matches skipme
+		DLLEXPORT void SendToAllButOnePlayer(shared_ptr<NetworkResponse> response, ConnectionInfo* skipme, int resendcount = 4);
+
 		//! \brief Returns the active networked input handler or NULL
 		DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
 
@@ -200,7 +203,6 @@ namespace Leviathan{
 
 		//! \brief Called by ConnectedPlayer when it's connection closes
 		std::vector<ConnectedPlayer*>::iterator _OnReportCloseConnection(const std::vector<ConnectedPlayer*>::iterator &iter, ObjectLock &guard);
-
 		// ------------------------------------ //
 
 

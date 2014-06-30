@@ -6,6 +6,7 @@
 #include "Exceptions/ExceptionInvalidArgument.h"
 #include "Common/DataStoring/NamedVars.h"
 #include "GameSpecificPacketHandler.h"
+#include "NetworkedInput.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(int inresponseto, PACKET_TIMEOUT_STYLE timeout, int timeoutvalue) : 
@@ -83,6 +84,16 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
 			ResponseData = new NetworkResponseDataForSyncResourceData(receivedresponse);
 		}
 		break;
+	case NETWORKRESPONSETYPE_CREATENETWORKEDINPUT:
+		{
+			ResponseData = new NetworkResponseDataForCreateNetworkedInput(receivedresponse);
+		}
+		break;
+	case NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT:
+		{
+			ResponseData = new NetworkResponseDataForUpdateNetworkedInput(receivedresponse);
+		}
+		break;
 	default:
 		{
 			throw ExceptionInvalidArgument(L"packet has invalid type", 0, __WFUNCTION__, L"receivedresponse", Convert::ToWstring(ResponseType));
@@ -157,6 +168,22 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateResourceSyncResponse(const ch
 	SAFE_DELETE(ResponseData);
 
 	ResponseData = new NetworkResponseDataForSyncResourceData(string(dataptr, datasize));
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateCreateNetworkedInputResponse(NetworkResponseDataForCreateNetworkedInput* newddata){
+	ResponseType = NETWORKRESPONSETYPE_CREATENETWORKEDINPUT;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateUpdateNetworkedInputResponse(NetworkResponseDataForUpdateNetworkedInput* newddata){
+	ResponseType = NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkResponse::GenerateKeepAliveResponse(){
@@ -293,6 +320,18 @@ DLLEXPORT NetworkResponseDataForSyncResourceData* Leviathan::NetworkResponse::Ge
 DLLEXPORT NetworkResponseDataForServerAllow* Leviathan::NetworkResponse::GetResponseDataForServerAllowResponse() const{
 	if(ResponseType == NETWORKRESPONSETYPE_SERVERALLOW && ResponseData)
 		return static_cast<NetworkResponseDataForServerAllow*>(ResponseData);
+	return NULL;
+}
+
+DLLEXPORT NetworkResponseDataForCreateNetworkedInput* Leviathan::NetworkResponse::GetResponseDataForCreateNetworkedInputResponse() const{
+	if(ResponseType == NETWORKRESPONSETYPE_CREATENETWORKEDINPUT && ResponseData)
+		return static_cast<NetworkResponseDataForCreateNetworkedInput*>(ResponseData);
+	return NULL;
+}
+
+DLLEXPORT NetworkResponseDataForUpdateNetworkedInput* Leviathan::NetworkResponse::GetResponseDataForUpdateNetworkedInputResponse() const{
+	if(ResponseType == NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT && ResponseData)
+		return static_cast<NetworkResponseDataForUpdateNetworkedInput*>(ResponseData);
 	return NULL;
 }
 // ------------------------------------ //
@@ -577,4 +616,51 @@ DLLEXPORT Leviathan::NetworkResponseDataForSyncResourceData::NetworkResponseData
 
 DLLEXPORT void Leviathan::NetworkResponseDataForSyncResourceData::AddDataToPacket(sf::Packet &packet){
 	packet << OurCustomData;
+}
+// ------------------ NetworkResponseDataForCreateNetworkedInput ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForCreateNetworkedInput::NetworkResponseDataForCreateNetworkedInput(sf::Packet &frompacket){
+	// Load the packet from the packet //
+	string tmpstr;
+	frompacket >> tmpstr;
+
+	// Fill the actual packet //
+	DataForObject.append(tmpstr.c_str(), tmpstr.size());
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForCreateNetworkedInput::NetworkResponseDataForCreateNetworkedInput(NetworkedInput &tosend){
+	// Copy the data to our packet //
+
+	tosend.AddFullDataToPacket(DataForObject);
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForCreateNetworkedInput::AddDataToPacket(sf::Packet &packet){
+
+	packet << string(reinterpret_cast<const char*>(DataForObject.getData()), DataForObject.getDataSize());
+}
+// ------------------ NetworkResponseDataForUpdateNetworkedInput ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForUpdateNetworkedInput::NetworkResponseDataForUpdateNetworkedInput(sf::Packet &frompacket){
+	// First the ID //
+	if(!(frompacket >> InputID)){
+
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+	}
+
+	// Load the packet from the packet //
+	string tmpstr;
+	frompacket >> tmpstr;
+
+	// Fill the actual packet //
+	UpdateData.append(tmpstr.c_str(), tmpstr.size());
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForUpdateNetworkedInput::NetworkResponseDataForUpdateNetworkedInput(NetworkedInput &object){
+	// Get the ID first //
+	InputID = object.GetID();
+
+	// Then copy the data to our packet //
+	object.AddChangesToPacket(UpdateData);
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForUpdateNetworkedInput::AddDataToPacket(sf::Packet &packet){
+	packet << InputID << string(reinterpret_cast<const char*>(UpdateData.getData()), UpdateData.getDataSize());
 }

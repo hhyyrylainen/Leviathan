@@ -98,17 +98,6 @@ namespace Leviathan{
 		string Command;
 	};
 
-	class RequestConnectInputData : public BaseNetworkRequestData{
-	public:
-		DLLEXPORT RequestConnectInputData(NetworkedInput &tosend);
-		DLLEXPORT RequestConnectInputData(sf::Packet &frompacket);
-
-		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
-
-		//! This contains the data required to create the object
-		sf::Packet DataForObject;
-	};
-
 	class CustomRequestData : public BaseNetworkRequestData{
 	public:
 		DLLEXPORT CustomRequestData(GameSpecificPacketData* newddata);
@@ -119,6 +108,17 @@ namespace Leviathan{
 
 		//! The actual data 
 		shared_ptr<GameSpecificPacketData> ActualPacketData;
+	};
+
+	class RequestConnectInputData : public BaseNetworkRequestData{
+	public:
+		DLLEXPORT RequestConnectInputData(NetworkedInput &tosend);
+		DLLEXPORT RequestConnectInputData(sf::Packet &frompacket);
+
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! This contains the data required to create the object
+		sf::Packet DataForObject;
 	};
 
 

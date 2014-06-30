@@ -12,6 +12,47 @@
 
 namespace Leviathan{
 
+
+	//! Defines the type of response that the packet contains
+	enum NETWORKRESPONSETYPE{
+		//! Sent in response to a NETWORKREQUESTTYPE_IDENTIFICATION contains a user readable string, game name, game version and leviathan version strings
+		NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS,
+		NETWORKRESPONSETYPE_KEEPALIVE,
+		NETWORKRESPONSETYPE_CLOSECONNECTION,
+		NETWORKRESPONSETYPE_REMOTECONSOLECLOSED,
+		NETWORKRESPONSETYPE_REMOTECONSOLEOPENED,
+		NETWORKRESPONSETYPE_INVALIDREQUEST,
+		//! \brief Sent by a server when it disallows a made request
+		NETWORKRESPONSETYPE_SERVERDISALLOW,
+		//! \brief Sent by a server when a request is allowed
+		NETWORKRESPONSETYPE_SERVERALLOW,
+		//! Returns anonymous data about the server
+		NETWORKRESPONSETYPE_SERVERSTATUS,
+		//! Sends a update/new SyncedValue
+		NETWORKRESPONSETYPE_SYNCVALDATA,
+		//! Send after all NETWORKRESPONSETYPE_SYNCVALDATA has been sent and indicates whether they should have arrived correctly
+		NETWORKRESPONSETYPE_SYNCDATAEND,
+		//! Contains SyncedResource update notification
+		NETWORKRESPONSETYPE_SYNCRESOURCEDATA,
+		//! Contains a new NetworkedInput
+		NETWORKRESPONSETYPE_CREATENETWORKEDINPUT,
+		//! Contains control state updates regarding a NetworkedInput
+		NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT,
+
+
+		//! A server heartbeat packet
+		NETWORKRESPONSETYPE_SERVERHEARTBEAT,
+
+		//! Marks that the client is required to send heartbeats
+		NETWORKRESPONSETYPE_STARTHEARTBEATS,
+
+		//! The packet is a game specific packet!
+		//! \see GameSpecificPacketHandler BaseGameSpecificFactory BaseGameSpecificResponsePacket
+		NETWORKRESPONSETYPE_CUSTOM,
+
+		//! Empty response, used for keeping alive/nothing
+		NETWORKRESPONSETYPE_NONE
+	};
 	
 
 	//! Defines in what way a request was invalid also
@@ -64,42 +105,6 @@ namespace Leviathan{
 		NETWORKRESPONSE_SERVERSTATUS_RUNNING,
 		NETWORKRESPONSE_SERVERSTATUS_SHUTDOWN,
 		NETWORKRESPONSE_SERVERSTATUS_RESTART
-	};
-
-
-	enum NETWORKRESPONSETYPE{
-		//! Sent in response to a NETWORKREQUESTTYPE_IDENTIFICATION contains a user readable string, game name, game version and leviathan version strings
-		NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS,
-		NETWORKRESPONSETYPE_KEEPALIVE,
-		NETWORKRESPONSETYPE_CLOSECONNECTION,
-		NETWORKRESPONSETYPE_REMOTECONSOLECLOSED,
-		NETWORKRESPONSETYPE_REMOTECONSOLEOPENED,
-		NETWORKRESPONSETYPE_INVALIDREQUEST,
-		//! \brief Sent by a server when it disallows a made request
-		NETWORKRESPONSETYPE_SERVERDISALLOW,
-		//! \brief Sent by a server when a request is allowed
-		NETWORKRESPONSETYPE_SERVERALLOW,
-		//! Returns anonymous data about the server
-		NETWORKRESPONSETYPE_SERVERSTATUS,
-		//! Sends a update/new SyncedValue
-		NETWORKRESPONSETYPE_SYNCVALDATA,
-		//! Send after all NETWORKRESPONSETYPE_SYNCVALDATA has been sent and indicates whether they should have arrived correctly
-		NETWORKRESPONSETYPE_SYNCDATAEND,
-		//! Contains SyncedResource update notification
-		NETWORKRESPONSETYPE_SYNCRESOURCEDATA,
-
-		//! A server heartbeat packet
-		NETWORKRESPONSETYPE_SERVERHEARTBEAT,
-
-		//! Marks that the client is required to send heartbeats
-		NETWORKRESPONSETYPE_STARTHEARTBEATS,
-
-		//! The packet is a game specific packet!
-		//! \see GameSpecificPacketHandler BaseGameSpecificFactory BaseGameSpecificResponsePacket
-		NETWORKRESPONSETYPE_CUSTOM,
-
-		//! Empty response, used for keeping alive/nothing
-		NETWORKRESPONSETYPE_NONE
 	};
 
 	//! Base class for all data objects that can be sent with the NETWORKRESPONSETYPE
@@ -250,6 +255,32 @@ namespace Leviathan{
 		shared_ptr<GameSpecificPacketData> ActualPacketData;
 	};
 
+	//! \brief Used for storing data related to creating a NetworkedInput
+	class NetworkResponseDataForCreateNetworkedInput : public BaseNetworkResponseData{
+	public:
+		DLLEXPORT NetworkResponseDataForCreateNetworkedInput(sf::Packet &frompacket);
+		DLLEXPORT NetworkResponseDataForCreateNetworkedInput(NetworkedInput &tosend);
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! This contains the data required to create the object
+		sf::Packet DataForObject;
+	};
+	
+	//! \brief Used for storing data related to updating a NetworkedInput
+	class NetworkResponseDataForUpdateNetworkedInput : public BaseNetworkResponseData{
+	public:
+		DLLEXPORT NetworkResponseDataForUpdateNetworkedInput(sf::Packet &frompacket);
+		DLLEXPORT NetworkResponseDataForUpdateNetworkedInput(NetworkedInput &object);
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+
+		//! The ID of the input used to match the player to the input
+		int InputID;
+
+		//! This contains the custom data which actually has the good stuff in it
+		sf::Packet UpdateData;
+	};
+
+
 
 	class NetworkResponse : public Object{
 	public:
@@ -267,6 +298,8 @@ namespace Leviathan{
 		DLLEXPORT void GenerateValueSyncResponse(NetworkResponseDataForSyncValData* newddata);
 		DLLEXPORT void GenerateValueSyncEndResponse(NetworkResponseDataForSyncDataEnd* newddata);
 		DLLEXPORT void GenerateResourceSyncResponse(const char* dataptr, size_t datasize);
+		DLLEXPORT void GenerateCreateNetworkedInputResponse(NetworkResponseDataForCreateNetworkedInput* newddata);
+		DLLEXPORT void GenerateUpdateNetworkedInputResponse(NetworkResponseDataForUpdateNetworkedInput* newddata);
 
 		DLLEXPORT void GenerateCustomResponse(GameSpecificPacketData* newdpacketdata);
 		DLLEXPORT void GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata);
@@ -298,6 +331,9 @@ namespace Leviathan{
 		DLLEXPORT NetworkResponseDataForCustom* GetResponseDataForGameSpecific() const;
 		DLLEXPORT NetworkResponseDataForSyncResourceData* GetResponseDataForSyncResourceResponse() const;
 		DLLEXPORT NetworkResponseDataForServerAllow* GetResponseDataForServerAllowResponse() const;
+		DLLEXPORT NetworkResponseDataForCreateNetworkedInput* GetResponseDataForCreateNetworkedInputResponse() const;
+		DLLEXPORT NetworkResponseDataForUpdateNetworkedInput* GetResponseDataForUpdateNetworkedInputResponse() const;
+
 		DLLEXPORT int GetResponseID() const;
 
 	protected:

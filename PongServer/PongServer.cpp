@@ -196,11 +196,11 @@ void Pong::PongServer::ServerCheckEnd(){
 // ------------------------------------ //
 void Pong::PongServer::DoSpecialPostLoad(){
 
-	// Setup receiving networked controls from players //
-	ServerInputHandler = shared_ptr<GameInputController>(new GameInputController());
-
 	_PongServerNetworking = dynamic_cast<PongServerNetworking*>(Leviathan::NetworkHandler::GetInterface());
 
+
+	// Setup receiving networked controls from players //
+	ServerInputHandler = shared_ptr<GameInputController>(new GameInputController());
 	_PongServerNetworking->RegisterNetworkedInput(ServerInputHandler);
 
 	// Create all the server variables //

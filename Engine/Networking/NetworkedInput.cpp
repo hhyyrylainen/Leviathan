@@ -89,13 +89,8 @@ DLLEXPORT bool Leviathan::NetworkedInput::ConnectToServersideInput(){
 	// Send a connect request //
 	CurrentState = NETWORKEDINPUT_STATE_WAITING;
 
-	sf::Packet tmpcollect;
-
-	// Add our data in it //
-	AddFullDataToPacket(tmpcollect);
-
 	// Create the request //
-	shared_ptr<NetworkRequest> request(new NetworkRequest(new RequestConnectInputData(tmpcollect), 1500));
+	shared_ptr<NetworkRequest> request(new NetworkRequest(new RequestConnectInputData(*this), 1500));
 
 
 	// Send the request //
@@ -170,6 +165,10 @@ DLLEXPORT int Leviathan::NetworkedInput::GetID() const{
 	return InputID;
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkedInput::SetNetworkReceivedState(){
+	CurrentState = NETWORKEDINPUT_STATE_CONNECTED;
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::_OnRemovedConnection(){
 
 }
@@ -193,3 +192,4 @@ void Leviathan::NetworkedInput::OnAddFullCustomDataToPacket(sf::Packet &packet){
 void Leviathan::NetworkedInput::OnAddUpdateCustomDataToPacket(sf::Packet &packet){
 
 }
+

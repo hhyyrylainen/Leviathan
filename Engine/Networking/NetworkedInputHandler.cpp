@@ -7,16 +7,18 @@
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
 #include "ConnectionInfo.h"
+#include "Threading/ThreadingManager.h"
+#include "NetworkServerInterface.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkedInputHandler::NetworkedInputHandler(NetworkInputFactory* objectcreater, NetworkClientInterface* isclient) : 
-	LastInputSourceID(2500), IsOnTheServer(false), ClientInterface(isclient), ServerInterface(NULL)
+	LastInputSourceID(2500), IsOnTheServer(false), ClientInterface(isclient), ServerInterface(NULL), _NetworkInputFactory(objectcreater)
 {
 
 }
 
 DLLEXPORT Leviathan::NetworkedInputHandler::NetworkedInputHandler(NetworkInputFactory* objectcreater, NetworkServerInterface* isserver) : 
-	LastInputSourceID(2500), IsOnTheServer(true), ClientInterface(NULL), ServerInterface(isserver)
+	LastInputSourceID(2500), IsOnTheServer(true), ClientInterface(NULL), ServerInterface(isserver), _NetworkInputFactory(objectcreater)
 {
 
 }
@@ -41,6 +43,10 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 	switch(request->GetType()){
 	case NETWORKREQUESTTYPE_CONNECTINPUT:
 		{
+			// Clients won't receive these //
+			if(!IsOnTheServer) 
+				return false;
+
 			_HandleConnectRequestPacket(request, connection);
 			return true;
 		}
@@ -52,6 +58,39 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 
 DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<NetworkResponse> response, ConnectionInfo* connection){
 	GUARD_LOCK_THIS_OBJECT();
+
+
+	switch(response->GetType()){
+	case NETWORKRESPONSETYPE_CREATENETWORKEDINPUT:
+		{
+			// Server in turn ignores this one //
+			if(IsOnTheServer) 
+				return false;
+
+			DEBUG_BREAK;
+
+			return true;
+		}
+		break;
+	case NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT:
+		{
+			DEBUG_BREAK;
+			// Everybody receives these, but the server has to distribute these around //
+			if(IsOnTheServer){
+
+
+
+			} else {
+
+
+			}
+
+			return true;
+		}
+		break;
+
+
+	}
 
 
 	// Type didn't match anything that we should be concerned with //
@@ -100,6 +139,8 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
 		// Add it to us //
 		LinkReceiver(ournewobject.get());
 		ournewobject->NowOwnedBy(this);
+		ournewobject->SetNetworkReceivedState();
+
 
 		GlobalOrLocalListeners.push_back(shared_ptr<NetworkedInput>(ournewobject.release()));
 
@@ -114,7 +155,28 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
 
 
 		// Send messages to other clients //
-		DEBUG_BREAK;
+		
+		// First create the packet //
+		shared_ptr<NetworkResponse> tmprespall = shared_ptr<NetworkResponse>(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 15));
+
+		tmprespall->GenerateCreateNetworkedInputResponse(new NetworkResponseDataForCreateNetworkedInput(*GlobalOrLocalListeners.back()));
+
+		// Using threading here to not use too much time processing the create request //
+
+		// \todo Guarantee that the interface will be available when this is ran
+		ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>(
+			[](shared_ptr<NetworkResponse> response, NetworkServerInterface* server, ConnectionInfo* skipme) -> void
+		{
+
+			// Then tell the interface to send it to all but one connection //
+			server->SendToAllButOnePlayer(response, skipme);
+
+			Logger::Get()->Info(L"NetworkedInputHandler: finished distributing create response around");
+
+		}, tmprespall, ServerInterface, connection)));
+
+
+
 
 		return;
 	}
@@ -139,7 +201,8 @@ DLLEXPORT void Leviathan::NetworkedInputHandler::UpdateInputStatus(){
 	for(auto iter = GlobalOrLocalListeners.begin(); iter != end; ++iter){
 
 		// This checks for all invalid states //
-		if(NETWORKEDINPUT_STATE_TODISCARD & (*iter)->GetState())
+		auto tmpstate = (*iter)->GetState();
+		if(tmpstate == NETWORKEDINPUT_STATE_CLOSED || tmpstate == NETWORKEDINPUT_STATE_FAILED)
 			_NetworkInputFactory->NoLongerNeeded(*(*iter).get());
 	}
 

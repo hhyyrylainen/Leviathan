@@ -74,15 +74,19 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 		break;
 	case NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT:
 		{
-			DEBUG_BREAK;
-			// Everybody receives these, but the server has to distribute these around //
+			// Process it //
+			if(!_HandleInputUpdateResponse(response, connection)){
+
+				// This packet wasn't properly authenticated //
+				return true;
+			}
+
+
+			// Everybody receives these, but only the server has to distribute these around //
 			if(IsOnTheServer){
 
-
-
-			} else {
-
-
+				// Distribute it around //
+				ServerInterface->SendToAllButOnePlayer(response, connection);
 			}
 
 			return true;
@@ -147,7 +151,9 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
 		_NetworkInputFactory->ReplicationFinalized(GlobalOrLocalListeners.back().get());
 
 		// Notify that we accepted it //
-		shared_ptr<NetworkResponse> tmpresp(new NetworkResponse(NETWORKRESPONSETYPE_SERVERALLOW, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1500));
+		shared_ptr<NetworkResponse> tmpresp(new NetworkResponse(request->GetExpectedResponseID(), 
+			PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1500));
+
 
 		tmpresp->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE_CONNECT_ACCEPTED));
 
@@ -277,5 +283,49 @@ void Leviathan::NetworkedInputHandler::_OnChildUnlink(InputReceiver* child){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInputHandler::QueueDeleteInput(NetworkedInput* inputobj){
 	DEBUG_BREAK;
+}
+// ------------------------------------ //
+bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection){
+
+
+	NetworkResponseDataForUpdateNetworkedInput* data = response->GetResponseDataForUpdateNetworkedInputResponse();
+
+
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Find the right input object //
+
+	NetworkedInput* target = NULL;
+
+	auto end = GlobalOrLocalListeners.end();
+	for(auto iter = GlobalOrLocalListeners.begin(); iter != end; ++iter){
+
+		// Find the right one //
+		if((*iter)->GetID() == data->InputID){
+
+			// Found the target //
+			target = (*iter).get();
+			break;
+		}
+	}
+
+
+	// If we didn't find it this *should* be a bogus request //
+	if(!target)
+		return false;
+
+
+	// Check is it allowed //
+	if(!_NetworkInputFactory->IsConnectionAllowedToUpdate(target, connection)){
+
+		// Some player is trying to fake someone else's input //
+		return false;
+	}
+
+	
+	// Now we can update it //
+	target->LoadUpdatesFromPacket(data->UpdateData);
+
+	return true;
 }
 

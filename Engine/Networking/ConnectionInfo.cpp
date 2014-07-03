@@ -496,6 +496,13 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 		Logger::Get()->Error(L"Received package has invalid format");
 	}
 
+	// We can discard this here if this is already received //
+	if(_IsAlreadyReceived(packetnumber)){
+
+		// Ignore repeat packet //
+		return true;
+	}
+
 	NetworkAckField otherreceivedpackages;
 
 	if(!(packet >> otherreceivedpackages)){
@@ -768,7 +775,33 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsTargetHostLocalhost(){
 DLLEXPORT wstring Leviathan::ConnectionInfo::GenerateFormatedAddressString() const{
 	return Convert::StringToWstring(TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
 }
+// ------------------------------------ //
+bool Leviathan::ConnectionInfo::_IsAlreadyReceived(int packetid){
 
+	// It is moved through in reverse to quickly return matches, but receiving the same packet twice isn't that common //
+	auto end = LastReceivedPacketIDs.rend();
+	for(auto iter = LastReceivedPacketIDs.rbegin(); iter != end; ++iter){
+
+		if(*iter == packetid){
+
+			// Found a match, this is an already received packet //
+			return true;
+		}
+	}
+
+	// Not found, add for future searches //
+	LastReceivedPacketIDs.push_back(packetid);
+
+	if(LastReceivedPacketIDs.size() > KEEP_IDS_FOR_DISCARD){
+
+		// Get rid of the oldest (the first) one //
+		LastReceivedPacketIDs.pop_front();
+	}
+
+
+	// It wasn't there //
+	return false;
+}
 // ------------------ SentNetworkThing ------------------ //
 Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponseid, shared_ptr<NetworkRequest> request, shared_ptr<boost::promise<bool>> waitobject, 
 	int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) : PacketNumber(packetid),

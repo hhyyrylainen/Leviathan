@@ -72,11 +72,23 @@ DLLEXPORT void Leviathan::NetworkedInput::LoadUpdatesFromPacket(sf::Packet &pack
 
 	// Common data cannot change, only custom data has changed //
 	OnLoadCustomUpdateDataFrompacket(packet);
+
+	// Notify local update //
+	_OnInputChanged();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::OnUpdateInputStates(){
+	// Server may not do this //
+	if(OwningHandler->IsOnTheServer)
+		return;
+
 	// Send updates through the network //
-	DEBUG_BREAK;
+	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
+	response->GenerateUpdateNetworkedInputResponse(new NetworkResponseDataForUpdateNetworkedInput(*this));
+
+	// Send to the server for it to then distribute it around //
+	OwningHandler->ClientInterface->GetServerConnection()->SendPacketToConnection(response, 5);
+
 
 	// Notify local update //
 	_OnInputChanged();

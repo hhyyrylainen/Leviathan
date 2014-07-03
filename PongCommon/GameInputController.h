@@ -34,10 +34,13 @@ namespace Pong{
 		DLLEXPORT virtual bool DoesServerAllowCreate(NetworkedInput* input, ConnectionInfo* connection);
 
 		DLLEXPORT virtual void ReplicationFinalized(NetworkedInput* input);
-
+		
+		DLLEXPORT virtual bool IsConnectionAllowedToUpdate(NetworkedInput* input, ConnectionInfo* connection);
 
 	protected:
 
+		//! \brief Returns true when the connection matches the player who owns the input with the id
+		bool IsConnectionAllowed(NetworkedInput* input, ConnectionInfo* connection);
 
 
 		static PongInputFactory* Staticinstance;

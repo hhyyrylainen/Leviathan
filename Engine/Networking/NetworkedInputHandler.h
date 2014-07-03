@@ -43,6 +43,9 @@ namespace Leviathan{
 		//! \brief Called on the server to verify whether a new input object can be created
 		DLLEXPORT virtual bool DoesServerAllowCreate(NetworkedInput* input, ConnectionInfo* connection) = 0;
 
+		//! \brief Called when the handler needs to know if a connection belongs to a player/input owner
+		DLLEXPORT virtual bool IsConnectionAllowedToUpdate(NetworkedInput* input, ConnectionInfo* connection) = 0;
+
 	};
 
 
@@ -128,6 +131,10 @@ namespace Leviathan{
 
 
 		void _HandleConnectRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
+
+		//! \brief Handle update response
+		//! \return false If the connection isn't authorized to update the input from this connection
+		bool _HandleInputUpdateResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
 
 		// ------------------------------------ //
 

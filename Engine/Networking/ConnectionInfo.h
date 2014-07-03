@@ -24,6 +24,9 @@ namespace Leviathan{
 #define ACKKEEPALIVE			200
 
 
+//! \brief The amount of received packet ids to keep in memory, these ids are used to discard duplicate packets
+#define KEEP_IDS_FOR_DISCARD	40
+
 //! Makes the program spam a ton of debug info about packets //
 //#define SPAM_ME_SOME_PACKETS	1
 
@@ -124,6 +127,7 @@ namespace Leviathan{
 	//!
 	//! \note this class does not use reference counting so it it safe to use shared_ptr with this class
 	//! \todo Internal security tokens to all packets
+	//! \todo Remove sent ack groups after they have "probably failed"
 	class ConnectionInfo : public BaseNotifierAll{
 	public:
 		//! \brief Creates a new connection to hostname
@@ -187,6 +191,12 @@ namespace Leviathan{
 		void _PreparePacketHeaderForPacket(int packetid, sf::Packet &tofill, bool isrequest, bool dontsendacks = false);
 
 		shared_ptr<SentNetworkThing> _GetPossibleRequestForResponse(shared_ptr<NetworkResponse> response);
+
+		//! \brief Checks whether a packet with the number is received
+		//!
+		//! This function will also store the packetid for later checks
+		bool _IsAlreadyReceived(int packetid);
+
 		// ------------------------------------ //
 
 		// Packet sent and received data //
@@ -216,6 +226,10 @@ namespace Leviathan{
 		std::list<shared_ptr<SentNetworkThing>> WaitingRequests;
 
 		std::vector<shared_ptr<SentAcks>> AcksNotConfirmedAsReceived;
+
+
+		//! IDs of packets used to drop same packets
+		std::deque<int> LastReceivedPacketIDs;
 
 		USHORT TargetPortNumber;
 		wstring HostName;

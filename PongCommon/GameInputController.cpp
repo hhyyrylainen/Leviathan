@@ -147,12 +147,12 @@ DLLEXPORT void Pong::PongInputFactory::ReplicationFinalized(NetworkedInput* inpu
 			PlayerSlot* curplayer = plys[i];
 
 			tmpobj->StartSendingInput(curplayer);
-			break;
+			return;
 		}
 	}
 
 
-	Logger::Get()->Error(L"Pong input thing failed to link from network");
+	Logger::Get()->Error(L"Pong input thing failed to link from network, finalize replication fail");
 }
 
 DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard){
@@ -174,7 +174,18 @@ PongInputFactory* Pong::PongInputFactory::Get(){
 	return Staticinstance;
 }
 
+PongInputFactory* Pong::PongInputFactory::Staticinstance = new PongInputFactory();
+
+// ------------------------------------ //
 DLLEXPORT bool Pong::PongInputFactory::DoesServerAllowCreate(NetworkedInput* input, ConnectionInfo* connection){
+	return IsConnectionAllowed(input, connection);
+}
+
+DLLEXPORT bool Pong::PongInputFactory::IsConnectionAllowedToUpdate(NetworkedInput* input, ConnectionInfo* connection){
+	return IsConnectionAllowed(input, connection);
+}
+
+bool Pong::PongInputFactory::IsConnectionAllowed(NetworkedInput* input, ConnectionInfo* connection){
 	// Check does the input id match the player's input that is associated with the connection //
 	auto plylist = BasePongParts::Get()->GetPlayers();
 
@@ -202,11 +213,9 @@ DLLEXPORT bool Pong::PongInputFactory::DoesServerAllowCreate(NetworkedInput* inp
 	}
 
 	Logger::Get()->Error(L"Pong input thing failed to find target for allow request");
-	// Failed to find the target //
 	return false;
 }
 
-PongInputFactory* Pong::PongInputFactory::Staticinstance = new PongInputFactory();
 // ------------------ PongNInputter ------------------ //
 Pong::PongNInputter::PongNInputter(int ownerid, int networkid, PlayerSlot* controlthis, PLAYERCONTROLS typetoreceive) : 
 	Leviathan::NetworkedInput(ownerid, networkid), ControlledSlot(controlthis), CtrlGroup(typetoreceive), CreatedByUs(false), ControlStates(0),
@@ -242,7 +251,6 @@ void Pong::PongNInputter::_OnInputChanged(){
 	if(ControlledSlot){
 		// Check which keys have changed //
 		char differences = ChangedKeys^ControlStates;
-
 
 
 		// Send our input actions //
@@ -298,7 +306,7 @@ void Pong::PongNInputter::OnLoadCustomFullDataFrompacket(sf::Packet &packet){
 void Pong::PongNInputter::OnAddUpdateCustomDataToPacket(sf::Packet &packet){
 	GUARD_LOCK_THIS_OBJECT();
 
-	packet << ChangedKeys;
+	packet << (sf::Int8)ChangedKeys;
 }
 
 void Pong::PongNInputter::OnLoadCustomUpdateDataFrompacket(sf::Packet &packet){
@@ -359,10 +367,10 @@ bool Pong::PongNInputter::_HandleKeyThing(OIS::KeyCode key, bool down){
 
 	// Set the bit //
 	switch(newaction){
-	case CONTROLKEYACTION_LEFT: targetbit = PONG_INPUT_FLAGS_LEFT; break;
-	case CONTROLKEYACTION_RIGHT: targetbit = PONG_INPUT_FLAGS_RIGHT; break;
-	case CONTROLKEYACTION_POWERUPDOWN: targetbit = PONG_INPUT_FLAGS_POWERDOWN; break;
-	case CONTROLKEYACTION_POWERUPUP: targetbit = PONG_INPUT_FLAGS_POWERUP; break;
+	case CONTROLKEYACTION_LEFT: targetbit = 0; break; // bit set in PONG_INPUT_FLAGS_LEFT
+	case CONTROLKEYACTION_RIGHT: targetbit = 1; break; // bit set in PONG_INPUT_FLAGS_RIGHT
+	case CONTROLKEYACTION_POWERUPDOWN: targetbit = 3; break; // bit set in PONG_INPUT_FLAGS_POWERDOWN
+	case CONTROLKEYACTION_POWERUPUP: targetbit = 2; break; // bit set in PONG_INPUT_FLAGS_POWERUP
 	}
 
 	// Set/unset the changed bit //

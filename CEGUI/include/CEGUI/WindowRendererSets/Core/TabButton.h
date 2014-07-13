@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   TabButton.h
     created:    Fri Jul 8 2005
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -40,8 +39,8 @@ namespace CEGUI
         This class requires LookNFeel to be assigned.  The LookNFeel should provide the following:
 
         States (missing states will default to 'Normal'):
-            - Normal    - Rendering for when the tab button is neither selected nor has the mouse hovering over it.
-            - Hover     - Rendering for then the tab button has the mouse hovering over it.
+            - Normal    - Rendering for when the tab button is neither selected nor has the pointer hovering over it.
+            - Hover     - Rendering for then the tab button has the pointer hovering over it.
             - Selected  - Rendering for when the tab button is the button for the selected tab.
             - Disabled  - Rendering for when the tab button is disabled.
     */

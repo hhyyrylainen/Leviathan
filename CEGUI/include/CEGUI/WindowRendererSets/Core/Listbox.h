@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   Listbox.h
     created:    Mon Jul 4 2005
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -42,6 +41,7 @@ namespace CEGUI
 
         States:
             - Enabled
+            - EnabledFocused
             - Disabled
 
         Named Areas:

@@ -1,5 +1,4 @@
 /************************************************************************
-    filename:   CEGUIFunctorPointerSlot.h
     created:    Tue Feb 28 2006
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -39,7 +38,7 @@ namespace CEGUI
     object pointer.
 */
 template<typename T>
-class FunctorPointerSlot : public SlotFunctorBase
+class FunctorPointerSlot : public SlotFunctorBase<EventArgs>
 {
 public:
     FunctorPointerSlot(T* functor) :

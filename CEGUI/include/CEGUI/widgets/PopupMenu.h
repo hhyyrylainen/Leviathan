@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   CEGUIPopupMenu.h
     created:    27/3/2005
     author:     Tomas Lindquist Olsen (based on code by Paul D Turner)
     
@@ -195,8 +194,8 @@ protected:
 	virtual void onDestructionStarted(WindowEventArgs& e);
 	virtual void onShown(WindowEventArgs& e);
 	virtual void onHidden(WindowEventArgs& e);
-	virtual void onMouseButtonDown(MouseEventArgs& e);
-	virtual void onMouseButtonUp(MouseEventArgs& e);
+    virtual void onPointerPressHold(PointerEventArgs& e);
+    virtual void onPointerActivate(PointerEventArgs& e);
 
 
     /*************************************************************************

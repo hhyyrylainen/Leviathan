@@ -9,7 +9,7 @@
         <Affector property="Position" interpolator="UVector2" applicationMethod="relative">
             <KeyFrame position="0" value="{{0, 0}, {0.0, 0.0}}"/>
             <KeyFrame position="0.3" value="{{0, 0}, {0.1, 0.0}}" progression="quadratic decelerating"/>
-            <KeyFrame position="0.4" value="{{0, 0}, {0.0, 0.0}}" progression="linear"/>
+            <KeyFrame position="0.4" value="{{0, 0}, {0.0, 0.0}}" progression="discrete"/>
         </Affector>
         <Affector property="Visible" interpolator="bool">
             <KeyFrame position="0" value="True"/>

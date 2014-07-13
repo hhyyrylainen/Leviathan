@@ -84,10 +84,11 @@ namespace Gui{
 		//! \brief Notifies internal browsers
 		//! \todo Make CEGUI allow multiple windows
 		DLLEXPORT void OnResize();
-		//! \brief Notifies internal browsers
+
+		//! \brief Notifies contexts about the change to appropriately lose focus on fields
 		DLLEXPORT void OnFocusChanged(bool focused);
 
-		// internal Gui element managing //
+		// Internal Gui element managing //
 		DLLEXPORT bool AddGuiObject(BaseGuiObject* obj);
 		DLLEXPORT void DeleteObject(int id);
 		DLLEXPORT int GetObjectIndexFromId(int id);
@@ -201,6 +202,9 @@ namespace Gui{
 
 		//! The corresponding CEGUI context
 		CEGUI::GUIContext* GuiContext;
+
+		//! The input handler for the context
+		CEGUI::InputAggregator* ContextInput;
 
 		//! Time of creation of this GuiManager
 		WantedClockType::time_point LastTimePulseTime;

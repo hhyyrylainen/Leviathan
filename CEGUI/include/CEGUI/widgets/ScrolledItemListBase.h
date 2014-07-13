@@ -1,5 +1,4 @@
 /************************************************************************
-    filename:   CEGUIIScrolledItemListBase.h
     created:    Sat Oct 29 2005
     author:     Tomas Lindquist Olsen
 *************************************************************************/
@@ -177,7 +176,7 @@ protected:
     /************************************************************************
         Overridden event handlers
     ************************************************************************/
-    virtual void onMouseWheel(MouseEventArgs& e);
+    virtual void onScroll(PointerEventArgs& e);
 
     /************************************************************************
         Event subscribers

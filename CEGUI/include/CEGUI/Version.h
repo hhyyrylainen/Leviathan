@@ -1,5 +1,4 @@
 /***********************************************************************
-	filename: 	CEGUIVersion.h
 	created:	7/3/2005
 	author:		jacmoe
 *************************************************************************/
@@ -37,14 +36,14 @@ This file contains CEGUI version defines
 //////////////////////////////////////////////////////////////////////////
 // Define CEGUI version
 //////////////////////////////////////////////////////////////////////////
-#define CEGUI_VERSION_MAJOR 0
-#define CEGUI_VERSION_MINOR 9999
+#define CEGUI_VERSION_MAJOR 9999
+#define CEGUI_VERSION_MINOR 0
 #define CEGUI_VERSION_PATCH 0
 
 // this is used to check consistency between runtime binary and headers
 // used for compiling.  You should not generally use this in client code
 // or rely on its value meaning anything in particular.
-#define CEGUI_VERSION_ABI 209999
+#define CEGUI_VERSION_ABI 299990
 
 #endif	// end of guard _CEGUIVersion_h_
 

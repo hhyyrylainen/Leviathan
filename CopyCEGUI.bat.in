@@ -1,0 +1,58 @@
+@echo off
+echo copying CEGUI libs and stuff from: "@CEGUI_INSTALL_DIR@"
+
+echo copying dlls
+
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUIBase@CEGUI_SUFFIX@.dll" "CEGUI\bin\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUIBase@CEGUI_SUFFIX@_d.dll" "CEGUI\bin\" /D /Y
+
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUICommonDialogs@CEGUI_SUFFIX@.dll" "CEGUI\bin\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUICommonDialogs@CEGUI_SUFFIX@_d.dll" "CEGUI\bin\" /D /Y
+
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUICoreWindowRendererSet.dll" "CEGUI\bin\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUICoreWindowRendererSet_d.dll" "CEGUI\bin\" /D /Y
+
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUIExpatParser.dll" "CEGUI\bin\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUIExpatParser_d.dll" "CEGUI\bin\" /D /Y
+
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUIOgreRenderer@CEGUI_SUFFIX@.dll" "CEGUI\bin\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUIOgreRenderer@CEGUI_SUFFIX@_d.dll" "CEGUI\bin\" /D /Y
+
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUISILLYImageCodec.dll" "CEGUI\bin\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\bin\CEGUISILLYImageCodec_d.dll" "CEGUI\bin\" /D /Y
+
+echo copying libs
+
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUIBase@CEGUI_SUFFIX@.lib" "CEGUI\lib\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUIBase@CEGUI_SUFFIX@_d.lib" "CEGUI\lib\" /D /Y
+
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUICommonDialogs@CEGUI_SUFFIX@.lib" "CEGUI\lib\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUICommonDialogs@CEGUI_SUFFIX@_d.lib" "CEGUI\lib\" /D /Y
+
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUICoreWindowRendererSet.lib" "CEGUI\lib\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUICoreWindowRendererSet_d.lib" "CEGUI\lib\" /D /Y
+
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUIExpatParser.lib" "CEGUI\lib\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUIExpatParser_d.lib" "CEGUI\lib\" /D /Y
+
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUIOgreRenderer@CEGUI_SUFFIX@.lib" "CEGUI\lib\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUIOgreRenderer@CEGUI_SUFFIX@_d.lib" "CEGUI\lib\" /D /Y
+
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUISILLYImageCodec.lib" "CEGUI\lib\" /D /Y
+xcopy "@CEGUI_INSTALL_DIR@\lib\CEGUISILLYImageCodec_d.lib" "CEGUI\lib\" /D /Y
+
+IF @CEGUI_COPY_DEBUGFILES@==ON (
+
+echo copying .pdbs
+    
+xcopy "@CEGUI_BUILD_BINARY_DIR@\CEGUIBase@CEGUI_SUFFIX@.pdb" "@PROJECT_NATIVE_BINARY_DIR@\bin\" /D /Y
+xcopy "@CEGUI_BUILD_BINARY_DIR@\CEGUIBase@CEGUI_SUFFIX@_d.pdb" "@PROJECT_NATIVE_BINARY_DIR@\bin\" /D /Y
+
+xcopy "@CEGUI_BUILD_BINARY_DIR@\CEGUIOgreRenderer@CEGUI_SUFFIX@.pdb" "@PROJECT_NATIVE_BINARY_DIR@\bin\" /D /Y
+xcopy "@CEGUI_BUILD_BINARY_DIR@\CEGUIOgreRenderer@CEGUI_SUFFIX@_d.pdb" "@PROJECT_NATIVE_BINARY_DIR@\bin\" /D /Y
+
+)
+
+echo don't forget to copy the additional requirements like libexpat.dll, pcre.dll and others 
+
+pause

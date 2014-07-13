@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   CEGUIRenderingSurface.h
     created:    Mon Jan 12 2009
     author:     Paul D Turner
 *************************************************************************/
@@ -31,6 +30,8 @@
 #include "CEGUI/EventSet.h"
 #include "CEGUI/EventArgs.h"
 #include "CEGUI/RenderQueue.h"
+
+#include <vector>
 
 #if defined(_MSC_VER)
 #   pragma warning(push)
@@ -153,6 +154,29 @@ public:
 
     /*!
     \brief
+        Add the specified GeometryBuffers to the specified queue for rendering
+        when the RenderingSurface is drawn.
+
+    \param queue
+        One of the RenderQueueID enumerated values indicating which prioritised
+        queue the GeometryBuffer should be added to.
+
+    \param geometryBuffers
+        List of GeometryBuffers to be added to the specified rendering queue.
+
+    \note
+        The RenderingSurface does not take ownership of the GeometryBuffers, and
+        does not destroy it when the RenderingSurface geometry is cleared.
+        Rather, the RenderingSurface is just maintaining a list of things to be
+        drawn; the actual GeometryBuffers can be re-used by whichever object
+        does own them, and even changed or updated while still "attached" to
+        a RenderingSurface.
+    */
+    void addGeometryBuffers(const RenderQueueID queue,
+                            const std::vector<GeometryBuffer*>& geometry_buffers);
+
+    /*!
+    \brief
         Add the specified GeometryBuffer to the specified queue for rendering
         when the RenderingSurface is drawn.
 
@@ -160,19 +184,19 @@ public:
         One of the RenderQueueID enumerated values indicating which prioritised
         queue the GeometryBuffer should be added to.
 
-    \param buffer
-        GeometryBuffer object to be added to the specified rendering queue.
+    \param geometry_buffers
+        The GeometryBuffer to be added to the specified rendering queue.
 
     \note
         The RenderingSurface does not take ownership of the GeometryBuffer, and
         does not destroy it when the RenderingSurface geometry is cleared.
-        Rather, the RenderingSurface is just maintaining a list of thigs to be
+        Rather, the RenderingSurface is just maintaining a list of things to be
         drawn; the actual GeometryBuffers can be re-used by whichever object
-        \e does own them, and even changed or updated while still "attached" to
+        does own them, and even changed or updated while still "attached" to
         a RenderingSurface.
     */
     void addGeometryBuffer(const RenderQueueID queue,
-                           const GeometryBuffer& buffer);
+                           const GeometryBuffer& geometry_buffer);
 
     /*!
     \brief
@@ -182,11 +206,11 @@ public:
         One of the RenderQueueID enumerated values indicating which prioritised
         queue the GeometryBuffer should be removed from.
 
-    \param buffer
+    \param geometry_buffer
         GeometryBuffer object to be removed from the specified rendering queue.
     */
     void removeGeometryBuffer(const RenderQueueID queue,
-                              const GeometryBuffer& buffer);
+                              const GeometryBuffer& geometry_buffer);
 
     /*!
     \brief

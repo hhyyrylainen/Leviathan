@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   CEGUIRenderedStringImageComponent.h
     created:    24/05/2009
     author:     Paul Turner
  *************************************************************************/
@@ -31,6 +30,8 @@
 #include "CEGUI/RenderedStringComponent.h"
 #include "CEGUI/ColourRect.h"
 #include "CEGUI/String.h"
+
+#include <vector>
 
 #if defined(_MSC_VER)
 #	pragma warning(push)
@@ -67,7 +68,7 @@ public:
     const Sizef& getSize() const;
 
     // implementation of abstract base interface
-    void draw(const Window* ref_wnd, GeometryBuffer& buffer,
+    void draw(const Window* ref_wnd, std::vector<GeometryBuffer*>& geometry_buffers,
               const Vector2f& position, const ColourRect* mod_colours,
               const Rectf* clip_rect, const float vertical_space,
               const float space_extra) const;

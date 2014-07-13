@@ -385,7 +385,7 @@ void Pong::PongGame::DoSpecialPostLoad(){
 	GuiManagerAccess = window1->GetGUI();
 
 	if(!GuiManagerAccess->LoadGUIFile(L"./Data/Scripts/GUI/PongMenus.txt")){
-
+		
 		Logger::Get()->Error(L"Pong: failed to load the GuiFile, quitting");
 		LeviathanApplication::GetApp()->StartRelease();
 	}

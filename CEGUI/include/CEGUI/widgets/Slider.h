@@ -1,5 +1,4 @@
 /***********************************************************************
-	filename: 	CEGUISlider.h
 	created:	13/4/2004
 	author:		Paul D Turner
 	
@@ -371,8 +370,8 @@ protected:
 	/*************************************************************************
 		Overridden event handlers
 	*************************************************************************/
-	virtual void	onMouseButtonDown(MouseEventArgs& e);
-	virtual	void	onMouseWheel(MouseEventArgs& e);
+    virtual void    onPointerPressHold(PointerEventArgs& e);
+    virtual void    onScroll(PointerEventArgs& e);
 
 
 	/*************************************************************************

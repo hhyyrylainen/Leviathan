@@ -28,6 +28,7 @@
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Handlers/ResourceRefreshHandler.h"
 #include "CEGUI/Clipboard.h"
+#include "CEGUI/InputAggregator.h"
 using namespace Leviathan;
 using namespace Leviathan::Gui;
 // ------------------------------------ //
@@ -198,7 +199,7 @@ private:
 // ------------------ GuiManager ------------------ //
 Leviathan::Gui::GuiManager::GuiManager() : ID(IDFactory::GetID()), Visible(true), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true),
 	LastTimePulseTime(Misc::GetThreadSafeSteadyTimePoint()), MainGuiManager(false), ThisWindow(NULL), GuiContext(NULL), FileChangeID(0),
-	_GuiClipboardHandler(NULL)
+	_GuiClipboardHandler(NULL), ContextInput(NULL)
 {
 	
 }
@@ -230,6 +231,9 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 	// Setup this window's context //
 	GuiContext = &CEGUI::System::getSingleton().createGUIContext(ThisWindow->GetCEGUIRenderer()->getDefaultRenderTarget());
 
+	// Setup input for the context //
+	ContextInput = new CEGUI::InputAggregator(GuiContext);
+	ContextInput->initialise();
 
 	// Set Simonetta as the default font //
 	GuiContext->setDefaultFont("Simonetta-Regular");
@@ -290,6 +294,8 @@ void Leviathan::Gui::GuiManager::Release(){
 
 	Collections.clear();
 
+	ContextInput->removeAllEvents();
+	SAFE_DELETE(ContextInput);
 
 	// Destroy the GUI //
 	CEGUI::System::getSingleton().destroyGUIContext(*GuiContext);
@@ -418,7 +424,7 @@ void Leviathan::Gui::GuiManager::Render(){
 	LastTimePulseTime = newtime;
 
 	// Update inputs //
-	ThisWindow->GetWindow()->GatherInput(GuiContext);
+	ThisWindow->GetWindow()->GatherInput(ContextInput);
 
 }
 // ------------------------------------ //
@@ -436,7 +442,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnFocusChanged(bool focused){
 	
 	// Notify our context //
 	if(!focused)
-		GuiContext->injectMouseLeaves();
+		ContextInput->injectMouseLeaves();
 
 }
 // ------------------------------------ //
@@ -697,7 +703,9 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseTheme(const wstring &tname){
 	}
 
 	// Set it active //
-	GuiContext->getMouseCursor().setDefaultImage(Convert::WstringToString(tname));
+	GuiContext->getPointerIndicator().setDefaultImage(Convert::WstringToString(tname));
+
+	
 
 	// hide window cursor //
 	ThisWindow->GetWindow()->SetHideCursor(true);
@@ -927,13 +935,13 @@ DLLEXPORT void Leviathan::Gui::GuiManager::ApplyGuiStates(const GuiCollectionSta
 
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::GuiManager::InjectPasteRequest(){
-	return GuiContext->injectPasteRequest();
+	return ContextInput->injectPasteRequest();
 }
 
 DLLEXPORT bool Leviathan::Gui::GuiManager::InjectCopyRequest(){
-	return GuiContext->injectCopyRequest();
+	return ContextInput->injectCopyRequest();
 }
 
 DLLEXPORT bool Leviathan::Gui::GuiManager::InjectCutRequest(){
-	return GuiContext->injectCutRequest();
+	return ContextInput->injectCutRequest();
 }

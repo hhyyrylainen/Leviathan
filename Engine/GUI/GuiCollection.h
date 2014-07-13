@@ -22,6 +22,7 @@ namespace Leviathan{ namespace Gui{
 			std::vector<unique_ptr<wstring>> &outanimations = std::vector<unique_ptr<wstring>>(), bool applyanimstochildren = false);
 		~GuiCollection();
 
+		//! \todo Allow script listeners to be executed even if custom animations are used
 		DLLEXPORT void UpdateState(bool newstate);
 		DLLEXPORT inline bool GetState(){
 			return Enabled;

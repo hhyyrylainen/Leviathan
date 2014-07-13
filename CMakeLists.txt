@@ -7,7 +7,7 @@ project(Leviathan)
 set(LEVIATHAN_VERSION_STABLE 0)
 set(LEVIATHAN_VERSION_MAJOR 6)
 set(LEVIATHAN_VERSION_MINOR 9)
-set(LEVIATHAN_VERSION_PATCH 6)
+set(LEVIATHAN_VERSION_PATCH 7)
 
 set(LEVIATHAN_VERSION_STR ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}.${LEVIATHAN_VERSION_MINOR}.${LEVIATHAN_VERSION_PATCH})
 set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LEVIATHAN_VERSION_MINOR}${LEVIATHAN_VERSION_PATCH})
@@ -16,12 +16,14 @@ set(LEVIATHAN_VERSIONS "L\"${LEVIATHAN_VERSION_STR}\"")
 set(LEVIATHAN_VERSION_ANSIS "\"${LEVIATHAN_VERSION_STR}\"")
 
 set(WORK_DIR "${PROJECT_BINARY_DIR}/bin")
+file(TO_NATIVE_PATH ${PROJECT_BINARY_DIR} PROJECT_NATIVE_BINARY_DIR)
 
 # modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake" "${PROJECT_SOURCE_DIR}/LeviathanCMake")
 
 # The CEGUI build might have some weird suffix
-set(CEGUI_SUFFIX "-0")
+set(CEGUI_SUFFIX "-9999" CACHE STRING "The suffix of cegui builds, for example -0.8 or -9999")
+
 #set(CEGUI_SUFFIX "")
 
 # Stuff from example ogre cmake configuration to hopefully fix linux build
@@ -202,6 +204,10 @@ if(DOXYGEN_FOUND)
     )
 endif(DOXYGEN_FOUND)
 
+set(CEGUI_INSTALL_DIR "" CACHE FILEPATH "Path to the root directory of CEGUI install folder")
+set(CEGUI_BUILD_BINARY_DIR "" CACHE FILEPATH "Path to the bin directory that has .pdb debug files")
+option(CEGUI_COPY_DEBUGFILES "Whether to copy the .pdb files and others that are required for proper debugging" ON) 
+configure_file("${PROJECT_SOURCE_DIR}/CopyCEGUI.bat.in" "${PROJECT_SOURCE_DIR}/CopyCEGUI.bat" @ONLY)
 
 message(STATUS "Copying files...")
 
@@ -516,14 +522,14 @@ set(CPACK_PACKAGE_VERSION_MAJOR "${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION
 set(CPACK_PACKAGE_VERSION_MINOR "${LEVIATHAN_VERSION_MINOR}")
 
 if(INSTALL_CREATE_SDK)
-set(${LEVIATHAN_VERSION_PATCH} "${LEVIATHAN_VERSION_PATCH}_sdk")
+    set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}-sdk")
+else(INSTALL_CREATE_SDK)
+    set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}")
 endif(INSTALL_CREATE_SDK)
-
-set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}")
 
 
 if(WIN32)
-  # There is a bug in NSI that does not handle full unix paths properly. Make
+  # There is a bug in NSIS that does not handle full unix paths properly. Make
   # sure there is at least one set of four (4) backlasshes.
   set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}\\\\LeviathanIcon.bmp")
   set(CPACK_NSIS_DISPLAY_NAME "Leviathan Game Engine")

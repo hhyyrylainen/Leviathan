@@ -1,10 +1,9 @@
 /***********************************************************************
-    filename:   SystemKeys.h
-    created:    Fri Feb 17 2012
+    created:    Wed Feb 16 2011
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
 /***************************************************************************
- *   Copyright (C) 2004 - 2012 Paul D Turner & The CEGUI Development Team
+ *   Copyright (C) 2004 - 2011 Paul D Turner & The CEGUI Development Team
  *
  *   Permission is hereby granted, free of charge, to any person obtaining
  *   a copy of this software and associated documentation files (the
@@ -25,63 +24,63 @@
  *   ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  *   OTHER DEALINGS IN THE SOFTWARE.
  ***************************************************************************/
-#ifndef _CEGUISystemKeys_h_
-#define _CEGUISystemKeys_h_
+#ifndef _CEGUIBitmapImage_h_
+#define _CEGUIBitmapImage_h_
 
-#include "CEGUI/InputEvent.h"
+#include "CEGUI/Image.h"
+#include "CEGUI/String.h"
+#include "CEGUI/Rect.h"
 
+#if defined(_MSC_VER)
+#	pragma warning(push)
+#	pragma warning(disable : 4251)
+#endif
+
+// Start of CEGUI namespace section
 namespace CEGUI
 {
-class CEGUIEXPORT SystemKeys
+class CEGUIEXPORT BitmapImage : public Image
 {
 public:
-    enum SystemKey
-    {
-        None          = 0x0000,
-        LeftMouse     = 0x0001,
-        RightMouse    = 0x0002,
-        Shift         = 0x0004,
-        Control       = 0x0008,
-        MiddleMouse   = 0x0010,
-        X1Mouse       = 0x0020,
-        X2Mouse       = 0x0040,
-        Alt           = 0x0080
-    };
+    BitmapImage(const String& name);
+    BitmapImage(const XMLAttributes& attributes);
 
-    SystemKeys();
+    BitmapImage(const String& name, Texture* texture,
+               const Rectf& tex_area, const Vector2f& offset,
+               const AutoScaledMode autoscaled, const Sizef& native_res);
 
-    void reset();
+    // Implement CEGUI::Image interface
+    void render(std::vector<GeometryBuffer*>& geometry_buffers,
+                const ImageRenderSettings& render_settings) const;
 
-    uint get() const;
-    bool isPressed(SystemKey key) const;
+    /*!
+    \brief
+        Sets the Texture object of this Image.
 
-    //! notify that the given key was presed
-    void keyPressed(Key::Scan key);
-    //! notify that the given key was released.
-    void keyReleased(Key::Scan key);
-    //! notify that the given mouse button was pressed.
-    void mouseButtonPressed(MouseButton button);
-    //! notify that the given mouse button was released.
-    void mouseButtonReleased(MouseButton button);
+    \param texture
+        The pointer to the Texture of this Image.
+    */
+    void setTexture(Texture* texture);
 
-    static SystemKey mouseButtonToSystemKey(MouseButton button);
-    static SystemKey keyCodeToSystemKey(Key::Scan key);
+    /*!
+    \brief
+        Returns the pointer to the Texture object used by this image.
 
-private:
-    void updatePressedStateForKey(Key::Scan key, bool state);
-    void updateSystemKeyState(SystemKey syskey);
+    \return
+        The pointer to the Texture object used by this image.
+    */
+    const Texture* getTexture() const;
 
-    uint d_current;
-
-    bool d_leftShift;
-    bool d_rightShift;
-    bool d_leftCtrl;
-    bool d_rightCtrl;
-    bool d_leftAlt;
-    bool d_rightAlt;
+protected:
+    //! Texture used by this image.
+    Texture* d_texture;
 };
 
-}
+} // End of  CEGUI namespace section
 
+#if defined(_MSC_VER)
+#	pragma warning(pop)
 #endif
+
+#endif  // end of guard _CEGUIBitmapImage_h_
 

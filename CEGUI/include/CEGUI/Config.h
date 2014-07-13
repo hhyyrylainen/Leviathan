@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   CEGUIConfig.h
     created:    Mon Jan 10 2011
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -191,7 +190,7 @@ setting CMake options and regenerating, rather than editing directly.
 #if defined(_WIN32) || defined(__WIN32__)
 #   define CEGUI_MODULE_DIR "H:/c++ resources/CEGUIForkIt/bin/"
 #else
-#   define CEGUI_MODULE_DIR "Install/lib/cegui-0.9999/"
+#   define CEGUI_MODULE_DIR "Install/lib/cegui-9999.0/"
 #endif
 
 // This is defined when iconv is expecting a const char** and not a char**

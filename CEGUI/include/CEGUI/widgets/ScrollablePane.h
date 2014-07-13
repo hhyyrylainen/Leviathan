@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   CEGUIScrollablePane.h
     created:    1/3/2005
     author:     Paul D Turner
 *************************************************************************/
@@ -565,7 +564,7 @@ protected:
     void removeChild_impl(Element* element);
     
     void onSized(ElementEventArgs& e);
-    void onMouseWheel(MouseEventArgs& e);
+    void onScroll(PointerEventArgs& e);
 
     //! \copydoc Window::getChildByNamePath_impl
     NamedElement* getChildByNamePath_impl(const String& name_path) const;

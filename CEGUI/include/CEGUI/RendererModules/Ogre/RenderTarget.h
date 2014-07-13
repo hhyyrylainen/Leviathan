@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   CEGUIOgreRenderTarget.h
     created:    Tue Feb 17 2009
     author:     Paul D Turner
 *************************************************************************/
@@ -93,7 +92,6 @@ protected:
     Ogre::Viewport* d_viewport;
     //! holds set Ogre viewport dimensions
     Rectf d_ogreViewportDimensions;
-
 
     //! projection / view matrix cache
     mutable Ogre::Matrix4 d_matrix;

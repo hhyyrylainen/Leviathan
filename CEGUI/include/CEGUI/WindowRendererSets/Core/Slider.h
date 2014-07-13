@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   Slider.h
     created:    Sun Jul 3 2005
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -47,6 +46,7 @@ namespace CEGUI
 
         States:
             - Enabled
+            - EnabledFocused
             - Disabled
 
         Named Areas:

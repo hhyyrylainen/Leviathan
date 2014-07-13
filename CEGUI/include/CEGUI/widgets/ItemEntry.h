@@ -1,5 +1,4 @@
 /***********************************************************************
-	filename: 	CEGUIItemEntry.h
 	created:	31/3/2005
 	author:		Tomas Lindquist Olsen (based on code by Paul D Turner)
 	
@@ -212,10 +211,7 @@ protected:
     */
     virtual void onSelectionChanged(WindowEventArgs& e);
 
-    /*************************************************************************
-		Overridden Event Handlers
-	*************************************************************************/
-	virtual void onMouseClicked(MouseEventArgs& e);
+    virtual void onSemanticInputEvent(SemanticEventArgs& e);
 
     /*************************************************************************
         Implementation Data

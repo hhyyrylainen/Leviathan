@@ -1,5 +1,4 @@
 /***********************************************************************
-	filename: 	CEGUIThumb.h
 	created:	25/4/2004
 	author:		Paul D Turner
 	
@@ -295,8 +294,8 @@ protected:
 	/*************************************************************************
 		Overridden event handling routines
 	*************************************************************************/
-	virtual void	onMouseMove(MouseEventArgs& e);
-	virtual void	onMouseButtonDown(MouseEventArgs& e);
+	virtual void	onPointerMove(PointerEventArgs& e);
+    virtual void    onPointerPressHold(PointerEventArgs& e);
 	virtual void	onCaptureLost(WindowEventArgs& e);
 
 

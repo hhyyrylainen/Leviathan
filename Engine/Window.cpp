@@ -12,6 +12,7 @@
 #include "OgreSceneNode.h"
 #include "OgreCamera.h"
 #include "Rendering/GraphicalInputEntity.h"
+#include "CEGUI/InputAggregator.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -352,7 +353,7 @@ void Leviathan::Window::UpdateOISMouseWindowSize(){
 	ms.height = height;
 }
 
-DLLEXPORT void Leviathan::Window::GatherInput(CEGUI::GUIContext* receivercontext){
+DLLEXPORT void Leviathan::Window::GatherInput(CEGUI::InputAggregator* receiver){
 	// quit if window closed //
 	if(OWindow->isClosed() || !WindowKeyboard || !WindowMouse){
 
@@ -360,7 +361,7 @@ DLLEXPORT void Leviathan::Window::GatherInput(CEGUI::GUIContext* receivercontext
 		return;
 	}
 
-	inputreceiver = receivercontext;
+	inputreceiver = receiver;
 
 	// on first frame we want to manually force mouse position send //
 	if(FirstInput){

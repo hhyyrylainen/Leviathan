@@ -1,5 +1,4 @@
 /************************************************************************
-    filename:   ItemListbox.h
     created:    Mon Mar 20 2006
     author:     Tomas Lindquist Olsen
 *************************************************************************/
@@ -42,6 +41,7 @@ namespace CEGUI
 
         States:
             - Enabled
+            - EnabledFocused
             - Disabled
 
         Named Areas:

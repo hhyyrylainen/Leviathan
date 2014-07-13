@@ -1,5 +1,4 @@
 /***********************************************************************
-	filename: 	CEGUIVector.h
 	created:	13/2/2011
 	author:		Martin Preisler (reworked from code by Paul D Turner)
 	
@@ -138,6 +137,14 @@ public:
     inline Vector2 operator/(const T c) const
     {
         return Vector2(d_x / c, d_y / c);
+    }
+
+    inline Vector2 operator/=(const T c)
+    {
+        d_x /= c;
+        d_y /= c;
+
+        return *this;
     }
 
     inline bool operator==(const Vector2& vec) const

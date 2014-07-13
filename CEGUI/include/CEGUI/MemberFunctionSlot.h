@@ -1,5 +1,4 @@
 /************************************************************************
-    filename:   CEGUIMemberFunctionSlot.h
     created:    Tue Feb 28 2006
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -39,7 +38,7 @@ namespace CEGUI
     member function.
 */
 template<typename T>
-class MemberFunctionSlot : public SlotFunctorBase
+class MemberFunctionSlot : public SlotFunctorBase<EventArgs>
 {
 public:
     //! Member function slot type.

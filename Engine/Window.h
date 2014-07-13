@@ -80,14 +80,14 @@ namespace Leviathan{
 		//! \exception ExceptionNotFound If the window is not found (the internal get rect fails)
 		//! \note This doesn't "work" on linux, same as calling GetWidth and GetHeight
 		DLLEXPORT Int4 GetScreenPixelRect() const THROWS;
-
+		
 		//! \brief Translates a client space coordinate to screen coordinate
 		//! \exception ExceptionNotFound If the window is not found (the internal translate fails)
 		//! \note Doesn't work on linux, returns the input point
 		DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const THROWS;
 				
 		//! \brief Captures input for this window and passes it on
-		DLLEXPORT void GatherInput(CEGUI::GUIContext* receivercontext);
+		DLLEXPORT void GatherInput(CEGUI::InputAggregator* receiver);
 
 
 		DLLEXPORT inline bool IsWindowed() const{ return !OWindow->isFullScreen();};
@@ -181,7 +181,7 @@ namespace Leviathan{
 		std::vector<OIS::JoyStick*> WindowJoysticks;
 
 		//! This is temporarily stored during input gathering
-		CEGUI::GUIContext* inputreceiver;
+		CEGUI::InputAggregator* inputreceiver;
 
 		bool ThisFrameHandledCreate;
 		int LastFrameDownMouseButtons;

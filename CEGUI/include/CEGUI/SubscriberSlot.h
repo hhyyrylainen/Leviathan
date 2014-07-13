@@ -1,5 +1,4 @@
 /************************************************************************
-    filename:   CEGUISubscriberSlot.h
     created:    Tue Feb 28 2006
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -138,7 +137,7 @@ public:
 
 private:
     //! Points to the internal functor object to which we are bound
-    SlotFunctorBase* d_functor_impl;
+    SlotFunctorBase<EventArgs>* d_functor_impl;
 };
 
 } // End of  CEGUI namespace section

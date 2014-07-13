@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   CEGUIDimensions.h
     created:    Mon Jun 13 2005
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -861,6 +860,15 @@ public:
         a URect type property.
     */
     void setAreaPropertySource(const String& property);
+
+    /*!
+    \brief
+        Return the name of the look to which the NamedArea, which is defined as source, belongs to.
+
+    \return
+        A string containing the name of the look.
+    */
+    const String& ComponentArea::getNamedAreaSourceLook() const;
 
     //! Set the named area source of the ComponentArea.
     void setNamedAreaSouce(const String& widget_look, const String& area_name);

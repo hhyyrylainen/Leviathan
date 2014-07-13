@@ -1,5 +1,4 @@
 /************************************************************************
-    filename:   CEGUIFreeFunctionSlot.h
     created:    Tue Feb 28 2006
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -37,7 +36,7 @@ namespace CEGUI
 \brief
     Slot functor class that calls back via a free function pointer.
 */
-class FreeFunctionSlot : public SlotFunctorBase
+class FreeFunctionSlot : public SlotFunctorBase<EventArgs>
 {
 public:
     //! Slot function type.

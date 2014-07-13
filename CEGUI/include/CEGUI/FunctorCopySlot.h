@@ -1,5 +1,4 @@
 /************************************************************************
-    filename:   CEGUIFunctorCopySlot.h
     created:    Tue Feb 28 2006
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -39,7 +38,7 @@ namespace CEGUI
     functor object.
 */
 template<typename T>
-class FunctorCopySlot : public SlotFunctorBase
+class FunctorCopySlot : public SlotFunctorBase<EventArgs>
 {
 public:
     FunctorCopySlot(const T& functor) :

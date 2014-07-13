@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   CEGUIJustifiedRenderedString.h
     created:    Mon Jul 6 2009
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -52,7 +51,7 @@ public:
 
     // implementation of base interface
     void format(const Window* ref_wnd, const Sizef& area_size);
-    void draw(const Window* ref_wnd, GeometryBuffer& buffer,
+    void draw(const Window* ref_wnd, std::vector<GeometryBuffer*>& geometry_buffers,
               const Vector2f& position, const ColourRect* mod_colours,
               const Rectf* clip_rect) const;
     size_t getFormattedLineCount() const;

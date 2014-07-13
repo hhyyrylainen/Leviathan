@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   CEGUIOgreRenderTarget.cpp
     created:    Tue Feb 17 2009
     author:     Paul D Turner
 *************************************************************************/
@@ -42,15 +41,15 @@ template <typename T>
 OgreRenderTarget<T>::OgreRenderTarget(OgreRenderer& owner,
                                       Ogre::RenderSystem& rs) :
     d_owner(owner),
-	d_renderSystem(rs),
-	d_area(0, 0, 0, 0),
-	d_renderTarget(0),
-	d_viewport(0),
-	d_ogreViewportDimensions(0, 0, 0, 0),
-	d_matrix(Ogre::Matrix3::ZERO),
-	d_matrixValid(false),
-	d_viewportValid(false),
-	d_viewDistance(0)
+    d_renderSystem(rs),
+    d_area(0, 0, 0, 0),
+    d_renderTarget(0),
+    d_viewport(0),
+    d_ogreViewportDimensions(0, 0, 0, 0),
+    d_matrix(Ogre::Matrix3::ZERO),
+    d_matrixValid(false),
+    d_viewportValid(false),
+    d_viewDistance(0)
 {
 }
 
@@ -79,13 +78,13 @@ void OgreRenderTarget<T>::draw(const RenderQueue& queue)
 template <typename T>
 void OgreRenderTarget<T>::setArea(const Rectf& area)
 {
-	d_area = area;
-	setOgreViewportDimensions(area);
+    d_area = area;
+    setOgreViewportDimensions(area);
 
-	d_matrixValid = false;
+    d_matrixValid = false;
 
-	RenderTargetEventArgs args(this);
-	T::fireEvent(RenderTarget::EventAreaChanged, args);
+    RenderTargetEventArgs args(this);
+    T::fireEvent(RenderTarget::EventAreaChanged, args);
 }
 
 //----------------------------------------------------------------------------//
@@ -94,12 +93,10 @@ void OgreRenderTarget<T>::setOgreViewportDimensions(const Rectf& area)
 {
     d_ogreViewportDimensions = area;
 
-	if (d_viewport)
-		updateOgreViewportDimensions(d_viewport->getTarget());
+    if (d_viewport)
+        updateOgreViewportDimensions(d_viewport->getTarget());
 
-
-
-	d_viewportValid = false;
+    d_viewportValid = false;
 }
 
 //----------------------------------------------------------------------------//
@@ -135,10 +132,10 @@ void OgreRenderTarget<T>::activate()
     if (!d_viewportValid)
         updateViewport();
 
-	d_renderSystem._setViewport(d_viewport);
+    d_renderSystem._setViewport(d_viewport);
 
-	d_owner.setProjectionMatrix(d_matrix);
-	d_owner.setViewMatrix(Ogre::Matrix4::IDENTITY);
+    d_owner.setProjectionMatrix(d_matrix);
+    d_owner.setViewMatrix(Ogre::Matrix4::IDENTITY);
 }
 
 //----------------------------------------------------------------------------//
@@ -171,6 +168,7 @@ void OgreRenderTarget<T>::unprojectPoint(const GeometryBuffer& buff,
     );
 
     // matrices used for projecting and unprojecting points
+
     const Ogre::Matrix4 proj(gb.getMatrix() * d_matrix * vpmat);
     const Ogre::Matrix4 unproj(proj.inverse());
 
@@ -220,10 +218,19 @@ void OgreRenderTarget<T>::unprojectPoint(const GeometryBuffer& buff,
 template <typename T>
 void OgreRenderTarget<T>::updateMatrix() const
 {
+    // Now with updated code from OpenGL renderer
+
     const float w = d_area.getWidth();
     const float h = d_area.getHeight();
-    const float aspect = w / h;
-    const float midx = w * 0.5f;
+
+    // We need to check if width or height are zero and act accordingly to prevent running into issues
+    // with divisions by zero which would lead to undefined values, as well as faulty clipping planes
+    // This is mostly important for avoiding asserts
+    const bool widthAndHeightNotZero = ( w != 0.0f ) && ( h != 0.0f);
+
+    const float aspect = widthAndHeightNotZero ? w / h : 1.0f;
+    const float midx = widthAndHeightNotZero ? w * 0.5f : 0.5f;
+    const float midy = widthAndHeightNotZero ? h * 0.5f : 0.5f;
     d_viewDistance = midx / (aspect * 0.267949192431123f);
 
     const float nearZ = d_viewDistance * 0.5f;
@@ -238,6 +245,7 @@ void OgreRenderTarget<T>::updateMatrix() const
     tmp[2][2] = -((farZ + nearZ) / nr_sub_far);
     tmp[3][2] = 1.0f;
     tmp[3][3] = d_viewDistance;
+
     d_renderSystem._convertProjectionMatrix(tmp, d_matrix);
 
     d_matrixValid = true;
@@ -260,7 +268,6 @@ void OgreRenderTarget<T>::updateViewport()
     }
 
     d_viewport->_updateDimensions();
-
 
     d_viewportValid = true;
 }

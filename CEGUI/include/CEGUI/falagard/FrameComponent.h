@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   CEGUIFrameComponent.h
     created:    Mon Jul 18 2005
     author:     Paul D Turner <paul@cegui.org.uk>
 *************************************************************************/
@@ -335,6 +334,12 @@ public:
 
     bool operator==(const FrameComponent& rhs) const;
 
+
+    //! Default value for the HorzFormat elements of the FrameComponent
+    static const HorizontalFormatting HorizontalFormattingDefault;
+    //! Default value for the VertFormat elements of the FrameComponent
+    static const VerticalFormatting VerticalFormattingDefault;
+
 protected:
     struct FrameImageSource
     {
@@ -365,7 +370,7 @@ protected:
                      const CEGUI::ColourRect* modColours,
                      const Rectf* clipper, bool clipToDisplay) const;
 
-    void renderImage(GeometryBuffer& buffer, const Image* image,
+    void renderImage(std::vector<GeometryBuffer*>& geometry_buffers, const Image* image,
                             VerticalFormatting vertFmt,
                             HorizontalFormatting horzFmt,
                             Rectf& destRect, const ColourRect& colours,

@@ -1,5 +1,4 @@
 /***********************************************************************
-	filename: 	CEGUIFreeTypeFont.h
 	created:	3/6/2006
 	author:		Andrew Zabolotny
 
@@ -32,7 +31,7 @@
 
 #include "CEGUI/Font.h"
 #include "CEGUI/DataContainer.h"
-#include "CEGUI/BasicImage.h"
+#include "CEGUI/BitmapImage.h"
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -176,8 +175,8 @@ protected:
         CEGUI_VECTOR_ALLOC(Texture*)> TextureVector;
     //! Textures that hold the glyph imagery for this font.
     mutable TextureVector d_glyphTextures;
-    typedef std::vector<BasicImage*
-        CEGUI_VECTOR_ALLOC(BasicImage*)> ImageVector;
+    typedef std::vector<BitmapImage*
+        CEGUI_VECTOR_ALLOC(BitmapImage*)> ImageVector;
     //! collection of images defined for this font.
     mutable ImageVector d_glyphImages;
 };

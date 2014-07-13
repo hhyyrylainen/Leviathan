@@ -1,5 +1,4 @@
 /***********************************************************************
-    filename:   CEGUIRenderedStringTextComponent.h
     created:    25/05/2009
     author:     Paul Turner
  *************************************************************************/
@@ -32,6 +31,8 @@
 #include "CEGUI/ColourRect.h"
 #include "CEGUI/String.h"
 
+#include <vector>
+
 // Start of CEGUI namespace section
 namespace CEGUI
 {
@@ -63,7 +64,7 @@ public:
     const ColourRect& getColours() const;
 
     // implementation of abstract base interface
-    void draw(const Window* ref_wnd, GeometryBuffer& buffer,
+    void draw(const Window* ref_wnd, std::vector<GeometryBuffer*>& geometry_buffers,
               const Vector2f& position, const ColourRect* mod_colours,
               const Rectf* clip_rect, const float vertical_space,
               const float space_extra) const;

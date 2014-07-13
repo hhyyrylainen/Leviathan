@@ -48,8 +48,8 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(){
 	while(PassedTimeTotal >= NEWTON_FPS_IN_MICROSECONDS){
 		// avoid freezing the program //
 		if(PassedTimeTotal >= 100000){
-			Logger::Get()->Warning(L"PhysicalWorld: SimulateWorld: falling behind, entering simulated time ("+Convert::ToWstring(PassedTimeTotal)+
-				L" is over 100000 microseconds)");
+			//Logger::Get()->Warning(L"PhysicalWorld: SimulateWorld: falling behind, entering simulated time ("+Convert::ToWstring(PassedTimeTotal)+
+			//	L" is over 100000 microseconds)");
 			PassedTimeTotal = 100000;
 		}
 

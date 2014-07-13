@@ -46,6 +46,6 @@ DLLEXPORT wstring Leviathan::ExceptionInvalidArgument::GetInvalidAsWstring() con
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ExceptionInvalidArgument::PrintToLog() const{
 	if(ErrorValue != 0)
-		return Logger::Get()->Error(L"[EXCEPTION] InvalidArguement ("+*InvalidParameter+L"["+*VisualizedValue+L"]) \""+*Message+L"\" from "+*SourceFunction, ErrorValue);
-	Logger::Get()->Error(L"[EXCEPTION] InvalidArguement ("+*InvalidParameter+L"["+*VisualizedValue+L"]) \""+*Message+L"\" from "+*SourceFunction);
+		return Logger::Get()->Error(L"[EXCEPTION] InvalidArgument ("+*InvalidParameter+L"["+*VisualizedValue+L"]) \""+*Message+L"\" from "+*SourceFunction, ErrorValue);
+	Logger::Get()->Error(L"[EXCEPTION] InvalidArgument ("+*InvalidParameter+L"["+*VisualizedValue+L"]) \""+*Message+L"\" from "+*SourceFunction);
 }

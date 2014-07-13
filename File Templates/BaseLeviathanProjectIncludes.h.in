@@ -7,6 +7,11 @@
 #define @BaseProgramName@_VERSIONS          @PROGRAM_VERSIONS@
 #define @BaseProgramName@_VERSIONS_ANSI     @PROGRAM_VERSIONS_ANSI@
 
+#define @BaseProgramName@_VERSION_STABLE    @PROGRAM_VERSION_STABLE@
+#define @BaseProgramName@_VERSION_MAJOR     @PROGRAM_VERSION_MAJOR@
+#define @BaseProgramName@_VERSION_MINOR     @PROGRAM_VERSION_MINOR@
+#define @BaseProgramName@_VERSION_PATCH     @PROGRAM_VERSION_PATCH@
+
 #define GAME_VERSION        @BaseProgramName@_VERSION
 #define GAME_VERSIONS       @BaseProgramName@_VERSIONS
 #define GAME_VERSIONS_ANSI  @BaseProgramName@_VERSIONS_ANSI

@@ -21,7 +21,6 @@ namespace Leviathan{
 		DLLEXPORT void ReleaseChildHooks();
 
 		//! Connects this to a notifiable object for holding a reference to it
-		//! \todo return false and skip adding if already added
 		DLLEXPORT FORCE_INLINE bool ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child){
 			GUARD_LOCK_THIS_OBJECT();
 			return ConnectToNotifiable(child, guard);
@@ -48,7 +47,15 @@ namespace Leviathan{
 		//! \brief Searches the connected notifiable objects and calls the above function with it's pointer
 		DLLEXPORT bool UnConnectFromNotifiable(int id);
 
+		//! \brief Actual implementation of this method
+		DLLEXPORT bool IsConnectedTo(BaseNotifiable<ParentType, ChildType>* check, ObjectLock &guard);
 
+		//! \brief Returns true when the specified object is already connected
+		DLLEXPORT FORCE_INLINE bool IsConnectedTo(BaseNotifiable<ParentType, ChildType>* check){
+			GUARD_LOCK_THIS_OBJECT();
+			IsConnectedTo(check, guard);
+		}
+		
 		// Callback called by the child, and doesn't call the unhook again on the child
 		void _OnUnhookNotifiable(BaseNotifiable<ParentType, ChildType>* childtoremove);
 
@@ -67,6 +74,7 @@ namespace Leviathan{
 	protected:
 
 		// Callbacks for child classes to implement //
+		// This object should already be locked during this call //
 		DLLEXPORT virtual void _OnNotifiableConnected(ChildType* childadded);
 		DLLEXPORT virtual void _OnNotifiableDisconnected(ChildType* childtoremove);
 		// ------------------------------------ //

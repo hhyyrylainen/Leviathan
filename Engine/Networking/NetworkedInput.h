@@ -71,6 +71,10 @@ namespace Leviathan{
 		//! \brief Call to establish a connection with the server
 		DLLEXPORT virtual bool ConnectToServersideInput();
 
+		//! \brief Called before destruction
+		//!
+		//! This should send proper destroyed messages to others (server broadcast to all, and original creator to server)
+		DLLEXPORT virtual void TerminateConnection();
 
 		//! \brief Called when this is connected to a networked input handler
 		DLLEXPORT virtual void NowOwnedBy(NetworkedInputHandler* owner);

@@ -9,6 +9,7 @@
 #include "Gameplay/CommandHandler.h"
 #include "SyncedVariables.h"
 #include "NetworkedInputHandler.h"
+#include "Entities/GameWorld.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(int maxplayers, const wstring &servername, 
@@ -377,6 +378,33 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(shared_p
 		}
 	}
 }
+
+DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllPlayers(shared_ptr<NetworkResponse> response, int resendcount /*= 4*/){
+	GUARD_LOCK_THIS_OBJECT();
+
+
+	// Loop the players and send to their connections //
+	auto end = PlayerList.end();
+	for(auto iter = PlayerList.begin(); iter != end; ++iter){
+
+		(*iter)->GetConnection()->SendPacketToConnection(response, resendcount);
+	}
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkServerInterface::VerifyWorldIsSyncedWithPlayers(shared_ptr<GameWorld> world){
+	GUARD_LOCK_THIS_OBJECT();
+
+	// We can safely add all players as they will only be added if they aren't there already //
+	auto end = PlayerList.end();
+	for(auto iter = PlayerList.begin(); iter != end; ++iter){
+
+		if(world->ConnectToNotifiable(*iter)){
+
+			// Added a new one //
+			Logger::Get()->Info(L"NetworkServerInterface: a new player is now synced with a world");
+		}
+	}
+}
 // ------------------------------------ //
 
 int Leviathan::NetworkServerInterface::CurrentPlayerID = 1000;
@@ -551,4 +579,11 @@ DLLEXPORT ConnectionInfo* Leviathan::ConnectedPlayer::GetConnection(){
 
 DLLEXPORT int Leviathan::ConnectedPlayer::GetID() const{
 	return ID;
+}
+// ------------------------------------ //
+DLLEXPORT BasePositionable* Leviathan::ConnectedPlayer::GetPositionInWorld(GameWorld* world, ObjectLock &guard) const{
+	VerifyLock(guard);
+
+	// Not found for that world //
+	return NULL;
 }

@@ -136,6 +136,9 @@ namespace Leviathan{
 		//! \return false If the connection isn't authorized to update the input from this connection
 		bool _HandleInputUpdateResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
 
+		//! \brief Clears out the DeleteQueue
+		void _HandleDeleteQueue(ObjectLock &guard);
+
 		// ------------------------------------ //
 
 		//! True if this is a server's object
@@ -159,7 +162,8 @@ namespace Leviathan{
 		//! Pointer to the network interface when on a server
 		NetworkServerInterface* ServerInterface;
 
-
+		//! Vector of listeners that will be deleted soon
+		std::vector<shared_ptr<NetworkedInput>> DeleteQueue;
 	};
 
 }

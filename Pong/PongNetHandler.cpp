@@ -10,6 +10,7 @@
 #include "Engine.h"
 #include "Rendering\GraphicalInputEntity.h"
 #include "GUI\GuiManager.h"
+#include "PongGame.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PongNetHandler::PongNetHandler() : OnAServer(false), ServerStatusIs(PONG_JOINGAMERESPONSE_TYPE_LOBBY){
@@ -37,12 +38,14 @@ void Pong::PongNetHandler::HandleResponseOnlyPacket(shared_ptr<Leviathan::Networ
 		if(data->IsRequest)
 			return;
 
-		//switch(data->TypeIDNumber){
-		//case PONG_PACKET_JOINGAME_RESPONSE:
-		//	{
-		//		return;
-		//	}
-		//}
+		switch(data->TypeIDNumber){
+		case PONG_PACKET_SERVER_STATE_RESPONSE:
+			{
+				// Verify the state //
+				PongGame::Get()->VerifyCorrectState(static_cast<PongServerChangeStateResponse*>(data->ResponseBaseData)->NewState);
+				return;
+			}
+		}
 
 
 	}
@@ -130,22 +133,8 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 				// Show the lobby screen //
 				instance->_OnNewConnectionStatusMessage(L"Server join completed, entering the lobby...");
 				
-				// Send event to enable the lobby screen //
-				EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
-					new NamedVariableList(L"State", new VariableBlock(string("On")))))));
+				PongGame::Get()->VerifyCorrectState(tmpresponseobj->RType);
 
-				return;
-			}
-		case PONG_JOINGAMERESPONSE_TYPE_MATCH:
-			{
-				// Show the during game GUI //
-				DEBUG_BREAK;
-				return;
-			}
-		case PONG_JOINGAMERESPONSE_TYPE_GAMEEND:
-			{
-				// Show the match scores screen //
-				DEBUG_BREAK;
 				return;
 			}
 		default:

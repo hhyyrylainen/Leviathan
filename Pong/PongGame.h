@@ -52,7 +52,8 @@ namespace Pong{
 
 		void AllowPauseMenu();
 
-
+		//! Verifies that the GUI displays correct state
+		void VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus);
 
 
 		PongNetHandler* GetInterface() const{

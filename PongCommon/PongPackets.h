@@ -13,6 +13,8 @@
 #define PONG_PACKET_JOINGAME_REQUEST				1
 #define PONG_PACKET_JOINGAME_RESPONSE				1
 
+#define PONG_PACKET_SERVER_STATE_RESPONSE			2
+
 
 namespace Pong{
 
@@ -25,7 +27,12 @@ namespace Pong{
 		}
 	};
 	
-	enum PONG_JOINGAMERESPONSE_TYPE {PONG_JOINGAMERESPONSE_TYPE_LOBBY, PONG_JOINGAMERESPONSE_TYPE_MATCH, PONG_JOINGAMERESPONSE_TYPE_GAMEEND};
+	enum PONG_JOINGAMERESPONSE_TYPE {
+		PONG_JOINGAMERESPONSE_TYPE_LOBBY, 
+		PONG_JOINGAMERESPONSE_TYPE_PREMATCH,
+		PONG_JOINGAMERESPONSE_TYPE_MATCH, 
+		PONG_JOINGAMERESPONSE_TYPE_GAMEEND
+	};
 
 	//! \brief Class that holds custom packet's data
 	class PongJoinGameResponse : public Leviathan::BaseGameSpecificResponsePacket{
@@ -87,14 +94,60 @@ namespace Pong{
 
 
 
+	//! \brief Response for server changing state
+	class PongServerChangeStateResponse : public Leviathan::BaseGameSpecificResponsePacket{
+	public:
+		PongServerChangeStateResponse(PONG_JOINGAMERESPONSE_TYPE state) : Leviathan::BaseGameSpecificResponsePacket(PONG_PACKET_SERVER_STATE_RESPONSE), 
+			NewState(state)
+		{
+
+		}
+
+		PONG_JOINGAMERESPONSE_TYPE NewState;
+	};
+
+	//! \brief Factory for PongServerChangeState
+	class PongServerChangeStateResponseFactory : public Leviathan::BaseGameSpecificPacketFactory{
+	public:
+		PongServerChangeStateResponseFactory() : Leviathan::BaseGameSpecificPacketFactory(PONG_PACKET_SERVER_STATE_RESPONSE, false){
+
+		}
+
+		virtual bool SerializeToPacket(GameSpecificPacketData* data, sf::Packet &packet){
+
+			// Response does have data //
+			packet << static_cast<PongServerChangeStateResponse*>(data->ResponseBaseData)->NewState;
+
+			return true;
+		}
+
+		virtual shared_ptr<GameSpecificPacketData> UnSerializeObjectFromPacket(sf::Packet &packet){
+
+			int tmptype;
+			// Try to extract the type data //
+			if(!(packet >> tmptype)){
+
+				return NULL;
+			}
+
+			return shared_ptr<GameSpecificPacketData>(new GameSpecificPacketData(new PongServerChangeStateResponse(
+				static_cast<PONG_JOINGAMERESPONSE_TYPE>(tmptype))));
+		}
+	};
+
+
+
+
 	//! \brief Registers all custom packets that Pong needs
 	class PongPackets{
 	public:
 		static void RegisterAllPongPacketTypes(){
 			// Register all the factories //
-			Leviathan::GameSpecificPacketHandler::Get()->RegisterNewTypeFactory(new PongJoingGameResponseFactory());
-			Leviathan::GameSpecificPacketHandler::Get()->RegisterNewTypeFactory(new PongJoingGameRequestFactory());
+			auto handler = Leviathan::GameSpecificPacketHandler::Get();
 
+			handler->RegisterNewTypeFactory(new PongJoingGameResponseFactory());
+			handler->RegisterNewTypeFactory(new PongJoingGameRequestFactory());
+			handler->RegisterNewTypeFactory(new PongServerChangeStateResponseFactory());
 
 
 		}

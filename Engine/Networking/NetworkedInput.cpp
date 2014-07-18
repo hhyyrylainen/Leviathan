@@ -161,6 +161,10 @@ doactualdeletereleasethingforfaillabel:
 	return true;
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkedInput::TerminateConnection(){
+	DEBUG_BREAK;
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::NowOwnedBy(NetworkedInputHandler* owner){
 	OwningHandler = owner;
 }

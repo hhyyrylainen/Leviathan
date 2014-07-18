@@ -38,11 +38,19 @@ namespace Leviathan{
 			return UnConnectFromNotifier(specificnotifier, guard);
 		}
 
+		//! \brief Actual implementation of this method
+		DLLEXPORT bool IsConnectedTo(BaseNotifier<ParentType, ChildType>* check, ObjectLock &guard);
+
+		//! \brief Returns true when the specified object is already connected
+		DLLEXPORT FORCE_INLINE bool IsConnectedTo(BaseNotifier<ParentType, ChildType>* check){
+			GUARD_LOCK_THIS_OBJECT();
+			IsConnectedTo(check, guard);
+		}
+
 		//! \brief This searches the connected notifiers and calls the above function with it's pointer
 		DLLEXPORT bool UnConnectFromNotifier(int id);
 
 		//! \brief Connects this to a notifier object calling all the needed functions
-		//! \todo return false and skip adding if already added
 		DLLEXPORT bool ConnectToNotifier(BaseNotifier<ParentType, ChildType>* owner);
 
 		//! Callback called by the parent, used to not to call the unhook again on the parent
@@ -63,6 +71,7 @@ namespace Leviathan{
 	protected:
 
 		// Callbacks for child classes to implement //
+		// This object should already be locked during this call //
 		DLLEXPORT virtual void _OnNotifierConnected(ParentType* parentadded);
 		DLLEXPORT virtual void _OnNotifierDisconnected(ParentType* parenttoremove);
 		// ------------------------------------ //

@@ -27,6 +27,11 @@ namespace Pong{
 		virtual void CloseDown();
 
 
+		//! Sets the current state and notifies clients
+		void SetStatus(PONG_JOINGAMERESPONSE_TYPE status);
+
+		//! Makes sure that all the players are synced with a world
+		void VerifySyncWorldForPlayers(Leviathan::GameWorld* world);
 
 	protected:
 

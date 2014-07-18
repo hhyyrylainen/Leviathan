@@ -255,11 +255,17 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 	// Update everything related to input //
 	if(PlayerID == PongGame::Get()->GetInterface()->GetOurID()){
 
-		_ResetNetworkInput();
+		// Create new one only if there isn't one already created //
+		if(!InputObj){
 
-		// Hook a networked input receiver to the server //
-		PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
-			PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(NetworkedInputID, true));
+			// Hook a networked input receiver to the server //
+			PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
+				PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(NetworkedInputID, true));
+		} else {
+
+			// Update the existing one //
+			InputObj->UpdateSettings(ControlType);
+		}
 	}
 
 

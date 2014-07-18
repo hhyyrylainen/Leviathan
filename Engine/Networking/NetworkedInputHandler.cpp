@@ -208,12 +208,15 @@ DLLEXPORT void Leviathan::NetworkedInputHandler::UpdateInputStatus(){
 
 		// This checks for all invalid states //
 		auto tmpstate = (*iter)->GetState();
-		if(tmpstate == NETWORKEDINPUT_STATE_CLOSED || tmpstate == NETWORKEDINPUT_STATE_FAILED)
-			_NetworkInputFactory->NoLongerNeeded(*(*iter).get());
+		if(tmpstate == NETWORKEDINPUT_STATE_CLOSED || tmpstate == NETWORKEDINPUT_STATE_FAILED){
+
+			DeleteQueue.push_back(*iter);
+			iter = GlobalOrLocalListeners.erase(iter);
+		}
 	}
 
 
-
+	_HandleDeleteQueue(guard);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInputHandler::GetNextInputIDNumber(boost::function<void (int)> onsuccess, boost::function<void ()> onfailure){
@@ -282,7 +285,36 @@ void Leviathan::NetworkedInputHandler::_OnChildUnlink(InputReceiver* child){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInputHandler::QueueDeleteInput(NetworkedInput* inputobj){
-	DEBUG_BREAK;
+	GUARD_LOCK_THIS_OBJECT();
+
+	// Find and remove from the main list //
+	auto end = GlobalOrLocalListeners.end();
+	for(auto iter = GlobalOrLocalListeners.begin(); iter != end; ++iter){
+
+		if((*iter).get() == inputobj){
+
+			// Found the one //
+			DeleteQueue.push_back(*iter);
+			GlobalOrLocalListeners.erase(iter);
+			return;
+		}
+	}
+
+	// Not found //
+}
+
+void Leviathan::NetworkedInputHandler::_HandleDeleteQueue(ObjectLock &guard){
+	VerifyLock(guard);
+
+	auto end = DeleteQueue.begin();
+	for(auto iter = DeleteQueue.begin(); iter != end; ++iter){
+
+		(*iter)->TerminateConnection();
+		_NetworkInputFactory->NoLongerNeeded(*(*iter).get());
+	}
+
+	// All are now ready to be deleted //
+	DeleteQueue.clear();
 }
 // ------------------------------------ //
 bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection){

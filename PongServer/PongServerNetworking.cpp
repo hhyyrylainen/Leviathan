@@ -134,6 +134,20 @@ void Pong::PongServerNetworking::_OnPlayerDisconnect(Leviathan::ConnectedPlayer*
 		}
 	}
 }
+// ------------------------------------ //
+void Pong::PongServerNetworking::SetStatus(PONG_JOINGAMERESPONSE_TYPE status){
+	GUARD_LOCK_THIS_OBJECT();
+
+	ServerStatusIs = status;
+
+	// Create an update packet //
+	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, Leviathan::PACKAGE_TIMEOUT_STYLE_TIMEDMS, 800));
+	response->GenerateCustomResponse(new PongServerChangeStateResponse(ServerStatusIs));
+
+
+	// Send it to all of the current players //
+	SendToAllPlayers(response);
+}
 
 
 

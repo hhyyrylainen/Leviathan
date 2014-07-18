@@ -405,4 +405,13 @@ void Pong::PongNInputter::StartSendingInput(PlayerSlot* target){
 	ControlledSlot = target;
 	// The SetInputThatSendsControls should be called by our caller //
 }
+// ------------------------------------ //
+void Pong::PongNInputter::UpdateSettings(PLAYERCONTROLS newcontrols){
+	GUARD_LOCK_THIS_OBJECT();
+
+	if(!CreatedByUs)
+		return;
+
+	CtrlGroup = newcontrols;
+}
 

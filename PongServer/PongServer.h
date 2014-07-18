@@ -43,6 +43,9 @@ namespace Pong{
 
 		}
 
+		//! Changes the server to preparing screen
+		void OnStartPreMatch();
+
 		PongServerNetworking* GetServerNetworkInterface(){
 
 			return _PongServerNetworking;

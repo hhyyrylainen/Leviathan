@@ -57,6 +57,10 @@ namespace Leviathan{
 		//! \brief Gets the unique identifier of the player, valid for this session
 		DLLEXPORT int GetID() const;
 
+		//! \brief Returns the object that contains this players position in a certain world or NULL
+		//! \note THe lock should be valid while using the returned pointer
+		DLLEXPORT BasePositionable* GetPositionInWorld(GameWorld* world, ObjectLock &guard) const;
+
 
 		DLLEXPORT virtual const string& GetUniqueName();
 
@@ -162,8 +166,17 @@ namespace Leviathan{
 		//! \brief Sends a response packet to all players except for the player(s) whose connection matches skipme
 		DLLEXPORT void SendToAllButOnePlayer(shared_ptr<NetworkResponse> response, ConnectionInfo* skipme, int resendcount = 4);
 
+		//! \brief Sends a response packet to all of the players
+		DLLEXPORT void SendToAllPlayers(shared_ptr<NetworkResponse> response, int resendcount = 4);
+
 		//! \brief Returns the active networked input handler or NULL
 		DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
+
+		//! \brief Verifies that all current players are receiving world updates
+		//! \note Prior to calling this (if your players will move) you should bind positionable objects to the players for them to receive updates
+		// based on their location
+		DLLEXPORT virtual void VerifyWorldIsSyncedWithPlayers(shared_ptr<GameWorld> world);
+
 
 	protected:
 

@@ -27,12 +27,24 @@ namespace Leviathan{
 		class TrailEmitter;
 	}
 
+	// Entity bases //
+	class BasePositionable;
+
 
 	class ExceptionInvalidArgument;
 
 
 	class ObjectFileTemplateInstance;
 	class ObjectFileTemplateDefinition;
+
+	class ThreadingManager;
+	class QueuedTask;
+	class DelayedTask;
+	class ConditionalTask;
+	class ConditionalDelayedTask;
+	class RepeatingDelayedTask;
+	class RepeatCountedDelayedTask;
+	class ApplyForceInfo;
 
 	class NetworkedInput;
 	class NetworkedInputHandler;
@@ -109,7 +121,6 @@ namespace Leviathan{
 	class GameModule;
 	class ThreadSafe;
 	struct MasterServerInformation;
-
 }
 
 

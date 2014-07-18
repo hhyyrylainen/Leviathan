@@ -67,6 +67,7 @@ namespace Leviathan{
 		//!
 		//! This is used by classes that aren't actually objects, but virtually inherit this
 		DLLEXPORT BaseObject();
+		//! \brief Use this constructor
 		DLLEXPORT BaseObject(int id, GameWorld* worldptr);
 		DLLEXPORT virtual ~BaseObject();
 		

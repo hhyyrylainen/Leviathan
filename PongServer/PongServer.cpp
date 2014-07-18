@@ -12,6 +12,7 @@
 #include "OgreException.h"
 #include "Networking/NetworkServerInterface.h"
 #include "Networking/NetworkHandler.h"
+#include "Threading/ThreadingManager.h"
 using namespace Pong;
 // ------------------------------------ //
 // Put this here, since nowhere else to put it //
@@ -241,5 +242,44 @@ void Pong::PongServer::PassCommandLine(const wstring &params){
 
 	// Now pass it //
 	_Engine->PassCommandLine(params);
+
+}
+// ------------------------------------ //
+void Pong::PongServer::OnStartPreMatch(){
+
+	// Notify the clients //
+	_PongServerNetworking->SetStatus(PONG_JOINGAMERESPONSE_TYPE_PREMATCH);
+
+
+	WorldOfPong->ClearObjects();
+	WorldOfPong->SetWorldPhysicsFrozenState(true);
+
+	// Make sure that everyone is receiving our world //
+	_PongServerNetworking->VerifyWorldIsSyncedWithPlayers(WorldOfPong);
+
+
+	// Setup the objects in the world //
+	GameArena->GenerateArena(this, _PlayerList);
+
+
+	// Queue a ready checking task //
+	ThreadingManager::Get()->QueueTask(new ConditionalTask(boost::bind<void>([](PongServer* server) -> void
+	{
+		// Start the match //
+		server->WorldOfPong->SetWorldPhysicsFrozenState(false);
+		server->_PongServerNetworking->SetStatus(PONG_JOINGAMERESPONSE_TYPE_MATCH);
+
+		// TODO: add a start timer here
+
+
+	}, this), boost::bind<bool>([](shared_ptr<GameWorld> world) -> bool
+	{
+		// We are ready to start once all clients are reported to be up to date by the world //
+		return world->AreAllPlayersSynced();
+
+	}, WorldOfPong)));
+
+	// Clear all other sorts of data like scores etc. //
+
 
 }

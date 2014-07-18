@@ -56,17 +56,22 @@ namespace Leviathan{
 
 		// physical interaction //
 		DLLEXPORT void GiveImpulse(const Float3 &deltaspeed, const Float3 &point = Float3(0));
+
 		// Adds an apply force (and possibly overwrites old one). Note: the pointer is deleted by this object //
 		DLLEXPORT void ApplyForce(ApplyForceInfo* pointertohandle);
+
 		// Just removes an existing force, pass empty wstring to delete default named force //
 		DLLEXPORT bool RemoveApplyForce(const wstring &name);
+
 		// Sets the absolute velocity of the object //
 		DLLEXPORT void SetBodyVelocity(const Float3 &velocities);
+
 		// Gets the velocity of this object //
 		DLLEXPORT Float3 GetBodyVelocity();
 
 		// Physical material setting in wstring form for your convenience //
 		DLLEXPORT bool SetPhysicalMaterial(const wstring &materialname);
+
 		// Higher performance material set if you use it in batches and you have fetched the material id from PhysicalMaterialManager //
 		DLLEXPORT void SetPhysicalMaterialID(int ID);
 
@@ -80,8 +85,10 @@ namespace Leviathan{
 		virtual void _DestroyPhysicalBody();
 		virtual void PosUpdated();
 		virtual void OrientationUpdated();
+
 		// this function should update physics object location or if Immovable set, directly graphical objects //
 		virtual void _UpdatePhysicsObjectLocation() = 0;
+
 		// Adds all applied forces together //
 		Float3 _GatherApplyForces(const float &mass);
 
@@ -99,8 +106,5 @@ namespace Leviathan{
 	};
 
 }
-
-// Using for shorter apply force calls //
-using Leviathan::ApplyForceInfo;
 
 #endif

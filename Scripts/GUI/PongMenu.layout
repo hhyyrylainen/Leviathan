@@ -397,7 +397,7 @@
                 <Property name="Text" value="Send"/>
             </Window>
             
-            <!-- The textbox to type comments in to -->
+            <!-- The textbox to type messages into -->
             <Window name="ChatMessage" type="TaharezLook/Editbox">
                 
                 <Property name="Area" value="{{0, 1}, {0.8, 1}, {0.85, -1}, {1, -1}}"/>

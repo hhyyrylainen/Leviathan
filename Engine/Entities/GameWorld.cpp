@@ -13,6 +13,8 @@
 #include "OgreViewport.h"
 #include "Compositor/OgreCompositorWorkspace.h"
 #include "Compositor/OgreCompositorManager2.h"
+#include "Networking/NetworkServerInterface.h"
+#include "Bases/BasePositionable.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld() : WorldSceneCamera(NULL), WorldsScene(NULL), Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false), 
@@ -194,20 +196,34 @@ DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
 	if(ID == -1){
 
 		Logger::Get()->Warning(L"GameWorld: GetWorldObject: trying to find object with ID == -1 (IDs shouldn't be negative)");
-		return nullptr;
+		return NULL;
 	}
 
 	GUARD_LOCK_THIS_OBJECT();
 
-	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
+	auto end = Objects.end();
+	for(auto iter = Objects.begin(); iter != end; ++iter){
 		if((*iter)->GetID() == ID){
 			return *iter;
 		}
 	}
-	return nullptr;
+
+	return NULL;
 }
+// ------------------------------------ //
+DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetSmartPointerForObject(BaseObject* rawptr) const{
+	GUARD_LOCK_THIS_OBJECT();
 
+	auto end = Objects.end();
+	for(auto iter = Objects.begin(); iter != end; ++iter){
+		if(iter->get() == rawptr){
+			return *iter;
+		}
+	}
 
+	return NULL;
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::ClearObjects(ObjectLock &guard){
 	VerifyLock(guard);
 
@@ -218,8 +234,7 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(ObjectLock &guard){
 	// Release our reference //
 	Objects.clear();
 }
-
-
+// ------------------------------------ //
 DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
 	// \todo take position into account //
 	// create force without mass applied //
@@ -365,6 +380,81 @@ DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHitProxy(Float3
 DLLEXPORT void Leviathan::GameWorld::MarkForClear(){
 	ClearAllObjects = true;
 }
+
+bool Leviathan::GameWorld::AreAllPlayersSynced() const{
+	return SendingInitialState;
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::GameWorld::_OnNotifierConnected(BaseNotifiableAll* parentadded){
+
+	// The connected object will always have to be a ConnectedPlayer
+	auto plyptr = static_cast<ConnectedPlayer*>(parentadded);
+
+
+	// Create an entry for this player //
+	DEBUG_BREAK;
+
+
+	// This lock is only required for this one call (we are always locked before this call) //
+	{
+		// Update the position data //
+		GUARD_LOCK_THIS_OBJECT();
+		UpdatePlayersPositionData(plyptr, guard);
+	}
+
+
+	// Start sending initial update //
+	DEBUG_BREAK;
+	SendingInitialState = true;
+}
+
+DLLEXPORT void Leviathan::GameWorld::_OnNotifierDisconnected(BaseNotifiableAll* parenttoremove){
+
+	auto plyptr = static_cast<ConnectedPlayer*>(parenttoremove);
+
+	// Destroy the update object containing this player and cancel all current packets //
+	DEBUG_BREAK;
+
+}
+
+void Leviathan::GameWorld::UpdatePlayersPositionData(ConnectedPlayer* ply, ObjectLock &guard){
+	VerifyLock(guard);
+	// Get the position for this player in this world //
+
+	GUARD_LOCK_OTHER_OBJECT_NAME(ply, guard2);
+	BasePositionable* positionobj = ply->GetPositionInWorld(this, guard2);
+
+	if(!positionobj){
+
+		// Player is using a static position at (0, 0, 0) //
+notusingapositionlabel:
+
+		return;
+	}
+
+	// Store the pointer to the object //
+
+
+	// To prevent us from deleting the pointer fetch a smart pointer that matches the object //
+	BaseObject* bobject = dynamic_cast<BaseObject*>(positionobj);
+
+	// Find the object //
+	auto safeptr = GetSmartPointerForObject(bobject);
+
+	if(!safeptr){
+
+		// We were given an invalid world //
+		Logger::Get()->Error(L"GameWorld: UpdatePlayersPositionData: could not find a matching object for player position in this world, wrong world?");
+		goto notusingapositionlabel;
+	}
+
+	// Link the position to the thing //
+
+
+}
+
+
+
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/, const float &tvar, RayCastData* ownerptr) : HitEntity(ptr), 
 	HitVariable(tvar)

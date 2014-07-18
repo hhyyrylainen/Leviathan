@@ -74,6 +74,10 @@ namespace Pong{
 		//! \brief Adds a PlayerSlot later
 		void StartSendingInput(PlayerSlot* target);
 
+		//! \brief Update settings reflecting new options
+		//! \todo Add control ID setting for controller support
+		//! \note This is only available on the client that created this object
+		void UpdateSettings(PLAYERCONTROLS newcontrols);
 
 		// The default functions that need overloading //
 		virtual void InitializeLocal();

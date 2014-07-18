@@ -10,6 +10,7 @@
 #include "Newton/PhysicalWorld.h"
 #include "Bases/BaseObject.h"
 #include "Common/ReferenceCounted.h"
+#include "Common/BaseNotifiable.h"
 
 
 #define PHYSICS_BASE_GRAVITY		-9.81f
@@ -20,8 +21,6 @@ namespace Ogre{
 }
 
 namespace Leviathan{
-
-
 
 
 	// Holds the returned object that was hit during ray casting //
@@ -60,7 +59,7 @@ namespace Leviathan{
 	};
 
 	//! \brief Represents a world that contains entities
-	class GameWorld : public ThreadSafe{
+	class GameWorld : public BaseNotifierAll{
 	public:
 		DLLEXPORT GameWorld();
 		DLLEXPORT ~GameWorld();
@@ -107,7 +106,13 @@ namespace Leviathan{
 		DLLEXPORT void DestroyObject(int ID);
 		DLLEXPORT void QueueDestroyObject(int ID);
 
+		//! \brief Returns an object matching the id
 		DLLEXPORT shared_ptr<BaseObject> GetWorldObject(int ID);
+
+		//! \brief Returns a matching smart pointer for a raw pointer
+		DLLEXPORT shared_ptr<BaseObject> GetSmartPointerForObject(BaseObject* rawptr) const;
+
+
 		// clears all objects from the world //
 		DLLEXPORT void ClearObjects(ObjectLock &guard);
 		DLLEXPORT FORCE_INLINE void ClearObjects(){
@@ -139,8 +144,19 @@ namespace Leviathan{
 
 	private:
 
+		//! Used to connect new players
+		DLLEXPORT virtual void _OnNotifierConnected(BaseNotifiableAll* parentadded);
+
+		//! Used to disconnect players that are going to be unloaded
+		DLLEXPORT virtual void _OnNotifierDisconnected(BaseNotifiableAll* parenttoremove);
+
+		//! \brief Updates a players position info in this world
+		void UpdatePlayersPositionData(ConnectedPlayer* ply, ObjectLock &guard);
+
 		void _CreateOgreResources(Ogre::Root* ogre, Window* rendertarget);
 		void _HandleDelayedDelete(ObjectLock &guard);
+		bool AreAllPlayersSynced() const;
+
 		// ------------------------------------ //
 		Ogre::Camera* WorldSceneCamera;
 		Ogre::SceneManager* WorldsScene;
@@ -162,6 +178,14 @@ namespace Leviathan{
 
 		//! Marks all objects to be released
 		bool ClearAllObjects;
+
+		//! This is true when some players are receiving their initial world state
+		bool SendingInitialState;
+
+		//! Holds the players who are receiving this worlds updates and their corresponding location entities (if any)
+		std::vector<shared_ptr<ConnectedPlayer>> ReceivingPlayers;
+
+
 
 		// objects //
 		// \todo maybe change this to a map //

@@ -213,6 +213,16 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 		Logger::Get()->Info(L"Slot opened, "+Convert::ToWstring(slotnumber));
 
 		slots->NotifyUpdatedValue();
+
+	} else if(*cmd == "start"){
+
+		Logger::Get()->Info(L"TODO: check permissions");
+
+
+		Logger::Get()->Info(L"TODO: check can a match actually begin");
+
+		// Start the match //
+		PongServer::Get()->OnStartPreMatch();
 	}
 
 

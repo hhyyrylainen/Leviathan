@@ -27,7 +27,7 @@ template<NameOfTarget, CollectionToGoTo, CollectionToDisable> GUIFrameWindowClos
     }
     
 // Back button for menus //
-template<NameOfTarget, CollectionToGoTo, CollectionToDisable> GUIMenuBackButtonDefault: 
+template<NameOfTarget, CollectionToGoTo, CollectionToDisable> GUIMenuButtonToCollection: 
     o GuiObject "NameOfTarget"{
         s{
             [@Listener="OnClick"]
@@ -121,47 +121,27 @@ o GuiCollection "TopLevelMenu"{
 }
 
 // To the server start screen button //
-o GuiObject "MenuWindow/TopLevelMenu/StartServerButton"{
+o GuiObject {
     s{
         [@Listener="OnClick"]
         bool SetVersion(GuiObject@ instance){
         
             // Go to the StartServerMenu //
-            instance.GetOwningManager().SetCollectionState("StartServerMenu", true);
-            instance.GetOwningManager().SetCollectionState("TopLevelMenu", false);
+            instance.GetOwningManager().SetCollectionState(, true);
+            instance.GetOwningManager().SetCollectionState("", false);
             return true;
         }
     @%};
 }
 
 // To the server browser screen button //
-o GuiObject "MenuWindow/TopLevelMenu/BrowseGamesButton"{
-    s{
-        [@Listener="OnClick"]
-        bool SetVersion(GuiObject@ instance){
-        
-            // Go to the StartServerMenu //
-            instance.GetOwningManager().SetCollectionState("ServerBrowserMenu", true);
-            instance.GetOwningManager().SetCollectionState("TopLevelMenu", false);
-            return true;
-        }
-    @%};
-}
+template<> GUIMenuButtonToCollection<"MenuWindow/TopLevelMenu/StartServerButton", StartServerMenu, TopLevelMenu>
 
 // To the direct connect screen button //
-o GuiObject "MenuWindow/TopLevelMenu/ConnectToAddressButton"{
-    s{
-        [@Listener="OnClick"]
-        bool SetVersion(GuiObject@ instance){
-        
-            // Go to the StartServerMenu //
-            instance.GetOwningManager().SetCollectionState("DirectConnectScreen", true);
-            instance.GetOwningManager().SetCollectionState("TopLevelMenu", false);
-            return true;
-        }
-    @%};
-}
+template<> GUIMenuButtonToCollection<"MenuWindow/TopLevelMenu/ConnectToAddressButton", DirectConnectScreen, TopLevelMenu>
+
 // To the options menu //
+//template<> GUIMenuButtonToCollection<"MenuWindow/TopLevelMenu/", , TopLevelMenu>
 
 
 // Quit the game //
@@ -189,7 +169,7 @@ o GuiCollection "StartServerMenu"{
 
 // Normal closing things //
 template<> GUIFrameWindowCloseButtonDefault<"MenuWindow/StartServerMenu", "TopLevelMenu", "StartServerMenu">
-template<> GUIMenuBackButtonDefault<"MenuWindow/StartServerMenu/BackToMainButton", "TopLevelMenu", "StartServerMenu">
+template<> GUIMenuButtonToCollection<"MenuWindow/StartServerMenu/BackToMainButton", "TopLevelMenu", "StartServerMenu">
 // ------------------ Server browser screen ------------------ //
 o GuiCollection "ServerBrowserMenu"{
     l params{
@@ -203,7 +183,7 @@ o GuiCollection "ServerBrowserMenu"{
 
 // Normal closing things //
 template<> GUIFrameWindowCloseButtonDefault<"MenuWindow/ServerBrowserMenu", "TopLevelMenu", "ServerBrowserMenu">
-template<> GUIMenuBackButtonDefault<"MenuWindow/ServerBrowserMenu/BackToMainButton", "TopLevelMenu", "ServerBrowserMenu">
+template<> GUIMenuButtonToCollection<"MenuWindow/ServerBrowserMenu/BackToMainButton", "TopLevelMenu", "ServerBrowserMenu">
 // ------------------ Direct connect to address screen ------------------ //
 o GuiCollection "DirectConnectScreen"{
     l params{
@@ -245,12 +225,9 @@ o GuiObject "MenuWindow/DirectConnectScreen/ConnectButton"{
 
 // Normal closing things //
 template<> GUIFrameWindowCloseButtonDefault<"MenuWindow/DirectConnectScreen", "TopLevelMenu", "DirectConnectScreen">
-template<> GUIMenuBackButtonDefault<"MenuWindow/DirectConnectScreen/BackToMainButton", "TopLevelMenu", "DirectConnectScreen">
+template<> GUIMenuButtonToCollection<"MenuWindow/DirectConnectScreen/BackToMainButton", "TopLevelMenu", "DirectConnectScreen">
 // ------------------ Server connection screen ------------------ //
 template<> PGCTemplate<ConnectionScreen, "ConnectionScreen", false>
-
-
-
 
 // Connect status message listener //
 o GuiObject "ConnectionScreen/Status"{
@@ -319,10 +296,11 @@ o GuiObject "_LobbyScreenSetter"{
                 instance.GetOwningManager().SetCollectionState("ConnectionScreen", false);
                 
             } else {
+                
                 // Disable //
                 instance.GetOwningManager().SetCollectionState("LobbyScreen", false);
-                
             }
+            
             return 1;
         }
     @%};
@@ -332,7 +310,7 @@ o GuiObject "_LobbyScreenSetter"{
 o GuiObject "LobbyScreen/LobbyTabs"{
     s{
         [@Listener="OnInit"]
-        int PrintStuff(GuiObject@ instance, Event@ event){
+        int CreateTabs(GuiObject@ instance, Event@ event){
             
             // Set the texts //
             instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnInfoTab").SetText("Info");
@@ -369,6 +347,20 @@ o GuiObject "LobbyScreen/DisconnectButton"{
         }
     @%};
 }
+
+// The force start button //
+o GuiObject "LobbyScreen/StartButton"{
+    s{
+        [@Listener="OnClick"]
+        bool SendStart(GuiObject@ instance){
+            
+            GetPongGame().SendServerCommand("start");
+            return true;
+        }
+    @%};
+}
+
+
 
 // Button and text state updater which is updated every time the server sends us a new list of players //
 o GuiObject "_LobbyStatusPlayerUpdater"{
@@ -431,6 +423,10 @@ template<> LobbyJoinOpenButtonThing<"Team2/Player21JoinOpen", 2, 1>
 // Fourth team controls //
 template<> LobbyJoinOpenButtonThing<"Team3/Player30JoinOpen", 3, 0>
 template<> LobbyJoinOpenButtonThing<"Team3/Player31JoinOpen", 3, 1>
+
+
+
+
 // ------------------ During gameplay objects ------------------ //
 template<> PGCTemplate<GameplayHUD, "", false>
 

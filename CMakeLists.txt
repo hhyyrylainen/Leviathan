@@ -280,7 +280,7 @@ if(NOT Boost_USE_STATIC_LIBS)
       
       
     # We need to add the actual libraries on linux
-    if(NOT WIN32)
+    if(BOOST_USE_MANGLEDNAMES)
         set(TMPRELEASEMOVE)
         set(TMPDEBUGMOVE)
         # loop them all
@@ -299,7 +299,7 @@ if(NOT Boost_USE_STATIC_LIBS)
         set(BOOST_MOVE_FILES_RELEASE ${BOOST_MOVE_FILES_RELEASE} ${TMPRELEASEMOVE})
         set(BOOST_MOVE_FILES_DEBUG ${BOOST_MOVE_FILES_DEBUG} ${TMPDEBUGMOVE})
         
-    endif(NOT WIN32)
+    endif(BOOST_USE_MANGLEDNAMES)
     
 	file(COPY ${BOOST_MOVE_FILES_RELEASE} DESTINATION "${PROJECT_BINARY_DIR}/bin")
     file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")

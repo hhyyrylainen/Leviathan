@@ -110,7 +110,7 @@ DLLEXPORT bool Leviathan::BaseNotifiable<ParentType, ChildType>::ConnectToNotifi
 	GUARD_LOCK_THIS_OBJECT();
 
 	// Check is it already connected //
-	if(IsConnectedTo(child, guard)){
+	if(IsConnectedTo(owner, guard)){
 
 		return false;
 	}

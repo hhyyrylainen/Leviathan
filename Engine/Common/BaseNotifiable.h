@@ -44,7 +44,7 @@ namespace Leviathan{
 		//! \brief Returns true when the specified object is already connected
 		DLLEXPORT FORCE_INLINE bool IsConnectedTo(BaseNotifier<ParentType, ChildType>* check){
 			GUARD_LOCK_THIS_OBJECT();
-			IsConnectedTo(check, guard);
+			return IsConnectedTo(check, guard);
 		}
 
 		//! \brief This searches the connected notifiers and calls the above function with it's pointer

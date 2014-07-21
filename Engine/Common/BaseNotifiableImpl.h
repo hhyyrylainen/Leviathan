@@ -61,7 +61,7 @@ DLLEXPORT bool Leviathan::BaseNotifiable<ParentType, ChildType>::UnConnectFromNo
 		auto end = ConnectedToParents.end();
 		for(auto iter = ConnectedToParents.begin(); iter != end; ++iter){
 
-			if((*iter)->GetID() == id){
+			if(iter->GetID() == id){
 				// Found the target //
 				foundtarget = *iter;
 			}
@@ -74,11 +74,11 @@ DLLEXPORT bool Leviathan::BaseNotifiable<ParentType, ChildType>::UnConnectFromNo
 	}
 
 	// Found a target, do the locking in the right order //
-
+	
 	GUARD_LOCK_OTHER_OBJECT_NAME(foundtarget, guard2);
 	GUARD_LOCK_THIS_OBJECT();
-
-	return UnConnectFromNotifier(iter, guard);
+	
+	return UnConnectFromNotifier(foundtarget, guard);
 }
 
 template<class ParentType, class ChildType>

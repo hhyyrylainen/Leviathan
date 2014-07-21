@@ -34,3 +34,5 @@ PongServer/PongIncludes.h
 Engine/Generated/
 CEED/
 CopyCEGUI.bat
+/build/
+nbproject/

@@ -4,7 +4,7 @@
 #ifndef LEVIATHAN_INCLUDE
 #include "Include.h"
 #endif
-#include <boost\thread.hpp>
+#include <boost/thread.hpp>
 // ------------------------------------ //
 // ---- includes ---- //
 

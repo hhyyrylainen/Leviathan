@@ -5,9 +5,9 @@
 #ifndef LEVIATHAN_DEFINE
 #include "Define.h"
 #endif
-#include "boost\function.hpp"
-#include "boost\thread.hpp"
-#include "Common\ThreadSafe.h"
+#include "boost/function.hpp"
+#include "boost/thread.hpp"
+#include "Common/ThreadSafe.h"
 // ------------------------------------ //
 // ---- includes ---- //
 
@@ -16,7 +16,7 @@ namespace Leviathan{
 
 
 	//! \brief A file listener instance which listens for file changes in a folder
-	//! \todo Do linux file listening
+	//! \todo Use only one inotify instance on linux
 	class ResourceFolderListener{
 	public:
 		//! \brief Creates a new listener
@@ -89,6 +89,16 @@ namespace Leviathan{
 		OVERLAPPED* OverlappedInfo;
 
 #else
+		// inotify should do the trick on linux //
+		
+		//! The ID of our inotify instance thing
+		int InotifyID;
+		
+		//! Inotify's folder id which is being monitored
+		int InotifyWatches;
+		
+		//! The read result buffer
+		char* ReadBuffer;
 		
 
 

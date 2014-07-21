@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_STRINGDATAITERATOR
 #include "StringDataIterator.h"
 #endif
-#include "utf8\checked.h"
+#include "utf8/checked.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::StringDataIterator::StringDataIterator() : CurrentCharacterNumber(0), CurrentLineNumber(1){
@@ -80,11 +80,9 @@ bool Leviathan::UTF8DataIterator::GetPreviousCharacter(int &receiver){
 		// Try to copy the previous code point into the receiver //
 		receiver = utf8::prior(shouldbepos, BeginPos);
 
-	} catch(const utf8::not_enough_room &e1){
-		e1;
+	} catch(const utf8::not_enough_room&){
 		return false;
-	} catch(const utf8::invalid_utf8 &e2){
-		e2;
+	} catch(const utf8::invalid_utf8&){
 		return false;
 	}
 

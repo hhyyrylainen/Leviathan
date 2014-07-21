@@ -547,8 +547,8 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuote
 			int previouscheck = GetPreviousCharacter();
 			
 			// Check do we need to go back 2 characters or just one //
-			if(quotes == QUOTETYPE_BOTH && (previouscheck == '"' || previouscheck == '\'') || 
-				quotes == QUOTETYPE_DOUBLEQUOTES && previouscheck == '"' || quotes == QUOTETYPE_SINGLEQUOTES && previouscheck == '\'')
+			if((quotes == QUOTETYPE_BOTH && (previouscheck == '"' || previouscheck == '\'')) || 
+				(quotes == QUOTETYPE_DOUBLEQUOTES && previouscheck == '"') || (quotes == QUOTETYPE_SINGLEQUOTES && previouscheck == '\''))
 			{
 				ITR_FUNCDEBUG(L"Going back over an extra quote character");
 				data->Positions.Y = GetPosition()-2;

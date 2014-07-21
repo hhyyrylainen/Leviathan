@@ -12,16 +12,21 @@
 using namespace Leviathan;
 using namespace Gui;
 // ------------------------------------ //
-Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, bool strict /*= false*/, 
+Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, 
+	std::vector<unique_ptr<wstring>> &inanimations, std::vector<unique_ptr<wstring>> &outanimations, bool strict /*= false*/, 
 	bool enabled /*= true*/, bool keepgui /*= false*/, bool allowenable /*= true*/, const wstring &autotarget /*= L""*/, 
-	std::vector<unique_ptr<wstring>> &inanimations /*= std::vector<unique_ptr<wstring>>()*/, 
-	std::vector<unique_ptr<wstring>> &outanimations /*= std::vector<unique_ptr<wstring>>()*/,
+
 	bool applyanimstochildren) : 
 	Name(name), ID(id), Enabled(enabled), Strict(strict), KeepsGuiOn(keepgui), OwningManager(manager), AllowEnable(allowenable), 
-	AutoTarget(autotarget), AutoAnimationOnEnable(move(inanimations)), AutoAnimationOnDisable(move(outanimations)), 
-	ApplyAnimationsToChildren(applyanimstochildren)
+	AutoTarget(autotarget), ApplyAnimationsToChildren(applyanimstochildren), AutoAnimationOnEnable(move(inanimations)), 
+	AutoAnimationOnDisable(move(outanimations))
 {
 	Toggle = GKey::GenerateKeyFromString(toggle);
+	
+	
+	
+	
+	
 }
 
 Leviathan::Gui::GuiCollection::~GuiCollection(){
@@ -162,8 +167,8 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 
 
 	// allocate new Collection object //
-	GuiCollection* cobj = new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle, Strict, Enabled, GuiOn, allowenable, autotarget, 
-		autoinanimation, autooutanimation, recursiveanims);
+	GuiCollection* cobj = new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle, autoinanimation, autooutanimation, Strict, Enabled, 
+		GuiOn, allowenable, autotarget, recursiveanims);
 	// copy script data over //
 	cobj->Scripting = data.GetScript();
 

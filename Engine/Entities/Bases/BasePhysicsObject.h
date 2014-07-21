@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Newton.h"
+#include "Newton/PhysicalWorld.h"
 #include "BasePositionable.h"
 #include "BaseObject.h"
 

@@ -316,7 +316,7 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 	Ogre::Matrix4 offset = Ogre::Matrix4::IDENTITY;
 	Ogre::Matrix4 toffset = offset.transpose();
 
-	Collision = NewtonCreateBox(tmpworld, Sizes.X, Sizes.Y, Sizes.Z, NULL, &toffset[0][0]);
+	Collision = NewtonCreateBox(tmpworld, Sizes.X, Sizes.Y, Sizes.Z, 0, &toffset[0][0]);
 
 	Ogre::Matrix4 matrix;
 	matrix.makeTransform(Position, Float3(1, 1, 1), QuatRotation);

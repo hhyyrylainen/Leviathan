@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "Common/BaseNotifiable.h"
 #include "SFML/Network/Packet.hpp"
+#include "Exceptions/ExceptionInvalidArgument.h"
 
 
 namespace Leviathan{

@@ -147,7 +147,7 @@ DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 
 	VerifyRenderWindowHandle();
 
-	if(m_hwnd == NULL){
+	if(m_hwnd == 0){
 		// window has closed //
 		return;
 	}

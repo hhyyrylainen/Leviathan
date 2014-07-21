@@ -16,10 +16,9 @@ namespace Leviathan{ namespace Gui{
 
 	class GuiCollection : public Object, public ReferenceCounted{
 	public:
-		GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, bool strict = false, bool enabled = true, 
-			bool keepgui = false, bool allowenable = true, const wstring &autotarget = L"", 
-			std::vector<unique_ptr<wstring>> &inanimations = std::vector<unique_ptr<wstring>>(), 
-			std::vector<unique_ptr<wstring>> &outanimations = std::vector<unique_ptr<wstring>>(), bool applyanimstochildren = false);
+		GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, std::vector<unique_ptr<wstring>> &inanimations, 
+			std::vector<unique_ptr<wstring>> &outanimations,bool strict = false, bool enabled = true, 
+			bool keepgui = false, bool allowenable = true, const wstring &autotarget = L"", bool applyanimstochildren = false);
 		~GuiCollection();
 
 		//! \todo Allow script listeners to be executed even if custom animations are used

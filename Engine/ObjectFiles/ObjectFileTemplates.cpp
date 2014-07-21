@@ -4,8 +4,8 @@
 #include "ObjectFileTemplates.h"
 #endif
 #include "ObjectFileObject.h"
-#include "Common\StringOperations.h"
-#include "Script\ScriptInterface.h"
+#include "Common/StringOperations.h"
+#include "Script/ScriptInterface.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ObjectFileTemplateDefinition::ObjectFileTemplateDefinition(const string &name, std::vector<unique_ptr<string>> &parameters, 

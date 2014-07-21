@@ -46,11 +46,8 @@ using namespace Leviathan::Gui;
 //! \todo Add support for linux
 class Leviathan::Gui::GuiClipboardHandler : public CEGUI::NativeClipboardProvider{
 public:
-#ifdef WIN32
 	GuiClipboardHandler(Window* windprovider) : HWNDSource(windprovider), OurOwnedBuffer(NULL){
 	}
-
-#endif // WIN32
 
 	~GuiClipboardHandler(){
 
@@ -181,15 +178,12 @@ public:
 
 private:
 
-#ifdef WIN32
-
+	
 	Window* HWNDSource;
-
-#endif // WIN32
 
 
 	//! The owned buffer, which has to be deleted by this
-	void* OurOwnedBuffer;
+	char* OurOwnedBuffer;
 
 };
 

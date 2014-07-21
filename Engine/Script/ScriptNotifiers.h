@@ -8,7 +8,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Common/BaseNotifiable.h"
-#include "Angelscript.h"
+#include "angelscript.h"
 #include "Common/ReferenceCounted.h"
 
 

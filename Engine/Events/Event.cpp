@@ -205,3 +205,9 @@ DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(int ticknumber) : Intege
 void Leviathan::IntegerEventData::AddDataToPacket(sf::Packet &packet){
 	packet << IntegerDataValue;
 }
+// ------------------ BaseEventData ------------------ //
+BaseEventData::~BaseEventData(){
+	
+}
+
+

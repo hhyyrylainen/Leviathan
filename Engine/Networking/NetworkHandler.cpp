@@ -4,7 +4,7 @@
 #include "NetworkHandler.h"
 #endif
 #include "FileSystem.h"
-#include "ObjectFiles/ObjectFileObject.h"
+#include "ObjectFiles/ObjectFile.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "SFML/Network/Http.hpp"
 #include "NetworkRequest.h"
@@ -184,8 +184,10 @@ void Leviathan::NetworkHandler::_SaveMasterServerList(){
 		}
 	}
 
-	ObjectFile file(NamedVars(new NamedVariableList(L"MasterServers", vals)));
-
+	NamedVars headervars(new NamedVariableList(L"MasterServers", vals));
+	
+	ObjectFile file(headervars);
+	
 
 	ObjectFileProcessor::WriteObjectFile(file, StoredMasterServerInfo.StoredListFile);
 }

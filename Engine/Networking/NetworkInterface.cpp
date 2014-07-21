@@ -64,6 +64,8 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 
 			return true;
 		}
+	default:
+		return false;
 	}
 
 	// Unhandled //
@@ -103,7 +105,8 @@ bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkR
 			RemoteConsole::Get()->HandleRemoteConsoleResponse(message, connection, NULL);
 			return true;
 		}
-
+	default:
+		return false;
 	}
 	// Not handled //
 	return false;

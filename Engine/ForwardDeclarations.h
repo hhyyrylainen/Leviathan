@@ -10,11 +10,8 @@ namespace Leviathan{
 	class Graphics;
 
 	namespace Gui{
-
-		class CefApplication;
+		
 		class GuiManager;
-		class LeviathanJavaScriptAsync;
-		class JSAsyncCustom;
 	}
 
 	namespace Entity{
@@ -66,7 +63,6 @@ namespace Leviathan{
 	class ScriptConsole;
 	class LeapManager;
 	class ObjectLoader;
-	class GlobalCEFHandler;
 	class GameSpecificPacketHandler;
 	class BaseGameSpecificRequestPacket;
 	class BaseGameSpecificResponsePacket;

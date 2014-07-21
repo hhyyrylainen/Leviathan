@@ -148,16 +148,16 @@ DLLEXPORT std::wstring Leviathan::Convert::Utf8ToUtf16(const string &utf8str){
 
 	try {
 
-	utf8::utf8to16(utf8str.begin(), utf8str.end(), back_inserter(results));
+		utf8::utf8to16(utf8str.begin(), utf8str.end(), back_inserter(results));
 
 	} catch(utf8::invalid_code_point &e1){
 
-		e1;
+		Logger::Get()->Error(L"Convert: invalid utf code point: "+Convert::ToWstring(e1.code_point()));
 		return wstring();
 
-	} catch(utf8::not_enough_room &e2){
+	} catch(utf8::not_enough_room&){
 
-		e2;
+		Logger::Get()->Error(L"Convert: not enough memory for string conversion");
 		return wstring();
 	}
 
@@ -176,12 +176,12 @@ DLLEXPORT std::string Leviathan::Convert::Utf16ToUtf8(const wstring &utf16str){
 
 	} catch(utf8::invalid_code_point &e1){
 
-		e1;
+		Logger::Get()->Error(L"Convert: invalid utf code point: "+Convert::ToWstring(e1.code_point()));
 		return string();
 
-	} catch(utf8::not_enough_room &e2){
+	} catch(utf8::not_enough_room&){
 
-		e2;
+		Logger::Get()->Error(L"Convert: not enough memory for string conversion");
 		return string();
 	}
 

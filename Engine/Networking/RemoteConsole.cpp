@@ -90,7 +90,7 @@ DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* co
 
 	// Look for a matching awaiting connection //
 	for(size_t i = 0; i < AwaitingConnections.size(); i++){
-		if(AwaitingConnections[i]->OnlyLocalhost && local || !AwaitingConnections[i]->OnlyLocalhost){
+		if((AwaitingConnections[i]->OnlyLocalhost && local) || !AwaitingConnections[i]->OnlyLocalhost){
 			if(AwaitingConnections[i]->SessionToken == sessiontoken){
 				// Match found //
 				Logger::Get()->Info(L"RemoteConsole: matching connection request got!");

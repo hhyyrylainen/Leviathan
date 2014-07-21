@@ -144,6 +144,9 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(shared_pt
 			_HandleServerJoinRequest(request, connectiontosendresult);
 			return true;
 		}
+	default:
+		// Let somebody else do this
+		return false;
 	}
 
 	// We didn't know how to handle this packet //
@@ -178,6 +181,8 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shar
 
 			return true;
 		}
+	default:
+		return false;
 	}
 
 	return false;

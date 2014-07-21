@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_CONSTRAINTS
 #include "Constraints.h"
 #endif
-#include <Newton.h>
+#include "Newton/PhysicalWorld.h"
 #include "../Bases/BaseContraintable.h"
 #include "../GameWorld.h"
 using namespace Leviathan;

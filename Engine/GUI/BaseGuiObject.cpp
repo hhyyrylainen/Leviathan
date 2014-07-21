@@ -266,9 +266,9 @@ void Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine(boost::strict_loc
 
 
 	// Fill the map //
-	CEGUIEventNames = boost::assign::map_list_of
-		(L"OnClick", &CEGUI::PushButton::EventClicked)
-		(L"OnCloseClicked", &CEGUI::FrameWindow::EventCloseClicked);
+	CEGUIEventNames.insert(make_pair(L"OnClick", &CEGUI::PushButton::EventClicked));
+	CEGUIEventNames.insert(make_pair(L"OnCloseClicked", &CEGUI::FrameWindow::EventCloseClicked));
+	
 
 }
 

@@ -3,8 +3,8 @@
 #ifndef LEVIATHAN_OBJECTFILE_TEXTBLOCK
 #include "ObjectFileTextBlock.h"
 #endif
-#include "utf8\checked.h"
-#include "Exceptions\ExceptionInvalidArgument.h"
+#include "utf8/checked.h"
+#include "Exceptions/ExceptionInvalidArgument.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ObjectFileTextBlockProper::ObjectFileTextBlockProper(const wstring &name) : Name(name){
@@ -34,26 +34,9 @@ DLLEXPORT const wstring& Leviathan::ObjectFileTextBlockProper::GetLine(size_t in
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ObjectFileTextBlockProper::AddTextLine(const string &line){
-	// Convert //
-	unique_ptr<wstring> converted(new wstring());
-	converted->reserve(line.size());
-
-	try{
-		utf8::utf8to16(line.begin(), line.end(), back_inserter(*converted));
-
-	} catch(const utf8::invalid_utf8 &e1){
-
-		e1;
-		return false;
-
-	} catch(const utf8::not_enough_room &e2){
-
-		e2;
-		return false;
-	}
-
-	// Conversion succeeded, add //
-	Lines.push_back(converted.release());
+	
+	// Convert and add (if it failed we will have an extra empty line) //
+	Lines.push_back(new wstring(Convert::Utf8ToUtf16(line)));
 	return true;
 }
 

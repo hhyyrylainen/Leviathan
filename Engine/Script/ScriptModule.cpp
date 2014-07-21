@@ -530,7 +530,7 @@ DLLEXPORT bool Leviathan::ScriptModule::ReLoadModuleCode(){
 	GUARD_LOCK_THIS_OBJECT();
 
 	// The module must be still valid //
-	if(ScriptState == SCRIPTBUILDSTATE_DISCARDED || !GetModule() && ScriptState != SCRIPTBUILDSTATE_FAILED)
+	if(ScriptState == SCRIPTBUILDSTATE_DISCARDED || (!GetModule() && ScriptState != SCRIPTBUILDSTATE_FAILED))
 		return false;
 
 

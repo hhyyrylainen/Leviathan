@@ -10,7 +10,13 @@
 #include "KeyConfiguration.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) : ConfigurationValues(new NamedVars()), HInstance(NULL), _GameConfiguration(NULL),
+DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) : ConfigurationValues(new NamedVars()), 
+#ifdef _WIN32
+	HInstance(NULL), 
+#else
+	HInstance(0),
+#endif //_WIN32
+	_GameConfiguration(NULL),
 	_KeyConfiguration(NULL), DeleteLog(false), _NetworkInterface(NULL), Mainlog(NULL)
 {
 	// If this is the default configuration set as the static access one //

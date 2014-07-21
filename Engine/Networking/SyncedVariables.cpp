@@ -220,6 +220,8 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
 			DEBUG_BREAK;
 			return true;
 		}
+	default:
+		return false;
 	}
 
 	// Could not process //
@@ -299,6 +301,8 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 
 			return true;
 		}
+	default:
+		return false;
 	}
 
 	// Could not process //

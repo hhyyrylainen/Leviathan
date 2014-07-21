@@ -133,7 +133,7 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::RemoveApplyForce(const wstring &nam
 	// search for matching name //
 	for(auto iter = ApplyForceList.begin(); iter != ApplyForceList.end(); ++iter){
 		// check do names match //
-		if(!(*iter)->OptionalName && name.size() == 0 || ((*iter)->OptionalName && *(*iter)->OptionalName == name)){
+		if((!((*iter)->OptionalName) && name.size() == 0) || ((*iter)->OptionalName && *(*iter)->OptionalName == name)){
 			ApplyForceList.erase(iter);
 			return true;
 		}

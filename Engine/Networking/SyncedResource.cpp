@@ -4,7 +4,7 @@
 #include "SyncedResource.h"
 #endif
 #include "SyncedVariables.h"
-#include "Exceptions\ExceptionInvalidArgument.h"
+#include "Exceptions/ExceptionInvalidArgument.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::SyncedResource::SyncedResource(const wstring &uniquename) : Name(uniquename){

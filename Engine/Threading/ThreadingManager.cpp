@@ -80,7 +80,9 @@ DLLEXPORT bool Leviathan::ThreadingManager::CheckInit(){
 				for(auto iter2 = UsableThreads.begin(); iter2 != UsableThreads.end(); ++iter2){
 
 					// Set the name //
+#ifdef _WIN32
 					SetThreadName((*iter2).get(), "Leviathan_TaskThread_"+Convert::ToString(threadnumber));
+#endif
 					threadnumber++;
 				}
 
@@ -268,10 +270,10 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 #ifdef __GNUC__
 			while((*iter)->HasRunningTask()){
 				try{
-					TaskQueueNotify.wait(guard);
+					TaskQueueNotify.wait(lockit);
 				}
 				catch(...){
-					Logger::Get()->Warning(L"ThreadingManager: MakeThreadsWorkWithOgre: wait interrupted");
+					Logger::Get()->Warning(L"ThreadingManager: MakeThreadsWorkWithOgre: linux fix wait interrupted");
 				}
 			}
 #endif

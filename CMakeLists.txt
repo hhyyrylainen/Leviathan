@@ -112,8 +112,9 @@ if(WIN32)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
     
 else(WIN32)
-    add_definitions(-std=c++11 -fextended-identifiers)
-
+    add_definitions(-fextended-identifiers)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	
     # We need X11 on linux for window class to work
     find_package(X11)
     find_package(Threads)

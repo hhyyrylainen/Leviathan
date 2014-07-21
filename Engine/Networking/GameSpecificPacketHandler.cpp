@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_GAMESPECIFICPACKET
 #include "GameSpecificPacketHandler.h"
 #endif
-#include "Exceptions\ExceptionInvalidArgument.h"
+#include "Exceptions/ExceptionInvalidArgument.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameSpecificPacketHandler::GameSpecificPacketHandler(NetworkInterface* usetoreport) : IsVectorSorted(false){

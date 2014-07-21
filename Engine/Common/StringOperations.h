@@ -585,7 +585,7 @@ namespace Leviathan{
 				// check is this last character //
 				size_t a = str.size()-1;
 				bool found = false;
-				for(a; a > i; a--){
+				for(; a > i; a--){
 					if(!IsCharacterWhitespace(str[a])){
 						// there is still valid characters //
 						found = true;

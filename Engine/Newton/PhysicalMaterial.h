@@ -7,7 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 // Pretty much no choice but to include this, or fill this file with all the defines //
-#include "Newton.h"
+#include "PhysicalWorld.h"
 #include "ObjectFiles/ObjectFileObject.h"
 
 

@@ -173,7 +173,7 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 
 				Logger::Get()->Error(L"ObjectFileProcessor: variable name already in use, file: "+file+L"("+
 					Convert::ToWstring(thisstart)+L"):");
-				return false;
+				return NULL;
 			}
 
 			continue;
@@ -630,7 +630,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 
 		Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
 		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e1.what()));
-		return false;
+		return NULL;
 
 	} catch(const utf8::not_enough_room &e2){
 		
@@ -638,7 +638,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 
 		Logger::Get()->Error(L"ObjectFile contains an invalid utf8 sequence, file: "+file+L"("+Convert::ToWstring(startline)+L"):");
 		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e2.what()));
-		return false;
+		return NULL;
 	}
 
 
@@ -669,7 +669,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 				if(!TryToLoadVariableList(file, itr, *ourobj, startline)){
 
 					Logger::Get()->Error(L"ObjectFile object contains an invalid variable list, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
-					return false;
+					return NULL;
 				}
 			}
 			break;
@@ -678,7 +678,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 				if(!TryToLoadTextBlock(file, itr, *ourobj, startline)){
 
 					Logger::Get()->Error(L"ObjectFile object contains an invalid text block, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
-					return false;
+					return NULL;
 				}
 			}
 			break;
@@ -687,7 +687,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 				if(!TryToLoadScriptBlock(file, itr, *ourobj, startline)){
 
 					Logger::Get()->Error(L"ObjectFile object contains an invalid script block, file: "+file+L"("+Convert::ToWstring(ourline)+L")");
-					return false;
+					return NULL;
 				}
 			}
 			break;

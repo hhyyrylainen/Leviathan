@@ -34,6 +34,10 @@ namespace X11{
 #undef index
 #define X11CurrentTime CurrentTime
 #undef CurrentTime
+#undef min
+#undef max
+#undef True
+#undef False
 
 #endif
 

@@ -124,6 +124,8 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
 			_OnStartHeartbeats();
 			return true;
 		}
+	default:
+		return false;
 	}
 
 

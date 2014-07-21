@@ -43,7 +43,7 @@ namespace Leviathan{
 		//! \brief Adds this to a packet for retrieving it later
 		virtual void AddDataToPacket(sf::Packet &packet) = 0;
 
-
+		virtual ~BaseEventData();
 
 
 	};

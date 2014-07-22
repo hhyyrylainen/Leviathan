@@ -3,13 +3,13 @@
 #ifndef PONGNETHANDLER
 #include "PongNetHandler.h"
 #endif
-#include "Networking\NetworkResponse.h"
+#include "Networking/NetworkResponse.h"
 #include "PongPackets.h"
-#include "Networking\NetworkRequest.h"
-#include "Networking\ConnectionInfo.h"
+#include "Networking/NetworkRequest.h"
+#include "Networking/ConnectionInfo.h"
 #include "Engine.h"
-#include "Rendering\GraphicalInputEntity.h"
-#include "GUI\GuiManager.h"
+#include "Rendering/GraphicalInputEntity.h"
+#include "GUI/GuiManager.h"
 #include "PongGame.h"
 using namespace Pong;
 // ------------------------------------ //

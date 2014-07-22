@@ -1,5 +1,5 @@
 #include "TestFunctions.h"
-#include "Common\StringOperations.h"
+#include "Common/StringOperations.h"
 #define FUNCTIONRUNS_BASE	1
 //#define FUNCTIONRUNS_BASE	10000
 

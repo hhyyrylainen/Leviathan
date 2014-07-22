@@ -18,14 +18,14 @@
 
 
 
-namespace Leviathan {
+namespace Leviathan{
 
 namespace Gui{
 
 
 	//! \brief A class for handling system clipboard interaction
 	class GuiClipboardHandler;
-
+	
 
 	//! \brief Holds the state of some collections stored by name
 	struct GuiCollectionStates{

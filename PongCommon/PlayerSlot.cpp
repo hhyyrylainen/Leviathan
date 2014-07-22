@@ -333,7 +333,7 @@ Pong::PlayerList::~PlayerList(){
 // ------------------------------------ //
 void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet) THROWS{
 	
-	size_t vecsize;
+	sf::Int32 vecsize;
 
 	if(!(packet >> vecsize)){
 
@@ -378,7 +378,7 @@ void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet) THROWS{
 void Pong::PlayerList::SerializeCustomDataToPacket(sf::Packet &packet){
 	GUARD_LOCK_THIS_OBJECT();
 	// First put the size //
-	packet << GamePlayers.size();
+	packet << static_cast<sf::Int32>(GamePlayers.size());
 
 	// Loop through them and add them //
 	for(auto iter = GamePlayers.begin(); iter != GamePlayers.end(); ++iter){

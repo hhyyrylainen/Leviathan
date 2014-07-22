@@ -38,28 +38,40 @@ Pong::GameInputController::~GameInputController(){
 
 // ------------------------------------ //
 void Pong::GameInputController::_SetupControlGroups(){
-
-	GroupToKeyMap = boost::assign::map_list_of(PLAYERCONTROLS_WASD, boost::assign::map_list_of
-		(Window::ConvertWstringToOISKeyCode(L"A"), CONTROLKEYACTION_LEFT)
-		(Window::ConvertWstringToOISKeyCode(L"D"), CONTROLKEYACTION_RIGHT)
-		(Window::ConvertWstringToOISKeyCode(L"W"), CONTROLKEYACTION_POWERUPUP)
-		(Window::ConvertWstringToOISKeyCode(L"S"), CONTROLKEYACTION_POWERUPDOWN)
-		)(PLAYERCONTROLS_ARROWS, boost::assign::map_list_of
-		(Window::ConvertWstringToOISKeyCode(L"LEFTARROW"), CONTROLKEYACTION_LEFT)
-		(Window::ConvertWstringToOISKeyCode(L"RIGHTARROW"), CONTROLKEYACTION_RIGHT)
-		(Window::ConvertWstringToOISKeyCode(L"UPARROW"), CONTROLKEYACTION_POWERUPUP)
-		(Window::ConvertWstringToOISKeyCode(L"DOWNARROW"), CONTROLKEYACTION_POWERUPDOWN)
-		)(PLAYERCONTROLS_IJKL, boost::assign::map_list_of
-		(Window::ConvertWstringToOISKeyCode(L"J"), CONTROLKEYACTION_LEFT)
-		(Window::ConvertWstringToOISKeyCode(L"L"), CONTROLKEYACTION_RIGHT)
-		(Window::ConvertWstringToOISKeyCode(L"I"), CONTROLKEYACTION_POWERUPUP)
-		(Window::ConvertWstringToOISKeyCode(L"K"), CONTROLKEYACTION_POWERUPDOWN)
-		)(PLAYERCONTROLS_NUMPAD, boost::assign::map_list_of
-		(Window::ConvertWstringToOISKeyCode(L"NUMPAD4"), CONTROLKEYACTION_LEFT)
-		(Window::ConvertWstringToOISKeyCode(L"NUMPAD6"), CONTROLKEYACTION_RIGHT)
-		(Window::ConvertWstringToOISKeyCode(L"NUMPAD8"), CONTROLKEYACTION_POWERUPUP)
-		(Window::ConvertWstringToOISKeyCode(L"NUMPAD5"), CONTROLKEYACTION_POWERUPDOWN)
-		);
+	typedef std::map<OIS::KeyCode, CONTROLKEYACTION> KeyMap;
+	
+	// Would be nice to be able to use boost::assign here...
+	
+	KeyMap WASD;
+	WASD.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"A"), CONTROLKEYACTION_LEFT));
+	WASD.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"D"), CONTROLKEYACTION_RIGHT));
+	WASD.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"W"), CONTROLKEYACTION_POWERUPUP));
+	WASD.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"S"), CONTROLKEYACTION_POWERUPDOWN));
+	
+	KeyMap Arrows;
+	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"LEFTARROW"), CONTROLKEYACTION_LEFT));
+	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"RIGHTARROW"), CONTROLKEYACTION_RIGHT));
+	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"UPARROW"), CONTROLKEYACTION_POWERUPUP));
+	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"DOWNARROW"), CONTROLKEYACTION_POWERUPDOWN));
+	
+	KeyMap IJKL;
+	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"J"), CONTROLKEYACTION_LEFT));
+	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"L"), CONTROLKEYACTION_RIGHT));
+	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"I"), CONTROLKEYACTION_POWERUPUP));
+	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"K"), CONTROLKEYACTION_POWERUPDOWN));
+	
+	KeyMap numpad;
+	numpad.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"NUMPAD4"), CONTROLKEYACTION_LEFT));
+	numpad.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"NUMPAD6"), CONTROLKEYACTION_RIGHT));
+	numpad.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"NUMPAD8"), CONTROLKEYACTION_POWERUPUP));
+	numpad.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"NUMPAD5"), CONTROLKEYACTION_POWERUPDOWN));
+	
+	
+	GroupToKeyMap.insert(make_pair(PLAYERCONTROLS_WASD, WASD));
+	GroupToKeyMap.insert(make_pair(PLAYERCONTROLS_ARROWS, Arrows));
+	GroupToKeyMap.insert(make_pair(PLAYERCONTROLS_IJKL, IJKL));
+	GroupToKeyMap.insert(make_pair(PLAYERCONTROLS_NUMPAD, numpad));
+	
 }
 
 std::map<OIS::KeyCode, CONTROLKEYACTION>& Pong::GameInputController::MapControlsToKeyGrouping(PLAYERCONTROLS controls) THROWS{

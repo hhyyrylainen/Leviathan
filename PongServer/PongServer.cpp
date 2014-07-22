@@ -70,32 +70,8 @@ void Pong::PongServer::CheckGameKeyConfigVariables(KeyConfiguration* keyconfigob
 }
 // ------------------------------------ //
 void Pong::PongServer::TryStartMatch(){
-	// Destroy old game world //
-	GameArena->GetWorld()->ClearObjects();
-	GamePaused = false;
+	// The world is already setup and all the players are ready at this point, just setup some cheap final values //
 
-	int activeplycount = 0;
-	int maxsplit = 0;
-	for(size_t i = 0; i < _PlayerList.Size(); i++){
-		_PlayerList[i]->SetScore(0);
-		if(_PlayerList[i]->IsSlotActive())
-			activeplycount++;
-		int split = _PlayerList[i]->GetSplitCount();
-		if(_PlayerList[i]->GetSplit())
-			_PlayerList[i]->GetSplit()->SetScore(0);
-		if(split > maxsplit)
-			maxsplit = split;
-	}
-	try{
-		if(!GameArena->GenerateArena(this, _PlayerList.GetVec(), activeplycount, maxsplit, true)){
-			//! \todo send error //
-			return;
-		}
-	} catch(const Ogre::InvalidParametersException &e){
-		//! \todo send error //
-		e;
-		return;
-	}
 	auto split0 = _PlayerList[0]->GetSplit();
 	auto split1 = _PlayerList[1]->GetSplit();
 	auto split2 = _PlayerList[2]->GetSplit();
@@ -103,18 +79,21 @@ void Pong::PongServer::TryStartMatch(){
 	// Setup dead angle //
 	DeadAxis = Float3(0.f);
 
-	if(!_PlayerList[0]->IsSlotActive() && !_PlayerList[2]->IsSlotActive() && (split0 ? !split0->IsSlotActive(): true) && (split2 ? !split2->IsSlotActive(): true)){
+	if(!_PlayerList[0]->IsSlotActive() && !_PlayerList[2]->IsSlotActive() && (split0 ? !split0->IsSlotActive() : true) && (split2 ? 
+		!split2->IsSlotActive() : true))
+	{
 
 		DeadAxis = Float3(1.f, 0.f, 0.f);
 
-	} else if(!_PlayerList[1]->IsSlotActive() && !_PlayerList[3]->IsSlotActive() && (split1 ? !split1->IsSlotActive(): true) && (split3 ? !split3->IsSlotActive(): true)){
+	} else if(!_PlayerList[1]->IsSlotActive() && !_PlayerList[3]->IsSlotActive() && (split1 ? !split1->IsSlotActive() : true) && (split3 ? 
+		!split3->IsSlotActive() : true))
+	{
 
 		DeadAxis = Float3(0.f, 0.f, 1.f);
 	}
 
 	// send start event //
-	Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"GameStart"), new NamedVars(shared_ptr<NamedVariableList>(new
-		NamedVariableList(L"PlayerCount", new Leviathan::VariableBlock(activeplycount))))));
+	Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"GameStart"));
 
 	// Set the camera location //
 	auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();

@@ -137,11 +137,15 @@ namespace Leviathan{
 		DLLEXPORT void ClearSimulatePassedTime();
 
 		// Ray callbacks //
-		static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam);
-
+		static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const 
+			hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam);
+		
 		// Script proxies //
 		DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(Float3 from, Float3 to);
-
+		
+		//! \brief Returns true when no players are marked as receiving initial update
+		bool AreAllPlayersSynced() const;
+		
 	private:
 
 		//! Used to connect new players
@@ -155,7 +159,6 @@ namespace Leviathan{
 
 		void _CreateOgreResources(Ogre::Root* ogre, Window* rendertarget);
 		void _HandleDelayedDelete(ObjectLock &guard);
-		bool AreAllPlayersSynced() const;
 
 		// ------------------------------------ //
 		Ogre::Camera* WorldSceneCamera;

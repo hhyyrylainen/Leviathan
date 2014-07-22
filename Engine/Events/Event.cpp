@@ -104,6 +104,12 @@ DLLEXPORT Leviathan::GenericEvent::GenericEvent(wstring* takeownershipstr, Named
 {
 
 }
+
+DLLEXPORT Leviathan::GenericEvent::GenericEvent(const wstring &type) : TypeStr(new wstring(type)), Variables(new NamedVars()){
+	
+	
+}
+
 DLLEXPORT Leviathan::GenericEvent::~GenericEvent(){
 	// release memory //
 	SAFE_DELETE(TypeStr);

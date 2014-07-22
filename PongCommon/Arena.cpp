@@ -20,24 +20,20 @@ Pong::Arena::~Arena(){
 
 }
 // ------------------------------------ //
-bool Pong::Arena::GenerateArena(BasePongParts* game, std::vector<PlayerSlot*> &players, int plycount, int maximumsplit, bool clearfirst /*= true*/){
+bool Pong::Arena::GenerateArena(BasePongParts* game, PlayerList &plys){
 	// check sanity of values //
 	QUICKTIME_THISSCOPE;
-
-	if(plycount == 0 || plycount > 4){
+	
+	std::vector<PlayerSlot*>& plyvec = plys.GetVec();
+	
+	
+	if(plyvec.empty() == 0 || plyvec.size() > 4){
 		game->SetError("Player count must be over 1");
 		return false;
 	}
-
-	if(maximumsplit > 2){
-		game->SetError("Sides have to be split into two or be whole (max 2 players per side)");
-		return false;
-	}
-
-	if(clearfirst){
-		TargetWorld->ClearObjects();
-		_ClearPointers();
-	}
+	
+	_ClearPointers();
+	
 
 	// Fast access to objects //
 	NewtonWorld* nworld = TargetWorld->GetPhysicalWorld()->GetNewtonWorld();
@@ -45,6 +41,7 @@ bool Pong::Arena::GenerateArena(BasePongParts* game, std::vector<PlayerSlot*> &p
 
 	// These settings are overwritten almost instantly //
 	Leviathan::Entity::TrailProperties balltrailproperties(5, 10, 100, false);
+	
 	// Set up all elements //
 	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(Float4(0), Float4(0.5f, 0.5f, 0.5f, 0), 3.f, 0.3f);
 
@@ -189,13 +186,14 @@ newtonmaterialfetchstartlabel:
 		0.f, &tmp));
 	tmp->SetPosComponents(width/2.f-sidexsize/2.f, sideheight/2.f, height/2.f-sideysize*1.5f);
 	tmp->SetPhysicalMaterialID(ArenaMatID);
-
+	
+	
 	// fill empty paddle spaces //
-	for(size_t i = 0; i < players.size(); i++){
+	for(size_t i = 0; i < plyvec.size(); i++){
 
-		if(!players[i]->IsSlotActive()){
+		if(!plyvec[i]->IsSlotActive()){
 			// The sub slot can save this //
-			if(auto split = players[i]->GetSplit())
+			if(auto split = plyvec[i]->GetSplit())
 				if(split->IsSlotActive())
 					continue;
 			// Fill the empty slot //
@@ -245,22 +243,22 @@ newtonmaterialfetchstartlabel:
 	// paddles and link slots to objects//
 
 	// loop through players and add paddles //
-	for(size_t i = 0; i < players.size(); i++){
+	for(size_t i = 0; i < plyvec.size(); i++){
 		// skip empty slots //
-		if(!players[i]->IsSlotActive())
+		if(!plyvec[i]->IsSlotActive())
 			continue;
 		bool secondary = false;
 addplayerpaddlelabel:
 
 		bool splitslotopen = false;
-		if(players[i]->GetSplit())
-			splitslotopen = players[i]->GetSplit()->IsSlotActive();
+		if(plyvec[i]->GetSplit())
+			splitslotopen = plyvec[i]->GetSplit()->IsSlotActive();
 
 		// Choose the thickness based on the split count of THIS slot //
 		float paddlethickness = secondary || splitslotopen ? paddlethicknesssplit: paddlethicknesswhole;
 
 		// Get the colour for the paddle //
-		Float4 colour = secondary ? players[i]->GetSplit()->GetColour(): players[i]->GetColour();
+		Float4 colour = secondary ? plyvec[i]->GetSplit()->GetColour(): plyvec[i]->GetColour();
 
 		// add paddle based on loop index //
 		auto plypaddle = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), GetMaterialNameForPlayerColour(colour), 
@@ -286,7 +284,7 @@ addplayerpaddlelabel:
 		}
 
 		// link //
-		secondary ? players[i]->GetSplit()->SetPaddleObject(plypaddle): players[i]->SetPaddleObject(plypaddle);
+		secondary ? plyvec[i]->GetSplit()->SetPaddleObject(plypaddle): plyvec[i]->SetPaddleObject(plypaddle);
 
 		// Create the track controller //
 		std::vector<Leviathan::Entity::TrackControllerPosition> MovementPositions(2);
@@ -329,7 +327,7 @@ addplayerpaddlelabel:
 		auto track = TargetWorld->GetWorldObject(loader->LoadTrackEntityControllerToWorld(TargetWorld.get(), MovementPositions, tmp, &controller));
 
 		// Set //
-		secondary ? players[i]->GetSplit()->SetTrackObject(track, controller): players[i]->SetTrackObject(track, controller);
+		secondary ? plyvec[i]->GetSplit()->SetTrackObject(track, controller): plyvec[i]->SetTrackObject(track, controller);
 
 		// Paddle should be in the middle by default, so set progress to 50% //
 		controller->SetProgressTowardsNextNode(0.5f);
@@ -350,10 +348,10 @@ addplayerpaddlelabel:
 		}
 
 		// Set to slot //
-		players[i]->SetGoalAreaObject(goalarea);
+		plyvec[i]->SetGoalAreaObject(goalarea);
 
 		// loop again if has secondary //
-		if(players[i]->GetSplit() != NULL){
+		if(plyvec[i]->GetSplit() != NULL){
 			secondary = true;
 			goto addplayerpaddlelabel;
 		}

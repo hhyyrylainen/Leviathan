@@ -22,7 +22,7 @@ namespace Pong{
 		Arena(shared_ptr<Leviathan::GameWorld> world);
 		~Arena();
 		// Generates an arena to the world //
-		bool GenerateArena(BasePongParts* game, vector<PlayerSlot*> &players, int plycount, int maximumsplit, bool clearfirst = true);
+		bool GenerateArena(BasePongParts* game, PlayerList &plys);
 
 		void ServeBall();
 		// Does what ever is needed to ditch old ball //

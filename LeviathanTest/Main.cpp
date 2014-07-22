@@ -6,6 +6,10 @@ public:
 	DLLEXPORT virtual void HandleResponseOnlyPacket(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived){
 		throw std::exception();
 	}
+	
+	virtual void CloseDown(){
+		
+	}
 };
 
 // ------------------ ProgramConfiguration ------------------ //

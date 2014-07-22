@@ -17,8 +17,13 @@ namespace Pong{
 		PongMasterNetworking();
 		virtual ~PongMasterNetworking();
 
-		virtual void HandleResponseOnlyPacket(shared_ptr<Leviathan::NetworkResponse> message, Leviathan::ConnectionInfo* connection, bool &dontmarkasreceived);
-
+		virtual void HandleResponseOnlyPacket(shared_ptr<Leviathan::NetworkResponse> message, Leviathan::ConnectionInfo* connection, 
+			bool &dontmarkasreceived);
+		
+		//! \todo Put actual stuff here
+		virtual void CloseDown();
+		
+		
 	protected:
 
 	};

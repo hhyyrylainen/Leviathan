@@ -134,6 +134,10 @@ namespace Leviathan{
 
 		//! \brief Constructs a generic event
 		DLLEXPORT GenericEvent(const wstring &type, const NamedVars &copyvals);
+		
+		//! \brief Constructs a generic event without any values
+		DLLEXPORT GenericEvent(const wstring &type);
+		
 		//! \brief Constructor that takes the pointers as it's own
 		DLLEXPORT GenericEvent(wstring* takeownershipstr, NamedVars* takeownershipvars);
 		DLLEXPORT ~GenericEvent();

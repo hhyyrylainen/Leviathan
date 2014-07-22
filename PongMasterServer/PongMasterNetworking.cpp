@@ -22,7 +22,10 @@ void Pong::PongMasterNetworking::HandleResponseOnlyPacket(shared_ptr<Leviathan::
 	Logger::Get()->Error(L"Couldn't handle a packet");
 }
 // ------------------------------------ //
-
+void Pong::PongMasterNetworking::CloseDown(){
+	
+	Logger::Get()->Info(L"Should probably put stuff here");
+}
 // ------------------------------------ //
 
 // ------------------------------------ //

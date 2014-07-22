@@ -26,7 +26,12 @@ set(CEGUI_SUFFIX "-9999" CACHE STRING "The suffix of cegui builds, for example -
 
 #set(CEGUI_SUFFIX "")
 
-# Stuff from example ogre cmake configuration to hopefully fix linux build
+if(NOT WIN32 AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+	# Not recommended configuration
+	message(SEND_ERROR "On linux you should only try to build with Release or RelWithDebInfo")
+
+endif(NOT WIN32 AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+
 
 # locating the Ogre folder
 if(WIN32)
@@ -142,10 +147,12 @@ set(CEGUI_ENGINE_DEBUG ${CEGUI_ENGINE_DEBUG} "CEGUICoreWindowRendererSet_d" "CEG
 # Library linking
 set(LINK_LIBS_TOENGINE_RELEASE optimized Newton)
 set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap Newton sfml-audio sfml-network sfml-system ${CEGUI_ENGINE_RELEASE})
-        
+
+if(WIN32)
 # Debug libraries
 set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
 set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd Newton_d sfml-audio-d sfml-network-d sfml-system-d ${CEGUI_ENGINE_DEBUG})
+endif(WIN32)
 
 # Prepend the right keywords
 
@@ -159,13 +166,15 @@ endforeach()
 
 set(LINK_LIBS_ENGINE_RELEASE ${TmpProcessQueueList})
 
-set(TmpProcessQueueList)
+if(WIN32)
+	set(TmpProcessQueueList)
 
-foreach(curlibname ${LINK_LIBS_ENGINE_DEBUG})
-    set(TmpProcessQueueList ${TmpProcessQueueList} debug ${curlibname})
-endforeach()
+	foreach(curlibname ${LINK_LIBS_ENGINE_DEBUG})
+    	set(TmpProcessQueueList ${TmpProcessQueueList} debug ${curlibname})
+	endforeach()
 
-set(LINK_LIBS_ENGINE_DEBUG ${TmpProcessQueueList})
+	set(LINK_LIBS_ENGINE_DEBUG ${TmpProcessQueueList})
+endif(WIN32)
 
 
 ######### Options
@@ -249,61 +258,33 @@ if(NOT Boost_USE_STATIC_LIBS)
 	  ${Boost_THREAD_LIBRARY_DEBUG} ${Boost_SYSTEM_LIBRARY_DEBUG} ${Boost_REGEX_LIBRARY_DEBUG})
       
     # Setup to target the actually wanted files
-    set(TmpDoStuff)
+	if(WIN32)
+	    set(TmpDoStuff)
     
-    foreach(libname ${BOOST_MOVE_FILES_RELEASE})
-        # Replace the library extension with the platform extension
-        get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
-        get_filename_component(LIBS_PATH ${libname} PATH)
-        if(WIN32)
-            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
-        else()
-            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.so)
-        endif()
-    endforeach()
+    	foreach(libname ${BOOST_MOVE_FILES_RELEASE})
+        	# Replace the library extension with the platform extension
+        	get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
+        	get_filename_component(LIBS_PATH ${libname} PATH)
+           	set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
+    	endforeach()
     
-    set(BOOST_MOVE_FILES_RELEASE ${TmpDoStuff})
-    set(TmpDoStuff)
-    foreach(libname ${BOOST_MOVE_FILES_DEBUG})
-        # Replace the library extension with the platform extension
-        get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
-        get_filename_component(LIBS_PATH ${libname} PATH)
-        if(WIN32)
-            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
-        else()
-            set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.so)
-        endif()
-    endforeach()
-    
-    set(BOOST_MOVE_FILES_DEBUG ${TmpDoStuff})
+    	set(BOOST_MOVE_FILES_RELEASE ${TmpDoStuff})
+
+		set(TmpDoStuff)
+		foreach(libname ${BOOST_MOVE_FILES_DEBUG})
+			# Replace the library extension with the platform extension
+			get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
+			get_filename_component(LIBS_PATH ${libname} PATH)
+			set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
+		endforeach()
+
+	    set(BOOST_MOVE_FILES_DEBUG ${TmpDoStuff})
+    endif(WIN32)
       
-    # define a function for linux processing
-      
-      
-    # We need to add the actual libraries on linux
-    if(BOOST_USE_MANGLEDNAMES)
-        set(TMPRELEASEMOVE)
-        set(TMPDEBUGMOVE)
-        # loop them all
-        foreach(blib ${BOOST_MOVE_FILES_RELEASE})
-            # remove variable 
-            string(REGEX REPLACE "so\.[\d\{1, 2}.]*" "so" TmpRegResult ${blib})
-            ProcessBoostLibThing(TMPRELEASEMOVE ${TMPRELEASEMOVE} ${TmpRegResult})
-        endforeach()
-        foreach(blib ${BOOST_MOVE_FILES_DEBUG})
-            # remove variable 
-            string(REGEX REPLACE "so\.[\d\{1, 2}.]*" "so" TmpRegResult ${blib})
-            ProcessBoostLibThing(TMPRELEASEMOVE ${TMPRELEASEMOVE} ${TmpRegResult})
-        endforeach()
-        
-        # add to the real move things
-        set(BOOST_MOVE_FILES_RELEASE ${BOOST_MOVE_FILES_RELEASE} ${TMPRELEASEMOVE})
-        set(BOOST_MOVE_FILES_DEBUG ${BOOST_MOVE_FILES_DEBUG} ${TMPDEBUGMOVE})
-        
-    endif(BOOST_USE_MANGLEDNAMES)
-    
-	file(COPY ${BOOST_MOVE_FILES_RELEASE} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-    file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    if(WIN32)  
+		file(COPY ${BOOST_MOVE_FILES_RELEASE} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    	file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+	endif(WIN32)
 
 endif(NOT Boost_USE_STATIC_LIBS)
 
@@ -341,40 +322,39 @@ if(WIN32)
 else(WIN32)
     # linux variants of the copy functions
     file(GLOB LeapMoveFilesRelease "Leap/lib/x64/libLeap.so")
-    file(GLOB LeapMoveFilesDebug "Leap/lib/x64/libLeapd.so")
     
     # ogre sos (this should be changed for public release to only copy required sos)
     file(GLOB OgreMoveFilesRelease "${OGRE_BASEDIR}/*.so*" "${OGRE_BASEDIR}/../*Ogre*.so*" "${OGRE_BASEDIR}/../libOIS*.so")
 
     # CEGUI sos
-    file(GLOB CEGUIMoveFilesDebug "CEGUI/bin/*_d.so")
-    file(GLOB CEGUIMoveFilesRelease "CEGUI/bin/*.so")
-    
-    # Remove the debug ones from the release ones
-    list(REMOVE_ITEM CEGUIMoveFilesRelease ${CEGUIMoveFilesDebug})
+    file(GLOB CEGUIMoveFilesRelease "CEGUI/bin/*.so*")
 
     # newton
     file(GLOB NewtonMoveFilesRelease "Newton/lib/libNewton.so")
-    file(GLOB NewtonMoveFilesDebug "Newton/lib/libNewton_d.so")
 
     # smfl
-    # \todo fix this to split into debug and release
     file(GLOB SMFLMoveFilesRelease "SFML/lib/*.so*")
 
 endif(WIN32)
 
 message(STATUS "Moving the bulk...")
 
-file(COPY ${CEGUIMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+if(WIN32)
+	
+	file(COPY ${CEGUIMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+	file(COPY ${LeapMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+	file(COPY ${SMFLMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+	file(COPY ${NewtonMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+	file(COPY ${OgreMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+
+endif(WIN32)
+
+
 file(COPY ${CEGUIMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${LeapMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-file(COPY ${LeapMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${SMFLMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-file(COPY ${SMFLMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${NewtonMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-file(COPY ${NewtonMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${OgreMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-file(COPY ${OgreMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 message(STATUS "Done copying")
 
@@ -410,14 +390,12 @@ include_directories("${PROJECT_SOURCE_DIR}/CEGUI/include")
 link_directories("${PROJECT_SOURCE_DIR}/AngelScript/lib")
 link_directories("${PROJECT_SOURCE_DIR}/libRocket/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/SFML/lib/")
-link_directories("${PROJECT_SOURCE_DIR}/CEGUI/lib")
+link_directories("${PROJECT_SOURCE_DIR}/CEGUI/lib/")
+link_directories("${PROJECT_SOURCE_DIR}/Newton/lib/")
 
 if(WIN32)
     link_directories("${PROJECT_SOURCE_DIR}/Leap/lib/x86")
-    link_directories("${PROJECT_SOURCE_DIR}/Newton/lib/Release")
-    link_directories("${PROJECT_SOURCE_DIR}/Newton/lib/Debug")
 else(WIN32)
-    link_directories("${PROJECT_SOURCE_DIR}/Newton/lib")
     link_directories("${PROJECT_SOURCE_DIR}/Leap/lib/x64")
 endif(WIN32)
 
@@ -477,21 +455,21 @@ if(WIN32)
 endif(WIN32)
 
 # Potentially install debug versions
-if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
+if((NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK) AND WIN32)
     # install all files that debug distribution might need
     install(FILES ${VLDMoveFiles} DESTINATION bin)
     install(FILES ${LeapMoveFilesDebug} DESTINATION bin)
     install(FILES ${NewtonMoveFilesDebug} DESTINATION bin)
     install(FILES ${SMFLMoveFilesDebug} DESTINATION bin)
     install(FILES ${OgreMoveFilesDebug} DESTINATION bin)
-    install(FILES ${CEGUIMoveFilesDebug} DESTINATION bin)
-    
+	install(FILES ${CEGUIMoveFilesDebug} DESTINATION bin)
+
     
     if(NOT Boost_USE_STATIC_LIBS)
         install(FILES ${BOOST_MOVE_FILES_DEBUG} DESTINATION bin)
     endif(NOT Boost_USE_STATIC_LIBS)
 
-endif(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
+endif((NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK) AND WIN32)
 
 # Always install release libraries
 install(FILES ${LeapMoveFilesRelease} DESTINATION bin)
@@ -500,13 +478,9 @@ install(FILES ${CEGUIMoveFilesRelease} DESTINATION bin)
 install(FILES ${NewtonMoveFilesRelease} DESTINATION bin)
 install(FILES ${SMFLMoveFilesRelease} DESTINATION bin)
 
-if(NOT Boost_USE_STATIC_LIBS)
+if(NOT Boost_USE_STATIC_LIBS AND WIN32)
     install(FILES ${BOOST_MOVE_FILES_RELEASE} DESTINATION bin)
-    if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
-        install(FILES ${BOOST_MOVE_FILES_DEBUG} DESTINATION bin)
-    endif()
-endif(NOT Boost_USE_STATIC_LIBS)
-
+endif(NOT Boost_USE_STATIC_LIBS AND WIN32)
 
 
 # testing support

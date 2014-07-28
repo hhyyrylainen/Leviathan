@@ -1,4 +1,3 @@
-#include "Include.h"
 #include <assert.h>
 #include "scriptstdstring.h"
 #include "../scriptarray/scriptarray.h"
@@ -29,10 +28,10 @@ static CScriptArray *StringSplit(const string &delim, const string &str)
 
 	// TODO: This should only be done once
 	// TODO: This assumes that CScriptArray was already registered
-	asIObjectType *arrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string>"));
+	asIObjectType *arrayType = engine->GetObjectTypeByDecl("array<string>");
 
 	// Create the array object
-	CScriptArray *array = new CScriptArray(0, arrayType);
+	CScriptArray *array = CScriptArray::Create(arrayType);
 
 	// Find the existence of the delimiter in the input string
 	int pos = 0, prev = 0, count = 0;

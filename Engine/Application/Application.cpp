@@ -72,8 +72,12 @@ DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
 	ShouldQuit = true;
 	Quit = true;
 
-	if(_Engine)
+	if(_Engine){
+		// The prelease does some stuff which is necessary and that requires tick to be called... //
+		_Engine->PreRelease();
+		_Engine->Tick();
 		_Engine->Release(true);
+	}
 
 	SAFE_DELETE(_Engine);
 }

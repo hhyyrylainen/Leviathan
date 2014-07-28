@@ -91,7 +91,8 @@ FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScrip
 	// space is already reserved and objects allocated //
 	for(UINT i = 0; i < parameterc; i++){
 		// get parameter type id //
-		int paraid = func->GetParamTypeId(i);
+		int paraid;
+		func->GetParam(i, &paraid);
 
 		_FillParameterDataObject(paraid, &newinfo->ParameterTypeIDS[i], &newinfo->ParameterDeclarations[i], &newinfo->MatchingDataBlockTypes[i]);
 	}

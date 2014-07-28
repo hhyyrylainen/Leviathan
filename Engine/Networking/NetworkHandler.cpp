@@ -116,7 +116,9 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 
 DLLEXPORT void Leviathan::NetworkHandler::Release(){
 	GUARD_LOCK_THIS_OBJECT();
-
+	
+	CloseMasterServerConnection = true;
+	
 	// Kill master server connection //
 	//MasterServerConnectionThread.join();
 	StopOwnUpdaterThread();
@@ -132,7 +134,8 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
 
 		AutoOpenedConnections[i]->Release();
 	}
-
+	
+	MasterServerConnectionThread.join();
 	MasterServerConnection.reset();
 	AutoOpenedConnections.clear();
 
@@ -165,6 +168,9 @@ DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMa
 
 	shared_ptr<boost::promise<wstring>> resultvalue(new boost::promise<wstring>());
 
+	// Make sure it doesn't die instantly //
+	CloseMasterServerConnection = false;
+	
 	// Run the task async //
 	MasterServerConnectionThread = boost::thread(RunGetResponseFromMaster, this, resultvalue);
 
@@ -241,8 +247,11 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 
 	// Remove closed connections //
 	RemoveClosedConnections(guard);
-
-	RemoteConsole::Get()->UpdateStatus();
+	
+	// Update remote console sessions if they exist //
+	auto rconsole = RemoteConsole::Get();
+	if(rconsole)
+		rconsole->UpdateStatus();
 
 	// Let's listen for things //
 	sf::Packet receivedpacket;
@@ -472,7 +481,10 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 		sf::Http httpserver(Convert::WstringToString(instance->StoredMasterServerInfo.MasterListFetchServer));
 
 		sf::Http::Response response = httpserver.sendRequest(request, sf::seconds(2.f));
-
+		
+		if(instance->CloseMasterServerConnection)
+			return;
+		
 		if(response.getStatus() == sf::Http::Response::Ok){
 
 			// It should just be a list of master servers one on each line //
@@ -495,6 +507,9 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 				return;
 			}
 
+			if(instance->CloseMasterServerConnection)
+				return;
+					
 			// Update real list //
 			GUARD_LOCK_OTHER_OBJECT(instance);
 
@@ -528,6 +543,9 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 		Logger::Get()->Info(L"NetworkHandler: no stored list of master servers, waiting for the update to finish");
 		DataUpdaterThread.join();
 	}
+
+	if(instance->CloseMasterServerConnection)
+		return;
 
 
 	// Try to find a master server to connect to //
@@ -565,6 +583,10 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 		}
 
 
+		if(instance->CloseMasterServerConnection)
+			return;
+		
+		
 		// Try connection //
 		shared_ptr<ConnectionInfo> tmpinfo(new ConnectionInfo(*tmpaddress));
 

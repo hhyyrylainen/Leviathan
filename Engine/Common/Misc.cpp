@@ -123,7 +123,12 @@ DLLEXPORT void Leviathan::Misc::KillThread(boost::thread &threadtokill){
 	//pthread_kill(threadtokill.native_handle(), SIGIO);
 	//pthread_kill(threadtokill.native_handle(), SIGUSR1);
 	// This should work //
-	pthread_cancel(threadtokill.native_handle());
+	int threadid = threadtokill.native_handle();
+	
+	if(threadid != 0){
+		
+		pthread_cancel(threadid);
+	}
 
 #else
 #error no working kill thread on platform!

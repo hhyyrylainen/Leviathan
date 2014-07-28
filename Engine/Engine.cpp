@@ -6,6 +6,7 @@
 #include "Application/Application.h"
 #include "Entities/GameWorld.h"
 #include <boost/thread/future.hpp>
+#include <boost/chrono/duration.hpp>
 #include "Rendering/Graphics.h"
 #include "Handlers/ObjectLoader.h"
 #include "Leap/LeapManager.h"
@@ -82,7 +83,7 @@ DLLEXPORT Engine* Leviathan::Engine::Get(){
 	return instance;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype){
+DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
 	GUARD_LOCK_THIS_OBJECT();
 	// get time, for monitoring how long load takes //
 	__int64 InitStartTime = Misc::GetTimeMs64();
@@ -634,10 +635,12 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 	GUARD_LOCK_THIS_OBJECT();
 	if(PreReleaseWaiting)
 		return;
+	
 	PreReleaseWaiting = true;
 
 	// Stop command handling first //
 	if(NoGui){
+
 		Misc::KillThread(CinThread);
 		// We don't join the thread because we can't properly stop this on linux //
 		//CinThread.join();

@@ -4,7 +4,7 @@
 // This code was based on the CScriptReloader written by FDsagizi
 // http://www.gamedev.net/topic/604890-dynamic-reloading-script/
 //
-#include "Include.h"
+
 #include <assert.h>
 #include <string.h> // strstr
 #include <stdio.h>  // sprintf

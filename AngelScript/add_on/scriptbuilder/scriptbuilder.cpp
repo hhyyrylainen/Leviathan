@@ -1,4 +1,3 @@
-#include "Include.h"
 #include "scriptbuilder.h"
 #include <vector>
 using namespace std;
@@ -85,7 +84,8 @@ int CScriptBuilder::AddSectionFromFile(const char *filename)
 	return 0;
 }
 
-int CScriptBuilder::AddSectionFromMemory(const char *sectionName, const char *scriptCode, int startline, unsigned int scriptLength /*= 0*/){
+int CScriptBuilder::AddSectionFromMemory(const char *sectionName, const char *scriptCode, unsigned int startline, unsigned int scriptLength)
+{
 	if( IncludeIfNotAlreadyIncluded(sectionName) )
 	{
 		int r = ProcessScriptSection(scriptCode, scriptLength, sectionName, startline);
@@ -193,10 +193,11 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 	}
 
 	// Process the script section even if it is zero length so that the name is registered
-	return ProcessScriptSection(code.c_str(), (unsigned int)(code.length()), filename, 0);
+	return ProcessScriptSection(code.c_str(), (unsigned int)(code.length()), filename);
 }
 
-int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length, const char *sectionname, int linestart){
+int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length, const char *sectionname, unsigned int startline)
+{
 	vector<string> includes;
 
 	// Perform a superficial parsing of the script first to store the metadata
@@ -448,7 +449,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 
 	// Build the actual script
 	engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, true);
-	module->AddScriptSection(sectionname, modifiedScript.c_str(), modifiedScript.size(), linestart);
+	module->AddScriptSection(sectionname, modifiedScript.c_str(), modifiedScript.size(), startline > 0 ? startline-1: startline);
 
 	if( includes.size() > 0 )
 	{
@@ -914,36 +915,36 @@ static const char *GetCurrentDir(char *buf, size_t size)
 {
 #ifdef _MSC_VER
 #ifdef _WIN32_WCE
-	static TCHAR apppath[MAX_PATH] = TEXT("");
-	if (!apppath[0])
-	{
-		GetModuleFileName(NULL, apppath, MAX_PATH);
+    static TCHAR apppath[MAX_PATH] = TEXT("");
+    if (!apppath[0])
+    {
+        GetModuleFileName(NULL, apppath, MAX_PATH);
 
 
-		int appLen = _tcslen(apppath);
+        int appLen = _tcslen(apppath);
 
-		// Look for the last backslash in the path, which would be the end
-		// of the path itself and the start of the filename.  We only want
-		// the path part of the exe's full-path filename
-		// Safety is that we make sure not to walk off the front of the
-		// array (in case the path is nothing more than a filename)
-		while (appLen > 1)
-		{
-			if (apppath[appLen-1] == TEXT('\\'))
-				break;
-			appLen--;
-		}
+        // Look for the last backslash in the path, which would be the end
+        // of the path itself and the start of the filename.  We only want
+        // the path part of the exe's full-path filename
+        // Safety is that we make sure not to walk off the front of the
+        // array (in case the path is nothing more than a filename)
+        while (appLen > 1)
+        {
+            if (apppath[appLen-1] == TEXT('\\'))
+                break;
+            appLen--;
+        }
 
-		// Terminate the string after the trailing backslash
-		apppath[appLen] = TEXT('\0');
-	}
+        // Terminate the string after the trailing backslash
+        apppath[appLen] = TEXT('\0');
+    }
 #ifdef _UNICODE
-	wcstombs(buf, apppath, min(size, wcslen(apppath)*sizeof(wchar_t)));
+    wcstombs(buf, apppath, min(size, wcslen(apppath)*sizeof(wchar_t)));
 #else
-	memcpy(buf, apppath, min(size, strlen(apppath)));
+    memcpy(buf, apppath, min(size, strlen(apppath)));
 #endif
 
-	return buf;
+    return buf;
 #elif defined(__S3E__)
 	// Marmalade uses its own portable C library
 	return getcwd(buf, (int)size);
@@ -952,6 +953,9 @@ static const char *GetCurrentDir(char *buf, size_t size)
 	assert( size >= 7 );
 	sprintf(buf, "game:\\");
 	return buf;
+#elif defined(_M_ARM)
+	// TODO: How to determine current working dir on Windows Phone?
+	return ""; 
 #else
 	return _getcwd(buf, (int)size);
 #endif // _MSC_VER

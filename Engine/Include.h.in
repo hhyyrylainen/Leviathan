@@ -18,8 +18,7 @@
 
 // we need to disable this warning to stop stdint and instsafe causing errors //
 #pragma warning (disable: 4005)
-// This seems to get enabled when using CEF, and it needs to be disabled //
-#pragma warning (disable: 4355)
+
 
 // C RunTime Header Files
 #include <stdlib.h>
@@ -43,7 +42,6 @@
     #pragma warning (default:6387)
 #endif
 
-#define CEF_ENABLE_SANDBOX @USE_CEF_SANDBOX_STATE@
 
 #ifdef _WIN32
     #include <Windows.h>
@@ -213,18 +211,17 @@ static const float EPSILON = 0.00000001f;
 #define FORCE_POSITIVE(x) {if((x) < 0){ (x)*=-1; }}
 #define FORCE_POSITIVEF(x) {if((x) < 0){ (x)*=-1.0f; }}
 
-#ifdef _WIN32
+#ifdef _MSC_VER
     #define WIDEN2(x) L##x
     #define WIDEN(x) WIDEN2(x)
 #else
-    #define EXPAND(x) x
+    #define EXPAND(x) #x
     #define WIDEN3(x) L ## x
     #define WIDEN2(x) WIDEN3(x)
     #define WIDEN(x) WIDEN2(EXPAND(x))
 #endif
 
 #ifdef __GNUC__
-    #define __FUNCTION__ __func__
     #define __FUNCSIG__ __PRETTY_FUNCTION__
 #endif
 
@@ -233,13 +230,18 @@ static const float EPSILON = 0.00000001f;
 #define STRINGGIFY(x) STRINGGIFY2(x)
 #define WSTRINGIFY(x) WIDEN(STRINGGIFY(x))
 
+
 #ifdef _MSC_VER
-    #define __WFUNCTION__ WIDEN(__FUNCTION__)
-    #define __WFILE__ WIDEN(__FILE__)
+#define __WFUNCSIG__ WSTRINGIFY(__FUNCSIG__)
+#define __WFUNCTION__ WIDEN(__FUNCTION__)
+#define __WFILE__ WIDEN(__FILE__)
 #else
-    #define __WFUNCTION__ WSTRINGIFY(__FUNCTION__)
-    #define __WFILE__ WSTRINGIFY(__FILE__)
+#define __WFUNCSIG__ Convert::StringToWstring(__PRETTY_FUNCTION__)
+#define __WFUNCTION__ Convert::StringToWstring(__FUNCTION__)
+#define __WFILE__ Convert::StringToWstring(__FILE__)
 #endif
+
+
 
 #define SSLINE2(x) #x
 #define SSLINE(x) SSLINE2(x)
@@ -249,7 +251,6 @@ static const float EPSILON = 0.00000001f;
 
 #define __WDATE__ WSTRINGIFY(__DATE__)
 #define __WTIME__ WSTRINGIFY(__TIME__)
-#define __WFUNCSIG__ WSTRINGIFY(__FUNCSIG__)
 
 #define SAFE_DELETE_VECTOR(x) for(size_t vdind = 0; vdind < x.size(); ++vdind){if(x[vdind]){delete x[vdind];}}; x.clear();
 

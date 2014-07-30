@@ -515,23 +515,115 @@ void drawArrow( eAxis axis )
   glEnd();
 }
 
-void drawAxes()
-{
-    GLAttribScope attribScope( GL_CURRENT_BIT|GL_LIGHTING_BIT|GL_DEPTH_BUFFER_BIT );
+  // draw unit length X, Y, Z axes in red, green and blue.
+  void drawAxes()
+  {
+    GLAttribScope attribScope(GL_CURRENT_BIT | GL_LIGHTING_BIT | GL_DEPTH_BUFFER_BIT);
 
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
 
-    glColor3f( 1, 0, 0 );
-    drawArrow( kAxis_X );
+    glColor3f(1, 0, 0);
+    drawArrow(kAxis_X);
 
-    glColor3f( 0, 1, 0 );
-    drawArrow( kAxis_Y );
+    glColor3f(0, 1, 0);
+    drawArrow(kAxis_Y);
 
-    glColor3f( 0, 0, 1 );
-    drawArrow( kAxis_Z );
-}
+    glColor3f(0, 0, 1);
+    drawArrow(kAxis_Z);
+  }
 
+  // additional sphere/cylinder drawing utilities
+  void drawSphere(eStyle style, const Vector& vCenter, float fRadius)
+  {
+    GLMatrixScope matrixScope;
+
+    glTranslatef(vCenter.x, vCenter.y, vCenter.z);
+    glScalef(fRadius, fRadius, fRadius);
+
+    drawSphere(style);
+  }
+
+  void drawCylinder(eStyle style, const Vector& vBottom, const Vector& vTop, float fRadius)
+  {
+    GLMatrixScope matrixScope;
+
+    Vector vCenter = (vBottom + vTop) * 0.5f;
+
+    Vector vDir = (vTop - vBottom).normalized();
+    Vector vRotAxis = Vector::zAxis().cross(vDir);
+    float fRotAngle = Vector::zAxis().angleTo(vDir);
+    float fHeight = vTop.distanceTo(vBottom);
+
+    glTranslatef(vCenter.x, vCenter.y, vCenter.z);
+    glRotatef(fRotAngle * RAD_TO_DEG, vRotAxis.x, vRotAxis.y, vRotAxis.z);
+    glScalef(fRadius, fRadius, fHeight);
+
+    drawCylinder(style, kAxis_Z);
+  }
+
+  // convenience function for drawing skeleton API hand
+  void drawSkeletonHand(const Leap::Hand& hand, const GLVector4fv& vBoneColor, const GLVector4fv& vJointColor) {
+    static const float kfJointRadiusScale = 0.75f;
+    static const float kfBoneRadiusScale = 0.5f;
+    static const float kfPalmRadiusScale = 1.15f;
+
+    LeapUtilGL::GLAttribScope colorScope( GL_CURRENT_BIT );
+
+    const Vector vPalm = hand.palmPosition();
+    const Vector vPalmDir = hand.direction();
+    const Vector vPalmNormal = hand.palmNormal();
+    const Vector vPalmSide = vPalmDir.cross(vPalmNormal).normalized();
+
+    const float fThumbDist = hand.fingers()[Finger::TYPE_THUMB].bone(Bone::TYPE_METACARPAL).prevJoint().distanceTo(hand.palmPosition());
+    const Vector vWrist = vPalm - fThumbDist*(vPalmDir*0.90f + (hand.isLeft() ? -1.0f : 1.0f)*vPalmSide*0.38f);
+
+    FingerList fingers = hand.fingers();
+
+    float fRadius = 0.0f;
+    Vector vCurBoxBase;
+    Vector vLastBoxBase = vWrist;
+
+    for (int i = 0, ei = fingers.count(); i < ei; i++) {
+      const Finger& finger = fingers[i];
+      fRadius = finger.width() * 0.5f;
+
+      // draw individual fingers
+      for (int j = Bone::TYPE_METACARPAL; j <= Bone::TYPE_DISTAL; j++) {
+        const Bone& bone = finger.bone(static_cast<Bone::Type>(j));
+
+        // don't draw metacarpal, a box around the metacarpals is draw instead.
+        if (j == Bone::TYPE_METACARPAL) {
+          // cache the top of the metacarpal for the next step in metacarpal box
+          vCurBoxBase = bone.nextJoint();
+        } else {
+          glColor4fv(vBoneColor);
+          drawCylinder(kStyle_Solid, bone.prevJoint(), bone.nextJoint(), kfBoneRadiusScale*fRadius);
+          glColor4fv(vJointColor);
+          drawSphere(kStyle_Solid, bone.nextJoint(), kfJointRadiusScale*fRadius);
+        }
+      }
+
+      // draw segment of metacarpal box
+      glColor4fv(vBoneColor);
+      drawCylinder(kStyle_Solid, vCurBoxBase, vLastBoxBase, kfBoneRadiusScale*fRadius);
+      glColor4fv(vJointColor);
+      drawSphere(kStyle_Solid, vCurBoxBase, kfJointRadiusScale*fRadius);
+      vLastBoxBase = vCurBoxBase;
+    }
+
+    // close the metacarpal box
+    fRadius = fingers[Finger::TYPE_THUMB].width() * 0.5f;
+    vCurBoxBase = vWrist;
+    glColor4fv(vBoneColor);
+    drawCylinder(kStyle_Solid, vCurBoxBase, vLastBoxBase, kfBoneRadiusScale*fRadius);
+    glColor4fv(vJointColor);
+    drawSphere(kStyle_Solid, vCurBoxBase, kfJointRadiusScale*fRadius);
+
+    // draw palm position
+    glColor4fv(vJointColor);
+    drawSphere(kStyle_Solid, vPalm, kfPalmRadiusScale*fRadius);
+  }
 
 //GLCamera methods
 
@@ -547,4 +639,4 @@ void CameraGL::SetupGLView() const
   glMultMatrixf( GetView().toArray4x4() );
 }
 
-}
+} // namespace LeapUtilGL

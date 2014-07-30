@@ -87,6 +87,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	GUARD_LOCK_THIS_OBJECT();
 	// get time, for monitoring how long load takes //
 	__int64 InitStartTime = Misc::GetTimeMs64();
+
 	// set static access to this object //
 	instance = this;
 	// store parameters //

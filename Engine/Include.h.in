@@ -215,7 +215,7 @@ static const float EPSILON = 0.00000001f;
     #define WIDEN2(x) L##x
     #define WIDEN(x) WIDEN2(x)
 #else
-    #define EXPAND(x) #x
+    #define EXPAND(x) x
     #define WIDEN3(x) L ## x
     #define WIDEN2(x) WIDEN3(x)
     #define WIDEN(x) WIDEN2(EXPAND(x))

@@ -37,3 +37,6 @@ CopyCEGUI.bat
 /build/
 nbproject/
 [#]*[#]
+GTAGS
+GPATH
+GRTAGS

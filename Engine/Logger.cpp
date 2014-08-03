@@ -12,7 +12,7 @@ using namespace Leviathan;
 #include "Application/AppDefine.h"
 
 DLLEXPORT Leviathan::Logger::Logger(const wstring &file): FirstSaveDone(false), Saved(false), Autosave(false), Path(file){
-	// get time for putting to beginning of log //
+	// get time for putting to the  beginning of the  log file //
 #ifdef _WIN32
 	SYSTEMTIME tdate;
 	GetLocalTime(&tdate);
@@ -26,7 +26,8 @@ DLLEXPORT Leviathan::Logger::Logger(const wstring &file): FirstSaveDone(false), 
 
 #endif
 
-	PendingLog = L"Start of Leviathan log for leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
+	PendingLog = L"Start of Leviathan log for leviathan version :" + VERSIONS +
+		L"\n------------------------TIME: "+times+L"----------------------\n";
 
 	LatestLogger = this;
 }
@@ -45,7 +46,8 @@ DLLEXPORT Leviathan::Logger::Logger(const wstring &file, const wstring &start, c
 
 #endif
 
-	PendingLog = start+L"Start of Leviathan log for leviathan version :" VERSIONS L"\n------------------------TIME: "+times+L"----------------------\n";
+	PendingLog = start+L"Start of Leviathan log for leviathan version :" + VERSIONS +
+		L"\n------------------------TIME: "+times+L"----------------------\n";
 
 	LatestLogger = this;
 }

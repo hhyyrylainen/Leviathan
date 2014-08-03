@@ -68,7 +68,6 @@
 
 using namespace std;
 // -------------------------- //
-#define CLASSNAME   L"LeviathanWindow"
 
 #define LEVIATHAN_VERSION @LEVIATHAN_VERSION@
 #define LEVIATHAN_VERSIONS @LEVIATHAN_VERSIONS@
@@ -79,14 +78,17 @@ using namespace std;
 #define LEVIATHAN_VERSION_MINOR     @LEVIATHAN_VERSION_MINOR@
 #define LEVIATHAN_VERSION_PATCH     @LEVIATHAN_VERSION_PATCH@
 
-#define VERSION     LEVIATHAN_VERSION
-#define VERSIONS    LEVIATHAN_VERSIONS
-
 #define LEVIATHAN
 
-static const float PI = 3.14159265f;
-static const float DEGREES_TO_RADIANS = PI/180.f;
-static const float EPSILON = 0.00000001f;
+namespace Leviathan{
+
+	static const double  VERSION = LEVIATHAN_VERSION;
+	static const wstring  VERSIONS =  LEVIATHAN_VERSIONS;
+
+	static const float PI = 3.14159265f;
+	static const float DEGREES_TO_RADIANS = PI/180.f;
+	static const float EPSILON = 0.00000001f;
+}
 
 // Define common types that might be missing //
 #ifndef _WIN32

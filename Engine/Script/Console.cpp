@@ -53,18 +53,19 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 	if(commandstr == L"help"){
 
 		ConsoleOutput(L"// ------------------ Help ------------------ //\n"
-			L"\t> Console commands are a custom command followed by it's parameters\n"
-			L"\t  or AngelScript code. (Optionally starting with '>')\n"
-			L"\t> Running a custom command: \">[TYPE=\"\"] [COMMAND]\" eg. \n"
-			L"\t  \">ADDVAR int newglobal = 25\"\n"
-			L"\t You can view custom commands with the \"commands\" command.\n"
-			L"\t> Running arbitrary commands:\n "
-			L"\t  \"> for(int i = 0; i < 5; i++) GlobalFunc();\"\n"
-			L"\t> Multiline commands are done by putting '\\' to the end of each line.\n"
-			L"\t> For example:\n"
-			L"\t >ADDFUNC void MyFunc(int i){ Print(\"Val is: \"+i); }\n"
-			L"\t > for(int i = 0; i < 10; i++){ Print(i); }\n"
-			L"\t> Would output \"Val is: 0 Val is: 1 ...\"");
+					  L"\t> Console commands are a custom command followed by it's parameters\n"
+					  L"\t  or just plain AngelScript code. (Optionally starting with a  '>')\n"
+					  L"\t> Running a custom command: \">[TYPE=\"\"] [COMMAND]\" eg. \n"
+					  L"\t  \">ADDVAR int newglobal = 25\"\n"
+					  L"\t You can view custom commands with the \"commands\" command.\n"
+					  L"\t> Running arbitrary commands:\n "
+					  L"\t  \"> for(int i = 0; i < 5; i++) GlobalFunc();\"\n"
+					  L"\t> Multiline commands are done by putting '\\' (a backwards slash) \n"
+					  L"to the end of each line.\n"
+					  L"\t> For example:\n"
+					  L"\t >ADDFUNC void MyFunc(int i){ Print(\"Val is: \"+i); }\n"
+					  L"\t > for(int i = 0; i < 10; i++){ Print(i); }\n"
+					  L"\t> Would output \"Val is: 0 Val is: 1 ...\"");
 		return CONSOLECOMMANDRESULTSTATE_SUCCEEDED;
 	} else if (commandstr == L"commands"){
 		// List custom commands //
@@ -125,7 +126,7 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 
 	// check if the length is too long or too short to actually be any specific command //
 	CONSOLECOMMANDTYPE commandtype = CONSOLECOMMANDTYPE_NONE;
-	if(ccmd->size() > 0){
+	if(ccmd && (ccmd->size() > 0)){
 		// check for types //
 		auto matchpos = CommandTypeDefinitions.find(*ccmd);
 		if(matchpos == CommandTypeDefinitions.end()){
@@ -153,16 +154,21 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 			// we just need to check if this is multiple lines command //
 			if(restofcommand->back() == L'\\'){
 				// multi line command //
+				
+				if(ccmd){
 
-				PendingCommand += (*ccmd)+(restofcommand->substr(0, restofcommand->size()-1))+L"\n";
+					PendingCommand += (*ccmd)+(*restofcommand)+L"\n";
+				} else {
+					
+					PendingCommand += *restofcommand+L"\n";
+				}
 				// waiting for more //
 				return CONSOLECOMMANDRESULTSTATE_WAITINGFORMORE;
 
 			} else {
 				// run command (and possibly previous multi line parts) //
 
-				if(!ExecuteStringInstruction(Convert::WstringToString(PendingCommand.size() != 0 ? PendingCommand+(*ccmd)+(*restofcommand): 
-					(*ccmd)+(*restofcommand))))
+				if(!ExecuteStringInstruction(Convert::WstringToString(PendingCommand.size() != 0 ? PendingCommand+((ccmd ? (*ccmd): L""))+(*restofcommand): ((ccmd ? (*ccmd): L""))+(*restofcommand))))
 				{
 					// clear pending command //
 					PendingCommand.clear();
@@ -187,13 +193,13 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 			return AddFunctionStringDefinition(Convert::WstringToString(*restofcommand)) ? CONSOLECOMMANDRESULTSTATE_SUCCEEDED: 
 				CONSOLECOMMANDRESULTSTATE_FAILED;
 		}
-	break;
+		break;
 	case CONSOLECOMMANDTYPE_DELVAR:
 		{
 			return DeleteVariableStringDefinition(Convert::WstringToString(*restofcommand)) ? CONSOLECOMMANDRESULTSTATE_SUCCEEDED: 
 				CONSOLECOMMANDRESULTSTATE_FAILED;
 		}
-	break;
+		break;
 	case CONSOLECOMMANDTYPE_DELFUNC:
 		{
 			return DeleteFunctionStringDefinition(Convert::WstringToString(*restofcommand)) ? CONSOLECOMMANDRESULTSTATE_SUCCEEDED: 
@@ -374,7 +380,8 @@ DLLEXPORT void Leviathan::ScriptConsole::ListFunctions(){
 	for(asUINT n = 0; n < mod->GetFunctionCount(); n++ ){
 		// get function //
 		asIScriptFunction* func = mod->GetFunctionByIndex(n);
-		// print the function //
+
+		// Print the function //
 		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(func->GetDeclaration()));
 	}
 

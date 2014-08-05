@@ -86,6 +86,10 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 		// Load the GUI fonts //
 		windowcreater->GetFontManager()->LoadAllFonts();
 	}
+	
+	// Store this window's number
+	WindowNumber = ++TotalCreatedWindows;
+
 	// create the actual window //
 	DisplayWindow = new Window(tmpwindow, this);
 #ifdef _WIN32
@@ -122,8 +126,11 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
 	GUARD_LOCK_THIS_OBJECT();
 
 	// GUI is very picky about delete order
-	SAFE_RELEASEDEL(WindowsGui);
+	//SAFE_RELEASEDEL(WindowsGui);
 
+	// The window object has to be closed down to avoid errors and crashing //
+	if(DisplayWindow)
+		DisplayWindow->CloseDown();
 
 	SAFE_DELETE(DisplayWindow);
 	TertiaryReceiver.reset();
@@ -170,6 +177,11 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::SetCustomInputController(shared_
 	GUARD_LOCK_THIS_OBJECT();
 	
 	TertiaryReceiver = controller;
+}
+// ------------------------------------ //
+DLLEXPORT int Leviathan::GraphicalInputEntity::GetWindowNumber() const{
+
+	return WindowNumber;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::SaveScreenShot(const string &filename){
@@ -236,6 +248,9 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::OnFocusChange(bool focused){
 GraphicalInputEntity* Leviathan::GraphicalInputEntity::InputCapturer = NULL;
 
 int Leviathan::GraphicalInputEntity::GlobalWindowCount = 0;
+
+int Leviathan::GraphicalInputEntity::TotalCreatedWindows = 0;
+
 
 DLLEXPORT int Leviathan::GraphicalInputEntity::GetGlobalWindowCount(){
 	return GlobalWindowCount;

@@ -120,8 +120,6 @@ DLLEXPORT void Leviathan::Misc::KillThread(boost::thread &threadtokill){
 
 #elif defined __linux__
 
-	//pthread_kill(threadtokill.native_handle(), SIGIO);
-	//pthread_kill(threadtokill.native_handle(), SIGUSR1);
 	// This should work //
 	int threadid = threadtokill.native_handle();
 	
@@ -130,6 +128,7 @@ DLLEXPORT void Leviathan::Misc::KillThread(boost::thread &threadtokill){
 		pthread_cancel(threadid);
 	}
 
+	threadtokill.detach();
 #else
 #error no working kill thread on platform!
 #endif

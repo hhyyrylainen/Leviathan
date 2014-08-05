@@ -325,7 +325,12 @@ void Leviathan::ResourceFolderListener::StopThread(){
 	inotify_rm_watch(InotifyID, InotifyWatches);
 	close(InotifyID);
 	
-	SAFE_DELETE(ReadBuffer);
+	ListenerThread.join();
+
+	if(ReadBuffer){
+		delete[] ReadBuffer;
+		ReadBuffer = NULL;
+	}
 	
 	InotifyID = -1;
 	InotifyWatches = -1;
@@ -461,6 +466,10 @@ movetonextdatalabel:
 		
 		// Handle all the data //
 		for(int i = 0; i < readcount; ){
+
+			// Break if invalid buffer //
+			if(!ReadBuffer)
+				return;
 			
 			inotify_event* event = reinterpret_cast<inotify_event*>(&ReadBuffer[i]);
 			

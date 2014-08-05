@@ -40,11 +40,11 @@ setting CMake options and regenerating, rather than editing directly.
 #   define DEBUG 1
 #endif
 
-#define CEGUI_HAS_BUILD_SUFFIX
+/* #undef CEGUI_HAS_BUILD_SUFFIX */
 #ifdef CEGUI_HAS_BUILD_SUFFIX
 #   ifndef CEGUI_BUILD_SUFFIX
 #       if defined(DEBUG) || defined(_DEBUG)
-#           define CEGUI_BUILD_SUFFIX "_d"
+#           define CEGUI_BUILD_SUFFIX ""
 #       else
 #           define CEGUI_BUILD_SUFFIX ""
 #       endif
@@ -85,13 +85,13 @@ setting CMake options and regenerating, rather than editing directly.
 // Set this to the default ImageCodec to be used.
 //////////////////////////////////////////////////////////////////////////
 #ifndef CEGUI_DEFAULT_IMAGE_CODEC
-#   define CEGUI_DEFAULT_IMAGE_CODEC SILLYImageCodec
+#   define CEGUI_DEFAULT_IMAGE_CODEC FreeImageImageCodec
 #endif
 
 //////////////////////////////////////////////////////////////////////////
 // The following says which TinyXML api version has been found
 //////////////////////////////////////////////////////////////////////////
-/* #undef CEGUI_TINYXML_HAS_2_6_API */
+#define CEGUI_TINYXML_HAS_2_6_API 1
 
 //////////////////////////////////////////////////////////////////////////
 // The following controls the version of Lua that is going to be used.
@@ -188,9 +188,9 @@ setting CMake options and regenerating, rather than editing directly.
 // Define the default place where cegui will look for loadable modules
 // this can be changed at runtime via the CEGUI_MODULE_DIR environment var.
 #if defined(_WIN32) || defined(__WIN32__)
-#   define CEGUI_MODULE_DIR "H:/c++ resources/CEGUIForkIt/bin/"
+#   define CEGUI_MODULE_DIR "/home/hhyyrylainen/Projects/Build/cegui-fork/bin/"
 #else
-#   define CEGUI_MODULE_DIR "Install/lib/cegui-9999.0/"
+#   define CEGUI_MODULE_DIR "/home/hhyyrylainen/Projects/Build/cegui-fork/Install/lib/cegui-9999.0/"
 #endif
 
 // This is defined when iconv is expecting a const char** and not a char**

@@ -157,10 +157,10 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 				
 				if(ccmd){
 
-					PendingCommand += (*ccmd)+(*restofcommand)+L"\n";
+					PendingCommand += (*ccmd)+(restofcommand->substr(0, restofcommand->size()-1))+L"\n";
 				} else {
 					
-					PendingCommand += *restofcommand+L"\n";
+					PendingCommand += restofcommand->substr(0, restofcommand->size()-1)+L"\n";
 				}
 				// waiting for more //
 				return CONSOLECOMMANDRESULTSTATE_WAITINGFORMORE;

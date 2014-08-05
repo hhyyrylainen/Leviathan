@@ -270,7 +270,7 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 #ifdef __GNUC__
 			while((*iter)->HasRunningTask()){
 				try{
-					TaskQueueNotify.wait(lockit);
+					TaskQueueNotify.wait_for(lockit, MillisecondDuration(50));
 				}
 				catch(...){
 					Logger::Get()->Warning(L"ThreadingManager: MakeThreadsWorkWithOgre: linux fix wait interrupted");

@@ -365,9 +365,9 @@ o GuiObject "LobbyScreen/StartButton"{
 // Button and text state updater which is updated every time the server sends us a new list of players //
 o GuiObject "_LobbyStatusPlayerUpdater"{
     s{
-        #include "PongLobbyPlayerUpdater.as"
-        
-    @%};
+		#include "PongLobbyPlayerUpdater.as"
+		
+	@%};
 }
 
 

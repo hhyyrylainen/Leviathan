@@ -148,7 +148,6 @@ namespace Leviathan{
 		DLLEXPORT static OIS::KeyCode ConvertWstringToOISKeyCode(const wstring &str);
 		DLLEXPORT static wstring ConvertOISKeyCodeToWstring(const OIS::KeyCode &code);
 
-		void ReportKeyEventAsUsed();
 
 	private:
 
@@ -189,10 +188,6 @@ namespace Leviathan{
 
 		bool ThisFrameHandledCreate;
 		int LastFrameDownMouseButtons;
-
-		//! Allows CEF to report whether a key input was handled
-		//! Set by ReportKeyEventAsUsed
-		bool InputProcessedByCEF;
 
 		// this is updated every time input is gathered //
 		int SpecialKeyModifiers;

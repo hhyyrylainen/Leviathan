@@ -255,6 +255,7 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 
 void Leviathan::Gui::GuiManager::Release(){
 	GUARD_LOCK_THIS_OBJECT();
+	
 
 	// Stop with the file updates //
 	if(FileChangeID){
@@ -269,7 +270,7 @@ void Leviathan::Gui::GuiManager::Release(){
 		FileChangeID = 0;
 	}
 
-	// default mouse back //
+	// Default mouse back //
 	SetMouseTheme(L"none");
 
 	// Release objects first //
@@ -692,8 +693,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseTheme(const wstring &tname){
 
 		// show default window cursor //
 		ThisWindow->GetWindow()->SetHideCursor(false);
-		if(tname == L"none")
-			return;
+		return;
 	}
 
 	// Set it active //

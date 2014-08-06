@@ -125,8 +125,12 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
 	GUARD_LOCK_THIS_OBJECT();
 
+	// Mark the Window as unusable //
+	DisplayWindow->InvalidateWindow();
+
+
 	// GUI is very picky about delete order
-	//SAFE_RELEASEDEL(WindowsGui);
+	SAFE_RELEASEDEL(WindowsGui);
 
 	// The window object has to be closed down to avoid errors and crashing //
 	if(DisplayWindow)

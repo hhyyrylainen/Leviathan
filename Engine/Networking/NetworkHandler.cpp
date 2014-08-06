@@ -613,6 +613,10 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 																					shared_ptr<boost::promise<bool>> result, shared_ptr<ConnectionInfo> currentconnection,
 																					shared_ptr<wstring> tmpaddress, shared_ptr<boost::promise<wstring>> resultvar) -> void
 				{
+					// Report this for easier debugging //
+					Logger::Get()->Info(L"Master server check with \""+*tmpaddress+
+										L"\" completed");
+
 					// Quit if the instance is gone //
 					if(instance->CloseMasterServerConnection)
 						return;
@@ -666,18 +670,17 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 						
 						return response->GetFutureForThis().has_value();
 					}, serverinforesponse)));
-		
-		goto RunGetResponseFromMasterprepareexit;
 	}
 	
 
-	// If we got here, we haven't connected to anything //
-	Logger::Get()->Warning(L"NetworkHandler: could not connect to any fetched master servers, you can restart to use a new list");
-
-	// We can let whoever is waiting for us to go now, and finish some utility tasks after that //
-	resultvar->set_value(wstring(L"Failed to connect to master server"));
-
-RunGetResponseFromMasterprepareexit:
+	// TODO: run this only when all the tasks fail
+	if(false){
+		// If we got here, we haven't connected to anything //
+		Logger::Get()->Warning(L"NetworkHandler: could not connect to any fetched master servers, you can restart to use a new list");
+		
+		// We can let whoever is waiting for us to go now, and finish some utility tasks after that //
+		resultvar->set_value(wstring(L"Failed to connect to master server"));
+	}
 
 
 	// This needs to be done here //

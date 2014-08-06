@@ -47,7 +47,7 @@ X11::XID Leviathan::Window::GetForegroundWindow(){
 
 DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner) : OWindow(owindow),
 	WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL), LastFrameDownMouseButtons(0),
-	ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true), OverLayCamera(NULL)
+																								ForceMouseVisible(false), CursorState(true), MouseCaptured(false), FirstInput(true), OverLayCamera(NULL), IsInvalidated(false)
 #ifdef __GNUC__
 	, XDisplay(NULL), m_hwnd(0), XInvCursor(0)
 #else
@@ -98,6 +98,11 @@ DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
 #ifdef _WIN32
 			ShowCursor(TRUE);
 #else
+
+			// Don't do anything if window is not valid anymore //
+			if(!VerifyRenderWindowHandle())
+				return;
+
 			// Restore default cursor //
 			XUndefineCursor(XDisplay, m_hwnd);
 #endif
@@ -110,6 +115,10 @@ DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
 #ifdef _WIN32
 			ShowCursor(FALSE);
 #else
+			// Don't do anything if window is not valid anymore //
+			if(!VerifyRenderWindowHandle())
+				return;
+
 			// Set the invisible map as our cursor //
 			XDefineCursor(XDisplay, m_hwnd, XInvCursor);
 #endif
@@ -120,7 +129,8 @@ DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
 #ifdef _WIN32
 DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 	// update window handle before using //
-	VerifyRenderWindowHandle();
+	if(!VerifyRenderWindowHandle())
+		return;
 
 	if(m_hwnd == NULL){
 		// window has closed //
@@ -138,7 +148,8 @@ DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 #else
 DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 
-	VerifyRenderWindowHandle();
+	if(!VerifyRenderWindowHandle())
+		return;
 
 	if(m_hwnd == 0){
 		// window has closed //
@@ -153,7 +164,9 @@ DLLEXPORT void Leviathan::Window::SetMouseToCenter(){
 #ifdef _WIN32
 DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
 	// update window handle before using //
-	VerifyRenderWindowHandle();
+	if(!VerifyRenderWindowHandle())
+		return;
+
 	if(m_hwnd == NULL){
 		// window has closed //
 		x = y = 0;
@@ -170,6 +183,10 @@ DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
 }
 #else
 DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
+
+	if(!VerifyRenderWindowHandle())
+		return;
+
 	// To not segment fault on this, we need to pass in dummy pointers to unused values //
 	X11::XID spammyme;
 	int spamme;
@@ -192,7 +209,7 @@ DLLEXPORT bool Leviathan::Window::IsMouseOutsideWindowClientArea(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Window::CloseDown(){
-	
+
 	// Sometimes the window might be closed already so check is it safe to use //
 	bool canusewindow = VerifyRenderWindowHandle();
 
@@ -236,7 +253,8 @@ void Leviathan::Window::windowResized(Ogre::RenderWindow* rw){
 
 void Leviathan::Window::windowFocusChange(Ogre::RenderWindow* rw){
 	// update handle to have it up to date //
-	VerifyRenderWindowHandle();
+	if(!VerifyRenderWindowHandle())
+		return;
 
 	//Focused = m_hwnd == GetFocus() ? true: false;
 	Focused = m_hwnd == GetForegroundWindow() ? true: false;
@@ -256,7 +274,7 @@ bool Leviathan::Window::VerifyRenderWindowHandle(){
 
 	m_hwnd = reinterpret_cast<HWND>(WindowHwnd);
 
-	if(!IsWindow(m_hwnd)){
+	if(IsInvalidated || !IsWindow(m_hwnd)){
 		// not a window! //
 		return false;
 	}
@@ -266,7 +284,7 @@ bool Leviathan::Window::VerifyRenderWindowHandle(){
 #else
 bool Leviathan::Window::VerifyRenderWindowHandle(){
 
-	if(!OWindow || OWindow->isClosed()){
+	if(IsInvalidated || !OWindow || OWindow->isClosed()){
 		
 		m_hwnd = 0;
 		XDisplay = 0;
@@ -288,6 +306,11 @@ bool Leviathan::Window::VerifyRenderWindowHandle(){
 	return true;
 }
 #endif
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Window::InvalidateWindow(){
+
+	IsInvalidated = true;
+}
 // ------------------------------------ //
 bool Leviathan::Window::SetupOISForThisWindow(){
 	// creation parameters //

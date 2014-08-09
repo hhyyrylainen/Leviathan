@@ -31,9 +31,9 @@ template<NameOfTarget, CollectionToGoTo, CollectionToDisable> GUIMenuButtonToCol
     o GuiObject "NameOfTarget"{
         s{
             [@Listener="OnClick"]
-            bool GoBackToMainMenu(GuiObject@ instance){
+            bool GoToCollection(GuiObject@ instance){
                 
-                // Go back to the main menu //
+                // Go back to the specified collection //
                 instance.GetOwningManager().SetCollectionState("CollectionToGoTo", true);
                 instance.GetOwningManager().SetCollectionState("CollectionToDisable", false);
                 return true;
@@ -51,34 +51,44 @@ o GuiCollection "OnKeeper"{
     }
 }
 
-
-// ------------------ Debug helpers ------------------ //
-// The FPS display //
-o GuiObject "FPSDisplay"{
-    l params{
-        
-        ListenOn = DATAINDEX_FPS;
-    }
-    s{
-        [@Listener="OnListenUpdate"]
-        int UpdateFPS(GuiObject@ instance, Event@ event){
-            // The new FPS is the first value //
-            ScriptSafeVariableBlock@ newvalue = instance.GetAndPopFirstUpdated();
-            if(newvalue is null)
-                return 0;
-                
-            // Set the value //
-            instance.GetTargetElement().SetText(string(newvalue));
-            
-            return 1;
-        }
-    @%};
-}
-
 // ------------------ MenuWindow ------------------ //
 template<> PGCTemplate<MenuWindow, "MenuWindow", true>
 
+// ------------------ Main menu objects ------------------ //
+o GuiCollection "TopLevelMenu"{
+    l params{
+        Enabled = true;
+        AutoTarget = "MenuWindow/TopLevelMenu";
+        AutoAnimateChildren = true;
+        AutoAnimationIn = [[AutoTarget], [PopIn]];
+        AutoAnimationOut = [[AutoTarget], [SinkAway]];
+    }
+}
 
+// To the server start screen button //
+template<> GUIMenuButtonToCollection<"MenuWindow/TopLevelMenu/StartServerButton", StartServerMenu, TopLevelMenu>
+
+// To the server browser screen button //
+
+// To the direct connect screen button //
+template<> GUIMenuButtonToCollection<"MenuWindow/TopLevelMenu/ConnectToAddressButton", DirectConnectScreen, TopLevelMenu>
+
+// To the options menu //
+//template<> GUIMenuButtonToCollection<"MenuWindow/TopLevelMenu/", , TopLevelMenu>
+
+
+// Quit the game //
+o GuiObject "MenuWindow/TopLevelMenu/QuitGameButton"{
+    s{
+        [@Listener="OnClick"]
+        bool QuitIt(GuiObject@ instance){
+            // Close the game //
+            GetPongBase().Quit();
+            return true;
+        }
+    @%};
+}
+// ------------------ Version numbers ------------------ //
 o GuiObject "MenuWindow/PongVersion"{
     s{
         [@Listener="OnInit"]
@@ -109,49 +119,25 @@ o GuiObject "MenuWindow/LeviathanVersion"{
         }
     @%};
 }
-// ------------------ Main menu objects ------------------ //
-o GuiCollection "TopLevelMenu"{
+// ------------------ Debug helpers ------------------ //
+// The FPS display //
+o GuiObject "FPSDisplay"{
     l params{
-        Enabled = true;
-        AutoTarget = "MenuWindow/TopLevelMenu";
-        AutoAnimateChildren = true;
-        AutoAnimationIn = [[AutoTarget], [PopIn]];
-        AutoAnimationOut = [[AutoTarget], [SinkAway]];
-    }
-}
-
-// To the server start screen button //
-o GuiObject {
-    s{
-        [@Listener="OnClick"]
-        bool SetVersion(GuiObject@ instance){
         
-            // Go to the StartServerMenu //
-            instance.GetOwningManager().SetCollectionState(, true);
-            instance.GetOwningManager().SetCollectionState("", false);
-            return true;
-        }
-    @%};
-}
-
-// To the server browser screen button //
-template<> GUIMenuButtonToCollection<"MenuWindow/TopLevelMenu/StartServerButton", StartServerMenu, TopLevelMenu>
-
-// To the direct connect screen button //
-template<> GUIMenuButtonToCollection<"MenuWindow/TopLevelMenu/ConnectToAddressButton", DirectConnectScreen, TopLevelMenu>
-
-// To the options menu //
-//template<> GUIMenuButtonToCollection<"MenuWindow/TopLevelMenu/", , TopLevelMenu>
-
-
-// Quit the game //
-o GuiObject "MenuWindow/TopLevelMenu/QuitGameButton"{
+        ListenOn = DATAINDEX_FPS;
+    }
     s{
-        [@Listener="OnClick"]
-        bool QuitIt(GuiObject@ instance){
-            // Close the game //
-            GetPongBase().Quit();
-            return true;
+        [@Listener="OnListenUpdate"]
+        int UpdateFPS(GuiObject@ instance, Event@ event){
+            // The new FPS is the first value //
+            ScriptSafeVariableBlock@ newvalue = instance.GetAndPopFirstUpdated();
+            if(newvalue is null)
+                return 0;
+                
+            // Set the value //
+            instance.GetTargetElement().SetText(string(newvalue));
+            
+            return 1;
         }
     @%};
 }

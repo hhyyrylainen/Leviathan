@@ -1,4 +1,3 @@
-#include "Include.h"
 #include <assert.h>
 #include <string>
 
@@ -24,6 +23,7 @@ struct SContextInfo
 	asUINT currentCoRoutine;
 };
 
+// TODO: Instead of using a global variable the context's user data
 static CContextMgr *g_ctxMgr = 0;
 static void ScriptSleep(asUINT milliSeconds)
 {
@@ -55,29 +55,21 @@ static void ScriptYield()
 	}
 }
 
-// TODO: Use function pointers to receive the function that should be called
-void ScriptCreateCoRoutine(string &func, CScriptAny *arg)
+void ScriptCreateCoRoutine(asIScriptFunction *func, CScriptDictionary *arg)
 {
+	if( func == 0 )
+		return;
+
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx && g_ctxMgr )
 	{
-		asIScriptModule *mod = ctx->GetFunction()->GetModule();
-
-		// We need to find the function that will be created as the co-routine
-		string decl = "void " + func + "(any @)";
-		asIScriptFunction *func = mod->GetFunctionByDecl(decl.c_str());
-		if( func == 0 )
-		{
-			// No function could be found, raise an exception
-			ctx->SetException(("Function '" + decl + "' doesn't exist").c_str());
-			return;
-		}
-
 		// Create a new context for the co-routine
 		asIScriptContext *coctx = g_ctxMgr->AddContextForCoRoutine(ctx, func);
 
 		// Pass the argument to the context
 		coctx->SetArgObject(0, arg);
+
+		// The context manager will call Execute() on the context when it is time
 	}
 }
 
@@ -183,7 +175,7 @@ void CContextMgr::ExecuteScripts()
 				engine->GarbageCollect(asGC_FULL_CYCLE | asGC_DESTROY_GARBAGE);
 
 				// Determine how many objects were destroyed
-				engine->GetGCStatistics(&gcSize3);
+ 				engine->GetGCStatistics(&gcSize3);
 				m_numGCObjectsDestroyed += gcSize3 - gcSize2;
 			}
 
@@ -336,10 +328,14 @@ void CContextMgr::RegisterThreadSupport(asIScriptEngine *engine)
 
 void CContextMgr::RegisterCoRoutineSupport(asIScriptEngine *engine)
 {
-	int r;
+	int r; 
+
+	// The dictionary add-on must have been registered already
+	assert( engine->GetObjectTypeByDecl("dictionary") );
 
 	r = engine->RegisterGlobalFunction("void yield()", asFUNCTION(ScriptYield), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("void createCoRoutine(const string &in, any @+)", asFUNCTION(ScriptCreateCoRoutine), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterFuncdef("void coroutine(dictionary@)");
+	r = engine->RegisterGlobalFunction("void createCoRoutine(coroutine @+, dictionary @+)", asFUNCTION(ScriptCreateCoRoutine), asCALL_CDECL); assert( r >= 0 );
 }
 
 void CContextMgr::SetGetTimeCallback(TIMEFUNC_t func)

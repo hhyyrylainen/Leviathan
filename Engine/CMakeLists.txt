@@ -21,6 +21,8 @@ file(GLOB GroupNewton "Newton/*.cpp" "Newton/*.h")
 file(GLOB GroupEntities "Entities/*.cpp" "Entities/*.h")
 file(GLOB GroupEntitiesBases "Entities/Bases/*.cpp" "Entities/Bases/*.h")
 file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
+file(GLOB GroupEntitiesSerializers "Entities/Serializers/*.cpp" "Entities/Serializers/*.h")
+
 file(GLOB GroupUtility "Utility/*.cpp" "Utility/*.h")
 file(GLOB GroupUtilityFile "Utility/FileRelated/*.cpp" "Utility/FileRelated/*.h")
 file(GLOB GroupUtilityData "Utility/DataHandling/*.cpp" "Utility/DataHandling/*.h")
@@ -82,7 +84,7 @@ source_group("Libraries\\Grouputf8" FILES ${Grouputf8})
 source_group("Entities" FILES ${GroupEntities})
 source_group("Entities\\Bases" FILES ${GroupEntitiesBases})
 source_group("Entities\\Objects" FILES ${GroupEntitiesObjects})
-
+source_group("Entities\\Serializers" FILES ${GroupEntitiesSerializers})
 
 source_group("Utility" FILES ${GroupUtility})
 source_group("Utility\\Statistics" FILES ${GroupStatistics})
@@ -116,7 +118,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
     ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
-    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators} ${GroupGameplay} ${GroupPermissions})
+    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators} ${GroupGameplay} ${GroupPermissions} ${GroupEntitiesSerializers})
 
     
 if(WIN32)

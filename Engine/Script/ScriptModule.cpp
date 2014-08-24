@@ -91,7 +91,8 @@ FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScrip
 	// space is already reserved and objects allocated //
 	for(UINT i = 0; i < parameterc; i++){
 		// get parameter type id //
-		int paraid = func->GetParamTypeId(i);
+		int paraid;
+		func->GetParam(i, &paraid);
 
 		_FillParameterDataObject(paraid, &newinfo->ParameterTypeIDS[i], &newinfo->ParameterDeclarations[i], &newinfo->MatchingDataBlockTypes[i]);
 	}
@@ -757,8 +758,9 @@ void Leviathan::ScriptModule::_FileChanged(const wstring &file, ResourceFolderLi
 void Leviathan::ScriptModule::_BuildTheModule(){
 	// Add the source files before building //
 	for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
-		if(ScriptBuilder->AddSectionFromMemory(ScriptSourceSegments[i]->SourceFile.c_str(), ScriptSourceSegments[i]->SourceCode->c_str(),
-			ScriptSourceSegments[i]->StartLine) < 0)
+		if(ScriptBuilder->AddSectionFromMemory(ScriptSourceSegments[i]->SourceFile.c_str(), 
+                                               ScriptSourceSegments[i]->SourceCode->c_str()
+                                               /*, ScriptSourceSegments[i]->StartLine*/) < 0)
 		{
 			Logger::Get()->Error(L"ScriptModule: GetModule: failed to build unbuilt module (adding source files failed), "+GetInfoWstring());
 			ScriptState = SCRIPTBUILDSTATE_FAILED;

@@ -28,7 +28,9 @@
 %ignore Leap::Pointable::Pointable(ToolImplementation*);
 %ignore Leap::Finger::Finger(FingerImplementation*);
 %ignore Leap::Tool::Tool(ToolImplementation*);
+%ignore Leap::Bone::Bone(BoneImplementation*);
 %ignore Leap::Hand::Hand(HandImplementation*);
+%ignore Leap::Arm::Arm(ArmImplementation*);
 %ignore Leap::Gesture::Gesture(GestureImplementation*);
 %ignore Leap::Screen::Screen(ScreenImplementation*);
 %ignore Leap::Frame::Frame(FrameImplementation*);
@@ -62,20 +64,28 @@
   %attributeval(Class, Leap::Type, Name, Name)
 %enddef
 
-# Apply language specific caseing
-#if SWIGCSHARP
+#if SWIGCSHARP || SWIGPYTHON
 
 %rename(GestureType) Leap::Gesture::Type;
 %rename(GestureState) Leap::Gesture::State;
-%rename("%(camelcase)s") "";
+%rename(FingerJoint) Leap::Finger::Joint;
+%rename(FingerType) Leap::Finger::Type;
+%rename(BoneType) Leap::Bone::Type;
+%rename(DeviceType) Leap::Device::Type;
+
+#endif
+
+# Apply language specific caseing
+#if SWIGCSHARP
+
+%rename("%(camelcase)s", %$not %$isenumitem) "";
 
 #elif SWIGPYTHON
 
 %typemap(varout, noblock=1) SWIGTYPE & {
   %set_varoutput(SWIG_NewPointerObj(%as_voidptr(&$1()), $descriptor, %newpointer_flags));
 }
-%rename(GestureType) Leap::Gesture::Type;
-%rename(GestureState) Leap::Gesture::State;
+
 %rename("%(undercase)s", notregexmatch$name="^[A-Z0-9_]+$") "";
 
 #endif
@@ -91,12 +101,23 @@
 %constattrib( Leap::Pointable, float, length );
 %constattrib( Leap::Pointable, bool, isTool );
 %constattrib( Leap::Pointable, bool, isFinger );
+%constattrib( Leap::Pointable, bool, isExtended );
 %constattrib( Leap::Pointable, bool, isValid );
 %constattrib( Leap::Pointable, Leap::Pointable::Zone, touchZone )
 %constattrib( Leap::Pointable, float, touchDistance )
 %leapattrib( Leap::Pointable, Vector, stabilizedTipPosition )
 %constattrib( Leap::Pointable, float, timeVisible );
 %leapattrib( Leap::Pointable, Frame, frame );
+
+%leapattrib( Leap::Bone, Vector, prevJoint );
+%leapattrib( Leap::Bone, Vector, nextJoint );
+%leapattrib( Leap::Bone, Vector, center );
+%leapattrib( Leap::Bone, Vector, direction );
+%constattrib( Leap::Bone, float, length );
+%constattrib( Leap::Bone, float, width );
+%constattrib( Leap::Bone, Leap::Bone::Type, type )
+%leapattrib( Leap::Bone, Matrix, basis )
+%constattrib( Leap::Bone, bool, isValid );
 
 %constattrib( Leap::Hand, int, id );
 %leapattrib( Leap::Hand, PointableList, pointables );
@@ -106,12 +127,28 @@
 %leapattrib( Leap::Hand, Vector, palmVelocity );
 %leapattrib( Leap::Hand, Vector, palmNormal );
 %leapattrib( Leap::Hand, Vector, direction );
+%leapattrib( Leap::Hand, Matrix, basis )
 %constattrib( Leap::Hand, bool, isValid );
 %leapattrib( Leap::Hand, Vector, sphereCenter );
 %constattrib( Leap::Hand, float, sphereRadius );
+%constattrib( Leap::Hand, float, grabStrength );
+%constattrib( Leap::Hand, float, pinchStrength );
+%constattrib( Leap::Hand, float, palmWidth );
 %leapattrib( Leap::Hand, Vector, stabilizedPalmPosition )
+%leapattrib( Leap::Hand, Vector, wristPosition )
 %constattrib( Leap::Hand, float, timeVisible );
+%constattrib( Leap::Hand, float, confidence );
+%constattrib( Leap::Hand, bool, isLeft );
+%constattrib( Leap::Hand, bool, isRight );
 %leapattrib( Leap::Hand, Frame, frame );
+%leapattrib( Leap::Hand, Arm, arm );
+
+%constattrib( Leap::Arm, float, width );
+%leapattrib( Leap::Arm, Vector, direction );
+%leapattrib( Leap::Arm, Matrix, basis )
+%leapattrib( Leap::Arm, Vector, elbowPosition );
+%leapattrib( Leap::Arm, Vector, wristPosition );
+%constattrib( Leap::Arm, bool, isValid );
 
 %constattrib( Leap::Gesture, Leap::Gesture::Type, type )
 %constattrib( Leap::Gesture, Leap::Gesture::State, state )
@@ -195,6 +232,9 @@
 %constattrib( Leap::Device, float, verticalViewAngle );
 %constattrib( Leap::Device, float, range );
 %constattrib( Leap::Device, bool, isValid );
+%constattrib( Leap::Device, bool, isEmbedded );
+%constattrib( Leap::Device, bool, isStreaming );
+%constattrib( Leap::Device, Leap::Device::Type, type );
 
 %leapattrib( Leap::InteractionBox, Vector, center );
 %constattrib( Leap::InteractionBox, float, width );
@@ -209,7 +249,9 @@
 %staticattrib( Leap::Pointable, static const Pointable&, invalid);
 %staticattrib( Leap::Finger, static const Finger&, invalid);
 %staticattrib( Leap::Tool, static const Tool&, invalid);
+%staticattrib( Leap::Bone, static const Bone&, invalid);
 %staticattrib( Leap::Hand, static const Hand&, invalid);
+%staticattrib( Leap::Arm, static const Arm&, invalid);
 %staticattrib( Leap::Gesture, static const Gesture&, invalid);
 %staticattrib( Leap::Screen, static const Screen&, invalid );
 %staticattrib( Leap::Device, static const Device&, invalid );

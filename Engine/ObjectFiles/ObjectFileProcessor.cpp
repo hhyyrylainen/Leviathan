@@ -933,7 +933,9 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, S
 		itr.GetUntilLineEnd<string>();
 
 	// This is the line the script block starts //
-	size_t ourstartline = itr.GetCurrentLine()-1;
+	// TODO: verify that this is correct
+	//size_t ourstartline = itr.GetCurrentLine()-1;
+	size_t ourstartline = itr.GetCurrentLine();
 
 	// Get until the ending sequence //
 	auto scriptdata = itr.GetUntilCharacterSequence<string>("@%};", SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);

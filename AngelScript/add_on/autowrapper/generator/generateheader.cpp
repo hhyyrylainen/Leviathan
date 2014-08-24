@@ -12,7 +12,7 @@
 // ref: http://www.gamedev.net/topic/617111-more-angelscript-binding-wrappers/
 //
 
-#include "Include.h"
+
 #include <stdio.h>
 #include <string>
 

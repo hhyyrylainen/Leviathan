@@ -14,6 +14,7 @@ using namespace Leviathan;
 #include <add_on/scriptmath/scriptmath.h>
 #include <add_on/scriptarray/scriptarray.h>
 #include <add_on/scriptstdstring/scriptstdstring.h>
+#include <add_on/scriptgrid/scriptgrid.h>
 
 // headers that contains bind able functions //
 #include "GUI/GuiScriptInterface.h"
@@ -66,7 +67,10 @@ bool ScriptExecutor::Init(){
 	RegisterStdStringUtils(engine);
 
 	// register dictionary object //
-	RegisterScriptDictionary_Native(engine);
+	RegisterScriptDictionary(engine);
+	
+	// Register the grid addon //
+	RegisterScriptGrid(engine);
 
 
 	// register global functions and classes //

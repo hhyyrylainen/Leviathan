@@ -379,7 +379,13 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
 #endif // _DEBUG
 
-	// load GUI documents //
+	// Load GUI documents (but only if graphics are enabled) //
+	if(Engine::Get()->GetNoGui()){
+		
+		// Skip the graphical objects when not in graphical mode //
+		return;
+	}
+
 	GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
 
 	GuiManagerAccess = window1->GetGUI();
@@ -400,6 +406,8 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
 	// link window input to game logic //
 	window1->SetCustomInputController(GameInputHandler);
+
+	// TODO: Register this even in NoGui mode and allow basic connecting to a server
 	ClientInterface->RegisterNetworkedInput(GameInputHandler);
 }
 // ------------------------------------ //

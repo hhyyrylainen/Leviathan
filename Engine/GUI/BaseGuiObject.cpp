@@ -159,7 +159,7 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(){
 
 
 	for(size_t i = 0; i < containedlisteners.size(); i++){
-		// generics cannot be rocket events //
+		// Generics cannot be CEGUI events //
 		if(containedlisteners[i]->GenericTypeName && containedlisteners[i]->GenericTypeName->size() > 0){
 			// custom event listener //
 
@@ -391,8 +391,10 @@ bool Leviathan::Gui::BaseGuiObject::_CallCEGUIListener(const wstring &name){
 	// There should be one as it is registered //
 	ScriptModule* mod = Scripting->GetModule();
 
-	if(!mod)
+	if(!mod){
+        Logger::Get()->Error(L"BaseGuiObject: CallCEGUIListener: the script module is no longer valid");
 		return false;
+    }
 
 	// Setup the parameters //
 	vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"GuiObject"));

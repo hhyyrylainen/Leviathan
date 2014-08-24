@@ -6,6 +6,7 @@
 #include "Application/Application.h"
 #include "Entities/GameWorld.h"
 #include <boost/thread/future.hpp>
+#include <boost/chrono/duration.hpp>
 #include "Rendering/Graphics.h"
 #include "Handlers/ObjectLoader.h"
 #include "Leap/LeapManager.h"
@@ -38,7 +39,7 @@ static const WORD MAX_CONSOLE_LINES = 500;
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL),
 	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
-	_RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false), _ResourceRefreshHandler(NULL)
+																   _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false), _ResourceRefreshHandler(NULL), PreReleaseCompleted(false)
 {
 
 	// create this here //
@@ -82,10 +83,11 @@ DLLEXPORT Engine* Leviathan::Engine::Get(){
 	return instance;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Engine::Init(AppDef* definition, NETWORKED_TYPE ntype){
+DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
 	GUARD_LOCK_THIS_OBJECT();
 	// get time, for monitoring how long load takes //
 	__int64 InitStartTime = Misc::GetTimeMs64();
+
 	// set static access to this object //
 	instance = this;
 	// store parameters //
@@ -410,6 +412,13 @@ void Leviathan::Engine::PostLoad(){
 				getline(wcin, inputcommand);
 				// Pass to various things //
 				Engine* engine = Engine::Get();
+				
+				// Stop if Engine is no more //
+				if(!engine){
+
+					break;
+				}
+
 				GUARD_LOCK_OTHER_OBJECT(engine);
 				auto tmpptr = engine->MainConsole;
 				if(tmpptr){
@@ -447,24 +456,25 @@ void Leviathan::Engine::Release(bool forced){
 		_ThreadingManager->WaitForAllTasksToFinish();
 
 	if(GraphicalEntity1){
-		// make windows clear their stored objects //
+		// Make windows clear their stored objects //
 		GraphicalEntity1->ReleaseLinked();
 	}
 
-	// destroy windows //
+	// Destroy windows //
 	SAFE_DELETE(GraphicalEntity1);
 
-	// release newton //
+	// Release newton //
 	SAFE_DELETE(PhysMaterials);
 	SAFE_DELETE(_NewtonManager);
 
 	SAFE_RELEASEDEL(LeapData);
 
-	// console needs to be released before script release //
+	// Console needs to be released before script release //
 	SAFE_RELEASEDEL(MainConsole);
 
 	SAFE_RELEASEDEL(MainScript);
-	// save at this point (just in case it crashes before exiting) //
+
+	// Save at this point (just in case it crashes before exiting) //
 	Logger::Get()->Save();
 
 	SAFE_DELETE(Loader);
@@ -632,16 +642,23 @@ void Leviathan::Engine::RenderFrame(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::PreRelease(){
 	GUARD_LOCK_THIS_OBJECT();
-	if(PreReleaseWaiting)
+	if(PreReleaseWaiting || PreReleaseCompleted)
 		return;
+	
 	PreReleaseWaiting = true;
+	// This will stay true until the end of times //
+	PreReleaseCompleted = true;
 
 	// Stop command handling first //
 	if(NoGui){
-		Misc::KillThread(CinThread);
-		// We don't join the thread because we can't properly stop this on linux //
-		//CinThread.join();
+		
+		// Apparently killing doesn't really work on linux in any reasonable way, so just let it run
+#if 0
+		//Misc::KillThread(CinThread);
 		Logger::Get()->Info(L"Successfully stopped command handling");
+#else
+		Logger::Get()->Info(L"Hopefully command handling stops soon...");
+#endif
 	}
 
 	// Then kill the network //

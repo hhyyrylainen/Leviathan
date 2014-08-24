@@ -33,6 +33,11 @@ PongServer/Main.cpp
 PongServer/PongIncludes.h
 Engine/Generated/
 CEED/
-CopyCEGUI.bat
+*CopyCEGUI.bat
 /build/
 nbproject/
+[#]*[#]
+TAGS
+GTAGS
+GPATH
+GRTAGS

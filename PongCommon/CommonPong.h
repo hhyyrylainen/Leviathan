@@ -26,7 +26,7 @@
 #include "Networking/SyncedResource.h"
 #include "GameInputController.h"
 
-#define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " __WFILE__ L" on line "+Convert::IntToWstring(__LINE__), false);return;
+#define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " +__WFILE__+ L" on line "+Convert::IntToWstring(__LINE__), false);return;
 
 #define BALLSTUCK_THRESHOLD		0.045f
 #define BALLSTUCK_COUNT			8
@@ -434,7 +434,7 @@ playrscorelistupdateendlabel:
 
 			Tickcount++;
 			// Let the AI think //
-			if(GameArena->GetBallPtr() && !GamePaused){
+			if(GameArena && GameArena->GetBallPtr() && !GamePaused){
 
 				// Find AI slots //
 				for(size_t i = 0; i < _PlayerList.Size(); i++){
@@ -468,16 +468,13 @@ playrscorelistupdateendlabel:
 					}
 				}
 
-			}
+				// Check if ball is too far away (also check if it is vertically stuck or horizontally) //
 
-			// Check if ball is too far away (also check if it is vertically stuck or horizontally) //
-
-			if(GameArena->GetBallPtr()){
-				Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*>(GameArena->GetBallPtr().get());
+				Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*> (GameArena->GetBallPtr().get());
 
 				Float3 ballcurpos = castedptr->GetPos();
 
-				if(ballcurpos.HAddAbs() > 100*BASE_ARENASCALE){
+				if(ballcurpos.HAddAbs() > 100 * BASE_ARENASCALE){
 
 					_DisposeOldBall();
 
@@ -495,7 +492,7 @@ playrscorelistupdateendlabel:
 				if(DeadAxis.HAddAbs() != 0 && ballspeed.HAddAbs() > BALLSTUCK_THRESHOLD){
 					// Compare directions //
 
-					float veldifference = (ballspeed-DeadAxis).HAddAbs();
+					float veldifference = (ballspeed - DeadAxis).HAddAbs();
 
 					if(veldifference < BALLSTUCK_THRESHOLD){
 
@@ -518,10 +515,11 @@ playrscorelistupdateendlabel:
 							StuckThresshold--;
 					}
 				}
-			}
 
-			// Give the ball more speed //
-			GameArena->GiveBallSpeed(1.00001f);
+
+				// Give the ball more speed //
+				GameArena->GiveBallSpeed(1.00001f);
+			}
 		}
 
 		// customized callbacks //

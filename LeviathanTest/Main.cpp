@@ -20,9 +20,9 @@ public:
 #define PROGRAMCHECKCONFIGFUNCNAME		LeviathanApplication::DummyGameConfigurationVariables
 #define PROGRAMCHECKKEYCONFIGFUNCNAME	LeviathanApplication::DummyGameKeyConfigVariables
 #define PROGRAMMASTERSERVERINFO			MasterServerInformation()
-#define WINDOWTITLEGENFUNCTION			L"LeviathanTest for version " VERSIONS L" built on " __WDATE__ L" " __WTIME__
+#define WINDOWTITLEGENFUNCTION			L"LeviathanTest for version " +  VERSIONS + L" built on " __WDATE__ L" " __WTIME__
 
-#define USERREADABLEIDENTIFICATION		L"Leviathan test" VERSIONS
+#define USERREADABLEIDENTIFICATION		L"Leviathan test" + VERSIONS
 #define GAMENAMEIDENTIFICATION			L"Test"
 #define GAMEVERSIONIDENTIFICATION		VERSIONS
 

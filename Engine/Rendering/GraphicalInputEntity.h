@@ -15,6 +15,7 @@
 namespace Leviathan{
 
 	//! \brief Represents a collection of objects that represents everything related to a single game's Windows window
+	//! \note Even though this class is marked thread safe only one instance maybe constructed at once
 	class GraphicalInputEntity : public ThreadSafe{
 	public:
 		//! \warning You can only create one window at a time since this is not thread safe
@@ -40,6 +41,11 @@ namespace Leviathan{
 		//! Returns how many windows have been created
 		//! \see GlobalWindowCount
 		DLLEXPORT static int GetGlobalWindowCount();
+
+		//! Returns this windows creation number
+		//! \note This is quaranteed to be unique among all windows
+		DLLEXPORT int GetWindowNumber() const;
+
 
 		// graphics related //
 		DLLEXPORT float GetViewportAspectRatio();
@@ -85,6 +91,12 @@ namespace Leviathan{
 		shared_ptr<ViewerCameraPos> LinkedCamera;
 		// this count variable is needed to parse resource groups after first window //
 		static int GlobalWindowCount;
+		
+		//! Keeps track of how many windows in total have been created
+		static int TotalCreatedWindows;
+
+		//! The number of this window (starts from 1)
+		int WindowNumber;
 
 		bool MouseCaptureState;
 		static GraphicalInputEntity* InputCapturer;

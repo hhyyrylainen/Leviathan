@@ -327,7 +327,7 @@ else(WIN32)
     file(GLOB OgreMoveFilesRelease "${OGRE_BASEDIR}/*.so*" "${OGRE_BASEDIR}/../*Ogre*.so*" "${OGRE_BASEDIR}/../libOIS*.so")
 
     # CEGUI sos
-    file(GLOB CEGUIMoveFilesRelease "CEGUI/bin/*.so*")
+    file(GLOB CEGUIMoveFilesRelease "CEGUI/lib/*.so*")
 
     # newton
     file(GLOB NewtonMoveFilesRelease "Newton/lib/libNewton.so")
@@ -392,6 +392,7 @@ link_directories("${PROJECT_SOURCE_DIR}/libRocket/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/SFML/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/CEGUI/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/Newton/lib/")
+link_directories("${PROJECT_SOURCE_DIR}/Newton/bin/")
 
 if(WIN32)
     link_directories("${PROJECT_SOURCE_DIR}/Leap/lib/x86")

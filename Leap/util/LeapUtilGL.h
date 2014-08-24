@@ -61,11 +61,21 @@ void drawAxes();
 struct GLVector4fv
 {
   GLVector4fv() : x(0), y(0), z(0), w(0) {}
-  GLVector4fv( float _x, float _y, float _z, float _w=0 ) : x(_x), y(_y), z(_z), w(_w) {}
+  GLVector4fv( float _x, float _y, float _z, float _w=1.0f ) : x(_x), y(_y), z(_z), w(_w) {}
+  GLVector4fv( const Leap::Vector& vRHS, float _w=1.0f ) : x(vRHS.x), y(vRHS.y), z(vRHS.z), w(_w) {}
+  static const GLVector4fv& One() { static const GLVector4fv s_one(1.0f, 1.0f, 1.0f, 1.0f); return s_one; }
   operator const GLfloat*() const { return &x; }
 
   GLfloat x, y, z, w;
 };
+
+/// additional sphere/cylinder drawing utilities
+void drawSphere(eStyle style, const Leap::Vector& vCenter, float fRadius);
+
+void drawCylinder(eStyle style, const Leap::Vector& vBottom, const Leap::Vector& vTop, float fRadius);
+
+/// utility for drawing a skeleton API hand as seen in diagnostic visualizer
+void drawSkeletonHand(const Leap::Hand& hand, const GLVector4fv& vBoneColor = GLVector4fv::One(), const GLVector4fv& vJointColor = GLVector4fv::One());
 
 /// utility class for keeping the gl matrix stack push/pop operations paired up correctly.
 class GLMatrixScope

@@ -97,6 +97,10 @@ DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
 }
 
 DLLEXPORT void Leviathan::ConnectionInfo::Release(){
+
+	// Remove us from the queue //
+	NetworkHandler::Get()->_UnregisterConnectionInfo(this);
+
 	{
 		GUARD_LOCK_THIS_OBJECT();
 
@@ -108,12 +112,22 @@ DLLEXPORT void Leviathan::ConnectionInfo::Release(){
 
 		// Destroy some of our stuff //
 		TargetHost == sf::IpAddress::None;
+        
+        // Make sure that all our remaining packets fail //
+        auto end = WaitingRequests.end();
+        for(auto iter = WaitingRequests.begin(); iter != end; ++iter){
+
+            // Mark as failed //
+            (*iter)->WaitForMe->set_value(false);
+        }
+
+        // All are now properly closed //
+        WaitingRequests.clear();
 
 		// Release all the listeners //
 		ReleaseChildHooks();
 	}
-	// Remove us from the queue //
-	NetworkHandler::Get()->_UnregisterConnectionInfo(this);
+
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<NetworkResponse> Leviathan::ConnectionInfo::SendRequestAndBlockUntilDone(shared_ptr<NetworkRequest> request, int maxtries /*= 2*/){

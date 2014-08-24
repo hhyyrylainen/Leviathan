@@ -265,12 +265,12 @@ array<AIDataCache@> ExistingAIs;
 
 AIDataCache@ GetAIForSlot(PlayerSlot@ slot){
     // Loop through all and add new if not found //
-    for(uint i = 0; i < ExistingAIs.size(); i++){
+    for(uint i = 0; i < ExistingAIs.length(); i++){
         if(ExistingAIs[i].AISlot is slot)
             return ExistingAIs[i];
     }
     // Not found, add new //
-    ExistingAIs.push_back(AIDataCache(slot));
+    ExistingAIs.insertLast(AIDataCache(slot));
     return ExistingAIs[(ExistingAIs.size()-1)];
 }
 

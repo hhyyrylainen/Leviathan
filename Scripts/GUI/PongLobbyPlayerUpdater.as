@@ -186,7 +186,7 @@ class PlayerDataHolder{
         
         ThePlayers = array<PlayerData@>(4);
         
-        for(uint i = 0; i < ThePlayers.size(); i++){
+        for(uint i = 0; i < ThePlayers.length(); i++){
             // Create an empty object //
             @ThePlayers[i] = @PlayerData(i);
         }

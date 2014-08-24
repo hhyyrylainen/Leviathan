@@ -1,6 +1,6 @@
 
 // The CScriptWeakRef class was originally implemented by vroad in March 2013
-#include "Include.h"
+
 #include "weakref.h"
 #include <new>
 #include <assert.h>
@@ -51,6 +51,7 @@ static bool ScriptWeakRefTemplateCallback(asIObjectType *ot, bool &/*dontGarbage
 			return true;
 	}
 
+	ot->GetEngine()->WriteMessage("weakref", 0, 0, asMSGTYPE_ERROR, "The subtype doesn't support weak references");
 	return false;
 }
 
@@ -82,7 +83,8 @@ CScriptWeakRef::CScriptWeakRef(void *ref, asIObjectType *type)
 	m_type->AddRef();
 
 	// The given type should be the weakref template instance
-	assert( strcmp(type->GetName(), "weakref") == 0 );
+	assert( strcmp(type->GetName(), "weakref") == 0 ||
+	        strcmp(type->GetName(), "const_weakref") == 0 );
 
 	// Get the shared flag that will tell us when the object has been destroyed
 	// This is threadsafe as we hold a strong reference to the object

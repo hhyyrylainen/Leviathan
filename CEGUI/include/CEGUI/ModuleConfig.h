@@ -43,8 +43,8 @@ setting CMake options and regenerating, rather than editing directly.
 // event that we do not have control over)
 //////////////////////////////////////////////////////////////////////////
 /* #undef CEGUI_BUILD_RENDERER_NULL */
-/* #undef CEGUI_BUILD_RENDERER_OPENGL */
-/* #undef CEGUI_BUILD_RENDERER_OPENGL3 */
+#define CEGUI_BUILD_RENDERER_OPENGL
+#define CEGUI_BUILD_RENDERER_OPENGL3
 #define CEGUI_BUILD_RENDERER_OGRE
 /* #undef CEGUI_BUILD_RENDERER_IRRLICHT */
 /* #undef CEGUI_BUILD_RENDERER_DIRECT3D11 */
@@ -57,9 +57,9 @@ setting CMake options and regenerating, rather than editing directly.
 // not actually include them in the final distribution (or some other
 // event that we do not have control over)
 //////////////////////////////////////////////////////////////////////////
-#define CEGUI_BUILD_IMAGECODEC_SILLY
+/* #undef CEGUI_BUILD_IMAGECODEC_SILLY */
 /* #undef CEGUI_BUILD_IMAGECODEC_DEVIL */
-/* #undef CEGUI_BUILD_IMAGECODEC_FREEIMAGE */
+#define CEGUI_BUILD_IMAGECODEC_FREEIMAGE
 /* #undef CEGUI_BUILD_IMAGECODEC_CORONA */
 /* #undef CEGUI_BUILD_IMAGECODEC_STB */
 /* #undef CEGUI_BUILD_IMAGECODEC_TGA */
@@ -73,9 +73,9 @@ setting CMake options and regenerating, rather than editing directly.
 //////////////////////////////////////////////////////////////////////////
 #define CEGUI_BUILD_XMLPARSER_EXPAT
 /* #undef CEGUI_BUILD_XMLPARSER_XERCES */
-/* #undef CEGUI_BUILD_XMLPARSER_LIBXML2 */
+#define CEGUI_BUILD_XMLPARSER_LIBXML2
 /* #undef CEGUI_BUILD_XMLPARSER_RAPIDXML */
-/* #undef CEGUI_BUILD_XMLPARSER_TINYXML */
+#define CEGUI_BUILD_XMLPARSER_TINYXML
 
 //////////////////////////////////////////////////////////////////////////
 // The following define what scripting modules /should/ be available

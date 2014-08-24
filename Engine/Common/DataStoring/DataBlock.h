@@ -405,34 +405,7 @@ namespace Leviathan{
 	TVALRESOLVERTYPE(DoubleBlock, DATABLOCK_TYPE_DOUBLE);
 	TVALRESOLVERTYPE(LeviathanObjectBlock, DATABLOCK_TYPE_OBJECTL);
 	TVALRESOLVERTYPE(VoidPtrBlock, DATABLOCK_TYPE_VOIDPTR);
-
 	
-
-	// ------------------ Loading/saving from/to packets ------------------ //
-	#define DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(BlockTypeName, VarTypeName, TmpTypeName) \
-	template<> DLLEXPORT void BlockTypeName::AddDataToPacket(sf::Packet &packet){ \
-		packet << *Value; \
-	} \
-	template<> DLLEXPORT BlockTypeName::DataBlock(sf::Packet &packet){ \
-		Type = DataBlockNameResolver<VarTypeName>::TVal; \
-		TmpTypeName tmpval; \
-		if(!(packet >> tmpval)){ \
-			throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L""); \
-		} \
-		Value = new VarTypeName(tmpval); \
-	}
-
-	
-	
-	// Fill in the gaps in the templates with these defaults //
-	template<class DBlockT> DLLEXPORT void DataBlock<DBlockT>::AddDataToPacket(sf::Packet &packet){
-		// The default one cannot do anything, only the specialized functions can try to do something //
-		throw ExceptionBase(L"this type doesn't support saving to a packet", 0, __WFUNCTION__);
-	}
-	template<class DBlockT> DLLEXPORT DataBlock<DBlockT>::DataBlock(sf::Packet &packet){
-		// The default one cannot do anything, only the specialized functions can try to do something //
-		throw ExceptionBase(L"this type doesn't support loading from a packet", 0, __WFUNCTION__);
-	}
 
 	//! \brief Non-template class for working with all types of DataBlocks
 	class VariableBlock{

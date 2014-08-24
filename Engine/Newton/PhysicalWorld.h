@@ -6,17 +6,17 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#ifdef __GNUC__
+//#ifdef __GNUC__
 // Stop newton warnings from popping up
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wextern-c-compat"
-#endif //__GNUC__
+//#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored "-Wextern-c-compat"
+//#endif //__GNUC__
 
 #include <Newton.h>
 
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif //__GNUC__
+//#ifdef __GNUC__
+//#pragma GCC diagnostic pop
+//#endif //__GNUC__
 
 #define NEWTON_DEFAULT_PHYSICS_FPS		150.f
 #define NEWTON_FPS_IN_MICROSECONDS		(1000000.0f/NEWTON_DEFAULT_PHYSICS_FPS)

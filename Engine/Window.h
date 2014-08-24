@@ -123,6 +123,12 @@ namespace Leviathan{
 		//! \return True when the window has focus
 		DLLEXPORT bool IsWindowFocused() const;
 
+
+		//! \brief Causes this window to no longer function
+		//! \note This is provided to prevent calling some platform specific methods that could
+		//! cause crashes
+		DLLEXPORT void InvalidateWindow();
+
 		virtual bool keyPressed(const OIS::KeyEvent &arg);
 		virtual bool keyReleased(const OIS::KeyEvent &arg);
 		virtual bool mouseMoved(const OIS::MouseEvent &arg);
@@ -148,7 +154,6 @@ namespace Leviathan{
 		DLLEXPORT static OIS::KeyCode ConvertWstringToOISKeyCode(const wstring &str);
 		DLLEXPORT static wstring ConvertOISKeyCodeToWstring(const OIS::KeyCode &code);
 
-		void ReportKeyEventAsUsed();
 
 	private:
 
@@ -189,10 +194,9 @@ namespace Leviathan{
 
 		bool ThisFrameHandledCreate;
 		int LastFrameDownMouseButtons;
-
-		//! Allows CEF to report whether a key input was handled
-		//! Set by ReportKeyEventAsUsed
-		bool InputProcessedByCEF;
+		
+		// Set when the native window is no longer valid //
+		bool IsInvalidated;
 
 		// this is updated every time input is gathered //
 		int SpecialKeyModifiers;

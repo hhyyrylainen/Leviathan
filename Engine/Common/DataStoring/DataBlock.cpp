@@ -252,98 +252,133 @@ Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyf
 }
 
 // ------------------ Loading/saving from/to packets ------------------ //
-DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(IntBlock, int, int);
-DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(FloatBlock, float, float);
-DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(BoolBlock, bool, bool);
-DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(WstringBlock, wstring, wstring);
-DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(StringBlock, string, string);
-DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(DoubleBlock, double, double);
-DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(CharBlock, char, sf::Int8);
-
-
-// ------------------ VariableBlock ------------------ //
-DLLEXPORT void VariableBlock::AddDataToPacket(sf::Packet& packet) const{
-	// Set the type //
-	if(BlockData != NULL){
-		packet << BlockData->Type;
-	} else {
-		packet << 0;
-		return;
-	}
-
-	// Set the data //
-	if(BlockData->Type == DATABLOCK_TYPE_INT)
-		return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->AddDataToPacket(packet);
-	else if(BlockData->Type == DATABLOCK_TYPE_FLOAT)
-		return TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData)->AddDataToPacket(packet);
-	else if(BlockData->Type == DATABLOCK_TYPE_BOOL)
-		return TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData)->AddDataToPacket(packet);
-	else if(BlockData->Type == DATABLOCK_TYPE_WSTRING)
-		return TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData)->AddDataToPacket(packet);
-	else if(BlockData->Type == DATABLOCK_TYPE_STRING)
-		return TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData)->AddDataToPacket(packet);
-	else if(BlockData->Type == DATABLOCK_TYPE_CHAR)
-		return TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData)->AddDataToPacket(packet);
-	else if(BlockData->Type == DATABLOCK_TYPE_DOUBLE)
-		return TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData)->AddDataToPacket(packet);
-
-	// type that shouldn't be used is used //
-	throw ExceptionBase(L"unallowed datatype in datablock for writing to packet", 0, __WFUNCTION__);
+#define DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(BlockTypeName, VarTypeName, TmpTypeName) \
+template<> DLLEXPORT void BlockTypeName::AddDataToPacket(sf::Packet &packet){ \
+	packet << *Value; \
+} \
+template<> DLLEXPORT BlockTypeName::DataBlock(sf::Packet &packet){ \
+	Type = DataBlockNameResolver<VarTypeName>::TVal; \
+	TmpTypeName tmpval; \
+	if(!(packet >> tmpval)){ \
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L""); \
+	} \
+	Value = new VarTypeName(tmpval); \
 }
 
-DLLEXPORT VariableBlock::VariableBlock(sf::Packet& packet){
+
+
+// ------------------ Loading/saving from/to packets ------------------ //
+namespace Leviathan{
+
+	DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(IntBlock, int, int);
+	DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(FloatBlock, float, float);
+	DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(BoolBlock, bool, bool);
+	DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(WstringBlock, wstring, wstring);
+	DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(StringBlock, string, string);
+	DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(DoubleBlock, double, double);
+	DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(CharBlock, char, sf::Int8);
+
+
+
+	// Fill in the gaps in the templates with these defaults //
+	template<class DBlockT> DLLEXPORT void Leviathan::DataBlock<DBlockT>::AddDataToPacket(sf::Packet&)
+	{
+		// The default one cannot do anything, only the specialized functions can try to do something //
+		throw ExceptionBase(L"this type doesn't support saving to a packet", 0, __WFUNCTION__);
+	}
+	template<class DBlockT> DLLEXPORT Leviathan::DataBlock<DBlockT>::DataBlock(sf::Packet&)
+	{
+		// The default one cannot do anything, only the specialized functions can try to do something //
+		throw ExceptionBase(L"this type doesn't support loading from a packet", 0, __WFUNCTION__);
+	}
+
+	// ------------------ VariableBlock ------------------ //
+	DLLEXPORT void VariableBlock::AddDataToPacket(sf::Packet& packet) const
+	{
+		// Set the type //
+		if(BlockData != NULL){
+			packet << BlockData->Type;
+		} else{
+			packet << 0;
+			return;
+		}
+
+		// Set the data //
+		if(BlockData->Type == DATABLOCK_TYPE_INT)
+			return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->AddDataToPacket(packet);
+		else if(BlockData->Type == DATABLOCK_TYPE_FLOAT)
+			return TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData)->AddDataToPacket(packet);
+		else if(BlockData->Type == DATABLOCK_TYPE_BOOL)
+			return TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData)->AddDataToPacket(packet);
+		else if(BlockData->Type == DATABLOCK_TYPE_WSTRING)
+			return TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData)->AddDataToPacket(packet);
+		else if(BlockData->Type == DATABLOCK_TYPE_STRING)
+			return TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData)->AddDataToPacket(packet);
+		else if(BlockData->Type == DATABLOCK_TYPE_CHAR)
+			return TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData)->AddDataToPacket(packet);
+		else if(BlockData->Type == DATABLOCK_TYPE_DOUBLE)
+			return TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData)->AddDataToPacket(packet);
+
+		// type that shouldn't be used is used //
+		throw ExceptionBase(L"unallowed datatype in datablock for writing to packet", 0, __WFUNCTION__);
+	}
 	
-	// Get the type //
-	short type;
-	packet >> type;
+	DLLEXPORT VariableBlock::VariableBlock(sf::Packet& packet)
+	{
 
-	// Load the actual data based on the type //
-	switch(type){
-	case 0:
-	{
-		// No data //
-		BlockData = NULL;
-		return;
-	}
-	case DATABLOCK_TYPE_INT:
-	{
-		BlockData = new IntBlock(packet);
-		return;
-	}
-	case DATABLOCK_TYPE_FLOAT:
-	{
-		BlockData = new FloatBlock(packet);
-		return;
-	}
-	case DATABLOCK_TYPE_BOOL:
-	{
-		BlockData = new BoolBlock(packet);
-		return;
-	}
-	case DATABLOCK_TYPE_WSTRING:
-	{
-		BlockData = new WstringBlock(packet);
-		return;
-	}
-	case DATABLOCK_TYPE_STRING:
-	{
-		BlockData = new StringBlock(packet);
-		return;
-	}
-	case DATABLOCK_TYPE_CHAR:
-	{
-		BlockData = new CharBlock(packet);
-		return;
-	}
-	case DATABLOCK_TYPE_DOUBLE:
-	{
-		BlockData = new DoubleBlock(packet);
-		return;
-	}
+		// Get the type //
+		short type;
+		packet >> type;
+
+		// Load the actual data based on the type //
+		switch(type){
+		case 0:
+		{
+			// No data //
+			BlockData = NULL;
+			return;
+		}
+		case DATABLOCK_TYPE_INT:
+		{
+			BlockData = new IntBlock(packet);
+			return;
+		}
+		case DATABLOCK_TYPE_FLOAT:
+		{
+			BlockData = new FloatBlock(packet);
+			return;
+		}
+		case DATABLOCK_TYPE_BOOL:
+		{
+			BlockData = new BoolBlock(packet);
+			return;
+		}
+		case DATABLOCK_TYPE_WSTRING:
+		{
+			BlockData = new WstringBlock(packet);
+			return;
+		}
+		case DATABLOCK_TYPE_STRING:
+		{
+			BlockData = new StringBlock(packet);
+			return;
+		}
+		case DATABLOCK_TYPE_CHAR:
+		{
+			BlockData = new CharBlock(packet);
+			return;
+		}
+		case DATABLOCK_TYPE_DOUBLE:
+		{
+			BlockData = new DoubleBlock(packet);
+			return;
+		}
+		}
+
+		// Invalid packet //
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+
+
 	}
 
-	// Invalid packet //
-	throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
-
-	
 }

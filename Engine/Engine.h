@@ -156,6 +156,8 @@ namespace Leviathan{
 		bool NoGui;
 		bool NoLeap;
 
+		// Marks that the Engine has already done prerelease //
+		bool PreReleaseCompleted;
 
 
 		// Stores the command line before running it //

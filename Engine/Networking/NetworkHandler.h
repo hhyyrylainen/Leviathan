@@ -16,27 +16,26 @@ namespace Leviathan{
 
 	void RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar);
 	void RunTemporaryUpdateConnections(NetworkHandler* instance);
-
-	enum PACKET_TIMEOUT_STYLE {PACKAGE_TIMEOUT_STYLE_TIMEDMS, 
+	enum PACKET_TIMEOUT_STYLE{
+		PACKAGE_TIMEOUT_STYLE_TIMEDMS,
 		// This style marks packets lost after TimeOutMS amount of packets sent after this packet have been confirmed to received
 		// So if you set this to 1 this packet is resend if even a single packet send after this is received by the target host
-		PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED};
+		PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED
+	};
 
 	// Used to pass master server info to the application //
 	struct MasterServerInformation{
-		MasterServerInformation(bool iammaster, const wstring &identificationstr) : RequireMaster(false), IAmMyOwnMaster(true), 
-			MasterServerIdentificationString(identificationstr)
-		{
+		MasterServerInformation(bool iammaster, const wstring &identificationstr) : RequireMaster(false), IAmMyOwnMaster(true),
+			MasterServerIdentificationString(identificationstr){
 
 		}
 		MasterServerInformation() : RequireMaster(false), IAmMyOwnMaster(false){
 		}
-		MasterServerInformation(const wstring &masterslistfile, const wstring &identification, const wstring &masterserverlistaddress, const wstring 
-			&masterserverlistpagename, const wstring &loginsession, bool requireconnection = false) : 
-		MasterListFetchServer(masterserverlistaddress), MasterListFetchPage(masterserverlistpagename), StoredListFile(masterslistfile),
+		MasterServerInformation(const wstring &masterslistfile, const wstring &identification, const wstring &masterserverlistaddress, const wstring
+			&masterserverlistpagename, const wstring &loginsession, bool requireconnection = false) :
+			MasterListFetchServer(masterserverlistaddress), MasterListFetchPage(masterserverlistpagename), StoredListFile(masterslistfile),
 			MasterServerIdentificationString(identification), LoginStoreFile(loginsession), RequireMaster(requireconnection),
-			IAmMyOwnMaster(false)
-		{
+			IAmMyOwnMaster(false){
 
 		}
 		wstring MasterListFetchServer;

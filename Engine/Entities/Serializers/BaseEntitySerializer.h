@@ -22,8 +22,10 @@ namespace Leviathan{
     //! \brief Base class for all entity serializer classes
     //! \note All possible types should be defined in this file here
 	class BaseEntitySerializer{
-        typedef int TypeIDSize;
 	public:
+        //! Type that should be large enough to hold everything in ENTITYSERIALIZEDTYPE and all custom types.
+        typedef int TypeIDSize;
+
         //! \brief Creates a serializer which is guaranteed to be able to serialize the type
 		DLLEXPORT BaseEntitySerializer(ENTITYSERIALIZEDTYPE type);
         DLLEXPORT virtual ~BaseEntitySerializer();

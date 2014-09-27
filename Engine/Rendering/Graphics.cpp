@@ -93,12 +93,12 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	
 	ORoot = unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, ""));
 
-
-	vector<Ogre::String> PluginNames = boost::assign::list_of("RenderSystem_GL")
+    // Still waiting for the GL3Plus render system to become usable... //
+	vector<Ogre::String> PluginNames = boost::assign::list_of("RenderSystem_GL"/*3Plus")*/)
 #ifdef _WIN32
 	("RenderSystem_Direct3D11")
 #endif
-		("Plugin_ParticleFX")("Plugin_CgProgramManager")/*("Plugin_OctreeSceneManager")*//*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
+		("Plugin_ParticleFX")("Plugin_CgProgramManager")/*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
 
 	for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++){
 		// append "_d" if in debug mode //
@@ -123,8 +123,8 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	// Create the regular expression it must match //
 	string rendersystemname;
 
-	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), L"RenderSystemName", rendersystemname, "OpenGL", true,
-		L"Graphics: Init: no selected render system,");
+	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), L"RenderSystemName", rendersystemname,
+        "OpenGL", true, L"Graphics: Init: no selected render system,");
 
 	boost::regex rendersystemnameregex(rendersystemname, boost::regex_constants::icase);
 	Ogre::RenderSystem* selectedrendersystem = NULL;
@@ -144,7 +144,8 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 	if(!selectedrendersystem){
 		// Select the first one since none matched //
-		Logger::Get()->Warning(L"Graphics: Init: no render system matched regex, choosing default: "+Convert::StringToWstring(RSystemList[0]->getName()));
+		Logger::Get()->Warning(L"Graphics: Init: no render system matched regex, choosing default: "
+            +Convert::StringToWstring(RSystemList[0]->getName()));
 		selectedrendersystem = RSystemList[0];
 	}
 

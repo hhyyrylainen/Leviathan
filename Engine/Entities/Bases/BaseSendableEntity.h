@@ -9,7 +9,7 @@
 // ---- includes ---- //
 #include "BaseObject.h"
 #include "../Serializers/BaseEntitySerializer.h"
-#include "SFML/Packet.hpp"
+#include "SFML/Network/Packet.hpp"
 
 namespace Leviathan{
 
@@ -17,7 +17,7 @@ namespace Leviathan{
 	class BaseSendableEntity : public virtual BaseObject{
 	public:
         //! \brief Sets the type identified with this object
-		DLLEXPORT BaseSendableEntity(BaseEntitySerializer::TypeIDSize type);
+        DLLEXPORT BaseSendableEntity(BaseEntitySerializer::TypeIDSize type);
         DLLEXPORT virtual ~BaseSendableEntity();
         
         //! \brief Implemented by subclasses to be serialized
@@ -34,7 +34,8 @@ namespace Leviathan{
         //! The serialized type of this object. This is used to identify the unpacker that is used to recover this
         //! object
         BaseEntitySerializer::TypeIDSize SerializeType;
-        
+
+
     };
 
 }

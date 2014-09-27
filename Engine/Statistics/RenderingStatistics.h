@@ -32,21 +32,15 @@ namespace Leviathan{
 		FORCE_INLINE static void MakeSureHasEnoughRoom(std::vector<int> &tarvec, const size_t &accessspot){
 			
 			if(tarvec.size() <= accessspot+1){
+				if(tarvec.size() > 5000){
 
-#ifdef _DEBUG
-				Logger::Get()->Warning(L"RenderingStatistics: performance warning: having to increase frame counter storage");
-#endif // _DEBUG				
-
-				if(tarvec.size() > 500){
-
-
-					tarvec.resize((size_t)(tarvec.size()*1.2f));
-					Logger::Get()->Warning(L"RenderingStatistics: large frame time tracking buffer is getting larger, size: "+
-						Convert::ToWstring(tarvec.size()));
+					tarvec.resize((size_t)(tarvec.size()*1.35f));
+					Logger::Get()->Warning(L"RenderingStatistics: large frame time tracking buffer is getting larger, "
+                        "size: "+Convert::ToWstring(tarvec.size()));
 
 				} else {
 
-					tarvec.resize((size_t)(tarvec.size()*1.5f));
+					tarvec.resize((size_t)(tarvec.size()*1.8f));
 				}
 			}
 

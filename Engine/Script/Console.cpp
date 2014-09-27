@@ -54,17 +54,17 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 
 		ConsoleOutput(L"// ------------------ Help ------------------ //\n"
 					  L"\t> Console commands are a custom command followed by it's parameters\n"
-					  L"\t  or just plain AngelScript code. (Optionally starting with a  '>')\n"
+					  L"\t  or just plain AngelScript code. (Optionally starting with a '>')\n"
 					  L"\t> Running a custom command: \">[TYPE=\"\"] [COMMAND]\" eg. \n"
 					  L"\t  \">ADDVAR int newglobal = 25\"\n"
 					  L"\t You can view custom commands with the \"commands\" command.\n"
 					  L"\t> Running arbitrary commands:\n "
 					  L"\t  \"> for(int i = 0; i < 5; i++) GlobalFunc();\"\n"
 					  L"\t> Multiline commands are done by putting '\\' (a backwards slash) \n"
-					  L"to the end of each line.\n"
+					  L"\tto the end of each line.\n"
 					  L"\t> For example:\n"
 					  L"\t >ADDFUNC void MyFunc(int i){ Print(\"Val is: \"+i); }\n"
-					  L"\t > for(int i = 0; i < 10; i++){ Print(i); }\n"
+					  L"\t(int i = 0; i < 10; i++){ MyFunc(i); }\n"
 					  L"\t> Would output \"Val is: 0 Val is: 1 ...\"");
 		return CONSOLECOMMANDRESULTSTATE_SUCCEEDED;
 	} else if (commandstr == L"commands"){
@@ -109,7 +109,8 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 		consoleemptyspam++;
 		if(consoleemptyspam > 5){
 			// \todo tell user how to close console //
-			ConsoleOutput(L"You seem to be spamming empty lines, maybe you'd like to close the console? \"quit\" or \"help\" might help you on your quest.");
+			ConsoleOutput(L"You seem to be spamming empty lines, maybe you'd like to close the console? \"quit\" \n"
+                L"or \"help\" might help you on your quest.");
 		}
 		return CONSOLECOMMANDRESULTSTATE_FAILED;
 	}
@@ -117,26 +118,30 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 	StringIterator itr(commandstr);
 
 	if(commandstr[0] == L'>'){
-		// skip first character since it is checked //
+		// Skip first character since it is now handled //
 		itr.MoveToNext();
 	}
 
 	// get the console main command type //
-	auto ccmd = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
+	auto ccmd = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_LOWCODES |
+        UNNORMALCHARACTER_TYPE_WHITESPACE);
 
 	// check if the length is too long or too short to actually be any specific command //
 	CONSOLECOMMANDTYPE commandtype = CONSOLECOMMANDTYPE_NONE;
 	if(ccmd && (ccmd->size() > 0)){
-		// check for types //
+		// Check for types //
 		auto matchpos = CommandTypeDefinitions.find(*ccmd);
+        
 		if(matchpos == CommandTypeDefinitions.end()){
-			// not found //
+			// Not found //
 			commandtype = CONSOLECOMMANDTYPE_NONE;
 		} else {
-			// set matching type //
+			// Set matching type //
 			commandtype = matchpos->second;
 		}
+        
 	} else {
+        
 		commandtype = CONSOLECOMMANDTYPE_ERROR;
 	}
 
@@ -147,14 +152,14 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 		restofcommand.swap(ccmd);
 	}
 
-	// switch on type and handle rest //
+	// Switch on type and handle rest //
 	switch (commandtype){
 	case CONSOLECOMMANDTYPE_NONE:
 		{
-			// we just need to check if this is multiple lines command //
+			// We just need to check if this is multiple lines command //
 			if(restofcommand->back() == L'\\'){
-				// multi line command //
-				
+                
+				// Multi line command //
 				if(ccmd){
 
 					PendingCommand += (*ccmd)+(restofcommand->substr(0, restofcommand->size()-1))+L"\n";
@@ -162,17 +167,20 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 					
 					PendingCommand += restofcommand->substr(0, restofcommand->size()-1)+L"\n";
 				}
+                
 				// waiting for more //
 				return CONSOLECOMMANDRESULTSTATE_WAITINGFORMORE;
 
 			} else {
+                
 				// run command (and possibly previous multi line parts) //
-
-				if(!ExecuteStringInstruction(Convert::WstringToString(PendingCommand.size() != 0 ? PendingCommand+((ccmd ? (*ccmd): L""))+(*restofcommand): ((ccmd ? (*ccmd): L""))+(*restofcommand))))
+				if(!ExecuteStringInstruction(Convert::WstringToString(PendingCommand.size() != 0 ?
+                            PendingCommand+((ccmd ? (*ccmd): L""))+(*restofcommand): ((ccmd ?
+                                    (*ccmd): L""))+(*restofcommand))))
 				{
-					// clear pending command //
+					// Clear the pending command //
 					PendingCommand.clear();
-					// failed //
+					// The command execution has failed... //
 					return CONSOLECOMMANDRESULTSTATE_FAILED;
 				}
 				// clear pending command //
@@ -184,25 +192,29 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 	break;
 	case CONSOLECOMMANDTYPE_ADDVAR:
 		{
-			return AddVariableStringDefinition(Convert::WstringToString(*restofcommand)) ? CONSOLECOMMANDRESULTSTATE_SUCCEEDED: 
+			return AddVariableStringDefinition(Convert::WstringToString(*restofcommand)) ?
+                CONSOLECOMMANDRESULTSTATE_SUCCEEDED: 
 				CONSOLECOMMANDRESULTSTATE_FAILED;
 		}
 	break;
 	case CONSOLECOMMANDTYPE_ADDFUNC:
 		{
-			return AddFunctionStringDefinition(Convert::WstringToString(*restofcommand)) ? CONSOLECOMMANDRESULTSTATE_SUCCEEDED: 
+			return AddFunctionStringDefinition(Convert::WstringToString(*restofcommand)) ?
+                CONSOLECOMMANDRESULTSTATE_SUCCEEDED: 
 				CONSOLECOMMANDRESULTSTATE_FAILED;
 		}
 		break;
 	case CONSOLECOMMANDTYPE_DELVAR:
 		{
-			return DeleteVariableStringDefinition(Convert::WstringToString(*restofcommand)) ? CONSOLECOMMANDRESULTSTATE_SUCCEEDED: 
+			return DeleteVariableStringDefinition(Convert::WstringToString(*restofcommand)) ?
+                CONSOLECOMMANDRESULTSTATE_SUCCEEDED: 
 				CONSOLECOMMANDRESULTSTATE_FAILED;
 		}
 		break;
 	case CONSOLECOMMANDTYPE_DELFUNC:
 		{
-			return DeleteFunctionStringDefinition(Convert::WstringToString(*restofcommand)) ? CONSOLECOMMANDRESULTSTATE_SUCCEEDED: 
+			return DeleteFunctionStringDefinition(Convert::WstringToString(*restofcommand)) ?
+                CONSOLECOMMANDRESULTSTATE_SUCCEEDED: 
 				CONSOLECOMMANDRESULTSTATE_FAILED;
 		}
 		break;
@@ -218,7 +230,10 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 		break;
 	default:
 		{
-			ConsoleOutput(L"Invalid command type, if you don't know what a command type is you probably should add space after > like: \"> yourstuffhere();\"");
+			ConsoleOutput(L"Invalid command type, if you don't know what a command type is you"
+                L"probably should add space after > \n"
+                L"like: \"> yourstuffhere();\" OR just don't type the '>' \n"
+                L"and everything should be fine.");
 		}
 	}
 	// commands will return their codes if they succeed //
@@ -227,20 +242,24 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const wstring &command
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptConsole::ExecuteStringInstruction(string statement){
 	GUARD_LOCK_THIS_OBJECT();
-	// use ScriptHelper class to execute this statement in the module //
-	int result = ExecuteString(InterfaceInstance->GetExecutor()->GetASEngine(), statement.c_str(), ConsoleModule.lock()->GetModule());
+    
+	// Use ScriptHelper class to execute this statement in the module //
+	int result = ExecuteString(InterfaceInstance->GetExecutor()->GetASEngine(), statement.c_str(),
+        ConsoleModule.lock()->GetModule());
 	if(result < 0){
 
-		ConsoleOutput(L"Invalid command syntax, refer to the AngelScript manual for the right syntax or whatever tutorial(s) you may have found");
+		ConsoleOutput(L"Invalid command syntax, please refer to the AngelScript manual");
 		return false;
 
 	} else if(result == asEXECUTION_EXCEPTION){
 
-		ConsoleOutput(L"Command caused an exception, more info is in the log, depending on the exception it may or may not have been your command but"
-			L"rather a bug in someone else's code");
+		ConsoleOutput(L"Command caused an exception, more info is in the log, \n"
+            L"depending on the exception it may or may not have been your command, \n"
+            L"but rather a bug in someone else's code...");
+        
 		return false;
 	}
-	// couldn't fail that badly //
+	// Couldn't fail that badly //
 	return true;
 }
 // ------------------------------------ //
@@ -339,7 +358,8 @@ DLLEXPORT bool Leviathan::ScriptConsole::DeleteFunctionStringDefinition(string s
 
 	}
 
-	ConsoleOutput(L"Function not found, if you tried with just the name try full declaration \"int func(int arg1, int arg2)\"");
+	ConsoleOutput(L"Function not found, if you tried with just the name try full declaration \n"
+        L"\"int func(int arg1, int arg2)\"");
 
 	return false;
 
@@ -350,6 +370,7 @@ funcdeletesucceedendgarbagecollectlabel:
 	// Since functions can be recursive, we'll call the garbage
 	// collector to make sure the object is really freed
 	// \todo make engine garbage collect stop all running scripts //
+    Logger::Get()->Warning(L"Console: doing garbage cleanup, scripts might be running...");
 	InterfaceInstance->GetExecutor()->GetASEngine()->GarbageCollect();
 
 	return true;

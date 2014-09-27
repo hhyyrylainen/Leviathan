@@ -2,4 +2,5 @@
 
 - Making ConnectionInfo properly thread safe
     - Either add a released parameter that is set after release and prevents doing anything after released
-    - Create a shared lock that needs to be obtained when using a connection through a safe ptr. And obtained uniquely when releasing
+    - Create a shared lock that needs to be obtained when using a connection through a safe ptr. And obtained uniquely 
+      when releasing

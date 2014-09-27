@@ -26,8 +26,14 @@ set(CEGUI_SUFFIX "-9999" CACHE STRING "The suffix of cegui builds, for example -
 
 #set(CEGUI_SUFFIX "")
 
+# When no configuration is set, enable RelWithDebInfo
+if(CMAKE_BUILD_TYPE STREQUAL "")
+    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Set the build type, usually Release or RelWithDebInfo" FORCE)
+endif(CMAKE_BUILD_TYPE STREQUAL "")
+
 if(NOT WIN32 AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	# Not recommended configuration
+	message(STATUS "Configuration is set to: " ${CMAKE_BUILD_TYPE})
 	message(SEND_ERROR "On linux you should only try to build with Release or RelWithDebInfo")
 
 endif(NOT WIN32 AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
@@ -69,8 +75,6 @@ if(NOT OIS_FOUND)
 	message(SEND_ERROR "Failed to find OIS")
 endif(NOT OIS_FOUND)
 
-# Set the install folder
-set(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/Install")
 
 # set some additional libraries
 set(ADDITIONAL_OGRE ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES}

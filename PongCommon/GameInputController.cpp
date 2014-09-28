@@ -74,7 +74,9 @@ void Pong::GameInputController::_SetupControlGroups(){
 	
 }
 
-std::map<OIS::KeyCode, CONTROLKEYACTION>& Pong::GameInputController::MapControlsToKeyGrouping(PLAYERCONTROLS controls) THROWS{
+std::map<OIS::KeyCode, CONTROLKEYACTION>& Pong::GameInputController::MapControlsToKeyGrouping(PLAYERCONTROLS controls)
+    THROWS
+{
 
 	return GroupToKeyMap[controls];
 }
@@ -103,17 +105,28 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
 
 	for(size_t i = 0; i < plys.size(); i++){
 
-		if(plys[i]->GetNetworkedInputID() == inputid){
+        // Store a pointer to the currently handled one, as subslots need to be handled //
+        PlayerSlot* curply = plys[i];
 
-			// Store the data and set us as this slot's thing //
-			curplayer = plys[i];
-			activecontrols = curplayer->GetControlType();
-			playerid = curplayer->GetPlayerID();
+        while(curply){
 
-			
+            if(plys[i]->GetNetworkedInputID() == inputid){
 
-			break;
-		}
+                // Store the data and set us as this slot's thing //
+                curplayer = plys[i];
+                activecontrols = curplayer->GetControlType();
+                playerid = curplayer->GetPlayerID();
+
+                break;
+            }
+
+            // Move to the subslot //
+            curply = curply->GetSplit();
+        }
+
+        // Quit if already found //
+        if(playerid >= 0)
+            break;
 	}
 
 	if(playerid == -1){

@@ -410,6 +410,53 @@ template<> LobbyJoinOpenButtonThing<"Team2/Player21JoinOpen", 2, 1>
 template<> LobbyJoinOpenButtonThing<"Team3/Player30JoinOpen", 3, 0>
 template<> LobbyJoinOpenButtonThing<"Team3/Player31JoinOpen", 3, 1>
 
+// ------------------ Prematch screen ------------------ //
+template<> PGCTemplate<PrematchScreen, "PrematchScreen", false>
+
+// Prematch screen state request handler //
+o GuiObject "_PrematchScreenSetter"{
+    s{
+        [@Listener="Generic", @Type="PrematchScreenState"]
+        int SetStateRight(GuiObject@ instance, GenericEvent@ event){
+            // Get the state //
+            string statestr = string(event.GetNamedVars().GetSingleValueByName("State"));
+            
+            if(statestr == "On"){
+                // Enable //
+                instance.GetOwningManager().SetCollectionState("PrematchScreen", true);
+
+            } else {
+                
+                // Disable //
+                instance.GetOwningManager().SetCollectionState("PrematchScreen", false);
+            }
+            
+            return 1;
+        }
+    @%};
+}
+
+
+// TODO: server status string
+// PrematchScreen/ServerStatus
+
+// The exit button //
+o GuiObject "PrematchScreen/DisconnectButton"{
+    s{
+        [@Listener="OnClick"]
+            bool Disconnect(GuiObject@ instance){
+            
+            GetPongGame().Disconnect("User left the match");
+            
+            // Change to the main menu //
+            instance.GetOwningManager().SetCollectionState("TopLevelMenu", true);
+            instance.GetOwningManager().SetCollectionState("MenuWindow", true);
+            return true;
+        }
+        @%};
+}
+
+
 
 
 

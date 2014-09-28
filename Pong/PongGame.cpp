@@ -540,19 +540,33 @@ void Pong::PongGame::VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus)
 
 	switch(serverstatus){
 	case PONG_JOINGAMERESPONSE_TYPE_LOBBY:
-		{
-			// Show the lobby //
-			// Send event to enable the lobby screen //
-			EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
-				new NamedVariableList(L"State", new VariableBlock(string("On")))))));
+    {
+        // Show the lobby //
+        // Send event to enable the lobby screen //
+        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState",
+                Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
+                            new VariableBlock(string("On")))))));
 
-			return;
-		}
-		
+        return;
+    }
+    case PONG_JOINGAMERESPONSE_TYPE_PREMATCH:
+    {
+        // First hide the lobby screen //
+        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState",
+                Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
+                            new VariableBlock(string("Off")))))));
+        
+        
+        // Display the preparation screen //
+        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"PrematchScreenState",
+                Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
+                            new VariableBlock(string("On")))))));
 
-
+        return;
+    }
 
 	}
 
+    Logger::Get()->Error(L"Pong: unknown state!");
 	DEBUG_BREAK;
 }

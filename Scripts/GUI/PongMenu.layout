@@ -359,131 +359,186 @@
     
     <!-- The lobby screen -->
     <Window name="LobbyScreen" type="DefaultWindow">
+      
+      <Property name="Visible" value="False"/>
+      
+      <Window name="DisconnectButton" type="TaharezLook/Button">
         
-        <Property name="Visible" value="False"/>
+        <Property name="Size" value="{{0.22, 0}, {0.08, 0}}"/>
+        <Property name="HorizontalAlignment" value="Right"/>
+        <Property name="VerticalAlignment" value="Bottom"/>
         
-        <Window name="DisconnectButton" type="TaharezLook/Button">
-            
-            <Property name="Size" value="{{0.22, 0}, {0.08, 0}}"/>
-            <Property name="HorizontalAlignment" value="Right"/>
-            <Property name="VerticalAlignment" value="Bottom"/>
-            
-            <Property name="Font" value="Simonetta-Black"/>
-            
-            <Property name="Text" value="Exit"/>
-            <Property name="TooltipText" value="Leave the server"/>
-        </Window>
+        <Property name="Font" value="Simonetta-Black"/>
         
-        <!-- The chat box -->
-        <Window name="ChatBox" type="TaharezLook/FrameWindow">
-            
-            <Property name="Area" value="{{0.02, 0}, {0.70, 0}, {0.76, 0}, {1, 0}}"/>
-            
-            <Property name="Text" value="Chat"/>
-            <Property name="Font" value="Simonetta-Regular"/>
-            
-            <Property name="CloseButtonEnabled" value="False"/>
-            <Property name="RollUpEnabled" value="False"/>
-            <Property name="SizingEnabled" value="False"/>
-            <Property name="DragMovingEnabled" value="False"/>
-            
-            <!-- Send button -->
-            <Window name="StartButton" type="TaharezLook/Button">
-                
-                <Property name="Area" value="{{0.85, 0}, {0.8, 1}, {1, 0}, {1, -1}}"/>
-                
-                <Property name="Font" value="Simonetta-Regular"/>
-                
-                <Property name="Text" value="Send"/>
-            </Window>
-            
-            <!-- The textbox to type messages into -->
-            <Window name="ChatMessage" type="TaharezLook/Editbox">
-                
-                <Property name="Area" value="{{0, 1}, {0.8, 1}, {0.85, -1}, {1, -1}}"/>
-                
-                <Property name="Font" value="Simonetta-Regular"/>
-            </Window>
-            
-            
-        </Window>
+        <Property name="Text" value="Exit"/>
+        <Property name="TooltipText" value="Leave the server"/>
+      </Window>
+      
+      <!-- The chat box -->
+      <Window name="ChatBox" type="TaharezLook/FrameWindow">
         
+        <Property name="Area" value="{{0.02, 0}, {0.70, 0}, {0.76, 0}, {1, 0}}"/>
         
-        <!-- The start button -->
+        <Property name="Text" value="Chat"/>
+        <Property name="Font" value="Simonetta-Regular"/>
+        
+        <Property name="CloseButtonEnabled" value="False"/>
+        <Property name="RollUpEnabled" value="False"/>
+        <Property name="SizingEnabled" value="False"/>
+        <Property name="DragMovingEnabled" value="False"/>
+        
+        <!-- Send button -->
         <Window name="StartButton" type="TaharezLook/Button">
-            
-            <Property name="Size" value="{{0.22, 0}, {0.10, 0}}"/>
-            <Property name="Position" value="{{0, 0}, {-0.085, 0}}"/>
-            
-            <Property name="HorizontalAlignment" value="Right"/>
-            <Property name="VerticalAlignment" value="Bottom"/>
-            
-            <Property name="Font" value="Simonetta-Black"/>
-            
-            <Property name="Text" value="Start"/>
-            <Property name="TooltipText" value="Starts the game if you are allowed to start the game"/>
+          
+          <Property name="Area" value="{{0.85, 0}, {0.8, 1}, {1, 0}, {1, -1}}"/>
+          
+          <Property name="Font" value="Simonetta-Regular"/>
+          
+          <Property name="Text" value="Send"/>
         </Window>
         
-        <!-- The ready button -->
-        <Window name="ReadyButton" type="TaharezLook/Button">
+        <!-- The textbox to type messages into -->
+        <Window name="ChatMessage" type="TaharezLook/Editbox">
+          
+          <Property name="Area" value="{{0, 1}, {0.8, 1}, {0.85, -1}, {1, -1}}"/>
+          
+          <Property name="Font" value="Simonetta-Regular"/>
+        </Window>
+        
+        
+      </Window>
+      
+      
+      <!-- The start button -->
+      <Window name="StartButton" type="TaharezLook/Button">
+        
+        <Property name="Size" value="{{0.22, 0}, {0.10, 0}}"/>
+        <Property name="Position" value="{{0, 0}, {-0.085, 0}}"/>
+        
+        <Property name="HorizontalAlignment" value="Right"/>
+        <Property name="VerticalAlignment" value="Bottom"/>
+        
+        <Property name="Font" value="Simonetta-Black"/>
+        
+        <Property name="Text" value="Start"/>
+        <Property name="TooltipText" value="Starts the game if you are allowed to start the game"/>
+      </Window>
+      
+      <!-- The ready button -->
+      <Window name="ReadyButton" type="TaharezLook/Button">
+        
+        <Property name="Size" value="{{0.22, 0}, {0.11, 0}}"/>
+        <Property name="Position" value="{{0, 0}, {-0.185, 0}}"/>
+        
+        <Property name="HorizontalAlignment" value="Right"/>
+        <Property name="VerticalAlignment" value="Bottom"/>
+        
+        <Property name="Font" value="Simonetta-Black-Large"/>
+        
+        <Property name="Text" value="Ready"/>
+        <Property name="TooltipText" value="Indicate that you are ready"/>
+      </Window>
+      
+      
+      <!-- The tab control containing the GUI pages -->
+      <Window name="LobbyTabs" type="TaharezLook/TabControl">
+        <Property name="TabHeight" value="{0,-1}"/>
+        <Property name="TabPanePosition" value="Top"/>
+        <Property name="Area" value="{{0.02, 0}, {0, 0}, {0.98, 0}, {0.69, 0}}"/>
+        
+        <!-- The general info tab -->
+        <Window name="InfoTab" type="DefaultWindow">
+          <Window name="Text" type="TaharezLook/StaticText">
             
-            <Property name="Size" value="{{0.22, 0}, {0.11, 0}}"/>
-            <Property name="Position" value="{{0, 0}, {-0.185, 0}}"/>
             
-            <Property name="HorizontalAlignment" value="Right"/>
-            <Property name="VerticalAlignment" value="Bottom"/>
+            <Property name="Size" value="{{0.5, 0}, {0.145, 0}}"/>
+            
+            <Property name="HorzFormatting" value="CentreAligned"/>
+            
+            <Property name="HorizontalAlignment" value="Centre"/>
+            <Property name="VerticalAlignment" value="Top"/>
             
             <Property name="Font" value="Simonetta-Black-Large"/>
-            
-            <Property name="Text" value="Ready"/>
-            <Property name="TooltipText" value="Indicate that you are ready"/>
+            <Property name="Text" value="Server status"/>
+          </Window>
         </Window>
         
-        
-        <!-- The tab control containing the GUI pages -->
-        <Window name="LobbyTabs" type="TaharezLook/TabControl">
-            <Property name="TabHeight" value="{0,-1}"/>
-            <Property name="TabPanePosition" value="Top"/>
-            <Property name="Area" value="{{0.02, 0}, {0, 0}, {0.98, 0}, {0.69, 0}}"/>
+        <!-- The player overview tab -->
+        <Window name="PlayersTab" type="DefaultWindow">
+          <Window name="Text" type="TaharezLook/StaticText">
             
-            <!-- The general info tab -->
-            <Window name="InfoTab" type="DefaultWindow">
-                <Window name="Text" type="TaharezLook/StaticText">
-                    
-                    
-                    <Property name="Size" value="{{0.5, 0}, {0.145, 0}}"/>
-                    
-                    <Property name="HorzFormatting" value="CentreAligned"/>
-                    
-                    <Property name="HorizontalAlignment" value="Centre"/>
-                    <Property name="VerticalAlignment" value="Top"/>
-                    
-                    <Property name="Font" value="Simonetta-Black-Large"/>
-                    <Property name="Text" value="Server status"/>
-                </Window>
-            </Window>
             
-            <!-- The player overview tab -->
-            <Window name="PlayersTab" type="DefaultWindow">
-                <Window name="Text" type="TaharezLook/StaticText">
-                    
-                    
-                    <Property name="Size" value="{{0.5, 0}, {0.145, 0}}"/>
-                    <Property name="Position" value="{{0, 1}, {0, 1}}"/>
-                    
-                    <Property name="HorzFormatting" value="CentreAligned"/>
-                    
-                    <Property name="HorizontalAlignment" value="Left"/>
-                    <Property name="VerticalAlignment" value="Top"/>
-                    <Property name="FrameEnabled" value="False"/>
-                    
-                    <Property name="Font" value="Simonetta-Black-Large"/>
-                    <Property name="Text" value="Players"/>
-                </Window>
-            </Window>
+            <Property name="Size" value="{{0.5, 0}, {0.145, 0}}"/>
+            <Property name="Position" value="{{0, 1}, {0, 1}}"/>
+            
+            <Property name="HorzFormatting" value="CentreAligned"/>
+            
+            <Property name="HorizontalAlignment" value="Left"/>
+            <Property name="VerticalAlignment" value="Top"/>
+            <Property name="FrameEnabled" value="False"/>
+            
+            <Property name="Font" value="Simonetta-Black-Large"/>
+            <Property name="Text" value="Players"/>
+          </Window>
         </Window>
-    </Window>
-    
+      </Window>
+    </Window>    
+
+    <!-- The prematch screen -->
+    <Window name="PrematchScreen" type="DefaultWindow">
+        
+      <Property name="Visible" value="False"/>
+
+      <!-- The "status" string -->
+      <Window name="BigLabel" type="TaharezLook/StaticText">
+
+        <Property name="Size" value="{{0.5, 0}, {0.2, 0}}"/>
+        <Property name="Position" value="{{0.25, 0}, {0.08, 0}}"/>
+        
+        <Property name="HorzFormatting" value="CentreAligned"/>
+        
+        <Property name="HorizontalAlignment" value="Left"/>
+        <Property name="VerticalAlignment" value="Top"/>
+
+        
+        <Property name="FrameEnabled" value="False"/>
+        <Property name="Font" value="Simonetta-Black-Large"/>
+        <Property name="Text" value="Match starting"/>
+      </Window>
+      
+      <!-- The server status string -->
+      <Window name="ServerStatus" type="TaharezLook/StaticText">
+
+        <Property name="Size" value="{{0.8, 0}, {0.4, 0}}"/>
+        <Property name="Position" value="{{0.1, 0}, {0.25, 0}}"/>
+        
+        <Property name="HorzFormatting" value="CentreAligned"/>
+        
+        <Property name="HorizontalAlignment" value="Left"/>
+        <Property name="VerticalAlignment" value="Top"/>
+
+        
+        <Property name="FrameEnabled" value="False"/>       
+        <Property name="Font" value="Simonetta-Black"/>
+        <Property name="Text" value="Synchronizing world..."/>
+      </Window>
+
+      <!-- Quitting button -->
+      <Window name="DisconnectButton" type="TaharezLook/Button">
+        
+        <Property name="Size" value="{{0.22, 0}, {0.08, 0}}"/>
+        <Property name="HorizontalAlignment" value="Right"/>
+        <Property name="VerticalAlignment" value="Bottom"/>
+        
+        <Property name="Font" value="Simonetta-Black"/>
+        
+        <Property name="Text" value="Exit"/>
+        <Property name="TooltipText" value="Leave the server"/>
+      </Window>
+      
+      
     
 	</Window>
+
+  </Window>
 </GUILayout>

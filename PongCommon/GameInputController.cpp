@@ -110,10 +110,10 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
 
         while(curply){
 
-            if(plys[i]->GetNetworkedInputID() == inputid){
+            if(curply->GetNetworkedInputID() == inputid){
 
                 // Store the data and set us as this slot's thing //
-                curplayer = plys[i];
+                curplayer = curply;
                 activecontrols = curplayer->GetControlType();
                 playerid = curplayer->GetPlayerID();
 
@@ -166,14 +166,22 @@ DLLEXPORT void Pong::PongInputFactory::ReplicationFinalized(NetworkedInput* inpu
 	
 	for(size_t i = 0; i < plys.size(); i++){
 
-		if(plys[i]->GetNetworkedInputID() == input->GetID()){
+        // Subslots... //
+        PlayerSlot* curply = plys[i];
 
-			// Store the data and set us as this slot's thing //
-			PlayerSlot* curplayer = plys[i];
+        while(curply){
 
-			tmpobj->StartSendingInput(curplayer);
-			return;
-		}
+            if(curply->GetNetworkedInputID() == input->GetID()){
+
+                // Store the data and set us as this slot's thing //
+                PlayerSlot* curplayer = curply;
+
+                tmpobj->StartSendingInput(curplayer);
+                return;
+            }
+
+            curply = curply->GetSplit();
+        }
 	}
 
 
@@ -221,21 +229,30 @@ bool Pong::PongInputFactory::IsConnectionAllowed(NetworkedInput* input, Connecti
 
 	for(size_t i = 0; i < plys.size(); i++){
 
-		if(plys[i]->GetNetworkedInputID() == input->GetID()){
+        // We need to loop the subslots here, too //
+        PlayerSlot* curply = plys[i];
 
-			GUARD_LOCK_OTHER_OBJECT_NAME(plys[i], guard2);
+        while(curply){
 
-			if(plys[i]->GetConnectedPlayer()->GetConnection() == connection){
+            if(curply->GetNetworkedInputID() == input->GetID()){
 
-				// It is allowed //
-				return true;
-			} else {
+                GUARD_LOCK_OTHER_OBJECT_NAME(curply, guard2);
 
-				// Not allowed //
-				return false;
-			}
-		}
+                if(curply->GetConnectedPlayer()->GetConnection() == connection){
+
+                    // It is allowed //
+                    return true;
+                } else {
+
+                    // Not allowed //
+                    return false;
+                }
+            }
+
+            curply = curply->GetSplit();
+        }
 	}
+    
 
 	Logger::Get()->Error(L"Pong input thing failed to find target for allow request");
 	return false;
@@ -243,8 +260,8 @@ bool Pong::PongInputFactory::IsConnectionAllowed(NetworkedInput* input, Connecti
 
 // ------------------ PongNInputter ------------------ //
 Pong::PongNInputter::PongNInputter(int ownerid, int networkid, PlayerSlot* controlthis, PLAYERCONTROLS typetoreceive) : 
-	Leviathan::NetworkedInput(ownerid, networkid), ControlledSlot(controlthis), CtrlGroup(typetoreceive), CreatedByUs(false), ControlStates(0),
-	ChangedKeys(0)
+	Leviathan::NetworkedInput(ownerid, networkid), ControlledSlot(controlthis), CtrlGroup(typetoreceive),
+    CreatedByUs(false), ControlStates(0), ChangedKeys(0)
 {
 	
 }
@@ -290,11 +307,13 @@ void Pong::PongNInputter::_OnInputChanged(){
 		}
 
 		if(differences & PONG_INPUT_FLAGS_POWERDOWN){
-			ControlledSlot->PassInputAction(CONTROLKEYACTION_POWERUPDOWN, ChangedKeys & PONG_INPUT_FLAGS_POWERDOWN ? true: false);
+			ControlledSlot->PassInputAction(CONTROLKEYACTION_POWERUPDOWN, ChangedKeys & PONG_INPUT_FLAGS_POWERDOWN ?
+                true: false);
 		}
 
 		if(differences & PONG_INPUT_FLAGS_POWERUP){
-			ControlledSlot->PassInputAction(CONTROLKEYACTION_POWERUPUP, ChangedKeys & PONG_INPUT_FLAGS_POWERUP ? true: false);
+			ControlledSlot->PassInputAction(CONTROLKEYACTION_POWERUPUP, ChangedKeys & PONG_INPUT_FLAGS_POWERUP ?
+                true: false);
 		}
 		
 

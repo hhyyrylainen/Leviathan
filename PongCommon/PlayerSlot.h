@@ -16,10 +16,20 @@
 
 namespace Pong{
 
-	enum PLAYERTYPE {PLAYERTYPE_HUMAN = 0, PLAYERTYPE_COMPUTER, PLAYERTYPE_EMPTY, PLAYERTYPE_CLOSED};
-	enum PLAYERCONTROLS {PLAYERCONTROLS_NONE = 0, PLAYERCONTROLS_AI, PLAYERCONTROLS_WASD, PLAYERCONTROLS_ARROWS, PLAYERCONTROLS_IJKL,
-		PLAYERCONTROLS_NUMPAD, PLAYERCONTROLS_CONTROLLER};
-	enum CONTROLKEYACTION {CONTROLKEYACTION_LEFT = 1, CONTROLKEYACTION_RIGHT, CONTROLKEYACTION_POWERUPDOWN, CONTROLKEYACTION_POWERUPUP};
+	enum PLAYERTYPE {
+        PLAYERTYPE_HUMAN = 0, PLAYERTYPE_COMPUTER, PLAYERTYPE_EMPTY, PLAYERTYPE_CLOSED
+    };
+    
+	enum PLAYERCONTROLS
+    {
+        PLAYERCONTROLS_NONE = 0, PLAYERCONTROLS_AI, PLAYERCONTROLS_WASD, PLAYERCONTROLS_ARROWS, PLAYERCONTROLS_IJKL,
+        PLAYERCONTROLS_NUMPAD, PLAYERCONTROLS_CONTROLLER
+    };
+    
+	enum CONTROLKEYACTION
+    {
+        CONTROLKEYACTION_LEFT = 1, CONTROLKEYACTION_RIGHT, CONTROLKEYACTION_POWERUPDOWN, CONTROLKEYACTION_POWERUPUP
+    };
 
 	class PlayerList;
 	class PongNInputter;
@@ -36,8 +46,9 @@ namespace Pong{
 		//! Call to set the startup parameters
 		//!
 		//! Doesn't actually initialize anything
-		void Init(PLAYERTYPE type = PLAYERTYPE_EMPTY, int PlayerNumber = 0, PLAYERCONTROLS controltype = PLAYERCONTROLS_NONE, 
-			int ctrlidentifier = 0, int playercontrollerid = -1, const Float4 &playercolour = Float4::GetColourWhite());
+		void Init(PLAYERTYPE type = PLAYERTYPE_EMPTY, int PlayerNumber = 0, PLAYERCONTROLS controltype =
+            PLAYERCONTROLS_NONE, int ctrlidentifier = 0, int playercontrollerid = -1,
+            const Float4 &playercolour = Float4::GetColourWhite());
 
 		//! Serializes this object to a packet
 		void AddDataToPacket(sf::Packet &packet);
@@ -124,13 +135,13 @@ namespace Pong{
 		}
 
 
-		//! returns true if player type isn't empty or closed
+		//! Returns true if player type isn't empty or closed
 		inline bool IsSlotActive(){
 
 			return PlayerType != PLAYERTYPE_CLOSED && PlayerType != PLAYERTYPE_EMPTY;
 		}
 
-		// recursively looks through children and counts maximum depth (usually 0 or 1) //
+		// Recursively looks through children and counts maximum depth (usually 0 or 1) //
 		int GetSplitCount();
 
 		PlayerSlot* GetSplit(){

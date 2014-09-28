@@ -211,6 +211,7 @@ class AIDataCache{
         
         if(AiState != AISTATE_IDLING){
             NotMovedToBall += mspassed;
+            
             if(NotMovedToBall >= 1500){
                 NotMovedToBall = 0;
                 AiState = AISTATE_IDLING;

@@ -243,15 +243,24 @@ private:
         XEvent event;
 
 
-        while(true){
+        while(RunMessageProcessing){
 
-            XWindowEvent(XDisplay, ClipboardWindow, VisibilityChangeMask, &event);
+            XWindowEvent(XDisplay, ClipboardWindow, VisibilityChangeMask | PropertyChangeMask,
+                &event);
 
             switch(event.type){
                 case VisibilityNotify:
                 {
                     if(event.xvisibility.state != VisibilityFullyObscured)
                         Logger::Get()->Warning(L"GuiClipboardHandler: clipboard window shoulnd't become visible");
+                }
+                break;
+                case PropertyNotify:
+                {
+                    Logger::Get()->Info("GuiClipboardHandler: our window's property was changed!, "
+                        L"this might have been the cue to stop");
+
+                    
                 }
                 break;
 
@@ -266,7 +275,6 @@ private:
     //! Sets up the clipboard window for usage
     void SetupClipboardWindow() THROWS{
         
-
         // First get the default display //
         XDisplay = XOpenDisplay(NULL);
 
@@ -276,7 +284,7 @@ private:
         // Setup the window attributes //
         XSetWindowAttributes properties;
 
-        properties.event_mask = VisibilityChangeMask;
+        properties.event_mask = VisibilityChangeMask | PropertyChangeMask;
 
         
         // Then we create the window //
@@ -322,15 +330,45 @@ private:
 
 
         // Display the window, this might not be required for it to work, but it should be invisible anyway //
-        XMapWindow(XDisplay, ClipboardWindow);
+        //XMapWindow(XDisplay, ClipboardWindow);
 
+        // The loop should run //
+        RunMessageProcessing = true;
         
+        XMessageThread = boost::thread(&GuiClipboardHandler::RunXMessageLoop, this);
     }
 
     //! Cleans up the window
     void CleanUpWindow(){
         
+        // First stop the message loop //
+        RunMessageProcessing = false;
+
+        // Then send an event for it to process... //
+        // Let's just set a property "stop" to 1
+        unsigned char stopproperty[] = "stop";
+        int count = 1;
         
+        //Atom customatom = XInternAtom(XDisplay, "PERSONAL_PROPERTY", false);
+
+        XChangeProperty(XDisplay, ClipboardWindow, XA_STRING, XA_STRING, 8,
+            PropModeReplace, stopproperty, 5);
+        
+        XFlush(XDisplay);
+
+        // Then wait for the message loop to end //
+        XMessageThread.join();
+
+        Logger::Get()->Info(L"GUI clipboard is ready to be destroyed");
+
+        // Now the window is ready for closing //
+        XDestroyWindow(XDisplay, ClipboardWindow);
+        
+        // And then the connection //
+        XCloseDisplay(XDisplay);
+
+        //XDisplay = 0;
+        ClipboardWindow = 0;
     }
 
     
@@ -343,6 +381,9 @@ private:
     ::Window ClipboardWindow;
         
     boost::thread XMessageThread;
+
+    //! Denotes whether the window loop should run
+    bool RunMessageProcessing;
         
 #endif
 
@@ -422,7 +463,7 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 	if(GraphicalInputEntity::GetGlobalWindowCount() == 1){
 
 		// Only one clipboard is needed //
-		if(_GuiClipboardHandler->WorksOnPlatform())
+		if(_GuiClipboardHandler && _GuiClipboardHandler->WorksOnPlatform())
 			CEGUI::System::getSingleton().getClipboard()->setNativeProvider(_GuiClipboardHandler);
 	}
 
@@ -481,11 +522,13 @@ void Leviathan::Gui::GuiManager::Release(){
     if(_GuiClipboardHandler && MainGuiManager){
 
         CEGUI::System::getSingleton().getClipboard()->setNativeProvider(NULL);
+        Logger::Get()->Info(L"GuiManager: main manager has detached the clipboard successfully");
     }
     
 	SAFE_DELETE(_GuiClipboardHandler);
 
 	_ReleaseOgreResources();
+    Logger::Get()->Info(L"GuiManager: Gui successfully closed on window");
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(OIS::KeyCode key, int specialmodifiers){

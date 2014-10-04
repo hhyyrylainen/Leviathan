@@ -11,35 +11,6 @@
 #include "OIS.h"
 #include "boost/bimap.hpp"
 
-#ifdef __GNUC__
-// Preprocessor magic to not conflict with Window class //
-namespace X11{
-#include <X11/Xlib.h>
-
-// X11 additional includes
-#include <X11/Xutil.h>
-#include "X11/Xlibint.h"
-#include <X11/Xos.h>
-#include <X11/Xatom.h>
-// Don't want to define our window with the same name //
-}
-// Need some magic to not confuse with GenericEvent macro with GenericEvent class //
-#define X11GenericEvent GenericEvent
-#undef GenericEvent
-#define X11Status Status
-#undef Status
-#define X11None None
-#undef None
-#define X11index index
-#undef index
-#define X11CurrentTime CurrentTime
-#undef CurrentTime
-#undef min
-#undef max
-#undef True
-#undef False
-
-#endif
 
 #include <OISMouse.h>
 #include <OISKeyboard.h>
@@ -47,6 +18,17 @@ namespace X11{
 #include <OISInputManager.h>
 #include "CEGUI/GUIContext.h"
 #include "CEGUI/InputEvent.h"
+
+#ifdef __linux
+
+// Predefine some Xlib stuff to make this header compile //
+typedef long unsigned int XID;
+typedef XID Cursor;
+struct _XDisplay;
+typedef _XDisplay Display;
+
+#endif
+
 
 namespace Leviathan{
 
@@ -99,7 +81,7 @@ namespace Leviathan{
 		DLLEXPORT inline HWND GetHandle(){ VerifyRenderWindowHandle(); return m_hwnd; };
 #else
 		// X11 compatible handle //
-		DLLEXPORT inline X11::XID GetX11Window(){ VerifyRenderWindowHandle(); return m_hwnd; }
+		DLLEXPORT inline XID GetX11Window(){ VerifyRenderWindowHandle(); return m_hwnd; }
 #endif
 		DLLEXPORT inline int GetWidth() const{ return OWindow->getWidth(); };
 		DLLEXPORT inline int GetHeight() const{ return OWindow->getHeight(); };
@@ -162,7 +144,7 @@ namespace Leviathan{
 		void UpdateOISMouseWindowSize();
 #ifdef __GNUC__
 		// X11 window focus find function //
-		X11::XID GetForegroundWindow();
+		XID GetForegroundWindow();
 #endif
 		void CheckInputState();
 		//! \brief Creates an Ogre scene to display GUI on this window
@@ -173,10 +155,10 @@ namespace Leviathan{
 #ifdef _WIN32
 		HWND m_hwnd;
 #else
-		X11::XID m_hwnd;
-		X11::Display* XDisplay;
+		XID m_hwnd;
+		Display* XDisplay;
 
-		X11::Cursor XInvCursor;
+		Cursor XInvCursor;
 #endif
 		Ogre::RenderWindow* OWindow;
 		Ogre::SceneManager* OverlayScene;

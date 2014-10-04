@@ -8,6 +8,7 @@
 #include "FileSystem.h"
 #include "Rendering/Graphics.h"
 #include <boost/assign/list_of.hpp>
+#include <boost/thread.hpp>
 #include "Rendering/GUI/FontManager.h"
 #include "GuiCollection.h"
 #include "Common/DataStoring/DataStore.h"
@@ -29,28 +30,36 @@
 #include "Handlers/ResourceRefreshHandler.h"
 #include "CEGUI/Clipboard.h"
 #include "CEGUI/InputAggregator.h"
-using namespace Leviathan;
-using namespace Leviathan::Gui;
-// ------------------------------------ //
-#ifdef WIN32
-
-
-#else
-#include "Window.h"
-
-#endif // WIN32
 #include "Exceptions/ExceptionNotFound.h"
+#include "Exceptions/ExceptionInvalidState.h"
+
+#ifdef __linux
+// On linux the GuiManager has to create an Xlib window which requires this include...
+#include "XLibInclude.h"
+
+#endif
+
+// ------------------------------------ //
 
 // ------------------ GuiClipboardHandler ------------------ //
 //! \brief Platform dependent clipboard handler
 //! \todo Add support for linux
 class Leviathan::Gui::GuiClipboardHandler : public CEGUI::NativeClipboardProvider{
 public:
-	GuiClipboardHandler(Window* windprovider) : HWNDSource(windprovider), OurOwnedBuffer(NULL){
-	}
+	GuiClipboardHandler(Leviathan::Window* windprovider) : HWNDSource(windprovider), OurOwnedBuffer(NULL)
+    {
+#ifdef __linux
+        // This will throw if it fails...
+        SetupClipboardWindow();
+#endif
+    }
 
 	~GuiClipboardHandler(){
 
+#ifdef __linux
+        CleanUpWindow();
+#endif
+        
 		SAFE_DELETE(OurOwnedBuffer);
 	}
 
@@ -59,10 +68,10 @@ public:
 #ifdef WIN32
 
 		return true;
-#elif __linux__
+#elif __linux
 
-		// Should be available but it isn't //
-		return false;
+		// Now on linux!
+		return true;
 
 #else
 		return false;
@@ -95,7 +104,8 @@ public:
 		}
 
 		// Convert the line endings //
-		string convertedstring = StringOperations::ChangeLineEndsToWindowsString(string(reinterpret_cast<char*>(buffer), size));
+		string convertedstring = StringOperations::ChangeLineEndsToWindowsString(
+            string(reinterpret_cast<char*>(buffer), size));
 		
 
 		// Allocate global data for the text //
@@ -160,17 +170,53 @@ public:
 		}
 	}
 
+#elif __linux
 
+	virtual void sendToClipboard(const CEGUI::String& mimeType, void* buffer, size_t size){
+        
+        // Ignore non-text setting //
+		if(mimeType != "text/plain"){
+
+			return;
+		}
+        
+        // Sending to clipboard is the easy part, responding to the requests is the harder part //
+
+        // Tell Xlib that we know own the clipboard stuff //
+        XSetSelectionOwner(XDisplay, XA_CLIPBOARD(XDisplay), ClipboardWindow, CurrentTime);
+        XFlush(XDisplay);
+
+        Logger::Get()->Info(L"Copying text to X clipboard");
+
+        // Store the text for retrieving later //
+        SAFE_DELETE(OurOwnedBuffer);
+
+        OurOwnedBuffer = new char[size];
+
+        assert(OurOwnedBuffer && "failed to allocate buffer for clipboard text");
+        
+        // Copy the data //
+        memcpy(OurOwnedBuffer, buffer, size);
+        
+	}
+
+	virtual void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size){
+	
+	}
+    
 
 #else
 
 	// Nothing //
 	virtual void sendToClipboard(const CEGUI::String& mimeType, void* buffer, size_t size){
-		throw ExceptionNotFound(L"The method or operation is not implemented.", 0, __WFUNCTION__, L"Platform", L"linux");
+
+        
+
+        
 	}
 
 	virtual void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size){
-		throw ExceptionNotFound(L"The method or operation is not implemented.", 0, __WFUNCTION__, L"Platform", L"linux");
+	
 	}
 
 #endif // WIN32
@@ -178,22 +224,142 @@ public:
 
 private:
 
-	
-	Window* HWNDSource;
+    // Common data //
+    
+    Leviathan::Window* HWNDSource;
 
 
 	//! The owned buffer, which has to be deleted by this
 	char* OurOwnedBuffer;
 
+#ifdef __linux
+private:
+    // Linux specific parts //
+
+    //! The message loop for the Xlib thread
+    void RunXMessageLoop(){
+        
+
+        XEvent event;
+
+
+        while(true){
+
+            XWindowEvent(XDisplay, ClipboardWindow, VisibilityChangeMask, &event);
+
+            switch(event.type){
+                case VisibilityNotify:
+                {
+                    if(event.xvisibility.state != VisibilityFullyObscured)
+                        Logger::Get()->Warning(L"GuiClipboardHandler: clipboard window shoulnd't become visible");
+                }
+                break;
+
+
+            }
+        }
+
+        Logger::Get()->Info(L"Xlib message loop for clipboard manager exiting");
+    }
+
+
+    //! Sets up the clipboard window for usage
+    void SetupClipboardWindow() THROWS{
+        
+
+        // First get the default display //
+        XDisplay = XOpenDisplay(NULL);
+
+        if(!XDisplay)
+            throw ExceptionInvalidState(L"cannot open XDisplay", 0, __WFUNCTION__, L"0");
+
+        // Setup the window attributes //
+        XSetWindowAttributes properties;
+
+        properties.event_mask = VisibilityChangeMask;
+
+        
+        // Then we create the window //
+        ClipboardWindow = XCreateWindow(XDisplay, DefaultRootWindow(XDisplay), 0, 0, 1, 1, 0,
+            CopyFromParent, InputOutput, CopyFromParent,
+            CWEventMask, &properties);
+
+        if(!ClipboardWindow)
+            throw ExceptionInvalidState(L"cannot create clipboard window", 0, __WFUNCTION__, L"0");
+
+
+        // Hide the window //
+        XEvent xev;
+        Atom wm_state = XInternAtom(XDisplay, "_NET_WM_STATE", false);
+        Atom statehidden = XInternAtom(XDisplay, "_NET_WM_STATE_HIDDEN", false);
+        Atom skiptaskbar = XInternAtom(XDisplay, "_NET_WM_STATE_SKIP_TASKBAR", false);
+        Atom nopager = XInternAtom(XDisplay, "_NET_WM_STATE_SKIP_PAGER", false);
+
+        Atom addstate = XInternAtom(XDisplay, "_NET_WM_STATE_ADD", false);
+
+        memset(&xev, 0, sizeof(xev));
+        xev.type = ClientMessage;
+        xev.xclient.window = ClipboardWindow;
+        xev.xclient.message_type = wm_state;
+        xev.xclient.format = 32;
+        xev.xclient.data.l[0] = addstate;
+        xev.xclient.data.l[1] = statehidden;
+        xev.xclient.data.l[2] = skiptaskbar;
+
+        XSendEvent(XDisplay, DefaultRootWindow(XDisplay), false, SubstructureNotifyMask, &xev);
+
+        // We need to set more properties... //
+        memset(&xev, 0, sizeof(xev));
+        xev.type = ClientMessage;
+        xev.xclient.window = ClipboardWindow;
+        xev.xclient.message_type = wm_state;
+        xev.xclient.format = 32;
+        xev.xclient.data.l[0] = addstate;
+        xev.xclient.data.l[1] = nopager;
+
+        
+        XSendEvent(XDisplay, DefaultRootWindow(XDisplay), false, SubstructureNotifyMask, &xev);
+
+
+        // Display the window, this might not be required for it to work, but it should be invisible anyway //
+        XMapWindow(XDisplay, ClipboardWindow);
+
+        
+    }
+
+    //! Cleans up the window
+    void CleanUpWindow(){
+        
+        
+    }
+
+    
+    // These are used for clipboard access //
+
+    //! The current XDisplay
+    Display* XDisplay;
+
+    //! Our hidden clipboard window
+    ::Window ClipboardWindow;
+        
+    boost::thread XMessageThread;
+        
+#endif
+
+    
+
 };
 
 
 
+using namespace Leviathan;
+using namespace Leviathan::Gui;
 
 // ------------------ GuiManager ------------------ //
-Leviathan::Gui::GuiManager::GuiManager() : ID(IDFactory::GetID()), Visible(true), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true),
-	LastTimePulseTime(Misc::GetThreadSafeSteadyTimePoint()), MainGuiManager(false), ThisWindow(NULL), GuiContext(NULL), FileChangeID(0),
-	_GuiClipboardHandler(NULL), ContextInput(NULL)
+Leviathan::Gui::GuiManager::GuiManager() :
+    ID(IDFactory::GetID()), Visible(true), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true),
+    LastTimePulseTime(Misc::GetThreadSafeSteadyTimePoint()), MainGuiManager(false), ThisWindow(NULL), GuiContext(NULL),
+    FileChangeID(0), _GuiClipboardHandler(NULL), ContextInput(NULL)
 {
 	
 }
@@ -219,11 +385,26 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 		return false;
 	}
 
-	// Create the clipboard handler for this window //
-	_GuiClipboardHandler = new GuiClipboardHandler(window->GetWindow());
-	
+	// Create the clipboard handler for this window (only one is required,
+    // so only create if this is the main window's gui
+    if(MainGuiManager){
+        try{
+            _GuiClipboardHandler = new GuiClipboardHandler(window->GetWindow());
+        } catch(const ExceptionBase &e){
+
+            // Clipboard isn't usable... //
+            Logger::Get()->Warning(L"GuiManager: failed to create a ClipboardHandler: cannot copy or paste text, "
+                L"exception:");
+            e.PrintToLog();
+            _GuiClipboardHandler = NULL;
+        }
+    }
+
+
+    
 	// Setup this window's context //
-	GuiContext = &CEGUI::System::getSingleton().createGUIContext(ThisWindow->GetCEGUIRenderer()->getDefaultRenderTarget());
+	GuiContext = &CEGUI::System::getSingleton().createGUIContext(
+        ThisWindow->GetCEGUIRenderer()->getDefaultRenderTarget());
 
 	// Setup input for the context //
 	ContextInput = new CEGUI::InputAggregator(GuiContext);
@@ -296,6 +477,12 @@ void Leviathan::Gui::GuiManager::Release(){
 	CEGUI::System::getSingleton().destroyGUIContext(*GuiContext);
 	GuiContext = NULL;
 
+    // If we are the main window unhook the clipboard //
+    if(_GuiClipboardHandler && MainGuiManager){
+
+        CEGUI::System::getSingleton().getClipboard()->setNativeProvider(NULL);
+    }
+    
 	SAFE_DELETE(_GuiClipboardHandler);
 
 	_ReleaseOgreResources();
@@ -328,7 +515,8 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const wstring &nam
 		if(Collections[i]->GetName() == name){
 			// set state //
 			if(Collections[i]->GetState() != state){
-				Logger::Get()->Info(L"Setting Collection "+Collections[i]->GetName()+L" state "+Convert::ToWstring(state));
+				Logger::Get()->Info(L"Setting Collection "+Collections[i]->GetName()+L" state "+
+                    Convert::ToWstring(state));
 				Collections[i]->ToggleState();
 			}
 			return;
@@ -345,7 +533,8 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const w
 		if(Collections[i]->GetName() == name){
 			// set state //
 			if(Collections[i]->GetAllowEnable() != allow){
-				Logger::Get()->Info(L"Setting Collection "+Collections[i]->GetName()+L" allow enable state "+Convert::ToWstring(allow));
+				Logger::Get()->Info(L"Setting Collection "+Collections[i]->GetName()+
+                    L" allow enable state "+Convert::ToWstring(allow));
 				Collections[i]->ToggleAllowEnable();
 			}
 			return;
@@ -429,7 +618,8 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnResize(){
 	// Notify the CEGUI system //
 	CEGUI::System* const sys = CEGUI::System::getSingletonPtr();
 	if(sys)
-		sys->notifyDisplaySizeChanged(CEGUI::Sizef((float)ThisWindow->GetWindow()->GetWidth(), (float)ThisWindow->GetWindow()->GetHeight()));
+		sys->notifyDisplaySizeChanged(CEGUI::Sizef((float)ThisWindow->GetWindow()->GetWidth(),
+                (float)ThisWindow->GetWindow()->GetHeight()));
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::OnFocusChanged(bool focused){
@@ -544,7 +734,8 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file, bool
 
 		if(!animslist->CanAllBeCastedToType<wstring>()){
 
-			Logger::Get()->Warning(L"GuiManager: LoadGUIFile: gui file has defined gui animation files in wrong format (expected list of strings), file: "+relativepath);
+			Logger::Get()->Warning(L"GuiManager: LoadGUIFile: gui file has defined gui animation files in wrong format"
+                L"(expected list of strings), file: "+relativepath);
 
 		} else {
 
@@ -574,12 +765,14 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file, bool
 
 				} catch(const Ogre::Exception &e){
 
-					Logger::Get()->Warning(L"GuiManager: LoadGUIFile: failed to locate gui animation file: "+curfile+L":");
+					Logger::Get()->Warning(L"GuiManager: LoadGUIFile: failed to locate gui animation file: "+curfile+
+                        L":");
 					Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e.what()));
 
 				} catch(const CEGUI::GenericException &e2){
 
-					Logger::Get()->Error(L"GuiManager: LoadGUIFile: failed to parse CEGUI animation file layout: "+curfile+L":");
+					Logger::Get()->Error(L"GuiManager: LoadGUIFile: failed to parse CEGUI animation file layout: "
+                        +curfile+L":");
 					Logger::Get()->Write(L"\t> "+Convert::StringToWstring(e2.what()));
 				}
 			}
@@ -609,7 +802,8 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file, bool
 			if(!GuiCollection::LoadCollection(this, *objecto)){
 
 				// report error //
-				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load collection, named "+objecto->GetName());
+				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load collection, named "+
+                    objecto->GetName());
 				continue;
 			}
 
@@ -621,7 +815,8 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file, bool
 			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *objecto)){
 
 				// report error //
-				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load GuiObject, named "+objecto->GetName());
+				Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: failed to load GuiObject, named "+
+                    objecto->GetName());
 				continue;
 			}
 
@@ -648,7 +843,8 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file, bool
 			// \todo Detect if the files are in different folders and start multiple listeners
 			std::vector<const wstring*> targetfiles = boost::assign::list_of(&file)(&relativepath);
 
-			tmphandler->ListenForFileChanges(targetfiles, boost::bind(&GuiManager::_FileChanged, this, _1, _2), FileChangeID);
+			tmphandler->ListenForFileChanges(targetfiles, boost::bind(&GuiManager::_FileChanged, this, _1, _2),
+                FileChangeID);
 		}
 	}
 
@@ -718,6 +914,7 @@ void GuiManager::AddCollection(GuiCollection* add){
 	GUARD_LOCK_THIS_OBJECT();
 	Collections.push_back(add);
 }
+
 GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const wstring &name){
 	GUARD_LOCK_THIS_OBJECT();
 	// look for collection based on id or name //
@@ -743,16 +940,7 @@ GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const ws
 // -------------------------------------- //
 bool Leviathan::Gui::GuiManager::_CreateInternalOgreResources(Ogre::SceneManager* windowsscene){
 
-	// Well we don't anymore need anything here since GuiView handles this //
-
-
-
-	// Create a quad for mouse displaying //
-
-	// Use RENDER_QUEUE_MAX to render on top of everything
-
-
-
+    // As it stands this is no longer required...
 	return true;
 }
 
@@ -834,8 +1022,8 @@ DLLEXPORT CEGUI::Window* Leviathan::Gui::GuiManager::GetWindowByStringName(const
 	}
 }
 
-DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindow(const string &windowname, const string &animationname, bool applyrecursively, 
-	const string &ignoretypenames)
+DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindow(const string &windowname, const string &animationname,
+    bool applyrecursively, const string &ignoretypenames)
 {
 	// First get the window //
 	auto wind = GetWindowByStringName(windowname);
@@ -864,12 +1052,14 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindow(const string &w
 	return true;
 }
 
-DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindowProxy(const string &windowname, const string &animationname){
+DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindowProxy(const string &windowname,
+    const string &animationname)
+{
 	return PlayAnimationOnWindow(windowname, animationname);
 }
 
-void Leviathan::Gui::GuiManager::_PlayAnimationOnWindow(CEGUI::Window* targetwind, CEGUI::Animation* animdefinition, bool recurse, 
-	const string &ignoretypenames)
+void Leviathan::Gui::GuiManager::_PlayAnimationOnWindow(CEGUI::Window* targetwind, CEGUI::Animation* animdefinition,
+    bool recurse, const string &ignoretypenames)
 {
 	// Apply only if the typename doesn't match ignored names //
 	if(ignoretypenames.find(targetwind->getType().c_str()) == string::npos && targetwind->getName().at(0) != '_'){
@@ -877,7 +1067,8 @@ void Leviathan::Gui::GuiManager::_PlayAnimationOnWindow(CEGUI::Window* targetwin
 		//Logger::Get()->Write(L"Animating thing: "+Convert::CharPtrToWstring(targetwind->getNamePath().c_str()));
 
 		// Create an animation instance //
-		CEGUI::AnimationInstance* createdanim = CEGUI::AnimationManager::getSingleton().instantiateAnimation(animdefinition);
+		CEGUI::AnimationInstance* createdanim = CEGUI::AnimationManager::getSingleton().instantiateAnimation(
+            animdefinition);
 
 		// Apply the instance //
 		createdanim->setTargetWindow(targetwind);

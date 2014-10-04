@@ -17,7 +17,6 @@
 
 
 
-
 namespace Leviathan{
 
 namespace Gui{
@@ -113,7 +112,8 @@ namespace Gui{
 		DLLEXPORT unique_ptr<GuiCollectionStates> GetGuiStates() const;
 
 		//! \brief Applies a stored set of states to the GUI
-		//! \param states A pointer to an object holding the state, the object should be obtained by calling GetGuiStates
+		//! \param states A pointer to an object holding the state, the object should be obtained by
+        //! calling GetGuiStates
 		//! \see GetGuiStates
 		DLLEXPORT void ApplyGuiStates(const GuiCollectionStates* states);
 
@@ -142,24 +142,27 @@ namespace Gui{
 
 		//! \brief Returns a string containing names of types that don't look good/break something when animated
 		//!
-		//! For use with PlayAnimationOnWindow the ignoretypenames parameter if you just want to avoid breaking some rendering
+		//! For use with PlayAnimationOnWindow the ignoretypenames parameter if you just want to avoid breaking some
+        //! rendering
 		DLLEXPORT FORCE_INLINE static string GetCEGUITypesWithBadAnimations(){
 			return "";
 		}
 
 
-		//! \brief Creates an plays an animation on a CEGUI Window
+		//! \brief Creates and plays an animation on a CEGUI Window
 		//! \param applyrecursively Applies the same animation to the child windows
-		DLLEXPORT bool PlayAnimationOnWindow(const string &windowname, const string &animationname, bool applyrecursively = false, const string 
-			&ignoretypenames = "");
+		DLLEXPORT bool PlayAnimationOnWindow(const string &windowname, const string &animationname,
+            bool applyrecursively = false, const string &ignoretypenames = "");
 		
 		//! \brief Overload of PlayAnimationOnWindow using string conversion
-		DLLEXPORT FORCE_INLINE bool PlayAnimationOnWindow(const wstring &windowname, const wstring &animationname, bool applyrecursively = false,
-			const string &ignoretypenames = ""){
-			return PlayAnimationOnWindow(Convert::WstringToString(windowname), Convert::WstringToString(animationname), applyrecursively,
-				ignoretypenames);
-		}
+		DLLEXPORT FORCE_INLINE bool PlayAnimationOnWindow(const wstring &windowname, const wstring &animationname,
+            bool applyrecursively = false, const string &ignoretypenames = "")
+            {
+                return PlayAnimationOnWindow(Convert::WstringToString(windowname), Convert::WstringToString(
+                        animationname), applyrecursively, ignoretypenames);
+            }
 
+        
 		//! \brief Proxy overload for PlayAnimationOnWindow
 		DLLEXPORT bool PlayAnimationOnWindowProxy(const string &windowname, const string &animationname);
 
@@ -173,30 +176,35 @@ namespace Gui{
 		//! \brief Tries to inject a cut request to CEGUI
 		DLLEXPORT bool InjectCutRequest();
 
+    protected:
+
+        //! Is called by folder listeners to notify of Gui file changes
+		void _FileChanged(const wstring &file, ResourceFolderListener &caller);
+        
 
 	private:
-		// rendering //
+		// Rendering //
 		bool _CreateInternalOgreResources(Ogre::SceneManager* windowsscene);
 		void _ReleaseOgreResources();
 
-		void _FileChanged(const wstring &file, ResourceFolderListener &caller);
 
 		//! The implementation of PlayAnimationOnWindow
-		void _PlayAnimationOnWindow(CEGUI::Window* targetwind, CEGUI::Animation* animdefinition, bool recurse, const string &ignoretypenames);
+		void _PlayAnimationOnWindow(CEGUI::Window* targetwind, CEGUI::Animation* animdefinition, bool recurse,
+            const string &ignoretypenames);
 
 		// ------------------------------------ //
 
-
-		//! \todo implement this in OverlayMaster to hide GUI in view ports that don't need it
 		bool Visible;
-		//! used to determine when to scan collections for active ones
+
+		//! Used to determine when to scan collections for active ones
 		bool GuiMouseUseUpdated;
-		//! set when containing window of the GUI shouldn't be allowed to capture mouse
+		//! Set when containing window of the GUI shouldn't be allowed to capture mouse
 		bool GuiDisallowMouseCapture;
 
 
 		GraphicalInputEntity* ThisWindow;
 
+        
 		//! Gui elements
 		vector<BaseGuiObject*> Objects;
 
@@ -206,23 +214,22 @@ namespace Gui{
 		//! The input handler for the context
 		CEGUI::InputAggregator* ContextInput;
 
-		//! Time of creation of this GuiManager
+		//! Used to keep track of elapsed time for keeping CEGUI posted on the current time
 		WantedClockType::time_point LastTimePulseTime;
 
-		//! The main file of the GUI from which is loaded from
+		//! The main file of the GUI from which it is loaded from
 		wstring MainGUIFile;
 
 		//! Set when this is the first created gui manager
 		//! \detail Used for injecting time pulses into CEGUI
 		bool MainGuiManager;
 
-		//! we will soon need a GuiManager for each window
 		int ID;
 
 		//! Used to stop listening for file changes
 		int FileChangeID;
 
-		// collections //
+		// Collections //
 		std::vector<GuiCollection*> Collections;
 
 
@@ -240,6 +247,8 @@ namespace Gui{
 
 		//! \warning Won't check if the file is already in the vector, use IsAnimationFileLoaded
 		static void SetAnimationFileLoaded(ObjectLock &lock, const wstring &file);
+
+        
 	};
 
 }}

@@ -505,29 +505,11 @@ namespace Leviathan{
         bool usedkeydown = false;
 
         // Try to create a paste/cut/copy request //
-        if(SpecialKeyModifiers & KEYSPECIAL_CTRL){
-            if(arg.key == OIS::KC_C){
+        // if(SpecialKeyModifiers & KEYSPECIAL_CTRL){
 
-                if(inputreceiver->injectCopyRequest()){
-
-                    usedkeydown = true;
-                }
-
-            } else if(arg.key == OIS::KC_V){
-
-                if(inputreceiver->injectPasteRequest()){
-
-                    usedkeydown = true;
-                }
-
-            } else if(arg.key == OIS::KC_X){
-
-                if(inputreceiver->injectCutRequest()){
-
-                    usedkeydown = true;
-                }
-            }
-        }
+        //     // Direct copy requests aren't required anymore as the input object should take care of them //
+            
+        // }
 
         bool usedtext = false;
 

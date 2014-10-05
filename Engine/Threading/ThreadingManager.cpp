@@ -17,8 +17,9 @@ void Leviathan::RegisterOgreOnThread(){
 
 
 // ------------------ ThreadingManager ------------------ //
-DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore /*= DEFAULT_THREADS_PER_CORE*/) : AllowStartTasksFromQueue(true),
-	StopProcessing(false), TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT), AllowConditionalWait(true), AllowRepeats(true)
+DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore /*= DEFAULT_THREADS_PER_CORE*/) :
+    AllowStartTasksFromQueue(true), StopProcessing(false), TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT),
+    AllowConditionalWait(true), AllowRepeats(true)
 {
 	WantedThreadCount = boost::thread::hardware_concurrency()*basethreadspercore;
 

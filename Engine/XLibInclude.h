@@ -17,18 +17,6 @@
 #include <X11/Xmu/Atoms.h>
 
 
-#undef GenericEvent
-//#undef Status
-//#undef None
-#undef index
-// This needs to be up to date with the current Xlib definition
-//#define X11CurrentTime 0L
-//#undef CurrentTime
-#undef min
-#undef max
-#undef True
-#undef False
-
 
 #endif
 #endif //__linux

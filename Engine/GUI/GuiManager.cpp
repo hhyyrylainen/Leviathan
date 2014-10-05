@@ -179,14 +179,18 @@ public:
 
 			return;
 		}
-        
-        // Sending to clipboard is the easy part, responding to the requests is the harder part //
 
+        // We must stop the message loop first //
+        StopXMessageLoop();
+        
+        // "Sending" to the clipboard is the easy part, responding to the requests is the harder part //
+        Atom clipboardtarget = XInternAtom(XDisplay, "CLIPBOARD", false);
+        
         // Tell Xlib that we know own the clipboard stuff //
-        XSetSelectionOwner(XDisplay, XA_CLIPBOARD(XDisplay), ClipboardWindow, CurrentTime);
+        XSetSelectionOwner(XDisplay, clipboardtarget, ClipboardWindow, CurrentTime);
         XFlush(XDisplay);
 
-        Logger::Get()->Info(L"Copying text to X clipboard");
+        Logger::Get()->Info(L"Copied text to the X clipboard");
 
         // Store the text for retrieving later //
         SAFE_DELETE(OurOwnedBuffer);
@@ -197,11 +201,108 @@ public:
         
         // Copy the data //
         memcpy(OurOwnedBuffer, buffer, size);
+
+        // Start handling clipboard data requests //
+        StartXMessageLoop();
         
 	}
 
 	virtual void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size){
-	
+
+        // We need to stop the message processing here, too //
+        StopXMessageLoop();
+        
+        // Create a request //
+
+        Atom targetproperty = XInternAtom(XDisplay, "CUT_BUFFER1", false);
+        
+        // We want the stuff in the clipboard //
+        XConvertSelection(XDisplay, XA_CLIPBOARD(XDisplay), XA_STRING, targetproperty, ClipboardWindow, CurrentTime);
+        XFlush(XDisplay);
+
+        // Now we wait for the request to be completed //
+        {
+            boost::unique_lock<boost::recursive_mutex> lock(ClipboardRetrieveMutex);
+
+            // We need to loop to run for it to process the response //
+            StartXMessageLoop();
+        
+            WaitForClipboard.wait(lock);
+        
+            if(!ClipboardRequestSucceeded){
+
+                Logger::Get()->Info(L"The clipboard was empty");
+                return;
+            }
+        }
+
+        // We probably need to stop the processing loop again //
+        StopXMessageLoop();
+
+        // First read 0 bytes, to get the total size //
+        Atom actualreturntype;
+        int receivedformat;
+        unsigned long receiveditems;
+        unsigned long totalbytes;
+
+        unsigned char* xbuffer;
+        
+        XGetWindowProperty(XDisplay, ClipboardWindow, targetproperty, 0, 0, false, XA_STRING, &actualreturntype,
+            &receivedformat, &receiveditems, &totalbytes, &xbuffer);
+
+        if(xbuffer)
+            XFree(xbuffer);
+        
+        // All that is left to do is to retrieve the property text //
+        // Might as well delete the data after this get
+        XGetWindowProperty(XDisplay, ClipboardWindow, targetproperty, 0, totalbytes, true, XA_STRING, &actualreturntype,
+            &receivedformat, &receiveditems, &totalbytes, &xbuffer);
+
+        // Do last final checks on the data to make sure it is fine //
+        if(receivedformat != 8){
+
+            Logger::Get()->Warning(L"GuiClipboardHandler: received clipboard data is not 8 bit (one byte) aligned"
+                L" chars, actual type: "+Convert::ToWstring(receivedformat));
+            goto finishprocessingthing;
+        }
+
+        if(!xbuffer || receiveditems < 1){
+
+            Logger::Get()->Warning(L"GuiClipboardHandler: received empty xbuffer from clipboard property");
+            goto finishprocessingthing;
+        }
+
+        if(totalbytes != 0){
+
+            Logger::Get()->Warning(L"GuiClipboardHandler: failed to retrieve whole clipboard, bytes left: "+
+                Convert::ToWstring(totalbytes));
+        }
+
+        // Reserve space and copy the string to our place //
+        ReceivedClipboardData.resize(receiveditems);
+
+        // The receiveditems might not be in bytes if other receivedformats than 8 are accepted...
+        memcpy(const_cast<char*>(ReceivedClipboardData.c_str()), xbuffer, receiveditems);
+
+        // Successfull retrieve is always text //
+        mimeType = "text/plain";
+
+        size = ReceivedClipboardData.size();
+
+        // Set the CEGUI data pointer to our string
+        buffer = const_cast<char*>(ReceivedClipboardData.c_str());
+
+        Logger::Get()->Info(L"Succesfully retrieved text from clipboard, text is of length: "+
+            Convert::ToWstring(ReceivedClipboardData.size()));
+
+finishprocessingthing:
+        
+        // The buffer needs to be always released //
+        if(xbuffer)
+            XFree(xbuffer);
+
+        // The message loop has to start again after all the Xlib calls //
+        StartXMessageLoop();
 	}
     
 
@@ -238,15 +339,12 @@ private:
 
     //! The message loop for the Xlib thread
     void RunXMessageLoop(){
-        
 
         XEvent event;
 
-
         while(RunMessageProcessing){
 
-            XWindowEvent(XDisplay, ClipboardWindow, VisibilityChangeMask | PropertyChangeMask,
-                &event);
+            XNextEvent(XDisplay, &event);
 
             switch(event.type){
                 case VisibilityNotify:
@@ -257,10 +355,130 @@ private:
                 break;
                 case PropertyNotify:
                 {
-                    Logger::Get()->Info("GuiClipboardHandler: our window's property was changed!, "
-                        L"this might have been the cue to stop");
+                    // Ignore removed properties //
+                    if(event.xproperty.state == PropertyDelete){
 
+                        break;
+                    }
+
+                    // Might want to get this somewhere else
+                    Atom pasteresponse = XInternAtom(XDisplay, "CUT_BUFFER1", false);
                     
+                    // Check what changed //
+                    if(event.xproperty.atom == XA_STRING){
+
+                        // This is the stop message //
+                        Logger::Get()->Info(L"Received the stop property");
+
+                        
+                    } else if(event.xproperty.atom == pasteresponse){
+                        
+                        Logger::Get()->Info(L"Received clipboard request's property");
+                            
+                        // We received the clipboard contents //
+                        {
+                            boost::unique_lock<boost::recursive_mutex> lock(ClipboardRetrieveMutex);
+
+                            ClipboardRequestSucceeded = true;
+                        }
+
+                        WaitForClipboard.notify_all();
+                    }
+
+                }
+                break;
+                case SelectionRequest:
+                {
+                    // Prepare a response for the requester //
+                    XEvent response;
+
+                    // Ignore if we got nothing //
+                    if(OurOwnedBuffer){
+                    
+                        if((event.xselectionrequest.target == XA_STRING || (event.xselectionrequest.target ==
+                                    XA_UTF8_STRING(XDisplay)) &&
+                                event.xselectionrequest.selection == XA_CLIPBOARD(XDisplay)))
+                        {
+
+                            if(response.xselection.property == None){
+
+                                Logger::Get()->Warning(L"Clipboard request property is None, "
+                                    L"and we decided that CUT_BUFFER1 is a good choice");
+
+                                // Let's just use this property //
+                                response.xselection.property = XInternAtom(XDisplay, "CUT_BUFFER1", false);
+                            }
+
+                            Logger::Get()->Info(L"Sending clipboard text to requester");
+                            
+                            // Send the text to the requester //
+                            XChangeProperty(XDisplay, event.xselectionrequest.requestor,
+                                event.xselectionrequest.property,
+                                XA_STRING, 8, PropModeReplace, reinterpret_cast<unsigned char*>(OurOwnedBuffer),
+                                static_cast<int>(strlen(OurOwnedBuffer)));
+                        
+                            response.xselection.property = event.xselectionrequest.property;
+                        
+                        } else if(event.xselectionrequest.target == XA_TARGETS(XDisplay)
+                            && event.xselectionrequest.selection == XA_CLIPBOARD(XDisplay)
+                            && OurOwnedBuffer)
+                        {
+                            Logger::Get()->Info(L"Sending supported formats to clipboard requester");
+                            
+                            // We need to tell the requester what types are supported
+                            Atom supported[] = {XA_UTF8_STRING(XDisplay), XA_STRING};
+                        
+                            XChangeProperty(XDisplay, event.xselectionrequest.requestor,
+                                event.xselectionrequest.property,
+                                XA_TARGETS(XDisplay), 32, PropModeReplace,
+                                reinterpret_cast<unsigned char*>(&supported),
+                                sizeof(supported)/sizeof(supported[0]));
+                        
+                        } else {
+
+                            Logger::Get()->Info(L"Don't know how to respond to clipboard request");
+                            response.xselection.property = None;
+                        }
+                    } else {
+
+                        response.xselection.property = None;
+                        Logger::Get()->Info(L"Clipboard is empty...");
+                    }
+                    
+                    response.xselection.type = SelectionNotify;
+                    response.xselection.display = event.xselectionrequest.display;
+                    response.xselection.requestor = event.xselectionrequest.requestor;
+                    response.xselection.selection = event.xselectionrequest.selection;
+                    response.xselection.target = event.xselectionrequest.target;
+                    response.xselection.time = event.xselectionrequest.time;
+                    
+                    XSendEvent(XDisplay, event.xselectionrequest.requestor, 0, 0, &response);
+                    XFlush(XDisplay);
+                }
+                break;
+                case SelectionClear:
+                {
+                    // We no longer hold the clipboard //
+                    Logger::Get()->Info(L"We now no longer own the clipboard");
+                    SAFE_DELETE(OurOwnedBuffer);
+
+                }
+                break;
+                case SelectionNotify:
+                {
+                    boost::unique_lock<boost::recursive_mutex> lock(ClipboardRetrieveMutex);
+                    
+                    // We received something from the selection owner //
+                    if(event.xselection.property == None){
+
+                        Logger::Get()->Info(L"Nothing to paste, clipboard empty");
+                        ClipboardRequestSucceeded = false;
+                        break;
+                    }
+
+                    // No reason that it would have failed... //
+                    ClipboardRequestSucceeded = true;
+                    WaitForClipboard.notify_all();
                 }
                 break;
 
@@ -268,7 +486,6 @@ private:
             }
         }
 
-        Logger::Get()->Info(L"Xlib message loop for clipboard manager exiting");
     }
 
 
@@ -327,38 +544,17 @@ private:
 
         
         XSendEvent(XDisplay, DefaultRootWindow(XDisplay), false, SubstructureNotifyMask, &xev);
-
-
-        // Display the window, this might not be required for it to work, but it should be invisible anyway //
-        //XMapWindow(XDisplay, ClipboardWindow);
-
-        // The loop should run //
-        RunMessageProcessing = true;
         
-        XMessageThread = boost::thread(&GuiClipboardHandler::RunXMessageLoop, this);
+        // The loop should run //
+        StartXMessageLoop();
     }
 
     //! Cleans up the window
     void CleanUpWindow(){
         
         // First stop the message loop //
-        RunMessageProcessing = false;
-
-        // Then send an event for it to process... //
-        // Let's just set a property "stop" to 1
-        unsigned char stopproperty[] = "stop";
-        int count = 1;
+        StopXMessageLoop();
         
-        //Atom customatom = XInternAtom(XDisplay, "PERSONAL_PROPERTY", false);
-
-        XChangeProperty(XDisplay, ClipboardWindow, XA_STRING, XA_STRING, 8,
-            PropModeReplace, stopproperty, 5);
-        
-        XFlush(XDisplay);
-
-        // Then wait for the message loop to end //
-        XMessageThread.join();
-
         Logger::Get()->Info(L"GUI clipboard is ready to be destroyed");
 
         // Now the window is ready for closing //
@@ -371,8 +567,41 @@ private:
         ClipboardWindow = 0;
     }
 
+    //! \brief Starts the Xlib message loop for responding to requests
+    //!
+    //! For use after stopping the loop
+    void StartXMessageLoop(){
+
+        
+        RunMessageProcessing = true;
+        
+        XMessageThread = boost::thread(&GuiClipboardHandler::RunXMessageLoop, this);
+    }
+
+    //! \brief Stops the message processing
+    void StopXMessageLoop(){
+
+        // First signal the loop to stop //
+        RunMessageProcessing = false;
+
+        // Then send an event for it to process... //
+        unsigned char stopproperty[] = "stop";
+        int count = 1;
+
+        XChangeProperty(XDisplay, ClipboardWindow, XA_STRING, XA_STRING, 8,
+            PropModeReplace, stopproperty, 5);
+
+        XFlush(XDisplay);
+
+        // Then wait for the message loop to end //
+        XMessageThread.join();
+    }
     
     // These are used for clipboard access //
+
+
+    //! Holds the received text from the clipboard
+    string ReceivedClipboardData;
 
     //! The current XDisplay
     Display* XDisplay;
@@ -384,6 +613,15 @@ private:
 
     //! Denotes whether the window loop should run
     bool RunMessageProcessing;
+
+    //! This is waited for while the clipboard is accessed
+    boost::condition_variable_any WaitForClipboard;
+
+    //! This is a lock for clipboard content retrieve
+    boost::recursive_mutex ClipboardRetrieveMutex;
+
+    //! Denotes whether clipboard grap failed or succeeded
+    bool ClipboardRequestSucceeded;
         
 #endif
 

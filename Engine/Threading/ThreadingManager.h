@@ -90,13 +90,15 @@ namespace Leviathan{
 
 		int WantedThreadCount;
 
-		//! Used to allow QueuedTask::MustBeRanBefore function to work, shared between staticaccess worker thread and the main object
+		//! Used to allow QueuedTask::MustBeRanBefore function to work, shared between staticaccess worker thread and
+        //! the main object
 		int TaksMustBeRanBeforeState;
 
 		//! Can tasks be repeated
 		bool AllowRepeats;
 
-		//! Controls whether tasks can be conditional. Setting this to false will remove all tasks that cannot be ran instantly
+		//! Controls whether tasks can be conditional. Setting this to false will remove all tasks that cannot be ran
+        //! instantly
 		bool AllowConditionalWait;
 
 

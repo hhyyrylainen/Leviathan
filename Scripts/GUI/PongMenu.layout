@@ -502,6 +502,7 @@
 
         
         <Property name="FrameEnabled" value="False"/>
+        <Property name="BackgroundEnabled" value="False"/>
         <Property name="Font" value="Simonetta-Black-Large"/>
         <Property name="Text" value="Match starting"/>
       </Window>
@@ -518,7 +519,8 @@
         <Property name="VerticalAlignment" value="Top"/>
 
         
-        <Property name="FrameEnabled" value="False"/>       
+        <Property name="FrameEnabled" value="False"/>
+        <Property name="BackgroundEnabled" value="False"/>
         <Property name="Font" value="Simonetta-Black"/>
         <Property name="Text" value="Synchronizing world..."/>
       </Window>

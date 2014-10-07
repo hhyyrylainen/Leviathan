@@ -31,7 +31,8 @@ namespace Leviathan{
 		DLLEXPORT bool IsConnectionYours(ConnectionInfo* checkconnection);
 
 		//! \brief Checks is a connection this player's connection
-		//! \note This compares the pointers and it should work but the IsConnectionYours is more secure (but it shouldn't be used)
+		//! \note This compares the pointers and it should work but the IsConnectionYours is more secure
+        //! (but it shouldn't be used)
 		//! \see IsConnectionYours
 		DLLEXPORT bool IsConnectionYoursPtrCompare(ConnectionInfo* checkconnection);
 
@@ -114,20 +115,23 @@ namespace Leviathan{
 
 	//! \brief Class that encapsulates common networking functionality required by server programs
 	//!
-	//! More specific version of NetworkInterface and should be included additionally in server network interface classes.
+	//! More specific version of NetworkInterface and should be included additionally in
+    //! server network interface classes.
 	//! \see NetworkInterface
 	class NetworkServerInterface : public virtual ThreadSafe{
 		friend ConnectedPlayer;
 	public:
-		//! \brief Initializes some values to defaults and requires others to be provided by the subclass that inherits from this.
+		//! \brief Initializes some values to defaults and requires others to be provided by the subclass that
+        //! inherits from this.
 		//!
 		//! These can be later changed with various set functions
 		//! \param maxplayers Sets the initial maximum player count
 		//! \param servername Sets the server's name visible in various listings
 		//! \param restricttype Controls who can join the server
 		//! \param additionalflags Sets the application specific flags for this server
-		DLLEXPORT NetworkServerInterface(int maxplayers, const wstring &servername, NETWORKRESPONSE_SERVERJOINRESTRICT restricttype =
-			NETWORKRESPONSE_SERVERJOINRESTRICT_NONE, int additionalflags = 0);
+		DLLEXPORT NetworkServerInterface(int maxplayers, const wstring &servername,
+            NETWORKRESPONSE_SERVERJOINRESTRICT restricttype = NETWORKRESPONSE_SERVERJOINRESTRICT_NONE,
+            int additionalflags = 0);
 		//! Default destructor
 		DLLEXPORT virtual ~NetworkServerInterface();
 
@@ -143,7 +147,8 @@ namespace Leviathan{
 
 
 		//! \brief Sends a response to a NETWORKREQUESTTYPE_SERVERSTATUS
-		DLLEXPORT void RespondToServerStatusRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontouse);
+		DLLEXPORT void RespondToServerStatusRequest(shared_ptr<NetworkRequest> request,
+            ConnectionInfo* connectiontouse);
 
 		//! \brief Sets the status of the server to newstatus
 		DLLEXPORT void SetServerStatus(NETWORKRESPONSE_SERVERSTATUS newstatus);
@@ -157,14 +162,16 @@ namespace Leviathan{
 
 
 		//! \brief Enables the use of a NetworkedInputHandler
-		//! \param handler The object that implements the networked input interface, this has to be guaranteed to stay allocated as long as it is
+		//! \param handler The object that implements the networked input interface, this has to be guaranteed to
+        //! stay allocated as long as it is
 		//! still attached.
 		//! \warning The deletion of the old handler isn't thread safe so be careful when switching handlers
 		DLLEXPORT virtual bool RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler);
 
 
 		//! \brief Sends a response packet to all players except for the player(s) whose connection matches skipme
-		DLLEXPORT void SendToAllButOnePlayer(shared_ptr<NetworkResponse> response, ConnectionInfo* skipme, int resendcount = 4);
+		DLLEXPORT void SendToAllButOnePlayer(shared_ptr<NetworkResponse> response, ConnectionInfo* skipme,
+            int resendcount = 4);
 
 		//! \brief Sends a response packet to all of the players
 		DLLEXPORT void SendToAllPlayers(shared_ptr<NetworkResponse> response, int resendcount = 4);
@@ -173,7 +180,8 @@ namespace Leviathan{
 		DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
 
 		//! \brief Verifies that all current players are receiving world updates
-		//! \note Prior to calling this (if your players will move) you should bind positionable objects to the players for them to receive updates
+		//! \note Prior to calling this (if your players will move) you should bind positionable objects to
+        //! the players for them to receive updates
 		// based on their location
 		DLLEXPORT virtual void VerifyWorldIsSyncedWithPlayers(shared_ptr<GameWorld> world);
 
@@ -189,7 +197,8 @@ namespace Leviathan{
 		//! \brief Utility function for subclasses to call for default handling of non-request responses
 		//!
 		//! Handles default types of response packages and returns true if processed.
-		DLLEXPORT bool _HandleServerResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived);
+		DLLEXPORT bool _HandleServerResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection,
+            bool &dontmarkasreceived);
 
 		//! \brief Used to handle server join request packets
 		//! \todo Check connection security status
@@ -211,11 +220,13 @@ namespace Leviathan{
 		//! \brief Called by _HandleServerJoinRequest to allow specific games to disallow players
 		//! \return true to allow join false to disallow join
 		//! \param message The error message to give back to the player
-		DLLEXPORT virtual bool AllowPlayerConnectVeto(shared_ptr<NetworkRequest> request, ConnectionInfo* connection, wstring &message);
+		DLLEXPORT virtual bool AllowPlayerConnectVeto(shared_ptr<NetworkRequest> request, ConnectionInfo* connection,
+            wstring &message);
 
 
 		//! \brief Called by ConnectedPlayer when it's connection closes
-		std::vector<ConnectedPlayer*>::iterator _OnReportCloseConnection(const std::vector<ConnectedPlayer*>::iterator &iter, ObjectLock &guard);
+		std::vector<ConnectedPlayer*>::iterator _OnReportCloseConnection(const std::vector<ConnectedPlayer*>::iterator
+            &iter, ObjectLock &guard);
 		// ------------------------------------ //
 
 
@@ -242,7 +253,8 @@ namespace Leviathan{
 
 		//! Type of join restriction, defaults to NETWORKRESPONSE_SERVERJOINRESTRICT_NONE
 		NETWORKRESPONSE_SERVERJOINRESTRICT JoinRestrict;
-		//! Server status, initially NETWORKRESPONSE_SERVERSTATUS_STARTING and should be set by the application when appropriate
+		//! Server status, initially NETWORKRESPONSE_SERVERSTATUS_STARTING and should be set by the application
+        //! when appropriate
 		NETWORKRESPONSE_SERVERSTATUS ServerStatus;
 
 		//! This can contain anything the specific game wants

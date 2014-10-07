@@ -117,9 +117,9 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 		chosenslot->SetControls(PLAYERCONTROLS_ARROWS, 0);
 
 
-		Logger::Get()->Info(L"Player joined slot "+Convert::ToWstring(slotnumber)+L", split "+Convert::ToWstring<int>(split)+L" (networked control: "+
-			Convert::ToWstring(newid)+L") named "
-			+Convert::Utf8ToUtf16(sender->GetNickname()));
+		Logger::Get()->Info(L"Player joined slot "+Convert::ToWstring(slotnumber)+L", split "+Convert::ToWstring<int>(
+                split)+L" (networked control: "+Convert::ToWstring(newid)+L") named "+
+            Convert::Utf8ToUtf16(sender->GetNickname()));
 
 		slots->NotifyUpdatedValue();
 	} else if(*cmd == "open"){

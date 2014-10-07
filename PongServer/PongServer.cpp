@@ -241,22 +241,25 @@ void Pong::PongServer::OnStartPreMatch(){
 	GameArena->GenerateArena(this, _PlayerList);
 
 
-	// Queue a ready checking task //
+	// Queue a readyness checking task //
 	ThreadingManager::Get()->QueueTask(new ConditionalTask(boost::bind<void>([](PongServer* server) -> void
-	{
-		// Start the match //
-		server->WorldOfPong->SetWorldPhysicsFrozenState(false);
-		server->_PongServerNetworking->SetStatus(PONG_JOINGAMERESPONSE_TYPE_MATCH);
+        {
 
-		// TODO: add a start timer here
+            Logger::Get()->Info(L"All players are synced, the match is ready to begin");
+            
+            // Start the match //
+            server->WorldOfPong->SetWorldPhysicsFrozenState(false);
+            server->_PongServerNetworking->SetStatus(PONG_JOINGAMERESPONSE_TYPE_MATCH);
+
+            // TODO: add a start timer here
 
 
-	}, this), boost::bind<bool>([](shared_ptr<GameWorld> world) -> bool
-	{
-		// We are ready to start once all clients are reported to be up to date by the world //
-		return world->AreAllPlayersSynced();
+        }, this), boost::bind<bool>([](shared_ptr<GameWorld> world) -> bool
+            {
+                // We are ready to start once all clients are reported to be up to date by the world //
+                return world->AreAllPlayersSynced();
 
-	}, WorldOfPong)));
+            }, WorldOfPong)));
 
 	// Clear all other sorts of data like scores etc. //
 

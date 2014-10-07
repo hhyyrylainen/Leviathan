@@ -59,6 +59,7 @@ namespace Leviathan{
 	};
 
 	//! \brief Represents a world that contains entities
+    //! \note Only ConnectedPlayer object may be linked with the world through Notifier
 	class GameWorld : public BaseNotifierAll{
 	public:
 		DLLEXPORT GameWorld();
@@ -137,8 +138,9 @@ namespace Leviathan{
 		DLLEXPORT void ClearSimulatePassedTime();
 
 		// Ray callbacks //
-		static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const 
-			hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam);
+		static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const
+            shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const
+            userData, dFloat intersectParam);
 		
 		// Script proxies //
 		DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(Float3 from, Float3 to);
@@ -149,10 +151,10 @@ namespace Leviathan{
 	private:
 
 		//! Used to connect new players
-		DLLEXPORT virtual void _OnNotifierConnected(BaseNotifiableAll* parentadded);
+		DLLEXPORT virtual void _OnNotifiableConnected(BaseNotifiableAll* parentadded) override;
 
 		//! Used to disconnect players that are going to be unloaded
-		DLLEXPORT virtual void _OnNotifierDisconnected(BaseNotifiableAll* parenttoremove);
+		DLLEXPORT virtual void _OnNotifiableDisconnected(BaseNotifiableAll* parenttoremove) override;
 
 		//! \brief Updates a players position info in this world
 		void UpdatePlayersPositionData(ConnectedPlayer* ply, ObjectLock &guard);

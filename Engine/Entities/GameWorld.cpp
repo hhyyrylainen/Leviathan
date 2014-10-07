@@ -17,8 +17,9 @@
 #include "Bases/BasePositionable.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameWorld::GameWorld() : WorldSceneCamera(NULL), WorldsScene(NULL), Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false), 
-	GraphicalMode(false), LinkedToWindow(NULL), WorldWorkspace(NULL), ClearAllObjects(false)
+DLLEXPORT Leviathan::GameWorld::GameWorld() :
+    WorldSceneCamera(NULL), WorldsScene(NULL), Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false),
+    GraphicalMode(false), LinkedToWindow(NULL), WorldWorkspace(NULL), ClearAllObjects(false)
 {
 
 }
@@ -78,7 +79,8 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 // ------------------------------------ //
 void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre, Window* rendertarget){
 	// create scene manager //
-	WorldsScene = ogre->createSceneManager(Ogre::ST_EXTERIOR_FAR, 2, Ogre::INSTANCING_CULLING_THREADED, "MainSceneManager");
+	WorldsScene = ogre->createSceneManager(Ogre::ST_EXTERIOR_FAR, 2, Ogre::INSTANCING_CULLING_THREADED,
+        "MainSceneManager");
 
 	WorldsScene->setShadowFarDistance(1000.f);
 	WorldsScene->setShadowDirectionalLightExtrusionDistance(10000.f);
@@ -195,7 +197,8 @@ DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
 	// ID shouldn't be under zero //
 	if(ID == -1){
 
-		Logger::Get()->Warning(L"GameWorld: GetWorldObject: trying to find object with ID == -1 (IDs shouldn't be negative)");
+		Logger::Get()->Warning(L"GameWorld: GetWorldObject: trying to find object with ID == -1 "
+            L"(IDs shouldn't be negative)");
 		return NULL;
 	}
 
@@ -341,7 +344,9 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 	}
 }
 
-DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float3 &from, const Float3 &to, ObjectLock &guard){
+DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float3 &from, const Float3 &to,
+    ObjectLock &guard)
+{
 	VerifyLock(guard);
 	// Create a data object for the ray cast //
 	RayCastData data(1, from, to);
@@ -360,8 +365,11 @@ DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float
 	return data.HitEntities[0];
 }
 // \todo improve this performance //
-dFloat Leviathan::GameWorld::RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam){
-	// Let's just store it as NewtonBody pointer //
+dFloat Leviathan::GameWorld::RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const
+    shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData,
+    dFloat intersectParam)
+{
+	// Let's just store it as a NewtonBody pointer //
 	RayCastData* data = reinterpret_cast<RayCastData*>(userData);
 
 	if(data->HitEntities.size() == 0)
@@ -385,11 +393,12 @@ bool Leviathan::GameWorld::AreAllPlayersSynced() const{
 	return SendingInitialState;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::_OnNotifierConnected(BaseNotifiableAll* parentadded){
+DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* parentadded){
 
 	// The connected object will always have to be a ConnectedPlayer
 	auto plyptr = static_cast<ConnectedPlayer*>(parentadded);
 
+    Logger::Get()->Info("GameWorld: player(\""+plyptr->GetNickname()+L" is now receiving world");
 
 	// Create an entry for this player //
 	DEBUG_BREAK;
@@ -408,7 +417,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifierConnected(BaseNotifiableAll* par
 	SendingInitialState = true;
 }
 
-DLLEXPORT void Leviathan::GameWorld::_OnNotifierDisconnected(BaseNotifiableAll* parenttoremove){
+DLLEXPORT void Leviathan::GameWorld::_OnNotifiableDisconnected(BaseNotifiableAll* parenttoremove){
 
 	auto plyptr = static_cast<ConnectedPlayer*>(parenttoremove);
 

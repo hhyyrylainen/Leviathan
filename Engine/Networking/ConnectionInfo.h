@@ -36,15 +36,23 @@ namespace Leviathan{
 	struct SentNetworkThing{
 
 		//! This is the signature for request packets
-		DLLEXPORT SentNetworkThing(int packetid, int expectedresponseid, shared_ptr<NetworkRequest> request, shared_ptr<boost::promise<bool>> waitobject, 
-			int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber = 1);
+		DLLEXPORT SentNetworkThing(int packetid, int expectedresponseid, shared_ptr<NetworkRequest> request,
+            shared_ptr<boost::promise<bool>> waitobject, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout,
+            int timeoutvalue, const sf::Packet &packetsdata, int attempnumber = 1);
 		//! Empty destructor to link this in
 		DLLEXPORT ~SentNetworkThing();
 		// This is the signature for response packets //
-		DLLEXPORT SentNetworkThing(int packetid, shared_ptr<NetworkResponse> response, shared_ptr<boost::promise<bool>> waitobject, int maxtries, 
-			PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber = 1);
+		DLLEXPORT SentNetworkThing(int packetid, shared_ptr<NetworkResponse> response, shared_ptr<boost::promise<bool>>
+            waitobject, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue,
+            const sf::Packet &packetsdata, int attempnumber = 1);
 
 		DLLEXPORT boost::unique_future<bool>& GetFutureForThis();
+
+
+        //! \brief Sets this packet as a timed packet
+        //! \note A timed package will have the ConfirmReceiveTime set to the time a response (or receive notification)
+        //! is received
+        DLLEXPORT void SetAsTimed();
 
 		int PacketNumber;
 
@@ -55,6 +63,13 @@ namespace Leviathan{
 
 		int TimeOutMS;
 		__int64 RequestStartTime;
+
+        //! \brief The time when this packed got marked as received
+        //!
+        //! This will roughly be the time it took for the packet to reach the destination and return
+        //! the round-trip time
+        //! \note This will only be set if this value is set to 1 before the packet is sent
+        //! \note This value is only valid if the packet wasn't lost (failed requests have this unset)
 		__int64 ConfirmReceiveTime;
 		int ExpectedResponseID;
 

@@ -10,7 +10,7 @@
 
 namespace Leviathan{
 
-
+    //! \todo Change to use utf8 strings
 	class Logger : public boost::basic_lockable_adapter<boost::recursive_mutex>{
 	public:
 		DLLEXPORT Logger(const wstring &file);
@@ -25,6 +25,7 @@ namespace Leviathan{
 		DLLEXPORT static void QueueErrorMessage(const wstring& str);
 
 		DLLEXPORT void Info(const wstring &data, const bool &save = false);
+        DLLEXPORT void Info(const string &data, const bool &save = false);
 		DLLEXPORT void Error(const wstring &data, const int &pvalue = 0, const bool &save = false);
 		DLLEXPORT void Warning(const wstring &data, bool save = false);
 

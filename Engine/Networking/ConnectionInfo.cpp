@@ -330,6 +330,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 #endif // SPAM_ME_SOME_PACKETS
 				// We want to notify all waiters that it has been received //
 				(*iter)->WaitForMe->set_value(true);
+                (*iter)->ConfirmReceiveTime = Misc::GetTimeMs64();                
 				iter = WaitingRequests.erase(iter);
 				continue;
 			}
@@ -345,6 +346,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 				// It has a proper response //
 				// We want to notify all waiters that it has been received //
 				(*iter)->WaitForMe->set_value(true);
+                (*iter)->ConfirmReceiveTime = Misc::GetTimeMs64();
 				iter = WaitingRequests.erase(iter);
 				continue;
 			}
@@ -835,19 +837,23 @@ bool Leviathan::ConnectionInfo::_IsAlreadyReceived(int packetid){
 	return false;
 }
 // ------------------ SentNetworkThing ------------------ //
-Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponseid, shared_ptr<NetworkRequest> request, shared_ptr<boost::promise<bool>> waitobject, 
-	int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) : PacketNumber(packetid),
-	ExpectedResponseID(expectedresponseid), OriginalRequest(request), WaitForMe(waitobject), MaxTries(maxtries), PacketTimeoutStyle(howtotimeout),
-	TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata), AttempNumber(attempnumber), RequestStartTime(Misc::GetTimeMs64()), ConfirmReceiveTime(0),
-	IsArequest(true), FutureFetched(false)
+Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponseid, shared_ptr<NetworkRequest> request,
+    shared_ptr<boost::promise<bool>> waitobject, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue,
+    const sf::Packet &packetsdata, int attempnumber /*= 1*/) :
+    PacketNumber(packetid), ExpectedResponseID(expectedresponseid), OriginalRequest(request), WaitForMe(waitobject),
+    MaxTries(maxtries), PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata),
+    AttempNumber(attempnumber), RequestStartTime(Misc::GetTimeMs64()), ConfirmReceiveTime(0), IsArequest(true),
+    FutureFetched(false)
 {
 
 }
 
-Leviathan::SentNetworkThing::SentNetworkThing(int packetid, shared_ptr<NetworkResponse> response, shared_ptr<boost::promise<bool>> waitobject, 
-	int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) : PacketNumber(packetid),
-	ExpectedResponseID(-1), SentResponse(response), WaitForMe(waitobject), MaxTries(maxtries), PacketTimeoutStyle(howtotimeout),
-	TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata), AttempNumber(attempnumber), RequestStartTime(Misc::GetTimeMs64()), ConfirmReceiveTime(0),
+Leviathan::SentNetworkThing::SentNetworkThing(int packetid, shared_ptr<NetworkResponse> response,
+    shared_ptr<boost::promise<bool>> waitobject, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue,
+    const sf::Packet &packetsdata, int attempnumber /*= 1*/) :
+    PacketNumber(packetid), ExpectedResponseID(-1), SentResponse(response), WaitForMe(waitobject), MaxTries(maxtries),
+    PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata),
+    AttempNumber(attempnumber), RequestStartTime(Misc::GetTimeMs64()), ConfirmReceiveTime(0),
 	IsArequest(false), FutureFetched(false)
 {
 
@@ -866,8 +872,15 @@ DLLEXPORT boost::unique_future<bool>& Leviathan::SentNetworkThing::GetFutureForT
 	}
 	return FutureValue;
 }
+
+DLLEXPORT void Leviathan::SentNetworkThing::SetAsTimed(){
+    
+    ConfirmReceiveTime = 1;
+}
 // ------------------ NetworkAckField ------------------ //
-Leviathan::NetworkAckField::NetworkAckField(sf::Int32 firstpacketid, char maxacks, ReceivedPacketField &copyfrom) : FirstPacketID(firstpacketid){
+Leviathan::NetworkAckField::NetworkAckField(sf::Int32 firstpacketid, char maxacks, ReceivedPacketField &copyfrom) :
+    FirstPacketID(firstpacketid)
+{
 
 	// Id is -1 nothing should be copied //
 	if(FirstPacketID == -1)
@@ -964,7 +977,8 @@ DLLEXPORT void Leviathan::NetworkAckField::RemoveMatchingPacketIDsFromMap(Receiv
 	}
 }
 // ------------------ SentAcks ------------------ //
-Leviathan::SentAcks::SentAcks(int packet, NetworkAckField* newddata) : InsidePacket(packet), AcksInThePacket(newddata), SendCount(1), Received(false){
+Leviathan::SentAcks::SentAcks(int packet, NetworkAckField* newddata) : InsidePacket(packet), AcksInThePacket(newddata),
+    SendCount(1), Received(false){
 
 }
 

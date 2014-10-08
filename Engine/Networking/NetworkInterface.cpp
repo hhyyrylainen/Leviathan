@@ -20,20 +20,27 @@ DLLEXPORT Leviathan::NetworkInterface::~NetworkInterface(){
 
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkInterface::HandleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection) THROWS{
+DLLEXPORT void Leviathan::NetworkInterface::HandleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo*
+    connection) THROWS
+{
 	// We can only try the default handle function //
 	if(!_HandleDefaultRequest(request, connection)){
 		// We couldn't handle it //
 
-		throw ExceptionInvalidArgument(L"could not handle request with default handler", 0, __WFUNCTION__, L"request", L"unknown type");
+		throw ExceptionInvalidArgument(L"could not handle request with default handler", 0, __WFUNCTION__, L"request",
+            L"unknown type");
 	}
 }
 
-DLLEXPORT bool Leviathan::NetworkInterface::PreHandleResponse(shared_ptr<NetworkResponse> response, shared_ptr<NetworkRequest> originalrequest, ConnectionInfo* connection){
+DLLEXPORT bool Leviathan::NetworkInterface::PreHandleResponse(shared_ptr<NetworkResponse> response,
+    shared_ptr<NetworkRequest> originalrequest, ConnectionInfo* connection)
+{
 	return true;
 }
 // ------------------------------------ //
-bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult){
+bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
+    ConnectionInfo* connectiontosendresult)
+{
 	// Switch based on type //
 
 	// See if it is a sync packet //
@@ -41,10 +48,11 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 		return true;
 
 	switch(request->GetType()){
-	case NETWORKREQUESTTYPE_IDENTIFICATION:
+        case NETWORKREQUESTTYPE_IDENTIFICATION:
 		{
 			// Let's send our identification string //
-			shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), PACKAGE_TIMEOUT_STYLE_TIMEDMS, 500));
+			shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(),
+                    PACKAGE_TIMEOUT_STYLE_TIMEDMS, 500));
 
 			// Fetch the data from the configuration object //
 			wstring userreadable, gamename, gameversion;
@@ -52,13 +60,26 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 			AppDef::GetDefault()->GetGameIdentificationData(userreadable, gamename, gameversion);
 
 			// Set the right data //
-			tmpresponse->GenerateIdentificationStringResponse(new NetworkResponseDataForIdentificationString(userreadable, gamename, gameversion, 
-				LEVIATHAN_VERSIONS));
+			tmpresponse->GenerateIdentificationStringResponse(new NetworkResponseDataForIdentificationString(
+                    userreadable, gamename, gameversion, LEVIATHAN_VERSIONS));
 			connectiontosendresult->SendPacketToConnection(tmpresponse, 3);
 
 			return true;
 		}
-	case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE: case NETWORKREQUESTTYPE_OPENREMOTECONSOLETO: case NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE:
+        case NETWORKREQUESTTYPE_ECHO:
+        {
+            // Send an empty response back //
+            shared_ptr<NetworkResponse> response(new NetworkResponse(request->GetExpectedResponseID(),
+                    PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));
+
+            response->GenerateEmptyResponse();
+            
+            connectiontosendresult->SendPacketToConnection(response, 1);
+            
+            return true;
+        }
+        case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE: case NETWORKREQUESTTYPE_OPENREMOTECONSOLETO:
+        case NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE:
 		{
 			RemoteConsole::Get()->HandleRemoteConsoleRequestPacket(request, connectiontosendresult);
 
@@ -72,7 +93,9 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 	return false;
 }
 // ------------------------------------ //
-bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived){
+bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo*
+    connection, bool &dontmarkasreceived)
+{
 
 	// See if it is a sync packet //
 	if(SyncedVariables::Get()->HandleResponseOnlySync(message, connection))
@@ -80,7 +103,12 @@ bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkR
 
 	// Switch on type //
 	switch(message->GetTypeOfResponse()){
-	case NETWORKRESPONSETYPE_KEEPALIVE: case NETWORKRESPONSETYPE_NONE:
+        case NETWORKRESPONSETYPE_NONE:
+        {
+            // Empty packets without a matching request are just ignored, but marked as received
+            return true;
+        }
+        case NETWORKRESPONSETYPE_KEEPALIVE:
 		{
 			// Requires no handling //
 			// Also this should not be reported as received //
@@ -90,7 +118,7 @@ bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkR
 			connection->CheckKeepAliveSend();
 			return true;
 		}
-	case NETWORKRESPONSETYPE_CLOSECONNECTION:
+        case NETWORKRESPONSETYPE_CLOSECONNECTION:
 		{
 			// This connection should be closed //
 			Logger::Get()->Info(L"NetworkInterface: dropping connection due to receiving a connection close packet ("+
@@ -99,14 +127,14 @@ bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkR
 			NetworkHandler::Get()->SafelyCloseConnectionTo(connection);
 			return true;
 		}
-	case NETWORKRESPONSETYPE_REMOTECONSOLEOPENED: case NETWORKRESPONSETYPE_REMOTECONSOLECLOSED:
+        case NETWORKRESPONSETYPE_REMOTECONSOLEOPENED: case NETWORKRESPONSETYPE_REMOTECONSOLECLOSED:
 		{
 			// Pass to remote console //
 			RemoteConsole::Get()->HandleRemoteConsoleResponse(message, connection, NULL);
 			return true;
 		}
-	default:
-		return false;
+        default:
+            return false;
 	}
 	// Not handled //
 	return false;

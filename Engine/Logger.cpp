@@ -11,13 +11,16 @@ using namespace Leviathan;
 #include "FileSystem.h"
 #include "Application/AppDefine.h"
 
-DLLEXPORT Leviathan::Logger::Logger(const wstring &file): FirstSaveDone(false), Saved(false), Autosave(false), Path(file){
+DLLEXPORT Leviathan::Logger::Logger(const wstring &file):
+    FirstSaveDone(false), Saved(false), Autosave(false), Path(file)
+{
 	// get time for putting to the  beginning of the  log file //
 #ifdef _WIN32
 	SYSTEMTIME tdate;
 	GetLocalTime(&tdate);
 
-	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "
+	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+
+        Convert::IntToWstring(tdate.wYear)+L" "
 		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
 
 #else
@@ -31,14 +34,15 @@ DLLEXPORT Leviathan::Logger::Logger(const wstring &file): FirstSaveDone(false), 
 
 	LatestLogger = this;
 }
-DLLEXPORT Leviathan::Logger::Logger(const wstring &file, const wstring &start, const bool &autosave) : FirstSaveDone(false), Saved(false), Autosave(autosave),
-	Path(file)
+DLLEXPORT Leviathan::Logger::Logger(const wstring &file, const wstring &start, const bool &autosave) :
+    FirstSaveDone(false), Saved(false), Autosave(autosave), Path(file)
 {
 #ifdef _WIN32
 	SYSTEMTIME tdate;
 	GetLocalTime(&tdate);
 
-	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wYear)+L" "
+	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+
+        Convert::IntToWstring(tdate.wYear)+L" "
 		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
 
 #else
@@ -98,6 +102,24 @@ DLLEXPORT void Leviathan::Logger::Info(const wstring &data, const bool &save /*=
 	PendingLog += message;
 
 	_LogUpdateEndPart(save, guard);
+}
+
+DLLEXPORT void Leviathan::Logger::Info(const string &data, const bool &save){
+
+    boost::strict_lock<Logger> guard(*this);
+
+    // TODO: change this to use utf8 strings...
+    wstringstream sstream;
+
+    sstream << L"[INFO] ";
+    sstream << data.c_str();
+    sstream << L"\n";
+
+    SendDebugMessage(sstream.str());
+    
+    PendingLog += sstream.str();
+
+    _LogUpdateEndPart(save, guard);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::Error(const wstring &data, const int &pvalue /*= 0*/, const bool &save /*= false*/){

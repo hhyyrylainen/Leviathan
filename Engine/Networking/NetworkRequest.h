@@ -28,6 +28,8 @@ namespace Leviathan{
 		NETWORKREQUESTTYPE_REQUESTEXECUTION,
 		//! Sent when a player requests the server to connect a NetworkedInput
 		NETWORKREQUESTTYPE_CONNECTINPUT,
+        //! Sent by servers to ping (time the time a client takes to respond) clients
+        NETWORKREQUESTTYPE_ECHO,
 
 		//! Used for game specific requests
 		NETWORKREQUESTTYPE_CUSTOM
@@ -124,14 +126,22 @@ namespace Leviathan{
 
 	class NetworkRequest{
 	public:
-		DLLEXPORT NetworkRequest(NETWORKREQUESTTYPE type, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(JoinServerRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(CustomRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(RequestCommandExecutionData* newddata, int timeout = 10, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED);
-		DLLEXPORT NetworkRequest(RequestConnectInputData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(NETWORKREQUESTTYPE type, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
+            PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout = 1000,
+            PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout = 1000,
+            PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(JoinServerRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
+            PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style
+            = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(CustomRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
+            PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+		DLLEXPORT NetworkRequest(RequestCommandExecutionData* newddata, int timeout = 10, PACKET_TIMEOUT_STYLE style =
+            PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED);
+		DLLEXPORT NetworkRequest(RequestConnectInputData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
+            PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		
 		DLLEXPORT ~NetworkRequest();
 

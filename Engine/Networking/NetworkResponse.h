@@ -15,7 +15,8 @@ namespace Leviathan{
 
 	//! Defines the type of response that the packet contains
 	enum NETWORKRESPONSETYPE{
-		//! Sent in response to a NETWORKREQUESTTYPE_IDENTIFICATION contains a user readable string, game name, game version and leviathan version strings
+		//! Sent in response to a NETWORKREQUESTTYPE_IDENTIFICATION contains a user readable string, game name,
+        //! game version and leviathan version strings
 		NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS,
 		NETWORKRESPONSETYPE_KEEPALIVE,
 		NETWORKRESPONSETYPE_CLOSECONNECTION,
@@ -30,7 +31,8 @@ namespace Leviathan{
 		NETWORKRESPONSETYPE_SERVERSTATUS,
 		//! Sends a update/new SyncedValue
 		NETWORKRESPONSETYPE_SYNCVALDATA,
-		//! Send after all NETWORKRESPONSETYPE_SYNCVALDATA has been sent and indicates whether they should have arrived correctly
+		//! Send after all NETWORKRESPONSETYPE_SYNCVALDATA has been sent and indicates whether they should have
+        //! arrived correctly
 		NETWORKRESPONSETYPE_SYNCDATAEND,
 		//! Contains SyncedResource update notification
 		NETWORKRESPONSETYPE_SYNCRESOURCEDATA,
@@ -61,13 +63,15 @@ namespace Leviathan{
 
 		//! Returned when the connection is anonymous (the other client hasn't requested verified connection)
 		NETWORKRESPONSE_INVALIDREASON_UNAUTHENTICATED,
-		//! Returned when we don't implement the wanted action (for example if we are asked our server status and we aren't a server)
+		//! Returned when we don't implement the wanted action (for example if we are asked our server status
+        //! and we aren't a server)
 		NETWORKRESPONSE_INVALIDREASON_UNSUPPORTED,
 		//! Server has maximum number of players
 		NETWORKRESPONSE_INVALIDREASON_SERVERFULL,
 		//! Server is not accepting players
 		NETWORKRESPONSE_INVALIDREASON_SERVERNOTACCEPTINGPLAYERS,
-		//! The client isn't properly authenticated for that action or the server received mismatching security/id numbers
+		//! The client isn't properly authenticated for that action or the server received mismatching security/
+        //! id numbers
 		NETWORKRESPONSE_INVALIDREASON_NOT_AUTHORIZED,
 
 		//! The client has already connected to the server, and must disconnect before trying again
@@ -108,7 +112,8 @@ namespace Leviathan{
 	};
 
 	//! Base class for all data objects that can be sent with the NETWORKRESPONSETYPE
-	//! \note Even though it cannot be required by the base class, sub classes should implement a constructor taking in a sf::Packet object
+	//! \note Even though it cannot be required by the base class, sub classes should implement a constructor
+    //! taking in an sf::Packet object
 	class BaseNetworkResponseData{
 	public:
 
@@ -121,8 +126,8 @@ namespace Leviathan{
 	class NetworkResponseDataForIdentificationString : public BaseNetworkResponseData{
 	public:
 		DLLEXPORT NetworkResponseDataForIdentificationString(sf::Packet &frompacket);
-		DLLEXPORT NetworkResponseDataForIdentificationString(const wstring &userreadableidentification, const wstring &gamename, const wstring &gameversion, 
-			const wstring &leviathanversion);
+		DLLEXPORT NetworkResponseDataForIdentificationString(const wstring &userreadableidentification,
+            const wstring &gamename, const wstring &gameversion, const wstring &leviathanversion);
 
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 		
@@ -138,7 +143,8 @@ namespace Leviathan{
 	class NetworkResponseDataForInvalidRequest : public BaseNetworkResponseData{
 	public:
 		DLLEXPORT NetworkResponseDataForInvalidRequest(sf::Packet &frompacket);
-		DLLEXPORT NetworkResponseDataForInvalidRequest(NETWORKRESPONSE_INVALIDREASON reason, const wstring &additional = wstring());
+		DLLEXPORT NetworkResponseDataForInvalidRequest(NETWORKRESPONSE_INVALIDREASON reason, const wstring &additional
+            = wstring());
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
 
@@ -150,8 +156,9 @@ namespace Leviathan{
 	class NetworkResponseDataForServerStatus : public BaseNetworkResponseData{
 	public:
 		DLLEXPORT NetworkResponseDataForServerStatus(sf::Packet &frompacket);
-		DLLEXPORT NetworkResponseDataForServerStatus(const wstring &servername, bool isjoinable, NETWORKRESPONSE_SERVERJOINRESTRICT whocanjoin,
-			int players, int maxplayers, int bots, NETWORKRESPONSE_SERVERSTATUS currentstatus, int serverflags);
+		DLLEXPORT NetworkResponseDataForServerStatus(const wstring &servername, bool isjoinable,
+            NETWORKRESPONSE_SERVERJOINRESTRICT whocanjoin, int players, int maxplayers, int bots,
+            NETWORKRESPONSE_SERVERSTATUS currentstatus, int serverflags);
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
 		//! Contains the name of the server, should be limited to max 100 letters
@@ -173,7 +180,8 @@ namespace Leviathan{
 		//! The current status of the server. Used to define what the server is doing
 		NETWORKRESPONSE_SERVERSTATUS ServerStatus;
 
-		//! The flags of the server. These can be used based on the game for example to define game mode or level requirements or something else
+		//! The flags of the server. These can be used based on the game for example to define game mode or
+        //! level requirements or something else
 		int AdditionalFlags;
 	};
 
@@ -181,7 +189,8 @@ namespace Leviathan{
 	class NetworkResponseDataForServerDisallow : public BaseNetworkResponseData{
 	public:
 		DLLEXPORT NetworkResponseDataForServerDisallow(sf::Packet &frompacket);
-		DLLEXPORT NetworkResponseDataForServerDisallow(NETWORKRESPONSE_INVALIDREASON reason, const wstring &message = L"Default disallow");
+		DLLEXPORT NetworkResponseDataForServerDisallow(NETWORKRESPONSE_INVALIDREASON reason, const wstring &message =
+            L"Default disallow");
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
 		//! \brief An user readable disallow string
@@ -196,7 +205,8 @@ namespace Leviathan{
 	class NetworkResponseDataForServerAllow : public BaseNetworkResponseData{
 	public:
 		DLLEXPORT NetworkResponseDataForServerAllow(sf::Packet &frompacket);
-		DLLEXPORT NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted, const wstring &message = L"");
+		DLLEXPORT NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted,
+            const wstring &message = L"");
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
 		//! What the server accepted

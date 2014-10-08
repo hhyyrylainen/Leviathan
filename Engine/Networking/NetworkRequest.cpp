@@ -8,16 +8,16 @@
 #include "NetworkedInput.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
-	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(type), TimeOutValue(timeout), TimeOutStyle(style),
-	RequestData(NULL)
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int timeout /*= 1000*/,
+    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    ResponseID(IDFactory::GetID()), TypeOfRequest(type), TimeOutValue(timeout), TimeOutStyle(style), RequestData(NULL)
 {
 	// We need to make sure the type is correct for this kind of packet //
 #ifdef _DEBUG
 	switch(TypeOfRequest){
 		// With these cases not having extra data is valid //
-	case NETWORKREQUESTTYPE_IDENTIFICATION: case NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE: case NETWORKREQUESTTYPE_SERVERSTATUS:
-	case NETWORKREQUESTTYPE_GETALLSYNCVALUES:
+        case NETWORKREQUESTTYPE_IDENTIFICATION: case NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE:
+        case NETWORKREQUESTTYPE_SERVERSTATUS: case NETWORKREQUESTTYPE_GETALLSYNCVALUES: case NETWORKREQUESTTYPE_ECHO:
 		return;
 	default:
 		assert(0 && "trying to create a request which requires extra data without providing any extra data!");
@@ -26,51 +26,58 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int
 #endif // _DEBUG
 }
 
-DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
-	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_OPENREMOTECONSOLETO), 
-	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout /*= 1000*/,
+    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_OPENREMOTECONSOLETO), TimeOutValue(timeout),
+    TimeOutStyle(style), RequestData(newddata)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
-	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE), 
-	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout /*= 1000*/,
+    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE), TimeOutValue(timeout),
+    TimeOutStyle(style), RequestData(newddata)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(JoinServerRequestData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
-	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_JOINSERVER), 
-	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(JoinServerRequestData* newddata, int timeout /*= 1000*/,
+    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_JOINSERVER), TimeOutValue(timeout),
+    TimeOutStyle(style), RequestData(newddata)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
-	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_GETSINGLESYNCVALUE), 
-	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout /*= 1000*/,
+    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_GETSINGLESYNCVALUE), TimeOutValue(timeout),
+    TimeOutStyle(style), RequestData(newddata)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(CustomRequestData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
-	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_CUSTOM), 
-	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(CustomRequestData* newddata, int timeout /*= 1000*/,
+    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_CUSTOM), TimeOutValue(timeout),
+    TimeOutStyle(style), RequestData(newddata)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestCommandExecutionData* newddata, int timeout /*= 10*/, PACKET_TIMEOUT_STYLE style 
-	/*= PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_REQUESTEXECUTION), 
-	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestCommandExecutionData* newddata, int timeout /*= 10*/,
+    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED*/) :
+    ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_REQUESTEXECUTION), TimeOutValue(timeout),
+    TimeOutStyle(style), RequestData(newddata)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestConnectInputData* newddata, int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style 
-	/*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) : ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_CONNECTINPUT), 
-	TimeOutValue(timeout), TimeOutStyle(style), RequestData(newddata)
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestConnectInputData* newddata, int timeout /*= 1000*/,
+    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_CONNECTINPUT), TimeOutValue(timeout),
+    TimeOutStyle(style), RequestData(newddata)
 {
 
 }

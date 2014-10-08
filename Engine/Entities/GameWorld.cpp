@@ -398,7 +398,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
 	// The connected object will always have to be a ConnectedPlayer
 	auto plyptr = static_cast<ConnectedPlayer*>(parentadded);
 
-    Logger::Get()->Info("GameWorld: player(\""+plyptr->GetNickname()+L" is now receiving world");
+    Logger::Get()->Info("GameWorld: player(\""+plyptr->GetNickname()+"\") is now receiving world");
 
 	// Create an entry for this player //
 	DEBUG_BREAK;

@@ -15,8 +15,47 @@
 #include "Compositor/OgreCompositorManager2.h"
 #include "Networking/NetworkServerInterface.h"
 #include "Bases/BasePositionable.h"
+#include "Networking/ConnectionInfo.h"
+#include "Threading/ThreadingManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
+
+//! \brief Class used by _OnNotifiableConnected to hold temporary connection data
+class Leviathan::PlayerConnectionPreparer{
+public:
+
+    //! Used to keep track of what's happening regards to the ping
+    enum PING_STATE {PING_STATE_STARTED, PING_STATE_FAILED, PING_STATE_NONE};
+    
+    PlayerConnectionPreparer() :
+        Pinging(PING_STATE_NONE), GameWorldCompromised(false), ObjectsReady(false), AllDone(false)
+    {
+
+
+    }
+
+    //! Called as an callback when pinging completes
+    void OnPingCompleted(int msping, int lostpackets){
+
+        DEBUG_BREAK;
+    }
+
+    //! Called when pinging fails
+    void OnPingFailed(CONNECTION_PING_FAIL_REASON failreason, int lostpackets){
+
+        DEBUG_BREAK;
+    }
+
+    //! Set by GameWorld if it isn't safe to use
+    bool GameWorldCompromised;
+
+
+    PING_STATE Pinging;
+    bool ObjectsReady;
+    bool AllDone;
+};
+
+// ------------------ GameWorld ------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld() :
     WorldSceneCamera(NULL), WorldsScene(NULL), Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false),
     GraphicalMode(false), LinkedToWindow(NULL), WorldWorkspace(NULL), ClearAllObjects(false)
@@ -50,6 +89,15 @@ DLLEXPORT bool Leviathan::GameWorld::Init(GraphicalInputEntity* renderto, Ogre::
 DLLEXPORT void Leviathan::GameWorld::Release(){
 	GUARD_LOCK_THIS_OBJECT();
 
+    // Tell initially syncing players that we are no longer valid //
+    auto end = InitiallySyncingPlayers.end();
+    for(auto iter = InitiallySyncingPlayers.begin(); iter != end; ++iter){
+
+        (*iter)->GameWorldCompromised = true;
+    }
+
+    InitiallySyncingPlayers.clear();
+    
 	// release objects //
 	for(size_t i = 0; i < Objects.size(); i++){
 
@@ -401,7 +449,29 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
     Logger::Get()->Info("GameWorld: player(\""+plyptr->GetNickname()+"\") is now receiving world");
 
 	// Create an entry for this player //
-	DEBUG_BREAK;
+    shared_ptr<PlayerConnectionPreparer> connectobject(new PlayerConnectionPreparer());
+
+
+    // We need a safe pointer to the connection //
+    ConnectionInfo* unsafeconnection = plyptr->GetConnection();
+
+
+    auto safeconnection = NetworkHandler::Get()->GetSafePointerToConnection(unsafeconnection);
+
+    if(!safeconnection){
+
+        // The closing should be handled by somebody else
+        Logger::Get()->Error(L"GameWorld: requested to sync with a player who has closed their connection");
+        return;
+    }
+
+
+    // Start pinging //
+    connectobject->Pinging = PlayerConnectionPreparer::PING_STATE_STARTED;
+
+    safeconnection->CalculateNetworkPing(WORLD_CLOCK_SYNC_PACKETS, WORLD_CLOCK_SYNC_ALLOW_FAILS,
+        boost::bind(&PlayerConnectionPreparer::OnPingCompleted, connectobject, _1, _2),
+        boost::bind(&PlayerConnectionPreparer::OnPingFailed, connectobject, _1, _2));
 
 
 	// This lock is only required for this one call (we are always locked before this call) //
@@ -409,11 +479,87 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
 		// Update the position data //
 		GUARD_LOCK_THIS_OBJECT();
 		UpdatePlayersPositionData(plyptr, guard);
+
+        // Add it to the list //
+        InitiallySyncingPlayers.push_back(connectobject);
 	}
 
 
 	// Start sending initial update //
-	DEBUG_BREAK;
+
+    // Now we can queue all objects for sending //
+    // TODO: make sure that all objects are sent
+    ThreadingManager::Get()->QueueTask(new RepeatCountedTask(boost::bind<void>([](shared_ptr<ConnectionInfo>
+                    connection, shared_ptr<PlayerConnectionPreparer> processingobject, GameWorld* world) -> void
+        {
+            // Get the next object //
+            RepeatCountedTask* task = dynamic_cast<RepeatCountedTask*>(TaskThread::GetThreadSpecificThreadObject()->
+                QuickTaskAccess.get());
+
+            assert(task && "wrong type passed to our task");
+
+            int num = task->GetRepeatCount();
+
+            if(processingobject->GameWorldCompromised){
+
+    taskstopprocessingobjectsforinitialsynclabel:
+                
+                // Stop processing //
+                task->StopRepeating();
+                
+                // This will stop the otherwise infinitely waiting task //
+                processingobject->AllDone = true;
+                return;
+            }
+            
+            GUARD_LOCK_OTHER_OBJECT(world);
+
+            // Stop if out of bounds //
+            if(num < 0 || num >= world->Objects.size()){
+
+                goto taskstopprocessingobjectsforinitialsynclabel;
+            }
+
+            // Get the object //
+            auto tosend = world->Objects[num];
+
+            
+            
+            
+        }, safeconnection, connectobject, this), Objects.size()));
+
+    // Task that will remove the added InitiallySyncingPlayers entry once done
+    ThreadingManager::Get()->QueueTask(new ConditionalTask(boost::bind<void>([](shared_ptr<PlayerConnectionPreparer>
+                    processingobject, GameWorld* world) -> void
+        {
+            // It is done //
+            Logger::Get()->Info("GameWorld: initial sync with player completed");
+
+            if(processingobject->GameWorldCompromised)
+                return;
+            
+            // Remove it //
+            GUARD_LOCK_OTHER_OBJECT(world);
+
+            auto end = world->InitiallySyncingPlayers.end();
+            for(auto iter = world->InitiallySyncingPlayers.begin(); iter != end; ++iter){
+
+                if((*iter).get() == processingobject.get()){
+                    world->InitiallySyncingPlayers.erase(iter);
+                    return;
+                }
+
+            }
+
+            // Might want to report this as an error //
+            
+
+        }, connectobject, this), boost::bind<bool>([](shared_ptr<PlayerConnectionPreparer> processingobject) -> bool
+            {
+                return processingobject->AllDone;
+
+            }, connectobject)));
+    
 	SendingInitialState = true;
 }
 
@@ -453,7 +599,8 @@ notusingapositionlabel:
 	if(!safeptr){
 
 		// We were given an invalid world //
-		Logger::Get()->Error(L"GameWorld: UpdatePlayersPositionData: could not find a matching object for player position in this world, wrong world?");
+		Logger::Get()->Error(L"GameWorld: UpdatePlayersPositionData: could not find a matching object for "
+            L"player position in this world, wrong world?");
 		goto notusingapositionlabel;
 	}
 

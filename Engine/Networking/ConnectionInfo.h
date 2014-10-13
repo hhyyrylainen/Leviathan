@@ -30,6 +30,13 @@ namespace Leviathan{
 //! Makes the program spam a ton of debug info about packets //
 //#define SPAM_ME_SOME_PACKETS	1
 
+    //! \brief Fail reason for ConnectionInfo::CalculateNetworkPing
+    enum CONNECTION_PING_FAIL_REASON {
+        CONNECTION_PING_FAIL_REASON_LOSS_TOO_HIGH,
+        CONNECTION_PING_FAIL_REASON_CONNECTION_CLOSED};
+
+    
+    
 	//! \brief Allows restricting connections to allow only certain packets
 	enum CONNECTION_RESTRICTION {CONNECTION_RESTRICTION_NONE, CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE};
 
@@ -111,7 +118,8 @@ namespace Leviathan{
 			return (Acks[vecelement] & (1 << (ackindex-vecelement))) != 0;
 		}
 
-		// If the ack in this field is set then it is set in the argument map, but if ack is not set in this field it isn't reseted in the argument map //
+		// If the ack in this field is set then it is set in the argument map, but if ack is not set in this field
+        //! it isn't reseted in the argument map //
 		DLLEXPORT void SetPacketsReceivedIfNotSet(ReceivedPacketField &copydatato);
 
 		DLLEXPORT void RemoveMatchingPacketIDsFromMap(ReceivedPacketField &removefrom);
@@ -165,11 +173,14 @@ namespace Leviathan{
 
 		DLLEXPORT void UpdateListening();
 
-		DLLEXPORT shared_ptr<SentNetworkThing> SendPacketToConnection(shared_ptr<NetworkRequest> request, int maxretries);
-		DLLEXPORT shared_ptr<SentNetworkThing> SendPacketToConnection(shared_ptr<NetworkResponse> response, int maxtries);
+		DLLEXPORT shared_ptr<SentNetworkThing> SendPacketToConnection(shared_ptr<NetworkRequest> request,
+            int maxretries);
+		DLLEXPORT shared_ptr<SentNetworkThing> SendPacketToConnection(shared_ptr<NetworkResponse> response,
+            int maxtries);
 
 		// Data exchange functions //
-		DLLEXPORT shared_ptr<NetworkResponse> SendRequestAndBlockUntilDone(shared_ptr<NetworkRequest> request, int maxtries = 2);
+		DLLEXPORT shared_ptr<NetworkResponse> SendRequestAndBlockUntilDone(shared_ptr<NetworkRequest> request,
+            int maxtries = 2);
 
 		DLLEXPORT void CheckKeepAliveSend();
 		DLLEXPORT void SendKeepAlivePacket(ObjectLock &guard);
@@ -191,6 +202,18 @@ namespace Leviathan{
 		//! \return For example something like "0.0.0.127:2565"
 		//! \todo this could be cached
 		DLLEXPORT wstring GenerateFormatedAddressString() const;
+
+        //! \brief Calculates the ping (round-trip time) on this connection
+        //! \note This will send packets asynchronously to the connection and can take up to an second to
+        //! call the callbacks
+        //! \param packets The amount of timing packets to send
+        //! \param allowedfails Is the amount of missed packets allowed before failing
+        //! \param onsucceeded Called after successfully completed. First value is the ping in milliseconds and the
+        //! second is failed packets
+        //! \param onfailed Is called if the function fails. First value will be the reason and
+        //! second the failed packet count
+        DLLEXPORT void CalculateNetworkPing(int packets, int allowedfails, boost::function<void(int, int)> onsucceeded,
+            boost::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed);
 
 		//! Don't call this
 		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);

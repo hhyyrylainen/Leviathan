@@ -137,9 +137,9 @@ namespace Leviathan{
 
 
 		//! \brief Checks if the current time is past the time stamp
-		//!
-		//! Controlled by the value of ExecutionTime
-		DLLEXPORT virtual bool CanBeRan(const QueuedTaskCheckValues* const checkvalues);
+        //!
+        //! Controlled by the value of ExecutionTime
+        DLLEXPORT virtual bool CanBeRan(const QueuedTaskCheckValues* const checkvalues);
 
 	protected:
 
@@ -188,26 +188,17 @@ namespace Leviathan{
 	};
 
 
-
-
-	//! \brief Encapsulates a function that is ran after a time period and repeated certain amount
+	//! \brief Encapsulates a function that is ran certain amount of times
 	//! \warning Function passed to this class should be thread safe
-	class RepeatCountedDelayedTask : public DelayedTask{
+    //! \todo Merge common parts from this and RepeatCountedDelayedTask
+	class RepeatCountedTask : public QueuedTask{
 	public:
-		//! Constructs a task that can be controlled when it can be ran and how many times it is ran
-		//! \param bothdelays Is the time before first execution AND the time between following executions
+		//! Constructs a task that can be controlled how many times it is ran
 		//! \param repeatcount The task is ran this specified times, or the task calls StopRepeating before that
-		//! \see DelayedTask
-		DLLEXPORT RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &bothdelays, int repeatcount);
-		//! Constructs a task that can be controlled when it can be ran and how many times it is ran
-		//! \param initialdelay Is the time before first execution
-		//! \param followingduration Is the time between following executions
-		//! \param repeatcount The task is ran this specified times, or the task calls StopRepeating before that
-		//! \see DelayedTask
-		DLLEXPORT RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay, const MicrosecondDuration
-			&followingduration, int repeatcount);
+		DLLEXPORT RepeatCountedTask(boost::function<void ()> functorun, int repeatcount);
 
-		DLLEXPORT virtual ~RepeatCountedDelayedTask();
+        
+		DLLEXPORT virtual ~RepeatCountedTask();
 
 		//! \brief Called by ThreadingManager to see if this task still wants to repeat
 		//! \see SetRepeatStatus ShouldRunAgain
@@ -219,7 +210,7 @@ namespace Leviathan{
 		DLLEXPORT void StopRepeating();
 
 		//! \brief Gets the number of repeats done
-		//! \note This will only be accurate if IsRepeaTing is only called once per repeat
+		//! \note This will only be accurate if IsRepeating is only called once per repeat
 		DLLEXPORT int GetRepeatCount() const;
 
 		//! \brief Checks if this is the last repeat
@@ -228,12 +219,7 @@ namespace Leviathan{
 		DLLEXPORT bool IsThisLastRepeat() const;
 
 	protected:
-		//! \brief Used to update the time when to run the task again
-		virtual void _PostFunctionRun();
-		// ------------------------------------ //
-
-		MicrosecondDuration TimeBetweenExecutions;
-
+        
 		//! Holds the maximum run count
 		int MaxRepeats;
 
@@ -241,6 +227,45 @@ namespace Leviathan{
 		//! \see IsRepeating
 		int RepeatedCount;
 	};
+    
+	//! \brief Encapsulates a function that is ran after a time period and repeated certain amount
+	//! \warning Function passed to this class should be thread safe
+	class RepeatCountedDelayedTask : public RepeatCountedTask{
+	public:
+		//! Constructs a task that can be controlled when it can be ran and how many times it is ran
+		//! \param bothdelays Is the time before first execution AND the time between following executions
+		//! \param repeatcount The task is ran this specified times, or the task calls StopRepeating before that
+		//! \see DelayedTask
+		DLLEXPORT RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &bothdelays,
+            int repeatcount);
+        
+		//! Constructs a task that can be controlled when it can be ran and how many times it is ran
+		//! \param initialdelay Is the time before first execution
+		//! \param followingduration Is the time between following executions
+		//! \param repeatcount The task is ran this specified times, or the task calls StopRepeating before that
+		//! \see DelayedTask
+		DLLEXPORT RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay,
+            const MicrosecondDuration &followingduration, int repeatcount);
+
+		DLLEXPORT virtual ~RepeatCountedDelayedTask();
+
+        //! \brief Checks if the current time is past the time stamp
+        //!
+        //! Controlled by the value of ExecutionTime
+        DLLEXPORT virtual bool CanBeRan(const QueuedTaskCheckValues* const checkvalues);
+        
+	protected:
+		//! \brief Used to update the time when to run the task again
+		virtual void _PostFunctionRun();
+		// ------------------------------------ //
+
+        //! Time between executions
+		MicrosecondDuration TimeBetweenExecutions;
+
+        //! The timepoint after which this function can be ran
+		WantedClockType::time_point ExecutionTime;
+	};
+
 
 }
 #endif

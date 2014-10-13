@@ -21,6 +21,32 @@ file(TO_NATIVE_PATH ${PROJECT_BINARY_DIR} PROJECT_NATIVE_BINARY_DIR)
 # modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake" "${PROJECT_SOURCE_DIR}/LeviathanCMake")
 
+# load cotire
+include(cotire)
+
+# Just in case some unity builds are broken
+set_property(DIRECTORY PROPERTY COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY")
+
+# Linking and platform specific
+if(WIN32)
+    # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
+    # higher memory for compiling precompiled headers
+    add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm216)
+    
+    # program database flag for debug
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
+    
+else(WIN32)
+    add_definitions(-fextended-identifiers)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	
+    # We need X11 on linux for window class to work
+    find_package(X11)
+    find_package(Threads)
+
+    include_directories(${X11_INCLUDE_DIR})
+endif(WIN32)
+
 # The CEGUI build might have some weird suffix
 set(CEGUI_SUFFIX "-9999" CACHE STRING "The suffix of cegui builds, for example -0.8 or -9999")
 
@@ -110,26 +136,6 @@ endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIR})
 # All libs are linked by cmake
 add_definitions(-DBOOST_ALL_NO_LIB)
-
-# Linking and platform specific
-if(WIN32)
-    # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
-    # higher memory for compiling precompiled headers
-    add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm216)
-    
-    # program database flag for debug
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
-    
-else(WIN32)
-    add_definitions(-fextended-identifiers)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-	
-    # We need X11 on linux for window class to work
-    find_package(X11)
-    find_package(Threads)
-
-    include_directories(${X11_INCLUDE_DIRS})
-endif(WIN32)
 
 # CEGUI libraries will have some suffixes
 set(CEGUI_ENGINE_RELEASE "CEGUIBase" "CEGUICommonDialogs" "CEGUIOgreRenderer")

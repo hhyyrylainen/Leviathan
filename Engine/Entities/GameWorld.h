@@ -23,6 +23,12 @@ namespace Ogre{
 namespace Leviathan{
 
 
+#define WORLD_CLOCK_SYNC_PACKETS 12
+#define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
+
+    //! Holds internal data for initial player syncing
+    class PlayerConnectionPreparer;
+    
 	// Holds the returned object that was hit during ray casting //
 	class RayCastHitEntity : public ReferenceCounted{
 	public:
@@ -151,6 +157,8 @@ namespace Leviathan{
 	private:
 
 		//! Used to connect new players
+        //! \todo Properly handle deleted and created objects (Potentially make objects vector have "empty"
+        //! spaces in the middle
 		DLLEXPORT virtual void _OnNotifiableConnected(BaseNotifiableAll* parentadded) override;
 
 		//! Used to disconnect players that are going to be unloaded
@@ -190,7 +198,11 @@ namespace Leviathan{
 		//! Holds the players who are receiving this worlds updates and their corresponding location entities (if any)
 		std::vector<shared_ptr<ConnectedPlayer>> ReceivingPlayers;
 
-
+        //! These objects need to be marked as invalid before quitting
+        //! These can also be used to check whether all players have received
+        //! the world
+        std::vector<shared_ptr<PlayerConnectionPreparer>> InitiallySyncingPlayers;
+        
 
 		// objects //
 		// \todo maybe change this to a map //

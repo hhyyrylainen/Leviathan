@@ -18,26 +18,33 @@ namespace Leviathan{
 	void RunTemporaryUpdateConnections(NetworkHandler* instance);
 	enum PACKET_TIMEOUT_STYLE{
 		PACKAGE_TIMEOUT_STYLE_TIMEDMS,
-		// This style marks packets lost after TimeOutMS amount of packets sent after this packet have been confirmed to received
-		// So if you set this to 1 this packet is resend if even a single packet send after this is received by the target host
+		//! This style marks packets lost after TimeOutMS amount of packets sent after this packet
+        //! have been confirmed to received
+		//! So if you set this to 1 this packet is resend if even a single packet send after this is
+        //! received by the target host
 		PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED
 	};
 
 	// Used to pass master server info to the application //
 	struct MasterServerInformation{
-		MasterServerInformation(bool iammaster, const wstring &identificationstr) : RequireMaster(false), IAmMyOwnMaster(true),
-			MasterServerIdentificationString(identificationstr){
+		MasterServerInformation(bool iammaster, const wstring &identificationstr) :
+            RequireMaster(false), IAmMyOwnMaster(true), MasterServerIdentificationString(identificationstr)
+        {
 
 		}
 		MasterServerInformation() : RequireMaster(false), IAmMyOwnMaster(false){
 		}
-		MasterServerInformation(const wstring &masterslistfile, const wstring &identification, const wstring &masterserverlistaddress, const wstring
-			&masterserverlistpagename, const wstring &loginsession, bool requireconnection = false) :
-			MasterListFetchServer(masterserverlistaddress), MasterListFetchPage(masterserverlistpagename), StoredListFile(masterslistfile),
-			MasterServerIdentificationString(identification), LoginStoreFile(loginsession), RequireMaster(requireconnection),
-			IAmMyOwnMaster(false){
+		MasterServerInformation(const wstring &masterslistfile, const wstring &identification,
+            const wstring &masterserverlistaddress, const wstring &masterserverlistpagename,
+            const wstring &loginsession, bool requireconnection = false) :
+			MasterListFetchServer(masterserverlistaddress), MasterListFetchPage(masterserverlistpagename),
+            StoredListFile(masterslistfile), MasterServerIdentificationString(identification),
+            LoginStoreFile(loginsession), RequireMaster(requireconnection), IAmMyOwnMaster(false)
+        {
 
 		}
+        
+        
 		wstring MasterListFetchServer;
 		wstring MasterListFetchPage;
 		wstring StoredListFile;
@@ -77,9 +84,11 @@ namespace Leviathan{
 		DLLEXPORT shared_ptr<ConnectionInfo> GetSafePointerToConnection(ConnectionInfo* unsafeptr);
 
 		//! \brief Creates a new connection or returns an existing connection to address
-		//! \warning This function is not aware of connections that are created without using NetworkHandler so there can be multiple connections to host
+		//! \warning This function is not aware of connections that are created without using NetworkHandler so
+        //! there can be multiple connections to host
 		//! \todo Fix the warning and disallow that, it shouldn't happen but bugs would be found
-		//! \param address The address to connect to. Note this is compared by getting strings from ConnectionInfo objects
+		//! \param address The address to connect to. Note this is compared by getting strings from
+        //! ConnectionInfo objects
 		//! \note This is quite an expensive function and should be called very rarely
 		//! \see OpenConnectionTo
 		DLLEXPORT shared_ptr<ConnectionInfo> GetOrCreatePointerToConnection(const wstring &address);

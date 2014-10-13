@@ -277,9 +277,5 @@ namespace Leviathan{
 // Undef stuff //
 #undef index
 
-// This is needed for compability reasons //
-// AngelAddons use std style names //
-#define AS_USE_STLNAMES     1
-
 
 #endif

@@ -1,18 +1,5 @@
 # File that defines common project based on variables
 
-# Potential precompiled header
-if(WIN32)
-    if(${UsePrecompiledHeaderForProject})
-        # precompiled headers
-        # remove from list before adding back
-        list(REMOVE_ITEM AllProjectFiles ${PrecompiledSourceName})
-
-        # precompiled header
-        ADD_MSVC_PRECOMPILED_HEADER(${PrecompiledHeaderName} ${PrecompiledSourceName} AllProjectFiles)
-    endif(${UsePrecompiledHeaderForProject})
-endif(WIN32)
-
-
 message(STATUS "Adding project: " ${CurrentProjectName})
 # Define the project
 if(WIN32)
@@ -39,6 +26,8 @@ set(FinalTargetLinkLibraries ${LINK_LIBS_TOENGINE_RELEASE} ${LINK_LIBS_TOENGINE_
 
 target_link_libraries(${CurrentProjectName} ${FinalTargetLinkLibraries})
 
+# speed up build
+cotire(${CurrentProjectName})
 
 # If the output directory is wrong then we need to use this
 if(WIN32 AND NOT MINGW)

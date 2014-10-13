@@ -10,7 +10,7 @@
 
 # get all files in their groups
 set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
-    "Include.cpp" "Include.h" "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
+    "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
     "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp" "utf8.h"
 )
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
@@ -118,22 +118,15 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
     ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
-    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators} ${GroupGameplay} ${GroupPermissions} ${GroupEntitiesSerializers})
+    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators} ${GroupGameplay} 
+    ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp} ${GeneratorInput} ${GroupGeneratedFiles}
+    ${Grouputf8})
 
     
-if(WIN32)
-# precompiled headers
-# remove from list before adding back
-set(PrecompiledHeaderName "Include.h")
-set(PrecompiledSourceName "Include.cpp")
-list(REMOVE_ITEM EngineFiles ${PrecompiledSourceName})
 
-# precompiled header
-ADD_MSVC_PRECOMPILED_HEADER("Include.h" ${PrecompiledSourceName} EngineFiles)
-endif(WIN32)
 
 # Don't use precompiled header on c source file
-set(EngineFiles ${EngineFiles} ${GroupLZ4} ${GroupJsoncpp} ${GeneratorInput} ${GroupGeneratedFiles} ${Grouputf8})
+set(EngineFiles ${EngineFiles} )
 
 # engine exporting define
 add_definitions(-DENGINE_EXPORTS)
@@ -155,6 +148,22 @@ endif(NOT WIN32)
 set(FinalEngineLinkLibraries ${FinalEngineLinkLibraries} ${LINK_LIBS_ENGINE_DEBUG} ${LINK_LIBS_ENGINE_RELEASE})
 
 target_link_libraries(Engine ${FinalEngineLinkLibraries})
+
+# Avoid Xlib headers and windows header in the precompiled header to avoid macros destroying everything
+set_target_properties(Engine PROPERTIES 
+  COTIRE_PREFIX_HEADER_IGNORE_PATH
+  "${X11_INCLUDE_DIR}/X11;${CMAKE_SOURCE_DIR};${CMAKE_BINARY_DIR}")
+
+
+# Allow adding in folder contained libraries to be cotired
+# And add the Include.h as a precompiled header file
+set_target_properties(Engine PROPERTIES 
+  COTIRE_PREFIX_HEADER_INCLUDE_PATH 
+  "${PROJECT_SOURCE_DIR}/AngelScript;${PROJECT_SOURCE_DIR}/CEGUI;${PROJECT_SOURCE_DIR}/Newton;${PROJECT_SOURCE_DIR}/SFML;${PROJECT_SOURCE_DIR}/Leap;${CMAKE_SOURCE_DIR}/Engine/Include.h")
+
+
+# speed up build
+cotire(Engine)
 
 
 # Possible debug installs

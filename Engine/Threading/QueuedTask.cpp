@@ -133,16 +133,48 @@ void Leviathan::RepeatingDelayedTask::_PostFunctionRun(){
 	// Set new execution point in time //
 	ExecutionTime = Misc::GetThreadSafeSteadyTimePoint()+TimeBetweenExecutions;
 }
-// ------------------ RunCountedDelayedTask ------------------ //
-DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &bothdelays,
-	int repeatcount) : DelayedTask(functorun, bothdelays), MaxRepeats(repeatcount), TimeBetweenExecutions(bothdelays), RepeatedCount(0)
+// ------------------ RepeatCountedTask ------------------ //
+DLLEXPORT Leviathan::RepeatCountedTask::RepeatCountedTask(boost::function<void ()> functorun, int repeatcount) :
+    QueuedTask(functorun), MaxRepeats(repeatcount), RepeatedCount(0)
 {
 
 }
 
-DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay,
-	const MicrosecondDuration &followingduration, int repeatcount) : DelayedTask(functorun, initialdelay), MaxRepeats(repeatcount),
-	TimeBetweenExecutions(followingduration), RepeatedCount(0)
+DLLEXPORT Leviathan::RepeatCountedTask::~RepeatCountedTask(){
+
+}
+
+DLLEXPORT bool Leviathan::RepeatCountedTask::IsRepeating(){
+	// Increment count and see if there are still repeats left //
+	return ++RepeatedCount < MaxRepeats;
+}
+
+DLLEXPORT void Leviathan::RepeatCountedTask::StopRepeating(){
+	// This should do the trick //
+	MaxRepeats = 0;
+}
+
+DLLEXPORT int Leviathan::RepeatCountedTask::GetRepeatCount() const{
+	return RepeatedCount;
+}
+
+DLLEXPORT bool Leviathan::RepeatCountedTask::IsThisLastRepeat() const{
+	return RepeatedCount+1 >= MaxRepeats;
+}
+// ------------------ RepeatCountedDelayedTask ------------------ //
+DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(boost::function<void ()> functorun,
+    const MicrosecondDuration &bothdelays, int repeatcount) :
+    DelayedTask(functorun, bothdelays), MaxRepeats(repeatcount),  TimeBetweenExecutions(bothdelays), RepeatedCount(0),
+    ExecutionTime(Misc::GetThreadSafeSteadyTimePoint()+bothdelays)
+{
+
+}
+
+DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(boost::function<void ()> functorun,
+    const MicrosecondDuration &initialdelay,
+	const MicrosecondDuration &followingduration, int repeatcount) :
+    DelayedTask(functorun, initialdelay), MaxRepeats(repeatcount), TimeBetweenExecutions(followingduration),
+    RepeatedCount(0), ExecutionTime(Misc::GetThreadSafeSteadyTimePoint()+initialdelay)
 {
 
 }
@@ -151,14 +183,9 @@ DLLEXPORT Leviathan::RepeatCountedDelayedTask::~RepeatCountedDelayedTask(){
 
 }
 
-DLLEXPORT bool Leviathan::RepeatCountedDelayedTask::IsRepeating(){
-	// Increment count and see if there are still repeats left //
-	return ++RepeatedCount < MaxRepeats;
-}
-
-DLLEXPORT void Leviathan::RepeatCountedDelayedTask::StopRepeating(){
-	// This should do the trick //
-	MaxRepeats = 0;
+DLLEXPORT bool Leviathan::RepeatCountedDelayedTask::CanBeRan(const QueuedTaskCheckValues* const checkvalues){
+	// Check is the current time past our timestamp //
+	return checkvalues->CurrentTime >= ExecutionTime;
 }
 
 void Leviathan::RepeatCountedDelayedTask::_PostFunctionRun(){
@@ -166,11 +193,5 @@ void Leviathan::RepeatCountedDelayedTask::_PostFunctionRun(){
 	ExecutionTime = Misc::GetThreadSafeSteadyTimePoint()+TimeBetweenExecutions;
 }
 
-DLLEXPORT int Leviathan::RepeatCountedDelayedTask::GetRepeatCount() const{
-	return RepeatedCount;
-}
 
-DLLEXPORT bool Leviathan::RepeatCountedDelayedTask::IsThisLastRepeat() const{
-	return RepeatedCount+1 >= MaxRepeats;
-}
 

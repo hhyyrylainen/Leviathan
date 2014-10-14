@@ -1,6 +1,9 @@
 #include "Define.h"
 #include "TestFunction.h"
 
+
+#include "Rendering/GraphicalInputEntity.h"
+
 class DummyNetworkHandler : public Leviathan::NetworkInterface{
 public:
 	DLLEXPORT virtual void HandleResponseOnlyPacket(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived){
@@ -132,6 +135,9 @@ int main(int argcount, char* args[]){
 
 			// After everything is ready the command line should be flushed //
 			app.FlushCommandLine();
+
+            // Disable mouse capture //
+            Engine::Get()->GetWindowEntity()->GetGui()->SetDisableMouseCapture(true);
 
 			Logger::Get()->Info(L"Engine successfully initialized", false);
 

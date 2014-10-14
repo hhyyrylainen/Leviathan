@@ -56,9 +56,13 @@ namespace Leviathan{
 		DLLEXPORT inline Window* GetWindow(){
 			return DisplayWindow;
 		}
+        //! \deprecated use GetGui instead
 		DLLEXPORT inline Gui::GuiManager* GetGUI(){
 			return WindowsGui;
 		}
+        DLLEXPORT inline Gui::GuiManager* GetGui(){
+            return WindowsGui;
+        }
 		DLLEXPORT inline InputController* GetInputController(){
 			return TertiaryReceiver.get();
 		}

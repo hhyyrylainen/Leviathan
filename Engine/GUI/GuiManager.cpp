@@ -638,7 +638,7 @@ using namespace Leviathan::Gui;
 Leviathan::Gui::GuiManager::GuiManager() :
     ID(IDFactory::GetID()), Visible(true), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true),
     LastTimePulseTime(Misc::GetThreadSafeSteadyTimePoint()), MainGuiManager(false), ThisWindow(NULL), GuiContext(NULL),
-    FileChangeID(0), _GuiClipboardHandler(NULL), ContextInput(NULL)
+    FileChangeID(0), _GuiClipboardHandler(NULL), ContextInput(NULL), DisableGuiMouseCapture(false)
 {
 	
 }
@@ -852,13 +852,21 @@ void Leviathan::Gui::GuiManager::GuiTick(int mspassed){
 
 			} else {
 
-				// activate direct mouse capture //
-				if(!ThisWindow->SetMouseCapture(true)){
-					// failed, GUI must be forced to stay on //
-					OnForceGUIOn();
-					GuiDisallowMouseCapture = true;
-					GuiMouseUseUpdated = true;
-				}
+                // Prevent capturing the mouse if disabled //
+                if(DisableGuiMouseCapture){
+
+                    GuiDisallowMouseCapture = true;
+                    
+                } else {
+                
+                    // activate direct mouse capture //
+                    if(!ThisWindow->SetMouseCapture(true)){
+                        // failed, GUI must be forced to stay on //
+                        OnForceGUIOn();
+                        GuiDisallowMouseCapture = true;
+                        GuiMouseUseUpdated = true;
+                    }
+                }
 			}
 		}
 	}
@@ -867,7 +875,15 @@ void Leviathan::Gui::GuiManager::GuiTick(int mspassed){
 DLLEXPORT void Leviathan::Gui::GuiManager::OnForceGUIOn(){
 	DEBUG_BREAK;
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Gui::GuiManager::SetDisableMouseCapture(bool newvalue){
 
+    DisableGuiMouseCapture = newvalue;
+    // This will cause the capture state to be checked next tick
+    GuiMouseUseUpdated = true;
+}
+
+// ------------------------------------ //
 void Leviathan::Gui::GuiManager::Render(){
 	GUARD_LOCK_THIS_OBJECT();
 

@@ -167,6 +167,9 @@ namespace Gui{
 		DLLEXPORT bool PlayAnimationOnWindowProxy(const string &windowname, const string &animationname);
 
 
+        //! \brief Stops the Gui from capturing the mouse when no Gui on-keeping collections are active
+        DLLEXPORT void SetDisableMouseCapture(bool newvalue);
+        
 		//! \brief Tries to inject a paste request to CEGUI
 		DLLEXPORT bool InjectPasteRequest();
 
@@ -235,6 +238,9 @@ namespace Gui{
 
 		//! The clipboard access object
 		GuiClipboardHandler* _GuiClipboardHandler;
+
+        //! Disables the GUI trying to capture the mouse when no collection is active
+        bool DisableGuiMouseCapture;
 
 		// ------------------------------------ //
 		// Static animation files //

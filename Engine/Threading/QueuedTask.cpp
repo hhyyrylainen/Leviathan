@@ -164,7 +164,7 @@ DLLEXPORT bool Leviathan::RepeatCountedTask::IsThisLastRepeat() const{
 // ------------------ RepeatCountedDelayedTask ------------------ //
 DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(boost::function<void ()> functorun,
     const MicrosecondDuration &bothdelays, int repeatcount) :
-    DelayedTask(functorun, bothdelays), MaxRepeats(repeatcount),  TimeBetweenExecutions(bothdelays), RepeatedCount(0),
+    RepeatCountedTask(functorun, repeatcount), TimeBetweenExecutions(bothdelays),
     ExecutionTime(Misc::GetThreadSafeSteadyTimePoint()+bothdelays)
 {
 
@@ -173,8 +173,8 @@ DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(boost::f
 DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(boost::function<void ()> functorun,
     const MicrosecondDuration &initialdelay,
 	const MicrosecondDuration &followingduration, int repeatcount) :
-    DelayedTask(functorun, initialdelay), MaxRepeats(repeatcount), TimeBetweenExecutions(followingduration),
-    RepeatedCount(0), ExecutionTime(Misc::GetThreadSafeSteadyTimePoint()+initialdelay)
+    RepeatCountedTask(functorun, repeatcount), TimeBetweenExecutions(followingduration),
+    ExecutionTime(Misc::GetThreadSafeSteadyTimePoint()+initialdelay)
 {
 
 }

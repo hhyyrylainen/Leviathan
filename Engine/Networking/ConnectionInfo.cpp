@@ -810,6 +810,14 @@ DLLEXPORT wstring Leviathan::ConnectionInfo::GenerateFormatedAddressString() con
 	return Convert::StringToWstring(TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
 }
 // ------------------------------------ //
+DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfails,
+    boost::function<void(int, int)> onsucceeded, boost::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed)
+{
+    DEBUG_BREAK;
+
+
+}
+// ------------------------------------ //
 bool Leviathan::ConnectionInfo::_IsAlreadyReceived(int packetid){
 
 	// It is moved through in reverse to quickly return matches, but receiving the same packet twice isn't that common //

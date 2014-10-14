@@ -19,7 +19,8 @@ namespace Leviathan{
 
 	//! \brief Object passed to tasks which has common values
 	//!
-	//! This is passed to improve performance since querying the system clock multiple times by every task can be quite slow
+	//! This is passed to improve performance since querying the system clock multiple times by
+    //! every task can be quite slow
 	struct QueuedTaskCheckValues{
 		//! \brief Constructs a new value holder and automatically fetches the CurrentTime value
 		QueuedTaskCheckValues();
@@ -48,16 +49,21 @@ namespace Leviathan{
 		//! \return By default returns always true, but child classes can perform various checks before returning
 		DLLEXPORT virtual bool CanBeRan(const QueuedTaskCheckValues* const checkvalues);
 
-		//! \brief Function called by ThreadingManager before certain events to make proper tasks finish before certain operations
-		//! \return By default returns true when passed TASK_MUSTBERAN_BEFORE_EXIT, but child classes can store internal variables
+		//! \brief Function called by ThreadingManager before certain events to make proper tasks
+        //! finish before certain operations
+		//! \return By default returns true when passed TASK_MUSTBERAN_BEFORE_EXIT, but child
+        //! classes can store internal variables
 		//! to match only certain types
 		DLLEXPORT virtual bool MustBeRanBefore(int eventtypeidentifier);
 
 
 		//! \brief Function called by ThreadingManager AFTER running the task //
-		//! \return By default returns always false (so will be removed from queue), but child classes can perform various checks or
-		//! an internal state which holds information about repeating the task, such as repeat x times or repeat until success etc.
-		//! \note This is guaranteed to be called only once per execution so this can be used to implement an execution times monitor
+		//! \return By default returns always false (so will be removed from queue), but child
+        //! classes can perform various checks or
+		//! an internal state which holds information about repeating the task, such as repeat x
+        //! times or repeat until success etc.
+		//! \note This is guaranteed to be called only once per execution so this can be used to
+        //! implement an execution times monitor
 		DLLEXPORT virtual bool IsRepeating();
 
 	private:
@@ -98,7 +104,8 @@ namespace Leviathan{
 	//! \warning Function passed to this class should be thread safe
 	class ConditionalDelayedTask : public QueuedTask{
 	public:
-		//! Constructs a task that can be controlled when it can be ran with an additional check to skip checking too often
+		//! Constructs a task that can be controlled when it can be ran with an additional check
+        //! to skip checking too often
 		//! \param delaytime The time between checks; time that needs to pass before checking again
 		//! \param canberuncheck Is ran when CanBeRan is called, so it should be relatively cheap to call
 		DLLEXPORT ConditionalDelayedTask(boost::function<void ()> functorun, boost::function<bool ()> canberuncheck, 
@@ -163,7 +170,8 @@ namespace Leviathan{
 		//! \param initialdelay Is the time before first execution
 		//! \param followingduration Is the time between following executions
 		//! \see DelayedTask
-		DLLEXPORT RepeatingDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay, const MicrosecondDuration &followingduration);
+		DLLEXPORT RepeatingDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay,
+            const MicrosecondDuration &followingduration);
 
 		DLLEXPORT virtual ~RepeatingDelayedTask();
 

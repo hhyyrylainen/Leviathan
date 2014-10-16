@@ -308,7 +308,14 @@ void Pong::PlayerSlot::_ResetNetworkInput(){
 
 
 		InputObj->StopSendingInput(this);
-		GameInputController::Get()->QueueDeleteInput(InputObj);
+        // The game InputController might be getting deleted during this, so potentially avoid this call //
+        auto icontroller = GameInputController::Get();
+        
+        if(icontroller){
+            // Hopefully it is impossible for it to get deleted during this call //
+            icontroller->QueueDeleteInput(InputObj);
+        }
+            
 	}
 
 	InputObj = NULL;

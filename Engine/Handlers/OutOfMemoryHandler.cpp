@@ -20,7 +20,7 @@ DLLEXPORT Leviathan::OutOfMemoryHandler::OutOfMemoryHandler(){
 
 DLLEXPORT Leviathan::OutOfMemoryHandler::~OutOfMemoryHandler(){
 	// release allocated memory //
-	delete ReservedMemory;
+	delete[] ReservedMemory;
 	ReservedMemory = NULL;
 }
 

@@ -283,7 +283,7 @@ DLLEXPORT int Leviathan::FileSystem::LoadDataDump(const wstring &file, vector<sh
 		Logger::Get()->Warning(L"FileSystem: LoadDataDumb: Empty file: "+file, false);
 		return 0;
 	}
-	unique_ptr<wchar_t> Buff(new wchar_t[Length+1]);
+	unique_ptr<wchar_t[]> Buff(new wchar_t[Length+1]);
 	// set null terminator, just in case
 	(Buff.get())[Length] = '\0';
 

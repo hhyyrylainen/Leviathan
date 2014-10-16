@@ -138,6 +138,12 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
 
 	SAFE_DELETE(DisplayWindow);
 	TertiaryReceiver.reset();
+
+
+    // Destory CEGUI if we are the last window //
+    Logger::Get()->Info(L"TODO: only release CEGUI if we are the last window");
+    
+    CEGUI::OgreRenderer::destroySystem();
 }
 
 // ------------------------------------ //

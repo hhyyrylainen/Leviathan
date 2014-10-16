@@ -144,6 +144,8 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
     Logger::Get()->Info(L"TODO: only release CEGUI if we are the last window");
     
     CEGUI::OgreRenderer::destroySystem();
+
+    // Make Ogre destroy the window? //
 }
 
 // ------------------------------------ //

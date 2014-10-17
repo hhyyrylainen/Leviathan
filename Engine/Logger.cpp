@@ -82,7 +82,7 @@ DLLEXPORT void Leviathan::Logger::Write(const wstring &data, const bool &save /*
 	const wstring message = data + L"\n";
 
 	// if debug build send it to debug output //
-	SendDebugMessage(message);
+	SendDebugMessage(message, guard);
 
 	PendingLog += message;
 
@@ -97,7 +97,7 @@ DLLEXPORT void Leviathan::Logger::Info(const wstring &data, const bool &save /*=
 	wstring message = L"[INFO] "+data + L"\n";
 
 	// if debug build send it to debug output //
-	SendDebugMessage(message);
+	SendDebugMessage(message, guard);
 
 	PendingLog += message;
 
@@ -115,7 +115,7 @@ DLLEXPORT void Leviathan::Logger::Info(const string &data, const bool &save){
     sstream << data.c_str();
     sstream << L"\n";
 
-    SendDebugMessage(sstream.str());
+    SendDebugMessage(sstream.str(), guard);
     
     PendingLog += sstream.str();
 
@@ -130,7 +130,7 @@ DLLEXPORT void Leviathan::Logger::Error(const wstring &data, const int &pvalue /
 	wstring message = L"[ERROR] "+data+L"\n";
 
 	// if debug build send it to debug output //
-	SendDebugMessage(message);
+	SendDebugMessage(message, guard);
 	PendingLog += message;
 
 
@@ -145,7 +145,7 @@ DLLEXPORT void Leviathan::Logger::Warning(const wstring &data, bool save /*= fal
 	wstring message = L"[WARNING] "+data+L"\n";
 
 	// if debug build send it to debug output //
-	SendDebugMessage(message);
+	SendDebugMessage(message, guard);
 	PendingLog += message;
 
 	_LogUpdateEndPart(save, guard);
@@ -178,7 +178,7 @@ void Leviathan::Logger::Print(string message, bool save){
 	Get()->Write(Convert::StringToWstring(message), save);
 }
 
-void Leviathan::Logger::SendDebugMessage(const wstring& str){
+void Leviathan::Logger::SendDebugMessage(const wstring& str, boost::strict_lock<Logger> &guard){
 #ifdef _WIN32
 	OutputDebugString(&*str.begin());
 #endif // _WIN32

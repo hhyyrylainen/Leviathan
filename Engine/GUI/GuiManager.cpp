@@ -44,7 +44,7 @@
 // ------------------ GuiClipboardHandler ------------------ //
 //! \brief Platform dependent clipboard handler
 //! \todo Add support for linux
-class Leviathan::Gui::GuiClipboardHandler : public CEGUI::NativeClipboardProvider{
+class Leviathan::Gui::GuiClipboardHandler : public CEGUI::NativeClipboardProvider, public ThreadSafe{
 public:
 	GuiClipboardHandler(Leviathan::Window* windprovider) : HWNDSource(windprovider), OurOwnedBuffer(NULL)
     {
@@ -55,7 +55,7 @@ public:
     }
 
 	~GuiClipboardHandler(){
-
+        GUARD_LOCK_THIS_OBJECT();
 #ifdef __linux
         CleanUpWindow();
 #endif
@@ -83,6 +83,7 @@ public:
 #ifdef WIN32
 
 	virtual void sendToClipboard(const CEGUI::String& mimeType, void* buffer, size_t size){
+        GUARD_LOCK_THIS_OBJECT();
 		// Ignore non-text setting //
 		if(mimeType != "text/plain"){
 
@@ -129,6 +130,7 @@ public:
 	}
 
 	virtual void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size){
+        GUARD_LOCK_THIS_OBJECT();
 		// Open the clipboard first //
 		if(OpenClipboard(HWNDSource->GetHandle())){
 
@@ -173,6 +175,7 @@ public:
 #elif __linux
 
 	virtual void sendToClipboard(const CEGUI::String& mimeType, void* buffer, size_t size){
+        GUARD_LOCK_THIS_OBJECT();
         
         // Ignore non-text setting //
 		if(mimeType != "text/plain"){
@@ -209,6 +212,8 @@ public:
 
 	virtual void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size){
 
+        GUARD_LOCK_THIS_OBJECT();
+        
         // We need to stop the message processing here, too //
         StopXMessageLoop();
         
@@ -391,6 +396,7 @@ private:
                 {
                     // Prepare a response for the requester //
                     XEvent response;
+                    GUARD_LOCK_THIS_OBJECT();
 
                     // Ignore if we got nothing //
                     if(OurOwnedBuffer){
@@ -491,6 +497,8 @@ private:
 
     //! Sets up the clipboard window for usage
     void SetupClipboardWindow() THROWS{
+
+        GUARD_LOCK_THIS_OBJECT();
         
         // First get the default display //
         XDisplay = XOpenDisplay(NULL);
@@ -552,6 +560,8 @@ private:
     //! Cleans up the window
     void CleanUpWindow(){
         
+        GUARD_LOCK_THIS_OBJECT();
+        
         // First stop the message loop //
         StopXMessageLoop();
         
@@ -572,6 +582,7 @@ private:
     //! For use after stopping the loop
     void StartXMessageLoop(){
 
+        GUARD_LOCK_THIS_OBJECT();
         
         RunMessageProcessing = true;
         
@@ -580,6 +591,8 @@ private:
 
     //! \brief Stops the message processing
     void StopXMessageLoop(){
+
+        GUARD_LOCK_THIS_OBJECT();
 
         // First signal the loop to stop //
         RunMessageProcessing = false;

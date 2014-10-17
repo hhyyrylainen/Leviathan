@@ -76,6 +76,9 @@ sf::Packet& operator >>(sf::Packet& packet, NetworkAckField &data){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
+    // Lock the Network handler //
+    GUARD_LOCK_OTHER_OBJECT_NAME(NetworkHandler::Get(), guard2);
+    
 	GUARD_LOCK_THIS_OBJECT();
 	// This might do something //
 	if(!AddressGot){
@@ -90,7 +93,7 @@ DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
 	}
 
 	// Register us //
-	NetworkHandler::Get()->_RegisterConnectionInfo(this);
+	NetworkHandler::Get()->_RegisterConnectionInfo(this, guard2);
 
 	Logger::Get()->Info(L"ConnectionInfo: opening connection to host on "+
         Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
@@ -315,6 +318,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 	GUARD_LOCK_THIS_OBJECT();
 
 	for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ){
+        GUARD_LOCK_OTHER_OBJECT_NAME((*iter), packetguard);
+        
 		// Check is it already here //
 		auto itergot = SentPacketsConfirmedAsReceived.find((*iter)->PacketNumber);
 
@@ -872,6 +877,7 @@ DLLEXPORT Leviathan::SentNetworkThing::~SentNetworkThing(){
 }
 
 DLLEXPORT boost::unique_future<bool>& Leviathan::SentNetworkThing::GetFutureForThis(){
+    GUARD_LOCK_THIS_OBJECT();
 	// Get a future if not already and return it //
 	if(!FutureFetched){
 
@@ -882,6 +888,7 @@ DLLEXPORT boost::unique_future<bool>& Leviathan::SentNetworkThing::GetFutureForT
 }
 
 DLLEXPORT void Leviathan::SentNetworkThing::SetAsTimed(){
+    GUARD_LOCK_THIS_OBJECT();
     
     ConfirmReceiveTime = 1;
 }

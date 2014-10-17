@@ -353,8 +353,8 @@ DLLEXPORT void Leviathan::NetworkHandler::StartOwnUpdaterThread(){
 	TempGetResponsesThread = boost::thread(RunTemporaryUpdateConnections, this);
 }
 // ------------------------------------ //
-void Leviathan::NetworkHandler::_RegisterConnectionInfo(ConnectionInfo* tomanage){
-	GUARD_LOCK_THIS_OBJECT();
+void Leviathan::NetworkHandler::_RegisterConnectionInfo(ConnectionInfo* tomanage, ObjectLock &guard){
+    VerifyLock(guard);
 
 	ConnectionsToUpdate.push_back(tomanage);
 }

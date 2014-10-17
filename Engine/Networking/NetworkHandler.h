@@ -96,11 +96,13 @@ namespace Leviathan{
 
 		//! \brief Opens a new connection to the provided address
 		//!
-		//! \param targetaddress The input should be in a form that has address:port in it. The address should be like 'google.fi' or '192.168.1.1'
-		//! \note This function doesn't verify that there actually is something on the target. The connection will be managed by the handler
+		//! \param targetaddress The input should be in a form that has address:port in it. The address should be like
+        //! 'google.fi' or '192.168.1.1'
+		//! \note This function doesn't verify that there actually is something on the target.
+        //! \note The connection will be managed by the handler
 		//! and will close if no response is received to a keep alive packet (which is sent after a couple of minutes)
-		//! \warning This will always open a new connection. To avoid multiple connections to same target (and breaking both connections) see
-		//! GetOrCreatePointerToConnection
+		//! \warning This will always open a new connection. To avoid multiple connections to same target
+        //! (and breaking both connections) see GetOrCreatePointerToConnection
 		DLLEXPORT FORCE_INLINE shared_ptr<ConnectionInfo> OpenConnectionTo(const wstring &targetaddress){
 			// Lock and call the real function //
 			GUARD_LOCK_THIS_OBJECT();
@@ -127,7 +129,8 @@ namespace Leviathan{
 
 		// Common network functions //
 		// For example if passed http://boostslair.com/Pong/MastersList.php returns http://boostslair.com/ //
-		DLLEXPORT static wstring GetServerAddressPartOfAddress(const wstring &fulladdress, const wstring &regextouse = L"http://.*?/");
+		DLLEXPORT static wstring GetServerAddressPartOfAddress(const wstring &fulladdress, const wstring &regextouse =
+            L"http://.*?/");
 
 		DLLEXPORT static NetworkHandler* Get();
 		DLLEXPORT static NetworkInterface* GetInterface();
@@ -143,7 +146,16 @@ namespace Leviathan{
 		void _SaveMasterServerList();
 		bool _LoadMasterServerList();
 
-		void _RegisterConnectionInfo(ConnectionInfo* tomanage);
+        //! \brief Registers a connection to be updated when UpdateAllConnections is called
+		void inline _RegisterConnectionInfo(ConnectionInfo* tomanage){
+
+            GUARD_LOCK_THIS_OBJECT();
+            _RegisterConnectionInfo(tomanage, guard);
+        }
+
+        //! Actual implementation of _RegisterConnectionInfo
+        void _RegisterConnectionInfo(ConnectionInfo* tomanage, ObjectLock &guard);
+        
 		void _UnregisterConnectionInfo(ConnectionInfo* unregisterme);
 
 		// ------------------------------------ //

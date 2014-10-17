@@ -40,7 +40,10 @@ namespace Leviathan{
 	//! \brief Allows restricting connections to allow only certain packets
 	enum CONNECTION_RESTRICTION {CONNECTION_RESTRICTION_NONE, CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE};
 
-	struct SentNetworkThing{
+    //! Represents a sent packet and holds all kinds of data for it
+    //! \todo Make this properly thread safe
+	class SentNetworkThing : public ThreadSafe{
+    public:
 
 		//! This is the signature for request packets
 		DLLEXPORT SentNetworkThing(int packetid, int expectedresponseid, shared_ptr<NetworkRequest> request,
@@ -160,7 +163,7 @@ namespace Leviathan{
 		DLLEXPORT ~ConnectionInfo();
 
 		//! Creates the address object
-		//! \todo Make calls to this threaded to avoid stalls
+        //! \warning This function will lock the NetworkHandler object and thus it needs to be still valid
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();
 

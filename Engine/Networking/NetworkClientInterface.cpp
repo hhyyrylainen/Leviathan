@@ -508,7 +508,8 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler){
-	
+	GUARD_LOCK_THIS_OBJECT();
+    
 	PotentialInputHandler = handler;
 	return true;
 }

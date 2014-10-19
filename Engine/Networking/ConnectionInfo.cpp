@@ -828,10 +828,6 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
         return;
     }
     
-    // Create a suitable echo request //
-    shared_ptr<NetworkRequest> echorequest = make_shared<NetworkRequest>(NETWORKREQUESTTYPE_ECHO, 1000,
-        PACKAGE_TIMEOUT_STYLE_TIMEDMS);
-
     // The finishing check task needs to store this. Using a smart pointer avoids copying this around
     shared_ptr<std::vector<shared_ptr<SentNetworkThing>>> sentechos = make_shared<
         std::vector<shared_ptr<SentNetworkThing>>>();
@@ -846,7 +842,14 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
 
     // Send the packet count of echo requests //
     for(int i = 0; i < packets; i++){
+        
+        // Create a suitable echo request //
+        // This needs to be regenerated for each loop as each need to have unique id for responses
+        // to be registered properly
+        shared_ptr<NetworkRequest> echorequest = make_shared<NetworkRequest>(NETWORKREQUESTTYPE_ECHO, 1000,
+            PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 
+        
         // Locked in here to allow the connection do stuff in between //
         GUARD_LOCK_THIS_OBJECT();
     
@@ -866,8 +869,6 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
                     boost::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed, int allowedfails) -> void
         {
             int fails = 0;
-
-            DEBUG_BREAK;
 
             std::vector<int> packagetimes;
             packagetimes.reserve(requests->size());

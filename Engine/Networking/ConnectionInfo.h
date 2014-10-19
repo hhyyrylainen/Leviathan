@@ -58,7 +58,10 @@ namespace Leviathan{
 
 		DLLEXPORT boost::unique_future<bool>& GetFutureForThis();
 
-
+        //! \brief Sets the status of the wait object notifying all waiters that this has
+        //! succeeded or failed
+        DLLEXPORT void SetWaitStatus(bool status);
+        
         //! \brief Sets this packet as a timed packet
         //! \note A timed package will have the ConfirmReceiveTime set to the time a response (or receive notification)
         //! is received
@@ -215,6 +218,7 @@ namespace Leviathan{
         //! second is failed packets
         //! \param onfailed Is called if the function fails. First value will be the reason and
         //! second the failed packet count
+        //! \todo Check whether the packets should be send in a cluster or not (as they are currently sent in one go)
         DLLEXPORT void CalculateNetworkPing(int packets, int allowedfails, boost::function<void(int, int)> onsucceeded,
             boost::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed);
 

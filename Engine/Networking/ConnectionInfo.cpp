@@ -10,6 +10,7 @@
 #include "Exceptions/ExceptionInvalidArgument.h"
 #include "RemoteConsole.h"
 #include "Common/Misc.h"
+#include "Threading/ThreadingManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const wstring &hostname) : 
@@ -318,7 +319,6 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 	GUARD_LOCK_THIS_OBJECT();
 
 	for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ){
-        GUARD_LOCK_OTHER_OBJECT_NAME((*iter), packetguard);
         
 		// Check is it already here //
 		auto itergot = SentPacketsConfirmedAsReceived.find((*iter)->PacketNumber);
@@ -334,7 +334,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
                     Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 				// We want to notify all waiters that it has been received //
-				(*iter)->WaitForMe->set_value(true);
+                (*iter)->SetWaitStatus(true);
+                
                 (*iter)->ConfirmReceiveTime = Misc::GetTimeMs64();                
 				iter = WaitingRequests.erase(iter);
 				continue;
@@ -350,7 +351,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 #endif // SPAM_ME_SOME_PACKETS
 				// It has a proper response //
 				// We want to notify all waiters that it has been received //
-				(*iter)->WaitForMe->set_value(true);
+                (*iter)->SetWaitStatus(true);
                 (*iter)->ConfirmReceiveTime = Misc::GetTimeMs64();
 				iter = WaitingRequests.erase(iter);
 				continue;
@@ -382,7 +383,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 #endif // _DEBUG
 
 							// We want to notify all waiters that it failed //
-							(*iter)->WaitForMe->set_value(false);
+                            (*iter)->SetWaitStatus(true);
 							iter = WaitingRequests.erase(iter);
 							continue;
 						}
@@ -500,7 +501,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 	} else if(timems > LastSentPacketTime+KEEPALIVE_TIME/1.1f && !HasReceived){
 
 
-		Logger::Get()->Info(L"ConnectionInfo: timing out connection (nothing received) "+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+		Logger::Get()->Info(L"ConnectionInfo: timing out connection (nothing received) "+
+            Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
 		// Mark us as closing //
 		NetworkHandler::Get()->SafelyCloseConnectionTo(this);
 	}
@@ -513,7 +515,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::CheckKeepAliveSend(){
 	auto timenow = Misc::GetTimeMs64();
 	if(timenow > LastSentPacketTime+KEEPALIVE_RESPOND){
 		// Respond to it //
-		Logger::Get()->Info(L"ConnectionInfo: replying to a keepalive packet (because "+Convert::ToWstring(timenow-LastSentPacketTime)+L" since last sent has elapsed) to "
+		Logger::Get()->Info(L"ConnectionInfo: replying to a keepalive packet (because "+
+            Convert::ToWstring(timenow-LastSentPacketTime)+L" since last sent has elapsed) to "
 			+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
 		SendKeepAlivePacket();
 	}
@@ -818,14 +821,136 @@ DLLEXPORT wstring Leviathan::ConnectionInfo::GenerateFormatedAddressString() con
 DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfails,
     boost::function<void(int, int)> onsucceeded, boost::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed)
 {
-    DEBUG_BREAK;
+    // Avoid dividing by zero here //
+    if(packets == 0){
+
+        Logger::Get()->Error(L"ConnectionInfo: avoided dividing by zero by dropping a ping request");
+        return;
+    }
+    
+    // Create a suitable echo request //
+    shared_ptr<NetworkRequest> echorequest = make_shared<NetworkRequest>(NETWORKREQUESTTYPE_ECHO, 1000,
+        PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+
+    // The finishing check task needs to store this. Using a smart pointer avoids copying this around
+    shared_ptr<std::vector<shared_ptr<SentNetworkThing>>> sentechos = make_shared<
+        std::vector<shared_ptr<SentNetworkThing>>>();
+    
+    sentechos->reserve(packets);
+
+    if(packets >= 100){
+
+        Logger::Get()->Warning(L"ConnectionInfo: trying to send loads of ping packets, sending "+
+            Convert::ToWstring(packets)+L" packets");
+    }
+
+    // Send the packet count of echo requests //
+    for(int i = 0; i < packets; i++){
+
+        // Locked in here to allow the connection do stuff in between //
+        GUARD_LOCK_THIS_OBJECT();
+    
+        // TODO: check is the connection still open
+        
+        auto cursent = SendPacketToConnection(echorequest, 1);
+        cursent->SetAsTimed();
+
+        sentechos->push_back(cursent);
+    }
 
 
+
+    ThreadingManager::Get()->QueueTask(new ConditionalTask(boost::bind<void>([](
+                    shared_ptr<std::vector<shared_ptr<SentNetworkThing>>> requests,
+                    boost::function<void(int, int)> onsucceeded,
+                    boost::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed, int allowedfails) -> void
+        {
+            int fails = 0;
+
+            DEBUG_BREAK;
+
+            std::vector<int> packagetimes;
+            packagetimes.reserve(requests->size());
+            
+            // Collect the times //
+            auto end = requests->end();
+            for(auto iter = requests->begin(); iter != end; ++iter){
+
+                if(!(*iter)->GetFutureForThis().get() || (*iter)->ConfirmReceiveTime < 2){
+                    // This one has failed //
+                    
+                    fails++;
+                    continue;
+                }
+
+                // Store the time //
+                packagetimes.push_back((*iter)->ConfirmReceiveTime-(*iter)->RequestStartTime);
+            }
+            
+            
+            // Check has too many failed //
+            if(fails > allowedfails){
+
+                Logger::Get()->Warning(L"ConnectionInfo: pinging failed due to too many lost packets, lost: "+
+                    Convert::ToWstring(fails));
+                
+                onfailed(CONNECTION_PING_FAIL_REASON_LOSS_TOO_HIGH, fails);
+                return;
+            }
+
+            // Use some nice distribution math to get the ping //
+            int finalping = 0;
+
+            // The values shouldn't be able to be more than 1000 each so ints will
+            // be able to hold all the values
+            int sum = 0;
+            float averagesquared = 0.f;
+            
+            auto end2 = packagetimes.end();
+            for(auto iter = packagetimes.begin(); iter != end2; ++iter){
+
+                sum += *iter;
+                averagesquared += powf(*iter, 2);
+            }
+            
+            float average = sum/static_cast<float>(packagetimes.size());
+
+            averagesquared /= static_cast<float>(packagetimes.size());
+
+            float standarddeviation = sqrtf(averagesquared-powf(average, 2));
+
+            // End mathematics
+
+            // Just one more calculation to get ping that represents average bad case in some way,
+            // might require tweaking...
+            
+            finalping = static_cast<int>(average+(standarddeviation*0.7f));
+            
+            onsucceeded(finalping, fails);
+            
+            Logger::Get()->Info("ConnectionInfo: pinging completed, ping: "+Convert::ToString(finalping));
+            
+        }, sentechos, onsucceeded, onfailed, allowedfails), boost::bind<bool>([](
+                shared_ptr<std::vector<shared_ptr<SentNetworkThing>>> requests) -> bool
+            {
+                // Check if even one is still waiting //
+                auto end = requests->end();
+                for(auto iter = requests->begin(); iter != end; ++iter){
+                    if(!(*iter)->GetFutureForThis().has_value())
+                        return false;
+                }
+
+                // None are still waiting, good to go //
+                return true;
+
+            }, sentechos)));
+    
 }
 // ------------------------------------ //
 bool Leviathan::ConnectionInfo::_IsAlreadyReceived(int packetid){
 
-	// It is moved through in reverse to quickly return matches, but receiving the same packet twice isn't that common //
+	// It is moved through in reverse to quickly return matches,
+    // but receiving the same packet twice isn't that common
 	auto end = LastReceivedPacketIDs.rend();
 	for(auto iter = LastReceivedPacketIDs.rbegin(); iter != end; ++iter){
 
@@ -885,6 +1010,12 @@ DLLEXPORT boost::unique_future<bool>& Leviathan::SentNetworkThing::GetFutureForT
 		FutureFetched = true;
 	}
 	return FutureValue;
+}
+
+DLLEXPORT void Leviathan::SentNetworkThing::SetWaitStatus(bool status){
+    GUARD_LOCK_THIS_OBJECT();
+
+    WaitForMe->set_value(status);
 }
 
 DLLEXPORT void Leviathan::SentNetworkThing::SetAsTimed(){

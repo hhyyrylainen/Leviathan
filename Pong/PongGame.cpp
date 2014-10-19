@@ -343,8 +343,20 @@ void Pong::PongGame::Disconnect(const string &reasonstring){
 	ClientInterface->DisconnectFromServer(Convert::StringToWstring(reasonstring));
 	
 	// Disable lobby screen //
-	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
-		new NamedVariableList(L"State", new VariableBlock(string("Off")))))));
+	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState",
+            Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
+                        new VariableBlock(string("Off")))))));
+
+    // Disable prematch screen //
+    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"PrematchScreenState",
+            Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
+                        new VariableBlock(string("Off")))))));
+
+    // Disable during game screen //
+
+
+    // Disable scores screen //
+    
 }
 // ------------------------------------ //
 void Pong::PongGame::DoSpecialPostLoad(){

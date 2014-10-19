@@ -438,7 +438,9 @@ DLLEXPORT void Leviathan::GameWorld::MarkForClear(){
 }
 
 bool Leviathan::GameWorld::AreAllPlayersSynced() const{
-	return SendingInitialState;
+    // The vector of sending players is empty if not sending //
+    GUARD_LOCK_THIS_OBJECT();
+    return InitiallySyncingPlayers.size() == 0;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* parentadded){
@@ -487,6 +489,8 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
 
 	// Start sending initial update //
 
+    Logger::Get()->Info("Starting to send "+Convert::ToString(Objects.size())+" to player");
+    
     // Now we can queue all objects for sending //
     // TODO: make sure that all objects are sent
     ThreadingManager::Get()->QueueTask(new RepeatCountedTask(boost::bind<void>([](shared_ptr<ConnectionInfo>
@@ -523,7 +527,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
             // Get the object //
             auto tosend = world->Objects[num];
 
-            
+            Logger::Get()->Info("Would send object, number: "+Convert::ToString(num));
             
             
         }, safeconnection, connectobject, this), Objects.size()));
@@ -559,8 +563,6 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
                 return processingobject->AllDone;
 
             }, connectobject)));
-    
-	SendingInitialState = true;
 }
 
 DLLEXPORT void Leviathan::GameWorld::_OnNotifiableDisconnected(BaseNotifiableAll* parenttoremove){

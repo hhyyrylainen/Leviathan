@@ -226,19 +226,24 @@ void Pong::PongServer::PassCommandLine(const wstring &params){
 // ------------------------------------ //
 void Pong::PongServer::OnStartPreMatch(){
 
-	// Notify the clients //
-	_PongServerNetworking->SetStatus(PONG_JOINGAMERESPONSE_TYPE_PREMATCH);
-
-
+    // Setup the world first as that can fail //
 	WorldOfPong->ClearObjects();
 	WorldOfPong->SetWorldPhysicsFrozenState(true);
 
-	// Make sure that everyone is receiving our world //
-	_PongServerNetworking->VerifyWorldIsSyncedWithPlayers(WorldOfPong);
-
-
 	// Setup the objects in the world //
-	GameArena->GenerateArena(this, _PlayerList);
+	if(!GameArena->GenerateArena(this, _PlayerList)){
+
+        Logger::Get()->Warning(L"PongServer: failed to generate arena");
+        return;
+    }
+
+	// Notify the clients //
+	_PongServerNetworking->SetStatus(PONG_JOINGAMERESPONSE_TYPE_PREMATCH);
+
+    
+	// Make sure that everyone is receiving our world //
+    // This will send many objects at once to all the players (or rather should send them in bulk)
+	_PongServerNetworking->VerifyWorldIsSyncedWithPlayers(WorldOfPong);
 
 
 	// Queue a readyness checking task //

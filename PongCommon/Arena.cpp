@@ -21,13 +21,13 @@ Pong::Arena::~Arena(){
 }
 // ------------------------------------ //
 bool Pong::Arena::GenerateArena(BasePongParts* game, PlayerList &plys){
-	// check sanity of values //
+
 	QUICKTIME_THISSCOPE;
 	
 	std::vector<PlayerSlot*>& plyvec = plys.GetVec();
 	
-	
-	if(plyvec.empty() == 0 || plyvec.size() > 4){
+	// Check sanity of values //	
+	if(plyvec.empty() || plyvec.size() > 4){
 		game->SetError("Player count must be over 1");
 		return false;
 	}
@@ -43,10 +43,12 @@ bool Pong::Arena::GenerateArena(BasePongParts* game, PlayerList &plys){
 	Leviathan::Entity::TrailProperties balltrailproperties(5, 10, 100, false);
 	
 	// Set up all elements //
-	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(Float4(0), Float4(0.5f, 0.5f, 0.5f, 0), 3.f, 0.3f);
+	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(Float4(0),
+        Float4(0.5f, 0.5f, 0.5f, 0), 3.f, 0.3f);
 
 	// Create the trail //
-	TrailKeeper = TargetWorld->GetWorldObject(loader->LoadTrailToWorld(TargetWorld.get(), "PongBallTrail", balltrailproperties,	true, &DirectTrail));
+	TrailKeeper = TargetWorld->GetWorldObject(loader->LoadTrailToWorld(TargetWorld.get(), "PongBallTrail",
+            balltrailproperties, true, &DirectTrail));
 
 	// Set the options with the unified function //
 	ColourTheBallTrail(Float4(1.f));
@@ -102,19 +104,20 @@ newtonmaterialfetchstartlabel:
 
 
 	// WARNING: Huge mess ahead!
-	// GetWorldObject is used because the ptr returned by load is not "safe" to use, so we get a shared ptr to the same object, this avoids dynamic
-	// cast and is safe at the same time
+	// GetWorldObject is used because the ptr returned by load is not "safe" to use, so we get a shared ptr
+    // to the same object, this avoids dynamic cast and is safe at the same time
 
 	// base surface brush //
 	Leviathan::Entity::Brush* castedbottombrush;
-	BottomBrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), materialbase, Float3(width, bottomthickness, height), 0.f,
-		&castedbottombrush));
+	BottomBrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), materialbase,
+            Float3(width, bottomthickness, height), 0.f, &castedbottombrush));
+    
 	castedbottombrush->SetPosComponents(0.f, -bottomthickness/2.f, 0.f);
 	castedbottombrush->SetPhysicalMaterialID(ArenaBaseID);
 
 	// Arena ceiling that keeps the ball in //
-	auto topbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), "", Float3(width, bottomthickness, height), 0.f,
-		&castedbottombrush));
+	auto topbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), "",
+            Float3(width, bottomthickness, height), 0.f, &castedbottombrush));
 	castedbottombrush->SetPosComponents(0.f, paddleheight+bottomthickness/2.f+BASE_ARENASCALE/2.f, 0.f);
 	castedbottombrush->SetPhysicalMaterialID(ArenaBaseID);
 	castedbottombrush->SetHiddenState(true);
@@ -343,7 +346,7 @@ addplayerpaddlelabel:
 		switch(i){
 		case 0: tmp->SetPosComponents(width/2.f+paddlethickness/2.f, sideheight/2.f, 0); break;
 		case 1: tmp->SetPosComponents(0, sideheight/2.f, width/2.f+paddlethickness/2.f); break;
-		case 2: tmp->SetPosComponents(-width/2.f-paddlethickness/2.f, sideheight/2.f, 0);break;
+		case 2: tmp->SetPosComponents(-width/2.f-paddlethickness/2.f, sideheight/2.f, 0); break;
 		case 3: tmp->SetPosComponents(0, sideheight/2.f, -width/2.f-paddlethickness/2.f); break;
 		}
 
@@ -357,7 +360,10 @@ addplayerpaddlelabel:
 		}
 	}
 
-
+    // Notify how much stuff was created //
+    Logger::Get()->Info(L"Arena: finished generating arena, total objects: "+
+        Convert::ToWstring(TargetWorld->GetObjectCount()));
+    
 	return true;
 }
 // ------------------------------------ //
@@ -376,7 +382,8 @@ void Pong::Arena::ServeBall(){
 
 	// we want to load our ball prop into the world //
 	Leviathan::Entity::Prop* prop;
-	Ball = TargetWorld->GetWorldObject(Leviathan::Engine::Get()->GetObjectLoader()->LoadPropToWorld(TargetWorld.get(), L"PongBall", &prop));
+	Ball = TargetWorld->GetWorldObject(Leviathan::Engine::Get()->GetObjectLoader()->LoadPropToWorld(TargetWorld.get(),
+            L"PongBall", &prop));
 
 	// set to center of board //
 	prop->SetPos(Float3(0.f, 0.5f, 0.f));
@@ -407,10 +414,14 @@ void Pong::Arena::ServeBall(){
 					// Set direction //
 
 					switch(i){
-					case 0: dir = Float3(25.f, 0.f, 0.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ? Float3(0.f, 0.f, 1.f): Float3(0.f, 0.f, -1.f)); break;
-					case 1: dir = Float3(0.f, 0.f, 25.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ? Float3(1.f, 0.f, 0.f): Float3(-1.f, 0.f, 0.f));; break;
-					case 2: dir = Float3(-25.f, 0.f, 0.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ? Float3(0.f, 0.f, 1.f): Float3(0.f, 0.f, -1.f));; break;
-					case 3: dir = Float3(0.f, 0.f, -25.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ? Float3(1.f, 0.f, 0.f): Float3(-1.f, 0.f, 0.f));; break;
+                        case 0: dir = Float3(25.f, 0.f, 0.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ?
+                            Float3(0.f, 0.f, 1.f): Float3(0.f, 0.f, -1.f)); break;
+                        case 1: dir = Float3(0.f, 0.f, 25.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ?
+                            Float3(1.f, 0.f, 0.f): Float3(-1.f, 0.f, 0.f)); break;
+                        case 2: dir = Float3(-25.f, 0.f, 0.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ?
+                            Float3(0.f, 0.f, 1.f): Float3(0.f, 0.f, -1.f)); break;
+                        case 3: dir = Float3(0.f, 0.f, -25.f)+(Leviathan::Random::Get()->GetNumber(0, 1) ?
+                            Float3(1.f, 0.f, 0.f): Float3(-1.f, 0.f, 0.f)); break;
 					}
 
 					break;
@@ -478,7 +489,8 @@ void Pong::Arena::ColourTheBallTrail(const Float4 &colour){
 	// Adjust the trail parameters //
 	Leviathan::Entity::TrailProperties balltrailproperties(5, 10, 100, false);
 	// Set up all elements //
-	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(colour, Float4(0.7f, 0.7f, 0.7f, 0.3f), 5.f, 0.6f);
+	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(colour,
+        Float4(0.7f, 0.7f, 0.7f, 0.3f), 5.f, 0.6f);
 
 	if(DirectTrail){
 
@@ -496,10 +508,12 @@ std::string Pong::Arena::GetMaterialNameForPlayerColour(const Float4 &colour){
 	}
 
 	// Create new //
-	string generatename = "Colour_"+Convert::Float4ToString<stringstream, string>(colour)+"_PaddleMaterial";
+    // The prefix in the name allows the clients to generate the texture when they need to use it
+	string generatename = "/Generated/Colour_"+Convert::Float4ToString<stringstream, string>(colour)+"_PaddleMaterial";
 
-	// Generate //
-	Leviathan::TextureGenerator::LoadSolidColourLightMaterialToMemory(generatename, colour);
+	// Generate (only in graphical mode) //
+    if(!Engine::Get()->GetNoGui())
+        Leviathan::TextureGenerator::LoadSolidColourLightMaterialToMemory(generatename, colour);
 
 	ColourMaterialName[colour] = generatename;
 	return generatename;

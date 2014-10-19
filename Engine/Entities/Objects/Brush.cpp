@@ -16,32 +16,34 @@ using namespace Entity;
 
 
 
-DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) : BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), 
-	MeshName(), Sizes(0), BrushModel(NULL)
+DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) :
+    BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), Sizes(0), BrushModel(NULL)
 {
 
 }
 
 DLLEXPORT Leviathan::Entity::Brush::~Brush(){
-	// delete memory that can wait until this //
+
 }
 
 DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
-	// release Ogre entity //
-	OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
-	OwnedByWorld->GetScene()->destroyEntity(GraphicalObject);
+	// Release Ogre entity //
+    if(ObjectsNode)
+        OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
+    if(GraphicalObject)
+        OwnedByWorld->GetScene()->destroyEntity(GraphicalObject);
 
 	ObjectsNode = NULL;
 	GraphicalObject = NULL;
 
-	// the model won't be used anymore //
-	if(MeshName.size()){
+	// The model won't be used anymore //
+	if(MeshName.size() && OwnedByWorld->GetScene()){
 		OwnedByWorld->GetScene()->destroyManualObject(BrushModel);
 	}
 
 	OwnedByWorld = NULL;
 
-	// physical entity //
+	// Physical entity //
 	AggressiveConstraintUnlink();
 	_DestroyPhysicalBody();
 }
@@ -51,230 +53,237 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 {
 	Sizes = dimensions;
 
-	// create unique name for mesh //
+	// Create an unique name for mesh //
 	MeshName = "Brush_"+Convert::ToString(ID);
 
-	// create the graphical box //
-	BrushModel = OwnedByWorld->GetScene()->createManualObject();
-	BrushModel->setName(MeshName+"_manual");
+    // Opt out of graphics if in non-gui mode //
+    if(!OwnedByWorld->GetScene()){
 
-	// we do not want to update this later //
-	BrushModel->setDynamic(false);
-	BrushModel->estimateVertexCount(24);
-	BrushModel->estimateIndexCount(24);
+        goto brushpostgraphicalobjectcreation;
+    }
+    
+    {
+        // create the graphical box //
+        BrushModel = OwnedByWorld->GetScene()->createManualObject();
+        BrushModel->setName(MeshName+"_manual");
+
+        // we do not want to update this later //
+        BrushModel->setDynamic(false);
+        BrushModel->estimateVertexCount(24);
+        BrushModel->estimateIndexCount(24);
 #ifdef BRUSH_CALCULATENORMALS
-	std::vector<Float3> tmpvertices;
-	tmpvertices.reserve(24);
+        std::vector<Float3> tmpvertices;
+        tmpvertices.reserve(24);
 #endif // BRUSH_CALCULATENORMALS
 
 
-	BrushModel->begin(material, Ogre::RenderOperation::OT_TRIANGLE_LIST);
+        BrushModel->begin(material, Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 
-	// loops to avoid redundant code //
-	float yval = dimensions.Y/-2.f;
-	bool up = false;
+        // loops to avoid redundant code //
+        float yval = dimensions.Y/-2.f;
+        bool up = false;
 
-	for(int i = 0; i < 2; i++){
-		// loop three times on all points for each side that has that point //
+        for(int i = 0; i < 2; i++){
+            // loop three times on all points for each side that has that point //
 
-		// bottom left //
-		for(int a = 0; a < 3; a++){
+            // bottom left //
+            for(int a = 0; a < 3; a++){
 
-			BrushModel->position(dimensions.X/-2.f, yval, dimensions.Z/-2.f);
+                BrushModel->position(dimensions.X/-2.f, yval, dimensions.Z/-2.f);
 #ifdef BRUSH_CALCULATENORMALS
-			tmpvertices.push_back(Float3(dimensions.X/-2.f, yval, dimensions.Z/-2.f));
+                tmpvertices.push_back(Float3(dimensions.X/-2.f, yval, dimensions.Z/-2.f));
 #endif // BRUSH_CALCULATENORMALS
 					
-			// bottom left //
-			if(a == 0){
+                // bottom left //
+                if(a == 0){
 
-				BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
-				BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+                    BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+                    BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
 						
-			} else if (a == 1){
-				// second is the face that is on the right when looking from the corner to the center of the cube //
-				if(!up)
-					BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
-				else
-					BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+                } else if (a == 1){
+                    // second is the face that is on the right when looking from the corner to the center of the cube //
+                    if(!up)
+                        BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+                    else
+                        BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
 
-				BrushModel->normal(Float3(0.f, 0.f, -1.f));
+                    BrushModel->normal(Float3(0.f, 0.f, -1.f));
 
-			} else {
-				// and third is on the left when looking to the center //
-				if(!up)
-					BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
-				else
-					BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+                } else {
+                    // and third is on the left when looking to the center //
+                    if(!up)
+                        BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+                    else
+                        BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
 
-				BrushModel->normal(Float3(-1.f, 0.f, 0.f));
-			}
-		}
+                    BrushModel->normal(Float3(-1.f, 0.f, 0.f));
+                }
+            }
 
-		// right point //
-		for(int a = 0; a < 3; a++){
+            // right point //
+            for(int a = 0; a < 3; a++){
 
-			BrushModel->position(dimensions.X/2.f, yval, dimensions.Z/-2.f);
+                BrushModel->position(dimensions.X/2.f, yval, dimensions.Z/-2.f);
 #ifdef BRUSH_CALCULATENORMALS
-			tmpvertices.push_back(Float3(dimensions.X/2.f, yval, dimensions.Z/-2.f));
+                tmpvertices.push_back(Float3(dimensions.X/2.f, yval, dimensions.Z/-2.f));
 #endif // BRUSH_CALCULATENORMALS
 
 
-			// first is bottom or top face //
-			if(a == 0){
+                // first is bottom or top face //
+                if(a == 0){
 
-				BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
-				BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+                    BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+                    BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
 
-			} else if (a == 1){
-				// second is the face that is on the right when looking from the corner to the center of the cube //
-				if(!up)
-					BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
-				else
-					BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+                } else if (a == 1){
+                    // second is the face that is on the right when looking from the corner to the center of the cube //
+                    if(!up)
+                        BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+                    else
+                        BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
 
-				BrushModel->normal(Float3(1.f, 0.f, 0.f));
+                    BrushModel->normal(Float3(1.f, 0.f, 0.f));
 
-			} else {
-				// and third is on the left when looking to the center //
-				if(!up)
-					BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
-				else
-					BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+                } else {
+                    // and third is on the left when looking to the center //
+                    if(!up)
+                        BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+                    else
+                        BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
 
-				BrushModel->normal(Float3(0.f, 0.f, -1.f));
-			}
-		}
+                    BrushModel->normal(Float3(0.f, 0.f, -1.f));
+                }
+            }
 
-		// right up //
-		for(int a = 0; a < 3; a++){
+            // right up //
+            for(int a = 0; a < 3; a++){
 
-			BrushModel->position(dimensions.X/2.f, yval, dimensions.Z/2.f);
+                BrushModel->position(dimensions.X/2.f, yval, dimensions.Z/2.f);
 #ifdef BRUSH_CALCULATENORMALS
-			tmpvertices.push_back(Float3(dimensions.X/2.f, yval, dimensions.Z/2.f));
+                tmpvertices.push_back(Float3(dimensions.X/2.f, yval, dimensions.Z/2.f));
 #endif // BRUSH_CALCULATENORMALS
 
 
-			// first is bottom or top face //
-			if(a == 0){
+                // first is bottom or top face //
+                if(a == 0){
 
-				BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
-				BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+                    BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+                    BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
 
-			} else if (a == 1){
-				// second is the face that is on the right when looking from the corner to the center of the cube //
-				if(!up)
-					BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
-				else
-					BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+                } else if (a == 1){
+                    // second is the face that is on the right when looking from the corner to the center of the cube //
+                    if(!up)
+                        BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+                    else
+                        BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
 
-				BrushModel->normal(Float3(0.f, 0.f, 1.f));
+                    BrushModel->normal(Float3(0.f, 0.f, 1.f));
 
-			} else {
-				// and third is on the left when looking to the center //
-				if(!up)
-					BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
-				else
-					BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+                } else {
+                    // and third is on the left when looking to the center //
+                    if(!up)
+                        BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+                    else
+                        BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
 
-				BrushModel->normal(Float3(1.f, 0.f, 0.f));
+                    BrushModel->normal(Float3(1.f, 0.f, 0.f));
 
-			}
-		}
-		// left up //
-		for(int a = 0; a < 3; a++){
+                }
+            }
+            // left up //
+            for(int a = 0; a < 3; a++){
 
-			BrushModel->position(dimensions.X/-2.f, yval, dimensions.Z/2.f);
+                BrushModel->position(dimensions.X/-2.f, yval, dimensions.Z/2.f);
 #ifdef BRUSH_CALCULATENORMALS
-			tmpvertices.push_back(Float3(dimensions.X/-2.f, yval, dimensions.Z/2.f));
+                tmpvertices.push_back(Float3(dimensions.X/-2.f, yval, dimensions.Z/2.f));
 #endif // BRUSH_CALCULATENORMALS
 
 
-			// first is bottom or top face //
-			if(a == 0){
+                // first is bottom or top face //
+                if(a == 0){
 
-				BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
-				BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+                    BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+                    BrushModel->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
 
-			} else if (a == 1){
-				// second is the face that is on the right when looking from the corner to the center of the cube //
-				if(!up)
-					BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
-				else
-					BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
+                } else if (a == 1){
+                    // second is the face that is on the right when looking from the corner to the center of the cube //
+                    if(!up)
+                        BrushModel->textureCoord(Ogre::Vector2(0.f, 1.f));
+                    else
+                        BrushModel->textureCoord(Ogre::Vector2(0.f, 0.f));
 
-				BrushModel->normal(Float3(-1.f, 0.f, 0.f));
+                    BrushModel->normal(Float3(-1.f, 0.f, 0.f));
 
-			} else {
-				// and third is on the left when looking to the center //
-				if(!up)
-					BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
-				else
-					BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
+                } else {
+                    // and third is on the left when looking to the center //
+                    if(!up)
+                        BrushModel->textureCoord(Ogre::Vector2(1.f, 1.f));
+                    else
+                        BrushModel->textureCoord(Ogre::Vector2(1.f, 0.f));
 
-				BrushModel->normal(Float3(0.f, 0.f, 1.f));
-			}
-		}
+                    BrushModel->normal(Float3(0.f, 0.f, 1.f));
+                }
+            }
 				
-		// move to next layer for next loop //
-		yval = dimensions.Y/2.f;
-		up = true;
-	}
+            // move to next layer for next loop //
+            yval = dimensions.Y/2.f;
+            up = true;
+        }
 
-	// quads are both same //
-	// base //
-	BrushModel->quad(0, 3, 6, 9);
+        // quads are both same //
+        // base //
+        BrushModel->quad(0, 3, 6, 9);
 
-	// front side //
-	BrushModel->quad(13, 17, 5, 1);
-	//TestModel->quad(1, 13, 17, 5);
+        // front side //
+        BrushModel->quad(13, 17, 5, 1);
+        //TestModel->quad(1, 13, 17, 5);
 
-	// right side //
-	BrushModel->quad(16, 20, 8, 4);
-	//TestModel->quad(4, 16, 20, 8);
+        // right side //
+        BrushModel->quad(16, 20, 8, 4);
+        //TestModel->quad(4, 16, 20, 8);
 
-	// left side //
-	BrushModel->quad(2, 10, 22, 14);
-	//TestModel->quad(10, 22, 14, 2);
+        // left side //
+        BrushModel->quad(2, 10, 22, 14);
+        //TestModel->quad(10, 22, 14, 2);
 
-	// back side //
-	BrushModel->quad(19, 23, 11, 7);
-	//TestModel->quad(7, 19, 23, 11);
+        // back side //
+        BrushModel->quad(19, 23, 11, 7);
+        //TestModel->quad(7, 19, 23, 11);
 
-	// top //
-	BrushModel->quad(21, 18, 15, 12);
-	//TestModel->quad(12, 21, 18, 15);
+        // top //
+        BrushModel->quad(21, 18, 15, 12);
+        //TestModel->quad(12, 21, 18, 15);
 
 
 #ifdef BRUSH_CALCULATENORMALS
-	// calculate normals and save //
+        // calculate normals and save //
 
 
-	wstring filetext = L"";
+        wstring filetext = L"";
 
-	std::vector<Float3> normals(6);
-
-
-	// calculate normals and store results according to indexes in above quads //
-	normals[0] = MMath::CalculateNormal(tmpvertices[0], tmpvertices[3], tmpvertices[6]);
-	normals[1] = MMath::CalculateNormal(tmpvertices[13], tmpvertices[17], tmpvertices[5]);
-	normals[2] = MMath::CalculateNormal(tmpvertices[16], tmpvertices[20], tmpvertices[8]);
-	normals[3] = MMath::CalculateNormal(tmpvertices[2], tmpvertices[10], tmpvertices[22]);
-	normals[4] = MMath::CalculateNormal(tmpvertices[19], tmpvertices[23], tmpvertices[11]);
-	normals[5] = MMath::CalculateNormal(tmpvertices[21], tmpvertices[18], tmpvertices[15]);
+        std::vector<Float3> normals(6);
 
 
-	for(size_t i = 0; i < normals.size(); i++){
+        // calculate normals and store results according to indexes in above quads //
+        normals[0] = MMath::CalculateNormal(tmpvertices[0], tmpvertices[3], tmpvertices[6]);
+        normals[1] = MMath::CalculateNormal(tmpvertices[13], tmpvertices[17], tmpvertices[5]);
+        normals[2] = MMath::CalculateNormal(tmpvertices[16], tmpvertices[20], tmpvertices[8]);
+        normals[3] = MMath::CalculateNormal(tmpvertices[2], tmpvertices[10], tmpvertices[22]);
+        normals[4] = MMath::CalculateNormal(tmpvertices[19], tmpvertices[23], tmpvertices[11]);
+        normals[5] = MMath::CalculateNormal(tmpvertices[21], tmpvertices[18], tmpvertices[15]);
 
-		// space after a face //
-		filetext += L"\nstarting face number: "+Convert::ToWstring(i)+L"\n";
+
+        for(size_t i = 0; i < normals.size(); i++){
+
+            // space after a face //
+            filetext += L"\nstarting face number: "+Convert::ToWstring(i)+L"\n";
 		
 
-		filetext += L"normal: "+Convert::ToWstring(normals[i].X)+L", "+Convert::ToWstring(normals[i].Y)+L", "
-			+Convert::ToWstring(normals[i].Z)+L"\n";
+            filetext += L"normal: "+Convert::ToWstring(normals[i].X)+L", "+Convert::ToWstring(normals[i].Y)+L", "
+                +Convert::ToWstring(normals[i].Z)+L"\n";
 
-	}
+        }
 
 
 	FileSystem::WriteToFile(filetext, L"Brush_Normals_"+Convert::ToWstring(ID)+L".txt");
@@ -294,6 +303,10 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 
 	// attach for deletion and valid display //
 	ObjectsNode->attachObject(GraphicalObject);
+}
+
+brushpostgraphicalobjectcreation:
+    
 
 	// create physical box if wanted //
 	if(createphysics)
@@ -349,7 +362,9 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 
 		// gravity callback //
 		NewtonBodySetForceAndTorqueCallback(Body, BasePhysicsObject::ApplyForceAndTorgueEvent);
+        
 	} else {
+        
 		Immovable = true;
 	}
 
@@ -359,45 +374,56 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 }
 // ------------------------------------ //
 void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(){
-	// update physics object location which will in turn change graphical object location //
+	// Update physics object location which will in turn change graphical object location //
 
 	Ogre::Matrix4 matrix;
 	matrix.makeTransform(Position, Float3(1, 1, 1), QuatRotation);
 
 	Ogre::Matrix4 tmatrix = matrix.transpose();
 
-	// update body //
+	// Update body //
 	NewtonBodySetMatrix(Body, &tmatrix[0][0]);
+    
+    if(ObjectsNode){
+        // Update graphical object location to have it always match up //
+        ObjectsNode->setOrientation(QuatRotation);
+        ObjectsNode->setPosition(Position);
+    }
 
-	// update graphical object location to have it always match up //
-	ObjectsNode->setOrientation(QuatRotation);
-	ObjectsNode->setPosition(Position);
+    
 	// Update potential children //
 	_ParentableNotifyLocationDataUpdated();
 }
 // ------------------------------------ //
-void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix, int threadIndex){
-	// first create Ogre 4x4 matrix from the matrix //
-	Ogre::Matrix4 mat(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6], matrix[7], matrix[8], matrix[9], matrix[10],
-		matrix[11], matrix[12], matrix[13], matrix[14], matrix[15]);
+void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix,
+    int threadIndex)
+{
+	// First create Ogre 4x4 matrix from the matrix //
+	Ogre::Matrix4 mat(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6], matrix[7], matrix[8],
+        matrix[9], matrix[10], matrix[11], matrix[12], matrix[13], matrix[14], matrix[15]);
 
-	// needs to convert from d3d style matrix to OpenGL style matrix //
+	// Needs to convert from d3d style matrix to OpenGL style matrix //
 	Ogre::Matrix4 tmat = mat.transpose();
 	Ogre::Vector3 vec = tmat.getTrans();
 
 	Float3 position = vec;
 
-	// rotation //
+	// Rotation //
 	Float4 quat(tmat.extractQuaternion());
 
-	// apply to graphical object //
+	// Apply to graphical object //
 	Brush* tmp = static_cast<Brush*>(reinterpret_cast<BasePhysicsObject*>(NewtonBodyGetUserData(body)));
 
-	tmp->ObjectsNode->setOrientation(quat);
-	tmp->ObjectsNode->setPosition(position);
-	// also update these so if only one is updated it doesn't force last value to rotation or location //
+    if(tmp->ObjectsNode){
+        
+        tmp->ObjectsNode->setOrientation(quat);
+        tmp->ObjectsNode->setPosition(position);
+    }
+    
+	// Also update these so if only one is updated it doesn't force last value to rotation or location //
 	tmp->Position = position;
 	tmp->QuatRotation = quat;
+    
 	// Update potential children //
 	tmp->_ParentableNotifyLocationDataUpdated();
 }

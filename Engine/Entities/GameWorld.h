@@ -127,6 +127,11 @@ namespace Leviathan{
 			ClearObjects(guard);
 		}
 
+        //! \brief Returns the amount of entities in the world
+        DLLEXPORT inline size_t GetObjectCount() const{
+            return Objects.size();
+        }
+
 		// Ogre get functions //
 		DLLEXPORT inline Ogre::SceneManager* GetScene(){
 			return WorldsScene;
@@ -192,12 +197,10 @@ namespace Leviathan{
 		//! Marks all objects to be released
 		bool ClearAllObjects;
 
-		//! This is true when some players are receiving their initial world state
-		bool SendingInitialState;
-
 		//! Holds the players who are receiving this worlds updates and their corresponding location entities (if any)
 		std::vector<shared_ptr<ConnectedPlayer>> ReceivingPlayers;
 
+        //! This is not empty when some players are receiving their initial world state
         //! These objects need to be marked as invalid before quitting
         //! These can also be used to check whether all players have received
         //! the world

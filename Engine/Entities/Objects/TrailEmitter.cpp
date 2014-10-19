@@ -9,8 +9,8 @@
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Entity::TrailEmitter::TrailEmitter(GameWorld* world, bool hidden /*= false*/) : BaseRenderable(hidden), 
-	BaseObject(IDFactory::GetID(), world), TrailEntity(NULL), TrailLocation(NULL)
+DLLEXPORT Leviathan::Entity::TrailEmitter::TrailEmitter(GameWorld* world, bool hidden /*= false*/) :
+    BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), TrailEntity(NULL), TrailLocation(NULL)
 {
 
 }
@@ -19,10 +19,18 @@ DLLEXPORT Leviathan::Entity::TrailEmitter::~TrailEmitter(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::TrailEmitter::Init(const string &materialname, const TrailProperties &variables, bool allowupdate /*= true*/){
+DLLEXPORT bool Leviathan::Entity::TrailEmitter::Init(const string &materialname, const TrailProperties &variables,
+    bool allowupdate /*= true*/)
+{
+    
+    
 	// Create Ogre objects //
 	Ogre::SceneManager* tmpmanager = OwnedByWorld->GetScene();
 
+    // Only create if graphical mode is on //
+    if(!tmpmanager)
+        return true;
+    
 	// Create node //
 	TrailLocation = tmpmanager->getRootSceneNode()->createChildSceneNode();
 
@@ -57,7 +65,9 @@ DLLEXPORT void Leviathan::Entity::TrailEmitter::ReleaseData(){
 	TrailLocation = NULL;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::TrailEmitter::SetTrailProperties(const TrailProperties &variables, bool force /*= false*/){
+DLLEXPORT bool Leviathan::Entity::TrailEmitter::SetTrailProperties(const TrailProperties &variables,
+    bool force /*= false*/)
+{
 	if(!TrailEntity)
 		return false;
 

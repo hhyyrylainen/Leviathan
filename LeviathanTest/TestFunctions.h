@@ -1080,8 +1080,8 @@ bool TestTaskTiming(const int &tests, Engine* engine){
 	vector<__int64> times;
 
 	// Queue some tasks //
-	engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new RepeatCountedDelayedTask(boost::bind<void>([](int &count, 
-		boost::promise<bool> &done, __int64 starttime, vector<__int64>* times)
+	engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new RepeatCountedDelayedTask(
+                boost::bind<void>([](int &count, boost::promise<bool> &done, __int64 starttime, vector<__int64>* times)
 	{
 		count++;
 
@@ -1119,6 +1119,23 @@ bool TestTaskTiming(const int &tests, Engine* engine){
 	}
 
 
+    // Check that certain tasks actually run //
+    int repeatcountedruncount = 0;
+    
+    ThreadingManager::Get()->QueueTask(new RepeatCountedTask(boost::bind<void>([](int* count) -> void
+        {
+            (*count) = (*count)+1;
+            
+            
+        }, &repeatcountedruncount), 6));
+
+
+    engine->GetThreadingManager()->WaitForAllTasksToFinish();
+
+    if(repeatcountedruncount != 6)
+        TESTFAIL;
+
+    Logger::Get()->Info("All task tests have finished and can no longer halt the thing");
 	return Failed;
 }
 // --------------------------------------------- //

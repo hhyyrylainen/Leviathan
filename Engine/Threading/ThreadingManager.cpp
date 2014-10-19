@@ -81,9 +81,8 @@ DLLEXPORT bool Leviathan::ThreadingManager::CheckInit(){
 				for(auto iter2 = UsableThreads.begin(); iter2 != UsableThreads.end(); ++iter2){
 
 					// Set the name //
-#ifdef _WIN32
-					SetThreadName((*iter2).get(), "Leviathan_TaskThread_"+Convert::ToString(threadnumber));
-#endif
+					SetThreadName((*iter2).get(), "Lev_Task_"+Convert::ToString(threadnumber));
+
 					threadnumber++;
 				}
 
@@ -404,7 +403,8 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 				if(!tmptask)
 					break;
 
-				// This won't actually finish it so to re-queue it, if it repeats, we use the callback called when it is finished //
+				// This won't actually finish it so to re-queue it, if it repeats, we use the callback called
+                // when it is finished
 				(*iter)->SetTaskAndNotify(tmptask);
 			}
 		}
@@ -453,6 +453,18 @@ void Leviathan::SetThreadNameImpl(DWORD threadid, const string &name){
 	{
 	}
 }
+#elif __linux
+
+void Leviathan::SetThreadName(TaskThread* thread, const string &name){
+
+    pthread_setname_np(thread->GetBoostThreadObject().native_handle(), name.c_str());
+}
+
+#else
+#error Do the Mac os thread name
+
+
+
 #endif // _WIN32
 
 

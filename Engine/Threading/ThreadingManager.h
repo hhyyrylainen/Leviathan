@@ -24,6 +24,9 @@ namespace Leviathan{
 
 	void SetThreadName(TaskThread* thread, const string &name);
 	void SetThreadNameImpl(DWORD threadid, const string &name);
+#else
+    void SetThreadName(TaskThread* thread, const string &name);
+    
 #endif // _WIN32
 
 

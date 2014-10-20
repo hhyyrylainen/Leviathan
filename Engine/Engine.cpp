@@ -37,12 +37,12 @@ static const WORD MAX_CONSOLE_LINES = 500;
 
 #endif
 
-DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) : Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL),
-	_NewtonManager(NULL), GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
-																   _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false), _ResourceRefreshHandler(NULL), PreReleaseCompleted(false)
+DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
+    Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), _NewtonManager(NULL),
+    GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
+    _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
+    _ResourceRefreshHandler(NULL), PreReleaseCompleted(false)
 {
-
-	// create this here //
 	IDDefaultInstance = IDFactory::Get();
 
 	Inited = false;
@@ -85,15 +85,18 @@ DLLEXPORT Engine* Leviathan::Engine::Get(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
 	GUARD_LOCK_THIS_OBJECT();
-	// get time, for monitoring how long load takes //
+    
+	// Get the  time, for monitoring how long loading takes //
 	__int64 InitStartTime = Misc::GetTimeMs64();
 
-	// set static access to this object //
+	// Set static access to this object //
 	instance = this;
-	// store parameters //
+    
+	// Store parameters //
 	Define = definition;
 
-	// create //
+	// Create all the things //
+    
 	OutOMemory = new OutOfMemoryHandler();
 
 	// Create threading facilities //
@@ -104,7 +107,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 		return false;
 	}
 
-	// create randomizer //
+	// Create the randomizer //
 	MainRandom = new Random((int)InitStartTime);
 	MainRandom->SetAsMain();
 
@@ -113,7 +116,9 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 #ifdef _WIN32
 		WinAllocateConsole();
 #else
-		// \todo linux console alternative detection method //
+        // On linux we probably shouldn't spawn a new terminal and instead just exit //
+        
+        
 #endif
 
 		// Tell window title //
@@ -187,67 +192,71 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 
 	// create script interface before renderer //
 	boost::promise<bool> ScriptInterfaceResult;
+    
 	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+    _ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
+                        boost::promise<bool> &returnvalue, Engine* engine) -> void
+        {
 
-		engine->MainScript = new ScriptInterface();
-		if(!engine->MainScript){
+            engine->MainScript = new ScriptInterface();
+            if(!engine->MainScript){
 
-			Logger::Get()->Error(L"Engine: Init: failed to create ScriptInterface");
-			returnvalue.set_value(false);
-			return;
-		}
+                Logger::Get()->Error(L"Engine: Init: failed to create ScriptInterface");
+                returnvalue.set_value(false);
+                return;
+            }
 
-		if(!engine->MainScript->Init()){
+            if(!engine->MainScript->Init()){
 
-			Logger::Get()->Error(L"Engine: Init: failed to init ScriptInterface");
-			returnvalue.set_value(false);
-			return;
-		}
+                Logger::Get()->Error(L"Engine: Init: failed to init ScriptInterface");
+                returnvalue.set_value(false);
+                return;
+            }
 
-		// create console after script engine //
-		engine->MainConsole = new ScriptConsole();
-		if(!engine->MainConsole){
+            // create console after script engine //
+            engine->MainConsole = new ScriptConsole();
+            if(!engine->MainConsole){
 
-			Logger::Get()->Error(L"Engine: Init: failed to create ScriptConsole");
-			returnvalue.set_value(false);
-			return;
-		}
+                Logger::Get()->Error(L"Engine: Init: failed to create ScriptConsole");
+                returnvalue.set_value(false);
+                return;
+            }
 
-		if(!engine->MainConsole->Init(engine->MainScript)){
+            if(!engine->MainConsole->Init(engine->MainScript)){
 
-			Logger::Get()->Error(L"Engine: Init: failed to initialize Console, continuing anyway");
-		}
+                Logger::Get()->Error(L"Engine: Init: failed to initialize Console, continuing anyway");
+            }
 
-		returnvalue.set_value(true);
-	}, boost::ref(ScriptInterfaceResult), this))));
+            returnvalue.set_value(true);
+        }, boost::ref(ScriptInterfaceResult), this))));
 
 	// create newton manager before any newton resources are needed //
 	boost::promise<bool> NewtonManagerResult;
 	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
+                        boost::promise<bool> &returnvalue, Engine* engine) -> void{
 
-		engine->_NewtonManager = new NewtonManager();
-		if(!engine->_NewtonManager){
+                        engine->_NewtonManager = new NewtonManager();
+                        if(!engine->_NewtonManager){
 
-			Logger::Get()->Error(L"Engine: Init: failed to create NewtonManager");
-			returnvalue.set_value(false);
-			return;
-		}
+                            Logger::Get()->Error(L"Engine: Init: failed to create NewtonManager");
+                            returnvalue.set_value(false);
+                            return;
+                        }
 
-		// next force application to load physical surface materials //
-		engine->PhysMaterials = new PhysicsMaterialManager(engine->_NewtonManager);
-		if(!engine->PhysMaterials){
+                        // next force application to load physical surface materials //
+                        engine->PhysMaterials = new PhysicsMaterialManager(engine->_NewtonManager);
+                        if(!engine->PhysMaterials){
 
-			Logger::Get()->Error(L"Engine: Init: failed to create PhysicsMaterialManager");
-			returnvalue.set_value(false);
-			return;
-		}
+                            Logger::Get()->Error(L"Engine: Init: failed to create PhysicsMaterialManager");
+                            returnvalue.set_value(false);
+                            return;
+                        }
 
-		engine->Owner->RegisterApplicationPhysicalMaterials(engine->PhysMaterials);
+                        engine->Owner->RegisterApplicationPhysicalMaterials(engine->PhysMaterials);
 
-		returnvalue.set_value(true);
-	}, boost::ref(NewtonManagerResult), this))));
+                        returnvalue.set_value(true);
+                    }, boost::ref(NewtonManagerResult), this))));
 
 
 	// Check if we don't want a window //
@@ -256,7 +265,8 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 		Logger::Get()->Info(L"Engine: Init: starting in console mode (won't allocate graphical objects) ");
 	} else {
 
-		ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), L"MaxFPS", FrameLimit, 120, true, L"Graphics: Init:");
+		ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), L"MaxFPS", FrameLimit, 120, true,
+            L"Graphics: Init:");
 
 		Graph = new Graphics();
 
@@ -292,7 +302,8 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 			}
 			catch(...){
 				// threw something //
-				Logger::Get()->Error(L"Engine: Init: Leap threw something, even without leap this shouldn't happen; continuing anyway");
+				Logger::Get()->Error(L"Engine: Init: Leap threw something, even without leap this shouldn't happen; "
+                    L"continuing anyway");
 			}
 
 		}, this));
@@ -301,51 +312,52 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	// sound device //
 	boost::promise<bool> SoundDeviceResult;
 	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue, Engine* engine) -> void{
-		if(!engine->NoGui){
-			engine->Sound = new SoundDevice();
-			if(!engine->Sound){
-				Logger::Get()->Error(L"Engine: Init: failed to create SoundDevice");
-				returnvalue.set_value(false);
-				return;
-			}
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
+                        boost::promise<bool> &returnvalue, Engine* engine) -> void{
+                        if(!engine->NoGui){
+                            engine->Sound = new SoundDevice();
+                            if(!engine->Sound){
+                                Logger::Get()->Error(L"Engine: Init: failed to create SoundDevice");
+                                returnvalue.set_value(false);
+                                return;
+                            }
 
-			if(!engine->Sound->Init()){
+                            if(!engine->Sound->Init()){
 
-				Logger::Get()->Error(L"Engine: Init: failed to init SoundDevice");
-				returnvalue.set_value(false);
-				return;
-			}
-		}
+                                Logger::Get()->Error(L"Engine: Init: failed to init SoundDevice");
+                                returnvalue.set_value(false);
+                                return;
+                            }
+                        }
 
-		// make angel script make list of registered stuff //
-		engine->MainScript->GetExecutor()->ScanAngelScriptTypes();
+                        // make angel script make list of registered stuff //
+                        engine->MainScript->GetExecutor()->ScanAngelScriptTypes();
 
-		if(!engine->NoGui){
-			// measuring //
-			engine->RenderTimer = new RenderingStatistics();
-			if(!engine->RenderTimer){
-				Logger::Get()->Error(L"Engine: Init: failed to create RenderingStatistics");
-				returnvalue.set_value(false);
-				return;
-			}
-		}
-		// create object loader //
-		engine->Loader = new ObjectLoader(engine);
-		if(!engine->Loader){
-			Logger::Get()->Error(L"Engine: Init: failed to create ObjectLoader");
-			returnvalue.set_value(false);
-			return;
-		}
+                        if(!engine->NoGui){
+                            // measuring //
+                            engine->RenderTimer = new RenderingStatistics();
+                            if(!engine->RenderTimer){
+                                Logger::Get()->Error(L"Engine: Init: failed to create RenderingStatistics");
+                                returnvalue.set_value(false);
+                                return;
+                            }
+                        }
+                        // create object loader //
+                        engine->Loader = new ObjectLoader(engine);
+                        if(!engine->Loader){
+                            Logger::Get()->Error(L"Engine: Init: failed to create ObjectLoader");
+                            returnvalue.set_value(false);
+                            return;
+                        }
 
-		if(engine->NoGui){
-			// Set object loader to gui mode //
-			// \todo do this
+                        if(engine->NoGui){
+                            // Set object loader to gui mode //
+                            // \todo do this
 
-		}
+                        }
 
-		returnvalue.set_value(true);
-	}, boost::ref(SoundDeviceResult), this))));
+                        returnvalue.set_value(true);
+                    }, boost::ref(SoundDeviceResult), this))));
 
 	if(!NoGui){
 		if(!Graph){
@@ -579,20 +591,13 @@ void Leviathan::Engine::Tick(){
 	// Call the default app tick //
 	Owner->Tick(TimePassed);
 
-
-	// Make queued tasks execute //
-	_ThreadingManager->NotifyQueuerThread();
-
-
 	TickTime = (int)(Misc::GetTimeMs64()-LastFrame);
 }
 
 DLLEXPORT void Leviathan::Engine::PreFirstTick(){
-	// On first tick we need to do some cleanup //
-	if(_NetworkHandler)
-		_NetworkHandler->StopOwnUpdaterThread();
-
-
+    // Stop this handling as it is no longer required //
+    _NetworkHandler->StopOwnUpdaterThread();
+    
 	_ThreadingManager->NotifyQueuerThread();
 
 	Logger::Get()->Info(L"Engine: PreFirstTick: everything fine to start running");
@@ -717,18 +722,22 @@ DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 	return openwindows;
 }
 
-DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEntity* owningwindow, shared_ptr<ViewerCameraPos> worldscamera){
+DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEntity* owningwindow,
+    shared_ptr<ViewerCameraPos> worldscamera)
+{
+    
 	shared_ptr<GameWorld> tmp(new GameWorld());
 	tmp->Init(owningwindow, NoGui ? NULL: Graph->GetOgreRoot());
 	if(owningwindow)
 		owningwindow->LinkObjects(worldscamera, tmp);
+    
 	GUARD_LOCK_THIS_OBJECT();
 	GameWorlds.push_back(tmp);
 	return GameWorlds.back();
 }
 
 DLLEXPORT void Leviathan::Engine::PhysicsUpdate(){
-	// go through all worlds and simulate updates //
+	// go through all the worlds and simulate updates //
 	GUARD_LOCK_THIS_OBJECT();
 	for(size_t i = 0; i < GameWorlds.size(); i++){
 
@@ -822,17 +831,20 @@ DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
 					Logger::Get()->Warning(L"Engine: ExecuteCommandLine: RemoteConsole: no token number provided");
 					continue;
 				}
-				// Convert to a real number. Maybe we could see if the token is complex enough here, but that isn't necessary //
+				// Convert to a real number. Maybe we could see if the token is complex enough here,
+                // but that isn't necessary
 				token = Convert::WstringToInt(*numberpart);
 
 				if(token == 0){
 					// Invalid number? //
-					Logger::Get()->Warning(L"Engine: ExecuteCommandLine: RemoteConsole: couldn't parse token number, "+*numberpart);
+					Logger::Get()->Warning(L"Engine: ExecuteCommandLine: RemoteConsole: couldn't parse token number, "+
+                        *numberpart);
 					continue;
 				}
 
 				// Create a connection (or potentially use an existing one) //
-				shared_ptr<ConnectionInfo> tmpconnection = NetworkHandler::Get()->GetOrCreatePointerToConnection(*topart);
+				shared_ptr<ConnectionInfo> tmpconnection = NetworkHandler::Get()->GetOrCreatePointerToConnection(
+                    *topart);
 
 				// Tell remote console to open a command to it //
 				if(tmpconnection){
@@ -841,13 +853,14 @@ DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
 
 				} else {
 					// Something funky happened... //
-					Logger::Get()->Warning(L"Engine: ExecuteCommandLine: RemoteConsole: couldn't open connection to "+*topart+L", couldn't resolve address");
+					Logger::Get()->Warning(L"Engine: ExecuteCommandLine: RemoteConsole: couldn't open connection to "+
+                        *topart+L", couldn't resolve address");
 				}
 
 			} else {
 				// Unknown command //
-				Logger::Get()->Warning(L"Engine: ExecuteCommandLine: unknown RemoteConsole command: "+*commandpart+L", whole argument: "+
-					*PassedCommands[i]);
+				Logger::Get()->Warning(L"Engine: ExecuteCommandLine: unknown RemoteConsole command: "+*commandpart+
+                    L", whole argument: "+*PassedCommands[i]);
 			}
 		}
 

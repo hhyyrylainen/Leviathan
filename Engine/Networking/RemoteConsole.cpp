@@ -30,7 +30,8 @@ DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
 	for(size_t i = 0; i < AwaitingConnections.size(); i++){
 		if(AwaitingConnections[i]->TimeoutTime < timenow){
 			// Time it out //
-			Logger::Get()->Warning(L"RemoteConsole: Remote console wait connection timed out, token "+Convert::ToWstring(AwaitingConnections[i]->SessionToken));
+			Logger::Get()->Warning(L"RemoteConsole: Remote console wait connection timed out, token "+
+                Convert::ToWstring(AwaitingConnections[i]->SessionToken));
 			AwaitingConnections.erase(AwaitingConnections.begin()+i);
 			i--;
 			continue;
@@ -43,7 +44,8 @@ DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
 		if(AwaitingConnections.size() == 0 && RemoteConsoleConnections.size() == 0){
 			// Time to close //
 
-			Logger::Get()->Info(L"RemoteConsole: closing the program because CloseIfNoRemoteConsole, and no active connections");
+			Logger::Get()->Info(L"RemoteConsole: closing the program because CloseIfNoRemoteConsole, "
+                L"and no active connections");
 			LeviathanApplication::GetApp()->MarkAsClosing();
 		}
 	}
@@ -51,7 +53,8 @@ DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
 	for(auto iter = RemoteConsoleConnections.begin(); iter != RemoteConsoleConnections.end(); ){
 		if((*iter)->TerminateSession){
 
-			Logger::Get()->Info(L"RemoteConsole: removing kill-queued session, token: "+Convert::ToWstring((*iter)->SessionToken));
+			Logger::Get()->Info(L"RemoteConsole: removing kill-queued session, token: "+
+                Convert::ToWstring((*iter)->SessionToken));
 			iter = RemoteConsoleConnections.erase(iter);
 		} else {
 			++iter;
@@ -64,15 +67,18 @@ DLLEXPORT bool Leviathan::RemoteConsole::IsAwaitingConnections(){
 	return AwaitingConnections.size() != 0;
 }
 
-DLLEXPORT void Leviathan::RemoteConsole::ExpectNewConnection(int SessionToken, const wstring &assignname /*= L""*/, bool onlylocalhost /*= false*/,
-	const MillisecondDuration &timeout /*= boost::chrono::seconds(30)*/)
+DLLEXPORT void Leviathan::RemoteConsole::ExpectNewConnection(int SessionToken, const wstring &assignname /*= L""*/,
+    bool onlylocalhost /*= false*/, const MillisecondDuration &timeout /*= boost::chrono::seconds(30)*/)
 {
 	GUARD_LOCK_THIS_OBJECT();
 
-	AwaitingConnections.push_back(shared_ptr<RemoteConsoleExpect>(new RemoteConsoleExpect(assignname, SessionToken, onlylocalhost, timeout)));
+	AwaitingConnections.push_back(shared_ptr<RemoteConsoleExpect>(new RemoteConsoleExpect(assignname, SessionToken,
+                onlylocalhost, timeout)));
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* connection, shared_ptr<NetworkRequest> request){
+DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* connection, shared_ptr<NetworkRequest>
+    request)
+{
 	// Get data from the packet //
 	bool local = connection->IsTargetHostLocalhost();
 
@@ -96,29 +102,32 @@ DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* co
 				Logger::Get()->Info(L"RemoteConsole: matching connection request got!");
 
 				// Add to real connections //
-				RemoteConsoleConnections.push_back(shared_ptr<RemoteConsoleSession>(new RemoteConsoleSession(AwaitingConnections[i]->ConnectionName,
-					connection, AwaitingConnections[i]->SessionToken)));
+				RemoteConsoleConnections.push_back(shared_ptr<RemoteConsoleSession>(new RemoteConsoleSession(
+                            AwaitingConnections[i]->ConnectionName, connection, AwaitingConnections[i]->SessionToken)));
 
 				// Link us with the lifetime of the connection //
 				connection->ConnectToNotifiable(this);
 
 				if(tmpdata){
 					// Create a open request //
-					shared_ptr<NetworkRequest> tmprequest(new NetworkRequest(new RemoteConsoleAccessRequestData(AwaitingConnections[i]->SessionToken)));
+					shared_ptr<NetworkRequest> tmprequest(new NetworkRequest(new RemoteConsoleAccessRequestData(
+                                AwaitingConnections[i]->SessionToken)));
 
 					// Send initial packet //
 					connection->SendPacketToConnection(tmprequest, 3);
 					WaitingRequests.push_back(tmprequest);
 
 					// We should also reply with an empty response //
-					shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), PACKAGE_TIMEOUT_STYLE_TIMEDMS, 5000));
+					shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(),
+                            PACKAGE_TIMEOUT_STYLE_TIMEDMS, 5000));
 					tmpresponse->GenerateEmptyResponse();
 
 					connection->SendPacketToConnection(tmpresponse, 5);
 
 				} else if(opennew){
 					// Open new, send succeed packet back //
-					shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));
+					shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(),
+                            PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));
 					tmpresponse->GenerateRemoteConsoleOpenedResponse();
 
 					connection->SendPacketToConnection(tmpresponse, 5);
@@ -134,7 +143,9 @@ DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* co
 	return false;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(ConnectionInfo* connectiontouse, const wstring &connectionname, int token){
+DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(ConnectionInfo* connectiontouse,
+    const wstring &connectionname, int token)
+{
 	GUARD_LOCK_THIS_OBJECT();
 	// Add to the expected connections //
 	AwaitingConnections.push_back(shared_ptr<RemoteConsoleExpect>(new RemoteConsoleExpect(connectionname, token,
@@ -150,7 +161,8 @@ DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(ConnectionInfo* conne
 void Leviathan::RemoteConsole::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
 	// Close the corresponding console session //
 
-	Logger::Get()->Info(L"RemoteConsole: detected connection closing, trying to close matching remote console session:");
+	Logger::Get()->Info(L"RemoteConsole: detected connection closing, trying to close matching remote "
+        L"console session:");
 
 	GUARD_LOCK_THIS_OBJECT();
 
@@ -167,9 +179,13 @@ void Leviathan::RemoteConsole::_OnNotifierDisconnected(BaseNotifierAll* parentto
 	Logger::Get()->Error(L"\t> RemoteConsole: didn't find a matching connection, bug?");
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection){
+DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleRequestPacket(shared_ptr<NetworkRequest> request,
+    ConnectionInfo* connection)
+{
 	// First check if it should be handled by CanOpenNewConnection which handless all open connection packets //
-	if(request->GetType() == NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE || request->GetType() == NETWORKREQUESTTYPE_OPENREMOTECONSOLETO){
+	if(request->GetType() == NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE || request->GetType() ==
+        NETWORKREQUESTTYPE_OPENREMOTECONSOLETO)
+    {
 
 		CanOpenNewConnection(connection, request);
 		return;
@@ -192,21 +208,21 @@ DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleRequestPacket(shared
 	}
 }
 
-DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection,
-	shared_ptr<NetworkRequest> potentialrequest)
+DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleResponse(shared_ptr<NetworkResponse> response,
+    ConnectionInfo* connection, shared_ptr<NetworkRequest> potentialrequest)
 {
 	// We can detect close messages //
 	switch(response->GetTypeOfResponse()){
 	case NETWORKRESPONSETYPE_REMOTECONSOLECLOSED: case NETWORKRESPONSETYPE_REMOTECONSOLEOPENED:
 		{
 			// These shouldn't be received //
-			Logger::Get()->Warning(L"RemoteConsole: HandleRemoteConsoleResponse: got a packet of type remote opened/remote closed, not expected to be received without"
-				L" use requesting it");
+			Logger::Get()->Warning(L"RemoteConsole: HandleRemoteConsoleResponse: got a packet of type remote opened/"
+                L"remote closed, not expected to be received without us requesting it");
 		}
 		break;
 	default:
-		Logger::Get()->Warning(L"RemoteConsole: HandleRemoteConsoleResponse: got a packet of unknown type, maybe this should not have been passed to RemoteConsole");
-		DEBUG_BREAK;
+		Logger::Get()->Warning(L"RemoteConsole: HandleRemoteConsoleResponse: got a packet of unknown type, "
+            L"maybe this should not have been passed to RemoteConsole");
 	}
 }
 // ------------------------------------ //
@@ -214,7 +230,9 @@ DLLEXPORT void Leviathan::RemoteConsole::SetCloseIfNoRemoteConsole(bool state){
 	CloseIfNoRemoteConsole = state;
 }
 
-DLLEXPORT RemoteConsoleSession* Leviathan::RemoteConsole::GetRemoteConsoleSessionForConnection(ConnectionInfo* connection, ObjectLock &guard){
+DLLEXPORT RemoteConsoleSession* Leviathan::RemoteConsole::GetRemoteConsoleSessionForConnection(
+    ConnectionInfo* connection, ObjectLock &guard)
+{
 	VerifyLock(guard);
 	// Loop over and compare pointers //
 	for(size_t i = 0; i < RemoteConsoleConnections.size(); i++){
@@ -250,14 +268,17 @@ void Leviathan::RemoteConsole::SetAllowClose(){
 	CanClose = true;
 }
 // ------------------ RemoteConsoleExpect ------------------ //
-Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const wstring &name, int token, bool onlylocalhost, const MillisecondDuration
-	&timeout) : ConnectionName(name), SessionToken(token), OnlyLocalhost(onlylocalhost), TimeoutTime(Misc::GetThreadSafeSteadyTimePoint()+timeout)
+Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const wstring &name, int token, bool onlylocalhost,
+    const MillisecondDuration &timeout) :
+    ConnectionName(name), SessionToken(token), OnlyLocalhost(onlylocalhost),
+    TimeoutTime(Misc::GetThreadSafeSteadyTimePoint()+timeout)
 {
 
 }
 // ------------------ RemoteConsoleSession ------------------ //
-Leviathan::RemoteConsoleSession::RemoteConsoleSession(const wstring &name, ConnectionInfo* connection, int token) : ConnectionName(name),
-	SessionToken(token), CorrespondingConnection(connection), TerminateSession(false), IsOpened(true)
+Leviathan::RemoteConsoleSession::RemoteConsoleSession(const wstring &name, ConnectionInfo* connection, int token) :
+    ConnectionName(name), SessionToken(token), CorrespondingConnection(connection), TerminateSession(false),
+    IsOpened(true)
 {
 
 }

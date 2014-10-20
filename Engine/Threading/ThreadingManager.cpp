@@ -145,13 +145,9 @@ DLLEXPORT void Leviathan::ThreadingManager::QueueTask(shared_ptr<QueuedTask> tas
 
 DLLEXPORT void Leviathan::ThreadingManager::FlushActiveThreads(){
 	// Disallow new tasks //
-	{
-		GUARD_LOCK_THIS_OBJECT();
-		AllowStartTasksFromQueue = false;
-	}
+    UNIQUE_LOCK_THIS_OBJECT();
+    AllowStartTasksFromQueue = false;
 
-	// Wait until all threads are available again //
-	UNIQUE_LOCK_OBJECT(this);
 
 	bool allavailable = false;
 
@@ -161,7 +157,7 @@ DLLEXPORT void Leviathan::ThreadingManager::FlushActiveThreads(){
 	while(!allavailable){
 
 		// Wait for tasks to update //
-		TaskQueueNotify.wait(lockit);
+		TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(10));
 
 skipfirstwaitforthreadslabel:
 
@@ -182,16 +178,19 @@ skipfirstwaitforthreadslabel:
 
 DLLEXPORT void Leviathan::ThreadingManager::WaitForAllTasksToFinish(){
 	// Use this lock the entire function //
-	UNIQUE_LOCK_OBJECT(this);
+	UNIQUE_LOCK_THIS_OBJECT();
 
+    // TODO: this could also be done by joining the task queuer thread and returning from there
+    // and then restarting the queuer thread
+    
 	// See if empty right now and loop until it is //
 	while(!WaitingTasks.empty()){
 
 		// Make the queuer run //
 		TaskQueueNotify.notify_all();
 
-		// Wait for update //
-		TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(10));
+		// Wait for some time //
+        TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(10));
 	}
 
 	// Wait for threads to empty up //
@@ -203,11 +202,7 @@ DLLEXPORT void Leviathan::ThreadingManager::WaitForAllTasksToFinish(){
 	while(!allavailable){
 
 		// Wait for tasks to update //
-		try{
-			TaskQueueNotify.timed_wait(lockit, boost::posix_time::microseconds((50)));
-		} catch(...){
-
-		}
+        TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(1));
 
 skipfirstwaitforthreadslabel2:
 
@@ -262,7 +257,7 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 
 	// Set the threads to run the register methods //
 	{
-		UNIQUE_LOCK_OBJECT(this);
+		UNIQUE_LOCK_THIS_OBJECT();
 
 		for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
 			(*iter)->SetTaskAndNotify(shared_ptr<QueuedTask>(new QueuedTask(boost::bind(RegisterOgreOnThread))));
@@ -270,7 +265,7 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 #ifdef __GNUC__
 			while((*iter)->HasRunningTask()){
 				try{
-					TaskQueueNotify.wait_for(lockit, MillisecondDuration(50));
+					TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(50));
 				}
 				catch(...){
 					Logger::Get()->Warning(L"ThreadingManager: MakeThreadsWorkWithOgre: linux fix wait interrupted");
@@ -314,7 +309,7 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 	while(!manager->StopProcessing){
 
 		// Wait until task queue needs work //
-		manager->TaskQueueNotify.wait(lockit);
+		manager->TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(100));
 
 		// Quickly continue if it is empty //
 		if(!manager->AllowStartTasksFromQueue || manager->WaitingTasks.empty()){

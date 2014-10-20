@@ -20,7 +20,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler) 
-	: AppType(ntype), CloseMasterServerConnection(false), StopGetResponsesThread(true)
+	: AppType(ntype), CloseMasterServerConnection(false), UpdaterThreadStop(false)
 {
 	instance = this;
 	interfaceinstance = packethandler;
@@ -72,7 +72,8 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 
 		if(!vars->GetValueAndConvertTo<int>(L"MasterServerPort", tmpport)){
 			// This is quite bad //
-			Logger::Get()->Error(L"NetworkHandler: Init: no port configured, config missing 'MasterServerPort' of type int");
+			Logger::Get()->Error(L"NetworkHandler: Init: no port configured, config missing "
+                L"'MasterServerPort' of type int");
 		}
 
 		PortNumber = (USHORT)tmpport;
@@ -103,14 +104,18 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 		return false;
 	}
 
-	// Set the socket as non-blocking //
-	_Socket.setBlocking(false);
+	// Set the socket as blocking //
+	_Socket.setBlocking(true);
+
+    // Run the listening thread //
+    ListenerThread = boost::thread(boost::bind(&NetworkHandler::_RunListenerThread, this));
 
 	// Report success //
-	Logger::Get()->Info(L"NetworkHandler: running listening socket on port "+Convert::ToWstring(_Socket.getLocalPort()));
+	Logger::Get()->Info(L"NetworkHandler: running listening socket on port "+Convert::ToWstring(
+            _Socket.getLocalPort()));
 
-	// Might as well start this thread here //
-	StartOwnUpdaterThread();
+    // Run temporary update thread //
+    TemporaryUpdateThread = boost::thread(boost::bind(&NetworkHandler::_RunTemporaryUpdaterThread, this));
 
 	return true;
 }
@@ -122,14 +127,13 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
 
 	// Kill master server connection //
 	//MasterServerConnectionThread.join();
-	StopOwnUpdaterThread();
-	TempGetResponsesThread.join();
 
 	// Notify master server connection kill //
 	if(MasterServerConnection){
 
 		MasterServerConnection->Release();
 	}
+    
 	// Close all connections //
 	for(size_t i = 0; i < AutoOpenedConnections.size(); i++){
 
@@ -140,7 +144,13 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
 	MasterServerConnection.reset();
 	AutoOpenedConnections.clear();
 
+    // This might have been left on by accident
+    StopOwnUpdaterThread();
+
 	_ReleaseSocket();
+
+    // Set the static instance to nothing //
+    instance = NULL;
 }
 
 void Leviathan::NetworkHandler::_ReleaseSocket(){
@@ -155,13 +165,17 @@ void Leviathan::NetworkHandler::_ReleaseSocket(){
 
 	// This should do the trick //
 	if(!blockunbind){
+        
 		_Socket.unbind();
+
 	} else {
 		Logger::Get()->Info(L"NetworkHandler: _ReleaseSocket: blocked unbind");
 	}
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMasterServer(const MasterServerInformation &info){
+DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMasterServer(
+    const MasterServerInformation &info)
+{
 	// Might as well lock here //
 	GUARD_LOCK_THIS_OBJECT();
 	// Copy the data //
@@ -224,13 +238,16 @@ bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 	GUARD_LOCK_THIS_OBJECT();
 
 	for(size_t i = 0; i < maxval; i++){
-		MasterServers.push_back(unique_ptr<wstring>(new wstring(foundvar->GetValueDirect(i)->ConvertAndReturnVariable<wstring>())));
+		MasterServers.push_back(unique_ptr<wstring>(new wstring(
+                    foundvar->GetValueDirect(i)->ConvertAndReturnVariable<wstring>())));
 	}
 
 	return true;
 }
 // ------------------------------------ //
-DLLEXPORT wstring Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const wstring &fulladdress, const wstring &regextouse /*= L"http://.*?/"*/){
+DLLEXPORT wstring Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const wstring &fulladdress,
+    const wstring &regextouse /*= L"http://.*?/"*/)
+{
 	// Create a regex //
 	boost::wregex findaddressregex(regextouse, boost::regex_constants::icase);
 
@@ -254,79 +271,6 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 	if(rconsole)
 		rconsole->UpdateStatus();
 
-	// Let's listen for things //
-	sf::Packet receivedpacket;
-
-	sf::IpAddress sender;
-	USHORT sentport;
-
-	// Loop through all received packets //
-	while(_Socket.receive(receivedpacket, sender, sentport) == sf::Socket::Done){
-		// Process packet //
-		//Logger::Get()->Info(L"NetworkHandler: received a packet! from "+Convert::StringToWstring(sender.toString()));
-
-		// Pass to a connection //
-		bool Passed = false;
-
-		for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
-			// Keep passing until somebody handles it //
-			if(ConnectionsToUpdate[i]->IsThisYours(receivedpacket, sender, sentport)){
-				Passed = true;
-				break;
-			}
-		}
-
-		if(Passed)
-			continue;
-
-		shared_ptr<ConnectionInfo> tmpconnect;
-
-		// \todo Check is it a close or a keepalive packet //
-
-
-
-		// We might want to open a new connection to this client //
-		Logger::Get()->Info(L"Received a new connection from "+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
-
-		if(AppType != NETWORKED_TYPE_CLIENT){
-			// Accept the connection //
-			Logger::Get()->Info(L"\t> Connection accepted");
-
-			tmpconnect = shared_ptr<ConnectionInfo>(new ConnectionInfo(sender, sentport));
-
-		} else if(RemoteConsole::Get()->IsAwaitingConnections()){
-			// We might allow a remote start remote console session //
-			Logger::Get()->Info(L"\t> Connection accepted for remote console receive");
-
-			tmpconnect = shared_ptr<ConnectionInfo>(new ConnectionInfo(sender, sentport));
-			// We need a special restriction for this connection //
-			tmpconnect->SetRestrictionMode(CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE);
-
-		} else {
-			// Deny the connection //
-			Logger::Get()->Info(L"\t> Dropping connection due to not being a server (and not expecting a remote console session)");
-
-		}
-
-		if(tmpconnect){
-			// Try to handle with the new connection //
-			// We need to initialize the new connection first //
-			if(!tmpconnect->Init()){
-				// This should never happen //
-				assert(0 && "connection init function should never fail");
-			}
-
-			AutoOpenedConnections.push_back(tmpconnect);
-
-			// Try to handle the packet //
-			if(!tmpconnect->IsThisYours(receivedpacket, sender, sentport)){
-				// That's an error //
-				Logger::Get()->Error(L"NetworkHandler: UpdateAllConnections: new connection refused to process it's packet from"
-					+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
-			}
-		}
-
-	}
 	// Time-out requests //
 	for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
 		//// This needs to be unlocked to avoid deadlocking //
@@ -336,21 +280,6 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 
 	// Interface might want to do something //
 	interfaceinstance->TickIt();
-}
-
-DLLEXPORT void Leviathan::NetworkHandler::StopOwnUpdaterThread(){
-	GUARD_LOCK_THIS_OBJECT();
-	StopGetResponsesThread = true;
-}
-
-DLLEXPORT void Leviathan::NetworkHandler::StartOwnUpdaterThread(){
-	GUARD_LOCK_THIS_OBJECT();
-	// Check if already running //
-	if(StopGetResponsesThread == false)
-		return;
-	StopGetResponsesThread = false;
-	// Start a thread for it //
-	TempGetResponsesThread = boost::thread(RunTemporaryUpdateConnections, this);
 }
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_RegisterConnectionInfo(ConnectionInfo* tomanage, ObjectLock &guard){
@@ -373,7 +302,9 @@ void Leviathan::NetworkHandler::_UnregisterConnectionInfo(ConnectionInfo* unregi
 	}
 }
 
-shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>> Leviathan::NetworkHandler::LockSocketForUse(){
+shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>>
+Leviathan::NetworkHandler::LockSocketForUse()
+{
 	return shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>>(
 		new boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>(SocketMutex));
 }
@@ -430,7 +361,9 @@ DLLEXPORT NETWORKED_TYPE Leviathan::NetworkHandler::GetNetworkType(){
 	return AppType;
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo(const wstring &targetaddress, ObjectLock &guard){
+DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo(const wstring &targetaddress,
+    ObjectLock &guard)
+{
 	VerifyLock(guard);
 	// Create object //
 	shared_ptr<ConnectionInfo> tmpconnection(new ConnectionInfo(targetaddress));
@@ -470,6 +403,121 @@ DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetOrCreatePoint
 	return OpenConnectionTo(address, guard);
 }
 // ------------------------------------ //
+void Leviathan::NetworkHandler::_RunListenerThread(){
+
+    // Let's listen for things //
+	sf::Packet receivedpacket;
+
+	sf::IpAddress sender;
+	USHORT sentport;
+
+    Logger::Get()->Info("NetworkHandler: running listening thread");
+
+	// Loop through all received packets //
+	while(_Socket.receive(receivedpacket, sender, sentport) == sf::Socket::Done){
+
+        // Quit if no longer valid //
+        if(Get() != this)
+            break;
+        
+		// Process packet //
+        GUARD_LOCK_THIS_OBJECT();
+        
+		// Pass to a connection //
+		bool Passed = false;
+
+		for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
+			// Keep passing until somebody handles it //
+			if(ConnectionsToUpdate[i]->IsThisYours(receivedpacket, sender, sentport)){
+				Passed = true;
+				break;
+			}
+		}
+
+		if(Passed)
+			continue;
+
+		shared_ptr<ConnectionInfo> tmpconnect;
+
+		// \todo Check is it a close or a keepalive packet //
+
+
+
+		// We might want to open a new connection to this client //
+		Logger::Get()->Info(L"Received a new connection from "+Convert::StringToWstring(sender.toString())+L":"+
+            Convert::ToWstring(sentport));
+
+		if(AppType != NETWORKED_TYPE_CLIENT){
+			// Accept the connection //
+			Logger::Get()->Info(L"\t> Connection accepted");
+
+			tmpconnect = shared_ptr<ConnectionInfo>(new ConnectionInfo(sender, sentport));
+
+		} else if(RemoteConsole::Get()->IsAwaitingConnections()){
+			// We might allow a remote start remote console session //
+			Logger::Get()->Info(L"\t> Connection accepted for remote console receive");
+
+			tmpconnect = shared_ptr<ConnectionInfo>(new ConnectionInfo(sender, sentport));
+			// We need a special restriction for this connection //
+			tmpconnect->SetRestrictionMode(CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE);
+
+		} else {
+			// Deny the connection //
+			Logger::Get()->Info(L"\t> Dropping connection due to not being a server (and not expecting anything)");
+
+		}
+
+		if(tmpconnect){
+			// Try to handle with the new connection //
+			// We need to initialize the new connection first //
+			if(!tmpconnect->Init()){
+				// This should never happen //
+				assert(0 && "connection init function should never fail");
+			}
+
+			AutoOpenedConnections.push_back(tmpconnect);
+
+			// Try to handle the packet //
+			if(!tmpconnect->IsThisYours(receivedpacket, sender, sentport)){
+				// That's an error //
+				Logger::Get()->Error(L"NetworkHandler: UpdateAllConnections: new connection refused to process "
+                    L"it's packet from"+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
+			}
+		}
+
+	}
+
+    Logger::Get()->Info("NetworkHandler: listening socket thread quitting");
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkHandler::StopOwnUpdaterThread(){
+    {
+        UNIQUE_LOCK_THIS_OBJECT();
+
+        // Tell the thread to stop //
+        UpdaterThreadStop = true;
+    }
+
+    // Make it stop waiting for faster quitting //
+    NotifyTemporaryUpdater.notify_all();
+
+    // Wait for the thread to die //
+    TemporaryUpdateThread.join();
+}
+
+void Leviathan::NetworkHandler::_RunTemporaryUpdaterThread(){
+
+    UNIQUE_LOCK_THIS_OBJECT();
+
+    // Run until told to stop and update connections when enough time has elapsed //
+    while(!UpdaterThreadStop){
+
+        UpdateAllConnections();
+
+        NotifyTemporaryUpdater.wait_for(lockit, boost::chrono::milliseconds(50));
+    }
+}
+// ------------------------------------ //
 void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar){
 	// Try to load master server list //
 
@@ -477,7 +525,8 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 	boost::thread DataUpdaterThread(boost::bind<void>([](NetworkHandler* instance) -> void{
 
 		Logger::Get()->Info(L"NetworkHandler: Fetching new master server list...");
-		sf::Http::Request request(Convert::WstringToString(instance->StoredMasterServerInfo.MasterListFetchPage), sf::Http::Request::Get);
+		sf::Http::Request request(Convert::WstringToString(instance->StoredMasterServerInfo.MasterListFetchPage),
+            sf::Http::Request::Get);
 
 		sf::Http httpserver(Convert::WstringToString(instance->StoredMasterServerInfo.MasterListFetchServer));
 
@@ -572,7 +621,8 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 		if(uselocalhost){
 
 			// We might want to warn about this //
-			ComplainOnce::PrintWarningOnce(L"MasterServerForceLocalhostOn", L"Master server list forced to use localhost as address, might not be what you want");
+			ComplainOnce::PrintWarningOnce(L"MasterServerForceLocalhostOn",
+                L"Master server list forced to use localhost as address, might not be what you want");
 
 			StringIterator itr(tmpaddress.get());
 
@@ -599,7 +649,8 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 		}
 
 		// Create an identification request //
-		shared_ptr<NetworkRequest> inforequest(new NetworkRequest(NETWORKREQUESTTYPE_IDENTIFICATION, 1500, PACKAGE_TIMEOUT_STYLE_TIMEDMS));
+		shared_ptr<NetworkRequest> inforequest(new NetworkRequest(NETWORKREQUESTTYPE_IDENTIFICATION, 1500,
+                PACKAGE_TIMEOUT_STYLE_TIMEDMS));
 
 		// Send the request and create a task that'll wait for the response //
 		shared_ptr<SentNetworkThing> serverinforesponse = tmpinfo->SendPacketToConnection(inforequest, 5);
@@ -609,9 +660,10 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 
 
 		// Now we'll just wait until it is done //
-		ThreadingManager::Get()->QueueTask(new ConditionalTask(boost::bind<void>([](shared_ptr<SentNetworkThing> response, NetworkHandler* instance,
-																					shared_ptr<boost::promise<bool>> result, shared_ptr<ConnectionInfo> currentconnection,
-																					shared_ptr<wstring> tmpaddress, shared_ptr<boost::promise<wstring>> resultvar) -> void
+		ThreadingManager::Get()->QueueTask(new ConditionalTask(boost::bind<void>([](
+                        shared_ptr<SentNetworkThing> response, NetworkHandler* instance,
+                        shared_ptr<boost::promise<bool>> result, shared_ptr<ConnectionInfo> currentconnection,
+                        shared_ptr<wstring> tmpaddress, shared_ptr<boost::promise<wstring>> resultvar) -> void
 				{
 					// Report this for easier debugging //
 					Logger::Get()->Info(L"Master server check with \""+*tmpaddress+
@@ -626,21 +678,25 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 					
 					if(!actualresponse){
 						// Failed to receive something from the server //
-						Logger::Get()->Warning(L"NetworkHandler: failed to receive a response from master server("+*tmpaddress+L")");
+						Logger::Get()->Warning(L"NetworkHandler: failed to receive a response from master server("+
+                            *tmpaddress+L")");
 						// Release connection //
 						currentconnection->Release();
 						return;
 					}
 					
-					Logger::Get()->Warning(L"NetworkHandler: received a response from master server("+*tmpaddress+L"):");
+					Logger::Get()->Warning(L"NetworkHandler: received a response from master server("+*tmpaddress+
+                        L"):");
 					
 					// Get data //
 					
-					NetworkResponseDataForIdentificationString* tmpresponse = actualresponse->GetResponseDataForIdentificationString();
+					NetworkResponseDataForIdentificationString* tmpresponse =
+                        actualresponse->GetResponseDataForIdentificationString();
 					
 					if(!tmpresponse){
 						// Failed to receive valid response //
-						Logger::Get()->Warning(L"NetworkHandler: received an invalid response from master server("+*tmpaddress+L")");
+						Logger::Get()->Warning(L"NetworkHandler: received an invalid response from master server("+
+                            *tmpaddress+L")");
 						// Release connection //
 						currentconnection->Release();
 						return;
@@ -664,8 +720,8 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 					result->set_value(true);
 						
 						
-				}, serverinforesponse, instance, sendpromise, tmpinfo, tmpaddress, resultvar), boost::bind<bool>([](shared_ptr<SentNetworkThing> response)
-																												 -> bool
+				}, serverinforesponse, instance, sendpromise, tmpinfo, tmpaddress, resultvar), boost::bind<bool>([](
+                        shared_ptr<SentNetworkThing> response) -> bool
 					{
 						
 						return response->GetFutureForThis().has_value();
@@ -676,7 +732,8 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 	// TODO: run this only when all the tasks fail
 	if(false){
 		// If we got here, we haven't connected to anything //
-		Logger::Get()->Warning(L"NetworkHandler: could not connect to any fetched master servers, you can restart to use a new list");
+		Logger::Get()->Warning(L"NetworkHandler: could not connect to any fetched master servers, "
+            L"you can restart to use a new list");
 		
 		// We can let whoever is waiting for us to go now, and finish some utility tasks after that //
 		resultvar->set_value(wstring(L"Failed to connect to master server"));
@@ -689,21 +746,5 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<bo
 	// Output the current list //
 	instance->_SaveMasterServerList();
 }
-
-void Leviathan::RunTemporaryUpdateConnections(NetworkHandler* instance){
-
-	while(!instance->StopGetResponsesThread){
-
-		instance->UpdateAllConnections();
-		try{
-			boost::this_thread::sleep(boost::posix_time::milliseconds(50));
-		} catch(...){
-			continue;
-		}
-	}
-
-}
-
-
 
 

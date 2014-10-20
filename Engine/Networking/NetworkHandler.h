@@ -15,7 +15,7 @@
 namespace Leviathan{
 
 	void RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar);
-	void RunTemporaryUpdateConnections(NetworkHandler* instance);
+	
 	enum PACKET_TIMEOUT_STYLE{
 		PACKAGE_TIMEOUT_STYLE_TIMEDMS,
 		//! This style marks packets lost after TimeOutMS amount of packets sent after this packet
@@ -57,7 +57,6 @@ namespace Leviathan{
 	//! \brief Handles everything related to connections
 	class NetworkHandler : public EngineComponent, public ThreadSafe{
 		friend void RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar);
-		friend void RunTemporaryUpdateConnections(NetworkHandler* instance);
 
 		friend ConnectionInfo;
 	public:
@@ -66,14 +65,15 @@ namespace Leviathan{
 		DLLEXPORT ~NetworkHandler();
 
 		DLLEXPORT virtual bool Init(const MasterServerInformation &info);
+        
 		// \note This waits for all connections to terminate
 		DLLEXPORT virtual void Release();
 
-		// Call as often as possible to receive responses //
+		//! \note  Call as often as possible to receive responses
 		DLLEXPORT virtual void UpdateAllConnections();
 
-		DLLEXPORT virtual void StopOwnUpdaterThread();
-		DLLEXPORT virtual void StartOwnUpdaterThread();
+        //! \brief Called by Engine to stop own connection update thread
+        DLLEXPORT void StopOwnUpdaterThread();
 
 		DLLEXPORT virtual void RemoveClosedConnections(ObjectLock &guard);
 
@@ -142,6 +142,11 @@ namespace Leviathan{
 		// Closes the socket //
 		void _ReleaseSocket();
 
+        //! \brief Constantly listens for packets in a blocked state
+        void _RunListenerThread();
+
+        //! \brief Does temporary connection updating
+        void _RunTemporaryUpdaterThread();
 
 		void _SaveMasterServerList();
 		bool _LoadMasterServerList();
@@ -182,18 +187,24 @@ namespace Leviathan{
 		// The master server list //
 		std::vector<shared_ptr<wstring>> MasterServers;
 
-		// Stores a "working" (meaning the server has responded something) master server address //
+		//! Stores a "working" (meaning the server has responded something) master server address
 		shared_ptr<ConnectionInfo> MasterServerConnection;
 
 		MasterServerInformation StoredMasterServerInfo;
 
-		// Makes sure that master server thread is graciously closed //
+		//! Makes sure that master server thread is graciously closed //
 		boost::thread MasterServerConnectionThread;
 		bool CloseMasterServerConnection;
 
-		// Temporary thread for getting responses while the game is starting //
-		boost::thread TempGetResponsesThread;
-		bool StopGetResponsesThread;
+		//! THread that constantly blocks on the socket and waits for packets
+		boost::thread ListenerThread;
+
+        //! Temporary thread for getting responses while the game is starting
+        boost::thread TemporaryUpdateThread;
+        bool UpdaterThreadStop;
+
+        boost::condition_variable_any NotifyTemporaryUpdater;
+        
 
 		wstring MasterServerMustPassIdentification;
 

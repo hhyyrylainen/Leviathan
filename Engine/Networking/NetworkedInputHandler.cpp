@@ -33,8 +33,10 @@ DLLEXPORT Leviathan::NetworkedInputHandler::~NetworkedInputHandler(){
 	}
 
 
-	_NetworkInputFactory = NULL;
 	GlobalOrLocalListeners.clear();
+
+    // The listeners might want to destruct stuff, so set this to NULL after releasing them //
+	_NetworkInputFactory = NULL;    
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection){
@@ -275,7 +277,9 @@ void Leviathan::NetworkedInputHandler::_OnChildUnlink(InputReceiver* child){
 
 				// Discard the one matching the pointer //
 				if(child == static_cast<InputReceiver*>((*iter).get())){
-					_NetworkInputFactory->NoLongerNeeded(*(*iter).get());
+                    // Only unallocate if the factory is still around //
+                    if(_NetworkInputFactory && (*iter).get())
+                        _NetworkInputFactory->NoLongerNeeded(*(*iter).get());
 					break;
 				}
 			}

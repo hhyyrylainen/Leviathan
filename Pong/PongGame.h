@@ -29,6 +29,8 @@ namespace Pong{
 
 		void StartInputHandling();
 
+        void CustomEnginePreShutdown() override;
+
 		//! \brief Called when the game wants to exit current game/lobby
 		void Disconnect(const string &reasonstring);
 

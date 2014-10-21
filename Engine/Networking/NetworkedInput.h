@@ -25,7 +25,9 @@ namespace Leviathan{
 		//! The state when something has failed
 		NETWORKEDINPUT_STATE_FAILED,
 		//! The state when the server has closed the connection
-		NETWORKEDINPUT_STATE_CLOSED
+		NETWORKEDINPUT_STATE_CLOSED,
+        //! This is set in the destructor and can be used to determine if NetworkInputFactory should ignore it
+        NETWORKEDINPUT_STATE_DESTRUCTED
 	};
 
 

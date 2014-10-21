@@ -522,15 +522,23 @@ DLLEXPORT void Leviathan::ConnectionInfo::CheckKeepAliveSend(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::IpAddress &sender, USHORT &sentport){
+DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::IpAddress &sender, USHORT &sentport){
+    GUARD_LOCK_THIS_OBJECT();
 	// Check for matching sender with our target //
 	if(sentport != TargetPortNumber || sender != TargetHost){
 		// Not mine //
 		return false;
 	}
+    
 	// It is mine //
+    return true;
 
-	// Handle incoming packet //
+	
+}
+
+DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::IpAddress &sender, USHORT &sentport){
+    
+    // Handle incoming packet //
 	int packetnumber = 0;
 
 	if(!(packet >> packetnumber)){
@@ -542,7 +550,7 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 	if(_IsAlreadyReceived(packetnumber)){
 
 		// Ignore repeat packet //
-		return true;
+		return;
 	}
 
 	NetworkAckField otherreceivedpackages;
@@ -561,8 +569,13 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 	// Rest of the data is now the actual thing //
 
 	// Mark as received a packet //
-	LastReceivedPacketTime = Misc::GetTimeMs64();
-	HasReceived = true;
+    {
+        GUARD_LOCK_THIS_OBJECT();
+        
+        LastReceivedPacketTime = Misc::GetTimeMs64();
+        HasReceived = true;
+
+    }
 
 	bool ShouldNotBeMarkedAsReceived = false;
 
@@ -571,6 +584,8 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 		// Generate a request object and make the interface handle it //
 		shared_ptr<NetworkRequest> request(new NetworkRequest(packet));
 
+        GUARD_LOCK_THIS_OBJECT();
+        
 		// Restrict mode checking //
 		if(RestrictType != CONNECTION_RESTRICTION_NONE){
 			// We can possibly drop the connection or perform other extra tasks //
@@ -583,18 +598,20 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 
 				} else {
 					// We want to close //
-					Logger::Get()->Error(L"ConnectionInfo: received a non-valid packet to receive remote console connection socket, "
-						+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+					Logger::Get()->Error(L"ConnectionInfo: received a non-valid packet to receive remote "
+                        L"console connection socket, "+Convert::StringToWstring(TargetHost.toString())+L":"+
+                        Convert::ToWstring(TargetPortNumber));
+                    
 					NetworkHandler::Get()->SafelyCloseConnectionTo(this);
-					return true;
+					return;
 				}
 			}
 		}
 
 #ifdef SPAM_ME_SOME_PACKETS
 		Logger::Get()->Info(L"PacketSpam: received request ("+Convert::ToWstring(packetnumber)+L", request"+
-			Convert::ToWstring(request->GetExpectedResponseID())+L") from "+Convert::StringToWstring(TargetHost.toString())+L":"
-			+Convert::ToWstring(TargetPortNumber));
+			Convert::ToWstring(request->GetExpectedResponseID())+L") from "+Convert::StringToWstring(
+                TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 		try{
 			NetworkHandler::GetInterface()->HandleRequestPacket(request, this);
@@ -617,18 +634,21 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 			// We can possibly drop the connection or perform other extra tasks //
 			if(RestrictType == CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE){
 				// We want to close //
-				Logger::Get()->Error(L"ConnectionInfo: received a response packet to receive remote console connection socket, "
-					+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+				Logger::Get()->Error(L"ConnectionInfo: received a response packet to receive remote console "
+                    L"connection socket, "+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(
+                        TargetPortNumber));
 				NetworkHandler::Get()->SafelyCloseConnectionTo(this);
-				return true;
+				return;
 			}
 		}
 
 		// See if interface wants to drop it //
-		if(!NetworkHandler::GetInterface()->PreHandleResponse(response, possiblerequest ? possiblerequest->OriginalRequest: NULL, this)){
+		if(!NetworkHandler::GetInterface()->PreHandleResponse(response, possiblerequest ?
+                possiblerequest->OriginalRequest: NULL, this))
+        {
 
 			Logger::Get()->Warning(L"ConnectionInfo: dropping packet due to interface not accepting response");
-			return true;
+			return;
 		}
 
 #ifdef SPAM_ME_SOME_PACKETS
@@ -642,7 +662,7 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::Packet &packet, sf::Ip
 			possiblerequest->GotResponse = response;
 
 			// Notify all that it succeeded will be done by the update loop //
-
+            // TODO: move that here
 
 		} else {
 
@@ -674,7 +694,7 @@ connectioninfoafterprocesslabel:
 	}
 
 
-	return true;
+	return;
 }
 // ------------------------------------ //
 void Leviathan::ConnectionInfo::_VerifyAckPacketsAsSuccesfullyReceivedFromHost(int packetreceived){
@@ -949,6 +969,7 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
 }
 // ------------------------------------ //
 bool Leviathan::ConnectionInfo::_IsAlreadyReceived(int packetid){
+    GUARD_LOCK_THIS_OBJECT();
 
 	// It is moved through in reverse to quickly return matches,
     // but receiving the same packet twice isn't that common

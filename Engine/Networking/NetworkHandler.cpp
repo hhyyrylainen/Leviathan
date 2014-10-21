@@ -421,14 +421,22 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
             break;
         
 		// Process packet //
-        GUARD_LOCK_THIS_OBJECT();
+        UNIQUE_LOCK_THIS_OBJECT();
         
 		// Pass to a connection //
 		bool Passed = false;
 
 		for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
 			// Keep passing until somebody handles it //
-			if(ConnectionsToUpdate[i]->IsThisYours(receivedpacket, sender, sentport)){
+			if(ConnectionsToUpdate[i]->IsThisYours(sender, sentport)){
+
+                auto curconnection = ConnectionsToUpdate[i];
+                
+                // Handle it //
+                lockit.unlock();
+                curconnection->HandlePacket(receivedpacket, sender, sentport);
+                lockit.lock();
+                
 				Passed = true;
 				break;
 			}
@@ -478,11 +486,16 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 			AutoOpenedConnections.push_back(tmpconnect);
 
 			// Try to handle the packet //
-			if(!tmpconnect->IsThisYours(receivedpacket, sender, sentport)){
+			if(!tmpconnect->IsThisYours(sender, sentport)){
 				// That's an error //
 				Logger::Get()->Error(L"NetworkHandler: UpdateAllConnections: new connection refused to process "
                     L"it's packet from"+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
-			}
+			} else {
+
+                lockit.unlock();
+                tmpconnect->HandlePacket(receivedpacket, sender, sentport);
+                lockit.lock();
+            }
 		}
 
 	}

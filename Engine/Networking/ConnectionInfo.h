@@ -173,7 +173,13 @@ namespace Leviathan{
 		//! \brief Adds special restriction on the connection
 		DLLEXPORT void SetRestrictionMode(CONNECTION_RESTRICTION type);
 
-		DLLEXPORT bool IsThisYours(sf::Packet &packet, sf::IpAddress &sender, USHORT &sentport);
+        //! \brief Checks does the sender and port match our corresponding values
+		DLLEXPORT bool IsThisYours(sf::IpAddress &sender, USHORT &sentport);
+
+        //! \brief Handles a packet
+        //! \note No other locks should be held while calling this
+        DLLEXPORT void HandlePacket(sf::Packet &packet, sf::IpAddress &sender, USHORT &sentport);
+        
 		DLLEXPORT bool IsTargetHostLocalhost();
 
 

@@ -162,6 +162,12 @@ playrscorelistupdateendlabel:
 			return GameArena->IsBallInPaddleArea();
 		}
 
+        //! \brief Called before closing the engine, use to release some stuff
+        virtual void CustomEnginePreShutdown(){
+
+
+        }
+
 
 
 		bool PlayerIDMatchesGoalAreaID(int plyid, Leviathan::BasePhysicsObject* goalptr){
@@ -426,6 +432,8 @@ playrscorelistupdateendlabel:
 			// Only the AI needs this //
 			if(GameAI)
 				GameAI->ReleaseScript();
+
+            CustomEnginePreShutdown();
 		}
 
 		virtual void Tick(int mspassed){

@@ -37,6 +37,9 @@ namespace Leviathan{
 		//! \brief Called when an input is no longer needed
 		//!
 		//! This can be used, for example, to remove hooks from physics objects or character controllers
+        //! \note This should use dynamic cast to find cases where the object is already being destructed and
+        //! is now only the base class and cannot be properly casted. The cast should only fail if
+        //! NetworkedInput::GetState return NETWORKEDINPUT_STATE_DESTRUCTED
 		DLLEXPORT virtual void NoLongerNeeded(NetworkedInput &todiscard) = 0;
 
 

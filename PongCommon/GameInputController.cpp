@@ -14,6 +14,7 @@ using namespace Pong;
 #include "Exceptions/ExceptionInvalidArgument.h"
 #include "PlayerSlot.h"
 #include "Networking/NetworkServerInterface.h"
+#include "Networking/NetworkedInput.h"
 // ------------------------------------ //
 Pong::GameInputController::GameInputController() : NetworkedInputHandler(PongInputFactory::Get(), 
 #ifdef PONG_VERSION
@@ -189,9 +190,23 @@ DLLEXPORT void Pong::PongInputFactory::ReplicationFinalized(NetworkedInput* inpu
 }
 
 DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard){
+
 	// Must still be the same type //
 	PongNInputter* tmpobj = dynamic_cast<PongNInputter*>(&todiscard);
 
+    if(!tmpobj){
+
+        if(todiscard.GetState() == Leviathan::NETWORKEDINPUT_STATE_DESTRUCTED){
+
+            // It's already destructed to the base class level //
+            return;
+        }
+
+        // Wrong type got passed here //
+        Logger::Get()->Warning(L"Wrong type passed to PongInputFactory");
+        return;
+    }
+    
 	// Unset the target if it is still set //
 	GUARD_LOCK_OTHER_OBJECT(tmpobj);
 

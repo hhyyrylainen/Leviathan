@@ -22,6 +22,7 @@ Pong::PongServerNetworking::~PongServerNetworking(){
 }
 // ------------------------------------ //
 void Pong::PongServerNetworking::HandleResponseOnlyPacket(shared_ptr<Leviathan::NetworkResponse> message, Leviathan::ConnectionInfo* connection, bool &dontmarkasreceived){
+    GUARD_LOCK_THIS_OBJECT();
 	// Try default handling //
 	if(_HandleDefaultResponseOnly(message, connection, dontmarkasreceived))
 		return;
@@ -47,6 +48,7 @@ void Pong::PongServerNetworking::HandleResponseOnlyPacket(shared_ptr<Leviathan::
 }
 
 void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection){
+    GUARD_LOCK_THIS_OBJECT();
 	// Try default handling //
 	if(_HandleDefaultRequest(request, connection))
 		return;
@@ -67,8 +69,6 @@ void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> 
 		case PONG_PACKET_JOINGAME_REQUEST:
 			{
 				// Disallow if not connected //
-				GUARD_LOCK_THIS_OBJECT();
-
 				Leviathan::ConnectedPlayer* ply = GetPlayerForConnection(connection);
 
 				if(!ply){

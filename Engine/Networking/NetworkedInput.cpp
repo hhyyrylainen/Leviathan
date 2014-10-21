@@ -23,6 +23,8 @@ DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(sf::Packet &packet){
 
 DLLEXPORT Leviathan::NetworkedInput::~NetworkedInput(){
 
+    // Set the correct state for destructors that run after this //
+    CurrentState = NETWORKEDINPUT_STATE_DESTRUCTED;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::AddFullDataToPacket(sf::Packet &packet){

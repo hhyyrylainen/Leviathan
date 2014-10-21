@@ -44,7 +44,6 @@ Pong::PongGame::~PongGame(){
 
 
 #endif // _WIN32
-
 }
 
 PongGame* Pong::PongGame::Get(){
@@ -283,6 +282,11 @@ int Pong::PongGame::StartServer(){
 
 	// succeeded //
 	return 1;
+}
+// ------------------------------------ //
+void Pong::PongGame::CustomEnginePreShutdown(){
+
+    GameInputHandler.reset();
 }
 // ------------------------------------ //
 void Pong::PongGame::AllowPauseMenu(){

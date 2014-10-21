@@ -225,8 +225,9 @@ namespace Leviathan{
 
 
 		//! \brief Called by ConnectedPlayer when it's connection closes
+        //! \param plylock Is the upgrade_lock that has the player list locked
 		std::vector<ConnectedPlayer*>::iterator _OnReportCloseConnection(const std::vector<ConnectedPlayer*>::iterator
-            &iter, ObjectLock &guard);
+            &iter, ObjectLock &guard, boost::upgrade_lock<boost::shared_mutex> &plylock);
 		// ------------------------------------ //
 
 
@@ -250,6 +251,10 @@ namespace Leviathan{
 
 		//! Controls whether players can join
 		bool AllowJoin;
+
+        //! Lock this when changing the player list
+        boost::shared_mutex PlayerListLocked;
+        
 
 		//! Type of join restriction, defaults to NETWORKRESPONSE_SERVERJOINRESTRICT_NONE
 		NETWORKRESPONSE_SERVERJOINRESTRICT JoinRestrict;

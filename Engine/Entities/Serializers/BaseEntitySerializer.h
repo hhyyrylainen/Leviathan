@@ -7,6 +7,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
+#include "SFML/Network/Packet.hpp"
+#include "Entities/Bases/BaseObject.h"
 
 namespace Leviathan{
 
@@ -14,6 +16,8 @@ namespace Leviathan{
     enum ENTITYSERIALIZEDTYPE{
         //! The generic type which should be able to be decoded by the generic handler
         ENTITYSERIALIZEDTYPE_COMPONENT_CONTAINER = 1,
+        //! Type of object that can be serialized with SendableEntitySerializer
+        ENTITYSERIALIZEDTYPE_SENDABLE_ENTITY,
         
         //! This has to be the last value, use this to specify custom types
         ENTITYSERIALIZEDTYPE_LAST
@@ -32,7 +36,34 @@ namespace Leviathan{
 
         //! Returns true when this serializer can work with the specified type
         DLLEXPORT bool CanSerializeType(TypeIDSize typetocheck) const;
+
+        //! \brief Returns true when the object passed can be dynamically casted to the right type
+        DLLEXPORT virtual bool IsObjectTypeCorrect(BaseObject* object) const = 0;
         
+        //! \brief Serializes an entity entirely into a packet
+        //! \note This will also link the entity to the connection so that it will automatically send updates
+        //! \param connectionptr Pointer to the connection to be used (doesn't have to be verified to be valid)
+        //! \return Returns true when the type of object is correct. Which should be when IsObjectTypeCorrect returns
+        //! true
+        //! \note The caller will have added the ID to the packet so that needs to be skipped (or rather should be)
+        //! But the Type variable should be included by this object
+        DLLEXPORT virtual bool CreatePacketForConnection(BaseObject* object, sf::Packet &packet,
+            ConnectionInfo* connectionptr) = 0;
+
+
+        //! \brief Deserializes a whole object from a packet if the Type in the packet is the same as Type of this
+        //! \note This should do the exact opposite of CreatePacketForConnection
+        //! \return True when the type of packet is correct even if the data is invalid
+        //! \todo Allow reporting invalid data
+        DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, sf::Packet &packet) = 0;
+
+
+        //! \brief Deserializes and applies an update from a packet
+        //! \note The targetobject is found by the caller based on the ID that it inserts
+        //! before CreatePacketForConnection
+        //! \return True when the type of packet is correct even if the data is invalid
+        DLLEXPORT virtual bool ApplyUpdateFromPacket(BaseObject* targetobject, sf::Packet &packet) = 0;
+
         
     protected:
         

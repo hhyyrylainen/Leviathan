@@ -17,8 +17,11 @@ namespace Leviathan{
 	void RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar);
 	
 	enum PACKET_TIMEOUT_STYLE{
+        
+
 		PACKAGE_TIMEOUT_STYLE_TIMEDMS,
-		//! This style marks packets lost after TimeOutMS amount of packets sent after this packet
+        
+        //! This style marks packets lost after TimeOutMS amount of packets sent after this packet        
         //! have been confirmed to received
 		//! So if you set this to 1 this packet is resend if even a single packet send after this is
         //! received by the target host

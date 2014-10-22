@@ -1,4 +1,5 @@
-// ------------------ This file contains forward declarations for all possible things that need to be included (or forward declared) ------------------ //
+// ------------------ This file contains forward declarations for all possible things that need to be included
+// (or forward declared) ------------------
 #pragma once
 
 
@@ -33,6 +34,9 @@ namespace Leviathan{
 
 	class ObjectFileTemplateInstance;
 	class ObjectFileTemplateDefinition;
+
+    class BaseEntitySerializer;
+    class EntitySerializerManager;
 
 	class ThreadingManager;
 	class QueuedTask;

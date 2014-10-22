@@ -157,7 +157,19 @@ namespace Leviathan{
 		DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(Float3 from, Float3 to);
 		
 		//! \brief Returns true when no players are marked as receiving initial update
-		bool AreAllPlayersSynced() const;
+		DLLEXPORT bool AreAllPlayersSynced() const;
+
+        //! \brief Returns true when the player matching the connection should receive updates about an object
+        //! \todo Implement this
+        DLLEXPORT bool ShouldPlayerReceiveObject(BaseObject* obj, ConnectionInfo* connectionptr);
+
+        //! \brief Sends an object to a connection and sets everything up
+        //! \post The connection will receive updates from the object
+        //! \param connection A safe pointer to the connection which won't be checked by this method
+        //! \return True when a packet was sent false otherwise
+        //! \todo Allow making these critical so that failing to send these will terminate the ConnectionInfo
+        DLLEXPORT static bool SendObjectToConnection(shared_pt<BaseObject> obj, shared_ptr<ConnectionInfo> connection);
+        
 		
 	private:
 
@@ -210,6 +222,12 @@ namespace Leviathan{
 		// objects //
 		// \todo maybe change this to a map //
 		std::vector<shared_ptr<BaseObject>> Objects;
+
+        //! The unique ID
+        int ID;
+
+        //! A funky name for this world, if any
+        std::string DecoratedName;
 
 		// This vector is used for delayed deletion //
 		std::vector<int> DelayedDeleteIDS;

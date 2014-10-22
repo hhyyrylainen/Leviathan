@@ -1,11 +1,9 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_SENDABLEENTITYSERIALIZER
-#include "SendableEntitySerializer.h"
+#ifndef LEVIATHAN_ENTITYSERIALIZERMANAGER
+#include "EntitySerializerManager.h"
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-
-
 
 // ------------------------------------ //
 

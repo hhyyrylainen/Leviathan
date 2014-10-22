@@ -17,6 +17,8 @@
 #include "Newton/PhysicalMaterialManager.h"
 #include "Networking/NetworkHandler.h"
 #include "Networking/RemoteConsole.h"
+#include "Handlers/EntitySerializerManager.h"
+#include "Entities/Serializers/SendableEntitySerializer.h"
 #ifdef _WIN32
 #include <io.h>
 #include <fcntl.h>
@@ -41,7 +43,7 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
     Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), _NewtonManager(NULL),
     GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
     _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
-    _ResourceRefreshHandler(NULL), PreReleaseCompleted(false)
+    _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), EntitySerializerManager(NULL)
 {
 	IDDefaultInstance = IDFactory::Get();
 
@@ -232,33 +234,61 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 
 	// create newton manager before any newton resources are needed //
 	boost::promise<bool> NewtonManagerResult;
+    
 	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
-                        boost::promise<bool> &returnvalue, Engine* engine) -> void{
+	_ThreadingManager->QueueTask(new QueuedTask(boost::bind<void>([](
+                    boost::promise<bool> &returnvalue, Engine* engine) -> void
+        {
 
-                        engine->_NewtonManager = new NewtonManager();
-                        if(!engine->_NewtonManager){
+            engine->_NewtonManager = new NewtonManager();
+            if(!engine->_NewtonManager){
 
-                            Logger::Get()->Error(L"Engine: Init: failed to create NewtonManager");
-                            returnvalue.set_value(false);
-                            return;
-                        }
+                Logger::Get()->Error(L"Engine: Init: failed to create NewtonManager");
+                returnvalue.set_value(false);
+                return;
+            }
 
-                        // next force application to load physical surface materials //
-                        engine->PhysMaterials = new PhysicsMaterialManager(engine->_NewtonManager);
-                        if(!engine->PhysMaterials){
+            // next force application to load physical surface materials //
+            engine->PhysMaterials = new PhysicsMaterialManager(engine->_NewtonManager);
+            if(!engine->PhysMaterials){
 
-                            Logger::Get()->Error(L"Engine: Init: failed to create PhysicsMaterialManager");
-                            returnvalue.set_value(false);
-                            return;
-                        }
+                Logger::Get()->Error(L"Engine: Init: failed to create PhysicsMaterialManager");
+                returnvalue.set_value(false);
+                return;
+            }
 
-                        engine->Owner->RegisterApplicationPhysicalMaterials(engine->PhysMaterials);
+            engine->Owner->RegisterApplicationPhysicalMaterials(engine->PhysMaterials);
 
-                        returnvalue.set_value(true);
-                    }, boost::ref(NewtonManagerResult), this))));
+            returnvalue.set_value(true);
+        }, boost::ref(NewtonManagerResult), this)));
 
+    boost::promise<bool> SerializerManagerResult;
 
+    _ThreadingManager->QueueTask(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue,
+                    Engine* engine) -> void
+        {
+
+            engine->_EntitySerializerManager = new EntitySerializerManager();
+            if(!engine->EntitySerializerManager){
+
+                returnvalue.set_value(false);
+                return;
+            }
+
+            // Create the default serializer //
+            unique_ptr<BaseEntitySerializer> tmpptr(new SendableEntitySerializer());
+            if(!tmpptr){
+
+                returnvalue.set_value(false);
+                return;
+            }
+
+            engine->_EntitySerializerManager->AddSerializer(tmpptr.release());
+            returnvalue.set_value(true);
+
+        }, boost::ref(SerializerManagerResult), this)));
+
+    
 	// Check if we don't want a window //
 	if(NoGui){
 
@@ -275,7 +305,8 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	_ThreadingManager->WaitForAllTasksToFinish();
 
 	// Check return values //
-	if(!ScriptInterfaceResult.get_future().get() || !NewtonManagerResult.get_future().get())
+	if(!ScriptInterfaceResult.get_future().get() || !NewtonManagerResult.get_future().get() ||
+        !SerializerManagerResult.get_future().get())
 	{
 
 		Logger::Get()->Error(L"Engine: Init: one or more queued tasks failed");
@@ -492,6 +523,8 @@ void Leviathan::Engine::Release(bool forced){
 	SAFE_DELETE(Loader);
 	SAFE_RELEASEDEL(Graph);
 	SAFE_DELETE(RenderTimer);
+
+    SAFE_RELEASEDEL(_EntitySerializerManager);
 
 	SAFE_RELEASEDEL(Sound);
 	SAFE_DELETE(Mainstore);

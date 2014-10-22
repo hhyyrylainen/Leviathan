@@ -17,6 +17,7 @@
 #include "Bases/BasePositionable.h"
 #include "Networking/ConnectionInfo.h"
 #include "Threading/ThreadingManager.h"
+#include "Handlers/EntitySerializerManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -25,7 +26,7 @@ class Leviathan::PlayerConnectionPreparer{
 public:
 
     //! Used to keep track of what's happening regards to the ping
-    enum PING_STATE {PING_STATE_STARTED, PING_STATE_FAILED, PING_STATE_NONE};
+    enum PING_STATE {PING_STATE_STARTED, PING_STATE_FAILED, PING_STATE_NONE, PING_STATE_COMPLETED};
     
     PlayerConnectionPreparer() :
         Pinging(PING_STATE_NONE), GameWorldCompromised(false), ObjectsReady(false), AllDone(false)
@@ -37,7 +38,11 @@ public:
     //! Called as an callback when pinging completes
     void OnPingCompleted(int msping, int lostpackets){
 
-        DEBUG_BREAK;
+        Pinging = PING_STATE_COMPLETED;
+
+        boost::unique_lock<boost::mutex> lock(_Mutex);
+        if(ObjectsReady)
+            AllDone = true;
     }
 
     //! Called when pinging fails
@@ -49,7 +54,10 @@ public:
     //! Set by GameWorld if it isn't safe to use
     bool GameWorldCompromised;
 
+    // This is needed to avoid rare cases where AllDone would never be set
+    boost::mutex _Mutex;
 
+    
     PING_STATE Pinging;
     bool ObjectsReady;
     bool AllDone;
@@ -58,7 +66,8 @@ public:
 // ------------------ GameWorld ------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld() :
     WorldSceneCamera(NULL), WorldsScene(NULL), Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false),
-    GraphicalMode(false), LinkedToWindow(NULL), WorldWorkspace(NULL), ClearAllObjects(false)
+    GraphicalMode(false), LinkedToWindow(NULL), WorldWorkspace(NULL), ClearAllObjects(false),
+    ID(IDFactory::GetID())
 {
 
 }
@@ -510,9 +519,22 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
                 
                 // Stop processing //
                 task->StopRepeating();
+                processingobject->ObjectsReady = true;
+                
+    exitcurrentiterationchecklabel:
+                
                 
                 // This will stop the otherwise infinitely waiting task //
-                processingobject->AllDone = true;
+                boost::unique_lock<boost::mutex> lock(processingobject->_Mutex);
+                
+                if(task->IsThisLastRepeat()){
+
+                    
+                    processingobject->ObjectsReady = true;
+                }
+
+                if(processingobject->ObjectsReady && processingobject->Pinging == PING_STATE_COMPLETED)
+                    processingobject->AllDone = true;
                 return;
             }
             
@@ -527,8 +549,22 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
             // Get the object //
             auto tosend = world->Objects[num];
 
-            Logger::Get()->Info("Would send object, number: "+Convert::ToString(num));
-            
+            Logger::Get()->Info("Sending object, number: "+Convert::ToString(num));
+
+            // Skip if shouldn't send //
+            if(!ShouldPlayerReceiveObject(tosend, *connection)){
+
+                goto exitcurrentiterationchecklabel;
+            }
+
+
+            // Send it //
+            // TODO: could check for errors here
+            SendObjectToConnection(tosend, connection);
+
+
+            // Sent, check the exit things //
+            goto exitcurrentiterationchecklabel;
             
         }, safeconnection, connectobject, this), Objects.size()));
 
@@ -610,12 +646,38 @@ notusingapositionlabel:
 
 
 }
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(shared_pt<BaseObject> obj,
+    shared_ptr<ConnectionInfo> connection)
+{
+    // Fail if the obj is not a valid pointer //
+    if(!obj)
+        return false;
+    
+    // First create a packet which will be the object's data //
+    GUARD_LOCK_OTHER_OBJECT(obj.get());
 
+    auto objdata = EntitySerializerManager::Get()->CreateInitialEntityMessageFor(obj.get(), connection);
+
+    if(!objdata)
+        return false;
+
+    // Then gather all sorts of other stuff to make an response //
+    
+    
+
+    // We return whatever the send function returns //
+    shared_ptr<NetworkResponse> response = make_shared<NetworkResponse>(-1,
+        PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 20);
+
+
+    return connection->SendPacketToConnection(response, 5);
+}
 
 
 // ------------------ RayCastHitEntity ------------------ //
-DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/, const float &tvar, RayCastData* ownerptr) : HitEntity(ptr), 
-	HitVariable(tvar)
+DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/, const float &tvar,
+    RayCastData* ownerptr) : HitEntity(ptr), HitVariable(tvar)
 {
 	if(ownerptr){
 		HitLocation = ownerptr->BaseHitLocationCalcVar*HitVariable;

@@ -31,8 +31,6 @@ THE SOFTWARE.
     
     Ogre3D: MIT license
     
-    Chromium Embedded Framework (CEF3): new BSD
-    
     OIS: zlib license
     
     Leap: non open source, redistributables included as part of the software
@@ -97,7 +95,7 @@ THE SOFTWARE.
 -- Additional code --
 
 WELL C++ implementation Copyright (c) Sergiu Dotenco 2010, 2011, 2012 
-    distributed under the Distributed under the Boost Software License, Version 1.0
+    distributed under the the Boost Software License, Version 1.0
     
     
 (Full license texts available online, in case any are missing from this file)
@@ -255,6 +253,26 @@ minor nuisance of being required to keep the above copyright notice
 and license text in the source code. Note also that by accepting the
 Public Domain "license" you can re-license your copy using whatever
 license you like.
+
+
+
+Newton game dynamics:
+
+Copyright (c) <2003-2011>
+
+This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be
+appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source distribution.
+
+Julio Jerez and Alain Suero
+http://www.gzip.org/zlib/zlib_license.html 
 
 
 

@@ -168,7 +168,7 @@ namespace Leviathan{
         //! \param connection A safe pointer to the connection which won't be checked by this method
         //! \return True when a packet was sent false otherwise
         //! \todo Allow making these critical so that failing to send these will terminate the ConnectionInfo
-        DLLEXPORT static bool SendObjectToConnection(shared_pt<BaseObject> obj, shared_ptr<ConnectionInfo> connection);
+        DLLEXPORT bool SendObjectToConnection(shared_ptr<BaseObject> obj, shared_ptr<ConnectionInfo> connection);
         
 		
 	private:

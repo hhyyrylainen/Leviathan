@@ -8,6 +8,8 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "SFML/Network/Packet.hpp"
+#include "Entities/Bases/BaseObject.h"
+#include "boost/function.hpp"
 
 
 namespace Leviathan{

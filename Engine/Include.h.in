@@ -28,6 +28,8 @@
 #include <math.h>
 #include <assert.h>
 
+#include <cstdint>
+
 #ifdef _WIN32
 #include <SDKDDKVer.h>
 

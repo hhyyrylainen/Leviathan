@@ -23,9 +23,9 @@ namespace Leviathan{
 		NETWORKRESPONSETYPE_REMOTECONSOLECLOSED,
 		NETWORKRESPONSETYPE_REMOTECONSOLEOPENED,
 		NETWORKRESPONSETYPE_INVALIDREQUEST,
-		//! \brief Sent by a server when it disallows a made request
+		//! Sent by a server when it disallows a made request
 		NETWORKRESPONSETYPE_SERVERDISALLOW,
-		//! \brief Sent by a server when a request is allowed
+		//! Sent by a server when a request is allowed
 		NETWORKRESPONSETYPE_SERVERALLOW,
 		//! Returns anonymous data about the server
 		NETWORKRESPONSETYPE_SERVERSTATUS,
@@ -41,7 +41,9 @@ namespace Leviathan{
 		//! Contains control state updates regarding a NetworkedInput
 		NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT,
 
-
+        //! Contains one or more full entities sent by the server
+        NETWORKRESPONSETYPE_INITIAL_ENTITY,
+        
 		//! A server heartbeat packet
 		NETWORKRESPONSETYPE_SERVERHEARTBEAT,
 
@@ -291,7 +293,31 @@ namespace Leviathan{
 	};
 
 
+    //! \brief Used for storing data related to updating a NetworkedInput
+	class NetworkResponseDataForInitialEntity : public BaseNetworkResponseData{
+	public:
+		DLLEXPORT NetworkResponseDataForInitialEntity(sf::Packet &frompacket);
+        
+        //! \brief Creates a response with a single entity
+		DLLEXPORT NetworkResponseDataForInitialEntity(int worldid, unique_ptr<sf::Packet> &entity1data);
+        
+		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) override;
 
+        //! \brief Puts the data of an object to a sf::Packet
+        //! \note This will overwrite all the data in the packet
+        //! \return True when the index is valid
+        DLLEXPORT shared_ptr<sf::Packet> GetDataForEntity(size_t index) const;
+        
+		//! The ID of the world to which the entities belong
+		int WorldID;
+
+		//! The data for the entitites is here as binary data
+        std::vector<shared_ptr<sf::Packet>> EntityData;
+	};
+
+
+
+    //! \brief Represents a response type packet sent through a ConnectionInfo
 	class NetworkResponse : public Object{
 	public:
 		DLLEXPORT NetworkResponse(int inresponseto, PACKET_TIMEOUT_STYLE timeout, int timeoutvalue);
@@ -310,6 +336,7 @@ namespace Leviathan{
 		DLLEXPORT void GenerateResourceSyncResponse(const char* dataptr, size_t datasize);
 		DLLEXPORT void GenerateCreateNetworkedInputResponse(NetworkResponseDataForCreateNetworkedInput* newddata);
 		DLLEXPORT void GenerateUpdateNetworkedInputResponse(NetworkResponseDataForUpdateNetworkedInput* newddata);
+        DLLEXPORT void GenerateInitialEntityResponse(NetworkResponseDataForInitialEntity* newddata);
 
 		DLLEXPORT void GenerateCustomResponse(GameSpecificPacketData* newdpacketdata);
 		DLLEXPORT void GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata);

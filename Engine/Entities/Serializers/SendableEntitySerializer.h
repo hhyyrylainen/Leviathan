@@ -23,14 +23,17 @@ namespace Leviathan{
 
         //! \copydoc BaseEntitySerializer::CreatePacketForConnection
         DLLEXPORT virtual bool CreatePacketForConnection(BaseObject* object, sf::Packet &packet,
-            ConnectionInfo* connectionptr);
+            ConnectionInfo* connectionptr) override;
 
         //! \copydoc BaseEntitySerializer::DeserializeWholeEntityFromPacket
-        DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, sf::Packet &packet);
+        DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, sf::Packet &packet) override;
 
         //! \copydoc BaseEntitySerializer::ApplyUpdateFromPacket
-        DLLEXPORT virtual bool ApplyUpdateFromPacket(BaseObject* targetobject, sf::Packet &packet);
+        DLLEXPORT virtual bool ApplyUpdateFromPacket(BaseObject* targetobject, sf::Packet &packet) override;
 
+
+        //! \copydoc BaseEntitySerializer::IsObjectTypeCorrect
+        DLLEXPORT virtual bool IsObjectTypeCorrect(BaseObject* object) const override;
         
     protected:
 

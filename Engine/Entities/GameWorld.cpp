@@ -533,8 +533,11 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
                     processingobject->ObjectsReady = true;
                 }
 
-                if(processingobject->ObjectsReady && processingobject->Pinging == PING_STATE_COMPLETED)
+                if(processingobject->ObjectsReady && processingobject->Pinging ==
+                    PlayerConnectionPreparer::PING_STATE_COMPLETED)
+                {
                     processingobject->AllDone = true;
+                }
                 return;
             }
             
@@ -552,7 +555,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
             Logger::Get()->Info("Sending object, number: "+Convert::ToString(num));
 
             // Skip if shouldn't send //
-            if(!ShouldPlayerReceiveObject(tosend, *connection)){
+            if(!world->ShouldPlayerReceiveObject(tosend.get(), connection.get())){
 
                 goto exitcurrentiterationchecklabel;
             }
@@ -560,7 +563,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
 
             // Send it //
             // TODO: could check for errors here
-            SendObjectToConnection(tosend, connection);
+            world->SendObjectToConnection(tosend, connection);
 
 
             // Sent, check the exit things //
@@ -647,7 +650,7 @@ notusingapositionlabel:
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(shared_pt<BaseObject> obj,
+DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(shared_ptr<BaseObject> obj,
     shared_ptr<ConnectionInfo> connection)
 {
     // Fail if the obj is not a valid pointer //
@@ -657,12 +660,13 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(shared_pt<BaseObject
     // First create a packet which will be the object's data //
     GUARD_LOCK_OTHER_OBJECT(obj.get());
 
-    auto objdata = EntitySerializerManager::Get()->CreateInitialEntityMessageFor(obj.get(), connection);
+    auto objdata = EntitySerializerManager::Get()->CreateInitialEntityMessageFor(obj.get(), connection.get());
 
     if(!objdata)
         return false;
 
     // Then gather all sorts of other stuff to make an response //
+    unique_ptr<NetworkResponseDataForInitialEntity> resdata(new NetworkResponseDataForInitialEntity(ID, objdata));
     
     
 
@@ -671,7 +675,7 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(shared_pt<BaseObject
         PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 20);
 
 
-    return connection->SendPacketToConnection(response, 5);
+    return connection->SendPacketToConnection(response, 5).get() ? true: false;
 }
 
 

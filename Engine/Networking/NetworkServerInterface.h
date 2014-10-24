@@ -9,6 +9,7 @@
 #include "NetworkResponse.h"
 #include "Common/BaseNotifiable.h"
 #include "Gameplay/CommandHandler.h"
+#include "boost/thread.hpp"
 
 //! Defines the interval between heartbeats
 //! Should be the same as CLIENT_HEARTBEATS_MILLISECOND

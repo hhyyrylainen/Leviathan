@@ -43,7 +43,7 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
     Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), _NewtonManager(NULL),
     GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
     _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
-    _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), EntitySerializerManager(NULL)
+    _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), _EntitySerializerManager(NULL)
 {
 	IDDefaultInstance = IDFactory::Get();
 
@@ -269,7 +269,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
         {
 
             engine->_EntitySerializerManager = new EntitySerializerManager();
-            if(!engine->EntitySerializerManager){
+            if(!engine->_EntitySerializerManager){
 
                 returnvalue.set_value(false);
                 return;

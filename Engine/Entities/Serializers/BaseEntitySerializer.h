@@ -46,7 +46,7 @@ namespace Leviathan{
         //! \return Returns true when the type of object is correct. Which should be when IsObjectTypeCorrect returns
         //! true
         //! \note The caller will have added the ID to the packet so that needs to be skipped (or rather should be)
-        //! But the Type variable should be included by this object
+        //! But the Type variable should be included by this object (as an int32_t)
         DLLEXPORT virtual bool CreatePacketForConnection(BaseObject* object, sf::Packet &packet,
             ConnectionInfo* connectionptr) = 0;
 
@@ -55,7 +55,9 @@ namespace Leviathan{
         //! \note This should do the exact opposite of CreatePacketForConnection
         //! \return True when the type of packet is correct even if the data is invalid
         //! \todo Allow reporting invalid data
-        DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, sf::Packet &packet) = 0;
+        //! \param serializetype The type that was included in the packet by a CreatePacketForConnection
+        DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, int32_t serializetype,
+            sf::Packet &packet) = 0;
 
 
         //! \brief Deserializes and applies an update from a packet

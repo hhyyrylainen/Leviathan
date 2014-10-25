@@ -26,7 +26,8 @@ namespace Leviathan{
             ConnectionInfo* connectionptr) override;
 
         //! \copydoc BaseEntitySerializer::DeserializeWholeEntityFromPacket
-        DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, sf::Packet &packet) override;
+        DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, int32_t serializetype,
+            sf::Packet &packet) override;
 
         //! \copydoc BaseEntitySerializer::ApplyUpdateFromPacket
         DLLEXPORT virtual bool ApplyUpdateFromPacket(BaseObject* targetobject, sf::Packet &packet) override;

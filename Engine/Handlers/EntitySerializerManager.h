@@ -10,11 +10,11 @@
 #include "SFML/Network/Packet.hpp"
 #include "Entities/Bases/BaseObject.h"
 #include "boost/function.hpp"
-
+#include "Common/ThreadSafe.h"
 
 namespace Leviathan{
 
-	class EntitySerializerManager{
+	class EntitySerializerManager : public ThreadSafe{
 	public:
 		DLLEXPORT EntitySerializerManager();
         DLLEXPORT ~EntitySerializerManager();

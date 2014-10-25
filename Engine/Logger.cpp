@@ -108,7 +108,7 @@ DLLEXPORT void Leviathan::Logger::Info(const string &data, const bool &save){
 
     boost::strict_lock<Logger> guard(*this);
 
-    // TODO: change this to use utf8 strings...
+    // TODO: change this to whole class to use utf8 strings...
     wstringstream sstream;
 
     sstream << L"[INFO] ";
@@ -132,6 +132,24 @@ DLLEXPORT void Leviathan::Logger::Error(const wstring &data, const int &pvalue /
 	// if debug build send it to debug output //
 	SendDebugMessage(message, guard);
 	PendingLog += message;
+
+
+	_LogUpdateEndPart(save, guard);
+}
+
+DLLEXPORT void Leviathan::Logger::Error(const string &data, const int &pvalue /*= 0*/, const bool &save /*= false*/){
+	// thread safety //
+	boost::strict_lock<Logger> guard(*this);
+
+    // TODO: change this to whole class to use utf8 strings...
+    wstringstream sstream;
+
+    sstream << L"[ERROR] ";
+    sstream << data.c_str();
+    sstream << L"\n";
+
+    SendDebugMessage(sstream.str(), guard);
+    PendingLog += sstream.str();
 
 
 	_LogUpdateEndPart(save, guard);

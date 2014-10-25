@@ -27,6 +27,7 @@ namespace Leviathan{
 		DLLEXPORT void Info(const wstring &data, const bool &save = false);
         DLLEXPORT void Info(const string &data, const bool &save = false);
 		DLLEXPORT void Error(const wstring &data, const int &pvalue = 0, const bool &save = false);
+        DLLEXPORT void Error(const string &data, const int &pvalue = 0, const bool &save = false);
 		DLLEXPORT void Warning(const wstring &data, bool save = false);
 
 		DLLEXPORT static void SendDebugMessage(const wstring& str, boost::strict_lock<Logger> &guard);

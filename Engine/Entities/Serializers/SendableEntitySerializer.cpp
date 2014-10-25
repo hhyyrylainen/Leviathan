@@ -6,7 +6,7 @@ using namespace Leviathan;
 #include "Entities/Bases/BaseSendableEntity.h"
 // ------------------------------------ //
 DLLEXPORT SendableEntitySerializer::SendableEntitySerializer() :
-    BaseSendableEntity(ENTITYSERIALIZEDTYPE_SENDABLE_ENTITY)
+    BaseEntitySerializer(ENTITYSERIALIZEDTYPE_SENDABLE_ENTITY)
 {
 
     
@@ -37,7 +37,7 @@ DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(BaseObject* o
 }
 // ------------------------------------ //
 DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(BaseObject** returnobj,
-    int32_t serializetype, sf::Packet &packet)
+    int32_t serializetype, sf::Packet &packet, GameWorld* world)
 {
     // Verify that the type matches //
     if(serializetype != Type){
@@ -47,7 +47,7 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(BaseOb
     }
 
     // Create a sendable entity //
-    auto sendableobj = BaseSendableEntity::UnSerializeFromPacket(packet);
+    auto sendableobj = BaseSendableEntity::UnSerializeFromPacket(packet, world);
 
     // Set the object if it was created //
     if(!sendableobj){

@@ -4,14 +4,18 @@
 #include "BaseEntitySerializer.h"
 #endif
 using namespace Leviathan;
-using namespace Leviathan::Gui;
+// ------------------------------------ //
+DLLEXPORT Leviathan::BaseEntitySerializer::BaseEntitySerializer(ENTITYSERIALIZEDTYPE type) : Type(type){
+
+}
+
+DLLEXPORT Leviathan::BaseEntitySerializer:: ~BaseEntitySerializer(){
+
+}
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::BaseEntitySerializer::CanSerializeType(TypeIDSize typetocheck) const{
+
+    return Type == typetocheck;
+}
 // ------------------------------------ //
 
-
-// ------------------------------------ //
-
-// ------------------------------------ //
-
-// ------------------------------------ //
-
-// ------------------------------------ //

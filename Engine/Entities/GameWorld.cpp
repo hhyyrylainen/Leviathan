@@ -240,6 +240,11 @@ DLLEXPORT void Leviathan::GameWorld::UpdateCameraLocation(int mspassed, ViewerCa
 
 	WorldSceneCamera->setOrientation(rotq);
 }
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(BaseObject* obj, ConnectionInfo* connectionptr){
+
+    return true;
+}
 // ------------------ Object managing ------------------ //
 DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
 	AddObject(shared_ptr<BaseObject>(obj, SharedPtrReleaseDeleter<BaseObject>::DoRelease));

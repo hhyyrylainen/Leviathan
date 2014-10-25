@@ -27,7 +27,7 @@ namespace Leviathan{
 
         //! \copydoc BaseEntitySerializer::DeserializeWholeEntityFromPacket
         DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, int32_t serializetype,
-            sf::Packet &packet) override;
+            sf::Packet &packet, GameWorld* world) override;
 
         //! \copydoc BaseEntitySerializer::ApplyUpdateFromPacket
         DLLEXPORT virtual bool ApplyUpdateFromPacket(BaseObject* targetobject, sf::Packet &packet) override;

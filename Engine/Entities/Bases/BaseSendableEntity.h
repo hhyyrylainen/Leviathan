@@ -29,7 +29,7 @@ namespace Leviathan{
 	class BaseSendableEntity : public virtual BaseObject{
 	public:
         //! \brief Sets the type identified with this object
-        DLLEXPORT BaseSendableEntity(BaseEntitySerializer::TypeIDSize type);
+        DLLEXPORT BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type);
         DLLEXPORT virtual ~BaseSendableEntity();
         
         //! \brief Serializes this object to a packet
@@ -40,7 +40,9 @@ namespace Leviathan{
         //! \brief Used to unserialize objects from packets
         //! \return Returns An object that is derived from BaseSendableEntity on success otherwise nullptr is
         //! returned
-        DLLEXPORT static unique_ptr<BaseSendableEntity> UnSerializeFromPacket(sf::Packet &packet);
+        //! \aram world The world to which the object is created. This has to be locked before this
+        //! call
+        DLLEXPORT static unique_ptr<BaseSendableEntity> UnSerializeFromPacket(sf::Packet &packet, GameWorld* world);
 
         //! \brief Serializes an update to a packet for a specific connection
         //! \note This function should include it's own type in the packet to verify that it is the right type

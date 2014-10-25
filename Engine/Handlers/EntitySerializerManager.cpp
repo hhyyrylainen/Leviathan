@@ -18,6 +18,8 @@ DLLEXPORT EntitySerializerManager* Leviathan::EntitySerializerManager::Get(){
 
     return Staticinstance;
 }
+
+EntitySerializerManager* Leviathan::EntitySerializerManager::Staticinstance = NULL;
 // ------------------------------------ //
 DLLEXPORT void Leviathan::EntitySerializerManager::Release(){
 

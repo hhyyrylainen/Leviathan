@@ -216,16 +216,19 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 
 	} else if(*cmd == "start"){
 
-		Logger::Get()->Info(L"TODO: check permissions");
+        ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([]() -> void
+            {
+
+                Logger::Get()->Info(L"TODO: check permissions");
 
 
-		Logger::Get()->Info(L"TODO: check can a match actually begin");
+                Logger::Get()->Info(L"TODO: check can a match actually begin");
 
-		// Start the match //
-		PongServer::Get()->OnStartPreMatch();
+                // Start the match //
+                PongServer::Get()->OnStartPreMatch();
+
+            })));
 	}
-
-
 }
 // ------------------------------------ //
 

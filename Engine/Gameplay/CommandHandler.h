@@ -23,7 +23,8 @@ namespace Leviathan{
 	class CommandSender : public virtual ThreadSafe{
 	public:
 
-		//! \brief Returns the unique name of this entity, this can be something like a steam id or some other static name
+		//! \brief Returns the unique name of this entity, this can be something like a steam id
+        //! or some other static name
 		DLLEXPORT virtual const string& GetUniqueName() = 0;
 
 		//! \brief Returns a friendly name, nickname used to represent this entity
@@ -39,7 +40,8 @@ namespace Leviathan{
 
 
 		//! \brief Marks the start of a time period during which this object needs to report if it is released
-		//! \warning It needs to be notified that calls with the same commander may NOT be ignored as the EndOwnership call of first would end the
+		//! \warning It needs to be notified that calls with the same commander may NOT be
+        //! ignored as the EndOwnership call of first would end the
 		//! ownership when in reality the single command handler still wants this object
 		DLLEXPORT virtual void StartOwnership(CommandHandler* commander);
 
@@ -54,7 +56,8 @@ namespace Leviathan{
 
 
 		//! \brief Should be the actual implementation of SendPrivateMessage
-		//! \return Return false when unable to send (the message will them appear in the server log where someone hopefully will see it)
+		//! \return Return false when unable to send (the message will them appear in the server
+        //! log where someone hopefully will see it)
 		DLLEXPORT virtual bool _OnSendPrivateMessage(const string &message) = 0;
 
 
@@ -82,12 +85,13 @@ namespace Leviathan{
 
 		//! \brief Call this periodically to perform cleanup tasks 
 		//!
-		//! and depending on actual implementation the command handling. The default implementation doesn't really need this, but it should still
-		//! be called
+		//! and depending on actual implementation the command handling. The default
+        //! implementation doesn't really need this, but it should still be called
 		DLLEXPORT virtual void UpdateStatus();
 
 
-		//! \brief This should be called by CommandSender subclasses when they are no longer available to remove their commands from the queue
+		//! \brief This should be called by CommandSender subclasses when they are no longer
+        //! available to remove their commands from the queue
 		DLLEXPORT virtual void RemoveMe(CommandSender* object);
 
 
@@ -98,11 +102,13 @@ namespace Leviathan{
 
 		//! \brief Called by a command handler when a CommandSender is no longer needed
 		//! \param stillgotthis Is the lock received from IsSenderStillValid
-		DLLEXPORT virtual void SenderNoLongerRequired(CommandSender* checkthis, const unique_ptr<ObjectLock> &stillgotthis);
+		DLLEXPORT virtual void SenderNoLongerRequired(CommandSender* checkthis,
+            const unique_ptr<ObjectLock> &stillgotthis);
 
 
 		//! \brief Registers a new custom command handler
-		//! \param handler The object to use for handling. The object will be owned by this and will be deleted when it is no longer used
+		//! \param handler The object to use for handling. The object will be owned by this and
+        //! will be deleted when it is no longer used
 		//! \see CustomCommandHandler
 		DLLEXPORT virtual bool RegisterCustomCommandHandler(shared_ptr<CustomCommandHandler> handler);
 

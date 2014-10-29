@@ -31,7 +31,10 @@ namespace Leviathan{
 
 		//! \brief Called by a worker thread that wants to execute a command
 		//! \param wholecommand Will contain exactly what the user passed in including the preceding /'s
-		//! \param sender The CommandSender who executed this command, the pointer is safe to use during this call as it is locked during the call
+		//! \param sender The CommandSender who executed this command, the pointer is safe to use
+        //! during this call as it is locked during the call
+        //! \warning This function can easily deadlock the engine if not used with care, expensive
+        //! operations (or dangerous ones) should be queued as a task to avoid deadlocking
 		DLLEXPORT virtual void ExecuteCommand(const string &wholecommand, CommandSender* sender) = 0;
 	};
 

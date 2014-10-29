@@ -7,7 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "NetworkInterface.h"
-#include <boost/thread/future.hpp>
+#include <boost/thread.hpp>
 #include "Common/ThreadSafe.h"
 #include "SFML/Network/UdpSocket.hpp"
 
@@ -78,7 +78,7 @@ namespace Leviathan{
         //! \brief Called by Engine to stop own connection update thread
         DLLEXPORT void StopOwnUpdaterThread();
 
-		DLLEXPORT virtual void RemoveClosedConnections(ObjectLock &guard);
+		DLLEXPORT virtual void RemoveClosedConnections();
 
 		DLLEXPORT shared_ptr<boost::promise<wstring>> QueryMasterServer(const MasterServerInformation &info);
 
@@ -106,15 +106,7 @@ namespace Leviathan{
 		//! and will close if no response is received to a keep alive packet (which is sent after a couple of minutes)
 		//! \warning This will always open a new connection. To avoid multiple connections to same target
         //! (and breaking both connections) see GetOrCreatePointerToConnection
-		DLLEXPORT FORCE_INLINE shared_ptr<ConnectionInfo> OpenConnectionTo(const wstring &targetaddress){
-			// Lock and call the real function //
-			GUARD_LOCK_THIS_OBJECT();
-			return OpenConnectionTo(targetaddress, guard);
-		}
-
-		//! \brief Actual version of OpenConnectionTo
-		//! \see OpenConnectionTo
-		DLLEXPORT shared_ptr<ConnectionInfo> OpenConnectionTo(const wstring &targetaddress, ObjectLock &guard);
+		DLLEXPORT shared_ptr<ConnectionInfo> OpenConnectionTo(const wstring &targetaddress);
 
 		//! Returns the port to which our socket has been bind
 		DLLEXPORT USHORT GetOurPort();
@@ -155,14 +147,7 @@ namespace Leviathan{
 		bool _LoadMasterServerList();
 
         //! \brief Registers a connection to be updated when UpdateAllConnections is called
-		void inline _RegisterConnectionInfo(ConnectionInfo* tomanage){
-
-            GUARD_LOCK_THIS_OBJECT();
-            _RegisterConnectionInfo(tomanage, guard);
-        }
-
-        //! Actual implementation of _RegisterConnectionInfo
-        void _RegisterConnectionInfo(ConnectionInfo* tomanage, ObjectLock &guard);
+        void _RegisterConnectionInfo(ConnectionInfo* tomanage);
         
 		void _UnregisterConnectionInfo(ConnectionInfo* unregisterme);
 
@@ -207,6 +192,10 @@ namespace Leviathan{
         bool UpdaterThreadStop;
 
         boost::condition_variable_any NotifyTemporaryUpdater;
+
+        //! Mutex that needs to belocked while changing ConnectionsToTerminate or ConnectionsToUpdate or any other
+        //! connection list
+        boost::shared_mutex ConnectionListMutex;
         
 
 		wstring MasterServerMustPassIdentification;

@@ -354,10 +354,15 @@ DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
 		// Send a close packet //
 		ConnectionsToTerminate[i]->SendCloseConnectionPacket();
 
+        // We don't have a recursive mutex, so avoid deadlocking by unlocking first //
+        lock.unlock();
+        
 		// Close it //
 		ConnectionsToTerminate[i]->Release();
 		// The connection will automatically remove itself from the vector //
 
+        lock.lock();
+        
 		// But if we have opened it we need to delete our pointer //
 		for(size_t a = 0; a < AutoOpenedConnections.size(); a++){
 			if(AutoOpenedConnections[a].get() == ConnectionsToTerminate[i]){
@@ -502,6 +507,10 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 		}
 
 		if(tmpconnect){
+
+            // This doesn't need relocking as it will be recreated next loop //
+            lock.unlock();
+            
 			// Try to handle with the new connection //
 			// We need to initialize the new connection first //
 			if(!tmpconnect->Init()){
@@ -509,8 +518,6 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 				assert(0 && "connection init function should never fail");
 			}
 
-            // This doesn't need relocking as it will be recreated next loop //
-            lock.unlock();
             {
                 boost::unique_lock<boost::shared_mutex> lock2(ConnectionListMutex);
             

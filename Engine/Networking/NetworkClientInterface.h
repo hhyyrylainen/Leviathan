@@ -22,7 +22,8 @@ namespace Leviathan{
 
 	//! \brief Class that encapsulates common networking functionality required by client programs
 	//!
-	//! More specific version of NetworkInterface and should be included additionally in client network interface classes.
+	//! More specific version of NetworkInterface and should be included additionally in client network
+    //! interface classes.
 	//! \see NetworkInterface
 	class NetworkClientInterface : public BaseNotifiableAll{
 	public:
@@ -31,8 +32,10 @@ namespace Leviathan{
 
 
 		//! \brief Connects the client to a server
-		//! \return Returns true when successfully started the join process, false if already connected (DisconnectFromServer should be called)
-		//! \param connectiontouse The connection object should be retrieved by calling NetworkHandler::GetOrCreatePointerToConnection
+		//! \return Returns true when successfully started the join process, false if already connected
+        //! (DisconnectFromServer should be called)
+		//! \param connectiontouse The connection object should be retrieved by calling
+        //! NetworkHandler::GetOrCreatePointerToConnection
 		DLLEXPORT bool JoinServer(shared_ptr<ConnectionInfo> connectiontouse);
 
 		//! \brief Disconnects the client from the server or does nothing
@@ -52,10 +55,12 @@ namespace Leviathan{
 
 		//! \brief Sends a command string to the server
 		//!
-		//! It should always be assumed that this function works. If it doesn't it is guaranteed that the client kicks itself because 
+		//! It should always be assumed that this function works. If it doesn't it is guaranteed that the
+        //! client kicks itself because 
 		//! the connection is lost.
 		//! \exception ExceptionInvalidState if not connected to a server
-		//! \param messagestr The UTF8 encoded string containing the command. This specifically uses utf8 to save space when sending long chat messages
+		//! \param messagestr The UTF8 encoded string containing the command. This specifically uses utf8 to
+        //! save space when sending long chat messages
 		//! The maximum length is MAX_SERVERCOMMAND_LENGTH should be around 550 characters.
 		//! \exception ExceptionInvalidArgument when the message string is too long
 		DLLEXPORT void SendCommandStringToServer(const string &messagestr);
@@ -70,7 +75,8 @@ namespace Leviathan{
 
 		//! \brief Returns true if the client is connected to a server
 		//!
-		//! This will be true when the server has responded to our join request and allowed us to join, we aren't actually yet playing on the server
+		//! This will be true when the server has responded to our join request and allowed us to join,
+        //! we aren't actually yet playing on the server
 		DLLEXPORT bool IsConnected() const;
 
 		//! \brief Returns the ID that the server has assigned to us
@@ -99,7 +105,8 @@ namespace Leviathan{
 		//! \brief Utility function for subclasses to call for default handling of non-request responses
 		//!
 		//! Handles default types of response packages and returns true if processed.
-		DLLEXPORT bool _HandleClientResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived);
+		DLLEXPORT bool _HandleClientResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection,
+            bool &dontmarkasreceived);
 
 		//! \brief Updates status of the client to server connections
 		//!  

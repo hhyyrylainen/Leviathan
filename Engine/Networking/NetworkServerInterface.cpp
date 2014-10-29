@@ -380,12 +380,10 @@ std::vector<ConnectedPlayer*>::iterator Leviathan::NetworkServerInterface::_OnRe
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
 	{
-		UNIQUE_LOCK_THIS_OBJECT();
-
         ConnectedPlayer* curplayer = NULL;
 
         // Lock the list while we are doing stuff //
-        boost::upgrade_lock<boost::shared_mutex> plylock;
+        boost::upgrade_lock<boost::shared_mutex> plylock(PlayerListLocked);
         
         // Check for closed connections //
         // We can use the iter because we have indicated that no player should be removed or added
@@ -394,19 +392,17 @@ DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
         for(auto iter = PlayerList.begin(); iter != end; ){
                 
             // Check is it the player //
-            lockit.unlock();
+            //lockit.unlock();
+            // TODO: check whether this unlock is required
             
             if((*iter)->IsConnectionClosed()){
                 // The player has disconnected //
-                lockit.lock();
                 GUARD_LOCK_THIS_OBJECT();
                 iter = _OnReportCloseConnection(iter, guard, plylock);
 
             } else {
 
                 (*iter)->UpdateHeartbeats();
-                lockit.lock();
-                
                 ++iter;
             }
         }

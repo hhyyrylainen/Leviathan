@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_NETWORKINTERFACE
 #include "NetworkInterface.h"
@@ -152,3 +151,4 @@ void Leviathan::NetworkInterface::_SetNetworkType(NETWORKED_TYPE ntype){
 DLLEXPORT void Leviathan::NetworkInterface::TickIt(){
 	return;
 }
+

@@ -13,6 +13,8 @@
 #include "Common/Misc.h"
 #include "Iterators/StringIterator.h"
 #include "NetworkedInputHandler.h"
+#include "Application/Application.h"
+#include "Entities/GameWorld.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -20,8 +22,9 @@ using namespace Leviathan;
 
 
 // ------------------ NetworkClientInterface ------------------ //
-DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() : MaxConnectTries(DEFAULT_MAXCONNECT_TRIES), ConnectTriesCount(0), 
-	ConnectedToServer(false), UsingHeartbeats(false), SecondsWithoutConnection(0.f), OurPlayerID(-1), PotentialInputHandler(NULL)
+DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() :
+    MaxConnectTries(DEFAULT_MAXCONNECT_TRIES), ConnectTriesCount(0), ConnectedToServer(false), UsingHeartbeats(false),
+    SecondsWithoutConnection(0.f), OurPlayerID(-1), PotentialInputHandler(NULL)
 {
 	Staticaccess = this;
 }
@@ -64,7 +67,9 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(shared_ptr<Connecti
 	return true;
 }
 
-DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLock &guard, const wstring &reason, bool connectiontimedout){
+DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLock &guard, const wstring &reason,
+    bool connectiontimedout)
+{
 	VerifyLock(guard);
 
 	// Return if no connection //
@@ -75,7 +80,8 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLoc
 	}
 
 	// Send disconnect message to server //
-	_OnNewConnectionStatusMessage(L"Disconnected from "+ServerConnection->GenerateFormatedAddressString()+L", reason: "+reason);
+	_OnNewConnectionStatusMessage(L"Disconnected from "+ServerConnection->GenerateFormatedAddressString()+L", reason: "
+        +reason);
 
 	SyncedVariables::Get()->RemoveConnectionWithAnother(ServerConnection.get());
 
@@ -89,7 +95,9 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLoc
 	_OnDisconnectFromServer(reason, connectiontimedout ? false: true);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult){
+DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_ptr<NetworkRequest> request,
+    ConnectionInfo* connectiontosendresult)
+{
 	// Try to handle input packet if we have the proper handler //
 	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(request, connectiontosendresult)){
 
@@ -100,8 +108,8 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_pt
 	return false;
 }
 
-DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection,
-	bool &dontmarkasreceived)
+DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shared_ptr<NetworkResponse> message,
+    ConnectionInfo* connection, bool &dontmarkasreceived)
 {
 	// Try to handle input packet if we have the proper handler //
 	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(message, connection)){
@@ -110,7 +118,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
 	}
 
 	switch(message->GetType()){
-	case NETWORKRESPONSETYPE_SERVERHEARTBEAT:
+        case NETWORKRESPONSETYPE_SERVERHEARTBEAT:
 		{
 			// We got a heartbeat //
 			_OnHeartbeat();
@@ -118,14 +126,46 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
 			//dontmarkasreceived = true;
 			return true;
 		}
-	case NETWORKRESPONSETYPE_STARTHEARTBEATS:
+        case NETWORKRESPONSETYPE_STARTHEARTBEATS:
 		{
 			// We need to start sending heartbeats //
 			_OnStartHeartbeats();
 			return true;
 		}
-	default:
-		return false;
+        case NETWORKRESPONSETYPE_INITIAL_ENTITY:
+        {
+            // We received a new entity! //
+            // TODO: do a system that automatically creates worlds on the client //
+
+            auto packetdata = message->GetResponseDataForInitialEntity();
+
+            if(!packetdata){
+                // Invalid data //
+                return true;
+            }
+
+            // Get a matching world //
+            auto world = LeviathanApplication::Get()->GetGameWorld(packetdata->WorldID);
+
+            if(!world){
+
+                Logger::Get()->Error("NetworkClientInterface: handle response: couldn't find a matching world for "
+                    "initial entity message, WorldID: "+packetdata->WorldID);
+                return true;
+            }
+
+            if(!world->HandleEntityInitialPacket(packetdata)){
+
+                Logger::Get()->Error("NetworkClientInterface: failed to create an entity from an initial "
+                    "entity packet");
+            }
+
+            Logger::Get()->Write(L"Received a new entity!");
+
+            return true;
+        }
+        default:
+            return false;
 	}
 
 
@@ -155,7 +195,8 @@ checksentrequestsbeginlabel:
 
 				_ProcessFailedRequest(tmpsendthing, guard);
 
-				// We need to loop again, because our iterator is now invalid, because quite often failed things are retried //
+				// We need to loop again, because our iterator is now invalid, because quite often failed things
+                // are retried
 				goto checksentrequestsbeginlabel;
 			}
 
@@ -194,7 +235,8 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnNotifierDisconnected(BaseNo
 	// Disconnect if got to the connected state //
 	if(ServerConnection){
 		// Send disconnect message to server //
-		_OnNewConnectionStatusMessage(L"Disconnected from "+ServerConnection->GenerateFormatedAddressString()+L", reason: "+closereason);
+		_OnNewConnectionStatusMessage(L"Disconnected from "+ServerConnection->GenerateFormatedAddressString()+
+            L", reason: "+closereason);
 
 		// Call the disconnect callback //
 		_OnDisconnectFromServer(closereason, false);
@@ -222,11 +264,13 @@ void Leviathan::NetworkClientInterface::_SendConnectRequest(ObjectLock &guard){
 	OurSentRequests.push_back(sentthing);
 
 	// Send message //
-	_OnNewConnectionStatusMessage(L"Trying to connect to a server on "+ServerConnection->GenerateFormatedAddressString()+L", attempt "+
-		Convert::ToWstring(ConnectTriesCount));
+	_OnNewConnectionStatusMessage(L"Trying to connect to a server on "+ServerConnection->
+        GenerateFormatedAddressString()+L", attempt "+Convert::ToWstring(ConnectTriesCount));
 }
 // ------------------------------------ //
-void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(shared_ptr<SentNetworkThing> tmpsendthing, ObjectLock &guard){
+void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(shared_ptr<SentNetworkThing> tmpsendthing,
+    ObjectLock &guard)
+{
 	VerifyLock(guard);
 
 	// Handle it //
@@ -266,14 +310,16 @@ void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(shared_ptr<Sent
 						if(OurPlayerID < 0)
 							goto networkresponseserverallowinvalidreponseformatthinglabel;
 
-						Logger::Get()->Info(L"NetworkClientInterface: our player ID is now: "+Convert::ToWstring(OurPlayerID));
+						Logger::Get()->Info(L"NetworkClientInterface: our player ID is now: "+
+                            Convert::ToWstring(OurPlayerID));
 
 						_ProperlyConnectedToServer(guard);
 						return;
 					}
 networkresponseserverallowinvalidreponseformatthinglabel:
 
-					Logger::Get()->Error(L"NetworkClientInterface: server join response has invalid format, disconnecting");
+					Logger::Get()->Error("NetworkClientInterface: server join response has invalid format, "
+                        "disconnecting");
 					DisconnectFromServer(guard, L"Server sent an invalid response to join request", true);
 				}
 				break;
@@ -291,7 +337,9 @@ networkresponseserverallowinvalidreponseformatthinglabel:
 	}
 }
 
-void Leviathan::NetworkClientInterface::_ProcessFailedRequest(shared_ptr<SentNetworkThing> tmpsendthing, ObjectLock &guard){
+void Leviathan::NetworkClientInterface::_ProcessFailedRequest(shared_ptr<SentNetworkThing> tmpsendthing,
+    ObjectLock &guard)
+{
 	VerifyLock(guard);
 
 	// First do some checks based on the request type //
@@ -306,7 +354,8 @@ void Leviathan::NetworkClientInterface::_ProcessFailedRequest(shared_ptr<SentNet
 			} else {
 
 				Logger::Get()->Write(L"\t> Maximum connect tries reached");
-				DisconnectFromServer(guard, L"Connection timed out after "+Convert::ToWstring(ConnectTriesCount)+L" tries", true);
+				DisconnectFromServer(guard, L"Connection timed out after "+Convert::ToWstring(ConnectTriesCount)+
+                    L" tries", true);
 			}
 		}
 		break;
@@ -360,12 +409,13 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
 		}
 
 		// This will have the maximum number of variables we are going to receive //
-		NetworkResponseDataForServerAllow* tmpresponse = maderequest->GotResponse->GetResponseDataForServerAllowResponse();
+		NetworkResponseDataForServerAllow* tmpresponse = maderequest->GotResponse->
+            GetResponseDataForServerAllowResponse();
 		
 		if(!tmpresponse){
 
-			Logger::Get()->Warning(L"NetworkClientInterface: connect sync: variable sync request returned and invalid response, expected ServerAllow,"
-				L"unknown count of synced variables");
+			Logger::Get()->Warning(L"NetworkClientInterface: connect sync: variable sync request returned and "
+                L"invalid response, expected ServerAllow, unknown count of synced variables");
 		} else {
 
 			// Set the maximum number of things //
@@ -373,7 +423,8 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
 
 			SyncedVariables::Get()->SetExpectedNumberOfVariablesReceived(toreceive);
 
-			Logger::Get()->Info(L"NetworkClientInterface: sync variables: now expecting "+Convert::ToWstring(toreceive)+L" variables");
+			Logger::Get()->Info(L"NetworkClientInterface: sync variables: now expecting "+Convert::ToWstring(toreceive)+
+                L" variables");
 		}
 
 
@@ -404,9 +455,12 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
 	}, receivedata))));
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::OnUpdateFullSynchronizationState(size_t variablesgot, size_t expectedvariables){
+DLLEXPORT void Leviathan::NetworkClientInterface::OnUpdateFullSynchronizationState(size_t variablesgot,
+    size_t expectedvariables)
+{
 
-	_OnNewConnectionStatusMessage(L"Syncing variables, "+Convert::ToWstring(variablesgot)+L"/"+Convert::ToWstring(expectedvariables));
+	_OnNewConnectionStatusMessage(L"Syncing variables, "+Convert::ToWstring(variablesgot)+L"/"+Convert::ToWstring(
+            expectedvariables));
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::OnCloseClient(){
@@ -423,14 +477,16 @@ DLLEXPORT void Leviathan::NetworkClientInterface::SendCommandStringToServer(cons
 	// Make sure that we are connected to a server //
 	if(!ConnectedToServer){
 
-		throw ExceptionInvalidState(L"cannot send command because we aren't connected to a server", 0, __WFUNCTION__, L"not connected");
+		throw ExceptionInvalidState(L"cannot send command because we aren't connected to a server", 0, __WFUNCTION__,
+            L"not connected");
 	}
 
 
 	// Check the length //
 	if(messagestr.length() >= MAX_SERVERCOMMAND_LENGTH){
 
-		throw ExceptionInvalidArgument(L"server command is too long", messagestr.size(), __WFUNCTION__, L"messagestr", Convert::Utf8ToUtf16(messagestr));
+		throw ExceptionInvalidArgument(L"server command is too long", messagestr.size(), __WFUNCTION__, L"messagestr",
+            Convert::Utf8ToUtf16(messagestr));
 	}
 
 	// Create a packet //

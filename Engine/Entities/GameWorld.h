@@ -72,6 +72,11 @@ namespace Leviathan{
 		DLLEXPORT ~GameWorld();
 
 
+        //! \brief Returns the unique ID of this world
+        DLLEXPORT inline int GetID() const{
+            return ID;
+        }
+
 		//! \brief Creates resources for the world to work
 		//! \post The world can be used after this
 		DLLEXPORT bool Init(GraphicalInputEntity* renderto, Ogre::Root* ogre);
@@ -170,7 +175,10 @@ namespace Leviathan{
         //! \todo Allow making these critical so that failing to send these will terminate the ConnectionInfo
         DLLEXPORT bool SendObjectToConnection(shared_ptr<BaseObject> obj, shared_ptr<ConnectionInfo> connection);
         
-		
+		//! \brief Creates a new entity from initial entity response
+        //! \note This should only be called on the client
+        DLLEXPORT bool HandleEntityInitialPacket(NetworkResponseDataForInitialEntity* data);
+        
 	private:
 
 		//! Used to connect new players

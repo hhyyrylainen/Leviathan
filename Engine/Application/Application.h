@@ -52,8 +52,16 @@ namespace Leviathan{
 		DLLEXPORT virtual void RegisterApplicationPhysicalMaterials(PhysicsMaterialManager* manager);
 		DLLEXPORT virtual void EnginePreShutdown();
 
+        //! \brief Used to query a world for specific id
+        //!
+        //! This is called when the world holder couldn't find a world with the id
+        DLLEXPORT virtual shared_ptr<GameWorld> GetGameWorld(int id);
+
+        
 		// static access method for getting instance of this class //
 		DLLEXPORT static LeviathanApplication* GetApp();
+        DLLEXPORT static LeviathanApplication* Get();
+        
 		// Some dummy functions for ease of use //
 		DLLEXPORT static void DummyGameConfigurationVariables(GameConfiguration* configobj);
 		DLLEXPORT static void DummyGameKeyConfigVariables(KeyConfiguration* keyconfigobj);

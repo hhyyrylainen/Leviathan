@@ -394,9 +394,8 @@ namespace Leviathan{
 			case 0: return X;
 			case 1: return Y;
 			case 2: return Z;
-				// this should NEVER be hit //
-			default: __assume(0);
 			}
+            throw exception();
 		}
 
 		// ------------------- Operators ----------------- //

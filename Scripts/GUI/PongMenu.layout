@@ -484,6 +484,30 @@
       </Window>
     </Window>    
 
+    <!-- The during match GUI -->
+    <Window name="MatchScreen" type="DefaultWindow">
+        
+      <Property name="Visible" value="False"/>
+
+      <Window name="PlayersLabel" type="TaharezLook/StaticText">
+
+        <Property name="Size" value="{{0.125, 0}, {0.35, 0}}"/>
+        <Property name="Position" value="{{0.05, 0}, {0, 0}}"/>
+        
+        <Property name="HorzFormatting" value="LeftAligned"/>
+        
+        <Property name="HorizontalAlignment" value="Left"/>
+        <Property name="VerticalAlignment" value="Top"/>
+
+        
+        <Property name="FrameEnabled" value="False"/>
+        <Property name="BackgroundEnabled" value="True"/>
+        <Property name="Font" value="Simonetta"/>
+        <Property name="Text" value="Players:"/>
+      </Window>
+
+	</Window>
+
     <!-- The prematch screen -->
     <Window name="PrematchScreen" type="DefaultWindow">
         
@@ -542,5 +566,7 @@
     
 	</Window>
 
+
+    
   </Window>
 </GUILayout>

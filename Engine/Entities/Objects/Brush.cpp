@@ -17,7 +17,8 @@ using namespace Entity;
 
 
 DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) :
-    BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), Sizes(0), BrushModel(NULL)
+    BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_BRUSH),
+    Sizes(0), BrushModel(NULL)
 {
 
 }
@@ -426,6 +427,78 @@ void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const bo
     
 	// Update potential children //
 	tmp->_ParentableNotifyLocationDataUpdated();
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Entity::Brush::AddUpdateToPacket(sf::Packet &packet, ConnectionInfo* receiver){
+
+    DEBUG_BREAK;
+}
+
+DLLEXPORT bool Leviathan::Entity::Brush::LoadUpdateFromPacket(sf::Packet &packet){
+
+
+    DEBUG_BREAK;
+}
+// ------------------------------------ //
+bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
+
+    // First get the base class data //
+    BasePositionData pdata;
+
+    if(!LoadPositionFromPacketToHolder(packet, pdata)){
+
+        // It failed (the packet was invalid) //
+        return false;
+    }
+
+    float x, y, z;
+    bool physics;
+    string matname;
+
+    // Get all the things at once and then check for invalid state //
+    packet >> x >> y >> z;
+    packet >> physics;
+    packet >> matname;
+    
+
+    // Don't apply data (Init) if the packet was invalid //
+    if(!packet)
+        return false;
+
+    if(!Init(Float3(x, y, z), matname, physics)){
+
+        // This shouldn't happen //
+        Logger::Get()->Error("Brush: failed to create from packet, Init failed");
+        return false;
+    }
+    
+    
+    // Then set the position //
+    ApplyPositionDataObject(pdata);
+    
+    
+    return true;
+}
+
+void Leviathan::Entity::Brush::_SaveOwnDataToPacket(sf::Packet &packet){
+
+    // Before adding our data make base classes add stuff //
+    AddPositionAndRotationToPacket(packet);
+
+    // First add the size //
+    packet << Sizes.X << Sizes.Y << Sizes.Z;
+
+    // Then whether we have a physical object or not //
+    packet << (GetPhysicsBody() ? true: false);
+
+    // And finally our material //
+    packet << Material;
+
+    wstringstream stream;
+    stream << L"[" << Sizes.X << L", "<< Sizes.Y << L", " << Sizes.Z << "]";
+    stream << L"mat: \"" << Material.c_str() << L"\"";
+    
+    Logger::Get()->Write(L"Brush with data: "+stream.str());
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessagetype, void* dataptr){

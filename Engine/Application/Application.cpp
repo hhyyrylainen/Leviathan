@@ -20,8 +20,15 @@ DLLEXPORT Leviathan::LeviathanApplication::~LeviathanApplication(){
 }
 
 DLLEXPORT LeviathanApplication* Leviathan::LeviathanApplication::GetApp(){
+    
 	return Curapp;
 }
+
+DLLEXPORT LeviathanApplication* Leviathan::LeviathanApplication::Get(){
+    
+	return Curapp;
+}
+
 
 LeviathanApplication* LeviathanApplication::Curapp = NULL;
 // ------------------------------------ //
@@ -172,6 +179,12 @@ DLLEXPORT void Leviathan::LeviathanApplication::Tick(int mspassed){
 DLLEXPORT void Leviathan::LeviathanApplication::EnginePreShutdown(){
 
 }
+
+DLLEXPORT shared_ptr<GameWorld> Leviathan::LeviathanApplication::GetGameWorld(int id){
+
+    return nullptr;
+}
+
 
 DLLEXPORT void Leviathan::LeviathanApplication::DummyGameConfigurationVariables(GameConfiguration* configobj){
 

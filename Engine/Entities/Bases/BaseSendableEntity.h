@@ -40,7 +40,7 @@ namespace Leviathan{
         //! \brief Used to unserialize objects from packets
         //! \return Returns An object that is derived from BaseSendableEntity on success otherwise nullptr is
         //! returned
-        //! \aram world The world to which the object is created. This has to be locked before this
+        //! \param world The world to which the object is created. This has to be locked before this
         //! call
         DLLEXPORT static unique_ptr<BaseSendableEntity> UnSerializeFromPacket(sf::Packet &packet, GameWorld* world);
 
@@ -59,6 +59,7 @@ namespace Leviathan{
         //!
         //! This is called by BaseSendableEntity from UnSerializeFromPacket
         //! This should do the opposite of SerializeToPacket
+        //! Note this function should also call Init on the object to make it usable
         virtual bool _LoadOwnDataFromPacket(sf::Packet &packet) = 0;
 
         //! \brief Child classers use this to serialize their own data to a packet

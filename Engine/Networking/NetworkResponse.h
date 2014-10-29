@@ -370,6 +370,7 @@ namespace Leviathan{
 		DLLEXPORT NetworkResponseDataForServerAllow* GetResponseDataForServerAllowResponse() const;
 		DLLEXPORT NetworkResponseDataForCreateNetworkedInput* GetResponseDataForCreateNetworkedInputResponse() const;
 		DLLEXPORT NetworkResponseDataForUpdateNetworkedInput* GetResponseDataForUpdateNetworkedInputResponse() const;
+        DLLEXPORT NetworkResponseDataForInitialEntity* GetResponseDataForInitialEntity() const;
 
 		DLLEXPORT int GetResponseID() const;
 

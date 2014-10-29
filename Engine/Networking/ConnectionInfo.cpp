@@ -94,7 +94,7 @@ DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
 	}
 
 	// Register us //
-	NetworkHandler::Get()->_RegisterConnectionInfo(this, guard2);
+	NetworkHandler::Get()->_RegisterConnectionInfo(this);
 
 	Logger::Get()->Info(L"ConnectionInfo: opening connection to host on "+
         Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));

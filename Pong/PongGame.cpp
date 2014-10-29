@@ -356,6 +356,12 @@ void Pong::PongGame::Disconnect(const string &reasonstring){
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
                         new VariableBlock(string("Off")))))));
 
+    // Disable match screen //
+    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"MatchScreenState",
+            Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
+                        new VariableBlock(string("Off")))))));
+
+
     // Disable during game screen //
 
 
@@ -580,6 +586,22 @@ void Pong::PongGame::VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus)
 
         return;
     }
+        case PONG_JOINGAMERESPONSE_TYPE_MATCH:
+        {
+            // First hide the preparation screen  //
+            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"PrematchScreenState",
+                    Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
+                                new VariableBlock(string("Off")))))));
+            
+
+            // And display the match HUD //
+            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"MatchScreenState",
+                    Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
+                                new VariableBlock(string("On")))))));
+
+            
+            return;
+        }
 
 	}
 

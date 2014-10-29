@@ -367,6 +367,18 @@ playrscorelistupdateendlabel:
 		}
 
 
+        virtual shared_ptr<GameWorld> GetGameWorld(int id) override{
+
+            if(!id != WorldOfPong->GetID()){
+
+                Logger::Get()->Error("Pong asked to return a world that isn't WorldOfPong, ID: "+
+                    Convert::ToString(id)+", WorldOfPong: "+Convert::ToString(WorldOfPong->GetID()));
+                return nullptr;
+            }
+
+            return WorldOfPong;
+        }
+
 		// These handle the common code between the server and client //
 		virtual void CustomizeEnginePostLoad(){
 			using namespace Leviathan;

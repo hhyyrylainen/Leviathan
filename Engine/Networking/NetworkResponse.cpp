@@ -372,6 +372,13 @@ GetResponseDataForUpdateNetworkedInputResponse() const
 		return static_cast<NetworkResponseDataForUpdateNetworkedInput*>(ResponseData);
 	return NULL;
 }
+
+DLLEXPORT NetworkResponseDataForInitialEntity* Leviathan::NetworkResponse::GetResponseDataForInitialEntity() const{
+
+    if(ResponseType == NETWORKRESPONSETYPE_INITIAL_ENTITY && ResponseData)
+        return static_cast<NetworkResponseDataForInitialEntity*>(ResponseData);
+    return NULL;
+}
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForIdentificationString::NetworkResponseDataForIdentificationString(
     sf::Packet &frompacket)

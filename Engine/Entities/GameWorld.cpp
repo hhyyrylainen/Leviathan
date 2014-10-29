@@ -14,6 +14,7 @@
 #include "Compositor/OgreCompositorWorkspace.h"
 #include "Compositor/OgreCompositorManager2.h"
 #include "Networking/NetworkServerInterface.h"
+#include "Networking/NetworkResponse.h"
 #include "Bases/BasePositionable.h"
 #include "Networking/ConnectionInfo.h"
 #include "Threading/ThreadingManager.h"
@@ -679,10 +680,33 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(shared_ptr<BaseObjec
     shared_ptr<NetworkResponse> response = make_shared<NetworkResponse>(-1,
         PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 20);
 
+    response->GenerateInitialEntityResponse(resdata.release());
 
     return connection->SendPacketToConnection(response, 5).get() ? true: false;
 }
 
+
+DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDataForInitialEntity*
+    data){
+
+    // Handle all the entities in the packet //
+    auto end = data->EntityData.end();
+    for(auto iter = data->EntityData.begin(); iter != end; ++iter){
+
+        BaseObject* returnptr = NULL;
+        
+        EntitySerializerManager::Get()->CreateEntityFromInitialMessage(&returnptr, *(*iter).get());
+
+        if(!returnptr){
+
+            Logger::Get()->Error("GameWorld: handle initial packet: failed to create entity");
+            continue;
+        }
+
+        // Add the entity //
+        AddObject(returnptr);
+    }
+}
 
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/, const float &tvar,

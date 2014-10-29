@@ -38,6 +38,9 @@ namespace Leviathan{
     class BaseEntitySerializer;
     class EntitySerializerManager;
 
+
+    class NetworkResponseDataForInitialEntity;
+
 	class ThreadingManager;
 	class QueuedTask;
 	class DelayedTask;

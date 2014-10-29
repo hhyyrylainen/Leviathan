@@ -461,7 +461,35 @@ o GuiObject "PrematchScreen/DisconnectButton"{
 
 
 // ------------------ During gameplay objects ------------------ //
-template<> PGCTemplate<GameplayHUD, "", false>
+
+
+// ------------------ Match screen ------------------ //
+template<> PGCTemplate<MatchScreen, "MatchScreen", false>
+
+
+// Match screen state request handler //
+o GuiObject "_MatchScreenSetter"{
+    s{
+        [@Listener="Generic", @Type="MatchScreenState"]
+        int SetStateRight(GuiObject@ instance, GenericEvent@ event){
+            // Get the state //
+            string statestr = string(event.GetNamedVars().GetSingleValueByName("State"));
+            
+            if(statestr == "On"){
+                // Enable //
+                instance.GetOwningManager().SetCollectionState("MatchScreen", true);
+
+            } else {
+                
+                // Disable //
+                instance.GetOwningManager().SetCollectionState("MatchScreen", false);
+            }
+            
+            return 1;
+        }
+    @%};
+}
+
 
 // ------------------ Match end screen objects ------------------ //
 template<> PGCTemplate<MatchEndScreen, "", false>

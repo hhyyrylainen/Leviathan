@@ -195,7 +195,7 @@ namespace Leviathan{
 
         //! Mutex that needs to belocked while changing ConnectionsToTerminate or ConnectionsToUpdate or any other
         //! connection list
-        boost::shared_mutex ConnectionListMutex;
+        boost::recursive_mutex ConnectionListMutex;
         
 
 		wstring MasterServerMustPassIdentification;

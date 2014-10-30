@@ -136,7 +136,7 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
 
     {
 
-        boost::unique_lock<boost::shared_mutex> lock(ConnectionListMutex);
+        boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
         
         // Close all connections //
         for(size_t i = 0; i < AutoOpenedConnections.size(); i++){
@@ -284,7 +284,7 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 
     {
 
-        boost::shared_lock<boost::shared_mutex> lock(ConnectionListMutex);
+        boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
         
         // Time-out requests //
         for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
@@ -300,13 +300,13 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_RegisterConnectionInfo(ConnectionInfo* tomanage){
 
-    boost::unique_lock<boost::shared_mutex> lock(ConnectionListMutex);
+    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
 	ConnectionsToUpdate.push_back(tomanage);
 }
 
 void Leviathan::NetworkHandler::_UnregisterConnectionInfo(ConnectionInfo* unregisterme){
 
-    boost::unique_lock<boost::shared_mutex> lock(ConnectionListMutex);
+    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
     
 	for(auto iter = ConnectionsToUpdate.begin(); iter != ConnectionsToUpdate.end(); ++iter){
 
@@ -328,7 +328,7 @@ Leviathan::NetworkHandler::LockSocketForUse()
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkHandler::SafelyCloseConnectionTo(ConnectionInfo* to){
 
-    boost::unique_lock<boost::shared_mutex> lock(ConnectionListMutex);
+    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
     
 	// Make sure that it isn't there already //
 	for(auto iter = ConnectionsToTerminate.begin(); iter != ConnectionsToTerminate.end(); ++iter){
@@ -344,7 +344,7 @@ DLLEXPORT void Leviathan::NetworkHandler::SafelyCloseConnectionTo(ConnectionInfo
 
 DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
     
-    boost::unique_lock<boost::shared_mutex> lock(ConnectionListMutex);
+    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
 
 	if(ConnectionsToUpdate.size() == 0 || ConnectionsToTerminate.size() == 0)
 		return;
@@ -397,7 +397,7 @@ DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo
 		return NULL;
 	}
 
-    boost::unique_lock<boost::shared_mutex> lock(ConnectionListMutex);
+    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
     
 	// If succeeded add to the automatically managed connections //
 	AutoOpenedConnections.push_back(tmpconnection);
@@ -407,7 +407,7 @@ DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo
 
 DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetSafePointerToConnection(ConnectionInfo* unsafeptr){
 
-    boost::shared_lock<boost::shared_mutex> lock(ConnectionListMutex);
+    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
     
 	for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
 		if(iter->get() == unsafeptr)
@@ -420,7 +420,7 @@ DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetSafePointerTo
 DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetOrCreatePointerToConnection(const wstring &address){
 
     {
-        boost::shared_lock<boost::shared_mutex> lock(ConnectionListMutex);
+        boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
     
         for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
             if((*iter)->GenerateFormatedAddressString() == address)
@@ -455,7 +455,7 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 		// Pass to a connection //
 		bool Passed = false;
 
-        boost::shared_lock<boost::shared_mutex> lock(ConnectionListMutex);
+        boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
         
 		for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
 			// Keep passing until somebody handles it //
@@ -519,7 +519,7 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 			}
 
             {
-                boost::unique_lock<boost::shared_mutex> lock2(ConnectionListMutex);
+                boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
             
                 AutoOpenedConnections.push_back(tmpconnect);
 

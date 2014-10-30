@@ -36,9 +36,10 @@ namespace Leviathan{
         //! \brief Creates an entity from a packet
         //! \return True when the entity creation was attempted
         //! \param returnobj The inner pointer will be set to point towards the new entity or
+        //! \param world The world into which the object is created
         //! it will be NULL if the packet was corrupted or otherwise unusable. The object needs to
         //! be deleted by the caller
-        DLLEXPORT bool CreateEntityFromInitialMessage(BaseObject** returnobj, sf::Packet &packet);
+        DLLEXPORT bool CreateEntityFromInitialMessage(BaseObject** returnobj, sf::Packet &packet, GameWorld* world);
 
         //! \brief Applies an update from a packet
         //! \return True when a suitable deserializer was found and the target object was valid

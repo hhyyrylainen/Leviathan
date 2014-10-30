@@ -23,7 +23,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SerializeToPacket(sf::Packet &pack
 }
 // ------------------------------------ //
 DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerializeFromPacket(sf::Packet &packet,
-    GameWorld* world)
+    GameWorld* world, int id)
 {
 
     int32_t packetstype;
@@ -38,9 +38,13 @@ DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerial
         case BASESENDABLE_ACTUAL_TYPE_BRUSH:
         {
             // Create a brush and apply the packet to it //
-            unique_ptr<Entity::Brush> tmpbrush(new Entity::Brush(false, world));
+            unique_ptr<Entity::Brush> tmpbrush(new Entity::Brush(world, id));
 
-            DEBUG_BREAK;
+            if(!tmpbrush->_LoadOwnDataFromPacket(packet)){
+
+                Logger::Get()->Warning("BaseSendableEntity: failed to Init Brush from network packet");
+                return nullptr;
+            }
             
             return move(unique_ptr<BaseSendableEntity>(dynamic_cast<BaseSendableEntity*>(tmpbrush.release())));
         }
@@ -51,4 +55,13 @@ DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerial
     }
 }
 // ------------------------------------ //
+
+
+
+
+
+
+
+
+
 

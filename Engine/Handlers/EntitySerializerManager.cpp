@@ -67,11 +67,37 @@ DLLEXPORT unique_ptr<sf::Packet> Leviathan::EntitySerializerManager::CreateIniti
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::EntitySerializerManager::CreateEntityFromInitialMessage(BaseObject** returnobj,
-    sf::Packet &packet)
+    sf::Packet &packet, GameWorld* world)
 {
     GUARD_LOCK_THIS_OBJECT();
-    DEBUG_BREAK;
 
+    // The ID is the first thing in the packet //
+    int32_t id;
+
+    packet >> id;
+    
+    // Get the type from the packet //
+    int32_t packettype;
+
+    packet >> packettype;
+
+    if(!packet){
+
+        Logger::Get()->Warning(L"EntitySerializerManager: CreateEntityFromInitialMessage: packet didn't have a proper"
+            L" int32_t type, or entity ID");
+        return false;
+    }
+    
+
+    for(size_t i = 0; i < Serializers.size(); i++){
+
+        if(Serializers[i]->DeserializeWholeEntityFromPacket(returnobj, packettype, packet, id, world)){
+
+            // The correct serializer was at least attempted //
+            return true;
+        }
+    }
+    
 
     // No serializer was able to do anything //
     return false;
@@ -87,3 +113,6 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(sf::Packet
     // No serializer was able to do anything //
     return false;
 }
+
+
+

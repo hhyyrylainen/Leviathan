@@ -37,17 +37,18 @@ DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(BaseObject* o
 }
 // ------------------------------------ //
 DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(BaseObject** returnobj,
-    int32_t serializetype, sf::Packet &packet, GameWorld* world)
+    int32_t serializetype, sf::Packet &packet, int objectid, GameWorld* world)
 {
     // Verify that the type matches //
     if(serializetype != Type){
 
-        Logger::Get()->Error("SendableEntitySerializer: passed wrong serializetype to unserialize");
+        Logger::Get()->Error("SendableEntitySerializer: passed wrong serializetype to unserialize, Our: "+
+            Convert::ToString(Type)+", got: "+Convert::ToString(serializetype));
         return false;
     }
 
     // Create a sendable entity //
-    auto sendableobj = BaseSendableEntity::UnSerializeFromPacket(packet, world);
+    auto sendableobj = BaseSendableEntity::UnSerializeFromPacket(packet, world, objectid);
 
     // Set the object if it was created //
     if(!sendableobj){

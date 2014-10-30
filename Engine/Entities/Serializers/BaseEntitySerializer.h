@@ -58,7 +58,7 @@ namespace Leviathan{
         //! \param serializetype The type that was included in the packet by a CreatePacketForConnection
         //! param world The world into which the object is created. Has to be locked before this call
         DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, int32_t serializetype,
-            sf::Packet &packet, GameWorld* world) = 0;
+            sf::Packet &packet, int objectid, GameWorld* world) = 0;
 
 
         //! \brief Deserializes and applies an update from a packet

@@ -42,7 +42,8 @@ namespace Leviathan{
         //! returned
         //! \param world The world to which the object is created. This has to be locked before this
         //! call
-        DLLEXPORT static unique_ptr<BaseSendableEntity> UnSerializeFromPacket(sf::Packet &packet, GameWorld* world);
+        DLLEXPORT static unique_ptr<BaseSendableEntity> UnSerializeFromPacket(sf::Packet &packet, GameWorld* world,
+            int id);
 
         //! \brief Serializes an update to a packet for a specific connection
         //! \note This function should include it's own type in the packet to verify that it is the right type

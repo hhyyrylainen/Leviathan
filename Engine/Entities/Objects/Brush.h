@@ -25,6 +25,7 @@ namespace Leviathan{ namespace Entity{
         class Brush : virtual public BaseObject, public BaseRenderable, public BaseContraintable,
                         public BaseParentable, public BaseSendableEntity
         {
+            friend BaseSendableEntity;
         public:
             DLLEXPORT Brush(bool hidden, GameWorld* world);
             DLLEXPORT virtual ~Brush();
@@ -51,6 +52,10 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet) override;
 
         protected:
+
+            //! \brief Constructs a brush for receiving through the network
+            //! \todo Allow network objects to be hidden from the beginning
+            Brush(GameWorld* world, int netid);
             
             virtual void _UpdatePhysicsObjectLocation();
 

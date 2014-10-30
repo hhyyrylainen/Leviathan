@@ -368,13 +368,13 @@ playrscorelistupdateendlabel:
 
 
         virtual shared_ptr<GameWorld> GetGameWorld(int id) override{
+            // The IDs won't probably match, so return our only world anyways //
+            // if(!id != WorldOfPong->GetID()){
 
-            if(!id != WorldOfPong->GetID()){
-
-                Logger::Get()->Error("Pong asked to return a world that isn't WorldOfPong, ID: "+
-                    Convert::ToString(id)+", WorldOfPong: "+Convert::ToString(WorldOfPong->GetID()));
-                return nullptr;
-            }
+            //     Logger::Get()->Error("Pong asked to return a world that isn't WorldOfPong, ID: "+
+            //         Convert::ToString(id)+", WorldOfPong: "+Convert::ToString(WorldOfPong->GetID()));
+            //     return nullptr;
+            // }
 
             return WorldOfPong;
         }

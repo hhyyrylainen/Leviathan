@@ -23,6 +23,14 @@ DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) :
 
 }
 
+DLLEXPORT Leviathan::Entity::Brush::Brush(GameWorld* world, int netid) :
+    BaseRenderable(false), BaseObject(netid, world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_BRUSH),
+    Sizes(0), BrushModel(NULL)
+{
+
+}
+
+
 DLLEXPORT Leviathan::Entity::Brush::~Brush(){
 
 }
@@ -54,6 +62,9 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 {
 	Sizes = dimensions;
 
+    // This is needed later by the network sending functionality //
+    Material = material;
+    
 	// Create an unique name for mesh //
 	MeshName = "Brush_"+Convert::ToString(ID);
 
@@ -72,6 +83,7 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
         BrushModel->setDynamic(false);
         BrushModel->estimateVertexCount(24);
         BrushModel->estimateIndexCount(24);
+        
 #ifdef BRUSH_CALCULATENORMALS
         std::vector<Float3> tmpvertices;
         tmpvertices.reserve(24);
@@ -475,7 +487,6 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
     
     // Then set the position //
     ApplyPositionDataObject(pdata);
-    
     
     return true;
 }

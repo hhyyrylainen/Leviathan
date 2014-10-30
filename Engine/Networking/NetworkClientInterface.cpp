@@ -136,32 +136,43 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
         {
             // We received a new entity! //
             // TODO: do a system that automatically creates worlds on the client //
+            ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](shared_ptr<NetworkResponse> message)
+                        -> void
+                {
 
-            auto packetdata = message->GetResponseDataForInitialEntity();
+                    auto packetdata = message->GetResponseDataForInitialEntity();
 
-            if(!packetdata){
-                // Invalid data //
-                return true;
-            }
+                    if(!packetdata){
+                        // Invalid data //
+                        return;
+                    }
 
-            // Get a matching world //
-            auto world = LeviathanApplication::Get()->GetGameWorld(packetdata->WorldID);
+                    // Get a matching world //
+                    auto world = LeviathanApplication::Get()->GetGameWorld(packetdata->WorldID);
 
-            if(!world){
+                    if(!world){
 
-                Logger::Get()->Error("NetworkClientInterface: handle response: couldn't find a matching world for "
-                    "initial entity message, WorldID: "+packetdata->WorldID);
-                return true;
-            }
+                        Logger::Get()->Error("NetworkClientInterface: handle response: couldn't find a matching "
+                            "world for initial entity message, WorldID: "+Convert::ToString(packetdata->WorldID));
+                        return;
+                    }
 
-            if(!world->HandleEntityInitialPacket(packetdata)){
+                    if(!world->HandleEntityInitialPacket(packetdata)){
 
-                Logger::Get()->Error("NetworkClientInterface: failed to create an entity from an initial "
-                    "entity packet");
-            }
+                        Logger::Get()->Error("NetworkClientInterface: failed to create an entity from an initial "
+                            "entity packet");
+                    }
 
-            Logger::Get()->Write(L"Received a new entity!");
+                    Logger::Get()->Write(L"Received a new entity!");
 
+
+                }, message)));
+
+            
+            // It will be handled soon //
+            return true;
+
+            
             return true;
         }
         default:

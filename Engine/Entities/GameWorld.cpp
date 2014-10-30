@@ -695,7 +695,7 @@ DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDa
 
         BaseObject* returnptr = NULL;
         
-        EntitySerializerManager::Get()->CreateEntityFromInitialMessage(&returnptr, *(*iter).get());
+        EntitySerializerManager::Get()->CreateEntityFromInitialMessage(&returnptr, *(*iter).get(), this);
 
         if(!returnptr){
 

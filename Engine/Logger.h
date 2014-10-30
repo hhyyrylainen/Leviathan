@@ -5,13 +5,13 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "boost/thread/lockable_adapter.hpp"
-#include "boost/thread/recursive_mutex.hpp"
+#include "boost/thread/mutex.hpp"
 #include "boost/thread/strict_lock.hpp"
 
 namespace Leviathan{
 
     //! \todo Change to use utf8 strings
-	class Logger : public boost::basic_lockable_adapter<boost::recursive_mutex>{
+	class Logger : public boost::basic_lockable_adapter<boost::mutex>{
 	public:
 		DLLEXPORT Logger(const wstring &file);
 		DLLEXPORT Logger(const wstring &file, const wstring &start, const bool &autosave);
@@ -29,6 +29,7 @@ namespace Leviathan{
 		DLLEXPORT void Error(const wstring &data, const int &pvalue = 0, const bool &save = false);
         DLLEXPORT void Error(const string &data, const int &pvalue = 0, const bool &save = false);
 		DLLEXPORT void Warning(const wstring &data, bool save = false);
+        DLLEXPORT void Warning(const string &data, bool save = false);
 
 		DLLEXPORT static void SendDebugMessage(const wstring& str, boost::strict_lock<Logger> &guard);
 

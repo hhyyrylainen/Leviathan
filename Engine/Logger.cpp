@@ -168,6 +168,24 @@ DLLEXPORT void Leviathan::Logger::Warning(const wstring &data, bool save /*= fal
 
 	_LogUpdateEndPart(save, guard);
 }
+
+DLLEXPORT void Leviathan::Logger::Warning(const string &data, bool save /*= false*/){
+	// thread safety //
+	boost::strict_lock<Logger> guard(*this);
+
+    // TODO: change this to whole class to use utf8 strings...
+    wstringstream sstream;
+
+    sstream << L"[WARNING] ";
+    sstream << data.c_str();
+    sstream << L"\n";
+
+    SendDebugMessage(sstream.str(), guard);
+    PendingLog += sstream.str();
+
+
+	_LogUpdateEndPart(save, guard);
+}
 // ------------------------------------ //
 void Leviathan::Logger::Save(boost::strict_lock<Logger> &guard){
 	if(!Saved){
@@ -232,7 +250,7 @@ void Leviathan::Logger::_LogUpdateEndPart(const bool &save, boost::strict_lock<L
 	Saved = false;
 
 	if(save)
-		Save();
+		Save(guard);
 }
 // ------------------------------------ //
 DLLEXPORT Logger* Leviathan::Logger::GetIfExists(){

@@ -6,10 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-// include math, just in case that pow works //
 #include <math.h>
-
-//#define RANDOM_MAX_POSSIBLE			(pow(2.f,32.f)-1)
 
 // this seems to only be half of the story, this might be double what it actually generates //
 //#define RANDOM_MAX_POSSIBLE			(4294967296)

@@ -9,7 +9,6 @@
 #include "Networking/RemoteConsole.h"
 #include "Rendering/GraphicalInputEntity.h"
 #include "PongNetHandler.h"
-#include "Entities/Objects/Brush.h"
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //
@@ -449,23 +448,6 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
 	// TODO: Register this even in NoGui mode and allow basic connecting to a server
 	ClientInterface->RegisterNetworkedInput(GameInputHandler);
-
-    // Try to create a thing //
-    ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](shared_ptr<Leviathan::GameWorld> world) ->
-                void
-        {
-            unique_ptr<Entity::Brush> brush(new Entity::Brush(false, world.get()));
-
-            // initialize the brush //
-            brush->Init(Float3(3, 1, 1), "");
-    
-            brush->SetPosition(Float3(-1.5f, 0, -3));
-
-            // add to world //
-            world->AddObject(brush.release());
-
-        }, WorldOfPong)));
-
 }
 // ------------------------------------ //
 string GetPongVersionProxy(){

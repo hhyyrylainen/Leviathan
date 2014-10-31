@@ -88,6 +88,22 @@ DLLEXPORT void Leviathan::Logger::Write(const wstring &data, const bool &save /*
 
 	_LogUpdateEndPart(save, guard);
 }
+
+DLLEXPORT void Leviathan::Logger::Write(const string &data, const bool &save /*= false*/){
+	// thread safety //
+	boost::strict_lock<Logger> guard(*this);
+
+    wstringstream sstream;
+
+    sstream << data.c_str();
+    sstream << L"\n";
+
+    SendDebugMessage(sstream.str(), guard);
+    
+    PendingLog += sstream.str();
+
+    _LogUpdateEndPart(save, guard);
+}
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::Info(const wstring &data, const bool &save /*= false*/){
 	// thread safety //

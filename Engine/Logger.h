@@ -18,6 +18,7 @@ namespace Leviathan{
 		DLLEXPORT ~Logger();
 
 		DLLEXPORT void Write(const wstring &data, const bool &save = false);
+        DLLEXPORT void Write(const string &data, const bool &save = false);
 
 		//! \brief Adds raw data to the queue unmodified (don't forget line ends!)
 		DLLEXPORT void DirectWriteBuffer(const wstring &data);

@@ -134,10 +134,10 @@ namespace Leviathan{
 
 #define DEBUG_BREAK __debugbreak();
 
-#elif defined __GNUC__
+#elif defined __linux
 
 // We are on linux (and this *should* work)
-#define DEBUG_BREAK raise(SIGINT)
+#define DEBUG_BREAK { Leviathan::Logger::Get()->Write("DEBUG_BREAK HIT!"); raise(SIGINT); }
 
 #else
 

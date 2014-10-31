@@ -22,6 +22,10 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
+// TODO: remember to delete these
+#include "Entities/Objects/Brush.h"
+#include "Utility/Random.h"
+
 //! \brief Class used by _OnNotifiableConnected to hold temporary connection data
 class Leviathan::PlayerConnectionPreparer{
 public:
@@ -29,8 +33,9 @@ public:
     //! Used to keep track of what's happening regards to the ping
     enum PING_STATE {PING_STATE_STARTED, PING_STATE_FAILED, PING_STATE_NONE, PING_STATE_COMPLETED};
     
-    PlayerConnectionPreparer() :
-        Pinging(PING_STATE_NONE), GameWorldCompromised(false), ObjectsReady(false), AllDone(false)
+    PlayerConnectionPreparer(ConnectedPlayer* ply) :
+        Pinging(PING_STATE_NONE), GameWorldCompromised(false), ObjectsReady(false), AllDone(false),
+        Player(ply)
     {
 
 
@@ -57,6 +62,10 @@ public:
 
     // This is needed to avoid rare cases where AllDone would never be set
     boost::mutex _Mutex;
+
+    //! The player who is being handled, used only for deleting
+    //! The pointer is unsafe to use
+    ConnectedPlayer* Player;
 
     
     PING_STATE Pinging;
@@ -466,7 +475,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
     Logger::Get()->Info("GameWorld: player(\""+plyptr->GetNickname()+"\") is now receiving world");
 
 	// Create an entry for this player //
-    shared_ptr<PlayerConnectionPreparer> connectobject(new PlayerConnectionPreparer());
+    shared_ptr<PlayerConnectionPreparer> connectobject(new PlayerConnectionPreparer(plyptr));
 
 
     // We need a safe pointer to the connection //
@@ -615,8 +624,21 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableDisconnected(BaseNotifiableAll
 	auto plyptr = static_cast<ConnectedPlayer*>(parenttoremove);
 
 	// Destroy the update object containing this player and cancel all current packets //
-	DEBUG_BREAK;
+    GUARD_LOCK_THIS_OBJECT();
 
+    auto end = InitiallySyncingPlayers.end();
+    for(auto iter = InitiallySyncingPlayers.begin(); iter != end; ++iter){
+
+        if((*iter)->Player == plyptr){
+            (*iter)->GameWorldCompromised = true;
+
+            InitiallySyncingPlayers.erase(iter);
+            return;
+        }
+    }
+
+    // Didn't find any //
+    Logger::Get()->Warning("GameWorld: disconnected plyptr not found in list");
 }
 
 void Leviathan::GameWorld::UpdatePlayersPositionData(ConnectedPlayer* ply, ObjectLock &guard){
@@ -686,9 +708,10 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(shared_ptr<BaseObjec
 }
 
 
-DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDataForInitialEntity*
-    data){
+DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDataForInitialEntity* data){
 
+    bool somesucceeded = false;
+    
     // Handle all the entities in the packet //
     auto end = data->EntityData.end();
     for(auto iter = data->EntityData.begin(); iter != end; ++iter){
@@ -705,7 +728,29 @@ DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDa
 
         // Add the entity //
         AddObject(returnptr);
+
+        somesucceeded = true;
     }
+
+    // Try to create a thing //
+    ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](GameWorld* world) ->
+                void
+        {
+            unique_ptr<Entity::Brush> brush(new Entity::Brush(false, world));
+
+            // initialize the brush //
+            brush->Init(Float3(3, 1, 1), "");
+    
+            brush->SetPosition(Float3(Random::Get()->GetNumber(-5.f, 5.f), 0, Random::Get()->GetNumber(-5.f, 5.f)));
+
+            // add to world //
+            world->AddObject(brush.release());
+
+        }, this)));
+
+
+
+    return somesucceeded;
 }
 
 // ------------------ RayCastHitEntity ------------------ //

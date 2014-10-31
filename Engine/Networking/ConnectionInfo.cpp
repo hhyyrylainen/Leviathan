@@ -340,22 +340,6 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 				iter = WaitingRequests.erase(iter);
 				continue;
 			}
-			// Check is the response received //
-			if((*iter)->GotResponse){
-#ifdef SPAM_ME_SOME_PACKETS
-				Logger::Get()->Info(L"PacketSpam: request packet successfully sent and got response ("+
-                    Convert::ToWstring((*iter)->PacketNumber)+L", "+
-					Convert::ToWstring((*iter)->ExpectedResponseID)+L") from "+
-                    Convert::StringToWstring(TargetHost.toString())+L":"+
-					Convert::ToWstring(TargetPortNumber));
-#endif // SPAM_ME_SOME_PACKETS
-				// It has a proper response //
-				// We want to notify all waiters that it has been received //
-                (*iter)->SetWaitStatus(true);
-                (*iter)->ConfirmReceiveTime = Misc::GetTimeMs64();
-				iter = WaitingRequests.erase(iter);
-				continue;
-			}
 		}
 
 
@@ -626,7 +610,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
 		shared_ptr<NetworkResponse> response(new NetworkResponse(packet));
 
 		// The response might have a corresponding request //
-		GUARD_LOCK_THIS_OBJECT();
+        UNIQUE_LOCK_THIS_OBJECT();
+        
 		shared_ptr<SentNetworkThing> possiblerequest = _GetPossibleRequestForResponse(response);
 
 		// Restrict mode checking //
@@ -637,12 +622,14 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
 				Logger::Get()->Error(L"ConnectionInfo: received a response packet to receive remote console "
                     L"connection socket, "+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(
                         TargetPortNumber));
+                lockit.unlock();
 				NetworkHandler::Get()->SafelyCloseConnectionTo(this);
 				return;
 			}
 		}
 
 		// See if interface wants to drop it //
+        lockit.unlock();
 		if(!NetworkHandler::GetInterface()->PreHandleResponse(response, possiblerequest ?
                 possiblerequest->OriginalRequest: NULL, this))
         {
@@ -651,18 +638,29 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
 			return;
 		}
 
-#ifdef SPAM_ME_SOME_PACKETS
-		Logger::Get()->Info(L"PacketSpam: received response ("+Convert::ToWstring(packetnumber)+L", response"+
-			Convert::ToWstring(response->GetResponseID())+L") to "+Convert::StringToWstring(TargetHost.toString())+L":"
-			+Convert::ToWstring(TargetPortNumber));
-#endif // SPAM_ME_SOME_PACKETS
-
 		if(possiblerequest){
 			// Add to the request //
 			possiblerequest->GotResponse = response;
 
-			// Notify all that it succeeded will be done by the update loop //
-            // TODO: move that here
+            lockit.lock();
+
+            // Remove the request //
+            
+            auto end = WaitingRequests.end();
+            for(auto iter = WaitingRequests.begin(); iter != end; ++iter){
+
+                if((*iter).get() == possiblerequest.get()){
+
+                    WaitingRequests.erase(iter);
+                    break;
+                }
+            }
+
+            lockit.unlock();
+            
+            // Notify that the request is done /
+            possiblerequest->SetWaitStatus(true);
+            possiblerequest->ConfirmReceiveTime = Misc::GetTimeMs64();
 
 		} else {
 

@@ -24,18 +24,21 @@ DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(int maxplaye
 
 DLLEXPORT Leviathan::NetworkServerInterface::~NetworkServerInterface(){
 
-	PotentialInputHandler.reset();
-
+    boost::unique_lock<boost::mutex> lock(PlayerListLocked);
+    
 	// Release the memory //
-	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ){
+	for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ){
 
 		delete (*iter);
 		// Can't report errors at this point, but maybe we should //
         cout << "Warning! server quitting while playerlist has data in it" << endl;
         
-		iter = PlayerList.erase(iter);
+		iter = ServerPlayers.erase(iter);
 	}
 
+    GUARD_LOCK_THIS_OBJECT();
+    
+	PotentialInputHandler.reset();
 	SAFE_DELETE(_CommandHandler);
 }
 // ------------------------------------ //
@@ -46,27 +49,27 @@ DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
 	ServerStatus = NETWORKRESPONSE_SERVERSTATUS_SHUTDOWN;
 	AllowJoin = false;
 
-    boost::unique_lock<boost::shared_mutex> uniqueplylock(PlayerListLocked);
+    boost::unique_lock<boost::mutex> uniqueplylock(PlayerListLocked);
     
-	for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ){
+	for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ){
 
 		// Kick them //
 		(*iter)->OnKicked(L"Server closing");
 
 		delete (*iter);
-		iter = PlayerList.erase(iter);
+		iter = ServerPlayers.erase(iter);
 	}
 }
 // ------------------------------------ //
 DLLEXPORT ConnectedPlayer* Leviathan::NetworkServerInterface::GetPlayerForConnection(ConnectionInfo* connection){
 	GUARD_LOCK_THIS_OBJECT();
 	// Search through the connections //
-    boost::shared_lock<boost::shared_mutex> plylock(PlayerListLocked);
+    boost::unique_lock<boost::mutex> plylock(PlayerListLocked);
     
-	for(size_t i = 0; i < PlayerList.size(); i++){
+	for(size_t i = 0; i < ServerPlayers.size(); i++){
 		// Check with the pointer //
-		if(PlayerList[i]->IsConnectionYoursPtrCompare(connection))
-			return PlayerList[i];
+		if(ServerPlayers[i]->IsConnectionYoursPtrCompare(connection))
+			return ServerPlayers[i];
 	}
 
 	// No matching one found //
@@ -82,10 +85,11 @@ DLLEXPORT void Leviathan::NetworkServerInterface::RespondToServerStatusRequest(s
 
 	// Generate a valid response //
     {
-        boost::shared_lock<boost::shared_mutex> plylock(PlayerListLocked);
+        boost::unique_lock<boost::mutex> plylock(PlayerListLocked);
         
-        response->GenerateServerStatusResponse(new NetworkResponseDataForServerStatus(ServerName, AllowJoin, JoinRestrict,
-                PlayerList.size(), MaxPlayers, ActiveBots.size(), ServerStatus, ExtraServerFlags));
+        response->GenerateServerStatusResponse(new NetworkResponseDataForServerStatus(ServerName,
+                AllowJoin, JoinRestrict, ServerPlayers.size(), MaxPlayers, ActiveBots.size(),
+                ServerStatus, ExtraServerFlags));
 
     }
 
@@ -229,9 +233,9 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(share
 
 	// Check is the player already connected //
     {
-        boost::shared_lock<boost::shared_mutex> plylock(PlayerListLocked);
+        boost::unique_lock<boost::mutex> plylock(PlayerListLocked);
         
-        for(auto iter = PlayerList.begin(); iter != PlayerList.end(); ++iter){
+        for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ++iter){
             // Check does it match //
             if((*iter)->IsConnectionYours(connection)){
                 // Already connected //
@@ -256,14 +260,14 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(share
 	// Check if we can fit a new player //
     {
 
-        boost::shared_lock<boost::shared_mutex> plylock(PlayerListLocked);
+        boost::unique_lock<boost::mutex> plylock(PlayerListLocked);
         
-        if((int)(PlayerList.size()+1) > MaxPlayers){
+        if((int)(ServerPlayers.size()+1) > MaxPlayers){
 
             shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(),
                     PACKAGE_TIMEOUT_STYLE_TIMEDMS, 2000));
 
-            wstring plys = Convert::ToWstring(PlayerList.size());
+            wstring plys = Convert::ToWstring(ServerPlayers.size());
 
             // Set data //
             tmpresponse->GenerateServerDisallowResponse(new NetworkResponseDataForServerDisallow(
@@ -300,17 +304,13 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(share
 	int newid = ++CurrentPlayerID;
     {
         // The player list needs to be locked while we add stuff and read //
-        boost::upgrade_lock<boost::shared_mutex> plylock(PlayerListLocked);
+        boost::unique_lock<boost::mutex> plylock(PlayerListLocked);
     
-        {
-            boost::upgrade_to_unique_lock<boost::shared_mutex> uniqueplylock(plylock);
+        ServerPlayers.push_back(new ConnectedPlayer(connection, this, newid));
         
-            PlayerList.push_back(new ConnectedPlayer(connection, this, newid));
-        }
-    
         SyncedVariables::Get()->AddAnotherToSyncWith(connection);
 
-        _OnPlayerConnected(PlayerList.back());
+        _OnPlayerConnected(ServerPlayers.back());
 
     }
     
@@ -355,63 +355,43 @@ DLLEXPORT void Leviathan::NetworkServerInterface::RegisterCustomCommandHandlers(
 
 }
 // ------------------------------------ //
-std::vector<ConnectedPlayer*>::iterator Leviathan::NetworkServerInterface::_OnReportCloseConnection(
-    const std::vector<ConnectedPlayer*>::iterator &iter, ObjectLock &guard,
-    boost::upgrade_lock<boost::shared_mutex> &plylock)
+void Leviathan::NetworkServerInterface::_OnReportCloseConnection(ConnectedPlayer* plyptr, ObjectLock &guard)
 {
 	VerifyLock(guard);
 
-	if(iter == PlayerList.end()){
-
-		Logger::Get()->Error(L"NetworkServerInterface: _OnReportCloseConnection: trying to use an invalid iterator");
-		return PlayerList.end();
-	}
-
-	// The player has disconnected //
 	Logger::Get()->Info(L"NetworkServerInterface: player (TODO: get name) has closed their connection");
 
-    _OnPlayerDisconnect(*iter);
-
-    boost::upgrade_to_unique_lock<boost::shared_mutex> uniqueplylock(plylock);
-    
-	delete (*iter);
-	return PlayerList.erase(iter);
+    _OnPlayerDisconnect(plyptr);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
 	{
-        ConnectedPlayer* curplayer = NULL;
-
         // Lock the list while we are doing stuff //
-        boost::upgrade_lock<boost::shared_mutex> plylock(PlayerListLocked);
+        boost::unique_lock<boost::mutex> plylock(PlayerListLocked);
         
         // Check for closed connections //
-        // We can use the iter because we have indicated that no player should be removed or added
-        // so the iterator will stay valid
-        auto end = PlayerList.end();
-        for(auto iter = PlayerList.begin(); iter != end; ){
-                
-            // Check is it the player //
-            //lockit.unlock();
-            // TODO: check whether this unlock is required
+        auto end = ServerPlayers.end();
+        for(auto iter = ServerPlayers.begin(); iter != end; ){
             
             if((*iter)->IsConnectionClosed()){
+
                 // The player has disconnected //
                 GUARD_LOCK_THIS_OBJECT();
-                iter = _OnReportCloseConnection(iter, guard, plylock);
+                _OnReportCloseConnection(*iter, guard);
 
-            } else {
-
-                (*iter)->UpdateHeartbeats();
-                ++iter;
+                iter = ServerPlayers.erase(iter);
+                // The end iterator is now also invalid //
+                end = ServerPlayers.end();
+                continue;
             }
+
+            (*iter)->UpdateHeartbeats();
+            ++iter;
         }
 	}
 
-
 	// Update the command handling //
 	_CommandHandler->UpdateStatus();
-
 
 	// Update networked input handling //
 	if(PotentialInputHandler)
@@ -433,11 +413,11 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(shared_p
 {
 	GUARD_LOCK_THIS_OBJECT();
 
-    boost::shared_lock<boost::shared_mutex> plylock(PlayerListLocked);
+    boost::unique_lock<boost::mutex> plylock(PlayerListLocked);
     
 	// Loop the players and send to their connections //
-	auto end = PlayerList.end();
-	for(auto iter = PlayerList.begin(); iter != end; ++iter){
+	auto end = ServerPlayers.end();
+	for(auto iter = ServerPlayers.begin(); iter != end; ++iter){
 
 		ConnectionInfo* curconnection = (*iter)->GetConnection();
 
@@ -453,11 +433,11 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllPlayers(shared_ptr<Ne
 {
 	GUARD_LOCK_THIS_OBJECT();
 
-    boost::shared_lock<boost::shared_mutex> plylock(PlayerListLocked);
+    boost::unique_lock<boost::mutex> plylock(PlayerListLocked);
 
 	// Loop the players and send to their connections //
-	auto end = PlayerList.end();
-	for(auto iter = PlayerList.begin(); iter != end; ++iter){
+	auto end = ServerPlayers.end();
+	for(auto iter = ServerPlayers.begin(); iter != end; ++iter){
 
 		(*iter)->GetConnection()->SendPacketToConnection(response, resendcount);
 	}
@@ -466,11 +446,11 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllPlayers(shared_ptr<Ne
 DLLEXPORT void Leviathan::NetworkServerInterface::VerifyWorldIsSyncedWithPlayers(shared_ptr<GameWorld> world){
 	GUARD_LOCK_THIS_OBJECT();
 
-    boost::shared_lock<boost::shared_mutex> plylock(PlayerListLocked);
+    boost::unique_lock<boost::mutex> plylock(PlayerListLocked);
     
 	// We can safely add all players as they will only be added if they aren't there already //
-	auto end = PlayerList.end();
-	for(auto iter = PlayerList.begin(); iter != end; ++iter){
+	auto end = ServerPlayers.end();
+	for(auto iter = ServerPlayers.begin(); iter != end; ++iter){
 
 		if(world->ConnectToNotifiable(*iter)){
 

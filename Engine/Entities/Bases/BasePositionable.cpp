@@ -71,6 +71,11 @@ DLLEXPORT void Leviathan::BasePositionable::SetPos(const Float3 &pos){
 	PosUpdated();
 }
 
+DLLEXPORT void Leviathan::BasePositionable::SetPosition(const Float3 &pos){
+	Position = pos;
+	PosUpdated();
+}
+
 DLLEXPORT void Leviathan::BasePositionable::SetOrientation(const Float4 &quat){
 	QuatRotation = quat;
 	OrientationUpdated();

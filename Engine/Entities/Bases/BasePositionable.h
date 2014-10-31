@@ -32,6 +32,7 @@ namespace Leviathan{
 
 		DLLEXPORT virtual void SetPosComponents(const float &x, const float &y, const float &z);
 		DLLEXPORT virtual void SetPos(const Float3 &pos);
+        DLLEXPORT virtual void SetPosition(const Float3 &pos);
 		DLLEXPORT virtual void SetOrientation(const Float4 &quaternionrotation);
         DLLEXPORT virtual void SetOrientationComponents(const float &x, const float &y, const float &z, const float &w);
 

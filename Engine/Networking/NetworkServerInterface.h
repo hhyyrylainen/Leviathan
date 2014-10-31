@@ -74,7 +74,7 @@ namespace Leviathan{
 
 	protected:
 		//! \brief Used to detect when a connection has been closed
-		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
+		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove) override;
 
 		DLLEXPORT virtual bool _OnSendPrivateMessage(const string &message);
 		// ------------------------------------ //
@@ -224,18 +224,17 @@ namespace Leviathan{
 		DLLEXPORT virtual bool AllowPlayerConnectVeto(shared_ptr<NetworkRequest> request, ConnectionInfo* connection,
             wstring &message);
 
-
-		//! \brief Called by ConnectedPlayer when it's connection closes
-        //! \param plylock Is the upgrade_lock that has the player list locked
-		std::vector<ConnectedPlayer*>::iterator _OnReportCloseConnection(const std::vector<ConnectedPlayer*>::iterator
-            &iter, ObjectLock &guard, boost::upgrade_lock<boost::shared_mutex> &plylock);
+        //! Internally called when a player is about to be deleted
+        //!
+        //! Will call virtual notify functions
+		void _OnReportCloseConnection(ConnectedPlayer* plyptr, ObjectLock &guard);
 		// ------------------------------------ //
 
 
 		// Server variables //
 
 		//! Holds the list of currently connected players
-		std::vector<ConnectedPlayer*> PlayerList;
+		std::vector<ConnectedPlayer*> ServerPlayers;
 
 		//! Maximum allowed player count
 		int MaxPlayers;
@@ -254,7 +253,7 @@ namespace Leviathan{
 		bool AllowJoin;
 
         //! Lock this when changing the player list
-        boost::shared_mutex PlayerListLocked;
+        boost::mutex PlayerListLocked;
         
 
 		//! Type of join restriction, defaults to NETWORKRESPONSE_SERVERJOINRESTRICT_NONE

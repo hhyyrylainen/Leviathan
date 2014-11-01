@@ -55,11 +55,17 @@ DLLEXPORT bool Leviathan::Entity::TrailEmitter::Init(const string &materialname,
 }
 
 DLLEXPORT void Leviathan::Entity::TrailEmitter::ReleaseData(){
+    // Only release if in graphical mode //
+    auto scene = OwnedByWorld->GetScene();
+
+    if(!scene)
+        return;
+    
 	// Destroy the Ogre resources //
-	OwnedByWorld->GetScene()->destroySceneNode(TrailLocation);
+	scene->destroySceneNode(TrailLocation);
 	// This might be needed //
-	OwnedByWorld->GetScene()->getRootSceneNode()->detachObject(TrailEntity);
-	OwnedByWorld->GetScene()->destroyRibbonTrail(TrailEntity);
+	scene->getRootSceneNode()->detachObject(TrailEntity);
+	scene->destroyRibbonTrail(TrailEntity);
 
 	TrailEntity = NULL;
 	TrailLocation = NULL;

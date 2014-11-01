@@ -23,7 +23,7 @@ DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) :
 
 }
 
-DLLEXPORT Leviathan::Entity::Brush::Brush(GameWorld* world, int netid) :
+DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world, int netid) :
     BaseRenderable(false), BaseObject(netid, world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_BRUSH),
     Sizes(0), BrushModel(NULL), Mass(0.f)
 {
@@ -466,6 +466,7 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
     if(!LoadPositionFromPacketToHolder(packet, pdata)){
 
         // It failed (the packet was invalid) //
+        Logger::Get()->Error("Brush: packet has invalid format");
         return false;
     }
 
@@ -482,12 +483,14 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
         packet >> mass;
 
     packet >> matname;
-    
 
     // Don't apply data (Init) if the packet was invalid //
-    if(!packet)
-        return false;
+    if(!packet){
 
+        Logger::Get()->Error("Brush: packet has invalid format");
+        return false;
+    }
+        
     // We always create the physical object ourselves if wanted
     if(!Init(Float3(x, y, z), matname, false)){
 
@@ -506,10 +509,14 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
     ApplyPositionDataObject(pdata);
 
     wstringstream stream;
-    stream << L"[" << Sizes.X << L", "<< Sizes.Y << L", " << Sizes.Z << "]";
+    stream << L"[" << Sizes.X << L", "<< Sizes.Y << L", " << Sizes.Z << "] ";
+    stream << L"pos: [" << Position.X << L", "<< Position.Y << L", " << Position.Z << "] ";
+    stream << L"rot: [" << QuatRotation.X << L", " << QuatRotation.Y << L", "<< QuatRotation.Z << L", "<<
+        QuatRotation.W << "] ";
+    stream << L" hidden: " << Hidden << " ";
     stream << L"mat: \"" << Material.c_str() << L"\"";
     
-    Logger::Get()->Write(L"Brush data: "+stream.str());
+    Logger::Get()->Write(L"Brush ("+Convert::ToWstring(ID)+L") data: "+stream.str());
     
     return true;
 }
@@ -517,6 +524,9 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
 void Leviathan::Entity::Brush::_SaveOwnDataToPacket(sf::Packet &packet){
 
     GUARD_LOCK_THIS_OBJECT();
+
+    // The hidden state needs to be the first thing
+    packet << Hidden;
     
     // Before adding our data make base classes add stuff //
     AddPositionAndRotationToPacket(packet);
@@ -537,10 +547,14 @@ void Leviathan::Entity::Brush::_SaveOwnDataToPacket(sf::Packet &packet){
     packet << Material;
 
     wstringstream stream;
-    stream << L"[" << Sizes.X << L", "<< Sizes.Y << L", " << Sizes.Z << "]";
+    stream << L"[" << Sizes.X << L", "<< Sizes.Y << L", " << Sizes.Z << "] ";
+    stream << L"pos: [" << Position.X << L", "<< Position.Y << L", " << Position.Z << "] ";
+    stream << L"rot: [" << QuatRotation.X << L", " << QuatRotation.Y << L", "<< QuatRotation.Z << L", "<<
+        QuatRotation.W << "] ";
+    stream << L" hidden: " << Hidden << " ";
     stream << L"mat: \"" << Material.c_str() << L"\"";
     
-    Logger::Get()->Write(L"Brush with data: "+stream.str());
+    Logger::Get()->Write(L"Brush ("+Convert::ToWstring(ID)+L") data: "+stream.str());
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessagetype, void* dataptr){

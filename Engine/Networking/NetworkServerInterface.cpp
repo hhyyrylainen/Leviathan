@@ -482,7 +482,8 @@ void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parent
 		GUARD_LOCK_THIS_OBJECT();
 
 		// Stop syncing values with this client //
-		SyncedVariables::Get()->RemoveConnectionWithAnother(CorrenspondingConnection);
+        // TODO: verify that this actually fixes the issue
+        SyncedVariables::Get()->RemoveConnectionWithAnother(CorrenspondingConnection);
 
 		// Set as closing //
 		ConnectionStatus = false;

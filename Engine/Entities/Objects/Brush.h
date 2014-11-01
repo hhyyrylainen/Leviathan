@@ -55,7 +55,7 @@ namespace Leviathan{ namespace Entity{
 
             //! \brief Constructs a brush for receiving through the network
             //! \todo Allow network objects to be hidden from the beginning
-            Brush(GameWorld* world, int netid);
+            Brush(bool hidden, GameWorld* world, int netid);
             
             virtual void _UpdatePhysicsObjectLocation();
 

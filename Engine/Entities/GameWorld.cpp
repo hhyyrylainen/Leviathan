@@ -83,7 +83,7 @@ DLLEXPORT Leviathan::GameWorld::GameWorld() :
 }
 
 DLLEXPORT Leviathan::GameWorld::~GameWorld(){
-
+    //Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): has been destroyed");
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GameWorld::Init(GraphicalInputEntity* renderto, Ogre::Root* ogre){
@@ -142,6 +142,10 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 	// some smart ptrs need releasing //
 	_PhysicalWorld.reset();
 
+    // Unhook from other objects //
+    ReleaseChildHooks();
+
+    Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): ready to be destroyed");
 }
 // ------------------------------------ //
 void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre, Window* rendertarget){

@@ -165,7 +165,7 @@ playrscorelistupdateendlabel:
         //! \brief Called before closing the engine, use to release some stuff
         virtual void CustomEnginePreShutdown(){
 
-
+            
         }
 
 
@@ -440,12 +440,17 @@ playrscorelistupdateendlabel:
 			Engine::GetEngine()->ResetPhysicsTime();
 		}
 
-		void EnginePreShutdown(){
+		virtual void EnginePreShutdown() override{
 			// Only the AI needs this //
 			if(GameAI)
 				GameAI->ReleaseScript();
 
+            // Destroy the world //
+            Engine::Get()->DestroyWorld(WorldOfPong);
+            
             CustomEnginePreShutdown();
+
+            Logger::Get()->Info("Pong PreShutdown complete");
 		}
 
 		virtual void Tick(int mspassed){

@@ -570,8 +570,10 @@ void Leviathan::Engine::Tick(){
 
 		Logger::Get()->Info(L"Engine: performing final release tick");
 
+        
+        
 		// Call last tick event //
-
+        
 	}
 
 	// Get the passed time since the last update //
@@ -754,7 +756,7 @@ DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 
 	return openwindows;
 }
-
+// ------------------------------------ //
 DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEntity* owningwindow,
     shared_ptr<ViewerCameraPos> worldscamera)
 {
@@ -769,6 +771,31 @@ DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEnt
 	return GameWorlds.back();
 }
 
+DLLEXPORT void Leviathan::Engine::DestroyWorld(shared_ptr<GameWorld> &world){
+
+    if(!world)
+        return;
+    
+    // Release the world first //
+    world->Release();
+
+    // Then delete it //
+    GUARD_LOCK_THIS_OBJECT();
+    auto end = GameWorlds.end();
+    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
+
+        if((*iter).get() == world.get()){
+
+            GameWorlds.erase(iter);
+            world.reset();
+            return;
+        }
+    }
+
+    // Should be fine destroying worlds that aren't on the list... //
+    world.reset();
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::PhysicsUpdate(){
 	// go through all the worlds and simulate updates //
 	GUARD_LOCK_THIS_OBJECT();

@@ -66,7 +66,16 @@ namespace Leviathan{
 		DLLEXPORT void ExecuteCommandLine();
 
 
-		DLLEXPORT shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow, shared_ptr<ViewerCameraPos> worldscamera);
+        //! \brief Creates a GameWorld for placing entities into
+		DLLEXPORT shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow, shared_ptr<ViewerCameraPos>
+            worldscamera);
+
+        //! \brief Releases a GameWorld
+        //! \param world The world to destroy.
+        //! \post The World will have been released and removed from Engine's internal list and the world pointer will
+        //! be NULL
+        DLLEXPORT void DestroyWorld(shared_ptr<GameWorld> &world);
+        
 
 		DLLEXPORT void SaveScreenShot();
 

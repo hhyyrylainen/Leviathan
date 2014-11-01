@@ -37,8 +37,16 @@ DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerial
     switch(matchtype){
         case BASESENDABLE_ACTUAL_TYPE_BRUSH:
         {
+            // This is hopefully written by the Brush _SaveOwnData
+            bool hidden;
+
+            if(!(packet >> hidden)){
+
+                return nullptr;
+            }
+            
             // Create a brush and apply the packet to it //
-            unique_ptr<Entity::Brush> tmpbrush(new Entity::Brush(world, id));
+            unique_ptr<Entity::Brush> tmpbrush(new Entity::Brush(hidden, world, id));
 
             if(!tmpbrush->_LoadOwnDataFromPacket(packet)){
 

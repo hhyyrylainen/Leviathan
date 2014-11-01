@@ -163,16 +163,10 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
                             "entity packet");
                     }
 
-                    Logger::Get()->Write(L"Received a new entity!");
-
-
                 }, message)));
 
             
             // It will be handled soon //
-            return true;
-
-            
             return true;
         }
         default:

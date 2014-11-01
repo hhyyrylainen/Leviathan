@@ -18,14 +18,14 @@ using namespace Entity;
 
 DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) :
     BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_BRUSH),
-    Sizes(0), BrushModel(NULL)
+    Sizes(0), BrushModel(NULL), Mass(0.f)
 {
 
 }
 
 DLLEXPORT Leviathan::Entity::Brush::Brush(GameWorld* world, int netid) :
     BaseRenderable(false), BaseObject(netid, world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_BRUSH),
-    Sizes(0), BrushModel(NULL)
+    Sizes(0), BrushModel(NULL), Mass(0.f)
 {
 
 }
@@ -64,6 +64,10 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 
     // This is needed later by the network sending functionality //
     Material = material;
+
+    // Force material to be default if not specified //
+    if(Material.empty())
+        Material = "BaseWhiteNoLighting";
     
 	// Create an unique name for mesh //
 	MeshName = "Brush_"+Convert::ToString(ID);
@@ -90,7 +94,7 @@ DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const st
 #endif // BRUSH_CALCULATENORMALS
 
 
-        BrushModel->begin(material, Ogre::RenderOperation::OT_TRIANGLE_LIST);
+        BrushModel->begin(Material, Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 
         // loops to avoid redundant code //
@@ -333,6 +337,8 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 	AggressiveConstraintUnlink();
 	_DestroyPhysicalBody();
 
+    // Store the mass //
+    Mass = mass;
 
 	// create a newton object which is always a box //
 
@@ -465,11 +471,16 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
 
     float x, y, z;
     bool physics;
+    float mass;
     string matname;
 
     // Get all the things at once and then check for invalid state //
     packet >> x >> y >> z;
     packet >> physics;
+    
+    if(physics)
+        packet >> mass;
+
     packet >> matname;
     
 
@@ -477,22 +488,36 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
     if(!packet)
         return false;
 
-    if(!Init(Float3(x, y, z), matname, physics)){
+    // We always create the physical object ourselves if wanted
+    if(!Init(Float3(x, y, z), matname, false)){
 
         // This shouldn't happen //
         Logger::Get()->Error("Brush: failed to create from packet, Init failed");
         return false;
     }
+
+    if(physics){
+
+        AddPhysicalObject(mass);
+    }
     
     
     // Then set the position //
     ApplyPositionDataObject(pdata);
+
+    wstringstream stream;
+    stream << L"[" << Sizes.X << L", "<< Sizes.Y << L", " << Sizes.Z << "]";
+    stream << L"mat: \"" << Material.c_str() << L"\"";
+    
+    Logger::Get()->Write(L"Brush data: "+stream.str());
     
     return true;
 }
 
 void Leviathan::Entity::Brush::_SaveOwnDataToPacket(sf::Packet &packet){
 
+    GUARD_LOCK_THIS_OBJECT();
+    
     // Before adding our data make base classes add stuff //
     AddPositionAndRotationToPacket(packet);
 
@@ -501,6 +526,12 @@ void Leviathan::Entity::Brush::_SaveOwnDataToPacket(sf::Packet &packet){
 
     // Then whether we have a physical object or not //
     packet << (GetPhysicsBody() ? true: false);
+
+    // Add the mass if it is applicable //
+    if(GetPhysicsBody()){
+
+        packet << Mass;
+    }
 
     // And finally our material //
     packet << Material;

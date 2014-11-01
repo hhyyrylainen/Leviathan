@@ -61,9 +61,11 @@ namespace Leviathan{
         //! This is called by BaseSendableEntity from UnSerializeFromPacket
         //! This should do the opposite of SerializeToPacket
         //! Note this function should also call Init on the object to make it usable
+        //! \note This doesn't require locking as the object cannot be used while this is called
         virtual bool _LoadOwnDataFromPacket(sf::Packet &packet) = 0;
 
         //! \brief Child classers use this to serialize their own data to a packet
+        //! \note The class implementing this might want to lock while this is being called to avoid properties changing
         virtual void _SaveOwnDataToPacket(sf::Packet &packet) = 0;
         
         // ------------------------------------ //

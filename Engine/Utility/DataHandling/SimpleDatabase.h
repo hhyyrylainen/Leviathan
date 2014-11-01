@@ -7,6 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Common/DataStoring/DataBlock.h"
+#include "Common/ThreadSafe.h"
 
 namespace Leviathan{
 

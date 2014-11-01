@@ -7,6 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Common/ReferenceCounted.h"
+#include "Common/ThreadSafe.h"
 
 
 // This cannot be enum because it need to be able to be extended with new values //
@@ -57,11 +58,8 @@ namespace Leviathan{
 
 namespace Leviathan{
 
-	class GameWorld;
-
-
-
-	class BaseObject : public ReferenceCounted{
+    //! Represents an entity that can be in a world
+	class BaseObject : public ReferenceCounted, public virtual ThreadSafe{
 	public:
 		//! \brief Default constructor that should never be used for actual objects 
 		//!

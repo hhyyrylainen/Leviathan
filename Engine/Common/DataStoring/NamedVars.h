@@ -10,6 +10,7 @@
 #include "Common/DataStoring/DataBlock.h"
 #include "../ReferenceCounted.h"
 #include "SFML/Network/Packet.hpp"
+#include "Common/ThreadSafe.h"
 
 namespace Leviathan{
 
@@ -28,10 +29,12 @@ namespace Leviathan{
 		//! \warning the vector will be wiped clean after creating new variable
 		DLLEXPORT NamedVariableList(const wstring &name, vector<VariableBlock*> values_willclear);
 		DLLEXPORT NamedVariableList(wstring &line, map<wstring, shared_ptr<VariableBlock>>* predefined = NULL) THROWS;
-		DLLEXPORT NamedVariableList(const wstring &name, const wstring &valuestr, map<wstring, shared_ptr<VariableBlock>>* predefined = NULL) THROWS;
+		DLLEXPORT NamedVariableList(const wstring &name, const wstring &valuestr, map<wstring,
+            shared_ptr<VariableBlock>>* predefined = NULL) THROWS;
 
 		//! \brief Helper function for constructing values
-		DLLEXPORT void ConstructValuesForObject(const wstring &variablestr, map<wstring, shared_ptr<VariableBlock>>* predefined) THROWS;
+		DLLEXPORT void ConstructValuesForObject(const wstring &variablestr, map<wstring,
+            shared_ptr<VariableBlock>>* predefined) THROWS;
 
 		DLLEXPORT ~NamedVariableList();
 		// ------------------------------------ //
@@ -128,7 +131,7 @@ namespace Leviathan{
 
 
 	// holds a vector of NamedVariableLists and provides searching functions //
-	class NamedVars : public ReferenceCounted{
+	class NamedVars : public ReferenceCounted, public ThreadSafe{
 	public:
 		DLLEXPORT NamedVars();
 

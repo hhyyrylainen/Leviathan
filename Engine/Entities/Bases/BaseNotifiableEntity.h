@@ -12,7 +12,9 @@
 
 namespace Leviathan{
 
-	class BaseNotifiableEntity : public BaseNotifiable<BaseNotifierEntity, BaseNotifiableEntity>, public virtual BaseObject{
+	class BaseNotifiableEntity : public BaseNotifiable<BaseNotifierEntity, BaseNotifiableEntity>,
+                                   public virtual BaseObject
+    {
 	public:
 		DLLEXPORT BaseNotifiableEntity();
 		DLLEXPORT virtual ~BaseNotifiableEntity();

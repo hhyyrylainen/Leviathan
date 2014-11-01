@@ -71,6 +71,7 @@ namespace Leviathan{ namespace Entity{
 
             string MeshName;
             string Material;
+            float Mass;
             Float3 Sizes;
         };
 

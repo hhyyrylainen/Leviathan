@@ -129,8 +129,8 @@ bool Leviathan::BasePositionable::BasePositionableCustomGetData(ObjectDataReques
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BasePositionable::AddPositionAndRotationToPacket(sf::Packet &packet){
 
-    packet << Position.X << Position.Y << Position.Z <<
-        QuatRotation.X << QuatRotation.Y << QuatRotation.Z << QuatRotation.Z;
+    packet << Position.X << Position.Y << Position.Z;
+    packet << QuatRotation.X << QuatRotation.Y << QuatRotation.Z << QuatRotation.W;
 }
 
 DLLEXPORT void Leviathan::BasePositionable::ApplyPositionAndRotationFromPacket(sf::Packet &packet){

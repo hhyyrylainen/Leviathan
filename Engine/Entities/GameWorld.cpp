@@ -732,27 +732,8 @@ DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDa
         somesucceeded = true;
     }
 
-    // Try to create a thing //
-    ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](GameWorld* world) ->
-                void
-        {
-            unique_ptr<Entity::Brush> brush(new Entity::Brush(false, world));
-
-            // initialize the brush //
-            brush->Init(Float3(3, 1, 1), "");
-    
-            brush->SetPosition(Float3(Random::Get()->GetNumber(-5.f, 5.f), 0, Random::Get()->GetNumber(-5.f, 5.f)));
-
-            // add to world //
-            world->AddObject(brush.release());
-
-        }, this)));
-
-
-
     return somesucceeded;
 }
-
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/, const float &tvar,
     RayCastData* ownerptr) : HitEntity(ptr), HitVariable(tvar)

@@ -890,6 +890,24 @@ DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDa
 
     return somesucceeded;
 }
+
+DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSyncData* data){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    // Change our TickNumber to match //
+    if(data->Absolute){
+
+        TickNumber = data->Ticks;
+        
+    } else {
+
+        TickNumber += data->Ticks;
+    }
+
+    Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): world clock adjusted, tick is now: "+
+        Convert::ToString(TickNumber));
+}
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/, const float &tvar,
     RayCastData* ownerptr) : HitEntity(ptr), HitVariable(tvar)

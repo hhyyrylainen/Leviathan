@@ -184,6 +184,10 @@ namespace Leviathan{
 		//! \brief Creates a new entity from initial entity response
         //! \note This should only be called on the client
         DLLEXPORT bool HandleEntityInitialPacket(NetworkResponseDataForInitialEntity* data);
+
+        //! \brief Handles a world clock synchronizing packet
+        //! \note This should only be allowed to be called on a client that has connected to a server
+        DLLEXPORT void HandleClockSyncPacket(RequestWorldClockSyncData* data);
         
 	private:
 

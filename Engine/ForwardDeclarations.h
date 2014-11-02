@@ -28,7 +28,7 @@ namespace Leviathan{
 	// Entity bases //
 	class BasePositionable;
 
-
+    // Exceptions //
 	class ExceptionInvalidArgument;
 
 
@@ -38,9 +38,13 @@ namespace Leviathan{
     class BaseEntitySerializer;
     class EntitySerializerManager;
 
-
+    // Network Response //
     class NetworkResponseDataForInitialEntity;
 
+    // Network Request //
+    class RequestWorldClockSyncData;
+
+    // Threading //
 	class ThreadingManager;
 	class QueuedTask;
 	class DelayedTask;
@@ -48,6 +52,8 @@ namespace Leviathan{
 	class ConditionalDelayedTask;
 	class RepeatingDelayedTask;
 	class RepeatCountedDelayedTask;
+
+    
 	class ApplyForceInfo;
 
 	class NetworkedInput;

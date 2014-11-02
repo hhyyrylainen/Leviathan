@@ -105,6 +105,49 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_pt
 	}
 
 
+    switch(request->GetType()){
+        case NETWORKREQUESTTYPE_WORLD_CLOCK_SYNC:
+        {
+
+            // TODO: only allow this to be received from the server
+            auto packetdata = request->GetWorldClockSyncRequestData();
+
+            if(!packetdata){
+                // Invalid data //
+                return true;
+            }
+
+            // Find a matching world and handle it //
+
+            // TODO: a thing that fetches the world from the thing that automatically creates worlds on the client
+            
+            // Get a matching world //
+            auto world = LeviathanApplication::Get()->GetGameWorld(packetdata->WorldID);
+
+            if(!world){
+
+                Logger::Get()->Error("NetworkClientInterface: handle response: couldn't find a matching "
+                    "world for world clock sync message, WorldID: "+Convert::ToString(packetdata->WorldID));
+                return true;
+            }
+
+            world->HandleClockSyncPacket(packetdata);
+
+            // Response to the request //
+            auto response = make_shared<NetworkResponse>(request->GetExpectedResponseID(),
+                PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000);
+
+            response->GenerateEmptyResponse();
+
+            // TODO: do something about this response potentially failing and the whole sync process having to be
+            // redone
+            connectiontosendresult->SendPacketToConnection(response, 1);
+            
+            return true;
+        }
+    }
+
+
 	return false;
 }
 

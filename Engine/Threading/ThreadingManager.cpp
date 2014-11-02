@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_THREADINGMANAGER
 #include "ThreadingManager.h"
@@ -143,6 +142,59 @@ DLLEXPORT void Leviathan::ThreadingManager::QueueTask(shared_ptr<QueuedTask> tas
 	TaskQueueNotify.notify_all();
 }
 
+DLLEXPORT bool Leviathan::ThreadingManager::RemoveFromQueue(shared_ptr<QueuedTask> task){
+    // Best case scenario is finding it in the wait queue //
+    {
+        GUARD_LOCK_THIS_OBJECT();
+
+        auto end = WaitingTasks.end();
+        for(auto iter = WaitingTasks.begin(); iter != end; ++iter){
+            
+            if((*iter).get() == task.get()){
+
+                WaitingTasks.erase(iter);
+                return true;
+            }
+        }
+    }
+
+    // The worse case is it having finished already //
+    // And the worst case is it being currently executed //
+    bool wasrunning = false;
+    bool isrunning = false;
+    
+    do{
+
+        isrunning = false;
+        
+        GUARD_LOCK_THIS_OBJECT();
+
+        auto end = UsableThreads.end();
+        for(auto iter = UsableThreads.begin(); iter != end; ++iter){
+
+            if((*iter)->IsRunningTask(task)){
+
+                isrunning = true;
+                wasrunning = true;
+                break;
+            }
+        }
+
+    } while(isrunning);
+
+    return wasrunning;
+}
+
+DLLEXPORT void Leviathan::ThreadingManager::RemoveTasksFromQueue(std::vector<shared_ptr<QueuedTask>> &tasklist){
+    // Just go one by one and remove them all //
+    for(size_t i = 0; i < tasklist.size(); i++){
+
+        RemoveFromQueue(tasklist[i]);
+    }
+
+    tasklist.clear();
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::ThreadingManager::FlushActiveThreads(){
 	// Disallow new tasks //
     UNIQUE_LOCK_THIS_OBJECT();
@@ -386,6 +438,7 @@ void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 						} else if(!manager->AllowConditionalWait){
 							// Discard it //
 							nonimportantiter = manager->WaitingTasks.erase(taskiter);
+                            
 							// Just to be safe, TODO: performance could be improved //
 							taskiter = nonimportantiter;
 						}

@@ -137,7 +137,13 @@ DLLEXPORT bool Leviathan::TaskThread::HasRunningTask(){
 
 	return SetTask.get() != NULL;
 }
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::TaskThread::IsRunningTask(shared_ptr<QueuedTask> task) const{
 
+    GUARD_LOCK_THIS_OBJECT();
+    return SetTask.get() == task.get();
+}
+// ------------------------------------ //
 DLLEXPORT boost::thread& Leviathan::TaskThread::GetBoostThreadObject(){
 	return ThisThread;
 }

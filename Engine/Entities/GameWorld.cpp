@@ -159,6 +159,8 @@ public:
                 if(plyprepare->ObjectsReady)
                     plyprepare->AllDone = true;
 
+                plyprepare->OurQueued.clear();
+
 
             }, this, sentthing, msping), boost::bind<bool>([](shared_ptr<SentNetworkThing> sentthing) -> bool
                 {

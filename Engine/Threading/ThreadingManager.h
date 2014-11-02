@@ -49,6 +49,17 @@ namespace Leviathan{
 		//! Adds a task to the queue
 		DLLEXPORT void QueueTask(shared_ptr<QueuedTask> task);
 
+        //! \brief Removes a task from the queue
+        //! \pre The task is added with QueueTask
+        //! \note If the task is currectly being executed current thread spinlocsk untill it is done
+        DLLEXPORT bool RemoveFromQueue(shared_ptr<QueuedTask> task);
+
+        //! \brief Removes specific tasks from the queue
+        //! \pre The tasks are added with QueueTask and tasklist has the list of tasks to remove
+        //! \post The tasklist is empty and the tasks won't be ran
+        //! \note If the task is currectly being executed current thread spinlocsk untill it is done
+        DLLEXPORT void RemoveTasksFromQueue(std::vector<shared_ptr<QueuedTask>> &tasklist);
+
 		//! \brief Adds a task to the queue
 		//! \param newdtask The task to queue, the pointer will be deleted by this
 		DLLEXPORT FORCE_INLINE void QueueTask(QueuedTask* newdtask){

@@ -1,4 +1,4 @@
-#ifndef LEVIATHAN_NETWORKRESPONSE
+#ifndef LEVIATHAN_NETWORKRESPONSE 
 #define LEVIATHAN_NETWORKRESPONSE
 // ------------------------------------ //
 #ifndef LEVIATHAN_DEFINE
@@ -43,7 +43,7 @@ namespace Leviathan{
 
         //! Contains one or more full entities sent by the server
         NETWORKRESPONSETYPE_INITIAL_ENTITY,
-        
+
 		//! A server heartbeat packet
 		NETWORKRESPONSETYPE_SERVERHEARTBEAT,
 
@@ -293,7 +293,7 @@ namespace Leviathan{
 	};
 
 
-    //! \brief Used for storing data related to updating a NetworkedInput
+    //! \brief Used for storing data for number of whole entitites
 	class NetworkResponseDataForInitialEntity : public BaseNetworkResponseData{
 	public:
 		DLLEXPORT NetworkResponseDataForInitialEntity(sf::Packet &frompacket);
@@ -314,7 +314,6 @@ namespace Leviathan{
 		//! The data for the entitites is here as binary data
         std::vector<shared_ptr<sf::Packet>> EntityData;
 	};
-
 
 
     //! \brief Represents a response type packet sent through a ConnectionInfo

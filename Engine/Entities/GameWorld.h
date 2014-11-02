@@ -67,6 +67,7 @@ namespace Leviathan{
 	//! \brief Represents a world that contains entities
     //! \note Only ConnectedPlayer object may be linked with the world through Notifier
 	class GameWorld : public BaseNotifierAll{
+        friend PlayerConnectionPreparer;
 	public:
 		DLLEXPORT GameWorld();
 		DLLEXPORT ~GameWorld();
@@ -86,6 +87,11 @@ namespace Leviathan{
 
 		//! \brief Marks all objects to be deleted
 		DLLEXPORT void MarkForClear();
+
+
+        //! \brief Used to keep track of passed ticks and trigger timed triggers
+        //! \note This will be called (or should be) every time the engine ticks
+        DLLEXPORT void Tick();
 
 		DLLEXPORT void SetFog();
 		DLLEXPORT void SetSkyBox(const string &materialname);
@@ -233,6 +239,12 @@ namespace Leviathan{
 
         //! The unique ID
         int ID;
+
+        //! The current tick number
+        //! This should be the same on all clients as closely as possible
+        int TickNumber;
+
+        
 
         //! A funky name for this world, if any
         std::string DecoratedName;

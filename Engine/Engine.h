@@ -17,7 +17,7 @@
 
 
 
-#define TICKSPEED 60
+#define TICKSPEED 50
 
 
 

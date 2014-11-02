@@ -82,6 +82,14 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestConnectInputData* new
 
 }
 
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestWorldClockSyncData* newddata, int timeout /*= 1000*/,
+    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_WORLD_CLOCK_SYNC), TimeOutValue(timeout),
+    TimeOutStyle(style), RequestData(newddata)
+{
+
+}
+
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket) : TimeOutValue(-1){
 	// Get the heading data //
 	if(!(frompacket >> ResponseID)){
@@ -97,42 +105,47 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket) : Ti
 
 	// Try to create the additional data if required for this type //
 	switch(TypeOfRequest){
-	case NETWORKREQUESTTYPE_OPENREMOTECONSOLETO:
+        case NETWORKREQUESTTYPE_OPENREMOTECONSOLETO:
 		{
 			RequestData = new RemoteConsoleOpenRequestDataTo(frompacket);
 		}
 		break;
-	case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE:
+        case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE:
 		{
 			RequestData = new RemoteConsoleAccessRequestData(frompacket);
 		}
 		break;
-	case NETWORKREQUESTTYPE_JOINSERVER:
+        case NETWORKREQUESTTYPE_JOINSERVER:
 		{
 			RequestData = new JoinServerRequestData(frompacket);
 		}
 		break;
-	case NETWORKREQUESTTYPE_GETSINGLESYNCVALUE:
+        case NETWORKREQUESTTYPE_GETSINGLESYNCVALUE:
 		{
 			RequestData = new GetSingleSyncValueRequestData(frompacket);
 		}
 		break;
-	case NETWORKREQUESTTYPE_CUSTOM:
+        case NETWORKREQUESTTYPE_CUSTOM:
 		{
 			RequestData = new CustomRequestData(frompacket);
 		}
 		break;
-	case NETWORKREQUESTTYPE_REQUESTEXECUTION:
+        case NETWORKREQUESTTYPE_REQUESTEXECUTION:
 		{
 			RequestData = new RequestCommandExecutionData(frompacket);
 		}
 		break;
-	case  NETWORKREQUESTTYPE_CONNECTINPUT:
+        case NETWORKREQUESTTYPE_CONNECTINPUT:
 		{
 			RequestData = new RequestConnectInputData(frompacket);
 		}
 		break;
-	default:
+        case NETWORKREQUESTTYPE_WORLD_CLOCK_SYNC:
+        {
+            RequestData = new RequestWorldClockSyncData(frompacket);
+        }
+        break;
+        default:
 		{
 			// Nothing to get //
 			RequestData = NULL;
@@ -177,33 +190,39 @@ DLLEXPORT NETWORKREQUESTTYPE Leviathan::NetworkRequest::GetType(){
 }
 // ------------------------------------ //
 DLLEXPORT RemoteConsoleOpenRequestDataTo* Leviathan::NetworkRequest::GetRemoteConsoleOpenToData(){
-	if(TypeOfRequest == NETWORKREQUESTTYPE_OPENREMOTECONSOLETO)
+	if(TypeOfRequest == NETWORKREQUESTTYPE_OPENREMOTECONSOLETO && RequestData)
 		return static_cast<RemoteConsoleOpenRequestDataTo*>(RequestData);
 	return NULL;
 }
 
 DLLEXPORT RemoteConsoleAccessRequestData* Leviathan::NetworkRequest::GetRemoteConsoleAccessRequestData(){
-	if(TypeOfRequest == NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE)
+	if(TypeOfRequest == NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE && RequestData)
 		return static_cast<RemoteConsoleAccessRequestData*>(RequestData);
 	return NULL;
 }
 
 DLLEXPORT CustomRequestData* Leviathan::NetworkRequest::GetCustomRequestData(){
-	if(TypeOfRequest == NETWORKREQUESTTYPE_CUSTOM)
+	if(TypeOfRequest == NETWORKREQUESTTYPE_CUSTOM && RequestData)
 		return static_cast<CustomRequestData*>(RequestData);
 	return NULL;
 }
 
 DLLEXPORT RequestCommandExecutionData* Leviathan::NetworkRequest::GetCommandExecutionRequestData(){
-	if(TypeOfRequest == NETWORKREQUESTTYPE_REQUESTEXECUTION)
+	if(TypeOfRequest == NETWORKREQUESTTYPE_REQUESTEXECUTION && RequestData)
 		return static_cast<RequestCommandExecutionData*>(RequestData);
 	return NULL;
 }
 
 DLLEXPORT RequestConnectInputData* Leviathan::NetworkRequest::GetConnectInputRequestData(){
-	if(TypeOfRequest == NETWORKREQUESTTYPE_CONNECTINPUT)
+	if(TypeOfRequest == NETWORKREQUESTTYPE_CONNECTINPUT && RequestData)
 		return static_cast<RequestConnectInputData*>(RequestData);
 	return NULL;
+}
+
+DLLEXPORT RequestWorldClockSyncData* Leviathan::NetworkRequest::GetWorldClockSyncRequestData(){
+    if(TypeOfRequest == NETWORKREQUESTTYPE_WORLD_CLOCK_SYNC && RequestData)
+        return static_cast<RequestWorldClockSyncData*>(RequestData);
+    return NULL;
 }
 // ------------------ RemoteConsoleOpenRequestDataTo ------------------ //
 DLLEXPORT Leviathan::RemoteConsoleOpenRequestDataTo::RemoteConsoleOpenRequestDataTo(int token) : SessionToken(token){
@@ -328,3 +347,40 @@ DLLEXPORT void Leviathan::RequestConnectInputData::AddDataToPacket(sf::Packet &p
 
 	packet << string(reinterpret_cast<const char*>(DataForObject.getData()), DataForObject.getDataSize());
 }
+// ------------------ RequestWorldClockSyncData ------------------ //
+DLLEXPORT RequestWorldClockSyncData::RequestWorldClockSyncData(sf::Packet &frompacket){
+
+    frompacket >> WorldID >> Ticks >> Absolute;
+
+    if(!frompacket)
+        throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"packet", L"");
+}
+
+DLLEXPORT RequestWorldClockSyncData::RequestWorldClockSyncData(int worldid, int ticks, bool
+    absolute /*= true*/) :
+    WorldID(worldid), Ticks(ticks), Absolute(absolute)
+{
+
+}
+
+DLLEXPORT void Leviathan::RequestWorldClockSyncData::AddDataToPacket(sf::Packet &packet){
+    packet << WorldID << Ticks << Absolute;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

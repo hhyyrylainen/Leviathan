@@ -24,12 +24,20 @@ namespace Leviathan{
 		NETWORKREQUESTTYPE_JOINSERVER,
 		NETWORKREQUESTTYPE_GETSINGLESYNCVALUE,
 		NETWORKREQUESTTYPE_GETALLSYNCVALUES,
+        
 		//! Used to request the server to run a command, used for chat and other things
 		NETWORKREQUESTTYPE_REQUESTEXECUTION,
+        
 		//! Sent when a player requests the server to connect a NetworkedInput
 		NETWORKREQUESTTYPE_CONNECTINPUT,
+        
         //! Sent by servers to ping (time the time a client takes to respond) clients
         NETWORKREQUESTTYPE_ECHO,
+        
+        //! Contains timing data to sync world clocks on a client
+        NETWORKREQUESTTYPE_WORLD_CLOCK_SYNC,
+        
+
 
 		//! Used for game specific requests
 		NETWORKREQUESTTYPE_CUSTOM
@@ -123,6 +131,29 @@ namespace Leviathan{
 		sf::Packet DataForObject;
 	};
 
+    //! \brief Stores data for synchronizing world clocks
+    class RequestWorldClockSyncData : public BaseNetworkRequestData{
+    public:
+
+        DLLEXPORT RequestWorldClockSyncData(sf::Packet &frompacket);
+
+        //! \brief Sets up a clock sync packet
+        DLLEXPORT RequestWorldClockSyncData(int worldid, int ticks, bool absolute = true);
+
+        DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) override;
+
+        //! The ID of the target world
+        int WorldID;
+        
+        //! The amount of ticks to set or change by
+        int Ticks;
+
+        //! Whether the tick count should be set to be the current or just added to the current tick
+        bool Absolute;
+    };
+
+
+
 
 	class NetworkRequest{
 	public:
@@ -142,6 +173,8 @@ namespace Leviathan{
             PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED);
 		DLLEXPORT NetworkRequest(RequestConnectInputData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
             PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+        DLLEXPORT NetworkRequest(RequestWorldClockSyncData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
+            PACKAGE_TIMEOUT_STYLE_TIMEDMS);
 		
 		DLLEXPORT ~NetworkRequest();
 
@@ -157,6 +190,7 @@ namespace Leviathan{
 		DLLEXPORT CustomRequestData* GetCustomRequestData();
 		DLLEXPORT RequestCommandExecutionData* GetCommandExecutionRequestData();
 		DLLEXPORT RequestConnectInputData* GetConnectInputRequestData();
+        DLLEXPORT RequestWorldClockSyncData* GetWorldClockSyncRequestData();
 
 		DLLEXPORT int GetExpectedResponseID();
 

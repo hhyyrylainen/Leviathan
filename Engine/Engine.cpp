@@ -604,6 +604,14 @@ void Leviathan::Engine::Tick(){
 	}
 
 
+    // Update worlds //
+    auto end = GameWorlds.end();
+    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
+
+        (*iter)->Tick();
+    }
+    
+    
 	// Some dark magic here //
 	if(TickCount % 25 == 0){
 		// update values

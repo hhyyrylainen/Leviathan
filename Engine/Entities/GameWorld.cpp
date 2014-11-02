@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_GAMEWORLD
 #include "GameWorld.h"
@@ -19,46 +18,171 @@
 #include "Networking/ConnectionInfo.h"
 #include "Threading/ThreadingManager.h"
 #include "Handlers/EntitySerializerManager.h"
+#include "Engine.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
 // TODO: remember to delete these
-#include "Entities/Objects/Brush.h"
-#include "Utility/Random.h"
+#include "boost/chrono.hpp"
+#include "Common/Misc.h"
+
+
 
 //! \brief Class used by _OnNotifiableConnected to hold temporary connection data
 class Leviathan::PlayerConnectionPreparer{
+
 public:
 
     //! Used to keep track of what's happening regards to the ping
-    enum PING_STATE {PING_STATE_STARTED, PING_STATE_FAILED, PING_STATE_NONE, PING_STATE_COMPLETED};
+    enum PING_STATE {PING_STATE_STARTED, PING_STATE_FAILED, PING_STATE_NONE, PING_STATE_COMPLETED,
+                     PING_STATE_FINAL_STEP};
     
-    PlayerConnectionPreparer(ConnectedPlayer* ply) :
+    PlayerConnectionPreparer(ConnectedPlayer* ply, GameWorld* world, shared_ptr<ConnectionInfo> connection) :
         Pinging(PING_STATE_NONE), GameWorldCompromised(false), ObjectsReady(false), AllDone(false),
-        Player(ply)
+        Player(ply), World(world), Connection(connection), PingTime(0)
     {
 
 
+    }
+    ~PlayerConnectionPreparer(){
+
+        // Cancel all tasks //
+        ThreadingManager::Get()->RemoveTasksFromQueue(OurQueued);
     }
 
     //! Called as an callback when pinging completes
     void OnPingCompleted(int msping, int lostpackets){
 
-        Pinging = PING_STATE_COMPLETED;
 
-        boost::unique_lock<boost::mutex> lock(_Mutex);
-        if(ObjectsReady)
-            AllDone = true;
+        PingTime = msping;
+        
+        SendClockSyncRequest(msping);
+    }
+
+    //! Sends the clock sync request and starts waiting
+    void SendClockSyncRequest(int msping){
+
+        // Send a tick sync thing //
+        if(GameWorldCompromised)
+            return;
+
+        int targettick;
+        {
+            GUARD_LOCK_OTHER_OBJECT(World);
+
+            targettick = World->TickNumber;
+        }
+        
+        // Take the ping into account //
+        float sendtime = msping / TICKSPEED;
+
+        int wholeticks = floor(sendtime);
+
+        targettick += wholeticks;
+
+        sendtime -= wholeticks;
+
+        // Add partial ticks if even somewhat possible that the next tick has passed //
+        if(sendtime >= 0.4f)
+            targettick++;
+        
+        shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
+                World->GetID(), targettick, true));
+
+        auto sentthing = Connection->SendPacketToConnection(clocksync, 1);
+        sentthing->SetAsTimed();
+
+        // Start waiting for it //
+        auto waitthing = make_shared<ConditionalTask>(boost::bind<void>([](PlayerConnectionPreparer* plyprepare,
+                    shared_ptr<SentNetworkThing> sentthing, int msping) -> void
+            {
+                bool succeeded = sentthing->GetFutureForThis().get();
+
+                // Resend once //
+                if(!succeeded){
+
+                    if(plyprepare->TimingFailed){
+
+                        // TODO: kick player
+                        DEBUG_BREAK;
+                        return;
+                    }
+
+                    plyprepare->TimingFailed = true;
+                    plyprepare->SendClockSyncRequest(msping);
+                    return;
+                }
+                
+                // Send a correction packet //
+                int64_t elapsedtime = sentthing->ConfirmReceiveTime-sentthing->RequestStartTime;
+                
+                float sendtime = msping / TICKSPEED;
+                
+                // Here we calculate how much our initial estimate of the time taken is off by
+                float correctingamount = elapsedtime-sendtime;
+
+                correctingamount /= TICKSPEED;
+
+                int wholecorrect = floor(correctingamount);
+
+                correctingamount -= wholecorrect;
+
+                if(correctingamount <= -0.6f){
+                    
+                    wholecorrect--;
+                    
+                } else if(correctingamount >= 0.6f){
+                    
+                    wholecorrect++;
+                }
+
+                // Send correction if not 0 //
+                if(wholecorrect != 0){
+
+                    if(plyprepare->GameWorldCompromised)
+                        return;
+                    
+                    Logger::Get()->Info("GameWorld: clock sync: sending follow up correction of: "+Convert::ToString(
+                            wholecorrect));
+
+                    shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
+                            plyprepare->World->GetID(), wholecorrect, false), 500);
+
+                    auto sentthing = plyprepare->Connection->SendPacketToConnection(clocksync, 5);
+                    
+                }
+
+                // Pinging is now done //
+                plyprepare->Pinging = PING_STATE_COMPLETED;
+                
+                boost::unique_lock<boost::mutex> lock(plyprepare->_Mutex);
+                if(plyprepare->ObjectsReady)
+                    plyprepare->AllDone = true;
+
+
+            }, this, sentthing, msping), boost::bind<bool>([](shared_ptr<SentNetworkThing> sentthing) -> bool
+                {
+                    return sentthing->GetFutureForThis().has_value();
+                }, sentthing));
+        
+        
+        OurQueued.push_back(waitthing);
+
+        ThreadingManager::Get()->QueueTask(waitthing);
     }
 
     //! Called when pinging fails
     void OnPingFailed(CONNECTION_PING_FAIL_REASON failreason, int lostpackets){
 
+        // TODO: kick the player
         DEBUG_BREAK;
     }
 
     //! Set by GameWorld if it isn't safe to use
     bool GameWorldCompromised;
+
+    //! The world
+    GameWorld* World;
 
     // This is needed to avoid rare cases where AllDone would never be set
     boost::mutex _Mutex;
@@ -67,17 +191,24 @@ public:
     //! The pointer is unsafe to use
     ConnectedPlayer* Player;
 
+    shared_ptr<ConnectionInfo> Connection;
+
+    bool TimingFailed;
     
     PING_STATE Pinging;
+    int PingTime;
+    
     bool ObjectsReady;
     bool AllDone;
+
+    std::vector<shared_ptr<QueuedTask>> OurQueued;
 };
 
 // ------------------ GameWorld ------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld() :
     WorldSceneCamera(NULL), WorldsScene(NULL), Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false),
     GraphicalMode(false), LinkedToWindow(NULL), WorldWorkspace(NULL), ClearAllObjects(false),
-    ID(IDFactory::GetID())
+    ID(IDFactory::GetID()), TickNumber(0)
 {
 
 }
@@ -259,6 +390,23 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(BaseObject* obj, 
 
     return true;
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::GameWorld::Tick(){
+
+    TickNumber++;
+
+    // TODO: get rid of this debug code
+    if(TickNumber % 100 == 0){
+
+        auto curtime = Misc::GetThreadSafeSteadyTimePoint();
+
+        stringstream strstream;
+        strstream << curtime;
+        
+        Logger::Get()->Write("World tick ("+Convert::ToString(TickNumber)+")");
+        Logger::Get()->Write("\t> At time: "+strstream.str());
+    }
+}
 // ------------------ Object managing ------------------ //
 DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
 	AddObject(shared_ptr<BaseObject>(obj, SharedPtrReleaseDeleter<BaseObject>::DoRelease));
@@ -428,7 +576,8 @@ DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float
 	RayCastData data(1, from, to);
 
 	// Call the actual ray firing function //
-	NewtonWorldRayCast(_PhysicalWorld->GetNewtonWorld(), &from.X, &to.X, RayCallbackDataCallbackClosest, &data, NULL, 0);
+	NewtonWorldRayCast(_PhysicalWorld->GetNewtonWorld(), &from.X, &to.X, RayCallbackDataCallbackClosest, &data, NULL,
+        0);
 
 	// Check the result //
 	if(data.HitEntities.size() == 0){
@@ -477,16 +626,17 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
 	auto plyptr = static_cast<ConnectedPlayer*>(parentadded);
 
     Logger::Get()->Info("GameWorld: player(\""+plyptr->GetNickname()+"\") is now receiving world");
-
-	// Create an entry for this player //
-    shared_ptr<PlayerConnectionPreparer> connectobject(new PlayerConnectionPreparer(plyptr));
-
-
+    
     // We need a safe pointer to the connection //
     ConnectionInfo* unsafeconnection = plyptr->GetConnection();
 
 
     auto safeconnection = NetworkHandler::Get()->GetSafePointerToConnection(unsafeconnection);
+
+	// Create an entry for this player //
+    shared_ptr<PlayerConnectionPreparer> connectobject(new PlayerConnectionPreparer(plyptr, this, safeconnection));
+
+
 
     if(!safeconnection){
 

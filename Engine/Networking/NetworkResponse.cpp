@@ -1,5 +1,5 @@
 #include "Include.h"
-// ------------------------------------ //
+// ----------------------------------- //
 #ifndef LEVIATHAN_NETWORKRESPONSE
 #include "NetworkResponse.h"
 #endif

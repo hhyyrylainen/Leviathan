@@ -830,6 +830,24 @@ void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
 	_ThreadingManager->MakeThreadsWorkWithOgre();
 }
 // ------------------------------------ //
+DLLEXPORT int Leviathan::Engine::GetTimeUntilTick() const{
+
+    return Misc::GetTimeMs64()-LastFrame;
+}
+
+void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute = true){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    if(!absolute){
+
+        LastFrame += amount;
+        return;
+    }
+
+    LastFrame = Misc::GetTimeMs64()+amount;
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 
 	Logger::Get()->Info(L"Command line: "+commands);

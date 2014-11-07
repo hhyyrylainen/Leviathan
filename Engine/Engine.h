@@ -12,7 +12,6 @@
 #include "FileSystem.h"
 #include "Common/DataStoring/DataStore.h"
 #include "Handlers/OutOfMemoryHandler.h"
-#include "Utility/Random.h"
 #include "Threading/ThreadingManager.h"
 
 
@@ -31,6 +30,7 @@ namespace Leviathan{
 		
 		friend GraphicalInputEntity;
 		friend Gui::GuiManager;
+        friend GameWorld;
 	public:
 		DLLEXPORT Engine(LeviathanApplication* owner);
 		DLLEXPORT ~Engine();
@@ -47,6 +47,9 @@ namespace Leviathan{
 		//! \pre PreRelease is called
 		DLLEXPORT bool HasPreRleaseBeenDone() const;
 
+        //! \brief Calculates how long until the next engine tick
+        //! \return The time remaining in milliseconds
+        DLLEXPORT int GetTimeUntilTick() const;
 
 		//! \brief Causes VLD to dump current memory leaks
 		DLLEXPORT static void DumpMemoryLeaks();
@@ -111,8 +114,16 @@ namespace Leviathan{
 		// after load function //
 		void PostLoad();
 
-		// Function called by first instance of Window class after creating a window to not error when registering threads to work with Ogre //
+		//! Function called by first instance of Window class after creating a window to not error
+        //! when registering threads to work with Ogre
 		void _NotifyThreadsRegisterOgre();
+
+        //! \brief Sets the tick clock to a certain value
+        //! \note Should only be used to match the server's clock
+        //! \param amount The amount of time in milliseconds to set or change
+        //! \param absolute When true sets the time until a tick to amount otherwise changes the remaining
+        //! time by amount
+        void _AdjustTickClock(int amount, bool absolute = true);
 
 		// ------------------------------------ //
 		AppDef* Define;

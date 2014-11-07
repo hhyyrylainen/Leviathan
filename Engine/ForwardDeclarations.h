@@ -124,6 +124,7 @@ namespace Leviathan{
 	class GraphicalInputEntity;
 	class StringIterator;
 	class Window;
+    class Random;
 	class VariableBlock;
 	class TimingMonitor;
 	class ScopeTimer;

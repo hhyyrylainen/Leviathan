@@ -3,7 +3,8 @@
 #ifndef LEVIATHAN_XINCLUDES
 #define LEVIATHAN_XINCLUDES
 // ------------------------------------ //
-//! \file File that defines Xlib includes and undefines (most) conflicting things
+//! \file
+//! File that defines Xlib includes and undefines (most) conflicting things
 // ---- includes ---- //
 
 #include <X11/Xlib.h>

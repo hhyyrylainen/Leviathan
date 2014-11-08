@@ -2,34 +2,44 @@
 #ifndef LEVIATHAN_ENGINE
 #include "Engine.h"
 #endif
+#include "Application/AppDefine.h"
 #include "Application/Application.h"
+#include "Common/DataStoring/DataStore.h"
+#include "Common/Misc.h"
+#include "Common/StringOperations.h"
 #include "Entities/GameWorld.h"
-#include <boost/thread/future.hpp>
-#include <boost/chrono/duration.hpp>
-#include "Rendering/Graphics.h"
+#include "Entities/Serializers/SendableEntitySerializer.h"
+#include "Events/EventHandler.h"
+#include "Handlers/EntitySerializerManager.h"
 #include "Handlers/ObjectLoader.h"
+#include "Handlers/OutOfMemoryHandler.h"
+#include "Handlers/ResourceRefreshHandler.h"
 #include "Leap/LeapManager.h"
-#include "Script/Console.h"
-#include "Sound/SoundDevice.h"
-#include "Rendering/GraphicalInputEntity.h"
-#include "Newton/NewtonManager.h"
-#include "Newton/PhysicalMaterialManager.h"
 #include "Networking/NetworkHandler.h"
 #include "Networking/RemoteConsole.h"
-#include "Handlers/EntitySerializerManager.h"
-#include "Entities/Serializers/SendableEntitySerializer.h"
+#include "Newton/NewtonManager.h"
+#include "Newton/PhysicalMaterialManager.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "Rendering/GraphicalInputEntity.h"
+#include "Rendering/Graphics.h"
+#include "Script/Console.h"
+#include "Sound/SoundDevice.h"
+#include "Statistics/RenderingStatistics.h"
+#include "Threading/ThreadingManager.h"
 #include "Utility/Random.h"
+#include <boost/chrono/duration.hpp>
+#include <boost/thread/future.hpp>
+#include <boost/thread/locks.hpp>
+
+#ifdef LEVIATHAN_USES_VLD
+#include <vld.h>
+#endif // LEVIATHAN_USES_VLD
+
 #ifdef _WIN32
 #include <io.h>
 #include <fcntl.h>
 #endif
-#include "Common/StringOperations.h"
-#include "Common/Misc.h"
-#include "ObjectFiles/ObjectFileProcessor.h"
-#ifdef LEVIATHAN_USES_VLD
-#include <vld.h>
-#endif // LEVIATHAN_USES_VLD
-#include "Handlers/ResourceRefreshHandler.h"
+
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -488,11 +498,16 @@ void Leviathan::Engine::Release(bool forced){
 		assert(PreReleaseDone && "PreReleaseDone must be done before actual release!");
 
 	// Destroy worlds //
-	while(GameWorlds.size()){
+    {
+        GUARD_LOCK_BASIC(GameWorldsLock);
+        
+        while(GameWorlds.size()){
 
-		GameWorlds[0]->Release();
-		GameWorlds.erase(GameWorlds.begin());
-	}
+            GameWorlds[0]->Release();
+            GameWorlds.erase(GameWorlds.begin());
+        }
+
+    }
 	
 	// Wait for tasks to finish //
 	if(!forced)
@@ -605,10 +620,14 @@ void Leviathan::Engine::Tick(){
 
 
     // Update worlds //
-    auto end = GameWorlds.end();
-    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
+    {
+        GUARD_LOCK_BASIC(GameWorldsLock);
+        
+        auto end = GameWorlds.end();
+        for(auto iter = GameWorlds.begin(); iter != end; ++iter){
 
-        (*iter)->Tick();
+            (*iter)->Tick();
+        }
     }
     
     
@@ -725,10 +744,14 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 	SAFE_RELEASEDEL(_ResourceRefreshHandler);
 
 	// Set worlds to empty //
-	for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
-		// Set all objects to release //
-		(*iter)->MarkForClear();
-	}
+    {
+        GUARD_LOCK_BASIC(GameWorldsLock);
+        
+        for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
+            // Set all objects to release //
+            (*iter)->MarkForClear();
+        }
+    }
 
 	// Set tasks to a proper state //
 	_ThreadingManager->SetDiscardConditionalTasks(true);
@@ -774,7 +797,8 @@ DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEnt
 	if(owningwindow)
 		owningwindow->LinkObjects(worldscamera, tmp);
     
-	GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK_BASIC(GameWorldsLock);
+    
 	GameWorlds.push_back(tmp);
 	return GameWorlds.back();
 }
@@ -788,7 +812,8 @@ DLLEXPORT void Leviathan::Engine::DestroyWorld(shared_ptr<GameWorld> &world){
     world->Release();
 
     // Then delete it //
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK_BASIC(GameWorldsLock);
+    
     auto end = GameWorlds.end();
     for(auto iter = GameWorlds.begin(); iter != end; ++iter){
 
@@ -806,7 +831,8 @@ DLLEXPORT void Leviathan::Engine::DestroyWorld(shared_ptr<GameWorld> &world){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::PhysicsUpdate(){
 	// go through all the worlds and simulate updates //
-	GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK_BASIC(GameWorldsLock);
+
 	for(size_t i = 0; i < GameWorlds.size(); i++){
 
 		GameWorlds[i]->SimulateWorld();
@@ -816,7 +842,8 @@ DLLEXPORT void Leviathan::Engine::PhysicsUpdate(){
 
 DLLEXPORT void Leviathan::Engine::ResetPhysicsTime(){
 	// go through all worlds and set last update time to this moment //
-	GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK_BASIC(GameWorldsLock);
+    
 	for(size_t i = 0; i < GameWorlds.size(); i++){
 
 		GameWorlds[i]->ClearSimulatePassedTime();
@@ -838,7 +865,7 @@ DLLEXPORT int Leviathan::Engine::GetTimeSinceLastTick() const{
 void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
 
     GUARD_LOCK_THIS_OBJECT();
-
+    
     if(!absolute){
 
         Logger::Get()->Info("Engine: adjusted tick timer by "+Convert::ToString(amount));

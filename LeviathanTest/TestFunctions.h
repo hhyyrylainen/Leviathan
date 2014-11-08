@@ -12,6 +12,9 @@
 #include "Utility/MultiFlag.h"
 #include "utf8/checked.h"
 #include "Utility/Random.h"
+#include "Common/DataStoring/DataStore.h"
+#include "Events/EventHandler.h"
+#include "Threading/ThreadingManager.h"
 
 bool TestMiscCutWstring(const int &tests){
 	bool Failed = false;

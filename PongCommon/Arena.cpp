@@ -10,6 +10,7 @@
 #include "TextureGenerator.h"
 #include "Handlers/ObjectLoader.h"
 #include "Newton/PhysicalMaterialManager.h"
+#include "Utility/Random.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::Arena::Arena(shared_ptr<Leviathan::GameWorld> world) : TargetWorld(world), DirectTrail(NULL){

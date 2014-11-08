@@ -9,6 +9,7 @@
 #include "Networking/RemoteConsole.h"
 #include "Rendering/GraphicalInputEntity.h"
 #include "PongNetHandler.h"
+#include "Utility/Random.h"
 using namespace Pong;
 using namespace Leviathan;
 // ------------------------------------ //

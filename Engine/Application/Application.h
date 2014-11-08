@@ -8,6 +8,7 @@
 // ---- includes ---- //
 #include "Engine.h"
 #include "Application/AppDefine.h"
+#include "Script/ScriptInterface.h"
 
 namespace Leviathan{
 

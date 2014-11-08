@@ -25,6 +25,8 @@
 #include "Newton/PhysicalMaterialManager.h"
 #include "Networking/SyncedResource.h"
 #include "GameInputController.h"
+#include "Events/EventHandler.h"
+#include "Threading/ThreadingManager.h"
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " +__WFILE__+ L" on line "+Convert::IntToWstring(__LINE__), false);return;
 

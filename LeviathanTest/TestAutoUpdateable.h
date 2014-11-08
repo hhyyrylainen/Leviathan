@@ -1,5 +1,5 @@
 
-
+#include "Events/AutoUpdateable.h"
 
 class TestAutoUpdateable : public Leviathan::AutoUpdateableObject{
 public:

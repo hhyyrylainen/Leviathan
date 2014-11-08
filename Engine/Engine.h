@@ -6,15 +6,10 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Application/AppDefine.h"
-#include "Events/EventHandler.h"
-#include "Statistics/RenderingStatistics.h"
-#include "FileSystem.h"
-#include "Common/DataStoring/DataStore.h"
-#include "Handlers/OutOfMemoryHandler.h"
-#include "Threading/ThreadingManager.h"
-
-
+#include "boost/thread/mutex.hpp"
+#include "Common/ThreadSafe.h"
+#include "Networking/NetworkInterface.h"
+#include "boost/thread.hpp"
 
 #define TICKSPEED 50
 
@@ -153,8 +148,12 @@ namespace Leviathan{
 
 		IDFactory* IDDefaultInstance;
 		LeviathanApplication* Owner;
-		// world data //
+        
+		//! List of current worlds
 		std::vector<shared_ptr<GameWorld>> GameWorlds;
+
+        //! Mutex that is locked when changing the worlds
+        boost::mutex GameWorldsLock;
 
 		// data //
 		__int64 LastFrame;

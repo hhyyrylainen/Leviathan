@@ -15,6 +15,7 @@
 #include "NetworkedInputHandler.h"
 #include "Application/Application.h"
 #include "Entities/GameWorld.h"
+#include "Threading/ThreadingManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 

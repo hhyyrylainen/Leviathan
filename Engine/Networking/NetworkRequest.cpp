@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_NETWORKREQUEST
 #include "NetworkRequest.h"
@@ -350,21 +349,21 @@ DLLEXPORT void Leviathan::RequestConnectInputData::AddDataToPacket(sf::Packet &p
 // ------------------ RequestWorldClockSyncData ------------------ //
 DLLEXPORT RequestWorldClockSyncData::RequestWorldClockSyncData(sf::Packet &frompacket){
 
-    frompacket >> WorldID >> Ticks >> Absolute;
+    frompacket >> WorldID >> Ticks >> EngineMSTweak  >> Absolute;
 
     if(!frompacket)
         throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"packet", L"");
 }
 
-DLLEXPORT RequestWorldClockSyncData::RequestWorldClockSyncData(int worldid, int ticks, bool
-    absolute /*= true*/) :
-    WorldID(worldid), Ticks(ticks), Absolute(absolute)
+DLLEXPORT RequestWorldClockSyncData::RequestWorldClockSyncData(int worldid, int ticks, int enginetick,
+    bool absolute /*= true*/) :
+    WorldID(worldid), Ticks(ticks), Absolute(absolute), EngineMSTweak(enginetick)
 {
 
 }
 
 DLLEXPORT void Leviathan::RequestWorldClockSyncData::AddDataToPacket(sf::Packet &packet){
-    packet << WorldID << Ticks << Absolute;
+    packet << WorldID << Ticks << EngineMSTweak << Absolute;
 }
 
 

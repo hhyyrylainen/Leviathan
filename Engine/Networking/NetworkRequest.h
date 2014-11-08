@@ -138,7 +138,7 @@ namespace Leviathan{
         DLLEXPORT RequestWorldClockSyncData(sf::Packet &frompacket);
 
         //! \brief Sets up a clock sync packet
-        DLLEXPORT RequestWorldClockSyncData(int worldid, int ticks, bool absolute = true);
+        DLLEXPORT RequestWorldClockSyncData(int worldid, int ticks, int enginetick, bool absolute = true);
 
         DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) override;
 
@@ -150,6 +150,9 @@ namespace Leviathan{
 
         //! Whether the tick count should be set to be the current or just added to the current tick
         bool Absolute;
+
+        //! The engine tick tweaking, this should only be applied by a single GameWorld
+        int EngineMSTweak;
     };
 
 

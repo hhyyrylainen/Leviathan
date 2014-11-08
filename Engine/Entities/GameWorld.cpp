@@ -72,9 +72,13 @@ public:
 
             targettick = World->TickNumber;
         }
+
+        // Check how long until we tick again //
+        int timeintick = Engine::Get()->GetTimeSinceLastTick();
+        
         
         // Take the ping into account //
-        float sendtime = msping / TICKSPEED;
+        float sendtime = (msping+timeintick) / TICKSPEED;
 
         int wholeticks = floor(sendtime);
 
@@ -82,19 +86,25 @@ public:
 
         sendtime -= wholeticks;
 
-        // Add partial ticks if even somewhat possible that the next tick has passed //
-        if(sendtime >= 0.4f)
+        // Add a partial tick if we were to set the timer quite close to the next tick //
+        if(sendtime >= 0.85f){
+            
             targettick++;
+            sendtime = 0.f;
+        }
+
+        // For maximum accuray we are also going to adjust the receiver's engine tick //
+        int enginemscorrect = sendtime*TICKSPEED;
         
         shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
-                World->GetID(), targettick, true));
+                World->GetID(), targettick, enginemscorrect, true));
 
         auto sentthing = Connection->SendPacketToConnection(clocksync, 1);
         sentthing->SetAsTimed();
 
         // Start waiting for it //
         auto waitthing = make_shared<ConditionalTask>(boost::bind<void>([](PlayerConnectionPreparer* plyprepare,
-                    shared_ptr<SentNetworkThing> sentthing, int msping) -> void
+                    shared_ptr<SentNetworkThing> sentthing, int msping, int enginems) -> void
             {
                 bool succeeded = sentthing->GetFutureForThis().get();
 
@@ -116,7 +126,7 @@ public:
                 // Send a correction packet //
                 int64_t elapsedtime = sentthing->ConfirmReceiveTime-sentthing->RequestStartTime;
                 
-                float sendtime = msping / TICKSPEED;
+                float sendtime = (msping+enginems) / TICKSPEED;
                 
                 // Here we calculate how much our initial estimate of the time taken is off by
                 float correctingamount = elapsedtime-sendtime;
@@ -127,28 +137,32 @@ public:
 
                 correctingamount -= wholecorrect;
 
-                if(correctingamount <= -0.6f){
+                if(correctingamount <= -0.9f){
                     
                     wholecorrect--;
+                    correctingamount = 0;
                     
-                } else if(correctingamount >= 0.6f){
+                } else if(correctingamount >= 0.9f){
                     
                     wholecorrect++;
+                    correctingamount = 0;
                 }
 
+                int enginemscorrect = correctingamount*TICKSPEED;
+
                 // Send correction if not 0 //
-                if(wholecorrect != 0){
+                if(wholecorrect != 0 || enginemscorrect != 0){
 
                     if(plyprepare->GameWorldCompromised)
                         return;
                     
                     Logger::Get()->Info("GameWorld: clock sync: sending follow up correction of: "+Convert::ToString(
-                            wholecorrect));
+                            wholecorrect)+"."+Convert::ToString(correctingamount));
 
                     shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
-                            plyprepare->World->GetID(), wholecorrect, false), 500);
+                            plyprepare->World->GetID(), wholecorrect, enginemscorrect, false), 500);
 
-                    auto sentthing = plyprepare->Connection->SendPacketToConnection(clocksync, 5);
+                    auto sentthing = plyprepare->Connection->SendPacketToConnection(clocksync, 20);
                     
                 }
 
@@ -162,7 +176,8 @@ public:
                 plyprepare->OurQueued.clear();
 
 
-            }, this, sentthing, msping), boost::bind<bool>([](shared_ptr<SentNetworkThing> sentthing) -> bool
+                }, this, sentthing, msping, timeintick), boost::bind<bool>([](shared_ptr<SentNetworkThing> sentthing)
+                    -> bool
                 {
                     return sentthing->GetFutureForThis().has_value();
                 }, sentthing));
@@ -899,10 +914,16 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
     if(data->Absolute){
 
         TickNumber = data->Ticks;
+
+        if(data->EngineMSTweak)
+            Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
         
     } else {
 
         TickNumber += data->Ticks;
+        
+        if(data->EngineMSTweak)
+            Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
     }
 
     Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): world clock adjusted, tick is now: "+

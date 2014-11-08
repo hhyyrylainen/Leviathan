@@ -47,9 +47,9 @@ namespace Leviathan{
 		//! \pre PreRelease is called
 		DLLEXPORT bool HasPreRleaseBeenDone() const;
 
-        //! \brief Calculates how long until the next engine tick
-        //! \return The time remaining in milliseconds
-        DLLEXPORT int GetTimeUntilTick() const;
+        //! \brief Calculates how long has elapsed since the last tick
+        //! \return The time in milliseconds
+        DLLEXPORT int GetTimeSinceLastTick() const;
 
 		//! \brief Causes VLD to dump current memory leaks
 		DLLEXPORT static void DumpMemoryLeaks();

@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_ENGINE
 #include "Engine.h"
@@ -19,6 +18,7 @@
 #include "Networking/RemoteConsole.h"
 #include "Handlers/EntitySerializerManager.h"
 #include "Entities/Serializers/SendableEntitySerializer.h"
+#include "Utility/Random.h"
 #ifdef _WIN32
 #include <io.h>
 #include <fcntl.h>
@@ -830,21 +830,52 @@ void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
 	_ThreadingManager->MakeThreadsWorkWithOgre();
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::Engine::GetTimeUntilTick() const{
+DLLEXPORT int Leviathan::Engine::GetTimeSinceLastTick() const{
 
     return Misc::GetTimeMs64()-LastFrame;
 }
 
-void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute = true){
+void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
 
     GUARD_LOCK_THIS_OBJECT();
 
     if(!absolute){
 
+        Logger::Get()->Info("Engine: adjusted tick timer by "+Convert::ToString(amount));
+        
         LastFrame += amount;
         return;
     }
 
+    // Make sure we don't skip any ticks //
+    if(Misc::GetTimeMs64()-LastFrame >= TICKSPEED){
+
+        // Calculate the time in the current last tick //
+        int64_t templasttick = LastFrame;
+
+        int64_t curtime = Misc::GetTimeMs64();
+
+        while(curtime-templasttick >= TICKSPEED){
+
+            templasttick += TICKSPEED;
+        }
+
+        // Check how far off we are from the target //
+        int intolasttick = curtime-templasttick;
+
+        int changeamount = amount-intolasttick;
+
+        Logger::Get()->Info("Engine: changing tick counter by "+Convert::ToString(changeamount)+
+            " because we are behind ticks");
+        
+        LastFrame += changeamount;
+        
+        return;
+    }
+
+    Logger::Get()->Info("Engine: set current tick progress to "+Convert::ToString(amount));
+    
+    // We aren't behind on ticks and thus we can directly set the time //
     LastFrame = Misc::GetTimeMs64()+amount;
 }
 // ------------------------------------ //

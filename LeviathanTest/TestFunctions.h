@@ -11,6 +11,7 @@
 #include "Iterators/StringIterator.h"
 #include "Utility/MultiFlag.h"
 #include "utf8/checked.h"
+#include "Utility/Random.h"
 
 bool TestMiscCutWstring(const int &tests){
 	bool Failed = false;

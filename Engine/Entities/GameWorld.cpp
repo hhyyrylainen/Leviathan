@@ -22,11 +22,6 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
-// TODO: remember to delete these
-#include "boost/chrono.hpp"
-#include "Common/Misc.h"
-
-
 
 //! \brief Class used by _OnNotifiableConnected to hold temporary connection data
 class Leviathan::PlayerConnectionPreparer{
@@ -73,17 +68,11 @@ public:
             targettick = World->TickNumber;
         }
 
-        Logger::Get()->Write("Tick number: "+Convert::ToString(targettick));
-        
         // Check how long until we tick again //
         int timeintick = Engine::Get()->GetTimeSinceLastTick();
 
-        Logger::Get()->Write("In tick: "+Convert::ToString(timeintick));
-        
         // Take the ping into account //
         float sendtime = (msping) / (float)TICKSPEED;
-
-        Logger::Get()->Write("GameWorld: sendtime: "+Convert::ToString(sendtime));
 
         int wholeticks = floor(sendtime);
 
@@ -91,8 +80,6 @@ public:
 
         sendtime -= wholeticks;
 
-        Logger::Get()->Write("Sendtime now: "+Convert::ToString(sendtime));
-        
         // For maximum accuray we are also going to adjust the receiver's engine tick //
         int enginemscorrect = timeintick + (sendtime*(float)TICKSPEED);
 
@@ -102,10 +89,6 @@ public:
         shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
                 World->GetID(), targettick, enginemscorrect, true));
 
-        auto data = clocksync->GetWorldClockSyncRequestData();
-        Logger::Get()->Write("Sending stuff: Absolute: "+Convert::ToString(data->Absolute)+", tick: "+Convert::ToString(
-                data->Ticks)+", enginems: "+Convert::ToString(data->EngineMSTweak));
-        
         auto sentthing = Connection->SendPacketToConnection(clocksync, 1);
         sentthing->SetAsTimed();
 
@@ -154,7 +137,7 @@ public:
                     if(plyprepare->GameWorldCompromised)
                         return;
                     
-                    Logger::Get()->Info("GameWorld: clock sync: sending follow up correction of: "+Convert::ToString(
+                    Logger::Get()->Info("GameWorld: clock sync: sending a follow up correction of: "+Convert::ToString(
                             wholecorrect)+" ticks and "+Convert::ToString(enginemscorrect)+" ms");
 
                     shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
@@ -908,8 +891,8 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
 
     GUARD_LOCK_THIS_OBJECT();
 
-    Logger::Get()->Write("We got stuff: Absolute: "+Convert::ToString(data->Absolute)+", tick: "+Convert::ToString(
-            data->Ticks)+", enginems: "+Convert::ToString(data->EngineMSTweak));
+    Logger::Get()->Info("GameWorld: adjusting our clock: Absolute: "+Convert::ToString(data->Absolute)+", tick: "+
+        Convert::ToString(data->Ticks)+", enginems: "+Convert::ToString(data->EngineMSTweak));
     
     // Change our TickNumber to match //
     if(data->Absolute){
@@ -927,8 +910,10 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
             Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
     }
 
-    Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): world clock adjusted, tick is now: "+
-        Convert::ToString(TickNumber));
+    // Only notify if the tick actually changed
+    if(data->Ticks)
+        Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): world clock adjusted, tick is now: "+
+            Convert::ToString(TickNumber));
 }
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/, const float &tvar,

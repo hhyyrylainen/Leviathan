@@ -10,6 +10,7 @@
 #include "GUI/GuiManager.h"
 #include "Engine.h"
 #include "Handlers/ObjectLoader.h"
+#include "FileSystem.h"
 using namespace Leviathan;
 using namespace SandBoxie;
 // ------------------------------------ //

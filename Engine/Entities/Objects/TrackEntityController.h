@@ -6,7 +6,8 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "../Bases/BaseEntityController.h"
+#include "Entities/Bases/BaseEntityController.h"
+#include "Entities/Bases/BaseSendableEntity.h"
 #include "LocationNode.h"
 #include "Events/CallableObject.h"
 
@@ -14,91 +15,120 @@
 
 namespace Leviathan{ namespace Entity{
 
-	// Struct that can be used to tell this object to create nodes //
-	struct TrackControllerPosition{
-		TrackControllerPosition(){
-		}
-		TrackControllerPosition(const Float3 &pos, const Float4 &orientation) : Pos(pos), Orientation(orientation){
-		}
+        // Struct that can be used to tell this object to create nodes //
+        struct TrackControllerPosition{
+            TrackControllerPosition(){
+            }
+            TrackControllerPosition(const Float3 &pos, const Float4 &orientation) : Pos(pos), Orientation(orientation){
+            }
 
-		Float3 Pos;
-		Float4 Orientation;
-	};
+            Float3 Pos;
+            Float4 Orientation;
+        };
 
 
-	// This class is used to create movement paths for entities //
-	class TrackEntityController : public BaseEntityController, virtual public BaseObject, public CallableObject{
-	public:
-		DLLEXPORT TrackEntityController(GameWorld* world);
-		DLLEXPORT virtual ~TrackEntityController();
+        // This class is used to create movement paths for entities //
+        class TrackEntityController : public BaseEntityController, virtual public BaseObject, public CallableObject,
+                                        public BaseSendableEntity
+        {
+        public:
+            DLLEXPORT TrackEntityController(GameWorld* world);
+            DLLEXPORT virtual ~TrackEntityController();
 
-		// Init starts listening to events and verify parameters //
-		DLLEXPORT bool Init();
-		DLLEXPORT virtual void ReleaseData();
+            //! Starts listening to events and verify parameters
+            DLLEXPORT bool Init();
+            DLLEXPORT virtual void ReleaseData();
 
-		// Events are used to receive when render is about to happen and update positions //
-		DLLEXPORT virtual int OnEvent(Event** pEvent);
-		// This function doesn't do anything (except return -1) //
-		DLLEXPORT virtual int OnGenericEvent(GenericEvent** pevent);
+            //! Events are used to receive when render is about to happen and update positions
+            DLLEXPORT virtual int OnEvent(Event** pEvent);
+        
+            //! Does nothing
+            DLLEXPORT virtual int OnGenericEvent(GenericEvent** pevent);
 
-		// Directly sets the progress towards next node (if set to 1.f goes to next node) //
-		DLLEXPORT void SetProgressTowardsNextNode(float progress);
-		// Gets the progress towards next node, if at 1.f then last node is reached //
-		DLLEXPORT float GetProgressTowardsNextNode(){
-			return NodeProgress;
-		}
+            //! \brief Directly sets the progress towards next node (if set to 1.f goes to next node)
+            DLLEXPORT void SetProgressTowardsNextNode(float progress);
+        
+            //! \brief Gets the progress towards next node, if at 1.f then last node is reached
+            DLLEXPORT float GetProgressTowardsNextNode(){
+                return NodeProgress;
+            }
 
-		// Controls the speed at which the entity moves along the track (set to negative to go backwards and 0.f to stop) //
-		DLLEXPORT inline void SetTrackAdvanceSpeed(const float &speed){
-			ChangeSpeed = speed;
-		}
-		DLLEXPORT inline float GetTrackAdvanceSpeed(){
-			return ChangeSpeed;
-		}
+            //! \brief Controls the speed at which the entity moves along the track (set to negative to go backwards
+            //! and 0.f to stop)
+            DLLEXPORT inline void SetTrackAdvanceSpeed(const float &speed){
+                ChangeSpeed = speed;
+            }
+            DLLEXPORT inline float GetTrackAdvanceSpeed(){
+                return ChangeSpeed;
+            }
 
-		// Gets the position of the current node (or Float3(0) if no nodes exist) //
-		DLLEXPORT Float3 GetCurrentNodePosition();
-		// Gets the position of the next node, or Float3(0) if final node is reached. Doesn't throw exceptions //
-		DLLEXPORT Float3 GetNextNodePosition();
+            //! \brief Gets the position of the current node (or Float3(0) if no nodes exist)
+            DLLEXPORT Float3 GetCurrentNodePosition();
+        
+            //! \brief Gets the position of the next node, or Float3(0) if the final node is reached.
+            //! \exception Doesn't throw exceptions
+            DLLEXPORT Float3 GetNextNodePosition();
 
-		// This function creates a new node to the world and ads it to the track of this object //
-		DLLEXPORT void AddLocationToTrack(const Float3 &pos, const Float4 &dir);
+            //! This function creates a new node to the world and ads it to the track of this object
+            DLLEXPORT void AddLocationToTrack(const Float3 &pos, const Float4 &dir);
 
-		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
+            DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
-		// When called updates the entity positions (You probably don't have to manually call this) //
-		DLLEXPORT virtual void UpdateControlledPositions(float timestep);
+            //! \brief Updates the entity positions
+            //! \note You probably don't have to manually call this
+            DLLEXPORT virtual void UpdateControlledPositions(float timestep);
 
-	protected:
-		// Internal function for making all data valid (checks for invalid reached node and progress) //
-		void _SanityCheckNodeProgress();
-		//! \brief Updates the controlled object
-		//! \todo apply rotation
-		void _ApplyTrackPositioning(float timestep);
+            //! \copydoc BaseSendableEntity::AddUpdateToPacket
+            DLLEXPORT virtual void AddUpdateToPacket(sf::Packet &packet, ConnectionInfo* receiver) override;
 
-		// Callback for detecting node unlinks //
-		virtual void _OnNotifiableDisconnected(BaseNotifiableEntity* childtoremove);
-		// ------------------------------------ //
-		// Number of the node that has been reached //
-		int ReachedNode;
+            //! \copydoc BaseSendableEntity::LoadUpdateFromPacket
+            DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet) override;
 
-		// Percentage between ReachedNode and next node (1.f being next node reached and progress reset to 0) //
-		float NodeProgress;
 
-		// The speed at which the node progress changes //
-		float ChangeSpeed;
+        protected:
 
-		// The amount of speed/force used to move the entities towards the track position //
-		float ForceTowardsPoint;
+            TrackEntityController(int netid, GameWorld* world);
+            
+            //! Internal function for making all data valid (checks for invalid reached node and progress)
+            void _SanityCheckNodeProgress();
+        
+            //! \brief Updates the controlled object
+            //! \todo apply rotation
+            void _ApplyTrackPositioning(float timestep);
 
-		// List of positions that form the track //
-		// Note these nodes are also on the inherited child object list //
-		std::vector<LocationNode*> TrackNodes;
+            //! Callback for detecting node unlinks
+            virtual void _OnNotifiableDisconnected(BaseNotifiableEntity* childtoremove);
 
-		// Internal flag for determining if an update is needed //
-		bool RequiresUpdate;
+            //! \copydoc BaseSendableEntity::_LoadOwnDataFromPacket
+            virtual bool _LoadOwnDataFromPacket(sf::Packet &packet) override;
 
-	};
+            //! \copydoc BaseSendableEntity::_SaveOwnDataToPacket
+            virtual void _SaveOwnDataToPacket(sf::Packet &packet) override;
 
-}}
+            // ------------------------------------ //
+        
+            //! Number of the node that has been reached
+            int ReachedNode;
+
+            //! Percentage between ReachedNode and next node
+            //! 1.f being next node reached and progress reset to 0
+            float NodeProgress;
+
+            //! The speed at which the node progress changes
+            float ChangeSpeed;
+
+            //! The amount of speed/force used to move the entities towards the track position
+            float ForceTowardsPoint;
+
+            //! List of positions that form the track
+            //! Note these nodes are also on the inherited child object list
+            std::vector<LocationNode*> TrackNodes;
+
+            //! Internal flag for determining if an update is needed
+            bool RequiresUpdate;
+
+        };
+
+    }
+}
 #endif

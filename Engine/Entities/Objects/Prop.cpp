@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_ENTITY_PROP
 #include "Prop.h"
@@ -13,7 +12,13 @@ using namespace Leviathan;
 using namespace Leviathan::Entity;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Entity::Prop::Prop(bool hidden, GameWorld* world) :
-    BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world) 
+    BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_PROP)
+{
+
+}
+
+Leviathan::Entity::Prop::Prop(bool hidden, GameWorld* world, int netid) :
+    BaseRenderable(hidden), BaseObject(netid, world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_PROP)
 {
 
 }
@@ -39,6 +44,9 @@ DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 
+    // Store the file //
+    ModelFile = modelfile;
+    
 	// Parse the file //
 	auto file = ObjectFileProcessor::ProcessObjectFile(modelfile);
 
@@ -321,3 +329,63 @@ DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessag
 
 	return false;
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Entity::Prop::AddUpdateToPacket(sf::Packet &packet, ConnectionInfo* receiver){
+
+    DEBUG_BREAK;
+}
+
+DLLEXPORT bool Leviathan::Entity::Prop::LoadUpdateFromPacket(sf::Packet &packet){
+
+
+    DEBUG_BREAK;
+}
+// ------------------------------------ //
+bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(sf::Packet &packet){
+
+    BasePositionData pdata;
+
+    if(!LoadPositionFromPacketToHolder(packet, pdata)){
+
+        // It failed (the packet was invalid) //
+        Logger::Get()->Error("Prop: packet has invalid format");
+        return false;
+    }
+
+    packet >> ModelFile;
+
+    if(!packet){
+
+        Logger::Get()->Error("Prop: packet has invalid format");
+        return false;
+    }
+
+    if(!Init(ModelFile)){
+
+        // This shouldn't happen //
+        Logger::Get()->Error("Prop: failed to create from packet, Init failed");
+        return false;
+    }
+
+    // Then set the position //
+    ApplyPositionDataObject(pdata);
+
+    // Apply hidden state //
+    _OnHiddenStateUpdated();
+    
+    return true;
+
+}
+
+void Leviathan::Entity::Prop::_SaveOwnDataToPacket(sf::Packet &packet){
+    GUARD_LOCK_THIS_OBJECT();
+    // The hidden state needs to be the first thing
+    packet << Hidden;
+    
+    // Before adding our data make base classes add stuff //
+    AddPositionAndRotationToPacket(packet);
+    
+    packet << ModelFile;
+}
+
+

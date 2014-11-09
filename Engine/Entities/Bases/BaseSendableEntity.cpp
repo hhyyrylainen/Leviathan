@@ -4,6 +4,7 @@
 #include "BaseSendableEntity.h"
 #endif
 #include "Entities/Objects/Brush.h"
+#include "Entities/Objects/Prop.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) : SerializeType(type){
@@ -46,17 +47,37 @@ DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerial
             }
             
             // Create a brush and apply the packet to it //
-            unique_ptr<Entity::Brush> tmpbrush(new Entity::Brush(hidden, world, id));
+            unique_ptr<Entity::Brush> tmpobj(new Entity::Brush(hidden, world, id));
 
-            if(!tmpbrush->_LoadOwnDataFromPacket(packet)){
+            if(!tmpobj->_LoadOwnDataFromPacket(packet)){
 
                 Logger::Get()->Warning("BaseSendableEntity: failed to Init Brush from network packet");
                 return nullptr;
             }
             
-            return move(unique_ptr<BaseSendableEntity>(dynamic_cast<BaseSendableEntity*>(tmpbrush.release())));
+            return move(unique_ptr<BaseSendableEntity>(dynamic_cast<BaseSendableEntity*>(tmpobj.release())));
         }
-        break;
+        case BASESENDABLE_ACTUAL_TYPE_PROP:
+        {
+            // This is hopefully written by the Prop _SaveOwnData
+            bool hidden;
+
+            if(!(packet >> hidden)){
+
+                return nullptr;
+            }
+            
+            // Create a brush and apply the packet to it //
+            unique_ptr<Entity::Prop> tmpobj(new Entity::Prop(hidden, world, id));
+
+            if(!tmpobj->_LoadOwnDataFromPacket(packet)){
+
+                Logger::Get()->Warning("BaseSendableEntity: failed to Init Prop from network packet");
+                return nullptr;
+            }
+            
+            return move(unique_ptr<BaseSendableEntity>(dynamic_cast<BaseSendableEntity*>(tmpobj.release())));
+        }
         default:
             // Unknown type
             return nullptr;

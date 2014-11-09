@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_TRACKENTITYCONTROLLER
 #include "TrackEntityController.h"
@@ -10,9 +9,18 @@
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Entity::TrackEntityController::TrackEntityController(GameWorld* world) : BaseObject(IDFactory::GetID(), world), ReachedNode(-1),
-	NodeProgress(0.f), ChangeSpeed(0.f), ForceTowardsPoint(TRACKCONTROLLER_DEFAULT_APPLYFORCE), RequiresUpdate(true)
+DLLEXPORT Leviathan::Entity::TrackEntityController::TrackEntityController(GameWorld* world) :
+    BaseObject(IDFactory::GetID(), world), ReachedNode(-1), NodeProgress(0.f), ChangeSpeed(0.f),
+    ForceTowardsPoint(TRACKCONTROLLER_DEFAULT_APPLYFORCE), RequiresUpdate(true)
 {
+
+}
+
+Leviathan::Entity::TrackEntityController::TrackEntityController(int netid, GameWorld* world) :
+    BaseObject(netid, world), ReachedNode(-1), NodeProgress(0.f), ChangeSpeed(0.f),
+    ForceTowardsPoint(TRACKCONTROLLER_DEFAULT_APPLYFORCE), RequiresUpdate(true)
+{
+
 
 }
 
@@ -26,11 +34,14 @@ DLLEXPORT bool Leviathan::Entity::TrackEntityController::Init(){
 
 	// Set current node and percentages and possibly update connected objects //
 	_SanityCheckNodeProgress();
+    
 	// Cannot fail //
 	return true;
 }
 
 DLLEXPORT void Leviathan::Entity::TrackEntityController::ReleaseData(){
+    GUARD_LOCK_THIS_OBJECT();
+    
 	// Release the hooks //
 	ReleaseChildHooks();
 
@@ -52,6 +63,7 @@ DLLEXPORT int Leviathan::Entity::TrackEntityController::OnEvent(Event** pEvent){
 		if(dataptr->GameWorldPtr != static_cast<void*>(OwnedByWorld)){
 			return 0;
 		}
+        
 		// This object's parent world is being updated //
 		UpdateControlledPositions(dataptr->TimeStep);
 		return 1;
@@ -66,11 +78,11 @@ DLLEXPORT int Leviathan::Entity::TrackEntityController::OnGenericEvent(GenericEv
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Entity::TrackEntityController::UpdateControlledPositions(float timestep){
+    GUARD_LOCK_THIS_OBJECT();
 	// Update progress and node number //
 	if(ChangeSpeed != 0.f){
 		// Update position //
 
-		//NodeProgress += ChangeSpeed*(timestep/NEWTON_TIMESTEP);
 		NodeProgress += ChangeSpeed*timestep;
 
 		// Check did node change //
@@ -121,6 +133,8 @@ void Leviathan::Entity::TrackEntityController::_OnNotifiableDisconnected(BaseNot
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Entity::TrackEntityController::SetProgressTowardsNextNode(float progress){
+    GUARD_LOCK_THIS_OBJECT();
+    
 	NodeProgress = progress;
 	// Update now //
 	_SanityCheckNodeProgress();
@@ -158,6 +172,7 @@ DLLEXPORT bool Leviathan::Entity::TrackEntityController::SendCustomMessage(int e
 	if(entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_LOCATIONDATA_UPDATED || entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_POSITIONUPDATED ||
 		entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_ORIENTATIONUPDATED)
 	{
+        GUARD_LOCK_THIS_OBJECT();
 		RequiresUpdate = true;
 		return true;
 	}
@@ -172,6 +187,8 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::AddLocationToTrack(cons
 	// Add to world //
 	OwnedByWorld->AddObject(shared_ptr<BaseObject>(tmpnode.get()));
 
+    GUARD_LOCK_THIS_OBJECT();
+    
 	// Link //
 	ConnectToNotifiable(tmpnode.get());
 
@@ -191,8 +208,10 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
 		TrackDir = TrackNodes[ReachedNode]->GetOrientation();
 	} else {
 		// We need interpolation //
-		TrackPos = TrackNodes[ReachedNode]->GetPos()*(1.f-NodeProgress)+TrackNodes[ReachedNode+1]->GetPos()*NodeProgress;
-		TrackDir = TrackNodes[ReachedNode]->GetOrientation().Slerp(TrackNodes[ReachedNode+1]->GetOrientation(), NodeProgress);
+		TrackPos = TrackNodes[ReachedNode]->GetPos()*(1.f-NodeProgress)+TrackNodes[ReachedNode+1]->GetPos()*
+            NodeProgress;
+		TrackDir = TrackNodes[ReachedNode]->GetOrientation().Slerp(TrackNodes[ReachedNode+1]->GetOrientation(),
+            NodeProgress);
 	}
 
 	// Apply forces to all objects //
@@ -252,6 +271,7 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
 }
 // ------------------------------------ //
 DLLEXPORT Float3 Leviathan::Entity::TrackEntityController::GetCurrentNodePosition(){
+    GUARD_LOCK_THIS_OBJECT();
 	if(TrackNodes.size() < 1)
 		return Float3(0);
 
@@ -260,11 +280,84 @@ DLLEXPORT Float3 Leviathan::Entity::TrackEntityController::GetCurrentNodePositio
 }
 
 DLLEXPORT Float3 Leviathan::Entity::TrackEntityController::GetNextNodePosition(){
+    GUARD_LOCK_THIS_OBJECT();
 	// Check if there is a next node //
 	if((size_t)(ReachedNode+1) >= TrackNodes.size())
 		return Float3(0);
 	// Return the position of the node //
 	return TrackNodes[ReachedNode+1]->GetPos();
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::Entity::TrackEntityController::AddUpdateToPacket(sf::Packet &packet, ConnectionInfo*
+    receiver)
+{
+    DEBUG_BREAK;
+}
 
+DLLEXPORT bool Leviathan::Entity::TrackEntityController::LoadUpdateFromPacket(sf::Packet &packet){
+
+    DEBUG_BREAK;
+}
+// ------------------------------------ //
+bool Leviathan::Entity::TrackEntityController::_LoadOwnDataFromPacket(sf::Packet &packet){
+    int reachednode;
+    float nodeprogress, changespeed, force;
+    int32_t nodecount;
+
+    packet >> reachednode >> nodeprogress >> changespeed >> force;
+    packet >> nodecount;
+
+    if(!packet){
+
+        Logger::Get()->Error("TrackEntityController: packet has invalid format");
+        return false;
+    }
+
+    for(int32_t i = 0; i < nodecount; i++){
+
+        // Create a new node to hold the position //
+        unique_ptr<LocationNode> curnode(new LocationNode(OwnedByWorld));
+
+        if(!curnode){
+
+            Logger::Get()->Error("TrackEntityController: load data from packet: failed to allocate LocationNode");
+            return false;
+        }
+
+        // Apply position //
+        curnode->ApplyPositionAndRotationFromPacket(packet);
+        
+        // Link //
+        ConnectToNotifiable(tmpnode.get());
+        
+        TrackNodes.push_back(curnode.release());
+    }
+
+    if(!packet){
+
+        Logger::Get()->Error("TrackEntityController: packet has invalid format");
+        return false;
+    }
+
+    Init();
+
+    return true;
+}
+
+void Leviathan::Entity::TrackEntityController::_SaveOwnDataToPacket(sf::Packet &packet){
+    GUARD_LOCK_THIS_OBJECT();
+
+    // First dump our state //
+    packet << ReachedNode << NodeProgress << ChangeSpeed << ForceTowardsPoint;
+
+    // Then put all of our location nodes //
+    int32_t nodecount = TrackNodes.size();
+    packet << nodecount;
+    
+    for(int32_t i = 0; i < nodecount; i++){
+
+        TrackNodes[i]->AddPositionAndRotationToPacket(packet);
+    }
+    
+}
 

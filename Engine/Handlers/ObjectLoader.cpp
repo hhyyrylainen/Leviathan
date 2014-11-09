@@ -14,6 +14,7 @@ using namespace Leviathan;
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
 #include "OgreEntity.h"
+#include "FileSystem.h"
 
 Leviathan::ObjectLoader::ObjectLoader(Engine* engine){
 	m_Engine = engine;

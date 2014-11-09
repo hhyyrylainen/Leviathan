@@ -7,13 +7,13 @@
 
 // ------------------------------------ //
 // ---- includes ---- //
-#include "../Bases/BaseObject.h"
-#include "../Bases/BaseRenderable.h"
-#include "../Bases/BasePositionable.h"
-#include "../Bases/BasePhysicsObject.h"
-#include "../Bases/BaseContraintable.h"
-#include "../Bases/BaseParentable.h"
-#include "../Bases/BaseSendableEntity.h"
+#include "Entities/Bases/BaseObject.h"
+#include "Entities/Bases/BaseRenderable.h"
+#include "Entities/Bases/BasePositionable.h"
+#include "Entities/Bases/BasePhysicsObject.h"
+#include "Entities/Bases/BaseContraintable.h"
+#include "Entities/Bases/BaseParentable.h"
+#include "Entities/Bases/BaseSendableEntity.h"
 
 namespace Leviathan{
 	class GameWorld;
@@ -54,7 +54,6 @@ namespace Leviathan{ namespace Entity{
         protected:
 
             //! \brief Constructs a brush for receiving through the network
-            //! \todo Allow network objects to be hidden from the beginning
             Brush(bool hidden, GameWorld* world, int netid);
             
             virtual void _UpdatePhysicsObjectLocation();

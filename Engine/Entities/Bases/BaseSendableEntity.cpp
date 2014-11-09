@@ -1,10 +1,10 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_BASESENDABLEENTITY
 #include "BaseSendableEntity.h"
 #endif
 #include "Entities/Objects/Brush.h"
 #include "Entities/Objects/Prop.h"
+#include "Entities/Objects/TrackEntityController.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) : SerializeType(type){
@@ -75,7 +75,19 @@ DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerial
                 Logger::Get()->Warning("BaseSendableEntity: failed to Init Prop from network packet");
                 return nullptr;
             }
-            
+
+            return move(unique_ptr<BaseSendableEntity>(dynamic_cast<BaseSendableEntity*>(tmpobj.release())));
+        }
+        case BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER:
+        {
+            unique_ptr<Entity::TrackEntityController> tmpobj(new Entity::TrackEntityController(id, world));
+
+            if(!tmpobj->_LoadOwnDataFromPacket(packet)){
+
+                Logger::Get()->Warning("BaseSendableEntity: failed to Init TrackEntityController from network packet");
+                return nullptr;
+            }
+
             return move(unique_ptr<BaseSendableEntity>(dynamic_cast<BaseSendableEntity*>(tmpobj.release())));
         }
         default:

@@ -11,14 +11,16 @@ using namespace Entity;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Entity::TrackEntityController::TrackEntityController(GameWorld* world) :
     BaseObject(IDFactory::GetID(), world), ReachedNode(-1), NodeProgress(0.f), ChangeSpeed(0.f),
-    ForceTowardsPoint(TRACKCONTROLLER_DEFAULT_APPLYFORCE), RequiresUpdate(true)
+    ForceTowardsPoint(TRACKCONTROLLER_DEFAULT_APPLYFORCE), RequiresUpdate(true),
+    BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER)
 {
 
 }
 
 Leviathan::Entity::TrackEntityController::TrackEntityController(int netid, GameWorld* world) :
     BaseObject(netid, world), ReachedNode(-1), NodeProgress(0.f), ChangeSpeed(0.f),
-    ForceTowardsPoint(TRACKCONTROLLER_DEFAULT_APPLYFORCE), RequiresUpdate(true)
+    ForceTowardsPoint(TRACKCONTROLLER_DEFAULT_APPLYFORCE), RequiresUpdate(true),
+    BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER)
 {
 
 
@@ -328,7 +330,7 @@ bool Leviathan::Entity::TrackEntityController::_LoadOwnDataFromPacket(sf::Packet
         curnode->ApplyPositionAndRotationFromPacket(packet);
         
         // Link //
-        ConnectToNotifiable(tmpnode.get());
+        ConnectToNotifiable(curnode.get());
         
         TrackNodes.push_back(curnode.release());
     }

@@ -22,7 +22,10 @@ namespace Leviathan{
         BASESENDABLE_ACTUAL_TYPE_BRUSH,
 
         //! The type is Entity::Prop
-        BASESENDABLE_ACTUAL_TYPE_PROP
+        BASESENDABLE_ACTUAL_TYPE_PROP,
+
+        //! The type is Entity::TrackEntityController
+        BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER
     };
     
     //! \brief Inherited by objects that can be serialized using the SendableEntitySerializer

@@ -31,6 +31,7 @@ namespace Leviathan{ namespace Entity{
         class TrackEntityController : public BaseEntityController, virtual public BaseObject, public CallableObject,
                                         public BaseSendableEntity
         {
+            friend BaseSendableEntity;
         public:
             DLLEXPORT TrackEntityController(GameWorld* world);
             DLLEXPORT virtual ~TrackEntityController();

@@ -81,7 +81,7 @@ public:
         Logger::Get()->Write("In tick: "+Convert::ToString(timeintick));
         
         // Take the ping into account //
-        float sendtime = (msping+timeintick) / (float)TICKSPEED;
+        float sendtime = (msping) / (float)TICKSPEED;
 
         Logger::Get()->Write("GameWorld: sendtime: "+Convert::ToString(sendtime));
 
@@ -94,7 +94,7 @@ public:
         Logger::Get()->Write("Sendtime now: "+Convert::ToString(sendtime));
         
         // For maximum accuray we are also going to adjust the receiver's engine tick //
-        int enginemscorrect = sendtime*(float)TICKSPEED;
+        int enginemscorrect = timeintick + (sendtime*(float)TICKSPEED);
 
         Logger::Get()->Info("GameWorld: adjusting client by "+Convert::ToString(targettick)+" ticks and engine "
             "clock by "+Convert::ToString(enginemscorrect)+" ms");
@@ -133,12 +133,10 @@ public:
                 // Send a correction packet //
                 int64_t elapsedtime = sentthing->ConfirmReceiveTime-sentthing->RequestStartTime;
                 
-                float sendtime = msping / (float)TICKSPEED;
-                
                 // Here we calculate how much our initial estimate of the time taken is off by
-                float correctingamount = elapsedtime-sendtime;
+                float correctingamount = elapsedtime-msping;
 
-                Logger::Get()->Info("GameWorld: adjust clock expected to take "+Convert::ToString(sendtime)+
+                Logger::Get()->Info("GameWorld: adjust clock expected to take "+Convert::ToString(msping)+
                     " and it took "+Convert::ToString(elapsedtime)+" correcting by "+
                     Convert::ToString(correctingamount));
 
@@ -147,17 +145,6 @@ public:
                 int wholecorrect = floor(correctingamount);
 
                 correctingamount -= wholecorrect;
-
-                if(correctingamount <= -0.9f){
-                    
-                    wholecorrect--;
-                    correctingamount = 0;
-                    
-                } else if(correctingamount >= 0.9f){
-                    
-                    wholecorrect++;
-                    correctingamount = 0;
-                }
 
                 int enginemscorrect = correctingamount*TICKSPEED;
 

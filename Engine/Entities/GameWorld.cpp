@@ -392,18 +392,6 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(BaseObject* obj, 
 DLLEXPORT void Leviathan::GameWorld::Tick(){
 
     TickNumber++;
-
-    // TODO: get rid of this debug code
-    if(TickNumber % 100 == 0){
-
-        auto curtime = Misc::GetThreadSafeSteadyTimePoint();
-
-        stringstream strstream;
-        strstream << curtime;
-        
-        Logger::Get()->Write("World tick ("+Convert::ToString(TickNumber)+")");
-        Logger::Get()->Write("\t> At time: "+strstream.str());
-    }
 }
 // ------------------ Object managing ------------------ //
 DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){

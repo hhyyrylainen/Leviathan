@@ -73,12 +73,17 @@ public:
             targettick = World->TickNumber;
         }
 
+        Logger::Get()->Write("Tick number: "+Convert::ToString(targettick));
+        
         // Check how long until we tick again //
         int timeintick = Engine::Get()->GetTimeSinceLastTick();
-        
+
+        Logger::Get()->Write("In tick: "+Convert::ToString(timeintick));
         
         // Take the ping into account //
-        float sendtime = (msping+timeintick) / TICKSPEED;
+        float sendtime = (msping+timeintick) / (float)TICKSPEED;
+
+        Logger::Get()->Write("GameWorld: sendtime: "+Convert::ToString(sendtime));
 
         int wholeticks = floor(sendtime);
 
@@ -86,19 +91,21 @@ public:
 
         sendtime -= wholeticks;
 
-        // Add a partial tick if we were to set the timer quite close to the next tick //
-        if(sendtime >= 0.85f){
-            
-            targettick++;
-            sendtime = 0.f;
-        }
-
+        Logger::Get()->Write("Sendtime now: "+Convert::ToString(sendtime));
+        
         // For maximum accuray we are also going to adjust the receiver's engine tick //
-        int enginemscorrect = sendtime*TICKSPEED;
+        int enginemscorrect = sendtime*(float)TICKSPEED;
+
+        Logger::Get()->Info("GameWorld: adjusting client by "+Convert::ToString(targettick)+" ticks and engine "
+            "clock by "+Convert::ToString(enginemscorrect)+" ms");
         
         shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
                 World->GetID(), targettick, enginemscorrect, true));
 
+        auto data = clocksync->GetWorldClockSyncRequestData();
+        Logger::Get()->Write("Sending stuff: Absolute: "+Convert::ToString(data->Absolute)+", tick: "+Convert::ToString(
+                data->Ticks)+", enginems: "+Convert::ToString(data->EngineMSTweak));
+        
         auto sentthing = Connection->SendPacketToConnection(clocksync, 1);
         sentthing->SetAsTimed();
 
@@ -126,12 +133,16 @@ public:
                 // Send a correction packet //
                 int64_t elapsedtime = sentthing->ConfirmReceiveTime-sentthing->RequestStartTime;
                 
-                float sendtime = (msping+enginems) / TICKSPEED;
+                float sendtime = msping / (float)TICKSPEED;
                 
                 // Here we calculate how much our initial estimate of the time taken is off by
                 float correctingamount = elapsedtime-sendtime;
 
-                correctingamount /= TICKSPEED;
+                Logger::Get()->Info("GameWorld: adjust clock expected to take "+Convert::ToString(sendtime)+
+                    " and it took "+Convert::ToString(elapsedtime)+" correcting by "+
+                    Convert::ToString(correctingamount));
+
+                correctingamount /= (float)TICKSPEED;
 
                 int wholecorrect = floor(correctingamount);
 
@@ -157,7 +168,7 @@ public:
                         return;
                     
                     Logger::Get()->Info("GameWorld: clock sync: sending follow up correction of: "+Convert::ToString(
-                            wholecorrect)+"."+Convert::ToString(correctingamount));
+                            wholecorrect)+" ticks and "+Convert::ToString(enginemscorrect)+" ms");
 
                     shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
                             plyprepare->World->GetID(), wholecorrect, enginemscorrect, false), 500);
@@ -910,6 +921,9 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
 
     GUARD_LOCK_THIS_OBJECT();
 
+    Logger::Get()->Write("We got stuff: Absolute: "+Convert::ToString(data->Absolute)+", tick: "+Convert::ToString(
+            data->Ticks)+", enginems: "+Convert::ToString(data->EngineMSTweak));
+    
     // Change our TickNumber to match //
     if(data->Absolute){
 

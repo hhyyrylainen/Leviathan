@@ -349,7 +349,7 @@ DLLEXPORT void Leviathan::RequestConnectInputData::AddDataToPacket(sf::Packet &p
 // ------------------ RequestWorldClockSyncData ------------------ //
 DLLEXPORT RequestWorldClockSyncData::RequestWorldClockSyncData(sf::Packet &frompacket){
 
-    frompacket >> WorldID >> Ticks >> EngineMSTweak  >> Absolute;
+    frompacket >> WorldID >> Ticks >> EngineMSTweak >> Absolute;
 
     if(!frompacket)
         throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"packet", L"");

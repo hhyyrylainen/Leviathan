@@ -671,7 +671,7 @@ void Leviathan::Engine::RenderFrame(){
 		return;
 
 	int SinceLastFrame = -1;
-	GUARD_LOCK_THIS_OBJECT();
+	UNIQUE_LOCK_THIS_OBJECT();
 
 	// limit check //
 	if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)){
@@ -697,10 +697,11 @@ void Leviathan::Engine::RenderFrame(){
 	if(GraphicalEntity1->Render(SinceLastFrame))
 		shouldrender = true;
 
-
+    lockit.unlock();
 	if(shouldrender)
 		Graph->Frame();
 
+    lockit.lock();
 	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_END, new IntegerEventData(FrameCount)));
 
 	// advanced statistics frame has ended //
@@ -874,36 +875,24 @@ void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
         return;
     }
 
-    // Make sure we don't skip any ticks //
-    if(Misc::GetTimeMs64()-LastFrame >= TICKSPEED){
+    // Calculate the time in the current last tick //
+    int64_t templasttick = LastFrame;
 
-        // Calculate the time in the current last tick //
-        int64_t templasttick = LastFrame;
+    int64_t curtime = Misc::GetTimeMs64();
 
-        int64_t curtime = Misc::GetTimeMs64();
+    while(curtime-templasttick >= TICKSPEED){
 
-        while(curtime-templasttick >= TICKSPEED){
-
-            templasttick += TICKSPEED;
-        }
-
-        // Check how far off we are from the target //
-        int intolasttick = curtime-templasttick;
-
-        int changeamount = amount-intolasttick;
-
-        Logger::Get()->Info("Engine: changing tick counter by "+Convert::ToString(changeamount)+
-            " because we are behind ticks");
-        
-        LastFrame += changeamount;
-        
-        return;
+        templasttick += TICKSPEED;
     }
 
-    Logger::Get()->Info("Engine: set current tick progress to "+Convert::ToString(amount));
-    
-    // We aren't behind on ticks and thus we can directly set the time //
-    LastFrame = Misc::GetTimeMs64()+amount;
+    // Check how far off we are from the target //
+    int intolasttick = curtime-templasttick;
+
+    int changeamount = amount-intolasttick;
+
+    Logger::Get()->Info("Engine: changing tick counter by "+Convert::ToString(changeamount));
+        
+    LastFrame += changeamount;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){

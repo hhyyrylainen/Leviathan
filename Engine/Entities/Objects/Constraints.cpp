@@ -1,40 +1,42 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_CONSTRAINTS
 #include "Constraints.h"
 #endif
 #include "Newton/PhysicalWorld.h"
-#include "../Bases/BaseContraintable.h"
+#include "../Bases/BaseConstraintable.h"
 #include "../GameWorld.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Entity::BaseContraint::BaseContraint(GameWorld* world, BaseContraintable* parent, BaseContraintable* child) : 
+DLLEXPORT Leviathan::Entity::BaseConstraint::BaseConstraint(GameWorld* world, BaseConstraintable* parent,
+    BaseConstraintable* child) : 
 	ParentObject(parent), ChildObject(child), OwningWorld(world), Joint(NULL)
 {
 }
 
-DLLEXPORT Leviathan::Entity::BaseContraint::~BaseContraint(){
+DLLEXPORT Leviathan::Entity::BaseConstraint::~BaseConstraint(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::BaseContraint::Init(){
-	// we use the virtual functions to make child class handle this //
+DLLEXPORT bool Leviathan::Entity::BaseConstraint::Init(){
+	// We use the virtual functions to make the child class handle this //
 	if(!_CheckParameters())
 		return false;
+    
 	if(!_CreateActualJoint())
 		return false;
 
 	return true;
 }
 
-DLLEXPORT void Leviathan::Entity::BaseContraint::Release(){
-	// calls both because neither of them invoked the function //
+DLLEXPORT void Leviathan::Entity::BaseConstraint::Release(){
+    
+	// Both are called because neither of them invoked this function //
 	ConstraintPartUnlinkedDestroy(NULL);
 }
 
-DLLEXPORT void Leviathan::Entity::BaseContraint::ConstraintPartUnlinkedDestroy(BaseContraintable* callinginstance){
-	// notify the object that isn't calling this function //
+DLLEXPORT void Leviathan::Entity::BaseConstraint::ConstraintPartUnlinkedDestroy(BaseConstraintable* callinginstance){
+	// Notify the object that isn't calling this function //
 	if(ParentObject && ParentObject != callinginstance){
 		ParentObject->ConstraintDestroyedRemove(this);
 
@@ -51,10 +53,18 @@ DLLEXPORT void Leviathan::Entity::BaseContraint::ConstraintPartUnlinkedDestroy(B
 		Joint = NULL;
 	}
 }
+// ------------------------------------ //
+DLLEXPORT BaseConstraintable* Leviathan::Entity::BaseConstraint::GetFirstEntity() const{
+    return ParentObject;
+}
 
+DLLEXPORT BaseConstraintable* Leviathan::Entity::BaseConstraint::GetSecondEntity() const{
+    return ChildObject;
+}
 // ------------------ SliderConstraint ------------------ //
-DLLEXPORT Leviathan::Entity::SliderConstraint::SliderConstraint(GameWorld* world, BaseContraintable* parent, BaseContraintable* child) : 
-	BaseContraint(world, parent, child), Axis(0)
+DLLEXPORT Leviathan::Entity::SliderConstraint::SliderConstraint(GameWorld* world, BaseConstraintable* parent,
+    BaseConstraintable* child) : 
+	BaseConstraint(world, parent, child), Axis(0)
 {
 
 }
@@ -63,7 +73,7 @@ DLLEXPORT Leviathan::Entity::SliderConstraint::~SliderConstraint(){
 
 }
 // ------------------------------------ //
-DLLEXPORT BaseContraint* Leviathan::Entity::SliderConstraint::SetParameters(const Float3 &slidingaxis){
+DLLEXPORT BaseConstraint* Leviathan::Entity::SliderConstraint::SetParameters(const Float3 &slidingaxis){
 	Axis = slidingaxis;
 	return this;
 }
@@ -71,12 +81,13 @@ DLLEXPORT BaseContraint* Leviathan::Entity::SliderConstraint::SetParameters(cons
 bool Leviathan::Entity::SliderConstraint::_CheckParameters(){
 	if(Axis.IsNormalized())
 		return true;
-	// if the vector is the default one it isn't normalized so the above check will suffice //
+    
+	// If the vector is the default one it isn't normalized so the above check will suffice //
 	return false;
 }
 
 bool Leviathan::Entity::SliderConstraint::_CreateActualJoint(){
-	// we'll just call the Newton creation function and it should be it //
+	// We'll just call the Newton create function and that should should be it //
 	Float3 pos(0.f, 0.f, 0.f);
 
 	Joint = NewtonConstraintCreateSlider(OwningWorld->GetPhysicalWorld()->GetWorld(), &pos.X, &Axis.X, 

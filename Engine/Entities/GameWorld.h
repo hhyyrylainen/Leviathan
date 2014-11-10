@@ -188,6 +188,12 @@ namespace Leviathan{
         //! \brief Handles a world clock synchronizing packet
         //! \note This should only be allowed to be called on a client that has connected to a server
         DLLEXPORT void HandleClockSyncPacket(RequestWorldClockSyncData* data);
+
+        //! \brief Sends a Constraint to a connection
+        //! \param constraint The constraint to send, the parent object needs to be locked during this call
+        //! to avoid the constraint becoming invalid during this call
+        //! \param connectionptr The connection to use, this must be a safe pointer
+        DLLEXPORT void SendConstraintToConnection(Entity::BaseConstraint* constraint, ConnectionInfo* connectionptr);
         
 	private:
 

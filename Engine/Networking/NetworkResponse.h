@@ -44,6 +44,9 @@ namespace Leviathan{
         //! Contains one or more full entities sent by the server
         NETWORKRESPONSETYPE_INITIAL_ENTITY,
 
+        //! Instructs a world to create or destroy a constraint
+        NETWORKRESPONSETYPE_ENTITY_CONSTRAINT,
+
 		//! A server heartbeat packet
 		NETWORKRESPONSETYPE_SERVERHEARTBEAT,
 
@@ -315,6 +318,35 @@ namespace Leviathan{
         std::vector<shared_ptr<sf::Packet>> EntityData;
 	};
 
+    //! \brief Holds data regarding a constraint between two entities
+    class NetworkResponseDataForEntityConstraint : public BaseNetworkResponseData{
+    public:
+        
+        DLLEXPORT NetworkResponseDataForEntityConstraint(int worldid, int entity1, int entity2, bool create,
+            Entity::ENTITY_CONSTRAINT_TYPE type, shared_ptr<sf::Packet> &data);
+
+        DLLEXPORT NetworkResponseDataForEntityConstraint(sf::Packet &frompacket);
+
+        DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) override;
+        
+        //! When false the constraint is to be deleted
+        bool Create;
+        
+        //! The ID of the world to which the entities belong
+		int WorldID;
+
+        //! The first entity
+        int EntityID1;
+        
+        //! The second entity
+        int EntityID2;
+        
+        Entity::ENTITY_CONSTRAINT_TYPE Type;
+
+        //! Data for the constraint
+        shared_ptr<sf::Packet> ConstraintData;
+    };
+
 
     //! \brief Represents a response type packet sent through a ConnectionInfo
 	class NetworkResponse : public Object{
@@ -336,6 +368,7 @@ namespace Leviathan{
 		DLLEXPORT void GenerateCreateNetworkedInputResponse(NetworkResponseDataForCreateNetworkedInput* newddata);
 		DLLEXPORT void GenerateUpdateNetworkedInputResponse(NetworkResponseDataForUpdateNetworkedInput* newddata);
         DLLEXPORT void GenerateInitialEntityResponse(NetworkResponseDataForInitialEntity* newddata);
+        DLLEXPORT void GenerateEntityConstraintResponse(NetworkResponseDataForEntityConstraint* newddata);
 
 		DLLEXPORT void GenerateCustomResponse(GameSpecificPacketData* newdpacketdata);
 		DLLEXPORT void GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata);
@@ -370,6 +403,7 @@ namespace Leviathan{
 		DLLEXPORT NetworkResponseDataForCreateNetworkedInput* GetResponseDataForCreateNetworkedInputResponse() const;
 		DLLEXPORT NetworkResponseDataForUpdateNetworkedInput* GetResponseDataForUpdateNetworkedInputResponse() const;
         DLLEXPORT NetworkResponseDataForInitialEntity* GetResponseDataForInitialEntity() const;
+        DLLEXPORT NetworkResponseDataForEntityConstraint* GetResponseDataForEntityConstraint() const;
 
 		DLLEXPORT int GetResponseID() const;
 

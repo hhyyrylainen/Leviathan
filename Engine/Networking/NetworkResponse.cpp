@@ -1,4 +1,3 @@
-#include "Include.h"
 // ----------------------------------- //
 #ifndef LEVIATHAN_NETWORKRESPONSE
 #include "NetworkResponse.h"
@@ -99,6 +98,11 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
         case NETWORKRESPONSETYPE_INITIAL_ENTITY:
         {
             ResponseData = new NetworkResponseDataForInitialEntity(receivedresponse);
+        }
+        break;
+        case NETWORKRESPONSETYPE_ENTITY_CONSTRAINT:
+        {
+            ResponseData = new NetworkResponseDataForEntityConstraint(receivedresponse);
         }
         break;
         default:
@@ -210,6 +214,16 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateInitialEntityResponse(
     NetworkResponseDataForInitialEntity* newddata)
 {
 	ResponseType = NETWORKRESPONSETYPE_INITIAL_ENTITY;
+	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityConstraintResponse(NetworkResponseDataForEntityConstraint*
+    newddata)
+{
+    ResponseType = NETWORKRESPONSETYPE_ENTITY_CONSTRAINT;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 
@@ -377,6 +391,14 @@ DLLEXPORT NetworkResponseDataForInitialEntity* Leviathan::NetworkResponse::GetRe
 
     if(ResponseType == NETWORKRESPONSETYPE_INITIAL_ENTITY && ResponseData)
         return static_cast<NetworkResponseDataForInitialEntity*>(ResponseData);
+    return NULL;
+}
+
+DLLEXPORT NetworkResponseDataForEntityConstraint* Leviathan::NetworkResponse::GetResponseDataForEntityConstraint()
+    const
+{
+    if(ResponseType == NETWORKRESPONSETYPE_ENTITY_CONSTRAINT && ResponseData)
+        return static_cast<NetworkResponseDataForEntityConstraint*>(ResponseData);
     return NULL;
 }
 // ------------------------------------ //
@@ -784,7 +806,7 @@ DLLEXPORT void Leviathan::NetworkResponseDataForInitialEntity::AddDataToPacket(s
 
     for(uint32_t i = 0; i < size; i++){
 
-        std::string tmpstr(reinterpret_cast<const char*>(EntityData[i]->getData()), EntityData[i]->getDataSize());
+        const std::string tmpstr(reinterpret_cast<const char*>(EntityData[i]->getData()), EntityData[i]->getDataSize());
         
         // Warn if it is quite large //
         if(tmpstr.size() >= 500){
@@ -803,6 +825,47 @@ DLLEXPORT shared_ptr<sf::Packet>  Leviathan::NetworkResponseDataForInitialEntity
 
     return EntityData[index];
 }
+// ------------------ NetworkResponseDataForEntityConstraint ------------------ //
+DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(int worldid, int entity1,
+    int entity2, bool create, Entity::ENTITY_CONSTRAINT_TYPE type, shared_ptr<sf::Packet> &data) :
+    WorldID(worldid), EntityID1(entity1), EntityID2(entity2), Create(create), Type(type), ConstraintData(data)
+{
+
+}     
+
+DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(sf::Packet &frompacket){
+
+    int32_t tmptype;
+    frompacket >> WorldID >> EntityID1 >> EntityID2 >> Create >> tmptype;
+    
+    std::string tmpstr;
+    frompacket >> tmpstr;
+
+    if(!frompacket)
+        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+
+    Type = static_cast<Entity::ENTITY_CONSTRAINT_TYPE>(tmptype);
+
+    ConstraintData = make_shared<sf::Packet>();
+
+    ConstraintData->append(tmpstr.c_str(), tmpstr.size());
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForEntityConstraint::AddDataToPacket(sf::Packet &packet){
+
+    packet << WorldID << EntityID1 << EntityID2 << Create << static_cast<int32_t>(Type);
+
+    const std::string tmpstr(reinterpret_cast<const char*>(ConstraintData->getData()), ConstraintData->getDataSize());
+        
+    // Warn if it is quite large //
+    if(tmpstr.size() >= 500){
+
+        Logger::Get()->Warning(L"Sending a large constraint, over 500 bytes in size");
+    }
+
+    packet << tmpstr;
+}
+
 
 
 

@@ -2,7 +2,8 @@
 // (or forward declared) ------------------
 #pragma once
 
-
+// Newton things
+struct NewtonJoint;
 
 namespace Leviathan{
 	class Logger;
@@ -23,10 +24,16 @@ namespace Leviathan{
 		class TrackEntityController;
 		struct TrailProperties;
 		class TrailEmitter;
+
+        class BaseConstraint;
+        class BaseConstraintable;
+
+        enum ENTITY_CONSTRAINT_TYPE : int32_t;
 	}
 
 	// Entity bases //
 	class BasePositionable;
+    class BaseObject;
 
     // Exceptions //
 	class ExceptionInvalidArgument;

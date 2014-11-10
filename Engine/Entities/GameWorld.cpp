@@ -18,6 +18,9 @@
 #include "Networking/ConnectionInfo.h"
 #include "Threading/ThreadingManager.h"
 #include "Handlers/EntitySerializerManager.h"
+#include "Handlers/ConstraintSerializerManager.h"
+#include "Entities/Objects/Constraints.h"
+#include "Entities/Bases/BaseConstraintable.h"
 #include "Engine.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -846,8 +849,34 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(shared_ptr<BaseObjec
 
     return connection->SendPacketToConnection(response, 5).get() ? true: false;
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::GameWorld::SendConstraintToConnection(Entity::BaseConstraint* constraint, ConnectionInfo*
+    connectionptr)
+{
+    if(!constraint)
+        return;
 
+    GUARD_LOCK_OTHER_OBJECT(constraint);
 
+    auto custompacketdata = ConstraintSerializerManager::Get()->SerializeConstraintData(constraint);
+
+    // Gather all the other info //
+    int obj1 = constraint->GetFirstEntity()->GetID();
+
+    // The second object might be NULL so make sure not to segfault here //
+    auto obj2ptr = constraint->GetSecondEntity();
+
+    int obj2 = obj2ptr ? obj2ptr->GetID(): -1;
+
+    auto packet = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000);
+    
+    // Wrap everything up and send //
+    packet->GenerateEntityConstraintResponse(new NetworkResponseDataForEntityConstraint(ID,
+            obj1, obj2, true, constraint->GetType(), custompacketdata));
+
+    connectionptr->SendPacketToConnection(packet, 12);
+}
+// ------------------------------------ //
 DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDataForInitialEntity* data){
 
     bool somesucceeded = false;

@@ -11,7 +11,7 @@
 #include "Entities/Bases/BaseRenderable.h"
 #include "Entities/Bases/BasePositionable.h"
 #include "Entities/Bases/BasePhysicsObject.h"
-#include "Entities/Bases/BaseContraintable.h"
+#include "Entities/Bases/BaseConstraintable.h"
 #include "Entities/Bases/BaseParentable.h"
 #include "Entities/Bases/BaseSendableEntity.h"
 
@@ -22,7 +22,7 @@ namespace Leviathan{
 namespace Leviathan{ namespace Entity{
 
 
-        class Brush : virtual public BaseObject, public BaseRenderable, public BaseContraintable,
+        class Brush : virtual public BaseObject, public BaseRenderable, public BaseConstraintable,
                         public BaseParentable, public BaseSendableEntity
         {
             friend BaseSendableEntity;

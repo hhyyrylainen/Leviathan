@@ -11,14 +11,14 @@
 #include "Entities/Bases/BasePositionable.h"
 #include "Entities/Bases/BaseScalable.h"
 #include "Entities/Bases/BasePhysicsObject.h"
-#include "Entities/Bases/BaseContraintable.h"
+#include "Entities/Bases/BaseConstraintable.h"
 #include "Entities/Bases/BaseParentable.h"
 #include "Entities/Bases/BaseSendableEntity.h"
 
 namespace Leviathan{ namespace Entity{
 	
 
-        class Prop : virtual public BaseObject, public BaseRenderable, public BaseContraintable, public BaseParentable,
+        class Prop : virtual public BaseObject, public BaseRenderable, public BaseConstraintable, public BaseParentable,
                        public BaseSendableEntity
         {
             friend BaseSendableEntity;

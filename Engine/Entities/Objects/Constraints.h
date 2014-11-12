@@ -89,6 +89,9 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT BaseConstraint* SetParameters(const Float3 &slidingaxis);
 
 
+            //! \brief Returns the axis along which this joint can move
+            DLLEXPORT Float3 GetAxis() const;
+            
         protected:
             virtual bool _CheckParameters() override;
             virtual bool _CreateActualJoint() override;

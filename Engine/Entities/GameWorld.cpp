@@ -723,6 +723,24 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
             // TODO: could check for errors here
             world->SendObjectToConnection(tosend, connection);
 
+            // Send all the constraints, TODO: this could be improved a lot //
+            Entity::BaseConstraintable* constraintable = dynamic_cast<Entity::BaseConstraintable*>(tosend.get());
+
+            if(constraintable){
+
+                GUARD_LOCK_OTHER_OBJECT(constraintable);
+
+                size_t count = constraintable->GetConstraintCount();
+
+                Logger::Get()->Info("Sending object's constraints, total: "+Convert::ToString(count));
+
+                for(size_t i = 0; i < count; i++){
+
+                    // This should ignore NULL pointers so this should send all constraints just fine //
+                    world->SendConstraintToConnection(constraintable->GetConstraint(i), connection.get());
+                }
+            }
+
 
             // Sent, check the exit things //
             goto exitcurrentiterationchecklabel;
@@ -850,15 +868,15 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(shared_ptr<BaseObjec
     return connection->SendPacketToConnection(response, 5).get() ? true: false;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::SendConstraintToConnection(Entity::BaseConstraint* constraint, ConnectionInfo*
-    connectionptr)
+DLLEXPORT void Leviathan::GameWorld::SendConstraintToConnection(shared_ptr<Entity::BaseConstraint> constraint,
+    ConnectionInfo* connectionptr)
 {
     if(!constraint)
         return;
 
     GUARD_LOCK_OTHER_OBJECT(constraint);
 
-    auto custompacketdata = ConstraintSerializerManager::Get()->SerializeConstraintData(constraint);
+    auto custompacketdata = ConstraintSerializerManager::Get()->SerializeConstraintData(constraint.get());
 
     // Gather all the other info //
     int obj1 = constraint->GetFirstEntity()->GetID();

@@ -14,6 +14,7 @@
 #include "Handlers/ObjectLoader.h"
 #include "Handlers/OutOfMemoryHandler.h"
 #include "Handlers/ResourceRefreshHandler.h"
+#include "Handlers/ConstraintSerializerManager.h"
 #include "Leap/LeapManager.h"
 #include "Networking/NetworkHandler.h"
 #include "Networking/RemoteConsole.h"
@@ -53,7 +54,8 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
     Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), _NewtonManager(NULL),
     GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
     _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
-    _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), _EntitySerializerManager(NULL)
+    _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), _EntitySerializerManager(NULL),
+    _ConstraintSerializerManager(NULL)
 {
 	IDDefaultInstance = IDFactory::Get();
 
@@ -294,6 +296,14 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
             }
 
             engine->_EntitySerializerManager->AddSerializer(tmpptr.release());
+
+            engine->_ConstraintSerializerManager = new ConstraintSerializerManager();
+            if(!engine->_ConstraintSerializerManager->Init()){
+
+                returnvalue.set_value(false);
+                return;
+            }
+            
             returnvalue.set_value(true);
 
         }, boost::ref(SerializerManagerResult), this)));
@@ -540,6 +550,7 @@ void Leviathan::Engine::Release(bool forced){
 	SAFE_DELETE(RenderTimer);
 
     SAFE_RELEASEDEL(_EntitySerializerManager);
+    SAFE_RELEASEDEL(_ConstraintSerializerManager);
 
 	SAFE_RELEASEDEL(Sound);
 	SAFE_DELETE(Mainstore);

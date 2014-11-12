@@ -93,6 +93,7 @@ namespace Leviathan{
 		DLLEXPORT ThreadingManager* GetThreadingManager(){ return _ThreadingManager; };
 		DLLEXPORT ResourceRefreshHandler* GetResourceRefreshHandler(){ return _ResourceRefreshHandler; };
         DLLEXPORT EntitySerializerManager* GetEntitySerializerManager(){ return _EntitySerializerManager; };
+        DLLEXPORT ConstraintSerializerManager* GetConstraintSerializerManager(){ return _ConstraintSerializerManager; };
 
 		DLLEXPORT bool GetNoGui(){ return NoGui; };
 
@@ -144,6 +145,7 @@ namespace Leviathan{
 		RemoteConsole* _RemoteConsole;
 		ResourceRefreshHandler* _ResourceRefreshHandler;
         EntitySerializerManager* _EntitySerializerManager;
+        ConstraintSerializerManager* _ConstraintSerializerManager;
 
 
 		IDFactory* IDDefaultInstance;

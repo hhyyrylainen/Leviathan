@@ -78,6 +78,10 @@ DLLEXPORT BaseConstraint* Leviathan::Entity::SliderConstraint::SetParameters(con
 	return this;
 }
 // ------------------------------------ //
+DLLEXPORT Float3 Leviathan::Entity::SliderConstraint::GetAxis() const{
+    return Axis;
+}
+// ------------------------------------ //
 bool Leviathan::Entity::SliderConstraint::_CheckParameters(){
 	if(Axis.IsNormalized())
 		return true;

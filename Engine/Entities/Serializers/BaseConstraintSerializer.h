@@ -34,6 +34,7 @@ namespace Leviathan{
         //! \param object1 The first object in the constraint, should always be valid
         //! \param object2 The second object in the constraint, this may be NULL
         //! \param create Whether to create or destroy the constraint
+        //! \return True when the data was valid, false otherwise even if the type is correct
         DLLEXPORT virtual bool UnSerializeConstraint(BaseObject* object1, BaseObject* object2,
             Entity::ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet, bool create = true);
         

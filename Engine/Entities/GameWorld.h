@@ -193,7 +193,8 @@ namespace Leviathan{
         //! \param constraint The constraint to send, the parent object needs to be locked during this call
         //! to avoid the constraint becoming invalid during this call
         //! \param connectionptr The connection to use, this must be a safe pointer
-        DLLEXPORT void SendConstraintToConnection(Entity::BaseConstraint* constraint, ConnectionInfo* connectionptr);
+        DLLEXPORT void SendConstraintToConnection(shared_ptr<Entity::BaseConstraint> constraint,
+            ConnectionInfo* connectionptr);
         
 	private:
 

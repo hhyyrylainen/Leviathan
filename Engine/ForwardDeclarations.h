@@ -60,6 +60,7 @@ namespace Leviathan{
 	class RepeatingDelayedTask;
 	class RepeatCountedDelayedTask;
 
+    class ConstraintSerializerManager;
     
 	class ApplyForceInfo;
 

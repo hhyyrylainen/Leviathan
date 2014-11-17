@@ -213,6 +213,36 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
             // It will be handled soon //
             return true;
         }
+        case NETWORKRESPONSETYPE_ENTITY_CONSTRAINT:
+        {
+            ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](shared_ptr<NetworkResponse> message)
+                        -> void
+                {
+
+                    auto packetdata = message->GetResponseDataForEntityConstraint();
+
+                    if(!packetdata){
+                        // Invalid data //
+                        return;
+                    }
+
+                    // Get a matching world //
+                    auto world = LeviathanApplication::Get()->GetGameWorld(packetdata->WorldID);
+
+                    if(!world){
+
+                        Logger::Get()->Error("NetworkClientInterface: handle response: ignoring constraint, WorldID: "+
+                            Convert::ToString(packetdata->WorldID));
+                        return;
+                    }
+
+                    // This cannot fail... //
+                    world->HandleConstraintPacket(packetdata, message);
+
+                }, message)));
+
+            return true;
+        }
         default:
             return false;
 	}

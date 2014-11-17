@@ -68,6 +68,15 @@ namespace Leviathan{
     //! \note Only ConnectedPlayer object may be linked with the world through Notifier
 	class GameWorld : public BaseNotifierAll{
         friend PlayerConnectionPreparer;
+
+        struct WaitingConstraint{
+            WaitingConstraints(int first, int second, shared_ptr<NetworkResponse> packet) :
+                Entity1(first), Entity2(second), Packet(packet){}
+            
+            int Entity1, Entity2;
+            shared_ptr<NetworkResponse> Packet;
+        };
+        
 	public:
 		DLLEXPORT GameWorld();
 		DLLEXPORT ~GameWorld();
@@ -185,6 +194,12 @@ namespace Leviathan{
         //! \note This should only be called on the client
         DLLEXPORT bool HandleEntityInitialPacket(NetworkResponseDataForInitialEntity* data);
 
+        //! \brief Applies a constraint packet
+        //!
+        //! If the entities aren't loaded yet the packet will be stored until they are
+        DLLEXPORT void HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data, shared_ptr<NetworkResponse>
+            packet);
+
         //! \brief Handles a world clock synchronizing packet
         //! \note This should only be allowed to be called on a client that has connected to a server
         DLLEXPORT void HandleClockSyncPacket(RequestWorldClockSyncData* data);
@@ -212,6 +227,10 @@ namespace Leviathan{
 		void _CreateOgreResources(Ogre::Root* ogre, Window* rendertarget);
 		void _HandleDelayedDelete(ObjectLock &guard);
 
+        //! \brief Applies a constraint to entities, if both are present
+        //! \returns True when the constraint is applied
+        bool _TryApplyConstraint(NetworkResponseDataForEntityConstraint* data);
+
 		// ------------------------------------ //
 		Ogre::Camera* WorldSceneCamera;
 		Ogre::SceneManager* WorldsScene;
@@ -236,6 +255,10 @@ namespace Leviathan{
 
 		//! Holds the players who are receiving this worlds updates and their corresponding location entities (if any)
 		std::vector<shared_ptr<ConnectedPlayer>> ReceivingPlayers;
+
+        //! The constraints that are waiting for their entities to be created
+        std::vector<WaitingConstraints> WaitingConstraints;
+        
 
         //! This is not empty when some players are receiving their initial world state
         //! These objects need to be marked as invalid before quitting

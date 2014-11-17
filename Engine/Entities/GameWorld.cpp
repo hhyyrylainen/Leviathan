@@ -277,6 +277,14 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     // Unhook from other objects //
     ReleaseChildHooks();
 
+    // Report waiting constraints //
+    if(!WaitingConstraints.empty()){
+
+        Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has "+Convert::ToString(
+                WaitingConstraints.size())+" constraints waiting for entities");
+        WaitingConstraints.clear();
+    }
+
     Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): ready to be destroyed");
 }
 // ------------------------------------ //
@@ -404,6 +412,33 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
 DLLEXPORT void Leviathan::GameWorld::AddObject(shared_ptr<BaseObject> obj){
 	GUARD_LOCK_THIS_OBJECT();
 	Objects.push_back(obj);
+
+    // Check for constraints //
+    if(WaitingConstraints.empty())
+        return;
+
+    int objid = obj->GetID();
+    
+    // Not sure if this is necessary //
+    // TODO: move this to the tick function?
+    size_t amount = WaitingConstraints.size();
+    WaitingConstraints* first = &*WaitingConstraints.begin();
+    for(size_t i = 0; i < amount; ){
+
+        WaitingConstraints* current = (first+i);
+        if(current->Entity1 == objid || current->Entity2 == objid){
+
+            // Try to apply it //
+            if(_TryApplyConstraint(current->Packet->GetResponseDataForEntityConstraint())){
+                
+                WaitingConstraints.erase(WaitingConstraints.begin()+i);
+                --amount;
+                continue;
+            }
+        }
+
+        i++;
+    }
 }
 
 DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
@@ -449,6 +484,9 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(ObjectLock &guard){
 	}
 	// Release our reference //
 	Objects.clear();
+
+    // Throw away the waiting constraints //
+    WaitingConstraints.clear();
 }
 // ------------------------------------ //
 DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
@@ -922,6 +960,21 @@ DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDa
     return somesucceeded;
 }
 
+DLLEXPORT void Leviathan::GameWorld::HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data,
+    shared_ptr<NetworkResponse> packet)
+{
+
+    if(_TryApplyConstraint(data)){
+
+        // It is now applied //
+        return;
+    }
+
+    // Add it to the queue //
+    GUARD_LOCK_THIS_OBJECT();
+    WaitingConstraints.push_back(packet);
+}
+
 DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSyncData* data){
 
     GUARD_LOCK_THIS_OBJECT();
@@ -949,6 +1002,62 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
     if(data->Ticks)
         Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): world clock adjusted, tick is now: "+
             Convert::ToString(TickNumber));
+}
+// ------------------------------------ //
+bool Leviathan::GameWorld::_TryApplyConstraint(NetworkResponseDataForEntityConstraint* data){
+
+    // Find the objects //
+    BaseObject* first;
+    BaseObject* second;
+    first = second = NULL;
+
+    bool found = false;
+    
+    // The constraint might only need the first entity //
+    bool findsecond = data->EntityID2 >= 0 ? true: false;
+
+    {
+        GUARD_LOCK_THIS_OBJECT();
+
+        auto end = Objects.end();
+        for(auto iter = Objects.begin(); iter != end; ++iter){
+
+            int objid = (*iter)->GetID();
+            if(!first && objid == data->EntityID1){
+            
+                first = (*iter).get();
+
+                // If the second is found or only one entity is needed we are done //
+                if(second || !findsecond){
+
+                    found = true;
+                    break;
+                }
+            
+            } else if(findsecond && !second && objid == data->EntityID2){
+
+                second = (*iter).get();
+
+                // If the first is found we are done //
+                if(first){
+
+                    found = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if(!found)
+        return false;
+
+    // TODO: constraint breaking
+    
+    // Apply the constraint //
+    ConstraintSerializerManager::Get()->CreateConstraint(first, second, data->Type, data->ConstraintData.get());
+    
+
+    return true;
 }
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/, const float &tvar,

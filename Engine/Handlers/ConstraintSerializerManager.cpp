@@ -5,11 +5,11 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ConstraintSerializerManager::ConstraintSerializerManager(){
-
+    Staticinstance = this;
 }
 
 DLLEXPORT Leviathan::ConstraintSerializerManager::~ConstraintSerializerManager(){
-
+    Staticinstance = NULL;
 }
 
 DLLEXPORT ConstraintSerializerManager* Leviathan::ConstraintSerializerManager::Get(){
@@ -46,7 +46,34 @@ DLLEXPORT bool Leviathan::ConstraintSerializerManager::CreateConstraint(BaseObje
 DLLEXPORT shared_ptr<sf::Packet> Leviathan::ConstraintSerializerManager::SerializeConstraintData(
     Entity::BaseConstraint* constraint)
 {
+    if(!constraint)
+        return nullptr;
+    
+    auto type = constraint->GetType();
+    
+    GUARD_LOCK_THIS_OBJECT();
+    
+    // Find a serializer for it and return whatever it returns //
+    auto end = Serializers.end();
+    for(auto iter = Serializers.begin(); iter != end; ++iter){
 
-    DEBUG_BREAK;
+        if((*iter)->CanHandleType(type)){
+
+            return (*iter)->SerializeConstraint(constraint, type);
+        }
+    }
+
+    // No matching serializer //
+    return nullptr;
 }
+
+
+
+
+
+
+
+
+
+
 

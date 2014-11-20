@@ -12,12 +12,16 @@
 #include "Application/KeyConfiguration.h"
 #include "CommonPong.h"
 
+#include "Events/EventHandler.h"
+
 namespace Pong{
 
 	class PongNetHandler;
 
 
-	class PongGame : public CommonPongParts<Leviathan::LeviathanApplication, false>{
+	class PongGame : public CommonPongParts<Leviathan::LeviathanApplication, false>,
+                       public Leviathan::CallableObject
+    {
 	public:
 		PongGame();
 		~PongGame();
@@ -76,6 +80,12 @@ namespace Pong{
 			return GameInputHandler.get();
 		}
 
+        virtual int OnEvent(Event** pEvent) override;
+        virtual int OnGenericEvent(GenericEvent** pevent) override{
+            return -1;
+        }
+
+        
 	protected:
 
 		virtual void DoSpecialPostLoad();

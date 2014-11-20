@@ -16,13 +16,43 @@ using namespace Leviathan;
 // Put this here, since nowhere else to put it //
 BasePongParts* Pong::BasepongStaticAccess = NULL;
 
+void TryToCrash(bool enable){
+
+    string state = enable ? "On": "Off";
+
+	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState",
+            Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
+                        new VariableBlock(state))))));
+
+    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"PrematchScreenState",
+            Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
+                        new VariableBlock(state))))));
+
+    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"MatchScreenState",
+            Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
+                        new VariableBlock(state))))));
+
+    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage",
+            Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"Message", new VariableBlock(
+                            string("test")))))));
+
+    Engine::Get()->GetWindowEntity()->GetGUI()->SetCollectionState(L"ConnectionScreen", enable);
+    Engine::Get()->GetWindowEntity()->GetGUI()->SetCollectionState(L"DirectConnectScreen", enable);
+    Engine::Get()->GetWindowEntity()->GetGUI()->SetCollectionState(L"TopLevelMenu", enable);
+}
+
+int Pong::PongGame::OnEvent(Event** pEvent){
+
+    //TryToCrash(Toggle);
+}
+
 Pong::PongGame::PongGame() : GuiManagerAccess(NULL), GameInputHandler(NULL)
 #ifdef _WIN32
 	, ServerProcessHandle(NULL)
 #endif // _WIN32
 
 {
-
+    
 	StaticGame = this;
 }
 
@@ -449,6 +479,9 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
 	// TODO: Register this even in NoGui mode and allow basic connecting to a server
 	ClientInterface->RegisterNetworkedInput(GameInputHandler);
+
+    // This is how to do something every frame //
+    Leviathan::EventHandler::Get()->RegisterForEvent(this, EVENT_TYPE_FRAME_END);
 }
 // ------------------------------------ //
 string GetPongVersionProxy(){

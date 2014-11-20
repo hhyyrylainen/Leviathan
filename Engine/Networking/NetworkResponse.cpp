@@ -855,15 +855,24 @@ DLLEXPORT void Leviathan::NetworkResponseDataForEntityConstraint::AddDataToPacke
 
     packet << WorldID << EntityID1 << EntityID2 << Create << static_cast<int32_t>(Type);
 
-    const std::string tmpstr(reinterpret_cast<const char*>(ConstraintData->getData()), ConstraintData->getDataSize());
+    // There might be no data for whatever reason //
+    if(ConstraintData){
         
-    // Warn if it is quite large //
-    if(tmpstr.size() >= 500){
+        const std::string tmpstr(reinterpret_cast<const char*>(ConstraintData->getData()),
+            ConstraintData->getDataSize());
+        
+        // Warn if it is quite large //
+        if(tmpstr.size() >= 500){
 
-        Logger::Get()->Warning(L"Sending a large constraint, over 500 bytes in size");
+            Logger::Get()->Warning(L"Sending a large constraint, over 500 bytes in size");
+        }
+
+        packet << tmpstr;
+        
+    } else {
+
+        packet << string("");
     }
-
-    packet << tmpstr;
 }
 
 

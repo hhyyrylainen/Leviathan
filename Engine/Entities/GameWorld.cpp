@@ -916,6 +916,13 @@ DLLEXPORT void Leviathan::GameWorld::SendConstraintToConnection(shared_ptr<Entit
 
     auto custompacketdata = ConstraintSerializerManager::Get()->SerializeConstraintData(constraint.get());
 
+    if(!custompacketdata){
+
+        Logger::Get()->Warning("GameWorld: failed to send constraint, type: "+Convert::ToString(
+                static_cast<int>(constraint->GetType())));
+        return;
+    }
+    
     // Gather all the other info //
     int obj1 = constraint->GetFirstEntity()->GetID();
 
@@ -931,6 +938,7 @@ DLLEXPORT void Leviathan::GameWorld::SendConstraintToConnection(shared_ptr<Entit
             obj1, obj2, true, constraint->GetType(), custompacketdata));
 
     connectionptr->SendPacketToConnection(packet, 12);
+    Logger::Get()->Info("Sent constraint");
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDataForInitialEntity* data){

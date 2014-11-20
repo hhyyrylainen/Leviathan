@@ -39,17 +39,21 @@ DLLEXPORT shared_ptr<sf::Packet> Leviathan::BaseConstraintSerializer::SerializeC
             if(!slider)
                 return nullptr;
 
-            auto data = unique_ptr<sf::Packet>(new sf::Packet());
+            auto data = make_shared<sf::Packet>();
 
             const Float3 &axis = slider->GetAxis();
             
             (*data) << axis.X << axis.Y << axis.Z;
 
-            return move(data);
+            Logger::Get()->Write("Sending constraint: "+Convert::ToString(axis.X)+", "+Convert::ToString(axis.Y)+", "
+                +Convert::ToString(axis.Z));
+            
+            return data;
         }
     }
 
     // Unknown type... //
+    Logger::Get()->Error("BaseConstraintSerializer: tried to serialize wrong type...");
     return nullptr;
 }
 // ------------------------------------ //
@@ -81,6 +85,9 @@ DLLEXPORT bool Leviathan::BaseConstraintSerializer::UnSerializeConstraint(BaseOb
 
             if(!packet)
                 return false;
+
+            Logger::Get()->Write("Creating constraint: "+Convert::ToString(axis.X)+", "+Convert::ToString(axis.Y)+", "
+                +Convert::ToString(axis.Z));
 
             // Create the constraint //
             firstobj->CreateConstraintWith<SliderConstraint>(secondobj)->SetParameters(axis)->

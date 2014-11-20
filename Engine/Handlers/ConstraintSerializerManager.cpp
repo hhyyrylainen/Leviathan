@@ -37,10 +37,21 @@ DLLEXPORT void Leviathan::ConstraintSerializerManager::Release(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ConstraintSerializerManager::CreateConstraint(BaseObject* object1,
-    BaseObject* object2, Entity::ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet)
+    BaseObject* object2, Entity::ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet, bool create)
 {
-    DEBUG_BREAK;
 
+    auto end = Serializers.end();
+    for(auto iter = Serializers.begin(); iter != end; ++iter){
+
+        if((*iter)->CanHandleType(type)){
+
+            // Found the right one, try to create a constraint //
+            return (*iter)->UnSerializeConstraint(object1, object2, type, packet, create);
+        }
+    }
+
+    // None handled it so it can't have been created //
+    return false;
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<sf::Packet> Leviathan::ConstraintSerializerManager::SerializeConstraintData(

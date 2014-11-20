@@ -422,10 +422,10 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(shared_ptr<BaseObject> obj){
     // Not sure if this is necessary //
     // TODO: move this to the tick function?
     size_t amount = WaitingConstraints.size();
-    WaitingConstraints* first = &*WaitingConstraints.begin();
+    WaitingConstraint* first = &*WaitingConstraints.begin();
     for(size_t i = 0; i < amount; ){
 
-        WaitingConstraints* current = (first+i);
+        WaitingConstraint* current = (first+i);
         if(current->Entity1 == objid || current->Entity2 == objid){
 
             // Try to apply it //
@@ -972,7 +972,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleConstraintPacket(NetworkResponseDataF
 
     // Add it to the queue //
     GUARD_LOCK_THIS_OBJECT();
-    WaitingConstraints.push_back(packet);
+    WaitingConstraints.push_back(WaitingConstraint(data->EntityID1, data->EntityID2, packet));
 }
 
 DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSyncData* data){
@@ -1050,12 +1050,10 @@ bool Leviathan::GameWorld::_TryApplyConstraint(NetworkResponseDataForEntityConst
 
     if(!found)
         return false;
-
-    // TODO: constraint breaking
     
     // Apply the constraint //
-    ConstraintSerializerManager::Get()->CreateConstraint(first, second, data->Type, data->ConstraintData.get());
-    
+    ConstraintSerializerManager::Get()->CreateConstraint(first, second, data->Type,
+        *data->ConstraintData.get(), data->Create);
 
     return true;
 }

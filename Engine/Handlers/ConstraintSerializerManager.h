@@ -30,8 +30,9 @@ namespace Leviathan{
         //! \param object1 The first entity, must be valid
         //! \param object2 The second entity, if any, may be NULL
         //! \param packet Containing the custom data for the constraint
+        //! \param create Specifies whether to create or destroy the constraint
         DLLEXPORT bool CreateConstraint(BaseObject* object1, BaseObject* object2, Entity::ENTITY_CONSTRAINT_TYPE
-            type, sf::Packet &packet);
+            type, sf::Packet &packet, bool create);
 
         //! \brief Puts the custom data of a constraint into a packet
         //! \note The constraint is locked before this call

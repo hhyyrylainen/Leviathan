@@ -70,7 +70,7 @@ namespace Leviathan{
         friend PlayerConnectionPreparer;
 
         struct WaitingConstraint{
-            WaitingConstraints(int first, int second, shared_ptr<NetworkResponse> packet) :
+            WaitingConstraint(int first, int second, shared_ptr<NetworkResponse> packet) :
                 Entity1(first), Entity2(second), Packet(packet){}
             
             int Entity1, Entity2;
@@ -257,7 +257,7 @@ namespace Leviathan{
 		std::vector<shared_ptr<ConnectedPlayer>> ReceivingPlayers;
 
         //! The constraints that are waiting for their entities to be created
-        std::vector<WaitingConstraints> WaitingConstraints;
+        std::vector<WaitingConstraint> WaitingConstraints;
         
 
         //! This is not empty when some players are receiving their initial world state

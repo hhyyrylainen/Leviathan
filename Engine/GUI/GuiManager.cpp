@@ -809,15 +809,14 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const wstring &nam
 		if(Collections[i]->GetName() == name){
 			// set state //
 			if(Collections[i]->GetState() != state){
-				Logger::Get()->Info(L"Setting Collection "+Collections[i]->GetName()+L" state "+
-                    Convert::ToWstring(state));
+                
 				Collections[i]->ToggleState();
 			}
 			return;
 		}
 	}
 	// Complain //
-	Logger::Get()->Warning(L"GuiManager: SetCollectionState: couldn't find collection with name: "+name);
+	Logger::Get()->Warning(L"GuiManager: SetCollectionState: couldn't find a collection with name: "+name);
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const wstring &name, bool allow /*= true*/){

@@ -69,6 +69,8 @@ using Leviathan::RepeatingDelayedTask;
 using Leviathan::RepeatCountedDelayedTask;
 
 
+using Leviathan::BaseObject;
+using Leviathan::GameWorld;
 
 using Leviathan::ExceptionInvalidArgument;
 

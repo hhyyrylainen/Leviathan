@@ -24,7 +24,10 @@ namespace Leviathan{
         //! \brief Destroys all Serializers
         DLLEXPORT void Release();
 
-
+        //! \brief Registers a new serializer
+        //! \param serializer The serializer to add, the pointer will be deleted by this
+        DLLEXPORT void AddSerializer(BaseConstraintSerializer* serializer);
+        
         //! \brief Finds a suitable serializer and creates a constraint
         //! \return True when the constraint is created
         //! \param object1 The first entity, must be valid

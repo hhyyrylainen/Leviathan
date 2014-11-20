@@ -11,6 +11,7 @@
 #include "Handlers/ObjectLoader.h"
 #include "Newton/PhysicalMaterialManager.h"
 #include "Utility/Random.h"
+#include "PongConstraints.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::Arena::Arena(shared_ptr<Leviathan::GameWorld> world) : TargetWorld(world), DirectTrail(NULL){
@@ -288,7 +289,10 @@ addplayerpaddlelabel:
 		}
 
 		// link //
-		secondary ? plyvec[i]->GetSplit()->SetPaddleObject(plypaddle): plyvec[i]->SetPaddleObject(plypaddle);
+		int plynumber = secondary ? plyvec[i]->GetSplit()->GetPlayerNumber(): plyvec[i]->GetPlayerNumber();
+
+        // tmp should still be plypaddle
+        tmp->CreateConstraintWith<EmotionalConnection>(NULL)->SetParameters(plynumber)->Init();
 
 		// Create the track controller //
 		std::vector<Leviathan::Entity::TrackControllerPosition> MovementPositions(2);

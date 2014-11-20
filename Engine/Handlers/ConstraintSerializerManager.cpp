@@ -36,6 +36,11 @@ DLLEXPORT void Leviathan::ConstraintSerializerManager::Release(){
     }
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::ConstraintSerializerManager::AddSerializer(BaseConstraintSerializer* serializer){
+    GUARD_LOCK_THIS_OBJECT();
+    Serializers.push_back(serializer);
+}
+// ------------------------------------ //
 DLLEXPORT bool Leviathan::ConstraintSerializerManager::CreateConstraint(BaseObject* object1,
     BaseObject* object2, Entity::ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet, bool create)
 {

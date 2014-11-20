@@ -8,9 +8,9 @@
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Entity::BaseConstraint::BaseConstraint(GameWorld* world, BaseConstraintable* parent,
-    BaseConstraintable* child) : 
-	ParentObject(parent), ChildObject(child), OwningWorld(world), Joint(NULL)
+DLLEXPORT Leviathan::Entity::BaseConstraint::BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world,
+    BaseConstraintable* parent, BaseConstraintable* child) : 
+	ParentObject(parent), ChildObject(child), OwningWorld(world), Joint(NULL), Type(type)
 {
 }
 
@@ -64,7 +64,7 @@ DLLEXPORT BaseConstraintable* Leviathan::Entity::BaseConstraint::GetSecondEntity
 // ------------------ SliderConstraint ------------------ //
 DLLEXPORT Leviathan::Entity::SliderConstraint::SliderConstraint(GameWorld* world, BaseConstraintable* parent,
     BaseConstraintable* child) : 
-	BaseConstraint(world, parent, child), Axis(0)
+	BaseConstraint(ENTITY_CONSTRAINT_TYPE_SLIDER, world, parent, child), Axis(0)
 {
 
 }
@@ -73,7 +73,7 @@ DLLEXPORT Leviathan::Entity::SliderConstraint::~SliderConstraint(){
 
 }
 // ------------------------------------ //
-DLLEXPORT BaseConstraint* Leviathan::Entity::SliderConstraint::SetParameters(const Float3 &slidingaxis){
+DLLEXPORT SliderConstraint* Leviathan::Entity::SliderConstraint::SetParameters(const Float3 &slidingaxis){
 	Axis = slidingaxis;
 	return this;
 }

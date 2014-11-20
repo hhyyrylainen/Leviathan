@@ -190,6 +190,7 @@ namespace Pong{
 		// data //
 		int Slot;
 		PLAYERTYPE PlayerType;
+        //! Unique number that is set for all players and AI, used to link various objects to the slot
 		int PlayerNumber;
 		PLAYERCONTROLS ControlType;
 		int ControlIdentifier;

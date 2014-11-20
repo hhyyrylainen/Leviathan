@@ -17,7 +17,7 @@ namespace Leviathan{ namespace Entity{
             ENTITY_CONSTRAINT_TYPE_SLIDER = 1,
 
                 
-            ENTITY_CONSTRAINT_TYPE_CUSTOM = 1000
+                ENTITY_CONSTRAINT_TYPE_CUSTOM = 1000
         };
 
         
@@ -25,7 +25,8 @@ namespace Leviathan{ namespace Entity{
         //! \todo Make this actually ThreadSafe
         class BaseConstraint : public ThreadSafe{
         public:
-            DLLEXPORT BaseConstraint(GameWorld* world, BaseConstraintable* parent, BaseConstraintable* child);
+            DLLEXPORT BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world, BaseConstraintable* parent,
+                BaseConstraintable* child);
             DLLEXPORT virtual ~BaseConstraint();
 
             //! \brief Actually creates the Newton joint.
@@ -77,6 +78,7 @@ namespace Leviathan{ namespace Entity{
         // Different types of constraints //
 
         //! Constraint that allows motion along a single axis
+        //! \note The axis has to be normalized otherwise Init fails
         class SliderConstraint : public BaseConstraint{
         public:
             DLLEXPORT SliderConstraint(GameWorld* world, BaseConstraintable* parent, BaseConstraintable* child);
@@ -86,7 +88,7 @@ namespace Leviathan{ namespace Entity{
             //! Call this before init to set the right parameters
             //! \param slidingaxis Is a normalized axis in global coordinates and defines the axis along which
             //! the object can move
-            DLLEXPORT BaseConstraint* SetParameters(const Float3 &slidingaxis);
+            DLLEXPORT SliderConstraint* SetParameters(const Float3 &slidingaxis);
 
 
             //! \brief Returns the axis along which this joint can move

@@ -8,13 +8,13 @@
 // ---- includes ---- //
 #include "Arena.h"
 #include "PlayerSlot.h"
+#include "PongConstraints.h"
 #include "Entities/Bases/BasePhysicsObject.h"
 #include "Utility/DataHandling/SimpleDatabase.h"
 #include "Entities/Objects/ViewerCameraPos.h"
 #include "Entities/GameWorld.h"
 #include "Entities/Objects/Prop.h"
 #include "Script/ScriptExecutor.h"
-#include "Arena.h"
 #include "Addons/GameModule.h"
 #include "Threading/QueuedTask.h"
 #include "add_on/autowrapper/aswrappedcall.h"
@@ -54,10 +54,12 @@ namespace Pong{
 		}
 
 
-		BasePongParts(bool isserver) : GameArena(nullptr), ErrorState("No error"), Tickcount(0), LastPlayerHitBallID(-1), 
+		BasePongParts(bool isserver) :
+            GameArena(nullptr), ErrorState("No error"), Tickcount(0), LastPlayerHitBallID(-1), 
 			ScoreLimit(L"ScoreLimit", 20), BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), 
 			GameConfigurationData(new Leviathan::SimpleDatabase(L"GameConfiguration")),
-			GamePaused(L"GamePaused", false), GameAI(NULL), _PlayerList(boost::function<void (PlayerList*)>(&StatUpdater), 4)
+			GamePaused(L"GamePaused", false), GameAI(NULL),
+            _PlayerList(boost::function<void (PlayerList*)>(&StatUpdater), 4)
 		{
 			BasepongStaticAccess = this;
 		}
@@ -144,8 +146,9 @@ playrscorelistupdateendlabel:
 
 
 			// Send ScoreUpdated event //
-			Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"ScoreUpdated"), new NamedVars(shared_ptr<NamedVariableList>(new
-				NamedVariableList(L"ScoredPlayer", new Leviathan::VariableBlock(LastPlayerHitBallID))))));
+			Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"ScoreUpdated"),
+                    new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"ScoredPlayer", new
+                                Leviathan::VariableBlock(LastPlayerHitBallID))))));
 
 			_DisposeOldBall();
 
@@ -182,7 +185,9 @@ playrscorelistupdateendlabel:
 
 					if(plyid == slotptr->GetPlayerNumber()){
 						// Check if goal area matches //
-						Leviathan::BasePhysicsObject* tmpptr = dynamic_cast<Leviathan::BasePhysicsObject*>(slotptr->GetGoalArea().get());
+						Leviathan::BasePhysicsObject* tmpptr = dynamic_cast<Leviathan::BasePhysicsObject*>(
+                            slotptr->GetGoalArea().get());
+                        
 						if(tmpptr == goalptr){
 							// Found matching goal area //
 							return true;
@@ -246,7 +251,8 @@ playrscorelistupdateendlabel:
 		void _SetLastPaddleHit(Leviathan::BasePhysicsObject* objptr, Leviathan::BasePhysicsObject* objptr2){
 			// Note: the object pointers can be in any order they want //
 
-			Leviathan::BasePhysicsObject* realballptr = dynamic_cast<Leviathan::BasePhysicsObject*>(GameArena->GetBallPtr().get());
+			Leviathan::BasePhysicsObject* realballptr = dynamic_cast<Leviathan::BasePhysicsObject*>(
+                GameArena->GetBallPtr().get());
 
 			// Look through all players and compare paddle ptrs //
 			for(size_t i = 0; i < _PlayerList.Size(); i++){
@@ -255,9 +261,12 @@ playrscorelistupdateendlabel:
 
 				while(slotptr){
 
-					Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*>(slotptr->GetPaddle().get());
+					Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*>(
+                        slotptr->GetPaddle().get());
 
-					if((objptr == castedptr && objptr2 == realballptr) || (objptr2 == castedptr && objptr == realballptr)){
+					if((objptr == castedptr && objptr2 == realballptr) ||
+                        (objptr2 == castedptr && objptr == realballptr))
+                    {
 						// Found right player //
 						LastPlayerHitBallID = slotptr->GetPlayerNumber();
 						SetBallLastHitColour();
@@ -268,11 +277,13 @@ playrscorelistupdateendlabel:
 				}
 			}
 		}
-		//! Handles score increase from scoring and destruction of ball. The second parameter is used to ensuring it is the right ball //
+		//! Handles score increase from scoring and destruction of ball. The second parameter is used to
+        //! ensuring it is the right ball
 		int _BallEnterGoalArea(Leviathan::BasePhysicsObject* goal, Leviathan::BasePhysicsObject* ballobject){
 			// Note: the object pointers can be in any order they want //
 
-			Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*>(GameArena->GetBallPtr().get());
+			Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*>(
+                GameArena->GetBallPtr().get());
 
 			if(ballobject == castedptr){
 				// goal is actually the goal area //
@@ -415,12 +426,15 @@ playrscorelistupdateendlabel:
 			}, this))));
 
 
-			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([]() -> void{
-				// Load Pong specific packets //
-				PongPackets::RegisterAllPongPacketTypes();
-				Logger::Get()->Info(L"Pong specific packets loaded");
-
-			}))));
+			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([]()
+                            -> void
+                {
+                    // Load Pong specific packets //
+                    PongPackets::RegisterAllPongPacketTypes();
+                    PongConstraintSerializer::Register();            
+                    Logger::Get()->Info(L"Pong specific packets loaded");
+                    
+                }))));
 
 			// setup world //
 			WorldOfPong = Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), NULL);

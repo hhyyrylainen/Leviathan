@@ -3,6 +3,7 @@
 #include "PongConstraints.h"
 #endif
 #include "CommonPong.h"
+#include "Entities/Objects/TrackEntityController.h"
 using namespace Pong;
 using namespace Leviathan;
 using namespace Entity;
@@ -35,7 +36,10 @@ shared_ptr<sf::Packet> Pong::PongConstraintSerializer::SerializeConstraint(BaseC
             
             shared_ptr<sf::Packet> packet = make_shared<sf::Packet>();
 
-            (*packet) << emotional->GetPlayerNumber();
+            (*packet) << emotional->GetPlayerNumber() << static_cast<int32_t>(emotional->GetType());
+
+            Logger::Get()->Write("Sending emotional constraint, number: "+
+                Convert::ToString(emotional->GetPlayerNumber()));
 
             return packet;
         }
@@ -57,17 +61,21 @@ bool Pong::PongConstraintSerializer::UnSerializeConstraint(BaseObject* object1, 
             }
             
             int32_t number;
-            packet >> number;
+            int32_t type;
+            packet >> number >> type;
 
             if(!packet)
                 return false;
 
             auto casted1 = dynamic_cast<BaseConstraintable*>(object1);
+            LINK_TYPE actualtype = static_cast<LINK_TYPE>(type);
 
             if(!casted1)
                 return false;
 
-            casted1->CreateConstraintWith<EmotionalConnection>(NULL)->SetParameters(number)->Init();
+            casted1->CreateConstraintWith<EmotionalConnection>(NULL)->SetParameters(number, actualtype)->Init();
+            Logger::Get()->Write("Received emotional constraint, number: "+
+                Convert::ToString(number));
             
             return true;
         }
@@ -78,7 +86,7 @@ bool Pong::PongConstraintSerializer::UnSerializeConstraint(BaseObject* object1, 
 // ------------------ EmotionalConnection ------------------ //
 EmotionalConnection::EmotionalConnection(GameWorld* world, BaseConstraintable* parent, BaseConstraintable* child) :
     BaseConstraint(static_cast<ENTITY_CONSTRAINT_TYPE>(PONG_CONSTRAINT_TYPE_EMOTIONAL), world,
-        parent, child), PlayerNumber(-1)
+        parent, child), PlayerNumber(-1), TypeToLink(LINK_TYPE_LAST)
 {
 
 }
@@ -97,7 +105,14 @@ EmotionalConnection::~EmotionalConnection(){
         while(curply){
 
             if(curply->GetPlayerNumber() == PlayerNumber){
-                curply->SetPaddleObject(nullptr);
+
+                switch(TypeToLink){
+                    case LINK_TYPE_PADDLE:
+                        curply->SetPaddleObject(nullptr);
+                        break;
+                    case LINK_TYPE_TRACK:
+                        curply->SetTrackObject(nullptr, nullptr);
+                }
                 return;
             }
             curply = curply->GetSplit();
@@ -106,13 +121,17 @@ EmotionalConnection::~EmotionalConnection(){
     
 }
 // ------------------------------------ //
-EmotionalConnection* EmotionalConnection::SetParameters(int plyid){
+EmotionalConnection* EmotionalConnection::SetParameters(int plyid, LINK_TYPE whattolink){
 
     PlayerNumber = plyid;
+    TypeToLink = whattolink;
     return this;
 }
 // ------------------------------------ //
 bool EmotionalConnection::_CheckParameters(){
+    if(TypeToLink != LINK_TYPE_PADDLE && TypeToLink != LINK_TYPE_TRACK)
+        return false;
+    
     return PlayerNumber >= 0;
 }
         
@@ -130,8 +149,17 @@ bool EmotionalConnection::_CreateActualJoint(){
         while(curply){
 
             if(curply->GetPlayerNumber() == PlayerNumber){
-
-                curply->SetPaddleObject(OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(ParentObject)));
+                switch(TypeToLink){
+                    case LINK_TYPE_PADDLE:
+                        curply->SetPaddleObject(OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
+                                    ParentObject)));
+                        break;
+                    case LINK_TYPE_TRACK:
+                        curply->SetTrackObject(OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
+                                    ParentObject)), static_cast<TrackEntityController*>(ParentObject));
+                        break;
+                }
+                
                 return true;
             }
             curply = curply->GetSplit();

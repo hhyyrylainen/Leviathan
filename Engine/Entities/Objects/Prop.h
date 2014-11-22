@@ -19,7 +19,7 @@ namespace Leviathan{ namespace Entity{
 	
 
         class Prop : virtual public BaseObject, public BaseRenderable, public BaseConstraintable, public BaseParentable,
-                       public BaseSendableEntity
+                       public BaseSendableEntity, public BasePhysicsObject
         {
             friend BaseSendableEntity;
         public:

@@ -5,6 +5,7 @@
 #include "Newton/PhysicalWorld.h"
 #include "../Bases/BaseConstraintable.h"
 #include "../GameWorld.h"
+#include "Entities/Bases/BasePhysicsObject.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
@@ -94,8 +95,18 @@ bool Leviathan::Entity::SliderConstraint::_CreateActualJoint(){
 	// We'll just call the Newton create function and that should should be it //
 	Float3 pos(0.f, 0.f, 0.f);
 
+    // TODO: check if we could add a GetPhysicsBody function to BaseConstraintable
+    auto first = dynamic_cast<BasePhysicsObject*>(ChildObject);
+    auto second = dynamic_cast<BasePhysicsObject*>(ParentObject);
+
+    if(!first || !second){
+
+        Logger::Get()->Error("SliderConstraint: passed in an entity that doesn't have physics");
+        return false;
+    }
+    
 	Joint = NewtonConstraintCreateSlider(OwningWorld->GetPhysicalWorld()->GetWorld(), &pos.X, &Axis.X, 
-		ChildObject->GetPhysicsBody(), ParentObject->GetPhysicsBody());
+		first->GetPhysicsBody(), second->GetPhysicsBody());
 
 	return Joint != NULL;
 }

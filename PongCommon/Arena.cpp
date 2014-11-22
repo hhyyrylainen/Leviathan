@@ -292,7 +292,7 @@ addplayerpaddlelabel:
 		int plynumber = secondary ? plyvec[i]->GetSplit()->GetPlayerNumber(): plyvec[i]->GetPlayerNumber();
 
         // tmp should still be plypaddle
-        tmp->CreateConstraintWith<EmotionalConnection>(NULL)->SetParameters(plynumber)->Init();
+        tmp->CreateConstraintWith<EmotionalConnection>(NULL)->SetParameters(plynumber, LINK_TYPE_PADDLE)->Init();
 
 		// Create the track controller //
 		std::vector<Leviathan::Entity::TrackControllerPosition> MovementPositions(2);
@@ -335,7 +335,9 @@ addplayerpaddlelabel:
 		auto track = TargetWorld->GetWorldObject(loader->LoadTrackEntityControllerToWorld(TargetWorld.get(), MovementPositions, tmp, &controller));
 
 		// Set //
-		secondary ? plyvec[i]->GetSplit()->SetTrackObject(track, controller): plyvec[i]->SetTrackObject(track, controller);
+        plynumber = secondary ? plyvec[i]->GetSplit()->GetPlayerNumber(): plyvec[i]->GetPlayerNumber();
+        
+        tmp->CreateConstraintWith<EmotionalConnection>(NULL)->SetParameters(plynumber, LINK_TYPE_TRACK)->Init();
 
 		// Paddle should be in the middle by default, so set progress to 50% //
 		controller->SetProgressTowardsNextNode(0.5f);

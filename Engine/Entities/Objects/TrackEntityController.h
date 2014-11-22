@@ -10,6 +10,7 @@
 #include "Entities/Bases/BaseSendableEntity.h"
 #include "LocationNode.h"
 #include "Events/CallableObject.h"
+#include "Entities/Bases/BaseConstraintable.h"
 
 #define TRACKCONTROLLER_DEFAULT_APPLYFORCE		12.f
 
@@ -29,7 +30,7 @@ namespace Leviathan{ namespace Entity{
 
         // This class is used to create movement paths for entities //
         class TrackEntityController : public BaseEntityController, virtual public BaseObject, public CallableObject,
-                                        public BaseSendableEntity
+                                        public BaseSendableEntity, public BaseConstraintable
         {
             friend BaseSendableEntity;
         public:

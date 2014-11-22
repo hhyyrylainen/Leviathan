@@ -23,7 +23,7 @@ namespace Leviathan{ namespace Entity{
 
 
         class Brush : virtual public BaseObject, public BaseRenderable, public BaseConstraintable,
-                        public BaseParentable, public BaseSendableEntity
+                        public BaseParentable, public BaseSendableEntity, public BasePhysicsObject
         {
             friend BaseSendableEntity;
         public:

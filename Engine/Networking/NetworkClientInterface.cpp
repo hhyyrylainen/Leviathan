@@ -80,6 +80,9 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLoc
 		return;
 	}
 
+    // Discard waiting requests //
+    OurSentRequests.clear();
+
 	// Send disconnect message to server //
 	_OnNewConnectionStatusMessage(L"Disconnected from "+ServerConnection->GenerateFormatedAddressString()+L", reason: "
         +reason);
@@ -420,6 +423,12 @@ void Leviathan::NetworkClientInterface::_ProcessFailedRequest(shared_ptr<SentNet
     ObjectLock &guard)
 {
 	VerifyLock(guard);
+
+    if(!ServerConnection){
+
+        Logger::Get()->Write("\t> Connection has been closed");
+        return;
+    }
 
 	// First do some checks based on the request type //
 	switch(tmpsendthing->OriginalRequest->GetType()){

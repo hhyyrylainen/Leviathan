@@ -37,6 +37,7 @@ if(WIN32)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
     
 else(WIN32)
+
     add_definitions(-fextended-identifiers)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 	
@@ -60,7 +61,7 @@ endif(CMAKE_BUILD_TYPE STREQUAL "")
 if(NOT WIN32 AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	# Not recommended configuration
 	message(STATUS "Configuration is set to: " ${CMAKE_BUILD_TYPE})
-	message(SEND_ERROR "On linux you should only try to build with Release or RelWithDebInfo")
+	message(SEND_WARNING "On linux you should only try to build with Release or RelWithDebInfo")
 
 endif(NOT WIN32 AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 
@@ -155,12 +156,12 @@ set(CEGUI_ENGINE_DEBUG ${CEGUI_ENGINE_DEBUG} "CEGUICoreWindowRendererSet_d" "CEG
 
 
 # Library linking
-set(LINK_LIBS_TOENGINE_RELEASE optimized Newton)
+set(LINK_LIBS_TOENGINE_RELEASE optimized Newton optimized breakpad_client)
 set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap Newton sfml-audio sfml-network sfml-system ${CEGUI_ENGINE_RELEASE})
 
 if(WIN32)
 # Debug libraries
-set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
+set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d debug breakpad_client)
 set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd Newton_d sfml-audio-d sfml-network-d sfml-system-d ${CEGUI_ENGINE_DEBUG})
 endif(WIN32)
 
@@ -229,7 +230,37 @@ set(CEGUI_BUILD_BINARY_DIR "" CACHE FILEPATH "Path to the bin directory that has
 option(CEGUI_COPY_DEBUGFILES "Whether to copy the .pdb files and others that are required for proper debugging" ON) 
 configure_file("${PROJECT_SOURCE_DIR}/CopyCEGUI.bat.in" "${PROJECT_SOURCE_DIR}/CopyCEGUI.bat" @ONLY)
 
+set(BREAKPAD_DIR "" CACHE FILEPATH "Path to the base directory of google breakpad installation")
+if(NOT EXISTS "${BREAKPAD_DIR}/src")
+  message(SEND_ERROR "Breakpad directory is missing")
+endif()
+
 message(STATUS "Copying files...")
+
+######### Debugging Symbols
+# Create debugging info directory
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/Symbols")
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/Symbols/Dumps")
+
+file(COPY "${PROJECT_SOURCE_DIR}/MoveSymbolFile.sh" "${PROJECT_SOURCE_DIR}/CreateSymbolsForTarget.sh"
+  DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
+
+# Copy the tools
+if(UNIX)
+
+  file(COPY "${BREAKPAD_DIR}/src/tools/linux/dump_syms/dump_syms" "${BREAKPAD_DIR}/src/processor/minidump_stackwalk" 
+    DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
+
+elseif(WIN32)
+
+endif()
+
+# Set the symbol tool name
+if(UNIX)
+  set(SYMBOL_EXTRACTOR "./CreateSymbolsForTarget.sh")
+elseif(WIN32)
+  set(SYMBOL_EXTRACTOR "./CreateSymbolsForTarget.bat")
+endif()
 
 # copy data from bin directory
 
@@ -396,6 +427,8 @@ include_directories("${PROJECT_SOURCE_DIR}/SFML/include")
 include_directories(${OIS_INCLUDE_DIRS}	${OGRE_INCLUDE_DIRS})
 include_directories("${PROJECT_SOURCE_DIR}/CEGUI/include")
 
+include_directories("${BREAKPAD_DIR}/src")
+
 # libraries paths
 link_directories("${PROJECT_SOURCE_DIR}/AngelScript/lib")
 link_directories("${PROJECT_SOURCE_DIR}/libRocket/lib/")
@@ -403,6 +436,14 @@ link_directories("${PROJECT_SOURCE_DIR}/SFML/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/CEGUI/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/Newton/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/Newton/bin/")
+
+if(UNIX)
+  link_directories("${BREAKPAD_DIR}/src/client/linux")
+elseif(WIN32)
+
+else()
+
+endif()
 
 if(WIN32)
     link_directories("${PROJECT_SOURCE_DIR}/Leap/lib/x86")
@@ -492,6 +533,11 @@ install(FILES ${SMFLMoveFilesRelease} DESTINATION bin)
 if(NOT Boost_USE_STATIC_LIBS AND WIN32)
     install(FILES ${BOOST_MOVE_FILES_RELEASE} DESTINATION bin)
 endif(NOT Boost_USE_STATIC_LIBS AND WIN32)
+
+
+
+##### All symbol creating target
+add_custom_target(All_Symbols ALL DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
 
 
 # testing support

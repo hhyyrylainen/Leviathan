@@ -906,6 +906,15 @@ void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
     LastFrame += changeamount;
 }
 // ------------------------------------ //
+int TestCrash(int writenum){
+
+    int* target = nullptr;
+    (*target) = writenum;
+    
+    Logger::Get()->Write("It didnt' crash...");
+    return 42;
+}
+
 DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 
 	Logger::Get()->Info(L"Command line: "+commands);
@@ -932,6 +941,16 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 			// Shouldn't try to open the console on windows //
 			DEBUG_BREAK;
 		}
+        if(*splitval == L"--crash"){
+            // Test crashing //
+            TestCrash(12);
+            
+            Logger::Get()->Info("Engine testing crash handling");
+            // TODO: write a file that disables crash handling
+            // Make the log say something useful //
+            Logger::Get()->Save();
+            continue;
+        }
 		// Add (if not processed already) //
 		PassedCommands.push_back(move(splitval));
 	}
@@ -1007,6 +1026,8 @@ DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
                     L", whole argument: "+*PassedCommands[i]);
 			}
 		}
+
+        
 
 	}
 

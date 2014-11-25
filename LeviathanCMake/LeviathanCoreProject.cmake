@@ -42,6 +42,10 @@ if(WIN32 AND NOT MINGW)
     )
 endif(WIN32 AND NOT MINGW)
 
+# Creating symbols after building
+add_custom_target(${CurrentProjectName}_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/${CurrentProjectName}"
+  DEPENDS ${CurrentProjectName} WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
+
 
 
 

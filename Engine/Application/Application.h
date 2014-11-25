@@ -84,7 +84,7 @@ namespace Leviathan{
 
 		Engine* _Engine;
 		AppDef* ApplicationConfiguration;
-
+        
 		// static part //
 		static LeviathanApplication* Curapp;
 	};

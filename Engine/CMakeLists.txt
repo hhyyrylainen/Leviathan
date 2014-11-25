@@ -182,3 +182,12 @@ ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND copy ARGS
 )
 endif(WIN32 AND NOT MINGW)
 
+# Symbol building
+if(UNIX)
+  add_custom_target(Engine_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/libEngine.so"
+    DEPENDS Engine WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
+elseif(WIN32)
+  add_custom_target(Engine_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/Engine.dll"
+    DEPENDS Engine WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
+endif()
+

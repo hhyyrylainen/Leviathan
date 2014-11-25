@@ -3,10 +3,25 @@
 #include "@ProgramNetHeader@"
 #include "resource.h"
 
+// Breakpad is used to detect and report crashes
+#ifdef __linux
+#include "client/linux/handler/exception_handler.h"
+#elif defined(_WIN32)
+#error add the windows breakpad include here
+#else
+#error no breakpad on platform
+#endif
+
 using namespace @ProgramNamespace@;
 
 
 // Don't look at the mess ahead, just set the variables in your cmake file //
+bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded){
+    
+    printf("Dump path: %s\n", descriptor.path());
+    return succeeded;
+}
+
 
 #ifdef LEVIATHAN_USES_VLD
 // visual leak detector //
@@ -48,12 +63,26 @@ int main(int argcount, char* args[]){
     VLDEnable();
 #endif // LEVIATHAN_USES_VLD
 
+    // Crash handler //
+    google_breakpad::MinidumpDescriptor descriptor(
+#ifdef _WIN32
+        "C://tmp"
+#else
+        "/tmp"
+#endif
+    );
+
+    google_breakpad::ExceptionHandler ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);
+        
+        
     // create program object //
     @PROGRAMCLASSNAME@ app;
     @PROGRAMNETWORKINGNAME@ network;
 
     unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"@PROGRAMLOG@", L"@ENGINECONFIGURATION@", 
-        L"@PROGRAMCONFIGURATION@", L"@PROGRAMKEYCONFIGURATION@", &@PROGRAMCHECKCONFIGFUNCNAME@, &@PROGRAMCHECKKEYCONFIGFUNCNAME@));
+        L"@PROGRAMCONFIGURATION@", L"@PROGRAMKEYCONFIGURATION@", &@PROGRAMCHECKCONFIGFUNCNAME@,
+        &@PROGRAMCHECKKEYCONFIGFUNCNAME@));
+        
     // customize values //
 #ifdef _WIN32
     ProgramDefinition->SetHInstance(hInstance);
@@ -69,16 +98,6 @@ int main(int argcount, char* args[]){
         &app);
 
     app.PassCommandLine(commandline);
-    
-    // Register our custom JS object if we are using one //
-#ifdef LEVIATHAN_USES_CUSTOMJS
-    Leviathan::GlobalCEFHandler::RegisterCustomJavaScriptQueryHandler(new @PROGRAMCUSTOMJS_CLASS@);
-    
-    // Register the custom file //
-    Leviathan::GlobalCEFHandler::GetCEFObjects()->GetCEFApp()->RegisterCustomExtensionFile("@PROGRAMCUSTOMJS_EXTFILE@"); 
-    
-#endif //LEVIATHAN_USES_CUSTOMJS
-    
     
     if(app.Initialize(ProgramDefinition.get())){
 

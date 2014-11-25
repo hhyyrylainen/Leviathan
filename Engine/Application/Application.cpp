@@ -9,8 +9,10 @@ using namespace Leviathan;
 #include "OGRE/OgreWindowEventUtilities.h"
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
-DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() : Quit(false), _Engine(new Engine(this)), ApplicationConfiguration(NULL), 
-	ShouldQuit(false), QuitSometime(false)
+
+// ------------------ LeviathanApplication ------------------ //
+DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() :
+    Quit(false), _Engine(new Engine(this)), ApplicationConfiguration(NULL), ShouldQuit(false), QuitSometime(false)
 {
 	Curapp = this;
 }
@@ -28,7 +30,6 @@ DLLEXPORT LeviathanApplication* Leviathan::LeviathanApplication::Get(){
     
 	return Curapp;
 }
-
 
 LeviathanApplication* LeviathanApplication::Curapp = NULL;
 // ------------------------------------ //

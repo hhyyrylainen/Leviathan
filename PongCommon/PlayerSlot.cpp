@@ -258,6 +258,8 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 		// Create new one only if there isn't one already created //
 		if(!InputObj){
 
+            Logger::Get()->Info("Creating input for our player id");
+            
 			// Hook a networked input receiver to the server //
 			PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
 				PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(NetworkedInputID, true));

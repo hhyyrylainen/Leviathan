@@ -256,6 +256,9 @@ void Pong::PongServer::OnStartPreMatch(){
             server->WorldOfPong->SetWorldPhysicsFrozenState(false);
             server->_PongServerNetworking->SetStatus(PONG_JOINGAMERESPONSE_TYPE_MATCH);
 
+            // Spawn a ball //
+            server->GameArena->ServeBall();
+
             // TODO: add a start timer here
 
 

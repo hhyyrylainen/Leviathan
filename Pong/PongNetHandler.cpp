@@ -21,7 +21,9 @@ Pong::PongNetHandler::~PongNetHandler(){
 
 }
 // ------------------------------------ //
-void Pong::PongNetHandler::HandleResponseOnlyPacket(shared_ptr<Leviathan::NetworkResponse> message, Leviathan::ConnectionInfo* connection, bool &dontmarkasreceived){
+void Pong::PongNetHandler::HandleResponseOnlyPacket(shared_ptr<Leviathan::NetworkResponse> message,
+    Leviathan::ConnectionInfo* connection, bool &dontmarkasreceived)
+{
 	// Try default handling //
 	if(_HandleDefaultResponseOnly(message, connection, dontmarkasreceived))
 		return;
@@ -42,7 +44,8 @@ void Pong::PongNetHandler::HandleResponseOnlyPacket(shared_ptr<Leviathan::Networ
 		case PONG_PACKET_SERVER_STATE_RESPONSE:
 			{
 				// Verify the state //
-				PongGame::Get()->VerifyCorrectState(static_cast<PongServerChangeStateResponse*>(data->ResponseBaseData)->NewState);
+				PongGame::Get()->VerifyCorrectState(static_cast<PongServerChangeStateResponse*>(
+                        data->ResponseBaseData)->NewState);
 				return;
 			}
 		}

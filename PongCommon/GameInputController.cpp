@@ -178,6 +178,8 @@ DLLEXPORT void Pong::PongInputFactory::ReplicationFinalized(NetworkedInput* inpu
                 PlayerSlot* curplayer = curply;
 
                 tmpobj->StartSendingInput(curplayer);
+
+                Logger::Get()->Info("Pong input linked to player");
                 return;
             }
 
@@ -300,6 +302,40 @@ DLLEXPORT void Pong::PongNInputter::InitializeLocal(){
 	GUARD_LOCK_THIS_OBJECT();
 
 	CreatedByUs = true;
+
+    // We need to do the same as in the replication finalized method //
+    // Now add the proper player pointer to it //
+	auto plylist = BasePongParts::Get()->GetPlayers();
+
+	GUARD_LOCK_OTHER_OBJECT_NAME(plylist, plylock);
+
+
+	std::vector<PlayerSlot*>& plys = plylist->GetVec();
+
+	for(size_t i = 0; i < plys.size(); i++){
+
+        // Subslots... //
+        PlayerSlot* curply = plys[i];
+
+        while(curply){
+
+            if(curply->GetNetworkedInputID() == GetID()){
+
+                // Store the data and set us as this slot's thing //
+                PlayerSlot* curplayer = curply;
+
+                this->StartSendingInput(curplayer);
+
+                Logger::Get()->Info("Pong input linked to local player");
+                return;
+            }
+
+            curply = curply->GetSplit();
+        }
+	}
+
+
+	Logger::Get()->Error(L"Pong input thing failed to create local");
 }
 // ------------------------------------ //
 void Pong::PongNInputter::_OnInputChanged(){
@@ -441,6 +477,8 @@ bool Pong::PongNInputter::_HandleKeyThing(OIS::KeyCode key, bool down){
 
 		ChangedKeys &= ~(1 << targetbit);
 	}
+
+    Logger::Get()->Write("Keypressed");
 
 
 	// Our thing has changed! //

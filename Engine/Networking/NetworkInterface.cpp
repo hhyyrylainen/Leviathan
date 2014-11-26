@@ -9,6 +9,7 @@
 #include "RemoteConsole.h"
 #include "Application/AppDefine.h"
 #include "SyncedVariables.h"
+#include "NetworkedInputHandler.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkInterface::NetworkInterface() : OurNetworkType(NETWORKED_TYPE_BASE_ERROR){
@@ -84,8 +85,16 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 
 			return true;
 		}
-	default:
-		return false;
+        case NETWORKREQUESTTYPE_CONNECTINPUT:
+        {
+            auto handler = NetworkedInputHandler::Get();
+            if(handler)
+                handler->HandleInputPacket(request, connectiontosendresult);
+
+            return true;
+        }
+        default:
+            return false;
 	}
 
 	// Unhandled //
@@ -132,6 +141,15 @@ bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkR
 			RemoteConsole::Get()->HandleRemoteConsoleResponse(message, connection, NULL);
 			return true;
 		}
+        case NETWORKRESPONSETYPE_CREATENETWORKEDINPUT: case NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT:
+        {
+            auto handler = NetworkedInputHandler::Get();
+            if(handler)
+                handler->HandleInputPacket(message, connection);
+            
+            return true;
+        }
+            
         default:
             return false;
 	}

@@ -126,8 +126,16 @@ namespace Leviathan{
 
 
 		// object managing functions //
-		// this takes the object to be deleted by this //
+		//! \brief Adds an existing entity to the world, which won't be broadcast to the world receiverd
+        //! \see CreateEntity
 		DLLEXPORT void AddObject(BaseObject* obj);
+
+        //! \brief Adds a new entity
+        //! \note This should be used instead of AddObject for most purposes
+        //! \todo Allow to set the world to queue objects and send them in big bunches to players
+        DLLEXPORT void CreateEntity(shared_ptr<BaseObject> obj);
+        
+        
 		// The smart pointer should have custom deleter to use Release //
 		DLLEXPORT void AddObject(shared_ptr<BaseObject> obj);
 		DLLEXPORT void DestroyObject(int ID);
@@ -163,6 +171,7 @@ namespace Leviathan{
 			return _PhysicalWorld.get();
 		}
 
+        //! \todo Synchronize this over the network
 		DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
 
 		DLLEXPORT void SimulateWorld();

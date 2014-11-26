@@ -441,6 +441,42 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(shared_ptr<BaseObject> obj){
     }
 }
 
+DLLEXPORT void Leviathan::GameWorld::CreateEntity(shared_ptr<BaseObject> obj){
+
+    Logger::Get()->Info("Entity("+Convert::ToString(obj->GetID())+") created");
+    
+    // Notify everybody that a new entity has been created //
+    {
+        GUARD_LOCK_THIS_OBJECT();
+
+        // This is at least a decent place to send them, any constraints created later will get send
+        // when they are created
+
+        auto end = ReceivingPlayers.end();
+        for(auto iter = ReceivingPlayers.begin(); iter != end; ++iter){
+
+            auto unsafe = (*iter)->GetConnection();
+
+            auto safe = NetworkHandler::Get()->GetSafePointerToConnection(unsafe);
+
+            if(!safe){
+                // Player has probably closed their connection //
+                continue;
+            }
+
+            if(!SendObjectToConnection(obj, safe)){
+
+                Logger::Get()->Warning("GameWorld: CreateEntity: failed to send object to player ("+
+                    (*iter)->GetNickname());
+                continue;
+            }
+        }
+    }
+    
+    // And finally register it //
+    AddObject(obj);
+}
+// ------------------------------------ //
 DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
 	// ID shouldn't be under zero //
 	if(ID == -1){

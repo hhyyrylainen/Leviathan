@@ -141,7 +141,9 @@ DLLEXPORT void Leviathan::ObjectLoader::CreateTestCubeToScene(Ogre::SceneManager
 
 }
 
-DLLEXPORT void Leviathan::ObjectLoader::AddTestCubeToScenePositions(Ogre::SceneManager* scene, vector<Float3> &positions, const string &meshname){
+DLLEXPORT void Leviathan::ObjectLoader::AddTestCubeToScenePositions(Ogre::SceneManager* scene, vector<Float3>
+    &positions, const string &meshname)
+{
 
 	for(size_t i = 0; i < positions.size(); i++){
 
@@ -154,7 +156,9 @@ DLLEXPORT void Leviathan::ObjectLoader::AddTestCubeToScenePositions(Ogre::SceneM
 
 
 // ------------------------------------ //
-DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const wstring &name, Entity::Prop** createdinstance){
+DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const wstring &name, Entity::Prop**
+    createdinstance)
+{
 
 	unique_ptr<Entity::Prop> prop(new Entity::Prop(false, world));
 
@@ -169,13 +173,13 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const w
 	int id = prop->GetID();
 
 	// add to world //
-	world->AddObject(prop.release());
+	world->CreateEntity(shared_ptr<BaseObject>(prop.release()));
 
 	return id;
 }
 
-DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, const float &mass, 
-	Entity::Brush** createdinstance)
+DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size,
+    const float &mass, Entity::Brush** createdinstance)
 {
 	unique_ptr<Entity::Brush> brush(new Entity::Brush(false, world));
 
@@ -192,12 +196,14 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const 
 	}
 
 	// add to world //
-	world->AddObject(brush.release());
+	world->CreateEntity(shared_ptr<BaseObject>(brush.release()));
 
 	return id;
 }
 
-DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, Entity::Brush** createdinstance){
+DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material,
+    const Float3 &size, Entity::Brush** createdinstance)
+{
 	unique_ptr<Entity::Brush> brush(new Entity::Brush(false, world));
 
 	(*createdinstance) = brush.get();
@@ -208,7 +214,7 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const 
 	int id = brush->GetID();
 
 	// add to world //
-	world->AddObject(brush.release());
+	world->CreateEntity(shared_ptr<BaseObject>(brush.release()));
 
 	return id;
 }
@@ -243,13 +249,13 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadTrackEntityControllerToWorld(GameWorl
 	*createdinstance = tmpptr.get();
 
 	// Add to world //
-	world->AddObject(tmpptr.release());
+	world->CreateEntity(shared_ptr<BaseObject>(tmpptr.release()));
 
 	return retid;
 }
 
-DLLEXPORT int Leviathan::ObjectLoader::LoadTrailToWorld(GameWorld* world, const string &material, const Entity::TrailProperties &properties, 
-	bool allowupdatelater, Entity::TrailEmitter** createdinstance)
+DLLEXPORT int Leviathan::ObjectLoader::LoadTrailToWorld(GameWorld* world, const string &material,
+    const Entity::TrailProperties &properties, bool allowupdatelater, Entity::TrailEmitter** createdinstance)
 {
 	// Construct the object //
 	unique_ptr<Entity::TrailEmitter> tmpptr(new Entity::TrailEmitter(world));
@@ -267,7 +273,7 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadTrailToWorld(GameWorld* world, const 
 	*createdinstance = tmpptr.get();
 
 	// Add to world //
-	world->AddObject(tmpptr.release());
+	world->CreateEntity(shared_ptr<BaseObject>(tmpptr.release()));
 
 	return retid;
 }

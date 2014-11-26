@@ -4,6 +4,7 @@
 #include "Misc.h"
 #include "Define.h"
 #endif
+#include "boost/filesystem.hpp"
 using namespace Leviathan;
 // ------------------------------------ //
 #include "Logger.h"
@@ -169,11 +170,14 @@ bool Misc::CompareDataBlockTypeToTHISNameCheck(int datablock, int typenamecheckr
 	return false;
 }
 
-
+// ------------------------------------ //
 wstring Misc::Errstring = L"ERROR";
 std::string Leviathan::Misc::Errstrings = "ERROR";
+// ------------------------------------ //
+DLLEXPORT std::string Leviathan::Misc::GetProcessDirectory(){
 
-
+    return boost::filesystem::current_path().string();
+}
 
 
 

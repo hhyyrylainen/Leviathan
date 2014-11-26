@@ -27,6 +27,38 @@ include(cotire)
 # Just in case some unity builds are broken
 set_property(DIRECTORY PROPERTY COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY")
 
+######### Options
+    
+option(INSTALL_ONLY_RELEASE "For creating release folders" ON)
+# \todo this option to copy right libs
+option(INSTALL_CREATE_SDK   "For creating SDKs for developers" OFF)
+
+# Automatically builds symbols as part of the build and enables google breakpad handler
+option(USE_BREAKPAD "For enabling google breakpad crash handling, set off for local debugging" ON)
+
+if(${USE_BREAKPAD})
+  set(BREAKPAD_STATE 1)
+else()
+  set(BREAKPAD_STATE 0)
+endif()
+
+
+# VisualLeakDetector setting
+if(WIN32)
+    option(USE_VLD "For including vld in the projects" ON)
+endif()
+
+# For making libs with right names
+set(CMAKE_DEBUG_POSTFIX "D")
+
+if(USE_VLD)
+    set(L_VLD_STATE 1)
+else(USE_VLD)
+    set(L_VLD_STATE 0)
+endif(USE_VLD)
+
+
+
 # Linking and platform specific
 if(WIN32)
     # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
@@ -116,7 +148,7 @@ set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
 set(OGRE_BOOST_COMPONENTS thread date_time)
 
 # Other than these that are required are header-only libraries
-set(LEVIATHAN_BOOST_COMPONENTS chrono system regex)
+set(LEVIATHAN_BOOST_COMPONENTS chrono system regex filesystem)
 
 set(REQUIRED_BOOST_COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} ${OGRE_BOOST_COMPONENTS})
 
@@ -154,16 +186,19 @@ set(CEGUI_ENGINE_RELEASE ${CEGUI_ENGINE_RELEASE} "CEGUICoreWindowRendererSet" "C
 set(CEGUI_ENGINE_DEBUG ${CEGUI_ENGINE_DEBUG} "CEGUICoreWindowRendererSet_d" "CEGUIExpatParser_d")
 
 
-
 # Library linking
-set(LINK_LIBS_TOENGINE_RELEASE optimized Newton optimized breakpad_client)
+set(LINK_LIBS_TOENGINE_RELEASE optimized Newton)
 set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap Newton sfml-audio sfml-network sfml-system ${CEGUI_ENGINE_RELEASE})
 
-if(WIN32)
 # Debug libraries
-set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d debug breakpad_client)
+set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
 set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd Newton_d sfml-audio-d sfml-network-d sfml-system-d ${CEGUI_ENGINE_DEBUG})
-endif(WIN32)
+
+# Breakpad libraries
+if(${USE_BREAKPAD})
+  set(LINK_LIBSTOENGINE_RELEASE ${LINK_LIBSTOENGINE_RELEASE} breakpad_client)
+  set(LINK_LIBSTOENGINE_DEBUG ${LINK_LIBSTOENGINE_DEBUG} breakpad_client)
+endif()
 
 # Prepend the right keywords
 
@@ -177,36 +212,13 @@ endforeach()
 
 set(LINK_LIBS_ENGINE_RELEASE ${TmpProcessQueueList})
 
-if(WIN32)
-	set(TmpProcessQueueList)
+set(TmpProcessQueueList)
 
-	foreach(curlibname ${LINK_LIBS_ENGINE_DEBUG})
-    	set(TmpProcessQueueList ${TmpProcessQueueList} debug ${curlibname})
-	endforeach()
+foreach(curlibname ${LINK_LIBS_ENGINE_DEBUG})
+  set(TmpProcessQueueList ${TmpProcessQueueList} debug ${curlibname})
+endforeach()
 
-	set(LINK_LIBS_ENGINE_DEBUG ${TmpProcessQueueList})
-endif(WIN32)
-
-
-######### Options
-    
-option(INSTALL_ONLY_RELEASE "For creating release folders" ON)
-# \todo this option to copy right libs
-option(INSTALL_CREATE_SDK   "For creating SDKs for developers" OFF)
-
-# VisualLeakDetector setting
-if(WIN32)
-    option(USE_VLD "For including vld in the projects" ON)
-endif()
-
-# For making libs with right names
-set(CMAKE_DEBUG_POSTFIX "D")
-
-if(USE_VLD)
-    set(L_VLD_STATE 1)
-else(USE_VLD)
-    set(L_VLD_STATE 0)
-endif(USE_VLD)
+set(LINK_LIBS_ENGINE_DEBUG ${TmpProcessQueueList})
 
 # create the bin directory
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
@@ -231,8 +243,11 @@ option(CEGUI_COPY_DEBUGFILES "Whether to copy the .pdb files and others that are
 configure_file("${PROJECT_SOURCE_DIR}/CopyCEGUI.bat.in" "${PROJECT_SOURCE_DIR}/CopyCEGUI.bat" @ONLY)
 
 set(BREAKPAD_DIR "" CACHE FILEPATH "Path to the base directory of google breakpad installation")
-if(NOT EXISTS "${BREAKPAD_DIR}/src")
-  message(SEND_ERROR "Breakpad directory is missing")
+
+if(${USE_BREAKPAD})
+  if(NOT EXISTS "${BREAKPAD_DIR}/src")
+    message(SEND_ERROR "Breakpad directory is missing")
+  endif()
 endif()
 
 message(STATUS "Copying files...")
@@ -248,8 +263,10 @@ file(COPY "${PROJECT_SOURCE_DIR}/MoveSymbolFile.sh" "${PROJECT_SOURCE_DIR}/Creat
 # Copy the tools
 if(UNIX)
 
-  file(COPY "${BREAKPAD_DIR}/src/tools/linux/dump_syms/dump_syms" "${BREAKPAD_DIR}/src/processor/minidump_stackwalk" 
-    DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
+  if(EXISTS "${BREAKPAD_DIR}/src/tools/linux/dump_syms/dump_syms" AND EXISTS "${BREAKPAD_DIR}/src/processor/minidump_stackwalk")
+    file(COPY "${BREAKPAD_DIR}/src/tools/linux/dump_syms/dump_syms" "${BREAKPAD_DIR}/src/processor/minidump_stackwalk" 
+      DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
+  endif()
 
 elseif(WIN32)
 
@@ -427,7 +444,9 @@ include_directories("${PROJECT_SOURCE_DIR}/SFML/include")
 include_directories(${OIS_INCLUDE_DIRS}	${OGRE_INCLUDE_DIRS})
 include_directories("${PROJECT_SOURCE_DIR}/CEGUI/include")
 
-include_directories("${BREAKPAD_DIR}/src")
+if(${USE_BREAKPAD})
+  include_directories("${BREAKPAD_DIR}/src")
+endif()
 
 # libraries paths
 link_directories("${PROJECT_SOURCE_DIR}/AngelScript/lib")
@@ -438,7 +457,9 @@ link_directories("${PROJECT_SOURCE_DIR}/Newton/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/Newton/bin/")
 
 if(UNIX)
-  link_directories("${BREAKPAD_DIR}/src/client/linux")
+  if(${USE_BREAKPAD})
+    link_directories("${BREAKPAD_DIR}/src/client/linux")
+  endif()
 elseif(WIN32)
 
 else()
@@ -537,7 +558,11 @@ endif(NOT Boost_USE_STATIC_LIBS AND WIN32)
 
 
 ##### All symbol creating target
-add_custom_target(All_Symbols ALL DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
+if(${USE_BREAKPAD})
+  add_custom_target(All_Symbols ALL DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
+else()
+    add_custom_target(All_Symbols DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
+endif()
 
 
 # testing support

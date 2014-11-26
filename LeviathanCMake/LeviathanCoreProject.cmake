@@ -34,7 +34,8 @@ if(WIN32 AND NOT MINGW)
 
     message(STATUS "Creating Windows launchers for project: " ${CurrentProjectName})
     # set working directory when we want to run this
-    create_target_launcher(${CurrentProjectName} RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/" WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin/")
+    create_target_launcher(${CurrentProjectName} RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/"
+      WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin/")
 
     # post build copy
     ADD_CUSTOM_COMMAND(TARGET ${CurrentProjectName} POST_BUILD COMMAND copy ARGS 
@@ -43,6 +44,7 @@ if(WIN32 AND NOT MINGW)
 endif(WIN32 AND NOT MINGW)
 
 # Creating symbols after building
+# When not USE_BREAKPAD this won't be ran automatically
 add_custom_target(${CurrentProjectName}_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/${CurrentProjectName}"
   DEPENDS ${CurrentProjectName} WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
 

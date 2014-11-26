@@ -3,7 +3,17 @@
 #include "@ProgramNetHeader@"
 #include "resource.h"
 
+// For getting starting folder
+#include "Common/Misc.h"
+
+#if @BREAKPAD_STATE@ == 1
+#define USE_BREAKPAD 1
+#else
+#undef USE_BREAKPAD
+#endif
+
 // Breakpad is used to detect and report crashes
+#ifdef USE_BREAKPAD
 #ifdef __linux
 #include "client/linux/handler/exception_handler.h"
 #elif defined(_WIN32)
@@ -11,17 +21,21 @@
 #else
 #error no breakpad on platform
 #endif
+#endif //USE_BREAKPAD
 
 using namespace @ProgramNamespace@;
 
 
+static std::string InitialFolder = "";
+
+#ifdef USE_BREAKPAD
 // Don't look at the mess ahead, just set the variables in your cmake file //
 bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded){
     
     printf("Dump path: %s\n", descriptor.path());
     return succeeded;
 }
-
+#endif //USE_BREAKPAD
 
 #ifdef LEVIATHAN_USES_VLD
 // visual leak detector //
@@ -63,6 +77,10 @@ int main(int argcount, char* args[]){
     VLDEnable();
 #endif // LEVIATHAN_USES_VLD
 
+    // Store starting folder //
+    InitialFolder = Leviathan::Misc::GetProcessDirectory();
+
+#ifdef USE_BREAKPAD
     // Crash handler //
     google_breakpad::MinidumpDescriptor descriptor(
 #ifdef _WIN32
@@ -73,8 +91,9 @@ int main(int argcount, char* args[]){
     );
 
     google_breakpad::ExceptionHandler ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);
-        
-        
+
+#endif //USE_BREAKPAD
+    
     // create program object //
     @PROGRAMCLASSNAME@ app;
     @PROGRAMNETWORKINGNAME@ network;

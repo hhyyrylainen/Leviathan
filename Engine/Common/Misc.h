@@ -23,6 +23,10 @@ namespace Leviathan{
 		//! it is used because Define.h can't be included in this file
 		DLLEXPORT static boost::chrono::high_resolution_clock::time_point GetThreadSafeSteadyTimePoint();
 
+        //! \brief Returns the directory from which the current process is ran
+        //!
+        //! As UTF-8 if possible
+        DLLEXPORT static std::string GetProcessDirectory();
 
 		///reduce code
 		template<typename T>

@@ -392,6 +392,8 @@ void Pong::Arena::ServeBall(){
 	Ball = TargetWorld->GetWorldObject(Leviathan::Engine::Get()->GetObjectLoader()->LoadPropToWorld(TargetWorld.get(),
             L"PongBall", &prop));
 
+    assert(Ball && prop && "failed to load the Ball model");
+
 	// set to center of board //
 	prop->SetPos(Float3(0.f, 0.5f, 0.f));
 

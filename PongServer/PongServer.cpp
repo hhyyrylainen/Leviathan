@@ -13,6 +13,7 @@
 #include "Networking/NetworkServerInterface.h"
 #include "Networking/NetworkHandler.h"
 #include "Threading/ThreadingManager.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 using namespace Pong;
 // ------------------------------------ //
 // Put this here, since nowhere else to put it //
@@ -156,8 +157,9 @@ void Pong::PongServer::CheckForGameEnd(){
 			}
 
 			// Send the game end event which should trigger proper menus //
-			Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"MatchEnded"), new NamedVars(shared_ptr<NamedVariableList>(new
-				NamedVariableList(L"WinningTeam", new Leviathan::VariableBlock((int)i))))));
+			Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"MatchEnded"),
+                    new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"WinningTeam",
+                                new Leviathan::VariableBlock((int)i))))));
 
 			// And finally destroy the ball //
 			GameArena->LetGoOfBall();
@@ -186,7 +188,8 @@ void Pong::PongServer::DoSpecialPostLoad(){
 	// Create all the server variables //
 	Leviathan::SyncedVariables* tmpvars = Leviathan::SyncedVariables::Get();
 
-	tmpvars->AddNewVariable(shared_ptr<SyncedValue>(new SyncedValue(new NamedVariableList(L"TheAnswer", new VariableBlock(42)))));
+	tmpvars->AddNewVariable(shared_ptr<SyncedValue>(new SyncedValue(new NamedVariableList(L"TheAnswer",
+                    new VariableBlock(42)))));
 }
 
 void Pong::PongServer::CustomizedGameEnd(){

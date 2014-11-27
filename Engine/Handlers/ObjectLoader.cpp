@@ -168,7 +168,11 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const w
 	wstring path = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL, name, L"levmd", false);
 
 	// initialize the model //
-	prop->Init(path);
+	if(!prop->Init(path)){
+
+        createdinstance = NULL;
+        return -1;
+    }
 
 	int id = prop->GetID();
 

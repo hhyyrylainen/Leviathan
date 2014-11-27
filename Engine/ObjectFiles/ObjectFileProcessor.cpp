@@ -50,7 +50,9 @@ void Leviathan::ObjectFileProcessor::Initialize(){
 
 	if(iter == RegisteredValues.end()){
 
-		Logger::Get()->Error(L"ObjectFileProcessor: RegisteredValues are messed up, DATAINDEX_TICKTIME is not defined, check the macros!");
+		Logger::Get()->Error("ObjectFileProcessor: RegisteredValues are messed up, "
+            "DATAINDEX_TICKTIME is not defined, check the macros!");
+        
 		return;
 	}
 #endif // _DEBUG
@@ -99,8 +101,6 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 	// Create the target object //
 	unique_ptr<ObjectFile> ofile(new ObjectFile());
 
-
-
 	bool succeeded = true;
 
 	// Create an UTF8 supporting iterator //
@@ -108,23 +108,23 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 
 	while(!itr.IsOutOfBounds()){
 		// First get the first thing defining what the following object/thing will be //
-		auto thingtype = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS, 
-			SPECIAL_ITERATOR_FILEHANDLING);
-
+		auto thingtype = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_LOWCODES |
+            UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS, SPECIAL_ITERATOR_FILEHANDLING);
 
 		if(!thingtype)
 			continue;
 
 		// Store the starting line for error reporting purposes //
 		size_t thisstart = itr.GetCurrentLine();
-
+        
 		if(*thingtype == "template"){
 			// Either a template definition or a template instantiation //
 			
 			if(!TryToHandleTemplate(file, itr, *ofile, *thingtype)){
 
-				Logger::Get()->Error(L"ObjectFileProcessor: processing a template definitions/instantiation has failed, file: "
-					+file+L"("+Convert::ToWstring(thisstart)+L")");
+				Logger::Get()->Error(L"ObjectFileProcessor: processing a template definitions/instantiation has failed,"
+                    "file: "+file+L"("+Convert::ToWstring(thisstart)+L")");
+                
 				succeeded = false;
 				break;
 			}
@@ -146,8 +146,10 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 
 			if(!ofile->AddObject(tmpobj)){
 
-				Logger::Get()->Error(L"ObjectFileProcessor: object has a conflicting name, name: \""+tmpobj->GetName()+L"\", file: "+file+L"("
-					+Convert::ToWstring(thisstart)+L"), current line: "+Convert::ToWstring(itr.GetCurrentLine()));
+				Logger::Get()->Error(L"ObjectFileProcessor: object has a conflicting name, name: \""+tmpobj->GetName()+
+                    L"\", file: "+file+L"("+Convert::ToWstring(thisstart)+L"), current line: "+
+                    Convert::ToWstring(itr.GetCurrentLine()));
+                
 				succeeded = false;
 				break;
 			}
@@ -157,7 +159,6 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 
 		} else {
 			// It should be a named variable //
-
 
 			auto ptr = TryToLoadNamedVariables(file, itr, *thingtype);
 			if(!ptr){
@@ -180,8 +181,8 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 		}
 
 		// It is something that cannot be handled //
-		Logger::Get()->Error(L"ObjectFile has an invalid block ("+Convert::StringToWstring(*thingtype)+L"), file: "+file+L"("
-			+Convert::ToWstring(thisstart)+L")");
+		Logger::Get()->Error(L"ObjectFile has an invalid block ("+Convert::StringToWstring(*thingtype)+L"), file: "+file
+            +L"("+Convert::ToWstring(thisstart)+L")");
 
 		// The file is clearly malformed //
 		succeeded = false;
@@ -200,18 +201,23 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 	// Generate the template instantiations and it's done //
 	if(!ofile->GenerateTemplatedObjects()){
 
-		Logger::Get()->Error(L"ObjectFileProcessor: file has invalid templates (either bad names, or instances without definitions), file: "+file);
+		Logger::Get()->Error(L"ObjectFileProcessor: file has invalid templates (either bad names, "
+            L"or instances without definitions), file: "+file);
+        
 		return NULL;
 	}
 
 	return ofile;
 }
 // ------------------------------------ //
-shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVariables(const wstring &file, StringIterator &itr, 
-	const string &preceeding)
+shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVariables(const wstring &file,
+    StringIterator &itr, const string &preceeding)
 {
 	// Try to load a named variable of format: "Variable = myvalue;" //
 
+    // Store the beginning line //
+    size_t startline = itr.GetCurrentLine();
+    
 	// Next thing after the preceeding is rest of the name until the '=' character //
 
 	// This is often empty //
@@ -219,7 +225,8 @@ shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVari
 
 	if(!restofname && preceeding.size() == 0){
 		// No name //
-		Logger::Get()->Error(L"ObjectFile named variable is malformed, unknown block?, file: "+file+L"("+
+		Logger::Get()->Error(L"ObjectFile named variable is malformed, unknown block?, file: "+file+L":"+
+            Convert::ToWstring(startline)+L"-"
 			Convert::ToWstring(itr.GetCurrentLine())+L")");
 		return NULL;
 	}
@@ -230,7 +237,8 @@ shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVari
 	if(lastchar != '=' && lastchar != ':'){
 
 		// Invalid format //
-		Logger::Get()->Error(L"ObjectFile block isn't a named variable, unknown block?, file: "+file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
+		Logger::Get()->Error(L"ObjectFile block isn't a named variable, unknown block?, file: "+file+L"("+
+            Convert::ToWstring(itr.GetCurrentLine())+L")");
 		return NULL;
 	}
 

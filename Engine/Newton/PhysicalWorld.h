@@ -42,6 +42,13 @@ namespace Leviathan{
 
 		DLLEXPORT NewtonWorld* GetNewtonWorld();
 
+        //! \brief Adds or subtracts time from the clock
+        //!
+        //! For example passing in 100 will run the physical simulation more times next update
+        //! to account for milliseconds amount of passed time
+        DLLEXPORT void AdjustClock(int milliseconds);
+        
+
 	protected:
 
 		__int64 LastSimulatedTime;

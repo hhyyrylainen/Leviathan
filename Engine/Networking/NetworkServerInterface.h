@@ -133,6 +133,7 @@ namespace Leviathan{
 		DLLEXPORT NetworkServerInterface(int maxplayers, const wstring &servername,
             NETWORKRESPONSE_SERVERJOINRESTRICT restricttype = NETWORKRESPONSE_SERVERJOINRESTRICT_NONE,
             int additionalflags = 0);
+        
 		//! Default destructor
 		DLLEXPORT virtual ~NetworkServerInterface();
 
@@ -145,7 +146,6 @@ namespace Leviathan{
 		//! \brief Gets corresponding player from a connection
 		//! \return Returns a pointer from PlayerList
 		DLLEXPORT ConnectedPlayer* GetPlayerForConnection(ConnectionInfo* connection);
-
 
 		//! \brief Sends a response to a NETWORKREQUESTTYPE_SERVERSTATUS
 		DLLEXPORT void RespondToServerStatusRequest(shared_ptr<NetworkRequest> request,

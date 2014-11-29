@@ -246,6 +246,39 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
 
             return true;
         }
+        case NETWORKRESPONSETYPE_WORLD_FROZEN:
+        {
+
+            // Queue world freeze/unfreeze //
+            ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](shared_ptr<NetworkResponse> message)
+                        -> void
+                {
+
+                    auto packetdata = message->GetResponseDataForWorldFrozen();
+
+                    if(!packetdata){
+                        // Invalid data //
+                        return;
+                    }
+
+                    // Get a matching world //
+                    auto world = LeviathanApplication::Get()->GetGameWorld(packetdata->WorldID);
+
+                    if(!world){
+
+                        Logger::Get()->Error("NetworkClientInterface: handle response: couldn't find a matching "
+                            "world for world frozen message, WorldID: "+Convert::ToString(packetdata->WorldID));
+                        return;
+                    }
+
+                    world->HandleWorldFrozenPacket(packetdata);
+
+
+                }, message)));
+
+            
+            return true;
+        }
         default:
             return false;
 	}

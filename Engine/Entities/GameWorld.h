@@ -213,6 +213,10 @@ namespace Leviathan{
         //! \note This should only be allowed to be called on a client that has connected to a server
         DLLEXPORT void HandleClockSyncPacket(RequestWorldClockSyncData* data);
 
+        //! \brief Handles a world freeze/unfreeze packet
+        //! \note Should only be called on a client
+        DLLEXPORT void HandleWorldFrozenPacket(NetworkResponseDataForWorldFrozen* data);
+
         //! \brief Sends a Constraint to a connection
         //! \param constraint The constraint to send, the parent object needs to be locked during this call
         //! to avoid the constraint becoming invalid during this call
@@ -263,7 +267,8 @@ namespace Leviathan{
 		bool ClearAllObjects;
 
 		//! Holds the players who are receiving this worlds updates and their corresponding location entities (if any)
-		std::vector<shared_ptr<ConnectedPlayer>> ReceivingPlayers;
+        //! \todo Change this to an object that holds more than the player pointer
+		std::vector<ConnectedPlayer*> ReceivingPlayers;
 
         //! The constraints that are waiting for their entities to be created
         std::vector<WaitingConstraint> WaitingConstraints;

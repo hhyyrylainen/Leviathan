@@ -226,7 +226,7 @@ shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVari
 	if(!restofname && preceeding.size() == 0){
 		// No name //
 		Logger::Get()->Error(L"ObjectFile named variable is malformed, unknown block?, file: "+file+L":"+
-            Convert::ToWstring(startline)+L"-"
+            Convert::ToWstring(startline)+L"-"+
 			Convert::ToWstring(itr.GetCurrentLine())+L")");
 		return NULL;
 	}
@@ -241,9 +241,6 @@ shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVari
             Convert::ToWstring(itr.GetCurrentLine())+L")");
 		return NULL;
 	}
-
-
-	size_t startline = itr.GetCurrentLine();
 
 	// We need to skip whitespace //
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);

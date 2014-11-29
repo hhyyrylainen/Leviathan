@@ -105,6 +105,11 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
             ResponseData = new NetworkResponseDataForEntityConstraint(receivedresponse);
         }
         break;
+        case NETWORKRESPONSETYPE_WORLD_FROZEN:
+        {
+            ResponseData = new NetworkResponseDataForWorldFrozen(receivedresponse);
+        }
+        break;
         default:
 		{
 			throw ExceptionInvalidArgument(L"packet has invalid type", 0, __WFUNCTION__, L"receivedresponse",
@@ -225,6 +230,15 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityConstraintResponse(Netw
 {
     ResponseType = NETWORKRESPONSETYPE_ENTITY_CONSTRAINT;
 	// Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateWorldFrozenResponse(NetworkResponseDataForWorldFrozen* newddata){
+
+    ResponseType = NETWORKRESPONSETYPE_WORLD_FROZEN;
+    // Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 
 	ResponseData = newddata;
@@ -399,6 +413,13 @@ DLLEXPORT NetworkResponseDataForEntityConstraint* Leviathan::NetworkResponse::Ge
 {
     if(ResponseType == NETWORKRESPONSETYPE_ENTITY_CONSTRAINT && ResponseData)
         return static_cast<NetworkResponseDataForEntityConstraint*>(ResponseData);
+    return NULL;
+}
+
+DLLEXPORT NetworkResponseDataForWorldFrozen* Leviathan::NetworkResponse::GetResponseDataForWorldFrozen() const{
+    
+    if(ResponseType == NETWORKRESPONSETYPE_WORLD_FROZEN && ResponseData)
+        return static_cast<NetworkResponseDataForWorldFrozen*>(ResponseData);
     return NULL;
 }
 // ------------------------------------ //
@@ -874,6 +895,35 @@ DLLEXPORT void Leviathan::NetworkResponseDataForEntityConstraint::AddDataToPacke
         packet << string("");
     }
 }
+
+// ------------------ NetworkResponseDataForWorldFrozen ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForWorldFrozen::NetworkResponseDataForWorldFrozen(int worldid, bool frozen,
+    int ontick) :
+    WorldID(worldid), Frozen(frozen), TickNumber(ontick)
+{
+
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForWorldFrozen::NetworkResponseDataForWorldFrozen(sf::Packet &frompacket){
+
+    frompacket >> WorldID >> Frozen >> TickNumber;
+
+    if(!frompacket)
+        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForWorldFrozen::AddDataToPacket(sf::Packet &packet){
+
+    packet << WorldID << Frozen << TickNumber;
+}
+
+
+
+
+
+
+
+
 
 
 

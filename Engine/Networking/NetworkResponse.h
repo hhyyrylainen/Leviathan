@@ -47,6 +47,9 @@ namespace Leviathan{
         //! Instructs a world to create or destroy a constraint
         NETWORKRESPONSETYPE_ENTITY_CONSTRAINT,
 
+        //! Sent when the server changes physics frozen state
+        NETWORKRESPONSETYPE_WORLD_FROZEN,
+
 		//! A server heartbeat packet
 		NETWORKRESPONSETYPE_SERVERHEARTBEAT,
 
@@ -347,8 +350,31 @@ namespace Leviathan{
         shared_ptr<sf::Packet> ConstraintData;
     };
 
+    //! \brief Holds world physics frozen state change information
+    class NetworkResponseDataForWorldFrozen : public BaseNetworkResponseData{
+    public:
+
+        DLLEXPORT NetworkResponseDataForWorldFrozen(int worldid, bool frozen, int ontick);
+
+        DLLEXPORT NetworkResponseDataForWorldFrozen(sf::Packet &frompacket);
+
+        DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) override;
+
+        //! World for which this packet applies
+        int WorldID;
+
+        //! Whether to freeze or unfreeze the world
+        bool Frozen;
+
+        //! The tick number at which this applies
+        //! \todo Make the GameWorld
+        int TickNumber;
+        
+    };
+
 
     //! \brief Represents a response type packet sent through a ConnectionInfo
+    //! \todo Refactor all packets to check if the packet is valid after loading all data
 	class NetworkResponse : public Object{
 	public:
 		DLLEXPORT NetworkResponse(int inresponseto, PACKET_TIMEOUT_STYLE timeout, int timeoutvalue);
@@ -369,6 +395,7 @@ namespace Leviathan{
 		DLLEXPORT void GenerateUpdateNetworkedInputResponse(NetworkResponseDataForUpdateNetworkedInput* newddata);
         DLLEXPORT void GenerateInitialEntityResponse(NetworkResponseDataForInitialEntity* newddata);
         DLLEXPORT void GenerateEntityConstraintResponse(NetworkResponseDataForEntityConstraint* newddata);
+        DLLEXPORT void GenerateWorldFrozenResponse(NetworkResponseDataForWorldFrozen* newddata);
 
 		DLLEXPORT void GenerateCustomResponse(GameSpecificPacketData* newdpacketdata);
 		DLLEXPORT void GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata);
@@ -404,6 +431,7 @@ namespace Leviathan{
 		DLLEXPORT NetworkResponseDataForUpdateNetworkedInput* GetResponseDataForUpdateNetworkedInputResponse() const;
         DLLEXPORT NetworkResponseDataForInitialEntity* GetResponseDataForInitialEntity() const;
         DLLEXPORT NetworkResponseDataForEntityConstraint* GetResponseDataForEntityConstraint() const;
+        DLLEXPORT NetworkResponseDataForWorldFrozen* GetResponseDataForWorldFrozen() const;
 
 		DLLEXPORT int GetResponseID() const;
 

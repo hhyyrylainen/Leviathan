@@ -239,7 +239,7 @@ DLLEXPORT bool Leviathan::GameWorld::Init(GraphicalInputEntity* renderto, Ogre::
 
 DLLEXPORT void Leviathan::GameWorld::Release(){
 	GUARD_LOCK_THIS_OBJECT();
-
+    
     // Tell initially syncing players that we are no longer valid //
     auto end = InitiallySyncingPlayers.end();
     for(auto iter = InitiallySyncingPlayers.begin(); iter != end; ++iter){
@@ -248,6 +248,8 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     }
 
     InitiallySyncingPlayers.clear();
+
+    ReceivingPlayers.clear();
     
 	// release objects //
 	for(size_t i = 0; i < Objects.size(); i++){
@@ -629,6 +631,25 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 		if(_PhysicalWorld)
 			_PhysicalWorld->ClearTimers();
 	}
+
+    // Send it to receiving players (if we are a server) //
+    if(ReceivingPlayers.empty())
+        return;
+
+    // Should be safe to create the packet now and send it to all the connections //
+    auto packet = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
+
+    packet->GenerateWorldFrozenResponse(new NetworkResponseDataForWorldFrozen(ID, WorldFrozen, TickNumber));
+
+    auto end = ReceivingPlayers.end();
+    for(auto iter = ReceivingPlayers.begin(); iter != end; ++iter){
+
+        auto connection = NetworkHandler::Get()->GetSafePointerToConnection((*iter)->GetConnection());
+        if(!connection)
+            continue;
+
+        connection->SendPacketToConnection(packet, 10);
+    }
 }
 
 DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float3 &from, const Float3 &to,
@@ -689,6 +710,14 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
 	auto plyptr = static_cast<ConnectedPlayer*>(parentadded);
 
     Logger::Get()->Info("GameWorld: player(\""+plyptr->GetNickname()+"\") is now receiving world");
+
+    // Add them to the list of receiving players //
+    {
+        GUARD_LOCK_THIS_OBJECT();
+
+        ReceivingPlayers.push_back(plyptr);
+    }
+    
     
     // We need a safe pointer to the connection //
     ConnectionInfo* unsafeconnection = plyptr->GetConnection();
@@ -861,6 +890,16 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableDisconnected(BaseNotifiableAll
 	// Destroy the update object containing this player and cancel all current packets //
     GUARD_LOCK_THIS_OBJECT();
 
+    for(size_t i = 0; i < ReceivingPlayers.size(); i++){
+
+        if(ReceivingPlayers[i] == plyptr){
+
+            ReceivingPlayers.erase(ReceivingPlayers.begin()+i);
+            break;
+        }
+    }
+
+
     auto end = InitiallySyncingPlayers.end();
     for(auto iter = InitiallySyncingPlayers.begin(); iter != end; ++iter){
 
@@ -1018,7 +1057,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleConstraintPacket(NetworkResponseDataF
     GUARD_LOCK_THIS_OBJECT();
     WaitingConstraints.push_back(WaitingConstraint(data->EntityID1, data->EntityID2, packet));
 }
-
+// ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSyncData* data){
 
     GUARD_LOCK_THIS_OBJECT();
@@ -1046,6 +1085,41 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
     if(data->Ticks)
         Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): world clock adjusted, tick is now: "+
             Convert::ToString(TickNumber));
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(NetworkResponseDataForWorldFrozen* data){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): frozen state updated, now: "+
+        Convert::ToString<int>(data->Frozen)+", tick: "+Convert::ToString(data->TickNumber)+" (our tick:"+
+        Convert::ToString(TickNumber)+")");
+    
+    // Set the state //
+    SetWorldPhysicsFrozenState(data->Frozen);
+
+    // Simulate ticks if required //
+    if(!data->Frozen){
+
+        // Check how many ticks we are behind and simulate that number of physical updates //
+        int tickstosimulate = TickNumber-data->TickNumber;
+
+        if(tickstosimulate > 0){
+
+            int milliseconds = TICKSPEED*tickstosimulate;
+
+            Logger::Get()->Info("GameWorld: unfreezing and simulating "+Convert::ToString(milliseconds)+
+                " milliseconds more physical updates");
+
+            _PhysicalWorld->AdjustClock(milliseconds);
+        }
+        
+        
+    } else {
+
+        // Snap objects back //
+        Logger::Get()->Info("TODO: world freeze snap things back a bit");
+    }
 }
 // ------------------------------------ //
 bool Leviathan::GameWorld::_TryApplyConstraint(NetworkResponseDataForEntityConstraint* data){

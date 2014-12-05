@@ -1,8 +1,15 @@
 // ------------------ AI Variables ------------------ //
 
 
-enum REALDIRECTION {REALDIRECTION_RIGHT, REALDIRECTION_LEFT};
-enum AISTATE {AISTATE_IDLING, AISTATE_BLOCKINGBALL, AISTATE_TRYINGTOINTERCEPT};
+enum REALDIRECTION {
+    REALDIRECTION_RIGHT,
+    REALDIRECTION_LEFT
+};
+enum AISTATE {
+    AISTATE_IDLING,
+    AISTATE_BLOCKINGBALL,
+    AISTATE_TRYINGTOINTERCEPT
+};
 
 CONTROLKEYACTION GetRealActionForSlot(PlayerSlot@ slot, REALDIRECTION absolutedir){
     // Translate based on verticalness of the slot //
@@ -272,7 +279,7 @@ AIDataCache@ GetAIForSlot(PlayerSlot@ slot){
     }
     // Not found, add new //
     ExistingAIs.insertLast(AIDataCache(slot));
-    return ExistingAIs[(ExistingAIs.size()-1)];
+    return ExistingAIs[(ExistingAIs.length()-1)];
 }
 
 void ClearCache(){

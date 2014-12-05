@@ -23,21 +23,15 @@ namespace Pong{
         
         LINK_TYPE_PADDLE = 2,
         LINK_TYPE_TRACK,
+        LINK_TYPE_GOAL,
         LINK_TYPE_LAST
     };
 
-    enum THINGS{
-
-        FIRST,
-        SECONDS,
-        THIRDS
-    };
-    
     class EmotionalConnection : public Leviathan::Entity::BaseConstraint{
     public:
 
-        EmotionalConnection(Leviathan::GameWorld* world, Leviathan::Entity::BaseConstraintable* parent,
-            Leviathan::Entity::BaseConstraintable* child);
+        EmotionalConnection(Leviathan::GameWorld* world, Leviathan::BaseConstraintable* parent,
+            Leviathan::BaseConstraintable* child);
         ~EmotionalConnection();
 
         EmotionalConnection* SetParameters(int plyid, LINK_TYPE whattolink);

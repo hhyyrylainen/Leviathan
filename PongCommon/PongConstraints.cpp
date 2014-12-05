@@ -112,6 +112,10 @@ EmotionalConnection::~EmotionalConnection(){
                         break;
                     case LINK_TYPE_TRACK:
                         curply->SetTrackObject(nullptr, nullptr);
+                        break;
+                    case LINK_TYPE_GOAL:
+                        curply->SetGoalAreaObject(nullptr);
+                        break;
                 }
                 return;
             }
@@ -151,13 +155,23 @@ bool EmotionalConnection::_CreateActualJoint(){
             if(curply->GetPlayerNumber() == PlayerNumber){
                 switch(TypeToLink){
                     case LINK_TYPE_PADDLE:
-                        curply->SetPaddleObject(OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
+                        curply->SetPaddleObject(
+                            OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
                                     ParentObject)));
                         break;
                     case LINK_TYPE_TRACK:
-                        curply->SetTrackObject(OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
-                                    ParentObject)), static_cast<TrackEntityController*>(ParentObject));
+                        curply->SetTrackObject(
+                            OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
+                                    ParentObject)),
+                            static_cast<TrackEntityController*>(ParentObject));
                         break;
+                    case LINK_TYPE_GOAL:
+                        curply->SetGoalAreaObject(
+                            OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
+                                    ParentObject)));
+                        break;
+                    default:
+                        return false;
                 }
                 
                 return true;

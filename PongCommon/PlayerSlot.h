@@ -113,6 +113,9 @@ namespace Pong{
 			GoalAreaObject = obj;
 		}
 		void SetTrackObject(shared_ptr<Leviathan::BaseObject> obj, Leviathan::Entity::TrackEntityController* direct){
+
+            if(obj && direct)
+                Logger::Get()->Info("PlayerSlot now has a track object");
 			TrackObject = obj;
 			TrackDirectptr = direct;
 		}

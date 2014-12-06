@@ -29,7 +29,7 @@ set_property(DIRECTORY PROPERTY COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY")
 
 ######### Options
     
-option(INSTALL_ONLY_RELEASE "For creating release folders" ON)
+option(INSTALL_ONLY_RELEASE "For creating release folders/samples" ON)
 # \todo this option to copy right libs
 option(INSTALL_CREATE_SDK   "For creating SDKs for developers" OFF)
 
@@ -58,7 +58,6 @@ else(USE_VLD)
 endif(USE_VLD)
 
 
-
 # Linking and platform specific
 if(WIN32)
     # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
@@ -79,11 +78,6 @@ else(WIN32)
 
     include_directories(${X11_INCLUDE_DIR})
 endif(WIN32)
-
-# The CEGUI build might have some weird suffix
-set(CEGUI_SUFFIX "-9999" CACHE STRING "The suffix of cegui builds, for example -0.8 or -9999")
-
-#set(CEGUI_SUFFIX "")
 
 # When no configuration is set, enable RelWithDebInfo
 if(CMAKE_BUILD_TYPE STREQUAL "")
@@ -119,8 +113,6 @@ if(UNIX)
     endif(EXISTS "/usr/local/lib/OGRE/cmake")
 endif(UNIX)
 
-# Ogre folder fine
-
 # Find required libraries
 
 # Ogre is required
@@ -134,6 +126,27 @@ if(NOT OIS_FOUND)
 	message(SEND_ERROR "Failed to find OIS")
 endif(NOT OIS_FOUND)
 
+# Find CEGUI
+find_package(CEGUI 9999 REQUIRED OgreRenderer CoreWindowRendererSet ExpatParser FreeImageImageCodec)
+# TODO: allow other parsers/codecs
+
+if(NOT CEGUI_FOUND)
+  message(SEND_ERROR "Failed to locate CEGUI")
+endif()
+
+set(ALL_CEGUI_LIBRARIES ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
+  ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
+
+include_directories(${CEGUI_INCLUDE_DIR})
+
+# Find sfml
+find_package(SFML 2 COMPONENTS audio network system)
+
+if(NOT SFML_FOUND)
+    message(SEND_ERROR "Failed to find SFML 2")
+endif()
+
+include_directories(${SFML_INCLUDE_DIR})
 
 # set some additional libraries
 set(ADDITIONAL_OGRE ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES}
@@ -152,7 +165,8 @@ set(LEVIATHAN_BOOST_COMPONENTS chrono system regex filesystem)
 
 set(REQUIRED_BOOST_COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} ${OGRE_BOOST_COMPONENTS})
 
-find_package(Boost COMPONENTS ${REQUIRED_BOOST_COMPONENTS})
+find_package(Boost COMPONENTS ${REQUIRED_BOOST_COMPONENTS} QUIET)
+
 if(NOT Boost_FOUND)
     message("Boost not found, retrying with different settings")
     # Try again with the other type of libs
@@ -163,36 +177,22 @@ if(NOT Boost_FOUND)
         message(SEND_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})        
     endif(NOT Boost_FOUND)
 endif(NOT Boost_FOUND)
+
 # Boost is found or the configuration has already failed
 
 # Set up referencing of Boost
 include_directories(${Boost_INCLUDE_DIR})
+
 # All libs are linked by cmake
 add_definitions(-DBOOST_ALL_NO_LIB)
 
-# CEGUI libraries will have some suffixes
-set(CEGUI_ENGINE_RELEASE "CEGUIBase" "CEGUICommonDialogs" "CEGUIOgreRenderer")
-set(TmpProcessQueueList)
-set(CEGUI_ENGINE_DEBUG)
-
-foreach(ceglib ${CEGUI_ENGINE_RELEASE})
-    set(TmpProcessQueueList ${TmpProcessQueueList} ${ceglib}${CEGUI_SUFFIX})
-    set(CEGUI_ENGINE_DEBUG ${CEGUI_ENGINE_DEBUG} ${ceglib}${CEGUI_SUFFIX}_d)
-endforeach()
-
-set(CEGUI_ENGINE_RELEASE ${TmpProcessQueueList})
-# Add the differently named ones
-set(CEGUI_ENGINE_RELEASE ${CEGUI_ENGINE_RELEASE} "CEGUICoreWindowRendererSet" "CEGUIExpatParser")
-set(CEGUI_ENGINE_DEBUG ${CEGUI_ENGINE_DEBUG} "CEGUICoreWindowRendererSet_d" "CEGUIExpatParser_d")
-
-
 # Library linking
 set(LINK_LIBS_TOENGINE_RELEASE optimized Newton)
-set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap Newton sfml-audio sfml-network sfml-system ${CEGUI_ENGINE_RELEASE})
+set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap Newton)
 
 # Debug libraries
 set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
-set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd Newton_d sfml-audio-d sfml-network-d sfml-system-d ${CEGUI_ENGINE_DEBUG})
+set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd Newton_d)
 
 # Breakpad libraries
 if(${USE_BREAKPAD})
@@ -236,11 +236,6 @@ if(DOXYGEN_FOUND)
     COMMENT "Generating API documentation with Doxygen" VERBATIM
     )
 endif(DOXYGEN_FOUND)
-
-set(CEGUI_INSTALL_DIR "" CACHE FILEPATH "Path to the root directory of CEGUI install folder")
-set(CEGUI_BUILD_BINARY_DIR "" CACHE FILEPATH "Path to the bin directory that has .pdb debug files")
-option(CEGUI_COPY_DEBUGFILES "Whether to copy the .pdb files and others that are required for proper debugging" ON) 
-configure_file("${PROJECT_SOURCE_DIR}/CopyCEGUI.bat.in" "${PROJECT_SOURCE_DIR}/CopyCEGUI.bat" @ONLY)
 
 set(BREAKPAD_DIR "" CACHE FILEPATH "Path to the base directory of google breakpad installation")
 
@@ -354,20 +349,6 @@ if(WIN32)
     file(GLOB LeapMoveFilesRelease "Leap/lib/x86/Leap.dll")
     file(GLOB LeapMoveFilesDebug "Leap/lib/x86/Leapd.dll")
 
-    # CEGUI dlls
-    file(GLOB CEGUIMoveFilesDebug "CEGUI/bin/*_d.dll")
-    file(GLOB CEGUIMoveFilesRelease "CEGUI/bin/*.dll")
-    
-    # Remove the debug ones from the release ones
-    list(REMOVE_ITEM CEGUIMoveFilesRelease ${CEGUIMoveFilesDebug})
-
-    # smfl
-    file(GLOB SMFLMoveFilesRelease "SFML/bin/openal32.dll" "SFML/bin/libsndfile-1.dll" "SFML/bin/sfml-audio-2.dll" "SFML/bin/sfml-system-2.dll"
-        "SFML/bin/sfml-network-2.dll")
-
-    file(GLOB SMFLMoveFilesDebug "SFML/bin/sfml-audio-d-2.dll" "SFML/bin/sfml-system-d-2.dll"
-        "SFML/bin/sfml-network-d-2.dll")
-    
     # newton
     file(GLOB NewtonMoveFilesRelease "Newton/bin/Release/*")
 
@@ -384,33 +365,40 @@ else(WIN32)
     # ogre sos (this should be changed for public release to only copy required sos)
     file(GLOB OgreMoveFilesRelease "${OGRE_BASEDIR}/*.so*" "${OGRE_BASEDIR}/../*Ogre*.so*" "${OGRE_BASEDIR}/../libOIS*.so")
 
-    # CEGUI sos
-    file(GLOB CEGUIMoveFilesRelease "CEGUI/lib/*.so*")
-
     # newton
     file(GLOB NewtonMoveFilesRelease "Newton/lib/libNewton.so")
 
-    # smfl
-    file(GLOB SMFLMoveFilesRelease "SFML/lib/*.so*")
-
 endif(WIN32)
+
+
+set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
+  ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
+
+list(REMOVE_DUPLICATES CEGUIMoveFiles)
+list(REMOVE_ITEM CEGUIMoveFiles debug)
+list(REMOVE_ITEM CEGUIMoveFiles optimized)
+
+file(GLOB SFMLMoveFiles ${SFML_LIBRARIES})
+
+list(REMOVE_DUPLICATES SFMLMoveFiles)
+list(REMOVE_ITEM SFMLMoveFiles debug)
+list(REMOVE_ITEM SFMLMoveFiles optimized)
+
 
 message(STATUS "Moving the bulk...")
 
 if(WIN32)
 	
-	file(COPY ${CEGUIMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 	file(COPY ${LeapMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-	file(COPY ${SMFLMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 	file(COPY ${NewtonMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 	file(COPY ${OgreMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 endif(WIN32)
 
 
-file(COPY ${CEGUIMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${CEGUIMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${LeapMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-file(COPY ${SMFLMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${SFMLMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${NewtonMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${OgreMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
@@ -440,9 +428,7 @@ include_directories("${PROJECT_SOURCE_DIR}/AngelScript")
 include_directories("${PROJECT_SOURCE_DIR}/Engine/")
 include_directories("${PROJECT_SOURCE_DIR}/Leap/include")
 include_directories("${PROJECT_SOURCE_DIR}/Newton/include")
-include_directories("${PROJECT_SOURCE_DIR}/SFML/include")
 include_directories(${OIS_INCLUDE_DIRS}	${OGRE_INCLUDE_DIRS})
-include_directories("${PROJECT_SOURCE_DIR}/CEGUI/include")
 
 if(${USE_BREAKPAD})
   include_directories("${BREAKPAD_DIR}/src")
@@ -450,9 +436,6 @@ endif()
 
 # libraries paths
 link_directories("${PROJECT_SOURCE_DIR}/AngelScript/lib")
-link_directories("${PROJECT_SOURCE_DIR}/libRocket/lib/")
-link_directories("${PROJECT_SOURCE_DIR}/SFML/lib/")
-link_directories("${PROJECT_SOURCE_DIR}/CEGUI/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/Newton/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/Newton/bin/")
 
@@ -533,9 +516,7 @@ if((NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK) AND WIN32)
     install(FILES ${VLDMoveFiles} DESTINATION bin)
     install(FILES ${LeapMoveFilesDebug} DESTINATION bin)
     install(FILES ${NewtonMoveFilesDebug} DESTINATION bin)
-    install(FILES ${SMFLMoveFilesDebug} DESTINATION bin)
     install(FILES ${OgreMoveFilesDebug} DESTINATION bin)
-	install(FILES ${CEGUIMoveFilesDebug} DESTINATION bin)
 
     
     if(NOT Boost_USE_STATIC_LIBS)
@@ -547,9 +528,9 @@ endif((NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK) AND WIN32)
 # Always install release libraries
 install(FILES ${LeapMoveFilesRelease} DESTINATION bin)
 install(FILES ${OgreMoveFilesRelease} DESTINATION bin)
-install(FILES ${CEGUIMoveFilesRelease} DESTINATION bin)
+install(FILES ${CEGUIMoveFiles} DESTINATION bin)
 install(FILES ${NewtonMoveFilesRelease} DESTINATION bin)
-install(FILES ${SMFLMoveFilesRelease} DESTINATION bin)
+install(FILES ${SFMLMoveFiles} DESTINATION bin)
 
 if(NOT Boost_USE_STATIC_LIBS AND WIN32)
     install(FILES ${BOOST_MOVE_FILES_RELEASE} DESTINATION bin)

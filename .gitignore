@@ -10,6 +10,8 @@ CodeAnalyst/
 */bin/
 /*/lib
 cryptopp/
+CEGUI/
+SFML/
 *.jar
 *.dia
 *.dia~

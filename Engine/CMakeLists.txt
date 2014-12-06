@@ -136,7 +136,7 @@ add_library(Engine SHARED ${EngineFiles})
 
 
 
-set(FinalEngineLinkLibraries ${Boost_LIBRARIES} ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${ADDITIONAL_OGRE})
+set(FinalEngineLinkLibraries ${Boost_LIBRARIES} ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${ADDITIONAL_OGRE} ${ALL_CEGUI_LIBRARIES} ${SFML_LIBRARIES})
 
 if(NOT WIN32)
 # Link with X11 and threads
@@ -159,7 +159,7 @@ set_target_properties(Engine PROPERTIES
 # And add the Include.h as a precompiled header file
 set_target_properties(Engine PROPERTIES 
   COTIRE_PREFIX_HEADER_INCLUDE_PATH 
-  "${PROJECT_SOURCE_DIR}/AngelScript;${PROJECT_SOURCE_DIR}/CEGUI;${PROJECT_SOURCE_DIR}/Newton;${PROJECT_SOURCE_DIR}/SFML;${PROJECT_SOURCE_DIR}/Leap;${CMAKE_SOURCE_DIR}/Engine/Include.h")
+  "${PROJECT_SOURCE_DIR}/AngelScript;${PROJECT_SOURCE_DIR}/Newton;${PROJECT_SOURCE_DIR}/Leap;${CMAKE_SOURCE_DIR}/Engine/Include.h")
 
 
 # speed up build

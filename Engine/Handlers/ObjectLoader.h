@@ -40,7 +40,7 @@ namespace Leviathan{
 
 		// ------------------ Complex entity loading ------------------ //
 		DLLEXPORT int LoadTrackEntityControllerToWorld(GameWorld* world, vector<Entity::TrackControllerPosition>
-            &initialtrack, BaseNotifiableEntity* controllable, Entity::TrackEntityController** createdinstance);
+            &initialtrack, BaseConstraintable* controllable, Entity::TrackEntityController** createdinstance);
 
 		// Creates a trail entity to a world. Set the dynamic property if you want to update the properties later //
 		DLLEXPORT int LoadTrailToWorld(GameWorld* world, const string &material, const Entity::TrailProperties

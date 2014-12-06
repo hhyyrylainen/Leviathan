@@ -29,15 +29,16 @@ namespace Leviathan{ namespace Entity{
 
 
         // This class is used to create movement paths for entities //
-        class TrackEntityController : public BaseEntityController, virtual public BaseObject, public CallableObject,
-                                        public BaseSendableEntity, public BaseConstraintable
-        {
+        class TrackEntityController : public BaseEntityController, public CallableObject, public BaseSendableEntity{
+            
             friend BaseSendableEntity;
         public:
+            
             DLLEXPORT TrackEntityController(GameWorld* world);
             DLLEXPORT virtual ~TrackEntityController();
 
-            //! Starts listening to events and verify parameters
+            //! \brief Starts listening to events and verifies parameters
+            //! \return Always true
             DLLEXPORT bool Init();
             DLLEXPORT virtual void ReleaseData();
 
@@ -91,15 +92,17 @@ namespace Leviathan{ namespace Entity{
 
             TrackEntityController(int netid, GameWorld* world);
             
-            //! Internal function for making all data valid (checks for invalid reached node and progress)
+            //! \brief Internal function for making all data valid
+            //!
+            //! Checks for invalid reached node and progress
             void _SanityCheckNodeProgress();
         
             //! \brief Updates the controlled object
             //! \todo apply rotation
             void _ApplyTrackPositioning(float timestep);
 
-            //! Callback for detecting node unlinks
-            virtual void _OnNotifiableDisconnected(BaseNotifiableEntity* childtoremove);
+            //! Removes applied forces from objects
+            void _OnConstraintUnlink(BaseConstraint* ptr) override;
 
             //! \copydoc BaseSendableEntity::_LoadOwnDataFromPacket
             virtual bool _LoadOwnDataFromPacket(sf::Packet &packet) override;
@@ -123,8 +126,8 @@ namespace Leviathan{ namespace Entity{
             float ForceTowardsPoint;
 
             //! List of positions that form the track
-            //! Note these nodes are also on the inherited child object list
-            std::vector<LocationNode*> TrackNodes;
+            //! \note These are owned by the track
+            std::vector<shared_ptr<LocationNode>> TrackNodes;
 
             //! Internal flag for determining if an update is needed
             bool RequiresUpdate;

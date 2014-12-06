@@ -7,12 +7,12 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "BaseControllable.h"
-#include "BaseNotifierEntity.h"
+#include "BaseConstraintable.h"
 
 namespace Leviathan{
 
 	// Base class for all kinds of entity controllers to inherit from //
-	class BaseEntityController : public BaseNotifierEntity{
+	class BaseEntityController : public BaseConstraintable, virtual public BaseObject{
 	public:
 		DLLEXPORT BaseEntityController();
 		DLLEXPORT ~BaseEntityController();

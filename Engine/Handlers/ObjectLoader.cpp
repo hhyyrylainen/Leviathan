@@ -3,8 +3,6 @@
 #ifndef LEVIATHAN_OBJECTLOADER
 #include "ObjectLoader.h"
 #endif
-using namespace Leviathan;
-// ------------------------------------ //
 #include "Statistics/TimingMonitor.h"
 #include "OgreManualObject.h"
 #include "Entities/Objects/Brush.h"
@@ -15,7 +13,9 @@ using namespace Leviathan;
 #include "OgreSceneNode.h"
 #include "OgreEntity.h"
 #include "FileSystem.h"
-
+#include "Entities/Objects/Constraints.h"
+using namespace Leviathan;
+// ------------------------------------ //
 Leviathan::ObjectLoader::ObjectLoader(Engine* engine){
 	m_Engine = engine;
 }
@@ -223,8 +223,9 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const 
 	return id;
 }
 // ------------------ Complex entity loading ------------------ //
-DLLEXPORT int Leviathan::ObjectLoader::LoadTrackEntityControllerToWorld(GameWorld* world, std::vector<Entity::TrackControllerPosition> &initialtrack, 
-	BaseNotifiableEntity* controllable, Entity::TrackEntityController** createdinstance)
+DLLEXPORT int Leviathan::ObjectLoader::LoadTrackEntityControllerToWorld(GameWorld* world,
+    std::vector<Entity::TrackControllerPosition> &initialtrack, 
+	BaseConstraintable* controllable, Entity::TrackEntityController** createdinstance)
 {
 	// Construct the object //
 	unique_ptr<Entity::TrackEntityController> tmpptr(new Entity::TrackEntityController(world));
@@ -237,7 +238,7 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadTrackEntityControllerToWorld(GameWorl
 
 	// Link object //
 	if(controllable)
-		tmpptr->ConnectToNotifiable(controllable);
+		tmpptr->CreateConstraintWith<Entity::ControllerConstraint>(controllable)->Init();
 
 	// Initialize //
 	if(!tmpptr->Init()){

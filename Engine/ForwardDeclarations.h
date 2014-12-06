@@ -24,9 +24,8 @@ namespace Leviathan{
 		class TrackEntityController;
 		struct TrailProperties;
 		class TrailEmitter;
-
         class BaseConstraint;
-        class BaseConstraintable;
+
 
         enum ENTITY_CONSTRAINT_TYPE : int32_t;
 	}
@@ -34,6 +33,7 @@ namespace Leviathan{
 	// Entity bases //
 	class BasePositionable;
     class BaseObject;
+    class BaseConstraintable;
 
     // Exceptions //
 	class ExceptionInvalidArgument;

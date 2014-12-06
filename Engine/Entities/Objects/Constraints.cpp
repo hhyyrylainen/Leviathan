@@ -31,26 +31,31 @@ DLLEXPORT bool Leviathan::Entity::BaseConstraint::Init(){
 }
 
 DLLEXPORT void Leviathan::Entity::BaseConstraint::Release(){
-    
+
 	// Both are called because neither of them invoked this function //
 	ConstraintPartUnlinkedDestroy(NULL);
 }
 
 DLLEXPORT void Leviathan::Entity::BaseConstraint::ConstraintPartUnlinkedDestroy(BaseConstraintable* callinginstance){
+    
+    GUARD_LOCK_THIS_OBJECT();
+    
 	// Notify the object that isn't calling this function //
 	if(ParentObject && ParentObject != callinginstance){
+        
 		ParentObject->ConstraintDestroyedRemove(this);
-
 	}
+
 	if(ChildObject && ChildObject != callinginstance){
 
 		ChildObject->ConstraintDestroyedRemove(this);
 	}
+    
 	ChildObject = NULL;
 	ParentObject = NULL;
 
 	if(Joint){
-		NewtonDestroyJoint(OwningWorld->GetPhysicalWorld()->GetWorld() , Joint);
+		NewtonDestroyJoint(OwningWorld->GetPhysicalWorld()->GetWorld(), Joint);
 		Joint = NULL;
 	}
 }
@@ -109,4 +114,25 @@ bool Leviathan::Entity::SliderConstraint::_CreateActualJoint(){
 		first->GetPhysicsBody(), second->GetPhysicsBody());
 
 	return Joint != NULL;
+}
+// ------------------ ControllerConstraint ------------------ //
+DLLEXPORT Leviathan::Entity::ControllerConstraint::ControllerConstraint(GameWorld* world,
+    BaseConstraintable* controller, BaseConstraintable* child) :
+    BaseConstraint(ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT, world, controller, child)
+{
+
+}
+
+DLLEXPORT Leviathan::Entity::ControllerConstraint::~ControllerConstraint(){
+
+
+}
+// ------------------------------------ //
+bool Leviathan::Entity::ControllerConstraint::_CheckParameters(){
+
+    return ChildObject != NULL;
+}
+
+bool Leviathan::Entity::ControllerConstraint::_CreateActualJoint(){
+    return true;
 }

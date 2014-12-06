@@ -274,7 +274,9 @@ void Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine(boost::strict_loc
 
 boost::mutex Leviathan::Gui::BaseGuiObject::CEGUIEventMutex;
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::BaseGuiObject::PrintWindowsRecursive(ObjectLock &guard, CEGUI::Window* target /*= NULL*/, size_t level /*= 0*/) const{
+DLLEXPORT void Leviathan::Gui::BaseGuiObject::PrintWindowsRecursive(ObjectLock &guard, CEGUI::Window* target /*= NULL*/,
+    size_t level /*= 0*/) const
+{
 
 	VerifyLock(guard);
 
@@ -290,10 +292,10 @@ DLLEXPORT void Leviathan::Gui::BaseGuiObject::PrintWindowsRecursive(ObjectLock &
 	// Print this window //
 	for(size_t i = 0; i < level; i++){
 
-		Logger::Get()->DirectWriteBuffer(L"\t");
+		Logger::Get()->DirectWriteBuffer(L"    ");
 	}
 
-	Logger::Get()->Write(L"\t> "+Convert::Utf8ToUtf16(actualtarget->getName().c_str()));
+	Logger::Get()->Write(L"    > "+Convert::Utf8ToUtf16(actualtarget->getName().c_str()));
 
 	// Recurse to child windows //
 	for(size_t i = 0; i < actualtarget->getChildCount(); i++){

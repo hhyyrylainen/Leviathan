@@ -827,7 +827,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
             world->SendObjectToConnection(tosend, connection);
 
             // Send all the constraints, TODO: this could be improved a lot //
-            Entity::BaseConstraintable* constraintable = dynamic_cast<Entity::BaseConstraintable*>(tosend.get());
+            BaseConstraintable* constraintable = dynamic_cast<BaseConstraintable*>(tosend.get());
 
             if(constraintable){
 

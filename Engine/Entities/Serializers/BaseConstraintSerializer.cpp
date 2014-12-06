@@ -3,6 +3,7 @@
 #include "BaseConstraintSerializer.h"
 #endif
 #include "Entities/Bases/BaseConstraintable.h"
+#include "Entities/Objects/Constraints.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
@@ -19,6 +20,8 @@ DLLEXPORT bool Leviathan::BaseConstraintSerializer::CanHandleType(Entity::ENTITY
 
     switch(type){
         case ENTITY_CONSTRAINT_TYPE_SLIDER:
+            return true;
+        case ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT:
             return true;
         default:
             return false;
@@ -45,8 +48,14 @@ DLLEXPORT shared_ptr<sf::Packet> Leviathan::BaseConstraintSerializer::SerializeC
             
             (*data) << axis.X << axis.Y << axis.Z;
 
-            Logger::Get()->Write("Sending constraint: "+Convert::ToString(axis.X)+", "+Convert::ToString(axis.Y)+", "
-                +Convert::ToString(axis.Z));
+            return data;
+        }
+        case ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT:
+        {
+            // We don't need a dynamic cast as nothing is required //
+            auto data = make_shared<sf::Packet>();
+
+            (*data) << int32_t(42);
             
             return data;
         }
@@ -96,17 +105,38 @@ DLLEXPORT bool Leviathan::BaseConstraintSerializer::UnSerializeConstraint(BaseOb
             
             return true;
         }
+        case ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT:
+        {
+            if(!create){
+                // Break the constraint //
+                DEBUG_BREAK;
+                return true;
+            }
+
+            // TODO: could try to find a way around this cast //
+            auto firstobj = dynamic_cast<BaseConstraintable*>(object1);
+            auto secondobj = dynamic_cast<BaseConstraintable*>(object2);
+            
+            if(!firstobj || !secondobj)
+                return false;
+
+            // Get the custom data //
+            int32_t thenumber = 0;
+            
+            packet >> thenumber;
+
+            if(!packet || thenumber != 42)
+                return false;
+
+            // Create it //
+            firstobj->CreateConstraintWith<ControllerConstraint>(secondobj)->Init();
+
+            return true;
+        }
     }
 
     return false;
 }
-
-
-
-
-
-
-
 
 
 

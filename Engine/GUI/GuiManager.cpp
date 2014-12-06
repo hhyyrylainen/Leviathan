@@ -212,7 +212,7 @@ public:
 
 	virtual void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size){
 
-        GUARD_LOCK_THIS_OBJECT();
+        UNIQUE_LOCK_THIS_OBJECT();
         
         // We need to stop the message processing here, too //
         StopXMessageLoop();
@@ -220,6 +220,8 @@ public:
         // Create a request //
 
         Atom targetproperty = XInternAtom(XDisplay, "CUT_BUFFER1", false);
+
+        lockit.unlock();
         
         // We want the stuff in the clipboard //
         XConvertSelection(XDisplay, XA_CLIPBOARD(XDisplay), XA_STRING, targetproperty, ClipboardWindow, CurrentTime);
@@ -233,6 +235,8 @@ public:
             StartXMessageLoop();
         
             WaitForClipboard.wait(lock);
+
+            lockit.lock();
         
             if(!ClipboardRequestSucceeded){
 
@@ -700,7 +704,7 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 
 	// Setup input for the context //
 	ContextInput = new CEGUI::InputAggregator(GuiContext);
-	ContextInput->initialise();
+	ContextInput->initialise(false);
 
 	// Set Simonetta as the default font //
 	GuiContext->setDefaultFont("Simonetta-Regular");
@@ -1202,7 +1206,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseTheme(const wstring &tname){
 	}
 
 	// Set it active //
-	GuiContext->getPointerIndicator().setDefaultImage(Convert::WstringToString(tname));
+	GuiContext->getCursor().setDefaultImage(Convert::WstringToString(tname));
 
 	
 

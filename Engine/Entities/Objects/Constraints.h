@@ -16,8 +16,11 @@ namespace Leviathan{ namespace Entity{
             //! Type is SliderConstraint
             ENTITY_CONSTRAINT_TYPE_SLIDER = 1,
 
+            
+            //! This type is used to connect entities to various controllers like TrackEntityController
+            ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT,
                 
-                ENTITY_CONSTRAINT_TYPE_CUSTOM = 1000
+            ENTITY_CONSTRAINT_TYPE_CUSTOM = 1000
         };
 
         
@@ -28,7 +31,7 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world, BaseConstraintable* parent,
                 BaseConstraintable* child);
             DLLEXPORT virtual ~BaseConstraint();
-
+            
             //! \brief Actually creates the Newton joint.
             //!
             //! The Constraint won't work without calling this
@@ -102,6 +105,22 @@ namespace Leviathan{ namespace Entity{
             // stored parameters //
             Float3 Axis;
 
+        };
+
+
+        //! \brief Marks a connection between a controller and an entity
+        class ControllerConstraint : public BaseConstraint{
+        public:
+            DLLEXPORT ControllerConstraint(GameWorld* world, BaseConstraintable* controller, BaseConstraintable* child);
+            DLLEXPORT ~ControllerConstraint();
+
+
+        protected:
+            virtual bool _CheckParameters() override;
+            virtual bool _CreateActualJoint() override;
+            // ------------------------------------ //
+            
+            
         };
 
 

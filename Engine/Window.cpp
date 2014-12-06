@@ -493,6 +493,12 @@ namespace Leviathan{
         if(WindowKeyboard->isKeyDown(OIS::KC_SCROLL))
             SpecialKeyModifiers |= KEYSPECIAL_SCROLL;
 
+        // Set the modifier keys to the input receiver //
+        if(inputreceiver)
+            inputreceiver->setModifierKeys(SpecialKeyModifiers & KEYSPECIAL_SHIFT,
+                SpecialKeyModifiers & KEYSPECIAL_ALT,
+                SpecialKeyModifiers & KEYSPECIAL_CTRL);
+
         ThisFrameHandledCreate = true;
     }
 // ------------------ Input listener functions ------------------ //
@@ -503,25 +509,16 @@ namespace Leviathan{
 
         // First pass to CEGUI //
         bool usedkeydown = false;
-
-        // Try to create a paste/cut/copy request //
-        // if(SpecialKeyModifiers & KEYSPECIAL_CTRL){
-
-        //     // Direct copy requests aren't required anymore as the input object should take care of them //
-            
-        // }
-
         bool usedtext = false;
 
-        if(arg.text && !usedkeydown){
+        if(arg.text){
 
             usedtext = inputreceiver->injectChar(arg.text);
         }
 
-        // If copy/paste/cut failed try to pass it as a normal key press //
-        if(!usedkeydown)
-            usedkeydown = inputreceiver->injectKeyDown(static_cast<CEGUI::Key::Scan>(arg.key));
-
+        // See if it does something cool like paste or select all //
+        usedkeydown = inputreceiver->injectKeyDown(static_cast<CEGUI::Key::Scan>(arg.key));
+        
         if(!usedkeydown && !usedtext){
 
             // Then try disabling collections //
@@ -544,13 +541,9 @@ namespace Leviathan{
     bool Leviathan::Window::keyReleased(const OIS::KeyEvent &arg){
         CheckInputState();
 
-        // Pass it //
-        inputreceiver->injectKeyUp(static_cast<CEGUI::Key::Scan>(arg.key));
-
         // This should always be passed here //
         OwningWindow->GetInputController()->OnInputGet(arg.key, SpecialKeyModifiers, false);
-	
-
+        
         return true;
     }
 

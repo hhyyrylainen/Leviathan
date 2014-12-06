@@ -99,6 +99,9 @@ DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
 	Logger::Get()->Info(L"ConnectionInfo: opening connection to host on "+
         Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
 
+    // Reset various timers //
+    LastSentPacketTime = MyLastSentReceived = LastReceivedPacketTime = Misc::GetTimeMs64();
+    
 	return true;
 }
 

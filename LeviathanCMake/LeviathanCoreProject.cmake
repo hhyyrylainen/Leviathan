@@ -32,6 +32,8 @@ cotire(${CurrentProjectName})
 # If the output directory is wrong then we need to use this
 if(WIN32 AND NOT MINGW)
 
+    include(CreateLaunchers)
+
     message(STATUS "Creating Windows launchers for project: " ${CurrentProjectName})
     # set working directory when we want to run this
     create_target_launcher(${CurrentProjectName} RUNTIME_LIBRARY_DIRS "${PROJECT_BINARY_DIR}/bin/"

@@ -553,7 +553,7 @@ DLLEXPORT void Leviathan::NetworkHandler::StopOwnUpdaterThread(){
     NotifyTemporaryUpdater.notify_all();
 
     // Wait for the thread to die //
-    TemporaryUpdateThread.join();
+    TemporaryUpdateThread.join_for(boost::chrono::milliseconds(100));
 }
 
 void Leviathan::NetworkHandler::_RunTemporaryUpdaterThread(){

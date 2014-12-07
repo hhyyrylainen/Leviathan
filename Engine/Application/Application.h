@@ -48,7 +48,7 @@ namespace Leviathan{
 		DLLEXPORT AppDef* GetDefinition(){ return ApplicationConfiguration;};
 
 		// callback functions called during engine initialization at appropriate times //
-		DLLEXPORT virtual void InitLoadCustomScriptTypes(asIScriptEngine* engine);
+		DLLEXPORT virtual bool InitLoadCustomScriptTypes(asIScriptEngine* engine);
 		DLLEXPORT virtual void RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids);
 		DLLEXPORT virtual void RegisterApplicationPhysicalMaterials(PhysicsMaterialManager* manager);
 		DLLEXPORT virtual void EnginePreShutdown();

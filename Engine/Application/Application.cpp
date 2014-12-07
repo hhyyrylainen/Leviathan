@@ -161,7 +161,7 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 }
 
 // ------------------ Default callbacks that do nothing ------------------ //
-DLLEXPORT void Leviathan::LeviathanApplication::InitLoadCustomScriptTypes(asIScriptEngine* engine){
+DLLEXPORT bool Leviathan::LeviathanApplication::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 
 }
 

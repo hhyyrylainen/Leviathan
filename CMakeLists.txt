@@ -127,7 +127,8 @@ if(NOT OIS_FOUND)
 endif(NOT OIS_FOUND)
 
 # Find CEGUI
-find_package(CEGUI 9999 REQUIRED OgreRenderer CoreWindowRendererSet ExpatParser FreeImageImageCodec)
+set(CEGUI_VERSION_MAJOR_DEFAULT 9999)
+find_package(CEGUI REQUIRED OgreRenderer CoreWindowRendererSet ExpatParser FreeImageImageCodec)
 # TODO: allow other parsers/codecs
 
 if(NOT CEGUI_FOUND)

@@ -1,9 +1,8 @@
+#pragma once
 #ifndef LEVIATHAN_MAIN
 #define LEVIATHAN_MAIN
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Application/Application.h"

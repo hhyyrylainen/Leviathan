@@ -564,7 +564,7 @@ playrscorelistupdateendlabel:
 		}
 
 		// customized callbacks //
-		virtual void InitLoadCustomScriptTypes(asIScriptEngine* engine){
+		virtual bool InitLoadCustomScriptTypes(asIScriptEngine* engine) override{
 
 			// register PongGame type //
 			if(engine->RegisterObjectType("PongBase", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){

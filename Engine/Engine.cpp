@@ -19,7 +19,7 @@
 #include "Networking/NetworkHandler.h"
 #include "Networking/RemoteConsole.h"
 #include "Newton/NewtonManager.h"
-#include "Newton/PhysicalMaterialManager.h"
+#include "Newton/PhysicsMaterialManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Rendering/GraphicalInputEntity.h"
 #include "Rendering/Graphics.h"

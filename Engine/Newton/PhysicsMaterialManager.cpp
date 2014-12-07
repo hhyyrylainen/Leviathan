@@ -1,7 +1,7 @@
 #include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_PHYSICSMATERIALMANAGER
-#include "PhysicalMaterialManager.h"
+#include "PhysicsMaterialManager.h"
 #endif
 using namespace Leviathan;
 // ------------------------------------ //

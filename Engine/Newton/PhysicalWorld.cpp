@@ -4,7 +4,7 @@
 #include "PhysicalWorld.h"
 #endif
 #include <Newton.h>
-#include "PhysicalMaterialManager.h"
+#include "PhysicsMaterialManager.h"
 #include "Events/EventHandler.h"
 #include "Common/Misc.h"
 using namespace Leviathan;

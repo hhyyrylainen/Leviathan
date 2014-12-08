@@ -60,7 +60,7 @@ namespace Pong{
 		virtual void DoSpecialPostLoad();
 		virtual void CustomizedGameEnd();
 
-		virtual void MoreCustomScriptTypes(asIScriptEngine* engine);
+		virtual bool MoreCustomScriptTypes(asIScriptEngine* engine);
 		virtual void MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids);
 
 		// Server specific connection handling //

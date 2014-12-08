@@ -31,7 +31,7 @@ void Pong::PongMasterServer::EnginePreShutdown(){
 
 }
 // ------------------------------------ //
-void Pong::PongMasterServer::InitLoadCustomScriptTypes(asIScriptEngine* engine){
+bool Pong::PongMasterServer::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 
 }
 

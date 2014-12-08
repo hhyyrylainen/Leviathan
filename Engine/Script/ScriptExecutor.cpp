@@ -111,7 +111,11 @@ bool ScriptExecutor::Init(){
 
 
 	// bind application specific //
-	Engine::GetEngine()->GetOwningApplication()->InitLoadCustomScriptTypes(engine);
+	if(!Engine::GetEngine()->GetOwningApplication()->InitLoadCustomScriptTypes(engine)){
+
+        Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: application register failed");
+        return false;
+    }
 
 	return true;
 }

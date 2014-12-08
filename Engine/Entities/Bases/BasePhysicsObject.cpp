@@ -4,11 +4,12 @@
 #include "BasePhysicsObject.h"
 #endif
 #include "../GameWorld.h"
-#include "Newton/PhysicalMaterialManager.h"
+#include "Newton/PhysicsMaterialManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 // I hope that this virtual constructor isn't actually called //
-DLLEXPORT Leviathan::BasePhysicsObject::BasePhysicsObject() : BaseObject(-1, NULL), Body(NULL), Collision(NULL), Immovable(false), ApplyGravity(false){
+DLLEXPORT Leviathan::BasePhysicsObject::BasePhysicsObject() :
+    BaseObject(-1, NULL), Body(NULL), Collision(NULL), Immovable(false), ApplyGravity(false){
 
 }
 
@@ -33,7 +34,9 @@ void Leviathan::BasePhysicsObject::OrientationUpdated(){
 	_UpdatePhysicsObjectLocation();
 }
 // ------------------------------------ //
-void Leviathan::BasePhysicsObject::ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat timestep, int threadIndex){
+void Leviathan::BasePhysicsObject::ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat
+    timestep, int threadIndex)
+{
 	// get object from body //
 	BasePhysicsObject* tmp = reinterpret_cast<BasePhysicsObject*>(NewtonBodyGetUserData(body));
 	// check if physics can't apply //
@@ -144,7 +147,8 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::RemoveApplyForce(const wstring &nam
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::BasePhysicsObject::SetPhysicalMaterial(const wstring &materialname){
 	// Fetches the ID and calls the direct material ID setting function //
-	int id = PhysicsMaterialManager::Get()->GetMaterialIDForWorld(materialname, OwnedByWorld->GetPhysicalWorld()->GetWorld());
+	int id = PhysicsMaterialManager::Get()->GetMaterialIDForWorld(materialname,
+        OwnedByWorld->GetPhysicalWorld()->GetWorld());
 
 	if(id == -1){
 		// invalid name //
@@ -200,15 +204,17 @@ bool Leviathan::BasePhysicsObject::BasePhysicsCustomGetData(ObjectDataRequest* d
 	return false;
 }
 // ------------------ ApplyForceInfo ------------------ //
-DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const Float3 &forces, bool addmass, bool persist /*= true*/, wstring* name /*= NULL*/) : 
+DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const Float3 &forces, bool addmass, bool persist /*= true*/,
+    wstring* name /*= NULL*/) : 
 	ForcesToApply(forces), Persist(persist), MultiplyByMass(addmass), OptionalName(name)
 {
 	
 
 }
 
-DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(ApplyForceInfo &other) : ForcesToApply(other.ForcesToApply), Persist(other.Persist), 
-	MultiplyByMass(other.MultiplyByMass)
+DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(ApplyForceInfo &other) :
+    ForcesToApply(other.ForcesToApply), Persist(other.Persist), 
+    MultiplyByMass(other.MultiplyByMass)
 {
 	// Swap the pointers //
 	OptionalName.swap(other.OptionalName);

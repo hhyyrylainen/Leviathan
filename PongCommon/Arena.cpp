@@ -9,7 +9,7 @@
 #include "Entities/Objects/TrackEntityController.h"
 #include "TextureGenerator.h"
 #include "Handlers/ObjectLoader.h"
-#include "Newton/PhysicalMaterialManager.h"
+#include "Newton/PhysicsMaterialManager.h"
 #include "Utility/Random.h"
 #include "PongConstraints.h"
 using namespace Pong;

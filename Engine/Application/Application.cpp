@@ -108,11 +108,11 @@ DLLEXPORT void Leviathan::LeviathanApplication::Render(){
 
 DLLEXPORT void Leviathan::LeviathanApplication::PreFirstTick(){
 
-	_Engine->PreFirstTick();
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 	// This is almost at tick so call this outside the loop for performance //
+    _Engine->PreFirstTick();
 	PreFirstTick();
 
 	// For reporting wait failures //
@@ -163,6 +163,7 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 // ------------------ Default callbacks that do nothing ------------------ //
 DLLEXPORT bool Leviathan::LeviathanApplication::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 
+    return true;
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){

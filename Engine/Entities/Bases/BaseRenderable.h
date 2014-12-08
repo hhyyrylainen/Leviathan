@@ -31,6 +31,9 @@ namespace Leviathan{
 
 		DLLEXPORT void SetOgreMaterialName(const string &name);
 
+        //! \todo Move to a new class
+        DLLEXPORT void SetScale(const Float3 &scale);
+
 	protected:
 
 		virtual void _OnHiddenStateUpdated();

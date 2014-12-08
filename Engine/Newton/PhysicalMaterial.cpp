@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_PHYSICALMATERIAL
 #include "PhysicalMaterial.h"
 #endif
-#include "PhysicalMaterialManager.h"
+#include "PhysicsMaterialManager.h"
 #include "Handlers/IDFactory.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -11,7 +11,9 @@ DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(const wstring &name) : N
 
 }
 
-DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(shared_ptr<ObjectFileObject> fileobject) : EngineID(IDFactory::GetID()){
+DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(shared_ptr<ObjectFileObject> fileobject) :
+    EngineID(IDFactory::GetID())
+{
 	throw std::exception();
 }
 
@@ -53,7 +55,9 @@ void Leviathan::PhysicalMaterial::_ApplyMaterialPropertiesToWorld(NewtonWorld* w
 	}
 }
 // ------------------ PhysMaterialDataPair ------------------ //
-void Leviathan::PhysMaterialDataPair::ApplySettingsToWorld(NewtonWorld* world, int thisid, int otherid, PhysicalMaterial* materialowner){
+void Leviathan::PhysMaterialDataPair::ApplySettingsToWorld(NewtonWorld* world, int thisid,
+    int otherid, PhysicalMaterial* materialowner)
+{
 
 	// Variables //
 	NewtonMaterialSetDefaultElasticity(world, thisid, otherid, Elasticity);
@@ -62,7 +66,8 @@ void Leviathan::PhysMaterialDataPair::ApplySettingsToWorld(NewtonWorld* world, i
 	NewtonMaterialSetDefaultSoftness(world, thisid, otherid, Softness);
 
 	// Callback setting //
-	NewtonMaterialSetCollisionCallback(world, thisid, otherid, materialowner, AABBCallback, ContactCallback);
+	NewtonMaterialSetCollisionCallback(world, thisid, otherid, materialowner, AABBCallback,
+        ContactCallback);
 }
 
 

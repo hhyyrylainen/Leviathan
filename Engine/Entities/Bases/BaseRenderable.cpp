@@ -43,5 +43,9 @@ DLLEXPORT void Leviathan::BaseRenderable::SetDefaultSubDefaultPassDiffuse(const 
 DLLEXPORT void Leviathan::BaseRenderable::SetOgreMaterialName(const string &name){
 	GraphicalObject->getSubEntity(0)->setMaterialName(name);
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::BaseRenderable::SetScale(const Float3 &scale){
 
-
+    if(ObjectsNode)
+        ObjectsNode->setScale(scale.X, scale.Y, scale.Z);
+}

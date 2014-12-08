@@ -197,8 +197,9 @@ void Pong::PongServer::CustomizedGameEnd(){
 
 }
 // ------------------------------------ //
-void Pong::PongServer::MoreCustomScriptTypes(asIScriptEngine* engine){
+bool Pong::PongServer::MoreCustomScriptTypes(asIScriptEngine* engine){
 
+    return true;
 }
 
 void Pong::PongServer::MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids){

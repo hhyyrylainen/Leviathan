@@ -24,7 +24,7 @@ namespace Pong{
 		static wstring GenerateWindowTitle();
 
 		// customized callbacks //
-		virtual void InitLoadCustomScriptTypes(asIScriptEngine* engine);
+		virtual bool InitLoadCustomScriptTypes(asIScriptEngine* engine);
 		virtual void RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids);
 		virtual void RegisterApplicationPhysicalMaterials(Leviathan::PhysicsMaterialManager* manager);
 

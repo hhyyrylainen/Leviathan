@@ -668,11 +668,23 @@ void Leviathan::Engine::Tick(){
 }
 
 DLLEXPORT void Leviathan::Engine::PreFirstTick(){
-    // Stop this handling as it is no longer required //
-    _NetworkHandler->StopOwnUpdaterThread();
     
-	_ThreadingManager->NotifyQueuerThread();
+    GUARD_LOCK_THIS_OBJECT();
 
+    // Stop this handling as it is no longer required //
+    if(_NetworkHandler)
+        _NetworkHandler->StopOwnUpdaterThread();
+
+    if(_ThreadingManager)
+        _ThreadingManager->NotifyQueuerThread();
+
+    // Reset physics timers //
+    auto end = GameWorlds.end();
+    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
+
+        (*iter)->ClearSimulatePassedTime();
+    }
+    
 	Logger::Get()->Info(L"Engine: PreFirstTick: everything fine to start running");
 }
 // ------------------------------------ //

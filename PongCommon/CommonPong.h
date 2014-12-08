@@ -22,13 +22,13 @@
 #include "Application/Application.h"
 #include "PongPackets.h"
 #include "Newton/PhysicalMaterial.h"
-#include "Newton/PhysicalMaterialManager.h"
+#include "Newton/PhysicsMaterialManager.h"
 #include "Networking/SyncedResource.h"
 #include "GameInputController.h"
 #include "Events/EventHandler.h"
 #include "Threading/ThreadingManager.h"
 
-#define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " +__WFILE__+ L" on line "+Convert::IntToWstring(__LINE__), false);return;
+#define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " +__WFILE__+ L" on line "+Convert::IntToWstring(__LINE__), false);return false;
 
 #define BALLSTUCK_THRESHOLD		0.045f
 #define BALLSTUCK_COUNT			8
@@ -778,7 +778,7 @@ playrscorelistupdateendlabel:
 			
 
 
-			MoreCustomScriptTypes(engine);
+			return MoreCustomScriptTypes(engine);
 		}
 
 		virtual void RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){
@@ -840,7 +840,7 @@ playrscorelistupdateendlabel:
 
 	protected:
 
-		virtual void MoreCustomScriptTypes(asIScriptEngine* engine) = 0;
+		virtual bool MoreCustomScriptTypes(asIScriptEngine* engine) = 0;
 		virtual void MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids) = 0;
 
 		// ------------------------------------ //

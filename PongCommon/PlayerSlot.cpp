@@ -6,6 +6,7 @@
 #include "Entities/Bases/BasePhysicsObject.h"
 #include "Iterators/StringIterator.h"
 #include "Networking/NetworkServerInterface.h"
+#include "Utility/ComplainOnce.h"
 #ifdef PONG_VERSION
 #include "PongGame.h"
 #include "PongNetHandler.h"
@@ -13,9 +14,11 @@
 #include "GameInputController.h"
 using namespace Pong;
 // ------------------------------------ //
-Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) : Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_CLOSED), 
-	PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()), PlayerControllerID(0),
-	SplitSlot(NULL), SlotsPlayer(NULL), TrackDirectptr(NULL), PlayerID(-1), NetworkedInputID(-1), InputObj(NULL)
+Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) :
+    Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_CLOSED), 
+	PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()),
+    PlayerControllerID(0), SplitSlot(NULL), SlotsPlayer(NULL), TrackDirectptr(NULL), PlayerID(-1),
+    NetworkedInputID(-1), InputObj(NULL)
 {
 	
 }
@@ -25,8 +28,9 @@ Pong::PlayerSlot::~PlayerSlot(){
 	SAFE_DELETE(SplitSlot);
 }
 // ------------------------------------ //
-void Pong::PlayerSlot::Init(PLAYERTYPE type /*= PLAYERTYPE_EMPTY*/, int PlayerNumber /*= 0*/, PLAYERCONTROLS controltype /*= PLAYERCONTROLS_NONE*/,
-	int ctrlidentifier /*= 0*/, int playercontrollerid /*= -1*/, const Float4 &playercolour /*= Float4::GetColourWhite()*/)
+void Pong::PlayerSlot::Init(PLAYERTYPE type /*= PLAYERTYPE_EMPTY*/, int PlayerNumber /*= 0*/,
+    PLAYERCONTROLS controltype /*= PLAYERCONTROLS_NONE*/, int ctrlidentifier /*= 0*/, int playercontrollerid /*= -1*/,
+    const Float4 &playercolour /*= Float4::GetColourWhite()*/)
 {
 	PlayerType = type;
 	PlayerNumber = PlayerNumber;
@@ -105,6 +109,12 @@ void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool ac
 		}
 
 	}
+
+    if(!TrackDirectptr){
+
+        Leviathan::ComplainOnce::PrintWarningOnce(L"Slot_trackdirect_ptr_is_empty",
+            L"Slot is trying to move but doesn't have track pointer set");
+    }
 
 	// Set the track speed based on move direction //
 	if(TrackDirectptr && MoveState)

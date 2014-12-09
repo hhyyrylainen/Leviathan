@@ -32,6 +32,7 @@ DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world, int net
 
 DLLEXPORT Leviathan::Entity::Brush::~Brush(){
 
+    ReleaseParentHooks();
 }
 
 DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){

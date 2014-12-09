@@ -337,13 +337,13 @@ addplayerpaddlelabel:
 		// Set //
         plynumber = secondary ? plyvec[i]->GetSplit()->GetPlayerNumber(): plyvec[i]->GetPlayerNumber();
         
-        tmp->CreateConstraintWith<EmotionalConnection>(NULL)->SetParameters(plynumber, LINK_TYPE_TRACK)->Init();
+        controller->CreateConstraintWith<EmotionalConnection>(NULL)->SetParameters(plynumber, LINK_TYPE_TRACK)->Init();
 
 		// Paddle should be in the middle by default, so set progress to 50% //
 		controller->SetProgressTowardsNextNode(0.5f);
 
         // Connect the paddle to the track //
-        tmp->CreateConstraintWith<Leviathan::Entity::ControllerConstraint>(
+        controller->CreateConstraintWith<Leviathan::Entity::ControllerConstraint>(
             dynamic_cast<Leviathan::BaseConstraintable*>(
                 plypaddle.get()))->Init();
 

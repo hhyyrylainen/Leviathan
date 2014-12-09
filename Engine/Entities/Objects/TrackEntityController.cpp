@@ -163,7 +163,8 @@ DLLEXPORT bool Leviathan::Entity::TrackEntityController::SendCustomMessage(int e
 
 
 	// Check if a node has been updated //
-	if(entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_LOCATIONDATA_UPDATED || entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_POSITIONUPDATED ||
+	if(entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_LOCATIONDATA_UPDATED ||
+        entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_POSITIONUPDATED ||
 		entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_ORIENTATIONUPDATED)
 	{
         GUARD_LOCK_THIS_OBJECT();
@@ -215,7 +216,8 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
         // Request position //
         ObjectDataRequest request(ENTITYDATA_REQUESTTYPE_WORLDPOSITION);
 
-        obj->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_DATAREQUEST, &request);
+        if(obj)
+            obj->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_DATAREQUEST, &request);
 
         // If non positionable skip //
         if(request.RequestResult == NULL){
@@ -270,6 +272,10 @@ DLLEXPORT Float3 Leviathan::Entity::TrackEntityController::GetNextNodePosition()
 	return TrackNodes[ReachedNode+1]->GetPos();
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::Entity::TrackEntityController::SetTrackAdvanceSpeed(const float &speed){
+    ChangeSpeed = speed;
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::Entity::TrackEntityController::AddUpdateToPacket(sf::Packet &packet, ConnectionInfo*
     receiver)
 {
@@ -308,7 +314,7 @@ bool Leviathan::Entity::TrackEntityController::_LoadOwnDataFromPacket(sf::Packet
 
         // Apply position //
         curnode->ApplyPositionAndRotationFromPacket(packet);
-        
+
         TrackNodes.push_back(curnode);
     }
 
@@ -318,6 +324,13 @@ bool Leviathan::Entity::TrackEntityController::_LoadOwnDataFromPacket(sf::Packet
         return false;
     }
 
+    // Set the things //
+    // These can be set before Init as it doesn't set any default values
+    ReachedNode = reachednode;
+    NodeProgress = nodeprogress;
+    ChangeSpeed = changespeed;
+    ForceTowardsPoint = force;
+    
     Init();
 
     return true;

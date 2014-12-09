@@ -163,7 +163,7 @@ bool EmotionalConnection::_CreateActualJoint(){
                         curply->SetTrackObject(
                             OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
                                     ParentObject)),
-                            static_cast<TrackEntityController*>(ParentObject));
+                            dynamic_cast<TrackEntityController*>(ParentObject));
                         break;
                     case LINK_TYPE_GOAL:
                         curply->SetGoalAreaObject(

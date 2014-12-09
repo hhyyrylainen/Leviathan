@@ -58,9 +58,8 @@ namespace Leviathan{ namespace Entity{
 
             //! \brief Controls the speed at which the entity moves along the track (set to negative to go backwards
             //! and 0.f to stop)
-            DLLEXPORT inline void SetTrackAdvanceSpeed(const float &speed){
-                ChangeSpeed = speed;
-            }
+            DLLEXPORT void SetTrackAdvanceSpeed(const float &speed);
+            
             DLLEXPORT inline float GetTrackAdvanceSpeed(){
                 return ChangeSpeed;
             }

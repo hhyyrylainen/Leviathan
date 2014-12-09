@@ -17,7 +17,7 @@ template<class ParentType, class ChildType>
 DLLEXPORT Leviathan::BaseNotifiable<ParentType, ChildType>::~BaseNotifiable(){
 	GUARD_LOCK_THIS_OBJECT();
 
-	// Last chance to unhook if not already //
+	// Last chance to unhook //
 	if(ConnectedToParents.size())
 		ReleaseParentHooks();
 }

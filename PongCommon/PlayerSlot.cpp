@@ -77,9 +77,6 @@ int Pong::PlayerSlot::GetSplitCount(){
 void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool active){
 	GUARD_LOCK_THIS_OBJECT();
 
-    Logger::Get()->Write("Input: "+Convert::ToString(actiontoperform)+", down: "+
-        Convert::ToString<int>(active));
-    
 	// if this is player 0 or 3 flip inputs //
 	if(Slot == 0 || Slot == 2){
 
@@ -117,7 +114,7 @@ void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool ac
     }
 
 	// Set the track speed based on move direction //
-	if(TrackDirectptr && MoveState)
+	if(TrackDirectptr)
 		TrackDirectptr->SetTrackAdvanceSpeed(MoveState*INPUT_TRACK_ADVANCESPEED);
 }
 

@@ -478,9 +478,6 @@ bool Pong::PongNInputter::_HandleKeyThing(OIS::KeyCode key, bool down){
 		ChangedKeys &= ~(1 << targetbit);
 	}
 
-    Logger::Get()->Write("Keypressed");
-
-
 	// Our thing has changed! //
 	if(ChangedKeys != ControlStates)
 		OnUpdateInputStates();

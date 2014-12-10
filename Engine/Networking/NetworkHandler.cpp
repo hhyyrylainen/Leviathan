@@ -486,13 +486,17 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 		Logger::Get()->Info(L"Received a new connection from "+Convert::StringToWstring(sender.toString())+L":"+
             Convert::ToWstring(sentport));
 
+        // \todo Make sure that the console won't be deleted between this and the actual check
+        RemoteConsole* rcon = RemoteConsole::Get();
+
 		if(AppType != NETWORKED_TYPE_CLIENT){
 			// Accept the connection //
 			Logger::Get()->Info(L"\t> Connection accepted");
 
 			tmpconnect = shared_ptr<ConnectionInfo>(new ConnectionInfo(sender, sentport));
 
-		} else if(RemoteConsole::Get()->IsAwaitingConnections()){
+		} else if(rcon && rcon->IsAwaitingConnections()){
+            
 			// We might allow a remote start remote console session //
 			Logger::Get()->Info(L"\t> Connection accepted for remote console receive");
 

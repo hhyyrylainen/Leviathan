@@ -9,6 +9,7 @@
 #include "Newton/PhysicalWorld.h"
 #include "BasePositionable.h"
 #include "BaseObject.h"
+#include "SFML/Network/Packet.hpp"
 
 
 #define BASEPHYSICS_CUSTOMMESSAGE_DATA_CHECK	{if(entitycustommessagetype >= ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE && entitycustommessagetype <= ENTITYCUSTOMMESSAGETYPE_SETVELOCITY){if(BasePhysicsCustomMessage(entitycustommessagetype, dataptr)) return true;}}
@@ -20,7 +21,7 @@ namespace Leviathan{
 	// fill this to apply a force //
 	class ApplyForceInfo{
 	public:
-		// Note: look at the class for what parameters do, and pass NULL for name if not used (avoid passing empty strings) //
+        //! \note Pass NULL for name if not used, avoid passing empty strings
 		DLLEXPORT ApplyForceInfo(const Float3 &forces, bool addmass, bool persist = true, wstring* name = NULL);
 		DLLEXPORT ApplyForceInfo(ApplyForceInfo &other);
 		DLLEXPORT ~ApplyForceInfo();
@@ -35,9 +36,6 @@ namespace Leviathan{
 		bool MultiplyByMass;
 		// finally the amount to apply to each direction //
 		Float3 ForcesToApply;
-	private:
-		//// don't want this constructor to be called
-		//DLLEXPORT ApplyForceInfo(const ApplyForceInfo &other);
 	};
 
 
@@ -60,7 +58,7 @@ namespace Leviathan{
 		// Adds an apply force (and possibly overwrites old one). Note: the pointer is deleted by this object //
 		DLLEXPORT void ApplyForce(ApplyForceInfo* pointertohandle);
 
-		// Just removes an existing force, pass empty wstring to delete default named force //
+		// Just removes an existing force, pass empty wstring to delete the default named force
 		DLLEXPORT bool RemoveApplyForce(const wstring &name);
 
 		// Sets the absolute velocity of the object //
@@ -69,17 +67,36 @@ namespace Leviathan{
 		// Gets the velocity of this object //
 		DLLEXPORT Float3 GetBodyVelocity();
 
+        //! \brief Gets the torque of the body (rotational velocity)
+        DLLEXPORT Float3 GetBodyTorque();
+
+        //! \brief Sets the torque of the body
+        //! \see GetBodyTorque
+        DLLEXPORT void SetBodyTorque(const Float3 &torque);
+
 		// Physical material setting in wstring form for your convenience //
 		DLLEXPORT bool SetPhysicalMaterial(const wstring &materialname);
 
-		// Higher performance material set if you use it in batches and you have fetched the material id from PhysicalMaterialManager //
+		// Higher performance material set if you use it in batches and
+        // you have fetched the material id from PhysicalMaterialManager
 		DLLEXPORT void SetPhysicalMaterialID(int ID);
 
+
+        //! \brief Serializes basic physical state to a packet if Body is set
+        //! \return True when Body is set
+        //!
+        //! Adds things like velocity and angular velocity (rotation)
+        DLLEXPORT bool AddPhysicalStateToPacket(sf::Packet &packet);
+
+        //! \brief Loads and applies a physical state from a packet
+        //! \return True when the packet was properly constructed and the state was set
+        DLLEXPORT bool ApplyPhysicalStateFromPacket(sf::Packet &packet);
+
 		// default physics callbacks that are fine in most cases //
-		// Don't forget to pass the user data as base object if using these //
+		// Don't forget to pass the user data as BaseObject if using these //
 		static void ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat timestep, int threadIndex);
 		static void DestroyBodyCallback(const NewtonBody* body);
-
+        
 
 	protected:
 		virtual void _DestroyPhysicalBody();

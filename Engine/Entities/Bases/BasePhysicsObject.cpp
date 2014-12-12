@@ -89,7 +89,25 @@ DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyVelocity(){
 		NewtonBodyGetVelocity(Body, &vel.X);
 		return vel;
 	}
+    
 	return (Float3)0;
+}
+
+DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyTorque(){
+	if(Body){
+		Float3 torq(0);
+		NewtonBodyGetTorque(Body, &torq.X);
+		return torq;
+	}
+    
+	return (Float3)0;
+}
+
+DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyTorque(const Float3 &torque){
+    if(Body){
+
+        NewtonBodySetTorque(Body, &torque.X);
+    }
 }
 // ------------------------------------ //
 Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(const float &mass){
@@ -203,6 +221,42 @@ bool Leviathan::BasePhysicsObject::BasePhysicsCustomGetData(ObjectDataRequest* d
 
 	return false;
 }
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::BasePhysicsObject::AddPhysicalStateToPacket(sf::Packet &packet){
+
+    if(!Body)
+        return false;
+
+    Float3 vel = GetBodyVelocity();
+
+    packet << vel.X << vel.Y << vel.Z;
+
+    Float3 torq = GetBodyTorque();
+
+    packet << torq.X << torq.Y << torq.Z;
+
+    return true;
+}
+
+DLLEXPORT bool Leviathan::BasePhysicsObject::ApplyPhysicalStateFromPacket(sf::Packet &packet){
+
+    if(!Body)
+        return false;
+
+    Float3 vel;
+    Float3 torq;
+
+    packet >> vel.X >> vel.Y >> vel.Z;
+    packet >> torq.X >> torq.Y >> torq.Z;
+
+    if(!packet)
+        return false;
+
+    SetBodyTorque(torq);
+    SetBodyVelocity(vel);
+    
+    return true;
+}
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const Float3 &forces, bool addmass, bool persist /*= true*/,
     wstring* name /*= NULL*/) : 
@@ -234,6 +288,11 @@ DLLEXPORT ApplyForceInfo& Leviathan::ApplyForceInfo::operator=(ApplyForceInfo &o
 
 	return *this;
 }
+
+
+
+
+
 
 
 

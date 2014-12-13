@@ -9,7 +9,7 @@
 #include "Newton/PhysicalWorld.h"
 #include "BasePositionable.h"
 #include "BaseObject.h"
-#include "SFML/Network/Packet.hpp"
+#include "Common/SFMLPackets.h"
 
 
 #define BASEPHYSICS_CUSTOMMESSAGE_DATA_CHECK	{if(entitycustommessagetype >= ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE && entitycustommessagetype <= ENTITYCUSTOMMESSAGETYPE_SETVELOCITY){if(BasePhysicsCustomMessage(entitycustommessagetype, dataptr)) return true;}}
@@ -38,7 +38,15 @@ namespace Leviathan{
 		Float3 ForcesToApply;
 	};
 
+    //! \brief Can hold all data used by BasePhysicsObject
+    struct BasePhysicsData{
 
+        Float3 Velocity;
+		Float3 Torque;
+    };
+
+
+    //! \brief Inherited by objects that have physical bodies
 	class BasePhysicsObject : virtual public BasePositionable, virtual public BaseObject{
 	public:
 		DLLEXPORT BasePhysicsObject();
@@ -91,6 +99,12 @@ namespace Leviathan{
         //! \brief Loads and applies a physical state from a packet
         //! \return True when the packet was properly constructed and the state was set
         DLLEXPORT bool ApplyPhysicalStateFromPacket(sf::Packet &packet);
+
+        //! \brief Applies physical state from holder object
+        DLLEXPORT void ApplyPhysicalState(BasePhysicsData &data);
+
+        //! \brief Loads a physical state from a packet
+        DLLEXPORT static bool LoadPhysicalStateFromPacket(sf::Packet &packet, BasePhysicsData &fill);
 
 		// default physics callbacks that are fine in most cases //
 		// Don't forget to pass the user data as BaseObject if using these //

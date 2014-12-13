@@ -227,13 +227,8 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::AddPhysicalStateToPacket(sf::Packet
     if(!Body)
         return false;
 
-    Float3 vel = GetBodyVelocity();
-
-    packet << vel.X << vel.Y << vel.Z;
-
-    Float3 torq = GetBodyTorque();
-
-    packet << torq.X << torq.Y << torq.Z;
+    packet << GetBodyVelocity();
+    packet << GetBodyTorque();
 
     return true;
 }
@@ -246,8 +241,8 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::ApplyPhysicalStateFromPacket(sf::Pa
     Float3 vel;
     Float3 torq;
 
-    packet >> vel.X >> vel.Y >> vel.Z;
-    packet >> torq.X >> torq.Y >> torq.Z;
+    packet >> vel;
+    packet >> torq;
 
     if(!packet)
         return false;
@@ -256,6 +251,25 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::ApplyPhysicalStateFromPacket(sf::Pa
     SetBodyVelocity(vel);
     
     return true;
+}
+
+DLLEXPORT bool Leviathan::BasePhysicsObject::LoadPhysicalStateFromPacket(sf::Packet &packet,
+    BasePhysicsData &fill)
+{
+    packet >> fill.Velocity;
+    packet >> fill.Torque;
+    
+    if(!packet)
+        return false;
+}
+
+DLLEXPORT void Leviathan::BasePhysicsObject::ApplyPhysicalState(BasePhysicsData &data){
+
+    if(!Body)
+        return;
+    
+    SetBodyTorque(data.Torque);
+    SetBodyVelocity(data.Velocity);
 }
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const Float3 &forces, bool addmass, bool persist /*= true*/,

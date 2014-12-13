@@ -343,11 +343,18 @@ DLLEXPORT bool Leviathan::Entity::Prop::LoadUpdateFromPacket(sf::Packet &packet)
 // ------------------------------------ //
 bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(sf::Packet &packet){
 
-    BasePositionData pdata;
+    BasePositionData posdata;
+    BasePhysicsData phydata;
 
-    if(!LoadPositionFromPacketToHolder(packet, pdata)){
+    if(!LoadPositionFromPacketToHolder(packet, posdata)){
 
         // It failed (the packet was invalid) //
+        Logger::Get()->Error("Prop: packet has invalid format");
+        return false;
+    }
+
+    if(!LoadPhysicalStateFromPacket(packet, phydata)){
+
         Logger::Get()->Error("Prop: packet has invalid format");
         return false;
     }
@@ -368,22 +375,28 @@ bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(sf::Packet &packet){
     }
 
     // Then set the position //
-    ApplyPositionDataObject(pdata);
+    ApplyPositionDataObject(posdata);
+
+    // And velocity //
+    ApplyPhysicalState(phydata);
 
     // Apply hidden state //
     _OnHiddenStateUpdated();
     
     return true;
-
 }
 
 void Leviathan::Entity::Prop::_SaveOwnDataToPacket(sf::Packet &packet){
     GUARD_LOCK_THIS_OBJECT();
+    
     // The hidden state needs to be the first thing
     packet << Hidden;
     
     // Before adding our data make base classes add stuff //
     AddPositionAndRotationToPacket(packet);
+
+    // Physics state //
+    AddPhysicalStateToPacket(packet);
     
     packet << ModelFile;
 }

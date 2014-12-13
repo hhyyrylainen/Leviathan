@@ -129,18 +129,18 @@ bool Leviathan::BasePositionable::BasePositionableCustomGetData(ObjectDataReques
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BasePositionable::AddPositionAndRotationToPacket(sf::Packet &packet){
 
-    packet << Position.X << Position.Y << Position.Z;
-    packet << QuatRotation.X << QuatRotation.Y << QuatRotation.Z << QuatRotation.W;
+    packet << Position;
+    packet << QuatRotation;
 }
 
 DLLEXPORT void Leviathan::BasePositionable::ApplyPositionAndRotationFromPacket(sf::Packet &packet){
 
     // First get the data //
-    float x, y, z;
-    float qx, qy, qz, qw;
-
-    packet >> x >> y >> z;
-    packet >> qx >> qy >> qz >> qw;
+    Float4 quaternion;
+    Float3 pos;
+    
+    packet >> pos;
+    packet >> quaternion;
     
     // Don't apply if any of the reads have failed //
     if(!packet){
@@ -149,15 +149,15 @@ DLLEXPORT void Leviathan::BasePositionable::ApplyPositionAndRotationFromPacket(s
     }
 
     // Apply the data //
-    SetPosComponents(x, y, z);
-    SetOrientationComponents(qx, qy, qz, qw);
+    SetPos(pos);
+    SetOrientation(quaternion);
 }
 
 DLLEXPORT bool Leviathan::BasePositionable::LoadPositionFromPacketToHolder(sf::Packet &packet,
     BasePositionData &target)
 {
-
-    packet >> target.Position.X >> target.Position.Y >> target.Position.Z;
-    packet >> target.QuatRotation.X >> target.QuatRotation.Y >> target.QuatRotation.Z >> target.QuatRotation.W;
+    packet >> target.Position;
+    packet >> target.QuatRotation;
+    
     return packet ? true: false;
 }

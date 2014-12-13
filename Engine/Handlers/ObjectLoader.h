@@ -20,6 +20,8 @@ namespace Leviathan{
     //! and store the shared_ptr with the pointer
     //! \note All created objects are added to the world so that they are broadcast on the network (if this is a server)
     //! \todo Make the above statement true for all the functions
+    //! \todo Allow objects to be created that will be sent to clients only after the caller has had the chance to set
+    //! the position etc.
 	class ObjectLoader : public Object{
 	public:
 		DLLEXPORT ObjectLoader(Engine* engine);

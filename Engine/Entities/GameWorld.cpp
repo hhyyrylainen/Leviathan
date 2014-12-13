@@ -1057,6 +1057,29 @@ DLLEXPORT void Leviathan::GameWorld::HandleConstraintPacket(NetworkResponseDataF
     GUARD_LOCK_THIS_OBJECT();
     WaitingConstraints.push_back(WaitingConstraint(data->EntityID1, data->EntityID2, packet));
 }
+
+DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(NetworkResponseDataForEntityUpdate* data){
+
+    // Get the target entity //
+    auto target = GetWorldObject(data->EntityID);
+
+    if(!target){
+
+        Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has no entity "+Convert::ToString(data->EntityID)+
+            ", ignoring an update packet");
+        return;
+    }
+
+    // Apply the update //
+    GUARD_LOCK_OTHER_OBJECT(target);
+    
+    if(!EntitySerializerManager::Get()->ApplyUpdateMessage(*data->UpdateData, target)){
+
+        Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): applying update to entity "+
+            Convert::ToString(data->EntityID)+" failed");
+        return;
+    }
+}
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSyncData* data){
 

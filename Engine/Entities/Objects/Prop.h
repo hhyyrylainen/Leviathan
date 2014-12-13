@@ -35,8 +35,8 @@ namespace Leviathan{ namespace Entity{
 
             DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
-            //! \copydoc BaseSendableEntity::AddUpdateToPacket
-            DLLEXPORT virtual void AddUpdateToPacket(sf::Packet &packet, ConnectionInfo* receiver) override;
+            //! \copydoc BaseSendableEntity::CaptureState
+            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() override;
 
             //! \copydoc BaseSendableEntity::LoadUpdateFromPacket
             DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet) override;

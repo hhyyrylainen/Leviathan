@@ -103,16 +103,43 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::CreateEntityFromInitialMessag
     return false;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(sf::Packet &packet,
-    boost::function<BaseObject*(int)> objectget)
+DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(sf::Packet &packet, shared_ptr<BaseObject> object)
 {
-    GUARD_LOCK_THIS_OBJECT();
-    DEBUG_BREAK;
+    // The first thing has to be the type //
+    int32_t objtype;
 
+    packet >> objtype;
+
+    if(!packet)
+        return false;
+
+    if(!object)
+        return false;
+    
+    GUARD_LOCK_THIS_OBJECT();
+    
+    for(size_t i = 0; i < Serializers.size(); i++){
+
+        if(Serializers[i]->CanHandleType(objtype)){
+
+            if(Serializers[i]->ApplyUpdateFromPacket(object.get(), packet)){
+
+                return true;
+            }
+
+            // This might be unnecessary and harmful, as another serializer might be able to do something //
+            return false;
+        }
+    }
 
     // No serializer was able to do anything //
     return false;
 }
+
+
+
+
+
 
 
 

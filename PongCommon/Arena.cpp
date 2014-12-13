@@ -445,8 +445,10 @@ void Pong::Arena::ServeBall(){
 	}
 
 
-	// TODO: queue send event //
 	prop->GiveImpulse(dir);
+
+    // We changed a few things so notify all receivers //
+    prop->SendUpdatesToAllClients();
 }
 // ------------------------------------ //
 void Pong::Arena::GiveBallSpeed(float mult){

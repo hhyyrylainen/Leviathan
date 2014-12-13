@@ -1,4 +1,4 @@
-// ----------------------------------- //
+// ----------------------------------- // 
 #ifndef LEVIATHAN_NETWORKRESPONSE
 #include "NetworkResponse.h"
 #endif
@@ -108,6 +108,11 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
         case NETWORKRESPONSETYPE_WORLD_FROZEN:
         {
             ResponseData = new NetworkResponseDataForWorldFrozen(receivedresponse);
+        }
+        break;
+        case NETWORKRESPONSETYPE_ENTITY_UPDATE:
+        {
+            ResponseData = new NetworkResponseDataForEntityUpdate(receivedresponse);
         }
         break;
         default:
@@ -242,6 +247,15 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateWorldFrozenResponse(NetworkRe
 	SAFE_DELETE(ResponseData);
 
 	ResponseData = newddata;
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityUpdateResponse(NetworkResponseDataForEntityUpdate* newddata){
+
+    ResponseType = NETWORKRESPONSETYPE_ENTITY_UPDATE;
+    // Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;    
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkResponse::GenerateKeepAliveResponse(){
@@ -408,6 +422,13 @@ DLLEXPORT NetworkResponseDataForInitialEntity* Leviathan::NetworkResponse::GetRe
     return NULL;
 }
 
+DLLEXPORT NetworkResponseDataForEntityUpdate* Leviathan::NetworkResponse::GetResponseDataForEntityUpdate() const{
+
+    if(ResponseType == NETWORKRESPONSETYPE_ENTITY_UPDATE && ResponseData)
+        return static_cast<NetworkResponseDataForEntityUpdate*>(ResponseData);
+    return NULL;
+}
+
 DLLEXPORT NetworkResponseDataForEntityConstraint* Leviathan::NetworkResponse::GetResponseDataForEntityConstraint()
     const
 {
@@ -526,7 +547,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
 
 	if(!(frompacket >> tmpextract)){
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+		throw ExcptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
 	}
 
 	JoinRestriction = static_cast<NETWORKRESPONSE_SERVERJOINRESTRICT>(tmpextract);
@@ -916,7 +937,43 @@ DLLEXPORT void Leviathan::NetworkResponseDataForWorldFrozen::AddDataToPacket(sf:
 
     packet << WorldID << Frozen << TickNumber;
 }
+// ------------------ NetworkResponseDataForEntityUpdate ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(int worldid, int entityid,
+    shared_ptr<sf::Packet> data) :
+    WorldID(worldid), EntityID(entityid), UpdateData(data)
+{
 
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(sf::Packet &frompacket){
+
+    frompacket >> WorldID >> EntityID;
+    
+    std::string tmpstr;
+    frompacket >> tmpstr;
+
+    if(!frompacket)
+        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+
+    UpdateData = make_shared<sf::Packet>();
+
+    UpdateData->append(tmpstr.c_str(), tmpstr.size());
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForEntityUpdate::AddDataToPacket(sf::Packet &packet){
+
+    packet << WorldID << EntityID;
+
+    const std::string tmpstr(reinterpret_cast<const char*>(UpdateData->getData()), UpdateData->getDataSize());
+        
+    // Warn if it is quite large //
+    if(tmpstr.size() >= 500){
+
+        Logger::Get()->Warning(L"Sending a large entity update, over 500 bytes in size");
+    }
+
+    packet << tmpstr;
+}
 
 
 

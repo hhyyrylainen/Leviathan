@@ -27,6 +27,44 @@ namespace Leviathan{
         //! The type is Entity::TrackEntityController
         BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER
     };
+
+    //! \brief Base class for entity state data
+    class ObjectDeltaStateData{
+    public:
+        DLLEXPORT virtual ~ObjectDeltaStateData();
+
+        //! \brief Adds update data to a packet
+        //! \param olderstate The state against which this is compared. Or NULL if a full update is wanted
+        DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) = 0;
+    };
+    
+    //! \brief Contains data about a connection and whether the object has changed since last update
+    class SendableObjectConnectionUpdate{
+        friend BaseSendableEntity;
+    public:
+
+        //! \brief Creates an connection holder and creates an initial state
+        DLLEXPORT SendableObjectConnectionUpdated(BaseSendableEntity* getstate, ConnectionInfo* connection);
+
+
+    protected:
+
+        void operator =(SendableObjectConnectionUpdated &other) = delete;
+        SendableObjectConnectionUpdated(const SendableObjectConnectionUpdated &other) = delete;
+        
+        // ------------------------------------ //
+        
+        //! The connection to which the updates are sent if it is still open
+        ConnectionInfo* CorrespondingConnection;
+
+        //! Set to true when the object changes state (moves, changes scale)
+        bool DataUpdatedAfterSending;
+
+        //! Data used to build a delta update packet
+        //! \note This is set to be the last known successfully sent state to avoid having to
+        //! resend intermediate steps
+        shared_ptr<ObjectDeltaStateData> LastConfirmedData;
+    };
     
     //! \brief Inherited by objects that can be serialized using the SendableEntitySerializer
 	class BaseSendableEntity : public virtual BaseObject{
@@ -48,15 +86,26 @@ namespace Leviathan{
         DLLEXPORT static unique_ptr<BaseSendableEntity> UnSerializeFromPacket(sf::Packet &packet, GameWorld* world,
             int id);
 
-        //! \brief Serializes an update to a packet for a specific connection
-        //! \note This function should include it's own type in the packet to verify that it is the right type
-        DLLEXPORT virtual void AddUpdateToPacket(sf::Packet &packet, ConnectionInfo* receiver) = 0;
-
         //! \brief Loads an update from a packet
         DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet) = 0;
-        
-        
 
+        //! \brief Capture current object state
+        //! \todo Allow this to be cached to improve performance
+        DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() = 0;
+        
+        //! \brief Tells this entity send updates to all receivers
+        //!
+        //! An update will be created for each connected ConnectionInfo and then sent.
+        //! This will be periodically called by the GameWorld but after, for example, setting the position
+        //! this can be called to get clients to update their positions faster
+        DLLEXPORT virtual void SendUpdatesToAllClients();
+
+        //! \brief Adds a new connection to known receivers
+        DLLEXPORT virtual void AddConnectionToReceivers(ConnectionInfo* receiver);
+
+        //! \brief Returns the sendable type of the object
+        DLLEXPORT BASESENDABLE_ACTUAL_TYPE GetSendableType() const;
+        
     protected:
         
         //! \brief Function which is used by subclasses to load their data from packets
@@ -78,6 +127,12 @@ namespace Leviathan{
         BASESENDABLE_ACTUAL_TYPE SerializeType;
 
 
+        //! List of receivers that will be updated whenever state changes and GameWorld decides it being
+        //! the time to send updates
+        std::vector<shared_ptr<SendableObjectConnectionUpdated>> UpdateReceivers;
+
+        //! Object-wide flag denoting that one or more UpdateReceivers could want an update
+        bool IsAnyDataUpdated;
     };
 
 }

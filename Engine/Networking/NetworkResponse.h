@@ -1,5 +1,5 @@
 #ifndef LEVIATHAN_NETWORKRESPONSE 
-#define LEVIATHAN_NETWORKRESPONSE
+#defin LEVIATHAN_NETWORKRESPONSE
 // ------------------------------------ //
 #ifndef LEVIATHAN_DEFINE
 #include "Define.h"
@@ -43,6 +43,9 @@ namespace Leviathan{
 
         //! Contains one or more full entities sent by the server
         NETWORKRESPONSETYPE_INITIAL_ENTITY,
+
+        //! Contains update data for a single entity
+        NETWORKRESPONSETYPE_ENTITY_UPDATE,
 
         //! Instructs a world to create or destroy a constraint
         NETWORKRESPONSETYPE_ENTITY_CONSTRAINT,
@@ -350,6 +353,27 @@ namespace Leviathan{
         shared_ptr<sf::Packet> ConstraintData;
     };
 
+    //! \brief Holds data for updating an entity
+    class NetworkResponseDataForEntityUpdate : public BaseNetworkResponseData{
+    public:
+        
+        DLLEXPORT NetworkResponseDataForEntityUpdate(int worldid, int entityid, shared_ptr<sf::Packet> data);
+
+        DLLEXPORT NetworkResponseDataForEntityUpdate(sf::Packet &frompacket);
+
+        DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) override;
+        
+        //! The ID of the world to which the entities belong
+		int WorldID;
+
+        //! The ID of the entity
+        int EntiyID;
+        
+        //! Data for updating the entity 
+        shared_ptr<sf::Packet> UpdateData;
+    };
+
+    
     //! \brief Holds world physics frozen state change information
     class NetworkResponseDataForWorldFrozen : public BaseNetworkResponseData{
     public:
@@ -383,6 +407,7 @@ namespace Leviathan{
 		DLLEXPORT ~NetworkResponse();
 
 		// Named "constructors" for different types //
+        // todo: these could be changed to take parameters for the object's constructors instead of pointers
 		DLLEXPORT void GenerateIdentificationStringResponse(NetworkResponseDataForIdentificationString* newddata);
 		DLLEXPORT void GenerateInvalidRequestResponse(NetworkResponseDataForInvalidRequest* newddata);
 		DLLEXPORT void GenerateServerStatusResponse(NetworkResponseDataForServerStatus* newddata);
@@ -396,6 +421,7 @@ namespace Leviathan{
         DLLEXPORT void GenerateInitialEntityResponse(NetworkResponseDataForInitialEntity* newddata);
         DLLEXPORT void GenerateEntityConstraintResponse(NetworkResponseDataForEntityConstraint* newddata);
         DLLEXPORT void GenerateWorldFrozenResponse(NetworkResponseDataForWorldFrozen* newddata);
+        DLLEXPORT void GenerateEntityUpdateResponse(NetworkResponseDataForEntityUpdate* newddata);
 
 		DLLEXPORT void GenerateCustomResponse(GameSpecificPacketData* newdpacketdata);
 		DLLEXPORT void GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata);
@@ -432,6 +458,7 @@ namespace Leviathan{
         DLLEXPORT NetworkResponseDataForInitialEntity* GetResponseDataForInitialEntity() const;
         DLLEXPORT NetworkResponseDataForEntityConstraint* GetResponseDataForEntityConstraint() const;
         DLLEXPORT NetworkResponseDataForWorldFrozen* GetResponseDataForWorldFrozen() const;
+        DLLEXPORT NetworkResponseDataForEntityUpdate* GetResponseDataForEntityUpdate() const; 
 
 		DLLEXPORT int GetResponseID() const;
 

@@ -246,6 +246,35 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
 
             return true;
         }
+        case NETWORKRESPONSETYPE_ENTITY_UPDATE:
+        {
+            ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](shared_ptr<NetworkResponse> message)
+                        -> void
+                {
+
+                    auto packetdata = message->GetResponseDataForEntityUpdate();
+
+                    if(!packetdata){
+                        // Invalid data //
+                        return;
+                    }
+
+                    // Get a matching world //
+                    auto world = LeviathanApplication::Get()->GetGameWorld(packetdata->WorldID);
+
+                    if(!world){
+
+                        Logger::Get()->Error("NetworkClientInterface: handle response: ignoring update, WorldID: "+
+                            Convert::ToString(packetdata->WorldID));
+                        return;
+                    }
+
+                    world->HandleEntityUpdatePacket(packetdata);
+
+                }, message)));
+
+            return true;
+        }
         case NETWORKRESPONSETYPE_WORLD_FROZEN:
         {
 

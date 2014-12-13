@@ -34,6 +34,7 @@ namespace Leviathan{
 	class BasePositionable;
     class BaseObject;
     class BaseConstraintable;
+    class BaseSendableEntity;
 
     // Exceptions //
 	class ExceptionInvalidArgument;

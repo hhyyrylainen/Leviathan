@@ -209,6 +209,11 @@ namespace Leviathan{
         DLLEXPORT void HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data, shared_ptr<NetworkResponse>
             packet);
 
+        //! \brief Applies an update packet
+        //!
+        //! If the entity is not found the packet is discarded
+        DLLEXPORT void HandleEntityUpdatePacket(NetworkResponseDataForEntityUpdate* data);
+
         //! \brief Handles a world clock synchronizing packet
         //! \note This should only be allowed to be called on a client that has connected to a server
         DLLEXPORT void HandleClockSyncPacket(RequestWorldClockSyncData* data);

@@ -7,13 +7,21 @@
 #include "Entities/Objects/TrackEntityController.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) : SerializeType(type){
+DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) :
+    SerializeType(type), IsAnyDataUpdated(false)
+{
 
 
 }
 
 DLLEXPORT Leviathan::BaseSendableEntity::~BaseSendableEntity(){
 
+    UpdateReceivers.clear();
+}
+// ------------------------------------ //
+DLLEXPORT BASESENDABLE_ACTUAL_TYPE Leviathan::BaseSendableEntity::GetSendableType() const{
+
+    return SerializeType;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BaseSendableEntity::SerializeToPacket(sf::Packet &packet){
@@ -96,13 +104,83 @@ DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerial
     }
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::BaseSendableEntity::AddConnectionToReceivers(ConnectionInfo* receiver){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    UpdateReceivers.push_back(make_shared<SendableObjectConnectionUpdated>(this, receiver));
+}
+
+// ------------------------------------ //
+DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    // Return if none could want any updates //
+    if(!IsAnyDataUpdated)
+        return;
+
+    // Create current state here as one or more conections should require it //
+    auto curstate = CaptureState();
+    
+    auto end = UpdateReceivers.end();
+    for(auto iter = UpdateReceivers.begin(); iter != end; ++iter){
+
+        // First check does this particular connection need an update //
+        if(!(*iter)->DataUpdatedAfterSending){
+
+            ++iter;
+            continue;
+        }
+
+        shared_ptr<sf::Packet> packet = make_shared<sf::Packet>();
+
+        // Prepare the packet //
+        // The first type is used by EntitySerializerManager and the second by the sendable entity serializer
+        (*packet) << static_cast<int32_t>(ENTITYSERIALIZEDTYPE_SENDABLE_ENTITY) << static_cast<int32_t>(SerializeType);
+        
+        // Now calculate a delta update from curstate to the last confirmed state //
+        curstate->CreateUpdatePacket((*iter)->LastConfirmedData.get(), *packet.get());
+        
+        // Check is the connection fine //
+        shared_ptr<ConnectionInfo> safeconnection = NetworkHandler::Get()->GetSafePointerToConnection(
+            (*iter)->CorrespondingConnection);
+        
+        // This will be the only function removing closed connections //
+        if(!safeconnection){
+
+            iter = UpdateReceivers.erase(iter);
+            // TODO: add a disconnect callback
+            continue;
+        }
+
+        // Create the final update packet //
+        shared_ptr<NetworkResponse> updatemesg = make_shared<NetworkResponse>(-1,
+            PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
+
+        updatemesg->GenerateEntityUpdateResponse(new NetworkResponseDataForEntityUpdate(OwnedByWorld->GetID(),
+                GetID(), packet));
+
+        safeconnection->SendPacketToConnection(updatemesg, 2);
+
+        ++iter;
+    }
+    
+    // After sending every connection is up to date //
+    IsAnyDataUpdated = false;
+}
 
 
+// ------------------ SendableObjectConnectionUpdated ------------------ //
+DLLEXPORT Leviathan::SendableObjectConnectionUpdate::SendableObjectConnectionUpdated(BaseSendableEntity* getstate,
+    ConnectionInfo* connection) :
+    CorrespondingConnection(connection), DataUpdatedAfterSending(false), LastConfirmedData(getstate->CaptureState())
+{
 
 
+}
+// ------------------ ObjectDeltaStateData ------------------ //
+DLLEXPORT Leviathan::ObjectDeltaStateData::~ObjectDeltaStateData(){
 
-
-
-
-
+}
 

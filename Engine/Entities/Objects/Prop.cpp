@@ -330,15 +330,13 @@ DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessag
 	return false;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Entity::Prop::AddUpdateToPacket(sf::Packet &packet, ConnectionInfo* receiver){
-
-    DEBUG_BREAK;
-}
-
 DLLEXPORT bool Leviathan::Entity::Prop::LoadUpdateFromPacket(sf::Packet &packet){
 
-
+    // Do the reverse as in state delta compression //
+    
     DEBUG_BREAK;
+
+    return true;
 }
 // ------------------------------------ //
 bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(sf::Packet &packet){

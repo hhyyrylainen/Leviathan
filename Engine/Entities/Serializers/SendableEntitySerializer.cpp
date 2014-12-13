@@ -31,6 +31,10 @@ DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(BaseObject* o
     // First add the type variable and then let the entity add it's data //
     packet << Type;
 
+    // Add the connection to the known ones (this is before the serialize to make sure that all updates after
+    // serializing get sent)
+    asbase->AddConnectionToReceivers(connectionptr);
+    
     asbase->SerializeToPacket(packet);
 
     return true;
@@ -71,7 +75,18 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(BaseObject* targe
     if(!asbase)
         return false;
 
-    DEBUG_BREAK;
+    // Get the type //
+    int32_t objecttype;
+
+    packet >> objecttype;
+
+    BASESENDABLE_ACTUAL_TYPE sendabletype = static_cast<BASESENDABLE_ACTUAL_TYPE>(objecttype);
+    
+    // Check does the type match //
+    if(!asbase->GetSendableType() == sendabletype)
+        return false;
+    
+    return asbase->LoadUpdateFromPacket(packet);
 }
 // ------------------------------------ //
 DLLEXPORT bool SendableEntitySerializer::IsObjectTypeCorrect(BaseObject* object) const{

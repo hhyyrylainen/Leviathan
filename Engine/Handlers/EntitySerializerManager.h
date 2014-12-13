@@ -44,8 +44,8 @@ namespace Leviathan{
         //! \brief Applies an update from a packet
         //! \return True when a suitable deserializer was found and the target object was valid
         //! \param objectget Function pointer to from which the target can be acquired
-        //! \note The object will be locked by this
-        DLLEXPORT bool ApplyUpdateMessage(sf::Packet &packet, boost::function<BaseObject*(int)> objectget);
+        //! \note The object has to be locked before calling this
+        DLLEXPORT bool ApplyUpdateMessage(sf::Packet &packet, shared_ptr<BaseObject> object);
 
 
         DLLEXPORT static EntitySerializerManager* Get();

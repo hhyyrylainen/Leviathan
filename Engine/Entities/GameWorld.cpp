@@ -1073,7 +1073,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(NetworkResponseDat
     // Apply the update //
     GUARD_LOCK_OTHER_OBJECT(target);
     
-    if(!EntitySerializerManager::Get()->ApplyUpdateMessage(*data->UpdateData, target)){
+    if(!EntitySerializerManager::Get()->ApplyUpdateMessage(*data->UpdateData, data->TickNumber, target)){
 
         Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): applying update to entity "+
             Convert::ToString(data->EntityID)+" failed");

@@ -5,6 +5,9 @@
 #include "Entities/Objects/Brush.h"
 #include "Entities/Objects/Prop.h"
 #include "Entities/Objects/TrackEntityController.h"
+#include "Networking/NetworkResponse.h"
+#include "Networking/ConnectionInfo.h"
+#include "boost/thread/lock_types.hpp"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) :
@@ -108,7 +111,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::AddConnectionToReceivers(Connectio
 
     GUARD_LOCK_THIS_OBJECT();
 
-    UpdateReceivers.push_back(make_shared<SendableObjectConnectionUpdated>(this, receiver));
+    UpdateReceivers.push_back(make_shared<SendableObjectConnectionUpdate>(this, receiver));
 }
 
 // ------------------------------------ //
@@ -158,26 +161,83 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(){
         shared_ptr<NetworkResponse> updatemesg = make_shared<NetworkResponse>(-1,
             PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
 
+        int ticknumber = OwnedByWorld->GetTickNumber();
+        
         updatemesg->GenerateEntityUpdateResponse(new NetworkResponseDataForEntityUpdate(OwnedByWorld->GetID(),
-                GetID(), packet));
+                GetID(), ticknumber, packet));
 
-        safeconnection->SendPacketToConnection(updatemesg, 2);
+        auto senthing = safeconnection->SendPacketToConnection(updatemesg, 2);
 
+        // Add a callback for success //
+        senthing->SetCallback(boost::bind(&SendableEntitySerializer::SucceedOrFailCallback, (*iter), ticknumber,
+                curstate, _1, _2));
+        
         ++iter;
     }
     
     // After sending every connection is up to date //
     IsAnyDataUpdated = false;
 }
+// ------------------------------------ //
+void Leviathan::BaseSendableEntity::_MarkDataUpdated(){
 
+    // Mark all active receivers as needing an update //
+    IsAnyDataUpdated = true;
 
+    auto end = UpdateReceivers.end();
+    for(auto iter = UpdateReceivers.begin(); iter != end; ++iter){
+
+        (*iter)->DataUpdatedAfterSending = true;
+    }
+}
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &packet, int ticknumber){
+
+    // First make the actual implementation class create a state from it //
+    auto receivedstate = CreateStateFromPacket(packet);
+
+    if(!receivedstate)
+        return false;
+
+    // Next find an old state for us that is on the same tick //
+    shared_ptr<ObjectDeltaStateData> ourold;
+
+    
+    
+    if(!ourold){
+        
+        // Didn't find an old state //
+        Logger::Get()->Warning("BaseSendableEntity: coulnd't find our old state for tick number "+
+            Convert::ToString(ticknumber));
+    }
+
+    // Now the implementation checks if we correctly simulated the entity on the client side //
+    VerifyOldState(receivedstate.get(), ourold.get(), ticknumber);
+    
+}
 // ------------------ SendableObjectConnectionUpdated ------------------ //
-DLLEXPORT Leviathan::SendableObjectConnectionUpdate::SendableObjectConnectionUpdated(BaseSendableEntity* getstate,
+DLLEXPORT Leviathan::SendableObjectConnectionUpdate::SendableObjectConnectionUpdate(BaseSendableEntity* getstate,
     ConnectionInfo* connection) :
-    CorrespondingConnection(connection), DataUpdatedAfterSending(false), LastConfirmedData(getstate->CaptureState())
+    CorrespondingConnection(connection), DataUpdatedAfterSending(false), LastConfirmedData(getstate->CaptureState()),
+    LastConfirmedTickNumber(-1)
 {
 
 
+}
+
+DLLEXPORT void Leviathan::SendableObjectConnectionUpdate::SucceedOrFailCallback(int ticknumber,
+    shared_ptr<ObjectDeltaStateData> state, bool succeeded, SentNetworkThing &us)
+{
+    if(!succeeded)
+        return;
+
+    boost::unique_lock<boost::mutex> lock(CallbackMutex);
+    
+    if(ticknumber < LastConfirmedTickNumber)
+        return;
+
+    LastConfirmedTickNumber = ticknumber;
+    LastConfirmedData = state;
 }
 // ------------------ ObjectDeltaStateData ------------------ //
 DLLEXPORT Leviathan::ObjectDeltaStateData::~ObjectDeltaStateData(){

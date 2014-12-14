@@ -103,7 +103,8 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::CreateEntityFromInitialMessag
     return false;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(sf::Packet &packet, shared_ptr<BaseObject> object)
+DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(sf::Packet &packet, int ticknumber,
+    shared_ptr<BaseObject> object)
 {
     // The first thing has to be the type //
     int32_t objtype;
@@ -120,9 +121,9 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(sf::Packet
     
     for(size_t i = 0; i < Serializers.size(); i++){
 
-        if(Serializers[i]->CanHandleType(objtype)){
+        if(Serializers[i]->CanSerializeType(objtype)){
 
-            if(Serializers[i]->ApplyUpdateFromPacket(object.get(), packet)){
+            if(Serializers[i]->ApplyUpdateFromPacket(object.get(), ticknumber, packet)){
 
                 return true;
             }

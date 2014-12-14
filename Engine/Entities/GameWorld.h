@@ -102,6 +102,9 @@ namespace Leviathan{
         //! \note This will be called (or should be) every time the engine ticks
         DLLEXPORT void Tick();
 
+        //! \brief Returns the current tick
+        DLLEXPORT int GetTickNumber() const;
+
 		DLLEXPORT void SetFog();
 		DLLEXPORT void SetSkyBox(const string &materialname);
 

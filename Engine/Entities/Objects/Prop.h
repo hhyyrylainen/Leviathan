@@ -17,7 +17,8 @@
 
 namespace Leviathan{ namespace Entity{
 	
-
+        //! \brief A movable model loaded from a file
+        //! \todo Make sure that _MarkDataUpdated is called enough
         class Prop : virtual public BaseObject, public BaseRenderable, public BaseConstraintable, public BaseParentable,
                        public BaseSendableEntity, public BasePhysicsObject
         {

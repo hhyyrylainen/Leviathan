@@ -547,7 +547,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
 
 	if(!(frompacket >> tmpextract)){
 
-		throw ExcptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
 	}
 
 	JoinRestriction = static_cast<NETWORKRESPONSE_SERVERJOINRESTRICT>(tmpextract);
@@ -939,15 +939,15 @@ DLLEXPORT void Leviathan::NetworkResponseDataForWorldFrozen::AddDataToPacket(sf:
 }
 // ------------------ NetworkResponseDataForEntityUpdate ------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(int worldid, int entityid,
-    shared_ptr<sf::Packet> data) :
-    WorldID(worldid), EntityID(entityid), UpdateData(data)
+    int ticknumber, shared_ptr<sf::Packet> data) :
+    WorldID(worldid), EntityID(entityid), UpdateData(data), TickNumber(ticknumber)
 {
 
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(sf::Packet &frompacket){
 
-    frompacket >> WorldID >> EntityID;
+    frompacket >> WorldID >> EntityID >> TickNumber;
     
     std::string tmpstr;
     frompacket >> tmpstr;
@@ -962,7 +962,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForE
 
 DLLEXPORT void Leviathan::NetworkResponseDataForEntityUpdate::AddDataToPacket(sf::Packet &packet){
 
-    packet << WorldID << EntityID;
+    packet << WorldID << EntityID << TickNumber;
 
     const std::string tmpstr(reinterpret_cast<const char*>(UpdateData->getData()), UpdateData->getDataSize());
         

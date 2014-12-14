@@ -264,7 +264,9 @@ void Leviathan::Entity::Prop::_UpdatePhysicsObjectLocation(){
     
 	// Update potential children //
 	_ParentableNotifyLocationDataUpdated();
-	
+
+    // Notify network of new position //
+    _MarkDataUpdated();
 }
 
 // ------------------------------------ //

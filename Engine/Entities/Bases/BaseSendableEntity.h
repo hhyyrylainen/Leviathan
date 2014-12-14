@@ -9,7 +9,8 @@
 // ---- includes ---- //
 #include "BaseObject.h"
 #include "../Serializers/BaseEntitySerializer.h"
-#include "SFML/Network/Packet.hpp"
+#include "Common/SFMLPackets.h"
+#include "boost/thread/mutex.hpp"
 
 namespace Leviathan{
 
@@ -44,13 +45,16 @@ namespace Leviathan{
     public:
 
         //! \brief Creates an connection holder and creates an initial state
-        DLLEXPORT SendableObjectConnectionUpdated(BaseSendableEntity* getstate, ConnectionInfo* connection);
+        DLLEXPORT SendableObjectConnectionUpdate(BaseSendableEntity* getstate, ConnectionInfo* connection);
 
-
+        //! \brief Used to update LastConfirmedData
+        DLLEXPORT void SucceedOrFailCallback(int ticknumber, shared_ptr<ObjectDeltaStateData> state,
+            bool succeeded, SentNetworkThing &us);
+        
     protected:
 
-        void operator =(SendableObjectConnectionUpdated &other) = delete;
-        SendableObjectConnectionUpdated(const SendableObjectConnectionUpdated &other) = delete;
+        void operator =(SendableObjectConnectionUpdate &other) = delete;
+        SendableObjectConnectionUpdate(const SendableObjectConnectionUpdate &other) = delete;
         
         // ------------------------------------ //
         
@@ -64,6 +68,14 @@ namespace Leviathan{
         //! \note This is set to be the last known successfully sent state to avoid having to
         //! resend intermediate steps
         shared_ptr<ObjectDeltaStateData> LastConfirmedData;
+
+        //! The tick number of the confirmed state
+        //! If a state is confirmed as received that has number higher than this LastConfirmedData will
+        //! be replaced.
+        int LastConfirmedTickNumber;
+
+        //! Mutex for callback function
+        boost::mutex CallbackMutex;
     };
     
     //! \brief Inherited by objects that can be serialized using the SendableEntitySerializer
@@ -87,11 +99,20 @@ namespace Leviathan{
             int id);
 
         //! \brief Loads an update from a packet
-        DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet) = 0;
+        DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet, int ticknumber);
 
         //! \brief Capture current object state
         //! \todo Allow this to be cached to improve performance
         DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() = 0;
+
+        //! \brief Verifies that an old server state is consistent with the client state
+        //! \param serversold The server's state that we have received
+        //! \param ourold Our old state that matches the tick, if any (only exact tick number matches are counted)
+        //! \param tick The tick on which the state was captured
+        DLLEXPORT virtual void VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold, int tick);
+
+        //! \brief Subclasses initialize their state object of choice from a packet
+        DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet) const = 0;
         
         //! \brief Tells this entity send updates to all receivers
         //!
@@ -119,6 +140,10 @@ namespace Leviathan{
         //! \brief Child classers use this to serialize their own data to a packet
         //! \note The class implementing this might want to lock while this is being called to avoid properties changing
         virtual void _SaveOwnDataToPacket(sf::Packet &packet) = 0;
+
+        //! \brief Called internally when data is updated
+        //! \note This object has to be locked before this call
+        void _MarkDataUpdated();
         
         // ------------------------------------ //
         
@@ -129,7 +154,7 @@ namespace Leviathan{
 
         //! List of receivers that will be updated whenever state changes and GameWorld decides it being
         //! the time to send updates
-        std::vector<shared_ptr<SendableObjectConnectionUpdated>> UpdateReceivers;
+        std::vector<shared_ptr<SendableObjectConnectionUpdate>> UpdateReceivers;
 
         //! Object-wide flag denoting that one or more UpdateReceivers could want an update
         bool IsAnyDataUpdated;

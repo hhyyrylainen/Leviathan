@@ -412,6 +412,9 @@ void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(){
     
 	// Update potential children //
 	_ParentableNotifyLocationDataUpdated();
+
+    // Notify network of new position //
+    _MarkDataUpdated();
 }
 // ------------------------------------ //
 void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix,
@@ -445,12 +448,6 @@ void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const bo
     
 	// Update potential children //
 	tmp->_ParentableNotifyLocationDataUpdated();
-}
-// ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::Brush::LoadUpdateFromPacket(sf::Packet &packet){
-
-
-    DEBUG_BREAK;
 }
 // ------------------------------------ //
 bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){

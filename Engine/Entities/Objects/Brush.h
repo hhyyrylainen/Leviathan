@@ -21,7 +21,8 @@ namespace Leviathan{
 
 namespace Leviathan{ namespace Entity{
 
-
+        //! \brief A (potentially) movable brush
+        //! \todo Make sure that _MarkDataUpdated is called enough
         class Brush : virtual public BaseObject, public BaseRenderable, public BaseConstraintable,
                         public BaseParentable, public BaseSendableEntity, public BasePhysicsObject
         {
@@ -48,9 +49,6 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseSendableEntity::CaptureState
             DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() override;
 
-
-            //! \copydoc BaseSendableEntity::LoadUpdateFromPacket
-            DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet) override;
 
         protected:
 

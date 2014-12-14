@@ -276,12 +276,6 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::SetTrackAdvanceSpeed(co
     ChangeSpeed = speed;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Entity::TrackEntityController::AddUpdateToPacket(sf::Packet &packet, ConnectionInfo*
-    receiver)
-{
-    DEBUG_BREAK;
-}
-
 DLLEXPORT bool Leviathan::Entity::TrackEntityController::LoadUpdateFromPacket(sf::Packet &packet){
 
     DEBUG_BREAK;

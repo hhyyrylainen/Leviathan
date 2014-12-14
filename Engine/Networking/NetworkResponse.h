@@ -1,5 +1,5 @@
 #ifndef LEVIATHAN_NETWORKRESPONSE 
-#defin LEVIATHAN_NETWORKRESPONSE
+#define LEVIATHAN_NETWORKRESPONSE
 // ------------------------------------ //
 #ifndef LEVIATHAN_DEFINE
 #include "Define.h"
@@ -357,7 +357,8 @@ namespace Leviathan{
     class NetworkResponseDataForEntityUpdate : public BaseNetworkResponseData{
     public:
         
-        DLLEXPORT NetworkResponseDataForEntityUpdate(int worldid, int entityid, shared_ptr<sf::Packet> data);
+        DLLEXPORT NetworkResponseDataForEntityUpdate(int worldid, int entityid, int ticknumber,
+            shared_ptr<sf::Packet> data);
 
         DLLEXPORT NetworkResponseDataForEntityUpdate(sf::Packet &frompacket);
 
@@ -367,7 +368,10 @@ namespace Leviathan{
 		int WorldID;
 
         //! The ID of the entity
-        int EntiyID;
+        int EntityID;
+
+        //! The tick on which this was generated
+        int TickNumber;
         
         //! Data for updating the entity 
         shared_ptr<sf::Packet> UpdateData;

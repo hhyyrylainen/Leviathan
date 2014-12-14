@@ -14,7 +14,24 @@ namespace Leviathan{
 
 
     //! Flags for which fields have changed
-    
+    //! \see PositionablePhysicalDeltaState
+    enum PPDELTAUPDATED{
+
+        // Position
+        PPDELTAUPDATED_POS_X = 1 << 0,
+        PPDELTAUPDATED_POS_Y = 1 << 1,
+        PPDELTAUPDATED_POS_Z = 1 << 2,
+
+        // Velocity
+        PPDELTAUPDATED_VEL_X = 1 << 3,
+        PPDELTAUPDATED_VEL_Y = 1 << 4,
+        PPDELTAUPDATED_VEL_Z = 1 << 5,
+
+        // Torque
+        PPDELTAUPDATED_TOR_X = 1 << 6,
+        PPDELTAUPDATED_TOR_Y = 1 << 7,
+        PPDELTAUPDATED_TOR_Z = 1 << 8
+    };
 
     //! \brief State object for entities that only have position and base physical components
 	class PositionablePhysicalDeltaState : public ObjectDeltaStateData{

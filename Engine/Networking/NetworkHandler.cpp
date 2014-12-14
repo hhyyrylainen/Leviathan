@@ -381,7 +381,7 @@ DLLEXPORT USHORT Leviathan::NetworkHandler::GetOurPort(){
 	return _Socket.getLocalPort();
 }
 
-DLLEXPORT NETWORKED_TYPE Leviathan::NetworkHandler::GetNetworkType(){
+DLLEXPORT NETWORKED_TYPE Leviathan::NetworkHandler::GetNetworkType() const{
 	return AppType;
 }
 // ------------------------------------ //

@@ -114,7 +114,7 @@ namespace Leviathan{
 		//! \brief Gets the type of network this program uses
 		//!
 		//! Will usually be NETWORKED_TYPE_CLIENT or NETWORKED_TYPE_SERVER
-		DLLEXPORT NETWORKED_TYPE GetNetworkType();
+		DLLEXPORT NETWORKED_TYPE GetNetworkType() const;
 
 		//! \brief Marks a connection as closing
 		//!

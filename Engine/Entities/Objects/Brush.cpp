@@ -447,11 +447,6 @@ void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const bo
 	tmp->_ParentableNotifyLocationDataUpdated();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Entity::Brush::AddUpdateToPacket(sf::Packet &packet, ConnectionInfo* receiver){
-
-    DEBUG_BREAK;
-}
-
 DLLEXPORT bool Leviathan::Entity::Brush::LoadUpdateFromPacket(sf::Packet &packet){
 
 

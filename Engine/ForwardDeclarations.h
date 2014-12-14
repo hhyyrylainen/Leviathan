@@ -50,6 +50,7 @@ namespace Leviathan{
     class NetworkResponseDataForInitialEntity;
     class NetworkResponseDataForEntityConstraint;
     class NetworkResponseDataForWorldFrozen;
+    class NetworkResponseDataForEntityUpdate;
 
     // Network Request //
     class RequestWorldClockSyncData;

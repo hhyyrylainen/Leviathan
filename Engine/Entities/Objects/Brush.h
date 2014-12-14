@@ -45,8 +45,9 @@ namespace Leviathan{ namespace Entity{
             static void BrushPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const
                 matrix, int threadIndex);
 
-            //! \copydoc BaseSendableEntity::AddUpdateToPacket
-            DLLEXPORT virtual void AddUpdateToPacket(sf::Packet &packet, ConnectionInfo* receiver) override;
+            //! \copydoc BaseSendableEntity::CaptureState
+            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() override;
+
 
             //! \copydoc BaseSendableEntity::LoadUpdateFromPacket
             DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet) override;

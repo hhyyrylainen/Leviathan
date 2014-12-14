@@ -7,13 +7,22 @@
 #include "Entities/Objects/TrackEntityController.h"
 #include "Networking/NetworkResponse.h"
 #include "Networking/ConnectionInfo.h"
+#include "Networking/NetworkHandler.h"
 #include "boost/thread/lock_types.hpp"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) :
-    SerializeType(type), IsAnyDataUpdated(false)
+    SerializeType(type), IsAnyDataUpdated(false), LastVerifiedTick(-1)
 {
+    // Only clients allocate any space to the circular state buffer //
+    if(NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT){
 
+        ClientStateBuffer(BASESENDABLE_STORED_CLIENT_STATES);
+        
+    } else {
+
+        ClientStateBuffer(0);
+    }
 
 }
 
@@ -28,7 +37,8 @@ DLLEXPORT BASESENDABLE_ACTUAL_TYPE Leviathan::BaseSendableEntity::GetSendableTyp
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BaseSendableEntity::SerializeToPacket(sf::Packet &packet){
-
+    GUARD_LOCK_THIS_OBJECT();
+    
     packet << static_cast<int32_t>(SerializeType);
 
     _SaveOwnDataToPacket(packet);
@@ -184,6 +194,9 @@ void Leviathan::BaseSendableEntity::_MarkDataUpdated(){
     // Mark all active receivers as needing an update //
     IsAnyDataUpdated = true;
 
+    if(UpdateReceivers.empty())
+        return;
+
     auto end = UpdateReceivers.end();
     for(auto iter = UpdateReceivers.begin(); iter != end; ++iter){
 
@@ -192,7 +205,18 @@ void Leviathan::BaseSendableEntity::_MarkDataUpdated(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &packet, int ticknumber){
+    {
+        GUARD_LOCK_THIS_OBJECT();
+        
+        // Ignore if older than latest update //
+        if(ticknumber < LastVerifiedTick){
 
+            return true;
+        }
+
+        LastVerifiedTick = ticknumber;
+    }
+    
     // First make the actual implementation class create a state from it //
     auto receivedstate = CreateStateFromPacket(packet);
 
@@ -202,18 +226,52 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
     // Next find an old state for us that is on the same tick //
     shared_ptr<ObjectDeltaStateData> ourold;
 
+    int oldestfound = INT_MAX;
     
+    {
+        GUARD_LOCK_THIS_OBJECT();
+        auto end = ClientStateBuffer.end();
+        for(auto iter = ClientStateBuffer.begin(); iter != end; ++iter){
+            
+            if(iter->Tick < oldestfound)
+                oldestfound = iter->Tick;
+            
+            if(iter->Tick == ticknumber){
+
+                // Found a matching state //
+                ourold = iter->State;
+                break;
+            }
+        }
+    }
     
     if(!ourold){
         
         // Didn't find an old state //
-        Logger::Get()->Warning("BaseSendableEntity: coulnd't find our old state for tick number "+
-            Convert::ToString(ticknumber));
+        // This could be because the object just started moving //
+
+        // This means that the state has already been popped //
+        if(oldestfound > ticknumber)
+            Logger::Get()->Warning("BaseSendableEntity: coulnd't find our old state for tick number "+
+                Convert::ToString(ticknumber));
     }
 
     // Now the implementation checks if we correctly simulated the entity on the client side //
     VerifyOldState(receivedstate.get(), ourold.get(), ticknumber);
+
+    return true;
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::BaseSendableEntity::StoreClientSideState(int ticknumber){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    if(!IsAnyDataUpdated)
+        return;
     
+    assert(ClientStateBuffer.capacity() != 0 && "StoreClientSideState called on something that isn't a client");
+
+    ClientStateBuffer.push_back(SendableObjectClientState(ticknumber, CaptureState()));
 }
 // ------------------ SendableObjectConnectionUpdated ------------------ //
 DLLEXPORT Leviathan::SendableObjectConnectionUpdate::SendableObjectConnectionUpdate(BaseSendableEntity* getstate,
@@ -243,4 +301,9 @@ DLLEXPORT void Leviathan::SendableObjectConnectionUpdate::SucceedOrFailCallback(
 DLLEXPORT Leviathan::ObjectDeltaStateData::~ObjectDeltaStateData(){
 
 }
-
+// ------------------ SendableObjectClientState ------------------ //
+Leviathan::SendableObjectClientState::SendableObjectClientState(int tick, shared_ptr<ObjectDeltaStateData> state) :
+    Tick(tick), State(state)
+{
+    
+}

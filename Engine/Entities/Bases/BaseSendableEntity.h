@@ -11,6 +11,9 @@
 #include "../Serializers/BaseEntitySerializer.h"
 #include "Common/SFMLPackets.h"
 #include "boost/thread/mutex.hpp"
+#include "boost/circular_buffer.hpp"
+
+#define BASESENDABLE_STORED_CLIENT_STATES 12
 
 namespace Leviathan{
 
@@ -77,6 +80,15 @@ namespace Leviathan{
         //! Mutex for callback function
         boost::mutex CallbackMutex;
     };
+
+    //! \brief Contains a clientside state and the tick on which it was captured
+    struct SendableObjectClientState{
+        SendableObjectClientState(int tick, shared_ptr<ObjectDeltaStateData> state);
+        
+        int Tick;
+        shared_ptr<ObjectDeltaStateData> State;
+    };
+    
     
     //! \brief Inherited by objects that can be serialized using the SendableEntitySerializer
 	class BaseSendableEntity : public virtual BaseObject{
@@ -119,7 +131,13 @@ namespace Leviathan{
         //! An update will be created for each connected ConnectionInfo and then sent.
         //! This will be periodically called by the GameWorld but after, for example, setting the position
         //! this can be called to get clients to update their positions faster
-        DLLEXPORT virtual void SendUpdatesToAllClients();
+        DLLEXPORT void SendUpdatesToAllClients();
+
+        //! \brief Tells this entity to capture its client side state
+        //! \note It will only be captured if the object is marked as updated
+        //! \warning This may NOT be called on any other application than a client
+        //! \see IsAnyDataUpdated
+        DLLEXPORT void StoreClientSideState(int ticknumber);
 
         //! \brief Adds a new connection to known receivers
         DLLEXPORT virtual void AddConnectionToReceivers(ConnectionInfo* receiver);
@@ -157,7 +175,15 @@ namespace Leviathan{
         std::vector<shared_ptr<SendableObjectConnectionUpdate>> UpdateReceivers;
 
         //! Object-wide flag denoting that one or more UpdateReceivers could want an update
+        //! \note On the client side this controls whehter an state capture notification actually captures a new state
         bool IsAnyDataUpdated;
+
+        //! Clientside buffer of past states
+        boost::circular_buffer<SendableObjectClientState> ClientStateBuffer;
+
+        //! The tick on which the client state was last checked with the server
+        //! any updates older than this will be ignored
+        int LastVerifiedTick;
     };
 
 }

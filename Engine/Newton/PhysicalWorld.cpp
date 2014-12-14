@@ -21,12 +21,9 @@ DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) :
 
 	// \todo figure out how to use this exact mode //
 	//NewtonSetSolverModel(World, 0);
-	//// fast mode //
-	//NewtonSetSolverModel(World, 1);
-	NewtonSetSolverModel(World, 2);
 
-	// set size //
-	//NewtonSetWorldSize();
+    // Accurate enough mode //
+    NewtonSetSolverModel(World, 1);
 
 	// Create materials for this world //
 	PhysicsMaterialManager::Get()->CreateActualMaterialsForWorld(World);

@@ -25,6 +25,7 @@ namespace Leviathan{
 
 #define WORLD_CLOCK_SYNC_PACKETS 12
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
+#define WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL 5
 
     //! Holds internal data for initial player syncing
     class PlayerConnectionPreparer;
@@ -252,6 +253,9 @@ namespace Leviathan{
         //! \returns True when the constraint is applied
         bool _TryApplyConstraint(NetworkResponseDataForEntityConstraint* data);
 
+        //! \brief Removes a sendable entity from the specific sendable vector
+        void _EraseFromSendable(BaseSendableEntity* obj, ObjectLock &guard);
+
 		// ------------------------------------ //
 		Ogre::Camera* WorldSceneCamera;
 		Ogre::SceneManager* WorldsScene;
@@ -290,8 +294,10 @@ namespace Leviathan{
         
 
 		// objects //
-		// \todo maybe change this to a map //
 		std::vector<shared_ptr<BaseObject>> Objects;
+
+        //! Objects that are sendable and require additional operations
+        std::vector<BaseSendableEntity*> SendableObjects;
 
         //! The unique ID
         int ID;

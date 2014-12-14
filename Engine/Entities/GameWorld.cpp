@@ -16,11 +16,13 @@
 #include "Networking/NetworkResponse.h"
 #include "Bases/BasePositionable.h"
 #include "Networking/ConnectionInfo.h"
+#include "Networking/NetworkHandler.h"
 #include "Threading/ThreadingManager.h"
 #include "Handlers/EntitySerializerManager.h"
 #include "Handlers/ConstraintSerializerManager.h"
 #include "Entities/Objects/Constraints.h"
 #include "Entities/Bases/BaseConstraintable.h"
+#include "Entities/Bases/BaseSendableEntity.h"
 #include "Engine.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -224,8 +226,10 @@ DLLEXPORT bool Leviathan::GameWorld::Init(GraphicalInputEntity* renderto, Ogre::
 
 	// Detecting non-GUI mode //
 	if(ogre){
+        
 		if(!renderto)
 			return false;
+        
 		GraphicalMode = true;
 		// these are always required for worlds //
 		_CreateOgreResources(ogre, renderto->GetWindow());
@@ -258,6 +262,7 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 	}
 
 	Objects.clear();
+    SendableObjects.clear();
 
 	if(GraphicalMode){
 		// TODO: notify our window that it no longer has a world workspace
@@ -404,7 +409,44 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(BaseObject* obj, 
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::Tick(){
 
+    GUARD_LOCK_THIS_OBJECT();
+    
     TickNumber++;
+
+    // Sendable objects may need something to be done //
+    auto nethandler = NetworkHandler::Get();
+
+    // TODO: the vectors could be sorted to improve branch predictor performance
+    if(nethandler->GetNetworkType() == NETWORKED_TYPE_SERVER){
+
+        // Skip if not tick that will be stored //
+        if(TickNumber % WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL != 0)
+            goto worldskiphandlingsendableobjectslabel;
+
+        
+        for(size_t i = 0; i < SendableObjects.size(); ++i){
+            
+            auto target = SendableObjects[i];
+
+            if(target->IsAnyDataUpdated)
+                target->SendUpdatesToAllClients(TickNumber);
+            
+        }
+        
+    } else if(nethandler->GetNetworkType() == NETWORKED_TYPE_CLIENT){
+
+        for(size_t i = 0; i < SendableObjects.size(); ++i){
+            
+            auto target = SendableObjects[i];
+
+            if(target->IsAnyDataUpdated)
+                target->StoreClientSideState(TickNumber);
+            
+        }
+    }
+
+worldskiphandlingsendableobjectslabel:
+    
 }
 // ------------------ Object managing ------------------ //
 DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
@@ -412,8 +454,20 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
 }
 
 DLLEXPORT void Leviathan::GameWorld::AddObject(shared_ptr<BaseObject> obj){
+
+    if(!obj)
+        return;
+    
 	GUARD_LOCK_THIS_OBJECT();
 	Objects.push_back(obj);
+
+    // Check is it a sendable object //
+    BaseSendableEntity* sendable = dynamic_cast<BaseSendableEntity*>(obj.get());
+
+    if(sendable){
+
+        SendableObjects.push_back(sendable);
+    }
 
     // Check for constraints //
     if(WaitingConstraints.empty())
@@ -522,6 +576,7 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(ObjectLock &guard){
 	}
 	// Release our reference //
 	Objects.clear();
+    SendableObjects.clear();
 
     // Throw away the waiting constraints //
     WaitingConstraints.clear();
@@ -547,13 +602,31 @@ DLLEXPORT void Leviathan::GameWorld::ClearSimulatePassedTime(){
 	_PhysicalWorld->ClearTimers();
 }
 // ------------------------------------ //
+void Leviathan::GameWorld::_EraseFromSendable(BaseSendableEntity* obj, ObjectLock &guard){
+
+    for(size_t i = 0; i < SendableObjects.size(); i++){
+
+        if(SendableObjects[i] == obj){
+
+            SendableObjects.erase(SendableObjects.begin()+i);
+        }
+    }
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
 	GUARD_LOCK_THIS_OBJECT();
-	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
+    auto end = Objects.end();
+    
+	for(auto iter = Objects.begin(); iter != end(); ++iter){
+        
 		if((*iter)->GetID() == ID){
+            // Also erase from sendable //
+            _EraseFromSendable(dynamic_cast<BaseSendableEntity*>((*iter).get()));
+            
 			// release the object and then erase our reference //
 			(*iter)->ReleaseData();
 			Objects.erase(iter);
+            
 			return;
 		}
 	}
@@ -604,9 +677,13 @@ void Leviathan::GameWorld::_HandleDelayedDelete(ObjectLock &guard){
 		}
 
 		if(delthis){
-
+            
+            // Also erase from sendable //
+            _EraseFromSendable(dynamic_cast<BaseSendableEntity*>((*iter).get()));
+            
 			(*iter)->ReleaseData();
 			iter = Objects.erase(iter);
+            
 			// Check for end //
 			if(DelayedDeleteIDS.size() == 0)
 				return;

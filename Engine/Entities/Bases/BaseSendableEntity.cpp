@@ -125,7 +125,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::AddConnectionToReceivers(Connectio
 }
 
 // ------------------------------------ //
-DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(){
+DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknumber){
 
     GUARD_LOCK_THIS_OBJECT();
 
@@ -171,8 +171,6 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(){
         shared_ptr<NetworkResponse> updatemesg = make_shared<NetworkResponse>(-1,
             PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
 
-        int ticknumber = OwnedByWorld->GetTickNumber();
-        
         updatemesg->GenerateEntityUpdateResponse(new NetworkResponseDataForEntityUpdate(OwnedByWorld->GetID(),
                 GetID(), ticknumber, packet));
 

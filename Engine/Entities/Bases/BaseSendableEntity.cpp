@@ -12,18 +12,12 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) :
-    SerializeType(type), IsAnyDataUpdated(false), LastVerifiedTick(-1)
-{
+    SerializeType(type), IsAnyDataUpdated(false), LastVerifiedTick(-1),
     // Only clients allocate any space to the circular state buffer //
-    if(NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT){
-
-        ClientStateBuffer(BASESENDABLE_STORED_CLIENT_STATES);
-        
-    } else {
-
-        ClientStateBuffer(0);
-    }
-
+    ClientStateBuffer(NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT ?
+        BASESENDABLE_STORED_CLIENT_STATES: 0)
+{
+    
 }
 
 DLLEXPORT Leviathan::BaseSendableEntity::~BaseSendableEntity(){
@@ -177,8 +171,9 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
         auto senthing = safeconnection->SendPacketToConnection(updatemesg, 2);
 
         // Add a callback for success //
-        senthing->SetCallback(boost::bind(&SendableEntitySerializer::SucceedOrFailCallback, (*iter), ticknumber,
-                curstate, _1, _2));
+        senthing->SetCallback(boost::bind(
+                &SendableObjectConnectionUpdate::SucceedOrFailCallback, (*iter), ticknumber, curstate,
+                _1, _2));
         
         ++iter;
     }

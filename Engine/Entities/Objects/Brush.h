@@ -49,7 +49,9 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseSendableEntity::CaptureState
             DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() override;
 
-
+            //! \copydoc BaseSendableEntity::CreateStateFromPacket
+            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet) const override;
+            
         protected:
 
             //! \brief Constructs a brush for receiving through the network

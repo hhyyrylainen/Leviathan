@@ -446,7 +446,8 @@ DLLEXPORT void Leviathan::GameWorld::Tick(){
     }
 
 worldskiphandlingsendableobjectslabel:
-    
+
+    return;
 }
 // ------------------ Object managing ------------------ //
 DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
@@ -617,11 +618,11 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
 	GUARD_LOCK_THIS_OBJECT();
     auto end = Objects.end();
     
-	for(auto iter = Objects.begin(); iter != end(); ++iter){
+	for(auto iter = Objects.begin(); iter != end; ++iter){
         
 		if((*iter)->GetID() == ID){
             // Also erase from sendable //
-            _EraseFromSendable(dynamic_cast<BaseSendableEntity*>((*iter).get()));
+            _EraseFromSendable(dynamic_cast<BaseSendableEntity*>(iter->get()), guard);
             
 			// release the object and then erase our reference //
 			(*iter)->ReleaseData();
@@ -679,7 +680,7 @@ void Leviathan::GameWorld::_HandleDelayedDelete(ObjectLock &guard){
 		if(delthis){
             
             // Also erase from sendable //
-            _EraseFromSendable(dynamic_cast<BaseSendableEntity*>((*iter).get()));
+            _EraseFromSendable(dynamic_cast<BaseSendableEntity*>((*iter).get()), guard);
             
 			(*iter)->ReleaseData();
 			iter = Objects.erase(iter);

@@ -67,6 +67,9 @@ namespace Leviathan{
         //! is received
         DLLEXPORT void SetAsTimed();
 
+        //! \brief Binds a callback function that is called either when the packet is successfully sent or it times out
+        DLLEXPORT void SetCallback(boost::function<void(bool, SentNetworkThing&)> func);
+
 		int PacketNumber;
 
 		int MaxTries;

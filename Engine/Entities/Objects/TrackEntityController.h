@@ -83,10 +83,13 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseSendableEntity::CaptureState
             DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() override;
 
-            //! \copydoc BaseSendableEntity::LoadUpdateFromPacket
-            DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet) override;
+            //! \copydoc BaseSendableEntity::VerfiyOldState
+            DLLEXPORT virtual void VerifyOldState(ObjectDeltaStateData* serversold,
+                ObjectDeltaStateData* ourold, int tick) override;
 
-
+            //! \copydoc BaseSendableEntity::CreateStateFromPacket
+            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet) const override;
+            
         protected:
 
             TrackEntityController(int netid, GameWorld* world);

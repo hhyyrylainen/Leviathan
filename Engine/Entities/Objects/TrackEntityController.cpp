@@ -276,11 +276,6 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::SetTrackAdvanceSpeed(co
     ChangeSpeed = speed;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::TrackEntityController::LoadUpdateFromPacket(sf::Packet &packet){
-
-    DEBUG_BREAK;
-}
-// ------------------------------------ //
 bool Leviathan::Entity::TrackEntityController::_LoadOwnDataFromPacket(sf::Packet &packet){
     int reachednode;
     float nodeprogress, changespeed, force;

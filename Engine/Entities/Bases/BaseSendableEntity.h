@@ -132,7 +132,7 @@ namespace Leviathan{
         //! An update will be created for each connected ConnectionInfo and then sent.
         //! This will be periodically called by the GameWorld but after, for example, setting the position
         //! this can be called to get clients to update their positions faster
-        DLLEXPORT void SendUpdatesToAllClients(int ticknumber = OwnedByWorld->GetTickNumber());
+        DLLEXPORT void SendUpdatesToAllClients(int ticknumber);
 
         //! \brief Tells this entity to capture its client side state
         //! \note It will only be captured if the object is marked as updated

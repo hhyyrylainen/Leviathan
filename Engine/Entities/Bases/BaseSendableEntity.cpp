@@ -210,13 +210,7 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
         LastVerifiedTick = ticknumber;
     }
     
-    // First make the actual implementation class create a state from it //
-    auto receivedstate = CreateStateFromPacket(packet);
-
-    if(!receivedstate)
-        return false;
-
-    // Next find an old state for us that is on the same tick //
+    // First find an old state for us that is on the same tick //
     shared_ptr<ObjectDeltaStateData> ourold;
 
     int oldestfound = INT_MAX;
@@ -248,6 +242,12 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
             Logger::Get()->Warning("BaseSendableEntity: coulnd't find our old state for tick number "+
                 Convert::ToString(ticknumber));
     }
+
+    // Then we create a state from the packet filling in the blanks from the old state //
+    auto receivedstate = CreateStateFromPacket(packet, ourold);
+
+    if(!receivedstate)
+        return false;
 
     // Now the implementation checks if we correctly simulated the entity on the client side //
     VerifyOldState(receivedstate.get(), ourold.get(), ticknumber);

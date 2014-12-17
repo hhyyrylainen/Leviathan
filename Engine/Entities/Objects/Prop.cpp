@@ -8,6 +8,7 @@
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
 #include "OgreEntity.h"
+#include "Entities/CommonStateObjects.h"
 using namespace Leviathan;
 using namespace Leviathan::Entity;
 // ------------------------------------ //
@@ -391,5 +392,32 @@ void Leviathan::Entity::Prop::_SaveOwnDataToPacket(sf::Packet &packet){
     
     packet << ModelFile;
 }
+// ------------------------------------ //
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CaptureState(){
+    
+    return shared_ptr<ObjectDeltaStateData>(
+        PositionablePhysicalDeltaState::CaptureState(*this).release());
+}
 
+DLLEXPORT void Leviathan::Entity::Prop::VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold,
+    int tick)
+{
 
+    DEBUG_BREAK;
+}
+
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CreateStateFromPacket(sf::Packet &packet,
+    shared_ptr<ObjectDeltaStateData> fillblanks) const
+{
+    try{
+        
+        return make_shared<PositionablePhysicalDeltaState>(packet, fillblanks);
+        
+    } catch(ExceptionInvalidArgument &e){
+
+        Logger::Get()->Warning("Prop: failed to CreateStateFromPacket, exception:");
+        e.PrintToLog();
+        return nullptr;
+    }
+    
+}

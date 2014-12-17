@@ -2,6 +2,7 @@
 #ifndef LEVIATHAN_COMMONSTATEOBJECTS
 #include "CommonStateObjects.h"
 #endif
+#include "Exceptions/ExceptionInvalidArgument.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -11,6 +12,69 @@ DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaSt
     Position(position), Velocity(velocity), Torque(torque)
 {
 
+}
+
+DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaState(sf::Packet &packet,
+    shared_ptr<ObjectDeltaStateData> fillblanks)
+{
+    int16_t packetstates = 0;
+
+    // We need to do the opposite of what we do in CreateUpdatePacket //
+    packet >> packetstates;
+
+    if(!packet)
+        throw ExceptionInvalidArgument(L"invalid packet for positionable delta state", 0, __WFUNCTION__,
+            L"packet", L"");
+    
+    // Warn if we can't fill in the blanks //
+    if(!fillblanks){
+
+        if(packetstates != PPDELTA_ALL_UPDATED){
+
+            // TODO: add a mechanism for automatically reporting engine bugs that shouldn't happen //
+            Logger::Get()->Error("PositionablePhysicalDeltaState: trying to reconstruct packet update without older "
+                "state, PLEASE REPORT THIS ERROR");
+            
+            Position = 0;
+            Velocity = 0;
+            Torque = 0;
+        }
+        
+    } else {
+
+        // Take starting values from the fillblanks one //
+        (*this) = *fillblanks;
+    }
+
+    // Position
+    if(packetstates & PPDELTAUPDATED_POS_X)
+        packet >> Position.X;
+
+    if(packetstates & PPDELTAUPDATED_POS_Y)
+        packet >> Position.Y;
+    
+    if(packetstates & PPDELTAUPDATED_POS_Z)
+        packet >> Position.Z;
+
+    // Velocity
+    if(packetstates & PPDELTAUPDATED_VEL_X)
+        packet >> Velocity.X;
+
+    if(packetstates & PPDELTAUPDATED_VEL_Y)
+        packet >> Velocity.Y;
+    
+    if(packetstates & PPDELTAUPDATED_VEL_Z)
+        packet >> Velocity.Z;
+
+    // Torque
+    if(packetstates & PPDELTAUPDATED_TOR_X)
+        packet >> Torque.X;
+
+    if(packetstates & PPDELTAUPDATED_TOR_Y)
+        packet >> Torque.Y;
+    
+    if(packetstates & PPDELTAUPDATED_TOR_Z)
+        packet >> Torque.Z;
 }
 
 DLLEXPORT Leviathan::PositionablePhysicalDeltaState::~PositionablePhysicalDeltaState(){
@@ -28,8 +92,7 @@ DLLEXPORT void Leviathan::PositionablePhysicalDeltaState::CreateUpdatePacket(Obj
     if(!olderstate){
 
         // When comparing against NULL state everything is updated //
-        // Set to max 16 bit value to set all to one //
-        changedparts = 65535;
+        changedparts = PPDELTA_ALL_UPDATED;
         
     } else {
 

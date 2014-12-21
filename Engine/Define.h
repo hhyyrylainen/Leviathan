@@ -7,6 +7,8 @@
 #include "ForwardDeclarations.h"
 #include <boost/ratio.hpp>
 
+//! Number of milliseconds between engine and world ticks
+#define TICKSPEED 50
 
 namespace Leviathan{
 

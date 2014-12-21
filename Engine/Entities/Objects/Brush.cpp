@@ -8,6 +8,7 @@
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
 #include "OgreEntity.h"
+#include "Entities/CommonStateObjects.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
@@ -554,4 +555,68 @@ DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessa
 
 	return false;
 }
+// ------------------------------------ //
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(){
+    
+    return shared_ptr<ObjectDeltaStateData>(
+        PositionablePhysicalDeltaState::CaptureState(*this).release());
+}
+
+DLLEXPORT void Leviathan::Entity::Brush::VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold,
+    int tick)
+{
+    // Check first do we need to resimulate //
+    bool requireupdate = false;
+
+    PositionablePhysicalDeltaState* servercasted = static_cast<PositionablePhysicalDeltaState*>(serversold);
+    PositionablePhysicalDeltaState* ourcasted = static_cast<PositionablePhysicalDeltaState*>(ourold);
+    
+    if(!ourold){
+
+        requireupdate = true;
+        
+    } else {
+        
+        float totaldifference = 0.f;
+
+        totaldifference += (ourcasted->Position-servercasted->Position).HAddAbs();
+        totaldifference += (ourcasted->Velocity-servercasted->Velocity).HAddAbs();
+        totaldifference += (ourcasted->Torque-servercasted->Torque).HAddAbs();
+
+        if(totaldifference >= SENDABLE_RESIMULATE_THRESSHOLD){
+
+            // We are too far of the right values //
+            requireupdate = true;
+        }
+    }
+
+    // All good if our old state matched //
+    if(!requireupdate)
+        return;
+
+    // Go back to the verified position and resimulate from there //
+    SetPos(servercasted->Position);
+    SetBodyVelocity(servercasted->Velocity);
+    SetBodyTorque(servercasted->Torque);
+
+    Logger::Get()->Write("Resimulating body for "+Convert::ToString(abs(OwnedByWorld->GetTickNumber()-tick))+" ticks");
+    OwnedByWorld->GetPhysicalWorld()->ResimulateBody(Body, abs(OwnedByWorld->GetTickNumber()-tick)*TICKSPEED);
+}
+
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateStateFromPacket(sf::Packet &packet,
+    shared_ptr<ObjectDeltaStateData> fillblanks) const
+{
+    try{
+        
+        return make_shared<PositionablePhysicalDeltaState>(packet, fillblanks);
+        
+    } catch(ExceptionInvalidArgument &e){
+
+        Logger::Get()->Warning("Brush: failed to CreateStateFromPacket, exception:");
+        e.PrintToLog();
+        return nullptr;
+    }
+    
+}
+
 

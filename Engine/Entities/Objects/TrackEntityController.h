@@ -27,6 +27,39 @@ namespace Leviathan{ namespace Entity{
             Float4 Orientation;
         };
 
+        //! Flags for which fields have changed
+        //! \see TrackControllerState
+        enum TRACKSTATE_UPDATED{
+
+            TRACKSTATE_UPDATED_NODE = 1 << 0,
+            
+            TRACKSTATE_UPDATED_SPEED = 1 << 1,
+
+            TRACKSTATE_UPDATED_PROGRESS = 1 << 2,
+        };
+
+        static const int8_t TRACKSTATE_UPDATED_ALL = TRACKSTATE_UPDATED_NODE & TRACKSTATE_UPDATED_SPEED &
+                                               TRACKSTATE_UPDATED_PROGRESS;
+#define TRACKCONTROLLER_PROGRESS_THRESSHOLD 0.00000001f
+        
+        //! Object delta state for TrackEntityController
+        //! \todo Handle adding positions to tracks
+        class TrackControllerState : public ObjectDeltaStateData{
+        public:
+
+            DLLEXPORT TrackControllerState(int reached, float speed, float progress);
+            DLLEXPORT TrackControllerState(sf::Packet &packet, shared_ptr<ObjectDeltaStateData> fillblanks);
+            
+            DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) override;
+
+            int ReachedNode;
+            float ChangeSpeed;
+            float NodeProgress;
+
+            //! \todo Make this work
+            std::vector<TrackControllerPosition> AddedNodes;
+        };
+        
 
         // This class is used to create movement paths for entities //
         class TrackEntityController : public BaseEntityController, public CallableObject, public BaseSendableEntity{
@@ -83,7 +116,7 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseSendableEntity::CaptureState
             DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() override;
 
-            //! \copydoc BaseSendableEntity::VerfiyOldState
+            //! \copydoc BaseSendableEntity::VerifyOldState
             DLLEXPORT virtual void VerifyOldState(ObjectDeltaStateData* serversold,
                 ObjectDeltaStateData* ourold, int tick) override;
 

@@ -341,4 +341,97 @@ void Leviathan::Entity::TrackEntityController::_SaveOwnDataToPacket(sf::Packet &
     }
     
 }
+// ------------------------------------ //
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityController::CaptureState(){
+    
+    return shared_ptr<ObjectDeltaStateData>(
+        new TrackControllerState(ReachedNode, ChangeSpeed, NodeProgress));
+}
+
+DLLEXPORT void Leviathan::Entity::TrackEntityController::VerifyOldState(ObjectDeltaStateData* serversold,
+    ObjectDeltaStateData* ourold, int tick)
+{
+    // Check first do we need to resimulate //
+    bool requireupdate = false;
+
+    TrackControllerState* servercasted = static_cast<TrackControllerState*>(serversold);
+    TrackControllerState* ourcasted = static_cast<TrackControllerState*>(ourold);
+    
+    if(!ourold){
+
+        requireupdate = true;
+        
+    } else {
+        
+        // We are comparing floats here which most of the time will result all comparisons being false... //
+        if(ourcasted->ChangeSpeed != servercasted->ChangeSpeed ||
+            fabs(ourcasted->NodeProgress-servercasted->NodeProgress) >= TRACKCONTROLLER_PROGRESS_THRESSHOLD ||
+            ourcasted->ReachedNode != servercasted->ReachedNode)
+        {
+            requireupdate = true;
+        }
+    }
+
+    // All good if our old state matched //
+    if(!requireupdate)
+        return;
+
+    // Go back to the verified state and resimulate //
+    ChangeSpeed = servercasted->ChangeSpeed;
+    NodeProgress = servercasted->NodeProgress;
+    ReachedNode = servercasted->ReachedNode;
+
+    _SanityCheckNodeProgress();
+    
+
+    Logger::Get()->Info("TrackEntiyController: resimulating");
+    
+    // 1000 milliseconds in a second //
+    UpdateControlledPositions((float)(tick*TICKSPEED)/1000);
+}
+
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityController::CreateStateFromPacket(
+    sf::Packet &packet, shared_ptr<ObjectDeltaStateData> fillblanks) const
+{
+    try{
+        
+        return make_shared<TrackControllerState>(packet, fillblanks);
+        
+    } catch(ExceptionInvalidArgument &e){
+
+        Logger::Get()->Warning("TrackEntityController: failed to CreateStateFromPacket, exception:");
+        e.PrintToLog();
+        return nullptr;
+    }
+    
+}
+// ------------------ TrackControllerState ------------------ //
+DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(int reached, float speed, float progress) :
+    ReachedNode(reached), ChangeSpeed(speed), NodeProgress(progress), AddedNodes(0)
+{
+
+}
+
+DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(sf::Packet &packet,
+    shared_ptr<ObjectDeltaStateData> fillblanks)
+{
+
+    DEBUG_BREAK;
+}
+            
+DLLEXPORT void Leviathan::Entity::TrackControllerState::CreateUpdatePacket(ObjectDeltaStateData* olderstate,
+    sf::Packet &packet)
+{
+
+    DEBUG_BREAK;
+}
+
+
+
+
+
+
+
+
+
 

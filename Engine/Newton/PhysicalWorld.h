@@ -34,6 +34,9 @@ namespace Leviathan{
 		DLLEXPORT ~PhysicalWorld();
 
 		DLLEXPORT void SimulateWorld();
+
+        DLLEXPORT void ResimulateBody(NewtonBody* body, int milliseconds);
+        
 		DLLEXPORT void ClearTimers();
 
 		DLLEXPORT inline NewtonWorld* GetWorld(){

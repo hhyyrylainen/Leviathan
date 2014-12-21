@@ -57,9 +57,6 @@ namespace Leviathan{
         //! \note The olderstate has to be of type PositionablePhysicalDeltaState
         DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) override;
 
-	protected:
-
-
         Float3 Position;
         Float3 Velocity;
         Float3 Torque;

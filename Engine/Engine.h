@@ -11,7 +11,6 @@
 #include "Networking/NetworkInterface.h"
 #include "boost/thread.hpp"
 
-#define TICKSPEED 50
 
 
 

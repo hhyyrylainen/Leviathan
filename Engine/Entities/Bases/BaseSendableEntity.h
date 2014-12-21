@@ -14,6 +14,7 @@
 #include "boost/circular_buffer.hpp"
 
 #define BASESENDABLE_STORED_CLIENT_STATES 12
+#define SENDABLE_RESIMULATE_THRESSHOLD 0.000001f
 
 namespace Leviathan{
 

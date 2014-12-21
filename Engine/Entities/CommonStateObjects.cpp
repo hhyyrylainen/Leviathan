@@ -35,15 +35,15 @@ DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaSt
             Logger::Get()->Error("PositionablePhysicalDeltaState: trying to reconstruct packet update without older "
                 "state, PLEASE REPORT THIS ERROR");
             
-            Position = 0;
-            Velocity = 0;
-            Torque = 0;
+            Position = Float3(0);
+            Velocity = Float3(0);
+            Torque = Float3(0);
         }
         
     } else {
 
         // Take starting values from the fillblanks one //
-        (*this) = *fillblanks;
+        (*this) = *static_cast<PositionablePhysicalDeltaState*>(fillblanks.get());
     }
 
     // Position

@@ -449,6 +449,8 @@ void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const bo
     
 	// Update potential children //
 	tmp->_ParentableNotifyLocationDataUpdated();
+
+    tmp->_MarkDataUpdated();
 }
 // ------------------------------------ //
 bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){

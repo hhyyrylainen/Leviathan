@@ -81,10 +81,13 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::UpdateControlledPositio
     GUARD_LOCK_THIS_OBJECT();
     
 	// Update progress and node number //
-	if(ChangeSpeed != 0.f){
+	if(ChangeSpeed != 0.f || RequiresUpdate){
 		// Update position //
-
+        
 		NodeProgress += ChangeSpeed*timestep;
+        
+        _MarkDataUpdated();
+        RequiresUpdate = false;
 
 		// Check did node change //
 		if(NodeProgress > 1.f){
@@ -363,7 +366,7 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::VerifyOldState(ObjectDe
         
     } else {
         
-        // We are comparing floats here which most of the time will result all comparisons being false... //
+        // We are comparing floats here which most of the time will result in all comparisons being false... //
         if(ourcasted->ChangeSpeed != servercasted->ChangeSpeed ||
             fabs(ourcasted->NodeProgress-servercasted->NodeProgress) >= TRACKCONTROLLER_PROGRESS_THRESSHOLD ||
             ourcasted->ReachedNode != servercasted->ReachedNode)
@@ -416,14 +419,88 @@ DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(sf::Pack
     shared_ptr<ObjectDeltaStateData> fillblanks)
 {
 
-    DEBUG_BREAK;
+    int8_t packetstates = 0;
+
+    // We need to do the opposite of what we do in CreateUpdatePacket //
+    packet >> packetstates;
+
+    if(!packet)
+        throw ExceptionInvalidArgument(L"invalid packet for TrackControllerState", 0, __WFUNCTION__,
+            L"packet", L"");
+    
+    // Warn if we can't fill in the blanks //
+    if(!fillblanks){
+
+        // These can be detected and ignored //
+        NodeProgress = -1.f;            
+        ReachedNode = -1;
+
+        // But this cannot //
+        if(packetstates != TRACKSTATE_UPDATED_SPEED){
+
+            // TODO: add a mechanism for automatically reporting engine bugs that shouldn't happen //
+            Logger::Get()->Error("TrackControllerState: trying to reconstruct packet update without older "
+                "state (that has speed), PLEASE REPORT THIS ERROR");
+
+            ChangeSpeed = 0.f;
+        }
+        
+    } else {
+
+        // Take starting values from the fillblanks one //
+        (*this) = *static_cast<TrackControllerState*>(fillblanks.get());
+    }
+
+    if(packetstates & TRACKSTATE_UPDATED_NODE)
+        packet >> ReachedNode;
+
+    if(packetstates & TRACKSTATE_UPDATED_SPEED)
+        packet >> ChangeSpeed;
+    
+    if(packetstates & TRACKSTATE_UPDATED_PROGRESS)
+        packet >> NodeProgress;
 }
             
 DLLEXPORT void Leviathan::Entity::TrackControllerState::CreateUpdatePacket(ObjectDeltaStateData* olderstate,
     sf::Packet &packet)
 {
 
-    DEBUG_BREAK;
+    int8_t changedparts = 0;
+
+    // Check which parts have changed //
+    if(!olderstate){
+
+        // When comparing against NULL state everything is updated //
+        changedparts = TRACKSTATE_UPDATED_ALL;
+        
+    } else {
+
+        TrackControllerState* other = static_cast<TrackControllerState*>(olderstate);
+
+        // Node
+        if(ReachedNode != other->ReachedNode)
+            changedparts |= TRACKSTATE_UPDATED_NODE;
+
+        // Speed
+        if(ChangeSpeed != other->ChangeSpeed)
+            changedparts |= TRACKSTATE_UPDATED_SPEED;
+
+        // Progress
+        if(NodeProgress != other->NodeProgress)
+            changedparts |= TRACKSTATE_UPDATED_PROGRESS;
+    }
+
+    packet << changedparts;
+
+    // Add the changed data to the packet //
+    if(changedparts & TRACKSTATE_UPDATED_NODE)
+        packet << ReachedNode;
+
+    if(changedparts & TRACKSTATE_UPDATED_SPEED)
+        packet << ChangeSpeed;
+    
+    if(changedparts & TRACKSTATE_UPDATED_PROGRESS)
+        packet << NodeProgress;
 }
 
 

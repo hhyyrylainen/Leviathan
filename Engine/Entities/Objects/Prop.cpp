@@ -307,6 +307,8 @@ void Leviathan::Entity::Prop::PropPhysicsMovedEvent(const NewtonBody* const body
     
 	// Update potential children //
 	tmp->_ParentableNotifyLocationDataUpdated();
+
+    tmp->_MarkDataUpdated();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessagetype, void* dataptr){

@@ -143,7 +143,7 @@ DLLEXPORT void Leviathan::PositionablePhysicalDeltaState::CreateUpdatePacket(Obj
     if(changedparts & PPDELTAUPDATED_POS_Z)
         packet << Position.Z;
 
-    // Velcity
+    // Velocity
     if(changedparts & PPDELTAUPDATED_VEL_X)
         packet << Velocity.X;
 

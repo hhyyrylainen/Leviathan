@@ -42,6 +42,8 @@ namespace Leviathan{
 
     //! Represents a sent packet and holds all kinds of data for it
     //! \todo Make this properly thread safe
+    //! \todo Make BaseSendable receive proper callbacks even after this has failed, so add
+    //! a place where failed packets are stored for a while
 	class SentNetworkThing : public ThreadSafe{
     public:
 
@@ -60,6 +62,8 @@ namespace Leviathan{
 
         //! \brief Sets the status of the wait object notifying all waiters that this has
         //! succeeded or failed
+        //!
+        //! Will also call the Callback if one is set
         DLLEXPORT void SetWaitStatus(bool status);
         
         //! \brief Sets this packet as a timed packet
@@ -76,6 +80,10 @@ namespace Leviathan{
 		int AttempNumber;
 
 		PACKET_TIMEOUT_STYLE PacketTimeoutStyle;
+
+        //! Callback function called when succeeded or failed
+        boost::function<void(bool, SentNetworkThing&)> Callback;
+        
 
 		int TimeOutMS;
 		__int64 RequestStartTime;

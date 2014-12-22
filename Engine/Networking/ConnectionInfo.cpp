@@ -1036,15 +1036,26 @@ DLLEXPORT boost::unique_future<bool>& Leviathan::SentNetworkThing::GetFutureForT
 }
 
 DLLEXPORT void Leviathan::SentNetworkThing::SetWaitStatus(bool status){
-    GUARD_LOCK_THIS_OBJECT();
+    {
+        GUARD_LOCK_THIS_OBJECT();
 
-    WaitForMe->set_value(status);
+        WaitForMe->set_value(status);
+    }
+
+    if(Callback)
+        Callback(status, *this);
 }
 
 DLLEXPORT void Leviathan::SentNetworkThing::SetAsTimed(){
     GUARD_LOCK_THIS_OBJECT();
     
     ConfirmReceiveTime = 1;
+}
+
+DLLEXPORT void Leviathan::SentNetworkThing::SetCallback(boost::function<void(bool,
+        SentNetworkThing&)> func)
+{
+    Callback = func;
 }
 // ------------------ NetworkAckField ------------------ //
 Leviathan::NetworkAckField::NetworkAckField(sf::Int32 firstpacketid, char maxacks, ReceivedPacketField &copyfrom) :

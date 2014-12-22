@@ -61,7 +61,18 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(){
 		PassedTimeTotal -= (int)NEWTON_FPS_IN_MICROSECONDS;
 	}
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int milliseconds){
 
+    int simulateruns = (1000.f*milliseconds)/NEWTON_TIMESTEP;
+
+    for(int i = 0; i < simulateruns; i++){
+
+        // NewtonUpdate(World, body, NEWTON_TIMESTEP);
+        DEBUG_BREAK;
+    }
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::PhysicalWorld::ClearTimers(){
 	LastSimulatedTime = Misc::GetTimeMicro64();
 	PassedTimeTotal = 0;

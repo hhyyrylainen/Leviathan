@@ -449,6 +449,11 @@ worldskiphandlingsendableobjectslabel:
 
     return;
 }
+// ------------------------------------ //
+DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{
+    
+    return TickNumber;
+}
 // ------------------ Object managing ------------------ //
 DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
 	AddObject(shared_ptr<BaseObject>(obj, SharedPtrReleaseDeleter<BaseObject>::DoRelease));

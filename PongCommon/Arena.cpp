@@ -448,7 +448,7 @@ void Pong::Arena::ServeBall(){
 	prop->GiveImpulse(dir);
 
     // We changed a few things so notify all receivers //
-    prop->SendUpdatesToAllClients();
+    prop->SendUpdatesToAllClients(TargetWorld->GetTickNumber());
 }
 // ------------------------------------ //
 void Pong::Arena::GiveBallSpeed(float mult){

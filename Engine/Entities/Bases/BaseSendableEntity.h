@@ -123,7 +123,8 @@ namespace Leviathan{
         //! \param serversold The server's state that we have received
         //! \param ourold Our old state that matches the tick, if any (only exact tick number matches are counted)
         //! \param tick The tick on which the state was captured
-        DLLEXPORT virtual void VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold, int tick);
+        DLLEXPORT virtual void VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold,
+            int tick) = 0;
 
         //! \brief Subclasses initialize their state object of choice from a packet
         DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet,

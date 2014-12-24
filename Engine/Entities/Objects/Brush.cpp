@@ -436,7 +436,10 @@ void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const bo
 
 	// Apply to graphical object //
 	Brush* tmp = static_cast<Brush*>(reinterpret_cast<BasePhysicsObject*>(NewtonBodyGetUserData(body)));
-
+    
+    // The object needs to be locked here //
+    GUARD_LOCK_OTHER_OBJECT(tmp);
+    
     if(tmp->ObjectsNode){
         
         tmp->ObjectsNode->setOrientation(quat);

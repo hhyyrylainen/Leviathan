@@ -1166,7 +1166,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(NetworkResponseDat
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSyncData* data){
 
-    GUARD_LOCK_THIS_OBJECT();
+    UNIQUE_LOCK_THIS_OBJECT();
 
     Logger::Get()->Info("GameWorld: adjusting our clock: Absolute: "+Convert::ToString(data->Absolute)+", tick: "+
         Convert::ToString(data->Ticks)+", enginems: "+Convert::ToString(data->EngineMSTweak));
@@ -1176,15 +1176,23 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
 
         TickNumber = data->Ticks;
 
+        lockit.unlock();
+        
         if(data->EngineMSTweak)
             Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
+        
+        lockit.lock();
         
     } else {
 
         TickNumber += data->Ticks;
+
+        lockit.unlock();
         
         if(data->EngineMSTweak)
             Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
+
+        lockit.lock();
     }
 
     // Only notify if the tick actually changed

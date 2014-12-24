@@ -295,6 +295,9 @@ void Leviathan::Entity::Prop::PropPhysicsMovedEvent(const NewtonBody* const body
 	// apply to graphical object //
 	Prop* tmp = static_cast<Prop*>(reinterpret_cast<BasePhysicsObject*>(NewtonBodyGetUserData(body)));
 
+    // The object needs to be locked here //
+    GUARD_LOCK_OTHER_OBJECT(tmp);
+    
     if(tmp->ObjectsNode){
         
         tmp->ObjectsNode->setOrientation(quat);

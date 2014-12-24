@@ -157,6 +157,8 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
         if(!safeconnection){
 
             iter = UpdateReceivers.erase(iter);
+            end = UpdateReceivers.end();
+            
             // TODO: add a disconnect callback
             continue;
         }

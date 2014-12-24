@@ -13,6 +13,7 @@
 //#endif //__GNUC__
 
 #include <Newton.h>
+#include "boost/thread/mutex.hpp"
 
 //#ifdef __GNUC__
 //#pragma GCC diagnostic pop
@@ -25,9 +26,11 @@
 
 namespace Leviathan{
 
-	class GameWorld;
-
+    int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void* islandHandle, int bodyCount);
+    
 	class PhysicalWorld : public Object{
+        friend int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void*
+            islandHandle, int bodyCount);
 	public:
 		// The constructor also builds the material list for the world, so it is rather expensive //
 		DLLEXPORT PhysicalWorld(GameWorld* owner);
@@ -35,6 +38,10 @@ namespace Leviathan{
 
 		DLLEXPORT void SimulateWorld();
 
+        //! \todo Improve performance by making this use a newton method that simulates a single body
+        //! instead of doing a full update and just discarding all changing bodies that aren't wanted
+        //! \todo Add an event that allows entity controllers to update forces when one of their controlled
+        //! entities are being simulated
         DLLEXPORT void ResimulateBody(NewtonBody* body, int milliseconds);
         
 		DLLEXPORT void ClearTimers();
@@ -59,6 +66,13 @@ namespace Leviathan{
 
 		NewtonWorld* World;
 		GameWorld* OwningWorld;
+
+        //! Lock for world updates
+        boost::mutex WorldUpdateLock;
+
+        //! Used for resimulation
+        //! \todo Potentially allow this to be a vector
+        NewtonBody* ResimulatedBody;
 	};
 
 }

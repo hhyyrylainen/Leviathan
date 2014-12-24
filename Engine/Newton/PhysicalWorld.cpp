@@ -7,10 +7,11 @@
 #include "PhysicsMaterialManager.h"
 #include "Events/EventHandler.h"
 #include "Common/Misc.h"
+#include "boost/thread/lock_types.hpp"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) :
-    LastSimulatedTime(0), PassedTimeTotal(0), OwningWorld(owner)
+    LastSimulatedTime(0), PassedTimeTotal(0), OwningWorld(owner), ResimulatedBody(NULL)
 {
 
 	// create newton world //
@@ -25,14 +26,21 @@ DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) :
     // Accurate enough mode //
     NewtonSetSolverModel(World, 1);
 
+    // Set us as the user data //
+    NewtonWorldSetUserData(World, this);
+
 	// Create materials for this world //
 	PhysicsMaterialManager::Get()->CreateActualMaterialsForWorld(World);
 }
 
 DLLEXPORT Leviathan::PhysicalWorld::~PhysicalWorld(){
+
+    NewtonWorldSetUserData(World, NULL);
+    
 	// finally destroy the newton world
-	//NewtonDestroyAllBodies(World);
+    
 	NewtonDestroy(World);
+    World = NULL;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(){
@@ -43,6 +51,8 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(){
 	PassedTimeTotal += (int)(curtime-LastSimulatedTime);
 	LastSimulatedTime = curtime;
 
+    boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
+    
 	// simulate updates //
 	while(PassedTimeTotal >= NEWTON_FPS_IN_MICROSECONDS){
 		// avoid freezing the program //
@@ -62,15 +72,47 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(){
 	}
 }
 // ------------------------------------ //
+int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void* islandHandle,
+    int bodyCount)
+{
+
+    PhysicalWorld* pworld = reinterpret_cast<PhysicalWorld*>(NewtonWorldGetUserData(newtonWorld));
+    
+    for(int i = 0; i < bodyCount; i++){
+
+        if(NewtonIslandGetBody(islandHandle, i) == pworld->ResimulatedBody){
+            
+            // Target body is part of this collision, simulate it //
+            return 1;
+        }
+    }
+    
+    // Wasn't the target body, ignore //
+    return 0;
+}
+
 DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int milliseconds){
 
     int simulateruns = (1000.f*milliseconds)/NEWTON_TIMESTEP;
 
+    DEBUG_BREAK;
+    
+    boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
+
+    ResimulatedBody = body;
+    
+    // Setup single island callbacks //
+    NewtonSetIslandUpdateEvent(World, &SingleBodyUpdate);
+
     for(int i = 0; i < simulateruns; i++){
 
-        // NewtonUpdate(World, body, NEWTON_TIMESTEP);
-        DEBUG_BREAK;
+        //NewtonUpdate(World, body, NEWTON_TIMESTEP);
+        
+        NewtonUpdate(World, NEWTON_TIMESTEP);
     }
+
+    // Reset the update event //
+    NewtonSetIslandUpdateEvent(World, NULL);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::PhysicalWorld::ClearTimers(){

@@ -27,11 +27,13 @@ void Leviathan::BasePhysicsObject::_DestroyPhysicalBody(){
 }
 // ------------------------------------ //
 void Leviathan::BasePhysicsObject::PosUpdated(){
-	_UpdatePhysicsObjectLocation();
+    GUARD_LOCK_THIS_OBJECT();
+	_UpdatePhysicsObjectLocation(guard);
 }
 
 void Leviathan::BasePhysicsObject::OrientationUpdated(){
-	_UpdatePhysicsObjectLocation();
+    GUARD_LOCK_THIS_OBJECT();
+	_UpdatePhysicsObjectLocation(guard);
 }
 // ------------------------------------ //
 void Leviathan::BasePhysicsObject::ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat

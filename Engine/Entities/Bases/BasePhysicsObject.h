@@ -114,11 +114,11 @@ namespace Leviathan{
 
 	protected:
 		virtual void _DestroyPhysicalBody();
-		virtual void PosUpdated();
-		virtual void OrientationUpdated();
+		virtual void PosUpdated() override;
+		virtual void OrientationUpdated() override;
 
 		// this function should update physics object location or if Immovable set, directly graphical objects //
-		virtual void _UpdatePhysicsObjectLocation() = 0;
+		virtual void _UpdatePhysicsObjectLocation(ObjectLock &guard) = 0;
 
 		// Adds all applied forces together //
 		Float3 _GatherApplyForces(const float &mass);

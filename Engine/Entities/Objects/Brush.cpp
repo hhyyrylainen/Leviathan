@@ -338,6 +338,8 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 	AggressiveConstraintUnlink();
 	_DestroyPhysicalBody();
 
+    GUARD_LOCK_THIS_OBJECT();
+    
     // Store the mass //
     Mass = mass;
 
@@ -358,7 +360,7 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 
 	Body = NewtonCreateDynamicBody(tmpworld, Collision, &tmatrix[0][0]);
 	// set location //
-	_UpdatePhysicsObjectLocation();
+	_UpdatePhysicsObjectLocation(guard);
 
 	// add this as user data //
 	NewtonBodySetUserData(Body, static_cast<BasePhysicsObject*>(this));
@@ -393,7 +395,7 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 	NewtonBodySetDestructorCallback(Body, BasePhysicsObject::DestroyBodyCallback);
 }
 // ------------------------------------ //
-void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(){
+void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(ObjectLock &guard){
 	// Update physics object location which will in turn change graphical object location //
 
 	Ogre::Matrix4 matrix;
@@ -415,7 +417,7 @@ void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(){
 	_ParentableNotifyLocationDataUpdated();
 
     // Notify network of new position //
-    _MarkDataUpdated();
+    _MarkDataUpdated(guard);
 }
 // ------------------------------------ //
 void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix,
@@ -453,7 +455,7 @@ void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const bo
 	// Update potential children //
 	tmp->_ParentableNotifyLocationDataUpdated();
 
-    tmp->_MarkDataUpdated();
+    tmp->_MarkDataUpdated(guard);
 }
 // ------------------------------------ //
 bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){

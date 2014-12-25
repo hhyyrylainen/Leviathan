@@ -17,8 +17,9 @@
 
 namespace Leviathan{
 
-	// This class can be inherited to be able to have non-physics controlled child objects and be parentable to other objects //
-	// \todo create physical version of this class using constraints
+	//! This class can be inherited to be able to have non-physics controlled child objects and be
+    //! parentable to other objects
+    //! \todo Rework the way this class works
 	class BaseParentable : public BaseNotifiableEntity, public BaseNotifierEntity, virtual public BasePositionable{
 	public:
 		DLLEXPORT BaseParentable();

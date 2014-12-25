@@ -243,7 +243,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 	return true;
 }
 // ------------------------------------ //
-void Leviathan::Entity::Prop::_UpdatePhysicsObjectLocation(){
+void Leviathan::Entity::Prop::_UpdatePhysicsObjectLocation(ObjectLock &guard){
 	// update physics object location which will in turn change graphical object location //
 
 	if(Body){
@@ -267,7 +267,7 @@ void Leviathan::Entity::Prop::_UpdatePhysicsObjectLocation(){
 	_ParentableNotifyLocationDataUpdated();
 
     // Notify network of new position //
-    _MarkDataUpdated();
+    _MarkDataUpdated(guard);
 }
 
 // ------------------------------------ //
@@ -311,7 +311,7 @@ void Leviathan::Entity::Prop::PropPhysicsMovedEvent(const NewtonBody* const body
 	// Update potential children //
 	tmp->_ParentableNotifyLocationDataUpdated();
 
-    tmp->_MarkDataUpdated();
+    tmp->_MarkDataUpdated(guard);
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessagetype, void* dataptr){

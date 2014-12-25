@@ -62,7 +62,7 @@ namespace Leviathan{ namespace Entity{
             //! \brief Constructs a brush for receiving through the network
             Brush(bool hidden, GameWorld* world, int netid);
             
-            virtual void _UpdatePhysicsObjectLocation();
+            virtual void _UpdatePhysicsObjectLocation(ObjectLock &guard) override;
 
             //! \copydoc BaseSendableEntity::_LoadOwnDataFromPacket
             virtual bool _LoadOwnDataFromPacket(sf::Packet &packet) override;

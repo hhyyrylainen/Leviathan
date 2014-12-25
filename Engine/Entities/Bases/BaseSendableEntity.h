@@ -165,7 +165,7 @@ namespace Leviathan{
 
         //! \brief Called internally when data is updated
         //! \note This object has to be locked before this call
-        void _MarkDataUpdated();
+        void _MarkDataUpdated(ObjectLock &guard);
         
         // ------------------------------------ //
         
@@ -173,10 +173,6 @@ namespace Leviathan{
         //! from a packet
         BASESENDABLE_ACTUAL_TYPE SerializeType;
 
-
-        //! List of receivers that will be updated whenever state changes and GameWorld decides it being
-        //! the time to send updates
-        std::vector<shared_ptr<SendableObjectConnectionUpdate>> UpdateReceivers;
 
         //! Object-wide flag denoting that one or more UpdateReceivers could want an update
         //! \note On the client side this controls whehter an state capture notification actually captures a new state
@@ -188,6 +184,12 @@ namespace Leviathan{
         //! The tick on which the client state was last checked with the server
         //! any updates older than this will be ignored
         int LastVerifiedTick;
+
+    private:
+        
+        //! List of receivers that will be updated whenever state changes and GameWorld decides it being
+        //! the time to send updates
+        std::vector<shared_ptr<SendableObjectConnectionUpdate>> UpdateReceivers;
     };
 
 }

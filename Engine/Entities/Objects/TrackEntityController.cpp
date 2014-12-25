@@ -86,11 +86,12 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::UpdateControlledPositio
         
 		NodeProgress += ChangeSpeed*timestep;
         
-        _MarkDataUpdated();
+        _MarkDataUpdated(guard);
         RequiresUpdate = false;
 
 		// Check did node change //
 		if(NodeProgress > 1.f){
+            
 			// Next node //
 			if(ReachedNode+1 >= (int)TrackNodes.size()){
 				ReachedNode++;
@@ -98,7 +99,9 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::UpdateControlledPositio
 			} else {
 				NodeProgress = 1.f;
 			}
+            
 		} else if(NodeProgress < 0.f){
+            
 			// Previous node, if possible //
 			if(ReachedNode > 0){
 				ReachedNode--;

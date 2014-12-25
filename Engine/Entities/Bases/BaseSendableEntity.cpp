@@ -22,6 +22,7 @@ DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_
 
 DLLEXPORT Leviathan::BaseSendableEntity::~BaseSendableEntity(){
 
+    GUARD_LOCK_THIS_OBJECT();
     UpdateReceivers.clear();
 }
 // ------------------------------------ //
@@ -184,8 +185,9 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
     IsAnyDataUpdated = false;
 }
 // ------------------------------------ //
-void Leviathan::BaseSendableEntity::_MarkDataUpdated(){
-
+void Leviathan::BaseSendableEntity::_MarkDataUpdated(ObjectLock &guard){
+    VerifyLock(guard);
+    
     // Mark all active receivers as needing an update //
     IsAnyDataUpdated = true;
 

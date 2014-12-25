@@ -132,7 +132,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
     auto curstate = CaptureState();
     
     auto end = UpdateReceivers.end();
-    for(auto iter = UpdateReceivers.begin(); iter != end; ++iter){
+    for(auto iter = UpdateReceivers.begin(); iter != end; ){
 
         // First check does this particular connection need an update //
         if(!(*iter)->DataUpdatedAfterSending){

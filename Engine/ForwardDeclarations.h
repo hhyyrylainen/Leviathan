@@ -36,6 +36,8 @@ namespace Leviathan{
     class BaseConstraintable;
     class BaseSendableEntity;
 
+    class PositionablePhysicalDeltaState;
+
     // Exceptions //
 	class ExceptionInvalidArgument;
 

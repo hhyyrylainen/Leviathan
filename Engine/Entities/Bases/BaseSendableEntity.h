@@ -127,8 +127,7 @@ namespace Leviathan{
             int tick) = 0;
 
         //! \brief Subclasses initialize their state object of choice from a packet
-        DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet,
-            shared_ptr<ObjectDeltaStateData> fillblanks) const = 0;
+        DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet) const = 0;
         
         //! \brief Tells this entity send updates to all receivers
         //!

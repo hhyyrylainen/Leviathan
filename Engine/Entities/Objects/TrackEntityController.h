@@ -48,7 +48,7 @@ namespace Leviathan{ namespace Entity{
         public:
 
             DLLEXPORT TrackControllerState(int reached, float speed, float progress);
-            DLLEXPORT TrackControllerState(sf::Packet &packet, shared_ptr<ObjectDeltaStateData> fillblanks);
+            DLLEXPORT TrackControllerState(sf::Packet &packet);
             
             DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) override;
 
@@ -56,6 +56,9 @@ namespace Leviathan{ namespace Entity{
             float ChangeSpeed;
             float NodeProgress;
 
+            //! Only set on received versions, marks which fields are valid
+            int8_t ValidFields;
+            
             //! \todo Make this work
             std::vector<TrackControllerPosition> AddedNodes;
         };
@@ -121,8 +124,7 @@ namespace Leviathan{ namespace Entity{
                 ObjectDeltaStateData* ourold, int tick) override;
 
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
-            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet,
-                shared_ptr<ObjectDeltaStateData> fillblanks) const override;
+            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet) const override;
             
         protected:
 

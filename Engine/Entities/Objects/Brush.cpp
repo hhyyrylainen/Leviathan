@@ -572,50 +572,15 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureStat
 DLLEXPORT void Leviathan::Entity::Brush::VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold,
     int tick)
 {
-    // Check first do we need to resimulate //
-    bool requireupdate = false;
-
-    PositionablePhysicalDeltaState* servercasted = static_cast<PositionablePhysicalDeltaState*>(serversold);
-    PositionablePhysicalDeltaState* ourcasted = static_cast<PositionablePhysicalDeltaState*>(ourold);
-    
-    if(!ourold){
-
-        requireupdate = true;
-        
-    } else {
-        
-        float totaldifference = 0.f;
-
-        totaldifference += (ourcasted->Position-servercasted->Position).HAddAbs();
-        totaldifference += (ourcasted->Velocity-servercasted->Velocity).HAddAbs();
-        totaldifference += (ourcasted->Torque-servercasted->Torque).HAddAbs();
-
-        if(totaldifference >= SENDABLE_RESIMULATE_THRESSHOLD){
-
-            // We are too far of the right values //
-            requireupdate = true;
-        }
-    }
-
-    // All good if our old state matched //
-    if(!requireupdate)
-        return;
-
-    // Go back to the verified position and resimulate from there //
-    SetPos(servercasted->Position);
-    SetBodyVelocity(servercasted->Velocity);
-    SetBodyTorque(servercasted->Torque);
-
-    Logger::Get()->Write("Resimulating body for "+Convert::ToString(abs(OwnedByWorld->GetTickNumber()-tick))+" ticks");
-    OwnedByWorld->GetPhysicalWorld()->ResimulateBody(Body, abs(OwnedByWorld->GetTickNumber()-tick)*TICKSPEED);
+    CheckOldPhysicalState(static_cast<PositionablePhysicalDeltaState*>(serversold),
+        static_cast<PositionablePhysicalDeltaState*>(ourold), tick);
 }
 
-DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateStateFromPacket(sf::Packet &packet,
-    shared_ptr<ObjectDeltaStateData> fillblanks) const
-{
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateStateFromPacket(sf::Packet &packet) const{
+    
     try{
         
-        return make_shared<PositionablePhysicalDeltaState>(packet, fillblanks);
+        return make_shared<PositionablePhysicalDeltaState>(packet);
         
     } catch(ExceptionInvalidArgument &e){
 

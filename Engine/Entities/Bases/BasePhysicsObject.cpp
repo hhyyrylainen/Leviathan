@@ -5,6 +5,7 @@
 #endif
 #include "../GameWorld.h"
 #include "Newton/PhysicsMaterialManager.h"
+#include "../CommonStateObjects.h"
 using namespace Leviathan;
 // ------------------------------------ //
 // I hope that this virtual constructor isn't actually called //
@@ -272,6 +273,172 @@ DLLEXPORT void Leviathan::BasePhysicsObject::ApplyPhysicalState(BasePhysicsData 
     
     SetBodyTorque(data.Torque);
     SetBodyVelocity(data.Velocity);
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionablePhysicalDeltaState* servercasted,
+    PositionablePhysicalDeltaState* ourcasted, int tick)
+{
+    // Check first do we need to resimulate //
+    bool requireupdate = false;
+
+    if(!ourcasted){
+
+        requireupdate = true;
+        
+    } else {
+        
+        float totaldifference = 0.f;
+
+        if(servercasted->ValidFields & PPDELTAUPDATED_POS_X)
+            totaldifference += fabs((ourcasted->Position.X-servercasted->Position.X));
+        if(servercasted->ValidFields & PPDELTAUPDATED_POS_Y)
+            totaldifference += fabs((ourcasted->Position.Y-servercasted->Position.Y));
+        if(servercasted->ValidFields & PPDELTAUPDATED_POS_Z)
+            totaldifference += fabs((ourcasted->Position.Z-servercasted->Position.Z));
+        
+        if(servercasted->ValidFields & PPDELTAUPDATED_VEL_X)
+            totaldifference += fabs((ourcasted->Velocity.X-servercasted->Velocity.X));
+        if(servercasted->ValidFields & PPDELTAUPDATED_VEL_Y)
+            totaldifference += fabs((ourcasted->Velocity.Y-servercasted->Velocity.Y));
+        if(servercasted->ValidFields & PPDELTAUPDATED_VEL_Z)
+            totaldifference += fabs((ourcasted->Velocity.Z-servercasted->Velocity.Z));
+
+        if(servercasted->ValidFields & PPDELTAUPDATED_TOR_X)
+            totaldifference += fabs((ourcasted->Torque.X-servercasted->Torque.X));
+        if(servercasted->ValidFields & PPDELTAUPDATED_TOR_Y)
+            totaldifference += fabs((ourcasted->Torque.Y-servercasted->Torque.Y));
+        if(servercasted->ValidFields & PPDELTAUPDATED_TOR_Z)
+            totaldifference += fabs((ourcasted->Torque.Z-servercasted->Torque.Z));
+
+
+        if(totaldifference >= SENDABLE_RESIMULATE_THRESSHOLD){
+
+            // We are too far of the right values //
+            requireupdate = true;
+        }
+    }
+
+    // All good if our old state matched //
+    if(!requireupdate)
+        return;
+
+    // Go back to the verified position and resimulate from there //
+    if(servercasted->ValidFields & PPDELTAUPDATED_POS_X){
+        SetPosX(servercasted->Position.X);
+        
+    } else if(ourcasted){
+        
+        SetPosX(ourcasted->Position.X);
+    }
+
+    if(servercasted->ValidFields & PPDELTAUPDATED_POS_Y){
+        SetPosY(servercasted->Position.Y);
+        
+    } else if(ourcasted){
+        
+        SetPosY(ourcasted->Position.Y);
+    }
+
+    if(servercasted->ValidFields & PPDELTAUPDATED_POS_Z){
+        SetPosZ(servercasted->Position.Z);
+        
+    } else if(ourcasted){
+        
+        SetPosZ(ourcasted->Position.Z);
+    }
+
+
+    Float3 finalvelocity;
+    Float3 curvelocity = GetBodyVelocity();
+
+    if(servercasted->ValidFields & PPDELTAUPDATED_VEL_X){
+
+        finalvelocity.X = servercasted->Velocity.X;
+        
+    } else if(ourcasted){
+        
+        finalvelocity.X = ourcasted->Position.X;
+        
+    } else {
+
+        finalvelocity.X = curvelocity.X;
+    }
+
+    if(servercasted->ValidFields & PPDELTAUPDATED_VEL_Y){
+
+        finalvelocity.Y = servercasted->Velocity.Y;
+        
+    } else if(ourcasted){
+        
+        finalvelocity.Y = ourcasted->Position.Y;
+        
+    } else {
+
+        finalvelocity.Y = curvelocity.Y;
+    }
+
+    if(servercasted->ValidFields & PPDELTAUPDATED_VEL_Z){
+
+        finalvelocity.Z = servercasted->Velocity.Z;
+        
+    } else if(ourcasted){
+        
+        finalvelocity.Z = ourcasted->Position.Z;
+        
+    } else {
+
+        finalvelocity.Z = curvelocity.Z;
+    }
+
+
+    Float3 finaltorque;
+    Float3 curtorque = GetBodyTorque();
+
+    if(servercasted->ValidFields & PPDELTAUPDATED_TOR_X){
+
+        finaltorque.X = servercasted->Torque.X;
+        
+    } else if(ourcasted){
+        
+        finaltorque.X = ourcasted->Torque.X;
+        
+    } else {
+
+        finaltorque.X = curtorque.X;
+    }
+
+    if(servercasted->ValidFields & PPDELTAUPDATED_TOR_Y){
+
+        finaltorque.Y = servercasted->Torque.Y;
+        
+    } else if(ourcasted){
+        
+        finaltorque.Y = ourcasted->Torque.Y;
+        
+    } else {
+
+        finaltorque.Y = curtorque.Y;
+    }
+
+    if(servercasted->ValidFields & PPDELTAUPDATED_TOR_Z){
+
+        finaltorque.Z = servercasted->Torque.Z;
+        
+    } else if(ourcasted){
+        
+        finaltorque.Z = ourcasted->Torque.Z;
+        
+    } else {
+
+        finaltorque.Z = curtorque.Z;
+    }    
+    
+    
+    SetBodyVelocity(finalvelocity);
+    SetBodyTorque(finaltorque);
+
+    Logger::Get()->Write("Resimulating body for "+Convert::ToString(abs(OwnedByWorld->GetTickNumber()-tick))+" ticks");
+    OwnedByWorld->GetPhysicalWorld()->ResimulateBody(Body, abs(OwnedByWorld->GetTickNumber()-tick)*TICKSPEED);
 }
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const Float3 &forces, bool addmass, bool persist /*= true*/,

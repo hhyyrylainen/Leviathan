@@ -42,7 +42,7 @@ namespace Leviathan{
 	public:
 		DLLEXPORT PositionablePhysicalDeltaState(const Float3 &position, const Float3 &velocity, const Float3 &torque);
         //! \see CreateUpdatePacket
-        DLLEXPORT PositionablePhysicalDeltaState(sf::Packet &packet, shared_ptr<ObjectDeltaStateData> fillblanks);
+        DLLEXPORT PositionablePhysicalDeltaState(sf::Packet &packet);
         DLLEXPORT ~PositionablePhysicalDeltaState();
 
         //! \brief Templated creation function for all classes that inherit both BasePotitionable and
@@ -60,6 +60,9 @@ namespace Leviathan{
         Float3 Position;
         Float3 Velocity;
         Float3 Torque;
+
+        //! Only set on received versions, marks which fields are valid
+        int16_t ValidFields;
 	};
 
 }

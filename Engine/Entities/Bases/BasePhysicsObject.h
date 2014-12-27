@@ -90,6 +90,11 @@ namespace Leviathan{
 		DLLEXPORT void SetPhysicalMaterialID(int ID);
 
 
+        //! \brief Sendable entity old state checking for basic physical objects
+        DLLEXPORT void CheckOldPhysicalState(PositionablePhysicalDeltaState* servercasted,
+            PositionablePhysicalDeltaState* ourcasted, int tick);
+
+        
         //! \brief Serializes basic physical state to a packet if Body is set
         //! \return True when Body is set
         //!

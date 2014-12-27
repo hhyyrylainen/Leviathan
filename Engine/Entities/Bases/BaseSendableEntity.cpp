@@ -248,7 +248,7 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
     }
 
     // Then we create a state from the packet filling in the blanks from the old state //
-    auto receivedstate = CreateStateFromPacket(packet, ourold);
+    auto receivedstate = CreateStateFromPacket(packet);
 
     if(!receivedstate)
         return false;

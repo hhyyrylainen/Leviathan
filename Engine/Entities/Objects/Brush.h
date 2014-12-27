@@ -54,8 +54,7 @@ namespace Leviathan{ namespace Entity{
                 ObjectDeltaStateData* ourold, int tick) override;
 
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
-            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet,
-                shared_ptr<ObjectDeltaStateData> fillblanks) const override;
+            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet) const override;
             
         protected:
 

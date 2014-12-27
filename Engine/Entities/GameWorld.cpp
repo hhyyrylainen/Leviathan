@@ -1154,7 +1154,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(NetworkResponseDat
     }
 
     // Apply the update //
-    GUARD_LOCK_OTHER_OBJECT(target);
+    // The object may not be locked as it might want to resimulate //
     
     if(!EntitySerializerManager::Get()->ApplyUpdateMessage(*data->UpdateData, data->TickNumber, target)){
 

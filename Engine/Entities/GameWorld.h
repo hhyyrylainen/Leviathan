@@ -216,6 +216,7 @@ namespace Leviathan{
         //! \brief Applies an update packet
         //!
         //! If the entity is not found the packet is discarded
+        //! \todo Cache the update data for 1 second and apply it if a matching entity is created during that time
         DLLEXPORT void HandleEntityUpdatePacket(NetworkResponseDataForEntityUpdate* data);
 
         //! \brief Handles a world clock synchronizing packet

@@ -437,7 +437,13 @@ DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionableP
     SetBodyVelocity(finalvelocity);
     SetBodyTorque(finaltorque);
 
-    Logger::Get()->Write("Resimulating body for "+Convert::ToString(abs(OwnedByWorld->GetTickNumber()-tick))+" ticks");
+    int tosimulate = OwnedByWorld->GetTickNumber()-tick;
+    
+    if(tosimulate < 1)
+        return;
+    
+    //Logger::Get()->Write("Resimulating body for "+Convert::ToString(abs(OwnedByWorld->GetTickNumber()-tick))+
+    //    " ticks");
     OwnedByWorld->GetPhysicalWorld()->ResimulateBody(Body, abs(OwnedByWorld->GetTickNumber()-tick)*TICKSPEED);
 }
 // ------------------ ApplyForceInfo ------------------ //

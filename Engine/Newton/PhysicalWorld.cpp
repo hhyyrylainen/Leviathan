@@ -95,8 +95,6 @@ DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int mi
 
     int simulateruns = (0.001f*milliseconds)/NEWTON_TIMESTEP;
 
-    DEBUG_BREAK;
-    
     boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
 
     ResimulatedBody = body;

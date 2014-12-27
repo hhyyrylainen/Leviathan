@@ -93,7 +93,7 @@ int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void
 
 DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int milliseconds){
 
-    int simulateruns = (1000.f*milliseconds)/NEWTON_TIMESTEP;
+    int simulateruns = (0.001f*milliseconds)/NEWTON_TIMESTEP;
 
     DEBUG_BREAK;
     

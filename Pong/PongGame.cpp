@@ -1,4 +1,3 @@
-#include "PongIncludes.h"
 // ------------------------------------ //
 #ifndef PONG_GAME
 #include "PongGame.h"
@@ -333,6 +332,54 @@ int Pong::PongGame::StartServer(){
 void Pong::PongGame::CustomEnginePreShutdown(){
 
     GameInputHandler.reset();
+}
+// ------------------------------------ //
+void Pong::PongGame::Tick(int mspassed){
+    
+    using namespace Leviathan;
+
+    Tickcount++;
+    
+    // Let the AI think //
+    if(GameArena && GameArena->GetBallPtr() && !GamePaused){
+
+        // Find AI slots //
+        for(size_t i = 0; i < _PlayerList.Size(); i++){
+
+            PlayerSlot* slotptr = _PlayerList[i];
+
+            while(slotptr){
+
+                if(slotptr->GetControlType() == PLAYERCONTROLS_AI){
+
+                    // Set the slot ptr as the argument and call function based on difficulty //
+                    std::vector<shared_ptr<NamedVariableBlock>> scriptargs(2);
+                    scriptargs[0] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(
+                            new VoidPtrBlock(slotptr), L"PlayerSlot"));
+                    scriptargs[1] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(
+                            new IntBlock(mspassed), L"MSPassed"));
+
+                    if(GameAI){
+                        bool ran;
+
+                        // The identifier defines the AI type and they are set in the database //
+                        switch(slotptr->GetControlIdentifier()){
+                            case 1: GameAI->ExecuteOnModule("BallTrackerAI", scriptargs, ran); break;
+                            case 2: GameAI->ExecuteOnModule("CombinedAI", scriptargs, ran); break;
+                            case 0: default:
+                                GameAI->ExecuteOnModule("SimpleAI", scriptargs, ran);
+                        }
+                    }
+
+                }
+
+                slotptr = slotptr->GetSplit();
+            }
+        }
+
+        // Give the ball more speed //
+        GameArena->GiveBallSpeed(1.00001f);
+    }
 }
 // ------------------------------------ //
 void Pong::PongGame::AllowPauseMenu(){

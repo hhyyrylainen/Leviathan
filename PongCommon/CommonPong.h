@@ -469,98 +469,10 @@ playrscorelistupdateendlabel:
             Logger::Get()->Info("Pong PreShutdown complete");
 		}
 
-		virtual void Tick(int mspassed){
+        //! Override this
+		virtual void Tick(int mspassed) override{
 
-			using namespace Leviathan;
-
-			Tickcount++;
-			// Let the AI think //
-			if(GameArena && GameArena->GetBallPtr() && !GamePaused){
-
-				// Find AI slots //
-				for(size_t i = 0; i < _PlayerList.Size(); i++){
-
-					PlayerSlot* slotptr = _PlayerList[i];
-
-					while(slotptr){
-
-						if(slotptr->GetControlType() == PLAYERCONTROLS_AI){
-
-							// Set the slot ptr as the argument and call function based on difficulty //
-							std::vector<shared_ptr<NamedVariableBlock>> scriptargs(2);
-							scriptargs[0] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new VoidPtrBlock(slotptr), L"PlayerSlot"));
-							scriptargs[1] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(new IntBlock(mspassed), L"MSPassed"));
-
-							if(GameAI){
-								bool ran;
-
-								// The identifier defines the AI type and they are set in the database //
-								switch(slotptr->GetControlIdentifier()){
-								case 1: GameAI->ExecuteOnModule("BallTrackerAI", scriptargs, ran); break;
-								case 2: GameAI->ExecuteOnModule("CombinedAI", scriptargs, ran); break;
-								case 0: default:
-									GameAI->ExecuteOnModule("SimpleAI", scriptargs, ran);
-								}
-							}
-
-						}
-
-						slotptr = slotptr->GetSplit();
-					}
-				}
-
-				// Check if ball is too far away (also check if it is vertically stuck or horizontally) //
-
-				Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*> (GameArena->GetBallPtr().get());
-
-				Float3 ballcurpos = castedptr->GetPos();
-
-				if(ballcurpos.HAddAbs() > 100 * BASE_ARENASCALE){
-
-					_DisposeOldBall();
-
-					// Serve new ball //
-					GameArena->ServeBall();
-				}
-
-				// Check is the ball stuck on the dead axis (where no paddle can hit it) //
-				Float3 ballspeed = castedptr->GetBodyVelocity();
-				ballspeed.X = abs(ballspeed.X);
-				ballspeed.Y = 0;
-				ballspeed.Z = abs(ballspeed.Z);
-				ballspeed = ballspeed.Normalize();
-
-				if(DeadAxis.HAddAbs() != 0 && ballspeed.HAddAbs() > BALLSTUCK_THRESHOLD){
-					// Compare directions //
-
-					float veldifference = (ballspeed - DeadAxis).HAddAbs();
-
-					if(veldifference < BALLSTUCK_THRESHOLD){
-
-						StuckThresshold++;
-
-						if(StuckThresshold >= BALLSTUCK_COUNT){
-							// Check is ball in a goal area //
-							if(IsBallInGoalArea()){
-								StuckThresshold = 0;
-							} else {
-								Logger::Get()->Info(L"Ball stuck!");
-
-								_DisposeOldBall();
-								// Serve new ball //
-								GameArena->ServeBall();
-							}
-						}
-					} else {
-						if(StuckThresshold >= 1)
-							StuckThresshold--;
-					}
-				}
-
-
-				// Give the ball more speed //
-				GameArena->GiveBallSpeed(1.00001f);
-			}
+            DEBUG_BREAK;
 		}
 
 		// customized callbacks //

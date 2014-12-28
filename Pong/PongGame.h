@@ -52,6 +52,8 @@ namespace Pong{
 		}
 
 
+        void Tick(int mspassed) override;
+        
 		//! \brief Sends a command to the current server if connected
 		//! \return True if connected, false otherwise
 		bool SendServerCommand(const string &command);

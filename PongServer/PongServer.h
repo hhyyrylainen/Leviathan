@@ -18,7 +18,7 @@ namespace Pong{
 		PongServer();
 		~PongServer();
 
-		virtual void Tick(int mspassed);
+        void Tick(int mspassed) override;
 
 		void TryStartMatch();
 		void CheckForGameEnd();

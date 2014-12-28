@@ -308,6 +308,36 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
             
             return true;
         }
+        case NETWORKRESPONSETYPE_ENTITY_DESTRUCTION:
+        {
+            // Time to destroy an entity //
+            ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](shared_ptr<NetworkResponse> message)
+                        -> void
+                {
+
+                    auto packetdata = message->GetResponseDataForEntityDestruction();
+
+                    if(!packetdata){
+                        // Invalid data //
+                        return;
+                    }
+
+                    // Get a matching world //
+                    auto world = LeviathanApplication::Get()->GetGameWorld(packetdata->WorldID);
+
+                    if(!world){
+
+                        Logger::Get()->Warning("NetworkClientInterface: handle response: dropping an entity "
+                            "destruction message, WorldID: "+Convert::ToString(packetdata->WorldID));
+                        return;
+                    }
+
+                    world->QueueDestroyObject(packetdata->EntityID);
+
+                }, message)));
+
+            return true;
+        }
         default:
             return false;
 	}

@@ -115,6 +115,11 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
             ResponseData = new NetworkResponseDataForEntityUpdate(receivedresponse);
         }
         break;
+        case NETWORKRESPONSETYPE_ENTITY_DESTRUCTION:
+        {
+            ResponseData = new NetworkResponseDataForEntityDestruction(receivedresponse);
+        }
+        break;
         default:
 		{
 			throw ExceptionInvalidArgument(L"packet has invalid type", 0, __WFUNCTION__, L"receivedresponse",
@@ -252,6 +257,16 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateWorldFrozenResponse(NetworkRe
 DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityUpdateResponse(NetworkResponseDataForEntityUpdate* newddata){
 
     ResponseType = NETWORKRESPONSETYPE_ENTITY_UPDATE;
+    // Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;    
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityDestructionResponse(NetworkResponseDataForEntityDestruction*
+    newddata)
+{
+    ResponseType = NETWORKRESPONSETYPE_ENTITY_DESTRUCTION;
     // Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 
@@ -412,6 +427,14 @@ GetResponseDataForUpdateNetworkedInputResponse() const
 {
 	if(ResponseType == NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT && ResponseData)
 		return static_cast<NetworkResponseDataForUpdateNetworkedInput*>(ResponseData);
+	return NULL;
+}
+
+DLLEXPORT NetworkResponseDataForEntityDestruction* Leviathan::NetworkResponse::GetResponseDataForEntityDestruction()
+    const
+{
+	if(ResponseType == NETWORKRESPONSETYPE_ENTITY_DESTRUCTION && ResponseData)
+		return static_cast<NetworkResponseDataForEntityDestruction*>(ResponseData);
 	return NULL;
 }
 
@@ -974,6 +997,27 @@ DLLEXPORT void Leviathan::NetworkResponseDataForEntityUpdate::AddDataToPacket(sf
 
     packet << tmpstr;
 }
+// ------------------ NetworkResponseDataForEntityDestruction ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForEntityDestruction::NetworkResponseDataForEntityDestruction(int worldid,
+    int entityid) : WorldID(worldid), EntityID(entityid)
+{
+
+}
+
+DLLEXPORT Leviathan::NetworkResponseDataForEntityDestruction::NetworkResponseDataForEntityDestruction(
+    sf::Packet &frompacket)
+{
+    frompacket >> WorldID >> EntityID;
+
+    if(!frompacket)
+        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+}
+
+DLLEXPORT void Leviathan::NetworkResponseDataForEntityDestruction::AddDataToPacket(sf::Packet &packet){
+
+    packet << WorldID << EntityID;
+}
+
 
 
 

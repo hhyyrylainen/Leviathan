@@ -47,6 +47,9 @@ namespace Leviathan{
         //! Contains update data for a single entity
         NETWORKRESPONSETYPE_ENTITY_UPDATE,
 
+        //! Contains (list) an ID for entity to be deleted
+        NETWORKRESPONSETYPE_ENTITY_DESTRUCTION,
+
         //! Instructs a world to create or destroy a constraint
         NETWORKRESPONSETYPE_ENTITY_CONSTRAINT,
 
@@ -377,6 +380,23 @@ namespace Leviathan{
         shared_ptr<sf::Packet> UpdateData;
     };
 
+    //! \brief Contains entities to destroy
+    class NetworkResponseDataForEntityDestruction : public BaseNetworkResponseData{
+    public:
+        DLLEXPORT NetworkResponseDataForEntityDestruction(int worldid, int entityid);
+
+        DLLEXPORT NetworkResponseDataForEntityDestruction(sf::Packet &frompacket);
+
+        DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) override;
+
+        
+        //! The ID of the world to which the entities belong
+		int WorldID;
+
+        //! The ID of the entity
+        int EntityID;
+    };
+
     
     //! \brief Holds world physics frozen state change information
     class NetworkResponseDataForWorldFrozen : public BaseNetworkResponseData{
@@ -426,6 +446,7 @@ namespace Leviathan{
         DLLEXPORT void GenerateEntityConstraintResponse(NetworkResponseDataForEntityConstraint* newddata);
         DLLEXPORT void GenerateWorldFrozenResponse(NetworkResponseDataForWorldFrozen* newddata);
         DLLEXPORT void GenerateEntityUpdateResponse(NetworkResponseDataForEntityUpdate* newddata);
+        DLLEXPORT void GenerateEntityDestructionResponse(NetworkResponseDataForEntityDestruction* newddata);
 
 		DLLEXPORT void GenerateCustomResponse(GameSpecificPacketData* newdpacketdata);
 		DLLEXPORT void GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata);
@@ -462,7 +483,8 @@ namespace Leviathan{
         DLLEXPORT NetworkResponseDataForInitialEntity* GetResponseDataForInitialEntity() const;
         DLLEXPORT NetworkResponseDataForEntityConstraint* GetResponseDataForEntityConstraint() const;
         DLLEXPORT NetworkResponseDataForWorldFrozen* GetResponseDataForWorldFrozen() const;
-        DLLEXPORT NetworkResponseDataForEntityUpdate* GetResponseDataForEntityUpdate() const; 
+        DLLEXPORT NetworkResponseDataForEntityUpdate* GetResponseDataForEntityUpdate() const;
+        DLLEXPORT NetworkResponseDataForEntityDestruction* GetResponseDataForEntityDestruction() const;
 
 		DLLEXPORT int GetResponseID() const;
 

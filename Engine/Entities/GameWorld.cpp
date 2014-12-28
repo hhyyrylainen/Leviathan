@@ -586,6 +586,22 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(ObjectLock &guard){
 
     // Throw away the waiting constraints //
     WaitingConstraints.clear();
+
+    // Notify everybody that all entities are discarded //
+    auto end = ReceivingPlayers.end();
+    for(auto iter = ReceivingPlayers.begin(); iter != end; ++iter){
+
+        auto unsafe = (*iter)->GetConnection();
+
+        auto safe = NetworkHandler::Get()->GetSafePointerToConnection(unsafe);
+
+        if(!safe){
+            // Player has probably closed their connection //
+            continue;
+        }
+
+        Logger::Get()->Write("TODO: send world clear message");
+    }
 }
 // ------------------------------------ //
 DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
@@ -632,6 +648,7 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
             
 			// release the object and then erase our reference //
 			(*iter)->ReleaseData();
+            _ReportEntityDestruction(ID, lockit);
 			Objects.erase(iter);
             
 			return;
@@ -691,11 +708,16 @@ void Leviathan::GameWorld::_HandleDelayedDelete(UniqueObjectLock &guard){
             _EraseFromSendable(dynamic_cast<BaseSendableEntity*>((*iter).get()), guard);
             
 			(*iter)->ReleaseData();
+            guard.lock();
+            _ReportEntityDestruction((*iter)->GetID(), guard);
+
 			iter = Objects.erase(iter);
             
 			// Check for end //
 			if(DelayedDeleteIDS.size() == 0)
-                break;
+                return;
+
+            guard.unlock();
 
 		} else {
 			++iter;
@@ -703,6 +725,39 @@ void Leviathan::GameWorld::_HandleDelayedDelete(UniqueObjectLock &guard){
 	}
     
     guard.lock();
+}
+
+void Leviathan::GameWorld::_ReportEntityDestruction(int id, UniqueObjectLock &guard){
+    
+    // Notify everybody that an entity has been destroyed //
+    auto end = ReceivingPlayers.end();
+    for(auto iter = ReceivingPlayers.begin(); iter != end; ++iter){
+
+        auto unsafe = (*iter)->GetConnection();
+
+        auto safe = NetworkHandler::Get()->GetSafePointerToConnection(unsafe);
+
+        if(!safe){
+            // Player has probably closed their connection //
+            continue;
+        }
+        
+        // Then gather all sorts of other stuff to make an response //
+        unique_ptr<NetworkResponseDataForEntityDestruction> resdata(new
+            NetworkResponseDataForEntityDestruction(ID, id));
+
+        // We return whatever the send function returns //
+        shared_ptr<NetworkResponse> response = make_shared<NetworkResponse>(-1,
+            PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 20);
+
+        response->GenerateEntityDestructionResponse(resdata.release());
+
+        if(!safe->SendPacketToConnection(response, 5).get()){
+
+            Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): failed to send entity destruction message "
+                "to client");
+        }
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){

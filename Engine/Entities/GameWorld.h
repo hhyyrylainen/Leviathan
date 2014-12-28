@@ -257,6 +257,11 @@ namespace Leviathan{
         //! \brief Removes a sendable entity from the specific sendable vector
         void _EraseFromSendable(BaseSendableEntity* obj, UniqueObjectLock &guard);
 
+        //! \brief Reports an entity deletion to clients
+        //! \todo Potentially send these in a big blob
+        void _ReportEntityDestruction(int id, UniqueObjectLock &guard);
+        
+
 		// ------------------------------------ //
 		Ogre::Camera* WorldSceneCamera;
 		Ogre::SceneManager* WorldsScene;

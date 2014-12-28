@@ -285,6 +285,8 @@ void Pong::PongServer::DoSpecialPostLoad(){
 
 	tmpvars->AddNewVariable(shared_ptr<SyncedValue>(new SyncedValue(new NamedVariableList(L"TheAnswer",
                     new VariableBlock(42)))));
+
+    GameArena->VerifyTrail();
 }
 
 void Pong::PongServer::CustomizedGameEnd(){

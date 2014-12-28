@@ -41,17 +41,8 @@ bool Pong::Arena::GenerateArena(BasePongParts* game, PlayerList &plys){
 	NewtonWorld* nworld = TargetWorld->GetPhysicalWorld()->GetNewtonWorld();
 	Leviathan::ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
 
-	// These settings are overwritten almost instantly //
-	Leviathan::Entity::TrailProperties balltrailproperties(5, 10, 100, false);
-	
-	// Set up all elements //
-	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(Float4(0),
-        Float4(0.5f, 0.5f, 0.5f, 0), 3.f, 0.3f);
-
-	// Create the trail //
-	TrailKeeper = TargetWorld->GetWorldObject(loader->LoadTrailToWorld(TargetWorld.get(), "PongBallTrail",
-            balltrailproperties, true, &DirectTrail));
-
+    VerifyTrail();
+    
 	// Set the options with the unified function //
 	ColourTheBallTrail(Float4(1.f));
 
@@ -394,11 +385,17 @@ void Pong::Arena::ServeBall(){
 
 	// we want to load our ball prop into the world //
 	Leviathan::Entity::Prop* prop;
-	Ball = TargetWorld->GetWorldObject(Leviathan::Engine::Get()->GetObjectLoader()->LoadPropToWorld(TargetWorld.get(),
-            L"PongBall", &prop));
+	auto tempball = TargetWorld->GetWorldObject(Leviathan::Engine::Get()->GetObjectLoader()->LoadPropToWorld(
+            TargetWorld.get(), L"PongBall", &prop));
 
-    assert(Ball && prop && "failed to load the Ball model");
+    assert(tempball && prop && "failed to load the Ball model");
 
+    // Make the ball be the actual ball //
+    prop->CreateConstraintWith<GameBallConnection>(NULL)->Init();
+    
+    // Verify that the constraint was created //
+    assert(Ball == tempball && "Failed to create emotional connection between the ball and NULL");
+        
 	// set to center of board //
 	prop->SetPos(Float3(0.f, 0.5f, 0.f));
 
@@ -406,6 +403,7 @@ void Pong::Arena::ServeBall(){
 	prop->SetPhysicalMaterial(L"BallMaterial");
 
 	// Parent the trail to the ball //
+    // TODO: make this send it to the client //
 	DirectTrail->AddNonPhysicsParent(prop);
 
 	// Update trail colour //
@@ -449,6 +447,23 @@ void Pong::Arena::ServeBall(){
 
     // We changed a few things so notify all receivers //
     prop->SendUpdatesToAllClients(TargetWorld->GetTickNumber());
+}
+// ------------------------------------ //
+void Pong::Arena::VerifyTrail(){
+
+    if(DirectTrail)
+        return;
+    
+    // These settings are overwritten almost instantly //
+	Leviathan::Entity::TrailProperties balltrailproperties(5, 10, 100, false);
+	
+	// Set up all elements //
+	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(
+        Float4(0), Float4(0.5f, 0.5f, 0.5f, 0), 3.f, 0.3f);
+
+    // Create the trail //
+	TrailKeeper = TargetWorld->GetWorldObject(Leviathan::Engine::Get()->GetObjectLoader()->LoadTrailToWorld(
+            TargetWorld.get(), "PongBallTrail", balltrailproperties, true, &DirectTrail));
 }
 // ------------------------------------ //
 void Pong::Arena::GiveBallSpeed(float mult){

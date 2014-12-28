@@ -164,13 +164,16 @@ void Leviathan::Entity::TrailEmitter::_OnHiddenStateUpdated(){
 }
 // ------------------ TrailProperties ------------------ //
 DLLEXPORT TrailProperties& Leviathan::Entity::TrailProperties::operator=(const TrailProperties &other){
+    
 	TrailLenght = other.TrailLenght;
 	MaxDistance = other.MaxDistance;
 	MaxChainElements = other.MaxChainElements;
 	CastShadows = other.CastShadows;
+    
 	// We need to allocate new vector for us //
 	SAFE_DELETE_VECTOR(ElementProperties);
 	ElementProperties.resize(other.ElementProperties.size());
+    
 	for(size_t i = 0; i < ElementProperties.size(); i++){
 
 		ElementProperties[i] = new TrailElementProperties(*other.ElementProperties[i]);

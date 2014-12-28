@@ -24,6 +24,9 @@ namespace Pong{
 		// Generates an arena to the world //
 		bool GenerateArena(BasePongParts* game, PlayerList &plys);
 
+        //! Makes sure the trail object exists
+        void VerifyTrail();
+
 		void ServeBall();
 		// Does what ever is needed to ditch old ball //
 		void LetGoOfBall();
@@ -31,6 +34,11 @@ namespace Pong{
 		inline shared_ptr<Leviathan::GameWorld> GetWorld(){
 			return TargetWorld;
 		}
+
+        void RegisterBall(shared_ptr<Leviathan::BaseObject> ball){
+
+            Ball = ball;
+        }
 
 		string GetMaterialNameForPlayerColour(const Float4 &colour);
 

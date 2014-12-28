@@ -14,7 +14,8 @@ namespace Pong{
 
     enum PONG_CONSTRAINT_TYPE
     {
-        PONG_CONSTRAINT_TYPE_EMOTIONAL = Leviathan::Entity::ENTITY_CONSTRAINT_TYPE_CUSTOM+1
+        PONG_CONSTRAINT_TYPE_EMOTIONAL = Leviathan::Entity::ENTITY_CONSTRAINT_TYPE_CUSTOM+1,
+        PONG_CONSTRAINT_TYPE_GAME_BALL
     };
 
 
@@ -24,6 +25,7 @@ namespace Pong{
         LINK_TYPE_PADDLE = 2,
         LINK_TYPE_TRACK,
         LINK_TYPE_GOAL,
+        LINK_TYPE_BALL,
         LINK_TYPE_LAST
     };
 
@@ -59,6 +61,21 @@ namespace Pong{
 
         //! Defines which object needs to be linked to the player
         LINK_TYPE TypeToLink;
+    };
+
+    class GameBallConnection : public Leviathan::Entity::BaseConstraint{
+    public:
+
+        GameBallConnection(Leviathan::GameWorld* world, Leviathan::BaseConstraintable* parent,
+            Leviathan::BaseConstraintable* child);
+        ~GameBallConnection();
+
+    protected:
+
+        virtual bool _CheckParameters() override;
+        
+        //! Links the player's paddle track to the PlayerSlot
+        virtual bool _CreateActualJoint() override;
     };
 
 

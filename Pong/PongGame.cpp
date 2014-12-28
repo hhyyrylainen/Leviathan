@@ -513,10 +513,10 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
 	// set skybox to have some sort of visuals //
 	WorldOfPong->SetSkyBox("NiceDaySky");
+    
+    GameArena->VerifyTrail();
 
 	// link world and camera to a window //
-
-
 	window1->LinkObjects(MainCamera, WorldOfPong);
 
 	// link window input to game logic //

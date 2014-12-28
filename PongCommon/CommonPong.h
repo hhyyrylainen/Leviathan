@@ -198,6 +198,11 @@ namespace Pong{
 			return InputFactory;
 		}
 
+        Arena* GetArena(){
+
+            return GameArena.get();
+        }
+
 	protected:
 
 

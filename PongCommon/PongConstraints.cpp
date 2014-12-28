@@ -18,7 +18,11 @@ Pong::PongConstraintSerializer::~PongConstraintSerializer(){
 }
 // ------------------------------------ //
 bool Pong::PongConstraintSerializer::CanHandleType(ENTITY_CONSTRAINT_TYPE type) const{
-    return type == static_cast<ENTITY_CONSTRAINT_TYPE>(PONG_CONSTRAINT_TYPE_EMOTIONAL);
+    if(type == static_cast<ENTITY_CONSTRAINT_TYPE>(PONG_CONSTRAINT_TYPE_EMOTIONAL))
+        return true;
+    if(type == static_cast<ENTITY_CONSTRAINT_TYPE>(PONG_CONSTRAINT_TYPE_GAME_BALL))
+        return true;
+    return false;
 }
 // ------------------------------------ //
 shared_ptr<sf::Packet> Pong::PongConstraintSerializer::SerializeConstraint(BaseConstraint* constraint,
@@ -38,8 +42,18 @@ shared_ptr<sf::Packet> Pong::PongConstraintSerializer::SerializeConstraint(BaseC
 
             (*packet) << emotional->GetPlayerNumber() << static_cast<int32_t>(emotional->GetType());
 
-            Logger::Get()->Write("Sending emotional constraint, number: "+
-                Convert::ToString(emotional->GetPlayerNumber()));
+            return packet;
+        }
+        case PONG_CONSTRAINT_TYPE_GAME_BALL:
+        {
+            GameBallConnection* ballconstraint = dynamic_cast<GameBallConnection*>(constraint);
+
+            if(!ballconstraint)
+                return nullptr;
+            
+            shared_ptr<sf::Packet> packet = make_shared<sf::Packet>();
+
+            (*packet) << int8_t(42);
 
             return packet;
         }
@@ -74,8 +88,30 @@ bool Pong::PongConstraintSerializer::UnSerializeConstraint(BaseObject* object1, 
                 return false;
 
             casted1->CreateConstraintWith<EmotionalConnection>(NULL)->SetParameters(number, actualtype)->Init();
-            Logger::Get()->Write("Received emotional constraint, number: "+
-                Convert::ToString(number));
+            
+            return true;
+        }
+        case PONG_CONSTRAINT_TYPE_GAME_BALL:
+        {
+            if(!create){
+
+                return true;
+            }
+
+            // Magic value check //
+            int8_t themeaning;
+
+            packet >> themeaning;
+
+            if(!packet || themeaning != 42)
+                return false;
+            
+            auto casted1 = dynamic_cast<BaseConstraintable*>(object1);
+
+            if(!casted1)
+                return false;
+
+            casted1->CreateConstraintWith<GameBallConnection>(NULL)->Init();
             
             return true;
         }
@@ -185,4 +221,37 @@ bool EmotionalConnection::_CreateActualJoint(){
             PlayerNumber));
     return false;
 }
+// ------------------ GameBallConnection ------------------ //
+Pong::GameBallConnection::GameBallConnection(Leviathan::GameWorld* world, Leviathan::BaseConstraintable* parent,
+    Leviathan::BaseConstraintable* child) :
+    Entity::BaseConstraint(static_cast<ENTITY_CONSTRAINT_TYPE>(PONG_CONSTRAINT_TYPE_GAME_BALL),
+        world, parent, child)
+{
+
+}
+Pong::GameBallConnection::~GameBallConnection(){
+
+    BasePongParts::Get()->GetArena()->RegisterBall(nullptr);
+}
+// ------------------------------------ //
+bool Pong::GameBallConnection::_CheckParameters(){
+
+    return true;
+}
+
+bool Pong::GameBallConnection::_CreateActualJoint(){
+    BasePongParts::Get()->GetArena()->RegisterBall(OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
+                ParentObject)));    
+}
+
+
+
+
+
+
+
+
+
+
+
 

@@ -89,9 +89,6 @@ void App::CustomizeEnginePostLoad(){
 		tmp->SetPosComponents(-1.f, 10.f, -1.f);
 	}
 	
-	// after loading reset time sensitive timers //
-	Engine::GetEngine()->ResetPhysicsTime();
-
 	// we want to capture mouse to main window //
 	Engine::GetEngine()->GetWindowEntity()->SetMouseCapture(true);
 

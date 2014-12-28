@@ -413,6 +413,16 @@ DLLEXPORT void Leviathan::GameWorld::Tick(){
     
     TickNumber++;
 
+    // Physical simulation //
+    if(!WorldFrozen){
+
+        _PhysicalWorld->AccumulateTime(TICKSPEED);
+
+        // This could potentially be moved somewhere else //
+        // Let's set the maximum runs to 1000 to disable completely deadlocking
+        _PhysicalWorld->ConsumeTime(1000);
+    }
+    
     // Sendable objects may need something to be done //
     auto nethandler = NetworkHandler::Get();
 
@@ -610,21 +620,6 @@ DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
 	return Float3(0.f, PHYSICS_BASE_GRAVITY, 0.f);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::SimulateWorld(){
-	UNIQUE_LOCK_THIS_OBJECT();
-    
-	// This is probably the best place to remove dead objects //
-	_HandleDelayedDelete(lockit);
-
-	// Only if not frozen run physics //
-	if(!WorldFrozen)
-		_PhysicalWorld->SimulateWorld();
-}
-
-DLLEXPORT void Leviathan::GameWorld::ClearSimulatePassedTime(){
-	_PhysicalWorld->ClearTimers();
-}
-// ------------------------------------ //
 void Leviathan::GameWorld::_EraseFromSendable(BaseSendableEntity* obj, UniqueObjectLock &guard){
 
     for(size_t i = 0; i < SendableObjects.size(); i++){
@@ -768,11 +763,6 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 	GUARD_LOCK_THIS_OBJECT();
 
 	WorldFrozen = frozen;
-	// If unfrozen reset physics time //
-	if(!WorldFrozen){
-		if(_PhysicalWorld)
-			_PhysicalWorld->ClearTimers();
-	}
 
     // Send it to receiving players (if we are a server) //
     if(ReceivingPlayers.empty())
@@ -815,6 +805,7 @@ DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float
 	// Return the only hit //
 	return data.HitEntities[0];
 }
+
 // \todo improve this performance //
 dFloat Leviathan::GameWorld::RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const
     shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData,
@@ -1267,6 +1258,11 @@ DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(NetworkResponseData
     Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): frozen state updated, now: "+
         Convert::ToString<int>(data->Frozen)+", tick: "+Convert::ToString(data->TickNumber)+" (our tick:"+
         Convert::ToString(TickNumber)+")");
+
+    if(data->TickNumber > TickNumber){
+
+        Logger::Get()->Write("TODO: freeze the world in the future");
+    }
     
     // Set the state //
     SetWorldPhysicsFrozenState(data->Frozen);
@@ -1279,12 +1275,10 @@ DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(NetworkResponseData
 
         if(tickstosimulate > 0){
 
-            int milliseconds = TICKSPEED*tickstosimulate;
+            Logger::Get()->Info("GameWorld: unfreezing and simulating "+Convert::ToString(tickstosimulate)+
+                " ticks worth of more physical updates");
 
-            Logger::Get()->Info("GameWorld: unfreezing and simulating "+Convert::ToString(milliseconds)+
-                " milliseconds more physical updates");
-
-            _PhysicalWorld->AdjustClock(milliseconds);
+            _PhysicalWorld->AccumulateTime(tickstosimulate*TICKSPEED);
         }
         
         

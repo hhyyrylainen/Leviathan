@@ -463,38 +463,35 @@ void Leviathan::Engine::PostLoad(){
 	}
 
 	// Start receiving input //
-	if(NoGui){
+    CinThread = boost::thread(boost::bind<void>([]() -> void
+        {
+            // First get input //
+            wstring inputcommand;
 
+            while(true){
 
-		CinThread = boost::thread(boost::bind<void>([]() -> void{
-			// First get input //
-			wstring inputcommand;
-
-			while(true){
-
-				getline(wcin, inputcommand);
-				// Pass to various things //
-				Engine* engine = Engine::Get();
+                getline(wcin, inputcommand);
+                // Pass to various things //
+                Engine* engine = Engine::Get();
 				
-				// Stop if Engine is no more //
-				if(!engine){
+                // Stop if Engine is no more //
+                if(!engine){
 
-					break;
-				}
+                    break;
+                }
 
-				GUARD_LOCK_OTHER_OBJECT(engine);
-				auto tmpptr = engine->MainConsole;
-				if(tmpptr){
+                GUARD_LOCK_OTHER_OBJECT(engine);
+                auto tmpptr = engine->MainConsole;
+                if(tmpptr){
 
-					tmpptr->RunConsoleCommand(inputcommand);
+                    tmpptr->RunConsoleCommand(inputcommand);
 
-				} else {
-					Logger::Get()->Warning(L"No console handler attached, cannot run command");
-				}
-			}
+                } else {
+                    Logger::Get()->Warning("No console handler attached, cannot run command");
+                }
+            }
 
-		}));
-	}
+        }));
 
 
 	// get time //
@@ -582,10 +579,8 @@ void Leviathan::Engine::Release(bool forced){
 // ------------------------------------ //
 void Leviathan::Engine::Tick(){
 	GUARD_LOCK_THIS_OBJECT();
-	// Because this is checked very often we can check for physics update here //
-	PhysicsUpdate();
 
-	// We can also update networking //
+	// Always try to update networking //
 	if(_NetworkHandler)
 		_NetworkHandler->UpdateAllConnections();
 
@@ -633,7 +628,8 @@ void Leviathan::Engine::Tick(){
     // Update worlds //
     {
         GUARD_LOCK_BASIC(GameWorldsLock);
-        
+
+        // This will also update physics //
         auto end = GameWorlds.end();
         for(auto iter = GameWorlds.begin(); iter != end; ++iter){
 
@@ -677,13 +673,6 @@ DLLEXPORT void Leviathan::Engine::PreFirstTick(){
 
     if(_ThreadingManager)
         _ThreadingManager->NotifyQueuerThread();
-
-    // Reset physics timers //
-    auto end = GameWorlds.end();
-    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
-
-        (*iter)->ClearSimulatePassedTime();
-    }
     
 	Logger::Get()->Info(L"Engine: PreFirstTick: everything fine to start running");
 }
@@ -741,16 +730,12 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 	PreReleaseCompleted = true;
 
 	// Stop command handling first //
-	if(NoGui){
-		
-		// Apparently killing doesn't really work on linux in any reasonable way, so just let it run
+    // Apparently killing doesn't really work on linux in any reasonable way, so just let it run
 #if 0
-		//Misc::KillThread(CinThread);
-		Logger::Get()->Info(L"Successfully stopped command handling");
-#else
-		Logger::Get()->Info(L"Hopefully command handling stops soon...");
+    //Misc::KillThread(CinThread);
+    Logger::Get()->Info(L"Successfully stopped command handling");
 #endif
-	}
+
 
 	// Then kill the network //
 	_NetworkHandler->GetInterface()->CloseDown();
@@ -784,7 +769,7 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 	Logger::Get()->Info(L"Engine: prerelease done, waiting for a tick");
 }
 
-DLLEXPORT bool Leviathan::Engine::HasPreRleaseBeenDone() const{
+DLLEXPORT bool Leviathan::Engine::HasPreReleaseBeenDone() const{
 	return PreReleaseDone;
 }
 // ------------------------------------ //
@@ -853,30 +838,10 @@ DLLEXPORT void Leviathan::Engine::DestroyWorld(shared_ptr<GameWorld> &world){
     world.reset();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Engine::PhysicsUpdate(){
-	// go through all the worlds and simulate updates //
-    GUARD_LOCK_BASIC(GameWorldsLock);
-
-	for(size_t i = 0; i < GameWorlds.size(); i++){
-
-		GameWorlds[i]->SimulateWorld();
-	}
-
-}
-
-DLLEXPORT void Leviathan::Engine::ResetPhysicsTime(){
-	// go through all worlds and set last update time to this moment //
-    GUARD_LOCK_BASIC(GameWorldsLock);
-    
-	for(size_t i = 0; i < GameWorlds.size(); i++){
-
-		GameWorlds[i]->ClearSimulatePassedTime();
-	}
-}
-// ------------------------------------ //
 void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
 	if(NoGui)
 		return;
+    
 	// Register threads to use graphical objects //
 	_ThreadingManager->MakeThreadsWorkWithOgre();
 }

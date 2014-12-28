@@ -118,7 +118,7 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 	// For reporting wait failures //
 	int FailCount = 0;
 
-	while(!_Engine->HasPreRleaseBeenDone()){
+	while(!_Engine->HasPreReleaseBeenDone()){
 		// Store this //
 		bool canprocess = _Engine->GetWindowOpenCount() != 0;
 

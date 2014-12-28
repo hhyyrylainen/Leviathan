@@ -88,7 +88,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 		return true;
 	}
 	
-	NewtonWorld* tmpworld = OwnedByWorld->GetPhysicalWorld()->GetWorld();
+	NewtonWorld* tmpworld = OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld();
 
 	// first get the type //
 	wstring ptype;

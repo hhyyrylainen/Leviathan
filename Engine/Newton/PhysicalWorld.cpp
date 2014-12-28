@@ -11,7 +11,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) :
-    LastSimulatedTime(0), PassedTimeTotal(0), OwningWorld(owner), ResimulatedBody(NULL)
+    PassedTimeTotal(0), OwningWorld(owner), ResimulatedBody(NULL)
 {
 
 	// create newton world //
@@ -43,32 +43,34 @@ DLLEXPORT Leviathan::PhysicalWorld::~PhysicalWorld(){
     World = NULL;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(){
-	// calculate passed delta time and simulate if possible //
+DLLEXPORT void Leviathan::PhysicalWorld::ConsumeTime(int maxruns /*= -1*/){
 
-	__int64 curtime = Misc::GetTimeMicro64();
-	// calculate passed time and reset //
-	PassedTimeTotal += (int)(curtime-LastSimulatedTime);
-	LastSimulatedTime = curtime;
+    if(maxruns == 0){
 
-    boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
+        // TODO: report error?
+        maxruns = 1;
+    }
     
-	// simulate updates //
-	while(PassedTimeTotal >= NEWTON_FPS_IN_MICROSECONDS){
-		// avoid freezing the program //
-		if(PassedTimeTotal >= 10000*NEWTON_FPS_IN_MICROSECONDS){
+    int runs = 0;
+    
+    boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
 
-            Logger::Get()->Warning("Game pretty much will deadlock now in physical update, passed time: "+
-                Convert::ToString(PassedTimeTotal));
-			PassedTimeTotal = 1000*NEWTON_FPS_IN_MICROSECONDS;
-		}
-
+	while(PassedTimeTotal >= NEWTON_FPS_IN_MILLISECONDS){
+        
 		// Call event //
 		EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_BEGIN, new PhysicsStartEventData(NEWTON_TIMESTEP,
                     OwningWorld)));
 
 		NewtonUpdate(World, NEWTON_TIMESTEP);
-		PassedTimeTotal -= (int)NEWTON_FPS_IN_MICROSECONDS;
+		PassedTimeTotal -= NEWTON_FPS_IN_MILLISECONDS;
+        runs++;
+
+        if(runs == maxruns){
+
+            Logger::Get()->Warning("PhysicalWorld: bailing from update after "+Convert::ToString(runs)+
+                " with time left: "+Convert::ToString(PassedTimeTotal));
+            return;
+        }
 	}
 }
 // ------------------------------------ //
@@ -93,40 +95,48 @@ int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void
 
 DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int milliseconds){
 
-    int simulateruns = (0.001f*milliseconds)/NEWTON_TIMESTEP;
-
     boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
 
     ResimulatedBody = body;
-    
+
     // Setup single island callbacks //
     NewtonSetIslandUpdateEvent(World, &SingleBodyUpdate);
 
-    for(int i = 0; i < simulateruns; i++){
-
-        //NewtonUpdate(World, body, NEWTON_TIMESTEP);
+    float passedtime = milliseconds;
+    
+    while(passedtime >= NEWTON_FPS_IN_MILLISECONDS){
         
-        NewtonUpdate(World, NEWTON_TIMESTEP);
+		NewtonUpdate(World, NEWTON_TIMESTEP);
+        passedtime-= NEWTON_FPS_IN_MILLISECONDS;
+	}
+
+    // Update away any left over time //
+    if(passedtime > 0){
+
+        // Might be a bad idea to use a varying time step here...
+        Logger::Get()->Write("Updating away: "+Convert::ToString(passedtime));
+        NewtonUpdate(World, passedtime);
     }
 
     // Reset the update event //
     NewtonSetIslandUpdateEvent(World, NULL);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::PhysicalWorld::ClearTimers(){
-	LastSimulatedTime = Misc::GetTimeMicro64();
+DLLEXPORT void Leviathan::PhysicalWorld::ResetPassedTime(){
 	PassedTimeTotal = 0;
+}
+
+DLLEXPORT void Leviathan::PhysicalWorld::AccumulateTime(int milliseconds){
+
+    PassedTimeTotal += milliseconds;
 }
 // ------------------------------------ //
 DLLEXPORT NewtonWorld* Leviathan::PhysicalWorld::GetNewtonWorld(){
 	return World;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::PhysicalWorld::AdjustClock(int milliseconds){
 
-    // Convert from milliseconds (10^-3) to micro seconds (10^-6) //
-    LastSimulatedTime -= 1000*milliseconds;
-}
-// ------------------------------------ //
+
+
 
 

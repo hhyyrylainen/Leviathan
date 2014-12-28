@@ -169,12 +169,13 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::RemoveApplyForce(const wstring &nam
 DLLEXPORT bool Leviathan::BasePhysicsObject::SetPhysicalMaterial(const wstring &materialname){
 	// Fetches the ID and calls the direct material ID setting function //
 	int id = PhysicsMaterialManager::Get()->GetMaterialIDForWorld(materialname,
-        OwnedByWorld->GetPhysicalWorld()->GetWorld());
+        OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld());
 
 	if(id == -1){
 		// invalid name //
 		return false;
 	}
+    
 	// Apply it //
 	SetPhysicalMaterialID(id);
 	return true;

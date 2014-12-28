@@ -345,7 +345,7 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 
 	// create a newton object which is always a box //
 
-	NewtonWorld* tmpworld = OwnedByWorld->GetPhysicalWorld()->GetWorld();
+	NewtonWorld* tmpworld = OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld();
 
 	// possible offset //
 	Ogre::Matrix4 offset = Ogre::Matrix4::IDENTITY;

@@ -101,7 +101,10 @@ namespace Leviathan{
 
         //! \brief Used to keep track of passed ticks and trigger timed triggers
         //! \note This will be called (or should be) every time the engine ticks
+        //!
+        //! This will also advance the simulation time and simulate physics
         DLLEXPORT void Tick();
+
 
         //! \brief Returns the current tick
         DLLEXPORT int GetTickNumber() const;
@@ -177,9 +180,6 @@ namespace Leviathan{
 
         //! \todo Synchronize this over the network
 		DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
-
-		DLLEXPORT void SimulateWorld();
-		DLLEXPORT void ClearSimulatePassedTime();
 
 		// Ray callbacks //
 		static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const

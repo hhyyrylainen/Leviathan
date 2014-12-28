@@ -451,9 +451,6 @@ playrscorelistupdateendlabel:
 
 			// Wait for everything to finish //
 			Engine::Get()->GetThreadingManager()->WaitForAllTasksToFinish();
-
-			// after loading reset time sensitive timers //
-			Engine::GetEngine()->ResetPhysicsTime();
 		}
 
 		virtual void EnginePreShutdown() override{

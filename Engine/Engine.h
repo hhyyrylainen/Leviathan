@@ -39,7 +39,7 @@ namespace Leviathan{
 
 		//! \brief Checks if PreRelease is done and Release can be called
 		//! \pre PreRelease is called
-		DLLEXPORT bool HasPreRleaseBeenDone() const;
+		DLLEXPORT bool HasPreReleaseBeenDone() const;
 
         //! \brief Calculates how long has elapsed since the last tick
         //! \return The time in milliseconds
@@ -50,8 +50,6 @@ namespace Leviathan{
 
 		DLLEXPORT void Tick();
 		DLLEXPORT void RenderFrame();
-		DLLEXPORT void PhysicsUpdate();
-		DLLEXPORT void ResetPhysicsTime();
 		DLLEXPORT void PreFirstTick();
 
 		DLLEXPORT int GetWindowOpenCount();

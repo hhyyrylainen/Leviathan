@@ -55,7 +55,7 @@ DLLEXPORT void Leviathan::Entity::BaseConstraint::ConstraintPartUnlinkedDestroy(
 	ParentObject = NULL;
 
 	if(Joint){
-		NewtonDestroyJoint(OwningWorld->GetPhysicalWorld()->GetWorld(), Joint);
+		NewtonDestroyJoint(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(), Joint);
 		Joint = NULL;
 	}
 }
@@ -110,7 +110,7 @@ bool Leviathan::Entity::SliderConstraint::_CreateActualJoint(){
         return false;
     }
     
-	Joint = NewtonConstraintCreateSlider(OwningWorld->GetPhysicalWorld()->GetWorld(), &pos.X, &Axis.X, 
+	Joint = NewtonConstraintCreateSlider(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(), &pos.X, &Axis.X, 
 		first->GetPhysicsBody(), second->GetPhysicsBody());
 
 	return Joint != NULL;

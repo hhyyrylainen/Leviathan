@@ -191,10 +191,8 @@ DLLEXPORT bool Leviathan::Graphics::Frame(){
 
 bool Leviathan::Graphics::frameRenderingQueued(const Ogre::FrameEvent& evt){
 
-	// simulate physics for next frame //
-	Engine::GetEngine()->PhysicsUpdate();
-
-
+    // TODO: check can we try to Tick here
+    
 	return true;
 }
 // ------------------------------------------- //

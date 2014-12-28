@@ -55,10 +55,11 @@ namespace Pong{
 
 
 		BasePongParts(bool isserver) :
-            GameArena(nullptr), ErrorState("No error"), Tickcount(0), LastPlayerHitBallID(-1), 
-			ScoreLimit(L"ScoreLimit", 20), BallLastPos(0.f), DeadAxis(0.f), StuckThresshold(0), 
+            GameArena(nullptr), ErrorState("No error"),  
+			ScoreLimit(L"ScoreLimit", 20),
 			GameConfigurationData(new Leviathan::SimpleDatabase(L"GameConfiguration")),
 			GamePaused(L"GamePaused", false), GameAI(NULL),
+            LastPlayerHitBallID(L"LastPlayerHitBallID", -1),
             _PlayerList(boost::function<void (PlayerList*)>(&StatUpdater), 4)
 		{
 			BasepongStaticAccess = this;
@@ -69,16 +70,6 @@ namespace Pong{
 			SAFE_DELETE(GameAI);
 			BasepongStaticAccess = NULL;
 		}
-
-
-
-		void GameMatchEnded(){
-			// This can be called from script so ensure that these are set //
-			GameArena->LetGoOfBall();
-
-			CustomizedGameEnd();
-		}
-
 
 		//! \brief Updates the ball trail based on the player colour
 		void SetBallLastHitColour(){
@@ -112,54 +103,6 @@ namespace Pong{
 			Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
 		}
 
-
-		//! \brief Called when scored, will handle everything
-		int PlayerScored(Leviathan::BasePhysicsObject* goalptr){
-			// Don't count if the player whose goal the ball is in is the last one to touch it or if none have touched it //
-			if(PlayerIDMatchesGoalAreaID(LastPlayerHitBallID, goalptr) || LastPlayerHitBallID == -1){
-
-				return 1;
-			}
-
-			// Add point to player who scored //
-
-			// Look through all players and compare PlayerIDs //
-			for(size_t i = 0; i < _PlayerList.Size(); i++){
-
-				PlayerSlot* slotptr = _PlayerList[i];
-
-				while(slotptr){
-
-
-					if(LastPlayerHitBallID == slotptr->GetPlayerNumber()){
-						// Found right player //
-						slotptr->SetScore(slotptr->GetScore()+SCOREPOINT_AMOUNT);
-						goto playrscorelistupdateendlabel;
-					}
-
-					slotptr = slotptr->GetSplit();
-				}
-			}
-			// No players got points! //
-
-playrscorelistupdateendlabel:
-
-
-			// Send ScoreUpdated event //
-			Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"ScoreUpdated"),
-                    new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"ScoredPlayer", new
-                                Leviathan::VariableBlock(LastPlayerHitBallID))))));
-
-			_DisposeOldBall();
-
-			// Serve new ball //
-			GameArena->ServeBall();
-
-			// Check for game end //
-			ServerCheckEnd();
-
-			return 0;
-		}
 
 		//! \brief Will determine if a paddle could theoretically hit the ball
 		bool IsBallInGoalArea(){
@@ -205,6 +148,8 @@ playrscorelistupdateendlabel:
 		//! \warning increases reference count
 		Leviathan::Entity::Prop* GetBall(){
 			auto tmp = GameArena->GetBallPtr();
+            if(!tmp)
+                return NULL;
 			tmp->AddRef();
 			return dynamic_cast<Leviathan::Entity::Prop*>(tmp.get());
 		}
@@ -234,9 +179,6 @@ playrscorelistupdateendlabel:
 		int GetScoreLimit(){
 			return ScoreLimit;
 		}
-		void SetScoreLimit(int scorelimit){
-			ScoreLimit = scorelimit;
-		}
 
 		BaseNotifiableAll* GetPlayersAsNotifiable(){
 
@@ -245,54 +187,6 @@ playrscorelistupdateendlabel:
 
 		static BasePongParts* Get(){
 			return BasepongStaticAccess;
-		}
-
-		//! This function sets the player ID who should get points for scoring //
-		void _SetLastPaddleHit(Leviathan::BasePhysicsObject* objptr, Leviathan::BasePhysicsObject* objptr2){
-			// Note: the object pointers can be in any order they want //
-
-			Leviathan::BasePhysicsObject* realballptr = dynamic_cast<Leviathan::BasePhysicsObject*>(
-                GameArena->GetBallPtr().get());
-
-			// Look through all players and compare paddle ptrs //
-			for(size_t i = 0; i < _PlayerList.Size(); i++){
-
-				PlayerSlot* slotptr = _PlayerList[i];
-
-				while(slotptr){
-
-					Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*>(
-                        slotptr->GetPaddle().get());
-
-					if((objptr == castedptr && objptr2 == realballptr) ||
-                        (objptr2 == castedptr && objptr == realballptr))
-                    {
-						// Found right player //
-						LastPlayerHitBallID = slotptr->GetPlayerNumber();
-						SetBallLastHitColour();
-						return;
-					}
-
-					slotptr = slotptr->GetSplit();
-				}
-			}
-		}
-		//! Handles score increase from scoring and destruction of ball. The second parameter is used to
-        //! ensuring it is the right ball
-		int _BallEnterGoalArea(Leviathan::BasePhysicsObject* goal, Leviathan::BasePhysicsObject* ballobject){
-			// Note: the object pointers can be in any order they want //
-
-			Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*>(
-                GameArena->GetBallPtr().get());
-
-			if(ballobject == castedptr){
-				// goal is actually the goal area //
-				return PlayerScored(goal);
-			} else if(goal == castedptr){
-				// ballobject is actually the goal area //
-				return PlayerScored(ballobject);
-			}
-			return 0;
 		}
 
 		PlayerList* GetPlayers(){
@@ -307,26 +201,10 @@ playrscorelistupdateendlabel:
 	protected:
 
 
-		void _DisposeOldBall(){
-
-			// Tell arena to let go of old ball //
-			GameArena->LetGoOfBall();
-
-			// Reset variables //
-			LastPlayerHitBallID = -1;
-			StuckThresshold = 0;
-			// This should reset the ball trail colour //
-			SetBallLastHitColour();
-		}
-
 		// These should be overridden by the child class //
 		virtual void DoSpecialPostLoad() = 0;
 		virtual void CustomizedGameEnd() = 0;
 		virtual void OnPlayerStatsUpdated(PlayerList* list) = 0;
-
-		virtual void ServerCheckEnd(){
-
-		}
 
 		// ------------------------------------ //
 
@@ -337,18 +215,10 @@ playrscorelistupdateendlabel:
 		// AI module //
 		GameModule* GameAI;
 
-		int LastPlayerHitBallID;
+		SyncedPrimitive<int> LastPlayerHitBallID;
 
 		SyncedPrimitive<bool> GamePaused;
 		SyncedPrimitive<int> ScoreLimit;
-
-		//! Used to count ticks to not have to call set apply force every tick
-		int Tickcount;
-		//! Ball's position during last tick. This is used to see if the ball is "stuck"
-		Float3 BallLastPos;
-		//! Direction in which the ball can get stuck
-		Float3 DeadAxis;
-		int StuckThresshold;
 
 		// Configuration data //
 		shared_ptr<Leviathan::SimpleDatabase> GameConfigurationData;
@@ -406,24 +276,27 @@ playrscorelistupdateendlabel:
 
 				GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
 
-				assert(vars->GetValueAndConvertTo<wstring>(L"GameDatabase", savefile) && "invalid game variable configuration, no GameDatabase");
+				assert(vars->GetValueAndConvertTo<wstring>(L"GameDatabase", savefile) &&
+                    "invalid game variable configuration, no GameDatabase");
 
 				GameConfigurationData->LoadFromFile(savefile);
 				Logger::Get()->Info(L"Loaded game configuration database");
 
 			}, GameConfigurationData))));
 
-			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](CommonPongParts* game) -> void{
-				// Load the game AI //
-				game->GameAI = new GameModule(L"PongAIModule", L"PongGameCore");
+			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
+                                CommonPongParts* game) -> void
+                {
+                    // Load the game AI //
+                    game->GameAI = new GameModule(L"PongAIModule", L"PongGameCore");
 
-				if(!game->GameAI->Init()){
-					// No AI for the game //
-					Logger::Get()->Error(L"Failed to load AI!");
-					SAFE_DELETE(game->GameAI);
-				}
+                    if(!game->GameAI->Init()){
+                        // No AI for the game //
+                        Logger::Get()->Error(L"Failed to load AI!");
+                        SAFE_DELETE(game->GameAI);
+                    }
 
-			}, this))));
+                }, this))));
 
 
 			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([]()
@@ -436,7 +309,7 @@ playrscorelistupdateendlabel:
                     
                 }))));
 
-			// setup world //
+			// Setup world //
 			WorldOfPong = Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), NULL);
 
 			// create playing field manager with the world //
@@ -448,6 +321,7 @@ playrscorelistupdateendlabel:
 			ScoreLimit.StartSync();
 			GamePaused.StartSync();
 			_PlayerList.StartSync();
+            LastPlayerHitBallID.StartSync();
 
 			// Wait for everything to finish //
 			Engine::Get()->GetThreadingManager()->WaitForAllTasksToFinish();
@@ -496,10 +370,6 @@ playrscorelistupdateendlabel:
 				SCRIPT_REGISTERFAIL;
 			}
 
-			if(engine->RegisterObjectMethod("PongBase", "void GameMatchEnded()", WRAP_MFN(BasePongParts, GameMatchEnded), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
 			if(engine->RegisterObjectMethod("PongBase", "int GetLastHitPlayer()", WRAP_MFN(BasePongParts, GetLastHitPlayer), asCALL_GENERIC) < 0)
 			{
 				SCRIPT_REGISTERFAIL;
@@ -704,14 +574,16 @@ playrscorelistupdateendlabel:
 			// load predefined materials //
 			unique_ptr<Leviathan::PhysicalMaterial> PaddleMaterial(new Leviathan::PhysicalMaterial(L"PaddleMaterial"));
 			unique_ptr<Leviathan::PhysicalMaterial> ArenaMaterial(new Leviathan::PhysicalMaterial(L"ArenaMaterial"));
-			unique_ptr<Leviathan::PhysicalMaterial> ArenaBottomMaterial(new Leviathan::PhysicalMaterial(L"ArenaBottomMaterial"));
+			unique_ptr<Leviathan::PhysicalMaterial> ArenaBottomMaterial(
+                new Leviathan::PhysicalMaterial(L"ArenaBottomMaterial"));
 			unique_ptr<Leviathan::PhysicalMaterial> BallMaterial(new Leviathan::PhysicalMaterial(L"BallMaterial"));
-			unique_ptr<Leviathan::PhysicalMaterial> GoalAreaMaterial(new Leviathan::PhysicalMaterial(L"GoalAreaMaterial"));
+			unique_ptr<Leviathan::PhysicalMaterial> GoalAreaMaterial(
+                new Leviathan::PhysicalMaterial(L"GoalAreaMaterial"));
 
 			// Set callbacks //
 			BallMaterial->FormPairWith(*PaddleMaterial).SetSoftness(1.f).SetElasticity(1.0f).SetFriction(1.f, 1.f).
-				SetCallbacks(NULL, BallContactCallbackPaddle);
-			BallMaterial->FormPairWith(*GoalAreaMaterial).SetCallbacks(NULL, BallContactCallbackGoalArea);
+				SetCallbacks(NULL, GetBallPaddleCallback());
+			BallMaterial->FormPairWith(*GoalAreaMaterial).SetCallbacks(NULL, GetBallGoalAreaCallback());
 
 			PaddleMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
 			PaddleMaterial->FormPairWith(*ArenaMaterial).SetCollidable(false).SetElasticity(0.f).SetSoftness(0.f);
@@ -731,22 +603,16 @@ playrscorelistupdateendlabel:
 			tmp->LoadedMaterialAdd(GoalAreaMaterial.release());
 			tmp->LoadedMaterialAdd(ArenaBottomMaterial.release());
 		}
+
+        
+        
 		// ------------------ Physics callbacks for game logic ------------------ //
 		// Ball handling callback //
-		static void BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep, int threadIndex){
 
-			// Call the callback //
-			BasepongStaticAccess->_SetLastPaddleHit(reinterpret_cast<Leviathan::BasePhysicsObject*>(
-				NewtonBodyGetUserData(NewtonJointGetBody0(contact))), reinterpret_cast<Leviathan::BasePhysicsObject*>(
-				NewtonBodyGetUserData(NewtonJointGetBody1(contact))));
-		}
-		static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep, int threadIndex){
-			// Call the function and set the collision state as the last one //
-			NewtonJointSetCollisionState(contact, BasepongStaticAccess->_BallEnterGoalArea(reinterpret_cast<Leviathan::BasePhysicsObject*>(
-				NewtonBodyGetUserData(NewtonJointGetBody0(contact))), reinterpret_cast<Leviathan::BasePhysicsObject*>(
-				NewtonBodyGetUserData(NewtonJointGetBody1(contact)))));
-		}
+        virtual PhysicsMaterialContactCallback GetBallPaddleCallback() = 0;
 
+        virtual PhysicsMaterialContactCallback GetBallGoalAreaCallback() = 0;
+        
 	protected:
 
 		virtual bool MoreCustomScriptTypes(asIScriptEngine* engine) = 0;

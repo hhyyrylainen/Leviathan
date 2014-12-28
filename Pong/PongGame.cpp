@@ -338,8 +338,6 @@ void Pong::PongGame::Tick(int mspassed){
     
     using namespace Leviathan;
 
-    Tickcount++;
-    
     // Let the AI think //
     if(GameArena && GameArena->GetBallPtr() && !GamePaused){
 

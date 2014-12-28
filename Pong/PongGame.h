@@ -86,7 +86,30 @@ namespace Pong{
         virtual int OnGenericEvent(GenericEvent** pevent) override{
             return -1;
         }
+        
+        static void BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep,
+            int threadIndex)
+        {
 
+		}
+        
+		static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep, int threadIndex){
+
+			// The ball will always go through it... //
+			NewtonJointSetCollisionState(contact, 0);
+		}
+
+
+
+        virtual PhysicsMaterialContactCallback GetBallPaddleCallback(){
+
+            return BallContactCallbackPaddle;
+        }
+
+        virtual PhysicsMaterialContactCallback GetBallGoalAreaCallback(){
+
+            return BallContactCallbackGoalArea;
+        }
         
 	protected:
 

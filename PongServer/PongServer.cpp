@@ -19,7 +19,10 @@ using namespace Pong;
 // Put this here, since nowhere else to put it //
 BasePongParts* Pong::BasepongStaticAccess = NULL;
 
-Pong::PongServer::PongServer() : ServerInputHandler(NULL), _PongServerNetworking(NULL){
+Pong::PongServer::PongServer() :
+    ServerInputHandler(NULL), _PongServerNetworking(NULL), BallLastPos(0.f), DeadAxis(0.f),
+    StuckThresshold(0)
+{
 
 	Staticaccess = this;
 }
@@ -44,8 +47,6 @@ void Pong::PongServer::Tick(int mspassed){
 
     using namespace Leviathan;
 
-    Tickcount++;
-    
     // Let the AI think //
     if(GameArena && GameArena->GetBallPtr() && !GamePaused){
 
@@ -293,11 +294,28 @@ void Pong::PongServer::CustomizedGameEnd(){
 // ------------------------------------ //
 bool Pong::PongServer::MoreCustomScriptTypes(asIScriptEngine* engine){
 
+    if(engine->RegisterObjectType("PongServer", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+		SCRIPT_REGISTERFAIL;
+	}
+
+
+	if(engine->RegisterGlobalFunction("PongServer@ GetPongServer()", asFUNCTION(PongServer::Get), asCALL_CDECL) < 0){
+		SCRIPT_REGISTERFAIL;
+	}
+
+    
+    if(engine->RegisterObjectMethod("PongServer", "void GameMatchEnded()", asMETHOD(PongServer, GameMatchEnded),
+            asCALL_THISCALL) < 0)
+    {
+        SCRIPT_REGISTERFAIL;
+    }
+
+    
     return true;
 }
 
 void Pong::PongServer::MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids){
-
+    typeids.insert(make_pair(engine->GetTypeIdByDecl("PongServer"), L"PongServer"));
 }
 
 void Pong::PongServer::PreFirstTick(){

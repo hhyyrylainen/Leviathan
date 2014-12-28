@@ -36,7 +36,8 @@ namespace Leviathan{
 		FORCE_INLINE void VerifyLock(ObjectLock &guard) const THROWS{
 			// ensure that lock is for this //
 			if(!guard.owns_lock(&this->ObjectsLock))
-				throw ExceptionInvalidAccess(L"wrong lock owner", 0, __WFUNCTION__, L"lock", L"mismatching lock and object");
+				throw ExceptionInvalidAccess(L"wrong lock owner", 0, __WFUNCTION__, L"lock",
+                    L"mismatching lock and object");
 		}
 
 		//! The main lock facility, mutable for working with const functions

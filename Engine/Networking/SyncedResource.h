@@ -74,8 +74,8 @@ namespace Leviathan{
 
 
 	//! \brief Template class for syncing basic types
-	//! \warning This will only work with primitive types like int, float, string etc. For other use you must inherit SyncedResource and create
-	//! a custom class
+	//! \warning This will only work with primitive types like int, float, string etc.
+    //! For other use you must inherit SyncedResource and create a custom class
 	//! \see SyncedResource
 	template<class DTypeName>
 	class SyncedPrimitive : public SyncedResource{
@@ -84,13 +84,16 @@ namespace Leviathan{
 		typedef void (*CallbackPtr)(SyncedPrimitive<DTypeName>* updated);
 
 		//! \brief Constructs an instance with a initial value
-		//! \warning The order of the initializer list is important since anytime after calling SyncedResource we can receive updates
-		DLLEXPORT SyncedPrimitive(const wstring &uniquename, const DTypeName &initialvalue, CallbackPtr updatecallback = NULL) : OurValue(initialvalue), 
+		//! \warning The order of the initializer list is important since anytime after calling
+        //! SyncedResource we can receive updates
+		DLLEXPORT SyncedPrimitive(const wstring &uniquename, const DTypeName &initialvalue,
+            CallbackPtr updatecallback = NULL) : OurValue(initialvalue), 
 			ValueUpdateCallback(updatecallback), SyncedResource(uniquename)
 		{
 			// Now we are ready to be updated //
 			IsValid = true;
 		}
+        
 		DLLEXPORT ~SyncedPrimitive(){
 			// Unhook already //
 			ReleaseParentHooks();
@@ -102,7 +105,8 @@ namespace Leviathan{
 		}
 
 		//! \brief Updates the value and notifies SyncedVariables
-		//! \note This does not call the callback or OnValueUpdated. They are only called when receiving updates through network
+		//! \note This does not call the callback or OnValueUpdated. They are only called when
+        //! receiving updates through network
 		DLLEXPORT inline void UpdateValue(const DTypeName &newvalue){
 			{
 				GUARD_LOCK_THIS_OBJECT();
@@ -119,7 +123,8 @@ namespace Leviathan{
 		}
 
 		//! \brief Directly accesses the variable, you will need to use your own locking with complex types
-		//! \warning The returned value might be changed at any point and depending on this object's lifespan it may become invalid
+		//! \warning The returned value might be changed at any point and depending on this
+        //! object's lifespan it may become invalid
 		//! \see GetValue
 		DLLEXPORT DTypeName* GetValueDirect(){
 			return &OurValue;
@@ -158,7 +163,8 @@ namespace Leviathan{
 			// Try to get our variable //
 			if(!(packet >> OurValue)){
 
-				throw ExceptionInvalidArgument(L"resource sync primitive packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+				throw ExceptionInvalidArgument(L"resource sync primitive packet has invalid format", 0, __WFUNCTION__,
+                    L"packet", L"");
 			}
 
 		}

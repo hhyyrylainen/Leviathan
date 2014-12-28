@@ -86,19 +86,25 @@ namespace Pong{
 
 playrscorelistupdateendlabel:
 
+            Leviathan::ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](int LastPlayerHitBallID,
+                            PongServer* instance) -> void
+                {
 
-			// Send ScoreUpdated event //
-			Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"ScoreUpdated"),
-                    new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"ScoredPlayer", new
-                                Leviathan::VariableBlock(LastPlayerHitBallID))))));
+                    // Send ScoreUpdated event //
+                    Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"ScoreUpdated"),
+                            new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"ScoredPlayer", new
+                                        Leviathan::VariableBlock(LastPlayerHitBallID))))));
 
-			_DisposeOldBall();
+                    instance->_DisposeOldBall();
 
-			// Serve new ball //
-			GameArena->ServeBall();
+                    // Serve new ball //
+                    instance->GameArena->ServeBall();
 
-			// Check for game end //
-			ServerCheckEnd();
+                    // Check for game end //
+                    instance->ServerCheckEnd();
+
+                    
+                }, LastPlayerHitBallID.GetValue(), this)));
 
 			return 0;
 		}

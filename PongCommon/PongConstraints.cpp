@@ -229,6 +229,7 @@ Pong::GameBallConnection::GameBallConnection(Leviathan::GameWorld* world, Leviat
 {
 
 }
+
 Pong::GameBallConnection::~GameBallConnection(){
 
     BasePongParts::Get()->GetArena()->RegisterBall(nullptr);
@@ -240,6 +241,9 @@ bool Pong::GameBallConnection::_CheckParameters(){
 }
 
 bool Pong::GameBallConnection::_CreateActualJoint(){
+
+    Logger::Get()->Info("Pong: registering ball");
+    
     BasePongParts::Get()->GetArena()->RegisterBall(OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
                 ParentObject)));    
 }

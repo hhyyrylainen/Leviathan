@@ -248,14 +248,14 @@ namespace Leviathan{
 		void UpdatePlayersPositionData(ConnectedPlayer* ply, ObjectLock &guard);
 
 		void _CreateOgreResources(Ogre::Root* ogre, Window* rendertarget);
-		void _HandleDelayedDelete(ObjectLock &guard);
+		void _HandleDelayedDelete(UniqueObjectLock &guard);
 
         //! \brief Applies a constraint to entities, if both are present
         //! \returns True when the constraint is applied
         bool _TryApplyConstraint(NetworkResponseDataForEntityConstraint* data);
 
         //! \brief Removes a sendable entity from the specific sendable vector
-        void _EraseFromSendable(BaseSendableEntity* obj, ObjectLock &guard);
+        void _EraseFromSendable(BaseSendableEntity* obj, UniqueObjectLock &guard);
 
 		// ------------------------------------ //
 		Ogre::Camera* WorldSceneCamera;
@@ -312,7 +312,10 @@ namespace Leviathan{
         //! A funky name for this world, if any
         std::string DecoratedName;
 
-		// This vector is used for delayed deletion //
+        //! A lock for delayed delete, to allow deleting objects from physical callbacks
+        boost::mutex DeleteMutex;
+        
+		//! This vector is used for delayed deletion
 		std::vector<int> DelayedDeleteIDS;
 	};
 

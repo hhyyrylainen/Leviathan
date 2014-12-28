@@ -595,9 +595,10 @@ DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SimulateWorld(){
-	GUARD_LOCK_THIS_OBJECT();
+	UNIQUE_LOCK_THIS_OBJECT();
+    
 	// This is probably the best place to remove dead objects //
-	_HandleDelayedDelete(guard);
+	_HandleDelayedDelete(lockit);
 
 	// Only if not frozen run physics //
 	if(!WorldFrozen)
@@ -608,7 +609,7 @@ DLLEXPORT void Leviathan::GameWorld::ClearSimulatePassedTime(){
 	_PhysicalWorld->ClearTimers();
 }
 // ------------------------------------ //
-void Leviathan::GameWorld::_EraseFromSendable(BaseSendableEntity* obj, ObjectLock &guard){
+void Leviathan::GameWorld::_EraseFromSendable(BaseSendableEntity* obj, UniqueObjectLock &guard){
 
     for(size_t i = 0; i < SendableObjects.size(); i++){
 
@@ -620,14 +621,14 @@ void Leviathan::GameWorld::_EraseFromSendable(BaseSendableEntity* obj, ObjectLoc
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
-	GUARD_LOCK_THIS_OBJECT();
+	UNIQUE_LOCK_THIS_OBJECT();
     auto end = Objects.end();
     
 	for(auto iter = Objects.begin(); iter != end; ++iter){
         
 		if((*iter)->GetID() == ID){
             // Also erase from sendable //
-            _EraseFromSendable(dynamic_cast<BaseSendableEntity*>(iter->get()), guard);
+            _EraseFromSendable(dynamic_cast<BaseSendableEntity*>(iter->get()), lockit);
             
 			// release the object and then erase our reference //
 			(*iter)->ReleaseData();
@@ -639,13 +640,11 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
 }
 
 DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(int ID){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK_BASIC(DeleteMutex);
 	DelayedDeleteIDS.push_back(ID);
 }
 
-void Leviathan::GameWorld::_HandleDelayedDelete(ObjectLock &guard){
-
-	VerifyLock(guard);
+void Leviathan::GameWorld::_HandleDelayedDelete(UniqueObjectLock &guard){
 
 	// We might want to delete everything //
 	if(ClearAllObjects){
@@ -658,6 +657,10 @@ void Leviathan::GameWorld::_HandleDelayedDelete(ObjectLock &guard){
 		return;
 	}
 
+    guard.unlock();
+
+    GUARD_LOCK_BASIC(DeleteMutex);
+    
 	// Return right away if no objects to delete //
 	if(DelayedDeleteIDS.size() == 0)
 		return;
@@ -692,13 +695,14 @@ void Leviathan::GameWorld::_HandleDelayedDelete(ObjectLock &guard){
             
 			// Check for end //
 			if(DelayedDeleteIDS.size() == 0)
-				return;
+                break;
 
 		} else {
 			++iter;
 		}
 	}
-
+    
+    guard.lock();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){

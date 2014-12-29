@@ -358,6 +358,18 @@ bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(sf::Packet &packet){
 
     packet >> ModelFile;
 
+    // TODO: move this to physical state and unify with Brush
+    bool physics;
+    int physid;
+    
+    packet >> physics;
+    
+    if(physics){
+        
+        packet >> physid;
+    }
+
+
     if(!packet){
 
         Logger::Get()->Error("Prop: packet has invalid format");
@@ -379,6 +391,14 @@ bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(sf::Packet &packet){
 
     // Apply hidden state //
     _OnHiddenStateUpdated();
+
+    // Apply physical material //
+    if(physics){
+
+        if(physid >= 0)
+            SetPhysicalMaterialID(physid);
+    }
+
     
     return true;
 }
@@ -396,6 +416,14 @@ void Leviathan::Entity::Prop::_SaveOwnDataToPacket(sf::Packet &packet){
     AddPhysicalStateToPacket(packet);
     
     packet << ModelFile;
+
+    packet << (GetPhysicsBody() ? true: false);
+
+    // Add the mass if it is applicable //
+    if(GetPhysicsBody()){
+
+        packet << AppliedPhysicalMaterial;
+    }
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CaptureState(){

@@ -94,6 +94,9 @@ namespace Leviathan{
         DLLEXPORT void CheckOldPhysicalState(PositionablePhysicalDeltaState* servercasted,
             PositionablePhysicalDeltaState* ourcasted, int tick);
 
+        //! \brief Returns the default material ID for the world to which this entity belongs
+        DLLEXPORT int GetDefaultPhysicalMaterialID() const;
+
         
         //! \brief Serializes basic physical state to a packet if Body is set
         //! \return True when Body is set
@@ -133,6 +136,11 @@ namespace Leviathan{
 		// ------------------------------------ //
 		NewtonCollision* Collision;
 		NewtonBody* Body;
+
+        //! The set physical material
+        //! If none is set this defaults to -1
+        //! The default material ID from GetDefaultPhysicalMaterialID might be applied
+        int AppliedPhysicalMaterial;
 
 		bool Immovable;
 		bool ApplyGravity;

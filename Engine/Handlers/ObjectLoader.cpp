@@ -156,8 +156,8 @@ DLLEXPORT void Leviathan::ObjectLoader::AddTestCubeToScenePositions(Ogre::SceneM
 
 
 // ------------------------------------ //
-DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const wstring &name, Entity::Prop**
-    createdinstance)
+DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const wstring &name, int materialid,
+    Entity::Prop** createdinstance)
 {
 
 	unique_ptr<Entity::Prop> prop(new Entity::Prop(false, world));
@@ -174,6 +174,9 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const w
         return -1;
     }
 
+    if(materialid >= 0)
+        prop->SetPhysicalMaterialID(materialid);
+
 	int id = prop->GetID();
 
 	// add to world //
@@ -183,7 +186,7 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const w
 }
 
 DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size,
-    const float &mass, Entity::Brush** createdinstance)
+    const float &mass, int materialid, Entity::Brush** createdinstance)
 {
 	unique_ptr<Entity::Brush> brush(new Entity::Brush(false, world));
 
@@ -194,10 +197,12 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const 
 
 	int id = brush->GetID();
 
-	// optional physics init //
-	if(mass != 0.f){
-		brush->AddPhysicalObject(mass);
-	}
+    // Physics init //
+    brush->AddPhysicalObject(mass);
+        
+    if(materialid >= 0)
+        brush->SetPhysicalMaterialID(materialid);
+
 
 	// add to world //
 	world->CreateEntity(shared_ptr<BaseObject>(brush.release()));

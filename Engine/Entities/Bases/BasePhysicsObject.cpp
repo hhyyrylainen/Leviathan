@@ -10,7 +10,9 @@ using namespace Leviathan;
 // ------------------------------------ //
 // I hope that this virtual constructor isn't actually called //
 DLLEXPORT Leviathan::BasePhysicsObject::BasePhysicsObject() :
-    BaseObject(-1, NULL), Body(NULL), Collision(NULL), Immovable(false), ApplyGravity(false){
+    BaseObject(-1, NULL), Body(NULL), Collision(NULL), Immovable(false), ApplyGravity(false),
+    AppliedPhysicalMaterial(-1)
+{
 
 }
 
@@ -42,9 +44,12 @@ void Leviathan::BasePhysicsObject::ApplyForceAndTorgueEvent(const NewtonBody* co
 {
 	// get object from body //
 	BasePhysicsObject* tmp = reinterpret_cast<BasePhysicsObject*>(NewtonBodyGetUserData(body));
+    
 	// check if physics can't apply //
 	if(tmp->Immovable)
 		return;
+
+    GUARD_LOCK_OTHER_OBJECT(tmp);
 
 	Float3 Torque(0, 0, 0);
 
@@ -58,9 +63,11 @@ void Leviathan::BasePhysicsObject::ApplyForceAndTorgueEvent(const NewtonBody* co
 
 	// get gravity force and apply mass to it //
 	Float3 Force = tmp->OwnedByWorld->GetGravityAtPosition(tmp->Position)*mass;
+    
 	// add other forces //
-	Force += tmp->_GatherApplyForces(mass);
-
+    if(!tmp->ApplyForceList.empty())
+        Force += tmp->_GatherApplyForces(mass);
+    
 
 	NewtonBodyAddForce(body, &Force.X);
 	NewtonBodyAddTorque(body, &Torque.X);
@@ -114,20 +121,23 @@ DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyTorque(const Float3 &torque)
 }
 // ------------------------------------ //
 Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(const float &mass){
-	// return if just an empty list //
+	// Return if just an empty list //
 	if(ApplyForceList.empty())
 		return Float3(0);
 
 	Float3 total(0);
 
 	for(auto iter = ApplyForceList.begin(); iter != ApplyForceList.end(); ){
-		// add to total, and multiply by mass if wanted //
+		// Add to total, and multiply by mass if wanted //
 		total += (*iter)->MultiplyByMass ? (*iter)->ForcesToApply*mass: (*iter)->ForcesToApply;
 
-		// remove if it isn't persistent force //
+		// Remove if it isn't persistent force //
 		if(!(*iter)->Persist){
+            
 			iter = ApplyForceList.erase(iter);
+            
 		} else {
+            
 			++iter;
 		}
 	}
@@ -136,9 +146,11 @@ Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(const float &mass){
 }
 
 DLLEXPORT void Leviathan::BasePhysicsObject::ApplyForce(ApplyForceInfo* pointertohandle){
-	// overwrite old if found //
+    GUARD_LOCK_THIS_OBJECT();
+	// Overwrite old if found //
 	for(auto iter = ApplyForceList.begin(); iter != ApplyForceList.end(); ++iter){
-		// check do names match //
+        
+		// Check do the names match //
 		if((bool)(*iter)->OptionalName == (bool)pointertohandle->OptionalName){
 
 			if(!pointertohandle->OptionalName || *pointertohandle->OptionalName == *(*iter)->OptionalName){
@@ -154,10 +166,15 @@ DLLEXPORT void Leviathan::BasePhysicsObject::ApplyForce(ApplyForceInfo* pointert
 }
 
 DLLEXPORT bool Leviathan::BasePhysicsObject::RemoveApplyForce(const wstring &name){
-	// search for matching name //
-	for(auto iter = ApplyForceList.begin(); iter != ApplyForceList.end(); ++iter){
-		// check do names match //
+    GUARD_LOCK_THIS_OBJECT();
+    
+	// Search for a matching name //
+    auto end = ApplyForceList.end();
+	for(auto iter = ApplyForceList.begin(); iter != end; ++iter){
+        
+		// Check do the names match //
 		if((!((*iter)->OptionalName) && name.size() == 0) || ((*iter)->OptionalName && *(*iter)->OptionalName == name)){
+            
 			ApplyForceList.erase(iter);
 			return true;
 		}
@@ -167,12 +184,19 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::RemoveApplyForce(const wstring &nam
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::BasePhysicsObject::SetPhysicalMaterial(const wstring &materialname){
+    // Empty string sets the default material //
+    if(materialname.empty()){
+
+        SetPhysicalMaterialID(GetDefaultPhysicalMaterialID());
+        return true;
+    }
+    
 	// Fetches the ID and calls the direct material ID setting function //
 	int id = PhysicsMaterialManager::Get()->GetMaterialIDForWorld(materialname,
         OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld());
 
 	if(id == -1){
-		// invalid name //
+		// Invalid name //
 		return false;
 	}
     
@@ -185,6 +209,11 @@ DLLEXPORT void Leviathan::BasePhysicsObject::SetPhysicalMaterialID(int ID){
 	assert(Body != NULL && "calling set material ID without having physical model loaded");
 
 	NewtonBodySetMaterialGroupID(Body, ID);
+}
+
+DLLEXPORT int Leviathan::BasePhysicsObject::GetDefaultPhysicalMaterialID() const{
+
+    return NewtonMaterialGetDefaultGroupID(OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld());
 }
 // ------------------------------------ //
 bool Leviathan::BasePhysicsObject::BasePhysicsCustomMessage(int message, void* data){

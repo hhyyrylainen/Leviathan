@@ -24,6 +24,7 @@
 #include "Entities/Bases/BaseConstraintable.h"
 #include "Entities/Bases/BaseSendableEntity.h"
 #include "Engine.h"
+#include "Newton/PhysicsMaterialManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -618,6 +619,12 @@ DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
 	// \todo take position into account //
 	// create force without mass applied //
 	return Float3(0.f, PHYSICS_BASE_GRAVITY, 0.f);
+}
+// ------------------------------------ //
+DLLEXPORT int Leviathan::GameWorld::GetPhysicalMaterial(const wstring &name){
+
+    PhysicsMaterialManager::Get()->GetMaterialIDForWorld(name,
+        _PhysicalWorld->GetNewtonWorld());
 }
 // ------------------------------------ //
 void Leviathan::GameWorld::_EraseFromSendable(BaseSendableEntity* obj, UniqueObjectLock &guard){

@@ -103,85 +103,85 @@ newtonmaterialfetchstartlabel:
 	// base surface brush //
 	Leviathan::Entity::Brush* castedbottombrush;
 	BottomBrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), materialbase,
-            Float3(width, bottomthickness, height), 0.f, &castedbottombrush));
+            Float3(width, bottomthickness, height), 0.f, ArenaBaseID, &castedbottombrush));
     
 	castedbottombrush->SetPosComponents(0.f, -bottomthickness/2.f, 0.f);
-	castedbottombrush->SetPhysicalMaterialID(ArenaBaseID);
+    
 
 	// Arena ceiling that keeps the ball in //
 	auto topbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), "",
-            Float3(width, bottomthickness, height), 0.f, &castedbottombrush));
+            Float3(width, bottomthickness, height), 0.f, ArenaBaseID, &castedbottombrush));
+    
 	castedbottombrush->SetPosComponents(0.f, paddleheight+bottomthickness/2.f+BASE_ARENASCALE/2.f, 0.f);
-	castedbottombrush->SetPhysicalMaterialID(ArenaBaseID);
 	castedbottombrush->SetHiddenState(true);
 
 	// arena sides //
 
 	// left top //
 	Leviathan::Entity::Brush* tmp;
-	auto tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
-		0.f, &tmp));
+	auto tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall,
+            Float3(sidexsize, mheight, sideysize), 
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(-width/2.f+sidexsize/2.f, mheight/2.f, -height/2.f+sideysize/2.f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 
-	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
-		0.f, &tmp));
+	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort,
+            Float3(sidexsize, sideheight, sideysize), 
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(-width/2.f+sidexsize*1.5f, sideheight/2.f, -height/2.f+sideysize/2.f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 
-	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize),
-		0.f, &tmp));
+	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort,
+            Float3(sidexsize, sideheight, sideysize),
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(-width/2.f+sidexsize/2.f, sideheight/2.f, -height/2.f+sideysize*1.5f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	// top right //
-	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
-		0.f, &tmp));
+	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall,
+            Float3(sidexsize, mheight, sideysize), 
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(width/2.f-sidexsize/2.f, mheight/2.f, -height/2.f+sideysize/2.f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 
-	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
-		0.f, &tmp));
+	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort,
+            Float3(sidexsize, sideheight, sideysize), 
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(width/2.f-sidexsize*1.5f, sideheight/2.f, -height/2.f+sideysize/2.f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 
-	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
-		0.f, &tmp));
+	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort,
+            Float3(sidexsize, sideheight, sideysize), 
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(width/2.f-sidexsize/2.f, sideheight/2.f, -height/2.f+sideysize*1.5f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 
 	// bottom left //
-	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
-		0.f, &tmp));
+	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall,
+            Float3(sidexsize, mheight, sideysize), 
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(-width/2.f+sidexsize/2.f, mheight/2.f, height/2.f-sideysize/2.f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 
-	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
-		0.f, &tmp));
+	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort,
+            Float3(sidexsize, sideheight, sideysize), 
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(-width/2.f+sidexsize*1.5f, sideheight/2.f, height/2.f-sideysize/2.f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 
-	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
-		0.f, &tmp));
+	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort,
+            Float3(sidexsize, sideheight, sideysize), 
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(-width/2.f+sidexsize/2.f, sideheight/2.f, height/2.f-sideysize*1.5f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 
 	// bottom right //
-	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall, Float3(sidexsize, mheight, sideysize), 
-		0.f, &tmp));
+	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialtall,
+            Float3(sidexsize, mheight, sideysize), 
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(width/2.f-sidexsize/2.f, mheight/2.f, height/2.f-sideysize/2.f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 
-	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
-		0.f, &tmp));
+	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort,
+            Float3(sidexsize, sideheight, sideysize), 
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(width/2.f-sidexsize*1.5f, sideheight/2.f, height/2.f-sideysize/2.f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 
-	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, Float3(sidexsize, sideheight, sideysize), 
-		0.f, &tmp));
+	tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort,
+            Float3(sidexsize, sideheight, sideysize), 
+            0.f, ArenaMatID, &tmp));
 	tmp->SetPosComponents(width/2.f-sidexsize/2.f, sideheight/2.f, height/2.f-sideysize*1.5f);
-	tmp->SetPhysicalMaterialID(ArenaMatID);
 	
 	
 	// fill empty paddle spaces //
@@ -197,37 +197,33 @@ newtonmaterialfetchstartlabel:
 			case 0:
 				{
 					// fill right with wall //
-					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
-						Float3(sidexsize, sideheight/2, sideysize*16.f), 0.f, &tmp));
+					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(),
+                            sidematerialshort, Float3(sidexsize, sideheight/2, sideysize*16.f), 0.f, ArenaMatID, &tmp));
 					tmp->SetPosComponents(width/2.f-sidexsize/2.f, sideheight/4.f, 0);
-					tmp->SetPhysicalMaterialID(ArenaMatID);
 				}
 				break;
 			case 1:
 				{
 					// fill bottom with wall //
-					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
-						Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, &tmp));
+					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(),
+                            sidematerialshort, Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, ArenaMatID, &tmp));
 					tmp->SetPosComponents(0, sideheight/4.f, height/2.f-sideysize/2.f);
-					tmp->SetPhysicalMaterialID(ArenaMatID);
 				}
 				break;
 			case 2:
 				{
 					// fill left with wall //
-					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
-						Float3(sidexsize, sideheight/2, sideysize*16.f), 0.f, &tmp));
+					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(),
+                            sidematerialshort, Float3(sidexsize, sideheight/2, sideysize*16.f), 0.f, ArenaMatID, &tmp));
 					tmp->SetPosComponents(-width/2.f+sidexsize/2.f, sideheight/4.f, 0);
-					tmp->SetPhysicalMaterialID(ArenaMatID);
 				}
 				break;
 			case 3:
 				{
 					// fill top with wall //
-					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), sidematerialshort, 
-						Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, &tmp));
+					tmpbrush = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(),
+                            sidematerialshort, Float3(sidexsize*16.f, sideheight/2, sideysize), 0.f, ArenaMatID, &tmp));
 					tmp->SetPosComponents(0, sideheight/4.f, -height/2.f+sideysize/2.f);
-					tmp->SetPhysicalMaterialID(ArenaMatID);
 				}
 				break;
 
@@ -257,26 +253,28 @@ addplayerpaddlelabel:
 		Float4 colour = secondary ? plyvec[i]->GetSplit()->GetColour(): plyvec[i]->GetColour();
 
 		// add paddle based on loop index //
-		auto plypaddle = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), GetMaterialNameForPlayerColour(colour), 
-			Float3((i == 0 || i == 2) ? paddlethickness: paddlewidth, paddleheight, (i == 0 || i == 2) ? paddlewidth: paddlethickness), paddlemass,
-			&tmp));
+		auto plypaddle = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(),
+                GetMaterialNameForPlayerColour(colour), Float3((i == 0 || i == 2) ? paddlethickness: paddlewidth,
+                    paddleheight, (i == 0 || i == 2) ? paddlewidth: paddlethickness), paddlemass, PaddleID, &tmp));
+        
 		// setup position //
 		float horiadjust = 0;
 		if(secondary || splitslotopen)
 			horiadjust = secondary ? 0: paddlethickness;
 
 		switch(i){
-		case 0: tmp->SetPosComponents(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, 0); break;
-		case 1: tmp->SetPosComponents(0, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust); break;
-		case 2: tmp->SetPosComponents(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, 0);break;
-		case 3: tmp->SetPosComponents(0, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust); break;
+            case 0: tmp->SetPosComponents(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, 0); break;
+            case 1: tmp->SetPosComponents(0, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust); break;
+            case 2: tmp->SetPosComponents(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, 0); break;
+            case 3: tmp->SetPosComponents(0, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust); break;
 		}
-		tmp->SetPhysicalMaterialID(PaddleID);
 
 		// setup joints //
 		if(!tmp->CreateConstraintWith<Leviathan::Entity::SliderConstraint>(castedbottombrush)->SetParameters(
-			(i == 0 || i == 2) ? Float3(0.f, 0.f, -1.f): Float3(1.f, 0.f, 0.f))->Init()){
-				Logger::Get()->Error(L"Arena: GenerateArena: failed to create slider for paddle "+Convert::ToWstring(i+1));
+                (i == 0 || i == 2) ? Float3(0.f, 0.f, -1.f): Float3(1.f, 0.f, 0.f))->Init())
+        {
+            Logger::Get()->Error(L"Arena: GenerateArena: failed to create slider for paddle "+
+                Convert::ToWstring(i+1));
 		}
 
 		// link //
@@ -292,38 +290,47 @@ addplayerpaddlelabel:
 		case 0:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, height/2.f-sideysize*2-paddlewidth/2.f), Float4::IdentityQuaternion());
+					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f,
+                        height/2.f-sideysize*2-paddlewidth/2.f), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f, -height/2.f+sideysize*2+paddlewidth/2.f), Float4::IdentityQuaternion());
+					Float3(width/2.f-paddlethickness/2.f-horiadjust, paddleheight/2.f,
+                        -height/2.f+sideysize*2+paddlewidth/2.f), Float4::IdentityQuaternion());
 			}
 			break;
 		case 1:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-sidexsize*2-paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust), Float4::IdentityQuaternion());
+					Float3(width/2.f-sidexsize*2-paddlewidth/2.f, paddleheight/2.f,
+                        width/2.f-paddlethickness/2.f-horiadjust), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+sidexsize*2+paddlewidth/2.f, paddleheight/2.f, width/2.f-paddlethickness/2.f-horiadjust), Float4::IdentityQuaternion());
+					Float3(-width/2.f+sidexsize*2+paddlewidth/2.f, paddleheight/2.f,
+                        width/2.f-paddlethickness/2.f-horiadjust), Float4::IdentityQuaternion());
 			}
 			break;
 		case 2:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, height/2.f-sideysize*2-paddlewidth/2.f), Float4::IdentityQuaternion());
+					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f,
+                        height/2.f-sideysize*2-paddlewidth/2.f), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f, -height/2.f+sideysize*2+paddlewidth/2.f), Float4::IdentityQuaternion());
+					Float3(-width/2.f+paddlethickness/2.f+horiadjust, paddleheight/2.f,
+                        -height/2.f+sideysize*2+paddlewidth/2.f), Float4::IdentityQuaternion());
 			}
 			break;
 		case 3:
 			{
 				MovementPositions[0] = Leviathan::Entity::TrackControllerPosition(
-					Float3(width/2.f-sidexsize*2-paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust), Float4::IdentityQuaternion());
+					Float3(width/2.f-sidexsize*2-paddlewidth/2.f, paddleheight/2.f,
+                        -width/2.f+paddlethickness/2.f+horiadjust), Float4::IdentityQuaternion());
 				MovementPositions[1] = Leviathan::Entity::TrackControllerPosition(
-					Float3(-width/2.f+sidexsize*2+paddlewidth/2.f, paddleheight/2.f, -width/2.f+paddlethickness/2.f+horiadjust), Float4::IdentityQuaternion());
+					Float3(-width/2.f+sidexsize*2+paddlewidth/2.f, paddleheight/2.f,
+                        -width/2.f+paddlethickness/2.f+horiadjust), Float4::IdentityQuaternion());
 			}
 			break;
 		}
 		Leviathan::Entity::TrackEntityController* controller;
-		auto track = TargetWorld->GetWorldObject(loader->LoadTrackEntityControllerToWorld(TargetWorld.get(), MovementPositions, tmp, &controller));
+		auto track = TargetWorld->GetWorldObject(loader->LoadTrackEntityControllerToWorld(TargetWorld.get(),
+                MovementPositions, tmp, &controller));
 
 		// Set //
         plynumber = secondary ? plyvec[i]->GetSplit()->GetPlayerNumber(): plyvec[i]->GetPlayerNumber();
@@ -340,17 +347,19 @@ addplayerpaddlelabel:
 
 		if(secondary)
 			continue;
+        
 		// Create goal area for this slot //
-		auto goalarea = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(), materialclosedpaddlearea, 
-			Float3((i == 0 || i == 2) ? paddlethickness: width, sideheight, (i == 0 || i == 2) ? height: paddlethickness), 0.f, &tmp));
-		tmp->SetPhysicalMaterialID(GoalAreaMatID);
+		auto goalarea = TargetWorld->GetWorldObject(loader->LoadBrushToWorld(TargetWorld.get(),
+                materialclosedpaddlearea, 
+                Float3((i == 0 || i == 2) ? paddlethickness: width, sideheight,
+                    (i == 0 || i == 2) ? height: paddlethickness), 0.f, GoalAreaMatID, &tmp));
 		tmp->SetHiddenState(true);
 		
 		switch(i){
-		case 0: tmp->SetPosComponents(width/2.f+paddlethickness/2.f, sideheight/2.f, 0); break;
-		case 1: tmp->SetPosComponents(0, sideheight/2.f, width/2.f+paddlethickness/2.f); break;
-		case 2: tmp->SetPosComponents(-width/2.f-paddlethickness/2.f, sideheight/2.f, 0); break;
-		case 3: tmp->SetPosComponents(0, sideheight/2.f, -width/2.f-paddlethickness/2.f); break;
+            case 0: tmp->SetPosComponents(width/2.f+paddlethickness/2.f, sideheight/2.f, 0); break;
+            case 1: tmp->SetPosComponents(0, sideheight/2.f, width/2.f+paddlethickness/2.f); break;
+            case 2: tmp->SetPosComponents(-width/2.f-paddlethickness/2.f, sideheight/2.f, 0); break;
+            case 3: tmp->SetPosComponents(0, sideheight/2.f, -width/2.f-paddlethickness/2.f); break;
 		}
 
 		// Set to slot //
@@ -385,8 +394,11 @@ void Pong::Arena::ServeBall(){
 
 	// we want to load our ball prop into the world //
 	Leviathan::Entity::Prop* prop;
+    
+    
 	auto tempball = TargetWorld->GetWorldObject(Leviathan::Engine::Get()->GetObjectLoader()->LoadPropToWorld(
-            TargetWorld.get(), L"PongBall", &prop));
+            TargetWorld.get(), L"PongBall", TargetWorld->GetPhysicalMaterial(L"BallMaterial"),
+            &prop));
 
     assert(tempball && prop && "failed to load the Ball model");
 
@@ -398,9 +410,6 @@ void Pong::Arena::ServeBall(){
         
 	// set to center of board //
 	prop->SetPos(Float3(0.f, 0.5f, 0.f));
-
-	// Set material //
-	prop->SetPhysicalMaterial(L"BallMaterial");
 
 	// Parent the trail to the ball //
     // TODO: make this send it to the client //

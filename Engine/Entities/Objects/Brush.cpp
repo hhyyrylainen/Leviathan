@@ -474,13 +474,16 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
     bool physics;
     float mass;
     string matname;
+    int physid;
 
     // Get all the things at once and then check for invalid state //
     packet >> x >> y >> z;
     packet >> physics;
     
-    if(physics)
-        packet >> mass;
+    if(physics){
+        
+        packet >> mass >> physid;
+    }
 
     packet >> matname;
 
@@ -502,6 +505,9 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
     if(physics){
 
         AddPhysicalObject(mass);
+        
+        if(physid >= 0)
+            SetPhysicalMaterialID(physid);
     }
     
     
@@ -533,7 +539,7 @@ void Leviathan::Entity::Brush::_SaveOwnDataToPacket(sf::Packet &packet){
     // Add the mass if it is applicable //
     if(GetPhysicsBody()){
 
-        packet << Mass;
+        packet << Mass << AppliedPhysicalMaterial;
     }
 
     // And finally our material //

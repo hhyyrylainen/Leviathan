@@ -109,6 +109,9 @@ namespace Leviathan{
         //! \brief Returns the current tick
         DLLEXPORT int GetTickNumber() const;
 
+        //! \brief Fetches the physical material ID from the material manager
+        DLLEXPORT int GetPhysicalMaterial(const wstring &name);
+
 		DLLEXPORT void SetFog();
 		DLLEXPORT void SetSkyBox(const string &materialname);
 

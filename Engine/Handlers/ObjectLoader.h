@@ -27,16 +27,16 @@ namespace Leviathan{
 		DLLEXPORT ObjectLoader(Engine* engine);
 
 		//! \brief Loads prop to a GameWorld
-		DLLEXPORT int LoadPropToWorld(GameWorld* world, const wstring &name, Entity::Prop** createdinstance);
+		DLLEXPORT int LoadPropToWorld(GameWorld* world, const wstring &name, int materialid,
+            Entity::Prop** createdinstance);
         
 		//! \brief Creates a brush with physical component and sets mass
 		//! \param mass The mass of the brush, use 0.f for static object
 		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, const float &mass,
-            Entity::Brush** createdinstance);
+            int materialid, Entity::Brush** createdinstance);
         
 		//! \brief Creates a brush, but no physics are initialized
-		//! \note To initialize physics later call FINDTHIS
-		//! \todo Finish this description
+		//! \note To initialize physics later call Entity::Brush::AddPhysicalObject
 		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size,
             Entity::Brush** createdinstance);
 

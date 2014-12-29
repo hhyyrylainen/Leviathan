@@ -50,7 +50,8 @@ void App::CustomizeEnginePostLoad(){
 
 	// load test objects //
 	Entity::Prop* tmpprop;
-	auto prop1holder = world1->GetWorldObject(loader->LoadPropToWorld(world1.get(), L"Cube", &tmpprop));
+	auto prop1holder = world1->GetWorldObject(loader->LoadPropToWorld(world1.get(), L"Cube", -1,
+            &tmpprop));
 
 	if(prop1holder.get() != NULL){
 		// set position //
@@ -60,7 +61,8 @@ void App::CustomizeEnginePostLoad(){
 	Entity::Brush* tmp;
 
 	// create brush for the block to fall onto //
-	auto brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(14.f, 1.f, 14.f), 0.f, &tmp));
+	auto brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(14.f, 1.f, 14.f),
+            0.f, -1, &tmp));
 
 	if(brush1.get() != NULL){
 		// set position //
@@ -68,21 +70,24 @@ void App::CustomizeEnginePostLoad(){
 	}
 
 
-	brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), 100.f, &tmp));
+	brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), 100.f,
+            -1, &tmp));
 
 	if(brush1.get() != NULL){
 		// set position //
 		tmp->SetPosComponents(1.f, 3.f, 0.f);
 	}
 
-	brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), 100.f, &tmp));
+	brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), 100.f,
+            -1, &tmp));
 
 	if(brush1.get() != NULL){
 		// set position //
 		tmp->SetPosComponents(0.f, 7.f, 0.f);
 	}
 
-	brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), 100.f, &tmp));
+	brush1 = world1->GetWorldObject(loader->LoadBrushToWorld(world1.get(), "Material.001", Float3(2.f, 2.f, 2.f), 100.f,
+            -1, &tmp));
 
 	if(brush1.get() != NULL){
 		// set position //

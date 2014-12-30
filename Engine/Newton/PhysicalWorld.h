@@ -36,20 +36,24 @@ namespace Leviathan{
 		DLLEXPORT PhysicalWorld(GameWorld* owner);
 		DLLEXPORT ~PhysicalWorld();
 
-        //! \brief Add passed time to be simulated away
-        DLLEXPORT void AccumulateTime(int milliseconds);
-        
         //! \todo Improve performance by making this use a newton method that simulates a single body
         //! instead of doing a full update and just discarding all changing bodies that aren't wanted
         //! \todo Add an event that allows entity controllers to update forces when one of their controlled
         //! entities are being simulated
         DLLEXPORT void ResimulateBody(NewtonBody* body, int milliseconds);
         
-        //! \brief Simulates away all accumulated time
-        DLLEXPORT void ConsumeTime(int maxruns = -1);
+        //! \brief Calculates and simulates away all accumulated time
+        DLLEXPORT void SimulateWorld(int maxruns = -1);
 
+        //! \brief Clears passed time
+		DLLEXPORT void ClearTimers();
 
-        DLLEXPORT void ResetPassedTime();
+        //! \brief Adds or subtracts time from the clock
+        //!
+        //! For example passing in 100 will run the physical simulation more times next update
+        //! to account for milliseconds amount of passed time
+        DLLEXPORT void AdjustClock(int milliseconds);
+
 
         //! \todo Make this return a newton lock that needs to be held while the pointer is used
 		DLLEXPORT NewtonWorld* GetNewtonWorld();
@@ -58,6 +62,7 @@ namespace Leviathan{
 
         //! Total amount of microseconds required to be simulated
 		int64_t PassedTimeTotal;
+        int64_t LastSimulatedTime;
 
 		NewtonWorld* World;
 		GameWorld* OwningWorld;

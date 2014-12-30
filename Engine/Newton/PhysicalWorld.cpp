@@ -10,7 +10,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) :
-    PassedTimeTotal(0), OwningWorld(owner), ResimulatedBody(NULL)
+    LastSimulatedTime(0), PassedTimeTotal(0), OwningWorld(owner), ResimulatedBody(NULL)
 {
 
 	// create newton world //
@@ -42,7 +42,7 @@ DLLEXPORT Leviathan::PhysicalWorld::~PhysicalWorld(){
     World = NULL;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::PhysicalWorld::ConsumeTime(int maxruns /*= -1*/){
+DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
 
     if(maxruns == 0){
 
@@ -51,6 +51,14 @@ DLLEXPORT void Leviathan::PhysicalWorld::ConsumeTime(int maxruns /*= -1*/){
     }
     
     int runs = 0;
+
+
+    __int64 curtime = Misc::GetTimeMicro64();
+    
+	// Calculate passed time and reset //
+	PassedTimeTotal += curtime-LastSimulatedTime;
+	LastSimulatedTime = curtime;
+
     
     boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
 
@@ -93,7 +101,30 @@ int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void
 }
 
 DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int milliseconds){
+    {
+        int simulateruns = (0.001f*milliseconds)/NEWTON_TIMESTEP;
 
+        boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
+
+        ResimulatedBody = body;
+    
+        // Setup single island callbacks //
+        NewtonSetIslandUpdateEvent(World, &SingleBodyUpdate);
+
+        for(int i = 0; i < simulateruns; i++){
+
+            //NewtonUpdate(World, body, NEWTON_TIMESTEP);
+        
+            NewtonUpdate(World, NEWTON_TIMESTEP);
+        }
+
+        // Reset the update event //
+        NewtonSetIslandUpdateEvent(World, NULL);
+
+
+        return;
+    }
+    
     boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
 
     ResimulatedBody = body;
@@ -121,13 +152,15 @@ DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int mi
     NewtonSetIslandUpdateEvent(World, NULL);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::PhysicalWorld::ResetPassedTime(){
+DLLEXPORT void Leviathan::PhysicalWorld::ClearTimers(){
+	LastSimulatedTime = Misc::GetTimeMicro64();
 	PassedTimeTotal = 0;
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::PhysicalWorld::AdjustClock(int milliseconds){
 
-DLLEXPORT void Leviathan::PhysicalWorld::AccumulateTime(int milliseconds){
-
-    PassedTimeTotal += milliseconds*1000;
+    // Convert from milliseconds (10^-3) to micro seconds (10^-6) //
+    LastSimulatedTime -= 1000*milliseconds;
 }
 // ------------------------------------ //
 DLLEXPORT NewtonWorld* Leviathan::PhysicalWorld::GetNewtonWorld(){

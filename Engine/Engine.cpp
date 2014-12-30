@@ -494,6 +494,8 @@ void Leviathan::Engine::PostLoad(){
         }));
 
 
+    ClearTimers();
+    
 	// get time //
 	LastFrame = Misc::GetTimeMs64();
 }
@@ -584,6 +586,9 @@ void Leviathan::Engine::Tick(){
 	if(_NetworkHandler)
 		_NetworkHandler->UpdateAllConnections();
 
+    // Update physics //
+    SimulatePhysics();
+
 	if(PreReleaseWaiting){
 
 		PreReleaseWaiting = false;
@@ -673,6 +678,8 @@ DLLEXPORT void Leviathan::Engine::PreFirstTick(){
 
     if(_ThreadingManager)
         _ThreadingManager->NotifyQueuerThread();
+
+    ClearTimers();
     
 	Logger::Get()->Info(L"Engine: PreFirstTick: everything fine to start running");
 }
@@ -837,6 +844,26 @@ DLLEXPORT void Leviathan::Engine::DestroyWorld(shared_ptr<GameWorld> &world){
     // Should be fine destroying worlds that aren't on the list... //
     world.reset();
 }
+DLLEXPORT void Leviathan::Engine::ClearTimers(){
+    GUARD_LOCK_BASIC(GameWorldsLock);
+
+    auto end = GameWorlds.end();
+    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
+
+        (*iter)->ClearTimers();
+    }
+}
+
+DLLEXPORT void Leviathan::Engine::SimulatePhysics(){
+    GUARD_LOCK_BASIC(GameWorldsLock);
+
+    auto end = GameWorlds.end();
+    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
+
+        (*iter)->SimulatePhysics();
+    }
+}
+
 // ------------------------------------ //
 void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
 	if(NoGui)

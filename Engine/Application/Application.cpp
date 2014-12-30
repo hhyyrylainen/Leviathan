@@ -159,7 +159,11 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 
 	return 0; 
 }
+// ------------------------------------ //
+DLLEXPORT void Leviathan::LeviathanApplication::ClearTimers(){
 
+    _Engine->ClearTimers();
+}
 // ------------------ Default callbacks that do nothing ------------------ //
 DLLEXPORT bool Leviathan::LeviathanApplication::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 

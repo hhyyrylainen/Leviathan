@@ -408,6 +408,22 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(BaseObject* obj, 
     return true;
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::GameWorld::SimulatePhysics(){
+    GUARD_LOCK_THIS_OBJECT();
+
+    if(!WorldFrozen){
+
+        // Let's set the maximum runs to 10000 to disable completely deadlocking
+        _PhysicalWorld->SimulateWorld(10000);
+    }
+    
+}
+
+DLLEXPORT void Leviathan::GameWorld::ClearTimers(){
+    
+    _PhysicalWorld->ClearTimers();
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::Tick(){
 
     UNIQUE_LOCK_THIS_OBJECT();
@@ -416,16 +432,8 @@ DLLEXPORT void Leviathan::GameWorld::Tick(){
 
     _HandleDelayedDelete(lockit);
 
-    // Physical simulation //
-    if(!WorldFrozen){
+    SimulatePhysics();
 
-        _PhysicalWorld->AccumulateTime(TICKSPEED);
-
-        // This could potentially be moved somewhere else //
-        // Let's set the maximum runs to 1000 to disable completely deadlocking
-        _PhysicalWorld->ConsumeTime(1000);
-    }
-    
     // Sendable objects may need something to be done //
     auto nethandler = NetworkHandler::Get();
 
@@ -783,6 +791,12 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 	GUARD_LOCK_THIS_OBJECT();
 
 	WorldFrozen = frozen;
+
+    if(!WorldFrozen){
+
+        // Reset timers //
+        ClearTimers();
+    }
 
     // Send it to receiving players (if we are a server) //
     if(ReceivingPlayers.empty())
@@ -1295,10 +1309,10 @@ DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(NetworkResponseData
 
         if(tickstosimulate > 0){
 
-            Logger::Get()->Info("GameWorld: unfreezing and simulating "+Convert::ToString(tickstosimulate)+
-                " ticks worth of more physical updates");
+            Logger::Get()->Info("GameWorld: unfreezing and simulating "+Convert::ToString(tickstosimulate*TICKSPEED)+
+                " ms worth of more physical updates");
 
-            _PhysicalWorld->AccumulateTime(tickstosimulate*TICKSPEED);
+            _PhysicalWorld->AdjustClock(tickstosimulate*TICKSPEED);
         }
         
         

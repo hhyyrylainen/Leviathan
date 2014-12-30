@@ -181,6 +181,12 @@ namespace Leviathan{
 			return _PhysicalWorld.get();
 		}
 
+        //! \brief Resets physical timers
+        DLLEXPORT void ClearTimers();
+
+        //! \brief Simulates physics
+        DLLEXPORT void SimulatePhysics();
+
         //! \todo Synchronize this over the network
 		DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
 

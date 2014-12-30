@@ -165,6 +165,8 @@ void App::CustomizeEnginePostLoad(){
 
 	//// set to node //
 	//MainScene->getRootSceneNode()->createChildSceneNode()->attachObject(rttplight);
+
+    ClearTimers();
 }
 // ------------------------------------ //
 std::wstring SandBoxie::App::GenerateWindowTitle(){

@@ -287,6 +287,8 @@ void Pong::PongServer::DoSpecialPostLoad(){
                     new VariableBlock(42)))));
 
     GameArena->VerifyTrail();
+
+    ClearTimers();
 }
 
 void Pong::PongServer::CustomizedGameEnd(){

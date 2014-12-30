@@ -47,6 +47,12 @@ namespace Leviathan{
 		DLLEXPORT Engine* GetEngine(){ return _Engine;};
 		DLLEXPORT AppDef* GetDefinition(){ return ApplicationConfiguration;};
 
+
+        //! \brief Resets all time sensitive timers
+        //!
+        //! Call this after loading resources to avoid long simulate times
+        DLLEXPORT void ClearTimers();
+
 		// callback functions called during engine initialization at appropriate times //
 		DLLEXPORT virtual bool InitLoadCustomScriptTypes(asIScriptEngine* engine);
 		DLLEXPORT virtual void RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids);

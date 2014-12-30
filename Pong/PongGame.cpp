@@ -527,6 +527,8 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
     // This is how to do something every frame //
     Leviathan::EventHandler::Get()->RegisterForEvent(this, EVENT_TYPE_FRAME_END);
+
+    ClearTimers();
 }
 // ------------------------------------ //
 string GetPongVersionProxy(){

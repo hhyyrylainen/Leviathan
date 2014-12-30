@@ -57,6 +57,9 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseSendableEntity::_SaveOwnDataToPacket
             virtual void _SaveOwnDataToPacket(sf::Packet &packet) override;
 
+            //! \copydoc BaseConstraintable::_SendCreatedConstraint
+            void _SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr) override;
+
             
             // for setting new values to graphical object and physical object //
             virtual void _UpdatePhysicsObjectLocation(ObjectLock &guard) override;

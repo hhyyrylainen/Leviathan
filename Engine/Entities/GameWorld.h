@@ -148,8 +148,8 @@ namespace Leviathan{
         
 		// The smart pointer should have custom deleter to use Release //
 		DLLEXPORT void AddObject(shared_ptr<BaseObject> obj);
-		DLLEXPORT void DestroyObject(int ID);
-		DLLEXPORT void QueueDestroyObject(int ID);
+		DLLEXPORT void DestroyObject(int EntityID);
+		DLLEXPORT void QueueDestroyObject(int EntityID);
 
 		//! \brief Returns an object matching the id
 		DLLEXPORT shared_ptr<BaseObject> GetWorldObject(int ID);

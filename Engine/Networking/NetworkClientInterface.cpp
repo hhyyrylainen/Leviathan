@@ -332,6 +332,9 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
                         return;
                     }
 
+                    Logger::Get()->Info("NetworkClientInterface: queueing destruction of "+
+                        Convert::ToString(packetdata->EntityID));
+                    
                     world->QueueDestroyObject(packetdata->EntityID);
 
                 }, message)));

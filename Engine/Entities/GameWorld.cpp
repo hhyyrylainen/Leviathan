@@ -410,9 +410,11 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(BaseObject* obj, 
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::Tick(){
 
-    GUARD_LOCK_THIS_OBJECT();
+    UNIQUE_LOCK_THIS_OBJECT();
     
     TickNumber++;
+
+    _HandleDelayedDelete(lockit);
 
     // Physical simulation //
     if(!WorldFrozen){
@@ -638,19 +640,23 @@ void Leviathan::GameWorld::_EraseFromSendable(BaseSendableEntity* obj, UniqueObj
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
+DLLEXPORT void Leviathan::GameWorld::DestroyObject(int EntityID){
 	UNIQUE_LOCK_THIS_OBJECT();
-    auto end = Objects.end();
+
+    Logger::Get()->Info("GameWorld destroying object "+Convert::ToString(EntityID));
     
+    auto end = Objects.end();
 	for(auto iter = Objects.begin(); iter != end; ++iter){
         
-		if((*iter)->GetID() == ID){
+		if((*iter)->GetID() == EntityID){
+
+            _ReportEntityDestruction(EntityID, lockit);
+
             // Also erase from sendable //
             _EraseFromSendable(dynamic_cast<BaseSendableEntity*>(iter->get()), lockit);
             
 			// release the object and then erase our reference //
 			(*iter)->ReleaseData();
-            _ReportEntityDestruction(ID, lockit);
 			Objects.erase(iter);
             
 			return;
@@ -658,9 +664,12 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(int ID){
 	}
 }
 
-DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(int ID){
+DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(int EntityID){
+
+    Logger::Get()->Write("Queueing entity destruction, "+Convert::ToString(EntityID));
+    
 	GUARD_LOCK_BASIC(DeleteMutex);
-	DelayedDeleteIDS.push_back(ID);
+	DelayedDeleteIDS.push_back(EntityID);
 }
 
 void Leviathan::GameWorld::_HandleDelayedDelete(UniqueObjectLock &guard){
@@ -705,13 +714,15 @@ void Leviathan::GameWorld::_HandleDelayedDelete(UniqueObjectLock &guard){
 		}
 
 		if(delthis){
+
+            _ReportEntityDestruction(curid, guard);
             
             // Also erase from sendable //
             _EraseFromSendable(dynamic_cast<BaseSendableEntity*>((*iter).get()), guard);
             
 			(*iter)->ReleaseData();
             guard.lock();
-            _ReportEntityDestruction((*iter)->GetID(), guard);
+
 
 			iter = Objects.erase(iter);
             
@@ -730,6 +741,8 @@ void Leviathan::GameWorld::_HandleDelayedDelete(UniqueObjectLock &guard){
 }
 
 void Leviathan::GameWorld::_ReportEntityDestruction(int id, UniqueObjectLock &guard){
+
+    Logger::Get()->Write("Reporting entity destruction, "+Convert::ToString(id));
     
     // Notify everybody that an entity has been destroyed //
     auto end = ReceivingPlayers.end();

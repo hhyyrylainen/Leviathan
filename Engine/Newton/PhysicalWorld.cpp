@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_PHYSICALWORLD
 #include "PhysicalWorld.h"
@@ -55,14 +54,14 @@ DLLEXPORT void Leviathan::PhysicalWorld::ConsumeTime(int maxruns /*= -1*/){
     
     boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
 
-	while(PassedTimeTotal >= NEWTON_FPS_IN_MILLISECONDS){
+	while(PassedTimeTotal >= NEWTON_FPS_IN_MICROSECONDS){
         
 		// Call event //
 		EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_BEGIN, new PhysicsStartEventData(NEWTON_TIMESTEP,
                     OwningWorld)));
 
 		NewtonUpdate(World, NEWTON_TIMESTEP);
-		PassedTimeTotal -= NEWTON_FPS_IN_MILLISECONDS;
+		PassedTimeTotal -= NEWTON_FPS_IN_MICROSECONDS;
         runs++;
 
         if(runs == maxruns){
@@ -102,20 +101,20 @@ DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int mi
     // Setup single island callbacks //
     NewtonSetIslandUpdateEvent(World, &SingleBodyUpdate);
 
-    float passedtime = milliseconds;
+    int64_t passedtime = milliseconds*1000;
     
-    while(passedtime >= NEWTON_FPS_IN_MILLISECONDS){
+    while(passedtime >= NEWTON_FPS_IN_MICROSECONDS){
         
 		NewtonUpdate(World, NEWTON_TIMESTEP);
-        passedtime-= NEWTON_FPS_IN_MILLISECONDS;
+        passedtime-= NEWTON_FPS_IN_MICROSECONDS;
 	}
 
     // Update away any left over time //
     if(passedtime > 0){
 
         // Might be a bad idea to use a varying time step here...
-        Logger::Get()->Write("Updating away: "+Convert::ToString(passedtime));
-        NewtonUpdate(World, passedtime);
+        Logger::Get()->Write("Updating away: "+Convert::ToString(passedtime/1000000.f));
+        NewtonUpdate(World, passedtime/1000000.f);
     }
 
     // Reset the update event //
@@ -128,7 +127,7 @@ DLLEXPORT void Leviathan::PhysicalWorld::ResetPassedTime(){
 
 DLLEXPORT void Leviathan::PhysicalWorld::AccumulateTime(int milliseconds){
 
-    PassedTimeTotal += milliseconds;
+    PassedTimeTotal += milliseconds*1000;
 }
 // ------------------------------------ //
 DLLEXPORT NewtonWorld* Leviathan::PhysicalWorld::GetNewtonWorld(){

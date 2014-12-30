@@ -9,6 +9,7 @@
 #include "Networking/ConnectionInfo.h"
 #include "Networking/NetworkHandler.h"
 #include "boost/thread/lock_types.hpp"
+#include "Handlers/ConstraintSerializerManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) :
@@ -269,6 +270,49 @@ DLLEXPORT void Leviathan::BaseSendableEntity::StoreClientSideState(int ticknumbe
     assert(ClientStateBuffer.capacity() != 0 && "StoreClientSideState called on something that isn't a client");
 
     ClientStateBuffer.push_back(SendableObjectClientState(ticknumber, CaptureState()));
+}
+// ------------------------------------ //
+void Leviathan::BaseSendableEntity::_SendNewConstraint(BaseConstraintable* us, BaseConstraintable* other,
+    Entity::BaseConstraint* constraint)
+{
+    GUARD_LOCK_THIS_OBJECT();
+
+    if(UpdateReceivers.empty())
+        return;
+
+    GUARD_LOCK_OTHER_OBJECT_NAME(constraint, guard2);
+
+    auto custompacketdata = ConstraintSerializerManager::Get()->SerializeConstraintData(constraint);
+
+    if(!custompacketdata){
+
+        Logger::Get()->Warning("BaseSendableEntity: failed to send constraint, type: "+Convert::ToString(
+                static_cast<int>(constraint->GetType())));
+        return;
+    }
+    
+    // Gather all the other info //
+    int obj1 = GetID();
+
+    // The second object might be NULL so make sure not to segfault here //
+    int obj2 = other ? other->GetID(): -1;
+
+    auto packet = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000);
+    
+    // Wrap everything up and send //
+    packet->GenerateEntityConstraintResponse(new NetworkResponseDataForEntityConstraint(OwnedByWorld->GetID(),
+            obj1, obj2, true, constraint->GetType(), custompacketdata));
+
+    auto end = UpdateReceivers.end();
+    for(auto iter = UpdateReceivers.begin(); iter != end; ++iter){
+
+        auto connectionptr = NetworkHandler::Get()->GetSafePointerToConnection((*iter)->CorrespondingConnection);
+
+        if(!connectionptr)
+            break;
+        
+        connectionptr->SendPacketToConnection(packet, 12);
+    }
 }
 // ------------------ SendableObjectConnectionUpdated ------------------ //
 DLLEXPORT Leviathan::SendableObjectConnectionUpdate::SendableObjectConnectionUpdate(BaseSendableEntity* getstate,

@@ -88,6 +88,9 @@ namespace Leviathan{
             if(child)
                 child->AddConstraintWhereThisIsChild(tmpconstraint);
 
+            // Send it over the network //
+            _SendCreatedConstraint(child, tmpconstraint.get());
+
             // Return direct ptr for the caller to actually create the joint //
             return tmpconstraint.get();
         }
@@ -110,6 +113,9 @@ namespace Leviathan{
         // over loadable notify functions //
         virtual void _OnConstraintAdded(Entity::BaseConstraint* ptr);
         virtual void _OnConstraintUnlink(Entity::BaseConstraint* ptr);
+
+        //! Override in classes that are sendable
+        virtual void _SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr);
 
         // called by the joint object //
         void ConstraintDestroyedRemove(Entity::BaseConstraint* ptr);

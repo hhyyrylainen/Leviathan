@@ -386,11 +386,9 @@ void Pong::Arena::_ClearPointers(){
 }
 
 void Pong::Arena::ServeBall(){
-	if(Ball){
-		// destroy old //
-		TargetWorld->DestroyObject(Ball->GetID());
-		Ball.reset();
-	}
+
+    LetGoOfBall();
+
 
 	// we want to load our ball prop into the world //
 	Leviathan::Entity::Prop* prop;
@@ -424,6 +422,20 @@ void Pong::Arena::ServeBall(){
 	int count = Leviathan::Random::Get()->GetNumber(0, 15);
 
 	BasePongParts* game = BasePongParts::Get();
+
+    // TODO: remove this debug code
+    bool someactive = 0;
+    for(size_t i = 0; i < game->_PlayerList.Size(); i++){
+
+        if(game->_PlayerList[i]->IsSlotActive()){
+
+            someactive = true;
+        }
+    }
+    
+    if(!someactive)
+        Logger::Get()->Error("NO ACTIVE SLOTS; WILL DEADLOCK");
+    //
 
 	while(count > -1){
 
@@ -504,6 +516,8 @@ void Pong::Arena::GiveBallSpeed(float mult){
 void Pong::Arena::LetGoOfBall(){
 	// We should delete it (but after this physics update is done) //
 	if(Ball){
+        
+        Logger::Get()->Info("Arena: destroying old ball");
 		Ball->GetWorld()->QueueDestroyObject(Ball->GetID());
 		Ball.reset();
 	}

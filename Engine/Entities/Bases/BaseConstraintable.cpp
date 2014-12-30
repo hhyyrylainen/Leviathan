@@ -64,6 +64,10 @@ void Leviathan::BaseConstraintable::_OnConstraintAdded(BaseConstraint* ptr){
 void Leviathan::BaseConstraintable::_OnConstraintUnlink(BaseConstraint* ptr){
 
 }
+
+void Leviathan::BaseConstraintable::_SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr){
+    
+}
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BaseConstraintable::AddConstraintWhereThisIsChild(weak_ptr<BaseConstraint>
     constraintptr)

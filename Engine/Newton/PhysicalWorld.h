@@ -20,8 +20,8 @@
 //#endif //__GNUC__
 
 #define NEWTON_DEFAULT_PHYSICS_FPS		150.f
-#define NEWTON_FPS_IN_MILLISECONDS		(1000.0f/NEWTON_DEFAULT_PHYSICS_FPS)
-#define NEWTON_TIMESTEP					(NEWTON_FPS_IN_MILLISECONDS/1000.0f)
+#define NEWTON_FPS_IN_MICROSECONDS		(1000000.0f/NEWTON_DEFAULT_PHYSICS_FPS)
+#define NEWTON_TIMESTEP					(NEWTON_FPS_IN_MICROSECONDS/1000000.0f)
 
 
 namespace Leviathan{
@@ -56,8 +56,8 @@ namespace Leviathan{
 
 	protected:
 
-        //! Total amount of milliseconds required to be simulated
-		float PassedTimeTotal;
+        //! Total amount of microseconds required to be simulated
+		int64_t PassedTimeTotal;
 
 		NewtonWorld* World;
 		GameWorld* OwningWorld;

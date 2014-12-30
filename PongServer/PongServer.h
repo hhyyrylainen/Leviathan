@@ -63,7 +63,7 @@ namespace Pong{
 				return 1;
 			}
 
-			// Add point to player who scored //
+			// Add point to the player who scored //
 
 			// Look through all players and compare PlayerIDs //
 			for(size_t i = 0; i < _PlayerList.Size(); i++){
@@ -86,6 +86,8 @@ namespace Pong{
 
 playrscorelistupdateendlabel:
 
+            GameArena->LetGoOfBall();
+
             Leviathan::ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](int LastPlayerHitBallID,
                             PongServer* instance) -> void
                 {
@@ -94,8 +96,6 @@ playrscorelistupdateendlabel:
                     Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"ScoreUpdated"),
                             new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"ScoredPlayer", new
                                         Leviathan::VariableBlock(LastPlayerHitBallID))))));
-
-                    instance->_DisposeOldBall();
 
                     // Serve new ball //
                     instance->GameArena->ServeBall();
@@ -130,8 +130,11 @@ playrscorelistupdateendlabel:
                         (objptr2 == castedptr && objptr == realballptr))
                     {
 						// Found right player //
-						LastPlayerHitBallID = slotptr->GetPlayerNumber();
-						SetBallLastHitColour();
+                        if(LastPlayerHitBallID != slotptr->GetPlayerNumber()){
+                            LastPlayerHitBallID = slotptr->GetPlayerNumber();
+                            SetBallLastHitColour();
+                        }
+                        
 						return;
 					}
 

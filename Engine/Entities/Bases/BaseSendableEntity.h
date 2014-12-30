@@ -165,6 +165,9 @@ namespace Leviathan{
         //! \brief Called internally when data is updated
         //! \note This object has to be locked before this call
         void _MarkDataUpdated(ObjectLock &guard);
+
+        //! \brief Called by entities which want created constraints replicated on clients
+        void _SendNewConstraint(BaseConstraintable* us, BaseConstraintable* other, Entity::BaseConstraint* constraint);
         
         // ------------------------------------ //
         

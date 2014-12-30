@@ -569,6 +569,10 @@ DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessa
 	return false;
 }
 // ------------------------------------ //
+void Leviathan::Entity::Brush::_SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr){
+    _SendNewConstraint(static_cast<BaseConstraintable*>(this), other, ptr);
+}
+// ------------------------------------ //
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(){
     
     return shared_ptr<ObjectDeltaStateData>(

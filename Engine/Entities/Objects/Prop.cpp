@@ -426,6 +426,10 @@ void Leviathan::Entity::Prop::_SaveOwnDataToPacket(sf::Packet &packet){
     }
 }
 // ------------------------------------ //
+void Leviathan::Entity::Prop::_SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr){
+    _SendNewConstraint(static_cast<BaseConstraintable*>(this), other, ptr);
+}
+// ------------------------------------ //
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CaptureState(){
     
     return shared_ptr<ObjectDeltaStateData>(

@@ -271,6 +271,26 @@ DLLEXPORT void Leviathan::BaseSendableEntity::StoreClientSideState(int ticknumbe
 
     ClientStateBuffer.push_back(SendableObjectClientState(ticknumber, CaptureState()));
 }
+
+DLLEXPORT bool Leviathan::BaseSendableEntity::ReplaceOldClientState(int onticktoreplace,
+    shared_ptr<ObjectDeltaStateData> state)
+{
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    auto end = ClientStateBuffer.end();
+    for(auto iter = ClientStateBuffer.begin(); iter != end; ++iter){
+
+        // Compare ticks to find the one to replace //
+        if(iter->Tick == onticktoreplace){
+
+            iter->State = state;
+            return true;
+        }
+    }
+
+    return false;
+}
 // ------------------------------------ //
 void Leviathan::BaseSendableEntity::_SendNewConstraint(BaseConstraintable* us, BaseConstraintable* other,
     Entity::BaseConstraint* constraint)

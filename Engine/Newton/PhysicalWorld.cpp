@@ -52,7 +52,6 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
     
     int runs = 0;
 
-
     __int64 curtime = Misc::GetTimeMicro64();
     
 	// Calculate passed time and reset //
@@ -101,29 +100,29 @@ int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void
 }
 
 DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int milliseconds){
-    {
-        int simulateruns = (0.001f*milliseconds)/NEWTON_TIMESTEP;
+    // {
+    //     int simulateruns = (0.001f*milliseconds)/NEWTON_TIMESTEP;
 
-        boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
+    //     boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
 
-        ResimulatedBody = body;
+    //     ResimulatedBody = body;
     
-        // Setup single island callbacks //
-        NewtonSetIslandUpdateEvent(World, &SingleBodyUpdate);
+    //     // Setup single island callbacks //
+    //     NewtonSetIslandUpdateEvent(World, &SingleBodyUpdate);
 
-        for(int i = 0; i < simulateruns; i++){
+    //     for(int i = 0; i < simulateruns; i++){
 
-            //NewtonUpdate(World, body, NEWTON_TIMESTEP);
+    //         //NewtonUpdate(World, body, NEWTON_TIMESTEP);
         
-            NewtonUpdate(World, NEWTON_TIMESTEP);
-        }
+    //         NewtonUpdate(World, NEWTON_TIMESTEP);
+    //     }
 
-        // Reset the update event //
-        NewtonSetIslandUpdateEvent(World, NULL);
+    //     // Reset the update event //
+    //     NewtonSetIslandUpdateEvent(World, NULL);
 
 
-        return;
-    }
+    //     return;
+    // }
     
     boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
 
@@ -139,15 +138,18 @@ DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int mi
 		NewtonUpdate(World, NEWTON_TIMESTEP);
         passedtime-= NEWTON_FPS_IN_MICROSECONDS;
 	}
-
+    
+#ifdef ALLOW_RESIMULATE_CONSUME_ALL
+    
     // Update away any left over time //
     if(passedtime > 0){
 
         // Might be a bad idea to use a varying time step here...
-        Logger::Get()->Write("Updating away: "+Convert::ToString(passedtime/1000000.f));
         NewtonUpdate(World, passedtime/1000000.f);
-    }
-
+}
+    
+#endif //ALLOW_RESIMULATE_CONSUME_ALL
+    
     // Reset the update event //
     NewtonSetIslandUpdateEvent(World, NULL);
 }

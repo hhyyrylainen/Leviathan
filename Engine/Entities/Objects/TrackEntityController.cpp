@@ -6,6 +6,7 @@
 #include "Entities/Bases/BasePhysicsObject.h"
 #include "Common/Misc.h"
 #include "Entities/Bases/BaseNotifiableEntity.h"
+#include "Newton/PhysicalWorld.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
@@ -385,6 +386,8 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::VerifyOldState(ObjectDe
     if(!requireupdate)
         return;
 
+    GUARD_LOCK_THIS_OBJECT();
+
     // Go back to the verified state and resimulate //
     if(servercasted->ValidFields & TRACKSTATE_UPDATED_SPEED)
         ChangeSpeed = servercasted->ChangeSpeed;
@@ -397,11 +400,59 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::VerifyOldState(ObjectDe
 
     _SanityCheckNodeProgress();
     
-
-    Logger::Get()->Info("TrackEntiyController: resimulating");
     
-    // 1000 milliseconds in a second //
-    UpdateControlledPositions((float)((OwnedByWorld->GetTickNumber()-tick)*TICKSPEED)/1000.f);
+    const int worldtick = OwnedByWorld->GetTickNumber();
+    
+    // Convert from milliseconds to microseconds //
+    int timetosimulate = (worldtick-tick)*TICKSPEED*1000.f;
+    
+    Logger::Get()->Info("TrackEntiyController: resimulating "+Convert::ToString(worldtick-tick));
+
+    // This should hold on to the world update lock once that is required //
+    auto nworld = OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld();
+
+    // We need to refill all the states that were recorded during that time //
+    int advancedtick = tick;
+    ReplaceOldClientState(advancedtick, CaptureState());
+
+    int simulatedtime = 0;
+    
+    // And then simulate updates for that time //
+	while(timetosimulate >= NEWTON_FPS_IN_MICROSECONDS){
+        
+        UpdateControlledPositions(NEWTON_TIMESTEP);
+        timetosimulate -= NEWTON_FPS_IN_MICROSECONDS;
+
+        // Keep track of current tick while resimulating //
+        simulatedtime += NEWTON_FPS_IN_MICROSECONDS;
+
+        if(simulatedtime >= TICKSPEED*1000){
+
+            advancedtick++;
+            simulatedtime -= TICKSPEED*1000;
+
+            assert(advancedtick <= worldtick && "TrackEntityController resimulate assert");
+            
+            if(!ReplaceOldClientState(advancedtick, CaptureState())){
+
+                // The world tick might not have been stored yet... //
+                if(advancedtick != worldtick){
+
+                    Logger::Get()->Warning("TrackEntityController("+Convert::ToString(ID)+"): resimulate: didn't find "
+                        "old state for tick "+Convert::ToString(advancedtick));
+                }
+            }
+        }
+    }
+    
+#ifdef ALLOW_RESIMULATE_CONSUME_ALL
+
+    if(timetosimulate > 0){
+
+        UpdateControlledPositions(timetosimulate/1000000.f);
+    }
+    
+#endif //ALLOW_RESIMULATE_CONSUME_ALL
 }
 
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityController::CreateStateFromPacket(

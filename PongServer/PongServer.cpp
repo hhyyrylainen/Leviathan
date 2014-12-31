@@ -106,6 +106,8 @@ void Pong::PongServer::Tick(int mspassed){
         ballspeed.Z = abs(ballspeed.Z);
         ballspeed = ballspeed.Normalize();
 
+        bool ballstuck = false;
+
         if(DeadAxis.HAddAbs() != 0 && ballspeed.HAddAbs() > BALLSTUCK_THRESHOLD){
             // Compare directions //
 
@@ -120,22 +122,38 @@ void Pong::PongServer::Tick(int mspassed){
                     if(IsBallInGoalArea()){
                         StuckThresshold = 0;
                     } else {
-                        Logger::Get()->Info(L"Ball stuck!");
 
-                        _DisposeOldBall();
-                        // Serve new ball //
-                        GameArena->ServeBall();
+                        ballstuck = true;
                     }
                 }
             } else {
                 if(StuckThresshold >= 1)
                     StuckThresshold--;
             }
+            
+        }
+
+        if(!ballstuck && castedptr->GetBodyVelocity().HAddAbs() < 0.00001f){
+
+            if(!IsBallInGoalArea()){
+
+                ballstuck = true;
+            }
+        }
+
+        if(ballstuck){
+
+            Logger::Get()->Info(L"Ball stuck!");
+
+            _DisposeOldBall();
+            // Serve new ball //
+            GameArena->ServeBall();
+
         }
 
 
         // Give the ball more speed //
-        GameArena->GiveBallSpeed(1.00001f);
+        //GameArena->GiveBallSpeed(1.00001f);
     }
 }
 // ------------------------------------ //

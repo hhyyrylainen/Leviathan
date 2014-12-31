@@ -13,8 +13,8 @@
 #include "boost/thread/mutex.hpp"
 #include "boost/circular_buffer.hpp"
 
-#define BASESENDABLE_STORED_CLIENT_STATES 12
-#define SENDABLE_RESIMULATE_THRESSHOLD 0.000001f
+#define BASESENDABLE_STORED_CLIENT_STATES 14
+#define SENDABLE_RESIMULATE_THRESSHOLD 0.01f
 
 namespace Leviathan{
 
@@ -141,6 +141,12 @@ namespace Leviathan{
         //! \warning This may NOT be called on any other application than a client
         //! \see IsAnyDataUpdated
         DLLEXPORT void StoreClientSideState(int ticknumber);
+
+
+        //! \brief Replaces an old state with a newer one
+        //!
+        //! This is used on the client when resimulating to replace old invalid states
+        DLLEXPORT bool ReplaceOldClientState(int onticktoreplace, shared_ptr<ObjectDeltaStateData> state);
 
         //! \brief Adds a new connection to known receivers
         DLLEXPORT virtual void AddConnectionToReceivers(ConnectionInfo* receiver);

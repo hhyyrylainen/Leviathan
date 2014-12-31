@@ -10,6 +10,9 @@
 //! Number of milliseconds between engine and world ticks
 #define TICKSPEED 50
 
+//! When true entities may run a single physical update with a short timestep when resimulating
+#define ALLOW_RESIMULATE_CONSUME_ALL
+
 namespace Leviathan{
 
 	template<class T>

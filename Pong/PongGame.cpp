@@ -376,7 +376,7 @@ void Pong::PongGame::Tick(int mspassed){
         }
 
         // Give the ball more speed //
-        GameArena->GiveBallSpeed(1.00001f);
+        //GameArena->GiveBallSpeed(1.00001f);
     }
 }
 // ------------------------------------ //

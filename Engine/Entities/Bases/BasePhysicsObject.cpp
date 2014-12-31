@@ -352,6 +352,13 @@ DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionableP
     if(!requireupdate)
         return;
 
+    // This should hold on to the world update lock once that is required //
+    auto nworld = OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld();
+
+    
+    // TODO: Check does this lock help with something
+    UNIQUE_LOCK_THIS_OBJECT();
+    
     // Go back to the verified position and resimulate from there //
     if(servercasted->ValidFields & PPDELTAUPDATED_POS_X){
         SetPosX(servercasted->Position.X);
@@ -471,10 +478,14 @@ DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionableP
     
     if(tosimulate < 1)
         return;
+
+    lockit.unlock();
     
     //Logger::Get()->Write("Resimulating body for "+Convert::ToString(abs(OwnedByWorld->GetTickNumber()-tick))+
     //    " ticks");
-    OwnedByWorld->GetPhysicalWorld()->ResimulateBody(Body, abs(OwnedByWorld->GetTickNumber()-tick)*TICKSPEED);
+
+    // TODO: make sure that the entity doesn't get simulated before this resimulate call locks the world
+    OwnedByWorld->GetPhysicalWorld()->ResimulateBody(Body, tosimulate*TICKSPEED);
 }
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const Float3 &forces, bool addmass, bool persist /*= true*/,

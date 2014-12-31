@@ -232,7 +232,11 @@ Pong::GameBallConnection::GameBallConnection(Leviathan::GameWorld* world, Leviat
 
 Pong::GameBallConnection::~GameBallConnection(){
 
-    BasePongParts::Get()->GetArena()->RegisterBall(nullptr);
+    // Verify that the ball is still the same //
+    auto arena = BasePongParts::Get()->GetArena();
+
+    if(arena->GetBallPtr().get() == dynamic_cast<BaseObject*>(ParentObject))
+        arena->RegisterBall(nullptr);
 }
 // ------------------------------------ //
 bool Pong::GameBallConnection::_CheckParameters(){

@@ -99,30 +99,9 @@ int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void
     return 0;
 }
 
-DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int milliseconds){
-    // {
-    //     int simulateruns = (0.001f*milliseconds)/NEWTON_TIMESTEP;
-
-    //     boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
-
-    //     ResimulatedBody = body;
-    
-    //     // Setup single island callbacks //
-    //     NewtonSetIslandUpdateEvent(World, &SingleBodyUpdate);
-
-    //     for(int i = 0; i < simulateruns; i++){
-
-    //         //NewtonUpdate(World, body, NEWTON_TIMESTEP);
-        
-    //         NewtonUpdate(World, NEWTON_TIMESTEP);
-    //     }
-
-    //     // Reset the update event //
-    //     NewtonSetIslandUpdateEvent(World, NULL);
-
-
-    //     return;
-    // }
+DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int milliseconds,
+    boost::function<void()> callback)
+{
     
     boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
 
@@ -137,6 +116,8 @@ DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int mi
         
 		NewtonUpdate(World, NEWTON_TIMESTEP);
         passedtime-= NEWTON_FPS_IN_MICROSECONDS;
+
+        callback();
 	}
     
 #ifdef ALLOW_RESIMULATE_CONSUME_ALL
@@ -146,7 +127,7 @@ DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int mi
 
         // Might be a bad idea to use a varying time step here...
         NewtonUpdate(World, passedtime/1000000.f);
-}
+    }
     
 #endif //ALLOW_RESIMULATE_CONSUME_ALL
     

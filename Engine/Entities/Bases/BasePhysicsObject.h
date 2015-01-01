@@ -92,7 +92,7 @@ namespace Leviathan{
 
         //! \brief Sendable entity old state checking for basic physical objects
         DLLEXPORT void CheckOldPhysicalState(PositionablePhysicalDeltaState* servercasted,
-            PositionablePhysicalDeltaState* ourcasted, int tick);
+            PositionablePhysicalDeltaState* ourcasted, int tick, BaseSendableEntity* assendable);
 
         //! \brief Returns the default material ID for the world to which this entity belongs
         DLLEXPORT int GetDefaultPhysicalMaterialID() const;

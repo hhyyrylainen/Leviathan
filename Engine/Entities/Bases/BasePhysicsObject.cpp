@@ -6,6 +6,7 @@
 #include "../GameWorld.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "../CommonStateObjects.h"
+#include "BaseSendableEntity.h"
 using namespace Leviathan;
 // ------------------------------------ //
 // I hope that this virtual constructor isn't actually called //
@@ -306,7 +307,7 @@ DLLEXPORT void Leviathan::BasePhysicsObject::ApplyPhysicalState(BasePhysicsData 
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionablePhysicalDeltaState* servercasted,
-    PositionablePhysicalDeltaState* ourcasted, int tick)
+    PositionablePhysicalDeltaState* ourcasted, int tick, BaseSendableEntity* assendable)
 {
     // Check first do we need to resimulate //
     bool requireupdate = false;
@@ -474,18 +475,54 @@ DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionableP
     SetBodyVelocity(finalvelocity);
     SetBodyTorque(finaltorque);
 
-    int tosimulate = OwnedByWorld->GetTickNumber()-tick;
+    const int worldtick = OwnedByWorld->GetTickNumber();
+
+    int tosimulate = worldtick-tick;
+
+    // All the old states need to be replaced with new ones or we are going to resimulate a lot
+    // for the next few ticks
+    int advancedtick = tick;
+    assendable->ReplaceOldClientState(advancedtick, assendable->CaptureState());
+
+    int simulatedtime = 0;
+    
+
+    
     
     if(tosimulate < 1)
         return;
 
     lockit.unlock();
-    
-    //Logger::Get()->Write("Resimulating body for "+Convert::ToString(abs(OwnedByWorld->GetTickNumber()-tick))+
-    //    " ticks");
 
+    
+    
     // TODO: make sure that the entity doesn't get simulated before this resimulate call locks the world
-    OwnedByWorld->GetPhysicalWorld()->ResimulateBody(Body, tosimulate*TICKSPEED);
+    OwnedByWorld->GetPhysicalWorld()->ResimulateBody(Body, tosimulate*TICKSPEED,
+        boost::bind<void>([](int &simulatedtime, int &advancedtick, BaseSendableEntity* obj, int worldtick) -> void
+            {
+        
+                // Keep track of current tick while resimulating //
+                simulatedtime += NEWTON_FPS_IN_MICROSECONDS;
+
+                if(simulatedtime >= TICKSPEED*1000){
+
+                    advancedtick++;
+                    simulatedtime -= TICKSPEED*1000;
+
+                    assert(advancedtick <= worldtick && "BasePhysicsObject resimulate assert");
+            
+                    if(!obj->ReplaceOldClientState(advancedtick, obj->CaptureState())){
+
+                        // The world tick might not have been stored yet... //
+                        if(advancedtick != worldtick){
+
+                            Logger::Get()->Warning("BasePhysicsObject("+Convert::ToString(obj->GetID())+
+                                "): resimulate: didn't find old state for tick "+
+                                Convert::ToString(advancedtick));
+                        }
+                    }
+                }
+            }, simulatedtime, advancedtick, assendable, worldtick));
 }
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const Float3 &forces, bool addmass, bool persist /*= true*/,

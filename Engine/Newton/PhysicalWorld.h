@@ -14,6 +14,7 @@
 
 #include <Newton.h>
 #include "boost/thread/mutex.hpp"
+#include "boost/function.hpp"
 
 //#ifdef __GNUC__
 //#pragma GCC diagnostic pop
@@ -36,11 +37,14 @@ namespace Leviathan{
 		DLLEXPORT PhysicalWorld(GameWorld* owner);
 		DLLEXPORT ~PhysicalWorld();
 
+        //! \brief Simulates the world and only allowing islands which contain body to update
+        //! \param callback Called each time the world is simulated. This is used to replace old states with
+        //! the resimulated ones
         //! \todo Improve performance by making this use a newton method that simulates a single body
         //! instead of doing a full update and just discarding all changing bodies that aren't wanted
         //! \todo Add an event that allows entity controllers to update forces when one of their controlled
         //! entities are being simulated
-        DLLEXPORT void ResimulateBody(NewtonBody* body, int milliseconds);
+        DLLEXPORT void ResimulateBody(NewtonBody* body, int milliseconds, boost::function<void()> callback);
         
         //! \brief Calculates and simulates away all accumulated time
         DLLEXPORT void SimulateWorld(int maxruns = -1);

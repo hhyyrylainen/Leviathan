@@ -583,7 +583,7 @@ DLLEXPORT void Leviathan::Entity::Brush::VerifyOldState(ObjectDeltaStateData* se
     int tick)
 {
     CheckOldPhysicalState(static_cast<PositionablePhysicalDeltaState*>(serversold),
-        static_cast<PositionablePhysicalDeltaState*>(ourold), tick);
+        static_cast<PositionablePhysicalDeltaState*>(ourold), tick, this);
 }
 
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateStateFromPacket(sf::Packet &packet) const{

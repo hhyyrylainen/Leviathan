@@ -980,8 +980,15 @@ BaseGuiObject* Leviathan::Gui::GuiManager::GetObject(unsigned int index){
 	return NULL;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file, bool nochangelistener /*= false*/){
+DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file, bool nochangelistener /*= false*/,
+    int iteration /*= 0*/)
+{
+    if(iteration > 10){
 
+        Logger::Get()->Warning("GuiManager: aborting file load on iteration "+Convert::ToString(iteration));
+        return false;
+    }
+    
 	// Parse the file //
 	auto data = ObjectFileProcessor::ProcessObjectFile(file);
 
@@ -993,12 +1000,16 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file, bool
 
 	NamedVars& varlist = *data->GetVariables();
 
-	// we need to load the corresponding rocket file first //
 	wstring relativepath;
-	// get path //
+    
+	// Get path //
 	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist, L"GUIBaseFile", relativepath, L"", true,
 		L"GuiManager: LoadGUIFile: no base file defined (in "+file+L") : ");
 
+    // This can be used to verify that CEGUI events are properly hooked //
+    bool requireevent;
+
+    ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist, L"RequireCEGUIHooked", requireevent, false, false, L"");
 
 	if(!relativepath.size()){
 
@@ -1138,6 +1149,41 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const wstring &file, bool
 
 		Logger::Get()->Error(L"GuiManager: ExecuteGuiScript: Unrecognized type! typename: "+objecto->GetTypeName());
 	}
+
+    // Verify loaded hooks, if wanted //
+    if(requireevent){
+
+        bool foundsomething = false;
+
+        auto end = TempOs.end();
+        for(auto iter = TempOs.begin(); iter != end; ++iter){
+
+            if((*iter)->IsCEGUIEventHooked()){
+
+                foundsomething = true;
+                break;
+            }
+        }
+
+        if(!foundsomething){
+
+            // Report that we will attempt to reload the file //
+            Logger::Get()->Warning(L"GuiManager: while trying to load \""+file+L"\" RequireCEGUIHooked is true, "
+                L"but no GUI object has any hooked CEGUI listeners, retrying load: ");
+
+            UnLoadGUIFile();
+
+            for(size_t i = 0; i < TempOs.size(); i++){
+		
+                TempOs[i]->ReleaseData();
+                SAFE_RELEASE(TempOs[i]);
+            }
+
+            Logger::Get()->Write("\t> Doing iteration "+Convert::ToString(iteration+1));
+
+            return LoadGUIFile(file, nochangelistener, iteration+1);
+        }
+    }
 	
 
 	for(size_t i = 0; i < TempOs.size(); i++){

@@ -185,6 +185,12 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(){
 	}
 }
 // ------------------------------------ //
+DLLEXPORT bool Leviathan::Gui::BaseGuiObject::IsCEGUIEventHooked() const{
+    
+    GUARD_LOCK_THIS_OBJECT();
+    return !CEGUIRegisteredEvents.empty();
+}
+// ------------------------------------ //
 void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericEvent** event2){
 	if(!Scripting)
 		return;
@@ -331,9 +337,13 @@ DLLEXPORT void Leviathan::Gui::BaseGuiObject::ConnectElement(CEGUI::Window* wind
 
 bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const wstring &listenername){
 
-	boost::strict_lock<boost::mutex> lockthis(CEGUIEventMutex);
+    {
+        // This should be fine to be only locked during the next call as
+        // it is the only place where the map could be updated
+        boost::strict_lock<boost::mutex> lockthis(CEGUIEventMutex);
 
-	MakeSureCEGUIEventsAreFine(lockthis);
+        MakeSureCEGUIEventsAreFine(lockthis);
+    }
 
 	// Try to match the name //
 

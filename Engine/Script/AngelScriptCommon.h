@@ -1,18 +1,29 @@
 void ScriptMessageCallback(const asSMessageInfo *msg, void *param){
 
-	//wstring type = L"";
-
 	if(msg->type == asMSGTYPE_WARNING){
-		//type = L"script [WARNING]";
-		Logger::Get()->Info(L"[SCRIPT] [WARNING] "+Convert::CharPtrToWstring(msg->section)+L" ("+Convert::ToWstring(msg->row)+L", "+Convert::ToWstring(msg->col)+L") : "+Convert::ToWstring(msg->message), true);
+        
+		Logger::Get()->Warning(string("[SCRIPT] ")+msg->section+" ("+Convert::ToString(msg->row)+
+            ", "+Convert::ToString(msg->col)+") : "+msg->message);
+        
 	} else if(msg->type == asMSGTYPE_INFORMATION){
-		//type = L"script [INFO]";
-		Logger::Get()->Info(L"[SCRIPT] "+Convert::CharPtrToWstring(msg->section)+L" ("+Convert::ToWstring(msg->row)+L", "+Convert::ToWstring(msg->col)+L") : "+Convert::ToWstring(msg->message), true);
+
+		Logger::Get()->Info(string("[SCRIPT] ")+msg->section+" ("+Convert::ToString(msg->row)+", "+
+            Convert::ToString(msg->col)+") : "+msg->message);
+        
 	} else {
-		//type = L"script [ERROR]";
-		Logger::Get()->Error(L"[SCRIPT] "+Convert::CharPtrToWstring(msg->section)+L" ("+Convert::ToWstring(msg->row)+L", "+Convert::ToWstring(msg->col)+L") : "+Convert::ToWstring(msg->message), true);
+
+		Logger::Get()->Error(string("[SCRIPT] ")+msg->section+" ("+Convert::ToString(msg->row)+
+            ", "+Convert::ToString(msg->col)+") : "+msg->message);
 	}
 	
 	return;
-	//printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, type, msg->message);
 }
+
+
+
+
+
+
+
+
+

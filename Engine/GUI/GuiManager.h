@@ -103,7 +103,7 @@ namespace Gui{
 		// file loading //
 
 		//! \brief Loads a GUI file
-		DLLEXPORT bool LoadGUIFile(const wstring &file, bool nochangelistener = false);
+		DLLEXPORT bool LoadGUIFile(const wstring &file, bool nochangelistener = false, int iteration = 0);
 
 		//! \brief Unloads the currently loaded file
 		DLLEXPORT void UnLoadGUIFile();

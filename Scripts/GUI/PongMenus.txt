@@ -1,5 +1,6 @@
 ﻿GUIBaseFile = "PongMenu.layout";
 GUIAnimations = [["PongMenus.anims"]];
+RequireCEGUIHooked = true;
 
 
 // ------------------ Templates for GUI objects ------------------ //

@@ -68,6 +68,9 @@ namespace Leviathan{ namespace Gui{
             //! \brief Returns the TargetElement CEGUI window which might be NULL
             DLLEXPORT CEGUI::Window* GetTargetWindow() const;
 
+            //! \brief Returns true if at least one CEGUI event is hooked
+            DLLEXPORT bool IsCEGUIEventHooked() const;
+
 
             //! \brief Prints the window layout starting from TargetElement
             //! \param target The target window or NULL if TargetElement should be used

@@ -107,8 +107,16 @@ void Pong::PongServer::Tick(int mspassed){
         ballspeed = ballspeed.Normalize();
 
         bool ballstuck = false;
+        float ballvel = castedptr->GetBodyVelocity().HAddAbs();
 
-        if(DeadAxis.HAddAbs() != 0 && ballspeed.HAddAbs() > BALLSTUCK_THRESHOLD){
+        if(ballvel < 0.04f){
+
+            if(!IsBallInGoalArea()){
+
+                ballstuck = true;
+            }
+            
+        } else if(DeadAxis.HAddAbs() != 0){
             // Compare directions //
 
             float veldifference = (ballspeed - DeadAxis).HAddAbs();
@@ -130,15 +138,6 @@ void Pong::PongServer::Tick(int mspassed){
                 if(StuckThresshold >= 1)
                     StuckThresshold--;
             }
-            
-        }
-
-        if(!ballstuck && castedptr->GetBodyVelocity().HAddAbs() < 0.00001f){
-
-            if(!IsBallInGoalArea()){
-
-                ballstuck = true;
-            }
         }
 
         if(ballstuck){
@@ -150,10 +149,11 @@ void Pong::PongServer::Tick(int mspassed){
             GameArena->ServeBall();
 
         }
+        
 
 
         // Give the ball more speed //
-        //GameArena->GiveBallSpeed(1.00001f);
+        GameArena->GiveBallSpeed(1.00001f);
     }
 }
 // ------------------------------------ //
@@ -183,41 +183,6 @@ void Pong::PongServer::CheckGameKeyConfigVariables(KeyConfiguration* keyconfigob
 
 }
 // ------------------------------------ //
-void Pong::PongServer::TryStartMatch(){
-	// The world is already setup and all the players are ready at this point, just setup some cheap final values //
-
-	auto split0 = _PlayerList[0]->GetSplit();
-	auto split1 = _PlayerList[1]->GetSplit();
-	auto split2 = _PlayerList[2]->GetSplit();
-	auto split3 = _PlayerList[3]->GetSplit();
-	// Setup dead angle //
-	DeadAxis = Float3(0.f);
-
-	if(!_PlayerList[0]->IsSlotActive() && !_PlayerList[2]->IsSlotActive() && (split0 ? !split0->IsSlotActive() : true) && (split2 ? 
-		!split2->IsSlotActive() : true))
-	{
-
-		DeadAxis = Float3(1.f, 0.f, 0.f);
-
-	} else if(!_PlayerList[1]->IsSlotActive() && !_PlayerList[3]->IsSlotActive() && (split1 ? !split1->IsSlotActive() : true) && (split3 ? 
-		!split3->IsSlotActive() : true))
-	{
-
-		DeadAxis = Float3(0.f, 0.f, 1.f);
-	}
-
-	// send start event //
-	Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"GameStart"));
-
-	// Set the camera location //
-	auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
-	cam->SetPos(Float3(0.f, 22.f*BASE_ARENASCALE, 0.f));
-	cam->SetRotation(Float3(0.f, -90.f, 0.f));
-
-	// now that we are ready to start let's serve the ball //
-	GameArena->ServeBall();
-}
-
 void Pong::PongServer::CheckForGameEnd(){
 	// Look through all players and see if any team/player has reached score limit // //
 	for(size_t i = 0; i < _PlayerList.Size(); i++){
@@ -410,4 +375,24 @@ void Pong::PongServer::OnStartPreMatch(){
 	// Clear all other sorts of data like scores etc. //
 
 
+    
+	auto split0 = _PlayerList[0]->GetSplit();
+	auto split1 = _PlayerList[1]->GetSplit();
+	auto split2 = _PlayerList[2]->GetSplit();
+	auto split3 = _PlayerList[3]->GetSplit();
+	// Setup dead angle //
+	DeadAxis = Float3(0.f);
+
+	if(!_PlayerList[0]->IsSlotActive() && !_PlayerList[2]->IsSlotActive() &&
+        (split0 ? !split0->IsSlotActive() : true) && (split2 ? !split2->IsSlotActive() : true))
+	{
+
+		DeadAxis = Float3(1.f, 0.f, 0.f);
+
+	} else if(!_PlayerList[1]->IsSlotActive() && !_PlayerList[3]->IsSlotActive() &&
+        (split1 ? !split1->IsSlotActive() : true) && (split3 ? !split3->IsSlotActive() : true))
+	{
+
+		DeadAxis = Float3(0.f, 0.f, 1.f);
+	}
 }

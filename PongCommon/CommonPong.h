@@ -30,7 +30,7 @@
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " +__WFILE__+ L" on line "+Convert::IntToWstring(__LINE__), false);return false;
 
-#define BALLSTUCK_THRESHOLD		0.045f
+#define BALLSTUCK_THRESHOLD		0.065f
 #define BALLSTUCK_COUNT			8
 #define SCOREPOINT_AMOUNT		1
 

@@ -11,7 +11,7 @@
 #define TICKSPEED 50
 
 //! When true entities may run a single physical update with a short timestep when resimulating
-#define ALLOW_RESIMULATE_CONSUME_ALL
+//#define ALLOW_RESIMULATE_CONSUME_ALL
 
 namespace Leviathan{
 

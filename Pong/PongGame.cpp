@@ -376,7 +376,7 @@ void Pong::PongGame::Tick(int mspassed){
         }
 
         // Give the ball more speed //
-        //GameArena->GiveBallSpeed(1.00001f);
+        GameArena->GiveBallSpeed(1.00001f);
     }
 }
 // ------------------------------------ //
@@ -691,6 +691,11 @@ void Pong::PongGame::VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus)
         EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"PrematchScreenState",
                 Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"State",
                             new VariableBlock(string("On")))))));
+
+        // Set the camera to be in the game playing position //
+        auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
+        cam->SetPos(Float3(0.f, 22.f*BASE_ARENASCALE, 0.f));
+        cam->SetRotation(Float3(0.f, -90.f, 0.f));
 
         return;
     }

@@ -25,7 +25,7 @@ namespace Leviathan{
 
 #define WORLD_CLOCK_SYNC_PACKETS 12
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
-#define WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL 4
+#define WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL 2
 
     //! Holds internal data for initial player syncing
     class PlayerConnectionPreparer;

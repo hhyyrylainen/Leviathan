@@ -524,7 +524,7 @@ namespace Leviathan{
 			return Float3(X/length, Y/length, Z/length);
 		}
 		// safe version of normalization //
-		DLLEXPORT inline Float3 NormalizeSafe(const Float3 &safer) const{
+		DLLEXPORT inline Float3 NormalizeSafe(const Float3 &safer = Float3(1, 0, 0)) const{
 			// security //
 			//assert(safer.IsNormalized() && "safer not normalized");
 			const float len = X*X+Y*Y+Z*Z;
@@ -645,14 +645,7 @@ namespace Leviathan{
 			}
 		}
 
-		//************************************
-		// Method:    operator float*
-		// FullName:  Leviathan::Float4::operator float*
-		// Access:    public
-		// Returns:   float*
-		// Qualifier:
-		// Usage: return first value of {X, Y, Z, W} as pointer, should be confirmed to work. D3DXMath10 has vector class that has this cast (implementation could be loaned)
-		//************************************
+		//! return first value of {X, Y, Z, W} as a pointer
 		DLLEXPORT inline operator float* (){
 			// this should be always confirmed to work //
 			return &X;
@@ -749,7 +742,7 @@ namespace Leviathan{
 			return Float4(X/length, Y/length, Z/length, W/length);
 		}
 		// safe version of normalization //
-		DLLEXPORT inline Float4 NormalizeSafe(const Float4 &safer) const{
+		DLLEXPORT inline Float4 NormalizeSafe(const Float4 &safer = Float4(0, 0, 0, 1)) const{
 			// security //
 			assert(safer.IsNormalized() && "safer not normalized");
 			const float len = X*X+Y*Y+Z*Z+W*W;

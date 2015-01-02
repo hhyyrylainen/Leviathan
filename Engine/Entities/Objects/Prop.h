@@ -14,20 +14,22 @@
 #include "Entities/Bases/BaseConstraintable.h"
 #include "Entities/Bases/BaseParentable.h"
 #include "Entities/Bases/BaseSendableEntity.h"
+#include "Entities/Bases/BaseInterpolated.h"
 
 namespace Leviathan{ namespace Entity{
-	
+        
         //! \brief A movable model loaded from a file
         //! \todo Make sure that _MarkDataUpdated is called enough
-        class Prop : virtual public BaseObject, public BaseRenderable, public BaseConstraintable, public BaseParentable,
-                       public BaseSendableEntity, public BasePhysicsObject
+        class Prop : public virtual BaseObject, public virtual BaseRenderable, public BaseConstraintable,
+                       public BaseParentable, public BaseSendableEntity, public BasePhysicsObject,
+                       public BaseInterpolated
         {
             friend BaseSendableEntity;
         public:
             
             DLLEXPORT Prop(bool hidden, GameWorld* world);
             DLLEXPORT virtual ~Prop();
-		
+            
             DLLEXPORT bool Init(const wstring &modelfile);
             DLLEXPORT virtual void ReleaseData();
 
@@ -60,6 +62,14 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseConstraintable::_SendCreatedConstraint
             void _SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr) override;
 
+            //! \copydoc BasePhysicsObject::OnBeforeResimulateStateChanged
+            void OnBeforeResimulateStateChanged() override;
+
+            //! \copydoc BaseInterpolated::_GetCurrentActualPosition
+            void _GetCurrentActualPosition(Float3 &pos) override;
+        
+            //! \copydoc BaseInterpolated::_GetCurrentActualRotation
+            void _GetCurrentActualRotation(Float4 &rot) override;
             
             // for setting new values to graphical object and physical object //
             virtual void _UpdatePhysicsObjectLocation(ObjectLock &guard) override;

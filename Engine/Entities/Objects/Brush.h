@@ -14,6 +14,7 @@
 #include "Entities/Bases/BaseConstraintable.h"
 #include "Entities/Bases/BaseParentable.h"
 #include "Entities/Bases/BaseSendableEntity.h"
+#include "Entities/Bases/BaseInterpolated.h"
 
 namespace Leviathan{
 	class GameWorld;
@@ -23,8 +24,9 @@ namespace Leviathan{ namespace Entity{
 
         //! \brief A (potentially) movable brush
         //! \todo Make sure that _MarkDataUpdated is called enough
-        class Brush : virtual public BaseObject, public BaseRenderable, public BaseConstraintable,
-                        public BaseParentable, public BaseSendableEntity, public BasePhysicsObject
+        class Brush : public virtual BaseObject, public virtual BaseRenderable, public BaseConstraintable,
+                        public BaseParentable, public BaseSendableEntity, public BasePhysicsObject,
+                        public BaseInterpolated
         {
             friend BaseSendableEntity;
         public:
@@ -68,9 +70,19 @@ namespace Leviathan{ namespace Entity{
 
             //! \copydoc BaseSendableEntity::_SaveOwnDataToPacket
             virtual void _SaveOwnDataToPacket(sf::Packet &packet) override;
-
+            
             //! \copydoc BaseConstraintable::_SendCreatedConstraint
             void _SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr) override;
+
+            //! \copydoc BasePhysicsObject::OnBeforeResimulateStateChanged
+            virtual void OnBeforeResimulateStateChanged() override;
+
+            //! \copydoc BaseInterpolated::_GetCurrentActualPosition
+            void _GetCurrentActualPosition(Float3 &pos) override;
+        
+            //! \copydoc BaseInterpolated::_GetCurrentActualRotation
+            void _GetCurrentActualRotation(Float4 &rot) override;
+
             
             // ------------------------------------ //
 

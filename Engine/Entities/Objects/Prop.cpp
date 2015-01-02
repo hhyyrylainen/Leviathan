@@ -29,6 +29,12 @@ DLLEXPORT Leviathan::Entity::Prop::~Prop(){
 }
 
 DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
+
+    StopInterpolating();
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    
 	// Release Ogre entity //
     if(ObjectsNode)
         OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
@@ -338,6 +344,16 @@ DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessag
 	return false;
 }
 // ------------------------------------ //
+void Leviathan::Entity::Prop::_GetCurrentActualPosition(Float3 &pos){
+
+    GetPos(pos);
+}
+        
+void Leviathan::Entity::Prop::_GetCurrentActualRotation(Float4 &rot){
+
+    GetOrientation(rot);
+}
+// ------------------------------------ //
 bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(sf::Packet &packet){
 
     BasePositionData posdata;
@@ -441,6 +457,10 @@ DLLEXPORT void Leviathan::Entity::Prop::VerifyOldState(ObjectDeltaStateData* ser
 {
     CheckOldPhysicalState(static_cast<PositionablePhysicalDeltaState*>(serversold),
         static_cast<PositionablePhysicalDeltaState*>(ourold), tick, this);
+}
+
+void Leviathan::Entity::Prop::OnBeforeResimulateStateChanged(){
+    StartInterpolating(GetPos(), GetOrientation());
 }
 
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CreateStateFromPacket(sf::Packet &packet) const{

@@ -36,13 +36,15 @@ namespace Leviathan{
 		DLLEXPORT virtual void SetOrientation(const Float4 &quaternionrotation);
         DLLEXPORT virtual void SetOrientationComponents(const float &x, const float &y, const float &z, const float &w);
 
-		DLLEXPORT virtual Float4 GetOrientation();
+		DLLEXPORT virtual Float4 GetOrientation() const;
+        DLLEXPORT virtual void GetOrientation(Float4 &receiver) const;
 
         //! \brief Applies position and rotation from a BasePositionData
         DLLEXPORT virtual void ApplyPositionDataObject(const BasePositionData &pos);
 
 		DLLEXPORT virtual void GetPosElements(float &outx, float &outy, float &outz);
-		DLLEXPORT virtual Float3 GetPos();
+		DLLEXPORT virtual Float3 GetPos() const;
+        DLLEXPORT virtual void GetPos(Float3 &receiver) const;
 		DLLEXPORT virtual float GetXPos();
 		DLLEXPORT virtual float GetYPos();
 		DLLEXPORT virtual float GetZPos();

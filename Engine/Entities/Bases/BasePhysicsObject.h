@@ -133,6 +133,10 @@ namespace Leviathan{
 
 		bool BasePhysicsCustomMessage(int message, void* data);
 		bool BasePhysicsCustomGetData(ObjectDataRequest* data);
+
+        //! \brief Called before position is changed in resimulate, can be used to interpolate position
+        virtual void OnBeforeResimulateStateChanged();
+        
 		// ------------------------------------ //
 		NewtonCollision* Collision;
 		NewtonBody* Body;

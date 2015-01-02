@@ -306,6 +306,10 @@ DLLEXPORT void Leviathan::BasePhysicsObject::ApplyPhysicalState(BasePhysicsData 
     SetBodyVelocity(data.Velocity);
 }
 // ------------------------------------ //
+void Leviathan::BasePhysicsObject::OnBeforeResimulateStateChanged(){
+
+}
+
 DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionablePhysicalDeltaState* servercasted,
     PositionablePhysicalDeltaState* ourcasted, int tick, BaseSendableEntity* assendable)
 {
@@ -356,6 +360,8 @@ DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionableP
     // This should hold on to the world update lock once that is required //
     auto nworld = OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld();
 
+
+    OnBeforeResimulateStateChanged();
     
     // TODO: Check does this lock help with something
     UNIQUE_LOCK_THIS_OBJECT();

@@ -21,7 +21,12 @@ ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryString(string blockname, 
 
 	return new ScriptSafeVariableBlock(new StringBlock(valuestr), Convert::StringToWstring(blockname));
 }
+// ------------------ Prop proxies ------------------ //
+Float3 PropGetPosVal(Entity::Prop* obj){
 
+    return obj->GetPos();
+}
+// ------------------ Float3 proxies ------------------ //
 void Float3ConstructorProxy(void* memory){
 	new(memory) Float3();
 }
@@ -71,6 +76,7 @@ Float3 Float3NormalizeProxy(Float3* obj){
 	return obj->Normalize();
 }
 
+// ------------------ BaseObject proxies ------------------ //
 NewtonBody* BaseObjectCustomMessageGetNewtonBody(BaseObject* obj){
 	// Use the SendCustomMessage function to request this data //
 	ObjectDataRequest request(ENTITYDATA_REQUESTTYPE_NEWTONBODY);
@@ -430,7 +436,8 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Prop", "Float3 GetPosition()",  WRAP_MFN(Prop, GetPos), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Prop", "Float3 GetPosition()",  asFUNCTION(PropGetPosVal),
+            asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}

@@ -160,6 +160,9 @@ namespace Leviathan{
         //! Mutex that is locked when changing the worlds
         boost::mutex GameWorldsLock;
 
+        //! Mutex that is locked while NetworkHandler is used
+        boost::mutex NetworkHandlerLock;
+
 		// data //
 		__int64 LastFrame;
 		int TimePassed;

@@ -144,9 +144,13 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	_RemoteConsole = new RemoteConsole();
 
 	// We want to send a request to the master server as soon as possible //
-	_NetworkHandler = new NetworkHandler(ntype, Define->GetPacketHandler());
+    {
+        boost::unique_lock<boost::mutex> lock(NetworkHandlerLock);
+        
+        _NetworkHandler = new NetworkHandler(ntype, Define->GetPacketHandler());
 
-	_NetworkHandler->Init(Define->GetMasterServerInfo());
+        _NetworkHandler->Init(Define->GetMasterServerInfo());
+    }
 
 	// These should be fine to be threaded //
 
@@ -580,14 +584,21 @@ void Leviathan::Engine::Release(bool forced){
 }
 // ------------------------------------ //
 void Leviathan::Engine::Tick(){
-	GUARD_LOCK_THIS_OBJECT();
 
-	// Always try to update networking //
-	if(_NetworkHandler)
-		_NetworkHandler->UpdateAllConnections();
-
+    // Always try to update networking //
+    {
+        boost::unique_lock<boost::mutex> lock(NetworkHandlerLock);
+        
+        if(_NetworkHandler)
+            _NetworkHandler->UpdateAllConnections();
+        
+    }
+    
     // Update physics //
     SimulatePhysics();
+
+    
+	GUARD_LOCK_THIS_OBJECT();
 
 	if(PreReleaseWaiting){
 
@@ -669,12 +680,16 @@ void Leviathan::Engine::Tick(){
 }
 
 DLLEXPORT void Leviathan::Engine::PreFirstTick(){
-    
-    GUARD_LOCK_THIS_OBJECT();
 
     // Stop this handling as it is no longer required //
-    if(_NetworkHandler)
-        _NetworkHandler->StopOwnUpdaterThread();
+    {
+        boost::unique_lock<boost::mutex> lock(NetworkHandlerLock);
+        
+        if(_NetworkHandler)
+            _NetworkHandler->StopOwnUpdaterThread();
+    }
+    
+    GUARD_LOCK_THIS_OBJECT();
 
     if(_ThreadingManager)
         _ThreadingManager->NotifyQueuerThread();
@@ -745,8 +760,11 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 
 
 	// Then kill the network //
-	_NetworkHandler->GetInterface()->CloseDown();
-
+    {
+        boost::unique_lock<boost::mutex> lock(NetworkHandlerLock);
+        
+        _NetworkHandler->GetInterface()->CloseDown();
+    }
 
 	// Let the game release it's resources //
 	Owner->EnginePreShutdown();
@@ -755,7 +773,11 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 	SAFE_DELETE(_RemoteConsole);
 
 	// Close all connections //
-	SAFE_RELEASEDEL(_NetworkHandler);
+    {
+        boost::unique_lock<boost::mutex> lock(NetworkHandlerLock);
+        
+        SAFE_RELEASEDEL(_NetworkHandler);
+    }
 
 	SAFE_RELEASEDEL(_ResourceRefreshHandler);
 

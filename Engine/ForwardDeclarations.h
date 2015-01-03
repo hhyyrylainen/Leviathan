@@ -35,6 +35,7 @@ namespace Leviathan{
     class BaseObject;
     class BaseConstraintable;
     class BaseSendableEntity;
+    class BasePhysicsObject;
 
     class PositionablePhysicalDeltaState;
 

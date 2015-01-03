@@ -10,6 +10,7 @@
 #include "BasePositionable.h"
 #include "BaseObject.h"
 #include "Common/SFMLPackets.h"
+#include "boost/function.hpp"
 
 
 #define BASEPHYSICS_CUSTOMMESSAGE_DATA_CHECK	{if(entitycustommessagetype >= ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE && entitycustommessagetype <= ENTITYCUSTOMMESSAGETYPE_SETVELOCITY){if(BasePhysicsCustomMessage(entitycustommessagetype, dataptr)) return true;}}
@@ -18,24 +19,33 @@
 
 namespace Leviathan{
 
-	// fill this to apply a force //
+
+    //! \brief Holder for information regarding a single force
+    //! \note Avoid using external state in the get callback as networked resimulation might become inaccurate
+    //! and players will have a bad experience
 	class ApplyForceInfo{
 	public:
         //! \note Pass NULL for name if not used, avoid passing empty strings
-		DLLEXPORT ApplyForceInfo(const Float3 &forces, bool addmass, bool persist = true, wstring* name = NULL);
+        //! \param name The name to assign. This will be deleted by a unique_ptr
+		DLLEXPORT ApplyForceInfo(bool addmass,
+            boost::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> getforce,
+            wstring* name = NULL);
+        
 		DLLEXPORT ApplyForceInfo(ApplyForceInfo &other);
+        DLLEXPORT ApplyForceInfo(ApplyForceInfo &&other);
 		DLLEXPORT ~ApplyForceInfo();
 
-		DLLEXPORT ApplyForceInfo& operator =(ApplyForceInfo &other);
+		DLLEXPORT ApplyForceInfo& operator =(const ApplyForceInfo &other);
 
-		// set name when you don't want other non-named forces override this //
+		//! Set a name when you don't want other non-named forces to override this
 		unique_ptr<wstring> OptionalName;
-		// set if you don't want to call apply force every frame //
-		bool Persist;
-		// whether to multiply the force by mass, to get same speed to all objects that are applied force to //
+        
+		//! Whether to multiply the force by mass, makes acceleration constant with different masses
 		bool MultiplyByMass;
-		// finally the amount to apply to each direction //
-		Float3 ForcesToApply;
+        
+        //! The callback which returns the force
+        //! \todo Allow deleting this force from the callback
+        boost::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> Callback;
 	};
 
     //! \brief Can hold all data used by BasePhysicsObject
@@ -88,6 +98,15 @@ namespace Leviathan{
 		// Higher performance material set if you use it in batches and
         // you have fetched the material id from PhysicalMaterialManager
 		DLLEXPORT void SetPhysicalMaterialID(int ID);
+
+        //! \brief Sets the linear dampening which slows down the object
+        //! \param factor The factor to set. Must be between 0.f and 1.f. Default is 0.1f
+        //! \note This can be used to set the viscosity of the substance the object is in for example to mimic
+        //! drag in water (this needs verification...)
+        //!
+        //! More on this in the Newton wiki here:
+        //! http://newtondynamics.com/wiki/index.php5?title=NewtonBodySetLinearDamping
+        DLLEXPORT void SetLinearDampening(float factor = 0.1f);
 
 
         //! \brief Sendable entity old state checking for basic physical objects

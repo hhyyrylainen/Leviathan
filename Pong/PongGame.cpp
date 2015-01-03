@@ -374,9 +374,6 @@ void Pong::PongGame::Tick(int mspassed){
                 slotptr = slotptr->GetSplit();
             }
         }
-
-        // Give the ball more speed //
-        GameArena->GiveBallSpeed(1.00001f);
     }
 }
 // ------------------------------------ //

@@ -487,32 +487,6 @@ void Pong::Arena::VerifyTrail(){
             TargetWorld.get(), "PongBallTrail", balltrailproperties, true, &DirectTrail));
 }
 // ------------------------------------ //
-void Pong::Arena::GiveBallSpeed(float mult){
-	if(Ball){
-
-		// Cast //
-		Leviathan::Entity::Prop* tmpball = dynamic_cast<Leviathan::Entity::Prop*>(Ball.get());
-		if(tmpball != NULL){
-			// Get current velocity //
-			Float3 targetspeed = tmpball->GetBodyVelocity();
-			// Don't want to apply any Y directional force //
-			targetspeed.Y = 0;
-			//// We want the direction //
-			//targetspeed = targetspeed.Normalize();
-			// Add the factor //
-			targetspeed *= mult;
-
-			// Limit maximum speed //
-			if(targetspeed.HAddAbs() >= BALL_SPEED_MAX){
-
-				tmpball->RemoveApplyForce(L"BallPush");
-			} else {
-				tmpball->ApplyForce(new ApplyForceInfo(targetspeed, true, true, new wstring(L"BallPush")));
-			}
-		}
-	}
-}
-
 void Pong::Arena::LetGoOfBall(){
 	// We should delete it (but after this physics update is done) //
 	if(Ball){

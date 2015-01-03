@@ -128,19 +128,13 @@ Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(const float &mass){
 
 	Float3 total(0);
 
-	for(auto iter = ApplyForceList.begin(); iter != ApplyForceList.end(); ){
+	for(auto iter = ApplyForceList.begin(); iter != ApplyForceList.end(); ++iter){
 		// Add to total, and multiply by mass if wanted //
-		total += (*iter)->MultiplyByMass ? (*iter)->ForcesToApply*mass: (*iter)->ForcesToApply;
+        const Float3 force = (*iter)->Callback((*iter).get(), this);
+        
+		total += (*iter)->MultiplyByMass ? force*mass: force;
 
-		// Remove if it isn't persistent force //
-		if(!(*iter)->Persist){
-            
-			iter = ApplyForceList.erase(iter);
-            
-		} else {
-            
-			++iter;
-		}
+        // We might assert/crash here if the force was removed //
 	}
 
 	return total;
@@ -215,6 +209,12 @@ DLLEXPORT void Leviathan::BasePhysicsObject::SetPhysicalMaterialID(int ID){
 DLLEXPORT int Leviathan::BasePhysicsObject::GetDefaultPhysicalMaterialID() const{
 
     return NewtonMaterialGetDefaultGroupID(OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld());
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::BasePhysicsObject::SetLinearDampening(float factor /*= 0.1f*/){
+
+    if(Body)
+        NewtonBodySetLinearDamping(Body, factor);
 }
 // ------------------------------------ //
 bool Leviathan::BasePhysicsObject::BasePhysicsCustomMessage(int message, void* data){
@@ -531,33 +531,44 @@ DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionableP
             }, simulatedtime, advancedtick, assendable, worldtick));
 }
 // ------------------ ApplyForceInfo ------------------ //
-DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(const Float3 &forces, bool addmass, bool persist /*= true*/,
+DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(bool addmass,
+    boost::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> getforce,
     wstring* name /*= NULL*/) : 
-	ForcesToApply(forces), Persist(persist), MultiplyByMass(addmass), OptionalName(name)
+	Callback(getforce), MultiplyByMass(addmass), OptionalName(name)
 {
 	
-
+    
 }
 
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(ApplyForceInfo &other) :
-    ForcesToApply(other.ForcesToApply), Persist(other.Persist), 
-    MultiplyByMass(other.MultiplyByMass)
+    Callback(other.Callback), MultiplyByMass(other.MultiplyByMass)
 {
-	// Swap the pointers //
-	OptionalName.swap(other.OptionalName);
+    if(other.OptionalName)
+        OptionalName = move(unique_ptr<wstring>(new wstring(*other.OptionalName.get())));
+}
+
+DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(ApplyForceInfo &&other) :
+    MultiplyByMass(move(other.MultiplyByMass)), Callback(std::move(other.Callback))
+{
+    OptionalName = move(other.OptionalName);
 }
 
 DLLEXPORT Leviathan::ApplyForceInfo::~ApplyForceInfo(){
 
 }
 
-DLLEXPORT ApplyForceInfo& Leviathan::ApplyForceInfo::operator=(ApplyForceInfo &other){
-	// assign data with normal operators and swap the unique ptr //
-	ForcesToApply = other.ForcesToApply;
-	Persist = other.Persist;
+DLLEXPORT ApplyForceInfo& Leviathan::ApplyForceInfo::operator=(const ApplyForceInfo &other){
+
 	MultiplyByMass = other.MultiplyByMass;
 
-	OptionalName.swap(other.OptionalName);
+    if(other.OptionalName){
+        
+        OptionalName = move(unique_ptr<wstring>(new wstring(*other.OptionalName.get())));
+        
+    } else {
+        
+        OptionalName.reset();
+    }
 
 	return *this;
 }

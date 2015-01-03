@@ -34,6 +34,9 @@
 #define BALLSTUCK_COUNT			8
 #define SCOREPOINT_AMOUNT		1
 
+#define BALL_SPEED_MAX		35
+#define BALL_SPEED_MULT 1.00001f
+
 namespace Pong{
 
 	class BasePongParts;

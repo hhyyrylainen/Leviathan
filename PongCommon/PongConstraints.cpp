@@ -249,7 +249,40 @@ bool Pong::GameBallConnection::_CreateActualJoint(){
     Logger::Get()->Info("Pong: registering ball");
     
     BasePongParts::Get()->GetArena()->RegisterBall(OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
-                ParentObject)));    
+                ParentObject)));
+
+    auto physball = dynamic_cast<Leviathan::BasePhysicsObject*>(ParentObject);
+    
+    // Set the ball to not loose speed //
+    physball->SetLinearDampening(0.00001f);
+
+    // Set a speed giving force //
+    physball->ApplyForce(new ApplyForceInfo(true, boost::bind<Float3>([](Leviathan::ApplyForceInfo* instance,
+                    Leviathan::BasePhysicsObject* object) -> Float3
+        {
+
+            // Get current velocity //
+			Float3 targetspeed = object->GetBodyVelocity();
+            
+			// Don't want to apply any Y directional force //
+			targetspeed.Y = 0;
+            
+			// Add the factor //
+			targetspeed *= BALL_SPEED_MULT;
+
+			// Limit maximum speed //
+			if(targetspeed.HAddAbs() >= BALL_SPEED_MAX){
+
+				return Float3(0);
+                
+			} else {
+                
+                return targetspeed;
+			}
+
+
+        }, _1, _2), new wstring(L"BallPush")));
+    
 }
 
 

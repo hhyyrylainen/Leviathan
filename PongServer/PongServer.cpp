@@ -149,11 +149,6 @@ void Pong::PongServer::Tick(int mspassed){
             GameArena->ServeBall();
 
         }
-        
-
-
-        // Give the ball more speed //
-        GameArena->GiveBallSpeed(1.00001f);
     }
 }
 // ------------------------------------ //

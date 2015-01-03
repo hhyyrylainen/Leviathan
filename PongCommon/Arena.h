@@ -11,7 +11,6 @@
 
 
 #define BASE_ARENASCALE		1.f	
-#define BALL_SPEED_MAX		35
 
 namespace Pong{
 
@@ -41,8 +40,6 @@ namespace Pong{
         }
 
 		string GetMaterialNameForPlayerColour(const Float4 &colour);
-
-		void GiveBallSpeed(float mult);
 
 		void ColourTheBallTrail(const Float4 &colour);
 

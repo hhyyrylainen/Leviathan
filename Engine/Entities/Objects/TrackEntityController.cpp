@@ -232,17 +232,7 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
             continue;
         }
 
-        // \todo implement different types //
-        if(false){
-
-            // Apply force //
-            Float3 forcetoapply = TrackPos-*reinterpret_cast<Float3*>(request.RequestResult);
-
-            unique_ptr<ApplyForceInfo> tmpapply(new ApplyForceInfo(forcetoapply, true, true));
-
-            obj->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE, tmpapply.get());
-            
-        } else if(true){
+        if(true){
             
             // Add velocity method //
             Float3 wantedspeed = TrackPos-*reinterpret_cast<Float3*>(request.RequestResult);

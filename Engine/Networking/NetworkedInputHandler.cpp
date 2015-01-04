@@ -102,16 +102,26 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 			if(!_HandleInputUpdateResponse(response, connection)){
 
 				// This packet wasn't properly authenticated //
+                Logger::Get()->Warning("NetworkedInputHandler: improperly authenticated response");
 				return true;
 			}
 
 
 			// Everybody receives these, but only the server has to distribute these around //
-			if(IsOnTheServer){
+            if(IsOnTheServer){
 
-				// Distribute it around //
-				ServerInterface->SendToAllButOnePlayer(response, connection);
-			}
+                // Distribute it around //
+        
+                // We duplicate the packet from the data to make it harder for people to send invalid packets to
+                // other clients 
+                shared_ptr<NetworkResponse> tmprespall = shared_ptr<NetworkResponse>(new NetworkResponse(-1,
+                        PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
+
+                tmprespall->GenerateUpdateNetworkedInputResponse(new NetworkResponseDataForUpdateNetworkedInput(
+                        *response->GetResponseDataForUpdateNetworkedInputResponse()));
+
+                ServerInterface->SendToAllButOnePlayer(response, connection);
+            }
 
 			return true;
 		}
@@ -380,8 +390,12 @@ bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(shared_ptr<Net
 
 
 	// If we didn't find it this *should* be a bogus request //
-	if(!target)
+	if(!target){
+        
+        Logger::Get()->Warning("NetworkedInputHandler: couldn't find a target for update response, InputID: "+
+            Convert::ToString(data->InputID));
 		return false;
+    }
 
 
 	// Check is it allowed //
@@ -390,6 +404,8 @@ bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(shared_ptr<Net
         if(!_NetworkInputFactory->IsConnectionAllowedToUpdate(target, connection)){
 
             // Some player is trying to fake someone else's input //
+            Logger::Get()->Warning("NetworkedInputHandler: connection not allowed to update InputID: "+
+                Convert::ToString(data->InputID));
             return false;
         }
         
@@ -402,30 +418,6 @@ bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(shared_ptr<Net
 	
 	// Now we can update it //
 	target->LoadUpdatesFromPacket(data->UpdateData);
-
-    if(IsOnTheServer){
-
-        // Distribute it around //
-        
-        // First create the packet //
-		shared_ptr<NetworkResponse> tmprespall = shared_ptr<NetworkResponse>(new NetworkResponse(-1,
-                PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
-
-		tmprespall->GenerateUpdateNetworkedInputResponse(new NetworkResponseDataForUpdateNetworkedInput(*data));
-
-		// Using threading here to not use too much time processing the update request //
-        
-		// \todo Guarantee that the interface will be available when this is ran
-		ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>(
-                    [](shared_ptr<NetworkResponse> response, NetworkServerInterface* server, ConnectionInfo* skipme)
-                    -> void
-            {
-
-                // Then tell the interface to send it to all but one connection //
-                server->SendToAllButOnePlayer(response, skipme);
-
-            }, tmprespall, ServerInterface, connection)));
-    }
 
 	return true;
 }

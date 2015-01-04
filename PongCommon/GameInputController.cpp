@@ -262,6 +262,8 @@ bool Pong::PongInputFactory::IsConnectionAllowed(NetworkedInput* input, Connecti
                 } else {
 
                     // Not allowed //
+                    Logger::Get()->Error("Pong input: connection is not allowed to update input "+
+                        Convert::ToString(input->GetID()));
                     return false;
                 }
             }
@@ -271,7 +273,7 @@ bool Pong::PongInputFactory::IsConnectionAllowed(NetworkedInput* input, Connecti
 	}
     
 
-	Logger::Get()->Error(L"Pong input thing failed to find target for allow request");
+	Logger::Get()->Error("Pong input thing failed to find target for allow request");
 	return false;
 }
 

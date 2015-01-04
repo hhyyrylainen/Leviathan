@@ -87,8 +87,12 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 			if(IsOnTheServer) 
 				return false;
 
-			DEBUG_BREAK;
+            if(!_HandleInputCreateResponse(response, connection)){
 
+                Logger::Get()->Error("NetworkedInputHandler: failed to create replicated input on a client");
+                return true;
+            }
+            
 			return true;
 		}
 		break;
@@ -137,8 +141,6 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
 			goto notallowedfailedlabel;
 
 
-
-
 		// We need to partially load the data here //
 		int ownerid, inputid;
 
@@ -177,7 +179,8 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
 			PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1500));
 
 
-		tmpresp->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(NETWORKRESPONSE_SERVERACCEPTED_TYPE_CONNECT_ACCEPTED));
+		tmpresp->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(
+                NETWORKRESPONSE_SERVERACCEPTED_TYPE_CONNECT_ACCEPTED));
 
 		connection->SendPacketToConnection(tmpresp, 4);
 
@@ -185,9 +188,11 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
 		// Send messages to other clients //
 		
 		// First create the packet //
-		shared_ptr<NetworkResponse> tmprespall = shared_ptr<NetworkResponse>(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 15));
+		shared_ptr<NetworkResponse> tmprespall = shared_ptr<NetworkResponse>(new NetworkResponse(-1,
+                PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 15));
 
-		tmprespall->GenerateCreateNetworkedInputResponse(new NetworkResponseDataForCreateNetworkedInput(*GlobalOrLocalListeners.back()));
+		tmprespall->GenerateCreateNetworkedInputResponse(new NetworkResponseDataForCreateNetworkedInput(
+                *GlobalOrLocalListeners.back()));
 
 		// Using threading here to not use too much time processing the create request //
 
@@ -216,7 +221,8 @@ notallowedfailedlabel:
 		PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1));
 
 	tmpresp->GenerateServerDisallowResponse(new 
-		NetworkResponseDataForServerDisallow(NETWORKRESPONSE_INVALIDREASON_NOT_AUTHORIZED, L"Not allowed to create input with that ID"));
+		NetworkResponseDataForServerDisallow(NETWORKRESPONSE_INVALIDREASON_NOT_AUTHORIZED,
+            L"Not allowed to create input with that ID"));
 
 	connection->SendPacketToConnection(tmpresp, 1);
 }
@@ -346,7 +352,9 @@ void Leviathan::NetworkedInputHandler::_HandleDeleteQueue(ObjectLock &guard){
 	DeleteQueue.clear();
 }
 // ------------------------------------ //
-bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection){
+bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(shared_ptr<NetworkResponse> response,
+    ConnectionInfo* connection)
+{
 
 
 	NetworkResponseDataForUpdateNetworkedInput* data = response->GetResponseDataForUpdateNetworkedInputResponse();
@@ -377,16 +385,94 @@ bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(shared_ptr<Net
 
 
 	// Check is it allowed //
-	if(!_NetworkInputFactory->IsConnectionAllowedToUpdate(target, connection)){
+    if(IsOnTheServer){
+        
+        if(!_NetworkInputFactory->IsConnectionAllowedToUpdate(target, connection)){
 
-		// Some player is trying to fake someone else's input //
-		return false;
-	}
+            // Some player is trying to fake someone else's input //
+            return false;
+        }
+        
+    } else {
+
+        if(!connection)
+            return false;
+    }
 
 	
 	// Now we can update it //
 	target->LoadUpdatesFromPacket(data->UpdateData);
 
+    if(IsOnTheServer){
+
+        // Distribute it around //
+        
+        // First create the packet //
+		shared_ptr<NetworkResponse> tmprespall = shared_ptr<NetworkResponse>(new NetworkResponse(-1,
+                PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
+
+		tmprespall->GenerateUpdateNetworkedInputResponse(new NetworkResponseDataForUpdateNetworkedInput(*data));
+
+		// Using threading here to not use too much time processing the update request //
+        
+		// \todo Guarantee that the interface will be available when this is ran
+		ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>(
+                    [](shared_ptr<NetworkResponse> response, NetworkServerInterface* server, ConnectionInfo* skipme)
+                    -> void
+            {
+
+                // Then tell the interface to send it to all but one connection //
+                server->SendToAllButOnePlayer(response, skipme);
+
+            }, tmprespall, ServerInterface, connection)));
+    }
+
 	return true;
 }
+// ------------------------------------ //
+bool Leviathan::NetworkedInputHandler::_HandleInputCreateResponse(shared_ptr<NetworkResponse> response,
+    ConnectionInfo* connection)
+{
+    assert(!IsOnTheServer && "Don't call _HandleInputCreateResponse on the server");
+    
+    NetworkResponseDataForCreateNetworkedInput* data = response->GetResponseDataForCreateNetworkedInputResponse();
 
+    if(!data)
+        return false;
+
+
+    // We need to partially load the data here //
+    int ownerid, inputid;
+
+    NetworkedInput::LoadHeaderDataFromPacket(data->DataForObject, ownerid, inputid);
+
+    Logger::Get()->Info("NetworkedInputHandler: client replicating networked input, "+Convert::ToString(ownerid));
+
+    // Create a temporary object from the packet //
+    auto ournewobject = _NetworkInputFactory->CreateNewInstanceForReplication(inputid, ownerid);
+
+    if(!ournewobject)
+        return false;
+
+    // Check is it allowed //
+    // Check here is the connection the connection to the server //
+    bool allowed = connection ? true: false;
+
+    if(!allowed)
+        return false;
+
+    GUARD_LOCK_THIS_OBJECT();
+    
+    // It got accepted so finish adding the data //
+    ournewobject->OnLoadCustomFullDataFrompacket(data->DataForObject);
+    
+    // Add it to us //
+    LinkReceiver(ournewobject.get());
+    ournewobject->NowOwnedBy(this);
+    ournewobject->SetNetworkReceivedState();
+
+
+    GlobalOrLocalListeners.push_back(shared_ptr<NetworkedInput>(ournewobject.release()));
+
+    _NetworkInputFactory->ReplicationFinalized(GlobalOrLocalListeners.back().get());
+}

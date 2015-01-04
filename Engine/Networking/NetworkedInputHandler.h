@@ -148,7 +148,13 @@ namespace Leviathan{
 
 		//! \brief Handle update response
 		//! \return false If the connection isn't authorized to update the input from this connection
+        //! \todo Client: check that the connection is the server connection
 		bool _HandleInputUpdateResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
+
+        //! \brief Handle input create responses
+        //! \note Should only be called on the client
+        //! \todo Fail if connection isn't the server we are connected ton
+        bool _HandleInputCreateResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
 
 		//! \brief Clears out the DeleteQueue
 		void _HandleDeleteQueue(ObjectLock &guard);

@@ -11,8 +11,8 @@
 #include "NetworkClientInterface.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(int ownerid, int networkid) : OwnerID(ownerid), InputID(networkid), OwningHandler(NULL),
-	CurrentState(NETWOKREDINPUT_STATE_READY)
+DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(int ownerid, int networkid) :
+    OwnerID(ownerid), InputID(networkid), OwningHandler(NULL), CurrentState(NETWOKREDINPUT_STATE_READY)
 {
 
 }
@@ -51,7 +51,9 @@ DLLEXPORT void Leviathan::NetworkedInput::LoadDataFromFullPacket(sf::Packet &pac
 	OnLoadCustomFullDataFrompacket(packet);
 }
 
-DLLEXPORT void Leviathan::NetworkedInput::LoadHeaderDataFromPacket(sf::Packet &packet, int &ownerid, int &inputid) THROWS{
+DLLEXPORT void Leviathan::NetworkedInput::LoadHeaderDataFromPacket(sf::Packet &packet, int &ownerid, int &inputid)
+    THROWS
+{
 	// First our common information //
 	if(!(packet >> ownerid)){
 

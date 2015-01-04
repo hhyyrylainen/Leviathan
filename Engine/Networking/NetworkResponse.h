@@ -295,6 +295,7 @@ namespace Leviathan{
 	public:
 		DLLEXPORT NetworkResponseDataForUpdateNetworkedInput(sf::Packet &frompacket);
 		DLLEXPORT NetworkResponseDataForUpdateNetworkedInput(NetworkedInput &object);
+        DLLEXPORT NetworkResponseDataForUpdateNetworkedInput(const NetworkResponseDataForUpdateNetworkedInput &other);
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
 		//! The ID of the input used to match the player to the input

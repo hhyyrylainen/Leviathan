@@ -820,6 +820,14 @@ DLLEXPORT Leviathan::NetworkResponseDataForUpdateNetworkedInput::NetworkResponse
 	object.AddChangesToPacket(UpdateData);
 }
 
+DLLEXPORT Leviathan::NetworkResponseDataForUpdateNetworkedInput::NetworkResponseDataForUpdateNetworkedInput(
+    const NetworkResponseDataForUpdateNetworkedInput &other) :
+    InputID(other.InputID)
+{
+    
+    UpdateData.append(other.UpdateData.getData(), other.UpdateData.getDataSize());
+}
+
 DLLEXPORT void Leviathan::NetworkResponseDataForUpdateNetworkedInput::AddDataToPacket(sf::Packet &packet){
 	packet << InputID << string(reinterpret_cast<const char*>(UpdateData.getData()), UpdateData.getDataSize());
 }

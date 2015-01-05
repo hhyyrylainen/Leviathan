@@ -29,9 +29,13 @@ DLLEXPORT Leviathan::Logger::Logger(const wstring &file):
 
 #endif
 
-	PendingLog = L"Start of Leviathan log for leviathan version :" + VERSIONS +
-		L"\n------------------------TIME: "+times+L"----------------------\n";
+	wstring write = L"Start of Leviathan log for leviathan version :" + VERSIONS;
 
+    write += L"\nWriting to file \""+file+L"\"";
+    write += L"\n------------------------TIME: "+times+L"----------------------\n";
+
+    Write(write, true);
+    
 	LatestLogger = this;
 }
 DLLEXPORT Leviathan::Logger::Logger(const wstring &file, const wstring &start, const bool &autosave) :
@@ -50,8 +54,12 @@ DLLEXPORT Leviathan::Logger::Logger(const wstring &file, const wstring &start, c
 
 #endif
 
-	PendingLog = start+L"Start of Leviathan log for leviathan version :" + VERSIONS +
-		L"\n------------------------TIME: "+times+L"----------------------\n";
+    wstring write = L"Start of Leviathan log for leviathan version :" + VERSIONS;
+
+    write += L"\nWriting to file \""+file+L"\"";
+    write += L"\n------------------------TIME: "+times+L"----------------------\n";
+
+    Write(write, true);
 
 	LatestLogger = this;
 }
@@ -73,6 +81,8 @@ Leviathan::Logger::~Logger(){
 std::wstring Leviathan::Logger::QueuedLog = L"";
 
 Logger* Leviathan::Logger::LatestLogger = NULL;
+
+boost::mutex Leviathan::Logger::QueueLock;
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::Write(const wstring &data, const bool &save /*= false*/){
 	// thread safety //
@@ -241,12 +251,16 @@ void Leviathan::Logger::SendDebugMessage(const wstring& str, boost::strict_lock<
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::QueueErrorMessage(const wstring& str){
 	Logger* tmp = GetIfExists();
+    
 	if(tmp == NULL){
-		// add to queue //
+        
+		// Add to queue //
+        boost::unique_lock<boost::mutex> lock(QueueLock);
 		QueuedLog += L"[ERROR][DELAYED] "+str+L"\n";
+        
 		return;
 	}
-	// send to logger //
+	// Send to logger //
 	tmp->Error(str);
 }
 
@@ -265,9 +279,21 @@ void Leviathan::Logger::_LogUpdateEndPart(const bool &save, boost::strict_lock<L
 	// unsaved //
 	Saved = false;
 
-	if(save)
+	if(save || PendingLog.size() >= 100)
 		Save(guard);
 }
+
+void Leviathan::Logger::CheckQueue(boost::strict_lock<Logger> &guard){
+    boost::unique_lock<boost::mutex> lock(QueueLock);
+    if(!QueuedLog.empty()){
+        
+        PendingLog += QueuedLog;
+        
+        // Clear //
+        QueuedLog.resize(0);
+    }
+}
+
 // ------------------------------------ //
 DLLEXPORT Logger* Leviathan::Logger::GetIfExists(){
 	return LatestLogger ? LatestLogger: NULL;

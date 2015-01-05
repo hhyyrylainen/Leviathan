@@ -56,13 +56,8 @@ namespace Leviathan{
 
 			CheckQueue(guard);
 		}
-		void inline CheckQueue(boost::strict_lock<Logger> &guard){
-			if(LatestLogger != NULL){
-				LatestLogger->PendingLog += QueuedLog;
-				// clear //
-				QueuedLog.resize(0);
-			}
-		}
+        
+		void CheckQueue(boost::strict_lock<Logger> &guard);
 
 		void inline _LogUpdateEndPart(const bool &save, boost::strict_lock<Logger> &guard);
 
@@ -76,6 +71,8 @@ namespace Leviathan{
 
 		// ------------------------------------ //
 		static Logger* LatestLogger;
+
+        static boost::mutex QueueLock;
 		static wstring QueuedLog;
 	};
 }

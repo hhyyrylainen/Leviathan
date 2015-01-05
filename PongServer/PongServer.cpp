@@ -304,9 +304,6 @@ void Pong::PongServer::PreFirstTick(){
 	auto casted = static_cast<PongServerNetworking*>(Leviathan::NetworkHandler::GetInterface());
 	casted->SetServerAllowPlayers(true);
 	casted->SetServerStatus(Leviathan::NETWORKRESPONSE_SERVERSTATUS_RUNNING);
-
-	// Don't want to forget to call this //
-	_Engine->PreFirstTick();
 }
 
 void Pong::PongServer::PassCommandLine(const wstring &params){

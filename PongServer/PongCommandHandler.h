@@ -8,7 +8,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Gameplay/CustomCommandHandler.h"
-
+#include "boost/thread/mutex.hpp"
 
 namespace Pong{
 
@@ -28,7 +28,12 @@ namespace Pong{
 
 	private:
 
+        //! Number for opened players (this has to be unique between all slots)
+        int PlayerUniqueCounter;
 
+        //! Mutex for PlayerUniqueCounter
+        boost::mutex PlayerIDMutex;
+        
 		PongServerNetworking* Owner;
 	};
 

@@ -157,7 +157,7 @@ namespace Pong{
 		}
 
 
-		void SlotJoinPlayer(Leviathan::ConnectedPlayer* ply);
+		void SlotJoinPlayer(Leviathan::ConnectedPlayer* ply, int uniqnumber);
 
 
 		void SlotLeavePlayer();

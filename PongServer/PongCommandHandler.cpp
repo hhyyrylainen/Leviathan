@@ -10,7 +10,7 @@
 #include "Networking/NetworkServerInterface.h"
 using namespace Pong;
 // ------------------------------------ //
-Pong::PongCommandHandler::PongCommandHandler(PongServerNetworking* owner) : Owner(owner){
+Pong::PongCommandHandler::PongCommandHandler(PongServerNetworking* owner) : Owner(owner), PlayerUniqueCounter(10000){
 
 }
 
@@ -105,8 +105,13 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 			return;
 		}
 
-		// Add this player to the slot //
-		chosenslot->SlotJoinPlayer(dynamic_cast<Leviathan::ConnectedPlayer*>(sender));
+        {
+            boost::unique_lock<boost::mutex> lock(PlayerIDMutex);
+            
+            // Add this player to the slot //
+            chosenslot->SlotJoinPlayer(dynamic_cast<Leviathan::ConnectedPlayer*>(sender), ++PlayerUniqueCounter);
+            
+        }
 
 		// Create a controller id for this player //
 		int newid = PongServer::Get()->GetServerNetworkInterface()->GetNetworkedInput()->GetNextInputIDNumberOnServer();

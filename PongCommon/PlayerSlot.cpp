@@ -283,11 +283,11 @@ int Pong::PlayerSlot::GetPlayerControllerID(){
 	return PlayerControllerID;
 }
 
-void Pong::PlayerSlot::SlotJoinPlayer(Leviathan::ConnectedPlayer* ply){
+void Pong::PlayerSlot::SlotJoinPlayer(Leviathan::ConnectedPlayer* ply, int uniqnumber){
 	SlotsPlayer = ply;
 
 	PlayerID = SlotsPlayer->GetID();
-    PlayerNumber = PlayerID;
+    PlayerNumber = uniqnumber;
 
 	PlayerType = PLAYERTYPE_HUMAN;
 }
@@ -437,7 +437,7 @@ void Pong::PlayerSlot::WriteInfoToLog(int depth /*= 0*/) const{
 
     Logger::Get()->Write(prefix+"----PlayerSlot "+Convert::ToString(Slot));
 
-#define PUT_FIELD(x) Logger::Get()->Write(prefix+ #x +Convert::ToString(x));
+#define PUT_FIELD(x) Logger::Get()->Write(prefix+ #x +" "+Convert::ToString(x));
 
     PUT_FIELD(PlayerType);
 
@@ -451,23 +451,21 @@ void Pong::PlayerSlot::WriteInfoToLog(int depth /*= 0*/) const{
 
     PUT_FIELD(Colour);
 
-    PUT_FIELD(Colour);
-
     PUT_FIELD(Score);
 
     PUT_FIELD(MoveState);
 
-    Logger::Get()->Write(prefix+"PaddleObject"+Convert::ToHexadecimalString(PaddleObject.get()));
+    Logger::Get()->Write(prefix+"PaddleObject "+Convert::ToHexadecimalString(PaddleObject.get()));
 
-    Logger::Get()->Write(prefix+"GoalAreaObject"+Convert::ToHexadecimalString(GoalAreaObject.get()));
+    Logger::Get()->Write(prefix+"GoalAreaObject "+Convert::ToHexadecimalString(GoalAreaObject.get()));
 
-    Logger::Get()->Write(prefix+"TrackObject"+Convert::ToHexadecimalString(TrackObject.get()));
+    Logger::Get()->Write(prefix+"TrackObject "+Convert::ToHexadecimalString(TrackObject.get()));
 
-    Logger::Get()->Write(prefix+"TrackDirectptr"+Convert::ToHexadecimalString(TrackDirectptr));
+    Logger::Get()->Write(prefix+"TrackDirectptr "+Convert::ToHexadecimalString(TrackDirectptr));
 
-    Logger::Get()->Write(prefix+"InputObj"+Convert::ToHexadecimalString(InputObj));
+    Logger::Get()->Write(prefix+"InputObj "+Convert::ToHexadecimalString(InputObj));
 
-    Logger::Get()->Write(prefix+"SlotsPlayer"+Convert::ToHexadecimalString(SlotsPlayer));
+    Logger::Get()->Write(prefix+"SlotsPlayer "+Convert::ToHexadecimalString(SlotsPlayer));
 
     PUT_FIELD(PlayerID);
 

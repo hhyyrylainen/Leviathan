@@ -1,4 +1,3 @@
-#include "PongIncludes.h"
 // ------------------------------------ //
 #ifndef PONG_PLAYERSLOT
 #include "PlayerSlot.h"
@@ -141,10 +140,6 @@ void Pong::PlayerSlot::AddEmptySubSlot(){
 
 }
 
-void Pong::PlayerSlot::SetPlayerProxy(PLAYERTYPE type){
-	SetPlayer(type, ++CurrentPlayerNumber);
-}
-
 bool Pong::PlayerSlot::IsVerticalSlot(){
 	return Slot == 0 || Slot == 2;
 }
@@ -162,8 +157,6 @@ bool Pong::PlayerSlot::DoesPlayerNumberMatchThisOrParent(int number){
 
 	return false;
 }
-
-int Pong::PlayerSlot::CurrentPlayerNumber = 0;
 // ------------------------------------ //
 void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
 	GUARD_LOCK_THIS_OBJECT();
@@ -294,6 +287,7 @@ void Pong::PlayerSlot::SlotJoinPlayer(Leviathan::ConnectedPlayer* ply){
 	SlotsPlayer = ply;
 
 	PlayerID = SlotsPlayer->GetID();
+    PlayerNumber = PlayerID;
 
 	PlayerType = PLAYERTYPE_HUMAN;
 }
@@ -414,9 +408,77 @@ void Pong::PlayerList::OnValueUpdated(){
 
 PlayerSlot* Pong::PlayerList::GetSlot(size_t index) THROWS{
 	if(index >= GamePlayers.size())
-		throw Leviathan::ExceptionInvalidArgument(L"index is out of range", GamePlayers.size(), __WFUNCTION__, L"index", Convert::ToWstring(index));
+		throw Leviathan::ExceptionInvalidArgument(L"index is out of range", GamePlayers.size(), __WFUNCTION__,
+            L"index", Convert::ToWstring(index));
 
 	return GamePlayers[index];
 }
+// ------------------------------------ //
+void Pong::PlayerList::ReportPlayerInfoToLog() const{
+
+    GUARD_LOCK_THIS_OBJECT();
+    Logger::Get()->Write("PlayerList:::: size "+Convert::ToString(GamePlayers.size()));
+
+    for(auto iter = GamePlayers.begin(); iter != GamePlayers.end(); ++iter){
+
+        (*iter)->WriteInfoToLog(1);
+    }
+}
 
 
+void Pong::PlayerSlot::WriteInfoToLog(int depth /*= 0*/) const{
+
+    string prefix;
+    if(depth >= 0)
+        prefix.reserve(depth*4);
+
+    for(int i = 0; i < depth; i++)
+        prefix += "    ";
+
+    Logger::Get()->Write(prefix+"----PlayerSlot "+Convert::ToString(Slot));
+
+#define PUT_FIELD(x) Logger::Get()->Write(prefix+ #x +Convert::ToString(x));
+
+    PUT_FIELD(PlayerType);
+
+    PUT_FIELD(PlayerNumber);
+
+    PUT_FIELD(ControlType);
+
+    PUT_FIELD(ControlIdentifier);
+
+    PUT_FIELD(PlayerControllerID);
+
+    PUT_FIELD(Colour);
+
+    PUT_FIELD(Colour);
+
+    PUT_FIELD(Score);
+
+    PUT_FIELD(MoveState);
+
+    Logger::Get()->Write(prefix+"PaddleObject"+Convert::ToHexadecimalString(PaddleObject.get()));
+
+    Logger::Get()->Write(prefix+"GoalAreaObject"+Convert::ToHexadecimalString(GoalAreaObject.get()));
+
+    Logger::Get()->Write(prefix+"TrackObject"+Convert::ToHexadecimalString(TrackObject.get()));
+
+    Logger::Get()->Write(prefix+"TrackDirectptr"+Convert::ToHexadecimalString(TrackDirectptr));
+
+    Logger::Get()->Write(prefix+"InputObj"+Convert::ToHexadecimalString(InputObj));
+
+    Logger::Get()->Write(prefix+"SlotsPlayer"+Convert::ToHexadecimalString(SlotsPlayer));
+
+    PUT_FIELD(PlayerID);
+
+    PUT_FIELD(NetworkedInputID);
+
+    if(SplitSlot){
+
+        Logger::Get()->Write(prefix+"====Split:");
+
+        SplitSlot->WriteInfoToLog(depth+1);
+    }
+        
+    Logger::Get()->Write(prefix+"----");
+}

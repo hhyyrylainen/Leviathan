@@ -63,6 +63,7 @@ namespace Leviathan{
 			stream >> tempval;
 			return tempval;
 		}
+        
 		template<class T>
 		DLLEXPORT static inline T StringTo(const std::string &str){
 			T tempval;
@@ -114,6 +115,15 @@ namespace Leviathan{
 			return stream.str();
 		}
 
+        template<class T>
+		DLLEXPORT static std::string ToHexadecimalString(const T& val){
+			std::stringstream stream;
+			if(!(stream << std::hex << val)){
+				return "";
+			}
+			return stream.str();
+		}
+
 
 		//! \brief Decodes an UTF8 string to an UTF16 string (wide string/wstring)
 		//! \return The converted string or an empty string in case the input string is invalid/has invalid format
@@ -124,8 +134,12 @@ namespace Leviathan{
 		DLLEXPORT static std::string Utf16ToUtf8(const wstring &utf16str);
 
 
-
 	};
+
+    template<> DLLEXPORT std::string Convert::ToString<Float4>(const Float4 &val);
+    template<> DLLEXPORT std::string Convert::ToString<Float3>(const Float3 &val);
+
+
 
 }
 

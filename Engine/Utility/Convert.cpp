@@ -266,3 +266,30 @@ int Convert::WstringTypeNameCheck(const wstring &data){
 	}
 	return -1;
 }
+// ------------------------------------ //
+namespace Leviathan{
+    
+    template<> DLLEXPORT std::string Convert::ToString<Float4>(const Float4 &val){
+            
+        std::stringstream stream;
+        if(!(stream << "[" << val.X << ", " << val.Y << ", " << val.Z << ", " << val.W <<
+                "]"))
+        {
+            return "";
+        }
+            
+        return stream.str();
+    }
+
+    template<> DLLEXPORT std::string Convert::ToString<Float3>(const Float3 &val){
+            
+        std::stringstream stream;
+        if(!(stream << "[" << val.X << ", " << val.Y << ", " << val.Z << ", " << "]"))
+        {
+            return "";
+        }
+            
+        return stream.str();
+    }
+
+}

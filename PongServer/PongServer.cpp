@@ -355,7 +355,10 @@ void Pong::PongServer::OnStartPreMatch(){
             server->_PongServerNetworking->SetStatus(PONG_JOINGAMERESPONSE_TYPE_MATCH);
 
             // Spawn a ball //
-            server->GameArena->ServeBall();
+            Logger::Get()->Write("Skipping spawning a ball");
+            //server->GameArena->ServeBall();
+
+            server->_PlayerList.ReportPlayerInfoToLog();
 
             // TODO: add a start timer here
 

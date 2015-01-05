@@ -525,10 +525,6 @@ namespace Pong{
 			{
 				SCRIPT_REGISTERFAIL;
 			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "void SetPlayerAutoID(PLAYERTYPE type)", WRAP_MFN(PlayerSlot, SetPlayerProxy), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
 			if(engine->RegisterObjectMethod("PlayerSlot", "void PassInputAction(CONTROLKEYACTION actiontoperform, bool active)", WRAP_MFN(PlayerSlot, PassInputAction), asCALL_GENERIC) < 0)
 			{
 				SCRIPT_REGISTERFAIL;

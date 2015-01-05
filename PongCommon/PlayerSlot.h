@@ -57,7 +57,6 @@ namespace Pong{
 		void UpdateDataFromPacket(sf::Packet &packet);
 
 		void SetPlayer(PLAYERTYPE type, int identifier);
-		void SetPlayerProxy(PLAYERTYPE type);
 		PLAYERTYPE GetPlayerType();
 		int GetPlayerNumber();
 
@@ -170,15 +169,15 @@ namespace Pong{
 		}
 
 
+        void WriteInfoToLog(int depth = 0) const;
+
+
 		//! \brief Sets the input object that sends input here
 		//!
 		//! This is used to notify it that we are no longer available
 		//! \param input The input object or NULL if the value needs to be reset
 		//! \param oldcheck If not NULL will only clear if the current one matches, useful to stop accidentally clearing new inputs
 		void SetInputThatSendsControls(PongNInputter* input, PongNInputter* oldcheck = NULL);
-
-
-		static int CurrentPlayerNumber;
 
 	private:
 
@@ -265,6 +264,9 @@ namespace Pong{
 		size_t Size() const{
 			return GamePlayers.size();
 		}
+
+        //! \brief Writes player information to log
+        void ReportPlayerInfoToLog() const;
 
 		virtual void UpdateCustomDataFromPacket(sf::Packet &packet) THROWS;
 

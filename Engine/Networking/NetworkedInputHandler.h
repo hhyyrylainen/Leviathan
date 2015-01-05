@@ -79,6 +79,10 @@ namespace Leviathan{
 		DLLEXPORT virtual ~NetworkedInputHandler();
 
 
+        //! \brief Destroyes all input objects
+        DLLEXPORT void Release();
+
+
 		//! \brief Handles an input update packet
 		//!
 		//! The packet might cause creation of additional objects, delete existing or just alter state of them

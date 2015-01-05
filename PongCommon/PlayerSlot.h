@@ -177,7 +177,12 @@ namespace Pong{
 		//! This is used to notify it that we are no longer available
 		//! \param input The input object or NULL if the value needs to be reset
 		//! \param oldcheck If not NULL will only clear if the current one matches, useful to stop accidentally clearing new inputs
-		void SetInputThatSendsControls(PongNInputter* input, PongNInputter* oldcheck = NULL);
+		void SetInputThatSendsControls(PongNInputter* input);
+
+        PongNInputter* GetInputObj() const{
+
+            return InputObj;
+        }
 
 	private:
 

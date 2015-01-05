@@ -365,6 +365,8 @@ addplayerpaddlelabel:
 		// Set to slot //
         tmp->CreateConstraintWith<EmotionalConnection>(NULL)->SetParameters(plynumber, LINK_TYPE_GOAL)->Init();
 
+        Logger::Get()->Write("Created goal area id: "+Convert::ToString(tmp->GetID()));
+
 		// loop again if has secondary //
 		if(plyvec[i]->GetSplit() != NULL){
 			secondary = true;

@@ -298,13 +298,15 @@ void Pong::PlayerSlot::SlotLeavePlayer(){
 	PlayerType = PLAYERTYPE_EMPTY;
 }
 
-void Pong::PlayerSlot::SetInputThatSendsControls(PongNInputter* input, PongNInputter* oldcheck /*= NULL*/){
+void Pong::PlayerSlot::SetInputThatSendsControls(PongNInputter* input){
 	GUARD_LOCK_THIS_OBJECT();
-	if(oldcheck && InputObj != oldcheck)
-		return;
 
-	_ResetNetworkInput();
+    if(InputObj && input != InputObj){
 
+        Logger::Get()->Info("PlayerSlot: destroying old networked input");
+        _ResetNetworkInput();
+    }
+    
 	InputObj = input;
 }
 

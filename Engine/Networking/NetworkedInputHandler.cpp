@@ -30,6 +30,16 @@ DLLEXPORT Leviathan::NetworkedInputHandler::NetworkedInputHandler(NetworkInputFa
 DLLEXPORT Leviathan::NetworkedInputHandler::~NetworkedInputHandler(){
     
     Staticinstance = NULL;
+}
+
+NetworkedInputHandler* Leviathan::NetworkedInputHandler::Staticinstance = NULL;
+
+DLLEXPORT NetworkedInputHandler* Leviathan::NetworkedInputHandler::Get(){
+    
+    return Staticinstance;
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkedInputHandler::Release(){
     
 	GUARD_LOCK_THIS_OBJECT();
 
@@ -44,13 +54,7 @@ DLLEXPORT Leviathan::NetworkedInputHandler::~NetworkedInputHandler(){
 
     // The listeners might want to destruct stuff, so set this to NULL after releasing them //
 	_NetworkInputFactory = NULL;    
-}
-
-NetworkedInputHandler* Leviathan::NetworkedInputHandler::Staticinstance = NULL;
-
-DLLEXPORT NetworkedInputHandler* Leviathan::NetworkedInputHandler::Get(){
     
-    return Staticinstance;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<NetworkRequest> request,

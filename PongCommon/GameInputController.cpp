@@ -213,11 +213,12 @@ DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard)
 	GUARD_LOCK_OTHER_OBJECT(tmpobj);
 
 
-	if(tmpobj->ControlledSlot){
+	if(tmpobj->ControlledSlot && tmpobj->ControlledSlot->GetInputObj() == tmpobj){
 
-		tmpobj->ControlledSlot->SetInputThatSendsControls(NULL, tmpobj);
-		tmpobj->ControlledSlot = NULL;
+		tmpobj->ControlledSlot->SetInputThatSendsControls(NULL);
 	}
+
+    tmpobj->ControlledSlot = NULL;
 }
 // ------------------------------------ //
 PongInputFactory* Pong::PongInputFactory::Get(){
@@ -289,9 +290,8 @@ Pong::PongNInputter::~PongNInputter(){
 	GUARD_LOCK_THIS_OBJECT();
 	if(ControlledSlot){
 		
-		
-		ControlledSlot->SetInputThatSendsControls(NULL, this);
-		ControlledSlot = NULL;
+		// Should have been destroyed already //
+        Logger::Get()->Warning("PongNInputter should have already had its slot destroyed");
 	}
 }
 
@@ -496,7 +496,7 @@ void Pong::PongNInputter::StartSendingInput(PlayerSlot* target){
 
 	if(ControlledSlot){
 
-		ControlledSlot->SetInputThatSendsControls(NULL, this);
+		ControlledSlot->SetInputThatSendsControls(this);
 	}
 
 	ControlledSlot = target;

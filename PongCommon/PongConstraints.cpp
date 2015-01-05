@@ -128,7 +128,8 @@ EmotionalConnection::EmotionalConnection(GameWorld* world, BaseConstraintable* p
 }
 EmotionalConnection::~EmotionalConnection(){
 
-    Logger::Get()->Write("Unlinking Object/Paddle from player number: "+Convert::ToString(PlayerNumber));
+    Logger::Get()->Write("Unlinking Object/Paddle from player number: "+Convert::ToString(PlayerNumber)+", type: "
+        +Convert::ToString(TypeToLink));
     
     // Set the slot's object to NULL //
     auto plys = BasePongParts::Get()->GetPlayers()->GetVec();
@@ -169,7 +170,7 @@ EmotionalConnection* EmotionalConnection::SetParameters(int plyid, LINK_TYPE wha
 }
 // ------------------------------------ //
 bool EmotionalConnection::_CheckParameters(){
-    if(TypeToLink != LINK_TYPE_PADDLE && TypeToLink != LINK_TYPE_TRACK)
+    if(TypeToLink != LINK_TYPE_PADDLE && TypeToLink != LINK_TYPE_TRACK && TypeToLink != LINK_TYPE_GOAL)
         return false;
     
     return PlayerNumber >= 0;
@@ -177,7 +178,8 @@ bool EmotionalConnection::_CheckParameters(){
         
 bool EmotionalConnection::_CreateActualJoint(){
 
-    Logger::Get()->Write("Linking Object/Paddle to player number: "+Convert::ToString(PlayerNumber));
+    Logger::Get()->Write("Linking Object/Paddle to player number: "+Convert::ToString(PlayerNumber)+", type: "
+        +Convert::ToString(TypeToLink));
 
     auto plys = BasePongParts::Get()->GetPlayers()->GetVec();
 

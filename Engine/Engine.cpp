@@ -9,6 +9,7 @@
 #include "Common/StringOperations.h"
 #include "Entities/GameWorld.h"
 #include "Entities/Serializers/SendableEntitySerializer.h"
+#include "Networking/NetworkedInputHandler.h"
 #include "Events/EventHandler.h"
 #include "Handlers/EntitySerializerManager.h"
 #include "Handlers/ObjectLoader.h"
@@ -757,6 +758,14 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
     //Misc::KillThread(CinThread);
     Logger::Get()->Info(L"Successfully stopped command handling");
 #endif
+
+    // Automatically destroy input sources //
+    NetworkedInputHandler* nhandler = NetworkedInputHandler::Get();
+
+    if(nhandler){
+
+        nhandler->Release();
+    }
 
 
 	// Then kill the network //

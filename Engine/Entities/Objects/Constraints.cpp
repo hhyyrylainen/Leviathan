@@ -21,11 +21,17 @@ DLLEXPORT Leviathan::Entity::BaseConstraint::~BaseConstraint(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::BaseConstraint::Init(){
 	// We use the virtual functions to make the child class handle this //
-	if(!_CheckParameters())
+	if(!_CheckParameters()){
+
+        Logger::Get()->Error("BaseContraint: invalid parameters");
 		return false;
+    }
     
-	if(!_CreateActualJoint())
+	if(!_CreateActualJoint()){
+
+        Logger::Get()->Error("BaseContraint: failed to create actual joint");
 		return false;
+    }
 
 	return true;
 }

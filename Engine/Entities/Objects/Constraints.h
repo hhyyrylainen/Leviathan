@@ -36,6 +36,7 @@ namespace Leviathan{ namespace Entity{
             //!
             //! The Constraint won't work without calling this
             //! \pre The SetParameters method of the child class is called
+            //! \todo Allow the error messages to be silenced
             DLLEXPORT bool Init();
             
             //! \brief Calls the Newton destroy function

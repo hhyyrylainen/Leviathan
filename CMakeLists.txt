@@ -589,6 +589,9 @@ else(INSTALL_CREATE_SDK)
     set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}")
 endif(INSTALL_CREATE_SDK)
 
+if(STRIP_SYMBOLS_ON_INSTALL)
+  set(CPACK_STRIP_FILES TRUE)
+endif()
 
 if(WIN32)
   # There is a bug in NSIS that does not handle full unix paths properly. Make

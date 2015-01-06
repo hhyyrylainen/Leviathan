@@ -491,10 +491,10 @@ void Pong::Arena::VerifyTrail(){
 // ------------------------------------ //
 void Pong::Arena::LetGoOfBall(){
 	// We should delete it (but after this physics update is done) //
-	if(Ball){
+	if(Ball && TargetWorld){
         
         Logger::Get()->Info("Arena: destroying old ball");
-		Ball->GetWorld()->QueueDestroyObject(Ball->GetID());
+		TargetWorld->QueueDestroyObject(Ball->GetID());
 		Ball.reset();
 	}
 }

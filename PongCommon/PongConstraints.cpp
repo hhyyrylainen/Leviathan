@@ -284,7 +284,8 @@ bool Pong::GameBallConnection::_CreateActualJoint(){
 
 
         }, _1, _2), new wstring(L"BallPush")));
-    
+
+    return true;
 }
 
 

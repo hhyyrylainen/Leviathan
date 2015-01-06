@@ -46,7 +46,11 @@ DLLEXPORT void Leviathan::NetworkedInputHandler::Release(){
 	auto end = GlobalOrLocalListeners.end();
 	for(auto iter = GlobalOrLocalListeners.begin(); iter != end; ++iter){
 
-		_NetworkInputFactory->NoLongerNeeded(*(*iter).get());
+        // Apparently there can be null pointers in the vector, skip them //
+        NetworkedInput* ptr = (*iter).get();
+
+        if(ptr)
+            _NetworkInputFactory->NoLongerNeeded(*ptr);
 	}
 
 

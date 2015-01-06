@@ -352,8 +352,7 @@ void Pong::PongServer::OnStartPreMatch(){
             server->_PongServerNetworking->SetStatus(PONG_JOINGAMERESPONSE_TYPE_MATCH);
 
             // Spawn a ball //
-            Logger::Get()->Write("Skipping spawning a ball");
-            //server->GameArena->ServeBall();
+            server->GameArena->ServeBall();
 
             server->_PlayerList.ReportPlayerInfoToLog();
 

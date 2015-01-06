@@ -218,7 +218,9 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
     auto end = PartInConstraints.end();
 	for(auto iter = PartInConstraints.begin(); iter != end; ++iter){
 
-        BaseConstraintable* obj = (*iter)->ParentPtr->GetSecondEntity();
+        auto parentpart = (*iter)->ParentPtr;
+        BaseConstraintable* obj = parentpart ? parentpart->GetSecondEntity():
+            (*iter)->ChildPartPtr.lock()->GetFirstEntity();
         
         // Request position //
         ObjectDataRequest request(ENTITYDATA_REQUESTTYPE_WORLDPOSITION);

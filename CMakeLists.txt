@@ -42,20 +42,24 @@ else()
   set(BREAKPAD_STATE 0)
 endif()
 
+# Strip symbols from install
+option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" ON)
+
 
 # VisualLeakDetector setting
 if(WIN32)
     option(USE_VLD "For including vld in the projects" ON)
 endif()
 
-# For making libs with right names
-set(CMAKE_DEBUG_POSTFIX "D")
-
 if(USE_VLD)
     set(L_VLD_STATE 1)
 else(USE_VLD)
     set(L_VLD_STATE 0)
 endif(USE_VLD)
+
+
+# For making libs with right names
+set(CMAKE_DEBUG_POSTFIX "D")
 
 
 # Linking and platform specific
@@ -372,18 +376,32 @@ else(WIN32)
 endif(WIN32)
 
 
-set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
+set(CEGUIMoveFiles ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
   ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
+
+set(MANGLED_CEGUI ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES})
 
 list(REMOVE_DUPLICATES CEGUIMoveFiles)
 list(REMOVE_ITEM CEGUIMoveFiles debug)
 list(REMOVE_ITEM CEGUIMoveFiles optimized)
 
-file(GLOB SFMLMoveFiles ${SFML_LIBRARIES})
+list(REMOVE_DUPLICATES MANGLED_CEGUI)
+list(REMOVE_ITEM MANGLED_CEGUI debug)
+list(REMOVE_ITEM MANGLED_CEGUI optimized)
 
-list(REMOVE_DUPLICATES SFMLMoveFiles)
-list(REMOVE_ITEM SFMLMoveFiles debug)
-list(REMOVE_ITEM SFMLMoveFiles optimized)
+
+# We seem to have to use the same approach as Ogre, globbing and getting all the shared objects that way
+foreach(clib ${MANGLED_CEGUI})
+  
+  get_filename_component(BASE_PATH "${clib}" DIRECTORY)
+  get_filename_component(BASE_NAME "${clib}" NAME_WE)
+  
+  file(GLOB ActualNeededFiles "${BASE_PATH}/${BASE_NAME}*")
+  
+  set(CEGUIMoveFiles ${CEGUIMoveFiles} ${ActualNeededFiles})
+
+endforeach(clib)
+
 
 
 message(STATUS "Moving the bulk...")
@@ -399,7 +417,6 @@ endif(WIN32)
 
 file(COPY ${CEGUIMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${LeapMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-file(COPY ${SFMLMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${NewtonMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 file(COPY ${OgreMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
@@ -531,13 +548,19 @@ install(FILES ${LeapMoveFilesRelease} DESTINATION bin)
 install(FILES ${OgreMoveFilesRelease} DESTINATION bin)
 install(FILES ${CEGUIMoveFiles} DESTINATION bin)
 install(FILES ${NewtonMoveFilesRelease} DESTINATION bin)
-install(FILES ${SFMLMoveFiles} DESTINATION bin)
+
 
 if(NOT Boost_USE_STATIC_LIBS AND WIN32)
     install(FILES ${BOOST_MOVE_FILES_RELEASE} DESTINATION bin)
 endif(NOT Boost_USE_STATIC_LIBS AND WIN32)
 
+# Strip symbols
+if(STRIP_SYMBOLS_ON_INSTALL AND UNIX)
+  
+  # Install code that strips the symbols
+  install(SCRIPT LeviathanCMake/StripSymbolsFromDependencies.cmake)
 
+endif()
 
 ##### All symbol creating target
 if(${USE_BREAKPAD})

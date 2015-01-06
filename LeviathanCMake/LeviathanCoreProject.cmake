@@ -10,14 +10,15 @@ endif(WIN32)
 
 set_target_properties(${CurrentProjectName} PROPERTIES DEBUG_POSTFIX D)
 
-# Possible debug installs
-if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
-    set(InstallConfigs "Release" "Debug")
-else()
-    set(InstallConfigs "Release")
-endif()
+install(TARGETS ${CurrentProjectName} DESTINATION bin)
 
-install(TARGETS ${CurrentProjectName} DESTINATION bin CONFIGURATIONS ${InstallConfigs})
+# Strip symbols
+if(STRIP_SYMBOLS_ON_INSTALL AND UNIX)
+  
+  # Install code that strips the symbols
+  install(CODE "execute_process(COMMAND strip ${CurrentProjectName} WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/bin\")")
+
+endif()
 
 # linking to engine
 target_link_libraries(${CurrentProjectName} Engine)

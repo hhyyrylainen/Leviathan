@@ -123,11 +123,6 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${Grouputf8})
 
     
-
-
-# Don't use precompiled header on c source file
-set(EngineFiles ${EngineFiles} )
-
 # engine exporting define
 add_definitions(-DENGINE_EXPORTS)
 
@@ -166,14 +161,15 @@ set_target_properties(Engine PROPERTIES
 cotire(Engine)
 
 
-# Possible debug installs
-if(NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK)
-    set(InstallConfigs "Release" "Debug")
-else()
-    set(InstallConfigs "Release")
-endif()
+install(TARGETS Engine DESTINATION bin)
 
-install(TARGETS Engine DESTINATION bin CONFIGURATIONS ${InstallConfigs})
+# Strip symbols
+if(STRIP_SYMBOLS_ON_INSTALL AND UNIX)
+  
+  # Install code that strips the symbols
+  install(CODE "execute_process(COMMAND strip libEngine.so WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/bin\")")
+
+endif()
 
 # post build copy
 if(WIN32 AND NOT MINGW)

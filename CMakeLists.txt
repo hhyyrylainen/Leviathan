@@ -24,12 +24,15 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake" "${PROJ
 # load cotire
 include(cotire)
 
+# Load utility files
+include(LeviathanUtility)
+
 # Just in case some unity builds are broken
 set_property(DIRECTORY PROPERTY COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY")
 
 ######### Options
     
-option(INSTALL_ONLY_RELEASE "For creating release folders/samples" ON)
+option(COPY_DEBUG_LIBS "When set copies debug libraries" OFF)
 # \todo this option to copy right libs
 option(INSTALL_CREATE_SDK   "For creating SDKs for developers" OFF)
 
@@ -308,129 +311,125 @@ file(COPY ${CoreOgreScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Cor
 # If we are not using static linking we need to copy everything
 if(NOT Boost_USE_STATIC_LIBS)
     
-    message(STATUS "Copying Boost libs")
-
 	set(BOOST_MOVE_FILES_RELEASE ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
 	  ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE} ${Boost_REGEX_LIBRARY_RELEASE})
 	set(BOOST_MOVE_FILES_DEBUG ${Boost_DATE_TIME_LIBRARY_DEBUG} ${Boost_CHRONO_LIBRARY_DEBUG}
 	  ${Boost_THREAD_LIBRARY_DEBUG} ${Boost_SYSTEM_LIBRARY_DEBUG} ${Boost_REGEX_LIBRARY_DEBUG})
       
+    if(COPY_DEBUG_LIBS)
+      set(BOOST_MOVE_FILES ${BOOST_MOVE_FILES_DEBUG} ${BOOST_MOVE_FILES_RELEASE})
+    else()
+      set(BOOST_MOVE_FILES ${BOOST_MOVE_FILES_RELEASE})
+    endif()
+
     # Setup to target the actually wanted files
-	if(WIN32)
-	    set(TmpDoStuff)
+	# if(WIN32)
+	#     set(TmpDoStuff)
     
-    	foreach(libname ${BOOST_MOVE_FILES_RELEASE})
-        	# Replace the library extension with the platform extension
-        	get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
-        	get_filename_component(LIBS_PATH ${libname} PATH)
-           	set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
-    	endforeach()
+    # 	foreach(libname ${BOOST_MOVE_FILES_RELEASE})
+    #     	# Replace the library extension with the platform extension
+    #     	get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
+    #     	get_filename_component(LIBS_PATH ${libname} PATH)
+    #        	set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
+    # 	endforeach()
     
-    	set(BOOST_MOVE_FILES_RELEASE ${TmpDoStuff})
+    # 	set(BOOST_MOVE_FILES_RELEASE ${TmpDoStuff})
 
-		set(TmpDoStuff)
-		foreach(libname ${BOOST_MOVE_FILES_DEBUG})
-			# Replace the library extension with the platform extension
-			get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
-			get_filename_component(LIBS_PATH ${libname} PATH)
-			set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
-		endforeach()
+	# 	set(TmpDoStuff)
+	# 	foreach(libname ${BOOST_MOVE_FILES_DEBUG})
+	# 		# Replace the library extension with the platform extension
+	# 		get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
+	# 		get_filename_component(LIBS_PATH ${libname} PATH)
+	# 		set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
+	# 	endforeach()
 
-	    set(BOOST_MOVE_FILES_DEBUG ${TmpDoStuff})
-    endif(WIN32)
-      
-    if(WIN32)  
-		file(COPY ${BOOST_MOVE_FILES_RELEASE} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-    	file(COPY ${BOOST_MOVE_FILES_DEBUG} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-	endif(WIN32)
+	#     set(BOOST_MOVE_FILES_DEBUG ${TmpDoStuff})
+    # endif(WIN32)
 
 endif(NOT Boost_USE_STATIC_LIBS)
 
-message(STATUS "Copying libs")
-
 if(WIN32)
 
-    # leap DLLs
-    file(GLOB LeapMoveFilesRelease "Leap/lib/x86/Leap.dll")
-    file(GLOB LeapMoveFilesDebug "Leap/lib/x86/Leapd.dll")
+    # leap
+    if(COPY_DEBUG_LIBS)
+      file(GLOB LeapMoveFiles "Leap/lib/x86/Leap.dll" "Leap/lib/x86/Leapd.dll")
+    else()
+      file(GLOB NewtonMoveFiles "Newton/bin/Release/*")
+    endif()
 
     # newton
-    file(GLOB NewtonMoveFilesRelease "Newton/bin/Release/*")
-
-    file(GLOB NewtonMoveFilesDebug "Newton/bin/Debug/*")
-
-    # ogre dlls (this should be changed for public release to only copy required dlls)
-    file(GLOB OgreMoveFilesDebug "${OGRE_BASEDIR}/bin/Debug/*.pdb" "${OGRE_BASEDIR}/bin/Debug/*.dll")
-    file(GLOB OgreMoveFilesRelease "${OGRE_BASEDIR}/bin/Release/*.dll")
+    if(COPY_DEBUG_LIBS)
+      file(GLOB NewtonMoveFiles "Newton/bin/Release/*" "Newton/bin/Debug/*")
+    else()
+      file(GLOB NewtonMoveFiles "Newton/bin/Release/*")
+    endif()
 
 else(WIN32)
+
     # linux variants of the copy functions
-    file(GLOB LeapMoveFilesRelease "Leap/lib/x64/libLeap.so")
-    
-    # ogre sos (this should be changed for public release to only copy required sos)
-    file(GLOB OgreMoveFilesRelease "${OGRE_BASEDIR}/*.so*" "${OGRE_BASEDIR}/../*Ogre*.so*" "${OGRE_BASEDIR}/../libOIS*.so")
+    file(GLOB LeapMoveFiles "Leap/lib/x64/libLeap.so")
 
     # newton
-    file(GLOB NewtonMoveFilesRelease "Newton/lib/libNewton.so")
+    file(GLOB NewtonMoveFiles "Newton/lib/libNewton.so")
 
 endif(WIN32)
 
+set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
 
-set(CEGUIMoveFiles ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
-  ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
+set(RawFilesToMove ${CEGUIMoveFiles} ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
+  ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES} ${OGRE_Plugin_OctreeZone_LIBRARIES} 
+  ${OGRE_Overlay_LIBRARIES} ${Ogre_Paging_LIBRARIES})
 
-set(MANGLED_CEGUI ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES})
+MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
 
-list(REMOVE_DUPLICATES CEGUIMoveFiles)
-list(REMOVE_ITEM CEGUIMoveFiles debug)
-list(REMOVE_ITEM CEGUIMoveFiles optimized)
+# Remove debug libs on windows
+if(WIN32 AND NOT COPY_DEBUG_LIBS)
 
-list(REMOVE_DUPLICATES MANGLED_CEGUI)
-list(REMOVE_ITEM MANGLED_CEGUI debug)
-list(REMOVE_ITEM MANGLED_CEGUI optimized)
+  RemoveLibsWithDebugSuffix(RawFilesToMove)
 
+endif(WIN32 AND NOT COPY_DEBUG_LIBS)
 
-# We seem to have to use the same approach as Ogre, globbing and getting all the shared objects that way
-foreach(clib ${MANGLED_CEGUI})
-  
-  get_filename_component(BASE_PATH "${clib}" DIRECTORY)
-  get_filename_component(BASE_NAME "${clib}" NAME_WE)
-  
-  file(GLOB ActualNeededFiles "${BASE_PATH}/${BASE_NAME}*")
-  
-  set(CEGUIMoveFiles ${CEGUIMoveFiles} ${ActualNeededFiles})
+set(FinalMoveInstallFiles)
 
-endforeach(clib)
-
-
+# Go through all the libraries and add all name variants to the moved files
+GlobAllVariants(RawFilesToMove FinalMoveInstallFiles)
 
 message(STATUS "Moving the bulk...")
 
-if(WIN32)
-	
-	file(COPY ${LeapMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-	file(COPY ${NewtonMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-	file(COPY ${OgreMoveFilesDebug} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-
-endif(WIN32)
-
-
-file(COPY ${CEGUIMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-file(COPY ${LeapMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-file(COPY ${NewtonMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-file(COPY ${OgreMoveFilesRelease} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${FinalMoveInstallFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 
 message(STATUS "Done copying")
 
+# And now add the SFML files and others that cause cmake warnings for some reason
+set(SFMLMoveFiles ${SFML_LIBRARIES} ${OIS_LIBRARIES} ${BOOST_MOVE_FILES})
+
+MakeUniqueAndSanitizeLibraryList(SFMLMoveFiles)
+
+# Remove debug libs on windows
+if(WIN32 AND NOT COPY_DEBUG_LIBS)
+
+  RemoveLibsWithDebugSuffix(SFMLMoveFiles)
+
+endif(WIN32 AND NOT COPY_DEBUG_LIBS)
+
+set(SFMLFinalMoveFiles)
+
+GlobAllVariants(SFMLMoveFiles SFMLFinalMoveFiles)
+
+## All files that need to be installed are here
+set(FinalMoveInstallFiles ${FinalMoveInstallFiles} ${SFMLFinalMoveFiles})
+
 # working directory setting
 if(WIN32)
+
     include(CreateLaunchers)
     include(SetPrecompiledHeaders)
+
 else(WIN32)
 
-    set(CMAKE_RPATH "$ORIGIN/")
-    set(CMAKE_INSTALL_RPATH "$ORIGIN/")
-    set(CMAKE_BUILD_RPATH "$ORIGIN/")
+    set(CMAKE_RPATH "$ORIGIN/:$ORIGIN/lib")
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/:$ORIGIN/lib")
+    set(CMAKE_BUILD_RPATH "$ORIGIN/:$ORIGIN/lib")
 
     set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
 
@@ -521,6 +520,7 @@ install(DIRECTORY "bin/Data/Screenshots" DESTINATION bin/Data)
 install(DIRECTORY "bin/Data/Cache" DESTINATION bin/Data)
 
 if(WIN32)
+
     # ogre tools
     file(GLOB OgreTools "${OGRE_BASEDIR}/bin/Release/*.exe")
     file(GLOB SampleBrowserFile "${OGRE_BASEDIR}/bin/Release/SampleBrowser.exe")
@@ -528,31 +528,7 @@ if(WIN32)
     
 endif(WIN32)
 
-# Potentially install debug versions
-if((NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK) AND WIN32)
-    # install all files that debug distribution might need
-    install(FILES ${VLDMoveFiles} DESTINATION bin)
-    install(FILES ${LeapMoveFilesDebug} DESTINATION bin)
-    install(FILES ${NewtonMoveFilesDebug} DESTINATION bin)
-    install(FILES ${OgreMoveFilesDebug} DESTINATION bin)
-
-    
-    if(NOT Boost_USE_STATIC_LIBS)
-        install(FILES ${BOOST_MOVE_FILES_DEBUG} DESTINATION bin)
-    endif(NOT Boost_USE_STATIC_LIBS)
-
-endif((NOT INSTALL_ONLY_RELEASE OR INSTALL_CREATE_SDK) AND WIN32)
-
-# Always install release libraries
-install(FILES ${LeapMoveFilesRelease} DESTINATION bin)
-install(FILES ${OgreMoveFilesRelease} DESTINATION bin)
-install(FILES ${CEGUIMoveFiles} DESTINATION bin)
-install(FILES ${NewtonMoveFilesRelease} DESTINATION bin)
-
-
-if(NOT Boost_USE_STATIC_LIBS AND WIN32)
-    install(FILES ${BOOST_MOVE_FILES_RELEASE} DESTINATION bin)
-endif(NOT Boost_USE_STATIC_LIBS AND WIN32)
+install(FILES ${FinalMoveInstallFiles} DESTINATION bin)
 
 # Strip symbols
 if(STRIP_SYMBOLS_ON_INSTALL AND UNIX)
@@ -590,7 +566,7 @@ else(INSTALL_CREATE_SDK)
 endif(INSTALL_CREATE_SDK)
 
 if(STRIP_SYMBOLS_ON_INSTALL)
-  set(CPACK_STRIP_FILES TRUE)
+  set(CPACK_STRIP_FILES true)
 endif()
 
 if(WIN32)

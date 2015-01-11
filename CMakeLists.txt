@@ -39,6 +39,9 @@ option(INSTALL_CREATE_SDK   "For creating SDKs for developers" OFF)
 # Automatically builds symbols as part of the build and enables google breakpad handler
 option(USE_BREAKPAD "For enabling google breakpad crash handling, set off for local debugging" ON)
 
+# Copies boost libraries to distributions
+option(COPY_BOOST_TO_PACKAGE "For copying all boost libraries to run on system that don't have it" OFF)
+
 if(${USE_BREAKPAD})
   set(BREAKPAD_STATE 1)
 else()
@@ -169,7 +172,7 @@ set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
 set(OGRE_BOOST_COMPONENTS thread date_time)
 
 # Other than these that are required are header-only libraries
-set(LEVIATHAN_BOOST_COMPONENTS chrono system regex filesystem)
+set(LEVIATHAN_BOOST_COMPONENTS chrono system filesystem)
 
 set(REQUIRED_BOOST_COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} ${OGRE_BOOST_COMPONENTS})
 
@@ -309,12 +312,12 @@ file(COPY ${CoreOgreScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Cor
 
 # Boost files
 # If we are not using static linking we need to copy everything
-if(NOT Boost_USE_STATIC_LIBS)
+if(NOT Boost_USE_STATIC_LIBS AND COPY_BOOST_TO_PACKAGE)
     
 	set(BOOST_MOVE_FILES_RELEASE ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
-	  ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE} ${Boost_REGEX_LIBRARY_RELEASE})
+	  ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE})
 	set(BOOST_MOVE_FILES_DEBUG ${Boost_DATE_TIME_LIBRARY_DEBUG} ${Boost_CHRONO_LIBRARY_DEBUG}
-	  ${Boost_THREAD_LIBRARY_DEBUG} ${Boost_SYSTEM_LIBRARY_DEBUG} ${Boost_REGEX_LIBRARY_DEBUG})
+	  ${Boost_THREAD_LIBRARY_DEBUG} ${Boost_SYSTEM_LIBRARY_DEBUG})
       
     if(COPY_DEBUG_LIBS)
       set(BOOST_MOVE_FILES ${BOOST_MOVE_FILES_DEBUG} ${BOOST_MOVE_FILES_RELEASE})
@@ -345,8 +348,9 @@ if(NOT Boost_USE_STATIC_LIBS)
 
 	#     set(BOOST_MOVE_FILES_DEBUG ${TmpDoStuff})
     # endif(WIN32)
-
-endif(NOT Boost_USE_STATIC_LIBS)
+else()
+  set(BOOST_MOVE_FILES)
+endif(NOT Boost_USE_STATIC_LIBS AND COPY_BOOST_TO_PACKAGE)
 
 if(WIN32)
 
@@ -377,7 +381,7 @@ endif(WIN32)
 set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
 
 set(RawFilesToMove ${CEGUIMoveFiles} ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
-  ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES} ${OGRE_Plugin_OctreeZone_LIBRARIES} 
+  ${OGRE_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES} ${OGRE_Plugin_OctreeZone_LIBRARIES} 
   ${OGRE_Overlay_LIBRARIES} ${Ogre_Paging_LIBRARIES})
 
 MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
@@ -388,6 +392,21 @@ if(WIN32 AND NOT COPY_DEBUG_LIBS)
   RemoveLibsWithDebugSuffix(RawFilesToMove)
 
 endif(WIN32 AND NOT COPY_DEBUG_LIBS)
+
+# Remove boost files from the list as they are added later if desired
+set(PassedItems)
+
+foreach(curlib ${RawFilesToMove})
+    string(REGEX MATCH ".*boost.*" item ${curlib})
+
+    if(NOT item)
+      
+      set(PassedItems ${PassedItems} ${curlib})
+
+    endif()
+endforeach()
+
+set(RawFilesToMove ${PassedItems})
 
 set(FinalMoveInstallFiles)
 

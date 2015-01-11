@@ -24,7 +24,8 @@ DLLEXPORT void Leviathan::Rendering::FontManager::LoadAllFonts(){
 	ScopeTimer timethis(L"Font loading");
 
 	// Get all font files and load them //
-	std::vector<shared_ptr<FileDefinitionType>> files = FileSystem::Get()->FindAllMatchingFiles(FILEGROUP_OTHER, L".*", L"font", true);
+	std::vector<shared_ptr<FileDefinitionType>> files = FileSystem::Get()->FindAllMatchingFiles(FILEGROUP_OTHER, L".*",
+        L"font", true);
 
 	// load them all //
 	for(size_t i = 0; i < files.size(); i++){

@@ -707,7 +707,8 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 	ContextInput->initialise(false);
 
 	// Set Simonetta as the default font //
-	GuiContext->setDefaultFont("Simonetta-Regular");
+    GuiContext->setDefaultFont("Simonetta-Regular");
+
 
 	// Set the taharez looks active //
 	SetMouseTheme(L"TaharezLook/MouseArrow");

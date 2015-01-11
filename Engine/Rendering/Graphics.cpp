@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_GRAPHICS
 #include "Graphics.h"
@@ -16,6 +15,7 @@
 #include "OgreTextureManager.h"
 #include "Application/GameConfiguration.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
+#include <regex>
 using namespace Leviathan;
 using namespace Rendering;
 // ------------------------------------ //
@@ -128,7 +128,8 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), L"RenderSystemName", rendersystemname,
         "OpenGL", true, L"Graphics: Init: no selected render system,");
 
-	boost::regex rendersystemnameregex(rendersystemname, boost::regex_constants::icase);
+	regex rendersystemnameregex(rendersystemname, regex_constants::ECMAScript |
+        regex_constants::icase);
 	Ogre::RenderSystem* selectedrendersystem = NULL;
 
 	// Choose the right render system //
@@ -136,7 +137,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 		const Ogre::String& rsystemname = RSystemList[i]->getName();
 
-		if(boost::regex_search(rsystemname, rendersystemnameregex)){
+		if(regex_match(rsystemname, rendersystemnameregex)){
 
 			// Matched //
 			selectedrendersystem = RSystemList[i];

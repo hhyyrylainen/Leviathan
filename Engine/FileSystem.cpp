@@ -705,7 +705,7 @@ DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllM
 	GetExtensionIDS(extensions, ExtensionIDS);
 
 	// create regex //
-	boost::wregex usedregex(regexname);
+	wregex usedregex(regexname, regex_constants::ECMAScript | regex_constants::icase);
 
 	vector<shared_ptr<FileDefinitionType>> foundfiles;
 
@@ -813,7 +813,7 @@ shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector
 }
 
 void Leviathan::FileSystem::_SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<shared_ptr<FileDefinitionType>>& results,
-	vector<int>& extensions, const boost::wregex &regex)
+	vector<int>& extensions, const wregex &regex)
 {
 	for(size_t i = 0; i < vec.size(); i++){
 		// if no extension specified skip checking them //
@@ -824,7 +824,7 @@ void Leviathan::FileSystem::_SearchForFilesInVec(vector<shared_ptr<FileDefinitio
 			}
 		}
 		// extensions match check name //
-		if(!boost::regex_search(vec[i]->Name, regex)){
+		if(!regex_match(vec[i]->Name, regex)){
 			continue;
 		}
 

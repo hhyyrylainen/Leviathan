@@ -64,21 +64,8 @@ int main(int argcount, char* args[]){
 		VLDEnable();
 #endif // LEVIATHAN_USES_VLD
 
-#ifdef _WIN32
-		// set path //
-		SYSTEMTIME tdate;
-		GetLocalTime(&tdate);
-
-
-
-		wstring times = Convert::IntToWstring(tdate.wYear)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+Convert::IntToWstring(tdate.wDay)+L" "+Convert::IntToWstring(tdate.wHour)+L"."+Convert::IntToWstring(tdate.wMinute);
-
-#else
-		wstring times = L"No time on linux";
-#endif
-
 		// Create our own logger first //
-		unique_ptr<Logger> Mainlog(new Logger(L"Test_"+times+L"Log.txt"));
+		unique_ptr<Logger> Mainlog(new Logger(L"LeviathanTestLog.txt"));
 
 		bool Passed = true;
 
@@ -95,16 +82,19 @@ int main(int argcount, char* args[]){
 			Passed = false;
 		} else {
 			Logger::Get()->Write(L"\n\n", false);
-			Logger::Get()->Info(L"-------------------- ALL TESTS PASSED --------------------\n", true);
+			Logger::Get()->Info(L"-------------------- ALL PREENGINE TESTS PASSED --------------------\n", true);
 		}
 
 		TimingMonitor::StopTiming(L"All tests timer");
 
 		Logger::Get()->Info(L"-------------------- Starting Engine init --------------------", true);
+
+        Logger::Get()->Save();
+        
 		LeviathanApplication app;
 		DummyNetworkHandler network;
 
-		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"Test_"+times, ENGINECONFIGURATION, PROGRAMCONFIGURATION, PROGRAMKEYCONFIGURATION,
+		unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"LeviathanTest", ENGINECONFIGURATION, PROGRAMCONFIGURATION, PROGRAMKEYCONFIGURATION,
 			&PROGRAMCHECKCONFIGFUNCNAME, &PROGRAMCHECKKEYCONFIGFUNCNAME));
 		// customize values //
 #ifdef _WIN32
@@ -158,6 +148,7 @@ int main(int argcount, char* args[]){
 			if(Passed){
 				// CMake testing will detect this
 				Logger::Get()->Info(L"***************** Testing completed succesfully *****************", true);
+                Logger::Get()->Save();
 				cout << "testing completed successfully" << endl;
 			}
 

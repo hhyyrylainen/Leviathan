@@ -15,6 +15,7 @@
 #include "Common/DataStoring/DataStore.h"
 #include "Events/EventHandler.h"
 #include "Threading/ThreadingManager.h"
+#include <regex>
 
 bool TestMiscCutWstring(const int &tests){
 	bool Failed = false;
@@ -1140,6 +1141,36 @@ bool TestTaskTiming(const int &tests, Engine* engine){
         TESTFAIL;
 
     Logger::Get()->Info("All task tests have finished and can no longer halt the thing");
+	return Failed;
+}
+
+bool TestRegex(){
+	bool Failed = false;
+
+    regex first("abd.*thing", regex_constants::ECMAScript | regex_constants::icase);
+
+    if(!regex_match("abdsuper thing", first)){
+        
+        TESTFAIL;
+    }
+
+    if(regex_match("abddthingd", first)){
+
+        TESTFAIL;
+    }
+
+    wregex usedregex(L"matchb.+", regex_constants::ECMAScript | regex_constants::icase);
+
+    if(!regex_match(L"matchb5467a", usedregex)){
+
+        TESTFAIL;
+    }
+
+    if(regex_match(L"matchb", usedregex)){
+
+        TESTFAIL;
+    }
+    
 	return Failed;
 }
 // --------------------------------------------- //

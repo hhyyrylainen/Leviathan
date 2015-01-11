@@ -104,7 +104,7 @@ DLLEXPORT Leviathan::ScopeTimer::~ScopeTimer(){
 
 	// print data //
 	Logger::Get()->Info(L"ScopeTimer: "+Source+L" Stopped elapsed: "+Convert::ToWstring(ElapsedTime/1000000.f)+L" s ("+
-		Convert::ToWstring(ElapsedTime)+L" \u00B5s)");
+		Convert::ToWstring(ElapsedTime)+L" micro seconds)");
 }
 
 int Leviathan::ScopeTimer::CurID = 42;

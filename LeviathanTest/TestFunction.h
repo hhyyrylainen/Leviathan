@@ -11,6 +11,12 @@ bool TestPreEngine(){
 
 
 	// -------------------- Core parameter checking -------------------- //
+    // --------- Regex test --------- //
+	if(TestRegex()){
+		Logger::Get()->Error(L"Regex not working like it should");
+		Failed = true;
+	}
+    
 	// --------- Float casting test --------- //
 	if(TestFloatsCasts()){
 		Logger::Get()->Error(L"Invalid casting on FloatX classes");

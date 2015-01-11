@@ -34,10 +34,7 @@ DLLEXPORT bool Leviathan::KeyConfiguration::Init(boost::function<void (KeyConfig
 	// Load the values from the file //
 	std::vector<shared_ptr<NamedVariableList>> tmpvalues;
 
-	if(FileSystem::LoadDataDump(KeyStorageFile, tmpvalues) != 0){
-
-		Logger::Get()->QueueErrorMessage(L"KeyConfiguration: could not load file: "+KeyStorageFile);
-	} else {
+	if(FileSystem::LoadDataDump(KeyStorageFile, tmpvalues) == 0){
 		// Create keys from the values //
 
 		for(auto iter = tmpvalues.begin(); iter != tmpvalues.end(); ++iter){
@@ -53,11 +50,7 @@ DLLEXPORT bool Leviathan::KeyConfiguration::Init(boost::function<void (KeyConfig
 				if(values[i]->IsConversionAllowedNonPtr<wstring>()){
 					keys->push_back(GKey::GenerateKeyFromString(values[i]->operator wstring()));
 
-				} else {
-					// Warn about this //
-					Logger::Get()->Warning(L"KeyConfiguration: Warning key type is not convertible to wstring! name: "+name);
 				}
-
 			}
 
 			// Assign to the map //

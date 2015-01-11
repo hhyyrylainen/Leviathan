@@ -23,8 +23,6 @@ namespace Leviathan{
 		//! \brief Adds raw data to the queue unmodified (don't forget line ends!)
 		DLLEXPORT void DirectWriteBuffer(const wstring &data);
 
-		DLLEXPORT static void QueueErrorMessage(const wstring& str);
-
 		DLLEXPORT void Info(const wstring &data, const bool &save = false);
         DLLEXPORT void Info(const string &data, const bool &save = false);
 		DLLEXPORT void Error(const wstring &data, const int &pvalue = 0, const bool &save = false);
@@ -37,8 +35,6 @@ namespace Leviathan{
 		// uses string for script compatibility //
 		DLLEXPORT static void Print(string message, bool save = true);
 
-
-		DLLEXPORT void SetSavePath(const wstring& path);
 		DLLEXPORT void inline Save(){
 			// thread safety //
 			boost::strict_lock<Logger> guard(*this);
@@ -50,30 +46,15 @@ namespace Leviathan{
 		DLLEXPORT static Logger* Get();
 		DLLEXPORT static Logger* GetIfExists();
 	private:
-		void inline CheckQueue(){
-			// thread safety //
-			boost::strict_lock<Logger> guard(*this);
-
-			CheckQueue(guard);
-		}
         
-		void CheckQueue(boost::strict_lock<Logger> &guard);
-
 		void inline _LogUpdateEndPart(const bool &save, boost::strict_lock<Logger> &guard);
 
 		// ------------------------------------ //
 		wstring PendingLog;
 		wstring Path;
 
-		bool Saved;
-		bool Autosave;
-		bool FirstSaveDone;
-
 		// ------------------------------------ //
 		static Logger* LatestLogger;
-
-        static boost::mutex QueueLock;
-		static wstring QueuedLog;
 	};
 }
 #endif

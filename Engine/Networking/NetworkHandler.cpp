@@ -255,12 +255,12 @@ DLLEXPORT wstring Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const
     const wstring &regextouse /*= L"http://.*?/"*/)
 {
 	// Create a regex //
-	boost::wregex findaddressregex(regextouse, boost::regex_constants::icase);
+	wregex findaddressregex(regextouse, regex_constants::ECMAScript | regex_constants::icase);
 
-	boost::match_results<const wchar_t*> addressmatch;
+	match_results<const wchar_t*> addressmatch;
 
 	// Return the match //
-	boost::regex_search(fulladdress.c_str(), addressmatch, findaddressregex);
+	regex_search(fulladdress.c_str(), addressmatch, findaddressregex);
 
 
 	return wstring(addressmatch[1]);

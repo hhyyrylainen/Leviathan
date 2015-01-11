@@ -22,7 +22,7 @@ macro(RemoveLibsWithDebugSuffix TargetList)
       
       set(PassedItems ${PassedItems} ${clib})
 
-    endif(item)
+    endif()
   endforeach()
   
   set(${TargetList} ${PassedItems})

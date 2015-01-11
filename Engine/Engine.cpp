@@ -467,36 +467,70 @@ void Leviathan::Engine::PostLoad(){
 		Mainstore->SetPersistance(L"StartCount", true);
 	}
 
-	// Start receiving input //
-    CinThread = boost::thread(boost::bind<void>([]() -> void
-        {
-            // First get input //
-            wstring inputcommand;
+    // Check if we are attached to a terminal //
+    bool connectedtoterminal = false;
+    
+#ifdef _WIN32
 
-            while(true){
+    if(_isatty(_fileno(stdin))){
 
-                getline(wcin, inputcommand);
-                // Pass to various things //
-                Engine* engine = Engine::Get();
+        connectedtoterminal = true;
+    }
+    
+    
+#else
+    
+    if(isatty(fileno(stdin))){
+
+        connectedtoterminal = true;
+    }
+    
+#endif
+    
+    if(connectedtoterminal){
+        // Start receiving input //
+        CinThread = boost::thread(boost::bind<void>([]() -> void
+            {
+                // First get input //
+                wstring inputcommand;
+
+                while(true){
+
+                    getline(wcin, inputcommand);
+
+                    // Pass to various things //
+                    Engine* engine = Engine::Get();
 				
-                // Stop if Engine is no more //
-                if(!engine){
+                    // Stop if Engine is no more //
+                    if(!engine){
 
-                    break;
+                        break;
+                    }
+
+                    if(inputcommand.empty())
+                        continue;
+
+                    GUARD_LOCK_OTHER_OBJECT(engine);
+                    auto tmpptr = engine->MainConsole;
+                    if(tmpptr){
+
+                        tmpptr->RunConsoleCommand(inputcommand);
+
+                    } else {
+                        Logger::Get()->Warning("No console handler attached, cannot run command");
+                    }
                 }
 
-                GUARD_LOCK_OTHER_OBJECT(engine);
-                auto tmpptr = engine->MainConsole;
-                if(tmpptr){
+            }));
+    } else {
 
-                    tmpptr->RunConsoleCommand(inputcommand);
+        if(NoGui){
 
-                } else {
-                    Logger::Get()->Warning("No console handler attached, cannot run command");
-                }
-            }
-
-        }));
+            // Quit as we aren't ran from a terminal //
+            Logger::Get()->Info("TODO: allow starting non-gui apps without attached console");
+            Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
+        }
+    }
 
 
     ClearTimers();

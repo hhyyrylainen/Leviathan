@@ -114,8 +114,6 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 				return true;
 			}
 
-            Logger::Get()->Write("Got update packet");
-            
 			// Everybody receives these, but only the server has to distribute these around //
             if(IsOnTheServer){
 

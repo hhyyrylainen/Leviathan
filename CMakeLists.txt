@@ -126,7 +126,7 @@ endif(UNIX)
 # Find required libraries
 
 # Ogre is required
-find_package(OGRE REQUIRED Plugin_ParticleFX Plugin_CgProgramManager Plugin_OctreeZone Overlay Paging)
+find_package(OGRE REQUIRED Plugin_ParticleFX Plugin_CgProgramManager Plugin_OctreeZone Overlay Paging RenderSystem_GL)
 
 # OIS is required for input
 find_package(OIS REQUIRED)
@@ -161,7 +161,7 @@ include_directories(${SFML_INCLUDE_DIR})
 
 # set some additional libraries
 set(ADDITIONAL_OGRE ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES}
-    ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${Ogre_Paging_LIBRARIES})
+    ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
 
 # Find Boost
 # Might be a good idea to dynamically link Boost
@@ -382,7 +382,7 @@ set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_Co
 
 set(RawFilesToMove ${CEGUIMoveFiles} ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
   ${OGRE_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES} ${OGRE_Plugin_OctreeZone_LIBRARIES} 
-  ${OGRE_Overlay_LIBRARIES} ${Ogre_Paging_LIBRARIES})
+  ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
 
 MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
 

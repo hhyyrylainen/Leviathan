@@ -347,8 +347,6 @@ void Pong::PongNInputter::_OnInputChanged(){
 		// Check which keys have changed //
 		char differences = ChangedKeys^ControlStates;
 
-        Logger::Get()->Write("Input updated: "+Convert::ToString(GetID()));
-
 		// Send our input actions //
 
 		// Check is each control changed and if it is send the new value //

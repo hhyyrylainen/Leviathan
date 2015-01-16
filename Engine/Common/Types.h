@@ -823,7 +823,7 @@ namespace Leviathan{
 			return Float4(0.f, 0.f, 0.f, 1.f);
 		}
 
-		// quaternion specific methods //
+        // ----------------- Quaternions ------------------- //
 		DLLEXPORT static inline Float4 CreateQuaternionFromAngles(const Float3 &angles){
 			// multiplied by 0.5 to get double the value //
 			float cosx = cosf(0.5f*angles.X);

@@ -11,7 +11,7 @@
 #include "Events/CallableObject.h"
 
 //! Number of frames in which the actual position will be reached
-#define INTERPOLATION_TARGET_REACH_IN_FRAMES 4
+#define INTERPOLATION_TARGET_REACH_IN_FRAMES 8
 
 //! Required precision to stop interpolating
 #define INTERPOLATION_STOP_PRECISION 0.04f
@@ -82,8 +82,17 @@ namespace Leviathan{
         //! The position at which the object appears at
         Float3 InterpolatedPosition;
 
+        //! The position it was at at the last frame.
+        //! This is used to make the entity move at a constant speed while interpolating
+        Float3 OldActualPosition;
+
         //! The rotation at which the object appears in
         Float4 InterpolatedRotation;
+
+        //! The rotation it was at at the last frame.
+        //! This is used to make the entity move rotate at a constant speed while interpolating
+        Float4 OldActualRotation;
+
 
         //! Locked when using/changing interpolation variables
         boost::mutex InterpolationMutex;

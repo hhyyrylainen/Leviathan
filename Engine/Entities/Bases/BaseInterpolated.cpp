@@ -43,8 +43,8 @@ DLLEXPORT bool Leviathan::BaseInterpolated::StartInterpolating(const Float3 &ori
     
     Interpolating = true;
 
-    InterpolatedPosition = originalposition;
-    InterpolatedRotation = originalrotation;
+    InterpolatedPosition = OldActualPosition = originalposition;
+    InterpolatedRotation = OldActualRotation = originalrotation;
 }
 
 DLLEXPORT void Leviathan::BaseInterpolated::StopInterpolating(boost::unique_lock<boost::mutex> &lock){
@@ -66,6 +66,22 @@ void Leviathan::BaseInterpolated::_DoActualInterpolation(){
 
     Float4 targetrot;
     _GetCurrentActualRotation(targetrot);
+
+    // Add all movement that happened last frame //
+    // TODO: make sure that starting interpolating multiple times just a few frames apart don't break things
+    Float3 movedsincelast = targetpos-OldActualPosition;
+    OldActualPosition = targetpos;
+
+    InterpolatedPosition += movedsincelast;
+
+    // And the rotation //
+    Float4 rotatedsincelast = targetrot.QuaternionMultiply(OldActualRotation.QuaternionReverse());
+    OldActualRotation = targetrot;
+
+    if(rotatedsincelast != Float4::IdentityQuaternion()){
+
+        InterpolatedRotation.QuaternionMultiply(rotatedsincelast);
+    }
 
     // Calculate the differences //
     Float3 posdifferences = targetpos-InterpolatedPosition;

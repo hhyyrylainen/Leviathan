@@ -13,7 +13,7 @@ using namespace Entity;
 DLLEXPORT Leviathan::Entity::TrackEntityController::TrackEntityController(GameWorld* world) :
     BaseObject(IDFactory::GetID(), world), ReachedNode(-1), NodeProgress(0.f), ChangeSpeed(0.f),
     ForceTowardsPoint(TRACKCONTROLLER_DEFAULT_APPLYFORCE), RequiresUpdate(true),
-    BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER)
+    BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER), LastResimulateTarget(NULL)
 {
 
 }
@@ -21,7 +21,7 @@ DLLEXPORT Leviathan::Entity::TrackEntityController::TrackEntityController(GameWo
 Leviathan::Entity::TrackEntityController::TrackEntityController(int netid, GameWorld* world) :
     BaseObject(netid, world), ReachedNode(-1), NodeProgress(0.f), ChangeSpeed(0.f),
     ForceTowardsPoint(TRACKCONTROLLER_DEFAULT_APPLYFORCE), RequiresUpdate(true),
-    BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER)
+    BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER), LastResimulateTarget(NULL)
 {
 
 
@@ -34,6 +34,7 @@ DLLEXPORT Leviathan::Entity::TrackEntityController::~TrackEntityController(){
 DLLEXPORT bool Leviathan::Entity::TrackEntityController::Init(){
 	// Start listening //
 	RegisterForEvent(EVENT_TYPE_PHYSICS_BEGIN);
+    RegisterForEvent(EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE);
 
 	// Set current node and percentages and possibly update connected objects //
 	_SanityCheckNodeProgress();
@@ -44,9 +45,12 @@ DLLEXPORT bool Leviathan::Entity::TrackEntityController::Init(){
 DLLEXPORT void Leviathan::Entity::TrackEntityController::ReleaseData(){
 
     // Stop listening //
+    // This should unregister both listeners
 	UnRegister(EVENT_TYPE_PHYSICS_BEGIN, true);
     
     GUARD_LOCK_THIS_OBJECT();
+
+    LastResimulateTarget = NULL;
 
     AggressiveConstraintUnlink();
     
@@ -68,7 +72,53 @@ DLLEXPORT int Leviathan::Entity::TrackEntityController::OnEvent(Event** pEvent){
 		// This object's parent world is being updated //
 		UpdateControlledPositions(dataptr->TimeStep);
 		return 1;
-	}
+        
+	} else if((*pEvent)->GetType() == EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE){
+
+		// Get data //
+		ResimulateSingleEventData* dataptr = (*pEvent)->GetDataForResimulateSingleEvent();
+        
+		assert(dataptr && "Invalid physics event");
+        
+		// Skip if wrong world //
+		if(dataptr->GameWorldPtr != static_cast<void*>(OwnedByWorld)){
+            
+			return 0;
+		}
+
+        GUARD_LOCK_THIS_OBJECT();
+        
+		// Check whether it is our entity //
+        if(dataptr->Target == LastResimulateTarget){
+
+            // It should be ours //
+            if(!_ApplyResimulateForce(dataptr->TimeInPast, LastResimulateTarget)){
+
+                // LastResimulateTarget is no longer valid //
+                LastResimulateTarget = NULL;
+            }
+            
+            return 1;
+        }
+
+        auto end = PartInConstraints.end();
+        for(auto iter = PartInConstraints.begin(); iter != end; ++iter){
+
+            auto parentpart = (*iter)->ParentPtr;
+            BaseConstraintable* obj = parentpart ? parentpart->GetSecondEntity():
+                (*iter)->ChildPartPtr.lock()->GetFirstEntity();
+
+            if(obj == dataptr->Target){
+
+                LastResimulateTarget = obj;
+                _ApplyResimulateForce(dataptr->TimeInPast, LastResimulateTarget);
+                
+                return 1;
+            }
+        }
+            
+		return 1;        
+    }
 
 	// This should signal disconnecting //
 	return -1;
@@ -85,29 +135,37 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::UpdateControlledPositio
 	if(ChangeSpeed != 0.f || RequiresUpdate){
 		// Update position //
         
-		NodeProgress += ChangeSpeed*timestep;
+        NodeProgress += ChangeSpeed*timestep;
         
         _MarkDataUpdated(guard);
         RequiresUpdate = false;
 
 		// Check did node change //
-		if(NodeProgress > 1.f){
+		while(NodeProgress > 1.f){
             
 			// Next node //
 			if(ReachedNode+1 >= (int)TrackNodes.size()){
+                
 				ReachedNode++;
-				NodeProgress = 0.f;
+				NodeProgress -= 1.f;
+                
 			} else {
+                
 				NodeProgress = 1.f;
 			}
             
-		} else if(NodeProgress < 0.f){
+		}
+        
+        while(NodeProgress < 0.f){
             
 			// Previous node, if possible //
 			if(ReachedNode > 0){
+                
 				ReachedNode--;
-				NodeProgress = 1.f;
+				NodeProgress += 1.f;
+                
 			} else {
+                
 				NodeProgress = 0.f;
 			}
 		}
@@ -194,25 +252,11 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::AddLocationToTrack(cons
 }
 // ------------------------------------ //
 void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float timestep){
-	// Calculate the position //
-	Float3 TrackPos(0.f);
-	Float4 TrackDir(Float4::IdentityQuaternion());
 
-	// Interpolate the values //
-	if(TrackNodes.size() == 1 || ReachedNode+1 >= (int)TrackNodes.size() || NodeProgress == 0.f){
-        
-		// The reached node is completely in control of the position //
-		TrackPos = TrackNodes[ReachedNode]->GetPos();
-		TrackDir = TrackNodes[ReachedNode]->GetOrientation();
-        
-	} else {
-        
-		// We need interpolation //
-		TrackPos = TrackNodes[ReachedNode]->GetPos()*(1.f-NodeProgress)+TrackNodes[ReachedNode+1]->GetPos()*
-            NodeProgress;
-		TrackDir = TrackNodes[ReachedNode]->GetOrientation().Slerp(TrackNodes[ReachedNode+1]->GetOrientation(),
-            NodeProgress);
-	}
+    Float3 TrackPos;
+	Float4 TrackDir;
+    
+    _GetPosAndRotForProgress(TrackPos, TrackDir, NodeProgress, ReachedNode);
 
 	// Apply forces to all objects //
     auto end = PartInConstraints.end();
@@ -221,34 +265,124 @@ void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float time
         auto parentpart = (*iter)->ParentPtr;
         BaseConstraintable* obj = parentpart ? parentpart->GetSecondEntity():
             (*iter)->ChildPartPtr.lock()->GetFirstEntity();
+
         
-        // Request position //
-        ObjectDataRequest request(ENTITYDATA_REQUESTTYPE_WORLDPOSITION);
+        _ApplyPositioningToSingleEntity(TrackPos, TrackDir, obj);
+    }
+}
 
-        if(obj)
-            obj->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_DATAREQUEST, &request);
+void Leviathan::Entity::TrackEntityController::_ApplyPositioningToSingleEntity(const Float3 &pos, const Float4 &rot,
+    BaseConstraintable* obj) const
+{
 
-        // If non positionable skip //
-        if(request.RequestResult == NULL){
+    // Request position //
+    ObjectDataRequest request(ENTITYDATA_REQUESTTYPE_WORLDPOSITION);
 
-            continue;
-        }
+    if(obj)
+        obj->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_DATAREQUEST, &request);
 
-        if(true){
+    // If non positionable skip //
+    if(request.RequestResult == NULL){
+
+        return;
+    }
+
+    if(true){
             
-            // Add velocity method //
-            Float3 wantedspeed = TrackPos-*reinterpret_cast<Float3*>(request.RequestResult);
+        // Add velocity method //
+        Float3 wantedspeed = pos-*reinterpret_cast<Float3*>(request.RequestResult);
 
 
-            wantedspeed = wantedspeed*ForceTowardsPoint;
+        wantedspeed = wantedspeed*ForceTowardsPoint;
 
-            obj->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_SETVELOCITY, &wantedspeed);
+        obj->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_SETVELOCITY, &wantedspeed);
+            
+    } else {
+        // Set position method //
+        Float3 tmpval(pos);
+        
+        obj->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_CHANGEWORLDPOSITION, &tmpval);
+    }
+
+    // Rotation applying //
+
+
+    if(true){
+
+        Float4 currotation;
+
+        Float4 quaterniontorque = rot.QuaternionMultiply(currotation.QuaternionReverse());
+
+        // Extract angles along all axises //
+        Float3 turnarounddirections;
+
+        // Set it as the torque //
+        
+    } else {
+
+        // Just set it as the rotation //
+        
+    }
+}
+// ------------------------------------ //
+bool Leviathan::Entity::TrackEntityController::_ApplyResimulateForce(int64_t microsecondsinpast, BaseConstraintable*
+    singleentity /*= NULL*/)
+{
+
+    // Lets go back in time and see were we are at //
+    float fakeprogress = NodeProgress - ChangeSpeed*(microsecondsinpast/1000000.f);
+
+    int fakenode = ReachedNode;
+    
+    // Check did node change //
+    while(fakeprogress > 1.f){
+            
+        // Next node //
+        if(fakenode+1 >= (int)TrackNodes.size()){
+            fakenode++;
+            fakeprogress -= 1.f;
             
         } else {
-            // Set position method //
-            obj->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_CHANGEWORLDPOSITION, &TrackPos);
+            
+            fakeprogress = 1.f;
         }
     }
+    
+    while(fakeprogress < 0.f){
+            
+        // Previous node, if possible //
+        if(fakenode > 0){
+            fakenode--;
+            fakeprogress += 1.f;
+        } else {
+            
+            fakeprogress = 0.f;
+        }
+    }
+
+    bool wasapplied = false;
+
+    Float3 pos;
+    Float4 rot;
+    
+    _GetPosAndRotForProgress(pos, rot, fakeprogress, fakenode);
+
+    // Selectively apply the positioning //
+    auto end = PartInConstraints.end();
+	for(auto iter = PartInConstraints.begin(); iter != end; ++iter){
+
+        auto parentpart = (*iter)->ParentPtr;
+        BaseConstraintable* obj = parentpart ? parentpart->GetSecondEntity():
+            (*iter)->ChildPartPtr.lock()->GetFirstEntity();
+
+        if(singleentity != NULL && singleentity != obj)
+            continue;
+        
+        _ApplyPositioningToSingleEntity(pos, rot, obj);
+        wasapplied = true;
+    }
+
+    return wasapplied;
 }
 // ------------------------------------ //
 DLLEXPORT Float3 Leviathan::Entity::TrackEntityController::GetCurrentNodePosition(){
@@ -341,6 +475,26 @@ void Leviathan::Entity::TrackEntityController::_SaveOwnDataToPacket(sf::Packet &
     
 }
 // ------------------------------------ //
+void Leviathan::Entity::TrackEntityController::_GetPosAndRotForProgress(Float3 &pos, Float4 &rot, float progress,
+    int reached) const
+{
+	// Interpolate the values //
+	if(TrackNodes.size() == 1 || reached+1 >= (int)TrackNodes.size() || progress == 0.f){
+        
+		// The reached node is completely in control of the position //
+		pos = TrackNodes[reached]->GetPos();
+		rot = TrackNodes[reached]->GetOrientation();
+        
+	} else {
+        
+		// We need interpolation //
+		pos = TrackNodes[reached]->GetPos()*(1.f-progress)+TrackNodes[reached+1]->GetPos()*
+            progress;
+		rot = TrackNodes[reached]->GetOrientation().Slerp(TrackNodes[reached+1]->GetOrientation(),
+            progress);
+	}
+}
+// ------------------------------------ //
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityController::CaptureState(){
     
     return shared_ptr<ObjectDeltaStateData>(
@@ -398,8 +552,6 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::VerifyOldState(ObjectDe
     // Convert from milliseconds to microseconds //
     int timetosimulate = (worldtick-tick)*TICKSPEED*1000.f;
     
-    Logger::Get()->Info("TrackEntiyController: resimulating "+Convert::ToString(worldtick-tick));
-
     // This should hold on to the world update lock once that is required //
     auto nworld = OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld();
 

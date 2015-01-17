@@ -51,27 +51,32 @@ DLLEXPORT Leviathan::Event::Event(sf::Packet &packet){
 
 	// Load based on type //
 	switch(Type){
-	case EVENT_TYPE_PHYSICS_BEGIN:
+        case EVENT_TYPE_PHYSICS_BEGIN:
 		{
 			// Load data //
 			Data = new PhysicsStartEventData(packet);
 		}
 		break;
-	case EVENT_TYPE_SHOW:
+        case EVENT_TYPE_SHOW:
 		{
 			Data = new ShowEventData(packet);
 		}
 		break;
-	case EVENT_TYPE_FRAME_BEGIN:
-	case EVENT_TYPE_FRAME_END:
-	case EVENT_TYPE_TICK:
+        case EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE:
+        {
+            Data = new ResimulateSingleEventData(packet);
+        }
+        break;
+        case EVENT_TYPE_FRAME_BEGIN:
+        case EVENT_TYPE_FRAME_END:
+        case EVENT_TYPE_TICK:
 		{
 			Data = new IntegerEventData(packet);
 		}
 		break;
-	default:
-		// No data required //
-		Data = NULL;
+        default:
+            // No data required //
+            Data = NULL;
 	}
 }
 // ------------------------------------ //
@@ -87,25 +92,33 @@ DLLEXPORT ShowEventData* Leviathan::Event::GetDataForShowEvent() const{
 	return NULL;
 }
 
+DLLEXPORT ResimulateSingleEventData* Leviathan::Event::GetDataForResimulateSingleEvent() const{
+	if(Type == EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE)
+		return static_cast<ResimulateSingleEventData*>(Data);
+	return NULL;
+}
+
 DLLEXPORT IntegerEventData* Leviathan::Event::GetIntegerDataForEvent() const{
 	if(Type == EVENT_TYPE_TICK || Type == EVENT_TYPE_FRAME_BEGIN || Type == EVENT_TYPE_FRAME_END)
 		return static_cast<IntegerEventData*>(Data);
 	return NULL;
 }
 // ------------------ GenericEvent ------------------ //
-DLLEXPORT Leviathan::GenericEvent::GenericEvent(const wstring &type, const NamedVars &copyvals) : TypeStr(new wstring(type)), 
-	Variables(new NamedVars(copyvals))
+DLLEXPORT Leviathan::GenericEvent::GenericEvent(const wstring &type, const NamedVars &copyvals) :
+    TypeStr(new wstring(type)), Variables(new NamedVars(copyvals))
 {
 
 }
 
-DLLEXPORT Leviathan::GenericEvent::GenericEvent(wstring* takeownershipstr, NamedVars* takeownershipvars) : TypeStr(takeownershipstr), 
-	Variables(takeownershipvars)
+DLLEXPORT Leviathan::GenericEvent::GenericEvent(wstring* takeownershipstr, NamedVars* takeownershipvars) :
+    TypeStr(takeownershipstr), Variables(takeownershipvars)
 {
 
 }
 
-DLLEXPORT Leviathan::GenericEvent::GenericEvent(const wstring &type) : TypeStr(new wstring(type)), Variables(new NamedVars()){
+DLLEXPORT Leviathan::GenericEvent::GenericEvent(const wstring &type) :
+    TypeStr(new wstring(type)), Variables(new NamedVars())
+{
 	
 	
 }
@@ -216,4 +229,32 @@ BaseEventData::~BaseEventData(){
 	
 }
 
+// ------------------ ResimulateSingleEventData ------------------ //
+DLLEXPORT Leviathan::ResimulateSingleEventData::ResimulateSingleEventData(sf::Packet &packet) :
+    GameWorldPtr(NULL), Target(NULL), TimeInPast(0)
+{
+#ifdef SFML_HAS_64_BIT_VALUES_PACKET
+    
+    packet >> TimeInPast;
+    
+#endif //SFML_HAS_64_BIT_VALUES_PACKET
+    
+    if(!packet)
+        throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+}
 
+DLLEXPORT Leviathan::ResimulateSingleEventData::ResimulateSingleEventData(int64_t resimulateremaining,
+    BaseConstraintable* resimulated, void* worldptr) :
+    TimeInPast(resimulateremaining), Target(resimulated), GameWorldPtr(worldptr)
+{
+
+}
+
+void Leviathan::ResimulateSingleEventData::AddDataToPacket(sf::Packet &packet){
+
+#ifdef SFML_HAS_64_BIT_VALUES_PACKET
+    
+    packet << TimeInPast;
+
+#endif //SFML_HAS_64_BIT_VALUES_PACKET
+}

@@ -528,7 +528,8 @@ DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionableP
                         }
                     }
                 }
-            }, simulatedtime, advancedtick, assendable, worldtick));
+            }, simulatedtime, advancedtick, assendable, worldtick),
+        BasePhysicsGetConstraintable());
 }
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(bool addmass,

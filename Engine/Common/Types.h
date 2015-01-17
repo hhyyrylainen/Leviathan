@@ -845,7 +845,7 @@ namespace Leviathan{
 			return quaternion;
 		}
 
-		DLLEXPORT inline Float4 QuaternionMultiply(const Float4 &other){
+		DLLEXPORT inline Float4 QuaternionMultiply(const Float4 &other) const{
 
 			Float4 result;
 
@@ -857,7 +857,7 @@ namespace Leviathan{
 			return result;
 		}
 
-		DLLEXPORT inline Float4 QuaternionReverse(){
+		DLLEXPORT inline Float4 QuaternionReverse() const{
 			// reverse vector //
 			return Float4(-X, -Y, -Z, W);
 		}

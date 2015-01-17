@@ -14,6 +14,9 @@
 //! Contains SFML packet includes and common overloaded packet
 //! operators for some types.
 
+//! Define when SFML 2.2 or higher is used
+#define SFML_HAS_64_BIT_VALUES_PACKET
+
 namespace Leviathan{
     
 

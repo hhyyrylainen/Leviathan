@@ -73,6 +73,8 @@ namespace Leviathan{ namespace Entity{
             
             // for setting new values to graphical object and physical object //
             virtual void _UpdatePhysicsObjectLocation(ObjectLock &guard) override;
+
+            BaseConstraintable* BasePhysicsGetConstraintable() override;
             // ------------------------------------ //
 
             wstring ModelFile;

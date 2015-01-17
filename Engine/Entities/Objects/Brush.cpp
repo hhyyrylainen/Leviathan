@@ -588,6 +588,10 @@ void Leviathan::Entity::Brush::_SendCreatedConstraint(BaseConstraintable* other,
     _SendNewConstraint(static_cast<BaseConstraintable*>(this), other, ptr);
 }
 // ------------------------------------ //
+BaseConstraintable* Leviathan::Entity::Brush::BasePhysicsGetConstraintable(){
+    return static_cast<BaseConstraintable*>(this);
+}
+// ------------------------------------ //
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(){
     
     return shared_ptr<ObjectDeltaStateData>(

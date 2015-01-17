@@ -155,6 +155,10 @@ namespace Leviathan{
 
         //! \brief Called before position is changed in resimulate, can be used to interpolate position
         virtual void OnBeforeResimulateStateChanged();
+
+        //! \brief Classes that implement both this and BaseConstraintable should return a pointer
+        //! to themselves as BaseContraintable otherwise return NULL
+        virtual BaseConstraintable* BasePhysicsGetConstraintable() = 0;
         
 		// ------------------------------------ //
 		NewtonCollision* Collision;

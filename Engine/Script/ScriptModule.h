@@ -18,7 +18,9 @@
 
 namespace Leviathan{
 
-	enum SCRIPTBUILDSTATE{SCRIPTBUILDSTATE_EMPTY, SCRIPTBUILDSTATE_READYTOBUILD, SCRIPTBUILDSTATE_BUILT, SCRIPTBUILDSTATE_FAILED,
+	enum SCRIPTBUILDSTATE{
+        
+        SCRIPTBUILDSTATE_EMPTY, SCRIPTBUILDSTATE_READYTOBUILD, SCRIPTBUILDSTATE_BUILT, SCRIPTBUILDSTATE_FAILED,
 		//! Only set when the module can no longer be retrieved, and the whole ScriptModule needs to be recreated
 		SCRIPTBUILDSTATE_DISCARDED
 	};
@@ -49,8 +51,12 @@ namespace Leviathan{
 
 	//! used to store function's parameter info
 	struct FunctionParameterInfo{
-		FunctionParameterInfo(int id, int sizes) : FunctionID(id), ParameterTypeIDS(sizes), ParameterDeclarations(sizes),
-			MatchingDataBlockTypes(sizes), ReturnMatchingDataBlock(-1){};
+		FunctionParameterInfo(int id, int sizes) :
+            FunctionID(id), ParameterTypeIDS(sizes), ParameterDeclarations(sizes),
+			MatchingDataBlockTypes(sizes), ReturnMatchingDataBlock(-1)
+        {
+            
+        };
 
 		int FunctionID;
 

@@ -100,7 +100,7 @@ int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void
 }
 
 DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int milliseconds,
-    boost::function<void()> callback)
+    boost::function<void()> callback, BaseConstraintable* targetentity)
 {
     
     boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
@@ -113,7 +113,11 @@ DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int mi
     int64_t passedtime = milliseconds*1000;
     
     while(passedtime >= NEWTON_FPS_IN_MICROSECONDS){
-        
+
+        if(targetentity)
+            EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE,
+                    new ResimulateSingleEventData(passedtime, targetentity, OwningWorld)));
+
 		NewtonUpdate(World, NEWTON_TIMESTEP);
         passedtime-= NEWTON_FPS_IN_MICROSECONDS;
 

@@ -446,6 +446,10 @@ void Leviathan::Entity::Prop::_SendCreatedConstraint(BaseConstraintable* other, 
     _SendNewConstraint(static_cast<BaseConstraintable*>(this), other, ptr);
 }
 // ------------------------------------ //
+BaseConstraintable* Leviathan::Entity::Prop::BasePhysicsGetConstraintable(){
+    return static_cast<BaseConstraintable*>(this);
+}
+// ------------------------------------ //
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CaptureState(){
     
     return shared_ptr<ObjectDeltaStateData>(

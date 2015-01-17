@@ -148,6 +148,17 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseSendableEntity::_SaveOwnDataToPacket
             virtual void _SaveOwnDataToPacket(sf::Packet &packet) override;
 
+            //! \brief Gets the target position and rotation for progress and node
+            void _GetPosAndRotForProgress(Float3 &pos, Float4 &rot, float progress, int reached) const;
+
+            //! \brief Applies track positioning to a single entity
+            void _ApplyPositioningToSingleEntity(const Float3 &pos, const Float4 &rot, BaseConstraintable* obj) const;
+
+
+            //! \brief Applies a force towards a past point for resimulation to a single entity or all
+            //! \return True when force was applied to one or more entities
+            bool _ApplyResimulateForce(int64_t microsecondsinpast, BaseConstraintable* singleentity = NULL);
+            
             // ------------------------------------ //
         
             //! Number of the node that has been reached
@@ -166,6 +177,9 @@ namespace Leviathan{ namespace Entity{
             //! List of positions that form the track
             //! \note These are owned by the track
             std::vector<shared_ptr<LocationNode>> TrackNodes;
+
+            //! Used to quickly find multiple resimulate targets in a row
+            BaseConstraintable* LastResimulateTarget;
 
             //! Internal flag for determining if an update is needed
             bool RequiresUpdate;

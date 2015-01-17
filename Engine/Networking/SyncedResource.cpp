@@ -87,6 +87,9 @@ DLLEXPORT wstring Leviathan::SyncedResource::GetSyncedResourceNameFromPacket(sf:
 // ------------------------------------ //
 DLLEXPORT void Leviathan::SyncedResource::UpdateOurNetworkValue(){
 	GUARD_LOCK_THIS_OBJECT();
-	SyncedVariables::Get()->_NotifyUpdatedValue(this);
+    // TODO: proper locking
+	auto synman = SyncedVariables::Get();
+    if(synman)
+        synman->_NotifyUpdatedValue(this);
 }
 

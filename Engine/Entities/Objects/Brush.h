@@ -83,7 +83,7 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseInterpolated::_GetCurrentActualRotation
             void _GetCurrentActualRotation(Float4 &rot) override;
 
-            
+            BaseConstraintable* BasePhysicsGetConstraintable() override;            
             // ------------------------------------ //
 
             Ogre::ManualObject* BrushModel;

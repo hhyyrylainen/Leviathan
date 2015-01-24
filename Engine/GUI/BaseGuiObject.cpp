@@ -451,12 +451,12 @@ bool Leviathan::Gui::BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &a
 bool Leviathan::Gui::BaseGuiObject::EventOnClick(const CEGUI::EventArgs &args){
 	// Pass the click event to the script //
 
-	return _CallCEGUIListener(L"OnClick");
+	return _CallCEGUIListener(LISTENERNAME_ONCLICK);
 }
 
 bool Leviathan::Gui::BaseGuiObject::EventOnCloseClicked(const CEGUI::EventArgs &args){
 	// Pass the event to the script //
 
-	return _CallCEGUIListener(L"OnCloseClicked");
+	return _CallCEGUIListener(LISTENERNAME_ONCLOSECLICKED);
 }
 

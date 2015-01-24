@@ -16,6 +16,7 @@
 
 namespace Leviathan{
 
+    //! Engine events that are triggered at certain times
 	enum EVENT_TYPE{
         EVENT_TYPE_ERROR = 0,
         EVENT_TYPE_WAKEUP,
@@ -36,15 +37,16 @@ namespace Leviathan{
 		EVENT_TYPE_ALL
     };
 
-	//! \brief A map of name of listener event type pairs, used by GUI to hook to events
-	static const std::map<wstring, EVENT_TYPE> EventListenerNameToEventMap =  boost::assign::map_list_of
-		(LISTENERNAME_ONSHOW, EVENT_TYPE_SHOW)
-		(LISTENERNAME_ONHIDE, EVENT_TYPE_HIDE)
-		(LISTENERNAME_ONCLICK, EVENT_TYPE_ONCLICK)
-		(LISTENERNAME_ONLISTENUPDATE, EVENT_TYPE_LISTENERVALUEUPDATED)
-		(LISTENERNAME_ONINIT, EVENT_TYPE_INIT)
-		(LISTENERNAME_ONRELEASE, EVENT_TYPE_RELEASE)
-		(LISTENERNAME_ONTICK, EVENT_TYPE_TICK);
+	//! Name of listener event type pairs, used by GUI to hook to events
+	static const std::map<wstring, EVENT_TYPE> EventListenerNameToEventMap =
+        boost::assign::map_list_of
+        (LISTENERNAME_ONSHOW, EVENT_TYPE_SHOW)
+        (LISTENERNAME_ONHIDE, EVENT_TYPE_HIDE)
+        (LISTENERNAME_ONCLICK, EVENT_TYPE_ONCLICK)
+        (LISTENERNAME_ONLISTENUPDATE, EVENT_TYPE_LISTENERVALUEUPDATED)
+        (LISTENERNAME_ONINIT, EVENT_TYPE_INIT)
+        (LISTENERNAME_ONRELEASE, EVENT_TYPE_RELEASE)
+        (LISTENERNAME_ONTICK, EVENT_TYPE_TICK);
 
 	//! \brief Base type for all event data types
 	//! \note Child classes constructors should contain one for creating from a packet

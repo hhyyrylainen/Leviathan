@@ -2,7 +2,7 @@
     
     \section addnewscripttype Adding a new event type to the Engine
     
-    First add a new entry to the list of LISTENERNAMEs and LISTENERVALUEs in ScriptModule.h at the top of the file.
+    First add a new entry to the list of LISTENERNAMEs and LISTENERVALUEs in ScriptModule.h near the top of the file.
     For example like this:
     \code
         #define LISTENERNAME_ONCLOSECLICKED			L"OnCloseClicked"
@@ -10,7 +10,7 @@
         #define LISTENERVALUE_ONCLOSECLICKED		109
     \endcode
     
-    Then in add them to the map in ScriptModule.cpp (around line 40)
+    Then add them to the map in ScriptModule.cpp (around line 40)
     \code
         (LISTENERNAME_ONCLOSECLICKED, LISTENERVALUE_ONCLOSECLICKED);
     \endcode
@@ -34,10 +34,10 @@
         bool Leviathan::Gui::BaseGuiObject::EventOn/*something*/(const CEGUI::EventArgs &args){
             // Pass the event to the script //
 
-            return _CallCEGUIListener(L"OnCloseClicked");
+            return _CallCEGUIListener(LISTENERNAME_ONCLOSECLICKED);
         }
     \endcode
-    Replacing the OnCloseClicked with the name used in the maps where the event was previously added.
+    Replacing LISTENERNAME_ONCLOSECLICKED with the name used in the maps where the event was previously added.
     
     \subsubsection addnewceguisupportelse Add an else-if clause for the new event
     Goto the function Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent and find the huge mess of a conditional statement.
@@ -55,7 +55,8 @@
     
     
     \section scriptaddnewengineevent Adding support for a new Engine Event
-    Alternatively if it is a predefined Leviathan event it may need to be added to Leviathan::EventListenerNameToEventMap
+    Alternatively if it is a predefined Leviathan event it may need to be added to Leviathan::EventListenerNameToEventMap which
+    is in Event.h
     Like this:
     \code
         (LISTENERNAME_ONTICK, EVENT_TYPE_TICK);

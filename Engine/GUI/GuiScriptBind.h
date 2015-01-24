@@ -57,6 +57,52 @@ bool CEGUITabControlSetActiveTabIndex(CEGUI::Window* obj, int index){
 	return false;
 }
 
+bool CEGUIComboboxSetSelectedItem(CEGUI::Window* obj, const string &text){
+
+    CEGUI::Combobox* convbox = dynamic_cast<CEGUI::Combobox*>(obj);
+
+    if(!convbox)
+        return false;
+
+    CEGUI::StandardItem* wanted = convbox->findItemWithText(CEGUI::String(text), NULL);
+
+    if(!wanted)
+        return false;
+
+    // Skip setting it as selected if it already is //
+    if(wanted == convbox->getSelectedItem())
+        return true;
+
+    convbox->clearAllSelections();
+    convbox->setItemSelectState(wanted, true);
+
+    return true;    
+}
+
+bool CEGUIComboboxAddItem(CEGUI::Window* obj, const string &text){
+
+    CEGUI::Combobox* convbox = dynamic_cast<CEGUI::Combobox*>(obj);
+
+    if(!convbox)
+        return false;
+    
+    convbox->addItem(new CEGUI::StandardItem(CEGUI::String(text)));
+
+    return true;
+}
+
+bool CEGUIComboboxClearItems(CEGUI::Window* obj){
+
+    CEGUI::Combobox* convbox = dynamic_cast<CEGUI::Combobox*>(obj);
+
+    if(!convbox)
+        return false;
+
+    convbox->resetList();
+
+    return true;
+}
+
 bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const string &filename, const string &tabname, const string &lookfor, const string &replacer){
 
 	// Find the file //
@@ -253,11 +299,29 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
     
+    if(engine->RegisterObjectMethod("Window", "bool AddItem(const string &in text)", asFUNCTION(CEGUIComboboxAddItem),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window", "bool ClearItems()", asFUNCTION(CEGUIComboboxClearItems),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window", "bool SetSelectedItem(const string &in text)",
+            asFUNCTION(CEGUIComboboxSetSelectedItem), asCALL_CDECL_OBJFIRST) < 0)
+        {
+            ANGELSCRIPT_REGISTERFAIL;
+        }
 
 	// Quite an expensive method //
 	if(engine->RegisterObjectMethod("Window", 
-		"bool LoadAndCustomizeTabFromFile(const string &in filename, const string &in tabname, const string &in lookfor, const string &in replacer)",
+            "bool LoadAndCustomizeTabFromFile(const string &in filename, const string &in tabname, const string &in lookfor, const string &in replacer)",
 		asFUNCTION(CEGUIAdvancedCreateTabFromFile), asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;

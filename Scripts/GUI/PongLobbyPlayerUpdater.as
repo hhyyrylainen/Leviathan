@@ -10,7 +10,24 @@ PlayerDataHolder@ StoredData = @PlayerDataHolder();
 // This is for accessing the GUI windows for changing their data //
 GuiObject@ Us;
 
+array<ControlScheme@> ControlList;
 
+class ControlScheme{
+
+    // controlnumber is used for controllers
+    ControlScheme(const string &in showtext, PLAYERCONTROLS controltype, int controlnumber = 0){
+
+        Text = showtext;
+        Controls = controltype;
+        ControlNumber = controlnumber;
+    }
+    
+    string Text;
+    PLAYERCONTROLS Controls;
+    int ControlNumber;
+}
+
+    
 [@Listener="OnInit"]
 int SetupData(GuiObject@ instance, Event@ event){
     // Create a listener for getting notified when the player list changes //
@@ -21,6 +38,21 @@ int SetupData(GuiObject@ instance, Event@ event){
     
     // We can store reference to us for the rest of eternity //
     @Us = @instance;
+
+    // Build controls list //
+    ControlList.insertLast(ControlScheme("Arrow keys", PLAYERCONTROLS_ARROWS));
+
+
+    // Add them to all of the controls //
+    for(int i = 0; i < 4; i++){
+
+        const string target1 = "LobbyScreen/LobbyTabs/__auto_TabPane__/Team"+i+"/Player"+i+"0TypeSelect";
+
+        const string target2 = "LobbyScreen/LobbyTabs/__auto_TabPane__/Team"+i+"/Player"+i+"1TypeSelect";
+        
+        AddControlsToBox(target1, false);
+        AddControlsToBox(target2, false);
+    }
     
     return 1;
 }
@@ -32,6 +64,21 @@ int ReleaseData(GuiObject@ instance, Event@ event){
     @UpdateListener = null;
     
     return 1;
+}
+
+void AddControlsToBox(const string &in element, bool clearfirst = true){
+
+    // TODO: find a more efficient way to do this
+    
+    if(clearfirst){
+
+        Us.GetOwningManager().GetWindowByName(element).ClearItems();
+    }
+
+    for(uint i = 0; i < ControlList.length(); i++){
+        
+        Us.GetOwningManager().GetWindowByName(element).AddItem(ControlList[i].Text);
+    }
 }
 
 void CheckIsSomethingActuallyUpdated(){

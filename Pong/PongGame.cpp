@@ -533,6 +533,14 @@ string GetPongVersionProxy(){
 	return GAME_VERSIONS_ANSI;
 }
 // ------------------------------------ //
+int Pong::PongGame::GetOurPlayerID(){
+
+    if(ClientInterface)
+        return ClientInterface->GetOurID();
+    
+    return -1;
+}
+// ------------------------------------ //
 bool Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 
 	if(engine->RegisterObjectType("PongGame", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
@@ -570,6 +578,13 @@ bool Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 	{
 		SCRIPT_REGISTERFAIL;
 	}
+    if(engine->RegisterObjectMethod("PongGame", "int GetOurPlayerID()", asMETHOD(PongGame, GetOurPlayerID),
+            asCALL_THISCALL) < 0)
+	{
+		SCRIPT_REGISTERFAIL;
+	}
+
+ 
 	
 
 

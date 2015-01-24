@@ -39,6 +39,11 @@ void CEGUIWindowInvalidateProxy(CEGUI::Window* obj, bool recursive){
 	obj->invalidate(recursive);
 }
 
+void CEGUIWindowSetDisabledState(CEGUI::Window* obj, bool disabled){
+
+    obj->setEnabled(!disabled);
+}
+
 
 bool CEGUITabControlSetActiveTabIndex(CEGUI::Window* obj, int index){
 
@@ -242,6 +247,13 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+    
+	if(engine->RegisterObjectMethod("Window", "void SetDisabledState(bool disabled)",
+            asFUNCTION(CEGUIWindowSetDisabledState), asCALL_CDECL_OBJFIRST) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
 
 	// Quite an expensive method //
 	if(engine->RegisterObjectMethod("Window", 

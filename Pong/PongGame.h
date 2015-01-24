@@ -51,6 +51,8 @@ namespace Pong{
 			Connect(address, errorcatcher);
 		}
 
+        //! \brief Returns our client ID player number
+        int GetOurPlayerID();
 
         void Tick(int mspassed) override;
         

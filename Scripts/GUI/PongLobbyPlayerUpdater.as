@@ -36,8 +36,6 @@ int ReleaseData(GuiObject@ instance, Event@ event){
 
 void CheckIsSomethingActuallyUpdated(){
     // Go through all the current data and check if any of it has changed //
-    Print("Player states have been updated, updating GUI...");
-    
     if(!OldDataCaptured){
     
         OldDataCaptured = true;
@@ -105,6 +103,21 @@ class PlayerData{
             
             ControlType = newcontrols;
             ControlsUpdated();
+        }
+
+        string othertarget = "LobbyScreen/LobbyTabs/__auto_TabPane__/Team"+SlotNumber+"/Player"+
+            SlotNumber+(IsSplitSlot ? "1": "0")+"TypeSelect";
+        
+        // Enable controls button if possible //
+        if(HumanPlayerID == GetPongGame().GetOurPlayerID()){
+
+            // Enable control selection //
+            Us.GetOwningManager().GetWindowByName(othertarget).SetDisabledState(false);
+                
+        } else {
+
+            // Disable control selection //
+            Us.GetOwningManager().GetWindowByName(othertarget).SetDisabledState(true);
         }
         
         

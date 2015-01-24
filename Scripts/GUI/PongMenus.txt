@@ -395,6 +395,13 @@ template<TabAndName, TSlotNumber, SplitInt> LobbyJoinOpenButtonThing:
         @%};
     }
 
+// Player control selection //
+template<TabAndName, TSlotNumber, SplitInt> LobbyPlayerControlSelect:
+    o GuiObject "LobbyScreen/LobbyTabs/__auto_TabPane__/TabAndName"{
+        
+
+    }
+
 // First team controls //
 template<> LobbyJoinOpenButtonThing<"Team0/Player00JoinOpen", 0, 0>
 template<> LobbyJoinOpenButtonThing<"Team0/Player01JoinOpen", 0, 1>

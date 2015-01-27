@@ -48,6 +48,15 @@ else()
   set(BREAKPAD_STATE 0)
 endif()
 
+set(BREAKPAD_DIR "" CACHE FILEPATH "Path to the base directory of google breakpad installation")
+
+if(${USE_BREAKPAD})
+  if(NOT EXISTS "${BREAKPAD_DIR}/src")
+    message(SEND_ERROR "Breakpad directory is missing")
+  endif()
+endif()
+
+
 # Strip symbols from install
 option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" ON)
 
@@ -247,14 +256,6 @@ if(DOXYGEN_FOUND)
     COMMENT "Generating API documentation with Doxygen" VERBATIM
     )
 endif(DOXYGEN_FOUND)
-
-set(BREAKPAD_DIR "" CACHE FILEPATH "Path to the base directory of google breakpad installation")
-
-if(${USE_BREAKPAD})
-  if(NOT EXISTS "${BREAKPAD_DIR}/src")
-    message(SEND_ERROR "Breakpad directory is missing")
-  endif()
-endif()
 
 message(STATUS "Copying files...")
 

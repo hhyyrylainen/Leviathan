@@ -45,6 +45,10 @@ DLLEXPORT Leviathan::Object::~Object(){
 
 }
 
-//DLLEXPORT bool Leviathan::Object::IsThis(Object* compare){
-//  return this == compare;
-//}
+
+// Junk function which contains things that might break //
+void DoImportantThings(){
+
+    QUICK_ERROR_MESSAGE;
+}
+

@@ -31,6 +31,7 @@ namespace Leviathan{
         DLLEXPORT void Warning(const string &data, bool save = false);
 
 		DLLEXPORT static void SendDebugMessage(const wstring& str, boost::strict_lock<Logger> &guard);
+        DLLEXPORT static void SendDebugMessage(const string &str);
 
 		// uses string for script compatibility //
 		DLLEXPORT static void Print(string message, bool save = true);

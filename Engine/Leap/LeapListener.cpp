@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_LEAPLISTENER
 #include "LeapListener.h"
@@ -90,9 +89,6 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 				datastr += L", radius: " +Convert::ToWstring(circle.radius());
 				datastr += L", angle " +Convert::ToWstring(sweptAngle * RAD_TO_DEG);
 
-#ifdef LEAP_DEBUGOUTPUT_DATA
-				DEBUG_OUTPUT_AUTO(datastr);
-#endif // LEAP_DEBUGOUTPUT_DATA
 			}
 			break;
 		case Gesture::TYPE_SWIPE:
@@ -105,7 +101,6 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 				// check for down going sweep //
 				if(swipe.direction().y < -0.7){
 					// down //
-					DEBUG_OUTPUT_AUTOPLAINTEXT("down going swipe");
 
 					// add to threshold //
 					Owner->DownWardSwipeThresshold((int)swipe.speed());
@@ -118,10 +113,6 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 				datastr += L", state: " +Convert::ToWstring(swipe.state());
 				datastr += L", direction: " +Convert::StringToWstring(Convert::ToString(swipe.direction()));
 				datastr += L", speed: " +Convert::ToWstring(swipe.speed());
-
-#ifdef LEAP_DEBUGOUTPUT_DATA
-				DEBUG_OUTPUT_AUTO(datastr);
-#endif // LEAP_DEBUGOUTPUT_DATA
 			}
 			break;
 		case Gesture::TYPE_KEY_TAP:
@@ -135,9 +126,6 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 				datastr += L", position: " +Convert::StringToWstring(Convert::ToString(tap.position()));
 				datastr += L", direction: " +Convert::StringToWstring(Convert::ToString(tap.direction()));
 
-#ifdef LEAP_DEBUGOUTPUT_DATA
-				DEBUG_OUTPUT_AUTO(datastr);
-#endif // LEAP_DEBUGOUTPUT_DATA
 			}
 			break;
 		case Gesture::TYPE_SCREEN_TAP:
@@ -150,10 +138,6 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 				datastr += L", state: " +Convert::ToWstring(screentap.state());
 				datastr += L", position: " +Convert::StringToWstring(Convert::ToString(screentap.position()));
 				datastr += L", direction: " +Convert::StringToWstring(Convert::ToString(screentap.direction()));
-
-#ifdef LEAP_DEBUGOUTPUT_DATA
-				DEBUG_OUTPUT_AUTO(datastr);
-#endif // LEAP_DEBUGOUTPUT_DATA
 			}
 			break;
 		default:

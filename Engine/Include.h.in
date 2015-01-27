@@ -148,27 +148,15 @@ namespace Leviathan{
 
 
 #ifndef DEBUG_OUTPUT
-    #ifdef _DEBUG
-        #define DEBUG_OUTPUT(s) {Logger::SendDebugMessage(s);}
-    #else
-        #define DEBUG_OUTPUT(s)   {}
-    #endif //_DEBUG
+#define DEBUG_OUTPUT(s) {Logger::SendDebugMessage(s);}
 #endif
 
 #ifndef DEBUG_OUTPUT_AUTO
-    #ifdef _DEBUG
-        #define DEBUG_OUTPUT_AUTO(s)    {Logger::SendDebugMessage(wstring(L"[INFO] "+s+L"\n"));}
-    #else
-        #define DEBUG_OUTPUT_AUTO(s)   {}
-    #endif //_DEBUG
+#define DEBUG_OUTPUT_AUTO(s)    {Logger::SendDebugMessage(string("[INFO] "+s+"\n"));}
 #endif
 
 #ifndef DEBUG_OUTPUT_AUTOPLAINTEXT
-    #ifdef _DEBUG
-        #define DEBUG_OUTPUT_AUTOPLAINTEXT(s)   {Logger::SendDebugMessage(wstring(L"[INFO] " L#s L"\n"));}
-    #else
-        #define DEBUG_OUTPUT_AUTOPLAINTEXT(s)   {}
-    #endif //_DEBUG
+#define DEBUG_OUTPUT_AUTOPLAINTEXT(s)   {Logger::SendDebugMessage(string("[INFO] " #s "\n"));}
 #endif
 
 
@@ -189,17 +177,6 @@ namespace Leviathan{
 #endif
 
 
-#ifdef _DEBUG
-    #define MONITOR_FUNCTION_TIME_FSTART wstring functiontimemonitorname = __WFUNCTION__ L" time monitor"; TimingMonitor::StartTiming(functiontimemonitorname);
-#else
-    #define MONITOR_FUNCTION_TIME_FSTART {}
-#endif
-#ifdef _DEBUG
-    #define MONITOR_FUNCTION_TIME_FSTOP {TimingMonitor::StopTiming(functiontimemonitorname, true);}
-#else
-    #define MONITOR_FUNCTION_TIME_FSTOP {}
-#endif
-
 #define SAFE_RELEASE( x ) {if(x){(x)->Release();(x)=NULL;}}
 #define SAFE_RELEASEDEL( x ) {if(x){(x)->Release();delete (x);(x)=NULL;}}
 #define SAFE_DELETE( x ) {if(x){delete (x);(x)=NULL;}}
@@ -212,7 +189,7 @@ namespace Leviathan{
 #define ARR_INDEX_CHECKINV( x, y) if(!(((x) >= 0 ) && ((size_t)(x) < (y))))
 #define VECTOR_LAST(x) (x).at((x).size()-1)
 #define VECTOR_LASTP(x) (x)->at((x)->size()-1)
-#define CLASS_ALLOC_CHECK(x) if(!(x)){Logger::Get()->Error(L"Out of memory error: " __WFUCNTION__);return false;}
+#define CLASS_ALLOC_CHECK(x) if(!(x)){Logger::Get()->Error("Out of memory error: " __FUCNTION__); return false;}
 
 #define FORCE_POSITIVE(x) {if((x) < 0){ (x)*=-1; }}
 #define FORCE_POSITIVEF(x) {if((x) < 0){ (x)*=-1.0f; }}
@@ -260,16 +237,11 @@ namespace Leviathan{
 
 #define SAFE_DELETE_VECTOR(x) for(size_t vdind = 0; vdind < x.size(); ++vdind){if(x[vdind]){delete x[vdind];}}; x.clear();
 
-#define STDCONTAINERERASELAST_PTR(x) x->erase(x->begin()+x->size()-1)
-#define STDCONTAINERERASELAST(x) x.erase(x.begin()+x.size()-1)
+#define QUICK_MEMORY_ERROR_MESSAGE {Logger::Get()->Error(("Out of memory error from: " __FILE__ " function: "__FUNCTION__), true);}
 
-#define QUICK_MEMORY_ERROR_MESSAGE {Logger::Get()->Error((L"Out of memory error from: " __WFILE__ L" function: "__WFUNCTION__), true);}
+#define QUICK_ERROR_MESSAGE {Logger::Get()->Error(string("Undocumented error: " __FILE__ " function: ")+ __FUNCTION__ \
+            +string(" line: " __SLINE__ ));}
 
-#ifdef _MVC_VER
-    #define QUICK_ERROR_MESSAGE {Logger::Get()->Error((L"Undocumented error: " __WFILE__ L" function: "__WFUNCTION__ L" line: " __SWLINE__ ), true);}
-#else
-    #define QUICK_ERROR_MESSAGE DEBUG_BREAK;
-#endif
 
 #include "Logger.h"
 #include "Common/Types.h"

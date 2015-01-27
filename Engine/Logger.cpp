@@ -234,6 +234,15 @@ void Leviathan::Logger::SendDebugMessage(const wstring& str, boost::strict_lock<
 	// Using cout should be fine for most other platforms //
 	cout << Convert::WstringToString(str);
 }
+
+DLLEXPORT void Leviathan::Logger::SendDebugMessage(const string &str){
+#ifdef _WIN32
+	OutputDebugString(&*str.begin());
+#endif // _WIN32
+	// We also want standard output messages //
+	// Using cout should be fine for most other platforms //
+	cout << str;
+}
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::DirectWriteBuffer(const wstring &data){
 	// thread safety //

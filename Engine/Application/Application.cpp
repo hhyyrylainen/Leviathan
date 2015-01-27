@@ -152,7 +152,7 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 	GUARD_LOCK_THIS_OBJECT();
 	// Report problems //
 	if(FailCount)
-		DEBUG_OUTPUT_AUTO(wstring(L"Application main loop sleep fails: "+Convert::ToWstring(FailCount)));
+		DEBUG_OUTPUT_AUTO(string("Application main loop sleep fails: "+Convert::ToString(FailCount)));
 
 	// always release before quitting to avoid tons of memory leaks //
 	Release();

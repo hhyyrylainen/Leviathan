@@ -122,11 +122,15 @@ namespace Leviathan{ namespace Script{
                 e.PrintToLog();
             }
 
-            // The object won't release the parameter references //
-            if(onevent)
-                onevent->Release();
-            if(ongeneric)
-                ongeneric->Release();
+            if(!listener){
+                
+                // The object won't release the parameter references //
+                if(onevent)
+                    onevent->Release();
+                
+                if(ongeneric)
+                    ongeneric->Release();
+            }
             
             return listener;
         }

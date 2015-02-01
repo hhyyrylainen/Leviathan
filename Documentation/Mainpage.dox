@@ -7,12 +7,16 @@
     See next: \ref tutorials
     
     \section install_sec Features
-    
+
     Here's a list of features in the engine.
     
     \subsection mainfeatures Main features
     
     Write this too.
+
+    \section references_list References
+
+    \ref angelscript_main AngelScript scripting reference
     
     \section generaltopics General topics
     

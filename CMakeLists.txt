@@ -56,6 +56,8 @@ if(${USE_BREAKPAD})
   endif()
 endif()
 
+# Whether to use Javascript or php search in doxygen
+option(DOCUMENTATION_LOCAL "Set to OFF to create web documentation" ON)
 
 # Strip symbols from install
 option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" ON)
@@ -249,6 +251,13 @@ configure_file("${PROJECT_SOURCE_DIR}/Engine/Include.h.in" "${PROJECT_SOURCE_DIR
 # configure the doxygen file
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
+
+  if(DOCUMENTATION_LOCAL)
+    set(DOXYGEN_SERVER_SEARCH "FALSE")
+  else()
+    set(DOXYGEN_SERVER_SEARCH "TRUE")
+  endif()
+  
     configure_file("${PROJECT_SOURCE_DIR}/LeviathanDoxy.in" "${PROJECT_BINARY_DIR}/LeviathanDoxy" @ONLY)
     add_custom_target(doc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/LeviathanDoxy

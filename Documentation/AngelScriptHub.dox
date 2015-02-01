@@ -1,0 +1,155 @@
+/*! \page angelscript_main AngelScript reference index
+    \tableofcontents
+
+    Put a link to AngelScript tutorials here.
+
+    Also see the manual: http://www.angelcode.com/angelscript/sdk/docs/manual/index.html
+
+    \section angelscript_reference_list Script class references
+    \subsection angelscript_events Events
+
+    \subsubsection angelscript_event_listening Listening for events in scripts
+    Standalone scripts can create a listener object
+    \code
+        // This example creates a new listener object //
+        
+        int OnChangedControlScheme(GenericEvent@ event){
+
+            NamedVars@ tempvalues = @event.GetNamedVars();
+            string player = string(tempvalues.GetSingleValueByName("Player"));
+            string controlsname = string(tempvalues.GetSingleValueByName("ControlsName"));
+        
+            return 1;
+        }
+
+        // Also a function with the signature
+        int OnNormalEvent(Event@ event){
+
+        
+        }
+        // Could be defined and the following null replaced with it to listen for predefined events
+
+        EventListener@ OnChangedEvents = @EventListener(null, OnChangedControlScheme);
+
+        // The only parameter is the name of the GenericEvent to listen for
+        OnChangedEvents.RegisterForEvent("GuiChangePLayerControls");
+        
+        // For normal events you can listen for them by calling
+        OnChangedEvents.RegisterForEvent(EVENT_TYPE_TICK);
+
+    \endcode
+    \see Leviathan::Script::EventListener
+
+    GUI Scripts can use script metadata to listen for specific events
+
+    \code
+        [@Listener="OnInit"]
+        int SetVersion(GuiObject@ instance, Event@ event){
+            // Set the text as the current Pong version //
+            
+            string newtext = GetPongVersion();
+           
+            instance.GetTargetElement().SetText(newtext);
+            
+            return 1;
+        }        
+
+    \endcode
+
+    \subsubsection angelscript_event_getting_values_from_generic Getting values from GenericEvent
+    To get values from a GenericEvent you first need to get the underlying Leviathan::NamedVars
+    and retrieve values from there
+
+    \code
+        int OnChangedControlScheme(GenericEvent@ event){
+
+            // Getting the NamedVars //
+            NamedVars@ tempvalues = @event.GetNamedVars();
+
+            // Getting a value and casting it to a type and assignong it to a variable //
+            string player = string(tempvalues.GetSingleValueByName("Player"));
+
+            // It is also possible to get other types
+            int somenumber = int(tempvalues.GetSingleValueByName("ControlsName"));
+            
+            return 1;
+        }
+    \endcode
+    \see \ref angelscript_namedvars    
+
+    \subsubsection angelscript_event_firing Firing events
+    To fire an event from AngelScript you first need to create an event object
+    \code
+        // Create a GenericEvent like this //
+        GenericEvent@ generic = @GenericEvent("NameOfEvent");
+
+        // Create an Event like this //
+        // Note: only events which don't take additional data parameters can be created like this
+        Event@ event = @Event(EVENT_TYPE_INIT);
+
+    \endcode
+    \see Leviathan::EVENT_TYPE for possible types
+    \todo List events that are recognizable by scripts here
+
+    Then call the event sending function on the global Leviathan::EventHandler.
+
+    \code
+        GetEventHandler().CallEvent(generic);
+    \endcode
+
+    \subsubsection angelscript_event_setting_parameters Setting event parameters
+    To set the data contained within a GenericEvent, you first need to access the event's Leviathan::NamedVars
+
+    \code
+        NamedVars@ vars = @generic.GetNamedVars();
+    \endcode
+
+    And add variables there.
+    \see \ref angelscript_namedvars
+
+    \todo Allow scripts to create data for Leviathan::Event objects
+
+    \subsection angelscript_namedvars NamedVars
+    \subsubsection angelscript_namedvars_access_values Accessing values
+    Single values (nonlist values) can be accessed with `GetSingleValueByName`
+
+    \code
+        ScriptSafeVariableBlock@ var = @vars.GetSingleValueByName("PlayerName");
+    \endcode
+    \see Leviathan::NamedVars::GetScriptCompatibleValue
+
+    Leviathan::ScriptSafeVariableBlock can then be used to construct values of actual types.
+    \code
+        string name = string(var);
+        int val = int(var);
+        int8 initial = int8(var);
+    \endcode
+
+    \subsubsection angelscript_namedvars_adding_values Adding values
+    To add values first create a ScriptSafeVariableBlock.
+
+    \code
+        ScriptSafeVariableBlock@ block = @ScriptSafeVariableBlock("PlayerName", "Boost");
+    \endcode
+    \see \ref angelscript_scriptsafevariableblock
+
+    And then add it to the the Leviathan::NamedVars using `AddValue`.
+    If a variable with the name was already present it will be deleted before adding the new value.
+    \note The value will be deep copied and thus changing the ScriptSafeVariableBlock won't affect the added value.
+
+    \code
+        bool succeeded = vars.AddValue(block);
+    \endcode
+
+    \see Leviathan::NamedVars::AddScriptCompatibleValue
+
+    \subsection angelscript_scriptsafevariableblock Variable blocks in scripts (ScriptSafeVariableBlock)
+    An AngelScript safe version of Leviathan::NamedVariableBlock
+
+    First parameter is the name and the second is the value. Right now only string values are supported, but
+    int, float, double, int8, bool will be supported once they are wrapped for AngelScript use.
+    
+    \section angelscript_common_tasks AngelScript common tasks
+    \ref eventinscripts Adding a new event type to AngelScript
+    
+*/

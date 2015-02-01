@@ -258,8 +258,8 @@ int Convert::WstringTypeNameCheck(const wstring &data){
 	if(StringOperations::CompareInsensitive(data, wstring(L"wstring"))){
 		return DATABLOCK_TYPE_WSTRING;
 	}
-	if(StringOperations::CompareInsensitive(data, wstring(L"wstring"))){
-		return DATABLOCK_TYPE_WSTRING;
+	if(StringOperations::CompareInsensitive(data, wstring(L"string"))){
+		return DATABLOCK_TYPE_STRING;
 	}
 	if(StringOperations::CompareInsensitive(data, wstring(L"void*"))){
 		return DATABLOCK_TYPE_VOIDPTR;

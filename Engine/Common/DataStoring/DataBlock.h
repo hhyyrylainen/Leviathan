@@ -87,7 +87,8 @@ namespace Leviathan{
 			// direct conversion check //
 			if(DataBlockNameResolver<T>::TVal == block->Type){
 				// just return //
-				return block->Value;
+                // Already type checked so force the pointer type //
+				return reinterpret_cast<T*>(block->Value);
 			}
 			// cannot return converted value //
 //#pragma message ("cannot return pointer from converted type")

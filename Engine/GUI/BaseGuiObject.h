@@ -13,6 +13,7 @@
 #include "GuiCollection.h"
 #include "Events/EventableScriptObject.h"
 #include "boost/thread/mutex.hpp"
+#include "boost/function.hpp"
 #include "Script/ScriptArgumentsProvider.h"
 
 namespace Leviathan{ namespace Gui{
@@ -50,7 +51,7 @@ namespace Leviathan{ namespace Gui{
             }
 		
             DLLEXPORT static bool LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*>
-                &tempobjects,	ObjectFileObject& dataforthis);
+                &tempobjects, ObjectFileObject& dataforthis);
 
 
             //! \brief Sets this objects target CEGUI widget
@@ -108,7 +109,8 @@ namespace Leviathan{ namespace Gui{
 
             //! \brief Calls the script for a specific CEGUI event listener
             //! \return The scripts return value changed to an int
-            bool _CallCEGUIListener(const wstring &name);
+            bool _CallCEGUIListener(const wstring &name,
+                boost::function<void(vector<shared_ptr<NamedVariableBlock>>&)> extraparam = NULL);
 
             unique_ptr<ScriptRunningSetup> _GetArgsForAutoFunc();
 
@@ -159,6 +161,8 @@ namespace Leviathan{ namespace Gui{
             bool EventOnClick(const CEGUI::EventArgs &args);
 
             bool EventOnCloseClicked(const CEGUI::EventArgs &args);
+
+            bool EventOnListSelectionAccepted(const CEGUI::EventArgs &args);
         };
 
 }}

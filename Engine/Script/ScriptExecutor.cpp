@@ -31,6 +31,7 @@ using namespace Leviathan::Script;
 
 
 ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
+    
 	instance = this;
 }
 ScriptExecutor::~ScriptExecutor(){
@@ -49,7 +50,8 @@ DLLEXPORT ScriptExecutor* Leviathan::ScriptExecutor::Get(){
 ScriptExecutor* Leviathan::ScriptExecutor::instance = NULL;
 // ------------------------------------ //
 bool ScriptExecutor::Init(){
-	// initialize AngelScript //
+    
+	// Initialize AngelScript //
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	if(engine == NULL){
 
@@ -77,17 +79,14 @@ bool ScriptExecutor::Init(){
 
 
 	// register global functions and classes //
-	if(engine->RegisterGlobalFunction("void Print(string message, bool save = true)", asFUNCTION(Logger::Print), asCALL_CDECL) < 0){
+	if(engine->RegisterGlobalFunction("void Print(string message, bool save = true)", asFUNCTION(Logger::Print),
+            asCALL_CDECL) < 0)
+    {
 		// error abort //
-		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: RegisterGlobalFunction: failed, line: "+Convert::IntToWstring(__LINE__));
+		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: RegisterGlobalFunction: failed, line: "+
+            Convert::IntToWstring(__LINE__));
 		return false;
 	}
-	// global values //
-	//if(engine->RegisterGlobalProperty("const int VAL_NOUPDATE", ) < 0){
-	//	// error abort //
-	//	Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: RegisterGlobalProperty: failed, line: "+Convert::IntToWstring(__LINE__));
-	//	return false;
-	//}
 
 	// use various binding functions //
 
@@ -141,10 +140,14 @@ void ScriptExecutor::Release(){
 	EngineTypeIDSInverted.clear();
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptScript* scriptobject, ScriptRunningSetup* parameters){
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptScript* scriptobject,
+    ScriptRunningSetup* parameters)
+{
 	// Get the ScriptModule for the script //
 	ScriptModule* scrptmodule = scriptobject->GetModule();
+    
 	if(!scrptmodule){
+        
 		// report error and exit //
 		Logger::Get()->Error(L"ScriptExecutor: RunSetUp: trying to run an empty module");
 		return shared_ptr<VariableBlock>(new VariableBlock(-1));
@@ -154,7 +157,10 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptSc
 	return RunSetUp(scrptmodule, parameters);
 }
 
-DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptModule* scrptmodule, ScriptRunningSetup* parameters){
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptModule* scrptmodule,
+    ScriptRunningSetup* parameters)
+{
+    
 	if(!scrptmodule){
 		Logger::Get()->Error(L"ScriptExecutor: RunSetUp: trying to run without a module");
 		return NULL;
@@ -162,9 +168,13 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptMo
 
 	// Load the actual script //
 	asIScriptModule* Module = scrptmodule->GetModule();
+    
 	if(!Module){
+        
 		// report error and exit //
-		Logger::Get()->Error(L"ScriptExecutor: RunSetUp: cannot run an invalid script module: "+scrptmodule->GetInfoWstring(), true);
+		Logger::Get()->Error(L"ScriptExecutor: RunSetUp: cannot run an invalid script module: "+
+            scrptmodule->GetInfoWstring(), true);
+        
 		return shared_ptr<VariableBlock>(new VariableBlock(-1));
 	}
 
@@ -198,8 +208,6 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptMo
 	}
 
 
-
-
 	// Get the function parameter info //
 	FunctionParameterInfo* paraminfo = scrptmodule->GetParamInfoForFunction(func);
 
@@ -230,6 +238,7 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunFunctionSetUp(
 	auto locked = GetModuleByAngelScriptName(function->GetModuleName()).lock();
 
 	ScriptModule* scrptmodule = locked ? locked.get(): NULL;
+    
 	if(!scrptmodule){
 		// report error and exit //
 		if(parameters->ErrorOnNonExistingFunction)
@@ -280,8 +289,8 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunFunctionSetUp(
 	return returnvalue;
 }
 // ------------------------------------ //
-bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptContext, ScriptRunningSetup* parameters, ScriptModule* scrptmodule, 
-	FunctionParameterInfo* paraminfo)
+bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptContext, ScriptRunningSetup* parameters,
+    ScriptModule* scrptmodule, FunctionParameterInfo* paraminfo)
 {
 	// Get the number of parameters expected //
 	int parameterc = paraminfo->ParameterTypeIDS.size();
@@ -293,7 +302,7 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
 
 		// Try to pass the parameter //
 		switch(paraminfo->MatchingDataBlockTypes[i]){
-		case DATABLOCK_TYPE_INT:
+            case DATABLOCK_TYPE_INT:
 			{
 				int tmpparam = 0;
 
@@ -305,7 +314,7 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
 				ScriptContext->SetArgDWord(i, tmpparam);
 			}
 			break;
-		case DATABLOCK_TYPE_FLOAT:
+            case DATABLOCK_TYPE_FLOAT:
 			{
 				float tmpparam = 0;
 
@@ -317,7 +326,7 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
 				ScriptContext->SetArgFloat(i, tmpparam);
 			}
 			break;
-		case DATABLOCK_TYPE_BOOL: case DATABLOCK_TYPE_CHAR:
+            case DATABLOCK_TYPE_BOOL: case DATABLOCK_TYPE_CHAR:
 			{
 				char tmpparam = 0;
 
@@ -329,31 +338,42 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
 				ScriptContext->SetArgByte(i, tmpparam);
 			}
 			break;
-		case DATABLOCK_TYPE_WSTRING:
+            case DATABLOCK_TYPE_STRING:
+            {
+
+                string* varpointer = static_cast<string*>(*parameters->Parameters[i]);
+
+                Logger::Get()->Write("Script passing string parameter: "+*varpointer);
+
+                ScriptContext->SetArgObject(i, varpointer);
+                
+            }
+            break;
+            case DATABLOCK_TYPE_WSTRING:
 			{
 				// save as a string that can be retrieved //
 				// not done
 				goto scriptexecutorpassparamsinvalidconversionparam;
 			}
 			break;
-		case DATABLOCK_TYPE_VOIDPTR:
+            case DATABLOCK_TYPE_VOIDPTR:
 			{
 				// we need to make sure that script object name matches engine object name //
-				//if(paraminfo->ParameterDeclarations[i] != parameters->Parameters[i]->GetName()){
 				if(paraminfo->ParameterDeclarations[i] != parameters->Parameters[i]->GetName()){
 					// non matching pointer types //
-					Logger::Get()->Error(L"Mismatching ptr types, comparing "+paraminfo->ParameterDeclarations[i]+L" to passed type of "
-						+parameters->Parameters[i]->GetName());
+					Logger::Get()->Error(L"Mismatching ptr types, comparing "+paraminfo->ParameterDeclarations[i]+
+                        L" to passed type of "+parameters->Parameters[i]->GetName());
+                    
 				} else {
+                    
 					// types match, we can pass in the raw pointer //
 					void* ptrtostuff = (void*)(*parameters->Parameters[i]);
 					ScriptContext->SetArgAddress(i, ptrtostuff);
-
 				}
 			}
 			break;
-		default:
-			goto scriptexecutorpassparamsinvalidconversionparam;
+            default:
+                goto scriptexecutorpassparamsinvalidconversionparam;
 		}
 
 		continue;
@@ -361,8 +381,9 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
 scriptexecutorpassparamsinvalidconversionparam:
 
 
-		Logger::Get()->Error(L"ScriptExecutor: RunScript: pass parameters failed func: "+Convert::StringToWstring(parameters->Entryfunction)+
-			L" param number: "+Convert::IntToWstring(i)+L" in: "+scrptmodule->GetInfoWstring(), true);
+		Logger::Get()->Error(L"ScriptExecutor: RunScript: pass parameters failed func: "+
+            Convert::StringToWstring(parameters->Entryfunction)+L" param number: "+Convert::IntToWstring(i)+L" in: "+
+            scrptmodule->GetInfoWstring(), true);
 		return false;
 	}
 
@@ -370,8 +391,9 @@ scriptexecutorpassparamsinvalidconversionparam:
 	return true;
 }
 
-shared_ptr<VariableBlock> Leviathan::ScriptExecutor::_GetScriptReturnedVariable(int retcode, asIScriptContext* ScriptContext, 
-	ScriptRunningSetup* parameters, asIScriptFunction* func, ScriptModule* scrptmodule, FunctionParameterInfo* paraminfo)
+shared_ptr<VariableBlock> Leviathan::ScriptExecutor::_GetScriptReturnedVariable(int retcode, asIScriptContext*
+    ScriptContext, ScriptRunningSetup* parameters, asIScriptFunction* func, ScriptModule* scrptmodule,
+    FunctionParameterInfo* paraminfo)
 {
 	// Check the return type //
 	if(retcode != asEXECUTION_FINISHED){
@@ -386,9 +408,10 @@ shared_ptr<VariableBlock> Leviathan::ScriptExecutor::_GetScriptReturnedVariable(
 
 			int linenumber = ScriptContext->GetExceptionLineNumber();
 
-			Logger::Get()->Error(L"[SCRIPT] [EXCEPTION] "+Convert::StringToWstring(ScriptContext->GetExceptionString())+L", function: "
-				+Convert::ToWstring(func->GetDeclaration())+L"\n\t in "+Convert::ToWstring(exceptionfunc->GetScriptSectionName())+L"("+
-				Convert::ToWstring(linenumber)+L") "+scrptmodule->GetInfoWstring());
+			Logger::Get()->Error(L"[SCRIPT] [EXCEPTION] "+Convert::StringToWstring(ScriptContext->GetExceptionString())+
+                L", function: "+Convert::ToWstring(func->GetDeclaration())+L"\n\t in "+Convert::ToWstring(
+                    exceptionfunc->GetScriptSectionName())+L"("+Convert::ToWstring(linenumber)+L") "+
+                scrptmodule->GetInfoWstring());
 
 
 			PrintAdditionalExcept(ScriptContext);
@@ -401,37 +424,57 @@ shared_ptr<VariableBlock> Leviathan::ScriptExecutor::_GetScriptReturnedVariable(
 	if(paraminfo->ReturnTypeID != 0){
 		// return type isn't void //
 		switch(paraminfo->ReturnMatchingDataBlock){
-		case DATABLOCK_TYPE_INT:
+            case DATABLOCK_TYPE_INT:
 			{
 				return shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(ScriptContext->GetReturnDWord())));
 			}
 			break;
-		case DATABLOCK_TYPE_FLOAT:
+            case DATABLOCK_TYPE_FLOAT:
 			{
 				return shared_ptr<VariableBlock>(new VariableBlock(new FloatBlock(ScriptContext->GetReturnFloat())));
 			}
 			break;
-		case DATABLOCK_TYPE_BOOL:
+            case DATABLOCK_TYPE_BOOL:
 			{
 				return shared_ptr<VariableBlock>(new VariableBlock(new BoolBlock(ScriptContext->GetReturnByte() != 0)));
 			}
 			break;
-		case DATABLOCK_TYPE_CHAR:
+            case DATABLOCK_TYPE_CHAR:
 			{
 				return shared_ptr<VariableBlock>(new VariableBlock(new CharBlock(ScriptContext->GetReturnByte())));
 			}
 			break;
+            case DATABLOCK_TYPE_STRING:
+            {
+
+                // TODO: check do we need to delete this
+                
+                string* varpointer = reinterpret_cast<string*>(ScriptContext->GetReturnObject());
+
+                if(varpointer){
+
+                    return make_shared<VariableBlock>(new StringBlock(*varpointer));
+                    
+                } else {
+
+                    return make_shared<VariableBlock>(new VoidPtrBlock((void*)nullptr));
+                }
+            }
+            break;
 		}
 
-		Logger::Get()->Info(L"[SCRIPT] return type not supported"+paraminfo->ReturnTypeDeclaration);
-		return shared_ptr<VariableBlock>(new VariableBlock(wstring(L"Return type not supported")));
+		Logger::Get()->Info(L"[SCRIPT] return type not supported "+paraminfo->ReturnTypeDeclaration);
+        
+		return shared_ptr<VariableBlock>(new VariableBlock(string("Return type not supported")));
 	}
 
 	// No return value //
 	return NULL;
 }
 
-bool Leviathan::ScriptExecutor::_CheckScriptFunctionPtr(asIScriptFunction* func, ScriptRunningSetup* parameters, ScriptModule* scrptmodule){
+bool Leviathan::ScriptExecutor::_CheckScriptFunctionPtr(asIScriptFunction* func, ScriptRunningSetup* parameters,
+    ScriptModule* scrptmodule)
+{
 	// Check is it NULL //
 	if(func == NULL){
 		// Set exists state //
@@ -439,8 +482,10 @@ bool Leviathan::ScriptExecutor::_CheckScriptFunctionPtr(asIScriptFunction* func,
 
 		// Check should we print an error //
 		if(parameters->PrintErrors && parameters->ErrorOnNonExistingFunction){
-			Logger::Get()->Error(L"ScriptExecutor: RunScript: Could not find starting function: "+Convert::StringToWstring(parameters->Entryfunction)+
-				L" in: "+scrptmodule->GetInfoWstring(), true);
+            
+			Logger::Get()->Error(L"ScriptExecutor: RunScript: Could not find starting function: "+
+                Convert::StringToWstring(parameters->Entryfunction)+L" in: "+scrptmodule->GetInfoWstring(), true);
+            
 			scrptmodule->PrintFunctionsInModule();
 		}
 
@@ -455,12 +500,14 @@ bool Leviathan::ScriptExecutor::_CheckScriptFunctionPtr(asIScriptFunction* func,
 }
 
 
-bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(asIScriptFunction* func, asIScriptContext* ScriptContext, 
-	ScriptRunningSetup* parameters, ScriptModule* scrptmodule)
+bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(asIScriptFunction* func, asIScriptContext*
+    ScriptContext, ScriptRunningSetup* parameters, ScriptModule* scrptmodule)
 {
 	if(ScriptContext->Prepare(func) < 0){
-		Logger::Get()->Error(L"ScriptExecutor: RunScript: prepare context failed, func: "+Convert::StringToWstring(parameters->Entryfunction)+
-			L" in: "+scrptmodule->GetInfoWstring(), true);
+        
+		Logger::Get()->Error(L"ScriptExecutor: RunScript: prepare context failed, func: "+Convert::StringToWstring(
+                parameters->Entryfunction)+L" in: "+scrptmodule->GetInfoWstring(), true);
+        
 		return false;
 	}
 
@@ -469,6 +516,7 @@ bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(asIScriptFun
 
 // ------------------------------------ //
 asIScriptContext* Leviathan::ScriptExecutor::_GetContextForExecution(){
+    
 	asIScriptContext* ScriptContext = engine->CreateContext();
 
 	if(!ScriptContext){
@@ -497,6 +545,7 @@ DLLEXPORT weak_ptr<ScriptModule> Leviathan::ScriptExecutor::GetModuleByAngelScri
 	// Find a matching name //
 	string module(nameofmodule);
 
+    // TODO: check could this be checked by comparing pointers
 	for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
 		if(AllocatedScriptModules[i]->GetModuleName() == module)
 			return AllocatedScriptModules[i];
@@ -505,7 +554,9 @@ DLLEXPORT weak_ptr<ScriptModule> Leviathan::ScriptExecutor::GetModuleByAngelScri
 	return shared_ptr<ScriptModule>(NULL);
 }
 // ------------------------------------ //
-DLLEXPORT weak_ptr<ScriptModule> Leviathan::ScriptExecutor::CreateNewModule(const wstring &name, const string &source, const int &modulesid /*= IDFactory::GetID()*/){
+DLLEXPORT weak_ptr<ScriptModule> Leviathan::ScriptExecutor::CreateNewModule(const wstring &name, const string &source,
+    const int &modulesid /*= IDFactory::GetID()*/)
+{
 	// create new module to a smart pointer //
 	shared_ptr<ScriptModule> tmpptr(new ScriptModule(engine, name, modulesid, source));
 

@@ -399,12 +399,32 @@ template<TabAndName, TSlotNumber, SplitInt> LobbyJoinOpenButtonThing:
 template<TabAndName, TSlotNumber, SplitInt> LobbyPlayerControlSelect:
     o GuiObject "LobbyScreen/LobbyTabs/__auto_TabPane__/TabAndName"{
         
+        s{
+            [@Listener="OnListSelectionAccepted"]
+            bool SetPlayerControls(GuiObject@ instance, const string &in text){
 
+                 // Prepare a GenericEvent //
+                 GenericEvent@ event = @GenericEvent("GuiChangePLayerControls");
+
+                 // Just dump all our data there //
+                 NamedVars@ vars = @event.GetNamedVars();
+
+                 vars.AddValue(ScriptSafeVariableBlock("Slot", "TSlotNumber");
+                 vars.AddValue(ScriptSafeVariableBlock("Split", "SplitInt");
+                 vars.AddValue(ScriptSafeVariableBlock("ControlsName", text);
+
+                 // And let someone else do the hard work //
+                 GetEventHandler().CallEvent(event);
+            }
+        @%};
     }
 
 // First team controls //
 template<> LobbyJoinOpenButtonThing<"Team0/Player00JoinOpen", 0, 0>
 template<> LobbyJoinOpenButtonThing<"Team0/Player01JoinOpen", 0, 1>
+
+template<> LobbyPlayerControlSelect<"Team0/Player00TypeSelect", 0, 0>
+template<> LobbyPlayerControlSelect<"Team0/Player01TypeSelect", 0, 1>
 
 // Second Team controls
 template<> LobbyJoinOpenButtonThing<"Team1/Player10JoinOpen", 1, 0>

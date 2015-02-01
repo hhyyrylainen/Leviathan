@@ -36,6 +36,7 @@ namespace Leviathan{
 #define LISTENERNAME_ONSUBMIT				L"OnSubmit"
 #define LISTENERNAME_ONTICK					L"OnTick"
 #define LISTENERNAME_ONCLOSECLICKED			L"OnCloseClicked"
+#define LISTENERNAME_LISTSELECTIONACCEPTED  L"OnListSelectionAccepted"
 
 #define LISTENERVALUE_ONSHOW				100
 #define LISTENERVALUE_ONHIDE				101
@@ -47,6 +48,7 @@ namespace Leviathan{
 #define LISTENERVALUE_ONSUBMIT				107
 #define LISTENERVALUE_ONTICK				108
 #define LISTENERVALUE_ONCLOSECLICKED		109
+#define LISTENERVALUE_LISTSELECTIONACCEPTED 110
 
 
 	//! used to store function's parameter info

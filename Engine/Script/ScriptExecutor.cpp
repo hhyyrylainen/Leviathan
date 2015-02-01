@@ -27,6 +27,9 @@ using namespace Leviathan;
 #include "Application/Application.h"
 #include "ScriptNotifiers.h"
 
+using namespace Leviathan::Script;
+
+
 ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
 	instance = this;
 }

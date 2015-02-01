@@ -14,18 +14,29 @@ using namespace Leviathan;
 Leviathan::NamedVariableList::NamedVariableList() : Datas(0), Name(L""){
 }
 
-DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, VariableBlock* value1) : Datas(1), Name(name){
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, VariableBlock* value1) :
+    Datas(1), Name(name)
+{
 	// set value //
 	Datas[0] = value1;
 }
 
-DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, const VariableBlock &val) : Datas(1), Name(name){
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, const VariableBlock &val) :
+    Datas(1), Name(name)
+{
 	// set value //
 	Datas[0] = new VariableBlock(val);
 }
 
-DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, vector<VariableBlock*> values_willclear) :
-	Datas(values_willclear.size()), Name(name)
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(ScriptSafeVariableBlock* const data) :
+    Datas(1), Name(data->GetName())
+{
+	// Copy value //
+	Datas[0] = new VariableBlock(*data);
+}
+
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, vector<VariableBlock*> values_willclear)
+    : Datas(values_willclear.size()), Name(name)
 {
 	// set values //
 	for(size_t i = 0; i < values_willclear.size(); i++){
@@ -33,7 +44,9 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, v
 	}
 }
 
-DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const NamedVariableList &other) : Datas(other.Datas.size()), Name(other.Name){
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const NamedVariableList &other) :
+    Datas(other.Datas.size()), Name(other.Name)
+{
 
 	// copy value over //
 	for(size_t i = 0; i < other.Datas.size(); i++){
@@ -42,7 +55,10 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const NamedVariableLis
 	}
 }
 
-DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wstring, shared_ptr<VariableBlock>>* predefined /*= NULL*/) : Datas(1){
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wstring,
+    shared_ptr<VariableBlock>>* predefined /*= NULL*/) :
+    Datas(1)
+{
 	// using WstringIterator makes this shorter //
 	StringIterator itr(&line);
 
@@ -65,14 +81,15 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 
 	if(!tempvar || tempvar->size() < 1){
 		// no variable //
-		throw ExceptionInvalidArgument(L"invalid data on line (no variable)", tempvar->size(), __WFUNCSIG__, L"line", line);
+		throw ExceptionInvalidArgument(L"invalid data on line (no variable)", tempvar->size(),
+            __WFUNCSIG__, L"line", line);
 	}
 
 	ConstructValuesForObject(*tempvar, predefined);
 }
 
-DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, const wstring &valuestr, map<wstring, shared_ptr<VariableBlock>>* 
-	predefined /*= NULL*/) THROWS
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, const wstring &valuestr, map<wstring,
+    shared_ptr<VariableBlock>>* predefined /*= NULL*/) THROWS
 {
 	// We already have the name provided for us //
 	Name = name;
@@ -81,11 +98,12 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const wstring &name, c
 	ConstructValuesForObject(valuestr, predefined);
 }
 
-DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const wstring &variablestr, map<wstring, shared_ptr<VariableBlock>>* 
-	predefined) THROWS
+DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const wstring &variablestr, map<wstring,
+    shared_ptr<VariableBlock>>* predefined) THROWS
 {
 	if(variablestr.size() == 0){
-		throw ExceptionInvalidArgument(L"invalid variable string, 0 length", 0, __WFUNCTION__, L"variablestr", variablestr);
+		throw ExceptionInvalidArgument(L"invalid variable string, 0 length", 0, __WFUNCTION__,
+            L"variablestr", variablestr);
 	}
 	// check does it have brackets (and need to be processed like so) //
 	if(variablestr[0] == L'['){
@@ -101,8 +119,8 @@ DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const wstr
 			SAFE_DELETE_VECTOR(tokens);
 
 			// might contain the base token, but cannot possibly have any values inside //
-			throw ExceptionInvalidArgument(L"invalid variable string (variable tokenization failed)", tokens.size(), __WFUNCTION__, 
-				L"variablestr", variablestr);
+			throw ExceptionInvalidArgument(L"invalid variable string (variable tokenization failed)", tokens.size(),
+                __WFUNCTION__, L"variablestr", variablestr);
 		}
 
 		// first should be base token //
@@ -195,7 +213,8 @@ DLLEXPORT void Leviathan::NamedVariableList::AddToPacket(sf::Packet &packet) con
 	if(truncsize > 1000){
 
 		// That's an error //
-		Logger::Get()->Error(L"NamedVariableList: AddToPacket: too many elements (sane maximum is 1000 values), got "+Convert::ToWstring(truncsize)+
+		Logger::Get()->Error(L"NamedVariableList: AddToPacket: too many elements (sane maximum is 1000 values), got "+
+            Convert::ToWstring(truncsize)+
 			L" values, truncated to first 1000");
 		truncsize = 1000;
 	}
@@ -336,22 +355,29 @@ DLLEXPORT wstring Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*
 		// check is conversion allowed //
 		if(!Datas[i]->IsConversionAllowedNonPtr<wstring>()){
 			// no choice but to throw exception //
-			throw ExceptionInvalidType(L"value cannot be cast to wstring", Datas[i]->GetBlock()->Type, __WFUNCTION__, L"Datas["+
-				Convert::ToWstring<int>(i)+L"]", Convert::ToWstring(typeid(Datas[i]->GetBlock()).name()));
+			throw ExceptionInvalidType(L"value cannot be cast to wstring",
+                Datas[i]->GetBlock()->Type, __WFUNCTION__, L"Datas["+Convert::ToWstring<int>(i)+L"]",
+                Convert::ToWstring(typeid(Datas[i]->GetBlock()).name()));
 		}
 		if(i != 0)
 			stringifiedval += L",";
 		// Check if type is a string type //
 		int blocktype = Datas[i]->GetBlockConst()->Type;
 
-		if(blocktype == DATABLOCK_TYPE_WSTRING || blocktype == DATABLOCK_TYPE_STRING || blocktype == DATABLOCK_TYPE_CHAR){
+		if(blocktype == DATABLOCK_TYPE_WSTRING || blocktype == DATABLOCK_TYPE_STRING ||
+            blocktype == DATABLOCK_TYPE_CHAR)
+        {
 			// Output in quotes //
 			stringifiedval += L"[\""+Datas[i]->operator wstring()+L"\"]";
+            
 		} else if(blocktype == DATABLOCK_TYPE_BOOL){
+            
 			// Use true/false for this //
-			stringifiedval += L"["+(Datas[i]->operator bool() ? wstring(L"true"): wstring(L"false"))+L"]";
+			stringifiedval += L"["+(Datas[i]->operator bool() ? wstring(L"true"):
+                wstring(L"false"))+L"]";
 
 		} else {
+            
 			stringifiedval += L"["+Datas[i]->operator wstring()+L"]";
 		}
 	}
@@ -399,10 +425,10 @@ DLLEXPORT bool Leviathan::NamedVariableList::operator==(const NamedVariableList 
 	return true;
 }
 // ----------------- process functions ------------------- //
-DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data, vector<shared_ptr<NamedVariableList>> &vec,
-	map<wstring, shared_ptr<VariableBlock>>* predefined /*= NULL*/)
+DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data,
+    vector<shared_ptr<NamedVariableList>> &vec, map<wstring,
+    shared_ptr<VariableBlock>>* predefined /*= NULL*/)
 {
-	//QUICKTIME_THISSCOPE;
 	// split to lines //
 	vector<shared_ptr<wstring>> Lines;
 
@@ -426,10 +452,9 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data,
 
 	if(Lines.size() < 1){
 		// no lines //
-		Logger::Get()->Error(L"NamedVar: ProcessDataDump: No lines (even 1 line requires ending ';' to work)", data.length(), false);
-#ifdef _DEBUG
-		Logger::Get()->Info(L"[DETAILS] data: "+data, true);
-#endif // _DEBUG
+		Logger::Get()->Error(L"NamedVar: ProcessDataDump: No lines (even 1 line requires ending ';' to work)",
+            data.length(), false);
+
 		return 400;
 	}
 	// make space for values //
@@ -451,15 +476,16 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data,
 			// print to log //
 			e.PrintToLog();
 			// exception throws, must be invalid line //
-			Logger::Get()->Info(L"NamedVar: ProcessDataDump: contains invalid line, line (with only ASCII characters): "+
-				Convert::StringToWstring(Convert::WstringToString(*Lines[i]))+L"\nEND", false);
+			Logger::Get()->Info(L"NamedVar: ProcessDataDump: contains invalid line, line (with only ASCII characters): "
+                +Convert::StringToWstring(Convert::WstringToString(*Lines[i]))+L"\nEND", false);
 			continue;
 		}
 
 		// check is it valid //
 		if(vec.back()->GetName().size() == 0 || vec.back()->GetName().size() > 10000){
 			// invalid //
-			Logger::Get()->Error(L"NamedVar: ProcessDataDump: invalid NamedVar generated for line: "+*Lines[i]+L"\nEND");
+			Logger::Get()->Error(L"NamedVar: ProcessDataDump: invalid NamedVar generated for line: "+*Lines[i]+
+                L"\nEND");
 			DEBUG_BREAK;
 			vec.erase(vec.end());
 		}
@@ -470,7 +496,9 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data,
 	return 0;
 }
 
-DLLEXPORT  void Leviathan::NamedVariableList::SwitchValues(NamedVariableList &receiver, NamedVariableList &donator){
+DLLEXPORT  void Leviathan::NamedVariableList::SwitchValues(NamedVariableList &receiver,
+    NamedVariableList &donator)
+{
 	// only overwrite name if there is one //
 	if(donator.Name.size() > 0)
 		receiver.Name = donator.Name;
@@ -940,7 +968,7 @@ DLLEXPORT int Leviathan::NamedVars::Find(const wstring &name, ObjectLock &guard)
 	return -1;
 }
 // ------------------ Script compatible functions ------------------ //
-ScriptSafeVariableBlock* Leviathan::NamedVars::GetScriptCompatibleValue(string name){
+ScriptSafeVariableBlock* Leviathan::NamedVars::GetScriptCompatibleValue(const string &name){
 	// Use a try block to not throw exceptions to the script engine //
 	try{
 		wstring wstrname = Convert::StringToWstring(name);
@@ -954,6 +982,23 @@ ScriptSafeVariableBlock* Leviathan::NamedVars::GetScriptCompatibleValue(string n
 		// Something failed, return empty handle //
 		return NULL;
 	}
+}
+
+bool Leviathan::NamedVars::AddScriptCompatibleValue(ScriptSafeVariableBlock* value){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    RemoveIfExists(value->GetName(), guard);
+
+    try{
+        
+        Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(value)));
+    
+    } catch(...){
+        return false;
+    }
+
+    return true;
 }
 
 DLLEXPORT size_t Leviathan::NamedVars::GetVariableCount() const{

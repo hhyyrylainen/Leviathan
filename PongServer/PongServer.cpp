@@ -47,6 +47,10 @@ void Pong::PongServer::Tick(int mspassed){
 
     using namespace Leviathan;
 
+    // We will want to skip doing things if we are shutting down soon //
+    if(Engine::Get()->HasPreReleaseBeenDone())
+        return;
+
     // Let the AI think //
     if(GameArena && GameArena->GetBallPtr() && !GamePaused){
 

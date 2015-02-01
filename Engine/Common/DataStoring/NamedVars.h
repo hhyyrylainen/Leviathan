@@ -22,6 +22,7 @@ namespace Leviathan{
 		DLLEXPORT NamedVariableList(const NamedVariableList &other);
 		DLLEXPORT NamedVariableList(const wstring &name, VariableBlock* value1);
 		DLLEXPORT NamedVariableList(const wstring &name, const VariableBlock &val);
+        DLLEXPORT NamedVariableList(ScriptSafeVariableBlock* const data);
 
 		//! \brief For receiving NamedVariableLists through the network
 		DLLEXPORT NamedVariableList(sf::Packet &packet);
@@ -143,6 +144,8 @@ namespace Leviathan{
 		DLLEXPORT NamedVars(const wstring &datadump);
 		DLLEXPORT NamedVars(const vector<shared_ptr<NamedVariableList>> &variables);
 		DLLEXPORT NamedVars(shared_ptr<NamedVariableList> variable);
+
+        
 		//! \param takevariable New'd ptr that will be owned by this object
 		DLLEXPORT NamedVars(NamedVariableList* takevariable);
 
@@ -206,9 +209,13 @@ namespace Leviathan{
 		// Script accessible functions //
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(NamedVars);
 
-		// Uses the find functions to get first value from the found value //
-		// Warning: uses reference counting for return value //
-		ScriptSafeVariableBlock* GetScriptCompatibleValue(string name);
+        //! \brief Finds and returns the first value in a list matching name
+		//! \warning For use from scripts
+		ScriptSafeVariableBlock* GetScriptCompatibleValue(const string &name);
+
+        //! For use from scripts
+        bool AddScriptCompatibleValue(ScriptSafeVariableBlock* value);
+        
 		// ------------------------------------ //
 		DLLEXPORT int GetVariableType(const wstring &name) const;
 		DLLEXPORT int GetVariableType(size_t index) const;

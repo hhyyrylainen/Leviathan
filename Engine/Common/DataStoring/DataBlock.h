@@ -717,7 +717,7 @@ namespace Leviathan{
 	};
 
 
-	// variant with name //
+	//! \brief DataBlock variant with name
 	class NamedVariableBlock : public VariableBlock{
 	public:
 		// constructors that accept any type of DataBlock //
@@ -749,8 +749,10 @@ namespace Leviathan{
 		std::wstring Name;
 	};
 
-	// NOTE: Do NOT use smart pointers with this class //
-	// reference counted version for scripts //
+    //! \brief Reference counted version for scripts
+    //!
+    //! Also stores the AngelScript ID of the type
+	//! \note Do NOT use smart pointers with this class
 	class ScriptSafeVariableBlock : public NamedVariableBlock, public ReferenceCounted{
 	public:
 

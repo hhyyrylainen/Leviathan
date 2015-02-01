@@ -9,14 +9,17 @@ using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Event::Event(EVENT_TYPE type, BaseEventData* data) : Type(type), Data(data){
 	// Check that types that require values have values //
-#ifdef _DEBUG
 	if(!Data){
 		// Check that the event has data //
-		assert(Type != EVENT_TYPE_PHYSICS_BEGIN && Type != EVENT_TYPE_SHOW && Type != EVENT_TYPE_FRAME_BEGIN && Type != EVENT_TYPE_FRAME_END &&
-			Type != EVENT_TYPE_TICK && "Event that requires data, didn't get it");
-	}
+        if(Type == EVENT_TYPE_PHYSICS_BEGIN || Type == EVENT_TYPE_SHOW ||
+            Type == EVENT_TYPE_FRAME_BEGIN || Type == EVENT_TYPE_FRAME_END ||
+			Type == EVENT_TYPE_TICK)
+        {
 
-#endif // _DEBUG
+            throw ExceptionInvalidArgument(L"Event that requires data, didn't get it", 0,
+                __WFUNCTION__, L"data", L"NULL");
+        }
+	}
 }
 
 Event::~Event(){

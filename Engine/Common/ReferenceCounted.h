@@ -27,7 +27,7 @@ namespace Leviathan{
 
     //! Reference counted object which will be deleted when all references are gone
     //! \note Pointers can be used with ReferenceCounted::pointer ptr = new Object();
-    //! \todo Make the reference count be zero in the beginning
+    //! \todo Make sure that all functions using intrusive pointers use the MakeIntrusive function
 	class ReferenceCounted{
 	public:
 
@@ -45,6 +45,19 @@ namespace Leviathan{
 		DLLEXPORT FORCE_INLINE void Release(){
 
             intrusive_ptr_release(this);
+        }
+
+        //! \brief Creates an intrusive_ptr from raw pointer
+        template<class ActualType>
+        DLLEXPORT static boost::intrusive_ptr<ActualType> MakeShared(ActualType* ptr){
+
+            if(!ptr)
+                return nullptr;
+
+            boost::intrusive_ptr<ActualType> newptr(ptr);
+            ptr->intrusive_ptr_release(ptr);
+
+            return newptr;
         }
 
 

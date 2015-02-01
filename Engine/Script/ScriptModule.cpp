@@ -162,7 +162,6 @@ DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(){
 
 		if(ScriptState != SCRIPTBUILDSTATE_BUILT){
 
-			Logger::Get()->Error(L"ScriptModule: GetModule: unbuilt module failed to build, "+GetInfoWstring());
 			return NULL;
 		}
 

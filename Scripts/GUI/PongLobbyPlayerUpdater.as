@@ -25,7 +25,22 @@ class ControlScheme{
     string Text;
     PLAYERCONTROLS Controls;
     int ControlNumber;
+};
+
+
+// This sends a command string to the server when we change a player's control scheme //
+int OnChangedControlScheme(GenericEvent@ event){
+
+    NamedVars@ tempvalues = @event.GetNamedVars();
+    string slot = string(tempvalues.GetSingleValueByName("Slot"));
+    string split = string(tempvalues.GetSingleValueByName("Split"));
+    string controlsname = string(tempvalues.GetSingleValueByName("ControlsName"));
+
+    UpdatePlayerControls(slot, split, controlsname);
+    return 1;
 }
+
+EventListener@ OnChangedEvents = @EventListener(null, OnChangedControlScheme);
 
     
 [@Listener="OnInit"]
@@ -41,6 +56,9 @@ int SetupData(GuiObject@ instance, Event@ event){
 
     // Build controls list //
     ControlList.insertLast(ControlScheme("Arrow keys", PLAYERCONTROLS_ARROWS));
+    ControlList.insertLast(ControlScheme("WASD keys", PLAYERCONTROLS_WASD));
+    ControlList.insertLast(ControlScheme("IJKL keys", PLAYERCONTROLS_IJKL));
+    ControlList.insertLast(ControlScheme("Numpad", PLAYERCONTROLS_NUMPAD));
 
 
     // Add them to all of the controls //
@@ -53,6 +71,8 @@ int SetupData(GuiObject@ instance, Event@ event){
         AddControlsToBox(target1, false);
         AddControlsToBox(target2, false);
     }
+
+    OnChangedEvents.RegisterForEvent("GuiChangePLayerControls");
     
     return 1;
 }
@@ -62,8 +82,29 @@ int ReleaseData(GuiObject@ instance, Event@ event){
     
     // Let the listener be released //
     @UpdateListener = null;
+
+    @OnChangedEvents = null;
     
     return 1;
+}
+
+
+
+void UpdatePlayerControls(const string &in slot, const string &in split, const string &in controlsname){
+
+    // Find the value for the controls //
+    for(uint i = 0; i < ControlList.length(); i++){
+
+        if(ControlList[i].Text == controlsname){
+
+            GetPongGame().SendServerCommand("controls "+slot+" "+split+" set "+ControlList[i].Controls+" "+
+                ControlList[i].ControlNumber);
+
+            return;
+        }
+    }
+
+    Print("Error: didn't find controls named "+controlsname);
 }
 
 void AddControlsToBox(const string &in element, bool clearfirst = true){

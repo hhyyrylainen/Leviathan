@@ -10,11 +10,29 @@
 #include "Entities/Objects/Brush.h"
 #include "Entities/Objects/TrackEntityController.h"
 #include "add_on/autowrapper/aswrappedcall.h"
+#include "Interface/ScriptEventListener.h"
+
 #include "Engine.h"
 
-GenericEvent* WrapperGenericEventFactory(string name){
+using namespace Leviathan::Script;
+
+GenericEvent* WrapperGenericEventFactory(const string &name){
 
 	return new GenericEvent(Convert::StringToWstring(name), NamedVars());
+}
+
+Event* WrapperEventFactory(EVENT_TYPE type){
+
+    try{
+        return new Event(type, NULL);
+        
+    } catch(const ExceptionInvalidArgument &e){
+
+        Logger::Get()->Error("Failed to construct Event for script, exception: ");
+        e.PrintToLog();
+
+        return NULL;
+    }
 }
 
 ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryString(string blockname, string valuestr){
@@ -246,20 +264,36 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
+    if(engine->RegisterObjectBehaviour("Event", asBEHAVE_FACTORY, "Event@ f(EVENT_TYPE type)",
+            asFUNCTION(WrapperEventFactory), asCALL_CDECL) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
 	// bind generic event //
 	if(engine->RegisterObjectType("GenericEvent", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("GenericEvent", asBEHAVE_ADDREF, "void f()", WRAP_MFN(GenericEvent, AddRefProxy), asCALL_GENERIC) < 0){
+    
+	if(engine->RegisterObjectBehaviour("GenericEvent", asBEHAVE_ADDREF, "void f()", asMETHOD(GenericEvent, AddRefProxy),
+            asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("GenericEvent", asBEHAVE_RELEASE, "void f()", WRAP_MFN(GenericEvent, ReleaseProxy), asCALL_GENERIC) < 0){
+    
+	if(engine->RegisterObjectBehaviour("GenericEvent", asBEHAVE_RELEASE, "void f()",
+            asMETHOD(GenericEvent, ReleaseProxy), asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+    
 	// Factory //
-	if(engine->RegisterObjectBehaviour("GenericEvent", asBEHAVE_FACTORY, "GenericEvent@ f(string typename)", WRAP_FN(WrapperGenericEventFactory), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("GenericEvent", asBEHAVE_FACTORY, "GenericEvent@ f(const string &in typename)",
+            asFUNCTION(WrapperGenericEventFactory), asCALL_CDECL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+    
 	// Data get function //
 	if(engine->RegisterObjectMethod("GenericEvent", "NamedVars@ GetNamedVars()", WRAP_MFN(GenericEvent, GetNamedVarsRefCounted), asCALL_GENERIC) < 0)
 	{
@@ -282,23 +316,74 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
+    // Bind EventListener //
+	if(engine->RegisterObjectType("EventListener", 0, asOBJ_REF) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterObjectBehaviour("EventListener", asBEHAVE_ADDREF, "void f()",
+            asMETHOD(EventListener, AddRefProxy), asCALL_THISCALL) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectBehaviour("EventListener", asBEHAVE_RELEASE, "void f()",
+            asMETHOD(EventListener, ReleaseProxy), asCALL_THISCALL) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterFuncdef("int OnEventCallback(Event@ event)") < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+    if(engine->RegisterFuncdef("int OnGenericEventCallback(GenericEvent@ event)") < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectBehaviour("EventListener", asBEHAVE_FACTORY,
+            "EventListener@ f(OnEventCallback@ onevent, OnGenericEventCallback@ ongeneric)",
+            asFUNCTION(EventListenerFactory), asCALL_CDECL) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterObjectMethod("EventListener", "bool RegisterForEvent(EVENT_TYPE type)",
+            asMETHOD(EventListener, RegisterForEventType), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterObjectMethod("EventListener", "bool RegisterForEvent(const string &in name)",
+            asMETHOD(EventListener, RegisterForEventGeneric), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    
+    
+
 	// bind datablock //
 	if(engine->RegisterObjectType("ScriptSafeVariableBlock", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_ADDREF, "void f()", WRAP_MFN(ScriptSafeVariableBlock, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_ADDREF, "void f()",
+            WRAP_MFN(ScriptSafeVariableBlock, AddRefProxy), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_RELEASE, "void f()", WRAP_MFN(ScriptSafeVariableBlock, ReleaseProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_RELEASE, "void f()",
+            WRAP_MFN(ScriptSafeVariableBlock, ReleaseProxy), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	// Some factories //
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_FACTORY, "ScriptSafeVariableBlock@ f(string blockname, string value)", 
+	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_FACTORY,
+            "ScriptSafeVariableBlock@ f(string blockname, string value)", 
 		WRAP_FN(ScriptSafeVariableBlockFactoryString), asCALL_GENERIC) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	// Internal type conversions //
-	if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "ScriptSafeVariableBlock@ ConvertToWstringBlock()", WRAP_MFN(ScriptSafeVariableBlock, CreateNewWstringProxy), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "ScriptSafeVariableBlock@ ConvertToWstringBlock()",
+            WRAP_MFN(ScriptSafeVariableBlock, CreateNewWstringProxy), asCALL_GENERIC) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -335,13 +420,21 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	//}
 
 	// type check //
-	if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "bool IsValidType()", WRAP_MFN(ScriptSafeVariableBlock, IsValidType), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "bool IsValidType()",
+            asMETHOD(ScriptSafeVariableBlock, IsValidType), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
 
-	if(engine->RegisterObjectMethod("NamedVars", "ScriptSafeVariableBlock@ GetSingleValueByName(string name)", WRAP_MFN(NamedVars, GetScriptCompatibleValue), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("NamedVars", "ScriptSafeVariableBlock@ GetSingleValueByName(const string &in name)",
+            asMETHOD(NamedVars, GetScriptCompatibleValue), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectMethod("NamedVars", "bool AddValue(ScriptSafeVariableBlock@ value)",
+            asMETHOD(NamedVars, AddScriptCompatibleValue), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -546,5 +639,6 @@ void RegisterEngineScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("Prop"), L"Prop"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("Brush"), L"Brush"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("BaseObject"), L"BaseObject"));
+    typeids.insert(make_pair(engine->GetTypeIdByDecl("EventListener"), L"EventListener"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("TrackEntityController"), L"TrackEntityController"));
 }

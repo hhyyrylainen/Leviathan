@@ -17,7 +17,7 @@
     
     Then finally (if the event is for CEGUI) add it to Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine in BaseGuiObject.cpp
     \code
-        (L"OnCloseClicked", &CEGUI::FrameWindow::EventCloseClicked);
+        (LISTENERNAME_ONCLICK, &CEGUI::FrameWindow::EventCloseClicked);
     \endcode
     Matching the CEGUI event name it needs to be added to a couple of places:
     

@@ -126,7 +126,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	string rendersystemname;
 
 	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), L"RenderSystemName", rendersystemname,
-        "OpenGL", true, L"Graphics: Init: no selected render system,");
+        "OpenGL.*", true, L"Graphics: Init: no selected render system,");
 
 	regex rendersystemnameregex(rendersystemname, regex_constants::ECMAScript |
         regex_constants::icase);
@@ -162,7 +162,6 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 		//selectedrendersystem->setConfigOption("RTT Preferred Mode","FBO");
 	}
 
-	// for now just choose the first one in the list //
 	ORoot->setRenderSystem(selectedrendersystem);
 
 	ORoot->initialise(false, "", "");

@@ -17,10 +17,11 @@
 #include "GUI/FontManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Exceptions/ExceptionNULLPtr.h"
+#include "boost/thread/lock_types.hpp"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties) : MouseCaptureState(false), 
-	CEGUIRenderer(NULL)
+DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties) :
+    MouseCaptureState(false), CEGUIRenderer(NULL)
 {
 
 	// create window //
@@ -37,7 +38,8 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	int FSAA = 4;
 
 	// get variables from engine configuration file //
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(windowproperties->GetValues(), L"FSAA", FSAA, 4, true, L"Graphics: Init:");
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(windowproperties->GetValues(), L"FSAA", FSAA, 4, true,
+        L"Graphics: Init:");
 
 	Ogre::String fsaastr = Convert::ToString(FSAA);
 
@@ -45,50 +47,66 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	WParams["vsync"] = vsync ? "true": "false";
 
 	Ogre::String wcaption = Convert::WstringToString(WData.Title);
+    
 	// quicker access to the window //
-	Ogre::RenderWindow* tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(wcaption, WData.Width, WData.Height, !WData.Windowed, &WParams);
+	Ogre::RenderWindow* tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(wcaption, WData.Width,
+        WData.Height, !WData.Windowed, &WParams);
 
-	// load resource groups since it is safe now //
-	if(++GlobalWindowCount == 1){
+    int windowsafter = 0;
+
+    {
+        boost::unique_lock<boost::mutex> lock(GlobalCountMutex);
+        ++GlobalWindowCount;
+        windowsafter = GlobalWindowCount;
+    }
+
+    // Do some first window initialization //
+	if(windowsafter == 1){
+        
 		// Initialize the compositor //
-		windowcreater->GetOgreRoot()->initialiseCompositor();
+        // This might not be required anymore...
+		//windowcreater->GetOgreRoot()->initialiseCompositor();
 
 		
 		// Notify engine to register threads to work with Ogre //
 		Engine::GetEngine()->_NotifyThreadsRegisterOgre();
 		FileSystem::RegisterOGREResourceGroups();
 
-		//Ogre::CompositorManager2* compositor = windowcreater->GetOgreRoot()->getCompositorManager2();
-
-		// These are loaded from files //
-		//// Create the definition for the main window workspace //
-		//Ogre::CompositorWorkspaceDef* maindef = compositor->addWorkspaceDefinition("WindowMainWorkspace");
-		//// Create the definition for world workspace //
-		//Ogre::CompositorWorkspaceDef* worlddef = compositor->addWorkspaceDefinition("WorldsWorkspace");
-
 		// Create the GUI system //
-
-
 		CEGUI::OgreRenderer& guirenderer = CEGUI::OgreRenderer::bootstrapSystem(*tmpwindow);
 		CEGUIRenderer = &guirenderer;
 
-		// Instantiate CEGUI script bridge //
-
-		// Link it //
-		CEGUI::System::getSingleton().setScriptingModule(0);
+        FirstCEGUIRenderer = &guirenderer;
 
 		// Print the used renderer //
-		Logger::Get()->Info(L"GUI using CEGUI renderer: "+Convert::StringToWstring(guirenderer.getIdentifierString().c_str()));
+		Logger::Get()->Info(L"GUI using CEGUI renderer: "+
+            Convert::StringToWstring(guirenderer.getIdentifierString().c_str()));
 
 		// Load the taharez look //
 		CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
 
 		// Load the GUI fonts //
 		windowcreater->GetFontManager()->LoadAllFonts();
-	}
+        
+	} else {
+
+        // Wait for the first window to initialize //
+        while(!FirstCEGUIRenderer){
+            
+            Logger::Get()->Info("GraphicalInputEntity: waiting for first window to initialize");
+            
+            boost::this_thread::sleep_for(MillisecondDuration(10));
+        }
+        
+        // Create a new renderer //
+        CEGUIRenderer = &CEGUI::OgreRenderer::registerWindow(*FirstCEGUIRenderer, *tmpwindow);
+    }
 	
 	// Store this window's number
-	WindowNumber = ++TotalCreatedWindows;
+    {
+        boost::unique_lock<boost::mutex> lock(TotalCountMutex);
+        WindowNumber = ++TotalCreatedWindows;
+    }
 
 	// create the actual window //
 	DisplayWindow = new Window(tmpwindow, this);
@@ -111,7 +129,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 		throw ExceptionNULLPtr(L"cannot create GUI manager instance", 0, __WFUNCTION__, NULL);
 	}
 
-	if(!WindowsGui->Init(windowproperties, windowcreater, this)){
+	if(!WindowsGui->Init(windowcreater, this, windowsafter == 1)){
 
 		Logger::Get()->Error(L"GraphicalInputEntity: Gui init failed");
 		throw ExceptionNULLPtr(L"invalid GUI manager", 0, __WFUNCTION__, WindowsGui);
@@ -139,15 +157,37 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
 	SAFE_DELETE(DisplayWindow);
 	TertiaryReceiver.reset();
 
+    int windowsafter = 0;
+
+    {
+        boost::unique_lock<boost::mutex> lock(GlobalCountMutex);
+        --GlobalWindowCount;
+        windowsafter = GlobalWindowCount;
+    }
 
     // Destory CEGUI if we are the last window //
-    Logger::Get()->Info(L"TODO: only release CEGUI if we are the last window");
-    
-    CEGUI::OgreRenderer::destroySystem();
+    if(windowsafter == 0){
 
-    // Make Ogre destroy the window? //
+        FirstCEGUIRenderer = NULL;
+        CEGUI::OgreRenderer::destroySystem();
+
+        Logger::Get()->Info("GraphicalInputEntity: all windows have been closed, should quit soon");
+    }
+
+    CEGUIRenderer = NULL;
 }
 
+GraphicalInputEntity* Leviathan::GraphicalInputEntity::InputCapturer = NULL;
+
+int Leviathan::GraphicalInputEntity::GlobalWindowCount = 0;
+
+boost::mutex Leviathan::GraphicalInputEntity::GlobalCountMutex;
+
+int Leviathan::GraphicalInputEntity::TotalCreatedWindows = 0;
+
+boost::mutex Leviathan::GraphicalInputEntity::TotalCountMutex;
+
+CEGUI::OgreRenderer* Leviathan::GraphicalInputEntity::FirstCEGUIRenderer = NULL;
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::ReleaseLinked(){
 	// release world and object references //
@@ -256,13 +296,6 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state){
 DLLEXPORT void Leviathan::GraphicalInputEntity::OnFocusChange(bool focused){
 	WindowsGui->OnFocusChanged(focused);
 }
-
-GraphicalInputEntity* Leviathan::GraphicalInputEntity::InputCapturer = NULL;
-
-int Leviathan::GraphicalInputEntity::GlobalWindowCount = 0;
-
-int Leviathan::GraphicalInputEntity::TotalCreatedWindows = 0;
-
 
 DLLEXPORT int Leviathan::GraphicalInputEntity::GetGlobalWindowCount(){
 	return GlobalWindowCount;

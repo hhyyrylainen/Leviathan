@@ -1,9 +1,7 @@
 #include <string.h>
 #include "scripthelper.h"
-#include <string>
 #include <assert.h>
 #include <stdio.h>
-#include <sstream>
 #include <fstream>
 #include <stdlib.h>
 
@@ -241,7 +239,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 				str.insert(pos, "\\");
 				pos += 2;
 			}
-			
+
 			return str;
 		}
 	};
@@ -563,7 +561,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 					count++;
 
 			return count;
-		} 
+		}
 	};
 
 	// Since we are only going to compile the script and never actually execute it,
@@ -581,7 +579,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 	} while( !strm.eof() );
 
 	// Process the configuration file and register each entity
-	asUINT pos  = 0; 
+	asUINT pos  = 0;
 	while( pos < config.length() )
 	{
 		string token;
@@ -599,20 +597,15 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 			{
 			case asEP_ALLOW_UNSAFE_REFERENCES:
 			case asEP_OPTIMIZE_BYTECODE:
-			//case asEP_COPY_SCRIPT_SECTIONS:
-			//case asEP_MAX_STACK_SIZE:
 			case asEP_USE_CHARACTER_LITERALS:
 			case asEP_ALLOW_MULTILINE_STRINGS:
 			case asEP_ALLOW_IMPLICIT_HANDLE_TYPES:
 			case asEP_BUILD_WITHOUT_LINE_CUES:
-			//case asEP_INIT_GLOBAL_VARS_AFTER_BUILD:
 			case asEP_REQUIRE_ENUM_SCOPE:
 			case asEP_SCRIPT_SCANNER:
 			case asEP_INCLUDE_JIT_INSTRUCTIONS:
 			case asEP_STRING_ENCODING:
 			case asEP_PROPERTY_ACCESSOR_MODE:
-			//case asEP_EXPAND_DEF_ARRAY_TO_TMPL:
-			//case asEP_AUTO_GARBAGE_COLLECT:
 			case asEP_DISALLOW_GLOBAL_VARS:
 			case asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT:
 			case asEP_COMPILER_WARNINGS:
@@ -627,6 +620,15 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 
 					engine->SetEngineProperty(ep, value);
 				}
+				break;
+
+			case asEP_COPY_SCRIPT_SECTIONS:
+			case asEP_MAX_STACK_SIZE:
+			case asEP_INIT_GLOBAL_VARS_AFTER_BUILD:
+			case asEP_EXPAND_DEF_ARRAY_TO_TMPL:
+			case asEP_AUTO_GARBAGE_COLLECT:
+				// These don't affect the compiler, so there is no need to export them
+				break;
 			}
 		}
 		else if( token == "namespace" )
@@ -655,7 +657,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 			name = name.substr(1, name.length() - 2);
 			in::GetToken(engine, flags, config, pos);
 
-			// The size of the value type doesn't matter, because the 
+			// The size of the value type doesn't matter, because the
 			// engine must adjust it anyway for different platforms
 			r = engine->RegisterObjectType(name.c_str(), (atol(flags.c_str()) & asOBJ_VALUE) ? 1 : 0, atol(flags.c_str()));
 			if( r < 0 )
@@ -721,7 +723,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 				return -1;
 			}
 
-			// All properties must have different offsets in order to make them 
+			// All properties must have different offsets in order to make them
 			// distinct, so we simply register them with an incremental offset
 			r = engine->RegisterObjectProperty(name.c_str(), decl.c_str(), type->GetPropertyCount());
 			if( r < 0 )
@@ -777,7 +779,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 			in::GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
 
-			// All properties must have different offsets in order to make them 
+			// All properties must have different offsets in order to make them
 			// distinct, so we simply register them with an incremental offset.
 			// The pointer must also be non-null so we add 1 to have a value.
 			r = engine->RegisterGlobalProperty(decl.c_str(), (void*)(engine->GetGlobalPropertyCount()+1));
@@ -817,7 +819,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 		{
 			string type;
 			in::GetToken(engine, type, config, pos);
-			
+
 			r = engine->RegisterEnum(type.c_str());
 			if( r < 0 )
 			{
@@ -871,20 +873,22 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 	return 0;
 }
 
-void PrintException(asIScriptContext *ctx, bool printStack)
+string GetExceptionInfo(asIScriptContext *ctx, bool showStack)
 {
-	if( ctx->GetState() != asEXECUTION_EXCEPTION ) return;
+	if( ctx->GetState() != asEXECUTION_EXCEPTION ) return "";
+
+	stringstream text;
 
 	const asIScriptFunction *function = ctx->GetExceptionFunction();
-	printf("func: %s\n", function->GetDeclaration());
-	printf("modl: %s\n", function->GetModuleName());
-	printf("sect: %s\n", function->GetScriptSectionName());
-	printf("line: %d\n", ctx->GetExceptionLineNumber());
-	printf("desc: %s\n", ctx->GetExceptionString());
+	text << "func: " << function->GetDeclaration() << "\n";
+	text << "modl: " << function->GetModuleName() << "\n";
+	text << "sect: " << function->GetScriptSectionName() << "\n";
+	text << "line: " << ctx->GetExceptionLineNumber() << "\n";
+	text << "desc: " << ctx->GetExceptionString() << "\n";
 
-	if( printStack )
+	if( showStack )
 	{
-		printf("--- call stack ---\n");
+		text << "--- call stack ---\n";
 		for( asUINT n = 1; n < ctx->GetCallstackSize(); n++ )
 		{
 			function = ctx->GetFunction(n);
@@ -892,23 +896,23 @@ void PrintException(asIScriptContext *ctx, bool printStack)
 			{
 				if( function->GetFuncType() == asFUNC_SCRIPT )
 				{
-					printf("%s (%d): %s\n", function->GetScriptSectionName(),
-											ctx->GetLineNumber(n),
-											function->GetDeclaration());
+					text << function->GetScriptSectionName() << " (" << ctx->GetLineNumber(n) << "): " << function->GetDeclaration() << "\n";
 				}
 				else
 				{
 					// The context is being reused by the application for a nested call
-					printf("{...application...}: %s\n", function->GetDeclaration());
+					text << "{...application...}: " << function->GetDeclaration() << "\n";
 				}
 			}
 			else
 			{
 				// The context is being reused by the script engine for a nested call
-				printf("{...script engine...}\n");
+				text << "{...script engine...}\n";
 			}
 		}
 	}
+
+	return text.str();
 }
 
 END_AS_NAMESPACE

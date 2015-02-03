@@ -87,6 +87,7 @@ namespace Leviathan{
 	//! \brief Represents a section of script source file
 	struct ScriptSourceFileData{
 
+        //! \param line The line to start from. First line in a file is 1
 		ScriptSourceFileData(const string &file, int line, const string &code);
 
 

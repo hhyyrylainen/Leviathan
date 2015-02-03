@@ -664,28 +664,19 @@ Leviathan::Gui::GuiManager::~GuiManager(){
 	
 }
 // ------------------------------------ //
-bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalInputEntity* window){
+bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* window, bool ismain){
 	GUARD_LOCK_THIS_OBJECT();
 
 	ThisWindow = window;
-
-	// Detect if this is the first GuiManager //
-	if(GraphicalInputEntity::GetGlobalWindowCount() == 1)
-		MainGuiManager = true;
+    MainGuiManager = ismain;
 	
-		
-	// Create Ogre resources //
-	if(!_CreateInternalOgreResources(window->GetWindow()->GetOverlayScene())){
-
-		Logger::Get()->Error(L"GuiManager: Init: failed to create internal Ogre resources");
-		return false;
-	}
-
 	// Create the clipboard handler for this window (only one is required,
     // so only create if this is the main window's gui
     if(MainGuiManager){
+        
         try{
             _GuiClipboardHandler = new GuiClipboardHandler(window->GetWindow());
+            
         } catch(const ExceptionBase &e){
 
             // Clipboard isn't usable... //
@@ -695,8 +686,6 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
             _GuiClipboardHandler = NULL;
         }
     }
-
-
     
 	// Setup this window's context //
 	GuiContext = &CEGUI::System::getSingleton().createGUIContext(
@@ -716,7 +705,7 @@ bool Leviathan::Gui::GuiManager::Init(AppDef* vars, Graphics* graph, GraphicalIn
 
 
 	// Make the clipboard play nice //
-	if(GraphicalInputEntity::GetGlobalWindowCount() == 1){
+	if(MainGuiManager == 1){
 
 		// Only one clipboard is needed //
 		if(_GuiClipboardHandler && _GuiClipboardHandler->WorksOnPlatform())
@@ -758,6 +747,7 @@ void Leviathan::Gui::GuiManager::Release(){
 		Objects[i]->ReleaseData();
 		SAFE_RELEASE(Objects[i]);
 	}
+    
 	Objects.clear();
 
 	// GuiCollections are now also reference counted //
@@ -783,7 +773,6 @@ void Leviathan::Gui::GuiManager::Release(){
     
 	SAFE_DELETE(_GuiClipboardHandler);
 
-	_ReleaseOgreResources();
     Logger::Get()->Info(L"GuiManager: Gui successfully closed on window");
 }
 // ------------------------------------ //
@@ -930,6 +919,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnResize(){
 	GUARD_LOCK_THIS_OBJECT();
 
 	// Notify the CEGUI system //
+    // TODO: only to the wanted context
 	CEGUI::System* const sys = CEGUI::System::getSingletonPtr();
 	if(sys)
 		sys->notifyDisplaySizeChanged(CEGUI::Sizef((float)ThisWindow->GetWindow()->GetWidth(),
@@ -1296,17 +1286,6 @@ GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const ws
 	}
 
 	return NULL;
-}
-// -------------------------------------- //
-bool Leviathan::Gui::GuiManager::_CreateInternalOgreResources(Ogre::SceneManager* windowsscene){
-
-    // As it stands this is no longer required...
-	return true;
-}
-
-void Leviathan::Gui::GuiManager::_ReleaseOgreResources(){
-	// We probably don't need to do anything //
-
 }
 // ------------------------------------ //
 void Leviathan::Gui::GuiManager::_FileChanged(const wstring &file, ResourceFolderListener &caller){

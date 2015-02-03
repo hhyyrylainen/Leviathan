@@ -13,12 +13,13 @@
 #include "Events/CallableObject.h"
 using namespace Leviathan;
 // ------------------------------------ //
-ScriptModule::ScriptModule(asIScriptEngine* engine, const wstring &name, int id, const string &source) : FuncParameterInfos(), 
-	ScriptBuilder(new CScriptBuilder()), Source(source), ID(id), Name(name), ScriptState(SCRIPTBUILDSTATE_EMPTY), 
-	ModuleName(source+"_;"+Convert::ToString<int>(LatestAssigned)), ASModule(NULL)
+ScriptModule::ScriptModule(asIScriptEngine* engine, const wstring &name, int id, const string &source) :
+    FuncParameterInfos(), ScriptBuilder(new CScriptBuilder()), Source(source), ID(id), Name(name),
+    ScriptState(SCRIPTBUILDSTATE_EMPTY), ASModule(NULL)
 {
 	{
 		boost::unique_lock<boost::mutex> lock(ModuleBuildingMutex);
+        ModuleName = string(source+"_;"+Convert::ToString<int>(LatestAssigned));
 		LatestAssigned++;
 	}
 
@@ -96,13 +97,15 @@ FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScrip
 		int paraid;
 		func->GetParam(i, &paraid);
 
-		_FillParameterDataObject(paraid, &newinfo->ParameterTypeIDS[i], &newinfo->ParameterDeclarations[i], &newinfo->MatchingDataBlockTypes[i]);
+		_FillParameterDataObject(paraid, &newinfo->ParameterTypeIDS[i], &newinfo->ParameterDeclarations[i],
+            &newinfo->MatchingDataBlockTypes[i]);
 	}
 
 	// return type //
 	int paraid = func->GetReturnTypeId();
 
-	_FillParameterDataObject(paraid, &newinfo->ReturnTypeID, &newinfo->ReturnTypeDeclaration, &newinfo->ReturnMatchingDataBlock);
+	_FillParameterDataObject(paraid, &newinfo->ReturnTypeID, &newinfo->ReturnTypeDeclaration,
+        &newinfo->ReturnMatchingDataBlock);
 
 	// add to vector //
 	FuncParameterInfos.push_back(newinfo.release());
@@ -111,7 +114,9 @@ FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScrip
 	return FuncParameterInfos.back();
 }
 // ------------------------------------ //
-void Leviathan::ScriptModule::_FillParameterDataObject(int typeofas, asUINT* paramtypeid, wstring* paramdecl, int* datablocktype){
+void Leviathan::ScriptModule::_FillParameterDataObject(int typeofas, asUINT* paramtypeid, wstring* paramdecl,
+    int* datablocktype)
+{
 	// set //
 	*paramtypeid = typeofas;
 	// try to find name //
@@ -174,8 +179,10 @@ DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(){
 
 	// Return the saved pointer or fetch the pointer //
 	if(!ASModule){
+        
 		// Get module from the engine //
-		ASModule = ScriptInterface::Get()->GetExecutor()->GetASEngine()->GetModule(ModuleName.c_str(), asGM_ONLY_IF_EXISTS);
+		ASModule = ScriptInterface::Get()->GetExecutor()->GetASEngine()->GetModule(ModuleName.c_str(),
+            asGM_ONLY_IF_EXISTS);
 
 		if(!ASModule){
 
@@ -194,7 +201,9 @@ DLLEXPORT shared_ptr<ScriptScript> Leviathan::ScriptModule::GetScriptInstance(){
 	return shared_ptr<ScriptScript>(new ScriptScript(ID, ScriptInterface::Get()->GetExecutor()->GetModule(ID)));
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(const wstring &listenername, const wstring* generictype /*= NULL*/){
+DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(const wstring &listenername,
+    const wstring* generictype /*= NULL*/)
+{
 	GUARD_LOCK_THIS_OBJECT();
 	// find from the map //
 	auto itr = _GetIteratorOfListener(guard, listenername, generictype);
@@ -222,27 +231,34 @@ DLLEXPORT void Leviathan::ScriptModule::GetListOfListeners(std::vector<shared_pt
 	}
 }
 
-DLLEXPORT string Leviathan::ScriptModule::GetListeningFunctionName(const wstring &listenername, const wstring* generictype /*= NULL*/){
+DLLEXPORT string Leviathan::ScriptModule::GetListeningFunctionName(const wstring &listenername,
+    const wstring* generictype /*= NULL*/)
+{
 	GUARD_LOCK_THIS_OBJECT();
-	// call search function and check if it found anything //
+    
+	// Call search function and check if it found anything //
 	auto itr = _GetIteratorOfListener(guard, listenername, generictype);
 	
 
 	if(itr != FoundListenerFunctions.end()){
-		// get name from pointer //
+		// Get name from pointer //
 		return string(itr->second->FuncPtr->GetName());
 	}
-	// nothing found //
+    
+	// Nothing found //
 	return "";
 }
 // ------------------------------------ //
 DLLEXPORT wstring Leviathan::ScriptModule::GetInfoWstring(){
+    
 	return L"ScriptModule("+Convert::ToWstring(ID)+L") "+Name+L", from: "+Convert::StringToWstring(Source);
 }
 
 DLLEXPORT void Leviathan::ScriptModule::DeleteThisModule(){
+    
 	GUARD_LOCK_THIS_OBJECT();
-	// tell script interface to unload this //
+    
+	// Tell script interface to unload this //
 	ScriptInterface::Get()->GetExecutor()->DeleteModule(this);
 }
 // ------------------------------------ //
@@ -250,43 +266,44 @@ void Leviathan::ScriptModule::_BuildListenerList(ObjectLock &guard){
 
 	VerifyLock(guard);
 
-	// we need to find functions with metadata specifying which listener it is //
+	// We need to find functions with metadata specifying which listener it is //
 	asIScriptModule* mod = GetModule();
 
 	if(!mod){
-		// module failed to build //
+		// Module failed to build //
 		return;
 	}
 
 	asUINT funccount = mod->GetFunctionCount();
-	// loop all and check the ones with promising names //
+	// Loop all and check the ones with promising names //
 	for(asUINT i = 0; i < funccount; i++){
 
 		asIScriptFunction* tmpfunc = mod->GetFunctionByIndex(i);
 
 
-		// get metadata for this and process //
+		// Get metadata for this and process it //
 		_ProcessMetadataForFunc(tmpfunc, mod);
 	}
 
-	// data is now built //
+	// Data is now built //
 	ListenerDataBuilt = true;
 }
 
 void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func, asIScriptModule* mod){
-	// start of by getting metadata string //
+    
+	// Start of by getting metadata string //
 	string meta = ScriptBuilder->GetMetadataStringForFunc(func);
 
 	if(meta.size() < 3){
-		// too short for anything //
+		// Too short for anything //
 		return;
 	}
 
-	// do all kinds of checks on the metadata //
+	// Do all kinds of checks on the metadata //
 	if(meta[0] == '@'){
-		// some specific special function, check which //
+		// Some specific special function, check which //
 
-		// we need some iterating here //
+		// We need some iterating here //
 		StringIterator itr(Convert::StringToWstring(meta));
 
 		// need to skip first character don't want @ to be in the name //
@@ -463,8 +480,8 @@ trytofindinscriptfolderincludecallback:
 			return builder->AddSectionFromFile(Convert::WstringToString(finalpath).c_str());
 		} else {
 
-			Logger::Get()->Error(L"ScriptModule: IncludeCallback: couldn't resolve include (even with full search), file: "+wfile
-				+L" in "+module->GetInfoWstring());
+			Logger::Get()->Error(L"ScriptModule: IncludeCallback: couldn't resolve include (even with full search), "
+                L"file: "+wfile+L" in "+module->GetInfoWstring());
 		}
 	}
 
@@ -488,7 +505,9 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegment(shared_ptr<ScriptSource
 	// Check is it already there //
 	for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
 
-		if(ScriptSourceSegments[i]->SourceFile == data->SourceFile && (abs(ScriptSourceSegments[i]->StartLine-data->StartLine) <= 2)){
+		if(ScriptSourceSegments[i]->SourceFile == data->SourceFile &&
+            (abs(ScriptSourceSegments[i]->StartLine-data->StartLine) <= 2))
+        {
 
 			return false;
 		}
@@ -760,10 +779,12 @@ void Leviathan::ScriptModule::_BuildTheModule(){
 	// Add the source files before building //
 	for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
 		if(ScriptBuilder->AddSectionFromMemory(ScriptSourceSegments[i]->SourceFile.c_str(), 
-                                               ScriptSourceSegments[i]->SourceCode->c_str()
-                                               /*, ScriptSourceSegments[i]->StartLine*/) < 0)
+                ScriptSourceSegments[i]->SourceCode->c_str(), 0,
+                ScriptSourceSegments[i]->StartLine-1) < 0)
 		{
-			Logger::Get()->Error(L"ScriptModule: GetModule: failed to build unbuilt module (adding source files failed), "+GetInfoWstring());
+			Logger::Get()->Error(L"ScriptModule: GetModule: failed to build unbuilt module (adding source files "
+                L"failed), "+GetInfoWstring());
+            
 			ScriptState = SCRIPTBUILDSTATE_FAILED;
 			return;
 		}

@@ -233,16 +233,22 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptMo
 	return returnvalue;
 }
 
-DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunFunctionSetUp(asIScriptFunction* function, ScriptRunningSetup* parameters){
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunFunctionSetUp(asIScriptFunction* function,
+    ScriptRunningSetup* parameters)
+{
 	// Find a script module by the name //
+    // TODO: find by AngelScript module pointer
 	auto locked = GetModuleByAngelScriptName(function->GetModuleName()).lock();
 
 	ScriptModule* scrptmodule = locked ? locked.get(): NULL;
     
 	if(!scrptmodule){
+        
 		// report error and exit //
 		if(parameters->ErrorOnNonExistingFunction)
-			Logger::Get()->Error(L"ScriptExecutor: RunSetUp: the module is no longer available: "+Convert::StringToWstring(function->GetModuleName()));
+			Logger::Get()->Error(L"ScriptExecutor: RunSetUp: the module is no longer available: "+
+                Convert::StringToWstring(function->GetModuleName()));
+        
 		return shared_ptr<VariableBlock>(new VariableBlock(-1));
 	}
 
@@ -516,7 +522,8 @@ bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(asIScriptFun
 
 // ------------------------------------ //
 asIScriptContext* Leviathan::ScriptExecutor::_GetContextForExecution(){
-    
+
+    // TODO: pool context and detect already acive context and push state and use that
 	asIScriptContext* ScriptContext = engine->CreateContext();
 
 	if(!ScriptContext){

@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        22900
-#define ANGELSCRIPT_VERSION_STRING "2.29.0"
+#define ANGELSCRIPT_VERSION        22902
+#define ANGELSCRIPT_VERSION_STRING "2.29.2"
 
 // Data types
 
@@ -133,6 +133,8 @@ enum asEEngineProp
 	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT      = 18,
 	asEP_COMPILER_WARNINGS                  = 19,
 	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20,
+	asEP_ALTER_SYNTAX_NAMED_ARGS            = 21,
+	asEP_DISABLE_INTEGER_DIVISION           = 22,
 
 	asEP_LAST_PROPERTY
 };
@@ -199,7 +201,9 @@ enum asEObjTypeFlags
 	asOBJ_LIST_PATTERN               = (1<<25),
 	asOBJ_ENUM                       = (1<<26),
 	asOBJ_TEMPLATE_SUBTYPE           = (1<<27),
-	asOBJ_TYPEDEF                    = (1<<28)
+	asOBJ_TYPEDEF                    = (1<<28),
+	asOBJ_ABSTRACT                   = (1<<29),
+	asOBJ_APP_ALIGN16                = (1<<30)
 };
 
 // Behaviours
@@ -441,7 +445,7 @@ struct asSFuncPtr
 		// The largest known method point is 20 bytes (MSVC 64bit),
 		// but with 8byte alignment this becomes 24 bytes. So we need
 		// to be able to store at least that much.
-		char dummy[25]; 
+		char dummy[25];
 		struct {asMETHOD_t   mthd; char dummy[25-sizeof(asMETHOD_t)];} m;
 		struct {asFUNCTION_t func; char dummy[25-sizeof(asFUNCTION_t)];} f;
 	} ptr;
@@ -517,7 +521,7 @@ struct asSMessageInfo
   #else // statically linked library
     #define AS_API
   #endif
-#elif defined(__GNUC__) 
+#elif defined(__GNUC__)
   #if defined(ANGELSCRIPT_EXPORT)
     #define AS_API __attribute__((visibility ("default")))
   #else
@@ -560,6 +564,74 @@ extern "C"
 	AS_API asILockableSharedBool *asCreateLockableSharedBool();
 }
 #endif // ANGELSCRIPT_DLL_MANUAL_IMPORT
+
+// Determine traits of a type for registration of value types
+// Relies on C++11 features so it can not be used with non-compliant compilers
+#ifdef AS_CAN_USE_CPP11
+
+END_AS_NAMESPACE
+#include <type_traits>
+BEGIN_AS_NAMESPACE
+
+template<typename T>
+asUINT asGetTypeTraits()
+{
+#if defined(_MSC_VER) || defined(_LIBCPP_TYPE_TRAITS)
+	// MSVC & XCode/Clang
+	// C++11 compliant code
+	bool hasConstructor        = std::is_default_constructible<T>::value && !std::is_trivially_default_constructible<T>::value;
+	bool hasDestructor         = std::is_destructible<T>::value          && !std::is_trivially_destructible<T>::value;
+	bool hasAssignmentOperator = std::is_copy_assignable<T>::value       && !std::is_trivially_copy_assignable<T>::value;
+	bool hasCopyConstructor    = std::is_copy_constructible<T>::value    && !std::is_trivially_copy_constructible<T>::value;
+#elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+	// gnuc 4.8+
+	// gnuc is using a mix of C++11 standard and pre-standard templates
+	bool hasConstructor        = std::is_default_constructible<T>::value && !std::has_trivial_default_constructor<T>::value;
+	bool hasDestructor         = std::is_destructible<T>::value          && !std::is_trivially_destructible<T>::value;
+	bool hasAssignmentOperator = std::is_copy_assignable<T>::value       && !std::has_trivial_copy_assign<T>::value;
+	bool hasCopyConstructor    = std::is_copy_constructible<T>::value    && !std::has_trivial_copy_constructor<T>::value;
+#else
+	// Not fully C++11 compliant. The has_trivial checks were used while the standard was still
+	// being elaborated, but were then removed in favor of the above is_trivially checks
+	// http://stackoverflow.com/questions/12702103/writing-code-that-works-when-has-trivial-destructor-is-defined-instead-of-is
+	// https://github.com/mozart/mozart2/issues/51
+	bool hasConstructor        = std::is_default_constructible<T>::value && !std::has_trivial_default_constructor<T>::value;
+	bool hasDestructor         = std::is_destructible<T>::value          && !std::has_trivial_destructor<T>::value;
+	bool hasAssignmentOperator = std::is_copy_assignable<T>::value       && !std::has_trivial_copy_assign<T>::value;
+	bool hasCopyConstructor    = std::is_copy_constructible<T>::value    && !std::has_trivial_copy_constructor<T>::value;
+#endif
+	bool isFloat     = std::is_floating_point<T>::value;
+	bool isPrimitive = std::is_integral<T>::value || std::is_pointer<T>::value || std::is_enum<T>::value;
+	bool isClass     = std::is_class<T>::value;
+	bool isArray     = std::is_array<T>::value;
+
+	if( isFloat )
+		return asOBJ_APP_FLOAT;
+	if( isPrimitive )
+		return asOBJ_APP_PRIMITIVE;
+
+	if( isClass )
+	{
+		asDWORD flags = asOBJ_APP_CLASS;
+		if( hasConstructor )
+			flags |= asOBJ_APP_CLASS_CONSTRUCTOR;
+		if( hasDestructor )
+			flags |= asOBJ_APP_CLASS_DESTRUCTOR;
+		if( hasAssignmentOperator )
+			flags |= asOBJ_APP_CLASS_ASSIGNMENT;
+		if( hasCopyConstructor )
+			flags |= asOBJ_APP_CLASS_COPY_CONSTRUCTOR;
+		return flags;
+	}
+
+	if( isArray )
+		return asOBJ_APP_ARRAY;
+
+	// Unknown type traits
+	return 0;
+}
+
+#endif // c++11
 
 // Interface declarations
 
@@ -765,7 +837,7 @@ public:
 	virtual int         BindAllImportedFunctions() = 0;
 	virtual int         UnbindAllImportedFunctions() = 0;
 
-	// Bytecode saving and loading
+	// Byte code saving and loading
 	virtual int SaveByteCode(asIBinaryStream *out, bool stripDebugInfo = false) const = 0;
 	virtual int LoadByteCode(asIBinaryStream *in, bool *wasDebugInfoStripped = 0) = 0;
 
@@ -1013,7 +1085,7 @@ public:
 #endif
 	virtual int              GetReturnTypeId(asDWORD *flags = 0) const = 0;
 
-	// Type id for function pointers 
+	// Type id for function pointers
 	virtual int              GetTypeId() const = 0;
 	virtual bool             IsCompatibleWithTypeId(int typeId) const = 0;
 
@@ -1059,7 +1131,7 @@ public:
 	// Value
 	virtual bool Get() const = 0;
 	virtual void Set(bool val) = 0;
-	
+
 	// Thread management
 	virtual void Lock() const = 0;
 	virtual void Unlock() const = 0;
@@ -1080,7 +1152,7 @@ inline asSFuncPtr asFunctionPtr(T func)
 	asSFuncPtr p(2);
 
 #ifdef AS_64BIT_PTR
-	// The size_t cast is to avoid a compiler warning with asFUNCTION(0) 
+	// The size_t cast is to avoid a compiler warning with asFUNCTION(0)
 	// on 64bit, as 0 is interpreted as a 32bit int value
 	p.ptr.f.func = reinterpret_cast<asFUNCTION_t>(size_t(func));
 #else
@@ -1176,9 +1248,9 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 
 #if defined(_MSC_VER) && !defined(AS_64BIT_PTR)
 			// Method pointers for virtual inheritance is not supported,
-			// as it requires the location of the vbase table, which is 
+			// as it requires the location of the vbase table, which is
 			// only available to the C++ compiler, but not in the method
-			// pointer. 
+			// pointer.
 
 			// You can get around this by forward declaring the class and
 			// storing the sizeof its method pointer in a constant. Example:

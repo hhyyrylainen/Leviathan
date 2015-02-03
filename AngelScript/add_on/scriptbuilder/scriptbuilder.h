@@ -68,8 +68,8 @@ public:
 	//         <0 on error
 	int AddSectionFromMemory(const char *sectionName,
 							 const char *scriptCode, 
-							 unsigned int startLine = 1,
-							 unsigned int scriptLength = 0);
+							 unsigned int scriptLength = 0,
+							 int lineOffset = 0);
 
 	// Build the added script sections
 	int BuildModule();
@@ -107,7 +107,7 @@ public:
 protected:
 	void ClearAll();
 	int  Build();
-	int  ProcessScriptSection(const char *script, unsigned int length, const char *sectionname, unsigned int startline = 1);
+	int  ProcessScriptSection(const char *script, unsigned int length, const char *sectionname, int lineOffset);
 	int  LoadScriptSection(const char *filename);
 	bool IncludeIfNotAlreadyIncluded(const char *filename);
 

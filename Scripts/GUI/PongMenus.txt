@@ -409,12 +409,14 @@ template<TabAndName, TSlotNumber, SplitInt> LobbyPlayerControlSelect:
                  // Just dump all our data there //
                  NamedVars@ vars = @event.GetNamedVars();
 
-                 vars.AddValue(ScriptSafeVariableBlock("Slot", "TSlotNumber");
-                 vars.AddValue(ScriptSafeVariableBlock("Split", "SplitInt");
-                 vars.AddValue(ScriptSafeVariableBlock("ControlsName", text);
+                 vars.AddValue(ScriptSafeVariableBlock("Slot", "TSlotNumber"));
+                 vars.AddValue(ScriptSafeVariableBlock("Split", "SplitInt"));
+                 vars.AddValue(ScriptSafeVariableBlock("ControlsName", text));
 
                  // And let someone else do the hard work //
                  GetEventHandler().CallEvent(event);
+
+                 return true;
             }
         @%};
     }

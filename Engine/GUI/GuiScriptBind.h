@@ -88,6 +88,11 @@ bool CEGUIComboboxAddItem(CEGUI::Window* obj, const string &text){
     
     convbox->addItem(new CEGUI::StandardItem(CEGUI::String(text)));
 
+    // This might kill the performance //
+    convbox->setAutoSizeListHeightToContent(true);
+    convbox->handleUpdatedListItemData();
+    convbox->updateAutoSizedDropList();
+    
     return true;
 }
 

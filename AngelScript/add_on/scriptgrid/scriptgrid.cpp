@@ -121,14 +121,14 @@ CScriptGrid *CScriptGrid::Create(asIObjectType *ot, asUINT w, asUINT h, void *de
 }
 
 // This optional callback is called when the template type is first used by the compiler.
-// It allows the application to validate if the template can be instanciated for the requested
+// It allows the application to validate if the template can be instantiated for the requested
 // subtype at compile time, instead of at runtime. The output argument dontGarbageCollect
 // allow the callback to tell the engine if the template instance type shouldn't be garbage collected,
 // i.e. no asOBJ_GC flag.
 static bool ScriptGridTemplateCallback(asIObjectType *ot, bool &dontGarbageCollect)
 {
-	// Make sure the subtype can be instanciated with a default factory/constructor,
-	// otherwise we won't be able to instanciate the elements.
+	// Make sure the subtype can be instantiated with a default factory/constructor,
+	// otherwise we won't be able to instantiate the elements.
 	int typeId = ot->GetSubTypeId();
 	if( typeId == asTYPEID_VOID )
 		return false;
@@ -294,7 +294,8 @@ CScriptGrid::CScriptGrid(asIObjectType *ot, void *buf)
 			buf = (asUINT*)(buf)+1;
 
 			// Copy the line
-			memcpy(At(0,y), buf, width*elementSize);
+			if( width > 0 )
+				memcpy(At(0,y), buf, width*elementSize);
 
 			// Move to next line
 			buf = (char*)(buf) + width*elementSize;
@@ -315,7 +316,8 @@ CScriptGrid::CScriptGrid(asIObjectType *ot, void *buf)
 			buf = (asUINT*)(buf)+1;
 
 			// Copy the line
-			memcpy(At(0,y), buf, width*elementSize);
+			if( width > 0 )
+				memcpy(At(0,y), buf, width*elementSize);
 
 			// With object handles it is safe to clear the memory in the received buffer
 			// instead of increasing the ref count. It will save time both by avoiding the
@@ -345,7 +347,8 @@ CScriptGrid::CScriptGrid(asIObjectType *ot, void *buf)
 			buf = (asUINT*)(buf)+1;
 
 			// Copy the line
-			memcpy(At(0,y), buf, width*elementSize);
+			if( width > 0 )
+				memcpy(At(0,y), buf, width*elementSize);
 
 			// With object handles it is safe to clear the memory in the received buffer
 			// instead of increasing the ref count. It will save time both by avoiding the
@@ -441,15 +444,19 @@ void CScriptGrid::Resize(asUINT width, asUINT height)
 	if( tmpBuffer == 0 )
 		return;
 
-	// Copy the existing values to the new buffer
-	asUINT w = width > buffer->width ? buffer->width : width;
-	asUINT h = height > buffer->height ? buffer->height : height;
-	for( asUINT y = 0; y < h; y++ )
-		for( asUINT x = 0; x < w; x++ )
-			SetValue(tmpBuffer, x, y, At(buffer, x, y));
+	if( buffer )
+	{
+		// Copy the existing values to the new buffer
+		asUINT w = width > buffer->width ? buffer->width : width;
+		asUINT h = height > buffer->height ? buffer->height : height;
+		for( asUINT y = 0; y < h; y++ )
+			for( asUINT x = 0; x < w; x++ )
+				SetValue(tmpBuffer, x, y, At(buffer, x, y));
 
-	// Replace the internal buffer
-	DeleteBuffer(buffer);
+		// Replace the internal buffer
+		DeleteBuffer(buffer);
+	}
+
 	buffer = tmpBuffer;
 }
 
@@ -539,12 +546,18 @@ CScriptGrid::~CScriptGrid()
 
 asUINT CScriptGrid::GetWidth() const
 {
-	return buffer->width;
+	if( buffer )
+		return buffer->width;
+
+	return 0;
 }
 
 asUINT CScriptGrid::GetHeight() const
 {
-	return buffer->height;
+	if( buffer )
+		return buffer->height;
+
+	return 0;
 }
 
 // internal
@@ -641,6 +654,8 @@ void CScriptGrid::CreateBuffer(SGridBuffer **buf, asUINT w, asUINT h)
 // internal
 void CScriptGrid::DeleteBuffer(SGridBuffer *buf)
 {
+	assert( buf );
+
 	Destruct(buf);
 
 	// Free the buffer
@@ -650,6 +665,8 @@ void CScriptGrid::DeleteBuffer(SGridBuffer *buf)
 // internal
 void CScriptGrid::Construct(SGridBuffer *buf)
 {
+	assert( buf );
+
 	if( subTypeId & asTYPEID_OBJHANDLE )
 	{
 		// Set all object handles to null
@@ -684,6 +701,8 @@ void CScriptGrid::Construct(SGridBuffer *buf)
 // internal
 void CScriptGrid::Destruct(SGridBuffer *buf)
 {
+	assert( buf );
+
 	if( subTypeId & asTYPEID_MASK_OBJECT )
 	{
 		asIScriptEngine *engine = objType->GetEngine();
@@ -702,6 +721,8 @@ void CScriptGrid::Destruct(SGridBuffer *buf)
 // GC behaviour
 void CScriptGrid::EnumReferences(asIScriptEngine *engine)
 {
+	if( buffer == 0 ) return;
+
 	// If the array is holding handles, then we need to notify the GC of them
 	if( subTypeId & asTYPEID_MASK_OBJECT )
 	{
@@ -718,6 +739,8 @@ void CScriptGrid::EnumReferences(asIScriptEngine *engine)
 // GC behaviour
 void CScriptGrid::ReleaseAllHandles(asIScriptEngine*)
 {
+	if( buffer == 0 ) return;
+
 	DeleteBuffer(buffer);
 	buffer = 0;
 }

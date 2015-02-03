@@ -383,7 +383,7 @@ bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const wstring &listenername)
 		createdconnection = TargetElement->subscribeEvent(*iter->second, CEGUI::Event::Subscriber(
                 &BaseGuiObject::EventOnCloseClicked, this));
 
-	} else if(iter->second == &CEGUI::FrameWindow::EventCloseClicked){
+	} else if(iter->second == &CEGUI::Combobox::EventListSelectionAccepted){
         
         createdconnection = TargetElement->subscribeEvent(*iter->second,
             CEGUI::Event::Subscriber(&BaseGuiObject::EventOnListSelectionAccepted, this));

@@ -164,6 +164,10 @@ namespace Leviathan{
 		Ogre::SceneManager* OverlayScene;
 		Ogre::Camera* OverLayCamera;
 
+        //! Like entity ID
+        //! Makes sure that created Ogre resources are unique
+        int ID;
+
 		GraphicalInputEntity* OwningWindow;
 
 		OIS::InputManager* WindowsInputManager;

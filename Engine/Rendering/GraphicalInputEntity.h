@@ -11,6 +11,7 @@
 #include "GUI/GuiManager.h"
 #include "Entities/Objects/ViewerCameraPos.h"
 #include "CEGUI/RendererModules/Ogre/Renderer.h"
+#include "boost/thread/mutex.hpp"
 
 namespace Leviathan{
 
@@ -77,7 +78,8 @@ namespace Leviathan{
 
 
 		//! \brief Overwrites the default InputController with a custom one
-		//! \warning The controller will be deleted by this and there is no way to release it without deleting after this call
+		//! \warning The controller will be deleted by this and there is no way to release it without deleting
+        //! after this call
 		DLLEXPORT void SetCustomInputController(shared_ptr<InputController> controller);
 
 
@@ -93,12 +95,20 @@ namespace Leviathan{
 
 		shared_ptr<GameWorld> LinkedWorld;
 		shared_ptr<ViewerCameraPos> LinkedCamera;
-		// this count variable is needed to parse resource groups after first window //
+        
+		//! this count variable is needed to parse resource groups after first window
 		static int GlobalWindowCount;
+
+        static boost::mutex GlobalCountMutex;
 		
 		//! Keeps track of how many windows in total have been created
 		static int TotalCreatedWindows;
 
+        static boost::mutex TotalCountMutex;
+
+        //! Pointer to the first CEGUI::OgreRenderer
+        static CEGUI::OgreRenderer* FirstCEGUIRenderer;
+        
 		//! The number of this window (starts from 1)
 		int WindowNumber;
 

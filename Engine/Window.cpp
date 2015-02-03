@@ -51,6 +51,7 @@ namespace Leviathan{
     DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner) :
         OWindow(owindow), WindowsInputManager(NULL), WindowMouse(NULL), WindowKeyboard(NULL),
         LastFrameDownMouseButtons(0), ForceMouseVisible(false), CursorState(true), MouseCaptured(false),
+        ID(IDFactory::GetID()),
         FirstInput(true), OverLayCamera(NULL), IsInvalidated(false)
 #ifdef __GNUC__
         , XDisplay(NULL), m_hwnd(0), XInvCursor(0)
@@ -693,7 +694,7 @@ namespace Leviathan{
     void Leviathan::Window::_CreateOverlayScene(){
         // create scene manager //
         OverlayScene = Ogre::Root::getSingleton().createSceneManager(Ogre::ST_INTERIOR, 1,
-            Ogre::INSTANCING_CULLING_SINGLETHREAD, "Overlay_forWindow_");
+            Ogre::INSTANCING_CULLING_SINGLETHREAD, "Overlay_forWindow_"+Convert::ToString(ID));
 
         OverLayCamera = OverlayScene->createCamera("empty camera");
     }

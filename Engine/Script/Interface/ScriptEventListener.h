@@ -3,6 +3,7 @@
 #include "Events/CallableObject.h"
 #include "Exceptions/ExceptionInvalidArgument.h"
 #include "Common/ThreadSafe.h"
+#include "Script/ScriptInterface.h"
 
 namespace Leviathan{ namespace Script{
 
@@ -51,8 +52,26 @@ namespace Leviathan{ namespace Script{
                 
                 if(OnEventScript){
 
-                    // Execute the script function //
-                    DEBUG_BREAK;
+                    // Setup the parameters //
+                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(
+                            new VoidPtrBlock(*event), L"Event"));
+
+                    (*event)->AddRef();
+
+                    ScriptRunningSetup sargs;
+                    sargs.SetArguments(Args);
+
+
+                    // Run the script //
+                    shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(OnGenericScript, &sargs);
+
+                    if(!result || !result->IsConversionAllowedNonPtr<int>()){
+
+                        return 0;
+                    }
+
+                    // Return the value returned by the script //
+                    return result->ConvertAndReturnVariable<int>();
                 }
 
                 return -1;
@@ -64,8 +83,26 @@ namespace Leviathan{ namespace Script{
                 
                 if(OnGenericScript){
 
-                    // Execute the script function //
-                    DEBUG_BREAK;
+                    // Setup the parameters //
+                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(
+                            new VoidPtrBlock(*event), L"GenericEvent"));
+
+                    (*event)->AddRef();
+
+                    ScriptRunningSetup sargs;
+                    sargs.SetArguments(Args);
+
+
+                    // Run the script //
+                    shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(OnGenericScript, &sargs);
+
+                    if(!result || !result->IsConversionAllowedNonPtr<int>()){
+
+                        return 0;
+                    }
+
+                    // Return the value returned by the script //
+                    return result->ConvertAndReturnVariable<int>();
                 }
 
                 return -1;

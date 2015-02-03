@@ -525,6 +525,17 @@ void Pong::PongGame::DoSpecialPostLoad(){
     // This is how to do something every frame //
     Leviathan::EventHandler::Get()->RegisterForEvent(this, EVENT_TYPE_FRAME_END);
 
+    // TESTING open a second window //
+    Logger::Get()->Write("Opening a second window...");
+    auto secondwind = Engine::Get()->OpenNewWindow();
+    Logger::Get()->Write("Window opened...");
+
+	if(!secondwind->GetGUI()->LoadGUIFile(L"./Data/Scripts/GUI/TestMenu.txt")){
+		
+		Logger::Get()->Error(L"Pong: failed to load the GuiFile, quitting");
+		LeviathanApplication::GetApp()->StartRelease();
+	}
+
     ClearTimers();
 }
 // ------------------------------------ //

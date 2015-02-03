@@ -42,8 +42,9 @@ NamedVars* Leviathan::AppDef::GetValues(){
 	return ConfigurationValues.get();
 }
 
-DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const wstring &logfile, const wstring &engineconfigfile, const wstring &gameconfig, const wstring &keyconfig, 
-	boost::function<void (GameConfiguration* configobj)> configchecker, boost::function<void (KeyConfiguration* keysobject)> keychecker)
+DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const wstring &logfile, const wstring &engineconfigfile,
+    const wstring &gameconfig, const wstring &keyconfig, boost::function<void (GameConfiguration* configobj)>
+    configchecker, boost::function<void (KeyConfiguration* keysobject)> keychecker)
 {
 
 	unique_ptr<AppDef> tmpptr(new AppDef(true));

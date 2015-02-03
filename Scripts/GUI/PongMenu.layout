@@ -502,7 +502,7 @@
         
         <Property name="FrameEnabled" value="False"/>
         <Property name="BackgroundEnabled" value="True"/>
-        <Property name="Font" value="Simonetta"/>
+        <Property name="Font" value="Simonetta-Regular"/>
         <Property name="Text" value="Players:"/>
       </Window>
 

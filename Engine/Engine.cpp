@@ -561,8 +561,18 @@ void Leviathan::Engine::Release(bool forced){
 	if(!forced)
 		_ThreadingManager->WaitForAllTasksToFinish();
 
+    // Make windows clear their stored objects //
+    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+
+        AdditionalGraphicalEntities[i]->ReleaseLinked();
+        SAFE_DELETE(AdditionalGraphicalEntities[i]);
+    }
+
+    AdditionalGraphicalEntities.clear();
+
+    // Finally the main window //
 	if(GraphicalEntity1){
-		// Make windows clear their stored objects //
+
 		GraphicalEntity1->ReleaseLinked();
 	}
 
@@ -867,6 +877,25 @@ DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 		openwindows++;
 
 	return openwindows;
+}
+// ------------------------------------ //
+DLLEXPORT GraphicalInputEntity* Leviathan::Engine::OpenNewWindow(){
+
+    AppDef winparams;
+
+
+    winparams.SetWindowDetails(WindowDataDetails(L"My Second window", 1280, 720, true, true,
+#ifdef _WIN32
+            NULL,
+#endif            
+            NULL));
+    
+    
+    unique_ptr<GraphicalInputEntity> newwindow(new GraphicalInputEntity(Graph, &winparams));
+    
+    AdditionalGraphicalEntities.push_back(newwindow.get());
+    
+    return newwindow.release();
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEntity* owningwindow,

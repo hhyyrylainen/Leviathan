@@ -92,7 +92,7 @@ class AIDataCache{
             // Get track controller positions //
             TrackEntityController@ track = AISlot.GetTrackController();
             Float3 startpos = track.GetCurrentNodePosition();
-            Float3 endpos = track.GetNextNodePosition();
+            endpos = track.GetNextNodePosition();
             
             // Change state //
             AiState = AISTATE_TRYINGTOINTERCEPT;
@@ -195,7 +195,7 @@ class AIDataCache{
             // Get track controller positions //
             TrackEntityController@ track = AISlot.GetTrackController();
             Float3 startpos = track.GetCurrentNodePosition();
-            Float3 endpos = track.GetNextNodePosition();
+            endpos = track.GetNextNodePosition();
             
             // Change state //
             AiState = AISTATE_BLOCKINGBALL;
@@ -229,15 +229,10 @@ class AIDataCache{
         if(AiState == AISTATE_IDLING){
             // Get the ball location along our axis and set our progress //
             
-            Prop@ ballptr = GetPongBase().GetBall();
-            Float3 ballpos = ballptr.GetPosition();
-            
-            float curprogress = AISlot.GetTrackProgress();
-            
             // Get track controller positions //
             TrackEntityController@ track = AISlot.GetTrackController();
             Float3 startpos = track.GetCurrentNodePosition();
-            Float3 endpos = track.GetNextNodePosition();
+            endpos = track.GetNextNodePosition();
                 
             float disttostart;
             float disttoend;

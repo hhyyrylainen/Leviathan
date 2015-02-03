@@ -64,7 +64,8 @@ namespace Gui{
 		DLLEXPORT GuiManager();
 		DLLEXPORT ~GuiManager();
 
-		DLLEXPORT bool Init(AppDef* vars, Graphics* graph, GraphicalInputEntity* window);
+        //! \param ismain Set to true for first created GuiManager
+		DLLEXPORT bool Init(Graphics* graph, GraphicalInputEntity* window, bool ismain);
 		DLLEXPORT void Release();
 
 		//! \brief Called by Engine during Release to destroy static variables
@@ -186,10 +187,6 @@ namespace Gui{
         
 
 	private:
-		// Rendering //
-		bool _CreateInternalOgreResources(Ogre::SceneManager* windowsscene);
-		void _ReleaseOgreResources();
-
 
 		//! The implementation of PlayAnimationOnWindow
 		void _PlayAnimationOnWindow(CEGUI::Window* targetwind, CEGUI::Animation* animdefinition, bool recurse,

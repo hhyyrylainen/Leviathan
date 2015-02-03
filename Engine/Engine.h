@@ -76,8 +76,16 @@ namespace Leviathan{
         //! \post The World will have been released and removed from Engine's internal list and the world pointer will
         //! be NULL
         DLLEXPORT void DestroyWorld(shared_ptr<GameWorld> &world);
-        
 
+        //! \brief Opens a new window
+        //! \note The window may become broken if the main window is closed
+        //! \todo Allow changing the parameters
+        DLLEXPORT GraphicalInputEntity* OpenNewWindow();
+
+        //! \brief Returns the main window
+		DLLEXPORT GraphicalInputEntity* GetWindowEntity(){ return GraphicalEntity1; };
+
+        
 		DLLEXPORT void SaveScreenShot();
 
 		DLLEXPORT Graphics* GetGraphics(){ return Graph; };
@@ -88,7 +96,6 @@ namespace Leviathan{
 		DLLEXPORT ScriptConsole* GetScriptConsole(){ return MainConsole;};
 		DLLEXPORT FileSystem* GetFileSystem(){ return MainFileHandler; };
 		DLLEXPORT AppDef* GetDefinition(){ return Define;};
-		DLLEXPORT GraphicalInputEntity* GetWindowEntity(){ return GraphicalEntity1; };
 		DLLEXPORT NewtonManager* GetNewtonManager(){ return _NewtonManager; };
 		DLLEXPORT LeviathanApplication* GetOwningApplication(){ return Owner; };
 		DLLEXPORT PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
@@ -129,7 +136,9 @@ namespace Leviathan{
 
 		RenderingStatistics* RenderTimer;
 		Graphics* Graph;
+        
 		GraphicalInputEntity* GraphicalEntity1;
+        std::vector<GraphicalInputEntity*> AdditionalGraphicalEntities;
 
 		SoundDevice* Sound;
 		DataStore* Mainstore;

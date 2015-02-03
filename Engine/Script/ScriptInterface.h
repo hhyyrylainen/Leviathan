@@ -29,6 +29,11 @@ namespace Leviathan{
 			return ScriptRunner->RunSetUp(obj, params);
 		}
 
+		DLLEXPORT inline shared_ptr<VariableBlock> ExecuteScript(asIScriptFunction* func, ScriptRunningSetup* params){
+			// just call executor's function //
+			return ScriptRunner->RunFunctionSetUp(func, params);
+		}        
+
 		DLLEXPORT inline ScriptExecutor* GetExecutor(){
 			return ScriptRunner;
 		}

@@ -899,9 +899,11 @@ DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 	// If we are in text only mode always return 1 //
 	if(NoGui)
 		return 1;
+    
 	GUARD_LOCK_THIS_OBJECT();
+    
 
-	if(GraphicalEntity1->GetWindow()->IsOpen())
+	if(GraphicalEntity1 && GraphicalEntity1->GetWindow()->IsOpen())
 		openwindows++;
 
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){

@@ -9,11 +9,13 @@
 #include "FileSystem.h"
 #include "Engine.h"
 #include "OgreRoot.h"
+#include "OgreSceneManager.h"
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorWorkspace.h"
 #include "Compositor/OgreCompositorWorkspaceDef.h"
 #include "Compositor/OgreCompositorNodeDef.h"
 #include "Compositor/Pass/PassClear/OgreCompositorPassClearDef.h"
+#include "Compositor/Pass/PassScene/OgreCompositorPassSceneDef.h"
 #include "CEGUI/RendererModules/Ogre/Renderer.h"
 #include "CEGUI/SchemeManager.h"
 #include "GUI/FontManager.h"
@@ -244,13 +246,6 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed){
 	// update window //
 	Ogre::RenderWindow* tmpwindow = DisplayWindow->GetOgreWindow();
 
-	// cancel actual rendering if window closed //
-	if(tmpwindow->isClosed()){
-
-		Logger::Get()->Warning(L"GraphicalInputEntity: Render: skipping render due to window being closed");
-		return false;
-	}
-
 	// finish rendering the window //
 	tmpwindow->swapBuffers();
 
@@ -276,7 +271,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::CreateAutoClearWorkspaceDefIfNot
     // Pass for it
     Ogre::CompositorTargetDef* targetpasses = 
         rendernode->addTargetPass("renderwindow");
-    targetpasses->setNumPasses(1);
+    targetpasses->setNumPasses(2);
 
     Ogre::CompositorPassClearDef* clearpass =
         static_cast<Ogre::CompositorPassClearDef*>(targetpasses->
@@ -285,6 +280,15 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::CreateAutoClearWorkspaceDefIfNot
     // Clear all of the buffers
     clearpass->mClearBufferFlags = Ogre::FBT_DEPTH | Ogre::FBT_STENCIL | Ogre::FBT_COLOUR;
 
+    // This will hopefully help it get properly cleared //
+    Ogre::CompositorPassSceneDef* scenepass =
+        static_cast<Ogre::CompositorPassSceneDef*>(targetpasses->
+            addPass(Ogre::PASS_SCENE));
+
+    scenepass->mFirstRQ = Ogre::RENDER_QUEUE_BACKGROUND;
+    scenepass->mLastRQ = Ogre::RENDER_QUEUE_MAX;
+
+    
     // Connect the main render target to the node
     templatedworkspace->connectOutput("GraphicalInputEntity_clear_node", 0);
     
@@ -292,7 +296,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::CreateAutoClearWorkspaceDefIfNot
     AutoClearResourcesCreated = true;
 }
 
-DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(){
+DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(const string &skyboxmaterial){
 
     // Skip if already doing this //
     if(AutoClearResources)
@@ -316,6 +320,20 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(){
 	// Which will be rendered before the overlay workspace //
 	AutoClearResources->WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(AutoClearResources->WorldsScene,
         DisplayWindow->GetOgreWindow(), AutoClearResources->WorldSceneCamera, "WorldsWorkspace", true, 0);
+
+    // Without a skybox CEGUI flickers... //
+    if(skyboxmaterial.empty())
+        return;
+    
+    try{
+        
+        AutoClearResources->WorldsScene->setSkyBox(true, skyboxmaterial);
+        
+	} catch(const Ogre::InvalidParametersException &e){
+
+		Logger::Get()->Error("GraphicalInputEntity: setting auto clear skybox "+e.getFullDescription());
+	}
+
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::StopAutoClearing(){
@@ -349,7 +367,8 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::SaveScreenShot(const string &fil
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::Tick(int mspassed){
 	// pass to GUI //
-	WindowsGui->GuiTick(mspassed);
+    if(WindowsGui)
+        WindowsGui->GuiTick(mspassed);
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::OnResize(int width, int height){

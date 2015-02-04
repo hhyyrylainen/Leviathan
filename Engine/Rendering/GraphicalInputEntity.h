@@ -44,7 +44,9 @@ namespace Leviathan{
 
         //! \brief Creates a workspace that clears this window to a specified colour
         //! \note A world cannot be attached to this object if this is used
-        DLLEXPORT void SetAutoClearing();
+        //! \param skyboxmaterial The material to use for a skybox. Empty if not wanted.
+        //! \warning A sky box is required to have CEGUI not flicker while rendering on this window
+        DLLEXPORT void SetAutoClearing(const string &skyboxmaterial);
 
         //! \brief Destroyes the workspace that is clearing this window each frame
         DLLEXPORT void StopAutoClearing();

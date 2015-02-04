@@ -242,8 +242,6 @@ namespace Leviathan{
 
         // Report that the window is now closed //
         Logger::Get()->Info(L"Window: closing window("+Convert::ToWstring(OwningWindow->GetWindowNumber())+L")");
-
-        SAFE_DELETE(OWindow);
     }
 
     DLLEXPORT void Leviathan::Window::ResizeWindow(const int &width, const int &height){

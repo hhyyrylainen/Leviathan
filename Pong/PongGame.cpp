@@ -526,24 +526,21 @@ void Pong::PongGame::DoSpecialPostLoad(){
     Leviathan::EventHandler::Get()->RegisterForEvent(this, EVENT_TYPE_FRAME_END);
 
     // TESTING open a second window //
-    Logger::Get()->Write("Opening a second window...");
-    auto secondwind = Engine::Get()->OpenNewWindow();
-    Logger::Get()->Write("Window opened...");
+    if(false){
+        
+        auto secondwind = Engine::Get()->OpenNewWindow();
 
-	if(!secondwind->GetGUI()->LoadGUIFile(L"./Data/Scripts/GUI/TestMenu.txt")){
+        if(!secondwind->GetGUI()->LoadGUIFile(L"./Data/Scripts/GUI/TestMenu.txt")){
 		
-		Logger::Get()->Error(L"Pong: failed to load the GuiFile, quitting");
-		LeviathanApplication::GetApp()->StartRelease();
-	}
+            Logger::Get()->Error(L"Pong: failed to load the GuiFile, quitting");
+            LeviathanApplication::GetApp()->StartRelease();
+        }
 
-    auto secondcam = make_shared<ViewerCameraPos>();
-    auto secondworld = Engine::Get()->CreateWorld(secondwind, secondcam);
-    secondwind->LinkObjects(secondcam, secondworld);
+        // Clear the window //
+        secondwind->SetAutoClearing("NiceDaySky");
 
-    secondworld->SetSkyBox("NiceDaySky");
+    }
     
-    // Clear the window //
-    //secondwind->SetAutoClearing();
 
     ClearTimers();
 }

@@ -12,6 +12,8 @@
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorWorkspace.h"
 #include "Compositor/OgreCompositorWorkspaceDef.h"
+#include "Compositor/OgreCompositorNodeDef.h"
+#include "Compositor/Pass/PassClear/OgreCompositorPassClearDef.h"
 #include "CEGUI/RendererModules/Ogre/Renderer.h"
 #include "CEGUI/SchemeManager.h"
 #include "GUI/FontManager.h"
@@ -19,6 +21,42 @@
 #include "Exceptions/ExceptionNULLPtr.h"
 #include "boost/thread/lock_types.hpp"
 using namespace Leviathan;
+// ------------------------------------ //
+
+namespace Leviathan{
+
+    //! \brief Used to hold objects that are required for clearing a GraphicalInputEntity each frame
+    class GEntityAutoClearResources{
+    public:
+
+        GEntityAutoClearResources(Ogre::Root* destroyer) :
+            Root(destroyer), WorldSceneCamera(NULL), WorldsScene(NULL), WorldWorkspace(NULL)
+        {
+
+        }
+        
+        ~GEntityAutoClearResources(){
+
+            Root->getCompositorManager2()->removeWorkspace(WorldWorkspace);
+            WorldWorkspace = NULL;
+            
+            Root->destroySceneManager(WorldsScene);
+            WorldsScene = NULL;
+            WorldSceneCamera = NULL;
+        }
+        
+        
+        Ogre::Camera* WorldSceneCamera;
+		Ogre::SceneManager* WorldsScene;
+		Ogre::CompositorWorkspace* WorldWorkspace;
+
+        Ogre::Root* Root;
+    };
+
+}
+
+
+
 // ------------------------------------ //
 DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties) :
     MouseCaptureState(false), CEGUIRenderer(NULL)
@@ -63,11 +101,6 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
     // Do some first window initialization //
 	if(windowsafter == 1){
         
-		// Initialize the compositor //
-        // This might not be required anymore...
-		//windowcreater->GetOgreRoot()->initialiseCompositor();
-
-		
 		// Notify engine to register threads to work with Ogre //
 		Engine::GetEngine()->_NotifyThreadsRegisterOgre();
 		FileSystem::RegisterOGREResourceGroups();
@@ -143,6 +176,8 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
 	GUARD_LOCK_THIS_OBJECT();
 
+    StopAutoClearing();
+
 	// Mark the Window as unusable //
 	DisplayWindow->InvalidateWindow();
 
@@ -188,6 +223,9 @@ int Leviathan::GraphicalInputEntity::TotalCreatedWindows = 0;
 boost::mutex Leviathan::GraphicalInputEntity::TotalCountMutex;
 
 CEGUI::OgreRenderer* Leviathan::GraphicalInputEntity::FirstCEGUIRenderer = NULL;
+
+bool Leviathan::GraphicalInputEntity::AutoClearResourcesCreated = false;
+boost::mutex Leviathan::GraphicalInputEntity::AutoClearResourcesMutex;
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::ReleaseLinked(){
 	// release world and object references //
@@ -219,7 +257,75 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed){
 	return true;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(shared_ptr<ViewerCameraPos> camera, shared_ptr<GameWorld> world){
+DLLEXPORT void Leviathan::GraphicalInputEntity::CreateAutoClearWorkspaceDefIfNotAlready(){
+
+    boost::unique_lock<boost::mutex> lock(AutoClearResourcesMutex);
+
+    if(AutoClearResourcesCreated)
+        return;
+
+    Ogre::CompositorManager2* manager = Graphics::Get()->GetOgreRoot()->getCompositorManager2();
+
+    auto templatedworkspace = manager->addWorkspaceDefinition("GraphicalInputEntity_clear_workspace");
+
+    // Create a node for rendering on top of everything
+    auto rendernode = manager->addNodeDefinition("GraphicalInputEntity_clear_node");
+
+    rendernode->setNumTargetPass(1);
+
+    // Pass for it
+    Ogre::CompositorTargetDef* targetpasses = 
+        rendernode->addTargetPass("renderwindow");
+    targetpasses->setNumPasses(1);
+
+    Ogre::CompositorPassClearDef* clearpass =
+        static_cast<Ogre::CompositorPassClearDef*>(targetpasses->
+            addPass(Ogre::PASS_CLEAR));
+
+    // Clear all of the buffers
+    clearpass->mClearBufferFlags = Ogre::FBT_DEPTH | Ogre::FBT_STENCIL | Ogre::FBT_COLOUR;
+
+    // Connect the main render target to the node
+    templatedworkspace->connectOutput("GraphicalInputEntity_clear_node", 0);
+    
+
+    AutoClearResourcesCreated = true;
+}
+
+DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(){
+
+    // Skip if already doing this //
+    if(AutoClearResources)
+        return;
+
+    CreateAutoClearWorkspaceDefIfNotAlready();
+
+    Ogre::Root* ogre = Graphics::Get()->GetOgreRoot();
+
+    AutoClearResources = move(unique_ptr<GEntityAutoClearResources>(new GEntityAutoClearResources(
+                ogre)));
+    
+	// create scene manager //
+    AutoClearResources->WorldsScene = ogre->createSceneManager(Ogre::ST_GENERIC, 1,
+        Ogre::INSTANCING_CULLING_SINGLETHREAD, "GraphicalInputEntity_clear_scene_"+Convert::ToString(WindowNumber));
+
+	// create camera //
+	AutoClearResources->WorldSceneCamera = AutoClearResources->WorldsScene->createCamera("Cam");
+
+	// Create the workspace for this scene //
+	// Which will be rendered before the overlay workspace //
+	AutoClearResources->WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(AutoClearResources->WorldsScene,
+        DisplayWindow->GetOgreWindow(), AutoClearResources->WorldSceneCamera, "WorldsWorkspace", true, 0);
+}
+
+DLLEXPORT void Leviathan::GraphicalInputEntity::StopAutoClearing(){
+
+    AutoClearResources.reset();
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(shared_ptr<ViewerCameraPos> camera,
+    shared_ptr<GameWorld> world)
+{
 	LinkedCamera = camera;
 	LinkedWorld = world;
 }

@@ -15,6 +15,9 @@
 
 namespace Leviathan{
 
+    class GEntityAutoClearResources;
+    
+
 	//! \brief Represents a collection of objects that represents everything related to a single game's Windows window
 	//! \note Even though this class is marked thread safe only one instance maybe constructed at once
 	class GraphicalInputEntity : public ThreadSafe{
@@ -38,6 +41,13 @@ namespace Leviathan{
 		DLLEXPORT void ReleaseLinked();
 
 		DLLEXPORT void UnlinkAll();
+
+        //! \brief Creates a workspace that clears this window to a specified colour
+        //! \note A world cannot be attached to this object if this is used
+        DLLEXPORT void SetAutoClearing();
+
+        //! \brief Destroyes the workspace that is clearing this window each frame
+        DLLEXPORT void StopAutoClearing();
 
 		//! Returns how many windows have been created
 		//! \see GlobalWindowCount
@@ -83,6 +93,9 @@ namespace Leviathan{
 		DLLEXPORT void SetCustomInputController(shared_ptr<InputController> controller);
 
 
+        //! \brief Creates a workspace definition that can be used to clear a window
+        DLLEXPORT static void CreateAutoClearWorkspaceDefIfNotAlready();
+
 	protected:
 
 
@@ -114,6 +127,13 @@ namespace Leviathan{
 
 		bool MouseCaptureState;
 		static GraphicalInputEntity* InputCapturer;
+
+        //! True when auto clear ogre workspace has been created
+        static bool AutoClearResourcesCreated;
+        static boost::mutex AutoClearResourcesMutex;
+
+        //! Used when this window does'nt have a world and the background needs to be cleared
+        unique_ptr<GEntityAutoClearResources> AutoClearResources;
 	};
 
 }

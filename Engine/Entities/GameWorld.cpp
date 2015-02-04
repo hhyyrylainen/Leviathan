@@ -299,7 +299,7 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre, Window* rendertarget){
 	// create scene manager //
 	WorldsScene = ogre->createSceneManager(Ogre::ST_EXTERIOR_FAR, 2, Ogre::INSTANCING_CULLING_THREADED,
-        "MainSceneManager");
+        "MainSceneManager_"+Convert::ToString(ID));
 
 	WorldsScene->setShadowFarDistance(1000.f);
 	WorldsScene->setShadowDirectionalLightExtrusionDistance(10000.f);
@@ -438,7 +438,7 @@ DLLEXPORT void Leviathan::GameWorld::Tick(){
     auto nethandler = NetworkHandler::Get();
 
     // TODO: the vectors could be sorted to improve branch predictor performance
-    if(nethandler->GetNetworkType() == NETWORKED_TYPE_SERVER){
+    if(nethandler && nethandler->GetNetworkType() == NETWORKED_TYPE_SERVER){
 
         // Skip if not tick that will be stored //
         if(TickNumber % WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL != 0)
@@ -454,7 +454,7 @@ DLLEXPORT void Leviathan::GameWorld::Tick(){
             
         }
         
-    } else if(nethandler->GetNetworkType() == NETWORKED_TYPE_CLIENT){
+    } else if(nethandler && nethandler->GetNetworkType() == NETWORKED_TYPE_CLIENT){
 
         for(size_t i = 0; i < SendableObjects.size(); ++i){
             

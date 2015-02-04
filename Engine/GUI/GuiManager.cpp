@@ -734,6 +734,7 @@ void Leviathan::Gui::GuiManager::Release(){
 
 			tmphandler->StopListeningForFileChanges(FileChangeID);
 		}
+        
 		FileChangeID = 0;
 	}
 

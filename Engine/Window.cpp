@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_WINDOW
 #include "Window.h"
@@ -212,7 +211,8 @@ namespace Leviathan{
 
         return false;
     }
-// ------------------------------------ //
+    
+    // ------------------------------------ //
     DLLEXPORT void Leviathan::Window::CloseDown(){
 
         // Sometimes the window might be closed already so check is it safe to use //
@@ -242,6 +242,8 @@ namespace Leviathan{
 
         // Report that the window is now closed //
         Logger::Get()->Info(L"Window: closing window("+Convert::ToWstring(OwningWindow->GetWindowNumber())+L")");
+
+        SAFE_DELETE(OWindow);
     }
 
     DLLEXPORT void Leviathan::Window::ResizeWindow(const int &width, const int &height){

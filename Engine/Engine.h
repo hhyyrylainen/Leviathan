@@ -85,6 +85,8 @@ namespace Leviathan{
         //! \brief Returns the main window
 		DLLEXPORT GraphicalInputEntity* GetWindowEntity(){ return GraphicalEntity1; };
 
+        //! \brief Removes an closed window from the engine
+        DLLEXPORT void ReportClosedWindow(GraphicalInputEntity* windowentity);
         
 		DLLEXPORT void SaveScreenShot();
 

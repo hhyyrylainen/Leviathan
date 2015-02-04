@@ -536,6 +536,15 @@ void Pong::PongGame::DoSpecialPostLoad(){
 		LeviathanApplication::GetApp()->StartRelease();
 	}
 
+    auto secondcam = make_shared<ViewerCameraPos>();
+    auto secondworld = Engine::Get()->CreateWorld(secondwind, secondcam);
+    secondwind->LinkObjects(secondcam, secondworld);
+
+    secondworld->SetSkyBox("NiceDaySky");
+    
+    // Clear the window //
+    //secondwind->SetAutoClearing();
+
     ClearTimers();
 }
 // ------------------------------------ //

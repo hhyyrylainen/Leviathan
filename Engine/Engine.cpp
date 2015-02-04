@@ -683,6 +683,10 @@ void Leviathan::Engine::Tick(){
 		// update windows //
 		GraphicalEntity1->Tick(TimePassed);
 
+        for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+
+            AdditionalGraphicalEntities[i]->Tick(TimePassed);
+        }
 	}
 
 
@@ -721,6 +725,24 @@ void Leviathan::Engine::Tick(){
 	// Call the default app tick //
 	Owner->Tick(TimePassed);
 
+    // Detect closed windows //
+    if(!GraphicalEntity1->GetWindow()->IsOpen()){
+
+        // Window closed //
+        ReportClosedWindow(GraphicalEntity1);
+    }
+
+    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+
+        if(!AdditionalGraphicalEntities[i]->GetWindow()->IsOpen()){
+
+            ReportClosedWindow(AdditionalGraphicalEntities[i]);
+            
+            // The above call might change the vector so stop looping after it //
+            break;
+        }
+    }
+    
 	TickTime = (int)(Misc::GetTimeMs64()-LastFrame);
 }
 
@@ -773,8 +795,14 @@ void Leviathan::Engine::RenderFrame(){
 	bool shouldrender = false;
 
 	// Render //
-	if(GraphicalEntity1->Render(SinceLastFrame))
+	if(GraphicalEntity1 && GraphicalEntity1->Render(SinceLastFrame))
 		shouldrender = true;
+
+    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+
+        if(AdditionalGraphicalEntities[i]->Render(SinceLastFrame))
+            shouldrender = true;
+    }
 
     lockit.unlock();
 	if(shouldrender)
@@ -876,6 +904,12 @@ DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 	if(GraphicalEntity1->GetWindow()->IsOpen())
 		openwindows++;
 
+    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+
+        if(AdditionalGraphicalEntities[i]->GetWindow()->IsOpen())
+            openwindows++;
+    }
+
 	return openwindows;
 }
 // ------------------------------------ //
@@ -892,10 +926,39 @@ DLLEXPORT GraphicalInputEntity* Leviathan::Engine::OpenNewWindow(){
     
     
     unique_ptr<GraphicalInputEntity> newwindow(new GraphicalInputEntity(Graph, &winparams));
+
+    GUARD_LOCK_THIS_OBJECT();
     
     AdditionalGraphicalEntities.push_back(newwindow.get());
     
     return newwindow.release();
+}
+
+DLLEXPORT void Leviathan::Engine::ReportClosedWindow(GraphicalInputEntity* windowentity){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    windowentity->ReleaseLinked();
+
+    if(GraphicalEntity1 == windowentity){
+
+        SAFE_DELETE(GraphicalEntity1);
+        return;
+    }
+
+    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+
+        if(AdditionalGraphicalEntities[i] == windowentity){
+            
+            SAFE_DELETE(AdditionalGraphicalEntities[i]);
+            AdditionalGraphicalEntities.erase(AdditionalGraphicalEntities.begin()+i);
+            
+            return;
+        }
+    }
+
+    // Didn't find the target //
+    Logger::Get()->Error("Engine: couldn't find closing GraphicalInputEntity");
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEntity* owningwindow,

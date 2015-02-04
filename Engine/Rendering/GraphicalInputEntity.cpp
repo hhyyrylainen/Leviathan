@@ -367,8 +367,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::SaveScreenShot(const string &fil
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::Tick(int mspassed){
 	// pass to GUI //
-    if(WindowsGui)
-        WindowsGui->GuiTick(mspassed);
+    WindowsGui->GuiTick(mspassed);
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::OnResize(int width, int height){

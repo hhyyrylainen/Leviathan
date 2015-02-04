@@ -681,7 +681,8 @@ void Leviathan::Engine::Tick(){
 		Sound->Tick(TimePassed);
 
 		// update windows //
-		GraphicalEntity1->Tick(TimePassed);
+        if(GraphicalEntity1)
+            GraphicalEntity1->Tick(TimePassed);
 
         for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
 

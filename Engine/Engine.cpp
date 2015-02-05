@@ -727,7 +727,7 @@ void Leviathan::Engine::Tick(){
 	Owner->Tick(TimePassed);
 
     // Detect closed windows //
-    if(!GraphicalEntity1->GetWindow()->IsOpen()){
+    if(GraphicalEntity1 && !GraphicalEntity1->GetWindow()->IsOpen()){
 
         // Window closed //
         ReportClosedWindow(GraphicalEntity1);

@@ -59,6 +59,10 @@ int SetupData(GuiObject@ instance, Event@ event){
     ControlList.insertLast(ControlScheme("WASD keys", PLAYERCONTROLS_WASD));
     ControlList.insertLast(ControlScheme("IJKL keys", PLAYERCONTROLS_IJKL));
     ControlList.insertLast(ControlScheme("Numpad", PLAYERCONTROLS_NUMPAD));
+    ControlList.insertLast(ControlScheme("AI Normal", PLAYERCONTROLS_AI, 0));
+    ControlList.insertLast(ControlScheme("AI Combined", PLAYERCONTROLS_AI, 2));
+    ControlList.insertLast(ControlScheme("AI Cheating", PLAYERCONTROLS_AI, 1));
+    
 
 
     // Add them to all of the controls //

@@ -21,7 +21,7 @@
     <Window name="SlotIdentifier0" type="TaharezLook/StaticText">
     
         <Property name="Size" value="{{0.15, 0}, {0.2, 0}}"/>
-        <Property name="Position" value="{{0.1, 0}, {0.105, 0}}"/>
+        <Property name="Position" value="{{0.1, 0}, {0, 0}}"/>
         
         <Property name="BackgroundEnabled" value="False"/>
         <Property name="FrameEnabled" value="False"/>
@@ -33,8 +33,8 @@
     <!-- Info string synchronized by the server -->
     <Window name="PlayerTNumber0" type="TaharezLook/StaticText">
     
-        <Property name="Size" value="{{0.3, 0}, {0.15, 0}}"/>
-        <Property name="Position" value="{{0.3, 0}, {0.125, 0}}"/>
+        <Property name="Size" value="{{0.35, 0}, {0.11, 0}}"/>
+        <Property name="Position" value="{{0.25, 0}, {0.09, 0}}"/>
         
         
         <Property name="BackgroundEnabled" value="True"/>
@@ -50,28 +50,47 @@
     <Window name="PlayerTNumber0JoinOpen" type="TaharezLook/Button">
         
         <Property name="Size" value="{{0.18, 0}, {0.10, 0}}"/>
-        <Property name="Position" value="{{-0.05, 0}, {0.15, 0}}"/>
+        <Property name="Position" value="{{-0.025, 0}, {0.1, 0}}"/>
 
         <Property name="HorizontalAlignment" value="Right"/>
         <Property name="Font" value="Simonetta-Black"/>
         <Property name="Text" value="Open"/>
         
     </Window>
+
+    <!-- Close button -->
+    <Window name="PlayerTNumber0Close" type="TaharezLook/Button">
+        
+        <Property name="Size" value="{{0.09, 0}, {0.05, 0}}"/>
+        <Property name="Position" value="{{-0.23, 0}, {0.1, 0}}"/>
+        <Property name="Disabled" value="True"/>
+
+
+        <Property name="HorizontalAlignment" value="Right"/>
+        <Property name="Font" value="Simonetta-Black"/>
+        <Property name="Text" value="Close"/>
+        
+    </Window>
     
     <!-- Control choosing list -->
     <Window name="PlayerTNumber0TypeSelect" type="TaharezLook/Combobox">
         
-        <Property name="Area" value="{{0.17, 0}, {0.28, 0}, {0.5, 0}, {0.5, 0}}"/>
+        <Property name="Area" value="{{0.1, 0}, {0.2, 0}, {0.5, 0}, {0.5, 0}}"/>
         <Property name="Disabled" value="True"/>
-        
-        <Property name="ClippedByParent" value="False" />
-
-        <AutoWindow namePath="__auto_droplist__" >
-          <Property name="ClippedByParent" value="False" />
-        </AutoWindow>
         
         <Property name="Font" value="Simonetta-Black"/>
         <Property name="Text" value="Choose controls/AI"/>
+        
+    </Window>
+
+    <!-- Colour choosing list -->
+    <Window name="PlayerTNumber0ColourSelect" type="TaharezLook/Combobox">
+        
+        <Property name="Area" value="{{0.525, 0}, {0.2, 0}, {0.925, 0}, {0.5, 0}}"/>
+        <Property name="Disabled" value="True"/>
+        
+        <Property name="Font" value="Simonetta-Black"/>
+        <Property name="Text" value="Choose colour"/>
         
     </Window>
     
@@ -92,8 +111,8 @@
     <!-- Info string synchronized by the server -->
     <Window name="PlayerTNumber1" type="TaharezLook/StaticText">
     
-        <Property name="Size" value="{{0.3, 0}, {0.2, 0}}"/>
-        <Property name="Position" value="{{0.3, 0}, {0.50, 0}}"/>
+        <Property name="Size" value="{{0.35, 0}, {0.11, 0}}"/>
+        <Property name="Position" value="{{0.25, 0}, {0.55, 0}}"/>
         
         
         <Property name="BackgroundEnabled" value="True"/>
@@ -109,7 +128,7 @@
     <Window name="PlayerTNumber1JoinOpen" type="TaharezLook/Button">
         
         <Property name="Size" value="{{0.18, 0}, {0.10, 0}}"/>
-        <Property name="Position" value="{{-0.05, 0}, {0.55, 0}}"/>
+        <Property name="Position" value="{{-0.025, 0}, {0.6, 0}}"/>
         
         
         <Property name="HorizontalAlignment" value="Right"/>
@@ -117,21 +136,43 @@
         <Property name="Text" value="Open"/>
         
     </Window>
+
+    <!-- Close button -->
+    <Window name="PlayerTNumber1Close" type="TaharezLook/Button">
+        
+        <Property name="Size" value="{{0.09, 0}, {0.05, 0}}"/>
+        <Property name="Position" value="{{-0.23, 0}, {0.6, 0}}"/>
+        <Property name="Disabled" value="True"/>
+
+
+        <Property name="HorizontalAlignment" value="Right"/>
+        <Property name="Font" value="Simonetta-Black"/>
+        <Property name="Text" value="Close"/>
+        
+    </Window>
+
     
     <!-- Control choosing list -->
     <Window name="PlayerTNumber1TypeSelect" type="TaharezLook/Combobox">
         
-        <Property name="Area" value="{{0.17, 0}, {0.72, 0}, {0.5, 0}, {0.93, 0}}"/>
+        <Property name="Area" value="{{0.1, 0}, {0.7, 0}, {0.5, 0}, {1, 0}}"/>
         <Property name="Disabled" value="True"/>
 
-        <Property name="ClippedByParent" value="False" />
-
-        <AutoWindow namePath="__auto_droplist__" >
-          <Property name="ClippedByParent" value="False" />
-        </AutoWindow>
-        
         <Property name="Font" value="Simonetta-Black"/>
         <Property name="Text" value="Choose controls/AI"/>
         
     </Window>
+
+    <!-- Colour choosing list -->
+    <Window name="PlayerTNumber1ColourSelect" type="TaharezLook/Combobox">
+        
+        <Property name="Area" value="{{0.525, 0}, {0.7, 0}, {0.925, 0}, {1, 0}}"/>
+        <Property name="Disabled" value="True"/>
+        
+        <Property name="Font" value="Simonetta-Black"/>
+        <Property name="Text" value="Choose colour"/>
+        
+    </Window>
+
+    
 </Window>

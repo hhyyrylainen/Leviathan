@@ -57,6 +57,8 @@ public:
 	~GuiClipboardHandler(){
         GUARD_LOCK_THIS_OBJECT();
 #ifdef __linux
+        XFlush(XDisplay);
+        
         CleanUpWindow();
 #endif
         
@@ -565,7 +567,7 @@ private:
     void CleanUpWindow(){
         
         GUARD_LOCK_THIS_OBJECT();
-        
+
         // First stop the message loop //
         StopXMessageLoop();
         
@@ -577,7 +579,7 @@ private:
         // And then the connection //
         XCloseDisplay(XDisplay);
 
-        //XDisplay = 0;
+        XDisplay = 0;
         ClipboardWindow = 0;
     }
 

@@ -20,7 +20,9 @@ Pong::PongCommandHandler::~PongCommandHandler(){
 // ------------------------------------ //
 DLLEXPORT bool Pong::PongCommandHandler::CanHandleCommand(const string &cmd) const{
 	// Just compare to our command strings //
-	if(cmd == "join" || cmd == "open" || cmd == "kickslot" || cmd == "leave" || cmd == "ready" || cmd == "start"){
+	if(cmd == "join" || cmd == "open" || cmd == "kickslot" || cmd == "leave" || cmd == "ready" || cmd == "start" ||
+        cmd == "close" || cmd == "controls" || cmd == "colour")
+    {
 
 		return true;
 	}
@@ -127,6 +129,7 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
             Convert::Utf8ToUtf16(sender->GetNickname()));
 
 		slots->NotifyUpdatedValue();
+        
 	} else if(*cmd == "open"){
 
 		// Get the target slot and target split //
@@ -215,8 +218,6 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 		chosenslot->SetControls(PLAYERCONTROLS_NONE, 0);
 		chosenslot->SetColour(Float4::GetColourWhite());
 
-		Logger::Get()->Info(L"Slot opened, "+Convert::ToWstring(slotnumber));
-
 		slots->NotifyUpdatedValue();
 
 	} else if(*cmd == "start"){
@@ -233,7 +234,71 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
                 PongServer::Get()->OnStartPreMatch();
 
             })));
-	}
+        
+	} else if(*cmd == "controls"){
+
+		// Get the target parameters //
+		auto targetslot = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
+
+		auto targetsplit = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
+
+        auto targetcontrols = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
+
+        auto targetnumber = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
+
+		bool split;
+
+        // Fail if invalid format //
+        if(!targetsplit || !targetslot || !targetcontrols || !targetnumber)
+            return;
+
+        int slotnumber = Convert::StringTo<int>(*targetslot);
+
+        int controls = Convert::StringTo<int>(*targetcontrols);
+
+        int number = Convert::StringTo<int>(*targetnumber);
+
+        int tmpvar = Convert::StringTo<int>(*targetsplit);
+
+        if(!tmpvar){
+
+            split = false;
+        } else {
+
+            split = true;
+        }
+
+        if(slotnumber < 0 || slotnumber > 3){
+
+			sender->SendPrivateMessage("invalid slot number");
+			return;
+		}
+        
+        // Find the target slot //
+
+		PlayerList* slots = BasePongParts::Get()->GetPlayers();
+
+		// Check is the slot empty //
+		auto chosenslot = slots->GetSlot(slotnumber);
+
+		if(split){
+
+			chosenslot = chosenslot->GetSplit();
+		}
+
+        Logger::Get()->Info("TODO: check whether the player changing controls is the player in the slot");
+
+        if(!chosenslot->IsSlotActive())
+            return;
+        
+		chosenslot->SetControls(static_cast<PLAYERCONTROLS>(controls), number);
+
+		slots->NotifyUpdatedValue();        
+        
+    } else {
+
+        Logger::Get()->Warning("Didn't recognize command \""+*cmd+"\"");
+    }
 }
 // ------------------------------------ //
 

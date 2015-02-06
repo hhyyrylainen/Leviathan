@@ -11,6 +11,7 @@
 #include "CEGUI/widgets/TabControl.h"
 #include "CEGUI/widgets/Combobox.h"
 #include "CEGUI/widgets/ListboxItem.h"
+#include "CEGUI/widgets/ListWidget.h"
 #include "CEGUI/WindowManager.h"
 #include "FileSystem.h"
 
@@ -82,17 +83,12 @@ bool CEGUIComboboxSetSelectedItem(CEGUI::Window* obj, const string &text){
 bool CEGUIComboboxAddItem(CEGUI::Window* obj, const string &text){
 
     CEGUI::Combobox* convbox = dynamic_cast<CEGUI::Combobox*>(obj);
-
+    
     if(!convbox)
         return false;
     
     convbox->addItem(new CEGUI::StandardItem(CEGUI::String(text)));
 
-    // This might kill the performance //
-    convbox->setAutoSizeListHeightToContent(true);
-    convbox->handleUpdatedListItemData();
-    convbox->updateAutoSizedDropList();
-    
     return true;
 }
 
@@ -108,14 +104,17 @@ bool CEGUIComboboxClearItems(CEGUI::Window* obj){
     return true;
 }
 
-bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const string &filename, const string &tabname, const string &lookfor, const string &replacer){
+bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const string &filename, const string &tabname,
+    const string &lookfor, const string &replacer)
+{
 
 	// Find the file //
 	const wstring tmpfile = Convert::Utf8ToUtf16(filename);
 
 	const wstring wfilename = StringOperations::RemoveExtensionWstring(tmpfile, true);
 
-	const wstring& targetfile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, wfilename, StringOperations::GetExtensionWstring(tmpfile), true);
+	const wstring& targetfile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, wfilename,
+        StringOperations::GetExtensionWstring(tmpfile), true);
 
 	if(targetfile.empty()){
 

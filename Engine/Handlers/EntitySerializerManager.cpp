@@ -104,7 +104,7 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::CreateEntityFromInitialMessag
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(sf::Packet &packet, int ticknumber,
-    shared_ptr<BaseObject> object)
+    ObjectPtr object)
 {
     // The first thing has to be the type //
     int32_t objtype;

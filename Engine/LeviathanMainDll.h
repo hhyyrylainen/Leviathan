@@ -70,6 +70,7 @@ using Leviathan::RepeatCountedDelayedTask;
 
 using Leviathan::BaseObject;
 using Leviathan::GameWorld;
+using Leviathan::ObjectPtr;
 
 using Leviathan::ExceptionInvalidArgument;
 

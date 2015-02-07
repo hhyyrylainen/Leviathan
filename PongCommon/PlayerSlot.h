@@ -84,7 +84,7 @@ namespace Pong{
 		// resets all input state //
 		void InputDisabled();
 
-		shared_ptr<Leviathan::BaseObject> GetPaddle(){
+		ObjectPtr GetPaddle(){
 			return PaddleObject;
 		}
 		// Warning increases reference count //
@@ -97,10 +97,10 @@ namespace Pong{
 			TrackDirectptr->AddRef();
 			return TrackDirectptr;
 		}
-		void SetPaddleObject(shared_ptr<Leviathan::BaseObject> obj){
+		void SetPaddleObject(ObjectPtr obj){
 			PaddleObject = obj;
 		}
-		shared_ptr<Leviathan::BaseObject> GetGoalArea(){
+		ObjectPtr GetGoalArea(){
 			return GoalAreaObject;
 		}
 		// Warning increases reference count //
@@ -108,10 +108,10 @@ namespace Pong{
 			GoalAreaObject->AddRef();
 			return GoalAreaObject.get();
 		}
-		void SetGoalAreaObject(shared_ptr<Leviathan::BaseObject> obj){
+		void SetGoalAreaObject(ObjectPtr obj){
 			GoalAreaObject = obj;
 		}
-		void SetTrackObject(shared_ptr<Leviathan::BaseObject> obj, Leviathan::Entity::TrackEntityController* direct){
+		void SetTrackObject(ObjectPtr obj, Leviathan::Entity::TrackEntityController* direct){
 
             if(obj && direct)
                 Logger::Get()->Info("PlayerSlot now has a track object");
@@ -209,15 +209,16 @@ namespace Pong{
 		Float4 Colour;
 
 		//! This is the player's points
-		//! \todo It would be more efficient to have a global points manager than resend all data when the slot is updated
+		//! \todo It would be more efficient to have a global points manager than resend all data
+        //! when the slot is updated
 		int Score;
 
 		int MoveState;
 
-		shared_ptr<Leviathan::BaseObject> PaddleObject;
-		shared_ptr<Leviathan::BaseObject> GoalAreaObject;
+		ObjectPtr PaddleObject;
+		ObjectPtr GoalAreaObject;
 
-		shared_ptr<Leviathan::BaseObject> TrackObject;
+		ObjectPtr TrackObject;
 		Leviathan::Entity::TrackEntityController* TrackDirectptr;
 
 		//! Slot splitting

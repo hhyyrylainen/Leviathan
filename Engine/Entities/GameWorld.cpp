@@ -257,12 +257,23 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     ReceivingPlayers.clear();
     
 	// release objects //
+    // Objects should release their data in their destructors //
 	for(size_t i = 0; i < Objects.size(); i++){
 
-		Objects[i]->ReleaseData();
+        // Check if the world will be destroyed //
+		if(Objects[i]->GetRefCount() != 1){
+
+            Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): entity("+
+                Convert::ToString(Objects[i]->GetID()+") has external references on world release"));
+
+            // Abandon the object //
+            Objects[i]->Disown();
+        }
 	}
 
+    // This will release our references and delete all objects that have no references
 	Objects.clear();
+    
     SendableObjects.clear();
 
 	if(GraphicalMode){
@@ -477,10 +488,10 @@ DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{
 }
 // ------------------ Object managing ------------------ //
 DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
-	AddObject(shared_ptr<BaseObject>(obj, SharedPtrReleaseDeleter<BaseObject>::DoRelease));
+	AddObject(BaseObject::MakeShared(obj));
 }
 
-DLLEXPORT void Leviathan::GameWorld::AddObject(shared_ptr<BaseObject> obj){
+DLLEXPORT void Leviathan::GameWorld::AddObject(ObjectPtr obj){
 
     if(!obj)
         return;
@@ -524,7 +535,7 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(shared_ptr<BaseObject> obj){
     }
 }
 
-DLLEXPORT void Leviathan::GameWorld::CreateEntity(shared_ptr<BaseObject> obj){
+DLLEXPORT void Leviathan::GameWorld::CreateEntity(ObjectPtr obj){
 
     Logger::Get()->Info("Entity("+Convert::ToString(obj->GetID())+") created");
     
@@ -560,7 +571,7 @@ DLLEXPORT void Leviathan::GameWorld::CreateEntity(shared_ptr<BaseObject> obj){
     AddObject(obj);
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
+DLLEXPORT ObjectPtr Leviathan::GameWorld::GetWorldObject(int ID){
 	// ID shouldn't be under zero //
 	if(ID == -1){
 
@@ -581,7 +592,7 @@ DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetWorldObject(int ID){
 	return NULL;
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetSmartPointerForObject(BaseObject* rawptr) const{
+DLLEXPORT ObjectPtr Leviathan::GameWorld::GetSmartPointerForObject(BaseObject* rawptr) const{
 	GUARD_LOCK_THIS_OBJECT();
 
 	auto end = Objects.end();
@@ -597,12 +608,24 @@ DLLEXPORT shared_ptr<BaseObject> Leviathan::GameWorld::GetSmartPointerForObject(
 DLLEXPORT void Leviathan::GameWorld::ClearObjects(ObjectLock &guard){
 	VerifyLock(guard);
 
-	for(std::vector<shared_ptr<BaseObject>>::iterator iter = Objects.begin(); iter != Objects.end(); ++iter){
-		// Release the object //
-		(*iter)->ReleaseData();
+    // release objects //
+    // Objects should release their data in their destructors //
+	for(size_t i = 0; i < Objects.size(); i++){
+
+        // Check if the world will be destroyed //
+		if(Objects[i]->GetRefCount() != 1){
+
+            Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): entity("+
+                Convert::ToString(Objects[i]->GetID()+") has external references on world clear"));
+
+            // Abandon the object //
+            Objects[i]->Disown();
+        }
 	}
-	// Release our reference //
+
+    // This will release our references and delete all objects that have no references
 	Objects.clear();
+    
     SendableObjects.clear();
 
     // Throw away the waiting constraints //
@@ -1119,7 +1142,7 @@ notusingapositionlabel:
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(shared_ptr<BaseObject> obj,
+DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(ObjectPtr obj,
     shared_ptr<ConnectionInfo> connection)
 {
     // Fail if the obj is not a valid pointer //

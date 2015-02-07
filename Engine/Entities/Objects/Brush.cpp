@@ -33,12 +33,14 @@ DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world, int net
 
 DLLEXPORT Leviathan::Entity::Brush::~Brush(){
 
-    ReleaseParentHooks();
+    ReleaseData();
 }
 
 DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
 
     StopInterpolating();
+
+    ReleaseParentHooks();
 
     GUARD_LOCK_THIS_OBJECT();
     

@@ -26,11 +26,14 @@ Leviathan::Entity::Prop::Prop(bool hidden, GameWorld* world, int netid) :
 
 DLLEXPORT Leviathan::Entity::Prop::~Prop(){
 
+    ReleaseData();
 }
 
 DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
 
     StopInterpolating();
+
+    ReleaseParentHooks();
 
     GUARD_LOCK_THIS_OBJECT();
 

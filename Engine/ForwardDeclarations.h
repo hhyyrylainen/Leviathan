@@ -2,6 +2,10 @@
 // (or forward declared) ------------------
 #pragma once
 
+// This is required for ObjectPtr
+#include <boost/intrusive_ptr.hpp>
+
+
 // Newton things
 struct NewtonJoint;
 
@@ -32,7 +36,10 @@ namespace Leviathan{
 
 	// Entity bases //
 	class BasePositionable;
+    
     class BaseObject;
+    typedef boost::intrusive_ptr<BaseObject> ObjectPtr;
+    
     class BaseConstraintable;
     class BaseSendableEntity;
     class BasePhysicsObject;

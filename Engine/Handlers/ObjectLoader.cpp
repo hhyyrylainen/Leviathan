@@ -180,7 +180,7 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const w
 	int id = prop->GetID();
 
 	// add to world //
-	world->CreateEntity(shared_ptr<BaseObject>(prop.release()));
+	world->CreateEntity(BaseObject::MakeShared(static_cast<BaseObject*>(prop.release())));
 
 	return id;
 }
@@ -205,7 +205,7 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const 
 
 
 	// add to world //
-	world->CreateEntity(shared_ptr<BaseObject>(brush.release()));
+	world->CreateEntity(BaseObject::MakeShared(static_cast<BaseObject*>(brush.release())));
 
 	return id;
 }
@@ -223,7 +223,7 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const 
 	int id = brush->GetID();
 
 	// add to world //
-	world->CreateEntity(shared_ptr<BaseObject>(brush.release()));
+	world->CreateEntity(BaseObject::MakeShared(static_cast<BaseObject*>(brush.release())));
 
 	return id;
 }
@@ -259,7 +259,7 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadTrackEntityControllerToWorld(GameWorl
 	*createdinstance = tmpptr.get();
 
 	// Add to world //
-	world->CreateEntity(shared_ptr<BaseObject>(tmpptr.release()));
+	world->CreateEntity(BaseObject::MakeShared(static_cast<BaseObject*>(tmpptr.release())));
 
 	return retid;
 }
@@ -283,12 +283,10 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadTrailToWorld(GameWorld* world, const 
 	*createdinstance = tmpptr.get();
 
 	// Add to world //
-	world->CreateEntity(shared_ptr<BaseObject>(tmpptr.release()));
+	world->CreateEntity(BaseObject::MakeShared(static_cast<BaseObject*>(tmpptr.release())));
 
 	return retid;
 }
-// ------------------------------------ //
-
 // ------------------------------------ //
 
 

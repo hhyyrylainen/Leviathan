@@ -29,6 +29,7 @@ Leviathan::Entity::TrackEntityController::TrackEntityController(int netid, GameW
 
 DLLEXPORT Leviathan::Entity::TrackEntityController::~TrackEntityController(){
 
+    ReleaseData();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::TrackEntityController::Init(){

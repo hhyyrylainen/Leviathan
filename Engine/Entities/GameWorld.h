@@ -136,30 +136,32 @@ namespace Leviathan{
 
 
 		// object managing functions //
-		//! \brief Adds an existing entity to the world, which won't be broadcast to the world receiverd
+		//! \brief Adds an existing entity to the world, which won't be broadcast to the world receivers
         //! \see CreateEntity
+        //! \warning The entity should have only one reference to be released properly
 		DLLEXPORT void AddObject(BaseObject* obj);
+
+        DLLEXPORT void AddObject(ObjectPtr obj);
 
         //! \brief Adds a new entity
         //! \note This should be used instead of AddObject for most purposes
         //! \todo Allow to set the world to queue objects and send them in big bunches to players
-        DLLEXPORT void CreateEntity(shared_ptr<BaseObject> obj);
+        DLLEXPORT void CreateEntity(ObjectPtr obj);
         
         
-		// The smart pointer should have custom deleter to use Release //
-		DLLEXPORT void AddObject(shared_ptr<BaseObject> obj);
 		DLLEXPORT void DestroyObject(int EntityID);
 		DLLEXPORT void QueueDestroyObject(int EntityID);
 
 		//! \brief Returns an object matching the id
-		DLLEXPORT shared_ptr<BaseObject> GetWorldObject(int ID);
+		DLLEXPORT ObjectPtr GetWorldObject(int ID);
 
 		//! \brief Returns a matching smart pointer for a raw pointer
-		DLLEXPORT shared_ptr<BaseObject> GetSmartPointerForObject(BaseObject* rawptr) const;
+		DLLEXPORT ObjectPtr GetSmartPointerForObject(BaseObject* rawptr) const;
 
 
 		// clears all objects from the world //
 		DLLEXPORT void ClearObjects(ObjectLock &guard);
+        
 		DLLEXPORT FORCE_INLINE void ClearObjects(){
 			GUARD_LOCK_THIS_OBJECT();
 			ClearObjects(guard);
@@ -167,6 +169,7 @@ namespace Leviathan{
 
         //! \brief Returns the amount of entities in the world
         DLLEXPORT inline size_t GetObjectCount() const{
+            GUARD_LOCK_THIS_OBJECT();
             return Objects.size();
         }
 
@@ -210,7 +213,7 @@ namespace Leviathan{
         //! \param connection A safe pointer to the connection which won't be checked by this method
         //! \return True when a packet was sent false otherwise
         //! \todo Allow making these critical so that failing to send these will terminate the ConnectionInfo
-        DLLEXPORT bool SendObjectToConnection(shared_ptr<BaseObject> obj, shared_ptr<ConnectionInfo> connection);
+        DLLEXPORT bool SendObjectToConnection(ObjectPtr obj, shared_ptr<ConnectionInfo> connection);
         
 		//! \brief Creates a new entity from initial entity response
         //! \note This should only be called on the client
@@ -309,7 +312,7 @@ namespace Leviathan{
         
 
 		// objects //
-		std::vector<shared_ptr<BaseObject>> Objects;
+		std::vector<ObjectPtr> Objects;
 
         //! Objects that are sendable and require additional operations
         std::vector<BaseSendableEntity*> SendableObjects;

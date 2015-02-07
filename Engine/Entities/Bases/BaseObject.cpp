@@ -13,17 +13,19 @@ DLLEXPORT Leviathan::BaseObject::BaseObject() : ID(-1), OwnedByWorld(NULL){
 
 }
 
-DLLEXPORT void Leviathan::BaseObject::ReleaseData(){
-	// default release, do nothing //
-}
-
 BaseObject::~BaseObject(){
 
 }
 // ------------------------------------ //
-
+DLLEXPORT void Leviathan::BaseObject::ReleaseData(){
+	// default release, do nothing //
+}
 // ------------------------------------ //
+void Leviathan::BaseObject::Disown(){
+    GUARD_LOCK_THIS_OBJECT();
 
+    OwnedByWorld = NULL;
+}
 // ------------------------------------ //
 
 // ------------------------------------ //

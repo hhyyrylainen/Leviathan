@@ -10,6 +10,7 @@
 #include "Entities/Objects/TrailEmitter.h"
 
 
+
 #define BASE_ARENASCALE		1.f	
 
 namespace Pong{
@@ -34,7 +35,7 @@ namespace Pong{
 			return TargetWorld;
 		}
 
-        void RegisterBall(shared_ptr<Leviathan::BaseObject> ball){
+        void RegisterBall(ObjectPtr ball){
 
             Ball = ball;
         }
@@ -43,7 +44,7 @@ namespace Pong{
 
 		void ColourTheBallTrail(const Float4 &colour);
 
-		inline shared_ptr<Leviathan::BaseObject> GetBallPtr(){
+		inline ObjectPtr GetBallPtr(){
 			return Ball;
 		}
 
@@ -61,14 +62,14 @@ namespace Pong{
 		// Stored object pointers //
 
 		// Arena bottom //
-		shared_ptr<Leviathan::BaseObject> BottomBrush;
+		ObjectPtr BottomBrush;
 
 		// The ball trail object //
-		shared_ptr<Leviathan::BaseObject> TrailKeeper;
+		ObjectPtr TrailKeeper;
 		Leviathan::Entity::TrailEmitter* DirectTrail;
 
 		// ball prop //
-		shared_ptr<Leviathan::BaseObject> Ball;
+		ObjectPtr Ball;
 
 		// Used to store already generated materials for paddles //
 		std::map<Float4, string> ColourMaterialName;

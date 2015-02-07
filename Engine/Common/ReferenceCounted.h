@@ -55,20 +55,27 @@ namespace Leviathan{
                 return nullptr;
 
             boost::intrusive_ptr<ActualType> newptr(ptr);
-            ptr->intrusive_ptr_release(ptr);
+            ptr->Release();
 
             return newptr;
+        }
+
+        //! \brief Returns the reference count
+        //! \todo Make sure that the right memory order is used
+        DLLEXPORT int32_t GetRefCount() const{
+            
+            return RefCount.load(boost::memory_order_acquire);
         }
 
 
 	protected:
         
-        friend void intrusive_ptr_add_ref(const ReferenceCounted * obj){
+        DLLEXPORT friend void intrusive_ptr_add_ref(const ReferenceCounted * obj){
             
             obj->RefCount.fetch_add(1, boost::memory_order_relaxed);
         }
         
-        friend void intrusive_ptr_release(const ReferenceCounted * obj){
+        DLLEXPORT friend void intrusive_ptr_release(const ReferenceCounted * obj){
             
             if(obj->RefCount.fetch_sub(1, boost::memory_order_release) == 1){
                 boost::atomic_thread_fence(boost::memory_order_acquire);

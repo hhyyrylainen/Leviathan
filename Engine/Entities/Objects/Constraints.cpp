@@ -60,10 +60,12 @@ DLLEXPORT void Leviathan::Entity::BaseConstraint::ConstraintPartUnlinkedDestroy(
 	ChildObject = NULL;
 	ParentObject = NULL;
 
-	if(Joint){
+	if(Joint && OwningWorld){
+        
 		NewtonDestroyJoint(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(), Joint);
-		Joint = NULL;
 	}
+
+    Joint = NULL;
 }
 // ------------------------------------ //
 DLLEXPORT BaseConstraintable* Leviathan::Entity::BaseConstraint::GetFirstEntity() const{
@@ -73,6 +75,17 @@ DLLEXPORT BaseConstraintable* Leviathan::Entity::BaseConstraint::GetFirstEntity(
 DLLEXPORT BaseConstraintable* Leviathan::Entity::BaseConstraint::GetSecondEntity() const{
     return ChildObject;
 }
+// ------------------------------------ //
+void Leviathan::Entity::BaseContraint::_WorldDisowned(){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    // Destroy the joint //
+    Release();
+
+    OwningWorld = NULL;
+}
+
 // ------------------ SliderConstraint ------------------ //
 DLLEXPORT Leviathan::Entity::SliderConstraint::SliderConstraint(GameWorld* world, BaseConstraintable* parent,
     BaseConstraintable* child) : 

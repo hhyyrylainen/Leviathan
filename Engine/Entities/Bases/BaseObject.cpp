@@ -25,6 +25,8 @@ void Leviathan::BaseObject::Disown(){
     GUARD_LOCK_THIS_OBJECT();
 
     OwnedByWorld = NULL;
+
+    _OnDisowned();
 }
 // ------------------------------------ //
 

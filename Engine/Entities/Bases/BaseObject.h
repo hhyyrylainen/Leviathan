@@ -98,6 +98,10 @@ namespace Leviathan{
         //! from accessing it
         void Disown();
 
+        //! \brief Callback for constraintable objects (or other containers) which need to disown their own children
+        //! \note This object will be locked before this call
+        virtual void _OnDisowned();
+
         // ------------------------------------ //
         
 		int ID;

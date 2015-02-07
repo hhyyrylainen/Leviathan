@@ -340,6 +340,9 @@ namespace Pong{
 			if(GameAI)
 				GameAI->ReleaseScript();
 
+            // Release object pointers //
+            _PlayerList.Release();
+
             // Destroy the world //
             Engine::Get()->DestroyWorld(WorldOfPong);
             

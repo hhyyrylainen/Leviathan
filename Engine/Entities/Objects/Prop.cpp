@@ -39,12 +39,16 @@ DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
 
     
 	// Release Ogre entity //
-    if(ObjectsNode)
-        OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
-    if(GraphicalObject)
-        OwnedByWorld->GetScene()->destroyEntity(GraphicalObject);
+    if(OwnedByWorld){
+        if(ObjectsNode)
+            OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
+        if(GraphicalObject)
+            OwnedByWorld->GetScene()->destroyEntity(GraphicalObject);
+    }
 
 	GraphicalObject = NULL;
+    ObjectsNode = NULL;
+    
 	OwnedByWorld = NULL;
 
 	// physical entity //

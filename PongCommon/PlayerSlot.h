@@ -271,6 +271,11 @@ namespace Pong{
 			return GamePlayers.size();
 		}
 
+        void Release(){
+
+            SAFE_DELETE_VECTOR(GamePlayers);
+        }
+
         //! \brief Writes player information to log
         void ReportPlayerInfoToLog() const;
 

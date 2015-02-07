@@ -45,10 +45,12 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
     GUARD_LOCK_THIS_OBJECT();
     
 	// Release Ogre entity //
-    if(ObjectsNode)
-        OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
-    if(GraphicalObject)
-        OwnedByWorld->GetScene()->destroyEntity(GraphicalObject);
+    if(OwnedByWorld){
+        if(ObjectsNode)
+            OwnedByWorld->GetScene()->destroySceneNode(ObjectsNode);
+        if(GraphicalObject)
+            OwnedByWorld->GetScene()->destroyEntity(GraphicalObject);
+    }
 
 	ObjectsNode = NULL;
 	GraphicalObject = NULL;

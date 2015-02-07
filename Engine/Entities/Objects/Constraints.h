@@ -66,6 +66,9 @@ namespace Leviathan{ namespace Entity{
             // called to verify params before init proceeds //
             virtual bool _CheckParameters() = 0;
             virtual bool _CreateActualJoint() = 0;
+
+            //! \brief Called by either side when they become disowned
+            void _WorldDisowned();
             
             // ------------------------------------ //
             BaseConstraintable* ParentObject;

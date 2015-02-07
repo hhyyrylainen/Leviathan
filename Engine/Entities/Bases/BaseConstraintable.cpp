@@ -108,3 +108,17 @@ DLLEXPORT shared_ptr<BaseConstraint> Leviathan::BaseConstraintable::GetConstrain
     return PartInConstraints[index]->IsParent ? PartInConstraints[index]->ParentPtr:
         PartInConstraints[index]->ChildPartPtr.lock();
 }
+// ------------------------------------ //
+void Leviathan::BaseConstraintable::_OnDisowned(){
+
+    auto end = PartInConstraints.end();
+    for(auto iter = PartInConstraints.begin(); iter != end; ++iter){
+
+        // It is enough if only the parents disown the constraints (as there cannot be a constraint between
+        // entitites in different worlds
+        if((*iter)->IsParent){
+
+            (*iter)->ParentPtr->_WorldDisowned();
+        }
+    }
+}

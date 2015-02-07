@@ -119,6 +119,13 @@ namespace Leviathan{
 
         // called by the joint object //
         void ConstraintDestroyedRemove(Entity::BaseConstraint* ptr);
+
+        //! \brief Called from BaseObject when the world disowns this object
+        //!
+        //! Used to disown all connections
+        //! \todo Allow objects inheriting this to provide a callback which gets called here
+        void _OnDisowned() override;
+        
         // ------------------------------------ //
         
         // for listing of constraints //

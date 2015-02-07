@@ -264,7 +264,8 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 		if(Objects[i]->GetRefCount() != 1){
 
             Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): entity("+
-                Convert::ToString(Objects[i]->GetID()+") has external references on world release"));
+                Convert::ToString(Objects[i]->GetID())+
+                ") has external references on world release");
 
             // Abandon the object //
             Objects[i]->Disown();
@@ -290,9 +291,6 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 		WorldsScene = NULL;
 	}
 
-	// some smart ptrs need releasing //
-	_PhysicalWorld.reset();
-
     // Unhook from other objects //
     ReleaseChildHooks();
 
@@ -303,6 +301,8 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
                 WaitingConstraints.size())+" constraints waiting for entities");
         WaitingConstraints.clear();
     }
+    
+    _PhysicalWorld.reset();
 
     Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): ready to be destroyed");
 }
@@ -616,7 +616,8 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(ObjectLock &guard){
 		if(Objects[i]->GetRefCount() != 1){
 
             Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): entity("+
-                Convert::ToString(Objects[i]->GetID()+") has external references on world clear"));
+                Convert::ToString(Objects[i]->GetID())+
+                ") has external references on world clear");
 
             // Abandon the object //
             Objects[i]->Disown();
@@ -686,8 +687,6 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(int EntityID){
             // Also erase from sendable //
             _EraseFromSendable(dynamic_cast<BaseSendableEntity*>(iter->get()), lockit);
             
-			// release the object and then erase our reference //
-			(*iter)->ReleaseData();
 			Objects.erase(iter);
             
 			return;
@@ -751,9 +750,8 @@ void Leviathan::GameWorld::_HandleDelayedDelete(UniqueObjectLock &guard){
             // Also erase from sendable //
             _EraseFromSendable(dynamic_cast<BaseSendableEntity*>((*iter).get()), guard);
             
-			(*iter)->ReleaseData();
             guard.lock();
-
+            
 
 			iter = Objects.erase(iter);
             

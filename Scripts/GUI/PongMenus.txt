@@ -432,13 +432,22 @@ template<> LobbyPlayerControlSelect<"Team0/Player01TypeSelect", 0, 1>
 template<> LobbyJoinOpenButtonThing<"Team1/Player10JoinOpen", 1, 0>
 template<> LobbyJoinOpenButtonThing<"Team1/Player11JoinOpen", 1, 1>
 
+template<> LobbyPlayerControlSelect<"Team0/Player10TypeSelect", 0, 0>
+template<> LobbyPlayerControlSelect<"Team0/Player11TypeSelect", 0, 1>
+
 // Third team controls //
 template<> LobbyJoinOpenButtonThing<"Team2/Player20JoinOpen", 2, 0>
 template<> LobbyJoinOpenButtonThing<"Team2/Player21JoinOpen", 2, 1>
 
+template<> LobbyPlayerControlSelect<"Team0/Player20TypeSelect", 0, 0>
+template<> LobbyPlayerControlSelect<"Team0/Player21TypeSelect", 0, 1>
+
 // Fourth team controls //
 template<> LobbyJoinOpenButtonThing<"Team3/Player30JoinOpen", 3, 0>
 template<> LobbyJoinOpenButtonThing<"Team3/Player31JoinOpen", 3, 1>
+
+template<> LobbyPlayerControlSelect<"Team0/Player30TypeSelect", 0, 0>
+template<> LobbyPlayerControlSelect<"Team0/Player31TypeSelect", 0, 1>
 
 // ------------------ Prematch screen ------------------ //
 template<> PGCTemplate<PrematchScreen, "PrematchScreen", false>

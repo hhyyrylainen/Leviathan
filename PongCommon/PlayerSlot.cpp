@@ -261,15 +261,27 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 		// Create new one only if there isn't one already created //
 		if(!InputObj){
 
-            Logger::Get()->Info("Creating input for our player id");
+            // Skip if it is an AI slot //
+            if(ControlType != PLAYERCONTROLS_AI){
+
+                Logger::Get()->Info("Creating input for our player id");
             
-			// Hook a networked input receiver to the server //
-			PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
-				PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(NetworkedInputID, true));
+                // Hook a networked input receiver to the server //
+                PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
+                    PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(NetworkedInputID, true));
+            }
+
 		} else {
 
-			// Update the existing one //
-			InputObj->UpdateSettings(ControlType);
+            if(ControlType == PLAYERCONTROLS_AI){
+                // Destroy out input if there is an AI //
+                _ResetNetworkInput();
+
+            } else {
+                
+                // Update the existing one //
+                InputObj->UpdateSettings(ControlType);
+            }
 		}
 	}
 

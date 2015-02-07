@@ -61,7 +61,7 @@ void Pong::PongServer::Tick(int mspassed){
 
             while(slotptr){
 
-                if(slotptr->GetControlType() == PLAYERCONTROLS_AI){
+                if(slotptr->GetControlType() == PLAYERCONTROLS_AI && slotptr->IsSlotActive()){
 
                     // Set the slot ptr as the argument and call function based on difficulty //
                     std::vector<shared_ptr<NamedVariableBlock>> scriptargs(2);
@@ -357,8 +357,6 @@ void Pong::PongServer::OnStartPreMatch(){
 
             // Spawn a ball //
             server->GameArena->ServeBall();
-
-            server->_PlayerList.ReportPlayerInfoToLog();
 
             // TODO: add a start timer here
 

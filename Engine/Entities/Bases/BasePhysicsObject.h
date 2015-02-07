@@ -11,6 +11,7 @@
 #include "BaseObject.h"
 #include "Common/SFMLPackets.h"
 #include "boost/function.hpp"
+#include "Common/ThreadSafe.h"
 
 
 #define BASEPHYSICS_CUSTOMMESSAGE_DATA_CHECK	{if(entitycustommessagetype >= ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE && entitycustommessagetype <= ENTITYCUSTOMMESSAGETYPE_SETVELOCITY){if(BasePhysicsCustomMessage(entitycustommessagetype, dataptr)) return true;}}
@@ -57,7 +58,7 @@ namespace Leviathan{
 
 
     //! \brief Inherited by objects that have physical bodies
-	class BasePhysicsObject : virtual public BasePositionable, virtual public BaseObject{
+	class BasePhysicsObject : virtual public BasePositionable, virtual public BaseObject, virtual public ThreadSafe{
 	public:
 		DLLEXPORT BasePhysicsObject();
 		DLLEXPORT virtual ~BasePhysicsObject();
@@ -66,6 +67,8 @@ namespace Leviathan{
 		DLLEXPORT NewtonCollision* GetPhysicsCollision(){
 			return Collision;
 		}
+
+        //! \todo Make sure that the body can't be destroyed while this is used
 		DLLEXPORT NewtonBody* GetPhysicsBody(){
 			return Body;
 		}

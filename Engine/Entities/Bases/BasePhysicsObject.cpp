@@ -22,10 +22,13 @@ DLLEXPORT Leviathan::BasePhysicsObject::~BasePhysicsObject(){
 }
 // ------------------------------------ //
 void Leviathan::BasePhysicsObject::_DestroyPhysicalBody(){
+    GUARD_LOCK_THIS_OBJECT();
+    
 	if(Collision)
 		NewtonDestroyCollision(Collision);
 	if(Body)
 		NewtonDestroyBody(Body);
+    
 	Body = NULL;
 	Collision = NULL;
 }
@@ -80,7 +83,8 @@ void Leviathan::BasePhysicsObject::DestroyBodyCallback(const NewtonBody* body){
 }
 // ------------------ Physical interaction functions ------------------ //
 DLLEXPORT void Leviathan::BasePhysicsObject::GiveImpulse(const Float3 &deltaspeed, const Float3 &point /*= Float3(0)*/){
-
+    GUARD_LOCK_THIS_OBJECT();
+    
 	if(Body){
 
 		NewtonBodyAddImpulse(Body, &deltaspeed.X, &point.X);
@@ -88,6 +92,8 @@ DLLEXPORT void Leviathan::BasePhysicsObject::GiveImpulse(const Float3 &deltaspee
 }
 
 DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyVelocity(const Float3 &velocities){
+    GUARD_LOCK_THIS_OBJECT();
+    
 	if(Body){
 
 		NewtonBodySetVelocity(Body, &velocities.X);
@@ -95,6 +101,8 @@ DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyVelocity(const Float3 &veloc
 }
 
 DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyVelocity(){
+    GUARD_LOCK_THIS_OBJECT();
+    
 	if(Body){
 		Float3 vel(0);
 		NewtonBodyGetVelocity(Body, &vel.X);
@@ -105,6 +113,8 @@ DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyVelocity(){
 }
 
 DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyTorque(){
+    GUARD_LOCK_THIS_OBJECT();
+    
 	if(Body){
 		Float3 torq(0);
 		NewtonBodyGetTorque(Body, &torq.X);
@@ -115,6 +125,8 @@ DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyTorque(){
 }
 
 DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyTorque(const Float3 &torque){
+    GUARD_LOCK_THIS_OBJECT();
+    
     if(Body){
 
         NewtonBodySetTorque(Body, &torque.X);
@@ -201,6 +213,8 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::SetPhysicalMaterial(const wstring &
 }
 
 DLLEXPORT void Leviathan::BasePhysicsObject::SetPhysicalMaterialID(int ID){
+    GUARD_LOCK_THIS_OBJECT();
+    
 	assert(Body != NULL && "calling set material ID without having physical model loaded");
 
 	NewtonBodySetMaterialGroupID(Body, ID);
@@ -212,7 +226,8 @@ DLLEXPORT int Leviathan::BasePhysicsObject::GetDefaultPhysicalMaterialID() const
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BasePhysicsObject::SetLinearDampening(float factor /*= 0.1f*/){
-
+    GUARD_LOCK_THIS_OBJECT();
+    
     if(Body)
         NewtonBodySetLinearDamping(Body, factor);
 }
@@ -257,7 +272,8 @@ bool Leviathan::BasePhysicsObject::BasePhysicsCustomGetData(ObjectDataRequest* d
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::BasePhysicsObject::AddPhysicalStateToPacket(sf::Packet &packet){
-
+    GUARD_LOCK_THIS_OBJECT();
+    
     if(!Body)
         return false;
 
@@ -268,7 +284,8 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::AddPhysicalStateToPacket(sf::Packet
 }
 
 DLLEXPORT bool Leviathan::BasePhysicsObject::ApplyPhysicalStateFromPacket(sf::Packet &packet){
-
+    GUARD_LOCK_THIS_OBJECT();
+    
     if(!Body)
         return false;
 
@@ -298,7 +315,8 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::LoadPhysicalStateFromPacket(sf::Pac
 }
 
 DLLEXPORT void Leviathan::BasePhysicsObject::ApplyPhysicalState(BasePhysicsData &data){
-
+    GUARD_LOCK_THIS_OBJECT();
+    
     if(!Body)
         return;
     

@@ -174,7 +174,6 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
                                 if(tmpptr->IsThisLastRepeat()){
                                     // Set as done //
                                     data->SentAll = true;
-                                    Logger::Get()->Info(L"SyncedVariables: sent all variables");
                                 }
 
 
@@ -357,10 +356,6 @@ void Leviathan::SyncedVariables::_NotifyUpdatedValue(const SyncedValue* const va
 	tmpresponse->GenerateValueSyncResponse(new NetworkResponseDataForSyncValData(new
             NamedVariableList(*valtosync->GetVariableAccess())));
 
-	// Report //
-	Logger::Get()->Info(L"SyncedVariables: syncing variable "+valtosync->GetVariableAccess()->GetName()+
-        L" with everyone");
-
 	GUARD_LOCK_THIS_OBJECT();
 
 	// Send it //
@@ -387,9 +382,6 @@ void Leviathan::SyncedVariables::_NotifyUpdatedValue(SyncedResource* valtosync, 
 	// Extract it from the packet //
 	tmpresponse->GenerateResourceSyncResponse(reinterpret_cast<const char*>(packet.getData()), packet.getDataSize());
 
-	// Report //
-	Logger::Get()->Info(L"SyncedVariables: syncing resource "+valtosync->Name+L" with everyone");
-
 	GUARD_LOCK_THIS_OBJECT();
 
 	// Send it //
@@ -409,10 +401,6 @@ shared_ptr<SentNetworkThing> Leviathan::SyncedVariables::_SendValueToSingleRecei
 	tmpresponse->GenerateValueSyncResponse(new NetworkResponseDataForSyncValData(new
             NamedVariableList(*valtosync->GetVariableAccess())));
 
-	// Report //
-	Logger::Get()->Info(L"SyncedVariables: syncing variable "+valtosync->GetVariableAccess()->GetName()+
-        L" with specific");
-
 	// Send to connection //
 	return unsafeptr->SendPacketToConnection(tmpresponse, 5);
 }
@@ -430,9 +418,6 @@ shared_ptr<SentNetworkThing> Leviathan::SyncedVariables::_SendValueToSingleRecei
 
 	// Extract it from the packet //
 	tmpresponse->GenerateResourceSyncResponse(reinterpret_cast<const char*>(packet.getData()), packet.getDataSize());
-
-	// Report //
-	Logger::Get()->Info(L"SyncedVariables: syncing resource "+valtosync->Name+L" with specific");
 
 	// Send to connection //
 	return unsafeptr->SendPacketToConnection(tmpresponse, 5);

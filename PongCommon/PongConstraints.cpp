@@ -235,8 +235,12 @@ Pong::GameBallConnection::GameBallConnection(Leviathan::GameWorld* world, Leviat
 Pong::GameBallConnection::~GameBallConnection(){
 
     // Verify that the ball is still the same //
-    auto arena = BasePongParts::Get()->GetArena();
+    auto base = BasePongParts::Get();
+    auto arena = base ? base->GetArena(): NULL;
 
+    if(!arena)
+        return;
+    
     if(arena->GetBallPtr().get() == dynamic_cast<BaseObject*>(ParentObject))
         arena->RegisterBall(nullptr);
 }
@@ -248,12 +252,15 @@ bool Pong::GameBallConnection::_CheckParameters(){
 
 bool Pong::GameBallConnection::_CreateActualJoint(){
 
-    Logger::Get()->Info("Pong: registering ball");
-    
     BasePongParts::Get()->GetArena()->RegisterBall(OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
                 ParentObject)));
 
     auto physball = dynamic_cast<Leviathan::BasePhysicsObject*>(ParentObject);
+
+    if(!physball){
+
+        Logger::Get()->Warning("Pong: aborting ball registering");
+    }
     
     // Set the ball to not loose speed //
     physball->SetLinearDampening(0.00001f);

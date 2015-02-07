@@ -76,7 +76,7 @@ int SetupData(GuiObject@ instance, Event@ event){
         AddControlsToBox(target2, false);
     }
 
-    OnChangedEvents.RegisterForEvent("GuiChangePLayerControls");
+    OnChangedEvents.RegisterForEvent("GuiChangePlayerControls");
     
     return 1;
 }

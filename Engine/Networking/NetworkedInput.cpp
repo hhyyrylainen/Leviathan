@@ -90,8 +90,6 @@ DLLEXPORT void Leviathan::NetworkedInput::OnUpdateInputStates(){
 	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
 	response->GenerateUpdateNetworkedInputResponse(new NetworkResponseDataForUpdateNetworkedInput(*this));
 
-    Logger::Get()->Info("Sending update to server");
-
 	// Send to the server for it to then distribute it around //
 	OwningHandler->ClientInterface->GetServerConnection()->SendPacketToConnection(response, 5);
 

@@ -404,7 +404,7 @@ template<TabAndName, TSlotNumber, SplitInt> LobbyPlayerControlSelect:
             bool SetPlayerControls(GuiObject@ instance, const string &in text){
 
                  // Prepare a GenericEvent //
-                 GenericEvent@ event = @GenericEvent("GuiChangePLayerControls");
+                 GenericEvent@ event = @GenericEvent("GuiChangePlayerControls");
 
                  // Just dump all our data there //
                  NamedVars@ vars = @event.GetNamedVars();

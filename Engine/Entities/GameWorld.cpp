@@ -537,8 +537,6 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(ObjectPtr obj){
 
 DLLEXPORT void Leviathan::GameWorld::CreateEntity(ObjectPtr obj){
 
-    Logger::Get()->Info("Entity("+Convert::ToString(obj->GetID())+") created");
-    
     // Notify everybody that a new entity has been created //
     {
         GUARD_LOCK_THIS_OBJECT();
@@ -696,8 +694,6 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(int EntityID){
 
 DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(int EntityID){
 
-    Logger::Get()->Write("Queueing entity destruction, "+Convert::ToString(EntityID));
-    
 	GUARD_LOCK_BASIC(DeleteMutex);
 	DelayedDeleteIDS.push_back(EntityID);
 }
@@ -771,8 +767,6 @@ void Leviathan::GameWorld::_HandleDelayedDelete(UniqueObjectLock &guard){
 
 void Leviathan::GameWorld::_ReportEntityDestruction(int id, UniqueObjectLock &guard){
 
-    Logger::Get()->Write("Reporting entity destruction, "+Convert::ToString(id));
-    
     // Notify everybody that an entity has been destroyed //
     auto end = ReceivingPlayers.end();
     for(auto iter = ReceivingPlayers.begin(); iter != end; ++iter){

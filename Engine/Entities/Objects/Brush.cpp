@@ -64,7 +64,9 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
 
 	// Physical entity //
 	AggressiveConstraintUnlink();
-	_DestroyPhysicalBody();
+    
+    if(OwnedByWorld)
+        _DestroyPhysicalBody();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const string &material, 

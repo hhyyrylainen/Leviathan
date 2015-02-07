@@ -53,7 +53,9 @@ DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
 
 	// physical entity //
 	AggressiveConstraintUnlink();
-	_DestroyPhysicalBody();
+
+    if(OwnedByWorld)
+        _DestroyPhysicalBody();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){

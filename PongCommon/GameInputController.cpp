@@ -135,6 +135,9 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
 		Logger::Get()->Error(L"Pong input thing failed to find player ID");
 		return NULL;
 	}
+
+    Logger::Get()->Info("Creating our input object: "+Convert::ToString(playerid)+", controls: "+
+        Convert::ToString(activecontrols));
 	
 	unique_ptr<PongNInputter> tmpobj(new PongNInputter(playerid, inputid, curplayer, activecontrols));
 

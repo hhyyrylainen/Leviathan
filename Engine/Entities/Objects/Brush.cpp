@@ -60,13 +60,13 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
 		OwnedByWorld->GetScene()->destroyManualObject(BrushModel);
 	}
 
-	OwnedByWorld = NULL;
-
 	// Physical entity //
 	AggressiveConstraintUnlink();
     
     if(OwnedByWorld)
         _DestroyPhysicalBody();
+
+    OwnedByWorld = NULL;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const string &material, 

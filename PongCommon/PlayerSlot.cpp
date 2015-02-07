@@ -264,7 +264,8 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
             // Skip if it is an AI slot //
             if(ControlType != PLAYERCONTROLS_AI){
 
-                Logger::Get()->Info("Creating input for our player id");
+                Logger::Get()->Info("Creating input for our player id, NetworkedInputID: "+Convert::ToString(
+                        NetworkedInputID));
             
                 // Hook a networked input receiver to the server //
                 PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
@@ -281,6 +282,7 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
                 
                 // Update the existing one //
                 InputObj->UpdateSettings(ControlType);
+                Logger::Get()->Info("Updated our control type: "+Convert::ToString(ControlType));
             }
 		}
 	}

@@ -27,6 +27,7 @@ namespace Leviathan{ namespace Entity{
         //! Base class for all different types of constraints to inherit
         //! \todo Make this actually ThreadSafe
         class BaseConstraint : public ThreadSafe{
+            friend BaseConstraintable;
         public:
             DLLEXPORT BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world, BaseConstraintable* parent,
                 BaseConstraintable* child);

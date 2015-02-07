@@ -29,5 +29,7 @@ void Leviathan::BaseObject::Disown(){
     _OnDisowned();
 }
 // ------------------------------------ //
-
+void Leviathan::BaseObject::_OnDisowned(){
+    
+}
 // ------------------------------------ //

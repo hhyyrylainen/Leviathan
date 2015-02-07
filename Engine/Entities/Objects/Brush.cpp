@@ -56,7 +56,7 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
 	GraphicalObject = NULL;
 
 	// The model won't be used anymore //
-	if(MeshName.size() && OwnedByWorld->GetScene()){
+	if(MeshName.size() && OwnedByWorld && OwnedByWorld->GetScene()){
 		OwnedByWorld->GetScene()->destroyManualObject(BrushModel);
 	}
 

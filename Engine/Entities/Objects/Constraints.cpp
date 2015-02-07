@@ -76,7 +76,7 @@ DLLEXPORT BaseConstraintable* Leviathan::Entity::BaseConstraint::GetSecondEntity
     return ChildObject;
 }
 // ------------------------------------ //
-void Leviathan::Entity::BaseContraint::_WorldDisowned(){
+void Leviathan::Entity::BaseConstraint::_WorldDisowned(){
 
     GUARD_LOCK_THIS_OBJECT();
 

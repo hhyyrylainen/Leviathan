@@ -8,7 +8,7 @@
 // ---- includes ---- //
 #include "PlayerSlot.h"
 #include "Entities/Objects/TrailEmitter.h"
-
+#include "Common/ThreadSafe.h"
 
 
 #define BASE_ARENASCALE		1.f	
@@ -17,7 +17,7 @@ namespace Pong{
 
 	class BasePongParts;
 
-	class Arena{
+	class Arena : public ThreadSafe{
 	public:
 		Arena(shared_ptr<Leviathan::GameWorld> world);
 		~Arena();
@@ -37,6 +37,9 @@ namespace Pong{
 
         void RegisterBall(ObjectPtr ball){
 
+            GUARD_LOCK_THIS_OBJECT();
+            
+            Ball.reset();
             Ball = ball;
         }
 
@@ -45,6 +48,7 @@ namespace Pong{
 		void ColourTheBallTrail(const Float4 &colour);
 
 		inline ObjectPtr GetBallPtr(){
+            GUARD_LOCK_THIS_OBJECT();
 			return Ball;
 		}
 

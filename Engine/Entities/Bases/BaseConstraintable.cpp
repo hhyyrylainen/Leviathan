@@ -117,8 +117,10 @@ void Leviathan::BaseConstraintable::_OnDisowned(){
         // It is enough if only the parents disown the constraints (as there cannot be a constraint between
         // entitites in different worlds
         if((*iter)->IsParent){
-
-            (*iter)->ParentPtr->_WorldDisowned();
+            
+            auto ptr = (*iter)->ParentPtr;
+            if(ptr)
+                ptr->_WorldDisowned();
         }
     }
 }

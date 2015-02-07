@@ -490,6 +490,8 @@ void Pong::Arena::VerifyTrail(){
 }
 // ------------------------------------ //
 void Pong::Arena::LetGoOfBall(){
+    GUARD_LOCK_THIS_OBJECT();
+    
 	// We should delete it (but after this physics update is done) //
 	if(Ball && TargetWorld){
         
@@ -501,6 +503,7 @@ void Pong::Arena::LetGoOfBall(){
 
 bool Pong::Arena::IsBallInPaddleArea(){
 
+    GUARD_LOCK_THIS_OBJECT();
 	// Cast //
 	Leviathan::Entity::Prop* tmpball = dynamic_cast<Leviathan::Entity::Prop*>(Ball.get());
 

@@ -233,6 +233,8 @@ void Pong::PongServer::CheckForGameEnd(){
 				break;
 			}
 
+            Logger::Get()->Info("TODO: make clients move the camera around");
+
 			// Send the game end event which should trigger proper menus //
 			Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"MatchEnded"),
                     new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"WinningTeam",
@@ -240,6 +242,9 @@ void Pong::PongServer::CheckForGameEnd(){
 
 			// And finally destroy the ball //
 			GameArena->LetGoOfBall();
+
+            // Send a message to all players that we are now in post match mode
+            DEBUG_BREAK;
 
 			// (Don't block input so players can wiggle around //
 

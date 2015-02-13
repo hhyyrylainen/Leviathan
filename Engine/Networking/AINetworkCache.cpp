@@ -1,14 +1,228 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_FILEREPLACENAME
-#include "FILEREPLACENAME.h"
+#ifndef LEVIATHAN_AINETWORKCACHE
+#include "AINetworkCache.h"
 #endif
+#include "Networking/NetworkHandler.h"
+#include "Threading/ThreadingManager.h"
+#include "boost/bind.hpp"
 using namespace Leviathan;
 // ------------------------------------ //
+DLLEXPORT Leviathan::AINetworkCache::AINetworkCache(bool serverside) : IsServer(serverside){
 
-// ------------------------------------ //
+    Staticinstance = this;
+}
 
-// ------------------------------------ //
+DLLEXPORT Leviathan::AINetworkCache::~AINetworkCache(){
 
-// ------------------------------------ //
+    Staticinstance = NULL;
+}
 
+AINetworkCache* Leviathan::AINetworkCache::Staticinstance = NULL;
+
+DLLEXPORT AINetworkCache* Leviathan::AINetworkCache::Get(){
+
+    return Staticinstance
+}
 // ------------------------------------ //
+DLLEXPORT bool Leviathan::AINetworkCache::Init(){
+
+    GUARD_LOCK_THIS_OBJECT();
+    
+    return true;
+}
+
+DLLEXPORT void Leviathan::AINetworkCache::Release(){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    ReceivingConnections.clear();
+
+    CurrentVariables.clear();
+}
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::AINetworkCache::UpdateVariable(const NamedVariableList &updatedvalue){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    if(!IsServer)
+        return false;
+    
+    // Remove old variable //
+    auto end = CurrentVariables.end();
+    for(auto iter = CurrentVariables.begin(); iter != end; ++iter){
+
+        if((*iter)->GetName() == updatedvalue.GetName()){
+
+            CurrentVariables.erase(iter);
+            break;
+        }
+    }
+
+    // Add it //
+    CurrentVariables.push_back(make_shared<NamedVariableList>(updatedvalue));
+    
+    _OnVariableUpdated(CurrentVariables.back(), guard);
+
+    return true;
+}
+        
+DLLEXPORT bool Leviathan::AINetworkCache::RemoveVariable(const wstring &name){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    auto end = CurrentVariables.end();
+    for(auto iter = CurrentVariables.begin(); iter != end; ++iter){
+
+        if((*iter)->GetName() == name){
+
+            CurrentVariables.erase(iter);
+            Logger::Get()->Info("AINetworkCache: todo: send remove message to clients");
+            return true;
+        }
+    }
+
+    return false;
+}
+// ------------------------------------ //
+DLLEXPORT const NamedVariableList* Leviathan::AINetworkCache::GetVariable(const wstring &name) const{
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    auto end = CurrentVariables.end();
+    for(auto iter = CurrentVariables.begin(); iter != end; ++iter){
+
+        if((*iter)->GetName() == name){
+
+            return (*iter).get();
+        }
+    }
+
+    return nullptr;
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::AINetworkCache::RegisterNewConnection(ConnectionInfo* connection){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    if(!IsServer)
+        return false;
+
+    auto safeptr = NetworkHandler::GetSafePointerToConnection(connection);
+
+    if(!safeptr)
+        return false;
+    
+    
+    ReceivingConnections.push_back(connection);
+
+    
+    ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](AINetworkCache* cache,
+                    shared_ptr<ConnectionInfo> connection)
+                -> void
+        {
+
+            size_t vars = 0;
+
+            {
+                GUARD_LOCK_OTHER_OBJECT(cache);
+                vars = cache->CurrentVariables.size();
+            }
+
+            for(size_t index = 0; i < vars; index++){
+
+                shared_ptr<NamedVariableList> target;
+
+                {
+                    GUARD_LOCK_OTHER_OBJECT(cache);
+                    if(index >= cache->CurrentVariables.size())
+                        return;
+
+                    target = cache->CurrentVariables[index];
+                }
+
+
+                auto response = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5);
+                
+
+                connection->SendPacketToConnection(response, 20);
+            }
+            
+        }, this, safeptr)));
+}
+
+DLLEXPORT bool Leviathan::AINetworkCache::RemoveConnection(ConnectionInfo* connection){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    auto end = ReceivingConnections.end();
+    for(auto iter = ReceivingConnections.begin(); iter != end; ++iter){
+
+        if((*iter) == connection){
+
+            ReceivingConnections.erase(iter);
+            return true;
+        }
+    }
+
+    return false;
+}
+// ------------------------------------ //
+void Leviathan::AINetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList> variable, ObjectLock &guard){
+
+    if(ReceivingConnections.empty())
+        return;
+    
+    ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](AINetworkCache* cache,
+                    shared_ptr<NamedVariableList> variable)
+                -> void
+        {
+
+            ConnectionInfo* target = NULL;
+
+            auto response = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5);
+                
+
+            while(true){
+                
+                bool changedtarget = false;
+
+                // Update target //
+                {
+                    // Loop until the last one is found and then change to the next //
+                    bool found = target ? false: true;
+                    
+                    GUARD_LOCK_OTHER_OBJECT(cache);
+                    
+                    for(size_t i = 0; i < cache->ReceivingConnections.size(); i++){
+
+                        if(found){
+
+                            target = cache->ReceivingConnections[i];
+                            changedtarget = true;
+                            break;
+                        }
+
+                        if(cache->ReceivingConnections[i] == target)
+                            found = true;
+                    }
+                }
+                
+                if(!changedtarget)
+                    return;
+
+                // Send to the target //
+                if(!target)
+                    return;
+
+                auto safe = NetworkHandler::Get()->GetSafePointerToConnection(connection);
+
+                if(safe)
+                    safe->SendPacketToConnection(response, 20);
+            }
+
+            
+
+
+        }, this, safeptr)));
+}
+        

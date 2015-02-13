@@ -15,6 +15,7 @@
 namespace Leviathan{
 
 	//! \brief hosts one or more VariableBlocks keeping only one name for all of them
+    //! \todo Make this reference counted
 	class NamedVariableList{
 		friend NamedVars;
 	public:

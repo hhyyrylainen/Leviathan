@@ -489,7 +489,26 @@
         
       <Property name="Visible" value="False"/>
 
-      <Window name="PlayersLabel" type="TaharezLook/StaticText">
+      <Window name="FullScoreTable" type="TaharezLook/StaticText">
+    
+        <Property name="Area" value="{{0, 0}, {0, 0}, {0.21, 0}, {0.31, 0}}"/>
+        
+        <Property name="BackgroundEnabled" value="True"/>
+        <Property name="FrameEnabled" value="True"/>
+        <Property name="HorzFormatting" value="WordWrappedLeftAligned"/>
+        <Property name="VertFormatting" value="TopAligned"/>
+        
+        <Property name="Font" value="Simonetta-Regular"/>
+        <Property name="Text" value="Players: \nNone"/>
+      </Window>
+	</Window>
+
+    <!-- The pause screen -->
+    <Window name="PauseMenu" type="DefaultWindow">
+
+      <Property name="Visible" value="False"/>
+
+      <Window name="MainLabel" type="TaharezLook/StaticText">
 
         <Property name="Size" value="{{0.125, 0}, {0.35, 0}}"/>
         <Property name="Position" value="{{0.05, 0}, {0, 0}}"/>
@@ -502,11 +521,11 @@
         
         <Property name="FrameEnabled" value="False"/>
         <Property name="BackgroundEnabled" value="True"/>
-        <Property name="Font" value="Simonetta-Regular"/>
-        <Property name="Text" value="Players:"/>
+        <Property name="Font" value="Simonetta-Black"/>
+        <Property name="Text" value="Not paused"/>
       </Window>
 
-	</Window>
+    </Window>
 
     <!-- The prematch screen -->
     <Window name="PrematchScreen" type="DefaultWindow">

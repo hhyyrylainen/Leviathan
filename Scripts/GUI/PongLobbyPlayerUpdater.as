@@ -169,10 +169,11 @@ class PlayerData{
         
     }
     
-    void CheckUpdates(PlayerSlot@ slot, bool forceupdate = false){
+    void CheckUpdates(PlayerSlot@ slot, bool forceupdate = false, PlayerDataHolder@ owner){
         
         PLAYERTYPE newtype = slot.GetPlayerType();
         int newid = slot.GetPlayerID();
+        PlayerNumber = slot.GetPlayerNumber();
         
         // Check has it updated //
         if(forceupdate || PlayerType != newtype || HumanPlayerID != newid){
@@ -184,10 +185,10 @@ class PlayerData{
         }
         
         int newscore = slot.GetScore();
-        if(forceupdate || Score != newscore){
+        if(Score != newscore){
             
             Score = newscore;
-            ScoreUpdated();
+            owner.UpdateScores();
         }
         
         PLAYERCONTROLS newcontrols = slot.GetControlType();
@@ -240,6 +241,7 @@ class PlayerData{
     int SlotNumber;
     PLAYERTYPE PlayerType;
     PLAYERCONTROLS ControlType;
+    int PlayerNumber;
     
     // Might as well handle the score here //
     int Score = 0;
@@ -272,16 +274,11 @@ class PlayerData{
         }
     }
     
-    void ScoreUpdated(){
-        
-        Print("Updating player score, for: " +SlotNumber+", split: "+IsSplitSlot);
-    }
-    
     void ControlsUpdated(){
     
         Print("Updating player controls, for: " +SlotNumber+", split: "+IsSplitSlot);
     }
-}
+};
 
 
 // This keeps all the old values in the same place, this is needed to know which parts are updated //
@@ -313,13 +310,61 @@ class PlayerDataHolder{
             
             PlayerSlot@ currentplayer = game.GetSlot(i);
             
-            ThePlayers[i].CheckUpdates(currentplayer, ignorechanges);
+            ThePlayers[i].CheckUpdates(currentplayer, ignorechanges, this);
         }
+
+        if(ignorechanges)
+            UpdateScores();
+    }
+
+
+    void UpdateScores(){
+
+        Print("Updating score table");
+
+        string finalscores = "---- Players ----\n";
+
+        if(ThePlayers.length() < 8){
+
+            Print("Not all players are in the data vector");
+            return;
+        }
+
+        for(uint i = 0; i < 4; i++){
+            
+            auto slot = ThePlayers[i];
+        
+            if(slotPlayerType != PLAYERTYPE_EMPTY || slot.PlayerType != PLAYERTYPE_CLOSED){
+
+
+                UpdateTeam(slot, finalscores);
+            }
+        }
+        
+        // Set the things //
+        Us.GetOwningManager().GetWindowByName("MatchScreeb/FullScoreTable").SetText(finalscores));
+    }
+
+    void UpdateTeam(PlayerData@ slot, string &inout finalscores){
+
+        finalscores += "Team "+slot.SlotNumber+": ";
+
+        int score = slot.Score;
+
+        if(slot.SplitData !is null)
+            score += slot.SplitData.Score;
+
+        finalscores += score+"\n";
+
+        finalscores += "    Player "+slot.PlayerNumber+": "+slot.Score;
+
+        if(slot.SplitData !is null)
+            finalscores += "    Player "+slot.SplitData.PlayerNumber+": "+slot.SplitData.Score;
     }
     
     
     private array<PlayerData@> ThePlayers;
-}
+};
 
 
 

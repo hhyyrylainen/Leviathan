@@ -57,7 +57,8 @@ namespace Pong{
 
         //! \brief Called when scored, will handle everything
 		int PlayerScored(Leviathan::BasePhysicsObject* goalptr){
-			// Don't count if the player whose goal the ball is in is the last one to touch it or if none have touched it //
+			// Don't count if the player whose goal the ball is in is the last one to touch it or if none have
+            // touched it
 			if(PlayerIDMatchesGoalAreaID(LastPlayerHitBallID, goalptr) || LastPlayerHitBallID == -1){
 
 				return 1;
@@ -76,6 +77,8 @@ namespace Pong{
 					if(LastPlayerHitBallID == slotptr->GetPlayerNumber()){
 						// Found right player //
 						slotptr->SetScore(slotptr->GetScore()+SCOREPOINT_AMOUNT);
+                        _PlayerList.NotifyUpdatedValue();
+                        
 						goto playrscorelistupdateendlabel;
 					}
 

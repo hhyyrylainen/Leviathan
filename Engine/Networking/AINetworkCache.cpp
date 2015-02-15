@@ -85,7 +85,7 @@ DLLEXPORT bool Leviathan::AINetworkCache::RemoveVariable(const wstring &name){
     return false;
 }
 // ------------------------------------ //
-DLLEXPORT const NamedVariableList* Leviathan::AINetworkCache::GetVariable(const wstring &name) const{
+DLLEXPORT NamedVariableList* Leviathan::AINetworkCache::GetVariable(const wstring &name) const{
 
     GUARD_LOCK_THIS_OBJECT();
 
@@ -235,4 +235,26 @@ void Leviathan::AINetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList>
 
         }, this, variable)));
 }
-        
+// ------------------------------------ //
+DLLEXPORT ScriptSafeVariableBlock* Leviathan::AINetworkCache::GetVariableWrapper(const string &name){
+
+    const wstring wname = Convert::StringToWstring(name);
+
+    auto variable = GetVariable(wname);
+
+    if(!variable)
+        return NULL;
+
+    auto value = variable->GetValueDirect();
+
+    if(!value)
+        return NULL;
+
+    return new ScriptSafeVariableBlock(value, variable->GetName());
+}
+
+DLLEXPORT void Leviathan::AINetworkCache::SetVariableWrapper(ScriptSafeVariableBlock* variable){
+
+    UpdateVariable(NamedVariableList(variable->GetName(),
+            variable->GetBlockConst()->AllocateNewFromThis()));
+}

@@ -11,6 +11,7 @@
 #include "Entities/Objects/TrackEntityController.h"
 #include "add_on/autowrapper/aswrappedcall.h"
 #include "Interface/ScriptEventListener.h"
+#include "Networking/AINetworkCache.h"
 
 #include "Engine.h"
 
@@ -497,6 +498,32 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+
+
+    // AINetworkCache
+    if(engine->RegisterObjectType("AINetworkCache", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterGlobalFunction("AINetworkCache& GetAINetworkCache()", asFUNCTION(AINetworkCache::Get),
+            asCALL_CDECL) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectMethod("AINetworkCache", "ScriptSafeVariableBlock@ GetVariable(const string &in name)",
+            asMETHOD(AINetworkCache, GetVariableWrapper), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectMethod("AINetworkCache", "void SetVariable(ScriptSafeVariableBlock@ variable)",
+            asMETHOD(AINetworkCache, SetVariableWrapper), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}    
+    
 
 
 	// ------------------ Game entities ------------------ //

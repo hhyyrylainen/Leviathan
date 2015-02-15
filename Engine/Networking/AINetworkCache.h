@@ -51,7 +51,7 @@ namespace Leviathan{
         //!
         //! Can be used both on the client and on the server
         //! \note You may not change the variable. On the server you can use UpdateVariable to change it.
-        DLLEXPORT const NamedVariableList* GetVariable(const wstring &name) const;
+        DLLEXPORT NamedVariableList* GetVariable(const wstring &name) const;
 
         //! \brief Registers a new connection to be used
         //!
@@ -63,6 +63,13 @@ namespace Leviathan{
         //! \brief Removes a connection
         //! \note Won't close the connection
         DLLEXPORT bool RemoveConnection(ConnectionInfo* connection);
+
+        //! \brief Script wrapper for GetVariable
+        DLLEXPORT ScriptSafeVariableBlock* GetVariableWrapper(const string &name);
+
+        //! \brief Script wrapper for UpdateVariable
+        DLLEXPORT void SetVariableWrapper(ScriptSafeVariableBlock* variable);
+        
         
         //! Retrieve static instance, may be NULL if Engine is released or not initialized
         DLLEXPORT static AINetworkCache* Get();

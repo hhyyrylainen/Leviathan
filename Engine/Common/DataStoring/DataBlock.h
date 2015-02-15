@@ -754,6 +754,7 @@ namespace Leviathan{
     //!
     //! Also stores the AngelScript ID of the type
 	//! \note Do NOT use smart pointers with this class
+    //! \todo Unify multiple values containing things and naming
 	class ScriptSafeVariableBlock : public NamedVariableBlock, public ReferenceCounted{
 	public:
 

@@ -50,6 +50,12 @@ namespace Leviathan{
         //! Contains (list) an ID for entity to be deleted
         NETWORKRESPONSETYPE_ENTITY_DESTRUCTION,
 
+        //! Contains an updated AI cache variable
+        NETWORKRESPONSETYPE_AI_CACHE_UPDATED,
+
+        //! Contains the name of a removed AI cache variable
+        NETWORKRESPONSETYPE_AI_CACHE_REMOVED,
+
         //! Instructs a world to create or destroy a constraint
         NETWORKRESPONSETYPE_ENTITY_CONSTRAINT,
 
@@ -421,6 +427,37 @@ namespace Leviathan{
         
     };
 
+    //! \brief Holds data for upated AI cache variable
+    class NetworkResponseDataForAICacheUpdated : public BaseNetworkResponseData{
+    public:
+
+        //! \exception ExceptionInvalidArgument When the variable is NULL
+        DLLEXPORT NetworkResponseDataForAICacheUpdated(shared_ptr<NamedVariableList> variable);
+
+        //! \exception ExceptionInvalidArgument When packet cannot be unserialized
+        DLLEXPORT NetworkResponseDataForAICacheUpdated(sf::Packet &frompacket);
+
+        DLLEXPORT void AddDataToPacket(sf::Packet &packet) override;
+
+        //! The received variable
+        shared_ptr<NamedVariableList> Variable;
+    };
+
+    //! \brief Holds data for upated AI cache variable
+    class NetworkResponseDataForAICacheRemoved : public BaseNetworkResponseData{
+    public:
+
+        DLLEXPORT NetworkResponseDataForAICacheRemoved(const wstring &name);
+
+        //! \exception ExceptionInvalidArgument When packet cannot be unserialized
+        DLLEXPORT NetworkResponseDataForAICacheRemoved(sf::Packet &frompacket);
+
+        DLLEXPORT void AddDataToPacket(sf::Packet &packet) override;
+
+        //! The name of the removed variable
+        wstring Name;
+    };
+
 
     //! \brief Represents a response type packet sent through a ConnectionInfo
     //! \todo Refactor all packets to check if the packet is valid after loading all data
@@ -448,6 +485,8 @@ namespace Leviathan{
         DLLEXPORT void GenerateWorldFrozenResponse(NetworkResponseDataForWorldFrozen* newddata);
         DLLEXPORT void GenerateEntityUpdateResponse(NetworkResponseDataForEntityUpdate* newddata);
         DLLEXPORT void GenerateEntityDestructionResponse(NetworkResponseDataForEntityDestruction* newddata);
+        DLLEXPORT void GenerateAICacheUpdatedResponse(NetworkResponseDataForAICacheUpdated* newddata);
+        DLLEXPORT void GenerateAICacheRemovedResponse(NetworkResponseDataForAICacheRemoved* newddata);
 
 		DLLEXPORT void GenerateCustomResponse(GameSpecificPacketData* newdpacketdata);
 		DLLEXPORT void GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata);
@@ -486,6 +525,9 @@ namespace Leviathan{
         DLLEXPORT NetworkResponseDataForWorldFrozen* GetResponseDataForWorldFrozen() const;
         DLLEXPORT NetworkResponseDataForEntityUpdate* GetResponseDataForEntityUpdate() const;
         DLLEXPORT NetworkResponseDataForEntityDestruction* GetResponseDataForEntityDestruction() const;
+        DLLEXPORT NetworkResponseDataForAICacheUpdated* GetResponseDataForAICacheUpdated() const;
+        DLLEXPORT NetworkResponseDataForAICacheRemoved* GetResponseDataForAICacheRemoved() const;
+        
 
 		DLLEXPORT int GetResponseID() const;
 

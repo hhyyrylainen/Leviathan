@@ -120,6 +120,16 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
             ResponseData = new NetworkResponseDataForEntityDestruction(receivedresponse);
         }
         break;
+        case NETWORKRESPONSETYPE_AI_CACHE_UPDATED:
+        {
+            ResponseData = new NetworkResponseDataForAICacheUpdated(receivedresponse);
+        }
+        break;
+        case NETWORKRESPONSETYPE_AI_CACHE_REMOVED:
+        {
+            ResponseData = new NetworkResponseDataForAICacheRemoved(receivedresponse);
+        }
+        break;
         default:
 		{
 			throw ExceptionInvalidArgument(L"packet has invalid type", 0, __WFUNCTION__, L"receivedresponse",
@@ -270,7 +280,27 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityDestructionResponse(Net
     // Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 
-	ResponseData = newddata;    
+	ResponseData = newddata;
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateAICacheUpdatedResponse(NetworkResponseDataForAICacheUpdated*
+    newddata)
+{
+    ResponseType = NETWORKRESPONSETYPE_AI_CACHE_UPDATED;
+    // Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
+}
+
+DLLEXPORT void Leviathan::NetworkResponse::GenerateAICacheRemovedResponse(NetworkResponseDataForAICacheRemoved*
+    newddata)
+{
+    ResponseType = NETWORKRESPONSETYPE_AI_CACHE_REMOVED;
+    // Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkResponse::GenerateKeepAliveResponse(){
@@ -464,6 +494,20 @@ DLLEXPORT NetworkResponseDataForWorldFrozen* Leviathan::NetworkResponse::GetResp
     
     if(ResponseType == NETWORKRESPONSETYPE_WORLD_FROZEN && ResponseData)
         return static_cast<NetworkResponseDataForWorldFrozen*>(ResponseData);
+    return NULL;
+}
+
+DLLEXPORT NetworkResponseDataForAICacheUpdated* GetResponseDataForAICacheUpdated() const{
+
+    if(ResponseType == NETWORKRESPONSETYPE_AI_CACHE_UPDATED && ResponseData)
+        return static_cast<NetworkResponseDataForAICacheUpdated*>(ResponseData);
+    return NULL;
+}
+
+DLLEXPORT NetworkResponseDataForAICacheRemoved* GetResponseDataForAICacheRemoved() const{
+
+    if(ResponseType == NETWORKRESPONSETYPE_AI_CACHE_REMOVED && ResponseData)
+        return static_cast<NetworkResponseDataForAICacheRemoved*>(ResponseData);
     return NULL;
 }
 // ------------------------------------ //
@@ -1000,7 +1044,7 @@ DLLEXPORT void Leviathan::NetworkResponseDataForEntityUpdate::AddDataToPacket(sf
     // Warn if it is quite large //
     if(tmpstr.size() >= 500){
 
-        Logger::Get()->Warning(L"Sending a large entity update, over 500 bytes in size");
+        Logger::Get()->Warning("Sending a large entity update, over 500 bytes in size");
     }
 
     packet << tmpstr;
@@ -1025,15 +1069,55 @@ DLLEXPORT void Leviathan::NetworkResponseDataForEntityDestruction::AddDataToPack
 
     packet << WorldID << EntityID;
 }
+// ------------------ NetworkResponseDataForAICacheUpdated ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataForAICacheUpdated(
+    shared_ptr<NamedVariableList> variable) :
+    Variable(variable)
+{
+    if(!Variable)
+        throw ExceptionInvalidArgument(L"invalid variable", 0, __WFUNCTION__, L"variable", "NULL");
+}
 
+DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataForAICacheUpdated(sf::Packet &frompacket){
 
+    Variable = make_shared<NamedVariableList>(frompacket);
 
+    if(!frompacket)
+        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+}
 
+DLLEXPORT void Leviathan::NetworkResponseDataForAICacheUpdated::AddDataToPacket(sf::Packet &packet){
 
+    Variable->AddDataToPacket(packet);
+}
+// ------------------ NetworkResponseDataForAICacheRemoved ------------------ //
+DLLEXPORT Leviathan::NetworkResponseDataForAICacheRemoved::NetworkResponseDataForAICacheRemoved(const wstring &name) :
+    Name(name)
+{
+    
+}
 
+DLLEXPORT Leviathan::NetworkResponseDataForAICacheRemoved::NetworkResponseDataForAICacheRemoved(sf::Packet &frompacket){
 
+    if(!(frompacket >> Name)){
+        
+        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+    }
+}
 
+DLLEXPORT void Leviathan::NetworkResponseDataForAICacheRemoved::AddDataToPacket(sf::Packet &packet){
 
+    packet << Name;
+    
+    // Warn if it is quite large //
+    if(Name.size() >= 800){
+
+        Logger::Get()->Warning("Sending a large AI cache remove, string is over 800 elements long");
+    }
+}
+
+//! The name of the removed variable
+wstring Name;
 
 
 

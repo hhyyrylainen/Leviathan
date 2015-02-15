@@ -203,7 +203,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(sf::Packet &packet){
 	}
 }
 
-DLLEXPORT void Leviathan::NamedVariableList::AddToPacket(sf::Packet &packet) const{
+DLLEXPORT void Leviathan::NamedVariableList::AddDataToPacket(sf::Packet &packet) const{
 	// Start adding data to the packet //
 	packet << Name;
 
@@ -646,7 +646,7 @@ DLLEXPORT void Leviathan::NamedVars::AddDataToPacket(sf::Packet &packet) const{
 	// Write each individual variable //
 	for(int i = 0; i < isize; i++){
 
-		Variables[i]->AddToPacket(packet);
+		Variables[i]->AddDataToPacket(packet);
 	}
 }
 // ------------------------------------ //

@@ -78,6 +78,8 @@ namespace Leviathan{
     
 	class ApplyForceInfo;
 
+    class AINetworkCache;
+
 	class NetworkedInput;
 	class NetworkedInputHandler;
 	class ConnectedPlayer;

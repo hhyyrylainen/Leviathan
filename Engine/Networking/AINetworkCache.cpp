@@ -4,6 +4,7 @@
 #endif
 #include "Networking/NetworkHandler.h"
 #include "Threading/ThreadingManager.h"
+#include "Networking/ConnectionInfo.h"
 #include "boost/bind.hpp"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -21,7 +22,7 @@ AINetworkCache* Leviathan::AINetworkCache::Staticinstance = NULL;
 
 DLLEXPORT AINetworkCache* Leviathan::AINetworkCache::Get(){
 
-    return Staticinstance
+    return Staticinstance;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::AINetworkCache::Init(){
@@ -51,7 +52,7 @@ DLLEXPORT bool Leviathan::AINetworkCache::UpdateVariable(const NamedVariableList
     auto end = CurrentVariables.end();
     for(auto iter = CurrentVariables.begin(); iter != end; ++iter){
 
-        if((*iter)->GetName() == updatedvalue.GetName()){
+        if(updatedvalue.CompareName((*iter)->GetName())){
 
             CurrentVariables.erase(iter);
             break;
@@ -100,14 +101,14 @@ DLLEXPORT const NamedVariableList* Leviathan::AINetworkCache::GetVariable(const 
     return nullptr;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::AINetworkCache::RegisterNewConnection(ConnectionInfo* connection){
+DLLEXPORT bool Leviathan::AINetworkCache::RegisterNewConnection(ConnectionInfo* connection){
 
     GUARD_LOCK_THIS_OBJECT();
 
     if(!IsServer)
         return false;
 
-    auto safeptr = NetworkHandler::GetSafePointerToConnection(connection);
+    auto safeptr = NetworkHandler::Get()->GetSafePointerToConnection(connection);
 
     if(!safeptr)
         return false;
@@ -128,7 +129,7 @@ DLLEXPORT void Leviathan::AINetworkCache::RegisterNewConnection(ConnectionInfo* 
                 vars = cache->CurrentVariables.size();
             }
 
-            for(size_t index = 0; i < vars; index++){
+            for(size_t index = 0; index < vars; index++){
 
                 shared_ptr<NamedVariableList> target;
 
@@ -140,14 +141,20 @@ DLLEXPORT void Leviathan::AINetworkCache::RegisterNewConnection(ConnectionInfo* 
                     target = cache->CurrentVariables[index];
                 }
 
-
-                auto response = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5);
+                if(!target)
+                    continue;
                 
+                auto response = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5);
+
+                response->GenerateAICacheUpdatedResponse(new NetworkResponseDataForAICacheUpdated(
+                        target));
 
                 connection->SendPacketToConnection(response, 20);
             }
             
         }, this, safeptr)));
+
+    return true;
 }
 
 DLLEXPORT bool Leviathan::AINetworkCache::RemoveConnection(ConnectionInfo* connection){
@@ -180,7 +187,10 @@ void Leviathan::AINetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList>
             ConnectionInfo* target = NULL;
 
             auto response = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5);
-                
+
+            response->GenerateAICacheUpdatedResponse(new
+                NetworkResponseDataForAICacheUpdated(variable));
+            
 
             while(true){
                 
@@ -214,7 +224,7 @@ void Leviathan::AINetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList>
                 if(!target)
                     return;
 
-                auto safe = NetworkHandler::Get()->GetSafePointerToConnection(connection);
+                auto safe = NetworkHandler::Get()->GetSafePointerToConnection(target);
 
                 if(safe)
                     safe->SendPacketToConnection(response, 20);
@@ -223,6 +233,6 @@ void Leviathan::AINetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList>
             
 
 
-        }, this, safeptr)));
+        }, this, variable)));
 }
         

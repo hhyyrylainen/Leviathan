@@ -55,7 +55,7 @@ namespace Leviathan{
 		DLLEXPORT size_t GetVariableCount() const;
 
 		//! \brief For passing NamedVariableLists to other instances through the network
-		DLLEXPORT void AddToPacket(sf::Packet &packet) const;
+		DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
 
 
 		DLLEXPORT int GetCommonType() const;

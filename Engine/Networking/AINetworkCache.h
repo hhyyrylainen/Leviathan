@@ -8,7 +8,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Common/ThreadSafe.h"
-#include "Utility/DataStoring/NamedVars.h"
+#include "Common/DataStoring/NamedVars.h"
 
 
 namespace Leviathan{

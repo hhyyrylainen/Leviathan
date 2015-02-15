@@ -497,14 +497,14 @@ DLLEXPORT NetworkResponseDataForWorldFrozen* Leviathan::NetworkResponse::GetResp
     return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForAICacheUpdated* GetResponseDataForAICacheUpdated() const{
+DLLEXPORT NetworkResponseDataForAICacheUpdated* Leviathan::NetworkResponse::GetResponseDataForAICacheUpdated() const{
 
     if(ResponseType == NETWORKRESPONSETYPE_AI_CACHE_UPDATED && ResponseData)
         return static_cast<NetworkResponseDataForAICacheUpdated*>(ResponseData);
     return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForAICacheRemoved* GetResponseDataForAICacheRemoved() const{
+DLLEXPORT NetworkResponseDataForAICacheRemoved* Leviathan::NetworkResponse::GetResponseDataForAICacheRemoved() const{
 
     if(ResponseType == NETWORKRESPONSETYPE_AI_CACHE_REMOVED && ResponseData)
         return static_cast<NetworkResponseDataForAICacheRemoved*>(ResponseData);
@@ -747,7 +747,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForSyncValData::NetworkResponseDataForSy
 
 DLLEXPORT void Leviathan::NetworkResponseDataForSyncValData::AddDataToPacket(sf::Packet &packet){
 	// Pass the data to the packet //
-	SyncValueData->AddToPacket(packet);
+	SyncValueData->AddDataToPacket(packet);
 }
 // ------------------ NetworkResponseDataForSyncDataEnd ------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForSyncDataEnd::NetworkResponseDataForSyncDataEnd(sf::Packet &frompacket){
@@ -1075,7 +1075,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataFo
     Variable(variable)
 {
     if(!Variable)
-        throw ExceptionInvalidArgument(L"invalid variable", 0, __WFUNCTION__, L"variable", "NULL");
+        throw ExceptionInvalidArgument(L"invalid variable", 0, __WFUNCTION__, L"variable", L"NULL");
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataForAICacheUpdated(sf::Packet &frompacket){

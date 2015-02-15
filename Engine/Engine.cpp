@@ -56,7 +56,7 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
     GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
     _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
     _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), _EntitySerializerManager(NULL),
-    _ConstraintSerializerManager(NULL)
+    _ConstraintSerializerManager(NULL), _AINetworkCache(NULL)
 {
 	IDDefaultInstance = IDFactory::Get();
 
@@ -326,6 +326,14 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 		Graph = new Graphics();
 
 	}
+
+    _AINetworkCache = new AINetworkCache();
+    if(!_AINetworkCache || !_AINetworkCache->Init()){
+
+        Logger::Get()->Error(L"Engine: Init: failed to create AINetworkCache");
+        return false;
+    }
+    
 	// We need to wait for all current tasks to finish //
 	_ThreadingManager->WaitForAllTasksToFinish();
 
@@ -556,6 +564,8 @@ void Leviathan::Engine::Release(bool forced){
         }
 
     }
+
+    SAFE_DELETE(_AINetworkCache);
 	
 	// Wait for tasks to finish //
 	if(!forced)
@@ -831,6 +841,9 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
     //Misc::KillThread(CinThread);
     Logger::Get()->Info(L"Successfully stopped command handling");
 #endif
+
+    if(_AINetworkCache)
+        _AINetworkCache->Release();
 
     // Automatically destroy input sources //
     NetworkedInputHandler* nhandler = NetworkedInputHandler::Get();

@@ -169,7 +169,7 @@ class PlayerData{
         
     }
     
-    void CheckUpdates(PlayerSlot@ slot, bool forceupdate = false, PlayerDataHolder@ owner){
+    void CheckUpdates(PlayerSlot@ slot, PlayerDataHolder@ owner, bool forceupdate = false){
         
         PLAYERTYPE newtype = slot.GetPlayerType();
         int newid = slot.GetPlayerID();
@@ -221,10 +221,11 @@ class PlayerData{
             
             // New split slot //
             @SplitData = @PlayerData(SlotNumber, true);
-            SplitData.CheckUpdates(newsplitdata, true);
+            SplitData.CheckUpdates(newsplitdata, owner, true);
+            
         } else if(newsplitdata !is null && SplitData !is null){
             
-            SplitData.CheckUpdates(newsplitdata, forceupdate);
+            SplitData.CheckUpdates(newsplitdata, owner, forceupdate);
         }
     }
     
@@ -310,7 +311,7 @@ class PlayerDataHolder{
             
             PlayerSlot@ currentplayer = game.GetSlot(i);
             
-            ThePlayers[i].CheckUpdates(currentplayer, ignorechanges, this);
+            ThePlayers[i].CheckUpdates(currentplayer, this, ignorechanges);
         }
 
         if(ignorechanges)
@@ -333,20 +334,22 @@ class PlayerDataHolder{
         for(uint i = 0; i < 4; i++){
             
             auto slot = ThePlayers[i];
-        
-            if(slotPlayerType != PLAYERTYPE_EMPTY || slot.PlayerType != PLAYERTYPE_CLOSED){
+
+            if(slot.PlayerType != PLAYERTYPE_EMPTY || slot.PlayerType != PLAYERTYPE_CLOSED){
 
 
-                UpdateTeam(slot, finalscores);
+                finalscores += UpdateTeam(slot);
             }
         }
         
         // Set the things //
-        Us.GetOwningManager().GetWindowByName("MatchScreeb/FullScoreTable").SetText(finalscores));
+        Us.GetOwningManager().GetWindowByName("MatchScreeb/FullScoreTable").SetText(finalscores);
     }
 
-    void UpdateTeam(PlayerData@ slot, string &inout finalscores){
+    string UpdateTeam(PlayerData@ slot){
 
+        string finalscores;
+            
         finalscores += "Team "+slot.SlotNumber+": ";
 
         int score = slot.Score;
@@ -360,6 +363,8 @@ class PlayerDataHolder{
 
         if(slot.SplitData !is null)
             finalscores += "    Player "+slot.SplitData.PlayerNumber+": "+slot.SplitData.Score;
+
+        return finalscores;
     }
     
     

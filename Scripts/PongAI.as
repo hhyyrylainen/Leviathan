@@ -324,7 +324,7 @@ void CombinedAI(GameModule@ mod, PlayerSlot@ slot, int mspassed){
 // AI client prediction
 void AIClientSide(GameModule@ mod, PlayerSlot@ slot, int mspassed){
 
-    string targetname = "Paddle_target_"+AISlot.GetPlayerNumber();
+    string targetname = "Paddle_target_"+slot.GetPlayerNumber();
 
     auto variable = GetAINetworkCache().GetVariable(targetname);
 

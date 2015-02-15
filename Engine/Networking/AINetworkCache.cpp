@@ -92,6 +92,30 @@ DLLEXPORT bool Leviathan::AINetworkCache::RemoveVariable(const wstring &name){
     return false;
 }
 // ------------------------------------ //
+DLLEXPORT bool Leviathan::AINetworkCache::HandleUpdatePacket(NetworkResponseDataForAICacheUpdated* data){
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    if(!data->Variable)
+        return false;
+
+    // Remove old variable (if any) //
+    auto end = CurrentVariables.end();
+    for(auto iter = CurrentVariables.begin(); iter != end; ++iter){
+
+        if(data->Variable->CompareName((*iter)->GetName())){
+
+            CurrentVariables.erase(iter);
+            break;
+        }
+    }
+
+    // Add it //
+    CurrentVariables.push_back(data->Variable);
+
+    return true;
+}
+// ------------------------------------ //
 DLLEXPORT NamedVariableList* Leviathan::AINetworkCache::GetVariable(const wstring &name) const{
 
     GUARD_LOCK_THIS_OBJECT();

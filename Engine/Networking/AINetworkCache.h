@@ -69,6 +69,12 @@ namespace Leviathan{
 
         //! \brief Script wrapper for UpdateVariable
         DLLEXPORT void SetVariableWrapper(ScriptSafeVariableBlock* variable);
+
+        //! \brief Handles an update packet
+        //!
+        //! \note Works both on  the client and the server but shoulnd't be called on the server
+        //! unless you really know what you are doing.
+        DLLEXPORT bool HandleUpdatePacket(NetworkResponseDataForAICacheUpdated* data);
         
         
         //! Retrieve static instance, may be NULL if Engine is released or not initialized

@@ -16,6 +16,7 @@
 #include "Application/Application.h"
 #include "Entities/GameWorld.h"
 #include "Threading/ThreadingManager.h"
+#include "Networking/AINetworkCache.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -179,6 +180,28 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
 			_OnStartHeartbeats();
 			return true;
 		}
+        case NETWORKRESPONSETYPE_AI_CACHE_UPDATED:
+        {
+            auto data = message->GetResponseDataForAICacheUpdated();
+
+            if(!data){
+
+                Logger::Get()->Error("NetworkClientInterface: AI cache update packet has invalid data");
+                return true;
+            }
+            
+            if(!AINetworkCache::Get()->HandleUpdatePacket(data)){
+
+                Logger::Get()->Warning("NetworkClientInterface: applying AI cache update failed");
+            }
+            
+            return true;
+        }
+        case NETWORKRESPONSETYPE_AI_CACHE_REMOVED:
+        {
+            DEBUG_BREAK;
+            return true;
+        }
         case NETWORKRESPONSETYPE_INITIAL_ENTITY:
         {
             // We received a new entity! //

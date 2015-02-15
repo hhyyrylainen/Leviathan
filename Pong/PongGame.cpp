@@ -348,9 +348,20 @@ void Pong::PongGame::Tick(int mspassed){
 
             while(slotptr){
 
-                if(slotptr->IsSlotActive()){
+                if(slotptr->GetControlType() == PLAYERCONTROLS_AI && slotptr->IsSlotActive()){
 
-                    
+                    // Set the slot ptr as the argument and call function based on difficulty //
+                    std::vector<shared_ptr<NamedVariableBlock>> scriptargs(2);
+                    scriptargs[0] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(
+                            new VoidPtrBlock(slotptr), L"PlayerSlot"));
+                    scriptargs[1] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(
+                            new IntBlock(mspassed), L"MSPassed"));
+
+                    if(GameAI){
+                        bool ran;
+
+                        GameAI->ExecuteOnModule("AIClientSide", scriptargs, ran);
+                    }
                 }
                 
                 slotptr = slotptr->GetSplit();

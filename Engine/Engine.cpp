@@ -19,6 +19,7 @@
 #include "Leap/LeapManager.h"
 #include "Networking/NetworkHandler.h"
 #include "Networking/RemoteConsole.h"
+#include "Networking/AINetworkCache.h"
 #include "Newton/NewtonManager.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
@@ -327,7 +328,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 
 	}
 
-    _AINetworkCache = new AINetworkCache();
+    _AINetworkCache = new AINetworkCache(ntype != NETWORKED_TYPE_CLIENT);
     if(!_AINetworkCache || !_AINetworkCache->Init()){
 
         Logger::Get()->Error(L"Engine: Init: failed to create AINetworkCache");

@@ -24,9 +24,33 @@ CONTROLKEYACTION GetRealActionForSlot(PlayerSlot@ slot, REALDIRECTION absolutedi
             case REALDIRECTION_LEFT: return CONTROLKEYACTION_RIGHT;
         }
     }
+    
     Print("Don't do this");
     return CONTROLKEYACTION_RIGHT;
 }
+
+//! Moves slots paddle towards TargetPercentage
+void MoveTowardsProgress(PlayerSlot@ AISlot, float TargetPercentage){
+    // Set right direction based on the target progress //
+    float curprogress = AISlot.GetTrackProgress();
+    if(curprogress > TargetPercentage+0.01){
+            
+        AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_RIGHT), false);    
+        AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_LEFT), true);
+            
+    } else if(curprogress < TargetPercentage-0.01){
+        
+        AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_LEFT), false);
+        AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_RIGHT), true);
+            
+    } else {
+        // Reset move //
+        AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_RIGHT), false);
+        AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_LEFT), false);
+    }
+}
+    
+
 // ------------------ AI data structures ------------------ //
 class AIDataCache{
 
@@ -38,25 +62,18 @@ class AIDataCache{
     }
     ~AIDataCache(){
     }
-    
-    void MoveTowardsProgress(){
-        // Set right direction based on the target progress //
-        float curprogress = AISlot.GetTrackProgress();
-        if(curprogress > TargetPercentage+0.01){
-            
-            AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_RIGHT), false);    
-            AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_LEFT), true);
-            
-        } else if(curprogress < TargetPercentage-0.01){
-        
-            AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_LEFT), false);
-            AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_RIGHT), true);
-            
-        } else {
-            // Reset move //
-            AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_RIGHT), false);
-            AISlot.PassInputAction(GetRealActionForSlot(AISlot, REALDIRECTION_LEFT), false);
-        }
+
+
+    //! Moves towards the set target and updates the cache variable
+    void CommonAIEnd(){
+
+        // Set cache variable //
+        // Should be unique enough //
+        string targetname = "Paddle_target_"+AISlot.GetPlayerNumber();
+
+        GetAINetworkCache().SetVariable(ScriptSafeVariableBlock(targetname, TargetPercentage));
+
+        MoveTowardsProgress(AISlot, TargetPercentage);
     }
     
     // ------------------ The main AI think functions ------------------ //  
@@ -127,9 +144,8 @@ class AIDataCache{
                 TargetPercentage = 0.5;
             }
         }
-        
-        MoveTowardsProgress();
-        // Now we're happy //
+
+        CommonAIEnd();
     }
     
     void RunAITracker(int mspassed){
@@ -160,7 +176,8 @@ class AIDataCache{
         }
             
         TargetPercentage = disttostart/(disttostart+disttoend);
-        MoveTowardsProgress();
+
+        CommonAIEnd();
     }
     
     void RunAICombined(int mspassed){
@@ -251,12 +268,13 @@ class AIDataCache{
         }
         
         
-        MoveTowardsProgress();
+        CommonAIEnd();
     }
 
 
     // How long in milliseconds last time ball was coming towards our goal //
     int NotMovedToBall;
+    
     // Target percentage for the paddle //
     float TargetPercentage;
     AISTATE AiState;
@@ -301,6 +319,21 @@ void BallTrackerAI(GameModule@ mod, PlayerSlot@ slot, int mspassed){
 void CombinedAI(GameModule@ mod, PlayerSlot@ slot, int mspassed){
 
     GetAIForSlot(slot).RunAICombined(mspassed); 
+}
+
+// AI client prediction
+void AIClientSide(GameModule@ mod, PlayerSlot@ slot, int mspassed){
+
+    string targetname = "Paddle_target_"+AISlot.GetPlayerNumber();
+
+    auto variable = GetAINetworkCache().GetVariable(targetname);
+
+    if(variable is null)
+        return;
+
+    float target = float(variable);
+    
+    MoveTowardsProgress(slot, target);
 }
 
 // ------------------ Listener Functions ------------------ //

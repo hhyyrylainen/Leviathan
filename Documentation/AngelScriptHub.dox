@@ -146,9 +146,41 @@
     \subsection angelscript_scriptsafevariableblock Variable blocks in scripts (ScriptSafeVariableBlock)
     An AngelScript safe version of Leviathan::NamedVariableBlock
 
-    First parameter is the name and the second is the value. Right now only string values are supported, but
-    int, float, double, int8, bool will be supported once they are wrapped for AngelScript use.
+    First parameter is the name and the second is the value. Supported types are: string, int, float, double, int8, bool.
+
+    \code
+        ScriptSafeVariableBlock@ var = @ScriptSafeVariableBlock("My value!", 2.5f);
+    \endcode
+
+    \subsubsection angelscript_scriptsafevariableblock_getting_primites Getting primitive values
+    Getting primite types works by casting to the primite type like in these examples.
+    \code
+        ScriptSafeVariableBlock@ var;
+
+        string name = string(var);
+        int val = int(var);
+        int8 initial = int8(var);        
+    \endcode
+
+    \subsection angelscript_ainetworkcache AINetworkCache in scripts
+    \subsubsection angelscript_ainetworkcache_setting_values Setting and reading values
+    Getting a variable with a name is done by calling `GetVariable` on the global instance of Leviathan::AINetworkCache.
+    \code
+        ScriptSafeVariableBlock@ value = GetAINetworkCache().GetVariable("Name of variable");
+
+        // Casting to a primitive
+        float target = float(value);
+    \endcode
+
+    Setting a new value is done by calling `SetVariable` with the ScriptSafeVariableBlock. The value won't
+    be actually updated unless it has changed.
+    \code
+        GetAINetworkCache().SetVariable(ScriptSafeVariableBlock("Name of value", "COMMAND_SHOOT"));
+    \endcode
     
+
+    \see Leviathan::AINetworkCache \ref angelscript_scriptsafevariableblock
+
     \section angelscript_common_tasks AngelScript common tasks
     \ref eventinscripts Adding a new event type to AngelScript
     

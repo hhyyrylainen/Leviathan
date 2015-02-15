@@ -54,6 +54,13 @@ DLLEXPORT bool Leviathan::AINetworkCache::UpdateVariable(const NamedVariableList
 
         if(updatedvalue.CompareName((*iter)->GetName())){
 
+            // Check does the value match //
+            if(updatedvalue == *(*iter)){
+
+                // The value is the same //
+                return true;
+            }
+            
             CurrentVariables.erase(iter);
             break;
         }

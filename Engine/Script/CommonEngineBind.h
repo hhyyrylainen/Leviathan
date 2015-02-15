@@ -36,10 +36,18 @@ Event* WrapperEventFactory(EVENT_TYPE type){
     }
 }
 
-ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryString(string blockname, string valuestr){
+ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryString(const string &blockname, const string &valuestr){
 
 	return new ScriptSafeVariableBlock(new StringBlock(valuestr), Convert::StringToWstring(blockname));
 }
+
+template<typename TType>
+ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryGeneric(const string &blockname, TType value){
+
+	return new ScriptSafeVariableBlock(new DataBlock<TType>(value), Convert::StringToWstring(blockname));
+}
+
+
 // ------------------ Prop proxies ------------------ //
 Float3 PropGetPosVal(Entity::Prop* obj){
 
@@ -378,10 +386,48 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	}
 	// Some factories //
 	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_FACTORY,
-            "ScriptSafeVariableBlock@ f(string blockname, string value)", 
-		WRAP_FN(ScriptSafeVariableBlockFactoryString), asCALL_GENERIC) < 0){
+            "ScriptSafeVariableBlock@ f(const string &in blockname, const string &in value)", 
+		asFUNCTION(ScriptSafeVariableBlockFactoryString), asCALL_CDECL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+    if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_FACTORY,
+            "ScriptSafeVariableBlock@ f(const string &in blockname, float value)", 
+            asFUNCTION(ScriptSafeVariableBlockFactoryGeneric<float>), asCALL_CDECL) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+    if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_FACTORY,
+            "ScriptSafeVariableBlock@ f(const string &in blockname, int value)", 
+            asFUNCTION(ScriptSafeVariableBlockFactoryGeneric<int>), asCALL_CDECL) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_FACTORY,
+            "ScriptSafeVariableBlock@ f(const string &in blockname, double value)", 
+            asFUNCTION(ScriptSafeVariableBlockFactoryGeneric<double>), asCALL_CDECL) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_FACTORY,
+            "ScriptSafeVariableBlock@ f(const string &in blockname, int8 value)", 
+            asFUNCTION(ScriptSafeVariableBlockFactoryGeneric<char>), asCALL_CDECL) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_FACTORY,
+            "ScriptSafeVariableBlock@ f(const string &in blockname, bool value)", 
+            asFUNCTION(ScriptSafeVariableBlockFactoryGeneric<bool>), asCALL_CDECL) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+    
 	// Internal type conversions //
 	if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "ScriptSafeVariableBlock@ ConvertToWstringBlock()",
             WRAP_MFN(ScriptSafeVariableBlock, CreateNewWstringProxy), asCALL_GENERIC) < 0)

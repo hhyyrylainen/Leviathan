@@ -9,6 +9,7 @@
 #include "Gameplay/CommandHandler.h"
 #include "SyncedVariables.h"
 #include "NetworkedInputHandler.h"
+#include "Networking/AINetworkCache.h"
 #include "Entities/GameWorld.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -308,10 +309,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(share
     
         ServerPlayers.push_back(new ConnectedPlayer(connection, this, newid));
         
-        SyncedVariables::Get()->AddAnotherToSyncWith(connection);
-
-        _OnPlayerConnected(ServerPlayers.back());
-
+        _OnReportPlayerConnected(ServerPlayers.back(), connection, guard);
     }
     
 	Logger::Get()->Info(L"NetworkServerInterface: accepted a new player, ID: "+Convert::ToWstring(newid));
@@ -362,6 +360,36 @@ void Leviathan::NetworkServerInterface::_OnReportCloseConnection(ConnectedPlayer
 	Logger::Get()->Info(L"NetworkServerInterface: player (TODO: get name) has closed their connection");
 
     _OnPlayerDisconnect(plyptr);
+}
+
+void Leviathan::NetworkServerInterface::_OnReportPlayerConnected(ConnectedPlayer* plyptr, ConnectionInfo* connection,
+    ObjectLock &guard)
+{
+	VerifyLock(guard);
+
+	Logger::Get()->Info(L"NetworkServerInterface: player (TODO: get name) has connected");
+
+    if(SyncedVariables::Get())
+        SyncedVariables::Get()->AddAnotherToSyncWith(connection);
+
+    if(AINetworkCache::Get())
+        AINetworkCache::Get()->RegisterNewConnection(connection);
+
+    _OnPlayerConnected(plyptr);
+}
+
+void Leviathan::NetworkServerInterface::_OnPlayerConnectionCloseResources(ConnectedPlayer* ply){
+
+    // Close common interfaces that might be using this player //
+    
+    // Stop syncing values with this client //
+    if(SyncedVariables::Get())
+        SyncedVariables::Get()->RemoveConnectionWithAnother(ply->GetConnection());
+
+    if(AINetworkCache::Get())
+        AINetworkCache::Get()->RemoveConnection(ply->GetConnection());
+
+    Logger::Get()->Info("NetworkServerInterface: player \""+ply->GetNickname()+"\" unconnected from common resources");
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
@@ -465,7 +493,7 @@ int Leviathan::NetworkServerInterface::CurrentPlayerID = 1000;
 // ------------------ ConnectedPlayer ------------------ //
 Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance,
     int plyid) : 
-	CorrenspondingConnection(unsafeconnection), Owner(owninginstance), ConnectionStatus(true), UsingHeartbeats(false),
+	CorrespondingConnection(unsafeconnection), Owner(owninginstance), ConnectionStatus(true), UsingHeartbeats(false),
     IsControlLost(false), SecondsWithoutConnection(0.f), ID(plyid)
 {
 	// Register us //
@@ -481,14 +509,12 @@ void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parent
 	{
 		GUARD_LOCK_THIS_OBJECT();
 
-		// Stop syncing values with this client //
-        // TODO: verify that this actually fixes the issue
-        SyncedVariables::Get()->RemoveConnectionWithAnother(CorrenspondingConnection);
+        Owner->_OnPlayerConnectionCloseResources(this);
 
 		// Set as closing //
 		ConnectionStatus = false;
 
-		CorrenspondingConnection = NULL;
+		CorrespondingConnection = NULL;
 	}
 
 	Logger::Get()->Info(L"ConnectedPlayer: connection marked as closed");
@@ -497,11 +523,12 @@ void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parent
 DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYours(ConnectionInfo* checkconnection){
 	GUARD_LOCK_THIS_OBJECT();
 
-	return CorrenspondingConnection->GenerateFormatedAddressString() == checkconnection->GenerateFormatedAddressString();
+	return CorrespondingConnection->GenerateFormatedAddressString() ==
+        checkconnection->GenerateFormatedAddressString();
 }
 
 DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYoursPtrCompare(ConnectionInfo* checkconnection){
-	return CorrenspondingConnection == checkconnection;
+	return CorrespondingConnection == checkconnection;
 }
 
 DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionClosed() const{
@@ -513,7 +540,7 @@ DLLEXPORT void Leviathan::ConnectedPlayer::OnKicked(const wstring &reason){
 		// Send a close connection packet //
 		GUARD_LOCK_THIS_OBJECT();
 
-		auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrenspondingConnection);
+		auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrespondingConnection);
 
 		if(connection){
 
@@ -534,7 +561,7 @@ DLLEXPORT void Leviathan::ConnectedPlayer::StartHeartbeats(){
 	GUARD_LOCK_THIS_OBJECT();
 
 	// Send a start packet //
-	auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrenspondingConnection);
+	auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrespondingConnection);
 
 	if(!connection){
 
@@ -583,7 +610,7 @@ DLLEXPORT void Leviathan::ConnectedPlayer::UpdateHeartbeats(){
 
 	if(timenow >= LastSentHeartbeat+MillisecondDuration(SERVER_HEARTBEATS_MILLISECOND)){
 
-		auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrenspondingConnection);
+		auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrespondingConnection);
 
 		if(!connection){
 
@@ -630,7 +657,7 @@ DLLEXPORT bool Leviathan::ConnectedPlayer::_OnSendPrivateMessage(const string &m
 }
 
 DLLEXPORT ConnectionInfo* Leviathan::ConnectedPlayer::GetConnection(){
-	return CorrenspondingConnection;
+	return CorrespondingConnection;
 }
 
 DLLEXPORT int Leviathan::ConnectedPlayer::GetID() const{

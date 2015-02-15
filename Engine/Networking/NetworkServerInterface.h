@@ -79,7 +79,7 @@ namespace Leviathan{
 		DLLEXPORT virtual bool _OnSendPrivateMessage(const string &message);
 		// ------------------------------------ //
 
-		ConnectionInfo* CorrenspondingConnection;
+		ConnectionInfo* CorrespondingConnection;
 		NetworkServerInterface* Owner;
 		bool ConnectionStatus;
 
@@ -228,6 +228,12 @@ namespace Leviathan{
         //!
         //! Will call virtual notify functions
 		void _OnReportCloseConnection(ConnectedPlayer* plyptr, ObjectLock &guard);
+
+        //! Internally used to detect when a new player has connected
+        void _OnReportPlayerConnected(ConnectedPlayer* plyptr, ConnectionInfo* connection, ObjectLock &guard);
+
+        //! \brief Called from ConnectedPlayer when its connection is no longer good
+        void _OnPlayerConnectionCloseResources(ConnectedPlayer* ply);
 		// ------------------------------------ //
 
 

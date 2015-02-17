@@ -48,13 +48,17 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::ReleaseData(){
     // Stop listening //
     // This should unregister both listeners
 	UnRegister(EVENT_TYPE_PHYSICS_BEGIN, true);
+
+    {
+        UNIQUE_LOCK_THIS_OBJECT();
+
+        AggressiveConstraintUnlink(lockit);
+    }
     
     GUARD_LOCK_THIS_OBJECT();
 
     LastResimulateTarget = NULL;
 
-    AggressiveConstraintUnlink();
-    
 	TrackNodes.clear();
 }
 // ------------------------------------ //
@@ -93,7 +97,7 @@ DLLEXPORT int Leviathan::Entity::TrackEntityController::OnEvent(Event** pEvent){
         if(dataptr->Target == LastResimulateTarget){
 
             // It should be ours //
-            if(!_ApplyResimulateForce(dataptr->TimeInPast, LastResimulateTarget)){
+            if(!_ApplyResimulateForce(dataptr->TimeInPast, LastResimulateTarget, guard)){
 
                 // LastResimulateTarget is no longer valid //
                 LastResimulateTarget = NULL;
@@ -112,7 +116,7 @@ DLLEXPORT int Leviathan::Entity::TrackEntityController::OnEvent(Event** pEvent){
             if(obj == dataptr->Target){
 
                 LastResimulateTarget = obj;
-                _ApplyResimulateForce(dataptr->TimeInPast, LastResimulateTarget);
+                _ApplyResimulateForce(dataptr->TimeInPast, LastResimulateTarget, guard);
                 
                 return 1;
             }
@@ -173,7 +177,7 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::UpdateControlledPositio
 	}
 
 	// Send the positions to the objects //
-	_ApplyTrackPositioning(timestep);
+	_ApplyTrackPositioning(timestep, guard);
 }
 // ------------------------------------ //
 void Leviathan::Entity::TrackEntityController::_OnConstraintUnlink(BaseConstraint* ptr){
@@ -252,7 +256,7 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::AddLocationToTrack(cons
 	TrackNodes.push_back(tmpnode);
 }
 // ------------------------------------ //
-void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float timestep){
+void Leviathan::Entity::TrackEntityController::_ApplyTrackPositioning(float timestep, ObjectLock &guard){
 
     Float3 TrackPos;
 	Float4 TrackDir;
@@ -327,7 +331,7 @@ void Leviathan::Entity::TrackEntityController::_ApplyPositioningToSingleEntity(c
 }
 // ------------------------------------ //
 bool Leviathan::Entity::TrackEntityController::_ApplyResimulateForce(int64_t microsecondsinpast, BaseConstraintable*
-    singleentity /*= NULL*/)
+    singleentity, ObjectLock &guard)
 {
 
     // Lets go back in time and see were we are at //

@@ -12,6 +12,7 @@
 
 namespace Leviathan{
 
+    //! \brief BaseConstraintable uses this internally to keep track of constraints it's part of
     struct EntitysConstraintEntry{
 
         EntitysConstraintEntry(weak_ptr<Entity::BaseConstraint> ischild, BaseConstraintable* owner) :
@@ -22,6 +23,8 @@ namespace Leviathan{
             IsParent(true), ParentPtr(isparent), OwningInstance(owner)
         {
         };
+
+        
         // destructor notifies the constraint object to unlink it's references (because might as well
         // destroy constraint when either one disconnects)
         ~EntitysConstraintEntry(){
@@ -41,7 +44,6 @@ namespace Leviathan{
         // above flag determines which one is set //
         weak_ptr<Entity::BaseConstraint> ChildPartPtr;
         shared_ptr<Entity::BaseConstraint> ParentPtr;
-
     };
 
     //! \brief Entities that inherit this can be a part of a constraint
@@ -53,13 +55,15 @@ namespace Leviathan{
         DLLEXPORT BaseConstraintable();
         DLLEXPORT virtual ~BaseConstraintable();
 
-        // only callable on the parent, which then calls child to unlink it's reference //
-        DLLEXPORT bool UnlinkConstraint(shared_ptr<Entity::BaseConstraint> constraintptr);
+        //! only callable on the parent, which then calls child to unlink it's reference
+        DLLEXPORT bool UnlinkConstraint(shared_ptr<Entity::BaseConstraint> constraintptr, UObjectLock &lockit);
             
         // unlinks all constraints which this object has whether it is parent or child
         // will also release all the constraints
-        DLLEXPORT void AggressiveConstraintUnlink();
+        DLLEXPORT void AggressiveConstraintUnlink(UObjectLock &lockit);
 
+        //! \brief Returns a safe pointer to a connection
+        //! \note This will only work if this entity is the owner part of the constraint
         DLLEXPORT shared_ptr<Entity::BaseConstraint> GetConstraintPtr(Entity::BaseConstraint*
             unsafeptr);
 
@@ -107,7 +111,9 @@ namespace Leviathan{
             constraintptr);
         DLLEXPORT void AddConstraintWhereThisIsParent(shared_ptr<Entity::BaseConstraint>
             constraintptr);
-        DLLEXPORT void OnRemoveConstraint(Entity::BaseConstraint* tmpptr);
+
+        
+        DLLEXPORT void OnRemoveConstraint(Entity::BaseConstraint* tmpptr, UObjectLock &lockit);
 
     protected:
         // over loadable notify functions //
@@ -118,7 +124,16 @@ namespace Leviathan{
         virtual void _SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr);
 
         // called by the joint object //
-        void ConstraintDestroyedRemove(Entity::BaseConstraint* ptr);
+        //! \brief The actual implementation of ConstraintDestroyedRemove
+        //!
+        //! The object may be locked as long as the lock is passed to this function
+        void ConstraintDestroyedRemove(Entity::BaseConstraint* ptr, UObjectLock &lockit);
+
+        //! \note The object may not be locked while this is called
+        void FORCE_INLINE ConstraintDestroyedRemove(Entity::BaseConstraint* ptr){
+            UNIQUE_LOCK_THIS_OBJECT();
+            ConstraintDestroyedRemove(ptr, lockit);
+        }
 
         //! \brief Called from BaseObject when the world disowns this object
         //!

@@ -5,53 +5,96 @@
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
-// I hope that this virtual inherited class' constructor won't run from here //
 DLLEXPORT Leviathan::BaseConstraintable::BaseConstraintable() : BaseObject(-1, NULL){
 
 }
 
 DLLEXPORT Leviathan::BaseConstraintable::~BaseConstraintable(){
-	SAFE_DELETE_VECTOR(PartInConstraints);
+    UNIQUE_LOCK_THIS_OBJECT();
+    
+    AggressiveConstraintUnlink(lockit);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::BaseConstraintable::UnlinkConstraint(shared_ptr<BaseConstraint> constraintptr){
+DLLEXPORT bool Leviathan::BaseConstraintable::UnlinkConstraint(shared_ptr<BaseConstraint> constraintptr,
+    UObjectLock &lockit)
+{
+    VerifyLock(lockit);
+    
 	for(size_t i = 0; i < PartInConstraints.size(); i++){
 		if(PartInConstraints[i]->ParentPtr == constraintptr){
 
-			SAFE_DELETE(PartInConstraints[i]);
+            auto constraint = PartInConstraints[i];
 			PartInConstraints.erase(PartInConstraints.begin()+i);
+
+            lockit.unlock();
+            
+            SAFE_DELETE(constraint);
+
+            lockit.lock();
+
 			return true;
 		}
 	}
+    
 	return false;
 }
 
-DLLEXPORT void Leviathan::BaseConstraintable::AggressiveConstraintUnlink(){
-	// destroy the vector, which will run destructors that destroy all constraints //
-	SAFE_DELETE_VECTOR(PartInConstraints);
+DLLEXPORT void Leviathan::BaseConstraintable::AggressiveConstraintUnlink(UObjectLock &lockit){
+
+    VerifyLock(lockit);
+    
+    while(!PartInConstraints.empty()){
+
+        auto constraint = PartInConstraints.back();
+        PartInConstraints.pop_back();
+
+        lockit.unlock();
+        
+        SAFE_DELETE(constraint);
+
+        lockit.lock();
+    }
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<BaseConstraint> Leviathan::BaseConstraintable::GetConstraintPtr(BaseConstraint* unsafeptr){
-	// returns this object's copy of the ptr if it is found //
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    // Returns this object's copy of the ptr if it is found //
 	for(size_t i = 0; i < PartInConstraints.size(); i++){
+        
 		if(PartInConstraints[i]->ParentPtr.get() == unsafeptr){
 
 			return PartInConstraints[i]->ParentPtr;
 		}
 	}
+    
 	return NULL;
 }
 // ------------------------------------ //
-void Leviathan::BaseConstraintable::ConstraintDestroyedRemove(BaseConstraint* ptr){
-	// this function may not call destruct, so we need to reset the ptrs by hand //
+void Leviathan::BaseConstraintable::ConstraintDestroyedRemove(BaseConstraint* ptr, UObjectLock &lockit){
+
+    VerifyLock(lockit);
+    
+	// This function may not call destruct, so we need to reset the ptrs by hand //
 	for(size_t i = 0; i < PartInConstraints.size(); i++){
+        
 		if(PartInConstraints[i]->IsParent ? PartInConstraints[i]->ParentPtr.get() == ptr: 
 			PartInConstraints[i]->ChildPartPtr.lock().get() == ptr)
 		{
-			PartInConstraints[i]->ChildPartPtr.reset();
-			PartInConstraints[i]->ParentPtr.reset();
-			SAFE_DELETE(PartInConstraints[i]);
+            auto constraint = PartInConstraints[i];
+            
+			constraint->ChildPartPtr.reset();
+			constraint->ParentPtr.reset();
+
 			PartInConstraints.erase(PartInConstraints.begin()+i);
+
+            lockit.unlock();
+            
+            SAFE_DELETE(constraint);
+
+            lockit.lock();
+            
 			return;
 		}
 	}
@@ -72,29 +115,42 @@ void Leviathan::BaseConstraintable::_SendCreatedConstraint(BaseConstraintable* o
 DLLEXPORT void Leviathan::BaseConstraintable::AddConstraintWhereThisIsChild(weak_ptr<BaseConstraint>
     constraintptr)
 {
+    GUARD_LOCK_THIS_OBJECT();
 	PartInConstraints.push_back(new EntitysConstraintEntry(constraintptr, this));
 }
 
 DLLEXPORT void Leviathan::BaseConstraintable::AddConstraintWhereThisIsParent(shared_ptr<BaseConstraint>
     constraintptr)
 {
+    GUARD_LOCK_THIS_OBJECT();
 	PartInConstraints.push_back(new EntitysConstraintEntry(constraintptr, this));
 }
 
-DLLEXPORT void Leviathan::BaseConstraintable::OnRemoveConstraint(BaseConstraint* tmpptr){
-	// this function may call destruct joint destruct so we can just erase the element //
+DLLEXPORT void Leviathan::BaseConstraintable::OnRemoveConstraint(BaseConstraint* tmpptr, UObjectLock &lockit){
+
+    VerifyLock(lockit);
+    
+	// This function may call destruct joint destruct so we can just erase the element //
 	for(size_t i = 0; i < PartInConstraints.size(); i++){
+        
 		if(PartInConstraints[i]->IsParent ? PartInConstraints[i]->ParentPtr.get() == tmpptr: 
 			PartInConstraints[i]->ChildPartPtr.lock().get() == tmpptr)
 		{
-			SAFE_DELETE(PartInConstraints[i]);
+            auto constraint = PartInConstraints[i];
 			PartInConstraints.erase(PartInConstraints.begin()+i);
+
+            lockit.unlock();
+            
+			SAFE_DELETE(constraint);
+
+            lockit.lock();
 			return;
 		}
 	}
 }
 // ------------------------------------ //
 DLLEXPORT size_t Leviathan::BaseConstraintable::GetConstraintCount() const{
+    GUARD_LOCK_THIS_OBJECT();
     return PartInConstraints.size();
 }
 
@@ -111,6 +167,7 @@ DLLEXPORT shared_ptr<BaseConstraint> Leviathan::BaseConstraintable::GetConstrain
 // ------------------------------------ //
 void Leviathan::BaseConstraintable::_OnDisowned(){
 
+    GUARD_LOCK_THIS_OBJECT();
     auto end = PartInConstraints.end();
     for(auto iter = PartInConstraints.begin(); iter != end; ++iter){
 

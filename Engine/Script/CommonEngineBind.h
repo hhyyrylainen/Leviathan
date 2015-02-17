@@ -167,70 +167,87 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 
 
 	// Float3 bind //
-	if(engine->RegisterObjectType("Float3", sizeof(Float3), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK | asOBJ_APP_CLASS_ALLFLOATS) < 0){
+	if(engine->RegisterObjectType("Float3", sizeof(Float3), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK |
+            asOBJ_APP_CLASS_ALLFLOATS) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f()", WRAP_FN(Float3ConstructorProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Float3ConstructorProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f(float value)", WRAP_FN(Float3ConstructorProxySingle), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f(float value)",
+            asFUNCTION(Float3ConstructorProxySingle), asCALL_CDECL_OBJFIRST) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f(float x, float y, float z)", WRAP_FN(Float3ConstructorProxyAll), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f(float x, float y, float z)",
+            asFUNCTION(Float3ConstructorProxyAll), asCALL_CDECL_OBJFIRST) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f(const Float3 &in other)", WRAP_FN(Float3ConstructorProxyCopy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f(const Float3 &in other)",
+            asFUNCTION(Float3ConstructorProxyCopy), asCALL_CDECL_OBJFIRST) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_DESTRUCT, "void f()", WRAP_FN(Float3DestructorProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Float3DestructorProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	// Operators //
-	if(engine->RegisterObjectMethod("Float3", "Float3& opAssign(const Float3 &in other)", WRAP_FN(Float3AssignOtherProxy), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "Float3& opAssign(const Float3 &in other)",
+            asFUNCTION(Float3AssignOtherProxy), asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "Float3 opAdd(const Float3 &in other)", WRAP_FN(Float3AddOtherProxy), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "Float3 opAdd(const Float3 &in other)", asFUNCTION(Float3AddOtherProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "Float3 opSub(const Float3 &in other)", WRAP_FN(Float3SubOtherProxy), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "Float3 opSub(const Float3 &in other)",
+            asFUNCTION(Float3SubOtherProxy), asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "Float3 opMul(float multiply)", WRAP_FN(Float3MulFloatProxy), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "Float3 opMul(float multiply)", asFUNCTION(Float3MulFloatProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "Float3 Normalize()", WRAP_FN(Float3NormalizeProxy), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "Float3 Normalize()", asFUNCTION(Float3NormalizeProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "float GetX()", WRAP_MFN(Float3, GetX), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "float GetX()", asMETHOD(Float3, GetX), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "float GetY()", WRAP_MFN(Float3, GetY), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "float GetY()", asMETHOD(Float3, GetY), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "float GetZ()", WRAP_MFN(Float3, GetZ), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "float GetZ()", asMETHOD(Float3, GetZ), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "void SetX(float &in x)", WRAP_MFN(Float3, SetX), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "void SetX(float &in x)", asMETHOD(Float3, SetX), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "void SetY(float &in y)", WRAP_MFN(Float3, SetY), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "void SetY(float &in y)", asMETHOD(Float3, SetY), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "void SetZ(float &in z)", WRAP_MFN(Float3, SetZ), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "void SetZ(float &in z)", asMETHOD(Float3, SetZ), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "float HAddAbs()", WRAP_MFN(Float3, HAddAbs), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Float3", "float HAddAbs()", asMETHOD(Float3, HAddAbs), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}

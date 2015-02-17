@@ -456,7 +456,8 @@ void Leviathan::NetworkClientInterface::_SendConnectRequest(ObjectLock &guard){
 
 
 	// Send connect request //
-	shared_ptr<NetworkRequest> tmprequest(new NetworkRequest(new JoinServerRequestData()));
+	shared_ptr<NetworkRequest> tmprequest(new NetworkRequest(new JoinServerRequestData(), 3000,
+            PACKAGE_TIMEOUT_STYLE_TIMEDMS));
 
 	auto sentthing = ServerConnection->SendPacketToConnection(tmprequest, 1);
 

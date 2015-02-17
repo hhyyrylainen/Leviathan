@@ -17,6 +17,7 @@ namespace Leviathan{
     
 	typedef boost::strict_lock<boost::recursive_mutex> ObjectLock;
 	typedef boost::unique_lock<boost::recursive_mutex> UniqueObjectLock;
+    typedef boost::unique_lock<boost::recursive_mutex> UObjectLock;
 
 #define GUARD_LOCK_THIS_OBJECT()						ObjectLock guard(this->ObjectsLock);
 #define GUARD_LOCK_THIS_OBJECT_CAST(BaseClass)			ObjectLock guard(static_cast<BaseClass*>(this)->ObjectsLock);
@@ -34,10 +35,19 @@ namespace Leviathan{
 		DLLEXPORT virtual ~ThreadSafe();
 
 		FORCE_INLINE void VerifyLock(ObjectLock &guard) const THROWS{
-			// ensure that lock is for this //
+            
+			// Ensure that lock is for this //
 			if(!guard.owns_lock(&this->ObjectsLock))
 				throw ExceptionInvalidAccess(L"wrong lock owner", 0, __WFUNCTION__, L"lock",
                     L"mismatching lock and object");
+		}
+
+        FORCE_INLINE void VerifyLock(UniqueObjectLock &lockit) const THROWS{
+            
+            // Make sure that the lock is locked //
+			if(!lockit.owns_lock())
+				throw ExceptionInvalidAccess(L"lock not locked", 0, __WFUNCTION__, L"lockit",
+                    L"");
 		}
 
 		//! The main lock facility, mutable for working with const functions

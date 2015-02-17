@@ -137,7 +137,7 @@ namespace Leviathan{ namespace Entity{
         
             //! \brief Updates the controlled object
             //! \todo apply rotation
-            void _ApplyTrackPositioning(float timestep);
+            void _ApplyTrackPositioning(float timestep, ObjectLock &guard);
 
             //! Removes applied forces from objects
             void _OnConstraintUnlink(BaseConstraint* ptr) override;
@@ -157,7 +157,7 @@ namespace Leviathan{ namespace Entity{
 
             //! \brief Applies a force towards a past point for resimulation to a single entity or all
             //! \return True when force was applied to one or more entities
-            bool _ApplyResimulateForce(int64_t microsecondsinpast, BaseConstraintable* singleentity = NULL);
+            bool _ApplyResimulateForce(int64_t microsecondsinpast, BaseConstraintable* singleentity, ObjectLock &guard);
             
             // ------------------------------------ //
         

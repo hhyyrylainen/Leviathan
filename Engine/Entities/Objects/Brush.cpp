@@ -42,6 +42,12 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
 
     ReleaseParentHooks();
 
+    {
+        UNIQUE_LOCK_THIS_OBJECT();
+
+        AggressiveConstraintUnlink(lockit);
+    }
+    
     GUARD_LOCK_THIS_OBJECT();
     
 	// Release Ogre entity //
@@ -60,9 +66,6 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
 		OwnedByWorld->GetScene()->destroyManualObject(BrushModel);
 	}
 
-	// Physical entity //
-	AggressiveConstraintUnlink();
-    
     if(OwnedByWorld)
         _DestroyPhysicalBody();
 
@@ -346,7 +349,13 @@ brushpostgraphicalobjectcreation:
 
 DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*= 0.f*/){
 	// destroy old first //
-	AggressiveConstraintUnlink();
+
+    {
+        UNIQUE_LOCK_THIS_OBJECT();
+
+        AggressiveConstraintUnlink(lockit);
+    }
+
 	_DestroyPhysicalBody();
 
     GUARD_LOCK_THIS_OBJECT();

@@ -188,7 +188,7 @@ class PlayerData{
         if(Score != newscore){
             
             Score = newscore;
-            owner.UpdateScores();
+            owner.QueueScoreUpdate();
         }
         
         PLAYERCONTROLS newcontrols = slot.GetControlType();
@@ -245,7 +245,7 @@ class PlayerData{
     int PlayerNumber;
     
     // Might as well handle the score here //
-    int Score = 0;
+    int Score = -1;
     
     
     // GUI Updating functions //
@@ -314,12 +314,16 @@ class PlayerDataHolder{
             ThePlayers[i].CheckUpdates(currentplayer, this, ignorechanges);
         }
 
-        if(ignorechanges)
-            UpdateScores();
+        UpdateScores();
     }
 
 
     void UpdateScores(){
+
+        if(!ScoreUpdateRequired)
+            return;
+        
+        ScoreUpdateRequired = false;
 
         Print("Updating score table");
 
@@ -336,7 +340,6 @@ class PlayerDataHolder{
             auto slot = ThePlayers[i];
 
             if(slot.PlayerType != PLAYERTYPE_EMPTY || slot.PlayerType != PLAYERTYPE_CLOSED){
-
 
                 finalscores += UpdateTeam(slot);
             }
@@ -366,8 +369,13 @@ class PlayerDataHolder{
 
         return finalscores;
     }
+
+    void QueueScoreUpdate(){
+
+        ScoreUpdateRequired = true;
+    }
     
-    
+    bool ScoreUpdateRequired = true;
     private array<PlayerData@> ThePlayers;
 };
 

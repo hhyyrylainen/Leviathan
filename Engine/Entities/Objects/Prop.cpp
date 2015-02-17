@@ -35,6 +35,12 @@ DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
 
     ReleaseParentHooks();
 
+    {
+        UNIQUE_LOCK_THIS_OBJECT();
+
+        AggressiveConstraintUnlink(lockit);
+    }
+
     GUARD_LOCK_THIS_OBJECT();
 
     
@@ -49,9 +55,6 @@ DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
 	GraphicalObject = NULL;
     ObjectsNode = NULL;
     
-	// physical entity //
-	AggressiveConstraintUnlink();
-
     if(OwnedByWorld)
         _DestroyPhysicalBody();
 

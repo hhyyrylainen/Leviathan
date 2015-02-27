@@ -48,6 +48,7 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
             DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet) const override;
 
+            REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(Prop);
             
         protected:
             //! \brief Constructs a prop for receiving through the network

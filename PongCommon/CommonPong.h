@@ -153,8 +153,19 @@ namespace Pong{
 			auto tmp = GameArena->GetBallPtr();
             if(!tmp)
                 return NULL;
+            
 			tmp->AddRef();
-			return dynamic_cast<Leviathan::Entity::Prop*>(tmp.get());
+            
+            auto asprop = dynamic_cast<Leviathan::Entity::Prop*>(tmp.get());
+            
+            if(!asprop){
+
+                Logger::Get()->Error("Couldn't cast ball to Prop");
+                tmp->Release();
+                return NULL;
+            }
+
+			return asprop;
 		}
 
 		Leviathan::SimpleDatabase* GetGameDatabase(){

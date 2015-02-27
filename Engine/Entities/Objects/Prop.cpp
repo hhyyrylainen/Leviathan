@@ -25,7 +25,7 @@ Leviathan::Entity::Prop::Prop(bool hidden, GameWorld* world, int netid) :
 }
 
 DLLEXPORT Leviathan::Entity::Prop::~Prop(){
-
+    
     ReleaseData();
 }
 

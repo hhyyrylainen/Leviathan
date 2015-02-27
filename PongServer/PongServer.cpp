@@ -283,6 +283,20 @@ void Pong::PongServer::CustomizedGameEnd(){
 
 }
 // ------------------------------------ //
+void Pong::PongServer::RunAITestMatch(){
+
+    Logger::Get()->Info("Running AI test");
+
+    _PlayerList[0]->AddServerAI(1020+1, 2);
+    _PlayerList[1]->AddServerAI(1020+2, 1);
+    _PlayerList[2]->AddServerAI(1020+3, 0);
+
+    Logger::Get()->Info("Starting a match");
+
+    OnStartPreMatch();
+    
+}
+// ------------------------------------ //
 bool Pong::PongServer::MoreCustomScriptTypes(asIScriptEngine* engine){
 
     if(engine->RegisterObjectType("PongServer", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
@@ -300,6 +314,13 @@ bool Pong::PongServer::MoreCustomScriptTypes(asIScriptEngine* engine){
     {
         SCRIPT_REGISTERFAIL;
     }
+
+    // Testing functions //
+	if(engine->RegisterObjectMethod("PongServer", "void RunAITestMatch()", asMETHOD(PongServer, RunAITestMatch),
+            asCALL_THISCALL) < 0)
+    {
+		SCRIPT_REGISTERFAIL;
+	}
 
     
     return true;

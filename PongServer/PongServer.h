@@ -222,6 +222,10 @@ playrscorelistupdateendlabel:
 		virtual bool MoreCustomScriptTypes(asIScriptEngine* engine);
 		virtual void MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids);
 
+        //! \brief For testing AI with valgrind
+        //! \todo Add a score limit and a way to go back to default state afterwards
+        void RunAITestMatch();
+
 		// Server specific connection handling //
 
 

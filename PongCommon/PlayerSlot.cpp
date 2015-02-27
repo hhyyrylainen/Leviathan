@@ -306,6 +306,18 @@ void Pong::PlayerSlot::SlotJoinPlayer(Leviathan::ConnectedPlayer* ply, int uniqn
 	PlayerType = PLAYERTYPE_HUMAN;
 }
 
+void Pong::PlayerSlot::AddServerAI(int uniquenumber, int aitype /*= 2*/){
+
+    // TODO: properly kick //
+    SlotsPlayer = NULL;
+
+    PlayerNumber = uniquenumber;
+    PlayerType = PLAYERTYPE_COMPUTER;
+    
+    ControlType = PLAYERCONTROLS_AI;
+    ControlIdentifier = aitype;
+}
+
 void Pong::PlayerSlot::SlotLeavePlayer(){
 	SlotsPlayer = NULL;
 	ControlType = PLAYERCONTROLS_NONE;

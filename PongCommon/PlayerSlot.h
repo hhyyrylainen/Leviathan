@@ -159,6 +159,8 @@ namespace Pong{
 
 		void SlotJoinPlayer(Leviathan::ConnectedPlayer* ply, int uniqnumber);
 
+        void AddServerAI(int uniquenumber, int aitype = 2);
+
 
 		void SlotLeavePlayer();
 

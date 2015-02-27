@@ -53,6 +53,26 @@ Float3 PropGetPosVal(Entity::Prop* obj){
 
     return obj->GetPos();
 }
+
+int PropGetID(Entity::Prop* ptr){
+
+    return ptr->GetID();
+}
+
+Float3 PropGetBodyVelocity(Entity::Prop* obj){
+
+    return obj->GetBodyVelocity();
+}
+
+NewtonBody* PropGetPhysicsBody(Entity::Prop* obj){
+
+    return obj->GetPhysicsBody();
+}
+// ------------------ Brush proxies ------------------ //
+NewtonBody* BrushGetPhysicsBody(Entity::Brush* obj){
+    
+    return obj->GetPhysicsBody();
+}
 // ------------------ Float3 proxies ------------------ //
 void Float3ConstructorProxy(void* memory){
 	new(memory) Float3();
@@ -258,10 +278,15 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectType("NamedVars", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("NamedVars", asBEHAVE_ADDREF, "void f()", WRAP_MFN(NamedVars, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("NamedVars", asBEHAVE_ADDREF, "void f()", asMETHOD(NamedVars, AddRefProxy),
+        asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("NamedVars", asBEHAVE_RELEASE, "void f()", WRAP_MFN(NamedVars, ReleaseProxy), asCALL_GENERIC) < 0){
+    
+	if(engine->RegisterObjectBehaviour("NamedVars", asBEHAVE_RELEASE, "void f()", asMETHOD(NamedVars, ReleaseProxy),
+            asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
@@ -283,10 +308,14 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectType("Event", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Event", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Event, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Event", asBEHAVE_ADDREF, "void f()", asMETHOD(Event, AddRefProxy),
+            asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Event", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Event, ReleaseProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Event", asBEHAVE_RELEASE, "void f()", asMETHOD(Event, ReleaseProxy),
+            asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
@@ -321,7 +350,8 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	}
     
 	// Data get function //
-	if(engine->RegisterObjectMethod("GenericEvent", "NamedVars@ GetNamedVars()", WRAP_MFN(GenericEvent, GetNamedVarsRefCounted), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("GenericEvent", "NamedVars@ GetNamedVars()",
+            asMETHOD(GenericEvent, GetNamedVarsRefCounted), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -332,12 +362,14 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	}
 
 	// Global get function //
-	if(engine->RegisterGlobalFunction("EventHandler& GetEventHandler()", WRAP_FN(EventHandler::Get), asCALL_GENERIC) < 0){
+	if(engine->RegisterGlobalFunction("EventHandler& GetEventHandler()", asFUNCTION(EventHandler::Get),
+            asCALL_CDECL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
 	// Script event firing //
-	if(engine->RegisterObjectMethod("EventHandler", "void CallEvent(GenericEvent@ event)", WRAP_MFN(EventHandler, CallEventGenericProxy), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("EventHandler", "void CallEvent(GenericEvent@ event)",
+            asMETHOD(EventHandler, CallEventGenericProxy), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -394,11 +426,11 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_ADDREF, "void f()",
-            WRAP_MFN(ScriptSafeVariableBlock, AddRefProxy), asCALL_GENERIC) < 0){
+            asMETHOD(ScriptSafeVariableBlock, AddRefProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_RELEASE, "void f()",
-            WRAP_MFN(ScriptSafeVariableBlock, ReleaseProxy), asCALL_GENERIC) < 0){
+            asMETHOD(ScriptSafeVariableBlock, ReleaseProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	// Some factories //
@@ -447,33 +479,33 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
     
 	// Internal type conversions //
 	if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "ScriptSafeVariableBlock@ ConvertToWstringBlock()",
-            WRAP_MFN(ScriptSafeVariableBlock, CreateNewWstringProxy), asCALL_GENERIC) < 0)
+            asMETHOD(ScriptSafeVariableBlock, CreateNewWstringProxy), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	// Implicit casts for normal types //
 	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "string f() const", 
-		WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<string>), asCALL_GENERIC) < 0)
+            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<string>), asCALL_GENERIC) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "int f() const", 
-		WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<int>), asCALL_GENERIC) < 0)
+            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<int>), asCALL_GENERIC) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "int8 f() const", 
-		WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<char>), asCALL_GENERIC) < 0)
+            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<char>), asCALL_GENERIC) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "float f() const", 
-		WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<float>), asCALL_GENERIC) < 0)
+            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<float>), asCALL_GENERIC) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "double f() const", 
-		WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<double>), asCALL_GENERIC) < 0)
+            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<double>), asCALL_GENERIC) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -513,14 +545,18 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectType("GameModule", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("GameModule", asBEHAVE_ADDREF, "void f()", WRAP_MFN(GameModule, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("GameModule", asBEHAVE_ADDREF, "void f()", asMETHOD(GameModule, AddRefProxy),
+        asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("GameModule", asBEHAVE_RELEASE, "void f()", WRAP_MFN(GameModule, ReleaseProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("GameModule", asBEHAVE_RELEASE, "void f()", asMETHOD(GameModule, ReleaseProxy),
+            asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	// Bind simple name get function //
-	if(engine->RegisterObjectMethod("GameModule", "string GetDescription(bool full = false)", WRAP_MFN(GameModule, GetDescriptionProxy), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("GameModule", "string GetDescription(bool full = false)",
+            asMETHOD(GameModule, GetDescriptionProxy), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -534,19 +570,25 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectType("RayCastHitEntity", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("RayCastHitEntity", asBEHAVE_ADDREF, "void f()", WRAP_MFN(RayCastHitEntity, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("RayCastHitEntity", asBEHAVE_ADDREF, "void f()",
+            asMETHOD(RayCastHitEntity, AddRefProxy), asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("RayCastHitEntity", asBEHAVE_RELEASE, "void f()", WRAP_MFN(RayCastHitEntity, ReleaseProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("RayCastHitEntity", asBEHAVE_RELEASE, "void f()",
+            asMETHOD(RayCastHitEntity, ReleaseProxy), asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("RayCastHitEntity", "Float3 GetPosition()", WRAP_MFN(RayCastHitEntity, GetPosition), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("RayCastHitEntity", "Float3 GetPosition()",
+            asMETHOD(RayCastHitEntity, GetPosition), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
 
-	if(engine->RegisterObjectMethod("GameWorld", "RayCastHitEntity@ CastRayGetFirstHit(Float3 start, Float3 end)", WRAP_MFN(GameWorld, CastRayGetFirstHitProxy), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("GameWorld", "RayCastHitEntity@ CastRayGetFirstHit(Float3 start, Float3 end)",
+            asMETHOD(GameWorld, CastRayGetFirstHitProxy), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -557,7 +599,8 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	}
 
 	// Compare function //
-	if(engine->RegisterObjectMethod("RayCastHitEntity", "bool DoesBodyMatchThisHit(NewtonBody@ body)", WRAP_MFN(RayCastHitEntity, DoesBodyMatchThisHit), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("RayCastHitEntity", "bool DoesBodyMatchThisHit(NewtonBody@ body)",
+            asMETHOD(RayCastHitEntity, DoesBodyMatchThisHit), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -593,13 +636,18 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectType("BaseObject", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_ADDREF, "void f()", WRAP_MFN(BaseObject, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_ADDREF, "void f()", asMETHOD(BaseObject, AddRefProxy),
+            asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_RELEASE, "void f()", WRAP_MFN(BaseObject, ReleaseProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_RELEASE, "void f()", asMETHOD(BaseObject, ReleaseProxy),
+            asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("BaseObject", "NewtonBody@ CustomMessageGetNewtonBody()", WRAP_FN(BaseObjectCustomMessageGetNewtonBody), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("BaseObject", "NewtonBody@ CustomMessageGetNewtonBody()",
+            asFUNCTION(BaseObjectCustomMessageGetNewtonBody), asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -609,13 +657,23 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectType("Prop", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Prop", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Prop, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Prop", asBEHAVE_ADDREF, "void f()", asMETHOD(Prop, AddRefProxy),
+            asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Prop", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Prop, ReleaseProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Prop", asBEHAVE_RELEASE, "void f()", asMETHOD(Prop, ReleaseProxy),
+            asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Prop", "NewtonBody@ GetPhysicalBody()", WRAP_MFN(Prop, GetPhysicsBody), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Prop", "NewtonBody@ GetPhysicalBody()", asFUNCTION(PropGetPhysicsBody),
+            asCALL_CDECL_OBJFIRST) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    if(engine->RegisterObjectMethod("Prop", "int GetID()", asFUNCTION(PropGetID),
+            asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -624,7 +682,8 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Prop", "Float3 GetVelocity()", WRAP_MFN(Prop, GetBodyVelocity), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Prop", "Float3 GetVelocity()", asFUNCTION(PropGetBodyVelocity),
+            asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -632,13 +691,18 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectType("Brush", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Brush", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Brush, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Brush", asBEHAVE_ADDREF, "void f()", asMETHOD(Brush, AddRefProxy),
+            asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Brush", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Brush, ReleaseProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Brush", asBEHAVE_RELEASE, "void f()", asMETHOD(Brush, ReleaseProxy),
+            asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Brush", "NewtonBody@ GetPhysicalBody()", WRAP_MFN(Brush, GetPhysicsBody), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("Brush", "NewtonBody@ GetPhysicalBody()", asFUNCTION(BrushGetPhysicsBody),
+            asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -647,45 +711,58 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	if(engine->RegisterObjectType("TrackEntityController", 0, asOBJ_REF) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("TrackEntityController", asBEHAVE_ADDREF, "void f()", WRAP_MFN(TrackEntityController, AddRefProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("TrackEntityController", asBEHAVE_ADDREF, "void f()",
+            asMETHOD(TrackEntityController, AddRefProxy), asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("TrackEntityController", asBEHAVE_RELEASE, "void f()", WRAP_MFN(TrackEntityController, ReleaseProxy), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("TrackEntityController", asBEHAVE_RELEASE, "void f()",
+            asMETHOD(TrackEntityController, ReleaseProxy), asCALL_THISCALL) < 0)
+    {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("TrackEntityController", "Float3 GetCurrentNodePosition()", WRAP_MFN(TrackEntityController, GetCurrentNodePosition), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("TrackEntityController", "Float3 GetCurrentNodePosition()",
+            asMETHOD(TrackEntityController, GetCurrentNodePosition), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("TrackEntityController", "Float3 GetNextNodePosition()", WRAP_MFN(TrackEntityController, GetNextNodePosition), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("TrackEntityController", "Float3 GetNextNodePosition()",
+            asMETHOD(TrackEntityController, GetNextNodePosition), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("TrackEntityController", "void SetProgressTowardsNextNode(float progress)", WRAP_MFN(TrackEntityController, SetProgressTowardsNextNode), asCALL_GENERIC) < 0)
+	if(engine->RegisterObjectMethod("TrackEntityController", "void SetProgressTowardsNextNode(float progress)",
+            asMETHOD(TrackEntityController, SetProgressTowardsNextNode), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
 
 	// ------------------ Entity casts ------------------ //
-	if(engine->RegisterObjectBehaviour("Prop", asBEHAVE_IMPLICIT_REF_CAST, "BaseObject@ f()", WRAP_FN((DoReferenceCastStatic<Prop, BaseObject>)), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Prop", asBEHAVE_IMPLICIT_REF_CAST, "BaseObject@ f()",
+            asFUNCTION((DoReferenceCastStatic<Prop, BaseObject>)), asCALL_CDECL_OBJFIRST) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_REF_CAST, "Prop@ f()", WRAP_FN((DoReferenceCastDynamic<BaseObject, Prop>)), asCALL_GENERIC) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-
-	if(engine->RegisterObjectBehaviour("Brush", asBEHAVE_IMPLICIT_REF_CAST, "BaseObject@ f()", WRAP_FN((DoReferenceCastStatic<Brush, BaseObject>)), asCALL_GENERIC) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_REF_CAST, "Brush@ f()", WRAP_FN((DoReferenceCastDynamic<BaseObject, Brush>)), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_REF_CAST, "Prop@ f()",
+            asFUNCTION((DoReferenceCastDynamic<BaseObject, Prop>)), asCALL_CDECL_OBJFIRST) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectBehaviour("TrackEntityController", asBEHAVE_IMPLICIT_REF_CAST, "BaseObject@ f()", WRAP_FN((DoReferenceCastStatic<TrackEntityController, BaseObject>)), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("Brush", asBEHAVE_IMPLICIT_REF_CAST, "BaseObject@ f()",
+            asFUNCTION((DoReferenceCastStatic<Brush, BaseObject>)), asCALL_CDECL_OBJFIRST) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_REF_CAST, "TrackEntityController@ f()", WRAP_FN((DoReferenceCastDynamic<BaseObject, TrackEntityController>)), asCALL_GENERIC) < 0){
+	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_REF_CAST, "Brush@ f()",
+            asFUNCTION((DoReferenceCastDynamic<BaseObject, Brush>)), asCALL_CDECL_OBJFIRST) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+	if(engine->RegisterObjectBehaviour("TrackEntityController", asBEHAVE_IMPLICIT_REF_CAST, "BaseObject@ f()",
+            asFUNCTION((DoReferenceCastStatic<TrackEntityController, BaseObject>)), asCALL_CDECL_OBJFIRST) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_REF_CAST, "TrackEntityController@ f()",
+            asFUNCTION((DoReferenceCastDynamic<BaseObject, TrackEntityController>)), asCALL_CDECL_OBJFIRST) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 

@@ -25,6 +25,7 @@ Pong::Arena::~Arena(){
 bool Pong::Arena::GenerateArena(BasePongParts* game, PlayerList &plys){
 
 	QUICKTIME_THISSCOPE;
+    GUARD_LOCK_THIS_OBJECT();
 	
 	std::vector<PlayerSlot*>& plyvec = plys.GetVec();
 	
@@ -382,6 +383,8 @@ addplayerpaddlelabel:
 }
 // ------------------------------------ //
 void Pong::Arena::_ClearPointers(){
+
+    GUARD_LOCK_THIS_OBJECT();
 	BottomBrush.reset();
 	TrailKeeper.reset();
 	DirectTrail = NULL;
@@ -390,6 +393,8 @@ void Pong::Arena::_ClearPointers(){
 void Pong::Arena::ServeBall(){
 
     LetGoOfBall();
+
+    GUARD_LOCK_THIS_OBJECT();
 
 
 	// we want to load our ball prop into the world //
@@ -473,7 +478,9 @@ void Pong::Arena::ServeBall(){
 }
 // ------------------------------------ //
 void Pong::Arena::VerifyTrail(){
-
+    
+    GUARD_LOCK_THIS_OBJECT();
+    
     if(DirectTrail)
         return;
     
@@ -525,6 +532,8 @@ void Pong::Arena::ColourTheBallTrail(const Float4 &colour){
 	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(colour,
         Float4(0.7f, 0.7f, 0.7f, 0.3f), 5.f, 0.6f);
 
+    GUARD_LOCK_THIS_OBJECT();
+    
 	if(DirectTrail){
 
 		DirectTrail->SetTrailProperties(balltrailproperties);
@@ -533,6 +542,7 @@ void Pong::Arena::ColourTheBallTrail(const Float4 &colour){
 // ------------------------------------ //
 std::string Pong::Arena::GetMaterialNameForPlayerColour(const Float4 &colour){
 
+    GUARD_LOCK_THIS_OBJECT();
 	auto iter = ColourMaterialName.find(colour);
 
 	if(iter != ColourMaterialName.end()){

@@ -101,8 +101,11 @@ void UpdatePlayerControls(const string &in slot, const string &in split, const s
 
         if(ControlList[i].Text == controlsname){
 
-            GetPongGame().SendServerCommand("controls "+slot+" "+split+" set "+ControlList[i].Controls+" "+
-                ControlList[i].ControlNumber);
+            string command = "controls "+slot+" "+split+" set "+ControlList[i].Controls+" "+
+                ControlList[i].ControlNumber;
+            
+            GetPongGame().SendServerCommand(command);
+            Print("Command> "+command);
 
             return;
         }

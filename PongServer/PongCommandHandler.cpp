@@ -290,6 +290,9 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 
         if(!chosenslot->IsSlotActive())
             return;
+
+        Logger::Get()->Info("Pong: setting slot "+Convert::ToString(slotnumber)+" split "+Convert::ToString(split)+
+            "controls to "+Convert::ToString(controls)+", "+Convert::ToString(number));
         
 		chosenslot->SetControls(static_cast<PLAYERCONTROLS>(controls), number);
 

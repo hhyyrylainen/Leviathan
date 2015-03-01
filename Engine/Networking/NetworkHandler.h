@@ -199,7 +199,7 @@ namespace Leviathan{
 
         //! Mutex which needs to be locked when deleting ConnectionInfo objects or trying to keep them from being
         //! destroyed. Needs to be locked after ConnectionListMutex
-        
+        boost::mutex ConnectionDestroyMutex;
 
 		wstring MasterServerMustPassIdentification;
 

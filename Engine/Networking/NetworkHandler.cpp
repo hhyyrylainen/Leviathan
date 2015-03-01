@@ -288,9 +288,21 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
         
         // Time-out requests //
         for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
-            //// This needs to be unlocked to avoid deadlocking //
+
+            auto connection = ConnectionsToUpdate[i];
+
+            boost::unique_lock<boost::mutex> destroylock(ConnectionDestroyMutex);
+
+            lock.unlock();
+            
+            // This needs to be unlocked to avoid deadlocking //
             // The callee needs to make sure to use the right locking function to not deadlock //
-            ConnectionsToUpdate[i]->UpdateListening();
+            // This still might potentially deadlock
+            GUARD_LOCK_OTHER_OBJECT(connection);
+
+            destroylock.unlock();
+            
+            connection->UpdateListening();
         }
     }
 
@@ -306,11 +318,16 @@ void Leviathan::NetworkHandler::_RegisterConnectionInfo(ConnectionInfo* tomanage
 
 void Leviathan::NetworkHandler::_UnregisterConnectionInfo(ConnectionInfo* unregisterme){
 
+    GUARD_LOCK_OTHER_OBJECT(unregisterme);
+    
     boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
     
 	for(auto iter = ConnectionsToUpdate.begin(); iter != ConnectionsToUpdate.end(); ++iter){
 
 		if((*iter) == unregisterme){
+
+            boost::unique_lock<boost::mutex> destroylock(ConnectionDestroyMutex);
+            
 			// Remove and don't cause iterator problems by returning //
 			ConnectionsToUpdate.erase(iter);
 			return;
@@ -339,6 +356,8 @@ DLLEXPORT void Leviathan::NetworkHandler::SafelyCloseConnectionTo(ConnectionInfo
 
 
 	// Add to the queue //
+    boost::unique_lock<boost::mutex> destroylock(ConnectionDestroyMutex);
+    
 	ConnectionsToTerminate.push_back(to);
 }
 
@@ -351,6 +370,9 @@ DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
 
 	// Go through the removed connection list and remove them //
 	for(size_t i = 0; i < ConnectionsToTerminate.size(); i++){
+
+        boost::unique_lock<boost::mutex> destroylock(ConnectionDestroyMutex);
+        
 		// Send a close packet //
 		ConnectionsToTerminate[i]->SendCloseConnectionPacket();
 
@@ -361,7 +383,9 @@ DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
 		ConnectionsToTerminate[i]->Release();
 		// The connection will automatically remove itself from the vector //
 
+        destroylock.unlock();
         lock.lock();
+        destroylock.lock();
         
 		// But if we have opened it we need to delete our pointer //
 		for(size_t a = 0; a < AutoOpenedConnections.size(); a++){

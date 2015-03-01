@@ -196,6 +196,9 @@ namespace Leviathan{
         //! Mutex that needs to belocked while changing ConnectionsToTerminate or ConnectionsToUpdate or any other
         //! connection list
         boost::recursive_mutex ConnectionListMutex;
+
+        //! Mutex which needs to be locked when deleting ConnectionInfo objects or trying to keep them from being
+        //! destroyed. Needs to be locked after ConnectionListMutex
         
 
 		wstring MasterServerMustPassIdentification;

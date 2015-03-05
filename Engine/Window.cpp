@@ -52,7 +52,7 @@ namespace Leviathan{
         LastFrameDownMouseButtons(0), ForceMouseVisible(false), CursorState(true), MouseCaptured(false),
         ID(IDFactory::GetID()),
         FirstInput(true), OverLayCamera(NULL), IsInvalidated(false)
-#ifdef __GNUC__
+#ifdef __linux
         , XDisplay(NULL), m_hwnd(0), XInvCursor(0)
 #else
         , m_hwnd(NULL)
@@ -70,7 +70,7 @@ namespace Leviathan{
         // cursor on top of window's windows isn't hidden //
         ApplicationWantCursorState = false;
 
-#ifdef __GNUC__
+#ifdef __linux
         // Create an invisible cursor //
         XColor black;
         static char noData[] = { 0,0,0,0,0,0,0,0 };

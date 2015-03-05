@@ -7,14 +7,13 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Common/BaseNotifiable.h"
-#include "SFML/Network/Packet.hpp"
+#include "Common/SFMLPackets.h"
 #include "Exceptions/ExceptionInvalidArgument.h"
-
 
 namespace Leviathan{
 
 	//! \brief Base class for all values that are to be automatically synced between clients
-	//! \note The variable is not sent to other clients unless they allow new resources from the net and this SyncedResource is updated after adding
+	//! \note The variable is not sent to other clients unless they allow new resources from the net
 	//! \warning The variable must be registered for syncing after SyncedVariables is created
 	//! \todo Possibly do a global static class that will automatically register all when single StartSync is called
 	class SyncedResource : public BaseNotifiableAll{
@@ -40,7 +39,7 @@ namespace Leviathan{
 		//! \post The variable is now ready for use
 		DLLEXPORT virtual void StartSync();
 
-		//! \brief Notify that this is changed and we want a local message too
+		//! \brief Notify that this is changed and we want a local message, too
 		//!
 		//! If you do not want a local message call UpdateOurNetworkValue directly
 		DLLEXPORT void NotifyUpdatedValue();
@@ -76,7 +75,6 @@ namespace Leviathan{
 	//! \brief Template class for syncing basic types
 	//! \warning This will only work with primitive types like int, float, string etc.
     //! For other use you must inherit SyncedResource and create a custom class
-	//! \see SyncedResource
 	template<class DTypeName>
 	class SyncedPrimitive : public SyncedResource{
 	public:

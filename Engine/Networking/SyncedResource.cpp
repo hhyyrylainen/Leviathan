@@ -8,7 +8,7 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::SyncedResource::SyncedResource(const wstring &uniquename) : Name(uniquename){
-	// Now we need to be registered later //
+
 }
 
 DLLEXPORT Leviathan::SyncedResource::~SyncedResource(){
@@ -29,12 +29,13 @@ DLLEXPORT void Leviathan::SyncedResource::StartSync(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(sf::Packet &packet){
 	GUARD_LOCK_THIS_OBJECT();
+    
 	// Load the custom data //
 	try{
 		UpdateCustomDataFromPacket(packet);
 
 	} catch(const ExceptionInvalidArgument &e){
-		// Something failed //
+
 		e.PrintToLog();
 		return false;
 	}

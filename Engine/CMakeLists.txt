@@ -166,7 +166,7 @@ set_target_properties(Engine PROPERTIES
 
 
 # speed up build
-#cotire(Engine)
+cotire(Engine)
 
 
 install(TARGETS Engine DESTINATION bin)

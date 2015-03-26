@@ -116,7 +116,8 @@ set(CMAKE_DEBUG_POSTFIX "D")
 if(WIN32)
     # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
     # higher memory for compiling precompiled headers
-    add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm216)
+    # Currently it seems that Zm250 should be enough but it might not be
+    add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm250)
     
     # program database flag for debug
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
@@ -449,6 +450,9 @@ if(WIN32)
         file(GLOB NewtonMoveFiles "Newton/bin/Release/*")
       endif()
     endif()
+    
+    # All files should be copied here
+    file(GLOB RawFilesToMove "bin/ThirdParty/*.dll")
 
 else(WIN32)
 
@@ -459,21 +463,22 @@ else(WIN32)
     
     # newton
     file(GLOB NewtonMoveFiles "Newton/lib/libNewton.so")
+    
+    set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
 
+    set(RawFilesToMove ${CEGUIMoveFiles} ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
+      ${OGRE_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES} ${OGRE_Plugin_OctreeZone_LIBRARIES} 
+      ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
+
+  MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
+      
 endif(WIN32)
-
-set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
-
-set(RawFilesToMove ${CEGUIMoveFiles} ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
-  ${OGRE_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES} ${OGRE_Plugin_OctreeZone_LIBRARIES} 
-  ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
-
-MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
 
 # Remove debug libs on windows
 if(WIN32 AND NOT COPY_DEBUG_LIBS)
-
+  
   RemoveLibsWithDebugSuffix(RawFilesToMove)
+
 
 endif(WIN32 AND NOT COPY_DEBUG_LIBS)
 
@@ -492,10 +497,12 @@ endforeach()
 
 set(RawFilesToMove ${PassedItems})
 
-set(FinalMoveInstallFiles)
-
-# Go through all the libraries and add all name variants to the moved files
-GlobAllVariants(RawFilesToMove FinalMoveInstallFiles)
+if(UNIX)
+  # Go through all the libraries and add all name variants to the moved files
+  GlobAllVariants(RawFilesToMove FinalMoveInstallFiles)
+else()
+  set(FinalMoveInstallFiles ${RawFilesToMove})
+endif()
 
 message(STATUS "Moving the bulk...")
 

@@ -7,7 +7,6 @@ CodeAnalyst/
 *.dll
 *.pdb
 *.exe
-*/bin/
 /*/lib
 cryptopp/
 CEGUI/
@@ -22,7 +21,6 @@ AngelScript/sdk/angelscript/lib/
 AngelScript/sdk/angelscript/projects/
 Engine/Include.h
 *.sln
-bin/
 *.7z
 *.orig
 CEF/Resources/
@@ -48,3 +46,4 @@ cscope.out
 cscope.po.out
 rcscope.sh
 .idea
+bin/Data/

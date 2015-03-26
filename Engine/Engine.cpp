@@ -706,7 +706,8 @@ void Leviathan::Engine::Tick(){
 
 	if(!NoGui){
 		// sound tick //
-		Sound->Tick(TimePassed);
+		if(Sound)
+		   Sound->Tick(TimePassed);
 
 		// update windows //
         if(GraphicalEntity1)

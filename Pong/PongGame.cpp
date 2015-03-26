@@ -43,6 +43,7 @@ void TryToCrash(bool enable){
 int Pong::PongGame::OnEvent(Event** pEvent){
 
     //TryToCrash(Toggle);
+	return 0;
 }
 
 Pong::PongGame::PongGame() : GuiManagerAccess(NULL), GameInputHandler(NULL)

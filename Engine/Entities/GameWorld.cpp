@@ -655,7 +655,7 @@ DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
 // ------------------------------------ //
 DLLEXPORT int Leviathan::GameWorld::GetPhysicalMaterial(const wstring &name){
 
-    PhysicsMaterialManager::Get()->GetMaterialIDForWorld(name,
+    return PhysicsMaterialManager::Get()->GetMaterialIDForWorld(name,
         _PhysicalWorld->GetNewtonWorld());
 }
 // ------------------------------------ //

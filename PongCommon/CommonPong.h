@@ -28,7 +28,7 @@
 #include "Events/EventHandler.h"
 #include "Threading/ThreadingManager.h"
 
-#define SCRIPT_REGISTERFAIL	Logger::Get()->Error(L"PongGame: AngelScript: register global failed in file " +__WFILE__+ L" on line "+Convert::IntToWstring(__LINE__), false);return false;
+#define SCRIPT_REGISTERFAIL	Logger::Get()->Error("PongGame: AngelScript: register global failed in file " __FILE__ " on line "+Convert::ToString(__LINE__), false); return false;
 
 #define BALLSTUCK_THRESHOLD		0.065f
 #define BALLSTUCK_COUNT			8

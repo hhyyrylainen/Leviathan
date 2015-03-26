@@ -35,8 +35,8 @@ namespace Leviathan{
 				if(tarvec.size() > 5000){
 
 					tarvec.resize((size_t)(tarvec.size()*1.35f));
-					Logger::Get()->Warning(L"RenderingStatistics: large frame time tracking buffer is getting larger, "
-                        "size: "+Convert::ToWstring(tarvec.size()));
+					Logger::Get()->Warning("RenderingStatistics: large frame time tracking buffer is getting larger, "
+                        "size: "+Convert::ToString(tarvec.size()));
 
 				} else {
 

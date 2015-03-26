@@ -6,6 +6,8 @@
 
 // ------------------------------------ //
 // ---- includes ---- //
+#include <memory>
+
 #include "OGRE/OgreQuaternion.h"
 #include "OGRE/OgreColourValue.h"
 #include "OGRE/OgreVector3.h"

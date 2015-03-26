@@ -12,9 +12,13 @@
 #include <assert.h>
 
 #ifdef _WIN32
+// This fixes including wincoded.h
+#include <d2d1.h>
+#include <wincodec.h>
+#include <SDKDDKVer.h>
+
 #include <Windows.h>
 #include <Windowsx.h>
-#include <wincodec.h>
 #else
 // For making SIGINT work as debug break on linux //
 #include <signal.h>

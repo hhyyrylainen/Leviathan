@@ -474,4 +474,6 @@ bool Leviathan::NetworkedInputHandler::_HandleInputCreateResponse(shared_ptr<Net
     GlobalOrLocalListeners.push_back(shared_ptr<NetworkedInput>(ournewobject.release()));
 
     _NetworkInputFactory->ReplicationFinalized(GlobalOrLocalListeners.back().get());
+
+	return true;
 }

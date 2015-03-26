@@ -4,6 +4,7 @@
 // Reduce bloat in precompiled header
 // ------------------------------------ //
 // ---- includes ---- //
+#include <memory>
 
 #define TIMINGMONITOR_STYLE_RESULT_DEFAULT	100
 #define TIMINGMONITOR_STYLE_RESULT_NONE		200

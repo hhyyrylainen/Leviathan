@@ -1,5 +1,10 @@
+#pragma once
 #ifndef LEVIATHAN_INCLUDE
 #define LEVIATHAN_INCLUDE
+
+//
+// File configured by CMake do not edit Include.h //
+//
 
 #define L_VLD_STATE @L_VLD_STATE@
 #if L_VLD_STATE == 0
@@ -8,6 +13,11 @@
 #ifdef L_VLD_STATE
 // Define the actual macro //
 #define LEVIATHAN_USES_VLD
+#endif
+
+#define L_LEAP_STATE @L_LEAP_STATE@
+#if L_LEAP_STATE == 1
+#define LEVIATHAN_USES_LEAP
 #endif
 
 #ifndef __cplusplus
@@ -31,8 +41,10 @@
 #include <cstdint>
 
 #ifdef _WIN32
+// This fixes including wincoded.h
+#include <d2d1.h>
+#include <wincodec.h>
 #include <SDKDDKVer.h>
-
 #endif
 
 // some special compiler settings //
@@ -48,7 +60,6 @@
 #ifdef _WIN32
     #include <Windows.h>
     #include <Windowsx.h>
-    #include <wincodec.h>
 #else
     // For making SIGINT work as debug break on linux //
     #include <signal.h>
@@ -243,10 +254,6 @@ namespace Leviathan{
             +string(" line: " __SLINE__ ));}
 
 
-#include "Logger.h"
-#include "Common/Types.h"
-#include "Utility/Convert.h"
-#include "Statistics/TimingMonitor.h"
 
 // Undef stuff //
 #undef index

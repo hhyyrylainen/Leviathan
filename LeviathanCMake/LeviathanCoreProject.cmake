@@ -48,10 +48,14 @@ endif(WIN32 AND NOT MINGW)
 
 # Creating symbols after building
 # When not USE_BREAKPAD this won't be ran automatically
+if(UNIX)
 add_custom_target(${CurrentProjectName}_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/${CurrentProjectName}"
   DEPENDS ${CurrentProjectName} WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
-
-
+elseif(WIN32)
+add_custom_target(${CurrentProjectName}_Symbols ${SYMBOL_EXTRACTOR} 
+  "${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/${CurrentProjectName}.exe"
+  DEPENDS ${CurrentProjectName} WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
+endif()
 
 
 

@@ -7,7 +7,7 @@
 
 
 // Newton things
-struct NewtonJoint;
+class NewtonJoint;
 
 namespace Leviathan{
 	class Logger;
@@ -113,7 +113,7 @@ namespace Leviathan{
 	class NamedVariableList;
 	class NetworkServerInterface;
 	class NetworkClientInterface;
-	struct SentNetworkThing;
+	class SentNetworkThing;
 	class BaseEntityController;
 	class BaseNotifiableAll;
 	class BaseNotifierAll;

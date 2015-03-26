@@ -33,6 +33,7 @@ void Pong::PongMasterServer::EnginePreShutdown(){
 // ------------------------------------ //
 bool Pong::PongMasterServer::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 
+	return true;
 }
 
 void Pong::PongMasterServer::RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){

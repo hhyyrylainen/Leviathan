@@ -16,7 +16,7 @@
 #include "Script/ScriptRunningSetup.h"
 #include "Handlers/IDFactory.h"
 
-#define ANGELSCRIPT_REGISTERFAIL	Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register global failed in file " +__WFILE__+ L" on line "+Convert::IntToWstring(__LINE__), false);return false;
+#define ANGELSCRIPT_REGISTERFAIL	Logger::Get()->Error("ScriptExecutor: Init: AngelScript: register global failed in file " __FILE__ " on line "+Convert::ToString(__LINE__)); return false;
 
 namespace Leviathan{
 

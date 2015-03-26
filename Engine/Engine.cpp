@@ -16,7 +16,6 @@
 #include "Handlers/OutOfMemoryHandler.h"
 #include "Handlers/ResourceRefreshHandler.h"
 #include "Handlers/ConstraintSerializerManager.h"
-#include "Leap/LeapManager.h"
 #include "Networking/NetworkHandler.h"
 #include "Networking/RemoteConsole.h"
 #include "Networking/AINetworkCache.h"
@@ -38,6 +37,10 @@
 #include <vld.h>
 #endif // LEVIATHAN_USES_VLD
 
+#ifdef LEVIATHAN_USES_LEAP
+#include "Leap/LeapManager.h"
+#endif
+
 #ifdef _WIN32
 #include <io.h>
 #include <fcntl.h>
@@ -53,7 +56,7 @@ static const WORD MAX_CONSOLE_LINES = 500;
 #endif
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
-    Owner(owner), LeapData(NULL), MainConsole(NULL), MainFileHandler(NULL), _NewtonManager(NULL),
+    Owner(owner), MainConsole(NULL), MainFileHandler(NULL), _NewtonManager(NULL),
     GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
     _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
     _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), _EntitySerializerManager(NULL),
@@ -82,6 +85,10 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
 	MainEvents = NULL;
 	Loader = NULL;
 	OutOMemory = NULL;
+
+#ifdef LEVIATHAN_USES_LEAP
+	LeapData = NULL;
+#endif
 }
 
 DLLEXPORT Leviathan::Engine::~Engine(){
@@ -349,6 +356,8 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 
 	// We can queue some more tasks //
 	// create leap controller //
+#ifdef LEVIATHAN_USES_LEAP
+
 	boost::thread leapinitthread;
 	if(!NoLeap)
 		leapinitthread = boost::thread(boost::bind<void>([](Engine* engine) -> void{
@@ -372,6 +381,8 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 			}
 
 		}, this));
+
+#endif
 
 
 	// sound device //
@@ -449,12 +460,14 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 
 	Inited = true;
 
+#ifdef LEVIATHAN_USES_LEAP
 	// We can probably assume here that leap creation has stalled if the thread is running //
 	if(!NoLeap && !leapinitthread.try_join_for(boost::chrono::milliseconds(5))){
 		// We can assume that it is running //
 		Logger::Get()->Warning(L"LeapController creation would have stalled the game!");
 		//Misc::KillThread(leapinitthread);
 	}
+#endif
 
 	PostLoad();
 
@@ -594,7 +607,9 @@ void Leviathan::Engine::Release(bool forced){
 	SAFE_DELETE(PhysMaterials);
 	SAFE_DELETE(_NewtonManager);
 
+#ifdef LEVIATHAN_USES_LEAP
 	SAFE_RELEASEDEL(LeapData);
+#endif
 
 	// Console needs to be released before script release //
 	SAFE_RELEASEDEL(MainConsole);
@@ -684,8 +699,10 @@ void Leviathan::Engine::Tick(){
 	TickCount++;
 
 	// Update input //
+#ifdef LEVIATHAN_USES_LEAP
 	if(LeapData)
 		LeapData->OnTick(TimePassed);
+#endif
 
 	if(!NoGui){
 		// sound tick //
@@ -1112,7 +1129,9 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 		if(*splitval == L"--noleap"){
 			NoLeap = true;
 
+#ifdef LEVIATHAN_USES_LEAP
 			Logger::Get()->Info(L"Engine starting with LeapMotion disabled");
+#endif
 			continue;
 		}
 		if(*splitval == L"--nonothing"){

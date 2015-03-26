@@ -8,6 +8,8 @@
 // ---- includes ---- //
 #include "boost/thread/lockable_adapter.hpp"
 #include "boost/thread/recursive_mutex.hpp"
+#include "boost/thread/lock_types.hpp"
+#include "boost/thread/strict_lock.hpp"
 
 namespace Leviathan{
 

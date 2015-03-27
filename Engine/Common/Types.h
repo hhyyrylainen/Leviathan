@@ -1,4 +1,4 @@
-
+#pragma once
 #ifndef LEVIATHAN_TYPES
 #define LEVIATHAN_TYPES
 // ----------------- //
@@ -7,6 +7,8 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include <memory>
+
+#include "Logger.h"
 
 #include "OGRE/OgreQuaternion.h"
 #include "OGRE/OgreColourValue.h"

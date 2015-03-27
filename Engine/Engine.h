@@ -94,7 +94,6 @@ namespace Leviathan{
 		DLLEXPORT EventHandler* GetEventHandler(){ return MainEvents; };
 		DLLEXPORT ObjectLoader* GetObjectLoader(){return Loader;};
 		DLLEXPORT RenderingStatistics* GetRenderingStatistics(){ return RenderTimer;};
-		DLLEXPORT LeapManager* GetLeapManager(){ return LeapData;};
 		DLLEXPORT ScriptConsole* GetScriptConsole(){ return MainConsole;};
 		DLLEXPORT FileSystem* GetFileSystem(){ return MainFileHandler; };
 		DLLEXPORT AppDef* GetDefinition(){ return Define;};
@@ -107,6 +106,10 @@ namespace Leviathan{
         DLLEXPORT EntitySerializerManager* GetEntitySerializerManager(){ return _EntitySerializerManager; };
         DLLEXPORT ConstraintSerializerManager* GetConstraintSerializerManager(){ return _ConstraintSerializerManager; };
         DLLEXPORT AINetworkCache* GetAINetworkCache(){ return _AINetworkCache; };
+
+#ifdef LEVIATHAN_USES_LEAP
+		DLLEXPORT LeapManager* GetLeapManager(){ return LeapData; };
+#endif
 
 		DLLEXPORT bool GetNoGui(){ return NoGui; };
 
@@ -148,7 +151,6 @@ namespace Leviathan{
 		EventHandler* MainEvents;
 		ScriptInterface* MainScript;
 		ObjectLoader* Loader;
-		LeapManager* LeapData;
 		ScriptConsole* MainConsole;
 		FileSystem* MainFileHandler;
 		Random* MainRandom;
@@ -162,6 +164,10 @@ namespace Leviathan{
         EntitySerializerManager* _EntitySerializerManager;
         ConstraintSerializerManager* _ConstraintSerializerManager;
         AINetworkCache* _AINetworkCache;
+
+#ifdef LEVIATHAN_USES_LEAP
+		LeapManager* LeapData;
+#endif
 
 
 		IDFactory* IDDefaultInstance;

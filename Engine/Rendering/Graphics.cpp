@@ -66,10 +66,10 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	Ogre::String PluginsFileName = "";
 
 	Ogre::LogManager* logMgr = new Ogre::LogManager();
-	
+
 	// Could also use the singleton access method here //
-    string ogrelogfile = Convert::WstringToString(appdef->GetLogFile())+"LogOGRE.txt";
-    
+	string ogrelogfile = Convert::WstringToString(appdef->GetLogFile()) + "LogOGRE.txt";
+
 	OLog = logMgr->createLog(ogrelogfile, true, true, false);
 	OLog->setDebugOutputEnabled(true);
 #ifdef OGRE_ALLOW_USEFULLOUTPUT
@@ -79,36 +79,54 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 		// Check if we want it //
 		GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
 
-		if(variables)
+		if (variables)
 			variables->GetValueAndConvertTo<bool>(L"OgreBoreMe", usebore);
 	}
 
-	if(usebore){
+	if (usebore){
 		OLog->setLogDetail(Ogre::LL_BOREME);
-	} else {
+	}
+	else {
 		OLog->setLogDetail(Ogre::LL_NORMAL);
 	}
 #else
 	OLog->setLogDetail(Ogre::LL_NORMAL);
 #endif // OGRE_USEFULLOUTPUT
 
-	
+
 	ORoot = unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, ""));
 
-    // Still waiting for the GL3Plus render system to become usable... //
+	// Still waiting for the GL3Plus render system to become usable... //
 	vector<Ogre::String> PluginNames = boost::assign::list_of("RenderSystem_GL"/*3Plus")*/)
 #ifdef _WIN32
-	("RenderSystem_Direct3D11")
+		("RenderSystem_Direct3D11")
 #endif
-		("Plugin_ParticleFX")("Plugin_CgProgramManager")/*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
+		("Plugin_ParticleFX")
+		// This seems no longer be available //
+		/*("Plugin_CgProgramManager")*/
+		/*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
 
-	for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++){
-		// append "_d" if in debug mode //
+	Ogre::String currentplugin = "";
+
+	try{
+
+			for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++){
+
+				currentplugin = *Iter;
+
+				// append "_d" if in debug mode //
 #ifdef _DEBUG
-		Iter->append("_d");
+				Iter->append("_d");
 #endif // _DEBUG
-		// load //
-		ORoot->loadPlugin(*Iter);
+				// load //
+				ORoot->loadPlugin(*Iter);
+		}
+
+	}
+	catch (const Ogre::InternalErrorException &e){
+
+		Logger::Get()->Error("Graphics: init: failed to load ogre plugin (\""+currentplugin+"\"), exception: "+string(e.what()));
+		return false;
 	}
 
 

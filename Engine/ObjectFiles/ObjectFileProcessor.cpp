@@ -22,7 +22,7 @@ Leviathan::ObjectFileProcessor::~ObjectFileProcessor(){}
 
 // quick macro to make this shorter //
 #ifdef _MSC_VER
-#define ADDDATANAMEINTDEFINITION(x) (WIDEN(#x), new VariableBlock(new IntBlock(x)))
+#define ADDDATANAMEINTDEFINITION(x) (WIDEN(#x), shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(x))))
 #else
 #define ADDDATANAMEINTDEFINITION(x) (WIDEN(#x), shared_ptr<VariableBlock>(new VariableBlock(new IntBlock(x))))
 #endif
@@ -123,7 +123,7 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 			if(!TryToHandleTemplate(file, itr, *ofile, *thingtype)){
 
 				Logger::Get()->Error(L"ObjectFileProcessor: processing a template definitions/instantiation has failed,"
-                    "file: "+file+L"("+Convert::ToWstring(thisstart)+L")");
+                    L"file: "+file+L"("+Convert::ToWstring(thisstart)+L")");
                 
 				succeeded = false;
 				break;

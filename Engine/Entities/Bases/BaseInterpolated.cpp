@@ -45,6 +45,8 @@ DLLEXPORT bool Leviathan::BaseInterpolated::StartInterpolating(const Float3 &ori
 
     InterpolatedPosition = OldActualPosition = originalposition;
     InterpolatedRotation = OldActualRotation = originalrotation;
+
+	return true;
 }
 
 DLLEXPORT void Leviathan::BaseInterpolated::StopInterpolating(boost::unique_lock<boost::mutex> &lock){

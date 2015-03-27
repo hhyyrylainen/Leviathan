@@ -1,6 +1,8 @@
 #pragma once
 #ifndef LEVIATHAN_CONVERT
 #define LEVIATHAN_CONVERT
+#include "Include.h"
+#include "Common/Types.h"
 // ------------------------------------ //
 
 namespace Leviathan{

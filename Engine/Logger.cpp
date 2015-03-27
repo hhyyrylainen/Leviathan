@@ -237,7 +237,8 @@ void Leviathan::Logger::SendDebugMessage(const wstring& str, boost::strict_lock<
 
 DLLEXPORT void Leviathan::Logger::SendDebugMessage(const string &str){
 #ifdef _WIN32
-	OutputDebugString(&*str.begin());
+	const wstring converted = Convert::StringToWstring(str);
+	OutputDebugString(&*converted.begin());
 #endif // _WIN32
 	// We also want standard output messages //
 	// Using cout should be fine for most other platforms //

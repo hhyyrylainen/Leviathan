@@ -62,10 +62,43 @@ option(DOCUMENTATION_LOCAL "Set to OFF to create web documentation" ON)
 # Strip symbols from install
 option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" ON)
 
+# Include glm directory on windows
+if(WIN32)
+  set(GLM_BASE_DIR "" CACHE FILEPATH "Path to the base directory of glm set to cegui-dependencies/src/glm-0.9.4.5")
+endif()
+
+if(EXISTS "${GLM_BASE_DIR}")
+
+  include_directories("${GLM_BASE_DIR}")
+
+else()
+  if(WIN32)
+    message(WARNING "GLM_BASE_DIR is not set, probably won't compile correctly depending on CEGUI version") 
+  endif()
+endif()
+
+# Check is leap motion used
+option(USE_LEAP "Set to on when using Leap motion, will auto disable if files are not copied" ON)
+
+if(EXISTS "${PROJECT_SOURCE_DIR}/Leap/include/Leap.h")
+
+  message(STATUS "Leap motion includes found")
+
+else()
+
+  message(WARNING "Leap motion files aren't installed in leviathan/Leap, disabled")
+  set(USE_LEAP OFF)
+endif()
+
+if(${USE_LEAP})
+  set(L_LEAP_STATE 1)
+else()
+  set(L_LEAP_STATE 0)
+endif()
 
 # VisualLeakDetector setting
 if(WIN32)
-    option(USE_VLD "For including vld in the projects" ON)
+    option(USE_VLD "For including vld in the projects" OFF)
 endif()
 
 if(USE_VLD)
@@ -83,10 +116,20 @@ set(CMAKE_DEBUG_POSTFIX "D")
 if(WIN32)
     # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
     # higher memory for compiling precompiled headers
-    add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm216)
+    # Currently it seems that Zm250 should be enough but it might not be
+    add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm250)
     
     # program database flag for debug
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
+    
+    # A policy is needed for launchers to work correctly
+    
+    # This allows the project target property be read the old way
+    cmake_policy(SET CMP0026 OLD)
+    
+    # This makes parameter evaluation expand things more aggressively(?)
+    cmake_policy(SET CMP0053 OLD)
+    cmake_policy(SET CMP0054 OLD)
     
 else(WIN32)
 
@@ -210,16 +253,30 @@ add_definitions(-DBOOST_ALL_NO_LIB)
 
 # Library linking
 set(LINK_LIBS_TOENGINE_RELEASE optimized Newton)
-set(LINK_LIBS_ENGINE_RELEASE Angelscript Leap Newton)
+set(LINK_LIBS_ENGINE_RELEASE Angelscript Newton)
+
+
 
 # Debug libraries
 set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
-set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Leapd Newton_d)
+set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Newton_d)
+
+if(${USE_LEAP})
+  set(LINK_LIBS_ENGINE_RELEASE ${LINK_LIBS_ENGINE_RELEASE} Leap)
+  set(LINK_LIBS_ENGINE_DEBUG ${LINK_LIBS_ENGINE_DEBUG} Leapd)
+endif()
 
 # Breakpad libraries
 if(${USE_BREAKPAD})
-  set(LINK_LIBSTOENGINE_RELEASE ${LINK_LIBSTOENGINE_RELEASE} breakpad_client)
-  set(LINK_LIBSTOENGINE_DEBUG ${LINK_LIBSTOENGINE_DEBUG} breakpad_client)
+  if(UNIX)
+    set(LINK_LIBS_TOENGINE_RELEASE ${LINK_LIBS_TOENGINE_RELEASE} optimized breakpad_client)
+    set(LINK_LIBS_TOENGINE_DEBUG ${LINK_LIBS_TOENGINE_DEBUG} debug breakpad_client)
+  elseif(WIN32)
+    set(LINK_LIBS_TOENGINE_RELEASE ${LINK_LIBS_TOENGINE_RELEASE} optimized exception_handler optimized common 
+      optimized crash_generation_client)
+  else()
+  
+  endif()
 endif()
 
 # Prepend the right keywords
@@ -273,7 +330,10 @@ message(STATUS "Copying files...")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/Symbols")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/Symbols/Dumps")
 
-file(COPY "${PROJECT_SOURCE_DIR}/MoveSymbolFile.sh" "${PROJECT_SOURCE_DIR}/CreateSymbolsForTarget.sh"
+file(COPY "${PROJECT_SOURCE_DIR}/MoveSymbolFile.sh"
+  "${PROJECT_SOURCE_DIR}/MoveSymbolFile.bat" 
+  "${PROJECT_SOURCE_DIR}/CreateSymbolsForTarget.sh"
+  "${PROJECT_SOURCE_DIR}/CreateSymbolsForTarget.bat"
   DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
 
 # Copy the tools
@@ -285,6 +345,17 @@ if(UNIX)
   endif()
 
 elseif(WIN32)
+
+  if(EXISTS "${BREAKPAD_DIR}/src/tools/windows/binaries/dump_syms.exe")
+    
+    file(COPY "${BREAKPAD_DIR}/src/tools/windows/binaries/dump_syms.exe" DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
+    
+  else()
+    
+    message(SEND_ERROR "Didn't find breakpad symbol dumber, did you forget to run "
+      "${BREAKPAD_DIR}/src/tools/windows/refresh_binaries.bat")
+    
+  endif()
 
 endif()
 
@@ -372,34 +443,42 @@ if(WIN32)
     endif()
 
     # newton
-    if(COPY_DEBUG_LIBS)
-      file(GLOB NewtonMoveFiles "Newton/bin/Release/*" "Newton/bin/Debug/*")
-    else()
-      file(GLOB NewtonMoveFiles "Newton/bin/Release/*")
+    if(${USE_LEAP})
+      if(COPY_DEBUG_LIBS)
+        file(GLOB NewtonMoveFiles "Newton/bin/Release/*" "Newton/bin/Debug/*")
+      else()
+        file(GLOB NewtonMoveFiles "Newton/bin/Release/*")
+      endif()
     endif()
+    
+    # All files should be copied here
+    file(GLOB RawFilesToMove "bin/ThirdParty/*.dll")
 
 else(WIN32)
 
     # linux variants of the copy functions
-    file(GLOB LeapMoveFiles "Leap/lib/x64/libLeap.so")
-
+    if(${USE_LEAP})
+      file(GLOB LeapMoveFiles "Leap/lib/x64/libLeap.so")
+    endif()
+    
     # newton
     file(GLOB NewtonMoveFiles "Newton/lib/libNewton.so")
+    
+    set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
 
+    set(RawFilesToMove ${CEGUIMoveFiles} ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
+      ${OGRE_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES} ${OGRE_Plugin_OctreeZone_LIBRARIES} 
+      ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
+
+  MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
+      
 endif(WIN32)
-
-set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
-
-set(RawFilesToMove ${CEGUIMoveFiles} ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
-  ${OGRE_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES} ${OGRE_Plugin_OctreeZone_LIBRARIES} 
-  ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
-
-MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
 
 # Remove debug libs on windows
 if(WIN32 AND NOT COPY_DEBUG_LIBS)
-
+  
   RemoveLibsWithDebugSuffix(RawFilesToMove)
+
 
 endif(WIN32 AND NOT COPY_DEBUG_LIBS)
 
@@ -418,10 +497,12 @@ endforeach()
 
 set(RawFilesToMove ${PassedItems})
 
-set(FinalMoveInstallFiles)
-
-# Go through all the libraries and add all name variants to the moved files
-GlobAllVariants(RawFilesToMove FinalMoveInstallFiles)
+if(UNIX)
+  # Go through all the libraries and add all name variants to the moved files
+  GlobAllVariants(RawFilesToMove FinalMoveInstallFiles)
+else()
+  set(FinalMoveInstallFiles ${RawFilesToMove})
+endif()
 
 message(STATUS "Moving the bulk...")
 
@@ -452,7 +533,6 @@ set(FinalMoveInstallFiles ${FinalMoveInstallFiles} ${SFMLFinalMoveFiles})
 if(WIN32)
 
     include(CreateLaunchers)
-    include(SetPrecompiledHeaders)
 
 else(WIN32)
 
@@ -472,9 +552,13 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 include_directories("${PROJECT_SOURCE_DIR}/AngelScript/include")
 include_directories("${PROJECT_SOURCE_DIR}/AngelScript")
 include_directories("${PROJECT_SOURCE_DIR}/Engine/")
-include_directories("${PROJECT_SOURCE_DIR}/Leap/include")
 include_directories("${PROJECT_SOURCE_DIR}/Newton/include")
 include_directories(${OIS_INCLUDE_DIRS}	${OGRE_INCLUDE_DIRS})
+
+if(${USE_LEAP})
+include_directories("${PROJECT_SOURCE_DIR}/Leap/include")
+include_directories("${PROJECT_SOURCE_DIR}/Leap")
+endif()
 
 if(${USE_BREAKPAD})
   include_directories("${BREAKPAD_DIR}/src")
@@ -485,21 +569,25 @@ link_directories("${PROJECT_SOURCE_DIR}/AngelScript/lib")
 link_directories("${PROJECT_SOURCE_DIR}/Newton/lib/")
 link_directories("${PROJECT_SOURCE_DIR}/Newton/bin/")
 
-if(UNIX)
-  if(${USE_BREAKPAD})
+if(${USE_BREAKPAD})
+  if(UNIX)
+
     link_directories("${BREAKPAD_DIR}/src/client/linux")
+    
+  elseif(WIN32)
+  
+    link_directories("${BREAKPAD_DIR}/src/client/windows/Release/lib")
+    
+  else()
+
   endif()
-elseif(WIN32)
-
-else()
-
 endif()
 
-if(WIN32)
+if(WIN32 AND ${USE_LEAP})
     link_directories("${PROJECT_SOURCE_DIR}/Leap/lib/x86")
-else(WIN32)
+elseif(UNIX AND ${USE_LEAP})
     link_directories("${PROJECT_SOURCE_DIR}/Leap/lib/x64")
-endif(WIN32)
+endif()
 
 # engine linking
 link_directories("${PROJECT_BINARY_DIR}")

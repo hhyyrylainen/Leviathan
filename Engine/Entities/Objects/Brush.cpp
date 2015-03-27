@@ -23,7 +23,7 @@ DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) :
 
 }
 
-DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world, int netid) :
+Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world, int netid) :
     BaseRenderable(hidden), BaseObject(netid, world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_BRUSH),
     Sizes(0), BrushModel(NULL), Mass(0.f)
 {

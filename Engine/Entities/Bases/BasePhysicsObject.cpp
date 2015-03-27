@@ -7,6 +7,7 @@
 #include "Newton/PhysicsMaterialManager.h"
 #include "../CommonStateObjects.h"
 #include "BaseSendableEntity.h"
+#include "boost/bind.hpp"
 using namespace Leviathan;
 // ------------------------------------ //
 // I hope that this virtual constructor isn't actually called //

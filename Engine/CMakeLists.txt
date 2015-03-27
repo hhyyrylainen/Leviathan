@@ -11,7 +11,7 @@
 # get all files in their groups
 set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
     "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
-    "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp" "utf8.h"
+    "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp" "utf8.h" "Include.h"
 )
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
 file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
@@ -35,7 +35,6 @@ file(GLOB GroupCommonData "Common/DataStoring/*.cpp" "Common/DataStoring/*.h")
 file(GLOB GroupSound "Sound/*.cpp" "Sound/*.h")
 file(GLOB GroupStatistics "Statistics/*.cpp" "Statistics/*.h")
 file(GLOB GroupInput "Input/*.cpp" "Input/*.h")
-file(GLOB GroupLeap "Leap/*.cpp" "Leap/*.h")
 file(GLOB GroupObjectFiles "ObjectFiles/*.cpp" "ObjectFiles/*.h")
 file(GLOB GroupHandlers "Handlers/*.cpp" "Handlers/*.h")
 file(GLOB GroupAddons "Addons/*.cpp" "Addons/*.h")
@@ -46,7 +45,9 @@ file(GLOB GroupIterators "Iterators/*.cpp" "Iterators/*.h")
 file(GLOB GroupGameplay "Gameplay/*.cpp" "Gameplay/*.h")
 file(GLOB GroupPermissions "Gameplay/Permissions/*.cpp" "Gameplay/Permissions/*.h")
 
-
+if(${USE_LEAP})
+  file(GLOB GroupLeap "Leap/*.cpp" "Leap/*.h")
+endif()
 
 file(GLOB GeneratorInput "GeneratorInput/*.*")
 
@@ -67,7 +68,6 @@ file(GLOB_RECURSE GroupScriptAddons "${PROJECT_SOURCE_DIR}/AngelScript/add_on/*.
 # set groups
 source_group("Math" FILES ${GroupMath})
 source_group("Sound" FILES ${GroupSound})
-source_group("Leap" FILES ${GroupLeap})
 source_group("Scripting" FILES ${GroupScript})
 source_group("Scripting\\AngelAddons" FILES ${GroupScriptAddons})
 source_group("Addons" FILES ${GroupAddons})
@@ -112,15 +112,23 @@ source_group("ObjectFiles" FILES ${GroupObjectFiles})
 source_group("Rendering" FILES ${GroupRendering})
 source_group("Rendering\\GUI" FILES ${GroupRenderingGUI})
 
+if(${USE_LEAP})
+  source_group("Leap" FILES ${GroupLeap})
+endif()
+
 # collect all files to one group
 set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics} ${GroupMath} ${GroupSound}
-    ${GroupLeap} ${GroupScript} ${GroupGUI}  ${GroupEvents}
+    ${GroupScript} ${GroupGUI}  ${GroupEvents}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
     ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
     ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators} ${GroupGameplay} 
     ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp} ${GeneratorInput} ${GroupGeneratedFiles}
     ${Grouputf8})
+    
+if(${USE_LEAP})
+  set(EngineFiles ${EngineFiles} ${GroupLeap})
+endif()
 
     
 # engine exporting define
@@ -183,7 +191,7 @@ if(UNIX)
   add_custom_target(Engine_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/libEngine.so"
     DEPENDS Engine WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
 elseif(WIN32)
-  add_custom_target(Engine_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/Engine.dll"
+  add_custom_target(Engine_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/Engine.dll"
     DEPENDS Engine WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
 endif()
 

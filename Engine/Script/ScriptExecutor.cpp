@@ -55,9 +55,12 @@ bool ScriptExecutor::Init(){
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	if(engine == NULL){
 
-		Logger::Get()->Error(L"ScriptExecutor: Init: asCreateScriptEngine failed", false);
+		Logger::Get()->Error("ScriptExecutor: Init: asCreateScriptEngine failed");
+		Logger::Get()->Info("ScriptExecutor: tried to init angelscript version " + Convert::ToString(ANGELSCRIPT_VERSION));
+		Logger::Get()->Write("Did you use a wrong angelscript version? copy header files to leviathan/Angelscript/include from your angelscript.zip");
 		return false;
 	}
+
 	// set callback to error report function //
 	engine->SetMessageCallback(asFUNCTION(ScriptMessageCallback), 0, asCALL_CDECL);
 

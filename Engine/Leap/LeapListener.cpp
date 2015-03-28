@@ -3,6 +3,7 @@
 #include "LeapListener.h"
 #endif
 #include "Leap.h"
+#include "Application/Application.h"
 using namespace Leviathan;
 using namespace Leap;
 // ------------------------------------ //
@@ -31,6 +32,11 @@ void Leviathan::LeapListener::onConnect(const Leap::Controller &control){
 	control.enableGesture(Gesture::TYPE_SWIPE);
     
 	Connected = true;
+
+    if(!control.isGestureEnabled(Gesture::TYPE_SWIPE)){
+
+        assert(0 && "leap gesture fail");
+    }
 
 	Logger::Get()->Info(L"LeapListener: connected");
 }
@@ -71,7 +77,7 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
     ++HandledFrames;
 
     // TODO: report these frames to someplace
-    
+
     
 
 	// process the frame gestures //
@@ -115,25 +121,24 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
             case Gesture::TYPE_SWIPE:
 			{
 				// instantiate correct gesture subclass //
-				SwipeGesture swipe = gesture;
-				wstring datastr;
+				const SwipeGesture swipe = gesture;
 
 
-				// check for down going sweep //
-				if(swipe.direction().y < -0.7){
-					// down //
+                // Check for shutdown left swipe //
+                if(swipe.direction().x < -0.6){
+                    if(swipe.durationSeconds() >= 0.04f){
 
-					// add to threshold //
-					Owner->DownWardSwipeThresshold((int)swipe.speed());
+                        auto change = swipe.startPosition()-swipe.position();
 
-				}
+                        if(change.x >= 40){
 
+                            Logger::Get()->Info(L"LeapManager: Input: swipe threshold passed, shutting down");
 
-				// this is one of the wanted ones //
-				datastr += L"Swipe id: "+Convert::ToWstring(swipe.id());
-				datastr += L", state: " +Convert::ToWstring(swipe.state());
-				datastr += L", direction: " +Convert::StringToWstring(Convert::ToString(swipe.direction()));
-				datastr += L", speed: " +Convert::ToWstring(swipe.speed());
+                            Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
+                        }
+
+                    }
+                }
 			}
 			break;
             case Gesture::TYPE_KEY_TAP:

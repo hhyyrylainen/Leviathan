@@ -18,8 +18,6 @@ DLLEXPORT Leviathan::LeapManager::LeapManager(Engine* engineinstance) :
     
 	// Default values to gesture variables //
 	TimeSinceReset = 0;
-
-	SweepDownShutdown = 0;
 }
 
 DLLEXPORT Leviathan::LeapManager::~LeapManager(){
@@ -76,35 +74,17 @@ DLLEXPORT void Leviathan::LeapManager::OnTick(const int &mspassed){
     
 #endif //LEAP_USE_ASYNC
     
-
+	// Check for action //
+    
+    
+    
 	if(TimeSinceReset >= GESTURESTATERESETTIME){
-		// reset all gesture variables //
-		SweepDownShutdown = 0;
-
-		// reset time //
+		// Reset time //
 		TimeSinceReset = 0;
-	}
-	// could get state from controller here //
-
-
-	// check for action //
-	if(SweepDownShutdown >= SHUTDOWNSWEEPTHRESSHOLD){
-
-		Logger::Get()->Info(L"LeapManager: Input: downward swipe threshold passed, shutting down");
-
-		// close the window so the program quits after this //
-		GUARD_LOCK_OTHER_OBJECT(Leviathan::LeviathanApplication::GetApp());
-		Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
+        
 	}
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::LeapManager::DownWardSwipeThresshold(const int &change){
-	SweepDownShutdown += change;
-}
-// ------------------------------------ //
-
-
-
 
 
 

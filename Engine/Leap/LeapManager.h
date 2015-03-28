@@ -10,7 +10,6 @@
 #include "LeapListener.h"
 #include "Leap.h"
 
-#define SHUTDOWNSWEEPTHRESSHOLD			20000
 #define GESTURESTATERESETTIME			1000
 
 // Define when using async handling
@@ -32,16 +31,12 @@ namespace Leviathan{
 
 		DLLEXPORT void OnTick(const int &mspassed);
 
-		DLLEXPORT void DownWardSwipeThresshold(const int &change);
-
 	private:
 		// leap listener //
 		LeapListener* MainListener;
 		Leap::Controller* MainController;
         
 	protected:
-		// current gesture stored states //
-		int SweepDownShutdown;
 
 
 		int TimeSinceReset;

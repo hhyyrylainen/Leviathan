@@ -8,8 +8,9 @@ using namespace Leap;
 // ------------------------------------ //
 #include "LeapManager.h"
 
-Leviathan::LeapListener::LeapListener(LeapManager* owner) : Owner(owner){
-	// set everything to default //
+Leviathan::LeapListener::LeapListener(LeapManager* owner) : Owner(owner), HandledFrames(0){
+    
+	// Set everything to default //
 	Connected = false;
 	Focused = false;
 }
@@ -28,7 +29,7 @@ void Leviathan::LeapListener::onConnect(const Leap::Controller &control){
 	control.enableGesture(Gesture::TYPE_KEY_TAP);
 	control.enableGesture(Gesture::TYPE_SCREEN_TAP);
 	control.enableGesture(Gesture::TYPE_SWIPE);
-	// set as connected //
+    
 	Connected = true;
 
 	Logger::Get()->Info(L"LeapListener: connected");
@@ -37,6 +38,8 @@ void Leviathan::LeapListener::onConnect(const Leap::Controller &control){
 void Leviathan::LeapListener::onDisconnect(const Leap::Controller &control){
 	// SDK Note: not dispatched when running in a debugger
 	Connected = false;
+
+    Logger::Get()->Info(L"LeapListener: disconnected");
 }
 
 void Leviathan::LeapListener::onExit(const Leap::Controller &control){
@@ -47,7 +50,7 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 	// get most recent frame //
 	const Frame frame = control.frame();
 
-    HandleFrame(frame);
+    HandleFrame(frame, control);
 }
 
 void Leviathan::LeapListener::onFocusGained(const Leap::Controller &control){
@@ -62,7 +65,14 @@ void Leviathan::LeapListener::onFocusLost(const Leap::Controller &control){
 	Focused = false;
 }
 // ------------------------------------ //
-void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame){
+void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
+    const Leap::Controller &control)
+{
+    ++HandledFrames;
+
+    // TODO: report these frames to someplace
+    
+    
 
 	// process the frame gestures //
 	const GestureList gestures = frame.gestures();

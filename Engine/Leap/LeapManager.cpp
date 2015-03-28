@@ -10,8 +10,12 @@ using namespace Leviathan;
 using namespace Leap;
 // ------------------------------------ //
 DLLEXPORT Leviathan::LeapManager::LeapManager(Engine* engineinstance) :
-    EngineAccess(engineinstance), MainController(NULL), MainListener(NULL), LastFrameID(0)
+    EngineAccess(engineinstance), MainController(NULL), MainListener(NULL)
 {
+#ifndef LEAP_USE_ASYNC
+    LastFrameID = 0;
+#endif //LEAP_USE_ASYNC
+    
 	// Default values to gesture variables //
 	TimeSinceReset = 0;
 
@@ -60,14 +64,14 @@ DLLEXPORT void Leviathan::LeapManager::OnTick(const int &mspassed){
 
 #ifndef LEAP_USE_ASYNC
     // Poll frame //
-    const auto frame = MainController.frame();
+    const auto frame = MainController->frame();
 
     auto id = frame.id();
 
     if(id != LastFrameID){
 
         LastFrameID = id;
-        MainListener->HandleFrame(frame);
+        MainListener->HandleFrame(frame, *MainController);
     }
     
 #endif //LEAP_USE_ASYNC

@@ -9,8 +9,10 @@
 using namespace Leviathan;
 using namespace Leap;
 // ------------------------------------ //
-DLLEXPORT Leviathan::LeapManager::LeapManager(Engine* engineinstance) : EngineAccess(engineinstance), MainController(NULL), MainListener(NULL){
-	// default values to gesture variables //
+DLLEXPORT Leviathan::LeapManager::LeapManager(Engine* engineinstance) :
+    EngineAccess(engineinstance), MainController(NULL), MainListener(NULL), LastFrameID(0)
+{
+	// Default values to gesture variables //
 	TimeSinceReset = 0;
 
 	SweepDownShutdown = 0;
@@ -20,37 +22,56 @@ DLLEXPORT Leviathan::LeapManager::~LeapManager(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::LeapManager::Init(){
-	// initialize leap interface //
+	// Initialize leap interface //
 	MainController = new Controller();
 
-	// create listener //
+	// Create listener //
 	MainListener = new LeapListener(this);
 
-	// start listening //
+#ifdef LEAP_USE_ASYNC
+	// Start listening //
 	if(!MainController->addListener(*MainListener)){
-		// no leap controller! //
+        
+		// No leap controller! //
 		Logger::Get()->Warning(L"LeapManager: Failed to start listening for Leap motion controller");
 	}
+#endif //LEAP_USE_ASYNC
 
-	// now listening //
 	return true;
 }
 
 DLLEXPORT void Leviathan::LeapManager::Release(){
-	// we need to unregister listener //
+	// We need to unregister listener //
 	if(MainListener){
-		// unregister from controller //
+#ifdef LEAP_USE_ASYNC
 		MainController->removeListener(*MainListener);
 		Logger::Get()->Info(L"LeapManager: unconnected from Leap");
+#endif //LEAP_USE_ASYNC
 	}
-	// unallocate //
+    
+	// Unallocate //
 	SAFE_DELETE(MainListener);
 	SAFE_DELETE(MainController);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::LeapManager::OnTick(const int &mspassed){
-	// add to time //
+	// Add to time //
 	TimeSinceReset += mspassed;
+
+#ifndef LEAP_USE_ASYNC
+    // Poll frame //
+    const auto frame = MainController.frame();
+
+    auto id = frame.id();
+
+    if(id != LastFrameID){
+
+        LastFrameID = id;
+        MainListener->HandleFrame(frame);
+    }
+    
+#endif //LEAP_USE_ASYNC
+    
 
 	if(TimeSinceReset >= GESTURESTATERESETTIME){
 		// reset all gesture variables //

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef LEVIATHAN_LEAPLISTENER
 #define LEVIATHAN_LEAPLISTENER
 // ------------------------------------ //
@@ -9,9 +10,9 @@
 #include "Leap.h"
 
 namespace Leviathan{
-	class LeapManager;
 
 	class LeapListener : public Leap::Listener{
+        friend LeapManager;
 	public:
 		LeapListener(LeapManager* owner);
 		~LeapListener();
@@ -28,6 +29,11 @@ namespace Leviathan{
 		DLLEXPORT inline bool IsConnected(){
 			return Connected;
 		}
+
+    protected:
+
+        //! \brief Handles a frame retrieved from the Leap or notified by frame event
+        void HandleFrame(const Leap::Frame &frame);
 
 	private:
 		// access to owner to update states //

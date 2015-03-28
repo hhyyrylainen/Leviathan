@@ -17,8 +17,6 @@ Leviathan::LeapListener::LeapListener(LeapManager* owner) : Owner(owner){
 Leviathan::LeapListener::~LeapListener(){
 }
 // ------------------------------------ //
-
-// ------------------------------------ //
 void Leviathan::LeapListener::onInit(const Leap::Controller &control){
 
 	Logger::Get()->Info(L"LeapListener: initialized");
@@ -49,6 +47,23 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 	// get most recent frame //
 	const Frame frame = control.frame();
 
+    HandleFrame(frame);
+}
+
+void Leviathan::LeapListener::onFocusGained(const Leap::Controller &control){
+
+    Logger::Get()->Info("LeapListener: gained focus");
+	Focused = true;
+}
+
+void Leviathan::LeapListener::onFocusLost(const Leap::Controller &control){
+
+    Logger::Get()->Info("LeapListener: lost focus");
+	Focused = false;
+}
+// ------------------------------------ //
+void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame){
+
 	// process the frame gestures //
 	const GestureList gestures = frame.gestures();
 	for(int i = 0; i < gestures.count(); i++){
@@ -56,7 +71,7 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 		Gesture gesture = gestures[i];
 		// switch based on type and process //
 		switch(gesture.type()) {
-		case Gesture::TYPE_CIRCLE:
+            case Gesture::TYPE_CIRCLE:
 			{
 				// instantiate correct gesture subclass //
 				CircleGesture circle = gesture;
@@ -87,7 +102,7 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 
 			}
 			break;
-		case Gesture::TYPE_SWIPE:
+            case Gesture::TYPE_SWIPE:
 			{
 				// instantiate correct gesture subclass //
 				SwipeGesture swipe = gesture;
@@ -111,7 +126,7 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 				datastr += L", speed: " +Convert::ToWstring(swipe.speed());
 			}
 			break;
-		case Gesture::TYPE_KEY_TAP:
+            case Gesture::TYPE_KEY_TAP:
 			{
 				// instantiate correct gesture subclass //
 				KeyTapGesture tap = gesture;
@@ -124,7 +139,7 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 
 			}
 			break;
-		case Gesture::TYPE_SCREEN_TAP:
+            case Gesture::TYPE_SCREEN_TAP:
 			{
 				// instantiate correct gesture subclass //
 				ScreenTapGesture screentap = gesture;
@@ -136,21 +151,13 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 				datastr += L", direction: " +Convert::StringToWstring(Convert::ToString(screentap.direction()));
 			}
 			break;
-		default:
-			Logger::Get()->Error(L"LeapListener: unknown gesture type: "+Convert::ToWstring(gesture.type()));
-			break;
+            default:
+                Logger::Get()->Error(L"LeapListener: unknown gesture type: "+Convert::ToWstring(gesture.type()));
+                break;
 		}
-	}
+	}    
 }
 
-void Leviathan::LeapListener::onFocusGained(const Leap::Controller &control){
-	Focused = true;
-}
-
-void Leviathan::LeapListener::onFocusLost(const Leap::Controller &control){
-	Focused = false;
-}
-// ------------------------------------ //
 
 // ------------------------------------ //
 

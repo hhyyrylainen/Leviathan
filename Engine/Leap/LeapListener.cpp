@@ -21,9 +21,7 @@ Leviathan::LeapListener::~LeapListener(){
 // ------------------------------------ //
 void Leviathan::LeapListener::onInit(const Leap::Controller &control){
 
-#ifdef _DEBUG
 	Logger::Get()->Info(L"LeapListener: initialized");
-#endif // _DEBUG
 }
 
 void Leviathan::LeapListener::onConnect(const Leap::Controller &control){
@@ -35,9 +33,7 @@ void Leviathan::LeapListener::onConnect(const Leap::Controller &control){
 	// set as connected //
 	Connected = true;
 
-#ifdef _DEBUG
 	Logger::Get()->Info(L"LeapListener: connected");
-#endif // _DEBUG
 }
 
 void Leviathan::LeapListener::onDisconnect(const Leap::Controller &control){

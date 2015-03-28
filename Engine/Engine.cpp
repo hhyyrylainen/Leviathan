@@ -358,8 +358,17 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	// create leap controller //
 #ifdef LEVIATHAN_USES_LEAP
 
+    // Disable leap if in non-gui mode //
+    if(!NoGui)
+        NoLeap = true;
+
+    Logger::Get()->Info("Engine: will try to create Leap motion connection");
+
 	boost::thread leapinitthread;
 	if(!NoLeap)
+        
+        Logger::Get()->Info("Engine: will try to create Leap motion connection");
+        
 		leapinitthread = boost::thread(boost::bind<void>([](Engine* engine) -> void{
 
 			engine->LeapData = new LeapManager(engine);
@@ -462,16 +471,19 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 
 #ifdef LEVIATHAN_USES_LEAP
 	// We can probably assume here that leap creation has stalled if the thread is running //
-	if(!NoLeap && !leapinitthread.try_join_for(boost::chrono::milliseconds(5))){
+	if(!NoLeap && !leapinitthread.try_join_for(boost::chrono::milliseconds(100))){
 		// We can assume that it is running //
 		Logger::Get()->Warning(L"LeapController creation would have stalled the game!");
+        Logger::Get()->Write("TODO: allow increasing wait period");
 		//Misc::KillThread(leapinitthread);
 	}
 #endif
 
 	PostLoad();
 
-	Logger::Get()->Info(L"Engine init took "+Convert::ToWstring(Misc::GetTimeMs64()-InitStartTime)+L" ms", false);
+	Logger::Get()->Info("Engine init took "+Convert::ToString(Misc::GetTimeMs64()-InitStartTime)+
+        " ms");
+    
 	return true;
 }
 

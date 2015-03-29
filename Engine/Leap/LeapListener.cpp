@@ -3,13 +3,15 @@
 #include "LeapListener.h"
 #endif
 #include "Leap.h"
+#include "Application/Application.h"
 using namespace Leviathan;
 using namespace Leap;
 // ------------------------------------ //
 #include "LeapManager.h"
 
-Leviathan::LeapListener::LeapListener(LeapManager* owner) : Owner(owner){
-	// set everything to default //
+Leviathan::LeapListener::LeapListener(LeapManager* owner) : Owner(owner), HandledFrames(0){
+    
+	// Set everything to default //
 	Connected = false;
 	Focused = false;
 }
@@ -17,13 +19,9 @@ Leviathan::LeapListener::LeapListener(LeapManager* owner) : Owner(owner){
 Leviathan::LeapListener::~LeapListener(){
 }
 // ------------------------------------ //
-
-// ------------------------------------ //
 void Leviathan::LeapListener::onInit(const Leap::Controller &control){
 
-#ifdef _DEBUG
 	Logger::Get()->Info(L"LeapListener: initialized");
-#endif // _DEBUG
 }
 
 void Leviathan::LeapListener::onConnect(const Leap::Controller &control){
@@ -32,17 +30,22 @@ void Leviathan::LeapListener::onConnect(const Leap::Controller &control){
 	control.enableGesture(Gesture::TYPE_KEY_TAP);
 	control.enableGesture(Gesture::TYPE_SCREEN_TAP);
 	control.enableGesture(Gesture::TYPE_SWIPE);
-	// set as connected //
+    
 	Connected = true;
 
-#ifdef _DEBUG
+    if(!control.isGestureEnabled(Gesture::TYPE_SWIPE)){
+
+        assert(0 && "leap gesture fail");
+    }
+
 	Logger::Get()->Info(L"LeapListener: connected");
-#endif // _DEBUG
 }
 
 void Leviathan::LeapListener::onDisconnect(const Leap::Controller &control){
 	// SDK Note: not dispatched when running in a debugger
 	Connected = false;
+
+    Logger::Get()->Info(L"LeapListener: disconnected");
 }
 
 void Leviathan::LeapListener::onExit(const Leap::Controller &control){
@@ -53,6 +56,30 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 	// get most recent frame //
 	const Frame frame = control.frame();
 
+    HandleFrame(frame, control);
+}
+
+void Leviathan::LeapListener::onFocusGained(const Leap::Controller &control){
+
+    Logger::Get()->Info("LeapListener: gained focus");
+	Focused = true;
+}
+
+void Leviathan::LeapListener::onFocusLost(const Leap::Controller &control){
+
+    Logger::Get()->Info("LeapListener: lost focus");
+	Focused = false;
+}
+// ------------------------------------ //
+void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
+    const Leap::Controller &control)
+{
+    ++HandledFrames;
+
+    // TODO: report these frames to someplace
+
+    
+
 	// process the frame gestures //
 	const GestureList gestures = frame.gestures();
 	for(int i = 0; i < gestures.count(); i++){
@@ -60,7 +87,7 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 		Gesture gesture = gestures[i];
 		// switch based on type and process //
 		switch(gesture.type()) {
-		case Gesture::TYPE_CIRCLE:
+            case Gesture::TYPE_CIRCLE:
 			{
 				// instantiate correct gesture subclass //
 				CircleGesture circle = gesture;
@@ -91,31 +118,30 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 
 			}
 			break;
-		case Gesture::TYPE_SWIPE:
+            case Gesture::TYPE_SWIPE:
 			{
 				// instantiate correct gesture subclass //
-				SwipeGesture swipe = gesture;
-				wstring datastr;
+				const SwipeGesture swipe = gesture;
 
 
-				// check for down going sweep //
-				if(swipe.direction().y < -0.7){
-					// down //
+                // Check for shutdown left swipe //
+                if(swipe.direction().x < -0.6){
+                    if(swipe.durationSeconds() >= 0.04f){
 
-					// add to threshold //
-					Owner->DownWardSwipeThresshold((int)swipe.speed());
+                        auto change = swipe.startPosition()-swipe.position();
 
-				}
+                        if(change.x >= 40){
 
+                            Logger::Get()->Info(L"LeapManager: Input: swipe threshold passed, shutting down");
 
-				// this is one of the wanted ones //
-				datastr += L"Swipe id: "+Convert::ToWstring(swipe.id());
-				datastr += L", state: " +Convert::ToWstring(swipe.state());
-				datastr += L", direction: " +Convert::StringToWstring(Convert::ToString(swipe.direction()));
-				datastr += L", speed: " +Convert::ToWstring(swipe.speed());
+                            Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
+                        }
+
+                    }
+                }
 			}
 			break;
-		case Gesture::TYPE_KEY_TAP:
+            case Gesture::TYPE_KEY_TAP:
 			{
 				// instantiate correct gesture subclass //
 				KeyTapGesture tap = gesture;
@@ -128,7 +154,7 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 
 			}
 			break;
-		case Gesture::TYPE_SCREEN_TAP:
+            case Gesture::TYPE_SCREEN_TAP:
 			{
 				// instantiate correct gesture subclass //
 				ScreenTapGesture screentap = gesture;
@@ -140,21 +166,13 @@ void Leviathan::LeapListener::onFrame(const Leap::Controller &control){
 				datastr += L", direction: " +Convert::StringToWstring(Convert::ToString(screentap.direction()));
 			}
 			break;
-		default:
-			Logger::Get()->Error(L"LeapListener: unknown gesture type: "+Convert::ToWstring(gesture.type()));
-			break;
+            default:
+                Logger::Get()->Error(L"LeapListener: unknown gesture type: "+Convert::ToWstring(gesture.type()));
+                break;
 		}
-	}
+	}    
 }
 
-void Leviathan::LeapListener::onFocusGained(const Leap::Controller &control){
-	Focused = true;
-}
-
-void Leviathan::LeapListener::onFocusLost(const Leap::Controller &control){
-	Focused = false;
-}
-// ------------------------------------ //
 
 // ------------------------------------ //
 

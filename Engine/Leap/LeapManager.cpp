@@ -9,77 +9,82 @@
 using namespace Leviathan;
 using namespace Leap;
 // ------------------------------------ //
-DLLEXPORT Leviathan::LeapManager::LeapManager(Engine* engineinstance) : EngineAccess(engineinstance), MainController(NULL), MainListener(NULL){
-	// default values to gesture variables //
+DLLEXPORT Leviathan::LeapManager::LeapManager(Engine* engineinstance) :
+    EngineAccess(engineinstance), MainController(NULL), MainListener(NULL)
+{
+#ifndef LEAP_USE_ASYNC
+    LastFrameID = 0;
+#endif //LEAP_USE_ASYNC
+    
+	// Default values to gesture variables //
 	TimeSinceReset = 0;
-
-	SweepDownShutdown = 0;
 }
 
 DLLEXPORT Leviathan::LeapManager::~LeapManager(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::LeapManager::Init(){
-	// initialize leap interface //
+	// Initialize leap interface //
 	MainController = new Controller();
 
-	// create listener //
+	// Create listener //
 	MainListener = new LeapListener(this);
 
-	// start listening //
+#ifdef LEAP_USE_ASYNC
+	// Start listening //
 	if(!MainController->addListener(*MainListener)){
-		// no leap controller! //
+        
+		// No leap controller! //
 		Logger::Get()->Warning(L"LeapManager: Failed to start listening for Leap motion controller");
 	}
+#endif //LEAP_USE_ASYNC
 
-	// now listening //
 	return true;
 }
 
 DLLEXPORT void Leviathan::LeapManager::Release(){
-	// we need to unregister listener //
+	// We need to unregister listener //
 	if(MainListener){
-		// unregister from controller //
+#ifdef LEAP_USE_ASYNC
 		MainController->removeListener(*MainListener);
 		Logger::Get()->Info(L"LeapManager: unconnected from Leap");
+#endif //LEAP_USE_ASYNC
 	}
-	// unallocate //
+    
+	// Unallocate //
 	SAFE_DELETE(MainListener);
 	SAFE_DELETE(MainController);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::LeapManager::OnTick(const int &mspassed){
-	// add to time //
+	// Add to time //
 	TimeSinceReset += mspassed;
 
+#ifndef LEAP_USE_ASYNC
+    // Poll frame //
+    const auto frame = MainController->frame();
+
+    auto id = frame.id();
+
+    if(id != LastFrameID){
+
+        LastFrameID = id;
+        MainListener->HandleFrame(frame, *MainController);
+    }
+    
+#endif //LEAP_USE_ASYNC
+    
+	// Check for action //
+    
+    
+    
 	if(TimeSinceReset >= GESTURESTATERESETTIME){
-		// reset all gesture variables //
-		SweepDownShutdown = 0;
-
-		// reset time //
+		// Reset time //
 		TimeSinceReset = 0;
-	}
-	// could get state from controller here //
-
-
-	// check for action //
-	if(SweepDownShutdown >= SHUTDOWNSWEEPTHRESSHOLD){
-
-		Logger::Get()->Info(L"LeapManager: Input: downward swipe threshold passed, shutting down");
-
-		// close the window so the program quits after this //
-		GUARD_LOCK_OTHER_OBJECT(Leviathan::LeviathanApplication::GetApp());
-		Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
+        
 	}
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::LeapManager::DownWardSwipeThresshold(const int &change){
-	SweepDownShutdown += change;
-}
-// ------------------------------------ //
-
-
-
 
 
 

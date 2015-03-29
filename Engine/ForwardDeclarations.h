@@ -99,7 +99,10 @@ namespace Leviathan{
 	class PhysicsMaterialManager;
 	class NewtonManager;
 	class ScriptConsole;
+    
 	class LeapManager;
+    class LeapListener;
+
 	class ObjectLoader;
 	class GameSpecificPacketHandler;
 	class BaseGameSpecificRequestPacket;

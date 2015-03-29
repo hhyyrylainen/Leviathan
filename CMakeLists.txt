@@ -21,6 +21,11 @@ file(TO_NATIVE_PATH ${PROJECT_BINARY_DIR} PROJECT_NATIVE_BINARY_DIR)
 # modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake" "${PROJECT_SOURCE_DIR}/LeviathanCMake")
 
+# Windows find modules
+if(WIN32)
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/Windows/CMake" )
+endif()
+
 # load cotire
 include(cotire)
 
@@ -83,14 +88,18 @@ option(USE_LEAP "Set to on when using Leap motion, will auto disable if files ar
 if(EXISTS "${PROJECT_SOURCE_DIR}/Leap/include/Leap.h")
 
   message(STATUS "Leap motion includes found")
+  set(CAN_USE_LEAP ON)
 
+  
 else()
 
-  message(WARNING "Leap motion files aren't installed in leviathan/Leap, disabled")
-  set(USE_LEAP OFF)
+  message(WARNING "Leap motion files aren't installed in leviathan/Leap, Leap motion support is disabled")
+
+  set(CAN_USE_LEAP OFF)
+  
 endif()
 
-if(${USE_LEAP})
+if(${USE_LEAP} AND ${CAN_USE_LEAP})
   set(L_LEAP_STATE 1)
 else()
   set(L_LEAP_STATE 0)

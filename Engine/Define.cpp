@@ -12,29 +12,8 @@ using namespace Leviathan;
 #endif // LEVIATHAN_USES_VLD
 
 
-
-
-
-
-//Object* Object::LApp = NULL;
-bool Object::IsThis(Object* compare){
-    return this == compare;
-}
-//Object* Object::GetApp(){
-//  return LApp;
-//
-//}
-//void Object::SetApp(Object* app){
-//  LApp = app;
-//}
-
-EngineComponent::EngineComponent() : Inited(false){
+EngineComponent::EngineComponent(){
     
-}
-bool EngineComponent::Init(){
-    return false;
-}
-void EngineComponent::Release(){
 }
 
 DLLEXPORT Leviathan::Object::Object(){

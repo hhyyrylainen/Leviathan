@@ -37,9 +37,6 @@ DLLEXPORT bool Leviathan::ResourceRefreshHandler::Init(){
 	// Set the next update time //
 	NextUpdateTime = Misc::GetThreadSafeSteadyTimePoint()+MillisecondDuration(1000);
 
-
-	Inited = true;
-
 	Staticaccess = this;
 	return true;
 }
@@ -55,9 +52,9 @@ DLLEXPORT void Leviathan::ResourceRefreshHandler::Release(){
 
 		(*iter)->StopThread();
 	}
-	ActiveFileListeners.clear();
 
-	Inited = false;
+    
+	ActiveFileListeners.clear();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ResourceRefreshHandler::ListenForFileChanges(const std::vector<const wstring*> &filestowatch, 

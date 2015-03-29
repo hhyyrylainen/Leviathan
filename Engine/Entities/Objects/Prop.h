@@ -1,3 +1,4 @@
+#pragma once
 #ifndef LEVIATHAN_ENTITY_PROP
 #define LEVIATHAN_ENTITY_PROP
 // ------------------------------------ //

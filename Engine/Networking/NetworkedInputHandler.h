@@ -64,6 +64,9 @@ namespace Leviathan{
     //! can be skipped as such entity might not have even been created in non-GUI mode
     //!
     //! Only one NetworkInputHandler should be created
+    //! \note The behaviour is changed by engine networking strategy, which may make some assumptions in documentation
+    //! invalid or not applicable
+    //! \see NETWORK_USE_SNAPSHOTS
 	class NetworkedInputHandler : public InputController, public ThreadSafe{
 		friend NetworkedInput;
 	public:

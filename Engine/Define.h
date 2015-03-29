@@ -27,6 +27,9 @@
 #define NETWORK_USE_RESIMULATE
 #endif //NETWORK_USE_SNAPSHOTS
 
+//! \todo Allow this to not be a multiple of TICKSPEED or smaller than it
+#define INTERPOLATION_TIME 100
+
 
 namespace Leviathan{
 
@@ -49,9 +52,6 @@ namespace Leviathan{
 	class EngineComponent : public Object{
 	public:
 		DLLEXPORT EngineComponent();
-
-		DLLEXPORT virtual bool Init();
-		DLLEXPORT virtual void Release();
 	};
 }
 

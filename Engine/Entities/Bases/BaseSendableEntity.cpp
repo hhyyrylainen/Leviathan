@@ -14,9 +14,12 @@ using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) :
     SerializeType(type), IsAnyDataUpdated(false), LastVerifiedTick(-1),
+
+#ifdef NETWORK_USE_SNAPSHOTS
     // Only clients allocate any space to the circular state buffer //
     ClientStateBuffer(NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT ?
         BASESENDABLE_STORED_CLIENT_STATES: 0)
+#endif //NETWORK_USE_SNAPSHOTS
 {
     
 }
@@ -214,6 +217,8 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
 
         LastVerifiedTick = ticknumber;
     }
+
+#ifdef NETWORK_USE_SNAPSHOTS
     
     // First find an old state for us that is on the same tick //
     shared_ptr<ObjectDeltaStateData> ourold;
@@ -256,10 +261,32 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
 
     // Now the implementation checks if we correctly simulated the entity on the client side //
     VerifyOldState(receivedstate.get(), ourold.get(), ticknumber);
+#else
+
+#pragma error write This
+
+    // Here find the last state from which we are interpolating and then request that the implementation
+    // starts interpolating
+
+    // We actually only want to interpolate between states that are INTERPOLATION_TIME apart so in that
+    // case store the state but don't interpolate
+
+    // If we miss a packet to which we should interpolate the implementation should call a function to
+    // retrieve a state to interpolate to which then can be less than INTERPOLATION_TIME apart and
+    // then we can hope that we receive more packets later
+
+    // If no old state is found then do a standard 50 millisecond interpolation from the initial state //
+    
+    
+    
+#endif //NETWORK_USE_SNAPSHOTS
+
+    
 
     return true;
 }
 // ------------------------------------ //
+#ifdef NETWORK_USE_SNAPSHOTS
 DLLEXPORT void Leviathan::BaseSendableEntity::StoreClientSideState(int ticknumber){
 
     GUARD_LOCK_THIS_OBJECT();
@@ -291,6 +318,10 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::ReplaceOldClientState(int ontickto
 
     return false;
 }
+#else
+
+
+#endif //NETWORK_USE_SNAPSHOTS
 // ------------------------------------ //
 void Leviathan::BaseSendableEntity::_SendNewConstraint(BaseConstraintable* us, BaseConstraintable* other,
     Entity::BaseConstraint* constraint)

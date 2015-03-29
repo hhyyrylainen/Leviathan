@@ -34,7 +34,8 @@ namespace Leviathan{
 
 
 
-	//! \brief Represents a single input source (group of keys) that are an input method that is to be synchronized between the server and the clients
+	//! \brief Represents a single input source (group of keys) that are an input method that is to be synchronized
+    //! between the server and the clients
 	//! \note This class inherits from InputReceiver and you will need to implement it's input processing methods
 	class NetworkedInput : public InputReceiver{
 		friend NetworkedInputHandler;
@@ -75,7 +76,8 @@ namespace Leviathan{
 
 		//! \brief Called before destruction
 		//!
-		//! This should send proper destroyed messages to others (server broadcast to all, and original creator to server)
+		//! This should send proper destroyed messages to others
+        //! (server broadcast to all, and original creator to server)
 		DLLEXPORT virtual void TerminateConnection();
 
 		//! \brief Called when this is connected to a networked input handler
@@ -106,7 +108,8 @@ namespace Leviathan{
 
 		//! \brief Called before this is destroyed by NetworkedInputHandler
 		//!
-		//! This is usually a result of the server not allowing ConnectToServersideInput or the server removing our access at a later time
+		//! This is usually a result of the server not allowing ConnectToServersideInput or the server
+        //! removing our access at a later time
 		DLLEXPORT virtual void _OnRemovedConnection();
 
 
@@ -135,7 +138,8 @@ namespace Leviathan{
 
 
 
-		//! The ID for this object, this is only used in some checks to make sure that right input is going to the right place
+		//! The ID for this object, this is only used in some checks to make sure that right input is going
+        //! to the right place
 		//! \todo The server needs to be asked about this ID
 		int InputID;
 

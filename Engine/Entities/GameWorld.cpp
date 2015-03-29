@@ -466,7 +466,7 @@ DLLEXPORT void Leviathan::GameWorld::Tick(){
         }
         
     } else if(nethandler && nethandler->GetNetworkType() == NETWORKED_TYPE_CLIENT){
-
+#ifndef NETWORK_USE_SNAPSHOTS
         for(size_t i = 0; i < SendableObjects.size(); ++i){
             
             auto target = SendableObjects[i];
@@ -475,6 +475,11 @@ DLLEXPORT void Leviathan::GameWorld::Tick(){
                 target->StoreClientSideState(TickNumber);
             
         }
+#else
+        // TODO: put here to code to snap back objects that shouldn't have moved
+        
+        
+#endif //NETWORK_USE_SNAPSHOTS
     }
 
 worldskiphandlingsendableobjectslabel:

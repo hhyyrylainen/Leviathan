@@ -13,8 +13,10 @@
 #include "boost/thread/mutex.hpp"
 #include "boost/circular_buffer.hpp"
 
+#ifndef NETWORK_USE_SNAPSHOTS
 #define BASESENDABLE_STORED_CLIENT_STATES 14
 #define SENDABLE_RESIMULATE_THRESSHOLD 0.01f
+#endif //NETWORK_USE_SNAPSHOTS
 
 namespace Leviathan{
 
@@ -119,12 +121,15 @@ namespace Leviathan{
         //! \todo Allow this to be cached to improve performance
         DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() = 0;
 
+#ifndef NETWORK_USE_SNAPSHOTS
         //! \brief Verifies that an old server state is consistent with the client state
         //! \param serversold The server's state that we have received
         //! \param ourold Our old state that matches the tick, if any (only exact tick number matches are counted)
         //! \param tick The tick on which the state was captured
         DLLEXPORT virtual void VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold,
             int tick) = 0;
+        
+#endif //NETWORK_USE_SNAPSHOTS
 
         //! \brief Subclasses initialize their state object of choice from a packet
         DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet) const = 0;
@@ -136,17 +141,23 @@ namespace Leviathan{
         //! this can be called to get clients to update their positions faster
         DLLEXPORT void SendUpdatesToAllClients(int ticknumber);
 
+#ifndef NETWORK_USE_SNAPSHOTS
         //! \brief Tells this entity to capture its client side state
         //! \note It will only be captured if the object is marked as updated
         //! \warning This may NOT be called on any other application than a client
         //! \see IsAnyDataUpdated
         DLLEXPORT void StoreClientSideState(int ticknumber);
 
-
         //! \brief Replaces an old state with a newer one
         //!
         //! This is used on the client when resimulating to replace old invalid states
         DLLEXPORT bool ReplaceOldClientState(int onticktoreplace, shared_ptr<ObjectDeltaStateData> state);
+
+#else
+        
+        
+        
+#endif //NETWORK_USE_SNAPSHOTS
 
         //! \brief Adds a new connection to known receivers
         DLLEXPORT virtual void AddConnectionToReceivers(ConnectionInfo* receiver);
@@ -186,8 +197,11 @@ namespace Leviathan{
         //! \note On the client side this controls whehter an state capture notification actually captures a new state
         bool IsAnyDataUpdated;
 
+#ifndef NETWORK_USE_SNAPSHOTS
         //! Clientside buffer of past states
         boost::circular_buffer<SendableObjectClientState> ClientStateBuffer;
+        
+#endif //NETWORK_USE_SNAPSHOTS
 
         //! The tick on which the client state was last checked with the server
         //! any updates older than this will be ignored

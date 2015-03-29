@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_NETWORKEDINPUTHANDLER
 #include "NetworkedInputHandler.h"
@@ -94,12 +93,13 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 			// Server in turn ignores this one //
 			if(IsOnTheServer) 
 				return false;
-
+#ifndef NETWORK_USE_SNAPSHOTS
             if(!_HandleInputCreateResponse(response, connection)){
 
                 Logger::Get()->Error("NetworkedInputHandler: failed to create replicated input on a client");
                 return true;
             }
+#endif //NETWORK_USE_SNAPSHOTS
             
 			return true;
 		}
@@ -114,6 +114,7 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 				return true;
 			}
 
+#ifdef NETWORK_USE_SNAPSHOTS
 			// Everybody receives these, but only the server has to distribute these around //
             if(IsOnTheServer){
 
@@ -129,6 +130,7 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 
                 ServerInterface->SendToAllButOnePlayer(response, connection);
             }
+#endif //NETWORK_USE_SNAPSHOTS
 
 			return true;
 		}
@@ -203,7 +205,7 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
 
 
 		// Send messages to other clients //
-		
+#ifndef NETWORK_USE_SNAPSHOTS
 		// First create the packet //
 		shared_ptr<NetworkResponse> tmprespall = shared_ptr<NetworkResponse>(new NetworkResponse(-1,
                 PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 15));
@@ -224,7 +226,7 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
 			Logger::Get()->Info(L"NetworkedInputHandler: finished distributing create response around");
 
 		}, tmprespall, ServerInterface, connection)));
-
+#endif //NETWORK_USE_SNAPSHOTS
 
 
 
@@ -376,6 +378,9 @@ bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(shared_ptr<Net
 
 	NetworkResponseDataForUpdateNetworkedInput* data = response->GetResponseDataForUpdateNetworkedInputResponse();
 
+    if(!data)
+        return false;
+
 
 	GUARD_LOCK_THIS_OBJECT();
 
@@ -432,8 +437,6 @@ bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(shared_ptr<Net
 bool Leviathan::NetworkedInputHandler::_HandleInputCreateResponse(shared_ptr<NetworkResponse> response,
     ConnectionInfo* connection)
 {
-    assert(!IsOnTheServer && "Don't call _HandleInputCreateResponse on the server");
-    
     NetworkResponseDataForCreateNetworkedInput* data = response->GetResponseDataForCreateNetworkedInputResponse();
 
     if(!data)
@@ -461,6 +464,8 @@ bool Leviathan::NetworkedInputHandler::_HandleInputCreateResponse(shared_ptr<Net
         return false;
 
     GUARD_LOCK_THIS_OBJECT();
+
+    assert(!IsOnTheServer && "Don't call _HandleInputCreateResponse on the server");
     
     // It got accepted so finish adding the data //
     ournewobject->OnLoadCustomFullDataFrompacket(data->DataForObject);

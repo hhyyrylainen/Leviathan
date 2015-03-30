@@ -15,8 +15,12 @@
 
 #ifndef NETWORK_USE_SNAPSHOTS
 #define BASESENDABLE_STORED_CLIENT_STATES 14
-#define SENDABLE_RESIMULATE_THRESSHOLD 0.01f
+#else
+#define BASESENDABLE_STORED_RECEIVED_STATES 4
 #endif //NETWORK_USE_SNAPSHOTS
+
+#define SENDABLE_RESIMULATE_THRESSHOLD 0.01f
+
 
 namespace Leviathan{
 
@@ -38,11 +42,19 @@ namespace Leviathan{
     //! \brief Base class for entity state data
     class ObjectDeltaStateData{
     public:
+        DLLEXPORT ObjectDeltaStateData(int tick);
         DLLEXPORT virtual ~ObjectDeltaStateData();
 
         //! \brief Adds update data to a packet
         //! \param olderstate The state against which this is compared. Or NULL if a full update is wanted
         DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) = 0;
+
+        //! \brief The tick this delta state matches
+        const int Tick;
+        
+
+        ObjectDeltaStateData(const ObjectDeltaStateData &other) = delete;
+        void operator=(const ObjectDeltaStateData &other) = delete;
     };
     
     //! \brief Contains data about a connection and whether the object has changed since last update
@@ -83,15 +95,6 @@ namespace Leviathan{
         //! Mutex for callback function
         boost::mutex CallbackMutex;
     };
-
-    //! \brief Contains a clientside state and the tick on which it was captured
-    struct SendableObjectClientState{
-        SendableObjectClientState(int tick, shared_ptr<ObjectDeltaStateData> state);
-        
-        int Tick;
-        shared_ptr<ObjectDeltaStateData> State;
-    };
-    
     
     //! \brief Inherited by objects that can be serialized using the SendableEntitySerializer
 	class BaseSendableEntity : public virtual BaseObject{
@@ -197,11 +200,12 @@ namespace Leviathan{
         //! \note On the client side this controls whehter an state capture notification actually captures a new state
         bool IsAnyDataUpdated;
 
-#ifndef NETWORK_USE_SNAPSHOTS
+
         //! Clientside buffer of past states
-        boost::circular_buffer<SendableObjectClientState> ClientStateBuffer;
+        //! Use depends on NETWORK_USE_SNAPSHOTS if it is defined this will contain states received from the server
+        //! otherwise these are locally captured states
+        boost::circular_buffer<shared_ptr<ObjectDeltaStateData>> ClientStateBuffer;
         
-#endif //NETWORK_USE_SNAPSHOTS
 
         //! The tick on which the client state was last checked with the server
         //! any updates older than this will be ignored

@@ -612,13 +612,14 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureStat
     return shared_ptr<ObjectDeltaStateData>(
         PositionablePhysicalDeltaState::CaptureState(*this).release());
 }
-
+#ifndef NETWORK_USE_SNAPSHOTS
 DLLEXPORT void Leviathan::Entity::Brush::VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold,
     int tick)
 {
     CheckOldPhysicalState(static_cast<PositionablePhysicalDeltaState*>(serversold),
         static_cast<PositionablePhysicalDeltaState*>(ourold), tick, this);
 }
+#endif //NETWORK_USE_SNAPSHOTS
 
 void Leviathan::Entity::Brush::OnBeforeResimulateStateChanged(){
     StartInterpolating(GetPos(), GetOrientation());

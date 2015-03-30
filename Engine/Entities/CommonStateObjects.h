@@ -40,9 +40,11 @@ namespace Leviathan{
     //! \brief State object for entities that only have position and base physical components
 	class PositionablePhysicalDeltaState : public ObjectDeltaStateData{
 	public:
-		DLLEXPORT PositionablePhysicalDeltaState(const Float3 &position, const Float3 &velocity, const Float3 &torque);
+		DLLEXPORT PositionablePhysicalDeltaState(int tick, const Float3 &position, const Float3 &velocity,
+            const Float3 &torque);
+        
         //! \see CreateUpdatePacket
-        DLLEXPORT PositionablePhysicalDeltaState(sf::Packet &packet);
+        DLLEXPORT PositionablePhysicalDeltaState(int tick, sf::Packet &packet);
         DLLEXPORT ~PositionablePhysicalDeltaState();
 
         //! \brief Templated creation function for all classes that inherit both BasePotitionable and

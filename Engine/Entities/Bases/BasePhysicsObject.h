@@ -111,10 +111,13 @@ namespace Leviathan{
         //! http://newtondynamics.com/wiki/index.php5?title=NewtonBodySetLinearDamping
         DLLEXPORT void SetLinearDampening(float factor = 0.1f);
 
-
+#ifndef NETWORK_USE_SNAPSHOTS
+        
         //! \brief Sendable entity old state checking for basic physical objects
         DLLEXPORT void CheckOldPhysicalState(PositionablePhysicalDeltaState* servercasted,
             PositionablePhysicalDeltaState* ourcasted, int tick, BaseSendableEntity* assendable);
+
+#endif //NETWORK_USE_SNAPSHOTS
 
         //! \brief Returns the default material ID for the world to which this entity belongs
         DLLEXPORT int GetDefaultPhysicalMaterialID() const;

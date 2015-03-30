@@ -506,6 +506,7 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityControl
         new TrackControllerState(ReachedNode, ChangeSpeed, NodeProgress));
 }
 
+#ifndef NETWORK_USE_SNAPSHOTS
 DLLEXPORT void Leviathan::Entity::TrackEntityController::VerifyOldState(ObjectDeltaStateData* serversold,
     ObjectDeltaStateData* ourold, int tick)
 {
@@ -603,6 +604,7 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::VerifyOldState(ObjectDe
     
 #endif //ALLOW_RESIMULATE_CONSUME_ALL
 }
+#endif //NETWORK_USE_SNAPSHOTS
 
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityController::CreateStateFromPacket(
     sf::Packet &packet) const

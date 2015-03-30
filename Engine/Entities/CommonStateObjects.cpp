@@ -7,14 +7,17 @@ using namespace Leviathan;
 // ------------------------------------ //
 
 // ------------------ PositionablePhysicalDeltaState ------------------ //
-DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaState(const Float3 &position,
+DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaState(int tick, const Float3 &position,
     const Float3 &velocity, const Float3 &torque) :
-    Position(position), Velocity(velocity), Torque(torque)
+    ObjectDeltaStateData(tick), Position(position), Velocity(velocity), Torque(torque)
 {
 
 }
 
-DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaState(sf::Packet &packet){
+DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaState(int tick,
+    sf::Packet &packet) :
+    ObjectDeltaStateData(tick)
+{
     
     // We need to do the opposite of what we do in CreateUpdatePacket //
     packet >> ValidFields;

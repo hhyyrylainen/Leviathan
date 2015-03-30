@@ -42,9 +42,16 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseSendableEntity::CaptureState
             DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() override;
 
+#ifndef NETWORK_USE_SNAPSHOTS
+            
             //! \copydoc BaseSendableEntity::VerifyOldState
             DLLEXPORT virtual void VerifyOldState(ObjectDeltaStateData* serversold,
                 ObjectDeltaStateData* ourold, int tick) override;
+#else
+            
+            
+            
+#endif //NETWORK_USE_SNAPSHOTS
 
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
             DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet) const override;

@@ -329,6 +329,7 @@ void Leviathan::BasePhysicsObject::OnBeforeResimulateStateChanged(){
 
 }
 
+#ifndef NETWORK_USE_SNAPSHOTS
 DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionablePhysicalDeltaState* servercasted,
     PositionablePhysicalDeltaState* ourcasted, int tick, BaseSendableEntity* assendable)
 {
@@ -550,6 +551,7 @@ DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionableP
             }, simulatedtime, advancedtick, assendable, worldtick),
         BasePhysicsGetConstraintable());
 }
+#endif //NETWORK_USE_SNAPSHOTS
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(bool addmass,
     boost::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> getforce,

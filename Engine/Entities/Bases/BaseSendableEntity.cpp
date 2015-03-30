@@ -123,9 +123,10 @@ DLLEXPORT void Leviathan::BaseSendableEntity::AddConnectionToReceivers(Connectio
 
     GUARD_LOCK_THIS_OBJECT();
 
-    UpdateReceivers.push_back(make_shared<SendableObjectConnectionUpdate>(this, receiver));
-}
+    const int tick = OwnedByWorld ? OwnedByWorld->GetTickNumber(): -1;
 
+    UpdateReceivers.push_back(make_shared<SendableObjectConnectionUpdate>(this, receiver, tick));
+}
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknumber){
 
@@ -136,7 +137,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
         return;
 
     // Create current state here as one or more conections should require it //
-    auto curstate = CaptureState();
+    auto curstate = CaptureState(ticknumber);
     
     auto end = UpdateReceivers.end();
     for(auto iter = UpdateReceivers.begin(); iter != end; ){
@@ -276,6 +277,7 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
     // Set this to the last tick that is included as the end point in a interpolation step //
     int lastqueuedtick = -1;
     
+    
     {
         GUARD_LOCK_THIS_OBJECT();
         
@@ -284,7 +286,7 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
             // This should always select the most recent state //
             if(obj->Tick == lastqueuedtick){
                 
-                ourold = obj;
+                laststate = obj;
             }
         }
 
@@ -331,7 +333,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::StoreClientSideState(int ticknumbe
     
     assert(ClientStateBuffer.capacity() != 0 && "StoreClientSideState called on something that isn't a client");
 
-    ClientStateBuffer.push_back(SendableObjectClientState(ticknumber, CaptureState()));
+    ClientStateBuffer.push_back(SendableObjectClientState(ticknumber, CaptureState(ticknumber)));
 }
 
 DLLEXPORT bool Leviathan::BaseSendableEntity::ReplaceOldClientState(int onticktoreplace,
@@ -402,8 +404,9 @@ void Leviathan::BaseSendableEntity::_SendNewConstraint(BaseConstraintable* us, B
 }
 // ------------------ SendableObjectConnectionUpdated ------------------ //
 DLLEXPORT Leviathan::SendableObjectConnectionUpdate::SendableObjectConnectionUpdate(BaseSendableEntity* getstate,
-    ConnectionInfo* connection) :
-    CorrespondingConnection(connection), DataUpdatedAfterSending(false), LastConfirmedData(getstate->CaptureState()),
+    ConnectionInfo* connection, int tick) :
+    CorrespondingConnection(connection), DataUpdatedAfterSending(false),
+    LastConfirmedData(getstate->CaptureState(tick)),
     LastConfirmedTickNumber(-1)
 {
 
@@ -432,9 +435,4 @@ DLLEXPORT Leviathan::ObjectDeltaStateData::ObjectDeltaStateData(int tick) : Tick
 DLLEXPORT Leviathan::ObjectDeltaStateData::~ObjectDeltaStateData(){
 
 }
-// ------------------ SendableObjectClientState ------------------ //
-Leviathan::SendableObjectClientState::SendableObjectClientState(int tick, shared_ptr<ObjectDeltaStateData> state) :
-    Tick(tick), State(state)
-{
-    
-}
+

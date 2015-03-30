@@ -49,7 +49,7 @@ namespace Leviathan{ namespace Entity{
                 matrix, int threadIndex);
 
             //! \copydoc BaseSendableEntity::CaptureState
-            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() override;
+            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
 
 #ifndef NETWORK_USE_SNAPSHOTS
             
@@ -63,7 +63,8 @@ namespace Leviathan{ namespace Entity{
 #endif //NETWORK_USE_SNAPSHOTS
 
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
-            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet) const override;
+            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
+                sf::Packet &packet) const override;
 
             REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(Brush);
             

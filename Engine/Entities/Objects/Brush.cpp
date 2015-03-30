@@ -607,10 +607,10 @@ BaseConstraintable* Leviathan::Entity::Brush::BasePhysicsGetConstraintable(){
     return static_cast<BaseConstraintable*>(this);
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(){
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(int tick){
     
     return shared_ptr<ObjectDeltaStateData>(
-        PositionablePhysicalDeltaState::CaptureState(*this).release());
+        PositionablePhysicalDeltaState::CaptureState(*this, tick).release());
 }
 #ifndef NETWORK_USE_SNAPSHOTS
 DLLEXPORT void Leviathan::Entity::Brush::VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold,
@@ -625,11 +625,13 @@ void Leviathan::Entity::Brush::OnBeforeResimulateStateChanged(){
     StartInterpolating(GetPos(), GetOrientation());
 }
 
-DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateStateFromPacket(sf::Packet &packet) const{
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateStateFromPacket(
+    int tick, sf::Packet &packet) const
+{
     
     try{
         
-        return make_shared<PositionablePhysicalDeltaState>(packet);
+        return make_shared<PositionablePhysicalDeltaState>(tick, packet);
         
     } catch(ExceptionInvalidArgument &e){
 

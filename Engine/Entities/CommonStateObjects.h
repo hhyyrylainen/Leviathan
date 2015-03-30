@@ -49,11 +49,14 @@ namespace Leviathan{
 
         //! \brief Templated creation function for all classes that inherit both BasePotitionable and
         //! BasePhysicsObject
+        //! \param tick The world tick to place in the resulting state
         template<class CType>
-        DLLEXPORT static unique_ptr<PositionablePhysicalDeltaState> CaptureState(CType &object){
+        DLLEXPORT static unique_ptr<PositionablePhysicalDeltaState> CaptureState(CType &object,
+            int tick)
+        {
 
             return unique_ptr<PositionablePhysicalDeltaState>(new PositionablePhysicalDeltaState(
-                    object.GetPos(), object.GetBodyVelocity(), object.GetBodyTorque()));
+                    tick, object.GetPos(), object.GetBodyVelocity(), object.GetBodyTorque()));
         }
 
         //! \note The olderstate has to be of type PositionablePhysicalDeltaState

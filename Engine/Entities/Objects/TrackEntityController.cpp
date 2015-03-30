@@ -500,10 +500,10 @@ void Leviathan::Entity::TrackEntityController::_GetPosAndRotForProgress(Float3 &
 	}
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityController::CaptureState(){
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityController::CaptureState(int tick){
     
     return shared_ptr<ObjectDeltaStateData>(
-        new TrackControllerState(ReachedNode, ChangeSpeed, NodeProgress));
+        new TrackControllerState(tick, ReachedNode, ChangeSpeed, NodeProgress));
 }
 
 #ifndef NETWORK_USE_SNAPSHOTS
@@ -607,11 +607,11 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::VerifyOldState(ObjectDe
 #endif //NETWORK_USE_SNAPSHOTS
 
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityController::CreateStateFromPacket(
-    sf::Packet &packet) const
+    int tick, sf::Packet &packet) const
 {
     try{
         
-        return make_shared<TrackControllerState>(packet);
+        return make_shared<TrackControllerState>(tick, packet);
         
     } catch(ExceptionInvalidArgument &e){
 
@@ -622,13 +622,18 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityControl
     
 }
 // ------------------ TrackControllerState ------------------ //
-DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(int reached, float speed, float progress) :
-    ReachedNode(reached), ChangeSpeed(speed), NodeProgress(progress), AddedNodes(0)
+DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(int tick, int reached,
+    float speed, float progress) :
+    ObjectDeltaStateData(tick),  ReachedNode(reached), ChangeSpeed(speed),
+    NodeProgress(progress), AddedNodes(0)
 {
 
 }
 
-DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(sf::Packet &packet){
+DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(int tick,
+    sf::Packet &packet) :
+    ObjectDeltaStateData(tick)
+{
 
     // We need to do the opposite of what we do in CreateUpdatePacket //
     packet >> ValidFields;

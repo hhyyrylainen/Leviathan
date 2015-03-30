@@ -63,7 +63,8 @@ namespace Leviathan{
     public:
 
         //! \brief Creates an connection holder and creates an initial state
-        DLLEXPORT SendableObjectConnectionUpdate(BaseSendableEntity* getstate, ConnectionInfo* connection);
+        //! \param curtick The current world tick, used to 
+        DLLEXPORT SendableObjectConnectionUpdate(BaseSendableEntity* getstate, ConnectionInfo* connection, int curtick);
 
         //! \brief Used to update LastConfirmedData
         DLLEXPORT void SucceedOrFailCallback(int ticknumber, shared_ptr<ObjectDeltaStateData> state,
@@ -121,8 +122,9 @@ namespace Leviathan{
         DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet, int ticknumber);
 
         //! \brief Capture current object state
+        //! \param tick The tick value to store in the state, usually world's current tick
         //! \todo Allow this to be cached to improve performance
-        DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState() = 0;
+        DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState(int tick) = 0;
 
 #ifndef NETWORK_USE_SNAPSHOTS
         //! \brief Verifies that an old server state is consistent with the client state
@@ -135,7 +137,8 @@ namespace Leviathan{
 #endif //NETWORK_USE_SNAPSHOTS
 
         //! \brief Subclasses initialize their state object of choice from a packet
-        DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(sf::Packet &packet) const = 0;
+        DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
+            sf::Packet &packet) const = 0;
         
         //! \brief Tells this entity send updates to all receivers
         //!

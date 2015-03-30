@@ -462,10 +462,10 @@ BaseConstraintable* Leviathan::Entity::Prop::BasePhysicsGetConstraintable(){
     return static_cast<BaseConstraintable*>(this);
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CaptureState(){
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CaptureState(int tick){
     
     return shared_ptr<ObjectDeltaStateData>(
-        PositionablePhysicalDeltaState::CaptureState(*this).release());
+        PositionablePhysicalDeltaState::CaptureState(*this, tick).release());
 }
 
 #ifndef NETWORK_USE_SNAPSHOTS
@@ -481,11 +481,13 @@ void Leviathan::Entity::Prop::OnBeforeResimulateStateChanged(){
     StartInterpolating(GetPos(), GetOrientation());
 }
 
-DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CreateStateFromPacket(sf::Packet &packet) const{
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CreateStateFromPacket(int tick, sf::Packet &packet)
+    const
+{
     
     try{
         
-        return make_shared<PositionablePhysicalDeltaState>(packet);
+        return make_shared<PositionablePhysicalDeltaState>(tick, packet);
         
     } catch(ExceptionInvalidArgument &e){
 

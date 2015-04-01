@@ -10,6 +10,7 @@
 #include "Networking/NetworkHandler.h"
 #include "boost/thread/lock_types.hpp"
 #include "Handlers/ConstraintSerializerManager.h"
+#include "Exceptions/ExceptionInvalidState.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) :
@@ -24,7 +25,10 @@ DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_
 #endif //NETWORK_USE_SNAPSHOTS
         : 0), LastVerifiedTick(-1)
 {
-    
+#ifdef NETWORK_USE_SNAPSHOTS
+    QueuedInterpolationStates.reserve(NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT ?
+        BASESENDABLE_STORED_CLIENT_INTERPOLATIONS: 0);
+#endif //NETWORK_USE_SNAPSHOTS
 }
 
 DLLEXPORT Leviathan::BaseSendableEntity::~BaseSendableEntity(){
@@ -357,7 +361,39 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::ReplaceOldClientState(int ontickto
 }
 #else
 
+DLLEXPORT void Leviathan::BaseSendableEntity::QueueInterpolation(shared_ptr<ObjectDeltaStateData> from,
+    shared_ptr<ObjectDeltaStateData> to, int mstime)
+{
+    // If we are interpolating from the initial state from is null //
+    if(from == nullptr){
 
+        from = CaptureState(0);
+    }
+
+    GUARD_LOCK_THIS_OBJECT();
+
+    QueuedInterpolationStates.push_back(move(ObjectInterpolation(from, to, mstime)));
+}
+
+DLLEXPORT ObjectInterpolation Leviathan::BaseSendableEntity::GetAndPopNextInterpolation(){
+
+    GUARD_LOCK_THIS_OBJECT();
+    
+    if(QueueInterpolation.empty())
+        throw ExceptionInvalidState(L"no states in queue", 0, __WFUNCTION__, L"");
+    
+    auto obj = QueuedInterpolationStates.first();
+    QueuedInterpolationStates.pop_front();
+
+    ReportInterpolationStatusToInput(obj.Second->Tick, Misc::GetTimeMs64()+obj.Duration);
+
+    return obj;
+}
+
+void Leviathan::BaseSendableEntity::ReportInterpolationStatusToInput(int tick, int64_t mstime){
+
+    cout << "Interpolation: " << tick << " at: " << mstime;
+}
 #endif //NETWORK_USE_SNAPSHOTS
 // ------------------------------------ //
 void Leviathan::BaseSendableEntity::_SendNewConstraint(BaseConstraintable* us, BaseConstraintable* other,
@@ -435,4 +471,19 @@ DLLEXPORT Leviathan::ObjectDeltaStateData::ObjectDeltaStateData(int tick) : Tick
 DLLEXPORT Leviathan::ObjectDeltaStateData::~ObjectDeltaStateData(){
 
 }
+// ------------------ ObjectInterpolation ------------------ //
+#ifdef NETWORK_USE_SNAPSHOTS
 
+Leviathan::ObjectInterpolation::ObjectInterpolation(shared_ptr<ObjectDeltaStateData> first,
+    shared_ptr<ObjectDeltaStateData> second, int duration) :
+    First(first), Second(second), Duration(duration)
+{
+    
+}
+
+Leviathan::ObjectInterpolation::ObjectInterpolation(ObjectInterpolation &&other) :
+    First(move(other.First)), Second(move(other.Second)), Duration(other.Duration)
+{
+    
+}
+#endif //NETWORK_USE_SNAPSHOTS

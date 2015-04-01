@@ -15,6 +15,7 @@
 
 #ifndef NETWORK_USE_SNAPSHOTS
 #define BASESENDABLE_STORED_CLIENT_STATES 14
+#define BASESENDABLE_STORED_CLIENT_INTERPOLATIONS 3
 #else
 #define BASESENDABLE_STORED_RECEIVED_STATES 4
 #endif //NETWORK_USE_SNAPSHOTS
@@ -56,6 +57,32 @@ namespace Leviathan{
         ObjectDeltaStateData(const ObjectDeltaStateData &other) = delete;
         void operator=(const ObjectDeltaStateData &other) = delete;
     };
+
+#ifdef NETWORK_USE_SNAPSHOTS
+    //! \brief Contains an interpolation for client side entity to perform
+    struct ObjectInterpolation{
+    public:
+        ObjectInterpolation(shared_ptr<ObjectDeltaStateData> first, shared_ptr<ObjectDeltaStateData> second,
+            int duration);
+
+        //! Move constructor
+        ObjectInterpolation(ObjectInterpolation &&other);
+
+        //! The first state
+        //! Must always be valid
+        shared_ptr<ObjectDeltaStateData> First;
+        
+        //! The second state
+        //! Must always be valid
+        shared_ptr<ObjectDeltaStateData> Second;
+
+        //! The time the change should take in milliseconds
+        //! Must be > 0
+        int Duration;
+    }
+    
+#endif //NETWORK_USE_SNAPSHOTS
+
     
     //! \brief Contains data about a connection and whether the object has changed since last update
     class SendableObjectConnectionUpdate{
@@ -160,8 +187,15 @@ namespace Leviathan{
         DLLEXPORT bool ReplaceOldClientState(int onticktoreplace, shared_ptr<ObjectDeltaStateData> state);
 
 #else
-        
-        
+
+        //! \brief Queues a interpolation for this entity
+        //! \param mstime The time the interpolation should take in milliseconds
+        DLLEXPORT void QueueInterpolation(shared_ptr<ObjectDeltaStateData> from, shared_ptr<ObjectDeltaStateData> to,
+            int mstime);
+
+        //! \brief Retrieves and pops the next interpolation
+        //! \brief ExceptionInvalidState when none in queue
+        DLLEXPORT ObjectInterpolation GetAndPopNextInterpolation() THROWS;
         
 #endif //NETWORK_USE_SNAPSHOTS
 
@@ -172,6 +206,18 @@ namespace Leviathan{
         DLLEXPORT BASESENDABLE_ACTUAL_TYPE GetSendableType() const;
         
     protected:
+
+#ifdef NETWORK_USE_SNAPSHOTS
+
+        //! \brief Report view interpolation status to the input manager
+        //! \param tick The tick that will be reached at millisecond time mstime
+        static void ReportInterpolationStatusToInput(int tick, int64_t mstime);
+
+
+        //! \brief Start a new interpolation if current one is finished
+        virtual void VerifySendableInterpolation() = 0;
+
+#endif //NETWORK_USE_SNAPSHOTS
         
         //! \brief Function which is used by subclasses to load their data from packets
         //!
@@ -208,6 +254,14 @@ namespace Leviathan{
         //! Use depends on NETWORK_USE_SNAPSHOTS if it is defined this will contain states received from the server
         //! otherwise these are locally captured states
         boost::circular_buffer<shared_ptr<ObjectDeltaStateData>> ClientStateBuffer;
+
+#ifdef NETWORK_USE_SNAPSHOTS
+
+        //! Clientside list of queued interpolation states
+        std::deque<ObjectInterpolation> QueuedInterpolationStates;
+        
+
+#endif //NETWORK_USE_SNAPSHOTS
         
 
         //! The tick on which the client state was last checked with the server

@@ -16,7 +16,9 @@
 #include "Script/ScriptRunningSetup.h"
 #include "Handlers/IDFactory.h"
 
-#define ANGELSCRIPT_REGISTERFAIL	Logger::Get()->Error("ScriptExecutor: Init: AngelScript: register global failed in file " __FILE__ " on line "+Convert::ToString(__LINE__)); return false;
+#define ANGELSCRIPT_REGISTERFAIL	Logger::Get()->Error("ScriptExecutor: Init: AngelScript: "\
+    "register global failed in file " __FILE__ " on line "+Convert::ToString(__LINE__)); \
+    return false;
 
 namespace Leviathan{
 
@@ -33,7 +35,9 @@ namespace Leviathan{
 		DLLEXPORT void ScanAngelScriptTypes();
 
 		// module managing //
-		DLLEXPORT weak_ptr<ScriptModule> CreateNewModule(const wstring &name, const string &source, const int &modulesid = IDFactory::GetID());
+		DLLEXPORT weak_ptr<ScriptModule> CreateNewModule(const wstring &name, const string &source,
+            const int &modulesid = IDFactory::GetID());
+        
 		DLLEXPORT void DeleteModule(ScriptModule* ptrtomatch);
 		DLLEXPORT bool DeleteModuleIfNoExternalReferences(int ID);
 		DLLEXPORT weak_ptr<ScriptModule> GetModule(const int &ID);
@@ -56,14 +60,17 @@ namespace Leviathan{
 		// script running commands //
 
 		//! \brief Runs a script
-		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptScript* scriptobject, ScriptRunningSetup* parameters);
+		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptScript* scriptobject,
+            ScriptRunningSetup* parameters);
 
 		//! \brief Runs a script
-		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptModule* scrptmodule, ScriptRunningSetup* parameters);
+		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptModule* scrptmodule,
+            ScriptRunningSetup* parameters);
 
 		//! \brief Runs a script function whose pointer is passed in
 		//! \todo Make the module finding more efficient, store module IDs in all call sites
-		DLLEXPORT shared_ptr<VariableBlock> RunFunctionSetUp(asIScriptFunction* function, ScriptRunningSetup* parameters);
+		DLLEXPORT shared_ptr<VariableBlock> RunFunctionSetUp(asIScriptFunction* function,
+            ScriptRunningSetup* parameters);
 
 		// Setup functions //
 
@@ -74,19 +81,21 @@ namespace Leviathan{
 		void PrintAdditionalExcept(asIScriptContext *ctx);
 
 		//! \brief Handles the return type and return value of a function
-		shared_ptr<VariableBlock> _GetScriptReturnedVariable(int retcode, asIScriptContext* ScriptContext, ScriptRunningSetup* parameters, 
-			asIScriptFunction* func, ScriptModule* scrptmodule, FunctionParameterInfo* paraminfo);
+		shared_ptr<VariableBlock> _GetScriptReturnedVariable(int retcode, asIScriptContext* ScriptContext,
+            ScriptRunningSetup* parameters, asIScriptFunction* func, ScriptModule* scrptmodule,
+            FunctionParameterInfo* paraminfo);
 
 		//! \brief Handles passing parameters to a context
-		bool _SetScriptParameters(asIScriptContext* ScriptContext, ScriptRunningSetup* parameters, ScriptModule* scrptmodule, 
-			FunctionParameterInfo* paraminfo);
+		bool _SetScriptParameters(asIScriptContext* ScriptContext, ScriptRunningSetup* parameters,
+            ScriptModule* scrptmodule, FunctionParameterInfo* paraminfo);
 
 		//! \brief Checks whether a function is a valid pointer
-		bool _CheckScriptFunctionPtr(asIScriptFunction* func, ScriptRunningSetup* parameters, ScriptModule* scrptmodule);
+		bool _CheckScriptFunctionPtr(asIScriptFunction* func, ScriptRunningSetup* parameters,
+            ScriptModule* scrptmodule);
 
 		//! \brief Prepares a context for usage
-		bool _PrepareContextForPassingParameters(asIScriptFunction* func, asIScriptContext* ScriptContext, ScriptRunningSetup* parameters, 
-			ScriptModule* scrptmodule);
+		bool _PrepareContextForPassingParameters(asIScriptFunction* func, asIScriptContext* ScriptContext,
+            ScriptRunningSetup* parameters, ScriptModule* scrptmodule);
 
 		//! \brief Called when a context is required for script execution
 		//! \todo Add a pool from which these are retrieved
@@ -98,7 +107,8 @@ namespace Leviathan{
 		// ------------------------------ //
 		// AngelScript engine script executing part //
 		asIScriptEngine* engine;
-		// list of modules that have been created, some might only have this as reference, and could potentially be released //
+		// list of modules that have been created, some might only have this as reference, and
+        // could potentially be released
 		vector<shared_ptr<ScriptModule>> AllocatedScriptModules;
 
 

@@ -47,7 +47,13 @@ namespace Leviathan{
     class PositionablePhysicalDeltaState;
 
     // Exceptions //
-	class ExceptionInvalidArgument;
+    class Exception;
+    class InvalidAccess;
+    class InvalidArgument;
+    class InvalidState;
+    class InvalidType;
+    class NotFound;
+    class NULLPtr;
 
 
 	class ObjectFileTemplateInstance;

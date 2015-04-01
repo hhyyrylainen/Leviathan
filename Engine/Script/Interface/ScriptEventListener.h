@@ -1,7 +1,7 @@
 #pragma once
 #include "Common/ReferenceCounted.h"
 #include "Events/CallableObject.h"
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "Common/ThreadSafe.h"
 #include "Script/ScriptInterface.h"
 
@@ -32,8 +32,8 @@ namespace Leviathan{ namespace Script{
 
                 // Fail if neither is set //
                 if(!OnGenericScript && !OnEventScript)
-                    throw ExceptionInvalidArgument(L"At least on event or on generic listeners need to be passed", 0,
-                        __WFUNCTION__, L"onevent ongeneric", L"both are NULL");
+                    throw InvalidArgument("At least on event or on generic listeners need to be "
+                        "provided, both are NULL");
             }
             
             ~EventListener(){
@@ -153,7 +153,7 @@ namespace Leviathan{ namespace Script{
                 
                 listener = new EventListener(onevent, ongeneric);
                 
-            } catch(const ExceptionInvalidArgument &e){
+            } catch(const InvalidArgument &e){
 
                 Logger::Get()->Error("Failed to construct Script::EventListener, exception: ");
                 e.PrintToLog();

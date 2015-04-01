@@ -613,7 +613,7 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityControl
         
         return make_shared<TrackControllerState>(tick, packet);
         
-    } catch(ExceptionInvalidArgument &e){
+    } catch(const InvalidArgument &e){
 
         Logger::Get()->Warning("TrackEntityController: failed to CreateStateFromPacket, exception:");
         e.PrintToLog();
@@ -639,8 +639,7 @@ DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(int tick
     packet >> ValidFields;
 
     if(!packet)
-        throw ExceptionInvalidArgument(L"invalid packet for TrackControllerState", 0, __WFUNCTION__,
-            L"packet", L"");
+        throw InvalidArgument("invalid packet for TrackControllerState");
     
     if(ValidFields & TRACKSTATE_UPDATED_NODE)
         packet >> ReachedNode;

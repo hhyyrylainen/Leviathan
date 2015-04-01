@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Exceptions/ExceptionInvalidAccess.h"
+#include "Exceptions.h"
 #include "boost/thread/lockable_adapter.hpp"
 #include "boost/thread/recursive_mutex.hpp"
 
@@ -38,16 +38,14 @@ namespace Leviathan{
             
 			// Ensure that lock is for this //
 			if(!guard.owns_lock(&this->ObjectsLock))
-				throw ExceptionInvalidAccess(L"wrong lock owner", 0, __WFUNCTION__, L"lock",
-                    L"mismatching lock and object");
+				throw InvalidAccess("wrong lock owner");
 		}
 
         FORCE_INLINE void VerifyLock(UniqueObjectLock &lockit) const THROWS{
             
             // Make sure that the lock is locked //
 			if(!lockit.owns_lock())
-				throw ExceptionInvalidAccess(L"lock not locked", 0, __WFUNCTION__, L"lockit",
-                    L"");
+				throw InvalidAccess("lock not locked");
 		}
 
 		//! The main lock facility, mutable for working with const functions

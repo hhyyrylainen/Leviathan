@@ -5,7 +5,8 @@
 #endif
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::ObjectFileObjectProper::ObjectFileObjectProper(const wstring &name, const wstring &typesname, vector<wstring*> prefix) : 
+DLLEXPORT Leviathan::ObjectFileObjectProper::ObjectFileObjectProper(const wstring &name, const wstring &typesname,
+    vector<wstring*> prefix) : 
 	Name(name), TName(typesname), Prefixes(prefix)
 {
 	
@@ -41,7 +42,7 @@ DLLEXPORT const wstring& Leviathan::ObjectFileObjectProper::GetPrefix(size_t ind
 	// Check the index //
 	if(index >= Prefixes.size()){
 
-		throw ExceptionInvalidArgument(L"index is out of range", index, __WFUNCTION__, L"index", Convert::ToWstring(index));
+		throw InvalidArgument("index is out of range");
 	}
 
 	return *Prefixes[index];
@@ -117,7 +118,7 @@ DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetList(size_t inde
 	// Check the index //
 	if(index >= Contents.size()){
 
-		throw ExceptionInvalidArgument(L"index is out of range", index, __WFUNCTION__, L"index", Convert::ToWstring(index));
+		throw InvalidArgument("index is out of range");
 	}
 
 	return Contents[index];
@@ -131,7 +132,7 @@ DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlock(s
 	// Check the index //
 	if(index >= TextBlocks.size()){
 
-		throw ExceptionInvalidArgument(L"index is out of range", index, __WFUNCTION__, L"index", Convert::ToWstring(index));
+		throw InvalidArgument("index is out of range");
 	}
 
 	return TextBlocks[index];

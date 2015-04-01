@@ -2,7 +2,7 @@
 #ifndef LEVIATHAN_NETWORKINTERFACE
 #include "NetworkInterface.h"
 #endif
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
 #include "ConnectionInfo.h"
@@ -27,8 +27,7 @@ DLLEXPORT void Leviathan::NetworkInterface::HandleRequestPacket(shared_ptr<Netwo
 	if(!_HandleDefaultRequest(request, connection)){
 		// We couldn't handle it //
 
-		throw ExceptionInvalidArgument(L"could not handle request with default handler", 0, __WFUNCTION__, L"request",
-            L"unknown type");
+		throw InvalidArgument("could not handle request with default handler");
 	}
 }
 

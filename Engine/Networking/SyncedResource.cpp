@@ -4,7 +4,7 @@
 #include "SyncedResource.h"
 #endif
 #include "SyncedVariables.h"
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::SyncedResource::SyncedResource(const wstring &uniquename) : Name(uniquename){
@@ -34,7 +34,7 @@ DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(sf::Packet &packe
 	try{
 		UpdateCustomDataFromPacket(packet);
 
-	} catch(const ExceptionInvalidArgument &e){
+	} catch(const InvalidArgument &e){
 
 		e.PrintToLog();
 		return false;
@@ -78,16 +78,17 @@ DLLEXPORT wstring Leviathan::SyncedResource::GetSyncedResourceNameFromPacket(sf:
 	// Get the name from the packet //
 	wstring tmpstr;
 
-	if(!(packet >> tmpstr)){
+	packet >> tmpstr;
 		
-		throw ExceptionInvalidArgument(L"resource sync packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
-	}
+    if(!packet)
+		throw InvalidArgument("resource sync packet has invalid format");        
 
 	return tmpstr;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::SyncedResource::UpdateOurNetworkValue(){
 	GUARD_LOCK_THIS_OBJECT();
+    
     // TODO: proper locking
 	auto synman = SyncedVariables::Get();
     if(synman)

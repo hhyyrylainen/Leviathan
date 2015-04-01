@@ -221,7 +221,7 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
 	try{
 		FileSystem::ReadFileEntirely(file, filecontents);
 	}
-	catch(const ExceptionInvalidArgument &e){
+	catch(const InvalidArgument &e){
 
 		Logger::Get()->Error(L"SimpleDatabase: LoadFromFile: file could not be read, exception:");
 		e.PrintToLog();

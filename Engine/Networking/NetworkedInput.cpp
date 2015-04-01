@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_NETWORKEDINPUT
 #include "NetworkedInput.h"
 #endif
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "NetworkedInputHandler.h"
 #include "NetworkRequest.h"
 #include "Threading/ThreadingManager.h"
@@ -40,11 +40,11 @@ DLLEXPORT void Leviathan::NetworkedInput::LoadDataFromFullPacket(sf::Packet &pac
 	// First our common information //
 	if(!(packet >> OwnerID)){
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid packet format");
 	}
 	if(!(packet >> InputID)){
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid packet format");
 	}
 
 	// And then the custom data //
@@ -57,11 +57,12 @@ DLLEXPORT void Leviathan::NetworkedInput::LoadHeaderDataFromPacket(sf::Packet &p
 	// First our common information //
 	if(!(packet >> ownerid)){
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid packet format");
 	}
+    
 	if(!(packet >> inputid)){
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid packet format");
 	}
 }
 // ------------------------------------ //

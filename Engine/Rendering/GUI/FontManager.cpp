@@ -4,7 +4,6 @@
 #include "FontManager.h"
 #endif
 #include "FileSystem.h"
-#include "Exceptions/ExceptionNotFound.h"
 #include "Common/DataStoring/DataStore.h"
 #include "CEGUI/FontManager.h"
 using namespace Leviathan;

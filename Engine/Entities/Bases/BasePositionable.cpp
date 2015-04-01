@@ -4,7 +4,7 @@
 #include "BasePositionable.h"
 #endif
 #include "BaseObject.h"
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 using namespace Leviathan;
 // ------------------------------------ //
 BasePositionable::BasePositionable() : QuatRotation(Float4::IdentityQuaternion()), Position(Float3(0)){
@@ -152,7 +152,7 @@ DLLEXPORT void Leviathan::BasePositionable::ApplyPositionAndRotationFromPacket(s
     // Don't apply if any of the reads have failed //
     if(!packet){
         // Some read has failed //
-        throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"packet", L"");
+        throw InvalidArgument("invalid packet");
     }
 
     // Apply the data //

@@ -27,7 +27,7 @@ Event* WrapperEventFactory(EVENT_TYPE type){
     try{
         return new Event(type, NULL);
         
-    } catch(const ExceptionInvalidArgument &e){
+    } catch(const Exception &e){
 
         Logger::Get()->Error("Failed to construct Event for script, exception: ");
         e.PrintToLog();

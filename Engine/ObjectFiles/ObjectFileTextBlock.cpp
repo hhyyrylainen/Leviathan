@@ -4,7 +4,7 @@
 #include "ObjectFileTextBlock.h"
 #endif
 #include "utf8/checked.h"
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ObjectFileTextBlockProper::ObjectFileTextBlockProper(const wstring &name) : Name(name){
@@ -27,7 +27,7 @@ DLLEXPORT const wstring& Leviathan::ObjectFileTextBlockProper::GetLine(size_t in
 	// Check the index //
 	if(index >= Lines.size()){
 
-		throw ExceptionInvalidArgument(L"index is out of range", index, __WFUNCTION__, L"index", Convert::ToWstring(index));
+		throw InvalidArgument("index is out of range");
 	}
 	
 	return *Lines[index];

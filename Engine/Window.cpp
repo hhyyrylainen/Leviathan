@@ -4,7 +4,7 @@
 #endif
 #include "Engine.h"
 #include <boost/assign/list_of.hpp>
-#include "Exceptions/ExceptionNotFound.h"
+#include "Exceptions.h"
 #include "OgreRoot.h"
 #include "OgreSceneManager.h"
 #include "OgreViewport.h"
@@ -843,7 +843,7 @@ namespace Leviathan{
 
         if(iter == CharacterToOISConvert.left.end()){
 
-            throw ExceptionNotFound(L"value not found", 0, __WFUNCTION__, L"str", str);
+            throw NotFound("keyvalue not found in map");
         }
 
         return iter->second;
@@ -855,8 +855,7 @@ namespace Leviathan{
 
         if(iter == CharacterToOISConvert.right.end()){
 
-
-            throw ExceptionNotFound(L"value not found", 0, __WFUNCTION__, L"code", Convert::ToWstring(code));
+            throw NotFound("keyvalue not found in map");
         }
 
         return iter->second;

@@ -8,7 +8,7 @@
 // ---- includes ---- //
 #include "Common/BaseNotifiable.h"
 #include "Common/SFMLPackets.h"
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 
 namespace Leviathan{
 
@@ -55,6 +55,7 @@ namespace Leviathan{
 
 
 		//! \brief Notifies our SyncedVariables of an update
+        //! \todo Proper locking
 		DLLEXPORT virtual void UpdateOurNetworkValue();
 
 		//! Update notifications are received through this
@@ -161,8 +162,7 @@ namespace Leviathan{
 			// Try to get our variable //
 			if(!(packet >> OurValue)){
 
-				throw ExceptionInvalidArgument(L"resource sync primitive packet has invalid format", 0, __WFUNCTION__,
-                    L"packet", L"");
+				throw InvalidArgument("resource sync primitive packet has invalid format");
 			}
 
 		}

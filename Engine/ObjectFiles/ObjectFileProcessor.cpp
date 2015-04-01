@@ -76,9 +76,9 @@ DLLEXPORT unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObjectFi
 	try{
 		FileSystem::ReadFileEntirely(fileansi, filecontents);
 	}
-	catch(const ExceptionInvalidArgument &e){
+	catch(const InvalidArgument &e){
 
-		Logger::Get()->Error(L"ObjectFileProcessor: ProcessObjectFile: file could not be read, exception:");
+		Logger::Get()->Error("ObjectFileProcessor: ProcessObjectFile: file could not be read, exception:");
 		e.PrintToLog();
 		return NULL;
 	}
@@ -284,20 +284,24 @@ shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVari
 
 	} catch(const utf8::invalid_code_point &ec){
 
-		Logger::Get()->Error(L"ObjectFileProcessor: invalid UTF8 sequence in a named variable, file: "+file+L"("+
-			Convert::ToWstring(startline)+L"):");
-		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(ec.what()));
+		Logger::Get()->Error("ObjectFileProcessor: invalid UTF8 sequence in a named variable, file: "+
+            Convert::Utf16ToUtf8(file)+"("+Convert::ToString(startline)+"):");
+        
+		Logger::Get()->Write(string("\t> ")+ec.what());
 		return NULL;
-	} catch(const ExceptionInvalidArgument &e){
+        
+	} catch(const InvalidArgument &e){
 
-		Logger::Get()->Error(L"ObjectFileProcessor: invalid UTF8 sequence in a named variable, file: "+file+L"("+
-			Convert::ToWstring(startline)+L"):");
+		Logger::Get()->Error("ObjectFileProcessor: invalid UTF8 sequence in a named variable, file: "+
+            Convert::Utf16ToUtf8(file)+"("+Convert::ToString(startline)+"):");
 		e.PrintToLog();
 		return NULL;
 	}
 }
 // ------------------------------------ //
-bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, StringIterator &itr, ObjectFile &obj, const string &preceeding){
+bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, StringIterator &itr, ObjectFile &obj,
+    const string &preceeding)
+{
 	// Skip potential space between 'template' and '<' //
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
@@ -325,14 +329,15 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 
 		if(!tmpldata){
 
-			Logger::Get()->Error(L"ObjectFile template has an invalid argument list (missing the ending '>') , file: "+file
-				+L"("+Convert::ToWstring(startline)+L")");
+			Logger::Get()->Error(L"ObjectFile template has an invalid argument list (missing the ending '>') , file: "+
+                file+L"("+Convert::ToWstring(startline)+L")");
 			return false;
 		}
 
 		StringIterator itr2(tmpldata.get());
 
-		auto tmplarg = itr2.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+		auto tmplarg = itr2.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS |
+            UNNORMALCHARACTER_TYPE_LOWCODES,
 			SPECIAL_ITERATOR_FILEHANDLING);
 
 		// Go somewhere proper //
@@ -345,7 +350,8 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 		while(itr2.GetCharacter() == ',' && !itr2.IsOutOfBounds()){
 
 			// More arguments //
-			tmplarg = itr2.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+			tmplarg = itr2.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS |
+                UNNORMALCHARACTER_TYPE_LOWCODES,
 				SPECIAL_ITERATOR_FILEHANDLING);
 
 			if(tmplarg && tmplarg->size()){
@@ -365,13 +371,16 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 		auto chartype = templateargs[i]->at(0);
 
 		if(chartype == '"' || chartype == '\''){
+            
 			// Remove the quotes //
 			quoteremover.ReInit(new UTF8DataIterator(*templateargs[i]), true);
 			auto newstr = quoteremover.GetStringInQuotes<string>(QUOTETYPE_BOTH);
+            
 			if(!newstr || newstr->empty()){
 
-				Logger::Get()->Warning(L"ObjectFileProcessor: Template: failed to remove quotes from template argument, "+
-					Convert::StringToWstring(*templateargs[i]));
+				Logger::Get()->Warning(L"ObjectFileProcessor: Template: failed to remove quotes "
+                    "from template argument, "+Convert::StringToWstring(*templateargs[i]));
+                
 				continue;
 			}
 
@@ -388,13 +397,13 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
 	// Now should be the name //
-	auto name = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
-		SPECIAL_ITERATOR_FILEHANDLING);
+	auto name = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS |
+        UNNORMALCHARACTER_TYPE_LOWCODES, SPECIAL_ITERATOR_FILEHANDLING);
 
 	if(!name || name->size() < 3){
 
-		Logger::Get()->Error(L"ObjectFile template has too short name (has to be a minimum of 3 characters), file: "+file+L"("
-			+Convert::ToWstring(itr.GetCurrentLine())+L")");
+		Logger::Get()->Error(L"ObjectFile template has too short name (has to be a minimum of 3 characters), file: "+
+            file+L"("+Convert::ToWstring(itr.GetCurrentLine())+L")");
 		return false;
 	}
 
@@ -407,8 +416,9 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 		// We should now be at the '<' character //
 		if(itr.GetCharacter() != '<'){
 
-			Logger::Get()->Error(L"ObjectFile template instance has an invalid argument list (missing starting '<' after name) , file: "+file
-				+L"("+Convert::ToWstring(startline)+L")");
+			Logger::Get()->Error(L"ObjectFile template instance has an invalid argument list "
+                "(missing starting '<' after name) , file: "+file+
+                L"("+Convert::ToWstring(startline)+L")");
 			return false;
 		}
 
@@ -427,8 +437,8 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 
 
 		// Load all the arguments //
-		auto instarg = itr3.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
-			SPECIAL_ITERATOR_FILEHANDLING);
+		auto instarg = itr3.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS |
+            UNNORMALCHARACTER_TYPE_LOWCODES, SPECIAL_ITERATOR_FILEHANDLING);
 
 		itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
@@ -441,8 +451,8 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 		while(itr3.GetCharacter() == ',' && !itr3.IsOutOfBounds()){
 
 			// More arguments //
-			instarg = itr3.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
-				SPECIAL_ITERATOR_FILEHANDLING);
+			instarg = itr3.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS |
+                UNNORMALCHARACTER_TYPE_LOWCODES, SPECIAL_ITERATOR_FILEHANDLING);
 
 			if(instarg && instarg->size()){
 				instanceargs.push_back(move(instarg));
@@ -461,12 +471,14 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 				// Remove the quotes //
 				quoteremover.ReInit(new UTF8DataIterator(*instanceargs[i]), true);
 				auto newstr = quoteremover.GetStringInQuotes<string>(QUOTETYPE_BOTH);
+                
 				if(!newstr || newstr->empty()){
 
 					if(instanceargs[i]->size() > 2){
-						Logger::Get()->Warning(L"ObjectFileProcessor: Template: failed to remove quotes from template argument, "+
-							Convert::StringToWstring(*instanceargs[i]));
+						Logger::Get()->Warning("ObjectFileProcessor: Template: failed to remove quotes from template "
+                            "argument, "+*instanceargs[i]);
 					}
+                    
 					continue;
 				}
 
@@ -542,11 +554,11 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const wstring &file, St
 	return true;
 }
 // ------------------------------------ //
-shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, StringIterator &itr, ObjectFile &obj, 
-	const string &preceeding)
+shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(const wstring &file, StringIterator &itr,
+    ObjectFile &obj,  const string &preceeding)
 {
-	auto typesname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
-		SPECIAL_ITERATOR_FILEHANDLING);
+	auto typesname = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS |
+        UNNORMALCHARACTER_TYPE_LOWCODES, SPECIAL_ITERATOR_FILEHANDLING);
 
 	if(!typesname || !typesname->size()){
 
@@ -564,7 +576,8 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(con
 	// Now there should be variable number of prefixes followed by a name //
 	while(itr.GetCharacter() != '"'){
 
-		auto oprefix = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_LOWCODES, SPECIAL_ITERATOR_FILEHANDLING);
+		auto oprefix = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_LOWCODES,
+            SPECIAL_ITERATOR_FILEHANDLING);
 
 		if(oprefix && oprefix->size()){
 			prefixesvec.push_back(move(oprefix));

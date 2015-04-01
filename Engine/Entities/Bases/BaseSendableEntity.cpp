@@ -10,7 +10,8 @@
 #include "Networking/NetworkHandler.h"
 #include "boost/thread/lock_types.hpp"
 #include "Handlers/ConstraintSerializerManager.h"
-#include "Exceptions/ExceptionInvalidState.h"
+#include "Exceptions.h"
+#include "Utility/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) :
@@ -25,10 +26,7 @@ DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_
 #endif //NETWORK_USE_SNAPSHOTS
         : 0), LastVerifiedTick(-1)
 {
-#ifdef NETWORK_USE_SNAPSHOTS
-    QueuedInterpolationStates.reserve(NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT ?
-        BASESENDABLE_STORED_CLIENT_INTERPOLATIONS: 0);
-#endif //NETWORK_USE_SNAPSHOTS
+
 }
 
 DLLEXPORT Leviathan::BaseSendableEntity::~BaseSendableEntity(){
@@ -379,10 +377,10 @@ DLLEXPORT ObjectInterpolation Leviathan::BaseSendableEntity::GetAndPopNextInterp
 
     GUARD_LOCK_THIS_OBJECT();
     
-    if(QueueInterpolation.empty())
-        throw ExceptionInvalidState(L"no states in queue", 0, __WFUNCTION__, L"");
+    if(QueuedInterpolationStates.empty())
+        throw InvalidState("no states in queue");
     
-    auto obj = QueuedInterpolationStates.first();
+    auto obj = QueuedInterpolationStates.front();
     QueuedInterpolationStates.pop_front();
 
     ReportInterpolationStatusToInput(obj.Second->Tick, Misc::GetTimeMs64()+obj.Duration);

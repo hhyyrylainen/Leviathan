@@ -2,7 +2,7 @@
 #ifndef LEVIATHAN_COMMONSTATEOBJECTS
 #include "CommonStateObjects.h"
 #endif
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -23,8 +23,7 @@ DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaSt
     packet >> ValidFields;
 
     if(!packet)
-        throw ExceptionInvalidArgument(L"invalid packet for positionable delta state", 0, __WFUNCTION__,
-            L"packet", L"");
+        throw InvalidArgument("invalid packet for positionable delta state");
     
     // Position
     if(ValidFields & PPDELTAUPDATED_POS_X)

@@ -1,26 +1,24 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_GRAPHICALINPUTENTITY
 #include "GraphicalInputEntity.h"
-#endif
-#include "OgreCommon.h"
-#include "Rendering/Graphics.h"
-#include "Entities/GameWorld.h"
-#include "FileSystem.h"
-#include "Engine.h"
-#include "OgreRoot.h"
-#include "OgreSceneManager.h"
-#include "Compositor/OgreCompositorManager2.h"
-#include "Compositor/OgreCompositorWorkspace.h"
-#include "Compositor/OgreCompositorWorkspaceDef.h"
-#include "Compositor/OgreCompositorNodeDef.h"
-#include "Compositor/Pass/PassClear/OgreCompositorPassClearDef.h"
-#include "Compositor/Pass/PassScene/OgreCompositorPassSceneDef.h"
+// ------------------------------------ //
 #include "CEGUI/RendererModules/Ogre/Renderer.h"
 #include "CEGUI/SchemeManager.h"
+#include "Compositor/OgreCompositorManager2.h"
+#include "Compositor/OgreCompositorNodeDef.h"
+#include "Compositor/OgreCompositorWorkspace.h"
+#include "Compositor/OgreCompositorWorkspaceDef.h"
+#include "Compositor/Pass/PassClear/OgreCompositorPassClearDef.h"
+#include "Compositor/Pass/PassScene/OgreCompositorPassSceneDef.h"
+#include "Engine.h"
+#include "Entities/GameWorld.h"
+#include "Exceptions.h"
+#include "FileSystem.h"
 #include "GUI/FontManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
-#include "Exceptions/ExceptionNULLPtr.h"
+#include "OgreCommon.h"
+#include "OgreRoot.h"
+#include "OgreSceneManager.h"
+#include "Rendering/Graphics.h"
 #include "boost/thread/lock_types.hpp"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -161,13 +159,13 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	// create GUI //
 	WindowsGui = new Gui::GuiManager();
 	if(!WindowsGui){
-		throw ExceptionNULLPtr(L"cannot create GUI manager instance", 0, __WFUNCTION__, NULL);
+		throw NULLPtr("cannot create GUI manager instance");
 	}
 
 	if(!WindowsGui->Init(windowcreater, this, windowsafter == 1)){
 
 		Logger::Get()->Error(L"GraphicalInputEntity: Gui init failed");
-		throw ExceptionNULLPtr(L"invalid GUI manager", 0, __WFUNCTION__, WindowsGui);
+		throw NULLPtr("invalid GUI manager");
 	}
 
 

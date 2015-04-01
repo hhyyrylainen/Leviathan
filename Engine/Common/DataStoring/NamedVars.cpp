@@ -6,7 +6,7 @@
 #include "FileSystem.h"
 #include "Statistics/TimingMonitor.h"
 #include "Iterators/StringIterator.h"
-#include "Exceptions/ExceptionInvalidType.h"
+#include "Exceptions.h"
 #include "ObjectFiles/LineTokenizer.h"
 #include "../Misc.h"
 using namespace Leviathan;
@@ -66,9 +66,8 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 
 	if(!name){
 		// no name //
-		throw ExceptionInvalidArgument(L"invalid data on line (invalid name)", 0, __WFUNCSIG__, L"line", line);
+		throw InvalidArgument("invalid data on line (invalid name)");
 	}
-
 
 	Name = *name;
 
@@ -81,8 +80,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(wstring &line, map<wst
 
 	if(!tempvar || tempvar->size() < 1){
 		// no variable //
-		throw ExceptionInvalidArgument(L"invalid data on line (no variable)", tempvar->size(),
-            __WFUNCSIG__, L"line", line);
+		throw InvalidArgument("invalid data on line (no variable)");
 	}
 
 	ConstructValuesForObject(*tempvar, predefined);
@@ -102,8 +100,8 @@ DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const wstr
     shared_ptr<VariableBlock>>* predefined) THROWS
 {
 	if(variablestr.size() == 0){
-		throw ExceptionInvalidArgument(L"invalid variable string, 0 length", 0, __WFUNCTION__,
-            L"variablestr", variablestr);
+        
+		throw InvalidArgument("invalid variable string, 0 length");
 	}
 	// check does it have brackets (and need to be processed like so) //
 	if(variablestr[0] == L'['){
@@ -119,8 +117,7 @@ DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const wstr
 			SAFE_DELETE_VECTOR(tokens);
 
 			// might contain the base token, but cannot possibly have any values inside //
-			throw ExceptionInvalidArgument(L"invalid variable string (variable tokenization failed)", tokens.size(),
-                __WFUNCTION__, L"variablestr", variablestr);
+			throw InvalidArgument("invalid variable string (variable tokenization failed)");
 		}
 
 		// first should be base token //
@@ -135,14 +132,13 @@ DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const wstr
 				// Try to create a new VariableBlock //
 				Datas[i] = new VariableBlock(tokens[0]->GetSubToken(i)->GetChangeableData(), predefined);
 			}
-			catch (const ExceptionInvalidArgument &e){
+			catch (const InvalidArgument &e){
 				// release memory //
 				SAFE_DELETE_VECTOR(tokens);
 				SAFE_DELETE_VECTOR(Datas);
 
 				// rethrow the exception //
-				if(e.GetInvalidValueAsPtr()->size())
-					throw;
+                throw;
 			}
 		}
 		// all variables are now created //
@@ -167,13 +163,10 @@ DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const wstr
 			Datas[0] = new VariableBlock(variablestr, predefined);
 		}
 	}
-	catch (const ExceptionInvalidArgument &e){
-		// release memory //
-		//SAFE_DELETE_VECTOR(Datas);
+	catch (const InvalidArgument &e){
 
-		// rethrow the exception //
-		if(e.GetInvalidValueAsPtr()->size())
-			throw;
+		// Rethrow the exception //
+        throw;
 	}
 }
 
@@ -190,7 +183,7 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(sf::Packet &packet){
 	// Thousand is considered here the maximum number of elements //
 	if(!(packet >> tmpsize) || tmpsize > 1000 || tmpsize < 0){
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid packet format");
 	}
 
 	// Reserve enough space //
@@ -213,9 +206,10 @@ DLLEXPORT void Leviathan::NamedVariableList::AddDataToPacket(sf::Packet &packet)
 	if(truncsize > 1000){
 
 		// That's an error //
-		Logger::Get()->Error(L"NamedVariableList: AddToPacket: too many elements (sane maximum is 1000 values), got "+
-            Convert::ToWstring(truncsize)+
-			L" values, truncated to first 1000");
+		Logger::Get()->Error("NamedVariableList: AddToPacket: too many elements (sane maximum is 1000 values), got "+
+            Convert::ToString(truncsize)+
+			" values, truncated to first 1000");
+        
 		truncsize = 1000;
 	}
 
@@ -226,10 +220,6 @@ DLLEXPORT void Leviathan::NamedVariableList::AddDataToPacket(sf::Packet &packet)
 
 		Datas[i]->AddDataToPacket(packet);
 	}
-
-	// Done setting //
-
-	// Potentially add a check sum here //
 }
 
 DLLEXPORT Leviathan::NamedVariableList::~NamedVariableList(){
@@ -355,10 +345,9 @@ DLLEXPORT wstring Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*
 		// check is conversion allowed //
 		if(!Datas[i]->IsConversionAllowedNonPtr<wstring>()){
 			// no choice but to throw exception //
-			throw ExceptionInvalidType(L"value cannot be cast to wstring",
-                Datas[i]->GetBlock()->Type, __WFUNCTION__, L"Datas["+Convert::ToWstring<int>(i)+L"]",
-                Convert::ToWstring(typeid(Datas[i]->GetBlock()).name()));
+			throw InvalidType("value cannot be cast to wstring");
 		}
+        
 		if(i != 0)
 			stringifiedval += L",";
 		// Check if type is a string type //
@@ -472,21 +461,25 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const wstring &data,
 			shared_ptr<NamedVariableList> var(new NamedVariableList(*Lines[i], predefined));
 			vec.push_back(var);
 		}
-		catch (const ExceptionInvalidArgument &e){
+		catch (const InvalidArgument &e){
 			// print to log //
 			e.PrintToLog();
 			// exception throws, must be invalid line //
-			Logger::Get()->Info(L"NamedVar: ProcessDataDump: contains invalid line, line (with only ASCII characters): "
-                +Convert::StringToWstring(Convert::WstringToString(*Lines[i]))+L"\nEND", false);
+
+            // This should remove null characters from the string //
+            
+			Logger::Get()->Info("NamedVar: ProcessDataDump: contains invalid line, line (with only ASCII characters): "
+                +Convert::ToString(Lines[i])+"\nEND");
+            
 			continue;
 		}
 
 		// check is it valid //
 		if(vec.back()->GetName().size() == 0 || vec.back()->GetName().size() > 10000){
 			// invalid //
-			Logger::Get()->Error(L"NamedVar: ProcessDataDump: invalid NamedVar generated for line: "+*Lines[i]+
-                L"\nEND");
-			DEBUG_BREAK;
+			Logger::Get()->Error("NamedVar: ProcessDataDump: invalid NamedVar generated for line: "+
+                Convert::ToString(Lines[i])+"\nEND");
+
 			vec.erase(vec.end());
 		}
 
@@ -622,7 +615,7 @@ DLLEXPORT Leviathan::NamedVars::NamedVars(sf::Packet &packet){
 
 	if(!(packet >> isize)){
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("packet has invalid format");
 	}
 
 	// Reserve space //
@@ -711,7 +704,7 @@ DLLEXPORT VariableBlock& Leviathan::NamedVars::GetValueNonConst(const wstring &n
 
 	ARR_INDEX_CHECKINV(index, Variables.size()){
 
-		throw ExceptionInvalidArgument(L"value not found", index, __WFUNCTION__, L"name", name);
+		throw InvalidArgument("value not found");
 	}
 
 	return Variables[index]->GetValue();
@@ -723,7 +716,7 @@ DLLEXPORT const VariableBlock* Leviathan::NamedVars::GetValue(const wstring &nam
 
 	ARR_INDEX_CHECKINV(index, Variables.size()){
 
-		throw ExceptionInvalidArgument(L"value not found", index, __WFUNCTION__, L"name", name);
+		throw InvalidArgument("value not found");
 	}
 
 	return Variables[index]->GetValueDirect();

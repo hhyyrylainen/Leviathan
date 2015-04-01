@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_DATABLOCK
 #include "DataBlock.h"
 #endif
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "Iterators/StringIterator.h"
 #include "Script/ScriptInterface.h"
 #include "../StringOperations.h"
@@ -128,7 +128,10 @@ DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
 //
 namespace Leviathan{
 // templates for getting AngelScript type id from template //
-#define TYPEIDGETTEMPLATEINSTANTIATION(TypeForTemplate, StringToUse) template<> struct TypeToAngelScriptIDConverter<TypeForTemplate>{static inline int GetTypeIDFromTemplated(){ return ScriptInterface::Get()->GetExecutor()->GetAngelScriptTypeID(L"int"); }};
+#define TYPEIDGETTEMPLATEINSTANTIATION(TypeForTemplate, StringToUse) template<> \
+    struct TypeToAngelScriptIDConverter<TypeForTemplate>{static inline int \
+        GetTypeIDFromTemplated(){ return \
+                ScriptInterface::Get()->GetExecutor()->GetAngelScriptTypeID(L"int"); }};
 
 
 TYPEIDGETTEMPLATEINSTANTIATION(int, L"int");
@@ -140,11 +143,13 @@ TYPEIDGETTEMPLATEINSTANTIATION(string, L"string");
 }
 
 // ------------------------------------ //
-DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined) THROWS{
+DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse,
+    map<wstring, shared_ptr<VariableBlock>>* predefined) THROWS
+{
 	// the text should have all preceding and trailing spaces removed //
 	if(valuetoparse.size() == 0){
 		// can't be anything //
-		throw ExceptionInvalidArgument(L"no data passed", valuetoparse.size(), __WFUNCTION__, L"valuetoparse", valuetoparse);
+		throw InvalidArgument("no data passed");
 	}
 	// try to figure out what type of block is required for this variable //
 
@@ -163,6 +168,7 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse, m
 
 		return;
 	}
+    
 	// check does it contain non numeric characters //
 	if(!StringOperations::IsStringNumeric<wstring, wchar_t>(valuetoparse)){
 
@@ -222,8 +228,9 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse, m
 
 
 // ------------------ ScriptSafeVariableBlock ------------------ //
-Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyfrom, const wstring &name) : NamedVariableBlock(
-	copyfrom->GetBlock()->AllocateNewFromThis(), name)
+Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyfrom,
+    const wstring &name) :
+    NamedVariableBlock(copyfrom->GetBlock()->AllocateNewFromThis(), name)
 {
 		// we need to copy all settings from the block //
 		switch(copyfrom->GetBlock()->Type){
@@ -246,8 +253,7 @@ Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyf
 		case DATABLOCK_TYPE_DOUBLE: ASTypeID = TypeToAngelScriptIDConverter<double>::GetTypeIDFromTemplated(); break;
 
 		default:
-			throw ExceptionInvalidArgument(L"cannot convert non-named, generic type block to script safe block", copyfrom->GetBlock()->Type,
-				__WFUNCTION__, L"copyfrom", L"invalid block type");
+			throw InvalidArgument("cannot convert non-named, generic type block to script safe block");
 		}
 }
 
@@ -260,7 +266,7 @@ template<> DLLEXPORT BlockTypeName::DataBlock(sf::Packet &packet){ \
 	Type = DataBlockNameResolver<VarTypeName>::TVal; \
 	TmpTypeName tmpval; \
 	if(!(packet >> tmpval)){ \
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L""); \
+		throw InvalidArgument("invalid packet format"); \
 	} \
 	Value = new VarTypeName(tmpval); \
 }
@@ -320,7 +326,7 @@ namespace Leviathan{
 			return TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData)->AddDataToPacket(packet);
 
 		// type that shouldn't be used is used //
-		throw ExceptionBase(L"unallowed datatype in datablock for writing to packet", 0, __WFUNCTION__);
+		throw InvalidType("unallowed datatype in datablock for writing to packet");
 	}
 	
 	DLLEXPORT VariableBlock::VariableBlock(sf::Packet& packet)
@@ -376,9 +382,7 @@ namespace Leviathan{
 		}
 
 		// Invalid packet //
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
-
-
+		throw InvalidArgument("invalid packet format");
 	}
 
 }

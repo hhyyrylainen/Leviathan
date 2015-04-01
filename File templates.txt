@@ -4,9 +4,7 @@ cppppppp
 
 ---------------------------------------------------------------------------
 // ------------------------------------ //
-#ifndef LEVIATHAN_FILEREPLACENAME
 #include "FILEREPLACENAME.h"
-#endif
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -24,12 +22,9 @@ hddddd
 
 ------------------------------------------------------------------------
 #pragma once
-#ifndef LEVIATHAN_FILEREPLACENAME
 #define LEVIATHAN_FILEREPLACENAME
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
 // ---- includes ---- //
 
@@ -47,7 +42,6 @@ namespace Leviathan{
 	};
 
 }
-#endif
 
 // --------------------------------------------------------------------------- GUI
 

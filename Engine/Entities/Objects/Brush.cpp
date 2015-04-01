@@ -9,6 +9,7 @@
 #include "OgreSceneNode.h"
 #include "OgreEntity.h"
 #include "Entities/CommonStateObjects.h"
+#include "Exceptions.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
@@ -633,7 +634,7 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateState
         
         return make_shared<PositionablePhysicalDeltaState>(tick, packet);
         
-    } catch(ExceptionInvalidArgument &e){
+    } catch(const InvalidArgument &e){
 
         Logger::Get()->Warning("Brush: failed to CreateStateFromPacket, exception:");
         e.PrintToLog();

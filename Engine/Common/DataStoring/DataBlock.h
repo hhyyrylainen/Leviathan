@@ -8,8 +8,7 @@
 // ---- includes ---- //
 #include "Common/ReferenceCounted.h"
 #include "SFML/Network/Packet.hpp"
-#include "Exceptions/ExceptionBase.h"
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 
 
 static_assert(sizeof(short) == 2, "Short must be 2 bytes for datablocks to work accross the network");

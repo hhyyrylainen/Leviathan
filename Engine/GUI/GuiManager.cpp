@@ -1,37 +1,34 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_GUI_MAIN
 #include "GuiManager.h"
-#endif
-#include "Engine.h"
-#include "Script/ScriptInterface.h"
-#include "FileSystem.h"
-#include "Rendering/Graphics.h"
-#include <boost/assign/list_of.hpp>
-#include <boost/thread.hpp>
-#include "Rendering/GUI/FontManager.h"
-#include "GuiCollection.h"
-#include "Common/DataStoring/DataStore.h"
-#include "Common/DataStoring/DataBlock.h"
-#include "Rendering/GraphicalInputEntity.h"
-#include "Window.h"
-#include "OgreSceneManager.h"
-#include "OgreRoot.h"
-#include "OgreManualObject.h"
-#include "OgreHardwarePixelBuffer.h"
-#include "CEGUI/System.h"
-#include "CEGUI/WindowManager.h"
-#include "Common/Misc.h"
-#include "CEGUI/RenderTarget.h"
-#include "CEGUI/Window.h"
-#include "CEGUI/AnimationManager.h"
+// ------------------------------------ //
 #include "CEGUI/AnimationInstance.h"
-#include "ObjectFiles/ObjectFileProcessor.h"
-#include "Handlers/ResourceRefreshHandler.h"
+#include "CEGUI/AnimationManager.h"
 #include "CEGUI/Clipboard.h"
 #include "CEGUI/InputAggregator.h"
-#include "Exceptions/ExceptionNotFound.h"
-#include "Exceptions/ExceptionInvalidState.h"
+#include "CEGUI/RenderTarget.h"
+#include "CEGUI/System.h"
+#include "CEGUI/Window.h"
+#include "CEGUI/WindowManager.h"
+#include "Common/DataStoring/DataBlock.h"
+#include "Common/DataStoring/DataStore.h"
+#include "Common/Misc.h"
+#include "Engine.h"
+#include "Exceptions.h"
+#include "FileSystem.h"
+#include "GuiCollection.h"
+#include "Handlers/ResourceRefreshHandler.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "OgreHardwarePixelBuffer.h"
+#include "OgreManualObject.h"
+#include "OgreRoot.h"
+#include "OgreSceneManager.h"
+#include "Rendering/GUI/FontManager.h"
+#include "Rendering/GraphicalInputEntity.h"
+#include "Rendering/Graphics.h"
+#include "Script/ScriptInterface.h"
+#include "Window.h"
+#include <boost/assign/list_of.hpp>
+#include <boost/thread.hpp>
 
 #ifdef __linux
 // On linux the GuiManager has to create an Xlib window which requires this include...
@@ -510,7 +507,7 @@ private:
         XDisplay = XOpenDisplay(NULL);
 
         if(!XDisplay)
-            throw ExceptionInvalidState(L"cannot open XDisplay", 0, __WFUNCTION__, L"0");
+            throw InvalidState("cannot open XDisplay");
 
         // Setup the window attributes //
         XSetWindowAttributes properties;
@@ -524,7 +521,7 @@ private:
             CWEventMask, &properties);
 
         if(!ClipboardWindow)
-            throw ExceptionInvalidState(L"cannot create clipboard window", 0, __WFUNCTION__, L"0");
+            throw InvalidState("cannot create clipboard window");
 
 
         // Hide the window //
@@ -679,7 +676,7 @@ bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* win
         try{
             _GuiClipboardHandler = new GuiClipboardHandler(window->GetWindow());
             
-        } catch(const ExceptionBase &e){
+        } catch(const Exception &e){
 
             // Clipboard isn't usable... //
             Logger::Get()->Warning(L"GuiManager: failed to create a ClipboardHandler: cannot copy or paste text, "

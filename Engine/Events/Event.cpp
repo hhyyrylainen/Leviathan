@@ -4,7 +4,7 @@
 #include "Event.h"
 #endif
 #include <boost/assign/list_of.hpp>
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Event::Event(EVENT_TYPE type, BaseEventData* data) : Type(type), Data(data){
@@ -16,8 +16,7 @@ DLLEXPORT Leviathan::Event::Event(EVENT_TYPE type, BaseEventData* data) : Type(t
 			Type == EVENT_TYPE_TICK)
         {
 
-            throw ExceptionInvalidArgument(L"Event that requires data, didn't get it", 0,
-                __WFUNCTION__, L"data", L"NULL");
+            throw InvalidArgument("Event that requires data, didn't get it");
         }
 	}
 }
@@ -46,7 +45,7 @@ DLLEXPORT Leviathan::Event::Event(sf::Packet &packet){
 
 	if(!(packet >> tmptype)){
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("packet has invalid format");
 	}
 
 	// Set our type //
@@ -137,7 +136,7 @@ DLLEXPORT Leviathan::GenericEvent::GenericEvent(sf::Packet &packet){
 	unique_ptr<wstring> tmpstr(new wstring());
 	if(!(packet >> *tmpstr)){
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("packet has invalid format");
 	}
 
 	// Try to get the named variables //
@@ -183,7 +182,9 @@ void Leviathan::PhysicsStartEventData::AddDataToPacket(sf::Packet &packet){
 	packet << TimeStep;
 }
 
-Leviathan::PhysicsStartEventData::PhysicsStartEventData(const float &time, void* worldptr) : TimeStep(time), GameWorldPtr(worldptr){
+Leviathan::PhysicsStartEventData::PhysicsStartEventData(const float &time, void* worldptr) :
+    TimeStep(time), GameWorldPtr(worldptr)
+{
 
 }
 
@@ -191,7 +192,7 @@ DLLEXPORT Leviathan::PhysicsStartEventData::PhysicsStartEventData(sf::Packet &pa
 	// Load our data //
 	if(!(packet >> TimeStep)){
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("packet has invalid format");
 	}
 
 	// This doesn't make any sense to be stored //
@@ -201,7 +202,7 @@ DLLEXPORT Leviathan::PhysicsStartEventData::PhysicsStartEventData(sf::Packet &pa
 DLLEXPORT Leviathan::ShowEventData::ShowEventData(sf::Packet &packet){
 	if(!(packet >> IsShown)){
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("packet has invalid format");
 	}
 }
 
@@ -214,13 +215,16 @@ void Leviathan::ShowEventData::AddDataToPacket(sf::Packet &packet){
 }
 // ------------------ IntegerEventData ------------------ //
 DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(sf::Packet &packet){
-	if(!(packet >> IntegerDataValue)){
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
-	}
+    packet >> IntegerDataValue;
+
+    if(!packet)
+        throw InvalidArgument("packet has invalid format");
 }
 
-DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(int ticknumber) : IntegerDataValue(ticknumber){
+DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(int ticknumber) :
+    IntegerDataValue(ticknumber)
+{
 
 }
 
@@ -243,7 +247,7 @@ DLLEXPORT Leviathan::ResimulateSingleEventData::ResimulateSingleEventData(sf::Pa
 #endif //SFML_HAS_64_BIT_VALUES_PACKET
     
     if(!packet)
-        throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+        throw InvalidArgument("packet has invalid format");
 }
 
 DLLEXPORT Leviathan::ResimulateSingleEventData::ResimulateSingleEventData(int64_t resimulateremaining,

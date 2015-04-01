@@ -8,7 +8,7 @@
 #include "SyncedVariables.h"
 #include "Engine.h"
 #include "boost/thread/future.hpp"
-#include "Exceptions/ExceptionInvalidState.h"
+#include "Exceptions.h"
 #include "NetworkRequest.h"
 #include "Common/Misc.h"
 #include "Iterators/StringIterator.h"
@@ -684,16 +684,14 @@ DLLEXPORT void Leviathan::NetworkClientInterface::SendCommandStringToServer(cons
 	// Make sure that we are connected to a server //
 	if(!ConnectedToServer){
 
-		throw ExceptionInvalidState(L"cannot send command because we aren't connected to a server", 0, __WFUNCTION__,
-            L"not connected");
+		throw InvalidState("cannot send command because we aren't connected to a server");
 	}
 
 
 	// Check the length //
 	if(messagestr.length() >= MAX_SERVERCOMMAND_LENGTH){
 
-		throw ExceptionInvalidArgument(L"server command is too long", messagestr.size(), __WFUNCTION__, L"messagestr",
-            Convert::Utf8ToUtf16(messagestr));
+		throw InvalidArgument("server command is too long");
 	}
 
 	// Create a packet //

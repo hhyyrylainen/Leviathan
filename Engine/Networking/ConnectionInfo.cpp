@@ -7,7 +7,7 @@
 #include "SFML/Network/IpAddress.hpp"
 #include "SFML/Network/Packet.hpp"
 #include "NetworkHandler.h"
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "RemoteConsole.h"
 #include "Common/Misc.h"
 #include "Threading/ThreadingManager.h"
@@ -602,7 +602,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
 #endif // SPAM_ME_SOME_PACKETS
 		try{
 			NetworkHandler::GetInterface()->HandleRequestPacket(request, this);
-		} catch(const ExceptionInvalidArgument &e){
+		} catch(const InvalidArgument &e){
 			// We couldn't handle this packet //
 			Logger::Get()->Error(L"ConnectionInfo: couldn't handle request packet! :");
 			e.PrintToLog();
@@ -810,9 +810,11 @@ shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::_GetPossibleRequestForRe
 
 		if((*iter)->ExpectedResponseID == lookingforid){
 #ifdef SPAM_ME_SOME_PACKETS
-			Logger::Get()->Info(L"PacketSpam: matching response to request ("+Convert::ToWstring(response->GetResponseID())+L") from "
-				+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+			Logger::Get()->Info("PacketSpam: matching response to request ("+
+                Convert::ToString(response->GetResponseID())+") from "
+				+TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
+            
 			// Found matching object //
 			return *iter;
 		}
@@ -823,7 +825,7 @@ shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::_GetPossibleRequestForRe
 }
 
 DLLEXPORT bool Leviathan::ConnectionInfo::SendCustomMessage(int entitycustommessagetype, void* dataptr){
-	throw std::exception();
+    throw Exception("not implemented/invalid function");
 }
 
 DLLEXPORT void Leviathan::ConnectionInfo::SetRestrictionMode(CONNECTION_RESTRICTION type){

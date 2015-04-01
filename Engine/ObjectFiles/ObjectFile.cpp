@@ -76,7 +76,7 @@ DLLEXPORT ObjectFileObject* Leviathan::ObjectFile::GetObjectFromIndex(size_t ind
 
 
 	// Invalid index //
-	throw ExceptionInvalidArgument(L"index is out of range", index, __WFUNCTION__, L"index", Convert::ToWstring(index));
+	throw InvalidArgument("index is out of range");
 }
 // ------------------------------------ //
 DLLEXPORT ObjectFileObject* Leviathan::ObjectFile::GetObjectWithType(const wstring &typestr) const{

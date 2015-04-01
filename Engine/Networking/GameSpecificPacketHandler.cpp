@@ -3,10 +3,12 @@
 #ifndef LEVIATHAN_GAMESPECIFICPACKET
 #include "GameSpecificPacketHandler.h"
 #endif
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameSpecificPacketHandler::GameSpecificPacketHandler(NetworkInterface* usetoreport) : IsVectorSorted(false){
+DLLEXPORT Leviathan::GameSpecificPacketHandler::GameSpecificPacketHandler(NetworkInterface* usetoreport) :
+    IsVectorSorted(false)
+{
 	Staticaccess = this;
 }
 
@@ -20,7 +22,9 @@ DLLEXPORT GameSpecificPacketHandler* Leviathan::GameSpecificPacketHandler::Get()
 
 GameSpecificPacketHandler* Leviathan::GameSpecificPacketHandler::Staticaccess = NULL;
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameSpecificPacketHandler::PassGameSpecificDataToPacket(GameSpecificPacketData* datatosend, sf::Packet &packet){
+DLLEXPORT void Leviathan::GameSpecificPacketHandler::PassGameSpecificDataToPacket(GameSpecificPacketData*
+    datatosend, sf::Packet &packet)
+{
 	// Try to find a handler for this //
 	auto handlerobject = _FindFactoryForType(datatosend->TypeIDNumber, datatosend->IsRequest);
 
@@ -31,33 +35,37 @@ DLLEXPORT void Leviathan::GameSpecificPacketHandler::PassGameSpecificDataToPacke
 
 	// Factory already knows what it does so let it do it //
 	if(!handlerobject->SerializeToPacket(datatosend, packet)){
-		// We need to throw //
-		throw ExceptionInvalidArgument(L"invalid custom request packet for writing to packet", 0, __WFUNCTION__, L"datatosend", L"");
+
+		throw InvalidArgument("invalid custom request packet for writing to packet");
 	}
 
 	
 	// The packet should now be fine //
 }
 
-DLLEXPORT shared_ptr<GameSpecificPacketData> Leviathan::GameSpecificPacketHandler::ReadGameSpecificPacketFromPacket(bool responsepacket, sf::Packet &packet){
+DLLEXPORT shared_ptr<GameSpecificPacketData> Leviathan::GameSpecificPacketHandler::ReadGameSpecificPacketFromPacket(
+    bool responsepacket, sf::Packet &packet)
+{
 	// Get the basic data from the packet //
 	int typeidnumber = -1;
 	bool packetisrequest;
 
 	if(!(packet >> typeidnumber)){
 
-		throw ExceptionInvalidArgument(L"invalid received custom packet base format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidAccess("invalid received custom packet base format");
 	}
 
 	if(!(packet >> packetisrequest)){
 
-		throw ExceptionInvalidArgument(L"invalid received custom packet base format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidAccess("invalid received custom packet base format");
 	}
 
 	if(packetisrequest != !responsepacket){
+        
 		// The packet might be corrupted or something //
-		Logger::Get()->Warning(L"GameSpecificPacketHandler: packet has inconsistent request identifier, expected "+Convert::ToWstring(responsepacket)+
-			L" but packet was "+Convert::ToWstring(packetisrequest));
+		Logger::Get()->Warning("GameSpecificPacketHandler: packet has inconsistent request identifier, expected "+
+            Convert::ToString(responsepacket)+" but packet was "+
+            Convert::ToString(packetisrequest));
 		return NULL;
 	}
 
@@ -66,8 +74,9 @@ DLLEXPORT shared_ptr<GameSpecificPacketData> Leviathan::GameSpecificPacketHandle
 
 	if(!handlerobject){
 
-		Logger::Get()->Warning(L"GameSpecificPacketHandler: couldn't find a handler for a packet of type "+Convert::ToWstring(typeidnumber)+L" and"
-			L" request state: "+Convert::ToWstring(packetisrequest));
+		Logger::Get()->Warning("GameSpecificPacketHandler: couldn't find a handler for a packet of type "+
+            Convert::ToString(typeidnumber)+" and"
+			" request state: "+Convert::ToString(packetisrequest));
 		return NULL;
 	}
 
@@ -75,7 +84,9 @@ DLLEXPORT shared_ptr<GameSpecificPacketData> Leviathan::GameSpecificPacketHandle
 	return handlerobject->UnSerializeObjectFromPacket(packet);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameSpecificPacketHandler::RegisterNewTypeFactory(BaseGameSpecificPacketFactory* newdfactoryobject){
+DLLEXPORT void Leviathan::GameSpecificPacketHandler::RegisterNewTypeFactory(BaseGameSpecificPacketFactory*
+    newdfactoryobject)
+{
 	// Check does it exist already //
 	if(_FindFactoryForType(newdfactoryobject->TypeIDNumber, newdfactoryobject->HandlesRequests)){
 
@@ -89,14 +100,18 @@ DLLEXPORT void Leviathan::GameSpecificPacketHandler::RegisterNewTypeFactory(Base
 	IsVectorSorted = false;
 }
 // ------------------------------------ //
-shared_ptr<BaseGameSpecificPacketFactory> Leviathan::GameSpecificPacketHandler::_FindFactoryForType(int typenumber, bool requesttype){
+shared_ptr<BaseGameSpecificPacketFactory> Leviathan::GameSpecificPacketHandler::_FindFactoryForType(int typenumber,
+    bool requesttype)
+{
 	// We can do some optimization if it is sorted //
 	if(!IsVectorSorted){
 		// Just search the old fashion way //
 
 		for(size_t i = 0; i < AllPacketFactories.size(); i++){
 			// Check does it match //
-			if(AllPacketFactories[i]->TypeIDNumber == typenumber && AllPacketFactories[i]->HandlesRequests == requesttype)
+			if(AllPacketFactories[i]->TypeIDNumber == typenumber &&
+                AllPacketFactories[i]->HandlesRequests == requesttype)
+                
 				return AllPacketFactories[i];
 		}
 
@@ -104,7 +119,8 @@ shared_ptr<BaseGameSpecificPacketFactory> Leviathan::GameSpecificPacketHandler::
 		return NULL;
 	}
 
-	// The elements are sorted so that the smallest ID is first so search until the id is higher than the wanted one //
+	// The elements are sorted so that the smallest ID is first so search until the id is higher
+    // than the wanted one
 	for(size_t i = 0; i < AllPacketFactories.size(); i++){
 		// Store some data for checking after it doesn't match //
 		auto tmpobj = AllPacketFactories[i].get();
@@ -123,7 +139,9 @@ shared_ptr<BaseGameSpecificPacketFactory> Leviathan::GameSpecificPacketHandler::
 	return NULL;
 }
 // ------------------------------------ //
-bool SharedPtrVecSortComparison(const shared_ptr<BaseGameSpecificPacketFactory> &first, const shared_ptr<BaseGameSpecificPacketFactory> &second){
+bool SharedPtrVecSortComparison(const shared_ptr<BaseGameSpecificPacketFactory> &first,
+    const shared_ptr<BaseGameSpecificPacketFactory> &second)
+{
 	return first->TypeIDNumber < second->TypeIDNumber;
 }
 
@@ -140,7 +158,9 @@ void Leviathan::GameSpecificPacketHandler::_CheckVectorSorting(){
 	IsVectorSorted = true;
 }
 // ------------------ BaseGameSpecificRequestPacket ------------------ //
-DLLEXPORT Leviathan::BaseGameSpecificRequestPacket::BaseGameSpecificRequestPacket(int typenumber) : TypeIDNumber(typenumber){
+DLLEXPORT Leviathan::BaseGameSpecificRequestPacket::BaseGameSpecificRequestPacket(int typenumber) :
+    TypeIDNumber(typenumber)
+{
 
 }
 
@@ -148,7 +168,9 @@ DLLEXPORT Leviathan::BaseGameSpecificRequestPacket::~BaseGameSpecificRequestPack
 
 }
 // ------------------ BaseGameSpecificResponsePacket ------------------ //
-DLLEXPORT Leviathan::BaseGameSpecificResponsePacket::BaseGameSpecificResponsePacket(int typenumber) : TypeIDNumber(typenumber){
+DLLEXPORT Leviathan::BaseGameSpecificResponsePacket::BaseGameSpecificResponsePacket(int typenumber) :
+    TypeIDNumber(typenumber)
+{
 
 }
 
@@ -156,14 +178,16 @@ DLLEXPORT Leviathan::BaseGameSpecificResponsePacket::~BaseGameSpecificResponsePa
 
 }
 // ------------------ GameSpecificPacketData ------------------ //
-DLLEXPORT Leviathan::GameSpecificPacketData::GameSpecificPacketData(BaseGameSpecificResponsePacket* newddata) : IsRequest(false), 
-	ResponseBaseData(newddata), RequestBaseData(NULL), TypeIDNumber(newddata->TypeIDNumber)
+DLLEXPORT Leviathan::GameSpecificPacketData::GameSpecificPacketData(BaseGameSpecificResponsePacket* newddata) :
+    IsRequest(false), ResponseBaseData(newddata), RequestBaseData(NULL),
+    TypeIDNumber(newddata->TypeIDNumber)
 {
 	
 }
 
-DLLEXPORT Leviathan::GameSpecificPacketData::GameSpecificPacketData(BaseGameSpecificRequestPacket* newddata) : IsRequest(true), 
-	ResponseBaseData(NULL), RequestBaseData(newddata), TypeIDNumber(newddata->TypeIDNumber)
+DLLEXPORT Leviathan::GameSpecificPacketData::GameSpecificPacketData(BaseGameSpecificRequestPacket* newddata) :
+    IsRequest(true), ResponseBaseData(NULL), RequestBaseData(newddata),
+    TypeIDNumber(newddata->TypeIDNumber)
 {
 
 }

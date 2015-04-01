@@ -15,9 +15,9 @@
 
 #ifndef NETWORK_USE_SNAPSHOTS
 #define BASESENDABLE_STORED_CLIENT_STATES 14
-#define BASESENDABLE_STORED_CLIENT_INTERPOLATIONS 3
 #else
 #define BASESENDABLE_STORED_RECEIVED_STATES 4
+#define BASESENDABLE_STORED_CLIENT_INTERPOLATIONS 3
 #endif //NETWORK_USE_SNAPSHOTS
 
 #define SENDABLE_RESIMULATE_THRESSHOLD 0.01f
@@ -79,7 +79,7 @@ namespace Leviathan{
         //! The time the change should take in milliseconds
         //! Must be > 0
         int Duration;
-    }
+    };
     
 #endif //NETWORK_USE_SNAPSHOTS
 

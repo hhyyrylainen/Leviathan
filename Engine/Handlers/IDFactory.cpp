@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_IDFACTORY
 #include "IDFactory.h"
 #endif
-#include "Exceptions/ExceptionInvalidAccess.h"
+#include "Exceptions.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -45,5 +45,5 @@ DLLEXPORT IDFactory* Leviathan::IDFactory::Get(){
 void Leviathan::IDFactory::VerifyLock(boost::strict_lock<IDFactory> &guard) THROWS{
 	// ensure that lock is for this //
 	if(!guard.owns_lock(this))
-		throw ExceptionInvalidAccess(L"wrong lock owner", 0, __WFUNCTION__, L"lock", L"mismatching lock and object");
+		throw InvalidAccess("wrong lock owner");
 }

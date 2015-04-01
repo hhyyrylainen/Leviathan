@@ -7,7 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Common/DataStoring/NamedVars.h"
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include <regex>
 
 namespace Leviathan{
@@ -17,7 +17,8 @@ namespace Leviathan{
 	class FileSystem;
 
 	struct FileDefinitionType{
-		FileDefinitionType(FileSystem* instance, const wstring &path); // just the path, everything else is worked out by the constructor //
+        // just the path, everything else is worked out by the constructor //
+		FileDefinitionType(FileSystem* instance, const wstring &path); 
 		~FileDefinitionType();
 
 		//! Returns the filename with the extension
@@ -34,9 +35,11 @@ namespace Leviathan{
 	};
 
 	struct FileDefSorter{
-		DLLEXPORT bool operator()(const shared_ptr<FileDefinitionType>& first, const shared_ptr<FileDefinitionType>& second);
+		DLLEXPORT bool operator()(const shared_ptr<FileDefinitionType>& first,
+            const shared_ptr<FileDefinitionType>& second);
 	};
 
+    //! \todo Redo this mess
 	class FileSystem{
 	public:
 		//// private constructors, to prevent creation of this class //
@@ -60,10 +63,11 @@ namespace Leviathan{
 
 
 		// loaded file searching functions //
-		DLLEXPORT wstring& SearchForFile(FILEGROUP which, const wstring& name, const wstring& extensions, bool searchall = true);
+		DLLEXPORT wstring& SearchForFile(FILEGROUP which, const wstring& name, const wstring& extensions,
+            bool searchall = true);
 
-		DLLEXPORT vector<shared_ptr<FileDefinitionType>> FindAllMatchingFiles(FILEGROUP which, const wstring& regexname, const wstring &extensions,
-			bool searchall = true);
+		DLLEXPORT vector<shared_ptr<FileDefinitionType>> FindAllMatchingFiles(FILEGROUP which, const wstring& regexname,
+            const wstring &extensions, bool searchall = true);
 
 		// direct access to files //
 		DLLEXPORT vector<shared_ptr<FileDefinitionType>>& GetModelFiles();
@@ -101,7 +105,8 @@ namespace Leviathan{
 		// file handling //
 		DLLEXPORT static int LoadDataDump(const wstring &file, vector<shared_ptr<NamedVariableList>>& vec);
 		// Warning: \todo linux version ignores the defined pattern //
-		DLLEXPORT static bool GetFilesInDirectory(vector<wstring> &files, const wstring &dirpath, const wstring &pattern = L"*.*", bool recursive = true);
+		DLLEXPORT static bool GetFilesInDirectory(vector<wstring> &files, const wstring &dirpath,
+            const wstring &pattern = L"*.*", bool recursive = true);
 
 		// file operations //
 		DLLEXPORT static int GetFileLength(wstring name);
@@ -119,12 +124,14 @@ namespace Leviathan{
 
 	private:
 		// file search functions //
-		shared_ptr<FileDefinitionType> _SearchForFileInVec(vector<shared_ptr<FileDefinitionType>> &vec, vector<int> &extensions,
+		shared_ptr<FileDefinitionType> _SearchForFileInVec(vector<shared_ptr<FileDefinitionType>> &vec, vector<int>
+            &extensions,
 			const wstring &name, bool UseIndexVector, vector<CharWithIndex*>* Index);
-		void _SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec, vector<shared_ptr<FileDefinitionType>>& results,
+		void _SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec,
+            vector<shared_ptr<FileDefinitionType>>& results,
 			vector<int>& extensions, const wregex &regex);
-		void _CreateIndexesIfMissing(vector<shared_ptr<FileDefinitionType>> &vec, vector<CharWithIndex*> &resultvec, bool &indexed,
-			const bool &force /*= false*/);
+		void _CreateIndexesIfMissing(vector<shared_ptr<FileDefinitionType>> &vec,
+            vector<CharWithIndex*> &resultvec, bool &indexed, const bool &force /*= false*/);
 		// ------------------------------------ //
 		// vector that holds string value of file extension and it's id code //
 		vector<IntWstring*> FileTypes;

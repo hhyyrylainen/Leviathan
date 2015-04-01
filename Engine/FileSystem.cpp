@@ -13,7 +13,7 @@
 #endif
 #include "Common/StringOperations.h"
 #include "Common/Misc.h"
-#include "Exceptions/ExceptionNotFound.h"
+#include "Exceptions.h"
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::FileSystem::FileSystem(){
@@ -23,7 +23,8 @@ Leviathan::FileSystem::FileSystem(){
 	CurrentFileExtID = 25;
 
 	// index creation flags //
-	IsAllIndexed = IsTextureIndexed = IsModelIndexed = IsSoundIndexed = IsScriptIndexed = IsSorted = IsBeingSorted = ShouldSortStop = false;
+	IsAllIndexed = IsTextureIndexed = IsModelIndexed = IsSoundIndexed = IsScriptIndexed =
+        IsSorted = IsBeingSorted = ShouldSortStop = false;
 }
 
 Leviathan::FileSystem::~FileSystem(){
@@ -55,7 +56,8 @@ DLLEXPORT bool Leviathan::FileSystem::Init(){
 
 	if(files.size() < 1){
 
-		Logger::Get()->Error(L"FileSystem: SearchFiles: No files inside data folder, cannot possibly work", files.size(), true);
+		Logger::Get()->Error(L"FileSystem: SearchFiles: No files inside data folder, cannot possibly work",
+            files.size(), true);
 		return false;
 	}
 
@@ -498,11 +500,8 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file, wst
 		reader.close();
 		return;
 	}
-#ifdef _WIN32
-	throw ExceptionInvalidArgument(L"cannot read given file", GetLastError(), __WFUNCTION__, L"file", file);
-#else
-	throw ExceptionInvalidArgument(L"cannot read given file", 0, __WFUNCTION__, L"file", file);
-#endif
+
+	throw InvalidArgument("cannot read given file");
 }
 
 DLLEXPORT void Leviathan::FileSystem::ReadFileEntirely(const string &file, string &resultreceiver) THROWS{
@@ -533,11 +532,8 @@ DLLEXPORT void Leviathan::FileSystem::ReadFileEntirely(const string &file, strin
 		reader.close();
 		return;
 	}
-#ifdef _WIN32
-	throw ExceptionInvalidArgument(L"cannot read given file", GetLastError(), __WFUNCTION__, L"file", Convert::StringToWstring(file));
-#else
-	throw ExceptionInvalidArgument(L"cannot read given file", 0, __WFUNCTION__, L"file", Convert::StringToWstring(file));
-#endif
+    
+	throw InvalidArgument("cannot read given file");
 }
 // ------------------ Non static part ------------------ //
 DLLEXPORT void Leviathan::FileSystem::SortFileVectors(){
@@ -624,11 +620,14 @@ DLLEXPORT const wstring& Leviathan::FileSystem::GetExtensionName(int id) const{
 		if(FileTypes[i]->Value == id)
 			return *FileTypes[i]->Wstr;
 	}
+    
 	// Not found //
-	throw ExceptionNotFound(L"No extension with that id", 0, __WFUNCTION__, L"id", Convert::ToWstring(id));
+	throw NotFound("No extension corresponds with id");
 }
 // ------------------------------------ //
-DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const wstring& name, const wstring& extensions, bool searchall /*= true*/){
+DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const wstring& name, const wstring& extensions,
+    bool searchall /*= true*/)
+{
 	// generate info about the search file //
 	vector<int> ExtensionIDS;
 	GetExtensionIDS(extensions, ExtensionIDS);
@@ -636,7 +635,8 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 	switch(which){
 	case FILEGROUP_MODEL:
 		{
-			shared_ptr<FileDefinitionType> result = _SearchForFileInVec(ModelFiles, ExtensionIDS, name, IsModelIndexed, &ModelIndexes);
+			shared_ptr<FileDefinitionType> result = _SearchForFileInVec(ModelFiles, ExtensionIDS,
+                name, IsModelIndexed, &ModelIndexes);
 			if(result.get() != NULL){
 				// found //
 				return result.get()->RelativePath;
@@ -645,7 +645,9 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 	break;
 	case FILEGROUP_TEXTURE:
 		{
-			shared_ptr<FileDefinitionType> result = _SearchForFileInVec(TextureFiles, ExtensionIDS, name, IsTextureIndexed, &TextureIndexes);
+			shared_ptr<FileDefinitionType> result = _SearchForFileInVec(TextureFiles,
+                ExtensionIDS, name, IsTextureIndexed, &TextureIndexes);
+            
 			if(result.get() != NULL){
 				// found //
 				return result.get()->RelativePath;
@@ -654,7 +656,8 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 		break;
 	case FILEGROUP_SOUND:
 		{
-			shared_ptr<FileDefinitionType> result = _SearchForFileInVec(SoundFiles, ExtensionIDS, name, IsSoundIndexed, &SoundIndexes);
+			shared_ptr<FileDefinitionType> result = _SearchForFileInVec(SoundFiles, ExtensionIDS,
+                name, IsSoundIndexed, &SoundIndexes);
 			if(result.get() != NULL){
 				// found //
 				return result.get()->RelativePath;
@@ -663,7 +666,8 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 		break;
 	case FILEGROUP_SCRIPT:
 		{
-			shared_ptr<FileDefinitionType> result = _SearchForFileInVec(ScriptFiles, ExtensionIDS, name, IsScriptIndexed, &ScriptIndexes);
+			shared_ptr<FileDefinitionType> result = _SearchForFileInVec(ScriptFiles, ExtensionIDS,
+                name, IsScriptIndexed, &ScriptIndexes);
 			if(result.get() != NULL){
 				// found //
 				return result.get()->RelativePath;
@@ -672,7 +676,8 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 	break;
 	case FILEGROUP_OTHER:
 		{
-			shared_ptr<FileDefinitionType> result = _SearchForFileInVec(AllFiles, ExtensionIDS, name, IsAllIndexed, &AllIndexes);
+			shared_ptr<FileDefinitionType> result = _SearchForFileInVec(AllFiles, ExtensionIDS,
+                name, IsAllIndexed, &AllIndexes);
 			if(result.get() != NULL){
 				// found //
 				return result.get()->RelativePath;
@@ -684,7 +689,8 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 
 	// still not found, if searchall specified search all files vector //
 	if(searchall){
-		shared_ptr<FileDefinitionType> result = _SearchForFileInVec(AllFiles, ExtensionIDS, name, IsAllIndexed, &AllIndexes);
+		shared_ptr<FileDefinitionType> result = _SearchForFileInVec(AllFiles, ExtensionIDS, name,
+            IsAllIndexed, &AllIndexes);
 		if(result.get() != NULL){
 			// found //
 			return result.get()->RelativePath;
@@ -697,8 +703,8 @@ DLLEXPORT wstring& Leviathan::FileSystem::SearchForFile(FILEGROUP which, const w
 	return Misc::EmptyString;
 }
 
-DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllMatchingFiles(FILEGROUP which, const wstring& regexname,
-	const wstring &extensions, bool searchall /*= true*/)
+DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllMatchingFiles(FILEGROUP which,
+    const wstring& regexname, const wstring &extensions, bool searchall /*= true*/)
 {
 	// generate info about the search file //
 	vector<int> ExtensionIDS;

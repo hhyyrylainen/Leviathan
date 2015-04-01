@@ -489,7 +489,7 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CreateStateF
         
         return make_shared<PositionablePhysicalDeltaState>(tick, packet);
         
-    } catch(ExceptionInvalidArgument &e){
+    } catch(const Exception &e){
 
         Logger::Get()->Warning("Prop: failed to CreateStateFromPacket, exception:");
         e.PrintToLog();

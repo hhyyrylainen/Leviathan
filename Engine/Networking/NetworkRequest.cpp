@@ -2,7 +2,7 @@
 #ifndef LEVIATHAN_NETWORKREQUEST
 #include "NetworkRequest.h"
 #endif
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "GameSpecificPacketHandler.h"
 #include "NetworkedInput.h"
 using namespace Leviathan;

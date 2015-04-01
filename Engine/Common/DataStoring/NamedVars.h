@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "Common/DataStoring/DataBlock.h"
 #include "../ReferenceCounted.h"
 #include "SFML/Network/Packet.hpp"

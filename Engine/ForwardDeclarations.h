@@ -41,7 +41,14 @@ namespace Leviathan{
     typedef boost::intrusive_ptr<BaseObject> ObjectPtr;
     
     class BaseConstraintable;
+
+#ifdef NETWORK_USE_SNAPSHOTS
+    struct ObjectInterpolation;
+#endif //NETWORK_USE_SNAPSHOTS
+    
+    class ObjectDeltaStateData;
     class BaseSendableEntity;
+    
     class BasePhysicsObject;
 
     class PositionablePhysicalDeltaState;

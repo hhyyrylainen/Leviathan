@@ -13,14 +13,34 @@ set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "
     "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
     "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp" "utf8.h" "Include.h"
     "Exceptions.h" "Exceptions.cpp"
-)
+    )
+
+set(GroupEntitiesBases "Entities/Bases/BaseConstraintable.cpp" "Entities/Bases/BaseConstraintable.h"
+  "Entities/Bases/BaseControllable.cpp" "Entities/Bases/BaseControllable.h"
+  "Entities/Bases/BaseEntityController.cpp" "Entities/Bases/BaseEntityController.h"
+  "Entities/Bases/BaseInterpolated.h" "Entities/Bases/BaseInterpolated.cpp"
+  "Entities/Bases/BaseNotifiableEntity.h" "Entities/Bases/BaseNotifiableEntity.cpp"
+  "Entities/Bases/BaseNotifierEntity.h" "Entities/Bases/BaseNotifierEntity.cpp"
+  "Entities/Bases/BaseObject.h" "Entities/Bases/BaseObject.cpp"
+  "Entities/Bases/BaseParentable.h" "Entities/Bases/BaseParentable.cpp"
+  "Entities/Bases/BasePhysicsObject.h" "Entities/Bases/BasePhysicsObject.cpp"
+  "Entities/Bases/BasePositionable.h" "Entities/Bases/BasePositionable.cpp"
+  "Entities/Bases/BaseRenderable.h" "Entities/Bases/BaseRenderable.cpp"
+  "Entities/Bases/BaseScalable.h" "Entities/Bases/BaseScalable.cpp"
+  "Entities/Bases/BaseSendableEntity.h" "Entities/Bases/BaseSendableEntity.cpp"
+  "Entities/Bases/BaseTickable.h" "Entities/Bases/BaseTickable.cpp"
+  "Entities/Bases/BaseTimedInterpolated.h" "Entities/Bases/BaseTimedInterpolated.cpp"
+  )
+  
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
 file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
 file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
 file(GLOB GroupGUI "GUI/*.cpp" "GUI/*.h")
 file(GLOB GroupNewton "Newton/*.cpp" "Newton/*.h")
 file(GLOB GroupEntities "Entities/*.cpp" "Entities/*.h")
-file(GLOB GroupEntitiesBases "Entities/Bases/*.cpp" "Entities/Bases/*.h")
+
+
+
 file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
 file(GLOB GroupEntitiesSerializers "Entities/Serializers/*.cpp" "Entities/Serializers/*.h")
 

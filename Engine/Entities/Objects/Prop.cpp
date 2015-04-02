@@ -9,6 +9,7 @@
 #include "OgreSceneNode.h"
 #include "OgreEntity.h"
 #include "Entities/CommonStateObjects.h"
+#include "Exceptions.h"
 using namespace Leviathan;
 using namespace Leviathan::Entity;
 // ------------------------------------ //
@@ -30,8 +31,11 @@ DLLEXPORT Leviathan::Entity::Prop::~Prop(){
 }
 
 DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
-
+#ifndef NETWORK_USE_SNAPSHOTS
     StopInterpolating();
+#endif //NETWORK_USE_SNAPSHOTS
+
+    UnRegisterAllEvents();
 
     ReleaseParentHooks();
 
@@ -497,3 +501,65 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CreateStateF
     }
     
 }
+// ------------------------------------ //
+#ifdef NETWORK_USE_SNAPSHOTS
+void Prop::VerifySendableInterpolation(){
+
+    {
+        // Skip if we are already interpolating //
+        GUARD_LOCK_THIS_OBJECT();
+        
+        if(IsCurrentlyInterpolating())
+            return;
+    }
+
+    // This way we don't have to write the implementation twice //
+    OnInterpolationFinished();
+}
+
+bool Prop::OnInterpolationFinished(){
+
+    // Fetch an interpolation //
+    try{
+        
+        const auto& interpolation = GetAndPopNextInterpolation();
+
+        GUARD_LOCK_THIS_OBJECT();
+        SetCurrentInterpolation(interpolation);
+
+        RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
+        
+        return true;
+
+    } catch(const InvalidState&){
+
+        UnRegister(EVENT_TYPE_FRAME_BEGIN);
+        return false;
+    }
+}
+
+DLLEXPORT int Prop::OnEvent(Event** pEvent){
+
+    if((*pEvent)->GetType() == EVENT_TYPE_FRAME_BEGIN){
+
+        UpdateInterpolation((*pEvent)->GetIntegerDataForEvent()->IntegerDataValue);
+        return 1;
+    }
+
+    return -1;
+}
+
+DLLEXPORT int Prop::OnGenericEvent(GenericEvent** pevent){
+    return -1;
+}
+
+DLLEXPORT bool Prop::SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second, float progress){
+
+    InterpolatePhysicalState(static_cast<PositionablePhysicalDeltaState&>(first),
+        static_cast<PositionablePhysicalDeltaState&>(second), progress);
+    
+    return true;
+}
+
+            
+#endif //NETWORK_USE_SNAPSHOTS

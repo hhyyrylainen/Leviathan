@@ -50,6 +50,10 @@ namespace Leviathan{
         //! \param olderstate The state against which this is compared. Or NULL if a full update is wanted
         DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) = 0;
 
+        //! \brief Copies data to missing values in this state from another state
+        //! \return True if all missing values have been filled
+        DLLEXPORT virtual bool FillMissingData(ObjectDeltaStateData &otherstate) = 0;
+
         //! \brief The tick this delta state matches
         const int Tick;
         
@@ -190,6 +194,7 @@ namespace Leviathan{
 
         //! \brief Queues a interpolation for this entity
         //! \param mstime The time the interpolation should take in milliseconds
+        //! \todo Allow implementation to directly start interpolating without having to store the state
         DLLEXPORT void QueueInterpolation(shared_ptr<ObjectDeltaStateData> from, shared_ptr<ObjectDeltaStateData> to,
             int mstime);
 
@@ -215,6 +220,8 @@ namespace Leviathan{
 
 
         //! \brief Start a new interpolation if current one is finished
+        //!
+        //! Called when a new interpolation has been queued
         virtual void VerifySendableInterpolation() = 0;
 
 #endif //NETWORK_USE_SNAPSHOTS

@@ -30,28 +30,30 @@ namespace Leviathan{
 		DLLEXPORT BasePositionable(const Float3 &pos, const Float4 &orientation);
 		DLLEXPORT virtual ~BasePositionable();
 
-		DLLEXPORT virtual void SetPosComponents(const float &x, const float &y, const float &z);
-		DLLEXPORT virtual void SetPos(const Float3 &pos);
-        DLLEXPORT virtual void SetPosition(const Float3 &pos);
-		DLLEXPORT virtual void SetOrientation(const Float4 &quaternionrotation);
-        DLLEXPORT virtual void SetOrientationComponents(const float &x, const float &y, const float &z, const float &w);
+		DLLEXPORT void SetPosComponents(const float &x, const float &y, const float &z);
+		DLLEXPORT void SetPos(const Float3 &pos);
+        DLLEXPORT void SetPosition(const Float3 &pos);
+		DLLEXPORT void SetOrientation(const Float4 &quaternionrotation);
+        DLLEXPORT void SetOrientationComponents(const float &x, const float &y, const float &z, const float &w);
 
-		DLLEXPORT virtual Float4 GetOrientation() const;
-        DLLEXPORT virtual void GetOrientation(Float4 &receiver) const;
+		DLLEXPORT Float4 GetOrientation() const;
+        DLLEXPORT Float4 GetRotation() const;
+        DLLEXPORT void GetOrientation(Float4 &receiver) const;
+        DLLEXPORT void GetRotation(Float4 &receiver) const;
 
         //! \brief Applies position and rotation from a BasePositionData
-        DLLEXPORT virtual void ApplyPositionDataObject(const BasePositionData &pos);
+        DLLEXPORT void ApplyPositionDataObject(const BasePositionData &pos);
 
-		DLLEXPORT virtual void GetPosElements(float &outx, float &outy, float &outz);
-		DLLEXPORT virtual Float3 GetPos() const;
-        DLLEXPORT virtual void GetPos(Float3 &receiver) const;
-		DLLEXPORT virtual float GetXPos();
-		DLLEXPORT virtual float GetYPos();
-		DLLEXPORT virtual float GetZPos();
+		DLLEXPORT void GetPosElements(float &outx, float &outy, float &outz);
+		DLLEXPORT Float3 GetPos() const;
+        DLLEXPORT void GetPos(Float3 &receiver) const;
+		DLLEXPORT float GetXPos();
+		DLLEXPORT float GetYPos();
+		DLLEXPORT float GetZPos();
 
-		DLLEXPORT virtual void SetPosX(const float &x);
-		DLLEXPORT virtual void SetPosY(const float &y);
-		DLLEXPORT virtual void SetPosZ(const float &z);
+		DLLEXPORT void SetPosX(const float &x);
+		DLLEXPORT void SetPosY(const float &y);
+		DLLEXPORT void SetPosZ(const float &z);
 
         //! \brief Saves location and rotation to a packet
         DLLEXPORT void AddPositionAndRotationToPacket(sf::Packet &packet);

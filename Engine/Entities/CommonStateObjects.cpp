@@ -8,8 +8,8 @@ using namespace Leviathan;
 
 // ------------------ PositionablePhysicalDeltaState ------------------ //
 DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaState(int tick, const Float3 &position,
-    const Float3 &velocity, const Float3 &torque) :
-    ObjectDeltaStateData(tick), Position(position), Velocity(velocity), Torque(torque)
+    const Float4 &rotation, const Float3 &velocity, const Float3 &torque) :
+    ObjectDeltaStateData(tick), Position(position), Velocity(velocity), Torque(torque), Rotation(rotation)
 {
 
 }
@@ -34,6 +34,19 @@ DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaSt
     
     if(ValidFields & PPDELTAUPDATED_POS_Z)
         packet >> Position.Z;
+
+    // Rotation
+    if(ValidFields & PPDELTAUPDATED_ROT_X)
+        packet >> Rotation.X;
+
+    if(ValidFields & PPDELTAUPDATED_ROT_Y)
+        packet >> Rotation.Y;
+    
+    if(ValidFields & PPDELTAUPDATED_ROT_Z)
+        packet >> Rotation.Z;
+    
+    if(ValidFields & PPDELTAUPDATED_ROT_W)
+        packet >> Rotation.W;
 
     // Velocity
     if(ValidFields & PPDELTAUPDATED_VEL_X)
@@ -87,6 +100,19 @@ DLLEXPORT void Leviathan::PositionablePhysicalDeltaState::CreateUpdatePacket(Obj
         if(Position.Z != other->Position.Z)
             ValidFields |= PPDELTAUPDATED_POS_Z;
 
+        // Rotation
+        if(Rotation.X != other->Rotation.X)
+            ValidFields |= PPDELTAUPDATED_ROT_X;
+
+        if(Rotation.Y != other->Rotation.Y)
+            ValidFields |= PPDELTAUPDATED_ROT_Y;
+
+        if(Rotation.Z != other->Rotation.Z)
+            ValidFields |= PPDELTAUPDATED_ROT_Z;
+
+        if(Rotation.W != other->Rotation.W)
+            ValidFields |= PPDELTAUPDATED_ROT_W;
+
         // Velocity
         if(Velocity.X != other->Velocity.X)
             ValidFields |= PPDELTAUPDATED_VEL_X;
@@ -122,6 +148,19 @@ DLLEXPORT void Leviathan::PositionablePhysicalDeltaState::CreateUpdatePacket(Obj
     if(ValidFields & PPDELTAUPDATED_POS_Z)
         packet << Position.Z;
 
+    // Rotation
+    if(ValidFields & PPDELTAUPDATED_ROT_X)
+        packet << Rotation.X;
+
+    if(ValidFields & PPDELTAUPDATED_ROT_Y)
+        packet << Rotation.Y;
+    
+    if(ValidFields & PPDELTAUPDATED_ROT_Z)
+        packet << Rotation.Z;
+
+    if(ValidFields & PPDELTAUPDATED_ROT_W)
+        packet << Rotation.W;
+
     // Velocity
     if(ValidFields & PPDELTAUPDATED_VEL_X)
         packet << Velocity.X;
@@ -143,3 +182,4 @@ DLLEXPORT void Leviathan::PositionablePhysicalDeltaState::CreateUpdatePacket(Obj
         packet << Torque.Z;
     
 }
+// ------------------ PositionableRotationableDeltaState ------------------ //

@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #ifndef LEVIATHAN_BASE_POSITIONABLE
 #include "BasePositionable.h"
@@ -38,7 +37,15 @@ Float4 Leviathan::BasePositionable::GetOrientation() const{
 	return QuatRotation;
 }
 
+DLLEXPORT Float4 Leviathan::BasePositionData::GetRotation() const{
+    return QuatRotation;
+}
+
 void Leviathan::BasePositionable::GetOrientation(Float4 &receiver) const{
+	receiver = QuatRotation;
+}
+
+DLLEXPORT void Leviathan::BasePositionable::GetRotation(Float4 &receiver) const{
 	receiver = QuatRotation;
 }
 // ------------------------------------ //

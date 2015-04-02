@@ -117,6 +117,10 @@ namespace Leviathan{
         DLLEXPORT void CheckOldPhysicalState(PositionablePhysicalDeltaState* servercasted,
             PositionablePhysicalDeltaState* ourcasted, int tick, BaseSendableEntity* assendable);
 
+#else
+        DLLEXPORT void InterpolatePhysicalState(PositionablePhysicalDeltaState &first,
+            PositionablePhysicalDeltaState &second, float progress);
+
 #endif //NETWORK_USE_SNAPSHOTS
 
         //! \brief Returns the default material ID for the world to which this entity belongs

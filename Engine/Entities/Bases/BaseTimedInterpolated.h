@@ -18,13 +18,16 @@ namespace Leviathan{
         //! \brief Sets this entity's state to be between first and second
         //! \param progress The progress between the states. Between 0.f and 1.f, Note it may actually be over 1.f so
         //! check if the progress is over one and snap to second
-        DLLEXPORT virtual bool SetStateToInterpolated(ObjectDeltaStateData* first, ObjectDeltaStateData* second,
+        DLLEXPORT virtual bool SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second,
             float progress) = 0;
 
         //! \brief Sets the current interpolation
         //! \note The object needs to be locked before this call
         //! \return True when the object was walid
         DLLEXPORT bool SetCurrentInterpolation(const ObjectInterpolation &interpolation);
+
+        //! \brief Returns true if current interpolation is valid
+        DLLEXPORT bool IsCurrentlyInterpolating() const;
 
     protected:
 

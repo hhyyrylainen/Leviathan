@@ -16,7 +16,7 @@ void BaseTimedInterpolated::UpdateInterpolation(int mspassed){
     
     const float progress = TimeAccumulator > 0 ? CurrentAnimation.Duration / (float)TimeAccumulator : 0.f;
 
-    SetStateToInterpolated(CurrentAnimation.First, CurrentAnimation.Second, progress);
+    SetStateToInterpolated(*CurrentAnimation.First, *CurrentAnimation.Second, progress);
 
     if(progress >= 1.f){
 
@@ -47,3 +47,7 @@ DLLEXPORT bool BaseTimedInterpolated::SetCurrentInterpolation(const ObjectInterp
     return true;
 }
 // ------------------------------------ //
+DLLEXPORT bool BaseTimedInterpolated::IsCurrentlyInterpolating() const{
+
+    return CurrentAnimation.Duration > 0;
+}

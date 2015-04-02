@@ -15,7 +15,12 @@
 #include "Entities/Bases/BaseConstraintable.h"
 #include "Entities/Bases/BaseParentable.h"
 #include "Entities/Bases/BaseSendableEntity.h"
+#ifdef NETWORK_USE_SNAPSHOTS
+#include "Entities/Bases/BaseTimedInterpolated.h"
+#include "Events/CallbackeObject.h"
+#else
 #include "Entities/Bases/BaseInterpolated.h"
+#endif //NETWORK_USE_SNAPSHOTS
 
 namespace Leviathan{ namespace Entity{
         
@@ -23,7 +28,11 @@ namespace Leviathan{ namespace Entity{
         //! \todo Make sure that _MarkDataUpdated is called enough
         class Prop : public virtual BaseObject, public virtual BaseRenderable, public BaseConstraintable,
                        public BaseParentable, public BaseSendableEntity, public BasePhysicsObject,
+#ifdef NETWORK_USE_SNAPSHOTS
+                       public BaseTimedInterpolated, public virtual CallableObject
+#else
                        public BaseInterpolated
+#endif //NETWORK_USE_SNAPSHOTS
         {
             friend BaseSendableEntity;
         public:
@@ -48,9 +57,11 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT virtual void VerifyOldState(ObjectDeltaStateData* serversold,
                 ObjectDeltaStateData* ourold, int tick) override;
 #else
-            
-            
-            
+            DLLEXPORT int OnEvent(Event** pEvent) override;
+            DLLEXPORT int OnGenericEvent(GenericEvent** pevent) override;
+
+            DLLEXPORT bool SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second,
+                float progress);
 #endif //NETWORK_USE_SNAPSHOTS
 
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
@@ -80,6 +91,13 @@ namespace Leviathan{ namespace Entity{
         
             //! \copydoc BaseInterpolated::_GetCurrentActualRotation
             void _GetCurrentActualRotation(Float4 &rot) override;
+
+#ifdef NETWORK_USE_SNAPSHOTS
+            void VerifySendableInterpolation() override;
+
+            bool OnInterpolationFinished() override;
+
+#endif //NETWORK_USE_SNAPSHOTS
             
             // for setting new values to graphical object and physical object //
             virtual void _UpdatePhysicsObjectLocation(ObjectLock &guard) override;

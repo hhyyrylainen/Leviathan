@@ -363,14 +363,34 @@ DLLEXPORT void Leviathan::BaseSendableEntity::QueueInterpolation(shared_ptr<Obje
     shared_ptr<ObjectDeltaStateData> to, int mstime)
 {
     // If we are interpolating from the initial state from is null //
+    GUARD_LOCK_THIS_OBJECT();
+
+    
     if(from == nullptr){
 
         from = CaptureState(0);
+        
+    } else {
+
+        // Allow from to capture values from an earlier state //
+        for(auto&& obj : ClientStateBuffer){
+
+            if(obj->Tick == from->Tick-1){
+                
+                if(!from->FillMissingData(*obj)){
+                    // We need a full state capture and we need to fill with that //
+                    assert(from->FillMissingData(CaptureState(0)) && "coulnd't properly fill a state, "
+                        "even with CaptureState");
+                }
+                
+                break;
+            }
+        }
     }
 
-    GUARD_LOCK_THIS_OBJECT();
-
     QueuedInterpolationStates.push_back(move(ObjectInterpolation(from, to, mstime)));
+    
+    VerifySendableInterpolation();
 }
 
 DLLEXPORT ObjectInterpolation Leviathan::BaseSendableEntity::GetAndPopNextInterpolation(){
@@ -457,9 +477,21 @@ DLLEXPORT void Leviathan::SendableObjectConnectionUpdate::SucceedOrFailCallback(
     
     if(ticknumber < LastConfirmedTickNumber)
         return;
+    
+#ifdef NETWORK_USE_SNAPSHOTS
 
+    // We want to only mark every packet that is INTERPOLATION_TIME apart //
+    // Or if we have missed a interpolation time apart packet
+    if(ticknumber % INTERPOLATION_TIME/TICKSPEED == 0 ||
+        ticknumber-LastConfirmedTickNumber > INTERPOLATION_TIME/TICKSPEED)
+    {
+        LastConfirmedTickNumber = ticknumber;
+        LastConfirmedData = state;
+    }
+#else
     LastConfirmedTickNumber = ticknumber;
     LastConfirmedData = state;
+#endif //NETWORK_USE_SNAPSHOTS
 }
 // ------------------ ObjectDeltaStateData ------------------ //
 DLLEXPORT Leviathan::ObjectDeltaStateData::ObjectDeltaStateData(int tick) : Tick(tick){

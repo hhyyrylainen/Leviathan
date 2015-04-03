@@ -14,7 +14,12 @@
 #include "Entities/Bases/BaseConstraintable.h"
 #include "Entities/Bases/BaseParentable.h"
 #include "Entities/Bases/BaseSendableEntity.h"
+#ifdef NETWORK_USE_SNAPSHOTS
+#include "Entities/Bases/BaseTimedInterpolated.h"
+#include "Events/CallableObject.h"
+#else
 #include "Entities/Bases/BaseInterpolated.h"
+#endif //NETWORK_USE_SNAPSHOTS
 
 namespace Leviathan{
 	class GameWorld;
@@ -26,7 +31,11 @@ namespace Leviathan{ namespace Entity{
         //! \todo Make sure that _MarkDataUpdated is called enough
         class Brush : public virtual BaseObject, public virtual BaseRenderable, public BaseConstraintable,
                         public BaseParentable, public BaseSendableEntity, public BasePhysicsObject,
+#ifdef NETWORK_USE_SNAPSHOTS
+                        public BaseTimedInterpolated, public virtual CallableObject
+#else
                         public BaseInterpolated
+#endif //NETWORK_USE_SNAPSHOTS
         {
             friend BaseSendableEntity;
         public:
@@ -58,7 +67,12 @@ namespace Leviathan{ namespace Entity{
                 ObjectDeltaStateData* ourold, int tick) override;
 
 #else
-            
+
+            DLLEXPORT int OnEvent(Event** pEvent) override;
+            DLLEXPORT int OnGenericEvent(GenericEvent** pevent) override;
+
+            DLLEXPORT bool SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second,
+                float progress);
 
 #endif //NETWORK_USE_SNAPSHOTS
 
@@ -87,12 +101,21 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BasePhysicsObject::OnBeforeResimulateStateChanged
             virtual void OnBeforeResimulateStateChanged() override;
 
+#ifdef NETWORK_USE_SNAPSHOTS
+            
+            void VerifySendableInterpolation() override;
+
+            bool OnInterpolationFinished() override;
+
+#else
             //! \copydoc BaseInterpolated::_GetCurrentActualPosition
             void _GetCurrentActualPosition(Float3 &pos) override;
         
             //! \copydoc BaseInterpolated::_GetCurrentActualRotation
             void _GetCurrentActualRotation(Float4 &rot) override;
 
+#endif //NETWORK_USE_SNAPSHOTS
+            
             BaseConstraintable* BasePhysicsGetConstraintable() override;            
             // ------------------------------------ //
 

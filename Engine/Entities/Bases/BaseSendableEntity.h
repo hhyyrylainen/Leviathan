@@ -62,7 +62,6 @@ namespace Leviathan{
         void operator=(const ObjectDeltaStateData &other) = delete;
     };
 
-#ifdef NETWORK_USE_SNAPSHOTS
     //! \brief Contains an interpolation for client side entity to perform
     struct ObjectInterpolation{
     public:
@@ -71,6 +70,9 @@ namespace Leviathan{
 
         //! Move constructor
         ObjectInterpolation(ObjectInterpolation &&other);
+        
+        ObjectInterpolation(const ObjectInterpolation &other);
+        
 
         //! The first state
         //! Must always be valid
@@ -84,8 +86,6 @@ namespace Leviathan{
         //! Must be > 0
         int Duration;
     };
-    
-#endif //NETWORK_USE_SNAPSHOTS
 
     
     //! \brief Contains data about a connection and whether the object has changed since last update

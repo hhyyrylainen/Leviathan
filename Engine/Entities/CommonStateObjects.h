@@ -67,7 +67,7 @@ namespace Leviathan{
 	class PositionablePhysicalDeltaState : public ObjectDeltaStateData{
 	public:
 		DLLEXPORT PositionablePhysicalDeltaState(int tick, const Float3 &position, const Float4 &rotation,
-            const Float3 &const Float3 &velocity, const Float3 &torque);
+            const Float3 &velocity, const Float3 &torque);
         
         //! \see CreateUpdatePacket
         DLLEXPORT PositionablePhysicalDeltaState(int tick, sf::Packet &packet);
@@ -87,6 +87,8 @@ namespace Leviathan{
 
         //! \note The olderstate has to be of type PositionablePhysicalDeltaState
         DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) override;
+
+        DLLEXPORT bool FillMissingData(ObjectDeltaStateData &otherstate) override;
 
         Float3 Position;
         Float4 Rotation;
@@ -116,7 +118,7 @@ namespace Leviathan{
         //! \note The olderstate has to be of type PositionableRotationableDeltaState
         DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) override;
         
-        
+        DLLEXPORT bool FillMissingData(ObjectDeltaStateData &otherstate) override;
         
 
         Float3 Position;

@@ -11,7 +11,7 @@
 #include "boost/thread/lock_types.hpp"
 #include "Handlers/ConstraintSerializerManager.h"
 #include "Exceptions.h"
-#include "Utility/Misc.h"
+#include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) :
@@ -400,7 +400,7 @@ DLLEXPORT ObjectInterpolation Leviathan::BaseSendableEntity::GetAndPopNextInterp
     if(QueuedInterpolationStates.empty())
         throw InvalidState("no states in queue");
     
-    auto obj = QueuedInterpolationStates.front();
+    auto& obj = QueuedInterpolationStates.front();
     QueuedInterpolationStates.pop_front();
 
     ReportInterpolationStatusToInput(obj.Second->Tick, Misc::GetTimeMs64()+obj.Duration);
@@ -509,6 +509,12 @@ Leviathan::ObjectInterpolation::ObjectInterpolation(shared_ptr<ObjectDeltaStateD
     First(first), Second(second), Duration(duration)
 {
     
+}
+
+ObjectInterpolation::ObjectInterpolation(const ObjectInterpolation &other) :
+    First(other.First), Second(other.Second), Duration(other.Duration)
+{
+
 }
 
 Leviathan::ObjectInterpolation::ObjectInterpolation(ObjectInterpolation &&other) :

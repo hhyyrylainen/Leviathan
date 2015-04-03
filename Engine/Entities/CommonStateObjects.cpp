@@ -9,7 +9,8 @@ using namespace Leviathan;
 // ------------------ PositionablePhysicalDeltaState ------------------ //
 DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaState(int tick, const Float3 &position,
     const Float4 &rotation, const Float3 &velocity, const Float3 &torque) :
-    ObjectDeltaStateData(tick), Position(position), Velocity(velocity), Torque(torque), Rotation(rotation)
+    ObjectDeltaStateData(tick), Position(position), Velocity(velocity), Torque(torque), Rotation(rotation),
+    ValidFields(PPDELTA_ALL_UPDATED)
 {
 
 }
@@ -139,6 +140,7 @@ DLLEXPORT void Leviathan::PositionablePhysicalDeltaState::CreateUpdatePacket(Obj
     packet << ValidFields;
 
     // Add the changed data to the packet //
+    // Position
     if(ValidFields & PPDELTAUPDATED_POS_X)
         packet << Position.X;
 
@@ -181,5 +183,165 @@ DLLEXPORT void Leviathan::PositionablePhysicalDeltaState::CreateUpdatePacket(Obj
     if(ValidFields & PPDELTAUPDATED_TOR_Z)
         packet << Torque.Z;
     
+}
+// ------------------------------------ //
+DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateData &otherstate){
+
+    const PositionablePhysicalDeltaState &other = static_cast<PositionablePhysicalDeltaState&>(
+        otherstate);
+
+    if(ValidFields == 0){
+
+        // Copy everything as nothing is valid //
+        Position = other.Position;
+        Rotation = other.Rotation;
+        Velocity = other.Velocity;
+        Torque = other.Torque;
+
+        return other.ValidFields == PPDELTA_ALL_UPDATED;
+        
+    } else if(ValidFields == PPDELTA_ALL_UPDATED){
+        
+        // Already contains everything //
+        return true;
+    }
+
+    bool allsucceeded = true;
+
+    // Position
+    if(ValidFields & PPDELTAUPDATED_POS_X){
+        if(other.ValidFields & PPDELTAUPDATED_POS_X){
+            
+            Position.X = other.Position.X;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    if(ValidFields & PPDELTAUPDATED_POS_Y){
+        if(other.ValidFields & PPDELTAUPDATED_POS_Y){
+            
+            Position.Y = other.Position.Y;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+    
+    if(ValidFields & PPDELTAUPDATED_POS_Z){
+        if(other.ValidFields & PPDELTAUPDATED_POS_Z){
+            
+            Position.Z = other.Position.Z;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    // Rotation
+    if(ValidFields & PPDELTAUPDATED_ROT_X){
+        if(other.ValidFields & PPDELTAUPDATED_ROT_X){
+            
+            Rotation.X = other.Rotation.X;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    if(ValidFields & PPDELTAUPDATED_ROT_Y){
+        if(other.ValidFields & PPDELTAUPDATED_ROT_Y){
+            
+            Rotation.Y = other.Rotation.Y;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+    
+    if(ValidFields & PPDELTAUPDATED_ROT_Z){
+        if(other.ValidFields & PPDELTAUPDATED_ROT_Z){
+            
+            Rotation.Z = other.Rotation.Z;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    if(ValidFields & PPDELTAUPDATED_ROT_W){
+        if(other.ValidFields & PPDELTAUPDATED_ROT_W){
+            
+            Rotation.W = other.Rotation.W;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    // Velocity
+    if(ValidFields & PPDELTAUPDATED_VEL_X){
+        if(other.ValidFields & PPDELTAUPDATED_VEL_X){
+            
+            Position.X = other.Position.X;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    if(ValidFields & PPDELTAUPDATED_VEL_Y){
+        if(other.ValidFields & PPDELTAUPDATED_VEL_Y){
+            
+            Position.Y = other.Position.Y;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+    
+    if(ValidFields & PPDELTAUPDATED_VEL_Z){
+        if(other.ValidFields & PPDELTAUPDATED_VEL_Z){
+            
+            Position.Z = other.Position.Z;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    // Torque
+    if(ValidFields & PPDELTAUPDATED_TOR_X){
+        if(other.ValidFields & PPDELTAUPDATED_TOR_X){
+            
+            Torque.X = other.Torque.X;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    if(ValidFields & PPDELTAUPDATED_TOR_Y){
+        if(other.ValidFields & PPDELTAUPDATED_TOR_Y){
+            
+            Torque.Y = other.Torque.Y;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+    
+    if(ValidFields & PPDELTAUPDATED_TOR_Z){
+        if(other.ValidFields & PPDELTAUPDATED_TOR_Z){
+            
+            Torque.Z = other.Torque.Z;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+    
+    return allsucceeded;
 }
 // ------------------ PositionableRotationableDeltaState ------------------ //

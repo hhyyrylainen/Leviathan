@@ -38,9 +38,12 @@ DLLEXPORT Leviathan::Entity::Brush::~Brush(){
 }
 
 DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
-
+#ifndef NETWORK_USE_SNAPSHOTS
     StopInterpolating();
-
+#else
+    UnRegisterAllEvents();    
+#endif //NETWORK_USE_SNAPSHOTS
+    
     ReleaseParentHooks();
 
     {
@@ -608,11 +611,16 @@ BaseConstraintable* Leviathan::Entity::Brush::BasePhysicsGetConstraintable(){
     return static_cast<BaseConstraintable*>(this);
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(int tick){
-    
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CaptureState(int tick){
+#ifdef NETWORK_USE_SNAPSHOTS
     return shared_ptr<ObjectDeltaStateData>(
         PositionablePhysicalDeltaState::CaptureState(*this, tick).release());
+#else
+    return shared_ptr<ObjectDeltaStateData>(
+        PositionableRotationableDeltaState::CaptureState(*this, tick).release());
+#endif //NETWORK_USE_SNAPSHOTS
 }
+
 #ifndef NETWORK_USE_SNAPSHOTS
 DLLEXPORT void Leviathan::Entity::Brush::VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold,
     int tick)
@@ -632,7 +640,11 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateState
     
     try{
         
+#ifdef NETWORK_USE_SNAPSHOTS
+        return make_shared<PositionableRotationableDeltaState>(tick, packet);
+#else
         return make_shared<PositionablePhysicalDeltaState>(tick, packet);
+#enfid //NETWORK_USE_SNAPSHOTS
         
     } catch(const InvalidArgument &e){
 
@@ -642,5 +654,67 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateState
     }
     
 }
+// ------------------------------------ //
+#ifdef NETWORK_USE_SNAPSHOTS
+void Brush::VerifySendableInterpolation(){
+
+    {
+        // Skip if we are already interpolating //
+        GUARD_LOCK_THIS_OBJECT();
+        
+        if(IsCurrentlyInterpolating())
+            return;
+    }
+
+    // This way we don't have to write the implementation twice //
+    OnInterpolationFinished();
+}
+
+bool Brush::OnInterpolationFinished(){
+
+    // Fetch an interpolation //
+    try{
+        
+        const auto& interpolation = GetAndPopNextInterpolation();
+
+        GUARD_LOCK_THIS_OBJECT();
+        SetCurrentInterpolation(interpolation);
+
+        RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
+        
+        return true;
+
+    } catch(const InvalidState&){
+
+        UnRegister(EVENT_TYPE_FRAME_BEGIN);
+        return false;
+    }
+}
+
+DLLEXPORT int Brush::OnEvent(Event** pEvent){
+
+    if((*pEvent)->GetType() == EVENT_TYPE_FRAME_BEGIN){
+
+        UpdateInterpolation((*pEvent)->GetIntegerDataForEvent()->IntegerDataValue);
+        return 1;
+    }
+
+    return -1;
+}
+
+DLLEXPORT int Brush::OnGenericEvent(GenericEvent** pevent){
+    return -1;
+}
+
+DLLEXPORT bool Brush::SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second, float progress){
+
+    InterpolatePhysicalState(static_cast<PositionablePhysicalDeltaState&>(first),
+        static_cast<PositionablePhysicalDeltaState&>(second), progress);
+    
+    return true;
+}
+
+            
+#endif //NETWORK_USE_SNAPSHOTS
 
 

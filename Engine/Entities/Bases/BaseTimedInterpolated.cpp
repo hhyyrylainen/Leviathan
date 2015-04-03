@@ -1,5 +1,5 @@
 // ------------------------------------ //
-#include "BaseTimedInterpolated.cpp"
+#include "BaseTimedInterpolated.h"
 using namespace Leviathan;
 // ------------------------------------ //
 BaseTimedInterpolated::BaseTimedInterpolated() : TimeAccumulator(0){

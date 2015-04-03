@@ -4,7 +4,7 @@
 #include "Define.h"
 // ------------------------------------ //
 // ---- includes ---- //
-
+#include "BaseSendableEntity.h"
 
 namespace Leviathan{
 

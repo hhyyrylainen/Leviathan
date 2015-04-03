@@ -17,7 +17,7 @@
 #include "Entities/Bases/BaseSendableEntity.h"
 #ifdef NETWORK_USE_SNAPSHOTS
 #include "Entities/Bases/BaseTimedInterpolated.h"
-#include "Events/CallbackeObject.h"
+#include "Events/CallableObject.h"
 #else
 #include "Entities/Bases/BaseInterpolated.h"
 #endif //NETWORK_USE_SNAPSHOTS
@@ -86,16 +86,17 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BasePhysicsObject::OnBeforeResimulateStateChanged
             void OnBeforeResimulateStateChanged() override;
 
+#ifdef NETWORK_USE_SNAPSHOTS
+            void VerifySendableInterpolation() override;
+
+            bool OnInterpolationFinished() override;
+
+#else
             //! \copydoc BaseInterpolated::_GetCurrentActualPosition
             void _GetCurrentActualPosition(Float3 &pos) override;
         
             //! \copydoc BaseInterpolated::_GetCurrentActualRotation
             void _GetCurrentActualRotation(Float4 &rot) override;
-
-#ifdef NETWORK_USE_SNAPSHOTS
-            void VerifySendableInterpolation() override;
-
-            bool OnInterpolationFinished() override;
 
 #endif //NETWORK_USE_SNAPSHOTS
             

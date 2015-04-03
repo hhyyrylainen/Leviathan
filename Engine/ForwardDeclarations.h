@@ -42,9 +42,8 @@ namespace Leviathan{
     
     class BaseConstraintable;
 
-#ifdef NETWORK_USE_SNAPSHOTS
+
     struct ObjectInterpolation;
-#endif //NETWORK_USE_SNAPSHOTS
     
     class ObjectDeltaStateData;
     class BaseSendableEntity;

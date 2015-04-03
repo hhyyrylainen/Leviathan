@@ -630,8 +630,8 @@ DLLEXPORT void BasePhysicsObject::InterpolatePhysicalState(PositionablePhysicalD
     GUARD_LOCK_THIS_OBJECT();
     Float3 pos = GetPosition();
     Float4 rot = GetOrientation();
-    Float3 vel = GetVelocity();
-    Float3 tor = GetTorque();
+    Float3 vel = GetBodyVelocity();
+    Float3 tor = GetBodyTorque();
 
     // First check does the second state have a changed value for each component
     // If it does interpolate from the first state, which should have almost all values, or if it doesn't error
@@ -672,94 +672,94 @@ DLLEXPORT void BasePhysicsObject::InterpolatePhysicalState(PositionablePhysicalD
     // TODO: spherical interpolation for rotation
     if(second.ValidFields & PPDELTAUPDATED_ROT_X){
 
-        pos.X = first.Rotation.X + (second.Rotation.X-first.Rotation.X)*progress;
+        rot.X = first.Rotation.X + (second.Rotation.X-first.Rotation.X)*progress;
         
     } else {
 
-        pos.X = first.Rotation.X;
+        rot.X = first.Rotation.X;
     }
 
     if(second.ValidFields & PPDELTAUPDATED_ROT_Y){
 
-        pos.Y = first.Rotation.Y + (second.Rotation.Y-first.Rotation.Y)*progress;
+        rot.Y = first.Rotation.Y + (second.Rotation.Y-first.Rotation.Y)*progress;
         
     } else {
 
-        pos.Y = first.Rotation.Y;
+        rot.Y = first.Rotation.Y;
     }
 
     if(second.ValidFields & PPDELTAUPDATED_ROT_Z){
 
-        pos.Z = first.Rotation.Z + (second.Rotation.Z-first.Rotation.Z)*progress;
+        rot.Z = first.Rotation.Z + (second.Rotation.Z-first.Rotation.Z)*progress;
         
     } else {
 
-        pos.Z = first.Rotation.Z;
+        rot.Z = first.Rotation.Z;
     }
 
     if(second.ValidFields & PPDELTAUPDATED_ROT_W){
 
-        pos.W = first.Rotation.W + (second.Rotation.W-first.Rotation.W)*progress;
+        rot.W = first.Rotation.W + (second.Rotation.W-first.Rotation.W)*progress;
         
     } else {
 
-        pos.W = first.Rotation.W;
+        rot.W = first.Rotation.W;
     }
 
     // Velocity
     if(second.ValidFields & PPDELTAUPDATED_VEL_X){
 
-        pos.X = first.Velocity.X + (second.Velocity.X-first.Velocity.X)*progress;
+        vel.X = first.Velocity.X + (second.Velocity.X-first.Velocity.X)*progress;
         
     } else {
 
-        pos.X = first.Velocity.X;
+        vel.X = first.Velocity.X;
     }
 
     if(second.ValidFields & PPDELTAUPDATED_VEL_Y){
 
-        pos.Y = first.Velocity.Y + (second.Velocity.Y-first.Velocity.Y)*progress;
+        vel.Y = first.Velocity.Y + (second.Velocity.Y-first.Velocity.Y)*progress;
         
     } else {
 
-        pos.Y = first.Velocity.Y;
+        vel.Y = first.Velocity.Y;
     }
 
     if(second.ValidFields & PPDELTAUPDATED_VEL_Z){
 
-        pos.Z = first.Velocity.Z + (second.Velocity.Z-first.Velocity.Z)*progress;
+        vel.Z = first.Velocity.Z + (second.Velocity.Z-first.Velocity.Z)*progress;
         
     } else {
 
-        pos.Z = first.Velocity.Z;
+        vel.Z = first.Velocity.Z;
     }
 
     // Torque
     if(second.ValidFields & PPDELTAUPDATED_TOR_X){
 
-        pos.X = first.Torque.X + (second.Torque.X-first.Torque.X)*progress;
+        tor.X = first.Torque.X + (second.Torque.X-first.Torque.X)*progress;
         
     } else {
 
-        pos.X = first.Torque.X;
+        tor.X = first.Torque.X;
     }
 
     if(second.ValidFields & PPDELTAUPDATED_TOR_Y){
 
-        pos.Y = first.Torque.Y + (second.Torque.Y-first.Torque.Y)*progress;
+        tor.Y = first.Torque.Y + (second.Torque.Y-first.Torque.Y)*progress;
         
     } else {
 
-        pos.Y = first.Torque.Y;
+        tor.Y = first.Torque.Y;
     }
 
     if(second.ValidFields & PPDELTAUPDATED_TOR_Z){
 
-        pos.Z = first.Torque.Z + (second.Torque.Z-first.Torque.Z)*progress;
+        tor.Z = first.Torque.Z + (second.Torque.Z-first.Torque.Z)*progress;
         
     } else {
 
-        pos.Z = first.Torque.Z;
+        tor.Z = first.Torque.Z;
     }
     
     UNIQUE_LOCK_THIS_OBJECT();

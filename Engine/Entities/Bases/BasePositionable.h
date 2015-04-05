@@ -63,10 +63,15 @@ namespace Leviathan{
         //! \exception ExceptionInvalidArgument when the packet format is invalid
         DLLEXPORT void ApplyPositionAndRotationFromPacket(sf::Packet &packet) THROWS;
 
+        //! \brief Interpolates between two states and sets this object's state to be between the states
+        DLLEXPORT void InterpolatePositionableState(PositionableRotationableDeltaState &first,
+            PositionableRotationableDeltaState &second, float progress);
+        
         //! \brief Loads position data into a BasePositionData
         //! \note This applies the values directly so if this returns false it is possible
         //! that the target has partially or entirely invalid data
         DLLEXPORT static bool LoadPositionFromPacketToHolder(sf::Packet &packet, BasePositionData &target);
+        
 
 	protected:
 		virtual void PosUpdated();

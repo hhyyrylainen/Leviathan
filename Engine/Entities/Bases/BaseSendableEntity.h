@@ -68,10 +68,15 @@ namespace Leviathan{
         ObjectInterpolation(shared_ptr<ObjectDeltaStateData> first, shared_ptr<ObjectDeltaStateData> second,
             int duration);
 
+        //! Invalid interpolation constructor
+        ObjectInterpolation();
+
         //! Move constructor
         ObjectInterpolation(ObjectInterpolation &&other);
         
         ObjectInterpolation(const ObjectInterpolation &other);
+
+        ObjectInterpolation& operator=(const ObjectInterpolation &other);
         
 
         //! The first state
@@ -274,6 +279,10 @@ namespace Leviathan{
         //! The tick on which the client state was last checked with the server
         //! any updates older than this will be ignored
         int LastVerifiedTick;
+
+        //! \todo Move this to a better place
+        //! True when this class is used on a client
+        static bool IsOnClient;
 
     private:
         

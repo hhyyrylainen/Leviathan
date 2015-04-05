@@ -71,8 +71,9 @@ namespace Leviathan{
 
 		virtual void AddDataToPacket(sf::Packet &packet);
 
-
+        //! The time step in seconds
 		float TimeStep;
+        
 		//! Pointer to the world
 		//! \warning This is NULL if this event is passed through a packet
 		void* GameWorldPtr;
@@ -110,7 +111,7 @@ namespace Leviathan{
 	public:
 		//! \brief Loads from a packet
 		DLLEXPORT ShowEventData(sf::Packet &packet);
-		//! \brief Creates a new PhysicsStartEventData
+
 		DLLEXPORT ShowEventData(bool shown);
 
 		virtual void AddDataToPacket(sf::Packet &packet);
@@ -125,7 +126,7 @@ namespace Leviathan{
 	public:
 		//! \brief Loads from a packet
 		DLLEXPORT IntegerEventData(sf::Packet &packet);
-		//! \brief Creates a new PhysicsStartEventData
+
 		DLLEXPORT IntegerEventData(int ticknumber);
 
 		virtual void AddDataToPacket(sf::Packet &packet);

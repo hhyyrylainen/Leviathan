@@ -27,6 +27,9 @@ DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_
         : 0), LastVerifiedTick(-1)
 {
 
+    if(NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT)
+        IsOnClient = true;
+    
 }
 
 DLLEXPORT Leviathan::BaseSendableEntity::~BaseSendableEntity(){
@@ -34,6 +37,8 @@ DLLEXPORT Leviathan::BaseSendableEntity::~BaseSendableEntity(){
     GUARD_LOCK_THIS_OBJECT();
     UpdateReceivers.clear();
 }
+
+bool BaseSendableEntity::IsOnClient = false;
 // ------------------------------------ //
 DLLEXPORT BASESENDABLE_ACTUAL_TYPE Leviathan::BaseSendableEntity::GetSendableType() const{
 
@@ -522,4 +527,16 @@ Leviathan::ObjectInterpolation::ObjectInterpolation(ObjectInterpolation &&other)
 {
     
 }
+
+ObjectInterpolation::ObjectInterpolation() : Duration(-1){
+    
+}
+
+ObjectInterpolation& ObjectInterpolation::operator=(const ObjectInterpolation &other){
+
+    Duration = other.Duration;
+    First = other.First;
+    Second = other.Second;
+}
+
 #endif //NETWORK_USE_SNAPSHOTS

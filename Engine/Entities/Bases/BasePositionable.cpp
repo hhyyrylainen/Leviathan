@@ -4,6 +4,7 @@
 #endif
 #include "BaseObject.h"
 #include "Exceptions.h"
+#include "../CommonStateObjects.h"
 using namespace Leviathan;
 // ------------------------------------ //
 BasePositionable::BasePositionable() : QuatRotation(Float4::IdentityQuaternion()), Position(Float3(0)){
@@ -178,4 +179,11 @@ DLLEXPORT bool Leviathan::BasePositionable::LoadPositionFromPacketToHolder(sf::P
     packet >> target.QuatRotation;
     
     return packet ? true: false;
+}
+// ------------------------------------ //
+DLLEXPORT void InterpolatePositionableState(PositionableRotationableDeltaState &first,
+    PositionableRotationableDeltaState &second, float progress)
+{
+
+    #error noooo
 }

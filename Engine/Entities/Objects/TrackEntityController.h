@@ -11,6 +11,7 @@
 #include "LocationNode.h"
 #include "Events/CallableObject.h"
 #include "Entities/Bases/BaseConstraintable.h"
+#include "../Bases/BaseTimedInterpolated.h"
 
 #define TRACKCONTROLLER_DEFAULT_APPLYFORCE		12.f
 
@@ -44,6 +45,7 @@ namespace Leviathan{ namespace Entity{
         
         //! Object delta state for TrackEntityController
         //! \todo Handle adding positions to tracks
+        //! \todo Should this be even interpolated on clients?
         class TrackControllerState : public ObjectDeltaStateData{
         public:
 
@@ -51,6 +53,8 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT TrackControllerState(int tick, sf::Packet &packet);
             
             DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) override;
+
+            DLLEXPORT bool FillMissingData(ObjectDeltaStateData &otherstate) override;
 
             int ReachedNode;
             float ChangeSpeed;
@@ -65,7 +69,12 @@ namespace Leviathan{ namespace Entity{
         
 
         // This class is used to create movement paths for entities //
-        class TrackEntityController : public BaseEntityController, public CallableObject, public BaseSendableEntity{
+        class TrackEntityController : public BaseEntityController, public CallableObject,
+#ifdef NETWORK_USE_SNAPSHOTS
+                                        public BaseTimedInterpolated,
+#endif //NETWORK_USE_SNAPSHOTS
+                                        public BaseSendableEntity
+        {
             
             friend BaseSendableEntity;
         public:
@@ -126,7 +135,8 @@ namespace Leviathan{ namespace Entity{
                 ObjectDeltaStateData* ourold, int tick) override;
 
 #else
-
+            DLLEXPORT bool SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second,
+                float progress);
 #endif //NETWORK_USE_SNAPSHOTS
 
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
@@ -138,6 +148,12 @@ namespace Leviathan{ namespace Entity{
         protected:
 
             TrackEntityController(int netid, GameWorld* world);
+
+#ifdef NETWORK_USE_SNAPSHOTS
+            void VerifySendableInterpolation() override;
+
+            bool OnInterpolationFinished() override;
+#endif //NETWORK_USE_SNAPSHOTS
             
             //! \brief Internal function for making all data valid
             //!

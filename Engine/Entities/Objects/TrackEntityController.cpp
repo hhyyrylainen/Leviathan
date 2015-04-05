@@ -73,9 +73,25 @@ DLLEXPORT int Leviathan::Entity::TrackEntityController::OnEvent(Event** pEvent){
 		if(dataptr->GameWorldPtr != static_cast<void*>(OwnedByWorld)){
 			return 0;
 		}
+
+#ifdef NETWORK_USE_SNAPSHOTS
+
+        if(IsOnClient){
+
+            // Client will only rely on snapshots //
+            UpdateInterpolation(dataptr->TimeStep*1000);
+            
+        } else {
+
+            UpdateControlledPositions(dataptr->TimeStep);
+        }
+        
+#else
         
 		// This object's parent world is being updated //
 		UpdateControlledPositions(dataptr->TimeStep);
+
+#endif //NETWORK_USE_SNAPSHOTS
 		return 1;
         
 	} else if((*pEvent)->GetType() == EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE){
@@ -621,6 +637,96 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityControl
     }
     
 }
+// ------------------------------------ //
+#ifdef NETWORK_USE_SNAPSHOTS
+void TrackEntityController::VerifySendableInterpolation(){
+
+    {
+        // Skip if we are already interpolating //
+        GUARD_LOCK_THIS_OBJECT();
+        
+        if(IsCurrentlyInterpolating())
+            return;
+    }
+
+    // This way we don't have to write the implementation twice //
+    OnInterpolationFinished();
+}
+
+bool TrackEntityController::OnInterpolationFinished(){
+
+    // Fetch an interpolation //
+    try{
+        
+        const auto& interpolation = GetAndPopNextInterpolation();
+
+        GUARD_LOCK_THIS_OBJECT();
+        SetCurrentInterpolation(interpolation);
+        
+        return true;
+
+    } catch(const InvalidState&){
+
+        return false;
+    }
+}
+
+DLLEXPORT bool TrackEntityController::SetStateToInterpolated(ObjectDeltaStateData &first,
+    ObjectDeltaStateData &second, float progress)
+{
+
+    const TrackControllerState& from = static_cast<const TrackControllerState&>(first);
+    const TrackControllerState& to = static_cast<const TrackControllerState&>(second);
+
+    if(progress < 0.f)
+        progress = 0.f;
+
+    if(progress > 1.f)
+        progress = 1.f;
+    
+    GUARD_LOCK_THIS_OBJECT();
+
+    if(to.ValidFields & TRACKSTATE_UPDATED_SPEED){
+
+        ChangeSpeed = from.ChangeSpeed*(1.f-progress) + progress*to.ChangeSpeed;
+        
+    } else {
+
+        ChangeSpeed = from.ChangeSpeed;
+    }
+
+    if(to.ValidFields & TRACKSTATE_UPDATED_NODE && from.ReachedNode != to.ReachedNode){
+
+        // Node has changed //
+        const float fromtotalvalue = from.ReachedNode+from.NodeProgress;
+
+        const float tototalvalue = to.ReachedNode +
+            (to.ValidFields & TRACKSTATE_UPDATED_PROGRESS ? to.NodeProgress : 0);
+
+        const float mixed = fromtotalvalue*(1.f-progress) + tototalvalue*progress;
+
+        ReachedNode = floor(mixed);
+        NodeProgress = mixed-ReachedNode;
+        
+    } else {
+
+        ReachedNode = from.ReachedNode;
+
+        if(to.ValidFields & TRACKSTATE_UPDATED_PROGRESS){
+            
+            NodeProgress = from.NodeProgress*(1.f-progress) + progress*to.NodeProgress;
+            
+        } else {
+
+            NodeProgress = from.NodeProgress;
+        }
+    }
+    
+    _SanityCheckNodeProgress();
+    
+    return true;
+}
+#endif //NETWORK_USE_SNAPSHOTS
 // ------------------ TrackControllerState ------------------ //
 DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(int tick, int reached,
     float speed, float progress) :
@@ -692,8 +798,64 @@ DLLEXPORT void Leviathan::Entity::TrackControllerState::CreateUpdatePacket(Objec
     if(ValidFields & TRACKSTATE_UPDATED_PROGRESS)
         packet << NodeProgress;
 }
+// ------------------------------------ //
+DLLEXPORT bool TrackControllerState::FillMissingData(ObjectDeltaStateData &otherstate){
+    
+    const TrackControllerState &other = static_cast<TrackControllerState&>(otherstate);
+
+    if(ValidFields == 0){
+        
+        // Copy everything as nothing is valid //
+        ReachedNode = other.ReachedNode;
+        ChangeSpeed = other.ChangeSpeed;
+        NodeProgress = other.NodeProgress;
 
 
+        return other.ValidFields == TRACKSTATE_UPDATED_ALL;
+        
+    } else if(ValidFields == TRACKSTATE_UPDATED_ALL){
+        
+        // Already contains everything //
+        return true;
+    }
+
+    bool allsucceeded = true;
+
+    // ReachedNode
+    if(!(ValidFields & TRACKSTATE_UPDATED_NODE)){
+        if(other.ValidFields & TRACKSTATE_UPDATED_NODE){
+            
+            ReachedNode = other.ReachedNode;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    // ChangeSpeed
+    if(!(ValidFields & TRACKSTATE_UPDATED_SPEED)){
+        if(other.ValidFields & TRACKSTATE_UPDATED_SPEED){
+            
+            ChangeSpeed = other.ChangeSpeed;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    // NodeProgress
+    if(!(ValidFields & TRACKSTATE_UPDATED_PROGRESS)){
+        if(other.ValidFields & TRACKSTATE_UPDATED_PROGRESS){
+            
+            NodeProgress = other.NodeProgress;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    return allsucceeded;
+}
 
 
 

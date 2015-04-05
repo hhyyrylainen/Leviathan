@@ -593,16 +593,6 @@ DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessa
 	return false;
 }
 // ------------------------------------ //
-void Leviathan::Entity::Brush::_GetCurrentActualPosition(Float3 &pos){
-
-    GetPos(pos);
-}
-        
-void Leviathan::Entity::Brush::_GetCurrentActualRotation(Float4 &rot){
-
-    GetOrientation(rot);
-}
-// ------------------------------------ //
 void Leviathan::Entity::Brush::_SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr){
     _SendNewConstraint(static_cast<BaseConstraintable*>(this), other, ptr);
 }
@@ -611,7 +601,7 @@ BaseConstraintable* Leviathan::Entity::Brush::BasePhysicsGetConstraintable(){
     return static_cast<BaseConstraintable*>(this);
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CaptureState(int tick){
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(int tick){
 #ifdef NETWORK_USE_SNAPSHOTS
     return shared_ptr<ObjectDeltaStateData>(
         PositionablePhysicalDeltaState::CaptureState(*this, tick).release());
@@ -628,11 +618,21 @@ DLLEXPORT void Leviathan::Entity::Brush::VerifyOldState(ObjectDeltaStateData* se
     CheckOldPhysicalState(static_cast<PositionablePhysicalDeltaState*>(serversold),
         static_cast<PositionablePhysicalDeltaState*>(ourold), tick, this);
 }
-#endif //NETWORK_USE_SNAPSHOTS
+
+void Leviathan::Entity::Brush::_GetCurrentActualPosition(Float3 &pos){
+
+    GetPos(pos);
+}
+        
+void Leviathan::Entity::Brush::_GetCurrentActualRotation(Float4 &rot){
+
+    GetOrientation(rot);
+}
 
 void Leviathan::Entity::Brush::OnBeforeResimulateStateChanged(){
     StartInterpolating(GetPos(), GetOrientation());
 }
+#endif //NETWORK_USE_SNAPSHOTS
 
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateStateFromPacket(
     int tick, sf::Packet &packet) const
@@ -644,7 +644,7 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateState
         return make_shared<PositionableRotationableDeltaState>(tick, packet);
 #else
         return make_shared<PositionablePhysicalDeltaState>(tick, packet);
-#enfid //NETWORK_USE_SNAPSHOTS
+#endif //NETWORK_USE_SNAPSHOTS
         
     } catch(const InvalidArgument &e){
 
@@ -708,8 +708,8 @@ DLLEXPORT int Brush::OnGenericEvent(GenericEvent** pevent){
 
 DLLEXPORT bool Brush::SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second, float progress){
 
-    InterpolatePhysicalState(static_cast<PositionablePhysicalDeltaState&>(first),
-        static_cast<PositionablePhysicalDeltaState&>(second), progress);
+    InterpolatePositionableState(static_cast<PositionableRotationableDeltaState&>(first),
+        static_cast<PositionableRotationableDeltaState&>(second), progress);
     
     return true;
 }

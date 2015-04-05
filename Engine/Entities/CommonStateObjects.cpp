@@ -209,7 +209,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
     bool allsucceeded = true;
 
     // Position
-    if(ValidFields & PPDELTAUPDATED_POS_X){
+    if(!(ValidFields & PPDELTAUPDATED_POS_X)){
         if(other.ValidFields & PPDELTAUPDATED_POS_X){
             
             Position.X = other.Position.X;
@@ -219,7 +219,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
         }
     }
 
-    if(ValidFields & PPDELTAUPDATED_POS_Y){
+    if(!(ValidFields & PPDELTAUPDATED_POS_Y)){
         if(other.ValidFields & PPDELTAUPDATED_POS_Y){
             
             Position.Y = other.Position.Y;
@@ -229,7 +229,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
         }
     }
     
-    if(ValidFields & PPDELTAUPDATED_POS_Z){
+    if(!(ValidFields & PPDELTAUPDATED_POS_Z)){
         if(other.ValidFields & PPDELTAUPDATED_POS_Z){
             
             Position.Z = other.Position.Z;
@@ -240,7 +240,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
     }
 
     // Rotation
-    if(ValidFields & PPDELTAUPDATED_ROT_X){
+    if(!(ValidFields & PPDELTAUPDATED_ROT_X)){
         if(other.ValidFields & PPDELTAUPDATED_ROT_X){
             
             Rotation.X = other.Rotation.X;
@@ -250,7 +250,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
         }
     }
 
-    if(ValidFields & PPDELTAUPDATED_ROT_Y){
+    if(!(ValidFields & PPDELTAUPDATED_ROT_Y)){
         if(other.ValidFields & PPDELTAUPDATED_ROT_Y){
             
             Rotation.Y = other.Rotation.Y;
@@ -260,7 +260,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
         }
     }
     
-    if(ValidFields & PPDELTAUPDATED_ROT_Z){
+    if(!(ValidFields & PPDELTAUPDATED_ROT_Z)){
         if(other.ValidFields & PPDELTAUPDATED_ROT_Z){
             
             Rotation.Z = other.Rotation.Z;
@@ -270,7 +270,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
         }
     }
 
-    if(ValidFields & PPDELTAUPDATED_ROT_W){
+    if(!(ValidFields & PPDELTAUPDATED_ROT_W)){
         if(other.ValidFields & PPDELTAUPDATED_ROT_W){
             
             Rotation.W = other.Rotation.W;
@@ -281,7 +281,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
     }
 
     // Velocity
-    if(ValidFields & PPDELTAUPDATED_VEL_X){
+    if(!(ValidFields & PPDELTAUPDATED_VEL_X)){
         if(other.ValidFields & PPDELTAUPDATED_VEL_X){
             
             Position.X = other.Position.X;
@@ -291,7 +291,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
         }
     }
 
-    if(ValidFields & PPDELTAUPDATED_VEL_Y){
+    if(!(ValidFields & PPDELTAUPDATED_VEL_Y)){
         if(other.ValidFields & PPDELTAUPDATED_VEL_Y){
             
             Position.Y = other.Position.Y;
@@ -301,7 +301,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
         }
     }
     
-    if(ValidFields & PPDELTAUPDATED_VEL_Z){
+    if(!(ValidFields & PPDELTAUPDATED_VEL_Z)){
         if(other.ValidFields & PPDELTAUPDATED_VEL_Z){
             
             Position.Z = other.Position.Z;
@@ -312,7 +312,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
     }
 
     // Torque
-    if(ValidFields & PPDELTAUPDATED_TOR_X){
+    if(!(ValidFields & PPDELTAUPDATED_TOR_X)){
         if(other.ValidFields & PPDELTAUPDATED_TOR_X){
             
             Torque.X = other.Torque.X;
@@ -322,7 +322,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
         }
     }
 
-    if(ValidFields & PPDELTAUPDATED_TOR_Y){
+    if(!(ValidFields & PPDELTAUPDATED_TOR_Y)){
         if(other.ValidFields & PPDELTAUPDATED_TOR_Y){
             
             Torque.Y = other.Torque.Y;
@@ -332,7 +332,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
         }
     }
     
-    if(ValidFields & PPDELTAUPDATED_TOR_Z){
+    if(!(ValidFields & PPDELTAUPDATED_TOR_Z)){
         if(other.ValidFields & PPDELTAUPDATED_TOR_Z){
             
             Torque.Z = other.Torque.Z;
@@ -345,3 +345,35 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
     return allsucceeded;
 }
 // ------------------ PositionableRotationableDeltaState ------------------ //
+DLLEXPORT PositionableRotationableDeltaState::PositionableRotationableDeltaState(int tick,
+    const Float3 &position, const Float4 &rotation) :
+    ObjectDeltaStateData(tick), Position(position), Rotation(rotation)
+{
+
+}
+        
+DLLEXPORT PositionableRotationableDeltaState::PositionableRotationableDeltaState(int tick,
+    sf::Packet &packet) :
+    ObjectDeltaStateData(tick)
+{
+
+    #error program this
+}
+
+DLLEXPORT PositionableRotationableDeltaState::~PositionableRotationableDeltaState(){
+
+}
+// ------------------------------------ //
+DLLEXPORT void PositionableRotationableDeltaState::CreateUpdatePacket(ObjectDeltaStateData* olderstate,
+    sf::Packet &packet)
+{
+
+    
+}
+        
+DLLEXPORT bool PositionableRotationableDeltaState::FillMissingData(ObjectDeltaStateData &otherstate){
+
+    
+}
+
+

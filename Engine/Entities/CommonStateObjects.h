@@ -102,7 +102,13 @@ namespace Leviathan{
     //! \brief State for objects that only require location and rotation data to get to clients
     class PositionableRotationableDeltaState : public ObjectDeltaStateData{
     public:
+
+        DLLEXPORT PositionableRotationableDeltaState(int tick, const Float3 &position,
+            const Float4 &rotation);
         
+        //! \see CreateUpdatePacket
+        DLLEXPORT PositionableRotationableDeltaState(int tick, sf::Packet &packet);
+        DLLEXPORT ~PositionableRotationableDeltaState();
         
         //! \brief Templated creation function for all classes that inherit BasePotitionable
         //! \param tick The world tick to place in the resulting state

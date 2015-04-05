@@ -51,6 +51,7 @@ namespace Leviathan{
     class BasePhysicsObject;
 
     class PositionablePhysicalDeltaState;
+    class PositionableRotationableDeltaState;
 
     // Exceptions //
     class Exception;

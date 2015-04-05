@@ -360,16 +360,6 @@ DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessag
 	return false;
 }
 // ------------------------------------ //
-void Leviathan::Entity::Prop::_GetCurrentActualPosition(Float3 &pos){
-
-    GetPos(pos);
-}
-        
-void Leviathan::Entity::Prop::_GetCurrentActualRotation(Float4 &rot){
-
-    GetOrientation(rot);
-}
-// ------------------------------------ //
 bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(sf::Packet &packet){
 
     BasePositionData posdata;
@@ -483,11 +473,21 @@ DLLEXPORT void Leviathan::Entity::Prop::VerifyOldState(ObjectDeltaStateData* ser
     CheckOldPhysicalState(static_cast<PositionablePhysicalDeltaState*>(serversold),
         static_cast<PositionablePhysicalDeltaState*>(ourold), tick, this);
 }
-#endif //NETWORK_USE_SNAPSHOTS
 
 void Leviathan::Entity::Prop::OnBeforeResimulateStateChanged(){
     StartInterpolating(GetPos(), GetOrientation());
 }
+
+void Leviathan::Entity::Prop::_GetCurrentActualPosition(Float3 &pos){
+
+    GetPos(pos);
+}
+        
+void Leviathan::Entity::Prop::_GetCurrentActualRotation(Float4 &rot){
+
+    GetOrientation(rot);
+}
+#endif //NETWORK_USE_SNAPSHOTS
 
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CreateStateFromPacket(int tick, sf::Packet &packet)
     const
@@ -498,7 +498,7 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CreateStateF
         return make_shared<PositionableRotationableDeltaState>(tick, packet);
 #else
         return make_shared<PositionablePhysicalDeltaState>(tick, packet);
-#enfid //NETWORK_USE_SNAPSHOTS
+#endif //NETWORK_USE_SNAPSHOTS
         
     } catch(const Exception &e){
 
@@ -562,8 +562,8 @@ DLLEXPORT int Prop::OnGenericEvent(GenericEvent** pevent){
 
 DLLEXPORT bool Prop::SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second, float progress){
 
-    InterpolatePhysicalState(static_cast<PositionablePhysicalDeltaState&>(first),
-        static_cast<PositionablePhysicalDeltaState&>(second), progress);
+    InterpolatePositionableState(static_cast<PositionableRotationableDeltaState&>(first),
+        static_cast<PositionableRotationableDeltaState&>(second), progress);
     
     return true;
 }

@@ -178,66 +178,25 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 	int tmpival;
 
 	// Get our data from it //
-	if(!(packet >> Slot)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> tmpival)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
+	packet >> Slot >> tmpival;
 
 	PlayerType = static_cast<PLAYERTYPE>(tmpival);
 
-	if(!(packet >> PlayerNumber)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> NetworkedInputID)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-	
-	if(!(packet >> ControlIdentifier)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> tmpival)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
+	packet >> PlayerNumber  >> NetworkedInputID  >> ControlIdentifier  >> tmpival;
 
 	ControlType = static_cast<PLAYERCONTROLS>(tmpival);
 
-	if(!(packet >> PlayerControllerID)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> Colour.X >> Colour.Y >> Colour.Z >> Colour.W)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> PlayerID)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> Score)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
+	packet >> PlayerControllerID;
+    packet >> Colour.X >> Colour.Y >> Colour.Z >> Colour.W;
+    packet >> PlayerID  >> Score;
+	
 
 	bool wantedsplit;
 
-	if(!(packet >> wantedsplit)){
+	packet >> wantedsplit;
 
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
+    if(!packet)
+        throw InvalidArgument("packet format for PlayerSlot is invalid");
 
 	// Check do we need to change split //
 	if(wantedsplit && !SplitSlot){
@@ -356,8 +315,8 @@ void Pong::PlayerSlot::_ResetNetworkInput(){
 }
 
 // ------------------ PlayerList ------------------ //
-Pong::PlayerList::PlayerList(boost::function<void (PlayerList*)> callback, size_t playercount /*= 4*/) : SyncedResource(L"PlayerList"), 
-	CallbackFunc(callback), GamePlayers(4)
+Pong::PlayerList::PlayerList(boost::function<void (PlayerList*)> callback, size_t playercount /*= 4*/) :
+    SyncedResource(L"PlayerList"), CallbackFunc(callback), GamePlayers(4)
 {
 
 	// Fill default player data //
@@ -378,7 +337,7 @@ void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet) THROWS{
 
 	if(!(packet >> vecsize)){
 
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("packet format for PlayerSlot is invalid");
 	}
 
 	if(vecsize != GamePlayers.size()){
@@ -436,8 +395,7 @@ void Pong::PlayerList::OnValueUpdated(){
 
 PlayerSlot* Pong::PlayerList::GetSlot(size_t index) THROWS{
 	if(index >= GamePlayers.size())
-		throw Leviathan::ExceptionInvalidArgument(L"index is out of range", GamePlayers.size(), __WFUNCTION__,
-            L"index", Convert::ToWstring(index));
+		throw InvalidArgument("player index is out of range");
 
 	return GamePlayers[index];
 }

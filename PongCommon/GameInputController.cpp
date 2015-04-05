@@ -11,7 +11,7 @@
 #include "PongServerNetworking.h"
 #endif // PONG_VERSION
 using namespace Pong;
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "PlayerSlot.h"
 #include "Networking/NetworkServerInterface.h"
 #include "Networking/NetworkedInput.h"
@@ -390,7 +390,7 @@ void Pong::PongNInputter::OnLoadCustomFullDataFrompacket(sf::Packet &packet){
 
 	if(!(packet >> tmpgroup)){
 
-		throw ExceptionInvalidArgument(L"invalid pong control packet", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid pong control packet");
 	}
 
 	CtrlGroup = static_cast<PLAYERCONTROLS>(tmpgroup);
@@ -398,7 +398,7 @@ void Pong::PongNInputter::OnLoadCustomFullDataFrompacket(sf::Packet &packet){
 
 	if(!(packet >> *reinterpret_cast<sf::Int8*>(&ControlStates))){
 
-		throw ExceptionInvalidArgument(L"invalid pong control packet", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid pong control packet");
 	}
 }
 // ------------------------------------ //
@@ -413,7 +413,7 @@ void Pong::PongNInputter::OnLoadCustomUpdateDataFrompacket(sf::Packet &packet){
 
 	if(!(packet >> *reinterpret_cast<sf::Int8*>(&ChangedKeys))){
 
-		throw ExceptionInvalidArgument(L"invalid pong control packet", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid pong control packet");
 	}
 }
 // ------------------------------------ //

@@ -675,9 +675,9 @@ bool Pong::PongGame::SendServerCommand(const string &command){
 		try{
 			clientinterface->SendCommandStringToServer(command);
 
-		} catch(const ExceptionBase &e){
+		} catch(const Exception &e){
 
-			Logger::Get()->Warning(L"Failed to send command to the server: ");
+			Logger::Get()->Warning("Failed to send command to the server: ");
 			e.PrintToLog();
 			return false;
 		}

@@ -83,9 +83,6 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseConstraintable::_SendCreatedConstraint
             void _SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr) override;
 
-            //! \copydoc BasePhysicsObject::OnBeforeResimulateStateChanged
-            void OnBeforeResimulateStateChanged() override;
-
 #ifdef NETWORK_USE_SNAPSHOTS
             void VerifySendableInterpolation() override;
 
@@ -97,6 +94,9 @@ namespace Leviathan{ namespace Entity{
         
             //! \copydoc BaseInterpolated::_GetCurrentActualRotation
             void _GetCurrentActualRotation(Float4 &rot) override;
+
+            //! \copydoc BasePhysicsObject::OnBeforeResimulateStateChanged
+            void OnBeforeResimulateStateChanged() override;
 
 #endif //NETWORK_USE_SNAPSHOTS
             

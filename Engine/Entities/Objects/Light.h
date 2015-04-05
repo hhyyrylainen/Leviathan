@@ -12,7 +12,7 @@
 
 namespace Leviathan{ namespace Entity{
 
-	class Light : public BaseObject, public BasePositionable{
+	class Light : public virtual BaseObject, public BasePositionable{
 	public:
 		DLLEXPORT Light(GameWorld* world);
 		DLLEXPORT virtual ~Light();

@@ -762,8 +762,6 @@ DLLEXPORT void BasePhysicsObject::InterpolatePhysicalState(PositionablePhysicalD
         tor.Z = first.Torque.Z;
     }
     
-    UNIQUE_LOCK_THIS_OBJECT();
-
     SetPos(pos);
     SetOrientation(rot);
     SetBodyVelocity(vel);

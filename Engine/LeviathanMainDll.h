@@ -72,7 +72,11 @@ using Leviathan::BaseObject;
 using Leviathan::GameWorld;
 using Leviathan::ObjectPtr;
 
-using Leviathan::ExceptionInvalidArgument;
+using Leviathan::Exception;
+using Leviathan::InvalidArgument;
+using Leviathan::InvalidType;
+using Leviathan::InvalidState;
+using Leviathan::InvalidAccess;
 
 
 #endif

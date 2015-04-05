@@ -68,6 +68,9 @@ DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaSt
     
     if(ValidFields & PPDELTAUPDATED_TOR_Z)
         packet >> Torque.Z;
+
+    if(!packet)
+        throw InvalidArgument("invalid packet for positionable delta state");
 }
 
 DLLEXPORT Leviathan::PositionablePhysicalDeltaState::~PositionablePhysicalDeltaState(){
@@ -351,13 +354,41 @@ DLLEXPORT PositionableRotationableDeltaState::PositionableRotationableDeltaState
 {
 
 }
-        
+
 DLLEXPORT PositionableRotationableDeltaState::PositionableRotationableDeltaState(int tick,
     sf::Packet &packet) :
     ObjectDeltaStateData(tick)
 {
+    packet >> ValidFields;
 
-    #error program this
+    if(!packet)
+        throw InvalidArgument("invalid packet for positionable rotationable delta state");
+    
+    // Position
+    if(ValidFields & PRDELTAUPDATED_POS_X)
+        packet >> Position.X;
+
+    if(ValidFields & PRDELTAUPDATED_POS_Y)
+        packet >> Position.Y;
+    
+    if(ValidFields & PRDELTAUPDATED_POS_Z)
+        packet >> Position.Z;
+
+    // Rotation
+    if(ValidFields & PRDELTAUPDATED_ROT_X)
+        packet >> Rotation.X;
+
+    if(ValidFields & PRDELTAUPDATED_ROT_Y)
+        packet >> Rotation.Y;
+    
+    if(ValidFields & PRDELTAUPDATED_ROT_Z)
+        packet >> Rotation.Z;
+    
+    if(ValidFields & PRDELTAUPDATED_ROT_W)
+        packet >> Rotation.W;
+
+    if(!packet)
+        throw InvalidArgument("invalid packet for positionable rotationable delta state");
 }
 
 DLLEXPORT PositionableRotationableDeltaState::~PositionableRotationableDeltaState(){
@@ -367,13 +398,163 @@ DLLEXPORT PositionableRotationableDeltaState::~PositionableRotationableDeltaStat
 DLLEXPORT void PositionableRotationableDeltaState::CreateUpdatePacket(ObjectDeltaStateData* olderstate,
     sf::Packet &packet)
 {
-
+    ValidFields = 0;
     
+    // Check which parts have changed //
+    if(!olderstate){
+
+        // When comparing against NULL state everything is updated //
+        ValidFields = PRDELTA_ALL_UPDATED;
+        
+    } else {
+
+        auto other = static_cast<PositionableRotationableDeltaState*>(olderstate);
+        
+        // Position
+        if(Position.X != other->Position.X)
+            ValidFields |= PRDELTAUPDATED_POS_X;
+
+        if(Position.Y != other->Position.Y)
+            ValidFields |= PRDELTAUPDATED_POS_Y;
+
+        if(Position.Z != other->Position.Z)
+            ValidFields |= PRDELTAUPDATED_POS_Z;
+
+        // Rotation
+        if(Rotation.X != other->Rotation.X)
+            ValidFields |= PRDELTAUPDATED_ROT_X;
+
+        if(Rotation.Y != other->Rotation.Y)
+            ValidFields |= PRDELTAUPDATED_ROT_Y;
+
+        if(Rotation.Z != other->Rotation.Z)
+            ValidFields |= PRDELTAUPDATED_ROT_Z;
+
+        if(Rotation.W != other->Rotation.W)
+            ValidFields |= PRDELTAUPDATED_ROT_W;
+    }
+
+    packet << ValidFields;
+
+    // Add the changed data to the packet //
+    // Position
+    if(ValidFields & PRDELTAUPDATED_POS_X)
+        packet << Position.X;
+
+    if(ValidFields & PRDELTAUPDATED_POS_Y)
+        packet << Position.Y;
+    
+    if(ValidFields & PRDELTAUPDATED_POS_Z)
+        packet << Position.Z;
+
+    // Rotation
+    if(ValidFields & PRDELTAUPDATED_ROT_X)
+        packet << Rotation.X;
+
+    if(ValidFields & PRDELTAUPDATED_ROT_Y)
+        packet << Rotation.Y;
+    
+    if(ValidFields & PRDELTAUPDATED_ROT_Z)
+        packet << Rotation.Z;
+
+    if(ValidFields & PRDELTAUPDATED_ROT_W)
+        packet << Rotation.W;
 }
         
 DLLEXPORT bool PositionableRotationableDeltaState::FillMissingData(ObjectDeltaStateData &otherstate){
 
+    const PositionableRotationableDeltaState &other =
+        static_cast<PositionableRotationableDeltaState&>(otherstate);
+
+    if(ValidFields == 0){
+
+        // Copy everything as nothing is valid //
+        Position = other.Position;
+        Rotation = other.Rotation;
+
+        return other.ValidFields == PRDELTA_ALL_UPDATED;
+        
+    } else if(ValidFields == PRDELTA_ALL_UPDATED){
+        
+        // Already contains everything //
+        return true;
+    }
+
+    bool allsucceeded = true;
+
+    // Position
+    if(!(ValidFields & PRDELTAUPDATED_POS_X)){
+        if(other.ValidFields & PRDELTAUPDATED_POS_X){
+            
+            Position.X = other.Position.X;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    if(!(ValidFields & PRDELTAUPDATED_POS_Y)){
+        if(other.ValidFields & PRDELTAUPDATED_POS_Y){
+            
+            Position.Y = other.Position.Y;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
     
+    if(!(ValidFields & PRDELTAUPDATED_POS_Z)){
+        if(other.ValidFields & PRDELTAUPDATED_POS_Z){
+            
+            Position.Z = other.Position.Z;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    // Rotation
+    if(!(ValidFields & PRDELTAUPDATED_ROT_X)){
+        if(other.ValidFields & PRDELTAUPDATED_ROT_X){
+            
+            Rotation.X = other.Rotation.X;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    if(!(ValidFields & PRDELTAUPDATED_ROT_Y)){
+        if(other.ValidFields & PRDELTAUPDATED_ROT_Y){
+            
+            Rotation.Y = other.Rotation.Y;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+    
+    if(!(ValidFields & PRDELTAUPDATED_ROT_Z)){
+        if(other.ValidFields & PRDELTAUPDATED_ROT_Z){
+            
+            Rotation.Z = other.Rotation.Z;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    if(!(ValidFields & PRDELTAUPDATED_ROT_W)){
+        if(other.ValidFields & PRDELTAUPDATED_ROT_W){
+            
+            Rotation.W = other.Rotation.W;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+    
+    return allsucceeded;
 }
 
 

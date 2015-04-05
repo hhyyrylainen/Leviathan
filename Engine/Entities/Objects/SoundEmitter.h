@@ -13,7 +13,7 @@
 
 namespace Leviathan{ namespace Entity{
 
-	class SoundEmitter : public BaseObject, public BasePositionable{
+	class SoundEmitter : public virtual BaseObject, public BasePositionable{
 	public:
 		DLLEXPORT SoundEmitter();
 		DLLEXPORT ~SoundEmitter();

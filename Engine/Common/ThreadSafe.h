@@ -28,6 +28,13 @@ namespace Leviathan{
 #define UNIQUE_LOCK_THIS_OBJECT()						UniqueObjectLock lockit(this->ObjectsLock);
 #define GUARD_LOCK_BASIC(x)                             BasicLockType lock(x);
 
+    // Individual lock objects //
+    using Mutex = boost::mutex;
+    using RecursiveMutex = boost::recursive_mutex;
+    using Lock = boost::unique_lock<boost::mutex>;
+    using RecursiveLock = boost::strict_lock<boost::recursive_mutex>;
+    
+
 	//! \brief Allows the inherited object to be locked
 	class ThreadSafe{
 	public:

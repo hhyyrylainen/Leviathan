@@ -132,7 +132,7 @@ namespace Leviathan{
 
 	protected:
 
-		shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>> LockSocketForUse();
+		Lock LockSocketForUse();
 
 		// Closes the socket //
 		void _ReleaseSocket();
@@ -154,9 +154,14 @@ namespace Leviathan{
 		// ------------------------------------ //
 
 		// Internal listing of all connections //
+
+        Mutex ConnectionsToUpdateMutex;
 		std::vector<ConnectionInfo*> ConnectionsToUpdate;
+
+        Mutex ConnectionsToTerminateMutex;
 		std::vector<ConnectionInfo*> ConnectionsToTerminate;
 
+        Mutex AutoOpenedConnectionsMutex;
 		std::vector<shared_ptr<ConnectionInfo>> AutoOpenedConnections;
 
 		NETWORKED_TYPE AppType;
@@ -170,7 +175,7 @@ namespace Leviathan{
 		GameSpecificPacketHandler* _GameSpecificPacketHandler;
 
 		// Used to control the locking of the socket //
-		boost::basic_lockable_adapter<boost::recursive_mutex> SocketMutex;
+		Mutex SocketMutex;
 
 		// The master server list //
 		std::vector<shared_ptr<wstring>> MasterServers;
@@ -192,14 +197,6 @@ namespace Leviathan{
         bool UpdaterThreadStop;
 
         boost::condition_variable_any NotifyTemporaryUpdater;
-
-        //! Mutex that needs to belocked while changing ConnectionsToTerminate or ConnectionsToUpdate or any other
-        //! connection list
-        boost::recursive_mutex ConnectionListMutex;
-
-        //! Mutex which needs to be locked when deleting ConnectionInfo objects or trying to keep them from being
-        //! destroyed. Needs to be locked after ConnectionListMutex
-        boost::mutex ConnectionDestroyMutex;
 
 		wstring MasterServerMustPassIdentification;
 

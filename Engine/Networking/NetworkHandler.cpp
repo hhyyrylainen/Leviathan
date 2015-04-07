@@ -3,20 +3,20 @@
 #ifndef LEVIATHAN_NETWORKHANDLER
 #include "NetworkHandler.h"
 #endif
-#include "FileSystem.h"
-#include "ObjectFiles/ObjectFile.h"
-#include "ObjectFiles/ObjectFileProcessor.h"
-#include "SFML/Network/Http.hpp"
-#include "NetworkRequest.h"
-#include "NetworkResponse.h"
 #include "Application/GameConfiguration.h"
-#include "Utility/ComplainOnce.h"
 #include "ConnectionInfo.h"
-#include "RemoteConsole.h"
-#include "SyncedVariables.h"
+#include "FileSystem.h"
 #include "GameSpecificPacketHandler.h"
 #include "Iterators/StringIterator.h"
+#include "NetworkRequest.h"
+#include "NetworkResponse.h"
+#include "ObjectFiles/ObjectFile.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "RemoteConsole.h"
+#include "SFML/Network/Http.hpp"
+#include "SyncedVariables.h"
 #include "Threading/ThreadingManager.h"
+#include "Utility/ComplainOnce.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler) 
@@ -54,7 +54,8 @@ NetworkHandler* Leviathan::NetworkHandler::instance = NULL;
 NetworkInterface* Leviathan::NetworkHandler::interfaceinstance = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &info){
-	GUARD_LOCK_THIS_OBJECT();
+
+    GUARD_LOCK_THIS_OBJECT();
 
 	MasterServerMustPassIdentification = info.MasterServerIdentificationString;
 
@@ -121,42 +122,46 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::Release(){
-	GUARD_LOCK_THIS_OBJECT();
-
-	CloseMasterServerConnection = true;
-
-	// Kill master server connection //
-	//MasterServerConnectionThread.join();
-
-	// Notify master server connection kill //
-	if(MasterServerConnection){
-
-		MasterServerConnection->Release();
-	}
-
+    
     {
+        GUARD_LOCK_THIS_OBJECT();
 
-        boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
-        
-        // Close all connections //
-        for(size_t i = 0; i < AutoOpenedConnections.size(); i++){
+        CloseMasterServerConnection = true;
 
-            AutoOpenedConnections[i]->Release();
+        // Kill master server connection //
+
+        // Notify master server connection kill //
+        if(MasterServerConnection){
+
+            MasterServerConnection->Release();
         }
 
-        MasterServerConnectionThread.join();
-        MasterServerConnection.reset();
-        AutoOpenedConnections.clear();
+        {
+            {
+                Lock lock(AutoOpenedConnectionsMutex);
+        
+                // Close all connections //
+                for(size_t i = 0; i < AutoOpenedConnections.size(); i++){
+
+                    AutoOpenedConnections[i]->Release();
+                }
+
+                AutoOpenedConnections.clear();
+            }
+
+            MasterServerConnectionThread.join();
+            MasterServerConnection.reset();
+        }
+    
+        // This might have been left on by accident
+        StopOwnUpdaterThread();
+
+        // Set the static instance to nothing //
+        instance = NULL;
 
     }
     
-    // This might have been left on by accident
-    StopOwnUpdaterThread();
-
-	_ReleaseSocket();
-
-    // Set the static instance to nothing //
-    instance = NULL;
+    _ReleaseSocket();
 }
 
 void Leviathan::NetworkHandler::_ReleaseSocket(){
@@ -168,6 +173,8 @@ void Leviathan::NetworkHandler::_ReleaseSocket(){
 		GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
 		variables->GetValueAndConvertTo<bool>(L"DisableSocketUnbind", blockunbind);
 	}
+
+    auto lock = std::move(LockSocketForUse());
 
 	// This should do the trick //
 	if(!blockunbind){
@@ -199,6 +206,9 @@ DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMa
 }
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_SaveMasterServerList(){
+
+    GUARD_LOCK_THIS_OBJECT();
+    
 	// Set up the values //
 	vector<VariableBlock*> vals;
 	vals.reserve(MasterServers.size());
@@ -238,10 +248,11 @@ bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 
 	// Found value, load //
 	size_t maxval = foundvar->GetVariableCount();
-	MasterServers.reserve(maxval);
 
 	// We need locking for this add //
 	GUARD_LOCK_THIS_OBJECT();
+
+	MasterServers.reserve(maxval);
 
 	for(size_t i = 0; i < maxval; i++){
 		MasterServers.push_back(unique_ptr<wstring>(new wstring(
@@ -283,25 +294,15 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
     }
 
     {
-
-        boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
+        Lock lock(ConnectionsToUpdateMutex);
         
         // Time-out requests //
         for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
 
             auto connection = ConnectionsToUpdate[i];
 
-            boost::unique_lock<boost::mutex> destroylock(ConnectionDestroyMutex);
-
-            lock.unlock();
-            
-            // This needs to be unlocked to avoid deadlocking //
-            // The callee needs to make sure to use the right locking function to not deadlock //
-            // This still might potentially deadlock
             GUARD_LOCK_OTHER_OBJECT(connection);
 
-            destroylock.unlock();
-            
             connection->UpdateListening();
         }
     }
@@ -312,94 +313,85 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_RegisterConnectionInfo(ConnectionInfo* tomanage){
 
-    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
+    Lock lock(ConnectionsToUpdateMutex);
 	ConnectionsToUpdate.push_back(tomanage);
 }
 
 void Leviathan::NetworkHandler::_UnregisterConnectionInfo(ConnectionInfo* unregisterme){
 
-    GUARD_LOCK_OTHER_OBJECT(unregisterme);
-    
-    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
+    Lock lock(ConnectionsToUpdateMutex);
     
 	for(auto iter = ConnectionsToUpdate.begin(); iter != ConnectionsToUpdate.end(); ++iter){
-
 		if((*iter) == unregisterme){
 
-            boost::unique_lock<boost::mutex> destroylock(ConnectionDestroyMutex);
-            
-			// Remove and don't cause iterator problems by returning //
 			ConnectionsToUpdate.erase(iter);
 			return;
 		}
-
 	}
 }
 
-shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>>
-Leviathan::NetworkHandler::LockSocketForUse()
-{
-	return shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>>(
-		new boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>(SocketMutex));
+Lock Leviathan::NetworkHandler::LockSocketForUse(){
+    
+	return std::move(Lock((SocketMutex)));
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkHandler::SafelyCloseConnectionTo(ConnectionInfo* to){
 
-    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
-    
-	// Make sure that it isn't there already //
-	for(auto iter = ConnectionsToTerminate.begin(); iter != ConnectionsToTerminate.end(); ++iter){
-		// Return if we found a match //
-		if(*iter == to)
+    Lock lock(ConnectionsToTerminateMutex);
+
+    // Return if it is already queued //
+	for(auto& connection : ConnectionsToTerminate){
+		if(connection == to)
 			return;
 	}
 
-
-	// Add to the queue //
-    boost::unique_lock<boost::mutex> destroylock(ConnectionDestroyMutex);
-    
 	ConnectionsToTerminate.push_back(to);
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
-    
-    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
 
-	if(ConnectionsToUpdate.size() == 0 || ConnectionsToTerminate.size() == 0)
+    Lock terminatelock(ConnectionsToTerminateMutex);
+
+	if(ConnectionsToTerminate.empty())
 		return;
 
 	// Go through the removed connection list and remove them //
 	for(size_t i = 0; i < ConnectionsToTerminate.size(); i++){
 
-        boost::unique_lock<boost::mutex> destroylock(ConnectionDestroyMutex);
+        auto connection = ConnectionsToTerminate[i];
+
+        ConnectionsToTerminate.erase(ConnectionsToTerminate.begin()+i);
+
+        terminatelock.unlock();
         
 		// Send a close packet //
-		ConnectionsToTerminate[i]->SendCloseConnectionPacket();
+		connection->SendCloseConnectionPacket();
 
-        // We don't have a recursive mutex, so avoid deadlocking by unlocking first //
-        destroylock.unlock();
-        
 		// Close it //
-		ConnectionsToTerminate[i]->Release();
-		// The connection will automatically remove itself from the vector //
+        // The connection will automatically remove itself from the vector //
+		connection->Release();
 
-        destroylock.lock();
+        {
+            Lock openedlock(AutoOpenedConnectionsMutex);
         
-		// But if we have opened it we need to delete our pointer //
-		for(size_t a = 0; a < AutoOpenedConnections.size(); a++){
-			if(AutoOpenedConnections[a].get() == ConnectionsToTerminate[i]){
-				AutoOpenedConnections.erase(AutoOpenedConnections.begin()+a);
-				break;
-			}
-		}
-	}
+            // But if we have opened it we need to delete our pointer //
+            auto end = AutoOpenedConnections.end();
+            for(auto iter = AutoOpenedConnections.begin(); iter != end; ++iter){
+            
+                if((*iter).get() == connection){
+                
+                    AutoOpenedConnections.erase(iter);
+                    break;
+                }
+            }
+        }
 
-	// All are handled, clear them //
-	ConnectionsToTerminate.clear();
+        terminatelock.lock();
+	}
 }
 // ------------------------------------ //
 DLLEXPORT USHORT Leviathan::NetworkHandler::GetOurPort(){
-	GUARD_LOCK_THIS_OBJECT();
+	auto lock = std::move(LockSocketForUse());
 	return _Socket.getLocalPort();
 }
 
@@ -409,17 +401,16 @@ DLLEXPORT NETWORKED_TYPE Leviathan::NetworkHandler::GetNetworkType() const{
 // ------------------------------------ //
 DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo(const wstring &targetaddress)
 {
-
 	// Create object //
 	shared_ptr<ConnectionInfo> tmpconnection(new ConnectionInfo(targetaddress));
 
 	// Initialize the connection //
 	if(!tmpconnection || !tmpconnection->Init()){
-		// Failed //
+        
 		return NULL;
 	}
 
-    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
+    Lock autolock(AutoOpenedConnectionsMutex);
     
 	// If succeeded add to the automatically managed connections //
 	AutoOpenedConnections.push_back(tmpconnection);
@@ -429,7 +420,7 @@ DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo
 
 DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetSafePointerToConnection(ConnectionInfo* unsafeptr){
 
-    boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
+    Lock autolock(AutoOpenedConnectionsMutex);
     
 	for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
 		if(iter->get() == unsafeptr)
@@ -442,7 +433,7 @@ DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetSafePointerTo
 DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetOrCreatePointerToConnection(const wstring &address){
 
     {
-        boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
+        Lock autolock(AutoOpenedConnectionsMutex);
     
         for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
             if((*iter)->GenerateFormatedAddressString() == address)
@@ -477,7 +468,7 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 		// Pass to a connection //
 		bool Passed = false;
 
-        boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
+        Lock connectionlock(ConnectionsToUpdateMutex);
         
 		for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
 			// Keep passing until somebody handles it //
@@ -486,9 +477,11 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
                 auto curconnection = ConnectionsToUpdate[i];
                 
                 // Handle it //
-                lock.unlock();
+                connectionlock.unlock();
+                
                 curconnection->HandlePacket(receivedpacket, sender, sentport);
-                lock.lock();
+                
+                connectionlock.lock();
                 
 				Passed = true;
 				break;
@@ -505,8 +498,7 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 
 
 		// We might want to open a new connection to this client //
-		Logger::Get()->Info(L"Received a new connection from "+Convert::StringToWstring(sender.toString())+L":"+
-            Convert::ToWstring(sentport));
+		Logger::Get()->Info("Received a new connection from "+sender.toString()+":"+Convert::ToString(sentport));
 
         // \todo Make sure that the console won't be deleted between this and the actual check
         RemoteConsole* rcon = RemoteConsole::Get();
@@ -535,7 +527,7 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 		if(tmpconnect){
 
             // This doesn't need relocking as it will be recreated next loop //
-            lock.unlock();
+            connectionlock.unlock();
             
 			// Try to handle with the new connection //
 			// We need to initialize the new connection first //
@@ -545,7 +537,7 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 			}
 
             {
-                boost::unique_lock<boost::recursive_mutex> lock(ConnectionListMutex);
+                Lock autolock(AutoOpenedConnectionsMutex);
             
                 AutoOpenedConnections.push_back(tmpconnect);
 
@@ -554,14 +546,13 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 			// Try to handle the packet //
 			if(!tmpconnect->IsThisYours(sender, sentport)){
 				// That's an error //
-				Logger::Get()->Error(L"NetworkHandler: UpdateAllConnections: new connection refused to process "
-                    L"it's packet from"+Convert::StringToWstring(sender.toString())+L":"+Convert::ToWstring(sentport));
+				Logger::Get()->Error("NetworkHandler: UpdateAllConnections: new connection refused to process "
+                    "its packet from "+sender.toString()+":"+Convert::ToString(sentport));
 			} else {
 
                 tmpconnect->HandlePacket(receivedpacket, sender, sentport);
             }
 		}
-
 	}
 
     Logger::Get()->Info("NetworkHandler: listening socket thread quitting");

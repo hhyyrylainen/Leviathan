@@ -377,14 +377,12 @@ DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
 		ConnectionsToTerminate[i]->SendCloseConnectionPacket();
 
         // We don't have a recursive mutex, so avoid deadlocking by unlocking first //
-        lock.unlock();
+        destroylock.unlock();
         
 		// Close it //
 		ConnectionsToTerminate[i]->Release();
 		// The connection will automatically remove itself from the vector //
 
-        destroylock.unlock();
-        lock.lock();
         destroylock.lock();
         
 		// But if we have opened it we need to delete our pointer //

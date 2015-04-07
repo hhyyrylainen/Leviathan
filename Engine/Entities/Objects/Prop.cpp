@@ -459,10 +459,10 @@ BaseConstraintable* Leviathan::Entity::Prop::BasePhysicsGetConstraintable(){
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CaptureState(int tick){
 #ifdef NETWORK_USE_SNAPSHOTS
     return shared_ptr<ObjectDeltaStateData>(
-        PositionablePhysicalDeltaState::CaptureState(*this, tick).release());
+        PositionableRotationableDeltaState::CaptureState(*this, tick).release());
 #else
     return shared_ptr<ObjectDeltaStateData>(
-        PositionableRotationableDeltaState::CaptureState(*this, tick).release());
+        PositionablePhysicalDeltaState::CaptureState(*this, tick).release());
 #endif //NETWORK_USE_SNAPSHOTS
 }
 

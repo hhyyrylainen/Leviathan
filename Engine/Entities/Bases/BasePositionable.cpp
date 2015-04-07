@@ -204,6 +204,8 @@ DLLEXPORT bool Leviathan::BasePositionable::LoadPositionFromPacketToHolder(sf::P
 DLLEXPORT void BasePositionable::InterpolatePositionableState(PositionableRotationableDeltaState &first,
     PositionableRotationableDeltaState &second, float progress)
 {
+
+    cout << "Position interpolation, progress: " << progress << "\n";
     
     if(progress < 0.f)
         progress = 0.f;
@@ -281,6 +283,8 @@ DLLEXPORT void BasePositionable::InterpolatePositionableState(PositionableRotati
     }
 
     GUARD_LOCK_THIS_OBJECT();
+    cout << "Setting things to, pos: " << pos.X << ", " << pos.Y << ", " << pos.Z;
+    cout << "\nEND" << endl;
     SetPos(pos);
     SetOrientation(rot);
 }

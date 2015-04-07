@@ -350,7 +350,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
 // ------------------ PositionableRotationableDeltaState ------------------ //
 DLLEXPORT PositionableRotationableDeltaState::PositionableRotationableDeltaState(int tick,
     const Float3 &position, const Float4 &rotation) :
-    ObjectDeltaStateData(tick), Position(position), Rotation(rotation)
+    ObjectDeltaStateData(tick), Position(position), Rotation(rotation), ValidFields(PRDELTA_ALL_UPDATED)
 {
 
 }

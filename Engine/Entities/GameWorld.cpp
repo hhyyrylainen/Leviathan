@@ -214,7 +214,7 @@ DLLEXPORT Leviathan::GameWorld::GameWorld() :
     GraphicalMode(false), LinkedToWindow(NULL), WorldWorkspace(NULL), ClearAllObjects(false),
     ID(IDFactory::GetID()), TickNumber(0)
 {
-
+    IsOnServer = NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_SERVER;
 }
 
 DLLEXPORT Leviathan::GameWorld::~GameWorld(){
@@ -422,10 +422,17 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(BaseObject* obj, 
 DLLEXPORT void Leviathan::GameWorld::SimulatePhysics(){
     GUARD_LOCK_THIS_OBJECT();
 
-    if(!WorldFrozen){
+    if(IsOnServer){
+    
+        if(!WorldFrozen){
 
-        // Let's set the maximum runs to 10000 to disable completely deadlocking
-        _PhysicalWorld->SimulateWorld(10000);
+            // Let's set the maximum runs to 10000 to disable completely deadlocking
+            _PhysicalWorld->SimulateWorld(10000);
+        }
+    } else {
+
+        // Simulate direct control //
+        
     }
     
 }

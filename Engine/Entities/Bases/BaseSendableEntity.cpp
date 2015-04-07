@@ -414,8 +414,8 @@ DLLEXPORT ObjectInterpolation Leviathan::BaseSendableEntity::GetAndPopNextInterp
 }
 
 void Leviathan::BaseSendableEntity::ReportInterpolationStatusToInput(int tick, int64_t mstime){
-
-    cout << "Interpolation: " << tick << " at: " << mstime;
+    
+    cout << "Interpolation, tick: " << tick << " at: " << mstime << std::endl;
 }
 #endif //NETWORK_USE_SNAPSHOTS
 // ------------------------------------ //

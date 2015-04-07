@@ -721,6 +721,10 @@ DLLEXPORT bool TrackEntityController::SetStateToInterpolated(ObjectDeltaStateDat
             NodeProgress = from.NodeProgress;
         }
     }
+
+    cout << "Track interpolation, progress: " << progress << ", progress: " << NodeProgress << ", reached: " <<
+        ReachedNode << "\n";
+    cout << "END" << endl;
     
     _SanityCheckNodeProgress();
     

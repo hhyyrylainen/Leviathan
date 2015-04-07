@@ -14,7 +14,7 @@ void BaseTimedInterpolated::UpdateInterpolation(int mspassed){
     
     TimeAccumulator += mspassed;
     
-    const float progress = TimeAccumulator > 0 ? CurrentAnimation.Duration / (float)TimeAccumulator : 0.f;
+    const float progress = TimeAccumulator > 0 ? (float)TimeAccumulator / CurrentAnimation.Duration : 0.f;
 
     SetStateToInterpolated(*CurrentAnimation.First, *CurrentAnimation.Second, progress);
 

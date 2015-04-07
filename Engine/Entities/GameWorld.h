@@ -320,6 +320,9 @@ namespace Leviathan{
         //! The unique ID
         int ID;
 
+        //! Bool flag telling whether this is a master world (on a server) or a mirroring world (client)
+        bool IsOnServer;
+
         //! The current tick number
         //! This should be the same on all clients as closely as possible
         int TickNumber;

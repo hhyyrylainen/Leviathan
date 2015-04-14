@@ -88,6 +88,8 @@ namespace Leviathan{ namespace Entity{
 
             bool OnInterpolationFinished() override;
 
+            bool ListeningForEvents;
+
 #else
             //! \copydoc BaseInterpolated::_GetCurrentActualPosition
             void _GetCurrentActualPosition(Float3 &pos) override;

@@ -67,6 +67,10 @@ DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 
+#ifndef NETWORK_USE_SNAPSHOTS
+    ListeningForEvents = false;
+#endif //NETWORK_USE_SNAPSHOTS
+    
     // Store the file //
     ModelFile = modelfile;
     
@@ -516,8 +520,15 @@ void Prop::VerifySendableInterpolation(){
         // Skip if we are already interpolating //
         GUARD_LOCK_THIS_OBJECT();
         
-        if(IsCurrentlyInterpolating())
+        if(IsCurrentlyInterpolating()){
+
+            if(!ListeningForEvents){
+            
+                RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
+                ListeningForEvents = true;
+            }
             return;
+        }
     }
 
     // This way we don't have to write the implementation twice //
@@ -529,18 +540,26 @@ bool Prop::OnInterpolationFinished(){
     // Fetch an interpolation //
     try{
         
-        const auto& interpolation = GetAndPopNextInterpolation();
+        auto interpolation = GetAndPopNextInterpolation();
 
         GUARD_LOCK_THIS_OBJECT();
         SetCurrentInterpolation(interpolation);
 
-        RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
+        if(!ListeningForEvents){
+            
+            RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
+            ListeningForEvents = true;
+        }
         
         return true;
 
     } catch(const InvalidState&){
 
-        UnRegister(EVENT_TYPE_FRAME_BEGIN);
+        if(ListeningForEvents){
+            
+            UnRegister(EVENT_TYPE_FRAME_BEGIN);
+            ListeningForEvents = false;
+        }
         return false;
     }
 }

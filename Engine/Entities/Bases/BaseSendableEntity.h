@@ -229,6 +229,12 @@ namespace Leviathan{
         //! Called when a new interpolation has been queued
         virtual void VerifySendableInterpolation() = 0;
 
+        //! \brief Creates a short interpolation if there is a next state
+        //!
+        //! This can be used to get an interpolation if a proper INTERPOLATION_TIME apart
+        //! received update is missed
+        void _CreateShortInterpolationFromStored(ObjectLock &guard);
+
 #endif //NETWORK_USE_SNAPSHOTS
         
         //! \brief Function which is used by subclasses to load their data from packets
@@ -271,6 +277,9 @@ namespace Leviathan{
 
         //! Clientside list of queued interpolation states
         std::deque<ObjectInterpolation> QueuedInterpolationStates;
+
+        //! Marks the last end point tick that has been pushed to the interpolation queue
+        int LastQueuedTick;
         
 
 #endif //NETWORK_USE_SNAPSHOTS

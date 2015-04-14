@@ -79,6 +79,10 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
 DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const string &material, 
 	bool createphysics /*= true*/)
 {
+#ifndef NETWORK_USE_SNAPSHOTS
+    ListeningForEvents = false;
+#endif //NETWORK_USE_SNAPSHOTS
+    
 	Sizes = dimensions;
 
     // This is needed later by the network sending functionality //
@@ -662,8 +666,15 @@ void Brush::VerifySendableInterpolation(){
         // Skip if we are already interpolating //
         GUARD_LOCK_THIS_OBJECT();
         
-        if(IsCurrentlyInterpolating())
+        if(IsCurrentlyInterpolating()){
+
+            if(!ListeningForEvents){
+            
+                RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
+                ListeningForEvents = true;
+            }
             return;
+        }
     }
 
     // This way we don't have to write the implementation twice //
@@ -675,18 +686,26 @@ bool Brush::OnInterpolationFinished(){
     // Fetch an interpolation //
     try{
         
-        const auto& interpolation = GetAndPopNextInterpolation();
+        auto interpolation = GetAndPopNextInterpolation();
 
         GUARD_LOCK_THIS_OBJECT();
         SetCurrentInterpolation(interpolation);
 
-        RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
+        if(!ListeningForEvents){
+            
+            RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
+            ListeningForEvents = true;
+        }
         
         return true;
 
     } catch(const InvalidState&){
 
-        UnRegister(EVENT_TYPE_FRAME_BEGIN);
+        if(ListeningForEvents){
+            
+            UnRegister(EVENT_TYPE_FRAME_BEGIN);
+            ListeningForEvents = false;
+        }
         return false;
     }
 }

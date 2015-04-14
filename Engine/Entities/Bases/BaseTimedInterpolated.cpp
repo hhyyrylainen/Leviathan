@@ -22,6 +22,9 @@ void BaseTimedInterpolated::UpdateInterpolation(int mspassed){
 
         const int wentover = TimeAccumulator-CurrentAnimation.Duration;
 
+        // Destroy current animation //
+        CurrentAnimation = ObjectInterpolation();
+
         if(OnInterpolationFinished()){
 
             // We can start interpolating again //

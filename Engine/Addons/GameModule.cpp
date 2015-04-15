@@ -6,7 +6,7 @@
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "FileSystem.h"
 #include "Common/StringOperations.h"
-#include "Script/ScriptInterface.h"
+#include "Script/ScriptExecutor.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameModule::GameModule(const wstring &modulename, const wstring &ownername,
@@ -76,8 +76,9 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 
 	if(!Scripting){
 
-		Scripting = shared_ptr<ScriptScript>(new ScriptScript(ScriptInterface::Get()->GetExecutor()->CreateNewModule(
-			L"GameModule("+Name+L") ScriptModule", Convert::WstringToString(SourceFile))));
+		Scripting = shared_ptr<ScriptScript>(new
+            ScriptScript(ScriptExecutor::Get()->CreateNewModule(
+                    L"GameModule("+Name+L") ScriptModule", Convert::WstringToString(SourceFile))));
 
 		// Get the newly created module //
 		mod = Scripting->GetModule();
@@ -86,7 +87,7 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 		mod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
 
 
-	} else{
+	} else {
 		// Get already created module //
 		mod = Scripting->GetModule();
 	}
@@ -104,7 +105,9 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 
 	for(size_t i = 0; i < containedlisteners.size(); i++){
 		// Bind generic event //
-		if(containedlisteners[i]->GenericTypeName && containedlisteners[i]->GenericTypeName->size() > 0){
+		if(containedlisteners[i]->GenericTypeName &&
+            containedlisteners[i]->GenericTypeName->size() > 0)
+        {
 
 			// custom event listener //
 			RegisterForEvent(*containedlisteners[i]->GenericTypeName);
@@ -119,8 +122,8 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 			continue;
 		}
 
-		Logger::Get()->Warning(L"GameModule: unknown event type "+*containedlisteners[i]->ListenerName+
-            L", did you intent to use Generic type?");
+		Logger::Get()->Warning(L"GameModule: unknown event type "+
+            *containedlisteners[i]->ListenerName+L", did you intent to use Generic type?");
 	}
 
 	// Call init callbacks //
@@ -147,7 +150,7 @@ DLLEXPORT void Leviathan::GameModule::ReleaseScript(){
 	int tmpid = Scripting->GetModule()->GetID();
 	Scripting.reset();
 
-	ScriptInterface::Get()->GetExecutor()->DeleteModuleIfNoExternalReferences(tmpid);
+	ScriptExecutor::Get()->DeleteModuleIfNoExternalReferences(tmpid);
 }
 // ------------------------------------ //
 DLLEXPORT wstring Leviathan::GameModule::GetDescriptionForError(bool full /*= false*/){
@@ -179,9 +182,12 @@ void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** e
 
 			ScriptRunningSetup sargs;
 			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
+            
 			// run the script //
-			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
-			// do something with result //
+			shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+                Scripting.get(), &sargs);
+            
+			// Do something with the result //
 		}
 	} else {
 		// generic event is passed //
@@ -195,9 +201,12 @@ void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** e
 			(*event2)->AddRef();
 
 			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->GetTypePtr())).SetArguments(Args);
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->GetTypePtr())).
+                SetArguments(Args);
+            
 			// run the script //
-			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
+			shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+                Scripting.get(), &sargs);
 			// do something with result //
 		}
 	}
@@ -215,9 +224,10 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(const
 	AddRef();
 
 	ScriptRunningSetup setup;
-	setup.SetArguments(otherparams).SetEntrypoint(entrypoint).SetUseFullDeclaration(fulldeclaration);
+	setup.SetArguments(otherparams).SetEntrypoint(entrypoint).SetUseFullDeclaration(
+        fulldeclaration);
 
-	auto result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &setup);
+	auto result = ScriptExecutor::Get()->RunSetUp(Scripting.get(), &setup);
 
 	existed = setup.ScriptExisted;
 

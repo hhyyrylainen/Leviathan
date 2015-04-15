@@ -225,19 +225,13 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
                         boost::promise<bool> &returnvalue, Engine* engine) -> void
         {
 
-            engine->MainScript = new ScriptInterface();
-            if(!engine->MainScript){
+            try{
+                engine->MainScript = new ScriptExecutor();
+            } catch(const Exception&){
 
                 Logger::Get()->Error(L"Engine: Init: failed to create ScriptInterface");
                 returnvalue.set_value(false);
-                return;
-            }
-
-            if(!engine->MainScript->Init()){
-
-                Logger::Get()->Error(L"Engine: Init: failed to init ScriptInterface");
-                returnvalue.set_value(false);
-                return;
+                return;                
             }
 
             // create console after script engine //
@@ -416,7 +410,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
                         }
 
                         // make angel script make list of registered stuff //
-                        engine->MainScript->GetExecutor()->ScanAngelScriptTypes();
+                        engine->MainScript->ScanAngelScriptTypes();
 
                         if(!engine->NoGui){
                             // measuring //
@@ -626,7 +620,7 @@ void Leviathan::Engine::Release(bool forced){
 	// Console needs to be released before script release //
 	SAFE_RELEASEDEL(MainConsole);
 
-	SAFE_RELEASEDEL(MainScript);
+	SAFE_DELETE(MainScript);
 
 	// Save at this point (just in case it crashes before exiting) //
 	Logger::Get()->Save();

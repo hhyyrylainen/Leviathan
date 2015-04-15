@@ -5,11 +5,12 @@
 #endif
 #include "ObjectFileObject.h"
 #include "Common/StringOperations.h"
-#include "Script/ScriptInterface.h"
+#include "Script/ScriptExecutor.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::ObjectFileTemplateDefinition::ObjectFileTemplateDefinition(const string &name, std::vector<unique_ptr<string>> &parameters, 
-	shared_ptr<ObjectFileObject> obj) : Name(name), Parameters(move(parameters)), RepresentingObject(obj)
+DLLEXPORT Leviathan::ObjectFileTemplateDefinition::ObjectFileTemplateDefinition(const string &name,
+    std::vector<unique_ptr<string>> &parameters, shared_ptr<ObjectFileObject> obj) :
+    Name(name), Parameters(move(parameters)), RepresentingObject(obj)
 {
 	// Convert the Parameters //
 	WParameters.reserve(Parameters.size());
@@ -27,8 +28,9 @@ DLLEXPORT const string& Leviathan::ObjectFileTemplateDefinition::GetName() const
 	return Name;
 }
 // ------------------------------------ //
-DLLEXPORT  shared_ptr<ObjectFileTemplateDefinition> Leviathan::ObjectFileTemplateDefinition::CreateFromObject(const string &name, 
-	shared_ptr<ObjectFileObject> obj, std::vector<unique_ptr<string>> &templateargs)
+DLLEXPORT  shared_ptr<ObjectFileTemplateDefinition> Leviathan::ObjectFileTemplateDefinition::CreateFromObject(
+    const string &name,  shared_ptr<ObjectFileObject> obj, std::vector<unique_ptr<string>>
+    &templateargs)
 {
 	// This could be changed to a function that tears down the object and creates mess of templating objects //
 	shared_ptr<ObjectFileTemplateDefinition> resultobj(new ObjectFileTemplateDefinition(name, templateargs, obj));
@@ -36,8 +38,8 @@ DLLEXPORT  shared_ptr<ObjectFileTemplateDefinition> Leviathan::ObjectFileTemplat
 	return resultobj;
 }
 
-DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefinition::CreateInstanceFromThis(const ObjectFileTemplateInstance 
-	&instanceargs)
+DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefinition::CreateInstanceFromThis(
+    const ObjectFileTemplateInstance &instanceargs)
 {
 	// First make sure that template counts match, return NULL otherwise //
 	if(Parameters.size() != instanceargs.Arguments.size() || WParameters.size() != instanceargs.WArguments.size()){
@@ -201,8 +203,9 @@ DLLEXPORT unique_ptr<ObjectFileTemplateObject> Leviathan::ObjectFileTemplateDefi
 
 			ReplaceWstringWithTemplateArguments(newname, instanceargs.WArguments);
 
-			shared_ptr<ScriptScript> newscript(new ScriptScript(ScriptInterface::Get()->GetExecutor()->CreateNewModule(
-                        newname, scrptmodule->GetSource())));
+			shared_ptr<ScriptScript> newscript(new
+                ScriptScript(ScriptExecutor::Get()->CreateNewModule(newname,
+                        scrptmodule->GetSource())));
 
 			// Add the new script to the object //
 			shared_ptr<ScriptSourceFileData> newsourcesegment(new

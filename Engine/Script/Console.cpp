@@ -24,13 +24,13 @@ map<wstring, CONSOLECOMMANDTYPE> Leviathan::ScriptConsole::CommandTypeDefinition
 	(wstring(L"LISTVAR"), CONSOLECOMMANDTYPE_PRINTVAR) (wstring(L"LISTFUNC"), CONSOLECOMMANDTYPE_PRINTFUNC);
 
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ScriptConsole::Init(ScriptInterface* MainScript){
+DLLEXPORT bool Leviathan::ScriptConsole::Init(ScriptExecutor* MainScript){
 	GUARD_LOCK_THIS_OBJECT();
 	// store pointer //
 	InterfaceInstance = MainScript;
 
 	// get a new module to be the console module //
-	ConsoleModule = InterfaceInstance->GetExecutor()->CreateNewModule(L"ConsoleModule", "console");
+	ConsoleModule = InterfaceInstance->CreateNewModule(L"ConsoleModule", "console");
 
 	return true;
 }
@@ -244,7 +244,7 @@ DLLEXPORT bool Leviathan::ScriptConsole::ExecuteStringInstruction(string stateme
 	GUARD_LOCK_THIS_OBJECT();
     
 	// Use ScriptHelper class to execute this statement in the module //
-	int result = ExecuteString(InterfaceInstance->GetExecutor()->GetASEngine(), statement.c_str(),
+	int result = ExecuteString(InterfaceInstance->GetASEngine(), statement.c_str(),
         ConsoleModule.lock()->GetModule());
 	if(result < 0){
 
@@ -371,7 +371,7 @@ funcdeletesucceedendgarbagecollectlabel:
 	// collector to make sure the object is really freed
 	// \todo make engine garbage collect stop all running scripts //
     Logger::Get()->Warning(L"Console: doing garbage cleanup, scripts might be running...");
-	InterfaceInstance->GetExecutor()->GetASEngine()->GarbageCollect();
+	InterfaceInstance->GetASEngine()->GarbageCollect();
 
 	return true;
 }
@@ -382,7 +382,7 @@ DLLEXPORT void Leviathan::ScriptConsole::ListFunctions(){
 	Logger::Get()->Info(L"Global functions: ");
 
 	// get pointer to engine //
-	asIScriptEngine* engine = InterfaceInstance->GetExecutor()->GetASEngine();
+	asIScriptEngine* engine = InterfaceInstance->GetASEngine();
 
 	for(asUINT n = 0; n < engine->GetGlobalFunctionCount(); n++){
 		// get function pointer //
@@ -414,7 +414,7 @@ DLLEXPORT void Leviathan::ScriptConsole::ListVariables(){
 	Logger::Get()->Info(L"Global script variables: ");
 
 	// get pointer to engine //
-	asIScriptEngine* engine = InterfaceInstance->GetExecutor()->GetASEngine();
+	asIScriptEngine* engine = InterfaceInstance->GetASEngine();
 
 	for(asUINT n = 0; n < engine->GetGlobalPropertyCount(); n++){
 		// get info about variable //

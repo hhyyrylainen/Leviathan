@@ -27,10 +27,12 @@ void Leviathan::ScriptNotifier::OnNotified(){
 	// No parameters used //
 
 
-	ScriptExecutor::Get()->RunFunctionSetUp(CallbackFunction, &params);
+	ScriptExecutor::Get()->RunSetUp(CallbackFunction, &params);
 }
 // ------------------ ScriptNotifiable ------------------ //
-DLLEXPORT Leviathan::ScriptNotifiable::ScriptNotifiable(asIScriptFunction* functiontocall) : CallbackFunction(functiontocall){
+DLLEXPORT Leviathan::ScriptNotifiable::ScriptNotifiable(asIScriptFunction* functiontocall) :
+    CallbackFunction(functiontocall)
+{
 
 }
 
@@ -49,7 +51,7 @@ void Leviathan::ScriptNotifiable::OnNotified(){
 	// No parameters used //
 
 
-	ScriptExecutor::Get()->RunFunctionSetUp(CallbackFunction, &params);
+	ScriptExecutor::Get()->RunSetUp(CallbackFunction, &params);
 }
 // ------------------------------------ //
 ScriptNotifier* ScriptNotifierFactory(asIScriptFunction* cb){

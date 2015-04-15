@@ -25,7 +25,7 @@
 #include "Rendering/GUI/FontManager.h"
 #include "Rendering/GraphicalInputEntity.h"
 #include "Rendering/Graphics.h"
-#include "Script/ScriptInterface.h"
+#include "Script/ScriptExecutor.h"
 #include "Window.h"
 #include <boost/assign/list_of.hpp>
 #include <boost/thread.hpp>

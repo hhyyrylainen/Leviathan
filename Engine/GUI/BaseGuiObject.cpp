@@ -10,7 +10,7 @@
 #include "GUI/GuiManager.h"
 #include "Common/StringOperations.h"
 #include "Script/ScriptRunningSetup.h"
-#include "Script/ScriptInterface.h"
+#include "Script/ScriptExecutor.h"
 #include "CEGUI/widgets/PushButton.h"
 #include "CEGUI/widgets/FrameWindow.h"
 #include "CEGUI/widgets/Combobox.h"
@@ -217,7 +217,8 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
 
 			// Run the script //
-			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
+			shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+                Scripting.get(), &sargs);
 		}
 	} else {
 		// generic event is passed //
@@ -234,7 +235,8 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->GetTypePtr())).SetArguments(Args);
 
 			// Run the script //
-			shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
+			shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+                Scripting.get(), &sargs);
 		}
 	}
 }
@@ -443,7 +445,7 @@ bool Leviathan::Gui::BaseGuiObject::_CallCEGUIListener(const wstring &name, boos
 
 
 	// Run the script //
-	shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(Scripting.get(), &sargs);
+	shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(Scripting.get(), &sargs);
 
 	if(!result || !result->IsConversionAllowedNonPtr<bool>()){
 

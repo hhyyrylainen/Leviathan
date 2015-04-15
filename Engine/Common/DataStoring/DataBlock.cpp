@@ -5,7 +5,7 @@
 #endif
 #include "Exceptions.h"
 #include "Iterators/StringIterator.h"
-#include "Script/ScriptInterface.h"
+#include "Script/ScriptExecutor.h"
 #include "../StringOperations.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -131,7 +131,7 @@ namespace Leviathan{
 #define TYPEIDGETTEMPLATEINSTANTIATION(TypeForTemplate, StringToUse) template<> \
     struct TypeToAngelScriptIDConverter<TypeForTemplate>{static inline int \
         GetTypeIDFromTemplated(){ return \
-                ScriptInterface::Get()->GetExecutor()->GetAngelScriptTypeID(L"int"); }};
+                ScriptExecutor::Get()->GetAngelScriptTypeID(L"int"); }};
 
 
 TYPEIDGETTEMPLATEINSTANTIATION(int, L"int");

@@ -6,7 +6,7 @@
 #endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "ScriptInterface.h"
+#include "ScriptExecutor.h"
 
 
 namespace Leviathan{
@@ -22,7 +22,7 @@ namespace Leviathan{
 		DLLEXPORT ScriptConsole();
 		DLLEXPORT ~ScriptConsole();
 
-		DLLEXPORT bool Init(ScriptInterface* MainScript);
+		DLLEXPORT bool Init(ScriptExecutor* MainScript);
 		DLLEXPORT void Release();
 		// this function takes direct wstring input from user and translates it to be used in one of the functions below //
 		// console commands should be in format of ">[TYPE=""] [COMMAND]" eg. ">ADDVAR int newglobal = 25"
@@ -47,7 +47,7 @@ namespace Leviathan{
 		}
 
 		// stored pointer to script interface //
-		ScriptInterface* InterfaceInstance;
+		ScriptExecutor* InterfaceInstance;
 
 		// the script module that Console runs in //
 		weak_ptr<ScriptModule> ConsoleModule;

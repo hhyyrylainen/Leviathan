@@ -34,6 +34,11 @@ namespace Leviathan{
 			FullDeclaration = state;
 			return *this;
 		}
+        DLLEXPORT inline ScriptRunningSetup& SetPrintErrors(const bool &state){
+            
+			PrintErrors = state;
+			return *this;
+		}
 		
 
 		// variables //

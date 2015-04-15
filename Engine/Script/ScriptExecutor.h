@@ -22,15 +22,12 @@
 
 namespace Leviathan{
 
-
+    //! \todo Make the module finding more efficient, store module IDs in all call sites
 	class ScriptExecutor : public EngineComponent{
 		friend ScriptModule;
 	public:
 		DLLEXPORT ScriptExecutor();
 		DLLEXPORT ~ScriptExecutor();
-
-		DLLEXPORT bool Init();
-		DLLEXPORT void Release();
 
 		DLLEXPORT void ScanAngelScriptTypes();
 
@@ -68,8 +65,7 @@ namespace Leviathan{
             ScriptRunningSetup* parameters);
 
 		//! \brief Runs a script function whose pointer is passed in
-		//! \todo Make the module finding more efficient, store module IDs in all call sites
-		DLLEXPORT shared_ptr<VariableBlock> RunFunctionSetUp(asIScriptFunction* function,
+		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(asIScriptFunction* function,
             ScriptRunningSetup* parameters);
 
 		// Setup functions //

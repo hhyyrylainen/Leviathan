@@ -149,7 +149,7 @@ namespace Leviathan{
 		SoundDevice* Sound;
 		DataStore* Mainstore;
 		EventHandler* MainEvents;
-		ScriptInterface* MainScript;
+		ScriptExecutor* MainScript;
 		ObjectLoader* Loader;
 		ScriptConsole* MainConsole;
 		FileSystem* MainFileHandler;

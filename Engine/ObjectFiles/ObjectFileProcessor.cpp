@@ -12,7 +12,7 @@
 #include "Common/Misc.h"
 #include "utf8/core.h"
 #include "utf8/checked.h"
-#include "Script/ScriptInterface.h"
+#include "Script/ScriptExecutor.h"
 #include "Script/ScriptScript.h"
 #include "ObjectFileTemplates.h"
 using namespace Leviathan;
@@ -995,8 +995,9 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const wstring &file, S
 	}
 
 	// Create us //
-	shared_ptr<ScriptScript> ourobj(new ScriptScript(ScriptInterface::Get()->GetExecutor()->CreateNewModule(modname, Convert::WstringToString(file)
-		+"("+Convert::ToString(ourstartline)+")")));
+	shared_ptr<ScriptScript> ourobj(new ScriptScript(ScriptExecutor::Get()->CreateNewModule(
+                modname, Convert::WstringToString(file)+"("+
+                Convert::ToString(ourstartline)+")")));
 	
 	// Add the source to the script //
 	auto ourmod = ourobj->GetModule();

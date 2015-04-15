@@ -33,32 +33,17 @@ using namespace Leviathan::Script;
 ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
     
 	instance = this;
-}
-ScriptExecutor::~ScriptExecutor(){
-	instance = NULL;
 
-	if(engine)
-		// try to release engine //
-		Release();
-}
-
-DLLEXPORT ScriptExecutor* Leviathan::ScriptExecutor::Get(){
-	return instance;
-}
-
-
-ScriptExecutor* Leviathan::ScriptExecutor::instance = NULL;
-// ------------------------------------ //
-bool ScriptExecutor::Init(){
-    
-	// Initialize AngelScript //
+    // Initialize AngelScript //
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	if(engine == NULL){
 
 		Logger::Get()->Error("ScriptExecutor: Init: asCreateScriptEngine failed");
-		Logger::Get()->Info("ScriptExecutor: tried to init angelscript version " + Convert::ToString(ANGELSCRIPT_VERSION));
-		Logger::Get()->Write("Did you use a wrong angelscript version? copy header files to leviathan/Angelscript/include from your angelscript.zip");
-		return false;
+		Logger::Get()->Info("ScriptExecutor: tried to init angelscript version " +
+            Convert::ToString(ANGELSCRIPT_VERSION));
+		Logger::Get()->Write("Did you use a wrong angelscript version? copy header files to "
+            "leviathan/Angelscript/include from your angelscript.zip");
+        throw Exception("Failed to init angelscript");
 	}
 
 	// set callback to error report function //
@@ -80,7 +65,6 @@ bool ScriptExecutor::Init(){
 	// Register the grid addon //
 	RegisterScriptGrid(engine);
 
-
 	// register global functions and classes //
 	if(engine->RegisterGlobalFunction("void Print(string message, bool save = true)", asFUNCTION(Logger::Print),
             asCALL_CDECL) < 0)
@@ -88,7 +72,7 @@ bool ScriptExecutor::Init(){
 		// error abort //
 		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: RegisterGlobalFunction: failed, line: "+
             Convert::IntToWstring(__LINE__));
-		return false;
+        throw Exception("Script bind failed");
 	}
 
 	// use various binding functions //
@@ -97,34 +81,39 @@ bool ScriptExecutor::Init(){
 	if(!BindEngineCommonScriptIterface(engine)){
 		// failed //
 		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register Engine object things failed");
-		return false;
+        throw Exception("Script bind failed");
 	}
 
 	// binding TextLabel and other objects to be elements //
 	if(!BindGUIObjects(engine)){
 		// failed //
 		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register GUI object things failed");
-		return false;
+        throw Exception("Script bind failed");
 	}
 
 	// Bind notifiers //
 	if(!RegisterNotifiersWithAngelScript(engine)){
 		// failed //
 		Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: register Notifier types failed");
-		return false;
+        throw Exception("Script bind failed");
 	}
 
 
 	// bind application specific //
-	if(!Engine::GetEngine()->GetOwningApplication()->InitLoadCustomScriptTypes(engine)){
+    auto leviathanengine = Engine::GetEngine();
 
-        Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: application register failed");
-        return false;
+    if(leviathanengine){
+
+        if(!leviathanengine->GetOwningApplication()->InitLoadCustomScriptTypes(engine)){
+
+            Logger::Get()->Error(L"ScriptExecutor: Init: AngelScript: application register failed");
+            throw Exception("Script bind failed");
+        }        
     }
 
-	return true;
+    ScanAngelScriptTypes();
 }
-void ScriptExecutor::Release(){
+ScriptExecutor::~ScriptExecutor(){
 
 	auto end = AllocatedScriptModules.end();
 	for(auto iter = AllocatedScriptModules.begin(); iter != end; ++iter){
@@ -141,7 +130,21 @@ void ScriptExecutor::Release(){
 	// release these to stop VLD complains //
 	EngineTypeIDS.clear();
 	EngineTypeIDSInverted.clear();
+
+    instance = NULL;
+    
+	if(engine){
+
+        engine->Release();
+        engine = NULL;
+    }
 }
+
+DLLEXPORT ScriptExecutor* Leviathan::ScriptExecutor::Get(){
+	return instance;
+}
+
+ScriptExecutor* Leviathan::ScriptExecutor::instance = NULL;
 // ------------------------------------ //
 DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptScript* scriptobject,
     ScriptRunningSetup* parameters)
@@ -236,7 +239,7 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(ScriptMo
 	return returnvalue;
 }
 
-DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunFunctionSetUp(asIScriptFunction* function,
+DLLEXPORT shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(asIScriptFunction* function,
     ScriptRunningSetup* parameters)
 {
 	// Find a script module by the name //
@@ -649,8 +652,12 @@ DLLEXPORT void Leviathan::ScriptExecutor::ScanAngelScriptTypes(){
 	RegisterEngineScriptTypes(engine, EngineTypeIDS);
 	RegisterNotifierTypesWithAngelScript(engine, EngineTypeIDS);
 
-	Engine::GetEngine()->GetOwningApplication()->RegisterCustomScriptTypes(engine, EngineTypeIDS);
-
+    
+    auto leviathanengine = Engine::GetEngine();
+    if(leviathanengine){
+        
+        leviathanengine->GetOwningApplication()->RegisterCustomScriptTypes(engine, EngineTypeIDS);
+    }
 
 	// invert the got list, since it should be final //
 	for(auto iter = EngineTypeIDS.begin(); iter != EngineTypeIDS.end(); ++iter){

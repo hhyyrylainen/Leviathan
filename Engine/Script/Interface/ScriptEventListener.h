@@ -3,7 +3,7 @@
 #include "Events/CallableObject.h"
 #include "Exceptions.h"
 #include "Common/ThreadSafe.h"
-#include "Script/ScriptInterface.h"
+#include "Script/ScriptExecutor.h"
 
 namespace Leviathan{ namespace Script{
 
@@ -63,7 +63,8 @@ namespace Leviathan{ namespace Script{
 
 
                     // Run the script //
-                    shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(OnGenericScript, &sargs);
+                    shared_ptr<VariableBlock> result =
+                        ScriptExecutor::Get()->RunSetUp(OnGenericScript, &sargs);
 
                     if(!result || !result->IsConversionAllowedNonPtr<int>()){
 
@@ -84,8 +85,8 @@ namespace Leviathan{ namespace Script{
                 if(OnGenericScript){
 
                     // Setup the parameters //
-                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(
-                            new VoidPtrBlock(*event), L"GenericEvent"));
+                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(
+                        new NamedVariableBlock(new VoidPtrBlock(*event), L"GenericEvent"));
 
                     (*event)->AddRef();
 
@@ -94,7 +95,8 @@ namespace Leviathan{ namespace Script{
 
 
                     // Run the script //
-                    shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(OnGenericScript, &sargs);
+                    shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+                        OnGenericScript, &sargs);
 
                     if(!result || !result->IsConversionAllowedNonPtr<int>()){
 

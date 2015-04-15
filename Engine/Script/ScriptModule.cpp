@@ -3,7 +3,7 @@
 #ifndef LEVIATHAN_SCRIPTMODULE
 #include "ScriptModule.h"
 #endif
-#include "ScriptInterface.h"
+#include "ScriptExecutor.h"
 #include <boost/assign/list_of.hpp>
 #include "Iterators/StringIterator.h"
 #include "FileSystem.h"
@@ -52,7 +52,7 @@ DLLEXPORT void Leviathan::ScriptModule::Release(){
 
 	// We'll need to destroy the module from the engine //
 	ASModule = NULL;
-	ScriptInterface::Get()->GetExecutor()->GetASEngine()->DiscardModule(ModuleName.c_str());
+	ScriptExecutor::Get()->GetASEngine()->DiscardModule(ModuleName.c_str());
 
 	// And then delete the builder //
 	SAFE_DELETE(ScriptBuilder);
@@ -181,7 +181,7 @@ DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(){
 	if(!ASModule){
         
 		// Get module from the engine //
-		ASModule = ScriptInterface::Get()->GetExecutor()->GetASEngine()->GetModule(ModuleName.c_str(),
+		ASModule = ScriptExecutor::Get()->GetASEngine()->GetModule(ModuleName.c_str(),
             asGM_ONLY_IF_EXISTS);
 
 		if(!ASModule){
@@ -198,7 +198,7 @@ DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(){
 // ------------------------------------ //
 DLLEXPORT shared_ptr<ScriptScript> Leviathan::ScriptModule::GetScriptInstance(){
 
-	return shared_ptr<ScriptScript>(new ScriptScript(ID, ScriptInterface::Get()->GetExecutor()->GetModule(ID)));
+	return shared_ptr<ScriptScript>(new ScriptScript(ID, ScriptExecutor::Get()->GetModule(ID)));
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(const wstring &listenername,
@@ -259,7 +259,7 @@ DLLEXPORT void Leviathan::ScriptModule::DeleteThisModule(){
 	GUARD_LOCK_THIS_OBJECT();
     
 	// Tell script interface to unload this //
-	ScriptInterface::Get()->GetExecutor()->DeleteModule(this);
+	ScriptExecutor::Get()->DeleteModule(this);
 }
 // ------------------------------------ //
 void Leviathan::ScriptModule::_BuildListenerList(ObjectLock &guard){
@@ -514,6 +514,9 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegment(shared_ptr<ScriptSource
 	}
 
 	ScriptSourceSegments.push_back(data);
+
+    // Needs to be built next //
+    ScriptState = SCRIPTBUILDSTATE_READYTOBUILD;
 	return true;
 }
 
@@ -533,6 +536,8 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const string &f
 	FileSystem::ReadFileEntirely(file, scriptdata);
 
 	ScriptSourceSegments.push_back(shared_ptr<ScriptSourceFileData>(new ScriptSourceFileData(file, 1, scriptdata)));
+    // Needs to be built next //
+    ScriptState = SCRIPTBUILDSTATE_READYTOBUILD;
 	return true;
 }
 
@@ -584,7 +589,7 @@ DLLEXPORT bool Leviathan::ScriptModule::ReLoadModuleCode(){
 	// Discard the old module //
 	ASModule = NULL;
 	if(GetModule())
-		ScriptInterface::Get()->GetExecutor()->GetASEngine()->DiscardModule(ModuleName.c_str());
+        ScriptExecutor::Get()->GetASEngine()->DiscardModule(ModuleName.c_str());
 
 	// The builder must be created again //
 	SAFE_DELETE(ScriptBuilder);

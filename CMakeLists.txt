@@ -672,9 +672,6 @@ else()
 endif()
 
 
-# testing support
-
-
 # CPack support
 include(InstallRequiredSystemLibraries)
 

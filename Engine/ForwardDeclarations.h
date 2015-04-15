@@ -105,7 +105,7 @@ namespace Leviathan{
 	class UTF8DataIterator;
 	template<class DTypeName> class SyncedPrimitive;
 	class SyncedResource;
-	class ScriptInterface;
+	class ScriptExecutor;
 	class ViewerCameraPos;
 	class NewtonManager;
 	class SoundDevice;

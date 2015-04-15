@@ -4,7 +4,7 @@
 #include "GuiCollection.h"
 #endif
 #include <boost/assign/list_of.hpp>
-#include "Script/ScriptInterface.h"
+#include "Script/ScriptExecutor.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "GuiManager.h"
 #include "CEGUI/GUIContext.h"
@@ -119,7 +119,7 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 			ScriptRunningSetup sargs;
 			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
 
-			ScriptInterface::Get()->ExecuteScript(tmpscript, &sargs);
+			ScriptExecutor::Get()->RunSetUp(tmpscript, &sargs);
 
 			onevent->Release();
 		}

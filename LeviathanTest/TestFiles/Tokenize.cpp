@@ -102,11 +102,11 @@ TEST_CASE("LineTokenizer correct output", "[objectfile]"){
 			{
 				REQUIRE(Tokens.size() == 5);
                 
-				CHECK(Tokens[1]->GetData() != L"to nice");
-                CHECK(Tokens[2]->GetData() != L"2");
-                CHECK(Tokens[3]->GetData() != L"that work");
-                CHECK(Tokens[4]->GetData() != L"2567");
-                CHECK(Tokens[0]->GetSubTokenCount() != 4);
+				CHECK(Tokens[1]->GetData() == L"to nice");
+                CHECK(Tokens[2]->GetData() == L"2");
+                CHECK(Tokens[3]->GetData() == L"that work");
+                CHECK(Tokens[4]->GetData() == L"2567");
+                CHECK(Tokens[0]->GetSubTokenCount() == 4);
 			}
             break;
             case 9:

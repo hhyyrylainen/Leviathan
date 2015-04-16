@@ -49,9 +49,9 @@ namespace Leviathan{
 		DLLEXPORT Float3 GetPos() const;
         DLLEXPORT Float3 GetPosition() const;
         DLLEXPORT void GetPos(Float3 &receiver) const;
-		DLLEXPORT float GetXPos();
-		DLLEXPORT float GetYPos();
-		DLLEXPORT float GetZPos();
+		DLLEXPORT float GetPosX() const;
+		DLLEXPORT float GetPosY() const;
+		DLLEXPORT float GetPosZ() const;
 
 		DLLEXPORT void SetPosX(const float &x);
 		DLLEXPORT void SetPosY(const float &y);

@@ -122,7 +122,7 @@ namespace Leviathan{
 		DLLEXPORT static void WinAllocateConsole();
 #endif
 
-	private:
+	protected:
 		// after load function //
 		void PostLoad();
 
@@ -203,6 +203,7 @@ namespace Leviathan{
 		bool PreReleaseWaiting : 1;
 		bool NoGui;
 		bool NoLeap;
+        bool NoSTDInput;
 
 		// Marks that the Engine has already done prerelease //
 		bool PreReleaseCompleted;

@@ -7,6 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include <memory>
+#include <iostream>
 
 #include "Logger.h"
 
@@ -920,6 +921,10 @@ namespace Leviathan{
 		DLLEXPORT static const Float4& GetColourTransparent();
 	};
 
-
+    // Stream operators //
+    DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+        const Leviathan::Float4 &value);
 }
+
+
 #endif

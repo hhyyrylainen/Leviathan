@@ -38,10 +38,10 @@ namespace Leviathan{
         PPDELTAUPDATED_TOR_Z = 1 << 12
     };
 
-    static const int16_t PPDELTA_ALL_UPDATED = PPDELTAUPDATED_POS_X & PPDELTAUPDATED_POS_Y & PPDELTAUPDATED_POS_Z &
-                                    PPDELTAUPDATED_VEL_X & PPDELTAUPDATED_VEL_Y & PPDELTAUPDATED_VEL_Z &
-                                    PPDELTAUPDATED_TOR_X & PPDELTAUPDATED_TOR_Y & PPDELTAUPDATED_TOR_Z &
-                                    PPDELTAUPDATED_ROT_X & PPDELTAUPDATED_ROT_Y & PPDELTAUPDATED_ROT_Z &
+    static const int16_t PPDELTA_ALL_UPDATED = PPDELTAUPDATED_POS_X | PPDELTAUPDATED_POS_Y | PPDELTAUPDATED_POS_Z |
+                                    PPDELTAUPDATED_VEL_X | PPDELTAUPDATED_VEL_Y | PPDELTAUPDATED_VEL_Z |
+                                    PPDELTAUPDATED_TOR_X | PPDELTAUPDATED_TOR_Y | PPDELTAUPDATED_TOR_Z |
+                                    PPDELTAUPDATED_ROT_X | PPDELTAUPDATED_ROT_Y | PPDELTAUPDATED_ROT_Z |
                                     PPDELTAUPDATED_ROT_W;
 
     //! \brief Flags for positionable rotationable updated state
@@ -59,8 +59,8 @@ namespace Leviathan{
         PRDELTAUPDATED_ROT_W = 1 << 6
     };
     
-    static const int8_t PRDELTA_ALL_UPDATED = PRDELTAUPDATED_POS_X & PRDELTAUPDATED_POS_Y & PRDELTAUPDATED_POS_Z &
-                                    PRDELTAUPDATED_ROT_X & PRDELTAUPDATED_ROT_Y & PRDELTAUPDATED_ROT_Z &
+    static const int8_t PRDELTA_ALL_UPDATED = PRDELTAUPDATED_POS_X | PRDELTAUPDATED_POS_Y | PRDELTAUPDATED_POS_Z |
+                                    PRDELTAUPDATED_ROT_X | PRDELTAUPDATED_ROT_Y | PRDELTAUPDATED_ROT_Z |
                                     PRDELTAUPDATED_ROT_W;;
 
     //! \brief State object for entities that only have position and base physical components

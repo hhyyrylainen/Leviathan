@@ -346,7 +346,8 @@ DLLEXPORT void Leviathan::BaseSendableEntity::StoreClientSideState(int ticknumbe
     if(!IsAnyDataUpdated)
         return;
     
-    assert(ClientStateBuffer.capacity() != 0 && "StoreClientSideState called on something that isn't a client");
+    if(ClientStateBuffer.capacity() != 0)
+        throw Exception("StoreClientSideState called on something that isn't a client");
 
     ClientStateBuffer.push_back(SendableObjectClientState(ticknumber, CaptureState(ticknumber)));
 }
@@ -392,8 +393,9 @@ DLLEXPORT void Leviathan::BaseSendableEntity::QueueInterpolation(shared_ptr<Obje
                 
                 if(!from->FillMissingData(*obj)){
                     // We need a full state capture and we need to fill with that //
-                    assert(from->FillMissingData(CaptureState(0)) &&
-                        "coulnd't properly fill a state, even with CaptureState");
+                    bool succeeded = from->FillMissingData(*CaptureState(0));
+                    if(!succeeded)
+                        throw Exception("coulnd't properly fill a state, even with CaptureState");
                 }
                 
                 break;

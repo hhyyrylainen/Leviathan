@@ -49,7 +49,7 @@ DLLEXPORT Leviathan::ConnectionInfo::~ConnectionInfo(){
 	GUARD_LOCK_THIS_OBJECT();
 }
 // ------------------ Packet extensions ------------------ //
-sf::Packet& operator <<(sf::Packet& packet, const NetworkAckField &data){
+void AckFieldToPacket(sf::Packet &packet, const NetworkAckField &data){
 	// First set the trivial data //
 	sf::Int8 tmpsize = data.Acks.size();
 
@@ -58,11 +58,9 @@ sf::Packet& operator <<(sf::Packet& packet, const NetworkAckField &data){
 	for(char i = 0; i < tmpsize; i++){
 		packet << data.Acks[i];
 	}
-
-	return packet;
 }
 
-sf::Packet& operator >>(sf::Packet& packet, NetworkAckField &data){
+void AckFieldFromPacket(sf::Packet &packet, NetworkAckField &data){
 	// Get data //
 	packet >> data.FirstPacketID;
 	sf::Int8 tmpsize = 0;
@@ -72,8 +70,6 @@ sf::Packet& operator >>(sf::Packet& packet, NetworkAckField &data){
 	for(char i = 0; i < tmpsize; i++){
 		packet >> data.Acks[i];
 	}
-
-	return packet;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
@@ -542,7 +538,9 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
 
 	NetworkAckField otherreceivedpackages;
 
-	if(!(packet >> otherreceivedpackages)){
+    AckFieldFromPacket(packet, otherreceivedpackages);
+    
+	if(!packet){
 
 		Logger::Get()->Error(L"Received package has invalid format");
 	}
@@ -741,7 +739,7 @@ void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::
 
 				AcksNotConfirmedAsReceived[i]->SendCount++;
 
-				tofill << *AcksNotConfirmedAsReceived[i]->AcksInThePacket;
+				AckFieldToPacket(tofill, *AcksNotConfirmedAsReceived[i]->AcksInThePacket);
 
 				newrequired = false;
 				break;
@@ -785,7 +783,7 @@ void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::
 #endif // SPAM_ME_SOME_PACKETS
 
 			// Put into the packet //
-			tofill << *tmpacks->AcksInThePacket;
+			AckFieldToPacket(tofill, *tmpacks->AcksInThePacket);
 
 			// We increment the last send, just for fun and to see what happens //
 			if(LastSentConfirmID != -1)

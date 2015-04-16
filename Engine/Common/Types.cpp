@@ -267,3 +267,11 @@ DLLEXPORT const Float4& Leviathan::Float4::GetColourWhite(){
 DLLEXPORT const Float4& Leviathan::Float4::GetColourTransparent(){
 	return ColourTransparent;
 }
+// ------------------ Stream operators ------------------ //
+DLLEXPORT std::ostream& Leviathan::operator <<(std::ostream &stream,
+    const Leviathan::Float4 &value)
+{
+
+    stream << "[" << value.X << ", " << value.Y << ", " << value.Z << ", " << value.W << "]";
+    return stream;
+}

@@ -344,7 +344,8 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
             allsucceeded = false;
         }
     }
-    
+
+    ValidFields |= other.ValidFields;
     return allsucceeded;
 }
 // ------------------ PositionableRotationableDeltaState ------------------ //
@@ -553,6 +554,8 @@ DLLEXPORT bool PositionableRotationableDeltaState::FillMissingData(ObjectDeltaSt
             allsucceeded = false;
         }
     }
+
+    ValidFields |= other.ValidFields;
     
     return allsucceeded;
 }

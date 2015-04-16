@@ -79,15 +79,15 @@ DLLEXPORT Float3 BasePositionable::GetPosition() const{
     return Position;
 }
 
-float BasePositionable::GetXPos(){
+float BasePositionable::GetPosX() const{
     GUARD_LOCK_THIS_OBJECT();
 	return Position.X;
 }
-float BasePositionable::GetYPos(){
+float BasePositionable::GetPosY() const{
     GUARD_LOCK_THIS_OBJECT();
 	return Position.Y;
 }
-float BasePositionable::GetZPos(){
+float BasePositionable::GetPosZ() const{
     GUARD_LOCK_THIS_OBJECT();
 	return Position.Z;
 }
@@ -205,8 +205,6 @@ DLLEXPORT void BasePositionable::InterpolatePositionableState(PositionableRotati
     PositionableRotationableDeltaState &second, float progress)
 {
 
-    cout << "Position interpolation, progress: " << progress << "\n";
-    
     if(progress < 0.f)
         progress = 0.f;
 
@@ -283,8 +281,6 @@ DLLEXPORT void BasePositionable::InterpolatePositionableState(PositionableRotati
     }
 
     GUARD_LOCK_THIS_OBJECT();
-    cout << "Setting things to, pos: " << pos.X << ", " << pos.Y << ", " << pos.Z;
-    cout << "\nEND" << endl;
     SetPos(pos);
     SetOrientation(rot);
 }

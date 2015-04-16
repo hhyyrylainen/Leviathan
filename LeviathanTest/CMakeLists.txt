@@ -14,6 +14,7 @@ set(TestSources
   TestFiles/ObjectFiles.cpp
   TestFiles/Floats.cpp
   TestFiles/Regex.cpp
+  TestFiles/DeltaStates.cpp
   )
 
 include_directories(catch)

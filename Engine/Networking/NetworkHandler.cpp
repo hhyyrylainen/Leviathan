@@ -26,7 +26,8 @@ DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, Networ
 	interfaceinstance = packethandler;
 
 	// Set our type to the NetworkInteface //
-	interfaceinstance->_SetNetworkType(AppType);
+    if(interfaceinstance)
+        interfaceinstance->_SetNetworkType(AppType);
 
 	// Create the variable syncer //
 	VariableSyncer = new SyncedVariables(this, AppType == NETWORKED_TYPE_SERVER, interfaceinstance);

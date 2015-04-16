@@ -303,8 +303,6 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     }
     
     _PhysicalWorld.reset();
-
-    Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): ready to be destroyed");
 }
 // ------------------------------------ //
 void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre, Window* rendertarget){

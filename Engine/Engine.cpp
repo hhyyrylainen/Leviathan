@@ -60,7 +60,7 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
     GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
     _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
     _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), _EntitySerializerManager(NULL),
-    _ConstraintSerializerManager(NULL), _AINetworkCache(NULL)
+    _ConstraintSerializerManager(NULL), _AINetworkCache(NULL), NoSTDInput(false)
 {
 	IDDefaultInstance = IDFactory::Get();
 
@@ -515,7 +515,7 @@ void Leviathan::Engine::PostLoad(){
     
 #endif
     
-    if(connectedtoterminal){
+    if(connectedtoterminal && !NoSTDInput){
         // Start receiving input //
         CinThread = boost::thread(boost::bind<void>([]() -> void
             {
@@ -1141,6 +1141,11 @@ DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
 #endif
 			continue;
 		}
+        if(*splitval == L"--nocin"){
+
+            NoSTDInput = true;
+            continue;
+        }
 		if(*splitval == L"--nonothing"){
 			// Shouldn't try to open the console on windows //
 			DEBUG_BREAK;

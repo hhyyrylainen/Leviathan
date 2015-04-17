@@ -39,6 +39,9 @@ DLLEXPORT Leviathan::PhysicalWorld::~PhysicalWorld(){
 	// finally destroy the newton world
     
 	NewtonDestroy(World);
+
+    PhysicsMaterialManager::Get()->DestroyActualMaterialsForWorld(World);
+
     World = NULL;
 }
 // ------------------------------------ //

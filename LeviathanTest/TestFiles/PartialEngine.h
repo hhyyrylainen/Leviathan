@@ -17,6 +17,15 @@ public:
 
 };
 
+//! This is required to reduce the times newton is initialized/released as that seems to be a
+//! major cause of deadlocking
+class NewtonHolder{
+public:
+
+    static unique_ptr<NewtonManager> StaticNewtonManager;
+    static unique_ptr<PhysicsMaterialManager> StaticPhysicsMaterialManager;
+};
+
 //! \brief Partial implementation of Leviathan::Engine for tests
 template<bool UseActualInit, NETWORKED_TYPE TestWithType>
 class PartialEngine : public Engine{
@@ -44,8 +53,19 @@ public:
 
             _NetworkHandler = new NetworkHandler(TestWithType, NULL);
 
-            _NewtonManager = new NewtonManager();
-            PhysMaterials = new PhysicsMaterialManager(_NewtonManager);
+            if(!NewtonHolder::StaticNewtonManager){
+
+                NewtonHolder::StaticNewtonManager = move(unique_ptr<NewtonManager>(
+                        new NewtonManager));
+                NewtonHolder::StaticPhysicsMaterialManager = move(
+                    unique_ptr<PhysicsMaterialManager>(new
+                        PhysicsMaterialManager(NewtonHolder::StaticNewtonManager.get())));
+            }
+            
+            _NewtonManager = NewtonHolder::StaticNewtonManager.get();
+            PhysMaterials = NewtonHolder::StaticPhysicsMaterialManager.get();
+
+            REQUIRE(PhysicsMaterialManager::Get() != nullptr);
         }
     }
 
@@ -53,15 +73,17 @@ public:
 
         Log.Save();
         
-        SAFE_DELETE(PhysMaterials);
-        SAFE_DELETE(_NewtonManager);
         if(UseActualInit){
 
             SAFE_RELEASEDEL(_NetworkHandler);
+            SAFE_DELETE(PhysMaterials);
+            SAFE_DELETE(_NewtonManager);
+
         } else {
             // This wasn't initialized //
             SAFE_DELETE(_NetworkHandler);
         }
+        
         SAFE_RELEASEDEL(MainEvents);
     }
     
@@ -69,4 +91,6 @@ public:
     PartialApplication App;
     Logger Log;
     AppDef Def;
+
+
 };

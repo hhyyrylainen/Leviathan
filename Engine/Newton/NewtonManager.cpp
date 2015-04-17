@@ -30,7 +30,7 @@ DLLEXPORT Leviathan::NewtonManager::~NewtonManager(){
 	Staticaccess = NULL;
 
 	// release newton library //
-
+    
 
 }
 

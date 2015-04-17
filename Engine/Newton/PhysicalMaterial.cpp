@@ -46,6 +46,18 @@ void Leviathan::PhysicalMaterial::_CreateMaterialToWorld(NewtonWorld* world){
 	NewtonWorldAndID[world] = NewtonMaterialCreateGroupID(world);
 }
 
+void PhysicalMaterial::_ClearFromWorld(NewtonWorld* world){
+
+    for(auto iter = NewtonWorldAndID.begin(); iter != NewtonWorldAndID.end(); ++iter){
+
+        if(iter->first == world){
+
+            NewtonWorldAndID.erase(iter);
+            return;
+        }
+    }
+}
+
 void Leviathan::PhysicalMaterial::_ApplyMaterialPropertiesToWorld(NewtonWorld* world){
 	// Loop interaction variables and apply their properties //
 	for(auto iter = InterractionVariables.begin(); iter != InterractionVariables.end(); ++iter){

@@ -119,6 +119,8 @@ namespace Leviathan{
 		void _CreateMaterialToWorld(NewtonWorld* world);
 		void _ApplyMaterialPropertiesToWorld(NewtonWorld* world);
 
+        void _ClearFromWorld(NewtonWorld* world);
+
 		// ------------------------------------ //
 		wstring Name;
 		int EngineID;

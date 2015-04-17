@@ -58,6 +58,14 @@ DLLEXPORT void Leviathan::PhysicsMaterialManager::CreateActualMaterialsForWorld(
 	_ApplyMaterialProperties(newtonworld);
 }
 
+DLLEXPORT void PhysicsMaterialManager::DestroyActualMaterialsForWorld(NewtonWorld* world){
+
+	for(auto iter = LoadedMaterials.begin(); iter != LoadedMaterials.end(); ++iter){
+
+		iter->second->_ClearFromWorld(world);
+	}    
+}
+
 void Leviathan::PhysicsMaterialManager::_CreatePrimitiveIDList(NewtonWorld* world){
 	// Loop the map and call creation functions on the objects //
 	for(auto iter = LoadedMaterials.begin(); iter != LoadedMaterials.end(); ++iter){

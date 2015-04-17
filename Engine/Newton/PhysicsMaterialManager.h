@@ -37,6 +37,8 @@ namespace Leviathan{
 		// This function builds the materials for a newton world (this is provided so that you can use multiple threads to setup the game) //
 		DLLEXPORT void CreateActualMaterialsForWorld(NewtonWorld* newtonworld);
 
+        //! \brief Clears world from materials
+        DLLEXPORT void DestroyActualMaterialsForWorld(NewtonWorld* world);
 
 		DLLEXPORT static PhysicsMaterialManager* Get();
 	private:

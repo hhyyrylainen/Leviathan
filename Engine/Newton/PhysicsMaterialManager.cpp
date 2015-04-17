@@ -74,7 +74,3 @@ void Leviathan::PhysicsMaterialManager::_ApplyMaterialProperties(NewtonWorld* wo
 	}
 }
 // ------------------------------------ //
-
-// ------------------------------------ //
-
-// ------------------------------------ //

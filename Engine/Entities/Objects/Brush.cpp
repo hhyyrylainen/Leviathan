@@ -21,14 +21,18 @@ DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) :
     BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_BRUSH),
     Sizes(0), BrushModel(NULL), Mass(0.f)
 {
-
+#ifdef NETWORK_USE_SNAPSHOTS
+    ListeningForEvents = false;
+#endif
 }
 
 Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world, int netid) :
     BaseRenderable(hidden), BaseObject(netid, world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_BRUSH),
     Sizes(0), BrushModel(NULL), Mass(0.f)
 {
-
+#ifdef NETWORK_USE_SNAPSHOTS
+    ListeningForEvents = false;
+#endif
 }
 
 
@@ -665,16 +669,9 @@ void Brush::VerifySendableInterpolation(){
     {
         // Skip if we are already interpolating //
         GUARD_LOCK_THIS_OBJECT();
-        
-        if(IsCurrentlyInterpolating()){
 
-            if(!ListeningForEvents){
-            
-                RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
-                ListeningForEvents = true;
-            }
+        if(IsCurrentlyInterpolating())
             return;
-        }
     }
 
     // This way we don't have to write the implementation twice //
@@ -689,7 +686,10 @@ bool Brush::OnInterpolationFinished(){
         auto interpolation = GetAndPopNextInterpolation();
 
         GUARD_LOCK_THIS_OBJECT();
-        SetCurrentInterpolation(interpolation);
+        if(!SetCurrentInterpolation(interpolation)){
+
+            throw Exception("Invalid interpolation tried to be set");
+        }
 
         if(!ListeningForEvents){
             

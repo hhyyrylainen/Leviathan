@@ -76,6 +76,8 @@ namespace Leviathan{
         
         ObjectInterpolation(const ObjectInterpolation &other);
 
+        ~ObjectInterpolation();
+
         ObjectInterpolation& operator=(const ObjectInterpolation &other);
         
 

@@ -407,8 +407,6 @@ DLLEXPORT void Leviathan::BaseSendableEntity::QueueInterpolation(shared_ptr<Obje
     // So further animations will work
     LastQueuedTick = to->Tick;
 
-    cout << "Queued, LastQueuedTick: " << LastQueuedTick << std::endl;    
-
     QueuedInterpolationStates.push_back(move(ObjectInterpolation(from, to, mstime)));
     
     VerifySendableInterpolation();
@@ -427,11 +425,9 @@ DLLEXPORT ObjectInterpolation Leviathan::BaseSendableEntity::GetAndPopNextInterp
             throw InvalidState("no states in queue");
     }
     
-    auto& obj = QueuedInterpolationStates.front();
+    auto obj = QueuedInterpolationStates.front();
     QueuedInterpolationStates.pop_front();
 
-    cout << "Popped: current size: " << QueuedInterpolationStates.size() << std::endl;
-    
     ReportInterpolationStatusToInput(obj.Second->Tick, Misc::GetTimeMs64()+obj.Duration);
 
     return obj;
@@ -467,7 +463,7 @@ void BaseSendableEntity::_CreateShortInterpolationFromStored(ObjectLock &guard){
 
 void Leviathan::BaseSendableEntity::ReportInterpolationStatusToInput(int tick, int64_t mstime){
     
-    cout << "Interpolation, tick: " << tick << " at: " << mstime << std::endl;
+    
 }
 #endif //NETWORK_USE_SNAPSHOTS
 // ------------------------------------ //
@@ -582,6 +578,12 @@ Leviathan::ObjectInterpolation::ObjectInterpolation(ObjectInterpolation &&other)
 
 ObjectInterpolation::ObjectInterpolation() : Duration(-1){
     
+}
+
+ObjectInterpolation::~ObjectInterpolation(){
+
+    Second.reset();
+    First.reset();
 }
 
 ObjectInterpolation& ObjectInterpolation::operator=(const ObjectInterpolation &other){

@@ -218,6 +218,10 @@ DLLEXPORT Leviathan::GameWorld::GameWorld() :
 }
 
 DLLEXPORT Leviathan::GameWorld::~GameWorld(){
+
+    // This should be relatively cheap if the newton threads don't deadlock while waiting
+    // for each other
+    _PhysicalWorld.reset();
     //Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): has been destroyed");
 }
 // ------------------------------------ //
@@ -301,8 +305,6 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
                 WaitingConstraints.size())+" constraints waiting for entities");
         WaitingConstraints.clear();
     }
-    
-    _PhysicalWorld.reset();
 }
 // ------------------------------------ //
 void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre, Window* rendertarget){

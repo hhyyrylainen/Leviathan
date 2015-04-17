@@ -52,11 +52,17 @@ public:
     ~PartialEngine(){
 
         Log.Save();
-
+        
         SAFE_DELETE(PhysMaterials);
         SAFE_DELETE(_NewtonManager);
-        SAFE_DELETE(_NetworkHandler);
-        SAFE_DELETE(MainEvents);
+        if(UseActualInit){
+
+            SAFE_RELEASEDEL(_NetworkHandler);
+        } else {
+            // This wasn't initialized //
+            SAFE_DELETE(_NetworkHandler);
+        }
+        SAFE_RELEASEDEL(MainEvents);
     }
     
 

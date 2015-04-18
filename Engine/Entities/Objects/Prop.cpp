@@ -16,13 +16,17 @@ using namespace Leviathan::Entity;
 DLLEXPORT Leviathan::Entity::Prop::Prop(bool hidden, GameWorld* world) :
     BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_PROP)
 {
-
+#ifdef NETWORK_USE_SNAPSHOTS
+    ListeningForEvents = false;
+#endif
 }
 
 Leviathan::Entity::Prop::Prop(bool hidden, GameWorld* world, int netid) :
     BaseRenderable(hidden), BaseObject(netid, world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_PROP)
 {
-
+#ifdef NETWORK_USE_SNAPSHOTS
+    ListeningForEvents = false;
+#endif
 }
 
 DLLEXPORT Leviathan::Entity::Prop::~Prop(){
@@ -519,16 +523,9 @@ void Prop::VerifySendableInterpolation(){
     {
         // Skip if we are already interpolating //
         GUARD_LOCK_THIS_OBJECT();
-        
-        if(IsCurrentlyInterpolating()){
 
-            if(!ListeningForEvents){
-            
-                RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
-                ListeningForEvents = true;
-            }
+        if(IsCurrentlyInterpolating())
             return;
-        }
     }
 
     // This way we don't have to write the implementation twice //
@@ -543,7 +540,10 @@ bool Prop::OnInterpolationFinished(){
         auto interpolation = GetAndPopNextInterpolation();
 
         GUARD_LOCK_THIS_OBJECT();
-        SetCurrentInterpolation(interpolation);
+        if(!SetCurrentInterpolation(interpolation)){
+
+            throw Exception("Invalid interpolation tried to be set");
+        }
 
         if(!ListeningForEvents){
             

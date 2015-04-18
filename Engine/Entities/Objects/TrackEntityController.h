@@ -39,7 +39,7 @@ namespace Leviathan{ namespace Entity{
             TRACKSTATE_UPDATED_PROGRESS = 1 << 2,
         };
 
-        static const int8_t TRACKSTATE_UPDATED_ALL = TRACKSTATE_UPDATED_NODE & TRACKSTATE_UPDATED_SPEED &
+        static const int8_t TRACKSTATE_UPDATED_ALL = TRACKSTATE_UPDATED_NODE | TRACKSTATE_UPDATED_SPEED |
                                                TRACKSTATE_UPDATED_PROGRESS;
 #define TRACKCONTROLLER_PROGRESS_THRESSHOLD 0.00000001f
         

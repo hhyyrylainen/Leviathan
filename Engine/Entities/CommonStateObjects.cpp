@@ -201,6 +201,7 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
         Velocity = other.Velocity;
         Torque = other.Torque;
 
+        ValidFields = other.ValidFields;
         return other.ValidFields == PPDELTA_ALL_UPDATED;
         
     } else if(ValidFields == PPDELTA_ALL_UPDATED){
@@ -473,6 +474,7 @@ DLLEXPORT bool PositionableRotationableDeltaState::FillMissingData(ObjectDeltaSt
         Position = other.Position;
         Rotation = other.Rotation;
 
+        ValidFields = other.ValidFields;
         return other.ValidFields == PRDELTA_ALL_UPDATED;
         
     } else if(ValidFields == PRDELTA_ALL_UPDATED){

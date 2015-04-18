@@ -734,8 +734,8 @@ DLLEXPORT bool TrackEntityController::SetStateToInterpolated(ObjectDeltaStateDat
 // ------------------ TrackControllerState ------------------ //
 DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(int tick, int reached,
     float speed, float progress) :
-    ObjectDeltaStateData(tick),  ReachedNode(reached), ChangeSpeed(speed),
-    NodeProgress(progress), AddedNodes(0)
+    ObjectDeltaStateData(tick), ReachedNode(reached), ChangeSpeed(speed),
+    NodeProgress(progress), AddedNodes(0), ValidFields(TRACKSTATE_UPDATED_ALL)
 {
 
 }
@@ -759,6 +759,9 @@ DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(int tick
     
     if(ValidFields & TRACKSTATE_UPDATED_PROGRESS)
         packet >> NodeProgress;
+
+    if(!packet)
+        throw InvalidArgument("invalid packet for TrackControllerState");
 }
             
 DLLEXPORT void Leviathan::Entity::TrackControllerState::CreateUpdatePacket(ObjectDeltaStateData* olderstate,
@@ -814,7 +817,7 @@ DLLEXPORT bool TrackControllerState::FillMissingData(ObjectDeltaStateData &other
         ChangeSpeed = other.ChangeSpeed;
         NodeProgress = other.NodeProgress;
 
-
+        
         return other.ValidFields == TRACKSTATE_UPDATED_ALL;
         
     } else if(ValidFields == TRACKSTATE_UPDATED_ALL){
@@ -857,6 +860,8 @@ DLLEXPORT bool TrackControllerState::FillMissingData(ObjectDeltaStateData &other
             allsucceeded = false;
         }
     }
+
+    ValidFields |= other.ValidFields;
 
     return allsucceeded;
 }

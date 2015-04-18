@@ -386,20 +386,38 @@ DLLEXPORT void Leviathan::BaseSendableEntity::QueueInterpolation(shared_ptr<Obje
         
     } else {
 
-        // Allow from to capture values from an earlier state //
-        for(auto& obj : ClientStateBuffer){
+        // The from state needs to have all valid data //
+        bool filled = false;
 
-            if(obj->Tick == from->Tick-1){
+        // This may get expensive quick //
+        // Better way could be making all interpolation methods snap back to the old value only if the older contains
+        // that value instead of forcing all older states to be full
+        for(int targettick = from->Tick-1; targettick > from->Tick-BASESENDABLE_STORED_RECEIVED_STATES; --targettick){
+            
+            // Allow from to capture values from an earlier state //
+            for(auto& obj : ClientStateBuffer){
+
+                if(obj->Tick == targettick){
                 
-                if(!from->FillMissingData(*obj)){
-                    // We need a full state capture and we need to fill with that //
-                    bool succeeded = from->FillMissingData(*CaptureState(0));
-                    if(!succeeded)
-                        throw Exception("coulnd't properly fill a state, even with CaptureState");
+                    if(from->FillMissingData(*obj)){
+
+                        filled = true;
+                        goto fillsucceededendlooplable;
+                    }
+
+                    break;
                 }
-                
-                break;
             }
+        }
+
+fillsucceededendlooplable:
+        
+        // Last chance to fill with new state //
+        if(!filled){
+
+            bool succeeded = from->FillMissingData(*CaptureState(0));
+            if(!succeeded)
+                throw Exception("coulnd't properly fill a state, even with CaptureState");
         }
     }
 

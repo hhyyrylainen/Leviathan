@@ -40,7 +40,10 @@ DLLEXPORT Leviathan::PhysicalWorld::~PhysicalWorld(){
     
 	NewtonDestroy(World);
 
-    PhysicsMaterialManager::Get()->DestroyActualMaterialsForWorld(World);
+    auto physmanager = PhysicsMaterialManager::Get();
+    
+    if(physmanager)
+        physmanager->DestroyActualMaterialsForWorld(World);
 
     World = NULL;
 }

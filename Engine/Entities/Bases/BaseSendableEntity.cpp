@@ -321,11 +321,21 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
 
         const int timeapart = TICKSPEED*(ticknumber-laststate->Tick);
 
+        const int fromlastqueued = TICKSPEED * (ticknumber-LastQueuedTick);
+
+        cout << "Queueing: " << laststate->Tick << " -> " << ticknumber << " in " << timeapart
+             << endl;
+        
+        if(timeapart != fromlastqueued){
+
+            DEBUG_BREAK;
+        }
+
         // We actually only want to interpolate between states that are INTERPOLATION_TIME apart
         // This verifies that the object doesn't stop moving if a single packet is missed
         if(timeapart >= INTERPOLATION_TIME){
 
-            QueueInterpolation(laststate, receivedstate, timeapart);
+            QueueInterpolation(laststate, receivedstate, timeapart-1);
         }
         
         // If we didn't queue it the running out of interpolation steps callback can find the skipped
@@ -426,6 +436,11 @@ fillsucceededendlooplable:
     LastQueuedTick = to->Tick;
 
     QueuedInterpolationStates.push_back(move(ObjectInterpolation(from, to, mstime)));
+
+    if(QueuedInterpolationStates.size() > 1){
+
+        DEBUG_BREAK;
+    }
     
     VerifySendableInterpolation();
 }

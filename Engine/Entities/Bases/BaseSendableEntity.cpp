@@ -19,17 +19,8 @@ DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_
 
     // Only clients allocate any space to the circular state buffer //
     ClientStateBuffer(NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT ?
-#ifndef NETWORK_USE_SNAPSHOTS        
-        BASESENDABLE_STORED_CLIENT_STATES
-#else
-        BASESENDABLE_STORED_RECEIVED_STATES
-#endif //NETWORK_USE_SNAPSHOTS
-        : 0), LastVerifiedTick(-1)
+        BASESENDABLE_STORED_RECEIVED_STATES: 0),
 {
-#ifdef NETWORK_USE_SNAPSHOTS
-    LastQueuedTick = -1;
-#endif //NETWORK_USE_SNAPSHOTS
-    
     if(NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT)
         IsOnClient = true;
 }
@@ -151,12 +142,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
     auto end = UpdateReceivers.end();
     for(auto iter = UpdateReceivers.begin(); iter != end; ){
 
-        // First check does this particular connection need an update //
-        if(!(*iter)->DataUpdatedAfterSending){
-
-            ++iter;
-            continue;
-        }
+        // Currently all active connections will receive all updates //
 
         shared_ptr<sf::Packet> packet = make_shared<sf::Packet>();
 
@@ -172,6 +158,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
             (*iter)->CorrespondingConnection);
         
         // This will be the only function removing closed connections //
+        // TODO: do a more global approach to avoid having to lookup connections here
         if(!safeconnection){
 
             iter = UpdateReceivers.erase(iter);
@@ -186,7 +173,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
             PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
 
         updatemesg->GenerateEntityUpdateResponse(new NetworkResponseDataForEntityUpdate(OwnedByWorld->GetID(),
-                GetID(), ticknumber, packet));
+                GetID(), ticknumber, LastConfirmedTickNumber, packet));
 
         auto senthing = safeconnection->SendPacketToConnection(updatemesg, 1);
 
@@ -210,295 +197,109 @@ void Leviathan::BaseSendableEntity::_MarkDataUpdated(ObjectLock &guard){
 
     if(UpdateReceivers.empty())
         return;
-
-    auto end = UpdateReceivers.end();
-    for(auto iter = UpdateReceivers.begin(); iter != end; ++iter){
-
-        (*iter)->DataUpdatedAfterSending = true;
-    }
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &packet, int ticknumber){
-#ifndef NETWORK_USE_SNAPSHOTS
+DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &packet, int ticknumber,
+    int referencetick)
+{
 
-    {
-        GUARD_LOCK_THIS_OBJECT();
-        
-        // Ignore if older than latest update //
-        if(ticknumber < LastVerifiedTick){
-
-            return true;
-        }
-
-        LastVerifiedTick = ticknumber;
-    }
-
-    
-    // First find an old state for us that is on the same tick //
-    shared_ptr<ObjectDeltaStateData> ourold;
-
-    int oldestfound = INT_MAX;
-    
-    {
-        GUARD_LOCK_THIS_OBJECT();
-        auto end = ClientStateBuffer.end();
-        for(auto iter = ClientStateBuffer.begin(); iter != end; ++iter){
-            
-            if((*iter)->Tick < oldestfound)
-                oldestfound = (*iter)->Tick;
-            
-            if((*iter)->Tick == ticknumber){
-
-                // Found a matching state //
-                ourold = (*iter);
-                break;
-            }
-        }
-    }
-    
-    if(!ourold){
-        
-        // Didn't find an old state //
-        // This could be because the object just started moving //
-
-        // This means that the state has already been popped //
-        if(oldestfound > ticknumber)
-            Logger::Get()->Warning("BaseSendableEntity: coulnd't find our old state for tick number "+
-                Convert::ToString(ticknumber));
-    }
-
-    // Then we create a state from the packet filling in the blanks from the old state //
     auto receivedstate = CreateStateFromPacket(ticknumber, packet);
 
-    if(!receivedstate)
+    if(!receivedstate){
+
         return false;
-
-    // Now the implementation checks if we correctly simulated the entity on the client side //
-    VerifyOldState(receivedstate.get(), ourold.get(), ticknumber);
-#else
-
-    // Here find the last state from which we are interpolating and then request that the implementation
-    // starts interpolating
-
-    shared_ptr<ObjectDeltaStateData> laststate;
-
-    auto receivedstate = CreateStateFromPacket(ticknumber, packet);
+    }
 
     {
         GUARD_LOCK_THIS_OBJECT();
-
-        // Skip if older than the last queued one //
-        if(ticknumber < LastQueuedTick){
-
-            return true;
-        }
 
         // Skip if not newer than any //
         bool newer = false;
-
+        bool filled = false;
         
         for(auto& obj : ClientStateBuffer){
 
-            if(obj->Tick == LastQueuedTick){
+            // Fill data from the reference tick to make this update packet as complete as possible //
+            if(obj.Tick == referencetick){
+
+                // Add missing values //
+                receivedstate->FillMissingData(*obj.DeltaData);
                 
-                laststate = obj;
+                filled = true;
+                goto packetisnewerthansomelabel;
+            }
+
+            if(obj.Tick < ticknumber){
+                
+                newer = true;
             }
         }
 
-        // Store the new state in the buffer so that it can be found when newer ones arrive //
-        ClientStateBuffer.push_back(receivedstate);
-    }
-    
+        if(newer)
+            goto packetisnewerthansomelabel;
 
-    if(!laststate){
+        // Was not newer than any //
+        return true;
 
-        // The object just started moving //
-        QueueInterpolation(NULL, receivedstate, INTERPOLATION_TIME);
-        
-    } else {
+packetisnewerthansomelabel:
 
-        // The object will need to move from the earlier state //
-
-        const int timeapart = TICKSPEED*(ticknumber-laststate->Tick);
-
-        const int fromlastqueued = TICKSPEED * (ticknumber-LastQueuedTick);
-
-        cout << "Queueing: " << laststate->Tick << " -> " << ticknumber << " in " << timeapart
-             << endl;
-        
-        if(timeapart != fromlastqueued){
+        // If it isn't filled that tells that our buffer is too small //
+        if(!filled){
 
             DEBUG_BREAK;
-        }
-
-        // We actually only want to interpolate between states that are INTERPOLATION_TIME apart
-        // This verifies that the object doesn't stop moving if a single packet is missed
-        if(timeapart >= INTERPOLATION_TIME){
-
-            QueueInterpolation(laststate, receivedstate, timeapart-1);
+            throw Exception("ReferenceTick is no longer in memory ClientStateBuffer is too small");
         }
         
-        // If we didn't queue it the running out of interpolation steps callback can find the skipped
-        // state and interpolate to there
-        
+        // Store the new state in the buffer so that it can be found when interpolating //
+        ClientStateBuffer.push_back(StoredState(receivedstate));
     }
     
-#endif //NETWORK_USE_SNAPSHOTS
+    _OnNewStateReceived();
 
     return true;
 }
 // ------------------------------------ //
-#ifndef NETWORK_USE_SNAPSHOTS
-DLLEXPORT void Leviathan::BaseSendableEntity::StoreClientSideState(int ticknumber){
-
-    GUARD_LOCK_THIS_OBJECT();
-
-    if(!IsAnyDataUpdated)
-        return;
-    
-    if(ClientStateBuffer.capacity() != 0)
-        throw Exception("StoreClientSideState called on something that isn't a client");
-
-    ClientStateBuffer.push_back(SendableObjectClientState(ticknumber, CaptureState(ticknumber)));
-}
-
-DLLEXPORT bool Leviathan::BaseSendableEntity::ReplaceOldClientState(int onticktoreplace,
-    shared_ptr<ObjectDeltaStateData> state)
+DLLEXPORT void BaseSendableEntity::GetServerSentStates(ObjectLock &guard, ObjectDeltaStateData*& first,
+    ObjectDeltaStateData*& second, int tick) const
 {
-
-    GUARD_LOCK_THIS_OBJECT();
-
-    auto end = ClientStateBuffer.end();
-    for(auto iter = ClientStateBuffer.begin(); iter != end; ++iter){
-
-        // Compare ticks to find the one to replace //
-        if(iter->Tick == onticktoreplace){
-
-            iter->State = state;
-            return true;
-        }
-    }
-
-    return false;
-}
-#else
-
-DLLEXPORT void Leviathan::BaseSendableEntity::QueueInterpolation(shared_ptr<ObjectDeltaStateData> from,
-    shared_ptr<ObjectDeltaStateData> to, int mstime)
-{
-    // If we are interpolating from the initial state from is null //
-    GUARD_LOCK_THIS_OBJECT();
-
-    
-    if(from == nullptr){
-
-        from = CaptureState(0);
-        
-    } else {
-
-        // The from state needs to have all valid data //
-        bool filled = false;
-
-        // This may get expensive quick //
-        // Better way could be making all interpolation methods snap back to the old value only if the older contains
-        // that value instead of forcing all older states to be full
-        for(int targettick = from->Tick-1; targettick > from->Tick-BASESENDABLE_STORED_RECEIVED_STATES; --targettick){
-            
-            // Allow from to capture values from an earlier state //
-            for(auto& obj : ClientStateBuffer){
-
-                if(obj->Tick == targettick){
-                
-                    if(from->FillMissingData(*obj)){
-
-                        filled = true;
-                        goto fillsucceededendlooplable;
-                    }
-
-                    break;
-                }
-            }
-        }
-
-fillsucceededendlooplable:
-        
-        // Last chance to fill with new state //
-        if(!filled){
-
-            bool succeeded = from->FillMissingData(*CaptureState(0));
-            if(!succeeded)
-                throw Exception("coulnd't properly fill a state, even with CaptureState");
-        }
-    }
-
-    // Set this to the last tick that is included as the end point in a interpolation step
-    // So further animations will work
-    LastQueuedTick = to->Tick;
-
-    QueuedInterpolationStates.push_back(move(ObjectInterpolation(from, to, mstime)));
-
-    if(QueuedInterpolationStates.size() > 1){
-
-        DEBUG_BREAK;
-    }
-    
-    VerifySendableInterpolation();
-}
-
-DLLEXPORT ObjectInterpolation Leviathan::BaseSendableEntity::GetAndPopNextInterpolation(){
-
-    GUARD_LOCK_THIS_OBJECT();
-    
-    if(QueuedInterpolationStates.empty()){
-
-        _CreateShortInterpolationFromStored(guard);
-
-        // Fail if no new interpolations were found //
-        if(QueuedInterpolationStates.empty())
-            throw InvalidState("no states in queue");
-    }
-    
-    auto obj = QueuedInterpolationStates.front();
-    QueuedInterpolationStates.pop_front();
-
-    ReportInterpolationStatusToInput(obj.Second->Tick, Misc::GetTimeMs64()+obj.Duration);
-
-    return obj;
-}
-
-void BaseSendableEntity::_CreateShortInterpolationFromStored(ObjectLock &guard){
-
     VerifyLock(guard);
-
-    // We need to find any interpolation were Tick > LastQueuedTick //
-    shared_ptr<ObjectDeltaStateData> laststate;
-    shared_ptr<ObjectDeltaStateData> targetstate;
     
-    for(auto& state : ClientStateBuffer){
+    bool firstfound = false;
+    bool secondfound = false;
 
-        if(state->Tick > LastQueuedTick){
+    for(auto& obj : ClientStateBuffer){
 
-            targetstate = state;
-        } else if(state->Tick == LastQueuedTick){
+        if(obj.Tick == tick){
+            
+            // This is the first state //
+            *first = *obj.DeltaData;
 
-            laststate = state;
+            if(secondfound)
+                return;
+            
+            firstfound = true;
+            continue;
+        }
+
+        // For this to be found the client should be around 50-100 milliseconds in the past
+        if(obj.Tick == tick+1){
+
+            // The second state //
+            *second = *obj.DeltaData;
+            
+            if(firstfound)
+                return;
+
+            secondfound = true;
+            continue;
         }
     }
 
-    if(!targetstate)
-        return;
-    
-    const int timeapart = TICKSPEED * (targetstate->Tick - LastQueuedTick);
+    if(!secondfound || !firstfound){
 
-    // laststate may be NULL here //
-    QueueInterpolation(laststate, targetstate, timeapart);
+        throw InvalidType("No stored server states around tick");
+    }
 }
-
-void Leviathan::BaseSendableEntity::ReportInterpolationStatusToInput(int tick, int64_t mstime){
-    
-    
-}
-#endif //NETWORK_USE_SNAPSHOTS
 // ------------------------------------ //
 void Leviathan::BaseSendableEntity::_SendNewConstraint(BaseConstraintable* us, BaseConstraintable* other,
     Entity::BaseConstraint* constraint)
@@ -563,21 +364,9 @@ DLLEXPORT void Leviathan::SendableObjectConnectionUpdate::SucceedOrFailCallback(
     
     if(ticknumber < LastConfirmedTickNumber)
         return;
-    
-#ifdef NETWORK_USE_SNAPSHOTS
 
-    // We want to only mark every packet that is INTERPOLATION_TIME apart //
-    // Or if we have missed a interpolation time apart packet
-    if(ticknumber % INTERPOLATION_TIME/TICKSPEED == 0 ||
-        ticknumber-LastConfirmedTickNumber > INTERPOLATION_TIME/TICKSPEED)
-    {
-        LastConfirmedTickNumber = ticknumber;
-        LastConfirmedData = state;
-    }
-#else
     LastConfirmedTickNumber = ticknumber;
     LastConfirmedData = state;
-#endif //NETWORK_USE_SNAPSHOTS
 }
 // ------------------ ObjectDeltaStateData ------------------ //
 DLLEXPORT Leviathan::ObjectDeltaStateData::ObjectDeltaStateData(int tick) : Tick(tick){
@@ -587,43 +376,16 @@ DLLEXPORT Leviathan::ObjectDeltaStateData::ObjectDeltaStateData(int tick) : Tick
 DLLEXPORT Leviathan::ObjectDeltaStateData::~ObjectDeltaStateData(){
 
 }
-// ------------------ ObjectInterpolation ------------------ //
-#ifdef NETWORK_USE_SNAPSHOTS
-
-Leviathan::ObjectInterpolation::ObjectInterpolation(shared_ptr<ObjectDeltaStateData> first,
-    shared_ptr<ObjectDeltaStateData> second, int duration) :
-    First(first), Second(second), Duration(duration)
-{
-    
-}
-
-ObjectInterpolation::ObjectInterpolation(const ObjectInterpolation &other) :
-    First(other.First), Second(other.Second), Duration(other.Duration)
+// ------------------ StoredState ------------------ //
+StoredState::StoredState(shared_ptr<ObjectDeltaStateData> data) :
+    DeltaData(data), Tick(data->Tick)
 {
 
 }
 
-Leviathan::ObjectInterpolation::ObjectInterpolation(ObjectInterpolation &&other) :
-    First(move(other.First)), Second(move(other.Second)), Duration(other.Duration)
+StoredState::StoredState(StoredState&& other) :
+    DeltaData(move(other.DeltaData)), Tick(other.Tick)
 {
     
 }
-
-ObjectInterpolation::ObjectInterpolation() : Duration(-1){
     
-}
-
-ObjectInterpolation::~ObjectInterpolation(){
-
-    Second.reset();
-    First.reset();
-}
-
-ObjectInterpolation& ObjectInterpolation::operator=(const ObjectInterpolation &other){
-
-    Duration = other.Duration;
-    First = other.First;
-    Second = other.Second;
-}
-
-#endif //NETWORK_USE_SNAPSHOTS

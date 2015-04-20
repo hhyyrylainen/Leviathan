@@ -367,7 +367,7 @@ namespace Leviathan{
     class NetworkResponseDataForEntityUpdate : public BaseNetworkResponseData{
     public:
         
-        DLLEXPORT NetworkResponseDataForEntityUpdate(int worldid, int entityid, int ticknumber,
+        DLLEXPORT NetworkResponseDataForEntityUpdate(int worldid, int entityid, int ticknumber, int referencetick,
             shared_ptr<sf::Packet> data);
 
         DLLEXPORT NetworkResponseDataForEntityUpdate(sf::Packet &frompacket);
@@ -382,6 +382,9 @@ namespace Leviathan{
 
         //! The tick on which this was generated
         int TickNumber;
+
+        //! The tick number against which this update has been created
+        int ReferenceTick;
         
         //! Data for updating the entity 
         shared_ptr<sf::Packet> UpdateData;

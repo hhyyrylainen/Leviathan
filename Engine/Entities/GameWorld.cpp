@@ -27,7 +27,7 @@
 #include "Newton/PhysicsMaterialManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
-
+static_assert(floor(INTERPOLATION_TIME/(float)TICKSPEED) == INTERPOLATION_TIME/TICKSPEED)
 
 //! \brief Class used by _OnNotifiableConnected to hold temporary connection data
 class Leviathan::PlayerConnectionPreparer{
@@ -69,9 +69,10 @@ public:
 
         int targettick;
         {
+            // TODO: get the engine tick here
             GUARD_LOCK_OTHER_OBJECT(World);
 
-            targettick = World->TickNumber;
+            targettick = World->TickNumber-INTERPOLATION_TIME/TICKSPEED;
         }
 
         // Check how long until we tick again //
@@ -82,14 +83,14 @@ public:
 
         int wholeticks = floor(sendtime);
 
-        targettick += wholeticks;
+        targettick -= wholeticks;
 
         sendtime -= wholeticks;
 
         // For maximum accuray we are also going to adjust the receiver's engine tick //
-        int enginemscorrect = timeintick + (sendtime*(float)TICKSPEED);
+        int enginemscorrect = timeintick - (sendtime*(float)TICKSPEED);
 
-        Logger::Get()->Info("GameWorld: adjusting client by "+Convert::ToString(targettick)+" ticks and engine "
+        Logger::Get()->Info("GameWorld: adjusting client to "+Convert::ToString(targettick)+" ticks and engine "
             "clock by "+Convert::ToString(enginemscorrect)+" ms");
         
         shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
@@ -1267,7 +1268,9 @@ DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(NetworkResponseDat
     // Apply the update //
     // The object may not be locked as it might want to resimulate //
     
-    if(!EntitySerializerManager::Get()->ApplyUpdateMessage(*data->UpdateData, data->TickNumber, target)){
+    if(!EntitySerializerManager::Get()->ApplyUpdateMessage(*data->UpdateData, data->TickNumber, data->ReferenceTick,
+            target))
+    {
 
         Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): applying update to entity "+
             Convert::ToString(data->EntityID)+" failed");

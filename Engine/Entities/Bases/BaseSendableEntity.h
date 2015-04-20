@@ -13,12 +13,8 @@
 #include "boost/thread/mutex.hpp"
 #include "boost/circular_buffer.hpp"
 
-#ifndef NETWORK_USE_SNAPSHOTS
-#define BASESENDABLE_STORED_CLIENT_STATES 14
-#else
 #define BASESENDABLE_STORED_RECEIVED_STATES 4
 #define BASESENDABLE_STORED_CLIENT_INTERPOLATIONS 3
-#endif //NETWORK_USE_SNAPSHOTS
 
 #define SENDABLE_RESIMULATE_THRESSHOLD 0.01f
 
@@ -62,38 +58,21 @@ namespace Leviathan{
         void operator=(const ObjectDeltaStateData &other) = delete;
     };
 
-    //! \brief Contains an interpolation for client side entity to perform
-    struct ObjectInterpolation{
+    //! \brief Storage class for ObjectDeltaStateData
+    //!
+    //! Contains directly the tick number in ObjectDeltaStateData to (hopefully) allow better cache coherence
+    //! and improve frame times since the ticks are searched for each frame
+    class StoredState{
     public:
-        ObjectInterpolation(shared_ptr<ObjectDeltaStateData> first, shared_ptr<ObjectDeltaStateData> second,
-            int duration);
+        StoredState(shared_ptr<ObjectDeltaStateData> data);
+        StoredState(StoredState&& other);
 
-        //! Invalid interpolation constructor
-        ObjectInterpolation();
-
-        //! Move constructor
-        ObjectInterpolation(ObjectInterpolation &&other);
+        StoredState(const StoredState &other) = delete;
+        StoredState& operator=(const StoredState &other) = delete;
         
-        ObjectInterpolation(const ObjectInterpolation &other);
-
-        ~ObjectInterpolation();
-
-        ObjectInterpolation& operator=(const ObjectInterpolation &other);
-        
-
-        //! The first state
-        //! Must always be valid
-        shared_ptr<ObjectDeltaStateData> First;
-        
-        //! The second state
-        //! Must always be valid
-        shared_ptr<ObjectDeltaStateData> Second;
-
-        //! The time the change should take in milliseconds
-        //! Must be > 0
-        int Duration;
+        shared_ptr<ObjectDeltaStateData> DeltaData;
+        const int Tick;
     };
-
     
     //! \brief Contains data about a connection and whether the object has changed since last update
     class SendableObjectConnectionUpdate{
@@ -117,9 +96,6 @@ namespace Leviathan{
         
         //! The connection to which the updates are sent if it is still open
         ConnectionInfo* CorrespondingConnection;
-
-        //! Set to true when the object changes state (moves, changes scale)
-        bool DataUpdatedAfterSending;
 
         //! Data used to build a delta update packet
         //! \note This is set to be the last known successfully sent state to avoid having to
@@ -157,22 +133,12 @@ namespace Leviathan{
             int id);
 
         //! \brief Loads an update from a packet
-        DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet, int ticknumber);
+        DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet, int ticknumber, int referencetick);
 
         //! \brief Capture current object state
         //! \param tick The tick value to store in the state, usually world's current tick
         //! \todo Allow this to be cached to improve performance
         DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState(int tick) = 0;
-
-#ifndef NETWORK_USE_SNAPSHOTS
-        //! \brief Verifies that an old server state is consistent with the client state
-        //! \param serversold The server's state that we have received
-        //! \param ourold Our old state that matches the tick, if any (only exact tick number matches are counted)
-        //! \param tick The tick on which the state was captured
-        DLLEXPORT virtual void VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold,
-            int tick) = 0;
-        
-#endif //NETWORK_USE_SNAPSHOTS
 
         //! \brief Subclasses initialize their state object of choice from a packet
         DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
@@ -185,31 +151,12 @@ namespace Leviathan{
         //! this can be called to get clients to update their positions faster
         DLLEXPORT void SendUpdatesToAllClients(int ticknumber);
 
-#ifndef NETWORK_USE_SNAPSHOTS
-        //! \brief Tells this entity to capture its client side state
-        //! \note It will only be captured if the object is marked as updated
-        //! \warning This may NOT be called on any other application than a client
-        //! \see IsAnyDataUpdated
-        DLLEXPORT void StoreClientSideState(int ticknumber);
-
-        //! \brief Replaces an old state with a newer one
-        //!
-        //! This is used on the client when resimulating to replace old invalid states
-        DLLEXPORT bool ReplaceOldClientState(int onticktoreplace, shared_ptr<ObjectDeltaStateData> state);
-
-#else
-
-        //! \brief Queues a interpolation for this entity
-        //! \param mstime The time the interpolation should take in milliseconds
-        //! \todo Allow implementation to directly start interpolating without having to store the state
-        DLLEXPORT void QueueInterpolation(shared_ptr<ObjectDeltaStateData> from, shared_ptr<ObjectDeltaStateData> to,
-            int mstime);
-
-        //! \brief Retrieves and pops the next interpolation
-        //! \brief ExceptionInvalidState when none in queue
-        DLLEXPORT ObjectInterpolation GetAndPopNextInterpolation() THROWS;
-        
-#endif //NETWORK_USE_SNAPSHOTS
+        //! \brief Retrieves states near tick for interpolation
+        //! \exception InvalidState if no states are available
+        //! \note use InvalidState to know if queue is empty and InvalidArgument to know if our
+        //! tick counter is not in the sweetspot behind the server
+        DLLEXPORT void GetServerSentStates(ObjectLock &guard,
+            ObjectDeltaStateData*& first, ObjectDeltaStateData*& second, int tick) const;
 
         //! \brief Adds a new connection to known receivers
         DLLEXPORT virtual void AddConnectionToReceivers(ConnectionInfo* receiver);
@@ -219,26 +166,6 @@ namespace Leviathan{
         
     protected:
 
-#ifdef NETWORK_USE_SNAPSHOTS
-
-        //! \brief Report view interpolation status to the input manager
-        //! \param tick The tick that will be reached at millisecond time mstime
-        static void ReportInterpolationStatusToInput(int tick, int64_t mstime);
-
-
-        //! \brief Start a new interpolation if current one is finished
-        //!
-        //! Called when a new interpolation has been queued
-        virtual void VerifySendableInterpolation() = 0;
-
-        //! \brief Creates a short interpolation if there is a next state
-        //!
-        //! This can be used to get an interpolation if a proper INTERPOLATION_TIME apart
-        //! received update is missed
-        void _CreateShortInterpolationFromStored(ObjectLock &guard);
-
-#endif //NETWORK_USE_SNAPSHOTS
-        
         //! \brief Function which is used by subclasses to load their data from packets
         //!
         //! This is called by BaseSendableEntity from UnSerializeFromPacket
@@ -257,6 +184,10 @@ namespace Leviathan{
 
         //! \brief Called by entities which want created constraints replicated on clients
         void _SendNewConstraint(BaseConstraintable* us, BaseConstraintable* other, Entity::BaseConstraint* constraint);
+
+        //! \brief Called when a new state has been added notifies the implementation to start listening for
+        //! interpolation events
+        virtual void _OnNewStateReceived() = 0;
         
         // ------------------------------------ //
         
@@ -273,28 +204,12 @@ namespace Leviathan{
         //! Clientside buffer of past states
         //! Use depends on NETWORK_USE_SNAPSHOTS if it is defined this will contain states received from the server
         //! otherwise these are locally captured states
-        boost::circular_buffer<shared_ptr<ObjectDeltaStateData>> ClientStateBuffer;
-
-#ifdef NETWORK_USE_SNAPSHOTS
-
-        //! Clientside list of queued interpolation states
-        std::deque<ObjectInterpolation> QueuedInterpolationStates;
-
-        //! Marks the last end point tick that has been pushed to the interpolation queue
-        int LastQueuedTick;
-        
-
-#endif //NETWORK_USE_SNAPSHOTS
-        
-
-        //! The tick on which the client state was last checked with the server
-        //! any updates older than this will be ignored
-        int LastVerifiedTick;
+        boost::circular_buffer<StoredState> ClientStateBuffer;
 
         //! \todo Move this to a better place
         //! True when this class is used on a client
-        static bool IsOnClient;
-
+        //static bool IsOnClient;
+        
     private:
         
         //! List of receivers that will be updated whenever state changes and GameWorld decides it being

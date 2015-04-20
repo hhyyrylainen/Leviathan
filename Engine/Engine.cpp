@@ -60,11 +60,10 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
     GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
     _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
     _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), _EntitySerializerManager(NULL),
-    _ConstraintSerializerManager(NULL), _AINetworkCache(NULL), NoSTDInput(false)
+    _ConstraintSerializerManager(NULL), _AINetworkCache(NULL), NoSTDInput(false), IsClient(false)
 {
 	IDDefaultInstance = IDFactory::Get();
 
-	Inited = false;
 	Graph = NULL;
 	Define = NULL;
 	MainRandom = NULL;
@@ -117,6 +116,8 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
     
 	// Store parameters //
 	Define = definition;
+
+    IsClient = ntype == NETWORKED_TYPE_CLIENT;
 
 	// Create all the things //
     
@@ -826,6 +827,15 @@ void Leviathan::Engine::RenderFrame(){
 	RenderTimer->RenderingStart();
 
 	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN, new IntegerEventData(SinceLastFrame)));
+
+    if(IsClient){
+
+        const auto currenttime = Misc::GetTimeMs64();
+        
+        // Interpolation event //
+        MainEvents->CallEvent(new Event(EVENT_TYPE_CLIENT_INTERPOLATION, new ClientInterpolationEventData(
+                    TickCount, currenttime-LastFrame)));
+    }
 
 
 	bool shouldrender = false;

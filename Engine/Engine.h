@@ -190,20 +190,22 @@ namespace Leviathan{
 		int TickTime;
 		int FrameCount;
 
-		// flags //
-		bool MouseCaptured : 1;
-		bool WantsToCapture : 1;
-		bool Focused : 1;
-		bool GuiActive : 1;
-		bool Inited : 1;
 		//! Set when PreRelease is called and Tick has happened
-		bool PreReleaseDone : 1;
+		bool PreReleaseDone;
+        
 		//! Set when PreRelease called and waiting for Tick
 		//! see PreReleaseDone
-		bool PreReleaseWaiting : 1;
+		bool PreReleaseWaiting;
+
+        // Engine settings //
 		bool NoGui;
 		bool NoLeap;
         bool NoSTDInput;
+
+        //! \brief Set to true when initialized as a client
+        //!
+        //! Used to call client specific events
+        bool IsClient;
 
 		// Marks that the Engine has already done prerelease //
 		bool PreReleaseCompleted;

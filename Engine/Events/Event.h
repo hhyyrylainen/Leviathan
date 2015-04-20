@@ -34,6 +34,10 @@ namespace Leviathan{
         EVENT_TYPE_INIT, EVENT_TYPE_RELEASE,
         EVENT_TYPE_PHYSICS_BEGIN, EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE,
         EVENT_TYPE_TEST,
+        //! Only called on the client when a frame is about to be renderd and interpolation status
+        //! needs to be determined
+        EVENT_TYPE_CLIENT_INTERPOLATION,
+        
 		EVENT_TYPE_ALL
     };
 
@@ -60,6 +64,33 @@ namespace Leviathan{
 
 
 	};
+
+    //! \brief Data for EVENT_TYPE_CLIENT_INTERPOLATION
+    class ClientInterpolationEventData : public BaseEventData{
+    public:
+
+        DLLEXPORT ClientInterpolationEventData(int tick, int mspassed);
+
+        DLLEXPORT ClientInterpolationEventData(sf::Packet &packet);
+
+        DLLEXPORT void AddDataToPacket(sf::Packet &packet) override;
+
+    private:
+        void CalculatePercentage();
+    public:
+        
+        //! The current tick to use for interpolation
+        int TickNumber;
+
+        //! Time passed since start of tick
+        //! In milliseconds
+        int TimeInTick;
+
+        //! The calculated percentage the tick has advanced
+        //!
+        //! In case of extreme lag this is forced to be between 0.f-1.f to not break even more badly
+        float Percentage;
+    };
 
 	//! \brief Data for EVENT_TYPE_PHYSICS_BEGIN
 	class PhysicsStartEventData : public BaseEventData{
@@ -156,6 +187,7 @@ namespace Leviathan{
 		DLLEXPORT PhysicsStartEventData* GetDataForPhysicsStartEvent() const;
 		DLLEXPORT ShowEventData* GetDataForShowEvent() const;
         DLLEXPORT ResimulateSingleEventData* GetDataForResimulateSingleEvent() const;
+        DLLEXPORT ClientInterpolationEventData* GetDataForClientInterpolationEvent() const;
 		//! \brief Gets the data if this is an event that has only one integer data member
 		DLLEXPORT IntegerEventData* GetIntegerDataForEvent() const;
 

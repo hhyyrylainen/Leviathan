@@ -76,6 +76,11 @@ DLLEXPORT Leviathan::Event::Event(sf::Packet &packet){
 			Data = new IntegerEventData(packet);
 		}
 		break;
+        case EVENT_TYPE_CLIENT_INTERPOLATION:
+        {
+            Data = new ClientInterpolationEventData(packet);
+        }
+        break;
         default:
             // No data required //
             Data = NULL;
@@ -97,6 +102,12 @@ DLLEXPORT ShowEventData* Leviathan::Event::GetDataForShowEvent() const{
 DLLEXPORT ResimulateSingleEventData* Leviathan::Event::GetDataForResimulateSingleEvent() const{
 	if(Type == EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE)
 		return static_cast<ResimulateSingleEventData*>(Data);
+	return NULL;
+}
+
+DLLEXPORT ClientInterpolationEventData* Event::GetDataForClientInterpolationEvent() const{
+	if(Type == EVENT_TYPE_CLIENT_INTERPOLATION)
+		return static_cast<ClientInterpolationEventData*>(Data);
 	return NULL;
 }
 
@@ -175,6 +186,42 @@ DLLEXPORT NamedVars* Leviathan::GenericEvent::GetVariables(){
 DLLEXPORT NamedVars* Leviathan::GenericEvent::GetNamedVarsRefCounted(){
 	Variables->AddRef();
 	return Variables;
+}
+// ------------------ ClientInterpolationEventData ------------------ //
+void ClientInterpolationEventData::CalculatePercentage(){
+
+    Percentage = TimeInTick/(float)TICKSPEED;
+
+    // Clamp the value to avoid breaking animations //
+    if(Percentage < 0){
+        
+        Percentage = 0;
+        
+    } else if(Percentage > 1.f){
+        
+        Percentage = 1.f;
+    }    
+}
+
+DLLEXPORT ClientInterpolationEventData::ClientInterpolationEventData(int tick, int mspassed) :
+    TickNumber(tick), TimeInTick(mspassed)
+{
+    CalculatePercentage();
+}
+
+DLLEXPORT ClientInterpolationEventData::ClientInterpolationEventData(sf::Packet &packet){
+
+    packet >> TickNumber >> TimeInTick;
+
+    if(!packet)
+        throw InvalidArgument("packet for ClientInterpolationEventData is invalid");
+
+    CalculatePercentage();
+}
+
+DLLEXPORT void ClientInterpolationEventData::AddDataToPacket(sf::Packet &packet){
+
+    packet << TickNumber << TimeInTick;
 }
 // ------------------ PhysicsStartEventData ------------------ //
 void Leviathan::PhysicsStartEventData::AddDataToPacket(sf::Packet &packet){

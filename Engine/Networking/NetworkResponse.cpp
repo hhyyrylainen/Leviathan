@@ -951,16 +951,17 @@ DLLEXPORT void Leviathan::NetworkResponseDataForWorldFrozen::AddDataToPacket(sf:
     packet << WorldID << Frozen << TickNumber;
 }
 // ------------------ NetworkResponseDataForEntityUpdate ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(int worldid, int entityid,
-    int ticknumber, shared_ptr<sf::Packet> data) :
-    WorldID(worldid), EntityID(entityid), UpdateData(data), TickNumber(ticknumber)
+DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(
+    int worldid, int entityid, int ticknumber, int referencetick, shared_ptr<sf::Packet> data) :
+    WorldID(worldid), EntityID(entityid), UpdateData(data), TickNumber(ticknumber),
+    ReferenceTick(referencetick)
 {
 
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(sf::Packet &frompacket){
 
-    frompacket >> WorldID >> EntityID >> TickNumber;
+    frompacket >> WorldID >> EntityID >> TickNumber >> ReferenceTick;
     
     std::string tmpstr;
     frompacket >> tmpstr;
@@ -975,7 +976,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForE
 
 DLLEXPORT void Leviathan::NetworkResponseDataForEntityUpdate::AddDataToPacket(sf::Packet &packet){
 
-    packet << WorldID << EntityID << TickNumber;
+    packet << WorldID << EntityID << TickNumber << ReferenceTick;
 
     const std::string tmpstr(reinterpret_cast<const char*>(UpdateData->getData()), UpdateData->getDataSize());
         

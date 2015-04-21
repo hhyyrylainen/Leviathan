@@ -30,8 +30,8 @@ namespace Leviathan{
             sf::Packet &packet, int objectid, GameWorld* world) override;
 
         //! \copydoc BaseEntitySerializer::ApplyUpdateFromPacket
-        DLLEXPORT virtual bool ApplyUpdateFromPacket(BaseObject* targetobject, int ticknumber, sf::Packet &packet)
-            override;
+        DLLEXPORT virtual bool ApplyUpdateFromPacket(BaseObject* targetobject, int ticknumber,
+            int referencetick, sf::Packet &packet) override;
 
 
         //! \copydoc BaseEntitySerializer::IsObjectTypeCorrect

@@ -67,11 +67,13 @@ namespace Leviathan{
         StoredState(shared_ptr<ObjectDeltaStateData> data);
         StoredState(StoredState&& other);
 
+        StoredState& operator=(StoredState&& other);
+        
         StoredState(const StoredState &other) = delete;
         StoredState& operator=(const StoredState &other) = delete;
         
         shared_ptr<ObjectDeltaStateData> DeltaData;
-        const int Tick;
+        int Tick;
     };
     
     //! \brief Contains data about a connection and whether the object has changed since last update
@@ -150,13 +152,15 @@ namespace Leviathan{
         //! This will be periodically called by the GameWorld but after, for example, setting the position
         //! this can be called to get clients to update their positions faster
         DLLEXPORT void SendUpdatesToAllClients(int ticknumber);
-
+        
         //! \brief Retrieves states near tick for interpolation
+        //! \param progress The progress from the EVENT_TYPE_CLIENT_INTERPOLATION which gets adjusted if the states
+        //! aren't 1 tick apart
         //! \exception InvalidState if no states are available
         //! \note use InvalidState to know if queue is empty and InvalidArgument to know if our
         //! tick counter is not in the sweetspot behind the server
-        DLLEXPORT void GetServerSentStates(ObjectLock &guard,
-            ObjectDeltaStateData*& first, ObjectDeltaStateData*& second, int tick) const;
+        DLLEXPORT void GetServerSentStates(shared_ptr<ObjectDeltaStateData> &first,
+            shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const;
 
         //! \brief Adds a new connection to known receivers
         DLLEXPORT virtual void AddConnectionToReceivers(ConnectionInfo* receiver);
@@ -205,10 +209,6 @@ namespace Leviathan{
         //! Use depends on NETWORK_USE_SNAPSHOTS if it is defined this will contain states received from the server
         //! otherwise these are locally captured states
         boost::circular_buffer<StoredState> ClientStateBuffer;
-
-        //! \todo Move this to a better place
-        //! True when this class is used on a client
-        //static bool IsOnClient;
         
     private:
         

@@ -21,18 +21,14 @@ DLLEXPORT Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world) :
     BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_BRUSH),
     Sizes(0), BrushModel(NULL), Mass(0.f)
 {
-#ifdef NETWORK_USE_SNAPSHOTS
     ListeningForEvents = false;
-#endif
 }
 
 Leviathan::Entity::Brush::Brush(bool hidden, GameWorld* world, int netid) :
     BaseRenderable(hidden), BaseObject(netid, world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_BRUSH),
     Sizes(0), BrushModel(NULL), Mass(0.f)
 {
-#ifdef NETWORK_USE_SNAPSHOTS
     ListeningForEvents = false;
-#endif
 }
 
 
@@ -42,11 +38,8 @@ DLLEXPORT Leviathan::Entity::Brush::~Brush(){
 }
 
 DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
-#ifndef NETWORK_USE_SNAPSHOTS
-    StopInterpolating();
-#else
+    
     UnRegisterAllEvents();    
-#endif //NETWORK_USE_SNAPSHOTS
     
     ReleaseParentHooks();
 
@@ -83,10 +76,6 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
 DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const string &material, 
 	bool createphysics /*= true*/)
 {
-#ifndef NETWORK_USE_SNAPSHOTS
-    ListeningForEvents = false;
-#endif //NETWORK_USE_SNAPSHOTS
-    
 	Sizes = dimensions;
 
     // This is needed later by the network sending functionality //
@@ -578,7 +567,9 @@ void Leviathan::Entity::Brush::_SaveOwnDataToPacket(sf::Packet &packet){
     packet << Material;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessagetype, void* dataptr){
+DLLEXPORT bool Leviathan::Entity::Brush::SendCustomMessage(int entitycustommessagetype,
+    void* dataptr)
+{
 	// First check if it is a request //
 	if(entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_DATAREQUEST){
 		// Check through components //
@@ -610,37 +601,9 @@ BaseConstraintable* Leviathan::Entity::Brush::BasePhysicsGetConstraintable(){
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(int tick){
-#ifdef NETWORK_USE_SNAPSHOTS
     return shared_ptr<ObjectDeltaStateData>(
         PositionableRotationableDeltaState::CaptureState(*this, tick).release());
-#else
-    return shared_ptr<ObjectDeltaStateData>(
-        PositionablePhysicalDeltaState::CaptureState(*this, tick).release());
-#endif //NETWORK_USE_SNAPSHOTS
 }
-
-#ifndef NETWORK_USE_SNAPSHOTS
-DLLEXPORT void Leviathan::Entity::Brush::VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold,
-    int tick)
-{
-    CheckOldPhysicalState(static_cast<PositionablePhysicalDeltaState*>(serversold),
-        static_cast<PositionablePhysicalDeltaState*>(ourold), tick, this);
-}
-
-void Leviathan::Entity::Brush::_GetCurrentActualPosition(Float3 &pos){
-
-    GetPos(pos);
-}
-        
-void Leviathan::Entity::Brush::_GetCurrentActualRotation(Float4 &rot){
-
-    GetOrientation(rot);
-}
-
-void Leviathan::Entity::Brush::OnBeforeResimulateStateChanged(){
-    StartInterpolating(GetPos(), GetOrientation());
-}
-#endif //NETWORK_USE_SNAPSHOTS
 
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateStateFromPacket(
     int tick, sf::Packet &packet) const
@@ -648,11 +611,7 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateState
     
     try{
         
-#ifdef NETWORK_USE_SNAPSHOTS
         return make_shared<PositionableRotationableDeltaState>(tick, packet);
-#else
-        return make_shared<PositionablePhysicalDeltaState>(tick, packet);
-#endif //NETWORK_USE_SNAPSHOTS
         
     } catch(const InvalidArgument &e){
 
@@ -663,58 +622,42 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateState
     
 }
 // ------------------------------------ //
-#ifdef NETWORK_USE_SNAPSHOTS
-void Brush::VerifySendableInterpolation(){
+void Brush::_OnNewStateReceived(){
 
-    {
-        // Skip if we are already interpolating //
-        GUARD_LOCK_THIS_OBJECT();
-
-        if(IsCurrentlyInterpolating())
-            return;
-    }
-
-    // This way we don't have to write the implementation twice //
-    OnInterpolationFinished();
-}
-
-bool Brush::OnInterpolationFinished(){
-
-    // Fetch an interpolation //
-    try{
-        
-        auto interpolation = GetAndPopNextInterpolation();
-
-        GUARD_LOCK_THIS_OBJECT();
-        if(!SetCurrentInterpolation(interpolation)){
-
-            throw Exception("Invalid interpolation tried to be set");
-        }
-
-        if(!ListeningForEvents){
+    if(!ListeningForEvents){
             
-            RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
-            ListeningForEvents = true;
-        }
-        
-        return true;
-
-    } catch(const InvalidState&){
-
-        if(ListeningForEvents){
-            
-            UnRegister(EVENT_TYPE_FRAME_BEGIN);
-            ListeningForEvents = false;
-        }
-        return false;
+        RegisterForEvent(EVENT_TYPE_CLIENT_INTERPOLATION);
+        ListeningForEvents = true;
     }
 }
 
 DLLEXPORT int Brush::OnEvent(Event** pEvent){
+    
+    if((*pEvent)->GetType() == EVENT_TYPE_CLIENT_INTERPOLATION){
+        
+        auto data = (*pEvent)->GetDataForClientInterpolationEvent();
 
-    if((*pEvent)->GetType() == EVENT_TYPE_FRAME_BEGIN){
+        shared_ptr<ObjectDeltaStateData> first;
+        shared_ptr<ObjectDeltaStateData> second;
 
-        UpdateInterpolation((*pEvent)->GetIntegerDataForEvent()->IntegerDataValue);
+        float progress = data->Percentage;
+        
+        try{
+                
+            GetServerSentStates(first, second, data->TickNumber, progress);
+                
+        } catch(const InvalidState&){
+
+            // No more states to use //
+            Logger::Get()->Write("Entity stopping interpolation");
+
+            ListeningForEvents = false;
+            return -1;
+        }
+
+        InterpolatePositionableState(static_cast<PositionableRotationableDeltaState&>(*first),
+            static_cast<PositionableRotationableDeltaState&>(*second), progress);
+
         return 1;
     }
 
@@ -724,16 +667,5 @@ DLLEXPORT int Brush::OnEvent(Event** pEvent){
 DLLEXPORT int Brush::OnGenericEvent(GenericEvent** pevent){
     return -1;
 }
-
-DLLEXPORT bool Brush::SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second, float progress){
-
-    InterpolatePositionableState(static_cast<PositionableRotationableDeltaState&>(first),
-        static_cast<PositionableRotationableDeltaState&>(second), progress);
-    
-    return true;
-}
-
-            
-#endif //NETWORK_USE_SNAPSHOTS
 
 

@@ -65,7 +65,8 @@ namespace Leviathan{
         //! \note The targetobject is found by the caller based on the ID that it inserts
         //! before CreatePacketForConnection
         //! \return True when the type of packet is correct even if the data is invalid
-        DLLEXPORT virtual bool ApplyUpdateFromPacket(BaseObject* targetobject, int ticknumber, sf::Packet &packet) = 0;
+        DLLEXPORT virtual bool ApplyUpdateFromPacket(BaseObject* targetobject, int ticknumber,
+            int referencetick, sf::Packet &packet) = 0;
 
         
     protected:

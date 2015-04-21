@@ -462,8 +462,6 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 		return false;
 	}
 
-	Inited = true;
-
 #ifdef LEVIATHAN_USES_LEAP
 	// We can probably assume here that leap creation has stalled if the thread is running //
 	if(!NoLeap && !leapinitthread.try_join_for(boost::chrono::milliseconds(100))){

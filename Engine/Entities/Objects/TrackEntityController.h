@@ -11,7 +11,6 @@
 #include "LocationNode.h"
 #include "Events/CallableObject.h"
 #include "Entities/Bases/BaseConstraintable.h"
-#include "../Bases/BaseTimedInterpolated.h"
 
 #define TRACKCONTROLLER_DEFAULT_APPLYFORCE		12.f
 
@@ -70,9 +69,6 @@ namespace Leviathan{ namespace Entity{
 
         // This class is used to create movement paths for entities //
         class TrackEntityController : public BaseEntityController, public CallableObject,
-#ifdef NETWORK_USE_SNAPSHOTS
-                                        public BaseTimedInterpolated,
-#endif //NETWORK_USE_SNAPSHOTS
                                         public BaseSendableEntity
         {
             
@@ -128,16 +124,8 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseSendableEntity::CaptureState
             DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
 
-#ifndef NETWORK_USE_SNAPSHOTS
-            
-            //! \copydoc BaseSendableEntity::VerifyOldState
-            DLLEXPORT virtual void VerifyOldState(ObjectDeltaStateData* serversold,
-                ObjectDeltaStateData* ourold, int tick) override;
-
-#else
             DLLEXPORT bool SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second,
                 float progress);
-#endif //NETWORK_USE_SNAPSHOTS
 
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
             DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
@@ -149,11 +137,7 @@ namespace Leviathan{ namespace Entity{
 
             TrackEntityController(int netid, GameWorld* world);
 
-#ifdef NETWORK_USE_SNAPSHOTS
-            void VerifySendableInterpolation() override;
-
-            bool OnInterpolationFinished() override;
-#endif //NETWORK_USE_SNAPSHOTS
+            void _OnNewStateReceived() override;
             
             //! \brief Internal function for making all data valid
             //!
@@ -209,6 +193,10 @@ namespace Leviathan{ namespace Entity{
             //! Internal flag for determining if an update is needed
             bool RequiresUpdate;
 
+            //! \todo Move this to a better place
+            bool IsOnClient;
+            
+            bool ListeningForEvents = false;
         };
 
     }

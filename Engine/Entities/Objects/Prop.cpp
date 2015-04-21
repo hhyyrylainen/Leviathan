@@ -16,17 +16,13 @@ using namespace Leviathan::Entity;
 DLLEXPORT Leviathan::Entity::Prop::Prop(bool hidden, GameWorld* world) :
     BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_PROP)
 {
-#ifdef NETWORK_USE_SNAPSHOTS
     ListeningForEvents = false;
-#endif
 }
 
 Leviathan::Entity::Prop::Prop(bool hidden, GameWorld* world, int netid) :
     BaseRenderable(hidden), BaseObject(netid, world), BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE_PROP)
 {
-#ifdef NETWORK_USE_SNAPSHOTS
     ListeningForEvents = false;
-#endif
 }
 
 DLLEXPORT Leviathan::Entity::Prop::~Prop(){
@@ -35,11 +31,8 @@ DLLEXPORT Leviathan::Entity::Prop::~Prop(){
 }
 
 DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
-#ifndef NETWORK_USE_SNAPSHOTS
-    StopInterpolating();
-#else
+
     UnRegisterAllEvents();    
-#endif //NETWORK_USE_SNAPSHOTS
 
     ReleaseParentHooks();
 
@@ -71,10 +64,6 @@ DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::Prop::Init(const wstring &modelfile){
 
-#ifndef NETWORK_USE_SNAPSHOTS
-    ListeningForEvents = false;
-#endif //NETWORK_USE_SNAPSHOTS
-    
     // Store the file //
     ModelFile = modelfile;
     
@@ -465,48 +454,17 @@ BaseConstraintable* Leviathan::Entity::Prop::BasePhysicsGetConstraintable(){
 }
 // ------------------------------------ //
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CaptureState(int tick){
-#ifdef NETWORK_USE_SNAPSHOTS
     return shared_ptr<ObjectDeltaStateData>(
         PositionableRotationableDeltaState::CaptureState(*this, tick).release());
-#else
-    return shared_ptr<ObjectDeltaStateData>(
-        PositionablePhysicalDeltaState::CaptureState(*this, tick).release());
-#endif //NETWORK_USE_SNAPSHOTS
 }
 
-#ifndef NETWORK_USE_SNAPSHOTS
-DLLEXPORT void Leviathan::Entity::Prop::VerifyOldState(ObjectDeltaStateData* serversold, ObjectDeltaStateData* ourold,
-    int tick)
-{
-    CheckOldPhysicalState(static_cast<PositionablePhysicalDeltaState*>(serversold),
-        static_cast<PositionablePhysicalDeltaState*>(ourold), tick, this);
-}
-
-void Leviathan::Entity::Prop::OnBeforeResimulateStateChanged(){
-    StartInterpolating(GetPos(), GetOrientation());
-}
-
-void Leviathan::Entity::Prop::_GetCurrentActualPosition(Float3 &pos){
-
-    GetPos(pos);
-}
-        
-void Leviathan::Entity::Prop::_GetCurrentActualRotation(Float4 &rot){
-
-    GetOrientation(rot);
-}
-#endif //NETWORK_USE_SNAPSHOTS
-
-DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CreateStateFromPacket(int tick, sf::Packet &packet)
+DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CreateStateFromPacket(
+    int tick, sf::Packet &packet)
     const
 {
     
     try{
-#ifdef NETWORK_USE_SNAPSHOTS
         return make_shared<PositionableRotationableDeltaState>(tick, packet);
-#else
-        return make_shared<PositionablePhysicalDeltaState>(tick, packet);
-#endif //NETWORK_USE_SNAPSHOTS
         
     } catch(const Exception &e){
 
@@ -517,58 +475,42 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Prop::CreateStateF
     
 }
 // ------------------------------------ //
-#ifdef NETWORK_USE_SNAPSHOTS
-void Prop::VerifySendableInterpolation(){
+void Prop::_OnNewStateReceived(){
 
-    {
-        // Skip if we are already interpolating //
-        GUARD_LOCK_THIS_OBJECT();
-
-        if(IsCurrentlyInterpolating())
-            return;
-    }
-
-    // This way we don't have to write the implementation twice //
-    OnInterpolationFinished();
-}
-
-bool Prop::OnInterpolationFinished(){
-
-    // Fetch an interpolation //
-    try{
-        
-        auto interpolation = GetAndPopNextInterpolation();
-
-        GUARD_LOCK_THIS_OBJECT();
-        if(!SetCurrentInterpolation(interpolation)){
-
-            throw Exception("Invalid interpolation tried to be set");
-        }
-
-        if(!ListeningForEvents){
+    if(!ListeningForEvents){
             
-            RegisterForEvent(EVENT_TYPE_FRAME_BEGIN);
-            ListeningForEvents = true;
-        }
-        
-        return true;
-
-    } catch(const InvalidState&){
-
-        if(ListeningForEvents){
-            
-            UnRegister(EVENT_TYPE_FRAME_BEGIN);
-            ListeningForEvents = false;
-        }
-        return false;
+        RegisterForEvent(EVENT_TYPE_CLIENT_INTERPOLATION);
+        ListeningForEvents = true;
     }
 }
 
 DLLEXPORT int Prop::OnEvent(Event** pEvent){
 
-    if((*pEvent)->GetType() == EVENT_TYPE_FRAME_BEGIN){
+    if((*pEvent)->GetType() == EVENT_TYPE_CLIENT_INTERPOLATION){
+        
+        auto data = (*pEvent)->GetDataForClientInterpolationEvent();
 
-        UpdateInterpolation((*pEvent)->GetIntegerDataForEvent()->IntegerDataValue);
+        shared_ptr<ObjectDeltaStateData> first;
+        shared_ptr<ObjectDeltaStateData> second;
+
+        float progress = data->Percentage;
+        
+        try{
+            
+            GetServerSentStates(first, second, data->TickNumber, progress);
+                
+        } catch(const InvalidState&){
+
+            // No more states to use //
+            Logger::Get()->Write("Entity stopping interpolation");
+
+            ListeningForEvents = false;
+            return -1;
+        }
+
+        InterpolatePositionableState(static_cast<PositionableRotationableDeltaState&>(*first),
+            static_cast<PositionableRotationableDeltaState&>(*second), progress);
+        
         return 1;
     }
 
@@ -579,13 +521,3 @@ DLLEXPORT int Prop::OnGenericEvent(GenericEvent** pevent){
     return -1;
 }
 
-DLLEXPORT bool Prop::SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second, float progress){
-
-    InterpolatePositionableState(static_cast<PositionableRotationableDeltaState&>(first),
-        static_cast<PositionableRotationableDeltaState&>(second), progress);
-    
-    return true;
-}
-
-            
-#endif //NETWORK_USE_SNAPSHOTS

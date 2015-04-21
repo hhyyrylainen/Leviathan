@@ -79,7 +79,9 @@ TEST_CASE("Positonable delta state interpolation", "[networking, entity]"){
     world.Release();
 }
 
-TEST_CASE("Positionable rotationable state through packet and interpolate", "[networking, entity]"){
+TEST_CASE("Positionable rotationable state through packet and interpolate",
+    "[networking, entity]")
+{
 
     PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
 
@@ -233,85 +235,6 @@ TEST_CASE("Positionable rotationable state fill missing data", "[networking, ent
     CHECK((secondresult->ValidFields & PRDELTAUPDATED_ROT_W));
 
     world.Release();   
-}
-
-void ConsumeTime(int reduce, int &time){
-    EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN,
-            new IntegerEventData(reduce)));
-
-    time -= reduce;
-}
-
-TEST_CASE("TimedInterpolation correctly ticks through interpolations", "[entity, networking]"){
-
-    PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
-
-    ObjectLoader loader(&engine);
-
-    GameWorld world;
-    world.Init(nullptr, nullptr);
-
-    Entity::Brush* brush = nullptr;
-    loader.LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0, &brush);
-    
-    REQUIRE(brush != nullptr);
-
-    brush->SetPos(Float3(0, 0, 0));
-
-    auto initialstate = shared_ptr<PositionableRotationableDeltaState>(
-        PositionableRotationableDeltaState::CaptureState(*brush, 0).release());
-
-    CHECK_FALSE(brush->IsCurrentlyInterpolating());
-
-    SECTION("Interpolate between all"){
-
-        // Store states //
-        auto olderstate = initialstate;
-
-        for(int i = 0; i < 10; i++){
-
-            brush->SetPos(Float3(5 + (10*i), 0, 0));
-        
-            auto currentcreated = shared_ptr<PositionableRotationableDeltaState>(
-                PositionableRotationableDeltaState::CaptureState(*brush, i+1).release());
-
-            brush->QueueInterpolation(olderstate, currentcreated, TICKSPEED);
-
-            olderstate = currentcreated;
-        }
-
-        brush->SetPos(Float3(0, 0, 0));
-
-        CHECK(brush->IsCurrentlyInterpolating());
-
-        // Now we need to fake frames worth of time //
-        int time = TICKSPEED*10;
-
-        int counter = 0;
-
-        auto numbers = {12, 30, 20, 50, 10, 5, 6, 8, 12, 84, 120, 10, 20, 20, 20,
-                        40, 33};
-
-        for(auto currentreduce : numbers){
-            
-            ConsumeTime(currentreduce, time);
-            counter += currentreduce;
-        }
-
-        CHECK(counter == TICKSPEED*10);
-        CHECK(time <= 0);
-
-        CHECK(brush->GetPosX() == Approx(95));
-        CHECK_FALSE(brush->IsCurrentlyInterpolating());
-    }
-
-    SECTION("Interpolate between every 2 states"){
-
-
-        
-    }
-
-    world.Release();
 }
 
 

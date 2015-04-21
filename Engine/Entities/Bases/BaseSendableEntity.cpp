@@ -19,10 +19,9 @@ DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_
 
     // Only clients allocate any space to the circular state buffer //
     ClientStateBuffer(NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT ?
-        BASESENDABLE_STORED_RECEIVED_STATES: 0),
+        BASESENDABLE_STORED_RECEIVED_STATES: 0)
 {
-    if(NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT)
-        IsOnClient = true;
+    
 }
 
 DLLEXPORT Leviathan::BaseSendableEntity::~BaseSendableEntity(){
@@ -30,8 +29,6 @@ DLLEXPORT Leviathan::BaseSendableEntity::~BaseSendableEntity(){
     GUARD_LOCK_THIS_OBJECT();
     UpdateReceivers.clear();
 }
-
-bool BaseSendableEntity::IsOnClient = false;
 // ------------------------------------ //
 DLLEXPORT BASESENDABLE_ACTUAL_TYPE Leviathan::BaseSendableEntity::GetSendableType() const{
 
@@ -173,7 +170,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
             PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
 
         updatemesg->GenerateEntityUpdateResponse(new NetworkResponseDataForEntityUpdate(OwnedByWorld->GetID(),
-                GetID(), ticknumber, LastConfirmedTickNumber, packet));
+                GetID(), ticknumber, (*iter)->LastConfirmedTickNumber, packet));
 
         auto senthing = safeconnection->SendPacketToConnection(updatemesg, 1);
 
@@ -259,45 +256,48 @@ packetisnewerthansomelabel:
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT void BaseSendableEntity::GetServerSentStates(ObjectLock &guard, ObjectDeltaStateData*& first,
-    ObjectDeltaStateData*& second, int tick) const
+DLLEXPORT void BaseSendableEntity::GetServerSentStates(shared_ptr<ObjectDeltaStateData> &first,
+    shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const
 {
-    VerifyLock(guard);
-    
     bool firstfound = false;
-    bool secondfound = false;
+    int secondfound = 0;
 
-    for(auto& obj : ClientStateBuffer){
+    {
+        GUARD_LOCK_THIS_OBJECT();
+    
+        for(auto& obj : ClientStateBuffer){
 
-        if(obj.Tick == tick){
+            if(obj.Tick == tick){
             
-            // This is the first state //
-            *first = *obj.DeltaData;
+                // This is the first state //
+                first = obj.DeltaData;
 
-            if(secondfound)
-                return;
+                firstfound = true;
+                continue;
+            }
+
+            // For this to be found the client should be around 50-100 milliseconds in the past
+            if(obj.Tick > tick && obj.Tick < tick+secondfound){
+
+                // The second state //
+                second = obj.DeltaData;
             
-            firstfound = true;
-            continue;
-        }
-
-        // For this to be found the client should be around 50-100 milliseconds in the past
-        if(obj.Tick == tick+1){
-
-            // The second state //
-            *second = *obj.DeltaData;
-            
-            if(firstfound)
-                return;
-
-            secondfound = true;
-            continue;
+                secondfound = obj.Tick-tick;
+                continue;
+            }
         }
     }
 
-    if(!secondfound || !firstfound){
+    if(!secondfound || firstfound == 0){
 
         throw InvalidType("No stored server states around tick");
+    }
+
+    // Adjust progress //
+    if(secondfound > 1){
+
+        const float mspassed = TICKSPEED*progress;
+        progress = mspassed/TICKSPEED*secondfound;
     }
 }
 // ------------------------------------ //
@@ -346,7 +346,9 @@ void Leviathan::BaseSendableEntity::_SendNewConstraint(BaseConstraintable* us, B
 // ------------------ SendableObjectConnectionUpdated ------------------ //
 DLLEXPORT Leviathan::SendableObjectConnectionUpdate::SendableObjectConnectionUpdate(BaseSendableEntity* getstate,
     ConnectionInfo* connection, int tick) :
-    CorrespondingConnection(connection), DataUpdatedAfterSending(false),
+    CorrespondingConnection(connection),
+    // TODO: make these this entity global to avoid capturing bunch of states whenever a new player
+    // connects
     LastConfirmedData(getstate->CaptureState(tick)),
     LastConfirmedTickNumber(-1)
 {
@@ -388,4 +390,10 @@ StoredState::StoredState(StoredState&& other) :
 {
     
 }
-    
+
+StoredState& StoredState::operator=(StoredState&& other){
+
+    DeltaData = move(other.DeltaData);
+    Tick = other.Tick;
+}
+

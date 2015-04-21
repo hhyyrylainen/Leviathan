@@ -7,6 +7,7 @@
 #include "Common/Misc.h"
 #include "Entities/Bases/BaseNotifiableEntity.h"
 #include "Newton/PhysicalWorld.h"
+#include "../../Networking/NetworkHandler.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
@@ -33,9 +34,13 @@ DLLEXPORT Leviathan::Entity::TrackEntityController::~TrackEntityController(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Entity::TrackEntityController::Init(){
+
+    IsOnClient = NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT;
+    
 	// Start listening //
 	RegisterForEvent(EVENT_TYPE_PHYSICS_BEGIN);
-    RegisterForEvent(EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE);
+
+    //RegisterForEvent(EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE);
 
 	// Set current node and percentages and possibly update connected objects //
 	_SanityCheckNodeProgress();
@@ -74,32 +79,51 @@ DLLEXPORT int Leviathan::Entity::TrackEntityController::OnEvent(Event** pEvent){
 			return 0;
 		}
 
-#ifdef NETWORK_USE_SNAPSHOTS
-
         if(IsOnClient){
 
             // Client will only rely on snapshots //
-            UpdateInterpolation(dataptr->TimeStep*1000);
+            DEBUG_BREAK;
+
+            // TODO: move to a new event type
+            GUARD_LOCK_THIS_OBJECT();
+            _ApplyTrackPositioning(dataptr->TimeStep*1000, guard);
             
         } else {
 
             UpdateControlledPositions(dataptr->TimeStep);
         }
         
-#else
-        
-		// This object's parent world is being updated //
-		UpdateControlledPositions(dataptr->TimeStep);
-
-#endif //NETWORK_USE_SNAPSHOTS
 		return 1;
         
-	} else if((*pEvent)->GetType() == EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE){
+	} else if((*pEvent)->GetType() == EVENT_TYPE_CLIENT_INTERPOLATION){
+        
+        auto data = (*pEvent)->GetDataForClientInterpolationEvent();
+
+        shared_ptr<ObjectDeltaStateData> first;
+        shared_ptr<ObjectDeltaStateData> second;
+
+        float progress = data->Percentage;
+        
+        try{
+                
+            GetServerSentStates(first, second, data->TickNumber, progress);
+                
+        } catch(const InvalidState&){
+
+            // No more states to use //
+            Logger::Get()->Write("TrackController stopping interpolation");
+
+            ListeningForEvents = false;
+            return -1;
+        }
+
+        SetStateToInterpolated(*first, *second, progress);
+        return 1;
+        
+    } else if((*pEvent)->GetType() == EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE){
 
 		// Get data //
 		ResimulateSingleEventData* dataptr = (*pEvent)->GetDataForResimulateSingleEvent();
-        
-		assert(dataptr && "Invalid physics event");
         
 		// Skip if wrong world //
 		if(dataptr->GameWorldPtr != static_cast<void*>(OwnedByWorld)){
@@ -522,106 +546,6 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityControl
         new TrackControllerState(tick, ReachedNode, ChangeSpeed, NodeProgress));
 }
 
-#ifndef NETWORK_USE_SNAPSHOTS
-DLLEXPORT void Leviathan::Entity::TrackEntityController::VerifyOldState(ObjectDeltaStateData* serversold,
-    ObjectDeltaStateData* ourold, int tick)
-{
-    // Check first do we need to resimulate //
-    bool requireupdate = false;
-
-    TrackControllerState* servercasted = static_cast<TrackControllerState*>(serversold);
-    TrackControllerState* ourcasted = static_cast<TrackControllerState*>(ourold);
-    
-    if(!ourold){
-
-        requireupdate = true;
-        
-    } else {
-        
-        // We are comparing floats here which most of the time will result in all comparisons being false... //
-        if(((servercasted->ValidFields & TRACKSTATE_UPDATED_SPEED) &&
-                ourcasted->ChangeSpeed != servercasted->ChangeSpeed) ||
-            ((servercasted->ValidFields & TRACKSTATE_UPDATED_PROGRESS) &&
-                fabs(ourcasted->NodeProgress-servercasted->NodeProgress) >= TRACKCONTROLLER_PROGRESS_THRESSHOLD) ||
-            ((servercasted->ValidFields & TRACKSTATE_UPDATED_NODE) &&
-                ourcasted->ReachedNode != servercasted->ReachedNode))
-        {
-            requireupdate = true;
-        }
-    }
-
-    // All good if our old state matched //
-    if(!requireupdate)
-        return;
-
-    GUARD_LOCK_THIS_OBJECT();
-
-    // Go back to the verified state and resimulate //
-    if(servercasted->ValidFields & TRACKSTATE_UPDATED_SPEED)
-        ChangeSpeed = servercasted->ChangeSpeed;
-
-    if(servercasted->ValidFields & TRACKSTATE_UPDATED_PROGRESS)
-        NodeProgress = servercasted->NodeProgress;
-
-    if(servercasted->ValidFields & TRACKSTATE_UPDATED_NODE)
-        ReachedNode = servercasted->ReachedNode;
-
-    _SanityCheckNodeProgress();
-    
-    
-    const int worldtick = OwnedByWorld->GetTickNumber();
-    
-    // Convert from milliseconds to microseconds //
-    int timetosimulate = (worldtick-tick)*TICKSPEED*1000.f;
-    
-    // This should hold on to the world update lock once that is required //
-    auto nworld = OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld();
-
-    // We need to refill all the states that were recorded during that time //
-    int advancedtick = tick;
-    ReplaceOldClientState(advancedtick, CaptureState());
-
-    int simulatedtime = 0;
-    
-    // And then simulate updates for that time //
-	while(timetosimulate >= NEWTON_FPS_IN_MICROSECONDS){
-        
-        UpdateControlledPositions(NEWTON_TIMESTEP);
-        timetosimulate -= NEWTON_FPS_IN_MICROSECONDS;
-
-        // Keep track of current tick while resimulating //
-        simulatedtime += NEWTON_FPS_IN_MICROSECONDS;
-
-        if(simulatedtime >= TICKSPEED*1000){
-
-            advancedtick++;
-            simulatedtime -= TICKSPEED*1000;
-
-            assert(advancedtick <= worldtick && "TrackEntityController resimulate assert");
-            
-            if(!ReplaceOldClientState(advancedtick, CaptureState())){
-
-                // The world tick might not have been stored yet... //
-                if(advancedtick != worldtick){
-
-                    Logger::Get()->Warning("TrackEntityController("+Convert::ToString(ID)+"): resimulate: didn't find "
-                        "old state for tick "+Convert::ToString(advancedtick));
-                }
-            }
-        }
-    }
-    
-#ifdef ALLOW_RESIMULATE_CONSUME_ALL
-
-    if(timetosimulate > 0){
-
-        UpdateControlledPositions(timetosimulate/1000000.f);
-    }
-    
-#endif //ALLOW_RESIMULATE_CONSUME_ALL
-}
-#endif //NETWORK_USE_SNAPSHOTS
-
 DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityController::CreateStateFromPacket(
     int tick, sf::Packet &packet) const
 {
@@ -631,43 +555,19 @@ DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityControl
         
     } catch(const InvalidArgument &e){
 
-        Logger::Get()->Warning("TrackEntityController: failed to CreateStateFromPacket, exception:");
+        Logger::Get()->Warning("TrackEntityController: failed to CreateStateFromPacket, "
+            "exception:");
         e.PrintToLog();
         return nullptr;
     }
-    
 }
 // ------------------------------------ //
-#ifdef NETWORK_USE_SNAPSHOTS
-void TrackEntityController::VerifySendableInterpolation(){
+void TrackEntityController::_OnNewStateReceived(){
 
-    {
-        // Skip if we are already interpolating //
-        GUARD_LOCK_THIS_OBJECT();
-        
-        if(IsCurrentlyInterpolating())
-            return;
-    }
-
-    // This way we don't have to write the implementation twice //
-    OnInterpolationFinished();
-}
-
-bool TrackEntityController::OnInterpolationFinished(){
-
-    // Fetch an interpolation //
-    try{
-        
-        const auto& interpolation = GetAndPopNextInterpolation();
-
-        GUARD_LOCK_THIS_OBJECT();
-        SetCurrentInterpolation(interpolation);
-        
-        return true;
-
-    } catch(const InvalidState&){
-
-        return false;
+    if(!ListeningForEvents){
+            
+        RegisterForEvent(EVENT_TYPE_CLIENT_INTERPOLATION);
+        ListeningForEvents = true;
     }
 }
 
@@ -730,7 +630,6 @@ DLLEXPORT bool TrackEntityController::SetStateToInterpolated(ObjectDeltaStateDat
     
     return true;
 }
-#endif //NETWORK_USE_SNAPSHOTS
 // ------------------ TrackControllerState ------------------ //
 DLLEXPORT Leviathan::Entity::TrackControllerState::TrackControllerState(int tick, int reached,
     float speed, float progress) :

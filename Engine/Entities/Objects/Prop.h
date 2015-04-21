@@ -15,24 +15,16 @@
 #include "Entities/Bases/BaseConstraintable.h"
 #include "Entities/Bases/BaseParentable.h"
 #include "Entities/Bases/BaseSendableEntity.h"
-#ifdef NETWORK_USE_SNAPSHOTS
-#include "Entities/Bases/BaseTimedInterpolated.h"
 #include "Events/CallableObject.h"
-#else
-#include "Entities/Bases/BaseInterpolated.h"
-#endif //NETWORK_USE_SNAPSHOTS
 
 namespace Leviathan{ namespace Entity{
         
         //! \brief A movable model loaded from a file
         //! \todo Make sure that _MarkDataUpdated is called enough
-        class Prop : public virtual BaseObject, public virtual BaseRenderable, public BaseConstraintable,
-                       public BaseParentable, public BaseSendableEntity, public BasePhysicsObject,
-#ifdef NETWORK_USE_SNAPSHOTS
-                       public BaseTimedInterpolated, public virtual CallableObject
-#else
-                       public BaseInterpolated
-#endif //NETWORK_USE_SNAPSHOTS
+        class Prop : public virtual BaseObject, public virtual BaseRenderable,
+                       public BaseConstraintable, public BaseParentable,
+                       public BaseSendableEntity, public BasePhysicsObject,
+                       public virtual CallableObject
         {
             friend BaseSendableEntity;
         public:
@@ -51,18 +43,8 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseSendableEntity::CaptureState
             DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
 
-#ifndef NETWORK_USE_SNAPSHOTS
-            
-            //! \copydoc BaseSendableEntity::VerifyOldState
-            DLLEXPORT virtual void VerifyOldState(ObjectDeltaStateData* serversold,
-                ObjectDeltaStateData* ourold, int tick) override;
-#else
             DLLEXPORT int OnEvent(Event** pEvent) override;
             DLLEXPORT int OnGenericEvent(GenericEvent** pevent) override;
-
-            DLLEXPORT bool SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second,
-                float progress);
-#endif //NETWORK_USE_SNAPSHOTS
 
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
             DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
@@ -83,24 +65,9 @@ namespace Leviathan{ namespace Entity{
             //! \copydoc BaseConstraintable::_SendCreatedConstraint
             void _SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr) override;
 
-#ifdef NETWORK_USE_SNAPSHOTS
-            void VerifySendableInterpolation() override;
+            void _OnNewStateReceived() override;
 
-            bool OnInterpolationFinished() override;
-
-            bool ListeningForEvents;
-
-#else
-            //! \copydoc BaseInterpolated::_GetCurrentActualPosition
-            void _GetCurrentActualPosition(Float3 &pos) override;
-        
-            //! \copydoc BaseInterpolated::_GetCurrentActualRotation
-            void _GetCurrentActualRotation(Float4 &rot) override;
-
-            //! \copydoc BasePhysicsObject::OnBeforeResimulateStateChanged
-            void OnBeforeResimulateStateChanged() override;
-
-#endif //NETWORK_USE_SNAPSHOTS
+            
             
             // for setting new values to graphical object and physical object //
             virtual void _UpdatePhysicsObjectLocation(ObjectLock &guard) override;
@@ -109,6 +76,8 @@ namespace Leviathan{ namespace Entity{
             // ------------------------------------ //
 
             wstring ModelFile;
+
+            bool ListeningForEvents;
         };
 
 }}

@@ -68,8 +68,8 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(BaseOb
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(BaseObject* targetobject, int ticknumber,
-    sf::Packet &packet)
+DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(BaseObject* targetobject,
+    int ticknumber, int referencetick, sf::Packet &packet)
 {
 
     BaseSendableEntity* asbase = dynamic_cast<BaseSendableEntity*>(targetobject);
@@ -88,7 +88,7 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(BaseObject* targe
     if(!asbase->GetSendableType() == sendabletype)
         return false;
     
-    return asbase->LoadUpdateFromPacket(packet, ticknumber);
+    return asbase->LoadUpdateFromPacket(packet, ticknumber, referencetick);
 }
 // ------------------------------------ //
 DLLEXPORT bool SendableEntitySerializer::IsObjectTypeCorrect(BaseObject* object) const{

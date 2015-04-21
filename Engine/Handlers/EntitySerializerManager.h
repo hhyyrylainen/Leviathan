@@ -44,8 +44,10 @@ namespace Leviathan{
         //! \brief Applies an update from a packet
         //! \return True when a suitable deserializer was found and the target object was valid
         //! \param objectget Function pointer to from which the target can be acquired
+        //! \param referencetick The tick against which this update was generated
         //! \note The object has to be locked before calling this
-        DLLEXPORT bool ApplyUpdateMessage(sf::Packet &packet, int ticknumber, ObjectPtr object);
+        DLLEXPORT bool ApplyUpdateMessage(sf::Packet &packet, int ticknumber, int referencetick,
+            ObjectPtr object);
 
 
         DLLEXPORT static EntitySerializerManager* Get();

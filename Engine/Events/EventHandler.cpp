@@ -24,24 +24,32 @@ bool EventHandler::Init(){
 void EventHandler::Release(){
 	GUARD_LOCK_THIS_OBJECT();
 	// release listeners //
-	SAFE_DELETE_VECTOR(EventListeners);
+	EventListeners.clear();
 	SAFE_DELETE_VECTOR(GenericEventListeners);
 }
 // ------------------------------------ //
 void EventHandler::CallEvent(Event* pEvent){
 	GUARD_LOCK_THIS_OBJECT();
-	// Loop and call all listeners which have a valid type //
-	for(size_t i = 0; i < EventListeners.size(); i++){
 
-		if(EventListeners[i]->Type == pEvent->GetType()){
+    const auto type = pEvent->GetType();
 
-			EventListeners[i]->Receiver->OnEvent(&pEvent);
-			if((pEvent) == NULL)
-				// callable destroyed message //
-				break;
+	for(auto iter = EventListeners.begin(); iter != EventListeners.end(); ){
 
+		if((*iter)->Type == type){
+
+			const auto result = (*iter)->Receiver->OnEvent(&pEvent);
+
+            if(result == -1){
+
+                // Unregister requested //
+                iter = EventListeners.erase(iter);
+                continue;
+            }
 		}
+
+        ++iter;
 	}
+    
 	SAFE_RELEASE(pEvent);
 }
 
@@ -64,7 +72,7 @@ DLLEXPORT void Leviathan::EventHandler::CallEvent(GenericEvent* pEvent){
 // ------------------------------------ //
 bool EventHandler::RegisterForEvent(CallableObject* toregister, EVENT_TYPE totype){
 	GUARD_LOCK_THIS_OBJECT();
-	EventListeners.push_back(new RegisteredCallback(toregister, totype));
+	EventListeners.push_back(move(make_unique<RegisteredCallback>(toregister, totype)));
 	return true;
 }
 
@@ -81,7 +89,7 @@ void EventHandler::Unregister(CallableObject* caller, EVENT_TYPE type, bool all)
 		if(EventListeners[i]->Receiver == caller){
 			// check type or if all is specified delete //
 			if(all || type == EventListeners[i]->Type){
-				delete EventListeners[i];
+
 				EventListeners.erase(EventListeners.begin()+i);
 				i--;
 			}
@@ -89,7 +97,9 @@ void EventHandler::Unregister(CallableObject* caller, EVENT_TYPE type, bool all)
 	}
 }
 
-DLLEXPORT void Leviathan::EventHandler::Unregister(CallableObject* caller, const wstring &genericname, bool all /*= false*/){
+DLLEXPORT void Leviathan::EventHandler::Unregister(CallableObject* caller, const wstring &genericname,
+    bool all /*= false*/)
+{
 	GUARD_LOCK_THIS_OBJECT();
 	// loop and remove wanted objects //
 	for(size_t i = 0; i < GenericEventListeners.size(); i++){

@@ -40,7 +40,9 @@ namespace Leviathan{
 		DLLEXPORT bool Init();
 		DLLEXPORT void Release();
 
+        //! \todo Make this use references instead
 		DLLEXPORT void CallEvent(Event* pEvent);
+        //! \todo Allow these events to also delete themselves
 		DLLEXPORT void CallEvent(GenericEvent* pEvent);
 
 		DLLEXPORT bool RegisterForEvent(CallableObject* toregister, EVENT_TYPE totype);
@@ -53,7 +55,7 @@ namespace Leviathan{
 		DLLEXPORT void CallEventGenericProxy(GenericEvent* genericevent);
 
 	private:
-		std::vector<RegisteredCallback*> EventListeners;
+		std::vector<unique_ptr<RegisteredCallback>> EventListeners;
 		std::vector<GenericRegisteredCallback*> GenericEventListeners;
 
 		static EventHandler* main;

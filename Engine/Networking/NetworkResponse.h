@@ -367,8 +367,8 @@ namespace Leviathan{
     class NetworkResponseDataForEntityUpdate : public BaseNetworkResponseData{
     public:
         
-        DLLEXPORT NetworkResponseDataForEntityUpdate(int worldid, int entityid, int ticknumber, int referencetick,
-            shared_ptr<sf::Packet> data);
+        DLLEXPORT NetworkResponseDataForEntityUpdate(int worldid, int entityid, int ticknumber,
+            int referencetick, shared_ptr<sf::Packet> data);
 
         DLLEXPORT NetworkResponseDataForEntityUpdate(sf::Packet &frompacket);
 

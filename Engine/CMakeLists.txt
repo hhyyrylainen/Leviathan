@@ -29,7 +29,6 @@ set(GroupEntitiesBases "Entities/Bases/BaseConstraintable.cpp" "Entities/Bases/B
   "Entities/Bases/BaseScalable.h" "Entities/Bases/BaseScalable.cpp"
   "Entities/Bases/BaseSendableEntity.h" "Entities/Bases/BaseSendableEntity.cpp"
   "Entities/Bases/BaseTickable.h" "Entities/Bases/BaseTickable.cpp"
-  "Entities/Bases/BaseTimedInterpolated.h" "Entities/Bases/BaseTimedInterpolated.cpp"
   )
   
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")

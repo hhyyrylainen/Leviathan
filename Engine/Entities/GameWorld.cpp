@@ -27,8 +27,6 @@
 #include "Newton/PhysicsMaterialManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
-static_assert(floor(INTERPOLATION_TIME/(float)TICKSPEED) == INTERPOLATION_TIME/TICKSPEED)
-
 //! \brief Class used by _OnNotifiableConnected to hold temporary connection data
 class Leviathan::PlayerConnectionPreparer{
 

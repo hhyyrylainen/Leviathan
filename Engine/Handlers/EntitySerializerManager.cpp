@@ -91,7 +91,9 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::CreateEntityFromInitialMessag
 
     for(size_t i = 0; i < Serializers.size(); i++){
 
-        if(Serializers[i]->DeserializeWholeEntityFromPacket(returnobj, packettype, packet, id, world)){
+        if(Serializers[i]->DeserializeWholeEntityFromPacket(returnobj, packettype, packet, id,
+                world))
+        {
 
             // The correct serializer was at least attempted //
             return true;
@@ -104,7 +106,7 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::CreateEntityFromInitialMessag
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(sf::Packet &packet, int ticknumber,
-    ObjectPtr object)
+    int referencetick, ObjectPtr object)
 {
     // The first thing has to be the type //
     int32_t objtype;
@@ -123,7 +125,9 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(sf::Packet
 
         if(Serializers[i]->CanSerializeType(objtype)){
 
-            if(Serializers[i]->ApplyUpdateFromPacket(object.get(), ticknumber, packet)){
+            if(Serializers[i]->ApplyUpdateFromPacket(object.get(), ticknumber, referencetick,
+                    packet))
+            {
 
                 return true;
             }

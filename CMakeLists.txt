@@ -123,33 +123,35 @@ set(CMAKE_DEBUG_POSTFIX "D")
 
 # Linking and platform specific
 if(WIN32)
-    # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
-    # higher memory for compiling precompiled headers
-    # Currently it seems that Zm250 should be enough but it might not be
-    add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm250)
-    
-    # program database flag for debug
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
-    
-    # A policy is needed for launchers to work correctly
-    
-    # This allows the project target property be read the old way
-    cmake_policy(SET CMP0026 OLD)
-    
-    # This makes parameter evaluation expand things more aggressively(?)
-    cmake_policy(SET CMP0053 OLD)
-    cmake_policy(SET CMP0054 OLD)
-    
+  # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
+  # higher memory for compiling precompiled headers
+  # Currently it seems that Zm250 should be enough but it might not be
+  add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm250)
+  
+  # program database flag for debug
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
+  
+  # A policy is needed for launchers to work correctly
+  
+  # This allows the project target property be read the old way
+  cmake_policy(SET CMP0026 OLD)
+  
+  # This makes parameter evaluation expand things more aggressively(?)
+  cmake_policy(SET CMP0053 OLD)
+  cmake_policy(SET CMP0054 OLD)
+  
 else(WIN32)
 
-    add_definitions(-fextended-identifiers)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-	
-    # We need X11 on linux for window class to work
-    find_package(X11)
-    find_package(Threads)
+  add_definitions(-fextended-identifiers)
 
-    include_directories(${X11_INCLUDE_DIR})
+  # C++14
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+  
+  # We need X11 on linux for window class to work
+  find_package(X11)
+  find_package(Threads)
+
+  include_directories(${X11_INCLUDE_DIR})
 endif(WIN32)
 
 # When no configuration is set, enable RelWithDebInfo

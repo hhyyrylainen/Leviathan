@@ -17,6 +17,7 @@ set(TestSources
   TestFiles/DeltaStates.cpp
   TestFiles/PartialEngine.h
   TestFiles/PartialEngine.cpp
+  TestFiles/Sendable.cpp
   )
 
 include_directories(catch)

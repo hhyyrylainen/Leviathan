@@ -204,12 +204,6 @@ DLLEXPORT bool Leviathan::BasePositionable::LoadPositionFromPacketToHolder(sf::P
 DLLEXPORT void BasePositionable::InterpolatePositionableState(PositionableRotationableDeltaState &first,
     PositionableRotationableDeltaState &second, float progress)
 {
-
-    if(progress < 0.f)
-        progress = 0.f;
-
-    if(progress > 1.f)
-        progress = 1.f;
     
     Float3 pos = GetPosition();
     Float4 rot = GetOrientation();
@@ -217,69 +211,111 @@ DLLEXPORT void BasePositionable::InterpolatePositionableState(PositionableRotati
     // Position
     if(second.ValidFields & PRDELTAUPDATED_POS_X){
 
-        pos.X = first.Position.X + (second.Position.X-first.Position.X)*progress;
-        
-    } else {
+        if(first.ValidFields & PRDELTAUPDATED_POS_X){
+            
+            pos.X = first.Position.X + (second.Position.X-first.Position.X)*progress;
+        } else {
 
+            pos.X = second.Position.X;
+        }
+        
+    } else if(first.ValidFields &PRDELTAUPDATED_POS_X){
+        
         pos.X = first.Position.X;
     }
 
     if(second.ValidFields & PRDELTAUPDATED_POS_Y){
 
-        pos.Y = first.Position.Y + (second.Position.Y-first.Position.Y)*progress;
-        
-    } else {
+        if(first.ValidFields & PRDELTAUPDATED_POS_Y){
+            
+            pos.Y = first.Position.Y + (second.Position.Y-first.Position.Y)*progress;
+        } else {
 
+            pos.Y = second.Position.Y;
+        }
+        
+    } else if(first.ValidFields &PRDELTAUPDATED_POS_Y){
+        
         pos.Y = first.Position.Y;
     }
-
+    
     if(second.ValidFields & PRDELTAUPDATED_POS_Z){
 
-        pos.Z = first.Position.Z + (second.Position.Z-first.Position.Z)*progress;
-        
-    } else {
+        if(first.ValidFields & PRDELTAUPDATED_POS_Z){
+            
+            pos.Z = first.Position.Z + (second.Position.Z-first.Position.Z)*progress;
+        } else {
 
+            pos.Z = second.Position.Z;
+        }
+        
+    } else if(first.ValidFields &PRDELTAUPDATED_POS_Z){
+        
         pos.Z = first.Position.Z;
     }
-
+    
     // Rotation
     // TODO: spherical interpolation for rotation
     if(second.ValidFields & PRDELTAUPDATED_ROT_X){
 
-        rot.X = first.Rotation.X + (second.Rotation.X-first.Rotation.X)*progress;
+        if(first.ValidFields & PRDELTAUPDATED_ROT_X){
+            
+            rot.X = first.Rotation.X + (second.Rotation.X-first.Rotation.X)*progress;
+        } else {
+
+            rot.X = second.Rotation.X;
+        }
         
-    } else {
+    } else if(first.ValidFields & PRDELTAUPDATED_ROT_X){
 
         rot.X = first.Rotation.X;
     }
 
     if(second.ValidFields & PRDELTAUPDATED_ROT_Y){
 
-        rot.Y = first.Rotation.Y + (second.Rotation.Y-first.Rotation.Y)*progress;
+        if(first.ValidFields & PRDELTAUPDATED_ROT_Y){
+            
+            rot.Y = first.Rotation.Y + (second.Rotation.Y-first.Rotation.Y)*progress;
+        } else {
+
+            rot.Y = second.Rotation.Y;
+        }
         
-    } else {
+    } else if(first.ValidFields & PRDELTAUPDATED_ROT_Y){
 
         rot.Y = first.Rotation.Y;
     }
-
+    
     if(second.ValidFields & PRDELTAUPDATED_ROT_Z){
 
-        rot.Z = first.Rotation.Z + (second.Rotation.Z-first.Rotation.Z)*progress;
+        if(first.ValidFields & PRDELTAUPDATED_ROT_Z){
+            
+            rot.Z = first.Rotation.Z + (second.Rotation.Z-first.Rotation.Z)*progress;
+        } else {
+
+            rot.Z = second.Rotation.Z;
+        }
         
-    } else {
+    } else if(first.ValidFields & PRDELTAUPDATED_ROT_Z){
 
         rot.Z = first.Rotation.Z;
     }
-
+    
     if(second.ValidFields & PRDELTAUPDATED_ROT_W){
 
-        rot.W = first.Rotation.W + (second.Rotation.W-first.Rotation.W)*progress;
+        if(first.ValidFields & PRDELTAUPDATED_ROT_W){
+            
+            rot.W = first.Rotation.W + (second.Rotation.W-first.Rotation.W)*progress;
+        } else {
+
+            rot.W = second.Rotation.W;
+        }
         
-    } else {
+    } else if(first.ValidFields & PRDELTAUPDATED_ROT_W){
 
         rot.W = first.Rotation.W;
     }
-
+    
     GUARD_LOCK_THIS_OBJECT();
     SetPos(pos);
     SetOrientation(rot);

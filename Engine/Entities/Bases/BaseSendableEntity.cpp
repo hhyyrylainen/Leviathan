@@ -211,41 +211,68 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
         GUARD_LOCK_THIS_OBJECT();
 
         // Skip if not newer than any //
-        bool newer = false;
-        bool filled = false;
-        
-        for(auto& obj : ClientStateBuffer){
+        if(ClientStateBuffer.size() != 0){
 
-            // Fill data from the reference tick to make this update packet as complete as possible //
-            if(obj.Tick == referencetick){
+            bool newer = false;
+            bool filled = false;
+            
+            for(auto& obj : ClientStateBuffer){
 
-                // Add missing values //
-                receivedstate->FillMissingData(*obj.DeltaData);
+                // Fill data from the reference tick to make this update packet as complete as possible //
+                if(obj.Tick == referencetick){
+
+                    // Add missing values //
+                    receivedstate->FillMissingData(*obj.DeltaData);
                 
-                filled = true;
-                goto packetisnewerthansomelabel;
-            }
-
-            if(obj.Tick < ticknumber){
+                    filled = true;
                 
-                newer = true;
+                    if(newer)
+                        break;
+                }
+
+                if(obj.Tick < ticknumber){
+                
+                    newer = true;
+
+                    if(filled)
+                        break;
+                }
             }
+            
+            if(!newer)
+                return false;
+
+            // If it isn't filled that tells that our buffer is too small //
+            if(!filled){
+
+                bool olderexist = false;
+
+                // TODO: make sure that this doesn't mess with interpolation too badly
+                // under reasonable network stress, also this probably should never be missing
+                // under normal conditions
+                
+                // Or that we have missed a single packet //
+                for(auto& obj : ClientStateBuffer){
+
+                    if(obj.Tick < referencetick){
+
+                        olderexist = true;
+                        break;
+                    }
+                }
+                
+                if(!olderexist)
+                    throw Exception("ReferenceTick is no longer in memory ClientStateBuffer "
+                        "is too small");
+            }
+            
+        } else {
+
+            // No stored states, must be newer //
+            // Also no need to fill missing data as only the updated values should be in the packet //
+            
         }
 
-        if(newer)
-            goto packetisnewerthansomelabel;
-
-        // Was not newer than any //
-        return true;
-
-packetisnewerthansomelabel:
-
-        // If it isn't filled that tells that our buffer is too small //
-        if(!filled){
-
-            DEBUG_BREAK;
-            throw Exception("ReferenceTick is no longer in memory ClientStateBuffer is too small");
-        }
         
         // Store the new state in the buffer so that it can be found when interpolating //
         ClientStateBuffer.push_back(StoredState(receivedstate));
@@ -277,7 +304,7 @@ DLLEXPORT void BaseSendableEntity::GetServerSentStates(shared_ptr<ObjectDeltaSta
             }
 
             // For this to be found the client should be around 50-100 milliseconds in the past
-            if(obj.Tick > tick && obj.Tick < tick+secondfound){
+            if(obj.Tick > tick && (secondfound == 0 || obj.Tick-tick < secondfound)){
 
                 // The second state //
                 second = obj.DeltaData;
@@ -288,16 +315,16 @@ DLLEXPORT void BaseSendableEntity::GetServerSentStates(shared_ptr<ObjectDeltaSta
         }
     }
 
-    if(!secondfound || firstfound == 0){
+    if(!firstfound || secondfound == 0){
 
-        throw InvalidType("No stored server states around tick");
+        throw InvalidState("No stored server states around tick");
     }
 
     // Adjust progress //
     if(secondfound > 1){
 
         const float mspassed = TICKSPEED*progress;
-        progress = mspassed/TICKSPEED*secondfound;
+        progress = mspassed / (TICKSPEED*secondfound);
     }
 }
 // ------------------------------------ //

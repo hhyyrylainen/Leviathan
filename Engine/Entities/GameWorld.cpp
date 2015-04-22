@@ -218,6 +218,11 @@ DLLEXPORT Leviathan::GameWorld::GameWorld() :
 
 DLLEXPORT Leviathan::GameWorld::~GameWorld(){
 
+    // Entities need to be disposed before physical world is destroyed //
+    // This in incase the world is not properly destroyed //
+    Objects.clear();
+    
+    
     // This should be relatively cheap if the newton threads don't deadlock while waiting
     // for each other
     _PhysicalWorld.reset();

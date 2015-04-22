@@ -48,6 +48,8 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
         
         REQUIRE_NOTHROW(brush->GetServerSentStates(first, second, 1, progress));
 
+        REQUIRE(first);
+        REQUIRE(second);
         CHECK(progress == 0.35f);
         CHECK(first->Tick == 1);
         CHECK(second->Tick == 2);
@@ -73,6 +75,8 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
         
         REQUIRE_NOTHROW(brush->GetServerSentStates(first, second, 3, progress));
 
+        REQUIRE(first);
+        REQUIRE(second);
         CHECK(progress == 0.25f);
         CHECK(first->Tick == 3);
         CHECK(second->Tick == 4);
@@ -99,10 +103,35 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
         
         REQUIRE_NOTHROW(brush->GetServerSentStates(first, second, 3, progress));
 
+        REQUIRE(first);
+        REQUIRE(second);
         CHECK(progress == 0.125f);
         CHECK(first->Tick == 3);
         CHECK(second->Tick == 5);
     }
+
+    SECTION("Correct exception is thrown"){
+
+        for(auto i : {3, 5, 7, 8}){
+        
+            auto state = brush->CaptureState(i);
+
+            sf::Packet packet;
+
+            state->CreateUpdatePacket(firststate.get(), packet);
+
+            REQUIRE(brush->LoadUpdateFromPacket(packet, i, i-1));
+        }
+        
+        shared_ptr<ObjectDeltaStateData> first;
+        shared_ptr<ObjectDeltaStateData> second;
+
+        float progress = 0.25f;
+        
+        REQUIRE_THROWS_AS(brush->GetServerSentStates(first, second, 1, progress), InvalidState);
+    }
+
+
     
     world.Release();
 }
@@ -143,13 +172,16 @@ TEST_CASE("Brush listens to and applies client interpolation events", "[entity, 
             REQUIRE(brush->LoadUpdateFromPacket(packet, i, i-1));
         }
 
-        brush->SetPos(Float3(0, 0, 0));
+        SECTION("Basic position updating"){
+            
+            brush->SetPos(Float3(0, 0, 0));
 
-        EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_CLIENT_INTERPOLATION,
-                new ClientInterpolationEventData(3, 0.5f*TICKSPEED)));
+            EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_CLIENT_INTERPOLATION,
+                    new ClientInterpolationEventData(3, 0.5f*TICKSPEED)));
 
-        // Position should have changed //
-        CHECK(brush->GetPosX() == Approx(35));
+            // Position should have changed //
+            CHECK(brush->GetPosX() == Approx(35));
+        }
 
         SECTION("Unlinking and relinking when new states arrive"){
             

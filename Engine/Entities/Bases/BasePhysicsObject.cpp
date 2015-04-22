@@ -621,6 +621,9 @@ DLLEXPORT void BasePhysicsObject::InterpolatePhysicalState(PositionablePhysicalD
     PositionablePhysicalDeltaState &second, float progress)
 {
 
+    // TODO: fix using partial first states
+    DEBUG_BREAK;
+    
     if(progress < 0.f)
         progress = 0.f;
 

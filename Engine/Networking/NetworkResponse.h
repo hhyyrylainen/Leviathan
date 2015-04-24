@@ -384,6 +384,8 @@ namespace Leviathan{
         int TickNumber;
 
         //! The tick number against which this update has been created
+        //!
+        //! Special case is -1 which notes that there is no reference tick
         int ReferenceTick;
         
         //! Data for updating the entity 

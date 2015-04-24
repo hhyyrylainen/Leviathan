@@ -11,6 +11,7 @@
 #include "SyncedVariables.h"
 #include "NetworkedInputHandler.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkInterface::NetworkInterface() : OurNetworkType(NETWORKED_TYPE_BASE_ERROR){
 

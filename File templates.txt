@@ -6,6 +6,7 @@ cppppppp
 // ------------------------------------ //
 #include "FILEREPLACENAME.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 
 // ------------------------------------ //
@@ -22,25 +23,18 @@ hddddd
 
 ------------------------------------------------------------------------
 #pragma once
-#define LEVIATHAN_FILEREPLACENAME
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-// ---- includes ---- //
-
 
 namespace Leviathan{
 
-	class FILEREPLACENAME : public Object{
+	class FILEREPLACENAME{
 	public:
 		DLLEXPORT FILEREPLACENAME();
         DLLEXPORT ~FILEREPLACENAME();
 
-
-	private:
-
 	};
-
 }
 
 // --------------------------------------------------------------------------- GUI

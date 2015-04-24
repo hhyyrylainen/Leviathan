@@ -243,7 +243,8 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
                 return false;
 
             // If it isn't filled that tells that our buffer is too small //
-            if(!filled){
+            // referencetick is invalid when it is -1 and is ignored in that case //
+            if(!filled && referencetick != -1){
 
                 bool olderexist = false;
 
@@ -260,10 +261,12 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
                         break;
                     }
                 }
+
+                cout << "Entity old state " << referencetick << " is no longer in memory" << endl;
                 
-                if(!olderexist)
-                    throw Exception("ReferenceTick is no longer in memory ClientStateBuffer "
-                        "is too small");
+                //if(!olderexist)
+                //    throw Exception("ReferenceTick is no longer in memory ClientStateBuffer "
+                //        "is too small");
             }
             
         } else {
@@ -277,8 +280,10 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
         // Store the new state in the buffer so that it can be found when interpolating //
         ClientStateBuffer.push_back(StoredState(receivedstate));
     }
-    
-    _OnNewStateReceived();
+
+    // Interpolations can only happen if more than one state is received
+    if(ClientStateBuffer.size() > 1)
+        _OnNewStateReceived();
 
     return true;
 }

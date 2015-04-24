@@ -1,14 +1,12 @@
-#ifndef LEVIATHAN_DATABLOCK
-#define LEVIATHAN_DATABLOCK
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "Common/ReferenceCounted.h"
-#include "SFML/Network/Packet.hpp"
-#include "Exceptions.h"
+#include "../../Common/ReferenceCounted.h"
+#include "../../Common/SFMLPackets.h"
+#include "../../Exceptions.h"
+#include "../../Utility/Convert.h"
 
 
 static_assert(sizeof(short) == 2, "Short must be 2 bytes for datablocks to work accross the network");
@@ -20,15 +18,11 @@ static_assert(sizeof(short) == 2, "Short must be 2 bytes for datablocks to work 
 #define DATABLOCK_TYPE_STRING	7
 #define DATABLOCK_TYPE_CHAR		8
 #define DATABLOCK_TYPE_DOUBLE	9
-#define DATABLOCK_TYPE_OBJECTL	10 // uses Leviathan::Object* as type
 #define DATABLOCK_TYPE_VOIDPTR	11
 
 #define DATABLOCK_TYPE_ERROR	9000
 
 namespace Leviathan{
-
-	// testing function (for some purpose) //
-	DLLEXPORT bool DataBlockTestVerifier(const int &tests);
 
 	// forward declaration //
 	template<class DBlockT> class DataBlock;
@@ -50,10 +44,8 @@ namespace Leviathan{
 	NAMERESOLVERTEMPLATEINSTANTIATION(std::string, DATABLOCK_TYPE_STRING);
 	NAMERESOLVERTEMPLATEINSTANTIATION(char, DATABLOCK_TYPE_CHAR);
 	NAMERESOLVERTEMPLATEINSTANTIATION(double, DATABLOCK_TYPE_DOUBLE);
-	NAMERESOLVERTEMPLATEINSTANTIATION(Object*, DATABLOCK_TYPE_OBJECTL);
 	NAMERESOLVERTEMPLATEINSTANTIATION(void*, DATABLOCK_TYPE_VOIDPTR);
 	// for conversion check to work //
-	NAMERESOLVERTEMPLATEINSTANTIATION(Object, DATABLOCK_TYPE_OBJECTL);
 	NAMERESOLVERTEMPLATEINSTANTIATION(void, DATABLOCK_TYPE_VOIDPTR);
 
 	// static class used to convert DataBlocks from different types to other types //
@@ -219,7 +211,7 @@ namespace Leviathan{
 		// copies just the pointer over (fast for copies that don't need both copies //
 		DLLEXPORT static inline DataBlock* CopyConstructor(DataBlock* arg){
 
-			unique_ptr<DataBlock> block(new DataBlock());
+            std::unique_ptr<DataBlock> block(new DataBlock());
 
 			block.get()->Type = arg->Type;
 			// copy pointer //
@@ -318,7 +310,7 @@ namespace Leviathan{
 		// copies just the pointer over (fast for copies that don't need both copies //
 		DLLEXPORT static inline DataBlock* CopyConstructor(DataBlock* arg){
 
-			unique_ptr<DataBlock> block(new DataBlock());
+            std::unique_ptr<DataBlock> block(new DataBlock());
 
 			block.get()->Type = arg->Type;
 			// copy pointer //
@@ -370,15 +362,14 @@ namespace Leviathan{
 
 	// define specific types //
 
-	typedef DataBlock<int>			IntBlock;
-	typedef DataBlock<float>		FloatBlock;
-	typedef DataBlock<bool>			BoolBlock;
-	typedef DataBlock<std::wstring>		WstringBlock;
-	typedef DataBlock<std::string>		StringBlock;
-	typedef DataBlock<char>			CharBlock;
-	typedef DataBlock<double>		DoubleBlock;
-	typedef DataBlock<Object*>		LeviathanObjectBlock;
-	typedef DataBlock<void*>		VoidPtrBlock;
+	typedef DataBlock<int> IntBlock;
+	typedef DataBlock<float> FloatBlock;
+	typedef DataBlock<bool> BoolBlock;
+	typedef DataBlock<std::wstring> WstringBlock;
+	typedef DataBlock<std::string> StringBlock;
+	typedef DataBlock<char> CharBlock;
+	typedef DataBlock<double> DoubleBlock;
+	typedef DataBlock<void*> VoidPtrBlock;
 
 	// template class for converting Type values to data types //
 	template<int TValue>
@@ -394,7 +385,10 @@ namespace Leviathan{
 
 
 	// type resolver specifications //
-#define TVALRESOLVERTYPE(BlockTypeT, DEFINEDValT) template<> struct TvalToTypeResolver<DEFINEDValT>{ static const BlockTypeT* Conversion(const DataBlockAll* bl){return static_cast<const BlockTypeT*>(bl);}; static BlockTypeT* Conversion(DataBlockAll* bl){return static_cast<BlockTypeT*>(bl);}};
+#define TVALRESOLVERTYPE(BlockTypeT, DEFINEDValT) template<> struct TvalToTypeResolver<DEFINEDValT>{\
+        static const BlockTypeT* Conversion(const DataBlockAll* bl){\
+            return static_cast<const BlockTypeT*>(bl);}; \
+        static BlockTypeT* Conversion(DataBlockAll* bl){return static_cast<BlockTypeT*>(bl);}};
 
 	TVALRESOLVERTYPE(IntBlock, DATABLOCK_TYPE_INT);
 	TVALRESOLVERTYPE(FloatBlock, DATABLOCK_TYPE_FLOAT);
@@ -403,7 +397,6 @@ namespace Leviathan{
 	TVALRESOLVERTYPE(StringBlock, DATABLOCK_TYPE_STRING);
 	TVALRESOLVERTYPE(CharBlock, DATABLOCK_TYPE_CHAR);
 	TVALRESOLVERTYPE(DoubleBlock, DATABLOCK_TYPE_DOUBLE);
-	TVALRESOLVERTYPE(LeviathanObjectBlock, DATABLOCK_TYPE_OBJECTL);
 	TVALRESOLVERTYPE(VoidPtrBlock, DATABLOCK_TYPE_VOIDPTR);
 	
 
@@ -460,7 +453,8 @@ namespace Leviathan{
 		}
 
 		// constructor for creating this from std::wstring //
-		DLLEXPORT VariableBlock(const std::wstring &valuetoparse, std::map<std::wstring, shared_ptr<VariableBlock>>* predefined) THROWS;
+		DLLEXPORT VariableBlock(const std::wstring &valuetoparse, std::map<std::wstring,
+            std::shared_ptr<VariableBlock>>* predefined);
 
 		// non template constructor //
 		DLLEXPORT VariableBlock(DataBlockAll* block){
@@ -502,6 +496,7 @@ namespace Leviathan{
 			// avoid performance issues //
 			return *this;
 		}
+        
 		template<class DBlockTP>
 		DLLEXPORT VariableBlock& operator =(DataBlock<DBlockTP>* arg){
 			// release existing value (if any) //
@@ -540,19 +535,26 @@ namespace Leviathan{
 				return false;
 			// need to check if values match //
 			if(BlockData->Type == DATABLOCK_TYPE_INT)
-				return *TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(other.BlockData);
+				return *TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData) ==
+                    *TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(other.BlockData);
 			else if(BlockData->Type == DATABLOCK_TYPE_FLOAT)
-				return *TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(other.BlockData);
+				return *TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData) ==
+                    *TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(other.BlockData);
 			else if(BlockData->Type == DATABLOCK_TYPE_BOOL)
-				return *TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(other.BlockData);
+				return *TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData) ==
+                    *TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(other.BlockData);
 			else if(BlockData->Type == DATABLOCK_TYPE_WSTRING)
-				return *TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(other.BlockData);
+				return *TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData) ==
+                    *TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(other.BlockData);
 			else if(BlockData->Type == DATABLOCK_TYPE_STRING)
-				return *TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(other.BlockData);
+				return *TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData) ==
+                    *TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(other.BlockData);
 			else if(BlockData->Type == DATABLOCK_TYPE_CHAR)
-				return *TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(other.BlockData);
+				return *TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData) ==
+                    *TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(other.BlockData);
 			else if(BlockData->Type == DATABLOCK_TYPE_DOUBLE)
-				return *TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData) == *TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(other.BlockData);
+				return *TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData) ==
+                    *TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(other.BlockData);
 
 			// type that shouldn't be used is used //
 			assert(0 && "unallowed datatype in datablock");
@@ -608,8 +610,6 @@ namespace Leviathan{
 					return *TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData);
 				else if(BlockData->Type == DATABLOCK_TYPE_DOUBLE)
 					return *TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData);
-				else if(BlockData->Type == DATABLOCK_TYPE_OBJECTL)
-					return *TvalToTypeResolver<DATABLOCK_TYPE_OBJECTL>::Conversion(BlockData);
 				else if(BlockData->Type == DATABLOCK_TYPE_VOIDPTR)
 					return *TvalToTypeResolver<DATABLOCK_TYPE_VOIDPTR>::Conversion(BlockData);
 			}
@@ -629,23 +629,29 @@ namespace Leviathan{
 				return false;
 			// check it //
 			if(BlockData->Type == DATABLOCK_TYPE_INT)
-				return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->IsConversionAllowedNonPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->
+                    IsConversionAllowedNonPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_FLOAT)
-				return TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData)->IsConversionAllowedNonPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData)->
+                    IsConversionAllowedNonPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_BOOL)
-				return TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData)->IsConversionAllowedNonPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData)->
+                    IsConversionAllowedNonPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_WSTRING)
-				return TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData)->IsConversionAllowedNonPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData)->
+                    IsConversionAllowedNonPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_STRING)
-				return TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData)->IsConversionAllowedNonPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData)->
+                    IsConversionAllowedNonPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_CHAR)
-				return TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData)->IsConversionAllowedNonPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData)->
+                    IsConversionAllowedNonPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_DOUBLE)
-				return TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData)->IsConversionAllowedNonPtr<ConvertT>();
-			else if(BlockData->Type == DATABLOCK_TYPE_OBJECTL)
-				return TvalToTypeResolver<DATABLOCK_TYPE_OBJECTL>::Conversion(BlockData)->IsConversionAllowedNonPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData)->
+                    IsConversionAllowedNonPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_VOIDPTR)
-				return TvalToTypeResolver<DATABLOCK_TYPE_VOIDPTR>::Conversion(BlockData)->IsConversionAllowedNonPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_VOIDPTR>::Conversion(BlockData)->
+                    IsConversionAllowedNonPtr<ConvertT>();
 
 			assert(0 && "invalid datablock type");
 			return false;
@@ -655,23 +661,29 @@ namespace Leviathan{
 		DLLEXPORT inline bool IsConversionAllowedPtr() const{
 			// check it //
 			if(BlockData->Type == DATABLOCK_TYPE_INT)
-				return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->IsConversionAllowedPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->
+                    IsConversionAllowedPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_FLOAT)
-				return TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData)->IsConversionAllowedPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData)->
+                    IsConversionAllowedPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_BOOL)
-				return TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData)->IsConversionAllowedPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData)->
+                    IsConversionAllowedPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_WSTRING)
-				return TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData)->IsConversionAllowedPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData)->
+                    IsConversionAllowedPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_STRING)
-				return TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData)->IsConversionAllowedPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData)->
+                    IsConversionAllowedPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_CHAR)
-				return TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData)->IsConversionAllowedPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData)->
+                    IsConversionAllowedPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_DOUBLE)
-				return TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData)->IsConversionAllowedPtr<ConvertT>();
-			else if(BlockData->Type == DATABLOCK_TYPE_OBJECTL)
-				return TvalToTypeResolver<DATABLOCK_TYPE_OBJECTL>::Conversion(BlockData)->IsConversionAllowedPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData)->
+                    IsConversionAllowedPtr<ConvertT>();
 			else if(BlockData->Type == DATABLOCK_TYPE_VOIDPTR)
-				return TvalToTypeResolver<DATABLOCK_TYPE_VOIDPTR>::Conversion(BlockData)->IsConversionAllowedPtr<ConvertT>();
+				return TvalToTypeResolver<DATABLOCK_TYPE_VOIDPTR>::Conversion(BlockData)->
+                    IsConversionAllowedPtr<ConvertT>();
 
 			assert(0 && "invalid datablock type");
 			return false;
@@ -722,11 +734,15 @@ namespace Leviathan{
 	public:
 		// constructors that accept any type of DataBlock //
 		template<class DBRType>
-		DLLEXPORT NamedVariableBlock(DataBlock<DBRType>* block, const std::wstring &name): VariableBlock(block), Name(name){
+		DLLEXPORT NamedVariableBlock(DataBlock<DBRType>* block, const std::wstring &name):
+            VariableBlock(block), Name(name)
+        {
 
 		}
 		// non template constructor //
-		DLLEXPORT NamedVariableBlock(DataBlockAll* block, const std::wstring &name) : VariableBlock(block), Name(name){
+		DLLEXPORT NamedVariableBlock(DataBlockAll* block, const std::wstring &name) :
+            VariableBlock(block), Name(name)
+        {
 
 		}
 
@@ -758,7 +774,9 @@ namespace Leviathan{
 	public:
 
 		template<class BlockBaseType>
-		DLLEXPORT ScriptSafeVariableBlock(DataBlock<BlockBaseType>* block, const std::wstring &name) : NamedVariableBlock(block, name){
+		DLLEXPORT ScriptSafeVariableBlock(DataBlock<BlockBaseType>* block, const std::wstring &name) :
+            NamedVariableBlock(block, name)
+        {
 			// getting typeid //
 			ASTypeID = TypeToAngelScriptIDConverter<BlockBaseType>::GetTypeIDFromTemplated();
 		}
@@ -805,8 +823,16 @@ namespace Leviathan{
 
 
 	// conversion template specifications //
-#define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(BlockTypeName, ToConvertTypeName, ConvertActionToDo) template<> class DataBlockConverter<BlockTypeName, ToConvertTypeName>{public: static inline ToConvertTypeName DoConvert(const BlockTypeName* block){ return ConvertActionToDo;}; static const bool AllowedConversion = true;};
-#define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCKDEFAULT(BlockTypeName, ToConvertTypeName) template<> class DataBlockConverter<BlockTypeName, ToConvertTypeName>{public: static inline ToConvertTypeName DoConvert(const BlockTypeName* block){ return (ToConvertTypeName)(*block->Value);}; static const bool AllowedConversion = true;};
+#define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(BlockTypeName, ToConvertTypeName, ConvertActionToDo) template<> \
+    class DataBlockConverter<BlockTypeName, ToConvertTypeName>{public: \
+        static inline ToConvertTypeName DoConvert(const BlockTypeName* block){ \
+            return ConvertActionToDo;}; \
+        static const bool AllowedConversion = true;};
+#define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCKDEFAULT(BlockTypeName, ToConvertTypeName) \
+    template<> class DataBlockConverter<BlockTypeName, ToConvertTypeName>{public: \
+        static inline ToConvertTypeName DoConvert(const BlockTypeName* block){ \
+            return (ToConvertTypeName)(*block->Value);}; \
+        static const bool AllowedConversion = true;};
 
 	// std::wstring and std::string conversions with templates //
 	template<class FromDataBlockType>
@@ -864,20 +890,32 @@ namespace Leviathan{
 	// little different std::string block definitions //
 	// ------------------ WstringBlock conversions ------------------ //
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, std::wstring, (*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, std::string, Convert::WstringToString(*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, bool, Convert::WstringFromBoolToInt(*block->Value) != 0);
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, float, Convert::WstringTo<float>(*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, double, Convert::WstringTo<double>(*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, char, (char)Convert::WstringTo<wchar_t>(*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, int, Convert::WstringTo<int>(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, std::string,
+        Convert::WstringToString(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, bool,
+        Convert::WstringFromBoolToInt(*block->Value) != 0);
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, float,
+        Convert::WstringTo<float>(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, double,
+        Convert::WstringTo<double>(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, char,
+        (char)Convert::WstringTo<wchar_t>(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, int,
+        Convert::WstringTo<int>(*block->Value));
 	//// ------------------ StringBlock conversions ------------------ //
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, std::string, (*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, std::wstring, Convert::StringToWstring(*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, bool, Convert::StringFromBoolToInt(*block->Value) != 0);
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, float, Convert::StringTo<float>(*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, double, Convert::StringTo<double>(*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, char, Convert::StringTo<char>(*block->Value));
-	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, int, Convert::StringTo<int>(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, std::wstring,
+        Convert::StringToWstring(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, bool,
+        Convert::StringFromBoolToInt(*block->Value) != 0);
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, float,
+        Convert::StringTo<float>(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, double,
+        Convert::StringTo<double>(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, char,
+        Convert::StringTo<char>(*block->Value));
+	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, int,
+        Convert::StringTo<int>(*block->Value));
 
 }
-#endif
+

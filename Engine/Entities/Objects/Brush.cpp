@@ -634,6 +634,9 @@ void Brush::_OnNewStateReceived(){
 DLLEXPORT int Brush::OnEvent(Event** pEvent){
     
     if((*pEvent)->GetType() == EVENT_TYPE_CLIENT_INTERPOLATION){
+
+        if(!ListeningForEvents)
+            DEBUG_BREAK;
         
         auto data = (*pEvent)->GetDataForClientInterpolationEvent();
 

@@ -1,54 +1,75 @@
-#ifndef LEVIATHAN_THREADSAFE
-#define LEVIATHAN_THREADSAFE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
 // ---- includes ---- //
 #include "Exceptions.h"
-#include "boost/thread/lockable_adapter.hpp"
-#include "boost/thread/recursive_mutex.hpp"
+#include <mutex>
 
 
 namespace Leviathan{
 
-    typedef boost::unique_lock<boost::mutex> BasicLockType;
-    
-	typedef boost::strict_lock<boost::recursive_mutex> ObjectLock;
-	typedef boost::unique_lock<boost::recursive_mutex> UniqueObjectLock;
-    typedef boost::unique_lock<boost::recursive_mutex> UObjectLock;
-
-#define GUARD_LOCK_THIS_OBJECT()						ObjectLock guard(this->ObjectsLock);
-#define GUARD_LOCK_THIS_OBJECT_CAST(BaseClass)			ObjectLock guard(static_cast<BaseClass*>(this)->ObjectsLock);
-#define GUARD_LOCK_OTHER_OBJECT(x)						ObjectLock guard(x->ObjectsLock);
-#define GUARD_LOCK_OTHER_OBJECT_NAME(x,y)				ObjectLock y(x->ObjectsLock);
-#define GUARD_LOCK_OTHER_OBJECT_UNIQUE_PTR_NAME(x, y)	unique_ptr<ObjectLock> y(new ObjectLock(x->ObjectsLock));
-#define UNIQUE_LOCK_OBJECT(x)							UniqueObjectLock lockit(x->ObjectsLock);
-#define UNIQUE_LOCK_THIS_OBJECT()						UniqueObjectLock lockit(this->ObjectsLock);
-#define GUARD_LOCK_BASIC(x)                             BasicLockType lock(x);
-
     // Individual lock objects //
-    using Mutex = boost::mutex;
-    using RecursiveMutex = boost::recursive_mutex;
-    using Lock = boost::unique_lock<boost::mutex>;
-    using RecursiveLock = boost::strict_lock<boost::recursive_mutex>;
+    using Mutex = std::mutex;
+    using RecursiveMutex = std::recursive_mutex;
+    using Lock = std::unique_lock<std::mutex>;
+    using RecursiveLock = std::lock_guard<std::recursive_mutex>;
+
+    template<class LockType>
+    struct LockTypeResolver{
+
+        using LType = void;
+    };
+
+    template<> struct LockTypeResolver<Mutex>{
+
+        using LType = Lock;
+    };
+
+    template<> struct LockTypeResolver<RecursiveMutex>{
+
+        using LType = RecursiveLock;
+    };
+
+    class Locker{
+    public:
+        
+        template<class LockType>
+        static auto Unique(LockType &lockref){
+
+            return typename LockTypeResolver<LockType>::LType(lockref);
+        }
+
+    };
+        
+
+#define GUARD_LOCK() auto guard = std::move(Locker::Unique(this->ObjectsLock));
+#define GUARD_LOCK_CAST(BaseClass) Lock guard(static_cast<BaseClass*>(this)->ObjectsLock);
+#define GUARD_LOCK_OTHER(x) Lock guard(x->ObjectsLock);
+#define GUARD_LOCK_NAME(y) Lock y(this->ObjectsLock);
+#define GUARD_LOCK_NAME_OTHER(x,y) Lock y(x->ObjectsLock);
+#define GUARD_LOCK_UNIQUE_PTR(y) unique_ptr<Lock> y(new Lock(this->ObjectsLock));
+#define GUARD_LOCK_UNIQUE_PTR_OTHER(x, y)	unique_ptr<Lock> y(new Lock(x->ObjectsLock));
+    
+#define UNIQUE_LOCK_OBJECT_OTHER(x) Lock lockit(x->ObjectsLock);
+#define UNIQUE_LOCK_OBJECT() Lock lockit(this->ObjectsLock);
     
 
 	//! \brief Allows the inherited object to be locked
-	class ThreadSafe{
+    //! \note Not allowed to be used as a pointer type
+    template<class MutexType>
+	class ThreadSafeGeneric{
 	public:
-		DLLEXPORT ThreadSafe();
-		DLLEXPORT virtual ~ThreadSafe();
+		DLLEXPORT ThreadSafeGeneric(){}
+		DLLEXPORT ~ThreadSafeGeneric(){}
 
-		FORCE_INLINE void VerifyLock(ObjectLock &guard) const THROWS{
-            
-			// Ensure that lock is for this //
-			if(!guard.owns_lock(&this->ObjectsLock))
-				throw InvalidAccess("wrong lock owner");
+		FORCE_INLINE void VerifyLock(RecursiveLock &guard) const{
+            // Apparently there is no way to verify this...
+			// if(!guard.owns_lock(&this->ObjectsLock))
+			// 	throw InvalidAccess("wrong lock owner");
 		}
 
-        FORCE_INLINE void VerifyLock(UniqueObjectLock &lockit) const THROWS{
+        FORCE_INLINE void VerifyLock(Lock &lockit) const{
             
             // Make sure that the lock is locked //
 			if(!lockit.owns_lock())
@@ -58,8 +79,12 @@ namespace Leviathan{
 		//! The main lock facility, mutable for working with const functions
 		//! \note Even though this is not protected it should not be abused
 		//! \protected
-		mutable boost::recursive_mutex ObjectsLock;
+		mutable MutexType ObjectsLock;
 	};
 
+    using ThreadSafe = ThreadSafeGeneric<Mutex>;
+    using ThreadSafeRecursive = ThreadSafeGeneric<RecursiveMutex>;
+    
+
 }
-#endif
+

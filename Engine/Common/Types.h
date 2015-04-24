@@ -1,21 +1,14 @@
 #pragma once
-#ifndef LEVIATHAN_TYPES
-#define LEVIATHAN_TYPES
-// ----------------- //
 // ------------------------------------ //
-
+#include "Define.h"
 // ------------------------------------ //
-// ---- includes ---- //
 #include <memory>
 #include <iostream>
-
-#include "Logger.h"
 
 #include "OGRE/OgreQuaternion.h"
 #include "OGRE/OgreColourValue.h"
 #include "OGRE/OgreVector3.h"
 #include "OGRE/OgreVector4.h"
-
 
 namespace Leviathan{
 
@@ -31,22 +24,6 @@ namespace Leviathan{
 
 		wchar_t Char;
 		int Index;
-	};
-
-	struct IntWstring{
-	public:
-		IntWstring();
-		IntWstring(const wstring& wstr, int value);
-		~IntWstring();
-
-		wstring* GetString();
-		int GetValue();
-
-		void SetString(const wstring& wstr);
-		void SetValue(int value);
-
-		shared_ptr<wstring> Wstr;
-		int Value;
 	};
 
 	class AllocatedBinaryBlock{
@@ -133,52 +110,6 @@ namespace Leviathan{
 		int X, Y, Z, W;
 	};
 
-	struct UINT4{
-	public:
-		DLLEXPORT UINT4(UINT u1, UINT u2, UINT u3, UINT u4);
-		DLLEXPORT UINT4();
-		DLLEXPORT operator UINT*();
-		//DLLEXPORT UINT& operator[](const int nIndex);
-		//DLLEXPORT UINT4 operator*(UINT);
-
-		UINT X, Y, Z, W;
-	};
-
-	//// not required //
-	struct Float1{
-	public:
-		DLLEXPORT inline Float1(){
-		}
-		DLLEXPORT inline Float1(const float &data){
-			X = data;
-		}
-
-		DLLEXPORT inline operator float& (){
-			return X;
-		}
-
-		DLLEXPORT operator float() const{
-			return X;
-		}
-		// ------------------------------------ //
-		DLLEXPORT inline Float1 operator +(const Float1& val){
-			return X+val.X;
-		}
-		DLLEXPORT inline Float1 operator +(const float& val){
-			return X+val;
-		}
-
-		DLLEXPORT inline float GetFloatValue() const{
-			return X;
-		}
-		DLLEXPORT inline void SetFloatValue(const float &val){
-			X = val;
-		}
-		// ------------------------------------ //
-
-		float X;
-	};
-
 	// ----------------- Float types ------------------- //
 	// refactored to match declarations in ozz vec_float //
 
@@ -201,8 +132,6 @@ namespace Leviathan{
 			switch (nindex){
 			case 0: return X;
 			case 1: return Y;
-				// this should NEVER be hit //
-			default: __assume(0);
 			}
 		}
 
@@ -400,7 +329,7 @@ namespace Leviathan{
 			case 1: return Y;
 			case 2: return Z;
 			}
-            throw exception();
+            throw std::exception();
 		}
 
 		// ------------------- Operators ----------------- //
@@ -645,9 +574,8 @@ namespace Leviathan{
 			case 1: return Y;
 			case 2: return Z;
 			case 3: return W;
-				// this should NEVER be hit //
-			default: __assume(0);
 			}
+            throw std::exception();
 		}
 
 		//! return first value of {X, Y, Z, W} as a pointer
@@ -719,10 +647,12 @@ namespace Leviathan{
 		}
 		// getting min and max of objects //
 		DLLEXPORT inline Float4 MinElements(const Float4 &other) const{
-			return Float4(X < other.X ? X : other.X, Y < other.Y ? Y : other.Y, Z < other.Z ? Z : other.Z, W < other.W ? W : other.W);
+			return Float4(X < other.X ? X : other.X, Y < other.Y ? Y : other.Y, Z < other.Z ? Z :
+                other.Z, W < other.W ? W : other.W);
 		}
 		DLLEXPORT inline Float4 MaxElements(const Float4 &other) const{
-			return Float4(X > other.X ? X : other.X, Y > other.Y ? Y : other.Y, Z > other.Z ? Z : other.Z, W > other.W ? W : other.W);
+			return Float4(X > other.X ? X : other.X, Y > other.Y ? Y : other.Y, Z > other.Z ? Z :
+                other.Z, W > other.W ? W : other.W);
 		}
 		// value clamping //
 		DLLEXPORT inline Float4 Clamp(const Float4 &min, const Float4 &max){
@@ -762,7 +692,8 @@ namespace Leviathan{
 			// is absolute -1.f under normalization tolerance //
 			return fabs(X*X+Y*Y+Z*Z+W*W -1.0f) < NORMALIZATION_TOLERANCE;
 		}
-		// does linear interpolation between vectors and coefficient f, not limited to range [0,1], courtesy of ozz-animation //
+		// does linear interpolation between vectors and coefficient f,
+        // not limited to range [0,1], courtesy of ozz-animation //
 		DLLEXPORT inline Float4 Lerp(const Float4 &other, float f) const{
 			return Float4((other.X-X)*f + X, (other.Y-Y)*f + Y, (other.Z-Z)*f + Z, (other.W-W)*f + W);
 		}
@@ -927,4 +858,3 @@ namespace Leviathan{
 }
 
 
-#endif

@@ -1,20 +1,20 @@
-#ifndef LEVIATHAN_SCRIPT_EXECUTOR
-#define LEVIATHAN_SCRIPT_EXECUTOR
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "Script/ScriptScript.h"
-#include "Common/DataStoring/DataBlock.h"
+#include <string>
+#include <memory>
 
 // angelscript //
-
 //#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
 #include "angelscript.h"
+
+
+#include "Script/ScriptScript.h"
+#include "Common/DataStoring/DataBlock.h"
 #include "Script/ScriptRunningSetup.h"
 #include "Handlers/IDFactory.h"
+
 
 #define ANGELSCRIPT_REGISTERFAIL	Logger::Get()->Error("ScriptExecutor: Init: AngelScript: "\
     "register global failed in file " __FILE__ " on line "+Convert::ToString(__LINE__)); \
@@ -32,7 +32,7 @@ namespace Leviathan{
 		DLLEXPORT void ScanAngelScriptTypes();
 
 		// module managing //
-		DLLEXPORT weak_ptr<ScriptModule> CreateNewModule(const wstring &name, const string &source,
+		DLLEXPORT weak_ptr<ScriptModule> CreateNewModule(const string &name, const string &source,
             const int &modulesid = IDFactory::GetID());
         
 		DLLEXPORT void DeleteModule(ScriptModule* ptrtomatch);
@@ -44,17 +44,8 @@ namespace Leviathan{
 			return engine;
 		}
 
-		DLLEXPORT inline int GetAngelScriptTypeID(const wstring &typesname){
+		DLLEXPORT int GetAngelScriptTypeID(const string &typesname);
 
-			auto iter = EngineTypeIDSInverted.find(typesname);
-
-			if(iter != EngineTypeIDSInverted.end()){
-				return iter->second;
-			}
-			return -1;
-		}
-
-		// script running commands //
 
 		//! \brief Runs a script
 		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptScript* scriptobject,
@@ -68,10 +59,9 @@ namespace Leviathan{
 		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(asIScriptFunction* function,
             ScriptRunningSetup* parameters);
 
-		// Setup functions //
-
 
 		DLLEXPORT static ScriptExecutor* Get();
+        
 	private:
 
 		void PrintAdditionalExcept(asIScriptContext *ctx);
@@ -103,17 +93,20 @@ namespace Leviathan{
 		// ------------------------------ //
 		// AngelScript engine script executing part //
 		asIScriptEngine* engine;
+        
 		// list of modules that have been created, some might only have this as reference, and
         // could potentially be released
-		vector<shared_ptr<ScriptModule>> AllocatedScriptModules;
+        std::vector<std::shared_ptr<ScriptModule>> AllocatedScriptModules;
 
 
 		// map of type name and engine type id //
-		static std::map<int, wstring> EngineTypeIDS;
+		static std::map<int, std::string> EngineTypeIDS;
+        
 		// inverted of the former for better performance //
-		static std::map<wstring, int> EngineTypeIDSInverted;
+		static std::map<std::string, int> EngineTypeIDSInverted;
+        
 		static ScriptExecutor* instance;
 	};
 
 }
-#endif
+

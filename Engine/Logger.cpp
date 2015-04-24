@@ -1,238 +1,131 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_LOGGER
 #include "Logger.h"
-#endif
+#include "Common/ThreadSafe.h"
+#include "FileSystem.h"
+#include <chrono>
+#include "Exceptions.h"
+#include <fstream>
+#include "Utility/Convert.h"
 using namespace Leviathan;
 // ------------------------------------ //
-#include "FileSystem.h"
-#include "Application/AppDefine.h"
-
-DLLEXPORT Leviathan::Logger::Logger(const wstring &file):
+DLLEXPORT Leviathan::Logger::Logger(const std::string &file):
     Path(file)
 {
+	// Get time for putting to the  beginning of the  log file //
+    auto curtime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+    std::stringstream formatedtime;
+
+    formatedtime << std::put_time(&curtime, "%S:%M:%H %A %d.%m.%Y (%Z)");
     
-    assert(LatestLogger == NULL && "Trying to create multiple loggers");
+	string write = "Start of Leviathan log for leviathan version: " + VERSIONS;
+
+    write += "\nWriting to file \""+file+L"\"";
+    write += "\n------------------------TIME: "+formatedtime.str()+"------------------------\n";
+
+    std::ofstream file(Path);
+
+    if(!file.is_open()){
+
+        throw Exception("Cannot open log file");
+    }
+
+    file << write;
     
-	// get time for putting to the  beginning of the  log file //
-#ifdef _WIN32
-	SYSTEMTIME tdate;
-	GetLocalTime(&tdate);
-
-	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+
-        Convert::IntToWstring(tdate.wYear)+L" "
-		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
-
-#else
-	// \todo Linux time get function
-	wstring times = L"TODO: add time get";
-
-#endif
-
-	wstring write = L"Start of Leviathan log for leviathan version :" + VERSIONS;
-
-    write += L"\nWriting to file \""+file+L"\"";
-    write += L"\n------------------------TIME: "+times+L"----------------------\n";
-
-    FileSystem::WriteToFile(write, Path);
-
-    PendingLog = L"";
+    file.close();
     
-	LatestLogger = this;
-}
-DLLEXPORT Leviathan::Logger::Logger(const wstring &file, const wstring &start, const bool &autosave) :
-    Path(file)
-{
-
-    assert(LatestLogger == NULL && "Trying to create multiple loggers");
-    
-#ifdef _WIN32
-	SYSTEMTIME tdate;
-	GetLocalTime(&tdate);
-
-	wstring times = Convert::IntToWstring(tdate.wDay)+L"."+Convert::IntToWstring(tdate.wMonth)+L"."+
-        Convert::IntToWstring(tdate.wYear)+L" "
-		+Convert::IntToWstring(tdate.wHour)+L":"+Convert::IntToWstring(tdate.wMinute);
-
-#else
-	wstring times = L"TODO: add time get";
-
-#endif
-
-	wstring write = L"Start of Leviathan log for leviathan version :" + VERSIONS;
-
-    write += L"\nWriting to file \""+file+L"\"";
-    write += L"\n------------------------TIME: "+times+L"----------------------\n";
-
-    FileSystem::WriteToFile(write, Path);
-
-    PendingLog = L"";
-    
+    PendingLog = "";
 	LatestLogger = this;
 }
 
 Leviathan::Logger::~Logger(){
-	// thread safety //
-	boost::strict_lock<Logger> guard(*this);
-
-	// save if unsaved //
+	// Save if unsaved //
 	Save(guard);
     
-	// Reset latest logger (this allows to create new logger, which is quite bad, but won't crash) //
+	// Reset latest logger (this allows to create new logger,
+    // which is quite bad, but won't crash
 	LatestLogger = NULL;
 }
 
 Logger* Leviathan::Logger::LatestLogger = NULL;
+
+//! \brief Lock when using the logger singleton
+static Mutex LoggerWriteMutex;
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Logger::Write(const wstring &data, const bool &save /*= false*/){
-	// thread safety //
-	boost::strict_lock<Logger> guard(*this);
+DLLEXPORT void Leviathan::Logger::Write(const std::string &data){
 
-	// create message string //
-	const wstring message = data + L"\n";
+    const auto message = data.c_str()+"\n";
 
-	// if debug build send it to debug output //
-	SendDebugMessage(message, guard);
+    Lock lock(LoggerWriteMutex);
 
-	PendingLog += message;
-
-	_LogUpdateEndPart(save, guard);
-}
-
-DLLEXPORT void Leviathan::Logger::Write(const string &data, const bool &save /*= false*/){
-	// thread safety //
-	boost::strict_lock<Logger> guard(*this);
-
-    wstringstream sstream;
-
-    sstream << data.c_str();
-    sstream << L"\n";
-
-    SendDebugMessage(sstream.str(), guard);
+    SendDebugMessage(message);
     
-    PendingLog += sstream.str();
+    PendingLog += message;
 
-    _LogUpdateEndPart(save, guard);
+    _LogUpdateEndPart();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Logger::Info(const wstring &data, const bool &save /*= false*/){
-	// thread safety //
-	boost::strict_lock<Logger> guard(*this);
-
-	// create message string //
-	wstring message = L"[INFO] "+data + L"\n";
-
-	// if debug build send it to debug output //
-	SendDebugMessage(message, guard);
-
-	PendingLog += message;
-
-	_LogUpdateEndPart(save, guard);
-}
-
-DLLEXPORT void Leviathan::Logger::Info(const string &data, const bool &save){
-
-    boost::strict_lock<Logger> guard(*this);
-
-    // TODO: change this to whole class to use utf8 strings...
-    wstringstream sstream;
-
-    sstream << L"[INFO] ";
-    sstream << data.c_str();
-    sstream << L"\n";
-
-    SendDebugMessage(sstream.str(), guard);
+DLLEXPORT void Leviathan::Logger::Info(const std::string &data){
     
-    PendingLog += sstream.str();
+    const auto message = "[INFO] " + data + "\n";
 
-    _LogUpdateEndPart(save, guard);
+    Lock lock(LoggerWriteMutex);
+
+    SendDebugMessage(message);
+    
+    PendingLog += message;
+
+    _LogUpdateEndPart();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Logger::Error(const wstring &data, const int &pvalue /*= 0*/, const bool &save /*= false*/){
-	// thread safety //
-	boost::strict_lock<Logger> guard(*this);
+DLLEXPORT void Logger::Error(const std::string &data){
 
-	// create message string //
-	wstring message = L"[ERROR] "+data+L"\n";
+    const auto message = "[ERROR] " + data + "\n";
 
-	// if debug build send it to debug output //
-	SendDebugMessage(message, guard);
-	PendingLog += message;
+    Lock lock(LoggerWriteMutex);
 
+    SendDebugMessage(message);
+    
+    PendingLog += message;
 
-	_LogUpdateEndPart(save, guard);
-}
-
-DLLEXPORT void Leviathan::Logger::Error(const string &data, const int &pvalue /*= 0*/, const bool &save /*= false*/){
-	// thread safety //
-	boost::strict_lock<Logger> guard(*this);
-
-    // TODO: change this to whole class to use utf8 strings...
-    wstringstream sstream;
-
-    sstream << L"[ERROR] ";
-    sstream << data.c_str();
-    sstream << L"\n";
-
-    SendDebugMessage(sstream.str(), guard);
-    PendingLog += sstream.str();
-
-
-	_LogUpdateEndPart(save, guard);
+	_LogUpdateEndPart();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Logger::Warning(const wstring &data, bool save /*= false*/){
-	// thread safety //
-	boost::strict_lock<Logger> guard(*this);
+DLLEXPORT void Logger::Warning(const std::string &data){
 
-	// create message string //
-	wstring message = L"[WARNING] "+data+L"\n";
+    const auto message = "[WARNING] " + data + "\n";
 
-	// if debug build send it to debug output //
-	SendDebugMessage(message, guard);
-	PendingLog += message;
+    Lock lock(LoggerWriteMutex);
+    
+    SendDebugMessage(message);
+    
+    PendingLog += message;
 
-	_LogUpdateEndPart(save, guard);
-}
-
-DLLEXPORT void Leviathan::Logger::Warning(const string &data, bool save /*= false*/){
-	// thread safety //
-	boost::strict_lock<Logger> guard(*this);
-
-    // TODO: change this to whole class to use utf8 strings...
-    wstringstream sstream;
-
-    sstream << L"[WARNING] ";
-    sstream << data.c_str();
-    sstream << L"\n";
-
-    SendDebugMessage(sstream.str(), guard);
-    PendingLog += sstream.str();
-
-
-	_LogUpdateEndPart(save, guard);
+	_LogUpdateEndPart();
 }
 // ------------------------------------ //
-void Leviathan::Logger::Save(boost::strict_lock<Logger> &guard){
+void Leviathan::Logger::Save(){
+
+    Lock lock(LoggerWriteMutex);
+
+    _Save();
+}
+
+void Logger::_Save(){
 
     if(PendingLog.empty())
         return;
 
-    // append to file //
-    FileSystem::AppendToFile(PendingLog, Path);
+    std::ofstream file(Path);
+
+    file << PendingLog;
+    file.close();
+    
     PendingLog.clear();
 }
 // -------------------------------- //
-void Leviathan::Logger::Print(string message, bool save){
-	Get()->Write(Convert::StringToWstring(message), save);
-}
-
-void Leviathan::Logger::SendDebugMessage(const wstring& str, boost::strict_lock<Logger> &guard){
-#ifdef _WIN32
-	OutputDebugString(&*str.begin());
-#endif // _WIN32
-	// We also want standard output messages //
-	// Using cout should be fine for most other platforms //
-	cout << Convert::WstringToString(str);
+void Leviathan::Logger::Print(const string &message){
+	Get()->Write(message);
 }
 
 DLLEXPORT void Leviathan::Logger::SendDebugMessage(const string &str){
@@ -245,37 +138,21 @@ DLLEXPORT void Leviathan::Logger::SendDebugMessage(const string &str){
 	cout << str;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Logger::DirectWriteBuffer(const wstring &data){
-	// thread safety //
-	boost::strict_lock<Logger> guard(*this);
+DLLEXPORT void Leviathan::Logger::DirectWriteBuffer(const std::string &data){
 
-	// directly just append to buffers //
+    Lock guard(LoggerWriteMutex);
+
 	PendingLog += data;
 }
 // ------------------------------------ //
-void Leviathan::Logger::_LogUpdateEndPart(const bool &save, boost::strict_lock<Logger> &guard){
+void Leviathan::Logger::_LogUpdateEndPart(){
 
-    Save(guard);
+    _Save();
 }
 // ------------------------------------ //
-DLLEXPORT Logger* Leviathan::Logger::GetIfExists(){
-	return LatestLogger ? LatestLogger: NULL;
-}
-
 DLLEXPORT Logger* Leviathan::Logger::Get(){
-	if(LatestLogger){
-		return LatestLogger;
-	}
-	// create emergency logger //
-	if(!AppDef::GetDefault()){
-		// We need some dummy logger //
-		return NULL;
-	}
 
-	wstring ourlogfile = AppDef::GetDefault()->GetLogFile();
-	ourlogfile += L".txt";
-	LatestLogger = new Logger(ourlogfile, L"(W) ", true);
-	return LatestLogger;
+    return LatestLogger;
 }
 
 

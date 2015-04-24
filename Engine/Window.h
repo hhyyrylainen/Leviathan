@@ -65,12 +65,12 @@ namespace Leviathan{
 		//! \return The screen begin x and y, and z and w as the width and height all in screen pixels
 		//! \exception ExceptionNotFound If the window is not found (the internal get rect fails)
 		//! \note This doesn't "work" on linux, same as calling GetWidth and GetHeight
-		DLLEXPORT Int4 GetScreenPixelRect() const THROWS;
+		DLLEXPORT Int4 GetScreenPixelRect() const;
 		
 		//! \brief Translates a client space coordinate to screen coordinate
 		//! \exception ExceptionNotFound If the window is not found (the internal translate fails)
 		//! \note Doesn't work on linux, returns the input point
-		DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const THROWS;
+		DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const;
 				
 		//! \brief Captures input for this window and passes it on
 		DLLEXPORT void GatherInput(CEGUI::InputAggregator* receiver);
@@ -130,11 +130,11 @@ namespace Leviathan{
 		}
 		// map that converts OIS::KeyCode to CEGUI key codes, not required since the codes are the same! //
 		//static std::map<OIS::KeyCode, CEGUI::Key::Scan> OISCEGUIKeyConvert;
-		static boost::bimap<wstring, OIS::KeyCode> CharacterToOISConvert;
+		static boost::bimap<std::string, OIS::KeyCode> CharacterToOISConvert;
 
 		// method for other DLLs to call the maps //
-		DLLEXPORT static OIS::KeyCode ConvertWstringToOISKeyCode(const wstring &str);
-		DLLEXPORT static wstring ConvertOISKeyCodeToWstring(const OIS::KeyCode &code);
+		DLLEXPORT static OIS::KeyCode ConvertWstringToOISKeyCode(const std::string &str);
+		DLLEXPORT static std::string ConvertOISKeyCodeToWstring(const OIS::KeyCode &code);
 
 
 	private:

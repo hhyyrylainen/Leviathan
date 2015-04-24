@@ -1,12 +1,7 @@
 #pragma once
-#ifndef LEVIATHAN_SFMLPACKETS
-#define LEVIATHAN_SFMLPACKETS
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Types.h"
 #include "SFML/Network/Packet.hpp"
 
@@ -30,4 +25,4 @@ namespace Leviathan{
     
     DLLEXPORT sf::Packet& operator >>(sf::Packet& packet, Float4& data);
 }
-#endif
+

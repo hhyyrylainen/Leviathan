@@ -1,62 +1,48 @@
-#ifndef	LEVIATHAN_LOGGER
-#define LEVIATHAN_LOGGER
+#pragma once
 // ------------------------------------ //
-#include "Include.h"
-// ------------------------------------ //
-// ---- includes ---- //
-
-#include "boost/thread/lockable_adapter.hpp"
-#include "boost/thread/mutex.hpp"
-#include "boost/thread/strict_lock.hpp"
+#include <string>
 
 namespace Leviathan{
 
-    //! \todo Change to use utf8 strings
-	class Logger : public boost::basic_lockable_adapter<boost::mutex>{
+    //! \brief Logger public interface
+	class Logger{
 	public:
-		DLLEXPORT Logger(const wstring &file);
-		DLLEXPORT Logger(const wstring &file, const wstring &start, const bool &autosave);
+        
+		DLLEXPORT Logger(const std::string &file);
 		DLLEXPORT ~Logger();
 
-		DLLEXPORT void Write(const wstring &data, const bool &save = false);
-        DLLEXPORT void Write(const string &data, const bool &save = false);
+        DLLEXPORT void Write(const std::string &data);
 
-		//! \brief Adds raw data to the queue unmodified (don't forget line ends!)
-		DLLEXPORT void DirectWriteBuffer(const wstring &data);
+		//! \brief Adds raw data to the queue unmodified
+        //! \note You will need to add new lines '\n' manually
+		DLLEXPORT void DirectWriteBuffer(const std::string &data);
 
-		DLLEXPORT void Info(const wstring &data, const bool &save = false);
-        DLLEXPORT void Info(const string &data, const bool &save = false);
-		DLLEXPORT void Error(const wstring &data, const int &pvalue = 0, const bool &save = false);
-        DLLEXPORT void Error(const string &data, const int &pvalue = 0, const bool &save = false);
-		DLLEXPORT void Warning(const wstring &data, bool save = false);
-        DLLEXPORT void Warning(const string &data, bool save = false);
+        DLLEXPORT void Info(const std::string &data);
+        DLLEXPORT void Error(const std::string &data);
+        DLLEXPORT void Warning(const std::string &data);
 
-		DLLEXPORT static void SendDebugMessage(const wstring& str, boost::strict_lock<Logger> &guard);
-        DLLEXPORT static void SendDebugMessage(const string &str);
+        DLLEXPORT static void SendDebugMessage(const std::string &str);
 
-		// uses string for script compatibility //
-		DLLEXPORT static void Print(string message, bool save = true);
+		//! \brief Script wrapper
+		DLLEXPORT static void Print(const std::string &message);
 
-		DLLEXPORT void inline Save(){
-			// thread safety //
-			boost::strict_lock<Logger> guard(*this);
-
-			Save(guard);
-		}
-		DLLEXPORT void Save(boost::strict_lock<Logger> &guard);
+		DLLEXPORT void Save();
 
 		DLLEXPORT static Logger* Get();
-		DLLEXPORT static Logger* GetIfExists();
-	private:
         
-		void inline _LogUpdateEndPart(const bool &save, boost::strict_lock<Logger> &guard);
+	private:
+
+        //! Call only after locking
+        void _Save();
+
+        //! \note The global logger mutex needs to be locked before this call
+		void _LogUpdateEndPart();
 
 		// ------------------------------------ //
-		wstring PendingLog;
-		wstring Path;
+        std::string PendingLog;
+		std::string Path;
 
-		// ------------------------------------ //
 		static Logger* LatestLogger;
 	};
 }
-#endif
+

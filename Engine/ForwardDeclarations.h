@@ -170,10 +170,10 @@ namespace Leviathan{
 	class TimingMonitor;
 	class ScopeTimer;
 	class GameModule;
-	class ThreadSafe;
     class DataStore;
     class OutOfMemoryHandler;
     class RenderingStatistics;
+    class IDFactory;
 	struct MasterServerInformation;
 }
 

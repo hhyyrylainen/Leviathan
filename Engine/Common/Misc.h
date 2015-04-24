@@ -1,27 +1,15 @@
+#pragma once
 #ifndef LEVIATHAN_MISC
 #define LEVIATHAN_MISC
 // ------------------------------------ //
-#ifndef LEVIATHAN_INCLUDE
-#include "Include.h"
-#endif
-#include <boost/thread.hpp>
+#include "Define.h"
 // ------------------------------------ //
-// ---- includes ---- //
+#include <thread>
 
 
 namespace Leviathan{
 	class Misc{
 	public:
-
-		///time functions
-		DLLEXPORT static __int64 GetTimeMs64();
-		DLLEXPORT static __int64 GetTimeMicro64();
-		//! \brief Gets the current time in a thread safe way
-		//!
-		//! This should always be used when getting the time to avoid segfaulting
-		//! \note boost::chrono::high_resolution_clock should be the exact same thing as WantedClockType
-		//! it is used because Define.h can't be included in this file
-		DLLEXPORT static boost::chrono::high_resolution_clock::time_point GetThreadSafeSteadyTimePoint();
 
         //! \brief Returns the directory from which the current process is ran
         //!

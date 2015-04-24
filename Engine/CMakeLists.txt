@@ -13,6 +13,7 @@ set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "
     "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
     "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp" "utf8.h" "Include.h"
     "Exceptions.h" "Exceptions.cpp"
+    "TimeIncludes.h" "TimeIncludes.cpp"
     )
 
 set(GroupEntitiesBases "Entities/Bases/BaseConstraintable.cpp" "Entities/Bases/BaseConstraintable.h"

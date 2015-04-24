@@ -191,6 +191,8 @@ namespace Leviathan{
 
         //! \brief Called when a new state has been added notifies the implementation to start listening for
         //! interpolation events
+        //! \note This will only be called after 2 states have been received and interpolation
+        //! can actually begin
         virtual void _OnNewStateReceived() = 0;
         
         // ------------------------------------ //

@@ -1,126 +1,11 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_DATABLOCK
 #include "DataBlock.h"
-#endif
 #include "Exceptions.h"
 #include "Iterators/StringIterator.h"
 #include "Script/ScriptExecutor.h"
 #include "../StringOperations.h"
 using namespace Leviathan;
 // ------------------------------------ //
-#define TEST_IVALUE_INDBLOCKS		254676
-
-DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
-
-	bool Failed = false;
-
-	IntBlock iblock(TEST_IVALUE_INDBLOCKS);
-
-	int gotvalue = iblock;
-
-	if(gotvalue != TEST_IVALUE_INDBLOCKS){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	VariableBlock vblock(new IntBlock(TEST_IVALUE_INDBLOCKS));
-
-	gotvalue = vblock;
-
-	if(gotvalue != TEST_IVALUE_INDBLOCKS){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	if(vblock.IsConversionAllowedNonPtr<float>() == false){
-		// should be valid conversion //
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	} else {
-		// this needs to be skipped if not allowed //
-
-		float fvaluegot = vblock;
-		if(fvaluegot != TEST_IVALUE_INDBLOCKS){
-
-			QUICK_ERROR_MESSAGE;
-			Failed = true;
-		}
-	}
-
-	FloatBlock fblock(TEST_IVALUE_INDBLOCKS);
-
-	gotvalue = fblock;
-
-	if(gotvalue != TEST_IVALUE_INDBLOCKS){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	wstring texty = iblock;
-
-	if(texty != Convert::ToWstring(TEST_IVALUE_INDBLOCKS)){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	// text to text check //
-	VariableBlock tblocky(wstring(L"this is a test text that should be intact"));
-
-	wstring checkvalue(L"");
-
-	if(!tblocky.ConvertAndAssingToVariable<wstring>(checkvalue)){
-
-		Failed = true;
-	}
-	// compare //
-	if(checkvalue != L"this is a test text that should be intact"){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	// void block testings //
-
-	Float4* floaty = new Float4(1, 564, 73784, 124);
-
-	VoidPtrBlock vblocky(floaty);
-
-	Float4* returnptr = (Float4*)(void*)(vblocky);
-
-	if(returnptr != floaty || *returnptr != *floaty){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	SAFE_DELETE(floaty);
-
-
-	// check fail state //
-	if(Failed){
-
-		return true;
-	}
-	int values;
-	// stress testing //
-	for(int i = 0; i < tests; i++){
-
-		unique_ptr<VariableBlock> tempnewblock(new VariableBlock(new IntBlock(2524646)));
-		values = *tempnewblock;
-
-		*tempnewblock = new FloatBlock(2546);
-
-		values = values*((int)*tempnewblock);
-	}
-	return false;
-}
-
 //
 // Template specifications should be fine being in here without causing any issues
 // should also improve compilation speed and reduce the mess in the header and
@@ -134,16 +19,16 @@ namespace Leviathan{
                 ScriptExecutor::Get()->GetAngelScriptTypeID(L"int"); }};
 
 
-TYPEIDGETTEMPLATEINSTANTIATION(int, L"int");
-TYPEIDGETTEMPLATEINSTANTIATION(bool, L"bool");
-TYPEIDGETTEMPLATEINSTANTIATION(float, L"float");
-TYPEIDGETTEMPLATEINSTANTIATION(char, L"char");
-TYPEIDGETTEMPLATEINSTANTIATION(string, L"string");
+    TYPEIDGETTEMPLATEINSTANTIATION(int, L"int");
+    TYPEIDGETTEMPLATEINSTANTIATION(bool, L"bool");
+    TYPEIDGETTEMPLATEINSTANTIATION(float, L"float");
+    TYPEIDGETTEMPLATEINSTANTIATION(char, L"char");
+    TYPEIDGETTEMPLATEINSTANTIATION(std::string, L"string");
 
 }
 
 // ------------------------------------ //
-DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse,
+DLLEXPORT Leviathan::VariableBlock::VariableBlock(const std::wstring &valuetoparse,
     map<wstring, shared_ptr<VariableBlock>>* predefined) THROWS
 {
 	// the text should have all preceding and trailing spaces removed //
@@ -160,17 +45,17 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse,
 		// use iterator to get data inside quotes //
 		StringIterator itr(valuetoparse);
 
-		unique_ptr<wstring> tempdata = itr.GetStringInQuotes<wstring>(QUOTETYPE_DOUBLEQUOTES);
+		auto tempdata = itr.GetStringInQuotes<std::wstring>(QUOTETYPE_DOUBLEQUOTES);
 
 		// set data //
 		// WstringBlock takes the pointer as it's own here //
-		BlockData = new WstringBlock(tempdata ? tempdata.release(): new wstring());
+		BlockData = new WstringBlock(tempdata ? tempdata.release(): new std::wstring());
 
 		return;
 	}
     
 	// check does it contain non numeric characters //
-	if(!StringOperations::IsStringNumeric<wstring, wchar_t>(valuetoparse)){
+	if(!StringOperations::IsStringNumeric<std::wstring, wchar_t>(valuetoparse)){
 
 		// check does it match true/false //
 		bool possiblevalue = false;
@@ -204,7 +89,7 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse,
 
 	// Try to figure out what kind of a number it is //
 	size_t decimalspot = valuetoparse.find_first_of(L'.');
-	if(decimalspot != wstring::npos){
+	if(decimalspot != std::wstring::npos){
 		// has decimal separator //
 
 		// check does it need more decimal digits than a float has //
@@ -229,7 +114,7 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse,
 
 // ------------------ ScriptSafeVariableBlock ------------------ //
 Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyfrom,
-    const wstring &name) :
+    const std::wstring &name) :
     NamedVariableBlock(copyfrom->GetBlock()->AllocateNewFromThis(), name)
 {
 		// we need to copy all settings from the block //
@@ -240,12 +125,14 @@ Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyf
 		case DATABLOCK_TYPE_WSTRING:
 			{
 				// we'll use automatic conversion here //
-				unique_ptr<DataBlockAll> tmp(new StringBlock(ConvertAndReturnVariable<string>()));
+				unique_ptr<DataBlockAll> tmp(new
+                    StringBlock(ConvertAndReturnVariable<std::string>()));
 
 				SAFE_DELETE(BlockData);
 				BlockData = tmp.release();
 
-				ASTypeID = TypeToAngelScriptIDConverter<string>::GetTypeIDFromTemplated(); break;
+				ASTypeID = TypeToAngelScriptIDConverter<std::string>::GetTypeIDFromTemplated();
+                break;
 			}
 		break;
 		case DATABLOCK_TYPE_STRING: ASTypeID = TypeToAngelScriptIDConverter<string>::GetTypeIDFromTemplated(); break;

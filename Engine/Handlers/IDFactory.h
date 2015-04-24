@@ -1,60 +1,62 @@
-#ifndef LEVIATHAN_IDFACTORY
-#define LEVIATHAN_IDFACTORY
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "boost/thread/lockable_adapter.hpp"
-#include "boost/thread/recursive_mutex.hpp"
-#include "boost/thread/lock_types.hpp"
-#include "boost/thread/strict_lock.hpp"
+#include <atomic>
+#include <limits.h>
 
 namespace Leviathan{
 
-	class IDFactory : public boost::basic_lockable_adapter<boost::recursive_mutex>{
+	class IDFactory : ThreadSafe{
 	public:
 		DLLEXPORT IDFactory();
 		DLLEXPORT ~IDFactory();
 
 
 		DLLEXPORT static inline int GetID(){
-			// call on instance pointer //
-			return Get()->ProduceID();
+
+			return Instance->ProduceID();
 		}
+        
 		DLLEXPORT static inline int GetSystemID(){
-			// call on instance pointer //
-			return Get()->ProduceSystemID();
+
+			return Instance->ProduceSystemID();
 		}
 
-		DLLEXPORT FORCE_INLINE int ProduceID(){
-			// we need to lock this object to ensure thread safety //
-			boost::strict_lock<IDFactory> guard(*this);
-			return ProduceID(guard);
-		}
-		DLLEXPORT FORCE_INLINE int ProduceSystemID(){
-			// we need to lock this object to ensure thread safety //
-			boost::strict_lock<IDFactory> guard(*this);
-			return ProduceSystemID(guard);
-		}
+		DLLEXPORT int ProduceID(){
 
-		DLLEXPORT int ProduceID(boost::strict_lock<IDFactory> &guard);
-		DLLEXPORT int ProduceSystemID(boost::strict_lock<IDFactory> &guard);
+            const auto result = GlobalID.fetch_add(1, std::memory_order_relaxed);
+            
+            if(result == INT_MAX){
+                
+                Logger::Get()->Error("IDFactory ID overflow");
+            }
+
+            return result;
+        }
+        
+		DLLEXPORT int ProduceSystemID(){
+
+            const auto result = SystemID.fetch_add(1, std::memory_order_relaxed);
+            
+            if(result == INT_MAX){
+                
+                Logger::Get()->Error("IDFactory system ID overflow");
+            }
+
+            return result;
+        }
 
 
 		DLLEXPORT static IDFactory* Get();
 
 	private:
-		void VerifyLock(boost::strict_lock<IDFactory> &guard) THROWS;
-		// ------------------------------------ //
-		int SystemID;
-		int GlobalID;
-
-
+        
+        std::atomic_int SystemID;
+        std::atomic_int GlobalID;
 
 		static IDFactory* Instance;
 	};
 
 }
-#endif
+

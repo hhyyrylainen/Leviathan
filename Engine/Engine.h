@@ -1,17 +1,12 @@
-#ifndef LEVIATHAN_ENGINE
-#define LEVIATHAN_ENGINE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "boost/thread/mutex.hpp"
 #include "Common/ThreadSafe.h"
 #include "Networking/NetworkInterface.h"
-#include "boost/thread.hpp"
-
-
+#include <inttypes.h>
+#include <mutex>
+#include <thread>
 
 
 namespace Leviathan{
@@ -20,7 +15,7 @@ namespace Leviathan{
 	//!
 	//! Allocates a lot of classes and performs almost all startup operations.
 	//! \note Should be thread safe, but might not actually be
-	class Engine : public Object, public ThreadSafe{
+	class Engine : public ThreadSafe{
 		
 		friend GraphicalInputEntity;
 		friend Gui::GuiManager;
@@ -62,20 +57,20 @@ namespace Leviathan{
 
 		// ------------------------------------ //
 		// Passes the commands and preprocesses them, but also interprets commands like --nogui //
-		DLLEXPORT void PassCommandLine(const wstring &commands);
+		DLLEXPORT void PassCommandLine(const std::string &commands);
+        
 		// Runs the normal commands passed by the PassCommandLine function //
 		DLLEXPORT void ExecuteCommandLine();
 
-
         //! \brief Creates a GameWorld for placing entities into
-		DLLEXPORT shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow, shared_ptr<ViewerCameraPos>
-            worldscamera);
+		DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow,
+            std::shared_ptr<ViewerCameraPos> worldscamera);
 
         //! \brief Releases a GameWorld
         //! \param world The world to destroy.
-        //! \post The World will have been released and removed from Engine's internal list and the world pointer will
-        //! be NULL
-        DLLEXPORT void DestroyWorld(shared_ptr<GameWorld> &world);
+        //! \post The World will have been released and removed from Engine's internal list and
+        //! the world pointer will be NULL
+        DLLEXPORT void DestroyWorld(std::shared_ptr<GameWorld> &world);
 
         //! \brief Opens a new window
         //! \note The window may become broken if the main window is closed
@@ -174,16 +169,16 @@ namespace Leviathan{
 		LeviathanApplication* Owner;
         
 		//! List of current worlds
-		std::vector<shared_ptr<GameWorld>> GameWorlds;
+		std::vector<std::shared_ptr<GameWorld>> GameWorlds;
 
         //! Mutex that is locked when changing the worlds
-        boost::mutex GameWorldsLock;
+        std::mutex GameWorldsLock;
 
         //! Mutex that is locked while NetworkHandler is used
-        boost::mutex NetworkHandlerLock;
+        std::mutex NetworkHandlerLock;
 
 		// data //
-		__int64 LastFrame;
+		int64_t LastFrame;
 		int TimePassed;
 		int FrameLimit;
 		int TickCount;
@@ -212,13 +207,13 @@ namespace Leviathan{
 
 
 		// Stores the command line before running it //
-		std::vector<unique_ptr<wstring>> PassedCommands;
+		std::vector<std::unique_ptr<std::string>> PassedCommands;
 
 		// NoGui input handler //
-		boost::thread CinThread;
+		std::thread CinThread;
 
 		static Engine* instance;
 	};
 
 }
-#endif
+

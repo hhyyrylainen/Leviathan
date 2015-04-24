@@ -1,7 +1,6 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_ENGINE
 #include "Engine.h"
-#endif
+
 #include "Application/AppDefine.h"
 #include "Application/Application.h"
 #include "Common/DataStoring/DataStore.h"
@@ -9,16 +8,17 @@
 #include "Common/StringOperations.h"
 #include "Entities/GameWorld.h"
 #include "Entities/Serializers/SendableEntitySerializer.h"
-#include "Networking/NetworkedInputHandler.h"
 #include "Events/EventHandler.h"
+#include "Handlers/ConstraintSerializerManager.h"
 #include "Handlers/EntitySerializerManager.h"
+#include "Handlers/IDFactory.h"
 #include "Handlers/ObjectLoader.h"
 #include "Handlers/OutOfMemoryHandler.h"
 #include "Handlers/ResourceRefreshHandler.h"
-#include "Handlers/ConstraintSerializerManager.h"
-#include "Networking/NetworkHandler.h"
-#include "Networking/RemoteConsole.h"
 #include "Networking/AINetworkCache.h"
+#include "Networking/NetworkHandler.h"
+#include "Networking/NetworkedInputHandler.h"
+#include "Networking/RemoteConsole.h"
 #include "Newton/NewtonManager.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
@@ -29,9 +29,8 @@
 #include "Statistics/RenderingStatistics.h"
 #include "Threading/ThreadingManager.h"
 #include "Utility/Random.h"
-#include <boost/chrono/duration.hpp>
-#include <boost/thread/future.hpp>
-#include <boost/thread/locks.hpp>
+#include <chrono>
+#include <future>
 
 #ifdef LEVIATHAN_USES_VLD
 #include <vld.h>
@@ -47,6 +46,7 @@
 #endif
 
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 
 #ifdef _WIN32

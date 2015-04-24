@@ -1,18 +1,7 @@
 #pragma once
-#ifndef LEVIATHAN_DEFINE
-#define LEVIATHAN_DEFINE
-#ifndef LEVIATHAN_INCLUDE
 #include "Include.h"
-#endif
 
 #include "ForwardDeclarations.h"
-#include <boost/ratio.hpp>
-
-//! Number of milliseconds between engine and world ticks
-#define TICKSPEED 50
-
-//! When true entities may run a single physical update with a short timestep when resimulating
-//#define ALLOW_RESIMULATE_CONSUME_ALL
 
 //! Defines the networking mode
 //! In this mode the server sends snapshots of moving entities to all clients which then interpolate
@@ -20,18 +9,27 @@
 //! inputs. Server uses resimulation to simulate clients taking actions in the past.
 #define NETWORK_USE_SNAPSHOTS
 
-#ifndef NETWORK_USE_SNAPSHOTS
-//! In this mode all clients run the whole simulation with access to all inputs from all clients.
-//! The server then sends verification snapshots to clients who then resimulate and interpolate if
-//! their results were different.
-#define NETWORK_USE_RESIMULATE
-#endif //NETWORK_USE_SNAPSHOTS
-
-//! \todo Allow this to not be a multiple of TICKSPEED or smaller than it
-#define INTERPOLATION_TIME 100
-
 
 namespace Leviathan{
+
+    //! Number of milliseconds between engine and world ticks
+    static const int TICKSPEED = 50;
+
+    //! \todo Allow this to not be a multiple of TICKSPEED or smaller than it
+    static const int INTERPOLATION_TIME  = 100;
+
+    static const double VERSION = LEVIATHAN_VERSION;
+    static const std::string VERSIONS = LEVIATHAN_VERSION_ANSIS;
+
+    static const int VERSION_STABLE = LEVIATHAN_VERSION_STABLE;
+    static const int VERSION_MAJOR = LEVIATHAN_VERSION_MAJOR;
+    static const int VERSION_MINOR = LEVIATHAN_VERSION_MINOR;
+    static const int VERSION_PATCH = LEVIATHAN_VERSION_PATCH;
+
+    static const float PI = 3.14159265f;
+    static const float DEGREES_TO_RADIANS = PI/180.f;
+    static const float EPSILON = 0.00000001f;
+
 
 	template<class T>
 	void SafeReleaser(T* obj){
@@ -41,45 +39,69 @@ namespace Leviathan{
 	void SafeReleaseDeleter(T* obj){
 		SAFE_RELEASEDEL(obj);
 	}
-
-	class Object{
-	public:
-		DLLEXPORT Object();;
-		DLLEXPORT virtual ~Object();
-	};
-    
-	// has no virtual destructor, objects may not be pointed by this base class //
-	class EngineComponent : public Object{
-	public:
-		DLLEXPORT EngineComponent();
-	};
 }
 
-#include <boost/chrono/system_clocks.hpp>
+#ifndef _WIN32
 
-// Standard type time durations //
-typedef boost::chrono::duration<__int64, boost::milli> MillisecondDuration;
-typedef boost::chrono::duration<__int64, boost::micro> MicrosecondDuration;
-typedef boost::chrono::duration<float, boost::ratio<1>> SecondDuration;
+#define FORCE_INLINE __attribute__((always_inline))
+    
+#else
+// Windows needs these //
+#define FORCE_INLINE    __forceinline
+    
+// Some undefines //
+#undef GetNextSibling
+#undef GetFirstChild
+#endif //_WIN32
 
+#ifdef _MSC_VER
 
+#define DEBUG_BREAK __debugbreak();
 
-#ifdef _WIN32
-// This could also use the high_resolution_clock (because they both resolve to the same thing) //
-//typedef boost::chrono::steady_clock WantedClockType;
-typedef boost::chrono::high_resolution_clock WantedClockType;
+#elif defined __linux
+
+// For making SIGINT work as debug break on linux //
+#include <signal.h>
+
+#define DEBUG_BREAK { Leviathan::Logger::Get()->Write("DEBUG_BREAK HIT!"); raise(SIGINT); }
+
 #else
 
-typedef boost::chrono::high_resolution_clock WantedClockType;
+#error "Debug break won't work"
 
 #endif
 
-#include "Common/Types.h"
-#include "Utility/Convert.h"
 
-#include "Handlers/IDFactory.h"
+#ifndef DLLEXPORT
+#ifdef ENGINE_EXPORTS
+#ifdef _WIN32
+#define DLLEXPORT    __declspec( dllexport )
+#else
+// This might not be needed for gcc
+#define DLLEXPORT   __attribute__ ((visibility ("default")))
+#endif
+// Json-cpp //
+#define JSON_DLL_BUILD
+#else
+#define DLLEXPORT
+#define JSON_DLL
+#endif // ENGINE_EXPORTS
+#endif
+
+#define SAFE_RELEASE( x ) {if(x){(x)->Release();(x)=NULL;}}
+#define SAFE_RELEASEDEL( x ) {if(x){(x)->Release();delete (x);(x)=NULL;}}
+#define SAFE_DELETE( x ) {if(x){delete (x);(x)=NULL;}}
+#define SAFE_DELETE_ARRAY( x ) {if(x){delete[] (x);(x)=NULL;}}
+
+#define SAFE_RELEASE_VECTOR(x) {for(auto iter = x.begin(); iter != x.end(); ++iter) if(*iter){ (*iter)->Release(); } \
+        x.clear();}
+
+#define SAFE_DELETE_VECTOR(x) for(size_t vdind = 0; vdind < x.size(); ++vdind){if(x[vdind]){delete x[vdind];}}; \
+    x.clear();
+
+// This will break everything if it is defined //
+#undef index
+
+
 #include "Logger.h"
-#include "Statistics/TimingMonitor.h"
 
-
-#endif

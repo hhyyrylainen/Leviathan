@@ -44,7 +44,7 @@ namespace Leviathan{
 	};
 
 
-	class InputController : public Object{
+	class InputController{
 		friend InputReceiver;
 	public:
 		DLLEXPORT InputController();

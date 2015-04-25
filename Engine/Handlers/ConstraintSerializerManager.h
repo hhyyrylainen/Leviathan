@@ -39,7 +39,8 @@ namespace Leviathan{
 
         //! \brief Puts the custom data of a constraint into a packet
         //! \note The constraint is locked before this call
-        DLLEXPORT shared_ptr<sf::Packet> SerializeConstraintData(Entity::BaseConstraint* constraint);
+        DLLEXPORT std::shared_ptr<sf::Packet> SerializeConstraintData(
+            Entity::BaseConstraint* constraint);
 
 
         DLLEXPORT static ConstraintSerializerManager* Get();

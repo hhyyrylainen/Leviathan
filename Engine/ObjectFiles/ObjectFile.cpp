@@ -1,10 +1,9 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_OBJECTFILE
 #include "ObjectFile.h"
-#endif
+
 #include "ObjectFileTemplates.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ObjectFile::ObjectFile(NamedVars &stealfrom) : HeaderVars(&stealfrom){
 
@@ -41,7 +40,7 @@ DLLEXPORT bool Leviathan::ObjectFile::AddObject(shared_ptr<ObjectFileObject> obj
 	return true;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ObjectFile::IsObjectNameInUse(const wstring &name) const{
+DLLEXPORT bool Leviathan::ObjectFile::IsObjectNameInUse(const std::string &name) const{
 	// Try to find an object with the same name //
 	for(size_t i = 0; i < DefinedObjects.size(); i++){
 
@@ -79,7 +78,7 @@ DLLEXPORT ObjectFileObject* Leviathan::ObjectFile::GetObjectFromIndex(size_t ind
 	throw InvalidArgument("index is out of range");
 }
 // ------------------------------------ //
-DLLEXPORT ObjectFileObject* Leviathan::ObjectFile::GetObjectWithType(const wstring &typestr) const{
+DLLEXPORT ObjectFileObject* Leviathan::ObjectFile::GetObjectWithType(const std::string &typestr) const{
 	// Find the first that matches the type //
 	for(size_t i = 0; i < DefinedObjects.size(); i++){
 
@@ -101,7 +100,7 @@ DLLEXPORT bool Leviathan::ObjectFile::GenerateTemplatedObjects(){
 		if(!tmpldef){
 
 			Logger::Get()->Error(L"ObjectFile: could not find template definition with name: "
-				+Convert::StringToWstring(TemplateInstantiations[i]->GetNameOfParentTemplate()));
+				+Convert::StringToStd::String(TemplateInstantiations[i]->GetNameOfParentTemplate()));
 			return false;
 		}
 
@@ -111,7 +110,7 @@ DLLEXPORT bool Leviathan::ObjectFile::GenerateTemplatedObjects(){
 		if(!resultobj){
 
 			Logger::Get()->Error(L"ObjectFile: could not instantiate template (parameter count probably didn't match), name: "
-				+Convert::StringToWstring(TemplateInstantiations[i]->GetNameOfParentTemplate()));
+				+Convert::StringToStd::String(TemplateInstantiations[i]->GetNameOfParentTemplate()));
 			return false;
 		}
 
@@ -125,7 +124,7 @@ DLLEXPORT bool Leviathan::ObjectFile::GenerateTemplatedObjects(){
 		if(!AddObject(tmpobj)){
 			
 			Logger::Get()->Error(L"ObjectFile: template instance's result was an object whose name is already in use, template name: "
-				+Convert::StringToWstring(TemplateInstantiations[i]->GetNameOfParentTemplate())+L", result object: "+tmpobj->GetName());
+				+Convert::StringToStd::String(TemplateInstantiations[i]->GetNameOfParentTemplate())+L", result object: "+tmpobj->GetName());
 			return false;
 		}
 	}

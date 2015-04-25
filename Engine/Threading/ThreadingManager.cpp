@@ -1,10 +1,10 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_THREADINGMANAGER
 #include "ThreadingManager.h"
-#endif
+
 #include "OgreRoot.h"
 #include "QueuedTask.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 
 // ------------------ Utility functions for threads to run ------------------ //

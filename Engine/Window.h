@@ -120,7 +120,7 @@ namespace Leviathan{
 		virtual bool buttonReleased(const OIS::JoyStickEvent &arg, int button);
 		virtual bool axisMoved(const OIS::JoyStickEvent &arg, int axis);
 
-		DLLEXPORT string GetOISCharacterAsText(const OIS::KeyCode &code);
+		DLLEXPORT std::string GetOISCharacterAsText(const OIS::KeyCode &code);
 
 		DLLEXPORT inline Ogre::SceneManager* GetOverlayScene(){
 			return OverlayScene;
@@ -133,8 +133,8 @@ namespace Leviathan{
 		static boost::bimap<std::string, OIS::KeyCode> CharacterToOISConvert;
 
 		// method for other DLLs to call the maps //
-		DLLEXPORT static OIS::KeyCode ConvertWstringToOISKeyCode(const std::string &str);
-		DLLEXPORT static std::string ConvertOISKeyCodeToWstring(const OIS::KeyCode &code);
+		DLLEXPORT static OIS::KeyCode ConvertStringToOISKeyCode(const std::string &str);
+		DLLEXPORT static std::string ConvertOISKeyCodeToString(const OIS::KeyCode &code);
 
 
 	private:

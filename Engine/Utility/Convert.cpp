@@ -1,17 +1,12 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_CONVERT
 #include "Convert.h"
-#endif
-#ifndef LEVIATHAN_DEFINE
+
 #include "Define.h"
-#endif
-using namespace Leviathan;
-// ------------------------------------ //
 #include "Common/DataStoring/DataBlock.h"
 #include "Common/StringOperations.h"
 #include "utf8/checked.h"
-
+using namespace Leviathan;
+// ------------------------------------ //
 double Convert::DegreesToRadians(float degrees){
 	return (degrees*(PI/180.f));
 	

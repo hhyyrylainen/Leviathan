@@ -27,8 +27,8 @@ namespace Leviathan{
 
 
         //! \brief Serializes a constraint
-        DLLEXPORT virtual shared_ptr<sf::Packet> SerializeConstraint(Entity::BaseConstraint* constraint,
-            Entity::ENTITY_CONSTRAINT_TYPE &type);
+        DLLEXPORT virtual std::shared_ptr<sf::Packet> SerializeConstraint(
+            Entity::BaseConstraint* constraint, Entity::ENTITY_CONSTRAINT_TYPE &type);
 
         //! \brief Creates a constraint from a serialized form
         //! \param object1 The first object in the constraint, should always be valid

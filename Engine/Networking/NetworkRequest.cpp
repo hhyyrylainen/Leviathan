@@ -6,6 +6,7 @@
 #include "GameSpecificPacketHandler.h"
 #include "NetworkedInput.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int timeout /*= 1000*/,
     PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
@@ -267,7 +268,7 @@ DLLEXPORT void Leviathan::JoinServerRequestData::AddDataToPacket(sf::Packet &pac
 	packet << MasterServerID;
 }
 // ------------------ JoinServerRequestData ------------------ //
-DLLEXPORT Leviathan::GetSingleSyncValueRequestData::GetSingleSyncValueRequestData(const wstring &name) :
+DLLEXPORT Leviathan::GetSingleSyncValueRequestData::GetSingleSyncValueRequestData(const std::string &name) :
     NameOfValue(name)
 {
 

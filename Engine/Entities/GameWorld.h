@@ -71,11 +71,11 @@ namespace Leviathan{
         friend PlayerConnectionPreparer;
 
         struct WaitingConstraint{
-            WaitingConstraint(int first, int second, shared_ptr<NetworkResponse> packet) :
+            WaitingConstraint(int first, int second, std::shared_ptr<NetworkResponse> packet) :
                 Entity1(first), Entity2(second), Packet(packet){}
             
             int Entity1, Entity2;
-            shared_ptr<NetworkResponse> Packet;
+            std::shared_ptr<NetworkResponse> Packet;
         };
         
 	public:
@@ -101,42 +101,48 @@ namespace Leviathan{
 
         //! \brief Used to keep track of passed ticks and trigger timed triggers
         //! \note This will be called (or should be) every time the engine ticks
-        //!
-        //! This will also advance the simulation time and simulate physics
-        DLLEXPORT void Tick();
-
+        //! \note This cannot be used for accurate time keeping for that use timers, but for
+        //! events that need to happen at certain game world times this is ideal
+        DLLEXPORT void Tick(int currenttick);
 
         //! \brief Returns the current tick
         DLLEXPORT int GetTickNumber() const;
 
         //! \brief Fetches the physical material ID from the material manager
-        DLLEXPORT int GetPhysicalMaterial(const wstring &name);
+        DLLEXPORT int GetPhysicalMaterial(const std::string &name);
 
 		DLLEXPORT void SetFog();
-		DLLEXPORT void SetSkyBox(const string &materialname);
+		DLLEXPORT void SetSkyBox(const std::string &materialname);
 
 		DLLEXPORT FORCE_INLINE void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos){
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			UpdateCameraLocation(mspassed, camerapos, guard);
 		}
-		DLLEXPORT void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos, ObjectLock &guard);
+        
+		DLLEXPORT void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos,
+            Lock &guard);
 
 		DLLEXPORT void SetSunlight();
 		DLLEXPORT void RemoveSunlight();
 
-		//! \brief Casts a ray from point along a vector and returns the first physical object it hits
+		//! \brief Casts a ray from point along a vector and returns the first physical
+        //! object it hits
 		//! \warning You need to call Release on the returned object once done
-		DLLEXPORT FORCE_INLINE RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to){
-			GUARD_LOCK_THIS_OBJECT();
+		DLLEXPORT FORCE_INLINE RayCastHitEntity* CastRayGetFirstHit(const Float3 &from,
+            const Float3 &to)
+        {
+			GUARD_LOCK();
 			return CastRayGetFirstHit(from, to, guard);
 		}
 
 		//! \brief Actual implementation of CastRayGetFirsHit
-		DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to, ObjectLock &guard);
+		DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to,
+            Lock &guard);
 
 
 		// object managing functions //
-		//! \brief Adds an existing entity to the world, which won't be broadcast to the world receivers
+		//! \brief Adds an existing entity to the world, which won't be broadcast to the world
+        //! receivers
         //! \see CreateEntity
         //! \warning The entity should have only one reference to be released properly
 		DLLEXPORT void AddObject(BaseObject* obj);
@@ -160,16 +166,16 @@ namespace Leviathan{
 
 
 		// clears all objects from the world //
-		DLLEXPORT void ClearObjects(ObjectLock &guard);
+		DLLEXPORT void ClearObjects(Lock &guard);
         
 		DLLEXPORT FORCE_INLINE void ClearObjects(){
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			ClearObjects(guard);
 		}
 
         //! \brief Returns the amount of entities in the world
         DLLEXPORT inline size_t GetObjectCount() const{
-            GUARD_LOCK_THIS_OBJECT();
+            GUARD_LOCK();
             return Objects.size();
         }
 
@@ -194,26 +200,30 @@ namespace Leviathan{
 		DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
 
 		// Ray callbacks //
-		static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body, const NewtonCollision* const
-            shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const
-            userData, dFloat intersectParam);
+		static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
+            const NewtonCollision* const shapeHit, const dFloat* const hitContact,
+            const dFloat* const hitNormal, dLong collisionID, void* const userData,
+            dFloat intersectParam);
 		
 		// Script proxies //
-		DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(Float3 from, Float3 to);
+		DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(const Float3 &from, const Float3 &to);
 		
 		//! \brief Returns true when no players are marked as receiving initial update
 		DLLEXPORT bool AreAllPlayersSynced() const;
 
-        //! \brief Returns true when the player matching the connection should receive updates about an object
+        //! \brief Returns true when the player matching the connection should receive updates
+        //! about an object
         //! \todo Implement this
         DLLEXPORT bool ShouldPlayerReceiveObject(BaseObject* obj, ConnectionInfo* connectionptr);
 
         //! \brief Sends an object to a connection and sets everything up
         //! \post The connection will receive updates from the object
-        //! \param connection A safe pointer to the connection which won't be checked by this method
+        //! \param connection A safe pointer to the connection which won't be checked
         //! \return True when a packet was sent false otherwise
-        //! \todo Allow making these critical so that failing to send these will terminate the ConnectionInfo
-        DLLEXPORT bool SendObjectToConnection(ObjectPtr obj, shared_ptr<ConnectionInfo> connection);
+        //! \todo Allow making these critical so that failing to send these will terminate
+        //! the ConnectionInfo
+        DLLEXPORT bool SendObjectToConnection(ObjectPtr obj,
+            std::shared_ptr<ConnectionInfo> connection);
         
 		//! \brief Creates a new entity from initial entity response
         //! \note This should only be called on the client
@@ -222,17 +232,19 @@ namespace Leviathan{
         //! \brief Applies a constraint packet
         //!
         //! If the entities aren't loaded yet the packet will be stored until they are
-        DLLEXPORT void HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data, shared_ptr<NetworkResponse>
-            packet);
+        DLLEXPORT void HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data,
+            std::shared_ptr<NetworkResponse> packet);
 
         //! \brief Applies an update packet
         //!
         //! If the entity is not found the packet is discarded
-        //! \todo Cache the update data for 1 second and apply it if a matching entity is created during that time
+        //! \todo Cache the update data for 1 second and apply it if a matching entity is
+        //! created during that time
         DLLEXPORT void HandleEntityUpdatePacket(NetworkResponseDataForEntityUpdate* data);
 
         //! \brief Handles a world clock synchronizing packet
-        //! \note This should only be allowed to be called on a client that has connected to a server
+        //! \note This should only be allowed to be called on a client that has connected
+        //! to a server
         DLLEXPORT void HandleClockSyncPacket(RequestWorldClockSyncData* data);
 
         //! \brief Handles a world freeze/unfreeze packet
@@ -240,38 +252,40 @@ namespace Leviathan{
         DLLEXPORT void HandleWorldFrozenPacket(NetworkResponseDataForWorldFrozen* data);
 
         //! \brief Sends a Constraint to a connection
-        //! \param constraint The constraint to send, the parent object needs to be locked during this call
+        //! \param constraint The constraint to send, the parent object needs to be locked
+        //! during this call
         //! to avoid the constraint becoming invalid during this call
         //! \param connectionptr The connection to use, this must be a safe pointer
-        DLLEXPORT void SendConstraintToConnection(shared_ptr<Entity::BaseConstraint> constraint,
-            ConnectionInfo* connectionptr);
+        DLLEXPORT void SendConstraintToConnection(
+            std::shared_ptr<Entity::BaseConstraint> constraint, ConnectionInfo* connectionptr);
         
 	private:
 
 		//! Used to connect new players
-        //! \todo Properly handle deleted and created objects (Potentially make objects vector have "empty"
-        //! spaces in the middle
+        //! \todo Properly handle deleted and created objects
+        //! (Potentially make objects vector have "empty" spaces in the middle)
 		DLLEXPORT virtual void _OnNotifiableConnected(BaseNotifiableAll* parentadded) override;
 
 		//! Used to disconnect players that are going to be unloaded
-		DLLEXPORT virtual void _OnNotifiableDisconnected(BaseNotifiableAll* parenttoremove) override;
+		DLLEXPORT virtual void _OnNotifiableDisconnected(BaseNotifiableAll* parenttoremove)
+            override;
 
 		//! \brief Updates a players position info in this world
-		void UpdatePlayersPositionData(ConnectedPlayer* ply, ObjectLock &guard);
+		void UpdatePlayersPositionData(ConnectedPlayer* ply, Lock &guard);
 
 		void _CreateOgreResources(Ogre::Root* ogre, Window* rendertarget);
-		void _HandleDelayedDelete(UniqueObjectLock &guard);
+		void _HandleDelayedDelete(Lock &guard);
 
         //! \brief Applies a constraint to entities, if both are present
         //! \returns True when the constraint is applied
         bool _TryApplyConstraint(NetworkResponseDataForEntityConstraint* data);
 
         //! \brief Removes a sendable entity from the specific sendable vector
-        void _EraseFromSendable(BaseSendableEntity* obj, UniqueObjectLock &guard);
+        void _EraseFromSendable(BaseSendableEntity* obj, Lock &guard);
 
         //! \brief Reports an entity deletion to clients
         //! \todo Potentially send these in a big blob
-        void _ReportEntityDestruction(int id, UniqueObjectLock &guard);
+        void _ReportEntityDestruction(int id, Lock &guard);
         
 
 		// ------------------------------------ //
@@ -287,7 +301,7 @@ namespace Leviathan{
 		Ogre::SceneNode* SunLightNode;
 
 		// physics //
-		shared_ptr<PhysicalWorld> _PhysicalWorld;
+        std::shared_ptr<PhysicalWorld> _PhysicalWorld;
 
 		//! The world can be frozen to stop physics
 		bool WorldFrozen;
@@ -296,7 +310,8 @@ namespace Leviathan{
 		//! Marks all objects to be released
 		bool ClearAllObjects;
 
-		//! Holds the players who are receiving this worlds updates and their corresponding location entities (if any)
+		//! Holds the players who are receiving this worlds updates and their corresponding
+        //! location entities (if any)
         //! \todo Change this to an object that holds more than the player pointer
 		std::vector<ConnectedPlayer*> ReceivingPlayers;
 
@@ -308,7 +323,7 @@ namespace Leviathan{
         //! These objects need to be marked as invalid before quitting
         //! These can also be used to check whether all players have received
         //! the world
-        std::vector<shared_ptr<PlayerConnectionPreparer>> InitiallySyncingPlayers;
+        std::vector<std::shared_ptr<PlayerConnectionPreparer>> InitiallySyncingPlayers;
         
 
 		// objects //
@@ -320,20 +335,19 @@ namespace Leviathan{
         //! The unique ID
         int ID;
 
-        //! Bool flag telling whether this is a master world (on a server) or a mirroring world (client)
+        //! Bool flag telling whether this is a master world (on a server) or
+        //! a mirroring world (client)
         bool IsOnServer;
 
         //! The current tick number
         //! This should be the same on all clients as closely as possible
         int TickNumber;
 
-        
-
         //! A funky name for this world, if any
         std::string DecoratedName;
 
         //! A lock for delayed delete, to allow deleting objects from physical callbacks
-        boost::mutex DeleteMutex;
+        Mutex DeleteMutex;
         
 		//! This vector is used for delayed deletion
 		std::vector<int> DelayedDeleteIDS;

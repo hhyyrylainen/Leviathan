@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_SOUND
-#define LEVIATHAN_SOUND
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "SoundPlayingSlot.h"
 
 
@@ -15,7 +11,7 @@
 namespace Leviathan{
 
 
-	class SoundDevice : public EngineComponent{
+	class SoundDevice{
 	public:
 		DLLEXPORT SoundDevice();
 		DLLEXPORT ~SoundDevice();
@@ -29,9 +25,9 @@ namespace Leviathan{
 		DLLEXPORT void SetGlobalVolume(const float &vol);
 		// Getting proper sound stream functions //
 
-		DLLEXPORT shared_ptr<SoundPlayingSlot> GetSlotForSound(const wstring &file);
+		DLLEXPORT std::shared_ptr<SoundPlayingSlot> GetSlotForSound(const std::string &file);
 		// used for streams //
-		DLLEXPORT shared_ptr<SoundPlayingSlot> GetSlotForSound();
+		DLLEXPORT std::shared_ptr<SoundPlayingSlot> GetSlotForSound();
 
 		DLLEXPORT static inline SoundDevice* Get(){
 			return Instance;
@@ -41,11 +37,11 @@ namespace Leviathan{
 
 
 		// ------------------------------------ //
-		std::vector<shared_ptr<SoundPlayingSlot>> LoadedSoundObjects;
+		std::vector<std::shared_ptr<SoundPlayingSlot>> LoadedSoundObjects;
 
 
 		static SoundDevice* Instance;
 	};
 
 }
-#endif
+

@@ -23,7 +23,7 @@
 namespace Leviathan{
 
     //! \todo Make the module finding more efficient, store module IDs in all call sites
-	class ScriptExecutor : public EngineComponent{
+	class ScriptExecutor{
 		friend ScriptModule;
 	public:
 		DLLEXPORT ScriptExecutor();
@@ -32,31 +32,31 @@ namespace Leviathan{
 		DLLEXPORT void ScanAngelScriptTypes();
 
 		// module managing //
-		DLLEXPORT weak_ptr<ScriptModule> CreateNewModule(const string &name, const string &source,
-            const int &modulesid = IDFactory::GetID());
+		DLLEXPORT std::weak_ptr<ScriptModule> CreateNewModule(const std::string &name,
+            const std::string &source, const int &modulesid = IDFactory::GetID());
         
 		DLLEXPORT void DeleteModule(ScriptModule* ptrtomatch);
 		DLLEXPORT bool DeleteModuleIfNoExternalReferences(int ID);
-		DLLEXPORT weak_ptr<ScriptModule> GetModule(const int &ID);
-		DLLEXPORT weak_ptr<ScriptModule> GetModuleByAngelScriptName(const char* nameofmodule);
+		DLLEXPORT std::weak_ptr<ScriptModule> GetModule(const int &ID);
+		DLLEXPORT std::weak_ptr<ScriptModule> GetModuleByAngelScriptName(const char* nameofmodule);
 
 		DLLEXPORT inline asIScriptEngine* GetASEngine(){
 			return engine;
 		}
 
-		DLLEXPORT int GetAngelScriptTypeID(const string &typesname);
+		DLLEXPORT int GetAngelScriptTypeID(const std::string &typesname);
 
 
 		//! \brief Runs a script
-		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptScript* scriptobject,
+		DLLEXPORT std::shared_ptr<VariableBlock> RunSetUp(ScriptScript* scriptobject,
             ScriptRunningSetup* parameters);
 
 		//! \brief Runs a script
-		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(ScriptModule* scrptmodule,
+		DLLEXPORT std::shared_ptr<VariableBlock> RunSetUp(ScriptModule* scrptmodule,
             ScriptRunningSetup* parameters);
 
 		//! \brief Runs a script function whose pointer is passed in
-		DLLEXPORT shared_ptr<VariableBlock> RunSetUp(asIScriptFunction* function,
+		DLLEXPORT std::shared_ptr<VariableBlock> RunSetUp(asIScriptFunction* function,
             ScriptRunningSetup* parameters);
 
 
@@ -67,7 +67,8 @@ namespace Leviathan{
 		void PrintAdditionalExcept(asIScriptContext *ctx);
 
 		//! \brief Handles the return type and return value of a function
-		shared_ptr<VariableBlock> _GetScriptReturnedVariable(int retcode, asIScriptContext* ScriptContext,
+        std::shared_ptr<VariableBlock> _GetScriptReturnedVariable(int retcode,
+            asIScriptContext* ScriptContext,
             ScriptRunningSetup* parameters, asIScriptFunction* func, ScriptModule* scrptmodule,
             FunctionParameterInfo* paraminfo);
 
@@ -80,8 +81,9 @@ namespace Leviathan{
             ScriptModule* scrptmodule);
 
 		//! \brief Prepares a context for usage
-		bool _PrepareContextForPassingParameters(asIScriptFunction* func, asIScriptContext* ScriptContext,
-            ScriptRunningSetup* parameters, ScriptModule* scrptmodule);
+		bool _PrepareContextForPassingParameters(asIScriptFunction* func,
+            asIScriptContext* ScriptContext, ScriptRunningSetup* parameters,
+            ScriptModule* scrptmodule);
 
 		//! \brief Called when a context is required for script execution
 		//! \todo Add a pool from which these are retrieved

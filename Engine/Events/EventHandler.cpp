@@ -1,8 +1,5 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_EVENTHANDLER
 #include "EventHandler.h"
-#endif
 using namespace Leviathan;
 // ------------------------------------ //
 EventHandler::EventHandler(){
@@ -76,7 +73,7 @@ bool EventHandler::RegisterForEvent(CallableObject* toregister, EVENT_TYPE totyp
 	return true;
 }
 
-DLLEXPORT bool Leviathan::EventHandler::RegisterForEvent(CallableObject* toregister, const wstring &genericname){
+DLLEXPORT bool Leviathan::EventHandler::RegisterForEvent(CallableObject* toregister, const std::string &genericname){
 	GUARD_LOCK_THIS_OBJECT();
 	GenericEventListeners.push_back(new GenericRegisteredCallback(toregister, genericname));
 	return true;
@@ -97,7 +94,7 @@ void EventHandler::Unregister(CallableObject* caller, EVENT_TYPE type, bool all)
 	}
 }
 
-DLLEXPORT void Leviathan::EventHandler::Unregister(CallableObject* caller, const wstring &genericname,
+DLLEXPORT void Leviathan::EventHandler::Unregister(CallableObject* caller, const std::string &genericname,
     bool all /*= false*/)
 {
 	GUARD_LOCK_THIS_OBJECT();

@@ -1,7 +1,6 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_WINDOW
 #include "Window.h"
-#endif
+
 #include "Engine.h"
 #include <boost/assign/list_of.hpp>
 #include "Exceptions.h"
@@ -12,6 +11,7 @@
 #include "OgreCamera.h"
 #include "Rendering/GraphicalInputEntity.h"
 #include "CEGUI/InputAggregator.h"
+using namespace std;
 // ------------------------------------ //
 
 #include "XLibInclude.h"

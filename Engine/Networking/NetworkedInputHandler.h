@@ -20,13 +20,15 @@ namespace Leviathan{
 	public:
 
 		//! \brief Won't actually be called by the engine but this should be used locally to create new instances
-		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForLocalStart(int inputid, bool isclient) = 0;
+		DLLEXPORT virtual std::unique_ptr<NetworkedInput> CreateNewInstanceForLocalStart(
+            int inputid, bool isclient) = 0;
 
 
 		//! \brief Called when a new input needs to be created through a networked packet
 		//! \note The returned object will get custom data from the packet after this call so it isn't
         //! necessary to fill in all the data
-		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForReplication(int inputid, int ownerid) = 0;
+		DLLEXPORT virtual std::unique_ptr<NetworkedInput> CreateNewInstanceForReplication(
+            int inputid, int ownerid) = 0;
 
 
 		//! \brief Called when a input is finally accepted and the construction should be finished
@@ -90,13 +92,15 @@ namespace Leviathan{
 		//!
 		//! The packet might cause creation of additional objects, delete existing or just alter state of them
 		//! \return Returns true when the packet is a networked input related packet even if it ISN'T handled
-		DLLEXPORT virtual bool HandleInputPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
+		DLLEXPORT virtual bool HandleInputPacket(std::shared_ptr<NetworkRequest> request,
+            ConnectionInfo* connection);
 
 		//! \brief Handles an input update packet
 		//!
 		//! The packet might cause creation of additional objects, delete existing or just alter state of them
 		//! \return Returns true when the packet is a networked input related packet even if it ISN'T handled
-		DLLEXPORT virtual bool HandleInputPacket(shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
+		DLLEXPORT virtual bool HandleInputPacket(std::shared_ptr<NetworkResponse> response,
+            ConnectionInfo* connection);
 
 
 		//! \brief Sends update packets
@@ -134,7 +138,7 @@ namespace Leviathan{
 		//! authorized by the server, either by directly requesting one or receiving one from the server
 		//! \return True when it is added. However it can later be discarded by the server not accepting us
         //! hooking the input to the global pool of input objects on the server
-		DLLEXPORT virtual bool RegisterNewLocalGlobalReflectingInputSource(shared_ptr<NetworkedInput> iobject);
+		DLLEXPORT virtual bool RegisterNewLocalGlobalReflectingInputSource(std::shared_ptr<NetworkedInput> iobject);
 
 		//! \brief Queues a NetworkedInput instance to be destroyed
 		DLLEXPORT void QueueDeleteInput(NetworkedInput* inputobj);
@@ -151,20 +155,20 @@ namespace Leviathan{
 
 
 
-		void _HandleConnectRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
+		void _HandleConnectRequestPacket(std::shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
 
 		//! \brief Handle update response
 		//! \return false If the connection isn't authorized to update the input from this connection
         //! \todo Client: check that the connection is the server connection
-		bool _HandleInputUpdateResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
+		bool _HandleInputUpdateResponse(std::shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
 
         //! \brief Handle input create responses
         //! \note Should only be called on the client
         //! \todo Fail if connection isn't the server we are connected ton
-        bool _HandleInputCreateResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
+        bool _HandleInputCreateResponse(std::shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
 
 		//! \brief Clears out the DeleteQueue
-		void _HandleDeleteQueue(ObjectLock &guard);
+		void _HandleDeleteQueue(Lock &guard);
 
 		// ------------------------------------ //
 
@@ -177,7 +181,7 @@ namespace Leviathan{
 		int LastInputSourceID;
 
 		//! On the server this has the list of global input listeners, on a local 
-		std::vector<shared_ptr<NetworkedInput>> GlobalOrLocalListeners;
+		std::vector<std::shared_ptr<NetworkedInput>> GlobalOrLocalListeners;
 
 
 		//! The factory used for stuff
@@ -190,7 +194,7 @@ namespace Leviathan{
 		NetworkServerInterface* ServerInterface;
 
 		//! Vector of listeners that will be deleted soon
-		std::vector<shared_ptr<NetworkedInput>> DeleteQueue;
+		std::vector<std::shared_ptr<NetworkedInput>> DeleteQueue;
 
         static NetworkedInputHandler* Staticinstance;
 	};

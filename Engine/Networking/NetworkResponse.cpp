@@ -7,6 +7,7 @@
 #include "GameSpecificPacketHandler.h"
 #include "NetworkedInput.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(int inresponseto, PACKET_TIMEOUT_STYLE timeout, int timeoutvalue)
     : ResponseType(NETWORKRESPONSETYPE_NONE), ResponseID(inresponseto), TimeOutStyle(timeout),
@@ -521,8 +522,8 @@ DLLEXPORT Leviathan::NetworkResponseDataForIdentificationString::NetworkResponse
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForIdentificationString::NetworkResponseDataForIdentificationString(
-    const wstring &userreadableidentification, const wstring &gamename, const wstring &gameversion,
-    const wstring &leviathanversion) :
+    const std::string &userreadableidentification, const std::string &gamename, const std::string &gameversion,
+    const std::string &leviathanversion) :
     UserReadableData(userreadableidentification), GameName(gamename), GameVersionString(gameversion),
     LeviathanVersionString(leviathanversion)
 {
@@ -534,7 +535,7 @@ DLLEXPORT void Leviathan::NetworkResponseDataForIdentificationString::AddDataToP
 }
 // ------------------ NetworkResponseDataForInvalidRequest ------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForInvalidRequest::NetworkResponseDataForInvalidRequest(
-    NETWORKRESPONSE_INVALIDREASON reason, const wstring &additional /*= wstring()*/) :
+    NETWORKRESPONSE_INVALIDREASON reason, const std::string &additional /*= std::string()*/) :
     Invalidness(reason), AdditionalInfo(additional)
 {
 
@@ -557,7 +558,7 @@ DLLEXPORT void Leviathan::NetworkResponseDataForInvalidRequest::AddDataToPacket(
 	packet << static_cast<int>(Invalidness) << AdditionalInfo;
 }
 // ------------------ NetworkResponseDataForServerStatus ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForServerStatus(const wstring &servername,
+DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForServerStatus(const std::string &servername,
     bool isjoinable, NETWORKRESPONSE_SERVERJOINRESTRICT whocanjoin, int players, int maxplayers, int bots,
     NETWORKRESPONSE_SERVERSTATUS currentstatus, int serverflags) :
     ServerNameString(servername), Joinable(isjoinable), JoinRestriction(whocanjoin), Players(players),
@@ -567,7 +568,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
 	if(ServerNameString.length() > 100){
 
 		Logger::Get()->Warning(L"NetworkResponse: NetworkResponseDataForServerStatus: server name is too long, max 100 "
-            L"characters (is "+Convert::ToWstring(ServerNameString.length())+L") : "+ServerNameString+
+            L"characters (is "+Convert::ToStd::String(ServerNameString.length())+L") : "+ServerNameString+
             L" will be truncated:");
 		ServerNameString.resize(100);
 		Logger::Get()->Write(L"\t> "+ServerNameString+L"\n");
@@ -619,14 +620,14 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataFo
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataForServerDisallow(
-    NETWORKRESPONSE_INVALIDREASON reason, const wstring &message /*= L"Default disallow"*/) :
+    NETWORKRESPONSE_INVALIDREASON reason, const std::string &message /*= L"Default disallow"*/) :
     Reason(reason), Message(message)
 {
 	// Check the length //
 	if(Message.length() > 100){
 
 		Logger::Get()->Warning(L"NetworkResponse: NetworkResponseDataForServerDisallow: message is too long (is "+
-            Convert::ToWstring(Message.length())+L") : "+Message+L" will be truncated:");
+            Convert::ToStd::String(Message.length())+L") : "+Message+L" will be truncated:");
 		Message.resize(100);
 		Logger::Get()->Write(L"\t> "+Message+L"\n");
 	}
@@ -655,14 +656,14 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForSe
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(
-    NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted, const wstring &message /*= L""*/) :
+    NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted, const std::string &message /*= L""*/) :
     ServerAcceptedWhat(whataccepted), Message(message)
 {
 	// Check the length //
 	if(Message.length() > 100){
 
 		Logger::Get()->Warning(L"NetworkResponse: NetworkResponseDataForServerAllow: message is too long (is "+
-            Convert::ToWstring(Message.length())+L") : "+Message+L" will be truncated:");
+            Convert::ToStd::String(Message.length())+L") : "+Message+L" will be truncated:");
 		Message.resize(100);
 		Logger::Get()->Write(L"\t> "+Message+L"\n");
 	}
@@ -1030,7 +1031,7 @@ DLLEXPORT void Leviathan::NetworkResponseDataForAICacheUpdated::AddDataToPacket(
     Variable->AddDataToPacket(packet);
 }
 // ------------------ NetworkResponseDataForAICacheRemoved ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForAICacheRemoved::NetworkResponseDataForAICacheRemoved(const wstring &name) :
+DLLEXPORT Leviathan::NetworkResponseDataForAICacheRemoved::NetworkResponseDataForAICacheRemoved(const std::string &name) :
     Name(name)
 {
     

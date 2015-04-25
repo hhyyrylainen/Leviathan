@@ -1,19 +1,14 @@
-#ifndef LEVIATHAN_GUI_BASEOBJECT
-#define LEVIATHAN_GUI_BASEOBJECT
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Script/ScriptScript.h"
 #include "ObjectFiles/ObjectFileObject.h"
 #include "Common/ReferenceCounted.h"
 #include "Events/Event.h"
 #include "GuiCollection.h"
 #include "Events/EventableScriptObject.h"
-#include "boost/thread/mutex.hpp"
-#include "boost/function.hpp"
+#include <functional>
 #include "Script/ScriptArgumentsProvider.h"
 
 namespace Leviathan{ namespace Gui{
@@ -25,8 +20,8 @@ namespace Leviathan{ namespace Gui{
                                 public ScriptArgumentsProvider, public ThreadSafe{
             friend GuiManager;
         public:
-            DLLEXPORT BaseGuiObject(GuiManager* owner, const wstring &name, int fakeid,
-                shared_ptr<ScriptScript> script = NULL);
+            DLLEXPORT BaseGuiObject(GuiManager* owner, const std::string &name, int fakeid,
+                std::shared_ptr<ScriptScript> script = NULL);
             DLLEXPORT virtual ~BaseGuiObject();
 
             REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(BaseGuiObject);
@@ -50,8 +45,8 @@ namespace Leviathan{ namespace Gui{
                 return OwningInstance;
             }
 		
-            DLLEXPORT static bool LoadFromFileStructure(GuiManager* owner, vector<BaseGuiObject*>
-                &tempobjects, ObjectFileObject& dataforthis);
+            DLLEXPORT static bool LoadFromFileStructure(GuiManager* owner,
+                std::vector<BaseGuiObject*> &tempobjects, ObjectFileObject &dataforthis);
 
 
             //! \brief Sets this objects target CEGUI widget
@@ -59,8 +54,8 @@ namespace Leviathan{ namespace Gui{
             //! This will also register the widget for unconnect events to not use deleted pointers
             DLLEXPORT void ConnectElement(CEGUI::Window* windojb);
 
-            //! \brief Gets the name of this object as a string
-            DLLEXPORT string GetNameAsString();
+            //! \brief Gets the name of this object
+            DLLEXPORT std::string GetName();
 
 
             //! \brief Releases the data held onto by this object
@@ -76,22 +71,21 @@ namespace Leviathan{ namespace Gui{
             //! \brief Prints the window layout starting from TargetElement
             //! \param target The target window or NULL if TargetElement should be used
             //! \note Passing only the guard will work if you want to start from the target element
-            DLLEXPORT void PrintWindowsRecursive(ObjectLock &guard, CEGUI::Window* target = NULL,
+            DLLEXPORT void PrintWindowsRecursive(Lock &guard, CEGUI::Window* target = NULL,
                 size_t level = 0) const;
 
             //! \brief No parameters version of PrintWindowsRecursive
             DLLEXPORT FORCE_INLINE void PrintWindowsRecursive() const{
-                GUARD_LOCK_THIS_OBJECT();
+                GUARD_LOCK();
                 PrintWindowsRecursive(guard);
             }
 
             //! \brief Proxy for PrintWindowsRecursive
             DLLEXPORT void PrintWindowsRecursiveProxy();
 		
-            DLLEXPORT virtual unique_ptr<ScriptRunningSetup> GetParametersForInit();
+            DLLEXPORT virtual std::unique_ptr<ScriptRunningSetup> GetParametersForInit();
 
-            DLLEXPORT virtual unique_ptr<ScriptRunningSetup> GetParametersForRelease();
-
+            DLLEXPORT virtual std::unique_ptr<ScriptRunningSetup> GetParametersForRelease();
 
         protected:
 
@@ -100,7 +94,7 @@ namespace Leviathan{ namespace Gui{
             virtual void _CallScriptListener(Event** pEvent, GenericEvent** event2);
 
             //! \brief Registers for an event if it is a CEGUI event
-            bool _HookCEGUIEvent(const wstring &listenername);
+            bool _HookCEGUIEvent(const std::string &listenername);
 
 
             //! \brief Clears CEGUIRegisteredEvents and unsubscribes from all
@@ -109,19 +103,19 @@ namespace Leviathan{ namespace Gui{
 
             //! \brief Calls the script for a specific CEGUI event listener
             //! \return The scripts return value changed to an int
-            bool _CallCEGUIListener(const wstring &name,
-                boost::function<void(vector<shared_ptr<NamedVariableBlock>>&)> extraparam = NULL);
+            bool _CallCEGUIListener(const std::string &name,
+                std::function<void(std::vector<std::shared_ptr<NamedVariableBlock>>&)>
+                extraparam = NULL);
 
-            unique_ptr<ScriptRunningSetup> _GetArgsForAutoFunc();
+            std::unique_ptr<ScriptRunningSetup> _GetArgsForAutoFunc();
 
 
             // ------------------------------------ //
 
-
             int ID;
             int FileID;
 
-            wstring Name;
+            std::string Name;
 
             GuiManager* OwningInstance;
 
@@ -134,7 +128,7 @@ namespace Leviathan{ namespace Gui{
 
             // ------------------------------------ //
             //! This map collects all the available CEGUI events which can be hooked into
-            static std::map<wstring, const CEGUI::String*> CEGUIEventNames;
+            static std::map<std::string, const CEGUI::String*> CEGUIEventNames;
 
         public:
 
@@ -146,11 +140,11 @@ namespace Leviathan{ namespace Gui{
             //! \brief Constructs CEGUIEventNames
             //!
             //! This is safe to call at any time since the map is only filled once
-            static void MakeSureCEGUIEventsAreFine(boost::strict_lock<boost::mutex> &locked);
+            static void MakeSureCEGUIEventsAreFine(Lock &locked);
 
 
             //! The mutex required for MakeSureCEGUIEventsAreFine
-            static boost::mutex CEGUIEventMutex;
+            static Mutex CEGUIEventMutex;
 
 
         protected:
@@ -166,4 +160,4 @@ namespace Leviathan{ namespace Gui{
         };
 
 }}
-#endif
+

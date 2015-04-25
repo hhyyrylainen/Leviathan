@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_BASE_RENDERABLE
-#define LEVIATHAN_BASE_RENDERABLE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "../GameWorld.h"
 
 namespace Leviathan{
@@ -27,9 +23,9 @@ namespace Leviathan{
 		// Messing with the materials //
 
 		// \todo add some more sophisticated methods //
-		DLLEXPORT void SetDefaultSubDefaultPassDiffuse(const Float4 &newdiffuse) THROWS;
+		DLLEXPORT void SetDefaultSubDefaultPassDiffuse(const Float4 &newdiffuse);
 
-		DLLEXPORT void SetOgreMaterialName(const string &name);
+		DLLEXPORT void SetOgreMaterialName(const std::string &name);
 
         //! \todo Move to a new class
         DLLEXPORT void SetScale(const Float3 &scale);
@@ -45,4 +41,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

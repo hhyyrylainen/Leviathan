@@ -1,8 +1,7 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_RENDERINGSTATISTICS
 #include "RenderingStatistics.h"
-#endif
+
+#include "../Common/DataStoring/DataStore.h"
 #include "Common/Misc.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -105,7 +104,7 @@ void Leviathan::RenderingStatistics::HalfMinuteMark(){
 	int frametimes = 0;
 
 
-	for(unsigned int i = 0; i < LastMinuteRenderTimesPos+1; i++){
+	for(size_t i = 0; i < LastMinuteRenderTimesPos+1; i++){
 		
 		frametimes += LastMinuteRenderTimes[i];
 	}
@@ -217,6 +216,23 @@ bool Leviathan::RenderingStatistics::CanRenderNow(int maxfps, int& TimeSinceLast
 	return false;
 }
 // ------------------------------------ //
+void RenderingStatistics::MakeSureHasEnoughRoom(std::vector<int> &tarvec,
+    const size_t &accessspot)
+{
+			
+    if(tarvec.size() <= accessspot+1){
+        if(tarvec.size() > 5000){
+
+            tarvec.resize((size_t)(tarvec.size()*1.35f));
+            Logger::Get()->Warning("RenderingStatistics: large frame time tracking buffer is "
+                "getting larger, size: "+Convert::ToString(tarvec.size()));
+
+        } else {
+
+            tarvec.resize((size_t)(tarvec.size()*1.8f));
+        }
+    }
+}
 
 
 

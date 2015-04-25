@@ -16,6 +16,8 @@ using namespace Leviathan;
 #include <add_on/scriptstdstring/scriptstdstring.h>
 #include <add_on/scriptgrid/scriptgrid.h>
 
+#include "ScriptModule.h"
+
 // headers that contains bind able functions //
 #include "GUI/GuiScriptInterface.h"
 

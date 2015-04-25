@@ -9,7 +9,7 @@
 #include "Common/ThreadSafe.h"
 #include "NetworkInterface.h"
 #include "SFML/Network/UdpSocket.hpp"
-#include <promise>
+#include <future>
 #include <thread>
 
 namespace Leviathan{
@@ -20,13 +20,13 @@ namespace Leviathan{
 	enum PACKET_TIMEOUT_STYLE{
         
 
-		PACKAGE_TIMEOUT_STYLE_TIMEDMS,
+		PACKET_TIMEOUT_STYLE_TIMEDMS,
         
-        //! This style marks packets lost after TimeOutMS amount of packets sent after this packet        
-        //! have been confirmed to received
-		//! So if you set this to 1 this packet is resend if even a single packet send after this is
-        //! received by the target host
-		PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED
+        //! This style marks packets lost after TimeOutMS amount of packets sent after
+        //! this packet have been confirmed to received
+		//! Example: If you set TimeOutMS to 1 this packet is resent after a single packet sent
+        //! after this packet is received by the target host (and we have received an ack for it)
+		PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED
 	};
 
 	// Used to pass master server info to the application //
@@ -62,7 +62,7 @@ namespace Leviathan{
 	};
 
 	//! \brief Handles everything related to connections
-	class NetworkHandler : public EngineComponent, public ThreadSafe{
+	class NetworkHandler : public ThreadSafe{
         friend void RunGetResponseFromMaster(NetworkHandler* instance,
             std::shared_ptr<std::promise<std::string>> resultvar);
 
@@ -133,8 +133,8 @@ namespace Leviathan{
 
 		// Common network functions //
 		// For example if passed http://boostslair.com/Pong/MastersList.php returns http://boostslair.com/ //
-		DLLEXPORT static wstring GetServerAddressPartOfAddress(const std::string &fulladdress,
-            const wstring &regextouse = L"http://.*?/");
+		DLLEXPORT static std::string GetServerAddressPartOfAddress(const std::string &fulladdress,
+            const std::string &regextouse = "http://.*?/");
 
 		DLLEXPORT static NetworkHandler* Get();
 		DLLEXPORT static NetworkInterface* GetInterface();
@@ -175,7 +175,7 @@ namespace Leviathan{
 
 		NETWORKED_TYPE AppType;
 		sf::UdpSocket _Socket;
-		USHORT PortNumber;
+		unsigned short PortNumber;
 
 		//! The syncable variable holder associated with this instance
 		SyncedVariables* VariableSyncer;
@@ -190,7 +190,7 @@ namespace Leviathan{
 		std::vector<std::shared_ptr<std::string>> MasterServers;
 
 		//! Stores a "working" (meaning the server has responded something) master server address
-		shared_ptr<ConnectionInfo> MasterServerConnection;
+        std::shared_ptr<ConnectionInfo> MasterServerConnection;
 
 		MasterServerInformation StoredMasterServerInfo;
 

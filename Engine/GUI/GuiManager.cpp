@@ -28,7 +28,6 @@
 #include "Script/ScriptExecutor.h"
 #include "Window.h"
 #include <boost/assign/list_of.hpp>
-#include <boost/thread.hpp>
 
 #ifdef __linux
 // On linux the GuiManager has to create an Xlib window which requires this include...
@@ -648,8 +647,8 @@ private:
 
 
 using namespace Leviathan;
-using namespace Leviathan::Gui;
-
+using namespace Gui;
+using namespace std;
 // ------------------ GuiManager ------------------ //
 Leviathan::Gui::GuiManager::GuiManager() :
     ID(IDFactory::GetID()), Visible(true), GuiMouseUseUpdated(true), GuiDisallowMouseCapture(true),

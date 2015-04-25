@@ -1,12 +1,10 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_OBJECTFILEOBJECT
 #include "ObjectFileObject.h"
-#endif
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::ObjectFileObjectProper::ObjectFileObjectProper(const wstring &name, const wstring &typesname,
-    vector<wstring*> prefix) : 
+DLLEXPORT Leviathan::ObjectFileObjectProper::ObjectFileObjectProper(const std::string &name, const std::string &typesname,
+    vector<std::string*> prefix) : 
 	Name(name), TName(typesname), Prefixes(prefix)
 {
 	
@@ -22,11 +20,11 @@ DLLEXPORT Leviathan::ObjectFileObjectProper::~ObjectFileObjectProper(){
 	SAFE_DELETE_VECTOR(TextBlocks);
 }
 // ------------------------------------ //
-DLLEXPORT const wstring& Leviathan::ObjectFileObjectProper::GetName() const{
+DLLEXPORT const std::string& Leviathan::ObjectFileObjectProper::GetName() const{
 	return Name;
 }
 
-DLLEXPORT const wstring& Leviathan::ObjectFileObjectProper::GetTypeName() const{
+DLLEXPORT const std::string& Leviathan::ObjectFileObjectProper::GetTypeName() const{
 	return TName;
 }
 
@@ -38,7 +36,7 @@ DLLEXPORT size_t Leviathan::ObjectFileObjectProper::GetPrefixesCount() const{
 	return Prefixes.size();
 }
 
-DLLEXPORT const wstring& Leviathan::ObjectFileObjectProper::GetPrefix(size_t index) const THROWS{
+DLLEXPORT const std::string& Leviathan::ObjectFileObjectProper::GetPrefix(size_t index) const THROWS{
 	// Check the index //
 	if(index >= Prefixes.size()){
 
@@ -86,7 +84,7 @@ DLLEXPORT void Leviathan::ObjectFileObjectProper::AddScriptScript(shared_ptr<Scr
 	Script = script;
 }
 // ------------------------------------ //
-DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetListWithName(const wstring &name) const{
+DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetListWithName(const std::string &name) const{
 	// Loop and compare names //
 	for(size_t i = 0; i < Contents.size(); i++){
 
@@ -98,7 +96,7 @@ DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetListWithName(con
 	return NULL;
 }
 
-DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlockWithName(const wstring &name) const{
+DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlockWithName(const std::string &name) const{
 	// Loop and compare names //
 	for(size_t i = 0; i < TextBlocks.size(); i++){
 

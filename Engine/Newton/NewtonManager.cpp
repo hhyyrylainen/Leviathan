@@ -1,10 +1,9 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_NEWTONMANAGER
 #include "NewtonManager.h"
-#endif
+
 #include <Newton.h>
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 // ------------------ newton system functions ------------------ //
 

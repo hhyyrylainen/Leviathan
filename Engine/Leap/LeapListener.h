@@ -1,12 +1,5 @@
 #pragma once
-#ifndef LEVIATHAN_LEAPLISTENER
-#define LEVIATHAN_LEAPLISTENER
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
 #include "Leap.h"
 
 namespace Leviathan{
@@ -49,4 +42,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

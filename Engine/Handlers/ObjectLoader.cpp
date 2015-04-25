@@ -1,8 +1,6 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_OBJECTLOADER
 #include "ObjectLoader.h"
-#endif
+
 #include "Statistics/TimingMonitor.h"
 #include "OgreManualObject.h"
 #include "Entities/Objects/Brush.h"
@@ -15,6 +13,7 @@
 #include "FileSystem.h"
 #include "Entities/Objects/Constraints.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 Leviathan::ObjectLoader::ObjectLoader(Engine* engine){
 	m_Engine = engine;
@@ -156,7 +155,7 @@ DLLEXPORT void Leviathan::ObjectLoader::AddTestCubeToScenePositions(Ogre::SceneM
 
 
 // ------------------------------------ //
-DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const wstring &name, int materialid,
+DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const std::string &name, int materialid,
     Entity::Prop** createdinstance)
 {
 
@@ -165,7 +164,7 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const w
 	(*createdinstance) = prop.get();
 
 	// get relative path //
-	wstring path = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL, name, L"levmd", false);
+	std::string path = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL, name, "levmd", false);
 
 	// initialize the model //
 	if(!prop->Init(path)){

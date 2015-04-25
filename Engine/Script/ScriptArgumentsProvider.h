@@ -1,25 +1,21 @@
 #pragma once
-#ifndef LEVIATHAN_SCRIPTARGUMENTSPROVIDER
-#define LEVIATHAN_SCRIPTARGUMENTSPROVIDER
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "ScriptRunningSetup.h"
 
 
 namespace Leviathan{
 
 
-	//! \brief Classes implementing this interface allow script modules to run automatic OnInit and OnRelease function during release
+	//! \brief Classes implementing this interface allow script modules to run automatic OnInit and
+    //! OnRelease function during release
 	class ScriptArgumentsProvider{
 	public:
 
 
-		DLLEXPORT virtual unique_ptr<ScriptRunningSetup> GetParametersForInit() = 0;
-		DLLEXPORT virtual unique_ptr<ScriptRunningSetup> GetParametersForRelease() = 0;
+		DLLEXPORT virtual std::unique_ptr<ScriptRunningSetup> GetParametersForInit() = 0;
+		DLLEXPORT virtual std::unique_ptr<ScriptRunningSetup> GetParametersForRelease() = 0;
 
 	protected:
 
@@ -29,15 +25,15 @@ namespace Leviathan{
 		DLLEXPORT void _LeaveBondBridge();
 
 
-		shared_ptr<ScriptArgumentsProviderBridge> _ArgumentBridge;
+        std::shared_ptr<ScriptArgumentsProviderBridge> _ArgumentBridge;
 	};
 
 
 
 	//! \brief Forms a connection between a ScriptModule and a ScriptArgumentsProvider which either can disconnect
 	//!
-	//! This is used to allow either of the objects to be destructed before the other. Another option would have been using Notifiers, but this
-	//! might be a cleaner solution
+	//! This is used to allow either of the objects to be destructed before the other.
+    //! Another option would have been using Notifiers, but this might be a cleaner solution
 	class ScriptArgumentsProviderBridge{
 	public:
 
@@ -81,4 +77,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

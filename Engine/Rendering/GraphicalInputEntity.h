@@ -33,7 +33,8 @@ namespace Leviathan{
 
 		// object linking //
 		// This function also updates the camera aspect ratio //
-		DLLEXPORT void LinkObjects(shared_ptr<ViewerCameraPos> camera, shared_ptr<GameWorld> world);
+		DLLEXPORT void LinkObjects(std::shared_ptr<ViewerCameraPos> camera,
+            std::shared_ptr<GameWorld> world);
 
 		// returns true if succeeds, false if another window has input //
 		DLLEXPORT bool SetMouseCapture(bool state);
@@ -46,7 +47,7 @@ namespace Leviathan{
         //! \note A world cannot be attached to this object if this is used
         //! \param skyboxmaterial The material to use for a skybox. Empty if not wanted.
         //! \warning A sky box is required to have CEGUI not flicker while rendering on this window
-        DLLEXPORT void SetAutoClearing(const string &skyboxmaterial);
+        DLLEXPORT void SetAutoClearing(const std::string &skyboxmaterial);
 
         //! \brief Destroyes the workspace that is clearing this window each frame
         DLLEXPORT void StopAutoClearing();
@@ -62,7 +63,7 @@ namespace Leviathan{
 
 		// graphics related //
 		DLLEXPORT float GetViewportAspectRatio();
-		DLLEXPORT void SaveScreenShot(const string &filename);
+		DLLEXPORT void SaveScreenShot(const std::string &filename);
 
 		DLLEXPORT void OnResize(int width, int height);
 
@@ -79,7 +80,7 @@ namespace Leviathan{
 		DLLEXPORT inline InputController* GetInputController(){
 			return TertiaryReceiver.get();
 		}
-		DLLEXPORT inline shared_ptr<ViewerCameraPos> GetLinkedCamera(){
+		DLLEXPORT inline std::shared_ptr<ViewerCameraPos> GetLinkedCamera(){
 			return LinkedCamera;
 		}
 		DLLEXPORT void OnFocusChange(bool focused);
@@ -92,7 +93,7 @@ namespace Leviathan{
 		//! \brief Overwrites the default InputController with a custom one
 		//! \warning The controller will be deleted by this and there is no way to release it without deleting
         //! after this call
-		DLLEXPORT void SetCustomInputController(shared_ptr<InputController> controller);
+		DLLEXPORT void SetCustomInputController(std::shared_ptr<InputController> controller);
 
 
         //! \brief Creates a workspace definition that can be used to clear a window
@@ -103,23 +104,23 @@ namespace Leviathan{
 
 
 		Window* DisplayWindow;
-		shared_ptr<InputController> TertiaryReceiver;
+        std::shared_ptr<InputController> TertiaryReceiver;
 		Gui::GuiManager* WindowsGui;
 		CEGUI::OgreRenderer* CEGUIRenderer;
 
 
-		shared_ptr<GameWorld> LinkedWorld;
-		shared_ptr<ViewerCameraPos> LinkedCamera;
+        std::shared_ptr<GameWorld> LinkedWorld;
+        std::shared_ptr<ViewerCameraPos> LinkedCamera;
         
 		//! this count variable is needed to parse resource groups after first window
 		static int GlobalWindowCount;
 
-        static boost::mutex GlobalCountMutex;
+        static Mutex GlobalCountMutex;
 		
 		//! Keeps track of how many windows in total have been created
 		static int TotalCreatedWindows;
 
-        static boost::mutex TotalCountMutex;
+        static Mutex TotalCountMutex;
 
         //! Pointer to the first CEGUI::OgreRenderer
         static CEGUI::OgreRenderer* FirstCEGUIRenderer;
@@ -132,10 +133,10 @@ namespace Leviathan{
 
         //! True when auto clear ogre workspace has been created
         static bool AutoClearResourcesCreated;
-        static boost::mutex AutoClearResourcesMutex;
+        static Mutex AutoClearResourcesMutex;
 
         //! Used when this window does'nt have a world and the background needs to be cleared
-        unique_ptr<GEntityAutoClearResources> AutoClearResources;
+        std::unique_ptr<GEntityAutoClearResources> AutoClearResources;
 	};
 
 }

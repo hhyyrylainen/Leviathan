@@ -1,12 +1,7 @@
 #pragma once
-#ifndef LEVIATHAN_LEAPMANAGER
-#define LEVIATHAN_LEAPMANAGER
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
+#include "../ForwardDeclarations.h"
+
 #include "LeapListener.h"
 #include "Leap.h"
 
@@ -20,7 +15,7 @@ namespace Leviathan{
 
 	class Engine;
 
-	class LeapManager : public EngineComponent{
+	class LeapManager{
 		friend LeapListener;
 	public:
 		DLLEXPORT LeapManager(Engine* engineinstance);
@@ -53,4 +48,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

@@ -1,25 +1,18 @@
-#ifndef LEVIATHAN_GUI_MAIN
-#define LEVIATHAN_GUI_MAIN
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "Application/AppDefine.h"
-#include "GUI/BaseGuiObject.h"
+#include "../Application/AppDefine.h"
+#include "BaseGuiObject.h"
+#include "../Common/ThreadSafe.h"
 
 
-// objects //
 #include "OgreRenderQueueListener.h"
-#include "Common/ThreadSafe.h"
 #include "CEGUI/GUIContext.h"
 
 
 
-namespace Leviathan{
-
-namespace Gui{
+namespace Leviathan{ namespace Gui{
 
 
 	//! \brief A class for handling system clipboard interaction
@@ -32,12 +25,14 @@ namespace Gui{
 		//! \brief Helper struct that allows keeping all the data in a single vector
 		struct SingleCollectionEntry{
 			//! \brief Constructs a new entry for a single GuiCollection
-			SingleCollectionEntry(const wstring &name, bool enabled) : Name(new wstring(name)), IsEnabled(enabled){
+			SingleCollectionEntry(const std::string &name, bool enabled) :
+                Name(new std::string(name)), IsEnabled(enabled)
+            {
 
 			}
 
 			bool IsEnabled;
-			unique_ptr<wstring> Name;
+            std::unique_ptr<std::string> Name;
 		};
 
 	public:
@@ -47,19 +42,20 @@ namespace Gui{
 		}
 
 		//! \brief Adds a new entry to the list
-		inline void AddNewEntry(const wstring &name, bool state){
+		inline void AddNewEntry(const std::string &name, bool state){
 
-			CollectionNames.push_back(move(unique_ptr<SingleCollectionEntry>(new SingleCollectionEntry(name, state))));
+			CollectionNames.push_back(move(std::unique_ptr<SingleCollectionEntry>(
+                        new SingleCollectionEntry(name, state))));
 		}
 
 
-		std::vector<unique_ptr<SingleCollectionEntry>> CollectionNames;
+		std::vector<std::unique_ptr<SingleCollectionEntry>> CollectionNames;
 	};
 
 
 	//! \brief Main GUI controller
 	//! \todo Add GUI window objects to this which are associated with different windows
-	class GuiManager : public EngineComponent, public ThreadSafe{
+	class GuiManager : public ThreadSafe{
 	public:
 		DLLEXPORT GuiManager();
 		DLLEXPORT ~GuiManager();
@@ -99,37 +95,39 @@ namespace Gui{
 		DLLEXPORT CEGUI::GUIContext* GetMainContext();
 
 		// function split into peaces //
-		DLLEXPORT bool LoadCollection(vector<shared_ptr<ObjectFileObject>> &data, ObjectFileObject &collectiondata);
+		DLLEXPORT bool LoadCollection(std::vector<std::shared_ptr<ObjectFileObject>> &data,
+            ObjectFileObject &collectiondata);
 
 		// file loading //
 
 		//! \brief Loads a GUI file
-		DLLEXPORT bool LoadGUIFile(const wstring &file, bool nochangelistener = false, int iteration = 0);
+		DLLEXPORT bool LoadGUIFile(const std::string &file, bool nochangelistener = false,
+            int iteration = 0);
 
 		//! \brief Unloads the currently loaded file
 		DLLEXPORT void UnLoadGUIFile();
 
 		//! \brief Creates an object representing the state of all GuiCollections
-		DLLEXPORT unique_ptr<GuiCollectionStates> GetGuiStates() const;
+		DLLEXPORT std::unique_ptr<GuiCollectionStates> GetGuiStates() const;
 
 		//! \brief Applies a stored set of states to the GUI
-		//! \param states A pointer to an object holding the state, the object should be obtained by
-        //! calling GetGuiStates
+		//! \param states A pointer to an object holding the state,
+        //! the object should be obtained by calling GetGuiStates
 		//! \see GetGuiStates
 		DLLEXPORT void ApplyGuiStates(const GuiCollectionStates* states);
 
 
 		// set to "none" to use default //
-		DLLEXPORT void SetMouseTheme(const wstring &tname);
+		DLLEXPORT void SetMouseTheme(const std::string &tname);
 		DLLEXPORT void SetMouseFileVisibleState(bool state);
 
 		// collection managing //
 		DLLEXPORT void AddCollection(GuiCollection* add);
-		DLLEXPORT GuiCollection* GetCollection(const int &id, const wstring &name = L"");
+		DLLEXPORT GuiCollection* GetCollection(const int &id, const std::string &name = "");
 
-		DLLEXPORT void SetCollectionStateProxy(string name, bool state);
-		DLLEXPORT void SetCollectionState(const wstring &name, bool state);
-		DLLEXPORT void SetCollectionAllowEnableState(const wstring &name, bool allow = true);
+		DLLEXPORT void SetCollectionStateProxy(std::string name, bool state);
+		DLLEXPORT void SetCollectionState(const std::string &name, bool state);
+		DLLEXPORT void SetCollectionAllowEnableState(const std::string &name, bool allow = true);
 		DLLEXPORT inline void PossiblyGUIMouseDisable(){
 			GuiMouseUseUpdated = true;
 		}
@@ -138,37 +136,33 @@ namespace Gui{
 
 		//! \brief Returns a single CEGUI::Window matching the name
 		//! \todo Allow error reporting
-		DLLEXPORT CEGUI::Window* GetWindowByStringName(const string &namepath);
+		DLLEXPORT CEGUI::Window* GetWindowByStringName(const std::string &namepath);
 
 
-		//! \brief Returns a string containing names of types that don't look good/break something when animated
+		//! \brief Returns a string containing names of types that don't look good/break
+        //! something when animated
 		//!
-		//! For use with PlayAnimationOnWindow the ignoretypenames parameter if you just want to avoid breaking some
-        //! rendering
-		DLLEXPORT FORCE_INLINE static string GetCEGUITypesWithBadAnimations(){
+		//! For use with PlayAnimationOnWindow the ignoretypenames parameter if you just want
+        //! to avoid breaking some rendering
+		DLLEXPORT FORCE_INLINE static std::string GetCEGUITypesWithBadAnimations(){
 			return "";
 		}
 
 
 		//! \brief Creates and plays an animation on a CEGUI Window
 		//! \param applyrecursively Applies the same animation to the child windows
-		DLLEXPORT bool PlayAnimationOnWindow(const string &windowname, const string &animationname,
-            bool applyrecursively = false, const string &ignoretypenames = "");
-		
-		//! \brief Overload of PlayAnimationOnWindow using string conversion
-		DLLEXPORT FORCE_INLINE bool PlayAnimationOnWindow(const wstring &windowname, const wstring &animationname,
-            bool applyrecursively = false, const string &ignoretypenames = "")
-            {
-                return PlayAnimationOnWindow(Convert::WstringToString(windowname), Convert::WstringToString(
-                        animationname), applyrecursively, ignoretypenames);
-            }
+		DLLEXPORT bool PlayAnimationOnWindow(const std::string &windowname,
+            const std::string &animationname, bool applyrecursively = false,
+            const std::string &ignoretypenames = "");
 
         
 		//! \brief Proxy overload for PlayAnimationOnWindow
-		DLLEXPORT bool PlayAnimationOnWindowProxy(const string &windowname, const string &animationname);
+		DLLEXPORT bool PlayAnimationOnWindowProxy(const std::string &windowname,
+            const std::string &animationname);
 
 
-        //! \brief Stops the Gui from capturing the mouse when no Gui on-keeping collections are active
+        //! \brief Stops the Gui from capturing the mouse when
+        //! no Gui on-keeping collections are active
         DLLEXPORT void SetDisableMouseCapture(bool newvalue);
         
 		//! \brief Tries to inject a paste request to CEGUI
@@ -183,14 +177,14 @@ namespace Gui{
     protected:
 
         //! Is called by folder listeners to notify of Gui file changes
-		void _FileChanged(const wstring &file, ResourceFolderListener &caller);
+		void _FileChanged(const std::string &file, ResourceFolderListener &caller);
         
 
 	private:
 
 		//! The implementation of PlayAnimationOnWindow
-		void _PlayAnimationOnWindow(CEGUI::Window* targetwind, CEGUI::Animation* animdefinition, bool recurse,
-            const string &ignoretypenames);
+		void _PlayAnimationOnWindow(CEGUI::Window* targetwind, CEGUI::Animation* animdefinition,
+            bool recurse, const std::string &ignoretypenames);
 
 		// ------------------------------------ //
 
@@ -206,7 +200,7 @@ namespace Gui{
 
         
 		//! Gui elements
-		vector<BaseGuiObject*> Objects;
+        std::vector<BaseGuiObject*> Objects;
 
 		//! The corresponding CEGUI context
 		CEGUI::GUIContext* GuiContext;
@@ -218,7 +212,7 @@ namespace Gui{
 		WantedClockType::time_point LastTimePulseTime;
 
 		//! The main file of the GUI from which it is loaded from
-		wstring MainGUIFile;
+		std::string MainGUIFile;
 
 		//! Set when this is the first created gui manager
 		//! \detail Used for injecting time pulses into CEGUI
@@ -242,17 +236,17 @@ namespace Gui{
 		// ------------------------------------ //
 		// Static animation files //
 		//! Holds the loaded animation files, used to prevent loading a single file multiple times
-		static std::vector<wstring> LoadedAnimationFiles;
+		static std::vector<std::string> LoadedAnimationFiles;
 
-		static boost::recursive_mutex GlobalGUIMutex;
+		static Mutex GlobalGUIMutex;
 
-		static bool IsAnimationFileLoaded(ObjectLock &lock, const wstring &file);
+		static bool IsAnimationFileLoaded(Lock &lock, const std::string &file);
 
 		//! \warning Won't check if the file is already in the vector, use IsAnimationFileLoaded
-		static void SetAnimationFileLoaded(ObjectLock &lock, const wstring &file);
+		static void SetAnimationFileLoaded(Lock &lock, const std::string &file);
 
         
 	};
 
 }}
-#endif
+

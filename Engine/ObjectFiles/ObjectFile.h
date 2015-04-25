@@ -1,12 +1,7 @@
 #pragma once
-#ifndef LEVIATHAN_OBJECTFILE
-#define LEVIATHAN_OBJECTFILE
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "ObjectFiles/ObjectFileObject.h"
 #include "Common/DataStoring/DataBlock.h"
 
@@ -14,7 +9,7 @@ namespace Leviathan{
 
 	//! Defines the main data structure for an ObjectFile
 	//! \warning The user is responsible for locking this class if multi threaded access is desired
-	class ObjectFile : public Object{
+	class ObjectFile{
 	public:
 		DLLEXPORT ObjectFile();
 
@@ -27,35 +22,35 @@ namespace Leviathan{
 
 		//! \brief Adds a NamedVariableList to this file
 		//! \return False when the variable is not added, only when the name is already used
-		DLLEXPORT bool AddNamedVariable(shared_ptr<NamedVariableList> var);
+		DLLEXPORT bool AddNamedVariable(std::shared_ptr<NamedVariableList> var);
 
 		//! \brief Adds a NamedVariableList to this file
 		//! \note This is a shorthand for AddNamedVariable defined above
 		//! \warning The pointer given will be deleted by this
 		//! \see AddNamedVariable
 		DLLEXPORT FORCE_INLINE bool AddNamedVariable(NamedVariableList* var){
-			return AddNamedVariable(shared_ptr<NamedVariableList>(var));
+			return AddNamedVariable(std::shared_ptr<NamedVariableList>(var));
 		}
 
 		//! \brief Adds a ObjectFileObject to this file
 		//! \return True when properly added, false if the name collides
 		//! \todo Disallow adding templates with this function
-		DLLEXPORT bool AddObject(shared_ptr<ObjectFileObject> obj);
+		DLLEXPORT bool AddObject(std::shared_ptr<ObjectFileObject> obj);
 
 
 		//! \brief Adds a ObjectFileTemplateInstance to this file
-		DLLEXPORT void AddTemplateInstance(shared_ptr<ObjectFileTemplateInstance> tiobj);
+		DLLEXPORT void AddTemplateInstance(std::shared_ptr<ObjectFileTemplateInstance> tiobj);
 
 		//! \brief Adds a ObjectFileTemplateInstance to this file
 		//! \return True when properly added, false if the name collides
-		DLLEXPORT bool AddTemplate(shared_ptr<ObjectFileTemplateDefinition> templatedef);
+		DLLEXPORT bool AddTemplate(std::shared_ptr<ObjectFileTemplateDefinition> templatedef);
 
 
 		//! \brief Adds a ObjectFileObject to this file
 		//! \warning The pointer will be deleted by this
 		//! \see AddObject
 		DLLEXPORT FORCE_INLINE bool AddObject(ObjectFileObject* obj){
-			return AddObject(shared_ptr<ObjectFileObject>(obj));
+			return AddObject(std::shared_ptr<ObjectFileObject>(obj));
 		}
 
 
@@ -69,16 +64,16 @@ namespace Leviathan{
 		//! \brief Gets an ObjectFileObject from an index
 		//! \except ExceptionInvalidArgument when the index is out of bounds
 		//! \see GetTotalObjectCount
-		DLLEXPORT ObjectFileObject* GetObjectFromIndex(size_t index) const THROWS;
+		DLLEXPORT ObjectFileObject* GetObjectFromIndex(size_t index) const;
 
 		//! \brief Gets an ObjectFileObject matching the type name
 		//! \note Only the first object is returned matching the type
 		//! \todo Add a function which returns all that matched the type
-		DLLEXPORT ObjectFileObject* GetObjectWithType(const wstring &typestr) const;
+		DLLEXPORT ObjectFileObject* GetObjectWithType(const std::string &typestr) const;
 
 		//! \brief Checks whether the given name is in use
 		//! \todo Check template names
-		DLLEXPORT bool IsObjectNameInUse(const wstring &name) const;
+		DLLEXPORT bool IsObjectNameInUse(const std::string &name) const;
 
 
 		//! \brief Instantiates all all templates to actual objects
@@ -89,19 +84,20 @@ namespace Leviathan{
 		//! \brief Finds the template definition matching the name
 		//! \return The found object or NULL
 		//! \todo Allow template overloading with different number of parameters
-		DLLEXPORT shared_ptr<ObjectFileTemplateDefinition> FindTemplateDefinition(const string &name) const;
+		DLLEXPORT std::shared_ptr<ObjectFileTemplateDefinition> FindTemplateDefinition(
+            const std::string &name) const;
 
 	protected:
 
 		//! Holds the defined objects
-		std::vector<shared_ptr<ObjectFileObject>> DefinedObjects;
+		std::vector<std::shared_ptr<ObjectFileObject>> DefinedObjects;
 
 		//! Holds all the template definitions
-		std::vector<shared_ptr<ObjectFileTemplateDefinition>> TemplateDefinitions;
+		std::vector<std::shared_ptr<ObjectFileTemplateDefinition>> TemplateDefinitions;
 
 
 		//! Holds all objects that are template instantiations
-		std::vector<shared_ptr<ObjectFileTemplateInstance>> TemplateInstantiations;
+		std::vector<std::shared_ptr<ObjectFileTemplateInstance>> TemplateInstantiations;
 
 
 		//! Holds all the named variables that were in the file
@@ -111,4 +107,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

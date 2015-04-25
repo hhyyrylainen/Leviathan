@@ -1,9 +1,7 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_PHYSICSMATERIALMANAGER
 #include "PhysicsMaterialManager.h"
-#endif
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicsMaterialManager::PhysicsMaterialManager(const NewtonManager* newtoninstanced){
 
@@ -26,7 +24,7 @@ DLLEXPORT void Leviathan::PhysicsMaterialManager::LoadedMaterialAdd(PhysicalMate
 	LoadedMaterials.insert(std::make_pair(ptrtotakeownership->GetName(), shared_ptr<PhysicalMaterial>(ptrtotakeownership)));
 }
 
-DLLEXPORT int Leviathan::PhysicsMaterialManager::GetMaterialIDForWorld(const wstring &name, NewtonWorld* WorldPtr){
+DLLEXPORT int Leviathan::PhysicsMaterialManager::GetMaterialIDForWorld(const std::string &name, NewtonWorld* WorldPtr){
 	// Search for it by name //
 	auto iter = LoadedMaterials.find(name);
 
@@ -39,7 +37,7 @@ DLLEXPORT int Leviathan::PhysicsMaterialManager::GetMaterialIDForWorld(const wst
 	return -1;
 }
 
-DLLEXPORT shared_ptr<PhysicalMaterial> Leviathan::PhysicsMaterialManager::GetMaterial(const wstring &name){
+DLLEXPORT shared_ptr<PhysicalMaterial> Leviathan::PhysicsMaterialManager::GetMaterial(const std::string &name){
 	// Search for it by name //
 	auto iter = LoadedMaterials.find(name);
 

@@ -1,27 +1,27 @@
-#ifndef LEVIATHAN_AUTOUPDATEABLE
-#define LEVIATHAN_AUTOUPDATEABLE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/DataStoring/NamedVars.h"
 #include "Common/DataStoring/DataBlock.h"
 
 namespace Leviathan{
 
-#define AUTOUPDATEABLEOBJECT_SCRIPTPROXIES DLLEXPORT ScriptSafeVariableBlock* GetAndPopFirstUpdatedProxy(){ return GetAndPopFirstUpdated(); };
+#define AUTOUPDATEABLEOBJECT_SCRIPTPROXIES DLLEXPORT ScriptSafeVariableBlock* GetAndPopFirstUpdatedProxy(){ \
+        return GetAndPopFirstUpdated(); };
 
 	class AutoUpdateableObject{
 	public:
 		DLLEXPORT AutoUpdateableObject();
 		DLLEXPORT virtual ~AutoUpdateableObject();
 
-		DLLEXPORT virtual void StartMonitoring(const vector<VariableBlock*> &IndexesAndNamesToListen);
-		DLLEXPORT virtual void StopMonitoring(vector<shared_ptr<VariableBlock>> &unregisterindexandnames, bool all = false);
+		DLLEXPORT virtual void StartMonitoring(
+            const std::vector<VariableBlock*> &IndexesAndNamesToListen);
+        
+		DLLEXPORT virtual void StopMonitoring(
+            std::vector<std::shared_ptr<VariableBlock>> &unregisterindexandnames, bool all = false);
 
-		DLLEXPORT virtual bool OnUpdate(const shared_ptr<NamedVariableList> &updated);
+		DLLEXPORT virtual bool OnUpdate(const std::shared_ptr<NamedVariableList> &updated);
 
 
 
@@ -30,12 +30,12 @@ namespace Leviathan{
 		DLLEXPORT void _PopUdated();
 
 		// -------------------------- //
-		vector<shared_ptr<VariableBlock>> MonitoredValues;
+        std::vector<std::shared_ptr<VariableBlock>> MonitoredValues;
 
 
 		bool ValuesUpdated;
-		vector<shared_ptr<NamedVariableList>> UpdatedValues;
+		std::vector<std::shared_ptr<NamedVariableList>> UpdatedValues;
 	};
 
 }
-#endif
+

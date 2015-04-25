@@ -1,5 +1,5 @@
-// ------------------ This file contains forward declarations for all possible things that need to be included
-// (or forward declared) ------------------
+// ------------------ This file contains forward declarations for all possible things
+// that need to be included (or forward declared)
 #pragma once
 
 // This is required for ObjectPtr
@@ -10,10 +10,25 @@
 class NewtonJoint;
 
 namespace Leviathan{
+
+    // Core systems //
 	class Logger;
 	class FileSystem;
 	class Engine;
 	class Graphics;
+    class ScriptExecutor;
+    class NetworkHandler;
+	class ScriptExecutor;
+	class GameWorld;
+	class AppDef;
+	class Convert;
+	class EventHandler;
+    class DataStore;
+    class OutOfMemoryHandler;
+    class RenderingStatistics;
+    class IDFactory;
+    class Time;
+
 
 	namespace Gui{
 		
@@ -36,20 +51,15 @@ namespace Leviathan{
 
 	// Entity bases //
 	class BasePositionable;
+    class BaseSendableEntity;
+    class BasePhysicsObject;
+    class BaseConstraintable;
     
     class BaseObject;
-    typedef boost::intrusive_ptr<BaseObject> ObjectPtr;
+    using ObjectPtr = boost::intrusive_ptr<BaseObject>;
     
-    class BaseConstraintable;
 
-
-    struct ObjectInterpolation;
-    
     class ObjectDeltaStateData;
-    class BaseSendableEntity;
-    
-    class BasePhysicsObject;
-
     class PositionablePhysicalDeltaState;
     class PositionableRotationableDeltaState;
 
@@ -99,13 +109,17 @@ namespace Leviathan{
 	class ConnectedPlayer;
 	class CommandSender;
 	class CommandHandler;
+    
 	class ScriptArgumentsProviderBridge;
+    struct FunctionParameterInfo;
+    
 	class ResourceFolderListener;
 	class ResourceRefreshHandler;
+    
 	class UTF8DataIterator;
 	template<class DTypeName> class SyncedPrimitive;
 	class SyncedResource;
-	class ScriptExecutor;
+    
 	class ViewerCameraPos;
 	class NewtonManager;
 	class SoundDevice;
@@ -150,12 +164,6 @@ namespace Leviathan{
 	struct RayCastData;
 	class ScriptModule;
 	class ScriptScript;
-	class NetworkHandler;
-	class ScriptExecutor;
-	class GameWorld;
-	class AppDef;
-	class Convert;
-	class EventHandler;
 	class Event;
 	class GenericEvent;
 	struct Int1;
@@ -170,10 +178,6 @@ namespace Leviathan{
 	class TimingMonitor;
 	class ScopeTimer;
 	class GameModule;
-    class DataStore;
-    class OutOfMemoryHandler;
-    class RenderingStatistics;
-    class IDFactory;
 	struct MasterServerInformation;
 }
 

@@ -1,8 +1,6 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_BASE_RENDERABLE
 #include "BaseRenderable.h"
-#endif
+
 #include "OgreEntity.h"
 #include "OgreSubEntity.h"
 #include "OgreMaterial.h"
@@ -10,6 +8,7 @@
 #include "OgrePass.h"
 #include "OgreSceneNode.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseRenderable::BaseRenderable(bool hidden) :
     Hidden(hidden), GraphicalObject(NULL), ObjectsNode(NULL)

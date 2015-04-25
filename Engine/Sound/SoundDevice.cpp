@@ -1,9 +1,8 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_SOUND
 #include "SoundDevice.h"
-#endif
+
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 
 // might as well resize space for maximum number of playing sounds //
@@ -55,7 +54,7 @@ void SoundDevice::Tick(int PassedMs){
 	}
 }
 
-DLLEXPORT shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(const wstring &file){
+DLLEXPORT shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(const string &file){
 	// loop all and get an empty one or if some already has it return it (if not active) //
 	for(size_t i = 0; i < LoadedSoundObjects.size(); i++){
 		if(LoadedSoundObjects[i]){

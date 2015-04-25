@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_BASENOTIFIABLE
-#define LEVIATHAN_BASENOTIFIABLE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "ThreadSafe.h"
 
 namespace Leviathan{
@@ -23,7 +19,7 @@ namespace Leviathan{
 		DLLEXPORT void ReleaseParentHooks();
 
 		//! \brief The actual implementation of UnConnectFromNotifier
-		DLLEXPORT bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier, ObjectLock &guard);
+		DLLEXPORT bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier, Lock &guard);
 
 		//! \brief Notifies all the parents of this object about something
 		//!
@@ -31,19 +27,21 @@ namespace Leviathan{
 		DLLEXPORT virtual void NotifyAll();
 
 		//! \brief Disconnects this from a previously connected notifier
-		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier){
+		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifier(
+            BaseNotifier<ParentType, ChildType>* specificnotifier)
+        {
 			// The parent has to be locked before this object //
-			GUARD_LOCK_OTHER_OBJECT_NAME(specificnotifier, guard2);
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK_OTHER_NAME(specificnotifier, guard2);
+			GUARD_LOCK();
 			return UnConnectFromNotifier(specificnotifier, guard);
 		}
 
 		//! \brief Actual implementation of this method
-		DLLEXPORT bool IsConnectedTo(BaseNotifier<ParentType, ChildType>* check, ObjectLock &guard);
+		DLLEXPORT bool IsConnectedTo(BaseNotifier<ParentType, ChildType>* check, Lock &guard);
 
 		//! \brief Returns true when the specified object is already connected
 		DLLEXPORT FORCE_INLINE bool IsConnectedTo(BaseNotifier<ParentType, ChildType>* check){
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			return IsConnectedTo(check, guard);
 		}
 
@@ -99,4 +97,4 @@ namespace Leviathan{
 // The implementations are included here to make this compile //
 #include "BaseNotifiableImpl.h"
 
-#endif
+

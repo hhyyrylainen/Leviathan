@@ -1,18 +1,13 @@
-#ifndef LEVIATHAN_SOUNDPLAYINGSLOT
-#define LEVIATHAN_SOUNDPLAYINGSLOT
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include <SFML/Audio.hpp>
 
 namespace Leviathan{
 
-
-
-	class SoundPlayingSlot : public Object{
+    //! \todo Redo with cAudio
+	class SoundPlayingSlot{
 	public:
 		DLLEXPORT SoundPlayingSlot();
 		DLLEXPORT ~SoundPlayingSlot();
@@ -28,7 +23,7 @@ namespace Leviathan{
 		DLLEXPORT bool IsConnected();
 		DLLEXPORT void SetConnected(bool state);
 
-		DLLEXPORT void SetPlayFile(const wstring &file, bool streaming);
+		DLLEXPORT void SetPlayFile(const std::string &file, bool streaming);
 		// unused recycle control //
 		DLLEXPORT void PassTimeIfNotPlaying(int mspassed);
 		DLLEXPORT int GetUnusedTime();
@@ -45,7 +40,7 @@ namespace Leviathan{
 
 	protected:
 		// information about last played sound //
-		wstring FileName;
+		std::string FileName;
 		int UnusedTimeMS;
 		bool Linked;
 
@@ -57,4 +52,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

@@ -1,7 +1,6 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_NETWORKEDINPUTHANDLER
 #include "NetworkedInputHandler.h"
-#endif
+
 #include "NetworkedInput.h"
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
@@ -9,6 +8,7 @@
 #include "Threading/ThreadingManager.h"
 #include "NetworkServerInterface.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkedInputHandler::NetworkedInputHandler(NetworkInputFactory* objectcreater,
     NetworkClientInterface* isclient) : 

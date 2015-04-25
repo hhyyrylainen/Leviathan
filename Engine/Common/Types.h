@@ -1,7 +1,5 @@
 #pragma once
 // ------------------------------------ //
-#include "Define.h"
-// ------------------------------------ //
 #include <memory>
 #include <iostream>
 
@@ -14,17 +12,6 @@ namespace Leviathan{
 
 
 #define NORMALIZATION_TOLERANCE	1e-6f
-
-	// just a key index class //
-	class CharWithIndex{
-	public:
-		CharWithIndex();
-		CharWithIndex(wchar_t character, int index);
-		~CharWithIndex();
-
-		wchar_t Char;
-		int Index;
-	};
 
 	class AllocatedBinaryBlock{
 	public:

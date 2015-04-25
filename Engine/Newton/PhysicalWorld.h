@@ -29,7 +29,7 @@ namespace Leviathan{
 
     int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void* islandHandle, int bodyCount);
     
-	class PhysicalWorld : public Object{
+	class PhysicalWorld{
         friend int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void*
             islandHandle, int bodyCount);
 	public:

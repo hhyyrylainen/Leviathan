@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_OBJECTLOADER
-#define LEVIATHAN_OBJECTLOADER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Entities/GameWorld.h"
 
 
@@ -22,37 +18,40 @@ namespace Leviathan{
     //! \todo Make the above statement true for all the functions
     //! \todo Allow objects to be created that will be sent to clients only after the caller has had the chance to set
     //! the position etc.
-	class ObjectLoader : public Object{
+	class ObjectLoader{
 	public:
 		DLLEXPORT ObjectLoader(Engine* engine);
 
 		//! \brief Loads prop to a GameWorld
-		DLLEXPORT int LoadPropToWorld(GameWorld* world, const wstring &name, int materialid,
+		DLLEXPORT int LoadPropToWorld(GameWorld* world, const std::string &name, int materialid,
             Entity::Prop** createdinstance);
         
 		//! \brief Creates a brush with physical component and sets mass
 		//! \param mass The mass of the brush, use 0.f for static object
-		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, const float &mass,
-            int materialid, Entity::Brush** createdinstance);
+		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const std::string &material,
+            const Float3 &size, const float &mass, int materialid, Entity::Brush** createdinstance);
         
 		//! \brief Creates a brush, but no physics are initialized
 		//! \note To initialize physics later call Entity::Brush::AddPhysicalObject
-		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size,
-            Entity::Brush** createdinstance);
+		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const std::string &material,
+            const Float3 &size, Entity::Brush** createdinstance);
 
 		// ------------------ Complex entity loading ------------------ //
-		DLLEXPORT int LoadTrackEntityControllerToWorld(GameWorld* world, vector<Entity::TrackControllerPosition>
-            &initialtrack, BaseConstraintable* controllable, Entity::TrackEntityController** createdinstance);
+		DLLEXPORT int LoadTrackEntityControllerToWorld(GameWorld* world,
+            std::vector<Entity::TrackControllerPosition> &initialtrack,
+            BaseConstraintable* controllable, Entity::TrackEntityController** createdinstance);
 
-		// Creates a trail entity to a world. Set the dynamic property if you want to update the properties later //
-		DLLEXPORT int LoadTrailToWorld(GameWorld* world, const string &material, const Entity::TrailProperties
-            &properties, bool allowupdatelater, Entity::TrailEmitter** createdinstance);
+		// Creates a trail entity to a world. Set the dynamic property if you want to update the
+        // properties later
+		DLLEXPORT int LoadTrailToWorld(GameWorld* world, const std::string &material,
+            const Entity::TrailProperties &properties, bool allowupdatelater,
+            Entity::TrailEmitter** createdinstance);
 
 
 		// ------------------ Test object adding ------------------ //
-		DLLEXPORT void CreateTestCubeToScene(Ogre::SceneManager* scene, string meshname);
-		DLLEXPORT void AddTestCubeToScenePositions(Ogre::SceneManager* scene, vector<Float3> &positions,
-            const string &meshname);
+		DLLEXPORT void CreateTestCubeToScene(Ogre::SceneManager* scene, std::string meshname);
+		DLLEXPORT void AddTestCubeToScenePositions(Ogre::SceneManager* scene,
+            std::vector<Float3> &positions, const std::string &meshname);
 
 	private:
 		Engine* m_Engine;
@@ -60,4 +59,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

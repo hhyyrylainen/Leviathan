@@ -1,8 +1,6 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_RESOURCEREFRESHHANDLER
 #include "ResourceRefreshHandler.h"
-#endif
+
 #include "Common/StringOperations.h"
 #include "Common/Misc.h"
 #ifdef __GNUC__
@@ -10,6 +8,7 @@
 #include <sys/inotify.h>
 #endif
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 #ifdef __GNUC__
 
@@ -57,8 +56,8 @@ DLLEXPORT void Leviathan::ResourceRefreshHandler::Release(){
 	ActiveFileListeners.clear();
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ResourceRefreshHandler::ListenForFileChanges(const std::vector<const wstring*> &filestowatch, 
-	boost::function<void (const wstring &, ResourceFolderListener&)> notifyfunction, int &createdid)
+DLLEXPORT bool Leviathan::ResourceRefreshHandler::ListenForFileChanges(const std::vector<const std::string*> &filestowatch, 
+	boost::function<void (const std::string &, ResourceFolderListener&)> notifyfunction, int &createdid)
 {
 
 	unique_ptr<ResourceFolderListener> tmpcreated(new ResourceFolderListener(filestowatch, notifyfunction));
@@ -130,8 +129,8 @@ DLLEXPORT void Leviathan::ResourceRefreshHandler::MarkListenersAsNotUpdated(cons
 	}
 }
 // ------------------ ResourceFolderListener ------------------ //
-Leviathan::ResourceFolderListener::ResourceFolderListener(const std::vector<const wstring*> &filestowatch, 
-	boost::function<void (const wstring &, ResourceFolderListener&)> notifyfunction) : CallbackFunction(notifyfunction), 
+Leviathan::ResourceFolderListener::ResourceFolderListener(const std::vector<const std::string*> &filestowatch, 
+	boost::function<void (const std::string &, ResourceFolderListener&)> notifyfunction) : CallbackFunction(notifyfunction), 
 	ListenedFiles(filestowatch.size()), ShouldQuit(false), ID(IDFactory::GetID()), 
 	UpdatedFiles(filestowatch.size(), false)
 #ifdef _WIN32
@@ -168,10 +167,10 @@ Leviathan::ResourceFolderListener::ResourceFolderListener(const std::vector<cons
 		if(i == 0){
 
 			
-			TargetFolder = StringOperations::GetPathWstring(*filestowatch[i]);
+			TargetFolder = StringOperations::GetPathStd::String(*filestowatch[i]);
 		}
 
-		ListenedFiles[i] = move(unique_ptr<wstring>(new wstring(StringOperations::RemovePathWstring(*filestowatch[i]))));
+		ListenedFiles[i] = move(unique_ptr<std::string>(new std::string(StringOperations::RemovePathStd::String(*filestowatch[i]))));
 	}
 
 }
@@ -207,7 +206,7 @@ bool Leviathan::ResourceFolderListener::StartListening(){
 	if(TargetFolderHandle == INVALID_HANDLE_VALUE || !TargetFolderHandle){
 
 		Logger::Get()->Error(L"ResourceFolderListener: StartListening: failed to open folder for reading, error: "
-			+Convert::ToHexadecimalWstring(GetLastError()));
+			+Convert::ToHexadecimalStd::String(GetLastError()));
 		return false;
 	}
 
@@ -223,7 +222,7 @@ bool Leviathan::ResourceFolderListener::StartListening(){
 	if(!readcompleteevent){
 
 		Logger::Get()->Error(L"ResourceFolderListener: StartListening: failed to create read notify handle, CreateEvent failed, error: "
-			+Convert::ToHexadecimalWstring(GetLastError()));
+			+Convert::ToHexadecimalStd::String(GetLastError()));
 		return false;
 	} 
 
@@ -244,7 +243,7 @@ bool Leviathan::ResourceFolderListener::StartListening(){
 
 		CloseHandle(TargetFolderHandle);
 		Logger::Get()->Error(L"ResourceFolderListener: StartListening: failed to start reading directory changes, error: "
-			+Convert::ToHexadecimalWstring(GetLastError()));
+			+Convert::ToHexadecimalStd::String(GetLastError()));
 		return false;
 	}
 
@@ -379,7 +378,7 @@ void Leviathan::ResourceFolderListener::_RunListeningThread(){
 
 					{
 						// Get the filename //
-						wstring entrydata;
+						std::string entrydata;
 
 						size_t filenameinwchars = dataptr->FileNameLength/sizeof(wchar_t);
 
@@ -431,7 +430,7 @@ movetonextdatalabel:
 				if(!createresult){
 
 					Logger::Get()->Error(L"ResourceFolderListener: _RunListeningThread: re-queuing file change read failed: "
-						+Convert::ToHexadecimalWstring(GetLastError()));
+						+Convert::ToHexadecimalStd::String(GetLastError()));
 					return;
 				}
 
@@ -443,7 +442,7 @@ movetonextdatalabel:
 			continue;
 
 		default:
-			Logger::Get()->Error(L"ResourceFolderListener: _RunListeningThread: invalid wait result: "+Convert::ToWstring(waitstatus));
+			Logger::Get()->Error(L"ResourceFolderListener: _RunListeningThread: invalid wait result: "+Convert::ToStd::String(waitstatus));
 			break;
 		}
 		
@@ -478,7 +477,7 @@ movetonextdatalabel:
 						// Some file was modified, check was it one of ours //
 						const string modifiedfile(event->name, event->len);
 						
-						const wstring entrydata = Convert::Utf8ToUtf16(modifiedfile);
+						const std::string entrydata = Convert::Utf8ToUtf16(modifiedfile);
 						
 						if(!entrydata.empty()){
 							
@@ -513,7 +512,7 @@ void Leviathan::ResourceFolderListener::CheckUpdatesEnded(){
 		if(UpdatedFiles[i]){
 
 			// Check is it readable //
-			const wstring checkread = TargetFolder+*ListenedFiles[i];
+			const std::string checkread = TargetFolder+*ListenedFiles[i];
 
 			string realtarget = Convert::Utf16ToUtf8(checkread);
 

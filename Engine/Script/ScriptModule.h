@@ -26,17 +26,17 @@ namespace Leviathan{
 	};
 
 
-#define LISTENERNAME_ONSHOW					L"OnShow"
-#define LISTENERNAME_ONHIDE					L"OnHide"
-#define LISTENERNAME_ONLISTENUPDATE			L"OnListenUpdate"
-#define LISTENERNAME_ONCLICK				L"OnClick"
-#define LISTENERNAME_ONINIT					L"OnInit"
-#define LISTENERNAME_ONRELEASE				L"OnRelease"
-#define LISTENERNAME_ONVALUECHANGE			L"OnValueChange"
-#define LISTENERNAME_ONSUBMIT				L"OnSubmit"
-#define LISTENERNAME_ONTICK					L"OnTick"
-#define LISTENERNAME_ONCLOSECLICKED			L"OnCloseClicked"
-#define LISTENERNAME_LISTSELECTIONACCEPTED  L"OnListSelectionAccepted"
+#define LISTENERNAME_ONSHOW					"OnShow"
+#define LISTENERNAME_ONHIDE					"OnHide"
+#define LISTENERNAME_ONLISTENUPDATE			"OnListenUpdate"
+#define LISTENERNAME_ONCLICK				"OnClick"
+#define LISTENERNAME_ONINIT					"OnInit"
+#define LISTENERNAME_ONRELEASE				"OnRelease"
+#define LISTENERNAME_ONVALUECHANGE			"OnValueChange"
+#define LISTENERNAME_ONSUBMIT				"OnSubmit"
+#define LISTENERNAME_ONTICK					"OnTick"
+#define LISTENERNAME_ONCLOSECLICKED			"OnCloseClicked"
+#define LISTENERNAME_LISTSELECTIONACCEPTED  "OnListSelectionAccepted"
 
 #define LISTENERVALUE_ONSHOW				100
 #define LISTENERVALUE_ONHIDE				101
@@ -62,41 +62,42 @@ namespace Leviathan{
 
 		int FunctionID;
 
-		vector<asUINT> ParameterTypeIDS;
+        std::vector<asUINT> ParameterTypeIDS;
 		//vector<string> ParameterDeclarations;
-		vector<wstring> ParameterDeclarations;
-		vector<int> MatchingDataBlockTypes;
+        std::vector<std::string> ParameterDeclarations;
+        std::vector<int> MatchingDataBlockTypes;
 
 		asUINT ReturnTypeID;
-		wstring ReturnTypeDeclaration;
+        std::string ReturnTypeDeclaration;
 		int ReturnMatchingDataBlock;
 	};
 
 	//! some data that is stored when a listener is found
 	struct ValidListenerData{
-		ValidListenerData(asIScriptFunction* funcptr, wstring* name, wstring* metadataend);
-		ValidListenerData(asIScriptFunction* funcptr, wstring* name, wstring* metadataend, wstring* generictypename);
+		ValidListenerData(asIScriptFunction* funcptr, std::string* name, std::string* metadataend);
+		ValidListenerData(asIScriptFunction* funcptr, std::string* name, std::string* metadataend,
+            std::string* generictypename);
 		~ValidListenerData();
 
 		asIScriptFunction* FuncPtr;
-		unique_ptr<wstring> ListenerName;
-		unique_ptr<wstring> RestOfMeta;
-		unique_ptr<wstring> GenericTypeName;
+        std::unique_ptr<std::string> ListenerName;
+        std::unique_ptr<std::string> RestOfMeta;
+        std::unique_ptr<std::string> GenericTypeName;
 	};
 
 	//! \brief Represents a section of script source file
 	struct ScriptSourceFileData{
 
         //! \param line The line to start from. First line in a file is 1
-		ScriptSourceFileData(const string &file, int line, const string &code);
+		ScriptSourceFileData(const std::string &file, int line, const std::string &code);
 
 
-		string SourceFile;
+        std::string SourceFile;
 		int StartLine;
 
 		//! The source is stored here to allow saving it to a file
 		//! This being a shared pointer allows for more efficient copying
-		shared_ptr<string> SourceCode;
+        std::shared_ptr<std::string> SourceCode;
 	};
 
 
@@ -105,7 +106,8 @@ namespace Leviathan{
 		// friend to be able to delete static objects //
 		friend ScriptExecutor;
 	public:
-		DLLEXPORT ScriptModule(asIScriptEngine* engine, const wstring &name, int id, const string &source);
+		DLLEXPORT ScriptModule(asIScriptEngine* engine, const std::string &name, int id,
+            const std::string &source);
 		DLLEXPORT ~ScriptModule();
 
 		DLLEXPORT FunctionParameterInfo* GetParamInfoForFunction(asIScriptFunction* func);
@@ -114,10 +116,10 @@ namespace Leviathan{
 		//! \return The associated module or NULL if build fails
 		DLLEXPORT asIScriptModule* GetModule();
 
-		DLLEXPORT shared_ptr<ScriptScript> GetScriptInstance();
+		DLLEXPORT std::shared_ptr<ScriptScript> GetScriptInstance();
 
 
-		DLLEXPORT inline wstring GetName(){
+		DLLEXPORT inline std::string GetName(){
 			return Name;
 		}
 
@@ -126,28 +128,33 @@ namespace Leviathan{
 		DLLEXPORT void Release();
 
 		//! \brief Gets the name of the internal AngelScript module
-		DLLEXPORT const string& GetModuleName() const;
+		DLLEXPORT const std::string& GetModuleName() const;
 
 		DLLEXPORT inline int GetID(){
 			return ID;
 		}
 
-		DLLEXPORT const string& GetSource() const{
+		DLLEXPORT const std::string& GetSource() const{
 			return Source;
 		}
 
-		DLLEXPORT inline const string& GetIncompleteSourceCode(){
+		DLLEXPORT inline const std::string& GetIncompleteSourceCode(){
 			return ObjectFileLoadedScriptCode;
 		}
 
 
 		DLLEXPORT void DeleteThisModule();
 
-		DLLEXPORT bool DoesListenersContainSpecificListener(const wstring &listenername, const wstring* generictype = NULL);
-		DLLEXPORT void GetListOfListeners(std::vector<shared_ptr<ValidListenerData>> &receiver);
-		DLLEXPORT string GetListeningFunctionName(const wstring &listenername, const wstring* generictype = NULL);
+		DLLEXPORT bool DoesListenersContainSpecificListener(const std::string &listenername,
+            const std::string* generictype = NULL);
+        
+		DLLEXPORT void GetListOfListeners(
+            std::vector<std::shared_ptr<ValidListenerData>> &receiver);
+        
+		DLLEXPORT std::string GetListeningFunctionName(const std::string &listenername,
+            const std::string* generictype = NULL);
 
-		DLLEXPORT wstring GetInfoWstring();
+		DLLEXPORT std::string GetInfoString();
 
 		DLLEXPORT inline void SetBuildState(const SCRIPTBUILDSTATE &state){
 			ScriptState = state;
@@ -160,23 +167,24 @@ namespace Leviathan{
 		//! \brief Gets the data associated with a code segment
 		//! \param index The index of the segment in the vector, use GetScriptSegmentCount to get max index
 		//! \return The segments data or NULL
-		DLLEXPORT shared_ptr<ScriptSourceFileData> GetScriptSegment(size_t index) const;
+		DLLEXPORT std::shared_ptr<ScriptSourceFileData> GetScriptSegment(size_t index) const;
 
 
 		//! \brief Adds a new script section
 		//! \return True when the file is not included already (and it got added), false otherwise
-		DLLEXPORT FORCE_INLINE bool AddScriptSegment(const string &file, int line, const string &code){
+		DLLEXPORT FORCE_INLINE bool AddScriptSegment(const std::string &file, int line,
+            const std::string &code){
 
-			return AddScriptSegment(shared_ptr<ScriptSourceFileData>(new ScriptSourceFileData(file, line, code)));
+			return AddScriptSegment(std::make_shared<ScriptSourceFileData>(file, line, code));
 		}
 
 		//! \brief The actual implementation of AddScriptSegment
-		DLLEXPORT bool AddScriptSegment(shared_ptr<ScriptSourceFileData> data);
+		DLLEXPORT bool AddScriptSegment(std::shared_ptr<ScriptSourceFileData> data);
 
 
 		//! \brief Adds an entire file as a script segment
 		//! \return True when the file is added, false if the file was already added
-		DLLEXPORT bool AddScriptSegmentFromFile(const string &file);
+		DLLEXPORT bool AddScriptSegmentFromFile(const std::string &file);
 
 
 		//! \brief Rebuilds the module and tries to restore data
@@ -192,25 +200,31 @@ namespace Leviathan{
 		DLLEXPORT void PrintFunctionsInModule();
 
 		// static map that contains listener names //
-		static const std::map<wstring, int> ListenerNameType;
+		static const std::map<std::string, int> ListenerNameType;
 
 		// static include resolver for scripts //
-		DLLEXPORT static int ScriptModuleIncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam);
+		DLLEXPORT static int ScriptModuleIncludeCallback(const char* include, const char* from,
+            CScriptBuilder* builder, void* userParam);
 
 
 		//! \brief Call when this module is added to a bridge
 		//! \return True when this is not in a bridge and it is added, false if this is removed from the bridge
-		DLLEXPORT bool OnAddedToBridge(shared_ptr<ScriptArgumentsProviderBridge> bridge);
+		DLLEXPORT bool OnAddedToBridge(std::shared_ptr<ScriptArgumentsProviderBridge> bridge);
 
 	private:
 		
 		ScriptModule(const ScriptModule &other){}
 		
-		void _FillParameterDataObject(int typeofas, asUINT* paramtypeid, wstring* paramdecl, int* datablocktype);
-		void _BuildListenerList(ObjectLock &guard);
+		void _FillParameterDataObject(int typeofas, asUINT* paramtypeid, std::string* paramdecl,
+            int* datablocktype);
+        
+		void _BuildListenerList(Lock &guard);
+        
 		void _ProcessMetadataForFunc(asIScriptFunction* func, asIScriptModule* mod);
-		std::map<wstring, shared_ptr<ValidListenerData>>::iterator _GetIteratorOfListener(ObjectLock &guard, const wstring &listenername, const wstring* generictype = NULL);
-
+        
+		std::map<std::string, std::shared_ptr<ValidListenerData>>::iterator
+            _GetIteratorOfListener(Lock &guard, const std::string &listenername,
+                const std::string* generictype = NULL);
 
 		//! \brief Tries to build the module and sets the state accordingly
 		void _BuildTheModule();
@@ -227,17 +241,17 @@ namespace Leviathan{
 
 
 		//! \brief Adds a new file to monitor, if required
-		void _AddFileToMonitorIfNotAlready(const string &file);
+		void _AddFileToMonitorIfNotAlready(const std::string &file);
 
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
 
 		// ------------------------------------ //
 
-		wstring Name;
-		string ModuleName;
-		string Source;
-		string ObjectFileLoadedScriptCode;
+        std::string Name;
+		std::string ModuleName;
+		std::string Source;
+		std::string ObjectFileLoadedScriptCode;
 		int ID;
 
 
@@ -249,7 +263,7 @@ namespace Leviathan{
 
 
 		//! The raw script source code for returning to writing to files
-		std::vector<shared_ptr<ScriptSourceFileData>> ScriptSourceSegments;
+		std::vector<std::shared_ptr<ScriptSourceFileData>> ScriptSourceSegments;
 
 
 		//! THe direct pointer to the module, this is stored to avoid searching
@@ -260,7 +274,7 @@ namespace Leviathan{
 
 
 		//! Map of found listener functions
-		std::map<wstring, shared_ptr<ValidListenerData>> FoundListenerFunctions;
+		std::map<std::string, std::shared_ptr<ValidListenerData>> FoundListenerFunctions;
 
 
 		//! Last ID of a ScriptModule, used to generate unique IDs for modules
@@ -268,11 +282,11 @@ namespace Leviathan{
 
 
 		//! Only one module can build code at a time so this mutex has to be locked while building
-		static boost::mutex ModuleBuildingMutex;
+		static Mutex ModuleBuildingMutex;
 
-		//! A connection to an object that provides us with parameters for automatically called script functions
-		shared_ptr<ScriptArgumentsProviderBridge> ArgsBridge;
-
+		//! A connection to an object that provides us with parameters for automatically called
+        //! script functions
+        std::shared_ptr<ScriptArgumentsProviderBridge> ArgsBridge;
 
 		// Data for file listening //
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
@@ -285,19 +299,22 @@ namespace Leviathan{
 		//! \todo Cache the file path to allow faster lookup
 		struct AutomonitoredFile{
 
-			AutomonitoredFile(const string &file) : File(new wstring(Convert::StringToWstring(file))), Added(false){
+			AutomonitoredFile(const std::string &file) :
+                File(new std::string(file)), Added(false)
+            {
+                
 			}
 
-			unique_ptr<wstring> File;
+            std::unique_ptr<std::string> File;
 			bool Added;
 		};
 
 		//! List of files that are already monitored, used to avoid duplicates
-		std::vector<unique_ptr<AutomonitoredFile>> AlreadyMonitoredFiles;
+		std::vector<std::unique_ptr<AutomonitoredFile>> AlreadyMonitoredFiles;
 
 
 		//! The function that is called when one of our files change
-		void _FileChanged(const wstring &file, ResourceFolderListener &caller);
+		void _FileChanged(const std::string &file, ResourceFolderListener &caller);
 
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 

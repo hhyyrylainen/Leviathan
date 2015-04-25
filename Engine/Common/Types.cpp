@@ -1,11 +1,7 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_TYPES
 #include "Types.h"
-#endif
-#ifndef LEVIATHAN_DEFINE
+
 #include "Define.h"
-#endif
 using namespace Leviathan;
 // ------------------------------------ //
 // --- AllocatedBinaryBlock --- //
@@ -193,19 +189,6 @@ void Leviathan::Int1::SetIntValue(int val){
 }
 
 // ----- CharWithIndex ------ //
-
-Leviathan::CharWithIndex::CharWithIndex(){
-	Char = L' ';
-	Index = -1;
-}
-
-Leviathan::CharWithIndex::CharWithIndex(wchar_t character, int index) : Char(character), Index(index){
-	
-}
-
-Leviathan::CharWithIndex::~CharWithIndex(){
-
-}
 
 // ------------ UINT4 ---------------- //
 DLLEXPORT Leviathan::UINT4::UINT4(UINT u1, UINT u2, UINT u3, UINT u4){

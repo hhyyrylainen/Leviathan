@@ -1,13 +1,14 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_PHYSICALMATERIAL
 #include "PhysicalMaterial.h"
-#endif
+
 #include "PhysicsMaterialManager.h"
 #include "Handlers/IDFactory.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(const wstring &name) : Name(name), EngineID(IDFactory::GetID()){
+DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(const std::string &name) :
+    Name(name), EngineID(IDFactory::GetID())
+{
 
 }
 

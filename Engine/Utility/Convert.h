@@ -1,7 +1,5 @@
 #pragma once
 // ------------------------------------ //
-#include "Define.h"
-// ------------------------------------ //
 #include "../Common/Types.h"
 
 namespace Leviathan{
@@ -80,11 +78,6 @@ namespace Leviathan{
 		// macro conversions //
 		STRINGTOSOMETHINGTEMPLATEALTERNATIVE(std::wstring, std::wstringstream, WstringToInt, int);
 		STRINGTOSOMETHINGTEMPLATEALTERNATIVE(std::wstring, std::wstringstream, WstringToFloat, float);
-
-
-		DLLEXPORT static wchar_t ToLower(const wchar_t &chara);
-		DLLEXPORT static void ToLower(const std::wstring &source, std::wstring &target);
-		DLLEXPORT static void ToCapital(const std::wstring &source, std::wstring &target);
 
 		// type checks //
 		DLLEXPORT static int WstringTypeCheck(const std::wstring& data, int typecheckfor);

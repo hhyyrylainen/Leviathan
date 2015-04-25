@@ -1,13 +1,12 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_LEAPMANAGER
 #include "LeapManager.h"
-#endif
+
 #include "Leap.h"
 #include "Engine.h"
-#include "Application/Application.h"
+#include "../Application/Application.h"
 using namespace Leviathan;
 using namespace Leap;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::LeapManager::LeapManager(Engine* engineinstance) :
     EngineAccess(engineinstance), MainController(NULL), MainListener(NULL)
@@ -35,7 +34,7 @@ DLLEXPORT bool Leviathan::LeapManager::Init(){
 	if(!MainController->addListener(*MainListener)){
         
 		// No leap controller! //
-		Logger::Get()->Warning(L"LeapManager: Failed to start listening for Leap motion controller");
+		Logger::Get()->Warning("LeapManager: Failed to start listening for Leap motion controller");
 	}
 #endif //LEAP_USE_ASYNC
 
@@ -47,7 +46,7 @@ DLLEXPORT void Leviathan::LeapManager::Release(){
 	if(MainListener){
 #ifdef LEAP_USE_ASYNC
 		MainController->removeListener(*MainListener);
-		Logger::Get()->Info(L"LeapManager: unconnected from Leap");
+		Logger::Get()->Info("LeapManager: unconnected from Leap");
 #endif //LEAP_USE_ASYNC
 	}
     

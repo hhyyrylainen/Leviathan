@@ -453,7 +453,7 @@ namespace Leviathan{
 		}
 
 		// constructor for creating this from std::wstring //
-		DLLEXPORT VariableBlock(const std::wstring &valuetoparse, std::map<std::wstring,
+		DLLEXPORT VariableBlock(const std::string &valuetoparse, std::map<std::string,
             std::shared_ptr<VariableBlock>>* predefined);
 
 		// non template constructor //
@@ -734,35 +734,35 @@ namespace Leviathan{
 	public:
 		// constructors that accept any type of DataBlock //
 		template<class DBRType>
-		DLLEXPORT NamedVariableBlock(DataBlock<DBRType>* block, const std::wstring &name):
+		DLLEXPORT NamedVariableBlock(DataBlock<DBRType>* block, const std::string &name):
             VariableBlock(block), Name(name)
         {
 
 		}
 		// non template constructor //
-		DLLEXPORT NamedVariableBlock(DataBlockAll* block, const std::wstring &name) :
+		DLLEXPORT NamedVariableBlock(DataBlockAll* block, const std::string &name) :
             VariableBlock(block), Name(name)
         {
 
 		}
 
-		DLLEXPORT inline std::wstring GetName() const{
+		DLLEXPORT inline std::string GetName() const{
 			return Name;
 		}
 
-		DLLEXPORT inline bool CompareName(const std::wstring &str) const{
+		DLLEXPORT inline bool CompareName(const std::string &str) const{
 
 			return Name == str;
 		}
 
-		DLLEXPORT inline std::wstring& GetNameChangeable(){
+		DLLEXPORT inline std::string& GetNameChangeable(){
 
 			return Name;
 		}
 
 	protected:
 
-		std::wstring Name;
+		std::string Name;
 	};
 
     //! \brief Reference counted version for scripts
@@ -774,14 +774,15 @@ namespace Leviathan{
 	public:
 
 		template<class BlockBaseType>
-		DLLEXPORT ScriptSafeVariableBlock(DataBlock<BlockBaseType>* block, const std::wstring &name) :
+		DLLEXPORT ScriptSafeVariableBlock(DataBlock<BlockBaseType>* block,
+            const std::string &name) :
             NamedVariableBlock(block, name)
         {
 			// getting typeid //
 			ASTypeID = TypeToAngelScriptIDConverter<BlockBaseType>::GetTypeIDFromTemplated();
 		}
 
-		DLLEXPORT ScriptSafeVariableBlock(VariableBlock* copyfrom, const std::wstring &name);
+		DLLEXPORT ScriptSafeVariableBlock(VariableBlock* copyfrom, const std::string &name);
 
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(ScriptSafeVariableBlock);
@@ -800,22 +801,7 @@ namespace Leviathan{
 			return ConvertAndReturnVariable<std::string>();
 		}
 
-		// More script proxies //
-		ScriptSafeVariableBlock* CreateNewWstringProxy(){
-
-			// Try to convert our block //
-			std::wstring wstrval;
-
-			if(ConvertAndAssingToVariable(wstrval)){
-
-				return new ScriptSafeVariableBlock(new WstringBlock(wstrval), Name);
-			}
-			// Conversion failed //
-			return NULL;
-		}
-
 	protected:
-
 
 		int ASTypeID;
 	};

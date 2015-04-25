@@ -7,14 +7,13 @@
 	file ext:	cpp
 	author:		Henri Hyyryläinen
 
-	purpose:	Platform independent random number generator, based on implementation of Mersenne twister. Code written based on pseudocode on
+	purpose:	Platform independent random number generator, based on implementation of Mersenne
+                twister. Code written based on pseudocode on
 				http://en.wikipedia.org/wiki/Mersenne_twister MT19937 algorithm.
 *********************************************************************/
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_RANDOM
 #include "Random.h"
-#endif
+
 #ifndef _WIN32
 #include <sys/time.h>
 #endif

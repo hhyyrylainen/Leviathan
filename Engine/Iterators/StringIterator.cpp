@@ -1,10 +1,9 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_STRINGITERATOR
 #include "StringIterator.h"
-#endif
+
 #include "utf8/checked.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::StringIterator::StringIterator(StringDataIterator* iterator, bool TakesOwnership) : CurrentFlags(0), 
 	HandlesDelete(TakesOwnership), DataIterator(iterator), CurrentStored(false), CurrentCharacter(-1)

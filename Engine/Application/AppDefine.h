@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_APPLICATIONDEFINE
-#define LEVIATHAN_APPLICATIONDEFINE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/DataStoring/NamedVars.h"
 #include "Window.h"
 #include "Networking/NetworkHandler.h"
@@ -15,19 +11,21 @@ namespace Leviathan{
 	struct WindowDataDetails{
 		WindowDataDetails();
 #ifdef _WIN32
-		WindowDataDetails(const wstring &title, const int &width, const int &height, const bool &windowed, const bool &windowborder, HICON icon,
-			LeviathanApplication* appvirtualptr);
+		WindowDataDetails(const std::string &title, const int &width, const int &height,
+            const bool &windowed, const bool &windowborder, HICON icon,
+            LeviathanApplication* appvirtualptr);
 
 		void ApplyIconToHandle(HWND hwnd) const;
 
 
 		HICON Icon;
 #else
-		WindowDataDetails(const wstring &title, const int &width, const int &height, const bool &windowed, const bool &windowborder,
+		WindowDataDetails(const std::string &title, const int &width, const int &height,
+            const bool &windowed, const bool &windowborder,
 			LeviathanApplication* appvirtualptr);
 
 #endif
-		wstring Title;
+        std::string Title;
 		int Height;
 		int Width;
 		bool Windowed;
@@ -75,7 +73,8 @@ namespace Leviathan{
 			return *this;
 		}
 		// Sets the version information of the application, leviathan version is set automatically //
-		DLLEXPORT AppDef& SetApplicationIdentification(const wstring &userreadable, const wstring &gamename, const wstring &gameversion);
+		DLLEXPORT AppDef& SetApplicationIdentification(const std::string &userreadable,
+            const std::string &gamename, const std::string &gameversion);
 
 		DLLEXPORT WindowDataDetails& GetWindowDetails(){
 
@@ -90,7 +89,7 @@ namespace Leviathan{
 		}
 		DLLEXPORT bool GetVSync();
 
-		DLLEXPORT const wstring& GetLogFile(){
+		DLLEXPORT const std::string& GetLogFile(){
 			return LogFile;
 		}
 
@@ -99,20 +98,27 @@ namespace Leviathan{
 			return _NetworkInterface;
 		}
 
-		DLLEXPORT static AppDef* GenerateAppdefine(const wstring &logfile, const wstring &engineconfigfile, const wstring &gameconfig, const wstring &keyconfig, 
-			boost::function<void (GameConfiguration* configobj)> configchecker, boost::function<void (KeyConfiguration* keysobject)> keychecker);
+		DLLEXPORT static AppDef* GenerateAppdefine(const std::string &logfile,
+            const std::string &engineconfigfile, const std::string &gameconfig,
+            const std::string &keyconfig, 
+			std::function<void (GameConfiguration* configobj)> configchecker,
+            std::function<void (KeyConfiguration* keysobject)> keychecker);
+        
 #ifdef _WIN32
-		DLLEXPORT void StoreWindowDetails(const wstring &title, const bool &windowborder, HICON icon, LeviathanApplication* appvirtualptr);
+		DLLEXPORT void StoreWindowDetails(const std::string &title, const bool &windowborder,
+            HICON icon, LeviathanApplication* appvirtualptr);
 #else
-		DLLEXPORT void StoreWindowDetails(const wstring &title, const bool &windowborder, LeviathanApplication* appvirtualptr);
+		DLLEXPORT void StoreWindowDetails(const std::string &title, const bool &windowborder,
+            LeviathanApplication* appvirtualptr);
 #endif
 
 
-		DLLEXPORT void GetGameIdentificationData(wstring &userreadable, wstring &gamename, wstring &gameversion);
+		DLLEXPORT void GetGameIdentificationData(std::string &userreadable, std::string &gamename,
+            std::string &gameversion);
 
 	protected:
 
-		unique_ptr<NamedVars> ConfigurationValues;
+        std::unique_ptr<NamedVars> ConfigurationValues;
 #ifdef _WIN32
 		HINSTANCE HInstance;
 #else
@@ -129,7 +135,7 @@ namespace Leviathan{
 		GameConfiguration* _GameConfiguration;
 		KeyConfiguration* _KeyConfiguration;
 
-		wstring LogFile;
+		std::string LogFile;
 		Logger* Mainlog;
 
 
@@ -137,14 +143,14 @@ namespace Leviathan{
 		//! \note Used to not delete loggers that weren't created by this instance
 		bool DeleteLog;
 
-		wstring LeviathanVersion;
-		wstring GameVersion;
-		wstring Game;
-		wstring UserReadableGame;
+		std::string LeviathanVersion;
+		std::string GameVersion;
+		std::string Game;
+		std::string UserReadableGame;
 
 		// ------------------------------------ //
 		static AppDef* Defaultconf;
 	};
 }
 
-#endif
+

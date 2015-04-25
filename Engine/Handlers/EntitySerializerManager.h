@@ -31,7 +31,8 @@ namespace Leviathan{
         //! \post The entity will automatically send following updates to the connection
         //! \return The packet which contains the data for the entity
         //! \note The object should be locked by the caller
-        DLLEXPORT unique_ptr<sf::Packet> CreateInitialEntityMessageFor(BaseObject* object, ConnectionInfo* forwho);
+        DLLEXPORT std::unique_ptr<sf::Packet> CreateInitialEntityMessageFor(BaseObject* object,
+            ConnectionInfo* forwho);
 
         //! \brief Creates an entity from a packet
         //! \return True when the entity creation was attempted

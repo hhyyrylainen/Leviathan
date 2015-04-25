@@ -1,14 +1,13 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_LEAPLISTENER
 #include "LeapListener.h"
-#endif
+
 #include "Leap.h"
 #include "Application/Application.h"
+#include "LeapManager.h"
 using namespace Leviathan;
 using namespace Leap;
+using namespace std;
 // ------------------------------------ //
-#include "LeapManager.h"
-
 Leviathan::LeapListener::LeapListener(LeapManager* owner) : Owner(owner), HandledFrames(0){
     
 	// Set everything to default //
@@ -21,7 +20,7 @@ Leviathan::LeapListener::~LeapListener(){
 // ------------------------------------ //
 void Leviathan::LeapListener::onInit(const Leap::Controller &control){
 
-	Logger::Get()->Info(L"LeapListener: initialized");
+	Logger::Get()->Info("LeapListener: initialized");
 }
 
 void Leviathan::LeapListener::onConnect(const Leap::Controller &control){
@@ -38,14 +37,14 @@ void Leviathan::LeapListener::onConnect(const Leap::Controller &control){
         assert(0 && "leap gesture fail");
     }
 
-	Logger::Get()->Info(L"LeapListener: connected");
+	Logger::Get()->Info("LeapListener: connected");
 }
 
 void Leviathan::LeapListener::onDisconnect(const Leap::Controller &control){
 	// SDK Note: not dispatched when running in a debugger
 	Connected = false;
 
-    Logger::Get()->Info(L"LeapListener: disconnected");
+    Logger::Get()->Info("LeapListener: disconnected");
 }
 
 void Leviathan::LeapListener::onExit(const Leap::Controller &control){
@@ -91,14 +90,14 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
 			{
 				// instantiate correct gesture subclass //
 				CircleGesture circle = gesture;
-				wstring datastr;
+				string datastr;
 				// check direction //
 				if(circle.pointable().direction().angleTo(circle.normal()) <= PI/4) {
 					// clockwise rotation //
-					datastr += L"clockwise ";
+					datastr += "clockwise ";
 				} else {
 					// counterclockwise //
-					datastr += L"counterclockwise ";
+					datastr += "counterclockwise ";
 				}
 
 				// Calculate angle difference since last frame //
@@ -110,11 +109,11 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
 					sweptAngle = (float)((circle.progress() - previousgesturestate.progress())*2*PI);
 				}
 
-				datastr += L"Circle id: "+Convert::ToWstring(circle.id());
-				datastr += L", state: " +Convert::ToWstring(circle.state());
-				datastr += L", progress: " +Convert::ToWstring(circle.progress());
-				datastr += L", radius: " +Convert::ToWstring(circle.radius());
-				datastr += L", angle " +Convert::ToWstring(sweptAngle * RAD_TO_DEG);
+				datastr += "Circle id: "+Convert::ToString(circle.id());
+				datastr += ", state: " +Convert::ToString(circle.state());
+				datastr += ", progress: " +Convert::ToString(circle.progress());
+				datastr += ", radius: " +Convert::ToString(circle.radius());
+				datastr += ", angle " +Convert::ToString(sweptAngle * RAD_TO_DEG);
 
 			}
 			break;
@@ -132,7 +131,8 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
 
                         if(change.x >= 40){
 
-                            Logger::Get()->Info(L"LeapManager: Input: swipe threshold passed, shutting down");
+                            Logger::Get()->Info("LeapManager: Input: swipe threshold passed, "
+                                "shutting down");
 
                             Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
                         }
@@ -145,12 +145,14 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
 			{
 				// instantiate correct gesture subclass //
 				KeyTapGesture tap = gesture;
-				wstring datastr;
+				string datastr;
 
-				datastr += L"Key Tap id: "+Convert::ToWstring(tap.id());
-				datastr += L", state: " +Convert::ToWstring(tap.state());
-				datastr += L", position: " +Convert::StringToWstring(Convert::ToString(tap.position()));
-				datastr += L", direction: " +Convert::StringToWstring(Convert::ToString(tap.direction()));
+				datastr += "Key Tap id: "+Convert::ToString(tap.id());
+				datastr += ", state: " +Convert::ToString(tap.state());
+				datastr += ", position: " +Convert::StringToString(Convert::ToString(
+                        tap.position()));
+				datastr += ", direction: " +Convert::StringToString(Convert::ToString(
+                        tap.direction()));
 
 			}
 			break;
@@ -158,16 +160,19 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
 			{
 				// instantiate correct gesture subclass //
 				ScreenTapGesture screentap = gesture;
-				wstring datastr;
+				string datastr;
 
-				datastr += L"Key Tap id: "+Convert::ToWstring(screentap.id());
-				datastr += L", state: " +Convert::ToWstring(screentap.state());
-				datastr += L", position: " +Convert::StringToWstring(Convert::ToString(screentap.position()));
-				datastr += L", direction: " +Convert::StringToWstring(Convert::ToString(screentap.direction()));
+				datastr += "Key Tap id: "+Convert::ToString(screentap.id());
+				datastr += ", state: " +Convert::ToString(screentap.state());
+				datastr += ", position: " +Convert::StringToString(Convert::ToString(
+                        screentap.position()));
+				datastr += ", direction: " +Convert::StringToString(Convert::ToString(
+                        screentap.direction()));
 			}
 			break;
             default:
-                Logger::Get()->Error(L"LeapListener: unknown gesture type: "+Convert::ToWstring(gesture.type()));
+                Logger::Get()->Error("LeapListener: unknown gesture type: "+
+                    Convert::ToString(gesture.type()));
                 break;
 		}
 	}    

@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_NETWORKREQUEST
-#define LEVIATHAN_NETWORKREQUEST
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "SFML/Network/Packet.hpp"
 #include "NetworkHandler.h"
 
@@ -88,13 +84,13 @@ namespace Leviathan{
 
 	class GetSingleSyncValueRequestData : public BaseNetworkRequestData{
 	public:
-		DLLEXPORT GetSingleSyncValueRequestData(const wstring &name);
+		DLLEXPORT GetSingleSyncValueRequestData(const std::string &name);
 		DLLEXPORT GetSingleSyncValueRequestData(sf::Packet &frompacket);
 
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
 		//! The name of the wanted value
-		wstring NameOfValue;
+		std::string NameOfValue;
 	};
 
 	class RequestCommandExecutionData : public BaseNetworkRequestData{
@@ -215,4 +211,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

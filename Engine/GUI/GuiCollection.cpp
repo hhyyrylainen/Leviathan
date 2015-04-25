@@ -1,8 +1,6 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_GUICOLLECTION
 #include "GuiCollection.h"
-#endif
+
 #include <boost/assign/list_of.hpp>
 #include "Script/ScriptExecutor.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
@@ -11,10 +9,11 @@
 #include "CEGUI/Window.h"
 using namespace Leviathan;
 using namespace Gui;
+using namespace std;
 // ------------------------------------ //
-Leviathan::Gui::GuiCollection::GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, 
-	std::vector<unique_ptr<wstring>> &inanimations, std::vector<unique_ptr<wstring>> &outanimations, bool strict /*= false*/, 
-	bool enabled /*= true*/, bool keepgui /*= false*/, bool allowenable /*= true*/, const wstring &autotarget /*= L""*/, 
+Leviathan::Gui::GuiCollection::GuiCollection(const std::string &name, GuiManager* manager, int id, const std::string &toggle, 
+	std::vector<unique_ptr<std::string>> &inanimations, std::vector<unique_ptr<std::string>> &outanimations, bool strict /*= false*/, 
+	bool enabled /*= true*/, bool keepgui /*= false*/, bool allowenable /*= true*/, const std::string &autotarget /*= L""*/, 
 
 	bool applyanimstochildren) : 
 	Name(name), ID(id), Enabled(enabled), Strict(strict), KeepsGuiOn(keepgui), OwningManager(manager), AllowEnable(allowenable), 
@@ -72,13 +71,13 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 		CEGUI::Window* foundobject = NULL;
 		try{
 
-			foundobject = OwningManager->GetMainContext()->getRootWindow()->getChild(Convert::WstringToString(AutoTarget));
+			foundobject = OwningManager->GetMainContext()->getRootWindow()->getChild(Convert::Std::StringToString(AutoTarget));
 
 		} catch(const CEGUI::UnknownObjectException &e){
 
 			// Not found //
 			Logger::Get()->Error(L"GuiCollection: couldn't find an AutoTarget CEGUI window with name: "+AutoTarget+L":");
-			Logger::Get()->Write(L"\t> "+Convert::CharPtrToWstring(e.what()));
+			Logger::Get()->Write(L"\t> "+Convert::CharPtrToStd::String(e.what()));
 		}
 
 		if(foundobject){
@@ -103,7 +102,7 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 		// check does the script contain right listeners //
 		ScriptModule* mod = tmpscript->GetModule();
 
-		const wstring &listenername = newstate ? LISTENERNAME_ONSHOW: LISTENERNAME_ONHIDE;
+		const std::string &listenername = newstate ? LISTENERNAME_ONSHOW: LISTENERNAME_ONHIDE;
 		
 		if(mod->DoesListenersContainSpecificListener(listenername)){
 			// create event to use //
@@ -129,14 +128,14 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data){
 	// load a GuiCollection from the structure //
 
-	wstring Toggle = L"";
+	std::string Toggle = L"";
 	bool Enabled = true;
 	bool Strict = false;
 	bool GuiOn = false;
 	bool allowenable = true;
-	wstring autotarget = L"";
-	std::vector<unique_ptr<wstring>> autoinanimation;
-	std::vector<unique_ptr<wstring>> autooutanimation;
+	std::string autotarget = L"";
+	std::vector<unique_ptr<std::string>> autoinanimation;
+	std::vector<unique_ptr<std::string>> autooutanimation;
 	bool recursiveanims = false;
 
 	auto varlist = data.GetListWithName(L"params");
@@ -144,9 +143,9 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 	if(varlist){
 
 		// get values //
-		if(!ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist->GetVariables(), L"ToggleOn", Toggle, L"", false)){
+		if(!ObjectFileProcessor::LoadValueFromNamedVars<std::string>(varlist->GetVariables(), L"ToggleOn", Toggle, L"", false)){
 			// Extra name check //
-			ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist->GetVariables(), L"Toggle", Toggle, L"", false);
+			ObjectFileProcessor::LoadValueFromNamedVars<std::string>(varlist->GetVariables(), L"Toggle", Toggle, L"", false);
 		}
 
 		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"Enabled", Enabled, false, true,
@@ -155,11 +154,11 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"KeepsGUIOn", GuiOn, false);
 		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"AllowEnable", allowenable, true);
 
-		ObjectFileProcessor::LoadValueFromNamedVars<wstring>(varlist->GetVariables(), L"AutoTarget", autotarget, L"");
+		ObjectFileProcessor::LoadValueFromNamedVars<std::string>(varlist->GetVariables(), L"AutoTarget", autotarget, L"");
 		
 
-		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<wstring>(varlist->GetVariables(), L"AutoAnimationIn", autoinanimation, 2);
-		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<wstring>(varlist->GetVariables(), L"AutoAnimationOut", autooutanimation, 2);
+		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<std::string>(varlist->GetVariables(), L"AutoAnimationIn", autoinanimation, 2);
+		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<std::string>(varlist->GetVariables(), L"AutoAnimationOut", autooutanimation, 2);
 
 		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"AutoAnimateChildren", recursiveanims, false);
 		
@@ -183,7 +182,7 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
 	AllowEnable = newstate;
 }
 // ------------------------------------ //
-void Leviathan::Gui::GuiCollection::_PlayAnimations(const std::vector<unique_ptr<wstring>> &anims){
+void Leviathan::Gui::GuiCollection::_PlayAnimations(const std::vector<unique_ptr<std::string>> &anims){
 #ifdef _DEBUG
 	assert(anims.size() % 2 == 0 && "_PlayAnimations has invalid vector, size non dividable by 2");
 #endif // _DEBUG
@@ -191,7 +190,7 @@ void Leviathan::Gui::GuiCollection::_PlayAnimations(const std::vector<unique_ptr
 	// Loop the animations and start them //
 	for(size_t i = 0; i < anims.size(); i += 2){
 
-		const wstring& targetanim = *anims[i];
+		const std::string& targetanim = *anims[i];
 
 		if(targetanim == L"AutoTarget"){
 

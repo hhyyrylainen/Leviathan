@@ -1,8 +1,10 @@
-#include "CallableObject.h"
-using namespace Leviathan;
 // ------------------------------------ //
-#include "EventHandler.h"
+#include "CallableObject.h"
 
+#include "EventHandler.h"
+using namespace Leviathan;
+using namespace std;
+// ------------------------------------ //
 CallableObject::CallableObject(){
 
 }
@@ -14,7 +16,7 @@ void Leviathan::CallableObject::UnRegister(EVENT_TYPE from, bool all){
 	EventHandler::Get()->Unregister(this, from, all);
 }
 
-void Leviathan::CallableObject::UnRegister(const wstring &genericname, bool all /*= false*/){
+void Leviathan::CallableObject::UnRegister(const string &genericname, bool all /*= false*/){
 	EventHandler::Get()->Unregister(this, genericname, all);
 }
 
@@ -22,7 +24,7 @@ void Leviathan::CallableObject::RegisterForEvent(EVENT_TYPE toregister){
 	EventHandler::Get()->RegisterForEvent(this, toregister);
 }
 
-void Leviathan::CallableObject::RegisterForEvent(const wstring &genericname){
+void Leviathan::CallableObject::RegisterForEvent(const string &genericname){
 	EventHandler::Get()->RegisterForEvent(this, genericname);
 }
 
@@ -36,10 +38,10 @@ DLLEXPORT int Leviathan::CallableObject::OnGenericEvent(GenericEvent** pevent){
 
 void Leviathan::CallableObject::UnRegisterAllEvents(){
 	EventHandler::Get()->Unregister(this, EVENT_TYPE_ALL, true);
-	EventHandler::Get()->Unregister(this, L"", true);
+	EventHandler::Get()->Unregister(this, "", true);
 }
 // ------------------------------------ //
-DLLEXPORT EVENT_TYPE Leviathan::CallableObject::ResolveStringToType(const wstring &type){
+DLLEXPORT EVENT_TYPE Leviathan::CallableObject::ResolveStringToType(const std::string &type){
 	// lookup map and return //
 	auto iter = EventListenerNameToEventMap.find(type);
 
@@ -50,11 +52,14 @@ DLLEXPORT EVENT_TYPE Leviathan::CallableObject::ResolveStringToType(const wstrin
 	return EVENT_TYPE_ERROR;
 }
 
-DLLEXPORT wstring Leviathan::CallableObject::GetListenerNameFromType(EVENT_TYPE type){
-	for(auto iter = EventListenerNameToEventMap.begin(); iter != EventListenerNameToEventMap.end(); ++iter){
+DLLEXPORT string Leviathan::CallableObject::GetListenerNameFromType(EVENT_TYPE type){
+	for(auto iter = EventListenerNameToEventMap.begin(); iter != EventListenerNameToEventMap.end();
+        ++iter)
+    {
 		// when the type matches return the string associated with that value//
 		if(iter->second == type)
 			return iter->first;
 	}
-	return L"";
+    
+	return "";
 }

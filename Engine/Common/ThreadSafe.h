@@ -44,15 +44,16 @@ namespace Leviathan{
         
 
 #define GUARD_LOCK() auto guard = std::move(Locker::Unique(this->ObjectsLock));
-#define GUARD_LOCK_CAST(BaseClass) Lock guard(static_cast<BaseClass*>(this)->ObjectsLock);
-#define GUARD_LOCK_OTHER(x) Lock guard(x->ObjectsLock);
-#define GUARD_LOCK_NAME(y) Lock y(this->ObjectsLock);
-#define GUARD_LOCK_NAME_OTHER(x,y) Lock y(x->ObjectsLock);
-#define GUARD_LOCK_UNIQUE_PTR(y) unique_ptr<Lock> y(new Lock(this->ObjectsLock));
-#define GUARD_LOCK_UNIQUE_PTR_OTHER(x, y)	unique_ptr<Lock> y(new Lock(x->ObjectsLock));
     
-#define UNIQUE_LOCK_OBJECT_OTHER(x) Lock lockit(x->ObjectsLock);
-#define UNIQUE_LOCK_OBJECT() Lock lockit(this->ObjectsLock);
+#define GUARD_LOCK_CAST(BaseClass) auto guard = std::move(Locker::Unique(static_cast<BaseClass*>(\
+                this)->ObjectsLock));
+    
+#define GUARD_LOCK_OTHER(x) auto guard = std::move(Locker::Unique(x->ObjectsLock));
+#define GUARD_LOCK_NAME(y) auto y = std::move(Locker::Unique(this->ObjectsLock));
+#define GUARD_LOCK_OTHER_NAME(x,y) auto y = std::move(Locker::Unique(x->ObjectsLock));
+    
+#define UNIQUE_LOCK_OBJECT_OTHER(x) auto lockit = std::move(Locker::Unique(x->ObjectsLock));
+#define UNIQUE_LOCK_THIS() auto lockit = std::move(Locker::Unique(this->ObjectsLock));
     
 
 	//! \brief Allows the inherited object to be locked

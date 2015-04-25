@@ -1,8 +1,6 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_EVENT
 #include "Event.h"
-#endif
+
 #include <boost/assign/list_of.hpp>
 #include "Exceptions.h"
 using namespace Leviathan;
@@ -117,20 +115,20 @@ DLLEXPORT IntegerEventData* Leviathan::Event::GetIntegerDataForEvent() const{
 	return NULL;
 }
 // ------------------ GenericEvent ------------------ //
-DLLEXPORT Leviathan::GenericEvent::GenericEvent(const wstring &type, const NamedVars &copyvals) :
-    TypeStr(new wstring(type)), Variables(new NamedVars(copyvals))
+DLLEXPORT Leviathan::GenericEvent::GenericEvent(const std::string &type, const NamedVars &copyvals) :
+    TypeStr(new std::string(type)), Variables(new NamedVars(copyvals))
 {
 
 }
 
-DLLEXPORT Leviathan::GenericEvent::GenericEvent(wstring* takeownershipstr, NamedVars* takeownershipvars) :
+DLLEXPORT Leviathan::GenericEvent::GenericEvent(std::string* takeownershipstr, NamedVars* takeownershipvars) :
     TypeStr(takeownershipstr), Variables(takeownershipvars)
 {
 
 }
 
-DLLEXPORT Leviathan::GenericEvent::GenericEvent(const wstring &type) :
-    TypeStr(new wstring(type)), Variables(new NamedVars())
+DLLEXPORT Leviathan::GenericEvent::GenericEvent(const std::string &type) :
+    TypeStr(new std::string(type)), Variables(new NamedVars())
 {
 	
 	
@@ -144,7 +142,7 @@ DLLEXPORT Leviathan::GenericEvent::~GenericEvent(){
 // ------------------------------------ //
 DLLEXPORT Leviathan::GenericEvent::GenericEvent(sf::Packet &packet){
 	// Load data from the packet //
-	unique_ptr<wstring> tmpstr(new wstring());
+	unique_ptr<std::string> tmpstr(new std::string());
 	if(!(packet >> *tmpstr)){
 
 		throw InvalidArgument("packet has invalid format");
@@ -167,11 +165,11 @@ DLLEXPORT void Leviathan::GenericEvent::AddDataToPacket(sf::Packet &packet) cons
 	Variables->AddDataToPacket(packet);
 }
 // ------------------------------------ //
-DLLEXPORT wstring* Leviathan::GenericEvent::GetTypePtr(){
+DLLEXPORT std::string* Leviathan::GenericEvent::GetTypePtr(){
 	return TypeStr;
 }
 
-DLLEXPORT wstring Leviathan::GenericEvent::GetType() const{
+DLLEXPORT std::string Leviathan::GenericEvent::GetType() const{
 	return *TypeStr;
 }
 

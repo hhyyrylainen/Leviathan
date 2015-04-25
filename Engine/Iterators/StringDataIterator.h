@@ -1,12 +1,7 @@
 #pragma once
-#ifndef LEVIATHAN_STRINGDATAITERATOR
-#define LEVIATHAN_STRINGDATAITERATOR
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 
 
 namespace Leviathan{
@@ -22,13 +17,16 @@ namespace Leviathan{
 		// Implement these in all subclasses to wrap the input for iteration //
 
 		//! \brief Gets the next character unicode code point (usually an ascii value)
-		//! \param forward Defines how many characters past the current position the wanted character is. This is usually 0 or 1
-		//! \note This is used to get the next character but also used for peeking so this should not increment the underlying iterator
+		//! \param forward Defines how many characters past the current position the wanted
+        //! character is. This is usually 0 or 1
+		//! \note This is used to get the next character but also used for peeking so this should
+        //! not increment the underlying iterator
 		//! \return Returns true when the input is still valid
 		virtual bool GetNextCharCode(int &codepointreceiver, size_t forward) = 0;
 
 		//! \brief Gets the previous character code point
-		//! \return True when succeeded false when this is the first character and there is nothing before it
+		//! \return True when succeeded false when this is the first character and there is
+        //! nothing before it
 		//! \see GetNextCharCode
 		virtual bool GetPreviousCharacter(int &receiver) = 0;
 
@@ -37,17 +35,19 @@ namespace Leviathan{
 
 
 		// These are for getting the results //
-		// If the internal string doesn't support efficient conversions false should be returned and nothing set
+		// If the internal string doesn't support efficient conversions false should be returned
+        // and nothing set
 
 
-		virtual bool ReturnSubString(size_t startpos, size_t endpos, string &receiver);
-		virtual bool ReturnSubString(size_t startpos, size_t endpos, wstring &receiver);
+		virtual bool ReturnSubString(size_t startpos, size_t endpos, std::string &receiver);
+		virtual bool ReturnSubString(size_t startpos, size_t endpos, std::wstring &receiver);
 
 
 		//! \brief Gets the position of the iterator, for use with ReturnSubString and others
 		virtual size_t CurrentIteratorPosition() const = 0;
 
-		//! \brief Gets the last valid index of the underlying string (not the last character but the last byte)
+		//! \brief Gets the last valid index of the underlying string
+        //! (not the last character but the last byte)
 		virtual size_t GetLastValidIteratorPosition() const = 0;
 
 
@@ -67,7 +67,8 @@ namespace Leviathan{
 	protected:
 
 
-		//! Must be the current character number, not the number of bytes for example one utf8 character might be 4 bytes
+		//! Must be the current character number, not the number of bytes for example one utf8
+        //! character might be 4 bytes
 		size_t CurrentCharacterNumber;
 
 		//! The current line number, the amount of \n characters 
@@ -248,7 +249,7 @@ namespace Leviathan{
 	public:
 
 		//! Wraps an utf8 encoded string for StringIterator
-		DLLEXPORT UTF8DataIterator(const string &str);
+		DLLEXPORT UTF8DataIterator(const std::string &str);
 
 		virtual bool GetNextCharCode(int &codepointreceiver, size_t forward);
 
@@ -262,11 +263,11 @@ namespace Leviathan{
 
 		virtual size_t GetLastValidIteratorPosition() const;
 
-		virtual bool ReturnSubString(size_t startpos, size_t endpos, string &receiver);
+		virtual bool ReturnSubString(size_t startpos, size_t endpos, std::string &receiver);
 
 	protected:
 
-		string OurString;
+        std::string OurString;
 
 		//! The current position of the iterator
 		ITType Current;
@@ -281,4 +282,4 @@ namespace Leviathan{
 
 
 }
-#endif
+

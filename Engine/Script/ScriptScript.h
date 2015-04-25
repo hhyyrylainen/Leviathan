@@ -1,20 +1,17 @@
-#ifndef LEVIATHAN_SCRIPT_SCRIPT
-#define LEVIATHAN_SCRIPT_SCRIPT
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "ScriptModule.h"
+
 
 namespace Leviathan{
 
 	// holds a reference of script module //
-	class ScriptScript : public Object{
+    //! \todo Remove this and replace with direct access to ScriptModule
+	class ScriptScript{
 	public:
-		DLLEXPORT ScriptScript(weak_ptr<ScriptModule> wptr);
-		DLLEXPORT ScriptScript(const int &MID, weak_ptr<ScriptModule> wptr);
+		DLLEXPORT ScriptScript(std::weak_ptr<ScriptModule> wptr);
+		DLLEXPORT ScriptScript(const int &MID, std::weak_ptr<ScriptModule> wptr);
 		DLLEXPORT ScriptScript(const ScriptScript &other);
 		DLLEXPORT ~ScriptScript();
 
@@ -27,7 +24,7 @@ namespace Leviathan{
 
 		//! \brief Locks the weak pointer and returns the shared_ptr
 		//! \note This should be used instead of GetModule if some methods are called on the pointer
-		DLLEXPORT inline shared_ptr<ScriptModule> GetModuleSafe(){
+		DLLEXPORT inline std::shared_ptr<ScriptModule> GetModuleSafe(){
 
 			return ScriptsModule.lock();
 		}
@@ -36,9 +33,9 @@ namespace Leviathan{
 
 	private:
 		// reference to module //
-		weak_ptr<ScriptModule> ScriptsModule;
+        std::weak_ptr<ScriptModule> ScriptsModule;
 		int ModuleID;
 	};
 
 }
-#endif
+

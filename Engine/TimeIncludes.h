@@ -3,13 +3,13 @@
 //! \file Includes and definitions for time keeping
 #include "Define.h"
 
-#include <stdint.h>
+#include <cstdint>
 #include <chrono>
 
 
 // Standard type time durations //
-typedef std::chrono::duration<__int64, std::milli> MillisecondDuration;
-typedef std::chrono::duration<__int64, std::micro> MicrosecondDuration;
+typedef std::chrono::duration<int64_t, std::milli> MillisecondDuration;
+typedef std::chrono::duration<int64_t, std::micro> MicrosecondDuration;
 typedef std::chrono::duration<float, std::ratio<1>> SecondDuration;
 
 typedef std::chrono::high_resolution_clock WantedClockType;

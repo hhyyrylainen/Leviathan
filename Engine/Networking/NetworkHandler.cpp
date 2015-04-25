@@ -1,8 +1,6 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_NETWORKHANDLER
 #include "NetworkHandler.h"
-#endif
+
 #include "Application/GameConfiguration.h"
 #include "ConnectionInfo.h"
 #include "FileSystem.h"
@@ -18,6 +16,7 @@
 #include "Threading/ThreadingManager.h"
 #include "Utility/ComplainOnce.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler) 
 	: AppType(ntype), CloseMasterServerConnection(false), UpdaterThreadStop(false)
@@ -102,7 +101,8 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 	// We want to receive responses //
 	if(_Socket.bind(PortNumber) != sf::Socket::Done){
 
-		Logger::Get()->Error(L"NetworkHandler: Init: failed to bind to a port "+Convert::ToWstring(PortNumber));
+		Logger::Get()->Error("NetworkHandler: Init: failed to bind to a port "+
+            Convert::String(PortNumber));
 		return false;
 	}
 
@@ -110,14 +110,15 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 	_Socket.setBlocking(true);
 
     // Run the listening thread //
-    ListenerThread = boost::thread(boost::bind(&NetworkHandler::_RunListenerThread, this));
+    ListenerThread = std::thread(std::bind(&NetworkHandler::_RunListenerThread, this));
 
 	// Report success //
-	Logger::Get()->Info(L"NetworkHandler: running listening socket on port "+Convert::ToWstring(
+	Logger::Get()->Info("NetworkHandler: running listening socket on port "+Convert::ToString(
             _Socket.getLocalPort()));
 
     // Run temporary update thread //
-    TemporaryUpdateThread = boost::thread(boost::bind(&NetworkHandler::_RunTemporaryUpdaterThread, this));
+    TemporaryUpdateThread = std::thread(std::bind(&NetworkHandler::_RunTemporaryUpdaterThread,
+            this));
 
 	return true;
 }
@@ -172,7 +173,7 @@ void Leviathan::NetworkHandler::_ReleaseSocket(){
 
 	{
 		GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
-		variables->GetValueAndConvertTo<bool>(L"DisableSocketUnbind", blockunbind);
+		variables->GetValueAndConvertTo<bool>("DisableSocketUnbind", blockunbind);
 	}
 
     auto lock = std::move(LockSocketForUse());
@@ -183,7 +184,7 @@ void Leviathan::NetworkHandler::_ReleaseSocket(){
 		_Socket.unbind();
 
 	} else {
-		Logger::Get()->Info(L"NetworkHandler: _ReleaseSocket: blocked unbind");
+		Logger::Get()->Info("NetworkHandler: _ReleaseSocket: blocked unbind");
 	}
 }
 // ------------------------------------ //
@@ -195,7 +196,7 @@ DLLEXPORT shared_ptr<boost::promise<wstring>> Leviathan::NetworkHandler::QueryMa
 	// Copy the data //
 	StoredMasterServerInfo = info;
 
-	shared_ptr<boost::promise<wstring>> resultvalue(new boost::promise<wstring>());
+	shared_ptr<std::promise<wstring>> resultvalue(new boost::promise<wstring>());
 
 	// Make sure it doesn't die instantly //
 	CloseMasterServerConnection = false;

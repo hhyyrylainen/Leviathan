@@ -74,7 +74,7 @@ DLLEXPORT bool Leviathan::AINetworkCache::UpdateVariable(const NamedVariableList
     return true;
 }
         
-DLLEXPORT bool Leviathan::AINetworkCache::RemoveVariable(const wstring &name){
+DLLEXPORT bool Leviathan::AINetworkCache::RemoveVariable(const std::string &name){
 
     GUARD_LOCK_THIS_OBJECT();
 
@@ -116,7 +116,7 @@ DLLEXPORT bool Leviathan::AINetworkCache::HandleUpdatePacket(NetworkResponseData
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT NamedVariableList* Leviathan::AINetworkCache::GetVariable(const wstring &name) const{
+DLLEXPORT NamedVariableList* Leviathan::AINetworkCache::GetVariable(const std::string &name) const{
 
     GUARD_LOCK_THIS_OBJECT();
 
@@ -269,7 +269,7 @@ void Leviathan::AINetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList>
 // ------------------------------------ //
 DLLEXPORT ScriptSafeVariableBlock* Leviathan::AINetworkCache::GetVariableWrapper(const string &name){
 
-    const wstring wname = Convert::StringToWstring(name);
+    const std::string wname = Convert::StringToStd::String(name);
 
     auto variable = GetVariable(wname);
 

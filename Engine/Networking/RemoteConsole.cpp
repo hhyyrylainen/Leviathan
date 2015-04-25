@@ -1,12 +1,11 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_REMOTECONSOLE
 #include "RemoteConsole.h"
-#endif
+
 #include "ConnectionInfo.h"
 #include "Application/Application.h"
 #include "Common/Misc.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::RemoteConsole::RemoteConsole() : CloseIfNoRemoteConsole(false), CanClose(false){
 	staticinstance = this;
@@ -31,7 +30,7 @@ DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
 		if(AwaitingConnections[i]->TimeoutTime < timenow){
 			// Time it out //
 			Logger::Get()->Warning(L"RemoteConsole: Remote console wait connection timed out, token "+
-                Convert::ToWstring(AwaitingConnections[i]->SessionToken));
+                Convert::ToStd::String(AwaitingConnections[i]->SessionToken));
 			AwaitingConnections.erase(AwaitingConnections.begin()+i);
 			i--;
 			continue;
@@ -54,7 +53,7 @@ DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
 		if((*iter)->TerminateSession){
 
 			Logger::Get()->Info(L"RemoteConsole: removing kill-queued session, token: "+
-                Convert::ToWstring((*iter)->SessionToken));
+                Convert::ToStd::String((*iter)->SessionToken));
 			iter = RemoteConsoleConnections.erase(iter);
 		} else {
 			++iter;
@@ -67,7 +66,7 @@ DLLEXPORT bool Leviathan::RemoteConsole::IsAwaitingConnections(){
 	return AwaitingConnections.size() != 0;
 }
 
-DLLEXPORT void Leviathan::RemoteConsole::ExpectNewConnection(int SessionToken, const wstring &assignname /*= L""*/,
+DLLEXPORT void Leviathan::RemoteConsole::ExpectNewConnection(int SessionToken, const std::string &assignname /*= L""*/,
     bool onlylocalhost /*= false*/, const MillisecondDuration &timeout /*= boost::chrono::seconds(30)*/)
 {
 	GUARD_LOCK_THIS_OBJECT();
@@ -144,7 +143,7 @@ DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* co
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(ConnectionInfo* connectiontouse,
-    const wstring &connectionname, int token)
+    const std::string &connectionname, int token)
 {
 	GUARD_LOCK_THIS_OBJECT();
 	// Add to the expected connections //
@@ -250,7 +249,7 @@ DLLEXPORT size_t Leviathan::RemoteConsole::GetActiveConnectionCount(){
 	return RemoteConsoleConnections.size();
 }
 
-DLLEXPORT ConnectionInfo* Leviathan::RemoteConsole::GetUnsafeConnectionForRemoteConsoleSession(const wstring &name){
+DLLEXPORT ConnectionInfo* Leviathan::RemoteConsole::GetUnsafeConnectionForRemoteConsoleSession(const std::string &name){
 	GUARD_LOCK_THIS_OBJECT();
 	// Loop over and compare names //
 	for(size_t i = 0; i < RemoteConsoleConnections.size(); i++){
@@ -268,7 +267,7 @@ void Leviathan::RemoteConsole::SetAllowClose(){
 	CanClose = true;
 }
 // ------------------ RemoteConsoleExpect ------------------ //
-Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const wstring &name, int token, bool onlylocalhost,
+Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const std::string &name, int token, bool onlylocalhost,
     const MillisecondDuration &timeout) :
     ConnectionName(name), SessionToken(token), OnlyLocalhost(onlylocalhost),
     TimeoutTime(Misc::GetThreadSafeSteadyTimePoint()+timeout)
@@ -276,7 +275,7 @@ Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const wstring
 
 }
 // ------------------ RemoteConsoleSession ------------------ //
-Leviathan::RemoteConsoleSession::RemoteConsoleSession(const wstring &name, ConnectionInfo* connection, int token) :
+Leviathan::RemoteConsoleSession::RemoteConsoleSession(const std::string &name, ConnectionInfo* connection, int token) :
     ConnectionName(name), SessionToken(token), CorrespondingConnection(connection), TerminateSession(false),
     IsOpened(true)
 {

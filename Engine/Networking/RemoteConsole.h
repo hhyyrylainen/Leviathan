@@ -1,13 +1,10 @@
-#ifndef LEVIATHAN_REMOTECONSOLE
-#define LEVIATHAN_REMOTECONSOLE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "SFML/Network/IpAddress.hpp"
 #include "Common/BaseNotifiable.h"
+#include "../TimeIncludes.h"
 
 
 namespace Leviathan{
@@ -15,7 +12,7 @@ namespace Leviathan{
 	class RemoteConsoleSession{
 		friend RemoteConsole;
 	public:
-		DLLEXPORT RemoteConsoleSession(const wstring &name, ConnectionInfo* connection, int token);
+		DLLEXPORT RemoteConsoleSession(const std::string &name, ConnectionInfo* connection, int token);
 		DLLEXPORT ~RemoteConsoleSession();
 
 		DLLEXPORT ConnectionInfo* GetConnection();
@@ -25,7 +22,7 @@ namespace Leviathan{
 		DLLEXPORT void KillConnection();
 
 	private:
-		wstring ConnectionName;
+		std::string ConnectionName;
 		int SessionToken;
 		ConnectionInfo* CorrespondingConnection;
 
@@ -40,15 +37,17 @@ namespace Leviathan{
 
 	//! Class used to handle remote server commands and receiving messages
 	//!
-	//! Doesn't actually use reference counting. Inherits BaseNotifiable to be able to receive messages when ConnectionInfo closes
+	//! Doesn't actually use reference counting. Inherits BaseNotifiable to be able to receive
+    //! messages when ConnectionInfo closes
 	class RemoteConsole : public BaseNotifiableAll{
 		friend Engine;
 
 		struct RemoteConsoleExpect{
-			RemoteConsoleExpect(const wstring &name, int token, bool onlylocalhost, const MillisecondDuration &timeout);
+			RemoteConsoleExpect(const std::string &name, int token, bool onlylocalhost,
+                const MillisecondDuration &timeout);
 
 
-			wstring ConnectionName;
+			std::string ConnectionName;
 			int SessionToken;
 			bool OnlyLocalhost;
 
@@ -60,16 +59,20 @@ namespace Leviathan{
 
 		//! \brief Called before packets are handled
 		//!
-		//! Checks statuses of remote connections and can perform some special tasks such as closing ConnectionInfo objects
+		//! Checks statuses of remote connections and can perform some special tasks such as
+        //! closing ConnectionInfo objects
 		DLLEXPORT void UpdateStatus();
 
 
 		// Handle functions for interface to use //
-		DLLEXPORT void HandleRemoteConsoleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
-		DLLEXPORT void HandleRemoteConsoleResponse(shared_ptr<NetworkResponse> response, ConnectionInfo* connection, shared_ptr<NetworkRequest> potentialrequest);
+		DLLEXPORT void HandleRemoteConsoleRequestPacket(std::shared_ptr<NetworkRequest> request,
+            ConnectionInfo* connection);
+		DLLEXPORT void HandleRemoteConsoleResponse(std::shared_ptr<NetworkResponse> response,
+            ConnectionInfo* connection, std::shared_ptr<NetworkRequest> potentialrequest);
 
 		//! Does everything needed to allow the client on the connection to connect to us
-		DLLEXPORT void OfferConnectionTo(ConnectionInfo* connectiontouse, const wstring &connectionname, int token);
+		DLLEXPORT void OfferConnectionTo(ConnectionInfo* connectiontouse,
+            const std::string &connectionname, int token);
 
 		//! \brief Returns true if connections are marked as awaiting
 		//!
@@ -83,7 +86,7 @@ namespace Leviathan{
 
 		//! \brief Gets the corresponding ConnectionInfo object from a RemoteConsoleSession session indicated by name
 		//! \warning The object can be already released or maybe even deleted. Use NetworkHandler::GetSafePointerToConnection to make it safe to use
-		DLLEXPORT ConnectionInfo* GetUnsafeConnectionForRemoteConsoleSession(const wstring &name);
+		DLLEXPORT ConnectionInfo* GetUnsafeConnectionForRemoteConsoleSession(const std::string &name);
 
 		//! \brief Sets the remote console to close the game if there are no connections
 		//!
@@ -95,12 +98,15 @@ namespace Leviathan{
 		//! \return Returns a valid pointer to a RemoteConsoleSession or NULL
 		//! \note The returned pointer will be guaranteed to be only valid while you have guard locked
 		//! \param guard ObjectLock with this RemoteConsole instance
-		DLLEXPORT RemoteConsoleSession* GetRemoteConsoleSessionForConnection(ConnectionInfo* connection, ObjectLock &guard);
+		DLLEXPORT RemoteConsoleSession* GetRemoteConsoleSessionForConnection(ConnectionInfo* connection,
+            Lock &guard);
 
-		DLLEXPORT bool CanOpenNewConnection(ConnectionInfo* connection, shared_ptr<NetworkRequest> request);
+		DLLEXPORT bool CanOpenNewConnection(ConnectionInfo* connection,
+            std::shared_ptr<NetworkRequest> request);
 
-		DLLEXPORT void ExpectNewConnection(int SessionToken, const wstring &assignname = L"", bool onlylocalhost = false, 
-			const MillisecondDuration &timeout = boost::chrono::seconds(30));
+		DLLEXPORT void ExpectNewConnection(int SessionToken, const std::string &assignname = "",
+            bool onlylocalhost = false, const MillisecondDuration &timeout =
+            std::chrono::seconds(30));
 
 		DLLEXPORT static RemoteConsole* Get();
 
@@ -118,23 +124,21 @@ namespace Leviathan{
 
 		// ------------------------------------ //
 		// We need to store the requests until we get a response //
-		std::vector<shared_ptr<NetworkRequest>> WaitingRequests;
+		std::vector<std::shared_ptr<NetworkRequest>> WaitingRequests;
 
-		std::vector<shared_ptr<RemoteConsoleSession>> RemoteConsoleConnections;
+		std::vector<std::shared_ptr<RemoteConsoleSession>> RemoteConsoleConnections;
 
 
-		std::vector<shared_ptr<RemoteConsoleExpect>> AwaitingConnections;
+		std::vector<std::shared_ptr<RemoteConsoleExpect>> AwaitingConnections;
 
-		// Special command variables //
-		//! Sends a close signal to the application if has no AwaitingConnections or RemoteConsoleConnections
+		//! Sends a close signal to the application if has no AwaitingConnections or
+        //! RemoteConsoleConnections
 		bool CloseIfNoRemoteConsole;
 
 		//! Prevents the program from closing before receiving the wanted connection info
 		bool CanClose;
 
-
 		static RemoteConsole* staticinstance;
 	};
 
 }
-#endif

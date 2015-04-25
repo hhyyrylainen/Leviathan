@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_BASENOTIFIER
-#define LEVIATHAN_BASENOTIFIER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "ThreadSafe.h"
 
 
@@ -22,12 +18,13 @@ namespace Leviathan{
 
 		//! Connects this to a notifiable object for holding a reference to it
 		DLLEXPORT FORCE_INLINE bool ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child){
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			return ConnectToNotifiable(child, guard);
 		}
 
 		//! \brief The actual implementation of ConnecToNotifiable
-		DLLEXPORT bool ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child, ObjectLock &guard);
+		DLLEXPORT bool ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child,
+            Lock &guard);
 
 
 		//! \brief Notifies the children about something
@@ -37,10 +34,13 @@ namespace Leviathan{
 
 
 		//! \brief Disconnects from previously connected notifiable
-		DLLEXPORT bool UnConnectFromNotifiable(BaseNotifiable<ParentType, ChildType>* unhookfrom, ObjectLock &guard);
+		DLLEXPORT bool UnConnectFromNotifiable(BaseNotifiable<ParentType, ChildType>* unhookfrom,
+            Lock &guard);
 
-		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifiable(BaseNotifiable<ParentType, ChildType>* child){
-			GUARD_LOCK_THIS_OBJECT();
+		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifiable(
+            BaseNotifiable<ParentType, ChildType>* child)
+        {
+			GUARD_LOCK();
 			return UnConnectFromNotifiable(child, guard);
 		}
 
@@ -48,11 +48,11 @@ namespace Leviathan{
 		DLLEXPORT bool UnConnectFromNotifiable(int id);
 
 		//! \brief Actual implementation of this method
-		DLLEXPORT bool IsConnectedTo(BaseNotifiable<ParentType, ChildType>* check, ObjectLock &guard);
+		DLLEXPORT bool IsConnectedTo(BaseNotifiable<ParentType, ChildType>* check, Lock &guard);
 
 		//! \brief Returns true when the specified object is already connected
 		DLLEXPORT FORCE_INLINE bool IsConnectedTo(BaseNotifiable<ParentType, ChildType>* check){
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			IsConnectedTo(check, guard);
 		}
 		
@@ -99,4 +99,3 @@ namespace Leviathan{
 // The implementations are included here to make this compile //
 #include "BaseNotifierImpl.h"
 
-#endif

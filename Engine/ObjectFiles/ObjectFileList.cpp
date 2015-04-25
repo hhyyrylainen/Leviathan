@@ -1,15 +1,15 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_OBJECTFILE_LIST
 #include "ObjectFileList.h"
-#endif
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::ObjectFileListProper::ObjectFileListProper(const wstring &name) : Name(name){
+DLLEXPORT Leviathan::ObjectFileListProper::ObjectFileListProper(const std::string &name) :
+    Name(name)
+{
 
 }
 // ------------------------------------ //
-DLLEXPORT const wstring& Leviathan::ObjectFileListProper::GetName() const{
+DLLEXPORT const std::string& Leviathan::ObjectFileListProper::GetName() const{
 	return Name;
 }
 // ------------------------------------ //

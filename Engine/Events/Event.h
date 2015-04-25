@@ -42,7 +42,7 @@ namespace Leviathan{
     };
 
 	//! Name of listener event type pairs, used by GUI to hook to events
-	static const std::map<wstring, EVENT_TYPE> EventListenerNameToEventMap =
+	static const std::map<std::string, EVENT_TYPE> EventListenerNameToEventMap =
         boost::assign::map_list_of
         (LISTENERNAME_ONSHOW, EVENT_TYPE_SHOW)
         (LISTENERNAME_ONHIDE, EVENT_TYPE_HIDE)
@@ -88,7 +88,8 @@ namespace Leviathan{
 
         //! The calculated percentage the tick has advanced
         //!
-        //! In case of extreme lag this is forced to be between 0.f-1.f to not break even more badly
+        //! In case of extreme lag this is forced to be between 0.f-1.f to not break
+        //! even more badly
         float Percentage;
     };
 
@@ -117,9 +118,10 @@ namespace Leviathan{
         DLLEXPORT ResimulateSingleEventData(sf::Packet &packet);
 
         //! \brief Constructs data for EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE
-        //! \param resimulateremaining How many microseconds will still be simulated before resimulate ends
-        DLLEXPORT ResimulateSingleEventData(int64_t resimulateremaining, BaseConstraintable* resimulated,
-            void* worldptr);
+        //! \param resimulateremaining How many microseconds will still be simulated
+        //! before resimulate ends
+        DLLEXPORT ResimulateSingleEventData(int64_t resimulateremaining,
+            BaseConstraintable* resimulated, void* worldptr);
 
         void AddDataToPacket(sf::Packet &packet) override;
 
@@ -196,6 +198,7 @@ namespace Leviathan{
 
 		//! Events type
 		EVENT_TYPE Type;
+        
 		//! Direct pointer to the data
 		BaseEventData* Data;
 	};
@@ -207,13 +210,13 @@ namespace Leviathan{
 		DLLEXPORT GenericEvent(sf::Packet &packet);
 
 		//! \brief Constructs a generic event
-		DLLEXPORT GenericEvent(const wstring &type, const NamedVars &copyvals);
+		DLLEXPORT GenericEvent(const std::string &type, const NamedVars &copyvals);
 		
 		//! \brief Constructs a generic event without any values
-		DLLEXPORT GenericEvent(const wstring &type);
+		DLLEXPORT GenericEvent(const std::string &type);
 		
 		//! \brief Constructor that takes the pointers as it's own
-		DLLEXPORT GenericEvent(wstring* takeownershipstr, NamedVars* takeownershipvars);
+		DLLEXPORT GenericEvent(std::string* takeownershipstr, NamedVars* takeownershipvars);
 		DLLEXPORT ~GenericEvent();
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GenericEvent);
@@ -232,15 +235,16 @@ namespace Leviathan{
 		DLLEXPORT NamedVars* GetNamedVarsRefCounted();
 
 		//! Returns the TypeStr ptr
-		DLLEXPORT wstring* GetTypePtr();
+		DLLEXPORT std::string* GetTypePtr();
 		//! \brief Returns the name of the event
 		//! \see GetTypePtr
-		DLLEXPORT wstring GetType() const;
+		DLLEXPORT std::string GetType() const;
 
 	protected:
 
 		//! String that defines this event's type
-		wstring* TypeStr;
+        std::string* TypeStr;
+        
 		//! Pointer to this event's variables
 		NamedVars* Variables;
 	};

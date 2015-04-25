@@ -1,8 +1,6 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_TIMINGMONITOR
 #include "TimingMonitor.h"
-#endif
+
 #ifndef LEVIATHAN_DEFINE
 #include "Define.h"
 #endif

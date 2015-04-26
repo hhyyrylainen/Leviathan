@@ -10,9 +10,9 @@ using namespace Leviathan;
 
 //! \brief Runs the thing
 //! \param sender The sender to pass to the handler, this will be verified to be still valid before usage
-void RunCustomHandler(shared_ptr<CustomCommandHandler> handler, shared_ptr<string> command, CommandSender* sender){
+void RunCustomHandler(shared_ptr<CustomCommandHandler> handler, std::shared_ptr<string> command, CommandSender* sender){
 
-	unique_ptr<ObjectLock> cmdlock;
+	unique_ptr<Lock> cmdlock;
 
 	auto cmdhandler = CommandHandler::Get(cmdlock);
 
@@ -22,7 +22,7 @@ void RunCustomHandler(shared_ptr<CustomCommandHandler> handler, shared_ptr<strin
 
 
 	// Check that the sender is still valid //
-	unique_ptr<ObjectLock> senderlock;
+	unique_ptr<Lock> senderlock;
 	if(!cmdhandler->IsSenderStillValid(sender, senderlock)){
 
 		// it isn't there anymore //
@@ -48,7 +48,7 @@ DLLEXPORT Leviathan::CommandHandler::~CommandHandler(){
 		Staticaccess = NULL;
 	}
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	CustomHandlers.clear();
 
@@ -60,11 +60,11 @@ CommandHandler* Leviathan::CommandHandler::Staticaccess;
 boost::mutex Leviathan::CommandHandler::StaticDeleteMutex;
 
 
-DLLEXPORT CommandHandler* Leviathan::CommandHandler::Get(unique_ptr<ObjectLock> &lockereceiver){
+DLLEXPORT CommandHandler* Leviathan::CommandHandler::Get(unique_ptr<Lock> &lockereceiver){
 	boost::unique_lock<boost::mutex> lock(StaticDeleteMutex);
 	if(Staticaccess){
 		
-		GUARD_LOCK_OTHER_OBJECT_UNIQUE_PTR_NAME(Staticaccess, olock);
+		GUARD_LOCK_OTHER_UNIQUE_PTR_NAME(Staticaccess, olock);
 		lockereceiver.swap(olock);
 	}
 
@@ -72,7 +72,7 @@ DLLEXPORT CommandHandler* Leviathan::CommandHandler::Get(unique_ptr<ObjectLock> 
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::CommandHandler::QueueCommand(const string &command, CommandSender* issuer){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Get the first word //
 	StringIterator itr(new UTF8DataIterator(command));
@@ -123,7 +123,7 @@ DLLEXPORT void Leviathan::CommandHandler::QueueCommand(const string &command, Co
 }
 
 DLLEXPORT void Leviathan::CommandHandler::RemoveMe(CommandSender* object){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Remove from the vector //
 	auto end = SendersInUse.end();
@@ -137,15 +137,15 @@ DLLEXPORT void Leviathan::CommandHandler::RemoveMe(CommandSender* object){
 	}
 }
 
-DLLEXPORT bool Leviathan::CommandHandler::IsSenderStillValid(CommandSender* checkthis, unique_ptr<ObjectLock> &retlock){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT bool Leviathan::CommandHandler::IsSenderStillValid(CommandSender* checkthis, std::unique_ptr<Lock> &retlock){
+	GUARD_LOCK();
 
 	// Check is it still in the list //
 	auto end = SendersInUse.end();
 	for(auto iter = SendersInUse.begin(); iter != end; ++iter){
 		if(*iter == checkthis){
 			// It is still there //
-			GUARD_LOCK_OTHER_OBJECT_UNIQUE_PTR_NAME((*iter), tmplock);
+			GUARD_LOCK_OTHER_UNIQUE_PTR_NAME((*iter), tmplock);
 			retlock.swap(tmplock);
 			return true;
 		}
@@ -157,12 +157,12 @@ DLLEXPORT bool Leviathan::CommandHandler::IsSenderStillValid(CommandSender* chec
 
 // ------------------------------------ //
 DLLEXPORT void Leviathan::CommandHandler::UpdateStatus(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 
 }
 // ------------------------------------ //
-void Leviathan::CommandHandler::_LetGoOfAll(ObjectLock &guard){
+void Leviathan::CommandHandler::_LetGoOfAll(Lock &guard){
 	VerifyLock(guard);
 
 	auto end = SendersInUse.end();
@@ -175,8 +175,8 @@ void Leviathan::CommandHandler::_LetGoOfAll(ObjectLock &guard){
 	SendersInUse.clear();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::CommandHandler::SenderNoLongerRequired(CommandSender* checkthis, const unique_ptr<ObjectLock> &stillgotthis){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT void Leviathan::CommandHandler::SenderNoLongerRequired(CommandSender* checkthis, const std::unique_ptr<Lock> &stillgotthis){
+	GUARD_LOCK();
 
 	// Remove from the vector //
 	auto end = SendersInUse.end();
@@ -193,7 +193,7 @@ DLLEXPORT void Leviathan::CommandHandler::SenderNoLongerRequired(CommandSender* 
 	}
 }
 
-void Leviathan::CommandHandler::_AddSender(CommandSender* object, ObjectLock &guard){
+void Leviathan::CommandHandler::_AddSender(CommandSender* object, Lock &guard){
 	VerifyLock(guard);
 
 	// Notify the object //
@@ -219,14 +219,14 @@ DLLEXPORT bool Leviathan::CommandHandler::IsThisDefaultCommand(const string &fir
 }
 // ------------------ CommandSender ------------------ //
 DLLEXPORT void Leviathan::CommandSender::StartOwnership(CommandHandler* commander){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Just add to the list //
 	CommandHandlersToNotify.push_back(commander);
 }
 
 DLLEXPORT void Leviathan::CommandSender::EndOwnership(CommandHandler* which){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Find the right one and remove it //
 	auto end = CommandHandlersToNotify.end();
@@ -241,7 +241,7 @@ DLLEXPORT void Leviathan::CommandSender::EndOwnership(CommandHandler* which){
 	}
 }
 
-DLLEXPORT void Leviathan::CommandSender::_OnReleaseParentCommanders(ObjectLock &guard){
+DLLEXPORT void Leviathan::CommandSender::_OnReleaseParentCommanders(Lock &guard){
 	VerifyLock(guard);
 
 	auto end = CommandHandlersToNotify.end();

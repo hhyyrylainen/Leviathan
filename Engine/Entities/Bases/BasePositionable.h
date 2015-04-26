@@ -1,13 +1,10 @@
-#ifndef LEVIATHAN_BASE_POSITIONABLE
-#define LEVIATHAN_BASE_POSITIONABLE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/SFMLPackets.h"
 #include "BaseObject.h"
+#include "../../Common/Types.h"
 
 #define BASEPOSITIONAL_CUSTOMMESSAGE_DATA_CHECK		{if(entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_CHANGEWORLDPOSITION){if(BasePositionableCustomMessage(entitycustommessagetype, dataptr)) return true;}}
 #define BASEPOSITIONAL_CUSTOMMESSAGE_GET_CHECK		{if(tmprequest->RequestObjectPart == ENTITYDATA_REQUESTTYPE_WORLDPOSITION){if(BasePositionableCustomGetData(tmprequest)) return true;}}
@@ -62,7 +59,7 @@ namespace Leviathan{
 
         //! \brief Sets the position and rotation to data retrieved from a packet
         //! \exception ExceptionInvalidArgument when the packet format is invalid
-        DLLEXPORT void ApplyPositionAndRotationFromPacket(sf::Packet &packet) THROWS;
+        DLLEXPORT void ApplyPositionAndRotationFromPacket(sf::Packet &packet);
 
         //! \brief Interpolates between two states and sets this object's state to be between the states
         DLLEXPORT void InterpolatePositionableState(PositionableRotationableDeltaState &first,
@@ -71,7 +68,8 @@ namespace Leviathan{
         //! \brief Loads position data into a BasePositionData
         //! \note This applies the values directly so if this returns false it is possible
         //! that the target has partially or entirely invalid data
-        DLLEXPORT static bool LoadPositionFromPacketToHolder(sf::Packet &packet, BasePositionData &target);
+        DLLEXPORT static bool LoadPositionFromPacketToHolder(sf::Packet &packet,
+            BasePositionData &target);
         
 
 	protected:
@@ -88,4 +86,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

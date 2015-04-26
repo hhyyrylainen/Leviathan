@@ -1,9 +1,9 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_SENDABLEENTITYSERIALIZER
 #include "SendableEntitySerializer.h"
-#endif
-using namespace Leviathan;
+
+#include "../../Utility/Convert.h"
 #include "Entities/Bases/BaseSendableEntity.h"
+using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT SendableEntitySerializer::SendableEntitySerializer() :
     BaseEntitySerializer(ENTITYSERIALIZEDTYPE_SENDABLE_ENTITY)

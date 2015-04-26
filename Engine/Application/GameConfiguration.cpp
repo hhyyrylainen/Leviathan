@@ -1,13 +1,12 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_GAMECONFIGURATION
 #include "GameConfiguration.h"
-#endif
+
 #include "FileSystem.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameConfiguration::GameConfiguration(const wstring &configfile) : GameConfigFile(configfile), Modified(false),
-	GameVars(NULL)
+DLLEXPORT Leviathan::GameConfiguration::GameConfiguration(const string &configfile) :
+    GameConfigFile(configfile), Modified(false), GameVars(NULL)
 {
 	staticaccess = this;
 }
@@ -22,16 +21,18 @@ DLLEXPORT GameConfiguration* Leviathan::GameConfiguration::Get(){
 
 GameConfiguration* Leviathan::GameConfiguration::staticaccess = NULL;
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameConfiguration::Init(boost::function<void (GameConfiguration* configobj)> sanitycheckcallback){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT bool Leviathan::GameConfiguration::Init(std::function<void (GameConfiguration*
+        configobj)> sanitycheckcallback)
+{
+	GUARD_LOCK();
 
 	GameVars = new NamedVars();
 
-	int res = GameVars->LoadVarsFromFile(GameConfigFile);
+	
 
-	if(res != 404 && res != 0){
+	if(!GameVars->LoadVarsFromFile(GameConfigFile)){
 		// Unknown error //
-		Logger::Get()->Error(L"GameConfiguration: Unknown error from LoadVarsFromFile, result code: "+Convert::ToWstring(res));
+		Logger::Get()->Error("GameConfiguration: Unknown error from LoadVarsFromFile");
 		return false;
 	}
 
@@ -44,7 +45,7 @@ DLLEXPORT bool Leviathan::GameConfiguration::Init(boost::function<void (GameConf
 }
 
 DLLEXPORT void Leviathan::GameConfiguration::Release(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	SaveCheck();
 
 	// We can now delete our variables //
@@ -53,10 +54,10 @@ DLLEXPORT void Leviathan::GameConfiguration::Release(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameConfiguration::SaveCheck(){
 
-	wstring newfilecontents = L"";
+	string newfilecontents = "";
 	// Writing to file doesn't need locking //
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		// If not modified we don't need to save anything //
 		if(!Modified)
 			return;
@@ -66,33 +67,35 @@ DLLEXPORT void Leviathan::GameConfiguration::SaveCheck(){
 
 		for(size_t i = 0; i < vec->size(); i++){
 
-			newfilecontents += vec->at(i)->ToText()+L"\n";
+			newfilecontents += vec->at(i)->ToText()+"\n";
 		}
+        
 		// No longer needs to save modified values //
 		Modified = false;
 	}
+    
 	FileSystem::WriteToFile(newfilecontents, GameConfigFile);
 }
 
 DLLEXPORT void Leviathan::GameConfiguration::MarkModified(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	Modified = true;
 }
 // ------------------------------------ //
-DLLEXPORT NamedVars* Leviathan::GameConfiguration::AccessVariables(ObjectLock &guard){
+DLLEXPORT NamedVars* Leviathan::GameConfiguration::AccessVariables(Lock &guard){
 	VerifyLock(guard);
 
 	return GameVars;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameConfiguration::VerifyGlobalVariables(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Socket unbind control //
-	if(GameVars->ShouldAddValueIfNotFoundOrWrongType<bool>(L"DisableSocketUnbind")){
+	if(GameVars->ShouldAddValueIfNotFoundOrWrongType<bool>("DisableSocketUnbind")){
 		// Add new //
-		GameVars->AddVar(L"DisableSocketUnbind", new VariableBlock(false));
+		GameVars->AddVar("DisableSocketUnbind", new VariableBlock(false));
 		MarkModified();
 	}
 

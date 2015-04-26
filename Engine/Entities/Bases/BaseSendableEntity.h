@@ -1,16 +1,11 @@
 #pragma once
-#ifndef LEVIATHAN_BASESENDABLEENTITY
-#define LEVIATHAN_BASESENDABLEENTITY
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
 // ---- includes ---- //
 #include "BaseObject.h"
 #include "../Serializers/BaseEntitySerializer.h"
 #include "Common/SFMLPackets.h"
-#include "boost/thread/mutex.hpp"
 #include "boost/circular_buffer.hpp"
 
 #define BASESENDABLE_STORED_RECEIVED_STATES 4
@@ -64,7 +59,7 @@ namespace Leviathan{
     //! and improve frame times since the ticks are searched for each frame
     class StoredState{
     public:
-        StoredState(shared_ptr<ObjectDeltaStateData> data);
+        StoredState(std::shared_ptr<ObjectDeltaStateData> data);
         StoredState(StoredState&& other);
 
         StoredState& operator=(StoredState&& other);
@@ -72,7 +67,7 @@ namespace Leviathan{
         StoredState(const StoredState &other) = delete;
         StoredState& operator=(const StoredState &other) = delete;
         
-        shared_ptr<ObjectDeltaStateData> DeltaData;
+        std::shared_ptr<ObjectDeltaStateData> DeltaData;
         int Tick;
     };
     
@@ -83,11 +78,12 @@ namespace Leviathan{
 
         //! \brief Creates an connection holder and creates an initial state
         //! \param curtick The current world tick, used to 
-        DLLEXPORT SendableObjectConnectionUpdate(BaseSendableEntity* getstate, ConnectionInfo* connection, int curtick);
+        DLLEXPORT SendableObjectConnectionUpdate(BaseSendableEntity* getstate,
+            ConnectionInfo* connection, int curtick);
 
         //! \brief Used to update LastConfirmedData
-        DLLEXPORT void SucceedOrFailCallback(int ticknumber, shared_ptr<ObjectDeltaStateData> state,
-            bool succeeded, SentNetworkThing &us);
+        DLLEXPORT void SucceedOrFailCallback(int ticknumber,
+            std::shared_ptr<ObjectDeltaStateData> state, bool succeeded, SentNetworkThing &us);
         
     protected:
 
@@ -102,7 +98,7 @@ namespace Leviathan{
         //! Data used to build a delta update packet
         //! \note This is set to be the last known successfully sent state to avoid having to
         //! resend intermediate steps
-        shared_ptr<ObjectDeltaStateData> LastConfirmedData;
+        std::shared_ptr<ObjectDeltaStateData> LastConfirmedData;
 
         //! The tick number of the confirmed state
         //! If a state is confirmed as received that has number higher than this LastConfirmedData will
@@ -110,7 +106,7 @@ namespace Leviathan{
         int LastConfirmedTickNumber;
 
         //! Mutex for callback function
-        boost::mutex CallbackMutex;
+        Mutex CallbackMutex;
     };
     
     //! \brief Inherited by objects that can be serialized using the SendableEntitySerializer
@@ -131,19 +127,20 @@ namespace Leviathan{
         //! returned
         //! \param world The world to which the object is created. This has to be locked before this
         //! call
-        DLLEXPORT static unique_ptr<BaseSendableEntity> UnSerializeFromPacket(sf::Packet &packet, GameWorld* world,
-            int id);
+        DLLEXPORT static std::unique_ptr<BaseSendableEntity> UnSerializeFromPacket(
+            sf::Packet &packet, GameWorld* world, int id);
 
         //! \brief Loads an update from a packet
-        DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet, int ticknumber, int referencetick);
+        DLLEXPORT virtual bool LoadUpdateFromPacket(sf::Packet &packet, int ticknumber,
+            int referencetick);
 
         //! \brief Capture current object state
         //! \param tick The tick value to store in the state, usually world's current tick
         //! \todo Allow this to be cached to improve performance
-        DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState(int tick) = 0;
+        DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CaptureState(int tick) = 0;
 
         //! \brief Subclasses initialize their state object of choice from a packet
-        DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
+        DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
             sf::Packet &packet) const = 0;
         
         //! \brief Tells this entity send updates to all receivers
@@ -159,8 +156,8 @@ namespace Leviathan{
         //! \exception InvalidState if no states are available
         //! \note use InvalidState to know if queue is empty and InvalidArgument to know if our
         //! tick counter is not in the sweetspot behind the server
-        DLLEXPORT void GetServerSentStates(shared_ptr<ObjectDeltaStateData> &first,
-            shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const;
+        DLLEXPORT void GetServerSentStates(std::shared_ptr<ObjectDeltaStateData> &first,
+            std::shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const;
 
         //! \brief Adds a new connection to known receivers
         DLLEXPORT virtual void AddConnectionToReceivers(ConnectionInfo* receiver);
@@ -184,7 +181,7 @@ namespace Leviathan{
 
         //! \brief Called internally when data is updated
         //! \note This object has to be locked before this call
-        void _MarkDataUpdated(ObjectLock &guard);
+        void _MarkDataUpdated(Lock &guard);
 
         //! \brief Called by entities which want created constraints replicated on clients
         void _SendNewConstraint(BaseConstraintable* us, BaseConstraintable* other, Entity::BaseConstraint* constraint);
@@ -216,8 +213,8 @@ namespace Leviathan{
         
         //! List of receivers that will be updated whenever state changes and GameWorld decides it being
         //! the time to send updates
-        std::vector<shared_ptr<SendableObjectConnectionUpdate>> UpdateReceivers;
+        std::vector<std::shared_ptr<SendableObjectConnectionUpdate>> UpdateReceivers;
     };
 
 }
-#endif
+

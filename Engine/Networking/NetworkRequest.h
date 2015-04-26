@@ -95,13 +95,13 @@ namespace Leviathan{
 
 	class RequestCommandExecutionData : public BaseNetworkRequestData{
 	public:
-		DLLEXPORT RequestCommandExecutionData(const string &commandstr);
+		DLLEXPORT RequestCommandExecutionData(const std::string &commandstr);
 		DLLEXPORT RequestCommandExecutionData(sf::Packet &frompacket);
 
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
 		//! The command to execute
-		string Command;
+        std::string Command;
 	};
 
 	class CustomRequestData : public BaseNetworkRequestData{
@@ -113,7 +113,7 @@ namespace Leviathan{
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
 		//! The actual data 
-		shared_ptr<GameSpecificPacketData> ActualPacketData;
+        std::shared_ptr<GameSpecificPacketData> ActualPacketData;
 	};
 
 	class RequestConnectInputData : public BaseNetworkRequestData{
@@ -157,23 +157,23 @@ namespace Leviathan{
 	class NetworkRequest{
 	public:
 		DLLEXPORT NetworkRequest(NETWORKREQUESTTYPE type, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
-            PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+            PACKET_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout = 1000,
-            PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+            PACKET_TIMEOUT_STYLE style = PACKET_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout = 1000,
-            PACKET_TIMEOUT_STYLE style = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+            PACKET_TIMEOUT_STYLE style = PACKET_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(JoinServerRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
-            PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+            PACKET_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style
-            = PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+            = PACKET_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(CustomRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
-            PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+            PACKET_TIMEOUT_STYLE_TIMEDMS);
 		DLLEXPORT NetworkRequest(RequestCommandExecutionData* newddata, int timeout = 10, PACKET_TIMEOUT_STYLE style =
-            PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED);
+            PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED);
 		DLLEXPORT NetworkRequest(RequestConnectInputData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
-            PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+            PACKET_TIMEOUT_STYLE_TIMEDMS);
         DLLEXPORT NetworkRequest(RequestWorldClockSyncData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
-            PACKAGE_TIMEOUT_STYLE_TIMEDMS);
+            PACKET_TIMEOUT_STYLE_TIMEDMS);
 		
 		DLLEXPORT ~NetworkRequest();
 

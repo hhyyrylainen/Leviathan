@@ -1,9 +1,9 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_ENTITYSERIALIZERMANAGER
 #include "EntitySerializerManager.h"
-#endif
-using namespace Leviathan;
+
 #include "Entities/Serializers/BaseEntitySerializer.h"
+using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::EntitySerializerManager::EntitySerializerManager(){
 
@@ -23,7 +23,7 @@ EntitySerializerManager* Leviathan::EntitySerializerManager::Staticinstance = NU
 // ------------------------------------ //
 DLLEXPORT void Leviathan::EntitySerializerManager::Release(){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     Staticinstance = NULL;
 
     // Delete the registered serializers //
@@ -34,18 +34,18 @@ DLLEXPORT void Leviathan::EntitySerializerManager::AddSerializer(BaseEntitySeria
     if(!serializer)
         return;
     
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     Serializers.push_back(serializer);
 }
 // ------------------------------------ //
-DLLEXPORT unique_ptr<sf::Packet> Leviathan::EntitySerializerManager::CreateInitialEntityMessageFor(BaseObject* object,
-    ConnectionInfo* forwho)
+DLLEXPORT std::unique_ptr<sf::Packet> Leviathan::EntitySerializerManager::CreateInitialEntityMessageFor(
+    BaseObject* object, ConnectionInfo* forwho)
 {
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     // Setup a packet //
-    unique_ptr<sf::Packet> packet(new sf::Packet);
+    std::unique_ptr<sf::Packet> packet(new sf::Packet);
 
     if(!packet || !object)
         return nullptr;
@@ -69,7 +69,7 @@ DLLEXPORT unique_ptr<sf::Packet> Leviathan::EntitySerializerManager::CreateIniti
 DLLEXPORT bool Leviathan::EntitySerializerManager::CreateEntityFromInitialMessage(BaseObject** returnobj,
     sf::Packet &packet, GameWorld* world)
 {
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     // The ID is the first thing in the packet //
     int32_t id;
@@ -83,11 +83,10 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::CreateEntityFromInitialMessag
 
     if(!packet){
 
-        Logger::Get()->Warning(L"EntitySerializerManager: CreateEntityFromInitialMessage: packet didn't have a proper"
-            L" int32_t type, or entity ID");
+        Logger::Get()->Warning("EntitySerializerManager: CreateEntityFromInitialMessage: "
+            "packet didn't have a proper int32_t type, or entity ID");
         return false;
     }
-    
 
     for(size_t i = 0; i < Serializers.size(); i++){
 
@@ -119,7 +118,7 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(sf::Packet
     if(!object)
         return false;
     
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     for(size_t i = 0; i < Serializers.size(); i++){
 

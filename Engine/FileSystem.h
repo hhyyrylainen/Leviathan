@@ -140,7 +140,7 @@ namespace Leviathan{
             bool recursive = true);
 
 		// file operations //
-		DLLEXPORT static size_t GetFileLength(std::string &name);
+		DLLEXPORT static size_t GetFileLength(const std::string &name);
 		DLLEXPORT static bool FileExists(const std::string &name);
 		DLLEXPORT static bool WriteToFile(const std::string &data, const std::string &filename);
 		DLLEXPORT static bool WriteToFile(const std::wstring &data, const std::wstring &filename);

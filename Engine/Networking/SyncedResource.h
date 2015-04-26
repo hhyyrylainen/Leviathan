@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_SYNCEDRESOURCE
-#define LEVIATHAN_SYNCEDRESOURCE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/BaseNotifiable.h"
 #include "Common/SFMLPackets.h"
 #include "Exceptions.h"
@@ -29,7 +25,7 @@ namespace Leviathan{
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
 		//! \brief Gets a name from packet leaving only the variable data there
-		DLLEXPORT static wstring GetSyncedResourceNameFromPacket(sf::Packet &packet) THROWS;
+		DLLEXPORT static wstring GetSyncedResourceNameFromPacket(sf::Packet &packet);
 
 		//! \brief Assigns data from a packet to this resource
 		//! \return False when the actual implementation throws
@@ -47,7 +43,7 @@ namespace Leviathan{
 	protected:
 
 		//! \brief Should load the custom data from a packet
-		virtual void UpdateCustomDataFromPacket(sf::Packet &packet) THROWS = 0;
+		virtual void UpdateCustomDataFromPacket(sf::Packet &packet) = 0;
 
 		//! \brief Should be used to add custom data to packet
 		//! \see UpdateCustomDataFromPacket
@@ -97,7 +93,7 @@ namespace Leviathan{
 			// Unhook already //
 			ReleaseParentHooks();
 			// Set us as invalid after locking //
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			IsValid = false;
 
 			// Destructors will take care of the rest //
@@ -108,7 +104,7 @@ namespace Leviathan{
         //! receiving updates through network
 		DLLEXPORT inline void UpdateValue(const DTypeName &newvalue){
 			{
-				GUARD_LOCK_THIS_OBJECT();
+				GUARD_LOCK();
 				// Update our value //
 				OurValue = newvalue;
 			}
@@ -117,7 +113,7 @@ namespace Leviathan{
 
 		//! \brief Gets the value with locking
 		DLLEXPORT DTypeName GetValue() const{
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			return OurValue;
 		}
 
@@ -143,7 +139,7 @@ namespace Leviathan{
 		}
 
 		DLLEXPORT operator DTypeName(){
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			return OurValue;
 		}
 
@@ -156,7 +152,7 @@ namespace Leviathan{
 				ValueUpdateCallback(this);
 		}
 
-		virtual void UpdateCustomDataFromPacket(sf::Packet &packet) THROWS{
+		virtual void UpdateCustomDataFromPacket(sf::Packet &packet){
 			// The object is already locked at this point //
 
 			// Try to get our variable //
@@ -185,4 +181,4 @@ namespace Leviathan{
 
 
 }
-#endif
+

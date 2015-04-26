@@ -1,12 +1,9 @@
-#ifndef LEVIATHAN_CONSTRAINTS
-#define LEVIATHAN_CONSTRAINTS
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/ThreadSafe.h"
+#include "../../Common/Types.h"
 
 namespace Leviathan{ namespace Entity{
 
@@ -17,7 +14,8 @@ namespace Leviathan{ namespace Entity{
             ENTITY_CONSTRAINT_TYPE_SLIDER = 1,
 
             
-            //! This type is used to connect entities to various controllers like TrackEntityController
+            //! This type is used to connect entities to various controllers
+            //! like TrackEntityController
             ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT,
                 
             ENTITY_CONSTRAINT_TYPE_CUSTOM = 1000
@@ -29,8 +27,8 @@ namespace Leviathan{ namespace Entity{
         class BaseConstraint : public ThreadSafe{
             friend BaseConstraintable;
         public:
-            DLLEXPORT BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world, BaseConstraintable* parent,
-                BaseConstraintable* child);
+            DLLEXPORT BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world,
+                BaseConstraintable* parent, BaseConstraintable* child);
             DLLEXPORT virtual ~BaseConstraint();
             
             //! \brief Actually creates the Newton joint.
@@ -75,7 +73,8 @@ namespace Leviathan{ namespace Entity{
             BaseConstraintable* ParentObject;
             BaseConstraintable* ChildObject;
             
-            //! \note World is a direct ptr since all joints MUST be destroyed before the world is released
+            //! \note World is a direct ptr since all joints MUST be destroyed before the
+            //! world is released
             GameWorld* OwningWorld;
             NewtonJoint* Joint;
 
@@ -89,12 +88,14 @@ namespace Leviathan{ namespace Entity{
         //! \note The axis has to be normalized otherwise Init fails
         class SliderConstraint : public BaseConstraint{
         public:
-            DLLEXPORT SliderConstraint(GameWorld* world, BaseConstraintable* parent, BaseConstraintable* child);
+            DLLEXPORT SliderConstraint(GameWorld* world, BaseConstraintable* parent,
+                BaseConstraintable* child);
             DLLEXPORT virtual ~SliderConstraint();
 
 
             //! Call this before init to set the right parameters
-            //! \param slidingaxis Is a normalized axis in global coordinates and defines the axis along which
+            //! \param slidingaxis Is a normalized axis in global coordinates and defines
+            //! the axis along which
             //! the object can move
             DLLEXPORT SliderConstraint* SetParameters(const Float3 &slidingaxis);
 
@@ -116,7 +117,8 @@ namespace Leviathan{ namespace Entity{
         //! \brief Marks a connection between a controller and an entity
         class ControllerConstraint : public BaseConstraint{
         public:
-            DLLEXPORT ControllerConstraint(GameWorld* world, BaseConstraintable* controller, BaseConstraintable* child);
+            DLLEXPORT ControllerConstraint(GameWorld* world, BaseConstraintable* controller,
+                BaseConstraintable* child);
             DLLEXPORT ~ControllerConstraint();
 
 
@@ -133,4 +135,4 @@ namespace Leviathan{ namespace Entity{
 
     }
 }
-#endif
+

@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_SCRIPTMODULE
-#define LEVIATHAN_SCRIPTMODULE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "angelscript.h"
 #include "add_on/scriptbuilder/scriptbuilder.h"
 #include "Common/ThreadSafe.h"
@@ -13,8 +9,6 @@
 #include "ScriptArgumentsProvider.h"
 
 #define SCRIPTMODULE_LISTENFORFILECHANGES
-
-
 
 namespace Leviathan{
 
@@ -321,7 +315,5 @@ namespace Leviathan{
 	};
 
 }
-#endif
-
 
 

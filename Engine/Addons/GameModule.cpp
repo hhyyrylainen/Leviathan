@@ -1,19 +1,20 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_GAMEMODULE
 #include "GameModule.h"
-#endif
+
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "FileSystem.h"
 #include "Common/StringOperations.h"
 #include "Script/ScriptExecutor.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameModule::GameModule(const wstring &modulename, const wstring &ownername,
-    const wstring &extension /*= L"txt|levgm"*/) : OwnerName(ownername), LoadedFromFile(modulename)
+DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
+    const std::string &ownername, const std::string &extension /*= "txt|levgm"*/) :
+    OwnerName(ownername), LoadedFromFile(modulename)
 {
 	// Find the actual file //
-	wstring file = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, modulename, extension, false);
+	std::string file = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, modulename, extension,
+        false);
 
 	if(file.size() == 0){
 		// Couldn't find file //
@@ -37,20 +38,21 @@ DLLEXPORT Leviathan::GameModule::GameModule(const wstring &modulename, const wst
 	}
 
 	// Get various data from the header //
-	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(ofile->GetVariables(), L"Version", Name,
-        L"-1", true, L"GameModule:");
+	ObjectFileProcessor::LoadValueFromNamedVars<std::string>(ofile->GetVariables(), "Version",
+        Name, "-1", true, "GameModule:");
 
 	auto gmobject = ofile->GetObjectFromIndex(0);
 
 	Name = gmobject->GetName();
 
 	// handle the single object //
-	ObjectFileList* properties = gmobject->GetListWithName(L"properties");
-	ObjectFileTextBlock* sources = gmobject->GetTextBlockWithName(L"sourcefiles");
+	ObjectFileList* properties = gmobject->GetListWithName("properties");
+	ObjectFileTextBlock* sources = gmobject->GetTextBlockWithName("sourcefiles");
 
 	if(!properties || !sources){
 
-		throw InvalidArgument("File contains invalid GameModule, properties or sourcefiles not found");
+		throw InvalidArgument("File contains invalid GameModule, properties or sourcefiles not "
+            "found");
 	}
 
 	// Copy data //
@@ -60,10 +62,12 @@ DLLEXPORT Leviathan::GameModule::GameModule(const wstring &modulename, const wst
 	}
 
 
-	wstring sourcefilename = StringOperations::RemoveExtensionWstring(sources->GetLine(0), true);
-	wstring extensions = StringOperations::GetExtensionWstring(sources->GetLine(0));
+	std::string sourcefilename = StringOperations::RemoveExtensionStd::String(sources->GetLine(0),
+        true);
+	std::string extensions = StringOperations::GetExtensionStd::String(sources->GetLine(0));
 
-	SourceFile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, sourcefilename, extensions, false);
+	SourceFile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, sourcefilename, extensions,
+        false);
 }
 
 DLLEXPORT Leviathan::GameModule::~GameModule(){
@@ -76,18 +80,19 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 
 	if(!Scripting){
 
-		Scripting = shared_ptr<ScriptScript>(new
+		Scripting = std::shared_ptr<ScriptScript>(new
             ScriptScript(ScriptExecutor::Get()->CreateNewModule(
-                    L"GameModule("+Name+L") ScriptModule", Convert::WstringToString(SourceFile))));
+                    "GameModule("+Name+") ScriptModule", SourceFile)));
 
 		// Get the newly created module //
 		mod = Scripting->GetModule();
 
-		mod->AddScriptSegmentFromFile(Convert::WstringToString(SourceFile));
+		mod->AddScriptSegmentFromFile(SourceFile);
 		mod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
 
 
 	} else {
+        
 		// Get already created module //
 		mod = Scripting->GetModule();
 	}
@@ -122,8 +127,8 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 			continue;
 		}
 
-		Logger::Get()->Warning(L"GameModule: unknown event type "+
-            *containedlisteners[i]->ListenerName+L", did you intent to use Generic type?");
+		Logger::Get()->Warning("GameModule: unknown event type "+
+            *containedlisteners[i]->ListenerName+", did you intent to use Generic type?");
 	}
 
 	// Call init callbacks //
@@ -153,13 +158,13 @@ DLLEXPORT void Leviathan::GameModule::ReleaseScript(){
 	ScriptExecutor::Get()->DeleteModuleIfNoExternalReferences(tmpid);
 }
 // ------------------------------------ //
-DLLEXPORT wstring Leviathan::GameModule::GetDescriptionForError(bool full /*= false*/){
-	return L"GameModule("+Name+(full ? L" v"+Version+L") ": L") ")+L" owned by: "+OwnerName+
-        (full ? L", loaded from file: "+LoadedFromFile+L".": L".");
+DLLEXPORT std::string Leviathan::GameModule::GetDescriptionForError(bool full /*= false*/){
+	return "GameModule("+Name+(full ? " v"+Version+") ": ") ")+" owned by: "+OwnerName+
+        (full ? ", loaded from file: "+LoadedFromFile+".": ".");
 }
 
 DLLEXPORT string Leviathan::GameModule::GetDescriptionProxy(bool full){
-	return Convert::WstringToString(GetDescriptionForError(full));
+	return Convert::Std::StringToString(GetDescriptionForError(full));
 }
 // ------------------------------------ //
 void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** event2){
@@ -168,14 +173,14 @@ void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** e
 
 	if(pEvent){
 		// Get the listener name from the event type //
-		wstring listenername = GetListenerNameFromType((*pEvent)->GetType());
+		std::string listenername = GetListenerNameFromType((*pEvent)->GetType());
 
 		// check does the script contain right listeners //
 		if(mod->DoesListenersContainSpecificListener(listenername)){
 			// setup parameters //
 			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new
-                NamedVariableBlock(new VoidPtrBlock(this), L"GameModule"))
-				(new NamedVariableBlock(new VoidPtrBlock(*pEvent), L"Event"));
+                NamedVariableBlock(new VoidPtrBlock(this), "GameModule"))
+				(new NamedVariableBlock(new VoidPtrBlock(*pEvent), "Event"));
 			// we are returning ourselves so increase refcount
 			AddRef();
 			(*pEvent)->AddRef();
@@ -194,14 +199,15 @@ void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** e
 		if(mod->DoesListenersContainSpecificListener(L"", (*event2)->GetTypePtr())){
 			// setup parameters //
 			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new
-                NamedVariableBlock(new VoidPtrBlock(this), L"GameModule"))
-				(new NamedVariableBlock(new VoidPtrBlock(*event2), L"GenericEvent"));
+                NamedVariableBlock(new VoidPtrBlock(this), "GameModule"))
+				(new NamedVariableBlock(new VoidPtrBlock(*event2), "GenericEvent"));
+            
 			// we are returning ourselves so increase refcount
 			AddRef();
 			(*event2)->AddRef();
 
 			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName(L"", (*event2)->GetTypePtr())).
+			sargs.SetEntrypoint(mod->GetListeningFunctionName("", (*event2)->GetTypePtr())).
                 SetArguments(Args);
             
 			// run the script //
@@ -212,13 +218,13 @@ void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** e
 	}
 }
 // ------------------ Being an actual module ------------------ //
-DLLEXPORT shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(const string &entrypoint,
+DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(const string &entrypoint,
     std::vector<shared_ptr<NamedVariableBlock>> &otherparams, bool &existed,
     bool fulldeclaration /*= false*/)
 {
 	// Add this as parameter //
-	otherparams.insert(otherparams.begin(), shared_ptr<NamedVariableBlock>(new
-            NamedVariableBlock(new VoidPtrBlock(this), L"GameModule")));
+	otherparams.insert(otherparams.begin(), std::shared_ptr<NamedVariableBlock>(new
+            NamedVariableBlock(new VoidPtrBlock(this), "GameModule")));
 
 	// we are returning ourselves so increase refcount
 	AddRef();

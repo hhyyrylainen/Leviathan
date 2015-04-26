@@ -1,15 +1,12 @@
-#ifndef LEVIATHAN_NETWORKSERVERINTERFACE
-#define LEVIATHAN_NETWORKSERVERINTERFACE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "NetworkResponse.h"
 #include "Common/BaseNotifiable.h"
 #include "Gameplay/CommandHandler.h"
 #include "boost/thread.hpp"
+#include "../TimeIncludes.h"
 
 //! Defines the interval between heartbeats
 //! Should be the same as CLIENT_HEARTBEATS_MILLISECOND
@@ -42,7 +39,7 @@ namespace Leviathan{
 
 		//! \brief Call this when the player is kicked
 		//! \todo Add the reason to the packet
-		DLLEXPORT void OnKicked(const wstring &reason);
+		DLLEXPORT void OnKicked(const std::string &reason);
 
 
 		//! \brief Starts requiring the player to send heartbeats
@@ -61,12 +58,12 @@ namespace Leviathan{
 
 		//! \brief Returns the object that contains this players position in a certain world or NULL
 		//! \note THe lock should be valid while using the returned pointer
-		DLLEXPORT BasePositionable* GetPositionInWorld(GameWorld* world, ObjectLock &guard) const;
+		DLLEXPORT BasePositionable* GetPositionInWorld(GameWorld* world, Lock &guard) const;
 
 
-		DLLEXPORT virtual const string& GetUniqueName();
+		DLLEXPORT virtual const std::string& GetUniqueName();
 
-		DLLEXPORT virtual const string& GetNickname();
+		DLLEXPORT virtual const std::string& GetNickname();
 
 		DLLEXPORT virtual COMMANDSENDER_PERMISSIONMODE GetPermissionMode();
 
@@ -76,7 +73,7 @@ namespace Leviathan{
 		//! \brief Used to detect when a connection has been closed
 		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove) override;
 
-		DLLEXPORT virtual bool _OnSendPrivateMessage(const string &message);
+		DLLEXPORT virtual bool _OnSendPrivateMessage(const std::string &message);
 		// ------------------------------------ //
 
 		ConnectionInfo* CorrespondingConnection;
@@ -92,11 +89,11 @@ namespace Leviathan{
 
 
 		//! The unique identifier of the player, might be a steam id or something else
-		string UniqueName;
+        std::string UniqueName;
 
 
 		//! The display name of the player
-		string DisplayName;
+		std::string DisplayName;
 
 
 		//! Gets set when a heartbeat hasn't been received for a while, this will be set before the player is kicked
@@ -130,9 +127,9 @@ namespace Leviathan{
 		//! \param servername Sets the server's name visible in various listings
 		//! \param restricttype Controls who can join the server
 		//! \param additionalflags Sets the application specific flags for this server
-		DLLEXPORT NetworkServerInterface(int maxplayers, const wstring &servername,
-            NETWORKRESPONSE_SERVERJOINRESTRICT restricttype = NETWORKRESPONSE_SERVERJOINRESTRICT_NONE,
-            int additionalflags = 0);
+		DLLEXPORT NetworkServerInterface(int maxplayers, const std::string &servername,
+            NETWORKRESPONSE_SERVERJOINRESTRICT restricttype =
+            NETWORKRESPONSE_SERVERJOINRESTRICT_NONE, int additionalflags = 0);
         
 		//! Default destructor
 		DLLEXPORT virtual ~NetworkServerInterface();
@@ -148,7 +145,7 @@ namespace Leviathan{
 		DLLEXPORT ConnectedPlayer* GetPlayerForConnection(ConnectionInfo* connection);
 
 		//! \brief Sends a response to a NETWORKREQUESTTYPE_SERVERSTATUS
-		DLLEXPORT void RespondToServerStatusRequest(shared_ptr<NetworkRequest> request,
+		DLLEXPORT void RespondToServerStatusRequest(std::shared_ptr<NetworkRequest> request,
             ConnectionInfo* connectiontouse);
 
 		//! \brief Sets the status of the server to newstatus
@@ -167,15 +164,17 @@ namespace Leviathan{
         //! stay allocated as long as it is
 		//! still attached.
 		//! \warning The deletion of the old handler isn't thread safe so be careful when switching handlers
-		DLLEXPORT virtual bool RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler);
+		DLLEXPORT virtual bool RegisterNetworkedInput(
+            std::shared_ptr<NetworkedInputHandler> handler);
 
 
 		//! \brief Sends a response packet to all players except for the player(s) whose connection matches skipme
-		DLLEXPORT void SendToAllButOnePlayer(shared_ptr<NetworkResponse> response, ConnectionInfo* skipme,
-            int resendcount = 4);
+		DLLEXPORT void SendToAllButOnePlayer(std::shared_ptr<NetworkResponse> response,
+            ConnectionInfo* skipme, int resendcount = 4);
 
 		//! \brief Sends a response packet to all of the players
-		DLLEXPORT void SendToAllPlayers(shared_ptr<NetworkResponse> response, int resendcount = 4);
+		DLLEXPORT void SendToAllPlayers(std::shared_ptr<NetworkResponse> response,
+            int resendcount = 4);
 
 		//! \brief Returns the active networked input handler or NULL
 		DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
@@ -184,7 +183,7 @@ namespace Leviathan{
 		//! \note Prior to calling this (if your players will move) you should bind positionable objects to
         //! the players for them to receive updates
 		// based on their location
-		DLLEXPORT virtual void VerifyWorldIsSyncedWithPlayers(shared_ptr<GameWorld> world);
+		DLLEXPORT virtual void VerifyWorldIsSyncedWithPlayers(std::shared_ptr<GameWorld> world);
 
 
 	protected:
@@ -193,23 +192,26 @@ namespace Leviathan{
 		//! \brief Utility function for subclasses to call for default handling of server packets
 		//!
 		//! Handles default packets that are meant to be processed by a server
-		DLLEXPORT bool _HandleServerRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult);
+		DLLEXPORT bool _HandleServerRequest(std::shared_ptr<NetworkRequest> request,
+            ConnectionInfo* connectiontosendresult);
 
 		//! \brief Utility function for subclasses to call for default handling of non-request responses
 		//!
 		//! Handles default types of response packages and returns true if processed.
-		DLLEXPORT bool _HandleServerResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection,
-            bool &dontmarkasreceived);
+		DLLEXPORT bool _HandleServerResponseOnly(std::shared_ptr<NetworkResponse> message,
+            ConnectionInfo* connection, bool &dontmarkasreceived);
 
 		//! \brief Used to handle server join request packets
 		//! \todo Check connection security status
 		//! \todo Add basic connection checking and master server authentication check
-		DLLEXPORT void _HandleServerJoinRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
+		DLLEXPORT void _HandleServerJoinRequest(std::shared_ptr<NetworkRequest> request,
+            ConnectionInfo* connection);
 
 		// Callback functions //
 
 		//! \brief Called when a player is about to connect
-		DLLEXPORT virtual void PlayerPreconnect(ConnectionInfo* connection, shared_ptr<NetworkRequest> joinrequest);
+		DLLEXPORT virtual void PlayerPreconnect(ConnectionInfo* connection,
+            std::shared_ptr<NetworkRequest> joinrequest);
 		DLLEXPORT virtual void _OnPlayerConnected(ConnectedPlayer* newplayer);
 		DLLEXPORT virtual void _OnPlayerDisconnect(ConnectedPlayer* newplayer);
 		DLLEXPORT virtual bool PlayerPotentiallyKicked(ConnectedPlayer* player);
@@ -221,16 +223,17 @@ namespace Leviathan{
 		//! \brief Called by _HandleServerJoinRequest to allow specific games to disallow players
 		//! \return true to allow join false to disallow join
 		//! \param message The error message to give back to the player
-		DLLEXPORT virtual bool AllowPlayerConnectVeto(shared_ptr<NetworkRequest> request, ConnectionInfo* connection,
-            wstring &message);
+		DLLEXPORT virtual bool AllowPlayerConnectVeto(std::shared_ptr<NetworkRequest> request, ConnectionInfo* connection,
+            std::string &message);
 
         //! Internally called when a player is about to be deleted
         //!
         //! Will call virtual notify functions
-		void _OnReportCloseConnection(ConnectedPlayer* plyptr, ObjectLock &guard);
+		void _OnReportCloseConnection(ConnectedPlayer* plyptr, Lock &guard);
 
         //! Internally used to detect when a new player has connected
-        void _OnReportPlayerConnected(ConnectedPlayer* plyptr, ConnectionInfo* connection, ObjectLock &guard);
+        void _OnReportPlayerConnected(ConnectedPlayer* plyptr, ConnectionInfo* connection,
+            Lock &guard);
 
         //! \brief Called from ConnectedPlayer when its connection is no longer good
         void _OnPlayerConnectionCloseResources(ConnectedPlayer* ply);
@@ -246,26 +249,26 @@ namespace Leviathan{
 		int MaxPlayers;
 
 		//! Currently active bots
-		vector<int> ActiveBots;
+		std::vector<int> ActiveBots;
 
 		//! This isn't always used, but when it is this will handle some packets
-		shared_ptr<NetworkedInputHandler> PotentialInputHandler;
+		std::shared_ptr<NetworkedInputHandler> PotentialInputHandler;
 
 
 		//! Name displayed in the server list
-		wstring ServerName;
+		std::string ServerName;
 
 		//! Controls whether players can join
 		bool AllowJoin;
 
         //! Lock this when changing the player list
-        boost::mutex PlayerListLocked;
+        Mutex PlayerListLocked;
         
 
 		//! Type of join restriction, defaults to NETWORKRESPONSE_SERVERJOINRESTRICT_NONE
 		NETWORKRESPONSE_SERVERJOINRESTRICT JoinRestrict;
-		//! Server status, initially NETWORKRESPONSE_SERVERSTATUS_STARTING and should be set by the application
-        //! when appropriate
+		//! Server status, initially NETWORKRESPONSE_SERVERSTATUS_STARTING and
+        //! should be set by the application when appropriate
 		NETWORKRESPONSE_SERVERSTATUS ServerStatus;
 
 		//! This can contain anything the specific game wants
@@ -277,8 +280,7 @@ namespace Leviathan{
 
 		//! The object used to handle all player submitted commands
 		CommandHandler* _CommandHandler;
-
 	};
 
 }
-#endif
+

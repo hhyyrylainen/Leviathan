@@ -567,11 +567,11 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
 	// Check the length //
 	if(ServerNameString.length() > 100){
 
-		Logger::Get()->Warning(L"NetworkResponse: NetworkResponseDataForServerStatus: server name is too long, max 100 "
-            L"characters (is "+Convert::ToStd::String(ServerNameString.length())+L") : "+ServerNameString+
-            L" will be truncated:");
+		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerStatus: server name is too long, max 100 "
+            "characters (is "+Convert::ToStd::String(ServerNameString.length())+") : "+ServerNameString+
+            " will be truncated:");
 		ServerNameString.resize(100);
-		Logger::Get()->Write(L"\t> "+ServerNameString+L"\n");
+		Logger::Get()->Write("\t> "+ServerNameString+"\n");
 	}
 }
 
@@ -586,7 +586,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
 	if(ServerNameString.size() > 100){
 
 		ServerNameString.resize(100);
-		Logger::Get()->Warning(L"NetworkResponseDataForServerStatus: packet had too long server name string");
+		Logger::Get()->Warning("NetworkResponseDataForServerStatus: packet had too long server name string");
 	}
 
     JoinRestriction = static_cast<NETWORKRESPONSE_SERVERJOINRESTRICT>(tmpextract);    
@@ -615,21 +615,21 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataFo
 	if(Message.size() > 100){
 
 		Message.resize(100);
-		Logger::Get()->Warning(L"NetworkResponseDataForServerDisallow: packet had too long message string");
+		Logger::Get()->Warning("NetworkResponseDataForServerDisallow: packet had too long message string");
 	}
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataForServerDisallow(
-    NETWORKRESPONSE_INVALIDREASON reason, const std::string &message /*= L"Default disallow"*/) :
+    NETWORKRESPONSE_INVALIDREASON reason, const std::string &message /*= "Default disallow"*/) :
     Reason(reason), Message(message)
 {
 	// Check the length //
 	if(Message.length() > 100){
 
-		Logger::Get()->Warning(L"NetworkResponse: NetworkResponseDataForServerDisallow: message is too long (is "+
-            Convert::ToStd::String(Message.length())+L") : "+Message+L" will be truncated:");
+		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerDisallow: message is too long (is "+
+            Convert::ToStd::String(Message.length())+") : "+Message+" will be truncated:");
 		Message.resize(100);
-		Logger::Get()->Write(L"\t> "+Message+L"\n");
+		Logger::Get()->Write("\t> "+Message+"\n");
 	}
 }
 
@@ -651,21 +651,21 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForSe
 	if(Message.size() > 100){
 
 		Message.resize(100);
-		Logger::Get()->Warning(L"NetworkResponseDataForServerAllow: packet had too long message string");
+		Logger::Get()->Warning("NetworkResponseDataForServerAllow: packet had too long message string");
 	}
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(
-    NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted, const std::string &message /*= L""*/) :
+    NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted, const std::string &message /*= ""*/) :
     ServerAcceptedWhat(whataccepted), Message(message)
 {
 	// Check the length //
 	if(Message.length() > 100){
 
-		Logger::Get()->Warning(L"NetworkResponse: NetworkResponseDataForServerAllow: message is too long (is "+
-            Convert::ToStd::String(Message.length())+L") : "+Message+L" will be truncated:");
+		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerAllow: message is too long (is "+
+            Convert::ToStd::String(Message.length())+") : "+Message+" will be truncated:");
 		Message.resize(100);
-		Logger::Get()->Write(L"\t> "+Message+L"\n");
+		Logger::Get()->Write("\t> "+Message+"\n");
 	}
 }
 
@@ -681,7 +681,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForSyncValData::NetworkResponseDataForSy
 
 DLLEXPORT Leviathan::NetworkResponseDataForSyncValData::NetworkResponseDataForSyncValData(sf::Packet &frompacket){
 	// Create new value from the packet //
-	SyncValueData = shared_ptr<NamedVariableList>(new NamedVariableList(frompacket));
+	SyncValueData = std::shared_ptr<NamedVariableList>(new NamedVariableList(frompacket));
 }
 
 DLLEXPORT void Leviathan::NetworkResponseDataForSyncValData::AddDataToPacket(sf::Packet &packet){
@@ -835,7 +835,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForInitialEntity::NetworkResponseDataFor
             throw InvalidArgument("invalid packet format");
         }
         
-        shared_ptr<sf::Packet> packit = make_shared<sf::Packet>();
+        std::shared_ptr<sf::Packet> packit = make_shared<sf::Packet>();
 
         packit->append(tmpstr.c_str(), tmpstr.size());
 
@@ -844,10 +844,10 @@ DLLEXPORT Leviathan::NetworkResponseDataForInitialEntity::NetworkResponseDataFor
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForInitialEntity::NetworkResponseDataForInitialEntity(int worldid,
-    unique_ptr<sf::Packet> &entity1data) :
+    std::unique_ptr<sf::Packet> &entity1data) :
     WorldID(worldid), EntityData(1)
 {
-    EntityData[0] = shared_ptr<sf::Packet>(entity1data.release());
+    EntityData[0] = std::shared_ptr<sf::Packet>(entity1data.release());
 }
         
 DLLEXPORT void Leviathan::NetworkResponseDataForInitialEntity::AddDataToPacket(sf::Packet &packet){
@@ -865,14 +865,14 @@ DLLEXPORT void Leviathan::NetworkResponseDataForInitialEntity::AddDataToPacket(s
         // Warn if it is quite large //
         if(tmpstr.size() >= 500){
 
-            Logger::Get()->Warning(L"Sending a large object, over 500 bytes in size");
+            Logger::Get()->Warning("Sending a large object, over 500 bytes in size");
         }
 
         packet << tmpstr;
     }
 }
 
-DLLEXPORT shared_ptr<sf::Packet>  Leviathan::NetworkResponseDataForInitialEntity::GetDataForEntity(size_t index) const{
+DLLEXPORT std::shared_ptr<sf::Packet>  Leviathan::NetworkResponseDataForInitialEntity::GetDataForEntity(size_t index) const{
     // Check is it out of bounds //
     if(index >= EntityData.size())
         return nullptr;
@@ -881,7 +881,7 @@ DLLEXPORT shared_ptr<sf::Packet>  Leviathan::NetworkResponseDataForInitialEntity
 }
 // ------------------ NetworkResponseDataForEntityConstraint ------------------ //
 DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(int worldid, int entity1,
-    int entity2, bool create, Entity::ENTITY_CONSTRAINT_TYPE type, shared_ptr<sf::Packet> &data) :
+    int entity2, bool create, Entity::ENTITY_CONSTRAINT_TYPE type, std::shared_ptr<sf::Packet> &data) :
     WorldID(worldid), EntityID1(entity1), EntityID2(entity2), Create(create), Type(type), ConstraintData(data)
 {
 
@@ -919,7 +919,7 @@ DLLEXPORT void Leviathan::NetworkResponseDataForEntityConstraint::AddDataToPacke
         // Warn if it is quite large //
         if(tmpstr.size() >= 500){
 
-            Logger::Get()->Warning(L"Sending a large constraint, over 500 bytes in size");
+            Logger::Get()->Warning("Sending a large constraint, over 500 bytes in size");
         }
 
         packet << tmpstr;
@@ -953,7 +953,7 @@ DLLEXPORT void Leviathan::NetworkResponseDataForWorldFrozen::AddDataToPacket(sf:
 }
 // ------------------ NetworkResponseDataForEntityUpdate ------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(
-    int worldid, int entityid, int ticknumber, int referencetick, shared_ptr<sf::Packet> data) :
+    int worldid, int entityid, int ticknumber, int referencetick, std::shared_ptr<sf::Packet> data) :
     WorldID(worldid), EntityID(entityid), UpdateData(data), TickNumber(ticknumber),
     ReferenceTick(referencetick)
 {
@@ -1011,7 +1011,7 @@ DLLEXPORT void Leviathan::NetworkResponseDataForEntityDestruction::AddDataToPack
 }
 // ------------------ NetworkResponseDataForAICacheUpdated ------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataForAICacheUpdated(
-    shared_ptr<NamedVariableList> variable) :
+    std::shared_ptr<NamedVariableList> variable) :
     Variable(variable)
 {
     if(!Variable)

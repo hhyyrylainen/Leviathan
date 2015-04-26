@@ -1,18 +1,16 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_BASESENDABLEENTITY
 #include "BaseSendableEntity.h"
-#endif
+
 #include "Entities/Objects/Brush.h"
 #include "Entities/Objects/Prop.h"
 #include "Entities/Objects/TrackEntityController.h"
 #include "Networking/NetworkResponse.h"
 #include "Networking/ConnectionInfo.h"
 #include "Networking/NetworkHandler.h"
-#include "boost/thread/lock_types.hpp"
 #include "Handlers/ConstraintSerializerManager.h"
 #include "Exceptions.h"
-#include "Common/Misc.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_TYPE type) :
     SerializeType(type), IsAnyDataUpdated(false), 
@@ -26,7 +24,7 @@ DLLEXPORT Leviathan::BaseSendableEntity::BaseSendableEntity(BASESENDABLE_ACTUAL_
 
 DLLEXPORT Leviathan::BaseSendableEntity::~BaseSendableEntity(){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     UpdateReceivers.clear();
 }
 // ------------------------------------ //
@@ -36,14 +34,14 @@ DLLEXPORT BASESENDABLE_ACTUAL_TYPE Leviathan::BaseSendableEntity::GetSendableTyp
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BaseSendableEntity::SerializeToPacket(sf::Packet &packet){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     packet << static_cast<int32_t>(SerializeType);
 
     _SaveOwnDataToPacket(packet);
 }
 // ------------------------------------ //
-DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerializeFromPacket(sf::Packet &packet,
+DLLEXPORT std::unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerializeFromPacket(sf::Packet &packet,
     GameWorld* world, int id)
 {
 
@@ -67,7 +65,7 @@ DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerial
             }
             
             // Create a brush and apply the packet to it //
-            unique_ptr<Entity::Brush> tmpobj(new Entity::Brush(hidden, world, id));
+            std::unique_ptr<Entity::Brush> tmpobj(new Entity::Brush(hidden, world, id));
 
             if(!tmpobj->_LoadOwnDataFromPacket(packet)){
 
@@ -88,7 +86,7 @@ DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerial
             }
             
             // Create a brush and apply the packet to it //
-            unique_ptr<Entity::Prop> tmpobj(new Entity::Prop(hidden, world, id));
+            std::unique_ptr<Entity::Prop> tmpobj(new Entity::Prop(hidden, world, id));
 
             if(!tmpobj->_LoadOwnDataFromPacket(packet)){
 
@@ -100,7 +98,7 @@ DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerial
         }
         case BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER:
         {
-            unique_ptr<Entity::TrackEntityController> tmpobj(new Entity::TrackEntityController(id, world));
+            std::unique_ptr<Entity::TrackEntityController> tmpobj(new Entity::TrackEntityController(id, world));
 
             if(!tmpobj->_LoadOwnDataFromPacket(packet)){
 
@@ -118,7 +116,7 @@ DLLEXPORT unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerial
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BaseSendableEntity::AddConnectionToReceivers(ConnectionInfo* receiver){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     const int tick = OwnedByWorld ? OwnedByWorld->GetTickNumber(): -1;
 
@@ -127,7 +125,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::AddConnectionToReceivers(Connectio
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknumber){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     // Return if none could want any updates //
     if(!IsAnyDataUpdated)
@@ -141,7 +139,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
 
         // Currently all active connections will receive all updates //
 
-        shared_ptr<sf::Packet> packet = make_shared<sf::Packet>();
+        std::shared_ptr<sf::Packet> packet = make_shared<sf::Packet>();
 
         // Prepare the packet //
         // The first type is used by EntitySerializerManager and the second by the sendable entity serializer
@@ -151,7 +149,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
         curstate->CreateUpdatePacket((*iter)->LastConfirmedData.get(), *packet.get());
         
         // Check is the connection fine //
-        shared_ptr<ConnectionInfo> safeconnection = NetworkHandler::Get()->GetSafePointerToConnection(
+        std::shared_ptr<ConnectionInfo> safeconnection = NetworkHandler::Get()->GetSafePointerToConnection(
             (*iter)->CorrespondingConnection);
         
         // This will be the only function removing closed connections //
@@ -166,8 +164,8 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
         }
 
         // Create the final update packet //
-        shared_ptr<NetworkResponse> updatemesg = make_shared<NetworkResponse>(-1,
-            PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
+        std::shared_ptr<NetworkResponse> updatemesg = make_shared<NetworkResponse>(-1,
+            PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
 
         updatemesg->GenerateEntityUpdateResponse(new NetworkResponseDataForEntityUpdate(OwnedByWorld->GetID(),
                 GetID(), ticknumber, (*iter)->LastConfirmedTickNumber, packet));
@@ -186,7 +184,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
     IsAnyDataUpdated = false;
 }
 // ------------------------------------ //
-void Leviathan::BaseSendableEntity::_MarkDataUpdated(ObjectLock &guard){
+void Leviathan::BaseSendableEntity::_MarkDataUpdated(Lock &guard){
     VerifyLock(guard);
     
     // Mark all active receivers as needing an update //
@@ -208,7 +206,7 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
     }
 
     {
-        GUARD_LOCK_THIS_OBJECT();
+        GUARD_LOCK();
 
         // Skip if not newer than any //
         if(ClientStateBuffer.size() != 0){
@@ -289,13 +287,13 @@ DLLEXPORT bool Leviathan::BaseSendableEntity::LoadUpdateFromPacket(sf::Packet &p
 }
 // ------------------------------------ //
 DLLEXPORT void BaseSendableEntity::GetServerSentStates(shared_ptr<ObjectDeltaStateData> &first,
-    shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const
+    std::shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const
 {
     bool firstfound = false;
     int secondfound = 0;
 
     {
-        GUARD_LOCK_THIS_OBJECT();
+        GUARD_LOCK();
     
         for(auto& obj : ClientStateBuffer){
 
@@ -336,12 +334,12 @@ DLLEXPORT void BaseSendableEntity::GetServerSentStates(shared_ptr<ObjectDeltaSta
 void Leviathan::BaseSendableEntity::_SendNewConstraint(BaseConstraintable* us, BaseConstraintable* other,
     Entity::BaseConstraint* constraint)
 {
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     if(UpdateReceivers.empty())
         return;
 
-    GUARD_LOCK_OTHER_OBJECT_NAME(constraint, guard2);
+    GUARD_LOCK_OTHER_NAME(constraint, guard2);
 
     auto custompacketdata = ConstraintSerializerManager::Get()->SerializeConstraintData(constraint);
 
@@ -358,7 +356,7 @@ void Leviathan::BaseSendableEntity::_SendNewConstraint(BaseConstraintable* us, B
     // The second object might be NULL so make sure not to segfault here //
     int obj2 = other ? other->GetID(): -1;
 
-    auto packet = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000);
+    auto packet = make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
     
     // Wrap everything up and send //
     packet->GenerateEntityConstraintResponse(new NetworkResponseDataForEntityConstraint(OwnedByWorld->GetID(),
@@ -389,12 +387,12 @@ DLLEXPORT Leviathan::SendableObjectConnectionUpdate::SendableObjectConnectionUpd
 }
 
 DLLEXPORT void Leviathan::SendableObjectConnectionUpdate::SucceedOrFailCallback(int ticknumber,
-    shared_ptr<ObjectDeltaStateData> state, bool succeeded, SentNetworkThing &us)
+    std::shared_ptr<ObjectDeltaStateData> state, bool succeeded, SentNetworkThing &us)
 {
     if(!succeeded)
         return;
 
-    boost::unique_lock<boost::mutex> lock(CallbackMutex);
+    Lock lock(CallbackMutex);
     
     if(ticknumber < LastConfirmedTickNumber)
         return;

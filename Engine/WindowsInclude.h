@@ -14,3 +14,6 @@
 #include <Windows.h>
 #include <Windowsx.h>
 
+// Some undefines //
+#undef GetNextSibling
+#undef GetFirstChild

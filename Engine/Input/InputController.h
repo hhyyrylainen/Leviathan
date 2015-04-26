@@ -1,13 +1,8 @@
-#ifndef LEVIATHAN_INPUTCONTROLLER
-#define LEVIATHAN_INPUTCONTROLLER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "OISKeyboard.h"
-
 
 namespace Leviathan{
 
@@ -40,7 +35,6 @@ namespace Leviathan{
 
 		// ------------------------------------ //
 		InputController* ConnectedTo;
-
 	};
 
 
@@ -71,4 +65,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

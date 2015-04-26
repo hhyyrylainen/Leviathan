@@ -4,7 +4,8 @@
 #include "ViewerCameraPos.h"
 #endif
 #include "Sound/SoundDevice.h"
-#include "Common/Misc.h"
+#include "../../Handlers/IDFactory.h"
+#include "../../Utility/Convert.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -31,10 +32,10 @@ void ViewerCameraPos::UpdatePos(int mspassed){
 		Orientation.Y -= ymoved/2.f*MouseYSensitivity*FrameTime*0.5f;
 		Orientation.X -= xmoved/2.f*MouseXSensitivity*FrameTime*0.5f;
 
-		if(!Misc::IsFiniteNumber(Orientation.X)){
+		if(Orientation.X != Orientation.X){
 			Orientation.X = 0;
 		}
-		if(!Misc::IsFiniteNumber(Orientation.Y)){
+		if(Orientation.Y != Orientation.Y){
 			Orientation.Y  = 0;
 		}
 
@@ -46,7 +47,7 @@ void ViewerCameraPos::UpdatePos(int mspassed){
 		while(Orientation.X > 360){
 			float over = Orientation.X-360.f;
 
-			if(!Misc::IsFiniteNumber(over)){
+			if(over != over){
 				Orientation.X = 0;
 			} else {
 				Orientation.X = over;
@@ -55,7 +56,7 @@ void ViewerCameraPos::UpdatePos(int mspassed){
 		while (Orientation.X < 0){
 			float under = Orientation.X;
 
-			if(!Misc::IsFiniteNumber(under)){
+			if(under != under){
 				Orientation.X = 0;
 			} else {
 				Orientation.X = 360.0f+under;

@@ -10,8 +10,10 @@
 #include "OgreEntity.h"
 #include "Entities/CommonStateObjects.h"
 #include "Exceptions.h"
+#include "../../Handlers/IDFactory.h"
 using namespace Leviathan;
 using namespace Entity;
+using namespace std;
 // ------------------------------------ //
 //#define BRUSH_CALCULATENORMALS		1
 
@@ -44,12 +46,12 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
     ReleaseParentHooks();
 
     {
-        UNIQUE_LOCK_THIS_OBJECT();
+        GUARD_LOCK_NAME(lockit);
 
         AggressiveConstraintUnlink(lockit);
     }
     
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
 	// Release Ogre entity //
     if(OwnedByWorld){
@@ -352,14 +354,14 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 	// destroy old first //
 
     {
-        UNIQUE_LOCK_THIS_OBJECT();
+        GUARD_LOCK_NAME(lockit);
 
         AggressiveConstraintUnlink(lockit);
     }
 
 	_DestroyPhysicalBody();
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     // Store the mass //
     Mass = mass;
@@ -416,7 +418,7 @@ DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*=
 	NewtonBodySetDestructorCallback(Body, BasePhysicsObject::DestroyBodyCallback);
 }
 // ------------------------------------ //
-void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(ObjectLock &guard){
+void Leviathan::Entity::Brush::_UpdatePhysicsObjectLocation(Lock &guard){
 	// Update physics object location which will in turn change graphical object location //
 
 	Ogre::Matrix4 matrix;
@@ -461,7 +463,7 @@ void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const bo
 	Brush* tmp = static_cast<Brush*>(reinterpret_cast<BasePhysicsObject*>(NewtonBodyGetUserData(body)));
     
     // The object needs to be locked here //
-    GUARD_LOCK_OTHER_OBJECT(tmp);
+    GUARD_LOCK_OTHER(tmp);
     
     if(tmp->ObjectsNode){
         
@@ -543,7 +545,7 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
 
 void Leviathan::Entity::Brush::_SaveOwnDataToPacket(sf::Packet &packet){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     // The hidden state needs to be the first thing
     packet << Hidden;
@@ -600,12 +602,12 @@ BaseConstraintable* Leviathan::Entity::Brush::BasePhysicsGetConstraintable(){
     return static_cast<BaseConstraintable*>(this);
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(int tick){
-    return shared_ptr<ObjectDeltaStateData>(
+DLLEXPORT std::shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(int tick){
+    return std::shared_ptr<ObjectDeltaStateData>(
         PositionableRotationableDeltaState::CaptureState(*this, tick).release());
 }
 
-DLLEXPORT shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateStateFromPacket(
+DLLEXPORT std::shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateStateFromPacket(
     int tick, sf::Packet &packet) const
 {
     
@@ -640,8 +642,8 @@ DLLEXPORT int Brush::OnEvent(Event** pEvent){
         
         auto data = (*pEvent)->GetDataForClientInterpolationEvent();
 
-        shared_ptr<ObjectDeltaStateData> first;
-        shared_ptr<ObjectDeltaStateData> second;
+        std::shared_ptr<ObjectDeltaStateData> first;
+        std::shared_ptr<ObjectDeltaStateData> second;
 
         float progress = data->Percentage;
         

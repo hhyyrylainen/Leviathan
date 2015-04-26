@@ -1,13 +1,7 @@
-#ifndef LEVIATHAN_COMMON_MATH
-#define LEVIATHAN_COMMON_MATH
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
-#include <cmath>  /* for std::abs(double) */
-
+#include "../Common/Types.h"
+#include <cmath>
 
 
 namespace Leviathan{
@@ -20,17 +14,19 @@ namespace Leviathan{
 		static DLLEXPORT double AngleBetweenPoints(float x1, float x2,float y1, float y2);
 		static DLLEXPORT float RandomNumber(float Min, float Max);
 
-		DLLEXPORT static bool IsPointInsidePolygon(const vector<Float3>& polygon, const Float3& point);
+		DLLEXPORT static bool IsPointInsidePolygon(const std::vector<Float3>& polygon,
+            const Float3& point);
 
 		// greatest common divisor, courtesy of Wikipedia
 		DLLEXPORT static int GreatestCommonDivisor(int a, int b);
 
 		// calculates a normal for triangle and returns in normalized //
-		DLLEXPORT static Float3 CalculateNormal(const Float3 &p1, const Float3 &p2, const Float3 &p3);
+		DLLEXPORT static Float3 CalculateNormal(const Float3 &p1, const Float3 &p2,
+            const Float3 &p3);
 
 		/*--------------------------------------
 		Original Function written by Philip J. Erdelsky October 25, 2001 (revised August 22, 2002)
-		Code Edited by Henri Hyyryl‰inen
+		Code Edited by Henri Hyyryl√§inen
 
 		This function uses Fermat's Theorem 100 times to test the primeness of a
 		(large) positive integer.
@@ -51,6 +47,3 @@ namespace Leviathan{
 }
 
 
-
-
-#endif

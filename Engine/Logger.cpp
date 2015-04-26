@@ -1,12 +1,17 @@
 // ------------------------------------ //
 #include "Logger.h"
+
+#include "Define.h"
 #include "Common/ThreadSafe.h"
-#include "FileSystem.h"
-#include <chrono>
 #include "Exceptions.h"
-#include <fstream>
+#include "FileSystem.h"
 #include "Utility/Convert.h"
+#include <chrono>
+#include <fstream>
+#include <ctime>
+#include <iomanip>
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Logger::Logger(const std::string &file):
     Path(file)
@@ -16,31 +21,37 @@ DLLEXPORT Leviathan::Logger::Logger(const std::string &file):
 
     std::stringstream formatedtime;
 
-    formatedtime << std::put_time(&curtime, "%S:%M:%H %A %d.%m.%Y (%Z)");
+    //formatedtime << std::put_time(&curtime, "%S:%M:%H %A %d.%m.%Y (%Z)");
+    formatedtime << "waiting for GCC 5";
     
 	string write = "Start of Leviathan log for leviathan version: " + VERSIONS;
 
-    write += "\nWriting to file \""+file+L"\"";
+    write += "\nWriting to file \""+file+"\"";
     write += "\n------------------------TIME: "+formatedtime.str()+"------------------------\n";
 
-    std::ofstream file(Path);
+    std::ofstream writer(Path);
 
-    if(!file.is_open()){
+    if(!writer.is_open()){
 
         throw Exception("Cannot open log file");
     }
 
-    file << write;
+    writer << write;
     
-    file.close();
+    writer.close();
     
     PendingLog = "";
 	LatestLogger = this;
 }
 
+//! \brief Lock when using the logger singleton
+static Mutex LoggerWriteMutex;
+
 Leviathan::Logger::~Logger(){
 	// Save if unsaved //
-	Save(guard);
+    Lock lock(LoggerWriteMutex);
+    
+	_Save();
     
 	// Reset latest logger (this allows to create new logger,
     // which is quite bad, but won't crash
@@ -48,13 +59,10 @@ Leviathan::Logger::~Logger(){
 }
 
 Logger* Leviathan::Logger::LatestLogger = NULL;
-
-//! \brief Lock when using the logger singleton
-static Mutex LoggerWriteMutex;
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::Write(const std::string &data){
 
-    const auto message = data.c_str()+"\n";
+    const auto message = data+"\n";
 
     Lock lock(LoggerWriteMutex);
 

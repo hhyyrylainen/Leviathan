@@ -14,6 +14,7 @@
 // ------------------------------------ //
 #include "Random.h"
 
+#include "../Logger.h"
 #ifndef _WIN32
 #include <sys/time.h>
 #endif
@@ -92,7 +93,8 @@ int Leviathan::Random::GetNumber(){
 
 int Leviathan::Random::GetNumber(int min, int max){
 	// get number and sample it to be between given values //
-	// basically get percentage of max value and then get difference of min and max and multiply that by percents and add it to min to get value between min and max //
+	// basically get percentage of max value and then get difference of min and max and multiply
+    // that by percents and add it to min to get value between min and max
 	return (int)(min+(((float)GetNumber()/RANDOM_MAX_POSSIBLE)*(max-min)));
 }
 
@@ -100,7 +102,8 @@ float Leviathan::Random::GetNumber(float min, float max){
 	// same as above but with floats //
 
 	// get number and sample it to be between given values //
-	// basically get percentage of max value and then get difference of min and max and multiply that by percents and add it to min to get value between min and max //
+	// basically get percentage of max value and then get difference of min and max and multiply
+    // that by percents and add it to min to get value between min and max
 	return min+(((float)GetNumber()/RANDOM_MAX_POSSIBLE)*(max-min));
 }
 
@@ -125,7 +128,7 @@ int Leviathan::Random::GetIndex(){
 
 void Leviathan::Random::SetAsMain(){
 	if(staticaccess != NULL)
-		Logger::Get()->Info(L"Random: old static access replaced by new", true);
+		Logger::Get()->Info("Random: old static access replaced by new");
 	staticaccess = this;
 }
 // ------------------------------------ //

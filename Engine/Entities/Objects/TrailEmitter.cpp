@@ -6,8 +6,11 @@
 #include "OgreBillboardChain.h"
 #include "OgreRibbonTrail.h"
 #include "OgreSceneManager.h"
+#include "../../Handlers/IDFactory.h"
+#include "../../Utility/Convert.h"
 using namespace Leviathan;
 using namespace Entity;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Entity::TrailEmitter::TrailEmitter(GameWorld* world, bool hidden /*= false*/) :
     BaseRenderable(hidden), BaseObject(IDFactory::GetID(), world), TrailEntity(NULL), TrailLocation(NULL)

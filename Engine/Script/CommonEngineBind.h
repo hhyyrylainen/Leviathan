@@ -16,10 +16,11 @@
 #include "Engine.h"
 
 using namespace Leviathan::Script;
+using namespace std;
 
 GenericEvent* WrapperGenericEventFactory(const string &name){
 
-	return new GenericEvent(Convert::StringToWstring(name), NamedVars());
+	return new GenericEvent(name, NamedVars());
 }
 
 Event* WrapperEventFactory(EVENT_TYPE type){
@@ -36,18 +37,20 @@ Event* WrapperEventFactory(EVENT_TYPE type){
     }
 }
 
-ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryString(const string &blockname, const string &valuestr){
+ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryString(const string &blockname,
+    const string &valuestr)
+{
 
-	return new ScriptSafeVariableBlock(new StringBlock(valuestr), Convert::StringToWstring(blockname));
+	return new ScriptSafeVariableBlock(new StringBlock(valuestr), blockname);
 }
 
 template<typename TType>
-ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryGeneric(const string &blockname, TType value){
+ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryGeneric(const string &blockname,
+    TType value)
+{
 
-	return new ScriptSafeVariableBlock(new DataBlock<TType>(value), Convert::StringToWstring(blockname));
+	return new ScriptSafeVariableBlock(new DataBlock<TType>(value), blockname);
 }
-
-
 // ------------------ Prop proxies ------------------ //
 Float3 PropGetPosVal(Entity::Prop* obj){
 
@@ -477,12 +480,6 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	}
     
     
-	// Internal type conversions //
-	if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "ScriptSafeVariableBlock@ ConvertToWstringBlock()",
-            asMETHOD(ScriptSafeVariableBlock, CreateNewWstringProxy), asCALL_THISCALL) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
 	// Implicit casts for normal types //
 	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "string f() const", 
             WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<string>), asCALL_GENERIC) < 0)
@@ -792,20 +789,22 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	return true;
 }
 
-void RegisterEngineScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){
+void RegisterEngineScriptTypes(asIScriptEngine* engine, std::map<int, string> &typeids){
 
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("Event"), L"Event"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("GenericEvent"), L"GenericEvent"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("ScriptSafeVariableBlock"), L"ScriptSafeVariableBlock"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("NamedVars"), L"NamedVars"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("SimpleDatabase"), L"SimpleDatabase"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("Float3"), L"Float3"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("GameModule"), L"GameModule"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("GameWorld"), L"GameWorld"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("RayCastHitEntity"), L"RayCastHitEntity"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("Prop"), L"Prop"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("Brush"), L"Brush"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("BaseObject"), L"BaseObject"));
-    typeids.insert(make_pair(engine->GetTypeIdByDecl("EventListener"), L"EventListener"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("TrackEntityController"), L"TrackEntityController"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("Event"), "Event"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("GenericEvent"), "GenericEvent"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("ScriptSafeVariableBlock"),
+            "ScriptSafeVariableBlock"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("NamedVars"), "NamedVars"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("SimpleDatabase"), "SimpleDatabase"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("Float3"), "Float3"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("GameModule"), "GameModule"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("GameWorld"), "GameWorld"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("RayCastHitEntity"), "RayCastHitEntity"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("Prop"), "Prop"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("Brush"), "Brush"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("BaseObject"), "BaseObject"));
+    typeids.insert(make_pair(engine->GetTypeIdByDecl("EventListener"), "EventListener"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("TrackEntityController"),
+            "TrackEntityController"));
 }

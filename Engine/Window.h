@@ -1,16 +1,12 @@
-#ifndef LEVIATHAN_WINDOW
-#define LEVIATHAN_WINDOW
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "OgreWindowEventUtilities.h"
 #include "OgreRenderWindow.h"
 #include "OIS.h"
 #include "boost/bimap.hpp"
-
+#include "Common/Types.h"
 
 #include <OISMouse.h>
 #include <OISKeyboard.h>
@@ -198,4 +194,4 @@ namespace Leviathan{
 
 
 }
-#endif
+

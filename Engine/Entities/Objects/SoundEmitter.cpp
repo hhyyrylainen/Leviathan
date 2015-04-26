@@ -4,6 +4,7 @@
 #include "SoundEmitter.h"
 #endif
 #include "Sound/SoundDevice.h"
+#include "../../Handlers/IDFactory.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //
@@ -16,7 +17,9 @@ DLLEXPORT Leviathan::Entity::SoundEmitter::~SoundEmitter(){
 	_LetGoOfPlayer();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Entity::SoundEmitter::SetFileToPlay(const wstring &file, bool usestreaming /*= false*/){
+DLLEXPORT void Leviathan::Entity::SoundEmitter::SetFileToPlay(const std::string &file,
+    bool usestreaming /*= false*/)
+{
 	// we should probably let go of old one //
 	_LetGoOfPlayer();
 

@@ -29,11 +29,11 @@ namespace Leviathan{
 		DLLEXPORT int RunConsoleCommand(const std::string &commandstr);
 
 		// calls script helper and runs this statement on the console module //
-		DLLEXPORT bool ExecuteStringInstruction(std::string statement);
+		DLLEXPORT bool ExecuteStringInstruction(const std::string &statement);
 		DLLEXPORT bool AddVariableStringDefinition(std::string statement);
-		DLLEXPORT bool DeleteVariableStringDefinition(std::string statement);
-		DLLEXPORT bool AddFunctionStringDefinition(std::string statement);
-		DLLEXPORT bool DeleteFunctionStringDefinition(std::string statement);
+		DLLEXPORT bool DeleteVariableStringDefinition(const std::string &statement);
+		DLLEXPORT bool AddFunctionStringDefinition(const std::string &statement);
+		DLLEXPORT bool DeleteFunctionStringDefinition(const std::string &statement);
 
 		// common functions that are in the style of the angel script sdk example console //
 		DLLEXPORT void ListFunctions();

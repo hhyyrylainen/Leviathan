@@ -22,7 +22,7 @@ namespace Leviathan{
 		}
 
 
-		//! \brief Locks the weak pointer and returns the shared_ptr
+		//! \brief Locks the weak pointer and returns the std::shared_ptr
 		//! \note This should be used instead of GetModule if some methods are called on the pointer
 		DLLEXPORT inline std::shared_ptr<ScriptModule> GetModuleSafe(){
 

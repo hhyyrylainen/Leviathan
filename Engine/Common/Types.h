@@ -1,8 +1,11 @@
 #pragma once
 // ------------------------------------ //
+#include "Include.h"
+// ------------------------------------ //
 #include <memory>
 #include <iostream>
 
+// TODO: move ogre conversion functions to another file
 #include "OGRE/OgreQuaternion.h"
 #include "OGRE/OgreColourValue.h"
 #include "OGRE/OgreVector3.h"
@@ -419,11 +422,7 @@ namespace Leviathan{
 			return min.MaxElements(minval);
 		}
 
-
-		DLLEXPORT inline Float3 DegreesToRadians(){
-
-			return Float3(X*DEGREES_TO_RADIANS, Y*DEGREES_TO_RADIANS, Z*DEGREES_TO_RADIANS);
-		}
+		DLLEXPORT inline Float3 DegreesToRadians();
 
 		// ----------------- Vector math ------------------- //
 		// dot product of the vectors //
@@ -460,7 +459,8 @@ namespace Leviathan{
 			// is absolute -1.f under normalization tolerance //
 			return fabs(X*X+Y*Y+Z*Z -1.0f) < NORMALIZATION_TOLERANCE;
 		}
-		// does linear interpolation between vectors and coefficient f, not limited to range [0,1], courtesy of ozz-animation //
+		// does linear interpolation between vectors and coefficient f, not limited to range
+        // [0,1], courtesy of ozz-animation //
 		DLLEXPORT inline Float3 Lerp(const Float3 &other, float f) const{
 			return Float3((other.X-X)*f + X, (other.Y-Y)*f + Y, (other.Z-Z)*f + Z);
 		}
@@ -470,12 +470,8 @@ namespace Leviathan{
 			return difference.Dot(difference) < tolerance*tolerance;
 		}
 
-		DLLEXPORT static inline Float3 CreateVectorFromAngles(const float &yaw, const float &pitch){
-
-			return Float3(-sin(yaw*DEGREES_TO_RADIANS), sin(pitch*DEGREES_TO_RADIANS), -cos(yaw*DEGREES_TO_RADIANS)).
-				//NormalizeSafe(Float3::UnitVForward);
-				NormalizeSafe(Zeroed);
-		}
+		DLLEXPORT static inline Float3 CreateVectorFromAngles(const float &yaw,
+            const float &pitch);
 		// ------------------------------------ //
 		// functions to be compatible with ozz functions //
 		// all zero values object //
@@ -795,9 +791,8 @@ namespace Leviathan{
 
 		DLLEXPORT static inline Float4 CreateAxisAngleFromEuler(const Float3 &angles){
 
-
-			DEBUG_BREAK;
-			return Float4();
+            throw std::exception();
+            //return Float4();
 		}
 
 

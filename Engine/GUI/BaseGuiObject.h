@@ -30,7 +30,8 @@ namespace Leviathan{ namespace Gui{
                 if(UpdatedValues.empty())
                     return NULL;
 
-                auto tmp = new ScriptSafeVariableBlock(UpdatedValues[0]->GetValueDirect(), UpdatedValues[0]->GetName());
+                auto tmp = new ScriptSafeVariableBlock(UpdatedValues[0]->GetValueDirect(),
+                    UpdatedValues[0]->GetName());
                 UpdatedValues.erase(UpdatedValues.begin());
 
                 return tmp;

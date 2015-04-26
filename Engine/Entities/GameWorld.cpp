@@ -25,7 +25,10 @@
 #include "Entities/Bases/BaseSendableEntity.h"
 #include "Engine.h"
 #include "Newton/PhysicsMaterialManager.h"
+#include "../Handlers/IDFactory.h"
+#include "../Window.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 //! \brief Class used by _OnNotifiableConnected to hold temporary connection data
 class Leviathan::PlayerConnectionPreparer{
@@ -36,7 +39,8 @@ public:
     enum PING_STATE {PING_STATE_STARTED, PING_STATE_FAILED, PING_STATE_NONE, PING_STATE_COMPLETED,
                      PING_STATE_FINAL_STEP};
     
-    PlayerConnectionPreparer(ConnectedPlayer* ply, GameWorld* world, shared_ptr<ConnectionInfo> connection) :
+    PlayerConnectionPreparer(ConnectedPlayer* ply, GameWorld* world,
+        std::shared_ptr<ConnectionInfo> connection) :
         Pinging(PING_STATE_NONE), GameWorldCompromised(false), ObjectsReady(false), AllDone(false),
         Player(ply), World(world), Connection(connection), PingTime(0)
     {
@@ -68,7 +72,7 @@ public:
         int targettick;
         {
             // TODO: get the engine tick here
-            GUARD_LOCK_OTHER_OBJECT(World);
+            GUARD_LOCK_OTHER(World);
 
             targettick = World->TickNumber-INTERPOLATION_TIME/TICKSPEED;
         }
@@ -91,15 +95,15 @@ public:
         Logger::Get()->Info("GameWorld: adjusting client to "+Convert::ToString(targettick)+" ticks and engine "
             "clock by "+Convert::ToString(enginemscorrect)+" ms");
         
-        shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
+        std::shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
                 World->GetID(), targettick, enginemscorrect, true));
 
         auto sentthing = Connection->SendPacketToConnection(clocksync, 1);
         sentthing->SetAsTimed();
 
         // Start waiting for it //
-        auto waitthing = make_shared<ConditionalTask>(boost::bind<void>([](PlayerConnectionPreparer* plyprepare,
-                    shared_ptr<SentNetworkThing> sentthing, int msping, int enginems) -> void
+        auto waitthing = make_shared<ConditionalTask>(std::bind<void>([](PlayerConnectionPreparer* plyprepare,
+                    std::shared_ptr<SentNetworkThing> sentthing, int msping, int enginems) -> void
             {
                 bool succeeded = sentthing->GetFutureForThis().get();
 
@@ -145,7 +149,7 @@ public:
                     Logger::Get()->Info("GameWorld: clock sync: sending a follow up correction of: "+Convert::ToString(
                             wholecorrect)+" ticks and "+Convert::ToString(enginemscorrect)+" ms");
 
-                    shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
+                    std::shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
                             plyprepare->World->GetID(), wholecorrect, enginemscorrect, false), 500);
 
                     auto sentthing = plyprepare->Connection->SendPacketToConnection(clocksync, 20);
@@ -155,14 +159,14 @@ public:
                 // Pinging is now done //
                 plyprepare->Pinging = PING_STATE_COMPLETED;
                 
-                boost::unique_lock<boost::mutex> lock(plyprepare->_Mutex);
+                std::unique_lock<std::mutex> lock(plyprepare->_Mutex);
                 if(plyprepare->ObjectsReady)
                     plyprepare->AllDone = true;
 
                 plyprepare->OurQueued.clear();
 
 
-                }, this, sentthing, msping, timeintick), boost::bind<bool>([](shared_ptr<SentNetworkThing> sentthing)
+                }, this, sentthing, msping, timeintick), std::bind<bool>([](shared_ptr<SentNetworkThing> sentthing)
                     -> bool
                 {
                     return sentthing->GetFutureForThis().has_value();
@@ -188,13 +192,13 @@ public:
     GameWorld* World;
 
     // This is needed to avoid rare cases where AllDone would never be set
-    boost::mutex _Mutex;
+    std::mutex _Mutex;
 
     //! The player who is being handled, used only for deleting
     //! The pointer is unsafe to use
     ConnectedPlayer* Player;
 
-    shared_ptr<ConnectionInfo> Connection;
+    std::shared_ptr<ConnectionInfo> Connection;
 
     bool TimingFailed;
     
@@ -251,7 +255,7 @@ DLLEXPORT bool Leviathan::GameWorld::Init(GraphicalInputEntity* renderto, Ogre::
 }
 
 DLLEXPORT void Leviathan::GameWorld::Release(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
     
     // Tell initially syncing players that we are no longer valid //
     auto end = InitiallySyncingPlayers.end();
@@ -341,7 +345,8 @@ void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre, Window* render
 	
 	// Create the workspace for this scene //
 	// Which will be rendered before the overlay workspace //
-	WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene, rendertarget->GetOgreWindow(), 
+	WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene,
+        rendertarget->GetOgreWindow(), 
 		WorldSceneCamera, "WorldsWorkspace", true, 0);
 }
 // ------------------------------------ //
@@ -351,7 +356,7 @@ DLLEXPORT void Leviathan::GameWorld::SetSkyBox(const string &materialname){
 	}
 	catch(const Ogre::InvalidParametersException &e){
 
-		Logger::Get()->Error(L"[EXCEPTION] "+Convert::StringToWstring(e.getFullDescription()));
+		Logger::Get()->Error("[EXCEPTION] "+e.getFullDescription());
 	}
 }
 
@@ -393,7 +398,7 @@ DLLEXPORT void Leviathan::GameWorld::RemoveSunlight(){
 	}
 }
 
-DLLEXPORT void Leviathan::GameWorld::UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos, ObjectLock &guard){
+DLLEXPORT void Leviathan::GameWorld::UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos, Lock &guard){
 	VerifyLock(guard);
 	// Skip if no camera //
 	if(camerapos == NULL)
@@ -424,7 +429,7 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(BaseObject* obj, 
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SimulatePhysics(){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     if(IsOnServer){
     
@@ -446,11 +451,11 @@ DLLEXPORT void Leviathan::GameWorld::ClearTimers(){
     _PhysicalWorld->ClearTimers();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::Tick(){
+DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
 
-    UNIQUE_LOCK_THIS_OBJECT();
-    
-    TickNumber++;
+    GUARD_LOCK_NAME(lockit);
+
+    TickNumber = currenttick;
 
     _HandleDelayedDelete(lockit);
 
@@ -512,7 +517,7 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(ObjectPtr obj){
     if(!obj)
         return;
     
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	Objects.push_back(obj);
 
     // Check is it a sendable object //
@@ -555,7 +560,7 @@ DLLEXPORT void Leviathan::GameWorld::CreateEntity(ObjectPtr obj){
 
     // Notify everybody that a new entity has been created //
     {
-        GUARD_LOCK_THIS_OBJECT();
+        GUARD_LOCK();
 
         // This is at least a decent place to send them, any constraints created later will get send
         // when they are created
@@ -574,8 +579,9 @@ DLLEXPORT void Leviathan::GameWorld::CreateEntity(ObjectPtr obj){
 
             if(!SendObjectToConnection(obj, safe)){
 
-                Logger::Get()->Warning("GameWorld: CreateEntity: failed to send object to player ("+
-                    (*iter)->GetNickname());
+                Logger::Get()->Warning("GameWorld: CreateEntity: failed to send object to player "
+                    "("+(*iter)->GetNickname()+")");
+                
                 continue;
             }
         }
@@ -589,12 +595,12 @@ DLLEXPORT ObjectPtr Leviathan::GameWorld::GetWorldObject(int ID){
 	// ID shouldn't be under zero //
 	if(ID == -1){
 
-		Logger::Get()->Warning(L"GameWorld: GetWorldObject: trying to find object with ID == -1 "
-            L"(IDs shouldn't be negative)");
+		Logger::Get()->Warning("GameWorld: GetWorldObject: trying to find object with ID == -1 "
+            "(IDs shouldn't be negative)");
 		return NULL;
 	}
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	auto end = Objects.end();
 	for(auto iter = Objects.begin(); iter != end; ++iter){
@@ -607,7 +613,7 @@ DLLEXPORT ObjectPtr Leviathan::GameWorld::GetWorldObject(int ID){
 }
 // ------------------------------------ //
 DLLEXPORT ObjectPtr Leviathan::GameWorld::GetSmartPointerForObject(BaseObject* rawptr) const{
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	auto end = Objects.end();
 	for(auto iter = Objects.begin(); iter != end; ++iter){
@@ -619,7 +625,7 @@ DLLEXPORT ObjectPtr Leviathan::GameWorld::GetSmartPointerForObject(BaseObject* r
 	return NULL;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::ClearObjects(ObjectLock &guard){
+DLLEXPORT void Leviathan::GameWorld::ClearObjects(Lock &guard){
 	VerifyLock(guard);
 
     // release objects //
@@ -669,13 +675,13 @@ DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
 	return Float3(0.f, PHYSICS_BASE_GRAVITY, 0.f);
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::GameWorld::GetPhysicalMaterial(const wstring &name){
+DLLEXPORT int Leviathan::GameWorld::GetPhysicalMaterial(const string &name){
 
     return PhysicsMaterialManager::Get()->GetMaterialIDForWorld(name,
         _PhysicalWorld->GetNewtonWorld());
 }
 // ------------------------------------ //
-void Leviathan::GameWorld::_EraseFromSendable(BaseSendableEntity* obj, UniqueObjectLock &guard){
+void Leviathan::GameWorld::_EraseFromSendable(BaseSendableEntity* obj, Lock &guard){
 
     for(size_t i = 0; i < SendableObjects.size(); i++){
 
@@ -687,7 +693,7 @@ void Leviathan::GameWorld::_EraseFromSendable(BaseSendableEntity* obj, UniqueObj
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::DestroyObject(int EntityID){
-	UNIQUE_LOCK_THIS_OBJECT();
+	GUARD_LOCK_NAME(lockit);
 
     Logger::Get()->Info("GameWorld destroying object "+Convert::ToString(EntityID));
     
@@ -710,15 +716,14 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(int EntityID){
 
 DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(int EntityID){
 
-	GUARD_LOCK_BASIC(DeleteMutex);
+	Lock lock(DeleteMutex);
 	DelayedDeleteIDS.push_back(EntityID);
 }
 
-void Leviathan::GameWorld::_HandleDelayedDelete(UniqueObjectLock &guard){
+void Leviathan::GameWorld::_HandleDelayedDelete(Lock &guard){
 
 	// We might want to delete everything //
 	if(ClearAllObjects){
-
 
 		ClearObjects();
 
@@ -729,7 +734,7 @@ void Leviathan::GameWorld::_HandleDelayedDelete(UniqueObjectLock &guard){
 
     guard.unlock();
 
-    GUARD_LOCK_BASIC(DeleteMutex);
+    Lock lock(DeleteMutex);
     
 	// Return right away if no objects to delete //
 	if(DelayedDeleteIDS.size() == 0)
@@ -781,7 +786,7 @@ void Leviathan::GameWorld::_HandleDelayedDelete(UniqueObjectLock &guard){
     guard.lock();
 }
 
-void Leviathan::GameWorld::_ReportEntityDestruction(int id, UniqueObjectLock &guard){
+void Leviathan::GameWorld::_ReportEntityDestruction(int id, Lock &guard){
 
     // Notify everybody that an entity has been destroyed //
     auto end = ReceivingPlayers.end();
@@ -797,19 +802,19 @@ void Leviathan::GameWorld::_ReportEntityDestruction(int id, UniqueObjectLock &gu
         }
         
         // Then gather all sorts of other stuff to make an response //
-        unique_ptr<NetworkResponseDataForEntityDestruction> resdata(new
+        std::unique_ptr<NetworkResponseDataForEntityDestruction> resdata(new
             NetworkResponseDataForEntityDestruction(ID, id));
 
         // We return whatever the send function returns //
-        shared_ptr<NetworkResponse> response = make_shared<NetworkResponse>(-1,
-            PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 20);
+        std::shared_ptr<NetworkResponse> response = make_shared<NetworkResponse>(-1,
+            PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 20);
 
         response->GenerateEntityDestructionResponse(resdata.release());
 
         if(!safe->SendPacketToConnection(response, 5).get()){
 
-            Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): failed to send entity destruction message "
-                "to client");
+            Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+
+                "): failed to send entity destruction message to client");
         }
     }
 }
@@ -819,7 +824,7 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 	if(frozen == WorldFrozen)
 		return;
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	WorldFrozen = frozen;
 
@@ -834,7 +839,7 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
         return;
 
     // Should be safe to create the packet now and send it to all the connections //
-    auto packet = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
+    auto packet = make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
 
     packet->GenerateWorldFrozenResponse(new NetworkResponseDataForWorldFrozen(ID, WorldFrozen, TickNumber));
 
@@ -850,7 +855,7 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 }
 
 DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float3 &from, const Float3 &to,
-    ObjectLock &guard)
+    Lock &guard)
 {
 	VerifyLock(guard);
 	// Create a data object for the ray cast //
@@ -888,7 +893,9 @@ dFloat Leviathan::GameWorld::RayCallbackDataCallbackClosest(const NewtonBody* co
 	return intersectParam;
 }
 
-DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHitProxy(Float3 from, Float3 to){
+DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHitProxy(const Float3 &from,
+    const Float3 &to)
+{
 	return CastRayGetFirstHit(from, to);
 }
 
@@ -898,7 +905,7 @@ DLLEXPORT void Leviathan::GameWorld::MarkForClear(){
 
 bool Leviathan::GameWorld::AreAllPlayersSynced() const{
     // The vector of sending players is empty if not sending //
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     return InitiallySyncingPlayers.size() == 0;
 }
 // ------------------------------------ //
@@ -907,11 +914,12 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
 	// The connected object will always have to be a ConnectedPlayer
 	auto plyptr = static_cast<ConnectedPlayer*>(parentadded);
 
-    Logger::Get()->Info("GameWorld: player(\""+plyptr->GetNickname()+"\") is now receiving world");
+    Logger::Get()->Info("GameWorld: player(\""+plyptr->GetNickname()+
+        "\") is now receiving world");
 
     // Add them to the list of receiving players //
     {
-        GUARD_LOCK_THIS_OBJECT();
+        GUARD_LOCK();
 
         ReceivingPlayers.push_back(plyptr);
     }
@@ -924,30 +932,31 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
     auto safeconnection = NetworkHandler::Get()->GetSafePointerToConnection(unsafeconnection);
 
 	// Create an entry for this player //
-    shared_ptr<PlayerConnectionPreparer> connectobject(new PlayerConnectionPreparer(plyptr, this, safeconnection));
-
-
+    auto connectobject = make_shared<PlayerConnectionPreparer>(plyptr, this, safeconnection);
 
     if(!safeconnection){
 
         // The closing should be handled by somebody else
-        Logger::Get()->Error(L"GameWorld: requested to sync with a player who has closed their connection");
+        Logger::Get()->Error("GameWorld: requested to sync with a player who has closed their "
+            "connection");
+        
         return;
     }
-
 
     // Start pinging //
     connectobject->Pinging = PlayerConnectionPreparer::PING_STATE_STARTED;
 
     safeconnection->CalculateNetworkPing(WORLD_CLOCK_SYNC_PACKETS, WORLD_CLOCK_SYNC_ALLOW_FAILS,
-        boost::bind(&PlayerConnectionPreparer::OnPingCompleted, connectobject, _1, _2),
-        boost::bind(&PlayerConnectionPreparer::OnPingFailed, connectobject, _1, _2));
+        std::bind(&PlayerConnectionPreparer::OnPingCompleted, connectobject, placeholders::_1,
+            placeholders::_2),
+        std::bind(&PlayerConnectionPreparer::OnPingFailed, connectobject, placeholders::_1,
+            placeholders::_2));
 
 
 	// This lock is only required for this one call (we are always locked before this call) //
 	{
 		// Update the position data //
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		UpdatePlayersPositionData(plyptr, guard);
 
         // Add it to the list //
@@ -961,8 +970,8 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
     
     // Now we can queue all objects for sending //
     // TODO: make sure that all objects are sent
-    ThreadingManager::Get()->QueueTask(new RepeatCountedTask(boost::bind<void>([](shared_ptr<ConnectionInfo>
-                    connection, shared_ptr<PlayerConnectionPreparer> processingobject, GameWorld* world) -> void
+    ThreadingManager::Get()->QueueTask(new RepeatCountedTask(std::bind<void>([](shared_ptr<ConnectionInfo>
+                    connection, std::shared_ptr<PlayerConnectionPreparer> processingobject, GameWorld* world) -> void
         {
             // Get the next object //
             RepeatCountedTask* task = dynamic_cast<RepeatCountedTask*>(TaskThread::GetThreadSpecificThreadObject()->
@@ -984,11 +993,10 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
                 
                 
                 // This will stop the otherwise infinitely waiting task //
-                boost::unique_lock<boost::mutex> lock(processingobject->_Mutex);
+                Lock lock(processingobject->_Mutex);
                 
                 if(task->IsThisLastRepeat()){
 
-                    
                     processingobject->ObjectsReady = true;
                 }
 
@@ -1000,7 +1008,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
                 return;
             }
             
-            GUARD_LOCK_OTHER_OBJECT(world);
+            GUARD_LOCK_OTHER(world);
 
             // Stop if out of bounds //
             if(num < 0 || num >= world->Objects.size()){
@@ -1029,16 +1037,19 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
 
             if(constraintable){
 
-                GUARD_LOCK_OTHER_OBJECT(constraintable);
+                GUARD_LOCK_OTHER(constraintable);
 
                 size_t count = constraintable->GetConstraintCount();
 
-                Logger::Get()->Info("Sending object's constraints, total: "+Convert::ToString(count));
+                Logger::Get()->Info("Sending object's constraints, total: "+
+                    Convert::ToString(count));
 
                 for(size_t i = 0; i < count; i++){
 
-                    // This should ignore NULL pointers so this should send all constraints just fine //
-                    world->SendConstraintToConnection(constraintable->GetConstraint(i), connection.get());
+                    // This should ignore NULL pointers so this should send all
+                    // constraints just fine
+                    world->SendConstraintToConnection(constraintable->GetConstraint(i),
+                        connection.get());
                 }
             }
 
@@ -1049,8 +1060,9 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
         }, safeconnection, connectobject, this), Objects.size()));
 
     // Task that will remove the added InitiallySyncingPlayers entry once done
-    ThreadingManager::Get()->QueueTask(new ConditionalTask(boost::bind<void>([](shared_ptr<PlayerConnectionPreparer>
-                    processingobject, GameWorld* world) -> void
+    ThreadingManager::Get()->QueueTask(new ConditionalTask(std::bind<void>([](
+                    std::shared_ptr<PlayerConnectionPreparer> processingobject, GameWorld* world)
+                -> void
         {
             // It is done //
             Logger::Get()->Info("GameWorld: initial sync with player completed");
@@ -1059,7 +1071,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
                 return;
             
             // Remove it //
-            GUARD_LOCK_OTHER_OBJECT(world);
+            GUARD_LOCK_OTHER(world);
 
             auto end = world->InitiallySyncingPlayers.end();
             for(auto iter = world->InitiallySyncingPlayers.begin(); iter != end; ++iter){
@@ -1074,7 +1086,8 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
             // Might want to report this as an error //
             
 
-        }, connectobject, this), boost::bind<bool>([](shared_ptr<PlayerConnectionPreparer> processingobject) -> bool
+        }, connectobject, this), std::bind<bool>([](
+                std::shared_ptr<PlayerConnectionPreparer> processingobject) -> bool
             {
                 return processingobject->AllDone;
 
@@ -1086,7 +1099,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableDisconnected(BaseNotifiableAll
 	auto plyptr = static_cast<ConnectedPlayer*>(parenttoremove);
 
 	// Destroy the update object containing this player and cancel all current packets //
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     for(size_t i = 0; i < ReceivingPlayers.size(); i++){
 
@@ -1113,11 +1126,11 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableDisconnected(BaseNotifiableAll
     Logger::Get()->Warning("GameWorld: disconnected plyptr not found in list");
 }
 
-void Leviathan::GameWorld::UpdatePlayersPositionData(ConnectedPlayer* ply, ObjectLock &guard){
+void Leviathan::GameWorld::UpdatePlayersPositionData(ConnectedPlayer* ply, Lock &guard){
 	VerifyLock(guard);
 	// Get the position for this player in this world //
 
-	GUARD_LOCK_OTHER_OBJECT_NAME(ply, guard2);
+	GUARD_LOCK_OTHER_NAME(ply, guard2);
 	BasePositionable* positionobj = ply->GetPositionInWorld(this, guard2);
 
 	if(!positionobj){
@@ -1140,8 +1153,9 @@ notusingapositionlabel:
 	if(!safeptr){
 
 		// We were given an invalid world //
-		Logger::Get()->Error(L"GameWorld: UpdatePlayersPositionData: could not find a matching object for "
-            L"player position in this world, wrong world?");
+		Logger::Get()->Error("GameWorld: UpdatePlayersPositionData: could not find a matching "
+            " object for player position in this world, wrong world?");
+        
 		goto notusingapositionlabel;
 	}
 
@@ -1151,14 +1165,14 @@ notusingapositionlabel:
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(ObjectPtr obj,
-    shared_ptr<ConnectionInfo> connection)
+    std::shared_ptr<ConnectionInfo> connection)
 {
     // Fail if the obj is not a valid pointer //
     if(!obj)
         return false;
     
     // First create a packet which will be the object's data //
-    GUARD_LOCK_OTHER_OBJECT(obj.get());
+    GUARD_LOCK_OTHER(obj.get());
 
     auto objdata = EntitySerializerManager::Get()->CreateInitialEntityMessageFor(obj.get(), connection.get());
 
@@ -1166,13 +1180,13 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(ObjectPtr obj,
         return false;
 
     // Then gather all sorts of other stuff to make an response //
-    unique_ptr<NetworkResponseDataForInitialEntity> resdata(new NetworkResponseDataForInitialEntity(ID, objdata));
+    std::unique_ptr<NetworkResponseDataForInitialEntity> resdata(new NetworkResponseDataForInitialEntity(ID, objdata));
     
     
 
     // We return whatever the send function returns //
-    shared_ptr<NetworkResponse> response = make_shared<NetworkResponse>(-1,
-        PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 20);
+    std::shared_ptr<NetworkResponse> response = make_shared<NetworkResponse>(-1,
+        PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 20);
 
     response->GenerateInitialEntityResponse(resdata.release());
 
@@ -1185,7 +1199,7 @@ DLLEXPORT void Leviathan::GameWorld::SendConstraintToConnection(shared_ptr<Entit
     if(!constraint)
         return;
 
-    GUARD_LOCK_OTHER_OBJECT(constraint);
+    GUARD_LOCK_OTHER(constraint);
 
     auto custompacketdata = ConstraintSerializerManager::Get()->SerializeConstraintData(constraint.get());
 
@@ -1204,7 +1218,7 @@ DLLEXPORT void Leviathan::GameWorld::SendConstraintToConnection(shared_ptr<Entit
 
     int obj2 = obj2ptr ? obj2ptr->GetID(): -1;
 
-    auto packet = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000);
+    auto packet = make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
     
     // Wrap everything up and send //
     packet->GenerateEntityConstraintResponse(new NetworkResponseDataForEntityConstraint(ID,
@@ -1242,7 +1256,7 @@ DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDa
 }
 
 DLLEXPORT void Leviathan::GameWorld::HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data,
-    shared_ptr<NetworkResponse> packet)
+    std::shared_ptr<NetworkResponse> packet)
 {
 
     if(_TryApplyConstraint(data)){
@@ -1252,7 +1266,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleConstraintPacket(NetworkResponseDataF
     }
 
     // Add it to the queue //
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     WaitingConstraints.push_back(WaitingConstraint(data->EntityID1, data->EntityID2, packet));
 }
 
@@ -1283,7 +1297,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(NetworkResponseDat
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSyncData* data){
 
-    UNIQUE_LOCK_THIS_OBJECT();
+    GUARD_LOCK_NAME(lockit);
 
     Logger::Get()->Info("GameWorld: adjusting our clock: Absolute: "+Convert::ToString(data->Absolute)+", tick: "+
         Convert::ToString(data->Ticks)+", enginems: "+Convert::ToString(data->EngineMSTweak));
@@ -1320,7 +1334,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(NetworkResponseDataForWorldFrozen* data){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): frozen state updated, now: "+
         Convert::ToString<int>(data->Frozen)+", tick: "+Convert::ToString(data->TickNumber)+" (our tick:"+
@@ -1369,7 +1383,7 @@ bool Leviathan::GameWorld::_TryApplyConstraint(NetworkResponseDataForEntityConst
     bool findsecond = data->EntityID2 >= 0 ? true: false;
 
     {
-        GUARD_LOCK_THIS_OBJECT();
+        GUARD_LOCK();
 
         auto end = Objects.end();
         for(auto iter = Objects.begin(); iter != end; ++iter){

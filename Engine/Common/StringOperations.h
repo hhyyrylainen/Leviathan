@@ -718,7 +718,8 @@ namespace Leviathan{
         template<class StringTypeN>
         DLLEXPORT static StringTypeN ToUpperCase(const StringTypeN &data){
 
-            StringTypeN result(data.size());
+            StringTypeN result;
+            result.reserve(data.size());
             
             for(size_t i = 0; i < data.size(); i++){
 
@@ -727,11 +728,11 @@ namespace Leviathan{
 
                 if(97 <= codepoint && codepoint <= 122){
 
-                    result[i] = codepoint-32;
+                    result.push_back(codepoint-32);
                     
                 } else {
 
-                    result[i] = codepoint;
+                    result.push_back(codepoint);
                 }
             }
 

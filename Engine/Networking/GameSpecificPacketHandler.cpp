@@ -43,7 +43,7 @@ DLLEXPORT void Leviathan::GameSpecificPacketHandler::PassGameSpecificDataToPacke
 	// The packet should now be fine //
 }
 
-DLLEXPORT shared_ptr<GameSpecificPacketData> Leviathan::GameSpecificPacketHandler::ReadGameSpecificPacketFromPacket(
+DLLEXPORT std::shared_ptr<GameSpecificPacketData> Leviathan::GameSpecificPacketHandler::ReadGameSpecificPacketFromPacket(
     bool responsepacket, sf::Packet &packet)
 {
 	// Get the basic data from the packet //
@@ -139,8 +139,8 @@ shared_ptr<BaseGameSpecificPacketFactory> Leviathan::GameSpecificPacketHandler::
 	return NULL;
 }
 // ------------------------------------ //
-bool SharedPtrVecSortComparison(const shared_ptr<BaseGameSpecificPacketFactory> &first,
-    const shared_ptr<BaseGameSpecificPacketFactory> &second)
+bool SharedPtrVecSortComparison(const std::shared_ptr<BaseGameSpecificPacketFactory> &first,
+    const std::shared_ptr<BaseGameSpecificPacketFactory> &second)
 {
 	return first->TypeIDNumber < second->TypeIDNumber;
 }

@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_TRACKENTITYCONTROLLER
-#define LEVIATHAN_TRACKENTITYCONTROLLER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Entities/Bases/BaseEntityController.h"
 #include "Entities/Bases/BaseSendableEntity.h"
 #include "LocationNode.h"
@@ -122,13 +118,13 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT virtual void UpdateControlledPositions(float timestep);
 
             //! \copydoc BaseSendableEntity::CaptureState
-            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
+            DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
 
-            DLLEXPORT bool SetStateToInterpolated(ObjectDeltaStateData &first, ObjectDeltaStateData &second,
-                float progress);
+            DLLEXPORT bool SetStateToInterpolated(ObjectDeltaStateData &first,
+                ObjectDeltaStateData &second, float progress);
 
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
-            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
+            DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
                 sf::Packet &packet) const override;
 
             REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(TrackEntityController);
@@ -146,7 +142,7 @@ namespace Leviathan{ namespace Entity{
         
             //! \brief Updates the controlled object
             //! \todo apply rotation
-            void _ApplyTrackPositioning(float timestep, ObjectLock &guard);
+            void _ApplyTrackPositioning(float timestep, Lock &guard);
 
             //! Removes applied forces from objects
             void _OnConstraintUnlink(BaseConstraint* ptr) override;
@@ -166,7 +162,7 @@ namespace Leviathan{ namespace Entity{
 
             //! \brief Applies a force towards a past point for resimulation to a single entity or all
             //! \return True when force was applied to one or more entities
-            bool _ApplyResimulateForce(int64_t microsecondsinpast, BaseConstraintable* singleentity, ObjectLock &guard);
+            bool _ApplyResimulateForce(int64_t microsecondsinpast, BaseConstraintable* singleentity, Lock &guard);
             
             // ------------------------------------ //
         
@@ -185,7 +181,7 @@ namespace Leviathan{ namespace Entity{
 
             //! List of positions that form the track
             //! \note These are owned by the track
-            std::vector<shared_ptr<LocationNode>> TrackNodes;
+            std::vector<std::shared_ptr<LocationNode>> TrackNodes;
 
             //! Used to quickly find multiple resimulate targets in a row
             BaseConstraintable* LastResimulateTarget;
@@ -201,4 +197,4 @@ namespace Leviathan{ namespace Entity{
 
     }
 }
-#endif
+

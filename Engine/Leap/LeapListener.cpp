@@ -90,15 +90,6 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
 			{
 				// instantiate correct gesture subclass //
 				CircleGesture circle = gesture;
-				string datastr;
-				// check direction //
-				if(circle.pointable().direction().angleTo(circle.normal()) <= PI/4) {
-					// clockwise rotation //
-					datastr += "clockwise ";
-				} else {
-					// counterclockwise //
-					datastr += "counterclockwise ";
-				}
 
 				// Calculate angle difference since last frame //
 				float sweptAngle = 0;
@@ -109,11 +100,7 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
 					sweptAngle = (float)((circle.progress() - previousgesturestate.progress())*2*PI);
 				}
 
-				datastr += "Circle id: "+Convert::ToString(circle.id());
-				datastr += ", state: " +Convert::ToString(circle.state());
-				datastr += ", progress: " +Convert::ToString(circle.progress());
-				datastr += ", radius: " +Convert::ToString(circle.radius());
-				datastr += ", angle " +Convert::ToString(sweptAngle * RAD_TO_DEG);
+
 
 			}
 			break;
@@ -145,14 +132,7 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
 			{
 				// instantiate correct gesture subclass //
 				KeyTapGesture tap = gesture;
-				string datastr;
 
-				datastr += "Key Tap id: "+Convert::ToString(tap.id());
-				datastr += ", state: " +Convert::ToString(tap.state());
-				datastr += ", position: " +Convert::StringToString(Convert::ToString(
-                        tap.position()));
-				datastr += ", direction: " +Convert::StringToString(Convert::ToString(
-                        tap.direction()));
 
 			}
 			break;
@@ -160,14 +140,6 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
 			{
 				// instantiate correct gesture subclass //
 				ScreenTapGesture screentap = gesture;
-				string datastr;
-
-				datastr += "Key Tap id: "+Convert::ToString(screentap.id());
-				datastr += ", state: " +Convert::ToString(screentap.state());
-				datastr += ", position: " +Convert::StringToString(Convert::ToString(
-                        screentap.position()));
-				datastr += ", direction: " +Convert::StringToString(Convert::ToString(
-                        screentap.direction()));
 			}
 			break;
             default:

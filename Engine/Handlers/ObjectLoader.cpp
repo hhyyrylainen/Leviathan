@@ -184,8 +184,8 @@ DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const s
 	return id;
 }
 
-DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size,
-    const float &mass, int materialid, Entity::Brush** createdinstance)
+DLLEXPORT int Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, const string &material,
+    const Float3 &size, const float &mass, int materialid, Entity::Brush** createdinstance)
 {
 	unique_ptr<Entity::Brush> brush(new Entity::Brush(false, world));
 

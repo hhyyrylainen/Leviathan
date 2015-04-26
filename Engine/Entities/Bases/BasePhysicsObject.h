@@ -27,10 +27,10 @@ namespace Leviathan{
 	class ApplyForceInfo{
 	public:
         //! \note Pass NULL for name if not used, avoid passing empty strings
-        //! \param name The name to assign. This will be deleted by a unique_ptr
+        //! \param name The name to assign. This will be deleted by a std::unique_ptr
 		DLLEXPORT ApplyForceInfo(bool addmass,
             boost::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> getforce,
-            wstring* name = NULL);
+            std::string* name = NULL);
         
 		DLLEXPORT ApplyForceInfo(ApplyForceInfo &other);
         DLLEXPORT ApplyForceInfo(ApplyForceInfo &&other);
@@ -39,7 +39,7 @@ namespace Leviathan{
 		DLLEXPORT ApplyForceInfo& operator =(const ApplyForceInfo &other);
 
 		//! Set a name when you don't want other non-named forces to override this
-		unique_ptr<wstring> OptionalName;
+        std::unique_ptr<std::string> OptionalName;
         
 		//! Whether to multiply the force by mass, makes acceleration constant with different masses
 		bool MultiplyByMass;
@@ -79,8 +79,8 @@ namespace Leviathan{
 		// Adds an apply force (and possibly overwrites old one). Note: the pointer is deleted by this object //
 		DLLEXPORT void ApplyForce(ApplyForceInfo* pointertohandle);
 
-		// Just removes an existing force, pass empty wstring to delete the default named force
-		DLLEXPORT bool RemoveApplyForce(const wstring &name);
+		// Just removes an existing force, pass empty std::string to delete the default named force
+		DLLEXPORT bool RemoveApplyForce(const std::string &name);
 
 		// Sets the absolute velocity of the object //
 		DLLEXPORT void SetBodyVelocity(const Float3 &velocities);
@@ -95,8 +95,8 @@ namespace Leviathan{
         //! \see GetBodyTorque
         DLLEXPORT void SetBodyTorque(const Float3 &torque);
 
-		// Physical material setting in wstring form for your convenience //
-		DLLEXPORT bool SetPhysicalMaterial(const wstring &materialname);
+		// Physical material setting in std::string form for your convenience //
+		DLLEXPORT bool SetPhysicalMaterial(const std::string &materialname);
 
 		// Higher performance material set if you use it in batches and
         // you have fetched the material id from PhysicalMaterialManager
@@ -155,7 +155,7 @@ namespace Leviathan{
 		virtual void OrientationUpdated() override;
 
 		// this function should update physics object location or if Immovable set, directly graphical objects //
-		virtual void _UpdatePhysicsObjectLocation(ObjectLock &guard) = 0;
+		virtual void _UpdatePhysicsObjectLocation(Lock &guard) = 0;
 
 		// Adds all applied forces together //
 		Float3 _GatherApplyForces(const float &mass);
@@ -183,7 +183,7 @@ namespace Leviathan{
 		bool ApplyGravity;
 
 		// force applying needs to be stored until (or longer) the apply force and torque callback //
-		std::list<shared_ptr<ApplyForceInfo>> ApplyForceList;
+		std::list<std::shared_ptr<ApplyForceInfo>> ApplyForceList;
 	};
 
 }

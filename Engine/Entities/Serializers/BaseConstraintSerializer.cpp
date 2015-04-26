@@ -6,6 +6,7 @@
 #include "Entities/Objects/Constraints.h"
 using namespace Leviathan;
 using namespace Entity;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseConstraintSerializer::BaseConstraintSerializer(){
 
@@ -28,7 +29,7 @@ DLLEXPORT bool Leviathan::BaseConstraintSerializer::CanHandleType(Entity::ENTITY
     }
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<sf::Packet> Leviathan::BaseConstraintSerializer::SerializeConstraint(Entity::BaseConstraint*
+DLLEXPORT std::shared_ptr<sf::Packet> Leviathan::BaseConstraintSerializer::SerializeConstraint(Entity::BaseConstraint*
     constraint, Entity::ENTITY_CONSTRAINT_TYPE &type)
 {
     // Get the type and then cast to the subclass //

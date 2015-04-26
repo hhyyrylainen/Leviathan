@@ -1,8 +1,7 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_ENTITY_LIGHT
 #include "Light.h"
-#endif
+
+#include "../../Handlers/IDFactory.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //

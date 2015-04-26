@@ -40,7 +40,7 @@ namespace Leviathan{ namespace Script{
 
                 UnRegisterAllEvents();
 
-                GUARD_LOCK_THIS_OBJECT();
+                GUARD_LOCK();
 
                 SAFE_RELEASE(OnEventScript);
                 SAFE_RELEASE(OnGenericScript);
@@ -48,13 +48,13 @@ namespace Leviathan{ namespace Script{
 
             int OnEvent(Event** event) override{
 
-                GUARD_LOCK_THIS_OBJECT();
+                GUARD_LOCK();
                 
                 if(OnEventScript){
 
                     // Setup the parameters //
-                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(
-                            new VoidPtrBlock(*event), L"Event"));
+                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(
+                        new NamedVariableBlock(new VoidPtrBlock(*event), "Event"));
 
                     (*event)->AddRef();
 
@@ -63,7 +63,7 @@ namespace Leviathan{ namespace Script{
 
 
                     // Run the script //
-                    shared_ptr<VariableBlock> result =
+                    std::shared_ptr<VariableBlock> result =
                         ScriptExecutor::Get()->RunSetUp(OnGenericScript, &sargs);
 
                     if(!result || !result->IsConversionAllowedNonPtr<int>()){
@@ -80,13 +80,13 @@ namespace Leviathan{ namespace Script{
 
             int OnGenericEvent(GenericEvent** event) override{
 
-                GUARD_LOCK_THIS_OBJECT();
+                GUARD_LOCK();
                 
                 if(OnGenericScript){
 
                     // Setup the parameters //
                     vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(
-                        new NamedVariableBlock(new VoidPtrBlock(*event), L"GenericEvent"));
+                        new NamedVariableBlock(new VoidPtrBlock(*event), "GenericEvent"));
 
                     (*event)->AddRef();
 
@@ -95,7 +95,7 @@ namespace Leviathan{ namespace Script{
 
 
                     // Run the script //
-                    shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+                    std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
                         OnGenericScript, &sargs);
 
                     if(!result || !result->IsConversionAllowedNonPtr<int>()){
@@ -114,7 +114,7 @@ namespace Leviathan{ namespace Script{
             bool RegisterForEventType(EVENT_TYPE type){
                 
                 {
-                    GUARD_LOCK_THIS_OBJECT();
+                    GUARD_LOCK();
                 
                     if(!OnEventScript)
                         return false;
@@ -128,13 +128,13 @@ namespace Leviathan{ namespace Script{
             bool RegisterForEventGeneric(const string &name){
                 
                 {
-                    GUARD_LOCK_THIS_OBJECT();
+                    GUARD_LOCK();
                 
                     if(!OnGenericScript)
                         return false;
                 }
                 
-                EventHandler::Get()->RegisterForEvent(this, Convert::StringToWstring(name));
+                EventHandler::Get()->RegisterForEvent(this, name);
                 return true;
             }
 

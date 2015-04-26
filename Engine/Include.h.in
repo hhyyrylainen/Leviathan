@@ -32,3 +32,31 @@
 #define __FUNCSIG__ __PRETTY_FUNCTION__
 #endif
 
+#ifndef DLLEXPORT
+#ifdef ENGINE_EXPORTS
+#ifdef _WIN32
+#define DLLEXPORT    __declspec( dllexport )
+#else
+// This might not be needed for gcc
+#define DLLEXPORT   __attribute__ ((visibility ("default")))
+#endif
+// Json-cpp //
+#define JSON_DLL_BUILD
+#else
+#define DLLEXPORT
+#define JSON_DLL
+#endif // ENGINE_EXPORTS
+#endif
+
+#ifndef _WIN32
+
+#define FORCE_INLINE __attribute__((always_inline))
+    
+#else
+// Windows needs these //
+#define FORCE_INLINE    __forceinline
+#endif    
+
+
+
+

@@ -1,33 +1,29 @@
-#ifndef LEVIATHAN_DEBUGVARIABLENOTIFIER
-#define LEVIATHAN_DEBUGVARIABLENOTIFIER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
+#include <map>
+#include <string>
+#include <memory>
+
 #include "Common/DataStoring/DataBlock.h"
 
 namespace Leviathan{
 
-	class DebugVariableNotifier : public Object{
+	class DebugVariableNotifier{
 	public:
 
-		DLLEXPORT static void UpdateVariable(const wstring &name, VariableBlock* valueofvariable);
+		DLLEXPORT static void UpdateVariable(const std::string &name,
+            VariableBlock* valueofvariable);
 
 		// prints all values to log //
 		DLLEXPORT static void PrintVariables();
 
-	private:
-		// singleton //
-		inline DebugVariableNotifier(){}
-		inline ~DebugVariableNotifier(){}
+		DebugVariableNotifier() = delete;
 
 	protected:
 		// stored variables //
-		static map<wstring, shared_ptr<VariableBlock>> CapturedValues;
+		static std::map<std::string, std::shared_ptr<VariableBlock>> CapturedValues;
 
 	};
 
 }
-#endif
+

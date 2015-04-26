@@ -13,7 +13,7 @@ namespace Leviathan{
 	//! \warning The object pointer the load methods return/set is NOT safe to use after a while
     //! (it *should* be safe to call some method on the ptr after
 	//! the function returns) But for storing it you need to use GameWorld::GetWorldObject with the returned ID
-    //! and store the shared_ptr with the pointer
+    //! and store the std::shared_ptr with the pointer
     //! \note All created objects are added to the world so that they are broadcast on the network (if this is a server)
     //! \todo Make the above statement true for all the functions
     //! \todo Allow objects to be created that will be sent to clients only after the caller has had the chance to set

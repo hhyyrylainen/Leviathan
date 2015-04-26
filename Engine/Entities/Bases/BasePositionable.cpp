@@ -22,78 +22,78 @@ BasePositionable::~BasePositionable(){
 }
 // ------------------------------------ //
 void BasePositionable::SetPosX(const float &x){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	Position.X = x;
 	PosUpdated();
 }
 void BasePositionable::SetPosY(const float &y){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	Position.Y = y;
 	PosUpdated();
 }
 void BasePositionable::SetPosZ(const float &z){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	Position.Z = z;
 	PosUpdated();
 }
 // ------------------------------------ //
 Float4 Leviathan::BasePositionable::GetOrientation() const{
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	return QuatRotation;
 }
 
 void Leviathan::BasePositionable::GetOrientation(Float4 &receiver) const{
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	receiver = QuatRotation;
 }
 
 DLLEXPORT void Leviathan::BasePositionable::GetRotation(Float4 &receiver) const{
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	receiver = QuatRotation;
 }
 
 DLLEXPORT Float4 BasePositionable::GetRotation() const{
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     return QuatRotation;
 }
 // ------------------------------------ //
 void BasePositionable::GetPosElements(float &outx, float &outy, float &outz){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	outx = Position.X;
 	outy = Position.Y;
 	outz = Position.Z;
 }
 
 DLLEXPORT Float3 Leviathan::BasePositionable::GetPos() const{
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	return Position;
 }
 
 DLLEXPORT void Leviathan::BasePositionable::GetPos(Float3 &receiver) const{
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     receiver = Position;
 }
 
 DLLEXPORT Float3 BasePositionable::GetPosition() const{
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     return Position;
 }
 
 float BasePositionable::GetPosX() const{
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	return Position.X;
 }
 float BasePositionable::GetPosY() const{
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	return Position.Y;
 }
 float BasePositionable::GetPosZ() const{
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	return Position.Z;
 }
 
 DLLEXPORT void Leviathan::BasePositionable::SetPosComponents(const float &x, const float &y, const float &z){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	Position.X = x;
 	Position.Y = y;
 	Position.Z = z;
@@ -101,19 +101,19 @@ DLLEXPORT void Leviathan::BasePositionable::SetPosComponents(const float &x, con
 }
 
 DLLEXPORT void Leviathan::BasePositionable::SetPos(const Float3 &pos){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	Position = pos;
 	PosUpdated();
 }
 
 DLLEXPORT void Leviathan::BasePositionable::SetPosition(const Float3 &pos){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	Position = pos;
 	PosUpdated();
 }
 
 DLLEXPORT void Leviathan::BasePositionable::SetOrientation(const Float4 &quat){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	QuatRotation = quat;
 	OrientationUpdated();
 }
@@ -121,7 +121,7 @@ DLLEXPORT void Leviathan::BasePositionable::SetOrientation(const Float4 &quat){
 DLLEXPORT void Leviathan::BasePositionable::SetOrientationComponents(const float &x, const float &y,
     const float &z, const float &w)
 {
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     QuatRotation = Float4(x, y, z, w);
     OrientationUpdated();
 }
@@ -136,7 +136,7 @@ void Leviathan::BasePositionable::OrientationUpdated(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BasePositionable::ApplyPositionDataObject(const BasePositionData &pos){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     Position = pos.Position;
     PosUpdated();
 
@@ -167,7 +167,7 @@ bool Leviathan::BasePositionable::BasePositionableCustomGetData(ObjectDataReques
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BasePositionable::AddPositionAndRotationToPacket(sf::Packet &packet){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     packet << Position;
     packet << QuatRotation;
 }
@@ -316,7 +316,7 @@ DLLEXPORT void BasePositionable::InterpolatePositionableState(PositionableRotati
         rot.W = first.Rotation.W;
     }
     
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     SetPos(pos);
     SetOrientation(rot);
 }

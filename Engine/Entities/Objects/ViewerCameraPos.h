@@ -1,11 +1,8 @@
-#ifndef LEVIATHAN_OBJECT_CAMERAPOS
-#define LEVIATHAN_OBJECT_CAMERAPOS
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
+#include "../../Common/Types.h"
 #include "Entities/Bases/BaseObject.h"
 #include "Input/InputController.h"
 
@@ -58,7 +55,8 @@ namespace Leviathan{
 		void SendPositionIfSet();
 
 		// reduces amount of code //
-		static void RollValueTowards(float &value, const float &changeamount, const bool &maxvalue, const float &limitvalue);
+		static void RollValueTowards(float &value, const float &changeamount,
+            const bool &maxvalue, const float &limitvalue);
 
 		// ------------------------------------ //
 
@@ -90,4 +88,3 @@ namespace Leviathan{
 	};
 }
 
-#endif

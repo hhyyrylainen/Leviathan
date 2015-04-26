@@ -1,17 +1,8 @@
-#ifndef LEVIATHAN_GRAPHICALINPUTENTITY
-#define LEVIATHAN_GRAPHICALINPUTENTITY
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "Window.h"
-#include "Input/InputController.h"
-#include "GUI/GuiManager.h"
-#include "Entities/Objects/ViewerCameraPos.h"
-#include "CEGUI/RendererModules/Ogre/Renderer.h"
-#include "boost/thread/mutex.hpp"
+#include "../Common/ThreadSafe.h"
 
 namespace Leviathan{
 
@@ -140,4 +131,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

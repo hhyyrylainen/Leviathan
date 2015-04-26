@@ -21,7 +21,7 @@ DLLEXPORT PhysicsMaterialManager* Leviathan::PhysicsMaterialManager::Get(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::PhysicsMaterialManager::LoadedMaterialAdd(PhysicalMaterial* ptrtotakeownership){
 	// Add to the map //
-	LoadedMaterials.insert(std::make_pair(ptrtotakeownership->GetName(), shared_ptr<PhysicalMaterial>(ptrtotakeownership)));
+	LoadedMaterials.insert(std::make_pair(ptrtotakeownership->GetName(), std::shared_ptr<PhysicalMaterial>(ptrtotakeownership)));
 }
 
 DLLEXPORT int Leviathan::PhysicsMaterialManager::GetMaterialIDForWorld(const std::string &name, NewtonWorld* WorldPtr){
@@ -37,7 +37,7 @@ DLLEXPORT int Leviathan::PhysicsMaterialManager::GetMaterialIDForWorld(const std
 	return -1;
 }
 
-DLLEXPORT shared_ptr<PhysicalMaterial> Leviathan::PhysicsMaterialManager::GetMaterial(const std::string &name){
+DLLEXPORT std::shared_ptr<PhysicalMaterial> Leviathan::PhysicsMaterialManager::GetMaterial(const std::string &name){
 	// Search for it by name //
 	auto iter = LoadedMaterials.find(name);
 

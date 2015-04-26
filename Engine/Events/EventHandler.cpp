@@ -1,6 +1,7 @@
 // ------------------------------------ //
 #include "EventHandler.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 EventHandler::EventHandler(){
 	main = this;
@@ -19,14 +20,14 @@ bool EventHandler::Init(){
 	return true;
 }
 void EventHandler::Release(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	// release listeners //
 	EventListeners.clear();
 	SAFE_DELETE_VECTOR(GenericEventListeners);
 }
 // ------------------------------------ //
 void EventHandler::CallEvent(Event* pEvent){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
     const auto type = pEvent->GetType();
 
@@ -51,7 +52,7 @@ void EventHandler::CallEvent(Event* pEvent){
 }
 
 DLLEXPORT void Leviathan::EventHandler::CallEvent(GenericEvent* pEvent){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	// Loop generic listeners //
 	for(size_t i = 0; i < GenericEventListeners.size(); i++){
 
@@ -68,19 +69,19 @@ DLLEXPORT void Leviathan::EventHandler::CallEvent(GenericEvent* pEvent){
 }
 // ------------------------------------ //
 bool EventHandler::RegisterForEvent(CallableObject* toregister, EVENT_TYPE totype){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	EventListeners.push_back(move(make_unique<RegisteredCallback>(toregister, totype)));
 	return true;
 }
 
 DLLEXPORT bool Leviathan::EventHandler::RegisterForEvent(CallableObject* toregister, const std::string &genericname){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	GenericEventListeners.push_back(new GenericRegisteredCallback(toregister, genericname));
 	return true;
 }
 
 void EventHandler::Unregister(CallableObject* caller, EVENT_TYPE type, bool all){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	// loop and remove wanted objects //
 	for(size_t i = 0; i < EventListeners.size(); i++){
 		if(EventListeners[i]->Receiver == caller){
@@ -97,7 +98,7 @@ void EventHandler::Unregister(CallableObject* caller, EVENT_TYPE type, bool all)
 DLLEXPORT void Leviathan::EventHandler::Unregister(CallableObject* caller, const std::string &genericname,
     bool all /*= false*/)
 {
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	// loop and remove wanted objects //
 	for(size_t i = 0; i < GenericEventListeners.size(); i++){
 		if(GenericEventListeners[i]->Receiver == caller){

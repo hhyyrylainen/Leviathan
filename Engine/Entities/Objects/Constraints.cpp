@@ -44,7 +44,7 @@ DLLEXPORT void Leviathan::Entity::BaseConstraint::Release(){
 
 DLLEXPORT void Leviathan::Entity::BaseConstraint::ConstraintPartUnlinkedDestroy(BaseConstraintable* callinginstance){
     
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
 	// Notify the object that isn't calling this function //
 	if(ParentObject && ParentObject != callinginstance){
@@ -78,7 +78,7 @@ DLLEXPORT BaseConstraintable* Leviathan::Entity::BaseConstraint::GetSecondEntity
 // ------------------------------------ //
 void Leviathan::Entity::BaseConstraint::_WorldDisowned(){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     // Destroy the joint //
     Release();

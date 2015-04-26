@@ -1,11 +1,10 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_LOCATIONNODEENTITY
 #include "LocationNode.h"
-#endif
+
 #include "../GameWorld.h"
 #include "../Bases/BaseObject.h"
 #include "../Bases/BaseNotifierEntity.h"
+#include "../../Handlers/IDFactory.h"
 using namespace Leviathan;
 using namespace Entity;
 // ------------------------------------ //

@@ -37,7 +37,7 @@ using Leviathan::VariableBlock;
 using Leviathan::TimingMonitor;
 using Leviathan::ScopeTimer;
 using Leviathan::GameModule;
-using Leviathan::ObjectLock;
+using Leviathan::Lock;
 using Leviathan::GameConfiguration;
 using Leviathan::KeyConfiguration;
 using Leviathan::NamedVars;

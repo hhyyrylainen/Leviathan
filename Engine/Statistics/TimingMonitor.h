@@ -1,7 +1,4 @@
-#ifndef LEVIATHAN_TIMINGMONITOR
-#define LEVIATHAN_TIMINGMONITOR
-// ------------------------------------ //
-// Reduce bloat in precompiled header
+#pragma once
 // ------------------------------------ //
 // ---- includes ---- //
 #include <memory>
@@ -66,4 +63,4 @@ namespace Leviathan{
 		static int CurID;
 	};
 }
-#endif
+

@@ -2,6 +2,7 @@
 #include "GraphicalInputEntity.h"
 // ------------------------------------ //
 #include "CEGUI/RendererModules/Ogre/Renderer.h"
+#include "CEGUI/RendererModules/Ogre/Renderer.h"
 #include "CEGUI/SchemeManager.h"
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorNodeDef.h"
@@ -11,16 +12,21 @@
 #include "Compositor/Pass/PassScene/OgreCompositorPassSceneDef.h"
 #include "Engine.h"
 #include "Entities/GameWorld.h"
+#include "Entities/Objects/ViewerCameraPos.h"
 #include "Exceptions.h"
 #include "FileSystem.h"
 #include "GUI/FontManager.h"
+#include "GUI/GuiManager.h"
+#include "Input/InputController.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "OgreCommon.h"
 #include "OgreRoot.h"
 #include "OgreSceneManager.h"
 #include "Rendering/Graphics.h"
-#include "boost/thread/lock_types.hpp"
+#include "Window.h"
+#include <thread>
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 
 namespace Leviathan{
@@ -76,24 +82,24 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	int FSAA = 4;
 
 	// get variables from engine configuration file //
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(windowproperties->GetValues(), L"FSAA", FSAA, 4, true,
-        L"Graphics: Init:");
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(windowproperties->GetValues(), "FSAA", FSAA,
+        4, true, "Graphics: Init:");
 
 	Ogre::String fsaastr = Convert::ToString(FSAA);
 
 	WParams["FSAA"] = fsaastr;
 	WParams["vsync"] = vsync ? "true": "false";
 
-	Ogre::String wcaption = Convert::WstringToString(WData.Title);
+	Ogre::String wcaption = WData.Title;
     
 	// quicker access to the window //
-	Ogre::RenderWindow* tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(wcaption, WData.Width,
-        WData.Height, !WData.Windowed, &WParams);
+	Ogre::RenderWindow* tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(wcaption,
+        WData.Width, WData.Height, !WData.Windowed, &WParams);
 
     int windowsafter = 0;
 
     {
-        boost::unique_lock<boost::mutex> lock(GlobalCountMutex);
+        Lock lock(GlobalCountMutex);
         ++GlobalWindowCount;
         windowsafter = GlobalWindowCount;
     }
@@ -112,8 +118,8 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
         FirstCEGUIRenderer = &guirenderer;
 
 		// Print the used renderer //
-		Logger::Get()->Info(L"GUI using CEGUI renderer: "+
-            Convert::StringToWstring(guirenderer.getIdentifierString().c_str()));
+		Logger::Get()->Info(string("GUI using CEGUI renderer: ")+
+            guirenderer.getIdentifierString().c_str());
 
 		// Load the taharez look //
 		CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
@@ -128,7 +134,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
             
             Logger::Get()->Info("GraphicalInputEntity: waiting for first window to initialize");
             
-            boost::this_thread::sleep_for(MillisecondDuration(10));
+            std::this_thread::sleep_for(MillisecondDuration(10));
         }
         
         // Create a new renderer //
@@ -137,7 +143,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	
 	// Store this window's number
     {
-        boost::unique_lock<boost::mutex> lock(TotalCountMutex);
+        Lock lock(TotalCountMutex);
         WindowNumber = ++TotalCreatedWindows;
     }
 
@@ -164,17 +170,17 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 
 	if(!WindowsGui->Init(windowcreater, this, windowsafter == 1)){
 
-		Logger::Get()->Error(L"GraphicalInputEntity: Gui init failed");
+		Logger::Get()->Error("GraphicalInputEntity: Gui init failed");
 		throw NULLPtr("invalid GUI manager");
 	}
 
 
 	// create receiver interface //
-	TertiaryReceiver = shared_ptr<InputController>(new InputController());
+	TertiaryReceiver = std::shared_ptr<InputController>(new InputController());
 }
 
 DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
     StopAutoClearing();
 
@@ -195,7 +201,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
     int windowsafter = 0;
 
     {
-        boost::unique_lock<boost::mutex> lock(GlobalCountMutex);
+        Lock lock(GlobalCountMutex);
         --GlobalWindowCount;
         windowsafter = GlobalWindowCount;
     }
@@ -206,7 +212,8 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
         FirstCEGUIRenderer = NULL;
         CEGUI::OgreRenderer::destroySystem();
 
-        Logger::Get()->Info("GraphicalInputEntity: all windows have been closed, should quit soon");
+        Logger::Get()->Info("GraphicalInputEntity: all windows have been closed, "
+            "should quit soon");
     }
 
     CEGUIRenderer = NULL;
@@ -216,16 +223,16 @@ GraphicalInputEntity* Leviathan::GraphicalInputEntity::InputCapturer = NULL;
 
 int Leviathan::GraphicalInputEntity::GlobalWindowCount = 0;
 
-boost::mutex Leviathan::GraphicalInputEntity::GlobalCountMutex;
+Mutex Leviathan::GraphicalInputEntity::GlobalCountMutex;
 
 int Leviathan::GraphicalInputEntity::TotalCreatedWindows = 0;
 
-boost::mutex Leviathan::GraphicalInputEntity::TotalCountMutex;
+Mutex Leviathan::GraphicalInputEntity::TotalCountMutex;
 
 CEGUI::OgreRenderer* Leviathan::GraphicalInputEntity::FirstCEGUIRenderer = NULL;
 
 bool Leviathan::GraphicalInputEntity::AutoClearResourcesCreated = false;
-boost::mutex Leviathan::GraphicalInputEntity::AutoClearResourcesMutex;
+Mutex Leviathan::GraphicalInputEntity::AutoClearResourcesMutex;
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::ReleaseLinked(){
 	// release world and object references //
@@ -234,7 +241,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::ReleaseLinked(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	if(LinkedWorld)
 		LinkedWorld->UpdateCameraLocation(mspassed, LinkedCamera.get());
 
@@ -252,7 +259,7 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::CreateAutoClearWorkspaceDefIfNotAlready(){
 
-    boost::unique_lock<boost::mutex> lock(AutoClearResourcesMutex);
+    Lock lock(AutoClearResourcesMutex);
 
     if(AutoClearResourcesCreated)
         return;
@@ -340,7 +347,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::StopAutoClearing(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(shared_ptr<ViewerCameraPos> camera,
-    shared_ptr<GameWorld> world)
+    std::shared_ptr<GameWorld> world)
 {
 	LinkedCamera = camera;
 	LinkedWorld = world;
@@ -348,7 +355,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(shared_ptr<ViewerCam
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::SetCustomInputController(shared_ptr<InputController> controller){
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	
 	TertiaryReceiver = controller;
 }
@@ -382,7 +389,7 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state){
 	if(MouseCaptureState == state)
 		return true;
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	MouseCaptureState = state;
 
@@ -390,7 +397,6 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state){
 	if(!MouseCaptureState){
 
 		// set mouse visible and disable capturing //
-		WindowsGui->SetMouseFileVisibleState(true);
 		DisplayWindow->SetCaptureMouse(false);
 
 		// reset pointer to indicate that this object no longer captures mouse to this window //
@@ -405,7 +411,6 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state){
 		}
 
 		// hide mouse and tell window to capture //
-		WindowsGui->SetMouseFileVisibleState(false);
 		DisplayWindow->SetCaptureMouse(true);
 		DisplayWindow->SetMouseToCenter();
 

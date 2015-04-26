@@ -1,8 +1,6 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_NETWORKCLIENTINTERFACE
 #include "NetworkClientInterface.h"
-#endif
+
 #include "NetworkHandler.h"
 #include "ConnectionInfo.h"
 #include "SyncedVariables.h"
@@ -18,10 +16,8 @@
 #include "Threading/ThreadingManager.h"
 #include "Networking/AINetworkCache.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-
-
-
 
 // ------------------ NetworkClientInterface ------------------ //
 DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() :
@@ -45,7 +41,7 @@ DLLEXPORT NetworkClientInterface* Leviathan::NetworkClientInterface::GetIfExists
 NetworkClientInterface* Leviathan::NetworkClientInterface::Staticaccess = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(shared_ptr<ConnectionInfo> connectiontouse){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Fail if already connected //
 	if(ServerConnection){
@@ -69,7 +65,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(shared_ptr<Connecti
 	return true;
 }
 
-DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(ObjectLock &guard, const wstring &reason,
+DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(Lock &guard, const std::string &reason,
     bool connectiontimedout)
 {
 	VerifyLock(guard);
@@ -140,7 +136,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_pt
 
             // Response to the request //
             auto response = make_shared<NetworkResponse>(request->GetExpectedResponseID(),
-                PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000);
+                PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
 
             response->GenerateEmptyResponse();
 
@@ -373,7 +369,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::UpdateClientStatus(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 checksentrequestsbeginlabel:
 
@@ -424,10 +420,10 @@ checksentrequestsbeginlabel:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Get the close reason from it //
-	wstring closereason;
+	std::string closereason;
 
 	if(closereason.empty())
 		closereason = L"Other side requested close";
@@ -448,7 +444,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnNotifierDisconnected(BaseNo
 	}
 }
 // ------------------------------------ //
-void Leviathan::NetworkClientInterface::_SendConnectRequest(ObjectLock &guard){
+void Leviathan::NetworkClientInterface::_SendConnectRequest(Lock &guard){
 	VerifyLock(guard);
 
 	// Increase connect number //
@@ -457,7 +453,7 @@ void Leviathan::NetworkClientInterface::_SendConnectRequest(ObjectLock &guard){
 
 	// Send connect request //
 	shared_ptr<NetworkRequest> tmprequest(new NetworkRequest(new JoinServerRequestData(), 3000,
-            PACKAGE_TIMEOUT_STYLE_TIMEDMS));
+            PACKET_TIMEOUT_STYLE_TIMEDMS));
 
 	auto sentthing = ServerConnection->SendPacketToConnection(tmprequest, 1);
 
@@ -466,11 +462,11 @@ void Leviathan::NetworkClientInterface::_SendConnectRequest(ObjectLock &guard){
 
 	// Send message //
 	_OnNewConnectionStatusMessage(L"Trying to connect to a server on "+ServerConnection->
-        GenerateFormatedAddressString()+L", attempt "+Convert::ToWstring(ConnectTriesCount));
+        GenerateFormatedAddressString()+L", attempt "+Convert::ToStd::String(ConnectTriesCount));
 }
 // ------------------------------------ //
 void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(shared_ptr<SentNetworkThing> tmpsendthing,
-    ObjectLock &guard)
+    Lock &guard)
 {
 	VerifyLock(guard);
 
@@ -500,19 +496,19 @@ void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(shared_ptr<Sent
 						// We need to parse our ID from the response //
 						StringIterator itr(resdata->Message);
 
-						auto numberthing = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE);
+						auto numberthing = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
 
 						// Invalid format //
 						if(!numberthing || numberthing->empty())
 							goto networkresponseserverallowinvalidreponseformatthinglabel;
 
-						OurPlayerID = Convert::WstringTo<int>(*numberthing);
+						OurPlayerID = Convert::Std::StringTo<int>(*numberthing);
 
 						if(OurPlayerID < 0)
 							goto networkresponseserverallowinvalidreponseformatthinglabel;
 
 						Logger::Get()->Info(L"NetworkClientInterface: our player ID is now: "+
-                            Convert::ToWstring(OurPlayerID));
+                            Convert::ToStd::String(OurPlayerID));
 
 						_ProperlyConnectedToServer(guard);
 						return;
@@ -539,7 +535,7 @@ networkresponseserverallowinvalidreponseformatthinglabel:
 }
 
 void Leviathan::NetworkClientInterface::_ProcessFailedRequest(shared_ptr<SentNetworkThing> tmpsendthing,
-    ObjectLock &guard)
+    Lock &guard)
 {
 	VerifyLock(guard);
 
@@ -561,7 +557,7 @@ void Leviathan::NetworkClientInterface::_ProcessFailedRequest(shared_ptr<SentNet
 			} else {
 
 				Logger::Get()->Write(L"\t> Maximum connect tries reached");
-				DisconnectFromServer(guard, L"Connection timed out after "+Convert::ToWstring(ConnectTriesCount)+
+				DisconnectFromServer(guard, L"Connection timed out after "+Convert::ToStd::String(ConnectTriesCount)+
                     L" tries", true);
 			}
 		}
@@ -578,7 +574,7 @@ void Leviathan::NetworkClientInterface::_ProcessFailedRequest(shared_ptr<SentNet
 	}
 }
 // ------------------------------------ //
-void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer(ObjectLock &guard){
+void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer(Lock &guard){
 	VerifyLock(guard);
 
 	// Set the variables //
@@ -626,11 +622,11 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
 		} else {
 
 			// Set the maximum number of things //
-			size_t toreceive = Convert::WstringTo<size_t>(tmpresponse->Message);
+			size_t toreceive = Convert::Std::StringTo<size_t>(tmpresponse->Message);
 
 			SyncedVariables::Get()->SetExpectedNumberOfVariablesReceived(toreceive);
 
-			Logger::Get()->Info(L"NetworkClientInterface: sync variables: now expecting "+Convert::ToWstring(toreceive)+
+			Logger::Get()->Info(L"NetworkClientInterface: sync variables: now expecting "+Convert::ToStd::String(toreceive)+
                 L" variables");
 		}
 
@@ -666,12 +662,12 @@ DLLEXPORT void Leviathan::NetworkClientInterface::OnUpdateFullSynchronizationSta
     size_t expectedvariables)
 {
 
-	_OnNewConnectionStatusMessage(L"Syncing variables, "+Convert::ToWstring(variablesgot)+L"/"+Convert::ToWstring(
+	_OnNewConnectionStatusMessage(L"Syncing variables, "+Convert::ToStd::String(variablesgot)+L"/"+Convert::ToStd::String(
             expectedvariables));
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::OnCloseClient(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	if(ServerConnection){
 
@@ -710,7 +706,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::IsConnected() const{
 }
 // ------------------------------------ //
 void Leviathan::NetworkClientInterface::_OnStartHeartbeats(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Ignore if already started /
 	if(UsingHeartbeats)
@@ -727,7 +723,7 @@ void Leviathan::NetworkClientInterface::_OnStartHeartbeats(){
 }
 
 void Leviathan::NetworkClientInterface::_OnHeartbeat(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	// Reset the times //
 	LastReceivedHeartbeat = Misc::GetThreadSafeSteadyTimePoint();
 	SecondsWithoutConnection = 0.f;
@@ -738,7 +734,7 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
 	if(!UsingHeartbeats)
 		return;
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	if(!ServerConnection)
 		return;
@@ -749,7 +745,7 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
 	if(timenow >= LastSentHeartbeat+MillisecondDuration(CLIENT_HEARTBEATS_MILLISECOND)){
 
 		// Send one //
-		shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 30));
+		shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 30));
 		response->GenerateHeartbeatResponse();
 
 		ServerConnection->SendPacketToConnection(response, 1);
@@ -769,7 +765,7 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
     
 	PotentialInputHandler = handler;
 	return true;
@@ -783,11 +779,11 @@ DLLEXPORT NetworkedInputHandler* Leviathan::NetworkClientInterface::GetNetworked
 	return PotentialInputHandler.get();
 }
 
-DLLEXPORT shared_ptr<ConnectionInfo> Leviathan::NetworkClientInterface::GetServerConnection(){
+DLLEXPORT std::shared_ptr<ConnectionInfo> Leviathan::NetworkClientInterface::GetServerConnection(){
 	return ServerConnection;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const wstring &reasonstring, bool donebyus){
+DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(const std::string &reasonstring, bool donebyus){
 
 }
 
@@ -795,7 +791,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnStartConnectToServer(){
 
 }
 
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnFailedToConnectToServer(const wstring &reason){
+DLLEXPORT void Leviathan::NetworkClientInterface::_OnFailedToConnectToServer(const std::string &reason){
 
 }
 
@@ -803,7 +799,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnSuccessfullyConnectedToServ
 
 }
 
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnNewConnectionStatusMessage(const wstring &message){
+DLLEXPORT void Leviathan::NetworkClientInterface::_OnNewConnectionStatusMessage(const std::string &message){
 
 }
 

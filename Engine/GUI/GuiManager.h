@@ -5,7 +5,7 @@
 #include "../Application/AppDefine.h"
 #include "BaseGuiObject.h"
 #include "../Common/ThreadSafe.h"
-
+#include "../TimeIncludes.h"
 
 #include "OgreRenderQueueListener.h"
 #include "CEGUI/GUIContext.h"
@@ -119,18 +119,17 @@ namespace Leviathan{ namespace Gui{
 
 		// set to "none" to use default //
 		DLLEXPORT void SetMouseTheme(const std::string &tname);
-		DLLEXPORT void SetMouseFileVisibleState(bool state);
 
 		// collection managing //
 		DLLEXPORT void AddCollection(GuiCollection* add);
 		DLLEXPORT GuiCollection* GetCollection(const int &id, const std::string &name = "");
 
-		DLLEXPORT void SetCollectionStateProxy(std::string name, bool state);
 		DLLEXPORT void SetCollectionState(const std::string &name, bool state);
 		DLLEXPORT void SetCollectionAllowEnableState(const std::string &name, bool allow = true);
 		DLLEXPORT inline void PossiblyGUIMouseDisable(){
 			GuiMouseUseUpdated = true;
 		}
+        
 		// called when mouse cannot be captured (should force at least one collection on) //
 		DLLEXPORT void OnForceGUIOn();
 

@@ -40,7 +40,7 @@ DLLEXPORT NetworkedInputHandler* Leviathan::NetworkedInputHandler::Get(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInputHandler::Release(){
     
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	auto end = GlobalOrLocalListeners.end();
 	for(auto iter = GlobalOrLocalListeners.begin(); iter != end; ++iter){
@@ -63,7 +63,7 @@ DLLEXPORT void Leviathan::NetworkedInputHandler::Release(){
 DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<NetworkRequest> request,
     ConnectionInfo* connection)
 {
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	switch(request->GetType()){
         case NETWORKREQUESTTYPE_CONNECTINPUT:
@@ -84,7 +84,7 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<NetworkResponse> response,
     ConnectionInfo* connection)
 {
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 
 	switch(response->GetType()){
@@ -122,8 +122,8 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
         
                 // We duplicate the packet from the data to make it harder for people to send invalid packets to
                 // other clients 
-                shared_ptr<NetworkResponse> tmprespall = shared_ptr<NetworkResponse>(new NetworkResponse(-1,
-                        PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
+                std::shared_ptr<NetworkResponse> tmprespall = std::shared_ptr<NetworkResponse>(new NetworkResponse(-1,
+                        PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
 
                 tmprespall->GenerateUpdateNetworkedInputResponse(new NetworkResponseDataForUpdateNetworkedInput(
                         *response->GetResponseDataForUpdateNetworkedInputResponse()));
@@ -148,7 +148,7 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
     ConnectionInfo* connection)
 {
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 
 		// Verify that it is allowed //
 		bool allowed = true;
@@ -195,7 +195,7 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
 
 		// Notify that we accepted it //
 		shared_ptr<NetworkResponse> tmpresp(new NetworkResponse(request->GetExpectedResponseID(), 
-			PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1500));
+			PACKET_TIMEOUT_STYLE_TIMEDMS, 1500));
 
 
 		tmpresp->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(
@@ -207,8 +207,8 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
 		// Send messages to other clients //
 #ifndef NETWORK_USE_SNAPSHOTS
 		// First create the packet //
-		shared_ptr<NetworkResponse> tmprespall = shared_ptr<NetworkResponse>(new NetworkResponse(-1,
-                PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 15));
+		shared_ptr<NetworkResponse> tmprespall = std::shared_ptr<NetworkResponse>(new NetworkResponse(-1,
+                PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 15));
 
 		tmprespall->GenerateCreateNetworkedInputResponse(new NetworkResponseDataForCreateNetworkedInput(
                 *GlobalOrLocalListeners.back()));
@@ -237,7 +237,7 @@ notallowedfailedlabel:
 
 	// Notify about we disallowing this connection //
 	shared_ptr<NetworkResponse> tmpresp(new NetworkResponse(NETWORKRESPONSETYPE_SERVERDISALLOW, 
-		PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1));
+		PACKET_TIMEOUT_STYLE_TIMEDMS, 1));
 
 	tmpresp->GenerateServerDisallowResponse(new 
 		NetworkResponseDataForServerDisallow(NETWORKRESPONSE_INVALIDREASON_NOT_AUTHORIZED,
@@ -247,7 +247,7 @@ notallowedfailedlabel:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInputHandler::UpdateInputStatus(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Remove invalid things //
 	auto end = GlobalOrLocalListeners.end();
@@ -269,13 +269,13 @@ DLLEXPORT void Leviathan::NetworkedInputHandler::UpdateInputStatus(){
 DLLEXPORT void Leviathan::NetworkedInputHandler::GetNextInputIDNumber(boost::function<void (int)> onsuccess,
     boost::function<void ()> onfailure)
 {
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	DEBUG_BREAK;
 }
 
 DLLEXPORT int Leviathan::NetworkedInputHandler::GetNextInputIDNumberOnServer(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	assert(IsOnTheServer && "cannot call this function on the client");
 
@@ -289,7 +289,7 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::RegisterNewLocalGlobalReflectin
 
 	assert(IsOnTheServer != true && "cannot call this function on the server");
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 
 	// Start connection to the server //
@@ -313,7 +313,7 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::RegisterNewLocalGlobalReflectin
 }
 // ------------------------------------ //
 void Leviathan::NetworkedInputHandler::_OnChildUnlink(InputReceiver* child){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	for(size_t i = 0; i < ConnectedReceivers.size(); i++){
 		if(ConnectedReceivers[i] == child){
@@ -339,7 +339,7 @@ void Leviathan::NetworkedInputHandler::_OnChildUnlink(InputReceiver* child){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInputHandler::QueueDeleteInput(NetworkedInput* inputobj){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Find and remove from the main list //
 	auto end = GlobalOrLocalListeners.end();
@@ -357,7 +357,7 @@ DLLEXPORT void Leviathan::NetworkedInputHandler::QueueDeleteInput(NetworkedInput
 	// Not found //
 }
 
-void Leviathan::NetworkedInputHandler::_HandleDeleteQueue(ObjectLock &guard){
+void Leviathan::NetworkedInputHandler::_HandleDeleteQueue(Lock &guard){
 	VerifyLock(guard);
 
 	auto end = DeleteQueue.begin();
@@ -382,7 +382,7 @@ bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(shared_ptr<Net
         return false;
 
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Find the right input object //
 
@@ -463,7 +463,7 @@ bool Leviathan::NetworkedInputHandler::_HandleInputCreateResponse(shared_ptr<Net
     if(!allowed)
         return false;
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     assert(!IsOnTheServer && "Don't call _HandleInputCreateResponse on the server");
     

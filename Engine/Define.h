@@ -41,18 +41,6 @@ namespace Leviathan{
 	}
 }
 
-#ifndef _WIN32
-
-#define FORCE_INLINE __attribute__((always_inline))
-    
-#else
-// Windows needs these //
-#define FORCE_INLINE    __forceinline
-    
-// Some undefines //
-#undef GetNextSibling
-#undef GetFirstChild
-#endif //_WIN32
 
 #ifdef _MSC_VER
 
@@ -69,23 +57,6 @@ namespace Leviathan{
 
 #error "Debug break won't work"
 
-#endif
-
-
-#ifndef DLLEXPORT
-#ifdef ENGINE_EXPORTS
-#ifdef _WIN32
-#define DLLEXPORT    __declspec( dllexport )
-#else
-// This might not be needed for gcc
-#define DLLEXPORT   __attribute__ ((visibility ("default")))
-#endif
-// Json-cpp //
-#define JSON_DLL_BUILD
-#else
-#define DLLEXPORT
-#define JSON_DLL
-#endif // ENGINE_EXPORTS
 #endif
 
 #define SAFE_RELEASE( x ) {if(x){(x)->Release();(x)=NULL;}}

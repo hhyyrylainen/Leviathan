@@ -1,16 +1,14 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_BASEPHYSICSOBJECT
 #include "BasePhysicsObject.h"
-#endif
+
 #include "../GameWorld.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "../CommonStateObjects.h"
 #include "BaseSendableEntity.h"
 #include "boost/bind.hpp"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-// I hope that this virtual constructor isn't actually called //
 DLLEXPORT Leviathan::BasePhysicsObject::BasePhysicsObject() :
     BaseObject(-1, NULL), Body(NULL), Collision(NULL), Immovable(false), ApplyGravity(false),
     AppliedPhysicalMaterial(-1)
@@ -23,7 +21,7 @@ DLLEXPORT Leviathan::BasePhysicsObject::~BasePhysicsObject(){
 }
 // ------------------------------------ //
 void Leviathan::BasePhysicsObject::_DestroyPhysicalBody(){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
 	if(Collision)
 		NewtonDestroyCollision(Collision);
@@ -35,12 +33,12 @@ void Leviathan::BasePhysicsObject::_DestroyPhysicalBody(){
 }
 // ------------------------------------ //
 void Leviathan::BasePhysicsObject::PosUpdated(){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	_UpdatePhysicsObjectLocation(guard);
 }
 
 void Leviathan::BasePhysicsObject::OrientationUpdated(){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	_UpdatePhysicsObjectLocation(guard);
 }
 // ------------------------------------ //
@@ -54,7 +52,7 @@ void Leviathan::BasePhysicsObject::ApplyForceAndTorgueEvent(const NewtonBody* co
 	if(tmp->Immovable)
 		return;
 
-    GUARD_LOCK_OTHER_OBJECT(tmp);
+    GUARD_LOCK_OTHER(tmp);
 
 	Float3 Torque(0, 0, 0);
 
@@ -84,7 +82,7 @@ void Leviathan::BasePhysicsObject::DestroyBodyCallback(const NewtonBody* body){
 }
 // ------------------ Physical interaction functions ------------------ //
 DLLEXPORT void Leviathan::BasePhysicsObject::GiveImpulse(const Float3 &deltaspeed, const Float3 &point /*= Float3(0)*/){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
 	if(Body){
 
@@ -93,7 +91,7 @@ DLLEXPORT void Leviathan::BasePhysicsObject::GiveImpulse(const Float3 &deltaspee
 }
 
 DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyVelocity(const Float3 &velocities){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
 	if(Body){
 
@@ -102,7 +100,7 @@ DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyVelocity(const Float3 &veloc
 }
 
 DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyVelocity(){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
 	if(Body){
 		Float3 vel(0);
@@ -114,7 +112,7 @@ DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyVelocity(){
 }
 
 DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyTorque(){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
 	if(Body){
 		Float3 torq(0);
@@ -126,7 +124,7 @@ DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyTorque(){
 }
 
 DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyTorque(const Float3 &torque){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     if(Body){
 
@@ -154,7 +152,7 @@ Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(const float &mass){
 }
 
 DLLEXPORT void Leviathan::BasePhysicsObject::ApplyForce(ApplyForceInfo* pointertohandle){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	// Overwrite old if found //
 	for(auto iter = ApplyForceList.begin(); iter != ApplyForceList.end(); ++iter){
         
@@ -173,8 +171,8 @@ DLLEXPORT void Leviathan::BasePhysicsObject::ApplyForce(ApplyForceInfo* pointert
 	ApplyForceList.push_back(shared_ptr<ApplyForceInfo>(pointertohandle));
 }
 
-DLLEXPORT bool Leviathan::BasePhysicsObject::RemoveApplyForce(const wstring &name){
-    GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT bool Leviathan::BasePhysicsObject::RemoveApplyForce(const std::string &name){
+    GUARD_LOCK();
     
 	// Search for a matching name //
     auto end = ApplyForceList.end();
@@ -191,7 +189,7 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::RemoveApplyForce(const wstring &nam
 	return false;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::BasePhysicsObject::SetPhysicalMaterial(const wstring &materialname){
+DLLEXPORT bool Leviathan::BasePhysicsObject::SetPhysicalMaterial(const std::string &materialname){
     // Empty string sets the default material //
     if(materialname.empty()){
 
@@ -214,7 +212,7 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::SetPhysicalMaterial(const wstring &
 }
 
 DLLEXPORT void Leviathan::BasePhysicsObject::SetPhysicalMaterialID(int ID){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
 	assert(Body != NULL && "calling set material ID without having physical model loaded");
 
@@ -227,7 +225,7 @@ DLLEXPORT int Leviathan::BasePhysicsObject::GetDefaultPhysicalMaterialID() const
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BasePhysicsObject::SetLinearDampening(float factor /*= 0.1f*/){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     if(Body)
         NewtonBodySetLinearDamping(Body, factor);
@@ -248,7 +246,7 @@ bool Leviathan::BasePhysicsObject::BasePhysicsCustomMessage(int message, void* d
 	case ENTITYCUSTOMMESSAGETYPE_REMOVEAPPLYFORCE:
 		{
 			// Remove force by name //
-			wstring* tmpstring = reinterpret_cast<wstring*>(data);
+			std::string* tmpstring = reinterpret_cast<std::string*>(data);
 
 			RemoveApplyForce(*tmpstring);
 
@@ -273,7 +271,7 @@ bool Leviathan::BasePhysicsObject::BasePhysicsCustomGetData(ObjectDataRequest* d
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::BasePhysicsObject::AddPhysicalStateToPacket(sf::Packet &packet){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     if(!Body)
         return false;
@@ -285,7 +283,7 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::AddPhysicalStateToPacket(sf::Packet
 }
 
 DLLEXPORT bool Leviathan::BasePhysicsObject::ApplyPhysicalStateFromPacket(sf::Packet &packet){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     if(!Body)
         return false;
@@ -316,7 +314,7 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::LoadPhysicalStateFromPacket(sf::Pac
 }
 
 DLLEXPORT void Leviathan::BasePhysicsObject::ApplyPhysicalState(BasePhysicsData &data){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     if(!Body)
         return;
@@ -393,7 +391,7 @@ DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionableP
     OnBeforeResimulateStateChanged();
     
     // TODO: Check does this lock help with something
-    UNIQUE_LOCK_THIS_OBJECT();
+    GUARD_LOCK_NAME(lockit);
     
     // Go back to the verified position and resimulate from there //
     if(servercasted->ValidFields & PPDELTAUPDATED_POS_X){
@@ -630,7 +628,7 @@ DLLEXPORT void BasePhysicsObject::InterpolatePhysicalState(PositionablePhysicalD
     if(progress > 1.f)
         progress = 1.f;
     
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     Float3 pos = GetPosition();
     Float4 rot = GetOrientation();
     Float3 vel = GetBodyVelocity();
@@ -775,7 +773,7 @@ DLLEXPORT void BasePhysicsObject::InterpolatePhysicalState(PositionablePhysicalD
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(bool addmass,
     boost::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> getforce,
-    wstring* name /*= NULL*/) : 
+    std::string* name /*= NULL*/) : 
 	Callback(getforce), MultiplyByMass(addmass), OptionalName(name)
 {
 	
@@ -786,7 +784,7 @@ DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(ApplyForceInfo &other) :
     Callback(other.Callback), MultiplyByMass(other.MultiplyByMass)
 {
     if(other.OptionalName)
-        OptionalName = move(unique_ptr<wstring>(new wstring(*other.OptionalName.get())));
+        OptionalName = move(unique_ptr<std::string>(new std::string(*other.OptionalName.get())));
 }
 
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(ApplyForceInfo &&other) :
@@ -805,7 +803,7 @@ DLLEXPORT ApplyForceInfo& Leviathan::ApplyForceInfo::operator=(const ApplyForceI
 
     if(other.OptionalName){
         
-        OptionalName = move(unique_ptr<wstring>(new wstring(*other.OptionalName.get())));
+        OptionalName = move(unique_ptr<std::string>(new std::string(*other.OptionalName.get())));
         
     } else {
         

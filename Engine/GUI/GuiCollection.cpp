@@ -11,21 +11,20 @@ using namespace Leviathan;
 using namespace Gui;
 using namespace std;
 // ------------------------------------ //
-Leviathan::Gui::GuiCollection::GuiCollection(const std::string &name, GuiManager* manager, int id, const std::string &toggle, 
-	std::vector<unique_ptr<std::string>> &inanimations, std::vector<unique_ptr<std::string>> &outanimations, bool strict /*= false*/, 
-	bool enabled /*= true*/, bool keepgui /*= false*/, bool allowenable /*= true*/, const std::string &autotarget /*= L""*/, 
+Leviathan::Gui::GuiCollection::GuiCollection(const std::string &name, GuiManager* manager, int id,
+    const std::string &toggle, std::vector<unique_ptr<std::string>> &inanimations,
+    std::vector<unique_ptr<std::string>> &outanimations, bool strict /*= false*/, 
+	bool enabled /*= true*/, bool keepgui /*= false*/, bool allowenable /*= true*/,
+    const std::string &autotarget /*= ""*/, 
 
 	bool applyanimstochildren) : 
-	Name(name), ID(id), Enabled(enabled), Strict(strict), KeepsGuiOn(keepgui), OwningManager(manager), AllowEnable(allowenable), 
-	AutoTarget(autotarget), ApplyAnimationsToChildren(applyanimstochildren), AutoAnimationOnEnable(move(inanimations)), 
+	Name(name), ID(id), Enabled(enabled), Strict(strict), KeepsGuiOn(keepgui),
+    OwningManager(manager), AllowEnable(allowenable), 
+	AutoTarget(autotarget), ApplyAnimationsToChildren(applyanimstochildren),
+    AutoAnimationOnEnable(move(inanimations)), 
 	AutoAnimationOnDisable(move(outanimations))
 {
 	Toggle = GKey::GenerateKeyFromString(toggle);
-	
-	
-	
-	
-	
 }
 
 Leviathan::Gui::GuiCollection::~GuiCollection(){
@@ -63,21 +62,20 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 	// Set the auto target visibility if the target is set //
 	if(!AutoTarget.empty()){
 
-
-
-
 		// Find it and set it //
 		// Find the CEGUI object //
 		CEGUI::Window* foundobject = NULL;
 		try{
 
-			foundobject = OwningManager->GetMainContext()->getRootWindow()->getChild(Convert::Std::StringToString(AutoTarget));
+			foundobject = OwningManager->GetMainContext()->getRootWindow()->getChild(AutoTarget);
 
 		} catch(const CEGUI::UnknownObjectException &e){
 
 			// Not found //
-			Logger::Get()->Error(L"GuiCollection: couldn't find an AutoTarget CEGUI window with name: "+AutoTarget+L":");
-			Logger::Get()->Write(L"\t> "+Convert::CharPtrToStd::String(e.what()));
+			Logger::Get()->Error("GuiCollection: couldn't find an AutoTarget CEGUI window with "
+                " name: "+AutoTarget+":");
+            
+			Logger::Get()->Write("\t> "+string(e.what()));
 		}
 
 		if(foundobject){
@@ -109,8 +107,9 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 			Event* onevent = new Event(EVENT_TYPE_SHOW, new ShowEventData(newstate));
 
 			// call it //
-			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(new VoidPtrBlock(this), L"GuiCollection"))
-				(new NamedVariableBlock(new VoidPtrBlock(onevent), L"Event"));
+			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(
+                new NamedVariableBlock(new VoidPtrBlock(this), "GuiCollection"))
+				(new NamedVariableBlock(new VoidPtrBlock(onevent), "Event"));
 
 			onevent->AddRef();
 			AddRef();
@@ -128,46 +127,57 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data){
 	// load a GuiCollection from the structure //
 
-	std::string Toggle = L"";
+	std::string Toggle = "";
 	bool Enabled = true;
 	bool Strict = false;
 	bool GuiOn = false;
 	bool allowenable = true;
-	std::string autotarget = L"";
+	std::string autotarget = "";
 	std::vector<unique_ptr<std::string>> autoinanimation;
 	std::vector<unique_ptr<std::string>> autooutanimation;
 	bool recursiveanims = false;
 
-	auto varlist = data.GetListWithName(L"params");
+	auto varlist = data.GetListWithName("params");
 
 	if(varlist){
 
 		// get values //
-		if(!ObjectFileProcessor::LoadValueFromNamedVars<std::string>(varlist->GetVariables(), L"ToggleOn", Toggle, L"", false)){
+		if(!ObjectFileProcessor::LoadValueFromNamedVars<std::string>(varlist->GetVariables(),
+                "ToggleOn", Toggle, "", false)){
 			// Extra name check //
-			ObjectFileProcessor::LoadValueFromNamedVars<std::string>(varlist->GetVariables(), L"Toggle", Toggle, L"", false);
+			ObjectFileProcessor::LoadValueFromNamedVars<std::string>(varlist->GetVariables(),
+                "Toggle", Toggle, "", false);
 		}
 
-		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"Enabled", Enabled, false, true,
-			L"GuiCollection: LoadCollection:");
+		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), "Enabled",
+            Enabled, false, true,
+			"GuiCollection: LoadCollection:");
 
-		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"KeepsGUIOn", GuiOn, false);
-		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"AllowEnable", allowenable, true);
+		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), "KeepsGUIOn",
+            GuiOn, false);
+		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), "AllowEnable",
+            allowenable, true);
 
-		ObjectFileProcessor::LoadValueFromNamedVars<std::string>(varlist->GetVariables(), L"AutoTarget", autotarget, L"");
+		ObjectFileProcessor::LoadValueFromNamedVars<std::string>(varlist->GetVariables(),
+            "AutoTarget", autotarget, "");
 		
 
-		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<std::string>(varlist->GetVariables(), L"AutoAnimationIn", autoinanimation, 2);
-		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<std::string>(varlist->GetVariables(), L"AutoAnimationOut", autooutanimation, 2);
+		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<std::string>(varlist->GetVariables(),
+            "AutoAnimationIn", autoinanimation, 2);
+		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<std::string>(varlist->GetVariables(),
+            "AutoAnimationOut", autooutanimation, 2);
 
-		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), L"AutoAnimateChildren", recursiveanims, false);
+		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(),
+            "AutoAnimateChildren", recursiveanims, false);
 		
 	}
 
 
 	// allocate new Collection object //
-	GuiCollection* cobj = new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle, autoinanimation, autooutanimation, Strict, Enabled, 
+	GuiCollection* cobj = new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle,
+        autoinanimation, autooutanimation, Strict, Enabled, 
 		GuiOn, allowenable, autotarget, recursiveanims);
+    
 	// copy script data over //
 	cobj->Scripting = data.GetScript();
 
@@ -183,31 +193,32 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
 }
 // ------------------------------------ //
 void Leviathan::Gui::GuiCollection::_PlayAnimations(const std::vector<unique_ptr<std::string>> &anims){
-#ifdef _DEBUG
+
 	assert(anims.size() % 2 == 0 && "_PlayAnimations has invalid vector, size non dividable by 2");
-#endif // _DEBUG
 
 	// Loop the animations and start them //
 	for(size_t i = 0; i < anims.size(); i += 2){
 
 		const std::string& targetanim = *anims[i];
 
-		if(targetanim == L"AutoTarget"){
+		if(targetanim == "AutoTarget"){
 
-			if(!OwningManager->PlayAnimationOnWindow(AutoTarget, *anims[i+1], ApplyAnimationsToChildren, 
-				GuiManager::GetCEGUITypesWithBadAnimations()))
+			if(!OwningManager->PlayAnimationOnWindow(AutoTarget, *anims[i+1],
+                    ApplyAnimationsToChildren, GuiManager::GetCEGUITypesWithBadAnimations()))
 			{
 
-				Logger::Get()->Error(L"GuiCollection: _PlayAnimations: failed to play animation("+*anims[i+1]+L") on window "+AutoTarget);
+				Logger::Get()->Error("GuiCollection: _PlayAnimations: failed to play animation("+
+                    *anims[i+1]+") on window "+AutoTarget);
 			}
 
 		} else {
 
-			if(!OwningManager->PlayAnimationOnWindow(targetanim, *anims[i+1], ApplyAnimationsToChildren, 
-				GuiManager::GetCEGUITypesWithBadAnimations()))
+			if(!OwningManager->PlayAnimationOnWindow(targetanim, *anims[i+1],
+                    ApplyAnimationsToChildren, GuiManager::GetCEGUITypesWithBadAnimations()))
 			{
 
-				Logger::Get()->Error(L"GuiCollection: _PlayAnimations: failed to play animation("+*anims[i+1]+L") on window "+targetanim);
+				Logger::Get()->Error("GuiCollection: _PlayAnimations: failed to play animation("+
+                    *anims[i+1]+") on window "+targetanim);
 			}
 		}
 	}

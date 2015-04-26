@@ -1,7 +1,8 @@
 #pragma once
 // ------------------------------------ //
-#include "Define.h"
-// ------------------------------------ //
+#include "../Common/Types.h"
+#include <memory>
+#include <vector>
 #include "SoundPlayingSlot.h"
 
 
@@ -9,7 +10,6 @@
 #define MAX_CONCURRENT_SOUNDS		256
 
 namespace Leviathan{
-
 
 	class SoundDevice{
 	public:

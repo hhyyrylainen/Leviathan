@@ -2,10 +2,8 @@
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Exceptions.h"
 #include <mutex>
-
 
 namespace Leviathan{
 

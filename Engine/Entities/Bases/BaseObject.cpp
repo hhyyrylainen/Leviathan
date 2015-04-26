@@ -22,7 +22,7 @@ DLLEXPORT void Leviathan::BaseObject::ReleaseData(){
 }
 // ------------------------------------ //
 void Leviathan::BaseObject::Disown(){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     OwnedByWorld = NULL;
 

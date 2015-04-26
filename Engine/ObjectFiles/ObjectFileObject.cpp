@@ -3,8 +3,8 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::ObjectFileObjectProper::ObjectFileObjectProper(const std::string &name, const std::string &typesname,
-    vector<std::string*> prefix) : 
+DLLEXPORT Leviathan::ObjectFileObjectProper::ObjectFileObjectProper(const std::string &name,
+    const std::string &typesname, vector<std::string*> prefix) : 
 	Name(name), TName(typesname), Prefixes(prefix)
 {
 	
@@ -28,7 +28,7 @@ DLLEXPORT const std::string& Leviathan::ObjectFileObjectProper::GetTypeName() co
 	return TName;
 }
 
-DLLEXPORT shared_ptr<ScriptScript> Leviathan::ObjectFileObjectProper::GetScript() const{
+DLLEXPORT std::shared_ptr<ScriptScript> Leviathan::ObjectFileObjectProper::GetScript() const{
 	return Script;
 }
 
@@ -36,7 +36,7 @@ DLLEXPORT size_t Leviathan::ObjectFileObjectProper::GetPrefixesCount() const{
 	return Prefixes.size();
 }
 
-DLLEXPORT const std::string& Leviathan::ObjectFileObjectProper::GetPrefix(size_t index) const THROWS{
+DLLEXPORT const std::string& Leviathan::ObjectFileObjectProper::GetPrefix(size_t index) const{
 	// Check the index //
 	if(index >= Prefixes.size()){
 
@@ -78,7 +78,8 @@ DLLEXPORT void Leviathan::ObjectFileObjectProper::AddScriptScript(shared_ptr<Scr
 	// Warn if we already have a script //
 	if(Script){
 
-		Logger::Get()->Warning(L"ObjectFileObject: already has a script, overwrote old one, name: "+Name);
+		Logger::Get()->Warning("ObjectFileObject: already has a script, overwrote old one, name: "
+            +Name);
 	}
 
 	Script = script;
@@ -112,7 +113,7 @@ DLLEXPORT size_t Leviathan::ObjectFileObjectProper::GetListCount() const{
 	return Contents.size();
 }
 
-DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetList(size_t index) const THROWS{
+DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetList(size_t index) const{
 	// Check the index //
 	if(index >= Contents.size()){
 
@@ -126,7 +127,7 @@ DLLEXPORT size_t Leviathan::ObjectFileObjectProper::GetTextBlockCount() const{
 	return TextBlocks.size();
 }
 
-DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlock(size_t index) const THROWS{
+DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlock(size_t index) const{
 	// Check the index //
 	if(index >= TextBlocks.size()){
 

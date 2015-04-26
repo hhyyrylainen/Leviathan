@@ -6,6 +6,7 @@
 #include "FileSystem.h"
 
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::DataStore::DataStore(){
 	Load();
@@ -74,7 +75,7 @@ DataStore* Leviathan::DataStore::Get(){
 void Leviathan::DataStore::Load(){
 	// load //
 	vector<shared_ptr<NamedVariableList>> tempvec;
-	FileSystem::LoadDataDump(AppDef::GetDefault()->GetLogFile()+L"Persist.txt", tempvec);
+	FileSystem::LoadDataDump(AppDef::GetDefault()->GetLogFile()+"Persist.txt", tempvec);
 
 	Values.SetVec(tempvec);
 
@@ -82,20 +83,20 @@ void Leviathan::DataStore::Load(){
 	Persistencestates.resize(tempvec.size(), true);
 }
 void Leviathan::DataStore::Save(){
-	std::string tosave = L"";
+	std::string tosave = "";
 	vector<shared_ptr<NamedVariableList>>* tempvec = Values.GetVec();
 
 	for(unsigned int i = 0; i < Persistencestates.size(); i++){
 		if(Persistencestates[i]){
 			tosave += tempvec->at(i)->ToText(0);
 			if(i+1 < Persistencestates.size()){
-				tosave += L"\n";
+				tosave += "\n";
 			}
 		}
 
 	}
 
-	FileSystem::WriteToFile(tosave, AppDef::GetDefault()->GetLogFile()+L"Persist.txt");
+	FileSystem::WriteToFile(tosave, AppDef::GetDefault()->GetLogFile()+"Persist.txt");
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::DataStore::GetValue(const std::string &name, VariableBlock &receiver) const{
@@ -111,28 +112,20 @@ DLLEXPORT bool Leviathan::DataStore::GetValues(const std::string &name, vector<c
 }
 // ------------------------------------ //
 void Leviathan::DataStore::SetPersistance(unsigned int index, bool toset){
-	ARR_INDEX_CHECKINV(index, Persistencestates.size())
-		return;
 
 	Persistencestates[index] = toset;
 }
 void DataStore::SetPersistance(const std::string &name, bool toset){
 	int index = Values.Find(name);
-	ARR_INDEX_CHECKINV(index, (int)Persistencestates.size())
-		return;
 
 	Persistencestates[index] = toset;
 }
 int DataStore::GetPersistance(unsigned int index) const{
-	ARR_INDEX_CHECKINV(index, Persistencestates.size())
-		return -1;
 
 	return Persistencestates[index];
 }
 int DataStore::GetPersistance(const std::string &name) const{
 	int index = Values.Find(name);
-	ARR_INDEX_CHECKINV(index, (int)Persistencestates.size())
-		return -1;
 
 	return Persistencestates[index];
 }
@@ -157,7 +150,9 @@ DLLEXPORT bool Leviathan::DataStore::SetValue(const std::string &name, VariableB
 	return true;
 }
 
-DLLEXPORT bool Leviathan::DataStore::SetValue(const std::string &name, const vector<VariableBlock*> &values){
+DLLEXPORT bool Leviathan::DataStore::SetValue(const std::string &name,
+    const vector<VariableBlock*> &values)
+{
 	// use variable holder to do this //
 	this->Values.SetValue(name, values);
 
@@ -168,7 +163,7 @@ DLLEXPORT bool Leviathan::DataStore::SetValue(const std::string &name, const vec
 }
 
 DLLEXPORT bool Leviathan::DataStore::SetValue(NamedVariableList &nameandvalues){
-	DEBUG_BREAK;
+
 	// send update to value listeners //
 	ValueUpdate(nameandvalues.GetName());
 
@@ -202,12 +197,6 @@ DLLEXPORT void Leviathan::DataStore::AddVar(shared_ptr<NamedVariableList> values
 }
 
 DLLEXPORT void Leviathan::DataStore::Remove(unsigned int index){
-	// index checking //
-	ARR_INDEX_CHECKINV(index, Values.GetVec()->size()){
-		// invalid index //
-		DEBUG_BREAK;
-		return;
-	}
 
 	// remove from store //
 	Values.Remove(index);
@@ -327,7 +316,7 @@ void Leviathan::DataStore::ValueUpdate(const std::string& name){
 				// check is value fine or not //
 				if(updatedval.get() == NULL){
 					// create //
-					updatedval = shared_ptr<NamedVariableList>(new NamedVariableList(name, new VariableBlock(
+					updatedval = std::shared_ptr<NamedVariableList>(new NamedVariableList(name, new VariableBlock(
 						Values.GetValue(name)->GetBlockConst()->AllocateNewFromThis())));
 				}
 				// send update //

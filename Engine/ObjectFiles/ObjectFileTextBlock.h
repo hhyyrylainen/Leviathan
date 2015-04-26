@@ -13,7 +13,7 @@ namespace Leviathan{
 		DLLEXPORT virtual ~ObjectFileTextBlock();
 
 		//! \brief Adds an UTF8 encoded line
-		DLLEXPORT virtual bool AddTextLine(const std::string &line) = 0;
+		DLLEXPORT virtual void AddTextLine(const std::string &line) = 0;
 
 		//! \brief Returns the number of text lines
 		DLLEXPORT virtual size_t GetLineCount() const = 0;
@@ -40,7 +40,7 @@ namespace Leviathan{
 		DLLEXPORT ObjectFileTextBlockProper(const std::string &name);
 		DLLEXPORT ~ObjectFileTextBlockProper();
 
-		DLLEXPORT virtual bool AddTextLine(const std::string &line);
+		DLLEXPORT virtual void AddTextLine(const std::string &line);
 
 		DLLEXPORT virtual size_t GetLineCount() const;
 

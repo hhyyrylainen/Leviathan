@@ -28,7 +28,7 @@ DLLEXPORT void Leviathan::SyncedResource::StartSync(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
     
 	// Load the custom data //
 	try{
@@ -52,7 +52,7 @@ DLLEXPORT void Leviathan::SyncedResource::NotifyUpdatedValue(){
 	// Update the networked value //
 	UpdateOurNetworkValue();
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Notify us about the update //
 	OnValueUpdated();
@@ -66,7 +66,7 @@ void Leviathan::SyncedResource::OnValueUpdated(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::SyncedResource::AddDataToPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	// First add the name //
 	packet << Name;
 
@@ -87,7 +87,7 @@ DLLEXPORT wstring Leviathan::SyncedResource::GetSyncedResourceNameFromPacket(sf:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::SyncedResource::UpdateOurNetworkValue(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
     
     // TODO: proper locking
 	auto synman = SyncedVariables::Get();

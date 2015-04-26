@@ -4,6 +4,7 @@
 #include <boost/assign/list_of.hpp>
 #include "Exceptions.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Event::Event(EVENT_TYPE type, BaseEventData* data) : Type(type), Data(data){
 	// Check that types that require values have values //
@@ -285,14 +286,7 @@ BaseEventData::~BaseEventData(){
 DLLEXPORT Leviathan::ResimulateSingleEventData::ResimulateSingleEventData(sf::Packet &packet) :
     GameWorldPtr(NULL), Target(NULL), TimeInPast(0)
 {
-#ifdef SFML_HAS_64_BIT_VALUES_PACKET
-    
-    packet >> TimeInPast;
-    
-#endif //SFML_HAS_64_BIT_VALUES_PACKET
-    
-    if(!packet)
-        throw InvalidArgument("packet has invalid format");
+    throw InvalidType("ResimulateSingleEventData cannot be serialized");
 }
 
 DLLEXPORT Leviathan::ResimulateSingleEventData::ResimulateSingleEventData(int64_t resimulateremaining,
@@ -304,9 +298,5 @@ DLLEXPORT Leviathan::ResimulateSingleEventData::ResimulateSingleEventData(int64_
 
 void Leviathan::ResimulateSingleEventData::AddDataToPacket(sf::Packet &packet){
 
-#ifdef SFML_HAS_64_BIT_VALUES_PACKET
-    
-    packet << TimeInPast;
-
-#endif //SFML_HAS_64_BIT_VALUES_PACKET
+    throw InvalidType("ResimulateSingleEventData cannot be serialized");
 }

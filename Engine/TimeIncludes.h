@@ -1,7 +1,7 @@
 #pragma once
 
 //! \file Includes and definitions for time keeping
-#include "Define.h"
+#include "Include.h"
 
 #include <cstdint>
 #include <chrono>
@@ -23,9 +23,7 @@ namespace Leviathan{
         DLLEXPORT static int64_t GetTimeMs64();
 		DLLEXPORT static int64_t GetTimeMicro64();
         
-		//! \brief Gets the current time in a thread safe way
-		//!
-		//! This should always be used when getting the time to avoid segfaulting
+        //! \note This should be not required when using the standard
 		DLLEXPORT static WantedClockType::time_point GetThreadSafeSteadyTimePoint();
     };
 }

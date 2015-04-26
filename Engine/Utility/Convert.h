@@ -54,7 +54,9 @@ namespace Leviathan{
 		DLLEXPORT static int WstringFromBoolToInt(const std::wstring &i);
 		DLLEXPORT static int StringFromBoolToInt(const std::string &i);
 
-		DLLEXPORT static bool IsWstringBool(const std::wstring &val, bool* valreceiver = NULL);
+        DLLEXPORT static int StringTypeNameCheck(const std::string &name);
+
+		DLLEXPORT static bool IsStringBool(const std::string &val, bool* receiver);
 
 		template<class T>
 		DLLEXPORT static inline T WstringTo(const std::wstring &str){
@@ -78,10 +80,6 @@ namespace Leviathan{
 		// macro conversions //
 		STRINGTOSOMETHINGTEMPLATEALTERNATIVE(std::wstring, std::wstringstream, WstringToInt, int);
 		STRINGTOSOMETHINGTEMPLATEALTERNATIVE(std::wstring, std::wstringstream, WstringToFloat, float);
-
-		// type checks //
-		DLLEXPORT static int WstringTypeCheck(const std::wstring& data, int typecheckfor);
-		DLLEXPORT static int WstringTypeNameCheck(const std::wstring &data);
 
 		// template functions //
 

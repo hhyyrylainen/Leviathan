@@ -68,7 +68,8 @@ namespace Leviathan{ namespace Entity{
 
 		//! \brief Creates the actual trail object
         //! \param allowupdate Set to true if you want to use SetTrailProperties later
-		DLLEXPORT bool Init(const string &materialname, const TrailProperties &variables, bool allowupdate = true);
+		DLLEXPORT bool Init(const std::string &materialname, const TrailProperties &variables,
+            bool allowupdate = true);
         
 		DLLEXPORT virtual void ReleaseData();
 

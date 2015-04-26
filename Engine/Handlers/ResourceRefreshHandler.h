@@ -16,7 +16,7 @@ namespace Leviathan{
 		//! \brief Creates a new listener
 		//! \see ResourceRefreshHandler::ListenForFileChanges
 		ResourceFolderListener(const std::vector<const std::string*> &filestowatch, 
-			boost::function<void (const std::string &, ResourceFolderListener&)> notifyfunction);
+			std::function<void (const std::string &, ResourceFolderListener&)> notifyfunction);
 		~ResourceFolderListener();
 
 		//! \brief Gets the ID of this object
@@ -47,7 +47,7 @@ namespace Leviathan{
 		// ------------------------------------ //
 
 		//! The listening thread
-		boost::thread ListenerThread;
+		std::thread ListenerThread;
 
 		//! The folder in which to listen for stuff
 		std::string TargetFolder;
@@ -129,7 +129,7 @@ namespace Leviathan{
         //! in the same folder
 		//! \todo Allow watching for files in subfolders
 		DLLEXPORT bool ListenForFileChanges(const std::vector<const std::string*> &filestowatch, 
-			boost::function<void (const std::string &, ResourceFolderListener&)> notifyfunction,
+			std::function<void (const std::string &, ResourceFolderListener&)> notifyfunction,
             int &createdid);
 
 		//! \brief Stops a listener with a specific id

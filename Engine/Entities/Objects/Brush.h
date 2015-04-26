@@ -1,12 +1,7 @@
-#ifndef LEVIATHAN_ENTITY_BRUSH
-#define LEVIATHAN_ENTITY_BRUSH
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
-
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Entities/Bases/BaseObject.h"
 #include "Entities/Bases/BaseRenderable.h"
 #include "Entities/Bases/BasePositionable.h"
@@ -15,10 +10,6 @@
 #include "Entities/Bases/BaseParentable.h"
 #include "Entities/Bases/BaseSendableEntity.h"
 #include "Events/CallableObject.h"
-
-namespace Leviathan{
-	class GameWorld;
-}
 
 namespace Leviathan{ namespace Entity{
 
@@ -38,9 +29,11 @@ namespace Leviathan{ namespace Entity{
 
             // different initialization functions for different box styles //
             // NOTE: leaving createphysics true creates a immovable box (uses mass = 0) //
-            DLLEXPORT bool Init(const Float3 &dimensions, const string &material, bool createphysics = true);
+            DLLEXPORT bool Init(const Float3 &dimensions, const std::string &material,
+                bool createphysics = true);
 
-            // call if you want to have this interact with other physical objects (set mass to 0 to be static) //
+            // call if you want to have this interact with other physical objects
+            // (set mass to 0 to be static)
             DLLEXPORT void AddPhysicalObject(const float &mass = 0.f);
 
 
@@ -50,13 +43,13 @@ namespace Leviathan{ namespace Entity{
                 matrix, int threadIndex);
 
             //! \copydoc BaseSendableEntity::CaptureState
-            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
+            DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
 
             DLLEXPORT int OnEvent(Event** pEvent) override;
             DLLEXPORT int OnGenericEvent(GenericEvent** pevent) override;
 
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
-            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
+            DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
                 sf::Packet &packet) const override;
 
             REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(Brush);
@@ -66,7 +59,7 @@ namespace Leviathan{ namespace Entity{
             //! \brief Constructs a brush for receiving through the network
             Brush(bool hidden, GameWorld* world, int netid);
             
-            virtual void _UpdatePhysicsObjectLocation(ObjectLock &guard) override;
+            virtual void _UpdatePhysicsObjectLocation(Lock &guard) override;
 
             //! \copydoc BaseSendableEntity::_LoadOwnDataFromPacket
             virtual bool _LoadOwnDataFromPacket(sf::Packet &packet) override;
@@ -84,8 +77,8 @@ namespace Leviathan{ namespace Entity{
 
             Ogre::ManualObject* BrushModel;
 
-            string MeshName;
-            string Material;
+            std::string MeshName;
+            std::string Material;
             float Mass;
             Float3 Sizes;
 
@@ -94,4 +87,4 @@ namespace Leviathan{ namespace Entity{
 
     }}
 
-#endif
+

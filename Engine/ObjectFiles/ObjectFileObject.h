@@ -64,7 +64,7 @@ namespace Leviathan{
 		//! \except ExceptionInvalidArgument when the index is out of bounds
 		DLLEXPORT virtual ObjectFileTextBlock* GetTextBlock(size_t index) const = 0;
 
-		//! \brief Returns a shared_ptr to our script
+		//! \brief Returns a std::shared_ptr to our script
 		DLLEXPORT virtual std::shared_ptr<ScriptScript> GetScript() const = 0;
 
 

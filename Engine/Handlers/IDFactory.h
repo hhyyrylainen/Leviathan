@@ -1,13 +1,14 @@
 #pragma once
 // ------------------------------------ //
-#include "Define.h"
-// ------------------------------------ //
+#include "Include.h"
 #include <atomic>
 #include <limits.h>
+#include "../Logger.h"
+#include "../Common/ThreadSafe.h"
 
 namespace Leviathan{
 
-	class IDFactory : ThreadSafe{
+	class IDFactory : public ThreadSafe{
 	public:
 		DLLEXPORT IDFactory();
 		DLLEXPORT ~IDFactory();
@@ -23,30 +24,9 @@ namespace Leviathan{
 			return Instance->ProduceSystemID();
 		}
 
-		DLLEXPORT int ProduceID(){
-
-            const auto result = GlobalID.fetch_add(1, std::memory_order_relaxed);
-            
-            if(result == INT_MAX){
-                
-                Logger::Get()->Error("IDFactory ID overflow");
-            }
-
-            return result;
-        }
+		DLLEXPORT int ProduceID();
         
-		DLLEXPORT int ProduceSystemID(){
-
-            const auto result = SystemID.fetch_add(1, std::memory_order_relaxed);
-            
-            if(result == INT_MAX){
-                
-                Logger::Get()->Error("IDFactory system ID overflow");
-            }
-
-            return result;
-        }
-
+		DLLEXPORT int ProduceSystemID();
 
 		DLLEXPORT static IDFactory* Get();
 

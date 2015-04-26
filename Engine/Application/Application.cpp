@@ -31,7 +31,7 @@ DLLEXPORT LeviathanApplication* Leviathan::LeviathanApplication::Get(){
 LeviathanApplication* LeviathanApplication::Curapp = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	// store configuration //
 	ApplicationConfiguration = configuration;
 
@@ -44,7 +44,7 @@ DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration
 
 DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		// set as quitting //
 		Quit = true;
 
@@ -57,7 +57,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 	_Engine->Release();
 
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		// Delete the already released engine //
 		delete _Engine;
 		_Engine = NULL;
@@ -65,7 +65,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	ShouldQuit = true;
 
 	// Tell Engine to expect a Release soon //
@@ -73,7 +73,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	ShouldQuit = true;
 	Quit = true;
 
@@ -141,13 +141,13 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 
 		// We could potentially wait here //
 		try{
-			std::this_thread::sleep(std::chrono::posix_time::milliseconds(1));
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		} catch(...){
 			FailCount++;
 		}
 	}
     
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	// Report problems //
 	if(FailCount)
         std::cout << "Application main loop sleep fails: " << FailCount << std::endl;

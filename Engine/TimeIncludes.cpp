@@ -1,8 +1,8 @@
 // ------------------------------------ //
-#include "TimeIncluides.h"
+#include "TimeIncludes.h"
 using namespace Leviathan;
 // ------------------------------------ //
-__int64 Time::GetTimeMs64(){
+int64_t Time::GetTimeMs64(){
 #ifdef _WIN32
     /* Windows */
 	FILETIME ft;
@@ -14,7 +14,7 @@ __int64 Time::GetTimeMs64(){
 	li.LowPart = ft.dwLowDateTime;
 	li.HighPart = ft.dwHighDateTime;
 
-	__int64 ret = li.QuadPart;
+	int64_t ret = li.QuadPart;
 	ret -= 116444736000000000LL; /* Convert from file time to UNIX epoch time. */
 	ret /= 10000; /* From 100 nano seconds (10^-7) to 1 millisecond (10^-3) intervals */
 
@@ -25,7 +25,7 @@ __int64 Time::GetTimeMs64(){
 
 	gettimeofday(&tv, NULL);
 
-	__int64 ret = tv.tv_usec;
+	int64_t ret = tv.tv_usec;
 	/* Convert from micro seconds (10^-6) to milliseconds (10^-3) */
 	ret /= 1000;
 
@@ -38,7 +38,7 @@ __int64 Time::GetTimeMs64(){
 #endif
 }
 
-__int64 Time::GetTimeMicro64(){
+int64_t Time::GetTimeMicro64(){
 #ifdef _WIN32
     /* Windows */
 	FILETIME ft;
@@ -50,7 +50,7 @@ __int64 Time::GetTimeMicro64(){
 	li.LowPart = ft.dwLowDateTime;
 	li.HighPart = ft.dwHighDateTime;
 
-	__int64 ret = li.QuadPart;
+	int64_t ret = li.QuadPart;
 	ret -= 116444736000000000LL; /* Convert from file time to UNIX epoch time. */
 	ret /= 10; /* From 100 nano seconds (10^-7) to 1 microsecond (10^-6) intervals */
 
@@ -61,7 +61,7 @@ __int64 Time::GetTimeMicro64(){
 
 	gettimeofday(&tv, NULL);
 
-	__int64 ret = tv.tv_usec;
+	int64_t ret = tv.tv_usec;
 
 	/* Adds the seconds (10^0) after converting them to microseconds (10^-6) */
 	ret += (tv.tv_sec * 1000000);
@@ -73,22 +73,8 @@ __int64 Time::GetTimeMicro64(){
 }
 // ------------------------------------ //
 DLLEXPORT WantedClockType::time_point Time::GetThreadSafeSteadyTimePoint(){
-	// The Boost function may assert so we need to pass error object to it //
-	boost::system::error_code timerror;
 
-	auto result = boost::chrono::high_resolution_clock::now(timerror);
-
-	// Check error code //
-	if(timerror){
-        wstring error = Convert::StringToWstring(timerror.message());
-		// Probably caused an error //
-		Logger::Get()->Warning(L"Misc: GetThreadSafeSteadyTimePoint: failed to get system time from Boost, error:"
-            +error+L", recursing");
-		// Let's fix this by recursing and causing a stack overflow
-		return GetThreadSafeSteadyTimePoint();
-	}
-
-	return result;
+	return WantedClockType::now();
 }
 // ------------------------------------ //
 

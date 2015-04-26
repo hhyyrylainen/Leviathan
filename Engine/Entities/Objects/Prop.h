@@ -1,12 +1,7 @@
 #pragma once
-#ifndef LEVIATHAN_ENTITY_PROP
-#define LEVIATHAN_ENTITY_PROP
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Entities/Bases/BaseObject.h"
 #include "Entities/Bases/BaseRenderable.h"
 #include "Entities/Bases/BasePositionable.h"
@@ -32,7 +27,7 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT Prop(bool hidden, GameWorld* world);
             DLLEXPORT virtual ~Prop();
             
-            DLLEXPORT bool Init(const wstring &modelfile);
+            DLLEXPORT bool Init(const std::string &modelfile);
             DLLEXPORT virtual void ReleaseData();
 
             static void PropPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix,
@@ -41,13 +36,13 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
             //! \copydoc BaseSendableEntity::CaptureState
-            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
+            DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
 
             DLLEXPORT int OnEvent(Event** pEvent) override;
             DLLEXPORT int OnGenericEvent(GenericEvent** pevent) override;
 
             //! \copydoc BaseSendableEntity::CreateStateFromPacket
-            DLLEXPORT virtual shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
+            DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,
                 sf::Packet &packet) const override;
 
             REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(Prop);
@@ -70,16 +65,16 @@ namespace Leviathan{ namespace Entity{
             
             
             // for setting new values to graphical object and physical object //
-            virtual void _UpdatePhysicsObjectLocation(ObjectLock &guard) override;
+            virtual void _UpdatePhysicsObjectLocation(Lock &guard) override;
 
             BaseConstraintable* BasePhysicsGetConstraintable() override;
             // ------------------------------------ //
 
-            wstring ModelFile;
+            std::string ModelFile;
 
             bool ListeningForEvents;
         };
 
 }}
 
-#endif
+

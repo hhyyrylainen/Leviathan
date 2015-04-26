@@ -11,6 +11,11 @@
 #include "OgreCamera.h"
 #include "Rendering/GraphicalInputEntity.h"
 #include "CEGUI/InputAggregator.h"
+#include "Handlers/IDFactory.h"
+#include "Utility/Convert.h"
+#include "Input/Key.h"
+#include "GUI/GuiManager.h"
+#include "Input/InputController.h"
 using namespace std;
 // ------------------------------------ //
 
@@ -98,7 +103,7 @@ namespace Leviathan{
             // show cursor //
             if(!CursorState){
                 CursorState = true;
-                Logger::Get()->Info(L"Showing cursor");
+                Logger::Get()->Info("Showing cursor");
 #ifdef _WIN32
                 ShowCursor(TRUE);
 #else
@@ -115,7 +120,7 @@ namespace Leviathan{
             // hide cursor //
             if(CursorState){
                 CursorState = false;
-                Logger::Get()->Info(L"Hiding cursor");
+                Logger::Get()->Info("Hiding cursor");
 #ifdef _WIN32
                 ShowCursor(FALSE);
 #else
@@ -241,7 +246,8 @@ namespace Leviathan{
         OWindow->destroy();
 
         // Report that the window is now closed //
-        Logger::Get()->Info(L"Window: closing window("+Convert::ToWstring(OwningWindow->GetWindowNumber())+L")");
+        Logger::Get()->Info("Window: closing window("+
+            Convert::ToString(OwningWindow->GetWindowNumber())+")");
     }
 
     DLLEXPORT void Leviathan::Window::ResizeWindow(const int &width, const int &height){
@@ -407,7 +413,7 @@ namespace Leviathan{
         // quit if window closed //
         if(OWindow->isClosed() || !WindowKeyboard || !WindowMouse){
 
-            Logger::Get()->Warning(L"Window: GatherInput: skipping due to closed input window");
+            Logger::Get()->Warning("Window: GatherInput: skipping due to closed input window");
             return;
         }
 
@@ -708,7 +714,7 @@ namespace Leviathan{
         VerifyRenderWindowHandle();
         Focused = m_hwnd == GetForegroundWindow() ? true: false;
 
-        // force cursor visible check (if outside client area or mouse is unfocused on the window) //
+        // force cursor visible check (if outside client area or mouse is unfocused on the window)
         if(IsMouseOutsideWindowClientArea() || !Focused){
 
             ForceMouseVisible = true;
@@ -720,7 +726,7 @@ namespace Leviathan{
         SetHideCursor(ApplicationWantCursorState);
     }
 // ------------------------------------ //
-    DLLEXPORT Int4 Leviathan::Window::GetScreenPixelRect() const THROWS{
+    DLLEXPORT Int4 Leviathan::Window::GetScreenPixelRect() const{
 
         Int4 result(0);
         unsigned int unused;
@@ -735,7 +741,7 @@ namespace Leviathan{
     }
 
 
-    DLLEXPORT Int2 Leviathan::Window::TranslateClientPointToScreenPoint(const Int2 &point) const THROWS{
+    DLLEXPORT Int2 Leviathan::Window::TranslateClientPointToScreenPoint(const Int2 &point) const{
 #ifdef _WIN32
 
         POINT pt = {point.X, point.Y};
@@ -746,8 +752,7 @@ namespace Leviathan{
         }
 
         // Failed //
-        throw ExceptionNotFound(L"could not translate point to screen space", GetLastError(), __WFUNCTION__,
-            L"invalid handle", L"m_hwnd");
+        throw NotFound("could not translate point to screen space, invalid handle");
 #else
         return point;
 #endif // _WIN32
@@ -756,12 +761,12 @@ namespace Leviathan{
 
 
 // ------------------ KeyCode conversion map ------------------ //
-#define SIMPLEPAIR(x, y)	L##x, OIS::y
-#define SIMPLEONETOONE(x)	WSTRINGIFY(x), OIS::KC_##x
+#define SIMPLEPAIR(x, y)	#x, OIS::y
+#define SIMPLEONETOONE(x)	#x, OIS::KC_##x
 
 
-    boost::bimap<wstring, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = boost::assign::list_of<
-        boost::bimap<wstring, OIS::KeyCode>::relation>
+    boost::bimap<std::string, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert = boost::assign::list_of<
+        boost::bimap<string, OIS::KeyCode>::relation>
         (SIMPLEONETOONE(A))
         (SIMPLEONETOONE(B))
         (SIMPLEONETOONE(C))
@@ -829,15 +834,15 @@ namespace Leviathan{
         (SIMPLEONETOONE(NUMPAD9))
 
         // some more "special" keys //
-        (L"LEFTARROW", OIS::KC_LEFT)
-        (L"RIGHTARROW", OIS::KC_RIGHT)
-        (L"UPARROW", OIS::KC_UP)
-        (L"DOWNARROW", OIS::KC_DOWN)
-        (L"ESC", OIS::KC_ESCAPE)
+        ("LEFTARROW", OIS::KC_LEFT)
+        ("RIGHTARROW", OIS::KC_RIGHT)
+        ("UPARROW", OIS::KC_UP)
+        ("DOWNARROW", OIS::KC_DOWN)
+        ("ESC", OIS::KC_ESCAPE)
         ;
 
 
-    DLLEXPORT OIS::KeyCode Leviathan::Window::ConvertWstringToOISKeyCode(const wstring &str){
+    DLLEXPORT OIS::KeyCode Leviathan::Window::ConvertStringToOISKeyCode(const string &str){
 
         auto iter = CharacterToOISConvert.left.find(str);
 
@@ -849,7 +854,7 @@ namespace Leviathan{
         return iter->second;
     }
 
-    DLLEXPORT wstring Leviathan::Window::ConvertOISKeyCodeToWstring(const OIS::KeyCode &code){
+    DLLEXPORT string Leviathan::Window::ConvertOISKeyCodeToString(const OIS::KeyCode &code){
 	
         auto iter = CharacterToOISConvert.right.find(code);
 

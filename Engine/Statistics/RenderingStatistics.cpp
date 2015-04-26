@@ -2,7 +2,7 @@
 #include "RenderingStatistics.h"
 
 #include "../Common/DataStoring/DataStore.h"
-#include "Common/Misc.h"
+#include "../TimeIncludes.h"
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::RenderingStatistics::RenderingStatistics() : LastMinuteFPS(80), LastMinuteRenderTimes(320){
@@ -41,13 +41,13 @@ Leviathan::RenderingStatistics::~RenderingStatistics(){
 }
 // ------------------------------------ //
 void Leviathan::RenderingStatistics::RenderingStart(){
-	RenderingStartTime = Misc::GetTimeMicro64();
+	RenderingStartTime = Time::GetTimeMicro64();
 
 	Frames++;
 }
 
 void Leviathan::RenderingStatistics::RenderingEnd(){
-	RenderingEndTime = Misc::GetTimeMicro64();
+	RenderingEndTime = Time::GetTimeMicro64();
 
 	RenderMCRSeconds = (int)(RenderingEndTime-RenderingStartTime);
 
@@ -153,7 +153,7 @@ bool Leviathan::RenderingStatistics::CanRenderNow(int maxfps, int& TimeSinceLast
 
 
 	// calculate can a frame be rendered now without going over max fps //
-	__int64 CurrentTime = Misc::GetTimeMicro64();
+	auto CurrentTime = Time::GetTimeMicro64();
 
 	// check first frame //
 	if(IsFirstFrame){

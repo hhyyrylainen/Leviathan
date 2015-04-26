@@ -1,12 +1,7 @@
 #pragma once
-#ifndef LEVIATHAN_COMMONSTATEOBJECTS
-#define LEVIATHAN_COMMONSTATEOBJECTS
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Bases/BaseSendableEntity.h"
 
 
@@ -77,16 +72,18 @@ namespace Leviathan{
         //! BasePhysicsObject
         //! \param tick The world tick to place in the resulting state
         template<class CType>
-        DLLEXPORT static unique_ptr<PositionablePhysicalDeltaState> CaptureState(CType &object,
-            int tick)
+        DLLEXPORT static std::unique_ptr<PositionablePhysicalDeltaState> CaptureState(
+            CType &object, int tick)
         {
 
-            return unique_ptr<PositionablePhysicalDeltaState>(new PositionablePhysicalDeltaState(
-                    tick, object.GetPos(), object.GetOrientation(), object.GetBodyVelocity(), object.GetBodyTorque()));
+            return std::unique_ptr<PositionablePhysicalDeltaState>(
+                new PositionablePhysicalDeltaState(tick, object.GetPos(), object.GetOrientation(),
+                    object.GetBodyVelocity(), object.GetBodyTorque()));
         }
 
         //! \note The olderstate has to be of type PositionablePhysicalDeltaState
-        DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) override;
+        DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate,
+            sf::Packet &packet) override;
 
         DLLEXPORT bool FillMissingData(ObjectDeltaStateData &otherstate) override;
 
@@ -113,19 +110,20 @@ namespace Leviathan{
         //! \brief Templated creation function for all classes that inherit BasePotitionable
         //! \param tick The world tick to place in the resulting state
         template<class CType>
-        DLLEXPORT static unique_ptr<PositionableRotationableDeltaState> CaptureState(CType &object,
-            int tick)
+        DLLEXPORT static std::unique_ptr<PositionableRotationableDeltaState> CaptureState(
+            CType &object, int tick)
         {
 
-            return unique_ptr<PositionableRotationableDeltaState>(new PositionableRotationableDeltaState(
-                    tick, object.GetPos(), object.GetOrientation()));
+            return std::unique_ptr<PositionableRotationableDeltaState>(
+                new PositionableRotationableDeltaState(tick, object.GetPos(),
+                    object.GetOrientation()));
         }
 
         //! \note The olderstate has to be of type PositionableRotationableDeltaState
-        DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) override;
+        DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate,
+            sf::Packet &packet) override;
         
         DLLEXPORT bool FillMissingData(ObjectDeltaStateData &otherstate) override;
-        
 
         Float3 Position;
         Float4 Rotation;
@@ -135,4 +133,4 @@ namespace Leviathan{
     };
 
 }
-#endif
+

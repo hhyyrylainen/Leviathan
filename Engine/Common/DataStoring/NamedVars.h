@@ -16,6 +16,7 @@ namespace Leviathan{
 
 	//! \brief hosts one or more VariableBlocks keeping only one name for all of them
     //! \todo Make this reference counted
+    //! \todo Make all methods throw exceptions on invalid operations
 	class NamedVariableList{
 		friend NamedVars;
 	public:
@@ -137,6 +138,7 @@ namespace Leviathan{
 
 
 	// holds a vector of NamedVariableLists and provides searching functions //
+    //! \todo Make all methods throw exceptions on invalid operations
 	class NamedVars : public ReferenceCounted, public ThreadSafe{
 	public:
 		DLLEXPORT NamedVars();
@@ -257,12 +259,12 @@ namespace Leviathan{
 
 		// ------------------------------------ //
 
-		DLLEXPORT inline int Find(const std::string &name) const{
+		DLLEXPORT inline size_t Find(const std::string &name) const{
 			GUARD_LOCK();
 			return Find(name, guard);
 		}
 
-		DLLEXPORT int Find(const std::string &name, Lock &guard) const;
+		DLLEXPORT size_t Find(const std::string &name, Lock &guard) const;
 		// ------------------------------------ //
 		template<class T>
 		DLLEXPORT bool ShouldAddValueIfNotFoundOrWrongType(const std::string &name){

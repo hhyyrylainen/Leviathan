@@ -1,12 +1,8 @@
-#ifndef LEVIATHAN_SOUNDEMITTER
-#define LEVIATHAN_SOUNDEMITTER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "Entities/Bases/BaseObject.h"
+ #include "Entities/Bases/BaseObject.h"
 #include "Entities/Bases/BasePositionable.h"
 #include "Sound/SoundPlayingSlot.h"
 
@@ -19,7 +15,7 @@ namespace Leviathan{ namespace Entity{
 		DLLEXPORT ~SoundEmitter();
 
 		// NOTE: important to set usestreaming for long files to not freeze the program //
-		DLLEXPORT void SetFileToPlay(const wstring &file, bool usestreaming = false);
+		DLLEXPORT void SetFileToPlay(const std::string &file, bool usestreaming = false);
 
 		// \todo implement stream playing //
 
@@ -34,11 +30,11 @@ namespace Leviathan{ namespace Entity{
 		virtual void PosUpdated();
 
 		// ------------------------------------ //
-		shared_ptr<SoundPlayingSlot> InternalSoundPlayer;
+        std::shared_ptr<SoundPlayingSlot> InternalSoundPlayer;
 
 
 
 	};
 
 }}
-#endif
+

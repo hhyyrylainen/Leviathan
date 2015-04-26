@@ -34,6 +34,8 @@
 #include <chrono>
 #include <future>
 #include <thread>
+#include "GUI/GuiManager.h"
+#include "Iterators/StringIterator.h"
 
 #ifdef LEVIATHAN_USES_VLD
 #include <vld.h>
@@ -300,7 +302,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
             }
 
             // Create the default serializer //
-            unique_ptr<BaseEntitySerializer> tmpptr(new SendableEntitySerializer());
+            std::unique_ptr<BaseEntitySerializer> tmpptr(new SendableEntitySerializer());
             if(!tmpptr){
 
                 returnvalue.set_value(false);
@@ -1027,8 +1029,8 @@ DLLEXPORT void Leviathan::Engine::ReportClosedWindow(GraphicalInputEntity* windo
     Logger::Get()->Error("Engine: couldn't find closing GraphicalInputEntity");
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEntity* owningwindow,
-    shared_ptr<ViewerCameraPos> worldscamera)
+DLLEXPORT std::shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEntity* owningwindow,
+    std::shared_ptr<ViewerCameraPos> worldscamera)
 {
     
 	auto tmp = make_shared<GameWorld>();

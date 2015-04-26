@@ -3,9 +3,10 @@
 
 #include "Define.h"
 #include "Common/DataStoring/DataBlock.h"
-#include "Common/StringOperations.h"
+#include "../Common/StringOperations.h"
 #include "utf8/checked.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 double Convert::DegreesToRadians(float degrees){
 	return (degrees*(PI/180.f));
@@ -58,81 +59,57 @@ wstring Convert::CharToWstring(const char &i){
 	return replace;
 }
 int Convert::WstringFromBoolToInt(const wstring &i){
-	if((i.compare(L"true") == 0) || (i.compare(L"True") == 0) || (i.compare(L"TRUE") == 0) || (i.compare(L"1") == 0)){
+    if(StringOperations::CompareInsensitive<wstring>(i, L"true") || i == L"1"){
 		return true;	
 	} else {
 		return false;
 	}
 }
 int Convert::StringFromBoolToInt(const string &i){
-	if((i.compare("true") == 0) || (i.compare("True") == 0) || (i.compare("TRUE") == 0) || (i.compare("1") == 0)){
+    if(StringOperations::CompareInsensitive<string>(i, "true") || i == "1"){
 		return true;	
 	} else {
 		return false;
 	}
 }
 
+DLLEXPORT bool Convert::IsStringBool(const string &val, bool* receiver){
 
-DLLEXPORT bool Leviathan::Convert::IsWstringBool(const wstring &val, bool* valreceiver /*= NULL*/){
-	wstring lowercased;
-	Convert::ToLower(val, lowercased);
+    if(StringOperations::CompareInsensitive<string>(val, "true") || val == "1"){
 
-	if((lowercased.compare(L"true") == 0) || (lowercased.compare(L"1") == 0)){
+        *receiver = true;
+        return true;
+    }
 
-		// set result if somebody wants it //
-		if(valreceiver != NULL)
-			*valreceiver = true;
-		// was a boolean value //
-		return true;
-	} else if ((lowercased.compare(L"false") == 0) || (lowercased.compare(L"0") == 0)){
+    if(StringOperations::CompareInsensitive<string>(val, "false") || val == "0"){
 
-		// set result if somebody wants it //
-		if(valreceiver != NULL)
-			*valreceiver = false;
-		// was a boolean value //
-		return true;
-	}
-	// didn't match true/false //
+        *receiver = false;
+        return true;
+    }
+
 	return false;
 }
 
-DLLEXPORT void Leviathan::Convert::ToLower(const wstring &source, wstring &target){
-	// make sizes match //
-	target.resize(source.size());
+DLLEXPORT int Convert::StringTypeNameCheck(const std::string &name){
 
-	for(size_t i = 0; i < source.size(); i++){
-		if(source[i] >= L'A' && source[i] <= L'Z'){
+    if(name == "int")
+        return DATABLOCK_TYPE_INT;
+    if(name == "float")
+        return DATABLOCK_TYPE_FLOAT;
+    if(name == "bool")
+        return DATABLOCK_TYPE_BOOL;
+    if(name == "wstring")
+        return DATABLOCK_TYPE_WSTRING;
+    if(name == "string")
+        return DATABLOCK_TYPE_STRING;
+    if(name == "char")
+        return DATABLOCK_TYPE_CHAR;
+    if(name == "double")
+        return DATABLOCK_TYPE_DOUBLE;
+    if(name == "void" || name == "void*")
+        return DATABLOCK_TYPE_VOIDPTR;
 
-			target[i] = 32+(int)source[i];
-		} else {
-			// just copy value //
-			target[i] = source[i];
-		}
-	}
-}
-
-DLLEXPORT void Leviathan::Convert::ToCapital(const wstring &source, wstring &target){
-	// make sizes match //
-	target.resize(source.size());
-
-	for(size_t i = 0; i < source.size(); i++){
-		if(source[i] >= L'a' && source[i] <= L'z'){
-
-			target[i] = ((int)source[i])-32;
-		} else {
-			// just copy value //
-			target[i] = source[i];
-		}
-	}
-}
-
-wchar_t Convert::ToLower(const wchar_t &chara){
-	int val = (int)chara;
-
-	if((val <= 90) && (val >= 65)){
-		return (wchar_t)(val+32);
-	}
-	return chara;
+    return -1;
 }
 // ------------------------------------ //
 DLLEXPORT std::wstring Leviathan::Convert::Utf8ToUtf16(const string &utf8str){
@@ -147,12 +124,14 @@ DLLEXPORT std::wstring Leviathan::Convert::Utf8ToUtf16(const string &utf8str){
 
 	} catch(utf8::invalid_code_point &e1){
 
-		Logger::Get()->Error(L"Convert: invalid utf code point: "+Convert::ToWstring(e1.code_point()));
+		Logger::Get()->Error("Convert: invalid utf code point: "+
+            Convert::ToString(e1.code_point()));
+        
 		return wstring();
 
 	} catch(utf8::not_enough_room&){
 
-		Logger::Get()->Error(L"Convert: not enough memory for string conversion");
+		Logger::Get()->Error("Convert: not enough memory for string conversion");
 		return wstring();
 	}
 
@@ -171,95 +150,18 @@ DLLEXPORT std::string Leviathan::Convert::Utf16ToUtf8(const wstring &utf16str){
 
 	} catch(utf8::invalid_code_point &e1){
 
-		Logger::Get()->Error(L"Convert: invalid utf code point: "+Convert::ToWstring(e1.code_point()));
+		Logger::Get()->Error("Convert: invalid utf code point: "+
+            Convert::ToString(e1.code_point()));
 		return string();
 
 	} catch(utf8::not_enough_room&){
 
-		Logger::Get()->Error(L"Convert: not enough memory for string conversion");
+		Logger::Get()->Error("Convert: not enough memory for string conversion");
 		return string();
 	}
 
 	// The result is now done //
 	return results;
-}
-// ----------------- type checks ------------------- //
-int Convert::WstringTypeCheck(const wstring& data, int typecheckfor){
-	switch(typecheckfor){
-	case 0: // int
-		{
-			wstring valid = L"1234567890-+";
-			for(unsigned int i = 0; i < data.length(); i++){
-				if(!valid.find(data[i]))
-					return 0;
-			}
-
-			return 1;
-		}
-		break;
-	case 1: // float/double
-		{
-			wstring valid = L"1234567890-+.,";
-			for(unsigned int i = 0; i < data.length(); i++){
-				if(!valid.find(data[i]))
-					return 0;
-			}
-
-			return 1;
-		}
-		break;
-	case 3: // boolean
-		{
-			if((data.compare(L"true") != 0) && (data.compare(L"false") != 0) && (data.compare(L"True") != 0) && (data.compare(L"False") != 0) && (data.compare(L"TRUE") != 0) && (data.compare(L"FALSE") != 0)){
-				// didn't match any //
-				return 0;
-
-			}
-			return 1;
-
-		}
-		break;
-	case 4: // wstring checking
-		{
-			unsigned int foundnumbparts = 0;
-			wstring valid = L"1234567890-+.,";
-			for(unsigned int i = 0; i < data.length(); i++){
-				if(valid.find(data[i]))
-					foundnumbparts++;
-			}
-			if(foundnumbparts == data.length())
-				return 0;
-			return 1;
-		}
-		break;
-
-
-	}
-
-	Logger::Get()->Error(L"WstringTypeCheck: invalid tocheck value", typecheckfor);
-	return 007;
-}
-
-int Convert::WstringTypeNameCheck(const wstring &data){
-	if(StringOperations::CompareInsensitive(data, wstring(L"int"))){
-		return DATABLOCK_TYPE_INT;
-	}
-	if(StringOperations::CompareInsensitive(data, wstring(L"float"))){
-		return DATABLOCK_TYPE_FLOAT;
-	}
-	if(StringOperations::CompareInsensitive(data, wstring(L"bool"))){
-		return DATABLOCK_TYPE_BOOL;
-	}
-	if(StringOperations::CompareInsensitive(data, wstring(L"wstring"))){
-		return DATABLOCK_TYPE_WSTRING;
-	}
-	if(StringOperations::CompareInsensitive(data, wstring(L"string"))){
-		return DATABLOCK_TYPE_STRING;
-	}
-	if(StringOperations::CompareInsensitive(data, wstring(L"void*"))){
-		return DATABLOCK_TYPE_VOIDPTR;
-	}
-	return -1;
 }
 // ------------------------------------ //
 namespace Leviathan{

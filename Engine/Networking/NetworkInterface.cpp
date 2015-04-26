@@ -33,7 +33,7 @@ DLLEXPORT void Leviathan::NetworkInterface::HandleRequestPacket(shared_ptr<Netwo
 }
 
 DLLEXPORT bool Leviathan::NetworkInterface::PreHandleResponse(shared_ptr<NetworkResponse> response,
-    shared_ptr<NetworkRequest> originalrequest, ConnectionInfo* connection)
+    std::shared_ptr<NetworkRequest> originalrequest, ConnectionInfo* connection)
 {
 	return true;
 }
@@ -52,7 +52,7 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 		{
 			// Let's send our identification string //
 			shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(),
-                    PACKAGE_TIMEOUT_STYLE_TIMEDMS, 500));
+                    PACKET_TIMEOUT_STYLE_TIMEDMS, 500));
 
 			// Fetch the data from the configuration object //
 			wstring userreadable, gamename, gameversion;
@@ -69,8 +69,8 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
         case NETWORKREQUESTTYPE_ECHO:
         {
             // Send an empty response back //
-            shared_ptr<NetworkResponse> response(new NetworkResponse(request->GetExpectedResponseID(),
-                    PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));
+            std::shared_ptr<NetworkResponse> response(new NetworkResponse(request->GetExpectedResponseID(),
+                    PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
 
             response->GenerateEmptyResponse();
             

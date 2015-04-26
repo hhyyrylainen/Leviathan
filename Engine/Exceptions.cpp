@@ -2,6 +2,7 @@
 #include "Exceptions.h"
 #include "Logger.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Exception::Exception(const char* description) noexcept : Message(description){
 

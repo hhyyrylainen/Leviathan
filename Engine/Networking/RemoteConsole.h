@@ -97,7 +97,7 @@ namespace Leviathan{
 		//!
 		//! \return Returns a valid pointer to a RemoteConsoleSession or NULL
 		//! \note The returned pointer will be guaranteed to be only valid while you have guard locked
-		//! \param guard ObjectLock with this RemoteConsole instance
+		//! \param guard Lock with this RemoteConsole instance
 		DLLEXPORT RemoteConsoleSession* GetRemoteConsoleSessionForConnection(ConnectionInfo* connection,
             Lock &guard);
 

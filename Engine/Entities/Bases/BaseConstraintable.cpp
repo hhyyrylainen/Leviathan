@@ -1,22 +1,22 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_BASECONSTRAINTABLE
 #include "BaseConstraintable.h"
-#endif
+
 using namespace Leviathan;
 using namespace Entity;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseConstraintable::BaseConstraintable() : BaseObject(-1, NULL){
 
 }
 
 DLLEXPORT Leviathan::BaseConstraintable::~BaseConstraintable(){
-    UNIQUE_LOCK_THIS_OBJECT();
+    GUARD_LOCK_NAME(lockit);
     
     AggressiveConstraintUnlink(lockit);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::BaseConstraintable::UnlinkConstraint(shared_ptr<BaseConstraint> constraintptr,
-    UObjectLock &lockit)
+DLLEXPORT bool Leviathan::BaseConstraintable::UnlinkConstraint(
+    shared_ptr<BaseConstraint> constraintptr, Lock &lockit)
 {
     VerifyLock(lockit);
     
@@ -39,7 +39,7 @@ DLLEXPORT bool Leviathan::BaseConstraintable::UnlinkConstraint(shared_ptr<BaseCo
 	return false;
 }
 
-DLLEXPORT void Leviathan::BaseConstraintable::AggressiveConstraintUnlink(UObjectLock &lockit){
+DLLEXPORT void Leviathan::BaseConstraintable::AggressiveConstraintUnlink(Lock &lockit){
 
     VerifyLock(lockit);
     
@@ -56,9 +56,9 @@ DLLEXPORT void Leviathan::BaseConstraintable::AggressiveConstraintUnlink(UObject
     }
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<BaseConstraint> Leviathan::BaseConstraintable::GetConstraintPtr(BaseConstraint* unsafeptr){
+DLLEXPORT std::shared_ptr<BaseConstraint> Leviathan::BaseConstraintable::GetConstraintPtr(BaseConstraint* unsafeptr){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     // Returns this object's copy of the ptr if it is found //
 	for(size_t i = 0; i < PartInConstraints.size(); i++){
@@ -72,7 +72,7 @@ DLLEXPORT shared_ptr<BaseConstraint> Leviathan::BaseConstraintable::GetConstrain
 	return NULL;
 }
 // ------------------------------------ //
-void Leviathan::BaseConstraintable::ConstraintDestroyedRemove(BaseConstraint* ptr, UObjectLock &lockit){
+void Leviathan::BaseConstraintable::ConstraintDestroyedRemove(BaseConstraint* ptr, Lock &lockit){
 
     VerifyLock(lockit);
     
@@ -115,18 +115,20 @@ void Leviathan::BaseConstraintable::_SendCreatedConstraint(BaseConstraintable* o
 DLLEXPORT void Leviathan::BaseConstraintable::AddConstraintWhereThisIsChild(weak_ptr<BaseConstraint>
     constraintptr)
 {
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	PartInConstraints.push_back(new EntitysConstraintEntry(constraintptr, this));
 }
 
 DLLEXPORT void Leviathan::BaseConstraintable::AddConstraintWhereThisIsParent(shared_ptr<BaseConstraint>
     constraintptr)
 {
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	PartInConstraints.push_back(new EntitysConstraintEntry(constraintptr, this));
 }
 
-DLLEXPORT void Leviathan::BaseConstraintable::OnRemoveConstraint(BaseConstraint* tmpptr, UObjectLock &lockit){
+DLLEXPORT void Leviathan::BaseConstraintable::OnRemoveConstraint(BaseConstraint* tmpptr,
+    Lock &lockit)
+{
 
     VerifyLock(lockit);
     
@@ -150,13 +152,15 @@ DLLEXPORT void Leviathan::BaseConstraintable::OnRemoveConstraint(BaseConstraint*
 }
 // ------------------------------------ //
 DLLEXPORT size_t Leviathan::BaseConstraintable::GetConstraintCount() const{
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     return PartInConstraints.size();
 }
 
-DLLEXPORT shared_ptr<BaseConstraint> Leviathan::BaseConstraintable::GetConstraint(size_t index) const{
+DLLEXPORT std::shared_ptr<BaseConstraint> Leviathan::BaseConstraintable::GetConstraint(
+    size_t index) const
+{
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     if(PartInConstraints.size() <= index)
         return nullptr;
@@ -167,7 +171,7 @@ DLLEXPORT shared_ptr<BaseConstraint> Leviathan::BaseConstraintable::GetConstrain
 // ------------------------------------ //
 void Leviathan::BaseConstraintable::_OnDisowned(){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     auto end = PartInConstraints.end();
     for(auto iter = PartInConstraints.begin(); iter != end; ++iter){
 

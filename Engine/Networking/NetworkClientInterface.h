@@ -1,12 +1,9 @@
-#ifndef LEVIATHAN_NETWORKCLIENTINTERFACE
-#define LEVIATHAN_NETWORKCLIENTINTERFACE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/BaseNotifiable.h"
+#include "../TimeIncludes.h"
 
 #define DEFAULT_MAXCONNECT_TRIES		5
 
@@ -36,17 +33,17 @@ namespace Leviathan{
         //! (DisconnectFromServer should be called)
 		//! \param connectiontouse The connection object should be retrieved by calling
         //! NetworkHandler::GetOrCreatePointerToConnection
-		DLLEXPORT bool JoinServer(shared_ptr<ConnectionInfo> connectiontouse);
+		DLLEXPORT bool JoinServer(std::shared_ptr<ConnectionInfo> connectiontouse);
 
 		//! \brief Disconnects the client from the server or does nothing
 		//! \todo Add a check to not close the connection if it is used by RemoteConsole
-		DLLEXPORT FORCE_INLINE void DisconnectFromServer(const wstring &reason, bool connectiontimedout = false){
-			GUARD_LOCK_THIS_OBJECT();
+		DLLEXPORT FORCE_INLINE void DisconnectFromServer(const std::string &reason, bool connectiontimedout = false){
+			GUARD_LOCK();
 			DisconnectFromServer(guard, reason, connectiontimedout);
 		}
 
 		//! \brief Actual implementation of DisconnectFromServer
-		DLLEXPORT void DisconnectFromServer(ObjectLock &guard, const wstring &reason, bool connectiontimedout = false);
+		DLLEXPORT void DisconnectFromServer(Lock &guard, const std::string &reason, bool connectiontimedout = false);
 
 
 		//! \brief Called directly by SyncedVariables to update the status string
@@ -92,7 +89,7 @@ namespace Leviathan{
 		DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
 
 		//! \brief Returns the active server connection or NULL
-		DLLEXPORT virtual shared_ptr<ConnectionInfo> GetServerConnection();
+		DLLEXPORT virtual std::shared_ptr<ConnectionInfo> GetServerConnection();
 
 
 	protected:
@@ -114,12 +111,12 @@ namespace Leviathan{
 		DLLEXPORT void UpdateClientStatus();
 
 		// Callbacks for child classes to implement //
-		DLLEXPORT virtual void _OnDisconnectFromServer(const wstring &reasonstring, bool donebyus);
+		DLLEXPORT virtual void _OnDisconnectFromServer(const std::string &reasonstring, bool donebyus);
 		DLLEXPORT virtual void _OnStartConnectToServer();
-		DLLEXPORT virtual void _OnFailedToConnectToServer(const wstring &reason);
+		DLLEXPORT virtual void _OnFailedToConnectToServer(const std::string &reason);
 		DLLEXPORT virtual void _OnSuccessfullyConnectedToServer();
 		//! \brief Called when this class generates a new update message
-		DLLEXPORT virtual void _OnNewConnectionStatusMessage(const wstring &message);
+		DLLEXPORT virtual void _OnNewConnectionStatusMessage(const std::string &message);
 
 
 		//! \brief Callback used to know when our connection is closed
@@ -138,17 +135,17 @@ namespace Leviathan{
 
 	private:
 		
-		void _SendConnectRequest(ObjectLock &guard);
+		void _SendConnectRequest(Lock &guard);
 
 		//! \brief Handles succeeded requests, removes clutter from other places
-		void _ProcessCompletedRequest(shared_ptr<SentNetworkThing> tmpsendthing, ObjectLock &guard);
+		void _ProcessCompletedRequest(std::shared_ptr<SentNetworkThing> tmpsendthing, Lock &guard);
 
 		//! \brief Handles failed requests, removes clutter from other places
-		void _ProcessFailedRequest(shared_ptr<SentNetworkThing> tmpsendthing, ObjectLock &guard);
+		void _ProcessFailedRequest(std::shared_ptr<SentNetworkThing> tmpsendthing, Lock &guard);
 
 		//! \brief Internally called when server has accepted us
 		//! \todo Call variable syncing from here
-		void _ProperlyConnectedToServer(ObjectLock &guard);
+		void _ProperlyConnectedToServer(Lock &guard);
 
 		//! \brief Called when we receive a start heartbeat packet
 		void _OnStartHeartbeats();
@@ -164,9 +161,9 @@ namespace Leviathan{
 	protected:
 
 		//! This vector holds the made requests to allow using the response to do stuff
-		std::vector<shared_ptr<SentNetworkThing>> OurSentRequests;
+		std::vector<std::shared_ptr<SentNetworkThing>> OurSentRequests;
 
-		shared_ptr<ConnectionInfo> ServerConnection;
+        std::shared_ptr<ConnectionInfo> ServerConnection;
 
 		bool ConnectedToServer;
 
@@ -174,7 +171,7 @@ namespace Leviathan{
 		int MaxConnectTries;
 
 		//! This isn't always used, but when it is this will handle some packets
-		shared_ptr<NetworkedInputHandler> PotentialInputHandler;
+        std::shared_ptr<NetworkedInputHandler> PotentialInputHandler;
 
 
 		//! Marks whether heartbeats are in use
@@ -201,4 +198,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

@@ -95,7 +95,7 @@ namespace Leviathan{
 		DLLEXPORT void SetNetworkReceivedState();
 
 
-		DLLEXPORT static void LoadHeaderDataFromPacket(sf::Packet &packet, int &ownerid, int &inputid) THROWS;
+		DLLEXPORT static void LoadHeaderDataFromPacket(sf::Packet &packet, int &ownerid, int &inputid);
 
 
 		//! \brief Called when this is created locally, should set the initial data

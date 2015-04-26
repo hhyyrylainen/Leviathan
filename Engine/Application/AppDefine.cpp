@@ -7,8 +7,10 @@
 #include "ForwardDeclarations.h"
 #include "KeyConfiguration.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) : ConfigurationValues(new NamedVars()), 
+DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) :
+    ConfigurationValues(new NamedVars()), 
 #ifdef _WIN32
 	HInstance(NULL), 
 #else
@@ -50,17 +52,11 @@ DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const std::string &logfil
 
 	tmpptr->LogFile = logfile;
 
-	// Create logger first if it doesn't exist //
-	if(Logger::GetIfExists() != NULL){
-		// already exists //
-		tmpptr->Mainlog = Logger::Get();
-		tmpptr->DeleteLog = false;
-
-	} else {
-		tmpptr->Mainlog = new Logger(logfile+"Log.txt");
-		// We created a new one //
-		tmpptr->DeleteLog = true;
-	}
+    // Always create the logger //
+    tmpptr->Mainlog = new Logger(logfile+"Log.txt");
+    
+    // We created a new one //
+    tmpptr->DeleteLog = true;
 
 	// load variables from configuration file //
 	tmpptr->ConfigurationValues->LoadVarsFromFile(engineconfigfile);
@@ -103,10 +99,10 @@ DLLEXPORT void Leviathan::AppDef::StoreWindowDetails(const std::string &title,
 
 	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), "Width", width, 800,
         true, "Create window: ");
-	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), L"Height", height, 600,
-        true, L"Create window: ");
-	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), L"Windowed", window,
-        true, true, L"Create window: ");
+	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), "Height", height, 600,
+        true, "Create window: ");
+	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), "Windowed", window,
+        true, true, "Create window: ");
     
 #ifdef _WIN32
 	this->SetWindowDetails(WindowDataDetails(title, width, height, window, windowborder, icon, appvirtualptr));
@@ -121,7 +117,7 @@ DLLEXPORT AppDef& Leviathan::AppDef::SetApplicationIdentification(const std::str
 	UserReadableGame = userreadable;
 	Game = gamename;
 	GameVersion = gameversion;
-	LeviathanVersion = LEVIATHAN_VERSIONS;
+	LeviathanVersion = LEVIATHAN_VERSION_ANSIS;
 
 	return *this;
 }

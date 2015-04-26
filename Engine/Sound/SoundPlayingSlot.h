@@ -1,7 +1,8 @@
 #pragma once
 // ------------------------------------ //
-#include "Define.h"
-// ------------------------------------ //
+#include "../Common/Types.h"
+#include <memory>
+#include <vector>
 #include <SFML/Audio.hpp>
 
 namespace Leviathan{

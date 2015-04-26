@@ -12,9 +12,9 @@
 #include "SFML/Network/UdpSocket.hpp"
 #include "SFML/Network/IpAddress.hpp"
 #include "Common/ThreadSafe.h"
-#include <boost/thread/future.hpp>
 #include "NetworkHandler.h"
 #include "Common/BaseNotifier.h"
+#include <future>
 
 namespace Leviathan{
 
@@ -38,7 +38,10 @@ namespace Leviathan{
     
     
 	//! \brief Allows restricting connections to allow only certain packets
-	enum CONNECTION_RESTRICTION {CONNECTION_RESTRICTION_NONE, CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE};
+	enum CONNECTION_RESTRICTION {
+        CONNECTION_RESTRICTION_NONE,
+        CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE
+    };
 
     //! Represents a sent packet and holds all kinds of data for it
     //! \todo Make this properly thread safe
@@ -48,17 +51,21 @@ namespace Leviathan{
     public:
 
 		//! This is the signature for request packets
-		DLLEXPORT SentNetworkThing(int packetid, int expectedresponseid, shared_ptr<NetworkRequest> request,
-            shared_ptr<boost::promise<bool>> waitobject, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout,
+		DLLEXPORT SentNetworkThing(int packetid, int expectedresponseid,
+            std::shared_ptr<NetworkRequest> request,
+            std::shared_ptr<std::promise<bool>> waitobject, int maxtries,
+            PACKET_TIMEOUT_STYLE howtotimeout,
             int timeoutvalue, const sf::Packet &packetsdata, int attempnumber = 1);
+        
 		//! Empty destructor to link this in
 		DLLEXPORT ~SentNetworkThing();
 		// This is the signature for response packets //
-		DLLEXPORT SentNetworkThing(int packetid, shared_ptr<NetworkResponse> response, shared_ptr<boost::promise<bool>>
-            waitobject, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue,
-            const sf::Packet &packetsdata, int attempnumber = 1);
+		DLLEXPORT SentNetworkThing(int packetid, std::shared_ptr<NetworkResponse> response,
+            std::shared_ptr<std::promise<bool>> waitobject, int maxtries,
+            PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata,
+            int attempnumber = 1);
 
-		DLLEXPORT boost::unique_future<bool>& GetFutureForThis();
+		DLLEXPORT std::future<bool>& GetFutureForThis();
 
         //! \brief Sets the status of the wait object notifying all waiters that this has
         //! succeeded or failed
@@ -72,7 +79,7 @@ namespace Leviathan{
         DLLEXPORT void SetAsTimed();
 
         //! \brief Binds a callback function that is called either when the packet is successfully sent or it times out
-        DLLEXPORT void SetCallback(boost::function<void(bool, SentNetworkThing&)> func);
+        DLLEXPORT void SetCallback(std::function<void(bool, SentNetworkThing&)> func);
 
 		int PacketNumber;
 
@@ -82,11 +89,11 @@ namespace Leviathan{
 		PACKET_TIMEOUT_STYLE PacketTimeoutStyle;
 
         //! Callback function called when succeeded or failed
-        boost::function<void(bool, SentNetworkThing&)> Callback;
+        std::function<void(bool, SentNetworkThing&)> Callback;
         
 
 		int TimeOutMS;
-		__int64 RequestStartTime;
+		int64_t RequestStartTime;
 
         //! \brief The time when this packed got marked as received
         //!
@@ -94,14 +101,16 @@ namespace Leviathan{
         //! the round-trip time
         //! \note This will only be set if this value is set to 1 before the packet is sent
         //! \note This value is only valid if the packet wasn't lost (failed requests have this unset)
-		__int64 ConfirmReceiveTime;
+		int64_t ConfirmReceiveTime;
 		int ExpectedResponseID;
 
 
 		//! Marks this as received by the other
-		shared_ptr<boost::promise<bool>> WaitForMe;
+        std::shared_ptr<std::promise<bool>> WaitForMe;
+        
 		//! The stored future that is returned when requested
-		boost::unique_future<bool> FutureValue;
+		std::future<bool> FutureValue;
+        
 		//! Controls when the future will be fetched, it is safe to retrieve only once
 		bool FutureFetched;
 
@@ -111,10 +120,10 @@ namespace Leviathan{
 
 		// If set the following variables will be used //
 		bool IsArequest;
-		shared_ptr<NetworkResponse> GotResponse;
-		shared_ptr<NetworkRequest> OriginalRequest;
+        std::shared_ptr<NetworkResponse> GotResponse;
+        std::shared_ptr<NetworkRequest> OriginalRequest;
 		// Else (if not a request) no response is expected (other than a receive confirmation) //
-		shared_ptr<NetworkResponse> SentResponse;
+        std::shared_ptr<NetworkResponse> SentResponse;
 	};
 
 	static_assert(sizeof(char) == 1, "Char must be one byte in size");
@@ -126,7 +135,8 @@ namespace Leviathan{
 	public:
 
 		DLLEXPORT NetworkAckField(){};
-		DLLEXPORT NetworkAckField(sf::Int32 firstpacketid, char maxacks, ReceivedPacketField &copyfrom);
+		DLLEXPORT NetworkAckField(sf::Int32 firstpacketid, char maxacks,
+            ReceivedPacketField &copyfrom);
 
 		DLLEXPORT inline bool IsAckSet(size_t ackindex){
 			// We can use division to find out which vector element is wanted //
@@ -143,7 +153,7 @@ namespace Leviathan{
 
 		// Data //
 		sf::Int32 FirstPacketID;
-		vector<sf::Int8> Acks;
+        std::vector<sf::Int8> Acks;
 	};
 
 	struct SentAcks{
@@ -165,15 +175,15 @@ namespace Leviathan{
 
 	//! \brief Class that handles a single connection to another instance
 	//!
-	//! \note this class does not use reference counting so it it safe to use shared_ptr with this class
+	//! \note this class does not use reference counting so it it safe to use std::shared_ptr with this class
 	//! \todo Internal security tokens to all packets
 	//! \todo Remove sent ack groups after they have "probably failed"
 	class ConnectionInfo : public BaseNotifierAll{
 	public:
 		//! \brief Creates a new connection to hostname
 		//! \todo Add a option to game configuration for default port
-		DLLEXPORT ConnectionInfo(const wstring &hostname);
-		DLLEXPORT ConnectionInfo(const sf::IpAddress &targetaddress, USHORT port);
+		DLLEXPORT ConnectionInfo(const std::string &hostname);
+		DLLEXPORT ConnectionInfo(const sf::IpAddress &targetaddress, unsigned short port);
 		DLLEXPORT ~ConnectionInfo();
 
 		//! Creates the address object
@@ -185,38 +195,40 @@ namespace Leviathan{
 		DLLEXPORT void SetRestrictionMode(CONNECTION_RESTRICTION type);
 
         //! \brief Checks does the sender and port match our corresponding values
-		DLLEXPORT bool IsThisYours(sf::IpAddress &sender, USHORT &sentport);
+		DLLEXPORT bool IsThisYours(sf::IpAddress &sender, unsigned short &sentport);
 
         //! \brief Handles a packet
         //! \note No other locks should be held while calling this
-        DLLEXPORT void HandlePacket(sf::Packet &packet, sf::IpAddress &sender, USHORT &sentport);
+        DLLEXPORT void HandlePacket(sf::Packet &packet, sf::IpAddress &sender,
+            unsigned short &sentport);
         
 		DLLEXPORT bool IsTargetHostLocalhost();
 
 
 		DLLEXPORT void UpdateListening();
 
-		DLLEXPORT shared_ptr<SentNetworkThing> SendPacketToConnection(shared_ptr<NetworkRequest> request,
-            int maxretries);
-		DLLEXPORT shared_ptr<SentNetworkThing> SendPacketToConnection(shared_ptr<NetworkResponse> response,
-            int maxtries);
+		DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(
+            std::shared_ptr<NetworkRequest> request, int maxretries);
+        
+		DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(
+            std::shared_ptr<NetworkResponse> response, int maxtries);
 
 		// Data exchange functions //
-		DLLEXPORT shared_ptr<NetworkResponse> SendRequestAndBlockUntilDone(shared_ptr<NetworkRequest> request,
-            int maxtries = 2);
+		DLLEXPORT std::shared_ptr<NetworkResponse> SendRequestAndBlockUntilDone(
+            std::shared_ptr<NetworkRequest> request, int maxtries = 2);
 
 		DLLEXPORT void CheckKeepAliveSend();
-		DLLEXPORT void SendKeepAlivePacket(ObjectLock &guard);
+		DLLEXPORT void SendKeepAlivePacket(Lock &guard);
 		DLLEXPORT FORCE_INLINE void SendKeepAlivePacket(){
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			SendKeepAlivePacket(guard);
 		}
 
 		//! \brief Sends a packet that tells the other side to disconnect
 		//! \todo Add a message parameter for the reason
-		DLLEXPORT void SendCloseConnectionPacket(ObjectLock &guard);
+		DLLEXPORT void SendCloseConnectionPacket(Lock &guard);
 		DLLEXPORT FORCE_INLINE void SendCloseConnectionPacket(){
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			SendCloseConnectionPacket(guard);
 		}
 
@@ -224,7 +236,7 @@ namespace Leviathan{
 		//!
 		//! \return For example something like "0.0.0.127:2565"
 		//! \todo this could be cached
-		DLLEXPORT wstring GenerateFormatedAddressString() const;
+		DLLEXPORT std::string GenerateFormatedAddressString() const;
 
         //! \brief Calculates the ping (round-trip time) on this connection
         //! \note This will send packets asynchronously to the connection and can take up to an second to
@@ -236,23 +248,26 @@ namespace Leviathan{
         //! \param onfailed Is called if the function fails. First value will be the reason and
         //! second the failed packet count
         //! \todo Check whether the packets should be send in a cluster or not (as they are currently sent in one go)
-        DLLEXPORT void CalculateNetworkPing(int packets, int allowedfails, boost::function<void(int, int)> onsucceeded,
-            boost::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed);
+        DLLEXPORT void CalculateNetworkPing(int packets, int allowedfails,
+            std::function<void(int, int)> onsucceeded,
+            std::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed);
 
 		//! Don't call this
 		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
 	private:
 
-		//void _PopMadeRequest(shared_ptr<SentNetworkThing> objectptr, ObjectLock &guard);
-		void _ResendRequest(shared_ptr<SentNetworkThing> toresend, ObjectLock &guard);
+		//void _PopMadeRequest(shared_ptr<SentNetworkThing> objectptr, Lock &guard);
+		void _ResendRequest(std::shared_ptr<SentNetworkThing> toresend, Lock &guard);
 
 		// Marks the acks in packet received as successfully sent and erases them //
 		void _VerifyAckPacketsAsSuccesfullyReceivedFromHost(int packetreceived);
 
-		void _PreparePacketHeaderForPacket(int packetid, sf::Packet &tofill, bool isrequest, bool dontsendacks = false);
+		void _PreparePacketHeaderForPacket(int packetid, sf::Packet &tofill, bool isrequest,
+            bool dontsendacks = false);
 
-		shared_ptr<SentNetworkThing> _GetPossibleRequestForResponse(shared_ptr<NetworkResponse> response);
+        std::shared_ptr<SentNetworkThing> _GetPossibleRequestForResponse(
+            std::shared_ptr<NetworkResponse> response);
 
 		//! \brief Checks whether a packet with the number is received
 		//!
@@ -278,23 +293,22 @@ namespace Leviathan{
 		// How many times the same ack table is sent before new one is generated (usually 1 with good connections) //
 		int MaxAckReduntancy;
 
-		__int64 LastSentPacketTime;
-		__int64 LastReceivedPacketTime;
+		int64_t LastSentPacketTime;
+		int64_t LastReceivedPacketTime;
 
 		//! With this we can close connections that have never received anything //
 		bool HasReceived;
 
 		// Sent packets that haven't been confirmed as arrived //
-		std::list<shared_ptr<SentNetworkThing>> WaitingRequests;
+		std::list<std::shared_ptr<SentNetworkThing>> WaitingRequests;
 
-		std::vector<shared_ptr<SentAcks>> AcksNotConfirmedAsReceived;
-
+		std::vector<std::shared_ptr<SentAcks>> AcksNotConfirmedAsReceived;
 
 		//! IDs of packets used to drop same packets
 		std::deque<int> LastReceivedPacketIDs;
 
-		USHORT TargetPortNumber;
-		wstring HostName;
+		unsigned short TargetPortNumber;
+		std::string HostName;
 		sf::IpAddress TargetHost;
 		bool AddressGot;
 	};

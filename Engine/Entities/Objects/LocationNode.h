@@ -1,13 +1,10 @@
-#ifndef LEVIATHAN_LOCATIONNODEENTITY
-#define LEVIATHAN_LOCATIONNODEENTITY
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "../Bases/BasePositionable.h"
 #include "../Bases/BaseNotifiableEntity.h"
+#include "../../Common/Types.h"
 
 
 namespace Leviathan{ namespace Entity{
@@ -40,4 +37,4 @@ namespace Leviathan{ namespace Entity{
 	};
 
 }}
-#endif
+

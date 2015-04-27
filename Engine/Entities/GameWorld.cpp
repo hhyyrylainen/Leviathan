@@ -105,7 +105,7 @@ public:
         auto waitthing = make_shared<ConditionalTask>(std::bind<void>([](PlayerConnectionPreparer* plyprepare,
                     std::shared_ptr<SentNetworkThing> sentthing, int msping, int enginems) -> void
             {
-                bool succeeded = sentthing->GetFutureForThis().get();
+                bool succeeded = sentthing->GetStatus();
 
                 // Resend once //
                 if(!succeeded){
@@ -169,7 +169,7 @@ public:
                 }, this, sentthing, msping, timeintick), std::bind<bool>([](shared_ptr<SentNetworkThing> sentthing)
                     -> bool
                 {
-                    return sentthing->GetFutureForThis().has_value();
+                    return sentthing->IsFinalized();
                 }, sentthing));
         
         

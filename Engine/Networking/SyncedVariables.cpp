@@ -181,62 +181,66 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
                         MillisecondDuration(10), (int)max(ToSyncValues.size(), ConnectedChildren.size()))));
 
 			// Queue a finish checking task //
-			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new RepeatingDelayedTask(
-                        boost::BOOST_BIND<void>([](ConnectionInfo* connection, SyncedVariables*
-                                instance, std::shared_ptr<SendDataSyncAllStruct> data) -> void
-                            {
-                                // Check is it done //
-                                if(!data->SentAll)
+			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(
+                    new RepeatingDelayedTask(std::bind<void>([](ConnectionInfo* connection,
+                                SyncedVariables* instance,
+                                std::shared_ptr<SendDataSyncAllStruct> data) -> void
+                        {
+                            // Check is it done //
+                            if(!data->SentAll)
+                                return;
+
+                            // See if all have been sent //
+                            for(size_t i = 0; i < data->SentThings.size(); i++){
+
+                                if(!data->SentThings[i]->IsFinalized())
                                     return;
+                            }
 
-                                // See if all have been sent //
-                                for(size_t i = 0; i < data->SentThings.size(); i++){
+                            // Stop after this loop //
+                            // Fetch our object //
+                            std::shared_ptr<QueuedTask> threadspecific =
+                                TaskThread::GetThreadSpecificThreadObject()->QuickTaskAccess;
+                            auto tmpptr =
+                                dynamic_cast<RepeatingDelayedTask*>(threadspecific.get());
 
-                                    if(!data->SentThings[i]->GetFutureForThis().has_value())
-                                        return;
-                                }
+                            // Disable the repeating //
+                            tmpptr->SetRepeatStatus(false);
 
-                                // Stop after this loop //
-                                // Fetch our object //
-                                std::shared_ptr<QueuedTask> threadspecific =
-                                    TaskThread::GetThreadSpecificThreadObject()->QuickTaskAccess;
-                                auto tmpptr = dynamic_cast<RepeatingDelayedTask*>(threadspecific.get());
-                                assert(tmpptr != NULL && "this is not what I wanted, passed wrong task object to task");
+                            std::unique_ptr<NetworkResponseDataForSyncDataEnd> tmpresponddata;
 
-                                // Disable the repeating //
-                                tmpptr->SetRepeatStatus(false);
+                            // Check did some fail //
+                            for(size_t i = 0; i < data->SentThings.size(); i++){
 
-                                std::unique_ptr<NetworkResponseDataForSyncDataEnd> tmpresponddata;
+                                if(!data->SentThings[i]->GetStatus()){
+                                    // Failed to send it //
 
-                                // Check did some fail //
-                                for(size_t i = 0; i < data->SentThings.size(); i++){
-
-                                    if(!data->SentThings[i]->GetFutureForThis().get()){
-                                        // Failed to send it //
-
-                                        tmpresponddata = std::unique_ptr<NetworkResponseDataForSyncDataEnd>(new
+                                    tmpresponddata =
+                                        std::unique_ptr<NetworkResponseDataForSyncDataEnd>(new
                                             NetworkResponseDataForSyncDataEnd(false));
-                                        break;
-                                    }
+                                    break;
                                 }
+                            }
 
-                                // It succeeded (if not set already) //
-                                if(!tmpresponddata)
-                                    tmpresponddata = std::unique_ptr<NetworkResponseDataForSyncDataEnd>(new
+                            // It succeeded (if not set already) //
+                            if(!tmpresponddata)
+                                tmpresponddata =
+                                    std::unique_ptr<NetworkResponseDataForSyncDataEnd>(new
                                         NetworkResponseDataForSyncDataEnd(true));
 
-                                // Send response //
-                                std::shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(-1,
-                                        PACKET_TIMEOUT_STYLE_TIMEDMS, 3000));
-                                tmpresponse->GenerateValueSyncEndResponse(tmpresponddata.release());
+                            // Send response //
+                            std::shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(-1,
+                                    PACKET_TIMEOUT_STYLE_TIMEDMS, 3000));
+                            tmpresponse->GenerateValueSyncEndResponse(tmpresponddata.release());
 
-                                std::shared_ptr<ConnectionInfo> safeconnection =
-                                    NetworkHandler::Get()->GetSafePointerToConnection(connection);
+                            std::shared_ptr<ConnectionInfo> safeconnection =
+                                NetworkHandler::Get()->GetSafePointerToConnection(connection);
 
-                                safeconnection->SendPacketToConnection(tmpresponse, 3);
+                            safeconnection->SendPacketToConnection(tmpresponse, 3);
 
-                            }, connection, this, taskdata), MillisecondDuration(100), MillisecondDuration(50))));
-
+                        }, connection, this, taskdata), MillisecondDuration(100),
+                        MillisecondDuration(50))));
+            
 			return true;
 		}
         case NETWORKREQUESTTYPE_GETSINGLESYNCVALUE:
@@ -263,8 +267,9 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 			// We got some data that requires syncing //
 			if(IsHost){
 
-				Logger::Get()->Warning("SyncedVariables: HandleResponseOnlySync: we are a host and got update data, "
-                    "ignoring (use server commands to change data on the server)");
+				Logger::Get()->Warning("SyncedVariables: HandleResponseOnlySync: we are a host "
+                    "and got update data, ignoring (use server commands to change "
+                    "data on the server)");
 				return true;
 			}
 
@@ -273,7 +278,8 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 
 			if(!tmpptr){
 
-				Logger::Get()->Error("SyncedVariables: received a response containing no variable data");
+				Logger::Get()->Error("SyncedVariables: received a response containing no "
+                    "variable data");
 				return true;
 			}
 
@@ -288,15 +294,18 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 			// We got custom sync data //
 			if(IsHost){
 
-                Logger::Get()->Warning("SyncedVariables: HandleResponseOnlySync: we are a host and got update data, "
-                    "ignoring (use server commands to change data on the server)");
+                Logger::Get()->Warning("SyncedVariables: HandleResponseOnlySync: we are a "
+                    "host and got update data, ignoring (use server commands to change "
+                    "data on the server)");
 				return true;
 			}
 
 
-			NetworkResponseDataForSyncResourceData* data = response->GetResponseDataForSyncResourceResponse();
+			NetworkResponseDataForSyncResourceData* data =
+                response->GetResponseDataForSyncResourceResponse();
 			if(!data){
-				Logger::Get()->Error("SyncedVariables: received a resource sync response containing no data");
+				Logger::Get()->Error("SyncedVariables: received a resource sync response "
+                    "containing no data");
 				return true;
 			}
 
@@ -304,7 +313,8 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 			sf::Packet ourdatapacket;
 			ourdatapacket.append(data->OurCustomData.c_str(), data->OurCustomData.size());
 
-			const std::string lookforname = SyncedResource::GetSyncedResourceNameFromPacket(ourdatapacket);
+			const std::string lookforname =
+                SyncedResource::GetSyncedResourceNameFromPacket(ourdatapacket);
 
 			// Update the one matching the name //
 			_OnSyncedResourceReceived(lookforname, ourdatapacket);
@@ -317,10 +327,12 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 
 			if(dataptr->Succeeded){
 
-				Logger::Get()->Info("SyncedVariables: variable sync reported as successful by the host");
+				Logger::Get()->Info("SyncedVariables: variable sync reported as successful "
+                    "by the host");
 			} else {
 
-				Logger::Get()->Info("SyncedVariables: variable sync reported as FAILED by the host");
+				Logger::Get()->Info("SyncedVariables: variable sync reported as FAILED "
+                    "by the host");
 			}
 
 			// Mark sync as ended //
@@ -336,7 +348,9 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 	return false;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::SyncedVariables::IsVariableNameUsed(const std::string &name, Lock &guard){
+DLLEXPORT bool Leviathan::SyncedVariables::IsVariableNameUsed(const std::string &name,
+    Lock &guard)
+{
 	VerifyLock(guard);
 
 	// Loop all and compare their names //
@@ -349,7 +363,9 @@ DLLEXPORT bool Leviathan::SyncedVariables::IsVariableNameUsed(const std::string 
 	return false;
 }
 // ------------------------------------ //
-void Leviathan::SyncedVariables::_NotifyUpdatedValue(const SyncedValue* const valtosync, int useid /*= -1*/){
+void Leviathan::SyncedVariables::_NotifyUpdatedValue(const SyncedValue* const valtosync,
+    int useid /*= -1*/)
+{
 	// Create an update packet //
 	shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(useid, PACKET_TIMEOUT_STYLE_TIMEDMS, 3000));
 

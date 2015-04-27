@@ -2,5 +2,5 @@
 
 using namespace Leviathan;
 
-unique_ptr<NewtonManager> NewtonHolder::StaticNewtonManager = nullptr;
-unique_ptr<PhysicsMaterialManager> NewtonHolder::StaticPhysicsMaterialManager = nullptr;
+std::unique_ptr<NewtonManager> NewtonHolder::StaticNewtonManager = nullptr;
+std::unique_ptr<PhysicsMaterialManager> NewtonHolder::StaticPhysicsMaterialManager = nullptr;

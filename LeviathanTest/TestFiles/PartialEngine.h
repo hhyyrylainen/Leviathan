@@ -22,8 +22,8 @@ public:
 class NewtonHolder{
 public:
 
-    static unique_ptr<NewtonManager> StaticNewtonManager;
-    static unique_ptr<PhysicsMaterialManager> StaticPhysicsMaterialManager;
+    static std::unique_ptr<NewtonManager> StaticNewtonManager;
+    static std::unique_ptr<PhysicsMaterialManager> StaticPhysicsMaterialManager;
 };
 
 //! \brief Partial implementation of Leviathan::Engine for tests
@@ -31,7 +31,7 @@ template<bool UseActualInit, NETWORKED_TYPE TestWithType>
 class PartialEngine : public Engine{
 public:
 
-    PartialEngine() : Log(L"Test/TestLog.txt"), Def(), App(), Engine(&App){
+    PartialEngine() : Log("Test/TestLog.txt"), Def(), App(), Engine(&App){
 
         // Configure for test use //
         NoGui = true;
@@ -55,10 +55,10 @@ public:
 
             if(!NewtonHolder::StaticNewtonManager){
 
-                NewtonHolder::StaticNewtonManager = move(unique_ptr<NewtonManager>(
+                NewtonHolder::StaticNewtonManager = std::move(std::unique_ptr<NewtonManager>(
                         new NewtonManager));
-                NewtonHolder::StaticPhysicsMaterialManager = move(
-                    unique_ptr<PhysicsMaterialManager>(new
+                NewtonHolder::StaticPhysicsMaterialManager = std::move(
+                    std::unique_ptr<PhysicsMaterialManager>(new
                         PhysicsMaterialManager(NewtonHolder::StaticNewtonManager.get())));
             }
             

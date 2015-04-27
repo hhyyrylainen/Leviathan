@@ -11,6 +11,7 @@
 #include "catch.hpp"
 
 using namespace Leviathan;
+using namespace std;
 
 
 TEST_CASE("Positonable delta state interpolation", "[networking, entity]"){

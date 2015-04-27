@@ -20,7 +20,6 @@ using Leviathan::Convert;
 using Leviathan::EventHandler;
 using Leviathan::Event;
 using Leviathan::GenericEvent;
-using Leviathan::Float1;
 using Leviathan::Float2;
 using Leviathan::Float3;
 using Leviathan::Float4;

@@ -6,6 +6,7 @@
 #include "catch.hpp"
 
 using namespace Leviathan;
+using namespace std;
 
 TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
@@ -342,4 +343,88 @@ TEST_CASE("StringIterator UTF8 correctness", "[string, objectfile, utf8]"){
     utf8::utf8to16(utf8encoded->begin(), utf8encoded->end(), back_inserter(cvrtsy));
 
     CHECK(cvrtsy == resultuni16);
+}
+
+TEST_CASE("StringIterator bracket handling", "[string, objectfile]"){
+    
+    StringIterator itr;
+    std::unique_ptr<std::string> result;
+
+    SECTION("Basic string"){
+        
+        itr.ReInit("my first [bracket value test] that is]] nice");
+        result = itr.GetStringInBracketsRecursive<string>();
+
+        REQUIRE(result);
+        CHECK(*result == "bracket value test");
+
+        itr.ReInit("[Another test]");
+
+        result = itr.GetStringInBracketsRecursive<string>();
+
+        REQUIRE(result);
+        CHECK(*result == "Another test");
+    }
+
+    SECTION("Return NULL when missing end"){
+        
+        itr.ReInit("[Another test");
+
+        result = itr.GetStringInBracketsRecursive<string>();
+
+        REQUIRE_FALSE(result);
+    }
+
+    SECTION("Nesting all begin in a row"){
+
+        itr.ReInit("[[[Nice deeply ] nested] brackets]");
+
+        result = itr.GetStringInBracketsRecursive<string>();
+
+        REQUIRE(result);
+        CHECK(*result == "[[Nice deeply ] nested] brackets");
+    }
+
+    SECTION("Line end is ignored without flag"){
+        
+        itr.ReInit("[[[Nice deeply ]\n nested] brackets]");
+
+        result = itr.GetStringInBracketsRecursive<string>();
+
+        REQUIRE(result);
+        CHECK(*result == "[[Nice deeply ]\n nested] brackets");
+    }
+
+    SECTION("Invalid end with line end when the flag specified"){
+        
+        itr.ReInit("[[[Nice deeply ]\n nested] brackets]");
+
+        result = itr.GetStringInBracketsRecursive<string>(SPECIAL_ITERATOR_ONNEWLINE_STOP);
+
+        REQUIRE_FALSE(result);
+    }
+
+    SECTION("Actual normal use data"){
+        
+        itr.ReInit("[[actual, usecases, [[things, other], final], last]]");
+
+        result = itr.GetStringInBracketsRecursive<string>();
+
+        REQUIRE(result);
+        CHECK(*result == "[actual, usecases, [[things, other], final], last]");
+
+        itr.ReInit(*result);
+
+        result = itr.GetStringInBracketsRecursive<string>();
+
+        REQUIRE(result);
+        CHECK(*result == "actual, usecases, [[things, other], final], last");
+
+        itr.ReInit(*result);
+
+        result = itr.GetStringInBracketsRecursive<string>();
+
+        REQUIRE(result);
+        CHECK(*result == "[things, other], final");
+    }
 }

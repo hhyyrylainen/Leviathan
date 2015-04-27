@@ -553,7 +553,7 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	}
 	// Bind simple name get function //
 	if(engine->RegisterObjectMethod("GameModule", "string GetDescription(bool full = false)",
-            asMETHOD(GameModule, GetDescriptionProxy), asCALL_THISCALL) < 0)
+            asMETHOD(GameModule, GetDescription), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}

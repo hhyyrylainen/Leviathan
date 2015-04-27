@@ -95,6 +95,101 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const string &name, co
 	ConstructValuesForObject(valuestr, predefined);
 }
 
+DLLEXPORT bool NamedVariableList::RecursiveParseList(std::vector<VariableBlock*> &resultvalues,
+    std::unique_ptr<std::string> expression,
+    std::map<std::string, std::shared_ptr<VariableBlock>>* predefined)
+{
+    // Empty brackets //
+    if(!expression){
+
+        resultvalues.push_back(new VariableBlock(new StringBlock()));
+        return true;
+    }
+
+    StringIterator itr(expression.get());
+
+    itr.SkipWhiteSpace();
+
+    auto curchar = itr.GetCharacter();
+
+    if(curchar == '['){
+
+        std::vector<VariableBlock*> morevalues;
+        auto firstvalue = itr.GetStringInBracketsRecursive<string>();
+
+        if(!RecursiveParseList(morevalues, move(firstvalue), predefined)){
+
+            throw InvalidArgument("Sub expression parsing failed");
+        }
+
+        itr.SkipWhiteSpace();
+
+        if(itr.IsOutOfBounds()){
+
+            // The values were just wrapped in an extra pair of brackets //
+            resultvalues.reserve(morevalues.size());
+
+            for(auto ptr : morevalues){
+
+                resultvalues.push_back(ptr);
+            }
+
+            morevalues.clear();
+            return true;
+            
+        } else {
+
+            // Actually recursive things //
+            SAFE_DELETE_VECTOR(morevalues);
+            morevalues.clear();
+            throw InvalidArgument("NamedVars recursive parsing is not done");
+        }
+    }
+
+    while(auto value = itr.GetUntilNextCharacterOrAll<string>(',')){
+
+        StringIterator itr2(value.get());
+
+        itr2.SkipWhiteSpace();
+
+        if(itr2.IsOutOfBounds()){
+
+            continue;
+        }
+
+        if(itr2.GetCharacter() == '['){
+
+            auto firstvalue = itr2.GetStringInBracketsRecursive<string>();
+
+            std::vector<VariableBlock*> morevalues;
+
+            if(!RecursiveParseList(morevalues, move(firstvalue), predefined)){
+
+                throw InvalidArgument("Sub expression parsing failed");
+            }
+
+            SAFE_DELETE_VECTOR(morevalues);
+            morevalues.clear();
+            throw InvalidArgument("NamedVars recursive parsing is not done");
+            
+            continue;
+        }
+
+        // Parse value //
+        auto valuestr = itr.GetUntilEnd<string>();
+
+        try{
+            resultvalues.push_back(new VariableBlock(*valuestr, predefined));
+        } catch(const InvalidArgument&){
+
+            SAFE_DELETE_VECTOR(resultvalues);
+            throw;
+        }
+    }
+    
+    return true;
+}
+
 DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const string &variablestr, map<string,
     std::shared_ptr<VariableBlock>>* predefined)
 {
@@ -102,58 +197,42 @@ DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const stri
         
 		throw InvalidArgument("invalid variable string, 0 length");
 	}
+    
 	// check does it have brackets (and need to be processed like so) //
 	if(variablestr[0] == L'['){
 
 		// Needs to be split into values //
-        int depth = 1;
-
         StringIterator itr(variablestr);
 
-        itr.MoveToNext();
+        auto firstlevel = itr.GetStringInBracketsRecursive<string>();
+
+        std::vector<VariableBlock*> parsedvalues;
+        try{
+            if(!RecursiveParseList(parsedvalues, move(firstlevel), predefined)){
+            
+                throw InvalidArgument("NamedVariableList could not parse top level bracket "
+                    "expression");
+            }
+        } catch(const InvalidArgument &e){
+
+            throw;
+        }
+
+        for(auto iter = Datas.begin(); iter != Datas.end(); ++iter){
+
+            SAFE_DELETE(*iter);
+        }
+
+        Datas.resize(parsedvalues.size());
+
+        // Add the final values //
+        for(size_t i = 0; i < Datas.size(); i++){
+
+            Datas[i] = parsedvalues[i];
+        }
+
+        parsedvalues.clear();
         
-        
-		vector<Token*> tokens;
-		// split to tokens //
-		LineTokeNizer::SplitTokenToRTokens(variablestr, tokens);
-
-		if(tokens.size() < 2){
-			// release tokens to not leak any memory //
-			SAFE_DELETE_VECTOR(tokens);
-
-			// might contain the base token, but cannot possibly have any values inside //
-			throw InvalidArgument("invalid variable string (variable tokenization failed)");
-		}
-
-		// first should be base token //
-
-		// reserve space //
-		Datas.resize(tokens[0]->GetSubTokenCount());
-
-		// iterate sub tokens and create values from them //
-		for(int i = 0; i < tokens[0]->GetSubTokenCount(); i++){
-
-			try{
-				// Try to create a new VariableBlock //
-				Datas[i] = new VariableBlock(tokens[0]->GetSubToken(i)->GetChangeableData(), predefined);
-			}
-			catch (const InvalidArgument &e){
-				// release memory //
-				SAFE_DELETE_VECTOR(tokens);
-				SAFE_DELETE_VECTOR(Datas);
-
-				// rethrow the exception //
-                throw;
-			}
-		}
-		// all variables are now created //
-
-		// release tokens //
-		SAFE_DELETE_VECTOR(tokens);
-
-
-
-		// don't want to fall to single value processing //
 		return;
 	}
 
@@ -174,9 +253,6 @@ DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const stri
         throw;
 	}
 }
-
-
-
 // ------------------ Handling passing to packets ------------------ //
 DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(sf::Packet &packet){
 	// Unpack the data from the packet //
@@ -332,11 +408,8 @@ DLLEXPORT string Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*/
 	case 1: stringifiedval += ": "; break;
 	default:
 		// error //
-		QUICK_ERROR_MESSAGE;
-		return "ERROR: NUL";
+        throw Exception("Invalid separator type");
 	}
-
-
 
 	// convert value to string //
 	// starting bracket //
@@ -446,8 +519,8 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const string &data,
 
 	if(Lines.size() < 1){
 		// no lines //
-		Logger::Get()->Error("NamedVar: ProcessDataDump: No lines (even 1 line requires ending ';' to work)",
-            data.length(), false);
+		Logger::Get()->Error("NamedVar: ProcessDataDump: No lines (even 1 line requires "
+            "ending ';' to work)");
 
 		return 400;
 	}
@@ -590,7 +663,7 @@ DLLEXPORT Leviathan::NamedVars::NamedVars(const string &datadump) : Variables(){
 	// load data directly to vector //
 	if(NamedVariableList::ProcessDataDump(datadump, Variables, NULL) != 0){
 		// error happened //
-		Logger::Get()->Error("NamedVars: Initialize: process datadump failed", true);
+		Logger::Get()->Error("NamedVars: Initialize: process datadump failed");
 	}
 }
 

@@ -27,9 +27,6 @@ namespace Leviathan{
 		//! Use to release script before releasing any other objects
 		DLLEXPORT void ReleaseScript();
 
-		//! \brief Returns a string describing this module
-		DLLEXPORT std::string GetDescriptionForError(bool full = false);
-
 		// Used to actually use the module //
 
 		//! Executes something on the module and returns the result. Adds the module as first
@@ -39,8 +36,8 @@ namespace Leviathan{
             bool fulldeclaration = false);
 
 
-		// Script proxies //
-		DLLEXPORT std::string GetDescriptionProxy(bool full);
+        //! \brief Returns a string describing this module
+		DLLEXPORT std::string GetDescription(bool full);
 
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GameModule);

@@ -33,6 +33,7 @@ documentation and/or software.
 
 #pragma once
 // ------------------------------------ //
+#include "Include.h"
 #include <string>
 
 namespace Leviathan{

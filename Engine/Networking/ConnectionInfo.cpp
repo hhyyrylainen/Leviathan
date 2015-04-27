@@ -124,7 +124,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::Release(){
         for(auto iter = WaitingRequests.begin(); iter != end; ++iter){
 
             // Mark as failed //
-            (*iter)->WaitForMe->set_value(false);
+            (*iter)->SetWaitStatus(false);
         }
 
         // All are now properly closed //
@@ -143,7 +143,7 @@ DLLEXPORT std::shared_ptr<NetworkResponse> Leviathan::ConnectionInfo::SendReques
 	shared_ptr<SentNetworkThing> sentrequest = SendPacketToConnection(request, maxtries);
 
 	// Now we wait //
-	sentrequest->WaitForMe->get_future().get();
+    sentrequest->GetStatus();
 
 	return sentrequest->GotResponse;
 }
@@ -178,7 +178,7 @@ DLLEXPORT std::shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacke
 	// Add to the sent packets //
 	shared_ptr<SentNetworkThing> tmprequestinfo(
         new SentNetworkThing(LastUsedID, request->GetExpectedResponseID(), request, 
-            std::shared_ptr<std::promise<bool>>(new std::promise<bool>()), maxretries, request->GetTimeOutType(),
+            maxretries, request->GetTimeOutType(),
             request->GetTimeOutValue(), requestsdata, 1));
 
 	WaitingRequests.push_back(tmprequestinfo);
@@ -216,7 +216,7 @@ DLLEXPORT std::shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacke
 
 	// Add to the sent packets //
 	shared_ptr<SentNetworkThing> tmprequestinfo(
-        new SentNetworkThing(LastUsedID, response, std::shared_ptr<std::promise<bool>>(new std::promise<bool>()), 
+        new SentNetworkThing(LastUsedID, response, 
             maxtries, response->GetTimeOutType(), response->GetTimeOutValue(), requestsdata, 1));
 
 	WaitingRequests.push_back(tmprequestinfo);
@@ -252,9 +252,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::SendKeepAlivePacket(Lock &guard){
 
 	// Add to the sent packets //
 	shared_ptr<SentNetworkThing> tmprequestinfo(
-        new SentNetworkThing(LastUsedID, response, std::shared_ptr<std::promise<bool>>(
-                new std::promise<bool>()),
-            1, response->GetTimeOutType(), response->GetTimeOutValue(), requestsdata, 1));
+        new SentNetworkThing(LastUsedID, response, 1, response->GetTimeOutType(),
+            response->GetTimeOutValue(), requestsdata, 1));
 
 	WaitingRequests.push_back(tmprequestinfo);
 }
@@ -333,10 +332,15 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
                     Convert::ToString((*iter)->PacketNumber)+") to " +
                     Convert::StringToString(TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
+
+                if((*iter)->ConfirmReceiveTime.load(memory_order_consume) == 1){
+
+                    (*iter)->ConfirmReceiveTime.store(Time::GetTimeMs64(), memory_order_release);
+                }
+                
 				// We want to notify all waiters that it has been received //
                 (*iter)->SetWaitStatus(true);
-                
-                (*iter)->ConfirmReceiveTime = Time::GetTimeMs64();                
+
 				iter = WaitingRequests.erase(iter);
 				continue;
 			}
@@ -665,10 +669,15 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
             }
 
             lockit.unlock();
+
+            if(possiblerequest->ConfirmReceiveTime.load(memory_order_consume) == 1){
+
+                possiblerequest->ConfirmReceiveTime.store(Time::GetTimeMs64(),
+                    memory_order_release);
+            }
             
             // Notify that the request is done /
             possiblerequest->SetWaitStatus(true);
-            possiblerequest->ConfirmReceiveTime = Time::GetTimeMs64();
 
 		} else {
 
@@ -874,7 +883,8 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
         // Create a suitable echo request //
         // This needs to be regenerated for each loop as each need to have unique id for responses
         // to be registered properly
-        std::shared_ptr<NetworkRequest> echorequest = make_shared<NetworkRequest>(NETWORKREQUESTTYPE_ECHO, 1000,
+        std::shared_ptr<NetworkRequest> echorequest =
+            make_shared<NetworkRequest>(NETWORKREQUESTTYPE_ECHO, 1000,
             PACKET_TIMEOUT_STYLE_TIMEDMS);
 
         
@@ -894,7 +904,8 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
     ThreadingManager::Get()->QueueTask(new ConditionalTask(std::bind<void>([](
                     std::shared_ptr<std::vector<shared_ptr<SentNetworkThing>>> requests,
                     std::function<void(int, int)> onsucceeded,
-                    std::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed, int allowedfails) -> void
+                    std::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed,
+                    int allowedfails) -> void
         {
             int fails = 0;
 
@@ -905,7 +916,9 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
             auto end = requests->end();
             for(auto iter = requests->begin(); iter != end; ++iter){
 
-                if(!(*iter)->GetFutureForThis().get() || (*iter)->ConfirmReceiveTime < 2){
+                if(!(*iter)->Succeeded ||
+                    (*iter)->ConfirmReceiveTime.load(memory_order_acquire) < 2)
+                {
                     // This one has failed //
                     
                     fails++;
@@ -913,15 +926,16 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
                 }
 
                 // Store the time //
-                packagetimes.push_back((*iter)->ConfirmReceiveTime-(*iter)->RequestStartTime);
+                packagetimes.push_back((*iter)->ConfirmReceiveTime.load(memory_order_acquire) -
+                    (*iter)->RequestStartTime);
             }
             
             
             // Check has too many failed //
             if(fails > allowedfails){
 
-                Logger::Get()->Warning("ConnectionInfo: pinging failed due to too many lost packets, lost: "+
-                    Convert::ToString(fails));
+                Logger::Get()->Warning("ConnectionInfo: pinging failed due to too many lost "
+                    "packets, lost: "+Convert::ToString(fails));
                 
                 onfailed(CONNECTION_PING_FAIL_REASON_LOSS_TOO_HIGH, fails);
                 return;
@@ -957,7 +971,8 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
             
             onsucceeded(finalping, fails);
             
-            Logger::Get()->Info("ConnectionInfo: pinging completed, ping: "+Convert::ToString(finalping));
+            Logger::Get()->Info("ConnectionInfo: pinging completed, ping: "+
+                Convert::ToString(finalping));
             
         }, sentechos, onsucceeded, onfailed, allowedfails), std::bind<bool>([](
                 std::shared_ptr<std::vector<shared_ptr<SentNetworkThing>>> requests) -> bool
@@ -965,7 +980,7 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
                 // Check if even one is still waiting //
                 auto end = requests->end();
                 for(auto iter = requests->begin(); iter != end; ++iter){
-                    if(!(*iter)->GetFutureForThis().has_value())
+                    if(!(*iter)->IsFinalized())
                         return false;
                 }
 
@@ -1005,24 +1020,26 @@ bool Leviathan::ConnectionInfo::_IsAlreadyReceived(int packetid){
 	return false;
 }
 // ------------------ SentNetworkThing ------------------ //
-Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponseid, std::shared_ptr<NetworkRequest> request,
-    std::shared_ptr<std::promise<bool>> waitobject, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue,
-    const sf::Packet &packetsdata, int attempnumber /*= 1*/) :
-    PacketNumber(packetid), ExpectedResponseID(expectedresponseid), OriginalRequest(request), WaitForMe(waitobject),
-    MaxTries(maxtries), PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata),
-    AttempNumber(attempnumber), RequestStartTime(Time::GetTimeMs64()), ConfirmReceiveTime(0), IsArequest(true),
-    FutureFetched(false)
+Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponseid,
+    std::shared_ptr<NetworkRequest> request, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout,
+    int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) :
+    PacketNumber(packetid), ExpectedResponseID(expectedresponseid), OriginalRequest(request),
+    IsDone(false), MaxTries(maxtries), PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue),
+    AlmostCompleteData(packetsdata), AttempNumber(attempnumber),
+    RequestStartTime(Time::GetTimeMs64()), ConfirmReceiveTime(0), IsArequest(true),
+    Succeeded(false)
 {
 
 }
 
-Leviathan::SentNetworkThing::SentNetworkThing(int packetid, std::shared_ptr<NetworkResponse> response,
-    std::shared_ptr<std::promise<bool>> waitobject, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue,
-    const sf::Packet &packetsdata, int attempnumber /*= 1*/) :
-    PacketNumber(packetid), ExpectedResponseID(-1), SentResponse(response), WaitForMe(waitobject), MaxTries(maxtries),
-    PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata),
-    AttempNumber(attempnumber), RequestStartTime(Time::GetTimeMs64()), ConfirmReceiveTime(0),
-	IsArequest(false), FutureFetched(false)
+Leviathan::SentNetworkThing::SentNetworkThing(int packetid,
+    std::shared_ptr<NetworkResponse> response, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout,
+    int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) :
+    PacketNumber(packetid), ExpectedResponseID(-1), SentResponse(response),
+    MaxTries(maxtries), PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue),
+    AlmostCompleteData(packetsdata), AttempNumber(attempnumber),
+    RequestStartTime(Time::GetTimeMs64()), ConfirmReceiveTime(0),
+	IsArequest(false), IsDone(false), Succeeded(false)
 {
 
 }
@@ -1031,32 +1048,35 @@ DLLEXPORT Leviathan::SentNetworkThing::~SentNetworkThing(){
 
 }
 
-DLLEXPORT std::future<bool>& Leviathan::SentNetworkThing::GetFutureForThis(){
-    GUARD_LOCK();
-	// Get a future if not already and return it //
-	if(!FutureFetched){
-
-		FutureValue = WaitForMe->get_future();
-		FutureFetched = true;
-	}
-	return FutureValue;
-}
-
 DLLEXPORT void Leviathan::SentNetworkThing::SetWaitStatus(bool status){
-    {
-        GUARD_LOCK();
-
-        WaitForMe->set_value(status);
-    }
+    
+    Succeeded = status;
+    IsDone.store(true, memory_order_release);
 
     if(Callback)
         Callback(status, *this);
+    
+    {
+        Lock lock(NotifyMutex);
+        Notifier.notify_all();
+    }
+}
+
+DLLEXPORT bool SentNetworkThing::GetStatus(){
+
+    while(!IsDone.load(memory_order_acquire)){
+
+        Lock lock(NotifyMutex);
+        // TODO: make sure that this cannot deadlock //
+        Notifier.wait(lock);
+    }
+
+    return Succeeded;
 }
 
 DLLEXPORT void Leviathan::SentNetworkThing::SetAsTimed(){
-    GUARD_LOCK();
     
-    ConfirmReceiveTime = 1;
+    ConfirmReceiveTime.store(1, memory_order_release);
 }
 
 DLLEXPORT void Leviathan::SentNetworkThing::SetCallback(std::function<void(bool,

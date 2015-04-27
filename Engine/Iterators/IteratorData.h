@@ -75,5 +75,14 @@ namespace Leviathan{
 		bool EndFound;
 	};
 
+    class IteratorNestingLevelData{
+    public:
+        IteratorNestingLevelData() : Positions(-1, -1), NestingLevel(0){
+        }
+
+        Int2 Positions;
+        int NestingLevel;
+    };
+
 }
 

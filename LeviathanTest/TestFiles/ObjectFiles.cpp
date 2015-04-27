@@ -4,6 +4,7 @@
 #include "catch.hpp"
 
 using namespace Leviathan;
+using namespace std;
 
 
 TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
@@ -11,7 +12,7 @@ TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
     ScriptExecutor exec;
     
 	// First test the minimal file //
-	wstring minfile = L"Data/Scripts/tests/SimpleTest.levof";
+	string minfile = "Data/Scripts/tests/SimpleTest.levof";
 
 	// Try to parse it //
 	auto ofile = ObjectFileProcessor::ProcessObjectFile(minfile);
@@ -23,7 +24,7 @@ TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
 	// Validate the output //
     CHECK(HeaderVars.GetVariableCount() == 4);
 
-    wstring TestFile = L"Data/Scripts/tests/TestObjectFile.levof";
+    string TestFile = "Data/Scripts/tests/TestObjectFile.levof";
 	
 	// Make sure the loading is correct //
 	auto rofile = ObjectFileProcessor::ProcessObjectFile(TestFile);

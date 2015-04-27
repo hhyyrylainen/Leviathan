@@ -131,6 +131,11 @@ namespace Leviathan{
 		//! \param text Pointer to a string that won't be deleted by this
 		DLLEXPORT StringIterator(std::string* text);
 
+        //! \brief Creates an empty iterator
+        //!
+        //! Use ReInit to fill with data
+        DLLEXPORT StringIterator();
+
 
 		DLLEXPORT virtual ~StringIterator();
 
@@ -406,6 +411,34 @@ namespace Leviathan{
 			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
 		}
 
+        //! \brief Gets characters inside brackets
+		//!
+		//! This function will skip until it finds a a left bracket '['
+        //! and then returns the content inside keeping track of the number of '[' and ']'
+        //! characters encountered and returns once the top level brackets close
+        //! \note Empty brackets "[]" are considered invalid and return NULL
+		//! \return The string found or NULL
+		template<class RStrType>
+		DLLEXPORT std::unique_ptr<RStrType> GetStringInBracketsRecursive(int specialflags = 0){
+
+			// Setup the result object //
+			IteratorNestingLevelData data;
+
+			// Iterate with our getting function //
+			StartIterating(std::bind(&StringIterator::FindInMatchingParentheses, this, &data,
+                    '[', ']', specialflags), specialflags);
+
+			// Create the substring from the result //
+            std::unique_ptr<RStrType> resultstr;
+
+			// NULL if nothing found //
+			if(data.Positions.X == -1 || data.Positions.Y == -1)
+				return NULL;
+
+			// Return the wanted part //
+			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+		}
+
 		//! \brief Skips until characters that are not whitespace are found
 		//! \see SkipCharacters
 		DLLEXPORT void inline SkipWhiteSpace(int specialflags = 0){
@@ -507,7 +540,7 @@ namespace Leviathan{
 
 	private:
 
-		StringIterator(const StringIterator &other){}
+		StringIterator(const StringIterator &other) = delete;
 
 
 		inline ITERATORCALLBACK_RETURNTYPE HandleSpecialCharacters();
@@ -516,7 +549,7 @@ namespace Leviathan{
 		//! \brief Loops over the string using functorun to handle continuing
 		//! \param specialflagcopy Depending on set flags this can cause the iterator to treat
         //! line ends as if they were end of input
-		DLLEXPORT void StartIterating(boost::function<ITERATORCALLBACK_RETURNTYPE()> functorun,
+		DLLEXPORT void StartIterating(std::function<ITERATORCALLBACK_RETURNTYPE()> functorun,
             int specialflagcopy);
 
 
@@ -547,17 +580,26 @@ namespace Leviathan{
 
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindFirstQuotedString(IteratorPositionData* data,
             QUOTETYPE quotes, int specialflags);
+        
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(
             IteratorPositionData* data, int stopflags, int specialflags);
+        
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindNextNumber(IteratorNumberFindData* data,
             DECIMALSEPARATORTYPE decimal, int specialflags);
+        
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilEquality(IteratorAssignmentData* data,
             EQUALITYCHARACTER equality, int specialflags);
+        
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE SkipSomething(IteratorCharacterData* data,
             int additionalskip, int specialflags);
+        
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilSpecificCharacter(
             IteratorFindUntilData* data, int character, int specialflags);
+        
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilNewLine(IteratorFindUntilData* data);
+
+        DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindInMatchingParentheses(
+            IteratorNestingLevelData* data, int left, int right, int specialflags);
 
 		template<class AcceptStr>
 		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilSequence(

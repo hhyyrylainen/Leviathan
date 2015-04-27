@@ -5,6 +5,14 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
+DLLEXPORT StringIterator::StringIterator() :
+    CurrentFlags(0), HandlesDelete(false), DataIterator(NULL), CurrentStored(false)
+{
+#ifdef _DEBUG
+	DebugMode = false;
+#endif // _DEBUG
+}
+
 DLLEXPORT Leviathan::StringIterator::StringIterator(StringDataIterator* iterator, bool TakesOwnership) : CurrentFlags(0), 
 	HandlesDelete(TakesOwnership), DataIterator(iterator), CurrentStored(false), CurrentCharacter(-1)
 {
@@ -85,7 +93,7 @@ DLLEXPORT void Leviathan::StringIterator::ReInit(string* text){
 	ReInit(new StringClassPointerIterator<string>(text), true);
 }
 // ------------------------------------ //
-void Leviathan::StringIterator::StartIterating(boost::function<ITERATORCALLBACK_RETURNTYPE()> functorun, int specialflagcopy){
+void Leviathan::StringIterator::StartIterating(std::function<ITERATORCALLBACK_RETURNTYPE()> functorun, int specialflagcopy){
 #ifdef _DEBUG
 	if(DebugMode){
 		Logger::Get()->Write(L"Iterator: begin ----------------------");
@@ -518,7 +526,7 @@ DLLEXPORT bool Leviathan::StringIterator::IsOutOfBounds(){
 #ifdef _DEBUG
 #define ITR_FUNCDEBUG(x) {\
 	if(DebugMode){\
-	Logger::Get()->Write(L"Iterator: procfunc: "+wstring(x));\
+	Logger::Get()->Write(L"Iterator: procfunc: "+string(x));\
 	}\
 }
 #else
@@ -528,8 +536,8 @@ DLLEXPORT bool Leviathan::StringIterator::IsOutOfBounds(){
 
 
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuotedString(IteratorPositionData* data, QUOTETYPE quotes, 
-	int specialflags)
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuotedString(IteratorPositionData* data,
+    QUOTETYPE quotes,  int specialflags)
 {
 
 	int currentcharacter = GetCharacter();
@@ -986,7 +994,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 		if((CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
 			ITR_FUNCDEBUG(L"Ignoring inside string");
 		}
-		if((specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) && (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+		if((specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) &&
+            (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT))
+        {
 			ITR_FUNCDEBUG(L"Ignoring inside comment");
 		}
 #endif // _DEBUG
@@ -1073,4 +1083,55 @@ positionisvalidlabelstringiteratorfindnewline:
 	}
 
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+}
+
+DLLEXPORT ITERATORCALLBACK_RETURNTYPE StringIterator::FindInMatchingParentheses(
+    IteratorNestingLevelData* data, int left, int right, int specialflags)
+{
+	// Ignore if ignoring special characters //
+	if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL) &&
+        !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING))
+    {
+
+        int currentcharacter = GetCharacter();
+        
+        if(currentcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+
+            // Invalid, always //
+            return ITERATORCALLBACK_RETURNTYPE_STOP;
+        }
+
+        // Nesting level starts //
+        if(currentcharacter == left){
+
+            ++data->NestingLevel;
+
+            if(data->NestingLevel > 1){
+
+                // There where multiple lefts in a row, like "[[[...]]]"
+                goto isinsidevalidleftrightpair;
+            }
+            
+            return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+        }
+
+        // One nesting level is ending //
+        if(currentcharacter == right){
+
+            --data->NestingLevel;
+
+            if(data->NestingLevel == 0){
+
+                data->Positions.Y = GetPosition()-1;
+                return ITERATORCALLBACK_RETURNTYPE_STOP;
+            }
+        }
+	}
+
+isinsidevalidleftrightpair:
+
+    if(data->Positions.X == -1){
+
+        data->Positions.X = GetPosition();
+    }
 }

@@ -1,11 +1,12 @@
 #include "Script/ScriptExecutor.h"
+#include "Script/ScriptModule.h"
 
 #include "catch.hpp"
 
 #include <boost/assign.hpp>
 
 using namespace Leviathan;
-
+using namespace std;
 
 TEST_CASE("Basic script running", "[script]"){
 
@@ -13,7 +14,7 @@ TEST_CASE("Basic script running", "[script]"){
     auto exec(move(unique_ptr<ScriptExecutor>(new ScriptExecutor())));
 
 	// setup the script //
-	auto mod = exec->CreateNewModule(L"TestScrpt", "ScriptGenerator").lock();
+	auto mod = exec->CreateNewModule("TestScrpt", "ScriptGenerator").lock();
 
     // Setup source for script //
     auto sourcecode = make_shared<ScriptSourceFileData>("memory_test_script", 1,
@@ -31,8 +32,8 @@ TEST_CASE("Basic script running", "[script]"){
     REQUIRE(module != nullptr);
 
 	vector<shared_ptr<NamedVariableBlock>> Params = boost::assign::list_of(new NamedVariableBlock(
-            new IntBlock(252134), L"Val1"))
-		(new NamedVariableBlock(new IntBlock(25552), L"Val2"));
+            new IntBlock(252134), "Val1"))
+		(new NamedVariableBlock(new IntBlock(25552), "Val2"));
 
     ScriptRunningSetup ssetup;
     ssetup.SetArguments(Params).SetEntrypoint("TestFunction").SetUseFullDeclaration(false)

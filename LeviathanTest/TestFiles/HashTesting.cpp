@@ -3,6 +3,7 @@
 #include "catch.hpp"
 
 using namespace Leviathan;
+using namespace std;
 
 TEST_CASE("MD5 makes correct hexdigest", "[hash]"){
     

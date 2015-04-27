@@ -43,6 +43,13 @@ namespace Leviathan{
 		DLLEXPORT void ConstructValuesForObject(const std::string &variablestr,
             std::map<std::string, std::shared_ptr<VariableBlock>>* predefined);
 
+        //! \brief Handles a found bracket expression "[...]" parsing it recursively
+        //! into values
+        //! \return false on parse error
+        DLLEXPORT bool RecursiveParseList(std::vector<VariableBlock*> &resultvalues,
+            std::unique_ptr<std::string> expression,
+            std::map<std::string, std::shared_ptr<VariableBlock>>* predefined);
+
 		DLLEXPORT ~NamedVariableList();
 		// ------------------------------------ //
 		DLLEXPORT void SetValue(const VariableBlock &value1);
@@ -233,7 +240,7 @@ namespace Leviathan{
 		DLLEXPORT int GetVariableTypeOfAll(const std::string &name) const;
 		DLLEXPORT int GetVariableTypeOfAll(size_t index) const;
 
-		DLLEXPORT std::string& GetName(size_t index);
+		DLLEXPORT std::string GetName(size_t index);
 		DLLEXPORT bool GetName(size_t index, std::string &name) const;
 
 		DLLEXPORT void SetName(size_t index, const std::string &name);

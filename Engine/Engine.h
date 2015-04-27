@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 
 namespace Leviathan{

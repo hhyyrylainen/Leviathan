@@ -1,19 +1,15 @@
-#ifndef LEVIATHAN_CONNECTIONINFO
-#define LEVIATHAN_CONNECTIONINFO
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "NetworkResponse.h"
 #include "NetworkRequest.h"
 #include "SFML/Network/Socket.hpp"
 #include "SFML/Network/UdpSocket.hpp"
 #include "SFML/Network/IpAddress.hpp"
-#include "Common/ThreadSafe.h"
+#include "../Common/ThreadSafe.h"
 #include "NetworkHandler.h"
-#include "Common/BaseNotifier.h"
+#include "../Common/BaseNotifier.h"
 #include <future>
 
 namespace Leviathan{
@@ -47,13 +43,12 @@ namespace Leviathan{
     //! \todo Make this properly thread safe
     //! \todo Make BaseSendable receive proper callbacks even after this has failed, so add
     //! a place where failed packets are stored for a while
-	class SentNetworkThing : public ThreadSafe{
+	class SentNetworkThing{
     public:
 
 		//! This is the signature for request packets
 		DLLEXPORT SentNetworkThing(int packetid, int expectedresponseid,
-            std::shared_ptr<NetworkRequest> request,
-            std::shared_ptr<std::promise<bool>> waitobject, int maxtries,
+            std::shared_ptr<NetworkRequest> request, int maxtries,
             PACKET_TIMEOUT_STYLE howtotimeout,
             int timeoutvalue, const sf::Packet &packetsdata, int attempnumber = 1);
         
@@ -61,24 +56,34 @@ namespace Leviathan{
 		DLLEXPORT ~SentNetworkThing();
 		// This is the signature for response packets //
 		DLLEXPORT SentNetworkThing(int packetid, std::shared_ptr<NetworkResponse> response,
-            std::shared_ptr<std::promise<bool>> waitobject, int maxtries,
-            PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue, const sf::Packet &packetsdata,
-            int attempnumber = 1);
+            int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue,
+            const sf::Packet &packetsdata, int attempnumber = 1);
 
-		DLLEXPORT std::future<bool>& GetFutureForThis();
+        //! \brief Returns true once the packet has been received by the target or lost
+        //! too many times
+        DLLEXPORT inline bool IsFinalized(){
 
+            return IsDone.load(std::memory_order_consume);
+        }
+
+        //! \brief Gets the status once IsFinalized returns true blocks otherwise
+        //! \return True when the packet has been successfully received, false if lost
+        DLLEXPORT bool GetStatus();
+        
         //! \brief Sets the status of the wait object notifying all waiters that this has
         //! succeeded or failed
         //!
         //! Will also call the Callback if one is set
+        //! \note May only be called once
         DLLEXPORT void SetWaitStatus(bool status);
         
         //! \brief Sets this packet as a timed packet
-        //! \note A timed package will have the ConfirmReceiveTime set to the time a response (or receive notification)
-        //! is received
+        //! \note A timed package will have the ConfirmReceiveTime set to the time a response
+        //! (or receive notification) is received
         DLLEXPORT void SetAsTimed();
 
-        //! \brief Binds a callback function that is called either when the packet is successfully sent or it times out
+        //! \brief Binds a callback function that is called either when the packet is
+        //! successfully sent or it times out
         DLLEXPORT void SetCallback(std::function<void(bool, SentNetworkThing&)> func);
 
 		int PacketNumber;
@@ -91,7 +96,6 @@ namespace Leviathan{
         //! Callback function called when succeeded or failed
         std::function<void(bool, SentNetworkThing&)> Callback;
         
-
 		int TimeOutMS;
 		int64_t RequestStartTime;
 
@@ -101,21 +105,20 @@ namespace Leviathan{
         //! the round-trip time
         //! \note This will only be set if this value is set to 1 before the packet is sent
         //! \note This value is only valid if the packet wasn't lost (failed requests have this unset)
-		int64_t ConfirmReceiveTime;
+        std::atomic<int64_t> ConfirmReceiveTime;
 		int ExpectedResponseID;
 
 
 		//! Marks this as received by the other
-        std::shared_ptr<std::promise<bool>> WaitForMe;
-        
-		//! The stored future that is returned when requested
-		std::future<bool> FutureValue;
-        
-		//! Controls when the future will be fetched, it is safe to retrieve only once
-		bool FutureFetched;
+        std::condition_variable Notifier;
 
+        Mutex NotifyMutex;
 
+        std::atomic_bool IsDone;
+        bool Succeeded;
+        
 		// This is stored for resending the data //
+        //! \todo Store as a pointer
 		sf::Packet AlmostCompleteData;
 
 		// If set the following variables will be used //
@@ -314,4 +317,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

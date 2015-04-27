@@ -379,12 +379,13 @@ checksentrequestsbeginlabel:
 	for(auto iter = OurSentRequests.begin(); iter != OurSentRequests.end(); ){
 
 		// Check can we handle it //
-		if((*iter)->GetFutureForThis().has_value()){
+		if((*iter)->IsFinalized()){
 			// Handle the request //
-			if(!(*iter)->GetFutureForThis().get() || !(*iter)->GotResponse){
+			if(!(*iter)->GetStatus() || !(*iter)->GotResponse){
 				// It failed //
 
-				Logger::Get()->Warning("NetworkClientInterface: request to server failed, possibly retrying:");
+				Logger::Get()->Warning("NetworkClientInterface: request to server failed, "
+                    "possibly retrying:");
 
 				// Store a copy and delete from the vector //
 				shared_ptr<SentNetworkThing> tmpsendthing = (*iter);
@@ -392,8 +393,8 @@ checksentrequestsbeginlabel:
 
 				_ProcessFailedRequest(tmpsendthing, guard);
 
-				// We need to loop again, because our iterator is now invalid, because quite often failed things
-                // are retried
+				// We need to loop again, because our iterator is now invalid, because
+                // quite often failed things are retried
 				goto checksentrequestsbeginlabel;
 			}
 
@@ -609,7 +610,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
 		std::bind<void>([](shared_ptr<SentNetworkThing> maderequest, NetworkClientInterface* iptr) -> void
 	{
 		// Check the status //
-		if(!maderequest->GetFutureForThis().get() || !maderequest->GotResponse){
+		if(!maderequest->GetStatus() || !maderequest->GotResponse){
 			// Terminate the connection //
 			DEBUG_BREAK;
 			return;
@@ -658,7 +659,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
 
 	}, receivedata, this), std::bind<bool>([](shared_ptr<SentNetworkThing> maderequest) -> bool
 	{
-		return maderequest->GetFutureForThis().has_value();
+		return maderequest->IsFinalized();
 	}, receivedata))));
 }
 // ------------------------------------ //

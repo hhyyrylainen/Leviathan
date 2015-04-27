@@ -25,11 +25,3 @@ TEST_CASE("Float4 access memory layout", "[types]"){
     CHECK(fl[3] == fl.GetW());
 }
 
-TEST_CASE("UINT4 access memory layout", "[types]"){
-
-    UINT4 u4(25, 12, 35, 12);
-
-	UINT* uptr = u4;
-
-	CHECK(*uptr == u4.X);
-}

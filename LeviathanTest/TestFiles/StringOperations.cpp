@@ -98,47 +98,48 @@ TEST_CASE("StringOperations common work with string and wstring", "[string]"){
 	string paththing2 = TESTPATHSTRWIN;
 
 
-	wstring result = RemoveExtension<wstring, wchar_t>(paththing, true);
-	string result2 = RemoveExtension<string, char>(paththing2, true);
+	wstring result = StringOperations::RemoveExtension<wstring, wchar_t>(paththing, true);
+	string result2 = StringOperations::RemoveExtension<string, char>(paththing2, true);
 
 	wstring wstringified = Convert::StringToWstring(result2);
 
     CHECK(result == wstringified);
     CHECK(result == L"filesthis");
 
-	result = GetExtension<wstring, wchar_t>(paththing);
+	result = StringOperations::GetExtension<wstring, wchar_t>(paththing);
 
 	CHECK(result == L"extsuper");
 
-	result = ChangeExtension<wstring, wchar_t>(paththing, L"superier");
+	result = StringOperations::ChangeExtension<wstring, wchar_t>(paththing, L"superier");
 
 	CHECK(result == L"My/super/path/filesthis.superier");
 
-	wstring ressecond = RemovePath<wstring, wchar_t>(result);
+	wstring ressecond = StringOperations::RemovePath<wstring, wchar_t>(result);
 
 	CHECK(ressecond == L"filesthis.superier");
 
-	string removed = RemovePathString("./GUI/Nice/Panels/Mytexture.png");
+	string removed = StringOperations::RemovePathString("./GUI/Nice/Panels/Mytexture.png");
 
 	CHECK(removed == "Mytexture.png");
 
-	wstring pathy = GetPathWstring(paththing);
+	wstring pathy = StringOperations::GetPathWstring(paththing);
 
 	CHECK(pathy == L"My/super/path/");
 
-	CHECK(StringStartsWith(wstring(L"My super text"), wstring(L"My")));
-    CHECK(StringStartsWith(wstring(L"}"), wstring(L"}")));
-    CHECK_FALSE(StringStartsWith(string("This shouldn't match"), string("this")));
+	CHECK(StringOperations::StringStartsWith(wstring(L"My super text"), wstring(L"My")));
+    CHECK(StringOperations::StringStartsWith(wstring(L"}"), wstring(L"}")));
+    CHECK_FALSE(StringOperations::StringStartsWith(string("This shouldn't match"),
+            string("this")));
 
 	// Line end changing //
 	wstring pathtestoriginal = L"My text is quite nice\nand has\n multiple\r\n lines\n"
         L"that are separated\n";
 
-	wstring pathresult = ChangeLineEndsToWindowsWstring(pathtestoriginal);
+	wstring pathresult = StringOperations::ChangeLineEndsToWindowsWstring(pathtestoriginal);
 
 	CHECK(pathresult == L"My text is quite nice\r\nand has\r\n multiple\r\n lines\r\n that are separated\r\n");
 
-	wstring backlinetest = ChangeLineEndsToUniversalWstring(pathresult);
+	wstring backlinetest = StringOperations::ChangeLineEndsToUniversalWstring(pathresult);
 
 	CHECK(backlinetest == L"My text is quite nice\nand has\n multiple\n lines\n that are separated\n");
 }

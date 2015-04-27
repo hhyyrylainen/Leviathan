@@ -616,9 +616,6 @@ add_subdirectory(Engine)
 # test project
 add_subdirectory(LeviathanTest)
 
-# sandboxie example project
-add_subdirectory(Sandboxie)
-
 # example pong master server
 add_subdirectory(PongMasterServer)
 

@@ -4,12 +4,9 @@ set(TestSources
   resource.h
   TestMain.cpp
   TestFiles/StringIterator.cpp
-  TestFiles/Misc.cpp
   TestFiles/StringOperations.cpp
   TestFiles/IDFactory.cpp
-  TestFiles/MultiFlag.cpp
   TestFiles/Script.cpp
-  TestFiles/Tokenize.cpp
   TestFiles/HashTesting.cpp
   TestFiles/ObjectFiles.cpp
   TestFiles/Floats.cpp

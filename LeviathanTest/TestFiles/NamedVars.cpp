@@ -8,19 +8,19 @@ using namespace std;
 TEST_CASE("NamedVars creation and value retrieve", "[variable]"){
 
 	vector<shared_ptr<NamedVariableList>> Variables;
-	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"var1",
+	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var1",
                 new VariableBlock(1))));
     
-	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"var2",
+	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var2",
                 new VariableBlock(2))));
     
-	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"var3",
+	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var3",
                 new VariableBlock(3))));
     
-	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"var4",
+	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var4",
                 new VariableBlock(4))));
     
-	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(L"var5",
+	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var5",
                 new VariableBlock(5))));
 
 	// create holder //
@@ -29,24 +29,24 @@ TEST_CASE("NamedVars creation and value retrieve", "[variable]"){
 	holder->SetVec(Variables);
 
 	// add some more values //
-	holder->AddVar(L"var66", new VariableBlock(25));
-	holder->Remove(holder->Find(L"var2"));
+	holder->AddVar("var66", new VariableBlock(25));
+	holder->Remove(holder->Find("var2"));
 
-    CHECK(holder->Find(L"var66") >= 0);
-    CHECK(holder->Find(L"var2") < 0);
+    CHECK(holder->Find("var66") >= 0);
+    CHECK(holder->Find("var2") < 0);
 
     int checkval;
     
-	REQUIRE(holder->GetValueAndConvertTo<int>(L"var3", checkval) == true);
+	REQUIRE(holder->GetValueAndConvertTo<int>("var3", checkval) == true);
 
     CHECK(checkval == 3);
 }
 
-TEST_CASE("NamedVars line parsing", "[variable]"){
+TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
 
     SECTION("Line 'this= not this'"){
         
-        wstring typelinething = L"this= not this";
+        string typelinething = "this= not this";
 
         // creation testing //
         auto ptry = make_shared<NamedVariableList>(typelinething);
@@ -60,7 +60,7 @@ TEST_CASE("NamedVars line parsing", "[variable]"){
 
     SECTION("Line 'this=2'"){
         
-        wstring typelinething = L"this=2";
+        string typelinething = "this=2";
 
         auto result = shared_ptr<NamedVariableList>(new NamedVariableList(typelinething));
 
@@ -73,13 +73,25 @@ TEST_CASE("NamedVars line parsing", "[variable]"){
 
     SECTION("Line 'oh=2;'"){
         
-        wstring line = L"oh=2;";
+        string line = "oh=2;";
 	
         auto result = make_shared<NamedVariableList>(line, NULL);
 
         REQUIRE(result == true);
 
-        CHECK(result->GetName() == L"oh");
+        CHECK(result->GetName() == "oh");
+    }
+
+    SECTION("Basic bracket expression"){
+
+        
+        NamedVariableList advlist("value = [first, 2]");
+
+        REQUIRE(advlist.GetVariableCount() != 2);
+
+        CHECK(advlist.GetValueDirect(0)->GetBlockConst()->Type == DATABLOCK_TYPE_STRING);
+    
+        CHECK(advlist.GetValueDirect(1)->GetBlockConst()->Type == DATABLOCK_TYPE_INT);
     }
 
     SECTION("Advanced line 'Color = [[0.1], [4], [true], [\"lol\"]]'"){
@@ -95,7 +107,7 @@ TEST_CASE("NamedVars line parsing", "[variable]"){
     
         CHECK(advlist.GetValueDirect(2)->GetBlockConst()->Type == DATABLOCK_TYPE_BOOL);
     
-        CHECK(advlist.GetValueDirect(3)->GetBlockConst()->Type == DATABLOCK_TYPE_WSTRING);
+        CHECK(advlist.GetValueDirect(3)->GetBlockConst()->Type == DATABLOCK_TYPE_STRING);
     }
 }
 

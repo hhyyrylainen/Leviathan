@@ -9,6 +9,7 @@
 #include "catch.hpp"
 
 using namespace Leviathan;
+using namespace std;
 
 TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 

@@ -121,7 +121,7 @@ DLLEXPORT bool Leviathan::NetworkedInput::ConnectToServersideInput(){
 	ThreadingManager::Get()->QueueTask(new ConditionalDelayedTask(std::bind<void>(
 		[](shared_ptr<SentNetworkThing> requestthing, NetworkedInput* inputobj) -> void
 	{
-		if(!requestthing->GetFutureForThis().get() || !requestthing->GotResponse){
+		if(!requestthing->GetStatus() || !requestthing->GotResponse){
 
 			// Destroy it //
 			Logger::Get()->Warning("NetworkedInput: closed due to the server not responding to connect request");
@@ -152,7 +152,7 @@ doactualdeletereleasethingforfaillabel:
 	}, netthing, this), std::bind<bool>(
 		[](shared_ptr<SentNetworkThing> requestthing, NetworkedInput* inputobj) -> bool{
 		// Check has it arrived //
-		if(requestthing->GetFutureForThis().has_value())
+		if(requestthing->IsFinalized())
 			return true;
 
 		// More waiting //

@@ -802,7 +802,7 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance,
                 std::bind<bool>([](std::shared_ptr<SentNetworkThing> response) -> bool
 					{
 						
-						return response->GetFutureForThis().has_value();
+						return response->IsFinalized();
 					}, serverinforesponse)));
 	}
 	

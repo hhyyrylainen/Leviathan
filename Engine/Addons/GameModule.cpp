@@ -158,7 +158,7 @@ DLLEXPORT void Leviathan::GameModule::ReleaseScript(){
 	ScriptExecutor::Get()->DeleteModuleIfNoExternalReferences(tmpid);
 }
 // ------------------------------------ //
-DLLEXPORT std::string Leviathan::GameModule::GetDescriptionForError(bool full /*= false*/){
+DLLEXPORT std::string Leviathan::GameModule::GetDescription(bool full /*= false*/){
 	return "GameModule("+Name+(full ? " v"+Version+") ": ") ")+" owned by: "+OwnerName+
         (full ? ", loaded from file: "+LoadedFromFile+".": ".");
 }

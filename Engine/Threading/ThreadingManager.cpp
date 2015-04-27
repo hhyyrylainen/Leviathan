@@ -4,6 +4,8 @@
 #include "OgreRoot.h"
 #include "QueuedTask.h"
 #include <thread>
+#include "../Utility/Convert.h"
+#include "../Statistics/TimingMonitor.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -12,7 +14,7 @@ using namespace std;
 void Leviathan::RegisterOgreOnThread(){
 
 	Ogre::Root::getSingleton().getRenderSystem()->registerThread();
-	Logger::Get()->Info(L"Thread registered to work with Ogre");
+	Logger::Get()->Info("Thread registered to work with Ogre");
 }
 
 
@@ -64,7 +66,7 @@ DLLEXPORT bool Leviathan::ThreadingManager::CheckInit(){
 	bool started = false;
 	int loopcount = 0;
 
-	std::thread::yield();
+	std::this_thread::yield();
 
 	// This might need to be repeated for a while //
 	while(!started){
@@ -92,13 +94,13 @@ DLLEXPORT bool Leviathan::ThreadingManager::CheckInit(){
 
 		if(++loopcount > 1000){
 
-			Logger::Get()->Error(L"ThreadingManager: CheckInit: no threads have started, after 1000 loops");
+			Logger::Get()->Error("ThreadingManager: CheckInit: no threads have started, after 1000 loops");
 
 			// No threads running //
 			return false;
 		}
 
-		std::thread::yield();
+		std::this_thread::yield();
 	}
 
 	assert(0 && "Shouldn't get out of that loop");
@@ -321,7 +323,7 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 					TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(50));
 				}
 				catch(...){
-					Logger::Get()->Warning(L"ThreadingManager: MakeThreadsWorkWithOgre: linux fix wait interrupted");
+					Logger::Get()->Warning("ThreadingManager: MakeThreadsWorkWithOgre: linux fix wait interrupted");
 				}
 			}
 #endif
@@ -357,12 +359,12 @@ DLLEXPORT void Leviathan::ThreadingManager::SetDiscardConditionalTasks(bool disc
 void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 
 	// Lock the object //
-	UNIQUE_LOCK_OBJECT(manager);
+	GUARD_LOCK_OTHER(manager);
 
 	while(!manager->StopProcessing){
 
 		// Wait until task queue needs work //
-		manager->TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(100));
+		manager->TaskQueueNotify.wait_for(guard, std::chrono::milliseconds(100));
 
 		// Quickly continue if it is empty //
 		if(!manager->AllowStartTasksFromQueue || manager->WaitingTasks.empty()){
@@ -480,7 +482,7 @@ void Leviathan::SetThreadName(TaskThread* thread, const string &name){
 		return;
 
 	// Get the native handle //
-	DWORD nativehandle = GetThreadId(thread->GetBoostThreadObject().native_handle());
+	DWORD nativehandle = GetThreadId(thread->GetInternalThreadObject().native_handle());
 
 	SetThreadNameImpl(nativehandle, name);
 }
@@ -506,7 +508,7 @@ void Leviathan::SetThreadNameImpl(DWORD threadid, const string &name){
 
 void Leviathan::SetThreadName(TaskThread* thread, const string &name){
 
-    pthread_setname_np(thread->GetBoostThreadObject().native_handle(), name.c_str());
+    pthread_setname_np(thread->GetInternalThreadObject().native_handle(), name.c_str());
 }
 
 #else

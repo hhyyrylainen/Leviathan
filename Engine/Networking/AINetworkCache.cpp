@@ -269,9 +269,7 @@ void Leviathan::AINetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList>
 // ------------------------------------ //
 DLLEXPORT ScriptSafeVariableBlock* Leviathan::AINetworkCache::GetVariableWrapper(const string &name){
 
-    const std::string wname = Convert::StringToStd::String(name);
-
-    auto variable = GetVariable(wname);
+    auto variable = GetVariable(name);
 
     if(!variable)
         return NULL;

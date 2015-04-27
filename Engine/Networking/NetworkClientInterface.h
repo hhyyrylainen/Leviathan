@@ -60,7 +60,7 @@ namespace Leviathan{
         //! save space when sending long chat messages
 		//! The maximum length is MAX_SERVERCOMMAND_LENGTH should be around 550 characters.
 		//! \exception ExceptionInvalidArgument when the message string is too long
-		DLLEXPORT void SendCommandStringToServer(const string &messagestr);
+		DLLEXPORT void SendCommandStringToServer(const std::string &messagestr);
 
 
 		//! \brief Returns a pointer to an instance if this application is a client
@@ -83,7 +83,8 @@ namespace Leviathan{
 		//! \brief Enables the use of a NetworkedInputHandler
 		//! \param handler The object that implements the networked input interface
 		//! \warning The deletion of the old handler isn't thread safe so be careful when switching handlers
-		DLLEXPORT virtual bool RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler);
+		DLLEXPORT virtual bool RegisterNetworkedInput(
+            std::shared_ptr<NetworkedInputHandler> handler);
 
 		//! \brief Returns the active networked input handler or NULL
 		DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
@@ -97,13 +98,14 @@ namespace Leviathan{
 		//! \brief Utility function for subclasses to call for default handling of server packets
 		//!
 		//! Handles default packets that are meant to be processed by a client
-		DLLEXPORT bool _HandleClientRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult);
+		DLLEXPORT bool _HandleClientRequest(std::shared_ptr<NetworkRequest> request,
+            ConnectionInfo* connectiontosendresult);
 
 		//! \brief Utility function for subclasses to call for default handling of non-request responses
 		//!
 		//! Handles default types of response packages and returns true if processed.
-		DLLEXPORT bool _HandleClientResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection,
-            bool &dontmarkasreceived);
+		DLLEXPORT bool _HandleClientResponseOnly(std::shared_ptr<NetworkResponse> message,
+            ConnectionInfo* connection, bool &dontmarkasreceived);
 
 		//! \brief Updates status of the client to server connections
 		//!  
@@ -111,7 +113,8 @@ namespace Leviathan{
 		DLLEXPORT void UpdateClientStatus();
 
 		// Callbacks for child classes to implement //
-		DLLEXPORT virtual void _OnDisconnectFromServer(const std::string &reasonstring, bool donebyus);
+		DLLEXPORT virtual void _OnDisconnectFromServer(const std::string &reasonstring,
+            bool donebyus);
 		DLLEXPORT virtual void _OnStartConnectToServer();
 		DLLEXPORT virtual void _OnFailedToConnectToServer(const std::string &reason);
 		DLLEXPORT virtual void _OnSuccessfullyConnectedToServer();
@@ -124,13 +127,16 @@ namespace Leviathan{
 
 		//! \brief Called when the server has confirmed the join and we are a player on the server
 		//!
-		//! By default this will synchronize game variables and call the _OnLobbyJoin function (which can then handle match joining)
+		//! By default this will synchronize game variables and call the _OnLobbyJoin function
+        //! (which can then handle match joining)
 		//! \todo Do what this should do
 		DLLEXPORT virtual void _OnProperlyConnected();
 
 
-		//! \brief Called when the player is on the server and everything that the Engine is concerned about is done
-		//! \note Here the application's connect data should be sent. The application specific connection routine should be done here
+		//! \brief Called when the player is on the server and everything that the Engine
+        //! is concerned about is done
+		//! \note Here the application's connect data should be sent. The application
+        //! specific connection routine should be done here
 		DLLEXPORT virtual void _OnStartApplicationConnect() = 0;
 
 	private:

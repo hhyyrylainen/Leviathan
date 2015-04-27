@@ -10,6 +10,7 @@
 #include "Application/AppDefine.h"
 #include "SyncedVariables.h"
 #include "NetworkedInputHandler.h"
+#include "../Utility/Convert.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -22,7 +23,7 @@ DLLEXPORT Leviathan::NetworkInterface::~NetworkInterface(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkInterface::HandleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo*
-    connection) THROWS
+    connection) 
 {
 	// We can only try the default handle function //
 	if(!_HandleDefaultRequest(request, connection)){
@@ -55,13 +56,13 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
                     PACKET_TIMEOUT_STYLE_TIMEDMS, 500));
 
 			// Fetch the data from the configuration object //
-			wstring userreadable, gamename, gameversion;
+			string userreadable, gamename, gameversion;
 
 			AppDef::GetDefault()->GetGameIdentificationData(userreadable, gamename, gameversion);
 
 			// Set the right data //
 			tmpresponse->GenerateIdentificationStringResponse(new NetworkResponseDataForIdentificationString(
-                    userreadable, gamename, gameversion, LEVIATHAN_VERSIONS));
+                    userreadable, gamename, gameversion, LEVIATHAN_VERSION_ANSIS));
 			connectiontosendresult->SendPacketToConnection(tmpresponse, 3);
 
 			return true;
@@ -129,8 +130,8 @@ bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkR
         case NETWORKRESPONSETYPE_CLOSECONNECTION:
 		{
 			// This connection should be closed //
-			Logger::Get()->Info(L"NetworkInterface: dropping connection due to receiving a connection close packet ("+
-				connection->GenerateFormatedAddressString()+L")");
+			Logger::Get()->Info("NetworkInterface: dropping connection due to receiving a connection close packet ("+
+				connection->GenerateFormatedAddressString()+")");
 
 			NetworkHandler::Get()->SafelyCloseConnectionTo(connection);
 			return true;

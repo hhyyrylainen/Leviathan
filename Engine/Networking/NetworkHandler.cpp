@@ -77,7 +77,7 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
                 "'MasterServerPort' of type int");
 		}
 
-		PortNumber = (USHORT)tmpport;
+		PortNumber = (unsigned short)tmpport;
 	}
 
 	if(AppType == NETWORKED_TYPE_CLIENT){
@@ -92,17 +92,18 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 
 		if(!vars->GetValueAndConvertTo<int>("DefaultServerPort", tmpport)){
 			// This is quite bad //
-			Logger::Get()->Error("NetworkHandler: Init: no port configured, config missing 'ServerPort' of type int");
+			Logger::Get()->Error("NetworkHandler: Init: no port configured, config missing "
+                "'ServerPort' of type int");
 		}
 
-		PortNumber = (USHORT)tmpport;
+		PortNumber = (unsigned short)tmpport;
 	}
 
 	// We want to receive responses //
 	if(_Socket.bind(PortNumber) != sf::Socket::Done){
 
 		Logger::Get()->Error("NetworkHandler: Init: failed to bind to a port "+
-            Convert::String(PortNumber));
+            Convert::ToString(PortNumber));
 		return false;
 	}
 
@@ -188,7 +189,7 @@ void Leviathan::NetworkHandler::_ReleaseSocket(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT std::shared_ptr<boost::promise<string>> Leviathan::NetworkHandler::QueryMasterServer(
+DLLEXPORT std::shared_ptr<std::promise<string>> Leviathan::NetworkHandler::QueryMasterServer(
     const MasterServerInformation &info)
 {
 	// Might as well lock here //
@@ -196,13 +197,13 @@ DLLEXPORT std::shared_ptr<boost::promise<string>> Leviathan::NetworkHandler::Que
 	// Copy the data //
 	StoredMasterServerInfo = info;
 
-	shared_ptr<std::promise<string>> resultvalue(new boost::promise<string>());
+	shared_ptr<std::promise<string>> resultvalue(new std::promise<string>());
 
 	// Make sure it doesn't die instantly //
 	CloseMasterServerConnection = false;
 
 	// Run the task async //
-	MasterServerConnectionThread = boost::thread(RunGetResponseFromMaster, this, resultvalue);
+	MasterServerConnectionThread = std::thread(RunGetResponseFromMaster, this, resultvalue);
 
 	return resultvalue;
 }
@@ -392,7 +393,7 @@ DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT USHORT Leviathan::NetworkHandler::GetOurPort(){
+DLLEXPORT unsigned short Leviathan::NetworkHandler::GetOurPort(){
 	auto lock = std::move(LockSocketForUse());
 	return _Socket.getLocalPort();
 }
@@ -572,7 +573,8 @@ DLLEXPORT void Leviathan::NetworkHandler::StopOwnUpdaterThread(){
     NotifyTemporaryUpdater.notify_all();
 
     // Wait for the thread to die //
-    TemporaryUpdateThread.try_join_for(boost::chrono::milliseconds(100));
+    // TODO: check that this doesn't deadlock //
+    TemporaryUpdateThread.join();
 }
 
 void Leviathan::NetworkHandler::_RunTemporaryUpdaterThread(){
@@ -584,21 +586,23 @@ void Leviathan::NetworkHandler::_RunTemporaryUpdaterThread(){
 
         UpdateAllConnections();
 
-        NotifyTemporaryUpdater.wait_for(lockit, boost::chrono::milliseconds(50));
+        NotifyTemporaryUpdater.wait_for(lockit, std::chrono::milliseconds(50));
     }
 }
 // ------------------------------------ //
-void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, std::shared_ptr<boost::promise<string>> resultvar){
+void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance,
+    std::shared_ptr<std::promise<string>> resultvar)
+{
 	// Try to load master server list //
 
 	// To reduce duplicated code and namespace pollution use a lambda thread for this //
-	boost::thread DataUpdaterThread(boost::bind<void>([](NetworkHandler* instance) -> void{
+	std::thread DataUpdaterThread(std::bind<void>([](NetworkHandler* instance) -> void{
 
 		Logger::Get()->Info("NetworkHandler: Fetching new master server list...");
-		sf::Http::Request request(Convert::StringToString(instance->StoredMasterServerInfo.MasterListFetchPage),
+		sf::Http::Request request(instance->StoredMasterServerInfo.MasterListFetchPage,
             sf::Http::Request::Get);
 
-		sf::Http httpserver(Convert::StringToString(instance->StoredMasterServerInfo.MasterListFetchServer));
+		sf::Http httpserver(instance->StoredMasterServerInfo.MasterListFetchServer);
 
 		sf::Http::Response response = httpserver.sendRequest(request, sf::seconds(2.f));
 
@@ -623,7 +627,8 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, std::shared_p
 			// Check //
 			if(tmplist.size() == 0){
 
-				Logger::Get()->Warning("NetworkHandler: retrieved an empty list of master servers, not updated");
+				Logger::Get()->Warning("NetworkHandler: retrieved an empty list of master "
+                    "servers, not updated");
 				return;
 			}
 
@@ -645,9 +650,12 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, std::shared_p
 			auto tmpget = Logger::Get();
 			if(tmpget)
 				tmpget->Info("NetworkHandler: Successfully fetched a master server list:");
-			for(auto iter = instance->MasterServers.begin(); iter != instance->MasterServers.end(); ++iter)
+			for(auto iter = instance->MasterServers.begin(); iter != instance->MasterServers.end();
+                ++iter)
+            {
 				if(tmpget)
-				Logger::Get()->Write("\t> "+*(*iter).get(), false);
+				Logger::Get()->Write("\t> "+*(*iter).get());
+            }
 
 		} else {
 			// Fail //
@@ -726,14 +734,14 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, std::shared_p
 		shared_ptr<SentNetworkThing> serverinforesponse = tmpinfo->SendPacketToConnection(inforequest, 5);
 
 
-        std::shared_ptr<boost::promise<bool>> sendpromise(new boost::promise<bool>());
+        std::shared_ptr<std::promise<bool>> sendpromise(new std::promise<bool>());
 
 
 		// Now we'll just wait until it is done //
-		ThreadingManager::Get()->QueueTask(new ConditionalTask(boost::bind<void>([](
+		ThreadingManager::Get()->QueueTask(new ConditionalTask(std::bind<void>([](
                         std::shared_ptr<SentNetworkThing> response, NetworkHandler* instance,
-                        std::shared_ptr<boost::promise<bool>> result, std::shared_ptr<ConnectionInfo> currentconnection,
-                        std::shared_ptr<string> tmpaddress, std::shared_ptr<boost::promise<string>> resultvar) -> void
+                        std::shared_ptr<std::promise<bool>> result, std::shared_ptr<ConnectionInfo> currentconnection,
+                        std::shared_ptr<string> tmpaddress, std::shared_ptr<std::promise<string>> resultvar) -> void
 				{
 					// Report this for easier debugging //
 					Logger::Get()->Info("Master server check with \""+*tmpaddress+
@@ -790,8 +798,8 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, std::shared_p
 					result->set_value(true);
 						
 						
-				}, serverinforesponse, instance, sendpromise, tmpinfo, tmpaddress, resultvar), boost::bind<bool>([](
-                        std::shared_ptr<SentNetworkThing> response) -> bool
+				}, serverinforesponse, instance, sendpromise, tmpinfo, tmpaddress, resultvar),
+                std::bind<bool>([](std::shared_ptr<SentNetworkThing> response) -> bool
 					{
 						
 						return response->GetFutureForThis().has_value();
@@ -805,7 +813,8 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance, std::shared_p
 		Logger::Get()->Warning("NetworkHandler: could not connect to any fetched master servers, "
             "you can restart to use a new list");
 		
-		// We can let whoever is waiting for us to go now, and finish some utility tasks after that //
+		// We can let whoever is waiting for us to go now, and finish some utility
+        // tasks after that
 		resultvar->set_value(string("Failed to connect to master server"));
 	}
 

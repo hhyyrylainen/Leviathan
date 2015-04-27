@@ -43,7 +43,8 @@ DLLEXPORT bool Leviathan::SyncedVariables::AddNewVariable(shared_ptr<SyncedValue
 	}
 
 	// Add it //
-	Logger::Get()->Info("SyncedVariables: added a new value, "+newvalue->GetVariableAccess()->GetName());
+	Logger::Get()->Info("SyncedVariables: added a new value, "+
+        newvalue->GetVariableAccess()->GetName());
 	ToSyncValues.push_back(newvalue);
 
 	// Notify update //
@@ -107,7 +108,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
 			// Send the number of values as the string parameter //
 			tmpresponse->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(
                     NETWORKRESPONSE_SERVERACCEPTED_TYPE_REQUEST_QUEUED,
-                    Convert::ToStd::String(ToSyncValues.size()+ConnectedChildren.size())));
+                    Convert::ToString(ToSyncValues.size()+ConnectedChildren.size())));
 
 			connection->SendPacketToConnection(tmpresponse, 5);
 

@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_NETWORKHANDLER
-#define LEVIATHAN_NETWORKHANDLER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/ThreadSafe.h"
 #include "NetworkInterface.h"
 #include "SFML/Network/UdpSocket.hpp"
@@ -215,4 +211,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

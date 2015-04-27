@@ -40,7 +40,7 @@ namespace Leviathan{
 
 
 		// Script proxies //
-		DLLEXPORT string GetDescriptionProxy(bool full);
+		DLLEXPORT std::string GetDescriptionProxy(bool full);
 
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GameModule);

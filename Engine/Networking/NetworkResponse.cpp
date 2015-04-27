@@ -567,9 +567,9 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
 	// Check the length //
 	if(ServerNameString.length() > 100){
 
-		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerStatus: server name is too long, max 100 "
-            "characters (is "+Convert::ToStd::String(ServerNameString.length())+") : "+ServerNameString+
-            " will be truncated:");
+		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerStatus: server "
+            "name is too long, max 100 characters (is "+Convert::ToString(
+                ServerNameString.length())+") : "+ServerNameString+" will be truncated:");
 		ServerNameString.resize(100);
 		Logger::Get()->Write("\t> "+ServerNameString+"\n");
 	}
@@ -626,8 +626,9 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataFo
 	// Check the length //
 	if(Message.length() > 100){
 
-		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerDisallow: message is too long (is "+
-            Convert::ToStd::String(Message.length())+") : "+Message+" will be truncated:");
+		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerDisallow: message "
+            "is too long (is "+Convert::ToString(Message.length())+") : "+
+            Message+" will be truncated:");
 		Message.resize(100);
 		Logger::Get()->Write("\t> "+Message+"\n");
 	}
@@ -662,8 +663,9 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForSe
 	// Check the length //
 	if(Message.length() > 100){
 
-		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerAllow: message is too long (is "+
-            Convert::ToStd::String(Message.length())+") : "+Message+" will be truncated:");
+		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerAllow: message "
+            "is too long (is "+Convert::ToString(Message.length())+") : "+
+            Message+" will be truncated:");
 		Message.resize(100);
 		Logger::Get()->Write("\t> "+Message+"\n");
 	}

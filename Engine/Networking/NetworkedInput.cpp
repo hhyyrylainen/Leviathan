@@ -1,8 +1,6 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_NETWORKEDINPUT
 #include "NetworkedInput.h"
-#endif
+
 #include "Exceptions.h"
 #include "NetworkedInputHandler.h"
 #include "NetworkRequest.h"
@@ -10,6 +8,7 @@
 #include "ConnectionInfo.h"
 #include "NetworkClientInterface.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(int ownerid, int networkid) :
     OwnerID(ownerid), InputID(networkid), OwningHandler(NULL), CurrentState(NETWOKREDINPUT_STATE_READY)
@@ -52,7 +51,7 @@ DLLEXPORT void Leviathan::NetworkedInput::LoadDataFromFullPacket(sf::Packet &pac
 }
 
 DLLEXPORT void Leviathan::NetworkedInput::LoadHeaderDataFromPacket(sf::Packet &packet, int &ownerid, int &inputid)
-    THROWS
+    
 {
 	// First our common information //
 	if(!(packet >> ownerid)){
@@ -119,13 +118,13 @@ DLLEXPORT bool Leviathan::NetworkedInput::ConnectToServersideInput(){
 	shared_ptr<SentNetworkThing> netthing = connection->SendPacketToConnection(request, 12);
 
 	// Queue a task for checking the result later //
-	ThreadingManager::Get()->QueueTask(new ConditionalDelayedTask(boost::bind<void>(
+	ThreadingManager::Get()->QueueTask(new ConditionalDelayedTask(std::bind<void>(
 		[](shared_ptr<SentNetworkThing> requestthing, NetworkedInput* inputobj) -> void
 	{
 		if(!requestthing->GetFutureForThis().get() || !requestthing->GotResponse){
 
 			// Destroy it //
-			Logger::Get()->Warning(L"NetworkedInput: closed due to the server not responding to connect request");
+			Logger::Get()->Warning("NetworkedInput: closed due to the server not responding to connect request");
 			goto doactualdeletereleasethingforfaillabel;
 		}
 
@@ -133,7 +132,7 @@ DLLEXPORT bool Leviathan::NetworkedInput::ConnectToServersideInput(){
 		if(requestthing->GotResponse->GetType() != NETWORKRESPONSETYPE_SERVERALLOW){
 
 			// It failed because server denied it //
-			Logger::Get()->Warning(L"NetworkedInput: closed due to the server denying our connect request");
+			Logger::Get()->Warning("NetworkedInput: closed due to the server denying our connect request");
 			goto doactualdeletereleasethingforfaillabel;
 		}
 
@@ -150,7 +149,7 @@ doactualdeletereleasethingforfaillabel:
 				otherpotential->QueueDeleteInput(inputobj);
 		}
 
-	}, netthing, this), boost::bind<bool>(
+	}, netthing, this), std::bind<bool>(
 		[](shared_ptr<SentNetworkThing> requestthing, NetworkedInput* inputobj) -> bool{
 		// Check has it arrived //
 		if(requestthing->GetFutureForThis().has_value())

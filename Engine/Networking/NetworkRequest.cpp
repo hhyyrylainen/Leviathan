@@ -6,6 +6,7 @@
 #include "GameSpecificPacketHandler.h"
 #include "NetworkedInput.h"
 #include "../Handlers/IDFactory.h"
+#include "../Utility/Convert.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //

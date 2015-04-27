@@ -3,9 +3,10 @@
 
 #include "FileSystem.h"
 #include "Statistics/TimingMonitor.h"
-#include "Iterators/StringIterator.h"
+#include "../../Iterators/StringIterator.h"
 #include "Exceptions.h"
 #include <cstdint>
+#include <limits.h>
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -104,7 +105,12 @@ DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const stri
 	// check does it have brackets (and need to be processed like so) //
 	if(variablestr[0] == L'['){
 
-		// needs to be tokenized //
+		// Needs to be split into values //
+        int depth = 1;
+
+        StringIterator itr(variablestr);
+
+        itr.MoveToNext();
         
         
 		vector<Token*> tokens;
@@ -934,17 +940,16 @@ DLLEXPORT size_t Leviathan::NamedVars::Find(const string &name, Lock &guard) con
 			return i;
 	}
     
-	return SIZE_T_MAX_VALUE;
+	return SIZE_MAX;
 }
 // ------------------ Script compatible functions ------------------ //
 ScriptSafeVariableBlock* Leviathan::NamedVars::GetScriptCompatibleValue(const string &name){
 	// Use a try block to not throw exceptions to the script engine //
 	try{
-		string wstrname = Convert::StringToString(name);
-		VariableBlock& tmpblock = GetValueNonConst(wstrname);
+		VariableBlock& tmpblock = GetValueNonConst(name);
 
 		// Create script safe version //
-		return new ScriptSafeVariableBlock(&tmpblock, wstrname);
+		return new ScriptSafeVariableBlock(&tmpblock, name);
 
 
 	} catch(...){

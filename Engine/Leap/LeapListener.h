@@ -4,6 +4,8 @@
 
 namespace Leviathan{
 
+    class LeapManager;
+
 	class LeapListener : public Leap::Listener{
         friend LeapManager;
 	public:

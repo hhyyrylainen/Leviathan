@@ -77,7 +77,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const string &modelfile){
 		return false;
 	}
 
-	wstring ogrefile;
+	string ogrefile;
 
 	ObjectFileProcessor::LoadValueFromNamedVars<string>(file->GetVariables(), "Model-Graphical",
         ogrefile, "error", true, "Prop: Init: no model file");
@@ -85,7 +85,8 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const string &modelfile){
 	// Load the Ogre entity if in graphical mode //
     if(OwnedByWorld->GetScene()){
         
-        GraphicalObject = OwnedByWorld->GetScene()->createEntity(Convert::WstringToString(ogrefile));
+        GraphicalObject =
+            OwnedByWorld->GetScene()->createEntity(ogrefile);
 
         // Create scene node for positioning //
         ObjectsNode = OwnedByWorld->GetScene()->getRootSceneNode()->createChildSceneNode();
@@ -112,14 +113,14 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const string &modelfile){
 	NewtonWorld* tmpworld = OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld();
 
 	// first get the type //
-	wstring ptype;
+	string ptype;
 
 	// get offset //
-	wstring offsettype;
+	string offsettype;
 	Ogre::Matrix4 offset = Ogre::Matrix4::IDENTITY;
-	// this is useful when the origin is at the bottom of the model and you don't take this into account in
-    // newton primitive (using Convex hull should not require this)
-	if(ObjectFileProcessor::LoadValueFromNamedVars<wstring>(proplist->GetVariables(), "Offset",
+	// this is useful when the origin is at the bottom of the model and you don't take
+    // this into account in newton primitive (using Convex hull should not require this)
+	if(ObjectFileProcessor::LoadValueFromNamedVars<string>(proplist->GetVariables(), "Offset",
             offsettype, "", true, "Prop: Init: CreatePhysicsModel"))
 	{
 
@@ -132,8 +133,8 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const string &modelfile){
             // There needs to be a workaround in non-graphical mode //
             if(!GraphicalObject){
 
-                Logger::Get()->Error("Prop: Init: trying to use BoundingBoxCenter as offset in non-graphical mode"
-                    " and there is no workaround to calculate that...yet");
+                Logger::Get()->Error("Prop: Init: trying to use BoundingBoxCenter as offset in "
+                    "non-graphical mode and there is no workaround to calculate that...yet");
                 return false;
             }
 
@@ -141,8 +142,9 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const string &modelfile){
 			offset.setTrans(bbox.mCenter);
 
 		} else {
-			Logger::Get()->Error("Prop: Init: invalid offset type, use None or BoundingBoxCenter for most common "
-                "cases, file: "+modelfile);
+            
+			Logger::Get()->Error("Prop: Init: invalid offset type, use None or BoundingBoxCenter "
+                "for most common cases, file: "+modelfile);
 			return false;
 		}
 	}
@@ -151,12 +153,15 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const string &modelfile){
 	Ogre::Matrix4 toffset = offset.transpose();
 
 
-	ObjectFileProcessor::LoadValueFromNamedVars<wstring>(proplist->GetVariables(), "PrimitiveType", ptype, "Convex");
+	ObjectFileProcessor::LoadValueFromNamedVars<string>(proplist->GetVariables(),
+        "PrimitiveType", ptype, "Convex");
 
-	// Process first the most complicated one, Convex hull which is basically a prop that we need to load //
+	// Process first the most complicated one, Convex hull which is basically a prop that
+    // we need to load
 	if(ptype == "Convex"){
 
-		Logger::Get()->Error("Prop: Init: physical object Convex hull loading is not implemented!");
+		Logger::Get()->Error("Prop: Init: physical object Convex hull loading is not "
+            "implemented!");
 		return false;
 
 	} else if(ptype == "Sphere" || ptype == "Ball"){
@@ -165,12 +170,14 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const string &modelfile){
         // count it from the object bounding box
 		float radius = 0.f;
 
-		if(!ObjectFileProcessor::LoadValueFromNamedVars<float>(proplist->GetVariables(), "Size", radius, 0.f)){
+		if(!ObjectFileProcessor::LoadValueFromNamedVars<float>(proplist->GetVariables(), "Size",
+                radius, 0.f))
+        {
 			// it should be string type //
-			wstring sizesourcename;
+			string sizesourcename;
 			
-			if(!ObjectFileProcessor::LoadValueFromNamedVars<wstring>(proplist->GetVariables(), "Size", sizesourcename,
-                    "", true, "Prop: Init: CreatePhysicsModel:"))
+			if(!ObjectFileProcessor::LoadValueFromNamedVars<string>(proplist->GetVariables(),
+                    "Size", sizesourcename, "", true, "Prop: Init: CreatePhysicsModel:"))
 			{
 				Logger::Get()->Error("Prop: Init: physical model has no size! at least specify "
                     "\"Size = GraphicalModel;\", file: "+modelfile);
@@ -183,8 +190,8 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const string &modelfile){
                 // There needs to be a workaround in non-graphical mode //
                 if(!GraphicalObject){
 
-                    Logger::Get()->Error("Prop: Init: trying to use GraphicalModel as size specification "
-                        " but in non-gui mode graphical object isn't loaded"
+                    Logger::Get()->Error("Prop: Init: trying to use GraphicalModel as size "
+                        "specification  but in non-gui mode graphical object isn't loaded"
                         " and there is no workaround to calculate that...yet");
                     return false;
                 }
@@ -196,16 +203,15 @@ DLLEXPORT bool Leviathan::Entity::Prop::Init(const string &modelfile){
 				// A little sanity check //
 				if(sizes.x != sizes.y || sizes.x != sizes.z){
 					// it's not cube //
-					Logger::Get()->Warning("Prop: Init: physical model sphere, the bounding box of graphical model is "
-                        "not a cube, continuing anyways");
+					Logger::Get()->Warning("Prop: Init: physical model sphere, the bounding box "
+                        "of graphical model is not a cube, continuing anyways");
 				}
 
 				radius = sizes.x;
 
-
 			} else {
-				Logger::Get()->Error("Prop: Init: physical model has no size! unknown source: "+sizesourcename+
-                    " (\"Size = GraphicalModel;\"), file: "+modelfile);
+				Logger::Get()->Error("Prop: Init: physical model has no size! unknown source: "
+                    +sizesourcename+" (\"Size = GraphicalModel;\"), file: "+modelfile);
 				return false;
 			}
 		}
@@ -297,8 +303,9 @@ void Leviathan::Entity::Prop::PropPhysicsMovedEvent(const NewtonBody* const body
 {
 
 	// first create Ogre 4x4 matrix from the matrix //
-	Ogre::Matrix4 mat(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6], matrix[7], matrix[8],
-        matrix[9], matrix[10], matrix[11], matrix[12], matrix[13], matrix[14], matrix[15]);
+	Ogre::Matrix4 mat(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6],
+        matrix[7], matrix[8], matrix[9], matrix[10], matrix[11], matrix[12], matrix[13],
+        matrix[14], matrix[15]);
 
 	// this might be a "cleaner" way to do this //
 	//memcpy(mat.m, matrix, sizeof(float)*16);
@@ -314,7 +321,8 @@ void Leviathan::Entity::Prop::PropPhysicsMovedEvent(const NewtonBody* const body
 	Float4 quat(tmat.extractQuaternion());
 
 	// apply to graphical object //
-	Prop* tmp = static_cast<Prop*>(reinterpret_cast<BasePhysicsObject*>(NewtonBodyGetUserData(body)));
+	Prop* tmp = static_cast<Prop*>(reinterpret_cast<BasePhysicsObject*>(
+            NewtonBodyGetUserData(body)));
 
     // The object needs to be locked here //
     GUARD_LOCK_OTHER(tmp);
@@ -325,7 +333,8 @@ void Leviathan::Entity::Prop::PropPhysicsMovedEvent(const NewtonBody* const body
         tmp->ObjectsNode->setPosition(position);
     }
     
-	// also update these so if only one is updated it doesn't force last value to rotation or location //
+	// Also update these so if only one is updated it doesn't force last value to
+    // rotation or location
 	tmp->Position = position;
 	tmp->QuatRotation = quat;
     
@@ -335,7 +344,9 @@ void Leviathan::Entity::Prop::PropPhysicsMovedEvent(const NewtonBody* const body
     tmp->_MarkDataUpdated(guard);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessagetype, void* dataptr){
+DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessagetype,
+    void* dataptr)
+{
 	// First check if it is a request //
 	if(entitycustommessagetype == ENTITYCUSTOMMESSAGETYPE_DATAREQUEST){
 		// Check through components //
@@ -447,7 +458,9 @@ void Leviathan::Entity::Prop::_SaveOwnDataToPacket(sf::Packet &packet){
     }
 }
 // ------------------------------------ //
-void Leviathan::Entity::Prop::_SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr){
+void Leviathan::Entity::Prop::_SendCreatedConstraint(BaseConstraintable* other,
+    Entity::BaseConstraint* ptr)
+{
     _SendNewConstraint(static_cast<BaseConstraintable*>(this), other, ptr);
 }
 // ------------------------------------ //

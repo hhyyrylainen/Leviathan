@@ -7,6 +7,7 @@
 #include "ConnectionInfo.h"
 #include "Threading/ThreadingManager.h"
 #include "NetworkServerInterface.h"
+#include "../Utility/Convert.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -223,7 +224,7 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(shared_ptr<Ne
 			// Then tell the interface to send it to all but one connection //
 			server->SendToAllButOnePlayer(response, skipme);
 
-			Logger::Get()->Info(L"NetworkedInputHandler: finished distributing create response around");
+			Logger::Get()->Info("NetworkedInputHandler: finished distributing create response around");
 
 		}, tmprespall, ServerInterface, connection)));
 #endif //NETWORK_USE_SNAPSHOTS
@@ -241,7 +242,7 @@ notallowedfailedlabel:
 
 	tmpresp->GenerateServerDisallowResponse(new 
 		NetworkResponseDataForServerDisallow(NETWORKRESPONSE_INVALIDREASON_NOT_AUTHORIZED,
-            L"Not allowed to create input with that ID"));
+            "Not allowed to create input with that ID"));
 
 	connection->SendPacketToConnection(tmpresp, 1);
 }

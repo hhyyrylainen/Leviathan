@@ -1,13 +1,12 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_SYNCEDRESOURCE
 #include "SyncedResource.h"
-#endif
+
 #include "SyncedVariables.h"
 #include "Exceptions.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::SyncedResource::SyncedResource(const wstring &uniquename) : Name(uniquename){
+DLLEXPORT Leviathan::SyncedResource::SyncedResource(const std::string &uniquename) : Name(uniquename){
 
 }
 
@@ -74,9 +73,9 @@ DLLEXPORT void Leviathan::SyncedResource::AddDataToPacket(sf::Packet &packet){
 	SerializeCustomDataToPacket(packet);
 }
 
-DLLEXPORT wstring Leviathan::SyncedResource::GetSyncedResourceNameFromPacket(sf::Packet &packet) THROWS{
+DLLEXPORT std::string Leviathan::SyncedResource::GetSyncedResourceNameFromPacket(sf::Packet &packet){
 	// Get the name from the packet //
-	wstring tmpstr;
+	std::string tmpstr;
 
 	packet >> tmpstr;
 		

@@ -1,9 +1,9 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_BASECONSTRAINTSERIALIZER
 #include "BaseConstraintSerializer.h"
-#endif
+
 #include "Entities/Bases/BaseConstraintable.h"
 #include "Entities/Objects/Constraints.h"
+#include "../../Utility/Convert.h"
 using namespace Leviathan;
 using namespace Entity;
 using namespace std;

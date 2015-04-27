@@ -1,10 +1,10 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_GAMESPECIFICPACKET
 #include "GameSpecificPacketHandler.h"
-#endif
+
 #include "Exceptions.h"
+#include "../Utility/Convert.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameSpecificPacketHandler::GameSpecificPacketHandler(NetworkInterface* usetoreport) :
     IsVectorSorted(false)

@@ -13,7 +13,7 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 	TaskThread::ThreadThreadPtr = make_shared<ThreadSpecificData>(thisthread);
 
 	// We want to have a lock always when running this function //
-	GUARD_LOCK(thisthread);
+	GUARD_LOCK_OTHER(thisthread);
 
 	// Register the thread //
 	{
@@ -105,7 +105,7 @@ void Leviathan::TaskThread::_ThreadEndClean(Lock &guard){
 	// Release script resources //
 	if(asThreadCleanup() < 0){
 
-		Logger::Get()->Error(L"Releasing threads while scripts are running!");
+		Logger::Get()->Error("Releasing threads while scripts are running!");
 	}
     
 	// Release Ogre (if Ogre is still active) //
@@ -145,7 +145,7 @@ DLLEXPORT bool Leviathan::TaskThread::IsRunningTask(shared_ptr<QueuedTask> task)
     return SetTask.get() == task.get();
 }
 // ------------------------------------ //
-DLLEXPORT boost::thread& Leviathan::TaskThread::GetBoostThreadObject(){
+DLLEXPORT std::thread& Leviathan::TaskThread::GetInternalThreadObject(){
 	return ThisThread;
 }
 
@@ -153,7 +153,7 @@ DLLEXPORT ThreadSpecificData* Leviathan::TaskThread::GetThreadSpecificThreadObje
 	return ThreadThreadPtr.get();
 }
 
-std::shared_ptr<ThreadSpecificData> TaskThread::ThreadThreadPtr;
+thread_local std::shared_ptr<ThreadSpecificData> TaskThread::ThreadThreadPtr;
 
 // ------------------ ThreadSpecificData ------------------ //
 ThreadSpecificData::ThreadSpecificData(TaskThread* threadptr) : ThreadObject(threadptr){

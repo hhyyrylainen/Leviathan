@@ -17,7 +17,7 @@ namespace Leviathan{
 	public:
 		//! \brief Constructs a base class for synced variables that requires a unique name
 		//! \todo Actually check if the name is actually unique
-		DLLEXPORT SyncedResource(const wstring &uniquename);
+		DLLEXPORT SyncedResource(const std::string &uniquename);
 		DLLEXPORT virtual ~SyncedResource();
 
 
@@ -25,7 +25,7 @@ namespace Leviathan{
 		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
 
 		//! \brief Gets a name from packet leaving only the variable data there
-		DLLEXPORT static wstring GetSyncedResourceNameFromPacket(sf::Packet &packet);
+		DLLEXPORT static std::string GetSyncedResourceNameFromPacket(sf::Packet &packet);
 
 		//! \brief Assigns data from a packet to this resource
 		//! \return False when the actual implementation throws
@@ -65,7 +65,7 @@ namespace Leviathan{
 		SyncedResource(const SyncedResource &other);
 		// ------------------------------------ //
 
-		const wstring Name;
+		const std::string Name;
 	};
 
 
@@ -81,7 +81,7 @@ namespace Leviathan{
 		//! \brief Constructs an instance with a initial value
 		//! \warning The order of the initializer list is important since anytime after calling
         //! SyncedResource we can receive updates
-		DLLEXPORT SyncedPrimitive(const wstring &uniquename, const DTypeName &initialvalue,
+		DLLEXPORT SyncedPrimitive(const std::string &uniquename, const DTypeName &initialvalue,
             CallbackPtr updatecallback = NULL) : OurValue(initialvalue), 
 			ValueUpdateCallback(updatecallback), SyncedResource(uniquename)
 		{

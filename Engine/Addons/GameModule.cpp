@@ -62,9 +62,9 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
 	}
 
 
-	std::string sourcefilename = StringOperations::RemoveExtensionStd::String(sources->GetLine(0),
+	std::string sourcefilename = StringOperations::RemoveExtensionString(sources->GetLine(0),
         true);
-	std::string extensions = StringOperations::GetExtensionStd::String(sources->GetLine(0));
+	std::string extensions = StringOperations::GetExtensionString(sources->GetLine(0));
 
 	SourceFile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, sourcefilename, extensions,
         false);
@@ -162,10 +162,6 @@ DLLEXPORT std::string Leviathan::GameModule::GetDescriptionForError(bool full /*
 	return "GameModule("+Name+(full ? " v"+Version+") ": ") ")+" owned by: "+OwnerName+
         (full ? ", loaded from file: "+LoadedFromFile+".": ".");
 }
-
-DLLEXPORT string Leviathan::GameModule::GetDescriptionProxy(bool full){
-	return Convert::Std::StringToString(GetDescriptionForError(full));
-}
 // ------------------------------------ //
 void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** event2){
 
@@ -196,7 +192,7 @@ void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** e
 		}
 	} else {
 		// generic event is passed //
-		if(mod->DoesListenersContainSpecificListener(L"", (*event2)->GetTypePtr())){
+		if(mod->DoesListenersContainSpecificListener("", (*event2)->GetTypePtr())){
 			// setup parameters //
 			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new
                 NamedVariableBlock(new VoidPtrBlock(this), "GameModule"))

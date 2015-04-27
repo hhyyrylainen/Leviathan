@@ -7,12 +7,13 @@
 #include "NetworkHandler.h"
 #include "Exceptions.h"
 #include "RemoteConsole.h"
-#include "Common/Misc.h"
 #include "Threading/ThreadingManager.h"
+#include "../TimeIncludes.h"
+#include "../Utility/Convert.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const wstring &hostname) : 
+DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const string &hostname) : 
     HostName(hostname), AddressGot(false), LastUsedID(-1), LastSentConfirmID(-1), MaxAckReduntancy(1), 
     MyLastSentReceived(-1), LastReceivedPacketTime(-1), RestrictType(CONNECTION_RESTRICTION_NONE), HasReceived(false), 
     LastSentPacketTime(0)
@@ -20,23 +21,24 @@ DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const wstring &hostname) :
 	// We need to split the port number from the address //
 	StringIterator itr(hostname);
 
-	auto result = itr.GetUntilNextCharacterOrAll<wstring>(L':');
+	auto result = itr.GetUntilNextCharacterOrAll<string>(':');
 
 	HostName = *result;
 
 	// We should be fine not skipping a letter //
-	result = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE);
+	result = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_NONE);
 
 	if(!result){
 		// Probably should get the default port number //
-		Logger::Get()->Warning(L"ConnectionInfo: no port defined, using default, hostname: "+hostname);
+		Logger::Get()->Warning("ConnectionInfo: no port defined, using default, hostname: "+hostname);
 		TargetPortNumber = 80;
 		return;
 	}
-	TargetPortNumber = Convert::WstringToInt(*result.get());
+	TargetPortNumber = Convert::StringTo<int>(*result.get());
 }
 
-DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const sf::IpAddress &targetaddress, USHORT port) : 
+DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const sf::IpAddress &targetaddress,
+    unsigned short port) : 
     HostName(), AddressGot(true), TargetPortNumber(port), TargetHost(targetaddress), LastUsedID(-1), 
     LastSentConfirmID(-1), MaxAckReduntancy(1), MyLastSentReceived(-1), LastReceivedPacketTime(-1),
     RestrictType(CONNECTION_RESTRICTION_NONE), HasReceived(false)
@@ -78,24 +80,24 @@ DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
 	GUARD_LOCK();
 	// This might do something //
 	if(!AddressGot){
-		TargetHost = sf::IpAddress(Convert::WstringToString(HostName));
+		TargetHost = sf::IpAddress(HostName);
 	}
 
 	// We fail if we got an invalid address //
 	if(TargetHost == sf::IpAddress::None){
 
-		Logger::Get()->Error(L"ConnectionInfo: Init: couldn't translate host name to a real address, host: "+HostName);
+		Logger::Get()->Error("ConnectionInfo: Init: couldn't translate host name to a real address, host: "+HostName);
 		return false;
 	}
 
 	// Register us //
 	NetworkHandler::Get()->_RegisterConnectionInfo(this);
 
-	Logger::Get()->Info(L"ConnectionInfo: opening connection to host on "+
-        Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+	Logger::Get()->Info("ConnectionInfo: opening connection to host on "+
+        TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
 
     // Reset various timers //
-    LastSentPacketTime = MyLastSentReceived = LastReceivedPacketTime = Misc::GetTimeMs64();
+    LastSentPacketTime = MyLastSentReceived = LastReceivedPacketTime = Time::GetTimeMs64();
     
 	return true;
 }
@@ -108,8 +110,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::Release(){
 	{
 		GUARD_LOCK();
 
-		Logger::Get()->Info(L"ConnectionInfo: disconnecting from "+Convert::StringToWstring(TargetHost.toString())+L":"
-			+Convert::ToWstring(TargetPortNumber));
+		Logger::Get()->Info("ConnectionInfo: disconnecting from "+TargetHost.toString()+":"
+			+Convert::ToString(TargetPortNumber));
 
 		// Send a close packet //
 		SendCloseConnectionPacket(guard);
@@ -162,9 +164,9 @@ DLLEXPORT std::shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacke
 	actualpackettosend.append(requestsdata.getData(), requestsdata.getDataSize());
 
 #ifdef SPAM_ME_SOME_PACKETS
-	Logger::Get()->Info(L"PacketSpam: Sending request packet ("+Convert::ToWstring(request->GetExpectedResponseID())+
-        L", id"+Convert::ToWstring(LastUsedID)+L") to "+Convert::StringToWstring(TargetHost.toString())+
-        L":"+Convert::ToWstring(TargetPortNumber));
+	Logger::Get()->Info("PacketSpam: Sending request packet ("+Convert::ToString(request->GetExpectedResponseID())+
+        ", id"+Convert::ToString(LastUsedID)+") to "+Convert::StringToString(TargetHost.toString())+
+        ":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 
 	// We need to use the handlers socket //
@@ -201,9 +203,9 @@ DLLEXPORT std::shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacke
 	actualpackettosend.append(requestsdata.getData(), requestsdata.getDataSize());
 
 #ifdef SPAM_ME_SOME_PACKETS
-	Logger::Get()->Info(L"PacketSpam: Sending response packet ("+Convert::ToWstring(response->GetResponseID())+L", id"+
-		Convert::ToWstring(LastUsedID)+L") to "
-		+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+	Logger::Get()->Info("PacketSpam: Sending response packet ("+Convert::ToString(response->GetResponseID())+", id"+
+		Convert::ToString(LastUsedID)+") to "
+		+Convert::StringToString(TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 
 	// We need to use the handlers socket //
@@ -238,8 +240,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::SendKeepAlivePacket(Lock &guard){
 	actualpackettosend.append(requestsdata.getData(), requestsdata.getDataSize());
 
 #ifdef SPAM_ME_SOME_PACKETS
-	Logger::Get()->Info(L"PacketSpam: Sending keepalive packet (id "+Convert::ToWstring(LastUsedID)+L") to "
-		+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+	Logger::Get()->Info("PacketSpam: Sending keepalive packet (id "+Convert::ToString(LastUsedID)+") to "
+		+Convert::StringToString(TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 
 	// We need to use the handlers socket //
@@ -273,8 +275,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::SendCloseConnectionPacket(Lock &guard)
 	actualpackettosend.append(requestsdata.getData(), requestsdata.getDataSize());
 
 #ifdef SPAM_ME_SOME_PACKETS
-	Logger::Get()->Info(L"PacketSpam: Sending close connection packet (id "+Convert::ToWstring(LastUsedID)+L") to "
-		+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+	Logger::Get()->Info("PacketSpam: Sending close connection packet (id "+Convert::ToString(LastUsedID)+") to "
+		+Convert::StringToString(TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 
 	// We need to use the handlers socket //
@@ -295,8 +297,8 @@ void Leviathan::ConnectionInfo::_ResendRequest(shared_ptr<SentNetworkThing> tore
 	tosend.append(toresend->AlmostCompleteData.getData(), toresend->AlmostCompleteData.getDataSize());
 
 #ifdef SPAM_ME_SOME_PACKETS
-	Logger::Get()->Info(L"PacketSpam: resending packet ("+Convert::ToWstring(toresend->PacketNumber)+L") to "
-		+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+	Logger::Get()->Info("PacketSpam: resending packet ("+Convert::ToString(toresend->PacketNumber)+") to "
+		+Convert::StringToString(TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 
 	// We need to use the handlers socket //
@@ -306,13 +308,13 @@ void Leviathan::ConnectionInfo::_ResendRequest(shared_ptr<SentNetworkThing> tore
 	}
 
 	// Reset the time //
-	toresend->RequestStartTime = Misc::GetTimeMs64();
+	toresend->RequestStartTime = Time::GetTimeMs64();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 
 	// Timeout stuff (if possible) //
-	__int64 timems = Misc::GetTimeMs64();
+	int64_t timems = Time::GetTimeMs64();
 
 	GUARD_LOCK();
 
@@ -327,14 +329,14 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 			if(!(*iter)->IsArequest){
 				// It is now done! //
 #ifdef SPAM_ME_SOME_PACKETS
-				Logger::Get()->Info(L"PacketSpam: non-request packet successfully sent ("+
-                    Convert::ToWstring((*iter)->PacketNumber)+L") to " +
-                    Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+				Logger::Get()->Info("PacketSpam: non-request packet successfully sent ("+
+                    Convert::ToString((*iter)->PacketNumber)+") to " +
+                    Convert::StringToString(TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 				// We want to notify all waiters that it has been received //
                 (*iter)->SetWaitStatus(true);
                 
-                (*iter)->ConfirmReceiveTime = Misc::GetTimeMs64();                
+                (*iter)->ConfirmReceiveTime = Time::GetTimeMs64();                
 				iter = WaitingRequests.erase(iter);
 				continue;
 			}
@@ -358,9 +360,9 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 							if(!(*iter)->IsArequest && (*iter)->SentResponse && (*iter)->SentResponse->GetType() ==
                                 NETWORKRESPONSETYPE_KEEPALIVE)
                             {
-								Logger::Get()->Info(L"ConnectionInfo: keepalive has been flushed from queue");
+								Logger::Get()->Info("ConnectionInfo: keepalive has been flushed from queue");
 							} else {
-								Logger::Get()->Warning(L"ConnectionInfo: packet reached maximum tries");
+								Logger::Get()->Warning("ConnectionInfo: packet reached maximum tries");
 							}
 #endif // _DEBUG
 
@@ -402,8 +404,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 
 		if(iter != SentPacketsConfirmedAsReceived.end() && iter->second){
 #ifdef SPAM_ME_SOME_PACKETS
-			Logger::Get()->Info(L"PacketSpam: acks successfully sent (first id "+Convert::ToWstring(AcksNotConfirmedAsReceived[i]->AcksInThePacket->FirstPacketID)+L") to "
-				+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+			Logger::Get()->Info("PacketSpam: acks successfully sent (first id "+Convert::ToString(AcksNotConfirmedAsReceived[i]->AcksInThePacket->FirstPacketID)+") to "
+				+Convert::StringToString(TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 			// Mark as properly sent //
 			AcksNotConfirmedAsReceived[i]->Received = true;
@@ -428,8 +430,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 			AcksNotConfirmedAsReceived[i]->SendCount = 0;
 			AcksCouldBeSent = true;
 #ifdef SPAM_ME_SOME_PACKETS
-			Logger::Get()->Info(L"PacketSpam: acks missing (resending) (first id "+Convert::ToWstring(AcksNotConfirmedAsReceived[i]->AcksInThePacket->FirstPacketID)+L") to "
-				+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+			Logger::Get()->Info("PacketSpam: acks missing (resending) (first id "+Convert::ToString(AcksNotConfirmedAsReceived[i]->AcksInThePacket->FirstPacketID)+") to "
+				+Convert::StringToString(TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 
 		} else {
@@ -455,14 +457,15 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 	// Send keep alive packet if it has been a while //
 	if(timems > LastSentPacketTime+KEEPALIVE_TIME){
 		// Send a keep alive packet //
-		Logger::Get()->Info(L"ConnectionInfo: sending keepalive packet (because"+Convert::ToWstring(timems-LastSentPacketTime)+L" since last sent has elapsed) to "
-			+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+		Logger::Get()->Info("ConnectionInfo: sending keepalive packet (because"+
+            Convert::ToString(timems-LastSentPacketTime)+" since last sent has elapsed) to "
+			+TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
 		SendKeepAlivePacket();
 
 	} else if(AcksCouldBeSent && timems > LastSentPacketTime+ACKKEEPALIVE){
 		// Send some acks //
-		//Logger::Get()->Info(L"ConnectionInfo: sending packet (because"+Convert::ToWstring(timems-LastSentPacketTime)+L" passed and acks await) to "
-		//	+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+		//Logger::Get()->Info("ConnectionInfo: sending packet (because"+Convert::ToString(timems-LastSentPacketTime)+" passed and acks await) to "
+		//	+Convert::StringToString(TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 
 		shared_ptr<NetworkResponse> emptyresponse(new NetworkResponse(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
 		emptyresponse->GenerateEmptyResponse();
@@ -473,7 +476,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 	// Check for connection close //
 	if(timems > LastSentPacketTime+KEEPALIVE_TIME/4.f && timems > LastReceivedPacketTime+KEEPALIVE_TIME*1.5f){
 		// We could timeout the connection //
-		Logger::Get()->Info(L"ConnectionInfo: could timeout connection to "+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+		Logger::Get()->Info("ConnectionInfo: could timeout connection to "+
+            TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
 
 		if(NetworkHandler::GetInterface()->CanConnectionTerminate(this)){
 			// Mark us as closing //
@@ -483,8 +487,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 	} else if(timems > LastSentPacketTime+KEEPALIVE_TIME/1.1f && !HasReceived){
 
 
-		Logger::Get()->Info(L"ConnectionInfo: timing out connection (nothing received) "+
-            Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+		Logger::Get()->Info("ConnectionInfo: timing out connection (nothing received) "+
+            TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
 		// Mark us as closing //
 		NetworkHandler::Get()->SafelyCloseConnectionTo(this);
 	}
@@ -494,17 +498,19 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
 DLLEXPORT void Leviathan::ConnectionInfo::CheckKeepAliveSend(){
 	GUARD_LOCK();
 	// Check is a keepalive reasonable to send (don't want to end up spamming them between the instances) //
-	auto timenow = Misc::GetTimeMs64();
+	auto timenow = Time::GetTimeMs64();
 	if(timenow > LastSentPacketTime+KEEPALIVE_RESPOND){
 		// Respond to it //
-		Logger::Get()->Info(L"ConnectionInfo: replying to a keepalive packet (because "+
-            Convert::ToWstring(timenow-LastSentPacketTime)+L" since last sent has elapsed) to "
-			+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+		Logger::Get()->Info("ConnectionInfo: replying to a keepalive packet (because "+
+            Convert::ToString(timenow-LastSentPacketTime)+" since last sent has elapsed) to "
+			+TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
 		SendKeepAlivePacket();
 	}
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::IpAddress &sender, USHORT &sentport){
+DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::IpAddress &sender,
+    unsigned short &sentport)
+{
     GUARD_LOCK();
 	// Check for matching sender with our target //
 	if(sentport != TargetPortNumber || sender != TargetHost){
@@ -518,14 +524,16 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::IpAddress &sender, USH
 	
 }
 
-DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::IpAddress &sender, USHORT &sentport){
+DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::IpAddress &sender,
+    unsigned short &sentport)
+{
     
     // Handle incoming packet //
 	int packetnumber = 0;
 
 	if(!(packet >> packetnumber)){
 
-		Logger::Get()->Error(L"Received package has invalid format");
+		Logger::Get()->Error("Received package has invalid format");
 	}
 
 	// We can discard this here if this is already received //
@@ -541,14 +549,14 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
     
 	if(!packet){
 
-		Logger::Get()->Error(L"Received package has invalid format");
+		Logger::Get()->Error("Received package has invalid format");
 	}
 
 	bool isrequest = false;
 
 	if(!(packet >> isrequest)){
 
-		Logger::Get()->Error(L"Received package has invalid format");
+		Logger::Get()->Error("Received package has invalid format");
 	}
 	// Rest of the data is now the actual thing //
 
@@ -556,7 +564,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
     {
         GUARD_LOCK();
         
-        LastReceivedPacketTime = Misc::GetTimeMs64();
+        LastReceivedPacketTime = Time::GetTimeMs64();
         HasReceived = true;
 
     }
@@ -582,9 +590,9 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
 
 				} else {
 					// We want to close //
-					Logger::Get()->Error(L"ConnectionInfo: received a non-valid packet to receive remote "
-                        L"console connection socket, "+Convert::StringToWstring(TargetHost.toString())+L":"+
-                        Convert::ToWstring(TargetPortNumber));
+					Logger::Get()->Error("ConnectionInfo: received a non-valid packet to receive remote "
+                        "console connection socket, "+TargetHost.toString()+":"+
+                        Convert::ToString(TargetPortNumber));
                     
 					NetworkHandler::Get()->SafelyCloseConnectionTo(this);
 					return;
@@ -593,15 +601,15 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
 		}
 
 #ifdef SPAM_ME_SOME_PACKETS
-		Logger::Get()->Info(L"PacketSpam: received request ("+Convert::ToWstring(packetnumber)+L", request"+
-			Convert::ToWstring(request->GetExpectedResponseID())+L") from "+Convert::StringToWstring(
-                TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+		Logger::Get()->Info("PacketSpam: received request ("+Convert::ToString(packetnumber)+", request"+
+			Convert::ToString(request->GetExpectedResponseID())+") from "+Convert::StringToString(
+                TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 		try{
 			NetworkHandler::GetInterface()->HandleRequestPacket(request, this);
 		} catch(const InvalidArgument &e){
 			// We couldn't handle this packet //
-			Logger::Get()->Error(L"ConnectionInfo: couldn't handle request packet! :");
+			Logger::Get()->Error("ConnectionInfo: couldn't handle request packet! :");
 			e.PrintToLog();
 		}
 
@@ -619,8 +627,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
 			// We can possibly drop the connection or perform other extra tasks //
 			if(RestrictType == CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE){
 				// We want to close //
-				Logger::Get()->Error(L"ConnectionInfo: received a response packet to receive remote console "
-                    L"connection socket, "+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(
+				Logger::Get()->Error("ConnectionInfo: received a response packet to receive remote console "
+                    "connection socket, "+TargetHost.toString()+":"+Convert::ToString(
                         TargetPortNumber));
                 lockit.unlock();
 				NetworkHandler::Get()->SafelyCloseConnectionTo(this);
@@ -634,7 +642,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
                 possiblerequest->OriginalRequest: NULL, this))
         {
 
-			Logger::Get()->Warning(L"ConnectionInfo: dropping packet due to interface not accepting response");
+			Logger::Get()->Warning("ConnectionInfo: dropping packet due to interface not accepting response");
 			return;
 		}
 
@@ -660,7 +668,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
             
             // Notify that the request is done /
             possiblerequest->SetWaitStatus(true);
-            possiblerequest->ConfirmReceiveTime = Misc::GetTimeMs64();
+            possiblerequest->ConfirmReceiveTime = Time::GetTimeMs64();
 
 		} else {
 
@@ -704,8 +712,8 @@ void Leviathan::ConnectionInfo::_VerifyAckPacketsAsSuccesfullyReceivedFromHost(i
 
 	if(iter == ReceivedPacketsNotifiedAsReceivedByUs.end()){
 #ifdef SPAM_ME_SOME_PACKETS
-		Logger::Get()->Info(L"PacketSpam: packet is now marked as received ("+Convert::ToWstring(packetreceived)+L") from "
-			+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+		Logger::Get()->Info("PacketSpam: packet is now marked as received ("+Convert::ToString(packetreceived)+") from "
+			+Convert::StringToString(TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 		// We set this to false to keep track if we have told the sender that we got this packet (then it is true and can be removed from the map) //
 		ReceivedPacketsNotifiedAsReceivedByUs[packetreceived] = false;
@@ -722,7 +730,7 @@ void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::
 	GUARD_LOCK();
 
 	// We have now made a new packet //
-	LastSentPacketTime = Misc::GetTimeMs64();
+	LastSentPacketTime = Time::GetTimeMs64();
 
 
 	if(dontsendacks){
@@ -775,10 +783,10 @@ void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::
 				AcksNotConfirmedAsReceived.push_back(tmpacks);
 
 #ifdef SPAM_ME_SOME_PACKETS
-			Logger::Get()->Info(L"PacketSpam: sending new acks (first id "+Convert::ToWstring(
-				tmpacks->AcksInThePacket->FirstPacketID)+L", count "+
-				Convert::ToWstring(tmpacks->AcksInThePacket->Acks.size())+L") to "
-				+Convert::StringToWstring(TargetHost.toString())+L":"+Convert::ToWstring(TargetPortNumber));
+			Logger::Get()->Info("PacketSpam: sending new acks (first id "+Convert::ToString(
+				tmpacks->AcksInThePacket->FirstPacketID)+", count "+
+				Convert::ToString(tmpacks->AcksInThePacket->Acks.size())+") to "
+				+Convert::StringToString(TargetHost.toString())+":"+Convert::ToString(TargetPortNumber));
 #endif // SPAM_ME_SOME_PACKETS
 
 			// Put into the packet //
@@ -834,8 +842,8 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsTargetHostLocalhost(){
 	return TargetHost == sf::IpAddress::LocalHost;
 }
 
-DLLEXPORT wstring Leviathan::ConnectionInfo::GenerateFormatedAddressString() const{
-	return Convert::StringToWstring(TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
+DLLEXPORT string Leviathan::ConnectionInfo::GenerateFormatedAddressString() const{
+	return TargetHost.toString()+":"+Convert::ToString(TargetPortNumber);
 }
 // ------------------------------------ //
 DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfails,
@@ -844,7 +852,7 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
     // Avoid dividing by zero here //
     if(packets == 0){
 
-        Logger::Get()->Error(L"ConnectionInfo: avoided dividing by zero by dropping a ping request");
+        Logger::Get()->Error("ConnectionInfo: avoided dividing by zero by dropping a ping request");
         return;
     }
     
@@ -856,8 +864,8 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
 
     if(packets >= 100){
 
-        Logger::Get()->Warning(L"ConnectionInfo: trying to send loads of ping packets, sending "+
-            Convert::ToWstring(packets)+L" packets");
+        Logger::Get()->Warning("ConnectionInfo: trying to send loads of ping packets, sending "+
+            Convert::ToString(packets)+" packets");
     }
 
     // Send the packet count of echo requests //
@@ -912,8 +920,8 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
             // Check has too many failed //
             if(fails > allowedfails){
 
-                Logger::Get()->Warning(L"ConnectionInfo: pinging failed due to too many lost packets, lost: "+
-                    Convert::ToWstring(fails));
+                Logger::Get()->Warning("ConnectionInfo: pinging failed due to too many lost packets, lost: "+
+                    Convert::ToString(fails));
                 
                 onfailed(CONNECTION_PING_FAIL_REASON_LOSS_TOO_HIGH, fails);
                 return;
@@ -1002,7 +1010,7 @@ Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponse
     const sf::Packet &packetsdata, int attempnumber /*= 1*/) :
     PacketNumber(packetid), ExpectedResponseID(expectedresponseid), OriginalRequest(request), WaitForMe(waitobject),
     MaxTries(maxtries), PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata),
-    AttempNumber(attempnumber), RequestStartTime(Misc::GetTimeMs64()), ConfirmReceiveTime(0), IsArequest(true),
+    AttempNumber(attempnumber), RequestStartTime(Time::GetTimeMs64()), ConfirmReceiveTime(0), IsArequest(true),
     FutureFetched(false)
 {
 
@@ -1013,7 +1021,7 @@ Leviathan::SentNetworkThing::SentNetworkThing(int packetid, std::shared_ptr<Netw
     const sf::Packet &packetsdata, int attempnumber /*= 1*/) :
     PacketNumber(packetid), ExpectedResponseID(-1), SentResponse(response), WaitForMe(waitobject), MaxTries(maxtries),
     PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue), AlmostCompleteData(packetsdata),
-    AttempNumber(attempnumber), RequestStartTime(Misc::GetTimeMs64()), ConfirmReceiveTime(0),
+    AttempNumber(attempnumber), RequestStartTime(Time::GetTimeMs64()), ConfirmReceiveTime(0),
 	IsArequest(false), FutureFetched(false)
 {
 
@@ -1023,7 +1031,7 @@ DLLEXPORT Leviathan::SentNetworkThing::~SentNetworkThing(){
 
 }
 
-DLLEXPORT std::unique_future<bool>& Leviathan::SentNetworkThing::GetFutureForThis(){
+DLLEXPORT std::future<bool>& Leviathan::SentNetworkThing::GetFutureForThis(){
     GUARD_LOCK();
 	// Get a future if not already and return it //
 	if(!FutureFetched){

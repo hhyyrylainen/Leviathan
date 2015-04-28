@@ -264,11 +264,12 @@ namespace Leviathan{
 		//! Used to connect new players
         //! \todo Properly handle deleted and created objects
         //! (Potentially make objects vector have "empty" spaces in the middle)
-		DLLEXPORT virtual void _OnNotifiableConnected(BaseNotifiableAll* parentadded) override;
+		DLLEXPORT virtual void _OnNotifiableConnected(Lock &guard,
+            BaseNotifiableAll* parentadded) override;
 
 		//! Used to disconnect players that are going to be unloaded
-		DLLEXPORT virtual void _OnNotifiableDisconnected(BaseNotifiableAll* parenttoremove)
-            override;
+		DLLEXPORT virtual void _OnNotifiableDisconnected(Lock &guard,
+            BaseNotifiableAll* parenttoremove) override;
 
 		//! \brief Updates a players position info in this world
 		void UpdatePlayersPositionData(ConnectedPlayer* ply, Lock &guard);

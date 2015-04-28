@@ -27,7 +27,7 @@ namespace Leviathan{ namespace Entity{
 
 		void _LetGoOfPlayer();
 		// used to reposition the audio source //
-		virtual void PosUpdated();
+		void PosUpdated(Lock &guard) override;
 
 		// ------------------------------------ //
         std::shared_ptr<SoundPlayingSlot> InternalSoundPlayer;

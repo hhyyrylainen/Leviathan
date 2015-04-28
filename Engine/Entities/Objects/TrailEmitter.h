@@ -82,8 +82,8 @@ namespace Leviathan{ namespace Entity{
 
 	private:
 		// Used to reposition the node //
-		virtual void PosUpdated();
-		virtual void OrientationUpdated();
+		void PosUpdated(Lock &guard) override;
+		void OrientationUpdated(Lock &guard) override;
 
 		virtual void _OnHiddenStateUpdated();
 		// ------------------------------------ //

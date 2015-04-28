@@ -24,17 +24,17 @@ BasePositionable::~BasePositionable(){
 void BasePositionable::SetPosX(const float &x){
     GUARD_LOCK();
 	Position.X = x;
-	PosUpdated();
+	PosUpdated(guard);
 }
 void BasePositionable::SetPosY(const float &y){
     GUARD_LOCK();
 	Position.Y = y;
-	PosUpdated();
+	PosUpdated(guard);
 }
 void BasePositionable::SetPosZ(const float &z){
     GUARD_LOCK();
 	Position.Z = z;
-	PosUpdated();
+	PosUpdated(guard);
 }
 // ------------------------------------ //
 Float4 Leviathan::BasePositionable::GetOrientation() const{
@@ -97,25 +97,37 @@ DLLEXPORT void Leviathan::BasePositionable::SetPosComponents(const float &x, con
 	Position.X = x;
 	Position.Y = y;
 	Position.Z = z;
-	PosUpdated();
+	PosUpdated(guard);
 }
 
 DLLEXPORT void Leviathan::BasePositionable::SetPos(const Float3 &pos){
     GUARD_LOCK();
 	Position = pos;
-	PosUpdated();
+	PosUpdated(guard);
 }
 
 DLLEXPORT void Leviathan::BasePositionable::SetPosition(const Float3 &pos){
     GUARD_LOCK();
 	Position = pos;
-	PosUpdated();
+	PosUpdated(guard);
 }
 
 DLLEXPORT void Leviathan::BasePositionable::SetOrientation(const Float4 &quat){
     GUARD_LOCK();
 	QuatRotation = quat;
-	OrientationUpdated();
+	OrientationUpdated(guard);
+}
+
+DLLEXPORT void BasePositionable::SetPos(const Float3 &pos, Lock &guard){
+
+    Position = pos;
+	PosUpdated(guard);
+}
+
+DLLEXPORT void BasePositionable::SetOrientation(const Float4 &quaternionrotation, Lock &guard){
+
+    QuatRotation = quaternionrotation;
+    OrientationUpdated(guard);
 }
 
 DLLEXPORT void Leviathan::BasePositionable::SetOrientationComponents(const float &x, const float &y,
@@ -123,14 +135,14 @@ DLLEXPORT void Leviathan::BasePositionable::SetOrientationComponents(const float
 {
     GUARD_LOCK();
     QuatRotation = Float4(x, y, z, w);
-    OrientationUpdated();
+    OrientationUpdated(guard);
 }
 
-void Leviathan::BasePositionable::PosUpdated(){
+void Leviathan::BasePositionable::PosUpdated(Lock &guard){
 
 }
 
-void Leviathan::BasePositionable::OrientationUpdated(){
+void Leviathan::BasePositionable::OrientationUpdated(Lock &guard){
 
 }
 // ------------------------------------ //
@@ -138,17 +150,18 @@ DLLEXPORT void Leviathan::BasePositionable::ApplyPositionDataObject(const BasePo
 
     GUARD_LOCK();
     Position = pos.Position;
-    PosUpdated();
+    PosUpdated(guard);
 
     QuatRotation = pos.QuatRotation;
-    OrientationUpdated();
+    OrientationUpdated(guard);
 }
 // ------------------------------------ //
 bool Leviathan::BasePositionable::BasePositionableCustomMessage(int message, void* data){
 	switch(message){
         case ENTITYCUSTOMMESSAGETYPE_CHANGEWORLDPOSITION:
         {
-            Position = *reinterpret_cast<Float3*>(data); PosUpdated(); return true;
+            GUARD_LOCK();
+            Position = *reinterpret_cast<Float3*>(data); PosUpdated(guard); return true;
         }
 
 
@@ -317,6 +330,6 @@ DLLEXPORT void BasePositionable::InterpolatePositionableState(PositionableRotati
     }
     
     GUARD_LOCK();
-    SetPos(pos);
-    SetOrientation(rot);
+    SetPos(pos, guard);
+    SetOrientation(rot, guard);
 }

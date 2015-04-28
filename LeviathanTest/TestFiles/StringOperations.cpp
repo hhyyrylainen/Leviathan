@@ -137,11 +137,11 @@ TEST_CASE("StringOperations common work with string and wstring", "[string]"){
 
 	wstring pathresult = StringOperations::ChangeLineEndsToWindowsWstring(pathtestoriginal);
 
-	CHECK(pathresult == L"My text is quite nice\r\nand has\r\n multiple\r\n lines\r\n that are separated\r\n");
+	CHECK(pathresult == L"My text is quite nice\r\nand has\r\n multiple\r\n lines\r\nthat are separated\r\n");
 
 	wstring backlinetest = StringOperations::ChangeLineEndsToUniversalWstring(pathresult);
 
-	CHECK(backlinetest == L"My text is quite nice\nand has\n multiple\n lines\n that are separated\n");
+	CHECK(backlinetest == L"My text is quite nice\nand has\n multiple\n lines\nthat are separated\n");
 }
 
 

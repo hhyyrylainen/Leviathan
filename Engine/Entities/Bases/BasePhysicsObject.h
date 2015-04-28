@@ -146,9 +146,9 @@ namespace Leviathan{
         
 
 	protected:
-		virtual void _DestroyPhysicalBody();
-		virtual void PosUpdated() override;
-		virtual void OrientationUpdated() override;
+		virtual void _DestroyPhysicalBody(Lock &guard);
+		virtual void PosUpdated(Lock &guard) override;
+		virtual void OrientationUpdated(Lock &guard) override;
 
 		// this function should update physics object location or if Immovable set, directly graphical objects //
 		virtual void _UpdatePhysicsObjectLocation(Lock &guard) = 0;

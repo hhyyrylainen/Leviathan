@@ -292,7 +292,7 @@ shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVari
         
 	} catch(const InvalidArgument &e){
 
-		Logger::Get()->Error("ObjectFileProcessor: invalid UTF8 sequence in a named variable, file: "+
+		Logger::Get()->Error("ObjectFileProcessor: named variable parse failed, file: "+
             file+"("+Convert::ToString(startline)+"):");
 		e.PrintToLog();
 		return NULL;

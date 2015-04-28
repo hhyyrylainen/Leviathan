@@ -59,7 +59,7 @@ DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
     ObjectsNode = NULL;
     
     if(OwnedByWorld)
-        _DestroyPhysicalBody();
+        _DestroyPhysicalBody(guard);
 
     OwnedByWorld = NULL;
 }

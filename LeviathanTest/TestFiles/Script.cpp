@@ -1,5 +1,6 @@
 #include "Script/ScriptExecutor.h"
 #include "Script/ScriptModule.h"
+#include "Handlers/IDFactory.h"
 
 #include "catch.hpp"
 
@@ -10,7 +11,7 @@ using namespace std;
 
 TEST_CASE("Basic script running", "[script]"){
 
-
+    IDFactory ids;
     auto exec(move(unique_ptr<ScriptExecutor>(new ScriptExecutor())));
 
 	// setup the script //

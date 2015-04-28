@@ -144,14 +144,14 @@ DLLEXPORT bool Leviathan::Entity::TrailEmitter::SendCustomMessage(int entitycust
 	return false;
 }
 // ------------------------------------ //
-void Leviathan::Entity::TrailEmitter::PosUpdated(){
+void Leviathan::Entity::TrailEmitter::PosUpdated(Lock &guard){
 	// Set node property //
 	if(TrailLocation){
 		TrailLocation->setPosition(Position);
 	}
 }
 
-void Leviathan::Entity::TrailEmitter::OrientationUpdated(){
+void Leviathan::Entity::TrailEmitter::OrientationUpdated(Lock &guard){
 	// Set node property //
 	if(TrailLocation){
 		TrailLocation->setOrientation(QuatRotation);

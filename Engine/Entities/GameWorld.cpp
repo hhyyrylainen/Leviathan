@@ -304,7 +304,7 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 	}
 
     // Unhook from other objects //
-    ReleaseChildHooks();
+    ReleaseChildHooks(guard);
 
     // Report waiting constraints //
     if(!WaitingConstraints.empty()){
@@ -909,7 +909,9 @@ bool Leviathan::GameWorld::AreAllPlayersSynced() const{
     return InitiallySyncingPlayers.size() == 0;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* parentadded){
+DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(Lock &guard,
+    BaseNotifiableAll* parentadded)
+{
 
 	// The connected object will always have to be a ConnectedPlayer
 	auto plyptr = static_cast<ConnectedPlayer*>(parentadded);
@@ -918,12 +920,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
         "\") is now receiving world");
 
     // Add them to the list of receiving players //
-    {
-        GUARD_LOCK();
-
-        ReceivingPlayers.push_back(plyptr);
-    }
-    
+    ReceivingPlayers.push_back(plyptr);
     
     // We need a safe pointer to the connection //
     ConnectionInfo* unsafeconnection = plyptr->GetConnection();
@@ -1094,13 +1091,13 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(BaseNotifiableAll* p
             }, connectobject)));
 }
 
-DLLEXPORT void Leviathan::GameWorld::_OnNotifiableDisconnected(BaseNotifiableAll* parenttoremove){
+DLLEXPORT void Leviathan::GameWorld::_OnNotifiableDisconnected(Lock &guard,
+    BaseNotifiableAll* parenttoremove)
+{
 
 	auto plyptr = static_cast<ConnectedPlayer*>(parenttoremove);
 
 	// Destroy the update object containing this player and cancel all current packets //
-    GUARD_LOCK();
-
     for(size_t i = 0; i < ReceivingPlayers.size(); i++){
 
         if(ReceivingPlayers[i] == plyptr){

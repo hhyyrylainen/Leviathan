@@ -20,7 +20,8 @@ namespace Leviathan{
 		DLLEXPORT void ReleaseParentHooks();
 
 		//! \brief The actual implementation of UnConnectFromNotifier
-		DLLEXPORT bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier, Lock &guard);
+		DLLEXPORT bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier,
+            Lock &guard, Lock &notifierlock);
 
 		//! \brief Notifies all the parents of this object about something
 		//!
@@ -34,7 +35,7 @@ namespace Leviathan{
 			// The parent has to be locked before this object //
 			GUARD_LOCK_OTHER_NAME(specificnotifier, guard2);
 			GUARD_LOCK();
-			return UnConnectFromNotifier(specificnotifier, guard);
+			return UnConnectFromNotifier(specificnotifier, guard, guard2);
 		}
 
 		//! \brief Actual implementation of this method

@@ -1130,8 +1130,10 @@ DLLEXPORT ITERATORCALLBACK_RETURNTYPE StringIterator::FindInMatchingParentheses(
 
 isinsidevalidleftrightpair:
 
-    if(data->Positions.X == -1){
+    if(data->Positions.X == -1 && data->NestingLevel > 0){
 
         data->Positions.X = GetPosition();
     }
+
+    return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }

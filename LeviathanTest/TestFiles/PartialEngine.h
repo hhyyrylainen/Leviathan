@@ -53,6 +53,8 @@ public:
 
             _NetworkHandler = new NetworkHandler(TestWithType, NULL);
 
+            IDDefaultInstance = new IDFactory();
+
             if(!NewtonHolder::StaticNewtonManager){
 
                 NewtonHolder::StaticNewtonManager = std::move(std::unique_ptr<NewtonManager>(
@@ -75,16 +77,16 @@ public:
         
         if(UseActualInit){
 
-            SAFE_RELEASEDEL(_NetworkHandler);
-            SAFE_DELETE(PhysMaterials);
-            SAFE_DELETE(_NewtonManager);
-
-        } else {
-            // This wasn't initialized //
-            SAFE_DELETE(_NetworkHandler);
+            Release();
+            return;
         }
-        
+
+        // This wasn't initialized //
+        SAFE_DELETE(_NetworkHandler);
+            
         SAFE_RELEASEDEL(MainEvents);
+
+        SAFE_DELETE(IDDefaultInstance);
     }
     
 

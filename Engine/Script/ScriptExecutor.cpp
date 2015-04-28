@@ -116,14 +116,17 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
 }
 ScriptExecutor::~ScriptExecutor(){
 
-	auto end = AllocatedScriptModules.end();
-	for(auto iter = AllocatedScriptModules.begin(); iter != end; ++iter){
+    {
+        Lock lock(ModulesLock);
+        auto end = AllocatedScriptModules.end();
+        for(auto iter = AllocatedScriptModules.begin(); iter != end; ++iter){
 
-		(*iter)->Release();
-	}
+            (*iter)->Release();
+        }
 
-	// release/delete all modules //
-	AllocatedScriptModules.clear();
+        // release/delete all modules //
+        AllocatedScriptModules.clear();
+    }
 
 	// release AngelScript //
 	SAFE_RELEASE(engine);
@@ -553,6 +556,8 @@ void Leviathan::ScriptExecutor::_DoneWithContext(asIScriptContext* context){
 // ------------------------------------ //
 DLLEXPORT weak_ptr<ScriptModule> Leviathan::ScriptExecutor::GetModule(const int &ID){
 	// loop modules and return a ptr to matching id //
+    Lock lock(ModulesLock);
+    
 	for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
 		if(AllocatedScriptModules[i]->GetID() == ID)
 			return AllocatedScriptModules[i];
@@ -565,6 +570,8 @@ DLLEXPORT weak_ptr<ScriptModule> Leviathan::ScriptExecutor::GetModuleByAngelScri
 	// Find a matching name //
 	string module(nameofmodule);
 
+    Lock lock(ModulesLock);
+    
     // TODO: check could this be checked by comparing pointers
 	for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
 		if(AllocatedScriptModules[i]->GetModuleName() == module)
@@ -581,11 +588,15 @@ DLLEXPORT weak_ptr<ScriptModule> Leviathan::ScriptExecutor::CreateNewModule(cons
 	shared_ptr<ScriptModule> tmpptr(new ScriptModule(engine, name, modulesid, source));
 
 	// add to vector and return //
+    Lock lock(ModulesLock);
 	AllocatedScriptModules.push_back(tmpptr);
 	return tmpptr;
 }
 
 DLLEXPORT void Leviathan::ScriptExecutor::DeleteModule(ScriptModule* ptrtomatch){
+
+    Lock lock(ModulesLock);
+    
 	// find module based on pointer and remove //
 	for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
 		if(AllocatedScriptModules[i].get() == ptrtomatch){
@@ -599,6 +610,9 @@ DLLEXPORT void Leviathan::ScriptExecutor::DeleteModule(ScriptModule* ptrtomatch)
 }
 
 DLLEXPORT bool Leviathan::ScriptExecutor::DeleteModuleIfNoExternalReferences(int ID){
+
+    Lock lock(ModulesLock);
+    
 	// Find based on the id //
 	for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
 		if(AllocatedScriptModules[i]->GetID() == ID){

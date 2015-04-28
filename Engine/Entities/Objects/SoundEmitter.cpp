@@ -30,7 +30,7 @@ DLLEXPORT void Leviathan::Entity::SoundEmitter::SetFileToPlay(const std::string 
 	InternalSoundPlayer->SetPlayFile(file, usestreaming);
 }
 // ------------------------------------ //
-void Leviathan::Entity::SoundEmitter::PosUpdated(){
+void Leviathan::Entity::SoundEmitter::PosUpdated(Lock &guard){
 	if(InternalSoundPlayer){
 
 		InternalSoundPlayer->SetPosition(Position);

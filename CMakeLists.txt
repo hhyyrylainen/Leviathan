@@ -313,6 +313,9 @@ set(LINK_LIBS_ENGINE_DEBUG ${TmpProcessQueueList})
 # create the bin directory
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 
+# Tests can crash if this folder doesn't exist
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Test")
+
 # Configure engine include file
 configure_file("${PROJECT_SOURCE_DIR}/Engine/Include.h.in" "${PROJECT_SOURCE_DIR}/Engine/Include.h")
 

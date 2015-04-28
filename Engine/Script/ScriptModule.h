@@ -227,15 +227,15 @@ namespace Leviathan{
 
 		//! \brief Starts monitoring for changes to all script segments and all included files
 		//! \see ReLoadModuleCode
-		void _StartMonitoringFiles();
+		void _StartMonitoringFiles(Lock &guard);
 
 		//! \brief Releases file listeners
 		//! \note This will need to be called before deleting this object unless the user wants access violations
-		void _StopFileMonitoring();
+		void _StopFileMonitoring(Lock &guard);
 
 
 		//! \brief Adds a new file to monitor, if required
-		void _AddFileToMonitorIfNotAlready(const std::string &file);
+		void _AddFileToMonitorIfNotAlready(Lock &guard, const std::string &file);
 
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 

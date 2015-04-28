@@ -110,42 +110,7 @@ DLLEXPORT bool NamedVariableList::RecursiveParseList(std::vector<VariableBlock*>
 
     itr.SkipWhiteSpace();
 
-    auto curchar = itr.GetCharacter();
-
-    if(curchar == '['){
-
-        std::vector<VariableBlock*> morevalues;
-        auto firstvalue = itr.GetStringInBracketsRecursive<string>();
-
-        if(!RecursiveParseList(morevalues, move(firstvalue), predefined)){
-
-            throw InvalidArgument("Sub expression parsing failed");
-        }
-
-        itr.SkipWhiteSpace();
-
-        if(itr.IsOutOfBounds()){
-
-            // The values were just wrapped in an extra pair of brackets //
-            resultvalues.reserve(morevalues.size());
-
-            for(auto ptr : morevalues){
-
-                resultvalues.push_back(ptr);
-            }
-
-            morevalues.clear();
-            return true;
-            
-        } else {
-
-            // Actually recursive things //
-            SAFE_DELETE_VECTOR(morevalues);
-            morevalues.clear();
-            throw InvalidArgument("NamedVars recursive parsing is not done");
-        }
-    }
-
+    // TODO: allow commas inside brackets without quoting them
     while(auto value = itr.GetUntilNextCharacterOrAll<string>(',')){
 
         StringIterator itr2(value.get());
@@ -157,6 +122,7 @@ DLLEXPORT bool NamedVariableList::RecursiveParseList(std::vector<VariableBlock*>
             continue;
         }
 
+        // Parameter is wrapped in brackets //
         if(itr2.GetCharacter() == '['){
 
             auto firstvalue = itr2.GetStringInBracketsRecursive<string>();
@@ -168,9 +134,21 @@ DLLEXPORT bool NamedVariableList::RecursiveParseList(std::vector<VariableBlock*>
                 throw InvalidArgument("Sub expression parsing failed");
             }
 
-            SAFE_DELETE_VECTOR(morevalues);
-            morevalues.clear();
-            throw InvalidArgument("NamedVars recursive parsing is not done");
+            if(morevalues.size() > 1){
+                
+                SAFE_DELETE_VECTOR(morevalues);
+                morevalues.clear();
+                throw InvalidArgument("NamedVars recursive parsing is not done");
+                
+            } else {
+
+                // Just a single or no values where wrapped in extra brackets //
+                for(auto ptr : morevalues){
+                    resultvalues.push_back(ptr);
+                }
+
+                morevalues.clear();
+            }
             
             continue;
         }
@@ -178,6 +156,9 @@ DLLEXPORT bool NamedVariableList::RecursiveParseList(std::vector<VariableBlock*>
         // Parse value //
         auto valuestr = itr.GetUntilEnd<string>();
 
+        if(!valuestr)
+            continue;
+        
         try{
             resultvalues.push_back(new VariableBlock(*valuestr, predefined));
         } catch(const InvalidArgument&){
@@ -240,16 +221,14 @@ DLLEXPORT void Leviathan::NamedVariableList::ConstructValuesForObject(const stri
 	try{
 		// try to create new VariableBlock //
 		// it should always have one element //
-		if(Datas.size() == 0){
-			Datas.push_back(new VariableBlock(variablestr, predefined));
-		} else {
-			SAFE_DELETE(Datas[0]);
-			Datas[0] = new VariableBlock(variablestr, predefined);
-		}
+        Datas.push_back(new VariableBlock(variablestr, predefined));
+
+
 	}
 	catch (const InvalidArgument &e){
 
 		// Rethrow the exception //
+        SAFE_DELETE_VECTOR(Datas);
         throw;
 	}
 }

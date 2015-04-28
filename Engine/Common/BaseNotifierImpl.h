@@ -21,8 +21,7 @@ DLLEXPORT Leviathan::BaseNotifier<ParentType, ChildType>::~BaseNotifier(){
 }
 // ------------------------------------ //
 template<class ParentType, class ChildType>
-DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::ReleaseChildHooks(){
-	GUARD_LOCK();
+DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::ReleaseChildHooks(Lock &guard){
 
 	// Go through all and unhook them //
 	while(ConnectedChildren.size()){
@@ -37,7 +36,7 @@ DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::ReleaseChildHooks
 		tmpobj->_OnUnhookNotifier(this);
 
 		// Remove it //
-		_OnNotifiableDisconnected(tmpobj->GetActualPointerToNotifiableObject());
+		_OnNotifiableDisconnected(guard, tmpobj->GetActualPointerToNotifiableObject());
 		
 		ConnectedChildren.erase(iter);
 	}
@@ -103,7 +102,7 @@ DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::ConnectToNotifiab
 	ConnectedChildren.push_back(child);
 
 	// Finally call the callback //
-	_OnNotifiableConnected(child->GetActualPointerToNotifiableObject());
+	_OnNotifiableConnected(guard, child->GetActualPointerToNotifiableObject());
 
 	return true;
 }
@@ -126,17 +125,17 @@ DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::IsConnectedTo(
 }
 // ------------------------------------ //
 template<class ParentType, class ChildType>
-void Leviathan::BaseNotifier<ParentType, ChildType>::_OnHookNotifiable(
+void Leviathan::BaseNotifier<ParentType, ChildType>::_OnHookNotifiable(Lock &guard, 
     BaseNotifiable<ParentType, ChildType>* child)
 {
 
 	// Add the object to the list of objects //
 	ConnectedChildren.push_back(child);
-	_OnNotifiableConnected(child->GetActualPointerToNotifiableObject());
+	_OnNotifiableConnected(guard, child->GetActualPointerToNotifiableObject());
 }
 
 template<class ParentType, class ChildType>
-void Leviathan::BaseNotifier<ParentType, ChildType>::_OnUnhookNotifiable(
+void Leviathan::BaseNotifier<ParentType, ChildType>::_OnUnhookNotifiable(Lock &guard,
     BaseNotifiable<ParentType, ChildType>* childtoremove)
 {
 
@@ -146,7 +145,7 @@ void Leviathan::BaseNotifier<ParentType, ChildType>::_OnUnhookNotifiable(
 
 		if(*iter == childtoremove){
 			// Remove it //
-			_OnNotifiableDisconnected((*iter)->GetActualPointerToNotifiableObject());
+			_OnNotifiableDisconnected(guard, (*iter)->GetActualPointerToNotifiableObject());
 			ConnectedChildren.erase(iter);
 			return;
 		}
@@ -159,12 +158,16 @@ DLLEXPORT ParentType* Leviathan::BaseNotifier<ParentType, ChildType>::GetActualP
 }
 // ------------------------------------ //
 template<class ParentType, class ChildType>
-DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::_OnNotifiableDisconnected(ChildType* childtoremove){
+DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::_OnNotifiableDisconnected(
+    Lock &guard, ChildType* childtoremove)
+{
 
 }
 
 template<class ParentType, class ChildType>
-DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::_OnNotifiableConnected(ChildType* childadded){
+DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::_OnNotifiableConnected(
+    Lock &guard, ChildType* childadded)
+{
 
 }
 // ------------------------------------ //

@@ -70,7 +70,7 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
 	}
 
     if(OwnedByWorld)
-        _DestroyPhysicalBody();
+        _DestroyPhysicalBody(guard);
 
     OwnedByWorld = NULL;
 }
@@ -353,15 +353,13 @@ brushpostgraphicalobjectcreation:
 DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*= 0.f*/){
 	// destroy old first //
 
-    {
-        GUARD_LOCK_NAME(lockit);
-
-        AggressiveConstraintUnlink(lockit);
-    }
-
-	_DestroyPhysicalBody();
-
     GUARD_LOCK();
+    
+    AggressiveConstraintUnlink(guard);
+
+	_DestroyPhysicalBody(guard);
+
+
     
     // Store the mass //
     Mass = mass;

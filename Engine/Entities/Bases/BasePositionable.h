@@ -34,6 +34,9 @@ namespace Leviathan{
 		DLLEXPORT void SetOrientation(const Float4 &quaternionrotation);
         DLLEXPORT void SetOrientationComponents(const float &x, const float &y, const float &z, const float &w);
 
+        DLLEXPORT void SetPos(const Float3 &pos, Lock &guard);
+        DLLEXPORT void SetOrientation(const Float4 &quaternionrotation, Lock &guard);
+
 		DLLEXPORT Float4 GetOrientation() const;
         DLLEXPORT Float4 GetRotation() const;
         DLLEXPORT void GetOrientation(Float4 &receiver) const;
@@ -73,8 +76,8 @@ namespace Leviathan{
         
 
 	protected:
-		virtual void PosUpdated();
-		virtual void OrientationUpdated();
+		virtual void PosUpdated(Lock &guard);
+		virtual void OrientationUpdated(Lock &guard);
 
 		bool BasePositionableCustomMessage(int message, void* data);
 		bool BasePositionableCustomGetData(ObjectDataRequest* data);

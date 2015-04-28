@@ -45,7 +45,7 @@ DLLEXPORT void Leviathan::ScriptModule::Release(){
 
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
-	_StopFileMonitoring();
+	_StopFileMonitoring(guard);
 
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
@@ -163,7 +163,7 @@ DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(){
 
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
-		_StartMonitoringFiles();
+		_StartMonitoringFiles(guard);
 
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
@@ -255,8 +255,6 @@ DLLEXPORT std::string Leviathan::ScriptModule::GetInfoString(){
 }
 
 DLLEXPORT void Leviathan::ScriptModule::DeleteThisModule(){
-    
-	GUARD_LOCK();
     
 	// Tell script interface to unload this //
 	ScriptExecutor::Get()->DeleteModule(this);
@@ -446,7 +444,7 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
 
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
-		module->_AddFileToMonitorIfNotAlready(file);
+		module->_AddFileToMonitorIfNotAlready(guard, file);
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
 		return builder->AddSectionFromFile(file.c_str());
@@ -462,7 +460,7 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
 			// completed search //
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
-			module->_AddFileToMonitorIfNotAlready(completefile);
+			module->_AddFileToMonitorIfNotAlready(guard, completefile);
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
 			return builder->AddSectionFromFile(completefile.c_str());
@@ -486,7 +484,7 @@ trytofindinscriptfolderincludecallback:
 
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
-			module->_AddFileToMonitorIfNotAlready(finalpath);
+			module->_AddFileToMonitorIfNotAlready(guard, finalpath);
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
 			return builder->AddSectionFromFile(finalpath.c_str());
@@ -666,16 +664,14 @@ DLLEXPORT bool Leviathan::ScriptModule::ReLoadModuleCode(){
 
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
-void Leviathan::ScriptModule::_StartMonitoringFiles(){
-
-	GUARD_LOCK();
+void Leviathan::ScriptModule::_StartMonitoringFiles(Lock& guard){
 
 	// First add all the known source files //
 	auto end = ScriptSourceSegments.end();
 	for(auto iter = ScriptSourceSegments.begin(); iter != end; ++iter){
 
 
-		_AddFileToMonitorIfNotAlready((*iter)->SourceFile);
+		_AddFileToMonitorIfNotAlready(guard, (*iter)->SourceFile);
 	}
 
 	// The others should already have been included //
@@ -727,9 +723,7 @@ void Leviathan::ScriptModule::_StartMonitoringFiles(){
 	}
 }
 
-void Leviathan::ScriptModule::_StopFileMonitoring(){
-
-	GUARD_LOCK();
+void Leviathan::ScriptModule::_StopFileMonitoring(Lock &guard){
 
 	auto tmphandler = ResourceRefreshHandler::Get();
 
@@ -754,9 +748,7 @@ void Leviathan::ScriptModule::_StopFileMonitoring(){
 
 }
 
-void Leviathan::ScriptModule::_AddFileToMonitorIfNotAlready(const string &file){
-
-	GUARD_LOCK();
+void Leviathan::ScriptModule::_AddFileToMonitorIfNotAlready(Lock &guard, const string &file){
 
 	// Look for a matching string //
 	auto end = AlreadyMonitoredFiles.end();

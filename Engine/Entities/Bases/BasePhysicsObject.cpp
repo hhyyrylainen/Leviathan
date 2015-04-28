@@ -19,8 +19,7 @@ DLLEXPORT Leviathan::BasePhysicsObject::~BasePhysicsObject(){
 
 }
 // ------------------------------------ //
-void Leviathan::BasePhysicsObject::_DestroyPhysicalBody(){
-    GUARD_LOCK();
+void Leviathan::BasePhysicsObject::_DestroyPhysicalBody(Lock &guard){
     
 	if(Collision)
 		NewtonDestroyCollision(Collision);
@@ -31,13 +30,13 @@ void Leviathan::BasePhysicsObject::_DestroyPhysicalBody(){
 	Collision = NULL;
 }
 // ------------------------------------ //
-void Leviathan::BasePhysicsObject::PosUpdated(){
-    GUARD_LOCK();
+void Leviathan::BasePhysicsObject::PosUpdated(Lock &guard){
+
 	_UpdatePhysicsObjectLocation(guard);
 }
 
-void Leviathan::BasePhysicsObject::OrientationUpdated(){
-    GUARD_LOCK();
+void Leviathan::BasePhysicsObject::OrientationUpdated(Lock &guard){
+
 	_UpdatePhysicsObjectLocation(guard);
 }
 // ------------------------------------ //

@@ -72,8 +72,9 @@ bool Leviathan::BaseParentable::BaseParentableCustomMessage(int message, void* d
 
 			// Call callbacks //
 			_OnParentablePositionUpdated();
-			PosUpdated();
-			OrientationUpdated();
+            GUARD_LOCK();
+			PosUpdated(guard);
+			OrientationUpdated(guard);
 			return true;
 		}
 

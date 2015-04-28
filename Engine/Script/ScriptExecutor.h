@@ -9,7 +9,7 @@
 //#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
 #include "angelscript.h"
 
-
+#include "Common/ThreadSafe.h"
 #include "Script/ScriptScript.h"
 #include "Common/DataStoring/DataBlock.h"
 #include "Script/ScriptRunningSetup.h"
@@ -100,6 +100,8 @@ namespace Leviathan{
         // could potentially be released
         std::vector<std::shared_ptr<ScriptModule>> AllocatedScriptModules;
 
+        Mutex ModulesLock;
+        
 
 		// map of type name and engine type id //
 		static std::map<int, std::string> EngineTypeIDS;

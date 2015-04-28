@@ -1,6 +1,6 @@
 #pragma once
 // ------------------------------------ //
-
+#include "Include.h"
 
 
 namespace Leviathan{ namespace Rendering{
@@ -12,8 +12,6 @@ namespace Leviathan{ namespace Rendering{
 		DLLEXPORT ~FontManager();
 
 		DLLEXPORT void LoadAllFonts();
-
-	private:
 
 	};
 

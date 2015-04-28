@@ -9,8 +9,11 @@
 #include "Entities/Objects/Constraints.h"
 #include "Handlers/ConstraintSerializerManager.h"
 #include "Entities/Bases/BaseConstraintable.h"
+#include <memory>
 
 namespace Pong{
+
+    using namespace std;
 
     enum PONG_CONSTRAINT_TYPE
     {

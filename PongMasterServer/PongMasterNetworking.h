@@ -1,13 +1,6 @@
-#ifndef PONGMASTERNETWORKING
-#define PONGMASTERNETWORKING
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
 #include "Networking/NetworkInterface.h"
-
 
 
 namespace Pong{
@@ -17,8 +10,8 @@ namespace Pong{
 		PongMasterNetworking();
 		virtual ~PongMasterNetworking();
 
-		virtual void HandleResponseOnlyPacket(shared_ptr<Leviathan::NetworkResponse> message, Leviathan::ConnectionInfo* connection, 
-			bool &dontmarkasreceived);
+		virtual void HandleResponseOnlyPacket(std::shared_ptr<Leviathan::NetworkResponse> message,
+            Leviathan::ConnectionInfo* connection,  bool &dontmarkasreceived);
 		
 		//! \todo Put actual stuff here
 		virtual void CloseDown();
@@ -29,4 +22,4 @@ namespace Pong{
 	};
 
 }
-#endif
+

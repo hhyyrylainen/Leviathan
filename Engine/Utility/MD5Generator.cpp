@@ -32,6 +32,7 @@ documentation and/or software.
 // ------------------------------------ //
 #include "MD5Generator.h"
 
+#include <cstring>
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //

@@ -74,7 +74,7 @@ int Pong::PlayerSlot::GetSplitCount(){
 }
 
 void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool active){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// if this is player 0 or 3 flip inputs //
 	if(Slot == 0 || Slot == 2){
@@ -108,8 +108,8 @@ void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool ac
 
     if(!TrackDirectptr){
 
-        Leviathan::ComplainOnce::PrintWarningOnce(L"Slot_trackdirect_ptr_is_empty",
-            L"Slot is trying to move but doesn't have track pointer set");
+        Leviathan::ComplainOnce::PrintWarningOnce("Slot_trackdirect_ptr_is_empty",
+            "Slot is trying to move but doesn't have track pointer set");
     }
 
 	// Set the track speed based on move direction //
@@ -159,7 +159,7 @@ bool Pong::PlayerSlot::DoesPlayerNumberMatchThisOrParent(int number){
 }
 // ------------------------------------ //
 void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Write all our data to the packet //
 	packet << Slot << (int)PlayerType << PlayerNumber << NetworkedInputID << ControlIdentifier << (int)ControlType << PlayerControllerID 
@@ -173,7 +173,7 @@ void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
 }
 
 void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	int tmpival;
 
@@ -284,7 +284,7 @@ void Pong::PlayerSlot::SlotLeavePlayer(){
 }
 
 void Pong::PlayerSlot::SetInputThatSendsControls(PongNInputter* input){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
     if(InputObj && input != InputObj){
 
@@ -296,7 +296,7 @@ void Pong::PlayerSlot::SetInputThatSendsControls(PongNInputter* input){
 }
 
 void Pong::PlayerSlot::_ResetNetworkInput(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	if(InputObj){
 
 
@@ -315,8 +315,8 @@ void Pong::PlayerSlot::_ResetNetworkInput(){
 }
 
 // ------------------ PlayerList ------------------ //
-Pong::PlayerList::PlayerList(boost::function<void (PlayerList*)> callback, size_t playercount /*= 4*/) :
-    SyncedResource(L"PlayerList"), CallbackFunc(callback), GamePlayers(4)
+Pong::PlayerList::PlayerList(std::function<void (PlayerList*)> callback, size_t playercount /*= 4*/) :
+    SyncedResource("PlayerList"), CallbackFunc(callback), GamePlayers(4)
 {
 
 	// Fill default player data //
@@ -331,7 +331,7 @@ Pong::PlayerList::~PlayerList(){
 	SAFE_DELETE_VECTOR(GamePlayers);
 }
 // ------------------------------------ //
-void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet) THROWS{
+void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet){
 	
 	sf::Int32 vecsize;
 
@@ -376,7 +376,7 @@ void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet) THROWS{
 }
 
 void Pong::PlayerList::SerializeCustomDataToPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	// First put the size //
 	packet << static_cast<sf::Int32>(GamePlayers.size());
 
@@ -393,7 +393,7 @@ void Pong::PlayerList::OnValueUpdated(){
 	CallbackFunc(this);
 }
 
-PlayerSlot* Pong::PlayerList::GetSlot(size_t index) THROWS{
+PlayerSlot* Pong::PlayerList::GetSlot(size_t index){
 	if(index >= GamePlayers.size())
 		throw InvalidArgument("player index is out of range");
 
@@ -402,7 +402,7 @@ PlayerSlot* Pong::PlayerList::GetSlot(size_t index) THROWS{
 // ------------------------------------ //
 void Pong::PlayerList::ReportPlayerInfoToLog() const{
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     Logger::Get()->Write("PlayerList:::: size "+Convert::ToString(GamePlayers.size()));
 
     for(auto iter = GamePlayers.begin(); iter != GamePlayers.end(); ++iter){

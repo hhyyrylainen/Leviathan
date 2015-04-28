@@ -10,9 +10,12 @@
 #include "PongServer.h"
 #include "PlayerSlot.h"
 using namespace Pong;
+using namespace std;
 // ------------------------------------ //
-Pong::PongServerNetworking::PongServerNetworking() : NetworkServerInterface(8, L"Local pong game", Leviathan::NETWORKRESPONSE_SERVERJOINRESTRICT_NONE),
-	ServerStatusIs(PONG_JOINGAMERESPONSE_TYPE_LOBBY)
+Pong::PongServerNetworking::PongServerNetworking() :
+    NetworkServerInterface(8, "Local pong game",
+        Leviathan::NETWORKRESPONSE_SERVERJOINRESTRICT_NONE),
+    ServerStatusIs(PONG_JOINGAMERESPONSE_TYPE_LOBBY)
 {
 	RegisterCustomCommandHandlers(_CommandHandler);
 }
@@ -21,8 +24,11 @@ Pong::PongServerNetworking::~PongServerNetworking(){
 
 }
 // ------------------------------------ //
-void Pong::PongServerNetworking::HandleResponseOnlyPacket(shared_ptr<Leviathan::NetworkResponse> message, Leviathan::ConnectionInfo* connection, bool &dontmarkasreceived){
-    GUARD_LOCK_THIS_OBJECT();
+void Pong::PongServerNetworking::HandleResponseOnlyPacket(
+    shared_ptr<Leviathan::NetworkResponse> message, Leviathan::ConnectionInfo* connection,
+    bool &dontmarkasreceived)
+{
+    GUARD_LOCK();
 	// Try default handling //
 	if(_HandleDefaultResponseOnly(message, connection, dontmarkasreceived))
 		return;
@@ -44,11 +50,11 @@ void Pong::PongServerNetworking::HandleResponseOnlyPacket(shared_ptr<Leviathan::
 	}
 
 	// We couldn't handle it //
-	Logger::Get()->Error(L"Couldn't handle a packet");
+	Logger::Get()->Error("Couldn't handle a packet");
 }
 
 void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	// Try default handling //
 	if(_HandleDefaultRequest(request, connection))
 		return;
@@ -74,10 +80,12 @@ void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> 
 				if(!ply){
 
 					shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), 
-						Leviathan::PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));
+						Leviathan::PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
 					// Send the state to the player //
-					tmpresponse->GenerateServerDisallowResponse(new Leviathan::NetworkResponseDataForServerDisallow(
-						Leviathan::NETWORKRESPONSE_INVALIDREASON_UNAUTHENTICATED, L"Connection not connected as a player"));
+					tmpresponse->GenerateServerDisallowResponse(
+                        new Leviathan::NetworkResponseDataForServerDisallow(
+						Leviathan::NETWORKRESPONSE_INVALIDREASON_UNAUTHENTICATED,
+                        "Connection not connected as a player"));
 
 					connection->SendPacketToConnection(tmpresponse, 1);
 					return;
@@ -88,7 +96,7 @@ void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> 
 				ply->StartHeartbeats();
 
 				shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(), 
-					Leviathan::PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));
+					Leviathan::PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
 				// Send the state to the player //
 				tmpresponse->GenerateCustomResponse(new PongJoinGameResponse(ServerStatusIs));
 
@@ -101,7 +109,7 @@ void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> 
 
 
 	// We couldn't handle it //
-	Logger::Get()->Error(L"Couldn't handle a packet");
+	Logger::Get()->Error("Couldn't handle a packet");
 }
 
 void Pong::PongServerNetworking::TickIt(){
@@ -136,12 +144,13 @@ void Pong::PongServerNetworking::_OnPlayerDisconnect(Leviathan::ConnectedPlayer*
 }
 // ------------------------------------ //
 void Pong::PongServerNetworking::SetStatus(PONG_JOINGAMERESPONSE_TYPE status){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	ServerStatusIs = status;
 
 	// Create an update packet //
-	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, Leviathan::PACKAGE_TIMEOUT_STYLE_TIMEDMS, 800));
+	shared_ptr<NetworkResponse> response(new NetworkResponse(-1,
+            Leviathan::PACKET_TIMEOUT_STYLE_TIMEDMS, 800));
 	response->GenerateCustomResponse(new PongServerChangeStateResponse(ServerStatusIs));
 
 

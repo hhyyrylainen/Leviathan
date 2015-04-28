@@ -1,6 +1,7 @@
 #pragma once
 // ------------------------------------ //
 #include "../ForwardDeclarations.h"
+#include "Include.h"
 
 #include "LeapListener.h"
 #include "Leap.h"

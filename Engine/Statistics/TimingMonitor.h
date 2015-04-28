@@ -1,7 +1,10 @@
 #pragma once
 // ------------------------------------ //
-// ---- includes ---- //
+#include "Include.h"
 #include <memory>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 #define TIMINGMONITOR_STYLE_RESULT_DEFAULT	100
 #define TIMINGMONITOR_STYLE_RESULT_NONE		200

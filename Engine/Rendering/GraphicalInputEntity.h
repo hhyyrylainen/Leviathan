@@ -3,6 +3,12 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "../Common/ThreadSafe.h"
+#include <memory>
+
+namespace CEGUI{
+
+    class OgreRenderer;
+}
 
 namespace Leviathan{
 

@@ -144,10 +144,10 @@ int main(int argcount, char* args[]){
         app.FlushCommandLine();
 
 
-        Logger::Get()->Info("Engine successfully initialized", true);
+        Logger::Get()->Info("Engine successfully initialized");
         Return = app.RunMessageLoop();
     } else {
-        Logger::Get()->Error("App init failed, closing", true);
+        Logger::Get()->Error("App init failed, closing");
         app.ForceRelease();
         Return = 5;
     }

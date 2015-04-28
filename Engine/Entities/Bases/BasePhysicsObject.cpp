@@ -5,7 +5,6 @@
 #include "Newton/PhysicsMaterialManager.h"
 #include "../CommonStateObjects.h"
 #include "BaseSendableEntity.h"
-#include "boost/bind.hpp"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -587,7 +586,7 @@ DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionableP
     
     // TODO: make sure that the entity doesn't get simulated before this resimulate call locks the world
     OwnedByWorld->GetPhysicalWorld()->ResimulateBody(Body, tosimulate*TICKSPEED,
-        boost::bind<void>([](int &simulatedtime, int &advancedtick, BaseSendableEntity* obj, int worldtick) -> void
+        std::bind<void>([](int &simulatedtime, int &advancedtick, BaseSendableEntity* obj, int worldtick) -> void
             {
         
                 // Keep track of current tick while resimulating //
@@ -772,7 +771,7 @@ DLLEXPORT void BasePhysicsObject::InterpolatePhysicalState(PositionablePhysicalD
 #endif //NETWORK_USE_SNAPSHOTS
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(bool addmass,
-    boost::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> getforce,
+    std::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> getforce,
     std::string* name /*= NULL*/) : 
 	Callback(getforce), MultiplyByMass(addmass), OptionalName(name)
 {

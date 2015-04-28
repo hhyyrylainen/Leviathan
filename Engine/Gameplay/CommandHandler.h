@@ -4,6 +4,9 @@
 // ------------------------------------ //
 #include "Common/ThreadSafe.h"
 #include "CustomCommandHandler.h"
+#include <list>
+#include <memory>
+#include <vector>
 
 
 namespace Leviathan{

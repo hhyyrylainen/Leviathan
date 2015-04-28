@@ -1,6 +1,7 @@
 #pragma once
 // ------------------------------------ //
-#include <exception>
+#include "Include.h"
+#include <new>
 
 #define OUTOFMEMORY_REQUIREDMEMORY_AMOUNT	1000
 

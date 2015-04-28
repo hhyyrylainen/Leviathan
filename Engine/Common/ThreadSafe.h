@@ -87,3 +87,9 @@ namespace Leviathan{
 
 }
 
+using Leviathan::Mutex;
+using Leviathan::RecursiveMutex;
+using Leviathan::Lock;
+using Leviathan::RecursiveLock;
+
+

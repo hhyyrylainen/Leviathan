@@ -5,12 +5,14 @@
 #include "Common/BaseNotifiable.h"
 #include "angelscript.h"
 #include "Common/ReferenceCounted.h"
+#include <map>
 
 
 namespace Leviathan{
 
 	bool RegisterNotifiersWithAngelScript(asIScriptEngine* engine);
-	void RegisterNotifierTypesWithAngelScript(asIScriptEngine* engine, std::map<int, std::string> &typeids);
+	void RegisterNotifierTypesWithAngelScript(asIScriptEngine* engine,
+        std::map<int, std::string> &typeids);
 
 
 	//! \brief BaseNotifier for use in scripts

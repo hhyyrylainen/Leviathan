@@ -124,7 +124,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
 
 			// Prepare a task that sends all of the values //
 			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new RepeatCountedDelayedTask(
-                        boost::bind<void>([](ConnectionInfo* connection, SyncedVariables* instance,
+                        std::bind<void>([](ConnectionInfo* connection, SyncedVariables* instance,
                                 std::shared_ptr<SendDataSyncAllStruct> data) -> void 
                             {
                                 // Get the loop count //

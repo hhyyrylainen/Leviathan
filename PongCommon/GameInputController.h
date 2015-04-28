@@ -8,18 +8,16 @@
 #include "Networking/NetworkedInputHandler.h"
 #include "Networking/NetworkedInput.h"
 #include "Common/ThreadSafe.h"
+#include <memory>
 
 
 namespace Pong{
 	
-
+    using namespace std;
 
 	//! \brief The factory that handles creating the things
 	class PongInputFactory : public Leviathan::NetworkInputFactory{
 	public:
-
-
-
 
 
 		//! \brief Returns the static instance
@@ -133,7 +131,8 @@ namespace Pong{
 
 
 
-		std::map<OIS::KeyCode, CONTROLKEYACTION>& MapControlsToKeyGrouping(PLAYERCONTROLS controls) THROWS;
+		std::map<OIS::KeyCode, CONTROLKEYACTION>& MapControlsToKeyGrouping(
+            PLAYERCONTROLS controls);
 		
 
 		static GameInputController* Get();

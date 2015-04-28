@@ -44,28 +44,28 @@ void Pong::GameInputController::_SetupControlGroups(){
 	// Would be nice to be able to use boost::assign here...
 	
 	KeyMap WASD;
-	WASD.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"A"), CONTROLKEYACTION_LEFT));
-	WASD.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"D"), CONTROLKEYACTION_RIGHT));
-	WASD.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"W"), CONTROLKEYACTION_POWERUPUP));
-	WASD.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"S"), CONTROLKEYACTION_POWERUPDOWN));
+	WASD.insert(make_pair(Window::ConvertStringToOISKeyCode("A"), CONTROLKEYACTION_LEFT));
+	WASD.insert(make_pair(Window::ConvertStringToOISKeyCode("D"), CONTROLKEYACTION_RIGHT));
+	WASD.insert(make_pair(Window::ConvertStringToOISKeyCode("W"), CONTROLKEYACTION_POWERUPUP));
+	WASD.insert(make_pair(Window::ConvertStringToOISKeyCode("S"), CONTROLKEYACTION_POWERUPDOWN));
 	
 	KeyMap Arrows;
-	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"LEFTARROW"), CONTROLKEYACTION_LEFT));
-	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"RIGHTARROW"), CONTROLKEYACTION_RIGHT));
-	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"UPARROW"), CONTROLKEYACTION_POWERUPUP));
-	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"DOWNARROW"), CONTROLKEYACTION_POWERUPDOWN));
+	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode("LEFTARROW"), CONTROLKEYACTION_LEFT));
+	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode("RIGHTARROW"), CONTROLKEYACTION_RIGHT));
+	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode("UPARROW"), CONTROLKEYACTION_POWERUPUP));
+	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode("DOWNARROW"), CONTROLKEYACTION_POWERUPDOWN));
 	
 	KeyMap IJKL;
-	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"J"), CONTROLKEYACTION_LEFT));
-	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"L"), CONTROLKEYACTION_RIGHT));
-	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"I"), CONTROLKEYACTION_POWERUPUP));
-	Arrows.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"K"), CONTROLKEYACTION_POWERUPDOWN));
+	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode("J"), CONTROLKEYACTION_LEFT));
+	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode(""), CONTROLKEYACTION_RIGHT));
+	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode("I"), CONTROLKEYACTION_POWERUPUP));
+	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode("K"), CONTROLKEYACTION_POWERUPDOWN));
 	
 	KeyMap numpad;
-	numpad.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"NUMPAD4"), CONTROLKEYACTION_LEFT));
-	numpad.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"NUMPAD6"), CONTROLKEYACTION_RIGHT));
-	numpad.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"NUMPAD8"), CONTROLKEYACTION_POWERUPUP));
-	numpad.insert(make_pair(Window::ConvertWstringToOISKeyCode(L"NUMPAD5"), CONTROLKEYACTION_POWERUPDOWN));
+	numpad.insert(make_pair(Window::ConvertStringToOISKeyCode("NUMPAD4"), CONTROLKEYACTION_LEFT));
+	numpad.insert(make_pair(Window::ConvertStringToOISKeyCode("NUMPAD6"), CONTROLKEYACTION_RIGHT));
+	numpad.insert(make_pair(Window::ConvertStringToOISKeyCode("NUMPAD8"), CONTROLKEYACTION_POWERUPUP));
+	numpad.insert(make_pair(Window::ConvertStringToOISKeyCode("NUMPAD5"), CONTROLKEYACTION_POWERUPDOWN));
 	
 	
 	GroupToKeyMap.insert(make_pair(PLAYERCONTROLS_WASD, WASD));
@@ -76,7 +76,7 @@ void Pong::GameInputController::_SetupControlGroups(){
 }
 
 std::map<OIS::KeyCode, CONTROLKEYACTION>& Pong::GameInputController::MapControlsToKeyGrouping(PLAYERCONTROLS controls)
-    THROWS
+    
 {
 
 	return GroupToKeyMap[controls];
@@ -94,7 +94,7 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
 	// We need to find the corresponding player with the control id matching this and then stealing it here //
 	auto plylist = BasePongParts::Get()->GetPlayers();
 
-	GUARD_LOCK_OTHER_OBJECT(plylist);
+	GUARD_LOCK_OTHER(plylist);
 
 
 	std::vector<PlayerSlot*>& plys = plylist->GetVec();
@@ -132,7 +132,7 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
 
 	if(playerid == -1){
 
-		Logger::Get()->Error(L"Pong input thing failed to find player ID");
+		Logger::Get()->Error("Pong input thing failed to find player ID");
 		return NULL;
 	}
 
@@ -160,7 +160,7 @@ DLLEXPORT void Pong::PongInputFactory::ReplicationFinalized(NetworkedInput* inpu
 	// Now add the proper player pointer to it //
 	auto plylist = BasePongParts::Get()->GetPlayers();
 
-	GUARD_LOCK_OTHER_OBJECT(plylist);
+	GUARD_LOCK_OTHER(plylist);
 
 
 	std::vector<PlayerSlot*>& plys = plylist->GetVec();
@@ -191,7 +191,7 @@ DLLEXPORT void Pong::PongInputFactory::ReplicationFinalized(NetworkedInput* inpu
 	}
 
 
-	Logger::Get()->Error(L"Pong input thing failed to link from network, finalize replication fail");
+	Logger::Get()->Error("Pong input thing failed to link from network, finalize replication fail");
 }
 
 DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard){
@@ -208,12 +208,12 @@ DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard)
         }
 
         // Wrong type got passed here //
-        Logger::Get()->Warning(L"Wrong type passed to PongInputFactory");
+        Logger::Get()->Warning("Wrong type passed to PongInputFactory");
         return;
     }
     
 	// Unset the target if it is still set //
-	GUARD_LOCK_OTHER_OBJECT(tmpobj);
+	GUARD_LOCK_OTHER(tmpobj);
 
 
 	if(tmpobj->ControlledSlot && tmpobj->ControlledSlot->GetInputObj() == tmpobj){
@@ -243,7 +243,7 @@ bool Pong::PongInputFactory::IsConnectionAllowed(NetworkedInput* input, Connecti
 	// Check does the input id match the player's input that is associated with the connection //
 	auto plylist = BasePongParts::Get()->GetPlayers();
 
-	GUARD_LOCK_OTHER_OBJECT(plylist);
+	GUARD_LOCK_OTHER(plylist);
 
 
 	std::vector<PlayerSlot*>& plys = plylist->GetVec();
@@ -257,7 +257,7 @@ bool Pong::PongInputFactory::IsConnectionAllowed(NetworkedInput* input, Connecti
 
             if(curply->GetNetworkedInputID() == input->GetID()){
 
-                GUARD_LOCK_OTHER_OBJECT_NAME(curply, guard2);
+                GUARD_LOCK_OTHER_NAME(curply, guard2);
 
                 if(curply->GetConnectedPlayer()->GetConnection() == connection){
 
@@ -290,7 +290,7 @@ Pong::PongNInputter::PongNInputter(int ownerid, int networkid, PlayerSlot* contr
 }
 
 Pong::PongNInputter::~PongNInputter(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	if(ControlledSlot){
 		
 		// Should have been destroyed already //
@@ -299,12 +299,12 @@ Pong::PongNInputter::~PongNInputter(){
 }
 
 void Pong::PongNInputter::StopSendingInput(PlayerSlot* tohere){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	ControlledSlot = NULL;
 }
 // ------------------------------------ //
 DLLEXPORT void Pong::PongNInputter::InitializeLocal(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	CreatedByUs = true;
 
@@ -312,7 +312,7 @@ DLLEXPORT void Pong::PongNInputter::InitializeLocal(){
     // Now add the proper player pointer to it //
 	auto plylist = BasePongParts::Get()->GetPlayers();
 
-	GUARD_LOCK_OTHER_OBJECT_NAME(plylist, plylock);
+	GUARD_LOCK_OTHER_NAME(plylist, plylock);
 
 
 	std::vector<PlayerSlot*>& plys = plylist->GetVec();
@@ -340,11 +340,11 @@ DLLEXPORT void Pong::PongNInputter::InitializeLocal(){
 	}
 
 
-	Logger::Get()->Error(L"Pong input thing failed to create local");
+	Logger::Get()->Error("Pong input thing failed to create local");
 }
 // ------------------------------------ //
 void Pong::PongNInputter::_OnInputChanged(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	
 	if(ControlledSlot){
 		// Check which keys have changed //
@@ -378,13 +378,13 @@ void Pong::PongNInputter::_OnInputChanged(){
 }
 // ------------------------------------ //
 void Pong::PongNInputter::OnAddFullCustomDataToPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	packet << (int)CtrlGroup << ControlStates;
 }
 
 void Pong::PongNInputter::OnLoadCustomFullDataFrompacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	int tmpgroup;
 
@@ -403,13 +403,13 @@ void Pong::PongNInputter::OnLoadCustomFullDataFrompacket(sf::Packet &packet){
 }
 // ------------------------------------ //
 void Pong::PongNInputter::OnAddUpdateCustomDataToPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	packet << (sf::Int8)ChangedKeys;
 }
 
 void Pong::PongNInputter::OnLoadCustomUpdateDataFrompacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	if(!(packet >> *reinterpret_cast<sf::Int8*>(&ChangedKeys))){
 
@@ -493,7 +493,7 @@ bool Pong::PongNInputter::_HandleKeyThing(OIS::KeyCode key, bool down){
 
 void Pong::PongNInputter::StartSendingInput(PlayerSlot* target){
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	if(ControlledSlot){
 
@@ -505,7 +505,7 @@ void Pong::PongNInputter::StartSendingInput(PlayerSlot* target){
 }
 // ------------------------------------ //
 void Pong::PongNInputter::UpdateSettings(PLAYERCONTROLS newcontrols){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	if(!CreatedByUs)
 		return;

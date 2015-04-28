@@ -4,6 +4,7 @@
 #include "Iterators/StringIterator.h"
 #include "Script/ScriptExecutor.h"
 #include "../StringOperations.h"
+#include <float.h>
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //

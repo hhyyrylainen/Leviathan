@@ -3,6 +3,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "PhysicalWorld.h"
+#include <memory>
 
 namespace Leviathan{
 

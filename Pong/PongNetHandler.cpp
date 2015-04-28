@@ -54,7 +54,7 @@ void Pong::PongNetHandler::HandleResponseOnlyPacket(shared_ptr<Leviathan::Networ
 	}
 
 	// We couldn't handle it //
-	Logger::Get()->Error(L"Couldn't handle a packet");
+	Logger::Get()->Error("Couldn't handle a packet");
 }
 
 void Pong::PongNetHandler::HandleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection){
@@ -84,7 +84,7 @@ void Pong::PongNetHandler::HandleRequestPacket(shared_ptr<NetworkRequest> reques
 	}
 
 	// We couldn't handle it //
-	Logger::Get()->Error(L"Couldn't handle a packet");
+	Logger::Get()->Error("Couldn't handle a packet");
 }
 
 DLLEXPORT void Pong::PongNetHandler::TickIt(){
@@ -92,7 +92,7 @@ DLLEXPORT void Pong::PongNetHandler::TickIt(){
 }
 // ------------------------------------ //
 void Pong::PongNetHandler::_OnStartApplicationConnect(){
-	Logger::Get()->Info(L"Pong ready to join the lobby or the game");
+	Logger::Get()->Info("Pong ready to join the lobby or the game");
 
 
 	// Send our custom join request packet //
@@ -106,10 +106,10 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 		boost::bind<void>([](shared_ptr<SentNetworkThing> packetobject, PongNetHandler* instance) -> void
 	{
 		// Check did it succeed //
-		if(!packetobject->GetFutureForThis().get() || !packetobject->GotResponse){
+		if(!packetobject->GetStatus() || !packetobject->GotResponse){
 
 			// It failed //
-			instance->DisconnectFromServer(L"Failed to receive response to a join lobby/match request");
+			instance->DisconnectFromServer("Failed to receive response to a join lobby/match request");
 			return;
 		}
 
@@ -121,7 +121,7 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 			directdata->ActualPacketData->TypeIDNumber != PONG_PACKET_JOINGAME_RESPONSE)
 		{
 			// It failed //
-			instance->DisconnectFromServer(L"Received an invalid response to a join game request");
+			instance->DisconnectFromServer("Received an invalid response to a join game request");
 			return;
 		}
 
@@ -134,7 +134,7 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 		case PONG_JOINGAMERESPONSE_TYPE_LOBBY:
 			{
 				// Show the lobby screen //
-				instance->_OnNewConnectionStatusMessage(L"Server join completed, entering the lobby...");
+				instance->_OnNewConnectionStatusMessage("Server join completed, entering the lobby...");
 				
 				PongGame::Get()->VerifyCorrectState(tmpresponseobj->RType);
 
@@ -142,27 +142,28 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 			}
 		default:
 			// It failed //
-			instance->DisconnectFromServer(L"Received an invalid match status after a join game request");
+			instance->DisconnectFromServer("Received an invalid match status after a join game request");
 		}
 
 	}, waitforthis, this), boost::bind<bool>([](shared_ptr<SentNetworkThing> packetobject) -> bool
 	{
 		// Check is it sent //
-		return packetobject->GetFutureForThis().has_value();
+		return packetobject->IsFinalized();
 
 	}, waitforthis))));
 }
 // ------------------------------------ //
-void Pong::PongNetHandler::_OnNewConnectionStatusMessage(const wstring &message){
-	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
-		new NamedVariableList(L"Message", new VariableBlock(Convert::WstringToString(message)))))));
+void Pong::PongNetHandler::_OnNewConnectionStatusMessage(const string &message){
+	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+            Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+		new NamedVariableList("Message", new VariableBlock(message))))));
 }
 // ------------------------------------ //
 void Pong::PongNetHandler::CloseDown(){
 	OnCloseClient();
 }
 
-void Pong::PongNetHandler::_OnDisconnectFromServer(const wstring &reasonstring, bool donebyus){
+void Pong::PongNetHandler::_OnDisconnectFromServer(const string &reasonstring, bool donebyus){
 
 	// Ignore if the reason is us //
 	if(donebyus){
@@ -170,18 +171,21 @@ void Pong::PongNetHandler::_OnDisconnectFromServer(const wstring &reasonstring, 
 		return;
 	}
 	
-	Logger::Get()->Info(L"The server kicked us, showing the reason");
+	Logger::Get()->Info("The server kicked us, showing the reason");
 
 	// Disable the lobby screen //
-	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"LobbyScreenState", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
-		new NamedVariableList(L"State", new VariableBlock(string("Off")))))));
+	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
+            Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+		new NamedVariableList("State", new VariableBlock(string("Off")))))));
 
 
-	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(L"ConnectStatusMessage", Leviathan::NamedVars(shared_ptr<NamedVariableList>(
-		new NamedVariableList(L"Message", new VariableBlock(L"Server kicked us, reason: "+reasonstring))))));
+	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+            Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+                    new NamedVariableList("Message", new VariableBlock(
+                            string("Server kicked us, reason: "+reasonstring)))))));
 
 	// Enable the connection screen to display this message //
-	Engine::Get()->GetWindowEntity()->GetGUI()->SetCollectionState(L"ConnectionScreen", true);
+	Engine::Get()->GetWindowEntity()->GetGUI()->SetCollectionState("ConnectionScreen", true);
 }
 
 

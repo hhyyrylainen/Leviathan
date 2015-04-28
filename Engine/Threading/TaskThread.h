@@ -5,6 +5,7 @@
 #include <thread>
 #include "Common/ThreadSafe.h"
 #include "QueuedTask.h"
+#include <condition_variable>
 
 namespace Leviathan{
 
@@ -59,7 +60,7 @@ namespace Leviathan{
 		// ------------------------------------ //
 
 		// For notifying the thread //
-		std::condition_variable_any ThreadNotify;
+		std::condition_variable ThreadNotify;
 
 		// The task needed to be completed //
         std::shared_ptr<QueuedTask> SetTask;

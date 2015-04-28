@@ -25,7 +25,7 @@ Pong::Arena::~Arena(){
 bool Pong::Arena::GenerateArena(BasePongParts* game, PlayerList &plys){
 
 	QUICKTIME_THISSCOPE;
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	
 	std::vector<PlayerSlot*>& plyvec = plys.GetVec();
 	
@@ -79,15 +79,15 @@ newtonmaterialfetchstartlabel:
 
 
 
-	int ArenaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"ArenaMaterial", nworld);
-	int PaddleID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"PaddleMaterial", nworld);
-	int GoalAreaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"GoalAreaMaterial", nworld);
-	int ArenaBaseID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(L"ArenaBottomMaterial", nworld);
+	int ArenaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld("ArenaMaterial", nworld);
+	int PaddleID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld("PaddleMaterial", nworld);
+	int GoalAreaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld("GoalAreaMaterial", nworld);
+	int ArenaBaseID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld("ArenaBottomMaterial", nworld);
 
 	if(ArenaMatID == -1){
 		// All are probably invalid, force world adding //
 		assert(!infiniteloop && "Stuck infinitely regenerating materials");
-		Logger::Get()->Warning(L"Arena: GenerateArena: world doesn't have materials, regenerating");
+		Logger::Get()->Warning("Arena: GenerateArena: world doesn't have materials, regenerating");
 		Leviathan::PhysicsMaterialManager::Get()->CreateActualMaterialsForWorld(nworld);
 		infiniteloop = true;
 		goto newtonmaterialfetchstartlabel;
@@ -274,8 +274,8 @@ addplayerpaddlelabel:
 		if(!tmp->CreateConstraintWith<Leviathan::Entity::SliderConstraint>(castedbottombrush)->SetParameters(
                 (i == 0 || i == 2) ? Float3(0.f, 0.f, -1.f): Float3(1.f, 0.f, 0.f))->Init())
         {
-            Logger::Get()->Error(L"Arena: GenerateArena: failed to create slider for paddle "+
-                Convert::ToWstring(i+1));
+            Logger::Get()->Error("Arena: GenerateArena: failed to create slider for paddle "+
+                Convert::ToString(i+1));
 		}
 
 		// link //
@@ -376,15 +376,15 @@ addplayerpaddlelabel:
 	}
 
     // Notify how much stuff was created //
-    Logger::Get()->Info(L"Arena: finished generating arena, total objects: "+
-        Convert::ToWstring(TargetWorld->GetObjectCount()));
+    Logger::Get()->Info("Arena: finished generating arena, total objects: "+
+        Convert::ToString(TargetWorld->GetObjectCount()));
     
 	return true;
 }
 // ------------------------------------ //
 void Pong::Arena::_ClearPointers(){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	BottomBrush.reset();
 	TrailKeeper.reset();
 	DirectTrail = NULL;
@@ -394,7 +394,7 @@ void Pong::Arena::ServeBall(){
 
     LetGoOfBall();
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
 
 	// we want to load our ball prop into the world //
@@ -402,7 +402,7 @@ void Pong::Arena::ServeBall(){
     
     
 	auto tempball = TargetWorld->GetWorldObject(Leviathan::Engine::Get()->GetObjectLoader()->LoadPropToWorld(
-            TargetWorld.get(), L"PongBall", TargetWorld->GetPhysicalMaterial(L"BallMaterial"),
+            TargetWorld.get(), "PongBall", TargetWorld->GetPhysicalMaterial("BallMaterial"),
             &prop));
 
     assert(tempball && prop && "failed to load the Ball model");
@@ -411,7 +411,7 @@ void Pong::Arena::ServeBall(){
     prop->CreateConstraintWith<GameBallConnection>(NULL)->Init();
     
     // Verify that the constraint was created //
-    assert(Ball == tempball && "Failed to create emotional connection between the ball and NULL");
+    assert(Ball == tempball && "Failed to create emotional connection between the ball and NUL");
         
 	// set to center of board //
 	prop->SetPos(Float3(0.f, 0.5f, 0.f));
@@ -479,7 +479,7 @@ void Pong::Arena::ServeBall(){
 // ------------------------------------ //
 void Pong::Arena::VerifyTrail(){
     
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     if(DirectTrail)
         return;
@@ -497,7 +497,7 @@ void Pong::Arena::VerifyTrail(){
 }
 // ------------------------------------ //
 void Pong::Arena::LetGoOfBall(){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
 	// We should delete it (but after this physics update is done) //
 	if(Ball && TargetWorld){
@@ -510,7 +510,7 @@ void Pong::Arena::LetGoOfBall(){
 
 bool Pong::Arena::IsBallInPaddleArea(){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	// Cast //
 	Leviathan::Entity::Prop* tmpball = dynamic_cast<Leviathan::Entity::Prop*>(Ball.get());
 
@@ -532,7 +532,7 @@ void Pong::Arena::ColourTheBallTrail(const Float4 &colour){
 	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(colour,
         Float4(0.7f, 0.7f, 0.7f, 0.3f), 5.f, 0.6f);
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
 	if(DirectTrail){
 
@@ -542,7 +542,7 @@ void Pong::Arena::ColourTheBallTrail(const Float4 &colour){
 // ------------------------------------ //
 std::string Pong::Arena::GetMaterialNameForPlayerColour(const Float4 &colour){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 	auto iter = ColourMaterialName.find(colour);
 
 	if(iter != ColourMaterialName.end()){

@@ -9,6 +9,10 @@
 
 // Some core classes that most likely won't conflict are brought to the global namespace here with 'using' statements //
 
+using Leviathan::Locker;
+using Leviathan::Mutex;
+using Leviathan::Lock;
+
 using Leviathan::Logger;
 using Leviathan::FileSystem;
 using Leviathan::Engine;

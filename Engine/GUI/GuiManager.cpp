@@ -9,6 +9,7 @@
 #include "CEGUI/System.h"
 #include "CEGUI/Window.h"
 #include "CEGUI/WindowManager.h"
+#include "CEGUI/RendererModules/Ogre/Renderer.h"
 #include "Common/DataStoring/DataBlock.h"
 #include "Common/DataStoring/DataStore.h"
 #include "../TimeIncludes.h"

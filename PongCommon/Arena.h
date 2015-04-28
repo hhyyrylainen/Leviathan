@@ -1,14 +1,13 @@
-#ifndef PONG_ARENA
-#define PONG_ARENA
+#pragma once
 // ------------------------------------ //
-#ifndef PONGINCLUDES
 #include "PongIncludes.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "PlayerSlot.h"
 #include "Entities/Objects/TrailEmitter.h"
 #include "Common/ThreadSafe.h"
+#include <memory>
+#include <string>
+#include <map>
 
 
 #define BASE_ARENASCALE		1.f	
@@ -16,6 +15,8 @@
 namespace Pong{
 
 	class BasePongParts;
+
+    using namespace std;
 
 	class Arena : public ThreadSafe{
 	public:
@@ -37,7 +38,7 @@ namespace Pong{
 
         void RegisterBall(ObjectPtr ball){
 
-            GUARD_LOCK_THIS_OBJECT();
+            GUARD_LOCK();
             
             Ball.reset();
             Ball = ball;
@@ -48,7 +49,7 @@ namespace Pong{
 		void ColourTheBallTrail(const Float4 &colour);
 
 		inline ObjectPtr GetBallPtr(){
-            GUARD_LOCK_THIS_OBJECT();
+            GUARD_LOCK();
 			return Ball;
 		}
 
@@ -61,7 +62,7 @@ namespace Pong{
 		// ------------------------------------ //
 
 		// the world to which the arena is generated //
-		shared_ptr<Leviathan::GameWorld> TargetWorld;
+        std::shared_ptr<Leviathan::GameWorld> TargetWorld;
 
 		// Stored object pointers //
 
@@ -76,9 +77,9 @@ namespace Pong{
 		ObjectPtr Ball;
 
 		// Used to store already generated materials for paddles //
-		std::map<Float4, string> ColourMaterialName;
+		std::map<Float4, std::string> ColourMaterialName;
 
 	};
 
 }
-#endif
+

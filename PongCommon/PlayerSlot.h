@@ -1,14 +1,11 @@
-#ifndef PONG_PLAYERSLOT
-#define PONG_PLAYERSLOT
+#pragma once
 // ------------------------------------ //
-#ifndef PONGINCLUDES
 #include "PongIncludes.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Entities/Objects/TrackEntityController.h"
 #include "Networking/SyncedResource.h"
 #include "Common/ThreadSafe.h"
+#include <functional>
 
 
 #define INPUTFORCE_APPLYSCALE		20.f
@@ -256,11 +253,11 @@ namespace Pong{
 	class PlayerList : public Leviathan::SyncedResource{
 	public:
 
-		PlayerList(boost::function<void (PlayerList*)> callback, size_t playercount = 4);
+		PlayerList(std::function<void (PlayerList*)> callback, size_t playercount = 4);
 		~PlayerList();
 
 
-		PlayerSlot* operator [](size_t index) THROWS{
+		PlayerSlot* operator [](size_t index){
 			return GamePlayers[index];
 		}
 
@@ -281,14 +278,14 @@ namespace Pong{
         //! \brief Writes player information to log
         void ReportPlayerInfoToLog() const;
 
-		virtual void UpdateCustomDataFromPacket(sf::Packet &packet) THROWS;
+		virtual void UpdateCustomDataFromPacket(sf::Packet &packet);
 
 		virtual void SerializeCustomDataToPacket(sf::Packet &packet);
 
 		virtual void OnValueUpdated();
 
 		//! \exception Leviathan::ExceptionInvalidArgument when out of range
-		PlayerSlot* GetSlot(size_t index) THROWS;
+		PlayerSlot* GetSlot(size_t index);
 
 
 	protected:
@@ -299,10 +296,10 @@ namespace Pong{
 		std::vector<PlayerSlot*> GamePlayers;
 
 		//! The function called when this is updated either through the network or locally
-		boost::function<void (PlayerList*)> CallbackFunc;
+		std::function<void (PlayerList*)> CallbackFunc;
 	};
 
 
 
 }
-#endif
+

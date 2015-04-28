@@ -11,6 +11,11 @@
 #include "NetworkHandler.h"
 #include "../Common/BaseNotifier.h"
 #include <future>
+#include <map>
+#include <list>
+#include <vector>
+#include <memory>
+#include <deque>
 
 namespace Leviathan{
 

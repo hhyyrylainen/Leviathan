@@ -31,8 +31,8 @@ Pong::PongServer::~PongServer(){
 	Staticaccess = NULL;
 }
 
-std::wstring Pong::PongServer::GenerateWindowTitle(){
-	return wstring(L"PongServer for version " GAME_VERSIONS L" Leviathan " LEVIATHAN_VERSIONS);
+std::string Pong::PongServer::GenerateWindowTitle(){
+	return string("PongServer for version " GAME_VERSIONS " Leviathan " LEVIATHAN_VERSION_ANSIS);
 }
 
 
@@ -66,9 +66,9 @@ void Pong::PongServer::Tick(int mspassed){
                     // Set the slot ptr as the argument and call function based on difficulty //
                     std::vector<shared_ptr<NamedVariableBlock>> scriptargs(2);
                     scriptargs[0] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(
-                            new VoidPtrBlock(slotptr), L"PlayerSlot"));
+                            new VoidPtrBlock(slotptr), "PlayerSlot"));
                     scriptargs[1] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(
-                            new IntBlock(mspassed), L"MSPassed"));
+                            new IntBlock(mspassed), "MSPassed"));
 
                     if(GameAI){
                         bool ran;
@@ -146,7 +146,7 @@ void Pong::PongServer::Tick(int mspassed){
 
         if(ballstuck){
 
-            Logger::Get()->Info(L"Ball stuck!");
+            Logger::Get()->Info("Ball stuck!");
 
             _DisposeOldBall();
             // Serve new ball //
@@ -158,21 +158,21 @@ void Pong::PongServer::Tick(int mspassed){
 // ------------------------------------ //
 void Pong::PongServer::CheckGameConfigurationVariables(GameConfiguration* configobj){
 	// Check for various variables //
-	GUARD_LOCK_OTHER_OBJECT_NAME(configobj, lockit);
+	GUARD_LOCK_OTHER_NAME(configobj, lockit);
 
 	NamedVars* vars = configobj->AccessVariables(lockit);
 
 	// Default server port //
-	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>(L"DefaultServerPort")){
+	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>("DefaultServerPort")){
 		// Add new //
-		vars->AddVar(L"DefaultServerPort", new VariableBlock(int(53221)));
+		vars->AddVar("DefaultServerPort", new VariableBlock(int(53221)));
 		configobj->MarkModified();
 	}
 
 	// Game configuration database //
-	if(vars->ShouldAddValueIfNotFoundOrWrongType<wstring>(L"GameDatabase")){
+	if(vars->ShouldAddValueIfNotFoundOrWrongType<string>("GameDatabase")){
 		// Add new //
-		vars->AddVar(L"GameDatabase", new VariableBlock(wstring(L"PongGameDatabase.txt")));
+		vars->AddVar("GameDatabase", new VariableBlock(string("PongGameDatabase.txt")));
 		configobj->MarkModified();
 	}
 
@@ -198,7 +198,7 @@ void Pong::PongServer::CheckForGameEnd(){
 
 		if(totalteamscore >= ScoreLimit){
 			// Team has won //
-			Logger::Get()->Info(L"Team "+Convert::ToWstring(i)+L" has won the match!");
+			Logger::Get()->Info("Team "+Convert::ToString(i)+" has won the match!");
 
 
 			// Do various activities related to winning the game //
@@ -236,8 +236,8 @@ void Pong::PongServer::CheckForGameEnd(){
             Logger::Get()->Info("TODO: make clients move the camera around");
 
 			// Send the game end event which should trigger proper menus //
-			Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"MatchEnded"),
-                    new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"WinningTeam",
+			Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new string("MatchEnded"),
+                    new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("WinningTeam",
                                 new Leviathan::VariableBlock((int)i))))));
 
 			// And finally destroy the ball //
@@ -270,7 +270,7 @@ void Pong::PongServer::DoSpecialPostLoad(){
 	// Create all the server variables //
 	Leviathan::SyncedVariables* tmpvars = Leviathan::SyncedVariables::Get();
 
-	tmpvars->AddNewVariable(shared_ptr<SyncedValue>(new SyncedValue(new NamedVariableList(L"TheAnswer",
+	tmpvars->AddNewVariable(shared_ptr<SyncedValue>(new SyncedValue(new NamedVariableList("TheAnswer",
                     new VariableBlock(42)))));
 
     GameArena->VerifyTrail();
@@ -326,8 +326,10 @@ bool Pong::PongServer::MoreCustomScriptTypes(asIScriptEngine* engine){
     return true;
 }
 
-void Pong::PongServer::MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids){
-    typeids.insert(make_pair(engine->GetTypeIdByDecl("PongServer"), L"PongServer"));
+void Pong::PongServer::MoreCustomScriptRegister(asIScriptEngine* engine,
+    std::map<int, string> &typeids)
+{
+    typeids.insert(make_pair(engine->GetTypeIdByDecl("PongServer"), "PongServer"));
 }
 
 void Pong::PongServer::PreFirstTick(){
@@ -336,11 +338,11 @@ void Pong::PongServer::PreFirstTick(){
 	casted->SetServerStatus(Leviathan::NETWORKRESPONSE_SERVERSTATUS_RUNNING);
 }
 
-void Pong::PongServer::PassCommandLine(const wstring &params){
+void Pong::PongServer::PassCommandLine(const string &params){
 	// Add "--nogui" if not found //
-	if(params.find(L"--nogui") == wstring::npos){
+	if(params.find("--nogui") == string::npos){
 
-		_Engine->PassCommandLine(params+L" --nogui");
+		_Engine->PassCommandLine(params+" --nogui");
 		return;
 	}
 
@@ -358,7 +360,7 @@ void Pong::PongServer::OnStartPreMatch(){
 	// Setup the objects in the world //
 	if(!GameArena->GenerateArena(this, _PlayerList)){
 
-        Logger::Get()->Warning(L"PongServer: failed to generate arena");
+        Logger::Get()->Warning("PongServer: failed to generate arena");
         return;
     }
 
@@ -372,10 +374,11 @@ void Pong::PongServer::OnStartPreMatch(){
 
 
 	// Queue a readyness checking task //
-	ThreadingManager::Get()->QueueTask(new ConditionalTask(boost::bind<void>([](PongServer* server) -> void
+	ThreadingManager::Get()->QueueTask(new ConditionalTask(std::bind<void>([](PongServer* server)
+                -> void
         {
 
-            Logger::Get()->Info(L"All players are synced, the match is ready to begin");
+            Logger::Get()->Info("All players are synced, the match is ready to begin");
             
             // Start the match //
             server->WorldOfPong->SetWorldPhysicsFrozenState(false);
@@ -387,7 +390,7 @@ void Pong::PongServer::OnStartPreMatch(){
             // TODO: add a start timer here
 
 
-        }, this), boost::bind<bool>([](shared_ptr<GameWorld> world) -> bool
+        }, this), std::bind<bool>([](shared_ptr<GameWorld> world) -> bool
             {
                 // We are ready to start once all clients are reported to be up to date by the world //
                 return world->AreAllPlayersSynced();

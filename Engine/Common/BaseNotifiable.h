@@ -3,6 +3,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "ThreadSafe.h"
+#include <vector>
 
 namespace Leviathan{
 

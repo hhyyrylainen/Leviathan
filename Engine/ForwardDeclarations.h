@@ -29,6 +29,9 @@ namespace Leviathan{
     class IDFactory;
     class Time;
 
+    class Locker;
+
+
     class InputReceiver;
     class InputController;
 

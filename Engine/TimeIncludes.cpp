@@ -1,5 +1,11 @@
 // ------------------------------------ //
 #include "TimeIncludes.h"
+
+#ifdef __linux__
+#include <sys/time.h>
+#elif __WIN32
+#include "WindowsInclude.h"
+#endif
 using namespace Leviathan;
 // ------------------------------------ //
 int64_t Time::GetTimeMs64(){

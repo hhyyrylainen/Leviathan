@@ -6,6 +6,7 @@
 #include <functional>
 #include <thread>
 #include "../TimeIncludes.h"
+#include <vector>
 
 namespace Leviathan{
 

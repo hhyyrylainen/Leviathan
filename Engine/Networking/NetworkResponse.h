@@ -8,7 +8,6 @@
 
 namespace Leviathan{
 
-
 	//! Defines the type of response that the packet contains
 	enum NETWORKRESPONSETYPE{
 		//! Sent in response to a NETWORKREQUESTTYPE_IDENTIFICATION contains a user readable

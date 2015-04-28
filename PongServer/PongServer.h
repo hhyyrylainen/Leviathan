@@ -1,17 +1,16 @@
-#ifndef PONG_SERVER
-#define PONG_SERVER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Application/ServerApplication.h"
 #include "CommonPong.h"
 #include "GameInputController.h"
 #include "PongServerNetworking.h"
+#include <memory>
 
 namespace Pong{
+
+    using namespace std;
 
 	class PongServer : public CommonPongParts<Leviathan::ServerApplication, true>{
 	public:
@@ -24,7 +23,7 @@ namespace Pong{
 		void CheckForGameEnd();
 
 
-		static wstring GenerateWindowTitle();
+		static string GenerateWindowTitle();
 		
 
 		// Game configuration checkers //
@@ -36,7 +35,7 @@ namespace Pong{
 
 
 		//! Makes sure doesn't start in GUI mode
-		virtual void PassCommandLine(const wstring &params);
+		virtual void PassCommandLine(const string &params);
 
 		//! This doesn't need any handling
 		virtual void OnPlayerStatsUpdated(PlayerList* list){
@@ -96,8 +95,10 @@ playrscorelistupdateendlabel:
                 {
 
                     // Send ScoreUpdated event //
-                    Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new wstring(L"ScoreUpdated"),
-                            new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(L"ScoredPlayer", new
+                    Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(
+                            new string("ScoreUpdated"),
+                            new NamedVars(shared_ptr<NamedVariableList>(
+                                    new NamedVariableList("ScoredPlayer", new
                                         Leviathan::VariableBlock(LastPlayerHitBallID))))));
 
                     // Serve new ball //
@@ -220,7 +221,8 @@ playrscorelistupdateendlabel:
 		virtual void CustomizedGameEnd();
 
 		virtual bool MoreCustomScriptTypes(asIScriptEngine* engine);
-		virtual void MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids);
+		virtual void MoreCustomScriptRegister(asIScriptEngine* engine,
+            std::map<int, string> &typeids);
 
         //! \brief For testing AI with valgrind
         //! \todo Add a score limit and a way to go back to default state afterwards
@@ -246,4 +248,4 @@ playrscorelistupdateendlabel:
 	};
 
 }
-#endif
+

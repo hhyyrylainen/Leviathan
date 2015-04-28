@@ -1,6 +1,7 @@
 // ------------------------------------ //
 #include "BaseSendableEntity.h"
 
+#include <functional>
 #include "Entities/Objects/Brush.h"
 #include "Entities/Objects/Prop.h"
 #include "Entities/Objects/TrackEntityController.h"
@@ -173,9 +174,9 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
         auto senthing = safeconnection->SendPacketToConnection(updatemesg, 1);
 
         // Add a callback for success //
-        senthing->SetCallback(boost::bind(
+        senthing->SetCallback(std::bind(
                 &SendableObjectConnectionUpdate::SucceedOrFailCallback, (*iter), ticknumber, curstate,
-                _1, _2));
+                placeholders::_1, placeholders::_2));
         
         ++iter;
     }

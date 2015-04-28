@@ -2,7 +2,7 @@
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-
+#include <memory>
 
 namespace Leviathan{
 

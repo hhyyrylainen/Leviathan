@@ -5,7 +5,7 @@
 #include "SFML/Network/IpAddress.hpp"
 #include "Common/BaseNotifiable.h"
 #include "../TimeIncludes.h"
-
+#include <memory>
 
 namespace Leviathan{
 

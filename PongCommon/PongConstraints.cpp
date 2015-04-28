@@ -266,7 +266,8 @@ bool Pong::GameBallConnection::_CreateActualJoint(){
     physball->SetLinearDampening(0.00001f);
 
     // Set a speed giving force //
-    physball->ApplyForce(new ApplyForceInfo(true, boost::bind<Float3>([](Leviathan::ApplyForceInfo* instance,
+    physball->ApplyForce(new ApplyForceInfo(true, std::bind<Float3>([](
+                    Leviathan::ApplyForceInfo* instance,
                     Leviathan::BasePhysicsObject* object) -> Float3
         {
 
@@ -290,7 +291,7 @@ bool Pong::GameBallConnection::_CreateActualJoint(){
 			}
 
 
-        }, _1, _2), new wstring(L"BallPush")));
+        }, placeholders::_1, placeholders::_2), new string("BallPush")));
 
     return true;
 }

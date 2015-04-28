@@ -4,6 +4,7 @@
 // ------------------------------------ //
 #include "Common/BaseNotifiable.h"
 #include "../TimeIncludes.h"
+#include <memory>
 
 #define DEFAULT_MAXCONNECT_TRIES		5
 

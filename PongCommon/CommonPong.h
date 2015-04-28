@@ -1,11 +1,7 @@
-#ifndef PONG_COMMON
-#define PONG_COMMON
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Arena.h"
 #include "PlayerSlot.h"
 #include "PongConstraints.h"
@@ -27,8 +23,12 @@
 #include "GameInputController.h"
 #include "Events/EventHandler.h"
 #include "Threading/ThreadingManager.h"
+#include <functional>
+#include "Statistics/TimingMonitor.h"
 
-#define SCRIPT_REGISTERFAIL	Logger::Get()->Error("PongGame: AngelScript: register global failed in file " __FILE__ " on line "+Convert::ToString(__LINE__), false); return false;
+#define SCRIPT_REGISTERFAIL	Logger::Get()->Error(\
+        "PongGame: AngelScript: register global failed in file " __FILE__ " on line "+Convert::ToString(__LINE__)); \
+    return false;
 
 #define BALLSTUCK_THRESHOLD		0.065f
 #define BALLSTUCK_COUNT			8
@@ -38,6 +38,8 @@
 #define BALL_SPEED_MULT 1.00001f
 
 namespace Pong{
+
+    using namespace std;
 
 	class BasePongParts;
 	//! \brief Should be in BasePongParts, used for static access
@@ -59,11 +61,11 @@ namespace Pong{
 
 		BasePongParts(bool isserver) :
             GameArena(nullptr), ErrorState("No error"),  
-			ScoreLimit(L"ScoreLimit", 20),
-			GameConfigurationData(new Leviathan::SimpleDatabase(L"GameConfiguration")),
-			GamePaused(L"GamePaused", false), GameAI(NULL),
-            LastPlayerHitBallID(L"LastPlayerHitBallID", -1),
-            _PlayerList(boost::function<void (PlayerList*)>(&StatUpdater), 4)
+			ScoreLimit("ScoreLimit", 20),
+			GameConfigurationData(new Leviathan::SimpleDatabase("GameConfiguration")),
+			GamePaused("GamePaused", false), GameAI(NULL),
+            LastPlayerHitBallID("LastPlayerHitBallID", -1),
+            _PlayerList(std::function<void (PlayerList*)>(&StatUpdater), 4)
 		{
 			BasepongStaticAccess = this;
 		}
@@ -291,15 +293,15 @@ namespace Pong{
 				shared_ptr<Leviathan::SimpleDatabase> GameConfigurationData) -> void
 			{
 
-				wstring savefile;
+				string savefile;
 
 				GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
 
-				assert(vars->GetValueAndConvertTo<wstring>(L"GameDatabase", savefile) &&
+				assert(vars->GetValueAndConvertTo<string>("GameDatabase", savefile) &&
                     "invalid game variable configuration, no GameDatabase");
 
 				GameConfigurationData->LoadFromFile(savefile);
-				Logger::Get()->Info(L"Loaded game configuration database");
+				Logger::Get()->Info("Loaded game configuration database");
 
 			}, GameConfigurationData))));
 
@@ -307,11 +309,11 @@ namespace Pong{
                                 CommonPongParts* game) -> void
                 {
                     // Load the game AI //
-                    game->GameAI = new GameModule(L"PongAIModule", L"PongGameCore");
+                    game->GameAI = new GameModule("PongAIModule", "PongGameCore");
 
                     if(!game->GameAI->Init()){
                         // No AI for the game //
-                        Logger::Get()->Error(L"Failed to load AI!");
+                        Logger::Get()->Error("Failed to load AI!");
                         SAFE_DELETE(game->GameAI);
                     }
 
@@ -324,7 +326,7 @@ namespace Pong{
                     // Load Pong specific packets //
                     PongPackets::RegisterAllPongPacketTypes();
                     PongConstraintSerializer::Register();            
-                    Logger::Get()->Info(L"Pong specific packets loaded");
+                    Logger::Get()->Info("Pong specific packets loaded");
                     
                 }))));
 
@@ -457,7 +459,7 @@ namespace Pong{
 			{
 				SCRIPT_REGISTERFAIL;
 			}
-			if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_IJKL", PLAYERCONTROLS_IJKL) < 0)
+			if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_IJK", PLAYERCONTROLS_IJKL) < 0)
 			{
 				SCRIPT_REGISTERFAIL;
 			}
@@ -578,10 +580,12 @@ namespace Pong{
 			return MoreCustomScriptTypes(engine);
 		}
 
-		virtual void RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){
+		virtual void RegisterCustomScriptTypes(asIScriptEngine* engine,
+            std::map<int, string> &typeids)
+        {
 			// we have registered just a one type, add it //
-			typeids.insert(make_pair(engine->GetTypeIdByDecl("PongBase"), L"PongBase"));
-			typeids.insert(make_pair(engine->GetTypeIdByDecl("PlayerSlot"), L"PlayerSlot"));
+			typeids.insert(make_pair(engine->GetTypeIdByDecl("PongBase"), "PongBase"));
+			typeids.insert(make_pair(engine->GetTypeIdByDecl("PlayerSlot"), "PlayerSlot"));
 
 			MoreCustomScriptRegister(engine, typeids);
 		}
@@ -590,13 +594,13 @@ namespace Pong{
 			// \todo implement loading from files //
 
 			// load predefined materials //
-			unique_ptr<Leviathan::PhysicalMaterial> PaddleMaterial(new Leviathan::PhysicalMaterial(L"PaddleMaterial"));
-			unique_ptr<Leviathan::PhysicalMaterial> ArenaMaterial(new Leviathan::PhysicalMaterial(L"ArenaMaterial"));
+			unique_ptr<Leviathan::PhysicalMaterial> PaddleMaterial(new Leviathan::PhysicalMaterial("PaddleMaterial"));
+			unique_ptr<Leviathan::PhysicalMaterial> ArenaMaterial(new Leviathan::PhysicalMaterial("ArenaMaterial"));
 			unique_ptr<Leviathan::PhysicalMaterial> ArenaBottomMaterial(
-                new Leviathan::PhysicalMaterial(L"ArenaBottomMaterial"));
-			unique_ptr<Leviathan::PhysicalMaterial> BallMaterial(new Leviathan::PhysicalMaterial(L"BallMaterial"));
+                new Leviathan::PhysicalMaterial("ArenaBottomMaterial"));
+			unique_ptr<Leviathan::PhysicalMaterial> BallMaterial(new Leviathan::PhysicalMaterial("BallMaterial"));
 			unique_ptr<Leviathan::PhysicalMaterial> GoalAreaMaterial(
-                new Leviathan::PhysicalMaterial(L"GoalAreaMaterial"));
+                new Leviathan::PhysicalMaterial("GoalAreaMaterial"));
 
 			// Set callbacks //
 			BallMaterial->FormPairWith(*PaddleMaterial).SetSoftness(1.f).SetElasticity(1.0f).SetFriction(1.f, 1.f).
@@ -634,11 +638,12 @@ namespace Pong{
 	protected:
 
 		virtual bool MoreCustomScriptTypes(asIScriptEngine* engine) = 0;
-		virtual void MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids) = 0;
+		virtual void MoreCustomScriptRegister(asIScriptEngine* engine,
+            std::map<int, string> &typeids) = 0;
 
 		// ------------------------------------ //
 
 	};
 
 }
-#endif
+

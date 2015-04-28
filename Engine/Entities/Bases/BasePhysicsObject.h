@@ -1,17 +1,13 @@
-#ifndef LEVIATHAN_BASEPHYSICSOBJECT
-#define LEVIATHAN_BASEPHYSICSOBJECT
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Newton/PhysicalWorld.h"
 #include "BasePositionable.h"
 #include "BaseObject.h"
 #include "Common/SFMLPackets.h"
-#include "boost/function.hpp"
 #include "Common/ThreadSafe.h"
+#include <functional>
 
 
 #define BASEPHYSICS_CUSTOMMESSAGE_DATA_CHECK	{if(entitycustommessagetype >= ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE && entitycustommessagetype <= ENTITYCUSTOMMESSAGETYPE_SETVELOCITY){if(BasePhysicsCustomMessage(entitycustommessagetype, dataptr)) return true;}}
@@ -29,7 +25,7 @@ namespace Leviathan{
         //! \note Pass NULL for name if not used, avoid passing empty strings
         //! \param name The name to assign. This will be deleted by a std::unique_ptr
 		DLLEXPORT ApplyForceInfo(bool addmass,
-            boost::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> getforce,
+            std::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> getforce,
             std::string* name = NULL);
         
 		DLLEXPORT ApplyForceInfo(ApplyForceInfo &other);
@@ -46,7 +42,7 @@ namespace Leviathan{
         
         //! The callback which returns the force
         //! \todo Allow deleting this force from the callback
-        boost::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> Callback;
+        std::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> Callback;
 	};
 
     //! \brief Can hold all data used by BasePhysicsObject
@@ -188,4 +184,3 @@ namespace Leviathan{
 
 }
 
-#endif

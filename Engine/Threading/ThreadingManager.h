@@ -4,6 +4,8 @@
 // ------------------------------------ //
 #include "QueuedTask.h"
 #include "TaskThread.h"
+#include <list>
+#include <vector>
 
 
 #define DEFAULT_THREADS_PER_CORE		2

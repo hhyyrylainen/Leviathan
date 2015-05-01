@@ -131,7 +131,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::Release(){
         WaitingRequests.clear();
 
 		// Release all the listeners //
-		ReleaseChildHooks();
+		ReleaseChildHooks(guard);
 	}
 
 }
@@ -155,7 +155,7 @@ DLLEXPORT std::shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacke
 	// Generate a packet from the request //
 	sf::Packet actualpackettosend;
 	// We need a complete header with acks and stuff //
-	_PreparePacketHeaderForPacket(++LastUsedID, actualpackettosend, true);
+	_PreparePacketHeaderForPacket(guard, ++LastUsedID, actualpackettosend, true);
 
 	// Generate packet object for the request //
 	sf::Packet requestsdata = request->GeneratePacketForRequest();
@@ -194,7 +194,7 @@ DLLEXPORT std::shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacke
 	// Generate a packet from the request //
 	sf::Packet actualpackettosend;
 	// We need a complete header with acks and stuff //
-	_PreparePacketHeaderForPacket(++LastUsedID, actualpackettosend, false);
+	_PreparePacketHeaderForPacket(guard, ++LastUsedID, actualpackettosend, false);
 
 	// Generate packet object for the request //
 	sf::Packet requestsdata = response->GeneratePacketForResponse();
@@ -229,7 +229,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::SendKeepAlivePacket(Lock &guard){
 	// Generate a packet from the request //
 	sf::Packet actualpackettosend;
 	// We need a complete header with acks and stuff //
-	_PreparePacketHeaderForPacket(++LastUsedID, actualpackettosend, false, true);
+	_PreparePacketHeaderForPacket(guard, ++LastUsedID, actualpackettosend, false, true);
 
 	// Generate packet object for the request //
 	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 100));
@@ -263,7 +263,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::SendCloseConnectionPacket(Lock &guard)
 	// Generate a packet from the request //
 	sf::Packet actualpackettosend;
 	// We need a complete header with acks and stuff //
-	_PreparePacketHeaderForPacket(++LastUsedID, actualpackettosend, false);
+	_PreparePacketHeaderForPacket(guard, ++LastUsedID, actualpackettosend, false);
 
 	// Generate packet object for the request //
 	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 100));
@@ -290,7 +290,7 @@ void Leviathan::ConnectionInfo::_ResendRequest(shared_ptr<SentNetworkThing> tore
 	// Generate a packet from the request //
 	sf::Packet tosend;
 
-	_PreparePacketHeaderForPacket(toresend->PacketNumber, tosend, toresend->IsArequest);
+	_PreparePacketHeaderForPacket(guard, toresend->PacketNumber, tosend, toresend->IsArequest);
 
 	// Add the packet data //
 	tosend.append(toresend->AlmostCompleteData.getData(), toresend->AlmostCompleteData.getDataSize());
@@ -310,12 +310,10 @@ void Leviathan::ConnectionInfo::_ResendRequest(shared_ptr<SentNetworkThing> tore
 	toresend->RequestStartTime = Time::GetTimeMs64();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(){
+DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(Lock &guard){
 
 	// Timeout stuff (if possible) //
 	int64_t timems = Time::GetTimeMs64();
-
-	GUARD_LOCK();
 
 	for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ){
         
@@ -729,14 +727,15 @@ void Leviathan::ConnectionInfo::_VerifyAckPacketsAsSuccesfullyReceivedFromHost(i
 	}
 }
 
-void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(int packetid, sf::Packet &tofill, bool isrequest, bool dontsendacks /*= false*/){
+void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(Lock &guard,
+    int packetid, sf::Packet &tofill, bool isrequest, bool dontsendacks /*= false*/)
+{
 	// First thing is the packet number //
 	tofill << packetid;
 
 	// Now the hard part, creating the ack table //
 
 	// Actually this can be skipped if we can send a ack packet again //
-	GUARD_LOCK();
 
 	// We have now made a new packet //
 	LastSentPacketTime = Time::GetTimeMs64();

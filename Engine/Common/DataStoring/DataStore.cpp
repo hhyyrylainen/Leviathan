@@ -88,7 +88,19 @@ void Leviathan::DataStore::Save(){
 
 	for(unsigned int i = 0; i < Persistencestates.size(); i++){
 		if(Persistencestates[i]){
-			tosave += tempvec->at(i)->ToText(0);
+
+            try{
+                
+                tosave += tempvec->at(i)->ToText(0);
+                
+            } catch(const InvalidType &e){
+
+                Logger::Get()->Error("DataStore: failed to serialize value \""+
+                    tempvec->at(i)->GetName()+"\": ");
+                e.PrintToLog();
+                continue;
+            }
+            
 			if(i+1 < Persistencestates.size()){
 				tosave += "\n";
 			}

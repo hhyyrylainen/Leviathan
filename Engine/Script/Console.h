@@ -29,7 +29,14 @@ namespace Leviathan{
 		DLLEXPORT int RunConsoleCommand(const std::string &commandstr);
 
 		// calls script helper and runs this statement on the console module //
-		DLLEXPORT bool ExecuteStringInstruction(const std::string &statement);
+		DLLEXPORT bool ExecuteStringInstruction(Lock &guard, const std::string &statement);
+
+        DLLEXPORT inline bool ExecuteStringInstruction(const std::string &statement){
+
+            GUARD_LOCK();
+            return ExecuteStringInstruction(guard, statement);
+        }
+        
 		DLLEXPORT bool AddVariableStringDefinition(std::string statement);
 		DLLEXPORT bool DeleteVariableStringDefinition(const std::string &statement);
 		DLLEXPORT bool AddFunctionStringDefinition(const std::string &statement);

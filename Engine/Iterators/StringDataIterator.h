@@ -168,7 +168,7 @@ namespace Leviathan{
 
 		//! Wraps a string reference for StringIterator
 		//! \note The string should not be changed while the iterator is used
-		DLLEXPORT StringClassPointerIterator(STRType* str) : OurString(str), Current(0){
+		DLLEXPORT StringClassPointerIterator(const STRType* str) : OurString(str), Current(0){
 			End = str ? str->size(): 0;
 
 			// If the first character is a newline the line number needs to be incremented immediately //
@@ -234,7 +234,7 @@ namespace Leviathan{
 
 	protected:
 
-		STRType* OurString;
+		const STRType* OurString;
 
 		//! The current position of the iterator
 		ITType Current;

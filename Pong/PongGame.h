@@ -70,8 +70,8 @@ namespace Pong{
 		static PongGame* Get();
 
 		// Game configuration checkers //
-		static void CheckGameConfigurationVariables(GameConfiguration* configobj);
-		static void CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
+		static void CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj);
+		static void CheckGameKeyConfigVariables(Lock &guard, KeyConfiguration* keyconfigobj);
 
 		GameInputController* GetInputController(){
 

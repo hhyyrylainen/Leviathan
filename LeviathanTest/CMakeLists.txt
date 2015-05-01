@@ -15,6 +15,7 @@ set(TestSources
   TestFiles/PartialEngine.h
   TestFiles/PartialEngine.cpp
   TestFiles/Sendable.cpp
+  TestFiles/NamedVars.cpp
   )
 
 include_directories(catch)

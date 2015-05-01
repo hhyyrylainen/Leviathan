@@ -381,36 +381,35 @@ void Pong::PongGame::CustomizedGameEnd(){
 	GuiManagerAccess->SetCollectionAllowEnableState("PauseMenu", false);
 }
 // ------------------------------------ //
-void Pong::PongGame::CheckGameConfigurationVariables(GameConfiguration* configobj){
+void Pong::PongGame::CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj){
 	// Check for various variables //
 
-	GUARD_LOCK_OTHER_NAME(configobj, lockit);
-	NamedVars* vars = configobj->AccessVariables(lockit);
+	NamedVars* vars = configobj->AccessVariables(guard);
 
 	// Master server force localhost //
 	if(vars->ShouldAddValueIfNotFoundOrWrongType<bool>("MasterServerForceLocalhost")){
 		// Add new //
 		vars->AddVar("MasterServerForceLocalhost", new VariableBlock(false));
-		configobj->MarkModified();
+		configobj->MarkModified(guard);
 	}
 
 	// Game configuration database //
 	if(vars->ShouldAddValueIfNotFoundOrWrongType<string>("GameDatabase")){
 		// Add new //
 		vars->AddVar("GameDatabase", new VariableBlock(string("PongGameDatabase.txt")));
-		configobj->MarkModified();
+		configobj->MarkModified(guard);
 	}
 
 	// Default server port //
 	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>("DefaultServerPort")){
 		// Add new //
 		vars->AddVar("DefaultServerPort", new VariableBlock(int(53221)));
-		configobj->MarkModified();
+		configobj->MarkModified(guard);
 	}
 
 }
 
-void Pong::PongGame::CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj){
+void Pong::PongGame::CheckGameKeyConfigVariables(Lock &guard, KeyConfiguration* keyconfigobj){
 
 }
 // ------------------------------------ //

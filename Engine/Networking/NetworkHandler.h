@@ -77,11 +77,11 @@ namespace Leviathan{
 		DLLEXPORT virtual void UpdateAllConnections();
 
         //! \brief Called by Engine to stop own connection update thread
-        DLLEXPORT void StopOwnUpdaterThread();
+        DLLEXPORT void StopOwnUpdaterThread(Lock &guard);
 
 		DLLEXPORT virtual void RemoveClosedConnections();
 
-		DLLEXPORT std::shared_ptr<std::promise<std::string>> QueryMasterServer(
+		DLLEXPORT std::shared_ptr<std::promise<std::string>> QueryMasterServer(Lock &guard,
             const MasterServerInformation &info);
 
 		//! \brief Makes a raw pointer to an ConnectionInfo safe

@@ -156,29 +156,27 @@ void Pong::PongServer::Tick(int mspassed){
     }
 }
 // ------------------------------------ //
-void Pong::PongServer::CheckGameConfigurationVariables(GameConfiguration* configobj){
+void Pong::PongServer::CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj){
 	// Check for various variables //
-	GUARD_LOCK_OTHER_NAME(configobj, lockit);
-
-	NamedVars* vars = configobj->AccessVariables(lockit);
+	NamedVars* vars = configobj->AccessVariables(guard);
 
 	// Default server port //
 	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>("DefaultServerPort")){
 		// Add new //
 		vars->AddVar("DefaultServerPort", new VariableBlock(int(53221)));
-		configobj->MarkModified();
+		configobj->MarkModified(guard);
 	}
 
 	// Game configuration database //
 	if(vars->ShouldAddValueIfNotFoundOrWrongType<string>("GameDatabase")){
 		// Add new //
 		vars->AddVar("GameDatabase", new VariableBlock(string("PongGameDatabase.txt")));
-		configobj->MarkModified();
+		configobj->MarkModified(guard);
 	}
 
 }
 
-void Pong::PongServer::CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj){
+void Pong::PongServer::CheckGameKeyConfigVariables(Lock &guard, KeyConfiguration* keyconfigobj){
 
 }
 // ------------------------------------ //

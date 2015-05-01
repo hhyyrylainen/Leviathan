@@ -108,7 +108,13 @@ namespace Leviathan{
 
 		//! \brief Builds the script if applicable
 		//! \return The associated module or NULL if build fails
-		DLLEXPORT asIScriptModule* GetModule();
+        DLLEXPORT asIScriptModule* GetModule(Lock &guard);
+            
+		DLLEXPORT inline asIScriptModule* GetModule(){
+
+            GUARD_LOCK();
+            return GetModule(guard);
+        }
 
 		DLLEXPORT std::shared_ptr<ScriptScript> GetScriptInstance();
 

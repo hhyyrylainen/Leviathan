@@ -16,12 +16,14 @@ namespace Leviathan{
 
 		// Loads the defined keys from a file, the function argument is called to
         // verify that all required keys are defined and it can add missing keys
-		DLLEXPORT bool Init(std::function<void (KeyConfiguration* checkfrom)> functocheck);
+		DLLEXPORT bool Init(
+            std::function<void (Lock &guard, KeyConfiguration* checkfrom)> functocheck);
+        
 		// Saves all modified keys //
 		DLLEXPORT void Release();
 
 		// Saves current keys //
-		DLLEXPORT void Save();
+		DLLEXPORT void Save(Lock &guard);
 
 		// Resolves a control key string ("WalkForward") to a key (OIS::KC_W and modifiers SHIFT) //
 		DLLEXPORT std::shared_ptr<std::vector<GKey>> ResolveControlNameToKey(

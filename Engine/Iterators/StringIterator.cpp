@@ -37,14 +37,14 @@ DLLEXPORT Leviathan::StringIterator::StringIterator(const wstring &text) : Curre
 #endif // _DEBUG
 }
 
-DLLEXPORT Leviathan::StringIterator::StringIterator(wstring* text) : CurrentFlags(0), HandlesDelete(true), 
+DLLEXPORT Leviathan::StringIterator::StringIterator(const wstring* text) : CurrentFlags(0), HandlesDelete(true), 
 	DataIterator(new StringClassPointerIterator<wstring>(text)), CurrentStored(false), CurrentCharacter(-1){
 #ifdef _DEBUG
 	DebugMode = false;
 #endif // _DEBUG
 }
 
-DLLEXPORT Leviathan::StringIterator::StringIterator(string* text) : CurrentFlags(0), HandlesDelete(true), 
+DLLEXPORT Leviathan::StringIterator::StringIterator(const string* text) : CurrentFlags(0), HandlesDelete(true), 
 	DataIterator(new StringClassPointerIterator<string>(text)), CurrentStored(false), CurrentCharacter(-1){
 #ifdef _DEBUG
 	DebugMode = false;
@@ -85,11 +85,11 @@ DLLEXPORT void Leviathan::StringIterator::ReInit(const string &text){
 	ReInit(new StringClassDataIterator<string>(text), true);
 }
 
-DLLEXPORT void Leviathan::StringIterator::ReInit(wstring* text){
+DLLEXPORT void Leviathan::StringIterator::ReInit(const wstring* text){
 	ReInit(new StringClassPointerIterator<wstring>(text), true);
 }
 
-DLLEXPORT void Leviathan::StringIterator::ReInit(string* text){
+DLLEXPORT void Leviathan::StringIterator::ReInit(const string* text){
 	ReInit(new StringClassPointerIterator<string>(text), true);
 }
 // ------------------------------------ //

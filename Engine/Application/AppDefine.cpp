@@ -44,8 +44,8 @@ NamedVars* Leviathan::AppDef::GetValues(){
 
 DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const std::string &logfile,
     const std::string &engineconfigfile, const std::string &gameconfig,
-    const std::string &keyconfig, std::function<void (GameConfiguration* configobj)>
-    configchecker, std::function<void (KeyConfiguration* keysobject)> keychecker)
+    const std::string &keyconfig, std::function<void (Lock &guard, GameConfiguration* configobj)>
+    configchecker, std::function<void (Lock &guard, KeyConfiguration* keysobject)> keychecker)
 {
 
 	unique_ptr<AppDef> tmpptr(new AppDef(true));

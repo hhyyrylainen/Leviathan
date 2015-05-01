@@ -37,7 +37,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::AddNewVariable(shared_ptr<SyncedValue
 	GUARD_LOCK();
 
 	// Check do we already have a variable with that name //
-	if(IsVariableNameUsed(newvalue->GetVariableAccess()->GetName())){
+	if(IsVariableNameUsed(guard, newvalue->GetVariableAccess()->GetName())){
 		// Shouldn't add another with the same name //
 		return false;
 	}
@@ -48,7 +48,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::AddNewVariable(shared_ptr<SyncedValue
 	ToSyncValues.push_back(newvalue);
 
 	// Notify update //
-	_NotifyUpdatedValue(newvalue.get());
+	_NotifyUpdatedValue(guard, newvalue.get());
 
 	return true;
 }
@@ -348,8 +348,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleResponseOnlySync(shared_ptr<Net
 	return false;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::SyncedVariables::IsVariableNameUsed(const std::string &name,
-    Lock &guard)
+DLLEXPORT bool Leviathan::SyncedVariables::IsVariableNameUsed(Lock &guard, const std::string &name)
 {
 	VerifyLock(guard);
 
@@ -363,7 +362,7 @@ DLLEXPORT bool Leviathan::SyncedVariables::IsVariableNameUsed(const std::string 
 	return false;
 }
 // ------------------------------------ //
-void Leviathan::SyncedVariables::_NotifyUpdatedValue(const SyncedValue* const valtosync,
+void SyncedVariables::_NotifyUpdatedValue(Lock &guard, const SyncedValue* const valtosync,
     int useid /*= -1*/)
 {
 	// Create an update packet //
@@ -371,8 +370,6 @@ void Leviathan::SyncedVariables::_NotifyUpdatedValue(const SyncedValue* const va
 
 	tmpresponse->GenerateValueSyncResponse(new NetworkResponseDataForSyncValData(new
             NamedVariableList(*valtosync->GetVariableAccess())));
-
-	GUARD_LOCK();
 
 	// Send it //
 	for(size_t i = 0; i < ConnectedToOthers.size(); i++){

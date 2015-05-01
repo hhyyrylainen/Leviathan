@@ -65,9 +65,9 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
     GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
     _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
     _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), _EntitySerializerManager(NULL),
-    _ConstraintSerializerManager(NULL), _AINetworkCache(NULL), NoSTDInput(false), IsClient(false)
+    _ConstraintSerializerManager(NULL), _AINetworkCache(NULL), NoSTDInput(false), IsClient(false),
+    IDDefaultInstance(NULL)
 {
-	IDDefaultInstance = IDFactory::Get();
 
 	Graph = NULL;
 	Define = NULL;
@@ -98,6 +98,10 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
 DLLEXPORT Leviathan::Engine::~Engine(){
 	// Reset the instance ptr //
 	instance = NULL;
+
+    // This thread is really well blocked until the end of time //
+    if(CinThread.joinable())
+        CinThread.detach();
 }
 
 Engine* Leviathan::Engine::instance = NULL;
@@ -127,6 +131,8 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	// Create all the things //
     
 	OutOMemory = new OutOfMemoryHandler();
+
+    IDDefaultInstance = new IDFactory();
 
 	// Create threading facilities //
 	_ThreadingManager = new ThreadingManager();
@@ -482,10 +488,11 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 
             int milliseconds = std::chrono::duration_cast<MillisecondDuration>(elapsed).count();
 
-            if(elapsed > std::chrono::milliseconds(100)){
+            if(elapsed > std::chrono::milliseconds(150)){
 
                 Logger::Get()->Warning("LeapController creation would have stalled the game!");
-                Logger::Get()->Write("TODO: allow increasing wait period");                
+                Logger::Get()->Write("TODO: allow increasing wait period");
+                leapinitthread.detach();
                 break;
             }
 
@@ -807,9 +814,10 @@ DLLEXPORT void Leviathan::Engine::PreFirstTick(){
     // Stop this handling as it is no longer required //
     {
         std::unique_lock<std::mutex> lock(NetworkHandlerLock);
-        
+
+        GUARD_LOCK_OTHER(_NetworkHandler);
         if(_NetworkHandler)
-            _NetworkHandler->StopOwnUpdaterThread();
+            _NetworkHandler->StopOwnUpdaterThread(guard);
     }
     
     GUARD_LOCK();

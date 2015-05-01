@@ -57,7 +57,7 @@ void Pong::GameInputController::_SetupControlGroups(){
 	
 	KeyMap IJKL;
 	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode("J"), CONTROLKEYACTION_LEFT));
-	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode(""), CONTROLKEYACTION_RIGHT));
+	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode("L"), CONTROLKEYACTION_RIGHT));
 	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode("I"), CONTROLKEYACTION_POWERUPUP));
 	Arrows.insert(make_pair(Window::ConvertStringToOISKeyCode("K"), CONTROLKEYACTION_POWERUPDOWN));
 	

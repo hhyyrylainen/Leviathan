@@ -22,7 +22,8 @@ namespace Leviathan{
 
 		//! This function loads the files from the defined file and calls the argument
         //! function afterwards to verify that all requires values are set
-		DLLEXPORT bool Init(std::function<void (GameConfiguration* configobj)> sanitycheckcallback);
+		DLLEXPORT bool Init(
+            std::function<void (Lock &guard, GameConfiguration* configobj)> sanitycheckcallback);
 
 		//! Tries to save the changes
 		DLLEXPORT void Release();
@@ -36,11 +37,11 @@ namespace Leviathan{
 		DLLEXPORT NamedVars* AccessVariables(Lock &guard);
 
 		//! Call this when you have changed variables
-		DLLEXPORT void MarkModified();
+		DLLEXPORT void MarkModified(Lock &guard);
 
 		//! Verifies that the global default values are added properly
 		//! \note This doesn't need to be called manually as it is called by Init
-		DLLEXPORT void VerifyGlobalVariables();
+		DLLEXPORT void VerifyGlobalVariables(Lock &guard);
 
 		DLLEXPORT static GameConfiguration* Get();
 	private:

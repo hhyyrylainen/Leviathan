@@ -146,8 +146,7 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 			FailCount++;
 		}
 	}
-    
-	GUARD_LOCK();
+
 	// Report problems //
 	if(FailCount)
         std::cout << "Application main loop sleep fails: " << FailCount << std::endl;

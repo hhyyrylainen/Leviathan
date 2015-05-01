@@ -153,8 +153,7 @@ void Leviathan::ScriptModule::_FillParameterDataObject(int typeofas, asUINT* par
 	}
 }
 // ------------------------------------ //
-DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(){
-	GUARD_LOCK();
+DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(Lock &guard){
 
 	// we need to check build state //
 	if(ScriptState == SCRIPTBUILDSTATE_READYTOBUILD){
@@ -265,7 +264,7 @@ void Leviathan::ScriptModule::_BuildListenerList(Lock &guard){
 	VerifyLock(guard);
 
 	// We need to find functions with metadata specifying which listener it is //
-	asIScriptModule* mod = GetModule();
+	asIScriptModule* mod = GetModule(guard);
 
 	if(!mod){
 		// Module failed to build //

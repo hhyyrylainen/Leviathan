@@ -180,7 +180,8 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const std::string &com
 			} else {
                 
 				// run command (and possibly previous multi line parts) //
-				if(!ExecuteStringInstruction(PendingCommand.size() != 0 ?
+				if(!ExecuteStringInstruction(guard,
+                        PendingCommand.size() != 0 ?
                             PendingCommand+((ccmd ? (*ccmd): ""))+(*restofcommand): ((ccmd ?
                                     (*ccmd): ""))+(*restofcommand)))
 				{
@@ -246,8 +247,9 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(const std::string &com
 	return CONSOLECOMMANDRESULTSTATE_FAILED;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ScriptConsole::ExecuteStringInstruction(const string &statement){
-	GUARD_LOCK();
+DLLEXPORT bool Leviathan::ScriptConsole::ExecuteStringInstruction(Lock &guard,
+    const string &statement)
+{
     
 	// Use ScriptHelper class to execute this statement in the module //
 	int result = ExecuteString(InterfaceInstance->GetASEngine(), statement.c_str(),

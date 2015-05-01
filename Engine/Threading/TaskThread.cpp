@@ -16,11 +16,8 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 	GUARD_LOCK_OTHER(thisthread);
 
 	// Register the thread //
-	{
-		GUARD_LOCK_OTHER_NAME(thisthread, guard2);
-		thisthread->_NewThreadEntryRegister(guard2);
-		thisthread->StartUpDone = true;
-	}
+    thisthread->_NewThreadEntryRegister(guard);
+    thisthread->StartUpDone = true;
 
 	// Run and run tasks, while alive //
 	while(!thisthread->KillSelf){
@@ -39,8 +36,24 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 			// Unlock for running //
 			guard.unlock();
 
-			// Run the task //
-			thisthread->SetTask->RunTask();
+            try{
+                // Run the task //
+                thisthread->SetTask->RunTask();
+
+            } catch(const Exception &e){
+
+                Logger::Get()->Error("TaskThread: task threw a Leviathan exception: ");
+                e.PrintToLog();
+                
+                DEBUG_BREAK;
+
+            } catch(const std::exception &e){
+
+                Logger::Get()->Error("TaskThread: task threw a generic exception: ");
+                Logger::Get()->Write(string("\t> ")+e.what());
+                
+                DEBUG_BREAK;
+            }
 
 			// Re-lock for changing around //
 			guard.lock();
@@ -57,11 +70,8 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 		}
 	}
 
-	{
-		GUARD_LOCK_OTHER_NAME(thisthread, guard2);
-		// Unregister the thread //
-		thisthread->_ThreadEndClean(guard2);
-	}
+    // Unregister the thread //
+    thisthread->_ThreadEndClean(guard);
 }
 
 // ------------------ TaskThread ------------------ //

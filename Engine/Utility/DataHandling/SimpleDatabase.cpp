@@ -281,7 +281,7 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const std::string &file){
 
 		// try to create a named var from this line //
 		try{
-			shared_ptr<NamedVariableList> namevar(new NamedVariableList(Lines[i], NULL));
+			shared_ptr<NamedVariableList> namevar(new NamedVariableList(Lines[i]));
 			// didn't cause an exception, is valid add //
 
 			insertiter->second->push_back(shared_ptr<SimpleDatabaseRowObject>(new SimpleDatabaseRowObject()));

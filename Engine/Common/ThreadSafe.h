@@ -81,7 +81,11 @@ namespace Leviathan{
 		mutable MutexType ObjectsLock;
 	};
 
+    //! \brief Simple lockable objects, no recursive locking
     using ThreadSafe = ThreadSafeGeneric<Mutex>;
+    //! \brief Object supports recursive locking
+    //!
+    //! Less efficient than ThreadSafe
     using ThreadSafeRecursive = ThreadSafeGeneric<RecursiveMutex>;
     
 

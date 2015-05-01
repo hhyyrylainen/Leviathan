@@ -21,14 +21,12 @@ DLLEXPORT GameConfiguration* Leviathan::GameConfiguration::Get(){
 
 GameConfiguration* Leviathan::GameConfiguration::staticaccess = NULL;
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameConfiguration::Init(std::function<void (GameConfiguration*
-        configobj)> sanitycheckcallback)
+DLLEXPORT bool Leviathan::GameConfiguration::Init(
+    std::function<void (Lock &guard, GameConfiguration* configobj)> sanitycheckcallback)
 {
 	GUARD_LOCK();
 
 	GameVars = new NamedVars();
-
-	
 
 	if(!GameVars->LoadVarsFromFile(GameConfigFile)){
 		// Unknown error //
@@ -37,18 +35,18 @@ DLLEXPORT bool Leviathan::GameConfiguration::Init(std::function<void (GameConfig
 	}
 
 	// First verify the global variables //
-	VerifyGlobalVariables();
+	VerifyGlobalVariables(guard);
 
 	// Call the checking function //
-	sanitycheckcallback(this);
+	sanitycheckcallback(guard, this);
 	return true;
 }
 
 DLLEXPORT void Leviathan::GameConfiguration::Release(){
-	GUARD_LOCK();
 	SaveCheck();
 
 	// We can now delete our variables //
+    GUARD_LOCK();
 	SAFE_DELETE(GameVars);
 }
 // ------------------------------------ //
@@ -77,8 +75,7 @@ DLLEXPORT void Leviathan::GameConfiguration::SaveCheck(){
 	FileSystem::WriteToFile(newfilecontents, GameConfigFile);
 }
 
-DLLEXPORT void Leviathan::GameConfiguration::MarkModified(){
-	GUARD_LOCK();
+DLLEXPORT void Leviathan::GameConfiguration::MarkModified(Lock &guard){
 
 	Modified = true;
 }
@@ -89,14 +86,13 @@ DLLEXPORT NamedVars* Leviathan::GameConfiguration::AccessVariables(Lock &guard){
 	return GameVars;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameConfiguration::VerifyGlobalVariables(){
-	GUARD_LOCK();
+DLLEXPORT void Leviathan::GameConfiguration::VerifyGlobalVariables(Lock &guard){
 
 	// Socket unbind control //
 	if(GameVars->ShouldAddValueIfNotFoundOrWrongType<bool>("DisableSocketUnbind")){
 		// Add new //
 		GameVars->AddVar("DisableSocketUnbind", new VariableBlock(false));
-		MarkModified();
+		MarkModified(guard);
 	}
 
 

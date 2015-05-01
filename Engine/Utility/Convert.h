@@ -60,7 +60,7 @@ namespace Leviathan{
 
 		template<class T>
 		DLLEXPORT static inline T WstringTo(const std::wstring &str){
-			T tempval;
+			T tempval(0);
             std::wstringstream stream;
 			stream.str(str.c_str());
 			stream >> tempval;
@@ -69,7 +69,7 @@ namespace Leviathan{
         
 		template<class T>
 		DLLEXPORT static inline T StringTo(const std::string &str){
-			T tempval;
+			T tempval(0);
             std::stringstream stream;
 			stream.str(str.c_str());
 			stream >> tempval;

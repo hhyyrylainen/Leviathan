@@ -54,9 +54,8 @@ DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const NamedVariableLis
 	}
 }
 
-DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(string &line, map<string,
-    std::shared_ptr<VariableBlock>>* predefined /*= NULL*/) :
-    Datas(1)
+DLLEXPORT Leviathan::NamedVariableList::NamedVariableList(const string &line,
+    map<string, std::shared_ptr<VariableBlock>>* predefined /*= NULL*/)
 {
 	// using StringIterator makes this shorter //
 	StringIterator itr(&line);
@@ -102,7 +101,7 @@ DLLEXPORT bool NamedVariableList::RecursiveParseList(std::vector<VariableBlock*>
     // Empty brackets //
     if(!expression){
 
-        resultvalues.push_back(new VariableBlock(new StringBlock()));
+        resultvalues.push_back(new VariableBlock(new StringBlock(new string())));
         return true;
     }
 
@@ -154,7 +153,7 @@ DLLEXPORT bool NamedVariableList::RecursiveParseList(std::vector<VariableBlock*>
         }
 
         // Parse value //
-        auto valuestr = itr.GetUntilEnd<string>();
+        auto valuestr = itr2.GetUntilEnd<string>();
 
         if(!valuestr)
             continue;
@@ -380,10 +379,10 @@ bool Leviathan::NamedVariableList::CompareName(const string& name) const{
 }
 DLLEXPORT string Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*/) const{
 
-	string stringifiedval = Name+" ";
+	string stringifiedval = Name;
 
 	switch(WhichSeparator){
-	case 0: stringifiedval += "= "; break;
+	case 0: stringifiedval += " = "; break;
 	case 1: stringifiedval += ": "; break;
 	default:
 		// error //
@@ -399,18 +398,13 @@ DLLEXPORT string Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*/
 
 	for(size_t i = 0; i < Datas.size(); i++){
 
-		// check is conversion allowed //
-		if(!Datas[i]->IsConversionAllowedNonPtr<string>()){
-			// no choice but to throw exception //
-			throw InvalidType("value cannot be cast to string");
-		}
-        
 		if(i != 0)
 			stringifiedval += ",";
+        
 		// Check if type is a string type //
 		int blocktype = Datas[i]->GetBlockConst()->Type;
 
-		if(blocktype == DATABLOCK_TYPE_STRING || blocktype == DATABLOCK_TYPE_STRING ||
+		if(blocktype == DATABLOCK_TYPE_STRING || blocktype == DATABLOCK_TYPE_WSTRING ||
             blocktype == DATABLOCK_TYPE_CHAR)
         {
 			// Output in quotes //
@@ -423,7 +417,13 @@ DLLEXPORT string Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*/
                 string("false"))+"]";
 
 		} else {
-            
+
+            // check is conversion allowed //
+            if(!Datas[i]->IsConversionAllowedNonPtr<string>()){
+                // no choice but to throw exception //
+                throw InvalidType("value cannot be cast to string");
+            }
+
 			stringifiedval += "["+Datas[i]->operator string()+"]";
 		}
 	}
@@ -471,7 +471,7 @@ DLLEXPORT bool Leviathan::NamedVariableList::operator==(const NamedVariableList 
 	return true;
 }
 // ----------------- process functions ------------------- //
-DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const string &data,
+DLLEXPORT bool Leviathan::NamedVariableList::ProcessDataDump(const string &data,
     vector<shared_ptr<NamedVariableList>> &vec, map<string,
     std::shared_ptr<VariableBlock>>* predefined /*= NULL*/)
 {
@@ -484,7 +484,7 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const string &data,
 	unique_ptr<string> curline;
 	int linelength = 0;
 	do {
-		curline = itr.GetUntilNextCharacterOrNothing<string>(L';');
+		curline = itr.GetUntilNextCharacterOrNothing<string>(';');
 		if(!curline)
 			break;
 		
@@ -543,7 +543,7 @@ DLLEXPORT int Leviathan::NamedVariableList::ProcessDataDump(const string &data,
 		continue;
 	}
 
-	return 0;
+	return true;
 }
 
 DLLEXPORT  void Leviathan::NamedVariableList::SwitchValues(NamedVariableList &receiver,
@@ -640,9 +640,10 @@ DLLEXPORT Leviathan::NamedVars::NamedVars(NamedVars* stealfrom) : Variables(stea
 DLLEXPORT Leviathan::NamedVars::NamedVars(const string &datadump) : Variables(){
 
 	// load data directly to vector //
-	if(NamedVariableList::ProcessDataDump(datadump, Variables, NULL) != 0){
+	if(!NamedVariableList::ProcessDataDump(datadump, Variables, NULL)){
+        
 		// error happened //
-		Logger::Get()->Error("NamedVars: Initialize: process datadump failed");
+        throw InvalidArgument("datadump processing failed");
 	}
 }
 
@@ -711,7 +712,7 @@ DLLEXPORT bool Leviathan::NamedVars::SetValue(const string &name, const Variable
 
 DLLEXPORT bool Leviathan::NamedVars::SetValue(const string &name, VariableBlock* value1){
 	GUARD_LOCK();
-	auto index = Find(name);
+	auto index = Find(guard, name);
 
 	if(index >= Variables.size())
         return false;
@@ -763,7 +764,7 @@ DLLEXPORT VariableBlock& Leviathan::NamedVars::GetValueNonConst(const string &na
 
 DLLEXPORT const VariableBlock* Leviathan::NamedVars::GetValue(const string &name) const{
 	GUARD_LOCK();
-	auto index = Find(name);
+	auto index = Find(guard, name);
 
 	if(index >= Variables.size()){
 
@@ -775,7 +776,7 @@ DLLEXPORT const VariableBlock* Leviathan::NamedVars::GetValue(const string &name
 
 DLLEXPORT bool Leviathan::NamedVars::GetValue(const string &name, VariableBlock &receiver) const{
 	GUARD_LOCK();
-	auto index = Find(name);
+	auto index = Find(guard, name);
 	// index check //
 	if(index >= Variables.size()){
 		return false;
@@ -788,7 +789,7 @@ DLLEXPORT bool Leviathan::NamedVars::GetValue(const string &name, VariableBlock 
 DLLEXPORT bool Leviathan::NamedVars::GetValue(const string &name, const int &nindex, VariableBlock &receiver) const{
 	GUARD_LOCK();
 
-	auto index = Find(name);
+	auto index = Find(guard, name);
     
 	// index check //
 	if(index >= Variables.size()){
@@ -814,7 +815,7 @@ DLLEXPORT bool Leviathan::NamedVars::GetValue(const int &index, VariableBlock &r
 
 DLLEXPORT size_t Leviathan::NamedVars::GetValueCount(const string &name) const{
 	GUARD_LOCK();
-	auto index = Find(name);
+	auto index = Find(guard, name);
 	// index check //
 	if(index >= Variables.size()){
 		return 0;
@@ -825,7 +826,7 @@ DLLEXPORT size_t Leviathan::NamedVars::GetValueCount(const string &name) const{
 
 DLLEXPORT vector<VariableBlock*>* Leviathan::NamedVars::GetValues(const string &name){
 	GUARD_LOCK();
-	auto index = Find(name);
+	auto index = Find(guard, name);
 	// index check //
 	if(index >= Variables.size()){
 		return NULL;
@@ -836,7 +837,7 @@ DLLEXPORT vector<VariableBlock*>* Leviathan::NamedVars::GetValues(const string &
 
 DLLEXPORT bool Leviathan::NamedVars::GetValues(const string &name, vector<const VariableBlock*> &receiver) const{
 	GUARD_LOCK();
-	auto index = Find(name);
+	auto index = Find(guard, name);
 	// index check //
 	if(index >= Variables.size()){
 		return false;
@@ -856,7 +857,7 @@ DLLEXPORT bool Leviathan::NamedVars::GetValues(const string &name, vector<const 
 
 DLLEXPORT std::shared_ptr<NamedVariableList> Leviathan::NamedVars::GetValueDirect(const string &name) const{
 	GUARD_LOCK();
-	auto index = Find(name);
+	auto index = Find(guard, name);
 	// index check //
 	if(index >= Variables.size()){
 		return NULL;
@@ -866,7 +867,7 @@ DLLEXPORT std::shared_ptr<NamedVariableList> Leviathan::NamedVars::GetValueDirec
 
 DLLEXPORT NamedVariableList* Leviathan::NamedVars::GetValueDirectRaw(const string &name) const{
 	GUARD_LOCK();
-	auto index = Find(name);
+	auto index = Find(guard, name);
 	// index check //
 	if(index >= Variables.size()){
 		return NULL;
@@ -878,11 +879,10 @@ DLLEXPORT NamedVariableList* Leviathan::NamedVars::GetValueDirectRaw(const strin
 DLLEXPORT int Leviathan::NamedVars::GetVariableType(const string &name) const{
 	GUARD_LOCK();
 	// call overload //
-	return GetVariableType(Find(name));
+	return GetVariableType(guard, Find(guard, name));
 }
 
-DLLEXPORT int Leviathan::NamedVars::GetVariableType(size_t index) const{
-	GUARD_LOCK();
+DLLEXPORT int Leviathan::NamedVars::GetVariableType(Lock &guard, size_t index) const{
 
 	return Variables[index]->GetVariableType();
 }
@@ -890,11 +890,10 @@ DLLEXPORT int Leviathan::NamedVars::GetVariableType(size_t index) const{
 DLLEXPORT int Leviathan::NamedVars::GetVariableTypeOfAll(const string &name) const{
 	GUARD_LOCK();
 	// call overload //
-	return GetVariableType(Find(name));
+	return GetVariableTypeOfAll(guard, Find(guard, name));
 }
 
-DLLEXPORT int Leviathan::NamedVars::GetVariableTypeOfAll(size_t index) const{
-	GUARD_LOCK();
+DLLEXPORT int Leviathan::NamedVars::GetVariableTypeOfAll(Lock &guard, size_t index) const{
 
 	return Variables[index]->GetCommonType();
 }
@@ -912,8 +911,7 @@ DLLEXPORT bool Leviathan::NamedVars::GetName(size_t index, string &name) const{
 	return true;
 }
 
-void Leviathan::NamedVars::SetName(size_t index, const string &name){
-	GUARD_LOCK();
+void Leviathan::NamedVars::SetName(Lock &guard, size_t index, const string &name){
 
 	Variables[index]->SetName(name);
 }
@@ -921,7 +919,7 @@ void Leviathan::NamedVars::SetName(size_t index, const string &name){
 void Leviathan::NamedVars::SetName(const string &oldname, const string &name){
 	GUARD_LOCK();
 	// call overload //
-	SetName(Find(oldname), name);
+	SetName(guard, Find(guard, oldname), name);
 }
 
 bool Leviathan::NamedVars::CompareName(size_t index, const string &name) const{
@@ -965,7 +963,7 @@ DLLEXPORT void Leviathan::NamedVars::Remove(const string &name){
 
 DLLEXPORT void Leviathan::NamedVars::RemoveIfExists(const string &name, Lock &guard){
 	// Try  to find it //
-	size_t index = Find(name, guard);
+	size_t index = Find(guard, name);
 
     if(index >= Variables.size())
         return;
@@ -974,7 +972,7 @@ DLLEXPORT void Leviathan::NamedVars::RemoveIfExists(const string &name, Lock &gu
     Variables.erase(Variables.begin()+index);
 }
 // ------------------------------------ //
-int Leviathan::NamedVars::LoadVarsFromFile(const string &file){
+bool Leviathan::NamedVars::LoadVarsFromFile(const string &file){
 	// call datadump loaded with this object's vector //
 	return FileSystem::LoadDataDump(file, Variables);
 }
@@ -986,7 +984,7 @@ void Leviathan::NamedVars::SetVec(vector<shared_ptr<NamedVariableList>>& vec){
 	Variables = vec;
 }
 // ------------------------------------ //
-DLLEXPORT size_t Leviathan::NamedVars::Find(const string &name, Lock &guard) const{
+DLLEXPORT size_t Leviathan::NamedVars::Find(Lock &guard, const string &name) const{
 	for(size_t i = 0; i < Variables.size(); i++){
 		if(Variables[i]->CompareName(name))
 			return i;

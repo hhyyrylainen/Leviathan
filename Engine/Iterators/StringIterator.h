@@ -126,10 +126,10 @@ namespace Leviathan{
 		DLLEXPORT StringIterator(const std::string &text);
 		//! \brief Helper constructor for common string type
 		//! \param text Pointer to a string that won't be deleted by this
-		DLLEXPORT StringIterator(std::wstring* text);
+		DLLEXPORT StringIterator(const std::wstring* text);
 		//! \brief Helper constructor for common string type
 		//! \param text Pointer to a string that won't be deleted by this
-		DLLEXPORT StringIterator(std::string* text);
+		DLLEXPORT StringIterator(const std::string* text);
 
         //! \brief Creates an empty iterator
         //!
@@ -147,10 +147,10 @@ namespace Leviathan{
 		DLLEXPORT void ReInit(const std::string &text);
 		//! \brief Helper function for ReInit for common string type
 		//! \param text Pointer to a string that won't be deleted by this
-		DLLEXPORT void ReInit(std::wstring* text);
+		DLLEXPORT void ReInit(const std::wstring* text);
 		//! \brief Helper function for ReInit for common string type
 		//! \param text Pointer to a string that won't be deleted by this
-		DLLEXPORT void ReInit(std::string* text);
+		DLLEXPORT void ReInit(const std::string* text);
 
 		// Iterating functions //
 

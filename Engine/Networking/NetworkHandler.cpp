@@ -61,7 +61,7 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 
 	if(AppType != NETWORKED_TYPE_MASTER){
 		// Query master server //
-		QueryMasterServer(info);
+		QueryMasterServer(guard, info);
 
 	} else {
 		// We are our own master! //
@@ -157,7 +157,7 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
         }
     
         // This might have been left on by accident
-        StopOwnUpdaterThread();
+        StopOwnUpdaterThread(guard);
 
         // Set the static instance to nothing //
         instance = NULL;
@@ -165,6 +165,10 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
     }
     
     _ReleaseSocket();
+
+    // This thread is blocked in infinite read //
+    //ListenerThread.join();
+    ListenerThread.detach();
 }
 
 void Leviathan::NetworkHandler::_ReleaseSocket(){
@@ -190,10 +194,8 @@ void Leviathan::NetworkHandler::_ReleaseSocket(){
 }
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<std::promise<string>> Leviathan::NetworkHandler::QueryMasterServer(
-    const MasterServerInformation &info)
+    Lock &guard, const MasterServerInformation &info)
 {
-	// Might as well lock here //
-	GUARD_LOCK();
 	// Copy the data //
 	StoredMasterServerInfo = info;
 
@@ -210,12 +212,11 @@ DLLEXPORT std::shared_ptr<std::promise<string>> Leviathan::NetworkHandler::Query
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_SaveMasterServerList(){
 
-    GUARD_LOCK();
-    
 	// Set up the values //
 	vector<VariableBlock*> vals;
-	vals.reserve(MasterServers.size());
-	{
+    {
+        vals.reserve(MasterServers.size());
+
 		// Only this scope requires locking //
 		GUARD_LOCK();
 
@@ -282,19 +283,14 @@ DLLEXPORT string Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const 
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 
-  
     // Remove closed connections //
     RemoveClosedConnections();
 
-    {
-        GUARD_LOCK();
+    // Update remote console sessions if they exist //
+    auto rconsole = RemoteConsole::Get();
+    if(rconsole)
+        rconsole->UpdateStatus();
         
-        // Update remote console sessions if they exist //
-        auto rconsole = RemoteConsole::Get();
-        if(rconsole)
-            rconsole->UpdateStatus();
-
-    }
 
     {
         Lock lock(ConnectionsToUpdateMutex);
@@ -306,7 +302,7 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 
             GUARD_LOCK_OTHER(connection);
 
-            connection->UpdateListening();
+            connection->UpdateListening(guard);
         }
     }
 
@@ -561,20 +557,22 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
     Logger::Get()->Info("NetworkHandler: listening socket thread quitting");
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkHandler::StopOwnUpdaterThread(){
-    {
-        GUARD_LOCK_NAME(lockit);
-
-        // Tell the thread to stop //
-        UpdaterThreadStop = true;
-    }
+DLLEXPORT void Leviathan::NetworkHandler::StopOwnUpdaterThread(Lock &guard){
+    
+    // Tell the thread to stop //
+    UpdaterThreadStop = true;
 
     // Make it stop waiting for faster quitting //
     NotifyTemporaryUpdater.notify_all();
 
     // Wait for the thread to die //
+    guard.unlock();
+    
     // TODO: check that this doesn't deadlock //
-    TemporaryUpdateThread.join();
+    if(TemporaryUpdateThread.joinable())
+        TemporaryUpdateThread.join();
+
+    guard.lock();
 }
 
 void Leviathan::NetworkHandler::_RunTemporaryUpdaterThread(){
@@ -584,8 +582,13 @@ void Leviathan::NetworkHandler::_RunTemporaryUpdaterThread(){
     // Run until told to stop and update connections when enough time has elapsed //
     while(!UpdaterThreadStop){
 
+        lockit.unlock();
+
+        // This whole object doesn't need to be locked in here //
         UpdateAllConnections();
 
+        lockit.lock();
+        
         NotifyTemporaryUpdater.wait_for(lockit, std::chrono::milliseconds(50));
     }
 }
@@ -669,6 +672,9 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance,
 
 		// We need to request a new list before we can do anything //
 		Logger::Get()->Info("NetworkHandler: no stored list of master servers, waiting for the update to finish");
+
+        if(!DataUpdaterThread.joinable())
+            throw Exception("This should be joinable");
 		DataUpdaterThread.join();
 	}
 
@@ -820,7 +826,8 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance,
 
 
 	// This needs to be done here //
-	DataUpdaterThread.join();
+    if(DataUpdaterThread.joinable())
+        DataUpdaterThread.join();
 
 	// Output the current list //
 	instance->_SaveMasterServerList();

@@ -213,7 +213,7 @@ namespace Leviathan{
 		DLLEXPORT bool IsTargetHostLocalhost();
 
 
-		DLLEXPORT void UpdateListening();
+		DLLEXPORT void UpdateListening(Lock &guard);
 
 		DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(
             std::shared_ptr<NetworkRequest> request, int maxretries);
@@ -271,8 +271,8 @@ namespace Leviathan{
 		// Marks the acks in packet received as successfully sent and erases them //
 		void _VerifyAckPacketsAsSuccesfullyReceivedFromHost(int packetreceived);
 
-		void _PreparePacketHeaderForPacket(int packetid, sf::Packet &tofill, bool isrequest,
-            bool dontsendacks = false);
+		void _PreparePacketHeaderForPacket(Lock &guard, int packetid, sf::Packet &tofill,
+            bool isrequest, bool dontsendacks = false);
 
         std::shared_ptr<SentNetworkThing> _GetPossibleRequestForResponse(
             std::shared_ptr<NetworkResponse> response);

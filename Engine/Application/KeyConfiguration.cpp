@@ -26,7 +26,7 @@ DLLEXPORT KeyConfiguration* Leviathan::KeyConfiguration::Get(){
 KeyConfiguration* Leviathan::KeyConfiguration::staticaccess = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::KeyConfiguration::Init(
-    std::function<void (KeyConfiguration* checkfrom)> functocheck)
+    std::function<void (Lock &guard, KeyConfiguration* checkfrom)> functocheck)
 {
 	GUARD_LOCK();
 
@@ -63,7 +63,7 @@ DLLEXPORT bool Leviathan::KeyConfiguration::Init(
 
 
 	// Call the function with a pointer to this for it to verify loaded keys //
-	functocheck(this);
+	functocheck(guard, this);
 
 	return true;
 }
@@ -71,18 +71,16 @@ DLLEXPORT bool Leviathan::KeyConfiguration::Init(
 DLLEXPORT void Leviathan::KeyConfiguration::Release(){
 	GUARD_LOCK();
 	// Save all the keys //
-	Save();
+	Save(guard);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::KeyConfiguration::Save(){
+DLLEXPORT void Leviathan::KeyConfiguration::Save(Lock &guard){
 	// Skip if not given a file //
 	if(KeyStorageFile.size() == 0)
 		return;
 
 	// First generate a string for this //
 	string savedata = "";
-
-	GUARD_LOCK();
 
 	// Loop through all keys and create string representations from them //
 	for(auto iter = KeyConfigurations.begin(); iter != KeyConfigurations.end(); ++iter){

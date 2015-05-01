@@ -33,7 +33,7 @@ namespace Leviathan{
 		DLLEXPORT NamedVariableList(const std::string &name,
             std::vector<VariableBlock*> values_willclear);
         
-		DLLEXPORT NamedVariableList(std::string &line,
+		DLLEXPORT NamedVariableList(const std::string &line,
             std::map<std::string, std::shared_ptr<VariableBlock>>* predefined = NULL);
         
 		DLLEXPORT NamedVariableList(const std::string &name, const std::string &valuestr,
@@ -115,7 +115,7 @@ namespace Leviathan{
 		DLLEXPORT std::string ToText(int WhichSeparator = 0) const;
         
 		// process functions //
-		DLLEXPORT static int ProcessDataDump(const std::string &data,
+		DLLEXPORT static bool ProcessDataDump(const std::string &data,
             std::vector<std::shared_ptr<NamedVariableList>> &vec,
             std::map<std::string, std::shared_ptr<VariableBlock>>* predefined = NULL);
         
@@ -155,6 +155,7 @@ namespace Leviathan{
 		DLLEXPORT NamedVars(NamedVars* stealfrom);
 
 		DLLEXPORT NamedVars(const NamedVars &other);
+        //! \todo Allow predefined values
 		DLLEXPORT NamedVars(const std::string &datadump);
 		DLLEXPORT NamedVars(const std::vector<std::shared_ptr<NamedVariableList>> &variables);
 		DLLEXPORT NamedVars(std::shared_ptr<NamedVariableList> variable);
@@ -236,14 +237,36 @@ namespace Leviathan{
         
 		// ------------------------------------ //
 		DLLEXPORT int GetVariableType(const std::string &name) const;
-		DLLEXPORT int GetVariableType(size_t index) const;
+        
+		DLLEXPORT int GetVariableType(Lock &guard, size_t index) const;
+
+        DLLEXPORT inline int GetVariableType(size_t index) const{
+
+            GUARD_LOCK();
+            return GetVariableType(guard, index);
+        }
+        
 		DLLEXPORT int GetVariableTypeOfAll(const std::string &name) const;
-		DLLEXPORT int GetVariableTypeOfAll(size_t index) const;
+        
+		DLLEXPORT int GetVariableTypeOfAll(Lock &guard, size_t index) const;
+
+        DLLEXPORT inline int GetVariableTypeOfAll(size_t index) const{
+
+            GUARD_LOCK();
+            return GetVariableTypeOfAll(guard, index);
+        }
 
 		DLLEXPORT std::string GetName(size_t index);
 		DLLEXPORT bool GetName(size_t index, std::string &name) const;
 
-		DLLEXPORT void SetName(size_t index, const std::string &name);
+		DLLEXPORT void SetName(Lock &guard, size_t index, const std::string &name);
+
+        DLLEXPORT inline void SetName(size_t index, const std::string &name){
+
+            GUARD_LOCK();
+            SetName(guard, index, name);
+        }
+        
 		DLLEXPORT void SetName(const std::string &oldname, const std::string &name);
 
 		DLLEXPORT bool CompareName(size_t index, const std::string &name) const;
@@ -256,7 +279,7 @@ namespace Leviathan{
 		//! \brief Removes a value with the given name if it exists
 		DLLEXPORT void RemoveIfExists(const std::string &name, Lock &guard);
 		// ------------------------------------ //
-		DLLEXPORT int LoadVarsFromFile(const std::string &file);
+		DLLEXPORT bool LoadVarsFromFile(const std::string &file);
 
 		DLLEXPORT std::vector<std::shared_ptr<NamedVariableList>>* GetVec();
 		DLLEXPORT void SetVec(std::vector<std::shared_ptr<NamedVariableList>> &vec);
@@ -268,10 +291,10 @@ namespace Leviathan{
 
 		DLLEXPORT inline size_t Find(const std::string &name) const{
 			GUARD_LOCK();
-			return Find(name, guard);
+			return Find(guard, name);
 		}
 
-		DLLEXPORT size_t Find(const std::string &name, Lock &guard) const;
+		DLLEXPORT size_t Find(Lock &guard, const std::string &name) const;
 		// ------------------------------------ //
 		template<class T>
 		DLLEXPORT bool ShouldAddValueIfNotFoundOrWrongType(const std::string &name){

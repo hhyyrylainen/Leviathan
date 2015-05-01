@@ -101,8 +101,8 @@ namespace Leviathan{
 		DLLEXPORT static AppDef* GenerateAppdefine(const std::string &logfile,
             const std::string &engineconfigfile, const std::string &gameconfig,
             const std::string &keyconfig, 
-			std::function<void (GameConfiguration* configobj)> configchecker,
-            std::function<void (KeyConfiguration* keysobject)> keychecker);
+			std::function<void (Lock &guard, GameConfiguration* configobj)> configchecker,
+            std::function<void (Lock &guard, KeyConfiguration* keysobject)> keychecker);
         
 #ifdef _WIN32
 		DLLEXPORT void StoreWindowDetails(const std::string &title, const bool &windowborder,

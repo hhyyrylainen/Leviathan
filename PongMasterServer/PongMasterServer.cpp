@@ -48,21 +48,22 @@ void Pong::PongMasterServer::RegisterApplicationPhysicalMaterials(Leviathan::Phy
 
 }
 // ------------------------------------ //
-void Pong::PongMasterServer::CheckGameConfigurationVariables(GameConfiguration* configobj){
+void Pong::PongMasterServer::CheckGameConfigurationVariables(Lock &guard,
+    GameConfiguration* configobj)
+{
 	// Check for various variables //
-
-	GUARD_LOCK_OTHER_NAME(configobj, lockit);
-
-	NamedVars* vars = configobj->AccessVariables(lockit);
+	NamedVars* vars = configobj->AccessVariables(guard);
 
 	// Master server port //
 	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>("MasterServerPort")){
 		// Add new //
 		vars->AddVar("MasterServerPort", new VariableBlock(53220));
-		configobj->MarkModified();
+		configobj->MarkModified(guard);
 	}
 }
 
-void Pong::PongMasterServer::CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj){
+void Pong::PongMasterServer::CheckGameKeyConfigVariables(Lock &guard,
+    KeyConfiguration* keyconfigobj)
+{
 
 }

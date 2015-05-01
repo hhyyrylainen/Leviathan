@@ -14,6 +14,10 @@
     
     Write this too.
 
+    \section design_choices Design choices
+
+    \ref object_locking How Leviathan handless thread-safety
+
     \section references_list References
 
     \ref angelscript_main AngelScript scripting reference

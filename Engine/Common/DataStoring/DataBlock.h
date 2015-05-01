@@ -21,6 +21,7 @@ static_assert(sizeof(short) == 2, "Short must be 2 bytes for datablocks to work 
 #define DATABLOCK_TYPE_VOIDPTR	11
 
 #define DATABLOCK_TYPE_ERROR	9000
+#define DATABLOCK_TYPE_UNINITIALIZED 10000
 
 namespace Leviathan{
 
@@ -151,11 +152,15 @@ namespace Leviathan{
 	//! \todo Add move constructor and move assignment operators
 	template<class DBlockT>
 	class DataBlock : public DataBlockAll{
+        struct _U{};
 	public:
-		DLLEXPORT DataBlock() : Value(NULL){
+        //! \brief Creates an uninitialized block of type non
+        //! \warning Calling this will create an invalid block that cannot be casted or used
+		DLLEXPORT explicit DataBlock(const _U &forceempty) : Value(NULL){
 
-			Type = DATABLOCK_TYPE_ERROR;
+			Type = DATABLOCK_TYPE_UNINITIALIZED;
 		}
+        
 		DLLEXPORT DataBlock(const DBlockT &val) : Value(new DBlockT(val)){
 
 			// use templates to get type //

@@ -24,8 +24,6 @@ namespace Leviathan{
 		DLLEXPORT ~SyncedValue();
 
 
-		
-
 		//! \brief Call after changing the HeldVariables
 		DLLEXPORT void NotifyUpdated();
 
@@ -123,12 +121,12 @@ namespace Leviathan{
 		DLLEXPORT bool IsSyncDone();
 
 		//! \brief Checks whether a name is already in use
-		DLLEXPORT bool IsVariableNameUsed(const std::string &name, Lock &guard);
+		DLLEXPORT bool IsVariableNameUsed(Lock &guard, const std::string &name);
 
 		//! \brief Short version for IsVariableNameUsed
 		DLLEXPORT FORCE_INLINE bool IsVariableNameUsed(const std::string &name){
 			GUARD_LOCK();
-			return IsVariableNameUsed(name, guard);
+			return IsVariableNameUsed(guard, name);
 		}
 
 		//! \brief Sets the expected number of variables received
@@ -141,7 +139,14 @@ namespace Leviathan{
 	protected:
 
 		//! \brief Sends update notifications about a variable
-		void _NotifyUpdatedValue(const SyncedValue* const valtosync, int useid = -1);
+		inline void _NotifyUpdatedValue(const SyncedValue* const valtosync, int useid = -1){
+
+            GUARD_LOCK();
+            _NotifyUpdatedValue(guard, valtosync, useid);
+        }
+
+        void _NotifyUpdatedValue(Lock &guard, const SyncedValue* const valtosync, int useid = -1);
+        
 		void _NotifyUpdatedValue(SyncedResource* valtosync, int useid = -1);
 
         std::shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(ConnectionInfo* unsafeptr,

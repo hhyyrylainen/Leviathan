@@ -27,8 +27,8 @@ namespace Pong{
 		
 
 		// Game configuration checkers //
-		static void CheckGameConfigurationVariables(GameConfiguration* configobj);
-		static void CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
+		static void CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj);
+		static void CheckGameKeyConfigVariables(Lock &guard, KeyConfiguration* keyconfigobj);
 
 		//! Used to set the server status as joinable (it has started)
 		virtual void PreFirstTick();

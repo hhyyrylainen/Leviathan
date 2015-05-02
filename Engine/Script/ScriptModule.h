@@ -99,6 +99,7 @@ namespace Leviathan{
 	class ScriptModule : public ThreadSafe{
 		// friend to be able to delete static objects //
 		friend ScriptExecutor;
+
 	public:
 		DLLEXPORT ScriptModule(asIScriptEngine* engine, const std::string &name, int id,
             const std::string &source);
@@ -227,7 +228,7 @@ namespace Leviathan{
                 const std::string* generictype = NULL);
 
 		//! \brief Tries to build the module and sets the state accordingly
-		void _BuildTheModule();
+		void _BuildTheModule(Lock &guard);
 
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
@@ -241,7 +242,8 @@ namespace Leviathan{
 
 
 		//! \brief Adds a new file to monitor, if required
-		void _AddFileToMonitorIfNotAlready(Lock &guard, const std::string &file);
+        //! \note The object needs to be locked before this call
+		void _AddFileToMonitorIfNotAlready(const std::string &file);
 
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 

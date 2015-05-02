@@ -369,13 +369,12 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
     if(!NoGui)
         NoLeap = true;
 
-    Logger::Get()->Info("Engine: will try to create Leap motion connection");
-
 	std::thread leapinitthread;
-	if(!NoLeap)
+	if(!NoLeap){
         
         Logger::Get()->Info("Engine: will try to create Leap motion connection");
-        
+
+        // Seems that std::threads are joinable when constructed with default constructor
 		leapinitthread = std::thread(std::bind<void>([](Engine* engine) -> void{
 
 			engine->LeapData = new LeapManager(engine);
@@ -397,7 +396,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 			}
 
 		}, this));
-
+    }
 #endif
 
 

@@ -21,12 +21,12 @@ namespace Leviathan{ namespace Gui{
 		~GuiCollection();
 
 		//! \todo Allow script listeners to be executed even if custom animations are used
-		DLLEXPORT void UpdateState(bool newstate);
+		DLLEXPORT void UpdateState(Lock &managerlock, bool newstate);
 		DLLEXPORT inline bool GetState(){
 			return Enabled;
 		}
-		DLLEXPORT inline void ToggleState(){
-			UpdateState(!Enabled);
+		DLLEXPORT inline void ToggleState(Lock &managerlock){
+			UpdateState(managerlock, !Enabled);
 		}
 
 		DLLEXPORT void UpdateAllowEnable(bool newstate);
@@ -59,10 +59,12 @@ namespace Leviathan{ namespace Gui{
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GuiCollection);
 
-		DLLEXPORT static bool LoadCollection(GuiManager* gui, const ObjectFileObject &data);
+		DLLEXPORT static bool LoadCollection(Lock &guilock, GuiManager* gui,
+            const ObjectFileObject &data);
 	private:
 
-		void _PlayAnimations(const std::vector<std::unique_ptr<std::string>> &anims);
+		void _PlayAnimations(Lock &managerlock,
+            const std::vector<std::unique_ptr<std::string>> &anims);
 
 		// ------------------------------------ //
 

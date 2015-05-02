@@ -7,6 +7,7 @@
 #include "GuiManager.h"
 #include "CEGUI/GUIContext.h"
 #include "CEGUI/Window.h"
+#include "../Common/ThreadSafe.h"
 using namespace Leviathan;
 using namespace Gui;
 using namespace std;
@@ -33,7 +34,7 @@ Leviathan::Gui::GuiCollection::~GuiCollection(){
 	// release reference //
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
+DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(Lock &managerlock, bool newstate){
 	// Don't do anything if the state didn't actually change //
 	if(Enabled == newstate)
 		return;
@@ -49,13 +50,13 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 	if(Enabled && !AutoAnimationOnEnable.empty()){
 
 		// Play the animations //
-		_PlayAnimations(AutoAnimationOnEnable);
+		_PlayAnimations(managerlock, AutoAnimationOnEnable);
 		return;
 
 	} else if(!Enabled && !AutoAnimationOnDisable.empty()){
 		
 		// Play the animations //
-		_PlayAnimations(AutoAnimationOnDisable);
+		_PlayAnimations(managerlock, AutoAnimationOnDisable);
 		return;
 	}
 
@@ -67,7 +68,8 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 		CEGUI::Window* foundobject = NULL;
 		try{
 
-			foundobject = OwningManager->GetMainContext()->getRootWindow()->getChild(AutoTarget);
+			foundobject = OwningManager->GetMainContext(managerlock)
+                ->getRootWindow()->getChild(AutoTarget);
 
 		} catch(const CEGUI::UnknownObjectException &e){
 
@@ -124,7 +126,9 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(bool newstate){
 	}
 }
 // ------------------------------------ //
-bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data){
+bool Leviathan::Gui::GuiCollection::LoadCollection(Lock &guilock, GuiManager* gui,
+    const ObjectFileObject &data)
+{
 	// load a GuiCollection from the structure //
 
 	std::string Toggle = "";
@@ -182,7 +186,7 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(GuiManager* gui, const Object
 	cobj->Scripting = data.GetScript();
 
 	// Add to the collection list //
-	gui->AddCollection(cobj);
+	gui->AddCollection(guilock, cobj);
 
 	// loading succeeded //
 	return true;
@@ -192,7 +196,7 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
 	AllowEnable = newstate;
 }
 // ------------------------------------ //
-void Leviathan::Gui::GuiCollection::_PlayAnimations(const std::vector<unique_ptr<std::string>> &anims){
+void Leviathan::Gui::GuiCollection::_PlayAnimations(Lock &lock, const std::vector<unique_ptr<std::string>> &anims){
 
 	assert(anims.size() % 2 == 0 && "_PlayAnimations has invalid vector, size non dividable by 2");
 
@@ -203,7 +207,7 @@ void Leviathan::Gui::GuiCollection::_PlayAnimations(const std::vector<unique_ptr
 
 		if(targetanim == "AutoTarget"){
 
-			if(!OwningManager->PlayAnimationOnWindow(AutoTarget, *anims[i+1],
+			if(!OwningManager->PlayAnimationOnWindow(lock, AutoTarget, *anims[i+1],
                     ApplyAnimationsToChildren, GuiManager::GetCEGUITypesWithBadAnimations()))
 			{
 
@@ -213,7 +217,7 @@ void Leviathan::Gui::GuiCollection::_PlayAnimations(const std::vector<unique_ptr
 
 		} else {
 
-			if(!OwningManager->PlayAnimationOnWindow(targetanim, *anims[i+1],
+			if(!OwningManager->PlayAnimationOnWindow(lock, targetanim, *anims[i+1],
                     ApplyAnimationsToChildren, GuiManager::GetCEGUITypesWithBadAnimations()))
 			{
 

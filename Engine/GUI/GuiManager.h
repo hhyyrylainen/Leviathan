@@ -85,14 +85,14 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT void OnFocusChanged(bool focused);
 
 		// Internal Gui element managing //
-		DLLEXPORT bool AddGuiObject(BaseGuiObject* obj);
+		DLLEXPORT bool AddGuiObject(Lock &guard, BaseGuiObject* obj);
 		DLLEXPORT void DeleteObject(int id);
 		DLLEXPORT int GetObjectIndexFromId(int id);
 		DLLEXPORT BaseGuiObject* GetObject(unsigned int index);
 
 
 		//! \brief Returns the main GUI context
-		DLLEXPORT CEGUI::GUIContext* GetMainContext();
+		DLLEXPORT CEGUI::GUIContext* GetMainContext(Lock &guard);
 
 		// function split into peaces //
 		DLLEXPORT bool LoadCollection(std::vector<std::shared_ptr<ObjectFileObject>> &data,
@@ -101,27 +101,46 @@ namespace Leviathan{ namespace Gui{
 		// file loading //
 
 		//! \brief Loads a GUI file
-		DLLEXPORT bool LoadGUIFile(const std::string &file, bool nochangelistener = false,
-            int iteration = 0);
+		DLLEXPORT bool LoadGUIFile(Lock &guard, const std::string &file,
+            bool nochangelistener = false, int iteration = 0);
+
+        DLLEXPORT inline bool LoadGUIFile(const std::string &file, bool nochangelistener = false){
+
+            GUARD_LOCK();
+            return LoadGUIFile(guard, file, nochangelistener);
+        }
 
 		//! \brief Unloads the currently loaded file
-		DLLEXPORT void UnLoadGUIFile();
+		DLLEXPORT void UnLoadGUIFile(Lock &guard);
+
+        DLLEXPORT inline void UnLoadGUIFile(){
+
+            GUARD_LOCK();
+            UnLoadGUIFile(guard);
+        }
 
 		//! \brief Creates an object representing the state of all GuiCollections
-		DLLEXPORT std::unique_ptr<GuiCollectionStates> GetGuiStates() const;
+		DLLEXPORT std::unique_ptr<GuiCollectionStates> GetGuiStates(Lock &guard) const;
 
 		//! \brief Applies a stored set of states to the GUI
 		//! \param states A pointer to an object holding the state,
         //! the object should be obtained by calling GetGuiStates
 		//! \see GetGuiStates
-		DLLEXPORT void ApplyGuiStates(const GuiCollectionStates* states);
+		DLLEXPORT void ApplyGuiStates(Lock &guard, const GuiCollectionStates* states);
 
 
 		// set to "none" to use default //
-		DLLEXPORT void SetMouseTheme(const std::string &tname);
+		DLLEXPORT void SetMouseTheme(Lock &guard, const std::string &tname);
+
+        DLLEXPORT inline void SetMouseTheme(const std::string &tname){
+
+            GUARD_LOCK();
+            SetMouseTheme(guard, tname);
+        }
 
 		// collection managing //
-		DLLEXPORT void AddCollection(GuiCollection* add);
+		DLLEXPORT void AddCollection(Lock &guard, GuiCollection* add);
+        
 		DLLEXPORT GuiCollection* GetCollection(const int &id, const std::string &name = "");
 
 		DLLEXPORT void SetCollectionState(const std::string &name, bool state);
@@ -135,7 +154,7 @@ namespace Leviathan{ namespace Gui{
 
 		//! \brief Returns a single CEGUI::Window matching the name
 		//! \todo Allow error reporting
-		DLLEXPORT CEGUI::Window* GetWindowByStringName(const std::string &namepath);
+		DLLEXPORT CEGUI::Window* GetWindowByStringName(Lock &guard, const std::string &namepath);
 
 
 		//! \brief Returns a string containing names of types that don't look good/break
@@ -150,7 +169,7 @@ namespace Leviathan{ namespace Gui{
 
 		//! \brief Creates and plays an animation on a CEGUI Window
 		//! \param applyrecursively Applies the same animation to the child windows
-		DLLEXPORT bool PlayAnimationOnWindow(const std::string &windowname,
+		DLLEXPORT bool PlayAnimationOnWindow(Lock &guard, const std::string &windowname,
             const std::string &animationname, bool applyrecursively = false,
             const std::string &ignoretypenames = "");
 
@@ -182,7 +201,7 @@ namespace Leviathan{ namespace Gui{
 	private:
 
 		//! The implementation of PlayAnimationOnWindow
-		void _PlayAnimationOnWindow(CEGUI::Window* targetwind, CEGUI::Animation* animdefinition,
+		void _PlayAnimationOnWindow(Lock &guard, CEGUI::Window* targetwind, CEGUI::Animation* animdefinition,
             bool recurse, const std::string &ignoretypenames);
 
 		// ------------------------------------ //

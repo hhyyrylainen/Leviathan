@@ -47,6 +47,8 @@ public:
 	GuiClipboardHandler(Leviathan::Window* windprovider) : HWNDSource(windprovider), OurOwnedBuffer(NULL)
     {
 #ifdef __linux
+        WaitingClipboard = false;
+        
         // This will throw if it fails...
         SetupClipboardWindow();
 #endif
@@ -57,7 +59,7 @@ public:
 #ifdef __linux
         XFlush(XDisplay);
         
-        CleanUpWindow();
+        CleanUpWindow(guard);
 #endif
         
 		SAFE_DELETE(OurOwnedBuffer);
@@ -184,7 +186,7 @@ public:
 		}
 
         // We must stop the message loop first //
-        StopXMessageLoop();
+        StopXMessageLoop(guard);
         
         // "Sending" to the clipboard is the easy part, responding to the requests is the harder part //
         Atom clipboardtarget = XInternAtom(XDisplay, "CLIPBOARD", false);
@@ -206,7 +208,7 @@ public:
         memcpy(OurOwnedBuffer, buffer, size);
 
         // Start handling clipboard data requests //
-        StartXMessageLoop();
+        StartXMessageLoop(guard);
         
 	}
 
@@ -215,7 +217,7 @@ public:
         GUARD_LOCK_NAME(lockit);
         
         // We need to stop the message processing here, too //
-        StopXMessageLoop();
+        StopXMessageLoop(lockit);
         
         // Create a request //
 
@@ -232,22 +234,30 @@ public:
         {
             Lock lock(ClipboardRetrieveMutex);
 
+            WaitingClipboard = true;
+
             // We need to loop to run for it to process the response //
-            StartXMessageLoop();
-        
-            WaitForClipboard.wait(lock);
+            StartXMessageLoop(lockit);
+
+            while(WaitingClipboard){
+                
+                WaitForClipboard.wait_for(lock, MillisecondDuration(5));
+            }
 
             lockit.lock();
         
             if(!ClipboardRequestSucceeded){
 
                 Logger::Get()->Info("The clipboard was empty");
+                size = 0;
+                mimeType = "";
+                buffer = nullptr;
                 return;
             }
         }
 
         // We probably need to stop the processing loop again //
-        StopXMessageLoop();
+        StopXMessageLoop(lockit);
 
         // First read 0 bytes, to get the total size //
         Atom actualreturntype;
@@ -313,7 +323,7 @@ finishprocessingthing:
             XFree(xbuffer);
 
         // The message loop has to start again after all the Xlib calls //
-        StartXMessageLoop();
+        StartXMessageLoop(lockit);
 	}
     
 
@@ -392,6 +402,7 @@ private:
                             Lock lock(ClipboardRetrieveMutex);
 
                             ClipboardRequestSucceeded = true;
+                            WaitingClipboard = false;
                         }
 
                         WaitForClipboard.notify_all();
@@ -489,6 +500,8 @@ private:
 
                         Logger::Get()->Info("Nothing to paste, clipboard empty");
                         ClipboardRequestSucceeded = false;
+                        WaitingClipboard = false;
+                        WaitForClipboard.notify_all();
                         break;
                     }
 
@@ -564,16 +577,14 @@ private:
         XSendEvent(XDisplay, DefaultRootWindow(XDisplay), false, SubstructureNotifyMask, &xev);
         
         // The loop should run //
-        StartXMessageLoop();
+        StartXMessageLoop(guard);
     }
 
     //! Cleans up the window
-    void CleanUpWindow(){
+    void CleanUpWindow(Lock &guard){
         
-        GUARD_LOCK();
-
         // First stop the message loop //
-        StopXMessageLoop();
+        StopXMessageLoop(guard);
         
         Logger::Get()->Info("GUI clipboard is ready to be destroyed");
 
@@ -590,19 +601,15 @@ private:
     //! \brief Starts the Xlib message loop for responding to requests
     //!
     //! For use after stopping the loop
-    void StartXMessageLoop(){
+    void StartXMessageLoop(Lock &guard){
 
-        GUARD_LOCK();
-        
         RunMessageProcessing = true;
         
         XMessageThread = std::thread(&GuiClipboardHandler::RunXMessageLoop, this);
     }
 
     //! \brief Stops the message processing
-    void StopXMessageLoop(){
-
-        GUARD_LOCK();
+    void StopXMessageLoop(Lock &guard){
 
         // First signal the loop to stop //
         RunMessageProcessing = false;
@@ -639,6 +646,9 @@ private:
 
     //! This is waited for while the clipboard is accessed
     std::condition_variable_any WaitForClipboard;
+
+    //! Set to true while waiting for clipboard thread to do something
+    bool WaitingClipboard;
 
     //! This is a lock for clipboard content retrieve
     Mutex ClipboardRetrieveMutex;
@@ -707,7 +717,7 @@ bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* win
 
 
 	// Set the taharez looks active //
-	SetMouseTheme("TaharezLook/MouseArrow");
+	SetMouseTheme(guard, "TaharezLook/MouseArrow");
 	GuiContext->setDefaultTooltipType("TaharezLook/Tooltip");
 
 
@@ -746,7 +756,7 @@ void Leviathan::Gui::GuiManager::Release(){
 	}
 
 	// Default mouse back //
-	SetMouseTheme("none");
+	SetMouseTheme(guard, "none");
 
 	// Release objects first //
 
@@ -787,9 +797,11 @@ void Leviathan::Gui::GuiManager::Release(){
 DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(OIS::KeyCode key, int specialmodifiers){
 	GUARD_LOCK();
 	for(size_t i = 0; i < Collections.size(); i++){
-		if(Collections[i]->GetTogglingKey().Match(key, specialmodifiers, false) && Collections[i]->GetAllowEnable()){
-			// is a match, toggle //
-			Collections[i]->ToggleState();
+		if(Collections[i]->GetTogglingKey().Match(key, specialmodifiers, false) &&
+            Collections[i]->GetAllowEnable())
+        {
+			// Is a match, toggle //
+			Collections[i]->ToggleState(guard);
 
 			return true;
 		}
@@ -807,7 +819,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const string &name
 			// set state //
 			if(Collections[i]->GetState() != state){
                 
-				Collections[i]->ToggleState();
+				Collections[i]->ToggleState(guard);
 			}
 			return;
 		}
@@ -915,6 +927,8 @@ void Leviathan::Gui::GuiManager::Render(){
 
 	LastTimePulseTime = newtime;
 
+    guard.unlock();
+    
 	// Update inputs //
 	ThisWindow->GetWindow()->GatherInput(ContextInput);
 
@@ -940,8 +954,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnFocusChanged(bool focused){
 
 }
 // ------------------------------------ //
-bool Leviathan::Gui::GuiManager::AddGuiObject(BaseGuiObject* obj){
-	GUARD_LOCK();
+bool Leviathan::Gui::GuiManager::AddGuiObject(Lock &guard, BaseGuiObject* obj){
 	Objects.push_back(obj);
 	return true;
 }
@@ -977,8 +990,8 @@ BaseGuiObject* Leviathan::Gui::GuiManager::GetObject(unsigned int index){
 	return NULL;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const string &file, bool nochangelistener,
-    int iteration /*= 0*/)
+DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(Lock &guard, const string &file,
+    bool nochangelistener, int iteration /*= 0*/)
 {
     if(iteration > 10){
 
@@ -1046,10 +1059,6 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const string &file, bool 
             relativepath);
 		return false;
 	}
-
-	// We need to lock now //
-	GUARD_LOCK();
-
 
 	// Look for animation files //
 	auto animslist = varlist.GetValueDirectRaw("GUIAnimations");
@@ -1123,7 +1132,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const string &file, bool 
 		// Check what type the of the object is //
 		if(objecto->GetTypeName() == "GuiCollection"){
 
-			if(!GuiCollection::LoadCollection(this, *objecto)){
+			if(!GuiCollection::LoadCollection(guard, this, *objecto)){
 
 				// report error //
 				Logger::Get()->Error("GuiManager: ExecuteGuiScript: failed to load collection, "
@@ -1136,7 +1145,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const string &file, bool 
 		} else if(objecto->GetTypeName() == "GuiObject"){
 
 			// try to load //
-			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *objecto)){
+			if(!BaseGuiObject::LoadFromFileStructure(guard, this, TempOs, *objecto)){
 
 				// report error //
 				Logger::Get()->Error("GuiManager: ExecuteGuiScript: failed to load GuiObject, "
@@ -1184,7 +1193,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const string &file, bool 
 
             Logger::Get()->Write("\t> Doing iteration "+Convert::ToString(iteration+1));
 
-            return LoadGUIFile(file, nochangelistener, iteration+1);
+            return LoadGUIFile(guard, file, nochangelistener, iteration+1);
         }
     }
 	
@@ -1192,7 +1201,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const string &file, bool 
 	for(size_t i = 0; i < TempOs.size(); i++){
 
 		// add to real objects //
-		AddGuiObject(TempOs[i]);
+		AddGuiObject(guard, TempOs[i]);
 	}
 
 	// This avoids having more and more change listeners each reload //
@@ -1215,9 +1224,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(const string &file, bool 
 	return true;
 }
 
-DLLEXPORT void Leviathan::Gui::GuiManager::UnLoadGUIFile(){
-
-	GUARD_LOCK();
+DLLEXPORT void Leviathan::Gui::GuiManager::UnLoadGUIFile(Lock &guard){
 
 	// Unload all objects //
 	for(size_t i = 0; i < Objects.size(); i++){
@@ -1244,8 +1251,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::UnLoadGUIFile(){
 	GuiContext->setRootWindow(NULL);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseTheme(const string &tname){
-	GUARD_LOCK();
+DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseTheme(Lock &guard, const string &tname){
 
 	if(tname == "none"){
 
@@ -1261,12 +1267,12 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseTheme(const string &tname){
 	ThisWindow->GetWindow()->SetHideCursor(true);
 }
 // ------------------------------------ //
-DLLEXPORT CEGUI::GUIContext* Leviathan::Gui::GuiManager::GetMainContext(){
+DLLEXPORT CEGUI::GUIContext* Leviathan::Gui::GuiManager::GetMainContext(Lock &guard){
 	return GuiContext;
 }
 // ----------------- collection managing --------------------- //
-void GuiManager::AddCollection(GuiCollection* add){
-	GUARD_LOCK();
+void GuiManager::AddCollection(Lock &guard, GuiCollection* add){
+    
 	Collections.push_back(add);
 }
 
@@ -1298,23 +1304,22 @@ void Leviathan::Gui::GuiManager::_FileChanged(const string &file, ResourceFolder
 	GUARD_LOCK();
 
 	// Store the current state //
-	auto currentstate = GetGuiStates();
+	auto currentstate = GetGuiStates(guard);
 
-	UnLoadGUIFile();
+	UnLoadGUIFile(guard);
 
 	// Now load it //
-	if(!LoadGUIFile(MainGUIFile, true)){
+	if(!LoadGUIFile(guard, MainGUIFile, true)){
 
 		Logger::Get()->Error("GuiManager: file changed: couldn't load updated file: "+
             MainGUIFile);
 	}
 
 	// Apply back the old states //
-	ApplyGuiStates(currentstate.get());
+	ApplyGuiStates(guard, currentstate.get());
 
 	// Mark everything as non-updated //
 	caller.MarkAllAsNotUpdated();
-
 }
 // ------------------ Static part ------------------ //
 std::vector<string> Leviathan::Gui::GuiManager::LoadedAnimationFiles;
@@ -1352,10 +1357,9 @@ DLLEXPORT void Leviathan::Gui::GuiManager::KillGlobalCache(){
 		single->destroyAllAnimations();
 }
 // ------------------------------------ //
-DLLEXPORT CEGUI::Window* Leviathan::Gui::GuiManager::GetWindowByStringName(
+DLLEXPORT CEGUI::Window* Leviathan::Gui::GuiManager::GetWindowByStringName(Lock &guard,
     const string &namepath)
 {
-	GUARD_LOCK();
 	try{
 
 		return GuiContext->getRootWindow()->getChild(namepath);
@@ -1367,11 +1371,12 @@ DLLEXPORT CEGUI::Window* Leviathan::Gui::GuiManager::GetWindowByStringName(
 	}
 }
 
-DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindow(const string &windowname,
-    const string &animationname, bool applyrecursively, const string &ignoretypenames)
+DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindow(Lock &guard,
+    const string &windowname, const string &animationname, bool applyrecursively,
+    const string &ignoretypenames)
 {
 	// First get the window //
-	auto wind = GetWindowByStringName(windowname);
+	auto wind = GetWindowByStringName(guard, windowname);
 
 	if(!wind)
 		return false;
@@ -1393,18 +1398,20 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindow(const string &w
 		return false;
 
 
-	_PlayAnimationOnWindow(wind, animdefinition, applyrecursively, ignoretypenames);
+	_PlayAnimationOnWindow(guard, wind, animdefinition, applyrecursively, ignoretypenames);
 	return true;
 }
 
 DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindowProxy(const string &windowname,
     const string &animationname)
 {
-	return PlayAnimationOnWindow(windowname, animationname);
+    GUARD_LOCK();
+	return PlayAnimationOnWindow(guard, windowname, animationname);
 }
 
-void Leviathan::Gui::GuiManager::_PlayAnimationOnWindow(CEGUI::Window* targetwind,
-    CEGUI::Animation* animdefinition, bool recurse, const string &ignoretypenames)
+void Leviathan::Gui::GuiManager::_PlayAnimationOnWindow(Lock &guard,
+    CEGUI::Window* targetwind, CEGUI::Animation* animdefinition, bool recurse,
+    const string &ignoretypenames)
 {
 	// Apply only if the typename doesn't match ignored names //
 	if(ignoretypenames.find(targetwind->getType().c_str()) == string::npos &&
@@ -1428,13 +1435,13 @@ void Leviathan::Gui::GuiManager::_PlayAnimationOnWindow(CEGUI::Window* targetwin
 		for(size_t i = 0; i < targetwind->getChildCount(); i++){
 			auto newtarget = targetwind->getChildAtIdx(i);
 
-			_PlayAnimationOnWindow(newtarget, animdefinition, recurse, ignoretypenames);
+			_PlayAnimationOnWindow(guard, newtarget, animdefinition, recurse, ignoretypenames);
 		}
 	}
 }
 // ------------------------------------ //
-DLLEXPORT std::unique_ptr<GuiCollectionStates> Leviathan::Gui::GuiManager::GetGuiStates() const{
-	GUARD_LOCK();
+DLLEXPORT std::unique_ptr<GuiCollectionStates> Leviathan::Gui::GuiManager::GetGuiStates(Lock &guard) const{
+    
 	// Create the result object using the size of Collections as all of them are added there //
 	unique_ptr<GuiCollectionStates> result(new GuiCollectionStates(Collections.size()));
 
@@ -1447,8 +1454,8 @@ DLLEXPORT std::unique_ptr<GuiCollectionStates> Leviathan::Gui::GuiManager::GetGu
 	return result;
 }
 
-DLLEXPORT void Leviathan::Gui::GuiManager::ApplyGuiStates(const GuiCollectionStates* states){
-	GUARD_LOCK();
+DLLEXPORT void Leviathan::Gui::GuiManager::ApplyGuiStates(Lock &guard, const GuiCollectionStates* states){
+
 	// Apply all the states from the object //
 	for(size_t i = 0; i < states->CollectionNames.size(); i++){
 
@@ -1458,7 +1465,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::ApplyGuiStates(const GuiCollectionSta
 		if(foundcollect && foundcollect->GetState() != states->CollectionNames[i]->IsEnabled){
 
 			// Change the state //
-			foundcollect->UpdateState(states->CollectionNames[i]->IsEnabled);
+			foundcollect->UpdateState(guard, states->CollectionNames[i]->IsEnabled);
 		}
 	}
 }

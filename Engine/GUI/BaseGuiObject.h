@@ -46,7 +46,7 @@ namespace Leviathan{ namespace Gui{
                 return OwningInstance;
             }
 		
-            DLLEXPORT static bool LoadFromFileStructure(GuiManager* owner,
+            DLLEXPORT static bool LoadFromFileStructure(Lock &ownerlock, GuiManager* owner,
                 std::vector<BaseGuiObject*> &tempobjects, ObjectFileObject &dataforthis);
 
 

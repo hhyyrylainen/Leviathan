@@ -72,8 +72,8 @@ DLLEXPORT CEGUI::Window* Leviathan::Gui::BaseGuiObject::GetTargetWindow() const{
 	return TargetElement;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* owner,
-    vector<BaseGuiObject*> &tempobjects, ObjectFileObject& dataforthis)
+DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(Lock &ownerlock,
+    GuiManager* owner, vector<BaseGuiObject*> &tempobjects, ObjectFileObject& dataforthis)
 {
 	// parse fake id from prefixes //
 	int fakeid = 0;
@@ -122,7 +122,8 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(GuiManager* 
 	try{
 		// Names starting with '_' are not considered to be targeting specific CEGUI windows //
 		if(tmpptr->Name.find_first_of(L'_') != 0)
-			foundobject = owner->GetMainContext()->getRootWindow()->getChild(tmpptr->Name);
+			foundobject = owner->GetMainContext(ownerlock)
+                ->getRootWindow()->getChild(tmpptr->Name);
 
 	} catch(const CEGUI::UnknownObjectException &e){
 

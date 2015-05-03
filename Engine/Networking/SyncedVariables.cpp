@@ -66,7 +66,7 @@ DLLEXPORT void Leviathan::SyncedVariables::AddAnotherToSyncWith(ConnectionInfo* 
 		}
 	}
 
-	ConnectToNotifier(unsafeptr);
+	ConnectToNotifier(guard, unsafeptr);
 
 	// Add the new one //
 	ConnectedToOthers.push_back(unsafeptr);
@@ -379,7 +379,7 @@ void SyncedVariables::_NotifyUpdatedValue(Lock &guard, const SyncedValue* const 
 	}
 }
 
-void Leviathan::SyncedVariables::_NotifyUpdatedValue(SyncedResource* valtosync, int useid /*= -1*/){
+void Leviathan::SyncedVariables::_NotifyUpdatedValue(Lock &guard, SyncedResource* valtosync, int useid /*= -1*/){
 	// Only update if we are a host //
 	if(!IsHost)
 		return;
@@ -390,7 +390,7 @@ void Leviathan::SyncedVariables::_NotifyUpdatedValue(SyncedResource* valtosync, 
 	// Serialize it to a packet //
 	sf::Packet packet;
 
-	valtosync->AddDataToPacket(packet);
+	valtosync->AddDataToPacket(guard, packet);
 
 	// Extract it from the packet //
 	tmpresponse->GenerateResourceSyncResponse(reinterpret_cast<const char*>(packet.getData()), packet.getDataSize());
@@ -445,8 +445,14 @@ void Leviathan::SyncedVariables::_OnSyncedResourceReceived(const std::string &na
 		auto tmpvar = static_cast<SyncedResource*>(ConnectedChildren[i]->GetActualPointerToNotifiableObject());
 
 		if(tmpvar->Name == name){
+
+            // Unlock to allow BaseNotifiable to lock us //
+            guard.unlock();
+            
 			// It is this //
 			tmpvar->UpdateDataFromPacket(packetdata);
+
+            guard.lock();
 
 			// Do some updating if we are doing a full sync //
 			if(!SyncDone){
@@ -537,8 +543,9 @@ DLLEXPORT void Leviathan::SyncedVariables::SetExpectedNumberOfVariablesReceived(
 	ExpectedThingCount = amount;
 }
 
-void Leviathan::SyncedVariables::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
-	GUARD_LOCK();
+void Leviathan::SyncedVariables::_OnNotifierDisconnected(Lock &guard,
+    BaseNotifierAll* parenttoremove)
+{
 
 	Logger::Get()->Info("SyncedVariables: stopping sync with specific, because connection is closing");
 	RemoveConnectionWithAnother(static_cast<ConnectionInfo*>(parenttoremove), guard, true);

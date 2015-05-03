@@ -149,9 +149,8 @@ DLLEXPORT std::shared_ptr<NetworkResponse> Leviathan::ConnectionInfo::SendReques
 }
 
 DLLEXPORT std::shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacketToConnection(
-    std::shared_ptr<NetworkRequest> request, int maxretries)
+    Lock &guard, std::shared_ptr<NetworkRequest> request, int maxretries)
 {
-	GUARD_LOCK();
 	// Generate a packet from the request //
 	sf::Packet actualpackettosend;
 	// We need a complete header with acks and stuff //
@@ -187,10 +186,9 @@ DLLEXPORT std::shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacke
 }
 
 
-DLLEXPORT std::shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacketToConnection(shared_ptr<NetworkResponse>
-    response, int maxtries)
+DLLEXPORT std::shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacketToConnection(
+    Lock &guard, shared_ptr<NetworkResponse> response, int maxtries)
 {
-	GUARD_LOCK();
 	// Generate a packet from the request //
 	sf::Packet actualpackettosend;
 	// We need a complete header with acks and stuff //
@@ -462,7 +460,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(Lock &guard){
 		Logger::Get()->Info("ConnectionInfo: sending keepalive packet (because"+
             Convert::ToString(timems-LastSentPacketTime)+" since last sent has elapsed) to "
 			+TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
-		SendKeepAlivePacket();
+		SendKeepAlivePacket(guard);
 
 	} else if(AcksCouldBeSent && timems > LastSentPacketTime+ACKKEEPALIVE){
 		// Send some acks //
@@ -472,7 +470,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::UpdateListening(Lock &guard){
 		shared_ptr<NetworkResponse> emptyresponse(new NetworkResponse(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
 		emptyresponse->GenerateEmptyResponse();
 
-		SendPacketToConnection(emptyresponse, 1);
+		SendPacketToConnection(guard, emptyresponse, 1);
 	}
 
 	// Check for connection close //
@@ -506,7 +504,7 @@ DLLEXPORT void Leviathan::ConnectionInfo::CheckKeepAliveSend(){
 		Logger::Get()->Info("ConnectionInfo: replying to a keepalive packet (because "+
             Convert::ToString(timenow-LastSentPacketTime)+" since last sent has elapsed) to "
 			+TargetHost.toString()+":"+Convert::ToString(TargetPortNumber));
-		SendKeepAlivePacket();
+		SendKeepAlivePacket(guard);
 	}
 }
 // ------------------------------------ //
@@ -578,29 +576,34 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
 		// Generate a request object and make the interface handle it //
 		shared_ptr<NetworkRequest> request(new NetworkRequest(packet));
 
-        GUARD_LOCK();
+        {
+            
+            GUARD_LOCK();
         
-		// Restrict mode checking //
-		if(RestrictType != CONNECTION_RESTRICTION_NONE){
-			// We can possibly drop the connection or perform other extra tasks //
-			if(RestrictType == CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE){
-				// Check type //
-				if(RemoteConsole::Get()->CanOpenNewConnection(this, request)){
-					// Successfully opened, connection should now be safe as a general purpose connection //
-					RestrictType = CONNECTION_RESTRICTION_NONE;
-					goto connectioninfoafterprocesslabel;
+            // Restrict mode checking //
+            if(RestrictType != CONNECTION_RESTRICTION_NONE){
+                // We can possibly drop the connection or perform other extra tasks //
+                if(RestrictType == CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE){
+                    // Check type //
+                    if(RemoteConsole::Get()->CanOpenNewConnection(this, request)){
+                        // Successfully opened, connection should now be safe as a
+                        // general purpose connection
+                        RestrictType = CONNECTION_RESTRICTION_NONE;
+                        goto connectioninfoafterprocesslabel;
 
-				} else {
-					// We want to close //
-					Logger::Get()->Error("ConnectionInfo: received a non-valid packet to receive remote "
-                        "console connection socket, "+TargetHost.toString()+":"+
-                        Convert::ToString(TargetPortNumber));
+                    } else {
+                        // We want to close //
+                        Logger::Get()->Error("ConnectionInfo: received a non-valid packet "
+                            "to receive remote console connection socket, "+
+                            TargetHost.toString()+":"+
+                            Convert::ToString(TargetPortNumber));
                     
-					NetworkHandler::Get()->SafelyCloseConnectionTo(this);
-					return;
-				}
-			}
-		}
+                        NetworkHandler::Get()->SafelyCloseConnectionTo(this);
+                        return;
+                    }
+                }
+            }
+        }
 
 #ifdef SPAM_ME_SOME_PACKETS
 		Logger::Get()->Info("PacketSpam: received request ("+Convert::ToString(packetnumber)+", request"+
@@ -622,7 +625,8 @@ DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::I
 		// The response might have a corresponding request //
         GUARD_LOCK_NAME(lockit);
         
-		shared_ptr<SentNetworkThing> possiblerequest = _GetPossibleRequestForResponse(response);
+		shared_ptr<SentNetworkThing> possiblerequest = _GetPossibleRequestForResponse(lockit,
+            response);
 
 		// Restrict mode checking //
 		if(RestrictType != CONNECTION_RESTRICTION_NONE){
@@ -702,7 +706,7 @@ connectioninfoafterprocesslabel:
 
 		if(!ShouldNotBeMarkedAsReceived){
 			// Report the packet as received //
-			_VerifyAckPacketsAsSuccesfullyReceivedFromHost(packetnumber);
+			_VerifyAckPacketsAsSuccesfullyReceivedFromHost(guard, packetnumber);
 		}
 	}
 
@@ -710,9 +714,10 @@ connectioninfoafterprocesslabel:
 	return;
 }
 // ------------------------------------ //
-void Leviathan::ConnectionInfo::_VerifyAckPacketsAsSuccesfullyReceivedFromHost(int packetreceived){
+void Leviathan::ConnectionInfo::_VerifyAckPacketsAsSuccesfullyReceivedFromHost(Lock &guard,
+    int packetreceived)
+{
 	// Mark it as received //
-	GUARD_LOCK();
 
 	// Only set if we haven't already set it //
 	auto iter = ReceivedPacketsNotifiedAsReceivedByUs.find(packetreceived);
@@ -810,14 +815,14 @@ void Leviathan::ConnectionInfo::_PreparePacketHeaderForPacket(Lock &guard,
 	tofill << isrequest;
 }
 
-shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::_GetPossibleRequestForResponse(shared_ptr<NetworkResponse> response){
+shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::_GetPossibleRequestForResponse(
+    Lock &guard, shared_ptr<NetworkResponse> response)
+{
 	// Return if it doesn't have a proper matching expected response id //
 	int lookingforid = response->GetResponseID();
 
 	if(lookingforid == -1)
 		return NULL;
-
-	GUARD_LOCK();
 
 	for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ++iter){
 
@@ -892,7 +897,7 @@ DLLEXPORT void ConnectionInfo::CalculateNetworkPing(int packets, int allowedfail
     
         // TODO: check is the connection still open
         
-        auto cursent = SendPacketToConnection(echorequest, 1);
+        auto cursent = SendPacketToConnection(guard, echorequest, 1);
         cursent->SetAsTimed();
 
         sentechos->push_back(cursent);

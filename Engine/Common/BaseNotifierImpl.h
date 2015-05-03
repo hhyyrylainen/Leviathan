@@ -33,7 +33,7 @@ DLLEXPORT void Leviathan::BaseNotifier<ParentType, ChildType>::ReleaseChildHooks
 		GUARD_LOCK_OTHER_NAME((*iter), guard2);
 
 		// Call unhook on the child //
-		tmpobj->_OnUnhookNotifier(this);
+		tmpobj->_OnUnhookNotifier(guard2, this);
 
 		// Remove it //
 		_OnNotifiableDisconnected(guard, tmpobj->GetActualPointerToNotifiableObject());
@@ -96,7 +96,7 @@ DLLEXPORT bool Leviathan::BaseNotifier<ParentType, ChildType>::ConnectToNotifiab
 	}
 
 	// Call hook on the child //
-	child->_OnHookNotifier(this);
+	child->_OnHookNotifier(guard2, this);
 
 	// Add to list //
 	ConnectedChildren.push_back(child);

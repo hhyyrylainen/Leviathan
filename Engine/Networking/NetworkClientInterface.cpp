@@ -56,7 +56,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(shared_ptr<Connecti
 	// Store the connection //
 	ServerConnection = connectiontouse;
 
-	ConnectToNotifier(ServerConnection.get());
+	ConnectToNotifier(guard, ServerConnection.get());
 
 	ConnectTriesCount = 0;
 
@@ -413,7 +413,7 @@ checksentrequestsbeginlabel:
 	}
 
 	// Send heartbeats //
-	_UpdateHeartbeats();
+	_UpdateHeartbeats(guard);
 
 	// Update networked input handling //
 	if(PotentialInputHandler)
@@ -421,8 +421,9 @@ checksentrequestsbeginlabel:
 
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
-	GUARD_LOCK();
+DLLEXPORT void Leviathan::NetworkClientInterface::_OnNotifierDisconnected(Lock &guard,
+    BaseNotifierAll* parenttoremove)
+{
 
 	// Get the close reason from it //
 	std::string closereason;
@@ -737,12 +738,10 @@ void Leviathan::NetworkClientInterface::_OnHeartbeat(){
 	SecondsWithoutConnection = 0.f;
 }
 
-void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
+void Leviathan::NetworkClientInterface::_UpdateHeartbeats(Lock &guard){
 	// Skip if not in use //
 	if(!UsingHeartbeats)
 		return;
-
-	GUARD_LOCK();
 
 	if(!ServerConnection)
 		return;

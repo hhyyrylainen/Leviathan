@@ -148,7 +148,7 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(shared_pt
 				GUARD_LOCK_OTHER_NAME(ply, lock2);
 
 				// Execute it //
-				_CommandHandler->QueueCommand(data->Command, ply);
+				_CommandHandler->QueueCommand(data->Command, ply, lock2);
 			}
 
 			return true;
@@ -510,17 +510,16 @@ DLLEXPORT Leviathan::ConnectedPlayer::~ConnectedPlayer(){
 	_OnReleaseParentCommanders(guard);
 }
 // ------------------------------------ //
-void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
-	{
-		GUARD_LOCK();
+void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(Lock &guard,
+    BaseNotifierAll* parenttoremove)
+{
 
-        Owner->_OnPlayerConnectionCloseResources(this);
+    Owner->_OnPlayerConnectionCloseResources(this);
 
-		// Set as closing //
-		ConnectionStatus = false;
+    // Set as closing //
+    ConnectionStatus = false;
 
-		CorrespondingConnection = NULL;
-	}
+    CorrespondingConnection = NULL;
 
 	Logger::Get()->Info("ConnectedPlayer: connection marked as closed");
 }

@@ -24,7 +24,7 @@ void RunCustomHandler(shared_ptr<CustomCommandHandler> handler, std::shared_ptr<
 
 	// Check that the sender is still valid //
 	Lock senderlock;
-	if(!cmdhandler->IsSenderStillValid(sender, senderlock)){
+	if(!cmdhandler->IsSenderStillValid(cmdlock, sender, senderlock)){
 
 		// it isn't there anymore //
 		return;
@@ -72,7 +72,7 @@ DLLEXPORT CommandHandler* Leviathan::CommandHandler::Get(Lock &lockereceiver){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::CommandHandler::QueueCommand(const string &command,
-    CommandSender* issuer)
+    CommandSender* issuer, Lock &issuerlock)
 {
 	GUARD_LOCK();
 
@@ -100,7 +100,7 @@ DLLEXPORT void Leviathan::CommandHandler::QueueCommand(const string &command,
 		DEBUG_BREAK;
 
 		// Default will also need this //
-		_AddSender(issuer, guard);
+		_AddSender(issuer, guard, issuerlock);
 		return;
 	}
 
@@ -115,7 +115,7 @@ DLLEXPORT void Leviathan::CommandHandler::QueueCommand(const string &command,
 
 
 			// And take good care of the object while the command handler is waiting //
-			_AddSender(issuer, guard);
+			_AddSender(issuer, guard, issuerlock);
 			return;
 		}
 	}
@@ -139,11 +139,9 @@ DLLEXPORT void Leviathan::CommandHandler::RemoveMe(CommandSender* object){
 	}
 }
 
-DLLEXPORT bool Leviathan::CommandHandler::IsSenderStillValid(CommandSender* checkthis,
+DLLEXPORT bool Leviathan::CommandHandler::IsSenderStillValid(Lock &guard, CommandSender* checkthis,
     Lock &retlock)
 {
-	GUARD_LOCK();
-
 	// Check is it still in the list //
 	auto end = SendersInUse.end();
 	for(auto iter = SendersInUse.begin(); iter != end; ++iter){
@@ -198,11 +196,11 @@ DLLEXPORT void Leviathan::CommandHandler::SenderNoLongerRequired(CommandSender* 
 	}
 }
 
-void Leviathan::CommandHandler::_AddSender(CommandSender* object, Lock &guard){
+void Leviathan::CommandHandler::_AddSender(CommandSender* object, Lock &guard, Lock &objectlock){
 	VerifyLock(guard);
 
 	// Notify the object //
-	object->StartOwnership(this);
+	object->StartOwnership(objectlock, this);
 
 	// Add to the list //
 	SendersInUse.push_back(object);
@@ -225,8 +223,7 @@ DLLEXPORT bool Leviathan::CommandHandler::IsThisDefaultCommand(const string &fir
 	return false;
 }
 // ------------------ CommandSender ------------------ //
-DLLEXPORT void Leviathan::CommandSender::StartOwnership(CommandHandler* commander){
-	GUARD_LOCK();
+DLLEXPORT void Leviathan::CommandSender::StartOwnership(Lock &guard, CommandHandler* commander){
 
 	// Just add to the list //
 	CommandHandlersToNotify.push_back(commander);

@@ -42,7 +42,7 @@ namespace Leviathan{
 		//! \warning It needs to be notified that calls with the same commander may NOT be
         //! ignored as the EndOwnership call of first would end the
 		//! ownership when in reality the single command handler still wants this object
-		DLLEXPORT virtual void StartOwnership(CommandHandler* commander);
+		DLLEXPORT virtual void StartOwnership(Lock &guard, CommandHandler* commander);
 
 
 		//! \brief Marks the end of ownership, it is no longer required to report that this object is released
@@ -77,7 +77,8 @@ namespace Leviathan{
 
 		//! \brief Queues a command to be executed
 		//! \note The object should be locked during this time to avoid it calling into us and causing a deadlock
-		DLLEXPORT virtual void QueueCommand(const std::string &command, CommandSender* issuer);
+		DLLEXPORT virtual void QueueCommand(const std::string &command, CommandSender* issuer,
+            Lock &issuerlock);
 
 
 		//! \brief Call this periodically to perform cleanup tasks 
@@ -96,7 +97,8 @@ namespace Leviathan{
         //! is still active
 		//! \param retlock Will contain a lock for the object so hold onto it while
         //! using the object
-		DLLEXPORT virtual bool IsSenderStillValid(CommandSender* checkthis, Lock &retlock);
+		DLLEXPORT virtual bool IsSenderStillValid(Lock &guard, CommandSender* checkthis,
+            Lock &retlock);
 
 
 		//! \brief Called by a command handler when a CommandSender is no longer needed
@@ -127,7 +129,7 @@ namespace Leviathan{
 		void _LetGoOfAll(Lock &guard);
 
 		//! \brief Adds a CommandSender to the list of active ones
-		void _AddSender(CommandSender* object, Lock &guard);
+		void _AddSender(CommandSender* object, Lock &guard, Lock &objectlock);
 
 		// ------------------------------------ //
 

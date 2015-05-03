@@ -117,7 +117,7 @@ namespace Leviathan{
 
 
 		//! \brief Used to detect when a connection has been closed
-		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
+		void _OnNotifierDisconnected(Lock &guard, BaseNotifierAll* parenttoremove) override;
 
 	private:
 

@@ -355,10 +355,14 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiManager", "CEGUI::Window& GetWindowByName(const string &in namepath)", asMETHOD(Gui::GuiManager, GetWindowByStringName), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("GuiManager",
+            "CEGUI::Window& GetWindowByName(const string &in namepath)",
+            asMETHODPR(Gui::GuiManager, GetWindowByStringName, (const string&), CEGUI::Window*),
+            asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+    
 	if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetElement()", asMETHOD(Gui::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;

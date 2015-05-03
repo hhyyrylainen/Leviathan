@@ -173,8 +173,9 @@ void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
 }
 
 void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
-	GUARD_LOCK();
 
+    GUARD_LOCK();
+    
 	int tmpival;
 
 	// Get our data from it //
@@ -331,7 +332,7 @@ Pong::PlayerList::~PlayerList(){
 	SAFE_DELETE_VECTOR(GamePlayers);
 }
 // ------------------------------------ //
-void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet){
+void Pong::PlayerList::UpdateCustomDataFromPacket(Lock &guard, sf::Packet &packet){
 	
 	sf::Int32 vecsize;
 
@@ -369,14 +370,10 @@ void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet){
 
 		(*iter)->UpdateDataFromPacket(packet);
 	}
-
-
-	// Notify update //
-	OnValueUpdated();
 }
 
-void Pong::PlayerList::SerializeCustomDataToPacket(sf::Packet &packet){
-	GUARD_LOCK();
+void Pong::PlayerList::SerializeCustomDataToPacket(Lock &guard, sf::Packet &packet){
+    
 	// First put the size //
 	packet << static_cast<sf::Int32>(GamePlayers.size());
 
@@ -388,7 +385,8 @@ void Pong::PlayerList::SerializeCustomDataToPacket(sf::Packet &packet){
 	}
 }
 
-void Pong::PlayerList::OnValueUpdated(){
+void Pong::PlayerList::OnValueUpdated(Lock &guard){
+    
 	// Call our callback //
 	CallbackFunc(this);
 }

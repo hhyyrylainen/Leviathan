@@ -278,18 +278,17 @@ namespace Pong{
         //! \brief Writes player information to log
         void ReportPlayerInfoToLog() const;
 
-		virtual void UpdateCustomDataFromPacket(sf::Packet &packet);
+        void UpdateCustomDataFromPacket(Lock &guard, sf::Packet &packet) override;
 
-		virtual void SerializeCustomDataToPacket(sf::Packet &packet);
+		void SerializeCustomDataToPacket(Lock &guard, sf::Packet &packet) override;
 
-		virtual void OnValueUpdated();
+		void OnValueUpdated(Lock &guard) override;
 
 		//! \exception Leviathan::ExceptionInvalidArgument when out of range
 		PlayerSlot* GetSlot(size_t index);
 
 
 	protected:
-
 
 
 		//! The main list of our players

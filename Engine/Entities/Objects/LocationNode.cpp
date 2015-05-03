@@ -40,7 +40,9 @@ void Leviathan::Entity::LocationNode::OrientationUpdated(){
 	_NotifyParentOfPosition();
 }
 // ------------------------------------ //
-void Leviathan::Entity::LocationNode::_OnNotifierDisconnected(BaseNotifierEntity* parenttoremove){
+void Leviathan::Entity::LocationNode::_OnNotifierDisconnected(Lock &guard,
+    BaseNotifierEntity* parenttoremove)
+{
 	if(ConnectedToParents.size()-1 == 0 && DeleteIfNoParent){
 
 		OwnedByWorld->QueueDestroyObject(ID);

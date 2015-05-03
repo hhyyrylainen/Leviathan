@@ -26,7 +26,8 @@ namespace Leviathan{
 		//! \brief Notifies all the parents of this object about something
 		//!
 		//! This will call the BaseNotifier::OnNotified on all the child objects
-		DLLEXPORT virtual void NotifyAll();
+        //! \param guard Lock for this object that can be safely unlocked
+		DLLEXPORT virtual void NotifyAll(Lock &guard);
 
 		//! \brief Disconnects this from a previously connected notifier
 		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifier(
@@ -53,11 +54,15 @@ namespace Leviathan{
 		//! \brief Connects this to a notifier object calling all the needed functions
 		DLLEXPORT bool ConnectToNotifier(BaseNotifier<ParentType, ChildType>* owner);
 
+        //! \brief Variant for already locked objects
+        //! \param unlockable Lock that has this object locked and can be safely unlocked
+        DLLEXPORT bool ConnectToNotifier(Lock &unlockable, BaseNotifier<ParentType, ChildType>* owner);
+
 		//! Callback called by the parent, used to not to call the unhook again on the parent
-		void _OnUnhookNotifier(BaseNotifier<ParentType, ChildType>* parent);
+		void _OnUnhookNotifier(Lock &locked, BaseNotifier<ParentType, ChildType>* parent);
 
 		//! Called by parent to hook, and doesn't call the parent's functions
-		void _OnHookNotifier(BaseNotifier<ParentType, ChildType>* parent);
+		void _OnHookNotifier(Lock &locked, BaseNotifier<ParentType, ChildType>* parent);
 
 		//! \brief Gets the internal pointer to the actual object
 		DLLEXPORT ChildType* GetActualPointerToNotifiableObject();
@@ -72,8 +77,8 @@ namespace Leviathan{
 
 		// Callbacks for child classes to implement //
 		// This object should already be locked during this call //
-		DLLEXPORT virtual void _OnNotifierConnected(ParentType* parentadded);
-		DLLEXPORT virtual void _OnNotifierDisconnected(ParentType* parenttoremove);
+		DLLEXPORT virtual void _OnNotifierConnected(Lock &guard, ParentType* parentadded);
+		DLLEXPORT virtual void _OnNotifierDisconnected(Lock &guard, ParentType* parenttoremove);
 		// ------------------------------------ //
 
 		//! Stores a pointer to the object that is inherited from this

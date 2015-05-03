@@ -165,13 +165,13 @@ DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(ConnectionInfo* conne
 	connectiontouse->SendPacketToConnection(tmprequest, 4);
 }
 // ------------------------------------ //
-void Leviathan::RemoteConsole::_OnNotifierDisconnected(BaseNotifierAll* parenttoremove){
+void Leviathan::RemoteConsole::_OnNotifierDisconnected(Lock &guard,
+    BaseNotifierAll* parenttoremove)
+{
 	// Close the corresponding console session //
 
 	Logger::Get()->Info("RemoteConsole: detected connection closing, trying to close matching remote "
         "console session:");
-
-	GUARD_LOCK();
 
 	for(size_t i = 0; i < RemoteConsoleConnections.size(); i++){
 		if(RemoteConsoleConnections[i]->GetConnection() == parenttoremove){
@@ -182,6 +182,7 @@ void Leviathan::RemoteConsole::_OnNotifierDisconnected(BaseNotifierAll* parentto
 			return;
 		}
 	}
+    
 	// Not found //
 	Logger::Get()->Error("\t> RemoteConsole: didn't find a matching connection, bug?");
 }

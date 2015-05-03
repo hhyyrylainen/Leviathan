@@ -43,11 +43,11 @@ namespace Leviathan{
 	protected:
 
 		//! \brief Should load the custom data from a packet
-		virtual void UpdateCustomDataFromPacket(sf::Packet &packet) = 0;
+		virtual void UpdateCustomDataFromPacket(Lock &guard, sf::Packet &packet) = 0;
 
 		//! \brief Should be used to add custom data to packet
 		//! \see UpdateCustomDataFromPacket
-		virtual void SerializeCustomDataToPacket(sf::Packet &packet) = 0;
+		virtual void SerializeCustomDataToPacket(Lock &guard, sf::Packet &packet) = 0;
 
 
 		//! \brief Notifies our SyncedVariables of an update
@@ -57,7 +57,7 @@ namespace Leviathan{
 		//! Update notifications are received through this
 		//! 
 		//! Called from UpdateDataFromPacket
-		virtual void OnValueUpdated();
+		virtual void OnValueUpdated(Lock &guard);
 
 
 		// Disable copy and copy constructor usage //
@@ -76,7 +76,7 @@ namespace Leviathan{
 	class SyncedPrimitive : public SyncedResource{
 	public:
 		//! The callback type
-		typedef void (*CallbackPtr)(SyncedPrimitive<DTypeName>* updated);
+		typedef void (*CallbackPtr)(Lock &guard, SyncedPrimitive<DTypeName>* updated);
 
 		//! \brief Constructs an instance with a initial value
 		//! \warning The order of the initializer list is important since anytime after calling
@@ -146,13 +146,13 @@ namespace Leviathan{
 
 	protected:
 
-		virtual void OnValueUpdated(){
+		virtual void OnValueUpdated(Lock &guard) override{
 			// Report update //
 			if(ValueUpdateCallback)
-				ValueUpdateCallback(this);
+				ValueUpdateCallback(guard, this);
 		}
 
-		virtual void UpdateCustomDataFromPacket(sf::Packet &packet){
+		virtual void UpdateCustomDataFromPacket(Lock &guard, sf::Packet &packet) override{
 			// The object is already locked at this point //
 
 			// Try to get our variable //
@@ -163,7 +163,7 @@ namespace Leviathan{
 
 		}
 
-		virtual void SerializeCustomDataToPacket(sf::Packet &packet){
+		virtual void SerializeCustomDataToPacket(Lock &guard, sf::Packet &packet) override{
 			packet << OurValue;
 		}
 

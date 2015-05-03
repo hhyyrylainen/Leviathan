@@ -215,11 +215,28 @@ namespace Leviathan{
 
 		DLLEXPORT void UpdateListening(Lock &guard);
 
-		DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(
+		DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(Lock &guard, 
             std::shared_ptr<NetworkRequest> request, int maxretries);
+
+		DLLEXPORT inline std::shared_ptr<SentNetworkThing> SendPacketToConnection(
+            std::shared_ptr<NetworkRequest> request, int maxretries)
+        {
+            GUARD_LOCK();
+            return SendPacketToConnection(guard, request, maxretries);
+        }
         
-		DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(
+        
+		DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(Lock &guard, 
             std::shared_ptr<NetworkResponse> response, int maxtries);
+
+		DLLEXPORT inline std::shared_ptr<SentNetworkThing> SendPacketToConnection(
+            std::shared_ptr<NetworkResponse> response, int maxtries)
+        {
+
+            GUARD_LOCK();
+            return SendPacketToConnection(guard, response, maxtries);
+        }
+        
 
 		// Data exchange functions //
 		DLLEXPORT std::shared_ptr<NetworkResponse> SendRequestAndBlockUntilDone(
@@ -269,12 +286,12 @@ namespace Leviathan{
 		void _ResendRequest(std::shared_ptr<SentNetworkThing> toresend, Lock &guard);
 
 		// Marks the acks in packet received as successfully sent and erases them //
-		void _VerifyAckPacketsAsSuccesfullyReceivedFromHost(int packetreceived);
+		void _VerifyAckPacketsAsSuccesfullyReceivedFromHost(Lock &guard, int packetreceived);
 
 		void _PreparePacketHeaderForPacket(Lock &guard, int packetid, sf::Packet &tofill,
             bool isrequest, bool dontsendacks = false);
 
-        std::shared_ptr<SentNetworkThing> _GetPossibleRequestForResponse(
+        std::shared_ptr<SentNetworkThing> _GetPossibleRequestForResponse(Lock &guard,
             std::shared_ptr<NetworkResponse> response);
 
 		//! \brief Checks whether a packet with the number is received

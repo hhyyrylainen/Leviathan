@@ -156,6 +156,12 @@ namespace Leviathan{ namespace Gui{
 		//! \todo Allow error reporting
 		DLLEXPORT CEGUI::Window* GetWindowByStringName(Lock &guard, const std::string &namepath);
 
+        DLLEXPORT inline CEGUI::Window* GetWindowByStringName(const std::string &namepath){
+
+            GUARD_LOCK();
+            return GetWindowByStringName(guard, namepath);
+        }
+
 
 		//! \brief Returns a string containing names of types that don't look good/break
         //! something when animated

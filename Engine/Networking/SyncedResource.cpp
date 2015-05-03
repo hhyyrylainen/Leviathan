@@ -31,7 +31,7 @@ DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(sf::Packet &packe
     
 	// Load the custom data //
 	try{
-		UpdateCustomDataFromPacket(packet);
+		UpdateCustomDataFromPacket(guard, packet);
 
 	} catch(const InvalidArgument &e){
 
@@ -40,27 +40,27 @@ DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(sf::Packet &packe
 	}
 
 	// Notify us about the update //
-	OnValueUpdated();
+	OnValueUpdated(guard);
 
 	// Notify listeners //
-	NotifyAll();
+	NotifyAll(guard);
 	return true;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::SyncedResource::NotifyUpdatedValue(){
-	// Update the networked value //
-	UpdateOurNetworkValue();
-
 	GUARD_LOCK();
 
+	// Update the networked value //
+	UpdateOurNetworkValue(guard);
+
 	// Notify us about the update //
-	OnValueUpdated();
+	OnValueUpdated(guard);
 
 	// Notify listeners //
-	NotifyAll();
+	NotifyAll(guard);
 }
 // ------------------------------------ //
-void Leviathan::SyncedResource::OnValueUpdated(){
+void Leviathan::SyncedResource::OnValueUpdated(Lock &guard){
 
 }
 // ------------------------------------ //
@@ -70,7 +70,7 @@ DLLEXPORT void Leviathan::SyncedResource::AddDataToPacket(sf::Packet &packet){
 	packet << Name;
 
 	// Then add our data //
-	SerializeCustomDataToPacket(packet);
+	SerializeCustomDataToPacket(guard, packet);
 }
 
 DLLEXPORT std::string Leviathan::SyncedResource::GetSyncedResourceNameFromPacket(sf::Packet &packet){

@@ -28,7 +28,6 @@ void Pong::PongServerNetworking::HandleResponseOnlyPacket(
     shared_ptr<Leviathan::NetworkResponse> message, Leviathan::ConnectionInfo* connection,
     bool &dontmarkasreceived)
 {
-    GUARD_LOCK();
 	// Try default handling //
 	if(_HandleDefaultResponseOnly(message, connection, dontmarkasreceived))
 		return;
@@ -44,6 +43,8 @@ void Pong::PongServerNetworking::HandleResponseOnlyPacket(
 		if(data->IsRequest)
 			return;
 
+        GUARD_LOCK();
+
 		//switch(data->TypeIDNumber){
 		//}
 
@@ -54,7 +55,7 @@ void Pong::PongServerNetworking::HandleResponseOnlyPacket(
 }
 
 void Pong::PongServerNetworking::HandleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo* connection){
-    GUARD_LOCK();
+
 	// Try default handling //
 	if(_HandleDefaultRequest(request, connection))
 		return;

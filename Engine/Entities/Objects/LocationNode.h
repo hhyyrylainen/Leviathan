@@ -28,7 +28,7 @@ namespace Leviathan{ namespace Entity{
 		virtual void PosUpdated();
 		virtual void OrientationUpdated();
 		// Potentially deletes this object if flags are right and no owner is connected //
-		virtual void _OnNotifierDisconnected(BaseNotifierEntity* parenttoremove);
+		void _OnNotifierDisconnected(Lock &guard, BaseNotifierEntity* parenttoremove) override;
 		// ------------------------------------ //
 
 		// Dictates whether this node should delete itself without any parents attached //

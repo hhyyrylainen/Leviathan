@@ -752,7 +752,7 @@ DLLEXPORT bool Leviathan::NamedVars::SetValue(NamedVariableList &nameandvalues){
 
 DLLEXPORT VariableBlock& Leviathan::NamedVars::GetValueNonConst(const string &name){
 	GUARD_LOCK();
-	auto index = Find(name);
+	auto index = Find(guard, name);
 
 	if(index >= Variables.size()){
 

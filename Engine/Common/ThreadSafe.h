@@ -1,9 +1,9 @@
 #pragma once
 // ------------------------------------ //
-#include "Define.h"
-// ------------------------------------ //
-#include "Exceptions.h"
+#include "Include.h"
+#include "../Exceptions.h"
 #include <mutex>
+#include <memory>
 
 namespace Leviathan{
 
@@ -37,9 +37,8 @@ namespace Leviathan{
 
             return typename LockTypeResolver<LockType>::LType(lockref);
         }
-
     };
-        
+    
 
 #define GUARD_LOCK() auto guard = std::move(Locker::Unique(this->ObjectsLock));
     

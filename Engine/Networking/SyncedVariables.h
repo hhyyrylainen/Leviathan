@@ -147,7 +147,7 @@ namespace Leviathan{
 
         void _NotifyUpdatedValue(Lock &guard, const SyncedValue* const valtosync, int useid = -1);
         
-		void _NotifyUpdatedValue(SyncedResource* valtosync, int useid = -1);
+		void _NotifyUpdatedValue(Lock &guard, SyncedResource* valtosync, int useid = -1);
 
         std::shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(ConnectionInfo* unsafeptr,
             const SyncedValue* const valtosync);

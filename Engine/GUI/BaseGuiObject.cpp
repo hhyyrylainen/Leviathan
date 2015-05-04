@@ -145,8 +145,13 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(Lock &ownerl
 	Event initevent(EVENT_TYPE_INIT, NULL);
 	Event* eptr = &initevent;
 
-	tmpptr->OnEvent(&eptr);
+    {
+        ownerlock.unlock();
+        
+        tmpptr->OnEvent(&eptr);
 
+        ownerlock.lock();
+    }
 
 	tempobjects.push_back(tmpptr.release());
 	return true;

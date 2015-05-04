@@ -94,8 +94,8 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
 	// We need to find the corresponding player with the control id matching this and then stealing it here //
 	auto plylist = BasePongParts::Get()->GetPlayers();
 
-	GUARD_LOCK_OTHER(plylist);
-
+    // The list has to be locked before this call //
+    // TODO: make sure that it actually is
 
 	std::vector<PlayerSlot*>& plys = plylist->GetVec();
 

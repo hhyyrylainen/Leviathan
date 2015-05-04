@@ -23,6 +23,14 @@ namespace Leviathan{
 		DLLEXPORT bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier,
             Lock &guard, Lock &notifierlock);
 
+        DLLEXPORT inline bool UnConnectFromNotifier(Lock &guard,
+            BaseNotifier<ParentType, ChildType>* specificnotifier)
+        {
+
+            GUARD_LOCK_OTHER_NAME(specificnotifier, guard2);
+            return UnConnectFromNotifier(specificnotifier, guard, guard2);
+        }
+
 		//! \brief Notifies all the parents of this object about something
 		//!
 		//! This will call the BaseNotifier::OnNotified on all the child objects

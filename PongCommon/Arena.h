@@ -58,7 +58,7 @@ namespace Pong{
 
 	private:
 
-		void _ClearPointers();
+		void _ClearPointers(Lock &guard);
 		// ------------------------------------ //
 
 		// the world to which the arena is generated //

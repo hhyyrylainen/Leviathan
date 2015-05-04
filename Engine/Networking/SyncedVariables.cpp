@@ -88,7 +88,7 @@ DLLEXPORT void Leviathan::SyncedVariables::RemoveConnectionWithAnother(Connectio
 			ConnectedToOthers.erase(iter);
 
 			if(!alreadyunhooking)
-				UnConnectFromNotifier(ptr);
+				UnConnectFromNotifier(guard, ptr);
 			return;
 		}
 	}
@@ -394,8 +394,6 @@ void Leviathan::SyncedVariables::_NotifyUpdatedValue(Lock &guard, SyncedResource
 
 	// Extract it from the packet //
 	tmpresponse->GenerateResourceSyncResponse(reinterpret_cast<const char*>(packet.getData()), packet.getDataSize());
-
-	GUARD_LOCK();
 
 	// Send it //
 	for(size_t i = 0; i < ConnectedToOthers.size(); i++){

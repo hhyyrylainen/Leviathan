@@ -33,7 +33,7 @@ void RunCustomHandler(shared_ptr<CustomCommandHandler> handler, std::shared_ptr<
 	handler->ExecuteCommand(*command, sender);
 
 	// The sender is now no longer required //
-	cmdhandler->SenderNoLongerRequired(sender, senderlock);
+	cmdhandler->SenderNoLongerRequired(cmdlock, sender, senderlock);
 }
 
 
@@ -169,17 +169,17 @@ void Leviathan::CommandHandler::_LetGoOfAll(Lock &guard){
 	auto end = SendersInUse.end();
 	for(auto iter = SendersInUse.begin(); iter != end; ++iter){
 
-		(*iter)->EndOwnership(this);
+        GUARD_LOCK_OTHER_NAME((*iter), lock);
+		(*iter)->EndOwnership(lock, this);
 	}
 
 	// Clear them all at once //
 	SendersInUse.clear();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::CommandHandler::SenderNoLongerRequired(CommandSender* checkthis,
-    Lock &stillgotthis)
+DLLEXPORT void Leviathan::CommandHandler::SenderNoLongerRequired(Lock &guard,
+    CommandSender* checkthis, Lock &stillgotthis)
 {
-	GUARD_LOCK();
 
 	// Remove from the vector //
 	auto end = SendersInUse.end();
@@ -187,7 +187,7 @@ DLLEXPORT void Leviathan::CommandHandler::SenderNoLongerRequired(CommandSender* 
 
 		if(*iter == checkthis){
 			// Notify it //
-			(*iter)->EndOwnership(this);
+			(*iter)->EndOwnership(stillgotthis, this);
 
 			// Remove the match //
 			SendersInUse.erase(iter);
@@ -229,8 +229,7 @@ DLLEXPORT void Leviathan::CommandSender::StartOwnership(Lock &guard, CommandHand
 	CommandHandlersToNotify.push_back(commander);
 }
 
-DLLEXPORT void Leviathan::CommandSender::EndOwnership(CommandHandler* which){
-	GUARD_LOCK();
+DLLEXPORT void Leviathan::CommandSender::EndOwnership(Lock &guard, CommandHandler* which){
 
 	// Find the right one and remove it //
 	auto end = CommandHandlersToNotify.end();

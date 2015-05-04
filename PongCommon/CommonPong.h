@@ -459,7 +459,7 @@ namespace Pong{
 			{
 				SCRIPT_REGISTERFAIL;
 			}
-			if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_IJK", PLAYERCONTROLS_IJKL) < 0)
+			if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_IJKL", PLAYERCONTROLS_IJKL) < 0)
 			{
 				SCRIPT_REGISTERFAIL;
 			}

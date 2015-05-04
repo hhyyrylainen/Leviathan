@@ -1,5 +1,4 @@
 #pragma once
-#define LEVIATHAN_EXCEPTIONS
 // ------------------------------------ //
 #include "Include.h"
 #include <exception>

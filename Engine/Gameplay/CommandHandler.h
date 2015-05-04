@@ -46,7 +46,7 @@ namespace Leviathan{
 
 
 		//! \brief Marks the end of ownership, it is no longer required to report that this object is released
-		DLLEXPORT virtual void EndOwnership(CommandHandler* which);
+		DLLEXPORT virtual void EndOwnership(Lock &guard, CommandHandler* which);
 
 	protected:
 
@@ -103,7 +103,7 @@ namespace Leviathan{
 
 		//! \brief Called by a command handler when a CommandSender is no longer needed
 		//! \param stillgotthis Is the lock received from IsSenderStillValid
-		DLLEXPORT virtual void SenderNoLongerRequired(CommandSender* checkthis,
+		DLLEXPORT virtual void SenderNoLongerRequired(Lock &guard, CommandSender* checkthis,
             Lock &stillgotthis);
 
 

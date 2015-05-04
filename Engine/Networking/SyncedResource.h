@@ -22,14 +22,26 @@ namespace Leviathan{
 
 
 		//! \brief Serializes the name to a packet
-		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+		DLLEXPORT virtual void AddDataToPacket(Lock &guard, sf::Packet &packet);
+
+        DLLEXPORT inline void AddDataToPacket(sf::Packet &packet){
+
+            GUARD_LOCK();
+            AddDataToPacket(guard, packet);
+        }
 
 		//! \brief Gets a name from packet leaving only the variable data there
 		DLLEXPORT static std::string GetSyncedResourceNameFromPacket(sf::Packet &packet);
 
 		//! \brief Assigns data from a packet to this resource
 		//! \return False when the actual implementation throws
-		DLLEXPORT virtual bool UpdateDataFromPacket(sf::Packet &packet);
+		DLLEXPORT virtual bool UpdateDataFromPacket(Lock &guard, sf::Packet &packet);
+
+        DLLEXPORT inline bool UpdateDataFromPacket(sf::Packet &packet){
+
+            GUARD_LOCK();
+            return UpdateDataFromPacket(guard, packet);
+        }
 
 		//! \brief Registers this resource with the SyncedVariables instance
 		//! \post The variable is now ready for use
@@ -52,7 +64,7 @@ namespace Leviathan{
 
 		//! \brief Notifies our SyncedVariables of an update
         //! \todo Proper locking
-		DLLEXPORT virtual void UpdateOurNetworkValue();
+		DLLEXPORT virtual void UpdateOurNetworkValue(Lock &guard);
 
 		//! Update notifications are received through this
 		//! 
@@ -103,12 +115,12 @@ namespace Leviathan{
 		//! \note This does not call the callback or OnValueUpdated. They are only called when
         //! receiving updates through network
 		DLLEXPORT inline void UpdateValue(const DTypeName &newvalue){
-			{
-				GUARD_LOCK();
-				// Update our value //
-				OurValue = newvalue;
-			}
-			UpdateOurNetworkValue();
+
+            GUARD_LOCK();
+            // Update our value //
+            OurValue = newvalue;
+
+			UpdateOurNetworkValue(guard);
 		}
 
 		//! \brief Gets the value with locking

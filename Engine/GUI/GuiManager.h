@@ -101,6 +101,8 @@ namespace Leviathan{ namespace Gui{
 		// file loading //
 
 		//! \brief Loads a GUI file
+        //! \todo Add a separate lock for this. Needed because Gui objects will unlock the lock
+        //! while loading
 		DLLEXPORT bool LoadGUIFile(Lock &guard, const std::string &file,
             bool nochangelistener = false, int iteration = 0);
 

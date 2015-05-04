@@ -35,7 +35,7 @@ bool Pong::Arena::GenerateArena(BasePongParts* game, PlayerList &plys){
 		return false;
 	}
 	
-	_ClearPointers();
+	_ClearPointers(guard);
 	
 
 	// Fast access to objects //
@@ -382,9 +382,8 @@ addplayerpaddlelabel:
 	return true;
 }
 // ------------------------------------ //
-void Pong::Arena::_ClearPointers(){
+void Pong::Arena::_ClearPointers(Lock &guard){
 
-    GUARD_LOCK();
 	BottomBrush.reset();
 	TrailKeeper.reset();
 	DirectTrail = NULL;

@@ -10,8 +10,10 @@
 #include "Entities/Objects/Brush.h"
 #include "Entities/Objects/TrackEntityController.h"
 #include "add_on/autowrapper/aswrappedcall.h"
-#include "Interface/ScriptEventListener.h"
 #include "Networking/AINetworkCache.h"
+
+#include "Interface/ScriptEventListener.h"
+#include "Interface/ScriptLock.h"
 
 #include "Engine.h"
 

@@ -19,14 +19,15 @@ namespace Leviathan{
 	class NetworkInputFactory{
 	public:
 
-		//! \brief Won't actually be called by the engine but this should be used locally to create new instances
-		DLLEXPORT virtual std::unique_ptr<NetworkedInput> CreateNewInstanceForLocalStart(
-            int inputid, bool isclient) = 0;
+		//! \brief Won't actually be called by the engine but this should be used locally
+        //! to create new instances
+		std::unique_ptr<NetworkedInput> CreateNewInstanceForLocalStart(
+            int inputid, bool isclient);
 
 
 		//! \brief Called when a new input needs to be created through a networked packet
-		//! \note The returned object will get custom data from the packet after this call so it isn't
-        //! necessary to fill in all the data
+		//! \note The returned object will get custom data from the packet after this call
+        //! so it isn't necessary to fill in all the data
 		DLLEXPORT virtual std::unique_ptr<NetworkedInput> CreateNewInstanceForReplication(
             int inputid, int ownerid) = 0;
 
@@ -44,7 +45,7 @@ namespace Leviathan{
         //! \note This should use dynamic cast to find cases where the object is already being destructed and
         //! is now only the base class and cannot be properly casted. The cast should only fail if
         //! NetworkedInput::GetState return NETWORKEDINPUT_STATE_DESTRUCTED
-		DLLEXPORT virtual void NoLongerNeeded(NetworkedInput &todiscard) = 0;
+		DLLEXPORT virtual void NoLongerNeeded(NetworkedInput &todiscard, Lock &parentlock) = 0;
 
 
 		//! \brief Called on the server to verify whether a new input object can be created
@@ -69,7 +70,7 @@ namespace Leviathan{
     //! \note The behaviour is changed by engine networking strategy, which may make some assumptions in documentation
     //! invalid or not applicable
     //! \see NETWORK_USE_SNAPSHOTS
-	class NetworkedInputHandler : public InputController, public ThreadSafe{
+	class NetworkedInputHandler : public InputController{
 		friend NetworkedInput;
 	public:
 
@@ -155,17 +156,25 @@ namespace Leviathan{
 
 
 
-		void _HandleConnectRequestPacket(std::shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
+		void _HandleConnectRequestPacket(Lock &guard, std::shared_ptr<NetworkRequest> request,
+            ConnectionInfo* connection);
 
 		//! \brief Handle update response
-		//! \return false If the connection isn't authorized to update the input from this connection
+		//! \return false If the connection isn't authorized to update the input
+        //! from this connection
         //! \todo Client: check that the connection is the server connection
-		bool _HandleInputUpdateResponse(std::shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
+		bool _HandleInputUpdateResponse(Lock &guard, std::shared_ptr<NetworkResponse> response,
+            ConnectionInfo* connection);
 
         //! \brief Handle input create responses
         //! \note Should only be called on the client
         //! \todo Fail if connection isn't the server we are connected ton
-        bool _HandleInputCreateResponse(std::shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
+        bool _HandleInputCreateResponse(Lock &guard, std::shared_ptr<NetworkResponse> response,
+            ConnectionInfo* connection);
+
+        //! \brief Handles destroying input handlers when clients request
+        bool _HandleDisconnectRequestPacket(Lock &guard,
+            std::shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
 
 		//! \brief Clears out the DeleteQueue
 		void _HandleDeleteQueue(Lock &guard);

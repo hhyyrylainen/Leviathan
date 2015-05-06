@@ -51,7 +51,7 @@ namespace Pong{
 		void AddDataToPacket(sf::Packet &packet);
 
 		//! Updates this object's data from a packet
-		void UpdateDataFromPacket(sf::Packet &packet);
+		void UpdateDataFromPacket(sf::Packet &packet, Lock &listlock);
 
 		void SetPlayer(PLAYERTYPE type, int identifier);
 		PLAYERTYPE GetPlayerType();
@@ -176,7 +176,7 @@ namespace Pong{
 		//! This is used to notify it that we are no longer available
 		//! \param input The input object or NULL if the value needs to be reset
 		//! \param oldcheck If not NULL will only clear if the current one matches, useful to stop accidentally clearing new inputs
-		void SetInputThatSendsControls(PongNInputter* input);
+		void SetInputThatSendsControls(Lock &guard, PongNInputter* input);
 
         PongNInputter* GetInputObj() const{
 
@@ -189,7 +189,13 @@ namespace Pong{
 		void _NotifyListOfUpdate();
 
 		//! \brief Resets the active network input
-		void _ResetNetworkInput();
+		void _ResetNetworkInput(Lock &guard);
+
+        inline void _ResetNetworkInput(){
+
+            GUARD_LOCK();
+            _ResetNetworkInput(guard);
+        }
 
 		// ------------------------------------ //
 

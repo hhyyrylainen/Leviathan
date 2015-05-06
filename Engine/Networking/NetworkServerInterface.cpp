@@ -187,7 +187,7 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shar
 	}
 
 	switch(message->GetType()){
-	case NETWORKRESPONSETYPE_SERVERHEARTBEAT:
+        case NETWORKRESPONSETYPE_SERVERHEARTBEAT:
 		{
 			// Notify the matching player object about a heartbeat //
 			ConnectedPlayer* ply = GetPlayerForConnection(connection);
@@ -206,8 +206,8 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shar
 
 			return true;
 		}
-	default:
-		return false;
+        default:
+            return false;
 	}
 
 	return false;
@@ -328,11 +328,15 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(share
 	connection->SendPacketToConnection(tmpresponse, 3);
 }
 // ------------------ Default callbacks ------------------ //
-DLLEXPORT void Leviathan::NetworkServerInterface::_OnPlayerConnected(ConnectedPlayer* newplayer){
+DLLEXPORT void Leviathan::NetworkServerInterface::_OnPlayerConnected(Lock &guard,
+    ConnectedPlayer* newplayer)
+{
 
 }
 
-DLLEXPORT void Leviathan::NetworkServerInterface::_OnPlayerDisconnect(ConnectedPlayer* newplayer){
+DLLEXPORT void Leviathan::NetworkServerInterface::_OnPlayerDisconnect(Lock &guard,
+    ConnectedPlayer* newplayer)
+{
 
 }
 
@@ -363,7 +367,7 @@ void Leviathan::NetworkServerInterface::_OnReportCloseConnection(ConnectedPlayer
 	Logger::Get()->Info("NetworkServerInterface: player (TODO: get name) has closed their "
         "connection");
 
-    _OnPlayerDisconnect(plyptr);
+    _OnPlayerDisconnect(guard, plyptr);
 }
 
 void Leviathan::NetworkServerInterface::_OnReportPlayerConnected(ConnectedPlayer* plyptr, ConnectionInfo* connection,
@@ -379,16 +383,21 @@ void Leviathan::NetworkServerInterface::_OnReportPlayerConnected(ConnectedPlayer
     if(AINetworkCache::Get())
         AINetworkCache::Get()->RegisterNewConnection(connection);
 
-    _OnPlayerConnected(plyptr);
+    _OnPlayerConnected(guard, plyptr);
 }
 
-void Leviathan::NetworkServerInterface::_OnPlayerConnectionCloseResources(ConnectedPlayer* ply){
+void Leviathan::NetworkServerInterface::_OnPlayerConnectionCloseResources(Lock &guard,
+    ConnectedPlayer* ply)
+{
 
     // Close common interfaces that might be using this player //
     
     // Stop syncing values with this client //
-    if(SyncedVariables::Get())
-        SyncedVariables::Get()->RemoveConnectionWithAnother(ply->GetConnection());
+    if(SyncedVariables::Get()){
+
+        // The connection should already be going to be closed soon... //
+        SyncedVariables::Get()->RemoveConnectionWithAnother(ply->GetConnection(), true);
+    }
 
     if(AINetworkCache::Get())
         AINetworkCache::Get()->RemoveConnection(ply->GetConnection());
@@ -514,7 +523,8 @@ void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(Lock &guard,
     BaseNotifierAll* parenttoremove)
 {
 
-    Owner->_OnPlayerConnectionCloseResources(this);
+    GUARD_LOCK_OTHER_NAME(Owner, guard2);
+    Owner->_OnPlayerConnectionCloseResources(guard2, this);
 
     // Set as closing //
     ConnectionStatus = false;

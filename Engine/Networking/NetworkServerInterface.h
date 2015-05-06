@@ -212,8 +212,8 @@ namespace Leviathan{
 		//! \brief Called when a player is about to connect
 		DLLEXPORT virtual void PlayerPreconnect(ConnectionInfo* connection,
             std::shared_ptr<NetworkRequest> joinrequest);
-		DLLEXPORT virtual void _OnPlayerConnected(ConnectedPlayer* newplayer);
-		DLLEXPORT virtual void _OnPlayerDisconnect(ConnectedPlayer* newplayer);
+		DLLEXPORT virtual void _OnPlayerConnected(Lock &guard, ConnectedPlayer* newplayer);
+		DLLEXPORT virtual void _OnPlayerDisconnect(Lock &guard, ConnectedPlayer* newplayer);
 		DLLEXPORT virtual bool PlayerPotentiallyKicked(ConnectedPlayer* player);
 
 		//! \brief Called when the application should register custom command handling providers
@@ -236,7 +236,7 @@ namespace Leviathan{
             Lock &guard);
 
         //! \brief Called from ConnectedPlayer when its connection is no longer good
-        void _OnPlayerConnectionCloseResources(ConnectedPlayer* ply);
+        void _OnPlayerConnectionCloseResources(Lock &guard, ConnectedPlayer* ply);
 		// ------------------------------------ //
 
 

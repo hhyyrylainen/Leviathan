@@ -166,7 +166,23 @@ doactualdeletereleasethingforfaillabel:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::TerminateConnection(){
-	DEBUG_BREAK;
+
+    // We don't need to bother if the server hasn't been contacted //
+    if(CurrentState == NETWOKREDINPUT_STATE_READY)
+        return;
+    
+	auto response = std::make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
+
+    response->GenerateDisconnectInputResponse(
+        new NetworkResponseDataForDisconnectInput(InputID, OwnerID));
+    
+	// Send the request //
+	auto connection = OwningHandler->ClientInterface->GetServerConnection();
+
+	if(!connection)
+		return;
+
+	connection->SendPacketToConnection(response, 12);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::NowOwnedBy(NetworkedInputHandler* owner){

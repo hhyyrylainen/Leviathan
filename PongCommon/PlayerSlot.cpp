@@ -172,7 +172,7 @@ void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
 	}
 }
 
-void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
+void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet, Lock &listlock){
 
     GUARD_LOCK();
     
@@ -210,7 +210,7 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 	// Update split value //
 	if(wantedsplit){
 
-		SplitSlot->UpdateDataFromPacket(packet);
+		SplitSlot->UpdateDataFromPacket(packet, listlock);
 	}
 
 #ifdef PONG_VERSION
@@ -229,14 +229,15 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
             
                 // Hook a networked input receiver to the server //
                 PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
-                    PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(NetworkedInputID, true));
+                    PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(guard,
+                        NetworkedInputID, true));
             }
 
 		} else {
 
             if(ControlType == PLAYERCONTROLS_AI){
                 // Destroy out input if there is an AI //
-                _ResetNetworkInput();
+                _ResetNetworkInput(guard);
 
             } else {
                 
@@ -284,8 +285,7 @@ void Pong::PlayerSlot::SlotLeavePlayer(){
 	PlayerType = PLAYERTYPE_EMPTY;
 }
 
-void Pong::PlayerSlot::SetInputThatSendsControls(PongNInputter* input){
-	GUARD_LOCK();
+void Pong::PlayerSlot::SetInputThatSendsControls(Lock &guard, PongNInputter* input){
 
     if(InputObj && input != InputObj){
 
@@ -296,8 +296,8 @@ void Pong::PlayerSlot::SetInputThatSendsControls(PongNInputter* input){
 	InputObj = input;
 }
 
-void Pong::PlayerSlot::_ResetNetworkInput(){
-	GUARD_LOCK();
+void Pong::PlayerSlot::_ResetNetworkInput(Lock &guard){
+
 	if(InputObj){
 
 
@@ -368,7 +368,7 @@ void Pong::PlayerList::UpdateCustomDataFromPacket(Lock &guard, sf::Packet &packe
 	auto end = GamePlayers.end();
 	for(auto iter = GamePlayers.begin(); iter != end; ++iter){
 
-		(*iter)->UpdateDataFromPacket(packet);
+		(*iter)->UpdateDataFromPacket(packet, guard);
 	}
 }
 

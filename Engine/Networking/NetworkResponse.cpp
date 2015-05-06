@@ -129,6 +129,11 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
             ResponseData = new NetworkResponseDataForAICacheRemoved(receivedresponse);
         }
         break;
+        case NETWORKRESPONSETYPE_DISCONNECTINPUT:
+        {
+            ResponseData = new NetworkResponseDataForDisconnectInput(receivedresponse);
+        }
+        break;
         default:
 		{
             Logger::Get()->Warning("NetworkResponse: unused type: "+
@@ -297,6 +302,16 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateAICacheRemovedResponse(Networ
     newddata)
 {
     ResponseType = NETWORKRESPONSETYPE_AI_CACHE_REMOVED;
+    // Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
+}
+
+DLLEXPORT void NetworkResponse::GenerateDisconnectInputResponse(
+    NetworkResponseDataForDisconnectInput* newddata)
+{
+    ResponseType = NETWORKRESPONSETYPE_DISCONNECTINPUT;
     // Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 
@@ -508,6 +523,14 @@ DLLEXPORT NetworkResponseDataForAICacheRemoved* Leviathan::NetworkResponse::GetR
 
     if(ResponseType == NETWORKRESPONSETYPE_AI_CACHE_REMOVED && ResponseData)
         return static_cast<NetworkResponseDataForAICacheRemoved*>(ResponseData);
+    return NULL;
+}
+
+DLLEXPORT NetworkResponseDataForDisconnectInput*
+NetworkResponse::GetResponseDataForDisconnectInput() const
+{
+    if(ResponseType == NETWORKRESPONSETYPE_DISCONNECTINPUT && ResponseData)
+        return static_cast<NetworkResponseDataForDisconnectInput*>(ResponseData);
     return NULL;
 }
 // ------------------------------------ //
@@ -1057,4 +1080,23 @@ DLLEXPORT void Leviathan::NetworkResponseDataForAICacheRemoved::AddDataToPacket(
         Logger::Get()->Warning("Sending a large AI cache remove, string is over 800 elements long");
     }
 }
+// ------------------ NetworkResponseDataForDisconnectInput ------------------ //
+NetworkResponseDataForDisconnectInput::NetworkResponseDataForDisconnectInput(int inputid,
+    int ownerid) :
+    OwnerID(ownerid), InputID(inputid)
+{
 
+}
+
+NetworkResponseDataForDisconnectInput::NetworkResponseDataForDisconnectInput(sf::Packet &packet){
+
+    packet << InputID << OwnerID;
+}
+
+DLLEXPORT void NetworkResponseDataForDisconnectInput::AddDataToPacket(sf::Packet &packet){
+
+    packet >> InputID >> OwnerID;
+
+    if(!packet)
+        throw InvalidArgument("invalid packet format");
+}

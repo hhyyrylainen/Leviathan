@@ -89,7 +89,9 @@ GameInputController* Pong::GameInputController::Get(){
 GameInputController* Pong::GameInputController::Staticistance = NULL;
 
 // ------------------ PongInputFactory ------------------ //
-DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceForLocalStart(int inputid, bool isclient){
+DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceForLocalStart(
+    Lock &pongplayerlock, int inputid, bool isclient)
+{
 #ifdef PONG_VERSION
 	// We need to find the corresponding player with the control id matching this and then stealing it here //
 	auto plylist = BasePongParts::Get()->GetPlayers();
@@ -141,7 +143,7 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
 	
 	unique_ptr<PongNInputter> tmpobj(new PongNInputter(playerid, inputid, curplayer, activecontrols));
 
-	curplayer->SetInputThatSendsControls(tmpobj.get());
+	curplayer->SetInputThatSendsControls(pongplayerlock, tmpobj.get());
 
 	return unique_ptr<NetworkedInput>(tmpobj.release());
 #else
@@ -180,7 +182,9 @@ DLLEXPORT void Pong::PongInputFactory::ReplicationFinalized(NetworkedInput* inpu
                 // Store the data and set us as this slot's thing //
                 PlayerSlot* curplayer = curply;
 
-                tmpobj->StartSendingInput(curplayer);
+                GUARD_LOCK_OTHER_NAME(tmpobj, inputterlock);
+                
+                tmpobj->StartSendingInput(inputterlock, curplayer);
 
                 Logger::Get()->Info("Pong input linked to player");
                 return;
@@ -194,7 +198,7 @@ DLLEXPORT void Pong::PongInputFactory::ReplicationFinalized(NetworkedInput* inpu
 	Logger::Get()->Error("Pong input thing failed to link from network, finalize replication fail");
 }
 
-DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard){
+DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard, Lock &parentlock){
 
 	// Must still be the same type //
 	PongNInputter* tmpobj = dynamic_cast<PongNInputter*>(&todiscard);
@@ -218,7 +222,8 @@ DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard)
 
 	if(tmpobj->ControlledSlot && tmpobj->ControlledSlot->GetInputObj() == tmpobj){
 
-		tmpobj->ControlledSlot->SetInputThatSendsControls(NULL);
+        GUARD_LOCK_OTHER_NAME(tmpobj->ControlledSlot, guard2);
+		tmpobj->ControlledSlot->SetInputThatSendsControls(guard2, NULL);
 	}
 
     tmpobj->ControlledSlot = NULL;
@@ -290,7 +295,7 @@ Pong::PongNInputter::PongNInputter(int ownerid, int networkid, PlayerSlot* contr
 }
 
 Pong::PongNInputter::~PongNInputter(){
-	GUARD_LOCK();
+
 	if(ControlledSlot){
 		
 		// Should have been destroyed already //
@@ -312,8 +317,8 @@ DLLEXPORT void Pong::PongNInputter::InitializeLocal(){
     // Now add the proper player pointer to it //
 	auto plylist = BasePongParts::Get()->GetPlayers();
 
-	GUARD_LOCK_OTHER_NAME(plylist, plylock);
-
+    // We have to assume that the list is already locked
+    // TOOD: verify the claim
 
 	std::vector<PlayerSlot*>& plys = plylist->GetVec();
 
@@ -329,7 +334,7 @@ DLLEXPORT void Pong::PongNInputter::InitializeLocal(){
                 // Store the data and set us as this slot's thing //
                 PlayerSlot* curplayer = curply;
 
-                this->StartSendingInput(curplayer);
+                this->StartSendingInput(guard, curplayer);
 
                 Logger::Get()->Info("Pong input linked to local player");
                 return;
@@ -491,13 +496,12 @@ bool Pong::PongNInputter::_HandleKeyThing(OIS::KeyCode key, bool down){
 	return true;
 }
 
-void Pong::PongNInputter::StartSendingInput(PlayerSlot* target){
+void Pong::PongNInputter::StartSendingInput(Lock &guard, PlayerSlot* target){
 
-	GUARD_LOCK();
+	if(ControlledSlot && ControlledSlot != target){
 
-	if(ControlledSlot){
-
-		ControlledSlot->SetInputThatSendsControls(this);
+        GUARD_LOCK_OTHER_NAME(ControlledSlot, guard2);
+		ControlledSlot->SetInputThatSendsControls(guard2, this);
 	}
 
 	ControlledSlot = target;

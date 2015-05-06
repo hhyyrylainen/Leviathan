@@ -36,6 +36,9 @@ namespace Leviathan{
 		//! Contains control state updates regarding a NetworkedInput
 		NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT,
 
+        //! Client sents this when they want input to be destroyed
+        NETWORKRESPONSETYPE_DISCONNECTINPUT,
+
         //! Contains one or more full entities sent by the server
         NETWORKRESPONSETYPE_INITIAL_ENTITY,
 
@@ -204,6 +207,24 @@ namespace Leviathan{
         //! game mode or level requirements or something else
 		int AdditionalFlags;
 	};
+
+    
+    //! \brief Stores data for NETWORKRESPONSETYPE_DISCONNECTINPUT,
+    class NetworkResponseDataForDisconnectInput : public BaseNetworkResponseData{
+    public:
+        NetworkResponseDataForDisconnectInput(int inputid, int ownerid);
+
+        NetworkResponseDataForDisconnectInput(sf::Packet &packet);
+
+        DLLEXPORT void AddDataToPacket(sf::Packet &packet) override;
+
+        //! The ID of the input that should be closed
+        int InputID;
+
+        //! ID of the player the input belongs to, provided as a sanity check
+        int OwnerID;
+    };
+
 
 	//! \brief Stores data about a server disallow response
 	class NetworkResponseDataForServerDisallow : public BaseNetworkResponseData{
@@ -498,6 +519,8 @@ namespace Leviathan{
         DLLEXPORT void GenerateEntityDestructionResponse(NetworkResponseDataForEntityDestruction* newddata);
         DLLEXPORT void GenerateAICacheUpdatedResponse(NetworkResponseDataForAICacheUpdated* newddata);
         DLLEXPORT void GenerateAICacheRemovedResponse(NetworkResponseDataForAICacheRemoved* newddata);
+        DLLEXPORT void GenerateDisconnectInputResponse(
+            NetworkResponseDataForDisconnectInput* newddata);
 
 		DLLEXPORT void GenerateCustomResponse(GameSpecificPacketData* newdpacketdata);
 		DLLEXPORT void GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata);
@@ -538,6 +561,7 @@ namespace Leviathan{
         DLLEXPORT NetworkResponseDataForEntityDestruction* GetResponseDataForEntityDestruction() const;
         DLLEXPORT NetworkResponseDataForAICacheUpdated* GetResponseDataForAICacheUpdated() const;
         DLLEXPORT NetworkResponseDataForAICacheRemoved* GetResponseDataForAICacheRemoved() const;
+        DLLEXPORT NetworkResponseDataForDisconnectInput* GetResponseDataForDisconnectInput() const;
         
 
 		DLLEXPORT int GetResponseID() const;

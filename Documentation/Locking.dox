@@ -16,5 +16,8 @@
 
     \section locking_style Style
     All methods that work on already locked objects take the lock as the first parameter.
+    Methods that want locks of other objects should receive the locks as the last argument.
+    If additionally a pointer to the object that is locked is passed the lock parameter should
+    follow the parameter that is locked by it.
 
 */

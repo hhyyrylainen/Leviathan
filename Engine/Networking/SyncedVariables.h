@@ -95,10 +95,11 @@ namespace Leviathan{
 		//! \note The ConnectionInfo parameter should be locked during this call
 		DLLEXPORT void AddAnotherToSyncWith(ConnectionInfo* unsafeptr);
 
-		DLLEXPORT FORCE_INLINE void RemoveConnectionWithAnother(ConnectionInfo* ptr){
-
+		DLLEXPORT FORCE_INLINE void RemoveConnectionWithAnother(ConnectionInfo* ptr,
+            bool alreadyunhooking = false)
+        {
 			GUARD_LOCK();
-			RemoveConnectionWithAnother(ptr, guard);
+			RemoveConnectionWithAnother(ptr, guard, alreadyunhooking);
 		}
 
 

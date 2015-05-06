@@ -3,6 +3,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "OISKeyboard.h"
+#include "../Common/ThreadSafe.h"
 
 namespace Leviathan{
 
@@ -27,25 +28,29 @@ namespace Leviathan{
 		// when mouse is captured and is moved (relative movement is passed) //
 		DLLEXPORT virtual bool OnMouseMove(int xmove, int ymove) = 0;
 
+        //! \brief If ConnectedTo is not NULL notifies it that we are no longer valid
+        DLLEXPORT void _UnConnectParent(Lock &ownerlock);
+
 	protected:
 		// called by input controller when certain events happen //
 		void _OnConnected(InputController* owner);
 		void _OnDisconnect(InputController* owner);
 
 
+        
 		// ------------------------------------ //
 		InputController* ConnectedTo;
 	};
 
 
-	class InputController{
+	class InputController : public ThreadSafe{
 		friend InputReceiver;
 	public:
 		DLLEXPORT InputController();
 		DLLEXPORT ~InputController();
 
 
-		DLLEXPORT void LinkReceiver(InputReceiver* object);
+		DLLEXPORT void LinkReceiver(Lock &guard, InputReceiver* object);
 
 		DLLEXPORT virtual void StartInputGather();
 
@@ -57,7 +62,7 @@ namespace Leviathan{
 
 	protected:
 		// called by input controllers if they unlink //
-		virtual void _OnChildUnlink(InputReceiver* child);
+		virtual void _OnChildUnlink(Lock &guard, InputReceiver* child);
 
 		// ------------------------------------ //
 

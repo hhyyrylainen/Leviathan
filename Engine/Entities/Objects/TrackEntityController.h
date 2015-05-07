@@ -118,7 +118,8 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT virtual void UpdateControlledPositions(float timestep);
 
             //! \copydoc BaseSendableEntity::CaptureState
-            DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
+            DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CaptureState(Lock &guard,
+                int tick) override;
 
             DLLEXPORT bool SetStateToInterpolated(ObjectDeltaStateData &first,
                 ObjectDeltaStateData &second, float progress);

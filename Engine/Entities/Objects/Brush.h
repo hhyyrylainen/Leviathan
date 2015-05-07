@@ -43,7 +43,14 @@ namespace Leviathan{ namespace Entity{
                 matrix, int threadIndex);
 
             //! \copydoc BaseSendableEntity::CaptureState
-            DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
+            DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CaptureState(Lock &guard,
+                int tick) override;
+
+            DLLEXPORT inline std::shared_ptr<ObjectDeltaStateData> CaptureState(int tick){
+
+                GUARD_LOCK();
+                return CaptureState(guard, tick);
+            }
 
             DLLEXPORT int OnEvent(Event** pEvent) override;
             DLLEXPORT int OnGenericEvent(GenericEvent** pevent) override;

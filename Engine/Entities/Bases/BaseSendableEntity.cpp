@@ -121,7 +121,8 @@ DLLEXPORT void Leviathan::BaseSendableEntity::AddConnectionToReceivers(Connectio
 
     const int tick = OwnedByWorld ? OwnedByWorld->GetTickNumber(): -1;
 
-    UpdateReceivers.push_back(make_shared<SendableObjectConnectionUpdate>(this, receiver, tick));
+    UpdateReceivers.push_back(make_shared<SendableObjectConnectionUpdate>(this, guard, receiver,
+            tick));
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknumber){
@@ -133,7 +134,7 @@ DLLEXPORT void Leviathan::BaseSendableEntity::SendUpdatesToAllClients(int ticknu
         return;
 
     // Create current state here as one or more conections should require it //
-    auto curstate = CaptureState(ticknumber);
+    auto curstate = CaptureState(guard, ticknumber);
     
     auto end = UpdateReceivers.end();
     for(auto iter = UpdateReceivers.begin(); iter != end; ){
@@ -375,12 +376,12 @@ void Leviathan::BaseSendableEntity::_SendNewConstraint(BaseConstraintable* us, B
     }
 }
 // ------------------ SendableObjectConnectionUpdated ------------------ //
-DLLEXPORT Leviathan::SendableObjectConnectionUpdate::SendableObjectConnectionUpdate(BaseSendableEntity* getstate,
-    ConnectionInfo* connection, int tick) :
+DLLEXPORT Leviathan::SendableObjectConnectionUpdate::SendableObjectConnectionUpdate(
+    BaseSendableEntity* getstate, Lock &getstatelock, ConnectionInfo* connection, int tick) :
     CorrespondingConnection(connection),
     // TODO: make these this entity global to avoid capturing bunch of states whenever a new player
     // connects
-    LastConfirmedData(getstate->CaptureState(tick)),
+    LastConfirmedData(getstate->CaptureState(getstatelock, tick)),
     LastConfirmedTickNumber(-1)
 {
 

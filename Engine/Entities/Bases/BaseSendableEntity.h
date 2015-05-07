@@ -78,7 +78,7 @@ namespace Leviathan{
 
         //! \brief Creates an connection holder and creates an initial state
         //! \param curtick The current world tick, used to 
-        DLLEXPORT SendableObjectConnectionUpdate(BaseSendableEntity* getstate,
+        DLLEXPORT SendableObjectConnectionUpdate(BaseSendableEntity* getstate, Lock &getstatelock,
             ConnectionInfo* connection, int curtick);
 
         //! \brief Used to update LastConfirmedData
@@ -137,7 +137,8 @@ namespace Leviathan{
         //! \brief Capture current object state
         //! \param tick The tick value to store in the state, usually world's current tick
         //! \todo Allow this to be cached to improve performance
-        DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CaptureState(int tick) = 0;
+        DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CaptureState(Lock &guard,
+            int tick) = 0;
 
         //! \brief Subclasses initialize their state object of choice from a packet
         DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CreateStateFromPacket(int tick,

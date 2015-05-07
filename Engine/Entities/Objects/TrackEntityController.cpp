@@ -543,8 +543,9 @@ void Leviathan::Entity::TrackEntityController::_GetPosAndRotForProgress(Float3 &
 	}
 }
 // ------------------------------------ //
-DLLEXPORT std::shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityController::CaptureState(int tick){
-    
+DLLEXPORT std::shared_ptr<ObjectDeltaStateData> Leviathan::Entity::TrackEntityController::CaptureState(Lock &guard,
+    int tick)
+{
     return std::shared_ptr<ObjectDeltaStateData>(
         new TrackControllerState(tick, ReachedNode, ChangeSpeed, NodeProgress));
 }

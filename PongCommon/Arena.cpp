@@ -42,10 +42,10 @@ bool Pong::Arena::GenerateArena(BasePongParts* game, PlayerList &plys){
 	NewtonWorld* nworld = TargetWorld->GetPhysicalWorld()->GetNewtonWorld();
 	Leviathan::ObjectLoader* loader = Engine::GetEngine()->GetObjectLoader();
 
-    VerifyTrail();
+    VerifyTrail(guard);
     
 	// Set the options with the unified function //
-	ColourTheBallTrail(Float4(1.f));
+	ColourTheBallTrail(guard, Float4(1.f));
 
 
 	// calculate sizes //
@@ -476,9 +476,7 @@ void Pong::Arena::ServeBall(){
     prop->SendUpdatesToAllClients(TargetWorld->GetTickNumber());
 }
 // ------------------------------------ //
-void Pong::Arena::VerifyTrail(){
-    
-    GUARD_LOCK();
+void Pong::Arena::VerifyTrail(Lock &guard){
     
     if(DirectTrail)
         return;
@@ -524,15 +522,13 @@ bool Pong::Arena::IsBallInPaddleArea(){
 	return false;
 }
 // ------------------------------------ //
-void Pong::Arena::ColourTheBallTrail(const Float4 &colour){
+void Pong::Arena::ColourTheBallTrail(Lock &guard, const Float4 &colour){
 	// Adjust the trail parameters //
 	Leviathan::Entity::TrailProperties balltrailproperties(5, 10, 100, false);
 	// Set up all elements //
 	balltrailproperties.ElementProperties[0] = new Leviathan::Entity::TrailElementProperties(colour,
         Float4(0.7f, 0.7f, 0.7f, 0.3f), 5.f, 0.6f);
 
-    GUARD_LOCK();
-    
 	if(DirectTrail){
 
 		DirectTrail->SetTrailProperties(balltrailproperties);
@@ -541,7 +537,8 @@ void Pong::Arena::ColourTheBallTrail(const Float4 &colour){
 // ------------------------------------ //
 std::string Pong::Arena::GetMaterialNameForPlayerColour(const Float4 &colour){
 
-    GUARD_LOCK();
+    Lock lock(ColourMaterialNameMutex);
+    
 	auto iter = ColourMaterialName.find(colour);
 
 	if(iter != ColourMaterialName.end()){

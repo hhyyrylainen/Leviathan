@@ -38,6 +38,7 @@ namespace Leviathan{
         DLLEXPORT void SetOrientation(const Float4 &quaternionrotation, Lock &guard);
 
 		DLLEXPORT Float4 GetOrientation() const;
+        DLLEXPORT Float4 GetOrientation(Lock &guard) const;
         DLLEXPORT Float4 GetRotation() const;
         DLLEXPORT void GetOrientation(Float4 &receiver) const;
         DLLEXPORT void GetRotation(Float4 &receiver) const;
@@ -47,6 +48,7 @@ namespace Leviathan{
 
 		DLLEXPORT void GetPosElements(float &outx, float &outy, float &outz);
 		DLLEXPORT Float3 GetPos() const;
+        DLLEXPORT Float3 GetPos(Lock &guard) const;
         DLLEXPORT Float3 GetPosition() const;
         DLLEXPORT void GetPos(Float3 &receiver) const;
 		DLLEXPORT float GetPosX() const;

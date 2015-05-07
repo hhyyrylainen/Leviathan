@@ -470,11 +470,9 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(shared_p
 	}
 }
 
-DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllPlayers(shared_ptr<NetworkResponse> response, int resendcount
-    /*= 4*/)
+DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllPlayers(
+    shared_ptr<NetworkResponse> response, int resendcount /*= 4*/)
 {
-	GUARD_LOCK();
-
     Lock plylock(PlayerListLocked);
 
 	// Loop the players and send to their connections //

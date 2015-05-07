@@ -111,12 +111,21 @@ namespace Leviathan{
         //! \param tick The world tick to place in the resulting state
         template<class CType>
         DLLEXPORT static std::unique_ptr<PositionableRotationableDeltaState> CaptureState(
-            CType &object, int tick)
+            Lock &guard, CType &object, int tick)
         {
 
             return std::unique_ptr<PositionableRotationableDeltaState>(
-                new PositionableRotationableDeltaState(tick, object.GetPos(),
-                    object.GetOrientation()));
+                new PositionableRotationableDeltaState(tick, object.GetPos(guard),
+                    object.GetOrientation(guard)));
+        }
+
+        //! \brief Automatically locking version of CaptureState
+        template<class CType>
+        DLLEXPORT static inline std::unique_ptr<PositionableRotationableDeltaState> CaptureState(
+            CType &object, int tick)
+        {
+            GUARD_LOCK_OTHER((&object));
+            return CaptureState<CType>(guard, object, tick);
         }
 
         //! \note The olderstate has to be of type PositionableRotationableDeltaState

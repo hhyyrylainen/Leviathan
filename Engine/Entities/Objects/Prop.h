@@ -36,7 +36,8 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
             //! \copydoc BaseSendableEntity::CaptureState
-            DLLEXPORT virtual std::shared_ptr<ObjectDeltaStateData> CaptureState(int tick) override;
+            DLLEXPORT std::shared_ptr<ObjectDeltaStateData> CaptureState(Lock &guard, int tick)
+                override;
 
             DLLEXPORT int OnEvent(Event** pEvent) override;
             DLLEXPORT int OnGenericEvent(GenericEvent** pevent) override;

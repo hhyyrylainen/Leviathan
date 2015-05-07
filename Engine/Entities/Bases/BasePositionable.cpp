@@ -42,6 +42,11 @@ Float4 Leviathan::BasePositionable::GetOrientation() const{
 	return QuatRotation;
 }
 
+DLLEXPORT Float4 BasePositionable::GetOrientation(Lock &guard) const{
+
+    return QuatRotation;
+}
+
 void Leviathan::BasePositionable::GetOrientation(Float4 &receiver) const{
     GUARD_LOCK();
 	receiver = QuatRotation;
@@ -67,6 +72,11 @@ void BasePositionable::GetPosElements(float &outx, float &outy, float &outz){
 DLLEXPORT Float3 Leviathan::BasePositionable::GetPos() const{
     GUARD_LOCK();
 	return Position;
+}
+
+DLLEXPORT Float3 BasePositionable::GetPos(Lock &guard) const{
+
+    return Position;
 }
 
 DLLEXPORT void Leviathan::BasePositionable::GetPos(Float3 &receiver) const{

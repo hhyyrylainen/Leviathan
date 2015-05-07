@@ -600,9 +600,11 @@ BaseConstraintable* Leviathan::Entity::Brush::BasePhysicsGetConstraintable(){
     return static_cast<BaseConstraintable*>(this);
 }
 // ------------------------------------ //
-DLLEXPORT std::shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(int tick){
+DLLEXPORT std::shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CaptureState(
+    Lock &guard, int tick)
+{
     return std::shared_ptr<ObjectDeltaStateData>(
-        PositionableRotationableDeltaState::CaptureState(*this, tick).release());
+        PositionableRotationableDeltaState::CaptureState(guard, *this, tick).release());
 }
 
 DLLEXPORT std::shared_ptr<ObjectDeltaStateData> Leviathan::Entity::Brush::CreateStateFromPacket(

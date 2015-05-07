@@ -26,7 +26,13 @@ namespace Pong{
 		bool GenerateArena(BasePongParts* game, PlayerList &plys);
 
         //! Makes sure the trail object exists
-        void VerifyTrail();
+        void VerifyTrail(Lock &guard);
+
+        inline void VerifyTrail(){
+
+            GUARD_LOCK();
+            VerifyTrail(guard);
+        }
 
 		void ServeBall();
 		// Does what ever is needed to ditch old ball //
@@ -46,7 +52,13 @@ namespace Pong{
 
 		string GetMaterialNameForPlayerColour(const Float4 &colour);
 
-		void ColourTheBallTrail(const Float4 &colour);
+		void ColourTheBallTrail(Lock &guard, const Float4 &colour);
+
+        inline void ColourTheBallTrail(const Float4 &colour){
+
+            GUARD_LOCK();
+            ColourTheBallTrail(guard, colour);
+        }
 
 		inline ObjectPtr GetBallPtr(){
             GUARD_LOCK();
@@ -76,8 +88,11 @@ namespace Pong{
 		// ball prop //
 		ObjectPtr Ball;
 
-		// Used to store already generated materials for paddles //
+		//! Used to store already generated materials for paddles
 		std::map<Float4, std::string> ColourMaterialName;
+
+        //! Lock for ColourMaterialName
+        Mutex ColourMaterialNameMutex;
 
 	};
 

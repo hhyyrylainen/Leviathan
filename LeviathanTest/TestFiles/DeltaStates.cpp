@@ -130,7 +130,9 @@ TEST_CASE("Positionable rotationable state through packet and interpolate",
     CHECK((reconstructed2->ValidFields & PRDELTAUPDATED_POS_Y));
     CHECK_FALSE((reconstructed2->ValidFields & PRDELTAUPDATED_POS_Z));
 
+
     reconstructed->FillMissingData(*brush->CaptureState(0));
+
     
     brush->InterpolatePositionableState(*reconstructed, *reconstructed2, 0.5f);
 

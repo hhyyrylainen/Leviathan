@@ -168,7 +168,8 @@ namespace Leviathan{
 
 
 		//! \brief Used to remove connections that are no longer active
-		void _OnNotifierDisconnected(Lock &guard, BaseNotifierAll* parenttoremove) override;
+		void _OnNotifierDisconnected(Lock &guard, BaseNotifierAll* parenttoremove,
+            Lock &parentlock) override;
 
 		// ------------------------------------ //
 

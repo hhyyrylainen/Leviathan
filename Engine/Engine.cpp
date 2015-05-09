@@ -791,14 +791,14 @@ void Leviathan::Engine::Tick(){
     if(GraphicalEntity1 && !GraphicalEntity1->GetWindow()->IsOpen()){
 
         // Window closed //
-        ReportClosedWindow(GraphicalEntity1);
+        ReportClosedWindow(guard, GraphicalEntity1);
     }
 
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
 
         if(!AdditionalGraphicalEntities[i]->GetWindow()->IsOpen()){
 
-            ReportClosedWindow(AdditionalGraphicalEntities[i]);
+            ReportClosedWindow(guard, AdditionalGraphicalEntities[i]);
             
             // The above call might change the vector so stop looping after it //
             break;
@@ -1009,9 +1009,9 @@ DLLEXPORT GraphicalInputEntity* Leviathan::Engine::OpenNewWindow(){
     return newwindow.release();
 }
 
-DLLEXPORT void Leviathan::Engine::ReportClosedWindow(GraphicalInputEntity* windowentity){
-
-    GUARD_LOCK();
+DLLEXPORT void Leviathan::Engine::ReportClosedWindow(Lock &guard,
+    GraphicalInputEntity* windowentity)
+{
 
     windowentity->ReleaseLinked();
 

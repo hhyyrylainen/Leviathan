@@ -42,10 +42,8 @@ namespace Pong{
 			return TargetWorld;
 		}
 
-        void RegisterBall(ObjectPtr ball){
+        void RegisterBall(Lock &guard, ObjectPtr ball){
 
-            GUARD_LOCK();
-            
             Ball.reset();
             Ball = ball;
         }
@@ -60,10 +58,16 @@ namespace Pong{
             ColourTheBallTrail(guard, colour);
         }
 
-		inline ObjectPtr GetBallPtr(){
-            GUARD_LOCK();
+		inline ObjectPtr GetBallPtr(Lock &guard){
+
 			return Ball;
 		}
+
+        inline ObjectPtr GetBallPtr(){
+
+            GUARD_LOCK();
+            return GetBallPtr(guard);
+        }
 
 		// Checks based on generated arena if ball intersects (or could) with a paddle area //
 		bool IsBallInPaddleArea();

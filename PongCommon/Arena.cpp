@@ -407,7 +407,7 @@ void Pong::Arena::ServeBall(){
     assert(tempball && prop && "failed to load the Ball model");
 
     // Make the ball be the actual ball //
-    prop->CreateConstraintWith<GameBallConnection>(NULL)->Init();
+    prop->CreateConstraintWith<GameBallConnection>(NULL)->Init(guard);
     
     // Verify that the constraint was created //
     assert(Ball == tempball && "Failed to create emotional connection between the ball and NUL");
@@ -420,7 +420,7 @@ void Pong::Arena::ServeBall(){
 	DirectTrail->AddNonPhysicsParent(prop);
 
 	// Update trail colour //
-	ColourTheBallTrail(Float4(1));
+	ColourTheBallTrail(guard, Float4(1));
 
 	Float3 dir(0);
 

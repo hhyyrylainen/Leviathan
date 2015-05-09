@@ -111,7 +111,14 @@ bool Pong::PongConstraintSerializer::UnSerializeConstraint(BaseObject* object1, 
             if(!casted1)
                 return false;
 
-            casted1->CreateConstraintWith<GameBallConnection>(NULL)->Init();
+            auto base = BasePongParts::Get();
+            auto arena = base ? base->GetArena(): NULL;
+
+            if(!arena)
+                return false;
+
+            GUARD_LOCK_OTHER_NAME(arena, lock);
+            casted1->CreateConstraintWith<GameBallConnection>(NULL)->Init(lock);
             
             return true;
         }
@@ -240,19 +247,16 @@ Pong::GameBallConnection::~GameBallConnection(){
 
     if(!arena)
         return;
-    
-    if(arena->GetBallPtr().get() == dynamic_cast<BaseObject*>(ParentObject))
-        arena->RegisterBall(nullptr);
+
+    GUARD_LOCK_OTHER(arena);
+    if(arena->GetBallPtr(guard).get() == dynamic_cast<BaseObject*>(ParentObject))
+        arena->RegisterBall(guard, nullptr);
 }
 // ------------------------------------ //
-bool Pong::GameBallConnection::_CheckParameters(){
+bool GameBallConnection::Init(Lock &arenalock){
 
-    return true;
-}
-
-bool Pong::GameBallConnection::_CreateActualJoint(){
-
-    BasePongParts::Get()->GetArena()->RegisterBall(OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
+    BasePongParts::Get()->GetArena()->RegisterBall(arenalock,
+        OwningWorld->GetSmartPointerForObject(dynamic_cast<BaseObject*>(
                 ParentObject)));
 
     auto physball = dynamic_cast<Leviathan::BasePhysicsObject*>(ParentObject);
@@ -268,11 +272,11 @@ bool Pong::GameBallConnection::_CreateActualJoint(){
     // Set a speed giving force //
     physball->ApplyForce(new ApplyForceInfo(true, std::bind<Float3>([](
                     Leviathan::ApplyForceInfo* instance,
-                    Leviathan::BasePhysicsObject* object) -> Float3
+                    Leviathan::BasePhysicsObject* object, Lock &objectlock) -> Float3
         {
 
             // Get current velocity //
-			Float3 targetspeed = object->GetBodyVelocity();
+			Float3 targetspeed = object->GetBodyVelocity(objectlock);
             
 			// Don't want to apply any Y directional force //
 			targetspeed.Y = 0;
@@ -291,17 +295,10 @@ bool Pong::GameBallConnection::_CreateActualJoint(){
 			}
 
 
-        }, placeholders::_1, placeholders::_2), new string("BallPush")));
+        }, placeholders::_1, placeholders::_2, placeholders::_3), new string("BallPush")));
 
     return true;
 }
-
-
-
-
-
-
-
 
 
 

@@ -76,7 +76,14 @@ namespace Leviathan{ namespace Entity{
 
             //! \brief Starts listening to events and verifies parameters
             //! \return Always true
-            DLLEXPORT bool Init();
+            DLLEXPORT bool Init(Lock &guard);
+
+            DLLEXPORT inline bool Init(){
+
+                GUARD_LOCK();
+                return Init(guard);
+            }
+            
             DLLEXPORT virtual void ReleaseData();
 
             //! Events are used to receive when render is about to happen and update positions
@@ -139,7 +146,7 @@ namespace Leviathan{ namespace Entity{
             //! \brief Internal function for making all data valid
             //!
             //! Checks for invalid reached node and progress
-            void _SanityCheckNodeProgress();
+            void _SanityCheckNodeProgress(Lock &guard);
         
             //! \brief Updates the controlled object
             //! \todo apply rotation
@@ -149,10 +156,10 @@ namespace Leviathan{ namespace Entity{
             void _OnConstraintUnlink(BaseConstraint* ptr) override;
 
             //! \copydoc BaseSendableEntity::_LoadOwnDataFromPacket
-            virtual bool _LoadOwnDataFromPacket(sf::Packet &packet) override;
+            virtual bool _LoadOwnDataFromPacket(Lock &guard, sf::Packet &packet) override;
 
             //! \copydoc BaseSendableEntity::_SaveOwnDataToPacket
-            virtual void _SaveOwnDataToPacket(sf::Packet &packet) override;
+            virtual void _SaveOwnDataToPacket(Lock &guard, sf::Packet &packet) override;
 
             //! \brief Gets the target position and rotation for progress and node
             void _GetPosAndRotForProgress(Float3 &pos, Float4 &rot, float progress, int reached) const;

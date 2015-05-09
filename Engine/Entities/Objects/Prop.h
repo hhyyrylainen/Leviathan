@@ -27,7 +27,14 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT Prop(bool hidden, GameWorld* world);
             DLLEXPORT virtual ~Prop();
             
-            DLLEXPORT bool Init(const std::string &modelfile);
+            DLLEXPORT bool Init(Lock &guard, const std::string &modelfile);
+
+            DLLEXPORT inline bool Init(const std::string &modelfile){
+
+                GUARD_LOCK();
+                return Init(guard, modelfile);
+            }
+            
             DLLEXPORT virtual void ReleaseData();
 
             static void PropPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix,
@@ -53,10 +60,10 @@ namespace Leviathan{ namespace Entity{
             Prop(bool hidden, GameWorld* world, int netid);
 
             //! \copydoc BaseSendableEntity::_LoadOwnDataFromPacket
-            virtual bool _LoadOwnDataFromPacket(sf::Packet &packet) override;
+            virtual bool _LoadOwnDataFromPacket(Lock &guard, sf::Packet &packet) override;
 
             //! \copydoc BaseSendableEntity::_SaveOwnDataToPacket
-            virtual void _SaveOwnDataToPacket(sf::Packet &packet) override;
+            virtual void _SaveOwnDataToPacket(Lock &guard, sf::Packet &packet) override;
 
             //! \copydoc BaseConstraintable::_SendCreatedConstraint
             void _SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr) override;

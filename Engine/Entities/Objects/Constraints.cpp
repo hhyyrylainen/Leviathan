@@ -68,6 +68,16 @@ DLLEXPORT void Leviathan::Entity::BaseConstraint::ConstraintPartUnlinkedDestroy(
     Joint = NULL;
 }
 // ------------------------------------ //
+DLLEXPORT bool BaseConstraint::_CheckParameters(){
+
+    return false;
+}
+
+DLLEXPORT bool BaseConstraint::_CreateActualJoint(){
+
+    return false;
+}
+// ------------------------------------ //
 DLLEXPORT BaseConstraintable* Leviathan::Entity::BaseConstraint::GetFirstEntity() const{
     return ParentObject;
 }
@@ -128,9 +138,11 @@ bool Leviathan::Entity::SliderConstraint::_CreateActualJoint(){
         Logger::Get()->Error("SliderConstraint: passed in an entity that doesn't have physics");
         return false;
     }
-    
+
+    GUARD_LOCK_OTHER_NAME(first, guard);
+    GUARD_LOCK_OTHER_NAME(second, guard2);
 	Joint = NewtonConstraintCreateSlider(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(), &pos.X, &Axis.X, 
-		first->GetPhysicsBody(), second->GetPhysicsBody());
+		first->GetPhysicsBody(guard), second->GetPhysicsBody(guard2));
 
 	return Joint != NULL;
 }

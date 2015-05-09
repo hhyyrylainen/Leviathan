@@ -75,8 +75,8 @@ DLLEXPORT void Leviathan::Entity::Brush::ReleaseData(){
     OwnedByWorld = NULL;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::Brush::Init(const Float3 &dimensions, const string &material, 
-	bool createphysics /*= true*/)
+DLLEXPORT bool Leviathan::Entity::Brush::Init(Lock &guard, const Float3 &dimensions,
+    const string &material, bool createphysics /*= true*/)
 {
 	Sizes = dimensions;
 
@@ -345,16 +345,16 @@ brushpostgraphicalobjectcreation:
 
 	// create physical box if wanted //
 	if(createphysics)
-		AddPhysicalObject(0.f);
+		AddPhysicalObject(guard, 0.f);
 
 	return true;
 }
 
-DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(const float &mass /*= 0.f*/){
+DLLEXPORT void Leviathan::Entity::Brush::AddPhysicalObject(Lock &guard,
+    const float &mass /*= 0.f*/)
+{
 	// destroy old first //
 
-    GUARD_LOCK();
-    
     AggressiveConstraintUnlink(guard);
 
 	_DestroyPhysicalBody(guard);
@@ -479,7 +479,7 @@ void Leviathan::Entity::Brush::BrushPhysicsMovedEvent(const NewtonBody* const bo
     tmp->_MarkDataUpdated(guard);
 }
 // ------------------------------------ //
-bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
+bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(Lock &guard, sf::Packet &packet){
 
     // First get the base class data //
     BasePositionData pdata;
@@ -516,7 +516,7 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
     }
         
     // We always create the physical object ourselves if wanted
-    if(!Init(Float3(x, y, z), matname, false)){
+    if(!Init(guard, Float3(x, y, z), matname, false)){
 
         // This shouldn't happen //
         Logger::Get()->Error("Brush: failed to create from packet, Init failed");
@@ -525,40 +525,37 @@ bool Leviathan::Entity::Brush::_LoadOwnDataFromPacket(sf::Packet &packet){
 
     if(physics){
 
-        AddPhysicalObject(mass);
+        AddPhysicalObject(guard, mass);
         
         if(physid >= 0)
-            SetPhysicalMaterialID(physid);
+            SetPhysicalMaterialID(guard, physid);
     }
     
-    
     // Then set the position //
-    ApplyPositionDataObject(pdata);
+    ApplyPositionDataObject(guard, pdata);
 
     // Apply hidden state //
-    _OnHiddenStateUpdated();
+    _OnHiddenStateUpdated(guard);
     
     return true;
 }
 
-void Leviathan::Entity::Brush::_SaveOwnDataToPacket(sf::Packet &packet){
-
-    GUARD_LOCK();
+void Leviathan::Entity::Brush::_SaveOwnDataToPacket(Lock &guard, sf::Packet &packet){
 
     // The hidden state needs to be the first thing
     packet << Hidden;
     
     // Before adding our data make base classes add stuff //
-    AddPositionAndRotationToPacket(packet);
+    AddPositionAndRotationToPacket(guard, packet);
 
     // First add the size //
     packet << Sizes.X << Sizes.Y << Sizes.Z;
 
     // Then whether we have a physical object or not //
-    packet << (GetPhysicsBody() ? true: false);
+    packet << (GetPhysicsBody(guard) ? true: false);
 
     // Add the mass if it is applicable //
-    if(GetPhysicsBody()){
+    if(GetPhysicsBody(guard)){
 
         packet << Mass << AppliedPhysicalMaterial;
     }

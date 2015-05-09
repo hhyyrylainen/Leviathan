@@ -25,7 +25,8 @@ namespace Leviathan{
         //! \note Pass NULL for name if not used, avoid passing empty strings
         //! \param name The name to assign. This will be deleted by a std::unique_ptr
 		DLLEXPORT ApplyForceInfo(bool addmass,
-            std::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> getforce,
+            std::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object,
+                Lock &objectlock)> getforce,
             std::string* name = NULL);
         
 		DLLEXPORT ApplyForceInfo(ApplyForceInfo &other);
@@ -42,7 +43,8 @@ namespace Leviathan{
         
         //! The callback which returns the force
         //! \todo Allow deleting this force from the callback
-        std::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> Callback;
+        std::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object,
+            Lock &objectlock)> Callback;
 	};
 
     //! \brief Can hold all data used by BasePhysicsObject
@@ -65,7 +67,7 @@ namespace Leviathan{
 		}
 
         //! \todo Make sure that the body can't be destroyed while this is used
-		DLLEXPORT NewtonBody* GetPhysicsBody(){
+		DLLEXPORT NewtonBody* GetPhysicsBody(Lock &guard){
 			return Body;
 		}
 
@@ -79,24 +81,54 @@ namespace Leviathan{
 		DLLEXPORT bool RemoveApplyForce(const std::string &name);
 
 		// Sets the absolute velocity of the object //
-		DLLEXPORT void SetBodyVelocity(const Float3 &velocities);
+		DLLEXPORT void SetBodyVelocity(Lock &guard, const Float3 &velocities);
+
+        DLLEXPORT inline void SetBodyVelocity(const Float3 &velocities){
+
+            GUARD_LOCK();
+            SetBodyVelocity(guard, velocities);
+        }
 
 		// Gets the velocity of this object //
-		DLLEXPORT Float3 GetBodyVelocity();
+		DLLEXPORT Float3 GetBodyVelocity(Lock &guard);
+
+        DLLEXPORT inline Float3 GetBodyVelocity(){
+
+            GUARD_LOCK();
+            return GetBodyVelocity(guard);
+        }
 
         //! \brief Gets the torque of the body (rotational velocity)
-        DLLEXPORT Float3 GetBodyTorque();
+        DLLEXPORT Float3 GetBodyTorque(Lock &guard);
+
+        DLLEXPORT inline Float3 GetBodyTorque(){
+
+            GUARD_LOCK();
+            return GetBodyTorque(guard);
+        }
 
         //! \brief Sets the torque of the body
         //! \see GetBodyTorque
-        DLLEXPORT void SetBodyTorque(const Float3 &torque);
+        DLLEXPORT void SetBodyTorque(Lock &guard, const Float3 &torque);
+
+        DLLEXPORT inline void SetBodyTorque(const Float3 &torque){
+
+            GUARD_LOCK();
+            SetBodyTorque(guard, torque);
+        }
 
 		// Physical material setting in std::string form for your convenience //
 		DLLEXPORT bool SetPhysicalMaterial(const std::string &materialname);
 
 		// Higher performance material set if you use it in batches and
         // you have fetched the material id from PhysicalMaterialManager
-		DLLEXPORT void SetPhysicalMaterialID(int ID);
+		DLLEXPORT void SetPhysicalMaterialID(Lock &guard, int ID);
+
+        DLLEXPORT inline void SetPhysicalMaterialID(int ID){
+
+            GUARD_LOCK();
+            SetPhysicalMaterialID(guard, ID);
+        }
 
         //! \brief Sets the linear dampening which slows down the object
         //! \param factor The factor to set. Must be between 0.f and 1.f. Default is 0.1f
@@ -127,14 +159,14 @@ namespace Leviathan{
         //! \return True when Body is set
         //!
         //! Adds things like velocity and angular velocity (rotation)
-        DLLEXPORT bool AddPhysicalStateToPacket(sf::Packet &packet);
+        DLLEXPORT bool AddPhysicalStateToPacket(Lock &guard, sf::Packet &packet);
 
         //! \brief Loads and applies a physical state from a packet
         //! \return True when the packet was properly constructed and the state was set
-        DLLEXPORT bool ApplyPhysicalStateFromPacket(sf::Packet &packet);
+        DLLEXPORT bool ApplyPhysicalStateFromPacket(Lock &guard, sf::Packet &packet);
 
         //! \brief Applies physical state from holder object
-        DLLEXPORT void ApplyPhysicalState(BasePhysicsData &data);
+        DLLEXPORT void ApplyPhysicalState(Lock &guard, BasePhysicsData &data);
 
         //! \brief Loads a physical state from a packet
         DLLEXPORT static bool LoadPhysicalStateFromPacket(sf::Packet &packet, BasePhysicsData &fill);
@@ -154,7 +186,7 @@ namespace Leviathan{
 		virtual void _UpdatePhysicsObjectLocation(Lock &guard) = 0;
 
 		// Adds all applied forces together //
-		Float3 _GatherApplyForces(const float &mass);
+		Float3 _GatherApplyForces(Lock &guard, const float &mass);
 
 		bool BasePhysicsCustomMessage(int message, void* data);
 		bool BasePhysicsCustomGetData(ObjectDataRequest* data);

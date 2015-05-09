@@ -1,12 +1,7 @@
 #pragma once
-#ifndef LEVIATHAN_SENDABLEENTITYSERIALIZER
-#define LEVIATHAN_SENDABLEENTITYSERIALIZER
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "BaseEntitySerializer.h"
 
 namespace Leviathan{
@@ -22,8 +17,8 @@ namespace Leviathan{
 
 
         //! \copydoc BaseEntitySerializer::CreatePacketForConnection
-        DLLEXPORT virtual bool CreatePacketForConnection(BaseObject* object, sf::Packet &packet,
-            ConnectionInfo* connectionptr) override;
+        DLLEXPORT virtual bool CreatePacketForConnection(BaseObject* object, Lock &objectlock,
+            sf::Packet &packet, ConnectionInfo* connectionptr) override;
 
         //! \copydoc BaseEntitySerializer::DeserializeWholeEntityFromPacket
         DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, int32_t serializetype,
@@ -48,4 +43,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

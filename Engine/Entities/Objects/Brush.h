@@ -29,12 +29,26 @@ namespace Leviathan{ namespace Entity{
 
             // different initialization functions for different box styles //
             // NOTE: leaving createphysics true creates a immovable box (uses mass = 0) //
-            DLLEXPORT bool Init(const Float3 &dimensions, const std::string &material,
+            DLLEXPORT bool Init(Lock &guard, const Float3 &dimensions, const std::string &material,
                 bool createphysics = true);
+
+            DLLEXPORT inline bool Init(const Float3 &dimensions, const std::string &material,
+                bool createphysics = true)
+            {
+                GUARD_LOCK();
+                return Init(guard, dimensions, material, createphysics);
+            }
+            
 
             // call if you want to have this interact with other physical objects
             // (set mass to 0 to be static)
-            DLLEXPORT void AddPhysicalObject(const float &mass = 0.f);
+            DLLEXPORT void AddPhysicalObject(Lock &guard, const float &mass = 0.f);
+
+            DLLEXPORT inline void AddPhysicalObject(const float &mass = 0.f){
+
+                GUARD_LOCK();
+                AddPhysicalObject(guard, mass);
+            }
 
 
             DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
@@ -69,10 +83,10 @@ namespace Leviathan{ namespace Entity{
             virtual void _UpdatePhysicsObjectLocation(Lock &guard) override;
 
             //! \copydoc BaseSendableEntity::_LoadOwnDataFromPacket
-            virtual bool _LoadOwnDataFromPacket(sf::Packet &packet) override;
+            virtual bool _LoadOwnDataFromPacket(Lock &guard, sf::Packet &packet) override;
 
             //! \copydoc BaseSendableEntity::_SaveOwnDataToPacket
-            virtual void _SaveOwnDataToPacket(sf::Packet &packet) override;
+            virtual void _SaveOwnDataToPacket(Lock &guard, sf::Packet &packet) override;
             
             //! \copydoc BaseConstraintable::_SendCreatedConstraint
             void _SendCreatedConstraint(BaseConstraintable* other, Entity::BaseConstraint* ptr) override;

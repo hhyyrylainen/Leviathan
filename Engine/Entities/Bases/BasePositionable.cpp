@@ -128,13 +128,13 @@ DLLEXPORT void Leviathan::BasePositionable::SetOrientation(const Float4 &quat){
 	OrientationUpdated(guard);
 }
 
-DLLEXPORT void BasePositionable::SetPos(const Float3 &pos, Lock &guard){
+DLLEXPORT void BasePositionable::SetPos(Lock &guard, const Float3 &pos){
 
     Position = pos;
 	PosUpdated(guard);
 }
 
-DLLEXPORT void BasePositionable::SetOrientation(const Float4 &quaternionrotation, Lock &guard){
+DLLEXPORT void BasePositionable::SetOrientation(Lock &guard, const Float4 &quaternionrotation){
 
     QuatRotation = quaternionrotation;
     OrientationUpdated(guard);
@@ -156,9 +156,10 @@ void Leviathan::BasePositionable::OrientationUpdated(Lock &guard){
 
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::BasePositionable::ApplyPositionDataObject(const BasePositionData &pos){
+DLLEXPORT void Leviathan::BasePositionable::ApplyPositionDataObject(Lock &guard,
+    const BasePositionData &pos)
+{
 
-    GUARD_LOCK();
     Position = pos.Position;
     PosUpdated(guard);
 
@@ -189,13 +190,16 @@ bool Leviathan::BasePositionable::BasePositionableCustomGetData(ObjectDataReques
 	return false;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::BasePositionable::AddPositionAndRotationToPacket(sf::Packet &packet){
-    GUARD_LOCK();
+DLLEXPORT void Leviathan::BasePositionable::AddPositionAndRotationToPacket(Lock &guard,
+    sf::Packet &packet)
+{
     packet << Position;
     packet << QuatRotation;
 }
 
-DLLEXPORT void Leviathan::BasePositionable::ApplyPositionAndRotationFromPacket(sf::Packet &packet){
+DLLEXPORT void Leviathan::BasePositionable::ApplyPositionAndRotationFromPacket(Lock &guard,
+    sf::Packet &packet)
+{
 
     // First get the data //
     Float4 quaternion;
@@ -211,8 +215,11 @@ DLLEXPORT void Leviathan::BasePositionable::ApplyPositionAndRotationFromPacket(s
     }
 
     // Apply the data //
-    SetPos(pos);
-    SetOrientation(quaternion);
+    Position = pos;
+    QuatRotation = quaternion;
+
+    PosUpdated(guard);
+    OrientationUpdated(guard);
 }
 
 DLLEXPORT bool Leviathan::BasePositionable::LoadPositionFromPacketToHolder(sf::Packet &packet,
@@ -227,9 +234,9 @@ DLLEXPORT bool Leviathan::BasePositionable::LoadPositionFromPacketToHolder(sf::P
 DLLEXPORT void BasePositionable::InterpolatePositionableState(PositionableRotationableDeltaState &first,
     PositionableRotationableDeltaState &second, float progress)
 {
-    
-    Float3 pos = GetPosition();
-    Float4 rot = GetOrientation();
+    GUARD_LOCK();
+    Float3 pos = GetPos(guard);
+    Float4 rot = GetOrientation(guard);
 
     // Position
     if(second.ValidFields & PRDELTAUPDATED_POS_X){
@@ -339,7 +346,6 @@ DLLEXPORT void BasePositionable::InterpolatePositionableState(PositionableRotati
         rot.W = first.Rotation.W;
     }
     
-    GUARD_LOCK();
-    SetPos(pos, guard);
-    SetOrientation(rot, guard);
+    SetPos(guard, pos);
+    SetOrientation(guard, rot);
 }

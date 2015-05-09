@@ -166,7 +166,7 @@ DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(ConnectionInfo* conne
 }
 // ------------------------------------ //
 void Leviathan::RemoteConsole::_OnNotifierDisconnected(Lock &guard,
-    BaseNotifierAll* parenttoremove)
+    BaseNotifierAll* parenttoremove, Lock &parentlock)
 {
 	// Close the corresponding console session //
 

@@ -71,7 +71,8 @@ namespace Leviathan{
 
 	protected:
 		//! \brief Used to detect when a connection has been closed
-		virtual void _OnNotifierDisconnected(Lock &guard, BaseNotifierAll* parenttoremove) override;
+		virtual void _OnNotifierDisconnected(Lock &guard, BaseNotifierAll* parenttoremove,
+            Lock &parentlock) override;
 
 		DLLEXPORT virtual bool _OnSendPrivateMessage(const std::string &message);
 		// ------------------------------------ //

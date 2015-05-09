@@ -151,17 +151,14 @@ DLLEXPORT void Leviathan::BaseConstraintable::OnRemoveConstraint(BaseConstraint*
 	}
 }
 // ------------------------------------ //
-DLLEXPORT size_t Leviathan::BaseConstraintable::GetConstraintCount() const{
-    GUARD_LOCK();
+DLLEXPORT size_t Leviathan::BaseConstraintable::GetConstraintCount(Lock &guard) const{
+
     return PartInConstraints.size();
 }
 
-DLLEXPORT std::shared_ptr<BaseConstraint> Leviathan::BaseConstraintable::GetConstraint(
+DLLEXPORT std::shared_ptr<BaseConstraint> Leviathan::BaseConstraintable::GetConstraint(Lock &guard,
     size_t index) const
 {
-
-    GUARD_LOCK();
-
     if(PartInConstraints.size() <= index)
         return nullptr;
 

@@ -100,10 +100,23 @@ namespace Leviathan{
         }
 
         //! \brief Returns the number of connections this object is part in
-        DLLEXPORT size_t GetConstraintCount() const;
+        DLLEXPORT size_t GetConstraintCount(Lock &guard) const;
+
+        DLLEXPORT inline size_t GetConstraintCount() const{
+
+            GUARD_LOCK();
+            return GetConstraintCount(guard);
+        }
 
         //! \brief Returns the constraint at index
-        DLLEXPORT std::shared_ptr<Entity::BaseConstraint> GetConstraint(size_t index) const;
+        DLLEXPORT std::shared_ptr<Entity::BaseConstraint> GetConstraint(Lock &guard,
+            size_t index) const;
+
+        DLLEXPORT inline std::shared_ptr<Entity::BaseConstraint> GetConstraint(size_t index) const{
+
+            GUARD_LOCK();
+            return GetConstraint(guard, index);
+        }
         
         
         // notify functions //

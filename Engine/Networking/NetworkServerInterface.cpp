@@ -492,7 +492,8 @@ DLLEXPORT void Leviathan::NetworkServerInterface::VerifyWorldIsSyncedWithPlayers
 	auto end = ServerPlayers.end();
 	for(auto iter = ServerPlayers.begin(); iter != end; ++iter){
 
-		if(world->ConnectToNotifiable(*iter)){
+        GUARD_LOCK_OTHER_NAME((*iter), guard2);
+		if(world->ConnectToNotifiable(guard, *iter, guard2)){
 
 			// Added a new one //
 			Logger::Get()->Info("NetworkServerInterface: a new player is now synced with a world");
@@ -518,7 +519,7 @@ DLLEXPORT Leviathan::ConnectedPlayer::~ConnectedPlayer(){
 }
 // ------------------------------------ //
 void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(Lock &guard,
-    BaseNotifierAll* parenttoremove)
+    BaseNotifierAll* parenttoremove, Lock &parentlock)
 {
 
     GUARD_LOCK_OTHER_NAME(Owner, guard2);

@@ -265,21 +265,21 @@ namespace Leviathan{
         //! \todo Properly handle deleted and created objects
         //! (Potentially make objects vector have "empty" spaces in the middle)
 		DLLEXPORT virtual void _OnNotifiableConnected(Lock &guard,
-            BaseNotifiableAll* parentadded) override;
+            BaseNotifiableAll* parentadded, Lock &parentlock) override;
 
 		//! Used to disconnect players that are going to be unloaded
 		DLLEXPORT virtual void _OnNotifiableDisconnected(Lock &guard,
-            BaseNotifiableAll* parenttoremove) override;
+            BaseNotifiableAll* parenttoremove, Lock &parentlock) override;
 
 		//! \brief Updates a players position info in this world
-		void UpdatePlayersPositionData(ConnectedPlayer* ply, Lock &guard);
+		void UpdatePlayersPositionData(Lock &guard, ConnectedPlayer* ply, Lock &plylock);
 
 		void _CreateOgreResources(Ogre::Root* ogre, Window* rendertarget);
 		void _HandleDelayedDelete(Lock &guard);
 
         //! \brief Applies a constraint to entities, if both are present
         //! \returns True when the constraint is applied
-        bool _TryApplyConstraint(NetworkResponseDataForEntityConstraint* data);
+        bool _TryApplyConstraint(Lock &guard, NetworkResponseDataForEntityConstraint* data);
 
         //! \brief Removes a sendable entity from the specific sendable vector
         void _EraseFromSendable(BaseSendableEntity* obj, Lock &guard);
@@ -318,6 +318,8 @@ namespace Leviathan{
 
         //! The constraints that are waiting for their entities to be created
         std::vector<WaitingConstraint> WaitingConstraints;
+
+        Mutex WaitingConstraintsMutex;
         
 
         //! This is not empty when some players are receiving their initial world state

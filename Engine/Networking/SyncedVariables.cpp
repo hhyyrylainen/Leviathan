@@ -542,7 +542,7 @@ DLLEXPORT void Leviathan::SyncedVariables::SetExpectedNumberOfVariablesReceived(
 }
 
 void Leviathan::SyncedVariables::_OnNotifierDisconnected(Lock &guard,
-    BaseNotifierAll* parenttoremove)
+    BaseNotifierAll* parenttoremove, Lock &parentlock)
 {
 
 	Logger::Get()->Info("SyncedVariables: stopping sync with specific, because connection is closing");

@@ -71,12 +71,14 @@ Float3 PropGetBodyVelocity(Entity::Prop* obj){
 
 NewtonBody* PropGetPhysicsBody(Entity::Prop* obj){
 
-    return obj->GetPhysicsBody();
+    GUARD_LOCK_OTHER(obj);
+    return obj->GetPhysicsBody(guard);
 }
 // ------------------ Brush proxies ------------------ //
 NewtonBody* BrushGetPhysicsBody(Entity::Brush* obj){
-    
-    return obj->GetPhysicsBody();
+
+    GUARD_LOCK_OTHER(obj);
+    return obj->GetPhysicsBody(guard);
 }
 // ------------------ Float3 proxies ------------------ //
 void Float3ConstructorProxy(void* memory){

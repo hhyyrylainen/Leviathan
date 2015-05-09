@@ -64,7 +64,7 @@ DLLEXPORT void Leviathan::Entity::Prop::ReleaseData(){
     OwnedByWorld = NULL;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::Prop::Init(const string &modelfile){
+DLLEXPORT bool Leviathan::Entity::Prop::Init(Lock &guard, const string &modelfile){
 
     // Store the file //
     ModelFile = modelfile;
@@ -370,7 +370,7 @@ DLLEXPORT bool Leviathan::Entity::Prop::SendCustomMessage(int entitycustommessag
 	return false;
 }
 // ------------------------------------ //
-bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(sf::Packet &packet){
+bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(Lock &guard, sf::Packet &packet){
 
     BasePositionData posdata;
     BasePhysicsData phydata;
@@ -408,7 +408,7 @@ bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(sf::Packet &packet){
         return false;
     }
 
-    if(!Init(ModelFile)){
+    if(!Init(guard, ModelFile)){
 
         // This shouldn't happen //
         Logger::Get()->Error("Prop: failed to create from packet, Init failed");
@@ -416,44 +416,42 @@ bool Leviathan::Entity::Prop::_LoadOwnDataFromPacket(sf::Packet &packet){
     }
 
     // Then set the position //
-    ApplyPositionDataObject(posdata);
+    ApplyPositionDataObject(guard, posdata);
 
     // And velocity //
-    ApplyPhysicalState(phydata);
+    ApplyPhysicalState(guard, phydata);
 
     // Apply hidden state //
-    _OnHiddenStateUpdated();
+    _OnHiddenStateUpdated(guard);
 
     // Apply physical material //
     if(physics){
 
         if(physid >= 0)
-            SetPhysicalMaterialID(physid);
+            SetPhysicalMaterialID(guard, physid);
     }
-
     
     return true;
 }
 
-void Leviathan::Entity::Prop::_SaveOwnDataToPacket(sf::Packet &packet){
-    GUARD_LOCK();
+void Leviathan::Entity::Prop::_SaveOwnDataToPacket(Lock &guard, sf::Packet &packet){
     
     // The hidden state needs to be the first thing
     packet << Hidden;
     
     // Before adding our data make base classes add stuff //
-    AddPositionAndRotationToPacket(packet);
+    AddPositionAndRotationToPacket(guard, packet);
 
     // Physics state //
-    AddPhysicalStateToPacket(packet);
+    AddPhysicalStateToPacket(guard, packet);
     
     packet << ModelFile;
 
-    packet << (GetPhysicsBody() ? true: false);
+    packet << (GetPhysicsBody(guard) ? true: false);
 
     // Add the mass if it is applicable //
-    if(GetPhysicsBody()){
-
+    if(GetPhysicsBody(guard)){
+        
         packet << AppliedPhysicalMaterial;
     }
 }

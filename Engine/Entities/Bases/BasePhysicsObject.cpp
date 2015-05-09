@@ -67,7 +67,7 @@ void Leviathan::BasePhysicsObject::ApplyForceAndTorgueEvent(const NewtonBody* co
     
 	// add other forces //
     if(!tmp->ApplyForceList.empty())
-        Force += tmp->_GatherApplyForces(mass);
+        Force += tmp->_GatherApplyForces(guard, mass);
     
 
 	NewtonBodyAddForce(body, &Force.X);
@@ -88,41 +88,36 @@ DLLEXPORT void Leviathan::BasePhysicsObject::GiveImpulse(const Float3 &deltaspee
 	}
 }
 
-DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyVelocity(const Float3 &velocities){
-    GUARD_LOCK();
-    
+DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyVelocity(Lock &guard,
+    const Float3 &velocities)
+{
 	if(Body){
 
 		NewtonBodySetVelocity(Body, &velocities.X);
 	}
 }
 
-DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyVelocity(){
-    GUARD_LOCK();
+DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyVelocity(Lock &guard){
+
+    if(!Body)
+        throw InvalidState("Physics object doesn't have a body");
     
-	if(Body){
-		Float3 vel(0);
-		NewtonBodyGetVelocity(Body, &vel.X);
-		return vel;
-	}
-    
-	return (Float3)0;
+    Float3 vel(0);
+    NewtonBodyGetVelocity(Body, &vel.X);
+    return vel;
 }
 
-DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyTorque(){
-    GUARD_LOCK();
+DLLEXPORT Float3 Leviathan::BasePhysicsObject::GetBodyTorque(Lock &guard){
+
+    if(!Body)
+        throw InvalidState("Physics object doesn't have a body");
     
-	if(Body){
-		Float3 torq(0);
-		NewtonBodyGetTorque(Body, &torq.X);
-		return torq;
-	}
-    
-	return (Float3)0;
+    Float3 torq(0);
+    NewtonBodyGetTorque(Body, &torq.X);
+    return torq;
 }
 
-DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyTorque(const Float3 &torque){
-    GUARD_LOCK();
+DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyTorque(Lock &guard, const Float3 &torque){
     
     if(Body){
 
@@ -130,7 +125,7 @@ DLLEXPORT void Leviathan::BasePhysicsObject::SetBodyTorque(const Float3 &torque)
     }
 }
 // ------------------------------------ //
-Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(const float &mass){
+Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(Lock &guard, const float &mass){
 	// Return if just an empty list //
 	if(ApplyForceList.empty())
 		return Float3(0);
@@ -139,7 +134,7 @@ Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(const float &mass){
 
 	for(auto iter = ApplyForceList.begin(); iter != ApplyForceList.end(); ++iter){
 		// Add to total, and multiply by mass if wanted //
-        const Float3 force = (*iter)->Callback((*iter).get(), this);
+        const Float3 force = (*iter)->Callback((*iter).get(), this, guard);
         
 		total += (*iter)->MultiplyByMass ? force*mass: force;
 
@@ -157,7 +152,9 @@ DLLEXPORT void Leviathan::BasePhysicsObject::ApplyForce(ApplyForceInfo* pointert
 		// Check do the names match //
 		if((bool)(*iter)->OptionalName == (bool)pointertohandle->OptionalName){
 
-			if(!pointertohandle->OptionalName || *pointertohandle->OptionalName == *(*iter)->OptionalName){
+			if(!pointertohandle->OptionalName ||
+                *pointertohandle->OptionalName == *(*iter)->OptionalName)
+            {
 				// it's the default, overwrite //
 				**iter = *pointertohandle;
 				SAFE_DELETE(pointertohandle);
@@ -209,10 +206,10 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::SetPhysicalMaterial(const std::stri
 	return true;
 }
 
-DLLEXPORT void Leviathan::BasePhysicsObject::SetPhysicalMaterialID(int ID){
-    GUARD_LOCK();
-    
-	assert(Body != NULL && "calling set material ID without having physical model loaded");
+DLLEXPORT void Leviathan::BasePhysicsObject::SetPhysicalMaterialID(Lock &guard, int ID){
+
+    if(!Body)
+        throw InvalidState("Calling set material ID without having physical Body");
 
 	NewtonBodySetMaterialGroupID(Body, ID);
 }
@@ -268,21 +265,21 @@ bool Leviathan::BasePhysicsObject::BasePhysicsCustomGetData(ObjectDataRequest* d
 	return false;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::BasePhysicsObject::AddPhysicalStateToPacket(sf::Packet &packet){
-    GUARD_LOCK();
-    
+DLLEXPORT bool Leviathan::BasePhysicsObject::AddPhysicalStateToPacket(Lock &guard,
+    sf::Packet &packet)
+{
     if(!Body)
         return false;
 
-    packet << GetBodyVelocity();
-    packet << GetBodyTorque();
+    packet << GetBodyVelocity(guard);
+    packet << GetBodyTorque(guard);
 
     return true;
 }
 
-DLLEXPORT bool Leviathan::BasePhysicsObject::ApplyPhysicalStateFromPacket(sf::Packet &packet){
-    GUARD_LOCK();
-    
+DLLEXPORT bool Leviathan::BasePhysicsObject::ApplyPhysicalStateFromPacket(Lock &guard,
+    sf::Packet &packet)
+{
     if(!Body)
         return false;
 
@@ -295,8 +292,8 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::ApplyPhysicalStateFromPacket(sf::Pa
     if(!packet)
         return false;
 
-    SetBodyTorque(torq);
-    SetBodyVelocity(vel);
+    SetBodyTorque(guard, torq);
+    SetBodyVelocity(guard, vel);
     
     return true;
 }
@@ -311,308 +308,20 @@ DLLEXPORT bool Leviathan::BasePhysicsObject::LoadPhysicalStateFromPacket(sf::Pac
         return false;
 }
 
-DLLEXPORT void Leviathan::BasePhysicsObject::ApplyPhysicalState(BasePhysicsData &data){
-    GUARD_LOCK();
-    
+DLLEXPORT void Leviathan::BasePhysicsObject::ApplyPhysicalState(Lock &guard,
+    BasePhysicsData &data)
+{
     if(!Body)
         return;
     
-    SetBodyTorque(data.Torque);
-    SetBodyVelocity(data.Velocity);
+    SetBodyTorque(guard, data.Torque);
+    SetBodyVelocity(guard, data.Velocity);
 }
 // ------------------------------------ //
 void Leviathan::BasePhysicsObject::OnBeforeResimulateStateChanged(){
 
 }
 
-#ifndef NETWORK_USE_SNAPSHOTS
-DLLEXPORT void Leviathan::BasePhysicsObject::CheckOldPhysicalState(PositionablePhysicalDeltaState* servercasted,
-    PositionablePhysicalDeltaState* ourcasted, int tick, BaseSendableEntity* assendable)
-{
-    // Check first do we need to resimulate //
-    bool requireupdate = false;
-
-    if(!ourcasted){
-
-        requireupdate = true;
-        
-    } else {
-        
-        float totaldifference = 0.f;
-
-        if(servercasted->ValidFields & PPDELTAUPDATED_POS_X)
-            totaldifference += fabs((ourcasted->Position.X-servercasted->Position.X));
-        if(servercasted->ValidFields & PPDELTAUPDATED_POS_Y)
-            totaldifference += fabs((ourcasted->Position.Y-servercasted->Position.Y));
-        if(servercasted->ValidFields & PPDELTAUPDATED_POS_Z)
-            totaldifference += fabs((ourcasted->Position.Z-servercasted->Position.Z));
-
-        if(servercasted->ValidFields & PPDELTAUPDATED_ROT_X)
-            totaldifference += fabs((ourcasted->Rotation.X-servercasted->Rotation.X));
-        if(servercasted->ValidFields & PPDELTAUPDATED_ROT_Y)
-            totaldifference += fabs((ourcasted->Rotation.Y-servercasted->Rotation.Y));
-        if(servercasted->ValidFields & PPDELTAUPDATED_ROT_Z)
-            totaldifference += fabs((ourcasted->Rotation.Z-servercasted->Rotation.Z));
-        if(servercasted->ValidFields & PPDELTAUPDATED_ROT_W)
-            totaldifference += fabs((ourcasted->Rotation.W-servercasted->Rotation.W));
-        
-        if(servercasted->ValidFields & PPDELTAUPDATED_VEL_X)
-            totaldifference += fabs((ourcasted->Velocity.X-servercasted->Velocity.X));
-        if(servercasted->ValidFields & PPDELTAUPDATED_VEL_Y)
-            totaldifference += fabs((ourcasted->Velocity.Y-servercasted->Velocity.Y));
-        if(servercasted->ValidFields & PPDELTAUPDATED_VEL_Z)
-            totaldifference += fabs((ourcasted->Velocity.Z-servercasted->Velocity.Z));
-
-        if(servercasted->ValidFields & PPDELTAUPDATED_TOR_X)
-            totaldifference += fabs((ourcasted->Torque.X-servercasted->Torque.X));
-        if(servercasted->ValidFields & PPDELTAUPDATED_TOR_Y)
-            totaldifference += fabs((ourcasted->Torque.Y-servercasted->Torque.Y));
-        if(servercasted->ValidFields & PPDELTAUPDATED_TOR_Z)
-            totaldifference += fabs((ourcasted->Torque.Z-servercasted->Torque.Z));
-
-
-        if(totaldifference >= SENDABLE_RESIMULATE_THRESSHOLD){
-
-            // We are too far of the right values //
-            requireupdate = true;
-        }
-    }
-
-    // All good if our old state matched //
-    if(!requireupdate)
-        return;
-
-    // This should hold on to the world update lock once that is required //
-    auto nworld = OwnedByWorld->GetPhysicalWorld()->GetNewtonWorld();
-
-
-    OnBeforeResimulateStateChanged();
-    
-    // TODO: Check does this lock help with something
-    GUARD_LOCK_NAME(lockit);
-    
-    // Go back to the verified position and resimulate from there //
-    if(servercasted->ValidFields & PPDELTAUPDATED_POS_X){
-        SetPosX(servercasted->Position.X);
-        
-    } else if(ourcasted){
-        
-        SetPosX(ourcasted->Position.X);
-    }
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_POS_Y){
-        SetPosY(servercasted->Position.Y);
-        
-    } else if(ourcasted){
-        
-        SetPosY(ourcasted->Position.Y);
-    }
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_POS_Z){
-        SetPosZ(servercasted->Position.Z);
-        
-    } else if(ourcasted){
-        
-        SetPosZ(ourcasted->Position.Z);
-    }
-
-    Float4 finalrotation;
-    Float4 currotation = GetOrientation();
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_ROT_X){
-
-        finalrotation.X = servercasted->Rotation.X;
-        
-    } else if(ourcasted){
-        
-        finalrotation.X = ourcasted->Rotation.X;
-        
-    } else {
-
-        finalrotation.X = currotation.X;
-    }
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_ROT_Y){
-
-        finalrotation.Y = servercasted->Rotation.Y;
-        
-    } else if(ourcasted){
-        
-        finalrotation.Y = ourcasted->Rotation.Y;
-        
-    } else {
-
-        finalrotation.Y = currotation.Y;
-    }
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_ROT_Z){
-
-        finalrotation.Z = servercasted->Rotation.Z;
-        
-    } else if(ourcasted){
-        
-        finalrotation.Z = ourcasted->Rotation.Z;
-        
-    } else {
-
-        finalrotation.Z = currotation.Z;
-    }
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_ROT_W){
-
-        finalrotation.W = servercasted->Rotation.W;
-        
-    } else if(ourcasted){
-        
-        finalrotation.W = ourcasted->Rotation.W;
-        
-    } else {
-
-        finalrotation.W = currotation.W;
-    }
-    
-    SetOrientation(finalrotation);
-
-    Float3 finalvelocity;
-    Float3 curvelocity = GetBodyVelocity();
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_VEL_X){
-
-        finalvelocity.X = servercasted->Velocity.X;
-        
-    } else if(ourcasted){
-        
-        finalvelocity.X = ourcasted->Velocity.X;
-        
-    } else {
-
-        finalvelocity.X = curvelocity.X;
-    }
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_VEL_Y){
-
-        finalvelocity.Y = servercasted->Velocity.Y;
-        
-    } else if(ourcasted){
-        
-        finalvelocity.Y = ourcasted->Velocity.Y;
-        
-    } else {
-
-        finalvelocity.Y = curvelocity.Y;
-    }
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_VEL_Z){
-
-        finalvelocity.Z = servercasted->Velocity.Z;
-        
-    } else if(ourcasted){
-        
-        finalvelocity.Z = ourcasted->Velocity.Z;
-        
-    } else {
-
-        finalvelocity.Z = curvelocity.Z;
-    }
-
-
-    Float3 finaltorque;
-    Float3 curtorque = GetBodyTorque();
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_TOR_X){
-
-        finaltorque.X = servercasted->Torque.X;
-        
-    } else if(ourcasted){
-        
-        finaltorque.X = ourcasted->Torque.X;
-        
-    } else {
-
-        finaltorque.X = curtorque.X;
-    }
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_TOR_Y){
-
-        finaltorque.Y = servercasted->Torque.Y;
-        
-    } else if(ourcasted){
-        
-        finaltorque.Y = ourcasted->Torque.Y;
-        
-    } else {
-
-        finaltorque.Y = curtorque.Y;
-    }
-
-    if(servercasted->ValidFields & PPDELTAUPDATED_TOR_Z){
-
-        finaltorque.Z = servercasted->Torque.Z;
-        
-    } else if(ourcasted){
-        
-        finaltorque.Z = ourcasted->Torque.Z;
-        
-    } else {
-
-        finaltorque.Z = curtorque.Z;
-    }    
-    
-    
-    SetBodyVelocity(finalvelocity);
-    SetBodyTorque(finaltorque);
-
-    const int worldtick = OwnedByWorld->GetTickNumber();
-
-    int tosimulate = worldtick-tick;
-
-    // All the old states need to be replaced with new ones or we are going to resimulate a lot
-    // for the next few ticks
-    int advancedtick = tick;
-    assendable->ReplaceOldClientState(advancedtick, assendable->CaptureState());
-
-    int simulatedtime = 0;
-    
-
-    
-    
-    if(tosimulate < 1)
-        return;
-
-    lockit.unlock();
-
-    
-    
-    // TODO: make sure that the entity doesn't get simulated before this resimulate call locks the world
-    OwnedByWorld->GetPhysicalWorld()->ResimulateBody(Body, tosimulate*TICKSPEED,
-        std::bind<void>([](int &simulatedtime, int &advancedtick, BaseSendableEntity* obj, int worldtick) -> void
-            {
-        
-                // Keep track of current tick while resimulating //
-                simulatedtime += NEWTON_FPS_IN_MICROSECONDS;
-
-                if(simulatedtime >= TICKSPEED*1000){
-
-                    advancedtick++;
-                    simulatedtime -= TICKSPEED*1000;
-
-                    assert(advancedtick <= worldtick && "BasePhysicsObject resimulate assert");
-            
-                    if(!obj->ReplaceOldClientState(advancedtick, obj->CaptureState())){
-
-                        // The world tick might not have been stored yet... //
-                        if(advancedtick != worldtick){
-
-                            Logger::Get()->Warning("BasePhysicsObject("+Convert::ToString(obj->GetID())+
-                                "): resimulate: didn't find old state for tick "+
-                                Convert::ToString(advancedtick));
-                        }
-                    }
-                }
-            }, simulatedtime, advancedtick, assendable, worldtick),
-        BasePhysicsGetConstraintable());
-}
-#else
 DLLEXPORT void BasePhysicsObject::InterpolatePhysicalState(PositionablePhysicalDeltaState &first,
     PositionablePhysicalDeltaState &second, float progress)
 {
@@ -627,10 +336,10 @@ DLLEXPORT void BasePhysicsObject::InterpolatePhysicalState(PositionablePhysicalD
         progress = 1.f;
     
     GUARD_LOCK();
-    Float3 pos = GetPosition();
-    Float4 rot = GetOrientation();
-    Float3 vel = GetBodyVelocity();
-    Float3 tor = GetBodyTorque();
+    Float3 pos = GetPos(guard);
+    Float4 rot = GetOrientation(guard);
+    Float3 vel = GetBodyVelocity(guard);
+    Float3 tor = GetBodyTorque(guard);
 
     // First check does the second state have a changed value for each component
     // If it does interpolate from the first state, which should have almost all values, or if it doesn't error
@@ -761,17 +470,15 @@ DLLEXPORT void BasePhysicsObject::InterpolatePhysicalState(PositionablePhysicalD
         tor.Z = first.Torque.Z;
     }
     
-    SetPos(pos);
-    SetOrientation(rot);
-    SetBodyVelocity(vel);
-    SetBodyTorque(tor);
+    SetPos(guard, pos);
+    SetOrientation(guard, rot);
+    SetBodyVelocity(guard, vel);
+    SetBodyTorque(guard, tor);
 }
-
-#endif //NETWORK_USE_SNAPSHOTS
 // ------------------ ApplyForceInfo ------------------ //
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(bool addmass,
-    std::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object)> getforce,
-    std::string* name /*= NULL*/) : 
+    std::function<Float3(ApplyForceInfo* instance, BasePhysicsObject* object, Lock &objectlock)>
+    getforce, std::string* name /*= NULL*/) : 
 	Callback(getforce), MultiplyByMass(addmass), OptionalName(name)
 {
 	
@@ -782,7 +489,7 @@ DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(ApplyForceInfo &other) :
     Callback(other.Callback), MultiplyByMass(other.MultiplyByMass)
 {
     if(other.OptionalName)
-        OptionalName = move(unique_ptr<std::string>(new std::string(*other.OptionalName.get())));
+        OptionalName = move(make_unique<std::string>(*other.OptionalName.get()));
 }
 
 DLLEXPORT Leviathan::ApplyForceInfo::ApplyForceInfo(ApplyForceInfo &&other) :

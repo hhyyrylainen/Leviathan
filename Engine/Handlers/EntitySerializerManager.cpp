@@ -55,7 +55,7 @@ DLLEXPORT std::unique_ptr<sf::Packet> Leviathan::EntitySerializerManager::Create
     // Find a serializer that can finish it //
     for(size_t i = 0; i < Serializers.size(); i++){
 
-        if(Serializers[i]->CreatePacketForConnection(object, *packet, forwho)){
+        if(Serializers[i]->CreatePacketForConnection(object, guard, *packet, forwho)){
 
             return move(packet);
         }

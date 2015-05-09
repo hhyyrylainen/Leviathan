@@ -125,7 +125,7 @@ namespace Leviathan{
 
 		//! \brief Callback used to know when our connection is closed
 		DLLEXPORT void _OnNotifierDisconnected(Lock &guard,
-            BaseNotifierAll* parenttoremove) override;
+            BaseNotifierAll* parenttoremove, Lock &parentlock) override;
 
 		//! \brief Called when the server has confirmed the join and we are a player on the server
 		//!

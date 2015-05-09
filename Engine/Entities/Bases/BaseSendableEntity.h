@@ -120,7 +120,7 @@ namespace Leviathan{
         //! \brief Serializes this object to a packet
         //!
         //! Calls the _SaveOwnDataToPacket method after adding SerializeType to the packet
-        DLLEXPORT void SerializeToPacket(sf::Packet &packet);
+        DLLEXPORT void SerializeToPacket(Lock &guard, sf::Packet &packet);
 
         //! \brief Used to unserialize objects from packets
         //! \return Returns An object that is derived from BaseSendableEntity on success otherwise nullptr is
@@ -161,7 +161,7 @@ namespace Leviathan{
             std::shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const;
 
         //! \brief Adds a new connection to known receivers
-        DLLEXPORT virtual void AddConnectionToReceivers(ConnectionInfo* receiver);
+        DLLEXPORT virtual void AddConnectionToReceivers(Lock &guard, ConnectionInfo* receiver);
 
         //! \brief Returns the sendable type of the object
         DLLEXPORT BASESENDABLE_ACTUAL_TYPE GetSendableType() const;
@@ -174,11 +174,11 @@ namespace Leviathan{
         //! This should do the opposite of SerializeToPacket
         //! Note this function should also call Init on the object to make it usable
         //! \note This doesn't require locking as the object cannot be used while this is called
-        virtual bool _LoadOwnDataFromPacket(sf::Packet &packet) = 0;
+        virtual bool _LoadOwnDataFromPacket(Lock &guard, sf::Packet &packet) = 0;
 
         //! \brief Child classers use this to serialize their own data to a packet
         //! \note The class implementing this might want to lock while this is being called to avoid properties changing
-        virtual void _SaveOwnDataToPacket(sf::Packet &packet) = 0;
+        virtual void _SaveOwnDataToPacket(Lock &guard, sf::Packet &packet) = 0;
 
         //! \brief Called internally when data is updated
         //! \note This object has to be locked before this call

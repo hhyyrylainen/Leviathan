@@ -21,11 +21,13 @@ DLLEXPORT Leviathan::BaseRenderable::~BaseRenderable(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::BaseRenderable::SetHiddenState(bool hidden){
+
+    GUARD_LOCK();
 	Hidden = hidden;
-	_OnHiddenStateUpdated();
+	_OnHiddenStateUpdated(guard);
 }
 
-void Leviathan::BaseRenderable::_OnHiddenStateUpdated(){
+void Leviathan::BaseRenderable::_OnHiddenStateUpdated(Lock &guard){
 	// Set scene node visibility //
 	if(ObjectsNode)
 		ObjectsNode->setVisible(!Hidden);

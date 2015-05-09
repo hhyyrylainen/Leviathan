@@ -71,7 +71,7 @@ public:
 
         int targettick;
         {
-            // TODO: get the engine tick here
+            // The world tick will be the same as the engine tick
             GUARD_LOCK_OTHER(World);
 
             targettick = World->TickNumber-INTERPOLATION_TIME/TICKSPEED;
@@ -306,7 +306,10 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     // Unhook from other objects //
     ReleaseChildHooks(guard);
 
+    guard.unlock();
+    
     // Report waiting constraints //
+    Lock lock(WaitingConstraintsMutex);
     if(!WaitingConstraints.empty()){
 
         Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has "+Convert::ToString(
@@ -516,19 +519,22 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(ObjectPtr obj){
 
     if(!obj)
         return;
-    
-	GUARD_LOCK();
-	Objects.push_back(obj);
 
-    // Check is it a sendable object //
-    BaseSendableEntity* sendable = dynamic_cast<BaseSendableEntity*>(obj.get());
+    {
+        GUARD_LOCK();
+        Objects.push_back(obj);
 
-    if(sendable){
+        // Check is it a sendable object //
+        BaseSendableEntity* sendable = dynamic_cast<BaseSendableEntity*>(obj.get());
 
-        SendableObjects.push_back(sendable);
+        if(sendable){
+
+            SendableObjects.push_back(sendable);
+        }
     }
 
     // Check for constraints //
+    Lock lock(WaitingConstraintsMutex);
     if(WaitingConstraints.empty())
         return;
 
@@ -543,8 +549,9 @@ DLLEXPORT void Leviathan::GameWorld::AddObject(ObjectPtr obj){
         WaitingConstraint* current = (first+i);
         if(current->Entity1 == objid || current->Entity2 == objid){
 
+            GUARD_LOCK();
             // Try to apply it //
-            if(_TryApplyConstraint(current->Packet->GetResponseDataForEntityConstraint())){
+            if(_TryApplyConstraint(guard, current->Packet->GetResponseDataForEntityConstraint())){
                 
                 WaitingConstraints.erase(WaitingConstraints.begin()+i);
                 --amount;
@@ -649,8 +656,15 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(Lock &guard){
     
     SendableObjects.clear();
 
+    guard.unlock();
+    
     // Throw away the waiting constraints //
-    WaitingConstraints.clear();
+    {
+        Lock lock(WaitingConstraintsMutex);
+        WaitingConstraints.clear();
+    }
+
+    guard.lock();
 
     // Notify everybody that all entities are discarded //
     auto end = ReceivingPlayers.end();
@@ -910,7 +924,7 @@ bool Leviathan::GameWorld::AreAllPlayersSynced() const{
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(Lock &guard,
-    BaseNotifiableAll* parentadded)
+    BaseNotifiableAll* parentadded, Lock &parentlock)
 {
 
 	// The connected object will always have to be a ConnectedPlayer
@@ -950,16 +964,11 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(Lock &guard,
             placeholders::_2));
 
 
-	// This lock is only required for this one call (we are always locked before this call) //
-	{
-		// Update the position data //
-		GUARD_LOCK();
-		UpdatePlayersPositionData(plyptr, guard);
+    // Update the position data //
+    UpdatePlayersPositionData(guard, plyptr, parentlock);
 
-        // Add it to the list //
-        InitiallySyncingPlayers.push_back(connectobject);
-	}
-
+    // Add it to the list //
+    InitiallySyncingPlayers.push_back(connectobject);
 
 	// Start sending initial update //
 
@@ -1036,7 +1045,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(Lock &guard,
 
                 GUARD_LOCK_OTHER(constraintable);
 
-                size_t count = constraintable->GetConstraintCount();
+                size_t count = constraintable->GetConstraintCount(guard);
 
                 Logger::Get()->Info("Sending object's constraints, total: "+
                     Convert::ToString(count));
@@ -1045,7 +1054,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(Lock &guard,
 
                     // This should ignore NULL pointers so this should send all
                     // constraints just fine
-                    world->SendConstraintToConnection(constraintable->GetConstraint(i),
+                    world->SendConstraintToConnection(constraintable->GetConstraint(guard, i),
                         connection.get());
                 }
             }
@@ -1092,7 +1101,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(Lock &guard,
 }
 
 DLLEXPORT void Leviathan::GameWorld::_OnNotifiableDisconnected(Lock &guard,
-    BaseNotifiableAll* parenttoremove)
+    BaseNotifiableAll* parenttoremove, Lock &parentlock)
 {
 
 	auto plyptr = static_cast<ConnectedPlayer*>(parenttoremove);
@@ -1123,12 +1132,11 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableDisconnected(Lock &guard,
     Logger::Get()->Warning("GameWorld: disconnected plyptr not found in list");
 }
 
-void Leviathan::GameWorld::UpdatePlayersPositionData(ConnectedPlayer* ply, Lock &guard){
-	VerifyLock(guard);
+void Leviathan::GameWorld::UpdatePlayersPositionData(Lock &guard, ConnectedPlayer* ply,
+    Lock &plylock)
+{
 	// Get the position for this player in this world //
-
-	GUARD_LOCK_OTHER_NAME(ply, guard2);
-	BasePositionable* positionobj = ply->GetPositionInWorld(this, guard2);
+	BasePositionable* positionobj = ply->GetPositionInWorld(this, plylock);
 
 	if(!positionobj){
 
@@ -1255,15 +1263,18 @@ DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDa
 DLLEXPORT void Leviathan::GameWorld::HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data,
     std::shared_ptr<NetworkResponse> packet)
 {
-
-    if(_TryApplyConstraint(data)){
+    GUARD_LOCK();
+    
+    if(_TryApplyConstraint(guard, data)){
 
         // It is now applied //
         return;
     }
 
+    guard.unlock();
+    
     // Add it to the queue //
-    GUARD_LOCK();
+    Lock lock(WaitingConstraintsMutex);
     WaitingConstraints.push_back(WaitingConstraint(data->EntityID1, data->EntityID2, packet));
 }
 
@@ -1367,7 +1378,9 @@ DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(NetworkResponseData
     }
 }
 // ------------------------------------ //
-bool Leviathan::GameWorld::_TryApplyConstraint(NetworkResponseDataForEntityConstraint* data){
+bool Leviathan::GameWorld::_TryApplyConstraint(Lock &guard,
+    NetworkResponseDataForEntityConstraint* data)
+{
 
     // Find the objects //
     BaseObject* first;
@@ -1379,44 +1392,44 @@ bool Leviathan::GameWorld::_TryApplyConstraint(NetworkResponseDataForEntityConst
     // The constraint might only need the first entity //
     bool findsecond = data->EntityID2 >= 0 ? true: false;
 
-    {
-        GUARD_LOCK();
+    auto end = Objects.end();
+    for(auto iter = Objects.begin(); iter != end; ++iter){
 
-        auto end = Objects.end();
-        for(auto iter = Objects.begin(); iter != end; ++iter){
-
-            int objid = (*iter)->GetID();
-            if(!first && objid == data->EntityID1){
+        int objid = (*iter)->GetID();
+        if(!first && objid == data->EntityID1){
             
-                first = (*iter).get();
+            first = (*iter).get();
 
-                // If the second is found or only one entity is needed we are done //
-                if(second || !findsecond){
+            // If the second is found or only one entity is needed we are done //
+            if(second || !findsecond){
 
-                    found = true;
-                    break;
-                }
+                found = true;
+                break;
+            }
             
-            } else if(findsecond && !second && objid == data->EntityID2){
+        } else if(findsecond && !second && objid == data->EntityID2){
 
-                second = (*iter).get();
+            second = (*iter).get();
 
-                // If the first is found we are done //
-                if(first){
+            // If the first is found we are done //
+            if(first){
 
-                    found = true;
-                    break;
-                }
+                found = true;
+                break;
             }
         }
     }
 
     if(!found)
         return false;
+
+    guard.unlock();
     
     // Apply the constraint //
     ConstraintSerializerManager::Get()->CreateConstraint(first, second, data->Type,
         *data->ConstraintData.get(), data->Create);
+
+    guard.lock();
 
     return true;
 }

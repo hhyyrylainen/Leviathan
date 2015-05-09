@@ -36,7 +36,7 @@ namespace Leviathan{ namespace Entity{
             //! The Constraint won't work without calling this
             //! \pre The SetParameters method of the child class is called
             //! \todo Allow the error messages to be silenced
-            DLLEXPORT bool Init();
+            DLLEXPORT virtual bool Init();
             
             //! \brief Calls the Newton destroy function
             DLLEXPORT void Release();
@@ -63,8 +63,8 @@ namespace Leviathan{ namespace Entity{
             
         protected:
             // called to verify params before init proceeds //
-            virtual bool _CheckParameters() = 0;
-            virtual bool _CreateActualJoint() = 0;
+            DLLEXPORT virtual bool _CheckParameters();
+            DLLEXPORT virtual bool _CreateActualJoint();
 
             //! \brief Called by either side when they become disowned
             void _WorldDisowned();

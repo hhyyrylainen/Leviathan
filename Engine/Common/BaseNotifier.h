@@ -23,14 +23,17 @@ namespace Leviathan{
         DLLEXPORT void ReleaseChildHooks(Lock &guard);
 
 		//! Connects this to a notifiable object for holding a reference to it
-		DLLEXPORT FORCE_INLINE bool ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child){
+		DLLEXPORT FORCE_INLINE bool ConnectToNotifiable(
+            BaseNotifiable<ParentType, ChildType>* child)
+        {
 			GUARD_LOCK();
-			return ConnectToNotifiable(child, guard);
+            GUARD_LOCK_OTHER_NAME(child, guard2);
+			return ConnectToNotifiable(guard, child, guard2);
 		}
 
 		//! \brief The actual implementation of ConnecToNotifiable
-		DLLEXPORT bool ConnectToNotifiable(BaseNotifiable<ParentType, ChildType>* child,
-            Lock &guard);
+		DLLEXPORT bool ConnectToNotifiable(Lock &guard,
+            BaseNotifiable<ParentType, ChildType>* child, Lock &childlock);
 
 
 		//! \brief Notifies the children about something
@@ -40,14 +43,14 @@ namespace Leviathan{
 
 
 		//! \brief Disconnects from previously connected notifiable
-		DLLEXPORT bool UnConnectFromNotifiable(BaseNotifiable<ParentType, ChildType>* unhookfrom,
-            Lock &guard);
+		DLLEXPORT bool UnConnectFromNotifiable(Lock &guard,
+            BaseNotifiable<ParentType, ChildType>* unhookfrom);
 
 		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifiable(
             BaseNotifiable<ParentType, ChildType>* child)
         {
 			GUARD_LOCK();
-			return UnConnectFromNotifiable(child, guard);
+			return UnConnectFromNotifiable(guard, child);
 		}
 
 		//! \brief Searches the connected notifiable objects and calls the above function with it's pointer
@@ -64,10 +67,11 @@ namespace Leviathan{
 		
 		// Callback called by the child, and doesn't call the unhook again on the child
 		void _OnUnhookNotifiable(Lock &guard,
-            BaseNotifiable<ParentType, ChildType>* childtoremove);
+            BaseNotifiable<ParentType, ChildType>* childtoremove, Lock &childlock);
 
 		// Called by child to hook, and doesn't call the child's functions
-		void _OnHookNotifiable(Lock &guard, BaseNotifiable<ParentType, ChildType>* child);
+		void _OnHookNotifiable(Lock &guard, BaseNotifiable<ParentType, ChildType>* child,
+            Lock &childlock);
 
 		//! \brief Gets the internal pointer to the actual object
 		DLLEXPORT ParentType* GetActualPointerToNotifierObject();
@@ -77,13 +81,14 @@ namespace Leviathan{
 		//! \warning Do not directly call this if you don't know what you are doing!
 		virtual void OnNotified();
 
-
 	protected:
 
 		// Callbacks for child classes to implement //
 		// This object should already be locked during this call //
-		DLLEXPORT virtual void _OnNotifiableConnected(Lock &guard, ChildType* childadded);
-		DLLEXPORT virtual void _OnNotifiableDisconnected(Lock &guard, ChildType* childtoremove);
+		DLLEXPORT virtual void _OnNotifiableConnected(Lock &guard, ChildType* childadded,
+            Lock &childlock);
+		DLLEXPORT virtual void _OnNotifiableDisconnected(Lock &guard, ChildType* childtoremove,
+            Lock &childlock);
 		// ------------------------------------ //
 
 		//! Stores a pointer to the object that is inherited from this

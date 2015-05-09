@@ -34,7 +34,7 @@ DLLEXPORT Leviathan::Entity::TrackEntityController::~TrackEntityController(){
     ReleaseData();
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::TrackEntityController::Init(){
+DLLEXPORT bool Leviathan::Entity::TrackEntityController::Init(Lock &guard){
 
     IsOnClient = NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_CLIENT;
     
@@ -44,7 +44,7 @@ DLLEXPORT bool Leviathan::Entity::TrackEntityController::Init(){
     //RegisterForEvent(EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE);
 
 	// Set current node and percentages and possibly update connected objects //
-	_SanityCheckNodeProgress();
+	_SanityCheckNodeProgress(guard);
     
 	return true;
 }
@@ -241,11 +241,11 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::SetProgressTowardsNextN
 	NodeProgress = progress;
     
 	// Update now //
-	_SanityCheckNodeProgress();
+	_SanityCheckNodeProgress(guard);
 	RequiresUpdate = true;
 }
 
-void Leviathan::Entity::TrackEntityController::_SanityCheckNodeProgress(){
+void Leviathan::Entity::TrackEntityController::_SanityCheckNodeProgress(Lock &guard){
 	if(ReachedNode < 0 || ReachedNode >= (int)TrackNodes.size()){
 		ReachedNode = 0;
 	}
@@ -457,7 +457,9 @@ DLLEXPORT void Leviathan::Entity::TrackEntityController::SetTrackAdvanceSpeed(co
     ChangeSpeed = speed;
 }
 // ------------------------------------ //
-bool Leviathan::Entity::TrackEntityController::_LoadOwnDataFromPacket(sf::Packet &packet){
+bool Leviathan::Entity::TrackEntityController::_LoadOwnDataFromPacket(Lock &guard,
+    sf::Packet &packet)
+{
     int reachednode;
     float nodeprogress, changespeed, force;
     int32_t nodecount;
@@ -483,7 +485,8 @@ bool Leviathan::Entity::TrackEntityController::_LoadOwnDataFromPacket(sf::Packet
         }
 
         // Apply position //
-        curnode->ApplyPositionAndRotationFromPacket(packet);
+        GUARD_LOCK_OTHER_NAME(curnode, guard2);
+        curnode->ApplyPositionAndRotationFromPacket(guard2, packet);
 
         TrackNodes.push_back(curnode);
     }
@@ -501,13 +504,14 @@ bool Leviathan::Entity::TrackEntityController::_LoadOwnDataFromPacket(sf::Packet
     ChangeSpeed = changespeed;
     ForceTowardsPoint = force;
     
-    Init();
+    Init(guard);
 
     return true;
 }
 
-void Leviathan::Entity::TrackEntityController::_SaveOwnDataToPacket(sf::Packet &packet){
-    GUARD_LOCK();
+void Leviathan::Entity::TrackEntityController::_SaveOwnDataToPacket(Lock &guard,
+    sf::Packet &packet)
+{
 
     // First dump our state //
     packet << ReachedNode << NodeProgress << ChangeSpeed << ForceTowardsPoint;
@@ -518,9 +522,9 @@ void Leviathan::Entity::TrackEntityController::_SaveOwnDataToPacket(sf::Packet &
     
     for(int32_t i = 0; i < nodecount; i++){
 
-        TrackNodes[i]->AddPositionAndRotationToPacket(packet);
+        GUARD_LOCK_OTHER_NAME(TrackNodes[i], guard2);
+        TrackNodes[i]->AddPositionAndRotationToPacket(guard2, packet);
     }
-    
 }
 // ------------------------------------ //
 void Leviathan::Entity::TrackEntityController::_GetPosAndRotForProgress(Float3 &pos, Float4 &rot, float progress,
@@ -626,7 +630,7 @@ DLLEXPORT bool TrackEntityController::SetStateToInterpolated(ObjectDeltaStateDat
         }
     }
 
-    _SanityCheckNodeProgress();
+    _SanityCheckNodeProgress(guard);
     
     return true;
 }

@@ -41,7 +41,7 @@ void Leviathan::Entity::LocationNode::OrientationUpdated(){
 }
 // ------------------------------------ //
 void Leviathan::Entity::LocationNode::_OnNotifierDisconnected(Lock &guard,
-    BaseNotifierEntity* parenttoremove)
+    BaseNotifierEntity* parenttoremove, Lock &parentlock)
 {
 	if(ConnectedToParents.size()-1 == 0 && DeleteIfNoParent){
 

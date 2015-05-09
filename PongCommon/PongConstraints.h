@@ -73,12 +73,7 @@ namespace Pong{
             Leviathan::BaseConstraintable* child);
         ~GameBallConnection();
 
-    protected:
-
-        virtual bool _CheckParameters() override;
-        
-        //! Links the player's paddle track to the PlayerSlot
-        virtual bool _CreateActualJoint() override;
+        bool Init(Lock &arenalock);
     };
 
 

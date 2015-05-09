@@ -34,8 +34,8 @@ namespace Leviathan{
 		DLLEXPORT void SetOrientation(const Float4 &quaternionrotation);
         DLLEXPORT void SetOrientationComponents(const float &x, const float &y, const float &z, const float &w);
 
-        DLLEXPORT void SetPos(const Float3 &pos, Lock &guard);
-        DLLEXPORT void SetOrientation(const Float4 &quaternionrotation, Lock &guard);
+        DLLEXPORT void SetPos(Lock &guard, const Float3 &pos);
+        DLLEXPORT void SetOrientation(Lock &guard, const Float4 &quaternionrotation);
 
 		DLLEXPORT Float4 GetOrientation() const;
         DLLEXPORT Float4 GetOrientation(Lock &guard) const;
@@ -44,7 +44,7 @@ namespace Leviathan{
         DLLEXPORT void GetRotation(Float4 &receiver) const;
 
         //! \brief Applies position and rotation from a BasePositionData
-        DLLEXPORT void ApplyPositionDataObject(const BasePositionData &pos);
+        DLLEXPORT void ApplyPositionDataObject(Lock &guard, const BasePositionData &pos);
 
 		DLLEXPORT void GetPosElements(float &outx, float &outy, float &outz);
 		DLLEXPORT Float3 GetPos() const;
@@ -60,11 +60,11 @@ namespace Leviathan{
 		DLLEXPORT void SetPosZ(const float &z);
 
         //! \brief Saves location and rotation to a packet
-        DLLEXPORT void AddPositionAndRotationToPacket(sf::Packet &packet);
+        DLLEXPORT void AddPositionAndRotationToPacket(Lock &guard, sf::Packet &packet);
 
         //! \brief Sets the position and rotation to data retrieved from a packet
         //! \exception ExceptionInvalidArgument when the packet format is invalid
-        DLLEXPORT void ApplyPositionAndRotationFromPacket(sf::Packet &packet);
+        DLLEXPORT void ApplyPositionAndRotationFromPacket(Lock &guard, sf::Packet &packet);
 
         //! \brief Interpolates between two states and sets this object's state to be between the states
         DLLEXPORT void InterpolatePositionableState(PositionableRotationableDeltaState &first,

@@ -422,7 +422,7 @@ checksentrequestsbeginlabel:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnNotifierDisconnected(Lock &guard,
-    BaseNotifierAll* parenttoremove)
+    BaseNotifierAll* parenttoremove, Lock &parentlock)
 {
 
 	// Get the close reason from it //

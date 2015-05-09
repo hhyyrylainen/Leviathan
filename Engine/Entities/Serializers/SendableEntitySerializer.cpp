@@ -17,8 +17,8 @@ DLLEXPORT SendableEntitySerializer::~SendableEntitySerializer(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(BaseObject* object, sf::Packet &packet,
-    ConnectionInfo* connectionptr)
+DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(BaseObject* object,
+    Lock &objectlock, sf::Packet &packet, ConnectionInfo* connectionptr)
 {
     // Cast to the base class that can handle the required functions //
     BaseSendableEntity* asbase = dynamic_cast<BaseSendableEntity*>(object);
@@ -33,9 +33,9 @@ DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(BaseObject* o
 
     // Add the connection to the known ones (this is before the serialize to make sure that all updates after
     // serializing get sent)
-    asbase->AddConnectionToReceivers(connectionptr);
+    asbase->AddConnectionToReceivers(objectlock, connectionptr);
     
-    asbase->SerializeToPacket(packet);
+    asbase->SerializeToPacket(objectlock, packet);
 
     return true;
 }

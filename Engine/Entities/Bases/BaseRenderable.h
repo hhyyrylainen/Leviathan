@@ -3,10 +3,11 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "../GameWorld.h"
+#include "../../Common/ThreadSafe.h"
 
 namespace Leviathan{
 
-	class BaseRenderable{
+	class BaseRenderable : public virtual ThreadSafe{
 	public:
 		DLLEXPORT BaseRenderable(bool hidden);
 		DLLEXPORT virtual ~BaseRenderable();
@@ -32,7 +33,7 @@ namespace Leviathan{
 
 	protected:
 
-		virtual void _OnHiddenStateUpdated();
+		virtual void _OnHiddenStateUpdated(Lock &guard);
 		// ------------------------------------ //
 		bool Hidden;
 

@@ -20,15 +20,18 @@ namespace Leviathan{
 		DLLEXPORT void ReleaseParentHooks();
 
 		//! \brief The actual implementation of UnConnectFromNotifier
-		DLLEXPORT bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier,
-            Lock &guard, Lock &notifierlock);
+		DLLEXPORT bool UnConnectFromNotifier(Lock &guard,
+            BaseNotifier<ParentType, ChildType>* specificnotifier, Lock &notifierlock);
 
         DLLEXPORT inline bool UnConnectFromNotifier(Lock &guard,
             BaseNotifier<ParentType, ChildType>* specificnotifier)
         {
 
+            guard.unlock();
             GUARD_LOCK_OTHER_NAME(specificnotifier, guard2);
-            return UnConnectFromNotifier(specificnotifier, guard, guard2);
+            guard.lock();
+            
+            return UnConnectFromNotifier(guard, specificnotifier, guard2);
         }
 
 		//! \brief Notifies all the parents of this object about something
@@ -67,10 +70,12 @@ namespace Leviathan{
         DLLEXPORT bool ConnectToNotifier(Lock &unlockable, BaseNotifier<ParentType, ChildType>* owner);
 
 		//! Callback called by the parent, used to not to call the unhook again on the parent
-		void _OnUnhookNotifier(Lock &locked, BaseNotifier<ParentType, ChildType>* parent);
+		void _OnUnhookNotifier(Lock &locked, BaseNotifier<ParentType, ChildType>* parent,
+            Lock &parentlock);
 
 		//! Called by parent to hook, and doesn't call the parent's functions
-		void _OnHookNotifier(Lock &locked, BaseNotifier<ParentType, ChildType>* parent);
+		void _OnHookNotifier(Lock &locked, BaseNotifier<ParentType, ChildType>* parent,
+            Lock &parentlock);
 
 		//! \brief Gets the internal pointer to the actual object
 		DLLEXPORT ChildType* GetActualPointerToNotifiableObject();
@@ -84,9 +89,10 @@ namespace Leviathan{
 	protected:
 
 		// Callbacks for child classes to implement //
-		// This object should already be locked during this call //
-		DLLEXPORT virtual void _OnNotifierConnected(Lock &guard, ParentType* parentadded);
-		DLLEXPORT virtual void _OnNotifierDisconnected(Lock &guard, ParentType* parenttoremove);
+		DLLEXPORT virtual void _OnNotifierConnected(Lock &guard, ParentType* parentadded,
+            Lock &parentlock);
+		DLLEXPORT virtual void _OnNotifierDisconnected(Lock &guard, ParentType* parentremoved,
+            Lock &parentlock);
 		// ------------------------------------ //
 
 		//! Stores a pointer to the object that is inherited from this

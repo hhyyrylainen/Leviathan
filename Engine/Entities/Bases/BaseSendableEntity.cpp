@@ -34,12 +34,11 @@ DLLEXPORT BASESENDABLE_ACTUAL_TYPE Leviathan::BaseSendableEntity::GetSendableTyp
     return SerializeType;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::BaseSendableEntity::SerializeToPacket(sf::Packet &packet){
-    GUARD_LOCK();
+DLLEXPORT void Leviathan::BaseSendableEntity::SerializeToPacket(Lock &guard, sf::Packet &packet){
     
     packet << static_cast<int32_t>(SerializeType);
 
-    _SaveOwnDataToPacket(packet);
+    _SaveOwnDataToPacket(guard, packet);
 }
 // ------------------------------------ //
 DLLEXPORT std::unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerializeFromPacket(sf::Packet &packet,
@@ -68,7 +67,8 @@ DLLEXPORT std::unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnS
             // Create a brush and apply the packet to it //
             std::unique_ptr<Entity::Brush> tmpobj(new Entity::Brush(hidden, world, id));
 
-            if(!tmpobj->_LoadOwnDataFromPacket(packet)){
+            GUARD_LOCK_OTHER(tmpobj);
+            if(!tmpobj->_LoadOwnDataFromPacket(guard, packet)){
 
                 Logger::Get()->Warning("BaseSendableEntity: failed to Init Brush from network packet");
                 return nullptr;
@@ -89,7 +89,8 @@ DLLEXPORT std::unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnS
             // Create a brush and apply the packet to it //
             std::unique_ptr<Entity::Prop> tmpobj(new Entity::Prop(hidden, world, id));
 
-            if(!tmpobj->_LoadOwnDataFromPacket(packet)){
+            GUARD_LOCK_OTHER(tmpobj);
+            if(!tmpobj->_LoadOwnDataFromPacket(guard, packet)){
 
                 Logger::Get()->Warning("BaseSendableEntity: failed to Init Prop from network packet");
                 return nullptr;
@@ -99,15 +100,19 @@ DLLEXPORT std::unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnS
         }
         case BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER:
         {
-            std::unique_ptr<Entity::TrackEntityController> tmpobj(new Entity::TrackEntityController(id, world));
+            std::unique_ptr<Entity::TrackEntityController> tmpobj(
+                new Entity::TrackEntityController(id, world));
 
-            if(!tmpobj->_LoadOwnDataFromPacket(packet)){
+            GUARD_LOCK_OTHER(tmpobj);
+            if(!tmpobj->_LoadOwnDataFromPacket(guard, packet)){
 
-                Logger::Get()->Warning("BaseSendableEntity: failed to Init TrackEntityController from network packet");
+                Logger::Get()->Warning("BaseSendableEntity: failed to Init "
+                    "TrackEntityController from network packet");
                 return nullptr;
             }
 
-            return move(unique_ptr<BaseSendableEntity>(dynamic_cast<BaseSendableEntity*>(tmpobj.release())));
+            return move(unique_ptr<BaseSendableEntity>(dynamic_cast<BaseSendableEntity*>(
+                        tmpobj.release())));
         }
         default:
             // Unknown type
@@ -115,9 +120,9 @@ DLLEXPORT std::unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnS
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::BaseSendableEntity::AddConnectionToReceivers(ConnectionInfo* receiver){
-
-    GUARD_LOCK();
+DLLEXPORT void Leviathan::BaseSendableEntity::AddConnectionToReceivers(Lock &guard,
+    ConnectionInfo* receiver)
+{
 
     const int tick = OwnedByWorld ? OwnedByWorld->GetTickNumber(): -1;
 

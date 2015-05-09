@@ -1,67 +1,21 @@
-#ifndef LEVIATHAN_BASEOBJECT
-#define LEVIATHAN_BASEOBJECT
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
-#include "Common/ReferenceCounted.h"
-#include "Common/ThreadSafe.h"
+#include "Include.h"
+
+// This is required for ObjectPtr
+#include <boost/intrusive_ptr.hpp>
 
 
-// This cannot be enum because it need to be able to be extended with new values //
-// Following rules should be followed:
-// Internal engine messages have reserved numbers below 10000
-// And direct to script calls should be over 100000 (100 thousand) for easy checking by callee //
-
-#define ENTITYCUSTOMMESSAGETYPE_LOCATIONDATA_UPDATED			1
-#define ENTITYCUSTOMMESSAGETYPE_POSITIONUPDATED					2
-#define ENTITYCUSTOMMESSAGETYPE_ORIENTATIONUPDATED				3
-
-// For this type ptr should be ApplyForceInfo* which should be deleted BY the CALLER (don't store this, just copy values out) //
-#define ENTITYCUSTOMMESSAGETYPE_ADDAPPLYFORCE					4
-// For this type ptr should be wstring* which doesn't need deleting //
-#define ENTITYCUSTOMMESSAGETYPE_REMOVEAPPLYFORCE				5
-// For this type ptr should be Float3* which doesn't need deleting //
-#define ENTITYCUSTOMMESSAGETYPE_SETVELOCITY						6
-// For this type ptr should be Float3* which doesn't need deleting //
-#define ENTITYCUSTOMMESSAGETYPE_CHANGEWORLDPOSITION				7
-// ------------------ These are sent by parent objects (only non-physical parenting) ------------------ //
-// Sent when the position of the parent object has updated, for this type the ptr should be BasePositionable* which doesn't need deleting //
-#define ENTITYCUSTOMMESSAGETYPE_PARENTPOSITIONUPDATED			8
-// Sent when parent has connected (won't be send when child connects to a parent), for this type ptr should be BasePositionable* which doesn't need deleting //
-#define ENTITYCUSTOMMESSAGETYPE_PARENTCONNECTED					9
-
-// This message type is used for requesting data, if cannot be handled just return false, but if it can return the right type in the void ptr //
-#define ENTITYCUSTOMMESSAGETYPE_DATAREQUEST						9999
+#include "../../Common/ReferenceCounted.h"
+#include "../../Common/ThreadSafe.h"
+#include "../../Common/Visitor.h"
 
 namespace Leviathan{
 
-	struct ObjectDataRequest{
-		ObjectDataRequest(int wantedtype) : RequestObjectPart(wantedtype), RequestResult(NULL), AdditionalInfo(NULL){
-		}
-
-		// See the following bunch of defines for values //
-		int RequestObjectPart;
-		void* RequestResult;
-		// Used to send more info like another object //
-		void* AdditionalInfo;
-	};
-}
-// Same rules should apply to these than the defines above (don't use values less than 10000) //
-
-// Expected result is Float3*, additional is NULL //
-#define ENTITYDATA_REQUESTTYPE_WORLDPOSITION		1
-#define ENTITYDATA_REQUESTTYPE_NEWTONBODY			2
-
-
-namespace Leviathan{
-
-    typedef boost::intrusive_ptr<BaseObject> ObjectPtr;
+    using ObjectPtr = boost::intrusive_ptr<BaseObject>;
 
     //! Represents an entity that can be in a world
-	class BaseObject : public ReferenceCounted, public virtual ThreadSafe{
+	class BaseObject : public ReferenceCounted, public virtual ThreadSafe, public Visitable{
         friend GameWorld;
 	public:
 		//! \brief Default constructor that should never be used for actual objects 
@@ -84,6 +38,9 @@ namespace Leviathan{
 			return OwnedByWorld;
 		}
 
+        //! \brief The new custom message function implemented as a visitor
+        DLLEXPORT virtual void Accept(Visitor &visitor) = 0;
+        
 		//! This function is used to avoid explicit dynamic casts when trying to call features on entities
         //! that they might not have
 		//! \returns True if the message is acknowledged so that the caller can avoid calling more general types
@@ -110,4 +67,9 @@ namespace Leviathan{
 	};
 
 }
+
+// Bring this common type to global namespace //
+using Leviathan::ObjectPtr;
+
+
 #endif

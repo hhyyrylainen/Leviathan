@@ -2,10 +2,6 @@
 // that need to be included (or forward declared)
 #pragma once
 
-// This is required for ObjectPtr
-#include <boost/intrusive_ptr.hpp>
-
-
 // Newton things
 class NewtonJoint;
 
@@ -30,6 +26,9 @@ namespace Leviathan{
     class Time;
 
     class Locker;
+
+    class Visitor;
+    class Visitable;
 
 
     class InputReceiver;
@@ -61,7 +60,6 @@ namespace Leviathan{
     class BaseConstraintable;
     
     class BaseObject;
-    using ObjectPtr = boost::intrusive_ptr<BaseObject>;
     
 
     class ObjectDeltaStateData;

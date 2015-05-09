@@ -1,10 +1,7 @@
 #pragma once
-#ifndef LEVIATHAN_MAIN
-#define LEVIATHAN_MAIN
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Application/Application.h"
 
 // Some core classes that most likely won't conflict are brought to the global namespace here with 'using' statements //
@@ -73,7 +70,6 @@ using Leviathan::RepeatCountedDelayedTask;
 
 using Leviathan::BaseObject;
 using Leviathan::GameWorld;
-using Leviathan::ObjectPtr;
 
 using Leviathan::Exception;
 using Leviathan::InvalidArgument;

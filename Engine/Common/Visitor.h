@@ -25,7 +25,7 @@ namespace Leviathan{
 	};
 
     //! \brief Example visitor that does nothing, but doesn't crash either
-    class EmptyVisitor{
+    class EmptyVisitor : public Visitor{
     public:
 
         

@@ -2,6 +2,7 @@
 #include "Include.h"
 
 #include "ForwardDeclarations.h"
+#include "Entities/EntityCommon.h"
 
 //! Defines the networking mode
 //! In this mode the server sends snapshots of moving entities to all clients which then interpolate
@@ -9,6 +10,7 @@
 //! inputs. Server uses resimulation to simulate clients taking actions in the past.
 #define NETWORK_USE_SNAPSHOTS
 
+#include <string>
 
 namespace Leviathan{
 
@@ -29,16 +31,6 @@ namespace Leviathan{
     static const float PI = 3.14159265f;
     static const float DEGREES_TO_RADIANS = PI/180.f;
     static const float EPSILON = 0.00000001f;
-
-
-	template<class T>
-	void SafeReleaser(T* obj){
-		SAFE_RELEASE(obj);
-	}
-	template<class T>
-	void SafeReleaseDeleter(T* obj){
-		SAFE_RELEASEDEL(obj);
-	}
 }
 
 

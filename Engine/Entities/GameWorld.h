@@ -1,11 +1,11 @@
-#ifndef LEVIATHAN_GAMEWORLD
-#define LEVIATHAN_GAMEWORLD
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
+#include <type_traits>
+
+#include "Systems.h"
+
 #include "Objects/ViewerCameraPos.h"
 #include "Newton/PhysicalWorld.h"
 #include "Bases/BaseObject.h"
@@ -26,6 +26,7 @@ namespace Leviathan{
 #define WORLD_CLOCK_SYNC_PACKETS 12
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
 #define WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL 2
+    
 
     //! Holds internal data for initial player syncing
     class PlayerConnectionPreparer;
@@ -33,7 +34,8 @@ namespace Leviathan{
 	// Holds the returned object that was hit during ray casting //
 	class RayCastHitEntity : public ReferenceCounted{
 	public:
-		DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = NULL, const float &tvar = 0.f, RayCastData* ownerptr = NULL);
+		DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = NULL, const float &tvar = 0.f,
+            RayCastData* ownerptr = NULL);
 
 		DLLEXPORT RayCastHitEntity& operator =(const RayCastHitEntity& other);
 
@@ -98,6 +100,11 @@ namespace Leviathan{
 		//! \brief Marks all objects to be deleted
 		DLLEXPORT void MarkForClear();
 
+        // clears all objects from the world //
+		DLLEXPORT void ClearObjects(Lock &guard);
+
+        DLLEXPORT int GetObjectCount() const;
+
 
         //! \brief Used to keep track of passed ticks and trigger timed triggers
         //! \note This will be called (or should be) every time the engine ticks
@@ -114,6 +121,9 @@ namespace Leviathan{
 		DLLEXPORT void SetFog();
 		DLLEXPORT void SetSkyBox(const std::string &materialname);
 
+        DLLEXPORT void SetSunlight();
+		DLLEXPORT void RemoveSunlight();
+
 		DLLEXPORT FORCE_INLINE void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos){
 			GUARD_LOCK();
 			UpdateCameraLocation(mspassed, camerapos, guard);
@@ -122,8 +132,6 @@ namespace Leviathan{
 		DLLEXPORT void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos,
             Lock &guard);
 
-		DLLEXPORT void SetSunlight();
-		DLLEXPORT void RemoveSunlight();
 
 		//! \brief Casts a ray from point along a vector and returns the first physical
         //! object it hits
@@ -140,49 +148,79 @@ namespace Leviathan{
             Lock &guard);
 
 
-		// object managing functions //
-		//! \brief Adds an existing entity to the world, which won't be broadcast to the world
-        //! receivers
-        //! \see CreateEntity
-        //! \warning The entity should have only one reference to be released properly
-		DLLEXPORT void AddObject(BaseObject* obj);
+        //! \brief Creates a new empty entity and returns its id
+        DLLEXPORT ObjectID CreateEntity();
 
-        DLLEXPORT void AddObject(ObjectPtr obj);
+        //! \brief Destroys an entity and all of its components
+        //! \todo Make this less expensive
+        DLLEXPORT void DestroyObject(ObjectID id);
 
-        //! \brief Adds a new entity
-        //! \note This should be used instead of AddObject for most purposes
+        //! \brief Deletes an entity during the next tick
+        DLLEXPORT void QueueDestroyObject(ObjectID id);
+
+        //! \brief Notifies others that we have created a new entity
+        //! \note This is called after all components are set up and it is ready to be sent to
+        //! other players
+        //! \note Client uses this to handle queued constraints
         //! \todo Allow to set the world to queue objects and send them in big bunches to players
-        DLLEXPORT void CreateEntity(ObjectPtr obj);
-        
-        
-		DLLEXPORT void DestroyObject(int EntityID);
-		DLLEXPORT void QueueDestroyObject(int EntityID);
-
-		//! \brief Returns an object matching the id
-		DLLEXPORT ObjectPtr GetWorldObject(int ID);
-
-		//! \brief Returns a matching smart pointer for a raw pointer
-		DLLEXPORT ObjectPtr GetSmartPointerForObject(BaseObject* rawptr) const;
+        DLLEXPORT void NotifyEntityCreate(ObjectID id);
 
 
-		// clears all objects from the world //
-		DLLEXPORT void ClearObjects(Lock &guard);
-        
-		DLLEXPORT FORCE_INLINE void ClearObjects(){
-			GUARD_LOCK();
-			ClearObjects(guard);
-		}
+        //! \brief Returns a reference to a component of wanted type
+        //! \exception NotFound when the specified entity doesn't have a component of the wanted
+        //! type
+        template<class ComponentType>
+        DLLEXPORT ComponentType& GetComponent(ObjectID id){
 
-        //! \brief Returns the amount of entities in the world
-        DLLEXPORT inline size_t GetObjectCount() const{
-            GUARD_LOCK();
-            return Objects.size();
+            static_assert(std::is_same<ComponentType, std::false_type>::value,
+                "Trying to use a component type that is missing a template specialization");
         }
 
+        //! \brief Destroys a component belonging to an entity
+        //! \return True when destroyed, false if the entity didn't have a component of this type
+        template<class ComponentType>
+        DLLEXPORT bool RemoveComponent(ObjectID id){
+
+            static_assert(std::is_same<ComponentType, std::false_type>::value,
+                "Trying to use a component type that is missing a template specialization");
+        }
+
+        //! \brief Creates a new component for entity
+        //! \exception Exception if the component failed to init or it already exists
+        template<typename... Args>
+        DLLEXPORT Position& CreatePosition(ObjectID id, Args... args){
+
+            return *ComponentPosition.ConstructNew(id, args...);
+        }
+
+        //! \brief Creates a new component for entity
+        //! \exception Exception if the component failed to init or it already exists
+        template<typename... Args>
+        DLLEXPORT Position& CreateRenderNode(ObjectID id, Args... args){
+
+            return *ComponentRenderNode.ConstructNew(id, args...);
+        }
+
+        template<typename... Args>
+        DLLEXPORT Position& CreateSendable(ObjectID id, Args... args){
+
+            return *ComponentSendable.ConstructNew(id, args...);
+        }
+        
+        //! \brief Runs a system specified by the template argument
+        template<class SystemType>
+        DLLEXPORT void RunSystem(){
+
+            static_assert(std::is_same<SystemType, std::false_type>::value,
+                "Trying to use a system type that is missing a template specialization");
+        }
+        
+        
 		// Ogre get functions //
 		DLLEXPORT inline Ogre::SceneManager* GetScene(){
 			return WorldsScene;
 		}
+        
 		// physics functions //
 		DLLEXPORT Float3 GetGravityAtPosition(const Float3 &pos);
 
@@ -214,7 +252,8 @@ namespace Leviathan{
         //! \brief Returns true when the player matching the connection should receive updates
         //! about an object
         //! \todo Implement this
-        DLLEXPORT bool ShouldPlayerReceiveObject(BaseObject* obj, ConnectionInfo* connectionptr);
+        DLLEXPORT bool ShouldPlayerReceiveObject(Position &atposition,
+            ConnectionInfo* connectionptr);
 
         //! \brief Sends an object to a connection and sets everything up
         //! \post The connection will receive updates from the object
@@ -222,7 +261,7 @@ namespace Leviathan{
         //! \return True when a packet was sent false otherwise
         //! \todo Allow making these critical so that failing to send these will terminate
         //! the ConnectionInfo
-        DLLEXPORT bool SendObjectToConnection(ObjectPtr obj,
+        DLLEXPORT bool SendObjectToConnection(ObjectID obj,
             std::shared_ptr<ConnectionInfo> connection);
         
 		//! \brief Creates a new entity from initial entity response
@@ -281,12 +320,12 @@ namespace Leviathan{
         //! \returns True when the constraint is applied
         bool _TryApplyConstraint(Lock &guard, NetworkResponseDataForEntityConstraint* data);
 
-        //! \brief Removes a sendable entity from the specific sendable vector
-        void _EraseFromSendable(BaseSendableEntity* obj, Lock &guard);
-
         //! \brief Reports an entity deletion to clients
         //! \todo Potentially send these in a big blob
-        void _ReportEntityDestruction(int id, Lock &guard);
+        void _ReportEntityDestruction(Lock &guard, ObjectID id);
+
+        //! \brief Implementation of doing actual destroy part of removing an entity
+        void _DoDestroy(Lock &guard, ObjectID id);
         
 
 		// ------------------------------------ //
@@ -330,10 +369,7 @@ namespace Leviathan{
         
 
 		// objects //
-		std::vector<ObjectPtr> Objects;
-
-        //! Objects that are sendable and require additional operations
-        std::vector<BaseSendableEntity*> SendableObjects;
+		std::vector<ObjectID> Objects;
 
         //! The unique ID
         int ID;
@@ -353,8 +389,64 @@ namespace Leviathan{
         Mutex DeleteMutex;
         
 		//! This vector is used for delayed deletion
-		std::vector<int> DelayedDeleteIDS;
+		std::vector<ObjectID> DelayedDeleteIDS;
+
+        // Has IDs of deleted objects is used to destroy nodes
+        std::vector<ObjectID> NodesToInvalidate;
+
+        // Systems, nodes and components //
+        // Note: all of these should be cleared in ClearObjects
+
+        ComponentHolder<Position> ComponentPosition;
+        ComponentHolder<RenderNode> ComponentRenderNode;
+        ComponentHolder<Sendable> ComponentSendable;
+        
+
+        
+        NodeHolder<RenderingPosition> NodeRenderingPosition;
+        RenderingPositionSystem _RenderingPositionSystem;
+
+        NodeHolder<SendableNode> NodeSendableNode;
+        SendableSystem _SendableSystem;
+
+        
 	};
 
+#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder) template<> DLLEXPORT type& \
+    GameWorld::GetComponent<type>(ObjectID id){                         \
+                                                                        \
+        auto component = holder.Find(id);                               \
+        if(!component)                                                  \
+            throw NotFound("Component for entity with id was not found"); \
+                                                                        \
+        return *component;                                              \
+    }                                                                   \
+                                                                        \
+    template<> DLLEXPORT bool GameWorld::RemoveComponent<type>(ObjectID id){ \
+        try{                                                            \
+            holder.Destroy(id);                                         \
+            return true;                                                \
+                                                                        \
+        } catch(...){                                                   \
+                                                                        \
+            return false;                                               \
+        }                                                               \
+    }
+
+#define ADDRUNSYSTEMFORGAMEWORLD(type, node) template<> DLLEXPORT void  \
+    GameWorld::RunSystem<type>(){                                       \
+                                                                        \
+        node.RunSystem(_##type);                                        \
+    }
+
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable);
+
+
+    ADDRUNSYSTEMFORGAMEWORLD(RenderingPositionSystem, NodeRenderingPosition);
+    ADDRUNSYSTEMFORGAMEWORLD(SendableSystem, NodeSendableNode);
+
+    
 }
-#endif
+

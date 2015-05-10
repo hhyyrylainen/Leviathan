@@ -2,6 +2,8 @@
 // that need to be included (or forward declared)
 #pragma once
 
+#include <cstdint>
+
 // Newton things
 class NewtonJoint;
 

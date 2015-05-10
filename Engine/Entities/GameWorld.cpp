@@ -269,26 +269,14 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     ReceivingPlayers.clear();
     
 	// release objects //
-    // Objects should release their data in their destructors //
-	for(size_t i = 0; i < Objects.size(); i++){
+    // TODO: allow objects to know that they are about to get killed
 
-        // Check if the world will be destroyed //
-		if(Objects[i]->GetRefCount() != 1){
-
-            Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): entity("+
-                Convert::ToString(Objects[i]->GetID())+
-                ") has external references on world release");
-
-            // Abandon the object //
-            Objects[i]->Disown();
-        }
-	}
-
-    // This will release our references and delete all objects that have no references
-	Objects.clear();
+    // As all objects are just pointers to components we can just dump the objects
+    // and once the component pools are released
+    Objects.clear();
     
-    SendableObjects.clear();
-
+    NodeRenderingPosition.Clear();
+    
 	if(GraphicalMode){
 		// TODO: notify our window that it no longer has a world workspace
 		LinkedToWindow = NULL;
@@ -426,7 +414,9 @@ DLLEXPORT void Leviathan::GameWorld::UpdateCameraLocation(int mspassed, ViewerCa
 	WorldSceneCamera->setOrientation(rotq);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(BaseObject* obj, ConnectionInfo* connectionptr){
+DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(Position &atposition,
+    ConnectionInfo* connectionptr)
+{
 
     return true;
 }
@@ -474,31 +464,11 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
         if(TickNumber % WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL != 0)
             goto worldskiphandlingsendableobjectslabel;
 
-        
-        for(size_t i = 0; i < SendableObjects.size(); ++i){
-            
-            auto target = SendableObjects[i];
-
-            if(target->IsAnyDataUpdated)
-                target->SendUpdatesToAllClients(TickNumber);
-            
-        }
+        RunSystem<SendableSystem>();
         
     } else if(nethandler && nethandler->GetNetworkType() == NETWORKED_TYPE_CLIENT){
-#ifndef NETWORK_USE_SNAPSHOTS
-        for(size_t i = 0; i < SendableObjects.size(); ++i){
-            
-            auto target = SendableObjects[i];
 
-            if(target->IsAnyDataUpdated)
-                target->StoreClientSideState(TickNumber);
-            
-        }
-#else
-        // TODO: put here to code to snap back objects that shouldn't have moved
-        
-        
-#endif //NETWORK_USE_SNAPSHOTS
+        // TODO: direct control objects
     }
 
 worldskiphandlingsendableobjectslabel:
@@ -511,62 +481,21 @@ DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{
     return TickNumber;
 }
 // ------------------ Object managing ------------------ //
-DLLEXPORT void Leviathan::GameWorld::AddObject(BaseObject* obj){
-	AddObject(BaseObject::MakeShared(obj));
+DLLEXPORT ObjectID GameWorld::CreateEntity(){
+
+    auto id = IDFactory::GetID();
+
+    GUARD_LOCK();
+
+    Objects.push_back(id);
+
+    return static_cast<ObjectID>(id);
 }
 
-DLLEXPORT void Leviathan::GameWorld::AddObject(ObjectPtr obj){
+DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id){
 
-    if(!obj)
-        return;
+    if(IsOnServer){
 
-    {
-        GUARD_LOCK();
-        Objects.push_back(obj);
-
-        // Check is it a sendable object //
-        BaseSendableEntity* sendable = dynamic_cast<BaseSendableEntity*>(obj.get());
-
-        if(sendable){
-
-            SendableObjects.push_back(sendable);
-        }
-    }
-
-    // Check for constraints //
-    Lock lock(WaitingConstraintsMutex);
-    if(WaitingConstraints.empty())
-        return;
-
-    int objid = obj->GetID();
-    
-    // Not sure if this is necessary //
-    // TODO: move this to the tick function?
-    size_t amount = WaitingConstraints.size();
-    WaitingConstraint* first = &*WaitingConstraints.begin();
-    for(size_t i = 0; i < amount; ){
-
-        WaitingConstraint* current = (first+i);
-        if(current->Entity1 == objid || current->Entity2 == objid){
-
-            GUARD_LOCK();
-            // Try to apply it //
-            if(_TryApplyConstraint(guard, current->Packet->GetResponseDataForEntityConstraint())){
-                
-                WaitingConstraints.erase(WaitingConstraints.begin()+i);
-                --amount;
-                continue;
-            }
-        }
-
-        i++;
-    }
-}
-
-DLLEXPORT void Leviathan::GameWorld::CreateEntity(ObjectPtr obj){
-
-    // Notify everybody that a new entity has been created //
-    {
         GUARD_LOCK();
 
         // This is at least a decent place to send them, any constraints created later will get send
@@ -592,69 +521,55 @@ DLLEXPORT void Leviathan::GameWorld::CreateEntity(ObjectPtr obj){
                 continue;
             }
         }
-    }
+
+        
+    } else {
+
+        // Check for constraints //
+        Lock lock(WaitingConstraintsMutex);
+        if(WaitingConstraints.empty())
+            return;
+
+        int objid = obj->GetID();
     
-    // And finally register it //
-    AddObject(obj);
-}
-// ------------------------------------ //
-DLLEXPORT ObjectPtr Leviathan::GameWorld::GetWorldObject(int ID){
-	// ID shouldn't be under zero //
-	if(ID == -1){
+        // Not sure if this is necessary //
+        // TODO: move this to the tick function?
+        size_t amount = WaitingConstraints.size();
+        WaitingConstraint* first = &*WaitingConstraints.begin();
+        for(size_t i = 0; i < amount; ){
 
-		Logger::Get()->Warning("GameWorld: GetWorldObject: trying to find object with ID == -1 "
-            "(IDs shouldn't be negative)");
-		return NULL;
-	}
+            WaitingConstraint* current = (first+i);
+            if(current->Entity1 == objid || current->Entity2 == objid){
 
-	GUARD_LOCK();
+                GUARD_LOCK();
+                // Try to apply it //
+                if(_TryApplyConstraint(guard,
+                        current->Packet->GetResponseDataForEntityConstraint())){
+                
+                    WaitingConstraints.erase(WaitingConstraints.begin()+i);
+                    --amount;
+                    continue;
+                }
+            }
 
-	auto end = Objects.end();
-	for(auto iter = Objects.begin(); iter != end; ++iter){
-		if((*iter)->GetID() == ID){
-			return *iter;
-		}
-	}
-
-	return NULL;
-}
-// ------------------------------------ //
-DLLEXPORT ObjectPtr Leviathan::GameWorld::GetSmartPointerForObject(BaseObject* rawptr) const{
-	GUARD_LOCK();
-
-	auto end = Objects.end();
-	for(auto iter = Objects.begin(); iter != end; ++iter){
-		if(iter->get() == rawptr){
-			return *iter;
-		}
-	}
-
-	return NULL;
+            i++;
+        }
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::ClearObjects(Lock &guard){
 	VerifyLock(guard);
 
     // release objects //
-    // Objects should release their data in their destructors //
-	for(size_t i = 0; i < Objects.size(); i++){
+    // TODO: allow objects to do something
+    Objects.clear();
 
-        // Check if the world will be destroyed //
-		if(Objects[i]->GetRefCount() != 1){
-
-            Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): entity("+
-                Convert::ToString(Objects[i]->GetID())+
-                ") has external references on world clear");
-
-            // Abandon the object //
-            Objects[i]->Disown();
-        }
-	}
-
-    // This will release our references and delete all objects that have no references
-	Objects.clear();
+    ComponentPosition.Clear();
+    ComponentRenderNode.Clear();
+    ComponentSendable.Clear();
     
-    SendableObjects.clear();
+    NodeRenderingPosition.Clear();
+    NodeSendableNode.Clear();
 
     guard.unlock();
     
@@ -695,32 +610,15 @@ DLLEXPORT int Leviathan::GameWorld::GetPhysicalMaterial(const string &name){
         _PhysicalWorld->GetNewtonWorld());
 }
 // ------------------------------------ //
-void Leviathan::GameWorld::_EraseFromSendable(BaseSendableEntity* obj, Lock &guard){
+DLLEXPORT void Leviathan::GameWorld::DestroyObject(ObjectID id){
+    GUARD_LOCK();
 
-    for(size_t i = 0; i < SendableObjects.size(); i++){
-
-        if(SendableObjects[i] == obj){
-
-            SendableObjects.erase(SendableObjects.begin()+i);
-        }
-    }
-}
-// ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::DestroyObject(int EntityID){
-	GUARD_LOCK_NAME(lockit);
-
-    Logger::Get()->Info("GameWorld destroying object "+Convert::ToString(EntityID));
-    
     auto end = Objects.end();
 	for(auto iter = Objects.begin(); iter != end; ++iter){
         
-		if((*iter)->GetID() == EntityID){
+		if(*iter == id){
 
-            _ReportEntityDestruction(EntityID, lockit);
-
-            // Also erase from sendable //
-            _EraseFromSendable(dynamic_cast<BaseSendableEntity*>(iter->get()), lockit);
-            
+            _DoDestroy(guard, id);
 			Objects.erase(iter);
             
 			return;
@@ -742,6 +640,14 @@ void Leviathan::GameWorld::_HandleDelayedDelete(Lock &guard){
 		ClearObjects();
 
 		ClearAllObjects = false;
+
+        guard.unlock();
+        
+        Lock lock(DeleteMutex);
+        DelayedDeleteIDS.clear();
+        
+        guard.lock();
+        
 		// All are now cleared //
 		return;
 	}
@@ -749,16 +655,18 @@ void Leviathan::GameWorld::_HandleDelayedDelete(Lock &guard){
     guard.unlock();
 
     Lock lock(DeleteMutex);
+
+    guard.lock();
     
 	// Return right away if no objects to delete //
-	if(DelayedDeleteIDS.size() == 0)
+	if(DelayedDeleteIDS.empty())
 		return;
 
 	// Search all objects and find the ones that need to be deleted //
 	for(auto iter = Objects.begin(); iter != Objects.end(); ){
 
 		// Check does id match any //
-		int curid = (*iter)->GetID();
+		auto curid = *iter;
 		bool delthis = false;
 
 		for(auto iterids = DelayedDeleteIDS.begin(); iterids != DelayedDeleteIDS.end(); ){
@@ -776,31 +684,35 @@ void Leviathan::GameWorld::_HandleDelayedDelete(Lock &guard){
 
 		if(delthis){
 
-            _ReportEntityDestruction(curid, guard);
-            
-            // Also erase from sendable //
-            _EraseFromSendable(dynamic_cast<BaseSendableEntity*>((*iter).get()), guard);
-            
-            guard.lock();
-            
-
+            _DoDestroy(curid);
 			iter = Objects.erase(iter);
             
 			// Check for end //
-			if(DelayedDeleteIDS.size() == 0)
+			if(DelayedDeleteIDS.empty())
                 return;
-
-            guard.unlock();
 
 		} else {
 			++iter;
 		}
 	}
-    
-    guard.lock();
 }
 
-void Leviathan::GameWorld::_ReportEntityDestruction(int id, Lock &guard){
+void _DoDestroy(Lock &guard, ObjectID id){
+
+    Logger::Get()->Info("GameWorld destroying object "+Convert::ToString(id));
+
+    if(IsOnServer)
+        _ReportEntityDestruction(guard, id);
+
+    // TODO: find a better way to do this
+    RemoveComponent<Position>(id);
+    RemoveComponent<RenderNode>(id);
+    RemoveComponent<Sendable>(id);            
+    
+    NodesToInvalidate.push_back(id);
+}
+
+void Leviathan::GameWorld::_ReportEntityDestruction(Lock &guard, ObjectID ID){
 
     // Notify everybody that an entity has been destroyed //
     auto end = ReceivingPlayers.end();
@@ -817,7 +729,7 @@ void Leviathan::GameWorld::_ReportEntityDestruction(int id, Lock &guard){
         
         // Then gather all sorts of other stuff to make an response //
         std::unique_ptr<NetworkResponseDataForEntityDestruction> resdata(new
-            NetworkResponseDataForEntityDestruction(ID, id));
+            NetworkResponseDataForEntityDestruction(this->ID, id));
 
         // We return whatever the send function returns //
         std::shared_ptr<NetworkResponse> response = make_shared<NetworkResponse>(-1,

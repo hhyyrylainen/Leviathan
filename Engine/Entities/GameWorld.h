@@ -261,7 +261,7 @@ namespace Leviathan{
         //! \return True when a packet was sent false otherwise
         //! \todo Allow making these critical so that failing to send these will terminate
         //! the ConnectionInfo
-        DLLEXPORT bool SendObjectToConnection(ObjectID obj,
+        DLLEXPORT bool SendObjectToConnection(Lock &guard, ObjectID obj,
             std::shared_ptr<ConnectionInfo> connection);
         
 		//! \brief Creates a new entity from initial entity response
@@ -412,7 +412,7 @@ namespace Leviathan{
         
 	};
 
-#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder) template<> DLLEXPORT type& \
+#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder, destroyfunc) template<> DLLEXPORT type& \
     GameWorld::GetComponent<type>(ObjectID id){                         \
                                                                         \
         auto component = holder.Find(id);                               \
@@ -424,7 +424,7 @@ namespace Leviathan{
                                                                         \
     template<> DLLEXPORT bool GameWorld::RemoveComponent<type>(ObjectID id){ \
         try{                                                            \
-            holder.Destroy(id);                                         \
+            holder.destroyfunc(id);                                     \
             return true;                                                \
                                                                         \
         } catch(...){                                                   \
@@ -439,9 +439,9 @@ namespace Leviathan{
         node.RunSystem(_##type);                                        \
     }
 
-    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition);
-    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode);
-    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition, Destroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode, QueueDestroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable, Destroy);
 
 
     ADDRUNSYSTEMFORGAMEWORLD(RenderingPositionSystem, NodeRenderingPosition);

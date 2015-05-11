@@ -49,6 +49,44 @@ namespace Leviathan{
             return created;
         }
 
+        //! \brief Calls Release with the specified arguments on the released types
+        template<typename... Args>
+        DLLEXPORT ElementType* ReleaseRemoved(Args... args){
+
+            GUARD_LOCK();
+
+            for(auto iter = Removed.begin(); iter != Removed.end(); ++iter){
+
+                auto object = iter->get<0>();
+                const auto id =iter->get<1>();
+
+                object->Release(args...);
+
+                Elements.destroy(object);
+                RemoveFromIndex(guard, id);
+            }
+
+            Removed.clear();
+        }
+
+
+        //! \brief Clears removed entities without calling Release
+        DLLEXPORT void ClearRemoved(){
+
+            GUARD_LOCK();
+
+            for(auto iter = Removed.begin(); iter != Removed.end(); ++iter){
+
+                auto object = iter->get<0>();
+                const auto id =iter->get<1>();
+
+                Elements.destroy(object);
+                RemoveFromIndex(guard, id);
+            }
+
+            Removed.clear();
+        }
+
         //! \return The found component or NULL
         DLLEXPORT ElementType* Find(Lock &guard, KeyType id) const{
 
@@ -82,6 +120,32 @@ namespace Leviathan{
 
             GUARD_LOCK();
             Destroy(guard, id);
+        }
+
+        //! \brief Queues destruction of an element
+        //! \exception InvalidArgument when key is not found (is already deleted)
+        //! \note This has to be used for objects that require calling Release
+        DLLEXPORT void QueueDestroy(Lock &guard, KeyType id){
+
+            auto end = Index.end();
+            for(auto iter = Index.begin(); iter != end; ++iter){
+
+                if(iter->first == id){
+
+                    Removed.push_back(std::make_tuple(iter->second, id));
+                    
+                    Index.erase(iter);
+                    return;
+                }
+            }
+
+            throw InvalidArgument("ID is not in index");
+        }
+
+        DLLEXPORT inline void QueueDestroy(KeyType id){
+
+            GUARD_LOCK();
+            QueueDestroy(guard, id);
         }
 
         //! \brief Calls an function on all the objects in the pool
@@ -144,6 +208,9 @@ namespace Leviathan{
 
         //! Used for looking up element belonging to id
         std::unordered_map<KeyType, ElementType*> Index;
+
+        //! Used for delayed deleting elements
+        std::vector<std::tuple<ElementType*, KeyType>> Removed;
 
         //! Pool for objects
         boost::object_pool<ElementType> Elements;

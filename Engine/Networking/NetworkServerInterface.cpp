@@ -677,9 +677,9 @@ DLLEXPORT int Leviathan::ConnectedPlayer::GetID() const{
 	return ID;
 }
 // ------------------------------------ //
-DLLEXPORT BasePositionable* Leviathan::ConnectedPlayer::GetPositionInWorld(GameWorld* world, Lock &guard) const{
-	VerifyLock(guard);
-
+DLLEXPORT ObjectID Leviathan::ConnectedPlayer::GetPositionInWorld(GameWorld* world, Lock &guard)
+    const
+{
 	// Not found for that world //
-	return NULL;
+	return 0;
 }

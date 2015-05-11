@@ -7,6 +7,7 @@
 #include "Gameplay/CommandHandler.h"
 #include "boost/thread.hpp"
 #include "../TimeIncludes.h"
+#include "../Entities/EntityCommon.h"
 
 //! Defines the interval between heartbeats
 //! Should be the same as CLIENT_HEARTBEATS_MILLISECOND
@@ -58,7 +59,7 @@ namespace Leviathan{
 
 		//! \brief Returns the object that contains this players position in a certain world or NULL
 		//! \note THe lock should be valid while using the returned pointer
-		DLLEXPORT BasePositionable* GetPositionInWorld(GameWorld* world, Lock &guard) const;
+		DLLEXPORT ObjectID GetPositionInWorld(GameWorld* world, Lock &guard) const;
 
 
 		DLLEXPORT virtual const std::string& GetUniqueName();

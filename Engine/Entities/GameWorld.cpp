@@ -498,8 +498,17 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id){
 
         GUARD_LOCK();
 
-        // This is at least a decent place to send them, any constraints created later will get send
-        // when they are created
+        // This is at least a decent place to send them,
+        // any constraints created later will get send when they are created
+
+        try{
+            auto& issendable = GetComponent<Sendable>(id);
+
+        } catch(const NotFound&){
+
+            // Not sendable no point in continuing //
+            return;
+        }
 
         auto end = ReceivingPlayers.end();
         for(auto iter = ReceivingPlayers.begin(); iter != end; ++iter){
@@ -513,7 +522,7 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id){
                 continue;
             }
 
-            if(!SendObjectToConnection(obj, safe)){
+            if(!SendObjectToConnection(guard, id, safe)){
 
                 Logger::Get()->Warning("GameWorld: CreateEntity: failed to send object to player "
                     "("+(*iter)->GetNickname()+")");
@@ -530,8 +539,6 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id){
         if(WaitingConstraints.empty())
             return;
 
-        int objid = obj->GetID();
-    
         // Not sure if this is necessary //
         // TODO: move this to the tick function?
         size_t amount = WaitingConstraints.size();
@@ -539,7 +546,7 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id){
         for(size_t i = 0; i < amount; ){
 
             WaitingConstraint* current = (first+i);
-            if(current->Entity1 == objid || current->Entity2 == objid){
+            if(current->Entity1 == id || current->Entity2 == id){
 
                 GUARD_LOCK();
                 // Try to apply it //
@@ -637,7 +644,7 @@ void Leviathan::GameWorld::_HandleDelayedDelete(Lock &guard){
 	// We might want to delete everything //
 	if(ClearAllObjects){
 
-		ClearObjects();
+		ClearObjects(guard);
 
 		ClearAllObjects = false;
 
@@ -684,7 +691,7 @@ void Leviathan::GameWorld::_HandleDelayedDelete(Lock &guard){
 
 		if(delthis){
 
-            _DoDestroy(curid);
+            _DoDestroy(guard, curid);
 			iter = Objects.erase(iter);
             
 			// Check for end //
@@ -697,7 +704,7 @@ void Leviathan::GameWorld::_HandleDelayedDelete(Lock &guard){
 	}
 }
 
-void _DoDestroy(Lock &guard, ObjectID id){
+void GameWorld::_DoDestroy(Lock &guard, ObjectID id){
 
     Logger::Get()->Info("GameWorld destroying object "+Convert::ToString(id));
 
@@ -712,7 +719,7 @@ void _DoDestroy(Lock &guard, ObjectID id){
     NodesToInvalidate.push_back(id);
 }
 
-void Leviathan::GameWorld::_ReportEntityDestruction(Lock &guard, ObjectID ID){
+void Leviathan::GameWorld::_ReportEntityDestruction(Lock &guard, ObjectID id){
 
     // Notify everybody that an entity has been destroyed //
     auto end = ReceivingPlayers.end();
@@ -940,37 +947,25 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(Lock &guard,
             Logger::Get()->Info("Sending object, number: "+Convert::ToString(num));
 
             // Skip if shouldn't send //
-            if(!world->ShouldPlayerReceiveObject(tosend.get(), connection.get())){
+            try{
 
-                goto exitcurrentiterationchecklabel;
+                auto& position = world->GetComponent<Position>(tosend);
+
+                if(!world->ShouldPlayerReceiveObject(position, connection.get())){
+
+                    goto exitcurrentiterationchecklabel;
+                }
+                
+            } catch(const NotFound&){
+
+                // No position, should probably always send //
             }
 
 
             // Send it //
             // TODO: could check for errors here
-            world->SendObjectToConnection(tosend, connection);
-
-            // Send all the constraints, TODO: this could be improved a lot //
-            BaseConstraintable* constraintable = dynamic_cast<BaseConstraintable*>(tosend.get());
-
-            if(constraintable){
-
-                GUARD_LOCK_OTHER(constraintable);
-
-                size_t count = constraintable->GetConstraintCount(guard);
-
-                Logger::Get()->Info("Sending object's constraints, total: "+
-                    Convert::ToString(count));
-
-                for(size_t i = 0; i < count; i++){
-
-                    // This should ignore NULL pointers so this should send all
-                    // constraints just fine
-                    world->SendConstraintToConnection(constraintable->GetConstraint(guard, i),
-                        connection.get());
-                }
-            }
-
+            // TODO: make sure that this will also send constraints
+            world->SendObjectToConnection(guard, tosend, connection);
 
             // Sent, check the exit things //
             goto exitcurrentiterationchecklabel;
@@ -1048,59 +1043,38 @@ void Leviathan::GameWorld::UpdatePlayersPositionData(Lock &guard, ConnectedPlaye
     Lock &plylock)
 {
 	// Get the position for this player in this world //
-	BasePositionable* positionobj = ply->GetPositionInWorld(this, plylock);
+	auto id = ply->GetPositionInWorld(this, plylock);
 
-	if(!positionobj){
+    // Player is using a static position at (0, 0, 0) //
+    if(id == 0)
+        return;
+    
+    try{
 
-		// Player is using a static position at (0, 0, 0) //
-notusingapositionlabel:
-
-		return;
-	}
-
-	// Store the pointer to the object //
-
-
-	// To prevent us from deleting the pointer fetch a smart pointer that matches the object //
-	BaseObject* bobject = dynamic_cast<BaseObject*>(positionobj);
-
-	// Find the object //
-	auto safeptr = GetSmartPointerForObject(bobject);
-
-	if(!safeptr){
-
-		// We were given an invalid world //
-		Logger::Get()->Error("GameWorld: UpdatePlayersPositionData: could not find a matching "
-            " object for player position in this world, wrong world?");
+        auto& position = GetComponent<Position>(id);
         
-		goto notusingapositionlabel;
-	}
+    } catch(const NotFound&){
 
-	// Link the position to the thing //
-
-
+        // Player has invalid position //
+        Logger::Get()->Warning("Player position entity has no Position component");
+    }
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(ObjectPtr obj,
+DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(Lock &guard, ObjectID id,
     std::shared_ptr<ConnectionInfo> connection)
 {
-    // Fail if the obj is not a valid pointer //
-    if(!obj)
-        return false;
-    
     // First create a packet which will be the object's data //
-    GUARD_LOCK_OTHER(obj.get());
 
-    auto objdata = EntitySerializerManager::Get()->CreateInitialEntityMessageFor(obj.get(), connection.get());
-
+    auto objdata = EntitySerializerManager::Get()->CreateInitialEntityMessageFor(
+        this, guard, obj, connection.get());
+    
     if(!objdata)
         return false;
 
     // Then gather all sorts of other stuff to make an response //
-    std::unique_ptr<NetworkResponseDataForInitialEntity> resdata(new NetworkResponseDataForInitialEntity(ID, objdata));
+    std::unique_ptr<NetworkResponseDataForInitialEntity> resdata(
+        new NetworkResponseDataForInitialEntity(ID, objdata));
     
-    
-
     // We return whatever the send function returns //
     std::shared_ptr<NetworkResponse> response = make_shared<NetworkResponse>(-1,
         PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 20);
@@ -1110,8 +1084,8 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(ObjectPtr obj,
     return connection->SendPacketToConnection(response, 5).get() ? true: false;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::SendConstraintToConnection(shared_ptr<Entity::BaseConstraint> constraint,
-    ConnectionInfo* connectionptr)
+DLLEXPORT void Leviathan::GameWorld::SendConstraintToConnection(
+    shared_ptr<Entity::BaseConstraint> constraint, ConnectionInfo* connectionptr)
 {
     if(!constraint)
         return;

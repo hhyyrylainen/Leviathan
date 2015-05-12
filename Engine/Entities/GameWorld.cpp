@@ -446,11 +446,15 @@ DLLEXPORT void Leviathan::GameWorld::ClearTimers(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
 
-    GUARD_LOCK_NAME(lockit);
+    GUARD_LOCK();
 
     TickNumber = currenttick;
 
-    _HandleDelayedDelete(lockit);
+    HandleAdded(guard);
+
+    _HandleDelayedDelete(guard);
+
+    HandleDeleted(guard);
 
     SimulatePhysics();
 
@@ -461,19 +465,124 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
     if(nethandler && nethandler->GetNetworkType() == NETWORKED_TYPE_SERVER){
 
         // Skip if not tick that will be stored //
-        if(TickNumber % WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL != 0)
-            goto worldskiphandlingsendableobjectslabel;
+        if(TickNumber % WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL == 0){
 
-        RunSystem<SendableSystem>();
+            RunSystem<SendableSystem>();
+        }
         
     } else if(nethandler && nethandler->GetNetworkType() == NETWORKED_TYPE_CLIENT){
 
         // TODO: direct control objects
     }
+}
+// ------------------------------------ //
+DLLEXPORT void GameWorld::RemoveInvalidNodes(Lock &guard){
 
-worldskiphandlingsendableobjectslabel:
+    // This first gets the vector that contain the possibly deleted components and then deletes
+    // them from node pools and finally properly clears or releases each pool that possibly got
+    // updated
 
-    return;
+    // Position, RenderNode
+    {
+        GUARD_LOCK_OTHER_NAME((&ComponentPosition), positionlock);
+        GUARD_LOCK_OTHER_NAME((&ComponentRenderNode), rendernodelock);
+
+        auto& removedposition = ComponentPosition.GetRemoved(positionlock);
+        auto& removedrendernode = ComponentRenderNode.GetRemoved(rendernodelock);
+
+        if(!removedposition.empty())
+            NodeRenderingPosition.RemoveBasedOnKeyTupleList(removedposition);
+
+        if(!removedrendernode.empty())
+            NodeRenderingPosition.RemoveBasedOnKeyTupleList(removedrendernode);
+
+        NodeRenderingPosition.ClearRemoved();
+    }
+
+    // Sendable
+    {
+        GUARD_LOCK_OTHER_NAME((&ComponentSendable), sendablelock);
+
+        auto& removedsendable = ComponentSendable.GetRemoved(sendablelock);
+
+        if(!removedsendable.empty()){
+            
+            NodeSendableNode.RemoveBasedOnKeyTupleList(removedsendable);
+
+            NodeSendableNode.ClearRemoved();
+        }
+    }
+    
+}
+
+DLLEXPORT void GameWorld::HandleDeleted(Lock &guard){
+
+    // Handle nodes with now missing components //
+    RemoveInvalidNodes(guard);
+    
+    // Clear deleted components //
+    if(ComponentRenderNode.HasElementsInRemoved()){
+
+        if(WorldsScene){
+
+            // Scene still exists, delete scene nodes //
+            ComponentRenderNode.ReleaseRemoved(WorldsScene);
+            
+        } else {
+
+            // Clear without deleting, Ogre has already released the memory //
+            ComponentRenderNode.ClearRemoved();
+        }
+    }
+
+    ComponentPosition.ClearRemoved();
+    ComponentSendable.ClearRemoved();
+}
+
+DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
+
+    // Construct new nodes based on components values //
+    // Almost the opposite of RemoveInvalidNodes
+    // CreateNodes automatically removes the used onces from the Added in component pool
+
+    // Position, RenderNode
+    {
+        GUARD_LOCK_OTHER_NAME((&ComponentPosition), positionlock);
+        GUARD_LOCK_OTHER_NAME((&ComponentRenderNode), rendernodelock);
+
+        auto& addedposition = ComponentPosition.GetAdded(positionlock);
+        auto& addedrendernode = ComponentRenderNode.GetAdded(rendernodelock);
+
+        if(!addedposition.empty() && !addedrendernode.empty()){
+
+            
+            NodeRenderingPosition.CreateNodes(addedposition, addedrendernode);
+            NodeRenderingPosition.ClearAdded();
+        }
+    }
+
+    // Sendable
+    {
+        GUARD_LOCK_OTHER_NAME((&ComponentSendable), sendablelock);
+
+        auto& addedsendable = ComponentSendable.GetAdded(sendablelock);
+
+        if(!addedsendable.empty()){
+            
+            NodeSendableNode.CreateNodes(addedsendable);
+            NodeSendableNode.ClearAdded();
+        }
+    }
+    
+}
+// ------------------------------------ //
+DLLEXPORT void GameWorld::RunFrameRenderSystems(){
+
+    GUARD_LOCK();
+
+    HandleDeleted(guard);
+
+    RunSystem<RenderingPositionSystem>();
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{

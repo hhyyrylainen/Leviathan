@@ -63,10 +63,6 @@ DLLEXPORT Leviathan::Event::Event(sf::Packet &packet){
 			Data = new ShowEventData(packet);
 		}
 		break;
-        case EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE:
-        {
-            Data = new ResimulateSingleEventData(packet);
-        }
         break;
         case EVENT_TYPE_FRAME_BEGIN:
         case EVENT_TYPE_FRAME_END:
@@ -95,12 +91,6 @@ DLLEXPORT PhysicsStartEventData* Leviathan::Event::GetDataForPhysicsStartEvent()
 DLLEXPORT ShowEventData* Leviathan::Event::GetDataForShowEvent() const{
 	if(Type == EVENT_TYPE_SHOW)
 		return static_cast<ShowEventData*>(Data);
-	return NULL;
-}
-
-DLLEXPORT ResimulateSingleEventData* Leviathan::Event::GetDataForResimulateSingleEvent() const{
-	if(Type == EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE)
-		return static_cast<ResimulateSingleEventData*>(Data);
 	return NULL;
 }
 
@@ -282,21 +272,4 @@ BaseEventData::~BaseEventData(){
 	
 }
 
-// ------------------ ResimulateSingleEventData ------------------ //
-DLLEXPORT Leviathan::ResimulateSingleEventData::ResimulateSingleEventData(sf::Packet &packet) :
-    GameWorldPtr(NULL), Target(NULL), TimeInPast(0)
-{
-    throw InvalidType("ResimulateSingleEventData cannot be serialized");
-}
 
-DLLEXPORT Leviathan::ResimulateSingleEventData::ResimulateSingleEventData(int64_t resimulateremaining,
-    BaseConstraintable* resimulated, void* worldptr) :
-    TimeInPast(resimulateremaining), Target(resimulated), GameWorldPtr(worldptr)
-{
-
-}
-
-void Leviathan::ResimulateSingleEventData::AddDataToPacket(sf::Packet &packet){
-
-    throw InvalidType("ResimulateSingleEventData cannot be serialized");
-}

@@ -349,15 +349,15 @@ DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateD
     ValidFields |= other.ValidFields;
     return allsucceeded;
 }
-// ------------------ PositionableRotationableDeltaState ------------------ //
-DLLEXPORT PositionableRotationableDeltaState::PositionableRotationableDeltaState(int tick,
+// ------------------ PositionDeltaState ------------------ //
+DLLEXPORT PositionDeltaState::PositionDeltaState(int tick,
     const Float3 &position, const Float4 &rotation) :
     ObjectDeltaStateData(tick), Position(position), Rotation(rotation), ValidFields(PRDELTA_ALL_UPDATED)
 {
 
 }
 
-DLLEXPORT PositionableRotationableDeltaState::PositionableRotationableDeltaState(int tick,
+DLLEXPORT PositionDeltaState::PositionDeltaState(int tick,
     sf::Packet &packet) :
     ObjectDeltaStateData(tick)
 {
@@ -393,11 +393,11 @@ DLLEXPORT PositionableRotationableDeltaState::PositionableRotationableDeltaState
         throw InvalidArgument("invalid packet for positionable rotationable delta state");
 }
 
-DLLEXPORT PositionableRotationableDeltaState::~PositionableRotationableDeltaState(){
+DLLEXPORT PositionDeltaState::~PositionDeltaState(){
 
 }
 // ------------------------------------ //
-DLLEXPORT void PositionableRotationableDeltaState::CreateUpdatePacket(ObjectDeltaStateData* olderstate,
+DLLEXPORT void PositionDeltaState::CreateUpdatePacket(ObjectDeltaStateData* olderstate,
     sf::Packet &packet)
 {
     ValidFields = 0;
@@ -410,7 +410,7 @@ DLLEXPORT void PositionableRotationableDeltaState::CreateUpdatePacket(ObjectDelt
         
     } else {
 
-        auto other = static_cast<PositionableRotationableDeltaState*>(olderstate);
+        auto other = static_cast<PositionDeltaState*>(olderstate);
         
         // Position
         if(Position.X != other->Position.X)
@@ -463,10 +463,10 @@ DLLEXPORT void PositionableRotationableDeltaState::CreateUpdatePacket(ObjectDelt
         packet << Rotation.W;
 }
         
-DLLEXPORT bool PositionableRotationableDeltaState::FillMissingData(ObjectDeltaStateData &otherstate){
+DLLEXPORT bool PositionDeltaState::FillMissingData(ObjectDeltaStateData &otherstate){
 
-    const PositionableRotationableDeltaState &other =
-        static_cast<PositionableRotationableDeltaState&>(otherstate);
+    const PositionDeltaState &other =
+        static_cast<PositionDeltaState&>(otherstate);
 
     if(ValidFields == 0){
 

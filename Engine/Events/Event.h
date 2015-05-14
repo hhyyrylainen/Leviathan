@@ -32,7 +32,7 @@ namespace Leviathan{
 		EVENT_TYPE_LISTENERVALUEUPDATED,
 		EVENT_TYPE_FRAME_BEGIN, EVENT_TYPE_FRAME_END,
         EVENT_TYPE_INIT, EVENT_TYPE_RELEASE,
-        EVENT_TYPE_PHYSICS_BEGIN, EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE,
+        EVENT_TYPE_PHYSICS_BEGIN, 
         EVENT_TYPE_TEST,
         //! Only called on the client when a frame is about to be renderd and interpolation status
         //! needs to be determined
@@ -110,33 +110,6 @@ namespace Leviathan{
 		//! \warning This is NULL if this event is passed through a packet
 		void* GameWorldPtr;
 	};
-
-    //! \brief Data for EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE
-    class ResimulateSingleEventData : public BaseEventData{
-    public:
-
-        DLLEXPORT ResimulateSingleEventData(sf::Packet &packet);
-
-        //! \brief Constructs data for EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE
-        //! \param resimulateremaining How many microseconds will still be simulated
-        //! before resimulate ends
-        DLLEXPORT ResimulateSingleEventData(int64_t resimulateremaining,
-            BaseConstraintable* resimulated, void* worldptr);
-
-        void AddDataToPacket(sf::Packet &packet) override;
-
-        //! \see ResimulateSingleEventData
-        int64_t TimeInPast;
-
-        //! Target entity
-        //! \note This should only be compared with other pointers, not actually accessed
-        //! \warning This is NULL if this event is passed through a packet
-        BaseConstraintable* Target;
-
-        //! Pointer to the world
-		//! \warning This is NULL if this event is passed through a packet
-		void* GameWorldPtr;
-    };
     
 
 	//! \brief Data for EVENT_TYPE_SHOW
@@ -188,7 +161,6 @@ namespace Leviathan{
 		// Data getting functions //
 		DLLEXPORT PhysicsStartEventData* GetDataForPhysicsStartEvent() const;
 		DLLEXPORT ShowEventData* GetDataForShowEvent() const;
-        DLLEXPORT ResimulateSingleEventData* GetDataForResimulateSingleEvent() const;
         DLLEXPORT ClientInterpolationEventData* GetDataForClientInterpolationEvent() const;
 		//! \brief Gets the data if this is an event that has only one integer data member
 		DLLEXPORT IntegerEventData* GetIntegerDataForEvent() const;

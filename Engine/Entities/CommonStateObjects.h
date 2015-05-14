@@ -1,11 +1,35 @@
 #pragma once
 // ------------------------------------ //
-#include "Define.h"
-// ------------------------------------ //
-#include "Bases/BaseSendableEntity.h"
+#include "Include.h"
+#include "../Common/SFMLPackets.h"
+#include "../Common/ThreadSafe.h"
 
 
 namespace Leviathan{
+
+    //! \brief Base class for entity state data
+    class ObjectDeltaStateData{
+    public:
+        DLLEXPORT ObjectDeltaStateData(int tick);
+        DLLEXPORT virtual ~ObjectDeltaStateData();
+
+        //! \brief Adds update data to a packet
+        //! \param olderstate The state against which this is compared. Or NULL if a full update is wanted
+        DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) = 0;
+
+        //! \brief Copies data to missing values in this state from another state
+        //! \return True if all missing values have been filled
+        DLLEXPORT virtual bool FillMissingData(ObjectDeltaStateData &otherstate) = 0;
+
+        //! \brief The tick this delta state matches
+        const int Tick;
+        
+
+        ObjectDeltaStateData(const ObjectDeltaStateData &other) = delete;
+        void operator=(const ObjectDeltaStateData &other) = delete;
+    };
+
+    
 
     //! Flags for which fields have changed
     //! \see PositionablePhysicalDeltaState
@@ -97,38 +121,38 @@ namespace Leviathan{
 	};
 
     //! \brief State for objects that only require location and rotation data to get to clients
-    class PositionableRotationableDeltaState : public ObjectDeltaStateData{
+    class PositionDeltaState : public ObjectDeltaStateData{
     public:
 
-        DLLEXPORT PositionableRotationableDeltaState(int tick, const Float3 &position,
+        DLLEXPORT PositionDeltaState(int tick, const Float3 &position,
             const Float4 &rotation);
         
         //! \see CreateUpdatePacket
-        DLLEXPORT PositionableRotationableDeltaState(int tick, sf::Packet &packet);
-        DLLEXPORT ~PositionableRotationableDeltaState();
+        DLLEXPORT PositionDeltaState(int tick, sf::Packet &packet);
+        DLLEXPORT ~PositionDeltaState();
         
         //! \brief Templated creation function for all classes that inherit BasePotitionable
         //! \param tick The world tick to place in the resulting state
         template<class CType>
-        DLLEXPORT static std::unique_ptr<PositionableRotationableDeltaState> CaptureState(
+        DLLEXPORT static std::unique_ptr<PositionDeltaState> CaptureState(
             Lock &guard, CType &object, int tick)
         {
 
-            return std::unique_ptr<PositionableRotationableDeltaState>(
-                new PositionableRotationableDeltaState(tick, object.GetPos(guard),
+            return std::unique_ptr<PositionDeltaState>(
+                new PositionDeltaState(tick, object.GetPos(guard),
                     object.GetOrientation(guard)));
         }
 
         //! \brief Automatically locking version of CaptureState
         template<class CType>
-        DLLEXPORT static inline std::unique_ptr<PositionableRotationableDeltaState> CaptureState(
+        DLLEXPORT static inline std::unique_ptr<PositionDeltaState> CaptureState(
             CType &object, int tick)
         {
             GUARD_LOCK_OTHER((&object));
             return CaptureState<CType>(guard, object, tick);
         }
 
-        //! \note The olderstate has to be of type PositionableRotationableDeltaState
+        //! \note The olderstate has to be of type PositionDeltaState
         DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate,
             sf::Packet &packet) override;
         

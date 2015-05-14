@@ -14,15 +14,12 @@
 #include "Compositor/OgreCompositorManager2.h"
 #include "Networking/NetworkServerInterface.h"
 #include "Networking/NetworkResponse.h"
-#include "Bases/BasePositionable.h"
 #include "Networking/ConnectionInfo.h"
 #include "Networking/NetworkHandler.h"
 #include "Threading/ThreadingManager.h"
 #include "Handlers/EntitySerializerManager.h"
 #include "Handlers/ConstraintSerializerManager.h"
 #include "Entities/Objects/Constraints.h"
-#include "Entities/Bases/BaseConstraintable.h"
-#include "Entities/Bases/BaseSendableEntity.h"
 #include "Engine.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "../Handlers/IDFactory.h"
@@ -274,8 +271,16 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     // As all objects are just pointers to components we can just dump the objects
     // and once the component pools are released
     Objects.clear();
-    
+
+    // Clear all nodes //
     NodeRenderingPosition.Clear();
+    NodeSendableNode.Clear();
+
+    // Clear all componenst //
+    ComponentPosition.Clear();
+    ComponentRenderNode.Clear();
+    ComponentSendable.Clear();
+
     
 	if(GraphicalMode){
 		// TODO: notify our window that it no longer has a world workspace
@@ -553,11 +558,16 @@ DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
         auto& addedposition = ComponentPosition.GetAdded(positionlock);
         auto& addedrendernode = ComponentRenderNode.GetAdded(rendernodelock);
 
-        if(!addedposition.empty() && !addedrendernode.empty()){
+        if(!addedposition.empty()){
 
-            
-            NodeRenderingPosition.CreateNodes(addedposition, addedrendernode);
-            NodeRenderingPosition.ClearAdded();
+            _RenderingPositionSystem.CreateNodes(NodeRenderingPosition, addedposition,
+                addedrendernode, ComponentRenderNode, rendernodelock);
+        }
+        
+        if(!addedrendernode.empty()){
+
+            _RenderingPositionSystem.CreateNodes(NodeRenderingPosition, addedrendernode,
+                addedposition, ComponentPosition, positionlock);
         }
     }
 
@@ -569,11 +579,14 @@ DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
 
         if(!addedsendable.empty()){
             
-            NodeSendableNode.CreateNodes(addedsendable);
-            NodeSendableNode.ClearAdded();
+            _SendableSystem.CreateNodes(NodeSendableNode, addedsendable);
         }
     }
-    
+
+    // Clear added //
+    ComponentPosition.ClearAdded();
+    ComponentRenderNode.ClearAdded();
+    ComponentSendable.ClearAdded();
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::RunFrameRenderSystems(){
@@ -1175,7 +1188,7 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(Lock &guard, ObjectI
     // First create a packet which will be the object's data //
 
     auto objdata = EntitySerializerManager::Get()->CreateInitialEntityMessageFor(
-        this, guard, obj, connection.get());
+        this, guard, id, connection.get());
     
     if(!objdata)
         return false;
@@ -1191,41 +1204,6 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(Lock &guard, ObjectI
     response->GenerateInitialEntityResponse(resdata.release());
 
     return connection->SendPacketToConnection(response, 5).get() ? true: false;
-}
-// ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::SendConstraintToConnection(
-    shared_ptr<Entity::BaseConstraint> constraint, ConnectionInfo* connectionptr)
-{
-    if(!constraint)
-        return;
-
-    GUARD_LOCK_OTHER(constraint);
-
-    auto custompacketdata = ConstraintSerializerManager::Get()->SerializeConstraintData(constraint.get());
-
-    if(!custompacketdata){
-
-        Logger::Get()->Warning("GameWorld: failed to send constraint, type: "+Convert::ToString(
-                static_cast<int>(constraint->GetType())));
-        return;
-    }
-    
-    // Gather all the other info //
-    int obj1 = constraint->GetFirstEntity()->GetID();
-
-    // The second object might be NULL so make sure not to segfault here //
-    auto obj2ptr = constraint->GetSecondEntity();
-
-    int obj2 = obj2ptr ? obj2ptr->GetID(): -1;
-
-    auto packet = make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
-    
-    // Wrap everything up and send //
-    packet->GenerateEntityConstraintResponse(new NetworkResponseDataForEntityConstraint(ID,
-            obj1, obj2, true, constraint->GetType(), custompacketdata));
-
-    connectionptr->SendPacketToConnection(packet, 12);
-    Logger::Get()->Info("Sent constraint");
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDataForInitialEntity* data){
@@ -1255,41 +1233,25 @@ DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDa
     return somesucceeded;
 }
 
-DLLEXPORT void Leviathan::GameWorld::HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data,
-    std::shared_ptr<NetworkResponse> packet)
+DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(
+    NetworkResponseDataForEntityUpdate* data)
 {
-    GUARD_LOCK();
-    
-    if(_TryApplyConstraint(guard, data)){
-
-        // It is now applied //
-        return;
-    }
-
-    guard.unlock();
-    
-    // Add it to the queue //
-    Lock lock(WaitingConstraintsMutex);
-    WaitingConstraints.push_back(WaitingConstraint(data->EntityID1, data->EntityID2, packet));
-}
-
-DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(NetworkResponseDataForEntityUpdate* data){
 
     // Get the target entity //
     auto target = GetWorldObject(data->EntityID);
 
     if(!target){
 
-        Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has no entity "+Convert::ToString(data->EntityID)+
-            ", ignoring an update packet");
+        Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has no entity "+
+            Convert::ToString(data->EntityID)+", ignoring an update packet");
         return;
     }
 
     // Apply the update //
     // The object may not be locked as it might want to resimulate //
     
-    if(!EntitySerializerManager::Get()->ApplyUpdateMessage(*data->UpdateData, data->TickNumber, data->ReferenceTick,
-            target))
+    if(!EntitySerializerManager::Get()->ApplyUpdateMessage(*data->UpdateData, data->TickNumber,
+            data->ReferenceTick, target))
     {
 
         Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): applying update to entity "+

@@ -7,6 +7,12 @@
 // Newton things
 class NewtonJoint;
 
+namespace Ogre{
+
+    class SceneManager;
+    class SceneNode;
+}
+
 namespace Leviathan{
 
     // Core systems //
@@ -43,30 +49,16 @@ namespace Leviathan{
 
 	namespace Entity{
 
-		class Prop;
-		class Brush;
-		struct TrackControllerPosition;
-		class TrackEntityController;
 		struct TrailProperties;
-		class TrailEmitter;
         class BaseConstraint;
-
 
         enum ENTITY_CONSTRAINT_TYPE : int32_t;
 	}
 
-	// Entity bases //
-	class BasePositionable;
-    class BaseSendableEntity;
-    class BasePhysicsObject;
-    class BaseConstraintable;
-    
-    class BaseObject;
-    
-
+    // Entities //
+    class Sendable;
     class ObjectDeltaStateData;
-    class PositionablePhysicalDeltaState;
-    class PositionableRotationableDeltaState;
+    
 
     // Exceptions //
     class Exception;

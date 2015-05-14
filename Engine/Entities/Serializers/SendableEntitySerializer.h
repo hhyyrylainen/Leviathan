@@ -3,6 +3,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "BaseEntitySerializer.h"
+#include "../Components.h"
 
 namespace Leviathan{
 
@@ -17,29 +18,20 @@ namespace Leviathan{
 
 
         //! \copydoc BaseEntitySerializer::CreatePacketForConnection
-        DLLEXPORT virtual bool CreatePacketForConnection(BaseObject* object, Lock &objectlock,
-            sf::Packet &packet, ConnectionInfo* connectionptr) override;
+        DLLEXPORT virtual bool CreatePacketForConnection(GameWorld* world, Lock &worldlock,
+            ObjectID id, sf::Packet &packet, ConnectionInfo* connectionptr) override;
 
         //! \copydoc BaseEntitySerializer::DeserializeWholeEntityFromPacket
-        DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, int32_t serializetype,
-            sf::Packet &packet, int objectid, GameWorld* world) override;
+        DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(GameWorld* world, Lock &worldlock, 
+            ObjectID id, int32_t serializetype, sf::Packet &packet, int objectid) override;
 
         //! \copydoc BaseEntitySerializer::ApplyUpdateFromPacket
-        DLLEXPORT virtual bool ApplyUpdateFromPacket(BaseObject* targetobject, int ticknumber,
-            int referencetick, sf::Packet &packet) override;
+        DLLEXPORT virtual bool ApplyUpdateFromPacket(GameWorld* world, Lock &worldlock,
+            ObjectID targetobject, int ticknumber, int referencetick, sf::Packet &packet) override;
 
 
         //! \copydoc BaseEntitySerializer::IsObjectTypeCorrect
-        DLLEXPORT virtual bool IsObjectTypeCorrect(BaseObject* object) const override;
-        
-    protected:
-
-        
-
-	private:
-        
-		SendableEntitySerializer(const SendableEntitySerializer &other) = delete;
-        SendableEntitySerializer& operator =(const SendableEntitySerializer &other) = delete;
+        DLLEXPORT virtual bool IsObjectTypeCorrect(Sendable &object) const override;
 	};
 
 }

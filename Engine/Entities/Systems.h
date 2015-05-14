@@ -33,31 +33,17 @@ namespace Leviathan{
             node._Position.Marked = false;
         }
 
-        //! \brief Creates nodes if matching ids are found in all argument vectors
-        //! \note It is more efficient to directly create nodes as
+        //! \brief Creates nodes if matching ids are found in all data vectors or
+        //! already existing component holders
+        //! \note It is more efficient to directly create nodes as entities are created
+        template<class FirstType, class SecondType>
         DLLEXPORT void CreateNodes(NodeHolder<RenderingPosition> &nodes,
-            const std::vector<std::tuple<Position*, ObjectID>> &positions,
-            const ComponentHolder<Position> &positionholder,
-            const std::vector<std::tuple<RenderNode*, ObjectID>> &rendernodes,
-            const ComponentHolder<RenderNode> &rendernodeholder)
+            const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
+            const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
+            const ComponentHolder<SecondType> &secondholder, Lock &secondlock)
         {
 
             GUARD_LOCK_OTHER((&nodes));
-
-            // This needs to be done both ways because components could be created at different times //
-            _CreateNodesSingle(nodes, guard, positions, rendernodes, rendernodeholder);
-            _CreateNodesSingle(nodes, guard, rendernodes, positions, positionholder);
-        }
-
-    protected:
-
-        //! Single way search helper for CreateNodes
-        template<class FirstType, class SecondType>
-        void _CreateNodesSingle(NodeHolder<RenderingPosition> &nodes, Lock &nodeguard,
-            const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
-            const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
-            const ComponentHolder<SecondType> &secondholder)
-        {
 
             for(auto iter = firstdata.begin(); iter != firstdata.end(); ++iter){
 
@@ -65,9 +51,9 @@ namespace Leviathan{
                 
                 for(auto iter2 = seconddata.begin(); iter != seconddata.end(); ++iter2){
 
-                    if(iter2->get<1>() == iter->get<1>()){
+                    if(std::get<1>(*iter2) == std::get<1>(*iter)){
 
-                        other = iter2->get<0>();
+                        other = std::get<0>(*iter2);
                         break;
                     }
                 }
@@ -75,45 +61,76 @@ namespace Leviathan{
                 if(!other){
 
                     // Full search //
-                    other = secondholder.Find(iter->get<1>());
+                    other = secondholder.Find(secondlock, std::get<1>(*iter));
                 }
 
                 if(!other)
                     continue;
 
                 // Create node if it doesn't exist already //
-                if(nodes.Find(nodeguard, iter->get<1>()))
+                if(nodes.Find(guard, std::get<1>(*iter)))
                     continue;
 
                 try{
-                    nodes.ConstructNew(nodeguard, iter->get<1>(), *other, *iter->get<0>());
+                    nodes.ConstructNew(guard, std::get<1>(*iter), *other, *std::get<0>(*iter));
                 } catch(const Exception &e){
 
-                    Logger::Get()->Error("CreateNodes: failed to create node for object "+
-                        Convert::ToString(iter->get<1>())+", exception: ");
+                    Logger::Get()->Error("CreateNodes: failed to create render position node "
+                        "for object "+Convert::ToString(std::get<1>(*iter))+", exception: ");
                     e.PrintToLog();
                     
                     continue;
                 }
             }
         }
-        
-	};
+    };
+
 
     //! \brief Sends updated entities from server to clients
     class SendableSystem : public System<SendableNode>{
+    public:
 
         //! \pre Final states for entities have been created for current tick
         DLLEXPORT void ProcessNode(SendableNode &node, ObjectID nodesobject,
             NodeHolder<SendableNode> &pool, Lock &poollock) const override
         {
-            if(!node.IsDirty)
+            if(!node._Sendable.Marked)
                 return;
 
+            // Send updates //
+            DEBUG_BREAK;
             
-            
-            node.IsDirty = false;
-        }        
+            node._Sendable.Marked = false;
+        }
+
+
+        //! \brief Creates nodes if matching ids are found in all data vectors or
+        //! already existing component holders
+        //! \note It is more efficient to directly create nodes as entities are created
+        DLLEXPORT void CreateNodes(NodeHolder<SendableNode> &nodes,
+            const std::vector<std::tuple<Sendable*, ObjectID>> &data)
+        {
+
+            GUARD_LOCK_OTHER((&nodes));
+
+            for(auto iter = data.begin(); iter != data.end(); ++iter){
+
+                // Create node if it doesn't exist already //
+                if(nodes.Find(guard, std::get<1>(*iter)))
+                    continue;
+
+                try{
+                    nodes.ConstructNew(guard, std::get<1>(*iter), *std::get<0>(*iter));
+                } catch(const Exception &e){
+
+                    Logger::Get()->Error("CreateNodes: failed to create sendable node for object "+
+                        Convert::ToString(std::get<1>(*iter))+", exception: ");
+                    e.PrintToLog();
+                    
+                    continue;
+                }
+            } 
+        }
     };
     
     

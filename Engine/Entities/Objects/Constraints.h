@@ -4,6 +4,7 @@
 // ------------------------------------ //
 #include "Common/ThreadSafe.h"
 #include "../../Common/Types.h"
+#include "../Components.h"
 
 namespace Leviathan{ namespace Entity{
 
@@ -25,10 +26,9 @@ namespace Leviathan{ namespace Entity{
         //! Base class for all different types of constraints to inherit
         //! \todo Make this actually ThreadSafe
         class BaseConstraint : public ThreadSafe{
-            friend BaseConstraintable;
         public:
             DLLEXPORT BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world,
-                BaseConstraintable* parent, BaseConstraintable* child);
+                Constraintable &first, Constraintable &second);
             DLLEXPORT virtual ~BaseConstraint();
             
             //! \brief Actually creates the Newton joint.
@@ -46,19 +46,17 @@ namespace Leviathan{ namespace Entity{
             //! Destroys the entire constraint
             //! \param callinginstance Ptr to either the parent or child is used to skip call to it
             //! (the destructor there is already running)
-            DLLEXPORT void ConstraintPartUnlinkedDestroy(BaseConstraintable* callinginstance);
-
+            DLLEXPORT void ConstraintPartUnlinkedDestroy(Constraintable &callinginstance);
+            
             DLLEXPORT inline ENTITY_CONSTRAINT_TYPE GetType() const{
                 return Type;
             }
 
             //! \brief Gets the first object
-            //! \return The object, this is always non-NULL while not being destructed
-            DLLEXPORT BaseConstraintable* GetFirstEntity() const;
+            DLLEXPORT Constraintable& GetFirstEntity() const;
 
             //! \brief Gets the second object
-            //! \return The object, this is may be NULL in special constraints
-            DLLEXPORT BaseConstraintable* GetSecondEntity() const;
+            DLLEXPORT Constraintable& GetSecondEntity() const;
 
             
         protected:
@@ -66,12 +64,9 @@ namespace Leviathan{ namespace Entity{
             DLLEXPORT virtual bool _CheckParameters();
             DLLEXPORT virtual bool _CreateActualJoint();
 
-            //! \brief Called by either side when they become disowned
-            void _WorldDisowned();
-            
             // ------------------------------------ //
-            BaseConstraintable* ParentObject;
-            BaseConstraintable* ChildObject;
+            Constraintable& FirstObject;
+            Constraintable& SecondObject;
             
             //! \note World is a direct ptr since all joints MUST be destroyed before the
             //! world is released
@@ -88,8 +83,8 @@ namespace Leviathan{ namespace Entity{
         //! \note The axis has to be normalized otherwise Init fails
         class SliderConstraint : public BaseConstraint{
         public:
-            DLLEXPORT SliderConstraint(GameWorld* world, BaseConstraintable* parent,
-                BaseConstraintable* child);
+            DLLEXPORT SliderConstraint(GameWorld* world, Constraintable &first,
+                Constraintable &second);
             DLLEXPORT virtual ~SliderConstraint();
 
 
@@ -108,31 +103,11 @@ namespace Leviathan{ namespace Entity{
             virtual bool _CreateActualJoint() override;
             // ------------------------------------ //
 
-            // stored parameters //
+            // Stored parameters //
             Float3 Axis;
 
         };
-
-
-        //! \brief Marks a connection between a controller and an entity
-        class ControllerConstraint : public BaseConstraint{
-        public:
-            DLLEXPORT ControllerConstraint(GameWorld* world, BaseConstraintable* controller,
-                BaseConstraintable* child);
-            DLLEXPORT ~ControllerConstraint();
-
-
-        protected:
-            virtual bool _CheckParameters() override;
-            virtual bool _CreateActualJoint() override;
-            // ------------------------------------ //
-            
-            
-        };
-
-
-
-
+        
     }
 }
 

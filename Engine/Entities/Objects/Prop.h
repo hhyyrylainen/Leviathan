@@ -1,28 +1,4 @@
-#pragma once
-// ------------------------------------ //
-#include "Define.h"
-// ------------------------------------ //
-#include "Entities/Bases/BaseObject.h"
-#include "Entities/Bases/BaseRenderable.h"
-#include "Entities/Bases/BasePositionable.h"
-#include "Entities/Bases/BaseScalable.h"
-#include "Entities/Bases/BasePhysicsObject.h"
-#include "Entities/Bases/BaseConstraintable.h"
-#include "Entities/Bases/BaseParentable.h"
-#include "Entities/Bases/BaseSendableEntity.h"
-#include "Events/CallableObject.h"
 
-namespace Leviathan{ namespace Entity{
-        
-        //! \brief A movable model loaded from a file
-        //! \todo Make sure that _MarkDataUpdated is called enough
-        class Prop : public virtual BaseObject, public virtual BaseRenderable,
-                       public BaseConstraintable, public BaseParentable,
-                       public BaseSendableEntity, public BasePhysicsObject,
-                       public virtual CallableObject
-        {
-            friend BaseSendableEntity;
-        public:
             
             DLLEXPORT Prop(bool hidden, GameWorld* world);
             DLLEXPORT virtual ~Prop();
@@ -37,8 +13,6 @@ namespace Leviathan{ namespace Entity{
             
             DLLEXPORT virtual void ReleaseData();
 
-            static void PropPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix,
-                int threadIndex);
 
             DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 

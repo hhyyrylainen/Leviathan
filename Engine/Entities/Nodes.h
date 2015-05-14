@@ -14,7 +14,9 @@ namespace Leviathan{
 	class RenderingPosition : public Node{
 	public:
 
-        DLLEXPORT bool Init(Position& pos, RenderNode& node);
+        DLLEXPORT RenderingPosition(Position& pos, RenderNode& node);
+
+        DLLEXPORT RenderingPosition(RenderNode& node, Position& pos);
 
 
         Position& _Position;
@@ -25,8 +27,9 @@ namespace Leviathan{
     class SendableNode : public Node{
     public:
 
-        DLLEXPORT bool Init();
+        DLLEXPORT SendableNode(Sendable &sendable);
 
-        bool IsDirty;
+        
+        Sendable& _Sendable;
     };
 }

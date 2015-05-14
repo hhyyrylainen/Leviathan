@@ -3,7 +3,6 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "../../Common/Types.h"
-#include "Entities/Bases/BaseObject.h"
 #include "Input/InputController.h"
 
 #define DEFAULTMOVEMENTMODIFIER		1.f
@@ -11,7 +10,7 @@
 
 namespace Leviathan{
 	// callable for the ability to receive key presses
-	class ViewerCameraPos : public BaseObject, public InputReceiver{
+	class ViewerCameraPos : public InputReceiver{
 	public:
 		DLLEXPORT ViewerCameraPos();
 		DLLEXPORT ~ViewerCameraPos();

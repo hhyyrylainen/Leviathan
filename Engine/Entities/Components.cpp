@@ -1,5 +1,7 @@
 // ------------------------------------ //
 #include "Components.h"
+
+#include "OgreSceneManager.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //

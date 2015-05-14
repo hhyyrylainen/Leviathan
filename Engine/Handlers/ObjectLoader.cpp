@@ -1,17 +1,18 @@
 // ------------------------------------ //
 #include "ObjectLoader.h"
 
-#include "Statistics/TimingMonitor.h"
-#include "OgreManualObject.h"
+#include "Entities/GameWorld.h"
 #include "Entities/Objects/Brush.h"
+#include "Entities/Objects/Constraints.h"
 #include "Entities/Objects/Prop.h"
 #include "Entities/Objects/TrackEntityController.h"
 #include "Entities/Objects/TrailEmitter.h"
+#include "FileSystem.h"
+#include "OgreEntity.h"
+#include "OgreManualObject.h"
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
-#include "OgreEntity.h"
-#include "FileSystem.h"
-#include "Entities/Objects/Constraints.h"
+#include "Statistics/TimingMonitor.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -155,7 +156,7 @@ DLLEXPORT void Leviathan::ObjectLoader::AddTestCubeToScenePositions(Ogre::SceneM
 
 
 // ------------------------------------ //
-DLLEXPORT int Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const std::string &name, int materialid,
+DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, const std::string &name, int materialid,
     Entity::Prop** createdinstance)
 {
 

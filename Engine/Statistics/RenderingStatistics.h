@@ -3,7 +3,7 @@
 #include "Include.h"
 #include "../ForwardDeclarations.h"
 #include <vector>
-#include <cstdint>
+#include <cstddef>
 
 namespace Leviathan{
 

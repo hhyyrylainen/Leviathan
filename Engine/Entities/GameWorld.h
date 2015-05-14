@@ -5,12 +5,13 @@
 #include <type_traits>
 
 #include "Systems.h"
+#include "Components.h"
+#include "Nodes.h"
 
 #include "Objects/ViewerCameraPos.h"
-#include "Newton/PhysicalWorld.h"
-#include "Bases/BaseObject.h"
-#include "Common/ReferenceCounted.h"
-#include "Common/BaseNotifiable.h"
+#include "../Newton/PhysicalWorld.h"
+#include "../Common/ReferenceCounted.h"
+#include "../Common/BaseNotifiable.h"
 
 
 #define PHYSICS_BASE_GRAVITY		-9.81f

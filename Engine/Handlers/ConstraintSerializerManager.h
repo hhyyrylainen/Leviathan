@@ -1,12 +1,7 @@
 #pragma once
-#ifndef LEVIATHAN_CONSTRAINTSERIALIZERMANAGER
-#define LEVIATHAN_CONSTRAINTSERIALIZERMANAGER
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Entities/Serializers/BaseConstraintSerializer.h"
 #include "Networking/NetworkResponse.h"
 #include "Common/ThreadSafe.h"
@@ -34,8 +29,8 @@ namespace Leviathan{
         //! \param object2 The second entity, if any, may be NULL
         //! \param packet Containing the custom data for the constraint
         //! \param create Specifies whether to create or destroy the constraint
-        DLLEXPORT bool CreateConstraint(BaseObject* object1, BaseObject* object2, Entity::ENTITY_CONSTRAINT_TYPE
-            type, sf::Packet &packet, bool create);
+        DLLEXPORT bool CreateConstraint(Constraintable &object1, Constraintable &object2,
+            Entity::ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet, bool create);
 
         //! \brief Puts the custom data of a constraint into a packet
         //! \note The constraint is locked before this call
@@ -56,10 +51,5 @@ namespace Leviathan{
 	};
 
 }
-#endif
-
-
-
-
 
 

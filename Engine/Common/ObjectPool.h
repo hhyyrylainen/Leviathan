@@ -25,39 +25,34 @@ namespace Leviathan{
         //! \brief Constructs a new component of the held type for entity
         //! \exception Exception when component has not been created
         template<typename... Args>
-        DLLEXPORT ElementType* ConstructNew(Lock &guard, KeyType forentity, Args... args){
+        DLLEXPORT ElementType* ConstructNew(Lock &guard, KeyType forentity, Args&&... args){
 
             if(Find(guard, forentity))
                 throw Exception("Entity with ID already has object in pool of this type");
-            
-            auto created = Elements.construct();
 
             try{
 
-                if(!created->Init(args...)){
+                auto created = Elements.construct(args...);
 
-                    throw Exception("Failed to Init element");
-                }
-                
-            } catch(...){
+                // Add to index for finding later //
+                Index.insert(std::make_pair(forentity, created));
 
-                Elements.destruct(created);
-                throw;
-            }
-
-            // Add to index for finding later //
-            Index.insert(std::make_pair(forentity, created));
-
-            Added.push_back(std::make_tuple(created, forentity));
+                Added.push_back(std::make_tuple(created, forentity));
             
-            return created;
+                return created;
+
+                
+            } catch(const Exception){
+
+                throw Exception("Failed to construct element");
+            }
         }
 
         template<typename... Args>
-        DLLEXPORT inline ElementType* ConstructNew(KeyType forentity, Args... args){
+        DLLEXPORT inline ElementType* ConstructNew(KeyType forentity, Args&&... args){
 
             GUARD_LOCK();
-            return ConstructNew(guard, forentity, args);
+            return ConstructNew(guard, forentity, args...);
         }
 
         //! \brief Returns true if there are objects in Removed
@@ -76,14 +71,14 @@ namespace Leviathan{
 
         //! \brief Calls Release with the specified arguments on the released types
         template<typename... Args>
-        DLLEXPORT void ReleaseRemoved(Args... args){
+        DLLEXPORT void ReleaseRemoved(Args&&... args){
 
             GUARD_LOCK();
 
             for(auto iter = Removed.begin(); iter != Removed.end(); ++iter){
 
-                auto object = iter->get<0>();
-                const auto id =iter->get<1>();
+                auto object = std::get<0>(*iter);
+                const auto id = std::get<1>(*iter);
 
                 object->Release(args...);
 
@@ -102,8 +97,8 @@ namespace Leviathan{
 
             for(auto iter = Removed.begin(); iter != Removed.end(); ++iter){
 
-                auto object = iter->get<0>();
-                const auto id =iter->get<1>();
+                auto object = std::get<0>(*iter);
+                const auto id = std::get<1>(*iter);
 
                 Elements.destroy(object);
                 RemoveFromIndex(guard, id);
@@ -139,13 +134,15 @@ namespace Leviathan{
 
         //! \brief QueueDestroys elements based on ids in vector
         template<typename Any>
-        DLLEXPORT void RemoveBasedOnKeyTupleList(const std::vector<std::tuple<Any, KeyType>> &values){
+        DLLEXPORT void RemoveBasedOnKeyTupleList(
+            const std::vector<std::tuple<Any, KeyType>> &values)
+        {
 
             GUARD_LOCK();
 
             for(auto iter = values.begin(); iter != values.end(); ++iter){
 
-                auto todelete = Index.find(iter->get<1>());
+                auto todelete = Index.find(std::get<1>(*iter));
 
                 if(todelete == Index.end())
                     continue;
@@ -167,7 +164,7 @@ namespace Leviathan{
 
             for(auto iter = Added.begin(); iter != Added.end(); ++iter){
 
-                if(iter->get<1>() == id){
+                if(std::get<1>(*iter) == id){
 
                     Added.erase(iter);
                     return;
@@ -243,7 +240,8 @@ namespace Leviathan{
         //! \note The order of the objects is not guaranteed and can change between runs
         //! \param function The function that is called with all of the components of this type
         //! the first parameter is the component, the second is the id of the entity owning the
-        //! component and the last one is a lock to this ComponentHolder, the return value specifies
+        //! component and the last one is a lock to this ComponentHolder,
+        //! the return value specifies
         //! if the component should be destroyed (true being yes and false being no)
         DLLEXPORT void Call(std::function<bool (ElementType&, KeyType, Lock&)> function){
 

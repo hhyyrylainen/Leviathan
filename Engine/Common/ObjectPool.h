@@ -151,7 +151,7 @@ namespace Leviathan{
 
                 RemoveFromAdded(guard, todelete->first);
                     
-                Index.erase(iter);
+                Index.erase(todelete);
             }
         }
 
@@ -265,9 +265,14 @@ namespace Leviathan{
         //! \warning All objects after this call are invalid
         DLLEXPORT void Clear(){
 
-            Index.clear();
-            Elements = std::move(boost::object_pool<ElementType>());
+            GUARD_LOCK();
+            
+            for(auto iter = Index.begin(); iter != Index.end(); ++iter){
 
+                Elements.destroy(iter->second);
+            }
+            
+            Index.clear();
             Removed.clear();
             Added.clear();
         }

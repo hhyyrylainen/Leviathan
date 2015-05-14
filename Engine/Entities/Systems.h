@@ -49,7 +49,7 @@ namespace Leviathan{
 
                 SecondType* other = nullptr;
                 
-                for(auto iter2 = seconddata.begin(); iter != seconddata.end(); ++iter2){
+                for(auto iter2 = seconddata.begin(); iter2 != seconddata.end(); ++iter2){
 
                     if(std::get<1>(*iter2) == std::get<1>(*iter)){
 

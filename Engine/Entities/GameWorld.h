@@ -72,15 +72,6 @@ namespace Leviathan{
     //! \note Only ConnectedPlayer object may be linked with the world through Notifier
 	class GameWorld : public BaseNotifierAll{
         friend PlayerConnectionPreparer;
-
-        struct WaitingConstraint{
-            WaitingConstraint(int first, int second, std::shared_ptr<NetworkResponse> packet) :
-                Entity1(first), Entity2(second), Packet(packet){}
-            
-            int Entity1, Entity2;
-            std::shared_ptr<NetworkResponse> Packet;
-        };
-        
 	public:
 		DLLEXPORT GameWorld();
 		DLLEXPORT ~GameWorld();
@@ -244,13 +235,25 @@ namespace Leviathan{
 		}
 
         //! \brief Resets physical timers
-        DLLEXPORT void ClearTimers();
+        DLLEXPORT void ClearTimers(Lock &guard);
 
+        DLLEXPORT inline void ClearTimers(){
+            
+            GUARD_LOCK();
+            ClearTimers(guard);
+        }
+        
         //! \brief Simulates physics
         DLLEXPORT void SimulatePhysics();
 
         //! \todo Synchronize this over the network
-		DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
+		DLLEXPORT void SetWorldPhysicsFrozenState(Lock &guard, bool frozen);
+
+        DLLEXPORT inline void SetWorldPhysicsFrozenState(bool frozen){
+
+            GUARD_LOCK();
+            SetWorldPhysicsFrozenState(guard, frozen);
+        }
 
 		// Ray callbacks //
 		static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
@@ -283,12 +286,6 @@ namespace Leviathan{
         //! \note This should only be called on the client
         DLLEXPORT bool HandleEntityInitialPacket(NetworkResponseDataForInitialEntity* data);
 
-        //! \brief Applies a constraint packet
-        //!
-        //! If the entities aren't loaded yet the packet will be stored until they are
-        DLLEXPORT void HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data,
-            std::shared_ptr<NetworkResponse> packet);
-
         //! \brief Applies an update packet
         //!
         //! If the entity is not found the packet is discarded
@@ -305,14 +302,6 @@ namespace Leviathan{
         //! \note Should only be called on a client
         DLLEXPORT void HandleWorldFrozenPacket(NetworkResponseDataForWorldFrozen* data);
 
-        //! \brief Sends a Constraint to a connection
-        //! \param constraint The constraint to send, the parent object needs to be locked
-        //! during this call
-        //! to avoid the constraint becoming invalid during this call
-        //! \param connectionptr The connection to use, this must be a safe pointer
-        DLLEXPORT void SendConstraintToConnection(
-            std::shared_ptr<Entity::BaseConstraint> constraint, ConnectionInfo* connectionptr);
-        
 	private:
 
 		//! Used to connect new players
@@ -330,10 +319,6 @@ namespace Leviathan{
 
 		void _CreateOgreResources(Ogre::Root* ogre, Window* rendertarget);
 		void _HandleDelayedDelete(Lock &guard);
-
-        //! \brief Applies a constraint to entities, if both are present
-        //! \returns True when the constraint is applied
-        bool _TryApplyConstraint(Lock &guard, NetworkResponseDataForEntityConstraint* data);
 
         //! \brief Reports an entity deletion to clients
         //! \todo Potentially send these in a big blob
@@ -370,18 +355,11 @@ namespace Leviathan{
         //! \todo Change this to an object that holds more than the player pointer
 		std::vector<ConnectedPlayer*> ReceivingPlayers;
 
-        //! The constraints that are waiting for their entities to be created
-        std::vector<WaitingConstraint> WaitingConstraints;
-
-        Mutex WaitingConstraintsMutex;
-        
-
         //! This is not empty when some players are receiving their initial world state
         //! These objects need to be marked as invalid before quitting
         //! These can also be used to check whether all players have received
         //! the world
         std::vector<std::shared_ptr<PlayerConnectionPreparer>> InitiallySyncingPlayers;
-        
 
 		// objects //
 		std::vector<ObjectID> Objects;

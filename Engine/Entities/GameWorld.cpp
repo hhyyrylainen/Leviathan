@@ -300,15 +300,6 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     ReleaseChildHooks(guard);
 
     guard.unlock();
-    
-    // Report waiting constraints //
-    Lock lock(WaitingConstraintsMutex);
-    if(!WaitingConstraints.empty()){
-
-        Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has "+Convert::ToString(
-                WaitingConstraints.size())+" constraints waiting for entities");
-        WaitingConstraints.clear();
-    }
 }
 // ------------------------------------ //
 void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre, Window* rendertarget){
@@ -444,7 +435,7 @@ DLLEXPORT void Leviathan::GameWorld::SimulatePhysics(){
     
 }
 
-DLLEXPORT void Leviathan::GameWorld::ClearTimers(){
+DLLEXPORT void Leviathan::GameWorld::ClearTimers(Lock &guard){
     
     _PhysicalWorld->ClearTimers();
 }
@@ -583,6 +574,10 @@ DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
         }
     }
 
+    // Constraintable
+    // Attach to missing constraints here, run system
+    
+
     // Clear added //
     ComponentPosition.ClearAdded();
     ComponentRenderNode.ClearAdded();
@@ -656,33 +651,7 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id){
         
     } else {
 
-        // Check for constraints //
-        Lock lock(WaitingConstraintsMutex);
-        if(WaitingConstraints.empty())
-            return;
 
-        // Not sure if this is necessary //
-        // TODO: move this to the tick function?
-        size_t amount = WaitingConstraints.size();
-        WaitingConstraint* first = &*WaitingConstraints.begin();
-        for(size_t i = 0; i < amount; ){
-
-            WaitingConstraint* current = (first+i);
-            if(current->Entity1 == id || current->Entity2 == id){
-
-                GUARD_LOCK();
-                // Try to apply it //
-                if(_TryApplyConstraint(guard,
-                        current->Packet->GetResponseDataForEntityConstraint())){
-                
-                    WaitingConstraints.erase(WaitingConstraints.begin()+i);
-                    --amount;
-                    continue;
-                }
-            }
-
-            i++;
-        }
     }
 }
 // ------------------------------------ //
@@ -699,16 +668,6 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(Lock &guard){
     
     NodeRenderingPosition.Clear();
     NodeSendableNode.Clear();
-
-    guard.unlock();
-    
-    // Throw away the waiting constraints //
-    {
-        Lock lock(WaitingConstraintsMutex);
-        WaitingConstraints.clear();
-    }
-
-    guard.lock();
 
     // Notify everybody that all entities are discarded //
     auto end = ReceivingPlayers.end();
@@ -874,19 +833,17 @@ void Leviathan::GameWorld::_ReportEntityDestruction(Lock &guard, ObjectID id){
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
+DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(Lock &guard, bool frozen){
 	// Skip if set to the same //
 	if(frozen == WorldFrozen)
 		return;
-
-	GUARD_LOCK();
 
 	WorldFrozen = frozen;
 
     if(!WorldFrozen){
 
         // Reset timers //
-        ClearTimers();
+        ClearTimers(guard);
     }
 
     // Send it to receiving players (if we are a server) //
@@ -1206,26 +1163,28 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(Lock &guard, ObjectI
     return connection->SendPacketToConnection(response, 5).get() ? true: false;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDataForInitialEntity* data){
+DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(
+    NetworkResponseDataForInitialEntity* data)
+{
 
     bool somesucceeded = false;
+
+    GUARD_LOCK();
     
     // Handle all the entities in the packet //
     auto end = data->EntityData.end();
     for(auto iter = data->EntityData.begin(); iter != end; ++iter){
 
-        BaseObject* returnptr = NULL;
+        ObjectID id = 0;
         
-        EntitySerializerManager::Get()->CreateEntityFromInitialMessage(&returnptr, *(*iter).get(), this);
+        EntitySerializerManager::Get()->CreateEntityFromInitialMessage(this, guard, id,
+            *(*iter).get());
 
-        if(!returnptr){
+        if(id < 1){
 
             Logger::Get()->Error("GameWorld: handle initial packet: failed to create entity");
             continue;
         }
-
-        // Add the entity //
-        AddObject(returnptr);
 
         somesucceeded = true;
     }
@@ -1236,36 +1195,38 @@ DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(NetworkResponseDa
 DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(
     NetworkResponseDataForEntityUpdate* data)
 {
-
-    // Get the target entity //
-    auto target = GetWorldObject(data->EntityID);
-
-    if(!target){
-
-        Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has no entity "+
-            Convert::ToString(data->EntityID)+", ignoring an update packet");
-        return;
-    }
-
-    // Apply the update //
-    // The object may not be locked as it might want to resimulate //
+    GUARD_LOCK();
     
-    if(!EntitySerializerManager::Get()->ApplyUpdateMessage(*data->UpdateData, data->TickNumber,
-            data->ReferenceTick, target))
-    {
+    // Just check if the entity is created/exists //
+    for(auto iter = Objects.begin(); iter != Objects.end(); ++iter){
 
-        Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): applying update to entity "+
-            Convert::ToString(data->EntityID)+" failed");
-        return;
+        if((*iter) == data->EntityID){
+
+            // Apply the update //
+            if(!EntitySerializerManager::Get()->ApplyUpdateMessage(this, guard, data->EntityID,
+                    *data->UpdateData, data->TickNumber, data->ReferenceTick))
+            {
+
+                Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): applying update "
+                    "to entity "+Convert::ToString(data->EntityID)+" failed");
+            }
+            
+            return;
+        }
     }
+
+    // It hasn't been created yet //
+    Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has no entity "+
+        Convert::ToString(data->EntityID)+", ignoring an update packet");
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSyncData* data){
 
     GUARD_LOCK_NAME(lockit);
 
-    Logger::Get()->Info("GameWorld: adjusting our clock: Absolute: "+Convert::ToString(data->Absolute)+", tick: "+
-        Convert::ToString(data->Ticks)+", enginems: "+Convert::ToString(data->EngineMSTweak));
+    Logger::Get()->Info("GameWorld: adjusting our clock: Absolute: "+
+        Convert::ToString(data->Absolute)+", tick: "+Convert::ToString(data->Ticks)+
+        ", enginems: "+Convert::ToString(data->EngineMSTweak));
     
     // Change our TickNumber to match //
     if(data->Absolute){
@@ -1302,8 +1263,8 @@ DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(NetworkResponseData
     GUARD_LOCK();
 
     Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): frozen state updated, now: "+
-        Convert::ToString<int>(data->Frozen)+", tick: "+Convert::ToString(data->TickNumber)+" (our tick:"+
-        Convert::ToString(TickNumber)+")");
+        Convert::ToString<int>(data->Frozen)+", tick: "+Convert::ToString(data->TickNumber)+
+        " (our tick:"+Convert::ToString(TickNumber)+")");
 
     if(data->TickNumber > TickNumber){
 
@@ -1311,7 +1272,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(NetworkResponseData
     }
     
     // Set the state //
-    SetWorldPhysicsFrozenState(data->Frozen);
+    SetWorldPhysicsFrozenState(guard, data->Frozen);
 
     // Simulate ticks if required //
     if(!data->Frozen){
@@ -1321,7 +1282,8 @@ DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(NetworkResponseData
 
         if(tickstosimulate > 0){
 
-            Logger::Get()->Info("GameWorld: unfreezing and simulating "+Convert::ToString(tickstosimulate*TICKSPEED)+
+            Logger::Get()->Info("GameWorld: unfreezing and simulating "+
+                Convert::ToString(tickstosimulate*TICKSPEED)+
                 " ms worth of more physical updates");
 
             _PhysicalWorld->AdjustClock(tickstosimulate*TICKSPEED);
@@ -1333,62 +1295,6 @@ DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(NetworkResponseData
         // Snap objects back //
         Logger::Get()->Info("TODO: world freeze snap things back a bit");
     }
-}
-// ------------------------------------ //
-bool Leviathan::GameWorld::_TryApplyConstraint(Lock &guard,
-    NetworkResponseDataForEntityConstraint* data)
-{
-
-    // Find the objects //
-    BaseObject* first;
-    BaseObject* second;
-    first = second = NULL;
-
-    bool found = false;
-    
-    // The constraint might only need the first entity //
-    bool findsecond = data->EntityID2 >= 0 ? true: false;
-
-    auto end = Objects.end();
-    for(auto iter = Objects.begin(); iter != end; ++iter){
-
-        int objid = (*iter)->GetID();
-        if(!first && objid == data->EntityID1){
-            
-            first = (*iter).get();
-
-            // If the second is found or only one entity is needed we are done //
-            if(second || !findsecond){
-
-                found = true;
-                break;
-            }
-            
-        } else if(findsecond && !second && objid == data->EntityID2){
-
-            second = (*iter).get();
-
-            // If the first is found we are done //
-            if(first){
-
-                found = true;
-                break;
-            }
-        }
-    }
-
-    if(!found)
-        return false;
-
-    guard.unlock();
-    
-    // Apply the constraint //
-    ConstraintSerializerManager::Get()->CreateConstraint(first, second, data->Type,
-        *data->ConstraintData.get(), data->Create);
-
-    guard.lock();
-
-    return true;
 }
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/, const float &tvar,

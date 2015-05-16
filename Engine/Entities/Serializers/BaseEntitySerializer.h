@@ -4,6 +4,7 @@
 // ------------------------------------ //
 #include "../../Common/SFMLPackets.h"
 #include "../Components.h"
+#include "../../Common/ThreadSafe.h"
 
 namespace Leviathan{
 
@@ -42,7 +43,7 @@ namespace Leviathan{
         //! \note The caller will have added the ID to the packet so that needs to be skipped (or rather should be)
         //! But the Type variable should be included by this object (as an int32_t)
         DLLEXPORT virtual bool CreatePacketForConnection(GameWorld* world, Lock &worldlock,
-            ObjectID id, sf::Packet &packet, ConnectionInfo* connectionptr) = 0;
+            ObjectID id, Sendable &sendable, sf::Packet &packet, ConnectionInfo* connectionptr) = 0;
 
 
         //! \brief Deserializes a whole object from a packet if the Type in the packet is the same as Type of this

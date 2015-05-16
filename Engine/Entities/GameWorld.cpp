@@ -598,22 +598,18 @@ DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{
     return TickNumber;
 }
 // ------------------ Object managing ------------------ //
-DLLEXPORT ObjectID GameWorld::CreateEntity(){
+DLLEXPORT ObjectID GameWorld::CreateEntity(Lock &guard){
 
     auto id = IDFactory::GetID();
-
-    GUARD_LOCK();
 
     Objects.push_back(id);
 
     return static_cast<ObjectID>(id);
 }
 
-DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id){
+DLLEXPORT void GameWorld::NotifyEntityCreate(Lock &guard, ObjectID id){
 
     if(IsOnServer){
-
-        GUARD_LOCK();
 
         // This is at least a decent place to send them,
         // any constraints created later will get send when they are created

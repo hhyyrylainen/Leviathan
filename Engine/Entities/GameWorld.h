@@ -155,7 +155,13 @@ namespace Leviathan{
 
 
         //! \brief Creates a new empty entity and returns its id
-        DLLEXPORT ObjectID CreateEntity();
+        DLLEXPORT ObjectID CreateEntity(Lock &guard);
+
+        DLLEXPORT inline ObjectID CreateEntity(){
+
+            GUARD_LOCK();
+            return CreateEntity(guard);
+        }
 
         //! \brief Destroys an entity and all of its components
         //! \todo Make this less expensive
@@ -167,9 +173,15 @@ namespace Leviathan{
         //! \brief Notifies others that we have created a new entity
         //! \note This is called after all components are set up and it is ready to be sent to
         //! other players
-        //! \note Client uses this to handle queued constraints
+        //! \note Clients should also call this function
         //! \todo Allow to set the world to queue objects and send them in big bunches to players
-        DLLEXPORT void NotifyEntityCreate(ObjectID id);
+        DLLEXPORT void NotifyEntityCreate(Lock &guard, ObjectID id);
+
+        DLLEXPORT inline void NotifyEntityCreate(ObjectID id){
+
+            GUARD_LOCK();
+            NotifyEntityCreate(guard, id);
+        }
 
 
         //! \brief Returns a reference to a component of wanted type
@@ -202,17 +214,71 @@ namespace Leviathan{
         //! \brief Creates a new component for entity
         //! \exception Exception if the component failed to init or it already exists
         template<typename... Args>
-        DLLEXPORT Position& CreateRenderNode(ObjectID id, Args... args){
+        DLLEXPORT RenderNode& CreateRenderNode(ObjectID id, Args... args){
 
             return *ComponentRenderNode.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Position& CreateSendable(ObjectID id, Args... args){
+        DLLEXPORT Sendable& CreateSendable(ObjectID id, Args... args){
 
             return *ComponentSendable.ConstructNew(id, args...);
         }
-        
+
+        template<typename... Args>
+        DLLEXPORT Model& CreateModel(ObjectID id, Args... args){
+
+            return *ComponentModel.ConstructNew(id, args...);
+        }
+
+        template<typename... Args>
+        DLLEXPORT Physics& CreatePhysics(ObjectID id, Args... args){
+
+            return *ComponentPhysics.ConstructNew(id, args...);
+        }
+
+        template<typename... Args>
+        DLLEXPORT Constraintable& CreateConstraintable(ObjectID id, Args... args){
+
+            return *ComponentConstraintable.ConstructNew(id, args...);
+        }
+
+        template<typename... Args>
+        DLLEXPORT BoxGeometry& CreateBoxGeometry(ObjectID id, Args... args){
+
+            return *ComponentBoxGeometry.ConstructNew(id, args...);
+        }
+
+        template<typename... Args>
+        DLLEXPORT ManualObject& CreateManualObject(ObjectID id, Args... args){
+
+            return *ComponentManualObject.ConstructNew(id, args...);
+        }
+
+        template<typename... Args>
+        DLLEXPORT PhysicsListener& CreatePhysicsListener(ObjectID id, Args... args){
+
+            return *ComponentPhysicsListener.ConstructNew(id, args...);
+        }
+
+        template<typename... Args>
+        DLLEXPORT PositionMarkerOwner& CreatePositionMarkerOwner(ObjectID id, Args... args){
+
+            return *ComponentPositionMarkerOwner.ConstructNew(id, args...);
+        }
+
+        template<typename... Args>
+        DLLEXPORT Parent& CreateParent(ObjectID id, Args... args){
+
+            return *ComponentParent.ConstructNew(id, args...);
+        }
+
+        template<typename... Args>
+        DLLEXPORT Trail& CreateTrail(ObjectID id, Args... args){
+
+            return *ComponentTrail.ConstructNew(id, args...);
+        }
+
         //! \brief Runs a system specified by the template argument
         template<class SystemType>
         DLLEXPORT void RunSystem(){
@@ -393,8 +459,19 @@ namespace Leviathan{
         ComponentHolder<Position> ComponentPosition;
         ComponentHolder<RenderNode> ComponentRenderNode;
         ComponentHolder<Sendable> ComponentSendable;
-        
 
+        // TODO: Setup handling for these... //
+        ComponentHolder<Model> ComponentModel;
+        ComponentHolder<Physics> ComponentPhysics;
+        ComponentHolder<Constraintable> ComponentConstraintable;
+        ComponentHolder<BoxGeometry> ComponentBoxGeometry;
+        ComponentHolder<ManualObject> ComponentManualObject;
+        ComponentHolder<PhysicsListener> ComponentPhysicsListener;
+        ComponentHolder<PositionMarkerOwner> ComponentPositionMarkerOwner;
+        ComponentHolder<Parent> ComponentParent;
+        ComponentHolder<Trail> ComponentTrail;
+
+        
         
         NodeHolder<RenderingPosition> NodeRenderingPosition;
         RenderingPositionSystem _RenderingPositionSystem;

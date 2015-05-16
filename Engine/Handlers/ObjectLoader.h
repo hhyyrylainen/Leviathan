@@ -3,6 +3,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "../Entities/Components.h"
+#include "../Entities/GameWorld.h"
 
 namespace Leviathan{
 
@@ -62,14 +63,16 @@ namespace Leviathan{
         //! Set the dynamic property if you want to update the properties later
 		DLLEXPORT ObjectID LoadTrailToWorld(GameWorld* world, Lock &worldlock,
             const std::string &material, const Trail::Properties &properties,
-            bool allowupdatelater);
+            bool allowupdatelater,
+            const Position::PositionData &pos = {Float3(0), Float4::IdentityQuaternion()});
 
         DLLEXPORT inline ObjectID LoadTrailToWorld(GameWorld* world, const std::string &material,
-            const Trail::Properties &properties, bool allowupdatelater)
+            const Trail::Properties &properties, bool allowupdatelater,
+            const Position::PositionData &pos = {Float3(0), Float4::IdentityQuaternion()})
         {
 
             GUARD_LOCK_OTHER(world);
-            return LoadTrailToWorld(world, guard, material, properties, allowupdatelater);
+            return LoadTrailToWorld(world, guard, material, properties, allowupdatelater, pos);
         }
             
 

@@ -561,5 +561,139 @@ DLLEXPORT bool PositionDeltaState::FillMissingData(ObjectDeltaStateData &otherst
     
     return allsucceeded;
 }
+// ------------------ TrackControllerState ------------------ //
+DLLEXPORT TrackControllerState::TrackControllerState(int tick, int reached,
+    float speed, float progress) :
+    ObjectDeltaStateData(tick), ReachedNode(reached), ChangeSpeed(speed),
+    NodeProgress(progress), AddedNodes(0), ValidFields(TRACKSTATE_UPDATED_ALL)
+{
+
+}
+
+DLLEXPORT TrackControllerState::TrackControllerState(int tick,
+    sf::Packet &packet) :
+    ObjectDeltaStateData(tick)
+{
+
+    // We need to do the opposite of what we do in CreateUpdatePacket //
+    packet >> ValidFields;
+
+    if(!packet)
+        throw InvalidArgument("invalid packet for TrackControllerState");
+    
+    if(ValidFields & TRACKSTATE_UPDATED_NODE)
+        packet >> ReachedNode;
+
+    if(ValidFields & TRACKSTATE_UPDATED_SPEED)
+        packet >> ChangeSpeed;
+    
+    if(ValidFields & TRACKSTATE_UPDATED_PROGRESS)
+        packet >> NodeProgress;
+
+    if(!packet)
+        throw InvalidArgument("invalid packet for TrackControllerState");
+}
+            
+DLLEXPORT void TrackControllerState::CreateUpdatePacket(ObjectDeltaStateData* olderstate,
+    sf::Packet &packet)
+{
+
+    ValidFields = 0;
+
+    // Check which parts have changed //
+    if(!olderstate){
+
+        // When comparing against NULL state everything is updated //
+        ValidFields = TRACKSTATE_UPDATED_ALL;
+        
+    } else {
+
+        TrackControllerState* other = static_cast<TrackControllerState*>(olderstate);
+
+        // Node
+        if(ReachedNode != other->ReachedNode)
+            ValidFields |= TRACKSTATE_UPDATED_NODE;
+
+        // Speed
+        if(ChangeSpeed != other->ChangeSpeed)
+            ValidFields |= TRACKSTATE_UPDATED_SPEED;
+
+        // Progress
+        if(NodeProgress != other->NodeProgress)
+            ValidFields |= TRACKSTATE_UPDATED_PROGRESS;
+    }
+
+    packet << ValidFields;
+
+    // Add the changed data to the packet //
+    if(ValidFields & TRACKSTATE_UPDATED_NODE)
+        packet << ReachedNode;
+
+    if(ValidFields & TRACKSTATE_UPDATED_SPEED)
+        packet << ChangeSpeed;
+    
+    if(ValidFields & TRACKSTATE_UPDATED_PROGRESS)
+        packet << NodeProgress;
+}
+// ------------------------------------ //
+DLLEXPORT bool TrackControllerState::FillMissingData(ObjectDeltaStateData &otherstate){
+    
+    const TrackControllerState &other = static_cast<TrackControllerState&>(otherstate);
+
+    if(ValidFields == 0){
+        
+        // Copy everything as nothing is valid //
+        ReachedNode = other.ReachedNode;
+        ChangeSpeed = other.ChangeSpeed;
+        NodeProgress = other.NodeProgress;
+
+        
+        return other.ValidFields == TRACKSTATE_UPDATED_ALL;
+        
+    } else if(ValidFields == TRACKSTATE_UPDATED_ALL){
+        
+        // Already contains everything //
+        return true;
+    }
+
+    bool allsucceeded = true;
+
+    // ReachedNode
+    if(!(ValidFields & TRACKSTATE_UPDATED_NODE)){
+        if(other.ValidFields & TRACKSTATE_UPDATED_NODE){
+            
+            ReachedNode = other.ReachedNode;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    // ChangeSpeed
+    if(!(ValidFields & TRACKSTATE_UPDATED_SPEED)){
+        if(other.ValidFields & TRACKSTATE_UPDATED_SPEED){
+            
+            ChangeSpeed = other.ChangeSpeed;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    // NodeProgress
+    if(!(ValidFields & TRACKSTATE_UPDATED_PROGRESS)){
+        if(other.ValidFields & TRACKSTATE_UPDATED_PROGRESS){
+            
+            NodeProgress = other.NodeProgress;
+        } else {
+
+            allsucceeded = false;
+        }
+    }
+
+    ValidFields |= other.ValidFields;
+
+    return allsucceeded;
+}
 
 

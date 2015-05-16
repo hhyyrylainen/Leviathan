@@ -4,6 +4,8 @@
 #include "../Common/SFMLPackets.h"
 #include "../Common/ThreadSafe.h"
 
+#include "Components.h"
+
 
 namespace Leviathan{
 
@@ -164,6 +166,52 @@ namespace Leviathan{
         //! Only set on received versions, marks which fields are valid
         int8_t ValidFields;
     };
+
+
+    //! Flags for which fields have changed
+    //! \see TrackControllerState
+    enum TRACKSTATE_UPDATED{
+
+        TRACKSTATE_UPDATED_NODE = 1 << 0,
+            
+        TRACKSTATE_UPDATED_SPEED = 1 << 1,
+
+        TRACKSTATE_UPDATED_PROGRESS = 1 << 2,
+    };
+    
+    static const int8_t TRACKSTATE_UPDATED_ALL = TRACKSTATE_UPDATED_NODE |
+                                           TRACKSTATE_UPDATED_SPEED |
+                                           TRACKSTATE_UPDATED_PROGRESS;
+    
+    static const float TRACKCONTROLLER_PROGRESS_THRESSHOLD = 0.00000001f;
+        
+    //! Object delta state for TrackEntityController
+    //! \todo Handle adding positions to tracks
+    //! \todo Should this be even interpolated on clients?
+    class TrackControllerState : public ObjectDeltaStateData{
+    public:
+
+        DLLEXPORT TrackControllerState(int tick, int reached, float speed, float progress);
+        DLLEXPORT TrackControllerState(int tick, sf::Packet &packet);
+            
+        DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate,
+            sf::Packet &packet) override;
+
+        DLLEXPORT bool FillMissingData(ObjectDeltaStateData &otherstate) override;
+
+        int ReachedNode;
+        float ChangeSpeed;
+        float NodeProgress;
+
+        //! Only set on received versions, marks which fields are valid
+        int8_t ValidFields;
+            
+        //! \todo Make this work
+        std::vector<Position::PositionData> AddedNodes;
+    };
+        
+
+
 
 }
 

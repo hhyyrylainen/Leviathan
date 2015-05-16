@@ -19,7 +19,8 @@ namespace Leviathan{
 
         //! \copydoc BaseEntitySerializer::CreatePacketForConnection
         DLLEXPORT virtual bool CreatePacketForConnection(GameWorld* world, Lock &worldlock,
-            ObjectID id, sf::Packet &packet, ConnectionInfo* connectionptr) override;
+            ObjectID id, Sendable &sendable, sf::Packet &packet, ConnectionInfo* connectionptr)
+            override;
 
         //! \copydoc BaseEntitySerializer::DeserializeWholeEntityFromPacket
         DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(GameWorld* world, Lock &worldlock, 

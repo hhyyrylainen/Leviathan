@@ -6,9 +6,8 @@
 #include "Events/EventHandler.h"
 #include "Utility/DataHandling/SimpleDatabase.h"
 #include "Addons/GameModule.h"
-#include "Entities/Objects/Prop.h"
-#include "Entities/Objects/Brush.h"
-#include "Entities/Objects/TrackEntityController.h"
+#include "../Entities/Components.h"
+#include "../Entities/GameWorld.h"
 #include "add_on/autowrapper/aswrappedcall.h"
 #include "Networking/AINetworkCache.h"
 
@@ -52,33 +51,6 @@ ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryGeneric(const string &blo
 {
 
 	return new ScriptSafeVariableBlock(new DataBlock<TType>(value), blockname);
-}
-// ------------------ Prop proxies ------------------ //
-Float3 PropGetPosVal(Entity::Prop* obj){
-
-    return obj->GetPos();
-}
-
-int PropGetID(Entity::Prop* ptr){
-
-    return ptr->GetID();
-}
-
-Float3 PropGetBodyVelocity(Entity::Prop* obj){
-
-    return obj->GetBodyVelocity();
-}
-
-NewtonBody* PropGetPhysicsBody(Entity::Prop* obj){
-
-    GUARD_LOCK_OTHER(obj);
-    return obj->GetPhysicsBody(guard);
-}
-// ------------------ Brush proxies ------------------ //
-NewtonBody* BrushGetPhysicsBody(Entity::Brush* obj){
-
-    GUARD_LOCK_OTHER(obj);
-    return obj->GetPhysicsBody(guard);
 }
 // ------------------ Float3 proxies ------------------ //
 void Float3ConstructorProxy(void* memory){
@@ -130,30 +102,6 @@ Float3 Float3NormalizeProxy(Float3* obj){
 	return obj->Normalize();
 }
 
-// ------------------ BaseObject proxies ------------------ //
-NewtonBody* BaseObjectCustomMessageGetNewtonBody(BaseObject* obj){
-	// Use the SendCustomMessage function to request this data //
-	ObjectDataRequest request(ENTITYDATA_REQUESTTYPE_NEWTONBODY);
-
-	obj->SendCustomMessage(ENTITYCUSTOMMESSAGETYPE_DATAREQUEST, &request);
-
-	return reinterpret_cast<NewtonBody*>(request.RequestResult);
-}
-
-BaseObject* CastPropToBaseObjectProxy(Entity::Prop* object){
-	return dynamic_cast<BaseObject*>(object);
-}
-
-BaseObject* CastBrushToBaseObjectProxy(Entity::Brush* object){
-	return dynamic_cast<BaseObject*>(object);
-}
-
-string GetLeviathanVersionProxy(){
-
-	return LEVIATHAN_VERSION_ANSIS;
-}
-
-
 template<class From, class To>
 To* DoReferenceCastDynamic(From* ptr){
 	// If already invalid just return it //
@@ -184,6 +132,12 @@ To* DoReferenceCastStatic(From* ptr){
 
 	// Return the ptr (which might be invalid) //
 	return newptr;
+}
+
+
+static std::string GetLeviathanVersionProxy(){
+
+    return Leviathan::VERSIONS;
 }
 
 
@@ -632,140 +586,9 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	}    
     
 
-
 	// ------------------ Game entities ------------------ //
-	if(engine->RegisterObjectType("BaseObject", 0, asOBJ_REF) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_ADDREF, "void f()", asMETHOD(BaseObject, AddRefProxy),
-            asCALL_THISCALL) < 0)
-    {
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_RELEASE, "void f()", asMETHOD(BaseObject, ReleaseProxy),
-            asCALL_THISCALL) < 0)
-    {
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("BaseObject", "NewtonBody@ CustomMessageGetNewtonBody()",
-            asFUNCTION(BaseObjectCustomMessageGetNewtonBody), asCALL_CDECL_OBJFIRST) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-
-	using namespace Entity;
-
-	if(engine->RegisterObjectType("Prop", 0, asOBJ_REF) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("Prop", asBEHAVE_ADDREF, "void f()", asMETHOD(Prop, AddRefProxy),
-            asCALL_THISCALL) < 0)
-    {
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("Prop", asBEHAVE_RELEASE, "void f()", asMETHOD(Prop, ReleaseProxy),
-            asCALL_THISCALL) < 0)
-    {
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("Prop", "NewtonBody@ GetPhysicalBody()", asFUNCTION(PropGetPhysicsBody),
-            asCALL_CDECL_OBJFIRST) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-    if(engine->RegisterObjectMethod("Prop", "int GetID()", asFUNCTION(PropGetID),
-            asCALL_CDECL_OBJFIRST) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("Prop", "Float3 GetPosition()",  asFUNCTION(PropGetPosVal),
-            asCALL_CDECL_OBJFIRST) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("Prop", "Float3 GetVelocity()", asFUNCTION(PropGetBodyVelocity),
-            asCALL_CDECL_OBJFIRST) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-
-	if(engine->RegisterObjectType("Brush", 0, asOBJ_REF) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("Brush", asBEHAVE_ADDREF, "void f()", asMETHOD(Brush, AddRefProxy),
-            asCALL_THISCALL) < 0)
-    {
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("Brush", asBEHAVE_RELEASE, "void f()", asMETHOD(Brush, ReleaseProxy),
-            asCALL_THISCALL) < 0)
-    {
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("Brush", "NewtonBody@ GetPhysicalBody()", asFUNCTION(BrushGetPhysicsBody),
-            asCALL_CDECL_OBJFIRST) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-
-
-	if(engine->RegisterObjectType("TrackEntityController", 0, asOBJ_REF) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("TrackEntityController", asBEHAVE_ADDREF, "void f()",
-            asMETHOD(TrackEntityController, AddRefProxy), asCALL_THISCALL) < 0)
-    {
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("TrackEntityController", asBEHAVE_RELEASE, "void f()",
-            asMETHOD(TrackEntityController, ReleaseProxy), asCALL_THISCALL) < 0)
-    {
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("TrackEntityController", "Float3 GetCurrentNodePosition()",
-            asMETHOD(TrackEntityController, GetCurrentNodePosition), asCALL_THISCALL) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("TrackEntityController", "Float3 GetNextNodePosition()",
-            asMETHOD(TrackEntityController, GetNextNodePosition), asCALL_THISCALL) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("TrackEntityController", "void SetProgressTowardsNextNode(float progress)",
-            asMETHOD(TrackEntityController, SetProgressTowardsNextNode), asCALL_THISCALL) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-
-
-	// ------------------ Entity casts ------------------ //
-	if(engine->RegisterObjectBehaviour("Prop", asBEHAVE_IMPLICIT_REF_CAST, "BaseObject@ f()",
-            asFUNCTION((DoReferenceCastStatic<Prop, BaseObject>)), asCALL_CDECL_OBJFIRST) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_REF_CAST, "Prop@ f()",
-            asFUNCTION((DoReferenceCastDynamic<BaseObject, Prop>)), asCALL_CDECL_OBJFIRST) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-
-	if(engine->RegisterObjectBehaviour("Brush", asBEHAVE_IMPLICIT_REF_CAST, "BaseObject@ f()",
-            asFUNCTION((DoReferenceCastStatic<Brush, BaseObject>)), asCALL_CDECL_OBJFIRST) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_REF_CAST, "Brush@ f()",
-            asFUNCTION((DoReferenceCastDynamic<BaseObject, Brush>)), asCALL_CDECL_OBJFIRST) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-
-	if(engine->RegisterObjectBehaviour("TrackEntityController", asBEHAVE_IMPLICIT_REF_CAST, "BaseObject@ f()",
-            asFUNCTION((DoReferenceCastStatic<TrackEntityController, BaseObject>)), asCALL_CDECL_OBJFIRST) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("BaseObject", asBEHAVE_REF_CAST, "TrackEntityController@ f()",
-            asFUNCTION((DoReferenceCastDynamic<BaseObject, TrackEntityController>)), asCALL_CDECL_OBJFIRST) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
+    
+    
 
 	// ------------------ Global functions ------------------ //
 
@@ -782,7 +605,8 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 #endif // _DEBUG
 
 
-	if(engine->RegisterGlobalFunction("string GetLeviathanVersion()", asFUNCTION(GetLeviathanVersionProxy), asCALL_CDECL) < 0)
+	if(engine->RegisterGlobalFunction("string GetLeviathanVersion()",
+            asFUNCTION(GetLeviathanVersionProxy), asCALL_CDECL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}

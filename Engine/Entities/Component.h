@@ -13,6 +13,9 @@ namespace Leviathan{
         //! Set to true when this component has changed
         //! Can be used by other systems to react to changing components
         bool Marked;
+
+        Component(const Component&) = delete;
+        Component& operator =(const Component&) = delete;
     };
 
     template<class ComponentType>

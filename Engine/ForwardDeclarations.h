@@ -57,7 +57,13 @@ namespace Leviathan{
 
     // Entities //
     class Sendable;
+    class Position;
     class ObjectDeltaStateData;
+
+    // DeltaStates //
+    class PositionDeltaState;
+    class ObjectDeltaStateData;
+    class TrackControllerState;
     
 
     // Exceptions //

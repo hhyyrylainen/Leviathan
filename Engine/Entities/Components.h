@@ -13,7 +13,6 @@
 #include "../Newton/PhysicalWorld.h"
 
 #include "Component.h"
-#include "CommonStateObjects.h"
 
 
 namespace Leviathan{
@@ -39,13 +38,8 @@ namespace Leviathan{
 
     public:
 
-        DLLEXPORT Position();
-
-        //! \brief Initializes at specific position
-        DLLEXPORT bool Init(const Float3 pos, const Float4 rot);
-
-        //! \brief Initializes at 0, 0, 0
-        DLLEXPORT bool Init();
+        //! \brief Creates at specific position
+        DLLEXPORT Position(const Float3 pos, const Float4 rot);
 
         //! \brief Sets _Position and _Orientation to be the same as in the data
         DLLEXPORT void ApplyPositionData(const PositionData &data);
@@ -182,7 +176,25 @@ namespace Leviathan{
     class BoxGeometry : public Component{
     public:
         
+        //! Size along the axises
+        Float3 Sizes;
 
+        //! Rendering surface material name
+        std::string Material;
+
+        //! Entity created from a box mesh
+        Ogre::Entity* GraphicalObject;
+    };
+
+    //! \brief Entity has a model
+    class Model : public Component{
+    public:
+
+        
+        std::string ModelFile;
+
+        //! The entity that has this model's mesh loaded
+        Ogre::Entity* GraphicalObject;
     };
 
 
@@ -229,7 +241,7 @@ namespace Leviathan{
         
     public:
         
-
+        DLLEXPORT Physics(Position* updatepos, Sendable* updatesendable);
         
 		DLLEXPORT void GiveImpulse(const Float3 &deltaspeed, const Float3 &point = Float3(0));
 
@@ -272,7 +284,7 @@ namespace Leviathan{
         //! \brief Applies physical state from holder object
         DLLEXPORT void ApplyPhysicalState(const BasePhysicsData &data);
 
-    protected:
+        
 
         // default physics callbacks that are fine in most cases //
 		// Don't forget to pass the user data as BaseObject if using these //
@@ -281,7 +293,7 @@ namespace Leviathan{
         
 		static void DestroyBodyCallback(const NewtonBody* body);
 
-        static void PropPhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix,
+        static void PhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix,
             int threadIndex);
 
         
@@ -289,13 +301,14 @@ namespace Leviathan{
 		Float3 _GatherApplyForces(Lock &guard, const float &mass);
         
 
-    public:
 
         //! \brief Destroys the physical body
         DLLEXPORT void Release(NewtonWorld* world);
 
         //! \brief Moves the physical body to the specified position
         DLLEXPORT void JumpTo(Position &target);
+
+        DLLEXPORT bool SetPosition(Lock &guard, const Float3 &pos, const Float4 &orientation);
 
         
         
@@ -310,7 +323,15 @@ namespace Leviathan{
 		bool Immovable;
 		bool ApplyGravity;
 
+        //! Non-newton access to mass
+        float Mass;
+
 		std::list<std::shared_ptr<ApplyForceInfo>> ApplyForceList;
+
+        // Optional access to other components that can be used for marking when physics object
+        // moves
+        Position* UpdatePosition;
+        Sendable* UpdateSendable;
     };
 
     class Parent : public Component{
@@ -355,6 +376,73 @@ namespace Leviathan{
     class PositionMarkerOwner : public Component{
 
 
+    };
+
+    class ManualObject : public Component{
+    public:
+
+        ManualObject(const std::string &meshname = "");
+
+        Ogre::ManualObject* Object;
+
+        //! When not empty the ManualObject has been created into an actual mesh
+        //! that needs to be destroyed on release
+        std::string CreatedMesh;
+    };
+
+    class TrackController : public Component{
+    public:
+
+        struct LocationNode{
+
+            ObjectID Object;
+            Position& Pos;
+        };
+
+    public:
+        
+
+        //! \brief Directly sets the progress towards next node (if set to 1.f goes to next node)
+        DLLEXPORT void SetProgressTowardsNextNode(float progress);
+        
+        //! \brief Gets the progress towards next node, if at 1.f then last node is reached
+        DLLEXPORT float GetProgressTowardsNextNode(){
+            return NodeProgress;
+        }
+
+        //! \brief Controls the speed at which the entity moves along the track
+        //! (set to negative to go backwards and 0.f to stop)
+        DLLEXPORT void SetTrackAdvanceSpeed(const float &speed);
+            
+        DLLEXPORT inline float GetTrackAdvanceSpeed(){
+            return ChangeSpeed;
+        }
+
+        //! \brief Updates the entity positions
+        //! \note You probably don't have to manually call this
+        DLLEXPORT virtual void UpdateControlledPositions(float timestep);
+
+        DLLEXPORT bool SetStateToInterpolated(ObjectDeltaStateData &first,
+            ObjectDeltaStateData &second, float progress);
+
+        //! \brief Internal function for making all data valid
+        //!
+        //! Checks for invalid reached node and progress
+        void _SanityCheckNodeProgress(Lock &guard);
+
+        
+        //! Number of the node that has been reached
+        int ReachedNode;
+
+        //! Percentage between ReachedNode and next node
+        //! 1.f being next node reached and progress reset to 0
+        float NodeProgress;
+
+        //! The speed at which the node progress changes
+        float ChangeSpeed;
+
+        //! The amount of speed/force used to move the entities towards the track position
+        float ForceTowardsPoint;
     };
 
     

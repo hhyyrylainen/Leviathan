@@ -13,6 +13,7 @@
 #include "../Newton/PhysicalWorld.h"
 
 #include "Component.h"
+#include "Objects/Constraints.h"
 
 
 namespace Leviathan{
@@ -130,10 +131,7 @@ namespace Leviathan{
         
     public:
         
-        DLLEXPORT Sendable();
-
-        //! \brief Inits sendable with specified type
-        DLLEXPORT bool Init(SENDABLE_TYPE type);
+        DLLEXPORT Sendable(SENDABLE_TYPE type);
 
         //! \brief Adds SendableHandleType to packet
         DLLEXPORT void AddTypeToPacket(sf::Packet &packet) const;
@@ -167,6 +165,8 @@ namespace Leviathan{
         };        
     public:
 
+        DLLEXPORT Received(SENDABLE_TYPE type);
+
         //! Clientside buffer of past states
         boost::circular_buffer<StoredState> ClientStateBuffer;
     };
@@ -175,6 +175,7 @@ namespace Leviathan{
     //! \brief Entity has a box for geometry/model, possibly also physics
     class BoxGeometry : public Component{
     public:
+        DLLEXPORT BoxGeometry(const Float3 &size, const std::string &material);
         
         //! Size along the axises
         Float3 Sizes;
@@ -189,7 +190,7 @@ namespace Leviathan{
     //! \brief Entity has a model
     class Model : public Component{
     public:
-
+        DLLEXPORT Model(const std::string &file);
         
         std::string ModelFile;
 
@@ -242,6 +243,8 @@ namespace Leviathan{
     public:
         
         DLLEXPORT Physics(Position* updatepos, Sendable* updatesendable);
+
+        DLLEXPORT void Release();
         
 		DLLEXPORT void GiveImpulse(const Float3 &deltaspeed, const Float3 &point = Float3(0));
 
@@ -336,46 +339,135 @@ namespace Leviathan{
 
     class Parent : public Component{
     public:
-        
+        DLLEXPORT Parent();
 
     };
 
     class Parentable : public Component{
     public:
+        DLLEXPORT Parentable();
 
         
+        Float3 RelativeToParent;
+
+        bool ApplyRotation;
     };
 
 
     class Constraintable : public Component{
     public:
-        
+        //! \param world Used to allow created constraints to access world data (including physics)
+        DLLEXPORT Constraintable(GameWorld* world);
 
+        //! Creates a constraint between this and another object
+        //! \warning DO NOT store the returned value (since that reference isn't counted)
+        //! \note Before the constraint is actually finished, you need to
+        //! call ->SetParameters() on the returned ptr
+        //! and then ->Init() and then let go of the ptr
+        //! \note If you do not want to allow constraints where child is NULL you have to
+        //! check if child is NULL before calling this function
+        template<class ConstraintClass>
+        DLLEXPORT std::shared_ptr<ConstraintClass> CreateConstraintWith(Constraintable &other){
+
+            auto tmpconstraint = std::make_shared<ConstraintClass>(World, this, other);
+            
+            return tmpconstraint;
+        }
+
+        
+        std::vector<std::shared_ptr<Entity::BaseConstraint>> PartInConstraints;
+
+        GameWorld* World;
     };
 
     class PhysicsListener : public Component{
-
+    public:
+        DLLEXPORT PhysicsListener();
 
     };
+
 
     class Trail : public Component{
     public:
 
+        struct ElementProperties{
+            DLLEXPORT ElementProperties(const Float4 &initialcolour,
+                const Float4 &colourchange, const float &initialsize, const float &sizechange) : 
+                InitialColour(initialcolour), ColourChange(colourchange), InitialSize(initialsize),
+                SizeChange(sizechange)
+            {
+
+            }
+        
+            DLLEXPORT ElementProperties(const Float4 &initialcolour,
+                const float &initialsize) : 
+                InitialColour(initialcolour), ColourChange(0), InitialSize(initialsize),
+                SizeChange(0)
+            {
+
+            }
+
+            DLLEXPORT ElementProperties() :
+                InitialColour(1), ColourChange(0), InitialSize(1), SizeChange(0)
+            {
+
+            }
+
+            Float4 InitialColour;
+            Float4 ColourChange;
+            float InitialSize;
+            float SizeChange;
+        };
+
         struct Properties{
+        public:
+            DLLEXPORT Properties(size_t maxelements, float lenght, float maxdistance,
+                bool castshadows = false) :
+                Elements(1), TrailLenght(lenght), MaxDistance(maxdistance),
+                CastShadows(castshadows), MaxChainElements(maxelements)
+            {
+            }
+        
+            float TrailLenght;
+            float MaxDistance;
+            size_t MaxChainElements;
+            bool CastShadows;
 
-
+            std::vector<ElementProperties> Elements;
         };
         
 
     public:
-        
 
+        Trail(RenderNode* node, const std::string &materialname, const Properties &variables);
+
+        //! \brief Sets properties on the trail object
+        //! \pre Ogre objects have been created
+        //! \param force If set to true all settings will be applied
+		DLLEXPORT bool SetTrailProperties(const Properties &variables, bool force = false);
+
+        //! The trail entity which is attached at the root scene node and follows our RenderNode
+        //! component around
+		Ogre::RibbonTrail* TrailEntity;
+
+        //! For ease of use direct access to ogre node is required
+        //! Not valid in non-gui mode
+        RenderNode* _RenderNode;
+
+        //! Current settings, when updating settings only changed ones are applied
         Properties CurrentSettings;
     };
     
     class PositionMarkerOwner : public Component{
+    public:
+        DLLEXPORT PositionMarkerOwner();
 
+        //! Adds a node
+        //! \todo Allow not deleting entities on release
+        DLLEXPORT void Add(ObjectID entity, Position& pos);
 
+        
+        std::vector<std::tuple<ObjectID, Position&>> Markers;
     };
 
     class ManualObject : public Component{
@@ -400,7 +492,8 @@ namespace Leviathan{
         };
 
     public:
-        
+
+        DLLEXPORT TrackController();
 
         //! \brief Directly sets the progress towards next node (if set to 1.f goes to next node)
         DLLEXPORT void SetProgressTowardsNextNode(float progress);

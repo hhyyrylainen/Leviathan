@@ -279,6 +279,12 @@ namespace Leviathan{
             return *ComponentTrail.ConstructNew(id, args...);
         }
 
+        template<typename... Args>
+        DLLEXPORT TrackController& CreateTrackController(ObjectID id, Args... args){
+
+            return *ComponentTrackController.ConstructNew(id, args...);
+        }
+
         //! \brief Runs a system specified by the template argument
         template<class SystemType>
         DLLEXPORT void RunSystem(){
@@ -470,6 +476,7 @@ namespace Leviathan{
         ComponentHolder<PositionMarkerOwner> ComponentPositionMarkerOwner;
         ComponentHolder<Parent> ComponentParent;
         ComponentHolder<Trail> ComponentTrail;
+        ComponentHolder<TrackController> ComponentTrackController;
 
         
         

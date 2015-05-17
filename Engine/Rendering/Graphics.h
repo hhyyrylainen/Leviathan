@@ -2,8 +2,6 @@
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-#include "Entities/Bases/BaseRenderable.h"
-
 #include "GraphicalInputEntity.h"
 #include "Application/AppDefine.h"
 #include "OgreFrameListener.h"

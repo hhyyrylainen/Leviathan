@@ -4,6 +4,8 @@
 
 namespace Leviathan{
 
+    class Visitor;
+
     //! \brief Base class for all classes that accept visitors
     class Visitable{
     public:

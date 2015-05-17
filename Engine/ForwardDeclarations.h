@@ -59,6 +59,8 @@ namespace Leviathan{
     class Sendable;
     class Position;
     class ObjectDeltaStateData;
+    class Constraintable;
+    
 
     // DeltaStates //
     class PositionDeltaState;

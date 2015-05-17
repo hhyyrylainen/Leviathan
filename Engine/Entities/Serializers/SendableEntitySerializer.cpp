@@ -51,6 +51,85 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(BaseOb
         return false;
     }
 
+    DLLEXPORT std::unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerializeFromPacket(sf::Packet &packet,
+        GameWorld* world, int id)
+    {
+
+        int32_t packetstype;
+        if(!(packet >> packetstype)){
+
+            return nullptr;
+        }
+
+        BASESENDABLE_ACTUAL_TYPE matchtype = static_cast<BASESENDABLE_ACTUAL_TYPE>(packetstype);
+
+        switch(matchtype){
+            case BASESENDABLE_ACTUAL_TYPE_BRUSH:
+            {
+                // This is hopefully written by the Brush _SaveOwnData
+                bool hidden;
+
+                if(!(packet >> hidden)){
+
+                    return nullptr;
+                }
+            
+                // Create a brush and apply the packet to it //
+                std::unique_ptr<Entity::Brush> tmpobj(new Entity::Brush(hidden, world, id));
+
+                GUARD_LOCK_OTHER(tmpobj);
+                if(!tmpobj->_LoadOwnDataFromPacket(guard, packet)){
+
+                    Logger::Get()->Warning("BaseSendableEntity: failed to Init Brush from network packet");
+                    return nullptr;
+                }
+            
+                return move(unique_ptr<BaseSendableEntity>(dynamic_cast<BaseSendableEntity*>(tmpobj.release())));
+            }
+            case BASESENDABLE_ACTUAL_TYPE_PROP:
+            {
+                // This is hopefully written by the Prop _SaveOwnData
+                bool hidden;
+
+                if(!(packet >> hidden)){
+
+                    return nullptr;
+                }
+            
+                // Create a brush and apply the packet to it //
+                std::unique_ptr<Entity::Prop> tmpobj(new Entity::Prop(hidden, world, id));
+
+                GUARD_LOCK_OTHER(tmpobj);
+                if(!tmpobj->_LoadOwnDataFromPacket(guard, packet)){
+
+                    Logger::Get()->Warning("BaseSendableEntity: failed to Init Prop from network packet");
+                    return nullptr;
+                }
+
+                return move(unique_ptr<BaseSendableEntity>(dynamic_cast<BaseSendableEntity*>(tmpobj.release())));
+            }
+            case BASESENDABLE_ACTUAL_TYPE_TRACKENTITYCONTROLLER:
+            {
+                std::unique_ptr<Entity::TrackEntityController> tmpobj(
+                    new Entity::TrackEntityController(id, world));
+
+                GUARD_LOCK_OTHER(tmpobj);
+                if(!tmpobj->_LoadOwnDataFromPacket(guard, packet)){
+
+                    Logger::Get()->Warning("BaseSendableEntity: failed to Init "
+                        "TrackEntityController from network packet");
+                    return nullptr;
+                }
+
+                return move(unique_ptr<BaseSendableEntity>(dynamic_cast<BaseSendableEntity*>(
+                            tmpobj.release())));
+            }
+            default:
+                // Unknown type
+                return nullptr;
+        }
+    }
+
     // Create a sendable entity //
     auto sendableobj = BaseSendableEntity::UnSerializeFromPacket(packet, world, objectid);
 

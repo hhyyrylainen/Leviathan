@@ -4,28 +4,17 @@
 #include "OgreSceneManager.h"
 #include "OgreBillboardChain.h"
 #include "OgreRibbonTrail.h"
+#include "CommonStateObjects.h"
+#include "GameWorld.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 
 // ------------------ Position ------------------ //
-DLLEXPORT Position::Position(){
-
-}
-
-DLLEXPORT bool Position::Init(const Float3 pos, const Float4 rot){
-
-    _Position = pos;
-    _Orientation = rot;
-
+DLLEXPORT Position::Position(const Float3 pos, const Float4 rot) :
+    _Position(pos), _Orientation(rot)
+{
     Marked = true;
-}
-
-//! \brief Initializes at 0, 0, 0
-DLLEXPORT bool Position::Init(){
-
-    _Position = Float3(0, 0, 0);
-    _Orientation = Float4::IdentityQuaternion();
 }
 // ------------------------------------ //
 DLLEXPORT void Position::ApplyPositionData(const PositionData &data){
@@ -66,111 +55,111 @@ DLLEXPORT void Position::Interpolate(PositionDeltaState &from, PositionDeltaStat
     Float4 rot = _Orientation;
 
     // Position
-    if(second.ValidFields & PRDELTAUPDATED_POS_X){
+    if(to.ValidFields & PRDELTAUPDATED_POS_X){
 
-        if(first.ValidFields & PRDELTAUPDATED_POS_X){
+        if(from.ValidFields & PRDELTAUPDATED_POS_X){
             
-            pos.X = first.Position.X + (second.Position.X-first.Position.X)*progress;
+            pos.X = from.Position.X + (to.Position.X-from.Position.X)*progress;
         } else {
 
-            pos.X = second.Position.X;
+            pos.X = to.Position.X;
         }
         
-    } else if(first.ValidFields & PRDELTAUPDATED_POS_X){
+    } else if(from.ValidFields & PRDELTAUPDATED_POS_X){
         
-        pos.X = first.Position.X;
+        pos.X = from.Position.X;
     }
 
-    if(second.ValidFields & PRDELTAUPDATED_POS_Y){
+    if(to.ValidFields & PRDELTAUPDATED_POS_Y){
 
-        if(first.ValidFields & PRDELTAUPDATED_POS_Y){
+        if(from.ValidFields & PRDELTAUPDATED_POS_Y){
             
-            pos.Y = first.Position.Y + (second.Position.Y-first.Position.Y)*progress;
+            pos.Y = from.Position.Y + (to.Position.Y-from.Position.Y)*progress;
         } else {
 
-            pos.Y = second.Position.Y;
+            pos.Y = to.Position.Y;
         }
         
-    } else if(first.ValidFields & PRDELTAUPDATED_POS_Y){
+    } else if(from.ValidFields & PRDELTAUPDATED_POS_Y){
         
-        pos.Y = first.Position.Y;
+        pos.Y = from.Position.Y;
     }
     
-    if(second.ValidFields & PRDELTAUPDATED_POS_Z){
+    if(to.ValidFields & PRDELTAUPDATED_POS_Z){
 
-        if(first.ValidFields & PRDELTAUPDATED_POS_Z){
+        if(from.ValidFields & PRDELTAUPDATED_POS_Z){
             
-            pos.Z = first.Position.Z + (second.Position.Z-first.Position.Z)*progress;
+            pos.Z = from.Position.Z + (to.Position.Z-from.Position.Z)*progress;
         } else {
 
-            pos.Z = second.Position.Z;
+            pos.Z = to.Position.Z;
         }
         
-    } else if(first.ValidFields & PRDELTAUPDATED_POS_Z){
+    } else if(from.ValidFields & PRDELTAUPDATED_POS_Z){
         
-        pos.Z = first.Position.Z;
+        pos.Z = from.Position.Z;
     }
     
     // Rotation
     // TODO: spherical interpolation for rotation
-    if(second.ValidFields & PRDELTAUPDATED_ROT_X){
+    if(to.ValidFields & PRDELTAUPDATED_ROT_X){
 
-        if(first.ValidFields & PRDELTAUPDATED_ROT_X){
+        if(from.ValidFields & PRDELTAUPDATED_ROT_X){
             
-            rot.X = first.Rotation.X + (second.Rotation.X-first.Rotation.X)*progress;
+            rot.X = from.Rotation.X + (to.Rotation.X-from.Rotation.X)*progress;
         } else {
 
-            rot.X = second.Rotation.X;
+            rot.X = to.Rotation.X;
         }
         
-    } else if(first.ValidFields & PRDELTAUPDATED_ROT_X){
+    } else if(from.ValidFields & PRDELTAUPDATED_ROT_X){
 
-        rot.X = first.Rotation.X;
+        rot.X = from.Rotation.X;
     }
 
-    if(second.ValidFields & PRDELTAUPDATED_ROT_Y){
+    if(to.ValidFields & PRDELTAUPDATED_ROT_Y){
 
-        if(first.ValidFields & PRDELTAUPDATED_ROT_Y){
+        if(from.ValidFields & PRDELTAUPDATED_ROT_Y){
             
-            rot.Y = first.Rotation.Y + (second.Rotation.Y-first.Rotation.Y)*progress;
+            rot.Y = from.Rotation.Y + (to.Rotation.Y-from.Rotation.Y)*progress;
         } else {
 
-            rot.Y = second.Rotation.Y;
+            rot.Y = to.Rotation.Y;
         }
         
-    } else if(first.ValidFields & PRDELTAUPDATED_ROT_Y){
+    } else if(from.ValidFields & PRDELTAUPDATED_ROT_Y){
 
-        rot.Y = first.Rotation.Y;
-    }
-    
-    if(second.ValidFields & PRDELTAUPDATED_ROT_Z){
-
-        if(first.ValidFields & PRDELTAUPDATED_ROT_Z){
-            
-            rot.Z = first.Rotation.Z + (second.Rotation.Z-first.Rotation.Z)*progress;
-        } else {
-
-            rot.Z = second.Rotation.Z;
-        }
-        
-    } else if(first.ValidFields & PRDELTAUPDATED_ROT_Z){
-
-        rot.Z = first.Rotation.Z;
+        rot.Y = from.Rotation.Y;
     }
     
-    if(second.ValidFields & PRDELTAUPDATED_ROT_W){
+    if(to.ValidFields & PRDELTAUPDATED_ROT_Z){
 
-        if(first.ValidFields & PRDELTAUPDATED_ROT_W){
+        if(from.ValidFields & PRDELTAUPDATED_ROT_Z){
             
-            rot.W = first.Rotation.W + (second.Rotation.W-first.Rotation.W)*progress;
+            rot.Z = from.Rotation.Z + (to.Rotation.Z-from.Rotation.Z)*progress;
         } else {
 
-            rot.W = second.Rotation.W;
+            rot.Z = to.Rotation.Z;
         }
         
-    } else if(first.ValidFields & PRDELTAUPDATED_ROT_W){
+    } else if(from.ValidFields & PRDELTAUPDATED_ROT_Z){
 
-        rot.W = first.Rotation.W;
+        rot.Z = from.Rotation.Z;
+    }
+    
+    if(to.ValidFields & PRDELTAUPDATED_ROT_W){
+
+        if(from.ValidFields & PRDELTAUPDATED_ROT_W){
+            
+            rot.W = from.Rotation.W + (to.Rotation.W-from.Rotation.W)*progress;
+        } else {
+
+            rot.W = to.Rotation.W;
+        }
+        
+    } else if(from.ValidFields & PRDELTAUPDATED_ROT_W){
+
+        rot.W = from.Rotation.W;
     }
     
     _Position = pos;
@@ -188,7 +177,7 @@ DLLEXPORT bool RenderNode::Init(){
     Node = nullptr;
 }
 
-DLLEXPORT void RenderNode::Release(Ogre::Scene* worldsscene){
+DLLEXPORT void RenderNode::Release(Ogre::SceneManager* worldsscene){
 
     worldsscene->destroySceneNode(Node);
     Node = nullptr;
@@ -208,7 +197,10 @@ DLLEXPORT bool Physics::SetPosition(Lock &guard, const Float3 &pos, const Float4
         return false;
     
     Ogre::Matrix4 matrix;
-    matrix.makeTransform(pos, Float3(1, 1, 1), orientation);
+
+    Ogre::Vector3 ogrepos = pos;
+    Ogre::Quaternion ogrerot = orientation;
+    matrix.makeTransform(ogrepos, Float3(1, 1, 1), ogrerot);
 
     Ogre::Matrix4 tmatrix = matrix.transpose();
 
@@ -219,7 +211,7 @@ DLLEXPORT bool Physics::SetPosition(Lock &guard, const Float3 &pos, const Float4
 }
 
 
-void Leviathan::Entity::Prop::PhysicsMovedEvent(const NewtonBody* const body,
+void Physics::PhysicsMovedEvent(const NewtonBody* const body,
     const dFloat* const matrix, int threadIndex)
 {
 
@@ -237,18 +229,15 @@ void Leviathan::Entity::Prop::PhysicsMovedEvent(const NewtonBody* const body,
     // The object needs to be locked here //
     GUARD_LOCK_OTHER(tmp);
     
-    if(tmp->UpdatePosition){
+    GUARD_LOCK_OTHER_NAME((&tmp->_Position), guard2);
 
-        GUARD_LOCK_OTHER_NAME(tmp->UpdatePosition, guard2);
-
-        tmp->UpdatePosition->_Position = tmat.getTrans();
-        tmp->UpdatePosition->_Orientation = tmat.extractQuaternion();
-        tmp->UpdatePosition->Marked = true;
-    }
+    tmp->_Position._Position = tmat.getTrans();
+    tmp->_Position._Orientation = tmat.extractQuaternion();
+    tmp->_Position.Marked = true;
     
     if(tmp->UpdateSendable){
         
-        tmp->UpdateSendable = true;
+        tmp->UpdateSendable->Marked = true;
     }
     
     tmp->Marked = true;
@@ -277,7 +266,7 @@ void Physics::ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat
     GUARD_LOCK_OTHER(tmp);
 
 	// get gravity force and apply mass to it //
-	Float3 Force = tmp->OwnedByWorld->GetGravityAtPosition(tmp->Position)*mass;
+	Float3 Force = tmp->World->GetGravityAtPosition(tmp->_Position._Position)*mass;
     
 	// add other forces //
     if(!tmp->ApplyForceList.empty())
@@ -289,30 +278,32 @@ void Physics::ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat
 }
 
 void Physics::DestroyBodyCallback(const NewtonBody* body){
+    // This shouldn't be required as the newton world won't be cleared while running
+    // Physics* tmp = reinterpret_cast<Physics*>(NewtonBodyGetUserData(body));
+
+    // GUARD_LOCK_OTHER(tmp);
     
-    Body = nullptr;
-    Collision = nullptr;
+    // tmp->Body = nullptr;
+    // tmp->Collision = nullptr;
 }
 // ------------------------------------ //
 DLLEXPORT void Physics::GiveImpulse(const Float3 &deltaspeed, const Float3 &point /*= Float3(0)*/){
     GUARD_LOCK();
+
+    if(!Body)
+        throw InvalidState("Physics object doesn't have a body");
     
-	if(Body){
-
 		NewtonBodyAddImpulse(Body, &deltaspeed.X, &point.X);
-	}
 }
 
-DLLEXPORT void Physics::SetBodyVelocity(Lock &guard,
-    const Float3 &velocities)
-{
-	if(Body){
-
-		NewtonBodySetVelocity(Body, &velocities.X);
-	}
+DLLEXPORT void Physics::SetVelocity(Lock &guard, const Float3 &velocities){
+    if(!Body)
+        throw InvalidState("Physics object doesn't have a body");
+    
+    NewtonBodySetVelocity(Body, &velocities.X);
 }
 
-DLLEXPORT Float3 Physics::GetBodyVelocity(Lock &guard){
+DLLEXPORT Float3 Physics::GetVelocity(Lock &guard){
 
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
@@ -322,7 +313,7 @@ DLLEXPORT Float3 Physics::GetBodyVelocity(Lock &guard){
     return vel;
 }
 
-DLLEXPORT Float3 Physics::GetBodyTorque(Lock &guard){
+DLLEXPORT Float3 Physics::GetTorque(Lock &guard){
 
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
@@ -332,22 +323,24 @@ DLLEXPORT Float3 Physics::GetBodyTorque(Lock &guard){
     return torq;
 }
 
-DLLEXPORT void Physics::SetBodyTorque(Lock &guard, const Float3 &torque){
+DLLEXPORT void Physics::SetTorque(Lock &guard, const Float3 &torque){
     
-    if(Body){
+    if(!Body)
+        throw InvalidState("Physics object doesn't have a body");
 
-        NewtonBodySetTorque(Body, &torque.X);
-    }
+    NewtonBodySetTorque(Body, &torque.X);
 }
 
 DLLEXPORT void Physics::SetLinearDampening(float factor /*= 0.1f*/){
     GUARD_LOCK();
-    
-    if(Body)
-        NewtonBodySetLinearDamping(Body, factor);
+
+    if(!Body)
+        throw InvalidState("Physics object doesn't have a body");
+
+    NewtonBodySetLinearDamping(Body, factor);
 }
 // ------------------------------------ //
-Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(Lock &guard, const float &mass){
+Float3 Physics::_GatherApplyForces(Lock &guard, const float &mass){
 	// Return if just an empty list //
 	if(ApplyForceList.empty())
 		return Float3(0);
@@ -356,7 +349,7 @@ Float3 Leviathan::BasePhysicsObject::_GatherApplyForces(Lock &guard, const float
 
 	for(auto iter = ApplyForceList.begin(); iter != ApplyForceList.end(); ++iter){
 		// Add to total, and multiply by mass if wanted //
-        const Float3 force = (*iter)->Callback((*iter).get(), this, guard);
+        const Float3 force = (*iter)->Callback((*iter).get(), *this, guard);
         
 		total += (*iter)->MultiplyByMass ? force*mass: force;
 
@@ -427,8 +420,8 @@ DLLEXPORT void Physics::SetPhysicalMaterialID(Lock &guard, int ID){
 	NewtonBodySetMaterialGroupID(Body, ID);
 }
 // ------------------------------------ //
-DLLEXPORT void Physics::InterpolatePhysicalState(PositionablePhysicalDeltaState &first,
-    PositionablePhysicalDeltaState &second, float progress)
+DLLEXPORT void Physics::InterpolatePhysicalState(PhysicalDeltaState &first,
+    PhysicalDeltaState &second, float progress)
 {
 
     // TODO: fix using partial first states
@@ -581,98 +574,6 @@ DLLEXPORT void Physics::InterpolatePhysicalState(PositionablePhysicalDeltaState 
     SetBodyTorque(guard, tor);
 }
 // ------------------ Received ------------------ //
-DLLEXPORT bool Received::LoadUpdateFromPacket(sf::Packet &packet, int ticknumber,
-    int referencetick)
-{
-
-    auto receivedstate = CreateStateFromPacket(ticknumber, packet);
-
-    if(!receivedstate){
-
-        return false;
-    }
-
-    {
-        GUARD_LOCK();
-
-        // Skip if not newer than any //
-        if(ClientStateBuffer.size() != 0){
-
-            bool newer = false;
-            bool filled = false;
-            
-            for(auto& obj : ClientStateBuffer){
-
-                // Fill data from the reference tick to make this update packet as complete as possible //
-                if(obj.Tick == referencetick){
-
-                    // Add missing values //
-                    receivedstate->FillMissingData(*obj.DeltaData);
-                
-                    filled = true;
-                
-                    if(newer)
-                        break;
-                }
-
-                if(obj.Tick < ticknumber){
-                
-                    newer = true;
-
-                    if(filled)
-                        break;
-                }
-            }
-            
-            if(!newer)
-                return false;
-
-            // If it isn't filled that tells that our buffer is too small //
-            // referencetick is invalid when it is -1 and is ignored in that case //
-            if(!filled && referencetick != -1){
-
-                bool olderexist = false;
-
-                // TODO: make sure that this doesn't mess with interpolation too badly
-                // under reasonable network stress, also this probably should never be missing
-                // under normal conditions
-                
-                // Or that we have missed a single packet //
-                for(auto& obj : ClientStateBuffer){
-
-                    if(obj.Tick < referencetick){
-
-                        olderexist = true;
-                        break;
-                    }
-                }
-
-                cout << "Entity old state " << referencetick << " is no longer in memory" << endl;
-                
-                //if(!olderexist)
-                //    throw Exception("ReferenceTick is no longer in memory ClientStateBuffer "
-                //        "is too small");
-            }
-            
-        } else {
-
-            // No stored states, must be newer //
-            // Also no need to fill missing data as only the updated values should be in the packet //
-            
-        }
-
-        
-        // Store the new state in the buffer so that it can be found when interpolating //
-        ClientStateBuffer.push_back(StoredState(receivedstate));
-    }
-
-    // Interpolations can only happen if more than one state is received
-    if(ClientStateBuffer.size() > 1)
-        _OnNewStateReceived();
-
-    return true;
-}
-
 DLLEXPORT void Received::GetServerSentStates(shared_ptr<ObjectDeltaStateData> &first,
     std::shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const
 {
@@ -719,7 +620,7 @@ DLLEXPORT void Received::GetServerSentStates(shared_ptr<ObjectDeltaStateData> &f
 }
 
 // ------------------ TrackController ------------------ //
-DLLEXPORT bool TrackEntityController::SetStateToInterpolated(ObjectDeltaStateData &first,
+DLLEXPORT bool TrackController::SetStateToInterpolated(ObjectDeltaStateData &first,
     ObjectDeltaStateData &second, float progress)
 {
 

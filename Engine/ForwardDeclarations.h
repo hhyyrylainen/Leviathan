@@ -64,6 +64,7 @@ namespace Leviathan{
 
     // DeltaStates //
     class PositionDeltaState;
+    class PhysicalDeltaState;
     class ObjectDeltaStateData;
     class TrackControllerState;
     

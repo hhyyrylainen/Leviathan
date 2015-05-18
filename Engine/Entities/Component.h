@@ -10,8 +10,11 @@ namespace Leviathan{
     class Component : public ThreadSafe{
     public:
 
+        DLLEXPORT Component() : Marked(true){};
+
         //! Set to true when this component has changed
         //! Can be used by other systems to react to changing components
+        //! \note This is true when the component has just been created
         bool Marked;
 
         Component(const Component&) = delete;

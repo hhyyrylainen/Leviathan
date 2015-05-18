@@ -167,6 +167,9 @@ namespace Leviathan{
 
         DLLEXPORT Received(SENDABLE_TYPE type);
 
+        DLLEXPORT void GetServerSentStates(std::shared_ptr<ObjectDeltaStateData> &first,
+            std::shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const;
+
         //! Clientside buffer of past states
         boost::circular_buffer<StoredState> ClientStateBuffer;
     };
@@ -242,7 +245,7 @@ namespace Leviathan{
         
     public:
         
-        DLLEXPORT Physics(Position* updatepos, Sendable* updatesendable);
+        DLLEXPORT Physics(GameWorld* world, Position &updatepos, Sendable* updatesendable);
 
         DLLEXPORT void Release();
         
@@ -259,17 +262,17 @@ namespace Leviathan{
 		DLLEXPORT bool RemoveApplyForce(const std::string &name);
 
         //! \brief Sets absolute velocity of the object
-        DLLEXPORT void SetVelocity(const Float3 &velocities);
+        DLLEXPORT void SetVelocity(Lock &guard, const Float3 &velocities);
 
         //! \brief Gets the absolute velocity
-        DLLEXPORT Float3 GetBodyVelocity(Lock &guard);
+        DLLEXPORT Float3 GetVelocity(Lock &guard);
 
         //! \brief Sets the torque of the body
         //! \see GetBodyTorque
-        DLLEXPORT void SetTorque(const Float3 &torque);
+        DLLEXPORT void SetTorque(Lock &guard, const Float3 &torque);
 
         //! \brief Gets the torque of the body (rotational velocity)
-        DLLEXPORT Float3 GetTorque();
+        DLLEXPORT Float3 GetTorque(Lock &guard);
 
         //! \brief Sets the physical material ID of this object
         //! \note You have to fetch the ID from the world's corresponding PhysicalMaterialManager
@@ -303,7 +306,9 @@ namespace Leviathan{
         //! \brief Adds all applied forces together
 		Float3 _GatherApplyForces(Lock &guard, const float &mass);
         
-
+        //! \todo Fix this to follow the new requirements (or this will segfault)
+        DLLEXPORT void InterpolatePhysicalState(PhysicalDeltaState &first,
+            PhysicalDeltaState &second, float progress);
 
         //! \brief Destroys the physical body
         DLLEXPORT void Release(NewtonWorld* world);
@@ -331,9 +336,14 @@ namespace Leviathan{
 
 		std::list<std::shared_ptr<ApplyForceInfo>> ApplyForceList;
 
+        //! Used to access gravity data
+        GameWorld* World;
+
+        //! Physics object requires a position
+        Position& _Position;
+
         // Optional access to other components that can be used for marking when physics object
         // moves
-        Position* UpdatePosition;
         Sendable* UpdateSendable;
     };
 

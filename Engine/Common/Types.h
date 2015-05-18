@@ -503,10 +503,9 @@ namespace Leviathan{
 		//	return D3DXVECTOR3(X, Y, Z);
 		//}
 
-		DLLEXPORT inline operator Ogre::Vector3(){
+		DLLEXPORT inline operator Ogre::Vector3() const{
 			return Ogre::Vector3(X, Y, Z);
 		}
-
 
 		// ------------------------------------ //
 

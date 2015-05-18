@@ -85,29 +85,29 @@ namespace Leviathan{
                                     PRDELTAUPDATED_ROT_W;;
 
     //! \brief State object for entities that only have position and base physical components
-	class PositionablePhysicalDeltaState : public ObjectDeltaStateData{
+	class PhysicalDeltaState : public ObjectDeltaStateData{
 	public:
-		DLLEXPORT PositionablePhysicalDeltaState(int tick, const Float3 &position, const Float4 &rotation,
+		DLLEXPORT PhysicalDeltaState(int tick, const Float3 &position, const Float4 &rotation,
             const Float3 &velocity, const Float3 &torque);
         
         //! \see CreateUpdatePacket
-        DLLEXPORT PositionablePhysicalDeltaState(int tick, sf::Packet &packet);
-        DLLEXPORT ~PositionablePhysicalDeltaState();
+        DLLEXPORT PhysicalDeltaState(int tick, sf::Packet &packet);
+        DLLEXPORT ~PhysicalDeltaState();
 
         //! \brief Templated creation function for all classes that inherit both BasePotitionable and
         //! BasePhysicsObject
         //! \param tick The world tick to place in the resulting state
         template<class CType>
-        DLLEXPORT static std::unique_ptr<PositionablePhysicalDeltaState> CaptureState(
+        DLLEXPORT static std::unique_ptr<PhysicalDeltaState> CaptureState(
             CType &object, int tick)
         {
 
-            return std::unique_ptr<PositionablePhysicalDeltaState>(
-                new PositionablePhysicalDeltaState(tick, object.GetPos(), object.GetOrientation(),
+            return std::unique_ptr<PhysicalDeltaState>(
+                new PhysicalDeltaState(tick, object.GetPos(), object.GetOrientation(),
                     object.GetBodyVelocity(), object.GetBodyTorque()));
         }
 
-        //! \note The olderstate has to be of type PositionablePhysicalDeltaState
+        //! \note The olderstate has to be of type PhysicalDeltaState
         DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate,
             sf::Packet &packet) override;
 

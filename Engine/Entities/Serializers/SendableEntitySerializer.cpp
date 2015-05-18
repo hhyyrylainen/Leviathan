@@ -3,6 +3,7 @@
 
 #include "../../Utility/Convert.h"
 #include "Entities/Bases/BaseSendableEntity.h"
+#include "../Components.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT SendableEntitySerializer::SendableEntitySerializer() :
@@ -147,10 +148,18 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(BaseOb
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(BaseObject* targetobject,
-    int ticknumber, int referencetick, sf::Packet &packet)
+DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world, Lock &worldlock,
+    ObjectID targetobject, int ticknumber, int referencetick, sf::Packet &packet)
 {
 
+    try{
+        Received& received = world->GetComponent<Received>();
+    } catch(...){
+
+        // targetobject is invalid type for us //
+        return false;
+    }
+    
     BaseSendableEntity* asbase = dynamic_cast<BaseSendableEntity*>(targetobject);
 
     if(!asbase)
@@ -166,8 +175,93 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(BaseObject* targe
     // Check does the type match //
     if(!asbase->GetSendableType() == sendabletype)
         return false;
-    
-    return asbase->LoadUpdateFromPacket(packet, ticknumber, referencetick);
+
+    auto receivedstate = CreateStateFromPacket(ticknumber, packet);
+
+    if(!receivedstate){
+
+        return false;
+    }
+
+    {
+        GUARD_LOCK();
+
+        // Skip if not newer than any //
+        if(ClientStateBuffer.size() != 0){
+
+            bool newer = false;
+            bool filled = false;
+            
+            for(auto& obj : ClientStateBuffer){
+
+                // Fill data from the reference tick to make this update packet as complete as possible //
+                if(obj.Tick == referencetick){
+
+                    // Add missing values //
+                    receivedstate->FillMissingData(*obj.DeltaData);
+                
+                    filled = true;
+                
+                    if(newer)
+                        break;
+                }
+
+                if(obj.Tick < ticknumber){
+                
+                    newer = true;
+
+                    if(filled)
+                        break;
+                }
+            }
+            
+            if(!newer)
+                return false;
+
+            // If it isn't filled that tells that our buffer is too small //
+            // referencetick is invalid when it is -1 and is ignored in that case //
+            if(!filled && referencetick != -1){
+
+                bool olderexist = false;
+
+                // TODO: make sure that this doesn't mess with interpolation too badly
+                // under reasonable network stress, also this probably should never be missing
+                // under normal conditions
+                
+                // Or that we have missed a single packet //
+                for(auto& obj : ClientStateBuffer){
+
+                    if(obj.Tick < referencetick){
+
+                        olderexist = true;
+                        break;
+                    }
+                }
+
+                cout << "Entity old state " << referencetick << " is no longer in memory" << endl;
+                
+                //if(!olderexist)
+                //    throw Exception("ReferenceTick is no longer in memory ClientStateBuffer "
+                //        "is too small");
+            }
+            
+        } else {
+
+            // No stored states, must be newer //
+            // Also no need to fill missing data as only the updated values should be in the packet //
+            
+        }
+
+        
+        // Store the new state in the buffer so that it can be found when interpolating //
+        ClientStateBuffer.push_back(StoredState(receivedstate));
+    }
+
+    // Interpolations can only happen if more than one state is received
+    if(ClientStateBuffer.size() > 1)
+        _OnNewStateReceived();
+
+    return true;
 }
 // ------------------------------------ //
 DLLEXPORT bool SendableEntitySerializer::IsObjectTypeCorrect(BaseObject* object) const{

@@ -16,22 +16,6 @@ set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "
     "TimeIncludes.h" "TimeIncludes.cpp"
     )
 
-set(GroupEntitiesBases "Entities/Bases/BaseConstraintable.cpp" "Entities/Bases/BaseConstraintable.h"
-  "Entities/Bases/BaseControllable.cpp" "Entities/Bases/BaseControllable.h"
-  "Entities/Bases/BaseEntityController.cpp" "Entities/Bases/BaseEntityController.h"
-  "Entities/Bases/BaseInterpolated.h" "Entities/Bases/BaseInterpolated.cpp"
-  "Entities/Bases/BaseNotifiableEntity.h" "Entities/Bases/BaseNotifiableEntity.cpp"
-  "Entities/Bases/BaseNotifierEntity.h" "Entities/Bases/BaseNotifierEntity.cpp"
-  "Entities/Bases/BaseObject.h" "Entities/Bases/BaseObject.cpp"
-  "Entities/Bases/BaseParentable.h" "Entities/Bases/BaseParentable.cpp"
-  "Entities/Bases/BasePhysicsObject.h" "Entities/Bases/BasePhysicsObject.cpp"
-  "Entities/Bases/BasePositionable.h" "Entities/Bases/BasePositionable.cpp"
-  "Entities/Bases/BaseRenderable.h" "Entities/Bases/BaseRenderable.cpp"
-  "Entities/Bases/BaseScalable.h" "Entities/Bases/BaseScalable.cpp"
-  "Entities/Bases/BaseSendableEntity.h" "Entities/Bases/BaseSendableEntity.cpp"
-  "Entities/Bases/BaseTickable.h" "Entities/Bases/BaseTickable.cpp"
-  )
-  
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
 file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
 file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
@@ -103,7 +87,6 @@ source_group("Libraries\\json-cpp" FILES ${GroupJsoncpp})
 source_group("Libraries\\Grouputf8" FILES ${Grouputf8})
 
 source_group("Entities" FILES ${GroupEntities})
-source_group("Entities\\Bases" FILES ${GroupEntitiesBases})
 source_group("Entities\\Objects" FILES ${GroupEntitiesObjects})
 source_group("Entities\\Serializers" FILES ${GroupEntitiesSerializers})
 
@@ -142,7 +125,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${GroupScript} ${GroupGUI}  ${GroupEvents}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
-    ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
+    ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
     ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators} ${GroupGameplay} 
     ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp} ${GeneratorInput} ${GroupGeneratedFiles}
     ${Grouputf8})

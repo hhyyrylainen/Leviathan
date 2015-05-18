@@ -6,8 +6,8 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
-// ------------------ PositionablePhysicalDeltaState ------------------ //
-DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaState(int tick, const Float3 &position,
+// ------------------ PhysicalDeltaState ------------------ //
+DLLEXPORT Leviathan::PhysicalDeltaState::PhysicalDeltaState(int tick, const Float3 &position,
     const Float4 &rotation, const Float3 &velocity, const Float3 &torque) :
     ObjectDeltaStateData(tick), Position(position), Velocity(velocity), Torque(torque), Rotation(rotation),
     ValidFields(PPDELTA_ALL_UPDATED)
@@ -15,7 +15,7 @@ DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaSt
 
 }
 
-DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaState(int tick,
+DLLEXPORT Leviathan::PhysicalDeltaState::PhysicalDeltaState(int tick,
     sf::Packet &packet) :
     ObjectDeltaStateData(tick)
 {
@@ -73,12 +73,12 @@ DLLEXPORT Leviathan::PositionablePhysicalDeltaState::PositionablePhysicalDeltaSt
         throw InvalidArgument("invalid packet for positionable delta state");
 }
 
-DLLEXPORT Leviathan::PositionablePhysicalDeltaState::~PositionablePhysicalDeltaState(){
+DLLEXPORT Leviathan::PhysicalDeltaState::~PhysicalDeltaState(){
 
 
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::PositionablePhysicalDeltaState::CreateUpdatePacket(ObjectDeltaStateData* olderstate,
+DLLEXPORT void Leviathan::PhysicalDeltaState::CreateUpdatePacket(ObjectDeltaStateData* olderstate,
     sf::Packet &packet)
 {
 
@@ -92,7 +92,7 @@ DLLEXPORT void Leviathan::PositionablePhysicalDeltaState::CreateUpdatePacket(Obj
         
     } else {
 
-        PositionablePhysicalDeltaState* other = static_cast<PositionablePhysicalDeltaState*>(olderstate);
+        PhysicalDeltaState* other = static_cast<PhysicalDeltaState*>(olderstate);
 
         // Position
         if(Position.X != other->Position.X)
@@ -188,9 +188,9 @@ DLLEXPORT void Leviathan::PositionablePhysicalDeltaState::CreateUpdatePacket(Obj
     
 }
 // ------------------------------------ //
-DLLEXPORT bool PositionablePhysicalDeltaState::FillMissingData(ObjectDeltaStateData &otherstate){
+DLLEXPORT bool PhysicalDeltaState::FillMissingData(ObjectDeltaStateData &otherstate){
 
-    const PositionablePhysicalDeltaState &other = static_cast<PositionablePhysicalDeltaState&>(
+    const PhysicalDeltaState &other = static_cast<PhysicalDeltaState&>(
         otherstate);
 
     if(ValidFields == 0){

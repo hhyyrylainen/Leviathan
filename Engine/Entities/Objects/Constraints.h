@@ -46,7 +46,7 @@ namespace Leviathan{ namespace Entity{
             //! Destroys the entire constraint
             //! \param callinginstance Ptr to either the parent or child is used to skip call to it
             //! (the destructor there is already running)
-            DLLEXPORT void ConstraintPartUnlinkedDestroy(Constraintable &callinginstance);
+            DLLEXPORT void ConstraintPartUnlinkedDestroy(Constraintable* callinginstance);
             
             DLLEXPORT inline ENTITY_CONSTRAINT_TYPE GetType() const{
                 return Type;

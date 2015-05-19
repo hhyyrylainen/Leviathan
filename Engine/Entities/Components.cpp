@@ -432,12 +432,13 @@ DLLEXPORT void Physics::InterpolatePhysicalState(PhysicalDeltaState &first,
 
     if(progress > 1.f)
         progress = 1.f;
-    
+
     GUARD_LOCK();
-    Float3 pos = GetPos(guard);
-    Float4 rot = GetOrientation(guard);
-    Float3 vel = GetBodyVelocity(guard);
-    Float3 tor = GetBodyTorque(guard);
+    
+    Float3 pos = _Position._Position;
+    Float4 rot = _Position._Orientation;
+    Float3 vel = GetVelocity(guard);
+    Float3 tor = GetTorque(guard);
 
     // First check does the second state have a changed value for each component
     // If it does interpolate from the first state, which should have almost all values, or if it doesn't error
@@ -567,11 +568,14 @@ DLLEXPORT void Physics::InterpolatePhysicalState(PhysicalDeltaState &first,
 
         tor.Z = first.Torque.Z;
     }
+
+    _Position._Position = pos;
+    _Position._Orientation = rot;
+
+    _Position.Marked = true;
     
-    SetPos(guard, pos);
-    SetOrientation(guard, rot);
-    SetBodyVelocity(guard, vel);
-    SetBodyTorque(guard, tor);
+    SetVelocity(guard, vel);
+    SetTorque(guard, tor);
 }
 // ------------------ Received ------------------ //
 DLLEXPORT void Received::GetServerSentStates(shared_ptr<ObjectDeltaStateData> &first,
@@ -690,7 +694,7 @@ DLLEXPORT bool Trail::SetTrailProperties(const Properties &variables, bool force
 	if(force || variables.MaxChainElements != CurrentSettings.MaxChainElements){
 
 		// This to avoid Ogre bug //
-		TrailEntity->removeNode(_RenderNode.Node);
+		TrailEntity->removeNode(_RenderNode->Node);
 		ConnectAgain = true;
 
 		// Apply the properties //
@@ -707,80 +711,18 @@ DLLEXPORT bool Trail::SetTrailProperties(const Properties &variables, bool force
 	// Apply per element properties //
 	for(size_t i = 0; i < variables.Elements.size(); i++){
 		// Apply settings //
-		const ElementProperties* tmp = variables.Elements[i];
+		const ElementProperties& tmp = variables.Elements[i];
 
-		if(tmp){
-			TrailEntity->setInitialColour(i, tmp->InitialColour);
-			TrailEntity->setInitialWidth(i, tmp->InitialSize);
-			TrailEntity->setColourChange(i, tmp->ColourChange);
-			TrailEntity->setWidthChange(i, tmp->SizeChange);
-		}
+        TrailEntity->setInitialColour(i, tmp.InitialColour);
+        TrailEntity->setInitialWidth(i, tmp.InitialSize);
+        TrailEntity->setColourChange(i, tmp.ColourChange);
+        TrailEntity->setWidthChange(i, tmp.SizeChange);
 	}
 
 	// More bug avoiding //
 	if(ConnectAgain)	
-		TrailEntity->addNode(RenderNode.Node);
+		TrailEntity->addNode(_RenderNode->Node);
 
 	return true;
 }
-// ------------------ Sendable ------------------ //
-DLLEXPORT void Sendable::SendUpdatesToAllClients(int ticknumber){
 
-    GUARD_LOCK();
-
-    // Return if none could want any updates //
-    if(!IsAnyDataUpdated)
-        return;
-
-    // Create current state here as one or more conections should require it //
-    auto curstate = CaptureState(guard, ticknumber);
-    
-    auto end = UpdateReceivers.end();
-    for(auto iter = UpdateReceivers.begin(); iter != end; ){
-
-        // Currently all active connections will receive all updates //
-
-        std::shared_ptr<sf::Packet> packet = make_shared<sf::Packet>();
-
-        // Prepare the packet //
-        // The first type is used by EntitySerializerManager and the second by the sendable entity serializer
-        (*packet) << static_cast<int32_t>(ENTITYSERIALIZEDTYPE_SENDABLE_ENTITY) << static_cast<int32_t>(SerializeType);
-        
-        // Now calculate a delta update from curstate to the last confirmed state //
-        curstate->CreateUpdatePacket((*iter)->LastConfirmedData.get(), *packet.get());
-        
-        // Check is the connection fine //
-        std::shared_ptr<ConnectionInfo> safeconnection = NetworkHandler::Get()->GetSafePointerToConnection(
-            (*iter)->CorrespondingConnection);
-        
-        // This will be the only function removing closed connections //
-        // TODO: do a more global approach to avoid having to lookup connections here
-        if(!safeconnection){
-
-            iter = UpdateReceivers.erase(iter);
-            end = UpdateReceivers.end();
-            
-            // TODO: add a disconnect callback
-            continue;
-        }
-
-        // Create the final update packet //
-        std::shared_ptr<NetworkResponse> updatemesg = make_shared<NetworkResponse>(-1,
-            PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
-
-        updatemesg->GenerateEntityUpdateResponse(new NetworkResponseDataForEntityUpdate(OwnedByWorld->GetID(),
-                GetID(), ticknumber, (*iter)->LastConfirmedTickNumber, packet));
-
-        auto senthing = safeconnection->SendPacketToConnection(updatemesg, 1);
-
-        // Add a callback for success //
-        senthing->SetCallback(std::bind(
-                &SendableObjectConnectionUpdate::SucceedOrFailCallback, (*iter), ticknumber, curstate,
-                placeholders::_1, placeholders::_2));
-        
-        ++iter;
-    }
-    
-    // After sending every connection is up to date //
-    IsAnyDataUpdated = false;
-}

@@ -206,7 +206,7 @@ namespace Leviathan{
         //! \brief Creates a new component for entity
         //! \exception Exception if the component failed to init or it already exists
         template<typename... Args>
-        DLLEXPORT Position& CreatePosition(ObjectID id, Args... args){
+        DLLEXPORT Position& CreatePosition(ObjectID id, Args&&... args){
 
             return *ComponentPosition.ConstructNew(id, args...);
         }
@@ -214,86 +214,84 @@ namespace Leviathan{
         //! \brief Creates a new component for entity
         //! \exception Exception if the component failed to init or it already exists
         template<typename... Args>
-        DLLEXPORT RenderNode& CreateRenderNode(ObjectID id, Args... args){
+        DLLEXPORT RenderNode& CreateRenderNode(ObjectID id, Args&&... args){
 
             return *ComponentRenderNode.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Sendable& CreateSendable(ObjectID id, Args... args){
+        DLLEXPORT Sendable& CreateSendable(ObjectID id, Args&&... args){
 
             return *ComponentSendable.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Model& CreateModel(ObjectID id, Args... args){
+        DLLEXPORT Model& CreateModel(ObjectID id, Args&&... args){
 
             return *ComponentModel.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Physics& CreatePhysics(ObjectID id, Args... args){
+        DLLEXPORT Physics& CreatePhysics(ObjectID id, Args&&... args){
 
             return *ComponentPhysics.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Constraintable& CreateConstraintable(ObjectID id, Args... args){
+        DLLEXPORT Constraintable& CreateConstraintable(ObjectID id, Args&&... args){
 
             return *ComponentConstraintable.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT BoxGeometry& CreateBoxGeometry(ObjectID id, Args... args){
+        DLLEXPORT BoxGeometry& CreateBoxGeometry(ObjectID id, Args&&... args){
 
             return *ComponentBoxGeometry.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT ManualObject& CreateManualObject(ObjectID id, Args... args){
+        DLLEXPORT ManualObject& CreateManualObject(ObjectID id, Args&&... args){
 
             return *ComponentManualObject.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT PhysicsListener& CreatePhysicsListener(ObjectID id, Args... args){
-
-            return *ComponentPhysicsListener.ConstructNew(id, args...);
-        }
-
-        template<typename... Args>
-        DLLEXPORT PositionMarkerOwner& CreatePositionMarkerOwner(ObjectID id, Args... args){
+        DLLEXPORT PositionMarkerOwner& CreatePositionMarkerOwner(ObjectID id, Args&&... args){
 
             return *ComponentPositionMarkerOwner.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Parent& CreateParent(ObjectID id, Args... args){
+        DLLEXPORT Parent& CreateParent(ObjectID id, Args&&... args){
 
             return *ComponentParent.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Trail& CreateTrail(ObjectID id, Args... args){
+        DLLEXPORT Trail& CreateTrail(ObjectID id, Args&&... args){
 
             return *ComponentTrail.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT TrackController& CreateTrackController(ObjectID id, Args... args){
+        DLLEXPORT TrackController& CreateTrackController(ObjectID id, Args&&... args){
 
             return *ComponentTrackController.ConstructNew(id, args...);
         }
 
-        //! \brief Runs a system specified by the template argument
-        template<class SystemType>
-        DLLEXPORT void RunSystem(){
+        // Systems //
+        template<typename... Args>
+        DLLEXPORT void RunRenderingPositionSystem(Args&&... args){
 
-            static_assert(std::is_same<SystemType, std::false_type>::value,
-                "Trying to use a system type that is missing a template specialization");
+            NodeRenderingPosition.RunSystem(_RenderingPositionSystem, args...);
         }
-        
-        
+
+        template<typename... Args>
+        DLLEXPORT void RunSendableSystem(Args&&... args){
+
+            NodeSendableNode.RunSystem(_SendableSystem, args...);
+        }
+
 		// Ogre get functions //
 		DLLEXPORT inline Ogre::SceneManager* GetScene(){
 			return WorldsScene;
@@ -398,7 +396,9 @@ namespace Leviathan{
 
         //! \brief Implementation of doing actual destroy part of removing an entity
         void _DoDestroy(Lock &guard, ObjectID id);
-        
+
+        //! \brief Sends sendable updates to all clients
+        void _SendEntityUpdates(Lock &guard, ObjectID id, Sendable &sendable, int tick);
 
 		// ------------------------------------ //
 		Ogre::Camera* WorldSceneCamera;
@@ -472,7 +472,6 @@ namespace Leviathan{
         ComponentHolder<Constraintable> ComponentConstraintable;
         ComponentHolder<BoxGeometry> ComponentBoxGeometry;
         ComponentHolder<ManualObject> ComponentManualObject;
-        ComponentHolder<PhysicsListener> ComponentPhysicsListener;
         ComponentHolder<PositionMarkerOwner> ComponentPositionMarkerOwner;
         ComponentHolder<Parent> ComponentParent;
         ComponentHolder<Trail> ComponentTrail;
@@ -510,20 +509,10 @@ namespace Leviathan{
         }                                                               \
     }
 
-#define ADDRUNSYSTEMFORGAMEWORLD(type, node) template<> DLLEXPORT void  \
-    GameWorld::RunSystem<type>(){                                       \
-                                                                        \
-        node.RunSystem(_##type);                                        \
-    }
-
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition, Destroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode, QueueDestroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable, Destroy);
-
-
-    ADDRUNSYSTEMFORGAMEWORLD(RenderingPositionSystem, NodeRenderingPosition);
-    ADDRUNSYSTEMFORGAMEWORLD(SendableSystem, NodeSendableNode);
-
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Physics, ComponentPhysics, QueueDestroy);
     
 }
 

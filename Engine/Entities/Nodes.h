@@ -32,4 +32,37 @@ namespace Leviathan{
         
         Sendable& _Sendable;
     };
+
+    //! \brief TrackController for physics world update
+    class TrackControllerNode : public Node{
+    public:
+        struct Parameters{
+
+            inline void Set(TrackController& toset){
+
+                _TrackController = &toset;
+            }
+            
+            inline void Set(PositionMarkerOwner& toset){
+
+                _PositionMarkerOwner = &toset;
+            }
+            
+            inline void Set(Parent& toset){
+
+                _Parent = &toset;
+            }
+            
+            TrackController* _TrackController;
+            PositionMarkerOwner* _PositionMarkerOwner;
+            Parent* _Parent;
+        };
+
+        DLLEXPORT TrackControllerNode(const Parameters &params);
+
+
+        TrackController& _TrackController;
+        PositionMarkerOwner& _PositionMarkerOwner;
+        Parent& _Parent;
+    };
 }

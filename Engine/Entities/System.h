@@ -3,6 +3,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "../Common/ThreadSafe.h"
+#include "Exceptions.h"
 
 namespace Leviathan{
 
@@ -23,7 +24,10 @@ namespace Leviathan{
         //! \param poollock The lock for the object pool that owns the node, pass when finding
         //! more elements of the same type
         DLLEXPORT virtual void ProcessNode(UsedNode &node, ObjectID nodesobject,
-            NodeHolder<UsedNode> &pool, Lock &poollock) const = 0;
+            NodeHolder<UsedNode> &pool, Lock &poollock) const
+        {
+            throw Exception("Base System ProcessNode called");
+        }
 	};
 }
 

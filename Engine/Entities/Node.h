@@ -21,13 +21,14 @@ namespace Leviathan{
     public:
 
         //! \brief Runs the system that accepts nodes of the held type
-        DLLEXPORT void RunSystem(const System<NodeType> &system){
+        template<class SystemType, typename... Args>
+        DLLEXPORT void RunSystem(const SystemType &system, Args&&... args){
 
             GUARD_LOCK();
 
             for(auto iter = this->Index.begin(); iter != this->Index.end(); ++iter){
 
-                system.ProcessNode(*iter->second, iter->first, *this, guard);
+                system.ProcessNode(*iter->second, iter->first, *this, guard, args...);
             }
         }
     };

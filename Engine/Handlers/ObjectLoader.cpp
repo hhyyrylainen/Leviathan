@@ -78,7 +78,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lo
 
         if(proplist){
 
-            auto& physics = world->CreatePhysics(prop, &position, &sendable);
+            auto& physics = world->CreatePhysics(prop, world, position, &sendable);
 
             NewtonWorld* tmpworld = world->GetPhysicalWorld()->GetNewtonWorld();
 
@@ -298,7 +298,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, L
 
     auto& constraintable = world->CreateConstraintable(brush, world);
 
-    auto& physics = world->CreatePhysics(brush, &position, &sendable);
+    auto& physics = world->CreatePhysics(brush, world, position, &sendable);
     
 	// Load the Ogre entity if in graphical mode //
     auto scene = world->GetScene();
@@ -557,7 +557,6 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrackControllerToWorld(GameWorld
 
     ObjectID controller = world->CreateEntity(worldlock);
 
-    auto& listener = world->CreatePhysicsListener(controller);
     auto& owner = world->CreatePositionMarkerOwner(controller);
     auto& parent = world->CreateParent(controller);
     auto& sendable = world->CreateSendable(controller, SENDABLE_TYPE_TRACKCONTROLLER);

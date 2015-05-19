@@ -1,7 +1,6 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_PHYSICALWORLD
 #include "PhysicalWorld.h"
-#endif
+
 #include <Newton.h>
 #include "PhysicsMaterialManager.h"
 #include "Events/EventHandler.h"
@@ -103,46 +102,6 @@ int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void
     
     // Wasn't the target body, ignore //
     return 0;
-}
-
-DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int milliseconds,
-    std::function<void()> callback, BaseConstraintable* targetentity)
-{
-    
-    Lock lock(WorldUpdateLock);
-
-    ResimulatedBody = body;
-
-    // Setup single island callbacks //
-    NewtonSetIslandUpdateEvent(World, &SingleBodyUpdate);
-
-    int64_t passedtime = milliseconds*1000;
-    
-    while(passedtime >= NEWTON_FPS_IN_MICROSECONDS){
-
-        if(targetentity)
-            EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE,
-                    new ResimulateSingleEventData(passedtime, targetentity, OwningWorld)));
-
-		NewtonUpdate(World, NEWTON_TIMESTEP);
-        passedtime-= NEWTON_FPS_IN_MICROSECONDS;
-
-        callback();
-	}
-    
-#ifdef ALLOW_RESIMULATE_CONSUME_ALL
-    
-    // Update away any left over time //
-    if(passedtime > 0){
-
-        // Might be a bad idea to use a varying time step here...
-        NewtonUpdate(World, passedtime/1000000.f);
-    }
-    
-#endif //ALLOW_RESIMULATE_CONSUME_ALL
-    
-    // Reset the update event //
-    NewtonSetIslandUpdateEvent(World, NULL);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::PhysicalWorld::ClearTimers(){

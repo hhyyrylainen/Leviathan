@@ -110,8 +110,13 @@ namespace Leviathan{
     //! \brief Entity is sendable to clients
     //! \note This will only be in the entity on the server
     class Sendable : public Component{
-
+    public:
         struct ActiveConnection{
+
+            DLLEXPORT void OnPacketFinalized(int tick,
+                std::shared_ptr<ObjectDeltaStateData> state, bool succeded,
+                SentNetworkThing &packet);
+            
             
             ConnectionInfo* CorrespondingConnection;
 
@@ -137,12 +142,12 @@ namespace Leviathan{
         DLLEXPORT void AddTypeToPacket(sf::Packet &packet) const;
 
         DLLEXPORT static SENDABLE_TYPE LoadTypeFromPacket(sf::Packet &packet);
-        
+
         //! Type used to find the required components for sending
         SENDABLE_TYPE SendableHandleType;
 
         //! Clients we have already sent a state to
-        std::vector<std::unique_ptr<ActiveConnection>> UpdateReceivers;
+        std::vector<std::shared_ptr<ActiveConnection>> UpdateReceivers;
     };
 
     //! \brief Entity is received from a server
@@ -379,23 +384,29 @@ namespace Leviathan{
         template<class ConstraintClass>
         DLLEXPORT std::shared_ptr<ConstraintClass> CreateConstraintWith(Constraintable &other){
 
-            auto tmpconstraint = std::make_shared<ConstraintClass>(World, this, other);
+            auto tmpconstraint = std::make_shared<ConstraintClass>(World, *this, other);
+
+            if(!tmpconstraint){
+
+                this->AddConstraint(tmpconstraint);
+                other.AddConstraint(tmpconstraint);
+            }
             
             return tmpconstraint;
         }
 
+        DLLEXPORT void RemoveConstraint(Entity::BaseConstraint* removed);
+
+        DLLEXPORT void AddConstraint(std::shared_ptr<Entity::BaseConstraint> added);
+        
         
         std::vector<std::shared_ptr<Entity::BaseConstraint>> PartInConstraints;
 
         GameWorld* World;
+
+        //! ID for other component lookup
+        ObjectID PartOfEntity;
     };
-
-    class PhysicsListener : public Component{
-    public:
-        DLLEXPORT PhysicsListener();
-
-    };
-
 
     class Trail : public Component{
     public:

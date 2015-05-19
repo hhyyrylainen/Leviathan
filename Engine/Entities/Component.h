@@ -15,6 +15,7 @@ namespace Leviathan{
         //! Set to true when this component has changed
         //! Can be used by other systems to react to changing components
         //! \note This is true when the component has just been created
+        //! \todo Make this an atomic
         bool Marked;
 
         Component(const Component&) = delete;

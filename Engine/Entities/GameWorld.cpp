@@ -463,7 +463,7 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
         // Skip if not tick that will be stored //
         if(TickNumber % WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL == 0){
 
-            RunSystem<SendableSystem>();
+            RunSendableSystem(this, guard, TickNumber);
         }
         
     } else if(nethandler && nethandler->GetNetworkType() == NETWORKED_TYPE_CLIENT){
@@ -590,7 +590,7 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(){
 
     HandleDeleted(guard);
 
-    RunSystem<RenderingPositionSystem>();
+    RunRenderingPositionSystem();
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{

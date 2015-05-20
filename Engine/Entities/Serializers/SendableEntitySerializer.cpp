@@ -2,7 +2,6 @@
 #include "SendableEntitySerializer.h"
 
 #include "../../Utility/Convert.h"
-#include "Entities/Bases/BaseSendableEntity.h"
 #include "../Components.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -18,51 +17,55 @@ DLLEXPORT SendableEntitySerializer::~SendableEntitySerializer(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(BaseObject* object,
-    Lock &objectlock, sf::Packet &packet, ConnectionInfo* connectionptr)
+DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(GameWorld* world,
+    Lock &worldlock, ObjectID id, Sendable &sendable, sf::Packet &packet,
+    ConnectionInfo* connectionptr)
 {
-    // Cast to the base class that can handle the required functions //
-    BaseSendableEntity* asbase = dynamic_cast<BaseSendableEntity*>(object);
-
-    if(!asbase)
+    // Check type //
+    if(!IsObjectTypeCorrect(sendable))
         return false;
 
     // The type is correct, so we should always return true after this //
     
-    // First add the type variable and then let the entity add it's data //
-    packet << Type;
+    // First add the type variable and then data according to the serailize type
+    packet << Type << sendable.SendableHandleType;
 
-    // Add the connection to the known ones (this is before the serialize to make sure that all updates after
-    // serializing get sent)
-    asbase->AddConnectionToReceivers(objectlock, connectionptr);
+    GUARD_LOCK_OTHER((&sendable));
     
-    asbase->SerializeToPacket(objectlock, packet);
+    // Add the connection to the known ones (this is before the serialize to make sure that
+    // all updates after serializing get sent)
+    sendable.AddConnectionToReceivers(guard, connectionptr);
 
+    DEBUG_BREAK;
+    
+    switch(sendable.SendableHandleType){
+
+        default:
+            throw Exception("Unimplemented Sendable serializer type");
+    }
+    
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(BaseObject** returnobj,
-    int32_t serializetype, sf::Packet &packet, int objectid, GameWorld* world)
+DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(GameWorld* world,
+    Lock &worldlock, ObjectID id, int32_t serializetype, sf::Packet &packet, int objectid)
 {
     // Verify that the type matches //
     if(serializetype != Type){
 
-        Logger::Get()->Error("SendableEntitySerializer: passed wrong serializetype to unserialize, Our: "+
-            Convert::ToString(Type)+", got: "+Convert::ToString(serializetype));
+        Logger::Get()->Error("SendableEntitySerializer: passed wrong serializetype to "
+            "unserialize, Our: "+Convert::ToString(Type)+", got: "+
+            Convert::ToString(serializetype));
+        return false;
+    }
+    
+    int32_t packetstype;
+    if(!(packet >> packetstype)){
+
         return false;
     }
 
-    DLLEXPORT std::unique_ptr<BaseSendableEntity> Leviathan::BaseSendableEntity::UnSerializeFromPacket(sf::Packet &packet,
-        GameWorld* world, int id)
-    {
-
-        int32_t packetstype;
-        if(!(packet >> packetstype)){
-
-            return nullptr;
-        }
-
-        BASESENDABLE_ACTUAL_TYPE matchtype = static_cast<BASESENDABLE_ACTUAL_TYPE>(packetstype);
+    BASESENDABLE_ACTUAL_TYPE matchtype = static_cast<BASESENDABLE_ACTUAL_TYPE>(packetstype);
 
         switch(matchtype){
             case BASESENDABLE_ACTUAL_TYPE_BRUSH:
@@ -129,7 +132,6 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(BaseOb
                 // Unknown type
                 return nullptr;
         }
-    }
 
     // Create a sendable entity //
     auto sendableobj = BaseSendableEntity::UnSerializeFromPacket(packet, world, objectid);
@@ -264,8 +266,15 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT bool SendableEntitySerializer::IsObjectTypeCorrect(BaseObject* object) const{
+DLLEXPORT bool SendableEntitySerializer::IsObjectTypeCorrect(Sendable &object) const{
 
-    return dynamic_cast<BaseSendableEntity*>(object) ? true: false;
+    switch(object.SendableHandleType){
+        case SENDABLE_TYPE_TRACKCONTROLLER:
+        case SENDABLE_TYPE_PROP:
+        case SENDABLE_TYPE_BRUSH:
+            return true;
+        default:
+            return false;
+    }
 }
 

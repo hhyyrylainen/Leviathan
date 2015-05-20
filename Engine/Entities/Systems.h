@@ -139,8 +139,9 @@ namespace Leviathan{
         //! \post Physics can be run for this timestep as all track controlled objects should
         //! have valid applyforces after this
         //! \param timestep The time step in seconds
-        DLLEXPORT void ProcessNode(SendableNode &node, ObjectID nodesobject,
-            NodeHolder<SendableNode> &pool, Lock &poollock, float timestep) const;
+        DLLEXPORT void ProcessNode(TrackControllerNode &node, ObjectID nodesobject,
+            NodeHolder<TrackControllerNode> &pool, Lock &poollock, float timestep,
+            GameWorld* world, Lock &worldlock) const;
         
         //! \brief Creates nodes if matching ids are found in all data vectors or
         //! already existing component holders

@@ -333,7 +333,6 @@ namespace Leviathan{
         //! The default material ID from GetDefaultPhysicalMaterialID might be applied
         int AppliedPhysicalMaterial;
 
-		bool Immovable;
 		bool ApplyGravity;
 
         //! Non-newton access to mass
@@ -356,16 +355,35 @@ namespace Leviathan{
     public:
         DLLEXPORT Parent();
 
+        //! \brief Removes child object without notifying it
+        DLLEXPORT void RemoveChildNoNotify(Parentable* which);
+
+        //! \brief Removes all children notifying them
+        DLLEXPORT void RemoveChildren();
+
+        //! Attached children which can be moved at certain times
+        //! \todo Make improvements to component lookup performance through this
+        std::vector<std::tuple<ObjectID, Parentable*>> Children;
     };
 
     class Parentable : public Component{
     public:
         DLLEXPORT Parentable();
 
+        //! \brief Detaches from parent
+        //!
+        //! Sets AttachedParent to NULL and notifies Parent
+        DLLEXPORT void DetachFromParent();
+
+        //! \brief Sets AttachedParent to NULL
+        DLLEXPORT void OnParentInvalidate();
         
         Float3 RelativeToParent;
 
         bool ApplyRotation;
+
+        //! Parent this is attached to, or NULL
+        Parent* AttachedParent;
     };
 
 
@@ -503,6 +521,7 @@ namespace Leviathan{
         std::string CreatedMesh;
     };
 
+    //! \todo Split this into server and clientside components
     class TrackController : public Component{
     public:
 
@@ -532,9 +551,9 @@ namespace Leviathan{
             return ChangeSpeed;
         }
 
-        //! \brief Updates the entity positions
-        //! \note You probably don't have to manually call this
-        DLLEXPORT virtual void UpdateControlledPositions(float timestep);
+        //! \brief Runs update logic based on timestep
+        //! \todo mark _Sendable as updated if something changed
+        DLLEXPORT void Update(float timestep);
 
         DLLEXPORT bool SetStateToInterpolated(ObjectDeltaStateData &first,
             ObjectDeltaStateData &second, float progress);
@@ -543,6 +562,9 @@ namespace Leviathan{
         //!
         //! Checks for invalid reached node and progress
         void _SanityCheckNodeProgress(Lock &guard);
+
+        //! \brief Returns the position and rotation for current NodeProgress
+        DLLEXPORT void GetPositionOnTrack(Float3 &pos, Float4 &rot) const;
 
         
         //! Number of the node that has been reached
@@ -557,6 +579,9 @@ namespace Leviathan{
 
         //! The amount of speed/force used to move the entities towards the track position
         float ForceTowardsPoint;
+
+        //! Marks Sendable as updated when changed
+        Sendable* _Sendable;
     };
 
     

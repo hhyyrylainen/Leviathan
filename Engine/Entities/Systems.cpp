@@ -97,4 +97,47 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
 }
 
 
+// ------------------ TrackControllerSystem ------------------ //
+DLLEXPORT void TrackControllerSystem::ProcessNode(TrackControllerNode &node, ObjectID nodesobject,
+    NodeHolder<TrackControllerNode> &pool, Lock &poollock, float timestep, GameWorld* world,
+    Lock &worldlock) const
+{
+    // Advance the state //
+    node._TrackController.Update(timestep);
 
+    Float3 pos;
+    Float4 rot;
+    node._TrackController.GetPositionOnTrack(pos, rot);
+
+    // Apply the position to Parentable objects //
+    GUARD_LOCK_OTHER_NAME((&node._Parent), parentlock);
+
+
+    for(auto&& tuple : node._Parent.Children){
+
+        // Request position //
+        auto& physics = world->GetComponent<Physics>(nodesobject);
+        auto& position = physics._Position;
+
+        GUARD_LOCK_OTHER_NAME((&physics), physicslock);
+        
+        // Apply position with the add velocity method //
+        Float3 wantedspeed = pos - position._Position;
+
+        wantedspeed = wantedspeed * node._TrackController.ForceTowardsPoint;
+
+        physics.SetVelocity(physicslock, wantedspeed);
+            
+        // Rotation applying //
+        Float4 quaterniontorque = rot.QuaternionMultiply(
+            position._Orientation.QuaternionReverse()).Normalize();
+
+        DEBUG_BREAK;
+        
+        // TODO: verify that this correctly gets the right torque
+        Float3 wantedtorque = quaterniontorque.QuaternionToEuler();
+
+        // Set it as the torque //
+        physics.SetTorque(physicslock, wantedtorque);
+    }
+}

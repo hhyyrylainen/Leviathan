@@ -60,6 +60,8 @@ namespace Leviathan{
     class Position;
     class ObjectDeltaStateData;
     class Constraintable;
+    class Parentable;
+    class Parent;
     
 
     // DeltaStates //

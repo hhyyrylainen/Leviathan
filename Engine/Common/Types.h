@@ -1,6 +1,6 @@
 #pragma once
 // ------------------------------------ //
-#include "Include.h"
+#include "Define.h"
 // ------------------------------------ //
 #include <memory>
 #include <iostream>
@@ -647,25 +647,31 @@ namespace Leviathan{
 		DLLEXPORT inline float Dot(const Float4 &val) const{
 			return X*val.X+Y*val.Y+Z*val.Z+W*val.W;
 		}
+        
 		// length of the vector //
 		DLLEXPORT inline float Length() const{
 			return sqrt(X*X+Y*Y+Z*Z+W*W);
 		}
+        
 		// normalizes the vector //
 		DLLEXPORT inline Float4 Normalize() const{
 			const float length = Length();
-			if(length == 0)
-				return Float4(0, 0, 0, 0);
+            
+			if(length == 0){
+                // Returns an identity quaternion
+				return Float4(0, 0, 0, 1);
+            }
+            
 			return Float4(X/length, Y/length, Z/length, W/length);
 		}
 		// safe version of normalization //
 		DLLEXPORT inline Float4 NormalizeSafe(const Float4 &safer = Float4(0, 0, 0, 1)) const{
 			// security //
-			assert(safer.IsNormalized() && "safer not normalized");
 			const float len = X*X+Y*Y+Z*Z+W*W;
 			if(len == 0){
 				return safer;
 			}
+            
 			const float length = sqrt(len);
 			return Float4(X/length, Y/length, Z/length, W/length);
 		}
@@ -762,6 +768,31 @@ namespace Leviathan{
 
 			return quaternion;
 		}
+
+        //! \note This quaternion has to be normalized
+        //! \see http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
+        DLLEXPORT inline Float3 QuaternionToEuler() const{
+
+            float test = X*Y + Z*W;
+            
+            if(test > 0.499){
+                // Singularity at north pole
+                return Float3(2 * atan2(X, W), PI/2, 0);
+            }
+            
+            if (test < -0.499) {
+                
+                // Singularity at south pole
+                return Float3(-2 * atan2(X, W), -PI/2, 0);
+            }
+            
+            float sqx = X*X;
+            float sqy = Y*Y;
+            float sqz = Z*Z;
+            
+            return Float3(atan2(2*Y*W-2*X*Z , 1 - 2*sqy - 2*sqz), asin(2*test),
+                atan2(2*X*W-2*Y*Z , 1 - 2*sqx - 2*sqz));
+        }
 
 		DLLEXPORT inline Float4 QuaternionMultiply(const Float4 &other) const{
 

@@ -250,8 +250,7 @@ void Physics::ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat
 	Physics* tmp = reinterpret_cast<Physics*>(NewtonBodyGetUserData(body));
     
 	// Check if physics can't apply //
-	if(tmp->Immovable)
-		return;
+    // Newton won't call this if the mass is 0
 
 	Float3 Torque(0, 0, 0);
 

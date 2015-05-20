@@ -230,9 +230,6 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lo
                 ObjectFileProcessor::LoadValueFromNamedVars<float>(proplist->GetVariables(),
                     "Mass", physics.Mass, 0.f, true, "Prop: Init: CreatePhysicsModel:");
 
-                if(physics.Mass == 0.f)
-                    physics.Immovable = true;
-
                 // First calculate inertia and center of mass points //
                 Float3 inertia;
                 Float3 centerofmass;
@@ -536,9 +533,6 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, L
 
 		NewtonBodySetForceAndTorqueCallback(physics.Body, Physics::ApplyForceAndTorgueEvent);
 
-	} else {
-
-		physics.Immovable = true;
 	}
 
 	// Callbacks //

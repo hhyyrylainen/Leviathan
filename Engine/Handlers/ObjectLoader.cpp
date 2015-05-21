@@ -16,10 +16,6 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-Leviathan::ObjectLoader::ObjectLoader(Engine* engine){
-	m_Engine = engine;
-}
-// ------------------------------------ //
 DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lock &worldlock,
     const std::string &name, int materialid, const Position::PositionData &pos)
 {

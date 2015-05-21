@@ -279,6 +279,12 @@ namespace Leviathan{
             return *ComponentTrackController.ConstructNew(id, args...);
         }
 
+        template<typename... Args>
+        DLLEXPORT Received& CreateReceived(ObjectID id, Args&&... args){
+
+            return *ComponentReceived.ConstructNew(id, args...);
+        }
+
         // Systems //
         template<typename... Args>
         DLLEXPORT void RunRenderingPositionSystem(Args&&... args){
@@ -476,6 +482,7 @@ namespace Leviathan{
         ComponentHolder<Parent> ComponentParent;
         ComponentHolder<Trail> ComponentTrail;
         ComponentHolder<TrackController> ComponentTrackController;
+        ComponentHolder<Received> ComponentReceived;
 
         
         
@@ -513,6 +520,13 @@ namespace Leviathan{
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode, QueueDestroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable, Destroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Physics, ComponentPhysics, QueueDestroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(BoxGeometry, ComponentBoxGeometry, Destroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Model, ComponentModel, QueueDestroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(TrackController, ComponentTrackController, Destroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Parent, ComponentParent, Destroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(PositionMarkerOwner, ComponentPositionMarkerOwner,
+        QueueDestroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived, Destroy);
     
 }
 

@@ -62,6 +62,8 @@ namespace Leviathan{
     class Constraintable;
     class Parentable;
     class Parent;
+
+    class SendableEntitySerializer;
     
 
     // DeltaStates //

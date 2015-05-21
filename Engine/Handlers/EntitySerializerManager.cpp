@@ -85,6 +85,8 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::CreateEntityFromInitialMessag
     ObjectID id;
 
     packet >> id;
+
+    returnid = id;
     
     // Get the type from the packet //
     int32_t packettype;
@@ -102,8 +104,8 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::CreateEntityFromInitialMessag
 
     for(size_t i = 0; i < Serializers.size(); i++){
 
-        if(Serializers[i]->DeserializeWholeEntityFromPacket(world, worldlock, returnid,
-                packettype, packet, id))
+        if(Serializers[i]->DeserializeWholeEntityFromPacket(world, worldlock, id,
+                packettype, packet))
         {
 
             // The correct serializer was at least attempted //

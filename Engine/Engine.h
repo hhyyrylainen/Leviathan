@@ -94,7 +94,6 @@ namespace Leviathan{
 
 		DLLEXPORT Graphics* GetGraphics(){ return Graph; };
 		DLLEXPORT EventHandler* GetEventHandler(){ return MainEvents; };
-		DLLEXPORT ObjectLoader* GetObjectLoader(){return Loader;};
 		DLLEXPORT RenderingStatistics* GetRenderingStatistics(){ return RenderTimer;};
 		DLLEXPORT ScriptConsole* GetScriptConsole(){ return MainConsole;};
 		DLLEXPORT FileSystem* GetFileSystem(){ return MainFileHandler; };
@@ -152,7 +151,6 @@ namespace Leviathan{
 		DataStore* Mainstore;
 		EventHandler* MainEvents;
 		ScriptExecutor* MainScript;
-		ObjectLoader* Loader;
 		ScriptConsole* MainConsole;
 		FileSystem* MainFileHandler;
 		Random* MainRandom;

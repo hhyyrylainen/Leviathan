@@ -12,7 +12,6 @@
 #include "Handlers/ConstraintSerializerManager.h"
 #include "Handlers/EntitySerializerManager.h"
 #include "Handlers/IDFactory.h"
-#include "Handlers/ObjectLoader.h"
 #include "Handlers/OutOfMemoryHandler.h"
 #include "Handlers/ResourceRefreshHandler.h"
 #include "Networking/AINetworkCache.h"
@@ -87,7 +86,6 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
 	FrameCount = 0;
 
 	MainEvents = NULL;
-	Loader = NULL;
 	OutOMemory = NULL;
 
 #ifdef LEVIATHAN_USES_LEAP
@@ -435,19 +433,6 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
                                 return;
                             }
                         }
-                        // create object loader //
-                        engine->Loader = new ObjectLoader(engine);
-                        if(!engine->Loader){
-                            Logger::Get()->Error("Engine: Init: failed to create ObjectLoader");
-                            returnvalue.set_value(false);
-                            return;
-                        }
-
-                        if(engine->NoGui){
-                            // Set object loader to gui mode //
-                            // \todo do this
-
-                        }
 
                         returnvalue.set_value(true);
                     }, std::ref(SoundDeviceResult), this))));
@@ -651,7 +636,6 @@ void Leviathan::Engine::Release(bool forced){
 	// Save at this point (just in case it crashes before exiting) //
 	Logger::Get()->Save();
 
-	SAFE_DELETE(Loader);
 	SAFE_RELEASEDEL(Graph);
 	SAFE_DELETE(RenderTimer);
 

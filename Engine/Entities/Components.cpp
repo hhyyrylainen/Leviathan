@@ -724,4 +724,33 @@ DLLEXPORT bool Trail::SetTrailProperties(const Properties &variables, bool force
 
 	return true;
 }
+// ------------------ Parent ------------------ //
+DLLEXPORT void Parent::AddDataToPacket(sf::Packet &packet) const{
 
+    GUARD_LOCK();
+
+    const auto size = static_cast<int32_t>(Children.size());
+    
+    packet << size;
+
+    for(int32_t i = 0; i < size; i++){
+
+        packet << std::get<0>(Children[i]);
+    }
+}
+// ------------------ Parent ------------------ //
+DLLEXPORT void PositionMarkerOwner::AddDataToPacket(sf::Packet &packet) const{
+
+    GUARD_LOCK();
+
+    const auto size = static_cast<int32_t>(Markers.size());
+    
+    packet << size;
+
+    for(int32_t i = 0; i < size; i++){
+
+        packet << std::get<0>(Markers[i]);
+
+        std::get<1>(Markers[i]).AddDataToPacket(packet);
+    }
+}

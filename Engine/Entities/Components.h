@@ -138,10 +138,7 @@ namespace Leviathan{
         
         DLLEXPORT Sendable(SENDABLE_TYPE type);
 
-        //! \brief Adds SendableHandleType to packet
-        DLLEXPORT void AddTypeToPacket(sf::Packet &packet) const;
-
-        DLLEXPORT static SENDABLE_TYPE LoadTypeFromPacket(sf::Packet &packet);
+        DLLEXPORT void AddConnectionToReceivers(Lock &guard, ConnectionInfo* connection);
 
         //! Type used to find the required components for sending
         SENDABLE_TYPE SendableHandleType;
@@ -154,6 +151,7 @@ namespace Leviathan{
     //!
     //! Sendable counterpart on the client
     class Received : public Component{
+    public:
         //! \brief Storage class for ObjectDeltaStateData
         class StoredState{
         public:
@@ -177,6 +175,9 @@ namespace Leviathan{
 
         //! Clientside buffer of past states
         boost::circular_buffer<StoredState> ClientStateBuffer;
+
+        //! Type used to create correct state objects and construct from packets
+        SENDABLE_TYPE SendableHandleType;
     };
 
 
@@ -361,6 +362,8 @@ namespace Leviathan{
         //! \brief Removes all children notifying them
         DLLEXPORT void RemoveChildren();
 
+        DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
+
         //! Attached children which can be moved at certain times
         //! \todo Make improvements to component lookup performance through this
         std::vector<std::tuple<ObjectID, Parentable*>> Children;
@@ -504,6 +507,8 @@ namespace Leviathan{
         //! Adds a node
         //! \todo Allow not deleting entities on release
         DLLEXPORT void Add(ObjectID entity, Position& pos);
+
+        DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
 
         
         std::vector<std::tuple<ObjectID, Position&>> Markers;

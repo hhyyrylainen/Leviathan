@@ -1,8 +1,8 @@
 // ------------------------------------ //
 #include "BaseConstraintSerializer.h"
 
-#include "../Entities/Objects/Constraints.h"
 #include "../../Utility/Convert.h"
+#include "../Objects/Constraints.h"
 using namespace Leviathan;
 using namespace Entity;
 using namespace std;
@@ -80,7 +80,7 @@ DLLEXPORT bool Leviathan::BaseConstraintSerializer::UnSerializeConstraint(Constr
                 return false;
 
             // Create the constraint //
-            firstobj.CreateConstraintWith<SliderConstraint>(secondobj)->SetParameters(axis)->
+            object1.CreateConstraintWith<SliderConstraint>(object2)->SetParameters(axis)->
                 Init();
             
             return true;

@@ -189,7 +189,7 @@ namespace Leviathan{
         //! type
         template<class ComponentType>
         DLLEXPORT ComponentType& GetComponent(ObjectID id){
-
+            
             static_assert(std::is_same<ComponentType, std::false_type>::value,
                 "Trying to use a component type that is missing a template specialization");
         }
@@ -492,29 +492,13 @@ namespace Leviathan{
         NodeHolder<SendableNode> NodeSendableNode;
         SendableSystem _SendableSystem;
 
-        
 	};
 
-#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder, destroyfunc) template<> DLLEXPORT type& \
-    GameWorld::GetComponent<type>(ObjectID id){                         \
+#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder, destroyfunc) template<> type& \
+    GameWorld::GetComponent<type>(ObjectID id);\
                                                                         \
-        auto component = holder.Find(id);                               \
-        if(!component)                                                  \
-            throw NotFound("Component for entity with id was not found"); \
-                                                                        \
-        return *component;                                              \
-    }                                                                   \
-                                                                        \
-    template<> DLLEXPORT bool GameWorld::RemoveComponent<type>(ObjectID id){ \
-        try{                                                            \
-            holder.destroyfunc(id);                                     \
-            return true;                                                \
-                                                                        \
-        } catch(...){                                                   \
-                                                                        \
-            return false;                                               \
-        }                                                               \
-    }
+    template<> bool GameWorld::RemoveComponent<type>(ObjectID id);
+    
 
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition, Destroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode, QueueDestroy);
@@ -527,6 +511,5 @@ namespace Leviathan{
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(PositionMarkerOwner, ComponentPositionMarkerOwner,
         QueueDestroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived, Destroy);
-    
 }
 

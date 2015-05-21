@@ -1,7 +1,7 @@
 #include "PartialEngine.h"
 
-#include "Entities/Bases/BaseSendableEntity.h"
 #include "Entities/GameWorld.h"
+#include "Entities/Components.h"
 #include "Handlers/ObjectLoader.h"
 #include "Entities/Objects/Brush.h"
 #include "Common/SFMLPackets.h"

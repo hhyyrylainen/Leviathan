@@ -1,10 +1,10 @@
-#include "Entities/Bases/BaseSendableEntity.h"
 #include "Entities/GameWorld.h"
 #include "Entities/CommonStateObjects.h"
 #include "Handlers/ObjectLoader.h"
 #include "Engine.h"
 #include "Entities/Objects/Brush.h"
 #include "Common/SFMLPackets.h"
+#include "Entities/Components.h"
 
 #include "PartialEngine.h"
 

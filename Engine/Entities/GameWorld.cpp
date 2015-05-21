@@ -1335,3 +1335,38 @@ DLLEXPORT Leviathan::RayCastData::~RayCastData(){
 	// We want to release all hit data //
 	SAFE_RELEASE_VECTOR(HitEntities);
 }
+
+
+#undef ADDCOMPONENTFUNCTIONSTOGAMEWORLD
+#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder, destroyfunc) template<> type& \
+    GameWorld::GetComponent<type>(ObjectID id){                         \
+                                                                        \
+        auto component = holder.Find(id);                               \
+        if(!component)                                                  \
+            throw NotFound("Component for entity with id was not found"); \
+                                                                        \
+        return *component;                                              \
+    }                                                                   \
+                                                                        \
+    template<> bool GameWorld::RemoveComponent<type>(ObjectID id){ \
+        try{                                                            \
+            holder.destroyfunc(id);                                     \
+            return true;                                                \
+                                                                        \
+        } catch(...){                                                   \
+                                                                        \
+            return false;                                               \
+        }                                                               \
+    }
+
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition, Destroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode, QueueDestroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable, Destroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Physics, ComponentPhysics, QueueDestroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(BoxGeometry, ComponentBoxGeometry, Destroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Model, ComponentModel, QueueDestroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(TrackController, ComponentTrackController, Destroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Parent, ComponentParent, Destroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(PositionMarkerOwner, ComponentPositionMarkerOwner,
+    QueueDestroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived, Destroy);

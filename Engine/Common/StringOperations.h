@@ -64,6 +64,8 @@ namespace Leviathan{
 	//!
 	//! Most functions work with any type of string, but it is recommended to only pass string
     //! or wstring to avoid headaches.
+    //! \todo Get rid of ElementType and just use ints for everything and hope that it is large
+    //! enough
 	class StringOperations{
 	public:
 		template<typename CharType>

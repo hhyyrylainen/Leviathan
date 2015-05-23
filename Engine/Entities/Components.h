@@ -113,6 +113,8 @@ namespace Leviathan{
     public:
         struct ActiveConnection{
 
+            ActiveConnection(ConnectionInfo* connection);
+
             DLLEXPORT void OnPacketFinalized(int tick,
                 std::shared_ptr<ObjectDeltaStateData> state, bool succeded,
                 SentNetworkThing &packet);
@@ -153,15 +155,10 @@ namespace Leviathan{
     class Received : public Component{
     public:
         //! \brief Storage class for ObjectDeltaStateData
+        //! \todo Possibly add move constructors
         class StoredState{
         public:
             StoredState(std::shared_ptr<ObjectDeltaStateData> data);
-            StoredState(StoredState&& other);
-
-            StoredState& operator=(StoredState&& other);
-        
-            StoredState(const StoredState &other) = delete;
-            StoredState& operator=(const StoredState &other) = delete;
         
             std::shared_ptr<ObjectDeltaStateData> DeltaData;
             int Tick;
@@ -222,11 +219,10 @@ namespace Leviathan{
             DLLEXPORT ApplyForceInfo(bool addmass,
                 std::function<Float3(ApplyForceInfo* instance, Physics &object,
                     Lock &objectlock)> getforce,
-                std::string* name = NULL);
+                std::unique_ptr<std::string> name = nullptr);
         
-            DLLEXPORT ApplyForceInfo(ApplyForceInfo &other);
+            DLLEXPORT ApplyForceInfo(const ApplyForceInfo &other);
             DLLEXPORT ApplyForceInfo(ApplyForceInfo &&other);
-            DLLEXPORT ~ApplyForceInfo();
 
             DLLEXPORT ApplyForceInfo& operator =(const ApplyForceInfo &other);
 
@@ -380,9 +376,11 @@ namespace Leviathan{
 
         //! \brief Sets AttachedParent to NULL
         DLLEXPORT void OnParentInvalidate();
-        
+
+        //! \todo Make this work
         Float3 RelativeToParent;
 
+        //! \todo Make this work
         bool ApplyRotation;
 
         //! Parent this is attached to, or NULL
@@ -393,7 +391,7 @@ namespace Leviathan{
     class Constraintable : public Component{
     public:
         //! \param world Used to allow created constraints to access world data (including physics)
-        DLLEXPORT Constraintable(GameWorld* world);
+        DLLEXPORT Constraintable(ObjectID id, GameWorld* world);
 
         //! Creates a constraint between this and another object
         //! \warning DO NOT store the returned value (since that reference isn't counted)
@@ -407,21 +405,25 @@ namespace Leviathan{
 
             auto tmpconstraint = std::make_shared<ConstraintClass>(World, *this, other);
 
-            if(!tmpconstraint){
-
-                this->AddConstraint(tmpconstraint);
-                other.AddConstraint(tmpconstraint);
-            }
+            if(tmpconstraint)
+                _NotifyCreate(tmpconstraint, other);
             
             return tmpconstraint;
         }
 
-        DLLEXPORT void RemoveConstraint(Entity::BaseConstraint* removed);
+        DLLEXPORT void RemoveConstraint(BaseConstraint* removed);
 
-        DLLEXPORT void AddConstraint(std::shared_ptr<Entity::BaseConstraint> added);
+        DLLEXPORT void AddConstraint(std::shared_ptr<BaseConstraint> added);
+
+    protected:
+
+        DLLEXPORT void _NotifyCreate(std::shared_ptr<BaseConstraint> newconstraint,
+            Constraintable &other);
+
+    public:
         
         
-        std::vector<std::shared_ptr<Entity::BaseConstraint>> PartInConstraints;
+        std::vector<std::shared_ptr<BaseConstraint>> PartInConstraints;
 
         GameWorld* World;
 
@@ -481,7 +483,8 @@ namespace Leviathan{
 
     public:
 
-        Trail(RenderNode* node, const std::string &materialname, const Properties &variables);
+        DLLEXPORT Trail(RenderNode* node, const std::string &materialname,
+            const Properties &variables);
 
         //! \brief Sets properties on the trail object
         //! \pre Ogre objects have been created
@@ -496,20 +499,35 @@ namespace Leviathan{
         //! Not valid in non-gui mode
         RenderNode* _RenderNode;
 
+        //! The used trail material
+        std::string Material;
+
         //! Current settings, when updating settings only changed ones are applied
         Properties CurrentSettings;
     };
-    
+
+    //! \todo Add the Markers to the actual world for sending over the network individually
     class PositionMarkerOwner : public Component{
     public:
         DLLEXPORT PositionMarkerOwner();
 
         //! Adds a node
         //! \todo Allow not deleting entities on release
-        DLLEXPORT void Add(ObjectID entity, Position& pos);
+        DLLEXPORT void Add(Lock &guard, ObjectID entity, Position& pos);
 
-        DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
+        DLLEXPORT inline void Add(ObjectID entity, Position& pos){
 
+            GUARD_LOCK();
+            Add(guard, entity, pos);
+        }
+
+        DLLEXPORT void AddDataToPacket(Lock &guard, sf::Packet &packet) const;
+
+        DLLEXPORT inline void AddDataToPacket(sf::Packet &packet) const{
+
+            GUARD_LOCK();
+            AddDataToPacket(guard, packet);
+        }
         
         std::vector<std::tuple<ObjectID, Position&>> Markers;
     };
@@ -517,7 +535,7 @@ namespace Leviathan{
     class ManualObject : public Component{
     public:
 
-        ManualObject(const std::string &meshname = "");
+        DLLEXPORT ManualObject();
 
         Ogre::ManualObject* Object;
 
@@ -538,29 +556,14 @@ namespace Leviathan{
 
     public:
 
-        DLLEXPORT TrackController();
-
-        //! \brief Directly sets the progress towards next node (if set to 1.f goes to next node)
-        DLLEXPORT void SetProgressTowardsNextNode(float progress);
-        
-        //! \brief Gets the progress towards next node, if at 1.f then last node is reached
-        DLLEXPORT float GetProgressTowardsNextNode(){
-            return NodeProgress;
-        }
-
-        //! \brief Controls the speed at which the entity moves along the track
-        //! (set to negative to go backwards and 0.f to stop)
-        DLLEXPORT void SetTrackAdvanceSpeed(const float &speed);
-            
-        DLLEXPORT inline float GetTrackAdvanceSpeed(){
-            return ChangeSpeed;
-        }
+        DLLEXPORT TrackController(PositionMarkerOwner& nodes, Sendable* sendable);
 
         //! \brief Runs update logic based on timestep
-        //! \todo mark _Sendable as updated if something changed
+        //! \note Doesn't actually add applyforces only changes internal state
+        //! \note This call can be avoided if ChangeSpeed == 0.f
         DLLEXPORT void Update(float timestep);
 
-        DLLEXPORT bool SetStateToInterpolated(ObjectDeltaStateData &first,
+        DLLEXPORT bool Interpolate(ObjectDeltaStateData &first,
             ObjectDeltaStateData &second, float progress);
 
         //! \brief Internal function for making all data valid
@@ -587,7 +590,14 @@ namespace Leviathan{
 
         //! Marks Sendable as updated when changed
         Sendable* _Sendable;
+
+        //! Access to actual nodes
+        PositionMarkerOwner& Nodes;
     };
 
     
 }
+
+using ApplyForceInfo = Leviathan::Physics::ApplyForceInfo;
+
+

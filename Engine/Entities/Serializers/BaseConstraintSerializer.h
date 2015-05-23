@@ -18,12 +18,12 @@ namespace Leviathan{
         DLLEXPORT virtual ~BaseConstraintSerializer();
 
         //! \brief Returns true if this object can handle the type
-        DLLEXPORT virtual bool CanHandleType(Entity::ENTITY_CONSTRAINT_TYPE type) const;
+        DLLEXPORT virtual bool CanHandleType(ENTITY_CONSTRAINT_TYPE type) const;
 
 
         //! \brief Serializes a constraint
         DLLEXPORT virtual std::shared_ptr<sf::Packet> SerializeConstraint(
-            Entity::BaseConstraint* constraint, Entity::ENTITY_CONSTRAINT_TYPE &type);
+            BaseConstraint* constraint, ENTITY_CONSTRAINT_TYPE &type);
 
         //! \brief Creates a constraint from a serialized form
         //! \param object1 The first object in the constraint, should always be valid
@@ -31,7 +31,7 @@ namespace Leviathan{
         //! \param create Whether to create or destroy the constraint
         //! \return True when the data was valid, false otherwise even if the type is correct
         DLLEXPORT virtual bool UnSerializeConstraint(Constraintable &object1,
-            Constraintable &object2, Entity::ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet,
+            Constraintable &object2, ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet,
             bool create = true);
 
         BaseConstraintSerializer(const BaseConstraintSerializer&) = delete;

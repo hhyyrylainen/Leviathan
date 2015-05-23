@@ -897,7 +897,9 @@ DLLEXPORT void Leviathan::NetworkResponseDataForInitialEntity::AddDataToPacket(s
     }
 }
 
-DLLEXPORT std::shared_ptr<sf::Packet>  Leviathan::NetworkResponseDataForInitialEntity::GetDataForEntity(size_t index) const{
+DLLEXPORT std::shared_ptr<sf::Packet>  NetworkResponseDataForInitialEntity::GetDataForEntity(
+    size_t index) const
+{
     // Check is it out of bounds //
     if(index >= EntityData.size())
         return nullptr;
@@ -905,9 +907,11 @@ DLLEXPORT std::shared_ptr<sf::Packet>  Leviathan::NetworkResponseDataForInitialE
     return EntityData[index];
 }
 // ------------------ NetworkResponseDataForEntityConstraint ------------------ //
-DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(int worldid, int entity1,
-    int entity2, bool create, Entity::ENTITY_CONSTRAINT_TYPE type, std::shared_ptr<sf::Packet> &data) :
-    WorldID(worldid), EntityID1(entity1), EntityID2(entity2), Create(create), Type(type), ConstraintData(data)
+DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(
+    int worldid, int entity1, int entity2, bool create, ENTITY_CONSTRAINT_TYPE type,
+    std::shared_ptr<sf::Packet> &data) :
+    WorldID(worldid), EntityID1(entity1), EntityID2(entity2), Create(create), Type(type),
+    ConstraintData(data)
 {
 
 }     
@@ -924,7 +928,7 @@ DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityCo
         throw InvalidArgument("invalid packet format");
 
 
-    Type = static_cast<Entity::ENTITY_CONSTRAINT_TYPE>(tmptype);
+    Type = static_cast<ENTITY_CONSTRAINT_TYPE>(tmptype);
 
     ConstraintData = make_shared<sf::Packet>();
 

@@ -362,8 +362,9 @@ namespace Leviathan{
     class NetworkResponseDataForEntityConstraint : public BaseNetworkResponseData{
     public:
         
-        DLLEXPORT NetworkResponseDataForEntityConstraint(int worldid, int entity1, int entity2, bool create,
-            Entity::ENTITY_CONSTRAINT_TYPE type, std::shared_ptr<sf::Packet> &data);
+        DLLEXPORT NetworkResponseDataForEntityConstraint(int worldid, ObjectID entity1,
+            ObjectID entity2, bool create, ENTITY_CONSTRAINT_TYPE type,
+            std::shared_ptr<sf::Packet> &data);
 
         DLLEXPORT NetworkResponseDataForEntityConstraint(sf::Packet &frompacket);
 
@@ -376,12 +377,12 @@ namespace Leviathan{
 		int WorldID;
 
         //! The first entity
-        int EntityID1;
+        ObjectID EntityID1;
         
         //! The second entity
-        int EntityID2;
+        ObjectID EntityID2;
         
-        Entity::ENTITY_CONSTRAINT_TYPE Type;
+        ENTITY_CONSTRAINT_TYPE Type;
 
         //! Data for the constraint
         std::shared_ptr<sf::Packet> ConstraintData;

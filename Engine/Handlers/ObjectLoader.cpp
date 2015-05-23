@@ -13,43 +13,17 @@
 #include <Newton.h>
 #include "OgreBillboardChain.h"
 #include "OgreRibbonTrail.h"
+#include "../Common/StringOperations.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lock &worldlock,
-    const std::string &name, int materialid, const Position::PositionData &pos)
+void ObjectLoader::_CreatePropCommon(GameWorld* world, Lock &worldlock,
+    ObjectID prop, const std::string &ogrefile, Model &model)
 {
 
-    // Get relative path //
-	std::string path = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL, name, "levmd", false);
+    auto& constraintable = world->CreateConstraintable(prop, prop, world);
 
-	// Parse the file //
-	auto file = ObjectFileProcessor::ProcessObjectFile(path);
-
-	if(!file){
-
-        Logger::Get()->Error("LoadProp: failed to parse prop file "+path);
-		return 0;
-	}
-
-    ObjectID prop = world->CreateEntity(worldlock);
-
-	// Setup the model //
-
-    auto& position = world->CreatePosition(prop, pos._Position, pos._Orientation);
-
-    auto& model = world->CreateModel(prop, path);
-
-    auto& sendable = world->CreateSendable(prop, SENDABLE_TYPE_PROP);
-
-    auto& constraintable = world->CreateConstraintable(prop, world);
-
-	string ogrefile;
-
-	ObjectFileProcessor::LoadValueFromNamedVars<string>(file->GetVariables(), "Model-Graphical",
-        ogrefile, "", true, "Prop: Init: no model file");
-
-	// Load the Ogre entity if in graphical mode //
+    // Load the Ogre entity if in graphical mode //
     auto scene = world->GetScene();
 
     if(scene && !ogrefile.empty()){
@@ -64,6 +38,226 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lo
         // attach for deletion and valid display //
         rendernode.Node->attachObject(model.GraphicalObject);
     }
+}
+
+void ObjectLoader::_CreatePropPhysics(GameWorld* world, Lock &worldlock, Model &model,
+    Physics &physics, Position &position, ObjectFileList* proplist, const std::string &path,
+    int materialid)
+{
+
+    NewtonWorld* tmpworld = world->GetPhysicalWorld()->GetNewtonWorld();
+
+    // get offset //
+    string offsettype;
+    Ogre::Matrix4 offset = Ogre::Matrix4::IDENTITY;
+    // this is useful when the origin is at the bottom of the model and you don't take
+    // this into account in newton primitive (using Convex hull should not require this)
+    if(ObjectFileProcessor::LoadValueFromNamedVars<string>(proplist->GetVariables(),
+            "Offset", offsettype, "", true, "Prop: Init: CreatePhysicsModel"))
+    {
+
+        if(offsettype == "None"){
+            // nothing needs to set //
+
+
+        } else if(offsettype == "BoundingBoxCenter"){
+
+            // There needs to be a workaround in non-graphical mode //
+            if(model.GraphicalObject){
+
+                Ogre::Aabb bbox = model.GraphicalObject->getLocalAabb();
+                offset.setTrans(bbox.mCenter);
+
+            } else {
+
+                Logger::Get()->Error("Prop: Init: trying to use BoundingBoxCenter as "
+                    "offset in non-graphical mode and there is no workaround to "
+                    "calculate that...yet");
+            }
+
+        } else {
+
+            Logger::Get()->Error("Prop: Init: invalid offset type, use None or "
+                "BoundingBoxCenter for most common cases, file: "+path);
+        }
+    }
+
+    // Newton uses different handed matrices...
+    Ogre::Matrix4 toffset = offset.transpose();
+
+    string ptype;
+
+    ObjectFileProcessor::LoadValueFromNamedVars<string>(proplist->GetVariables(),
+        "PrimitiveType", ptype, "Convex");
+
+    // Process first the most complicated one, Convex hull which is basically a prop that
+    // we need to load
+    if(ptype == "Convex"){
+
+        Logger::Get()->Error("Prop: Init: physical object Convex hull loading is not "
+            "implemented!");
+        return;
+
+    } else if(ptype == "Sphere" || ptype == "Ball"){
+
+        // Sphere primitive type, now we just need to load the size parameter or
+        // count it from the object bounding box
+        float radius = 0.f;
+
+        if(!ObjectFileProcessor::LoadValueFromNamedVars<float>(proplist->GetVariables(),
+                "Size", radius, 0.f))
+        {
+            // it should be string type //
+            string sizesourcename;
+
+            if(!ObjectFileProcessor::LoadValueFromNamedVars<string>(
+                    proplist->GetVariables(), "Size", sizesourcename, "", true,
+                    "Prop: Init: CreatePhysicsModel:"))
+            {
+                // Process based on the source name //
+                if(sizesourcename == "GraphicalModel"){
+
+                    // There needs to be a workaround in non-graphical mode //
+                    if(model.GraphicalObject){
+
+                        // Calculate the radius from bounding box size //
+                        Ogre::Aabb bbox = model.GraphicalObject->getLocalAabb();
+                        Ogre::Vector3 sizes = bbox.getSize();
+
+                        // A little sanity check //
+                        if(sizes.x != sizes.y || sizes.x != sizes.z){
+                            // it's not cube //
+                            Logger::Get()->Warning("Prop: Init: physical model sphere, "
+                                "the bounding box of graphical model is not a cube, "
+                                "continuing anyways");
+                        }
+
+                        radius = sizes.x;
+
+                    } else {
+
+                        Logger::Get()->Error("Prop: Init: trying to use GraphicalModel "
+                            "as size specification  but in non-gui mode graphical object "
+                            "isn't loaded and there is no workaround to calculate "
+                            "that...yet");
+                    }
+
+                } else {
+                    Logger::Get()->Error("Prop: Init: physical model has no size! "
+                        "unknown source: "+sizesourcename+
+                        " (\"Size = GraphicalModel;\"), file: "+path);
+                }
+
+            } else {
+
+                Logger::Get()->Error("Prop: Init: physical model has no size! "
+                    "at least specify \"Size = GraphicalModel;\", file: "+path);
+            }
+
+        }
+
+        // Radius should be fine now //
+        if(radius > 0){
+
+            // Create the sphere now //
+            physics.Collision = NewtonCreateSphere(tmpworld, radius, 0, &toffset[0][0]);
+        }
+
+    } else if(ptype == "Box"){
+
+        DEBUG_BREAK;
+        //Collision = NewtonCreateBox(tmpworld, sizes.x, sizes.y, sizes.z, NULL,
+        // &toffset[0][0]);
+    } else {
+        Logger::Get()->Error("Prop: Init: physical model has no type! "
+            "unknown typename: "+ptype+", \"PrimitiveType = Convex;\" for mesh "
+            "collisions, file: "+path);
+    }
+
+    if(physics.Collision){
+
+        GUARD_LOCK_OTHER((&physics));
+
+        // Create the body //
+        Ogre::Matrix4 locrot = Ogre::Matrix4::IDENTITY;
+        locrot.makeTransform(position._Position, Float3(1, 1, 1), position._Orientation);
+
+        Ogre::Matrix4 tlocrot = locrot.transpose();
+
+        physics.Body = NewtonCreateDynamicBody(tmpworld, physics.Collision,
+            &tlocrot[0][0]);
+
+        // Add this as user data //
+        NewtonBodySetUserData(physics.Body, &physics);
+
+        // Get mass //
+        physics.Mass = 0;
+        ObjectFileProcessor::LoadValueFromNamedVars<float>(proplist->GetVariables(),
+            "Mass", physics.Mass, 0.f, true, "Prop: Init: CreatePhysicsModel:");
+
+        // First calculate inertia and center of mass points //
+        Float3 inertia;
+        Float3 centerofmass;
+
+        NewtonConvexCollisionCalculateInertialMatrix(physics.Collision, &inertia.X,
+            &centerofmass.X);
+
+        // Apply mass to inertia
+        inertia *= physics.Mass;
+
+        NewtonBodySetMassMatrix(physics.Body, physics.Mass, inertia.X, inertia.Y,
+            inertia.Z);
+        NewtonBodySetCentreOfMass(physics.Body, &centerofmass.X);
+
+
+        // Callbacks //
+        NewtonBodySetTransformCallback(physics.Body,
+            Physics::PhysicsMovedEvent);
+
+        NewtonBodySetForceAndTorqueCallback(physics.Body,
+            Physics::ApplyForceAndTorgueEvent);
+
+        NewtonBodySetDestructorCallback(physics.Body, Physics::DestroyBodyCallback);
+
+        // TODO: create test that verifies that default material id = 0
+        if(materialid > 0)
+            physics.SetPhysicalMaterialID(guard, materialid);
+    }
+}
+
+DLLEXPORT bool ObjectLoader::LoadNetworkProp(GameWorld* world, Lock &worldlock,
+    ObjectID id, const std::string &modelfile, int materialid,
+    const Position::PositionData &pos)
+{
+    // Get relative path //
+	std::string path = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL,
+        StringOperations::RemoveExtensionString(modelfile, true), "levmd", true);
+
+	// Parse the file //
+	auto file = ObjectFileProcessor::ProcessObjectFile(path);
+
+	if(!file){
+
+        Logger::Get()->Error("LoadNetworkProp: failed to parse prop file "+path);
+		return false;
+	}
+
+    ObjectID prop = id;
+
+    string ogrefile;
+
+	ObjectFileProcessor::LoadValueFromNamedVars<string>(file->GetVariables(), "Model-Graphical",
+        ogrefile, "", true, "Prop: Init: no model file");
+
+
+    // Setup the model //
+    auto& sendable = world->CreateSendable(prop, SENDABLE_TYPE_PROP);
+
+    auto& position = world->CreatePosition(prop, pos._Position, pos._Orientation);
+
+    auto& model = world->CreateModel(prop, path);
+
+    _CreatePropCommon(world, worldlock, prop, ogrefile, model);
 
 	// Find the physics object definition //
 	auto phyobj = file->GetObjectWithType("PhysicalModel");
@@ -76,184 +270,67 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lo
 
             auto& physics = world->CreatePhysics(prop, world, position, &sendable);
 
-            NewtonWorld* tmpworld = world->GetPhysicalWorld()->GetNewtonWorld();
-
-            // get offset //
-            string offsettype;
-            Ogre::Matrix4 offset = Ogre::Matrix4::IDENTITY;
-            // this is useful when the origin is at the bottom of the model and you don't take
-            // this into account in newton primitive (using Convex hull should not require this)
-            if(ObjectFileProcessor::LoadValueFromNamedVars<string>(proplist->GetVariables(),
-                    "Offset", offsettype, "", true, "Prop: Init: CreatePhysicsModel"))
-            {
-
-                if(offsettype == "None"){
-                    // nothing needs to set //
+            _CreatePropPhysics(world, worldlock, model, physics, position, proplist, path,
+                materialid);
 
 
-                } else if(offsettype == "BoundingBoxCenter"){
+        } else {
 
-                    // There needs to be a workaround in non-graphical mode //
-                    if(model.GraphicalObject){
+            Logger::Get()->Warning("Model file "+path+" has PhysicalModel but no properties list");
+        }
+	}
 
-                        Ogre::Aabb bbox = model.GraphicalObject->getLocalAabb();
-                        offset.setTrans(bbox.mCenter);
+    // Notify that it has been created //
+    world->NotifyEntityCreate(worldlock, prop);
 
-                    } else {
+    return true;
+}
 
-                        Logger::Get()->Error("Prop: Init: trying to use BoundingBoxCenter as "
-                            "offset in non-graphical mode and there is no workaround to "
-                            "calculate that...yet");
-                    }
+DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lock &worldlock,
+    const std::string &name, int materialid, const Position::PositionData &pos)
+{
+    // Get relative path //
+	std::string path = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL, name, "levmd", false);
 
-                } else {
+	// Parse the file //
+	auto file = ObjectFileProcessor::ProcessObjectFile(path);
 
-                    Logger::Get()->Error("Prop: Init: invalid offset type, use None or "
-                        "BoundingBoxCenter for most common cases, file: "+path);
-                }
-            }
+	if(!file){
 
-            // Newton uses different handed matrices...
-            Ogre::Matrix4 toffset = offset.transpose();
+        Logger::Get()->Error("LoadProp: failed to parse prop file "+path);
+		return 0;
+	}
 
-            string ptype;
+    ObjectID prop = world->CreateEntity(worldlock);
 
-            ObjectFileProcessor::LoadValueFromNamedVars<string>(proplist->GetVariables(),
-                "PrimitiveType", ptype, "Convex");
+    string ogrefile;
 
-            // Process first the most complicated one, Convex hull which is basically a prop that
-            // we need to load
-            if(ptype == "Convex"){
+	ObjectFileProcessor::LoadValueFromNamedVars<string>(file->GetVariables(), "Model-Graphical",
+        ogrefile, "", true, "Prop: Init: no model file");
+    
 
-                Logger::Get()->Error("Prop: Init: physical object Convex hull loading is not "
-                    "implemented!");
-                return false;
+	// Setup the model //
+    auto& sendable = world->CreateSendable(prop, SENDABLE_TYPE_PROP);
 
-            } else if(ptype == "Sphere" || ptype == "Ball"){
+    auto& position = world->CreatePosition(prop, pos._Position, pos._Orientation);
 
-                // Sphere primitive type, now we just need to load the size parameter or
-                // count it from the object bounding box
-                float radius = 0.f;
+    auto& model = world->CreateModel(prop, path);
 
-                if(!ObjectFileProcessor::LoadValueFromNamedVars<float>(proplist->GetVariables(),
-                        "Size", radius, 0.f))
-                {
-                    // it should be string type //
-                    string sizesourcename;
+    _CreatePropCommon(world, worldlock, prop, ogrefile, model);
 
-                    if(!ObjectFileProcessor::LoadValueFromNamedVars<string>(
-                            proplist->GetVariables(), "Size", sizesourcename, "", true,
-                            "Prop: Init: CreatePhysicsModel:"))
-                    {
-                        // Process based on the source name //
-                        if(sizesourcename == "GraphicalModel"){
+	// Find the physics object definition //
+	auto phyobj = file->GetObjectWithType("PhysicalModel");
 
-                            // There needs to be a workaround in non-graphical mode //
-                            if(model.GraphicalObject){
+	if(phyobj){
 
-                                // Calculate the radius from bounding box size //
-                                Ogre::Aabb bbox = model.GraphicalObject->getLocalAabb();
-                                Ogre::Vector3 sizes = bbox.getSize();
+        auto proplist = phyobj->GetListWithName("properties");
 
-                                // A little sanity check //
-                                if(sizes.x != sizes.y || sizes.x != sizes.z){
-                                    // it's not cube //
-                                    Logger::Get()->Warning("Prop: Init: physical model sphere, "
-                                        "the bounding box of graphical model is not a cube, "
-                                        "continuing anyways");
-                                }
+        if(proplist){
 
-                                radius = sizes.x;
+            auto& physics = world->CreatePhysics(prop, world, position, &sendable);
 
-                            } else {
-
-                                Logger::Get()->Error("Prop: Init: trying to use GraphicalModel "
-                                    "as size specification  but in non-gui mode graphical object "
-                                    "isn't loaded and there is no workaround to calculate "
-                                    "that...yet");
-                            }
-
-                        } else {
-                            Logger::Get()->Error("Prop: Init: physical model has no size! "
-                                "unknown source: "+sizesourcename+
-                                " (\"Size = GraphicalModel;\"), file: "+path);
-                        }
-
-                    } else {
-
-                        Logger::Get()->Error("Prop: Init: physical model has no size! "
-                            "at least specify \"Size = GraphicalModel;\", file: "+path);
-                    }
-
-                }
-
-                // Radius should be fine now //
-                if(radius > 0){
-
-                    // Create the sphere now //
-                    physics.Collision = NewtonCreateSphere(tmpworld, radius, 0, &toffset[0][0]);
-                }
-
-            } else if(ptype == "Box"){
-
-                DEBUG_BREAK;
-                //Collision = NewtonCreateBox(tmpworld, sizes.x, sizes.y, sizes.z, NULL,
-                // &toffset[0][0]);
-            } else {
-                Logger::Get()->Error("Prop: Init: physical model has no type! "
-                    "unknown typename: "+ptype+", \"PrimitiveType = Convex;\" for mesh "
-                    "collisions, file: "+path);
-            }
-
-            if(physics.Collision){
-
-                GUARD_LOCK_OTHER((&physics));
-
-                // Create the body //
-                Ogre::Matrix4 locrot = Ogre::Matrix4::IDENTITY;
-                locrot.makeTransform(position._Position, Float3(1, 1, 1), position._Orientation);
-
-                Ogre::Matrix4 tlocrot = locrot.transpose();
-
-                physics.Body = NewtonCreateDynamicBody(tmpworld, physics.Collision,
-                    &tlocrot[0][0]);
-
-                // Add this as user data //
-                NewtonBodySetUserData(physics.Body, &physics);
-
-                // Get mass //
-                physics.Mass = 0;
-                ObjectFileProcessor::LoadValueFromNamedVars<float>(proplist->GetVariables(),
-                    "Mass", physics.Mass, 0.f, true, "Prop: Init: CreatePhysicsModel:");
-
-                // First calculate inertia and center of mass points //
-                Float3 inertia;
-                Float3 centerofmass;
-
-                NewtonConvexCollisionCalculateInertialMatrix(physics.Collision, &inertia.X,
-                    &centerofmass.X);
-
-                // Apply mass to inertia
-                inertia *= physics.Mass;
-
-                NewtonBodySetMassMatrix(physics.Body, physics.Mass, inertia.X, inertia.Y,
-                    inertia.Z);
-                NewtonBodySetCentreOfMass(physics.Body, &centerofmass.X);
-
-
-                // Callbacks //
-                NewtonBodySetTransformCallback(physics.Body,
-                    Physics::PhysicsMovedEvent);
-
-                NewtonBodySetForceAndTorqueCallback(physics.Body,
-                    Physics::ApplyForceAndTorgueEvent);
-
-                NewtonBodySetDestructorCallback(physics.Body, Physics::DestroyBodyCallback);
-
-                // TODO: create test that verifies that default material id = 0
-                if(materialid > 0)
-                    physics.SetPhysicalMaterialID(guard, materialid);
-            }
+            _CreatePropPhysics(world, worldlock, model, physics, position, proplist, path,
+                materialid);
 
         } else {
 
@@ -266,33 +343,11 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lo
 
 	return prop;
 }
-
-DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, Lock &worldlock,
-    const std::string &material, const Float3 &size, const float &mass, int materialid,
-    const Position::PositionData &pos)
+// ------------------------------------ //
+void ObjectLoader::_CreateBrushModel(GameWorld* world, Lock &worldlock, ObjectID brush,
+    Physics &physics, BoxGeometry &box, Position &position, float mass, const Float3 &size)
 {
 
-    if(material.empty()){
-
-        Logger::Get()->Error("LoadBrush: trying to create brush with empty material, specify "
-            "\"BaseWhiteNoLighting\" for default");
-        return 0;
-    }
-
-    ObjectID brush = world->CreateEntity(worldlock);
-
-	// Setup the model //
-
-    auto& position = world->CreatePosition(brush, pos._Position, pos._Orientation);
-
-    auto& box = world->CreateBoxGeometry(brush, size, material);
-
-    auto& sendable = world->CreateSendable(brush, SENDABLE_TYPE_BRUSH);
-
-    auto& constraintable = world->CreateConstraintable(brush, world);
-
-    auto& physics = world->CreatePhysics(brush, world, position, &sendable);
-    
 	// Load the Ogre entity if in graphical mode //
     auto scene = world->GetScene();
 
@@ -301,7 +356,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, L
         auto& rendernode = world->CreateRenderNode(brush);
 
         // Use an unique name for the mesh //
-        auto& manual = world->CreateManualObject(brush, "Brush_"+Convert::ToString(brush));
+        auto& manual = world->CreateManualObject(brush);
 
         // Create the graphical box //
         manual.Object = scene->createManualObject();
@@ -488,7 +543,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, L
         rendernode.Node->attachObject(box.GraphicalObject);
     }
 
-	// Create physical box //
+    // Create physical box //
 
     physics.Mass = mass;
 
@@ -534,13 +589,66 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, L
 	// Callbacks //
 	NewtonBodySetTransformCallback(physics.Body, Physics::PhysicsMovedEvent);
 	NewtonBodySetDestructorCallback(physics.Body, Physics::DestroyBodyCallback);
+}
+
+DLLEXPORT bool ObjectLoader::LoadNetworkBrush(GameWorld* world, Lock &worldlock,
+    ObjectID id, const std::string &material, const Float3 &size, const float &mass,
+    int materialid, const Position::PositionData &pos)
+{
+    ObjectID brush = id;
+
+    auto& position = world->CreatePosition(brush, pos._Position, pos._Orientation);
+
+    auto& box = world->CreateBoxGeometry(brush, size, material);
+
+    auto& received = world->CreateReceived(brush, SENDABLE_TYPE_BRUSH);
+
+    auto& constraintable = world->CreateConstraintable(brush, brush, world);
+
+    auto& physics = world->CreatePhysics(brush, world, position, nullptr);
+
+    _CreateBrushModel(world, worldlock, brush, physics, box, position, mass, size);
+
+    // Notify that it has been created //
+    world->NotifyEntityCreate(worldlock, brush);
+
+    return true;
+}
+
+DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, Lock &worldlock,
+    const std::string &material, const Float3 &size, const float &mass, int materialid,
+    const Position::PositionData &pos)
+{
+
+    if(material.empty()){
+
+        Logger::Get()->Error("LoadBrush: trying to create brush with empty material, specify "
+            "\"BaseWhiteNoLighting\" for default");
+        return 0;
+    }
+
+    ObjectID brush = world->CreateEntity(worldlock);
+
+	// Setup the model //
+
+    auto& position = world->CreatePosition(brush, pos._Position, pos._Orientation);
+
+    auto& box = world->CreateBoxGeometry(brush, size, material);
+
+    auto& sendable = world->CreateSendable(brush, SENDABLE_TYPE_BRUSH);
+
+    auto& constraintable = world->CreateConstraintable(brush, brush, world);
+
+    auto& physics = world->CreatePhysics(brush, world, position, &sendable);
+
+    _CreateBrushModel(world, worldlock, brush, physics, box, position, mass, size);
 
     // Notify that it has been created //
     world->NotifyEntityCreate(worldlock, brush);
 
 	return brush;
 }
-
+// ------------------------------------ //
 DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrackControllerToWorld(GameWorld* world,
     Lock &worldlock, std::vector<Position::PositionData> &initialtrack)
 {
@@ -550,7 +658,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrackControllerToWorld(GameWorld
     auto& owner = world->CreatePositionMarkerOwner(controller);
     auto& parent = world->CreateParent(controller);
     auto& sendable = world->CreateSendable(controller, SENDABLE_TYPE_TRACKCONTROLLER);
-    auto& track = world->CreateTrackController(controller);
+    auto& track = world->CreateTrackController(controller, owner, &sendable);
 
 	// Set nodes //
 	for(auto iter = initialtrack.begin(); iter != initialtrack.end(); ++iter){

@@ -42,7 +42,7 @@ DLLEXPORT void Leviathan::ConstraintSerializerManager::AddSerializer(BaseConstra
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ConstraintSerializerManager::CreateConstraint(Constraintable &object1,
-    Constraintable &object2, Entity::ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet, bool create)
+    Constraintable &object2, ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet, bool create)
 {
 
     auto end = Serializers.end();
@@ -60,7 +60,7 @@ DLLEXPORT bool Leviathan::ConstraintSerializerManager::CreateConstraint(Constrai
 }
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<sf::Packet> Leviathan::ConstraintSerializerManager::SerializeConstraintData(
-    Entity::BaseConstraint* constraint)
+    BaseConstraint* constraint)
 {
     if(!constraint)
         return nullptr;

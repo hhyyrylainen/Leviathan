@@ -5,6 +5,7 @@
 #include "../Common/ThreadSafe.h"
 
 #include "Components.h"
+#include "Objects/Constraints.h"
 
 
 namespace Leviathan{
@@ -16,8 +17,10 @@ namespace Leviathan{
         DLLEXPORT virtual ~ObjectDeltaStateData();
 
         //! \brief Adds update data to a packet
-        //! \param olderstate The state against which this is compared. Or NULL if a full update is wanted
-        DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate, sf::Packet &packet) = 0;
+        //! \param olderstate The state against which this is compared.
+        //! Or NULL if a full update is wanted
+        DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate,
+            sf::Packet &packet) = 0;
 
         //! \brief Copies data to missing values in this state from another state
         //! \return True if all missing values have been filled
@@ -135,23 +138,10 @@ namespace Leviathan{
         
         //! \brief Templated creation function for all classes that inherit BasePotitionable
         //! \param tick The world tick to place in the resulting state
-        template<class CType>
-        DLLEXPORT static std::unique_ptr<PositionDeltaState> CaptureState(
-            Lock &guard, CType &object, int tick)
+        DLLEXPORT static inline auto CaptureState(Position &pos,
+            int tick)
         {
-
-            return std::unique_ptr<PositionDeltaState>(
-                new PositionDeltaState(tick, object.GetPos(guard),
-                    object.GetOrientation(guard)));
-        }
-
-        //! \brief Automatically locking version of CaptureState
-        template<class CType>
-        DLLEXPORT static inline std::unique_ptr<PositionDeltaState> CaptureState(
-            CType &object, int tick)
-        {
-            GUARD_LOCK_OTHER((&object));
-            return CaptureState<CType>(guard, object, tick);
+            return std::make_shared<PositionDeltaState>(tick, pos._Position, pos._Orientation);
         }
 
         //! \note The olderstate has to be of type PositionDeltaState
@@ -163,10 +153,9 @@ namespace Leviathan{
         Float3 Position;
         Float4 Rotation;
 
-        //! Only set on received versions, marks which fields are valid
+        //! Marks which fields are valid
         int8_t ValidFields;
     };
-
 
     //! Flags for which fields have changed
     //! \see TrackControllerState

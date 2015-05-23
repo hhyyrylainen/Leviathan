@@ -185,6 +185,45 @@ DLLEXPORT void RenderNode::Release(Ogre::SceneManager* worldsscene){
 
 
 // ------------------ Physics ------------------ //
+DLLEXPORT Physics::ApplyForceInfo::ApplyForceInfo(bool addmass,
+    std::function<Float3(ApplyForceInfo* instance, Physics &object, Lock &objectlock)> getforce,
+    std::unique_ptr<std::string> name) :
+    OptionalName(move(name)), MultiplyByMass(addmass), Callback(getforce)
+{
+
+}
+        
+DLLEXPORT Physics::ApplyForceInfo::ApplyForceInfo(const ApplyForceInfo &other) :
+    MultiplyByMass(other.MultiplyByMass), Callback(other.Callback)
+{
+    if(other.OptionalName)
+        OptionalName = move(make_unique<string>(*other.OptionalName));
+}
+
+DLLEXPORT Physics::ApplyForceInfo::ApplyForceInfo(ApplyForceInfo &&other) :
+    OptionalName(move(other.OptionalName)), MultiplyByMass(move(other.MultiplyByMass)),
+    Callback(move(other.Callback))
+{
+    
+}
+
+DLLEXPORT Physics::ApplyForceInfo& Physics::ApplyForceInfo::operator =(
+    const Physics::ApplyForceInfo &other){
+
+    if(other.OptionalName)
+        OptionalName = move(make_unique<string>(*other.OptionalName));
+
+    MultiplyByMass = other.MultiplyByMass;
+    Callback = other.Callback;
+}
+// ------------------------------------ //
+DLLEXPORT Physics::Physics(GameWorld* world, Position &updatepos, Sendable* updatesendable) :
+    World(world), _Position(updatepos), UpdateSendable(updatesendable), Mass(0.f),
+    ApplyGravity(true), AppliedPhysicalMaterial(0), Collision(nullptr), Body(nullptr)
+{
+
+}
+// ------------------------------------ //
 DLLEXPORT void Physics::JumpTo(Position &target){
 
     GUARD_LOCK();
@@ -209,7 +248,6 @@ DLLEXPORT bool Physics::SetPosition(Lock &guard, const Float3 &pos, const Float4
 
     return true;
 }
-
 
 void Physics::PhysicsMovedEvent(const NewtonBody* const body,
     const dFloat* const matrix, int threadIndex)
@@ -577,6 +615,16 @@ DLLEXPORT void Physics::InterpolatePhysicalState(PhysicalDeltaState &first,
     SetTorque(guard, tor);
 }
 // ------------------ Received ------------------ //
+Received::StoredState::StoredState(std::shared_ptr<ObjectDeltaStateData> data) :
+    Tick(data->Tick), DeltaData(data)
+{
+
+}
+// ------------------------------------ //
+DLLEXPORT Received::Received(SENDABLE_TYPE type) : SendableHandleType(type){
+
+}
+// ------------------------------------ //
 DLLEXPORT void Received::GetServerSentStates(shared_ptr<ObjectDeltaStateData> &first,
     std::shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const
 {
@@ -623,7 +671,72 @@ DLLEXPORT void Received::GetServerSentStates(shared_ptr<ObjectDeltaStateData> &f
 }
 
 // ------------------ TrackController ------------------ //
-DLLEXPORT bool TrackController::SetStateToInterpolated(ObjectDeltaStateData &first,
+DLLEXPORT TrackController::TrackController(PositionMarkerOwner& nodes, Sendable* sendable) :
+    ForceTowardsPoint(0.3f), ReachedNode(0), NodeProgress(0.f), ChangeSpeed(0.f),
+    _Sendable(sendable), Nodes(nodes)
+{
+
+}
+// ------------------------------------ //
+DLLEXPORT void TrackController::Update(float timestep){
+
+    if(ChangeSpeed == 0.f)
+        return;
+
+    NodeProgress += timestep * ChangeSpeed;
+
+    if(NodeProgress < 0.f){
+
+        int wholeunder = floor(NodeProgress);
+
+        float singlenodepart = NodeProgress + wholeunder;
+
+        ReachedNode -= wholeunder;
+
+        if(ReachedNode < 0)
+            ReachedNode = 0;
+
+        NodeProgress = 1.f-singlenodepart;
+        
+    } else if(NodeProgress >= 1.f){
+
+        int wholeover = floor(NodeProgress);
+
+        float singlenodepart = NodeProgress - wholeover;
+
+        ReachedNode += wholeover;
+
+        if(ReachedNode >= Nodes.Markers.size())
+            ReachedNode = Nodes.Markers.size()-1;
+
+        NodeProgress = singlenodepart;
+    }
+}
+// ------------------------------------ //
+void TrackController::_SanityCheckNodeProgress(Lock &guard){
+
+    // Should work for NaN checks
+    if(NodeProgress != NodeProgress)
+        NodeProgress = 0.f; 
+    
+    if(ReachedNode < 0)
+        ReachedNode = 0;
+
+    if(ReachedNode >= Nodes.Markers.size())
+        ReachedNode = Nodes.Markers.size()-1;
+}
+// ------------------------------------ //
+DLLEXPORT void TrackController::GetPositionOnTrack(Float3 &pos, Float4 &rot) const{
+
+    const auto& node = Nodes.Markers[ReachedNode];
+
+    const auto& nodepos = std::get<1>(node);
+
+    pos = nodepos._Position;
+    rot = nodepos._Orientation;
+}
+// ------------------------------------ //
+DLLEXPORT bool TrackController::Interpolate(ObjectDeltaStateData &first,
     ObjectDeltaStateData &second, float progress)
 {
 
@@ -679,6 +792,13 @@ DLLEXPORT bool TrackController::SetStateToInterpolated(ObjectDeltaStateData &fir
     return true;
 }
 // ------------------ Trail ------------------ //
+DLLEXPORT Trail::Trail(RenderNode* node, const std::string &materialname,
+    const Properties &variables) :
+    TrailEntity(nullptr), _RenderNode(node), CurrentSettings(variables), Material(materialname)
+{
+
+}
+
 DLLEXPORT bool Trail::SetTrailProperties(const Properties &variables, bool force /*= false*/){
 
     GUARD_LOCK();
@@ -725,6 +845,35 @@ DLLEXPORT bool Trail::SetTrailProperties(const Properties &variables, bool force
 	return true;
 }
 // ------------------ Parent ------------------ //
+DLLEXPORT Parent::Parent(){
+
+}
+
+DLLEXPORT void Parent::RemoveChildNoNotify(Parentable* which){
+
+    GUARD_LOCK();
+    for(auto iter = Children.begin(); iter != Children.end(); ++iter){
+
+        if(get<1>(*iter) == which){
+
+            Children.erase(iter);
+            return;
+        }
+    }
+}
+
+DLLEXPORT void Parent::RemoveChildren(){
+
+    GUARD_LOCK();
+
+    for(auto& tuple : Children){
+
+        get<1>(tuple)->OnParentInvalidate();
+    }
+    
+    Children.clear();
+}
+
 DLLEXPORT void Parent::AddDataToPacket(sf::Packet &packet) const{
 
     GUARD_LOCK();
@@ -738,19 +887,135 @@ DLLEXPORT void Parent::AddDataToPacket(sf::Packet &packet) const{
         packet << std::get<0>(Children[i]);
     }
 }
-// ------------------ Parent ------------------ //
-DLLEXPORT void PositionMarkerOwner::AddDataToPacket(sf::Packet &packet) const{
+// ------------------ Parentable ------------------ //
+DLLEXPORT Parentable::Parentable() :
+    ApplyRotation(true), RelativeToParent(0), AttachedParent(nullptr)
+{
+
+}
+
+DLLEXPORT void Parentable::DetachFromParent(){
 
     GUARD_LOCK();
 
-    const auto size = static_cast<int32_t>(Markers.size());
+    AttachedParent = nullptr;
+}
+
+DLLEXPORT void Parentable::OnParentInvalidate(){
+
+    GUARD_LOCK();
+
+    if(AttachedParent)
+        AttachedParent->RemoveChildNoNotify(this);
+
+    AttachedParent = nullptr;
+}
+// ------------------ Sendable ------------------ //
+DLLEXPORT void Sendable::ActiveConnection::OnPacketFinalized(int tick,
+    std::shared_ptr<ObjectDeltaStateData> state, bool succeded, SentNetworkThing &packet)
+{
+    if(!succeded)
+        return;
     
-    packet << size;
+    Lock lock(CallbackMutex);
 
-    for(int32_t i = 0; i < size; i++){
+    if(tick > LastConfirmedTickNumber){
 
-        packet << std::get<0>(Markers[i]);
-
-        std::get<1>(Markers[i]).AddDataToPacket(packet);
+        LastConfirmedTickNumber = tick;
+        LastConfirmedData = state;
     }
 }
+
+Sendable::ActiveConnection::ActiveConnection(ConnectionInfo* connection) :
+    CorrespondingConnection(connection), LastConfirmedTickNumber(-1)
+{
+
+}
+
+DLLEXPORT Sendable::Sendable(SENDABLE_TYPE type) : SendableHandleType(type)
+{
+
+}
+
+DLLEXPORT void Sendable::AddConnectionToReceivers(Lock &guard, ConnectionInfo* connection){
+
+    UpdateReceivers.push_back(make_shared<ActiveConnection>(connection));
+}
+// ------------------ BoxGeometry ------------------ //
+DLLEXPORT BoxGeometry::BoxGeometry(const Float3 &size, const std::string &material) :
+    Sizes(size), Material(material), GraphicalObject(nullptr)
+{
+
+}
+// ------------------ PositionMarkerOwner ------------------ //
+DLLEXPORT PositionMarkerOwner::PositionMarkerOwner(){
+
+}
+// ------------------------------------ //
+DLLEXPORT void PositionMarkerOwner::Add(Lock &guard, ObjectID entity, Position& pos){
+
+    Markers.push_back(std::tie(entity, pos));
+}
+
+DLLEXPORT void PositionMarkerOwner::AddDataToPacket(Lock &guard, sf::Packet &packet) const{
+
+    int32_t size = Markers.size();
+
+    packet << size;
+    
+    for(int32_t i = 0; i < size; i++){
+
+        packet << std::get<0>(Markers[i]) << std::get<1>(Markers[i])._Position <<
+            std::get<1>(Markers[i])._Orientation;
+    }
+}
+// ------------------ Model ------------------ //
+DLLEXPORT Model::Model(const std::string &file) : ModelFile(file), GraphicalObject(nullptr){
+
+}
+// ------------------ Constraintable ------------------ //
+DLLEXPORT Constraintable::Constraintable(ObjectID id, GameWorld* world) :
+    World(world), PartOfEntity(id)
+{
+
+}
+
+DLLEXPORT void Constraintable::RemoveConstraint(BaseConstraint* removed){
+
+    GUARD_LOCK();
+
+    for(auto iter = PartInConstraints.begin(); iter != PartInConstraints.end(); ++iter){
+
+        if((*iter).get() == removed){
+
+            PartInConstraints.erase(iter);
+            return;
+        }
+    }
+}
+
+DLLEXPORT void Constraintable::AddConstraint(std::shared_ptr<BaseConstraint> added){
+
+    GUARD_LOCK();
+
+    PartInConstraints.push_back(added);
+}
+// ------------------------------------ //
+DLLEXPORT void Constraintable::_NotifyCreate(std::shared_ptr<BaseConstraint> newconstraint,
+    Constraintable &other)
+{
+
+    this->AddConstraint(newconstraint);
+    other.AddConstraint(newconstraint);
+    
+
+    // Notify world //
+    World->NotifyNewConstraint(newconstraint);
+}
+// ------------------ ManualObject ------------------ //
+DLLEXPORT ManualObject::ManualObject() : Object(nullptr){
+    
+}
+
+
+

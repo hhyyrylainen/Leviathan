@@ -68,7 +68,8 @@ namespace Leviathan{
             const Position::PositionData &pos = {Float3(0), Float4::IdentityQuaternion()});
 
         DLLEXPORT static inline ObjectID LoadTrailToWorld(GameWorld* world,
-            const std::string &material, const Trail::Properties &properties, bool allowupdatelater,
+            const std::string &material, const Trail::Properties &properties,
+            bool allowupdatelater,
             const Position::PositionData &pos = {Float3(0), Float4::IdentityQuaternion()})
         {
 
@@ -78,15 +79,29 @@ namespace Leviathan{
 
     protected:
 
+        //! \see LoadBrushToWorld
         DLLEXPORT static bool LoadNetworkBrush(GameWorld* world, Lock &worldlock,
             ObjectID id, const std::string &material, const Float3 &size, const float &mass,
             int materialid, const Position::PositionData &pos);
-        
+
+        //! \see LoadPropToWorld
         DLLEXPORT static bool LoadNetworkProp(GameWorld* world, Lock &worldlock,
             ObjectID id, const std::string &modelfile, int materialid,
             const Position::PositionData &pos);
-        
 
+
+    private:
+
+        static void _CreateBrushModel(GameWorld* world, Lock &worldlock, ObjectID brush,
+            Physics &physics, BoxGeometry &box, Position &position, float mass,
+            const Float3 &size);
+
+        static void _CreatePropCommon(GameWorld* world, Lock &worldlock,
+            ObjectID prop, const std::string &ogrefile, Model &model);
+
+        static void _CreatePropPhysics(GameWorld* world, Lock &worldlock, Model &model,
+            Physics &physics, Position &position, ObjectFileList* proplist,
+            const std::string &path, int materialid);
 	};
 
 }

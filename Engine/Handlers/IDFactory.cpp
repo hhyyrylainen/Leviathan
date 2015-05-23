@@ -27,7 +27,7 @@ DLLEXPORT int IDFactory::ProduceID(){
 
     return result;
 }
-        
+
 DLLEXPORT int IDFactory::ProduceSystemID(){
 
     const auto result = SystemID.fetch_add(1, std::memory_order_relaxed);

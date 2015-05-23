@@ -4,7 +4,6 @@
 #include "../../Utility/Convert.h"
 #include "../Objects/Constraints.h"
 using namespace Leviathan;
-using namespace Entity;
 using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseConstraintSerializer::BaseConstraintSerializer(){
@@ -17,7 +16,7 @@ DLLEXPORT Leviathan::BaseConstraintSerializer::~BaseConstraintSerializer(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::BaseConstraintSerializer::CanHandleType(
-    Entity::ENTITY_CONSTRAINT_TYPE type) const
+    ENTITY_CONSTRAINT_TYPE type) const
 {
 
     switch(type){
@@ -29,7 +28,7 @@ DLLEXPORT bool Leviathan::BaseConstraintSerializer::CanHandleType(
 }
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<sf::Packet> Leviathan::BaseConstraintSerializer::SerializeConstraint(
-    Entity::BaseConstraint* constraint, Entity::ENTITY_CONSTRAINT_TYPE &type)
+    BaseConstraint* constraint, ENTITY_CONSTRAINT_TYPE &type)
 {
     // Get the type and then cast to the subclass //
     type = constraint->GetType();
@@ -58,7 +57,7 @@ DLLEXPORT std::shared_ptr<sf::Packet> Leviathan::BaseConstraintSerializer::Seria
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::BaseConstraintSerializer::UnSerializeConstraint(Constraintable &object1,
-    Constraintable &object2, Entity::ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet,
+    Constraintable &object2, ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet,
     bool create /*= true*/)
 {
 

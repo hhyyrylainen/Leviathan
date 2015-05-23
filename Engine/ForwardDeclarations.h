@@ -47,14 +47,6 @@ namespace Leviathan{
 		class GuiManager;
 	}
 
-	namespace Entity{
-
-		struct TrailProperties;
-        class BaseConstraint;
-
-        enum ENTITY_CONSTRAINT_TYPE : int32_t;
-	}
-
     // Entities //
     class Sendable;
     class Position;
@@ -64,6 +56,14 @@ namespace Leviathan{
     class Parent;
 
     class SendableEntitySerializer;
+
+    class Physics;
+
+
+    // Constraints //
+    class BaseConstraint;
+    enum ENTITY_CONSTRAINT_TYPE : int32_t;
+    
     
 
     // DeltaStates //
@@ -85,6 +85,8 @@ namespace Leviathan{
 
 	class ObjectFileTemplateInstance;
 	class ObjectFileTemplateDefinition;
+
+    class ObjectFileList;
 
     class BaseEntitySerializer;
     class EntitySerializerManager;
@@ -110,8 +112,6 @@ namespace Leviathan{
 
     class ConstraintSerializerManager;
     
-	class ApplyForceInfo;
-
     class AINetworkCache;
 
 	class NetworkedInput;

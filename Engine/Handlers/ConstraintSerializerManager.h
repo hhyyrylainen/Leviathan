@@ -30,12 +30,12 @@ namespace Leviathan{
         //! \param packet Containing the custom data for the constraint
         //! \param create Specifies whether to create or destroy the constraint
         DLLEXPORT bool CreateConstraint(Constraintable &object1, Constraintable &object2,
-            Entity::ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet, bool create);
+            ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet, bool create);
 
         //! \brief Puts the custom data of a constraint into a packet
         //! \note The constraint is locked before this call
         DLLEXPORT std::shared_ptr<sf::Packet> SerializeConstraintData(
-            Entity::BaseConstraint* constraint);
+            BaseConstraint* constraint);
 
 
         DLLEXPORT static ConstraintSerializerManager* Get();

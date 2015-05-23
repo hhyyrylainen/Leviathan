@@ -4,19 +4,18 @@
 #include "Newton/PhysicalWorld.h"
 #include "../GameWorld.h"
 using namespace Leviathan;
-using namespace Entity;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Entity::BaseConstraint::BaseConstraint(ENTITY_CONSTRAINT_TYPE type,
+DLLEXPORT BaseConstraint::BaseConstraint(ENTITY_CONSTRAINT_TYPE type,
     GameWorld* world, Constraintable &first, Constraintable &second) : 
 	FirstObject(first), SecondObject(second), OwningWorld(world), Joint(NULL), Type(type)
 {
 }
 
-DLLEXPORT Leviathan::Entity::BaseConstraint::~BaseConstraint(){
+DLLEXPORT BaseConstraint::~BaseConstraint(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::BaseConstraint::Init(){
+DLLEXPORT bool BaseConstraint::Init(){
 	// We use the virtual functions to make the child class handle this //
 	if(!_CheckParameters()){
 
@@ -33,13 +32,13 @@ DLLEXPORT bool Leviathan::Entity::BaseConstraint::Init(){
 	return true;
 }
 
-DLLEXPORT void Leviathan::Entity::BaseConstraint::Release(){
+DLLEXPORT void BaseConstraint::Release(){
 
 	// Both are called because neither of them invoked this function //
 	ConstraintPartUnlinkedDestroy(NULL);
 }
 
-DLLEXPORT void Leviathan::Entity::BaseConstraint::ConstraintPartUnlinkedDestroy(
+DLLEXPORT void BaseConstraint::ConstraintPartUnlinkedDestroy(
     Constraintable* callinginstance)
 {
     
@@ -74,37 +73,37 @@ DLLEXPORT bool BaseConstraint::_CreateActualJoint(){
     return false;
 }
 // ------------------------------------ //
-DLLEXPORT Constraintable& Leviathan::Entity::BaseConstraint::GetFirstEntity() const{
+DLLEXPORT Constraintable& BaseConstraint::GetFirstEntity() const{
     return FirstObject;
 }
 
-DLLEXPORT Constraintable& Leviathan::Entity::BaseConstraint::GetSecondEntity() const{
+DLLEXPORT Constraintable& BaseConstraint::GetSecondEntity() const{
     return SecondObject;
 }
 // ------------------ SliderConstraint ------------------ //
-DLLEXPORT Leviathan::Entity::SliderConstraint::SliderConstraint(GameWorld* world,
+DLLEXPORT SliderConstraint::SliderConstraint(GameWorld* world,
     Constraintable &first, Constraintable &second) : 
 	BaseConstraint(ENTITY_CONSTRAINT_TYPE_SLIDER, world, first, second), Axis(0)
 {
 
 }
 
-DLLEXPORT Leviathan::Entity::SliderConstraint::~SliderConstraint(){
+DLLEXPORT SliderConstraint::~SliderConstraint(){
 
 }
 // ------------------------------------ //
-DLLEXPORT SliderConstraint* Leviathan::Entity::SliderConstraint::SetParameters(
+DLLEXPORT SliderConstraint* SliderConstraint::SetParameters(
     const Float3 &slidingaxis)
 {
 	Axis = slidingaxis;
 	return this;
 }
 // ------------------------------------ //
-DLLEXPORT Float3 Leviathan::Entity::SliderConstraint::GetAxis() const{
+DLLEXPORT Float3 SliderConstraint::GetAxis() const{
     return Axis;
 }
 // ------------------------------------ //
-bool Leviathan::Entity::SliderConstraint::_CheckParameters(){
+bool SliderConstraint::_CheckParameters(){
 	if(Axis.IsNormalized())
 		return true;
     
@@ -112,7 +111,7 @@ bool Leviathan::Entity::SliderConstraint::_CheckParameters(){
 	return false;
 }
 
-bool Leviathan::Entity::SliderConstraint::_CreateActualJoint(){
+bool SliderConstraint::_CreateActualJoint(){
 	// We'll just call the Newton create function and that should should be it //
 	Float3 pos(0.f, 0.f, 0.f);
 

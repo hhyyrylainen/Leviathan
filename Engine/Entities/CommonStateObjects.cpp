@@ -5,7 +5,13 @@
 #include "Exceptions.h"
 using namespace Leviathan;
 // ------------------------------------ //
+DLLEXPORT ObjectDeltaStateData::ObjectDeltaStateData(int tick) : Tick(tick){
 
+}
+
+DLLEXPORT ObjectDeltaStateData::~ObjectDeltaStateData(){
+
+}
 // ------------------ PhysicalDeltaState ------------------ //
 DLLEXPORT Leviathan::PhysicalDeltaState::PhysicalDeltaState(int tick, const Float3 &position,
     const Float4 &rotation, const Float3 &velocity, const Float3 &torque) :

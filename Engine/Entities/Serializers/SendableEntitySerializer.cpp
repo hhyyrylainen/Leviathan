@@ -214,7 +214,7 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
         case SENDABLE_TYPE_PROP:
         case SENDABLE_TYPE_BRUSH:
         {
-            DEBUG_BREAK;
+            receivedstate = make_shared<PositionDeltaState>(ticknumber, packet);
         }
         break;
         case SENDABLE_TYPE_TRACKCONTROLLER:

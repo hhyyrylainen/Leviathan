@@ -88,6 +88,11 @@ public:
 
         SAFE_DELETE(IDDefaultInstance);
     }
+
+    void AdjustTickClock(int mstoset){
+
+        _AdjustTickClock(mstoset, true);
+    }
     
 
     PartialApplication App;

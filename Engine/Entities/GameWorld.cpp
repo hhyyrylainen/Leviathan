@@ -590,12 +590,23 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(){
 
     HandleDeleted(guard);
 
+    // Client interpolation //
+    if(!IsOnServer){
+
+        DEBUG_BREAK;
+    }
+
     RunRenderingPositionSystem();
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{
     
     return TickNumber;
+}
+// ------------------------------------ //
+DLLEXPORT void GameWorld::NotifyNewConstraint(std::shared_ptr<BaseConstraint> constraint){
+
+    DEBUG_BREAK;
 }
 // ------------------ Object managing ------------------ //
 DLLEXPORT ObjectID GameWorld::CreateEntity(Lock &guard){

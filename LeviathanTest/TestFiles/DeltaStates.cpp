@@ -2,7 +2,6 @@
 #include "Entities/CommonStateObjects.h"
 #include "Handlers/ObjectLoader.h"
 #include "Engine.h"
-#include "Entities/Objects/Brush.h"
 #include "Common/SFMLPackets.h"
 #include "Entities/Components.h"
 
@@ -18,30 +17,28 @@ TEST_CASE("Positonable delta state interpolation", "[networking, entity]"){
 
     PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
 
-    ObjectLoader loader(&engine);
-
     GameWorld world;
     world.Init(nullptr, nullptr);
 
-    Entity::Brush* brush = nullptr;
-    loader.LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0, &brush);
+    auto brush = ObjectLoader::LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0,
+        { Float3(10, 0, 0), Float4::IdentityQuaternion() });
+
+    REQUIRE(brush != 0);
+
+    auto& position = world.GetComponent<Position>(brush);
     
-    REQUIRE(brush != nullptr);
+    auto firststate = PositionDeltaState::CaptureState(position, 5);
 
-    brush->SetPos(Float3(10, 0, 0));
-
-    auto firststate = PositionableRotationableDeltaState::CaptureState(*brush, 5);
-
-    SECTION("Postionable rotationable properly captured state"){
+    SECTION("Position properly captured state"){
         
         CHECK(firststate->Position == Float3(10, 0, 0));
         CHECK(firststate->Rotation == Float4::IdentityQuaternion());
         CHECK(firststate->ValidFields == PRDELTA_ALL_UPDATED);
     }
 
-    brush->SetPos(Float3(20, 5, 0));
+    position._Position = Float3(20, 5, 0);
 
-    auto secondstate = PositionableRotationableDeltaState::CaptureState(*brush, 5);
+    auto secondstate = PositionDeltaState::CaptureState(position, 5);
 
     SECTION("Postionable rotationable captures updated state"){
         
@@ -50,80 +47,77 @@ TEST_CASE("Positonable delta state interpolation", "[networking, entity]"){
         CHECK(secondstate->ValidFields == PRDELTA_ALL_UPDATED);
     }
 
-    brush->InterpolatePositionableState(*firststate, *secondstate, 0.5f);
+    position.Interpolate(*firststate, *secondstate, 0.5f);
 
-    CHECK(brush->GetPosX() == Approx(15));
-    CHECK(brush->GetPosY() == Approx(2.5));
-    CHECK(brush->GetPosZ() == Approx(0));
-    CHECK(brush->GetOrientation() == Float4::IdentityQuaternion());
+    CHECK(position._Position.X == Approx(15));
+    CHECK(position._Position.Y == Approx(2.5));
+    CHECK(position._Position.Z == Approx(0));
+    CHECK(position._Orientation == Float4::IdentityQuaternion());
 
     // Another point //
-    brush->InterpolatePositionableState(*firststate, *secondstate, 0.25f);
-    
-    CHECK(brush->GetPosX() == Approx(12.5));
-    CHECK(brush->GetPosY() == Approx(1.25));
-    CHECK(brush->GetPosZ() == Approx(0));
-    CHECK(brush->GetOrientation() == Float4::IdentityQuaternion());
+    position.Interpolate(*firststate, *secondstate, 0.25f);
+
+    CHECK(position._Position.X == Approx(12.5));
+    CHECK(position._Position.Y == Approx(1.25));
+    CHECK(position._Position.Z == Approx(0));
+    CHECK(position._Orientation == Float4::IdentityQuaternion());
 
     // Only first //
-    brush->InterpolatePositionableState(*firststate, *secondstate, 0);
+    position.Interpolate(*firststate, *secondstate, 0);
     
-    CHECK(brush->GetPos() == firststate->Position);
-    CHECK(brush->GetOrientation() == firststate->Rotation);
+    CHECK(position._Position == firststate->Position);
+    CHECK(position._Orientation == firststate->Rotation);
 
     // Only second first //
-    brush->InterpolatePositionableState(*firststate, *secondstate, 1);
+    position.Interpolate(*firststate, *secondstate, 1);
     
-    CHECK(brush->GetPos() == secondstate->Position);
-    CHECK(brush->GetOrientation() == secondstate->Rotation);
+    CHECK(position._Position == secondstate->Position);
+    CHECK(position._Orientation == secondstate->Rotation);
 
     world.Release();
 }
 
-TEST_CASE("Positionable rotationable state through packet and interpolate",
-    "[networking, entity]")
+TEST_CASE("Position state through packet and interpolate", "[networking, entity]")
 {
 
     PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
 
-    ObjectLoader loader(&engine);
-
     GameWorld world;
     world.Init(nullptr, nullptr);
 
-    Entity::Brush* brush = nullptr;
-    loader.LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0, &brush);
-    
-    REQUIRE(brush != nullptr);
+    auto brush = ObjectLoader::LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0,
+        { Float3(0, 0, 0), Float4::IdentityQuaternion() });
 
-    brush->SetPos(Float3(0, 0, 0));
+    REQUIRE(brush != 0);
 
-    auto atoriginstate = PositionableRotationableDeltaState::CaptureState(*brush, 0);
+    auto& position = world.GetComponent<Position>(brush);
 
-    brush->SetPos(Float3(50, 25, 5));
+    auto atoriginstate = PositionDeltaState::CaptureState(position, 0);
 
-    auto firststate = PositionableRotationableDeltaState::CaptureState(*brush, 1);
+    position._Position = Float3(50, 25, 5);
+
+    auto firststate = PositionDeltaState::CaptureState(position, 1);
 
     sf::Packet packet1;
 
     firststate->CreateUpdatePacket(atoriginstate.get(), packet1);
 
-    auto reconstructed = make_shared<PositionableRotationableDeltaState>(1, packet1);
+    auto reconstructed = make_shared<PositionDeltaState>(1, packet1);
 
     CHECK_FALSE((reconstructed->ValidFields & PRDELTAUPDATED_ROT_X));
     CHECK((reconstructed->ValidFields & PRDELTAUPDATED_POS_X));
     CHECK((reconstructed->ValidFields & PRDELTAUPDATED_POS_Y));
     CHECK((reconstructed->ValidFields & PRDELTAUPDATED_POS_Z));
 
-    brush->SetPos(Float3(100, 0, 5));
+    position._Position = Float3(100, 0, 5);
 
-    auto secondstate = PositionableRotationableDeltaState::CaptureState(*brush, 2);
+    auto secondstate = PositionDeltaState::CaptureState(position, 2);
 
     sf::Packet packet2;
 
     secondstate->CreateUpdatePacket(firststate.get(), packet2);
 
-    auto reconstructed2 = make_shared<PositionableRotationableDeltaState>(2, packet2);
+    auto reconstructed2 = make_shared<PositionDeltaState>(2, packet2);
 
     CHECK_FALSE((reconstructed2->ValidFields & PRDELTAUPDATED_ROT_X));
     CHECK((reconstructed2->ValidFields & PRDELTAUPDATED_POS_X));
@@ -131,47 +125,45 @@ TEST_CASE("Positionable rotationable state through packet and interpolate",
     CHECK_FALSE((reconstructed2->ValidFields & PRDELTAUPDATED_POS_Z));
 
 
-    reconstructed->FillMissingData(*brush->CaptureState(0));
+    reconstructed->FillMissingData(*PositionDeltaState::CaptureState(position, 0));
 
     
-    brush->InterpolatePositionableState(*reconstructed, *reconstructed2, 0.5f);
+    position.Interpolate(*reconstructed, *reconstructed2, 0.5f);
 
-    CHECK(brush->GetPosX() == Approx(75));
-    CHECK(brush->GetPosY() == Approx(12.5));
-    CHECK(brush->GetPosZ() == 5);
-    CHECK(brush->GetOrientation() == Float4::IdentityQuaternion());
+    CHECK(position._Position.X == Approx(75));
+    CHECK(position._Position.Y == Approx(12.5));
+    CHECK(position._Position.Z == 5);
+    CHECK(position._Orientation == Float4::IdentityQuaternion());
 
     world.Release();
 }
 
-TEST_CASE("Positionable rotationable state fill missing data", "[networking, entity"){
+TEST_CASE("Position state fill missing data", "[networking, entity"){
 
     PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
-
-    ObjectLoader loader(&engine);
 
     GameWorld world;
     world.Init(nullptr, nullptr);
 
-    Entity::Brush* brush = nullptr;
-    loader.LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0, &brush);
-    
-    REQUIRE(brush != nullptr);
+    auto brush = ObjectLoader::LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0,
+        { Float3(0, 0, 0), Float4::IdentityQuaternion() });
 
-    brush->SetPos(Float3(0, 0, 0));
+    REQUIRE(brush != 0);
 
-    auto initialstate = PositionableRotationableDeltaState::CaptureState(*brush, 0);
+    auto& position = world.GetComponent<Position>(brush);
+
+    auto initialstate = PositionDeltaState::CaptureState(position, 0);
 
     // First position //
-    brush->SetPos(Float3(50, 25, 0));
+    position._Position = Float3(50, 25, 0);
 
-    auto firstcheck = PositionableRotationableDeltaState::CaptureState(*brush, 1);
+    auto firstcheck = PositionDeltaState::CaptureState(position, 1);
 
     sf::Packet packet1;
 
     firstcheck->CreateUpdatePacket(initialstate.get(), packet1);
 
-    auto firstresult = make_shared<PositionableRotationableDeltaState>(1, packet1);
+    auto firstresult = make_shared<PositionDeltaState>(1, packet1);
 
     CHECK_FALSE((firstresult->ValidFields & PRDELTA_ALL_UPDATED) == PRDELTA_ALL_UPDATED);
 
@@ -185,15 +177,15 @@ TEST_CASE("Positionable rotationable state fill missing data", "[networking, ent
 
     
     // Second position //
-    brush->SetPos(Float3(100, 0, 0));
+    position._Position = Float3(100, 0, 0);
 
-    auto secondcheck = PositionableRotationableDeltaState::CaptureState(*brush, 2);
+    auto secondcheck = PositionDeltaState::CaptureState(position, 2);
 
     sf::Packet packet2;
 
     secondcheck->CreateUpdatePacket(initialstate.get(), packet2);
 
-    auto secondresult = make_shared<PositionableRotationableDeltaState>(2, packet2);
+    auto secondresult = make_shared<PositionDeltaState>(2, packet2);
 
     CHECK_FALSE(secondresult->ValidFields == PRDELTA_ALL_UPDATED);
 
@@ -224,7 +216,7 @@ TEST_CASE("Positionable rotationable state fill missing data", "[networking, ent
     CHECK_FALSE((secondresult->ValidFields & PRDELTAUPDATED_ROT_W));
     
     
-    filled = secondresult->FillMissingData(*brush->CaptureState(0));
+    filled = secondresult->FillMissingData(*PositionDeltaState::CaptureState(position, 0));
 
     CHECK(filled);
 

@@ -56,7 +56,6 @@ using Leviathan::CommandSender;
 using Leviathan::CommandHandler;
 using Leviathan::NetworkedInput;
 using Leviathan::ThreadSafe;
-using Leviathan::ApplyForceInfo;
 
 
 using Leviathan::ThreadingManager;
@@ -68,7 +67,7 @@ using Leviathan::RepeatingDelayedTask;
 using Leviathan::RepeatCountedDelayedTask;
 
 
-using Leviathan::BaseObject;
+using Leviathan::ObjectID;
 using Leviathan::GameWorld;
 
 using Leviathan::Exception;

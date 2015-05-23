@@ -3,8 +3,9 @@
 #include "Entities/GameWorld.h"
 #include "Entities/Components.h"
 #include "Handlers/ObjectLoader.h"
-#include "Entities/Objects/Brush.h"
 #include "Common/SFMLPackets.h"
+#include "Entities/CommonStateObjects.h"
+#include "Entities/Serializers/SendableEntitySerializer.h"
 
 #include "catch.hpp"
 
@@ -15,17 +16,22 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
     PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
 
-    ObjectLoader loader(&engine);
+    SendableEntitySerializer serializer;
 
     GameWorld world;
     world.Init(nullptr, nullptr);
 
-    Entity::Brush* brush = nullptr;
-    loader.LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0, &brush);
-    
-    REQUIRE(brush != nullptr);
+    auto brush = ObjectLoader::LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0,
+        { Float3(0, 0, 0), Float4::IdentityQuaternion() });
 
-    auto firststate = brush->CaptureState(0);
+    REQUIRE(brush != 0);
+
+    auto& position = world.GetComponent<Position>(brush);
+
+    // Fake Received type
+    auto& received = world.CreateReceived(brush, SENDABLE_TYPE_BRUSH);
+
+    auto firststate = PositionDeltaState::CaptureState(position, 0);
     
     // Create multiple instances of the same state with different ticks //
 
@@ -33,13 +39,14 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
         for(auto i : {1, 2}){
         
-            auto state = brush->CaptureState(i);
+            auto state = PositionDeltaState::CaptureState(position, i);
 
             sf::Packet packet;
 
             state->CreateUpdatePacket(firststate.get(), packet);
 
-            REQUIRE(brush->LoadUpdateFromPacket(packet, i, i-1));
+            GUARD_LOCK_OTHER_NAME((&world), worldlock);
+            REQUIRE(serializer.ApplyUpdateFromPacket(&world, worldlock, brush, i, i-1, packet));
         }
 
         shared_ptr<ObjectDeltaStateData> first;
@@ -47,7 +54,7 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
         float progress = 0.35f;
         
-        REQUIRE_NOTHROW(brush->GetServerSentStates(first, second, 1, progress));
+        REQUIRE_NOTHROW(received.GetServerSentStates(first, second, 1, progress));
 
         REQUIRE(first);
         REQUIRE(second);
@@ -60,13 +67,14 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
         
         for(auto i : {1, 2, 3, 4, 5}){
         
-            auto state = brush->CaptureState(i);
+            auto state = PositionDeltaState::CaptureState(position, i);
 
             sf::Packet packet;
 
             state->CreateUpdatePacket(firststate.get(), packet);
 
-            REQUIRE(brush->LoadUpdateFromPacket(packet, i, i-1));
+            GUARD_LOCK_OTHER_NAME((&world), worldlock);
+            REQUIRE(serializer.ApplyUpdateFromPacket(&world, worldlock, brush, i, i-1, packet));
         }
 
         shared_ptr<ObjectDeltaStateData> first;
@@ -74,7 +82,7 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
         float progress = 0.25f;
         
-        REQUIRE_NOTHROW(brush->GetServerSentStates(first, second, 3, progress));
+        REQUIRE_NOTHROW(received.GetServerSentStates(first, second, 3, progress));
 
         REQUIRE(first);
         REQUIRE(second);
@@ -88,13 +96,14 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
         
         for(auto i : {1, 2, 3, 5}){
         
-            auto state = brush->CaptureState(i);
+            auto state = PositionDeltaState::CaptureState(position, i);
 
             sf::Packet packet;
 
             state->CreateUpdatePacket(firststate.get(), packet);
 
-            REQUIRE(brush->LoadUpdateFromPacket(packet, i, i-1));
+            GUARD_LOCK_OTHER_NAME((&world), worldlock);
+            REQUIRE(serializer.ApplyUpdateFromPacket(&world, worldlock, brush, i, i-1, packet));
         }
 
         shared_ptr<ObjectDeltaStateData> first;
@@ -102,7 +111,7 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
         float progress = 0.25f;
         
-        REQUIRE_NOTHROW(brush->GetServerSentStates(first, second, 3, progress));
+        REQUIRE_NOTHROW(received.GetServerSentStates(first, second, 3, progress));
 
         REQUIRE(first);
         REQUIRE(second);
@@ -115,13 +124,14 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
         for(auto i : {3, 5, 7, 8}){
         
-            auto state = brush->CaptureState(i);
+            auto state = PositionDeltaState::CaptureState(position, i);
 
             sf::Packet packet;
 
             state->CreateUpdatePacket(firststate.get(), packet);
 
-            REQUIRE(brush->LoadUpdateFromPacket(packet, i, i-1));
+            GUARD_LOCK_OTHER_NAME((&world), worldlock);
+            REQUIRE(serializer.ApplyUpdateFromPacket(&world, worldlock, brush, i, i-1, packet));
         }
         
         shared_ptr<ObjectDeltaStateData> first;
@@ -129,32 +139,31 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
         float progress = 0.25f;
         
-        REQUIRE_THROWS_AS(brush->GetServerSentStates(first, second, 1, progress), InvalidState);
+        REQUIRE_THROWS_AS(received.GetServerSentStates(first, second, 1, progress), InvalidState);
     }
-
 
     
     world.Release();
 }
 
 
-TEST_CASE("Brush listens to and applies client interpolation events", "[entity, networking]"){
+TEST_CASE("World interpolation system works with Brush", "[entity, networking]"){
 
     PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
 
-    ObjectLoader loader(&engine);
-
+    SendableEntitySerializer serializer;
+    
     GameWorld world;
     world.Init(nullptr, nullptr);
 
-    Entity::Brush* brush = nullptr;
-    loader.LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0, &brush);
+    auto brush = ObjectLoader::LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0,
+        { Float3(0, 0, 0), Float4::IdentityQuaternion() });
 
-    brush->SetPos(Float3(0, 0, 0));
-    
-    REQUIRE(brush != nullptr);
+    REQUIRE(brush != 0);
 
-    auto firststate = brush->CaptureState(0);
+    auto& position = world.GetComponent<Position>(brush);
+
+    auto firststate = PositionDeltaState::CaptureState(position, 0);
     
     // Create multiple instances of the same state with different ticks //
 
@@ -162,58 +171,76 @@ TEST_CASE("Brush listens to and applies client interpolation events", "[entity, 
         
         for(auto i : {1, 2, 3, 4, 5}){
 
-            brush->SetPos(Float3(i*10, 0, 0));
+            position._Position = Float3(i*10, 0, 0);
             
-            auto state = brush->CaptureState(i);
+            auto state = PositionDeltaState::CaptureState(position, i);
 
             sf::Packet packet;
 
             state->CreateUpdatePacket(firststate.get(), packet);
 
-            REQUIRE(brush->LoadUpdateFromPacket(packet, i, i-1));
+            GUARD_LOCK_OTHER_NAME((&world), worldlock);
+            REQUIRE(serializer.ApplyUpdateFromPacket(&world, worldlock, brush, i, i-1, packet));
         }
 
         SECTION("Basic position updating"){
             
-            brush->SetPos(Float3(0, 0, 0));
+            position._Position = Float3(0, 0, 0);
 
-            EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_CLIENT_INTERPOLATION,
-                    new ClientInterpolationEventData(3, 0.5f*TICKSPEED)));
+            // Set tick
+            world.Tick(3);
+
+            // Engine progress
+            engine.AdjustTickClock(0.5f*TICKSPEED);
+            world.RunFrameRenderSystems();
 
             // Position should have changed //
-            CHECK(brush->GetPosX() == Approx(35));
+            CHECK(position._Position.X == Approx(35));
         }
 
-        SECTION("Unlinking and relinking when new states arrive"){
+        SECTION("Unmarking and remarking when new states arrive"){
             
             // This should unlink the listener //
-            EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_CLIENT_INTERPOLATION,
-                    new ClientInterpolationEventData(5, 0.5f*TICKSPEED)));
+            world.Tick(3);
 
-            brush->SetPos(Float3(0, 0, 0));
+            // Engine progress
+            engine.AdjustTickClock(0.5f*TICKSPEED);
+            world.RunFrameRenderSystems();
+            
+
+            position._Position = Float3(0, 0, 0);
 
             // This shoulnd't apply //
-            EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_CLIENT_INTERPOLATION,
-                    new ClientInterpolationEventData(3, 0.5f*TICKSPEED)));
+            world.Tick(3);
 
-            CHECK(brush->GetPosX() == 0);
+            // Engine progress
+            engine.AdjustTickClock(0.5f*TICKSPEED);
+            world.RunFrameRenderSystems();
+
+            CHECK(position._Position.X == 0);
 
             // This should relink the listener //
-            brush->SetPos(Float3(60, 0, 0));
+            position._Position = Float3(60, 0, 0);
             
-            auto state = brush->CaptureState(6);
+            auto state = PositionDeltaState::CaptureState(position, 6);
 
             sf::Packet packet;
 
             state->CreateUpdatePacket(firststate.get(), packet);
 
-            REQUIRE(brush->LoadUpdateFromPacket(packet, 6, 5));
+            {
+                GUARD_LOCK_OTHER_NAME((&world), worldlock);
+                REQUIRE(serializer.ApplyUpdateFromPacket(&world, worldlock, brush, 6, 5, packet));
+            }
 
             // And this should now work //
-            EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_CLIENT_INTERPOLATION,
-                    new ClientInterpolationEventData(5, 0.5f*TICKSPEED)));
+            world.Tick(5);
 
-            CHECK(brush->GetPosX() == Approx(55));
+            // Engine progress
+            engine.AdjustTickClock(0.5f*TICKSPEED);
+            world.RunFrameRenderSystems();
+
+            CHECK(position._Position.X == Approx(55));
         }
     }
     

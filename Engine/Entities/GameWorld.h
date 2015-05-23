@@ -117,7 +117,8 @@ namespace Leviathan{
         DLLEXPORT void HandleAdded(Lock &guard);
 
         //! \brief Called by engine before frame rendering
-        //! \todo Only call on worlds that contain cameras that are connected to GraphicalInputEntities
+        //! \todo Only call on worlds that contain cameras that are connected
+        //! to GraphicalInputEntities
         DLLEXPORT void RunFrameRenderSystems();
         
 
@@ -330,6 +331,10 @@ namespace Leviathan{
             GUARD_LOCK();
             SetWorldPhysicsFrozenState(guard, frozen);
         }
+
+        //! \brief Call when a new constraint is created, will broadcast on the server
+        DLLEXPORT void NotifyNewConstraint(std::shared_ptr<BaseConstraint> constraint);
+        
 
 		// Ray callbacks //
 		static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,

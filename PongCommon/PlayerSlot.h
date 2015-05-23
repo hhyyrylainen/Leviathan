@@ -2,7 +2,7 @@
 // ------------------------------------ //
 #include "PongIncludes.h"
 // ------------------------------------ //
-#include "Entities/Objects/TrackEntityController.h"
+#include "Entities/Components.h"
 #include "Networking/SyncedResource.h"
 #include "Common/ThreadSafe.h"
 #include <functional>
@@ -12,6 +12,8 @@
 #define INPUT_TRACK_ADVANCESPEED	2.0f
 
 namespace Pong{
+
+    using namespace Leviathan;
 
 	enum PLAYERTYPE {
         PLAYERTYPE_HUMAN = 0, PLAYERTYPE_COMPUTER, PLAYERTYPE_EMPTY, PLAYERTYPE_CLOSED

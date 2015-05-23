@@ -193,6 +193,7 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
     } catch(...){
 
         // targetobject is invalid type for us //
+        Logger::Get()->Error("SendableEntitySerializer: target object has no Received component");
         return false;
     }
     
@@ -201,11 +202,23 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
 
     packet >> objecttype;
 
+    if(!packet){
+
+        Logger::Get()->Error("SendableEntitySerializer: invalid packet, no valid type");
+        return false;
+    }
+
     auto sendabletype = static_cast<SENDABLE_TYPE>(objecttype);
     
     // Check does the type match //
-    if(received->SendableHandleType == sendabletype)
+    if(received->SendableHandleType != sendabletype){
+
+        Logger::Get()->Error("SendableEntitySerializer: packet doesn't match entity type, "
+            +Convert::ToString(sendabletype)+" != "+
+            Convert::ToString(received->SendableHandleType));
+        
         return false;
+    }
 
     shared_ptr<ObjectDeltaStateData> receivedstate;
     
@@ -232,6 +245,7 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
 
     if(!receivedstate){
 
+        Logger::Get()->Error("SendableEntitySerializer: invalid packet, failed to create state object");
         return false;
     }
 

@@ -417,8 +417,7 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(Position &atposit
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::SimulatePhysics(){
-    GUARD_LOCK();
+DLLEXPORT void Leviathan::GameWorld::SimulatePhysics(Lock &guard){
 
     if(IsOnServer){
     
@@ -451,8 +450,6 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
     _HandleDelayedDelete(guard);
 
     HandleDeleted(guard);
-
-    SimulatePhysics();
 
     // Sendable objects may need something to be done //
     auto nethandler = NetworkHandler::Get();
@@ -593,7 +590,8 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(){
     // Client interpolation //
     if(!IsOnServer){
 
-        DEBUG_BREAK;
+        RunInterpolationSystem();
+        // TODO: run direct control system
     }
 
     RunRenderingPositionSystem();

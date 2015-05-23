@@ -621,7 +621,9 @@ Received::StoredState::StoredState(std::shared_ptr<ObjectDeltaStateData> data) :
 
 }
 // ------------------------------------ //
-DLLEXPORT Received::Received(SENDABLE_TYPE type) : SendableHandleType(type){
+DLLEXPORT Received::Received(SENDABLE_TYPE type) :
+    SendableHandleType(type), ClientStateBuffer(BASESENDABLE_STORED_RECEIVED_STATES)
+{
 
 }
 // ------------------------------------ //

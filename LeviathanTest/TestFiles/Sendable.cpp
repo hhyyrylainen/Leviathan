@@ -43,11 +43,15 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
             sf::Packet packet;
 
+            packet << static_cast<int32_t>(SENDABLE_TYPE_BRUSH);
+
             state->CreateUpdatePacket(firststate.get(), packet);
 
             GUARD_LOCK_OTHER_NAME((&world), worldlock);
             REQUIRE(serializer.ApplyUpdateFromPacket(&world, worldlock, brush, i, i-1, packet));
         }
+
+        REQUIRE(received.ClientStateBuffer.size() == 2);
 
         shared_ptr<ObjectDeltaStateData> first;
         shared_ptr<ObjectDeltaStateData> second;
@@ -70,6 +74,8 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
             auto state = PositionDeltaState::CaptureState(position, i);
 
             sf::Packet packet;
+
+            packet << static_cast<int32_t>(SENDABLE_TYPE_BRUSH);
 
             state->CreateUpdatePacket(firststate.get(), packet);
 
@@ -100,6 +106,8 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
             sf::Packet packet;
 
+            packet << static_cast<int32_t>(SENDABLE_TYPE_BRUSH);
+
             state->CreateUpdatePacket(firststate.get(), packet);
 
             GUARD_LOCK_OTHER_NAME((&world), worldlock);
@@ -128,11 +136,15 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
             sf::Packet packet;
 
+            packet << static_cast<int32_t>(SENDABLE_TYPE_BRUSH);
+
             state->CreateUpdatePacket(firststate.get(), packet);
 
             GUARD_LOCK_OTHER_NAME((&world), worldlock);
             REQUIRE(serializer.ApplyUpdateFromPacket(&world, worldlock, brush, i, i-1, packet));
         }
+
+        REQUIRE(received.ClientStateBuffer.size() == 4);
         
         shared_ptr<ObjectDeltaStateData> first;
         shared_ptr<ObjectDeltaStateData> second;
@@ -163,6 +175,9 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
 
     auto& position = world.GetComponent<Position>(brush);
 
+    // Fake Received type
+    auto& received = world.CreateReceived(brush, SENDABLE_TYPE_BRUSH);
+
     auto firststate = PositionDeltaState::CaptureState(position, 0);
     
     // Create multiple instances of the same state with different ticks //
@@ -176,6 +191,8 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
             auto state = PositionDeltaState::CaptureState(position, i);
 
             sf::Packet packet;
+
+            packet << static_cast<int32_t>(SENDABLE_TYPE_BRUSH);
 
             state->CreateUpdatePacket(firststate.get(), packet);
 
@@ -225,6 +242,8 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
             auto state = PositionDeltaState::CaptureState(position, 6);
 
             sf::Packet packet;
+
+            packet << static_cast<int32_t>(SENDABLE_TYPE_BRUSH);
 
             state->CreateUpdatePacket(firststate.get(), packet);
 

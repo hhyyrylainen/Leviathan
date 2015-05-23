@@ -76,7 +76,9 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
 	Sound = NULL;
 
 	TimePassed = 0;
-	LastFrame = 0;
+
+    // This makes sure that uninitialized engine will have at least some last frame time //
+	LastFrame = Time::GetTimeMs64();
 
 	Mainstore = NULL;
 	MainScript = NULL;

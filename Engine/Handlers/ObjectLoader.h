@@ -42,7 +42,7 @@ namespace Leviathan{
         {
 
             GUARD_LOCK_OTHER(world);
-            return LoadBrushToWorld(world, material, size, mass, materialid, pos);
+            return LoadBrushToWorld(world, guard, material, size, mass, materialid, pos);
         }
 
         //! \brief Creates a track controller to a world

@@ -18,6 +18,10 @@
 
 namespace Leviathan{
 
+    
+    static const int BASESENDABLE_STORED_RECEIVED_STATES = 4;
+
+
     //! brief Class containing residue static helper functions
     class ComponentHelpers{
 
@@ -102,10 +106,6 @@ namespace Leviathan{
         //! Components: PhysicsListener, PositionMarkerOwner, Parent
         SENDABLE_TYPE_TRACKCONTROLLER
     };
-
-#define BASESENDABLE_STORED_RECEIVED_STATES 4
-#define BASESENDABLE_STORED_CLIENT_INTERPOLATIONS 3
-    
 
     //! \brief Entity is sendable to clients
     //! \note This will only be in the entity on the server

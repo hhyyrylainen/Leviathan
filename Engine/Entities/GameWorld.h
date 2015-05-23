@@ -321,7 +321,13 @@ namespace Leviathan{
         }
         
         //! \brief Simulates physics
-        DLLEXPORT void SimulatePhysics();
+        DLLEXPORT void SimulatePhysics(Lock &guard);
+
+        DLLEXPORT inline void SimulatePhysics(){
+
+            GUARD_LOCK();
+            SimulatePhysics(guard);
+        }
 
         //! \todo Synchronize this over the network
 		DLLEXPORT void SetWorldPhysicsFrozenState(Lock &guard, bool frozen);

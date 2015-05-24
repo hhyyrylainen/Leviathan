@@ -53,12 +53,12 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
         REQUIRE(received.ClientStateBuffer.size() == 2);
 
-        shared_ptr<ObjectDeltaStateData> first;
-        shared_ptr<ObjectDeltaStateData> second;
+        const Received::StoredState* first;
+        const Received::StoredState* second;
 
         float progress = 0.35f;
         
-        REQUIRE_NOTHROW(received.GetServerSentStates(first, second, 1, progress));
+        REQUIRE_NOTHROW(received.GetServerSentStates(&first, &second, 1, progress));
 
         REQUIRE(first);
         REQUIRE(second);
@@ -83,12 +83,12 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
             REQUIRE(serializer.ApplyUpdateFromPacket(&world, worldlock, brush, i, i-1, packet));
         }
 
-        shared_ptr<ObjectDeltaStateData> first;
-        shared_ptr<ObjectDeltaStateData> second;
+        const Received::StoredState* first;
+        const Received::StoredState* second;
 
         float progress = 0.25f;
         
-        REQUIRE_NOTHROW(received.GetServerSentStates(first, second, 3, progress));
+        REQUIRE_NOTHROW(received.GetServerSentStates(&first, &second, 3, progress));
 
         REQUIRE(first);
         REQUIRE(second);
@@ -114,12 +114,12 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
             REQUIRE(serializer.ApplyUpdateFromPacket(&world, worldlock, brush, i, i-1, packet));
         }
 
-        shared_ptr<ObjectDeltaStateData> first;
-        shared_ptr<ObjectDeltaStateData> second;
+        const Received::StoredState* first;
+        const Received::StoredState* second;
 
         float progress = 0.25f;
         
-        REQUIRE_NOTHROW(received.GetServerSentStates(first, second, 3, progress));
+        REQUIRE_NOTHROW(received.GetServerSentStates(&first, &second, 3, progress));
 
         REQUIRE(first);
         REQUIRE(second);
@@ -146,12 +146,13 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 
         REQUIRE(received.ClientStateBuffer.size() == 4);
         
-        shared_ptr<ObjectDeltaStateData> first;
-        shared_ptr<ObjectDeltaStateData> second;
+        const Received::StoredState* first;
+        const Received::StoredState* second;
 
         float progress = 0.25f;
         
-        REQUIRE_THROWS_AS(received.GetServerSentStates(first, second, 1, progress), InvalidState);
+        REQUIRE_THROWS_AS(received.GetServerSentStates(&first, &second, 1, progress),
+            InvalidState);
     }
 
     
@@ -164,6 +165,8 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
     PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
 
     SendableEntitySerializer serializer;
+
+    REQUIRE(Engine::Get() != nullptr);
     
     GameWorld world;
     world.Init(nullptr, nullptr);
@@ -208,8 +211,7 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
             world.Tick(3);
 
             // Engine progress
-            engine.AdjustTickClock(0.5f*TICKSPEED);
-            world.RunFrameRenderSystems();
+            world.RunFrameRenderSystems(0.5f*TICKSPEED);
 
             // Position should have changed //
             CHECK(position._Position.X == Approx(35));
@@ -218,11 +220,10 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
         SECTION("Unmarking and remarking when new states arrive"){
             
             // This should unlink the listener //
-            world.Tick(3);
+            world.Tick(5);
 
             // Engine progress
-            engine.AdjustTickClock(0.5f*TICKSPEED);
-            world.RunFrameRenderSystems();
+            world.RunFrameRenderSystems(0.5f*TICKSPEED);
             
 
             position._Position = Float3(0, 0, 0);
@@ -231,8 +232,7 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
             world.Tick(3);
 
             // Engine progress
-            engine.AdjustTickClock(0.5f*TICKSPEED);
-            world.RunFrameRenderSystems();
+            world.RunFrameRenderSystems(0.5f*TICKSPEED);
 
             CHECK(position._Position.X == 0);
 
@@ -256,8 +256,7 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
             world.Tick(5);
 
             // Engine progress
-            engine.AdjustTickClock(0.5f*TICKSPEED);
-            world.RunFrameRenderSystems();
+            world.RunFrameRenderSystems(0.5f*TICKSPEED);
 
             CHECK(position._Position.X == Approx(55));
         }

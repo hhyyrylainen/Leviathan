@@ -119,7 +119,7 @@ namespace Leviathan{
         //! \brief Called by engine before frame rendering
         //! \todo Only call on worlds that contain cameras that are connected
         //! to GraphicalInputEntities
-        DLLEXPORT void RunFrameRenderSystems();
+        DLLEXPORT void RunFrameRenderSystems(int timeintick);
         
 
         //! \brief Fetches the physical material ID from the material manager
@@ -297,6 +297,12 @@ namespace Leviathan{
         DLLEXPORT void RunSendableSystem(Args&&... args){
 
             NodeSendableNode.RunSystem(_SendableSystem, args...);
+        }
+
+        template<typename... Args>
+        DLLEXPORT void RunInterpolationSystem(Args&&... args){
+
+            NodeReceivedPosition.RunSystem(_ReceivedPositionSystem, args...);
         }
 
 		// Ogre get functions //
@@ -495,7 +501,8 @@ namespace Leviathan{
         ComponentHolder<TrackController> ComponentTrackController;
         ComponentHolder<Received> ComponentReceived;
 
-        
+        NodeHolder<ReceivedPosition> NodeReceivedPosition;
+        ReceivedPositionSystem _ReceivedPositionSystem;
         
         NodeHolder<RenderingPosition> NodeRenderingPosition;
         RenderingPositionSystem _RenderingPositionSystem;

@@ -27,3 +27,15 @@ DLLEXPORT TrackControllerNode::TrackControllerNode(const Parameters &params) :
 {
 
 }
+// ------------------ ReceivedPosition ------------------ //
+DLLEXPORT ReceivedPosition::ReceivedPosition(Received &received, Position& pos) :
+    _Received(received), _Position(pos)
+{
+
+}
+
+DLLEXPORT ReceivedPosition::ReceivedPosition(Position& pos, Received &received) :
+    _Received(received), _Position(pos)
+{
+
+}

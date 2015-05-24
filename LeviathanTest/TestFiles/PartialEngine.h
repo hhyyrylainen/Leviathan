@@ -6,6 +6,7 @@
 #include "Events/EventHandler.h"
 #include "Newton/NewtonManager.h"
 #include "Newton/PhysicsMaterialManager.h"
+#include "TimeIncludes.h"
 
 #include "catch.hpp"
 
@@ -89,11 +90,10 @@ public:
         SAFE_DELETE(IDDefaultInstance);
     }
 
-    void AdjustTickClock(int mstoset){
+    void ResetClock(int mstoset){
 
-        _AdjustTickClock(mstoset, true);
+        LastFrame = Time::GetTimeMs64()-mstoset;
     }
-    
 
     PartialApplication App;
     Logger Log;

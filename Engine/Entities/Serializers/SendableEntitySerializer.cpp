@@ -182,76 +182,17 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(GameWo
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world, Lock &worldlock,
-    ObjectID targetobject, int ticknumber, int referencetick, sf::Packet &packet)
+DLLEXPORT bool SendableEntitySerializer::VerifyAndFillReceivedState(Received* received,
+    int ticknumber, int referencetick, shared_ptr<ObjectDeltaStateData> receivedstate)
 {
-
-    Received* received;
-    
-    try{
-        received = &world->GetComponent<Received>(targetobject);
-    } catch(...){
-
-        // targetobject is invalid type for us //
-        Logger::Get()->Error("SendableEntitySerializer: target object has no Received component");
-        return false;
-    }
-    
-    // Get the type //
-    int32_t objecttype;
-
-    packet >> objecttype;
-
-    if(!packet){
-
-        Logger::Get()->Error("SendableEntitySerializer: invalid packet, no valid type");
-        return false;
-    }
-
-    auto sendabletype = static_cast<SENDABLE_TYPE>(objecttype);
-    
-    // Check does the type match //
-    if(received->SendableHandleType != sendabletype){
-
-        Logger::Get()->Error("SendableEntitySerializer: packet doesn't match entity type, "
-            +Convert::ToString(sendabletype)+" != "+
-            Convert::ToString(received->SendableHandleType));
-        
-        return false;
-    }
-
-    shared_ptr<ObjectDeltaStateData> receivedstate;
-    
-    // Create a state object //
-    switch(sendabletype){
-        case SENDABLE_TYPE_PROP:
-        case SENDABLE_TYPE_BRUSH:
-        {
-            receivedstate = make_shared<PositionDeltaState>(ticknumber, packet);
-        }
-        break;
-        case SENDABLE_TYPE_TRACKCONTROLLER:
-        {
-            DEBUG_BREAK;
-        }
-        break;
-        default:
-        {
-            Logger::Get()->Error("SendableSerializer: missing delta state case for "+
-                Convert::ToString(sendabletype));
-            return false;
-        }
-    }
-
     if(!receivedstate){
 
-        Logger::Get()->Error("SendableEntitySerializer: invalid packet, failed to create state object");
+        Logger::Get()->Error("SendableEntitySerializer: invalid packet, failed to create "
+            "state object");
         return false;
     }
 
     // Store for interpolation //
-    GUARD_LOCK_OTHER(received);
-
     // Skip if not newer than any //
     if(received->ClientStateBuffer.size() != 0){
 
@@ -315,8 +256,78 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
         // Also no need to fill missing data as only the updated values should be in the packet //
     }
 
-    // Store the new state in the buffer so that it can be found when interpolating //
-    received->ClientStateBuffer.push_back(Received::StoredState(receivedstate));
+    return true;
+}
+
+DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world, Lock &worldlock,
+    ObjectID targetobject, int ticknumber, int referencetick, sf::Packet &packet)
+{
+
+    Received* received;
+    
+    try{
+        received = &world->GetComponent<Received>(targetobject);
+    } catch(...){
+
+        // targetobject is invalid type for us //
+        Logger::Get()->Error("SendableEntitySerializer: target object has no Received component");
+        return false;
+    }
+    
+    // Get the type //
+    int32_t objecttype;
+
+    packet >> objecttype;
+
+    if(!packet){
+
+        Logger::Get()->Error("SendableEntitySerializer: invalid packet, no valid type");
+        return false;
+    }
+
+    auto sendabletype = static_cast<SENDABLE_TYPE>(objecttype);
+    
+    // Check does the type match //
+    if(received->SendableHandleType != sendabletype){
+
+        Logger::Get()->Error("SendableEntitySerializer: packet doesn't match entity type, "
+            +Convert::ToString(sendabletype)+" != "+
+            Convert::ToString(received->SendableHandleType));
+        
+        return false;
+    }
+
+    GUARD_LOCK_OTHER(received);
+    
+    // Create a state object //
+    switch(sendabletype){
+        case SENDABLE_TYPE_PROP:
+        case SENDABLE_TYPE_BRUSH:
+        {
+            auto state = make_shared<PositionDeltaState>(ticknumber, packet);
+
+            if(!VerifyAndFillReceivedState(received, ticknumber, referencetick, state)){
+
+                return false;
+            }
+
+            // Store the new state in the buffer so that it can be found when interpolating //
+            received->ClientStateBuffer.push_back(Received::StoredState(state, state.get(),
+                    sendabletype));
+        }
+        break;
+        case SENDABLE_TYPE_TRACKCONTROLLER:
+        {
+            DEBUG_BREAK;
+        }
+        break;
+        default:
+        {
+            Logger::Get()->Error("SendableSerializer: missing delta state case for "+
+                Convert::ToString(sendabletype));
+            return false;
+        }
+    }
 
     // Interpolations can only happen if more than one state is received
     if(received->ClientStateBuffer.size() > 1)

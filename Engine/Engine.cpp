@@ -93,6 +93,8 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
 #ifdef LEVIATHAN_USES_LEAP
 	LeapData = NULL;
 #endif
+
+    instance = this;
 }
 
 DLLEXPORT Leviathan::Engine::~Engine(){
@@ -120,9 +122,6 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	// Get the  time, for monitoring how long loading takes //
 	auto InitStartTime = Time::GetTimeMs64();
 
-	// Set static access to this object //
-	instance = this;
-    
 	// Store parameters //
 	Define = definition;
 
@@ -841,14 +840,18 @@ void Leviathan::Engine::RenderFrame(){
 	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN,
             new IntegerEventData(SinceLastFrame)));
 
-    if(IsClient){
+    // Run rendering systems //
+    const auto timeintick = Time::GetTimeMs64() - LastFrame;
 
-        const auto currenttime = Time::GetTimeMs64();
+    {
+        Lock lock(GameWorldsLock);
         
-        // Interpolation event //
-        MainEvents->CallEvent(new Event(EVENT_TYPE_CLIENT_INTERPOLATION,
-                new ClientInterpolationEventData(TickCount, currenttime-LastFrame)));
+        for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
+
+            (*iter)->RunFrameRenderSystems(timeintick);
+        }
     }
+    
 
 	bool shouldrender = false;
 

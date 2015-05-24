@@ -17,3 +17,6 @@
 // Some undefines //
 #undef GetNextSibling
 #undef GetFirstChild
+
+#undef min
+#undef max

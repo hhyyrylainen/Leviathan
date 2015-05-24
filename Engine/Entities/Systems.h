@@ -215,6 +215,106 @@ namespace Leviathan{
             }
         }
     };
-    
-    
+
+
+    //! \brief Interpolates positions between states of marked Received objects
+	class ReceivedPositionSystem : public System<ReceivedPosition>{
+	public:
+        
+        //! \copydoc System::ProcessNode
+        //! \pre All systems that can mark Position as updated have been executed
+        DLLEXPORT void ProcessNode(ReceivedPosition &node, ObjectID nodesobject,
+            NodeHolder<ReceivedPosition> &pool, Lock &poollock, int tick, float progress) const
+        {
+            // Unmarked nodes should have invalid interpolation status
+            if(!node._Received.Marked)
+                return;
+
+            float adjustedprogress = progress;
+            const Received::StoredState* first;
+            const Received::StoredState* second;
+
+            GUARD_LOCK_OTHER((&node._Received));
+
+            try{
+                node._Received.GetServerSentStates(guard, &first, &second, tick, adjustedprogress);
+
+            } catch(const InvalidState&){
+
+                // If not found unmark to avoid running unneeded //
+                node._Received.Marked = false;
+                return;
+            }
+
+            switch(node._Received.SendableHandleType){
+                case SENDABLE_TYPE_PROP:
+                case SENDABLE_TYPE_BRUSH:
+                {
+                    node._Position.Interpolate(*reinterpret_cast<const PositionDeltaState*>(
+                            first->DirectData),
+                        *reinterpret_cast<const PositionDeltaState*>(second->DirectData),
+                        adjustedprogress);
+                }
+                break;
+                default:
+                {
+                    Logger::Get()->Error("ReceivedPositionSystem: trying to handle received "
+                        "whose type is not properly added");
+                    DEBUG_BREAK;
+                    return;
+                }
+            }
+        }
+
+        //! \brief Creates nodes if matching ids are found in all data vectors or
+        //! already existing component holders
+        //! \note It is more efficient to directly create nodes as entities are created
+        template<class FirstType, class SecondType>
+        DLLEXPORT void CreateNodes(NodeHolder<ReceivedPosition> &nodes,
+            const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
+            const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
+            const ComponentHolder<SecondType> &secondholder, Lock &secondlock)
+        {
+
+            GUARD_LOCK_OTHER((&nodes));
+
+            for(auto iter = firstdata.begin(); iter != firstdata.end(); ++iter){
+
+                SecondType* other = nullptr;
+                
+                for(auto iter2 = seconddata.begin(); iter2 != seconddata.end(); ++iter2){
+
+                    if(std::get<1>(*iter2) == std::get<1>(*iter)){
+
+                        other = std::get<0>(*iter2);
+                        break;
+                    }
+                }
+
+                if(!other){
+
+                    // Full search //
+                    other = secondholder.Find(secondlock, std::get<1>(*iter));
+                }
+
+                if(!other)
+                    continue;
+
+                // Create node if it doesn't exist already //
+                if(nodes.Find(guard, std::get<1>(*iter)))
+                    continue;
+
+                try{
+                    nodes.ConstructNew(guard, std::get<1>(*iter), *other, *std::get<0>(*iter));
+                } catch(const Exception &e){
+
+                    Logger::Get()->Error("CreateNodes: failed to create received position node "
+                        "for object "+Convert::ToString(std::get<1>(*iter))+", exception: ");
+                    e.PrintToLog();
+                    
+                    continue;
+                }
+            }
+        }
+    };
 }

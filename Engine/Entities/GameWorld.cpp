@@ -275,6 +275,7 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     // Clear all nodes //
     NodeRenderingPosition.Clear();
     NodeSendableNode.Clear();
+    NodeReceivedPosition.Clear();
 
     // Clear all componenst //
     ComponentPosition.Clear();
@@ -483,8 +484,12 @@ DLLEXPORT void GameWorld::RemoveInvalidNodes(Lock &guard){
         auto& removedposition = ComponentPosition.GetRemoved(positionlock);
         auto& removedrendernode = ComponentRenderNode.GetRemoved(rendernodelock);
 
-        if(!removedposition.empty())
+        if(!removedposition.empty()){
+            
             NodeRenderingPosition.RemoveBasedOnKeyTupleList(removedposition);
+            NodeReceivedPosition.RemoveBasedOnKeyTupleList(removedposition);
+            NodeReceivedPosition.ClearRemoved();
+        }
 
         if(!removedrendernode.empty())
             NodeRenderingPosition.RemoveBasedOnKeyTupleList(removedrendernode);
@@ -538,18 +543,30 @@ DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
     // Almost the opposite of RemoveInvalidNodes
     // CreateNodes automatically removes the used onces from the Added in component pool
 
-    // Position, RenderNode
+    // Position, RenderNode (Received)
     {
         GUARD_LOCK_OTHER_NAME((&ComponentPosition), positionlock);
         GUARD_LOCK_OTHER_NAME((&ComponentRenderNode), rendernodelock);
+        GUARD_LOCK_OTHER_NAME((&ComponentReceived), receivedlock);
 
         auto& addedposition = ComponentPosition.GetAdded(positionlock);
         auto& addedrendernode = ComponentRenderNode.GetAdded(rendernodelock);
+
+        auto& addedreceived = ComponentReceived.GetAdded(receivedlock);
 
         if(!addedposition.empty()){
 
             _RenderingPositionSystem.CreateNodes(NodeRenderingPosition, addedposition,
                 addedrendernode, ComponentRenderNode, rendernodelock);
+
+            _ReceivedPositionSystem.CreateNodes(NodeReceivedPosition, addedposition,
+                addedreceived, ComponentReceived, receivedlock);
+        }
+
+        if(!addedreceived.empty()){
+
+            _ReceivedPositionSystem.CreateNodes(NodeReceivedPosition, addedreceived,
+                addedposition, ComponentPosition, positionlock);
         }
         
         if(!addedrendernode.empty()){
@@ -579,18 +596,22 @@ DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
     ComponentPosition.ClearAdded();
     ComponentRenderNode.ClearAdded();
     ComponentSendable.ClearAdded();
+    ComponentReceived.ClearAdded();
 }
 // ------------------------------------ //
-DLLEXPORT void GameWorld::RunFrameRenderSystems(){
+DLLEXPORT void GameWorld::RunFrameRenderSystems(int timeintick){
 
     GUARD_LOCK();
 
     HandleDeleted(guard);
 
+    HandleAdded(guard);
+
     // Client interpolation //
     if(!IsOnServer){
 
-        RunInterpolationSystem();
+        RunInterpolationSystem(TickNumber, std::max(0.f,
+                std::min(timeintick / (float)TICKSPEED, 1.f)));
         // TODO: run direct control system
     }
 

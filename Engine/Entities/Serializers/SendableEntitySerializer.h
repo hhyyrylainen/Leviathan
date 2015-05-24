@@ -33,6 +33,11 @@ namespace Leviathan{
 
         //! \copydoc BaseEntitySerializer::IsObjectTypeCorrect
         DLLEXPORT virtual bool IsObjectTypeCorrect(Sendable &object) const override;
+
+    protected:
+
+        DLLEXPORT bool VerifyAndFillReceivedState(Received* received, int ticknumber,
+            int referencetick, std::shared_ptr<ObjectDeltaStateData> receivedstate);
 	};
 
 }

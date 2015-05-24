@@ -65,4 +65,17 @@ namespace Leviathan{
         PositionMarkerOwner& _PositionMarkerOwner;
         Parent& _Parent;
     };
+
+    //! \brief Interpolates position of Received object
+	class ReceivedPosition : public Node{
+	public:
+
+        DLLEXPORT ReceivedPosition(Received &received, Position& pos);
+
+        DLLEXPORT ReceivedPosition(Position& pos, Received &received);
+
+        
+        Received& _Received;
+        Position& _Position;
+	};
 }

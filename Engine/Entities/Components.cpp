@@ -48,7 +48,7 @@ DLLEXPORT void Position::ApplyDataFromPacket(sf::Packet &packet){
     Marked = true;
 }
 // ------------------------------------ //
-DLLEXPORT void Position::Interpolate(PositionDeltaState &from, PositionDeltaState &to,
+DLLEXPORT void Position::Interpolate(const PositionDeltaState &from, const PositionDeltaState &to,
     float progress)
 {
     Float3 pos = _Position;
@@ -615,8 +615,9 @@ DLLEXPORT void Physics::InterpolatePhysicalState(PhysicalDeltaState &first,
     SetTorque(guard, tor);
 }
 // ------------------ Received ------------------ //
-Received::StoredState::StoredState(std::shared_ptr<ObjectDeltaStateData> data) :
-    Tick(data->Tick), DeltaData(data)
+Received::StoredState::StoredState(std::shared_ptr<ObjectDeltaStateData> safedata,
+    void* data, SENDABLE_TYPE datatype) :
+    Tick(safedata->Tick), DeltaData(safedata), DirectData(data), OwnersType(datatype)
 {
 
 }
@@ -627,35 +628,31 @@ DLLEXPORT Received::Received(SENDABLE_TYPE type) :
 
 }
 // ------------------------------------ //
-DLLEXPORT void Received::GetServerSentStates(shared_ptr<ObjectDeltaStateData> &first,
-    std::shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const
+DLLEXPORT void Received::GetServerSentStates(Lock &guard, StoredState const** first,
+    StoredState const** second, int tick, float &progress) const
 {
     bool firstfound = false;
     int secondfound = 0;
 
-    {
-        GUARD_LOCK();
-    
-        for(auto& obj : ClientStateBuffer){
+    for(auto& obj : ClientStateBuffer){
 
-            if(obj.Tick == tick){
+        if(obj.Tick == tick){
             
-                // This is the first state //
-                first = obj.DeltaData;
+            // This is the first state //
+            *first = &obj;
 
-                firstfound = true;
-                continue;
-            }
+            firstfound = true;
+            continue;
+        }
 
-            // For this to be found the client should be around 50-100 milliseconds in the past
-            if(obj.Tick > tick && (secondfound == 0 || obj.Tick-tick < secondfound)){
+        // For this to be found the client should be around 50-100 milliseconds in the past
+        if(obj.Tick > tick && (secondfound == 0 || obj.Tick-tick < secondfound)){
 
-                // The second state //
-                second = obj.DeltaData;
+            // The second state //
+            *second = &obj;
             
-                secondfound = obj.Tick-tick;
-                continue;
-            }
+            secondfound = obj.Tick-tick;
+            continue;
         }
     }
 

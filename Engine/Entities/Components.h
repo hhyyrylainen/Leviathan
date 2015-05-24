@@ -61,7 +61,7 @@ namespace Leviathan{
         DLLEXPORT static void LoadDataFromPacket(sf::Packet &packet, PositionData &data);
 
         //! \brief Interpolates the member variables between from and to based on progress
-        DLLEXPORT void Interpolate(PositionDeltaState &from, PositionDeltaState &to,
+        DLLEXPORT void Interpolate(const PositionDeltaState &from, const PositionDeltaState &to,
             float progress);
         
         
@@ -96,14 +96,17 @@ namespace Leviathan{
 
         //! The sendable is a Brush
         //! Components: Position, RenderNode, BoxGeometry, Physics, Constraintable
+        //! Type is PositionDeltaState
         SENDABLE_TYPE_BRUSH,
 
         //! The sendable is a Prop
         //! Components: Position, RenderNode, Model, Physics, Constraintable
+        //! Type is PositionDeltaState
         SENDABLE_TYPE_PROP,
 
         //! The sendable is a TrackController
         //! Components: PhysicsListener, PositionMarkerOwner, Parent
+        //! Type is TrackControllerState
         SENDABLE_TYPE_TRACKCONTROLLER
     };
 
@@ -158,17 +161,32 @@ namespace Leviathan{
         //! \todo Possibly add move constructors
         class StoredState{
         public:
-            StoredState(std::shared_ptr<ObjectDeltaStateData> data);
+            StoredState(std::shared_ptr<ObjectDeltaStateData> safedata, void* data,
+                SENDABLE_TYPE datatype);
         
             std::shared_ptr<ObjectDeltaStateData> DeltaData;
             int Tick;
-        };        
+
+            //! This avoids using dynamic_cast
+            void* DirectData;
+
+            //! Type of the owning Received used to reinterpret_cast to correct type
+            SENDABLE_TYPE OwnersType;
+        };
     public:
 
         DLLEXPORT Received(SENDABLE_TYPE type);
 
-        DLLEXPORT void GetServerSentStates(std::shared_ptr<ObjectDeltaStateData> &first,
-            std::shared_ptr<ObjectDeltaStateData> &second, int tick, float &progress) const;
+        DLLEXPORT void GetServerSentStates(Lock &guard, StoredState const** first,
+            StoredState const** second, int tick, float &progress) const;
+
+        DLLEXPORT inline void GetServerSentStates(StoredState const** first,
+            StoredState const** second, int tick, float &progress) const
+        {
+            GUARD_LOCK();
+            GetServerSentStates(guard, first, second, tick, progress);
+        }
+
 
         //! Clientside buffer of past states
         boost::circular_buffer<StoredState> ClientStateBuffer;

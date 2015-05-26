@@ -233,6 +233,17 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
+    // ObjectID bind
+    // if(engine->RegisterObjectType("ObjectID", sizeof(int), asOBJ_VALUE |
+    //         asGetTypeTraits<int>() | asOBJ_APP_CLASS_ALLINTS) < 0)
+    // {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
+    if(engine->RegisterTypedef("ObjectID", "int") < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
 	// Bind NamedVars //
 
 	// \todo make this safe to be passed to the script //
@@ -437,38 +448,48 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
     
-    
 	// Implicit casts for normal types //
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "string f() const", 
-            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<string>), asCALL_GENERIC) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "int f() const", 
-            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<int>), asCALL_GENERIC) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "int8 f() const", 
-            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<char>), asCALL_GENERIC) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "float f() const", 
-            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<float>), asCALL_GENERIC) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "double f() const", 
-            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<double>), asCALL_GENERIC) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	//if(engine->RegisterObjectBehaviour("ScriptSafeVariableBlock", asBEHAVE_VALUE_CAST, "bool f() const", 
-	//	WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<bool>), asCALL_GENERIC) < 0)
-	//{
-	//	ANGELSCRIPT_REGISTERFAIL;
-	//}
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "string OpImplCast()",
+            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<string>),
+            asCALL_GENERIC) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "int opImplConv()",
+            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<int>),
+            asCALL_GENERIC) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "int8 opImplConv()",
+            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<char>),
+            asCALL_GENERIC) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "float opImplConv()",
+            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<float>),
+            asCALL_GENERIC) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "double opImplConv()",
+            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<double>),
+            asCALL_GENERIC) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "bool opImplConv()",
+            WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<bool>),
+            asCALL_GENERIC) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
 	// type check //
 	if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "bool IsValidType()",

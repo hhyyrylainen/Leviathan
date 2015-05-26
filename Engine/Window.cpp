@@ -10,7 +10,7 @@
 #include "OgreSceneNode.h"
 #include "OgreCamera.h"
 #include "Rendering/GraphicalInputEntity.h"
-#include "CEGUI/InputAggregator.h"
+#include "CEGUIInclude.h"
 #include "Handlers/IDFactory.h"
 #include "Utility/Convert.h"
 #include "Input/Key.h"

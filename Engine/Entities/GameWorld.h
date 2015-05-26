@@ -95,6 +95,9 @@ namespace Leviathan{
         // clears all objects from the world //
 		DLLEXPORT void ClearObjects(Lock &guard);
 
+        //! \brief Returns the number of ObjectIDs this world keeps track of
+        //! \note There may actually be more objects as it is possible to create components
+        //! for ids that are not created
         DLLEXPORT int GetObjectCount() const;
 
 
@@ -202,6 +205,7 @@ namespace Leviathan{
 
             static_assert(std::is_same<ComponentType, std::false_type>::value,
                 "Trying to use a component type that is missing a template specialization");
+            return false;
         }
 
         //! \brief Creates a new component for entity
@@ -235,7 +239,8 @@ namespace Leviathan{
         template<typename... Args>
         DLLEXPORT Physics& CreatePhysics(ObjectID id, Args&&... args){
 
-            return *ComponentPhysics.ConstructNew(id, args...);
+            const Physics::Arguments createdargs = {args...};
+            return *ComponentPhysics.ConstructNew(id, createdargs);
         }
 
         template<typename... Args>
@@ -267,6 +272,12 @@ namespace Leviathan{
 
             return *ComponentParent.ConstructNew(id, args...);
         }
+
+        template<typename... Args>
+        DLLEXPORT Parentable& CreateParentable(ObjectID id, Args&&... args){
+
+            return *ComponentParentable.ConstructNew(id, args...);
+        }        
 
         template<typename... Args>
         DLLEXPORT Trail& CreateTrail(ObjectID id, Args&&... args){
@@ -500,6 +511,7 @@ namespace Leviathan{
         ComponentHolder<Trail> ComponentTrail;
         ComponentHolder<TrackController> ComponentTrackController;
         ComponentHolder<Received> ComponentReceived;
+        ComponentHolder<Parentable> ComponentParentable;
 
         NodeHolder<ReceivedPosition> NodeReceivedPosition;
         ReceivedPositionSystem _ReceivedPositionSystem;
@@ -526,8 +538,12 @@ namespace Leviathan{
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Model, ComponentModel, QueueDestroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(TrackController, ComponentTrackController, Destroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Parent, ComponentParent, Destroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Parentable, ComponentParentable, Destroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(PositionMarkerOwner, ComponentPositionMarkerOwner,
         QueueDestroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived, Destroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Constraintable, ComponentConstraintable, Destroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Trail, ComponentTrail, QueueDestroy);
+    
 }
 

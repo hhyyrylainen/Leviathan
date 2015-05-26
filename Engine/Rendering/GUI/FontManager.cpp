@@ -3,7 +3,7 @@
 
 #include "../../FileSystem.h"
 #include "../../Statistics/TimingMonitor.h"
-#include "CEGUI/FontManager.h"
+#include "../../CEGUIInclude.h"
 using namespace Leviathan;
 using namespace Rendering;
 using namespace std;

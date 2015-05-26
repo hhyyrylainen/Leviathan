@@ -11,6 +11,8 @@
 #include <functional>
 #include "Script/ScriptArgumentsProvider.h"
 
+#include "CEGUI/Event.h"
+
 namespace Leviathan{ namespace Gui{
 
 

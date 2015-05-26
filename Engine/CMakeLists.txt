@@ -14,6 +14,7 @@ set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "
     "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp" "utf8.h" "Include.h"
     "Exceptions.h" "Exceptions.cpp"
     "TimeIncludes.h" "TimeIncludes.cpp"
+    "CEGUIInclude.h"
     )
 
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")

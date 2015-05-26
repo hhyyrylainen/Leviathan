@@ -262,10 +262,18 @@ namespace Leviathan{
             Float3 Velocity;
             Float3 Torque;
         };
+
+        struct Arguments{
+
+            ObjectID id;
+            GameWorld* world;
+            Position &updatepos;
+            Sendable* updatesendable;
+        };
         
     public:
         
-        DLLEXPORT Physics(GameWorld* world, Position &updatepos, Sendable* updatesendable);
+        DLLEXPORT Physics(const Arguments &args);
 
         DLLEXPORT void Release();
         
@@ -286,6 +294,12 @@ namespace Leviathan{
 
         //! \brief Gets the absolute velocity
         DLLEXPORT Float3 GetVelocity(Lock &guard);
+
+        DLLEXPORT inline Float3 GetVelocity(){
+
+            GUARD_LOCK();
+            return GetVelocity(guard);
+        }
 
         //! \brief Sets the torque of the body
         //! \see GetBodyTorque
@@ -361,6 +375,9 @@ namespace Leviathan{
         //! Physics object requires a position
         Position& _Position;
 
+        //! For access from physics callbacks
+        ObjectID ThisEntity;
+
         // Optional access to other components that can be used for marking when physics object
         // moves
         Sendable* UpdateSendable;
@@ -377,6 +394,9 @@ namespace Leviathan{
         DLLEXPORT void RemoveChildren();
 
         DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
+
+        //! \brief Does everything necessary to attach a child
+        DLLEXPORT void AddChild(ObjectID childid, Parentable &child);
 
         //! Attached children which can be moved at certain times
         //! \todo Make improvements to component lookup performance through this
@@ -485,8 +505,8 @@ namespace Leviathan{
         public:
             DLLEXPORT Properties(size_t maxelements, float lenght, float maxdistance,
                 bool castshadows = false) :
-                Elements(1), TrailLenght(lenght), MaxDistance(maxdistance),
-                CastShadows(castshadows), MaxChainElements(maxelements)
+                TrailLenght(lenght), MaxDistance(maxdistance),
+                MaxChainElements(maxelements), CastShadows(castshadows), Elements(1)
             {
             }
         

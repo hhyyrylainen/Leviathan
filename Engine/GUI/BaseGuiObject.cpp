@@ -11,9 +11,7 @@
 #include "Common/StringOperations.h"
 #include "Script/ScriptRunningSetup.h"
 #include "Script/ScriptExecutor.h"
-#include "CEGUI/widgets/PushButton.h"
-#include "CEGUI/widgets/FrameWindow.h"
-#include "CEGUI/widgets/Combobox.h"
+#include "../CEGUIInclude.h"
 #include "../Handlers/IDFactory.h"
 using namespace Leviathan;
 using namespace Gui;

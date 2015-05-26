@@ -60,35 +60,25 @@ static const WORD MAX_CONSOLE_LINES = 500;
 #endif
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
-    Owner(owner), MainConsole(NULL), MainFileHandler(NULL), _NewtonManager(NULL),
-    GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
-    _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
-    _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), _EntitySerializerManager(NULL),
-    _ConstraintSerializerManager(NULL), _AINetworkCache(NULL), NoSTDInput(false), IsClient(false),
-    IDDefaultInstance(NULL)
+    Define(NULL), RenderTimer(NULL), Graph(NULL), GraphicalEntity1(NULL), Sound(NULL),
+    Mainstore(NULL), MainEvents(NULL), MainScript(NULL), MainConsole(NULL), MainFileHandler(NULL),
+    MainRandom(NULL),  OutOMemory(NULL), _NewtonManager(NULL), PhysMaterials(NULL),
+    _NetworkHandler(NULL), _ThreadingManager(NULL), _RemoteConsole(NULL),
+    _ResourceRefreshHandler(NULL), _EntitySerializerManager(NULL),
+    _ConstraintSerializerManager(NULL), _AINetworkCache(NULL), IDDefaultInstance(NULL),
+    Owner(owner),
+    NoGui(false), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
+    PreReleaseCompleted(false), NoSTDInput(false), IsClient(false)
 {
-
-	Graph = NULL;
-	Define = NULL;
-	MainRandom = NULL;
-	RenderTimer = NULL;
-
-	Sound = NULL;
 
 	TimePassed = 0;
 
     // This makes sure that uninitialized engine will have at least some last frame time //
 	LastFrame = Time::GetTimeMs64();
 
-	Mainstore = NULL;
-	MainScript = NULL;
-
 	TickCount = 0;
 	TickTime = 0;
 	FrameCount = 0;
-
-	MainEvents = NULL;
-	OutOMemory = NULL;
 
 #ifdef LEVIATHAN_USES_LEAP
 	LeapData = NULL;

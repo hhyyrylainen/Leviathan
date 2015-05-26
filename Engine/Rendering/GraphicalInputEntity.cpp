@@ -1,9 +1,7 @@
 // ------------------------------------ //
 #include "GraphicalInputEntity.h"
 // ------------------------------------ //
-#include "CEGUI/RendererModules/Ogre/Renderer.h"
-#include "CEGUI/RendererModules/Ogre/Renderer.h"
-#include "CEGUI/SchemeManager.h"
+#include "../CEGUIInclude.h"
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorNodeDef.h"
 #include "Compositor/OgreCompositorWorkspace.h"

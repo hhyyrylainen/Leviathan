@@ -13,6 +13,14 @@ namespace Ogre{
     class SceneNode;
 }
 
+namespace CEGUI{
+
+    class InputAggregator;
+    class Window;
+    class Animation;
+    class GUIContext;
+}
+
 namespace Leviathan{
 
     // Core systems //

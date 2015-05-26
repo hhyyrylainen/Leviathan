@@ -217,9 +217,10 @@ DLLEXPORT Physics::ApplyForceInfo& Physics::ApplyForceInfo::operator =(
     Callback = other.Callback;
 }
 // ------------------------------------ //
-DLLEXPORT Physics::Physics(GameWorld* world, Position &updatepos, Sendable* updatesendable) :
-    World(world), _Position(updatepos), UpdateSendable(updatesendable), Mass(0.f),
-    ApplyGravity(true), AppliedPhysicalMaterial(0), Collision(nullptr), Body(nullptr)
+DLLEXPORT Physics::Physics(const Arguments &args) :
+    World(args.world), _Position(args.updatepos), UpdateSendable(args.updatesendable), Mass(0.f),
+    ApplyGravity(true), AppliedPhysicalMaterial(0), Collision(nullptr), Body(nullptr),
+    ThisEntity(args.id)
 {
 
 }
@@ -871,6 +872,13 @@ DLLEXPORT void Parent::RemoveChildren(){
     }
     
     Children.clear();
+}
+
+DLLEXPORT void Parent::AddChild(ObjectID childid, Parentable &child){
+
+    GUARD_LOCK();
+
+    Children.push_back(make_tuple(childid, &child));
 }
 
 DLLEXPORT void Parent::AddDataToPacket(sf::Packet &packet) const{

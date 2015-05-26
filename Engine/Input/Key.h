@@ -106,7 +106,7 @@ namespace Leviathan{
 			}
 			// various styles from which a key can be easily parsed //
 			DEBUG_BREAK;
-			return L"error";
+			return "error";
 		}
 
 		DLLEXPORT bool Match(const T &chara, const short &additional, bool strict = false) const{

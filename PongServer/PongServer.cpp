@@ -52,7 +52,7 @@ void Pong::PongServer::Tick(int mspassed){
         return;
 
     // Let the AI think //
-    if(GameArena && GameArena->GetBallPtr() && !GamePaused){
+    if(GameArena && GameArena->GetBall() && !GamePaused){
 
         // Find AI slots //
         for(size_t i = 0; i < _PlayerList.Size(); i++){
@@ -90,58 +90,91 @@ void Pong::PongServer::Tick(int mspassed){
 
         // Check if ball is too far away (also check if it is vertically stuck or horizontally) //
 
-        Leviathan::BasePhysicsObject* castedptr = dynamic_cast<Leviathan::BasePhysicsObject*>(
-            GameArena->GetBallPtr().get());
+        ObjectID ball = GameArena->GetBall();
 
-        Float3 ballcurpos = castedptr->GetPos();
+        try{
+            auto& pos = WorldOfPong->GetComponent<Position>(ball);
 
-        if(ballcurpos.HAddAbs() > 100 * BASE_ARENASCALE){
+            const auto& ballcurpos = pos._Position;
+
+            if(ballcurpos.HAddAbs() > 100 * BASE_ARENASCALE){
+
+                _DisposeOldBall();
+
+                // Serve new ball //
+                GameArena->ServeBall();
+                return;
+            }
+
+        } catch(const NotFound&){
+            
+            // Ball is invalid //
+            Logger::Get()->Error("Invalid ball, resetting");
 
             _DisposeOldBall();
 
             // Serve new ball //
             GameArena->ServeBall();
+            return;
         }
 
-        // Check is the ball stuck on the dead axis (where no paddle can hit it) //
-        Float3 ballspeed = castedptr->GetBodyVelocity();
-        ballspeed.X = abs(ballspeed.X);
-        ballspeed.Y = 0;
-        ballspeed.Z = abs(ballspeed.Z);
-        ballspeed = ballspeed.Normalize();
-
         bool ballstuck = false;
-        float ballvel = castedptr->GetBodyVelocity().HAddAbs();
-
-        if(ballvel < 0.04f){
-
-            if(!IsBallInGoalArea()){
-
-                ballstuck = true;
-            }
+        
+        try{
+            // Check is the ball stuck on the dead axis (where no paddle can hit it) //
+            auto& physics = WorldOfPong->GetComponent<Physics>(ball);
             
-        } else if(DeadAxis.HAddAbs() != 0){
-            // Compare directions //
+            Float3 ballspeed = physics.GetVelocity();
+            ballspeed.X = abs(ballspeed.X);
+            ballspeed.Y = 0;
+            ballspeed.Z = abs(ballspeed.Z);
+            ballspeed = ballspeed.Normalize();
 
-            float veldifference = (ballspeed - DeadAxis).HAddAbs();
+            float ballvel = physics.GetVelocity().HAddAbs();
 
-            if(veldifference < BALLSTUCK_THRESHOLD){
+            if(ballvel < 0.04f){
 
-                StuckThresshold++;
+                if(!IsBallInGoalArea()){
 
-                if(StuckThresshold >= BALLSTUCK_COUNT){
-                    // Check is ball in a goal area //
-                    if(IsBallInGoalArea()){
-                        StuckThresshold = 0;
-                    } else {
-
-                        ballstuck = true;
-                    }
+                    ballstuck = true;
                 }
-            } else {
-                if(StuckThresshold >= 1)
-                    StuckThresshold--;
+            
+            } else if(DeadAxis.HAddAbs() != 0){
+                // Compare directions //
+
+                float veldifference = (ballspeed - DeadAxis).HAddAbs();
+
+                if(veldifference < BALLSTUCK_THRESHOLD){
+
+                    StuckThresshold++;
+
+                    if(StuckThresshold >= BALLSTUCK_COUNT){
+                        // Check is ball in a goal area //
+                        if(IsBallInGoalArea()){
+                            StuckThresshold = 0;
+                        } else {
+
+                            ballstuck = true;
+                        }
+                    }
+                } else {
+                    if(StuckThresshold >= 1)
+                        StuckThresshold--;
+                }
             }
+
+
+        } catch(const NotFound&){
+
+            // Ball is invalid //
+            Logger::Get()->Error("Invalid ball, resetting");
+
+            _DisposeOldBall();
+
+            // Serve new ball //
+            GameArena->ServeBall();
+            return;
+
         }
 
         if(ballstuck){
@@ -151,7 +184,6 @@ void Pong::PongServer::Tick(int mspassed){
             _DisposeOldBall();
             // Serve new ball //
             GameArena->ServeBall();
-
         }
     }
 }
@@ -352,8 +384,11 @@ void Pong::PongServer::PassCommandLine(const string &params){
 void Pong::PongServer::OnStartPreMatch(){
 
     // Setup the world first as that can fail //
-	WorldOfPong->ClearObjects();
-	WorldOfPong->SetWorldPhysicsFrozenState(true);
+    {
+        GUARD_LOCK_OTHER_NAME(WorldOfPong, lock);
+        WorldOfPong->ClearObjects(lock);
+        WorldOfPong->SetWorldPhysicsFrozenState(lock, true);
+    }
 
 	// Setup the objects in the world //
 	if(!GameArena->GenerateArena(this, _PlayerList)){
@@ -419,3 +454,166 @@ void Pong::PongServer::OnStartPreMatch(){
 		DeadAxis = Float3(0.f, 0.f, 1.f);
 	}
 }
+// ------------------------------------ //
+PongServerNetworking* PongServer::GetServerNetworkInterface(){
+
+    return _PongServerNetworking;
+}
+
+void PongServer::SetScoreLimit(int scorelimit){
+    ScoreLimit = scorelimit;
+}
+
+int PongServer::PlayerScored(ObjectID goal){
+    // Don't count if the player whose goal the ball is in is the last one to touch
+    // it or if none have touched it
+    if(PlayerIDMatchesGoalAreaID(LastPlayerHitBallID, goal) || LastPlayerHitBallID == -1){
+
+        return 1;
+    }
+
+    // Add point to the player who scored //
+
+    // Look through all players and compare PlayerIDs //
+    for(size_t i = 0; i < _PlayerList.Size(); i++){
+
+        PlayerSlot* slotptr = _PlayerList[i];
+
+        while(slotptr){
+
+
+            if(LastPlayerHitBallID == slotptr->GetPlayerNumber()){
+                // Found right player //
+                slotptr->SetScore(slotptr->GetScore()+SCOREPOINT_AMOUNT);
+                _PlayerList.NotifyUpdatedValue();
+                        
+                goto playrscorelistupdateendlabel;
+            }
+
+            slotptr = slotptr->GetSplit();
+        }
+    }
+    // No players got points! //
+
+playrscorelistupdateendlabel:
+
+    GameArena->LetGoOfBall();
+
+    Leviathan::ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](
+                    int LastPlayerHitBallID, PongServer* instance) -> void
+        {
+
+            // Serve new ball //
+            instance->GameArena->ServeBall();
+
+            // Check for game end //
+            instance->ServerCheckEnd();
+
+                    
+        }, LastPlayerHitBallID.GetValue(), this)));
+
+    return 0;
+}
+
+void PongServer::_SetLastPaddleHit(ObjectID objptr, ObjectID objptr2){
+    // Note: the object pointers can be in any order they want //
+
+    auto realballptr = GameArena->GetBall();
+
+    // Look through all players and compare paddle ptrs //
+    for(size_t i = 0; i < _PlayerList.Size(); i++){
+
+        PlayerSlot* slotptr = _PlayerList[i];
+
+        while(slotptr){
+
+            auto paddle = slotptr->GetPaddle();
+
+            if((objptr == paddle && objptr2 == realballptr) ||
+                (objptr2 == paddle && objptr == realballptr))
+            {
+                // Found right player //
+                if(LastPlayerHitBallID != slotptr->GetPlayerNumber()){
+                    LastPlayerHitBallID = slotptr->GetPlayerNumber();
+                    SetBallLastHitColour();
+                }
+                
+                return;
+            }
+
+            slotptr = slotptr->GetSplit();
+        }
+    }
+}
+
+int PongServer::_BallEnterGoalArea(ObjectID goal, ObjectID ballobject){
+    // Note: the object pointers can be in any order they want //
+
+    auto castedptr = GameArena->GetBall();
+
+    if(ballobject == castedptr){
+        // goal is actually the goal area //
+        return PlayerScored(goal);
+                
+    } else if(goal == castedptr){
+                
+        // ballobject is actually the goal area //
+        return PlayerScored(ballobject);
+    }
+            
+    return 0;
+}
+
+void PongServer::_DisposeOldBall(){
+
+    // Tell arena to let go of old ball //
+    GameArena->LetGoOfBall();
+
+    // Reset variables //
+    LastPlayerHitBallID = -1;
+    StuckThresshold = 0;
+    // This should reset the ball trail colour //
+			
+}
+
+void PongServer::GameMatchEnded(){
+    // This can be called from script so ensure that these are set //
+    GameArena->LetGoOfBall();
+
+    CustomizedGameEnd();
+}
+
+void PongServer::BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep,
+    int threadIndex)
+{
+
+    // Call the callback //
+    Staticaccess->_SetLastPaddleHit(reinterpret_cast<Physics*>(
+            NewtonBodyGetUserData(NewtonJointGetBody0(contact)))->ThisEntity,
+        reinterpret_cast<Physics*>(NewtonBodyGetUserData(
+                NewtonJointGetBody1(contact)))->ThisEntity);
+}
+        
+void PongServer::BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep,
+    int threadIndex)
+{
+    // Call the function and set the collision state as the last one //
+    NewtonJointSetCollisionState(contact,
+        Staticaccess->_BallEnterGoalArea(reinterpret_cast<
+            Physics*>(NewtonBodyGetUserData(NewtonJointGetBody0(contact)))->ThisEntity,
+            reinterpret_cast<Physics*>(NewtonBodyGetUserData(
+                    NewtonJointGetBody1(contact)))->ThisEntity));
+}
+
+PhysicsMaterialContactCallback PongServer::GetBallPaddleCallback(){
+
+    return BallContactCallbackPaddle;
+}
+
+PhysicsMaterialContactCallback PongServer::GetBallGoalAreaCallback(){
+
+    return BallContactCallbackGoalArea;
+}
+
+
+

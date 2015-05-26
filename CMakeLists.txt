@@ -263,18 +263,19 @@ include_directories(${Boost_INCLUDE_DIR})
 add_definitions(-DBOOST_ALL_NO_LIB)
 
 # Library linking
-set(LINK_LIBS_TOENGINE_RELEASE optimized Newton)
-set(LINK_LIBS_ENGINE_RELEASE Angelscript Newton)
+set(LINK_LIBS_TOENGINE_RELEASE optimized Newton ${OGRE_LIBRARIES})
+set(LINK_LIBS_ENGINE_RELEASE optimized angelscript optimized Newton)
 
 
 
 # Debug libraries
 set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
-set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Newton_d)
+set(LINK_LIBS_ENGINE_DEBUG debug angelscriptd debug Newton_d)
+
 
 if(${USE_LEAP})
-  set(LINK_LIBS_ENGINE_RELEASE ${LINK_LIBS_ENGINE_RELEASE} Leap)
-  set(LINK_LIBS_ENGINE_DEBUG ${LINK_LIBS_ENGINE_DEBUG} Leapd)
+  set(LINK_LIBS_ENGINE_RELEASE ${LINK_LIBS_ENGINE_RELEASE} optimized Leap)
+  set(LINK_LIBS_ENGINE_DEBUG ${LINK_LIBS_ENGINE_DEBUG} debug Leapd)
 endif()
 
 # Breakpad libraries
@@ -283,32 +284,12 @@ if(${USE_BREAKPAD})
     set(LINK_LIBS_TOENGINE_RELEASE ${LINK_LIBS_TOENGINE_RELEASE} optimized breakpad_client)
     set(LINK_LIBS_TOENGINE_DEBUG ${LINK_LIBS_TOENGINE_DEBUG} debug breakpad_client)
   elseif(WIN32)
-    set(LINK_LIBS_TOENGINE_RELEASE ${LINK_LIBS_TOENGINE_RELEASE} optimized exception_handler optimized common 
-      optimized crash_generation_client)
+    set(LINK_LIBS_TOENGINE_RELEASE ${LINK_LIBS_TOENGINE_RELEASE} optimized exception_handler
+      optimized common optimized crash_generation_client)
   else()
   
   endif()
 endif()
-
-# Prepend the right keywords
-
-
-# define a temp value
-set(TmpProcessQueueList)
-
-foreach(curlibname ${LINK_LIBS_ENGINE_RELEASE})
-    set(TmpProcessQueueList ${TmpProcessQueueList} optimized ${curlibname})
-endforeach()
-
-set(LINK_LIBS_ENGINE_RELEASE ${TmpProcessQueueList})
-
-set(TmpProcessQueueList)
-
-foreach(curlibname ${LINK_LIBS_ENGINE_DEBUG})
-  set(TmpProcessQueueList ${TmpProcessQueueList} debug ${curlibname})
-endforeach()
-
-set(LINK_LIBS_ENGINE_DEBUG ${TmpProcessQueueList})
 
 # create the bin directory
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
@@ -329,7 +310,8 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_SERVER_SEARCH "TRUE")
   endif()
   
-    configure_file("${PROJECT_SOURCE_DIR}/LeviathanDoxy.in" "${PROJECT_BINARY_DIR}/LeviathanDoxy" @ONLY)
+  configure_file("${PROJECT_SOURCE_DIR}/LeviathanDoxy.in"
+    "${PROJECT_BINARY_DIR}/LeviathanDoxy" @ONLY)
     add_custom_target(doc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/LeviathanDoxy
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

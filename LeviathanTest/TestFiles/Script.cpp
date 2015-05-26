@@ -1,3 +1,5 @@
+#include "PartialEngine.h"
+
 #include "Script/ScriptExecutor.h"
 #include "Script/ScriptModule.h"
 #include "Handlers/IDFactory.h"
@@ -11,6 +13,8 @@ using namespace std;
 
 TEST_CASE("Basic script running", "[script]"){
 
+    PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
+    
     IDFactory ids;
     auto exec(move(unique_ptr<ScriptExecutor>(new ScriptExecutor())));
 

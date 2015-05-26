@@ -83,39 +83,30 @@ namespace Pong{
 		// resets all input state //
 		void InputDisabled();
 
-		ObjectPtr GetPaddle(){
+		ObjectID GetPaddle(){
 			return PaddleObject;
 		}
 		// Warning increases reference count //
-		Leviathan::BaseObject* GetPaddleProxy(){
-			PaddleObject->AddRef();
-			return PaddleObject.get();
+		ObjectID GetTrackController(){
+	
+			return TrackObject;
 		}
-		// Warning increases reference count //
-		Leviathan::Entity::TrackEntityController* GetTrackController(){
-			TrackDirectptr->AddRef();
-			return TrackDirectptr;
-		}
-		void SetPaddleObject(ObjectPtr obj){
+        
+		void SetPaddleObject(ObjectID obj){
 			PaddleObject = obj;
 		}
-		ObjectPtr GetGoalArea(){
+        
+		ObjectID GetGoalArea(){
 			return GoalAreaObject;
 		}
-		// Warning increases reference count //
-		Leviathan::BaseObject* GetGoalAreaProxy(){
-			GoalAreaObject->AddRef();
-			return GoalAreaObject.get();
-		}
-		void SetGoalAreaObject(ObjectPtr obj){
+
+		void SetGoalAreaObject(ObjectID obj){
 			GoalAreaObject = obj;
 		}
-		void SetTrackObject(ObjectPtr obj, Leviathan::Entity::TrackEntityController* direct){
+        
+		void SetTrackObject(ObjectID obj){
 
-            if(obj && direct)
-                Logger::Get()->Info("PlayerSlot now has a track object");
 			TrackObject = obj;
-			TrackDirectptr = direct;
 		}
 
 		inline Float4 GetColour(){
@@ -134,7 +125,6 @@ namespace Pong{
 
 			return NetworkedInputID;
 		}
-
 
 		//! Returns true if player type isn't empty or closed
 		inline bool IsSlotActive(){
@@ -222,11 +212,10 @@ namespace Pong{
 
 		int MoveState;
 
-		ObjectPtr PaddleObject;
-		ObjectPtr GoalAreaObject;
+		ObjectID PaddleObject;
+		ObjectID GoalAreaObject;
 
-		ObjectPtr TrackObject;
-		Leviathan::Entity::TrackEntityController* TrackDirectptr;
+		ObjectID TrackObject;
 
 		//! Slot splitting
 		PlayerSlot* SplitSlot;

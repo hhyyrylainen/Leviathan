@@ -28,7 +28,8 @@ namespace Leviathan{
 	// Used to pass master server info to the application //
 	struct MasterServerInformation{
 		MasterServerInformation(bool iammaster, const std::string &identificationstr) :
-            RequireMaster(false), IAmMyOwnMaster(true), MasterServerIdentificationString(identificationstr)
+            MasterServerIdentificationString(identificationstr), IAmMyOwnMaster(true),
+            RequireMaster(false)
         {
 
 		}

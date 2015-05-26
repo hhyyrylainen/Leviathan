@@ -334,38 +334,7 @@ void Pong::PongGame::CustomEnginePreShutdown(){
 // ------------------------------------ //
 void Pong::PongGame::Tick(int mspassed){
     
-    using namespace Leviathan;
-
-    // Let the AI think //
-    if(GameArena && GameArena->GetBallPtr() && !GamePaused){
-
-        // Find AI slots //
-        for(size_t i = 0; i < _PlayerList.Size(); i++){
-
-            PlayerSlot* slotptr = _PlayerList[i];
-
-            while(slotptr){
-
-                if(slotptr->GetControlType() == PLAYERCONTROLS_AI && slotptr->IsSlotActive()){
-
-                    // Set the slot ptr as the argument and call function based on difficulty //
-                    std::vector<shared_ptr<NamedVariableBlock>> scriptargs(2);
-                    scriptargs[0] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(
-                            new VoidPtrBlock(slotptr), "PlayerSlot"));
-                    scriptargs[1] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(
-                            new IntBlock(mspassed), "MSPassed"));
-
-                    if(GameAI){
-                        bool ran;
-
-                        GameAI->ExecuteOnModule("AIClientSide", scriptargs, ran);
-                    }
-                }
-                
-                slotptr = slotptr->GetSplit();
-            }
-        }
-    }
+    
 }
 // ------------------------------------ //
 void Pong::PongGame::AllowPauseMenu(){

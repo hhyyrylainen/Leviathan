@@ -22,9 +22,8 @@ namespace Leviathan{
 	// Defines properties between two materials //
 	struct PhysMaterialDataPair{
 		DLLEXPORT inline PhysMaterialDataPair(const std::string &othername) :
-            OtherName(othername), AABBCallback(NULL), ContactCallback(NULL), 
-			Collidable(true), Elasticity(0.4f), StaticFriction(0.9f), DynamicFriction(0.5f),
-            Softness(0.15f)
+            OtherName(othername), Collidable(true), Elasticity(0.4f), StaticFriction(0.9f),
+            DynamicFriction(0.5f), Softness(0.15f), AABBCallback(NULL), ContactCallback(NULL)
 		{
 
 		}

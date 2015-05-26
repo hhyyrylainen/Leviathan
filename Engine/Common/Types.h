@@ -198,7 +198,7 @@ namespace Leviathan{
 		}
 		// Add all elements together after abs() is called on each element //
 		DLLEXPORT inline float HAddAbs() const{
-			return abs(X)+abs(Y);
+			return std::abs(X) + std::abs(Y);
 		}
 		// getting min and max of objects //
 		DLLEXPORT inline Float2 MinElements(const Float2 &other) const{
@@ -407,7 +407,7 @@ namespace Leviathan{
 		}
 		// Add all elements together absoluted (abs()) //
 		DLLEXPORT inline float HAddAbs() const{
-			return abs(X)+abs(Y)+abs(Z);
+			return std::abs(X) + std::abs(Y) + std::abs(Z);
 		}
 		// getting min and max of objects //
 		DLLEXPORT inline Float3 MinElements(const Float3 &other) const{
@@ -625,7 +625,7 @@ namespace Leviathan{
 		}
 		// Add all elements together after abs() is called on each element //
 		DLLEXPORT inline float HAddAbs() const{
-			return abs(X)+abs(Y)+abs(Z)+abs(W);
+			return std::abs(X) + std::abs(Y) + std::abs(Z) + std::abs(W);
 		}
 		// getting min and max of objects //
 		DLLEXPORT inline Float4 MinElements(const Float4 &other) const{

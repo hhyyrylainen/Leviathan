@@ -2,21 +2,25 @@
 #ifndef PONG_PLAYERSLOT
 #include "PlayerSlot.h"
 #endif
-#include "Entities/Bases/BasePhysicsObject.h"
 #include "Iterators/StringIterator.h"
 #include "Networking/NetworkServerInterface.h"
 #include "Utility/ComplainOnce.h"
+#include "Entities/Components.h"
+
+#include "CommonPong.h"
+
 #ifdef PONG_VERSION
 #include "PongGame.h"
 #include "PongNetHandler.h"
 #endif //PONG_VERSION
+
 #include "GameInputController.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) :
     Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_CLOSED), 
 	PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()),
-    PlayerControllerID(0), SplitSlot(NULL), SlotsPlayer(NULL), TrackDirectptr(NULL), PlayerID(-1),
+    PlayerControllerID(0), SplitSlot(NULL), SlotsPlayer(NULL), PlayerID(-1),
     NetworkedInputID(-1), InputObj(NULL)
 {
 	
@@ -106,26 +110,41 @@ void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool ac
 
 	}
 
-    if(!TrackDirectptr){
+    try{
+        auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
+            TrackObject);
 
-        Leviathan::ComplainOnce::PrintWarningOnce("Slot_trackdirect_ptr_is_empty",
-            "Slot is trying to move but doesn't have track pointer set");
+        // Set the track speed based on move direction //
+        track.ChangeSpeed = MoveState*INPUT_TRACK_ADVANCESPEED;
+        track.Marked = true;
+    
+    } catch(const NotFound&){
+
+        Logger::Get()->Warning("PlayerSlot has a TrackObject that has no TrackController "
+            "component");
     }
-
-	// Set the track speed based on move direction //
-	if(TrackDirectptr)
-		TrackDirectptr->SetTrackAdvanceSpeed(MoveState*INPUT_TRACK_ADVANCESPEED);
 }
 
 void Pong::PlayerSlot::InputDisabled(){
-	// set apply force to zero //
-	if(PaddleObject){
 
-		TrackDirectptr->SetTrackAdvanceSpeed(0.f);
-	}
+    // Reset control state //
+    MoveState = 0;
 
-	// reset control state //
-	MoveState = 0;
+    if(TrackObject == 0)
+        return;
+    
+	// Set apply force to zero //
+    try{
+        auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
+            TrackObject);
+
+        // Set the track speed based on move direction //
+        track.ChangeSpeed = 0;
+        track.Marked = true;
+    
+    } catch(const NotFound&){
+
+    }
 }
 
 int Pong::PlayerSlot::GetScore(){
@@ -145,7 +164,17 @@ bool Pong::PlayerSlot::IsVerticalSlot(){
 }
 
 float Pong::PlayerSlot::GetTrackProgress(){
-	return TrackDirectptr->GetProgressTowardsNextNode();
+
+    try{
+        auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
+            TrackObject);
+
+        return track.NodeProgress;
+    
+    } catch(const NotFound&){
+
+        return 0.f;
+    }
 }
 
 bool Pong::PlayerSlot::DoesPlayerNumberMatchThisOrParent(int number){
@@ -162,9 +191,13 @@ void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
 	GUARD_LOCK();
 
 	// Write all our data to the packet //
-	packet << Slot << (int)PlayerType << PlayerNumber << NetworkedInputID << ControlIdentifier << (int)ControlType << PlayerControllerID 
-		<< Colour.X << Colour.Y << Colour.Z << Colour.W;
+	packet << Slot << (int)PlayerType << PlayerNumber << NetworkedInputID << ControlIdentifier
+           << (int)ControlType << PlayerControllerID 
+           << Colour;
 	packet << PlayerID << Score << (bool)(SplitSlot != NULL);
+
+    // TODO: send track id and goal id
+    DEBUG_BREAK;
 
 	if(SplitSlot){
 		// Add our sub slot data //
@@ -188,7 +221,7 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet, Lock &listlock){
 	ControlType = static_cast<PLAYERCONTROLS>(tmpival);
 
 	packet >> PlayerControllerID;
-    packet >> Colour.X >> Colour.Y >> Colour.Z >> Colour.W;
+    packet >> Colour;
     packet >> PlayerID  >> Score;
 	
 
@@ -439,17 +472,15 @@ void Pong::PlayerSlot::WriteInfoToLog(int depth /*= 0*/) const{
 
     PUT_FIELD(MoveState);
 
-    Logger::Get()->Write(prefix+"PaddleObject "+Convert::ToHexadecimalString(PaddleObject.get()));
+    Logger::Get()->Write(prefix+"PaddleObject "+Convert::ToString(PaddleObject));
 
-    Logger::Get()->Write(prefix+"GoalAreaObject "+Convert::ToHexadecimalString(GoalAreaObject.get()));
+    Logger::Get()->Write(prefix + "GoalAreaObject "+Convert::ToString(GoalAreaObject));
 
-    Logger::Get()->Write(prefix+"TrackObject "+Convert::ToHexadecimalString(TrackObject.get()));
+    Logger::Get()->Write(prefix+"TrackObject "+Convert::ToString(TrackObject));
 
-    Logger::Get()->Write(prefix+"TrackDirectptr "+Convert::ToHexadecimalString(TrackDirectptr));
+    Logger::Get()->Write(prefix+"InputObj "+Convert::ToString(InputObj));
 
-    Logger::Get()->Write(prefix+"InputObj "+Convert::ToHexadecimalString(InputObj));
-
-    Logger::Get()->Write(prefix+"SlotsPlayer "+Convert::ToHexadecimalString(SlotsPlayer));
+    Logger::Get()->Write(prefix+"SlotsPlayer "+Convert::ToString(SlotsPlayer));
 
     PUT_FIELD(PlayerID);
 

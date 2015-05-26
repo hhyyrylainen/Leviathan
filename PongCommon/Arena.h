@@ -3,7 +3,7 @@
 #include "PongIncludes.h"
 // ------------------------------------ //
 #include "PlayerSlot.h"
-#include "Entities/Objects/TrailEmitter.h"
+#include "Entities/Components.h"
 #include "Common/ThreadSafe.h"
 #include <memory>
 #include <string>
@@ -20,8 +20,11 @@ namespace Pong{
 
 	class Arena : public ThreadSafe{
 	public:
-		Arena(shared_ptr<Leviathan::GameWorld> world);
+
+        //! \warning The world has to be valid while this object is used
+		Arena(Leviathan::GameWorld* world);
 		~Arena();
+        
 		// Generates an arena to the world //
 		bool GenerateArena(BasePongParts* game, PlayerList &plys);
 
@@ -38,13 +41,8 @@ namespace Pong{
 		// Does what ever is needed to ditch old ball //
 		void LetGoOfBall();
 
-		inline shared_ptr<Leviathan::GameWorld> GetWorld(){
-			return TargetWorld;
-		}
+        void RegisterBall(Lock &guard, ObjectID ball){
 
-        void RegisterBall(Lock &guard, ObjectPtr ball){
-
-            Ball.reset();
             Ball = ball;
         }
 
@@ -58,15 +56,15 @@ namespace Pong{
             ColourTheBallTrail(guard, colour);
         }
 
-		inline ObjectPtr GetBallPtr(Lock &guard){
+		inline ObjectID GetBall(Lock &guard){
 
 			return Ball;
 		}
 
-        inline ObjectPtr GetBallPtr(){
+        inline ObjectID GetBall(){
 
             GUARD_LOCK();
-            return GetBallPtr(guard);
+            return GetBall(guard);
         }
 
 		// Checks based on generated arena if ball intersects (or could) with a paddle area //
@@ -78,19 +76,18 @@ namespace Pong{
 		// ------------------------------------ //
 
 		// the world to which the arena is generated //
-        std::shared_ptr<Leviathan::GameWorld> TargetWorld;
+        Leviathan::GameWorld* TargetWorld;
 
 		// Stored object pointers //
 
 		// Arena bottom //
-		ObjectPtr BottomBrush;
+		ObjectID BottomBrush;
 
 		// The ball trail object //
-		ObjectPtr TrailKeeper;
-		Leviathan::Entity::TrailEmitter* DirectTrail;
+		ObjectID TrailKeeper;
 
 		// ball prop //
-		ObjectPtr Ball;
+		ObjectID Ball;
 
 		//! Used to store already generated materials for paddles
 		std::map<Float4, std::string> ColourMaterialName;

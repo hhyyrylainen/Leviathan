@@ -268,7 +268,7 @@ DLLEXPORT bool ObjectLoader::LoadNetworkProp(GameWorld* world, Lock &worldlock,
 
         if(proplist){
 
-            auto& physics = world->CreatePhysics(prop, world, position, &sendable);
+            auto& physics = world->CreatePhysics(prop, prop, world, position, &sendable);
 
             _CreatePropPhysics(world, worldlock, model, physics, position, proplist, path,
                 materialid);
@@ -327,7 +327,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lo
 
         if(proplist){
 
-            auto& physics = world->CreatePhysics(prop, world, position, &sendable);
+            auto& physics = world->CreatePhysics(prop, prop, world, position, &sendable);
 
             _CreatePropPhysics(world, worldlock, model, physics, position, proplist, path,
                 materialid);
@@ -605,7 +605,7 @@ DLLEXPORT bool ObjectLoader::LoadNetworkBrush(GameWorld* world, Lock &worldlock,
 
     auto& constraintable = world->CreateConstraintable(brush, brush, world);
 
-    auto& physics = world->CreatePhysics(brush, world, position, nullptr);
+    auto& physics = world->CreatePhysics(brush, brush, world, position, nullptr);
 
     _CreateBrushModel(world, worldlock, brush, physics, box, position, mass, size);
 
@@ -639,7 +639,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, L
 
     auto& constraintable = world->CreateConstraintable(brush, brush, world);
 
-    auto& physics = world->CreatePhysics(brush, world, position, &sendable);
+    auto& physics = world->CreatePhysics(brush, brush, world, position, &sendable);
 
     _CreateBrushModel(world, worldlock, brush, physics, box, position, mass, size);
 

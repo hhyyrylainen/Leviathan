@@ -8,7 +8,6 @@
 #include "../TimeIncludes.h"
 
 #include "OgreRenderQueueListener.h"
-#include "CEGUI/GUIContext.h"
 
 
 
@@ -26,7 +25,7 @@ namespace Leviathan{ namespace Gui{
 		struct SingleCollectionEntry{
 			//! \brief Constructs a new entry for a single GuiCollection
 			SingleCollectionEntry(const std::string &name, bool enabled) :
-                Name(new std::string(name)), IsEnabled(enabled)
+                IsEnabled(enabled), Name(new std::string(name))
             {
 
 			}

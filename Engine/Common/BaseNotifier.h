@@ -62,7 +62,7 @@ namespace Leviathan{
 		//! \brief Returns true when the specified object is already connected
 		DLLEXPORT FORCE_INLINE bool IsConnectedTo(BaseNotifiable<ParentType, ChildType>* check){
 			GUARD_LOCK();
-			IsConnectedTo(check, guard);
+			return IsConnectedTo(check, guard);
 		}
 		
 		// Callback called by the child, and doesn't call the unhook again on the child

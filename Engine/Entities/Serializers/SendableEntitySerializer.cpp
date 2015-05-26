@@ -176,7 +176,7 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(GameWo
         }
         default:
             // Unknown type
-            return nullptr;
+            return false;
     }
 
     return true;

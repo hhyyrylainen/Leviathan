@@ -12,8 +12,6 @@
 #include <OISKeyboard.h>
 #include <OISJoyStick.h>
 #include <OISInputManager.h>
-#include "CEGUI/GUIContext.h"
-#include "CEGUI/InputEvent.h"
 
 #ifdef __linux
 
@@ -24,7 +22,6 @@ struct _XDisplay;
 typedef _XDisplay Display;
 
 #endif
-
 
 namespace Leviathan{
 

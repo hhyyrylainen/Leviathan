@@ -5,8 +5,7 @@
 #include "Script/ScriptExecutor.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "GuiManager.h"
-#include "CEGUI/GUIContext.h"
-#include "CEGUI/Window.h"
+#include "../CEGUIInclude.h"
 #include "../Common/ThreadSafe.h"
 using namespace Leviathan;
 using namespace Gui;

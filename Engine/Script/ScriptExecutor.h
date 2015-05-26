@@ -9,6 +9,7 @@
 //#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
 #include "angelscript.h"
 
+
 #include "Common/ThreadSafe.h"
 #include "Script/ScriptScript.h"
 #include "Common/DataStoring/DataBlock.h"

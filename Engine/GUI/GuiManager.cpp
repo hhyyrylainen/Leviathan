@@ -1,15 +1,7 @@
 // ------------------------------------ //
 #include "GuiManager.h"
 // ------------------------------------ //
-#include "CEGUI/AnimationInstance.h"
-#include "CEGUI/AnimationManager.h"
-#include "CEGUI/Clipboard.h"
-#include "CEGUI/InputAggregator.h"
-#include "CEGUI/RenderTarget.h"
-#include "CEGUI/System.h"
-#include "CEGUI/Window.h"
-#include "CEGUI/WindowManager.h"
-#include "CEGUI/RendererModules/Ogre/Renderer.h"
+#include "../CEGUIInclude.h"
 #include "Common/DataStoring/DataBlock.h"
 #include "Common/DataStoring/DataStore.h"
 #include "../TimeIncludes.h"

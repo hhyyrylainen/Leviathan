@@ -447,6 +447,8 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
 		module->_AddFileToMonitorIfNotAlready(file);
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
+        const string beginstripped = file.substr(2, file.size()-2);
+        
 		return builder->AddSectionFromFile(file.c_str());
 	}
 
@@ -462,6 +464,9 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
 
 			module->_AddFileToMonitorIfNotAlready(completefile);
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
+
+            if(completefile.find("./") == 0)
+                completefile = completefile.substr(2, completefile.size()-2);
 
 			return builder->AddSectionFromFile(completefile.c_str());
 		} else {
@@ -486,6 +491,9 @@ trytofindinscriptfolderincludecallback:
 
 			module->_AddFileToMonitorIfNotAlready(finalpath);
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
+
+            if(finalpath.find("./") == 0)
+                finalpath = finalpath.substr(2, finalpath.size()-2);
 
 			return builder->AddSectionFromFile(finalpath.c_str());
 		} else {

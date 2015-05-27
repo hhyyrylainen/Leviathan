@@ -20,7 +20,6 @@
 #include "Statistics/TimingMonitor.h"
 #include "Threading/QueuedTask.h"
 #include "Threading/ThreadingManager.h"
-#include "Utility/DataHandling/SimpleDatabase.h"
 #include "add_on/autowrapper/aswrappedcall.h"
 #include <functional>
 
@@ -60,7 +59,6 @@ namespace Pong{
 		BasePongParts(bool isserver) :
             GameArena(nullptr), ErrorState("No error"),  
 			ScoreLimit("ScoreLimit", 20),
-			GameConfigurationData(new Leviathan::SimpleDatabase("GameConfiguration")),
 			GamePaused("GamePaused", false), GameAI(NULL),
             LastPlayerHitBallID("LastPlayerHitBallID", -1),
             _PlayerList(std::function<void (PlayerList*)>(&StatUpdater), 4)
@@ -152,9 +150,6 @@ namespace Pong{
             return GameArena->GetBall();
 		}
 
-		Leviathan::SimpleDatabase* GetGameDatabase(){
-			return GameConfigurationData.get();
-		}
 		Leviathan::GameWorld* GetGameWorld(){
 			return WorldOfPong.get();
 		}
@@ -223,9 +218,6 @@ namespace Pong{
 		SyncedPrimitive<bool> GamePaused;
 		SyncedPrimitive<int> ScoreLimit;
 
-		// Configuration data //
-		shared_ptr<Leviathan::SimpleDatabase> GameConfigurationData;
-
 		PlayerList _PlayerList;
 
 		//! stores last error string for easy access from scripts
@@ -271,23 +263,8 @@ namespace Pong{
 
 			QUICKTIME_THISSCOPE;
 
-			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
-				shared_ptr<Leviathan::SimpleDatabase> GameConfigurationData) -> void
-			{
-
-				string savefile;
-
-				GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
-
-				if(!vars->GetValueAndConvertTo<string>("GameDatabase", savefile))
-                    Logger::Get()->Error("invalid game variable configuration, no GameDatabase");
-
-				GameConfigurationData->LoadFromFile(savefile);
-				Logger::Get()->Info("Loaded game configuration database");
-
-			}, GameConfigurationData))));
-
-			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
+			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(
+                    new QueuedTask(std::bind<void>([](
                                 CommonPongParts* game) -> void
                 {
                     // Load the game AI //
@@ -302,7 +279,8 @@ namespace Pong{
                 }, this))));
 
 
-			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([]()
+			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(
+                    new QueuedTask(std::bind<void>([]()
                             -> void
                 {
                     // Load Pong specific packets //
@@ -384,11 +362,6 @@ namespace Pong{
 				SCRIPT_REGISTERFAIL;
 			}
 			// For getting the game database //
-			if(engine->RegisterObjectMethod("PongBase", "SimpleDatabase& GetGameDatabase()",
-                    WRAP_MFN(BasePongParts, GetGameDatabase), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
 			if(engine->RegisterObjectMethod("PongBase", "GameWorld& GetGameWorld()",
                     WRAP_MFN(BasePongParts, GetGameWorld), asCALL_GENERIC) < 0)
 			{

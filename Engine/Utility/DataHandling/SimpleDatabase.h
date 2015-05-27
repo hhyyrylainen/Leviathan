@@ -15,6 +15,7 @@ namespace Leviathan{
 
 	//! A class that can be used to pass databases to Rocket and generally keeping simple databases 
 	//! \warning Do NOT use this class as non-pointer objects (because linking will fail)
+    //! \todo This needs proper tests and fixing
 	class SimpleDatabase : public ThreadSafe{
 	public:
 		//! \brief Creates a new database. Should be used as pointer

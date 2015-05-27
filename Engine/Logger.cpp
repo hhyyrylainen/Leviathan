@@ -124,7 +124,7 @@ void Logger::_Save(){
     if(PendingLog.empty())
         return;
 
-    std::ofstream file(Path);
+    std::ofstream file(Path, std::ofstream::out | std::ofstream::app);
 
     file << PendingLog;
     file.close();

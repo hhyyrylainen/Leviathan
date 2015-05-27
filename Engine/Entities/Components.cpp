@@ -344,7 +344,7 @@ DLLEXPORT void Physics::SetVelocity(Lock &guard, const Float3 &velocities){
     NewtonBodySetVelocity(Body, &velocities.X);
 }
 
-DLLEXPORT Float3 Physics::GetVelocity(Lock &guard){
+DLLEXPORT Float3 Physics::GetVelocity(Lock &guard) const{
 
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
@@ -379,6 +379,11 @@ DLLEXPORT void Physics::SetLinearDampening(float factor /*= 0.1f*/){
         throw InvalidState("Physics object doesn't have a body");
 
     NewtonBodySetLinearDamping(Body, factor);
+}
+// ------------------------------------ //
+DLLEXPORT NewtonBody* Physics::GetBody() const{
+
+    return Body;
 }
 // ------------------------------------ //
 Float3 Physics::_GatherApplyForces(Lock &guard, const float &mass){
@@ -727,6 +732,21 @@ void TrackController::_SanityCheckNodeProgress(Lock &guard){
 
     if(ReachedNode >= static_cast<int>(Nodes.Markers.size()))
         ReachedNode = Nodes.Markers.size()-1;
+}
+// ------------------------------------ //
+DLLEXPORT bool TrackController::GetNodePosition(int index, Float3 &pos, Float4 &rot) const{
+    // Lock to avoid getting markers changed while being called
+    GUARD_LOCK();
+    
+    if(index < 0 || index >= static_cast<int>(Nodes.Markers.size())){
+
+        return false;
+    }
+
+    pos = get<1>(Nodes.Markers[index])._Position;
+    rot = get<1>(Nodes.Markers[index])._Orientation;
+
+    return true;
 }
 // ------------------------------------ //
 DLLEXPORT void TrackController::GetPositionOnTrack(Float3 &pos, Float4 &rot) const{

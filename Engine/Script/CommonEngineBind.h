@@ -65,43 +65,35 @@ void Float3ConstructorProxySingle(void* memory, float all){
 	new(memory) Float3(all);
 }
 
-void Float3ConstructorProxyCopy(void* memory, const Float3* other){
-	new(memory) Float3(*other);
+void Float3ConstructorProxyCopy(void* memory, const Float3 &other){
+	new(memory) Float3(other);
 }
 
 void Float3DestructorProxy(void* memory){
 	reinterpret_cast<Float3*>(memory)->~Float3();
 }
-
-Float3* Float3AssignOtherProxy(Float3* thisobj, const Float3* otherobj){
-
-	*thisobj = *otherobj;
-	return thisobj;
+// ------------------ Float4 proxies ------------------ //
+void Float4ConstructorProxy(void* memory){
+	new(memory) Float4();
 }
 
-Float3 Float3AddOtherProxy(Float3* thisobj, const Float3* otherobj){
-
-	return *thisobj + *otherobj;
+void Float4ConstructorProxyAll(void* memory, float x, float y, float z, float w){
+	new(memory) Float4(x, y, z, w);
 }
 
-Float3 Float3SubOtherProxy(Float3* thisobj, const Float3* otherobj){
-
-	return *thisobj - *otherobj;
+void Float4ConstructorProxySingle(void* memory, float all){
+	new(memory) Float4(all);
 }
 
-Float3 Float3MulFloatProxy(Float3* thisobj, float val){
-
-	return (*thisobj)*val;
+void Float4ConstructorProxyCopy(void* memory, const Float4 &other){
+	new(memory) Float4(other);
 }
 
-float Float3HAddAbsProxy(Float3* obj){
-	return obj->HAddAbs();
+void Float4DestructorProxy(void* memory){
+	reinterpret_cast<Float4*>(memory)->~Float4();
 }
 
-Float3 Float3NormalizeProxy(Float3* obj){
-	return obj->Normalize();
-}
-
+// ------------------ Dynamic cast proxies ------------------ //
 template<class From, class To>
 To* DoReferenceCastDynamic(From* ptr){
 	// If already invalid just return it //
@@ -148,12 +140,13 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 
 
 	// Float3 bind //
-	if(engine->RegisterObjectType("Float3", sizeof(Float3), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK |
-            asOBJ_APP_CLASS_ALLFLOATS) < 0)
+	if(engine->RegisterObjectType("Float3", sizeof(Float3), asOBJ_VALUE |
+            asGetTypeTraits<Float3>() | asOBJ_APP_CLASS_ALLFLOATS) < 0)
     {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Float3ConstructorProxy),
+	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f()",
+            asFUNCTION(Float3ConstructorProxy),
             asCALL_CDECL_OBJFIRST) < 0)
     {
 		ANGELSCRIPT_REGISTERFAIL;
@@ -163,76 +156,165 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
     {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f(float x, float y, float z)",
+	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT,
+            "void f(float x, float y, float z)",
             asFUNCTION(Float3ConstructorProxyAll), asCALL_CDECL_OBJFIRST) < 0)
     {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT, "void f(const Float3 &in other)",
+	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT,
+            "void f(const Float3 &in other)",
             asFUNCTION(Float3ConstructorProxyCopy), asCALL_CDECL_OBJFIRST) < 0)
     {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Float3DestructorProxy),
+	if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_DESTRUCT, "void f()",
+            asFUNCTION(Float3DestructorProxy),
             asCALL_CDECL_OBJFIRST) < 0)
     {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	// Operators //
 	if(engine->RegisterObjectMethod("Float3", "Float3& opAssign(const Float3 &in other)",
-            asFUNCTION(Float3AssignOtherProxy), asCALL_CDECL_OBJFIRST) < 0)
+            asMETHODPR(Float3, operator=, (const Float3&), Float3&), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "Float3 opAdd(const Float3 &in other)", asFUNCTION(Float3AddOtherProxy),
-            asCALL_CDECL_OBJFIRST) < 0)
+    
+	if(engine->RegisterObjectMethod("Float3", "Float3 opAdd(const Float3 &in other) const",
+            asMETHODPR(Float3, operator+, (const Float3&) const, Float3), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "Float3 opSub(const Float3 &in other)",
-            asFUNCTION(Float3SubOtherProxy), asCALL_CDECL_OBJFIRST) < 0)
+    
+	if(engine->RegisterObjectMethod("Float3", "Float3 opSub(const Float3 &in other) const",
+            asMETHODPR(Float3, operator-, (const Float3&) const, Float3), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "Float3 opMul(float multiply)", asFUNCTION(Float3MulFloatProxy),
-            asCALL_CDECL_OBJFIRST) < 0)
+    
+	if(engine->RegisterObjectMethod("Float3", "Float3 opMul(float multiply) const",
+            asMETHODPR(Float3, operator*, (float) const, Float3), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "Float3 Normalize()", asFUNCTION(Float3NormalizeProxy),
-            asCALL_CDECL_OBJFIRST) < 0)
+    
+	if(engine->RegisterObjectMethod("Float3", "Float3 Normalize() const",
+            asMETHOD(Float3, Normalize),
+            asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("Float3", "float GetX()", asMETHOD(Float3, GetX), asCALL_THISCALL) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("Float3", "float GetY()", asMETHOD(Float3, GetY), asCALL_THISCALL) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("Float3", "float GetZ()", asMETHOD(Float3, GetZ), asCALL_THISCALL) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("Float3", "void SetX(float &in x)", asMETHOD(Float3, SetX), asCALL_THISCALL) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("Float3", "void SetY(float &in y)", asMETHOD(Float3, SetY), asCALL_THISCALL) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("Float3", "void SetZ(float &in z)", asMETHOD(Float3, SetZ), asCALL_THISCALL) < 0)
-	{
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("Float3", "float HAddAbs()", asMETHOD(Float3, HAddAbs), asCALL_THISCALL) < 0)
+    
+	if(engine->RegisterObjectMethod("Float3", "float HAddAbs()", asMETHOD(Float3, HAddAbs),
+            asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
+    // Direct access
+    if(engine->RegisterObjectProperty("Float3", "float X", asOFFSET(Float3, X)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Float3", "float Y", asOFFSET(Float3, Y)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Float3", "float Z", asOFFSET(Float3, Z)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Float4
+    if(engine->RegisterObjectType("Float4", sizeof(Float4), asOBJ_VALUE |
+            asGetTypeTraits<Float4>() | asOBJ_APP_CLASS_ALLFLOATS) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT, "void f()",
+            asFUNCTION(Float4ConstructorProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT, "void f(float value)",
+            asFUNCTION(Float4ConstructorProxySingle), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT,
+            "void f(float x, float y, float z, float w)",
+            asFUNCTION(Float4ConstructorProxyAll), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT,
+            "void f(const Float4 &in other)",
+            asFUNCTION(Float4ConstructorProxyCopy), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_DESTRUCT, "void f()",
+            asFUNCTION(Float4DestructorProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+    // Operators //
+    if(engine->RegisterObjectMethod("Float4", "Float4& opAssign(const Float4 &in other)",
+            asMETHODPR(Float4, operator=, (const Float4&), Float4&), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+    if(engine->RegisterObjectMethod("Float4", "Float4 opAdd(const Float4 &in other) const",
+            asMETHODPR(Float4, operator+, (const Float4&) const, Float4), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterObjectMethod("Float4", "Float4 opSub(const Float4 &in other) const",
+            asMETHODPR(Float4, operator-, (const Float4&) const, Float4), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Float4", "Float4 opMul(float multiply) const",
+            asMETHODPR(Float4, operator*, (float) const, Float4), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    // Direct access
+    if(engine->RegisterObjectProperty("Float4", "float X", asOFFSET(Float4, X)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Float4", "float Y", asOFFSET(Float4, Y)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Float4", "float Z", asOFFSET(Float4, Z)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Float4", "float W", asOFFSET(Float4, W)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
     // ObjectID bind
     // if(engine->RegisterObjectType("ObjectID", sizeof(int), asOBJ_VALUE |
     //         asGetTypeTraits<int>() | asOBJ_APP_CLASS_ALLINTS) < 0)
@@ -449,42 +531,42 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	}
     
 	// Implicit casts for normal types //
-    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "string OpImplCast()",
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "string opImplConv() const",
             WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<string>),
             asCALL_GENERIC) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "int opImplConv()",
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "int opImplConv() const",
             WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<int>),
             asCALL_GENERIC) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "int8 opImplConv()",
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "int8 opImplConv() const",
             WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<char>),
             asCALL_GENERIC) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "float opImplConv()",
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "float opImplConv() const",
             WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<float>),
             asCALL_GENERIC) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "double opImplConv()",
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "double opImplConv() const",
             WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<double>),
             asCALL_GENERIC) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "bool opImplConv()",
+    if(engine->RegisterObjectMethod("ScriptSafeVariableBlock", "bool opImplConv() const",
             WRAP_MFN(ScriptSafeVariableBlock, ConvertAndReturnVariable<bool>),
             asCALL_GENERIC) < 0)
     {
@@ -538,9 +620,11 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 	}
 
 	// Bind GameWorld //
-	if(engine->RegisterObjectType("GameWorld", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0){
+    // TODO: add reference counting for GameWorld
+	if(engine->RegisterObjectType("GameWorld", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+    
 	// Bind the ray cast function //
 	// Result class for ray cast //
 	if(engine->RegisterObjectType("RayCastHitEntity", 0, asOBJ_REF) < 0){
@@ -608,7 +692,96 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
     
 
 	// ------------------ Game entities ------------------ //
+
+    // Physics
+    if(engine->RegisterObjectType("Physics", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    // Currently does nothing
+    if(engine->RegisterObjectProperty("Physics", "bool Marked",
+            asOFFSET(Physics, Marked)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
     
+    if(engine->RegisterObjectMethod("Physics", "Float3 GetVelocity() const",
+            asMETHODPR(Physics, GetVelocity, () const, Float3), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics", "NewtonBody@ GetBody() const",
+            asMETHODPR(Physics, GetBody, () const, NewtonBody*), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Position
+    if(engine->RegisterObjectType("Position", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterObjectProperty("Position", "bool Marked",
+            asOFFSET(Position, Marked)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Position", "Float3 _Position",
+            asOFFSET(Position, _Position)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Position", "Float4 _Orientation",
+            asOFFSET(Position, _Orientation)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // TrackController
+    if(engine->RegisterObjectType("TrackController", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterObjectProperty("TrackController", "bool Marked",
+            asOFFSET(TrackController, Marked)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
+    if(engine->RegisterObjectMethod("TrackController",
+            "bool GetNodePosition(int index, Float3 &out pos, Float4 &out rot) const",
+            asMETHODPR(TrackController, GetNodePosition, (int, Float3&, Float4&) const, bool),
+            asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    // GameWorld
+    if(engine->RegisterObjectMethod("GameWorld", "Physics@ GetComponentPhysics(ObjectID id)",
+            asMETHODPR(GameWorld, GetComponent<Physics>, (ObjectID), Physics&),
+            asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("GameWorld", "Position@ GetComponentPosition(ObjectID id)",
+            asMETHODPR(GameWorld, GetComponent<Position>, (ObjectID), Position&),
+            asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("GameWorld",
+            "TrackController@ GetComponentTrackController(ObjectID id)",
+            asMETHODPR(GameWorld, GetComponent<TrackController>, (ObjectID), TrackController&),
+            asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
     
 
 	// ------------------ Global functions ------------------ //
@@ -647,13 +820,13 @@ void RegisterEngineScriptTypes(asIScriptEngine* engine, std::map<int, string> &t
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("NamedVars"), "NamedVars"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("SimpleDatabase"), "SimpleDatabase"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("Float3"), "Float3"));
+    typeids.insert(make_pair(engine->GetTypeIdByDecl("Float4"), "Float4"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("GameModule"), "GameModule"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("GameWorld"), "GameWorld"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("RayCastHitEntity"), "RayCastHitEntity"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("Prop"), "Prop"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("Brush"), "Brush"));
 	typeids.insert(make_pair(engine->GetTypeIdByDecl("BaseObject"), "BaseObject"));
     typeids.insert(make_pair(engine->GetTypeIdByDecl("EventListener"), "EventListener"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("TrackEntityController"),
-            "TrackEntityController"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("TrackController"), "TrackController"));
+    typeids.insert(make_pair(engine->GetTypeIdByDecl("Physics"), "Physics"));
+    typeids.insert(make_pair(engine->GetTypeIdByDecl("Position"), "Position"));
 }

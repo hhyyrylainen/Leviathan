@@ -293,13 +293,15 @@ namespace Leviathan{
         DLLEXPORT void SetVelocity(Lock &guard, const Float3 &velocities);
 
         //! \brief Gets the absolute velocity
-        DLLEXPORT Float3 GetVelocity(Lock &guard);
+        DLLEXPORT Float3 GetVelocity(Lock &guard) const;
 
-        DLLEXPORT inline Float3 GetVelocity(){
+        DLLEXPORT inline Float3 GetVelocity() const{
 
             GUARD_LOCK();
             return GetVelocity(guard);
         }
+
+        DLLEXPORT NewtonBody* GetBody() const;
 
         //! \brief Sets the torque of the body
         //! \see GetBodyTorque
@@ -611,6 +613,9 @@ namespace Leviathan{
 
         //! \brief Returns the position and rotation for current NodeProgress
         DLLEXPORT void GetPositionOnTrack(Float3 &pos, Float4 &rot) const;
+
+        //! \brief Retursn the position and rotation for the node at index
+        DLLEXPORT bool GetNodePosition(int index, Float3 &pos, Float4 &rot) const;
 
         
         //! Number of the node that has been reached

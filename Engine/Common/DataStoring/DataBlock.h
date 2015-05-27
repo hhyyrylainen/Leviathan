@@ -712,6 +712,7 @@ namespace Leviathan{
 			return true;
 		}
 
+        //! \todo Throw an exception if unallowed
 		template<class ConvertT>
 		DLLEXPORT inline ConvertT ConvertAndReturnVariable() const{
 			// return if not allowed conversion //
@@ -719,12 +720,9 @@ namespace Leviathan{
 				//Logger::Get()->Warning(L"VariableBlock: conversion not allowed");
 				return ConvertT(0);
 			}
+            
 			// return conversion result //
-#ifdef _WIN32
-			return (ConvertT)*this;
-#else
 			return this->operator ConvertT();
-#endif
 		}
 
 	protected:

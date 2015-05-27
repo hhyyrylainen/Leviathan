@@ -194,10 +194,9 @@ void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
 	packet << Slot << (int)PlayerType << PlayerNumber << NetworkedInputID << ControlIdentifier
            << (int)ControlType << PlayerControllerID 
            << Colour;
-	packet << PlayerID << Score << (bool)(SplitSlot != NULL);
+    packet << PaddleObject << GoalAreaObject << TrackObject;
 
-    // TODO: send track id and goal id
-    DEBUG_BREAK;
+	packet << PlayerID << Score << (bool)(SplitSlot != NULL);
 
 	if(SplitSlot){
 		// Add our sub slot data //
@@ -222,7 +221,10 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet, Lock &listlock){
 
 	packet >> PlayerControllerID;
     packet >> Colour;
-    packet >> PlayerID  >> Score;
+
+    packet >> PaddleObject >> GoalAreaObject >> TrackObject;
+    
+    packet >> PlayerID >> Score;
 	
 
 	bool wantedsplit;
@@ -323,7 +325,7 @@ void Pong::PlayerSlot::SetInputThatSendsControls(Lock &guard, PongNInputter* inp
     if(InputObj && input != InputObj){
 
         Logger::Get()->Info("PlayerSlot: destroying old networked input");
-        _ResetNetworkInput();
+        _ResetNetworkInput(guard);
     }
     
 	InputObj = input;

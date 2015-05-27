@@ -12,7 +12,7 @@ using namespace Pong;
 using namespace std;
 // ------------------------------------ //
 Pong::Arena::Arena(Leviathan::GameWorld* world) :
-    TargetWorld(world)
+    TargetWorld(world), BottomBrush(0), TrailKeeper(0), Ball(0) 
 {
 
 }
@@ -118,9 +118,15 @@ newtonmaterialfetchstartlabel:
         {Float3(0.f, paddleheight+bottomthickness/2.f+BASE_ARENASCALE/2.f, 0.f),
                 Float4::IdentityQuaternion()});
 
-    auto& node = TargetWorld->GetComponent<RenderNode>(topbrush);
+    try{
+        auto& node = TargetWorld->GetComponent<RenderNode>(topbrush);
+        
+        node.Node->setVisible(false);        
 
-    node.Node->setVisible(false);
+    } catch(const NotFound&){
+        
+        // Non-gui mode no need to hide things //
+    }
     
 	// arena sides //
 
@@ -457,9 +463,15 @@ addplayerpaddlelabel:
             break;
 		}
 
-        auto& node = TargetWorld->GetComponent<RenderNode>(goalarea);
+        try{
+            auto& node = TargetWorld->GetComponent<RenderNode>(topbrush);
 
-        node.Node->setVisible(false);
+            node.Node->setVisible(false);        
+
+        } catch(const NotFound&){
+        
+            // Non-gui mode no need to hide things //
+        }
 		
 		// Set to slot //
         plyvec[i]->SetGoalAreaObject(goalarea);

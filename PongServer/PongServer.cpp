@@ -52,7 +52,7 @@ void Pong::PongServer::Tick(int mspassed){
         return;
 
     // Let the AI think //
-    if(GameArena && GameArena->GetBall() && !GamePaused){
+    if(GameArena && GameArena->GetBall() != 0 && !GamePaused){
 
         // Find AI slots //
         for(size_t i = 0; i < _PlayerList.Size(); i++){

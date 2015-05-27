@@ -620,20 +620,13 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, L
     const Position::PositionData &pos)
 {
 
-    if(material.empty()){
-
-        Logger::Get()->Error("LoadBrush: trying to create brush with empty material, specify "
-            "\"BaseWhiteNoLighting\" for default");
-        return 0;
-    }
-
     ObjectID brush = world->CreateEntity(worldlock);
 
 	// Setup the model //
 
     auto& position = world->CreatePosition(brush, pos._Position, pos._Orientation);
 
-    auto& box = world->CreateBoxGeometry(brush, size, material);
+    auto& box = world->CreateBoxGeometry(brush, size, material.size() ? material: "BaseWhiteNoLighting");
 
     auto& sendable = world->CreateSendable(brush, SENDABLE_TYPE_BRUSH);
 

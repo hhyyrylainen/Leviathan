@@ -97,7 +97,10 @@ void Leviathan::LeapListener::HandleFrame(const Leap::Frame &frame,
 					// retrieve this gesture in last frame based on id //
 					CircleGesture previousgesturestate = CircleGesture(control.frame(1).gesture(circle.id()));
 					// get progress change and change it to a radian angle //
-					sweptAngle = (float)((circle.progress() - previousgesturestate.progress())*2*PI);
+					sweptAngle = (float)((circle.progress() -
+                            previousgesturestate.progress())*2*PI);
+
+                    (void)sweptAngle;
 				}
 
 

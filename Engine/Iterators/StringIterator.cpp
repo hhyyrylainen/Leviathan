@@ -108,8 +108,11 @@ void Leviathan::StringIterator::StartIterating(std::function<ITERATORCALLBACK_RE
 
 	for(; DataIterator->IsPositionValid(); DataIterator->MoveToNextCharacter()){
 
-		int chara = GetCharacter();
+        // The GetCharacter call will cache the result but there might be iterators that don't
+        // want to get the current character
 #ifdef _DEBUG
+		int chara = GetCharacter();
+        
 		if(DebugMode){
 			// Convert to UTF8 //
 

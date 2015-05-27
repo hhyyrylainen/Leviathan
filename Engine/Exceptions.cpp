@@ -15,6 +15,7 @@ DLLEXPORT Leviathan::Exception::Exception(const Exception &e) noexcept : Message
 DLLEXPORT Exception& Leviathan::Exception::operator=(const Exception &other) noexcept{
 
     Message = other.Message;
+    return *this;
 }
 // ------------------------------------ //
 DLLEXPORT const char* Leviathan::Exception::what() const noexcept{

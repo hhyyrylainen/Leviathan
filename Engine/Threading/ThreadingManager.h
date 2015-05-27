@@ -33,7 +33,7 @@ namespace Leviathan{
 		friend void RunTaskQueuerThread(ThreadingManager* manager);
 	public:
 		DLLEXPORT ThreadingManager(int basethreadspercore = DEFAULT_THREADS_PER_CORE);
-		DLLEXPORT ~ThreadingManager();
+		DLLEXPORT virtual ~ThreadingManager();
 
 		//! Sets up the work queue
 		DLLEXPORT virtual bool Init();

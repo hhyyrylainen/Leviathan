@@ -49,11 +49,13 @@ DLLEXPORT std::shared_ptr<sf::Packet> Leviathan::BaseConstraintSerializer::Seria
 
             return data;
         }
+        default:
+        {
+            // Unknown type... //
+            Logger::Get()->Error("BaseConstraintSerializer: tried to serialize wrong type...");
+            return nullptr;
+        }
     }
-
-    // Unknown type... //
-    Logger::Get()->Error("BaseConstraintSerializer: tried to serialize wrong type...");
-    return nullptr;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::BaseConstraintSerializer::UnSerializeConstraint(Constraintable &object1,
@@ -84,9 +86,9 @@ DLLEXPORT bool Leviathan::BaseConstraintSerializer::UnSerializeConstraint(Constr
             
             return true;
         }
+        default:
+            return false;
     }
-
-    return false;
 }
 
 

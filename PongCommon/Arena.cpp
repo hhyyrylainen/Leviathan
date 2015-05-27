@@ -88,7 +88,12 @@ newtonmaterialfetchstartlabel:
 
 	if(ArenaMatID == -1){
 		// All are probably invalid, force world adding //
-		assert(!infiniteloop && "Stuck infinitely regenerating materials");
+		if(infiniteloop){
+
+            Logger::Get()->Error("Stuck infinitely regenerating materials");
+            return false;
+        }
+        
 		Logger::Get()->Warning("Arena: GenerateArena: world doesn't have materials, regenerating");
 		Leviathan::PhysicsMaterialManager::Get()->CreateActualMaterialsForWorld(nworld);
 		infiniteloop = true;
@@ -120,36 +125,36 @@ newtonmaterialfetchstartlabel:
 	// arena sides //
 
 	// left top //
-	auto tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialtall,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialtall,
         Float3(sidexsize, mheight, sideysize), 
         0.f, ArenaMatID, {Float3(-width/2.f+sidexsize/2.f, mheight/2.f, -height/2.f+sideysize/2.f),
                 Float4::IdentityQuaternion()});
         
-	tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
         Float3(sidexsize, sideheight, sideysize),  0.f, ArenaMatID, {
             Float3(-width/2.f+sidexsize*1.5f, sideheight/2.f, -height/2.f+sideysize/2.f),
                 Float4::IdentityQuaternion()});
 
-	tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
         Float3(sidexsize, sideheight, sideysize),
         0.f, ArenaMatID, {
             Float3(-width/2.f+sidexsize/2.f, sideheight/2.f, -height/2.f+sideysize*1.5f),
                 Float4::IdentityQuaternion()});
 
 	// top right //
-	tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialtall,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialtall,
         Float3(sidexsize, mheight, sideysize), 
         0.f, ArenaMatID, {
             Float3(width/2.f-sidexsize/2.f, mheight/2.f, -height/2.f+sideysize/2.f),
                 Float4::IdentityQuaternion() });
 
-	tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
         Float3(sidexsize, sideheight, sideysize), 
         0.f, ArenaMatID, {
             Float3(width/2.f-sidexsize*1.5f, sideheight/2.f, -height/2.f+sideysize/2.f),
                 Float4::IdentityQuaternion() });
 
-	tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
         Float3(sidexsize, sideheight, sideysize), 
         0.f, ArenaMatID, {
             Float3(width/2.f-sidexsize/2.f, sideheight/2.f, -height/2.f+sideysize*1.5f),
@@ -157,38 +162,38 @@ newtonmaterialfetchstartlabel:
 
 
 	// bottom left //
-	tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialtall,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialtall,
         Float3(sidexsize, mheight, sideysize), 
         0.f, ArenaMatID, {
             Float3(-width/2.f+sidexsize/2.f, mheight/2.f, height/2.f-sideysize/2.f),
                 Float4::IdentityQuaternion() });
 
-	tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
         Float3(sidexsize, sideheight, sideysize), 
         0.f, ArenaMatID, {
             Float3(-width/2.f+sidexsize*1.5f, sideheight/2.f, height/2.f-sideysize/2.f),
                 Float4::IdentityQuaternion() });
 
-	tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
         Float3(sidexsize, sideheight, sideysize), 
         0.f, ArenaMatID, {
             Float3(-width/2.f+sidexsize/2.f, sideheight/2.f, height/2.f-sideysize*1.5f),
                 Float4::IdentityQuaternion() });
 
 	// bottom right //
-	tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialtall,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialtall,
         Float3(sidexsize, mheight, sideysize), 
         0.f, ArenaMatID, {
             Float3(width/2.f-sidexsize/2.f, mheight/2.f, height/2.f-sideysize/2.f),
                 Float4::IdentityQuaternion() });
 
-	tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
         Float3(sidexsize, sideheight, sideysize), 
         0.f, ArenaMatID, {
             Float3(width/2.f-sidexsize*1.5f, sideheight/2.f, height/2.f-sideysize/2.f),
                 Float4::IdentityQuaternion() });
 
-	tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
+	ObjectLoader::LoadBrushToWorld(TargetWorld, sidematerialshort,
         Float3(sidexsize, sideheight, sideysize), 
         0.f, ArenaMatID, {
             Float3(width/2.f-sidexsize/2.f, sideheight/2.f, height/2.f-sideysize*1.5f),
@@ -208,7 +213,7 @@ newtonmaterialfetchstartlabel:
 			case 0:
 				{
 					// fill right with wall //
-					tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld,
+					ObjectLoader::LoadBrushToWorld(TargetWorld,
                         sidematerialshort, Float3(sidexsize, sideheight/2, sideysize*16.f),
                         0.f, ArenaMatID, {
                             Float3(width/2.f-sidexsize/2.f, sideheight/4.f, 0),
@@ -218,7 +223,7 @@ newtonmaterialfetchstartlabel:
 			case 1:
 				{
 					// fill bottom with wall //
-					tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld,
+					ObjectLoader::LoadBrushToWorld(TargetWorld,
                         sidematerialshort, Float3(sidexsize*16.f, sideheight/2, sideysize),
                         0.f, ArenaMatID, { Float3(0, sideheight/4.f, height/2.f-sideysize/2.f),
                                 Float4::IdentityQuaternion() });
@@ -227,7 +232,7 @@ newtonmaterialfetchstartlabel:
 			case 2:
 				{
 					// fill left with wall //
-					tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld,
+					ObjectLoader::LoadBrushToWorld(TargetWorld,
                         sidematerialshort, Float3(sidexsize, sideheight/2, sideysize*16.f), 0.f,
                         ArenaMatID, { Float3(-width/2.f+sidexsize/2.f, sideheight/4.f, 0),
                                 Float4::IdentityQuaternion() });
@@ -236,7 +241,7 @@ newtonmaterialfetchstartlabel:
 			case 3:
 				{
 					// fill top with wall //
-					tmpbrush = ObjectLoader::LoadBrushToWorld(TargetWorld,
+					ObjectLoader::LoadBrushToWorld(TargetWorld,
                         sidematerialshort, Float3(sidexsize*16.f, sideheight/2, sideysize),
                         0.f, ArenaMatID, { Float3(0, sideheight/4.f, -height/2.f+sideysize/2.f),
                                 Float4::IdentityQuaternion() });

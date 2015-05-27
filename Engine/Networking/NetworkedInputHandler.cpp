@@ -76,10 +76,12 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 			_HandleConnectRequestPacket(guard, request, connection);
 			return true;
 		}
+        default:
+        {
+            // Type didn't match anything that we should be concerned with //
+            return false;
+        }
 	}
-
-	// Type didn't match anything that we should be concerned with //
-	return false;
 }
 
 DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<NetworkResponse> response,
@@ -149,11 +151,12 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 
 			return true;
 		}
+        default:
+        {
+            // Type didn't match anything that we should be concerned with //
+            return false;
+        }
 	}
-
-
-	// Type didn't match anything that we should be concerned with //
-	return false;
 }
 // ------------------------------------ //
 void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(Lock &guard,

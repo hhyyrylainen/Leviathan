@@ -67,8 +67,8 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
     _ResourceRefreshHandler(NULL), _EntitySerializerManager(NULL),
     _ConstraintSerializerManager(NULL), _AINetworkCache(NULL), IDDefaultInstance(NULL),
     Owner(owner),
-    NoGui(false), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
-    PreReleaseCompleted(false), NoSTDInput(false), IsClient(false)
+    PreReleaseDone(false), PreReleaseWaiting(false), NoGui(false), NoLeap(false),
+    NoSTDInput(false), IsClient(false), PreReleaseCompleted(false)
 {
 
 	TimePassed = 0;
@@ -460,8 +460,6 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
         while(leapinitthread.joinable()){
 
             auto elapsed = WantedClockType::now() - start;
-
-            int milliseconds = std::chrono::duration_cast<MillisecondDuration>(elapsed).count();
 
             if(elapsed > std::chrono::milliseconds(150)){
 

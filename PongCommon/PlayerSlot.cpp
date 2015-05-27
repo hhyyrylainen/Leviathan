@@ -374,7 +374,7 @@ void Pong::PlayerList::UpdateCustomDataFromPacket(Lock &guard, sf::Packet &packe
 		throw InvalidArgument("packet format for PlayerSlot is invalid");
 	}
 
-	if(vecsize != GamePlayers.size()){
+	if(vecsize != static_cast<int>(GamePlayers.size())){
 		// We need to resize //
 		int difference = vecsize-GamePlayers.size();
 

@@ -20,7 +20,7 @@ namespace Leviathan{
 		friend LeapListener;
 	public:
 		DLLEXPORT LeapManager(Engine* engineinstance);
-		DLLEXPORT ~LeapManager();
+		DLLEXPORT virtual ~LeapManager();
 		// actual methods //
 		DLLEXPORT virtual bool Init();
 		DLLEXPORT virtual void Release();

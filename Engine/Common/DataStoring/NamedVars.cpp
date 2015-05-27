@@ -574,7 +574,7 @@ DLLEXPORT VariableBlock* Leviathan::NamedVariableList::GetValueDirect(){
 
 DLLEXPORT VariableBlock* Leviathan::NamedVariableList::GetValueDirect(const int &nindex){
 
-    if(nindex >= Datas.size())
+    if(nindex >= static_cast<int>(Datas.size()))
         return nullptr;
     
 	return Datas[nindex];
@@ -804,7 +804,7 @@ DLLEXPORT bool Leviathan::NamedVars::GetValue(const string &name, const int &nin
 DLLEXPORT bool Leviathan::NamedVars::GetValue(const int &index, VariableBlock &receiver) const{
 	GUARD_LOCK();
 	// index check //
-	if(index >= Variables.size()){
+	if(index >= static_cast<int>(Variables.size())){
 		return false;
 	}
     

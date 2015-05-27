@@ -19,7 +19,8 @@ DLLEXPORT Leviathan::ObjectFile::~ObjectFile(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ObjectFile::AddNamedVariable(shared_ptr<NamedVariableList> var){
 	// Make sure that name is not in use //
-	if(HeaderVars.Find(var->GetName()) != -1){
+	if(HeaderVars.Find(var->GetName()) < HeaderVars.GetVariableCount()){
+        
 		return false;
 	}
 

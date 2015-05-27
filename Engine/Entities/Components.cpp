@@ -175,6 +175,7 @@ DLLEXPORT RenderNode::RenderNode(){
 DLLEXPORT bool RenderNode::Init(){
 
     Node = nullptr;
+    return true;
 }
 
 DLLEXPORT void RenderNode::Release(Ogre::SceneManager* worldsscene){
@@ -215,6 +216,8 @@ DLLEXPORT Physics::ApplyForceInfo& Physics::ApplyForceInfo::operator =(
 
     MultiplyByMass = other.MultiplyByMass;
     Callback = other.Callback;
+
+    return *this;
 }
 // ------------------------------------ //
 DLLEXPORT Physics::Physics(const Arguments &args) :
@@ -706,7 +709,7 @@ DLLEXPORT void TrackController::Update(float timestep){
 
         ReachedNode += wholeover;
 
-        if(ReachedNode >= Nodes.Markers.size())
+        if(ReachedNode >= static_cast<int>(Nodes.Markers.size()))
             ReachedNode = Nodes.Markers.size()-1;
 
         NodeProgress = singlenodepart;
@@ -722,7 +725,7 @@ void TrackController::_SanityCheckNodeProgress(Lock &guard){
     if(ReachedNode < 0)
         ReachedNode = 0;
 
-    if(ReachedNode >= Nodes.Markers.size())
+    if(ReachedNode >= static_cast<int>(Nodes.Markers.size()))
         ReachedNode = Nodes.Markers.size()-1;
 }
 // ------------------------------------ //

@@ -42,6 +42,13 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
 
         }
         break;
+        default:
+        {
+            Logger::Get()->Error("SendableSystem: processed entity type is invalid, type: "+
+                Convert::ToString(node._Sendable.SendableHandleType));
+            DEBUG_BREAK;
+            return;
+        }
     }
             
     auto end = node._Sendable.UpdateReceivers.end();
@@ -116,7 +123,7 @@ DLLEXPORT void TrackControllerSystem::ProcessNode(TrackControllerNode &node, Obj
     for(auto&& tuple : node._Parent.Children){
 
         // Request position //
-        auto& physics = world->GetComponent<Physics>(nodesobject);
+        auto& physics = world->GetComponent<Physics>(get<0>(tuple));
         auto& position = physics._Position;
 
         GUARD_LOCK_OTHER_NAME((&physics), physicslock);

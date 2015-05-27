@@ -28,8 +28,8 @@ namespace Leviathan{
 	// Used to pass master server info to the application //
 	struct MasterServerInformation{
 		MasterServerInformation(bool iammaster, const std::string &identificationstr) :
-            MasterServerIdentificationString(identificationstr), IAmMyOwnMaster(true),
-            RequireMaster(false)
+            MasterServerIdentificationString(identificationstr), RequireMaster(false),
+            IAmMyOwnMaster(true)
         {
 
 		}
@@ -67,7 +67,7 @@ namespace Leviathan{
 	public:
 		// Either a client or a server handler //
 		DLLEXPORT NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler);
-		DLLEXPORT ~NetworkHandler();
+		DLLEXPORT virtual ~NetworkHandler();
 
 		DLLEXPORT virtual bool Init(const MasterServerInformation &info);
         

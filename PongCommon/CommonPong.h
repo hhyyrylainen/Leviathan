@@ -279,8 +279,8 @@ namespace Pong{
 
 				GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
 
-				assert(vars->GetValueAndConvertTo<string>("GameDatabase", savefile) &&
-                    "invalid game variable configuration, no GameDatabase");
+				if(!vars->GetValueAndConvertTo<string>("GameDatabase", savefile))
+                    Logger::Get()->Error("invalid game variable configuration, no GameDatabase");
 
 				GameConfigurationData->LoadFromFile(savefile);
 				Logger::Get()->Info("Loaded game configuration database");
@@ -394,7 +394,7 @@ namespace Pong{
 			{
 				SCRIPT_REGISTERFAIL;
 			}
-			if(engine->RegisterObjectMethod("PongBase", "Prop@ GetBall()",
+			if(engine->RegisterObjectMethod("PongBase", "ObjectID GetBall()",
                     WRAP_MFN(BasePongParts, GetBall), asCALL_GENERIC) < 0)
 			{
 				SCRIPT_REGISTERFAIL;
@@ -583,19 +583,17 @@ namespace Pong{
 			{
 				SCRIPT_REGISTERFAIL;
 			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "bool DoesPlayerNumberMatchThisOrParent(int number)",
+			if(engine->RegisterObjectMethod("PlayerSlot",
+                    "bool DoesPlayerNumberMatchThisOrParent(int number)",
                     asMETHOD(PlayerSlot, DoesPlayerNumberMatchThisOrParent), asCALL_THISCALL) < 0)
 			{
 				SCRIPT_REGISTERFAIL;
 			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "int GetPlayerID()", asMETHOD(PlayerSlot, GetPlayerID),
-                    asCALL_THISCALL) < 0)
+			if(engine->RegisterObjectMethod("PlayerSlot", "int GetPlayerID()",
+                    asMETHOD(PlayerSlot, GetPlayerID), asCALL_THISCALL) < 0)
 			{
 				SCRIPT_REGISTERFAIL;
 			}
-
-			
-
 
 			return MoreCustomScriptTypes(engine);
 		}

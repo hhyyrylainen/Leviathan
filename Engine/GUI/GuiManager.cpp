@@ -412,8 +412,8 @@ private:
                     if(OurOwnedBuffer){
                     
                         if((event.xselectionrequest.target == XA_STRING ||
-                                (event.xselectionrequest.target == XA_UTF8_STRING(XDisplay)) &&
-                                event.xselectionrequest.selection == XA_CLIPBOARD(XDisplay)))
+                                (event.xselectionrequest.target == XA_UTF8_STRING(XDisplay))) &&
+                                event.xselectionrequest.selection == XA_CLIPBOARD(XDisplay))
                         {
 
                             if(response.xselection.property == None){
@@ -608,7 +608,6 @@ private:
 
         // Then send an event for it to process... //
         unsigned char stopproperty[] = "stop";
-        int count = 1;
 
         XChangeProperty(XDisplay, ClipboardWindow, XA_STRING, XA_STRING, 8,
             PropModeReplace, stopproperty, 5);

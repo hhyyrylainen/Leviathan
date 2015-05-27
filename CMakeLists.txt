@@ -6,8 +6,8 @@ project(Leviathan)
 # version number
 set(LEVIATHAN_VERSION_STABLE 0)
 set(LEVIATHAN_VERSION_MAJOR 7)
-set(LEVIATHAN_VERSION_MINOR 0)
-set(LEVIATHAN_VERSION_PATCH 2)
+set(LEVIATHAN_VERSION_MINOR 1)
+set(LEVIATHAN_VERSION_PATCH 0)
 
 set(LEVIATHAN_VERSION_STR ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}.${LEVIATHAN_VERSION_MINOR}.${LEVIATHAN_VERSION_PATCH})
 set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LEVIATHAN_VERSION_MINOR}${LEVIATHAN_VERSION_PATCH})
@@ -145,7 +145,7 @@ else(WIN32)
   add_definitions(-fextended-identifiers)
 
   # C++14
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-reorder -Wno-unused-function -Wno-unknown-pragmas")
   
   # We need X11 on linux for window class to work
   find_package(X11)

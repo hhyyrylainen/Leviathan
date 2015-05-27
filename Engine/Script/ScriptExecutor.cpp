@@ -640,7 +640,7 @@ void Leviathan::ScriptExecutor::PrintAdditionalExcept(asIScriptContext *ctx){
     
 	// Loop the stack starting from the frame below the current function
     // (actually might be nice to print the top frame too)
-	for(auto n = 0; n < ctx->GetCallstackSize(); n++){
+	for(size_t n = 0; n < ctx->GetCallstackSize(); n++){
         
 		// Get the function object //
 		const asIScriptFunction* function = ctx->GetFunction(n);

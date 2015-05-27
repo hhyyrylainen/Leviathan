@@ -694,9 +694,10 @@ void Pong::PongGame::VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus)
             
             return;
         }
-
+        default:
+        {
+            Logger::Get()->Error("Pong: unknown state!");
+            DEBUG_BREAK;
+        }
 	}
-
-    Logger::Get()->Error("Pong: unknown state!");
-	DEBUG_BREAK;
 }

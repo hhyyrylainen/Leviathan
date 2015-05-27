@@ -108,6 +108,8 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_pt
 
 
     switch(request->GetType()){
+        default:
+            return false;
         case NETWORKREQUESTTYPE_WORLD_CLOCK_SYNC:
         {
 
@@ -148,9 +150,6 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(shared_pt
             return true;
         }
     }
-
-
-	return false;
 }
 
 DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shared_ptr<NetworkResponse> message,

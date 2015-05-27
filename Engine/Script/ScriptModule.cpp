@@ -88,7 +88,9 @@ FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScrip
 	unique_ptr<FunctionParameterInfo> newinfo(new FunctionParameterInfo(funcid, parameterc));
 
 	// fill it with data //
-	asIScriptModule* module = ScriptBuilder->GetModule();
+
+    // This verifies that the module is built //
+	ScriptBuilder->GetModule();
 
 	// space is already reserved and objects allocated //
 	for(unsigned int i = 0; i < parameterc; i++){

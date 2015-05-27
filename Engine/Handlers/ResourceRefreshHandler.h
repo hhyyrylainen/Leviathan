@@ -112,7 +112,7 @@ namespace Leviathan{
 	class ResourceRefreshHandler : public ThreadSafe{
 	public:
 		DLLEXPORT ResourceRefreshHandler();
-		DLLEXPORT ~ResourceRefreshHandler();
+		DLLEXPORT virtual ~ResourceRefreshHandler();
 
 		DLLEXPORT virtual bool Init();
 		DLLEXPORT virtual void Release();

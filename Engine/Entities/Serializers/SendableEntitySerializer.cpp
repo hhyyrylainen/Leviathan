@@ -246,8 +246,11 @@ DLLEXPORT bool SendableEntitySerializer::VerifyAndFillReceivedState(Received* re
                 }
             }
 
-            Logger::Get()->Warning("Entity old state "+Convert::ToString(referencetick)+
-                " is no longer in memory");
+            if(!olderexist){
+
+                Logger::Get()->Warning("Entity old state "+Convert::ToString(referencetick)+
+                    " is no longer in memory, too small buffer");
+            }
         }
             
     } else {

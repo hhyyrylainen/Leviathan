@@ -146,8 +146,9 @@ DLLEXPORT bool Leviathan::ViewerCameraPos::ReceiveInput(OIS::KeyCode key, int mo
 	case OIS::KC_S: if(!down && m_Forward == -1) m_Forward = 0; else if(down) m_Forward = -1; return true;
 	case OIS::KC_SPACE: if(!down && m_Vertical == 1) m_Vertical = 0; else if(down) m_Vertical = 1; return true;
 	case OIS::KC_LCONTROL: if(!down && m_Vertical == -1) m_Vertical = 0; else if(down) m_Vertical = -1; return true;
+        default:
+            return false;
 	}
-	return false;
 }
 
 DLLEXPORT bool Leviathan::ViewerCameraPos::OnMouseMove(int xmove, int ymove){

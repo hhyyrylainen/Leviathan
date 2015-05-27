@@ -21,7 +21,7 @@ void ObjectLoader::_CreatePropCommon(GameWorld* world, Lock &worldlock,
     ObjectID prop, const std::string &ogrefile, Model &model)
 {
 
-    auto& constraintable = world->CreateConstraintable(prop, prop, world);
+    world->CreateConstraintable(prop, prop, world);
 
     // Load the Ogre entity if in graphical mode //
     auto scene = world->GetScene();
@@ -601,9 +601,9 @@ DLLEXPORT bool ObjectLoader::LoadNetworkBrush(GameWorld* world, Lock &worldlock,
 
     auto& box = world->CreateBoxGeometry(brush, size, material);
 
-    auto& received = world->CreateReceived(brush, SENDABLE_TYPE_BRUSH);
+    world->CreateReceived(brush, SENDABLE_TYPE_BRUSH);
 
-    auto& constraintable = world->CreateConstraintable(brush, brush, world);
+    world->CreateConstraintable(brush, brush, world);
 
     auto& physics = world->CreatePhysics(brush, brush, world, position, nullptr);
 
@@ -637,7 +637,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, L
 
     auto& sendable = world->CreateSendable(brush, SENDABLE_TYPE_BRUSH);
 
-    auto& constraintable = world->CreateConstraintable(brush, brush, world);
+    world->CreateConstraintable(brush, brush, world);
 
     auto& physics = world->CreatePhysics(brush, brush, world, position, &sendable);
 
@@ -656,9 +656,9 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrackControllerToWorld(GameWorld
     ObjectID controller = world->CreateEntity(worldlock);
 
     auto& owner = world->CreatePositionMarkerOwner(controller);
-    auto& parent = world->CreateParent(controller);
+    world->CreateParent(controller);
     auto& sendable = world->CreateSendable(controller, SENDABLE_TYPE_TRACKCONTROLLER);
-    auto& track = world->CreateTrackController(controller, owner, &sendable);
+    world->CreateTrackController(controller, owner, &sendable);
 
 	// Set nodes //
 	for(auto iter = initialtrack.begin(); iter != initialtrack.end(); ++iter){
@@ -687,7 +687,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrailToWorld(GameWorld* world, L
     ObjectID entity = world->CreateEntity(worldlock);
 
     // TODO: add sendable here
-    auto& position = world->CreatePosition(entity, pos._Position, pos._Orientation);
+    world->CreatePosition(entity, pos._Position, pos._Orientation);
 
     auto scene = world->GetScene();
 
@@ -717,7 +717,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrailToWorld(GameWorld* world, L
         
     } else {
 
-        auto& trail = world->CreateTrail(entity, nullptr, material, properties);
+        world->CreateTrail(entity, nullptr, material, properties);
     }
 
     // Notify that it has been created //

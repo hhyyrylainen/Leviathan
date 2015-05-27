@@ -102,8 +102,8 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
 	std::vector<PlayerSlot*>& plys = plylist->GetVec();
 
 
-	PlayerSlot* curplayer;
-	PLAYERCONTROLS activecontrols;
+	PlayerSlot* curplayer = nullptr;
+	PLAYERCONTROLS activecontrols = PLAYERCONTROLS_NONE;
 	int playerid = -1;
 
 	for(size_t i = 0; i < plys.size(); i++){
@@ -132,7 +132,7 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
             break;
 	}
 
-	if(playerid == -1){
+	if(playerid == -1 || curplayer == nullptr){
 
 		Logger::Get()->Error("Pong input thing failed to find player ID");
 		return NULL;
@@ -141,7 +141,8 @@ DLLEXPORT unique_ptr<NetworkedInput> Pong::PongInputFactory::CreateNewInstanceFo
     Logger::Get()->Info("Creating our input object: "+Convert::ToString(playerid)+", controls: "+
         Convert::ToString(activecontrols));
 	
-	unique_ptr<PongNInputter> tmpobj(new PongNInputter(playerid, inputid, curplayer, activecontrols));
+	unique_ptr<PongNInputter> tmpobj(new PongNInputter(playerid, inputid, curplayer,
+            activecontrols));
 
 	curplayer->SetInputThatSendsControls(pongplayerlock, tmpobj.get());
 
@@ -475,6 +476,11 @@ bool Pong::PongNInputter::_HandleKeyThing(OIS::KeyCode key, bool down){
 	case CONTROLKEYACTION_RIGHT: targetbit = 1; break; // bit set in PONG_INPUT_FLAGS_RIGHT
 	case CONTROLKEYACTION_POWERUPDOWN: targetbit = 3; break; // bit set in PONG_INPUT_FLAGS_POWERDOWN
 	case CONTROLKEYACTION_POWERUPUP: targetbit = 2; break; // bit set in PONG_INPUT_FLAGS_POWERUP
+        default:
+        {
+            // Not our key //
+            return false;
+        }
 	}
 
 	// Set/unset the changed bit //

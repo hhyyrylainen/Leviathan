@@ -38,12 +38,14 @@ public:
     
     PlayerConnectionPreparer(ConnectedPlayer* ply, GameWorld* world,
         std::shared_ptr<ConnectionInfo> connection) :
-        Pinging(PING_STATE_NONE), GameWorldCompromised(false), ObjectsReady(false), AllDone(false),
-        Player(ply), World(world), Connection(connection), PingTime(0)
+        GameWorldCompromised(false), World(world),
+        Player(ply), Connection(connection), TimingFailed(false),
+        Pinging(PING_STATE_NONE), PingTime(0), ObjectsReady(false), AllDone(false)
     {
 
 
     }
+    
     ~PlayerConnectionPreparer(){
 
         // Cancel all tasks //
@@ -648,15 +650,19 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(Lock &guard, ObjectID id){
 
         // This is at least a decent place to send them,
         // any constraints created later will get send when they are created
-
+        Sendable* issendable = nullptr;
+        
         try{
-            auto& issendable = GetComponent<Sendable>(id);
+            issendable = &GetComponent<Sendable>(id);
 
         } catch(const NotFound&){
 
             // Not sendable no point in continuing //
             return;
         }
+
+        if(!issendable)
+            return;
 
         auto end = ReceivingPlayers.end();
         for(auto iter = ReceivingPlayers.begin(); iter != end; ++iter){
@@ -670,6 +676,7 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(Lock &guard, ObjectID id){
                 continue;
             }
 
+            // TODO: pass issendable here to avoid an extra lookup
             if(!SendObjectToConnection(guard, id, safe)){
 
                 Logger::Get()->Warning("GameWorld: CreateEntity: failed to send object to player "
@@ -1046,7 +1053,7 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(Lock &guard,
             GUARD_LOCK_OTHER(world);
 
             // Stop if out of bounds //
-            if(num < 0 || num >= world->Objects.size()){
+            if(num < 0 || num >= static_cast<int>(world->Objects.size())){
 
                 goto taskstopprocessingobjectsforinitialsynclabel;
             }
@@ -1162,6 +1169,8 @@ void Leviathan::GameWorld::UpdatePlayersPositionData(Lock &guard, ConnectedPlaye
     try{
 
         auto& position = GetComponent<Position>(id);
+
+        (void)position._Position;
         
     } catch(const NotFound&){
 

@@ -433,6 +433,9 @@ namespace Leviathan{
         //! \param world Used to allow created constraints to access world data (including physics)
         DLLEXPORT Constraintable(ObjectID id, GameWorld* world);
 
+        //! \brief Destroys all constraints attached to this
+        DLLEXPORT ~Constraintable();
+
         //! Creates a constraint between this and another object
         //! \warning DO NOT store the returned value (since that reference isn't counted)
         //! \note Before the constraint is actually finished, you need to
@@ -440,10 +443,11 @@ namespace Leviathan{
         //! and then ->Init() and then let go of the ptr
         //! \note If you do not want to allow constraints where child is NULL you have to
         //! check if child is NULL before calling this function
-        template<class ConstraintClass>
-        DLLEXPORT std::shared_ptr<ConstraintClass> CreateConstraintWith(Constraintable &other){
-
-            auto tmpconstraint = std::make_shared<ConstraintClass>(World, *this, other);
+        template<class ConstraintClass, typename... Args>
+        DLLEXPORT std::shared_ptr<ConstraintClass> CreateConstraintWith(Constraintable &other,
+            Args&&... args)
+        {
+            auto tmpconstraint = std::make_shared<ConstraintClass>(World, *this, other, args...);
 
             if(tmpconstraint)
                 _NotifyCreate(tmpconstraint, other);
@@ -457,6 +461,7 @@ namespace Leviathan{
 
     protected:
 
+        //! \brief Notifies the other object and the GameWorld of the new constraint
         DLLEXPORT void _NotifyCreate(std::shared_ptr<BaseConstraint> newconstraint,
             Constraintable &other);
 

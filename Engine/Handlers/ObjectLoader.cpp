@@ -257,6 +257,8 @@ DLLEXPORT bool ObjectLoader::LoadNetworkProp(GameWorld* world, Lock &worldlock,
 
     auto& model = world->CreateModel(prop, path);
 
+    world->CreateParentable(prop);
+
     _CreatePropCommon(world, worldlock, prop, ogrefile, model);
 
 	// Find the physics object definition //
@@ -315,6 +317,8 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lo
     auto& position = world->CreatePosition(prop, pos._Position, pos._Orientation);
 
     auto& model = world->CreateModel(prop, path);
+
+    world->CreateParentable(prop);
 
     _CreatePropCommon(world, worldlock, prop, ogrefile, model);
 
@@ -605,6 +609,8 @@ DLLEXPORT bool ObjectLoader::LoadNetworkBrush(GameWorld* world, Lock &worldlock,
 
     world->CreateConstraintable(brush, brush, world);
 
+    world->CreateParentable(brush);
+
     auto& physics = world->CreatePhysics(brush, brush, world, position, nullptr);
 
     _CreateBrushModel(world, worldlock, brush, physics, box, position, mass, size);
@@ -629,6 +635,8 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, L
     auto& box = world->CreateBoxGeometry(brush, size, material.size() ? material: "BaseWhiteNoLighting");
 
     auto& sendable = world->CreateSendable(brush, SENDABLE_TYPE_BRUSH);
+
+    world->CreateParentable(brush);
 
     world->CreateConstraintable(brush, brush, world);
 
@@ -659,7 +667,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrackControllerToWorld(GameWorld
         // TODO: make sure that these are cleaned up once no longer needed
         auto created = world->CreateEntity(worldlock);
 
-        auto& pos = world->CreatePosition(controller, iter->_Position, iter->_Orientation);
+        auto& pos = world->CreatePosition(created, iter->_Position, iter->_Orientation);
         
 		// Add position //
 		owner.Add(created, pos);
@@ -681,6 +689,8 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrailToWorld(GameWorld* world, L
 
     // TODO: add sendable here
     world->CreatePosition(entity, pos._Position, pos._Orientation);
+
+    // TODO: sendable
 
     auto scene = world->GetScene();
 

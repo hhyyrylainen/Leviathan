@@ -1010,6 +1010,18 @@ DLLEXPORT Constraintable::Constraintable(ObjectID id, GameWorld* world) :
 
 }
 
+DLLEXPORT Constraintable::~Constraintable(){
+
+    GUARD_LOCK();
+
+    for(auto&& constraint : PartInConstraints){
+
+        constraint->Destroy(this);
+    }
+
+    PartInConstraints.clear();
+}
+
 DLLEXPORT void Constraintable::RemoveConstraint(BaseConstraint* removed){
 
     GUARD_LOCK();

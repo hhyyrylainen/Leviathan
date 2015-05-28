@@ -303,6 +303,45 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
             
             return true;
         }
+        case NETWORKRESPONSETYPE_ENTITY_CONSTRAINT:
+        {
+            // We received a new entity! //
+            // TODO: do a system that automatically creates worlds on the client //
+            ThreadingManager::Get()->QueueTask(new
+                QueuedTask(std::bind<void>([](shared_ptr<NetworkResponse> message) -> void
+                    {
+
+                        auto packetdata = message->GetResponseDataForEntityConstraint();
+
+                        if(!packetdata){
+                            // Invalid data //
+                            return;
+                        }
+
+                        // Get a matching world //
+                        auto world = LeviathanApplication::Get()->GetGameWorld(
+                            packetdata->WorldID);
+
+                        if(!world){
+
+                            Logger::Get()->Error("NetworkClientInterface: handle response: "
+                                "couldn't find a matching world for constraint message, "
+                                "WorldID: "+Convert::ToString(packetdata->WorldID));
+                            return;
+                        }
+
+                        if(!world->HandleConstraintPacket(packetdata)){
+
+                            Logger::Get()->Error("NetworkClientInterface: couldn't handle "
+                                "constraint packet");
+                        }
+
+                    }, message)));
+
+            
+            // It will be handled soon //
+            return true;
+        }
         case NETWORKRESPONSETYPE_ENTITY_DESTRUCTION:
         {
             // Time to destroy an entity //

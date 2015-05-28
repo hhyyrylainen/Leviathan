@@ -24,22 +24,18 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
     // Create current state here as one or more conections should require it //
     shared_ptr<ObjectDeltaStateData> curstate;
 
-    DEBUG_BREAK;
-
     switch(node._Sendable.SendableHandleType){
+        case SENDABLE_TYPE_PROP:
         case SENDABLE_TYPE_BRUSH:
         {
-
-        }
-        break;
-        case SENDABLE_TYPE_PROP:
-        {
-
+            curstate = PositionDeltaState::CaptureState(world->GetComponent<Position>(nodesobject),
+                ticknumber);
         }
         break;
         case SENDABLE_TYPE_TRACKCONTROLLER:
         {
-
+            curstate = TrackControllerState::CaptureState(world->GetComponent<TrackController>(
+                    nodesobject), ticknumber);
         }
         break;
         default:
@@ -49,6 +45,15 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
             DEBUG_BREAK;
             return;
         }
+    }
+
+    if(!curstate){
+
+        Logger::Get()->Error("SendableSystem: created invalid state for entity, id: "+
+            Convert::ToString(nodesobject)+", type: "+Convert::ToString(
+                node._Sendable.SendableHandleType));
+        
+        return;
     }
             
     auto end = node._Sendable.UpdateReceivers.end();

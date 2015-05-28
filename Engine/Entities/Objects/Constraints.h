@@ -13,14 +13,20 @@ namespace Leviathan{
     {
         //! Type is SliderConstraint
         ENTITY_CONSTRAINT_TYPE_SLIDER = 1,
-
             
-            //! This type is used to connect entities to various controllers
-            //! like TrackEntityController
-            ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT,
-                
-            ENTITY_CONSTRAINT_TYPE_CUSTOM = 1000
-            };
+            
+        //! This type is used to connect entities to various controllers
+        //! like TrackEntityController
+        ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT,
+
+        
+         
+        //! Constraint has been destructed, used to not allow
+        //! destruction multiple times
+        ENTITY_CONSTRAINT_TYPE_DESTRUCTED,
+            
+        ENTITY_CONSTRAINT_TYPE_CUSTOM = 1000
+    };
 
     //! \brief Base class for constraint data types, used to serialize constraint states to
     //! state objects
@@ -37,6 +43,14 @@ namespace Leviathan{
     public:
         DLLEXPORT BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world,
             Constraintable &first, Constraintable &second);
+
+        //! \brief Variant for forcing id
+        //!
+        //! Used for receiving from network
+        DLLEXPORT BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world,
+            Constraintable &first, Constraintable &second, int id);
+        
+        
         DLLEXPORT virtual ~BaseConstraint();
             
         //! \brief Actually creates the Newton joint.
@@ -49,12 +63,11 @@ namespace Leviathan{
         //! \brief Calls the Newton destroy function
         DLLEXPORT void Release();
 
-        //! Called when either one of constraint parts wants to disconnect
-        //!
-        //! Destroys the entire constraint
-        //! \param callinginstance Ptr to either the parent or child is used to skip call to it
-        //! (the destructor there is already running)
-        DLLEXPORT void ConstraintPartUnlinkedDestroy(Constraintable* callinginstance);
+        //! \brief Call to destroy this constraint
+        //! \param skipthis Skips removing from this side, avoid
+        //! unlinking multiple times from one side when it is being
+        //! destructed
+        DLLEXPORT void Destroy(Constraintable* skipthis = nullptr);
             
         DLLEXPORT inline ENTITY_CONSTRAINT_TYPE GetType() const{
             return Type;
@@ -66,7 +79,9 @@ namespace Leviathan{
         //! \brief Gets the second object
         DLLEXPORT Constraintable& GetSecondEntity() const;
 
-            
+        //! \brief Returns ID
+        DLLEXPORT int GetID() const;
+
     protected:
         // called to verify params before init proceeds //
         DLLEXPORT virtual bool _CheckParameters();
@@ -75,6 +90,9 @@ namespace Leviathan{
         // ------------------------------------ //
         Constraintable& FirstObject;
         Constraintable& SecondObject;
+
+        //! Server and client matching identifier for deleting constraints
+        int ID;
             
         //! \note World is a direct ptr since all joints MUST be destroyed before the
         //! world is released
@@ -93,6 +111,13 @@ namespace Leviathan{
     public:
         DLLEXPORT SliderConstraint(GameWorld* world, Constraintable &first,
             Constraintable &second);
+
+        //! \brief Variant for forcing id
+        //!
+        //! Used for receiving from network
+        DLLEXPORT SliderConstraint(GameWorld* world, Constraintable &first,
+            Constraintable &second, int id);
+        
         DLLEXPORT virtual ~SliderConstraint();
 
 

@@ -357,6 +357,12 @@ namespace Leviathan{
 
         //! \brief Call when a new constraint is created, will broadcast on the server
         DLLEXPORT void NotifyNewConstraint(std::shared_ptr<BaseConstraint> constraint);
+
+        //! \brief Removes a constraint and notifies possible clients that it was destroyed
+        DLLEXPORT void ConstraintDestroyed(BaseConstraint* constraint);
+
+        //! \brief Creates a network constraint at the next suitable time
+        DLLEXPORT bool HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data);
         
 
 		// Ray callbacks //
@@ -492,6 +498,14 @@ namespace Leviathan{
 
         // Has IDs of deleted objects is used to destroy nodes
         std::vector<ObjectID> NodesToInvalidate;
+
+        //! Mutex for ConstraintList
+        Mutex ConstraintListMutex;
+
+        //! List of constraints in this world
+        //!
+        //! Used to send full lists to clients
+        std::vector<std::shared_ptr<BaseConstraint>> ConstraintList;
 
         // Systems, nodes and components //
         // Note: all of these should be cleared in ClearObjects

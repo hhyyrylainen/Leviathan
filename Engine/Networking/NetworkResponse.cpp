@@ -908,18 +908,30 @@ DLLEXPORT std::shared_ptr<sf::Packet>  NetworkResponseDataForInitialEntity::GetD
 }
 // ------------------ NetworkResponseDataForEntityConstraint ------------------ //
 DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(
-    int worldid, int entity1, int entity2, bool create, ENTITY_CONSTRAINT_TYPE type,
-    std::shared_ptr<sf::Packet> &data) :
-    WorldID(worldid), EntityID1(entity1), EntityID2(entity2), Create(create), Type(type),
-    ConstraintData(data)
+    int worldid, int constraintid, int entity1, int entity2, bool create,
+    ENTITY_CONSTRAINT_TYPE type, std::shared_ptr<sf::Packet> &data) :
+    WorldID(worldid), ConstraintID(constraintid), EntityID1(entity1), EntityID2(entity2),
+    Create(create), Type(type), ConstraintData(data)
 {
 
-}     
+}
 
-DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(
+    int worldid, int constraintid, ObjectID entity1, ObjectID entity2, bool create,
+    ENTITY_CONSTRAINT_TYPE type) :
+    WorldID(worldid), ConstraintID(constraintid), EntityID1(entity1), EntityID2(entity2),
+    Create(create), Type(type)
+{
+
+}
+
+
+DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(
+    sf::Packet &frompacket)
+{
 
     int32_t tmptype;
-    frompacket >> WorldID >> EntityID1 >> EntityID2 >> Create >> tmptype;
+    frompacket >> WorldID >> ConstraintID >> EntityID1 >> EntityID2 >> Create >> tmptype;
     
     std::string tmpstr;
     frompacket >> tmpstr;
@@ -930,14 +942,20 @@ DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityCo
 
     Type = static_cast<ENTITY_CONSTRAINT_TYPE>(tmptype);
 
-    ConstraintData = make_shared<sf::Packet>();
+    if(tmpstr.size() > 0){
+        
+        ConstraintData = make_shared<sf::Packet>();
 
-    ConstraintData->append(tmpstr.c_str(), tmpstr.size());
+        ConstraintData->append(tmpstr.c_str(), tmpstr.size());
+    }
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForEntityConstraint::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void Leviathan::NetworkResponseDataForEntityConstraint::AddDataToPacket(
+    sf::Packet &packet)
+{
 
-    packet << WorldID << EntityID1 << EntityID2 << Create << static_cast<int32_t>(Type);
+    packet << WorldID << ConstraintID << EntityID1 << EntityID2 << Create <<
+        static_cast<int32_t>(Type);
 
     // There might be no data for whatever reason //
     if(ConstraintData){

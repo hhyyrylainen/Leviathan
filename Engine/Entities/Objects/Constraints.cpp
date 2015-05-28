@@ -3,12 +3,24 @@
 
 #include "Newton/PhysicalWorld.h"
 #include "../GameWorld.h"
+#include "../../Handlers/IDFactory.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT BaseConstraint::BaseConstraint(ENTITY_CONSTRAINT_TYPE type,
     GameWorld* world, Constraintable &first, Constraintable &second) : 
-	FirstObject(first), SecondObject(second), OwningWorld(world), Joint(NULL), Type(type)
+	FirstObject(first), SecondObject(second), ID(IDFactory::GetID()),
+    OwningWorld(world), Joint(NULL), Type(type)
+
 {
+    
+}
+
+DLLEXPORT BaseConstraint::BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world,
+    Constraintable &first, Constraintable &second, int id) :
+    FirstObject(first), SecondObject(second), ID(id),
+    OwningWorld(world), Joint(NULL), Type(type)
+{
+
 }
 
 DLLEXPORT BaseConstraint::~BaseConstraint(){
@@ -34,33 +46,46 @@ DLLEXPORT bool BaseConstraint::Init(){
 
 DLLEXPORT void BaseConstraint::Release(){
 
-	// Both are called because neither of them invoked this function //
-	ConstraintPartUnlinkedDestroy(NULL);
+    Destroy(nullptr);
 }
 
-DLLEXPORT void BaseConstraint::ConstraintPartUnlinkedDestroy(
-    Constraintable* callinginstance)
-{
+DLLEXPORT void BaseConstraint::Destroy(Constraintable* skipthis /*= nullptr*/){
+    {
+        GUARD_LOCK();
+
+        if(Type == ENTITY_CONSTRAINT_TYPE_DESTRUCTED)
+            return;
+
+        if(&FirstObject != skipthis)
+            FirstObject.RemoveConstraint(this);
+
+        if(&SecondObject != skipthis)
+            SecondObject.RemoveConstraint(this);
     
-    GUARD_LOCK();
-    
-	// Notify the object that isn't calling this function //
-	if(&FirstObject == callinginstance){
+
+        Type = ENTITY_CONSTRAINT_TYPE_DESTRUCTED;
+
+        if(!OwningWorld)
+            return;
+
+        if(Joint && OwningWorld){
         
-		FirstObject.RemoveConstraint(this);
-	}
+            NewtonDestroyJoint(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(), Joint);
+        }
 
-	if(&SecondObject == callinginstance){
+        Joint = NULL;
+    }
 
-		SecondObject.RemoveConstraint(this);
-	}
-    
-	if(Joint && OwningWorld){
-        
-		NewtonDestroyJoint(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(), Joint);
-	}
+    // This call should get rid of the last reference
+    // We have been unlocked before calling delete
+    OwningWorld->ConstraintDestroyed(this);
 
-    Joint = NULL;
+    // We should be deleted now
+}
+// ------------------------------------ //
+DLLEXPORT int BaseConstraint::GetID() const{
+
+    return ID;
 }
 // ------------------------------------ //
 DLLEXPORT bool BaseConstraint::_CheckParameters(){
@@ -84,6 +109,13 @@ DLLEXPORT Constraintable& BaseConstraint::GetSecondEntity() const{
 DLLEXPORT SliderConstraint::SliderConstraint(GameWorld* world,
     Constraintable &first, Constraintable &second) : 
 	BaseConstraint(ENTITY_CONSTRAINT_TYPE_SLIDER, world, first, second), Axis(0)
+{
+
+}
+
+DLLEXPORT SliderConstraint::SliderConstraint(GameWorld* world, Constraintable &first,
+    Constraintable &second, int id) :
+    BaseConstraint(ENTITY_CONSTRAINT_TYPE_SLIDER, world, first, second, id), Axis(0)
 {
 
 }

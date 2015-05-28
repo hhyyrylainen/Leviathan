@@ -362,9 +362,12 @@ namespace Leviathan{
     class NetworkResponseDataForEntityConstraint : public BaseNetworkResponseData{
     public:
         
-        DLLEXPORT NetworkResponseDataForEntityConstraint(int worldid, ObjectID entity1,
-            ObjectID entity2, bool create, ENTITY_CONSTRAINT_TYPE type,
+        DLLEXPORT NetworkResponseDataForEntityConstraint(int worldid, int constraintid,
+            ObjectID entity1, ObjectID entity2, bool create, ENTITY_CONSTRAINT_TYPE type,
             std::shared_ptr<sf::Packet> &data);
+
+        DLLEXPORT NetworkResponseDataForEntityConstraint(int worldid, int constraintid,
+            ObjectID entity1, ObjectID entity2, bool create, ENTITY_CONSTRAINT_TYPE type);
 
         DLLEXPORT NetworkResponseDataForEntityConstraint(sf::Packet &frompacket);
 
@@ -375,6 +378,9 @@ namespace Leviathan{
         
         //! The ID of the world to which the entities belong
 		int WorldID;
+
+        //! The ID of the constraint
+        int ConstraintID;
 
         //! The first entity
         ObjectID EntityID1;
@@ -503,23 +509,37 @@ namespace Leviathan{
 
 		// Named "constructors" for different types //
         // todo: these could be changed to take parameters for the object's constructors instead of pointers
-		DLLEXPORT void GenerateIdentificationStringResponse(NetworkResponseDataForIdentificationString* newddata);
-		DLLEXPORT void GenerateInvalidRequestResponse(NetworkResponseDataForInvalidRequest* newddata);
-		DLLEXPORT void GenerateServerStatusResponse(NetworkResponseDataForServerStatus* newddata);
-		DLLEXPORT void GenerateServerDisallowResponse(NetworkResponseDataForServerDisallow* newddata);
-		DLLEXPORT void GenerateServerAllowResponse(NetworkResponseDataForServerAllow* newddata);
-		DLLEXPORT void GenerateValueSyncResponse(NetworkResponseDataForSyncValData* newddata);
-		DLLEXPORT void GenerateValueSyncEndResponse(NetworkResponseDataForSyncDataEnd* newddata);
+		DLLEXPORT void GenerateIdentificationStringResponse(
+            NetworkResponseDataForIdentificationString* newddata);
+		DLLEXPORT void GenerateInvalidRequestResponse(
+            NetworkResponseDataForInvalidRequest* newddata);
+		DLLEXPORT void GenerateServerStatusResponse(
+            NetworkResponseDataForServerStatus* newddata);
+		DLLEXPORT void GenerateServerDisallowResponse(
+            NetworkResponseDataForServerDisallow* newddata);
+		DLLEXPORT void GenerateServerAllowResponse(
+            NetworkResponseDataForServerAllow* newddata);
+		DLLEXPORT void GenerateValueSyncResponse(
+            NetworkResponseDataForSyncValData* newddata);
+		DLLEXPORT void GenerateValueSyncEndResponse(
+            NetworkResponseDataForSyncDataEnd* newddata);
 		DLLEXPORT void GenerateResourceSyncResponse(const char* dataptr, size_t datasize);
-		DLLEXPORT void GenerateCreateNetworkedInputResponse(NetworkResponseDataForCreateNetworkedInput* newddata);
-		DLLEXPORT void GenerateUpdateNetworkedInputResponse(NetworkResponseDataForUpdateNetworkedInput* newddata);
-        DLLEXPORT void GenerateInitialEntityResponse(NetworkResponseDataForInitialEntity* newddata);
-        DLLEXPORT void GenerateEntityConstraintResponse(NetworkResponseDataForEntityConstraint* newddata);
+		DLLEXPORT void GenerateCreateNetworkedInputResponse(
+            NetworkResponseDataForCreateNetworkedInput* newddata);
+		DLLEXPORT void GenerateUpdateNetworkedInputResponse(
+            NetworkResponseDataForUpdateNetworkedInput* newddata);
+        DLLEXPORT void GenerateInitialEntityResponse(
+            NetworkResponseDataForInitialEntity* newddata);
+        DLLEXPORT void GenerateEntityConstraintResponse(
+            NetworkResponseDataForEntityConstraint* newddata);
         DLLEXPORT void GenerateWorldFrozenResponse(NetworkResponseDataForWorldFrozen* newddata);
         DLLEXPORT void GenerateEntityUpdateResponse(NetworkResponseDataForEntityUpdate* newddata);
-        DLLEXPORT void GenerateEntityDestructionResponse(NetworkResponseDataForEntityDestruction* newddata);
-        DLLEXPORT void GenerateAICacheUpdatedResponse(NetworkResponseDataForAICacheUpdated* newddata);
-        DLLEXPORT void GenerateAICacheRemovedResponse(NetworkResponseDataForAICacheRemoved* newddata);
+        DLLEXPORT void GenerateEntityDestructionResponse(
+            NetworkResponseDataForEntityDestruction* newddata);
+        DLLEXPORT void GenerateAICacheUpdatedResponse(
+            NetworkResponseDataForAICacheUpdated* newddata);
+        DLLEXPORT void GenerateAICacheRemovedResponse(
+            NetworkResponseDataForAICacheRemoved* newddata);
         DLLEXPORT void GenerateDisconnectInputResponse(
             NetworkResponseDataForDisconnectInput* newddata);
 

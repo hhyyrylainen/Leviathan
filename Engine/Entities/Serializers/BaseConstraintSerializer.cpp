@@ -44,6 +44,8 @@ DLLEXPORT std::shared_ptr<sf::Packet> Leviathan::BaseConstraintSerializer::Seria
             auto data = make_shared<sf::Packet>();
 
             const Float3 &axis = slider->GetAxis();
+
+            (*data) << slider->GetID();
             
             (*data) << axis.X << axis.Y << axis.Z;
 
@@ -74,14 +76,15 @@ DLLEXPORT bool Leviathan::BaseConstraintSerializer::UnSerializeConstraint(Constr
 
             // Get the custom data //
             Float3 axis;
+            int id;
 
-            packet >> axis.X >> axis.Y >> axis.Z;
+            packet >> id >> axis.X >> axis.Y >> axis.Z;
 
             if(!packet)
                 return false;
 
             // Create the constraint //
-            object1.CreateConstraintWith<SliderConstraint>(object2)->SetParameters(axis)->
+            object1.CreateConstraintWith<SliderConstraint>(object2, id)->SetParameters(axis)->
                 Init();
             
             return true;

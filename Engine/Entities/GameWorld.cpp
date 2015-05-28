@@ -632,7 +632,86 @@ DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{
 // ------------------------------------ //
 DLLEXPORT void GameWorld::NotifyNewConstraint(std::shared_ptr<BaseConstraint> constraint){
 
+    Lock lock(ConstraintListMutex);
+
+    ConstraintList.push_back(constraint);
+
+    if(IsOnServer){
+
+        GUARD_LOCK();
+        
+        GUARD_LOCK_OTHER_NAME(constraint, constraintlock);
+
+        auto serialized = ConstraintSerializerManager::Get()->SerializeConstraintData(
+            constraint.get());
+
+        auto packet = make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
+        
+        packet->GenerateEntityConstraintResponse(new NetworkResponseDataForEntityConstraint(ID,
+                constraint->GetID(), constraint->GetFirstEntity().PartOfEntity,
+                constraint->GetSecondEntity().PartOfEntity, true, constraint->GetType(),
+                serialized));
+
+        constraintlock.unlock();
+        
+        for(auto&& player : ReceivingPlayers){
+
+            auto safeconnection = NetworkHandler::Get()->GetSafePointerToConnection(
+                player->GetConnection());
+
+            if(safeconnection)
+                safeconnection->SendPacketToConnection(packet, 5);
+        }
+    }
+}
+
+DLLEXPORT void GameWorld::ConstraintDestroyed(BaseConstraint* constraint){
+
+    if(IsOnServer){
+
+        GUARD_LOCK();
+
+        GUARD_LOCK_OTHER_NAME(constraint, constraintlock);
+
+        auto packet = make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1500);
+        
+        packet->GenerateEntityConstraintResponse(new NetworkResponseDataForEntityConstraint(ID,
+                constraint->GetID(), 0, 0, false, constraint->GetType()));
+
+        constraintlock.unlock();
+        
+        for(auto&& player : ReceivingPlayers){
+
+            auto safeconnection = NetworkHandler::Get()->GetSafePointerToConnection(
+                player->GetConnection());
+
+            if(safeconnection)
+                safeconnection->SendPacketToConnection(packet, 10);
+        }
+    }
+
+    Lock lock(ConstraintListMutex);
+
+    for(auto iter = ConstraintList.begin(); iter != ConstraintList.end(); ++iter){
+
+        if((*iter).get() == constraint){
+
+            ConstraintList.erase(iter);
+            return;
+        }
+    }
+}
+
+DLLEXPORT bool GameWorld::HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data){
+
+    if(!data)
+        return false;
+    
+    GUARD_LOCK();
+
     DEBUG_BREAK;
+
+    return true;
 }
 // ------------------ Object managing ------------------ //
 DLLEXPORT ObjectID GameWorld::CreateEntity(Lock &guard){

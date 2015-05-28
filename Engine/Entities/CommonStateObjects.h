@@ -136,7 +136,6 @@ namespace Leviathan{
         DLLEXPORT PositionDeltaState(int tick, sf::Packet &packet);
         DLLEXPORT ~PositionDeltaState();
         
-        //! \brief Templated creation function for all classes that inherit BasePotitionable
         //! \param tick The world tick to place in the resulting state
         DLLEXPORT static inline auto CaptureState(Position &pos,
             int tick)
@@ -187,6 +186,14 @@ namespace Leviathan{
             sf::Packet &packet) override;
 
         DLLEXPORT bool FillMissingData(ObjectDeltaStateData &otherstate) override;
+
+        //! \param tick The world tick to place in the resulting state
+        DLLEXPORT static inline auto CaptureState(TrackController &track,
+            int tick)
+        {
+            return std::make_shared<TrackControllerState>(tick, track.ReachedNode,
+                track.ChangeSpeed, track.NodeProgress);
+        }
 
         int ReachedNode;
         float ChangeSpeed;

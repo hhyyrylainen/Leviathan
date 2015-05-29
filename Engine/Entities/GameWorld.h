@@ -288,7 +288,8 @@ namespace Leviathan{
         template<typename... Args>
         DLLEXPORT TrackController& CreateTrackController(ObjectID id, Args&&... args){
 
-            return *ComponentTrackController.ConstructNew(id, args...);
+            const TrackController::Arguments params = { args... };
+            return *ComponentTrackController.ConstructNew(id, params);
         }
 
         template<typename... Args>

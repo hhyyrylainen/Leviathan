@@ -680,6 +680,25 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrackControllerToWorld(GameWorld
 	return controller;
 }
 
+DLLEXPORT bool ObjectLoader::LoadNetworkTrackController(GameWorld* world, Lock &worldlock,
+    ObjectID id, int reachednode, float nodeprogress, float changespeed, float applyforce,
+    const Parent::Data &childrendata, const PositionMarkerOwner::Data &positions)
+{
+
+    ObjectID controller = id;
+
+    auto& owner = world->CreatePositionMarkerOwner(controller, positions, world, worldlock);
+    world->CreateParent(controller, childrendata, world, worldlock);
+    auto& sendable = world->CreateSendable(controller, SENDABLE_TYPE_TRACKCONTROLLER);
+    world->CreateTrackController(controller, owner, &sendable, reachednode, nodeprogress,
+        changespeed, applyforce);
+
+    // Notify that it has been created //
+    world->NotifyEntityCreate(worldlock, controller);
+    
+	return controller;
+}
+// ------------------------------------ //
 DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrailToWorld(GameWorld* world, Lock &worldlock,
     const std::string &material, const Trail::Properties &properties, bool allowupdatelater,
     const Position::PositionData &pos)

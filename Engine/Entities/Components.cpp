@@ -685,6 +685,14 @@ DLLEXPORT TrackController::TrackController(PositionMarkerOwner& nodes, Sendable*
 {
 
 }
+
+DLLEXPORT TrackController::TrackController(const Arguments &args) :
+    ReachedNode(args.ReachedNode), NodeProgress(args.NodeProgress),
+    ChangeSpeed(args.ChangeSpeed), ForceTowardsPoint(args.ForceTowardsPoint),
+    _Sendable(args._Sendable), Nodes(args.Nodes)
+{
+
+}
 // ------------------------------------ //
 DLLEXPORT void TrackController::Update(float timestep){
 
@@ -743,8 +751,8 @@ DLLEXPORT bool TrackController::GetNodePosition(int index, Float3 &pos, Float4 &
         return false;
     }
 
-    pos = get<1>(Nodes.Markers[index])._Position;
-    rot = get<1>(Nodes.Markers[index])._Orientation;
+    pos = get<1>(Nodes.Markers[index])->_Position;
+    rot = get<1>(Nodes.Markers[index])->_Orientation;
 
     return true;
 }
@@ -755,8 +763,8 @@ DLLEXPORT void TrackController::GetPositionOnTrack(Float3 &pos, Float4 &rot) con
 
     const auto& nodepos = std::get<1>(node);
 
-    pos = nodepos._Position;
-    rot = nodepos._Orientation;
+    pos = nodepos->_Position;
+    rot = nodepos->_Orientation;
 }
 // ------------------------------------ //
 DLLEXPORT bool TrackController::Interpolate(ObjectDeltaStateData &first,
@@ -872,6 +880,17 @@ DLLEXPORT Parent::Parent(){
 
 }
 
+DLLEXPORT Parent::Parent(const Data &data, GameWorld* world, Lock &worldlock){
+
+    Children.reserve(data.EntityIDs.size());
+
+    for(auto&& id : data.EntityIDs){
+
+        // TODO: find already received ids from the world
+        Children.push_back(make_tuple(id, nullptr));
+    }
+}
+// ------------------------------------ //
 DLLEXPORT void Parent::RemoveChildNoNotify(Parentable* which){
 
     GUARD_LOCK();
@@ -916,6 +935,31 @@ DLLEXPORT void Parent::AddDataToPacket(sf::Packet &packet) const{
 
         packet << std::get<0>(Children[i]);
     }
+}
+// ------------------------------------ //
+DLLEXPORT Parent::Data Parent::LoadDataFromPacket(sf::Packet &packet){
+
+    Data data;
+
+    int32_t size;
+
+    packet >> size;
+
+    if(!packet)
+        return data;
+
+    data.EntityIDs.reserve(size);
+
+    for(int32_t i = 0; i < size; i++){
+
+        ObjectID id;
+
+        packet >> id;
+        
+        data.EntityIDs.push_back(id);
+    }
+
+    return data;
 }
 // ------------------ Parentable ------------------ //
 DLLEXPORT Parentable::Parentable() :
@@ -981,12 +1025,28 @@ DLLEXPORT BoxGeometry::BoxGeometry(const Float3 &size, const std::string &materi
 DLLEXPORT PositionMarkerOwner::PositionMarkerOwner(){
 
 }
+
+DLLEXPORT PositionMarkerOwner::PositionMarkerOwner(const Data &positions, GameWorld* world,
+    Lock &worldlock)
+{
+
+    Markers.reserve(positions.EntityPositions.size());
+
+    for(auto&& tuple : positions.EntityPositions){
+
+        ObjectID marker = get<0>(tuple);
+
+        auto& pos = world->CreatePosition(marker, get<1>(tuple), get<2>(tuple));
+
+        Markers.push_back(make_tuple(marker, &pos));
+    }
+}
 // ------------------------------------ //
 DLLEXPORT void PositionMarkerOwner::Add(Lock &guard, ObjectID entity, Position& pos){
 
-    Markers.push_back(std::tie(entity, pos));
+    Markers.push_back(make_tuple(entity, &pos));
 }
-
+// ------------------------------------ //
 DLLEXPORT void PositionMarkerOwner::AddDataToPacket(Lock &guard, sf::Packet &packet) const{
 
     int32_t size = Markers.size();
@@ -995,9 +1055,36 @@ DLLEXPORT void PositionMarkerOwner::AddDataToPacket(Lock &guard, sf::Packet &pac
     
     for(int32_t i = 0; i < size; i++){
 
-        packet << std::get<0>(Markers[i]) << std::get<1>(Markers[i])._Position <<
-            std::get<1>(Markers[i])._Orientation;
+        packet << std::get<0>(Markers[i]) << std::get<1>(Markers[i])->_Position <<
+            std::get<1>(Markers[i])->_Orientation;
     }
+}
+// ------------------------------------ //
+DLLEXPORT PositionMarkerOwner::Data PositionMarkerOwner::LoadDataFromPacket(sf::Packet &packet){
+
+    Data data;
+    
+    int32_t size;
+
+    packet >> size;
+
+    if(!packet)
+        return data;
+
+    data.EntityPositions.reserve(size);
+
+    for(int32_t i = 0; i < size; i++){
+
+        ObjectID id;
+        Float3 pos;
+        Float4 rot;
+
+        packet >> id >> pos >> rot;
+        
+        data.EntityPositions.push_back(move(make_tuple(id, pos, rot)));
+    }
+
+    return data;
 }
 // ------------------ Model ------------------ //
 DLLEXPORT Model::Model(const std::string &file) : ModelFile(file), GraphicalObject(nullptr){

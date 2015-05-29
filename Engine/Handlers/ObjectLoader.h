@@ -89,6 +89,11 @@ namespace Leviathan{
             ObjectID id, const std::string &modelfile, int materialid,
             const Position::PositionData &pos);
 
+        //! \see LoadTrackControllerToWorld
+        DLLEXPORT static bool LoadNetworkTrackController(GameWorld* world, Lock &worldlock,
+            ObjectID id, int reachednode, float nodeprogress, float changespeed, float applyforce,
+            const Parent::Data &childrendata, const PositionMarkerOwner::Data &positions);
+
 
     private:
 

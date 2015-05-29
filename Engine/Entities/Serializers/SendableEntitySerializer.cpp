@@ -39,8 +39,6 @@ DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(GameWorld* wo
     // all updates after serializing get sent)
     sendable.AddConnectionToReceivers(guard, connectionptr);
 
-    DEBUG_BREAK;
-    
     switch(sendable.SendableHandleType){
         case SENDABLE_TYPE_BRUSH:
         {
@@ -141,6 +139,13 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(GameWo
 
             packet >> material >> sizes >> pos >> rot >> physicalid >> mass;
 
+            if(!packet){
+
+                Logger::Get()->Error("SendableEntitySerializer: failed to unserialize brush, "
+                    "invalid packet");
+                return true;
+            }
+
             if(!ObjectLoader::LoadNetworkBrush(world, worldlock, id, material, sizes, mass,
                     physicalid, {pos, rot}))
             {
@@ -159,20 +164,51 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(GameWo
 
             packet >> modelname >> pos >> rot >> physicalid;
 
+            if(!packet){
+
+                Logger::Get()->Error("SendableEntitySerializer: failed to unserialize prop, "
+                    "invalid packet");
+                return true;
+            }
+
             if(!ObjectLoader::LoadNetworkProp(world, worldlock, id, modelname, physicalid,
                     {pos, rot}))
             {
 
-                Logger::Get()->Warning("SendableSerializer: failed to create a brush");
+                Logger::Get()->Warning("SendableSerializer: failed to create a prop");
             }
 
             return true;
         }
         case SENDABLE_TYPE_TRACKCONTROLLER:
         {
+            int reachednode;
+            float nodeprogress;
+            float changespeed;
+            float forcetowardspoint;
 
-            
-            DEBUG_BREAK;
+            packet >> reachednode >> nodeprogress >> changespeed >>
+                forcetowardspoint;
+
+            const auto parentdata = Parent::LoadDataFromPacket(packet);
+
+            const auto positiondata = PositionMarkerOwner::LoadDataFromPacket(packet);
+
+            if(!packet){
+
+                Logger::Get()->Error("SendableEntitySerializer: failed to unserialize "
+                    "track controller invalid packet");
+                return true;
+            }
+
+            if(!ObjectLoader::LoadNetworkTrackController(world, worldlock, id, reachednode,
+                    nodeprogress, changespeed, forcetowardspoint, parentdata, positiondata))
+            {
+
+                Logger::Get()->Warning("SendableSerializer: failed to create a track controller");
+            }
+
+            return true;
         }
         default:
             // Unknown type

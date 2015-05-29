@@ -60,10 +60,17 @@ DLLEXPORT std::unique_ptr<sf::Packet> Leviathan::EntitySerializerManager::Create
         // Find a serializer that can finish it //
         for(size_t i = 0; i < Serializers.size(); i++){
 
-            if(Serializers[i]->CreatePacketForConnection(world, worldlock, id, sendable, *packet,
-                    forwho))
-            {
-                return move(packet);
+            try{
+                if(Serializers[i]->CreatePacketForConnection(world, worldlock, id, sendable,
+                        *packet, forwho))
+                {
+                    return move(packet);
+                }
+            } catch(const Exception &e){
+                
+                Logger::Get()->Error("EntitySerializer: correct serializer threw an exception");
+                e.PrintToLog();
+                DEBUG_BREAK;
             }
         }
 

@@ -387,7 +387,16 @@ namespace Leviathan{
 
     class Parent : public Component{
     public:
+
+        struct Data{
+
+            std::vector<ObjectID> EntityIDs;
+        };
+        
+    public:
         DLLEXPORT Parent();
+
+        DLLEXPORT Parent(const Data &data, GameWorld* world, Lock &worldlock);
 
         //! \brief Removes child object without notifying it
         DLLEXPORT void RemoveChildNoNotify(Parentable* which);
@@ -396,6 +405,9 @@ namespace Leviathan{
         DLLEXPORT void RemoveChildren();
 
         DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
+
+        //! \note The packet needs to be checked that it is still valid after this call
+        DLLEXPORT static Data LoadDataFromPacket(sf::Packet &packet);
 
         //! \brief Does everything necessary to attach a child
         DLLEXPORT void AddChild(ObjectID childid, Parentable &child);
@@ -554,7 +566,17 @@ namespace Leviathan{
     //! \todo Add the Markers to the actual world for sending over the network individually
     class PositionMarkerOwner : public Component{
     public:
+
+        struct Data{
+
+            std::vector<std::tuple<ObjectID, Float3, Float4>> EntityPositions;
+        };
+        
+    public:
         DLLEXPORT PositionMarkerOwner();
+
+        //! \brief Create with automatically created positions
+        DLLEXPORT PositionMarkerOwner(const Data &positions, GameWorld* world, Lock &worldlock);
 
         //! Adds a node
         //! \todo Allow not deleting entities on release
@@ -573,8 +595,11 @@ namespace Leviathan{
             GUARD_LOCK();
             AddDataToPacket(guard, packet);
         }
+
+        //! \note The packet needs to be checked that it is valid after this call
+        DLLEXPORT static Data LoadDataFromPacket(sf::Packet &packet);
         
-        std::vector<std::tuple<ObjectID, Position&>> Markers;
+        std::vector<std::tuple<ObjectID, Position*>> Markers;
     };
 
     class ManualObject : public Component{
@@ -599,9 +624,21 @@ namespace Leviathan{
             Position& Pos;
         };
 
+        struct Arguments{
+
+            PositionMarkerOwner& Nodes;
+            Sendable* _Sendable;
+            int ReachedNode;
+            float NodeProgress;
+            float ChangeSpeed;
+            float ForceTowardsPoint;
+        };
+
     public:
 
         DLLEXPORT TrackController(PositionMarkerOwner& nodes, Sendable* sendable);
+
+        DLLEXPORT TrackController(const Arguments &args);
 
         //! \brief Runs update logic based on timestep
         //! \note Doesn't actually add applyforces only changes internal state

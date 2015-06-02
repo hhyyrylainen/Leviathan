@@ -1,0 +1,22 @@
+/*!
+    \page multiple_windows Opening multiple windows
+    \section sample_code Sample code
+    This is only a proof of concept and may not actually be usable for anything
+    \code{.cpp}
+    // TESTING open a second window //
+    if(false){
+        
+        auto secondwind = Engine::Get()->OpenNewWindow();
+
+        if(!secondwind->GetGUI()->LoadGUIFile("./Data/Scripts/GUI/TestMenu.txt")){
+		
+            Logger::Get()->Error("Pong: failed to load the GuiFile, quitting");
+            LeviathanApplication::GetApp()->StartRelease();
+        }
+
+        // Clear the window //
+        secondwind->SetAutoClearing("NiceDaySky");
+
+    }
+    \endcode
+*/

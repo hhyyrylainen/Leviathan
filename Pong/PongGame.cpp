@@ -424,31 +424,15 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
 	shared_ptr<ViewerCameraPos> MainCamera;
 
-	_Engine->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(std::bind<void>([](
-                        shared_ptr<ViewerCameraPos>* MainCamera, PongGame* game) -> void
-        {
-            // camera //
-            *MainCamera = shared_ptr<ViewerCameraPos>(new ViewerCameraPos());
-            (*MainCamera)->SetPos(Leviathan::Float3(0.f, 22.f*BASE_ARENASCALE, 0.f));
+    // Camera //
+    MainCamera = make_shared<ViewerCameraPos>();
+    MainCamera->SetPos(Float3(0.f, 22.f*BASE_ARENASCALE, 0.f));
 
-            // camera should always point down towards the play field //
-            (*MainCamera)->SetRotation(Leviathan::Float3(0.f, -90.f, 0.f));
+    // Camera should always point down towards the play field //
+    MainCamera->SetRotation(Float3(0.f, -90.f, 0.f));
 
-            // sound listening camera //
-            (*MainCamera)->BecomeSoundPerceiver();
-
-        }, &MainCamera, this))));
-
-	// Wait for everything to finish //
-	_Engine->GetThreadingManager()->WaitForAllTasksToFinish();
-
-#ifdef _DEBUG
-
-	// We are probably in text-only mode //
-	if(Engine::Get()->GetGraphics() == NULL)
-		return;
-
-#endif // _DEBUG
+    // Sound listening camera //
+    MainCamera->BecomeSoundPerceiver();
 
 	// Load GUI documents (but only if graphics are enabled) //
 	if(Engine::Get()->GetNoGui()){
@@ -483,23 +467,6 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
     // This is how to do something every frame //
     Leviathan::EventHandler::Get()->RegisterForEvent(this, EVENT_TYPE_FRAME_END);
-
-    // TESTING open a second window //
-    if(false){
-        
-        auto secondwind = Engine::Get()->OpenNewWindow();
-
-        if(!secondwind->GetGUI()->LoadGUIFile("./Data/Scripts/GUI/TestMenu.txt")){
-		
-            Logger::Get()->Error("Pong: failed to load the GuiFile, quitting");
-            LeviathanApplication::GetApp()->StartRelease();
-        }
-
-        // Clear the window //
-        secondwind->SetAutoClearing("NiceDaySky");
-
-    }
-    
 
     ClearTimers();
 }

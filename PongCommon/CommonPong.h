@@ -263,31 +263,17 @@ namespace Pong{
 
 			QUICKTIME_THISSCOPE;
 
-			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(
-                    new QueuedTask(std::bind<void>([](
-                                CommonPongParts* game) -> void
-                {
-                    // Load the game AI //
-                    game->GameAI = new GameModule("PongAIModule", "PongGameCore");
+            // Load the game AI //
+            GameAI = new GameModule("PongAIModule", "PongGameCore");
 
-                    if(!game->GameAI->Init()){
-                        // No AI for the game //
-                        Logger::Get()->Error("Failed to load AI!");
-                        SAFE_DELETE(game->GameAI);
-                    }
+            if(!GameAI->Init()){
+                // No AI for the game //
+                Logger::Get()->Error("Failed to load AI!");
+                SAFE_DELETE(GameAI);
+            }
 
-                }, this))));
-
-
-			Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(
-                    new QueuedTask(std::bind<void>([]()
-                            -> void
-                {
-                    // Load Pong specific packets //
-                    PongPackets::RegisterAllPongPacketTypes();
-                    Logger::Get()->Info("Pong specific packets loaded");
-                    
-                }))));
+            // Load Pong specific packets //
+            PongPackets::RegisterAllPongPacketTypes();
 
 			// Setup world //
 			WorldOfPong = Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), NULL);
@@ -302,9 +288,6 @@ namespace Pong{
 			GamePaused.StartSync();
 			_PlayerList.StartSync();
             LastPlayerHitBallID.StartSync();
-
-			// Wait for everything to finish //
-			Engine::Get()->GetThreadingManager()->WaitForAllTasksToFinish();
 		}
 
 		virtual void EnginePreShutdown() override{

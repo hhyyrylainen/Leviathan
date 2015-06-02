@@ -215,6 +215,9 @@ namespace Leviathan{
     class Model : public Component{
     public:
         DLLEXPORT Model(const std::string &file);
+
+        //! \brief Destroys GraphicalObject
+        DLLEXPORT void Release(Ogre::SceneManager* scene);
         
         std::string ModelFile;
 
@@ -548,6 +551,9 @@ namespace Leviathan{
         //! \param force If set to true all settings will be applied
 		DLLEXPORT bool SetTrailProperties(const Properties &variables, bool force = false);
 
+        //! \brief Destroys the TrailEntity
+        DLLEXPORT void Release(Ogre::SceneManager* scene);
+
         //! The trail entity which is attached at the root scene node and follows our RenderNode
         //! component around
 		Ogre::RibbonTrail* TrailEntity;
@@ -578,6 +584,9 @@ namespace Leviathan{
         //! \brief Create with automatically created positions
         DLLEXPORT PositionMarkerOwner(const Data &positions, GameWorld* world, Lock &worldlock);
 
+        //! \brief Queues destruction and clears the list of Markers
+        DLLEXPORT void Release(GameWorld* world, Lock &worldlock);
+
         //! Adds a node
         //! \todo Allow not deleting entities on release
         DLLEXPORT void Add(Lock &guard, ObjectID entity, Position& pos);
@@ -606,6 +615,8 @@ namespace Leviathan{
     public:
 
         DLLEXPORT ManualObject();
+
+        DLLEXPORT void Release(Ogre::SceneManager* scene);
 
         Ogre::ManualObject* Object;
 

@@ -514,8 +514,6 @@ namespace Leviathan{
         ComponentHolder<Position> ComponentPosition;
         ComponentHolder<RenderNode> ComponentRenderNode;
         ComponentHolder<Sendable> ComponentSendable;
-
-        // TODO: Setup handling for these... //
         ComponentHolder<Model> ComponentModel;
         ComponentHolder<Physics> ComponentPhysics;
         ComponentHolder<Constraintable> ComponentConstraintable;
@@ -527,6 +525,8 @@ namespace Leviathan{
         ComponentHolder<TrackController> ComponentTrackController;
         ComponentHolder<Received> ComponentReceived;
         ComponentHolder<Parentable> ComponentParentable;
+
+        // Systems and nodes //
 
         NodeHolder<ReceivedPosition> NodeReceivedPosition;
         ReceivedPositionSystem _ReceivedPositionSystem;
@@ -559,6 +559,7 @@ namespace Leviathan{
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived, Destroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Constraintable, ComponentConstraintable, Destroy);
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Trail, ComponentTrail, QueueDestroy);
+    ADDCOMPONENTFUNCTIONSTOGAMEWORLD(ManualObject, ComponentManualObject, QueueDestroy);
     
 }
 

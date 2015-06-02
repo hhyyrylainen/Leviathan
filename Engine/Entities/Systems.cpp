@@ -52,7 +52,8 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
         Logger::Get()->Error("SendableSystem: created invalid state for entity, id: "+
             Convert::ToString(nodesobject)+", type: "+Convert::ToString(
                 node._Sendable.SendableHandleType));
-        
+
+        node._Sendable.Marked = false;
         return;
     }
             

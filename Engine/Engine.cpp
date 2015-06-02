@@ -1119,6 +1119,25 @@ void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
         
     LastFrame += changeamount;
 }
+
+void Engine::_AdjustTickNumber(int tickamount, bool absolute){
+
+    GUARD_LOCK();
+
+    if(!absolute){
+
+        TickCount += tickamount;
+
+        Logger::Get()->Info("Engine: adjusted tick by "+Convert::ToString(tickamount)
+            +", tick is now "+Convert::ToString(TickCount));
+        
+        return;
+    }
+
+    TickCount = tickamount;
+
+    Logger::Get()->Info("Engine: tick set to "+Convert::ToString(TickCount));
+}
 // ------------------------------------ //
 int TestCrash(int writenum){
 

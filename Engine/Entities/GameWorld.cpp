@@ -283,6 +283,17 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     ComponentPosition.Clear();
     ComponentRenderNode.Clear();
     ComponentSendable.Clear();
+    ComponentModel.Clear();
+    ComponentPhysics.Clear();
+    ComponentConstraintable.Clear();
+    ComponentBoxGeometry.Clear();
+    ComponentManualObject.Clear();
+    ComponentPositionMarkerOwner.Clear();
+    ComponentParent.Clear();
+    ComponentTrail.Clear();
+    ComponentTrackController.Clear();
+    ComponentReceived.Clear();
+    ComponentParentable.Clear();
 
     
 	if(GraphicalMode){
@@ -495,6 +506,7 @@ DLLEXPORT void GameWorld::RemoveInvalidNodes(Lock &guard){
             
             NodeRenderingPosition.RemoveBasedOnKeyTupleList(removedposition);
             NodeReceivedPosition.RemoveBasedOnKeyTupleList(removedposition);
+
             NodeReceivedPosition.ClearRemoved();
         }
 
@@ -502,6 +514,20 @@ DLLEXPORT void GameWorld::RemoveInvalidNodes(Lock &guard){
             NodeRenderingPosition.RemoveBasedOnKeyTupleList(removedrendernode);
 
         NodeRenderingPosition.ClearRemoved();
+    }
+
+    // Received
+    {
+        GUARD_LOCK_OTHER_NAME((&ComponentReceived), receivedlock);
+        GUARD_LOCK_OTHER_NAME((&ComponentRenderNode), rendernodelock);
+
+        auto& removedreceived = ComponentReceived.GetRemoved(receivedlock);
+
+        if(!removedreceived.empty()){
+
+            NodeReceivedPosition.RemoveBasedOnKeyTupleList(removedreceived);
+            NodeReceivedPosition.ClearRemoved();
+        }
     }
 
     // Sendable
@@ -540,8 +566,71 @@ DLLEXPORT void GameWorld::HandleDeleted(Lock &guard){
         }
     }
 
+    if(ComponentTrail.HasElementsInRemoved()){
+
+        if(WorldsScene){
+
+            // Scene still exists, delete scene nodes //
+            ComponentTrail.ReleaseRemoved(WorldsScene);
+            
+        } else {
+
+            // Clear without deleting, Ogre has already released the memory //
+            ComponentTrail.ClearRemoved();
+        }
+    }
+
+    if(ComponentModel.HasElementsInRemoved()){
+
+        if(WorldsScene){
+
+            // Scene still exists, delete scene nodes //
+            ComponentModel.ReleaseRemoved(WorldsScene);
+            
+        } else {
+
+            // Clear without deleting, Ogre has already released the memory //
+            ComponentModel.ClearRemoved();
+        }
+    }
+
+    if(ComponentManualObject.HasElementsInRemoved()){
+
+        if(WorldsScene){
+
+            // Scene still exists, delete scene nodes //
+            ComponentManualObject.ReleaseRemoved(WorldsScene);
+            
+        } else {
+
+            // Clear without deleting, Ogre has already released the memory //
+            ComponentManualObject.ClearRemoved();
+        }
+    }
+
+    if(ComponentPhysics.HasElementsInRemoved()){
+
+        if(_PhysicalWorld){
+
+            // Safe for the newton objects to be destroyed
+            ComponentPhysics.ReleaseRemoved();
+            
+        } else {
+
+            ComponentPhysics.ClearRemoved();
+        }
+    }
+
+    ComponentPositionMarkerOwner.ReleaseRemoved(this, guard);
+
     ComponentPosition.ClearRemoved();
     ComponentSendable.ClearRemoved();
+    ComponentConstraintable.ClearRemoved();
+    ComponentBoxGeometry.ClearRemoved();
+    ComponentParent.ClearRemoved();
+    ComponentTrackController.ClearRemoved();
+    ComponentReceived.ClearRemoved();
+    ComponentParentable.ClearRemoved();
 }
 
 DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
@@ -604,6 +693,17 @@ DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
     ComponentRenderNode.ClearAdded();
     ComponentSendable.ClearAdded();
     ComponentReceived.ClearAdded();
+    ComponentModel.ClearAdded();
+    ComponentPhysics.ClearAdded();
+    ComponentConstraintable.ClearAdded();
+    ComponentBoxGeometry.ClearAdded();
+    ComponentManualObject.ClearAdded();
+    ComponentPositionMarkerOwner.ClearAdded();
+    ComponentParent.ClearAdded();
+    ComponentTrail.ClearAdded();
+    ComponentTrackController.ClearAdded();
+    ComponentReceived.ClearAdded();
+    ComponentParentable.ClearAdded();
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::RunFrameRenderSystems(int timeintick){
@@ -782,9 +882,22 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(Lock &guard){
     ComponentPosition.Clear();
     ComponentRenderNode.Clear();
     ComponentSendable.Clear();
+    ComponentModel.Clear();
+    ComponentPhysics.Clear();
+    ComponentConstraintable.Clear();
+    ComponentBoxGeometry.Clear();
+    ComponentManualObject.Clear();
+    ComponentPositionMarkerOwner.Clear();
+    ComponentParent.Clear();
+    ComponentTrail.Clear();
+    ComponentTrackController.Clear();
+    ComponentReceived.Clear();
+    ComponentParentable.Clear();
+
     
     NodeRenderingPosition.Clear();
     NodeSendableNode.Clear();
+    NodeReceivedPosition.Clear();
 
     // Notify everybody that all entities are discarded //
     auto end = ReceivingPlayers.end();
@@ -912,7 +1025,19 @@ void GameWorld::_DoDestroy(Lock &guard, ObjectID id){
     // TODO: find a better way to do this
     RemoveComponent<Position>(id);
     RemoveComponent<RenderNode>(id);
-    RemoveComponent<Sendable>(id);            
+    RemoveComponent<Sendable>(id);
+    RemoveComponent<Model>(id);
+    RemoveComponent<Physics>(id);
+    RemoveComponent<Constraintable>(id);
+    RemoveComponent<BoxGeometry>(id);
+    RemoveComponent<ManualObject>(id);
+    RemoveComponent<PositionMarkerOwner>(id);
+    RemoveComponent<Parent>(id);
+    RemoveComponent<Trail>(id);
+    RemoveComponent<TrackController>(id);
+    RemoveComponent<Received>(id);
+    RemoveComponent<Parentable>(id);
+
     
     NodesToInvalidate.push_back(id);
 }
@@ -1348,33 +1473,14 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
         ", enginems: "+Convert::ToString(data->EngineMSTweak));
     
     // Change our TickNumber to match //
-    if(data->Absolute){
+    lockit.unlock();
 
-        TickNumber = data->Ticks;
-
-        lockit.unlock();
+    Engine::Get()->_AdjustTickNumber(data->Ticks, data->Absolute);
         
-        if(data->EngineMSTweak)
-            Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
-        
-        lockit.lock();
-        
-    } else {
-
-        TickNumber += data->Ticks;
-
-        lockit.unlock();
-        
-        if(data->EngineMSTweak)
-            Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
-
-        lockit.lock();
-    }
-
-    // Only notify if the tick actually changed
-    if(data->Ticks)
-        Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): world clock adjusted, tick is now: "+
-            Convert::ToString(TickNumber));
+    if(data->EngineMSTweak)
+        Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
+    
+    lockit.lock();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(NetworkResponseDataForWorldFrozen* data){
@@ -1496,3 +1602,4 @@ ADDCOMPONENTFUNCTIONSTOGAMEWORLD(PositionMarkerOwner, ComponentPositionMarkerOwn
 ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived, Destroy);
 ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Constraintable, ComponentConstraintable, Destroy);
 ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Trail, ComponentTrail, QueueDestroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(ManualObject, ComponentManualObject, QueueDestroy);

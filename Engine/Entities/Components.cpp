@@ -875,6 +875,15 @@ DLLEXPORT bool Trail::SetTrailProperties(const Properties &variables, bool force
 
 	return true;
 }
+// ------------------------------------ //
+DLLEXPORT void Trail::Release(Ogre::SceneManager* scene){
+
+    if(TrailEntity){
+
+        scene->destroyRibbonTrail(TrailEntity);
+        TrailEntity = nullptr;
+    }
+}
 // ------------------ Parent ------------------ //
 DLLEXPORT Parent::Parent(){
 
@@ -1042,6 +1051,18 @@ DLLEXPORT PositionMarkerOwner::PositionMarkerOwner(const Data &positions, GameWo
     }
 }
 // ------------------------------------ //
+DLLEXPORT void PositionMarkerOwner::Release(GameWorld* world, Lock &worldlock){
+
+    for(auto&& tuple : Markers){
+
+        auto id = get<0>(tuple);
+
+        world->QueueDestroyObject(id);
+    }
+
+    Markers.clear();
+}
+// ------------------------------------ //
 DLLEXPORT void PositionMarkerOwner::Add(Lock &guard, ObjectID entity, Position& pos){
 
     Markers.push_back(make_tuple(entity, &pos));
@@ -1089,6 +1110,15 @@ DLLEXPORT PositionMarkerOwner::Data PositionMarkerOwner::LoadDataFromPacket(sf::
 // ------------------ Model ------------------ //
 DLLEXPORT Model::Model(const std::string &file) : ModelFile(file), GraphicalObject(nullptr){
 
+}
+// ------------------------------------ //
+DLLEXPORT void Model::Release(Ogre::SceneManager* scene){
+
+    if(GraphicalObject){
+
+        scene->destroyEntity(GraphicalObject);
+        GraphicalObject = nullptr;
+    }
 }
 // ------------------ Constraintable ------------------ //
 DLLEXPORT Constraintable::Constraintable(ObjectID id, GameWorld* world) :
@@ -1144,6 +1174,17 @@ DLLEXPORT void Constraintable::_NotifyCreate(std::shared_ptr<BaseConstraint> new
 // ------------------ ManualObject ------------------ //
 DLLEXPORT ManualObject::ManualObject() : Object(nullptr){
     
+}
+
+DLLEXPORT void ManualObject::Release(Ogre::SceneManager* scene){
+
+    if(Object){
+
+        scene->destroyManualObject(Object);
+        Object = nullptr;
+    }
+
+    CreatedMesh.clear();
 }
 
 

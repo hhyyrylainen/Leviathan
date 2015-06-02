@@ -138,6 +138,10 @@ namespace Leviathan{
         //! time by amount
         void _AdjustTickClock(int amount, bool absolute = true);
 
+        //! \brief Sets the tick number to a specified value
+        //! \note Should only be called on the client as this may break some simulations
+        void _AdjustTickNumber(int tickamount, bool absolute);
+
 		// ------------------------------------ //
 		AppDef* Define;
 

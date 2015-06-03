@@ -18,12 +18,13 @@
 using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) :
-    Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_CLOSED), 
-	PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()),
-    PlayerControllerID(0), SplitSlot(NULL), SlotsPlayer(NULL), PlayerID(-1),
-    NetworkedInputID(-1), InputObj(NULL)
+    Slot(slotnumber), PlayerType(PLAYERTYPE_CLOSED), PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE),
+    ControlIdentifier(0), PlayerControllerID(0), Colour(Float4::GetColourWhite()), Score(0), 
+    MoveState(0), PaddleObject(0), GoalAreaObject(0), TrackObject(0), SplitSlot(nullptr),
+    ParentSlot(nullptr), InputObj(nullptr), SlotsPlayer(NULL), PlayerID(-1), NetworkedInputID(-1), 
+    Parent(owner)
 {
-	
+
 }
 
 Pong::PlayerSlot::~PlayerSlot(){

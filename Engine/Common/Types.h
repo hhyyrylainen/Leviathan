@@ -867,6 +867,9 @@ namespace Leviathan{
     // Stream operators //
     DLLEXPORT std::ostream& operator <<(std::ostream &stream,
         const Leviathan::Float4 &value);
+
+    DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+        const Leviathan::Float3 &value);
 }
 
 

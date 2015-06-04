@@ -210,3 +210,11 @@ DLLEXPORT std::ostream& Leviathan::operator <<(std::ostream &stream,
     stream << "[" << value.X << ", " << value.Y << ", " << value.Z << ", " << value.W << "]";
     return stream;
 }
+
+DLLEXPORT std::ostream& Leviathan::operator <<(std::ostream &stream,
+    const Leviathan::Float3 &value)
+{
+
+    stream << "[" << value.X << ", " << value.Y << ", " << value.Z << "]";
+    return stream;
+}

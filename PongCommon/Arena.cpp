@@ -502,8 +502,7 @@ void Pong::Arena::ServeBall(){
     LetGoOfBall();
 
     GUARD_LOCK();
-
-
+    
 	// we want to load our ball prop into the world //
 	Ball = ObjectLoader::LoadPropToWorld(
         TargetWorld, "PongBall", TargetWorld->GetPhysicalMaterial("BallMaterial"), {

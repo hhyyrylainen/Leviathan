@@ -504,16 +504,14 @@ DLLEXPORT void GameWorld::RemoveInvalidNodes(Lock &guard){
 
         if(!removedposition.empty()){
             
-            NodeRenderingPosition.RemoveBasedOnKeyTupleList(removedposition);
-            NodeReceivedPosition.RemoveBasedOnKeyTupleList(removedposition);
-
-            NodeReceivedPosition.ClearRemoved();
+            NodeRenderingPosition.RemoveBasedOnKeyTupleList(removedposition, false);
+            NodeReceivedPosition.RemoveBasedOnKeyTupleList(removedposition, false);
         }
 
-        if(!removedrendernode.empty())
-            NodeRenderingPosition.RemoveBasedOnKeyTupleList(removedrendernode);
-
-        NodeRenderingPosition.ClearRemoved();
+        if(!removedrendernode.empty()){
+            
+            NodeRenderingPosition.RemoveBasedOnKeyTupleList(removedrendernode, false);
+        }
     }
 
     // Received
@@ -525,8 +523,7 @@ DLLEXPORT void GameWorld::RemoveInvalidNodes(Lock &guard){
 
         if(!removedreceived.empty()){
 
-            NodeReceivedPosition.RemoveBasedOnKeyTupleList(removedreceived);
-            NodeReceivedPosition.ClearRemoved();
+            NodeReceivedPosition.RemoveBasedOnKeyTupleList(removedreceived, false);
         }
     }
 
@@ -538,9 +535,7 @@ DLLEXPORT void GameWorld::RemoveInvalidNodes(Lock &guard){
 
         if(!removedsendable.empty()){
             
-            NodeSendableNode.RemoveBasedOnKeyTupleList(removedsendable);
-
-            NodeSendableNode.ClearRemoved();
+            NodeSendableNode.RemoveBasedOnKeyTupleList(removedsendable, false);
         }
     }
     
@@ -548,86 +543,93 @@ DLLEXPORT void GameWorld::RemoveInvalidNodes(Lock &guard){
 
 DLLEXPORT void GameWorld::HandleDeleted(Lock &guard){
 
-    // Handle nodes with now missing components //
-    RemoveInvalidNodes(guard);
-    
-    // Clear deleted components //
-    if(ComponentRenderNode.HasElementsInRemoved()){
+    // Delete queued objects //
+    if(ComponentRenderNode.HasElementsInQueued()){
 
         if(WorldsScene){
 
             // Scene still exists, delete scene nodes //
-            ComponentRenderNode.ReleaseRemoved(WorldsScene);
+            ComponentRenderNode.ReleaseQueued(WorldsScene);
             
         } else {
 
             // Clear without deleting, Ogre has already released the memory //
-            ComponentRenderNode.ClearRemoved();
+            ComponentRenderNode.ClearQueued();
         }
     }
-
+    
     if(ComponentTrail.HasElementsInRemoved()){
 
         if(WorldsScene){
 
             // Scene still exists, delete scene nodes //
-            ComponentTrail.ReleaseRemoved(WorldsScene);
+            ComponentTrail.ReleaseQueued(WorldsScene);
             
         } else {
 
             // Clear without deleting, Ogre has already released the memory //
-            ComponentTrail.ClearRemoved();
+            ComponentTrail.ClearQueued();
         }
     }
 
-    if(ComponentModel.HasElementsInRemoved()){
+    if(ComponentModel.HasElementsInQueued()){
 
         if(WorldsScene){
 
             // Scene still exists, delete scene nodes //
-            ComponentModel.ReleaseRemoved(WorldsScene);
+            ComponentModel.ReleaseQueued(WorldsScene);
             
         } else {
 
             // Clear without deleting, Ogre has already released the memory //
-            ComponentModel.ClearRemoved();
+            ComponentModel.ClearQueued();
         }
     }
 
-    if(ComponentManualObject.HasElementsInRemoved()){
+    if(ComponentManualObject.HasElementsInQueued()){
 
         if(WorldsScene){
 
             // Scene still exists, delete scene nodes //
-            ComponentManualObject.ReleaseRemoved(WorldsScene);
+            ComponentManualObject.ReleaseQueued(WorldsScene);
             
         } else {
 
             // Clear without deleting, Ogre has already released the memory //
-            ComponentManualObject.ClearRemoved();
+            ComponentManualObject.ClearQueued();
         }
     }
 
-    if(ComponentPhysics.HasElementsInRemoved()){
+    if(ComponentPhysics.HasElementsInQueued()){
 
         if(_PhysicalWorld){
 
             // Safe for the newton objects to be destroyed
-            ComponentPhysics.ReleaseRemoved();
+            ComponentPhysics.ReleaseQueued();
             
         } else {
 
-            ComponentPhysics.ClearRemoved();
+            ComponentPhysics.ClearQueued();
         }
     }
 
-    ComponentPositionMarkerOwner.ReleaseRemoved(this, guard);
+    ComponentPositionMarkerOwner.ReleaseQueued(this, guard);
 
+    // Handle nodes with now missing components //
+    // This uses Removed vectors inside the components
+    RemoveInvalidNodes(guard);
+    
     ComponentPosition.ClearRemoved();
+    ComponentRenderNode.ClearRemoved();
     ComponentSendable.ClearRemoved();
+    ComponentModel.ClearRemoved();
+    ComponentPhysics.ClearRemoved();
     ComponentConstraintable.ClearRemoved();
     ComponentBoxGeometry.ClearRemoved();
+    ComponentManualObject.ClearRemoved();
+    ComponentPositionMarkerOwner.ClearRemoved();
     ComponentParent.ClearRemoved();
+    ComponentTrail.ClearRemoved();
     ComponentTrackController.ClearRemoved();
     ComponentReceived.ClearRemoved();
     ComponentParentable.ClearRemoved();

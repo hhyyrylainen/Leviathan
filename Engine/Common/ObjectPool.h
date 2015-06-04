@@ -69,13 +69,21 @@ namespace Leviathan{
             return !Added.empty();
         }
 
-        //! \brief Calls Release with the specified arguments on the released types
+        //! \brief Returns true if there are objects in Queued
+        DLLEXPORT bool HasElementsInQueued() const{
+
+            GUARD_LOCK();
+            return !Queued.empty();
+        }
+
+        //! \brief Calls Release with the specified arguments on elements that are queued
+        //! for desctuction
         template<typename... Args>
-        DLLEXPORT void ReleaseRemoved(Args&&... args){
+        DLLEXPORT void ReleaseQueued(Args&&... args){
 
             GUARD_LOCK();
 
-            for(auto iter = Removed.begin(); iter != Removed.end(); ++iter){
+            for(auto iter = Queued.begin(); iter != Queued.end(); ++iter){
 
                 auto object = std::get<0>(*iter);
                 const auto id = std::get<1>(*iter);
@@ -83,28 +91,31 @@ namespace Leviathan{
                 object->Release(args...);
 
                 Elements.destroy(object);
+                Removed.push_back(std::make_tuple(object, id));
                 RemoveFromIndex(guard, id);
             }
 
-            Removed.clear();
+            Queued.clear();
         }
 
 
-        //! \brief Clears removed entities without calling Release
-        DLLEXPORT void ClearRemoved(){
+        //! \brief Removes elements that are queued for destruction
+        //! without calling release 
+        DLLEXPORT void ClearQueued(){
 
             GUARD_LOCK();
 
-            for(auto iter = Removed.begin(); iter != Removed.end(); ++iter){
+            for(auto iter = Queued.begin(); iter != Queued.end(); ++iter){
 
                 auto object = std::get<0>(*iter);
                 const auto id = std::get<1>(*iter);
 
                 Elements.destroy(object);
+                Removed.push_back(std::make_tuple(object, id));
                 RemoveFromIndex(guard, id);
             }
 
-            Removed.clear();
+            Queued.clear();
         }
 
         //! \brief Returns a reference to the vector of removed elements
@@ -132,25 +143,38 @@ namespace Leviathan{
             Added.clear();
         }
 
-        //! \brief QueueDestroys elements based on ids in vector
+        //! \brief Clears the removed list
+        DLLEXPORT void ClearRemoved(){
+
+            GUARD_LOCK();
+            Removed.clear();
+        }
+
+        //! \brief Destroys without releasing elements based on ids in vector
+        //! \param addtoremoved If true will add the elements to the Removed index
+        //! for (possibly) using them to remove attached resources
         template<typename Any>
         DLLEXPORT void RemoveBasedOnKeyTupleList(
-            const std::vector<std::tuple<Any, KeyType>> &values)
+            const std::vector<std::tuple<Any, KeyType>> &values, bool addtoremoved = false)
         {
 
             GUARD_LOCK();
-
+            
             for(auto iter = values.begin(); iter != values.end(); ++iter){
 
                 auto todelete = Index.find(std::get<1>(*iter));
 
                 if(todelete == Index.end())
                     continue;
+
                 
-                Removed.push_back(std::make_tuple(todelete->second, todelete->first));
+                if(addtoremoved){
+                    
+                    Removed.push_back(std::make_tuple(todelete->second, todelete->first));
+                }
 
                 RemoveFromAdded(guard, todelete->first);
-                    
+                
                 Index.erase(todelete);
             }
         }
@@ -198,6 +222,9 @@ namespace Leviathan{
                 throw InvalidArgument("ID is not in index");
 
             Elements.destroy(object);
+
+            Removed.push_back(std::make_tuple(object, id));
+            
             RemoveFromIndex(guard, id);
             RemoveFromAdded(guard, id);
         }
@@ -218,11 +245,10 @@ namespace Leviathan{
 
                 if(iter->first == id){
 
-                    Removed.push_back(std::make_tuple(iter->second, id));
+                    Queued.push_back(std::make_tuple(iter->second, id));
 
                     RemoveFromAdded(guard, id);
                     
-                    Index.erase(iter);
                     return;
                 }
             }
@@ -274,6 +300,7 @@ namespace Leviathan{
             
             Index.clear();
             Removed.clear();
+            Queued.clear();
             Added.clear();
         }
 
@@ -306,8 +333,15 @@ namespace Leviathan{
         //! Used for looking up element belonging to id
         std::unordered_map<KeyType, ElementType*> Index;
 
-        //! Used for delayed deleting elements
+        //! Used for detecting deleted elements later
+        //! Can be used to unlink resources that have pointers to
+        //! elements
         std::vector<std::tuple<ElementType*, KeyType>> Removed;
+
+        //! Used for marking elements to be deleted later at a suitable
+        //! time
+        //! GameWorld uses this to control when components are deleted
+        std::vector<std::tuple<ElementType*, KeyType>> Queued;
 
         //! Used for detecting created elements
         std::vector<std::tuple<ElementType*, KeyType>> Added;

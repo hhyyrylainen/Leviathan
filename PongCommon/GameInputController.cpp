@@ -305,7 +305,7 @@ Pong::PongNInputter::~PongNInputter(){
 }
 
 void Pong::PongNInputter::StopSendingInput(PlayerSlot* tohere){
-	GUARD_LOCK();
+    // Hopefully locking is not required, if added deadlocking on this thread needs to be fixed
 	ControlledSlot = NULL;
 }
 // ------------------------------------ //

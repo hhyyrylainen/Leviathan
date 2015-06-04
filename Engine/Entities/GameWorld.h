@@ -510,7 +510,6 @@ namespace Leviathan{
 
         // Systems, nodes and components //
         // Note: all of these should be cleared in ClearObjects
-
         ComponentHolder<Position> ComponentPosition;
         ComponentHolder<RenderNode> ComponentRenderNode;
         ComponentHolder<Sendable> ComponentSendable;

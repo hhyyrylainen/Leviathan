@@ -251,7 +251,7 @@ DLLEXPORT bool ObjectLoader::LoadNetworkProp(GameWorld* world, Lock &worldlock,
 
 
     // Setup the model //
-    auto& sendable = world->CreateSendable(prop, SENDABLE_TYPE_PROP);
+    world->CreateReceived(prop, SENDABLE_TYPE_PROP);
 
     auto& position = world->CreatePosition(prop, pos._Position, pos._Orientation);
 
@@ -270,7 +270,7 @@ DLLEXPORT bool ObjectLoader::LoadNetworkProp(GameWorld* world, Lock &worldlock,
 
         if(proplist){
 
-            auto& physics = world->CreatePhysics(prop, prop, world, position, &sendable);
+            auto& physics = world->CreatePhysics(prop, prop, world, position, nullptr);
 
             _CreatePropPhysics(world, worldlock, model, physics, position, proplist, path,
                 materialid);

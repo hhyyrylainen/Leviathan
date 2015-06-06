@@ -121,12 +121,15 @@ newtonmaterialfetchstartlabel:
     try{
         auto& node = TargetWorld->GetComponent<RenderNode>(topbrush);
         
-        node.Node->setVisible(false);        
+        node.Node->setVisible(false);
 
     } catch(const NotFound&){
         
         // Non-gui mode no need to hide things //
     }
+
+    // TODO: fix this once you can play multiple matches
+    TargetWorld->RemoveComponent<Sendable>(topbrush);
     
 	// arena sides //
 
@@ -464,7 +467,7 @@ addplayerpaddlelabel:
 		}
 
         try{
-            auto& node = TargetWorld->GetComponent<RenderNode>(topbrush);
+            auto& node = TargetWorld->GetComponent<RenderNode>(goalarea);
 
             node.Node->setVisible(false);        
 
@@ -472,6 +475,9 @@ addplayerpaddlelabel:
         
             // Non-gui mode no need to hide things //
         }
+
+        // TODO: fix this once you can play multiple matches
+        TargetWorld->RemoveComponent<Sendable>(goalarea);
 		
 		// Set to slot //
         plyvec[i]->SetGoalAreaObject(goalarea);

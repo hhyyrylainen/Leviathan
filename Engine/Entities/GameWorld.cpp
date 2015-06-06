@@ -870,7 +870,8 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(Lock &guard, ObjectID id){
         
     } else {
 
-
+        // Clients register received objects here //
+        Objects.push_back(id);
     }
 }
 // ------------------------------------ //

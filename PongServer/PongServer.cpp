@@ -130,12 +130,13 @@ void Pong::PongServer::Tick(int mspassed){
             ballspeed.Z = abs(ballspeed.Z);
             ballspeed = ballspeed.Normalize();
 
-            float ballvel = physics.GetVelocity().HAddAbs();
+            float ballvel = ballspeed.HAddAbs();
 
             if(ballvel < 0.04f){
 
                 if(!IsBallInGoalArea()){
 
+                    Logger::Get()->Info("Pong: ball going too slow outside goal area");
                     ballstuck = true;
                 }
             
@@ -154,6 +155,7 @@ void Pong::PongServer::Tick(int mspassed){
                             StuckThresshold = 0;
                         } else {
 
+                            Logger::Get()->Info("Pong: ball stuck count over thresshold");
                             ballstuck = true;
                         }
                     }

@@ -170,6 +170,7 @@ DLLEXPORT void Position::Interpolate(const PositionDeltaState &from, const Posit
 // ------------------ RenderNode ------------------ //
 DLLEXPORT RenderNode::RenderNode(){
 
+    Marked = false;
 }
 
 DLLEXPORT bool RenderNode::Init(){

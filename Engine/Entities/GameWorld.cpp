@@ -247,8 +247,12 @@ DLLEXPORT bool Leviathan::GameWorld::Init(GraphicalInputEntity* renderto, Ogre::
 		_CreateOgreResources(ogre, renderto->GetWindow());
 	}
 
-	// acquire physics engine world //
-	_PhysicalWorld = NewtonManager::Get()->CreateWorld(this);
+	// Acquire physics engine world //
+    // This should not be required if it isn't available
+    if(NewtonManager::Get()){
+        
+        _PhysicalWorld = NewtonManager::Get()->CreateWorld(this);
+    }
 
 	return true;
 }
@@ -278,6 +282,7 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     NodeRenderingPosition.Clear();
     NodeSendableNode.Clear();
     NodeReceivedPosition.Clear();
+    NodeRenderNodeHiderNode.Clear();
 
     // Clear all componenst //
     ComponentPosition.Clear();
@@ -511,6 +516,7 @@ DLLEXPORT void GameWorld::RemoveInvalidNodes(Lock &guard){
         if(!removedrendernode.empty()){
             
             NodeRenderingPosition.RemoveBasedOnKeyTupleList(removedrendernode, false);
+            NodeRenderNodeHiderNode.RemoveBasedOnKeyTupleList(removedrendernode, false);
         }
     }
 
@@ -671,6 +677,8 @@ DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
 
             _RenderingPositionSystem.CreateNodes(NodeRenderingPosition, addedrendernode,
                 addedposition, ComponentPosition, positionlock);
+
+            _RenderNodeHiderSystem.CreateNodes(NodeRenderNodeHiderNode, addedrendernode);
         }
     }
 
@@ -725,6 +733,7 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(int timeintick){
     }
 
     RunRenderingPositionSystem();
+    RunRenderNodeHiderSystem();
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{
@@ -901,6 +910,7 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(Lock &guard){
     NodeRenderingPosition.Clear();
     NodeSendableNode.Clear();
     NodeReceivedPosition.Clear();
+    NodeRenderNodeHiderNode.Clear();
 
     // Notify everybody that all entities are discarded //
     auto end = ReceivingPlayers.end();

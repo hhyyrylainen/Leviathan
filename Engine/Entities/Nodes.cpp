@@ -39,3 +39,7 @@ DLLEXPORT ReceivedPosition::ReceivedPosition(Position& pos, Received &received) 
 {
 
 }
+// ------------------ RenderNodeHiderNode ------------------ //
+DLLEXPORT RenderNodeHiderNode::RenderNodeHiderNode(RenderNode& node) : _RenderNode(node){
+
+}

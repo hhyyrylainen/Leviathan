@@ -317,6 +317,12 @@ namespace Leviathan{
             NodeReceivedPosition.RunSystem(_ReceivedPositionSystem, args...);
         }
 
+        template<typename... Args>
+        DLLEXPORT void RunRenderNodeHiderSystem(Args&&... args){
+
+            NodeRenderNodeHiderNode.RunSystem(_RenderNodeHiderSystem, args...);
+        }
+
 		// Ogre get functions //
 		DLLEXPORT inline Ogre::SceneManager* GetScene(){
 			return WorldsScene;
@@ -536,6 +542,8 @@ namespace Leviathan{
         NodeHolder<SendableNode> NodeSendableNode;
         SendableSystem _SendableSystem;
 
+        NodeHolder<RenderNodeHiderNode> NodeRenderNodeHiderNode;
+        RenderNodeHiderSystem _RenderNodeHiderSystem;
 	};
 
 #define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder, destroyfunc) template<> type& \

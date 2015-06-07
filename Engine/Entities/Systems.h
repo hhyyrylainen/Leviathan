@@ -86,6 +86,50 @@ namespace Leviathan{
         }
     };
 
+    //! \brief Sets visibility objects with Ogre nodes that have changed RenderNode::Hidden
+    class RenderNodeHiderSystem : public System<RenderNodeHiderNode>{
+    public:
+        //! \copydoc System::ProcessNode
+        //! \pre All systems that can mark Position as updated have been executed
+        DLLEXPORT void ProcessNode(RenderNodeHiderNode &node, ObjectID nodesobject,
+            NodeHolder<RenderNodeHiderNode> &pool, Lock &poollock) const override
+        {
+            if(!node._RenderNode.Marked)
+                return;
+
+            node._RenderNode.Node->setVisible(!node._RenderNode.Hidden);
+
+            node._RenderNode.Marked = false;
+        }
+
+        //! \brief Creates nodes if matching ids are found in all data vectors or
+        //! already existing component holders
+        //! \note It is more efficient to directly create nodes as entities are created
+        DLLEXPORT void CreateNodes(NodeHolder<RenderNodeHiderNode> &nodes,
+            const std::vector<std::tuple<RenderNode*, ObjectID>> &firstdata)
+        {
+            GUARD_LOCK_OTHER((&nodes));
+
+            for(auto iter = firstdata.begin(); iter != firstdata.end(); ++iter){
+
+                // Create node if it doesn't exist already //
+                if(nodes.Find(guard, std::get<1>(*iter)))
+                    continue;
+
+                try{
+                    nodes.ConstructNew(guard, std::get<1>(*iter), *std::get<0>(*iter));
+                } catch(const Exception &e){
+
+                    Logger::Get()->Error("CreateNodes: failed to create render node hider node "
+                        "for object "+Convert::ToString(std::get<1>(*iter))+", exception: ");
+                    e.PrintToLog();
+                    
+                    continue;
+                }
+            }
+        }
+    };
+
 
     //! \brief Sends updated entities from server to clients
     //! \todo Change this to take distance into account

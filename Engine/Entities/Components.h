@@ -71,6 +71,8 @@ namespace Leviathan{
 	};
 
     //! \brief Entity has an Ogre scene node
+    //! \note By default this is not marked. If you change Hidden set as marked to
+    //! update Node state
     class RenderNode : public Component{
     public:
 
@@ -82,8 +84,10 @@ namespace Leviathan{
         //! \brief Gracefully releases while world is still valid
         DLLEXPORT void Release(Ogre::SceneManager* worldsscene);
         
-        
         Ogre::SceneNode* Node;
+
+        //! Sets objects attached to the node to be hidden or visible
+        bool Hidden;
     };
 
     //! \brief Types for Sendable

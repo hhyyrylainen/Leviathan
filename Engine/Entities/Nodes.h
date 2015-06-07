@@ -23,6 +23,15 @@ namespace Leviathan{
         RenderNode& _RenderNode;
 	};
 
+    //! \brief Sets node hidden or visible
+    class RenderNodeHiderNode : public Node{
+    public:
+
+        DLLEXPORT RenderNodeHiderNode(RenderNode& node);
+
+        RenderNode& _RenderNode;
+    };
+
     //! \brief Holds dirty flag for quikcly looping sendable entities
     class SendableNode : public Node{
     public:

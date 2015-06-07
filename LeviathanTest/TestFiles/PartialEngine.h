@@ -4,8 +4,6 @@
 #include "Application/Application.h"
 #include "Engine.h"
 #include "Events/EventHandler.h"
-#include "Newton/NewtonManager.h"
-#include "Newton/PhysicsMaterialManager.h"
 #include "TimeIncludes.h"
 
 #include "catch.hpp"
@@ -16,15 +14,6 @@ using namespace Leviathan;
 class PartialApplication : public LeviathanApplication{
 public:
 
-};
-
-//! This is required to reduce the times newton is initialized/released as that seems to be a
-//! major cause of deadlocking
-class NewtonHolder{
-public:
-
-    static std::unique_ptr<NewtonManager> StaticNewtonManager;
-    static std::unique_ptr<PhysicsMaterialManager> StaticPhysicsMaterialManager;
 };
 
 //! \brief Partial implementation of Leviathan::Engine for tests
@@ -55,20 +44,6 @@ public:
             _NetworkHandler = new NetworkHandler(TestWithType, NULL);
 
             IDDefaultInstance = new IDFactory();
-
-            if(!NewtonHolder::StaticNewtonManager){
-
-                NewtonHolder::StaticNewtonManager = std::move(std::unique_ptr<NewtonManager>(
-                        new NewtonManager));
-                NewtonHolder::StaticPhysicsMaterialManager = std::move(
-                    std::unique_ptr<PhysicsMaterialManager>(new
-                        PhysicsMaterialManager(NewtonHolder::StaticNewtonManager.get())));
-            }
-            
-            _NewtonManager = NewtonHolder::StaticNewtonManager.get();
-            PhysMaterials = NewtonHolder::StaticPhysicsMaterialManager.get();
-
-            REQUIRE(PhysicsMaterialManager::Get() != nullptr);
         }
     }
 
@@ -98,6 +73,4 @@ public:
     PartialApplication App;
     Logger Log;
     AppDef Def;
-
-
 };

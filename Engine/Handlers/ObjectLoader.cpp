@@ -551,48 +551,52 @@ void ObjectLoader::_CreateBrushModel(GameWorld* world, Lock &worldlock, ObjectID
 
     physics.Mass = mass;
 
-	// Create a newton object which is always a box //
-	NewtonWorld* tmpworld = world->GetPhysicalWorld()->GetNewtonWorld();
+    // Skip using physics if not available //
+    if(world->GetPhysicalWorld()){
 
-	// Possible offset //
-	Ogre::Matrix4 offset = Ogre::Matrix4::IDENTITY;
-	Ogre::Matrix4 toffset = offset.transpose();
+        // Create a newton object which is always a box //
+        NewtonWorld* tmpworld = world->GetPhysicalWorld()->GetNewtonWorld();
 
-	physics.Collision = NewtonCreateBox(tmpworld, size.X, size.Y, size.Z, 0, &toffset[0][0]);
+        // Possible offset //
+        Ogre::Matrix4 offset = Ogre::Matrix4::IDENTITY;
+        Ogre::Matrix4 toffset = offset.transpose();
 
-	Ogre::Matrix4 matrix;
-	matrix.makeTransform(position._Position, Float3(1, 1, 1), position._Orientation);
+        physics.Collision = NewtonCreateBox(tmpworld, size.X, size.Y, size.Z, 0, &toffset[0][0]);
 
-	Ogre::Matrix4 tmatrix = matrix.transpose();
+        Ogre::Matrix4 matrix;
+        matrix.makeTransform(position._Position, Float3(1, 1, 1), position._Orientation);
 
-	physics.Body = NewtonCreateDynamicBody(tmpworld, physics.Collision, &tmatrix[0][0]);
+        Ogre::Matrix4 tmatrix = matrix.transpose();
+
+        physics.Body = NewtonCreateDynamicBody(tmpworld, physics.Collision, &tmatrix[0][0]);
     
-	// Add this as user data //
-	NewtonBodySetUserData(physics.Body, &physics);
+        // Add this as user data //
+        NewtonBodySetUserData(physics.Body, &physics);
 
-	// Set as movable if has mass //
-	if(mass != 0){
+        // Set as movable if has mass //
+        if(mass != 0){
 
-		// First calculate inertia and center of mass points //
-		Float3 inertia;
-		Float3 centerofmass;
+            // First calculate inertia and center of mass points //
+            Float3 inertia;
+            Float3 centerofmass;
 
-		NewtonConvexCollisionCalculateInertialMatrix(physics.Collision, &inertia.X,
-            &centerofmass.X);
+            NewtonConvexCollisionCalculateInertialMatrix(physics.Collision, &inertia.X,
+                &centerofmass.X);
 
-		// Apply mass to inertia
-		inertia *= mass;
+            // Apply mass to inertia
+            inertia *= mass;
 
-		NewtonBodySetMassMatrix(physics.Body, mass, inertia.X, inertia.Y, inertia.Z);
-		NewtonBodySetCentreOfMass(physics.Body, &centerofmass.X);
+            NewtonBodySetMassMatrix(physics.Body, mass, inertia.X, inertia.Y, inertia.Z);
+            NewtonBodySetCentreOfMass(physics.Body, &centerofmass.X);
 
-		NewtonBodySetForceAndTorqueCallback(physics.Body, Physics::ApplyForceAndTorgueEvent);
+            NewtonBodySetForceAndTorqueCallback(physics.Body, Physics::ApplyForceAndTorgueEvent);
 
-	}
+        }
 
-	// Callbacks //
-	NewtonBodySetTransformCallback(physics.Body, Physics::PhysicsMovedEvent);
-	NewtonBodySetDestructorCallback(physics.Body, Physics::DestroyBodyCallback);
+        // Callbacks //
+        NewtonBodySetTransformCallback(physics.Body, Physics::PhysicsMovedEvent);
+        NewtonBodySetDestructorCallback(physics.Body, Physics::DestroyBodyCallback);
+    }
 }
 
 DLLEXPORT bool ObjectLoader::LoadNetworkBrush(GameWorld* world, Lock &worldlock,

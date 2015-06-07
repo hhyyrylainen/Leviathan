@@ -18,7 +18,7 @@ using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 void ObjectLoader::_CreatePropCommon(GameWorld* world, Lock &worldlock,
-    ObjectID prop, const std::string &ogrefile, Model &model)
+    ObjectID prop, const std::string &ogrefile, Model &model, bool hidden)
 {
 
     world->CreateConstraintable(prop, prop, world);
@@ -26,11 +26,18 @@ void ObjectLoader::_CreatePropCommon(GameWorld* world, Lock &worldlock,
     // Load the Ogre entity if in graphical mode //
     auto scene = world->GetScene();
 
+    // Render node is required on the server for hiding things on clients
+    auto& rendernode = world->CreateRenderNode(prop);
+
+    if(hidden){
+
+        rendernode.Marked = true;
+        rendernode.Hidden = true;
+    }
+
     if(scene && !ogrefile.empty()){
 
         model.GraphicalObject = scene->createEntity(ogrefile);
-
-        auto& rendernode = world->CreateRenderNode(prop);
 
         // Create scene node for positioning //
         rendernode.Node = scene->getRootSceneNode()->createChildSceneNode();
@@ -44,6 +51,9 @@ void ObjectLoader::_CreatePropPhysics(GameWorld* world, Lock &worldlock, Model &
     Physics &physics, Position &position, ObjectFileList* proplist, const std::string &path,
     int materialid)
 {
+    // Skip creating if no physical world
+    if(!world->GetPhysicalWorld())
+        return;
 
     NewtonWorld* tmpworld = world->GetPhysicalWorld()->GetNewtonWorld();
 
@@ -227,7 +237,7 @@ void ObjectLoader::_CreatePropPhysics(GameWorld* world, Lock &worldlock, Model &
 
 DLLEXPORT bool ObjectLoader::LoadNetworkProp(GameWorld* world, Lock &worldlock,
     ObjectID id, const std::string &modelfile, int materialid,
-    const Position::PositionData &pos)
+    const Position::PositionData &pos, bool hidden)
 {
     // Get relative path //
 	std::string path = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL,
@@ -259,7 +269,7 @@ DLLEXPORT bool ObjectLoader::LoadNetworkProp(GameWorld* world, Lock &worldlock,
 
     world->CreateParentable(prop);
 
-    _CreatePropCommon(world, worldlock, prop, ogrefile, model);
+    _CreatePropCommon(world, worldlock, prop, ogrefile, model, hidden);
 
 	// Find the physics object definition //
 	auto phyobj = file->GetObjectWithType("PhysicalModel");
@@ -320,7 +330,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lo
 
     world->CreateParentable(prop);
 
-    _CreatePropCommon(world, worldlock, prop, ogrefile, model);
+    _CreatePropCommon(world, worldlock, prop, ogrefile, model, false);
 
 	// Find the physics object definition //
 	auto phyobj = file->GetObjectWithType("PhysicalModel");
@@ -349,15 +359,24 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lo
 }
 // ------------------------------------ //
 void ObjectLoader::_CreateBrushModel(GameWorld* world, Lock &worldlock, ObjectID brush,
-    Physics &physics, BoxGeometry &box, Position &position, float mass, const Float3 &size)
+    Physics &physics, BoxGeometry &box, Position &position, float mass, const Float3 &size,
+    bool hidden)
 {
 
 	// Load the Ogre entity if in graphical mode //
     auto scene = world->GetScene();
 
-    if(scene){
+    // Server might want to hide this on the client
+    auto& rendernode = world->CreateRenderNode(brush);
 
-        auto& rendernode = world->CreateRenderNode(brush);
+    if(hidden){
+
+        rendernode.Marked = true;
+        rendernode.Hidden = true;
+    }
+        
+
+    if(scene){
 
         // Use an unique name for the mesh //
         auto& manual = world->CreateManualObject(brush);
@@ -601,7 +620,7 @@ void ObjectLoader::_CreateBrushModel(GameWorld* world, Lock &worldlock, ObjectID
 
 DLLEXPORT bool ObjectLoader::LoadNetworkBrush(GameWorld* world, Lock &worldlock,
     ObjectID id, const std::string &material, const Float3 &size, const float &mass,
-    int materialid, const Position::PositionData &pos)
+    int materialid, const Position::PositionData &pos, bool hidden)
 {
     ObjectID brush = id;
 
@@ -617,7 +636,7 @@ DLLEXPORT bool ObjectLoader::LoadNetworkBrush(GameWorld* world, Lock &worldlock,
 
     auto& physics = world->CreatePhysics(brush, brush, world, position, nullptr);
 
-    _CreateBrushModel(world, worldlock, brush, physics, box, position, mass, size);
+    _CreateBrushModel(world, worldlock, brush, physics, box, position, mass, size, hidden);
 
     // Notify that it has been created //
     world->NotifyEntityCreate(worldlock, brush);
@@ -646,7 +665,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, L
 
     auto& physics = world->CreatePhysics(brush, brush, world, position, &sendable);
 
-    _CreateBrushModel(world, worldlock, brush, physics, box, position, mass, size);
+    _CreateBrushModel(world, worldlock, brush, physics, box, position, mass, size, false);
 
     // Notify that it has been created //
     world->NotifyEntityCreate(worldlock, brush);

@@ -118,19 +118,10 @@ newtonmaterialfetchstartlabel:
         {Float3(0.f, paddleheight+bottomthickness/2.f+BASE_ARENASCALE/2.f, 0.f),
                 Float4::IdentityQuaternion()});
 
-    try{
-        auto& node = TargetWorld->GetComponent<RenderNode>(topbrush);
+    auto& node = TargetWorld->GetComponent<RenderNode>(topbrush);
+    node.Marked = true;
+    node.Hidden = true;
         
-        node.Node->setVisible(false);
-
-    } catch(const NotFound&){
-        
-        // Non-gui mode no need to hide things //
-    }
-
-    // TODO: fix this once you can play multiple matches
-    TargetWorld->RemoveComponent<Sendable>(topbrush);
-    
 	// arena sides //
 
 	// left top //
@@ -466,19 +457,10 @@ addplayerpaddlelabel:
             break;
 		}
 
-        try{
-            auto& node = TargetWorld->GetComponent<RenderNode>(goalarea);
+        auto& node = TargetWorld->GetComponent<RenderNode>(goalarea);
+        node.Marked = true;
+        node.Hidden = true;
 
-            node.Node->setVisible(false);        
-
-        } catch(const NotFound&){
-        
-            // Non-gui mode no need to hide things //
-        }
-
-        // TODO: fix this once you can play multiple matches
-        TargetWorld->RemoveComponent<Sendable>(goalarea);
-		
 		// Set to slot //
         plyvec[i]->SetGoalAreaObject(goalarea);
 

@@ -46,9 +46,10 @@ DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(GameWorld* wo
                 auto& box = world->GetComponent<BoxGeometry>(id);
                 auto& pos = world->GetComponent<Position>(id);
                 auto& physics = world->GetComponent<Physics>(id);
+                auto& rendernode = world->GetComponent<RenderNode>(id);
 
                 packet << box.Material << box.Sizes << pos._Position << pos._Orientation <<
-                    physics.AppliedPhysicalMaterial << physics.Mass;
+                    physics.AppliedPhysicalMaterial << physics.Mass << rendernode.Hidden;
 
                 return true;
                 
@@ -64,9 +65,10 @@ DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(GameWorld* wo
                 auto& model = world->GetComponent<Model>(id);
                 auto& pos = world->GetComponent<Position>(id);
                 auto& physics = world->GetComponent<Physics>(id);
+                auto& rendernode = world->GetComponent<RenderNode>(id);
 
                 packet << model.ModelFile << pos._Position << pos._Orientation <<
-                    physics.AppliedPhysicalMaterial;
+                    physics.AppliedPhysicalMaterial << rendernode.Hidden;
 
                 return true;
                 
@@ -136,8 +138,9 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(GameWo
             Float4 rot;
             int physicalid;
             float mass;
+            bool hidden;
 
-            packet >> material >> sizes >> pos >> rot >> physicalid >> mass;
+            packet >> material >> sizes >> pos >> rot >> physicalid >> mass >> hidden;
 
             if(!packet){
 
@@ -147,7 +150,7 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(GameWo
             }
 
             if(!ObjectLoader::LoadNetworkBrush(world, worldlock, id, material, sizes, mass,
-                    physicalid, {pos, rot}))
+                    physicalid, {pos, rot}, hidden))
             {
 
                 Logger::Get()->Warning("SendableSerializer: failed to create a brush");
@@ -161,8 +164,9 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(GameWo
             Float3 pos;
             Float4 rot;
             int physicalid;
+            bool hidden;
 
-            packet >> modelname >> pos >> rot >> physicalid;
+            packet >> modelname >> pos >> rot >> physicalid >> hidden;
 
             if(!packet){
 
@@ -172,7 +176,7 @@ DLLEXPORT bool SendableEntitySerializer::DeserializeWholeEntityFromPacket(GameWo
             }
 
             if(!ObjectLoader::LoadNetworkProp(world, worldlock, id, modelname, physicalid,
-                    {pos, rot}))
+                    {pos, rot}, hidden))
             {
 
                 Logger::Get()->Warning("SendableSerializer: failed to create a prop");

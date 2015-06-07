@@ -82,12 +82,12 @@ namespace Leviathan{
         //! \see LoadBrushToWorld
         DLLEXPORT static bool LoadNetworkBrush(GameWorld* world, Lock &worldlock,
             ObjectID id, const std::string &material, const Float3 &size, const float &mass,
-            int materialid, const Position::PositionData &pos);
+            int materialid, const Position::PositionData &pos, bool hidden);
 
         //! \see LoadPropToWorld
         DLLEXPORT static bool LoadNetworkProp(GameWorld* world, Lock &worldlock,
             ObjectID id, const std::string &modelfile, int materialid,
-            const Position::PositionData &pos);
+            const Position::PositionData &pos, bool hidden);
 
         //! \see LoadTrackControllerToWorld
         DLLEXPORT static bool LoadNetworkTrackController(GameWorld* world, Lock &worldlock,
@@ -99,10 +99,10 @@ namespace Leviathan{
 
         static void _CreateBrushModel(GameWorld* world, Lock &worldlock, ObjectID brush,
             Physics &physics, BoxGeometry &box, Position &position, float mass,
-            const Float3 &size);
+            const Float3 &size, bool hidden);
 
         static void _CreatePropCommon(GameWorld* world, Lock &worldlock,
-            ObjectID prop, const std::string &ogrefile, Model &model);
+            ObjectID prop, const std::string &ogrefile, Model &model, bool hidden);
 
         static void _CreatePropPhysics(GameWorld* world, Lock &worldlock, Model &model,
             Physics &physics, Position &position, ObjectFileList* proplist,

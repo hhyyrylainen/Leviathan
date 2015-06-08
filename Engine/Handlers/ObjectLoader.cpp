@@ -374,7 +374,6 @@ void ObjectLoader::_CreateBrushModel(GameWorld* world, Lock &worldlock, ObjectID
         rendernode.Marked = true;
         rendernode.Hidden = true;
     }
-        
 
     if(scene){
 
@@ -389,147 +388,155 @@ void ObjectLoader::_CreateBrushModel(GameWorld* world, Lock &worldlock, ObjectID
         manual.Object->estimateVertexCount(24);
         manual.Object->estimateIndexCount(24);
 
+        // Create mesh name //
+        manual.CreatedMesh = "_BoxGeometry_manual_"+Convert::ToString(brush);
+
         manual.Object->begin(box.Material, Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
-        // loops to avoid redundant code //
-        float yval = size.Y/-2.f;
-        bool up = false;
+        // Bottom left //
+        // Bottom //
+        manual.Object->position(size.X/-2.f, size.Y/-2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(0.f, -1.f, 0.f));
 
-        for(int i = 0; i < 2; i++){
-            // loop three times on all points for each side that has that point //
+        // second is the face that is on the right when looking from the
+        // corner to the center of the cube
+        manual.Object->position(size.X/-2.f, size.Y/-2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 0.f, -1.f));
 
-            // bottom left //
-            for(int a = 0; a < 3; a++){
+        // and third is on the left when looking to the center //
+        manual.Object->position(size.X/-2.f, size.Y/-2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(-1.f, 0.f, 0.f));
 
-                manual.Object->position(size.X/-2.f, yval, size.Z/-2.f);
 
-                // bottom left //
-                if(a == 0){
+        // right point //
+        // first is bottom or top face //
+        manual.Object->position(size.X/2.f, size.Y/-2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(0.f, -1.f, 0.f));
 
-                    manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
-                    manual.Object->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+        // second is the face that is on the right when looking from the
+        // corner to the center of the cube
+        manual.Object->position(size.X/2.f, size.Y/-2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(1.f, 0.f, 0.f));
 
-                } else if (a == 1){
-                    // second is the face that is on the right when looking from the
-                    // corner to the center of the cube
-                    if(!up)
-                        manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
-                    else
-                        manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
+        // and third is on the left when looking to the center //
+        manual.Object->position(size.X/2.f, size.Y/-2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 0.f, -1.f));
 
-                    manual.Object->normal(Float3(0.f, 0.f, -1.f));
+        
+        // right up //
+        // first is bottom or top face //
+        manual.Object->position(size.X/2.f, size.Y/-2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(0.f, -1.f, 0.f));
+        
+        // second is the face that is on the right when looking from the corner
+        // to the center of the cube
+        manual.Object->position(size.X/2.f, size.Y/-2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 0.f, 1.f));
 
-                } else {
-                    // and third is on the left when looking to the center //
-                    if(!up)
-                        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
-                    else
-                        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
+        // and third is on the left when looking to the center //
+        manual.Object->position(size.X/2.f, size.Y/-2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(1.f, 0.f, 0.f));
+        
 
-                    manual.Object->normal(Float3(-1.f, 0.f, 0.f));
-                }
-            }
+        // left up //
+        // first is bottom or top face //
+        manual.Object->position(size.X/-2.f, size.Y/-2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(0.f, -1.f, 0.f));
 
-            // right point //
-            for(int a = 0; a < 3; a++){
+        // second is the face that is on the right when looking from the corner to
+        // the center of the cube
+        manual.Object->position(size.X/-2.f, size.Y/-2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(-1.f, 0.f, 0.f));
+        
+        // and third is on the left when looking to the center //
+        manual.Object->position(size.X/-2.f, size.Y/-2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 0.f, 1.f));
 
-                manual.Object->position(size.X/2.f, yval, size.Z/-2.f);
+        /// The other half ///
 
-                // first is bottom or top face //
-                if(a == 0){
+        // Bottom left //
+        // Bottom //
+        manual.Object->position(size.X/-2.f, size.Y/2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 1.f, 0.f));
 
-                    manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
-                    manual.Object->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+        // second is the face that is on the right when looking from the
+        // corner to the center of the cube
+        manual.Object->position(size.X/-2.f, size.Y/2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 0.f, -1.f));
 
-                } else if (a == 1){
-                    // second is the face that is on the right when looking from the
-                    // corner to the center of the cube
-                    if(!up)
-                        manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
-                    else
-                        manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
+        // and third is on the left when looking to the center //
+        manual.Object->position(size.X/-2.f, size.Y/2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(-1.f, 0.f, 0.f));
 
-                    manual.Object->normal(Float3(1.f, 0.f, 0.f));
 
-                } else {
-                    // and third is on the left when looking to the center //
-                    if(!up)
-                        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
-                    else
-                        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
+        // right point //
+        // first is bottom or top face //
+        manual.Object->position(size.X/2.f, size.Y/2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 1.f, 0.f));
 
-                    manual.Object->normal(Float3(0.f, 0.f, -1.f));
-                }
-            }
+        // second is the face that is on the right when looking from the
+        // corner to the center of the cube
+        manual.Object->position(size.X/2.f, size.Y/2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(1.f, 0.f, 0.f));
 
-            // right up //
-            for(int a = 0; a < 3; a++){
+        // and third is on the left when looking to the center //
+        manual.Object->position(size.X/2.f, size.Y/2.f, size.Z/-2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 0.f, -1.f));
 
-                manual.Object->position(size.X/2.f, yval, size.Z/2.f);
+        
+        // right up //
+        // first is bottom or top face //
+        manual.Object->position(size.X/2.f, size.Y/2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 1.f, 0.f));
 
-                // first is bottom or top face //
-                if(a == 0){
+        // second is the face that is on the right when looking from the corner
+        // to the center of the cube
+        manual.Object->position(size.X/2.f, size.Y/2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 0.f, 1.f));
 
-                    manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
-                    manual.Object->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
+        // and third is on the left when looking to the center //
+        manual.Object->position(size.X/2.f, size.Y/2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(1.f, 0.f, 0.f));
+        
 
-                } else if (a == 1){
-                    // second is the face that is on the right when looking from the corner
-                    // to the center of the cube
-                    if(!up)
-                        manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
-                    else
-                        manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
+        // left up //
+        // first is bottom or top face //
+        manual.Object->position(size.X/-2.f, size.Y/2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 1.f, 0.f));
 
-                    manual.Object->normal(Float3(0.f, 0.f, 1.f));
+        // second is the face that is on the right when looking from the corner to
+        // the center of the cube
+        manual.Object->position(size.X/-2.f, size.Y/2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(-1.f, 0.f, 0.f));
+        
+        // and third is on the left when looking to the center //
+        manual.Object->position(size.X/-2.f, size.Y/2.f, size.Z/2.f);
+        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
+        manual.Object->normal(Ogre::Vector3(0.f, 0.f, 1.f));
 
-                } else {
-                    // and third is on the left when looking to the center //
-                    if(!up)
-                        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
-                    else
-                        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
-
-                    manual.Object->normal(Float3(1.f, 0.f, 0.f));
-
-                }
-            }
-            // left up //
-            for(int a = 0; a < 3; a++){
-
-                manual.Object->position(size.X/-2.f, yval, size.Z/2.f);
-
-                // first is bottom or top face //
-                if(a == 0){
-
-                    manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
-                    manual.Object->normal(Float3(0.f, -1.f*(i != 0 ? -1.f: 1.f), 0.f));
-
-                } else if (a == 1){
-                    // second is the face that is on the right when looking from the corner to
-                    // the center of the cube
-                    if(!up)
-                        manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
-                    else
-                        manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
-
-                    manual.Object->normal(Float3(-1.f, 0.f, 0.f));
-
-                } else {
-                    // and third is on the left when looking to the center //
-                    if(!up)
-                        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
-                    else
-                        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
-
-                    manual.Object->normal(Float3(0.f, 0.f, 1.f));
-                }
-            }
-
-            // move to next layer for next loop //
-            yval = size.Y/2.f;
-            up = true;
-        }
 
         // quads are both same //
         // base //

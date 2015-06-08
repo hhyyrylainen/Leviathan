@@ -1278,8 +1278,6 @@ DLLEXPORT void Leviathan::GameWorld::_OnNotifiableConnected(Lock &guard,
             // Get the object //
             auto tosend = world->Objects[num];
 
-            Logger::Get()->Info("Sending object, number: "+Convert::ToString(num));
-
             // Skip if shouldn't send //
             try{
 

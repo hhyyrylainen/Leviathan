@@ -390,10 +390,11 @@ void Pong::PongServer::OnStartPreMatch(){
         GUARD_LOCK_OTHER_NAME(WorldOfPong, lock);
         WorldOfPong->ClearObjects(lock);
         WorldOfPong->SetWorldPhysicsFrozenState(lock, true);
+
     }
 
-	// Setup the objects in the world //
-	if(!GameArena->GenerateArena(this, _PlayerList)){
+    // Setup the objects in the world //
+    if(!GameArena->GenerateArena(this, _PlayerList)){
 
         Logger::Get()->Warning("PongServer: failed to generate arena");
         return;

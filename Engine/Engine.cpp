@@ -1088,6 +1088,11 @@ DLLEXPORT int Leviathan::Engine::GetTimeSinceLastTick() const{
     return Time::GetTimeMs64()-LastFrame;
 }
 
+DLLEXPORT int Engine::GetCurrentTick() const{
+
+    return TickCount;
+}
+// ------------------------------------ //
 void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
 
     GUARD_LOCK();

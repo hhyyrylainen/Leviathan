@@ -41,6 +41,9 @@ namespace Leviathan{
         //! \return The time in milliseconds
         DLLEXPORT int GetTimeSinceLastTick() const;
 
+        //! \brief Returns the number of tick that was last simulated
+        DLLEXPORT int GetCurrentTick() const;
+
 		//! \brief Causes VLD to dump current memory leaks
 		DLLEXPORT static void DumpMemoryLeaks();
 

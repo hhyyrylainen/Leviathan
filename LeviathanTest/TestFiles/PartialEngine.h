@@ -5,6 +5,7 @@
 #include "Engine.h"
 #include "Events/EventHandler.h"
 #include "TimeIncludes.h"
+#include "Networking/NetworkClientInterface.h"
 
 #include "catch.hpp"
 
@@ -14,6 +15,13 @@ using namespace Leviathan;
 class PartialApplication : public LeviathanApplication{
 public:
 
+};
+
+class PartialClient : public NetworkClientInterface{
+public:
+    void _OnStartApplicationConnect() override{
+        
+    }
 };
 
 //! \brief Partial implementation of Leviathan::Engine for tests
@@ -73,4 +81,6 @@ public:
     PartialApplication App;
     Logger Log;
     AppDef Def;
+
+    PartialClient DummyClient;
 };

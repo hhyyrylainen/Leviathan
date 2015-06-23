@@ -17,6 +17,7 @@ set(TestSources
   TestFiles/Sendable.cpp
   TestFiles/NamedVars.cpp
   TestFiles/Components.cpp
+  TestFiles/StdBehaviour.cpp
   )
 
 include_directories(catch)

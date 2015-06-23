@@ -89,7 +89,7 @@ namespace Leviathan{
 
         //! \brief Binds a callback function that is called either when the packet is
         //! successfully sent or it times out
-        DLLEXPORT void SetCallback(std::function<void(bool, SentNetworkThing&)> func);
+        DLLEXPORT void SetCallback(std::shared_ptr<std::function<void(bool, SentNetworkThing&)>> func = nullptr);
 
 		int PacketNumber;
 
@@ -99,7 +99,7 @@ namespace Leviathan{
 		PACKET_TIMEOUT_STYLE PacketTimeoutStyle;
 
         //! Callback function called when succeeded or failed
-        std::function<void(bool, SentNetworkThing&)> Callback;
+        std::shared_ptr<std::function<void(bool, SentNetworkThing&)>> Callback;
         
 		int TimeOutMS;
 		int64_t RequestStartTime;
@@ -118,6 +118,9 @@ namespace Leviathan{
         std::condition_variable Notifier;
 
         Mutex NotifyMutex;
+
+        //! Locked when Callback is being changed or while it is executing
+        Mutex CallbackMutex;
 
         std::atomic_bool IsDone;
         bool Succeeded;

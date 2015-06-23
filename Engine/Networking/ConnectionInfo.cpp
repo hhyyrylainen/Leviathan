@@ -1057,8 +1057,12 @@ DLLEXPORT void Leviathan::SentNetworkThing::SetWaitStatus(bool status){
     Succeeded = status;
     IsDone.store(true, memory_order_release);
 
-    if(Callback)
-        Callback(status, *this);
+    {
+        Lock lock(CallbackMutex);
+        
+        if(Callback)
+            (*Callback)(status, *this);
+    }
     
     {
         Lock lock(NotifyMutex);
@@ -1083,9 +1087,10 @@ DLLEXPORT void Leviathan::SentNetworkThing::SetAsTimed(){
     ConfirmReceiveTime.store(1, memory_order_release);
 }
 
-DLLEXPORT void Leviathan::SentNetworkThing::SetCallback(std::function<void(bool,
-        SentNetworkThing&)> func)
+DLLEXPORT void Leviathan::SentNetworkThing::SetCallback(std::shared_ptr<std::function<void(bool,
+        SentNetworkThing&)>> func)
 {
+    Lock lock(CallbackMutex);
     Callback = func;
 }
 // ------------------ NetworkAckField ------------------ //

@@ -62,6 +62,8 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
 
         std::shared_ptr<sf::Packet> packet = make_shared<sf::Packet>();
 
+        std::shared_ptr<Sendable::ActiveConnection> current = *iter;
+
         // Prepare the packet //
         // The first type is used by EntitySerializerManager and the second by
         // the sendable entity serializer
@@ -69,13 +71,11 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
             static_cast<int32_t>(node._Sendable.SendableHandleType);
         
         // Now calculate a delta update from curstate to the last confirmed state //
-        curstate->CreateUpdatePacket((*iter)->LastConfirmedData.get(), *packet.get());
-
+        curstate->CreateUpdatePacket(current->LastConfirmedData.get(), *packet.get());
         
         // Check is the connection fine //
         std::shared_ptr<ConnectionInfo> safeconnection =
-            NetworkHandler::Get()->GetSafePointerToConnection(
-                (*iter)->CorrespondingConnection);
+            NetworkHandler::Get()->GetSafePointerToConnection(current->CorrespondingConnection);
         
         // This will be the only function removing closed connections //
         // TODO: do a more global approach to avoid having to lookup connections here
@@ -83,7 +83,8 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
 
             iter = node._Sendable.UpdateReceivers.erase(iter);
             end = node._Sendable.UpdateReceivers.end();
-            
+
+            Logger::Get()->Warning("Sendable invalid corresponding connection");
             // TODO: add a disconnect callback
             continue;
         }
@@ -94,14 +95,19 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
 
         updatemesg->GenerateEntityUpdateResponse(new
             NetworkResponseDataForEntityUpdate(world->GetID(), nodesobject, ticknumber,
-                (*iter)->LastConfirmedTickNumber, packet));
+                current->LastConfirmedTickNumber, packet));
+
+        Logger::Get()->Write("Sent state: object: "+Convert::ToString(nodesobject)+", tick: "+
+            Convert::ToString(ticknumber)+", last confirmed: "+
+            Convert::ToString(current->LastConfirmedTickNumber)+", ptr: "+
+            Convert::ToHexadecimalString(current.get()));
 
         auto senthing = safeconnection->SendPacketToConnection(updatemesg, 1);
 
         // Add a callback for success //
-        senthing->SetCallback(std::bind(
-                &Sendable::ActiveConnection::OnPacketFinalized, (*iter),
-                ticknumber, curstate, placeholders::_1, placeholders::_2));
+        senthing->SetCallback(make_shared<SentNetworkThing::CallbackType>(std::bind(
+                &Sendable::ActiveConnection::OnPacketFinalized, current.get(), current, 
+                ticknumber, curstate, placeholders::_1, placeholders::_2)));
         
         ++iter;
     }

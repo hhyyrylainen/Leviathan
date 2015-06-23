@@ -5,6 +5,7 @@
 #include "../Components.h"
 #include "../../Handlers/ObjectLoader.h"
 #include "../CommonStateObjects.h"
+#include "../../Networking/NetworkClientInterface.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -302,6 +303,10 @@ DLLEXPORT bool SendableEntitySerializer::VerifyAndFillReceivedState(Received* re
     return true;
 }
 
+// TODO:
+////// REMOVE DEBUG CODE
+#include "../../Engine.h"
+
 DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world, Lock &worldlock,
     ObjectID targetobject, int ticknumber, int referencetick, sf::Packet &packet)
 {
@@ -372,9 +377,15 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
         }
     }
 
+    cout << "Sendable: received new state " << ticknumber << ", ref: " << referencetick <<
+        " currently at " << Engine::Get()->GetCurrentTick() << "\n";
+
     // Interpolations can only happen if more than one state is received
     if(received->ClientStateBuffer.size() > 1)
         received->Marked = true;
+
+    // Send an empty packet on next tick //
+    NetworkClientInterface::Get()->MarkForNotifyReceivedStates();
 
     return true;
 }

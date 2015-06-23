@@ -122,8 +122,8 @@ namespace Leviathan{
 
             ActiveConnection(ConnectionInfo* connection);
 
-            DLLEXPORT void OnPacketFinalized(int tick,
-                std::shared_ptr<ObjectDeltaStateData> state, bool succeded,
+            DLLEXPORT void OnPacketFinalized(std::shared_ptr<ActiveConnection> object,
+                int tick, std::shared_ptr<ObjectDeltaStateData> state, bool succeded,
                 SentNetworkThing &packet);
             
             

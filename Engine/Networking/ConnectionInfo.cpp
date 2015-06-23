@@ -1087,8 +1087,7 @@ DLLEXPORT void Leviathan::SentNetworkThing::SetAsTimed(){
     ConfirmReceiveTime.store(1, memory_order_release);
 }
 
-DLLEXPORT void Leviathan::SentNetworkThing::SetCallback(std::shared_ptr<std::function<void(bool,
-        SentNetworkThing&)>> func)
+DLLEXPORT void Leviathan::SentNetworkThing::SetCallback(std::shared_ptr<CallbackType> func)
 {
     Lock lock(CallbackMutex);
     Callback = func;

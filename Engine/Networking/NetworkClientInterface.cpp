@@ -23,7 +23,7 @@ using namespace std;
 // ------------------ NetworkClientInterface ------------------ //
 DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() :
     MaxConnectTries(DEFAULT_MAXCONNECT_TRIES), ConnectTriesCount(0), ConnectedToServer(false), UsingHeartbeats(false),
-    SecondsWithoutConnection(0.f), OurPlayerID(-1), PotentialInputHandler(NULL)
+    KeepAliveQueued(false), SecondsWithoutConnection(0.f), OurPlayerID(-1), PotentialInputHandler(NULL)
 {
 	Staticaccess = this;
 }
@@ -35,7 +35,7 @@ DLLEXPORT Leviathan::NetworkClientInterface::~NetworkClientInterface(){
 	Staticaccess = NULL;
 }
 
-DLLEXPORT NetworkClientInterface* Leviathan::NetworkClientInterface::GetIfExists(){
+DLLEXPORT NetworkClientInterface* Leviathan::NetworkClientInterface::Get(){
 	return Staticaccess;
 }
 
@@ -385,6 +385,17 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::UpdateClientStatus(){
 	GUARD_LOCK();
+
+    if(KeepAliveQueued){
+
+        // Send a keep alive //
+        if(ServerConnection){
+
+            ServerConnection->SendKeepAlivePacket();
+        }
+        
+        KeepAliveQueued = false;
+    }
 
 checksentrequestsbeginlabel:
 
@@ -805,6 +816,12 @@ DLLEXPORT NetworkedInputHandler* Leviathan::NetworkClientInterface::GetNetworked
 
 DLLEXPORT std::shared_ptr<ConnectionInfo> Leviathan::NetworkClientInterface::GetServerConnection(){
 	return ServerConnection;
+}
+// ------------------------------------ //
+DLLEXPORT void NetworkClientInterface::MarkForNotifyReceivedStates(){
+
+    GUARD_LOCK();
+    KeepAliveQueued = true;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(

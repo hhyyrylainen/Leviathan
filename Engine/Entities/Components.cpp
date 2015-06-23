@@ -995,18 +995,35 @@ DLLEXPORT void Parentable::OnParentInvalidate(){
     AttachedParent = nullptr;
 }
 // ------------------ Sendable ------------------ //
-DLLEXPORT void Sendable::ActiveConnection::OnPacketFinalized(int tick,
+DLLEXPORT void Sendable::ActiveConnection::OnPacketFinalized(
+    std::shared_ptr<ActiveConnection> object, int tick,
     std::shared_ptr<ObjectDeltaStateData> state, bool succeded, SentNetworkThing &packet)
 {
+    Logger::Get()->Write("Params: "+Convert::ToHexadecimalString(this)+", "+
+        Convert::ToHexadecimalString(object.get())+", "+Convert::ToString(tick)+", "+
+        Convert::ToHexadecimalString(state.get())+", "+Convert::ToString(succeded)+", "+
+        Convert::ToHexadecimalString(&packet));
+    
     if(!succeded)
         return;
-    
-    Lock lock(CallbackMutex);
 
-    if(tick > LastConfirmedTickNumber){
+    if(this != object.get()){
 
-        LastConfirmedTickNumber = tick;
-        LastConfirmedData = state;
+        // This should never happen //
+        Logger::Get()->Error("OnPacketFinalized: arguments corrupted");
+        DEBUG_BREAK;
+        return;
+    }
+
+    Lock lock(object->CallbackMutex);
+
+    if(tick > object->LastConfirmedTickNumber){
+
+        object->LastConfirmedTickNumber = tick;
+        object->LastConfirmedData = state;
+
+        Logger::Get()->Write("Tick "+Convert::ToString(tick)+" is now confirmed, ptr: "+
+            Convert::ToHexadecimalString(object.get()));
     }
 }
 

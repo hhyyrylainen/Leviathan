@@ -589,7 +589,7 @@ void Pong::PongGame::OnPlayerStatsUpdated(PlayerList* list){
 
 bool Pong::PongGame::SendServerCommand(const string &command){
 
-	NetworkClientInterface* clientinterface = NetworkClientInterface::GetIfExists();
+	NetworkClientInterface* clientinterface = NetworkClientInterface::Get();
 	if(clientinterface != NULL){
 		
 		if(!clientinterface->IsConnected())

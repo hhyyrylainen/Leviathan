@@ -532,7 +532,7 @@ void Leviathan::SyncedVariables::_UpdateReceiveCount(const std::string &nameofth
 	++ActualGotThingCount;
 
 
-	auto iface = NetworkClientInterface::GetIfExists();
+	auto iface = NetworkClientInterface::Get();
 	if(iface)
 		iface->OnUpdateFullSynchronizationState(ActualGotThingCount, ExpectedThingCount);
 }

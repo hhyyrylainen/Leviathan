@@ -28,10 +28,10 @@ namespace Leviathan{
             if(!node._Position.Marked)
                 return;
 
+            node._Position.Marked = false;
+            
             node._RenderNode.Node->setPosition(node._Position._Position);
             node._RenderNode.Node->setOrientation(node._Position._Orientation);
-
-            node._Position.Marked = false;
         }
 
         //! \brief Creates nodes if matching ids are found in all data vectors or

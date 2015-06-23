@@ -732,6 +732,10 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(int timeintick){
         // TODO: run direct control system
     }
 
+    // Skip in non-gui mode //
+    if(!GraphicalMode)
+        return;
+    
     RunRenderingPositionSystem();
     RunRenderNodeHiderSystem();
 }

@@ -64,10 +64,6 @@ namespace Leviathan{
 		DLLEXPORT void SendCommandStringToServer(const std::string &messagestr);
 
 
-		//! \brief Returns a pointer to an instance if this application is a client
-		DLLEXPORT static NetworkClientInterface* GetIfExists();
-
-
 		//! \brief Closes all client related things
 		DLLEXPORT void OnCloseClient();
 
@@ -93,6 +89,12 @@ namespace Leviathan{
 		//! \brief Returns the active server connection or NULL
 		DLLEXPORT virtual std::shared_ptr<ConnectionInfo> GetServerConnection();
 
+        //! \brief Marks a keep alive to be sent on next tick
+        DLLEXPORT void MarkForNotifyReceivedStates();
+
+        //! \brief Returns the static instance or NULL
+        //! \note This will always be NULL on non-client applications
+        DLLEXPORT static NetworkClientInterface* Get();
 
 	protected:
 
@@ -190,6 +192,9 @@ namespace Leviathan{
 
 		//! The last time a heartbeat was sent
 		WantedClockType::time_point LastSentHeartbeat;
+
+        //! True when a keep alive should be sent on next tick
+        bool KeepAliveQueued;
 
 
 		//! Holds the time for how long we have been without a heartbeat

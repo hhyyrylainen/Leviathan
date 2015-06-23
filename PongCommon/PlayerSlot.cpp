@@ -122,7 +122,7 @@ void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool ac
     } catch(const NotFound&){
 
         Logger::Get()->Warning("PlayerSlot has a TrackObject that has no TrackController "
-            "component");
+            "component, object: "+Convert::ToString(TrackObject));
     }
 }
 

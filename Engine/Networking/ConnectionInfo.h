@@ -51,6 +51,8 @@ namespace Leviathan{
 	class SentNetworkThing{
     public:
 
+        using CallbackType = std::function<void(bool, SentNetworkThing&)>;
+
 		//! This is the signature for request packets
 		DLLEXPORT SentNetworkThing(int packetid, int expectedresponseid,
             std::shared_ptr<NetworkRequest> request, int maxtries,
@@ -89,7 +91,7 @@ namespace Leviathan{
 
         //! \brief Binds a callback function that is called either when the packet is
         //! successfully sent or it times out
-        DLLEXPORT void SetCallback(std::shared_ptr<std::function<void(bool, SentNetworkThing&)>> func = nullptr);
+        DLLEXPORT void SetCallback(std::shared_ptr<CallbackType> func = nullptr);
 
 		int PacketNumber;
 

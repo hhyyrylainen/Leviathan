@@ -132,11 +132,19 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(GameWorld*
 
     packet >> objtype;
 
-    if(!packet)
-        return false;
+    if(!packet){
 
-    if(!object)
+        Logger::Get()->Error("EntitySerializerManager: ApplyUpdateMessage: packet is invalid, "
+            "didn't contain int32_t object type");
+        
         return false;
+    }
+
+    if(!object){
+
+        Logger::Get()->Error("EntitySerializerManager: ApplyUpdateMessage: invalid object passed");
+        return false;
+    }
     
     GUARD_LOCK();
     
@@ -153,11 +161,17 @@ DLLEXPORT bool Leviathan::EntitySerializerManager::ApplyUpdateMessage(GameWorld*
 
             // This might be unnecessary and harmful,
             // as another serializer might be able to do something
+            Logger::Get()->Error("EntitySerializerManager: ApplyUpdateMessage: serializer failed "
+                "to apply update from packet");
+            
             return false;
         }
     }
 
     // No serializer was able to do anything //
+    Logger::Get()->Error("EntitySerializerManager: ApplyUpdateMessage: no serializer registered "
+        "for type "+Convert::ToString(objtype));
+    
     return false;
 }
 

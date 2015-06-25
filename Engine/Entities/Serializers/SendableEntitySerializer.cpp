@@ -353,7 +353,8 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
 
             if(!VerifyAndFillReceivedState(received, ticknumber, referencetick, state)){
 
-                return false;
+                // Should only get here if it isn't older than any //
+                return true;
             }
 
             // Store the new state in the buffer so that it can be found when interpolating //
@@ -367,7 +368,8 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
 
             if(!VerifyAndFillReceivedState(received, ticknumber, referencetick, state)){
 
-                return false;
+                // Should only get here if it isn't older than any //
+                return true;
             }
 
             // Store the new state in the buffer so that it can be found when interpolating //

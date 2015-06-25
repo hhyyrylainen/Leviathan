@@ -332,6 +332,11 @@ void Pong::PlayerSlot::SetInputThatSendsControls(Lock &guard, PongNInputter* inp
 	InputObj = input;
 }
 
+void PlayerSlot::InputDeleted(Lock &guard){
+
+    InputObj = nullptr;
+}
+
 void Pong::PlayerSlot::_ResetNetworkInput(Lock &guard){
 
 	if(InputObj){

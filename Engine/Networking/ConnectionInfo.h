@@ -28,9 +28,6 @@ namespace Leviathan{
 //! \brief The amount of received packet ids to keep in memory, these ids are used to discard duplicate packets
 #define KEEP_IDS_FOR_DISCARD	40
 
-//! Makes the program spam a ton of debug info about packets //
-//#define SPAM_ME_SOME_PACKETS	1
-
     //! \brief Fail reason for ConnectionInfo::CalculateNetworkPing
     enum CONNECTION_PING_FAIL_REASON {
         CONNECTION_PING_FAIL_REASON_LOSS_TOO_HIGH,
@@ -61,6 +58,7 @@ namespace Leviathan{
         
 		//! Empty destructor to link this in
 		DLLEXPORT ~SentNetworkThing();
+        
 		// This is the signature for response packets //
 		DLLEXPORT SentNetworkThing(int packetid, std::shared_ptr<NetworkResponse> response,
             int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue,
@@ -91,6 +89,7 @@ namespace Leviathan{
 
         //! \brief Binds a callback function that is called either when the packet is
         //! successfully sent or it times out
+        //! \bug This can corrupt the arguments passed to this function, not recommended for use
         DLLEXPORT void SetCallback(std::shared_ptr<CallbackType> func = nullptr);
 
 		int PacketNumber;
@@ -281,9 +280,6 @@ namespace Leviathan{
         DLLEXPORT void CalculateNetworkPing(int packets, int allowedfails,
             std::function<void(int, int)> onsucceeded,
             std::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed);
-
-		//! Don't call this
-		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
 
 	private:
 

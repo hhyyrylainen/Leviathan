@@ -6,6 +6,7 @@
 #include "OgreRibbonTrail.h"
 #include "CommonStateObjects.h"
 #include "GameWorld.h"
+#include "../Networking/ConnectionInfo.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -995,38 +996,58 @@ DLLEXPORT void Parentable::OnParentInvalidate(){
     AttachedParent = nullptr;
 }
 // ------------------ Sendable ------------------ //
-DLLEXPORT void Sendable::ActiveConnection::OnPacketFinalized(
-    std::shared_ptr<ActiveConnection> object, int tick,
-    std::shared_ptr<ObjectDeltaStateData> state, bool succeded, SentNetworkThing &packet)
-{
-    Logger::Get()->Write("Params: "+Convert::ToHexadecimalString(this)+", "+
-        Convert::ToHexadecimalString(object.get())+", "+Convert::ToString(tick)+", "+
-        Convert::ToHexadecimalString(state.get())+", "+Convert::ToString(succeded)+", "+
-        Convert::ToHexadecimalString(&packet));
-    
-    if(!succeded)
+DLLEXPORT void Sendable::ActiveConnection::CheckReceivedPackets(){
+
+    if(SentPackets.empty())
         return;
 
-    if(this != object.get()){
+    // Looped in reverse to hopefully remove only last elements //
+    for(int i = SentPackets.size()-1; i >= 0; ){
 
-        // This should never happen //
-        Logger::Get()->Error("OnPacketFinalized: arguments corrupted");
-        DEBUG_BREAK;
-        return;
+        const auto& tuple = SentPackets[i];
+
+        if(std::get<2>(tuple)->IsFinalized()){
+
+            Logger::Get()->Write("Ended check for tick: "+
+                Convert::ToString(std::get<0>(tuple)));
+
+            if(std::get<2>(tuple)->GetStatus()){
+
+                // Succeeded //
+                if(std::get<0>(tuple) > LastConfirmedTickNumber){
+
+                    LastConfirmedTickNumber = std::get<0>(tuple);
+                    LastConfirmedData = std::get<1>(tuple);
+
+                    Logger::Get()->Write("Latest received is now: "+
+                        Convert::ToString(LastConfirmedTickNumber));
+                }
+            }
+
+            SentPackets.erase(SentPackets.begin()+i);
+
+            if(SentPackets.empty())
+                break;
+            
+        } else {
+
+            i--;
+        }
     }
 
-    Lock lock(object->CallbackMutex);
+    if(SentPackets.capacity() > 10){
 
-    if(tick > object->LastConfirmedTickNumber){
-
-        object->LastConfirmedTickNumber = tick;
-        object->LastConfirmedData = state;
-
-        Logger::Get()->Write("Tick "+Convert::ToString(tick)+" is now confirmed, ptr: "+
-            Convert::ToHexadecimalString(object.get()));
+        Logger::Get()->Warning("Sendable::ActiveConnection: SentPackets has space for over 10 "
+            "sent packets");
+        SentPackets.shrink_to_fit();
     }
 }
 
+DLLEXPORT void Sendable::ActiveConnection::AddSentPacket(int tick,
+    std::shared_ptr<ObjectDeltaStateData> state, std::shared_ptr<SentNetworkThing> packet)
+{
+    SentPackets.push_back(make_tuple(tick, state, packet));
+}
 Sendable::ActiveConnection::ActiveConnection(ConnectionInfo* connection) :
     CorrespondingConnection(connection), LastConfirmedTickNumber(-1)
 {

@@ -368,10 +368,6 @@ namespace Leviathan{
         //! \brief Removes a constraint and notifies possible clients that it was destroyed
         DLLEXPORT void ConstraintDestroyed(BaseConstraint* constraint);
 
-        //! \brief Creates a network constraint at the next suitable time
-        DLLEXPORT bool HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data);
-        
-
 		// Ray callbacks //
 		static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
             const NewtonCollision* const shapeHit, const dFloat* const hitContact,
@@ -401,14 +397,20 @@ namespace Leviathan{
         
 		//! \brief Creates a new entity from initial entity response
         //! \note This should only be called on the client
-        DLLEXPORT bool HandleEntityInitialPacket(NetworkResponseDataForInitialEntity* data);
+        DLLEXPORT void HandleEntityInitialPacket(std::shared_ptr<NetworkResponse> message,
+            NetworkResponseDataForInitialEntity* data);
 
         //! \brief Applies an update packet
         //!
         //! If the entity is not found the packet is discarded
         //! \todo Cache the update data for 1 second and apply it if a matching entity is
         //! created during that time
-        DLLEXPORT void HandleEntityUpdatePacket(NetworkResponseDataForEntityUpdate* data);
+        DLLEXPORT void HandleEntityUpdatePacket(std::shared_ptr<NetworkResponse> message,
+            NetworkResponseDataForEntityUpdate* data);
+
+        //! \brief Creates a network constraint at the next suitable time
+        DLLEXPORT void HandleConstraintPacket(std::shared_ptr<NetworkResponse> message,
+            NetworkResponseDataForEntityConstraint* data);
 
         //! \brief Handles a world clock synchronizing packet
         //! \note This should only be allowed to be called on a client that has connected
@@ -418,6 +420,12 @@ namespace Leviathan{
         //! \brief Handles a world freeze/unfreeze packet
         //! \note Should only be called on a client
         DLLEXPORT void HandleWorldFrozenPacket(NetworkResponseDataForWorldFrozen* data);
+
+        //! \brief Applies packets that have been received after the last call to this
+        DLLEXPORT void ApplyQueuedPackets(Lock &guard);
+
+        //! \brief Applies update packets that can be applied without waiting for new entities
+        DLLEXPORT void ApplyExistingEntityUpdates(Lock &guard);
 
 	private:
 
@@ -446,6 +454,14 @@ namespace Leviathan{
 
         //! \brief Sends sendable updates to all clients
         void _SendEntityUpdates(Lock &guard, ObjectID id, Sendable &sendable, int tick);
+
+
+        // Packet apply functions //
+        void _ApplyInitialEntityPackets(Lock &guard);
+
+        void _ApplyEntityUpdatePackets(Lock &guard);
+
+        void _ApplyConstraintPackets(Lock &guard);
 
 		// ------------------------------------ //
 		Ogre::Camera* WorldSceneCamera;
@@ -513,6 +529,16 @@ namespace Leviathan{
         //!
         //! Used to send full lists to clients
         std::vector<std::shared_ptr<BaseConstraint>> ConstraintList;
+
+        //! Waiting entity packets
+        std::vector<std::shared_ptr<NetworkResponse>> InitialEntityPackets;
+
+        //! Waiting update packets
+        std::vector<std::shared_ptr<NetworkResponse>> EntityUpdatePackets;
+
+        //! Waiting constraint packets
+        std::vector<std::shared_ptr<NetworkResponse>> ConstraintPackets;
+        
 
         // Systems, nodes and components //
         // Note: all of these should be cleared in ClearObjects

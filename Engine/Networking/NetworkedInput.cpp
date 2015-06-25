@@ -11,12 +11,15 @@ using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(int ownerid, int networkid) :
-    OwnerID(ownerid), InputID(networkid), OwningHandler(NULL), CurrentState(NETWOKREDINPUT_STATE_READY)
+    OwnerID(ownerid), InputID(networkid), OwningHandler(NULL),
+    CurrentState(NETWOKREDINPUT_STATE_READY), IsLocal(true)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(sf::Packet &packet){
+DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(sf::Packet &packet) :
+    IsLocal(false)
+{
 	LoadDataFromFullPacket(packet);
 }
 
@@ -167,22 +170,30 @@ doactualdeletereleasethingforfaillabel:
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::TerminateConnection(){
 
-    // We don't need to bother if the server hasn't been contacted //
-    if(CurrentState == NETWOKREDINPUT_STATE_READY)
-        return;
+    if(IsLocal){
     
-	auto response = std::make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
-
-    response->GenerateDisconnectInputResponse(
-        new NetworkResponseDataForDisconnectInput(InputID, OwnerID));
+        // We don't need to bother if the server hasn't been contacted //
+        if(CurrentState == NETWOKREDINPUT_STATE_READY)
+            return;
     
-	// Send the request //
-	auto connection = OwningHandler->ClientInterface->GetServerConnection();
+        auto response = std::make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
 
-	if(!connection)
-		return;
+        response->GenerateDisconnectInputResponse(
+            new NetworkResponseDataForDisconnectInput(InputID, OwnerID));
+    
+        // Send the request //
+        auto connection = OwningHandler->ClientInterface->GetServerConnection();
 
-	connection->SendPacketToConnection(response, 12);
+        if(!connection)
+            return;
+
+        connection->SendPacketToConnection(response, 12);
+
+    } else {
+
+        // Server disconnect client //
+        Logger::Get()->Info("TODO: notify client that we terminated input");
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::NowOwnedBy(NetworkedInputHandler* owner){

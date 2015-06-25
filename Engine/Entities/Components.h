@@ -19,7 +19,7 @@
 namespace Leviathan{
 
     
-    static const int BASESENDABLE_STORED_RECEIVED_STATES = 4;
+    static const int BASESENDABLE_STORED_RECEIVED_STATES = 6;
 
 
     //! brief Class containing residue static helper functions
@@ -118,14 +118,21 @@ namespace Leviathan{
     //! \note This will only be in the entity on the server
     class Sendable : public Component{
     public:
-        struct ActiveConnection{
+        //! \note This is not thread safe do not call CheckReceivedPackets and AddSentPacket
+        //! at the same time
+        //! \todo Make sure that CheckReceivedPackages is called for entities that have
+        //! stopped moving ages ago to free up memory
+        class ActiveConnection{
+        public:
 
             ActiveConnection(ConnectionInfo* connection);
 
-            DLLEXPORT void OnPacketFinalized(std::shared_ptr<ActiveConnection> object,
-                int tick, std::shared_ptr<ObjectDeltaStateData> state, bool succeded,
-                SentNetworkThing &packet);
-            
+            //! \brief Checks has any packet been successfully received and updates last confirmed
+            DLLEXPORT void CheckReceivedPackets();
+
+            //! \brief Adds a package to be checked for finalization in CheckReceivedPackages
+            DLLEXPORT void AddSentPacket(int tick, std::shared_ptr<ObjectDeltaStateData> state,
+                std::shared_ptr<SentNetworkThing> packet);
             
             ConnectionInfo* CorrespondingConnection;
 
@@ -139,8 +146,9 @@ namespace Leviathan{
             // LastConfirmedData will be replaced.
             int LastConfirmedTickNumber;
 
-            //! Mutex for callback function
-            Mutex CallbackMutex;
+            //! Holds packets sent to this connection that haven't failed or been received yet
+            std::vector<std::tuple<int, std::shared_ptr<ObjectDeltaStateData>,
+                                   std::shared_ptr<SentNetworkThing>>> SentPackets;
         };
         
     public:

@@ -224,7 +224,7 @@ DLLEXPORT void Pong::PongInputFactory::NoLongerNeeded(NetworkedInput &todiscard,
 	if(tmpobj->ControlledSlot && tmpobj->ControlledSlot->GetInputObj() == tmpobj){
 
         GUARD_LOCK_OTHER_NAME(tmpobj->ControlledSlot, guard2);
-		tmpobj->ControlledSlot->SetInputThatSendsControls(guard2, NULL);
+		tmpobj->ControlledSlot->InputDeleted(guard2);
 	}
 
     tmpobj->ControlledSlot = NULL;

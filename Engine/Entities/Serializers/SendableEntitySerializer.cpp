@@ -230,6 +230,7 @@ DLLEXPORT bool SendableEntitySerializer::VerifyAndFillReceivedState(Received* re
 
         Logger::Get()->Error("SendableEntitySerializer: invalid packet, failed to create "
             "state object");
+        
         return false;
     }
 
@@ -303,10 +304,6 @@ DLLEXPORT bool SendableEntitySerializer::VerifyAndFillReceivedState(Received* re
     return true;
 }
 
-// TODO:
-////// REMOVE DEBUG CODE
-#include "../../Engine.h"
-
 DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world, Lock &worldlock,
     ObjectID targetobject, int ticknumber, int referencetick, sf::Packet &packet)
 {
@@ -366,7 +363,16 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
         break;
         case SENDABLE_TYPE_TRACKCONTROLLER:
         {
-            DEBUG_BREAK;
+            auto state = make_shared<TrackControllerState>(ticknumber, packet);
+
+            if(!VerifyAndFillReceivedState(received, ticknumber, referencetick, state)){
+
+                return false;
+            }
+
+            // Store the new state in the buffer so that it can be found when interpolating //
+            received->ClientStateBuffer.push_back(Received::StoredState(state, state.get(),
+                    sendabletype));
         }
         break;
         default:
@@ -376,9 +382,6 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
             return false;
         }
     }
-
-    cout << "Sendable: received new state " << ticknumber << ", ref: " << referencetick <<
-        " currently at " << Engine::Get()->GetCurrentTick() << "\n";
 
     // Interpolations can only happen if more than one state is received
     if(received->ClientStateBuffer.size() > 1)

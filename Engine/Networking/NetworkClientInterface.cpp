@@ -202,69 +202,56 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
         {
             // We received a new entity! //
             // TODO: do a system that automatically creates worlds on the client //
-            ThreadingManager::Get()->QueueTask(new
-                QueuedTask(std::bind<void>([](shared_ptr<NetworkResponse> message) -> void
-                    {
 
-                        auto packetdata = message->GetResponseDataForInitialEntity();
+            auto packetdata = message->GetResponseDataForInitialEntity();
 
-                        if(!packetdata){
-                            // Invalid data //
-                            return;
-                        }
+            if(!packetdata){
+                // Invalid data //
+                return true;
+            }
 
-                        // Get a matching world //
-                        auto world = LeviathanApplication::Get()->GetGameWorld(
-                            packetdata->WorldID);
+            // Get a matching world //
+            auto world = LeviathanApplication::Get()->GetGameWorld(
+                packetdata->WorldID);
 
-                        if(!world){
+            if(!world){
 
-                            Logger::Get()->Error("NetworkClientInterface: handle response: "
-                                "couldn't find a matching world for initial entity message, "
-                                "WorldID: "+Convert::ToString(packetdata->WorldID));
-                            return;
-                        }
+                Logger::Get()->Error("NetworkClientInterface: handle response: "
+                    "couldn't find a matching world for initial entity message, "
+                    "WorldID: "+Convert::ToString(packetdata->WorldID));
+                
+                return true;
+            }
 
-                        if(!world->HandleEntityInitialPacket(packetdata)){
+            world->HandleEntityInitialPacket(message, packetdata);
 
-                            Logger::Get()->Error("NetworkClientInterface: failed to create an "
-                                "entity from an initial entity packet");
-                        }
-
-                    }, message)));
-
-            
             // It will be handled soon //
             return true;
         }
         case NETWORKRESPONSETYPE_ENTITY_UPDATE:
         {
-            ThreadingManager::Get()->QueueTask(new
-                QueuedTask(std::bind<void>([](shared_ptr<NetworkResponse> message) -> void
-                    {
 
-                        auto packetdata = message->GetResponseDataForEntityUpdate();
+            auto packetdata = message->GetResponseDataForEntityUpdate();
 
-                        if(!packetdata){
-                            // Invalid data //
-                            return;
-                        }
+            if(!packetdata){
+                // Invalid data //
+                return true;
+            }
 
-                        // Get a matching world //
-                        auto world = LeviathanApplication::Get()->GetGameWorld(
-                            packetdata->WorldID);
+            // Get a matching world //
+            auto world = LeviathanApplication::Get()->GetGameWorld(
+                packetdata->WorldID);
 
-                        if(!world){
+            if(!world){
 
-                            Logger::Get()->Error("NetworkClientInterface: handle response: "
-                                "ignoring update, WorldID: "+Convert::ToString(
-                                    packetdata->WorldID));
-                            return;
-                        }
+                Logger::Get()->Error("NetworkClientInterface: handle response: "
+                    "ignoring update, WorldID: "+Convert::ToString(
+                        packetdata->WorldID));
+                
+                return true;
+            }
 
-                        world->HandleEntityUpdatePacket(packetdata);
-
-                    }, message)));
+            world->HandleEntityUpdatePacket(message, packetdata);
 
             return true;
         }
@@ -307,39 +294,28 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(shar
         {
             // We received a new entity! //
             // TODO: do a system that automatically creates worlds on the client //
-            ThreadingManager::Get()->QueueTask(new
-                QueuedTask(std::bind<void>([](shared_ptr<NetworkResponse> message) -> void
-                    {
+            auto packetdata = message->GetResponseDataForEntityConstraint();
 
-                        auto packetdata = message->GetResponseDataForEntityConstraint();
+            if(!packetdata){
+                
+                // Invalid data //
+                return true;
+            }
 
-                        if(!packetdata){
-                            // Invalid data //
-                            return;
-                        }
+            // Get a matching world //
+            auto world = LeviathanApplication::Get()->GetGameWorld(
+                packetdata->WorldID);
 
-                        // Get a matching world //
-                        auto world = LeviathanApplication::Get()->GetGameWorld(
-                            packetdata->WorldID);
+            if(!world){
 
-                        if(!world){
+                Logger::Get()->Error("NetworkClientInterface: handle response: "
+                    "couldn't find a matching world for constraint message, "
+                    "WorldID: "+Convert::ToString(packetdata->WorldID));
+                return true;
+            }
 
-                            Logger::Get()->Error("NetworkClientInterface: handle response: "
-                                "couldn't find a matching world for constraint message, "
-                                "WorldID: "+Convert::ToString(packetdata->WorldID));
-                            return;
-                        }
+            world->HandleConstraintPacket(message, packetdata);
 
-                        if(!world->HandleConstraintPacket(packetdata)){
-
-                            Logger::Get()->Error("NetworkClientInterface: couldn't handle "
-                                "constraint packet");
-                        }
-
-                    }, message)));
-
-            
-            // It will be handled soon //
             return true;
         }
         case NETWORKRESPONSETYPE_ENTITY_DESTRUCTION:

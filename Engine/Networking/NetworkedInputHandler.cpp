@@ -43,22 +43,30 @@ DLLEXPORT void Leviathan::NetworkedInputHandler::Release(){
     
 	GUARD_LOCK();
 
-	auto end = GlobalOrLocalListeners.end();
-	for(auto iter = GlobalOrLocalListeners.begin(); iter != end; ++iter){
+    _HandleDeleteQueue(guard);
+
+    for(size_t i = 0; i < GlobalOrLocalListeners.size(); i++){
 
         // Apparently there can be null pointers in the vector, skip them //
-        NetworkedInput* ptr = (*iter).get();
+        NetworkedInput* ptr = GlobalOrLocalListeners[i].get();
 
-        if(ptr)
-            _NetworkInputFactory->NoLongerNeeded(*ptr, guard);
-	}
+        if(!ptr)
+            continue;
 
+        ptr->_UnConnectParent(guard);
+		ptr->TerminateConnection();
+		_NetworkInputFactory->NoLongerNeeded(*ptr, guard);
 
-	GlobalOrLocalListeners.clear();
+        if(ptr->ConnectedTo){
+
+            DEBUG_BREAK;
+        }
+    }
+    
+    GlobalOrLocalListeners.clear();
 
     // The listeners might want to destruct stuff, so set this to NULL after releasing them //
 	_NetworkInputFactory = NULL;    
-    
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<NetworkRequest> request,

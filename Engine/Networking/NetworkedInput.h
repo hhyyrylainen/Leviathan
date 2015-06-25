@@ -143,6 +143,8 @@ namespace Leviathan{
 		//! \todo The server needs to be asked about this ID
 		int InputID;
 
+        //! True when this is local. On the client
+        bool IsLocal;
 
 		//! A pointer to the owning handler instance
 		NetworkedInputHandler* OwningHandler;

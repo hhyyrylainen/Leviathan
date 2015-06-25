@@ -60,19 +60,8 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
     auto end = node._Sendable.UpdateReceivers.end();
     for(auto iter = node._Sendable.UpdateReceivers.begin(); iter != end; ){
 
-        std::shared_ptr<sf::Packet> packet = make_shared<sf::Packet>();
-
         std::shared_ptr<Sendable::ActiveConnection> current = *iter;
 
-        // Prepare the packet //
-        // The first type is used by EntitySerializerManager and the second by
-        // the sendable entity serializer
-        (*packet) << static_cast<int32_t>(ENTITYSERIALIZEDTYPE_SENDABLE_ENTITY) <<
-            static_cast<int32_t>(node._Sendable.SendableHandleType);
-        
-        // Now calculate a delta update from curstate to the last confirmed state //
-        curstate->CreateUpdatePacket(current->LastConfirmedData.get(), *packet.get());
-        
         // Check is the connection fine //
         std::shared_ptr<ConnectionInfo> safeconnection =
             NetworkHandler::Get()->GetSafePointerToConnection(current->CorrespondingConnection);
@@ -89,25 +78,51 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
             continue;
         }
 
+        // Check has some of the packages been received //
+        current->CheckReceivedPackets();
+
+        // Prepare the packet //
+        std::shared_ptr<sf::Packet> packet = make_shared<sf::Packet>();
+
+        // The first type is used by EntitySerializerManager and the second by
+        // the sendable entity serializer
+        (*packet) << static_cast<int32_t>(ENTITYSERIALIZEDTYPE_SENDABLE_ENTITY) <<
+            static_cast<int32_t>(node._Sendable.SendableHandleType);
+
+
+        // Do not use last confirmed if it is too old
+        int referencetick = -1;
+
+        if(ticknumber < current->LastConfirmedTickNumber + BASESENDABLE_STORED_RECEIVED_STATES -1){
+
+            referencetick = current->LastConfirmedTickNumber;
+
+            // Now calculate a delta update from curstate to the last confirmed state //
+            curstate->CreateUpdatePacket(current->LastConfirmedData.get(), *packet.get());
+
+        } else {
+
+            // Data is too old and cannot be used //
+            curstate->CreateUpdatePacket(nullptr, *packet.get());
+        }
+
         // Create the final update packet //
         std::shared_ptr<NetworkResponse> updatemesg = make_shared<NetworkResponse>(-1,
             PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 4);
 
         updatemesg->GenerateEntityUpdateResponse(new
             NetworkResponseDataForEntityUpdate(world->GetID(), nodesobject, ticknumber,
-                current->LastConfirmedTickNumber, packet));
+                referencetick, packet));
 
         Logger::Get()->Write("Sent state: object: "+Convert::ToString(nodesobject)+", tick: "+
             Convert::ToString(ticknumber)+", last confirmed: "+
             Convert::ToString(current->LastConfirmedTickNumber)+", ptr: "+
             Convert::ToHexadecimalString(current.get()));
 
-        auto senthing = safeconnection->SendPacketToConnection(updatemesg, 1);
+        auto sentthing = safeconnection->SendPacketToConnection(updatemesg, 1);
 
         // Add a callback for success //
-        senthing->SetCallback(make_shared<SentNetworkThing::CallbackType>(std::bind(
-                &Sendable::ActiveConnection::OnPacketFinalized, current.get(), current, 
-                ticknumber, curstate, placeholders::_1, placeholders::_2)));
+        current->AddSentPacket(ticknumber, curstate, sentthing);
         
         ++iter;
     }

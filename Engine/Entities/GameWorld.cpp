@@ -447,6 +447,9 @@ DLLEXPORT void Leviathan::GameWorld::SimulatePhysics(Lock &guard){
     
         if(!WorldFrozen){
 
+            _ApplyEntityUpdatePackets(guard);
+            _ApplyConstraintPackets(guard);
+
             // Let's set the maximum runs to 10000 to disable completely deadlocking
             _PhysicalWorld->SimulateWorld(10000);
         }
@@ -469,6 +472,10 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
 
     TickNumber = currenttick;
 
+    // Apply queued packets //
+    ApplyQueuedPackets(guard);
+
+    // All required nodes for entities are created //
     HandleAdded(guard);
 
     _HandleDelayedDelete(guard);
@@ -724,12 +731,19 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(int timeintick){
 
     HandleAdded(guard);
 
+    ApplyExistingEntityUpdates(guard);
+
     // Client interpolation //
     if(!IsOnServer){
 
-        RunInterpolationSystem(TickNumber, std::max(0.f,
-                std::min(timeintick / (float)TICKSPEED, 1.f)));
+        const float interpolatepercentage = std::max(0.f,
+            std::min(timeintick / (float)TICKSPEED, 1.f));
+        
+        RunInterpolationSystem(TickNumber, interpolatepercentage);
+        
         // TODO: run direct control system
+
+        cout << "Interpolate: " << TickNumber << interpolatepercentage << "\n";
     }
 
     // Skip in non-gui mode //
@@ -815,18 +829,6 @@ DLLEXPORT void GameWorld::ConstraintDestroyed(BaseConstraint* constraint){
             return;
         }
     }
-}
-
-DLLEXPORT bool GameWorld::HandleConstraintPacket(NetworkResponseDataForEntityConstraint* data){
-
-    if(!data)
-        return false;
-    
-    GUARD_LOCK();
-
-    DEBUG_BREAK;
-
-    return true;
 }
 // ------------------ Object managing ------------------ //
 DLLEXPORT ObjectID GameWorld::CreateEntity(Lock &guard){
@@ -1422,61 +1424,186 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(Lock &guard, ObjectI
     return connection->SendPacketToConnection(response, 5).get() ? true: false;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::HandleEntityInitialPacket(
-    NetworkResponseDataForInitialEntity* data)
+DLLEXPORT void Leviathan::GameWorld::HandleEntityInitialPacket(
+    shared_ptr<NetworkResponse> message, NetworkResponseDataForInitialEntity* data)
 {
-
-    bool somesucceeded = false;
-
-    GUARD_LOCK();
+    if(!data)
+        return;
     
-    // Handle all the entities in the packet //
-    auto end = data->EntityData.end();
-    for(auto iter = data->EntityData.begin(); iter != end; ++iter){
+    GUARD_LOCK();
 
-        ObjectID id = 0;
-        
-        EntitySerializerManager::Get()->CreateEntityFromInitialMessage(this, guard, id,
-            *(*iter).get());
-
-        if(id < 1){
-
-            Logger::Get()->Error("GameWorld: handle initial packet: failed to create entity");
-            continue;
-        }
-
-        somesucceeded = true;
-    }
-
-    return somesucceeded;
+    InitialEntityPackets.push_back(message);
 }
 
-DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(
+void GameWorld::_ApplyInitialEntityPackets(Lock &guard){
+
+    auto serializer = EntitySerializerManager::Get();
+    
+    for(auto&& response : InitialEntityPackets){
+
+        // Data cannot be NULL here //
+        NetworkResponseDataForInitialEntity* data = response->GetResponseDataForInitialEntity();
+        
+        // Handle all the entities in the packet //
+        auto end = data->EntityData.end();
+        for(auto iter = data->EntityData.begin(); iter != end; ++iter){
+
+            ObjectID id = 0;
+        
+            serializer->CreateEntityFromInitialMessage(this, guard, id,
+                *(*iter).get());
+
+            if(id < 1){
+
+                Logger::Get()->Error("GameWorld: handle initial packet: failed to create entity");
+            }
+        }
+    }
+    
+    InitialEntityPackets.clear();
+}
+
+DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(shared_ptr<NetworkResponse> message,
     NetworkResponseDataForEntityUpdate* data)
 {
-    GUARD_LOCK();
+    if(!data)
+        return;
     
-    // Just check if the entity is created/exists //
-    for(auto iter = Objects.begin(); iter != Objects.end(); ++iter){
+    GUARD_LOCK();
 
-        if((*iter) == data->EntityID){
+    EntityUpdatePackets.push_back(message);
+}
 
-            // Apply the update //
-            if(!EntitySerializerManager::Get()->ApplyUpdateMessage(this, guard, data->EntityID,
-                    *data->UpdateData, data->TickNumber, data->ReferenceTick))
+void GameWorld::_ApplyEntityUpdatePackets(Lock &guard){
+
+    auto serializer = EntitySerializerManager::Get();
+    
+    for(auto&& response : EntityUpdatePackets){
+
+        // Data cannot be NULL here //
+        NetworkResponseDataForEntityUpdate* data = response->GetResponseDataForEntityUpdate();
+        
+        // Just check if the entity is created/exists //
+        for(auto iter = Objects.begin(); iter != Objects.end(); ++iter){
+
+            if((*iter) == data->EntityID){
+
+                // Apply the update //
+                if(!serializer->ApplyUpdateMessage(this, guard, data->EntityID,
+                        *data->UpdateData, data->TickNumber, data->ReferenceTick))
+                {
+
+                    Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): applying update "
+                        "to entity "+Convert::ToString(data->EntityID)+" failed");
+                }
+            
+                return;
+            }
+        }
+
+        // It hasn't been created yet //
+        Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has no entity "+
+            Convert::ToString(data->EntityID)+", ignoring an update packet");
+    }
+    
+    EntityUpdatePackets.clear();
+}
+
+DLLEXPORT void GameWorld::ApplyExistingEntityUpdates(Lock &guard){
+
+    if(!EntityUpdatePackets.empty())
+        return;
+
+    auto serializer = EntitySerializerManager::Get();
+    
+    for(auto iter = EntityUpdatePackets.begin(); iter != EntityUpdatePackets.end(); ){
+
+        // Data cannot be NULL here //
+        NetworkResponseDataForEntityUpdate* data = (*iter)->GetResponseDataForEntityUpdate();
+
+        bool applied = false;
+        
+        // Just check if the entity is created/exists //
+        for(auto iter = Objects.begin(); iter != Objects.end(); ++iter){
+
+            if((*iter) == data->EntityID){
+
+                // Apply the update //
+                if(!serializer->ApplyUpdateMessage(this, guard, data->EntityID,
+                        *data->UpdateData, data->TickNumber, data->ReferenceTick))
+                {
+
+                    Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): applying update "
+                        "to entity "+Convert::ToString(data->EntityID)+" failed");
+                }
+
+                applied = true;
+                break;
+            }
+        }
+
+        if(!applied){
+            
+            ++iter;
+            
+        } else {
+
+            iter = EntityUpdatePackets.erase(iter);
+        }
+    }
+    
+}
+
+DLLEXPORT void GameWorld::HandleConstraintPacket(shared_ptr<NetworkResponse> message,
+    NetworkResponseDataForEntityConstraint* data)
+{
+    if(!data)
+        return;
+    
+    GUARD_LOCK();
+
+    ConstraintPackets.push_back(message);
+}
+
+void GameWorld::_ApplyConstraintPackets(Lock &guard){
+
+    for(auto&& response : ConstraintPackets){
+
+        NetworkResponseDataForEntityConstraint* data =
+            response->GetResponseDataForEntityConstraint();
+
+        // Find the entities //
+        try{
+            
+            auto& first = GetComponent<Constraintable>(data->EntityID1);
+            auto& second = GetComponent<Constraintable>(data->EntityID2);
+
+            if(!ConstraintSerializerManager::Get()->CreateConstraint(first, second,
+                    data->Type, *data->ConstraintData, data->Create))
             {
-
-                Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): applying update "
-                    "to entity "+Convert::ToString(data->EntityID)+" failed");
+                Logger::Get()->Error("GameWorld: apply constraint: failed to create constraint");
             }
             
-            return;
+        } catch(const NotFound&){
+
+            // TODO: move to waiting constraints
+            continue;
         }
     }
 
-    // It hasn't been created yet //
-    Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has no entity "+
-        Convert::ToString(data->EntityID)+", ignoring an update packet");
+    ConstraintPackets.clear();
+}
+// ------------------------------------ //
+DLLEXPORT void GameWorld::ApplyQueuedPackets(Lock &guard){
+
+    if(!InitialEntityPackets.empty())
+        _ApplyInitialEntityPackets(guard);
+
+    if(!EntityUpdatePackets.empty())
+        _ApplyEntityUpdatePackets(guard);
+    
+    if(!ConstraintPackets.empty())
+        _ApplyConstraintPackets(guard);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSyncData* data){

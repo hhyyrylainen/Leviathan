@@ -553,6 +553,19 @@ void Pong::Arena::ServeBall(){
     auto& physics = TargetWorld->GetComponent<Physics>(Ball);
     
 	physics.GiveImpulse(dir);
+
+    // Add applyforce //
+    physics.ApplyForce(new Physics::ApplyForceInfo(true, [](
+                    ApplyForceInfo* instance, Physics &object, Lock &objectlock) -> Float3
+        {
+
+            auto vel = object.GetVelocity(objectlock);
+
+            vel.Y = 0;
+
+            return vel.Normalize()*1.002;
+            
+        }));
 }
 // ------------------------------------ //
 void Pong::Arena::VerifyTrail(Lock &guard){

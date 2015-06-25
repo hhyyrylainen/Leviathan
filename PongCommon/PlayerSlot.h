@@ -170,6 +170,11 @@ namespace Pong{
 		//! \param oldcheck If not NULL will only clear if the current one matches, useful to stop accidentally clearing new inputs
 		void SetInputThatSendsControls(Lock &guard, PongNInputter* input);
 
+        //! \brief Called when input object is destroyed externally
+        //!
+        //! Called when NetworkedInputHandler is released while there are inputs attached
+        void InputDeleted(Lock &guard);
+
         PongNInputter* GetInputObj() const{
 
             return InputObj;

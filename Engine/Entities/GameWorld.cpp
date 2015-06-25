@@ -723,7 +723,7 @@ DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
     ComponentParentable.ClearAdded();
 }
 // ------------------------------------ //
-DLLEXPORT void GameWorld::RunFrameRenderSystems(int timeintick){
+DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick){
 
     GUARD_LOCK();
 
@@ -736,14 +736,13 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(int timeintick){
     // Client interpolation //
     if(!IsOnServer){
 
-        const float interpolatepercentage = std::max(0.f,
-            std::min(timeintick / (float)TICKSPEED, 1.f));
+        const float interpolatepercentage = std::max(0.f, timeintick / (float)TICKSPEED);
         
-        RunInterpolationSystem(TickNumber, interpolatepercentage);
+        RunInterpolationSystem(tick, interpolatepercentage);
         
         // TODO: run direct control system
 
-        cout << "Interpolate: " << TickNumber << interpolatepercentage << "\n";
+        cout << "Interpolate: " << tick << " : " << interpolatepercentage << "\n";
     }
 
     // Skip in non-gui mode //
@@ -1493,8 +1492,8 @@ void GameWorld::_ApplyEntityUpdatePackets(Lock &guard){
                         *data->UpdateData, data->TickNumber, data->ReferenceTick))
                 {
 
-                    Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): applying update "
-                        "to entity "+Convert::ToString(data->EntityID)+" failed");
+                    Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): "
+                        "applying update to entity "+Convert::ToString(data->EntityID)+" failed");
                 }
             
                 return;

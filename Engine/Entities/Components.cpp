@@ -1008,9 +1008,6 @@ DLLEXPORT void Sendable::ActiveConnection::CheckReceivedPackets(){
 
         if(std::get<2>(tuple)->IsFinalized()){
 
-            Logger::Get()->Write("Ended check for tick: "+
-                Convert::ToString(std::get<0>(tuple)));
-
             if(std::get<2>(tuple)->GetStatus()){
 
                 // Succeeded //
@@ -1018,9 +1015,6 @@ DLLEXPORT void Sendable::ActiveConnection::CheckReceivedPackets(){
 
                     LastConfirmedTickNumber = std::get<0>(tuple);
                     LastConfirmedData = std::get<1>(tuple);
-
-                    Logger::Get()->Write("Latest received is now: "+
-                        Convert::ToString(LastConfirmedTickNumber));
                 }
             }
 

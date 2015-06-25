@@ -190,7 +190,8 @@ namespace Leviathan{
         std::mutex NetworkHandlerLock;
 
 		// data //
-		int64_t LastFrame;
+		int64_t LastTickTime;
+        
 		int TimePassed;
 		int FrameLimit;
 		int TickCount;

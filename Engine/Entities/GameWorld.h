@@ -122,7 +122,7 @@ namespace Leviathan{
         //! \brief Called by engine before frame rendering
         //! \todo Only call on worlds that contain cameras that are connected
         //! to GraphicalInputEntities
-        DLLEXPORT void RunFrameRenderSystems(int timeintick);
+        DLLEXPORT void RunFrameRenderSystems(int tick, int timeintick);
         
 
         //! \brief Fetches the physical material ID from the material manager

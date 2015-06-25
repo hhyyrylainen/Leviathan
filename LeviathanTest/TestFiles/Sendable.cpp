@@ -207,11 +207,8 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
             
             position._Position = Float3(0, 0, 0);
 
-            // Set tick
-            world.Tick(3);
-
             // Engine progress
-            world.RunFrameRenderSystems(0.5f*TICKSPEED);
+            world.RunFrameRenderSystems(3, 0.5f*TICKSPEED);
 
             // Position should have changed //
             CHECK(position._Position.X == Approx(35));
@@ -220,19 +217,16 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
         SECTION("Unmarking and remarking when new states arrive"){
             
             // This should unlink the listener //
-            world.Tick(5);
 
             // Engine progress
-            world.RunFrameRenderSystems(0.5f*TICKSPEED);
+            world.RunFrameRenderSystems(5, 0.5f*TICKSPEED);
             
 
             position._Position = Float3(0, 0, 0);
 
             // This shoulnd't apply //
-            world.Tick(3);
-
             // Engine progress
-            world.RunFrameRenderSystems(0.5f*TICKSPEED);
+            world.RunFrameRenderSystems(3, 0.5f*TICKSPEED);
 
             CHECK(position._Position.X == 0);
 
@@ -253,10 +247,9 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
             }
 
             // And this should now work //
-            world.Tick(5);
 
             // Engine progress
-            world.RunFrameRenderSystems(0.5f*TICKSPEED);
+            world.RunFrameRenderSystems(5, 0.5f*TICKSPEED);
 
             CHECK(position._Position.X == Approx(55));
         }

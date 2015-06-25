@@ -116,8 +116,7 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
 
         Logger::Get()->Write("Sent state: object: "+Convert::ToString(nodesobject)+", tick: "+
             Convert::ToString(ticknumber)+", last confirmed: "+
-            Convert::ToString(current->LastConfirmedTickNumber)+", ptr: "+
-            Convert::ToHexadecimalString(current.get()));
+            Convert::ToString(current->LastConfirmedTickNumber));
 
         auto sentthing = safeconnection->SendPacketToConnection(updatemesg, 1);
 

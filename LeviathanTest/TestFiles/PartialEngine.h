@@ -75,7 +75,7 @@ public:
 
     void ResetClock(int mstoset){
 
-        LastFrame = Time::GetTimeMs64()-mstoset;
+        LastTickTime = Time::GetTimeMs64()-mstoset;
     }
 
     PartialApplication App;

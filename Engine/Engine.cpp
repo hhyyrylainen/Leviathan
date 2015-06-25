@@ -74,7 +74,7 @@ DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
 	TimePassed = 0;
 
     // This makes sure that uninitialized engine will have at least some last frame time //
-	LastFrame = Time::GetTimeMs64();
+	LastTickTime = Time::GetTimeMs64();
 
 	TickCount = 0;
 	TickTime = 0;
@@ -564,7 +564,7 @@ void Leviathan::Engine::PostLoad(){
     ClearTimers();
     
 	// get time //
-	LastFrame = Time::GetTimeMs64();
+	LastTickTime = Time::GetTimeMs64();
 }
 
 void Leviathan::Engine::Release(bool forced){
@@ -691,7 +691,7 @@ void Leviathan::Engine::Tick(){
 
 	// Get the passed time since the last update //
 	auto CurTime = Time::GetTimeMs64();
-	TimePassed = (int)(CurTime-LastFrame);
+	TimePassed = (int)(CurTime-LastTickTime);
 
 
 	if((TimePassed < TICKSPEED)){
@@ -700,7 +700,7 @@ void Leviathan::Engine::Tick(){
 	}
 
 
-	LastFrame += TICKSPEED;
+	LastTickTime += TICKSPEED;
 	TickCount++;
 
 	// Update input //
@@ -778,7 +778,7 @@ void Leviathan::Engine::Tick(){
         }
     }
     
-	TickTime = (int)(Time::GetTimeMs64()-LastFrame);
+	TickTime = (int)(Time::GetTimeMs64()-CurTime);
 }
 
 DLLEXPORT void Leviathan::Engine::PreFirstTick(){
@@ -818,7 +818,7 @@ void Leviathan::Engine::RenderFrame(){
 	}
 
 	// since last frame is in microseconds 10^-6 convert to milliseconds //
-	// SinceLastFrame is always more than 1000 (always 1 ms or more) //
+	// SinceLastTickTime is always more than 1000 (always 1 ms or more) //
 	SinceLastFrame /= 1000;
 	FrameCount++;
 
@@ -829,14 +829,21 @@ void Leviathan::Engine::RenderFrame(){
             new IntegerEventData(SinceLastFrame)));
 
     // Run rendering systems //
-    const auto timeintick = Time::GetTimeMs64() - LastFrame;
+    int timeintick = Time::GetTimeMs64() - LastTickTime;
+    int moreticks = 0;
+
+    while(timeintick > TICKSPEED){
+
+        timeintick -= TICKSPEED;
+        moreticks++;
+    }
 
     {
         Lock lock(GameWorldsLock);
         
         for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
 
-            (*iter)->RunFrameRenderSystems(timeintick);
+            (*iter)->RunFrameRenderSystems(TickCount + moreticks, timeintick);
         }
     }
     
@@ -1085,7 +1092,7 @@ void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
 // ------------------------------------ //
 DLLEXPORT int Leviathan::Engine::GetTimeSinceLastTick() const{
 
-    return Time::GetTimeMs64()-LastFrame;
+    return Time::GetTimeMs64()-LastTickTime;
 }
 
 DLLEXPORT int Engine::GetCurrentTick() const{
@@ -1101,12 +1108,12 @@ void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
 
         Logger::Get()->Info("Engine: adjusted tick timer by "+Convert::ToString(amount));
         
-        LastFrame += amount;
+        LastTickTime += amount;
         return;
     }
 
     // Calculate the time in the current last tick //
-    int64_t templasttick = LastFrame;
+    int64_t templasttick = LastTickTime;
 
     int64_t curtime = Time::GetTimeMs64();
 
@@ -1122,7 +1129,7 @@ void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
 
     Logger::Get()->Info("Engine: changing tick counter by "+Convert::ToString(changeamount));
         
-    LastFrame += changeamount;
+    LastTickTime += changeamount;
 }
 
 void Engine::_AdjustTickNumber(int tickamount, bool absolute){

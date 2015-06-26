@@ -30,8 +30,44 @@ namespace Leviathan{
     };
 
     class Locker{
-    public:
         
+        template<typename T>
+        static T* TurnToPointer(T &obj){
+            return &obj;
+        }
+
+        template<typename T>
+        static T* TurnToPointer(T* obj){
+            return obj;
+        }
+        
+    public:
+
+
+        template<typename ObjectClass>
+        static auto Object(const ObjectClass* object){
+
+            return Unique(TurnToPointer(object)->ObjectsLock);
+        }
+
+        template<typename ObjectClass>
+        static auto Object(const ObjectClass &object){
+
+            return Unique(TurnToPointer(object)->ObjectsLock);
+        }
+
+        template<typename ObjectClass>
+        static auto Object(std::shared_ptr<ObjectClass> object){
+
+            return Unique(object->ObjectsLock);
+        }
+
+        template<typename ObjectClass>
+        static auto Object(std::unique_ptr<ObjectClass> object){
+
+            return Unique(object->ObjectsLock);
+        }
+
         template<class LockType>
         static auto Unique(LockType &lockref){
 
@@ -40,17 +76,14 @@ namespace Leviathan{
     };
     
 
-#define GUARD_LOCK() auto guard = std::move(Locker::Unique(this->ObjectsLock));
+#define GUARD_LOCK() auto guard = std::move(Locker::Object(this));
     
-#define GUARD_LOCK_CAST(BaseClass) auto guard = std::move(Locker::Unique(static_cast<BaseClass*>(\
-                this)->ObjectsLock));
+#define GUARD_LOCK_OTHER(x) auto guard = std::move(Locker::Object(x));
+#define GUARD_LOCK_NAME(y) auto y = std::move(Locker::Object(this));
+#define GUARD_LOCK_OTHER_NAME(x,y) auto y = std::move(Locker::Object(x));
     
-#define GUARD_LOCK_OTHER(x) auto guard = std::move(Locker::Unique(x->ObjectsLock));
-#define GUARD_LOCK_NAME(y) auto y = std::move(Locker::Unique(this->ObjectsLock));
-#define GUARD_LOCK_OTHER_NAME(x,y) auto y = std::move(Locker::Unique(x->ObjectsLock));
-    
-#define UNIQUE_LOCK_OBJECT_OTHER(x) auto lockit = std::move(Locker::Unique(x->ObjectsLock));
-#define UNIQUE_LOCK_THIS() auto lockit = std::move(Locker::Unique(this->ObjectsLock));
+#define UNIQUE_LOCK_OBJECT_OTHER(x) auto lockit = std::move(Locker::Object(x));
+#define UNIQUE_LOCK_THIS() auto lockit = std::move(Locker::Object(this));
     
 
 	//! \brief Allows the inherited object to be locked
@@ -82,6 +115,7 @@ namespace Leviathan{
 
     //! \brief Simple lockable objects, no recursive locking
     using ThreadSafe = ThreadSafeGeneric<Mutex>;
+    
     //! \brief Object supports recursive locking
     //!
     //! Less efficient than ThreadSafe

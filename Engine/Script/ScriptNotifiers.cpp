@@ -16,7 +16,7 @@ DLLEXPORT Leviathan::ScriptNotifier::ScriptNotifier(asIScriptFunction* functiont
 DLLEXPORT Leviathan::ScriptNotifier::~ScriptNotifier(){
 	ReleaseChildHooks();
     
-	GUARD_LOCK_CAST(BaseNotifierAll);
+	GUARD_LOCK();
     
 	if(CallbackFunction)
 		CallbackFunction->Release();
@@ -41,10 +41,14 @@ DLLEXPORT Leviathan::ScriptNotifiable::ScriptNotifiable(asIScriptFunction* funct
 }
 
 DLLEXPORT Leviathan::ScriptNotifiable::~ScriptNotifiable(){
+    
 	ReleaseParentHooks();
-	GUARD_LOCK_CAST(BaseNotifiableAll);
+    
+	GUARD_LOCK();
+    
 	if(CallbackFunction)
 		CallbackFunction->Release();
+    
 	CallbackFunction = NULL;
 }
 // ------------------------------------ //

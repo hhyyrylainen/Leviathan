@@ -731,7 +731,7 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick){
 
     HandleAdded(guard);
 
-    ApplyExistingEntityUpdates(guard);
+    _ApplyEntityUpdatePackets(guard);
 
     // Client interpolation //
     if(!IsOnServer){
@@ -741,8 +741,6 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick){
         RunInterpolationSystem(tick, interpolatepercentage);
         
         // TODO: run direct control system
-
-        cout << "Interpolate: " << tick << " : " << interpolatepercentage << "\n";
     }
 
     // Skip in non-gui mode //
@@ -1471,6 +1469,8 @@ DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(shared_ptr<Network
     
     GUARD_LOCK();
 
+    cout << "Update: " << data->TickNumber << "\n";
+
     EntityUpdatePackets.push_back(message);
 }
 
@@ -1482,12 +1482,6 @@ void GameWorld::_ApplyEntityUpdatePackets(Lock &guard){
 
         // Data cannot be NULL here //
         NetworkResponseDataForEntityUpdate* data = response->GetResponseDataForEntityUpdate();
-
-        if(!data){
-
-            DEBUG_BREAK;
-            continue;
-        }
 
         bool found = false;
         
@@ -1519,51 +1513,6 @@ void GameWorld::_ApplyEntityUpdatePackets(Lock &guard){
     }
     
     EntityUpdatePackets.clear();
-}
-
-DLLEXPORT void GameWorld::ApplyExistingEntityUpdates(Lock &guard){
-
-    if(!EntityUpdatePackets.empty())
-        return;
-
-    auto serializer = EntitySerializerManager::Get();
-    
-    for(auto iter = EntityUpdatePackets.begin(); iter != EntityUpdatePackets.end(); ){
-
-        // Data cannot be NULL here //
-        NetworkResponseDataForEntityUpdate* data = (*iter)->GetResponseDataForEntityUpdate();
-
-        bool applied = false;
-        
-        // Just check if the entity is created/exists //
-        for(auto iter = Objects.begin(); iter != Objects.end(); ++iter){
-
-            if((*iter) == data->EntityID){
-
-                // Apply the update //
-                if(!serializer->ApplyUpdateMessage(this, guard, data->EntityID,
-                        *data->UpdateData, data->TickNumber, data->ReferenceTick))
-                {
-
-                    Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): applying update "
-                        "to entity "+Convert::ToString(data->EntityID)+" failed");
-                }
-
-                applied = true;
-                break;
-            }
-        }
-
-        if(!applied){
-            
-            ++iter;
-            
-        } else {
-
-            iter = EntityUpdatePackets.erase(iter);
-        }
-    }
-    
 }
 
 DLLEXPORT void GameWorld::HandleConstraintPacket(shared_ptr<NetworkResponse> message,

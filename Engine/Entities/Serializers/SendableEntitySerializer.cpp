@@ -354,6 +354,7 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
             if(!VerifyAndFillReceivedState(received, ticknumber, referencetick, state)){
 
                 // Should only get here if it isn't older than any //
+                DEBUG_BREAK;
                 return true;
             }
 

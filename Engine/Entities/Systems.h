@@ -298,6 +298,9 @@ namespace Leviathan{
                             first->DirectData),
                         *reinterpret_cast<const PositionDeltaState*>(second->DirectData),
                         adjustedprogress);
+
+                    std::cout << "Interpolate between " << first->Tick << " \t" << second->Tick <<
+                        " \t" << adjustedprogress<< "\n";
                 }
                 break;
                 default:

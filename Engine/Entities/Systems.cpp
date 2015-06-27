@@ -104,6 +104,9 @@ DLLEXPORT void SendableSystem::ProcessNode(SendableNode &node, ObjectID nodesobj
 
             // Data is too old and cannot be used //
             curstate->CreateUpdatePacket(nullptr, *packet.get());
+
+            current->LastConfirmedTickNumber = -1;
+            current->LastConfirmedData.reset();
         }
 
         // Create the final update packet //

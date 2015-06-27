@@ -7,6 +7,7 @@
 #include "CommonStateObjects.h"
 #include "GameWorld.h"
 #include "../Networking/ConnectionInfo.h"
+#include <limits>
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -642,22 +643,23 @@ DLLEXPORT Received::Received(SENDABLE_TYPE type) :
 DLLEXPORT void Received::GetServerSentStates(Lock &guard, StoredState const** first,
     StoredState const** second, int tick, float &progress) const
 {
-    bool firstfound = false;
+    // Used to find the first tick before or on tick //
+    int firstinpast = std::numeric_limits<int>::max();
     int secondfound = 0;
+
 
     for(auto& obj : ClientStateBuffer){
 
-        if(obj.Tick == tick){
-            
-            // This is the first state //
-            *first = &obj;
+        if(tick - obj.Tick < firstinpast && tick - obj.Tick >= 0){
 
-            firstfound = true;
-            continue;
+            // This is (potentially) the first state //
+            firstinpast = tick - obj.Tick;
+
+            *first = &obj;
         }
 
         // For this to be found the client should be around 50-100 milliseconds in the past
-        if(obj.Tick > tick && (secondfound == 0 || obj.Tick-tick < secondfound)){
+        if(obj.Tick > tick && (secondfound == 0 || obj.Tick - tick < secondfound)){
 
             // The second state //
             *second = &obj;
@@ -665,19 +667,23 @@ DLLEXPORT void Received::GetServerSentStates(Lock &guard, StoredState const** fi
             secondfound = obj.Tick-tick;
             continue;
         }
+
+
     }
 
-    if(!firstfound || secondfound == 0){
+    if(firstinpast == std::numeric_limits<int>::max() || secondfound == 0){
 
         throw InvalidState("No stored server states around tick");
     }
 
-    // Adjust progress //
-    if(secondfound > 1){
+    // If the range is not 1, meaning firstinpast != 0 || secondfound > 1 we need to adjust
+    // progress
+    int range = firstinpast + secondfound;
 
-        const float mspassed = TICKSPEED*progress;
-        progress = mspassed / (TICKSPEED*secondfound);
-    }
+    if(range == 1)
+        return;
+
+    progress = ((tick + progress) - (*first)->Tick) / range;
 }
 
 // ------------------ TrackController ------------------ //

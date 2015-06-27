@@ -158,6 +158,42 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
             InvalidState);
     }
 
+    SECTION("Specified tick is missing but older exist"){
+
+        for(auto i : {1, 2, 4}){
+        
+            auto state = PositionDeltaState::CaptureState(position, i);
+
+            sf::Packet packet;
+
+            packet << static_cast<int32_t>(SENDABLE_TYPE_BRUSH);
+
+            state->CreateUpdatePacket(firststate.get(), packet);
+
+            GUARD_LOCK_OTHER_NAME((&world), worldlock);
+            REQUIRE(serializer.ApplyUpdateFromPacket(&world, worldlock, brush, i, i-1, packet));
+        }
+
+        const Received::StoredState* first = nullptr;
+        const Received::StoredState* second = nullptr;
+
+        float progress = 0.25f;
+        
+        REQUIRE_NOTHROW(received.GetServerSentStates(&first, &second, 3, progress));
+
+        REQUIRE(first);
+        REQUIRE(second);
+        CHECK(progress == 0.625f);
+        CHECK(first->Tick == 2);
+        CHECK(second->Tick == 4);
+
+        progress = 0.75f;
+        
+        REQUIRE_NOTHROW(received.GetServerSentStates(&first, &second, 3, progress));
+
+        CHECK(progress == 0.875);
+    }
+
     
     world.Release();
 }

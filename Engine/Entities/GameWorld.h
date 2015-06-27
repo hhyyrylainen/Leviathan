@@ -424,9 +424,6 @@ namespace Leviathan{
         //! \brief Applies packets that have been received after the last call to this
         DLLEXPORT void ApplyQueuedPackets(Lock &guard);
 
-        //! \brief Applies update packets that can be applied without waiting for new entities
-        DLLEXPORT void ApplyExistingEntityUpdates(Lock &guard);
-
 	private:
 
 		//! Used to connect new players

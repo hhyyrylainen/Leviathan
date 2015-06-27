@@ -368,6 +368,11 @@ DLLEXPORT void Leviathan::NetworkClientInterface::UpdateClientStatus(){
         if(ServerConnection){
 
             ServerConnection->SendKeepAlivePacket();
+            
+        } else {
+
+            Logger::Get()->Warning("NetworkClientInterface: cannot send keepalive because "
+                "ServerConnection is empty");
         }
         
         KeepAliveQueued = false;

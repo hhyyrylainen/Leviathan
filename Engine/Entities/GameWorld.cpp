@@ -885,6 +885,7 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(Lock &guard, ObjectID id){
     } else {
 
         // Clients register received objects here //
+        // TODO: make sure that this doesn't add duplicates when running tests
         Objects.push_back(id);
     }
 }
@@ -1481,11 +1482,21 @@ void GameWorld::_ApplyEntityUpdatePackets(Lock &guard){
 
         // Data cannot be NULL here //
         NetworkResponseDataForEntityUpdate* data = response->GetResponseDataForEntityUpdate();
+
+        if(!data){
+
+            DEBUG_BREAK;
+            continue;
+        }
+
+        bool found = false;
         
         // Just check if the entity is created/exists //
         for(auto iter = Objects.begin(); iter != Objects.end(); ++iter){
 
             if((*iter) == data->EntityID){
+
+                found = true;
 
                 // Apply the update //
                 if(!serializer->ApplyUpdateMessage(this, guard, data->EntityID,
@@ -1496,13 +1507,15 @@ void GameWorld::_ApplyEntityUpdatePackets(Lock &guard){
                         "applying update to entity "+Convert::ToString(data->EntityID)+" failed");
                 }
             
-                return;
+                break;
             }
         }
 
-        // It hasn't been created yet //
-        Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has no entity "+
-            Convert::ToString(data->EntityID)+", ignoring an update packet");
+        if(!found){
+            // It hasn't been created yet //
+            Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): has no entity "+
+                Convert::ToString(data->EntityID)+", ignoring an update packet");
+        }
     }
     
     EntityUpdatePackets.clear();

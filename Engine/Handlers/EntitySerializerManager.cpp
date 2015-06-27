@@ -13,6 +13,7 @@ DLLEXPORT Leviathan::EntitySerializerManager::EntitySerializerManager(){
 
 DLLEXPORT Leviathan::EntitySerializerManager::~EntitySerializerManager(){
 
+    Staticinstance = NULL;
 }
 
 DLLEXPORT EntitySerializerManager* Leviathan::EntitySerializerManager::Get(){

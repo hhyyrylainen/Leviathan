@@ -3,9 +3,12 @@
 #include "Entities/GameWorld.h"
 #include "Entities/Components.h"
 #include "Handlers/ObjectLoader.h"
+#include "Handlers/EntitySerializerManager.h"
 #include "Common/SFMLPackets.h"
 #include "Entities/CommonStateObjects.h"
 #include "Entities/Serializers/SendableEntitySerializer.h"
+#include "Networking/NetworkResponse.h"
+
 
 #include "catch.hpp"
 
@@ -256,4 +259,127 @@ TEST_CASE("World interpolation system works with Brush", "[entity, networking]")
     }
     
     world.Release();
+}
+
+TEST_CASE("GameWorld properly loads and applies state packets", "[networking, entity]"){
+
+    PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
+
+    SendableEntitySerializer serializer;
+    EntitySerializerManager manager;
+    manager.AddSerializer(&serializer);
+
+    REQUIRE(Engine::Get() != nullptr);
+    
+    GameWorld world;
+    world.Init(nullptr, nullptr);
+
+    REQUIRE(world.GetObjectCount() == 0);
+
+    auto brush = ObjectLoader::LoadBrushToWorld(&world, "none", Float3(1, 1, 1), 50, 0,
+        { Float3(0, 0, 0), Float4::IdentityQuaternion() });
+
+    // TODO: make fake clients not register objects twice
+    REQUIRE(world.GetObjectCount() == 2);
+
+    REQUIRE(brush != 0);
+
+    auto& position = world.GetComponent<Position>(brush);
+
+    auto& sendable = world.GetComponent<Sendable>(brush);
+
+    // Fake Received type
+    auto& received = world.CreateReceived(brush, SENDABLE_TYPE_BRUSH);
+
+    position._Position = Float3(12, 5, 2);
+
+    // Create packet "as the server" //
+    auto serverstate = PositionDeltaState::CaptureState(position, 1);
+
+    shared_ptr<NetworkResponse> packet;
+
+    SECTION("No reference tick"){
+
+        auto datapacket = make_shared<sf::Packet>();
+
+        (*datapacket) << static_cast<int32_t>(ENTITYSERIALIZEDTYPE_SENDABLE_ENTITY) <<
+            static_cast<int32_t>(sendable.SendableHandleType);
+
+        serverstate->CreateUpdatePacket(nullptr, *datapacket);
+
+        packet = move(make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
+        packet->GenerateEntityUpdateResponse(new NetworkResponseDataForEntityUpdate(
+                0, brush, 1, -1, datapacket));
+    }
+
+    SECTION("With reference tick"){
+
+        // First send the reference tick //
+        position._Position = Float3(24, 0, 2);
+
+        auto referencestate = PositionDeltaState::CaptureState(position, 0);
+        
+        auto datapacket = make_shared<sf::Packet>();
+
+        (*datapacket) << static_cast<int32_t>(ENTITYSERIALIZEDTYPE_SENDABLE_ENTITY) <<
+            static_cast<int32_t>(sendable.SendableHandleType);
+
+        serverstate->CreateUpdatePacket(nullptr, *datapacket);
+
+        auto referencepacket = move(make_shared<NetworkResponse>(-1,
+                PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
+        referencepacket->GenerateEntityUpdateResponse(new NetworkResponseDataForEntityUpdate(
+                0, brush, 0, -1, datapacket));
+
+        world.HandleEntityUpdatePacket(referencepacket,
+            referencepacket->GetResponseDataForEntityUpdate());
+
+        // Then the actual packet //
+        datapacket = make_shared<sf::Packet>();
+
+        (*datapacket) << static_cast<int32_t>(ENTITYSERIALIZEDTYPE_SENDABLE_ENTITY) <<
+            static_cast<int32_t>(sendable.SendableHandleType);
+
+        serverstate->CreateUpdatePacket(referencestate.get(), *datapacket);
+        
+        packet = move(make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
+        packet->GenerateEntityUpdateResponse(new NetworkResponseDataForEntityUpdate(
+                0, brush, 1, 0, datapacket));
+    }
+
+    REQUIRE(packet);
+    REQUIRE(packet->GetResponseDataForEntityUpdate() != nullptr);
+
+    // Then try to load it as the client //
+    
+    world.HandleEntityUpdatePacket(packet, packet->GetResponseDataForEntityUpdate());
+
+    // This actually loads it //
+    {
+        GUARD_LOCK_OTHER(world);
+
+        world.ApplyQueuedPackets(guard);
+    }
+
+    if(received.ClientStateBuffer.size() < 2){
+
+        position._Position = Float3(10);
+
+        auto firststate = PositionDeltaState::CaptureState(position, 0);
+
+        received.ClientStateBuffer.push_back(Received::StoredState(firststate, firststate.get(),
+                SENDABLE_TYPE_BRUSH));
+    }
+
+    position._Position = Float3(0);
+
+    CHECK(received.ClientStateBuffer.size() == 2);
+
+    // This may not get marked //
+    received.Marked = true;
+    
+    // Now if it successfully loaded the position should change //
+    world.RunFrameRenderSystems(0, 0.5*TICKSPEED);
+
+    CHECK(position._Position != Float3(0));
 }

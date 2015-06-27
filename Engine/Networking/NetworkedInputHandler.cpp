@@ -205,6 +205,9 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(Lock &guard,
         // It got accepted so finish adding the data //
         ournewobject->OnLoadCustomFullDataFrompacket(data->DataForObject);
 
+        // Set status //
+        ournewobject->SetAsServerSize();
+
         // Add it to us //
         LinkReceiver(guard, ournewobject.get());
         ournewobject->NowOwnedBy(this);

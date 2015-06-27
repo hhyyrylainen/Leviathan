@@ -18,7 +18,7 @@ DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(int ownerid, int networkid) 
 }
 
 DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(sf::Packet &packet) :
-    IsLocal(false)
+    IsLocal(true)
 {
 	LoadDataFromFullPacket(packet);
 }
@@ -210,6 +210,11 @@ DLLEXPORT NETWORKEDINPUT_STATE Leviathan::NetworkedInput::GetState() const{
 
 DLLEXPORT int Leviathan::NetworkedInput::GetID() const{
 	return InputID;
+}
+// ------------------------------------ //
+DLLEXPORT void NetworkedInput::SetAsServerSize(){
+
+    IsLocal = false;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::SetNetworkReceivedState(){

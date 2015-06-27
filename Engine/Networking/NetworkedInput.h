@@ -101,6 +101,9 @@ namespace Leviathan{
 		//! \brief Called when this is created locally, should set the initial data
 		DLLEXPORT virtual void InitializeLocal() = 0;
 
+        //! \brief Called on the server to make this behave like the server's input should
+        DLLEXPORT void SetAsServerSize();
+
 
 		DLLEXPORT int GetID() const;
 
@@ -144,6 +147,7 @@ namespace Leviathan{
 		int InputID;
 
         //! True when this is local. On the client
+        //! Set to false in SetAsServerSize
         bool IsLocal;
 
 		//! A pointer to the owning handler instance

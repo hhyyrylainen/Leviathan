@@ -26,12 +26,13 @@ namespace Leviathan{
 
 
 //! \brief The amount of received packet ids to keep in memory, these ids are used to discard duplicate packets
-#define KEEP_IDS_FOR_DISCARD	40
+#define KEEP_IDS_FOR_DISCARD	60
 
     //! \brief Fail reason for ConnectionInfo::CalculateNetworkPing
     enum CONNECTION_PING_FAIL_REASON {
         CONNECTION_PING_FAIL_REASON_LOSS_TOO_HIGH,
-        CONNECTION_PING_FAIL_REASON_CONNECTION_CLOSED};
+        CONNECTION_PING_FAIL_REASON_CONNECTION_CLOSED
+    };
 
     
     
@@ -141,13 +142,27 @@ namespace Leviathan{
 	static_assert(sizeof(char) == 1, "Char must be one byte in size");
 	static_assert(sizeof(int) == 4, "Int must be four bytes in size");
 
-	typedef std::map<int, bool> ReceivedPacketField;
+    enum RECEIVED_STATE{
+
+        //! Packet hasn't been received
+        RECEIVED_STATE_NOT_RECEIVED = 0,
+
+        //! Packet is received but no acks have been sent
+        RECEIVED_STATE_RECEIVED,
+
+        //! Packet is received and an ack has been sent
+        RECEIVED_STATE_ACKS_SENT,
+
+        //! Packet is received and the ack is also received
+        RECEIVED_STATE_RECEIVED_ACK_SUCCEEDED
+    };
+
+	using ReceivedPacketField = std::unordered_map<int, RECEIVED_STATE>;
 
 	class NetworkAckField{
 	public:
 
-		DLLEXPORT NetworkAckField(){};
-		DLLEXPORT NetworkAckField(sf::Int32 firstpacketid, char maxacks,
+		DLLEXPORT NetworkAckField(int32_t firstpacketid, char maxacks,
             ReceivedPacketField &copyfrom);
 
 		DLLEXPORT inline bool IsAckSet(size_t ackindex){
@@ -157,29 +172,29 @@ namespace Leviathan{
 			return (Acks[vecelement] & (1 << (ackindex-vecelement))) != 0;
 		}
 
-		// If the ack in this field is set then it is set in the argument map, but if ack is not set in this field
-        //! it isn't reseted in the argument map //
+        //! \brief Sets acks in this packet as properly sent in copydatato
+        //!
+        //! Acks that were false in this packet are untouched
 		DLLEXPORT void SetPacketsReceivedIfNotSet(ReceivedPacketField &copydatato);
 
-		DLLEXPORT void RemoveMatchingPacketIDsFromMap(ReceivedPacketField &removefrom);
-
 		// Data //
-		sf::Int32 FirstPacketID;
-        std::vector<sf::Int8> Acks;
+		int32_t FirstPacketID;
+        std::vector<int8_t> Acks;
 	};
 
 	struct SentAcks{
 
-		SentAcks(int packet, NetworkAckField* newddata);
-		~SentAcks();
+        //! \param insidepacket The packet in which the data was sent in
+		SentAcks(int insidepacket, std::shared_ptr<NetworkAckField> acks);
 
-		// The packet (SentNetworkThing) in which these acks were sent //
+		//! The packet (SentNetworkThing) in which these acks were sent //
 		int InsidePacket;
-		//! Used to control how many times to send each ackbunch //
-		//! If package loss is high this will be increased to make sure acks are received //
+        
+		//! Used to control how many times to send each packet of acks
+		//! If package loss is high this will be increased to make sure acks are received
 		int SendCount;
 
-		//! Marks if this can be deleted (after using for resends, of course) //
+        //! Marks when the remote host tells us that any packet in which bunch is is received
 		bool Received;
 
 		NetworkAckField* AcksInThePacket;
@@ -243,6 +258,7 @@ namespace Leviathan{
         
 
 		// Data exchange functions //
+        //! \deprecated Should loop and wait on SentNetworkThing
 		DLLEXPORT std::shared_ptr<NetworkResponse> SendRequestAndBlockUntilDone(
             std::shared_ptr<NetworkRequest> request, int maxtries = 2);
 
@@ -283,39 +299,51 @@ namespace Leviathan{
 
 	private:
 
-		//void _PopMadeRequest(shared_ptr<SentNetworkThing> objectptr, Lock &guard);
 		void _ResendRequest(std::shared_ptr<SentNetworkThing> toresend, Lock &guard);
 
-		// Marks the acks in packet received as successfully sent and erases them //
-		void _VerifyAckPacketsAsSuccesfullyReceivedFromHost(Lock &guard, int packetreceived);
+		//! Marks the acks in packet received as successfully sent and erases them
+		void _VerifyAckPacketsAsSuccesfullyReceivedFromHost(Lock &guard, int oursentreceived);
 
-		void _PreparePacketHeaderForPacket(Lock &guard, int packetid, sf::Packet &tofill,
+        //! \brief Creates a standard header and ack field for outgoing packet
+        //! \param tofill An empty packet where the packet header can be added
+        //! \param dontsendacks If true first ack will be set to -1 and count to 0
+		void _PreparePacketHeaderForPacket(Lock &guard, int localpacketid, sf::Packet &tofill,
             bool isrequest, bool dontsendacks = false);
 
+        //! \brief Returns a request matching the response's reference ID or NULL
         std::shared_ptr<SentNetworkThing> _GetPossibleRequestForResponse(Lock &guard,
             std::shared_ptr<NetworkResponse> response);
 
-		//! \brief Checks whether a packet with the number is received
+		//! \brief Checks whether a packet with the number is received from remote
 		//!
 		//! This function will also store the packetid for later checks
-		bool _IsAlreadyReceived(int packetid);
+		bool _IsAlreadyReceived(int remotepacketid);
 
 		// ------------------------------------ //
 
-		// Packet sent and received data //
-		std::map<int, bool> SentPacketsConfirmedAsReceived;
-		std::map<int, bool> ReceivedPacketsNotifiedAsReceivedByUs;
-		int LastSentConfirmID;
+        //! Used to send acks for received remote packets
+		ReceivedPacketField ReceivedRemotePackets;
+        
 
-		int MyLastSentReceived;
+		//! Holds the ID of the last sent packet
+        //! Incremented everytime a packet is sent to keep local
+        //! packet ids different
+        //! \note The world will break once this wraps around and reaches -1
+		int LastUsedLocalID;
+        
 
-		// Holds the ID of the last sent packet //
-		int LastUsedID;
-
-		//! Connections might have special restrictions on them (mainly the accept only remote console feature) //
+		//! Connections might have special restrictions on them (mainly the accept only remote console feature)
 		CONNECTION_RESTRICTION RestrictType;
 
+        //! Flipped everytime a packet is sent to toggle sending acks from the front or the back
+        //! In normal operation doesn't matter but in exceptional circumstances allows more acks to be sent
+        //! by sending 2 group of acks for each round while waiting for confirmation of ack receive
+        bool FrontAcks = true;
 
+        //! When acks pile up increase this value to send more acks
+        //! \todo Add a proper method that tracks unsent acks with time and modifies this
+        int ExtraAckCount = 0;
+        
 		// How many times the same ack table is sent before new one is generated (usually 1 with good connections) //
 		int MaxAckReduntancy;
 

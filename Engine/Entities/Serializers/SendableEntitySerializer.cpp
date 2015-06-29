@@ -6,6 +6,8 @@
 #include "../../Handlers/ObjectLoader.h"
 #include "../CommonStateObjects.h"
 #include "../../Networking/NetworkClientInterface.h"
+// TODO: remove
+#include "../../Networking/ConnectionInfo.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -392,6 +394,11 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
 
     // Send an empty packet on next tick //
     NetworkClientInterface::Get()->MarkForNotifyReceivedStates();
+
+    // TODO: remove debug code
+    auto connection = NetworkClientInterface::Get()->GetServerConnection();
+
+    connection->SendKeepAlivePacket();
 
     return true;
 }

@@ -15,7 +15,7 @@ using namespace std;
 // ------------------------------------ //
 
 //! Makes the program spam a ton of debug info about packets //
-//#define SPAM_ME_SOME_PACKETS 1
+#define SPAM_ME_SOME_PACKETS 1
 
 // ------------------------------------ //
 DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const string &hostname) : 
@@ -60,6 +60,7 @@ void AckFieldToPacket(sf::Packet &packet, const NetworkAckField &data){
 	sf::Int8 tmpsize = data.Acks.size();
 
 	packet << data.FirstPacketID << tmpsize;
+    
 	// Now to fill in the ack data //
 	for(char i = 0; i < tmpsize; i++){
 		packet << data.Acks[i];
@@ -69,10 +70,14 @@ void AckFieldToPacket(sf::Packet &packet, const NetworkAckField &data){
 void AckFieldFromPacket(sf::Packet &packet, NetworkAckField &data){
 	// Get data //
 	packet >> data.FirstPacketID;
+    
 	sf::Int8 tmpsize = 0;
+    
 	packet >> tmpsize;
+    
 	// Fill in the acks from the packet //
 	data.Acks.resize(tmpsize);
+    
 	for(char i = 0; i < tmpsize; i++){
 		packet >> data.Acks[i];
 	}
@@ -83,6 +88,7 @@ DLLEXPORT bool Leviathan::ConnectionInfo::Init(){
     GUARD_LOCK_OTHER_NAME(NetworkHandler::Get(), guard2);
     
 	GUARD_LOCK();
+    
 	// This might do something //
 	if(!AddressGot){
 		TargetHost = sf::IpAddress(HostName);
@@ -112,33 +118,30 @@ DLLEXPORT void Leviathan::ConnectionInfo::Release(){
 	// Remove us from the queue //
 	NetworkHandler::Get()->_UnregisterConnectionInfo(this);
 
-	{
-		GUARD_LOCK();
+    GUARD_LOCK();
 
-		Logger::Get()->Info("ConnectionInfo: disconnecting from "+TargetHost.toString()+":"
-			+Convert::ToString(TargetPortNumber));
+    Logger::Get()->Info("ConnectionInfo: disconnecting from "+TargetHost.toString()+":"
+        +Convert::ToString(TargetPortNumber));
 
-		// Send a close packet //
-		SendCloseConnectionPacket(guard);
+    // Send a close packet //
+    SendCloseConnectionPacket(guard);
 
-		// Destroy some of our stuff //
-		TargetHost == sf::IpAddress::None;
+    // Destroy some of our stuff //
+    TargetHost == sf::IpAddress::None;
         
-        // Make sure that all our remaining packets fail //
-        auto end = WaitingRequests.end();
-        for(auto iter = WaitingRequests.begin(); iter != end; ++iter){
+    // Make sure that all our remaining packets fail //
+    auto end = WaitingRequests.end();
+    for(auto iter = WaitingRequests.begin(); iter != end; ++iter){
 
-            // Mark as failed //
-            (*iter)->SetWaitStatus(false);
-        }
+        // Mark as failed //
+        (*iter)->SetWaitStatus(false);
+    }
 
-        // All are now properly closed //
-        WaitingRequests.clear();
+    // All are now properly closed //
+    WaitingRequests.clear();
 
-		// Release all the listeners //
-		ReleaseChildHooks(guard);
-	}
-
+    // Release all the listeners //
+    ReleaseChildHooks(guard);
 }
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<NetworkResponse> Leviathan::ConnectionInfo::SendRequestAndBlockUntilDone(

@@ -1,13 +1,8 @@
-#ifndef LEVIATHAN_DATASTORE
-#define LEVIATHAN_DATASTORE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/DataStoring/NamedVars.h"
-#include "FileSystem.h"
 #include "Events/AutoUpdateable.h"
 
 namespace Leviathan{
@@ -31,16 +26,15 @@ namespace Leviathan{
 
 
 #define DATAINDEX_UND			-1
-//#define FUNCKREATE(x, y) private: #x #y; public: DLLEXPORT #x Get#y(){ return #y; }; public: DLLEXPORT void Set#y(#x newval){ #y = newval; ValueUpdate(); };
 
 
 	struct DataListener{
 		DLLEXPORT DataListener();
-		DLLEXPORT DataListener(int index, bool onindex, const wstring& var = L"");
+		DLLEXPORT DataListener(int index, bool onindex, const std::string &var = "");
 
 		int ListenIndex;
 		bool ListenOnIndex;
-		wstring VarName;
+        std::string VarName;
 
 		//AutoUpdateableObject* Object;
 	};
@@ -52,36 +46,38 @@ namespace Leviathan{
 			SAFE_DELETE_VECTOR(HandledListeners);
 		}
 
-		vector<DataListener*> HandledListeners;
+        std::vector<DataListener*> HandledListeners;
 	};
 
 
-	class DataStore : public Object{
+	class DataStore{
 	public:
 		DLLEXPORT DataStore();
 		DLLEXPORT DataStore(bool main);
 		DLLEXPORT ~DataStore();
 
 		DLLEXPORT void SetPersistance(unsigned int index, bool toset);
-		DLLEXPORT void SetPersistance(const wstring &name, bool toset);
+		DLLEXPORT void SetPersistance(const std::string &name, bool toset);
 		DLLEXPORT int GetPersistance(unsigned int index) const;
-		DLLEXPORT int GetPersistance(const wstring &name) const;
+		DLLEXPORT int GetPersistance(const std::string &name) const;
 		// ------------------------------------ //
-		DLLEXPORT bool SetValue(const wstring &name, const VariableBlock &value1);
-		DLLEXPORT bool SetValue(const wstring &name, VariableBlock* value1);
-		DLLEXPORT bool SetValue(const wstring &name, const vector<VariableBlock*> &values);
+		DLLEXPORT bool SetValue(const std::string &name, const VariableBlock &value1);
+		DLLEXPORT bool SetValue(const std::string &name, VariableBlock* value1);
+		DLLEXPORT bool SetValue(const std::string &name,
+            const std::vector<VariableBlock*> &values);
 
 		DLLEXPORT bool SetValue(NamedVariableList &nameandvalues);
 
-		DLLEXPORT size_t GetValueCount(const wstring &name) const;
+		DLLEXPORT size_t GetValueCount(const std::string &name) const;
 
-		DLLEXPORT const VariableBlock* GetValue(const wstring &name) const;
-		DLLEXPORT bool GetValue(const wstring &name, VariableBlock &receiver) const;
-		DLLEXPORT bool GetValues(const wstring &name, vector<const VariableBlock*> &receiver) const;
+		DLLEXPORT const VariableBlock* GetValue(const std::string &name) const;
+		DLLEXPORT bool GetValue(const std::string &name, VariableBlock &receiver) const;
+		DLLEXPORT bool GetValues(const std::string &name,
+            std::vector<const VariableBlock*> &receiver) const;
 
 
 		template<class T>
-		DLLEXPORT bool GetValueAndConvertTo(const wstring &name, T &receiver) const{
+		DLLEXPORT bool GetValueAndConvertTo(const std::string &name, T &receiver) const{
 			// use try block to catch all exceptions (not found and conversion fail //
 			try{
 				if(!Values.GetValue(name)->ConvertAndAssingToVariable<T>(receiver)){
@@ -97,15 +93,15 @@ namespace Leviathan{
 			return true;
 		}
 
-		//DLLEXPORT vector<VariableBlock*>* GetValues(const wstring &name) throw(...);
+		//DLLEXPORT vector<VariableBlock*>* GetValues(const std::string &name) throw(...);
 
 		DLLEXPORT void AddVar(NamedVariableList* newvaluetoadd);
-		DLLEXPORT void AddVar(shared_ptr<NamedVariableList> values);
+		DLLEXPORT void AddVar(std::shared_ptr<NamedVariableList> values);
 		DLLEXPORT void Remove(unsigned int index);
-		DLLEXPORT void Remove(const wstring &name);
+		DLLEXPORT void Remove(const std::string &name);
 
-		DLLEXPORT int GetVariableType(const wstring &name) const;
-		DLLEXPORT int GetVariableTypeOfAll(const wstring &name) const;
+		DLLEXPORT int GetVariableType(const std::string &name) const;
+		DLLEXPORT int GetVariableTypeOfAll(const std::string &name) const;
 		// ------------------------------------ //
 
 		DLLEXPORT static DataStore* Get();
@@ -146,7 +142,8 @@ namespace Leviathan{
 		DLLEXPORT int GetValueFromValIndex(int valindex) const;
 	public:
 		DLLEXPORT void RegisterListener(AutoUpdateableObject* object, DataListener* listen);
-		DLLEXPORT void RemoveListener(AutoUpdateableObject* object, int valueid, const wstring &name = L"", bool all = false);
+		DLLEXPORT void RemoveListener(AutoUpdateableObject* object, int valueid,
+            const std::string &name = "", bool all = false);
 
 	private:
 		// ------------------------------------ //
@@ -155,14 +152,14 @@ namespace Leviathan{
 
 		//void _RemoveListener(int index);
 		void ValueUpdate(int index);
-		void ValueUpdate(const wstring& name);
+		void ValueUpdate(const std::string& name);
 		// ------------------------------------ //
 		NamedVars Values;
 		// NamedVariableLists that should be saved to file on quit //
-		vector<bool> Persistencestates;
+        std::vector<bool> Persistencestates;
 
 
-		map<AutoUpdateableObject*, shared_ptr<DataListenHolder>> Listeners;
+        std::map<AutoUpdateableObject*, std::shared_ptr<DataListenHolder>> Listeners;
 
 
 		//vector<DataListener*> Listeners;
@@ -194,4 +191,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

@@ -1,12 +1,12 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_AINETWORKCACHE
 #include "AINetworkCache.h"
-#endif
+
 #include "Networking/NetworkHandler.h"
 #include "Threading/ThreadingManager.h"
 #include "Networking/ConnectionInfo.h"
 #include "boost/bind.hpp"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::AINetworkCache::AINetworkCache(bool serverside) : IsServer(serverside){
 
@@ -27,14 +27,14 @@ DLLEXPORT AINetworkCache* Leviathan::AINetworkCache::Get(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::AINetworkCache::Init(){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     return true;
 }
 
 DLLEXPORT void Leviathan::AINetworkCache::Release(){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     ReceivingConnections.clear();
 
@@ -43,7 +43,7 @@ DLLEXPORT void Leviathan::AINetworkCache::Release(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::AINetworkCache::UpdateVariable(const NamedVariableList &updatedvalue){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     if(!IsServer)
         return false;
@@ -74,9 +74,9 @@ DLLEXPORT bool Leviathan::AINetworkCache::UpdateVariable(const NamedVariableList
     return true;
 }
         
-DLLEXPORT bool Leviathan::AINetworkCache::RemoveVariable(const wstring &name){
+DLLEXPORT bool Leviathan::AINetworkCache::RemoveVariable(const std::string &name){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     auto end = CurrentVariables.end();
     for(auto iter = CurrentVariables.begin(); iter != end; ++iter){
@@ -94,7 +94,7 @@ DLLEXPORT bool Leviathan::AINetworkCache::RemoveVariable(const wstring &name){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::AINetworkCache::HandleUpdatePacket(NetworkResponseDataForAICacheUpdated* data){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     if(!data->Variable)
         return false;
@@ -116,9 +116,9 @@ DLLEXPORT bool Leviathan::AINetworkCache::HandleUpdatePacket(NetworkResponseData
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT NamedVariableList* Leviathan::AINetworkCache::GetVariable(const wstring &name) const{
+DLLEXPORT NamedVariableList* Leviathan::AINetworkCache::GetVariable(const std::string &name) const{
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     auto end = CurrentVariables.end();
     for(auto iter = CurrentVariables.begin(); iter != end; ++iter){
@@ -134,7 +134,7 @@ DLLEXPORT NamedVariableList* Leviathan::AINetworkCache::GetVariable(const wstrin
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::AINetworkCache::RegisterNewConnection(ConnectionInfo* connection){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     if(!IsServer)
         return false;
@@ -149,23 +149,23 @@ DLLEXPORT bool Leviathan::AINetworkCache::RegisterNewConnection(ConnectionInfo* 
 
     
     ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](AINetworkCache* cache,
-                    shared_ptr<ConnectionInfo> connection)
+                    std::shared_ptr<ConnectionInfo> connection)
                 -> void
         {
 
             size_t vars = 0;
 
             {
-                GUARD_LOCK_OTHER_OBJECT(cache);
+                GUARD_LOCK_OTHER(cache);
                 vars = cache->CurrentVariables.size();
             }
 
             for(size_t index = 0; index < vars; index++){
 
-                shared_ptr<NamedVariableList> target;
+                std::shared_ptr<NamedVariableList> target;
 
                 {
-                    GUARD_LOCK_OTHER_OBJECT(cache);
+                    GUARD_LOCK_OTHER(cache);
                     if(index >= cache->CurrentVariables.size())
                         return;
 
@@ -175,7 +175,7 @@ DLLEXPORT bool Leviathan::AINetworkCache::RegisterNewConnection(ConnectionInfo* 
                 if(!target)
                     continue;
                 
-                auto response = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5);
+                auto response = make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5);
 
                 response->GenerateAICacheUpdatedResponse(new NetworkResponseDataForAICacheUpdated(
                         target));
@@ -190,7 +190,7 @@ DLLEXPORT bool Leviathan::AINetworkCache::RegisterNewConnection(ConnectionInfo* 
 
 DLLEXPORT bool Leviathan::AINetworkCache::RemoveConnection(ConnectionInfo* connection){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     auto end = ReceivingConnections.end();
     for(auto iter = ReceivingConnections.begin(); iter != end; ++iter){
@@ -205,19 +205,19 @@ DLLEXPORT bool Leviathan::AINetworkCache::RemoveConnection(ConnectionInfo* conne
     return false;
 }
 // ------------------------------------ //
-void Leviathan::AINetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList> variable, ObjectLock &guard){
+void Leviathan::AINetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList> variable, Lock &guard){
 
     if(ReceivingConnections.empty())
         return;
     
     ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](AINetworkCache* cache,
-                    shared_ptr<NamedVariableList> variable)
+                    std::shared_ptr<NamedVariableList> variable)
                 -> void
         {
 
             ConnectionInfo* target = NULL;
 
-            auto response = make_shared<NetworkResponse>(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5);
+            auto response = make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5);
 
             response->GenerateAICacheUpdatedResponse(new
                 NetworkResponseDataForAICacheUpdated(variable));
@@ -232,7 +232,7 @@ void Leviathan::AINetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList>
                     // Loop until the last one is found and then change to the next //
                     bool found = target ? false: true;
                     
-                    GUARD_LOCK_OTHER_OBJECT(cache);
+                    GUARD_LOCK_OTHER(cache);
                     
                     for(size_t i = 0; i < cache->ReceivingConnections.size(); i++){
 
@@ -269,9 +269,7 @@ void Leviathan::AINetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList>
 // ------------------------------------ //
 DLLEXPORT ScriptSafeVariableBlock* Leviathan::AINetworkCache::GetVariableWrapper(const string &name){
 
-    const wstring wname = Convert::StringToWstring(name);
-
-    auto variable = GetVariable(wname);
+    auto variable = GetVariable(name);
 
     if(!variable)
         return NULL;

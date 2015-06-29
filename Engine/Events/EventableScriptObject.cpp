@@ -4,8 +4,12 @@
 #include "EventableScriptObject.h"
 #endif
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::EventableScriptObject::EventableScriptObject(shared_ptr<ScriptScript> script /*= nullptr*/) : Scripting(script){
+DLLEXPORT Leviathan::EventableScriptObject::EventableScriptObject(shared_ptr<ScriptScript> script
+    /*= nullptr*/) :
+    Scripting(script)
+{
 
 }
 
@@ -27,7 +31,9 @@ DLLEXPORT int Leviathan::EventableScriptObject::OnGenericEvent(GenericEvent** pe
 	return 0;
 }
 
-DLLEXPORT bool Leviathan::EventableScriptObject::OnUpdate(const shared_ptr<NamedVariableList> &updated){
+DLLEXPORT bool Leviathan::EventableScriptObject::OnUpdate(
+    const std::shared_ptr<NamedVariableList> &updated)
+{
 	ValuesUpdated = true;
 
 	// push to update vector //

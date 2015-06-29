@@ -1,13 +1,12 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_SYNCEDRESOURCE
 #include "SyncedResource.h"
-#endif
+
 #include "SyncedVariables.h"
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::SyncedResource::SyncedResource(const wstring &uniquename) : Name(uniquename){
+DLLEXPORT Leviathan::SyncedResource::SyncedResource(const std::string &uniquename) : Name(uniquename){
 
 }
 
@@ -27,70 +26,69 @@ DLLEXPORT void Leviathan::SyncedResource::StartSync(){
 	ConnectToNotifier(sync);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(Lock &guard, sf::Packet &packet){
     
 	// Load the custom data //
 	try{
-		UpdateCustomDataFromPacket(packet);
+		UpdateCustomDataFromPacket(guard, packet);
 
-	} catch(const ExceptionInvalidArgument &e){
+	} catch(const InvalidArgument &e){
 
 		e.PrintToLog();
 		return false;
 	}
 
 	// Notify us about the update //
-	OnValueUpdated();
+	OnValueUpdated(guard);
 
 	// Notify listeners //
-	NotifyAll();
+	NotifyAll(guard);
 	return true;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::SyncedResource::NotifyUpdatedValue(){
-	// Update the networked value //
-	UpdateOurNetworkValue();
+	GUARD_LOCK();
 
-	GUARD_LOCK_THIS_OBJECT();
+	// Update the networked value //
+	UpdateOurNetworkValue(guard);
 
 	// Notify us about the update //
-	OnValueUpdated();
+	OnValueUpdated(guard);
 
 	// Notify listeners //
-	NotifyAll();
+	NotifyAll(guard);
 }
 // ------------------------------------ //
-void Leviathan::SyncedResource::OnValueUpdated(){
+void Leviathan::SyncedResource::OnValueUpdated(Lock &guard){
 
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::SyncedResource::AddDataToPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT void Leviathan::SyncedResource::AddDataToPacket(Lock &guard, sf::Packet &packet){
+
 	// First add the name //
 	packet << Name;
 
 	// Then add our data //
-	SerializeCustomDataToPacket(packet);
+	SerializeCustomDataToPacket(guard, packet);
 }
 
-DLLEXPORT wstring Leviathan::SyncedResource::GetSyncedResourceNameFromPacket(sf::Packet &packet) THROWS{
+DLLEXPORT std::string Leviathan::SyncedResource::GetSyncedResourceNameFromPacket(sf::Packet &packet){
 	// Get the name from the packet //
-	wstring tmpstr;
+	std::string tmpstr;
 
-	if(!(packet >> tmpstr)){
+	packet >> tmpstr;
 		
-		throw ExceptionInvalidArgument(L"resource sync packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
-	}
+    if(!packet)
+		throw InvalidArgument("resource sync packet has invalid format");        
 
 	return tmpstr;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::SyncedResource::UpdateOurNetworkValue(){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT void Leviathan::SyncedResource::UpdateOurNetworkValue(Lock &guard){
+    
     // TODO: proper locking
 	auto synman = SyncedVariables::Get();
     if(synman)
-        synman->_NotifyUpdatedValue(this);
+        synman->_NotifyUpdatedValue(guard, this);
 }
 

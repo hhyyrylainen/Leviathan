@@ -9,7 +9,7 @@ set(PROGRAM_VERSION_PATCH 0)
 set(PROGRAM_VERSION_STR ${PROGRAM_VERSION_STABLE}.${PROGRAM_VERSION_MAJOR}.${PROGRAM_VERSION_MINOR}.${PROGRAM_VERSION_PATCH})
 set(PROGRAM_VERSION ${PROGRAM_VERSION_STABLE}.${PROGRAM_VERSION_MAJOR}${PROGRAM_VERSION_MINOR}${PROGRAM_VERSION_PATCH})
 
-set(PROGRAM_VERSIONS "L\"${PROGRAM_VERSION_STR}\"")
+set(PROGRAM_VERSIONS "\"${PROGRAM_VERSION_STR}\"")
 set(PROGRAM_VERSIONS_ANSI "\"${PROGRAM_VERSION_STR}\"")
 
 set(BaseProgramName "PONG_SERVER")
@@ -31,10 +31,10 @@ set(PROGRAMCONFIGURATION			"./PongServer.conf")
 set(PROGRAMKEYCONFIGURATION			"")
 set(PROGRAMCHECKCONFIGFUNCNAME		"PongServer::CheckGameConfigurationVariables")
 set(PROGRAMCHECKKEYCONFIGFUNCNAME	"PongServer::CheckGameKeyConfigVariables")
-set(PROGRAMMASTERSERVERINFO			"MasterServerInformation(L\"PongServer.txt\", L\"Pong_\" GAME_VERSIONS, L\"http://boostslair.com/\", L\"/Pong/MastersList.txt\", L\"PongCrecentials.txt\", false)")
+set(PROGRAMMASTERSERVERINFO			"MasterServerInformation(\"PongServer.txt\", \"Pong_\" GAME_VERSIONS, \"http://boostslair.com/\", \"/Pong/MastersList.txt\", \"PongCrecentials.txt\", false)")
 set(WINDOWTITLEGENFUNCTION			"PongServer::GenerateWindowTitle()")
 
-set(USERREADABLEIDENTIFICATION		"L\"Pong server version \" GAME_VERSIONS")
+set(USERREADABLEIDENTIFICATION		"\"Pong server version \" GAME_VERSIONS")
 set(GAMENAMEIDENTIFICATION			Pong)
 set(GAMEVERSIONIDENTIFICATION		GAME_VERSIONS)
 

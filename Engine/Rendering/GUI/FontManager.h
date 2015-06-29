@@ -1,26 +1,18 @@
-#ifndef LEVIATHAN_FILEREPLACENAME
-#define LEVIATHAN_FILEREPLACENAME
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
+#include "Include.h"
 
 
 namespace Leviathan{ namespace Rendering{
 	
 
-	class FontManager : public Object{
+	class FontManager{
 	public:
 		DLLEXPORT FontManager();
 		DLLEXPORT ~FontManager();
 
 		DLLEXPORT void LoadAllFonts();
 
-	private:
-
 	};
 
 }}
-#endif

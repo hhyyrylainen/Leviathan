@@ -1,12 +1,8 @@
-#ifndef LEVIATHAN_OBJECT_CAMERAPOS
-#define LEVIATHAN_OBJECT_CAMERAPOS
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "Entities/Bases/BaseObject.h"
+#include "../../Common/Types.h"
 #include "Input/InputController.h"
 
 #define DEFAULTMOVEMENTMODIFIER		1.f
@@ -14,7 +10,7 @@
 
 namespace Leviathan{
 	// callable for the ability to receive key presses
-	class ViewerCameraPos : public BaseObject, public InputReceiver{
+	class ViewerCameraPos : public InputReceiver{
 	public:
 		DLLEXPORT ViewerCameraPos();
 		DLLEXPORT ~ViewerCameraPos();
@@ -58,7 +54,8 @@ namespace Leviathan{
 		void SendPositionIfSet();
 
 		// reduces amount of code //
-		static void RollValueTowards(float &value, const float &changeamount, const bool &maxvalue, const float &limitvalue);
+		static void RollValueTowards(float &value, const float &changeamount,
+            const bool &maxvalue, const float &limitvalue);
 
 		// ------------------------------------ //
 
@@ -90,4 +87,3 @@ namespace Leviathan{
 	};
 }
 
-#endif

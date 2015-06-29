@@ -1,63 +1,113 @@
-#ifndef LEVIATHAN_OBJECTLOADER
-#define LEVIATHAN_OBJECTLOADER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "Entities/GameWorld.h"
-
-
+#include "../Entities/Components.h"
+#include "../Entities/GameWorld.h"
 
 namespace Leviathan{
 
 	//! \brief Class to collect all entity creations to one class
-	//! \todo Do a page for entity
-	//! \warning The object pointer the load methods return/set is NOT safe to use after a while
-    //! (it *should* be safe to call some method on the ptr after
-	//! the function returns) But for storing it you need to use GameWorld::GetWorldObject with the returned ID
-    //! and store the shared_ptr with the pointer
-    //! \note All created objects are added to the world so that they are broadcast on the network (if this is a server)
-    //! \todo Make the above statement true for all the functions
-    //! \todo Allow objects to be created that will be sent to clients only after the caller has had the chance to set
-    //! the position etc.
-	class ObjectLoader : public Object{
+    //! \note All created objects are added to the world so that they are broadcast on
+    //! the network (if this is a server)
+    //! \todo Allow objects to be created that will be sent to clients only after the caller has
+    //! had the chance to create constraints etc.
+	class ObjectLoader{
+        friend SendableEntitySerializer;
+        
+        ObjectLoader() = delete;
 	public:
-		DLLEXPORT ObjectLoader(Engine* engine);
-
 		//! \brief Loads prop to a GameWorld
-		DLLEXPORT int LoadPropToWorld(GameWorld* world, const wstring &name, int materialid,
-            Entity::Prop** createdinstance);
+		DLLEXPORT static ObjectID LoadPropToWorld(GameWorld* world, Lock &worldlock,
+            const std::string &name, int materialid, const Position::PositionData &pos =
+                {Float3(0), Float4::IdentityQuaternion()});
+
+        DLLEXPORT static ObjectID LoadPropToWorld(GameWorld* world, const std::string &name,
+            int materialid, const Position::PositionData &pos =
+                {Float3(0), Float4::IdentityQuaternion()})
+        {
+            GUARD_LOCK_OTHER(world);
+            return LoadPropToWorld(world, guard, name, materialid, pos); 
+        }
         
 		//! \brief Creates a brush with physical component and sets mass
 		//! \param mass The mass of the brush, use 0.f for static object
-		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size, const float &mass,
-            int materialid, Entity::Brush** createdinstance);
-        
-		//! \brief Creates a brush, but no physics are initialized
-		//! \note To initialize physics later call Entity::Brush::AddPhysicalObject
-		DLLEXPORT int LoadBrushToWorld(GameWorld* world, const string &material, const Float3 &size,
-            Entity::Brush** createdinstance);
+		DLLEXPORT static ObjectID LoadBrushToWorld(GameWorld* world, Lock &worldlock,
+            const std::string &material, const Float3 &size, const float &mass, int materialid,
+            const Position::PositionData &pos = {Float3(0), Float4::IdentityQuaternion()});
 
-		// ------------------ Complex entity loading ------------------ //
-		DLLEXPORT int LoadTrackEntityControllerToWorld(GameWorld* world, vector<Entity::TrackControllerPosition>
-            &initialtrack, BaseConstraintable* controllable, Entity::TrackEntityController** createdinstance);
+        DLLEXPORT static inline ObjectID LoadBrushToWorld(GameWorld* world,
+            const std::string &material, const Float3 &size, const float &mass, int materialid,
+            const Position::PositionData &pos = {Float3(0), Float4::IdentityQuaternion()})
+        {
 
-		// Creates a trail entity to a world. Set the dynamic property if you want to update the properties later //
-		DLLEXPORT int LoadTrailToWorld(GameWorld* world, const string &material, const Entity::TrailProperties
-            &properties, bool allowupdatelater, Entity::TrailEmitter** createdinstance);
+            GUARD_LOCK_OTHER(world);
+            return LoadBrushToWorld(world, guard, material, size, mass, materialid, pos);
+        }
+
+        //! \brief Creates a track controller to a world
+        //!
+        //! Track controller makes entities move along a track at specified speed
+		DLLEXPORT static ObjectID LoadTrackControllerToWorld(GameWorld* world, Lock &worldlock,
+            std::vector<Position::PositionData> &initialtrack);
+
+        DLLEXPORT static inline ObjectID LoadTrackControllerToWorld(GameWorld* world,
+            std::vector<Position::PositionData> &initialtrack)
+        {
+
+            GUARD_LOCK_OTHER(world);
+            return LoadTrackControllerToWorld(world, guard, initialtrack);
+        }
+
+		//! \brief Creates a trail entity to a world
+        //!
+        //! Set the dynamic property if you want to update the properties later
+		DLLEXPORT static ObjectID LoadTrailToWorld(GameWorld* world, Lock &worldlock,
+            const std::string &material, const Trail::Properties &properties,
+            bool allowupdatelater,
+            const Position::PositionData &pos = {Float3(0), Float4::IdentityQuaternion()});
+
+        DLLEXPORT static inline ObjectID LoadTrailToWorld(GameWorld* world,
+            const std::string &material, const Trail::Properties &properties,
+            bool allowupdatelater,
+            const Position::PositionData &pos = {Float3(0), Float4::IdentityQuaternion()})
+        {
+
+            GUARD_LOCK_OTHER(world);
+            return LoadTrailToWorld(world, guard, material, properties, allowupdatelater, pos);
+        }
+
+    protected:
+
+        //! \see LoadBrushToWorld
+        DLLEXPORT static bool LoadNetworkBrush(GameWorld* world, Lock &worldlock,
+            ObjectID id, const std::string &material, const Float3 &size, const float &mass,
+            int materialid, const Position::PositionData &pos, bool hidden);
+
+        //! \see LoadPropToWorld
+        DLLEXPORT static bool LoadNetworkProp(GameWorld* world, Lock &worldlock,
+            ObjectID id, const std::string &modelfile, int materialid,
+            const Position::PositionData &pos, bool hidden);
+
+        //! \see LoadTrackControllerToWorld
+        DLLEXPORT static bool LoadNetworkTrackController(GameWorld* world, Lock &worldlock,
+            ObjectID id, int reachednode, float nodeprogress, float changespeed, float applyforce,
+            const Parent::Data &childrendata, const PositionMarkerOwner::Data &positions);
 
 
-		// ------------------ Test object adding ------------------ //
-		DLLEXPORT void CreateTestCubeToScene(Ogre::SceneManager* scene, string meshname);
-		DLLEXPORT void AddTestCubeToScenePositions(Ogre::SceneManager* scene, vector<Float3> &positions,
-            const string &meshname);
+    private:
 
-	private:
-		Engine* m_Engine;
+        static void _CreateBrushModel(GameWorld* world, Lock &worldlock, ObjectID brush,
+            Physics &physics, BoxGeometry &box, Position &position, float mass,
+            const Float3 &size, bool hidden);
 
+        static void _CreatePropCommon(GameWorld* world, Lock &worldlock,
+            ObjectID prop, const std::string &ogrefile, Model &model, bool hidden);
+
+        static void _CreatePropPhysics(GameWorld* world, Lock &worldlock, Model &model,
+            Physics &physics, Position &position, ObjectFileList* proplist,
+            const std::string &path, int materialid);
 	};
 
 }
-#endif
+

@@ -1,9 +1,8 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_RENDERINGSTATISTICS
 #include "RenderingStatistics.h"
-#endif
-#include "Common/Misc.h"
+
+#include "../Common/DataStoring/DataStore.h"
+#include "../TimeIncludes.h"
 using namespace Leviathan;
 // ------------------------------------ //
 Leviathan::RenderingStatistics::RenderingStatistics() : LastMinuteFPS(80), LastMinuteRenderTimes(320){
@@ -42,13 +41,13 @@ Leviathan::RenderingStatistics::~RenderingStatistics(){
 }
 // ------------------------------------ //
 void Leviathan::RenderingStatistics::RenderingStart(){
-	RenderingStartTime = Misc::GetTimeMicro64();
+	RenderingStartTime = Time::GetTimeMicro64();
 
 	Frames++;
 }
 
 void Leviathan::RenderingStatistics::RenderingEnd(){
-	RenderingEndTime = Misc::GetTimeMicro64();
+	RenderingEndTime = Time::GetTimeMicro64();
 
 	RenderMCRSeconds = (int)(RenderingEndTime-RenderingStartTime);
 
@@ -105,7 +104,7 @@ void Leviathan::RenderingStatistics::HalfMinuteMark(){
 	int frametimes = 0;
 
 
-	for(unsigned int i = 0; i < LastMinuteRenderTimesPos+1; i++){
+	for(size_t i = 0; i < LastMinuteRenderTimesPos+1; i++){
 		
 		frametimes += LastMinuteRenderTimes[i];
 	}
@@ -154,7 +153,7 @@ bool Leviathan::RenderingStatistics::CanRenderNow(int maxfps, int& TimeSinceLast
 
 
 	// calculate can a frame be rendered now without going over max fps //
-	__int64 CurrentTime = Misc::GetTimeMicro64();
+	auto CurrentTime = Time::GetTimeMicro64();
 
 	// check first frame //
 	if(IsFirstFrame){
@@ -217,6 +216,23 @@ bool Leviathan::RenderingStatistics::CanRenderNow(int maxfps, int& TimeSinceLast
 	return false;
 }
 // ------------------------------------ //
+void RenderingStatistics::MakeSureHasEnoughRoom(std::vector<int> &tarvec,
+    const size_t &accessspot)
+{
+			
+    if(tarvec.size() <= accessspot+1){
+        if(tarvec.size() > 5000){
+
+            tarvec.resize((size_t)(tarvec.size()*1.35f));
+            Logger::Get()->Warning("RenderingStatistics: large frame time tracking buffer is "
+                "getting larger, size: "+Convert::ToString(tarvec.size()));
+
+        } else {
+
+            tarvec.resize((size_t)(tarvec.size()*1.8f));
+        }
+    }
+}
 
 
 

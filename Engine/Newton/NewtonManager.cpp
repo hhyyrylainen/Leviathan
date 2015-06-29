@@ -1,10 +1,9 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_NEWTONMANAGER
 #include "NewtonManager.h"
-#endif
+
 #include <Newton.h>
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 // ------------------ newton system functions ------------------ //
 
@@ -30,15 +29,15 @@ DLLEXPORT Leviathan::NewtonManager::~NewtonManager(){
 	Staticaccess = NULL;
 
 	// release newton library //
-
+    
 
 }
 
 NewtonManager* Leviathan::NewtonManager::Staticaccess = NULL;
 // ------------------------------------ //
-DLLEXPORT shared_ptr<PhysicalWorld> Leviathan::NewtonManager::CreateWorld(GameWorld* owningworld){
+DLLEXPORT std::shared_ptr<PhysicalWorld> Leviathan::NewtonManager::CreateWorld(GameWorld* owningworld){
 	// we are probably initialized at this point so it should be safe to just call the constructor //
-	return shared_ptr<PhysicalWorld>(new PhysicalWorld(owningworld));
+	return std::shared_ptr<PhysicalWorld>(new PhysicalWorld(owningworld));
 }
 // ------------------------------------ //
 

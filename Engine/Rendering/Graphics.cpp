@@ -18,6 +18,7 @@
 #include <regex>
 using namespace Leviathan;
 using namespace Rendering;
+using namespace std;
 // ------------------------------------ //
 #define OGRE_ALLOW_USEFULLOUTPUT
 
@@ -42,7 +43,7 @@ bool Graphics::Init(AppDef* appdef){
 	// create ogre renderer //
 	if(!InitializeOgre(AppDefinition)){
 
-		Logger::Get()->Error(L"Graphics: Init: failed to create ogre renderer");
+		Logger::Get()->Error("Graphics: Init: failed to create ogre renderer");
 		return false;
 	}
 
@@ -68,10 +69,11 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	Ogre::LogManager* logMgr = new Ogre::LogManager();
 
 	// Could also use the singleton access method here //
-	string ogrelogfile = Convert::WstringToString(appdef->GetLogFile()) + "LogOGRE.txt";
+	string ogrelogfile = appdef->GetLogFile() + "LogOGRE.txt";
 
 	OLog = logMgr->createLog(ogrelogfile, true, true, false);
 	OLog->setDebugOutputEnabled(true);
+    
 #ifdef OGRE_ALLOW_USEFULLOUTPUT
 
 	bool usebore = false;
@@ -79,14 +81,15 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 		// Check if we want it //
 		GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
 
-		if (variables)
-			variables->GetValueAndConvertTo<bool>(L"OgreBoreMe", usebore);
+		if(variables)
+			variables->GetValueAndConvertTo<bool>("OgreBoreMe", usebore);
 	}
 
 	if (usebore){
 		OLog->setLogDetail(Ogre::LL_BOREME);
-	}
-	else {
+        
+	} else {
+        
 		OLog->setLogDetail(Ogre::LL_NORMAL);
 	}
 #else
@@ -94,7 +97,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 #endif // OGRE_USEFULLOUTPUT
 
 
-	ORoot = unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, ""));
+	ORoot = std::unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, ""));
 
 	// Still waiting for the GL3Plus render system to become usable... //
 	vector<Ogre::String> PluginNames = boost::assign::list_of("RenderSystem_GL"/*3Plus")*/)
@@ -110,22 +113,23 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 	try{
 
-			for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++){
+        for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++){
 
-				currentplugin = *Iter;
+            currentplugin = *Iter;
 
-				// append "_d" if in debug mode //
+            // append "_d" if in debug mode //
 #ifdef _DEBUG
-				Iter->append("_d");
+            Iter->append("_d");
 #endif // _DEBUG
-				// load //
-				ORoot->loadPlugin(*Iter);
+            // load //
+            ORoot->loadPlugin(*Iter);
 		}
 
 	}
 	catch (const Ogre::InternalErrorException &e){
 
-		Logger::Get()->Error("Graphics: init: failed to load ogre plugin (\""+currentplugin+"\"), exception: "+string(e.what()));
+		Logger::Get()->Error("Graphics: init: failed to load ogre plugin (\""+currentplugin+
+            "\"), exception: "+string(e.what()));
 		return false;
 	}
 
@@ -136,18 +140,21 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	if(RSystemList.size() == 0){
 		// no render systems found //
 
-		Logger::Get()->Error(L"Graphics: InitializeOgre: no render systems found");
+		Logger::Get()->Error("Graphics: InitializeOgre: no render systems found");
 		return false;
 	}
 
 	// Create the regular expression it must match //
 	string rendersystemname;
 
-	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), L"RenderSystemName", rendersystemname,
-        "OpenGL.*", true, L"Graphics: Init: no selected render system,");
+	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), "RenderSystemName",
+        rendersystemname, "OpenGL.*", true, "Graphics: Init: no selected render system,");
 
 	regex rendersystemnameregex(rendersystemname, regex_constants::ECMAScript |
         regex_constants::icase);
+
+    Logger::Get()->Info("Graphics: preferred rendering system: \""+rendersystemname+"\"");
+    
 	Ogre::RenderSystem* selectedrendersystem = NULL;
 
 	// Choose the right render system //
@@ -155,7 +162,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 		const Ogre::String& rsystemname = RSystemList[i]->getName();
 
-		if(regex_match(rsystemname, rendersystemnameregex)){
+		if(regex_search(rsystemname, rendersystemnameregex)){
 
 			// Matched //
 			selectedrendersystem = RSystemList[i];
@@ -165,8 +172,8 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 	if(!selectedrendersystem){
 		// Select the first one since none matched //
-		Logger::Get()->Warning(L"Graphics: Init: no render system matched regex, choosing default: "
-            +Convert::StringToWstring(RSystemList[0]->getName()));
+		Logger::Get()->Warning("Graphics: Init: no render system matched regex, choosing default: "
+            +RSystemList[0]->getName());
 		selectedrendersystem = RSystemList[0];
 	}
 

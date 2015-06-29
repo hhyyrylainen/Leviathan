@@ -1,11 +1,10 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_EVENT
 #include "Event.h"
-#endif
+
 #include <boost/assign/list_of.hpp>
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Event::Event(EVENT_TYPE type, BaseEventData* data) : Type(type), Data(data){
 	// Check that types that require values have values //
@@ -16,8 +15,7 @@ DLLEXPORT Leviathan::Event::Event(EVENT_TYPE type, BaseEventData* data) : Type(t
 			Type == EVENT_TYPE_TICK)
         {
 
-            throw ExceptionInvalidArgument(L"Event that requires data, didn't get it", 0,
-                __WFUNCTION__, L"data", L"NULL");
+            throw InvalidArgument("Event that requires data, didn't get it");
         }
 	}
 }
@@ -46,7 +44,7 @@ DLLEXPORT Leviathan::Event::Event(sf::Packet &packet){
 
 	if(!(packet >> tmptype)){
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("packet has invalid format");
 	}
 
 	// Set our type //
@@ -65,10 +63,6 @@ DLLEXPORT Leviathan::Event::Event(sf::Packet &packet){
 			Data = new ShowEventData(packet);
 		}
 		break;
-        case EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE:
-        {
-            Data = new ResimulateSingleEventData(packet);
-        }
         break;
         case EVENT_TYPE_FRAME_BEGIN:
         case EVENT_TYPE_FRAME_END:
@@ -77,6 +71,11 @@ DLLEXPORT Leviathan::Event::Event(sf::Packet &packet){
 			Data = new IntegerEventData(packet);
 		}
 		break;
+        case EVENT_TYPE_CLIENT_INTERPOLATION:
+        {
+            Data = new ClientInterpolationEventData(packet);
+        }
+        break;
         default:
             // No data required //
             Data = NULL;
@@ -95,9 +94,9 @@ DLLEXPORT ShowEventData* Leviathan::Event::GetDataForShowEvent() const{
 	return NULL;
 }
 
-DLLEXPORT ResimulateSingleEventData* Leviathan::Event::GetDataForResimulateSingleEvent() const{
-	if(Type == EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE)
-		return static_cast<ResimulateSingleEventData*>(Data);
+DLLEXPORT ClientInterpolationEventData* Event::GetDataForClientInterpolationEvent() const{
+	if(Type == EVENT_TYPE_CLIENT_INTERPOLATION)
+		return static_cast<ClientInterpolationEventData*>(Data);
 	return NULL;
 }
 
@@ -107,20 +106,20 @@ DLLEXPORT IntegerEventData* Leviathan::Event::GetIntegerDataForEvent() const{
 	return NULL;
 }
 // ------------------ GenericEvent ------------------ //
-DLLEXPORT Leviathan::GenericEvent::GenericEvent(const wstring &type, const NamedVars &copyvals) :
-    TypeStr(new wstring(type)), Variables(new NamedVars(copyvals))
+DLLEXPORT Leviathan::GenericEvent::GenericEvent(const std::string &type, const NamedVars &copyvals) :
+    TypeStr(new std::string(type)), Variables(new NamedVars(copyvals))
 {
 
 }
 
-DLLEXPORT Leviathan::GenericEvent::GenericEvent(wstring* takeownershipstr, NamedVars* takeownershipvars) :
+DLLEXPORT Leviathan::GenericEvent::GenericEvent(std::string* takeownershipstr, NamedVars* takeownershipvars) :
     TypeStr(takeownershipstr), Variables(takeownershipvars)
 {
 
 }
 
-DLLEXPORT Leviathan::GenericEvent::GenericEvent(const wstring &type) :
-    TypeStr(new wstring(type)), Variables(new NamedVars())
+DLLEXPORT Leviathan::GenericEvent::GenericEvent(const std::string &type) :
+    TypeStr(new std::string(type)), Variables(new NamedVars())
 {
 	
 	
@@ -134,10 +133,10 @@ DLLEXPORT Leviathan::GenericEvent::~GenericEvent(){
 // ------------------------------------ //
 DLLEXPORT Leviathan::GenericEvent::GenericEvent(sf::Packet &packet){
 	// Load data from the packet //
-	unique_ptr<wstring> tmpstr(new wstring());
+	unique_ptr<std::string> tmpstr(new std::string());
 	if(!(packet >> *tmpstr)){
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("packet has invalid format");
 	}
 
 	// Try to get the named variables //
@@ -157,11 +156,11 @@ DLLEXPORT void Leviathan::GenericEvent::AddDataToPacket(sf::Packet &packet) cons
 	Variables->AddDataToPacket(packet);
 }
 // ------------------------------------ //
-DLLEXPORT wstring* Leviathan::GenericEvent::GetTypePtr(){
+DLLEXPORT std::string* Leviathan::GenericEvent::GetTypePtr(){
 	return TypeStr;
 }
 
-DLLEXPORT wstring Leviathan::GenericEvent::GetType() const{
+DLLEXPORT std::string Leviathan::GenericEvent::GetType() const{
 	return *TypeStr;
 }
 
@@ -177,13 +176,51 @@ DLLEXPORT NamedVars* Leviathan::GenericEvent::GetNamedVarsRefCounted(){
 	Variables->AddRef();
 	return Variables;
 }
+// ------------------ ClientInterpolationEventData ------------------ //
+void ClientInterpolationEventData::CalculatePercentage(){
+
+    Percentage = TimeInTick/(float)TICKSPEED;
+
+    // Clamp the value to avoid breaking animations //
+    if(Percentage < 0){
+        
+        Percentage = 0;
+        
+    } else if(Percentage > 1.f){
+        
+        Percentage = 1.f;
+    }    
+}
+
+DLLEXPORT ClientInterpolationEventData::ClientInterpolationEventData(int tick, int mspassed) :
+    TickNumber(tick), TimeInTick(mspassed)
+{
+    CalculatePercentage();
+}
+
+DLLEXPORT ClientInterpolationEventData::ClientInterpolationEventData(sf::Packet &packet){
+
+    packet >> TickNumber >> TimeInTick;
+
+    if(!packet)
+        throw InvalidArgument("packet for ClientInterpolationEventData is invalid");
+
+    CalculatePercentage();
+}
+
+DLLEXPORT void ClientInterpolationEventData::AddDataToPacket(sf::Packet &packet){
+
+    packet << TickNumber << TimeInTick;
+}
 // ------------------ PhysicsStartEventData ------------------ //
 void Leviathan::PhysicsStartEventData::AddDataToPacket(sf::Packet &packet){
 	// Add our data //
 	packet << TimeStep;
 }
 
-Leviathan::PhysicsStartEventData::PhysicsStartEventData(const float &time, void* worldptr) : TimeStep(time), GameWorldPtr(worldptr){
+Leviathan::PhysicsStartEventData::PhysicsStartEventData(const float &time, void* worldptr) :
+    TimeStep(time), GameWorldPtr(worldptr)
+{
 
 }
 
@@ -191,7 +228,7 @@ DLLEXPORT Leviathan::PhysicsStartEventData::PhysicsStartEventData(sf::Packet &pa
 	// Load our data //
 	if(!(packet >> TimeStep)){
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("packet has invalid format");
 	}
 
 	// This doesn't make any sense to be stored //
@@ -201,7 +238,7 @@ DLLEXPORT Leviathan::PhysicsStartEventData::PhysicsStartEventData(sf::Packet &pa
 DLLEXPORT Leviathan::ShowEventData::ShowEventData(sf::Packet &packet){
 	if(!(packet >> IsShown)){
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("packet has invalid format");
 	}
 }
 
@@ -214,13 +251,16 @@ void Leviathan::ShowEventData::AddDataToPacket(sf::Packet &packet){
 }
 // ------------------ IntegerEventData ------------------ //
 DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(sf::Packet &packet){
-	if(!(packet >> IntegerDataValue)){
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
-	}
+    packet >> IntegerDataValue;
+
+    if(!packet)
+        throw InvalidArgument("packet has invalid format");
 }
 
-DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(int ticknumber) : IntegerDataValue(ticknumber){
+DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(int ticknumber) :
+    IntegerDataValue(ticknumber)
+{
 
 }
 
@@ -232,32 +272,4 @@ BaseEventData::~BaseEventData(){
 	
 }
 
-// ------------------ ResimulateSingleEventData ------------------ //
-DLLEXPORT Leviathan::ResimulateSingleEventData::ResimulateSingleEventData(sf::Packet &packet) :
-    GameWorldPtr(NULL), Target(NULL), TimeInPast(0)
-{
-#ifdef SFML_HAS_64_BIT_VALUES_PACKET
-    
-    packet >> TimeInPast;
-    
-#endif //SFML_HAS_64_BIT_VALUES_PACKET
-    
-    if(!packet)
-        throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"packet", L"");
-}
 
-DLLEXPORT Leviathan::ResimulateSingleEventData::ResimulateSingleEventData(int64_t resimulateremaining,
-    BaseConstraintable* resimulated, void* worldptr) :
-    TimeInPast(resimulateremaining), Target(resimulated), GameWorldPtr(worldptr)
-{
-
-}
-
-void Leviathan::ResimulateSingleEventData::AddDataToPacket(sf::Packet &packet){
-
-#ifdef SFML_HAS_64_BIT_VALUES_PACKET
-    
-    packet << TimeInPast;
-
-#endif //SFML_HAS_64_BIT_VALUES_PACKET
-}

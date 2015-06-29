@@ -1,15 +1,9 @@
 #pragma once
-#ifndef LEVIATHAN_ENTITYSERIALIZERMANAGER
-#define LEVIATHAN_ENTITYSERIALIZERMANAGER
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "SFML/Network/Packet.hpp"
-#include "Entities/Bases/BaseObject.h"
-#include "boost/function.hpp"
+#include "../Common/SFMLPackets.h"
+#include <functional>
 #include "Common/ThreadSafe.h"
 
 namespace Leviathan{
@@ -31,7 +25,8 @@ namespace Leviathan{
         //! \post The entity will automatically send following updates to the connection
         //! \return The packet which contains the data for the entity
         //! \note The object should be locked by the caller
-        DLLEXPORT unique_ptr<sf::Packet> CreateInitialEntityMessageFor(BaseObject* object, ConnectionInfo* forwho);
+        DLLEXPORT std::unique_ptr<sf::Packet> CreateInitialEntityMessageFor(GameWorld* world,
+            Lock &worldlock, ObjectID id, ConnectionInfo* forwho);
 
         //! \brief Creates an entity from a packet
         //! \return True when the entity creation was attempted
@@ -39,13 +34,16 @@ namespace Leviathan{
         //! \param world The world into which the object is created
         //! it will be NULL if the packet was corrupted or otherwise unusable. The object needs to
         //! be deleted by the caller
-        DLLEXPORT bool CreateEntityFromInitialMessage(BaseObject** returnobj, sf::Packet &packet, GameWorld* world);
+        DLLEXPORT bool CreateEntityFromInitialMessage(GameWorld* world, Lock &worldlock,
+            ObjectID &returnid, sf::Packet &packet);
 
         //! \brief Applies an update from a packet
         //! \return True when a suitable deserializer was found and the target object was valid
         //! \param objectget Function pointer to from which the target can be acquired
+        //! \param referencetick The tick against which this update was generated
         //! \note The object has to be locked before calling this
-        DLLEXPORT bool ApplyUpdateMessage(sf::Packet &packet, int ticknumber, ObjectPtr object);
+        DLLEXPORT bool ApplyUpdateMessage(GameWorld* world, Lock &worldlock,
+            ObjectID object, sf::Packet &packet, int ticknumber, int referencetick);
 
 
         DLLEXPORT static EntitySerializerManager* Get();
@@ -60,4 +58,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

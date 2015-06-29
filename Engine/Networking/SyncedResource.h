@@ -1,14 +1,10 @@
-#ifndef LEVIATHAN_SYNCEDRESOURCE
-#define LEVIATHAN_SYNCEDRESOURCE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/BaseNotifiable.h"
 #include "Common/SFMLPackets.h"
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 
 namespace Leviathan{
 
@@ -21,19 +17,31 @@ namespace Leviathan{
 	public:
 		//! \brief Constructs a base class for synced variables that requires a unique name
 		//! \todo Actually check if the name is actually unique
-		DLLEXPORT SyncedResource(const wstring &uniquename);
+		DLLEXPORT SyncedResource(const std::string &uniquename);
 		DLLEXPORT virtual ~SyncedResource();
 
 
 		//! \brief Serializes the name to a packet
-		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+		DLLEXPORT virtual void AddDataToPacket(Lock &guard, sf::Packet &packet);
+
+        DLLEXPORT inline void AddDataToPacket(sf::Packet &packet){
+
+            GUARD_LOCK();
+            AddDataToPacket(guard, packet);
+        }
 
 		//! \brief Gets a name from packet leaving only the variable data there
-		DLLEXPORT static wstring GetSyncedResourceNameFromPacket(sf::Packet &packet) THROWS;
+		DLLEXPORT static std::string GetSyncedResourceNameFromPacket(sf::Packet &packet);
 
 		//! \brief Assigns data from a packet to this resource
 		//! \return False when the actual implementation throws
-		DLLEXPORT virtual bool UpdateDataFromPacket(sf::Packet &packet);
+		DLLEXPORT virtual bool UpdateDataFromPacket(Lock &guard, sf::Packet &packet);
+
+        DLLEXPORT inline bool UpdateDataFromPacket(sf::Packet &packet){
+
+            GUARD_LOCK();
+            return UpdateDataFromPacket(guard, packet);
+        }
 
 		//! \brief Registers this resource with the SyncedVariables instance
 		//! \post The variable is now ready for use
@@ -47,20 +55,21 @@ namespace Leviathan{
 	protected:
 
 		//! \brief Should load the custom data from a packet
-		virtual void UpdateCustomDataFromPacket(sf::Packet &packet) THROWS = 0;
+		virtual void UpdateCustomDataFromPacket(Lock &guard, sf::Packet &packet) = 0;
 
 		//! \brief Should be used to add custom data to packet
 		//! \see UpdateCustomDataFromPacket
-		virtual void SerializeCustomDataToPacket(sf::Packet &packet) = 0;
+		virtual void SerializeCustomDataToPacket(Lock &guard, sf::Packet &packet) = 0;
 
 
 		//! \brief Notifies our SyncedVariables of an update
-		DLLEXPORT virtual void UpdateOurNetworkValue();
+        //! \todo Proper locking
+		DLLEXPORT virtual void UpdateOurNetworkValue(Lock &guard);
 
 		//! Update notifications are received through this
 		//! 
 		//! Called from UpdateDataFromPacket
-		virtual void OnValueUpdated();
+		virtual void OnValueUpdated(Lock &guard);
 
 
 		// Disable copy and copy constructor usage //
@@ -68,7 +77,7 @@ namespace Leviathan{
 		SyncedResource(const SyncedResource &other);
 		// ------------------------------------ //
 
-		const wstring Name;
+		const std::string Name;
 	};
 
 
@@ -79,12 +88,12 @@ namespace Leviathan{
 	class SyncedPrimitive : public SyncedResource{
 	public:
 		//! The callback type
-		typedef void (*CallbackPtr)(SyncedPrimitive<DTypeName>* updated);
+		typedef void (*CallbackPtr)(Lock &guard, SyncedPrimitive<DTypeName>* updated);
 
 		//! \brief Constructs an instance with a initial value
 		//! \warning The order of the initializer list is important since anytime after calling
         //! SyncedResource we can receive updates
-		DLLEXPORT SyncedPrimitive(const wstring &uniquename, const DTypeName &initialvalue,
+		DLLEXPORT SyncedPrimitive(const std::string &uniquename, const DTypeName &initialvalue,
             CallbackPtr updatecallback = NULL) : OurValue(initialvalue), 
 			ValueUpdateCallback(updatecallback), SyncedResource(uniquename)
 		{
@@ -96,7 +105,7 @@ namespace Leviathan{
 			// Unhook already //
 			ReleaseParentHooks();
 			// Set us as invalid after locking //
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			IsValid = false;
 
 			// Destructors will take care of the rest //
@@ -106,17 +115,17 @@ namespace Leviathan{
 		//! \note This does not call the callback or OnValueUpdated. They are only called when
         //! receiving updates through network
 		DLLEXPORT inline void UpdateValue(const DTypeName &newvalue){
-			{
-				GUARD_LOCK_THIS_OBJECT();
-				// Update our value //
-				OurValue = newvalue;
-			}
-			UpdateOurNetworkValue();
+
+            GUARD_LOCK();
+            // Update our value //
+            OurValue = newvalue;
+
+			UpdateOurNetworkValue(guard);
 		}
 
 		//! \brief Gets the value with locking
 		DLLEXPORT DTypeName GetValue() const{
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			return OurValue;
 		}
 
@@ -142,32 +151,31 @@ namespace Leviathan{
 		}
 
 		DLLEXPORT operator DTypeName(){
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			return OurValue;
 		}
 
 
 	protected:
 
-		virtual void OnValueUpdated(){
+		virtual void OnValueUpdated(Lock &guard) override{
 			// Report update //
 			if(ValueUpdateCallback)
-				ValueUpdateCallback(this);
+				ValueUpdateCallback(guard, this);
 		}
 
-		virtual void UpdateCustomDataFromPacket(sf::Packet &packet) THROWS{
+		virtual void UpdateCustomDataFromPacket(Lock &guard, sf::Packet &packet) override{
 			// The object is already locked at this point //
 
 			// Try to get our variable //
 			if(!(packet >> OurValue)){
 
-				throw ExceptionInvalidArgument(L"resource sync primitive packet has invalid format", 0, __WFUNCTION__,
-                    L"packet", L"");
+				throw InvalidArgument("resource sync primitive packet has invalid format");
 			}
 
 		}
 
-		virtual void SerializeCustomDataToPacket(sf::Packet &packet){
+		virtual void SerializeCustomDataToPacket(Lock &guard, sf::Packet &packet) override{
 			packet << OurValue;
 		}
 
@@ -185,4 +193,4 @@ namespace Leviathan{
 
 
 }
-#endif
+

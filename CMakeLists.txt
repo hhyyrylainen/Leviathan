@@ -6,20 +6,22 @@ project(Leviathan)
 # version number
 set(LEVIATHAN_VERSION_STABLE 0)
 set(LEVIATHAN_VERSION_MAJOR 7)
-set(LEVIATHAN_VERSION_MINOR 0)
-set(LEVIATHAN_VERSION_PATCH 2)
+set(LEVIATHAN_VERSION_MINOR 1)
+set(LEVIATHAN_VERSION_PATCH 1)
 
 set(LEVIATHAN_VERSION_STR ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}.${LEVIATHAN_VERSION_MINOR}.${LEVIATHAN_VERSION_PATCH})
 set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LEVIATHAN_VERSION_MINOR}${LEVIATHAN_VERSION_PATCH})
-
-set(LEVIATHAN_VERSIONS "L\"${LEVIATHAN_VERSION_STR}\"")
-set(LEVIATHAN_VERSION_ANSIS "\"${LEVIATHAN_VERSION_STR}\"")
 
 set(WORK_DIR "${PROJECT_BINARY_DIR}/bin")
 file(TO_NATIVE_PATH ${PROJECT_BINARY_DIR} PROJECT_NATIVE_BINARY_DIR)
 
 # modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake" "${PROJECT_SOURCE_DIR}/LeviathanCMake")
+
+# Windows find modules
+if(WIN32)
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/Windows/CMake" )
+endif()
 
 # load cotire
 include(cotire)
@@ -83,14 +85,18 @@ option(USE_LEAP "Set to on when using Leap motion, will auto disable if files ar
 if(EXISTS "${PROJECT_SOURCE_DIR}/Leap/include/Leap.h")
 
   message(STATUS "Leap motion includes found")
+  set(CAN_USE_LEAP ON)
 
+  
 else()
 
-  message(WARNING "Leap motion files aren't installed in leviathan/Leap, disabled")
-  set(USE_LEAP OFF)
+  message(WARNING "Leap motion files aren't installed in leviathan/Leap, Leap motion support is disabled")
+
+  set(CAN_USE_LEAP OFF)
+  
 endif()
 
-if(${USE_LEAP})
+if(${USE_LEAP} AND ${CAN_USE_LEAP})
   set(L_LEAP_STATE 1)
 else()
   set(L_LEAP_STATE 0)
@@ -114,33 +120,35 @@ set(CMAKE_DEBUG_POSTFIX "D")
 
 # Linking and platform specific
 if(WIN32)
-    # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
-    # higher memory for compiling precompiled headers
-    # Currently it seems that Zm250 should be enough but it might not be
-    add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm250)
-    
-    # program database flag for debug
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
-    
-    # A policy is needed for launchers to work correctly
-    
-    # This allows the project target property be read the old way
-    cmake_policy(SET CMP0026 OLD)
-    
-    # This makes parameter evaluation expand things more aggressively(?)
-    cmake_policy(SET CMP0053 OLD)
-    cmake_policy(SET CMP0054 OLD)
-    
+  # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
+  # higher memory for compiling precompiled headers
+  # Currently it seems that Zm250 should be enough but it might not be
+  add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm250)
+  
+  # program database flag for debug
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
+  
+  # A policy is needed for launchers to work correctly
+  
+  # This allows the project target property be read the old way
+  cmake_policy(SET CMP0026 OLD)
+  
+  # This makes parameter evaluation expand things more aggressively(?)
+  cmake_policy(SET CMP0053 OLD)
+  cmake_policy(SET CMP0054 OLD)
+  
 else(WIN32)
 
-    add_definitions(-fextended-identifiers)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-	
-    # We need X11 on linux for window class to work
-    find_package(X11)
-    find_package(Threads)
+  add_definitions(-fextended-identifiers)
 
-    include_directories(${X11_INCLUDE_DIR})
+  # C++14
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-reorder -Wno-unused-function -Wno-unknown-pragmas")
+  
+  # We need X11 on linux for window class to work
+  find_package(X11)
+  find_package(Threads)
+
+  include_directories(${X11_INCLUDE_DIR})
 endif(WIN32)
 
 # When no configuration is set, enable RelWithDebInfo
@@ -252,18 +260,19 @@ include_directories(${Boost_INCLUDE_DIR})
 add_definitions(-DBOOST_ALL_NO_LIB)
 
 # Library linking
-set(LINK_LIBS_TOENGINE_RELEASE optimized Newton)
-set(LINK_LIBS_ENGINE_RELEASE Angelscript Newton)
+set(LINK_LIBS_TOENGINE_RELEASE optimized Newton ${OGRE_LIBRARIES})
+set(LINK_LIBS_ENGINE_RELEASE optimized angelscript optimized Newton)
 
 
 
 # Debug libraries
 set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
-set(LINK_LIBS_ENGINE_DEBUG Angelscriptd Newton_d)
+set(LINK_LIBS_ENGINE_DEBUG debug angelscriptd debug Newton_d)
+
 
 if(${USE_LEAP})
-  set(LINK_LIBS_ENGINE_RELEASE ${LINK_LIBS_ENGINE_RELEASE} Leap)
-  set(LINK_LIBS_ENGINE_DEBUG ${LINK_LIBS_ENGINE_DEBUG} Leapd)
+  set(LINK_LIBS_ENGINE_RELEASE ${LINK_LIBS_ENGINE_RELEASE} optimized Leap)
+  set(LINK_LIBS_ENGINE_DEBUG ${LINK_LIBS_ENGINE_DEBUG} debug Leapd)
 endif()
 
 # Breakpad libraries
@@ -272,35 +281,18 @@ if(${USE_BREAKPAD})
     set(LINK_LIBS_TOENGINE_RELEASE ${LINK_LIBS_TOENGINE_RELEASE} optimized breakpad_client)
     set(LINK_LIBS_TOENGINE_DEBUG ${LINK_LIBS_TOENGINE_DEBUG} debug breakpad_client)
   elseif(WIN32)
-    set(LINK_LIBS_TOENGINE_RELEASE ${LINK_LIBS_TOENGINE_RELEASE} optimized exception_handler optimized common 
-      optimized crash_generation_client)
+    set(LINK_LIBS_TOENGINE_RELEASE ${LINK_LIBS_TOENGINE_RELEASE} optimized exception_handler
+      optimized common optimized crash_generation_client)
   else()
   
   endif()
 endif()
 
-# Prepend the right keywords
-
-
-# define a temp value
-set(TmpProcessQueueList)
-
-foreach(curlibname ${LINK_LIBS_ENGINE_RELEASE})
-    set(TmpProcessQueueList ${TmpProcessQueueList} optimized ${curlibname})
-endforeach()
-
-set(LINK_LIBS_ENGINE_RELEASE ${TmpProcessQueueList})
-
-set(TmpProcessQueueList)
-
-foreach(curlibname ${LINK_LIBS_ENGINE_DEBUG})
-  set(TmpProcessQueueList ${TmpProcessQueueList} debug ${curlibname})
-endforeach()
-
-set(LINK_LIBS_ENGINE_DEBUG ${TmpProcessQueueList})
-
 # create the bin directory
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+
+# Tests can crash if this folder doesn't exist
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Test")
 
 # Configure engine include file
 configure_file("${PROJECT_SOURCE_DIR}/Engine/Include.h.in" "${PROJECT_SOURCE_DIR}/Engine/Include.h")
@@ -315,7 +307,8 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_SERVER_SEARCH "TRUE")
   endif()
   
-    configure_file("${PROJECT_SOURCE_DIR}/LeviathanDoxy.in" "${PROJECT_BINARY_DIR}/LeviathanDoxy" @ONLY)
+  configure_file("${PROJECT_SOURCE_DIR}/LeviathanDoxy.in"
+    "${PROJECT_BINARY_DIR}/LeviathanDoxy" @ONLY)
     add_custom_target(doc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/LeviathanDoxy
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -605,9 +598,6 @@ add_subdirectory(Engine)
 # test project
 add_subdirectory(LeviathanTest)
 
-# sandboxie example project
-add_subdirectory(Sandboxie)
-
 # example pong master server
 add_subdirectory(PongMasterServer)
 
@@ -661,9 +651,6 @@ if(${USE_BREAKPAD})
 else()
     add_custom_target(All_Symbols DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
 endif()
-
-
-# testing support
 
 
 # CPack support

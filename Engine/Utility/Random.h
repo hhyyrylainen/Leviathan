@@ -1,12 +1,8 @@
-#ifndef LEVIATHAN_RANDOM
-#define LEVIATHAN_RANDOM
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
 #include <math.h>
+#include "Include.h"
+
 
 // this seems to only be half of the story, this might be double what it actually generates //
 //#define RANDOM_MAX_POSSIBLE			(4294967296)
@@ -16,7 +12,7 @@
 namespace Leviathan{
 
 	//! \brief Random number generator based on Mersenne Twister
-	class Random : public Object{
+	class Random{
 	public:
 		DLLEXPORT Random();
 		DLLEXPORT Random(int seed);
@@ -52,4 +48,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

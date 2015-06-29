@@ -1,16 +1,10 @@
-#ifndef LEVIATHAN_ITERATORDATA
-#define LEVIATHAN_ITERATORDATA
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
-
+#include "../Common/Types.h"
 
 namespace Leviathan{
 
-	class IteratorPositionData : public Object{
+	class IteratorPositionData{
 	public:
 		IteratorPositionData(int val1, int val2) : Positions(val1, val2){
 
@@ -21,7 +15,7 @@ namespace Leviathan{
 
 	};
 
-	class IteratorFindUntilData : public Object{
+	class IteratorFindUntilData{
 	public:
 		IteratorFindUntilData(int val1, int val2) : Positions(val1, val2), FoundEnd(false){
 
@@ -33,9 +27,12 @@ namespace Leviathan{
 	};
 
 
-	class IteratorNumberFindData : public Object{
+	class IteratorNumberFindData{
 	public:
-		IteratorNumberFindData() : Positions(-1, -1), DigitsFound(0), DecimalFound(false), NegativeFound(false){
+		IteratorNumberFindData() :
+            Positions(-1, -1), DigitsFound(0), DecimalFound(false), NegativeFound(false)
+        {
+            
 		}
 
 		// data //
@@ -45,7 +42,7 @@ namespace Leviathan{
 		bool NegativeFound;
 	};
 
-	class IteratorAssignmentData : public Object{
+	class IteratorAssignmentData{
 	public:
 		IteratorAssignmentData() : Positions(-1, -1), SeparatorFound(false){
 		}
@@ -55,7 +52,7 @@ namespace Leviathan{
 		bool SeparatorFound;
 	};
 
-	class IteratorCharacterData : public Object{
+	class IteratorCharacterData{
 	public:
 		IteratorCharacterData(int chartouse) : CharacterToUse(chartouse){
 		}
@@ -64,9 +61,12 @@ namespace Leviathan{
 	};
 
 	template<class StrType>
-	class IteratorUntilSequenceData : public Object{
+	class IteratorUntilSequenceData{
 	public:
-		IteratorUntilSequenceData(const StrType &finduntil) : CurMatchedIndex(0), StringToMatch(finduntil), Positions(-1, -1), EndFound(false){
+		IteratorUntilSequenceData(const StrType &finduntil) :
+            CurMatchedIndex(0), StringToMatch(finduntil), Positions(-1, -1), EndFound(false)
+        {
+            
 		}
 
 		StrType StringToMatch;
@@ -75,5 +75,14 @@ namespace Leviathan{
 		bool EndFound;
 	};
 
+    class IteratorNestingLevelData{
+    public:
+        IteratorNestingLevelData() : Positions(-1, -1), NestingLevel(0){
+        }
+
+        Int2 Positions;
+        int NestingLevel;
+    };
+
 }
-#endif
+

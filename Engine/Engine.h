@@ -1,17 +1,13 @@
-#ifndef LEVIATHAN_ENGINE
-#define LEVIATHAN_ENGINE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "boost/thread/mutex.hpp"
 #include "Common/ThreadSafe.h"
 #include "Networking/NetworkInterface.h"
-#include "boost/thread.hpp"
-
-
+#include <inttypes.h>
+#include <mutex>
+#include <thread>
+#include <vector>
 
 
 namespace Leviathan{
@@ -20,7 +16,7 @@ namespace Leviathan{
 	//!
 	//! Allocates a lot of classes and performs almost all startup operations.
 	//! \note Should be thread safe, but might not actually be
-	class Engine : public Object, public ThreadSafe{
+	class Engine : public ThreadSafe{
 		
 		friend GraphicalInputEntity;
 		friend Gui::GuiManager;
@@ -45,6 +41,9 @@ namespace Leviathan{
         //! \return The time in milliseconds
         DLLEXPORT int GetTimeSinceLastTick() const;
 
+        //! \brief Returns the number of tick that was last simulated
+        DLLEXPORT int GetCurrentTick() const;
+
 		//! \brief Causes VLD to dump current memory leaks
 		DLLEXPORT static void DumpMemoryLeaks();
 
@@ -62,20 +61,20 @@ namespace Leviathan{
 
 		// ------------------------------------ //
 		// Passes the commands and preprocesses them, but also interprets commands like --nogui //
-		DLLEXPORT void PassCommandLine(const wstring &commands);
+		DLLEXPORT void PassCommandLine(const std::string &commands);
+        
 		// Runs the normal commands passed by the PassCommandLine function //
 		DLLEXPORT void ExecuteCommandLine();
 
-
         //! \brief Creates a GameWorld for placing entities into
-		DLLEXPORT shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow, shared_ptr<ViewerCameraPos>
-            worldscamera);
+		DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow,
+            std::shared_ptr<ViewerCameraPos> worldscamera);
 
         //! \brief Releases a GameWorld
         //! \param world The world to destroy.
-        //! \post The World will have been released and removed from Engine's internal list and the world pointer will
-        //! be NULL
-        DLLEXPORT void DestroyWorld(shared_ptr<GameWorld> &world);
+        //! \post The World will have been released and removed from Engine's internal list and
+        //! the world pointer will be NULL
+        DLLEXPORT void DestroyWorld(std::shared_ptr<GameWorld> &world);
 
         //! \brief Opens a new window
         //! \note The window may become broken if the main window is closed
@@ -86,13 +85,18 @@ namespace Leviathan{
 		DLLEXPORT GraphicalInputEntity* GetWindowEntity(){ return GraphicalEntity1; };
 
         //! \brief Removes an closed window from the engine
-        DLLEXPORT void ReportClosedWindow(GraphicalInputEntity* windowentity);
+        DLLEXPORT void ReportClosedWindow(Lock &guard, GraphicalInputEntity* windowentity);
+
+        DLLEXPORT inline void ReportClosedWindow(GraphicalInputEntity* windowentity){
+
+            GUARD_LOCK();
+            ReportClosedWindow(guard, windowentity);
+        }
         
 		DLLEXPORT void SaveScreenShot();
 
 		DLLEXPORT Graphics* GetGraphics(){ return Graph; };
 		DLLEXPORT EventHandler* GetEventHandler(){ return MainEvents; };
-		DLLEXPORT ObjectLoader* GetObjectLoader(){return Loader;};
 		DLLEXPORT RenderingStatistics* GetRenderingStatistics(){ return RenderTimer;};
 		DLLEXPORT ScriptConsole* GetScriptConsole(){ return MainConsole;};
 		DLLEXPORT FileSystem* GetFileSystem(){ return MainFileHandler; };
@@ -122,7 +126,7 @@ namespace Leviathan{
 		DLLEXPORT static void WinAllocateConsole();
 #endif
 
-	private:
+	protected:
 		// after load function //
 		void PostLoad();
 
@@ -137,6 +141,10 @@ namespace Leviathan{
         //! time by amount
         void _AdjustTickClock(int amount, bool absolute = true);
 
+        //! \brief Sets the tick number to a specified value
+        //! \note Should only be called on the client as this may break some simulations
+        void _AdjustTickNumber(int tickamount, bool absolute);
+
 		// ------------------------------------ //
 		AppDef* Define;
 
@@ -149,8 +157,7 @@ namespace Leviathan{
 		SoundDevice* Sound;
 		DataStore* Mainstore;
 		EventHandler* MainEvents;
-		ScriptInterface* MainScript;
-		ObjectLoader* Loader;
+		ScriptExecutor* MainScript;
 		ScriptConsole* MainConsole;
 		FileSystem* MainFileHandler;
 		Random* MainRandom;
@@ -174,48 +181,52 @@ namespace Leviathan{
 		LeviathanApplication* Owner;
         
 		//! List of current worlds
-		std::vector<shared_ptr<GameWorld>> GameWorlds;
+		std::vector<std::shared_ptr<GameWorld>> GameWorlds;
 
         //! Mutex that is locked when changing the worlds
-        boost::mutex GameWorldsLock;
+        std::mutex GameWorldsLock;
 
         //! Mutex that is locked while NetworkHandler is used
-        boost::mutex NetworkHandlerLock;
+        std::mutex NetworkHandlerLock;
 
 		// data //
-		__int64 LastFrame;
+		int64_t LastTickTime;
+        
 		int TimePassed;
 		int FrameLimit;
 		int TickCount;
 		int TickTime;
 		int FrameCount;
 
-		// flags //
-		bool MouseCaptured : 1;
-		bool WantsToCapture : 1;
-		bool Focused : 1;
-		bool GuiActive : 1;
-		bool Inited : 1;
 		//! Set when PreRelease is called and Tick has happened
-		bool PreReleaseDone : 1;
+		bool PreReleaseDone;
+        
 		//! Set when PreRelease called and waiting for Tick
 		//! see PreReleaseDone
-		bool PreReleaseWaiting : 1;
+		bool PreReleaseWaiting;
+
+        // Engine settings //
 		bool NoGui;
 		bool NoLeap;
+        bool NoSTDInput;
+
+        //! \brief Set to true when initialized as a client
+        //!
+        //! Used to call client specific events
+        bool IsClient;
 
 		// Marks that the Engine has already done prerelease //
 		bool PreReleaseCompleted;
 
 
 		// Stores the command line before running it //
-		std::vector<unique_ptr<wstring>> PassedCommands;
+		std::vector<std::unique_ptr<std::string>> PassedCommands;
 
 		// NoGui input handler //
-		boost::thread CinThread;
+		std::thread CinThread;
 
 		static Engine* instance;
 	};
 
 }
-#endif
+

@@ -1,10 +1,9 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_STRINGDATAITERATOR
 #include "StringDataIterator.h"
-#endif
+
 #include "utf8/checked.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::StringDataIterator::StringDataIterator() : CurrentCharacterNumber(0), CurrentLineNumber(1){
 
@@ -15,15 +14,18 @@ DLLEXPORT Leviathan::StringDataIterator::~StringDataIterator(){
 }
 // ------------------------------------ //
 bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos, string &receiver){
-	Logger::Get()->Error(L"StringDataIterator doesn't support getting with type: string, make sure your provided data source string "
-		L"type is the same as the request template type");
+	Logger::Get()->Error("StringDataIterator doesn't support getting with type: string, "
+        "make sure your provided data source string type is the same as the "
+        "request template type");
 	DEBUG_BREAK;
 	return false;
 }
 
-bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos, wstring &receiver){
-	Logger::Get()->Error(L"StringDataIterator doesn't support getting with type: wstring, make sure your provided data source string "
-		L"type is the same as the request template type");
+bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos,
+    wstring &receiver)
+{
+	Logger::Get()->Error("StringDataIterator doesn't support getting with type: wstring, make "
+        "sure your provided data source string type is the same as the request template type");
 	DEBUG_BREAK;
 	return false;
 }

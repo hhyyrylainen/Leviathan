@@ -1,7 +1,4 @@
 #pragma once
-#ifndef LEVIATHAN_INCLUDE
-#define LEVIATHAN_INCLUDE
-
 //
 // File configured by CMake do not edit Include.h //
 //
@@ -20,71 +17,9 @@
 #define LEVIATHAN_USES_LEAP
 #endif
 
-#ifndef __cplusplus
-#error C++ compiler required!
-#endif
-
-#include <stdio.h>
-
-// we need to disable this warning to stop stdint and instsafe causing errors //
-#pragma warning (disable: 4005)
-
-
-// C RunTime Header Files
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
-#include <wchar.h>
-#include <math.h>
-#include <assert.h>
-
-#include <cstdint>
-
-#ifdef _WIN32
-// This fixes including wincoded.h
-#include <d2d1.h>
-#include <wincodec.h>
-#include <SDKDDKVer.h>
-#endif
-
-// some special compiler settings //
-#ifdef ANALYZEBUILD
-    // this to stop code analyze from breaking //
-    #define _AFXDLL
-    #pragma warning (disable:6387)
-    #include <afxcontrolbars.h>
-    #pragma warning (default:6387)
-#endif
-
-
-#ifdef _WIN32
-    #include <Windows.h>
-    #include <Windowsx.h>
-#else
-    // For making SIGINT work as debug break on linux //
-    #include <signal.h>
-#endif
-
-// Might have to only include this on linux //
-#include <limits>
-
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <map>
-#include <list>
-#include <algorithm>
-#include <string>
-#include <vector>
-#include <utility>
-
-
-using namespace std;
-// -------------------------- //
-
 #define LEVIATHAN_VERSION @LEVIATHAN_VERSION@
-#define LEVIATHAN_VERSIONS @LEVIATHAN_VERSIONS@
-#define LEVIATHAN_VERSION_ANSIS @LEVIATHAN_VERSION_ANSIS@
+#define LEVIATHAN_VERSIONS L"@LEVIATHAN_VERSION_STR@"
+#define LEVIATHAN_VERSION_ANSIS "@LEVIATHAN_VERSION_STR@"
 
 #define LEVIATHAN_VERSION_STABLE    @LEVIATHAN_VERSION_STABLE@
 #define LEVIATHAN_VERSION_MAJOR     @LEVIATHAN_VERSION_MAJOR@
@@ -93,170 +28,35 @@ using namespace std;
 
 #define LEVIATHAN
 
-namespace Leviathan{
-
-	static const double  VERSION = LEVIATHAN_VERSION;
-	static const wstring  VERSIONS =  LEVIATHAN_VERSIONS;
-
-	static const float PI = 3.14159265f;
-	static const float DEGREES_TO_RADIANS = PI/180.f;
-	static const float EPSILON = 0.00000001f;
-}
-
-// Define common types that might be missing //
-#ifndef _WIN32
-    // Linux is missing many types used quite commonly //
-    #include <inttypes.h>
-    #include <float.h>
-    typedef unsigned int UINT;
-    typedef long LONG;
-    typedef int64_t __int64;
-    typedef int32_t __int32;
-    typedef unsigned char BYTE;
-    typedef unsigned char UCHAR;
-    typedef unsigned short USHORT;
-    typedef unsigned short UINT16;
-    typedef unsigned short USHORT;
-
-    #undef index
-
-    #define __assume(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
-
-    #define FORCE_INLINE __attribute__((always_inline))
-    #define THROWS
-    
-#else
-    // Windows needs these //
-    #define FORCE_INLINE    __forceinline
-    #define THROWS      throw(...)
-    
-    // Some undefines //
-    #define WinGetNextSibling GetNextSibling
-    #undef GetNextSibling
-    #define WinGetGetFirstChild GetFirstChild
-    #undef GetFirstChild
-    
-#endif //_WIN32
-
-// throw on Error message //
-//#define THROW_ON_PRINTERROR
-
-#ifdef _MSC_VER
-
-#define DEBUG_BREAK __debugbreak();
-
-#elif defined __linux
-
-// We are on linux (and this *should* work)
-#define DEBUG_BREAK { Leviathan::Logger::Get()->Write("DEBUG_BREAK HIT!"); raise(SIGINT); }
-
-#else
-
-#error "Debug break won't work"
-
+#ifdef __GNUC__
+#define __FUNCSIG__ __PRETTY_FUNCTION__
 #endif
-
-
-
-#ifndef DEBUG_OUTPUT
-#define DEBUG_OUTPUT(s) {Logger::SendDebugMessage(s);}
-#endif
-
-#ifndef DEBUG_OUTPUT_AUTO
-#define DEBUG_OUTPUT_AUTO(s)    {Logger::SendDebugMessage(string("[INFO] "+s+"\n"));}
-#endif
-
-#ifndef DEBUG_OUTPUT_AUTOPLAINTEXT
-#define DEBUG_OUTPUT_AUTOPLAINTEXT(s)   {Logger::SendDebugMessage(string("[INFO] " #s "\n"));}
-#endif
-
 
 #ifndef DLLEXPORT
-    #ifdef ENGINE_EXPORTS
-        #ifdef _WIN32
-            #define DLLEXPORT    __declspec( dllexport )
-        #else
-            // This might not be needed for gcc
-            #define DLLEXPORT   __attribute__ ((visibility ("default")))
-        #endif
-        // Json-cpp //
-        #define JSON_DLL_BUILD
-    #else
-        #define DLLEXPORT
-        #define JSON_DLL
-    #endif // ENGINE_EXPORTS
-#endif
-
-
-#define SAFE_RELEASE( x ) {if(x){(x)->Release();(x)=NULL;}}
-#define SAFE_RELEASEDEL( x ) {if(x){(x)->Release();delete (x);(x)=NULL;}}
-#define SAFE_DELETE( x ) {if(x){delete (x);(x)=NULL;}}
-#define SAFE_DELETE_ARRAY( x ) {if(x){delete[] (x);(x)=NULL;}}
-#define EXISTS( x ) {( (x) != NULL )}
-
-#define SAFE_RELEASE_VECTOR(x) {for(auto iter = x.begin(); iter != x.end(); ++iter) if(*iter){ (*iter)->Release(); } x.clear();}
-
-#define ARR_INDEX_CHECK( x, y) if(((x) >= 0 ) && ((size_t)(x) < (y)))
-#define ARR_INDEX_CHECKINV( x, y) if(!(((x) >= 0 ) && ((size_t)(x) < (y))))
-#define VECTOR_LAST(x) (x).at((x).size()-1)
-#define VECTOR_LASTP(x) (x)->at((x)->size()-1)
-#define CLASS_ALLOC_CHECK(x) if(!(x)){Logger::Get()->Error("Out of memory error: " __FUCNTION__); return false;}
-
-#define FORCE_POSITIVE(x) {if((x) < 0){ (x)*=-1; }}
-#define FORCE_POSITIVEF(x) {if((x) < 0){ (x)*=-1.0f; }}
-
-#ifdef _MSC_VER
-    #define WIDEN2(x) L##x
-    #define WIDEN(x) WIDEN2(x)
+#ifdef ENGINE_EXPORTS
+#ifdef _WIN32
+#define DLLEXPORT    __declspec( dllexport )
 #else
-    #define EXPAND(x) x
-    #define WIDEN3(x) L ## x
-    #define WIDEN2(x) WIDEN3(x)
-    #define WIDEN(x) WIDEN2(EXPAND(x))
+// This might not be needed for gcc
+#define DLLEXPORT   __attribute__ ((visibility ("default")))
 #endif
-
-#ifdef __GNUC__
-    #define __FUNCSIG__ __PRETTY_FUNCTION__
-#endif
-
-#define STRINGIFY3(x) #x
-#define STRINGGIFY2(x) STRINGIFY3(x)
-#define STRINGGIFY(x) STRINGGIFY2(x)
-#define WSTRINGIFY(x) WIDEN(STRINGGIFY(x))
-
-
-#ifdef _MSC_VER
-#define __WFUNCSIG__ WSTRINGIFY(__FUNCSIG__)
-#define __WFUNCTION__ WIDEN(__FUNCTION__)
-#define __WFILE__ WIDEN(__FILE__)
+// Json-cpp //
+#define JSON_DLL_BUILD
 #else
-#define __WFUNCSIG__ Convert::StringToWstring(__PRETTY_FUNCTION__)
-#define __WFUNCTION__ Convert::StringToWstring(__FUNCTION__)
-#define __WFILE__ Convert::StringToWstring(__FILE__)
+#define DLLEXPORT
+#define JSON_DLL
+#endif // ENGINE_EXPORTS
 #endif
 
+#ifndef _WIN32
 
-
-#define SSLINE2(x) #x
-#define SSLINE(x) SSLINE2(x)
-#define __SLINE__ SSLINE(__LINE__)
-
-#define __SWLINE__ WSTRINGIFY(__SLINE__)
-
-#define __WDATE__ WSTRINGIFY(__DATE__)
-#define __WTIME__ WSTRINGIFY(__TIME__)
-
-#define SAFE_DELETE_VECTOR(x) for(size_t vdind = 0; vdind < x.size(); ++vdind){if(x[vdind]){delete x[vdind];}}; x.clear();
-
-#define QUICK_MEMORY_ERROR_MESSAGE {Logger::Get()->Error(("Out of memory error from: " __FILE__ " function: "__FUNCTION__), true);}
-
-#define QUICK_ERROR_MESSAGE {Logger::Get()->Error(string("Undocumented error: " __FILE__ " function: ")+ __FUNCTION__ \
-            +string(" line: " __SLINE__ ));}
+#define FORCE_INLINE __attribute__((always_inline))
+    
+#else
+// Windows needs these //
+#define FORCE_INLINE    __forceinline
+#endif    
 
 
 
-// Undef stuff //
-#undef index
 
-
-#endif

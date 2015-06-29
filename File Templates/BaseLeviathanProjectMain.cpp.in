@@ -3,9 +3,6 @@
 #include "@ProgramNetHeader@"
 #include "resource.h"
 
-// For getting starting folder
-#include "Common/Misc.h"
-
 #if @BREAKPAD_STATE@ == 1
 #define USE_BREAKPAD 1
 #else
@@ -24,10 +21,9 @@
 #endif //USE_BREAKPAD
 
 using namespace @ProgramNamespace@;
+using namespace std;
 
 // Don't look at the mess ahead, just set the variables in your cmake file //
-
-static std::string InitialFolder = "";
 
 #ifdef USE_BREAKPAD
 #ifdef _WIN32
@@ -69,11 +65,11 @@ int main(int argcount, char* args[]){
 #endif
     
 #ifdef _WIN32
-    wstring commandline = Convert::StringToWstring(lpCmdLine);
+    string commandline = lpCmdLine;
 #else
-    wstring commandline = L"";
+    string commandline = "";
     for(int i = 1; i < argcount; i++){
-        commandline += L" "+Leviathan::Convert::CharPtrToWstring(args[i]);
+        commandline += string(" ")+args[i];
     }
 #endif
     
@@ -92,9 +88,6 @@ int main(int argcount, char* args[]){
 
     VLDEnable();
 #endif // LEVIATHAN_USES_VLD
-
-    // Store starting folder //
-    InitialFolder = Leviathan::Misc::GetProcessDirectory();
 
 #ifdef USE_BREAKPAD
     // Crash handler //
@@ -121,16 +114,17 @@ int main(int argcount, char* args[]){
     @PROGRAMCLASSNAME@ app;
     @PROGRAMNETWORKINGNAME@ network;
 
-    unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(L"@PROGRAMLOG@", L"@ENGINECONFIGURATION@", 
-        L"@PROGRAMCONFIGURATION@", L"@PROGRAMKEYCONFIGURATION@", &@PROGRAMCHECKCONFIGFUNCNAME@,
+    unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine("@PROGRAMLOG@", "@ENGINECONFIGURATION@", 
+        "@PROGRAMCONFIGURATION@", "@PROGRAMKEYCONFIGURATION@", &@PROGRAMCHECKCONFIGFUNCNAME@,
         &@PROGRAMCHECKKEYCONFIGFUNCNAME@));
         
     // customize values //
 #ifdef _WIN32
     ProgramDefinition->SetHInstance(hInstance);
 #endif
-    ProgramDefinition->SetMasterServerParameters(@PROGRAMMASTERSERVERINFO@).SetPacketHandler(&network).SetApplicationIdentification(
-        @USERREADABLEIDENTIFICATION@, L"@GAMENAMEIDENTIFICATION@", L"@GAMEVERSIONIDENTIFICATION@");
+    ProgramDefinition->SetMasterServerParameters(@PROGRAMMASTERSERVERINFO@).
+        SetPacketHandler(&network).SetApplicationIdentification(
+        @USERREADABLEIDENTIFICATION@, "@GAMENAMEIDENTIFICATION@", "@GAMEVERSIONIDENTIFICATION@");
 
     // create window last //
     ProgramDefinition->StoreWindowDetails(@WINDOWTITLEGENFUNCTION@, true,
@@ -150,10 +144,10 @@ int main(int argcount, char* args[]){
         app.FlushCommandLine();
 
 
-        Logger::Get()->Info(L"Engine successfully initialized", true);
+        Logger::Get()->Info("Engine successfully initialized");
         Return = app.RunMessageLoop();
     } else {
-        Logger::Get()->Error(L"App init failed, closing", true);
+        Logger::Get()->Error("App init failed, closing");
         app.ForceRelease();
         Return = 5;
     }

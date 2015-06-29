@@ -1,9 +1,7 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_COMMON_MATH
 #include "CommonMath.h"
-#endif
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 #include "Utility/Random.h"
 
@@ -32,7 +30,9 @@ int MMath::GreatestCommonDivisor(int a, int b){
 	return (b == 0 ? a : GreatestCommonDivisor(b, a%b));
 }
 
-DLLEXPORT  bool Leviathan::MMath::IsPointInsidePolygon(const vector<Float3>& polygon, const Float3& point){
+DLLEXPORT  bool Leviathan::MMath::IsPointInsidePolygon(const std::vector<Float3>& polygon,
+    const Float3& point)
+{
 	//bool IsInside = false;
 	//int i,j;
 	//for(i = 0, j = polygon.size()-1; i < polygon.size(); j = i++){

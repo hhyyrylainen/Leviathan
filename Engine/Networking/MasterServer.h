@@ -1,16 +1,12 @@
-#ifndef LEVIATHAN_MASTERSERVER
-#define LEVIATHAN_MASTERSERVER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 
 
 namespace Leviathan{
 
-	class MasterServer : public Object{
+	class MasterServer{
 	public:
 		DLLEXPORT MasterServer();
 		DLLEXPORT ~MasterServer();
@@ -23,4 +19,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

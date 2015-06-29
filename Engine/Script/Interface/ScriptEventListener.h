@@ -1,9 +1,9 @@
 #pragma once
 #include "Common/ReferenceCounted.h"
 #include "Events/CallableObject.h"
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "Common/ThreadSafe.h"
-#include "Script/ScriptInterface.h"
+#include "Script/ScriptExecutor.h"
 
 namespace Leviathan{ namespace Script{
 
@@ -32,15 +32,15 @@ namespace Leviathan{ namespace Script{
 
                 // Fail if neither is set //
                 if(!OnGenericScript && !OnEventScript)
-                    throw ExceptionInvalidArgument(L"At least on event or on generic listeners need to be passed", 0,
-                        __WFUNCTION__, L"onevent ongeneric", L"both are NULL");
+                    throw InvalidArgument("At least on event or on generic listeners need to be "
+                        "provided, both are NULL");
             }
             
             ~EventListener(){
 
                 UnRegisterAllEvents();
 
-                GUARD_LOCK_THIS_OBJECT();
+                GUARD_LOCK();
 
                 SAFE_RELEASE(OnEventScript);
                 SAFE_RELEASE(OnGenericScript);
@@ -48,13 +48,13 @@ namespace Leviathan{ namespace Script{
 
             int OnEvent(Event** event) override{
 
-                GUARD_LOCK_THIS_OBJECT();
+                GUARD_LOCK();
                 
                 if(OnEventScript){
 
                     // Setup the parameters //
-                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(
-                            new VoidPtrBlock(*event), L"Event"));
+                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(
+                        new NamedVariableBlock(new VoidPtrBlock(*event), "Event"));
 
                     (*event)->AddRef();
 
@@ -63,7 +63,8 @@ namespace Leviathan{ namespace Script{
 
 
                     // Run the script //
-                    shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(OnGenericScript, &sargs);
+                    std::shared_ptr<VariableBlock> result =
+                        ScriptExecutor::Get()->RunSetUp(OnGenericScript, &sargs);
 
                     if(!result || !result->IsConversionAllowedNonPtr<int>()){
 
@@ -79,13 +80,13 @@ namespace Leviathan{ namespace Script{
 
             int OnGenericEvent(GenericEvent** event) override{
 
-                GUARD_LOCK_THIS_OBJECT();
+                GUARD_LOCK();
                 
                 if(OnGenericScript){
 
                     // Setup the parameters //
-                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(
-                            new VoidPtrBlock(*event), L"GenericEvent"));
+                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(
+                        new NamedVariableBlock(new VoidPtrBlock(*event), "GenericEvent"));
 
                     (*event)->AddRef();
 
@@ -94,7 +95,8 @@ namespace Leviathan{ namespace Script{
 
 
                     // Run the script //
-                    shared_ptr<VariableBlock> result = ScriptInterface::Get()->ExecuteScript(OnGenericScript, &sargs);
+                    std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+                        OnGenericScript, &sargs);
 
                     if(!result || !result->IsConversionAllowedNonPtr<int>()){
 
@@ -112,7 +114,7 @@ namespace Leviathan{ namespace Script{
             bool RegisterForEventType(EVENT_TYPE type){
                 
                 {
-                    GUARD_LOCK_THIS_OBJECT();
+                    GUARD_LOCK();
                 
                     if(!OnEventScript)
                         return false;
@@ -126,13 +128,13 @@ namespace Leviathan{ namespace Script{
             bool RegisterForEventGeneric(const string &name){
                 
                 {
-                    GUARD_LOCK_THIS_OBJECT();
+                    GUARD_LOCK();
                 
                     if(!OnGenericScript)
                         return false;
                 }
                 
-                EventHandler::Get()->RegisterForEvent(this, Convert::StringToWstring(name));
+                EventHandler::Get()->RegisterForEvent(this, name);
                 return true;
             }
 
@@ -153,7 +155,7 @@ namespace Leviathan{ namespace Script{
                 
                 listener = new EventListener(onevent, ongeneric);
                 
-            } catch(const ExceptionInvalidArgument &e){
+            } catch(const InvalidArgument &e){
 
                 Logger::Get()->Error("Failed to construct Script::EventListener, exception: ");
                 e.PrintToLog();

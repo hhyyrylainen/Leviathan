@@ -1,50 +1,20 @@
-
-#ifndef LEVIATHAN_TYPES
-#define LEVIATHAN_TYPES
-// ----------------- //
+#pragma once
 // ------------------------------------ //
-
+#include "Define.h"
 // ------------------------------------ //
-// ---- includes ---- //
 #include <memory>
+#include <iostream>
 
+// TODO: move ogre conversion functions to another file
 #include "OGRE/OgreQuaternion.h"
 #include "OGRE/OgreColourValue.h"
 #include "OGRE/OgreVector3.h"
 #include "OGRE/OgreVector4.h"
 
-
 namespace Leviathan{
 
 
 #define NORMALIZATION_TOLERANCE	1e-6f
-
-	// just a key index class //
-	class CharWithIndex{
-	public:
-		CharWithIndex();
-		CharWithIndex(wchar_t character, int index);
-		~CharWithIndex();
-
-		wchar_t Char;
-		int Index;
-	};
-
-	struct IntWstring{
-	public:
-		IntWstring();
-		IntWstring(const wstring& wstr, int value);
-		~IntWstring();
-
-		wstring* GetString();
-		int GetValue();
-
-		void SetString(const wstring& wstr);
-		void SetValue(int value);
-
-		shared_ptr<wstring> Wstr;
-		int Value;
-	};
 
 	class AllocatedBinaryBlock{
 	public:
@@ -130,52 +100,6 @@ namespace Leviathan{
 		int X, Y, Z, W;
 	};
 
-	struct UINT4{
-	public:
-		DLLEXPORT UINT4(UINT u1, UINT u2, UINT u3, UINT u4);
-		DLLEXPORT UINT4();
-		DLLEXPORT operator UINT*();
-		//DLLEXPORT UINT& operator[](const int nIndex);
-		//DLLEXPORT UINT4 operator*(UINT);
-
-		UINT X, Y, Z, W;
-	};
-
-	//// not required //
-	struct Float1{
-	public:
-		DLLEXPORT inline Float1(){
-		}
-		DLLEXPORT inline Float1(const float &data){
-			X = data;
-		}
-
-		DLLEXPORT inline operator float& (){
-			return X;
-		}
-
-		DLLEXPORT operator float() const{
-			return X;
-		}
-		// ------------------------------------ //
-		DLLEXPORT inline Float1 operator +(const Float1& val){
-			return X+val.X;
-		}
-		DLLEXPORT inline Float1 operator +(const float& val){
-			return X+val;
-		}
-
-		DLLEXPORT inline float GetFloatValue() const{
-			return X;
-		}
-		DLLEXPORT inline void SetFloatValue(const float &val){
-			X = val;
-		}
-		// ------------------------------------ //
-
-		float X;
-	};
-
 	// ----------------- Float types ------------------- //
 	// refactored to match declarations in ozz vec_float //
 
@@ -198,8 +122,6 @@ namespace Leviathan{
 			switch (nindex){
 			case 0: return X;
 			case 1: return Y;
-				// this should NEVER be hit //
-			default: __assume(0);
 			}
 		}
 
@@ -276,7 +198,7 @@ namespace Leviathan{
 		}
 		// Add all elements together after abs() is called on each element //
 		DLLEXPORT inline float HAddAbs() const{
-			return abs(X)+abs(Y);
+			return std::abs(X) + std::abs(Y);
 		}
 		// getting min and max of objects //
 		DLLEXPORT inline Float2 MinElements(const Float2 &other) const{
@@ -397,7 +319,7 @@ namespace Leviathan{
 			case 1: return Y;
 			case 2: return Z;
 			}
-            throw exception();
+            throw std::exception();
 		}
 
 		// ------------------- Operators ----------------- //
@@ -427,21 +349,21 @@ namespace Leviathan{
 		DLLEXPORT inline Float3 operator/(const float &val) const{
 			return Float3(X/val, Y/val, Z/val);
 		}
-		DLLEXPORT inline Float3* operator/=(const float &val){
+		DLLEXPORT inline Float3& operator/=(const float &val){
 			X /= val;
 			Y /= val;
 			Z /= val;
-			return this;
+			return *this;
 		}
 		// multiply  by scalar f //
 		DLLEXPORT inline Float3 operator*(float f) const{
 			return Float3(X*f, Y*f, Z*f);
 		}
-		DLLEXPORT inline Float3* operator*=(float f){
+		DLLEXPORT inline Float3& operator*=(float f){
 			X *= f;
 			Y *= f;
 			Z *= f;
-			return this;
+			return *this;
 		}
 		// divides all elements //
 		DLLEXPORT inline Float3 operator/(const Float3 &val) const{
@@ -485,7 +407,7 @@ namespace Leviathan{
 		}
 		// Add all elements together absoluted (abs()) //
 		DLLEXPORT inline float HAddAbs() const{
-			return abs(X)+abs(Y)+abs(Z);
+			return std::abs(X) + std::abs(Y) + std::abs(Z);
 		}
 		// getting min and max of objects //
 		DLLEXPORT inline Float3 MinElements(const Float3 &other) const{
@@ -500,11 +422,7 @@ namespace Leviathan{
 			return min.MaxElements(minval);
 		}
 
-
-		DLLEXPORT inline Float3 DegreesToRadians(){
-
-			return Float3(X*DEGREES_TO_RADIANS, Y*DEGREES_TO_RADIANS, Z*DEGREES_TO_RADIANS);
-		}
+		DLLEXPORT inline Float3 DegreesToRadians();
 
 		// ----------------- Vector math ------------------- //
 		// dot product of the vectors //
@@ -541,7 +459,8 @@ namespace Leviathan{
 			// is absolute -1.f under normalization tolerance //
 			return fabs(X*X+Y*Y+Z*Z -1.0f) < NORMALIZATION_TOLERANCE;
 		}
-		// does linear interpolation between vectors and coefficient f, not limited to range [0,1], courtesy of ozz-animation //
+		// does linear interpolation between vectors and coefficient f, not limited to range
+        // [0,1], courtesy of ozz-animation //
 		DLLEXPORT inline Float3 Lerp(const Float3 &other, float f) const{
 			return Float3((other.X-X)*f + X, (other.Y-Y)*f + Y, (other.Z-Z)*f + Z);
 		}
@@ -551,12 +470,8 @@ namespace Leviathan{
 			return difference.Dot(difference) < tolerance*tolerance;
 		}
 
-		DLLEXPORT static inline Float3 CreateVectorFromAngles(const float &yaw, const float &pitch){
-
-			return Float3(-sin(yaw*DEGREES_TO_RADIANS), sin(pitch*DEGREES_TO_RADIANS), -cos(yaw*DEGREES_TO_RADIANS)).
-				//NormalizeSafe(Float3::UnitVForward);
-				NormalizeSafe(Zeroed);
-		}
+		DLLEXPORT static inline Float3 CreateVectorFromAngles(const float &yaw,
+            const float &pitch);
 		// ------------------------------------ //
 		// functions to be compatible with ozz functions //
 		// all zero values object //
@@ -588,10 +503,9 @@ namespace Leviathan{
 		//	return D3DXVECTOR3(X, Y, Z);
 		//}
 
-		DLLEXPORT inline operator Ogre::Vector3(){
+		DLLEXPORT inline operator Ogre::Vector3() const{
 			return Ogre::Vector3(X, Y, Z);
 		}
-
 
 		// ------------------------------------ //
 
@@ -642,9 +556,8 @@ namespace Leviathan{
 			case 1: return Y;
 			case 2: return Z;
 			case 3: return W;
-				// this should NEVER be hit //
-			default: __assume(0);
 			}
+            throw std::exception();
 		}
 
 		//! return first value of {X, Y, Z, W} as a pointer
@@ -712,14 +625,16 @@ namespace Leviathan{
 		}
 		// Add all elements together after abs() is called on each element //
 		DLLEXPORT inline float HAddAbs() const{
-			return abs(X)+abs(Y)+abs(Z)+abs(W);
+			return std::abs(X) + std::abs(Y) + std::abs(Z) + std::abs(W);
 		}
 		// getting min and max of objects //
 		DLLEXPORT inline Float4 MinElements(const Float4 &other) const{
-			return Float4(X < other.X ? X : other.X, Y < other.Y ? Y : other.Y, Z < other.Z ? Z : other.Z, W < other.W ? W : other.W);
+			return Float4(X < other.X ? X : other.X, Y < other.Y ? Y : other.Y, Z < other.Z ? Z :
+                other.Z, W < other.W ? W : other.W);
 		}
 		DLLEXPORT inline Float4 MaxElements(const Float4 &other) const{
-			return Float4(X > other.X ? X : other.X, Y > other.Y ? Y : other.Y, Z > other.Z ? Z : other.Z, W > other.W ? W : other.W);
+			return Float4(X > other.X ? X : other.X, Y > other.Y ? Y : other.Y, Z > other.Z ? Z :
+                other.Z, W > other.W ? W : other.W);
 		}
 		// value clamping //
 		DLLEXPORT inline Float4 Clamp(const Float4 &min, const Float4 &max){
@@ -732,25 +647,31 @@ namespace Leviathan{
 		DLLEXPORT inline float Dot(const Float4 &val) const{
 			return X*val.X+Y*val.Y+Z*val.Z+W*val.W;
 		}
+        
 		// length of the vector //
 		DLLEXPORT inline float Length() const{
 			return sqrt(X*X+Y*Y+Z*Z+W*W);
 		}
+        
 		// normalizes the vector //
 		DLLEXPORT inline Float4 Normalize() const{
 			const float length = Length();
-			if(length == 0)
-				return Float4(0, 0, 0, 0);
+            
+			if(length == 0){
+                // Returns an identity quaternion
+				return Float4(0, 0, 0, 1);
+            }
+            
 			return Float4(X/length, Y/length, Z/length, W/length);
 		}
 		// safe version of normalization //
 		DLLEXPORT inline Float4 NormalizeSafe(const Float4 &safer = Float4(0, 0, 0, 1)) const{
 			// security //
-			assert(safer.IsNormalized() && "safer not normalized");
 			const float len = X*X+Y*Y+Z*Z+W*W;
 			if(len == 0){
 				return safer;
 			}
+            
 			const float length = sqrt(len);
 			return Float4(X/length, Y/length, Z/length, W/length);
 		}
@@ -759,7 +680,8 @@ namespace Leviathan{
 			// is absolute -1.f under normalization tolerance //
 			return fabs(X*X+Y*Y+Z*Z+W*W -1.0f) < NORMALIZATION_TOLERANCE;
 		}
-		// does linear interpolation between vectors and coefficient f, not limited to range [0,1], courtesy of ozz-animation //
+		// does linear interpolation between vectors and coefficient f,
+        // not limited to range [0,1], courtesy of ozz-animation //
 		DLLEXPORT inline Float4 Lerp(const Float4 &other, float f) const{
 			return Float4((other.X-X)*f + X, (other.Y-Y)*f + Y, (other.Z-Z)*f + Z, (other.W-W)*f + W);
 		}
@@ -847,6 +769,31 @@ namespace Leviathan{
 			return quaternion;
 		}
 
+        //! \note This quaternion has to be normalized
+        //! \see http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
+        DLLEXPORT inline Float3 QuaternionToEuler() const{
+
+            float test = X*Y + Z*W;
+            
+            if(test > 0.499){
+                // Singularity at north pole
+                return Float3(2 * atan2(X, W), PI/2, 0);
+            }
+            
+            if (test < -0.499) {
+                
+                // Singularity at south pole
+                return Float3(-2 * atan2(X, W), -PI/2, 0);
+            }
+            
+            float sqx = X*X;
+            float sqy = Y*Y;
+            float sqz = Z*Z;
+            
+            return Float3(atan2(2*Y*W-2*X*Z , 1 - 2*sqy - 2*sqz), asin(2*test),
+                atan2(2*X*W-2*Y*Z , 1 - 2*sqx - 2*sqz));
+        }
+
 		DLLEXPORT inline Float4 QuaternionMultiply(const Float4 &other) const{
 
 			Float4 result;
@@ -874,9 +821,8 @@ namespace Leviathan{
 
 		DLLEXPORT static inline Float4 CreateAxisAngleFromEuler(const Float3 &angles){
 
-
-			DEBUG_BREAK;
-			return Float4();
+            throw std::exception();
+            //return Float4();
 		}
 
 
@@ -918,6 +864,12 @@ namespace Leviathan{
 		DLLEXPORT static const Float4& GetColourTransparent();
 	};
 
+    // Stream operators //
+    DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+        const Leviathan::Float4 &value);
 
+    DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+        const Leviathan::Float3 &value);
 }
-#endif
+
+

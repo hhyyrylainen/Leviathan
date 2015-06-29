@@ -1,29 +1,16 @@
-#ifndef LEVIATHAN_REFERENCECOUNTED
-#define LEVIATHAN_REFERENCECOUNTED
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include <boost/intrusive_ptr.hpp>
-#include <boost/atomic.hpp>
+#include <cstdint>
+#include <atomic>
 
 namespace Leviathan{
 
 	// macro for adding proxies to hopefully work with scripts //
 #define REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(classname) void AddRefProxy(){ \
         this->AddRef(); }; void ReleaseProxy(){ this->Release(); };
-
-
-	template<class TypeName>
-	struct SharedPtrReleaseDeleter{
-
-		static void DoRelease(TypeName* obj){
-			obj->Release();
-		}
-	};
-
 
     //! Reference counted object which will be deleted when all references are gone
     //! \note Pointers can be used with ReferenceCounted::pointer ptr = new Object();
@@ -64,7 +51,7 @@ namespace Leviathan{
         //! \todo Make sure that the right memory order is used
         DLLEXPORT int32_t GetRefCount() const{
             
-            return RefCount.load(boost::memory_order_acquire);
+            return RefCount.load(std::memory_order_acquire);
         }
 
 
@@ -72,21 +59,21 @@ namespace Leviathan{
         
         DLLEXPORT friend void intrusive_ptr_add_ref(const ReferenceCounted * obj){
             
-            obj->RefCount.fetch_add(1, boost::memory_order_relaxed);
+            obj->RefCount.fetch_add(1, std::memory_order_relaxed);
         }
         
         DLLEXPORT friend void intrusive_ptr_release(const ReferenceCounted * obj){
             
-            if(obj->RefCount.fetch_sub(1, boost::memory_order_release) == 1){
-                boost::atomic_thread_fence(boost::memory_order_acquire);
+            if(obj->RefCount.fetch_sub(1, std::memory_order_release) == 1){
+                std::atomic_thread_fence(std::memory_order_acquire);
                 delete obj;
             }
         }
         
     private:
 
-        mutable boost::atomic<int32_t> RefCount;
+        mutable std::atomic_int_fast32_t RefCount;
 	};
 
 }
-#endif
+

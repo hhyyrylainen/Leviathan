@@ -2,7 +2,7 @@
 #ifndef LEVIATHAN_NETWORKINTERFACE
 #include "NetworkInterface.h"
 #endif
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
 #include "ConnectionInfo.h"
@@ -10,7 +10,9 @@
 #include "Application/AppDefine.h"
 #include "SyncedVariables.h"
 #include "NetworkedInputHandler.h"
+#include "../Utility/Convert.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkInterface::NetworkInterface() : OurNetworkType(NETWORKED_TYPE_BASE_ERROR){
 
@@ -21,19 +23,18 @@ DLLEXPORT Leviathan::NetworkInterface::~NetworkInterface(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkInterface::HandleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo*
-    connection) THROWS
+    connection) 
 {
 	// We can only try the default handle function //
 	if(!_HandleDefaultRequest(request, connection)){
 		// We couldn't handle it //
 
-		throw ExceptionInvalidArgument(L"could not handle request with default handler", 0, __WFUNCTION__, L"request",
-            L"unknown type");
+		throw InvalidArgument("could not handle request with default handler");
 	}
 }
 
 DLLEXPORT bool Leviathan::NetworkInterface::PreHandleResponse(shared_ptr<NetworkResponse> response,
-    shared_ptr<NetworkRequest> originalrequest, ConnectionInfo* connection)
+    std::shared_ptr<NetworkRequest> originalrequest, ConnectionInfo* connection)
 {
 	return true;
 }
@@ -52,16 +53,16 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 		{
 			// Let's send our identification string //
 			shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(),
-                    PACKAGE_TIMEOUT_STYLE_TIMEDMS, 500));
+                    PACKET_TIMEOUT_STYLE_TIMEDMS, 500));
 
 			// Fetch the data from the configuration object //
-			wstring userreadable, gamename, gameversion;
+			string userreadable, gamename, gameversion;
 
 			AppDef::GetDefault()->GetGameIdentificationData(userreadable, gamename, gameversion);
 
 			// Set the right data //
 			tmpresponse->GenerateIdentificationStringResponse(new NetworkResponseDataForIdentificationString(
-                    userreadable, gamename, gameversion, LEVIATHAN_VERSIONS));
+                    userreadable, gamename, gameversion, LEVIATHAN_VERSION_ANSIS));
 			connectiontosendresult->SendPacketToConnection(tmpresponse, 3);
 
 			return true;
@@ -69,8 +70,8 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
         case NETWORKREQUESTTYPE_ECHO:
         {
             // Send an empty response back //
-            shared_ptr<NetworkResponse> response(new NetworkResponse(request->GetExpectedResponseID(),
-                    PACKAGE_TIMEOUT_STYLE_TIMEDMS, 1000));
+            std::shared_ptr<NetworkResponse> response(new NetworkResponse(request->GetExpectedResponseID(),
+                    PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
 
             response->GenerateEmptyResponse();
             
@@ -129,8 +130,8 @@ bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkR
         case NETWORKRESPONSETYPE_CLOSECONNECTION:
 		{
 			// This connection should be closed //
-			Logger::Get()->Info(L"NetworkInterface: dropping connection due to receiving a connection close packet ("+
-				connection->GenerateFormatedAddressString()+L")");
+			Logger::Get()->Info("NetworkInterface: dropping connection due to receiving a connection close packet ("+
+				connection->GenerateFormatedAddressString()+")");
 
 			NetworkHandler::Get()->SafelyCloseConnectionTo(connection);
 			return true;

@@ -27,7 +27,7 @@ DLLEXPORT bool Leviathan::ConstraintSerializerManager::Init(){
 
 DLLEXPORT void Leviathan::ConstraintSerializerManager::Release(){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     auto end = Serializers.end();
     for(auto iter = Serializers.begin(); iter != end; ++iter){
@@ -37,12 +37,12 @@ DLLEXPORT void Leviathan::ConstraintSerializerManager::Release(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ConstraintSerializerManager::AddSerializer(BaseConstraintSerializer* serializer){
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     Serializers.push_back(serializer);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ConstraintSerializerManager::CreateConstraint(BaseObject* object1,
-    BaseObject* object2, Entity::ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet, bool create)
+DLLEXPORT bool Leviathan::ConstraintSerializerManager::CreateConstraint(Constraintable &object1,
+    Constraintable &object2, ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet, bool create)
 {
 
     auto end = Serializers.end();
@@ -59,15 +59,15 @@ DLLEXPORT bool Leviathan::ConstraintSerializerManager::CreateConstraint(BaseObje
     return false;
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<sf::Packet> Leviathan::ConstraintSerializerManager::SerializeConstraintData(
-    Entity::BaseConstraint* constraint)
+DLLEXPORT std::shared_ptr<sf::Packet> Leviathan::ConstraintSerializerManager::SerializeConstraintData(
+    BaseConstraint* constraint)
 {
     if(!constraint)
         return nullptr;
     
     auto type = constraint->GetType();
     
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     // Find a serializer for it and return whatever it returns //
     auto end = Serializers.end();

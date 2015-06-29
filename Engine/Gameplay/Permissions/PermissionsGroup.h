@@ -1,17 +1,12 @@
 #pragma once
-#ifndef LEVIATHAN_PERMISSIONSGROUP
-#define LEVIATHAN_PERMISSIONSGROUP
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 
 
 namespace Leviathan{
 
-	class PermissionsGroup : public Object{
+	class PermissionsGroup{
 	public:
 		DLLEXPORT PermissionsGroup();
 		DLLEXPORT ~PermissionsGroup();
@@ -22,4 +17,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

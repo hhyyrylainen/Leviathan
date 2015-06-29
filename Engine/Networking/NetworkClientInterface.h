@@ -1,12 +1,10 @@
-#ifndef LEVIATHAN_NETWORKCLIENTINTERFACE
-#define LEVIATHAN_NETWORKCLIENTINTERFACE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/BaseNotifiable.h"
+#include "../TimeIncludes.h"
+#include <memory>
 
 #define DEFAULT_MAXCONNECT_TRIES		5
 
@@ -36,17 +34,17 @@ namespace Leviathan{
         //! (DisconnectFromServer should be called)
 		//! \param connectiontouse The connection object should be retrieved by calling
         //! NetworkHandler::GetOrCreatePointerToConnection
-		DLLEXPORT bool JoinServer(shared_ptr<ConnectionInfo> connectiontouse);
+		DLLEXPORT bool JoinServer(std::shared_ptr<ConnectionInfo> connectiontouse);
 
 		//! \brief Disconnects the client from the server or does nothing
 		//! \todo Add a check to not close the connection if it is used by RemoteConsole
-		DLLEXPORT FORCE_INLINE void DisconnectFromServer(const wstring &reason, bool connectiontimedout = false){
-			GUARD_LOCK_THIS_OBJECT();
+		DLLEXPORT FORCE_INLINE void DisconnectFromServer(const std::string &reason, bool connectiontimedout = false){
+			GUARD_LOCK();
 			DisconnectFromServer(guard, reason, connectiontimedout);
 		}
 
 		//! \brief Actual implementation of DisconnectFromServer
-		DLLEXPORT void DisconnectFromServer(ObjectLock &guard, const wstring &reason, bool connectiontimedout = false);
+		DLLEXPORT void DisconnectFromServer(Lock &guard, const std::string &reason, bool connectiontimedout = false);
 
 
 		//! \brief Called directly by SyncedVariables to update the status string
@@ -63,11 +61,7 @@ namespace Leviathan{
         //! save space when sending long chat messages
 		//! The maximum length is MAX_SERVERCOMMAND_LENGTH should be around 550 characters.
 		//! \exception ExceptionInvalidArgument when the message string is too long
-		DLLEXPORT void SendCommandStringToServer(const string &messagestr);
-
-
-		//! \brief Returns a pointer to an instance if this application is a client
-		DLLEXPORT static NetworkClientInterface* GetIfExists();
+		DLLEXPORT void SendCommandStringToServer(const std::string &messagestr);
 
 
 		//! \brief Closes all client related things
@@ -86,27 +80,35 @@ namespace Leviathan{
 		//! \brief Enables the use of a NetworkedInputHandler
 		//! \param handler The object that implements the networked input interface
 		//! \warning The deletion of the old handler isn't thread safe so be careful when switching handlers
-		DLLEXPORT virtual bool RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler);
+		DLLEXPORT virtual bool RegisterNetworkedInput(
+            std::shared_ptr<NetworkedInputHandler> handler);
 
 		//! \brief Returns the active networked input handler or NULL
 		DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
 
 		//! \brief Returns the active server connection or NULL
-		DLLEXPORT virtual shared_ptr<ConnectionInfo> GetServerConnection();
+		DLLEXPORT virtual std::shared_ptr<ConnectionInfo> GetServerConnection();
 
+        //! \brief Marks a keep alive to be sent on next tick
+        DLLEXPORT void MarkForNotifyReceivedStates();
+
+        //! \brief Returns the static instance or NULL
+        //! \note This will always be NULL on non-client applications
+        DLLEXPORT static NetworkClientInterface* Get();
 
 	protected:
 
 		//! \brief Utility function for subclasses to call for default handling of server packets
 		//!
 		//! Handles default packets that are meant to be processed by a client
-		DLLEXPORT bool _HandleClientRequest(shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult);
+		DLLEXPORT bool _HandleClientRequest(std::shared_ptr<NetworkRequest> request,
+            ConnectionInfo* connectiontosendresult);
 
 		//! \brief Utility function for subclasses to call for default handling of non-request responses
 		//!
 		//! Handles default types of response packages and returns true if processed.
-		DLLEXPORT bool _HandleClientResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo* connection,
-            bool &dontmarkasreceived);
+		DLLEXPORT bool _HandleClientResponseOnly(std::shared_ptr<NetworkResponse> message,
+            ConnectionInfo* connection, bool &dontmarkasreceived);
 
 		//! \brief Updates status of the client to server connections
 		//!  
@@ -114,41 +116,46 @@ namespace Leviathan{
 		DLLEXPORT void UpdateClientStatus();
 
 		// Callbacks for child classes to implement //
-		DLLEXPORT virtual void _OnDisconnectFromServer(const wstring &reasonstring, bool donebyus);
+		DLLEXPORT virtual void _OnDisconnectFromServer(const std::string &reasonstring,
+            bool donebyus);
 		DLLEXPORT virtual void _OnStartConnectToServer();
-		DLLEXPORT virtual void _OnFailedToConnectToServer(const wstring &reason);
+		DLLEXPORT virtual void _OnFailedToConnectToServer(const std::string &reason);
 		DLLEXPORT virtual void _OnSuccessfullyConnectedToServer();
 		//! \brief Called when this class generates a new update message
-		DLLEXPORT virtual void _OnNewConnectionStatusMessage(const wstring &message);
+		DLLEXPORT virtual void _OnNewConnectionStatusMessage(const std::string &message);
 
 
 		//! \brief Callback used to know when our connection is closed
-		DLLEXPORT virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
+		DLLEXPORT void _OnNotifierDisconnected(Lock &guard,
+            BaseNotifierAll* parenttoremove, Lock &parentlock) override;
 
 		//! \brief Called when the server has confirmed the join and we are a player on the server
 		//!
-		//! By default this will synchronize game variables and call the _OnLobbyJoin function (which can then handle match joining)
+		//! By default this will synchronize game variables and call the _OnLobbyJoin function
+        //! (which can then handle match joining)
 		//! \todo Do what this should do
 		DLLEXPORT virtual void _OnProperlyConnected();
 
 
-		//! \brief Called when the player is on the server and everything that the Engine is concerned about is done
-		//! \note Here the application's connect data should be sent. The application specific connection routine should be done here
+		//! \brief Called when the player is on the server and everything that the Engine
+        //! is concerned about is done
+		//! \note Here the application's connect data should be sent. The application
+        //! specific connection routine should be done here
 		DLLEXPORT virtual void _OnStartApplicationConnect() = 0;
 
 	private:
 		
-		void _SendConnectRequest(ObjectLock &guard);
+		void _SendConnectRequest(Lock &guard);
 
 		//! \brief Handles succeeded requests, removes clutter from other places
-		void _ProcessCompletedRequest(shared_ptr<SentNetworkThing> tmpsendthing, ObjectLock &guard);
+		void _ProcessCompletedRequest(std::shared_ptr<SentNetworkThing> tmpsendthing, Lock &guard);
 
 		//! \brief Handles failed requests, removes clutter from other places
-		void _ProcessFailedRequest(shared_ptr<SentNetworkThing> tmpsendthing, ObjectLock &guard);
+		void _ProcessFailedRequest(std::shared_ptr<SentNetworkThing> tmpsendthing, Lock &guard);
 
 		//! \brief Internally called when server has accepted us
 		//! \todo Call variable syncing from here
-		void _ProperlyConnectedToServer(ObjectLock &guard);
+		void _ProperlyConnectedToServer(Lock &guard);
 
 		//! \brief Called when we receive a start heartbeat packet
 		void _OnStartHeartbeats();
@@ -159,14 +166,14 @@ namespace Leviathan{
 
 
 		//! \brief Updates the heartbeat states
-		void _UpdateHeartbeats();
+		void _UpdateHeartbeats(Lock &guard);
 
 	protected:
 
 		//! This vector holds the made requests to allow using the response to do stuff
-		std::vector<shared_ptr<SentNetworkThing>> OurSentRequests;
+		std::vector<std::shared_ptr<SentNetworkThing>> OurSentRequests;
 
-		shared_ptr<ConnectionInfo> ServerConnection;
+        std::shared_ptr<ConnectionInfo> ServerConnection;
 
 		bool ConnectedToServer;
 
@@ -174,7 +181,7 @@ namespace Leviathan{
 		int MaxConnectTries;
 
 		//! This isn't always used, but when it is this will handle some packets
-		shared_ptr<NetworkedInputHandler> PotentialInputHandler;
+        std::shared_ptr<NetworkedInputHandler> PotentialInputHandler;
 
 
 		//! Marks whether heartbeats are in use
@@ -185,6 +192,9 @@ namespace Leviathan{
 
 		//! The last time a heartbeat was sent
 		WantedClockType::time_point LastSentHeartbeat;
+
+        //! True when a keep alive should be sent on next tick
+        bool KeepAliveQueued;
 
 
 		//! Holds the time for how long we have been without a heartbeat
@@ -201,4 +211,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

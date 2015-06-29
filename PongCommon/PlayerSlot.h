@@ -1,20 +1,19 @@
-#ifndef PONG_PLAYERSLOT
-#define PONG_PLAYERSLOT
+#pragma once
 // ------------------------------------ //
-#ifndef PONGINCLUDES
 #include "PongIncludes.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "Entities/Objects/TrackEntityController.h"
+#include "Entities/Components.h"
 #include "Networking/SyncedResource.h"
 #include "Common/ThreadSafe.h"
+#include <functional>
 
 
 #define INPUTFORCE_APPLYSCALE		20.f
 #define INPUT_TRACK_ADVANCESPEED	2.0f
 
 namespace Pong{
+
+    using namespace Leviathan;
 
 	enum PLAYERTYPE {
         PLAYERTYPE_HUMAN = 0, PLAYERTYPE_COMPUTER, PLAYERTYPE_EMPTY, PLAYERTYPE_CLOSED
@@ -54,7 +53,7 @@ namespace Pong{
 		void AddDataToPacket(sf::Packet &packet);
 
 		//! Updates this object's data from a packet
-		void UpdateDataFromPacket(sf::Packet &packet);
+		void UpdateDataFromPacket(sf::Packet &packet, Lock &listlock);
 
 		void SetPlayer(PLAYERTYPE type, int identifier);
 		PLAYERTYPE GetPlayerType();
@@ -84,39 +83,30 @@ namespace Pong{
 		// resets all input state //
 		void InputDisabled();
 
-		ObjectPtr GetPaddle(){
+		ObjectID GetPaddle(){
 			return PaddleObject;
 		}
 		// Warning increases reference count //
-		Leviathan::BaseObject* GetPaddleProxy(){
-			PaddleObject->AddRef();
-			return PaddleObject.get();
+		ObjectID GetTrackController(){
+	
+			return TrackObject;
 		}
-		// Warning increases reference count //
-		Leviathan::Entity::TrackEntityController* GetTrackController(){
-			TrackDirectptr->AddRef();
-			return TrackDirectptr;
-		}
-		void SetPaddleObject(ObjectPtr obj){
+        
+		void SetPaddleObject(ObjectID obj){
 			PaddleObject = obj;
 		}
-		ObjectPtr GetGoalArea(){
+        
+		ObjectID GetGoalArea(){
 			return GoalAreaObject;
 		}
-		// Warning increases reference count //
-		Leviathan::BaseObject* GetGoalAreaProxy(){
-			GoalAreaObject->AddRef();
-			return GoalAreaObject.get();
-		}
-		void SetGoalAreaObject(ObjectPtr obj){
+
+		void SetGoalAreaObject(ObjectID obj){
 			GoalAreaObject = obj;
 		}
-		void SetTrackObject(ObjectPtr obj, Leviathan::Entity::TrackEntityController* direct){
+        
+		void SetTrackObject(ObjectID obj){
 
-            if(obj && direct)
-                Logger::Get()->Info("PlayerSlot now has a track object");
 			TrackObject = obj;
-			TrackDirectptr = direct;
 		}
 
 		inline Float4 GetColour(){
@@ -135,7 +125,6 @@ namespace Pong{
 
 			return NetworkedInputID;
 		}
-
 
 		//! Returns true if player type isn't empty or closed
 		inline bool IsSlotActive(){
@@ -179,7 +168,12 @@ namespace Pong{
 		//! This is used to notify it that we are no longer available
 		//! \param input The input object or NULL if the value needs to be reset
 		//! \param oldcheck If not NULL will only clear if the current one matches, useful to stop accidentally clearing new inputs
-		void SetInputThatSendsControls(PongNInputter* input);
+		void SetInputThatSendsControls(Lock &guard, PongNInputter* input);
+
+        //! \brief Called when input object is destroyed externally
+        //!
+        //! Called when NetworkedInputHandler is released while there are inputs attached
+        void InputDeleted(Lock &guard);
 
         PongNInputter* GetInputObj() const{
 
@@ -192,7 +186,13 @@ namespace Pong{
 		void _NotifyListOfUpdate();
 
 		//! \brief Resets the active network input
-		void _ResetNetworkInput();
+		void _ResetNetworkInput(Lock &guard);
+
+        inline void _ResetNetworkInput(){
+
+            GUARD_LOCK();
+            _ResetNetworkInput(guard);
+        }
 
 		// ------------------------------------ //
 
@@ -217,11 +217,10 @@ namespace Pong{
 
 		int MoveState;
 
-		ObjectPtr PaddleObject;
-		ObjectPtr GoalAreaObject;
+		ObjectID PaddleObject;
+		ObjectID GoalAreaObject;
 
-		ObjectPtr TrackObject;
-		Leviathan::Entity::TrackEntityController* TrackDirectptr;
+		ObjectID TrackObject;
 
 		//! Slot splitting
 		PlayerSlot* SplitSlot;
@@ -256,11 +255,11 @@ namespace Pong{
 	class PlayerList : public Leviathan::SyncedResource{
 	public:
 
-		PlayerList(boost::function<void (PlayerList*)> callback, size_t playercount = 4);
+		PlayerList(std::function<void (PlayerList*)> callback, size_t playercount = 4);
 		~PlayerList();
 
 
-		PlayerSlot* operator [](size_t index) THROWS{
+		PlayerSlot* operator [](size_t index){
 			return GamePlayers[index];
 		}
 
@@ -281,28 +280,27 @@ namespace Pong{
         //! \brief Writes player information to log
         void ReportPlayerInfoToLog() const;
 
-		virtual void UpdateCustomDataFromPacket(sf::Packet &packet) THROWS;
+        void UpdateCustomDataFromPacket(Lock &guard, sf::Packet &packet) override;
 
-		virtual void SerializeCustomDataToPacket(sf::Packet &packet);
+		void SerializeCustomDataToPacket(Lock &guard, sf::Packet &packet) override;
 
-		virtual void OnValueUpdated();
+		void OnValueUpdated(Lock &guard) override;
 
 		//! \exception Leviathan::ExceptionInvalidArgument when out of range
-		PlayerSlot* GetSlot(size_t index) THROWS;
+		PlayerSlot* GetSlot(size_t index);
 
 
 	protected:
-
 
 
 		//! The main list of our players
 		std::vector<PlayerSlot*> GamePlayers;
 
 		//! The function called when this is updated either through the network or locally
-		boost::function<void (PlayerList*)> CallbackFunc;
+		std::function<void (PlayerList*)> CallbackFunc;
 	};
 
 
 
 }
-#endif
+

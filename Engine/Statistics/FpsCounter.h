@@ -1,16 +1,9 @@
-#ifndef LEVIATHAN_FPSCOUNTER
-#define LEVIATHAN_FPSCOUNTER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
-
 
 namespace Leviathan{
 
-	class FpsCounter : public EngineComponent{
+	class FpsCounter{
 	public:
 		FpsCounter();
 		
@@ -27,9 +20,7 @@ namespace Leviathan{
 		int MaxFps, MinFps;
 		int Fps, Framecount;
 		int SinceLast;
-
-		//unsigned long Starttime;
 	};
 
 }
-#endif
+

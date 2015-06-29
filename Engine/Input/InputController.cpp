@@ -1,8 +1,7 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_INPUTCONTROLLER
 #include "InputController.h"
-#endif
+
+#include "../Exceptions.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::InputController::InputController(){
@@ -19,6 +18,8 @@ DLLEXPORT Leviathan::InputController::~InputController(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::InputController::StartInputGather(){
+
+    GUARD_LOCK();
 	// reset internal state //
 
 	// tell listeners that new frame begins //
@@ -32,6 +33,8 @@ DLLEXPORT void Leviathan::InputController::OnInputGet(OIS::KeyCode key, int spec
 	// call on first that gets it //
 	bool received = false;
 
+    GUARD_LOCK();
+    
 	for(size_t i = 0; i < ConnectedReceivers.size(); i++){
 
 		if(received){
@@ -45,7 +48,12 @@ DLLEXPORT void Leviathan::InputController::OnInputGet(OIS::KeyCode key, int spec
 	}
 }
 
-DLLEXPORT void Leviathan::InputController::OnBlockedInput(OIS::KeyCode key, int specialmodifiers, bool down){
+DLLEXPORT void Leviathan::InputController::OnBlockedInput(OIS::KeyCode key, int specialmodifiers,
+    bool down)
+{
+
+    GUARD_LOCK();
+    
 	// call on all //
 	for(size_t i = 0; i < ConnectedReceivers.size(); i++){
 
@@ -55,6 +63,9 @@ DLLEXPORT void Leviathan::InputController::OnBlockedInput(OIS::KeyCode key, int 
 
 
 DLLEXPORT void Leviathan::InputController::SendMouseMovement(int xmoved, int ymoved){
+
+    GUARD_LOCK();
+    
 	// call on first that gets it //
 	for(size_t i = 0; i < ConnectedReceivers.size(); i++){
 
@@ -63,13 +74,14 @@ DLLEXPORT void Leviathan::InputController::SendMouseMovement(int xmoved, int ymo
 	}
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::InputController::LinkReceiver(InputReceiver* object){
+DLLEXPORT void Leviathan::InputController::LinkReceiver(Lock &guard, InputReceiver* object){
 	// just add to list and call link function //
 	object->_OnConnected(this);
+
 	ConnectedReceivers.push_back(object);
 }
 // ------------------------------------ //
-void Leviathan::InputController::_OnChildUnlink(InputReceiver* child){
+void Leviathan::InputController::_OnChildUnlink(Lock &guard, InputReceiver* child){
 	for(size_t i = 0; i < ConnectedReceivers.size(); i++){
 		if(ConnectedReceivers[i] == child){
 			// call disconnect function first //
@@ -79,8 +91,6 @@ void Leviathan::InputController::_OnChildUnlink(InputReceiver* child){
 		}
 	}
 }
-// ------------------------------------ //
-
 
 
 // ------------------ InputReceiver ------------------ //
@@ -90,8 +100,16 @@ DLLEXPORT Leviathan::InputReceiver::InputReceiver() : ConnectedTo(NULL){
 
 Leviathan::InputReceiver::~InputReceiver(){
 	// tell owner that we no longer exist //
+    if(ConnectedTo)
+        throw Exception("InputReceiver not _UnConnectParent called");
+}
+// ------------------------------------ //
+DLLEXPORT void InputReceiver::_UnConnectParent(Lock &ownerlock){
+
 	if(ConnectedTo)
-		ConnectedTo->_OnChildUnlink(this);
+		ConnectedTo->_OnChildUnlink(ownerlock, this);
+
+    ConnectedTo = NULL;
 }
 // ------------------------------------ //
 void Leviathan::InputReceiver::_OnConnected(InputController* owner){

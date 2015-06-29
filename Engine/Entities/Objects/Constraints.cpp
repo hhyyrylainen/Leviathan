@@ -1,25 +1,33 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_CONSTRAINTS
 #include "Constraints.h"
-#endif
+
 #include "Newton/PhysicalWorld.h"
-#include "../Bases/BaseConstraintable.h"
 #include "../GameWorld.h"
-#include "Entities/Bases/BasePhysicsObject.h"
+#include "../../Handlers/IDFactory.h"
 using namespace Leviathan;
-using namespace Entity;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Entity::BaseConstraint::BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world,
-    BaseConstraintable* parent, BaseConstraintable* child) : 
-	ParentObject(parent), ChildObject(child), OwningWorld(world), Joint(NULL), Type(type)
+DLLEXPORT BaseConstraint::BaseConstraint(ENTITY_CONSTRAINT_TYPE type,
+    GameWorld* world, Constraintable &first, Constraintable &second) : 
+	FirstObject(first), SecondObject(second), ID(IDFactory::GetID()),
+    OwningWorld(world), Joint(NULL), Type(type)
+
 {
+    
 }
 
-DLLEXPORT Leviathan::Entity::BaseConstraint::~BaseConstraint(){
+DLLEXPORT BaseConstraint::BaseConstraint(ENTITY_CONSTRAINT_TYPE type, GameWorld* world,
+    Constraintable &first, Constraintable &second, int id) :
+    FirstObject(first), SecondObject(second), ID(id),
+    OwningWorld(world), Joint(NULL), Type(type)
+{
+
+}
+
+DLLEXPORT BaseConstraint::~BaseConstraint(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Entity::BaseConstraint::Init(){
+DLLEXPORT bool BaseConstraint::Init(){
 	// We use the virtual functions to make the child class handle this //
 	if(!_CheckParameters()){
 
@@ -36,78 +44,98 @@ DLLEXPORT bool Leviathan::Entity::BaseConstraint::Init(){
 	return true;
 }
 
-DLLEXPORT void Leviathan::Entity::BaseConstraint::Release(){
+DLLEXPORT void BaseConstraint::Release(){
 
-	// Both are called because neither of them invoked this function //
-	ConstraintPartUnlinkedDestroy(NULL);
+    Destroy(nullptr);
 }
 
-DLLEXPORT void Leviathan::Entity::BaseConstraint::ConstraintPartUnlinkedDestroy(BaseConstraintable* callinginstance){
+DLLEXPORT void BaseConstraint::Destroy(Constraintable* skipthis /*= nullptr*/){
+    {
+        GUARD_LOCK();
+
+        if(Type == ENTITY_CONSTRAINT_TYPE_DESTRUCTED)
+            return;
+
+        if(&FirstObject != skipthis)
+            FirstObject.RemoveConstraint(this);
+
+        if(&SecondObject != skipthis)
+            SecondObject.RemoveConstraint(this);
     
-    GUARD_LOCK_THIS_OBJECT();
-    
-	// Notify the object that isn't calling this function //
-	if(ParentObject && ParentObject != callinginstance){
+
+        Type = ENTITY_CONSTRAINT_TYPE_DESTRUCTED;
+
+        if(!OwningWorld)
+            return;
+
+        if(Joint && OwningWorld){
         
-		ParentObject->ConstraintDestroyedRemove(this);
-	}
+            NewtonDestroyJoint(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(), Joint);
+        }
 
-	if(ChildObject && ChildObject != callinginstance){
+        Joint = NULL;
+    }
 
-		ChildObject->ConstraintDestroyedRemove(this);
-	}
-    
-	ChildObject = NULL;
-	ParentObject = NULL;
+    // This call should get rid of the last reference
+    // We have been unlocked before calling delete
+    OwningWorld->ConstraintDestroyed(this);
 
-	if(Joint && OwningWorld){
-        
-		NewtonDestroyJoint(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(), Joint);
-	}
-
-    Joint = NULL;
+    // We should be deleted now
 }
 // ------------------------------------ //
-DLLEXPORT BaseConstraintable* Leviathan::Entity::BaseConstraint::GetFirstEntity() const{
-    return ParentObject;
-}
+DLLEXPORT int BaseConstraint::GetID() const{
 
-DLLEXPORT BaseConstraintable* Leviathan::Entity::BaseConstraint::GetSecondEntity() const{
-    return ChildObject;
+    return ID;
 }
 // ------------------------------------ //
-void Leviathan::Entity::BaseConstraint::_WorldDisowned(){
+DLLEXPORT bool BaseConstraint::_CheckParameters(){
 
-    GUARD_LOCK_THIS_OBJECT();
-
-    // Destroy the joint //
-    Release();
-
-    OwningWorld = NULL;
+    return false;
 }
 
+DLLEXPORT bool BaseConstraint::_CreateActualJoint(){
+
+    return false;
+}
+// ------------------------------------ //
+DLLEXPORT Constraintable& BaseConstraint::GetFirstEntity() const{
+    return FirstObject;
+}
+
+DLLEXPORT Constraintable& BaseConstraint::GetSecondEntity() const{
+    return SecondObject;
+}
 // ------------------ SliderConstraint ------------------ //
-DLLEXPORT Leviathan::Entity::SliderConstraint::SliderConstraint(GameWorld* world, BaseConstraintable* parent,
-    BaseConstraintable* child) : 
-	BaseConstraint(ENTITY_CONSTRAINT_TYPE_SLIDER, world, parent, child), Axis(0)
+DLLEXPORT SliderConstraint::SliderConstraint(GameWorld* world,
+    Constraintable &first, Constraintable &second) : 
+	BaseConstraint(ENTITY_CONSTRAINT_TYPE_SLIDER, world, first, second), Axis(0)
 {
 
 }
 
-DLLEXPORT Leviathan::Entity::SliderConstraint::~SliderConstraint(){
+DLLEXPORT SliderConstraint::SliderConstraint(GameWorld* world, Constraintable &first,
+    Constraintable &second, int id) :
+    BaseConstraint(ENTITY_CONSTRAINT_TYPE_SLIDER, world, first, second, id), Axis(0)
+{
+
+}
+
+DLLEXPORT SliderConstraint::~SliderConstraint(){
 
 }
 // ------------------------------------ //
-DLLEXPORT SliderConstraint* Leviathan::Entity::SliderConstraint::SetParameters(const Float3 &slidingaxis){
+DLLEXPORT SliderConstraint* SliderConstraint::SetParameters(
+    const Float3 &slidingaxis)
+{
 	Axis = slidingaxis;
 	return this;
 }
 // ------------------------------------ //
-DLLEXPORT Float3 Leviathan::Entity::SliderConstraint::GetAxis() const{
+DLLEXPORT Float3 SliderConstraint::GetAxis() const{
     return Axis;
 }
 // ------------------------------------ //
-bool Leviathan::Entity::SliderConstraint::_CheckParameters(){
+bool SliderConstraint::_CheckParameters(){
 	if(Axis.IsNormalized())
 		return true;
     
@@ -115,43 +143,26 @@ bool Leviathan::Entity::SliderConstraint::_CheckParameters(){
 	return false;
 }
 
-bool Leviathan::Entity::SliderConstraint::_CreateActualJoint(){
+bool SliderConstraint::_CreateActualJoint(){
 	// We'll just call the Newton create function and that should should be it //
 	Float3 pos(0.f, 0.f, 0.f);
 
     // TODO: check if we could add a GetPhysicsBody function to BaseConstraintable
-    auto first = dynamic_cast<BasePhysicsObject*>(ChildObject);
-    auto second = dynamic_cast<BasePhysicsObject*>(ParentObject);
+    try{
+        
+        auto& first = OwningWorld->GetComponent<Physics>(FirstObject.PartOfEntity);
+        auto& second = OwningWorld->GetComponent<Physics>(SecondObject.PartOfEntity);
 
-    if(!first || !second){
+        
+        Joint = NewtonConstraintCreateSlider(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(),
+            &pos.X, &Axis.X, first.Body, second.Body);
 
-        Logger::Get()->Error("SliderConstraint: passed in an entity that doesn't have physics");
+        return Joint != NULL;
+    
+    } catch(const NotFound&){
+
+        Logger::Get()->Error("SliderCOnstraint: trying to create between non-Physics objects");
         return false;
     }
-    
-	Joint = NewtonConstraintCreateSlider(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(), &pos.X, &Axis.X, 
-		first->GetPhysicsBody(), second->GetPhysicsBody());
-
-	return Joint != NULL;
-}
-// ------------------ ControllerConstraint ------------------ //
-DLLEXPORT Leviathan::Entity::ControllerConstraint::ControllerConstraint(GameWorld* world,
-    BaseConstraintable* controller, BaseConstraintable* child) :
-    BaseConstraint(ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT, world, controller, child)
-{
-
 }
 
-DLLEXPORT Leviathan::Entity::ControllerConstraint::~ControllerConstraint(){
-
-
-}
-// ------------------------------------ //
-bool Leviathan::Entity::ControllerConstraint::_CheckParameters(){
-
-    return ChildObject != NULL;
-}
-
-bool Leviathan::Entity::ControllerConstraint::_CreateActualJoint(){
-    return true;
-}

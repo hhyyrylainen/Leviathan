@@ -1,13 +1,7 @@
-#ifndef LEVIATHAN_GRAPHICS
-#define LEVIATHAN_GRAPHICS
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "Entities/Bases/BaseRenderable.h"
-
 #include "GraphicalInputEntity.h"
 #include "Application/AppDefine.h"
 #include "OgreFrameListener.h"
@@ -15,11 +9,12 @@
 namespace Leviathan{
 	// forward declarations to avoid having tons of headers here that aren't necessary //
 	namespace Rendering{
-	class ShaderManager;
-	class FontManager;
+        
+        class ShaderManager;
+        class FontManager;
 	}
 
-	class Graphics : public EngineComponent, Ogre::FrameListener{
+	class Graphics : Ogre::FrameListener{
 	public:
 		DLLEXPORT Graphics();
 		DLLEXPORT ~Graphics();
@@ -27,9 +22,7 @@ namespace Leviathan{
 		DLLEXPORT bool Init(AppDef* appdef);
 		DLLEXPORT void Release();
 
-
 		DLLEXPORT bool Frame();
-
 
 		virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt);
 
@@ -53,7 +46,7 @@ namespace Leviathan{
 		AppDef* AppDefinition;
 
 		// OGRE //
-		unique_ptr<Ogre::Root> ORoot;
+        std::unique_ptr<Ogre::Root> ORoot;
 		Ogre::Log* OLog;
 		Rendering::FontManager* Fonts;
 
@@ -61,4 +54,4 @@ namespace Leviathan{
 		static Graphics* Staticaccess;
 	};
 }
-#endif
+

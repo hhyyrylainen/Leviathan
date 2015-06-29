@@ -1,11 +1,10 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_OBJECTFILEOBJECT
 #include "ObjectFileObject.h"
-#endif
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::ObjectFileObjectProper::ObjectFileObjectProper(const wstring &name, const wstring &typesname, vector<wstring*> prefix) : 
+DLLEXPORT Leviathan::ObjectFileObjectProper::ObjectFileObjectProper(const std::string &name,
+    const std::string &typesname, vector<std::string*> prefix) : 
 	Name(name), TName(typesname), Prefixes(prefix)
 {
 	
@@ -21,15 +20,15 @@ DLLEXPORT Leviathan::ObjectFileObjectProper::~ObjectFileObjectProper(){
 	SAFE_DELETE_VECTOR(TextBlocks);
 }
 // ------------------------------------ //
-DLLEXPORT const wstring& Leviathan::ObjectFileObjectProper::GetName() const{
+DLLEXPORT const std::string& Leviathan::ObjectFileObjectProper::GetName() const{
 	return Name;
 }
 
-DLLEXPORT const wstring& Leviathan::ObjectFileObjectProper::GetTypeName() const{
+DLLEXPORT const std::string& Leviathan::ObjectFileObjectProper::GetTypeName() const{
 	return TName;
 }
 
-DLLEXPORT shared_ptr<ScriptScript> Leviathan::ObjectFileObjectProper::GetScript() const{
+DLLEXPORT std::shared_ptr<ScriptScript> Leviathan::ObjectFileObjectProper::GetScript() const{
 	return Script;
 }
 
@@ -37,11 +36,11 @@ DLLEXPORT size_t Leviathan::ObjectFileObjectProper::GetPrefixesCount() const{
 	return Prefixes.size();
 }
 
-DLLEXPORT const wstring& Leviathan::ObjectFileObjectProper::GetPrefix(size_t index) const THROWS{
+DLLEXPORT const std::string& Leviathan::ObjectFileObjectProper::GetPrefix(size_t index) const{
 	// Check the index //
 	if(index >= Prefixes.size()){
 
-		throw ExceptionInvalidArgument(L"index is out of range", index, __WFUNCTION__, L"index", Convert::ToWstring(index));
+		throw InvalidArgument("index is out of range");
 	}
 
 	return *Prefixes[index];
@@ -79,13 +78,14 @@ DLLEXPORT void Leviathan::ObjectFileObjectProper::AddScriptScript(shared_ptr<Scr
 	// Warn if we already have a script //
 	if(Script){
 
-		Logger::Get()->Warning(L"ObjectFileObject: already has a script, overwrote old one, name: "+Name);
+		Logger::Get()->Warning("ObjectFileObject: already has a script, overwrote old one, name: "
+            +Name);
 	}
 
 	Script = script;
 }
 // ------------------------------------ //
-DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetListWithName(const wstring &name) const{
+DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetListWithName(const std::string &name) const{
 	// Loop and compare names //
 	for(size_t i = 0; i < Contents.size(); i++){
 
@@ -97,7 +97,7 @@ DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetListWithName(con
 	return NULL;
 }
 
-DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlockWithName(const wstring &name) const{
+DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlockWithName(const std::string &name) const{
 	// Loop and compare names //
 	for(size_t i = 0; i < TextBlocks.size(); i++){
 
@@ -113,11 +113,11 @@ DLLEXPORT size_t Leviathan::ObjectFileObjectProper::GetListCount() const{
 	return Contents.size();
 }
 
-DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetList(size_t index) const THROWS{
+DLLEXPORT ObjectFileList* Leviathan::ObjectFileObjectProper::GetList(size_t index) const{
 	// Check the index //
 	if(index >= Contents.size()){
 
-		throw ExceptionInvalidArgument(L"index is out of range", index, __WFUNCTION__, L"index", Convert::ToWstring(index));
+		throw InvalidArgument("index is out of range");
 	}
 
 	return Contents[index];
@@ -127,11 +127,11 @@ DLLEXPORT size_t Leviathan::ObjectFileObjectProper::GetTextBlockCount() const{
 	return TextBlocks.size();
 }
 
-DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlock(size_t index) const THROWS{
+DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlock(size_t index) const{
 	// Check the index //
 	if(index >= TextBlocks.size()){
 
-		throw ExceptionInvalidArgument(L"index is out of range", index, __WFUNCTION__, L"index", Convert::ToWstring(index));
+		throw InvalidArgument("index is out of range");
 	}
 
 	return TextBlocks[index];

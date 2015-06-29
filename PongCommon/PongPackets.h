@@ -1,11 +1,8 @@
-#ifndef PONG_PACKETS
-#define PONG_PACKETS
+#pragma once
 // ------------------------------------ //
-#ifndef PONGINCLUDES
 #include "PongIncludes.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
+#include <memory>
 #include "Networking/GameSpecificPacketHandler.h"
 
 
@@ -17,6 +14,8 @@
 
 
 namespace Pong{
+
+    using namespace std;
 
 	//! \brief Class that holds custom packet's data
 	class PongJoinGameRequest : public Leviathan::BaseGameSpecificRequestPacket{
@@ -37,7 +36,9 @@ namespace Pong{
 	//! \brief Class that holds custom packet's data
 	class PongJoinGameResponse : public Leviathan::BaseGameSpecificResponsePacket{
 	public:
-		PongJoinGameResponse(PONG_JOINGAMERESPONSE_TYPE type) : Leviathan::BaseGameSpecificResponsePacket(PONG_PACKET_JOINGAME_RESPONSE), RType(type){
+		PongJoinGameResponse(PONG_JOINGAMERESPONSE_TYPE type) :
+            Leviathan::BaseGameSpecificResponsePacket(PONG_PACKET_JOINGAME_RESPONSE), RType(type)
+        {
 
 		}
 
@@ -57,16 +58,21 @@ namespace Pong{
 			return true;
 		}
 
-		virtual shared_ptr<GameSpecificPacketData> UnSerializeObjectFromPacket(sf::Packet &packet){
+		virtual std::shared_ptr<GameSpecificPacketData> UnSerializeObjectFromPacket(
+            sf::Packet &packet)
+        {
 
-			return shared_ptr<GameSpecificPacketData>(new GameSpecificPacketData(new PongJoinGameRequest()));
+			return std::shared_ptr<GameSpecificPacketData>(new GameSpecificPacketData(
+                    new PongJoinGameRequest()));
 		}
 	};
 	
 	//! \brief Allows sending and receiving of custom packet, PongJoingGame
 	class PongJoingGameResponseFactory : public Leviathan::BaseGameSpecificPacketFactory{
 	public:
-		PongJoingGameResponseFactory() : Leviathan::BaseGameSpecificPacketFactory(PONG_PACKET_JOINGAME_RESPONSE, false){
+		PongJoingGameResponseFactory() :
+            Leviathan::BaseGameSpecificPacketFactory(PONG_PACKET_JOINGAME_RESPONSE, false)
+        {
 
 		}
 
@@ -157,4 +163,3 @@ namespace Pong{
 }
 
 
-#endif

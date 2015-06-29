@@ -1,23 +1,25 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_NETWORKEDINPUT
 #include "NetworkedInput.h"
-#endif
-#include "Exceptions/ExceptionInvalidArgument.h"
+
+#include "Exceptions.h"
 #include "NetworkedInputHandler.h"
 #include "NetworkRequest.h"
 #include "Threading/ThreadingManager.h"
 #include "ConnectionInfo.h"
 #include "NetworkClientInterface.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(int ownerid, int networkid) :
-    OwnerID(ownerid), InputID(networkid), OwningHandler(NULL), CurrentState(NETWOKREDINPUT_STATE_READY)
+    OwnerID(ownerid), InputID(networkid), OwningHandler(NULL),
+    CurrentState(NETWOKREDINPUT_STATE_READY), IsLocal(true)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(sf::Packet &packet){
+DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(sf::Packet &packet) :
+    IsLocal(true)
+{
 	LoadDataFromFullPacket(packet);
 }
 
@@ -40,11 +42,11 @@ DLLEXPORT void Leviathan::NetworkedInput::LoadDataFromFullPacket(sf::Packet &pac
 	// First our common information //
 	if(!(packet >> OwnerID)){
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid packet format");
 	}
 	if(!(packet >> InputID)){
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid packet format");
 	}
 
 	// And then the custom data //
@@ -52,16 +54,17 @@ DLLEXPORT void Leviathan::NetworkedInput::LoadDataFromFullPacket(sf::Packet &pac
 }
 
 DLLEXPORT void Leviathan::NetworkedInput::LoadHeaderDataFromPacket(sf::Packet &packet, int &ownerid, int &inputid)
-    THROWS
+    
 {
 	// First our common information //
 	if(!(packet >> ownerid)){
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid packet format");
 	}
+    
 	if(!(packet >> inputid)){
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("invalid packet format");
 	}
 }
 // ------------------------------------ //
@@ -87,7 +90,7 @@ DLLEXPORT void Leviathan::NetworkedInput::OnUpdateInputStates(){
 		return;
 
 	// Send updates through the network //
-	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
+	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
 	response->GenerateUpdateNetworkedInputResponse(new NetworkResponseDataForUpdateNetworkedInput(*this));
 
 	// Send to the server for it to then distribute it around //
@@ -118,13 +121,13 @@ DLLEXPORT bool Leviathan::NetworkedInput::ConnectToServersideInput(){
 	shared_ptr<SentNetworkThing> netthing = connection->SendPacketToConnection(request, 12);
 
 	// Queue a task for checking the result later //
-	ThreadingManager::Get()->QueueTask(new ConditionalDelayedTask(boost::bind<void>(
+	ThreadingManager::Get()->QueueTask(new ConditionalDelayedTask(std::bind<void>(
 		[](shared_ptr<SentNetworkThing> requestthing, NetworkedInput* inputobj) -> void
 	{
-		if(!requestthing->GetFutureForThis().get() || !requestthing->GotResponse){
+		if(!requestthing->GetStatus() || !requestthing->GotResponse){
 
 			// Destroy it //
-			Logger::Get()->Warning(L"NetworkedInput: closed due to the server not responding to connect request");
+			Logger::Get()->Warning("NetworkedInput: closed due to the server not responding to connect request");
 			goto doactualdeletereleasethingforfaillabel;
 		}
 
@@ -132,7 +135,7 @@ DLLEXPORT bool Leviathan::NetworkedInput::ConnectToServersideInput(){
 		if(requestthing->GotResponse->GetType() != NETWORKRESPONSETYPE_SERVERALLOW){
 
 			// It failed because server denied it //
-			Logger::Get()->Warning(L"NetworkedInput: closed due to the server denying our connect request");
+			Logger::Get()->Warning("NetworkedInput: closed due to the server denying our connect request");
 			goto doactualdeletereleasethingforfaillabel;
 		}
 
@@ -149,10 +152,10 @@ doactualdeletereleasethingforfaillabel:
 				otherpotential->QueueDeleteInput(inputobj);
 		}
 
-	}, netthing, this), boost::bind<bool>(
+	}, netthing, this), std::bind<bool>(
 		[](shared_ptr<SentNetworkThing> requestthing, NetworkedInput* inputobj) -> bool{
 		// Check has it arrived //
-		if(requestthing->GetFutureForThis().has_value())
+		if(requestthing->IsFinalized())
 			return true;
 
 		// More waiting //
@@ -166,7 +169,31 @@ doactualdeletereleasethingforfaillabel:
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::TerminateConnection(){
-	DEBUG_BREAK;
+
+    if(IsLocal){
+    
+        // We don't need to bother if the server hasn't been contacted //
+        if(CurrentState == NETWOKREDINPUT_STATE_READY)
+            return;
+    
+        auto response = std::make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
+
+        response->GenerateDisconnectInputResponse(
+            new NetworkResponseDataForDisconnectInput(InputID, OwnerID));
+    
+        // Send the request //
+        auto connection = OwningHandler->ClientInterface->GetServerConnection();
+
+        if(!connection)
+            return;
+
+        connection->SendPacketToConnection(response, 12);
+
+    } else {
+
+        // Server disconnect client //
+        Logger::Get()->Info("TODO: notify client that we terminated input");
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::NowOwnedBy(NetworkedInputHandler* owner){
@@ -183,6 +210,11 @@ DLLEXPORT NETWORKEDINPUT_STATE Leviathan::NetworkedInput::GetState() const{
 
 DLLEXPORT int Leviathan::NetworkedInput::GetID() const{
 	return InputID;
+}
+// ------------------------------------ //
+DLLEXPORT void NetworkedInput::SetAsServerSize(){
+
+    IsLocal = false;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInput::SetNetworkReceivedState(){

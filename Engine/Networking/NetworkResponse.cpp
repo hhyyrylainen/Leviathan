@@ -2,11 +2,12 @@
 #ifndef LEVIATHAN_NETWORKRESPONSE
 #include "NetworkResponse.h"
 #endif
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "Common/DataStoring/NamedVars.h"
 #include "GameSpecificPacketHandler.h"
 #include "NetworkedInput.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(int inresponseto, PACKET_TIMEOUT_STYLE timeout, int timeoutvalue)
     : ResponseType(NETWORKRESPONSETYPE_NONE), ResponseID(inresponseto), TimeOutStyle(timeout),
@@ -17,17 +18,15 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(int inresponseto, PACKET_T
 
 DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedresponse) : TimeOutValue(-1){
 	// First thing is the response ID //
-	if(!(receivedresponse >> ResponseID)){
-
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"receivedresponse", L"");
-	}
+	receivedresponse >> ResponseID;
 
 	// Second is the type, based on which we handle the rest of the data //
 	int tmpval;
-	if(!(receivedresponse >> tmpval)){
+    receivedresponse >> tmpval;
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"receivedresponse", L"");
-	}
+    if(!receivedresponse)
+        throw InvalidArgument("packet has invalid format");
+    
 	ResponseType = static_cast<NETWORKRESPONSETYPE>(tmpval);
 
 	// Process based on the type //
@@ -130,10 +129,16 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
             ResponseData = new NetworkResponseDataForAICacheRemoved(receivedresponse);
         }
         break;
+        case NETWORKRESPONSETYPE_DISCONNECTINPUT:
+        {
+            ResponseData = new NetworkResponseDataForDisconnectInput(receivedresponse);
+        }
+        break;
         default:
 		{
-			throw ExceptionInvalidArgument(L"packet has invalid type", 0, __WFUNCTION__, L"receivedresponse",
-                Convert::ToWstring(ResponseType));
+            Logger::Get()->Warning("NetworkResponse: unused type: "+
+                Convert::ToString(ResponseType));
+            throw InvalidArgument("packet has invalid format invalid response type");
 		}
 		break;
 	}
@@ -297,6 +302,16 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateAICacheRemovedResponse(Networ
     newddata)
 {
     ResponseType = NETWORKRESPONSETYPE_AI_CACHE_REMOVED;
+    // Destroy old data if any //
+	SAFE_DELETE(ResponseData);
+
+	ResponseData = newddata;
+}
+
+DLLEXPORT void NetworkResponse::GenerateDisconnectInputResponse(
+    NetworkResponseDataForDisconnectInput* newddata)
+{
+    ResponseType = NETWORKRESPONSETYPE_DISCONNECTINPUT;
     // Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 
@@ -510,32 +525,28 @@ DLLEXPORT NetworkResponseDataForAICacheRemoved* Leviathan::NetworkResponse::GetR
         return static_cast<NetworkResponseDataForAICacheRemoved*>(ResponseData);
     return NULL;
 }
+
+DLLEXPORT NetworkResponseDataForDisconnectInput*
+NetworkResponse::GetResponseDataForDisconnectInput() const
+{
+    if(ResponseType == NETWORKRESPONSETYPE_DISCONNECTINPUT && ResponseData)
+        return static_cast<NetworkResponseDataForDisconnectInput*>(ResponseData);
+    return NULL;
+}
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForIdentificationString::NetworkResponseDataForIdentificationString(
     sf::Packet &frompacket)
 {
 	// Extract the data from the packet //
-	if(!(frompacket >> UserReadableData)){
+    frompacket >> UserReadableData >> GameName >> GameVersionString >> LeviathanVersionString;
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-	if(!(frompacket >> GameName)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-	if(!(frompacket >> GameVersionString)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-	if(!(frompacket >> LeviathanVersionString)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
+    if(!frompacket)
+        throw InvalidArgument("invalid packet format");
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForIdentificationString::NetworkResponseDataForIdentificationString(
-    const wstring &userreadableidentification, const wstring &gamename, const wstring &gameversion,
-    const wstring &leviathanversion) :
+    const std::string &userreadableidentification, const std::string &gamename, const std::string &gameversion,
+    const std::string &leviathanversion) :
     UserReadableData(userreadableidentification), GameName(gamename), GameVersionString(gameversion),
     LeviathanVersionString(leviathanversion)
 {
@@ -547,7 +558,7 @@ DLLEXPORT void Leviathan::NetworkResponseDataForIdentificationString::AddDataToP
 }
 // ------------------ NetworkResponseDataForInvalidRequest ------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForInvalidRequest::NetworkResponseDataForInvalidRequest(
-    NETWORKRESPONSE_INVALIDREASON reason, const wstring &additional /*= wstring()*/) :
+    NETWORKRESPONSE_INVALIDREASON reason, const std::string &additional /*= std::string()*/) :
     Invalidness(reason), AdditionalInfo(additional)
 {
 
@@ -556,25 +567,21 @@ DLLEXPORT Leviathan::NetworkResponseDataForInvalidRequest::NetworkResponseDataFo
 DLLEXPORT Leviathan::NetworkResponseDataForInvalidRequest::NetworkResponseDataForInvalidRequest(sf::Packet &frompacket){
 	// Extract the data from the packet //
 	int tmpextract;
-
-	if(!(frompacket >> tmpextract)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
+	frompacket >> tmpextract;
 
 	Invalidness = static_cast<NETWORKRESPONSE_INVALIDREASON>(tmpextract);
 
-	if(!(frompacket >> AdditionalInfo)){
+    frompacket >> AdditionalInfo;
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
+    if(!frompacket)
+        throw InvalidArgument("invalid packet format");
 }
 
 DLLEXPORT void Leviathan::NetworkResponseDataForInvalidRequest::AddDataToPacket(sf::Packet &packet){
 	packet << static_cast<int>(Invalidness) << AdditionalInfo;
 }
 // ------------------ NetworkResponseDataForServerStatus ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForServerStatus(const wstring &servername,
+DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForServerStatus(const std::string &servername,
     bool isjoinable, NETWORKRESPONSE_SERVERJOINRESTRICT whocanjoin, int players, int maxplayers, int bots,
     NETWORKRESPONSE_SERVERSTATUS currentstatus, int serverflags) :
     ServerNameString(servername), Joinable(isjoinable), JoinRestriction(whocanjoin), Players(players),
@@ -583,11 +590,11 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
 	// Check the length //
 	if(ServerNameString.length() > 100){
 
-		Logger::Get()->Warning(L"NetworkResponse: NetworkResponseDataForServerStatus: server name is too long, max 100 "
-            L"characters (is "+Convert::ToWstring(ServerNameString.length())+L") : "+ServerNameString+
-            L" will be truncated:");
+		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerStatus: server "
+            "name is too long, max 100 characters (is "+Convert::ToString(
+                ServerNameString.length())+") : "+ServerNameString+" will be truncated:");
 		ServerNameString.resize(100);
-		Logger::Get()->Write(L"\t> "+ServerNameString+L"\n");
+		Logger::Get()->Write("\t> "+ServerNameString+"\n");
 	}
 }
 
@@ -595,56 +602,21 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
 	// Try to reverse the process //
 	int tmpextract;
 
-	if(!(frompacket >> ServerNameString)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-
-	// Just in case we got an invalid packet check this //
+	frompacket >> ServerNameString  >> Joinable >> tmpextract >> Players >> MaxPlayers;
+    frompacket >> Bots >> tmpextract >> AdditionalFlags;
+        
+    // Just in case we got an invalid packet check this //
 	if(ServerNameString.size() > 100){
 
 		ServerNameString.resize(100);
-		Logger::Get()->Warning(L"NetworkResponseDataForServerStatus: packet had too long server name string");
+		Logger::Get()->Warning("NetworkResponseDataForServerStatus: packet had too long server name string");
 	}
 
-	if(!(frompacket >> Joinable)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-
-	if(!(frompacket >> tmpextract)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-
-	JoinRestriction = static_cast<NETWORKRESPONSE_SERVERJOINRESTRICT>(tmpextract);
-
-	if(!(frompacket >> Players)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-
-	if(!(frompacket >> MaxPlayers)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-
-	if(!(frompacket >> Bots)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-
-	if(!(frompacket >> tmpextract)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-
+    JoinRestriction = static_cast<NETWORKRESPONSE_SERVERJOINRESTRICT>(tmpextract);    
 	ServerStatus = static_cast<NETWORKRESPONSE_SERVERSTATUS>(tmpextract);
 
-	if(!(frompacket >> AdditionalFlags)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
+    if(!frompacket)
+        throw InvalidArgument("invalid packet format");
 }
 
 DLLEXPORT void Leviathan::NetworkResponseDataForServerStatus::AddDataToPacket(sf::Packet &packet){
@@ -655,37 +627,33 @@ DLLEXPORT void Leviathan::NetworkResponseDataForServerStatus::AddDataToPacket(sf
 DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataForServerDisallow(sf::Packet &frompacket){
 	int tmpextract;
 
-	if(!(frompacket >> tmpextract)){
+    frompacket >> tmpextract >> Message;
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
+    if(!frompacket)
+        throw InvalidArgument("invalid packet format");
 
-	Reason = static_cast<NETWORKRESPONSE_INVALIDREASON>(tmpextract);
-
-	if(!(frompacket >> Message)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
+    Reason = static_cast<NETWORKRESPONSE_INVALIDREASON>(tmpextract);
 
 	// Just in case we got an invalid packet check this //
 	if(Message.size() > 100){
 
 		Message.resize(100);
-		Logger::Get()->Warning(L"NetworkResponseDataForServerDisallow: packet had too long message string");
+		Logger::Get()->Warning("NetworkResponseDataForServerDisallow: packet had too long message string");
 	}
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataForServerDisallow(
-    NETWORKRESPONSE_INVALIDREASON reason, const wstring &message /*= L"Default disallow"*/) :
+    NETWORKRESPONSE_INVALIDREASON reason, const std::string &message /*= "Default disallow"*/) :
     Reason(reason), Message(message)
 {
 	// Check the length //
 	if(Message.length() > 100){
 
-		Logger::Get()->Warning(L"NetworkResponse: NetworkResponseDataForServerDisallow: message is too long (is "+
-            Convert::ToWstring(Message.length())+L") : "+Message+L" will be truncated:");
+		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerDisallow: message "
+            "is too long (is "+Convert::ToString(Message.length())+") : "+
+            Message+" will be truncated:");
 		Message.resize(100);
-		Logger::Get()->Write(L"\t> "+Message+L"\n");
+		Logger::Get()->Write("\t> "+Message+"\n");
 	}
 }
 
@@ -696,37 +664,33 @@ DLLEXPORT void Leviathan::NetworkResponseDataForServerDisallow::AddDataToPacket(
 DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(sf::Packet &frompacket){
 	int tmpextract;
 
-	if(!(frompacket >> tmpextract)){
+    frompacket >> tmpextract >> Message;
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
+    if(!frompacket)
+        throw InvalidArgument("invalid packet format");
 
 	ServerAcceptedWhat = static_cast<NETWORKRESPONSE_SERVERACCEPTED_TYPE>(tmpextract);
-
-	if(!(frompacket >> Message)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-
+    
 	// Just in case we got an invalid packet check this //
 	if(Message.size() > 100){
 
 		Message.resize(100);
-		Logger::Get()->Warning(L"NetworkResponseDataForServerAllow: packet had too long message string");
+		Logger::Get()->Warning("NetworkResponseDataForServerAllow: packet had too long message string");
 	}
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(
-    NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted, const wstring &message /*= L""*/) :
+    NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted, const std::string &message /*= ""*/) :
     ServerAcceptedWhat(whataccepted), Message(message)
 {
 	// Check the length //
 	if(Message.length() > 100){
 
-		Logger::Get()->Warning(L"NetworkResponse: NetworkResponseDataForServerAllow: message is too long (is "+
-            Convert::ToWstring(Message.length())+L") : "+Message+L" will be truncated:");
+		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerAllow: message "
+            "is too long (is "+Convert::ToString(Message.length())+") : "+
+            Message+" will be truncated:");
 		Message.resize(100);
-		Logger::Get()->Write(L"\t> "+Message+L"\n");
+		Logger::Get()->Write("\t> "+Message+"\n");
 	}
 }
 
@@ -742,7 +706,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForSyncValData::NetworkResponseDataForSy
 
 DLLEXPORT Leviathan::NetworkResponseDataForSyncValData::NetworkResponseDataForSyncValData(sf::Packet &frompacket){
 	// Create new value from the packet //
-	SyncValueData = shared_ptr<NamedVariableList>(new NamedVariableList(frompacket));
+	SyncValueData = std::shared_ptr<NamedVariableList>(new NamedVariableList(frompacket));
 }
 
 DLLEXPORT void Leviathan::NetworkResponseDataForSyncValData::AddDataToPacket(sf::Packet &packet){
@@ -752,8 +716,8 @@ DLLEXPORT void Leviathan::NetworkResponseDataForSyncValData::AddDataToPacket(sf:
 // ------------------ NetworkResponseDataForSyncDataEnd ------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForSyncDataEnd::NetworkResponseDataForSyncDataEnd(sf::Packet &frompacket){
 	if(!(frompacket >> Succeeded)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+        
+        throw InvalidArgument("invalid packet format");
 	}
 }
 
@@ -783,9 +747,8 @@ DLLEXPORT Leviathan::NetworkResponseDataForCustom::NetworkResponseDataForCustom(
 DLLEXPORT Leviathan::NetworkResponseDataForCustom::NetworkResponseDataForCustom(sf::Packet &frompacket){
 	ActualPacketData = GameSpecificPacketHandler::Get()->ReadGameSpecificPacketFromPacket(true, frompacket);
 	if(!ActualPacketData){
-		// Because the above loading function doesn't throw, we should throw here
-		throw ExceptionInvalidArgument(L"invalid packet format for user defined response", 0, __WFUNCTION__,
-            L"frompacket", L"");
+
+        throw InvalidArgument("invalid packet format for user defined response");
 	}
 }
 
@@ -798,7 +761,8 @@ DLLEXPORT Leviathan::NetworkResponseDataForSyncResourceData::NetworkResponseData
 {
 	
 	if(!(frompacket >> OurCustomData)){
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+
+        throw InvalidArgument("invalid packet format");
 	}
 }
 
@@ -809,7 +773,8 @@ DLLEXPORT Leviathan::NetworkResponseDataForSyncResourceData::NetworkResponseData
 
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForSyncResourceData::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void Leviathan::NetworkResponseDataForSyncResourceData::AddDataToPacket(sf::Packet &packet)
+{
 	packet << OurCustomData;
 }
 // ------------------ NetworkResponseDataForCreateNetworkedInput ------------------ //
@@ -843,7 +808,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForUpdateNetworkedInput::NetworkResponse
 	// First the ID //
 	if(!(frompacket >> InputID)){
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+        throw InvalidArgument("invalid packet format");
 	}
 
 	// Load the packet from the packet //
@@ -878,16 +843,12 @@ DLLEXPORT void Leviathan::NetworkResponseDataForUpdateNetworkedInput::AddDataToP
 // ------------------ NetworkResponseDataForInitialEntity ------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForInitialEntity::NetworkResponseDataForInitialEntity(sf::Packet &frompacket){
     // Do the reverse of AddDataToPacket... //
-    if(!(frompacket >> WorldID)){
-
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
-
     uint32_t size;
-    if(!(frompacket >> size)){
+    
+    frompacket >> WorldID >> size;
 
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
+    if(!frompacket)
+        throw InvalidArgument("invalid packet format");
 
     EntityData.reserve(size);
 
@@ -895,10 +856,11 @@ DLLEXPORT Leviathan::NetworkResponseDataForInitialEntity::NetworkResponseDataFor
         std::string tmpstr;
 
         if(!(frompacket >> tmpstr)){
-
-            throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+            
+            throw InvalidArgument("invalid packet format");
         }
-        shared_ptr<sf::Packet> packit = make_shared<sf::Packet>();
+        
+        std::shared_ptr<sf::Packet> packit = make_shared<sf::Packet>();
 
         packit->append(tmpstr.c_str(), tmpstr.size());
 
@@ -907,10 +869,10 @@ DLLEXPORT Leviathan::NetworkResponseDataForInitialEntity::NetworkResponseDataFor
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForInitialEntity::NetworkResponseDataForInitialEntity(int worldid,
-    unique_ptr<sf::Packet> &entity1data) :
+    std::unique_ptr<sf::Packet> &entity1data) :
     WorldID(worldid), EntityData(1)
 {
-    EntityData[0] = shared_ptr<sf::Packet>(entity1data.release());
+    EntityData[0] = std::shared_ptr<sf::Packet>(entity1data.release());
 }
         
 DLLEXPORT void Leviathan::NetworkResponseDataForInitialEntity::AddDataToPacket(sf::Packet &packet){
@@ -928,14 +890,16 @@ DLLEXPORT void Leviathan::NetworkResponseDataForInitialEntity::AddDataToPacket(s
         // Warn if it is quite large //
         if(tmpstr.size() >= 500){
 
-            Logger::Get()->Warning(L"Sending a large object, over 500 bytes in size");
+            Logger::Get()->Warning("Sending a large object, over 500 bytes in size");
         }
 
         packet << tmpstr;
     }
 }
 
-DLLEXPORT shared_ptr<sf::Packet>  Leviathan::NetworkResponseDataForInitialEntity::GetDataForEntity(size_t index) const{
+DLLEXPORT std::shared_ptr<sf::Packet>  NetworkResponseDataForInitialEntity::GetDataForEntity(
+    size_t index) const
+{
     // Check is it out of bounds //
     if(index >= EntityData.size())
         return nullptr;
@@ -943,34 +907,55 @@ DLLEXPORT shared_ptr<sf::Packet>  Leviathan::NetworkResponseDataForInitialEntity
     return EntityData[index];
 }
 // ------------------ NetworkResponseDataForEntityConstraint ------------------ //
-DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(int worldid, int entity1,
-    int entity2, bool create, Entity::ENTITY_CONSTRAINT_TYPE type, shared_ptr<sf::Packet> &data) :
-    WorldID(worldid), EntityID1(entity1), EntityID2(entity2), Create(create), Type(type), ConstraintData(data)
+DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(
+    int worldid, int constraintid, int entity1, int entity2, bool create,
+    ENTITY_CONSTRAINT_TYPE type, std::shared_ptr<sf::Packet> &data) :
+    WorldID(worldid), ConstraintID(constraintid), EntityID1(entity1), EntityID2(entity2),
+    Create(create), Type(type), ConstraintData(data)
 {
 
-}     
+}
 
-DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(
+    int worldid, int constraintid, ObjectID entity1, ObjectID entity2, bool create,
+    ENTITY_CONSTRAINT_TYPE type) :
+    WorldID(worldid), ConstraintID(constraintid), EntityID1(entity1), EntityID2(entity2),
+    Create(create), Type(type)
+{
+
+}
+
+
+DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(
+    sf::Packet &frompacket)
+{
 
     int32_t tmptype;
-    frompacket >> WorldID >> EntityID1 >> EntityID2 >> Create >> tmptype;
+    frompacket >> WorldID >> ConstraintID >> EntityID1 >> EntityID2 >> Create >> tmptype;
     
     std::string tmpstr;
     frompacket >> tmpstr;
 
     if(!frompacket)
-        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+        throw InvalidArgument("invalid packet format");
 
-    Type = static_cast<Entity::ENTITY_CONSTRAINT_TYPE>(tmptype);
 
-    ConstraintData = make_shared<sf::Packet>();
+    Type = static_cast<ENTITY_CONSTRAINT_TYPE>(tmptype);
 
-    ConstraintData->append(tmpstr.c_str(), tmpstr.size());
+    if(tmpstr.size() > 0){
+        
+        ConstraintData = make_shared<sf::Packet>();
+
+        ConstraintData->append(tmpstr.c_str(), tmpstr.size());
+    }
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForEntityConstraint::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void Leviathan::NetworkResponseDataForEntityConstraint::AddDataToPacket(
+    sf::Packet &packet)
+{
 
-    packet << WorldID << EntityID1 << EntityID2 << Create << static_cast<int32_t>(Type);
+    packet << WorldID << ConstraintID << EntityID1 << EntityID2 << Create <<
+        static_cast<int32_t>(Type);
 
     // There might be no data for whatever reason //
     if(ConstraintData){
@@ -981,7 +966,7 @@ DLLEXPORT void Leviathan::NetworkResponseDataForEntityConstraint::AddDataToPacke
         // Warn if it is quite large //
         if(tmpstr.size() >= 500){
 
-            Logger::Get()->Warning(L"Sending a large constraint, over 500 bytes in size");
+            Logger::Get()->Warning("Sending a large constraint, over 500 bytes in size");
         }
 
         packet << tmpstr;
@@ -1005,7 +990,8 @@ DLLEXPORT Leviathan::NetworkResponseDataForWorldFrozen::NetworkResponseDataForWo
     frompacket >> WorldID >> Frozen >> TickNumber;
 
     if(!frompacket)
-        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+        throw InvalidArgument("invalid packet format");
+
 }
 
 DLLEXPORT void Leviathan::NetworkResponseDataForWorldFrozen::AddDataToPacket(sf::Packet &packet){
@@ -1013,22 +999,23 @@ DLLEXPORT void Leviathan::NetworkResponseDataForWorldFrozen::AddDataToPacket(sf:
     packet << WorldID << Frozen << TickNumber;
 }
 // ------------------ NetworkResponseDataForEntityUpdate ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(int worldid, int entityid,
-    int ticknumber, shared_ptr<sf::Packet> data) :
-    WorldID(worldid), EntityID(entityid), UpdateData(data), TickNumber(ticknumber)
+DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(
+    int worldid, int entityid, int ticknumber, int referencetick, std::shared_ptr<sf::Packet> data) :
+    WorldID(worldid), EntityID(entityid), UpdateData(data), TickNumber(ticknumber),
+    ReferenceTick(referencetick)
 {
 
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(sf::Packet &frompacket){
 
-    frompacket >> WorldID >> EntityID >> TickNumber;
+    frompacket >> WorldID >> EntityID >> TickNumber >> ReferenceTick;
     
     std::string tmpstr;
     frompacket >> tmpstr;
 
     if(!frompacket)
-        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+        throw InvalidArgument("invalid packet format");
 
     UpdateData = make_shared<sf::Packet>();
 
@@ -1037,7 +1024,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForE
 
 DLLEXPORT void Leviathan::NetworkResponseDataForEntityUpdate::AddDataToPacket(sf::Packet &packet){
 
-    packet << WorldID << EntityID << TickNumber;
+    packet << WorldID << EntityID << TickNumber << ReferenceTick;
 
     const std::string tmpstr(reinterpret_cast<const char*>(UpdateData->getData()), UpdateData->getDataSize());
         
@@ -1062,7 +1049,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForEntityDestruction::NetworkResponseDat
     frompacket >> WorldID >> EntityID;
 
     if(!frompacket)
-        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+        throw InvalidArgument("invalid packet format");
 }
 
 DLLEXPORT void Leviathan::NetworkResponseDataForEntityDestruction::AddDataToPacket(sf::Packet &packet){
@@ -1071,11 +1058,11 @@ DLLEXPORT void Leviathan::NetworkResponseDataForEntityDestruction::AddDataToPack
 }
 // ------------------ NetworkResponseDataForAICacheUpdated ------------------ //
 DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataForAICacheUpdated(
-    shared_ptr<NamedVariableList> variable) :
+    std::shared_ptr<NamedVariableList> variable) :
     Variable(variable)
 {
     if(!Variable)
-        throw ExceptionInvalidArgument(L"invalid variable", 0, __WFUNCTION__, L"variable", L"NULL");
+        throw InvalidArgument("invalid packet format");
 }
 
 DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataForAICacheUpdated(sf::Packet &frompacket){
@@ -1083,7 +1070,7 @@ DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataFo
     Variable = make_shared<NamedVariableList>(frompacket);
 
     if(!frompacket)
-        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+        throw InvalidArgument("invalid packet format");
 }
 
 DLLEXPORT void Leviathan::NetworkResponseDataForAICacheUpdated::AddDataToPacket(sf::Packet &packet){
@@ -1091,7 +1078,7 @@ DLLEXPORT void Leviathan::NetworkResponseDataForAICacheUpdated::AddDataToPacket(
     Variable->AddDataToPacket(packet);
 }
 // ------------------ NetworkResponseDataForAICacheRemoved ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForAICacheRemoved::NetworkResponseDataForAICacheRemoved(const wstring &name) :
+DLLEXPORT Leviathan::NetworkResponseDataForAICacheRemoved::NetworkResponseDataForAICacheRemoved(const std::string &name) :
     Name(name)
 {
     
@@ -1100,8 +1087,8 @@ DLLEXPORT Leviathan::NetworkResponseDataForAICacheRemoved::NetworkResponseDataFo
 DLLEXPORT Leviathan::NetworkResponseDataForAICacheRemoved::NetworkResponseDataForAICacheRemoved(sf::Packet &frompacket){
 
     if(!(frompacket >> Name)){
-        
-        throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"frompacket", L"");
+
+        throw InvalidArgument("invalid packet format");
     }
 }
 
@@ -1115,9 +1102,23 @@ DLLEXPORT void Leviathan::NetworkResponseDataForAICacheRemoved::AddDataToPacket(
         Logger::Get()->Warning("Sending a large AI cache remove, string is over 800 elements long");
     }
 }
+// ------------------ NetworkResponseDataForDisconnectInput ------------------ //
+NetworkResponseDataForDisconnectInput::NetworkResponseDataForDisconnectInput(int inputid,
+    int ownerid) :
+    OwnerID(ownerid), InputID(inputid)
+{
 
-//! The name of the removed variable
-wstring Name;
+}
 
+NetworkResponseDataForDisconnectInput::NetworkResponseDataForDisconnectInput(sf::Packet &packet){
 
+    packet << InputID << OwnerID;
+}
 
+DLLEXPORT void NetworkResponseDataForDisconnectInput::AddDataToPacket(sf::Packet &packet){
+
+    packet >> InputID >> OwnerID;
+
+    if(!packet)
+        throw InvalidArgument("invalid packet format");
+}

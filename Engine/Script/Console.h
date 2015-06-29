@@ -1,12 +1,8 @@
-#ifndef LEVIATHAN_CONSOLE
-#define LEVIATHAN_CONSOLE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "ScriptInterface.h"
+#include "ScriptExecutor.h"
 
 
 namespace Leviathan{
@@ -22,19 +18,29 @@ namespace Leviathan{
 		DLLEXPORT ScriptConsole();
 		DLLEXPORT ~ScriptConsole();
 
-		DLLEXPORT bool Init(ScriptInterface* MainScript);
+		DLLEXPORT bool Init(ScriptExecutor* MainScript);
 		DLLEXPORT void Release();
-		// this function takes direct wstring input from user and translates it to be used in one of the functions below //
-		// console commands should be in format of ">[TYPE=""] [COMMAND]" eg. ">ADDVAR int newglobal = 25"
-		// or "> for(int i = 0; i < 5; i++) GlobalFunc();" multiline commands are done by putting '\' to the end of each line
-		DLLEXPORT int RunConsoleCommand(const wstring &commandstr);
+		// this function takes direct std::string input from user and translates it to be used in
+        // one of the functions below
+		// console commands should be in format of ">[TYPE=""] [COMMAND]" eg.
+        // ">ADDVAR int newglobal = 25"
+		// or "> for(int i = 0; i < 5; i++) GlobalFunc();" multiline commands are done by
+        // putting '\' to the end of each line
+		DLLEXPORT int RunConsoleCommand(const std::string &commandstr);
 
 		// calls script helper and runs this statement on the console module //
-		DLLEXPORT bool ExecuteStringInstruction(string statement);
-		DLLEXPORT bool AddVariableStringDefinition(string statement);
-		DLLEXPORT bool DeleteVariableStringDefinition(string statement);
-		DLLEXPORT bool AddFunctionStringDefinition(string statement);
-		DLLEXPORT bool DeleteFunctionStringDefinition(string statement);
+		DLLEXPORT bool ExecuteStringInstruction(Lock &guard, const std::string &statement);
+
+        DLLEXPORT inline bool ExecuteStringInstruction(const std::string &statement){
+
+            GUARD_LOCK();
+            return ExecuteStringInstruction(guard, statement);
+        }
+        
+		DLLEXPORT bool AddVariableStringDefinition(std::string statement);
+		DLLEXPORT bool DeleteVariableStringDefinition(const std::string &statement);
+		DLLEXPORT bool AddFunctionStringDefinition(const std::string &statement);
+		DLLEXPORT bool DeleteFunctionStringDefinition(const std::string &statement);
 
 		// common functions that are in the style of the angel script sdk example console //
 		DLLEXPORT void ListFunctions();
@@ -42,27 +48,26 @@ namespace Leviathan{
 
 	private:
 		// function used to add prefix to console output //
-		inline void ConsoleOutput(const wstring &text){
-			Logger::Get()->Write(L"[CONSOLE] "+text);
+		inline void ConsoleOutput(const std::string &text){
+			Logger::Get()->Write("[CONSOLE] "+text);
 		}
 
 		// stored pointer to script interface //
-		ScriptInterface* InterfaceInstance;
+		ScriptExecutor* InterfaceInstance;
 
 		// the script module that Console runs in //
-		weak_ptr<ScriptModule> ConsoleModule;
+        std::weak_ptr<ScriptModule> ConsoleModule;
 
 		// variables about the current command //
 		// multi line command stored part //
-		wstring PendingCommand;
+		std::string PendingCommand;
 
 		int consoleemptyspam;
 
 		// static map for special function definitions in command s//
-		static map<wstring, CONSOLECOMMANDTYPE> CommandTypeDefinitions;
+		static std::map<std::string, CONSOLECOMMANDTYPE> CommandTypeDefinitions;
 	};
 
 
 }
 
-#endif

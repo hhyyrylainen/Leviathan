@@ -8,34 +8,36 @@
 #include "Networking/NetworkedInputHandler.h"
 #include "Networking/NetworkedInput.h"
 #include "Common/ThreadSafe.h"
+#include <memory>
 
 
 namespace Pong{
 	
-
+    using namespace std;
 
 	//! \brief The factory that handles creating the things
 	class PongInputFactory : public Leviathan::NetworkInputFactory{
 	public:
 
 
-
-
-
 		//! \brief Returns the static instance
 		static PongInputFactory* Get();
 
-		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForLocalStart(int inputid, bool isclient);
+		DLLEXPORT unique_ptr<NetworkedInput> CreateNewInstanceForLocalStart(
+            Lock &pongplayerlock, int inputid, bool isclient);
 
-		DLLEXPORT virtual unique_ptr<NetworkedInput> CreateNewInstanceForReplication(int inputid, int ownerid);
+		DLLEXPORT unique_ptr<NetworkedInput> CreateNewInstanceForReplication(int inputid,
+            int ownerid) override;
 
-		DLLEXPORT virtual void NoLongerNeeded(NetworkedInput &todiscard);
+		DLLEXPORT void NoLongerNeeded(NetworkedInput &todiscard, Lock &parentlock) override;
 
-		DLLEXPORT virtual bool DoesServerAllowCreate(NetworkedInput* input, ConnectionInfo* connection);
+		DLLEXPORT bool DoesServerAllowCreate(NetworkedInput* input,
+            ConnectionInfo* connection) override;
 
-		DLLEXPORT virtual void ReplicationFinalized(NetworkedInput* input);
+		DLLEXPORT void ReplicationFinalized(NetworkedInput* input) override;
 		
-		DLLEXPORT virtual bool IsConnectionAllowedToUpdate(NetworkedInput* input, ConnectionInfo* connection);
+		DLLEXPORT bool IsConnectionAllowedToUpdate(NetworkedInput* input,
+            ConnectionInfo* connection) override;
 
 	protected:
 
@@ -62,17 +64,17 @@ namespace Pong{
 		~PongNInputter();
 
 
-		virtual bool ReceiveInput(OIS::KeyCode key, int modifiers, bool down);
+        bool ReceiveInput(OIS::KeyCode key, int modifiers, bool down) override;
 
-		virtual void ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down);
+        void ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down) override;
 
-		virtual bool OnMouseMove(int xmove, int ymove);
+        bool OnMouseMove(int xmove, int ymove) override;
 
 		//! \brief Called by a PlayerSlot to prevent us using an invalid pointer
 		void StopSendingInput(PlayerSlot* tohere);
 
 		//! \brief Adds a PlayerSlot later
-		void StartSendingInput(PlayerSlot* target);
+		void StartSendingInput(Lock &guard, PlayerSlot* target);
 
 		//! \brief Update settings reflecting new options
 		//! \todo Add control ID setting for controller support
@@ -133,7 +135,8 @@ namespace Pong{
 
 
 
-		std::map<OIS::KeyCode, CONTROLKEYACTION>& MapControlsToKeyGrouping(PLAYERCONTROLS controls) THROWS;
+		std::map<OIS::KeyCode, CONTROLKEYACTION>& MapControlsToKeyGrouping(
+            PLAYERCONTROLS controls);
 		
 
 		static GameInputController* Get();

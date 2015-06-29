@@ -1,12 +1,9 @@
-#ifndef LEVIATHAN_BASENOTIFIABLE
-#define LEVIATHAN_BASENOTIFIABLE
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "ThreadSafe.h"
+#include <vector>
 
 namespace Leviathan{
 
@@ -23,27 +20,42 @@ namespace Leviathan{
 		DLLEXPORT void ReleaseParentHooks();
 
 		//! \brief The actual implementation of UnConnectFromNotifier
-		DLLEXPORT bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier, ObjectLock &guard);
+		DLLEXPORT bool UnConnectFromNotifier(Lock &guard,
+            BaseNotifier<ParentType, ChildType>* specificnotifier, Lock &notifierlock);
+
+        DLLEXPORT inline bool UnConnectFromNotifier(Lock &guard,
+            BaseNotifier<ParentType, ChildType>* specificnotifier)
+        {
+
+            guard.unlock();
+            GUARD_LOCK_OTHER_NAME(specificnotifier, guard2);
+            guard.lock();
+            
+            return UnConnectFromNotifier(guard, specificnotifier, guard2);
+        }
 
 		//! \brief Notifies all the parents of this object about something
 		//!
 		//! This will call the BaseNotifier::OnNotified on all the child objects
-		DLLEXPORT virtual void NotifyAll();
+        //! \param guard Lock for this object that can be safely unlocked
+		DLLEXPORT virtual void NotifyAll(Lock &guard);
 
 		//! \brief Disconnects this from a previously connected notifier
-		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifier(BaseNotifier<ParentType, ChildType>* specificnotifier){
+		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifier(
+            BaseNotifier<ParentType, ChildType>* specificnotifier)
+        {
 			// The parent has to be locked before this object //
-			GUARD_LOCK_OTHER_OBJECT_NAME(specificnotifier, guard2);
-			GUARD_LOCK_THIS_OBJECT();
-			return UnConnectFromNotifier(specificnotifier, guard);
+			GUARD_LOCK_OTHER_NAME(specificnotifier, guard2);
+			GUARD_LOCK();
+			return UnConnectFromNotifier(specificnotifier, guard, guard2);
 		}
 
 		//! \brief Actual implementation of this method
-		DLLEXPORT bool IsConnectedTo(BaseNotifier<ParentType, ChildType>* check, ObjectLock &guard);
+		DLLEXPORT bool IsConnectedTo(BaseNotifier<ParentType, ChildType>* check, Lock &guard);
 
 		//! \brief Returns true when the specified object is already connected
 		DLLEXPORT FORCE_INLINE bool IsConnectedTo(BaseNotifier<ParentType, ChildType>* check){
-			GUARD_LOCK_THIS_OBJECT();
+			GUARD_LOCK();
 			return IsConnectedTo(check, guard);
 		}
 
@@ -53,11 +65,17 @@ namespace Leviathan{
 		//! \brief Connects this to a notifier object calling all the needed functions
 		DLLEXPORT bool ConnectToNotifier(BaseNotifier<ParentType, ChildType>* owner);
 
+        //! \brief Variant for already locked objects
+        //! \param unlockable Lock that has this object locked and can be safely unlocked
+        DLLEXPORT bool ConnectToNotifier(Lock &unlockable, BaseNotifier<ParentType, ChildType>* owner);
+
 		//! Callback called by the parent, used to not to call the unhook again on the parent
-		void _OnUnhookNotifier(BaseNotifier<ParentType, ChildType>* parent);
+		void _OnUnhookNotifier(Lock &locked, BaseNotifier<ParentType, ChildType>* parent,
+            Lock &parentlock);
 
 		//! Called by parent to hook, and doesn't call the parent's functions
-		void _OnHookNotifier(BaseNotifier<ParentType, ChildType>* parent);
+		void _OnHookNotifier(Lock &locked, BaseNotifier<ParentType, ChildType>* parent,
+            Lock &parentlock);
 
 		//! \brief Gets the internal pointer to the actual object
 		DLLEXPORT ChildType* GetActualPointerToNotifiableObject();
@@ -71,9 +89,10 @@ namespace Leviathan{
 	protected:
 
 		// Callbacks for child classes to implement //
-		// This object should already be locked during this call //
-		DLLEXPORT virtual void _OnNotifierConnected(ParentType* parentadded);
-		DLLEXPORT virtual void _OnNotifierDisconnected(ParentType* parenttoremove);
+		DLLEXPORT virtual void _OnNotifierConnected(Lock &guard, ParentType* parentadded,
+            Lock &parentlock);
+		DLLEXPORT virtual void _OnNotifierDisconnected(Lock &guard, ParentType* parentremoved,
+            Lock &parentlock);
 		// ------------------------------------ //
 
 		//! Stores a pointer to the object that is inherited from this
@@ -99,4 +118,4 @@ namespace Leviathan{
 // The implementations are included here to make this compile //
 #include "BaseNotifiableImpl.h"
 
-#endif
+

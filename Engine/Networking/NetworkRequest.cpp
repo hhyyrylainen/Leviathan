@@ -2,13 +2,16 @@
 #ifndef LEVIATHAN_NETWORKREQUEST
 #include "NetworkRequest.h"
 #endif
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "GameSpecificPacketHandler.h"
 #include "NetworkedInput.h"
+#include "../Handlers/IDFactory.h"
+#include "../Utility/Convert.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int timeout /*= 1000*/,
-    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    PACKET_TIMEOUT_STYLE style /*= PACKET_TIMEOUT_STYLE_TIMEDMS*/) :
     ResponseID(IDFactory::GetID()), TypeOfRequest(type), TimeOutValue(timeout), TimeOutStyle(style), RequestData(NULL)
 {
 	// We need to make sure the type is correct for this kind of packet //
@@ -26,7 +29,7 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int
 }
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout /*= 1000*/,
-    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    PACKET_TIMEOUT_STYLE style /*= PACKET_TIMEOUT_STYLE_TIMEDMS*/) :
     ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_OPENREMOTECONSOLETO), TimeOutValue(timeout),
     TimeOutStyle(style), RequestData(newddata)
 {
@@ -34,7 +37,7 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleOpenRequestData
 }
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout /*= 1000*/,
-    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    PACKET_TIMEOUT_STYLE style /*= PACKET_TIMEOUT_STYLE_TIMEDMS*/) :
     ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE), TimeOutValue(timeout),
     TimeOutStyle(style), RequestData(newddata)
 {
@@ -42,7 +45,7 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RemoteConsoleAccessRequestDa
 }
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(JoinServerRequestData* newddata, int timeout /*= 1000*/,
-    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    PACKET_TIMEOUT_STYLE style /*= PACKET_TIMEOUT_STYLE_TIMEDMS*/) :
     ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_JOINSERVER), TimeOutValue(timeout),
     TimeOutStyle(style), RequestData(newddata)
 {
@@ -50,7 +53,7 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(JoinServerRequestData* newdd
 }
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout /*= 1000*/,
-    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    PACKET_TIMEOUT_STYLE style /*= PACKET_TIMEOUT_STYLE_TIMEDMS*/) :
     ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_GETSINGLESYNCVALUE), TimeOutValue(timeout),
     TimeOutStyle(style), RequestData(newddata)
 {
@@ -58,7 +61,7 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(GetSingleSyncValueRequestDat
 }
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(CustomRequestData* newddata, int timeout /*= 1000*/,
-    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    PACKET_TIMEOUT_STYLE style /*= PACKET_TIMEOUT_STYLE_TIMEDMS*/) :
     ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_CUSTOM), TimeOutValue(timeout),
     TimeOutStyle(style), RequestData(newddata)
 {
@@ -66,7 +69,7 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(CustomRequestData* newddata,
 }
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestCommandExecutionData* newddata, int timeout /*= 10*/,
-    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED*/) :
+    PACKET_TIMEOUT_STYLE style /*= PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED*/) :
     ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_REQUESTEXECUTION), TimeOutValue(timeout),
     TimeOutStyle(style), RequestData(newddata)
 {
@@ -74,7 +77,7 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestCommandExecutionData*
 }
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestConnectInputData* newddata, int timeout /*= 1000*/,
-    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    PACKET_TIMEOUT_STYLE style /*= PACKET_TIMEOUT_STYLE_TIMEDMS*/) :
     ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_CONNECTINPUT), TimeOutValue(timeout),
     TimeOutStyle(style), RequestData(newddata)
 {
@@ -82,7 +85,7 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestConnectInputData* new
 }
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestWorldClockSyncData* newddata, int timeout /*= 1000*/,
-    PACKET_TIMEOUT_STYLE style /*= PACKAGE_TIMEOUT_STYLE_TIMEDMS*/) :
+    PACKET_TIMEOUT_STYLE style /*= PACKET_TIMEOUT_STYLE_TIMEDMS*/) :
     ResponseID(IDFactory::GetID()), TypeOfRequest(NETWORKREQUESTTYPE_WORLD_CLOCK_SYNC), TimeOutValue(timeout),
     TimeOutStyle(style), RequestData(newddata)
 {
@@ -91,15 +94,14 @@ DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(RequestWorldClockSyncData* n
 
 DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(sf::Packet &frompacket) : TimeOutValue(-1){
 	// Get the heading data //
-	if(!(frompacket >> ResponseID)){
+	frompacket >> ResponseID;
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
 	int tmpval;
-	if(!(frompacket >> tmpval)){
+	frompacket >> tmpval;
 
-		throw ExceptionInvalidArgument(L"packet has invalid format", 0, __WFUNCTION__, L"frompacket", L"");
-	}
+    if(!(frompacket))
+        throw InvalidArgument("packet has invalid format");
+    
 	TypeOfRequest = static_cast<NETWORKREQUESTTYPE>(tmpval);
 
 	// Try to create the additional data if required for this type //
@@ -230,7 +232,7 @@ DLLEXPORT Leviathan::RemoteConsoleOpenRequestDataTo::RemoteConsoleOpenRequestDat
 
 DLLEXPORT Leviathan::RemoteConsoleOpenRequestDataTo::RemoteConsoleOpenRequestDataTo(sf::Packet &frompacket){
 	if(!(frompacket >> SessionToken)){
-		throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"frompacket", L"");
+		throw InvalidArgument("invalid packet");
 	}
 }
 
@@ -244,7 +246,7 @@ DLLEXPORT Leviathan::RemoteConsoleAccessRequestData::RemoteConsoleAccessRequestD
 
 DLLEXPORT Leviathan::RemoteConsoleAccessRequestData::RemoteConsoleAccessRequestData(sf::Packet &frompacket){
 	if(!(frompacket >> SessionToken)){
-		throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"frompacket", L"");
+		throw InvalidArgument("invalid packet");
 	}
 }
 
@@ -252,13 +254,15 @@ DLLEXPORT void Leviathan::RemoteConsoleAccessRequestData::AddDataToPacket(sf::Pa
 	packet << SessionToken;
 }
 // ------------------ JoinServerRequestData ------------------ //
-DLLEXPORT Leviathan::JoinServerRequestData::JoinServerRequestData(int outmasterid /*= -1*/) : MasterServerID(outmasterid){
+DLLEXPORT Leviathan::JoinServerRequestData::JoinServerRequestData(int outmasterid /*= -1*/) :
+    MasterServerID(outmasterid)
+{
 
 }
 
 DLLEXPORT Leviathan::JoinServerRequestData::JoinServerRequestData(sf::Packet &frompacket){
 	if(!(frompacket >> MasterServerID)){
-		throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"frompacket", L"");
+		throw InvalidArgument("invalid packet");
 	}
 }
 
@@ -266,13 +270,15 @@ DLLEXPORT void Leviathan::JoinServerRequestData::AddDataToPacket(sf::Packet &pac
 	packet << MasterServerID;
 }
 // ------------------ JoinServerRequestData ------------------ //
-DLLEXPORT Leviathan::GetSingleSyncValueRequestData::GetSingleSyncValueRequestData(const wstring &name) : NameOfValue(name){
+DLLEXPORT Leviathan::GetSingleSyncValueRequestData::GetSingleSyncValueRequestData(const std::string &name) :
+    NameOfValue(name)
+{
 
 }
 
 DLLEXPORT Leviathan::GetSingleSyncValueRequestData::GetSingleSyncValueRequestData(sf::Packet &frompacket){
 	if(!(frompacket >> NameOfValue)){
-		throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"frompacket", L"");
+		throw InvalidArgument("invalid packet");
 	}
 }
 
@@ -280,7 +286,9 @@ DLLEXPORT void Leviathan::GetSingleSyncValueRequestData::AddDataToPacket(sf::Pac
 	packet << NameOfValue;
 }
 // ------------------ CustomRequestData ------------------ //
-DLLEXPORT Leviathan::CustomRequestData::CustomRequestData(GameSpecificPacketData* newddata) : ActualPacketData(newddata){
+DLLEXPORT Leviathan::CustomRequestData::CustomRequestData(GameSpecificPacketData* newddata) :
+    ActualPacketData(newddata)
+{
 
 }
 
@@ -294,7 +302,7 @@ DLLEXPORT Leviathan::CustomRequestData::CustomRequestData(sf::Packet &frompacket
 	ActualPacketData = GameSpecificPacketHandler::Get()->ReadGameSpecificPacketFromPacket(false, frompacket);
 	if(!ActualPacketData){
 		// Because the above loading function doesn't throw, we should throw here
-		throw ExceptionInvalidArgument(L"invalid packet format for user defined request", 0, __WFUNCTION__, L"frompacket", L"");
+		throw InvalidArgument("invalid packet format for user defined request");
 	}
 }
 
@@ -302,23 +310,26 @@ DLLEXPORT void Leviathan::CustomRequestData::AddDataToPacket(sf::Packet &packet)
 	GameSpecificPacketHandler::Get()->PassGameSpecificDataToPacket(ActualPacketData.get(), packet);
 }
 // ------------------ RequestCommandExecution ------------------ //
-DLLEXPORT Leviathan::RequestCommandExecutionData::RequestCommandExecutionData(const string &commandstr) : Command(commandstr){
+DLLEXPORT Leviathan::RequestCommandExecutionData::RequestCommandExecutionData(const string &commandstr) :
+    Command(commandstr)
+{
 
 	if(Command.length() > MAX_SERVERCOMMAND_LENGTH){
 
-		Logger::Get()->Warning(L"NetworkRequest: RequestCommandExecution: command is too long (is "+Convert::ToWstring(Command.length())
-			+L") : "+Convert::StringToWstring(Command)+L" will be truncated:");
+		Logger::Get()->Warning("NetworkRequest: RequestCommandExecution: command is too long (is "+
+            Convert::ToString(Command.length())
+			+") : "+Command+" will be truncated:");
 
 		// Cut it to fit //
 		Command.resize(MAX_SERVERCOMMAND_LENGTH);
 
-		Logger::Get()->Write(L"\t> "+Convert::StringToWstring(Command)+L"\n");
+		Logger::Get()->Write("\t> "+Command+"\n");
 	}
 }
 
 DLLEXPORT Leviathan::RequestCommandExecutionData::RequestCommandExecutionData(sf::Packet &frompacket){
 	if(!(frompacket >> Command)){
-		throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"frompacket", L"");
+		throw InvalidArgument("invalid packet");
 	}
 }
 
@@ -352,7 +363,7 @@ DLLEXPORT RequestWorldClockSyncData::RequestWorldClockSyncData(sf::Packet &fromp
     frompacket >> WorldID >> Ticks >> EngineMSTweak >> Absolute;
 
     if(!frompacket)
-        throw ExceptionInvalidArgument(L"invalid packet", 0, __WFUNCTION__, L"packet", L"");
+        throw InvalidArgument("invalid packet");
 }
 
 DLLEXPORT RequestWorldClockSyncData::RequestWorldClockSyncData(int worldid, int ticks, int enginetick,

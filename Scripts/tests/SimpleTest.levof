@@ -8,7 +8,7 @@ Why = true;
 
 o TestData object_prefix "Named1" /* Our first data */ {
     l list {
-        Answers = [["none"]["nope"]];
+        Answers = [["none"],["nope"]];
         this= not this;
         oh=2;
         no:false;

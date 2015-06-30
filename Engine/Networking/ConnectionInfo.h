@@ -2,20 +2,18 @@
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-#include "NetworkResponse.h"
-#include "NetworkRequest.h"
 #include "SFML/Network/Socket.hpp"
 #include "SFML/Network/UdpSocket.hpp"
 #include "SFML/Network/IpAddress.hpp"
+#include "SFML/Network/Packet.hpp"
 #include "../Common/ThreadSafe.h"
 #include "NetworkHandler.h"
 #include "../Common/BaseNotifier.h"
 #include <future>
 #include <map>
-#include <list>
 #include <vector>
 #include <memory>
-#include <deque>
+#include "boost/circular_buffer.hpp"
 
 namespace Leviathan{
 
@@ -26,7 +24,7 @@ namespace Leviathan{
 
 
 //! \brief The amount of received packet ids to keep in memory, these ids are used to discard duplicate packets
-#define KEEP_IDS_FOR_DISCARD	60
+#define KEEP_IDS_FOR_DISCARD	40
 
     //! \brief Fail reason for ConnectionInfo::CalculateNetworkPing
     enum CONNECTION_PING_FAIL_REASON {
@@ -157,13 +155,18 @@ namespace Leviathan{
         RECEIVED_STATE_RECEIVED_ACK_SUCCEEDED
     };
 
-	using ReceivedPacketField = std::unordered_map<int, RECEIVED_STATE>;
+	using ReceivedPacketField = std::map<int, RECEIVED_STATE>;
 
 	class NetworkAckField{
 	public:
 
 		DLLEXPORT NetworkAckField(int32_t firstpacketid, char maxacks,
             ReceivedPacketField &copyfrom);
+
+        DLLEXPORT void AddDataToPacket(sf::Packet &packet);
+
+        DLLEXPORT NetworkAckField(sf::Packet &packet);
+
 
 		DLLEXPORT inline bool IsAckSet(size_t ackindex){
 			// We can use division to find out which vector element is wanted //
@@ -172,10 +175,16 @@ namespace Leviathan{
 			return (Acks[vecelement] & (1 << (ackindex-vecelement))) != 0;
 		}
 
-        //! \brief Sets acks in this packet as properly sent in copydatato
+        //! \brief Sets acks in this packet as properly sent in receiver
         //!
         //! Acks that were false in this packet are untouched
-		DLLEXPORT void SetPacketsReceivedIfNotSet(ReceivedPacketField &copydatato);
+		DLLEXPORT void SetPacketsReceivedIfNotSet(ConnectionInfo &receiver);
+
+        //! \brief Removes acks that were successful in this packet from target
+        //! \note Should be called after the packet containing these acks is marked as
+        //! successfull
+        DLLEXPORT void RemoveSucceededAcks(ConnectionInfo &target);
+
 
 		// Data //
 		int32_t FirstPacketID;
@@ -189,15 +198,15 @@ namespace Leviathan{
 
 		//! The packet (SentNetworkThing) in which these acks were sent //
 		int InsidePacket;
+
+        std::shared_ptr<NetworkAckField> AcksInThePacket;
         
 		//! Used to control how many times to send each packet of acks
 		//! If package loss is high this will be increased to make sure acks are received
-		int SendCount;
+		int SendCount = 1;
 
         //! Marks when the remote host tells us that any packet in which bunch is is received
-		bool Received;
-
-		NetworkAckField* AcksInThePacket;
+		bool Received = false;
 	};
 
 	//! \brief Class that handles a single connection to another instance
@@ -206,6 +215,7 @@ namespace Leviathan{
 	//! \todo Internal security tokens to all packets
 	//! \todo Remove sent ack groups after they have "probably failed"
 	class ConnectionInfo : public BaseNotifierAll{
+        friend NetworkAckField;
 	public:
 		//! \brief Creates a new connection to hostname
 		//! \todo Add a option to game configuration for default port
@@ -231,8 +241,9 @@ namespace Leviathan{
         
 		DLLEXPORT bool IsTargetHostLocalhost();
 
-
+        //! \brief Ticks this connection, times out sent packets
 		DLLEXPORT void UpdateListening(Lock &guard);
+        
 
 		DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(Lock &guard, 
             std::shared_ptr<NetworkRequest> request, int maxretries);
@@ -251,7 +262,6 @@ namespace Leviathan{
 		DLLEXPORT inline std::shared_ptr<SentNetworkThing> SendPacketToConnection(
             std::shared_ptr<NetworkResponse> response, int maxtries)
         {
-
             GUARD_LOCK();
             return SendPacketToConnection(guard, response, maxtries);
         }
@@ -261,7 +271,8 @@ namespace Leviathan{
         //! \deprecated Should loop and wait on SentNetworkThing
 		DLLEXPORT std::shared_ptr<NetworkResponse> SendRequestAndBlockUntilDone(
             std::shared_ptr<NetworkRequest> request, int maxtries = 2);
-
+        
+        //! \brief Sends a keepalive packet if enough time has passed
 		DLLEXPORT void CheckKeepAliveSend();
 		DLLEXPORT void SendKeepAlivePacket(Lock &guard);
 		DLLEXPORT FORCE_INLINE void SendKeepAlivePacket(){
@@ -297,12 +308,22 @@ namespace Leviathan{
             std::function<void(int, int)> onsucceeded,
             std::function<void(CONNECTION_PING_FAIL_REASON, int)> onfailed);
 
+        //! \brief Called when the other side sends us an ack
+        //!
+        //! Used to mark our packets as sent
+        DLLEXPORT void HandleRemoteAck(Lock &guard, int oursentconfirmed);
+
+        DLLEXPORT inline void HandleRemoteAck(int oursentconfirmed){
+
+            GUARD_LOCK();
+            HandleRemoteAck(guard, oursentconfirmed);
+        }
+
 	private:
 
+        //! \brief Prepares a new header for the thing but keeps the original local id and
+        //! sends the packet again
 		void _ResendRequest(std::shared_ptr<SentNetworkThing> toresend, Lock &guard);
-
-		//! Marks the acks in packet received as successfully sent and erases them
-		void _VerifyAckPacketsAsSuccesfullyReceivedFromHost(Lock &guard, int oursentreceived);
 
         //! \brief Creates a standard header and ack field for outgoing packet
         //! \param tofill An empty packet where the packet header can be added
@@ -323,13 +344,15 @@ namespace Leviathan{
 
         //! Used to send acks for received remote packets
 		ReceivedPacketField ReceivedRemotePackets;
-        
 
 		//! Holds the ID of the last sent packet
         //! Incremented everytime a packet is sent to keep local
         //! packet ids different
         //! \note The world will break once this wraps around and reaches -1
-		int LastUsedLocalID;
+		int LastUsedLocalID = -1;
+
+        //! Holds the id of last local sent packet that we have received an ack for
+        int LastConfirmedSent = -1;
         
 
 		//! Connections might have special restrictions on them (mainly the accept only remote console feature)
@@ -344,26 +367,32 @@ namespace Leviathan{
         //! \todo Add a proper method that tracks unsent acks with time and modifies this
         int ExtraAckCount = 0;
         
-		// How many times the same ack table is sent before new one is generated (usually 1 with good connections) //
-		int MaxAckReduntancy;
-
 		int64_t LastSentPacketTime;
 		int64_t LastReceivedPacketTime;
 
 		//! With this we can close connections that have never received anything //
-		bool HasReceived;
+		bool HasReceived = false;
 
-		// Sent packets that haven't been confirmed as arrived //
-		std::list<std::shared_ptr<SentNetworkThing>> WaitingRequests;
+		//! Sent packets that haven't been confirmed as arrived
+        //! \todo Split this into two, requests and responses
+		std::vector<std::shared_ptr<SentNetworkThing>> WaitingRequests;
 
-		std::vector<std::shared_ptr<SentAcks>> AcksNotConfirmedAsReceived;
+        //! Holds sent ack groups until they are considered lost or received and
+        //! then is used to mark the received packets as successfully sent
+		std::vector<std::shared_ptr<SentAcks>> SentAckPackets;
 
 		//! IDs of packets used to drop same packets
-		std::deque<int> LastReceivedPacketIDs;
+        boost::circular_buffer<int> LastReceivedPacketIDs;
 
 		unsigned short TargetPortNumber;
+
+        //! If the target remote was specified with an url this stores it for
+        //! later reconstruction
 		std::string HostName;
 		sf::IpAddress TargetHost;
+
+        //! True when TargetHost has been retrieved from HostName or TargetHost is
+        //! made valid some other way
 		bool AddressGot;
 	};
 

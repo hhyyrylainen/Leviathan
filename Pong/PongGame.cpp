@@ -6,6 +6,8 @@
 #include "Networking/ConnectionInfo.h"
 #include "Networking/NetworkClientInterface.h"
 #include "Networking/RemoteConsole.h"
+#include "Networking/NetworkRequest.h"
+#include "Networking/NetworkResponse.h"
 #include "Rendering/GraphicalInputEntity.h"
 #include "PongNetHandler.h"
 #include "Utility/Random.h"
@@ -235,7 +237,8 @@ int Pong::PongGame::StartServer(){
 			if(!taskdata){
 				// Send a new request //
 
-				shared_ptr<Leviathan::NetworkRequest> tmprequest(new NetworkRequest(NETWORKREQUESTTYPE_SERVERSTATUS));
+				shared_ptr<Leviathan::NetworkRequest> tmprequest(new
+                    NetworkRequest(NETWORKREQUESTTYPE_SERVERSTATUS));
 
 				taskdata = safeptr->SendPacketToConnection(tmprequest, 2);
 

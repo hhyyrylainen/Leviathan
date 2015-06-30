@@ -4,6 +4,8 @@
 #include "ConnectionInfo.h"
 #include "Application/Application.h"
 #include "../TimeIncludes.h"
+#include "NetworkRequest.h"
+#include "NetworkResponse.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -29,8 +31,9 @@ DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
 	for(size_t i = 0; i < AwaitingConnections.size(); i++){
 		if(AwaitingConnections[i]->TimeoutTime < timenow){
 			// Time it out //
-			Logger::Get()->Warning("RemoteConsole: Remote console wait connection timed out, token "+
-                Convert::ToString(AwaitingConnections[i]->SessionToken));
+			Logger::Get()->Warning("RemoteConsole: Remote console wait connection timed out, "
+                "token "+Convert::ToString(AwaitingConnections[i]->SessionToken));
+            
 			AwaitingConnections.erase(AwaitingConnections.begin()+i);
 			i--;
 			continue;
@@ -75,8 +78,8 @@ DLLEXPORT void Leviathan::RemoteConsole::ExpectNewConnection(int SessionToken, c
                 onlylocalhost, timeout)));
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* connection, std::shared_ptr<NetworkRequest>
-    request)
+DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* connection,
+    std::shared_ptr<NetworkRequest> request)
 {
 	// Get data from the packet //
 	bool local = connection->IsTargetHostLocalhost();

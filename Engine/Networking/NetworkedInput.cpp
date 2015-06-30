@@ -4,6 +4,7 @@
 #include "Exceptions.h"
 #include "NetworkedInputHandler.h"
 #include "NetworkRequest.h"
+#include "NetworkResponse.h"
 #include "Threading/ThreadingManager.h"
 #include "ConnectionInfo.h"
 #include "NetworkClientInterface.h"

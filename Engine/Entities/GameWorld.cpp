@@ -14,6 +14,7 @@
 #include "Compositor/OgreCompositorManager2.h"
 #include "Networking/NetworkServerInterface.h"
 #include "Networking/NetworkResponse.h"
+#include "Networking/NetworkRequest.h"
 #include "Networking/ConnectionInfo.h"
 #include "Networking/NetworkHandler.h"
 #include "Threading/ThreadingManager.h"

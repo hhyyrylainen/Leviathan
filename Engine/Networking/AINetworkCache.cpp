@@ -2,6 +2,7 @@
 #include "AINetworkCache.h"
 
 #include "Networking/NetworkHandler.h"
+#include "Networking/NetworkResponse.h"
 #include "Threading/ThreadingManager.h"
 #include "Networking/ConnectionInfo.h"
 #include "boost/bind.hpp"

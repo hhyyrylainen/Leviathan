@@ -3,6 +3,8 @@
 
 #include "../Networking/NetworkHandler.h"
 #include "../Networking/ConnectionInfo.h"
+#include "../Networking/NetworkResponse.h"
+#include "../Networking/NetworkRequest.h"
 #include "CommonStateObjects.h"
 #include "GameWorld.h"
 using namespace Leviathan;

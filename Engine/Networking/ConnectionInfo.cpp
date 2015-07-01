@@ -206,7 +206,32 @@ DLLEXPORT std::shared_ptr<SentNetworkThing> Leviathan::ConnectionInfo::SendPacke
 
 	return tmprequestinfo;
 }
+// ------------------------------------ //
+std::shared_ptr<SentNetworkThing> ConnectionInfo::CreateFullSendablePacket(
+    std::shared_ptr<NetworkResponse> data, sf::Packet &packettofill, bool skipwaitingrequests)
+{
+    GUARD_LOCK();
+    
+    // We need a complete header with acks and stuff //
+    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, packettofill, false);
 
+    // Generate packet object for the request //
+    sf::Packet responsedata = data->GeneratePacketForResponse();
+
+    // Add the data to the actual packet //
+    packettofill.append(responsedata.getData(), responsedata.getDataSize());
+
+    // Add to the sent packets //
+    shared_ptr<SentNetworkThing> tmprequestinfo(
+        new SentNetworkThing(LastUsedLocalID, data, 
+            1, data->GetTimeOutType(), data->GetTimeOutValue(), responsedata, 0));
+
+    if(!skipwaitingrequests)
+        WaitingRequests.push_back(tmprequestinfo);
+
+    return tmprequestinfo;
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::ConnectionInfo::SendKeepAlivePacket(Lock &guard){
     
 	// Generate a packet from the request //
@@ -494,9 +519,7 @@ DLLEXPORT bool Leviathan::ConnectionInfo::IsThisYours(sf::IpAddress &sender,
     return true;
 }
 
-DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet, sf::IpAddress &sender,
-    unsigned short &sentport)
-{
+DLLEXPORT void Leviathan::ConnectionInfo::HandlePacket(sf::Packet &packet){
     
     // Handle incoming packet //
 	int packetnumber = 0;

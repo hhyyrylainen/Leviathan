@@ -478,7 +478,7 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
                 // Handle it //
                 connectionlock.unlock();
                 
-                curconnection->HandlePacket(receivedpacket, sender, sentport);
+                curconnection->HandlePacket(receivedpacket);
                 
                 connectionlock.lock();
                 
@@ -549,7 +549,7 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
                     "its packet from "+sender.toString()+":"+Convert::ToString(sentport));
 			} else {
 
-                tmpconnect->HandlePacket(receivedpacket, sender, sentport);
+                tmpconnect->HandlePacket(receivedpacket);
             }
 		}
 	}

@@ -50,6 +50,7 @@ namespace Leviathan{
         using CallbackType = std::function<void(bool, SentNetworkThing&)>;
 
 		//! This is the signature for request packets
+        //! \todo take packetsdata in as a pointer to avoid unnecessary copying
 		DLLEXPORT SentNetworkThing(int packetid, int expectedresponseid,
             std::shared_ptr<NetworkRequest> request, int maxtries,
             PACKET_TIMEOUT_STYLE howtotimeout,
@@ -235,9 +236,8 @@ namespace Leviathan{
 		DLLEXPORT bool IsThisYours(sf::IpAddress &sender, unsigned short &sentport);
 
         //! \brief Handles a packet
-        //! \note No other locks should be held while calling this
-        DLLEXPORT void HandlePacket(sf::Packet &packet, sf::IpAddress &sender,
-            unsigned short &sentport);
+        //! \note Care needs to be taken to avoid deadlocking while handling packet contents
+        DLLEXPORT void HandlePacket(sf::Packet &packet);
         
 		DLLEXPORT bool IsTargetHostLocalhost();
 
@@ -318,6 +318,13 @@ namespace Leviathan{
             GUARD_LOCK();
             HandleRemoteAck(guard, oursentconfirmed);
         }
+
+        //! \brief Fills a packet with all the data that it would get filled with in SendPacket
+        //!
+        //! Used mainly for local testing purposes where it's difficult to use sockets
+        std::shared_ptr<SentNetworkThing> CreateFullSendablePacket(
+            std::shared_ptr<NetworkResponse> data, sf::Packet &packettofill,
+            bool skipwaitingrequests = false);
 
 	private:
 

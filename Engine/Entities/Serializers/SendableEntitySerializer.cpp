@@ -398,7 +398,8 @@ DLLEXPORT bool SendableEntitySerializer::ApplyUpdateFromPacket(GameWorld* world,
     // TODO: remove debug code
     auto connection = NetworkClientInterface::Get()->GetServerConnection();
 
-    connection->SendKeepAlivePacket();
+    if(connection)
+        connection->SendKeepAlivePacket();
 
     return true;
 }

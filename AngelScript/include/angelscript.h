@@ -584,7 +584,7 @@ BEGIN_AS_NAMESPACE
 template<typename T>
 asUINT asGetTypeTraits()
 {
-#if defined(_MSC_VER) || defined(_LIBCPP_TYPE_TRAITS) || (__GNUC__ >= 5)
+#if defined(_MSC_VER) || defined(_LIBCPP_TYPE_TRAITS)
 	// MSVC & XCode/Clang
 	// C++11 compliant code
 	bool hasConstructor        = std::is_default_constructible<T>::value && !std::is_trivially_default_constructible<T>::value;

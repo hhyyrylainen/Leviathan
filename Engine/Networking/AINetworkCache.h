@@ -1,12 +1,7 @@
 #pragma once
-#ifndef LEVIATHAN_AINETWORKCACHE
-#define LEVIATHAN_AINETWORKCACHE
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/ThreadSafe.h"
 #include "Common/DataStoring/NamedVars.h"
 
@@ -44,14 +39,14 @@ namespace Leviathan{
         //! \brief Removes a variable
         //! \note This can only be called on the server
         //! \todo send remove message to clients
-        DLLEXPORT bool RemoveVariable(const wstring &name);
+        DLLEXPORT bool RemoveVariable(const std::string &name);
 
 
         //! \brief Retrieves a variable
         //!
         //! Can be used both on the client and on the server
         //! \note You may not change the variable. On the server you can use UpdateVariable to change it.
-        DLLEXPORT NamedVariableList* GetVariable(const wstring &name) const;
+        DLLEXPORT NamedVariableList* GetVariable(const std::string &name) const;
 
         //! \brief Registers a new connection to be used
         //!
@@ -65,7 +60,7 @@ namespace Leviathan{
         DLLEXPORT bool RemoveConnection(ConnectionInfo* connection);
 
         //! \brief Script wrapper for GetVariable
-        DLLEXPORT ScriptSafeVariableBlock* GetVariableWrapper(const string &name);
+        DLLEXPORT ScriptSafeVariableBlock* GetVariableWrapper(const std::string &name);
 
         //! \brief Script wrapper for UpdateVariable
         DLLEXPORT void SetVariableWrapper(ScriptSafeVariableBlock* variable);
@@ -83,7 +78,7 @@ namespace Leviathan{
     protected:
 
         //! \brief Called when a variable needs to be updated on the clients
-        void _OnVariableUpdated(shared_ptr<NamedVariableList> variable, ObjectLock &guard);
+        void _OnVariableUpdated(std::shared_ptr<NamedVariableList> variable, Lock &guard);
         
         // ------------------------------------ //
         
@@ -91,7 +86,7 @@ namespace Leviathan{
         const bool IsServer;
 
         //! States of the AI variables, exists both on the client and the server
-        std::vector<shared_ptr<NamedVariableList>> CurrentVariables;
+        std::vector<std::shared_ptr<NamedVariableList>> CurrentVariables;
 
         //! Connections that are receiving update notifications. Only used on the server
         std::vector<ConnectionInfo*> ReceivingConnections;
@@ -100,4 +95,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

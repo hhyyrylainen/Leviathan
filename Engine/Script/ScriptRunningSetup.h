@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_SCRIPTRUNNINGSETUP
-#define LEVIATHAN_SCRIPTRUNNINGSETUP
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/DataStoring/DataBlock.h"
 
 
@@ -19,25 +15,35 @@ namespace Leviathan{
 		DLLEXPORT ~ScriptRunningSetup();
 
 		// named constructor idiom //
-		DLLEXPORT inline ScriptRunningSetup& SetEntrypoint(const string &epoint){
+		DLLEXPORT inline ScriptRunningSetup& SetEntrypoint(const std::string &epoint){
 			// set //
 			Entryfunction = epoint;
 			return *this;
 		}
-		DLLEXPORT inline ScriptRunningSetup& SetArguments(vector<shared_ptr<NamedVariableBlock>>  &args){
+        
+		DLLEXPORT inline ScriptRunningSetup& SetArguments(
+            std::vector<std::shared_ptr<NamedVariableBlock>> &args)
+        {
 			// set //
 			Parameters = args;
 			return *this;
 		}
+        
 		DLLEXPORT inline ScriptRunningSetup& SetUseFullDeclaration(const bool &state){
 			// set //
 			FullDeclaration = state;
 			return *this;
 		}
+        
+        DLLEXPORT inline ScriptRunningSetup& SetPrintErrors(const bool &state){
+            
+			PrintErrors = state;
+			return *this;
+		}
 		
 
 		// variables //
-		vector<shared_ptr<NamedVariableBlock>> Parameters;
+        std::vector<std::shared_ptr<NamedVariableBlock>> Parameters;
 
 		bool PrintErrors;
 		bool FullDeclaration;
@@ -47,8 +53,8 @@ namespace Leviathan{
 
 		bool ScriptExisted;
 
-		string Entryfunction;
+        std::string Entryfunction;
 	};
 
 }
-#endif
+

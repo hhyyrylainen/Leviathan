@@ -1,14 +1,13 @@
-#ifndef PONG_ARENA
-#define PONG_ARENA
+#pragma once
 // ------------------------------------ //
-#ifndef PONGINCLUDES
 #include "PongIncludes.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "PlayerSlot.h"
-#include "Entities/Objects/TrailEmitter.h"
+#include "Entities/Components.h"
 #include "Common/ThreadSafe.h"
+#include <memory>
+#include <string>
+#include <map>
 
 
 #define BASE_ARENASCALE		1.f	
@@ -17,68 +16,86 @@ namespace Pong{
 
 	class BasePongParts;
 
+    using namespace std;
+
 	class Arena : public ThreadSafe{
 	public:
-		Arena(shared_ptr<Leviathan::GameWorld> world);
+
+        //! \warning The world has to be valid while this object is used
+		Arena(Leviathan::GameWorld* world);
 		~Arena();
+        
 		// Generates an arena to the world //
 		bool GenerateArena(BasePongParts* game, PlayerList &plys);
 
         //! Makes sure the trail object exists
-        void VerifyTrail();
+        void VerifyTrail(Lock &guard);
+
+        inline void VerifyTrail(){
+
+            GUARD_LOCK();
+            VerifyTrail(guard);
+        }
 
 		void ServeBall();
 		// Does what ever is needed to ditch old ball //
 		void LetGoOfBall();
 
-		inline shared_ptr<Leviathan::GameWorld> GetWorld(){
-			return TargetWorld;
-		}
+        void RegisterBall(Lock &guard, ObjectID ball){
 
-        void RegisterBall(ObjectPtr ball){
-
-            GUARD_LOCK_THIS_OBJECT();
-            
-            Ball.reset();
             Ball = ball;
         }
 
 		string GetMaterialNameForPlayerColour(const Float4 &colour);
 
-		void ColourTheBallTrail(const Float4 &colour);
+		void ColourTheBallTrail(Lock &guard, const Float4 &colour);
 
-		inline ObjectPtr GetBallPtr(){
-            GUARD_LOCK_THIS_OBJECT();
+        inline void ColourTheBallTrail(const Float4 &colour){
+
+            GUARD_LOCK();
+            ColourTheBallTrail(guard, colour);
+        }
+
+		inline ObjectID GetBall(Lock &guard){
+
 			return Ball;
 		}
+
+        inline ObjectID GetBall(){
+
+            GUARD_LOCK();
+            return GetBall(guard);
+        }
 
 		// Checks based on generated arena if ball intersects (or could) with a paddle area //
 		bool IsBallInPaddleArea();
 
 	private:
 
-		void _ClearPointers();
+		void _ClearPointers(Lock &guard);
 		// ------------------------------------ //
 
 		// the world to which the arena is generated //
-		shared_ptr<Leviathan::GameWorld> TargetWorld;
+        Leviathan::GameWorld* TargetWorld;
 
 		// Stored object pointers //
 
 		// Arena bottom //
-		ObjectPtr BottomBrush;
+		ObjectID BottomBrush;
 
 		// The ball trail object //
-		ObjectPtr TrailKeeper;
-		Leviathan::Entity::TrailEmitter* DirectTrail;
+		ObjectID TrailKeeper;
 
 		// ball prop //
-		ObjectPtr Ball;
+		ObjectID Ball;
 
-		// Used to store already generated materials for paddles //
-		std::map<Float4, string> ColourMaterialName;
+		//! Used to store already generated materials for paddles
+		std::map<Float4, std::string> ColourMaterialName;
+
+        //! Lock for ColourMaterialName
+        Mutex ColourMaterialNameMutex;
 
 	};
 
 }
-#endif
+

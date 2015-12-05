@@ -108,7 +108,7 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 		}
 
         {
-            boost::unique_lock<boost::mutex> lock(PlayerIDMutex);
+            Lock lock(PlayerIDMutex);
             
             // Add this player to the slot //
             chosenslot->SlotJoinPlayer(dynamic_cast<Leviathan::ConnectedPlayer*>(sender), ++PlayerUniqueCounter);
@@ -124,9 +124,9 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 		chosenslot->SetControls(PLAYERCONTROLS_ARROWS, 0);
 
 
-		Logger::Get()->Info(L"Player joined slot "+Convert::ToWstring(slotnumber)+L", split "+Convert::ToWstring<int>(
-                split)+L" (networked control: "+Convert::ToWstring(newid)+L") named "+
-            Convert::Utf8ToUtf16(sender->GetNickname()));
+		Logger::Get()->Info("Player joined slot "+Convert::ToString(slotnumber)+", split "+
+            Convert::ToString<int>(split)+" (networked control: "+Convert::ToString(newid)+
+            ") named "+sender->GetNickname());
 
 		slots->NotifyUpdatedValue();
         
@@ -196,7 +196,7 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 				// And set it as open //
 				chosenslot->GetSplit()->SetPlayer(PLAYERTYPE_EMPTY, 0);
 
-				Logger::Get()->Info(L"New split slot opened, "+Convert::ToWstring(slotnumber));
+				Logger::Get()->Info("New split slot opened, "+Convert::ToString(slotnumber));
 				slots->NotifyUpdatedValue();
 				return;
 			}
@@ -225,10 +225,10 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
         ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([]() -> void
             {
 
-                Logger::Get()->Info(L"TODO: check permissions");
+                Logger::Get()->Info("TODO: check permissions");
 
 
-                Logger::Get()->Info(L"TODO: check can a match actually begin");
+                Logger::Get()->Info("TODO: check can a match actually begin");
 
                 // Start the match //
                 PongServer::Get()->OnStartPreMatch();
@@ -291,12 +291,13 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
         if(!chosenslot->IsSlotActive())
             return;
 
-        Logger::Get()->Info("Pong: setting slot "+Convert::ToString(slotnumber)+" split "+Convert::ToString(split)+
-            "controls to "+Convert::ToString(controls)+", "+Convert::ToString(number));
+        Logger::Get()->Info("Pong: setting slot "+Convert::ToString(slotnumber)+" split "+
+            Convert::ToString(split)+"controls to "+Convert::ToString(controls)+
+            ", "+Convert::ToString(number));
         
 		chosenslot->SetControls(static_cast<PLAYERCONTROLS>(controls), number);
 
-		slots->NotifyUpdatedValue();        
+		slots->NotifyUpdatedValue();
         
     } else {
 

@@ -1,19 +1,14 @@
-#ifndef LEVIATHAN_GUISCRIPTBIND
-#define LEVIATHAN_GUISCRIPTBIND
-
+#pragma once
 
 #include "angelscript.h"
 #include "GuiScriptInterface.h"
 #include "BaseGuiObject.h"
 #include "GuiManager.h"
 #include "add_on/autowrapper/aswrappedcall.h"
-#include "CEGUI/Window.h"
-#include "CEGUI/widgets/TabControl.h"
-#include "CEGUI/widgets/Combobox.h"
-#include "CEGUI/widgets/ListboxItem.h"
-#include "CEGUI/widgets/ListWidget.h"
-#include "CEGUI/WindowManager.h"
+#include "../CEGUIInclude.h"
 #include "FileSystem.h"
+
+using namespace std;
 
 void CEGUIWindowSetTextProxy(CEGUI::Window* obj, const string &text){
 	
@@ -109,12 +104,10 @@ bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const string &filename, 
 {
 
 	// Find the file //
-	const wstring tmpfile = Convert::Utf8ToUtf16(filename);
+	const string onlyname = StringOperations::RemoveExtensionString(filename, true);
 
-	const wstring wfilename = StringOperations::RemoveExtensionWstring(tmpfile, true);
-
-	const wstring& targetfile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, wfilename,
-        StringOperations::GetExtensionWstring(tmpfile), true);
+	const string &targetfile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, onlyname,
+        StringOperations::GetExtensionString(filename), true);
 
 	if(targetfile.empty()){
 
@@ -134,7 +127,7 @@ bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const string &filename, 
 	// Load the file to memory //
 	string filecontents;
 
-	FileSystem::ReadFileEntirely(Convert::WstringToString(targetfile), filecontents);
+	FileSystem::ReadFileEntirely(targetfile, filecontents);
 
 	if(filecontents.empty())
 		return false;
@@ -155,7 +148,8 @@ bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const string &filename, 
 
 
 	// This makes sure that the name is right //
-	convtabs->getChild(CEGUI::String("__auto_TabPane__Buttons/__auto_btn")+newwindow->getName())->setText(tabname);
+	convtabs->getChild(CEGUI::String("__auto_TabPane__Buttons/__auto_btn")+
+        newwindow->getName())->setText(tabname);
 
 	// Succeeded //
 	return true;
@@ -197,13 +191,16 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_ADDREF, "void f()", asMETHOD(Gui::GuiCollection, AddRefProxy), asCALL_THISCALL) < 0){
+	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_ADDREF, "void f()",
+            asMETHOD(Gui::GuiCollection, AddRefProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_RELEASE, "void f()", asMETHOD(Gui::GuiCollection, ReleaseProxy), asCALL_THISCALL) < 0){
+	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_RELEASE, "void f()",
+            asMETHOD(Gui::GuiCollection, ReleaseProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("GuiCollection", "string GetName()", asMETHOD(Gui::GuiCollection, GetNameProxy), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("GuiCollection", "string GetName()",
+            asMETHOD(Gui::GuiCollection, GetNameProxy), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -213,7 +210,9 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiManager", "bool SetCollectionState(string name, bool state = false)", asMETHOD(Gui::GuiManager, SetCollectionStateProxy), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("GuiManager",
+            "bool SetCollectionState(const string &in name, bool state = false)",
+            asMETHOD(Gui::GuiManager, SetCollectionState), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -225,34 +224,41 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	}
 	// no factory function to prevent scripts from creating these functions //
 
-	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_ADDREF, "void f()", asMETHOD(Gui::BaseGuiObject, AddRefProxy), asCALL_THISCALL) < 0){
+	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_ADDREF, "void f()",
+            asMETHOD(Gui::BaseGuiObject, AddRefProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_RELEASE, "void f()", asMETHOD(Gui::BaseGuiObject, ReleaseProxy), asCALL_THISCALL) < 0){
+	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_RELEASE, "void f()",
+            asMETHOD(Gui::BaseGuiObject, ReleaseProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiObject", "int GetID()", asMETHOD(Gui::BaseGuiObject, GetID), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "int GetID()", asMETHOD(Gui::BaseGuiObject,
+                GetID), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiObject", "ScriptSafeVariableBlock@ GetAndPopFirstUpdated()", asMETHOD(Gui::BaseGuiObject, GetAndPopFirstUpdated), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "ScriptSafeVariableBlock@ GetAndPopFirstUpdated()", asMETHOD(
+                Gui::BaseGuiObject, GetAndPopFirstUpdated), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiObject", "GuiManager& GetOwningManager()", asMETHOD(Gui::BaseGuiObject, GetOwningManager), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "GuiManager& GetOwningManager()", asMETHOD(Gui::BaseGuiObject,
+                GetOwningManager), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiObject", "string GetName()", asMETHOD(Gui::BaseGuiObject, GetNameAsString), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "string GetName()", asMETHOD(Gui::BaseGuiObject,
+                GetName), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	
-	if(engine->RegisterObjectMethod("GuiObject", "void PrintWindowsRecursive()", asMETHOD(Gui::BaseGuiObject, PrintWindowsRecursiveProxy), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "void PrintWindowsRecursive()", asMETHOD(Gui::BaseGuiObject,
+                PrintWindowsRecursiveProxy), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -267,17 +273,20 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("Window", "void SetText(const string &in newtext)", asFUNCTION(CEGUIWindowSetTextProxy), asCALL_CDECL_OBJFIRST) < 0)
+	if(engine->RegisterObjectMethod("Window", "void SetText(const string &in newtext)",
+            asFUNCTION(CEGUIWindowSetTextProxy), asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("Window", "string GetText()", asFUNCTION(CEGUIWindowGetTextProxy), asCALL_CDECL_OBJFIRST) < 0)
+	if(engine->RegisterObjectMethod("Window", "string GetText()", asFUNCTION(CEGUIWindowGetTextProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("Window", "Window& GetChildWindow(const string &in namepath)", asFUNCTION(CEGUIWindowGetChildWindowProxy), asCALL_CDECL_OBJFIRST) < 0)
+	if(engine->RegisterObjectMethod("Window", "Window& GetChildWindow(const string &in namepath)",
+            asFUNCTION(CEGUIWindowGetChildWindowProxy), asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -288,12 +297,14 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("Window", "void Invalidate(bool recursive = false)", asFUNCTION(CEGUIWindowInvalidateProxy), asCALL_CDECL_OBJFIRST) < 0)
+	if(engine->RegisterObjectMethod("Window", "void Invalidate(bool recursive = false)",
+            asFUNCTION(CEGUIWindowInvalidateProxy), asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("Window", "bool SetSelectedTabIndex(int index)", asFUNCTION(CEGUITabControlSetActiveTabIndex), asCALL_CDECL_OBJFIRST) < 0)
+	if(engine->RegisterObjectMethod("Window", "bool SetSelectedTabIndex(int index)",
+            asFUNCTION(CEGUITabControlSetActiveTabIndex), asCALL_CDECL_OBJFIRST) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -339,10 +350,14 @@ bool BindGUIObjects(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiManager", "CEGUI::Window& GetWindowByName(const string &in namepath)", asMETHOD(Gui::GuiManager, GetWindowByStringName), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("GuiManager",
+            "CEGUI::Window& GetWindowByName(const string &in namepath)",
+            asMETHODPR(Gui::GuiManager, GetWindowByStringName, (const string&), CEGUI::Window*),
+            asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+    
 	if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetElement()", asMETHOD(Gui::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
@@ -356,10 +371,10 @@ bool BindGUIObjects(asIScriptEngine* engine){
 }
 
 
-void RegisterGUIScriptTypeNames(asIScriptEngine* engine, std::map<int, wstring> &typeids){
+void RegisterGUIScriptTypeNames(asIScriptEngine* engine, std::map<int, string> &typeids){
 
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("GuiCollection"), L"GuiCollection"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("GuiObject"), L"GuiObject"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("GuiCollection"), "GuiCollection"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("GuiObject"), "GuiObject"));
 }
 
-#endif
+

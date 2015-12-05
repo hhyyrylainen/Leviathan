@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_SYNCEDVARIABLES
-#define LEVIATHAN_SYNCEDVARIABLES
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/ThreadSafe.h"
 #include "NetworkResponse.h"
 #include "SyncedResource.h"
@@ -27,8 +23,6 @@ namespace Leviathan{
 		DLLEXPORT SyncedValue(NamedVariableList* newddata, bool passtoclients = true, bool allowevents = true);
 		DLLEXPORT ~SyncedValue();
 
-
-		
 
 		//! \brief Call after changing the HeldVariables
 		DLLEXPORT void NotifyUpdated();
@@ -77,39 +71,46 @@ namespace Leviathan{
 
 		//! \brief Adds a new variable to be synced
 		//!
-		//! The variable is automatically then broadcasted to all the connected instances (or the server if this instance is a client)
-		//! \note (Verify this, might be false) The variable needs to be added on both the client and the server for this to work. 
+		//! The variable is automatically then broadcasted to all the connected instances
+        //! (or the server if this instance is a client)
+		//! \note (Verify this, might be false) The variable needs to be added on both the
+        //! client and the server for this to work. 
 		//! Not doing this may cause the client to get kicked
 		//! \return The value is true if it was added
 		//! \see SyncedValue
-		DLLEXPORT bool AddNewVariable(shared_ptr<SyncedValue> newvalue);
+		DLLEXPORT bool AddNewVariable(std::shared_ptr<SyncedValue> newvalue);
 
 
 		//! \brief Handles all requests aimed at the synchronized variables
-		DLLEXPORT bool HandleSyncRequests(shared_ptr<NetworkRequest> request, ConnectionInfo* connection);
+		DLLEXPORT bool HandleSyncRequests(std::shared_ptr<NetworkRequest> request,
+            ConnectionInfo* connection);
 
 		//! \brief Handles a response only packet, if it is a sync packet
 		//! \note This will most likely only receive variable updated notifications
-		DLLEXPORT bool HandleResponseOnlySync(shared_ptr<NetworkResponse> response, ConnectionInfo* connection);
+		DLLEXPORT bool HandleResponseOnlySync(std::shared_ptr<NetworkResponse> response,
+            ConnectionInfo* connection);
 
 
 		//! \brief Adds another instance to sync with
 		//! \note The ConnectionInfo parameter should be locked during this call
 		DLLEXPORT void AddAnotherToSyncWith(ConnectionInfo* unsafeptr);
 
-		DLLEXPORT FORCE_INLINE void RemoveConnectionWithAnother(ConnectionInfo* ptr){
-
-			GUARD_LOCK_THIS_OBJECT();
-			RemoveConnectionWithAnother(ptr, guard);
+		DLLEXPORT FORCE_INLINE void RemoveConnectionWithAnother(ConnectionInfo* ptr,
+            bool alreadyunhooking = false)
+        {
+			GUARD_LOCK();
+			RemoveConnectionWithAnother(ptr, guard, alreadyunhooking);
 		}
 
 
 		//! \brief Stops updating with a single other
 		//! \param alreadyunhooking Used internally don't set to true unless you know what you are doing
-		DLLEXPORT void RemoveConnectionWithAnother(ConnectionInfo* ptr, ObjectLock &guard, bool alreadyunhooking = false);
+		DLLEXPORT void RemoveConnectionWithAnother(ConnectionInfo* ptr, Lock &guard,
+            bool alreadyunhooking = false);
 
 
-		//! \brief Provided for NetworkServerInterface and NetworkClientInterface to access AddAnotherToSyncWith and other functions
+		//! \brief Provided for NetworkServerInterface and NetworkClientInterface to
+        //! access AddAnotherToSyncWith and other functions
 		DLLEXPORT static SyncedVariables* Get();
 
 		//! \brief Call before requesting full value sync
@@ -121,12 +122,12 @@ namespace Leviathan{
 		DLLEXPORT bool IsSyncDone();
 
 		//! \brief Checks whether a name is already in use
-		DLLEXPORT bool IsVariableNameUsed(const wstring &name, ObjectLock &guard);
+		DLLEXPORT bool IsVariableNameUsed(Lock &guard, const std::string &name);
 
 		//! \brief Short version for IsVariableNameUsed
-		DLLEXPORT FORCE_INLINE bool IsVariableNameUsed(const wstring &name){
-			GUARD_LOCK_THIS_OBJECT();
-			return IsVariableNameUsed(name, guard);
+		DLLEXPORT FORCE_INLINE bool IsVariableNameUsed(const std::string &name){
+			GUARD_LOCK();
+			return IsVariableNameUsed(guard, name);
 		}
 
 		//! \brief Sets the expected number of variables received
@@ -139,26 +140,36 @@ namespace Leviathan{
 	protected:
 
 		//! \brief Sends update notifications about a variable
-		void _NotifyUpdatedValue(const SyncedValue* const valtosync, int useid = -1);
-		void _NotifyUpdatedValue(SyncedResource* valtosync, int useid = -1);
+		inline void _NotifyUpdatedValue(const SyncedValue* const valtosync, int useid = -1){
 
-		shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(ConnectionInfo* unsafeptr, const SyncedValue* const valtosync);
-		shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(ConnectionInfo* unsafeptr, SyncedResource* valtosync);
+            GUARD_LOCK();
+            _NotifyUpdatedValue(guard, valtosync, useid);
+        }
 
-		void _UpdateFromNetworkReceive(NetworkResponseDataForSyncValData* datatouse, ObjectLock &guard);
+        void _NotifyUpdatedValue(Lock &guard, const SyncedValue* const valtosync, int useid = -1);
+        
+		void _NotifyUpdatedValue(Lock &guard, SyncedResource* valtosync, int useid = -1);
+
+        std::shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(ConnectionInfo* unsafeptr,
+            const SyncedValue* const valtosync);
+        std::shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(ConnectionInfo* unsafeptr,
+            SyncedResource* valtosync);
+
+		void _UpdateFromNetworkReceive(NetworkResponseDataForSyncValData* datatouse, Lock &guard);
 
 		//! \brief SyncedResource calls this when it is updated
 		void _IWasUpdated(SyncedResource* me);
 
 		//! \brief This is called when an update to a SyncedResource is received through the network
-		void _OnSyncedResourceReceived(const wstring &name, sf::Packet &packetdata);
+		void _OnSyncedResourceReceived(const std::string &name, sf::Packet &packetdata);
 
 		//! \brief Updates the number of synced values received during SyncDone
-		void _UpdateReceiveCount(const wstring &nameofthing);
+		void _UpdateReceiveCount(const std::string &nameofthing);
 
 
 		//! \brief Used to remove connections that are no longer active
-		virtual void _OnNotifierDisconnected(BaseNotifierAll* parenttoremove);
+		void _OnNotifierDisconnected(Lock &guard, BaseNotifierAll* parenttoremove,
+            Lock &parentlock) override;
 
 		// ------------------------------------ //
 
@@ -179,7 +190,7 @@ namespace Leviathan{
 		//!
 		//! This is used to keep track of how many values have been updated
 		//! \todo Potentially use a map here
-		std::vector<unique_ptr<wstring>> ValueNamesUpdated;
+		std::vector<std::unique_ptr<std::string>> ValueNamesUpdated;
 
 		//! The expected number of variables to receive during SyncDone is false
 		size_t ExpectedThingCount;
@@ -188,7 +199,7 @@ namespace Leviathan{
 		size_t ActualGotThingCount;
 
 		//! Contains the values that are to be synced
-		std::vector<shared_ptr<SyncedValue>> ToSyncValues;
+		std::vector<std::shared_ptr<SyncedValue>> ToSyncValues;
 
 		//! Keeps tract of other instances that are allowed to request from us
 		//!
@@ -201,4 +212,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

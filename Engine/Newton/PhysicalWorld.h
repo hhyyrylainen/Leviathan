@@ -1,9 +1,6 @@
-#ifndef LEVIATHAN_PHYSICALWORLD
-#define LEVIATHAN_PHYSICALWORLD
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
 // ---- includes ---- //
 //#ifdef __GNUC__
@@ -13,8 +10,8 @@
 //#endif //__GNUC__
 
 #include <Newton.h>
-#include "boost/thread/mutex.hpp"
-#include "boost/function.hpp"
+#include <functional>
+#include "../Common/ThreadSafe.h"
 
 //#ifdef __GNUC__
 //#pragma GCC diagnostic pop
@@ -29,7 +26,7 @@ namespace Leviathan{
 
     int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void* islandHandle, int bodyCount);
     
-	class PhysicalWorld : public Object{
+	class PhysicalWorld{
         friend int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void*
             islandHandle, int bodyCount);
 	public:
@@ -37,17 +34,6 @@ namespace Leviathan{
 		DLLEXPORT PhysicalWorld(GameWorld* owner);
 		DLLEXPORT ~PhysicalWorld();
 
-        //! \brief Simulates the world and only allowing islands which contain body to update
-        //! \param callback Called each time the world is simulated. This is used to replace old states with
-        //! the resimulated ones
-        //! \param targetentity This is used for resimulate events. Set to NULL to disable
-        //! \todo Improve performance by making this use a newton method that simulates a single body
-        //! instead of doing a full update and just discarding all changing bodies that aren't wanted
-        //! \todo Add an event that allows entity controllers to update forces when one of their controlled
-        //! entities are being simulated
-        DLLEXPORT void ResimulateBody(NewtonBody* body, int milliseconds, boost::function<void()> callback,
-            BaseConstraintable* targetentity);
-        
         //! \brief Calculates and simulates away all accumulated time
         DLLEXPORT void SimulateWorld(int maxruns = -1);
 
@@ -74,7 +60,7 @@ namespace Leviathan{
 		GameWorld* OwningWorld;
 
         //! Lock for world updates
-        boost::mutex WorldUpdateLock;
+        Mutex WorldUpdateLock;
 
         //! Used for resimulation
         //! \todo Potentially allow this to be a vector
@@ -82,4 +68,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

@@ -1,13 +1,13 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_SOUND
 #include "SoundDevice.h"
-#endif
+
+#include "Define.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 
 // might as well resize space for maximum number of playing sounds //
-SoundDevice::SoundDevice() : LoadedSoundObjects(MAX_CONCURRENT_SOUNDS, shared_ptr<SoundPlayingSlot>(nullptr)){
+SoundDevice::SoundDevice() : LoadedSoundObjects(MAX_CONCURRENT_SOUNDS, std::shared_ptr<SoundPlayingSlot>(nullptr)){
 
 	// set instance //
 	Instance = this;
@@ -55,7 +55,7 @@ void SoundDevice::Tick(int PassedMs){
 	}
 }
 
-DLLEXPORT shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(const wstring &file){
+DLLEXPORT std::shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(const string &file){
 	// loop all and get an empty one or if some already has it return it (if not active) //
 	for(size_t i = 0; i < LoadedSoundObjects.size(); i++){
 		if(LoadedSoundObjects[i]){
@@ -68,7 +68,7 @@ DLLEXPORT shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(c
 
 		} else {
 			// add new //
-			LoadedSoundObjects[i] = shared_ptr<SoundPlayingSlot>(new SoundPlayingSlot());
+			LoadedSoundObjects[i] = std::shared_ptr<SoundPlayingSlot>(new SoundPlayingSlot());
 			return LoadedSoundObjects[i];
 		}
 	}
@@ -78,7 +78,7 @@ DLLEXPORT shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(c
 	return NULL;
 }
 
-DLLEXPORT shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(){
+DLLEXPORT std::shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(){
 #ifdef _WIN32
 	throw exception("not implemented");
 #else
@@ -90,7 +90,8 @@ DLLEXPORT void Leviathan::SoundDevice::SetSoundListenerPosition(const Float3 &po
 	sf::Listener::setPosition(pos.X, pos.Y, pos.X);
 	// we need to create a vector from the angles //
 
-	Float3 vec = Float3(-sin(pitchyawroll.X*DEGREES_TO_RADIANS), sin(pitchyawroll.Y*DEGREES_TO_RADIANS), -cos(pitchyawroll.X*DEGREES_TO_RADIANS));
+	Float3 vec = Float3(-sin(pitchyawroll.X*DEGREES_TO_RADIANS),
+        sin(pitchyawroll.Y*DEGREES_TO_RADIANS), -cos(pitchyawroll.X*DEGREES_TO_RADIANS));
 
 	sf::Listener::setDirection(vec.X, vec.Y, vec.Z);
 }

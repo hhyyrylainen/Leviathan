@@ -1,12 +1,9 @@
-#ifndef LEVIATHAN_QUEUEDTASK
-#define LEVIATHAN_QUEUEDTASK
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include <boost/function.hpp>
+#include <functional>
+#include "../TimeIncludes.h"
 
 //! Default value to pass for ignoring this setting //
 #define TASK_MUSTBERAN_BEFORE_EXIT			0
@@ -33,11 +30,11 @@ namespace Leviathan{
 
 	//! \brief Encapsulates a function that can later be ran in a free thread
 	//! \warning Function passed to this class should be thread safe
-	//! \warning This is not explicitly thread safe, it might be through Boost::Thread
+	//! \warning This is not explicitly thread safe, it might be through std::Thread
 	class QueuedTask{
 	public:
 		//! Takes in the function which is ran when the Task is ran
-		DLLEXPORT QueuedTask(boost::function<void ()> functorun);
+		DLLEXPORT QueuedTask(std::function<void ()> functorun);
 		DLLEXPORT virtual ~QueuedTask();
 
 		//! \brief Runs the stored function
@@ -74,7 +71,7 @@ namespace Leviathan{
 		// ------------------------------------ //
 
 		//! The function to run
-		boost::function<void ()> FunctionToRun;
+		std::function<void ()> FunctionToRun;
 
 	};
 
@@ -86,7 +83,7 @@ namespace Leviathan{
 	public:
 		//! Constructs a task that can be controlled when it can be ran
 		//! \param canberuncheck Is ran when CanBeRan is called, so it should be relatively cheap to call
-		DLLEXPORT ConditionalTask(boost::function<void ()> functorun, boost::function<bool ()> canberuncheck);
+		DLLEXPORT ConditionalTask(std::function<void ()> functorun, std::function<bool ()> canberuncheck);
 		DLLEXPORT virtual ~ConditionalTask();
 
 
@@ -96,7 +93,7 @@ namespace Leviathan{
 	protected:
 
 		//! The function for checking if the task is allowed to be run
-		boost::function<bool ()> TaskCheckingFunc;
+		std::function<bool ()> TaskCheckingFunc;
 	};
 
 
@@ -108,7 +105,7 @@ namespace Leviathan{
         //! to skip checking too often
 		//! \param delaytime The time between checks; time that needs to pass before checking again
 		//! \param canberuncheck Is ran when CanBeRan is called, so it should be relatively cheap to call
-		DLLEXPORT ConditionalDelayedTask(boost::function<void ()> functorun, boost::function<bool ()> canberuncheck, 
+		DLLEXPORT ConditionalDelayedTask(std::function<void ()> functorun, std::function<bool ()> canberuncheck, 
 			const MicrosecondDuration &delaytime);
 		DLLEXPORT virtual ~ConditionalDelayedTask();
 
@@ -119,7 +116,7 @@ namespace Leviathan{
 	protected:
 
 		//! The function for checking if the task is allowed to be run
-		boost::function<bool ()> TaskCheckingFunc;
+		std::function<bool ()> TaskCheckingFunc;
 
 		//! The time after which this task may be checked again
 		WantedClockType::time_point CheckingTime;
@@ -135,11 +132,11 @@ namespace Leviathan{
 		//! Constructs a task that can be controlled when it can be ran
 		//! \param delaytime Is used to control when the task can run
 		//! \see QueuedTask
-		DLLEXPORT DelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &delaytime);
+		DLLEXPORT DelayedTask(std::function<void ()> functorun, const MicrosecondDuration &delaytime);
 		//! Constructs a task that can be controlled when it can be ran
 		//! \param executetime Is used to control when the task can run
 		//! \see QueuedTask
-		DLLEXPORT DelayedTask(boost::function<void ()> functorun, const WantedClockType::time_point &executetime);
+		DLLEXPORT DelayedTask(std::function<void ()> functorun, const WantedClockType::time_point &executetime);
 		DLLEXPORT virtual ~DelayedTask();
 
 
@@ -165,12 +162,12 @@ namespace Leviathan{
 		//! Constructs a task that can be controlled when it can be ran and how many times it is ran
 		//! \param bothdelays Is the time before first execution AND the time between following executions
 		//! \see DelayedTask
-		DLLEXPORT RepeatingDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &bothdelays);
+		DLLEXPORT RepeatingDelayedTask(std::function<void ()> functorun, const MicrosecondDuration &bothdelays);
 		//! Constructs a task that can be controlled when it can be ran and how many times it is ran
 		//! \param initialdelay Is the time before first execution
 		//! \param followingduration Is the time between following executions
 		//! \see DelayedTask
-		DLLEXPORT RepeatingDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay,
+		DLLEXPORT RepeatingDelayedTask(std::function<void ()> functorun, const MicrosecondDuration &initialdelay,
             const MicrosecondDuration &followingduration);
 
 		DLLEXPORT virtual ~RepeatingDelayedTask();
@@ -203,7 +200,7 @@ namespace Leviathan{
 	public:
 		//! Constructs a task that can be controlled how many times it is ran
 		//! \param repeatcount The task is ran this specified times, or the task calls StopRepeating before that
-		DLLEXPORT RepeatCountedTask(boost::function<void ()> functorun, int repeatcount);
+		DLLEXPORT RepeatCountedTask(std::function<void ()> functorun, int repeatcount);
 
         
 		DLLEXPORT virtual ~RepeatCountedTask();
@@ -244,7 +241,7 @@ namespace Leviathan{
 		//! \param bothdelays Is the time before first execution AND the time between following executions
 		//! \param repeatcount The task is ran this specified times, or the task calls StopRepeating before that
 		//! \see DelayedTask
-		DLLEXPORT RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &bothdelays,
+		DLLEXPORT RepeatCountedDelayedTask(std::function<void ()> functorun, const MicrosecondDuration &bothdelays,
             int repeatcount);
         
 		//! Constructs a task that can be controlled when it can be ran and how many times it is ran
@@ -252,8 +249,9 @@ namespace Leviathan{
 		//! \param followingduration Is the time between following executions
 		//! \param repeatcount The task is ran this specified times, or the task calls StopRepeating before that
 		//! \see DelayedTask
-		DLLEXPORT RepeatCountedDelayedTask(boost::function<void ()> functorun, const MicrosecondDuration &initialdelay,
-            const MicrosecondDuration &followingduration, int repeatcount);
+		DLLEXPORT RepeatCountedDelayedTask(std::function<void ()> functorun,
+            const MicrosecondDuration &initialdelay, const MicrosecondDuration &followingduration,
+            int repeatcount);
 
 		DLLEXPORT virtual ~RepeatCountedDelayedTask();
 
@@ -276,4 +274,4 @@ namespace Leviathan{
 
 
 }
-#endif
+

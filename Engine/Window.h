@@ -1,23 +1,17 @@
-#ifndef LEVIATHAN_WINDOW
-#define LEVIATHAN_WINDOW
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "OgreWindowEventUtilities.h"
 #include "OgreRenderWindow.h"
 #include "OIS.h"
 #include "boost/bimap.hpp"
-
+#include "Common/Types.h"
 
 #include <OISMouse.h>
 #include <OISKeyboard.h>
 #include <OISJoyStick.h>
 #include <OISInputManager.h>
-#include "CEGUI/GUIContext.h"
-#include "CEGUI/InputEvent.h"
 
 #ifdef __linux
 
@@ -28,7 +22,6 @@ struct _XDisplay;
 typedef _XDisplay Display;
 
 #endif
-
 
 namespace Leviathan{
 
@@ -65,12 +58,12 @@ namespace Leviathan{
 		//! \return The screen begin x and y, and z and w as the width and height all in screen pixels
 		//! \exception ExceptionNotFound If the window is not found (the internal get rect fails)
 		//! \note This doesn't "work" on linux, same as calling GetWidth and GetHeight
-		DLLEXPORT Int4 GetScreenPixelRect() const THROWS;
+		DLLEXPORT Int4 GetScreenPixelRect() const;
 		
 		//! \brief Translates a client space coordinate to screen coordinate
 		//! \exception ExceptionNotFound If the window is not found (the internal translate fails)
 		//! \note Doesn't work on linux, returns the input point
-		DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const THROWS;
+		DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const;
 				
 		//! \brief Captures input for this window and passes it on
 		DLLEXPORT void GatherInput(CEGUI::InputAggregator* receiver);
@@ -120,7 +113,7 @@ namespace Leviathan{
 		virtual bool buttonReleased(const OIS::JoyStickEvent &arg, int button);
 		virtual bool axisMoved(const OIS::JoyStickEvent &arg, int axis);
 
-		DLLEXPORT string GetOISCharacterAsText(const OIS::KeyCode &code);
+		DLLEXPORT std::string GetOISCharacterAsText(const OIS::KeyCode &code);
 
 		DLLEXPORT inline Ogre::SceneManager* GetOverlayScene(){
 			return OverlayScene;
@@ -130,11 +123,11 @@ namespace Leviathan{
 		}
 		// map that converts OIS::KeyCode to CEGUI key codes, not required since the codes are the same! //
 		//static std::map<OIS::KeyCode, CEGUI::Key::Scan> OISCEGUIKeyConvert;
-		static boost::bimap<wstring, OIS::KeyCode> CharacterToOISConvert;
+		static boost::bimap<std::string, OIS::KeyCode> CharacterToOISConvert;
 
 		// method for other DLLs to call the maps //
-		DLLEXPORT static OIS::KeyCode ConvertWstringToOISKeyCode(const wstring &str);
-		DLLEXPORT static wstring ConvertOISKeyCodeToWstring(const OIS::KeyCode &code);
+		DLLEXPORT static OIS::KeyCode ConvertStringToOISKeyCode(const std::string &str);
+		DLLEXPORT static std::string ConvertOISKeyCodeToString(const OIS::KeyCode &code);
 
 
 	private:
@@ -198,4 +191,4 @@ namespace Leviathan{
 
 
 }
-#endif
+

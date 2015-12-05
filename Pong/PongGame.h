@@ -1,11 +1,7 @@
-#ifndef PONG_GAME
-#define PONG_GAME
+#pragma once
 // ------------------------------------ //
-#ifndef PONGINCLUDES
 #include "PongIncludes.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "GameInputController.h"
 #include "GUI/GuiManager.h"
 #include "Application/GameConfiguration.h"
@@ -40,14 +36,12 @@ namespace Pong{
 
 		//! \brief Connects to a server specified by an address string
 		//! \note Only allows connections to be made to one server at a time (excluding remote console connections)
-		bool Connect(const wstring &address, wstring &errorstr);
-
-		bool ConnectProxy(const string &address, string &error);
+		bool Connect(const string &address, string &errorstr);
 
 		//! \brief Connect method with no result and no error return
-		void Connect(const wstring &address){
+		void ConnectNoError(const string &address){
 			
-			wstring errorcatcher;
+			string errorcatcher;
 			Connect(address, errorcatcher);
 		}
 
@@ -71,13 +65,13 @@ namespace Pong{
 			return ClientInterface;
 		}
 
-		static wstring GenerateWindowTitle();
+		static string GenerateWindowTitle();
 
 		static PongGame* Get();
 
 		// Game configuration checkers //
-		static void CheckGameConfigurationVariables(GameConfiguration* configobj);
-		static void CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
+		static void CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj);
+		static void CheckGameKeyConfigVariables(Lock &guard, KeyConfiguration* keyconfigobj);
 
 		GameInputController* GetInputController(){
 
@@ -118,7 +112,7 @@ namespace Pong{
 		virtual void DoSpecialPostLoad();
 		virtual void CustomizedGameEnd();
 		virtual bool MoreCustomScriptTypes(asIScriptEngine* engine);
-		virtual void MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, wstring> &typeids);
+		virtual void MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, string> &typeids);
 
 
 		//! \brief Sends updates to the GUI
@@ -146,4 +140,4 @@ namespace Pong{
 }
 // ------------------------------------ //
 
-#endif
+

@@ -1,46 +1,47 @@
-#ifndef LEVIATHAN_NETWORKHANDLER
-#define LEVIATHAN_NETWORKHANDLER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "NetworkInterface.h"
-#include <boost/thread.hpp>
 #include "Common/ThreadSafe.h"
+#include "NetworkInterface.h"
 #include "SFML/Network/UdpSocket.hpp"
-
+#include <future>
+#include <thread>
 
 namespace Leviathan{
 
-	void RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar);
+	void RunGetResponseFromMaster(NetworkHandler* instance,
+        std::shared_ptr<std::promise<std::string>> resultvar);
 	
 	enum PACKET_TIMEOUT_STYLE{
         
 
-		PACKAGE_TIMEOUT_STYLE_TIMEDMS,
+		PACKET_TIMEOUT_STYLE_TIMEDMS,
         
-        //! This style marks packets lost after TimeOutMS amount of packets sent after this packet        
-        //! have been confirmed to received
-		//! So if you set this to 1 this packet is resend if even a single packet send after this is
-        //! received by the target host
-		PACKAGE_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED
+        //! This style marks packets lost after TimeOutMS amount of packets sent after
+        //! this packet have been confirmed to received
+		//! Example: If you set TimeOutMS to 1 this packet is resent after a single packet sent
+        //! after this packet is received by the target host (and we have received an ack for it)
+		PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED
 	};
 
 	// Used to pass master server info to the application //
 	struct MasterServerInformation{
-		MasterServerInformation(bool iammaster, const wstring &identificationstr) :
-            RequireMaster(false), IAmMyOwnMaster(true), MasterServerIdentificationString(identificationstr)
+		MasterServerInformation(bool iammaster, const std::string &identificationstr) :
+            MasterServerIdentificationString(identificationstr), RequireMaster(false),
+            IAmMyOwnMaster(true)
         {
 
 		}
 		MasterServerInformation() : RequireMaster(false), IAmMyOwnMaster(false){
 		}
-		MasterServerInformation(const wstring &masterslistfile, const wstring &identification,
-            const wstring &masterserverlistaddress, const wstring &masterserverlistpagename,
-            const wstring &loginsession, bool requireconnection = false) :
-			MasterListFetchServer(masterserverlistaddress), MasterListFetchPage(masterserverlistpagename),
+		MasterServerInformation(const std::string &masterslistfile,
+            const std::string &identification,
+            const std::string &masterserverlistaddress,
+            const std::string &masterserverlistpagename,
+            const std::string &loginsession, bool requireconnection = false) :
+			MasterListFetchServer(masterserverlistaddress),
+            MasterListFetchPage(masterserverlistpagename),
             StoredListFile(masterslistfile), MasterServerIdentificationString(identification),
             LoginStoreFile(loginsession), RequireMaster(requireconnection), IAmMyOwnMaster(false)
         {
@@ -48,24 +49,25 @@ namespace Leviathan{
 		}
         
         
-		wstring MasterListFetchServer;
-		wstring MasterListFetchPage;
-		wstring StoredListFile;
-		wstring MasterServerIdentificationString;
-		wstring LoginStoreFile;
+		std::string MasterListFetchServer;
+		std::string MasterListFetchPage;
+		std::string StoredListFile;
+		std::string MasterServerIdentificationString;
+		std::string LoginStoreFile;
 		bool RequireMaster;
 		bool IAmMyOwnMaster;
 	};
 
 	//! \brief Handles everything related to connections
-	class NetworkHandler : public EngineComponent, public ThreadSafe{
-		friend void RunGetResponseFromMaster(NetworkHandler* instance, shared_ptr<boost::promise<wstring>> resultvar);
+	class NetworkHandler : public ThreadSafe{
+        friend void RunGetResponseFromMaster(NetworkHandler* instance,
+            std::shared_ptr<std::promise<std::string>> resultvar);
 
 		friend ConnectionInfo;
 	public:
 		// Either a client or a server handler //
 		DLLEXPORT NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler);
-		DLLEXPORT ~NetworkHandler();
+		DLLEXPORT virtual ~NetworkHandler();
 
 		DLLEXPORT virtual bool Init(const MasterServerInformation &info);
         
@@ -76,15 +78,17 @@ namespace Leviathan{
 		DLLEXPORT virtual void UpdateAllConnections();
 
         //! \brief Called by Engine to stop own connection update thread
-        DLLEXPORT void StopOwnUpdaterThread();
+        DLLEXPORT void StopOwnUpdaterThread(Lock &guard);
 
 		DLLEXPORT virtual void RemoveClosedConnections();
 
-		DLLEXPORT shared_ptr<boost::promise<wstring>> QueryMasterServer(const MasterServerInformation &info);
+		DLLEXPORT std::shared_ptr<std::promise<std::string>> QueryMasterServer(Lock &guard,
+            const MasterServerInformation &info);
 
 		//! \brief Makes a raw pointer to an ConnectionInfo safe
 		//! \return Returns a safe ptr to the passed ConnectionInfo for using it thread safely
-		DLLEXPORT shared_ptr<ConnectionInfo> GetSafePointerToConnection(ConnectionInfo* unsafeptr);
+		DLLEXPORT std::shared_ptr<ConnectionInfo> GetSafePointerToConnection(
+            ConnectionInfo* unsafeptr);
 
 		//! \brief Creates a new connection or returns an existing connection to address
 		//! \warning This function is not aware of connections that are created without using NetworkHandler so
@@ -94,7 +98,8 @@ namespace Leviathan{
         //! ConnectionInfo objects
 		//! \note This is quite an expensive function and should be called very rarely
 		//! \see OpenConnectionTo
-		DLLEXPORT shared_ptr<ConnectionInfo> GetOrCreatePointerToConnection(const wstring &address);
+		DLLEXPORT std::shared_ptr<ConnectionInfo> GetOrCreatePointerToConnection(
+            const std::string &address);
 
 
 		//! \brief Opens a new connection to the provided address
@@ -106,10 +111,11 @@ namespace Leviathan{
 		//! and will close if no response is received to a keep alive packet (which is sent after a couple of minutes)
 		//! \warning This will always open a new connection. To avoid multiple connections to same target
         //! (and breaking both connections) see GetOrCreatePointerToConnection
-		DLLEXPORT shared_ptr<ConnectionInfo> OpenConnectionTo(const wstring &targetaddress);
+		DLLEXPORT std::shared_ptr<ConnectionInfo> OpenConnectionTo(
+            const std::string &targetaddress);
 
 		//! Returns the port to which our socket has been bind
-		DLLEXPORT USHORT GetOurPort();
+		DLLEXPORT unsigned short GetOurPort();
 
 		//! \brief Gets the type of network this program uses
 		//!
@@ -124,15 +130,15 @@ namespace Leviathan{
 
 		// Common network functions //
 		// For example if passed http://boostslair.com/Pong/MastersList.php returns http://boostslair.com/ //
-		DLLEXPORT static wstring GetServerAddressPartOfAddress(const wstring &fulladdress, const wstring &regextouse =
-            L"http://.*?/");
+		DLLEXPORT static std::string GetServerAddressPartOfAddress(const std::string &fulladdress,
+            const std::string &regextouse = "http://.*?/");
 
 		DLLEXPORT static NetworkHandler* Get();
 		DLLEXPORT static NetworkInterface* GetInterface();
 
 	protected:
 
-		shared_ptr<boost::strict_lock<boost::basic_lockable_adapter<boost::recursive_mutex>>> LockSocketForUse();
+		Lock LockSocketForUse();
 
 		// Closes the socket //
 		void _ReleaseSocket();
@@ -154,14 +160,19 @@ namespace Leviathan{
 		// ------------------------------------ //
 
 		// Internal listing of all connections //
+
+        Mutex ConnectionsToUpdateMutex;
 		std::vector<ConnectionInfo*> ConnectionsToUpdate;
+
+        Mutex ConnectionsToTerminateMutex;
 		std::vector<ConnectionInfo*> ConnectionsToTerminate;
 
-		std::vector<shared_ptr<ConnectionInfo>> AutoOpenedConnections;
+        Mutex AutoOpenedConnectionsMutex;
+		std::vector<std::shared_ptr<ConnectionInfo>> AutoOpenedConnections;
 
 		NETWORKED_TYPE AppType;
 		sf::UdpSocket _Socket;
-		USHORT PortNumber;
+		unsigned short PortNumber;
 
 		//! The syncable variable holder associated with this instance
 		SyncedVariables* VariableSyncer;
@@ -170,38 +181,30 @@ namespace Leviathan{
 		GameSpecificPacketHandler* _GameSpecificPacketHandler;
 
 		// Used to control the locking of the socket //
-		boost::basic_lockable_adapter<boost::recursive_mutex> SocketMutex;
+		Mutex SocketMutex;
 
 		// The master server list //
-		std::vector<shared_ptr<wstring>> MasterServers;
+		std::vector<std::shared_ptr<std::string>> MasterServers;
 
 		//! Stores a "working" (meaning the server has responded something) master server address
-		shared_ptr<ConnectionInfo> MasterServerConnection;
+        std::shared_ptr<ConnectionInfo> MasterServerConnection;
 
 		MasterServerInformation StoredMasterServerInfo;
 
 		//! Makes sure that master server thread is graciously closed //
-		boost::thread MasterServerConnectionThread;
+		std::thread MasterServerConnectionThread;
 		bool CloseMasterServerConnection;
 
 		//! THread that constantly blocks on the socket and waits for packets
-		boost::thread ListenerThread;
+		std::thread ListenerThread;
 
         //! Temporary thread for getting responses while the game is starting
-        boost::thread TemporaryUpdateThread;
+        std::thread TemporaryUpdateThread;
         bool UpdaterThreadStop;
 
-        boost::condition_variable_any NotifyTemporaryUpdater;
+        std::condition_variable_any NotifyTemporaryUpdater;
 
-        //! Mutex that needs to belocked while changing ConnectionsToTerminate or ConnectionsToUpdate or any other
-        //! connection list
-        boost::recursive_mutex ConnectionListMutex;
-
-        //! Mutex which needs to be locked when deleting ConnectionInfo objects or trying to keep them from being
-        //! destroyed. Needs to be locked after ConnectionListMutex
-        boost::mutex ConnectionDestroyMutex;
-
-		wstring MasterServerMustPassIdentification;
+        std::string MasterServerMustPassIdentification;
 
 		// Static access //
 		static NetworkHandler* instance;
@@ -209,4 +212,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

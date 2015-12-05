@@ -1,24 +1,23 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_ENGINE
 #include "Engine.h"
-#endif
+
+#include "Statistics/TimingMonitor.h"
 #include "Application/AppDefine.h"
 #include "Application/Application.h"
 #include "Common/DataStoring/DataStore.h"
-#include "Common/Misc.h"
 #include "Common/StringOperations.h"
 #include "Entities/GameWorld.h"
 #include "Entities/Serializers/SendableEntitySerializer.h"
-#include "Networking/NetworkedInputHandler.h"
 #include "Events/EventHandler.h"
+#include "Handlers/ConstraintSerializerManager.h"
 #include "Handlers/EntitySerializerManager.h"
-#include "Handlers/ObjectLoader.h"
+#include "Handlers/IDFactory.h"
 #include "Handlers/OutOfMemoryHandler.h"
 #include "Handlers/ResourceRefreshHandler.h"
-#include "Handlers/ConstraintSerializerManager.h"
-#include "Networking/NetworkHandler.h"
-#include "Networking/RemoteConsole.h"
 #include "Networking/AINetworkCache.h"
+#include "Networking/NetworkHandler.h"
+#include "Networking/NetworkedInputHandler.h"
+#include "Networking/RemoteConsole.h"
 #include "Newton/NewtonManager.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
@@ -29,9 +28,13 @@
 #include "Statistics/RenderingStatistics.h"
 #include "Threading/ThreadingManager.h"
 #include "Utility/Random.h"
-#include <boost/chrono/duration.hpp>
-#include <boost/thread/future.hpp>
-#include <boost/thread/locks.hpp>
+#include "TimeIncludes.h"
+#include "FileSystem.h"
+#include <chrono>
+#include <future>
+#include <thread>
+#include "GUI/GuiManager.h"
+#include "Iterators/StringIterator.h"
 
 #ifdef LEVIATHAN_USES_VLD
 #include <vld.h>
@@ -47,6 +50,7 @@
 #endif
 
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 
 #ifdef _WIN32
@@ -56,44 +60,40 @@ static const WORD MAX_CONSOLE_LINES = 500;
 #endif
 
 DLLEXPORT Leviathan::Engine::Engine(LeviathanApplication* owner) :
-    Owner(owner), MainConsole(NULL), MainFileHandler(NULL), _NewtonManager(NULL),
-    GraphicalEntity1(NULL), PhysMaterials(NULL), _NetworkHandler(NULL), _ThreadingManager(NULL), NoGui(false),
-    _RemoteConsole(NULL), PreReleaseWaiting(false), PreReleaseDone(false), NoLeap(false),
-    _ResourceRefreshHandler(NULL), PreReleaseCompleted(false), _EntitySerializerManager(NULL),
-    _ConstraintSerializerManager(NULL), _AINetworkCache(NULL)
+    Define(NULL), RenderTimer(NULL), Graph(NULL), GraphicalEntity1(NULL), Sound(NULL),
+    Mainstore(NULL), MainEvents(NULL), MainScript(NULL), MainConsole(NULL), MainFileHandler(NULL),
+    MainRandom(NULL),  OutOMemory(NULL), _NewtonManager(NULL), PhysMaterials(NULL),
+    _NetworkHandler(NULL), _ThreadingManager(NULL), _RemoteConsole(NULL),
+    _ResourceRefreshHandler(NULL), _EntitySerializerManager(NULL),
+    _ConstraintSerializerManager(NULL), _AINetworkCache(NULL), IDDefaultInstance(NULL),
+    Owner(owner),
+    PreReleaseDone(false), PreReleaseWaiting(false), NoGui(false), NoLeap(false),
+    NoSTDInput(false), IsClient(false), PreReleaseCompleted(false)
 {
-	IDDefaultInstance = IDFactory::Get();
-
-	Inited = false;
-	Graph = NULL;
-	Define = NULL;
-	MainRandom = NULL;
-	RenderTimer = NULL;
-
-	Sound = NULL;
 
 	TimePassed = 0;
-	LastFrame = 0;
 
-	Mainstore = NULL;
-	MainScript = NULL;
+    // This makes sure that uninitialized engine will have at least some last frame time //
+	LastTickTime = Time::GetTimeMs64();
 
 	TickCount = 0;
 	TickTime = 0;
 	FrameCount = 0;
 
-	MainEvents = NULL;
-	Loader = NULL;
-	OutOMemory = NULL;
-
 #ifdef LEVIATHAN_USES_LEAP
 	LeapData = NULL;
 #endif
+
+    instance = this;
 }
 
 DLLEXPORT Leviathan::Engine::~Engine(){
 	// Reset the instance ptr //
 	instance = NULL;
+
+    // This thread is really well blocked until the end of time //
+    if(CinThread.joinable())
+        CinThread.detach();
 }
 
 Engine* Leviathan::Engine::instance = NULL;
@@ -107,26 +107,27 @@ DLLEXPORT Engine* Leviathan::Engine::Get(){
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
     
 	// Get the  time, for monitoring how long loading takes //
-	__int64 InitStartTime = Misc::GetTimeMs64();
+	auto InitStartTime = Time::GetTimeMs64();
 
-	// Set static access to this object //
-	instance = this;
-    
 	// Store parameters //
 	Define = definition;
+
+    IsClient = ntype == NETWORKED_TYPE_CLIENT;
 
 	// Create all the things //
     
 	OutOMemory = new OutOfMemoryHandler();
 
+    IDDefaultInstance = new IDFactory();
+
 	// Create threading facilities //
 	_ThreadingManager = new ThreadingManager();
 	if(!_ThreadingManager->Init()){
 
-		Logger::Get()->Error(L"Engine: Init: cannot start threading");
+		Logger::Get()->Error("Engine: Init: cannot start threading");
 		return false;
 	}
 
@@ -145,7 +146,8 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 #endif
 
 		// Tell window title //
-		Logger::Get()->Write(L"// ----------- "+Define->GetWindowDetails().Title+L" ----------- //");
+		Logger::Get()->Write("// ----------- "+Define->GetWindowDetails().Title+
+            " ----------- //");
 	}
 	
 
@@ -154,7 +156,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 
 	// We want to send a request to the master server as soon as possible //
     {
-        boost::unique_lock<boost::mutex> lock(NetworkHandlerLock);
+        Lock lock(NetworkHandlerLock);
         
         _NetworkHandler = new NetworkHandler(ntype, Define->GetPacketHandler());
 
@@ -167,7 +169,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	_ResourceRefreshHandler = new ResourceRefreshHandler();
 	if(!_ResourceRefreshHandler->Init()){
 
-		Logger::Get()->Error(L"Engine: Init: cannot start resource monitor");
+		Logger::Get()->Error("Engine: Init: cannot start resource monitor");
 		return false;
 	}
 
@@ -175,7 +177,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	Mainstore = new DataStore(true);
 	if(!Mainstore){
 
-		Logger::Get()->Error(L"Engine: Init: failed to create main data store");
+		Logger::Get()->Error("Engine: Init: failed to create main data store");
 		return false;
 	}
 
@@ -183,13 +185,13 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	MainFileHandler = new FileSystem();
 	if(!MainFileHandler){
 
-		Logger::Get()->Error(L"Engine: Init: failed to create FileSystem");
+		Logger::Get()->Error("Engine: Init: failed to create FileSystem");
 		return false;
 	}
 
 	if(!MainFileHandler->Init()){
 
-		Logger::Get()->Error(L"Engine: Init: failed to init FileSystem");
+		Logger::Get()->Error("Engine: Init: failed to init FileSystem");
 		return false;
 	}
 
@@ -200,75 +202,69 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	MainEvents = new EventHandler();
 	if(!MainEvents){
 
-		Logger::Get()->Error(L"Engine: Init: failed to create MainEvents");
+		Logger::Get()->Error("Engine: Init: failed to create MainEvents");
 		return false;
 	}
 
 	if(!MainEvents->Init()){
 
-		Logger::Get()->Error(L"Engine: Init: failed to init MainEvents");
+		Logger::Get()->Error("Engine: Init: failed to init MainEvents");
 		return false;
 	}
 
 	// Check is threading properly started //
 	if(!_ThreadingManager->CheckInit()){
 
-		Logger::Get()->Error(L"Engine: Init: threading start failed");
+		Logger::Get()->Error("Engine: Init: threading start failed");
 		return false;
 	}
 
 	// create script interface before renderer //
-	boost::promise<bool> ScriptInterfaceResult;
+	std::promise<bool> ScriptInterfaceResult;
     
 	// Ref is OK to use since this task finishes before this function //
-    _ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
-                        boost::promise<bool> &returnvalue, Engine* engine) -> void
+    _ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(std::bind<void>([](
+                        std::promise<bool> &returnvalue, Engine* engine) -> void
         {
 
-            engine->MainScript = new ScriptInterface();
-            if(!engine->MainScript){
+            try{
+                engine->MainScript = new ScriptExecutor();
+            } catch(const Exception&){
 
-                Logger::Get()->Error(L"Engine: Init: failed to create ScriptInterface");
+                Logger::Get()->Error("Engine: Init: failed to create ScriptInterface");
                 returnvalue.set_value(false);
-                return;
-            }
-
-            if(!engine->MainScript->Init()){
-
-                Logger::Get()->Error(L"Engine: Init: failed to init ScriptInterface");
-                returnvalue.set_value(false);
-                return;
+                return;                
             }
 
             // create console after script engine //
             engine->MainConsole = new ScriptConsole();
             if(!engine->MainConsole){
 
-                Logger::Get()->Error(L"Engine: Init: failed to create ScriptConsole");
+                Logger::Get()->Error("Engine: Init: failed to create ScriptConsole");
                 returnvalue.set_value(false);
                 return;
             }
 
             if(!engine->MainConsole->Init(engine->MainScript)){
 
-                Logger::Get()->Error(L"Engine: Init: failed to initialize Console, continuing anyway");
+                Logger::Get()->Error("Engine: Init: failed to initialize Console, continuing anyway");
             }
 
             returnvalue.set_value(true);
-        }, boost::ref(ScriptInterfaceResult), this))));
+        }, std::ref(ScriptInterfaceResult), this))));
 
 	// create newton manager before any newton resources are needed //
-	boost::promise<bool> NewtonManagerResult;
+	std::promise<bool> NewtonManagerResult;
     
 	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(new QueuedTask(boost::bind<void>([](
-                    boost::promise<bool> &returnvalue, Engine* engine) -> void
+	_ThreadingManager->QueueTask(new QueuedTask(std::bind<void>([](
+                    std::promise<bool> &returnvalue, Engine* engine) -> void
         {
 
             engine->_NewtonManager = new NewtonManager();
             if(!engine->_NewtonManager){
 
-                Logger::Get()->Error(L"Engine: Init: failed to create NewtonManager");
+                Logger::Get()->Error("Engine: Init: failed to create NewtonManager");
                 returnvalue.set_value(false);
                 return;
             }
@@ -277,7 +273,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
             engine->PhysMaterials = new PhysicsMaterialManager(engine->_NewtonManager);
             if(!engine->PhysMaterials){
 
-                Logger::Get()->Error(L"Engine: Init: failed to create PhysicsMaterialManager");
+                Logger::Get()->Error("Engine: Init: failed to create PhysicsMaterialManager");
                 returnvalue.set_value(false);
                 return;
             }
@@ -285,11 +281,11 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
             engine->Owner->RegisterApplicationPhysicalMaterials(engine->PhysMaterials);
 
             returnvalue.set_value(true);
-        }, boost::ref(NewtonManagerResult), this)));
+        }, std::ref(NewtonManagerResult), this)));
 
-    boost::promise<bool> SerializerManagerResult;
+    std::promise<bool> SerializerManagerResult;
 
-    _ThreadingManager->QueueTask(new QueuedTask(boost::bind<void>([](boost::promise<bool> &returnvalue,
+    _ThreadingManager->QueueTask(new QueuedTask(std::bind<void>([](std::promise<bool> &returnvalue,
                     Engine* engine) -> void
         {
 
@@ -301,7 +297,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
             }
 
             // Create the default serializer //
-            unique_ptr<BaseEntitySerializer> tmpptr(new SendableEntitySerializer());
+            std::unique_ptr<BaseEntitySerializer> tmpptr(new SendableEntitySerializer());
             if(!tmpptr){
 
                 returnvalue.set_value(false);
@@ -319,17 +315,17 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
             
             returnvalue.set_value(true);
 
-        }, boost::ref(SerializerManagerResult), this)));
+        }, std::ref(SerializerManagerResult), this)));
 
     
 	// Check if we don't want a window //
 	if(NoGui){
 
-		Logger::Get()->Info(L"Engine: Init: starting in console mode (won't allocate graphical objects) ");
+		Logger::Get()->Info("Engine: Init: starting in console mode (won't allocate graphical objects) ");
 	} else {
 
-		ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), L"MaxFPS", FrameLimit, 120, true,
-            L"Graphics: Init:");
+		ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), "MaxFPS",
+            FrameLimit, 120, true, "Graphics: Init:");
 
 		Graph = new Graphics();
 
@@ -338,7 +334,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
     _AINetworkCache = new AINetworkCache(ntype != NETWORKED_TYPE_CLIENT);
     if(!_AINetworkCache || !_AINetworkCache->Init()){
 
-        Logger::Get()->Error(L"Engine: Init: failed to create AINetworkCache");
+        Logger::Get()->Error("Engine: Init: failed to create AINetworkCache");
         return false;
     }
     
@@ -350,7 +346,7 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
         !SerializerManagerResult.get_future().get())
 	{
 
-		Logger::Get()->Error(L"Engine: Init: one or more queued tasks failed");
+		Logger::Get()->Error("Engine: Init: one or more queued tasks failed");
 		return false;
 	}
 
@@ -358,93 +354,90 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 	// create leap controller //
 #ifdef LEVIATHAN_USES_LEAP
 
-	boost::thread leapinitthread;
-	if(!NoLeap)
-		leapinitthread = boost::thread(boost::bind<void>([](Engine* engine) -> void{
+    // Disable leap if in non-gui mode //
+    if(!NoGui)
+        NoLeap = true;
+
+	std::thread leapinitthread;
+	if(!NoLeap){
+        
+        Logger::Get()->Info("Engine: will try to create Leap motion connection");
+
+        // Seems that std::threads are joinable when constructed with default constructor
+		leapinitthread = std::thread(std::bind<void>([](Engine* engine) -> void{
 
 			engine->LeapData = new LeapManager(engine);
 			if(!engine->LeapData){
-				Logger::Get()->Error(L"Engine: Init: failed to create LeapManager");
+				Logger::Get()->Error("Engine: Init: failed to create LeapManager");
 				return;
 			}
 			// try here just in case //
 			try{
 				if(!engine->LeapData->Init()){
 
-					Logger::Get()->Info(L"Engine: Init: No Leap controller found, not using one");
+					Logger::Get()->Info("Engine: Init: No Leap controller found, not using one");
 				}
 			}
 			catch(...){
 				// threw something //
-				Logger::Get()->Error(L"Engine: Init: Leap threw something, even without leap this shouldn't happen; "
-                    L"continuing anyway");
+				Logger::Get()->Error("Engine: Init: Leap threw something, even without leap "
+                    "this shouldn't happen; continuing anyway");
 			}
 
 		}, this));
-
+    }
 #endif
 
 
 	// sound device //
-	boost::promise<bool> SoundDeviceResult;
+	std::promise<bool> SoundDeviceResult;
 	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(boost::bind<void>([](
-                        boost::promise<bool> &returnvalue, Engine* engine) -> void{
+	_ThreadingManager->QueueTask(shared_ptr<QueuedTask>(new QueuedTask(std::bind<void>([](
+                        std::promise<bool> &returnvalue, Engine* engine) -> void{
+                        
                         if(!engine->NoGui){
                             engine->Sound = new SoundDevice();
+                            
                             if(!engine->Sound){
-                                Logger::Get()->Error(L"Engine: Init: failed to create SoundDevice");
+                                Logger::Get()->Error("Engine: Init: failed to create Sound");
                                 returnvalue.set_value(false);
                                 return;
                             }
 
                             if(!engine->Sound->Init()){
 
-                                Logger::Get()->Error(L"Engine: Init: failed to init SoundDevice");
+                                Logger::Get()->Error("Engine: Init: failed to init SoundDevice");
                                 returnvalue.set_value(false);
                                 return;
                             }
                         }
 
                         // make angel script make list of registered stuff //
-                        engine->MainScript->GetExecutor()->ScanAngelScriptTypes();
+                        engine->MainScript->ScanAngelScriptTypes();
 
                         if(!engine->NoGui){
                             // measuring //
                             engine->RenderTimer = new RenderingStatistics();
                             if(!engine->RenderTimer){
-                                Logger::Get()->Error(L"Engine: Init: failed to create RenderingStatistics");
+                                Logger::Get()->Error("Engine: Init: failed to create RenderingStatistics");
                                 returnvalue.set_value(false);
                                 return;
                             }
                         }
-                        // create object loader //
-                        engine->Loader = new ObjectLoader(engine);
-                        if(!engine->Loader){
-                            Logger::Get()->Error(L"Engine: Init: failed to create ObjectLoader");
-                            returnvalue.set_value(false);
-                            return;
-                        }
-
-                        if(engine->NoGui){
-                            // Set object loader to gui mode //
-                            // \todo do this
-
-                        }
 
                         returnvalue.set_value(true);
-                    }, boost::ref(SoundDeviceResult), this))));
+                    }, std::ref(SoundDeviceResult), this))));
 
 	if(!NoGui){
 		if(!Graph){
 
-			Logger::Get()->Error(L"Engine: Init: failed to create instance of Graphics");
+			Logger::Get()->Error("Engine: Init: failed to create instance of Graphics");
 			return false;
 		}
 
 		// call init //
 		if(!Graph->Init(definition)){
-			Logger::Get()->Error(L"Failed to init Engine, Init graphics failed! Aborting");
+			Logger::Get()->Error("Failed to init Engine, Init graphics failed! Aborting");
 			return false;
 		}
 
@@ -454,24 +447,38 @@ DLLEXPORT bool Leviathan::Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype
 
 	if(!SoundDeviceResult.get_future().get()){
 
-		Logger::Get()->Error(L"Engine: Init: sound device queued tasks failed");
+		Logger::Get()->Error("Engine: Init: sound device queued tasks failed");
 		return false;
 	}
 
-	Inited = true;
-
 #ifdef LEVIATHAN_USES_LEAP
 	// We can probably assume here that leap creation has stalled if the thread is running //
-	if(!NoLeap && !leapinitthread.try_join_for(boost::chrono::milliseconds(5))){
-		// We can assume that it is running //
-		Logger::Get()->Warning(L"LeapController creation would have stalled the game!");
-		//Misc::KillThread(leapinitthread);
+	if(!NoLeap){
+
+        auto start = WantedClockType::now();
+        
+        while(leapinitthread.joinable()){
+
+            auto elapsed = WantedClockType::now() - start;
+
+            if(elapsed > std::chrono::milliseconds(150)){
+
+                Logger::Get()->Warning("LeapController creation would have stalled the game!");
+                Logger::Get()->Write("TODO: allow increasing wait period");
+                leapinitthread.detach();
+                break;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
 	}
 #endif
 
 	PostLoad();
 
-	Logger::Get()->Info(L"Engine init took "+Convert::ToWstring(Misc::GetTimeMs64()-InitStartTime)+L" ms", false);
+	Logger::Get()->Info("Engine init took "+Convert::ToString(Time::GetTimeMs64()-InitStartTime)+
+        " ms");
+    
 	return true;
 }
 
@@ -479,14 +486,14 @@ void Leviathan::Engine::PostLoad(){
 	// increase start count //
 	int startcounts = 0;
 
-	if(Mainstore->GetValueAndConvertTo<int>(L"StartCount", startcounts)){
+	if(Mainstore->GetValueAndConvertTo<int>("StartCount", startcounts)){
 		// increase //
-		Mainstore->SetValue(L"StartCount", new VariableBlock(new IntBlock(startcounts+1)));
+		Mainstore->SetValue("StartCount", new VariableBlock(new IntBlock(startcounts+1)));
 	} else {
 
-		Mainstore->AddVar(new NamedVariableList(L"StartCount", new VariableBlock(1)));
+		Mainstore->AddVar(new NamedVariableList("StartCount", new VariableBlock(1)));
 		// set as persistent //
-		Mainstore->SetPersistance(L"StartCount", true);
+		Mainstore->SetPersistance("StartCount", true);
 	}
 
     // Check if we are attached to a terminal //
@@ -509,16 +516,16 @@ void Leviathan::Engine::PostLoad(){
     
 #endif
     
-    if(connectedtoterminal){
+    if(connectedtoterminal && !NoSTDInput){
         // Start receiving input //
-        CinThread = boost::thread(boost::bind<void>([]() -> void
+        CinThread = std::thread(std::bind<void>([]() -> void
             {
                 // First get input //
-                wstring inputcommand;
+                string inputcommand;
 
                 while(true){
 
-                    getline(wcin, inputcommand);
+                    getline(cin, inputcommand);
 
                     // Pass to various things //
                     Engine* engine = Engine::Get();
@@ -532,7 +539,7 @@ void Leviathan::Engine::PostLoad(){
                     if(inputcommand.empty())
                         continue;
 
-                    GUARD_LOCK_OTHER_OBJECT(engine);
+                    GUARD_LOCK_OTHER(engine);
                     auto tmpptr = engine->MainConsole;
                     if(tmpptr){
 
@@ -554,22 +561,21 @@ void Leviathan::Engine::PostLoad(){
         }
     }
 
-
     ClearTimers();
     
 	// get time //
-	LastFrame = Misc::GetTimeMs64();
+	LastTickTime = Time::GetTimeMs64();
 }
 
 void Leviathan::Engine::Release(bool forced){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	if(!forced)
 		assert(PreReleaseDone && "PreReleaseDone must be done before actual release!");
 
 	// Destroy worlds //
     {
-        GUARD_LOCK_BASIC(GameWorldsLock);
+        Lock lock(GameWorldsLock);
         
         while(GameWorlds.size()){
 
@@ -614,12 +620,11 @@ void Leviathan::Engine::Release(bool forced){
 	// Console needs to be released before script release //
 	SAFE_RELEASEDEL(MainConsole);
 
-	SAFE_RELEASEDEL(MainScript);
+	SAFE_DELETE(MainScript);
 
 	// Save at this point (just in case it crashes before exiting) //
 	Logger::Get()->Save();
 
-	SAFE_DELETE(Loader);
 	SAFE_RELEASEDEL(Graph);
 	SAFE_DELETE(RenderTimer);
 
@@ -636,7 +641,7 @@ void Leviathan::Engine::Release(bool forced){
 	Gui::GuiManager::KillGlobalCache();
 
 	ObjectFileProcessor::Release();
-	SAFE_RELEASEDEL(MainFileHandler);
+	SAFE_DELETE(MainFileHandler);
 
 	// Stop threads //
 	if(!forced)
@@ -651,14 +656,14 @@ void Leviathan::Engine::Release(bool forced){
 
 	SAFE_DELETE(IDDefaultInstance);
 
-	Logger::Get()->Write(L"Goodbye cruel world!");
+	Logger::Get()->Write("Goodbye cruel world!");
 }
 // ------------------------------------ //
 void Leviathan::Engine::Tick(){
 
     // Always try to update networking //
     {
-        boost::unique_lock<boost::mutex> lock(NetworkHandlerLock);
+        Lock lock(NetworkHandlerLock);
         
         if(_NetworkHandler)
             _NetworkHandler->UpdateAllConnections();
@@ -669,14 +674,14 @@ void Leviathan::Engine::Tick(){
     SimulatePhysics();
 
     
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	if(PreReleaseWaiting){
 
 		PreReleaseWaiting = false;
 		PreReleaseDone = true;
 
-		Logger::Get()->Info(L"Engine: performing final release tick");
+		Logger::Get()->Info("Engine: performing final release tick");
 
         
         
@@ -685,8 +690,8 @@ void Leviathan::Engine::Tick(){
 	}
 
 	// Get the passed time since the last update //
-	__int64 CurTime = Misc::GetTimeMs64();
-	TimePassed = (int)(CurTime-LastFrame);
+	auto CurTime = Time::GetTimeMs64();
+	TimePassed = (int)(CurTime-LastTickTime);
 
 
 	if((TimePassed < TICKSPEED)){
@@ -695,7 +700,7 @@ void Leviathan::Engine::Tick(){
 	}
 
 
-	LastFrame += TICKSPEED;
+	LastTickTime += TICKSPEED;
 	TickCount++;
 
 	// Update input //
@@ -722,13 +727,13 @@ void Leviathan::Engine::Tick(){
 
     // Update worlds //
     {
-        GUARD_LOCK_BASIC(GameWorldsLock);
+        Lock lock(GameWorldsLock);
 
         // This will also update physics //
         auto end = GameWorlds.end();
         for(auto iter = GameWorlds.begin(); iter != end; ++iter){
 
-            (*iter)->Tick();
+            (*iter)->Tick(TickCount);
         }
     }
     
@@ -759,41 +764,42 @@ void Leviathan::Engine::Tick(){
     if(GraphicalEntity1 && !GraphicalEntity1->GetWindow()->IsOpen()){
 
         // Window closed //
-        ReportClosedWindow(GraphicalEntity1);
+        ReportClosedWindow(guard, GraphicalEntity1);
     }
 
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
 
         if(!AdditionalGraphicalEntities[i]->GetWindow()->IsOpen()){
 
-            ReportClosedWindow(AdditionalGraphicalEntities[i]);
+            ReportClosedWindow(guard, AdditionalGraphicalEntities[i]);
             
             // The above call might change the vector so stop looping after it //
             break;
         }
     }
     
-	TickTime = (int)(Misc::GetTimeMs64()-LastFrame);
+	TickTime = (int)(Time::GetTimeMs64()-CurTime);
 }
 
 DLLEXPORT void Leviathan::Engine::PreFirstTick(){
 
     // Stop this handling as it is no longer required //
     {
-        boost::unique_lock<boost::mutex> lock(NetworkHandlerLock);
-        
+        std::unique_lock<std::mutex> lock(NetworkHandlerLock);
+
+        GUARD_LOCK_OTHER(_NetworkHandler);
         if(_NetworkHandler)
-            _NetworkHandler->StopOwnUpdaterThread();
+            _NetworkHandler->StopOwnUpdaterThread(guard);
     }
     
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
 
     if(_ThreadingManager)
         _ThreadingManager->NotifyQueuerThread();
 
     ClearTimers();
     
-	Logger::Get()->Info(L"Engine: PreFirstTick: everything fine to start running");
+	Logger::Get()->Info("Engine: PreFirstTick: everything fine to start running");
 }
 // ------------------------------------ //
 void Leviathan::Engine::RenderFrame(){
@@ -802,7 +808,7 @@ void Leviathan::Engine::RenderFrame(){
 		return;
 
 	int SinceLastFrame = -1;
-	UNIQUE_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// limit check //
 	if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)){
@@ -812,15 +818,35 @@ void Leviathan::Engine::RenderFrame(){
 	}
 
 	// since last frame is in microseconds 10^-6 convert to milliseconds //
-	// SinceLastFrame is always more than 1000 (always 1 ms or more) //
+	// SinceLastTickTime is always more than 1000 (always 1 ms or more) //
 	SinceLastFrame /= 1000;
 	FrameCount++;
 
 	// advanced statistic start monitoring //
 	RenderTimer->RenderingStart();
 
-	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN, new IntegerEventData(SinceLastFrame)));
+	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN,
+            new IntegerEventData(SinceLastFrame)));
 
+    // Run rendering systems //
+    int timeintick = Time::GetTimeMs64() - LastTickTime;
+    int moreticks = 0;
+
+    while(timeintick > TICKSPEED){
+
+        timeintick -= TICKSPEED;
+        moreticks++;
+    }
+
+    {
+        Lock lock(GameWorldsLock);
+        
+        for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
+
+            (*iter)->RunFrameRenderSystems(TickCount + moreticks, timeintick);
+        }
+    }
+    
 
 	bool shouldrender = false;
 
@@ -834,11 +860,11 @@ void Leviathan::Engine::RenderFrame(){
             shouldrender = true;
     }
 
-    lockit.unlock();
+    guard.unlock();
 	if(shouldrender)
 		Graph->Frame();
 
-    lockit.lock();
+    guard.lock();
 	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_END, new IntegerEventData(FrameCount)));
 
 	// advanced statistics frame has ended //
@@ -846,7 +872,7 @@ void Leviathan::Engine::RenderFrame(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::PreRelease(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	if(PreReleaseWaiting || PreReleaseCompleted)
 		return;
 	
@@ -857,8 +883,7 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 	// Stop command handling first //
     // Apparently killing doesn't really work on linux in any reasonable way, so just let it run
 #if 0
-    //Misc::KillThread(CinThread);
-    Logger::Get()->Info(L"Successfully stopped command handling");
+    Logger::Get()->Info("Successfully stopped command handling");
 #endif
 
     if(_AINetworkCache)
@@ -875,7 +900,7 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 
 	// Then kill the network //
     {
-        boost::unique_lock<boost::mutex> lock(NetworkHandlerLock);
+        Lock lock(NetworkHandlerLock);
         
         _NetworkHandler->GetInterface()->CloseDown();
     }
@@ -888,7 +913,7 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 
 	// Close all connections //
     {
-        boost::unique_lock<boost::mutex> lock(NetworkHandlerLock);
+        Lock lock(NetworkHandlerLock);
         
         SAFE_RELEASEDEL(_NetworkHandler);
     }
@@ -897,7 +922,7 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 
 	// Set worlds to empty //
     {
-        GUARD_LOCK_BASIC(GameWorldsLock);
+        Lock lock(GameWorldsLock);
         
         for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
             // Set all objects to release //
@@ -909,7 +934,7 @@ DLLEXPORT void Leviathan::Engine::PreRelease(){
 	_ThreadingManager->SetDiscardConditionalTasks(true);
 	_ThreadingManager->SetDisallowRepeatingTasks(true);
 
-	Logger::Get()->Info(L"Engine: prerelease done, waiting for a tick");
+	Logger::Get()->Info("Engine: prerelease done, waiting for a tick");
 }
 
 DLLEXPORT bool Leviathan::Engine::HasPreReleaseBeenDone() const{
@@ -918,12 +943,11 @@ DLLEXPORT bool Leviathan::Engine::HasPreReleaseBeenDone() const{
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Engine::SaveScreenShot(){
 	assert(!NoGui && "really shouldn't try to screenshot in text-only mode");
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
-	const wstring fileprefix = MainFileHandler->GetDataFolder()+L"Screenshots/Captured_frame_";
+	const string fileprefix = MainFileHandler->GetDataFolder()+"Screenshots/Captured_frame_";
 
-
-	GraphicalEntity1->SaveScreenShot(Convert::WstringToString(fileprefix));
+	GraphicalEntity1->SaveScreenShot(fileprefix);
 }
 
 DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
@@ -933,7 +957,7 @@ DLLEXPORT int Leviathan::Engine::GetWindowOpenCount(){
 	if(NoGui)
 		return 1;
     
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
     
 
 	if(GraphicalEntity1 && GraphicalEntity1->GetWindow()->IsOpen())
@@ -953,25 +977,25 @@ DLLEXPORT GraphicalInputEntity* Leviathan::Engine::OpenNewWindow(){
     AppDef winparams;
 
 
-    winparams.SetWindowDetails(WindowDataDetails(L"My Second window", 1280, 720, true, true,
+    winparams.SetWindowDetails(WindowDataDetails("My Second window", 1280, 720, true, true,
 #ifdef _WIN32
             NULL,
 #endif            
             NULL));
     
     
-    unique_ptr<GraphicalInputEntity> newwindow(new GraphicalInputEntity(Graph, &winparams));
+    auto newwindow = std::make_unique<GraphicalInputEntity>(Graph, &winparams);
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     AdditionalGraphicalEntities.push_back(newwindow.get());
     
     return newwindow.release();
 }
 
-DLLEXPORT void Leviathan::Engine::ReportClosedWindow(GraphicalInputEntity* windowentity){
-
-    GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT void Leviathan::Engine::ReportClosedWindow(Lock &guard,
+    GraphicalInputEntity* windowentity)
+{
 
     windowentity->ReleaseLinked();
 
@@ -996,16 +1020,18 @@ DLLEXPORT void Leviathan::Engine::ReportClosedWindow(GraphicalInputEntity* windo
     Logger::Get()->Error("Engine: couldn't find closing GraphicalInputEntity");
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEntity* owningwindow,
-    shared_ptr<ViewerCameraPos> worldscamera)
+DLLEXPORT std::shared_ptr<GameWorld> Leviathan::Engine::CreateWorld(GraphicalInputEntity* owningwindow,
+    std::shared_ptr<ViewerCameraPos> worldscamera)
 {
     
-	shared_ptr<GameWorld> tmp(new GameWorld());
+	auto tmp = make_shared<GameWorld>();
+    
 	tmp->Init(owningwindow, NoGui ? NULL: Graph->GetOgreRoot());
+    
 	if(owningwindow)
 		owningwindow->LinkObjects(worldscamera, tmp);
     
-    GUARD_LOCK_BASIC(GameWorldsLock);
+    Lock lock(GameWorldsLock);
     
 	GameWorlds.push_back(tmp);
 	return GameWorlds.back();
@@ -1020,7 +1046,7 @@ DLLEXPORT void Leviathan::Engine::DestroyWorld(shared_ptr<GameWorld> &world){
     world->Release();
 
     // Then delete it //
-    GUARD_LOCK_BASIC(GameWorldsLock);
+    Lock lock(GameWorldsLock);
     
     auto end = GameWorlds.end();
     for(auto iter = GameWorlds.begin(); iter != end; ++iter){
@@ -1037,7 +1063,7 @@ DLLEXPORT void Leviathan::Engine::DestroyWorld(shared_ptr<GameWorld> &world){
     world.reset();
 }
 DLLEXPORT void Leviathan::Engine::ClearTimers(){
-    GUARD_LOCK_BASIC(GameWorldsLock);
+    Lock lock(GameWorldsLock);
 
     auto end = GameWorlds.end();
     for(auto iter = GameWorlds.begin(); iter != end; ++iter){
@@ -1047,7 +1073,7 @@ DLLEXPORT void Leviathan::Engine::ClearTimers(){
 }
 
 DLLEXPORT void Leviathan::Engine::SimulatePhysics(){
-    GUARD_LOCK_BASIC(GameWorldsLock);
+    Lock lock(GameWorldsLock);
 
     auto end = GameWorlds.end();
     for(auto iter = GameWorlds.begin(); iter != end; ++iter){
@@ -1055,7 +1081,6 @@ DLLEXPORT void Leviathan::Engine::SimulatePhysics(){
         (*iter)->SimulatePhysics();
     }
 }
-
 // ------------------------------------ //
 void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
 	if(NoGui)
@@ -1067,25 +1092,30 @@ void Leviathan::Engine::_NotifyThreadsRegisterOgre(){
 // ------------------------------------ //
 DLLEXPORT int Leviathan::Engine::GetTimeSinceLastTick() const{
 
-    return Misc::GetTimeMs64()-LastFrame;
+    return Time::GetTimeMs64()-LastTickTime;
 }
 
+DLLEXPORT int Engine::GetCurrentTick() const{
+
+    return TickCount;
+}
+// ------------------------------------ //
 void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     
     if(!absolute){
 
         Logger::Get()->Info("Engine: adjusted tick timer by "+Convert::ToString(amount));
         
-        LastFrame += amount;
+        LastTickTime += amount;
         return;
     }
 
     // Calculate the time in the current last tick //
-    int64_t templasttick = LastFrame;
+    int64_t templasttick = LastTickTime;
 
-    int64_t curtime = Misc::GetTimeMs64();
+    int64_t curtime = Time::GetTimeMs64();
 
     while(curtime-templasttick >= TICKSPEED){
 
@@ -1099,7 +1129,26 @@ void Leviathan::Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
 
     Logger::Get()->Info("Engine: changing tick counter by "+Convert::ToString(changeamount));
         
-    LastFrame += changeamount;
+    LastTickTime += changeamount;
+}
+
+void Engine::_AdjustTickNumber(int tickamount, bool absolute){
+
+    GUARD_LOCK();
+
+    if(!absolute){
+
+        TickCount += tickamount;
+
+        Logger::Get()->Info("Engine: adjusted tick by "+Convert::ToString(tickamount)
+            +", tick is now "+Convert::ToString(TickCount));
+        
+        return;
+    }
+
+    TickCount = tickamount;
+
+    Logger::Get()->Info("Engine: tick set to "+Convert::ToString(TickCount));
 }
 // ------------------------------------ //
 int TestCrash(int writenum){
@@ -1107,131 +1156,142 @@ int TestCrash(int writenum){
     int* target = nullptr;
     (*target) = writenum;
     
-    Logger::Get()->Write("It didnt' crash...");
+    Logger::Get()->Write("It didn't crash...");
     return 42;
 }
 
-DLLEXPORT void Leviathan::Engine::PassCommandLine(const wstring &commands){
+DLLEXPORT void Leviathan::Engine::PassCommandLine(const string &commands){
 
-	Logger::Get()->Info(L"Command line: "+commands);
+	Logger::Get()->Info("Command line: "+commands);
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	// Split all flags and check for some flags that might be set //
 	StringIterator itr(commands);
-	unique_ptr<wstring> splitval;
+	unique_ptr<string> splitval;
 
-	while((splitval = itr.GetNextCharacterSequence<wstring>(UNNORMALCHARACTER_TYPE_WHITESPACE)) != NULL){
+	while((splitval = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE))
+        != NULL)
+    {
 
-		if(*splitval == L"--nogui"){
+		if(*splitval == "--nogui"){
 			NoGui = true;
-			Logger::Get()->Info(L"Engine starting in non-GUI mode");
+			Logger::Get()->Info("Engine starting in non-GUI mode");
 			continue;
 		}
-		if(*splitval == L"--noleap"){
+		if(*splitval == "--noleap"){
 			NoLeap = true;
 
 #ifdef LEVIATHAN_USES_LEAP
-			Logger::Get()->Info(L"Engine starting with LeapMotion disabled");
+			Logger::Get()->Info("Engine starting with LeapMotion disabled");
 #endif
 			continue;
 		}
-		if(*splitval == L"--nonothing"){
+        if(*splitval == "--nocin"){
+
+            NoSTDInput = true;
+            continue;
+        }
+		if(*splitval == "--nonothing"){
 			// Shouldn't try to open the console on windows //
 			DEBUG_BREAK;
 		}
-        if(*splitval == L"--crash"){
-            // Test crashing //
-            TestCrash(12);
+        if(*splitval == "--crash"){
             
             Logger::Get()->Info("Engine testing crash handling");
             // TODO: write a file that disables crash handling
             // Make the log say something useful //
             Logger::Get()->Save();
+
+            // Test crashing //
+            TestCrash(12);
+            
             continue;
         }
+        
 		// Add (if not processed already) //
 		PassedCommands.push_back(move(splitval));
 	}
 }
 
 DLLEXPORT void Leviathan::Engine::ExecuteCommandLine(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	StringIterator itr(NULL, false);
 
 	// Iterate over the commands and process them //
 	for(size_t i = 0; i < PassedCommands.size(); i++){
+        
 		itr.ReInit(PassedCommands[i].get());
 		// Skip the preceding '-'s //
-		itr.SkipCharacters(L'-');
+		itr.SkipCharacters('-');
 
 		// Get the command //
-		auto firstpart = itr.GetUntilNextCharacterOrAll<wstring>(L':');
+		auto firstpart = itr.GetUntilNextCharacterOrAll<string>(':');
 
 		// Execute the wanted command //
-		if(StringOperations::CompareInsensitive<wstring>(*firstpart, L"RemoteConsole")){
+		if(StringOperations::CompareInsensitive<string>(*firstpart, "RemoteConsole")){
 			
 			// Get the next command //
-			auto commandpart = itr.GetUntilNextCharacterOrAll<wstring>(L':');
+			auto commandpart = itr.GetUntilNextCharacterOrAll<string>(L':');
 
-			if(*commandpart == L"CloseIfNone"){
+			if(*commandpart == "CloseIfNone"){
 				// Set the command //
 				RemoteConsole::Get()->SetCloseIfNoRemoteConsole(true);
-				Logger::Get()->Info(L"Engine will close when no active/waiting remote console sessions");
+				Logger::Get()->Info("Engine will close when no active/waiting remote console "
+                    "sessions");
 
-			} else if(*commandpart == L"OpenTo"){
+			} else if(*commandpart == "OpenTo"){
 				// Get the to part //
-				auto topart = itr.GetStringInQuotes<wstring>(QUOTETYPE_BOTH);
+				auto topart = itr.GetStringInQuotes<string>(QUOTETYPE_BOTH);
 
 				int token = 0;
 
-				auto numberpart = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE);
+				auto numberpart = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_NONE);
 
 				if(numberpart->size() == 0){
 
-					Logger::Get()->Warning(L"Engine: ExecuteCommandLine: RemoteConsole: no token number provided");
+					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: no token "
+                        "number provided");
 					continue;
 				}
-				// Convert to a real number. Maybe we could see if the token is complex enough here,
-                // but that isn't necessary
-				token = Convert::WstringToInt(*numberpart);
+				// Convert to a real number. Maybe we could see if the token is
+                // complex enough here, but that isn't necessary
+				token = Convert::StringTo<int>(*numberpart);
 
 				if(token == 0){
 					// Invalid number? //
-					Logger::Get()->Warning(L"Engine: ExecuteCommandLine: RemoteConsole: couldn't parse token number, "+
-                        *numberpart);
+					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: couldn't "
+                        "parse token number, "+*numberpart);
 					continue;
 				}
 
 				// Create a connection (or potentially use an existing one) //
-				shared_ptr<ConnectionInfo> tmpconnection = NetworkHandler::Get()->GetOrCreatePointerToConnection(
-                    *topart);
+				shared_ptr<ConnectionInfo> tmpconnection =
+                    NetworkHandler::Get()->GetOrCreatePointerToConnection(*topart);
 
 				// Tell remote console to open a command to it //
 				if(tmpconnection){
 
-					RemoteConsole::Get()->OfferConnectionTo(tmpconnection.get(), L"AutoOpen", token);
+					RemoteConsole::Get()->OfferConnectionTo(tmpconnection.get(), "AutoOpen",
+                        token);
 
 				} else {
 					// Something funky happened... //
-					Logger::Get()->Warning(L"Engine: ExecuteCommandLine: RemoteConsole: couldn't open connection to "+
-                        *topart+L", couldn't resolve address");
+					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: couldn't "
+                        "open connection to "+*topart+", couldn't resolve address");
 				}
 
 			} else {
 				// Unknown command //
-				Logger::Get()->Warning(L"Engine: ExecuteCommandLine: unknown RemoteConsole command: "+*commandpart+
-                    L", whole argument: "+*PassedCommands[i]);
+				Logger::Get()->Warning("Engine: ExecuteCommandLine: unknown RemoteConsole "
+                    "command: "+*commandpart+", whole argument: "+*PassedCommands[i]);
 			}
 		}
-
-        
 
 	}
 
 
 	PassedCommands.clear();
-
 
 	// Now we can set some things that require command line arguments //
 	// _RemoteConsole might be NULL //

@@ -1,9 +1,7 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_PHYSICSMATERIALMANAGER
 #include "PhysicsMaterialManager.h"
-#endif
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicsMaterialManager::PhysicsMaterialManager(const NewtonManager* newtoninstanced){
 
@@ -23,10 +21,10 @@ DLLEXPORT PhysicsMaterialManager* Leviathan::PhysicsMaterialManager::Get(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::PhysicsMaterialManager::LoadedMaterialAdd(PhysicalMaterial* ptrtotakeownership){
 	// Add to the map //
-	LoadedMaterials.insert(std::make_pair(ptrtotakeownership->GetName(), shared_ptr<PhysicalMaterial>(ptrtotakeownership)));
+	LoadedMaterials.insert(std::make_pair(ptrtotakeownership->GetName(), std::shared_ptr<PhysicalMaterial>(ptrtotakeownership)));
 }
 
-DLLEXPORT int Leviathan::PhysicsMaterialManager::GetMaterialIDForWorld(const wstring &name, NewtonWorld* WorldPtr){
+DLLEXPORT int Leviathan::PhysicsMaterialManager::GetMaterialIDForWorld(const std::string &name, NewtonWorld* WorldPtr){
 	// Search for it by name //
 	auto iter = LoadedMaterials.find(name);
 
@@ -39,7 +37,7 @@ DLLEXPORT int Leviathan::PhysicsMaterialManager::GetMaterialIDForWorld(const wst
 	return -1;
 }
 
-DLLEXPORT shared_ptr<PhysicalMaterial> Leviathan::PhysicsMaterialManager::GetMaterial(const wstring &name){
+DLLEXPORT std::shared_ptr<PhysicalMaterial> Leviathan::PhysicsMaterialManager::GetMaterial(const std::string &name){
 	// Search for it by name //
 	auto iter = LoadedMaterials.find(name);
 
@@ -58,6 +56,14 @@ DLLEXPORT void Leviathan::PhysicsMaterialManager::CreateActualMaterialsForWorld(
 	_ApplyMaterialProperties(newtonworld);
 }
 
+DLLEXPORT void PhysicsMaterialManager::DestroyActualMaterialsForWorld(NewtonWorld* world){
+
+	for(auto iter = LoadedMaterials.begin(); iter != LoadedMaterials.end(); ++iter){
+
+		iter->second->_ClearFromWorld(world);
+	}    
+}
+
 void Leviathan::PhysicsMaterialManager::_CreatePrimitiveIDList(NewtonWorld* world){
 	// Loop the map and call creation functions on the objects //
 	for(auto iter = LoadedMaterials.begin(); iter != LoadedMaterials.end(); ++iter){
@@ -73,8 +79,4 @@ void Leviathan::PhysicsMaterialManager::_ApplyMaterialProperties(NewtonWorld* wo
 		iter->second->_ApplyMaterialPropertiesToWorld(world);
 	}
 }
-// ------------------------------------ //
-
-// ------------------------------------ //
-
 // ------------------------------------ //

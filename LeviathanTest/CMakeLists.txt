@@ -1,18 +1,31 @@
 # LeviathanTest application CMake
 
-# get all files in their groups
-file(GLOB LTSourceFiles *.cpp)
-file(GLOB LTHeaderFiles *.h) 
+set(TestSources
+  resource.h
+  TestMain.cpp
+  TestFiles/StringIterator.cpp
+  TestFiles/StringOperations.cpp
+  TestFiles/IDFactory.cpp
+  TestFiles/Script.cpp
+  TestFiles/HashTesting.cpp
+  TestFiles/ObjectFiles.cpp
+  TestFiles/Floats.cpp
+  TestFiles/Regex.cpp
+  TestFiles/DeltaStates.cpp
+  TestFiles/PartialEngine.h
+  TestFiles/PartialEngine.cpp
+  TestFiles/Sendable.cpp
+  TestFiles/NamedVars.cpp
+  TestFiles/Components.cpp
+  TestFiles/StdBehaviour.cpp
+  TestFiles/PacketsAndConnection.cpp
+  )
 
-# file grouping
-source_group("Source" FILES ${LTSourceFiles})
-source_group("Header" FILES ${LTHeaderFiles})
-
-
-# all LeviathanTest files in one list
-set(AllProjectFiles ${LTSourceFiles} ${LTHeaderFiles})
+include_directories(catch)
 
 set(CurrentProjectName LeviathanTest)
+
+set(AllProjectFiles ${TestSources})
 
 # Include the common file
 include(LeviathanCoreProject)
@@ -20,6 +33,16 @@ include(LeviathanCoreProject)
 # The project is now defined
 
 # testing
-add_test(LeviathanTestMainTest LeviathanTest CONFIGURATIONS Debug Release WORKING_DIRECTORY 
-    "${PROJECT_BINARY_DIR}/bin")
-set_tests_properties(LeviathanTestMainTest PROPERTIES PASS_REGULAR_EXPRESSION "testing completed succesfully")
+
+if(WIN32)
+  add_custom_target(check COMMAND "${PROJECT_BINARY_DIR}/bin/LeviathanTest.exe"
+    DEPENDS LeviathanTest
+    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+else()
+  add_custom_target(check COMMAND "${PROJECT_BINARY_DIR}/bin/LeviathanTest"
+    DEPENDS LeviathanTest
+    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+endif()
+
+
+  

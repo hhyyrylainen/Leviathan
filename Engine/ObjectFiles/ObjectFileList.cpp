@@ -1,21 +1,21 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_OBJECTFILE_LIST
 #include "ObjectFileList.h"
-#endif
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::ObjectFileListProper::ObjectFileListProper(const wstring &name) : Name(name){
+DLLEXPORT Leviathan::ObjectFileListProper::ObjectFileListProper(const std::string &name) :
+    Name(name)
+{
 
 }
 // ------------------------------------ //
-DLLEXPORT const wstring& Leviathan::ObjectFileListProper::GetName() const{
+DLLEXPORT const std::string& Leviathan::ObjectFileListProper::GetName() const{
 	return Name;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ObjectFileListProper::AddVariable(shared_ptr<NamedVariableList> var){
 	// Make sure that name is not in use //
-	if(Variables.Find(var->GetName()) != -1){
+	if(Variables.Find(var->GetName()) < Variables.GetVariableCount()){
 		return false;
 	}
 

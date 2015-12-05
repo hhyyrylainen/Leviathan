@@ -1,80 +1,70 @@
 #pragma once
-#ifndef LEVIATHAN_DEFINE
-#define LEVIATHAN_DEFINE
-#ifndef LEVIATHAN_INCLUDE
 #include "Include.h"
-#endif
 
 #include "ForwardDeclarations.h"
-#include <boost/ratio.hpp>
+#include "Entities/EntityCommon.h"
 
-//! Number of milliseconds between engine and world ticks
-#define TICKSPEED 50
+//! Defines the networking mode
+//! In this mode the server sends snapshots of moving entities to all clients which then interpolate
+//! between states. Input will not be replicated on all clients. Clients locally simulate their own
+//! inputs. Server uses resimulation to simulate clients taking actions in the past.
+#define NETWORK_USE_SNAPSHOTS
 
-//! When true entities may run a single physical update with a short timestep when resimulating
-//#define ALLOW_RESIMULATE_CONSUME_ALL
+#include <string>
 
 namespace Leviathan{
 
-	template<class T>
-	void SafeReleaser(T* obj){
-		SAFE_RELEASE(obj);
-	}
-	template<class T>
-	void SafeReleaseDeleter(T* obj){
-		SAFE_RELEASEDEL(obj);
-	}
+    //! Number of milliseconds between engine and world ticks
+    static const int TICKSPEED = 50;
 
-	class Object{
-	public:
-		DLLEXPORT Object();;
-		DLLEXPORT virtual ~Object();
-		DLLEXPORT virtual bool IsThis(Object* compare);
+    //! \todo Allow this to not be a multiple of TICKSPEED or smaller than it
+    static const int INTERPOLATION_TIME  = 100;
 
-	protected:
+    static const double VERSION = LEVIATHAN_VERSION;
+    static const std::string VERSIONS = LEVIATHAN_VERSION_ANSIS;
 
-	};
-	// has no virtual destructor, objects may not be pointed by this base class //
-	class EngineComponent : public Object{
-	public:
-		DLLEXPORT EngineComponent();
+    static const int VERSION_STABLE = LEVIATHAN_VERSION_STABLE;
+    static const int VERSION_MAJOR = LEVIATHAN_VERSION_MAJOR;
+    static const int VERSION_MINOR = LEVIATHAN_VERSION_MINOR;
+    static const int VERSION_PATCH = LEVIATHAN_VERSION_PATCH;
 
-		DLLEXPORT virtual bool Init();
-		DLLEXPORT virtual void Release();
-		DLLEXPORT inline bool IsInited(){
-			return Inited;
-		}
-	protected:
-		bool Inited;
-
-	};
+    static const float PI = 3.14159265f;
+    static const float DEGREES_TO_RADIANS = PI/180.f;
+    static const float EPSILON = 0.00000001f;
 }
 
-#include <boost/chrono/system_clocks.hpp>
 
-// Standard type time durations //
-typedef boost::chrono::duration<__int64, boost::milli> MillisecondDuration;
-typedef boost::chrono::duration<__int64, boost::micro> MicrosecondDuration;
-typedef boost::chrono::duration<float, boost::ratio<1>> SecondDuration;
+#ifdef _MSC_VER
 
+#define DEBUG_BREAK __debugbreak();
 
+#elif defined __linux
 
-#ifdef _WIN32
-// This could also use the high_resolution_clock (because they both resolve to the same thing) //
-//typedef boost::chrono::steady_clock WantedClockType;
-typedef boost::chrono::high_resolution_clock WantedClockType;
+// For making SIGINT work as debug break on linux //
+#include <signal.h>
+
+#define DEBUG_BREAK { Leviathan::Logger::Get()->Write("DEBUG_BREAK HIT!"); raise(SIGINT); }
+
 #else
 
-typedef boost::chrono::high_resolution_clock WantedClockType;
+#error "Debug break won't work"
 
 #endif
 
-#include "Common/Types.h"
-#include "Utility/Convert.h"
+#define SAFE_RELEASE( x ) {if(x){(x)->Release();(x)=NULL;}}
+#define SAFE_RELEASEDEL( x ) {if(x){(x)->Release();delete (x);(x)=NULL;}}
+#define SAFE_DELETE( x ) {if(x){delete (x);(x)=NULL;}}
+#define SAFE_DELETE_ARRAY( x ) {if(x){delete[] (x);(x)=NULL;}}
 
-#include "Handlers/IDFactory.h"
+#define SAFE_RELEASE_VECTOR(x) {for(auto iter = x.begin(); iter != x.end(); ++iter) if(*iter){ (*iter)->Release(); } \
+        x.clear();}
+
+#define SAFE_DELETE_VECTOR(x) for(size_t vdind = 0; vdind < x.size(); ++vdind){if(x[vdind]){delete x[vdind];}}; \
+    x.clear();
+
+// This will break everything if it is defined //
+#undef index
+
+
 #include "Logger.h"
-#include "Statistics/TimingMonitor.h"
 
-
-#endif

@@ -1,15 +1,11 @@
-#ifndef LEVIATHAN_TASKTHREAD
-#define LEVIATHAN_TASKTHREAD
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include <boost/thread.hpp>
+#include <thread>
 #include "Common/ThreadSafe.h"
 #include "QueuedTask.h"
-#include <boost/thread/tss.hpp>
+#include <condition_variable>
 
 namespace Leviathan{
 
@@ -18,9 +14,8 @@ namespace Leviathan{
 	struct ThreadSpecificData{
 		ThreadSpecificData(TaskThread* threadptr);
 
-
 		TaskThread* ThreadObject;
-		shared_ptr<QueuedTask> QuickTaskAccess;
+        std::shared_ptr<QueuedTask> QuickTaskAccess;
 	};
 
 	//! \brief Object used by ThreadingManager to easily create properly initialized threads
@@ -33,9 +28,9 @@ namespace Leviathan{
 
 		DLLEXPORT ~TaskThread();
 
-		DLLEXPORT void SetTaskAndNotify(shared_ptr<QueuedTask> task);
+		DLLEXPORT void SetTaskAndNotify(std::shared_ptr<QueuedTask> task);
 
-		DLLEXPORT void NotifyKill(ObjectLock &guard);
+		DLLEXPORT void NotifyKill(Lock &guard);
 		DLLEXPORT void NotifyKill();
 
 		DLLEXPORT void NotifyThread();
@@ -47,10 +42,10 @@ namespace Leviathan{
 		DLLEXPORT bool HasRunningTask();
 
         //! \brief Returns true if the current task pointer matches the argument
-        DLLEXPORT bool IsRunningTask(shared_ptr<QueuedTask> task) const;
+        DLLEXPORT bool IsRunningTask(std::shared_ptr<QueuedTask> task) const;
 
 		//! \brief Returns the internal ThisThread variable
-		DLLEXPORT boost::thread& GetBoostThreadObject();
+		DLLEXPORT std::thread& GetInternalThreadObject();
 
 		//! \brief Returns thread specific data about QueuedTask and TaskThread object
 		DLLEXPORT static ThreadSpecificData* GetThreadSpecificThreadObject();
@@ -59,24 +54,24 @@ namespace Leviathan{
 
 	private:
 
-		void _NewThreadEntryRegister(ObjectLock &guard);
-		void _ThreadEndClean(ObjectLock &guard);
+		void _NewThreadEntryRegister(Lock &guard);
+		void _ThreadEndClean(Lock &guard);
 
 		// ------------------------------------ //
 
 		// For notifying the thread //
-		boost::condition_variable_any ThreadNotify;
+		std::condition_variable ThreadNotify;
 
 		// The task needed to be completed //
-		shared_ptr<QueuedTask> SetTask;
+        std::shared_ptr<QueuedTask> SetTask;
 
 		bool StartUpDone;
 		bool KillSelf;
-		boost::thread ThisThread;
+		std::thread ThisThread;
 
 		// Stores the thread object for the thread to access //
-		static boost::thread_specific_ptr<ThreadSpecificData> ThreadThreadPtr;
+		static thread_local std::shared_ptr<ThreadSpecificData> ThreadThreadPtr;
 	};
 
 }
-#endif
+

@@ -1,57 +1,100 @@
-// ------------------ This file contains forward declarations for all possible things that need to be included
-// (or forward declared) ------------------
+// ------------------ This file contains forward declarations for all possible things
+// that need to be included (or forward declared)
 #pragma once
 
-// This is required for ObjectPtr
-#include <boost/intrusive_ptr.hpp>
-
+#include <cstdint>
 
 // Newton things
 class NewtonJoint;
 
+namespace Ogre{
+
+    class SceneManager;
+    class SceneNode;
+}
+
+namespace CEGUI{
+
+    class InputAggregator;
+    class Window;
+    class Animation;
+    class GUIContext;
+}
+
 namespace Leviathan{
+
+    // Core systems //
 	class Logger;
 	class FileSystem;
 	class Engine;
 	class Graphics;
+    class ScriptExecutor;
+    class NetworkHandler;
+	class ScriptExecutor;
+	class GameWorld;
+	class AppDef;
+	class Convert;
+	class EventHandler;
+    class DataStore;
+    class OutOfMemoryHandler;
+    class RenderingStatistics;
+    class IDFactory;
+    class Time;
+
+    class Locker;
+
+    class Visitor;
+    class Visitable;
+
+
+    class InputReceiver;
+    class InputController;
 
 	namespace Gui{
 		
 		class GuiManager;
 	}
 
-	namespace Entity{
+    // Entities //
+    class Sendable;
+    class Position;
+    class ObjectDeltaStateData;
+    class Constraintable;
+    class Parentable;
+    class Parent;
 
-		class Prop;
-		class Brush;
-		struct TrackControllerPosition;
-		class TrackEntityController;
-		struct TrailProperties;
-		class TrailEmitter;
-        class BaseConstraint;
+    class SendableEntitySerializer;
+
+    class Physics;
 
 
-        enum ENTITY_CONSTRAINT_TYPE : int32_t;
-	}
-
-	// Entity bases //
-	class BasePositionable;
+    // Constraints //
+    class BaseConstraint;
+    enum ENTITY_CONSTRAINT_TYPE : int32_t;
     
-    class BaseObject;
-    typedef boost::intrusive_ptr<BaseObject> ObjectPtr;
     
-    class BaseConstraintable;
-    class BaseSendableEntity;
-    class BasePhysicsObject;
 
-    class PositionablePhysicalDeltaState;
+    // DeltaStates //
+    class PositionDeltaState;
+    class PhysicalDeltaState;
+    class ObjectDeltaStateData;
+    class TrackControllerState;
+    
 
     // Exceptions //
-	class ExceptionInvalidArgument;
+    class Exception;
+    class InvalidAccess;
+    class InvalidArgument;
+    class InvalidState;
+    class InvalidType;
+    class NotFound;
+    class NULLPtr;
 
 
 	class ObjectFileTemplateInstance;
 	class ObjectFileTemplateDefinition;
+
+    class ObjectFileList;
 
     class BaseEntitySerializer;
     class EntitySerializerManager;
@@ -77,8 +120,6 @@ namespace Leviathan{
 
     class ConstraintSerializerManager;
     
-	class ApplyForceInfo;
-
     class AINetworkCache;
 
 	class NetworkedInput;
@@ -86,20 +127,27 @@ namespace Leviathan{
 	class ConnectedPlayer;
 	class CommandSender;
 	class CommandHandler;
+    
 	class ScriptArgumentsProviderBridge;
+    struct FunctionParameterInfo;
+    
 	class ResourceFolderListener;
 	class ResourceRefreshHandler;
+    
 	class UTF8DataIterator;
 	template<class DTypeName> class SyncedPrimitive;
 	class SyncedResource;
-	class ScriptInterface;
+    
 	class ViewerCameraPos;
 	class NewtonManager;
 	class SoundDevice;
 	class PhysicsMaterialManager;
 	class NewtonManager;
 	class ScriptConsole;
+    
 	class LeapManager;
+    class LeapListener;
+
 	class ObjectLoader;
 	class GameSpecificPacketHandler;
 	class BaseGameSpecificRequestPacket;
@@ -134,12 +182,6 @@ namespace Leviathan{
 	struct RayCastData;
 	class ScriptModule;
 	class ScriptScript;
-	class NetworkHandler;
-	class ScriptExecutor;
-	class GameWorld;
-	class AppDef;
-	class Convert;
-	class EventHandler;
 	class Event;
 	class GenericEvent;
 	struct Int1;
@@ -154,10 +196,6 @@ namespace Leviathan{
 	class TimingMonitor;
 	class ScopeTimer;
 	class GameModule;
-	class ThreadSafe;
-    class DataStore;
-    class OutOfMemoryHandler;
-    class RenderingStatistics;
 	struct MasterServerInformation;
 }
 

@@ -1,18 +1,16 @@
 #pragma once
-#ifndef PONG_COMMANDHANDLER
-#define PONG_COMMANDHANDLER
 // ------------------------------------ //
-#ifndef PONGINCLUDES
 #include "PongIncludes.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Gameplay/CustomCommandHandler.h"
-#include "boost/thread/mutex.hpp"
+#include "Common/ThreadSafe.h"
+#include <string>
 
 namespace Pong{
 
 	class PongServerNetworking;
+
+    using namespace std;
 
 	//! \brief Pong's command handler
 	//! \see Leviathan::CustomCommandHandler
@@ -32,10 +30,10 @@ namespace Pong{
         int PlayerUniqueCounter;
 
         //! Mutex for PlayerUniqueCounter
-        boost::mutex PlayerIDMutex;
+        Mutex PlayerIDMutex;
         
 		PongServerNetworking* Owner;
 	};
 
 }
-#endif
+

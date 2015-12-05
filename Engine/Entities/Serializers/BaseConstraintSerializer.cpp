@@ -1,11 +1,10 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_BASECONSTRAINTSERIALIZER
 #include "BaseConstraintSerializer.h"
-#endif
-#include "Entities/Bases/BaseConstraintable.h"
-#include "Entities/Objects/Constraints.h"
+
+#include "../../Utility/Convert.h"
+#include "../Objects/Constraints.h"
 using namespace Leviathan;
-using namespace Entity;
+using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::BaseConstraintSerializer::BaseConstraintSerializer(){
 
@@ -16,20 +15,20 @@ DLLEXPORT Leviathan::BaseConstraintSerializer::~BaseConstraintSerializer(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::BaseConstraintSerializer::CanHandleType(Entity::ENTITY_CONSTRAINT_TYPE type) const{
+DLLEXPORT bool Leviathan::BaseConstraintSerializer::CanHandleType(
+    ENTITY_CONSTRAINT_TYPE type) const
+{
 
     switch(type){
         case ENTITY_CONSTRAINT_TYPE_SLIDER:
-            return true;
-        case ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT:
             return true;
         default:
             return false;
     }
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<sf::Packet> Leviathan::BaseConstraintSerializer::SerializeConstraint(Entity::BaseConstraint*
-    constraint, Entity::ENTITY_CONSTRAINT_TYPE &type)
+DLLEXPORT std::shared_ptr<sf::Packet> Leviathan::BaseConstraintSerializer::SerializeConstraint(
+    BaseConstraint* constraint, ENTITY_CONSTRAINT_TYPE &type)
 {
     // Get the type and then cast to the subclass //
     type = constraint->GetType();
@@ -45,29 +44,24 @@ DLLEXPORT shared_ptr<sf::Packet> Leviathan::BaseConstraintSerializer::SerializeC
             auto data = make_shared<sf::Packet>();
 
             const Float3 &axis = slider->GetAxis();
+
+            (*data) << slider->GetID();
             
             (*data) << axis.X << axis.Y << axis.Z;
 
             return data;
         }
-        case ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT:
+        default:
         {
-            // We don't need a dynamic cast as nothing is required //
-            auto data = make_shared<sf::Packet>();
-
-            (*data) << int32_t(42);
-            
-            return data;
+            // Unknown type... //
+            Logger::Get()->Error("BaseConstraintSerializer: tried to serialize wrong type...");
+            return nullptr;
         }
     }
-
-    // Unknown type... //
-    Logger::Get()->Error("BaseConstraintSerializer: tried to serialize wrong type...");
-    return nullptr;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::BaseConstraintSerializer::UnSerializeConstraint(BaseObject* object1,
-    BaseObject* object2, Entity::ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet,
+DLLEXPORT bool Leviathan::BaseConstraintSerializer::UnSerializeConstraint(Constraintable &object1,
+    Constraintable &object2, ENTITY_CONSTRAINT_TYPE type, sf::Packet &packet,
     bool create /*= true*/)
 {
 
@@ -80,62 +74,24 @@ DLLEXPORT bool Leviathan::BaseConstraintSerializer::UnSerializeConstraint(BaseOb
                 return true;
             }
 
-            // TODO: could try to find a way around this cast //
-            auto firstobj = dynamic_cast<BaseConstraintable*>(object1);
-            auto secondobj = dynamic_cast<BaseConstraintable*>(object2);
-            
-            if(!firstobj || !secondobj)
-                return false;
-
             // Get the custom data //
             Float3 axis;
+            int id;
 
-            packet >> axis.X >> axis.Y >> axis.Z;
+            packet >> id >> axis.X >> axis.Y >> axis.Z;
 
             if(!packet)
                 return false;
 
-            Logger::Get()->Write("Creating constraint: "+Convert::ToString(axis.X)+", "+Convert::ToString(axis.Y)+", "
-                +Convert::ToString(axis.Z));
-
             // Create the constraint //
-            firstobj->CreateConstraintWith<SliderConstraint>(secondobj)->SetParameters(axis)->
+            object1.CreateConstraintWith<SliderConstraint>(object2, id)->SetParameters(axis)->
                 Init();
             
-            
             return true;
         }
-        case ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT:
-        {
-            if(!create){
-                // Break the constraint //
-                DEBUG_BREAK;
-                return true;
-            }
-
-            // TODO: could try to find a way around this cast //
-            auto firstobj = dynamic_cast<BaseConstraintable*>(object1);
-            auto secondobj = dynamic_cast<BaseConstraintable*>(object2);
-            
-            if(!firstobj || !secondobj)
-                return false;
-
-            // Get the custom data //
-            int32_t thenumber = 0;
-            
-            packet >> thenumber;
-
-            if(!packet || thenumber != 42)
-                return false;
-
-            // Create it //
-            firstobj->CreateConstraintWith<ControllerConstraint>(secondobj)->Init();
-
-            return true;
-        }
+        default:
+            return false;
     }
-
-    return false;
 }
 
 

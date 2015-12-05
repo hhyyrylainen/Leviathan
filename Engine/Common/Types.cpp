@@ -1,12 +1,9 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_TYPES
 #include "Types.h"
-#endif
-#ifndef LEVIATHAN_DEFINE
+
 #include "Define.h"
-#endif
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 // --- AllocatedBinaryBlock --- //
 AllocatedBinaryBlock::AllocatedBinaryBlock(){
@@ -33,35 +30,6 @@ unsigned char* AllocatedBinaryBlock::Get(int& Elements){
 	//	bool Release;
 	//};
 
-
-// ---- IntWstring ---- //
-IntWstring::IntWstring() : Value(-1){
-	
-}
-
-IntWstring::IntWstring(const wstring& wstr, int value) : Wstr(new wstring(wstr)), Value(value){
-
-}
-IntWstring::~IntWstring(){
-
-}
-
-wstring* IntWstring::GetString(){
-	return Wstr.get();
-}
-
-int IntWstring::GetValue(){
-	return Value;
-}
-
-void IntWstring::SetString(const wstring& wstr){
-
-	Wstr = shared_ptr<wstring>(new wstring(wstr));
-}
-
-void IntWstring::SetValue(int value){
-	Value = value;
-}
 // ---- Int2 ---- //
 Int2::Int2(){
 	X = 0;
@@ -88,8 +56,9 @@ int Int2::operator[](const int nIndex) const{
 	switch(nIndex){
 	case 0: return X;
 	case 1: return Y;
-	default: __assume(0);
 	}
+
+    throw std::exception();
 }
 // ---- Int3 ---- //
 Int3::Int3(){
@@ -115,8 +84,9 @@ int Int3::operator[](const int nIndex) const{
 	case 0: return X;
 	case 1: return Y;
 	case 2: return Z;
-	default: __assume(0);
 	}
+
+    throw exception();
 }
 
 DLLEXPORT Int3 Leviathan::Int3::operator-(const Int3& other) const{
@@ -153,8 +123,9 @@ DLLEXPORT int Leviathan::Int4::operator[](const int nIndex) const{
 	case 1: return Y;
 	case 2: return Z;
 	case 3: return W;
-	default: __assume(0);
 	}
+
+    throw exception();
 }
 
 DLLEXPORT Int4& Leviathan::Int4::operator-(const Int4& val){
@@ -192,55 +163,19 @@ void Leviathan::Int1::SetIntValue(int val){
 	iVal = val;
 }
 
-// ----- CharWithIndex ------ //
 
-Leviathan::CharWithIndex::CharWithIndex(){
-	Char = L' ';
-	Index = -1;
+DLLEXPORT Float3 Float3::DegreesToRadians(){
+
+    return Float3(X*DEGREES_TO_RADIANS, Y*DEGREES_TO_RADIANS, Z*DEGREES_TO_RADIANS);
 }
 
-Leviathan::CharWithIndex::CharWithIndex(wchar_t character, int index) : Char(character), Index(index){
-	
+DLLEXPORT Float3 Float3::CreateVectorFromAngles(const float &yaw, const float &pitch)
+{
+    return Float3(-sin(yaw*DEGREES_TO_RADIANS), sin(pitch*DEGREES_TO_RADIANS),
+        -cos(yaw*DEGREES_TO_RADIANS)).NormalizeSafe(Zeroed);
 }
 
-Leviathan::CharWithIndex::~CharWithIndex(){
 
-}
-
-// ------------ UINT4 ---------------- //
-DLLEXPORT Leviathan::UINT4::UINT4(UINT u1, UINT u2, UINT u3, UINT u4){
-	X = u1;
-	Y = u2;
-	Z = u3;
-	W = u4;
-}
-
-DLLEXPORT Leviathan::UINT4::UINT4(){
-}
-
-DLLEXPORT Leviathan::UINT4::operator UINT*(){
-	return &X;
-}
-
-//DLLEXPORT Leviathan::UINT4::operator UINT*(){
-//	switch(nIndex){
-//	case 0: return &X;
-//	case 1: return &Y;
-//	case 2: return &Z;
-//	case 3: return &W;
-//	default: __assume(0);
-//	}
-//}
-
-//DLLEXPORT UINT& Leviathan::UINT4::operator[](const int nIndex){
-//	switch(nIndex){
-//	case 0: return X;
-//	case 1: return Y;
-//	case 2: return Z;
-//	case 3: return W;
-//	default: __assume(0);
-//	}
-//}
 
 // specific colours //
 
@@ -266,4 +201,20 @@ DLLEXPORT const Float4& Leviathan::Float4::GetColourWhite(){
 
 DLLEXPORT const Float4& Leviathan::Float4::GetColourTransparent(){
 	return ColourTransparent;
+}
+// ------------------ Stream operators ------------------ //
+DLLEXPORT std::ostream& Leviathan::operator <<(std::ostream &stream,
+    const Leviathan::Float4 &value)
+{
+
+    stream << "[" << value.X << ", " << value.Y << ", " << value.Z << ", " << value.W << "]";
+    return stream;
+}
+
+DLLEXPORT std::ostream& Leviathan::operator <<(std::ostream &stream,
+    const Leviathan::Float3 &value)
+{
+
+    stream << "[" << value.X << ", " << value.Y << ", " << value.Z << "]";
+    return stream;
 }

@@ -1,12 +1,10 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_PHYSICALWORLD
 #include "PhysicalWorld.h"
-#endif
+
 #include <Newton.h>
 #include "PhysicsMaterialManager.h"
 #include "Events/EventHandler.h"
-#include "Common/Misc.h"
-#include "boost/thread/lock_types.hpp"
+#include "../TimeIncludes.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) :
@@ -39,6 +37,12 @@ DLLEXPORT Leviathan::PhysicalWorld::~PhysicalWorld(){
 	// finally destroy the newton world
     
 	NewtonDestroy(World);
+
+    auto physmanager = PhysicsMaterialManager::Get();
+    
+    if(physmanager)
+        physmanager->DestroyActualMaterialsForWorld(World);
+
     World = NULL;
 }
 // ------------------------------------ //
@@ -52,19 +56,20 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
     
     int runs = 0;
 
-    __int64 curtime = Misc::GetTimeMicro64();
+    auto curtime = Time::GetTimeMicro64();
     
 	// Calculate passed time and reset //
 	PassedTimeTotal += curtime-LastSimulatedTime;
 	LastSimulatedTime = curtime;
 
     
-    boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
+    Lock lock(WorldUpdateLock);
 
 	while(PassedTimeTotal >= NEWTON_FPS_IN_MICROSECONDS){
         
 		// Call event //
-		EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_BEGIN, new PhysicsStartEventData(NEWTON_TIMESTEP,
+		EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_BEGIN,
+                new PhysicsStartEventData(NEWTON_TIMESTEP,
                     OwningWorld)));
 
 		NewtonUpdate(World, NEWTON_TIMESTEP);
@@ -73,8 +78,8 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
 
         if(runs == maxruns){
 
-            Logger::Get()->Warning("PhysicalWorld: bailing from update after "+Convert::ToString(runs)+
-                " with time left: "+Convert::ToString(PassedTimeTotal));
+            Logger::Get()->Warning("PhysicalWorld: bailing from update after "+
+                Convert::ToString(runs)+" with time left: "+Convert::ToString(PassedTimeTotal));
             return;
         }
 	}
@@ -98,49 +103,9 @@ int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void
     // Wasn't the target body, ignore //
     return 0;
 }
-
-DLLEXPORT void Leviathan::PhysicalWorld::ResimulateBody(NewtonBody* body, int milliseconds,
-    boost::function<void()> callback, BaseConstraintable* targetentity)
-{
-    
-    boost::unique_lock<boost::mutex> lock(WorldUpdateLock);
-
-    ResimulatedBody = body;
-
-    // Setup single island callbacks //
-    NewtonSetIslandUpdateEvent(World, &SingleBodyUpdate);
-
-    int64_t passedtime = milliseconds*1000;
-    
-    while(passedtime >= NEWTON_FPS_IN_MICROSECONDS){
-
-        if(targetentity)
-            EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_RESIMULATE_SINGLE,
-                    new ResimulateSingleEventData(passedtime, targetentity, OwningWorld)));
-
-		NewtonUpdate(World, NEWTON_TIMESTEP);
-        passedtime-= NEWTON_FPS_IN_MICROSECONDS;
-
-        callback();
-	}
-    
-#ifdef ALLOW_RESIMULATE_CONSUME_ALL
-    
-    // Update away any left over time //
-    if(passedtime > 0){
-
-        // Might be a bad idea to use a varying time step here...
-        NewtonUpdate(World, passedtime/1000000.f);
-    }
-    
-#endif //ALLOW_RESIMULATE_CONSUME_ALL
-    
-    // Reset the update event //
-    NewtonSetIslandUpdateEvent(World, NULL);
-}
 // ------------------------------------ //
 DLLEXPORT void Leviathan::PhysicalWorld::ClearTimers(){
-	LastSimulatedTime = Misc::GetTimeMicro64();
+	LastSimulatedTime = Time::GetTimeMicro64();
 	PassedTimeTotal = 0;
 }
 // ------------------------------------ //
@@ -154,8 +119,6 @@ DLLEXPORT NewtonWorld* Leviathan::PhysicalWorld::GetNewtonWorld(){
 	return World;
 }
 // ------------------------------------ //
-
-
 
 
 

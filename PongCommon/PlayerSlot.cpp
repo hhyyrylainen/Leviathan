@@ -2,24 +2,29 @@
 #ifndef PONG_PLAYERSLOT
 #include "PlayerSlot.h"
 #endif
-#include "Entities/Bases/BasePhysicsObject.h"
 #include "Iterators/StringIterator.h"
 #include "Networking/NetworkServerInterface.h"
 #include "Utility/ComplainOnce.h"
+#include "Entities/Components.h"
+
+#include "CommonPong.h"
+
 #ifdef PONG_VERSION
 #include "PongGame.h"
 #include "PongNetHandler.h"
 #endif //PONG_VERSION
+
 #include "GameInputController.h"
 using namespace Pong;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) :
-    Slot(slotnumber), Parent(owner), Score(0), PlayerType(PLAYERTYPE_CLOSED), 
-	PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE), ControlIdentifier(0), Colour(Float4::GetColourWhite()),
-    PlayerControllerID(0), SplitSlot(NULL), SlotsPlayer(NULL), TrackDirectptr(NULL), PlayerID(-1),
-    NetworkedInputID(-1), InputObj(NULL)
+    Slot(slotnumber), PlayerType(PLAYERTYPE_CLOSED), PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE),
+    ControlIdentifier(0), PlayerControllerID(0), Colour(Float4::GetColourWhite()), Score(0), 
+    MoveState(0), PaddleObject(0), GoalAreaObject(0), TrackObject(0), SplitSlot(nullptr),
+    ParentSlot(nullptr), InputObj(nullptr), SlotsPlayer(NULL), PlayerID(-1), NetworkedInputID(-1), 
+    Parent(owner)
 {
-	
+
 }
 
 Pong::PlayerSlot::~PlayerSlot(){
@@ -74,7 +79,7 @@ int Pong::PlayerSlot::GetSplitCount(){
 }
 
 void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool active){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// if this is player 0 or 3 flip inputs //
 	if(Slot == 0 || Slot == 2){
@@ -106,26 +111,41 @@ void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool ac
 
 	}
 
-    if(!TrackDirectptr){
+    try{
+        auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
+            TrackObject);
 
-        Leviathan::ComplainOnce::PrintWarningOnce(L"Slot_trackdirect_ptr_is_empty",
-            L"Slot is trying to move but doesn't have track pointer set");
+        // Set the track speed based on move direction //
+        track.ChangeSpeed = MoveState*INPUT_TRACK_ADVANCESPEED;
+        track.Marked = true;
+    
+    } catch(const NotFound&){
+
+        Logger::Get()->Warning("PlayerSlot has a TrackObject that has no TrackController "
+            "component, object: "+Convert::ToString(TrackObject));
     }
-
-	// Set the track speed based on move direction //
-	if(TrackDirectptr)
-		TrackDirectptr->SetTrackAdvanceSpeed(MoveState*INPUT_TRACK_ADVANCESPEED);
 }
 
 void Pong::PlayerSlot::InputDisabled(){
-	// set apply force to zero //
-	if(PaddleObject){
 
-		TrackDirectptr->SetTrackAdvanceSpeed(0.f);
-	}
+    // Reset control state //
+    MoveState = 0;
 
-	// reset control state //
-	MoveState = 0;
+    if(TrackObject == 0)
+        return;
+    
+	// Set apply force to zero //
+    try{
+        auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
+            TrackObject);
+
+        // Set the track speed based on move direction //
+        track.ChangeSpeed = 0;
+        track.Marked = true;
+    
+    } catch(const NotFound&){
+
+    }
 }
 
 int Pong::PlayerSlot::GetScore(){
@@ -145,7 +165,17 @@ bool Pong::PlayerSlot::IsVerticalSlot(){
 }
 
 float Pong::PlayerSlot::GetTrackProgress(){
-	return TrackDirectptr->GetProgressTowardsNextNode();
+
+    try{
+        auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
+            TrackObject);
+
+        return track.NodeProgress;
+    
+    } catch(const NotFound&){
+
+        return 0.f;
+    }
 }
 
 bool Pong::PlayerSlot::DoesPlayerNumberMatchThisOrParent(int number){
@@ -159,11 +189,14 @@ bool Pong::PlayerSlot::DoesPlayerNumberMatchThisOrParent(int number){
 }
 // ------------------------------------ //
 void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Write all our data to the packet //
-	packet << Slot << (int)PlayerType << PlayerNumber << NetworkedInputID << ControlIdentifier << (int)ControlType << PlayerControllerID 
-		<< Colour.X << Colour.Y << Colour.Z << Colour.W;
+	packet << Slot << (int)PlayerType << PlayerNumber << NetworkedInputID << ControlIdentifier
+           << (int)ControlType << PlayerControllerID 
+           << Colour;
+    packet << PaddleObject << GoalAreaObject << TrackObject;
+
 	packet << PlayerID << Score << (bool)(SplitSlot != NULL);
 
 	if(SplitSlot){
@@ -172,72 +205,35 @@ void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
 	}
 }
 
-void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet, Lock &listlock){
 
+    GUARD_LOCK();
+    
 	int tmpival;
 
 	// Get our data from it //
-	if(!(packet >> Slot)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> tmpival)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
+	packet >> Slot >> tmpival;
 
 	PlayerType = static_cast<PLAYERTYPE>(tmpival);
 
-	if(!(packet >> PlayerNumber)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> NetworkedInputID)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-	
-	if(!(packet >> ControlIdentifier)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> tmpival)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
+	packet >> PlayerNumber  >> NetworkedInputID  >> ControlIdentifier  >> tmpival;
 
 	ControlType = static_cast<PLAYERCONTROLS>(tmpival);
 
-	if(!(packet >> PlayerControllerID)){
+	packet >> PlayerControllerID;
+    packet >> Colour;
 
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> Colour.X >> Colour.Y >> Colour.Z >> Colour.W)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> PlayerID)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
-
-	if(!(packet >> Score)){
-
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
+    packet >> PaddleObject >> GoalAreaObject >> TrackObject;
+    
+    packet >> PlayerID >> Score;
+	
 
 	bool wantedsplit;
 
-	if(!(packet >> wantedsplit)){
+	packet >> wantedsplit;
 
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
-	}
+    if(!packet)
+        throw InvalidArgument("packet format for PlayerSlot is invalid");
 
 	// Check do we need to change split //
 	if(wantedsplit && !SplitSlot){
@@ -250,7 +246,7 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
 	// Update split value //
 	if(wantedsplit){
 
-		SplitSlot->UpdateDataFromPacket(packet);
+		SplitSlot->UpdateDataFromPacket(packet, listlock);
 	}
 
 #ifdef PONG_VERSION
@@ -269,14 +265,15 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet){
             
                 // Hook a networked input receiver to the server //
                 PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
-                    PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(NetworkedInputID, true));
+                    PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(guard,
+                        NetworkedInputID, true));
             }
 
 		} else {
 
             if(ControlType == PLAYERCONTROLS_AI){
                 // Destroy out input if there is an AI //
-                _ResetNetworkInput();
+                _ResetNetworkInput(guard);
 
             } else {
                 
@@ -324,20 +321,24 @@ void Pong::PlayerSlot::SlotLeavePlayer(){
 	PlayerType = PLAYERTYPE_EMPTY;
 }
 
-void Pong::PlayerSlot::SetInputThatSendsControls(PongNInputter* input){
-	GUARD_LOCK_THIS_OBJECT();
+void Pong::PlayerSlot::SetInputThatSendsControls(Lock &guard, PongNInputter* input){
 
     if(InputObj && input != InputObj){
 
         Logger::Get()->Info("PlayerSlot: destroying old networked input");
-        _ResetNetworkInput();
+        _ResetNetworkInput(guard);
     }
     
 	InputObj = input;
 }
 
-void Pong::PlayerSlot::_ResetNetworkInput(){
-	GUARD_LOCK_THIS_OBJECT();
+void PlayerSlot::InputDeleted(Lock &guard){
+
+    InputObj = nullptr;
+}
+
+void Pong::PlayerSlot::_ResetNetworkInput(Lock &guard){
+
 	if(InputObj){
 
 
@@ -356,8 +357,8 @@ void Pong::PlayerSlot::_ResetNetworkInput(){
 }
 
 // ------------------ PlayerList ------------------ //
-Pong::PlayerList::PlayerList(boost::function<void (PlayerList*)> callback, size_t playercount /*= 4*/) : SyncedResource(L"PlayerList"), 
-	CallbackFunc(callback), GamePlayers(4)
+Pong::PlayerList::PlayerList(std::function<void (PlayerList*)> callback, size_t playercount /*= 4*/) :
+    SyncedResource("PlayerList"), CallbackFunc(callback), GamePlayers(4)
 {
 
 	// Fill default player data //
@@ -372,16 +373,16 @@ Pong::PlayerList::~PlayerList(){
 	SAFE_DELETE_VECTOR(GamePlayers);
 }
 // ------------------------------------ //
-void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet) THROWS{
+void Pong::PlayerList::UpdateCustomDataFromPacket(Lock &guard, sf::Packet &packet){
 	
 	sf::Int32 vecsize;
 
 	if(!(packet >> vecsize)){
 
-		throw Leviathan::ExceptionInvalidArgument(L"packet format for PlayerSlot is invalid", 0, __WFUNCTION__, L"packet", L"");
+		throw InvalidArgument("packet format for PlayerSlot is invalid");
 	}
 
-	if(vecsize != GamePlayers.size()){
+	if(vecsize != static_cast<int>(GamePlayers.size())){
 		// We need to resize //
 		int difference = vecsize-GamePlayers.size();
 
@@ -408,16 +409,12 @@ void Pong::PlayerList::UpdateCustomDataFromPacket(sf::Packet &packet) THROWS{
 	auto end = GamePlayers.end();
 	for(auto iter = GamePlayers.begin(); iter != end; ++iter){
 
-		(*iter)->UpdateDataFromPacket(packet);
+		(*iter)->UpdateDataFromPacket(packet, guard);
 	}
-
-
-	// Notify update //
-	OnValueUpdated();
 }
 
-void Pong::PlayerList::SerializeCustomDataToPacket(sf::Packet &packet){
-	GUARD_LOCK_THIS_OBJECT();
+void Pong::PlayerList::SerializeCustomDataToPacket(Lock &guard, sf::Packet &packet){
+    
 	// First put the size //
 	packet << static_cast<sf::Int32>(GamePlayers.size());
 
@@ -429,22 +426,22 @@ void Pong::PlayerList::SerializeCustomDataToPacket(sf::Packet &packet){
 	}
 }
 
-void Pong::PlayerList::OnValueUpdated(){
+void Pong::PlayerList::OnValueUpdated(Lock &guard){
+    
 	// Call our callback //
 	CallbackFunc(this);
 }
 
-PlayerSlot* Pong::PlayerList::GetSlot(size_t index) THROWS{
+PlayerSlot* Pong::PlayerList::GetSlot(size_t index){
 	if(index >= GamePlayers.size())
-		throw Leviathan::ExceptionInvalidArgument(L"index is out of range", GamePlayers.size(), __WFUNCTION__,
-            L"index", Convert::ToWstring(index));
+		throw InvalidArgument("player index is out of range");
 
 	return GamePlayers[index];
 }
 // ------------------------------------ //
 void Pong::PlayerList::ReportPlayerInfoToLog() const{
 
-    GUARD_LOCK_THIS_OBJECT();
+    GUARD_LOCK();
     Logger::Get()->Write("PlayerList:::: size "+Convert::ToString(GamePlayers.size()));
 
     for(auto iter = GamePlayers.begin(); iter != GamePlayers.end(); ++iter){
@@ -483,17 +480,15 @@ void Pong::PlayerSlot::WriteInfoToLog(int depth /*= 0*/) const{
 
     PUT_FIELD(MoveState);
 
-    Logger::Get()->Write(prefix+"PaddleObject "+Convert::ToHexadecimalString(PaddleObject.get()));
+    Logger::Get()->Write(prefix+"PaddleObject "+Convert::ToString(PaddleObject));
 
-    Logger::Get()->Write(prefix+"GoalAreaObject "+Convert::ToHexadecimalString(GoalAreaObject.get()));
+    Logger::Get()->Write(prefix + "GoalAreaObject "+Convert::ToString(GoalAreaObject));
 
-    Logger::Get()->Write(prefix+"TrackObject "+Convert::ToHexadecimalString(TrackObject.get()));
+    Logger::Get()->Write(prefix+"TrackObject "+Convert::ToString(TrackObject));
 
-    Logger::Get()->Write(prefix+"TrackDirectptr "+Convert::ToHexadecimalString(TrackDirectptr));
+    Logger::Get()->Write(prefix+"InputObj "+Convert::ToString(InputObj));
 
-    Logger::Get()->Write(prefix+"InputObj "+Convert::ToHexadecimalString(InputObj));
-
-    Logger::Get()->Write(prefix+"SlotsPlayer "+Convert::ToHexadecimalString(SlotsPlayer));
+    Logger::Get()->Write(prefix+"SlotsPlayer "+Convert::ToString(SlotsPlayer));
 
     PUT_FIELD(PlayerID);
 

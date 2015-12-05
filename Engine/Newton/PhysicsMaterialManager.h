@@ -1,17 +1,11 @@
-#ifndef LEVIATHAN_PHYSICSMATERIALMANAGER
-#define LEVIATHAN_PHYSICSMATERIALMANAGER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "PhysicalMaterial.h"
 #include "NewtonManager.h"
 
 namespace Leviathan{
-
-
 
 	class PhysicsMaterialManager{
 	public:
@@ -28,15 +22,18 @@ namespace Leviathan{
 		// ------------------ Material ID fetching functions ------------------ //
 
 		// Gets the ID of a material based on name and NewtonWorld ptr //
-		DLLEXPORT int GetMaterialIDForWorld(const wstring &name, NewtonWorld* WorldPtr);
+		DLLEXPORT int GetMaterialIDForWorld(const std::string &name, NewtonWorld* WorldPtr);
 
 		// Gets the pointer to physical material //
-		DLLEXPORT shared_ptr<PhysicalMaterial> GetMaterial(const wstring &name);
+		DLLEXPORT std::shared_ptr<PhysicalMaterial> GetMaterial(const std::string &name);
 
 
-		// This function builds the materials for a newton world (this is provided so that you can use multiple threads to setup the game) //
+		// This function builds the materials for a newton world (this is provided so that you can
+        // use multiple threads to setup the game)
 		DLLEXPORT void CreateActualMaterialsForWorld(NewtonWorld* newtonworld);
 
+        //! \brief Clears world from materials
+        DLLEXPORT void DestroyActualMaterialsForWorld(NewtonWorld* world);
 
 		DLLEXPORT static PhysicsMaterialManager* Get();
 	private:
@@ -47,10 +44,10 @@ namespace Leviathan{
 		// ------------------------------------ //
 
 		// map for fast finding //
-		std::map<wstring, shared_ptr<PhysicalMaterial>> LoadedMaterials;
+		std::map<std::string, std::shared_ptr<PhysicalMaterial>> LoadedMaterials;
 
 		static PhysicsMaterialManager* StaticInstance;
 	};
 
 }
-#endif
+

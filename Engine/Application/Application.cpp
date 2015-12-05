@@ -1,18 +1,15 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_APPLICATION
 #include "Application.h"
-#endif
-using namespace Leviathan;
-// ------------------------------------ //
+
 #include "FileSystem.h"
 #include "OGRE/OgreWindowEventUtilities.h"
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
-
-
-// ------------------ LeviathanApplication ------------------ //
+using namespace Leviathan;
+using namespace std;
+// ------------------------------------ //
 DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() :
-    Quit(false), _Engine(new Engine(this)), ApplicationConfiguration(NULL), ShouldQuit(false), QuitSometime(false)
+    Quit(false), _Engine(new Engine(this)), ApplicationConfiguration(NULL), ShouldQuit(false),
+    QuitSometime(false)
 {
 	Curapp = this;
 }
@@ -34,7 +31,7 @@ DLLEXPORT LeviathanApplication* Leviathan::LeviathanApplication::Get(){
 LeviathanApplication* LeviathanApplication::Curapp = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	// store configuration //
 	ApplicationConfiguration = configuration;
 
@@ -47,7 +44,7 @@ DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration
 
 DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		// set as quitting //
 		Quit = true;
 
@@ -60,7 +57,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 	_Engine->Release();
 
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		// Delete the already released engine //
 		delete _Engine;
 		_Engine = NULL;
@@ -68,7 +65,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	ShouldQuit = true;
 
 	// Tell Engine to expect a Release soon //
@@ -76,7 +73,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	ShouldQuit = true;
 	Quit = true;
 
@@ -90,7 +87,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
 	SAFE_DELETE(_Engine);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::LeviathanApplication::PassCommandLine(const wstring &params){
+DLLEXPORT void Leviathan::LeviathanApplication::PassCommandLine(const std::string &params){
 	_Engine->PassCommandLine(params);
 }
 
@@ -126,7 +123,7 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 
 		// Set as quitting //
 		if((!canprocess || QuitSometime) && !ShouldQuit){
-			Logger::Get()->Info(L"Application: starting real close");
+			Logger::Get()->Info("Application: starting real close");
 			StartRelease();
 		}
 
@@ -144,15 +141,15 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 
 		// We could potentially wait here //
 		try{
-			boost::this_thread::sleep(boost::posix_time::milliseconds(1));
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		} catch(...){
 			FailCount++;
 		}
 	}
-	GUARD_LOCK_THIS_OBJECT();
+
 	// Report problems //
 	if(FailCount)
-		DEBUG_OUTPUT_AUTO(string("Application main loop sleep fails: "+Convert::ToString(FailCount)));
+        std::cout << "Application main loop sleep fails: " << FailCount << std::endl;
 
 	// always release before quitting to avoid tons of memory leaks //
 	Release();
@@ -170,11 +167,15 @@ DLLEXPORT bool Leviathan::LeviathanApplication::InitLoadCustomScriptTypes(asIScr
     return true;
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){
+DLLEXPORT void Leviathan::LeviathanApplication::RegisterCustomScriptTypes(asIScriptEngine* engine,
+    std::map<int, std::string> &typeids)
+{
 
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager* manager){
+DLLEXPORT void Leviathan::LeviathanApplication::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager*
+    manager)
+{
 
 }
 
@@ -186,17 +187,21 @@ DLLEXPORT void Leviathan::LeviathanApplication::EnginePreShutdown(){
 
 }
 
-DLLEXPORT shared_ptr<GameWorld> Leviathan::LeviathanApplication::GetGameWorld(int id){
+DLLEXPORT std::shared_ptr<GameWorld> Leviathan::LeviathanApplication::GetGameWorld(int id){
 
     return nullptr;
 }
 
 
-DLLEXPORT void Leviathan::LeviathanApplication::DummyGameConfigurationVariables(GameConfiguration* configobj){
+DLLEXPORT void Leviathan::LeviathanApplication::DummyGameConfigurationVariables(
+    GameConfiguration* configobj)
+{
 
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::DummyGameKeyConfigVariables(KeyConfiguration* keyconfigobj){
+DLLEXPORT void Leviathan::LeviathanApplication::DummyGameKeyConfigVariables(
+    KeyConfiguration* keyconfigobj)
+{
 
 }
 

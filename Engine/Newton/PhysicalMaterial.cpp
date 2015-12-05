@@ -1,13 +1,14 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_PHYSICALMATERIAL
 #include "PhysicalMaterial.h"
-#endif
+
 #include "PhysicsMaterialManager.h"
 #include "Handlers/IDFactory.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(const wstring &name) : Name(name), EngineID(IDFactory::GetID()){
+DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(const std::string &name) :
+    Name(name), EngineID(IDFactory::GetID())
+{
 
 }
 
@@ -44,6 +45,18 @@ DLLEXPORT int Leviathan::PhysicalMaterial::GetMaterialIDIfLoaded(NewtonWorld* wo
 void Leviathan::PhysicalMaterial::_CreateMaterialToWorld(NewtonWorld* world){
 	// Create ID for world //
 	NewtonWorldAndID[world] = NewtonMaterialCreateGroupID(world);
+}
+
+void PhysicalMaterial::_ClearFromWorld(NewtonWorld* world){
+
+    for(auto iter = NewtonWorldAndID.begin(); iter != NewtonWorldAndID.end(); ++iter){
+
+        if(iter->first == world){
+
+            NewtonWorldAndID.erase(iter);
+            return;
+        }
+    }
 }
 
 void Leviathan::PhysicalMaterial::_ApplyMaterialPropertiesToWorld(NewtonWorld* world){

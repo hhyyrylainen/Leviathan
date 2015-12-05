@@ -28,7 +28,7 @@ set(FinalTargetLinkLibraries ${LINK_LIBS_TOENGINE_RELEASE} ${LINK_LIBS_TOENGINE_
 target_link_libraries(${CurrentProjectName} ${FinalTargetLinkLibraries})
 
 # speed up build
-cotire(${CurrentProjectName})
+#cotire(${CurrentProjectName})
 
 # If the output directory is wrong then we need to use this
 if(WIN32 AND NOT MINGW)

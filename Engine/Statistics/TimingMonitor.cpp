@@ -1,19 +1,19 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_TIMINGMONITOR
 #include "TimingMonitor.h"
-#endif
-#ifndef LEVIATHAN_DEFINE
+
 #include "Define.h"
-#endif
-#include "Common/Misc.h"
+#include "../TimeIncludes.h"
+#include "../Utility/Convert.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-void Leviathan::TimingMonitor::StartTiming(const wstring& name, int style /*= TIMINGMONITOR_STYLE_RESULT_DEFAULT*/){
+void Leviathan::TimingMonitor::StartTiming(const std::string& name,
+    int style /*= TIMINGMONITOR_STYLE_RESULT_DEFAULT*/)
+{
 	Timers.push_back(shared_ptr<TimingMonitorClock>(new TimingMonitorClock(name, style)));
 }
 
-int Leviathan::TimingMonitor::GetCurrentElapsed(const wstring& name){
+int Leviathan::TimingMonitor::GetCurrentElapsed(const std::string& name){
 	// loop through timers and get right based on name //
 	for(unsigned int i = 0; i < Timers.size(); i++){
 		if(Timers[i]->Name == name){
@@ -24,7 +24,8 @@ int Leviathan::TimingMonitor::GetCurrentElapsed(const wstring& name){
 	return -1;
 }
 
-int Leviathan::TimingMonitor::StopTiming(const wstring& name, bool printoutput /*= true*/){
+int Leviathan::TimingMonitor::StopTiming(const std::string& name, bool printoutput /*= true*/){
+    
 	// loop through timers and get right based on name //
 	for(size_t i = 0; i < Timers.size(); i++){
 		if(Timers[i]->Name == name){
@@ -33,8 +34,9 @@ int Leviathan::TimingMonitor::StopTiming(const wstring& name, bool printoutput /
 			int time = Timers[i]->EndMonitoring();
 
 			if(printoutput){
-				Logger::Get()->Info(L"TimingMonitor: Timer \""+name+L"\" stopped elapsed "+Convert::ToWstring(time/1000000.f)+L" s ("+
-					Convert::ToWstring(time)+L" \u00B5s)");
+				Logger::Get()->Info("TimingMonitor: Timer \""+name+
+                    "\" stopped elapsed "+Convert::ToString(time/1000000.f)+" s ("+
+					Convert::ToString(time)+" micro seconds)");
 			}
 
 			// remove the timer because memory might be filled with stuff //
@@ -44,6 +46,7 @@ int Leviathan::TimingMonitor::StopTiming(const wstring& name, bool printoutput /
 			return time;
 		}
 	}
+    
 	return -1;
 }
 // ------------------------------------ //
@@ -63,7 +66,7 @@ DLLEXPORT void Leviathan::TimingMonitor::ClearTimers(){
 
 	for(size_t i = 0; i < Timers.size(); i++){
 		if(i == 0)
-			Logger::Get()->Info(L"TimingMonitor: leaked timers! names:");
+			Logger::Get()->Info("TimingMonitor: leaked timers! names:");
 		Logger::Get()->Write(Timers[i]->Name);
 	}
 	// just clear all timers vector and they will delete automatically //
@@ -75,24 +78,24 @@ vector<shared_ptr<TimingMonitorClock>> Leviathan::TimingMonitor::Timers;
 // ---------------- TimingMonitorClock -------------------- //
 int Leviathan::TimingMonitorClock::EndMonitoring(){
 	// get end time and calculate duration //
-	EndTime = Misc::GetTimeMicro64();
+	EndTime = Time::GetTimeMicro64();
 	CurrentElapsed = (int)(EndTime-StartTime);
 	return CurrentElapsed;
 }
 
-Leviathan::TimingMonitorClock::TimingMonitorClock(const wstring& name, int style){
+Leviathan::TimingMonitorClock::TimingMonitorClock(const std::string& name, int style){
 	EndTime = -1;
 	Name = name;
 
 	CurrentElapsed = 0;
-	StartTime = Misc::GetTimeMicro64();
+	StartTime = Time::GetTimeMicro64();
 	Style = style;
 }
 // ---------------- ScopeTimer -------------------- //
-DLLEXPORT Leviathan::ScopeTimer::ScopeTimer(const wstring& source){
+DLLEXPORT Leviathan::ScopeTimer::ScopeTimer(const std::string& source){
 	// create unique name for this timer //
 	CurID++;
-	TimerName = BASETIMERNAME_FOR_SCROPE_TIMER+Convert::IntToWstring(CurID);
+	TimerName = BASETIMERNAME_FOR_SCROPE_TIMER+Convert::ToString(CurID);
 	Source = source;
 	// start timer for this object //
 	TimingMonitor::StartTiming(TimerName, TIMINGMONITOR_STYLE_RESULT_NONE);
@@ -103,8 +106,9 @@ DLLEXPORT Leviathan::ScopeTimer::~ScopeTimer(){
 	int ElapsedTime = TimingMonitor::StopTiming(TimerName, false);
 
 	// print data //
-	Logger::Get()->Info(L"ScopeTimer: "+Source+L" Stopped elapsed: "+Convert::ToWstring(ElapsedTime/1000000.f)+L" s ("+
-		Convert::ToWstring(ElapsedTime)+L" micro seconds)");
+	Logger::Get()->Info("ScopeTimer: "+Source+" Stopped elapsed: "+
+        Convert::ToString(ElapsedTime/1000000.f)+" s ("+
+		Convert::ToString(ElapsedTime)+" micro seconds)");
 }
 
 int Leviathan::ScopeTimer::CurID = 42;

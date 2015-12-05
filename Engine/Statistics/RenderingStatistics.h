@@ -1,17 +1,14 @@
-#ifndef LEVIATHAN_RENDERINGSTATISTICS
-#define LEVIATHAN_RENDERINGSTATISTICS
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
-#include "Common/DataStoring/DataStore.h"
+#include "Include.h"
+#include "../ForwardDeclarations.h"
+#include <vector>
+#include <cstddef>
 
 namespace Leviathan{
 
 	//! \brief Mainly a FPS limiter
-	class RenderingStatistics : public Object{
+	class RenderingStatistics{
 	public:
 		DLLEXPORT RenderingStatistics();
 		DLLEXPORT ~RenderingStatistics();
@@ -29,29 +26,13 @@ namespace Leviathan{
 		void HalfMinuteMark();
 		void SecondMark();
 
-		FORCE_INLINE static void MakeSureHasEnoughRoom(std::vector<int> &tarvec, const size_t &accessspot){
-			
-			if(tarvec.size() <= accessspot+1){
-				if(tarvec.size() > 5000){
-
-					tarvec.resize((size_t)(tarvec.size()*1.35f));
-					Logger::Get()->Warning("RenderingStatistics: large frame time tracking buffer is getting larger, "
-                        "size: "+Convert::ToString(tarvec.size()));
-
-				} else {
-
-					tarvec.resize((size_t)(tarvec.size()*1.8f));
-				}
-			}
-
-
-		}
+		static void MakeSureHasEnoughRoom(std::vector<int> &tarvec, const size_t &accessspot);
 
 		// ------------------------------------ //
-		__int64 HalfMinuteStartTime;
-		__int64 SecondStartTime;
-		__int64 RenderingStartTime;
-		__int64 RenderingEndTime;
+		int64_t HalfMinuteStartTime;
+		int64_t SecondStartTime;
+		int64_t RenderingStartTime;
+		int64_t RenderingEndTime;
 		// measured values //
 		int Frames;
 
@@ -85,4 +66,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

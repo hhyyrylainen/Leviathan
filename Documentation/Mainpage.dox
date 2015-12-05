@@ -1,18 +1,14 @@
 /*! \mainpage Leviathan main page
     
     \section intro_sec Introduction
-    
-    \todo Write some nice introduction
+
+    \see http://boostslair.com/Leviathan/leviathan-game-engine.html
     
     See next: \ref tutorials
     
-    \section install_sec Features
+    \section design_choices Design choices
 
-    Here's a list of features in the engine.
-    
-    \subsection mainfeatures Main features
-    
-    Write this too.
+    \ref object_locking How Leviathan handless thread-safety
 
     \section references_list References
 

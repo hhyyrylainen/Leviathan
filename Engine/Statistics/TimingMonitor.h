@@ -1,10 +1,10 @@
-#ifndef LEVIATHAN_TIMINGMONITOR
-#define LEVIATHAN_TIMINGMONITOR
+#pragma once
 // ------------------------------------ //
-// Reduce bloat in precompiled header
-// ------------------------------------ //
-// ---- includes ---- //
+#include "Include.h"
 #include <memory>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 #define TIMINGMONITOR_STYLE_RESULT_DEFAULT	100
 #define TIMINGMONITOR_STYLE_RESULT_NONE		200
@@ -17,19 +17,19 @@
 
 #define ADDTIMEFORSCOPECALLER(x,y) ADDTIMERFROSCOPE(x, y)
 
-#define QUICKTIME_THISSCOPE ADDTIMEFORSCOPECALLER(__LINE__, __WFUNCTION__)
+#define QUICKTIME_THISSCOPE ADDTIMEFORSCOPECALLER(__LINE__, __FUNCTION__)
 
-#define BASETIMERNAME_FOR_SCROPE_TIMER	L"Scopetimer_for_id_:"
+#define BASETIMERNAME_FOR_SCROPE_TIMER	"Scopetimer_for_id_:"
 
 namespace Leviathan{
 	struct TimingMonitorClock{
 	public:
-		TimingMonitorClock(const wstring& name, int style);
+		TimingMonitorClock(const std::string& name, int style);
 		int EndMonitoring();
 
-		wstring Name;
-		__int64 StartTime;
-		__int64 EndTime;
+        std::string Name;
+		int64_t StartTime;
+		int64_t EndTime;
 		int CurrentElapsed;
 		int Style;
 
@@ -38,9 +38,10 @@ namespace Leviathan{
 
 	class TimingMonitor{
 	public:
-		DLLEXPORT static void StartTiming(const wstring& name, int style = TIMINGMONITOR_STYLE_RESULT_DEFAULT);
-		DLLEXPORT static int GetCurrentElapsed(const wstring& name);
-		DLLEXPORT static int StopTiming(const wstring& name, bool printoutput = true);
+		DLLEXPORT static void StartTiming(const std::string &name,
+            int style = TIMINGMONITOR_STYLE_RESULT_DEFAULT);
+		DLLEXPORT static int GetCurrentElapsed(const std::string &name);
+		DLLEXPORT static int StopTiming(const std::string &name, bool printoutput = true);
 
 		DLLEXPORT static int GetCurrentTimerCount();
 		DLLEXPORT static void ClearTimers();
@@ -51,18 +52,18 @@ namespace Leviathan{
 		~TimingMonitor();
 
 		// ---------------------- //
-		static vector<shared_ptr<TimingMonitorClock>> Timers;
+		static std::vector<std::shared_ptr<TimingMonitorClock>> Timers;
 	};
 
 	class ScopeTimer{
 	public:
-		DLLEXPORT ScopeTimer(const wstring& source);
+		DLLEXPORT ScopeTimer(const std::string &source);
 		DLLEXPORT ~ScopeTimer();
 	protected:
-		wstring TimerName;
-		wstring Source;
+		std::string TimerName;
+		std::string Source;
 
 		static int CurID;
 	};
 }
-#endif
+

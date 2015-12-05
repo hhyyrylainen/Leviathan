@@ -1,22 +1,18 @@
 #pragma once
-#ifndef LEVIATHAN_SCRIPTNOTIFIERS
-#define LEVIATHAN_SCRIPTNOTIFIERS
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/BaseNotifiable.h"
 #include "angelscript.h"
 #include "Common/ReferenceCounted.h"
-
+#include <map>
 
 
 namespace Leviathan{
 
 	bool RegisterNotifiersWithAngelScript(asIScriptEngine* engine);
-	void RegisterNotifierTypesWithAngelScript(asIScriptEngine* engine, std::map<int, wstring> &typeids);
+	void RegisterNotifierTypesWithAngelScript(asIScriptEngine* engine,
+        std::map<int, std::string> &typeids);
 
 
 	//! \brief BaseNotifier for use in scripts
@@ -64,4 +60,4 @@ namespace Leviathan{
 
 
 }
-#endif
+

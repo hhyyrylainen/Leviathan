@@ -1,18 +1,13 @@
-#ifndef LEVIATHAN_OUTOFMEMORYHANDLER
-#define LEVIATHAN_OUTOFMEMORYHANDLER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
-
+#include "Include.h"
+#include <new>
 
 #define OUTOFMEMORY_REQUIREDMEMORY_AMOUNT	1000
 
 namespace Leviathan{
 
-	class OutOfMemoryHandler /*: public Object*/{
+	class OutOfMemoryHandler{
 	public:
 		DLLEXPORT OutOfMemoryHandler();
 		DLLEXPORT ~OutOfMemoryHandler();
@@ -24,9 +19,9 @@ namespace Leviathan{
 	private:
 		static OutOfMemoryHandler* staticinstance;
 
-		// memory that can be used to try to get through the error //
+		//! Memory that can be used to try to get through the error
 		char* ReservedMemory;
 	};
 
 }
-#endif
+

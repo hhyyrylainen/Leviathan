@@ -1,15 +1,10 @@
-#ifndef PONGNETHANDLER
-#define PONGNETHANDLER
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Networking/NetworkInterface.h"
 #include "Networking/NetworkClientInterface.h"
 #include "PongPackets.h"
-
 
 
 namespace Pong{
@@ -35,10 +30,10 @@ namespace Pong{
 
 
 		//! \brief Used to fire GenericEvents to update GUI status
-		virtual void _OnNewConnectionStatusMessage(const wstring &message);
+		virtual void _OnNewConnectionStatusMessage(const string &message);
 
 		//! \brief This detects when the server kicks us and displays the reason
-		virtual void _OnDisconnectFromServer(const wstring &reasonstring, bool donebyus);
+		virtual void _OnDisconnectFromServer(const string &reasonstring, bool donebyus);
 
 
 		bool OnAServer;
@@ -46,4 +41,4 @@ namespace Pong{
 	};
 
 }
-#endif
+

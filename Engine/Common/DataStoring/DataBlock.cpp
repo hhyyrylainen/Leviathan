@@ -1,126 +1,13 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_DATABLOCK
 #include "DataBlock.h"
-#endif
-#include "Exceptions/ExceptionInvalidArgument.h"
+#include "Exceptions.h"
 #include "Iterators/StringIterator.h"
-#include "Script/ScriptInterface.h"
+#include "Script/ScriptExecutor.h"
 #include "../StringOperations.h"
+#include <float.h>
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-#define TEST_IVALUE_INDBLOCKS		254676
-
-DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
-
-	bool Failed = false;
-
-	IntBlock iblock(TEST_IVALUE_INDBLOCKS);
-
-	int gotvalue = iblock;
-
-	if(gotvalue != TEST_IVALUE_INDBLOCKS){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	VariableBlock vblock(new IntBlock(TEST_IVALUE_INDBLOCKS));
-
-	gotvalue = vblock;
-
-	if(gotvalue != TEST_IVALUE_INDBLOCKS){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	if(vblock.IsConversionAllowedNonPtr<float>() == false){
-		// should be valid conversion //
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	} else {
-		// this needs to be skipped if not allowed //
-
-		float fvaluegot = vblock;
-		if(fvaluegot != TEST_IVALUE_INDBLOCKS){
-
-			QUICK_ERROR_MESSAGE;
-			Failed = true;
-		}
-	}
-
-	FloatBlock fblock(TEST_IVALUE_INDBLOCKS);
-
-	gotvalue = fblock;
-
-	if(gotvalue != TEST_IVALUE_INDBLOCKS){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	wstring texty = iblock;
-
-	if(texty != Convert::ToWstring(TEST_IVALUE_INDBLOCKS)){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	// text to text check //
-	VariableBlock tblocky(wstring(L"this is a test text that should be intact"));
-
-	wstring checkvalue(L"");
-
-	if(!tblocky.ConvertAndAssingToVariable<wstring>(checkvalue)){
-
-		Failed = true;
-	}
-	// compare //
-	if(checkvalue != L"this is a test text that should be intact"){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	// void block testings //
-
-	Float4* floaty = new Float4(1, 564, 73784, 124);
-
-	VoidPtrBlock vblocky(floaty);
-
-	Float4* returnptr = (Float4*)(void*)(vblocky);
-
-	if(returnptr != floaty || *returnptr != *floaty){
-
-		QUICK_ERROR_MESSAGE;
-		Failed = true;
-	}
-
-	SAFE_DELETE(floaty);
-
-
-	// check fail state //
-	if(Failed){
-
-		return true;
-	}
-	int values;
-	// stress testing //
-	for(int i = 0; i < tests; i++){
-
-		unique_ptr<VariableBlock> tempnewblock(new VariableBlock(new IntBlock(2524646)));
-		values = *tempnewblock;
-
-		*tempnewblock = new FloatBlock(2546);
-
-		values = values*((int)*tempnewblock);
-	}
-	return false;
-}
-
 //
 // Template specifications should be fine being in here without causing any issues
 // should also improve compilation speed and reduce the mess in the header and
@@ -128,48 +15,54 @@ DLLEXPORT bool Leviathan::DataBlockTestVerifier(const int &tests){
 //
 namespace Leviathan{
 // templates for getting AngelScript type id from template //
-#define TYPEIDGETTEMPLATEINSTANTIATION(TypeForTemplate, StringToUse) template<> struct TypeToAngelScriptIDConverter<TypeForTemplate>{static inline int GetTypeIDFromTemplated(){ return ScriptInterface::Get()->GetExecutor()->GetAngelScriptTypeID(L"int"); }};
+#define TYPEIDGETTEMPLATEINSTANTIATION(TypeForTemplate, StringToUse) template<> \
+    struct TypeToAngelScriptIDConverter<TypeForTemplate>{static inline int \
+        GetTypeIDFromTemplated(){ return \
+                ScriptExecutor::Get()->GetAngelScriptTypeID(StringToUse); }};
 
 
-TYPEIDGETTEMPLATEINSTANTIATION(int, L"int");
-TYPEIDGETTEMPLATEINSTANTIATION(bool, L"bool");
-TYPEIDGETTEMPLATEINSTANTIATION(float, L"float");
-TYPEIDGETTEMPLATEINSTANTIATION(char, L"char");
-TYPEIDGETTEMPLATEINSTANTIATION(string, L"string");
+    TYPEIDGETTEMPLATEINSTANTIATION(int, "int");
+    TYPEIDGETTEMPLATEINSTANTIATION(bool, "bool");
+    TYPEIDGETTEMPLATEINSTANTIATION(float, "float");
+    TYPEIDGETTEMPLATEINSTANTIATION(char, "char");
+    TYPEIDGETTEMPLATEINSTANTIATION(std::string, "string");
 
 }
 
 // ------------------------------------ //
-DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse, map<wstring, shared_ptr<VariableBlock>>* predefined) THROWS{
+DLLEXPORT Leviathan::VariableBlock::VariableBlock(const std::string &valuetoparse,
+    map<string, std::shared_ptr<VariableBlock>>* predefined)
+{
 	// the text should have all preceding and trailing spaces removed //
 	if(valuetoparse.size() == 0){
 		// can't be anything //
-		throw ExceptionInvalidArgument(L"no data passed", valuetoparse.size(), __WFUNCTION__, L"valuetoparse", valuetoparse);
+		throw InvalidArgument("no data passed");
 	}
 	// try to figure out what type of block is required for this variable //
 
 	// easy one first, quotes //
-	if(valuetoparse[0] == L'"'){
+	if(valuetoparse[0] == '"'){
 		// it's a string //
 
 		// use iterator to get data inside quotes //
 		StringIterator itr(valuetoparse);
 
-		unique_ptr<wstring> tempdata = itr.GetStringInQuotes<wstring>(QUOTETYPE_DOUBLEQUOTES);
+		auto tempdata = itr.GetStringInQuotes<std::string>(QUOTETYPE_DOUBLEQUOTES);
 
 		// set data //
 		// WstringBlock takes the pointer as it's own here //
-		BlockData = new WstringBlock(tempdata ? tempdata.release(): new wstring());
+		BlockData = new StringBlock(tempdata ? tempdata.release(): new std::string());
 
 		return;
 	}
+    
 	// check does it contain non numeric characters //
-	if(!StringOperations::IsStringNumeric<wstring, wchar_t>(valuetoparse)){
+	if(!StringOperations::IsStringNumeric<std::string, char>(valuetoparse)){
 
 		// check does it match true/false //
 		bool possiblevalue = false;
 
-		if(Convert::IsWstringBool(valuetoparse, &possiblevalue)){
+		if(Convert::IsStringBool(valuetoparse, &possiblevalue)){
 
 			BlockData = new BoolBlock(possiblevalue);
 
@@ -191,63 +84,72 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(const wstring &valuetoparse, m
 		}
 
 		// create a string from the whole thing //
-		BlockData = new WstringBlock(valuetoparse);
+		BlockData = new StringBlock(valuetoparse);
 
 		return;
 	}
 
 	// Try to figure out what kind of a number it is //
-	size_t decimalspot = valuetoparse.find_first_of(L'.');
-	if(decimalspot != wstring::npos){
+	size_t decimalspot = valuetoparse.find_first_of('.');
+	if(decimalspot != std::wstring::npos){
 		// has decimal separator //
 
 		// check does it need more decimal digits than a float has //
 
 		if(valuetoparse.size()-1-decimalspot > FLT_DIG){
 			// create a double //
-			BlockData = new DoubleBlock(Convert::WstringTo<double>(valuetoparse));
+			BlockData = new DoubleBlock(Convert::StringTo<double>(valuetoparse));
 
 		} else {
 
 			// float should have space to hold all characters //
-			BlockData = new FloatBlock(Convert::WstringTo<float>(valuetoparse));
+			BlockData = new FloatBlock(Convert::StringTo<float>(valuetoparse));
 		}
 
 		return;
 	}
 
 	// Should be a plain old int //
-	BlockData = new IntBlock(Convert::WstringTo<int>(valuetoparse));
+	BlockData = new IntBlock(Convert::StringTo<int>(valuetoparse));
 }
 
 
 // ------------------ ScriptSafeVariableBlock ------------------ //
-Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyfrom, const wstring &name) : NamedVariableBlock(
-	copyfrom->GetBlock()->AllocateNewFromThis(), name)
+Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyfrom,
+    const std::string &name) :
+    NamedVariableBlock(copyfrom->GetBlock()->AllocateNewFromThis(), name)
 {
 		// we need to copy all settings from the block //
 		switch(copyfrom->GetBlock()->Type){
-		case DATABLOCK_TYPE_INT: ASTypeID = TypeToAngelScriptIDConverter<int>::GetTypeIDFromTemplated(); break;
-		case DATABLOCK_TYPE_FLOAT: ASTypeID = TypeToAngelScriptIDConverter<float>::GetTypeIDFromTemplated(); break;
-		case DATABLOCK_TYPE_BOOL: ASTypeID = TypeToAngelScriptIDConverter<bool>::GetTypeIDFromTemplated(); break;
+		case DATABLOCK_TYPE_INT: ASTypeID =
+                TypeToAngelScriptIDConverter<int>::GetTypeIDFromTemplated(); break;
+		case DATABLOCK_TYPE_FLOAT: ASTypeID =
+                TypeToAngelScriptIDConverter<float>::GetTypeIDFromTemplated(); break;
+		case DATABLOCK_TYPE_BOOL: ASTypeID =
+                TypeToAngelScriptIDConverter<bool>::GetTypeIDFromTemplated(); break;
 		case DATABLOCK_TYPE_WSTRING:
 			{
 				// we'll use automatic conversion here //
-				unique_ptr<DataBlockAll> tmp(new StringBlock(ConvertAndReturnVariable<string>()));
+				unique_ptr<DataBlockAll> tmp(new
+                    StringBlock(ConvertAndReturnVariable<std::string>()));
 
 				SAFE_DELETE(BlockData);
 				BlockData = tmp.release();
 
-				ASTypeID = TypeToAngelScriptIDConverter<string>::GetTypeIDFromTemplated(); break;
+				ASTypeID = TypeToAngelScriptIDConverter<std::string>::GetTypeIDFromTemplated();
+                break;
 			}
 		break;
-		case DATABLOCK_TYPE_STRING: ASTypeID = TypeToAngelScriptIDConverter<string>::GetTypeIDFromTemplated(); break;
-		case DATABLOCK_TYPE_CHAR: ASTypeID = TypeToAngelScriptIDConverter<char>::GetTypeIDFromTemplated(); break;
-		case DATABLOCK_TYPE_DOUBLE: ASTypeID = TypeToAngelScriptIDConverter<double>::GetTypeIDFromTemplated(); break;
+		case DATABLOCK_TYPE_STRING: ASTypeID =
+            TypeToAngelScriptIDConverter<string>::GetTypeIDFromTemplated(); break;
+		case DATABLOCK_TYPE_CHAR: ASTypeID =
+            TypeToAngelScriptIDConverter<char>::GetTypeIDFromTemplated(); break;
+		case DATABLOCK_TYPE_DOUBLE: ASTypeID =
+            TypeToAngelScriptIDConverter<double>::GetTypeIDFromTemplated(); break;
 
 		default:
-			throw ExceptionInvalidArgument(L"cannot convert non-named, generic type block to script safe block", copyfrom->GetBlock()->Type,
-				__WFUNCTION__, L"copyfrom", L"invalid block type");
+			throw InvalidArgument("cannot convert non-named, generic type block to script "
+                "safe block");
 		}
 }
 
@@ -260,7 +162,7 @@ template<> DLLEXPORT BlockTypeName::DataBlock(sf::Packet &packet){ \
 	Type = DataBlockNameResolver<VarTypeName>::TVal; \
 	TmpTypeName tmpval; \
 	if(!(packet >> tmpval)){ \
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L""); \
+		throw InvalidArgument("invalid packet format"); \
 	} \
 	Value = new VarTypeName(tmpval); \
 }
@@ -283,13 +185,15 @@ namespace Leviathan{
 	// Fill in the gaps in the templates with these defaults //
 	template<class DBlockT> DLLEXPORT void Leviathan::DataBlock<DBlockT>::AddDataToPacket(sf::Packet&)
 	{
-		// The default one cannot do anything, only the specialized functions can try to do something //
-		throw ExceptionBase(L"this type doesn't support saving to a packet", 0, __WFUNCTION__);
+		// The default one cannot do anything, only the specialized functions can try to do
+        // something
+		throw Exception("this type doesn't support saving to a packet");
 	}
 	template<class DBlockT> DLLEXPORT Leviathan::DataBlock<DBlockT>::DataBlock(sf::Packet&)
 	{
-		// The default one cannot do anything, only the specialized functions can try to do something //
-		throw ExceptionBase(L"this type doesn't support loading from a packet", 0, __WFUNCTION__);
+		// The default one cannot do anything, only the specialized functions can try to do
+        // something
+		throw Exception("this type doesn't support loading from a packet");
 	}
 
 	// ------------------ VariableBlock ------------------ //
@@ -305,22 +209,29 @@ namespace Leviathan{
 
 		// Set the data //
 		if(BlockData->Type == DATABLOCK_TYPE_INT)
-			return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->AddDataToPacket(packet);
+			return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->
+                AddDataToPacket(packet);
 		else if(BlockData->Type == DATABLOCK_TYPE_FLOAT)
-			return TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData)->AddDataToPacket(packet);
+			return TvalToTypeResolver<DATABLOCK_TYPE_FLOAT>::Conversion(BlockData)->
+                AddDataToPacket(packet);
 		else if(BlockData->Type == DATABLOCK_TYPE_BOOL)
-			return TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData)->AddDataToPacket(packet);
+			return TvalToTypeResolver<DATABLOCK_TYPE_BOOL>::Conversion(BlockData)->
+                AddDataToPacket(packet);
 		else if(BlockData->Type == DATABLOCK_TYPE_WSTRING)
-			return TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData)->AddDataToPacket(packet);
+			return TvalToTypeResolver<DATABLOCK_TYPE_WSTRING>::Conversion(BlockData)->
+                AddDataToPacket(packet);
 		else if(BlockData->Type == DATABLOCK_TYPE_STRING)
-			return TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData)->AddDataToPacket(packet);
+			return TvalToTypeResolver<DATABLOCK_TYPE_STRING>::Conversion(BlockData)->
+                AddDataToPacket(packet);
 		else if(BlockData->Type == DATABLOCK_TYPE_CHAR)
-			return TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData)->AddDataToPacket(packet);
+			return TvalToTypeResolver<DATABLOCK_TYPE_CHAR>::Conversion(BlockData)->
+                AddDataToPacket(packet);
 		else if(BlockData->Type == DATABLOCK_TYPE_DOUBLE)
-			return TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData)->AddDataToPacket(packet);
+			return TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData)->
+                AddDataToPacket(packet);
 
 		// type that shouldn't be used is used //
-		throw ExceptionBase(L"unallowed datatype in datablock for writing to packet", 0, __WFUNCTION__);
+		throw InvalidType("unallowed datatype in datablock for writing to packet");
 	}
 	
 	DLLEXPORT VariableBlock::VariableBlock(sf::Packet& packet)
@@ -376,9 +287,7 @@ namespace Leviathan{
 		}
 
 		// Invalid packet //
-		throw ExceptionInvalidArgument(L"invalid packet format", 0, __WFUNCTION__, L"packet", L"");
-
-
+		throw InvalidArgument("invalid packet format");
 	}
 
 }

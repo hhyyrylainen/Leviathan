@@ -47,3 +47,7 @@ cscope.po.out
 rcscope.sh
 .idea
 bin/Data/
+Leap/head_sha.txt
+Leap/include
+Leap/util
+Leap/version.txt

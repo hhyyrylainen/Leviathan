@@ -6,6 +6,7 @@
 #include "Common/DataStoring/NamedVars.h"
 #include "Application/GameConfiguration.h"
 using namespace Pong;
+using namespace std;
 // ------------------------------------ //
 Pong::PongMasterServer::PongMasterServer(){
 
@@ -15,8 +16,9 @@ Pong::PongMasterServer::~PongMasterServer(){
 
 }
 
-std::wstring Pong::PongMasterServer::GenerateWindowTitle(){
-	return wstring(L"PongMasterServer for version " GAME_VERSIONS L" Leviathan " LEVIATHAN_VERSIONS);
+std::string Pong::PongMasterServer::GenerateWindowTitle(){
+	return string("PongMasterServer for version " GAME_VERSIONS_ANSI " Leviathan "
+        LEVIATHAN_VERSION_ANSIS);
 }
 // ------------------------------------ //
 void Pong::PongMasterServer::Tick(int mspassed){
@@ -36,7 +38,9 @@ bool Pong::PongMasterServer::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 	return true;
 }
 
-void Pong::PongMasterServer::RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids){
+void Pong::PongMasterServer::RegisterCustomScriptTypes(asIScriptEngine* engine,
+    std::map<int, string> &typeids)
+{
 
 }
 // ------------------------------------ //
@@ -44,21 +48,22 @@ void Pong::PongMasterServer::RegisterApplicationPhysicalMaterials(Leviathan::Phy
 
 }
 // ------------------------------------ //
-void Pong::PongMasterServer::CheckGameConfigurationVariables(GameConfiguration* configobj){
+void Pong::PongMasterServer::CheckGameConfigurationVariables(Lock &guard,
+    GameConfiguration* configobj)
+{
 	// Check for various variables //
-
-	GUARD_LOCK_OTHER_OBJECT_NAME(configobj, lockit);
-
-	NamedVars* vars = configobj->AccessVariables(lockit);
+	NamedVars* vars = configobj->AccessVariables(guard);
 
 	// Master server port //
-	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>(L"MasterServerPort")){
+	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>("MasterServerPort")){
 		// Add new //
-		vars->AddVar(L"MasterServerPort", new VariableBlock(53220));
-		configobj->MarkModified();
+		vars->AddVar("MasterServerPort", new VariableBlock(53220));
+		configobj->MarkModified(guard);
 	}
 }
 
-void Pong::PongMasterServer::CheckGameKeyConfigVariables(KeyConfiguration* keyconfigobj){
+void Pong::PongMasterServer::CheckGameKeyConfigVariables(Lock &guard,
+    KeyConfiguration* keyconfigobj)
+{
 
 }

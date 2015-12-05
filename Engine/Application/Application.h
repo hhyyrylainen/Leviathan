@@ -1,18 +1,14 @@
-#ifndef LEVIATHAN_APPLICATION
-#define LEVIATHAN_APPLICATION
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Engine.h"
 #include "Application/AppDefine.h"
-#include "Script/ScriptInterface.h"
+#include "Script/ScriptExecutor.h"
 
 namespace Leviathan{
 
-	class LeviathanApplication : public Object, public ThreadSafe{
+	class LeviathanApplication : public ThreadSafe{
 	public:
 		// creation and initialization //
 		DLLEXPORT LeviathanApplication();
@@ -36,7 +32,8 @@ namespace Leviathan{
 		// perform actions //
 		DLLEXPORT virtual int RunMessageLoop();
 		DLLEXPORT virtual void Render();
-		DLLEXPORT virtual void PassCommandLine(const wstring &params);
+		DLLEXPORT virtual void PassCommandLine(const std::string &params);
+        
 		// Executes all pending command line arguments //
 		DLLEXPORT void FlushCommandLine();
 		DLLEXPORT virtual void Tick(int mspassed);
@@ -55,14 +52,17 @@ namespace Leviathan{
 
 		// callback functions called during engine initialization at appropriate times //
 		DLLEXPORT virtual bool InitLoadCustomScriptTypes(asIScriptEngine* engine);
-		DLLEXPORT virtual void RegisterCustomScriptTypes(asIScriptEngine* engine, std::map<int, wstring> &typeids);
-		DLLEXPORT virtual void RegisterApplicationPhysicalMaterials(PhysicsMaterialManager* manager);
+		DLLEXPORT virtual void RegisterCustomScriptTypes(asIScriptEngine* engine,
+            std::map<int, std::string> &typeids);
+        
+		DLLEXPORT virtual void RegisterApplicationPhysicalMaterials(
+            PhysicsMaterialManager* manager);
 		DLLEXPORT virtual void EnginePreShutdown();
 
         //! \brief Used to query a world for specific id
         //!
         //! This is called when the world holder couldn't find a world with the id
-        DLLEXPORT virtual shared_ptr<GameWorld> GetGameWorld(int id);
+        DLLEXPORT virtual std::shared_ptr<GameWorld> GetGameWorld(int id);
 
         
 		// static access method for getting instance of this class //
@@ -97,4 +97,4 @@ namespace Leviathan{
 
 
 }
-#endif
+

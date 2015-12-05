@@ -12,7 +12,7 @@ DLLEXPORT void Leviathan::ScriptArgumentsProvider::_LeaveBondBridge(){
 }
 
 DLLEXPORT void Leviathan::ScriptArgumentsProvider::_BondWithModule(ScriptModule* module){
-	_ArgumentBridge = shared_ptr<ScriptArgumentsProviderBridge>(new ScriptArgumentsProviderBridge());
+	_ArgumentBridge = std::shared_ptr<ScriptArgumentsProviderBridge>(new ScriptArgumentsProviderBridge());
 
 	_ArgumentBridge->SetProvider(this);
 	_ArgumentBridge->SetModule(module);

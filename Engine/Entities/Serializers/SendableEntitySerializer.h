@@ -1,13 +1,9 @@
 #pragma once
-#ifndef LEVIATHAN_SENDABLEENTITYSERIALIZER
-#define LEVIATHAN_SENDABLEENTITYSERIALIZER
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "BaseEntitySerializer.h"
+#include "../Components.h"
 
 namespace Leviathan{
 
@@ -22,30 +18,27 @@ namespace Leviathan{
 
 
         //! \copydoc BaseEntitySerializer::CreatePacketForConnection
-        DLLEXPORT virtual bool CreatePacketForConnection(BaseObject* object, sf::Packet &packet,
-            ConnectionInfo* connectionptr) override;
+        DLLEXPORT virtual bool CreatePacketForConnection(GameWorld* world, Lock &worldlock,
+            ObjectID id, Sendable &sendable, sf::Packet &packet, ConnectionInfo* connectionptr)
+            override;
 
         //! \copydoc BaseEntitySerializer::DeserializeWholeEntityFromPacket
-        DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(BaseObject** returnobj, int32_t serializetype,
-            sf::Packet &packet, int objectid, GameWorld* world) override;
+        DLLEXPORT virtual bool DeserializeWholeEntityFromPacket(GameWorld* world, Lock &worldlock, 
+            ObjectID id, int32_t serializetype, sf::Packet &packet) override;
 
         //! \copydoc BaseEntitySerializer::ApplyUpdateFromPacket
-        DLLEXPORT virtual bool ApplyUpdateFromPacket(BaseObject* targetobject, int ticknumber, sf::Packet &packet)
-            override;
+        DLLEXPORT virtual bool ApplyUpdateFromPacket(GameWorld* world, Lock &worldlock,
+            ObjectID targetobject, int ticknumber, int referencetick, sf::Packet &packet) override;
 
 
         //! \copydoc BaseEntitySerializer::IsObjectTypeCorrect
-        DLLEXPORT virtual bool IsObjectTypeCorrect(BaseObject* object) const override;
-        
+        DLLEXPORT virtual bool IsObjectTypeCorrect(Sendable &object) const override;
+
     protected:
 
-        
-
-	private:
-        
-		SendableEntitySerializer(const SendableEntitySerializer &other) = delete;
-        SendableEntitySerializer& operator =(const SendableEntitySerializer &other) = delete;
+        DLLEXPORT bool VerifyAndFillReceivedState(Received* received, int ticknumber,
+            int referencetick, std::shared_ptr<ObjectDeltaStateData> receivedstate);
 	};
 
 }
-#endif
+

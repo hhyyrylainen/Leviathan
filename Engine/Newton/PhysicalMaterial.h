@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_PHYSICALMATERIAL
-#define LEVIATHAN_PHYSICALMATERIAL
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "PhysicalWorld.h"
 #include "ObjectFiles/ObjectFileObject.h"
 
@@ -25,9 +21,9 @@ namespace Leviathan{
 
 	// Defines properties between two materials //
 	struct PhysMaterialDataPair{
-		DLLEXPORT inline PhysMaterialDataPair(const wstring &othername) :
-            OtherName(othername), AABBCallback(NULL), ContactCallback(NULL), 
-			Collidable(true), Elasticity(0.4f), StaticFriction(0.9f), DynamicFriction(0.5f), Softness(0.15f)
+		DLLEXPORT inline PhysMaterialDataPair(const std::string &othername) :
+            OtherName(othername), Collidable(true), Elasticity(0.4f), StaticFriction(0.9f),
+            DynamicFriction(0.5f), Softness(0.15f), AABBCallback(NULL), ContactCallback(NULL)
 		{
 
 		}
@@ -60,7 +56,8 @@ namespace Leviathan{
 		//! \brief Sets the friction between the materials
         //!
         //! default static is 0.9f and dynamic (sliding) 0.5f
-		DLLEXPORT inline PhysMaterialDataPair& SetFriction(const float &staticfriction, const float &dynamicfriction){
+		DLLEXPORT inline PhysMaterialDataPair& SetFriction(const float &staticfriction,
+            const float &dynamicfriction){
 
 			DynamicFriction = dynamicfriction;
 			StaticFriction = staticfriction;
@@ -79,10 +76,11 @@ namespace Leviathan{
 
 
 		// Creates the material to the world, value changes won't apply after this //
-		void ApplySettingsToWorld(NewtonWorld* world, int thisid, int otherid, PhysicalMaterial* materialowner);
+		void ApplySettingsToWorld(NewtonWorld* world, int thisid, int otherid,
+            PhysicalMaterial* materialowner);
 
 		// ------------------------------------ //
-		wstring OtherName;
+		std::string OtherName;
 		bool Collidable;
 		float Elasticity;
 		float StaticFriction;
@@ -97,8 +95,8 @@ namespace Leviathan{
 	class PhysicalMaterial{
 		friend PhysicsMaterialManager;
 	public:
-		DLLEXPORT PhysicalMaterial(const wstring &name);
-		DLLEXPORT PhysicalMaterial(shared_ptr<ObjectFileObject> fileobject);
+		DLLEXPORT PhysicalMaterial(const std::string &name);
+		DLLEXPORT PhysicalMaterial(std::shared_ptr<ObjectFileObject> fileobject);
 		DLLEXPORT ~PhysicalMaterial();
 
 		// ------------------ Data pairing functions ------------------ //
@@ -109,7 +107,7 @@ namespace Leviathan{
 		// \todo file loading function //
 
 
-		DLLEXPORT inline wstring GetName(){
+		DLLEXPORT inline std::string GetName(){
 			return Name;
 		}
 
@@ -119,16 +117,18 @@ namespace Leviathan{
 		void _CreateMaterialToWorld(NewtonWorld* world);
 		void _ApplyMaterialPropertiesToWorld(NewtonWorld* world);
 
+        void _ClearFromWorld(NewtonWorld* world);
+
 		// ------------------------------------ //
-		wstring Name;
+		std::string Name;
 		int EngineID;
 
 		// this material can be loaded into multiple worlds at once, so we need to quickly fetch right id value //
 		std::map<NewtonWorld*, int> NewtonWorldAndID;
 
 		// values that are sent to newton //
-		std::list<shared_ptr<PhysMaterialDataPair>> InterractionVariables;
+		std::list<std::shared_ptr<PhysMaterialDataPair>> InterractionVariables;
 	};
 
 }
-#endif
+

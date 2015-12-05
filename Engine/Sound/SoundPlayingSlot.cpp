@@ -1,11 +1,12 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_SOUNDPLAYINGSLOT
 #include "SoundPlayingSlot.h"
-#endif
+
+#include "Define.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::SoundPlayingSlot::SoundPlayingSlot() : Music(NULL), Audio(NULL), SoundBuffer(NULL), UnusedTimeMS(0), Linked(false){
+DLLEXPORT Leviathan::SoundPlayingSlot::SoundPlayingSlot() :
+    Music(NULL), Audio(NULL), SoundBuffer(NULL), UnusedTimeMS(0), Linked(false)
+{
 
 }
 
@@ -45,7 +46,7 @@ DLLEXPORT bool Leviathan::SoundPlayingSlot::IsStopped(){
 	return Audio->getStatus() == sf::Sound::Paused;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::SoundPlayingSlot::SetPlayFile(const wstring &file, bool streaming){
+DLLEXPORT void Leviathan::SoundPlayingSlot::SetPlayFile(const std::string &file, bool streaming){
 	// check has file changed //
 	if(file == FileName)
 		return;
@@ -60,7 +61,7 @@ DLLEXPORT void Leviathan::SoundPlayingSlot::SetPlayFile(const wstring &file, boo
 			Music = new sf::Music();
 		}
 
-		Music->openFromFile(Convert::WstringToString(FileName));
+		Music->openFromFile(FileName);
 
 	} else {
 		// delete old //
@@ -73,7 +74,7 @@ DLLEXPORT void Leviathan::SoundPlayingSlot::SetPlayFile(const wstring &file, boo
 		}
 
 		// load buffer //
-		SoundBuffer->loadFromFile(Convert::WstringToString(FileName));
+		SoundBuffer->loadFromFile(FileName);
 
 		Audio->setBuffer(*SoundBuffer);
 	}

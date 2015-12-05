@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_CALLABLE_OBJECT
-#define LEVIATHAN_CALLABLE_OBJECT
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Event.h"
 
 namespace Leviathan{
@@ -20,18 +16,19 @@ namespace Leviathan{
 
 		//! \returns event type from wstring (invalid event type is returned if matches none)
 		//! \note if invalid type is returned type should be registered as generic event
-		DLLEXPORT static EVENT_TYPE ResolveStringToType(const wstring &type);
-		//! reverse of above and returns for example from EVENT_TYPE_SHOW L"OnShow"
-		DLLEXPORT static wstring GetListenerNameFromType(EVENT_TYPE type);
+		DLLEXPORT static EVENT_TYPE ResolveStringToType(const std::string &type);
+        
+		//! reverse of above and returns for example from EVENT_TYPE_SHOW "OnShow"
+		DLLEXPORT static std::string GetListenerNameFromType(EVENT_TYPE type);
 
 	protected:
 		void UnRegister(EVENT_TYPE from, bool all = false);
-		void UnRegister(const wstring &genericname, bool all = false);
+		void UnRegister(const std::string &genericname, bool all = false);
 		void RegisterForEvent(EVENT_TYPE toregister);
-		void RegisterForEvent(const wstring &genericname);
+		void RegisterForEvent(const std::string &genericname);
 		void UnRegisterAllEvents();
 		// ------------------------------------ //
 	};
 
 }
-#endif
+

@@ -7,7 +7,7 @@
 // ------------------------------------ //
 #include "Window.h"
 #include "Iterators/StringIterator.h"
-#include "Common/StringOperations.h"
+#include "../Common/StringOperations.h"
 
 enum KEYSPECIAL {
 	KEYSPECIAL_SHIFT = 0x1,
@@ -93,20 +93,20 @@ namespace Leviathan{
 			return true;
 		}
 
-		DLLEXPORT inline wstring GenerateWstringMessage(const int &style = 0){
+		DLLEXPORT inline std::string GenerateStringMessage(const int &style = 0){
 			// create a string that represents this key //
 			if(style == 0){
 				// debug string //
-				wstring resultstr = L"Key["+Convert::ToWstring<wchar_t>((wchar_t)Character)+L"]=";
+                std::string resultstr = "Key["+Convert::ToString((char)Character)+"]=";
 
-				resultstr += Convert::ToWstring<T>(Character);
-				resultstr += L"(0x"+Convert::ToHexadecimalWstring<T>(Character)+L")+";
+				resultstr += Convert::ToString<T>(Character);
+				resultstr += "(0x"+Convert::ToHexadecimalString<T>(Character)+")+";
 
 				return resultstr;
 			}
 			// various styles from which a key can be easily parsed //
 			DEBUG_BREAK;
-			return L"error";
+			return "error";
 		}
 
 		DLLEXPORT bool Match(const T &chara, const short &additional, bool strict = false) const{
@@ -147,35 +147,35 @@ namespace Leviathan{
 				Ctrl = true;
 		}
 
-		DLLEXPORT static Key<T> GenerateKeyFromString(const wstring &representation){
+		DLLEXPORT static Key<T> GenerateKeyFromString(const std::string &representation){
 			if(representation.size() == 0){
 				// empty, nothing to do //
 				return Key<T>((T)0, 0);
 			}
+            
 			StringIterator itr(representation);
 
-			wstring converted;
+			auto str = itr.GetUntilNextCharacterOrAll<std::string>('+');
+            
+            auto converted = StringOperations::ToUpperCase<std::string>(*str);
 
-			auto str = itr.GetUntilNextCharacterOrAll<wstring>(L'+');
-
-			Convert::ToCapital(*str, converted);
-
-			T character = Leviathan::Window::ConvertWstringToOISKeyCode(converted);
+			T character = Leviathan::Window::ConvertStringToOISKeyCode(converted);
 			short special = 0;
 
-			while((str = itr.GetUntilNextCharacterOrAll<wstring>(L'+')) && (str->size() > 0)){
+			while((str = itr.GetUntilNextCharacterOrAll<std::string>('+')) && (str->size() > 0)){
 
-				if(StringOperations::CompareInsensitive(*str, wstring(L"alt"))){
+				if(StringOperations::CompareInsensitive(*str, std::string("ALT"))){
 					special |= KEYSPECIAL_ALT;
 				}
-				if(StringOperations::CompareInsensitive(*str, wstring(L"shift"))){
+				if(StringOperations::CompareInsensitive(*str, std::string("SHIFT"))){
 					special |= KEYSPECIAL_SHIFT;
 				}
-				if(StringOperations::CompareInsensitive(*str, wstring(L"ctrl"))){
+				if(StringOperations::CompareInsensitive(*str, std::string("CTRL"))){
 					special |= KEYSPECIAL_CTRL;
 				}
-				if(StringOperations::CompareInsensitive(*str, wstring(L"win")) ||StringOperations::CompareInsensitive(*str, wstring(L"meta")) || 
-					StringOperations::CompareInsensitive(*str, wstring(L"super")))
+				if(StringOperations::CompareInsensitive(*str, std::string("WIN")) ||
+                    StringOperations::CompareInsensitive(*str, std::string("META")) || 
+					StringOperations::CompareInsensitive(*str, std::string("SUPER")))
 				{
 					special |= KEYSPECIAL_WIN;
 				}
@@ -184,20 +184,20 @@ namespace Leviathan{
 			return Key<T>(character, special);
 		}
 
-		DLLEXPORT wstring GenerateWstringFromKey(){
+		DLLEXPORT std::string GenerateStringFromKey(){
 
 			// First the actual key value //
-			wstring resultstr = Leviathan::Window::ConvertOISKeyCodeToWstring(Character);
+			auto resultstr = Leviathan::Window::ConvertOISKeyCodeToString(Character);
 
 			// Add special modifiers //
 			if(Extras && KEYSPECIAL_ALT)
-				resultstr += L"+ALT";
+				resultstr += "+ALT";
 			if(Extras && KEYSPECIAL_CTRL)
-				resultstr += L"+CTRL";
+				resultstr += "+CTRL";
 			if(Extras && KEYSPECIAL_SHIFT)
-				resultstr += L"+SHIFT";
+				resultstr += "+SHIFT";
 			if(Extras && KEYSPECIAL_WIN)
-				resultstr += L"+META";
+				resultstr += "+META";
 			// Result is done //
 			return resultstr;
 		}

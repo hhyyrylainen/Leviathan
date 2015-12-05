@@ -1,12 +1,8 @@
-#ifndef LEVIATHAN_GAMESPECIFICPACKET
-#define LEVIATHAN_GAMESPECIFICPACKET
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
 // ---- includes ---- //
-#include "SFML/Network/Packet.hpp"
+#include "../Common/SFMLPackets.h"
 
 
 namespace Leviathan{
@@ -70,7 +66,8 @@ namespace Leviathan{
 		DLLEXPORT virtual bool SerializeToPacket(GameSpecificPacketData* data, sf::Packet &packet) = 0;
 		//! \brief Called when a factory needs to extract data from a packet
 		//! \note Should not throw, instead should return NULL when invalid data is encountered
-		DLLEXPORT virtual shared_ptr<GameSpecificPacketData> UnSerializeObjectFromPacket(sf::Packet &packet) = 0;
+		DLLEXPORT virtual std::shared_ptr<GameSpecificPacketData>
+        UnSerializeObjectFromPacket(sf::Packet &packet) = 0;
 
 		//! The integer identifying when this factory needs to be used
 		int TypeIDNumber;
@@ -79,15 +76,17 @@ namespace Leviathan{
 	};
 
 	//! \brief Handles construction of all game specific packets
-	class GameSpecificPacketHandler : public Object{
+	class GameSpecificPacketHandler{
 	public:
 		DLLEXPORT GameSpecificPacketHandler(NetworkInterface* usetoreport);
 		DLLEXPORT ~GameSpecificPacketHandler();
 
 
-		DLLEXPORT void PassGameSpecificDataToPacket(GameSpecificPacketData* datatosend, sf::Packet &packet);
+		DLLEXPORT void PassGameSpecificDataToPacket(GameSpecificPacketData* datatosend,
+            sf::Packet &packet);
 
-		DLLEXPORT shared_ptr<GameSpecificPacketData> ReadGameSpecificPacketFromPacket(bool responsepacket, sf::Packet &packet);
+		DLLEXPORT std::shared_ptr<GameSpecificPacketData> ReadGameSpecificPacketFromPacket(
+            bool responsepacket, sf::Packet &packet);
 
 		//! \brief Adds a new type that can be handled
 		DLLEXPORT void RegisterNewTypeFactory(BaseGameSpecificPacketFactory* newdfactoryobject);
@@ -96,14 +95,15 @@ namespace Leviathan{
 		DLLEXPORT static GameSpecificPacketHandler* Get();
 	protected:
 
-		shared_ptr<BaseGameSpecificPacketFactory> _FindFactoryForType(int typenumber, bool requesttype);
+        std::shared_ptr<BaseGameSpecificPacketFactory> _FindFactoryForType(int typenumber,
+            bool requesttype);
 
 		void _CheckVectorSorting();
 		// ------------------------------------ //
 
 		//! \brief Stores a list of custom type factories
 		//! \note Map to easily map the ID to a handler
-		std::vector<shared_ptr<BaseGameSpecificPacketFactory>> AllPacketFactories;
+		std::vector<std::shared_ptr<BaseGameSpecificPacketFactory>> AllPacketFactories;
 
 		//! Marks whether or not the vector is indexed
 		bool IsVectorSorted;
@@ -113,4 +113,4 @@ namespace Leviathan{
 	};
 
 }
-#endif
+

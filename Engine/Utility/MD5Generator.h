@@ -31,15 +31,10 @@ documentation and/or software.
 */
 
 
-#ifndef LEVIATHAN_MD5_GENERATOR
-#define LEVIATHAN_MD5_GENERATOR
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-// ------------------------------------ //
-// ---- includes ---- //
-
+#include "Include.h"
+#include <string>
 
 namespace Leviathan{
 
@@ -54,8 +49,10 @@ namespace Leviathan{
 	//      MD5(std::string).hexdigest()
 	//
 	// assumes that char is 8 bit and int is 32 bit
+    static_assert(sizeof(char) == 1, "MD5 requires 1 byte char");
+    static_assert(sizeof(int) == 4, "MD5 requires 4 byte int");
 
-	class MD5 : public Object{
+	class MD5{
 	public:
 	  typedef unsigned int size_type; // must be 32bit
 
@@ -94,7 +91,5 @@ namespace Leviathan{
 	  static inline void HH(uint4 &a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac);
 	  static inline void II(uint4 &a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac);
 	};
-
-	//std::string md5(const std::string str);
 }
-#endif
+

@@ -1,22 +1,26 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_SCRIPTNOTIFIERS
 #include "ScriptNotifiers.h"
-#endif
+
 #include "ScriptExecutor.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 
 // ------------------ ScriptNotifier ------------------ //
-DLLEXPORT Leviathan::ScriptNotifier::ScriptNotifier(asIScriptFunction* functiontocall) : CallbackFunction(functiontocall){
+DLLEXPORT Leviathan::ScriptNotifier::ScriptNotifier(asIScriptFunction* functiontocall) :
+    CallbackFunction(functiontocall)
+{
 
 }
 
 DLLEXPORT Leviathan::ScriptNotifier::~ScriptNotifier(){
 	ReleaseChildHooks();
-	GUARD_LOCK_THIS_OBJECT_CAST(BaseNotifierAll);
+    
+	GUARD_LOCK();
+    
 	if(CallbackFunction)
 		CallbackFunction->Release();
+    
 	CallbackFunction = NULL;
 }
 // ------------------------------------ //
@@ -24,21 +28,27 @@ void Leviathan::ScriptNotifier::OnNotified(){
 
 	ScriptRunningSetup params;
 	params.ErrorOnNonExistingFunction = true;
+    
 	// No parameters used //
 
-
-	ScriptExecutor::Get()->RunFunctionSetUp(CallbackFunction, &params);
+	ScriptExecutor::Get()->RunSetUp(CallbackFunction, &params);
 }
 // ------------------ ScriptNotifiable ------------------ //
-DLLEXPORT Leviathan::ScriptNotifiable::ScriptNotifiable(asIScriptFunction* functiontocall) : CallbackFunction(functiontocall){
+DLLEXPORT Leviathan::ScriptNotifiable::ScriptNotifiable(asIScriptFunction* functiontocall) :
+    CallbackFunction(functiontocall)
+{
 
 }
 
 DLLEXPORT Leviathan::ScriptNotifiable::~ScriptNotifiable(){
+    
 	ReleaseParentHooks();
-	GUARD_LOCK_THIS_OBJECT_CAST(BaseNotifiableAll);
+    
+	GUARD_LOCK();
+    
 	if(CallbackFunction)
 		CallbackFunction->Release();
+    
 	CallbackFunction = NULL;
 }
 // ------------------------------------ //
@@ -49,7 +59,7 @@ void Leviathan::ScriptNotifiable::OnNotified(){
 	// No parameters used //
 
 
-	ScriptExecutor::Get()->RunFunctionSetUp(CallbackFunction, &params);
+	ScriptExecutor::Get()->RunSetUp(CallbackFunction, &params);
 }
 // ------------------------------------ //
 ScriptNotifier* ScriptNotifierFactory(asIScriptFunction* cb){
@@ -169,11 +179,11 @@ bool Leviathan::RegisterNotifiersWithAngelScript(asIScriptEngine* engine){
 	return true;
 }
 
-void Leviathan::RegisterNotifierTypesWithAngelScript(asIScriptEngine* engine, std::map<int, wstring> &typeids){
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("ScriptNotifiable"), L"ScriptNotifiable"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("ScriptNotifier"), L"ScriptNotifier"));
-	//typeids.insert(make_pair(engine->GetTypeIdByDecl("BaseNotifiableAll"), L"BaseNotifiableAll"));
-	//typeids.insert(make_pair(engine->GetTypeIdByDecl("BaseNotifierAll"), L"BaseNotifierAll"));
+void Leviathan::RegisterNotifierTypesWithAngelScript(asIScriptEngine* engine,
+    std::map<int, string> &typeids)
+{
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("ScriptNotifiable"), "ScriptNotifiable"));
+	typeids.insert(make_pair(engine->GetTypeIdByDecl("ScriptNotifier"), "ScriptNotifier"));
 }
 
 

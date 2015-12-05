@@ -12,14 +12,20 @@
 set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
     "LeviathanMainDll.h" "Logger.cpp" "Logger.h"
     "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp" "utf8.h" "Include.h"
-)
+    "Exceptions.h" "Exceptions.cpp"
+    "TimeIncludes.h" "TimeIncludes.cpp"
+    "CEGUIInclude.h"
+    )
+
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
 file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
 file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
 file(GLOB GroupGUI "GUI/*.cpp" "GUI/*.h")
 file(GLOB GroupNewton "Newton/*.cpp" "Newton/*.h")
 file(GLOB GroupEntities "Entities/*.cpp" "Entities/*.h")
-file(GLOB GroupEntitiesBases "Entities/Bases/*.cpp" "Entities/Bases/*.h")
+
+
+
 file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
 file(GLOB GroupEntitiesSerializers "Entities/Serializers/*.cpp" "Entities/Serializers/*.h")
 
@@ -82,7 +88,6 @@ source_group("Libraries\\json-cpp" FILES ${GroupJsoncpp})
 source_group("Libraries\\Grouputf8" FILES ${Grouputf8})
 
 source_group("Entities" FILES ${GroupEntities})
-source_group("Entities\\Bases" FILES ${GroupEntitiesBases})
 source_group("Entities\\Objects" FILES ${GroupEntitiesObjects})
 source_group("Entities\\Serializers" FILES ${GroupEntitiesSerializers})
 
@@ -121,7 +126,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
     ${GroupScript} ${GroupGUI}  ${GroupEvents}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
-    ${GroupEntitiesBases} ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
+    ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
     ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators} ${GroupGameplay} 
     ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp} ${GeneratorInput} ${GroupGeneratedFiles}
     ${Grouputf8})
@@ -166,7 +171,7 @@ set_target_properties(Engine PROPERTIES
 
 
 # speed up build
-cotire(Engine)
+#cotire(Engine)
 
 
 install(TARGETS Engine DESTINATION bin)

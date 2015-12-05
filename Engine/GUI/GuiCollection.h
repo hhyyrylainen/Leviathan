@@ -1,33 +1,32 @@
-#ifndef LEVIATHAN_GUICOLLECTION
-#define LEVIATHAN_GUICOLLECTION
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "Input/Key.h"
-#include "Script/ScriptScript.h"
-#include "ObjectFiles/ObjectFileObject.h"
-#include "Common/ReferenceCounted.h"
+#include "../Input/Key.h"
+#include "../Script/ScriptScript.h"
+#include "../ObjectFiles/ObjectFileObject.h"
+#include "../Common/ReferenceCounted.h"
 
 namespace Leviathan{ namespace Gui{
 
 
-	class GuiCollection : public Object, public ReferenceCounted{
+	class GuiCollection : public ReferenceCounted{
 	public:
-		GuiCollection(const wstring &name, GuiManager* manager, int id, const wstring &toggle, std::vector<unique_ptr<wstring>> &inanimations, 
-			std::vector<unique_ptr<wstring>> &outanimations,bool strict = false, bool enabled = true, 
-			bool keepgui = false, bool allowenable = true, const wstring &autotarget = L"", bool applyanimstochildren = false);
+		GuiCollection(const std::string &name, GuiManager* manager, int id,
+            const std::string &toggle, std::vector<std::unique_ptr<std::string>> &inanimations, 
+			std::vector<std::unique_ptr<std::string>> &outanimations,bool strict = false,
+            bool enabled = true, bool keepgui = false, bool allowenable = true,
+            const std::string &autotarget = "", bool applyanimstochildren = false);
+        
 		~GuiCollection();
 
 		//! \todo Allow script listeners to be executed even if custom animations are used
-		DLLEXPORT void UpdateState(bool newstate);
+		DLLEXPORT void UpdateState(Lock &managerlock, bool newstate);
 		DLLEXPORT inline bool GetState(){
 			return Enabled;
 		}
-		DLLEXPORT inline void ToggleState(){
-			UpdateState(!Enabled);
+		DLLEXPORT inline void ToggleState(Lock &managerlock){
+			UpdateState(managerlock, !Enabled);
 		}
 
 		DLLEXPORT void UpdateAllowEnable(bool newstate);
@@ -49,25 +48,27 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT inline int GetID(){
 			return ID;
 		}
-		DLLEXPORT inline const wstring& GetName(){
+		DLLEXPORT inline const std::string& GetName(){
 			return Name;
 		}
 
-		string GetNameProxy(){
-			return Convert::WstringToString(Name);
+        std::string GetNameProxy(){
+			return Name;
 		}
 
 
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GuiCollection);
 
-		DLLEXPORT static bool LoadCollection(GuiManager* gui, const ObjectFileObject &data);
+		DLLEXPORT static bool LoadCollection(Lock &guilock, GuiManager* gui,
+            const ObjectFileObject &data);
 	private:
 
-		void _PlayAnimations(const std::vector<unique_ptr<wstring>> &anims);
+		void _PlayAnimations(Lock &managerlock,
+            const std::vector<std::unique_ptr<std::string>> &anims);
 
 		// ------------------------------------ //
 
-		wstring Name;
+		std::string Name;
 		int ID;
 		bool Enabled;
 		bool Strict;
@@ -76,23 +77,20 @@ namespace Leviathan{ namespace Gui{
 
 		//! The CEGUI window that is automatically controlled
 		//! \todo Allow script to be called after this
-		wstring AutoTarget;
+		std::string AutoTarget;
 
 		//! The CEGUI animations that are automatically used
-		std::vector<unique_ptr<wstring>> AutoAnimationOnEnable;
-		std::vector<unique_ptr<wstring>> AutoAnimationOnDisable;
+		std::vector<std::unique_ptr<std::string>> AutoAnimationOnEnable;
+		std::vector<std::unique_ptr<std::string>> AutoAnimationOnDisable;
 
 		//! Flag for using the same animations in AutoAnimationOnEnable for their child windows
 		bool ApplyAnimationsToChildren;
 
-
-
-
 		GKey Toggle;
 		GuiManager* OwningManager;
 
-		shared_ptr<ScriptScript> Scripting;
+        std::shared_ptr<ScriptScript> Scripting;
 	};
 
 }}
-#endif
+

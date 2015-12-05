@@ -1,15 +1,14 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_SIMPLEDATABASE
 #include "SimpleDatabase.h"
-#endif
+
 #include "FileSystem.h"
 #include "Common/StringOperations.h"
 #include "Iterators/StringIterator.h"
 #include "jsoncpp/json.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::SimpleDatabase::SimpleDatabase(const wstring &databasename){
+DLLEXPORT Leviathan::SimpleDatabase::SimpleDatabase(const std::string &databasename){
 
 }
 
@@ -17,8 +16,10 @@ DLLEXPORT Leviathan::SimpleDatabase::~SimpleDatabase(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::SimpleDatabase::AddValue(const wstring &database, shared_ptr<SimpleDatabaseRowObject> valuenamesandvalues){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT bool Leviathan::SimpleDatabase::AddValue(const std::string &database,
+    std::shared_ptr<SimpleDatabaseRowObject> valuenamesandvalues)
+{
+	GUARD_LOCK();
 	// Using the database object add a new value to correct vector //
 	auto iter = _EnsureTable(database);
 
@@ -35,8 +36,8 @@ DLLEXPORT bool Leviathan::SimpleDatabase::AddValue(const wstring &database, shar
 	return true;
 }
 
-DLLEXPORT bool Leviathan::SimpleDatabase::RemoveValue(const wstring &database, int row){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT bool Leviathan::SimpleDatabase::RemoveValue(const std::string &database, int row){
+	GUARD_LOCK();
 	// If we are missing the database we shouldn't add it //
 	SimpleDatabaseObject::iterator iter = Database.find(database);
 
@@ -57,8 +58,10 @@ DLLEXPORT bool Leviathan::SimpleDatabase::RemoveValue(const wstring &database, i
 	return true;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::SimpleDatabase::GetRow(std::vector<wstring> &row, const wstring &table, int row_index, const std::vector<wstring> &columns){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT void Leviathan::SimpleDatabase::GetRow(std::vector<std::string> &row,
+    const std::string &table, int row_index, const std::vector<std::string> &columns)
+{
+	GUARD_LOCK();
 	// If we are missing the database we shouldn't add it //
 	SimpleDatabaseObject::iterator iter = Database.find(table);
 
@@ -73,7 +76,7 @@ DLLEXPORT void Leviathan::SimpleDatabase::GetRow(std::vector<wstring> &row, cons
 	}
 
 	// Valid value //
-	const std::map<wstring, shared_ptr<VariableBlock>>& datbaseentry = *iter->second->at(row_index).get();
+	const std::map<std::string, std::shared_ptr<VariableBlock>>& datbaseentry = *iter->second->at(row_index).get();
 
 	// Copy data //
 	for(size_t i = 0; i < columns.size(); i++){
@@ -82,15 +85,15 @@ DLLEXPORT void Leviathan::SimpleDatabase::GetRow(std::vector<wstring> &row, cons
 		auto iter2 = datbaseentry.find(columns[i]);
 		if(iter2 != datbaseentry.end()){
 			// Add to result //
-			row.push_back(iter2->second->operator wstring());
+			row.push_back(iter2->second->operator std::string());
 		}
 	}
 
 
 }
 
-DLLEXPORT int Leviathan::SimpleDatabase::GetNumRows(const wstring &table){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT int Leviathan::SimpleDatabase::GetNumRows(const std::string &table){
+	GUARD_LOCK();
 	// If we are missing the database we shouldn't add it //
 	SimpleDatabaseObject::iterator iter = Database.find(table);
 
@@ -102,8 +105,11 @@ DLLEXPORT int Leviathan::SimpleDatabase::GetNumRows(const wstring &table){
 	return iter->second->size();
 }
 // ------------------------------------ //
-DLLEXPORT shared_ptr<VariableBlock> Leviathan::SimpleDatabase::GetValueOnRow(const wstring &table, const wstring &valuekeyname, const VariableBlock &wantedvalue, const wstring &wantedvaluekey){
-	GUARD_LOCK_THIS_OBJECT();
+DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::SimpleDatabase::GetValueOnRow(
+    const std::string &table, const std::string &valuekeyname, const VariableBlock &wantedvalue,
+    const std::string &wantedvaluekey)
+{
+	GUARD_LOCK();
 	// Search the database for matching row and return another value from that row //
 	// If we are missing the database we shouldn't add it //
 	SimpleDatabaseObject::iterator iter = Database.find(table);
@@ -137,7 +143,9 @@ DLLEXPORT shared_ptr<VariableBlock> Leviathan::SimpleDatabase::GetValueOnRow(con
 }
 
 
-DLLEXPORT bool Leviathan::SimpleDatabase::WriteTableToJson(const wstring &tablename, string &receiver, bool humanreadable /*= false*/){
+DLLEXPORT bool Leviathan::SimpleDatabase::WriteTableToJson(const std::string &tablename,
+    string &receiver, bool humanreadable /*= false*/)
+{
 	// Holds the data //
 	Json::Value root;
 
@@ -145,7 +153,7 @@ DLLEXPORT bool Leviathan::SimpleDatabase::WriteTableToJson(const wstring &tablen
 	Json::Value tablearray;
 
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		// If we are missing the database we shouldn't add it //
 		SimpleDatabaseObject::iterator iter = Database.find(tablename);
 
@@ -163,13 +171,20 @@ DLLEXPORT bool Leviathan::SimpleDatabase::WriteTableToJson(const wstring &tablen
 			for(auto iter2 = iter->second->at(i)->begin(); iter2 != iter->second->at(i)->end(); ++iter2){
 				// We want to set it as the native data //
 				switch(iter2->second->GetBlockConst()->Type){
-				case DATABLOCK_TYPE_INT: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator int(); break;
-				case DATABLOCK_TYPE_FLOAT: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator float(); break;
-				case DATABLOCK_TYPE_BOOL: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator bool(); break;
-				case DATABLOCK_TYPE_WSTRING: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator string(); break;
-				case DATABLOCK_TYPE_STRING: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator string(); break;
-				case DATABLOCK_TYPE_CHAR: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator char(); break;
-				case DATABLOCK_TYPE_DOUBLE: rowdata[Convert::WstringToString(iter2->first)] = iter2->second->operator double(); break;
+				case DATABLOCK_TYPE_INT: rowdata[(iter2->first)] =
+                        iter2->second->operator int(); break;
+				case DATABLOCK_TYPE_FLOAT: rowdata[(iter2->first)] =
+                        iter2->second->operator float(); break;
+				case DATABLOCK_TYPE_BOOL: rowdata[(iter2->first)] =
+                        iter2->second->operator bool(); break;
+				case DATABLOCK_TYPE_WSTRING: rowdata[(iter2->first)] =
+                        iter2->second->operator string(); break;
+				case DATABLOCK_TYPE_STRING: rowdata[(iter2->first)] =
+                        iter2->second->operator string(); break;
+				case DATABLOCK_TYPE_CHAR: rowdata[(iter2->first)] =
+                        iter2->second->operator char(); break;
+				case DATABLOCK_TYPE_DOUBLE: rowdata[(iter2->first)] =
+                        iter2->second->operator double(); break;
 				default: assert(0 && "unallowed datablock type in SimpleDatabase");
 				}
 			}
@@ -182,7 +197,7 @@ DLLEXPORT bool Leviathan::SimpleDatabase::WriteTableToJson(const wstring &tablen
 	// The lock ends here since it is no longer needed //
 
 	// Add it and write //
-	root[Convert::WstringToString(tablename)] = tablearray;
+	root[(tablename)] = tablearray;
 
 	// It succeeded //
 	if(!humanreadable){
@@ -197,7 +212,7 @@ DLLEXPORT bool Leviathan::SimpleDatabase::WriteTableToJson(const wstring &tablen
 }
 
 // ------------------------------------ //
-SimpleDatabaseObject::iterator Leviathan::SimpleDatabase::_EnsureTable(const wstring &name){
+SimpleDatabaseObject::iterator Leviathan::SimpleDatabase::_EnsureTable(const std::string &name){
 	// Try to find it //
 	SimpleDatabaseObject::iterator iter = Database.find(name);
 
@@ -206,39 +221,39 @@ SimpleDatabaseObject::iterator Leviathan::SimpleDatabase::_EnsureTable(const wst
 		return iter;
 	}
 	// Ensure new database //
-	Database[name] = shared_ptr<std::vector<shared_ptr<std::map<wstring, shared_ptr<VariableBlock>>>>>(new
-		std::vector<shared_ptr<std::map<wstring, shared_ptr<VariableBlock>>>>());
+	Database[name] = std::shared_ptr<std::vector<shared_ptr<std::map<std::string, std::shared_ptr<VariableBlock>>>>>(
+        new std::vector<shared_ptr<std::map<std::string, std::shared_ptr<VariableBlock>>>>());
 
 	// Recurse, might want to avoid stack overflow //
 	return _EnsureTable(name);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
+DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const std::string &file){
 	// The file should be able to be processed as named variable lists //
 	// read the file entirely //
-	wstring filecontents;
+	std::string filecontents;
 
 	try{
 		FileSystem::ReadFileEntirely(file, filecontents);
 	}
-	catch(const ExceptionInvalidArgument &e){
+	catch(const InvalidArgument &e){
 
-		Logger::Get()->Error(L"SimpleDatabase: LoadFromFile: file could not be read, exception:");
+		Logger::Get()->Error("SimpleDatabase: LoadFromFile: file could not be read, exception:");
 		e.PrintToLog();
 		return false;
 	}
 
 
 	// file needs to be split to lines //
-	vector<wstring> Lines;
+	vector<std::string> Lines;
 
-	if(!StringOperations::CutString(filecontents, wstring(L"\n"), Lines)){
+	if(!StringOperations::CutString(filecontents, std::string("\n"), Lines)){
 
 		Lines.push_back(filecontents);
-		Logger::Get()->Warning(L"ObjectFileProcessor: file seems to be only a single line: "+filecontents);
+		Logger::Get()->Warning("ObjectFileProcessor: file seems to be only a single line: "+filecontents);
 	}
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	SimpleDatabaseObject::iterator insertiter;
 
@@ -249,14 +264,15 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
 		}
 
 		// Check is this new table //
-		if(StringOperations::StringStartsWith<wstring>(Lines[i], L"TABLE")){
+		if(StringOperations::StringStartsWith<std::string>(Lines[i], "TABLE")){
 			// Move to a new table //
 
 			StringIterator itr(&Lines[i]);
 
-			auto tablename = itr.GetStringInQuotes<wstring>(QUOTETYPE_BOTH);
+			auto tablename = itr.GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
 
-			Database[*tablename] = shared_ptr<std::vector<shared_ptr<SimpleDatabaseRowObject>>>(new std::vector<shared_ptr<SimpleDatabaseRowObject>>());
+			Database[*tablename] = std::shared_ptr<std::vector<shared_ptr<SimpleDatabaseRowObject>>>(
+                new std::vector<shared_ptr<SimpleDatabaseRowObject>>());
 
 			// Change the iter //
 			insertiter = Database.find(*tablename);
@@ -265,7 +281,7 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
 
 		// try to create a named var from this line //
 		try{
-			shared_ptr<NamedVariableList> namevar(new NamedVariableList(Lines[i], NULL));
+			shared_ptr<NamedVariableList> namevar(new NamedVariableList(Lines[i]));
 			// didn't cause an exception, is valid add //
 
 			insertiter->second->push_back(shared_ptr<SimpleDatabaseRowObject>(new SimpleDatabaseRowObject()));
@@ -274,23 +290,25 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
 
 			if(namevar->GetVariableCount() % 2 != 0){
 
-				Logger::Get()->Warning(L"SimpleDatabase: LoadFromFile: file: "+file+L", line: "+Convert::ToWstring(i)+L" has invalid number of elements");
+				Logger::Get()->Warning("SimpleDatabase: LoadFromFile: file: "+file+", line: "+
+                    Convert::ToString(i)+" has invalid number of elements");
 				continue;
 			}
 
 			for(size_t namei = 0; namei < namevar->GetVariableCount(); namei += 2){
 
-				wstring name;
+				std::string name;
 
-				namevar->GetValueDirect(namei)->ConvertAndAssingToVariable<wstring>(name);
+				namevar->GetValueDirect(namei)->ConvertAndAssingToVariable<std::string>(name);
 
 				string blockdata;
 
 				if(!namevar->GetValueDirect(namei+1)->ConvertAndAssingToVariable<string>(blockdata)){
-					Logger::Get()->Warning(L"SimpleDatabase: LoadFromFile: file: "+file+L", line: "+Convert::ToWstring(i)+L" couldn't convert value to string");
+					Logger::Get()->Warning("SimpleDatabase: LoadFromFile: file: "+file+", line: "+
+                        Convert::ToString(i)+" couldn't convert value to string");
 				}
 
-				(*toinsert)[name] = shared_ptr<VariableBlock>(new VariableBlock(blockdata));
+				(*toinsert)[name] = std::shared_ptr<VariableBlock>(new VariableBlock(blockdata));
 			}
 		}
 		catch(...){
@@ -301,32 +319,33 @@ DLLEXPORT bool Leviathan::SimpleDatabase::LoadFromFile(const wstring &file){
 	return true;
 }
 
-DLLEXPORT void Leviathan::SimpleDatabase::SaveToFile(const wstring &file){
+DLLEXPORT void Leviathan::SimpleDatabase::SaveToFile(const std::string &file){
 
-	wstring datastr;
-	wstring tmpdata;
+	std::string datastr;
+	std::string tmpdata;
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		// Just iterate over everything and write them to file //
 		for(auto iter = Database.begin(); iter != Database.end(); ++iter){
 
-			datastr += L"TABLE = \""+iter->first+L"\";\n";
+			datastr += "TABLE = \""+iter->first+"\";\n";
 
 			for(auto iter2 = iter->second->begin(); iter2 != iter->second->end(); ++iter2){
 
-				datastr += L"n= [";
+				datastr += "n= [";
 
 				for(auto iter3 = (*iter2)->begin(); iter3 != (*iter2)->end(); ++iter3){
 
-					datastr += L"[\""+iter3->first+L"\"]";
+					datastr += "[\""+iter3->first+"\"]";
 
-					if(!iter3->second->ConvertAndAssingToVariable<wstring>(tmpdata)){
+					if(!iter3->second->ConvertAndAssingToVariable<std::string>(tmpdata)){
 
 						assert(0 && "database has a value that cannot be stored as a string");
 					}
-					datastr += L"[\""+tmpdata+L"\"]";
+					datastr += "[\""+tmpdata+"\"]";
 				}
-				datastr += L"];\n";
+                
+				datastr += "];\n";
 			}
 		}
 	}

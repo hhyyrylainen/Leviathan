@@ -1,25 +1,18 @@
 #pragma once
-#ifndef LEVIATHAN_PERMISSIONSNODE
-#define LEVIATHAN_PERMISSIONSNODE
-	// ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
-#include "Define.h"
-#endif
-	// ------------------------------------ //
-	// ---- includes ---- //
+// ------------------------------------ //
+#include "Include.h"
+
+namespace Leviathan{
+
+    class PermissionsNode{
+    public:
+        DLLEXPORT PermissionsNode();
+        DLLEXPORT ~PermissionsNode();
 
 
-	namespace Leviathan{
+    protected:
 
-		class PermissionsNode : public Object{
-		public:
-			DLLEXPORT PermissionsNode();
-			DLLEXPORT ~PermissionsNode();
-
-
-		protected:
-
-		};
+    };
 
 }
-#endif
+

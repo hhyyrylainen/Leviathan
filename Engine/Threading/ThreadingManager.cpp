@@ -1,17 +1,20 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_THREADINGMANAGER
 #include "ThreadingManager.h"
-#endif
+
 #include "OgreRoot.h"
 #include "QueuedTask.h"
+#include <thread>
+#include "../Utility/Convert.h"
+#include "../Statistics/TimingMonitor.h"
 using namespace Leviathan;
+using namespace std;
 // ------------------------------------ //
 
 // ------------------ Utility functions for threads to run ------------------ //
 void Leviathan::RegisterOgreOnThread(){
 
 	Ogre::Root::getSingleton().getRenderSystem()->registerThread();
-	Logger::Get()->Info(L"Thread registered to work with Ogre");
+	Logger::Get()->Info("Thread registered to work with Ogre");
 }
 
 
@@ -20,7 +23,7 @@ DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore /
     AllowStartTasksFromQueue(true), StopProcessing(false), TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT),
     AllowConditionalWait(true), AllowRepeats(true)
 {
-	WantedThreadCount = boost::thread::hardware_concurrency()*basethreadspercore;
+	WantedThreadCount = std::thread::hardware_concurrency()*basethreadspercore;
 
 	staticaccess = this;
 }
@@ -38,10 +41,10 @@ ThreadingManager* Leviathan::ThreadingManager::staticaccess = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ThreadingManager::Init(){
 
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 	// Start the queuer //
-	WorkQueueHandler = boost::thread(RunTaskQueuerThread, this);
+	WorkQueueHandler = std::thread(RunTaskQueuerThread, this);
 
 
 	// Start appropriate amount of threads //
@@ -57,13 +60,13 @@ DLLEXPORT bool Leviathan::ThreadingManager::Init(){
 
 DLLEXPORT bool Leviathan::ThreadingManager::CheckInit(){
 	// Check are there running threads //
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 
 
 	bool started = false;
 	int loopcount = 0;
 
-	boost::thread::yield();
+	std::this_thread::yield();
 
 	// This might need to be repeated for a while //
 	while(!started){
@@ -91,13 +94,13 @@ DLLEXPORT bool Leviathan::ThreadingManager::CheckInit(){
 
 		if(++loopcount > 1000){
 
-			Logger::Get()->Error(L"ThreadingManager: CheckInit: no threads have started, after 1000 loops");
+			Logger::Get()->Error("ThreadingManager: CheckInit: no threads have started, after 1000 loops");
 
 			// No threads running //
 			return false;
 		}
 
-		boost::thread::yield();
+		std::this_thread::yield();
 	}
 
 	assert(0 && "Shouldn't get out of that loop");
@@ -111,7 +114,7 @@ DLLEXPORT bool Leviathan::ThreadingManager::CheckInit(){
 DLLEXPORT void Leviathan::ThreadingManager::Release(){
 	// Disallow new tasks //
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		AllowStartTasksFromQueue = false;
 	}
 
@@ -119,7 +122,7 @@ DLLEXPORT void Leviathan::ThreadingManager::Release(){
 	//WaitForAllTasksToFinish();
 
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		StopProcessing = true;
 	}
 	// Wait for the queuer to exit //
@@ -134,7 +137,7 @@ DLLEXPORT void Leviathan::ThreadingManager::Release(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ThreadingManager::QueueTask(shared_ptr<QueuedTask> task){
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 
 		WaitingTasks.push_back(task);
 	}
@@ -145,7 +148,7 @@ DLLEXPORT void Leviathan::ThreadingManager::QueueTask(shared_ptr<QueuedTask> tas
 DLLEXPORT bool Leviathan::ThreadingManager::RemoveFromQueue(shared_ptr<QueuedTask> task){
     // Best case scenario is finding it in the wait queue //
     {
-        GUARD_LOCK_THIS_OBJECT();
+        GUARD_LOCK();
 
         auto end = WaitingTasks.end();
         for(auto iter = WaitingTasks.begin(); iter != end; ++iter){
@@ -167,7 +170,7 @@ DLLEXPORT bool Leviathan::ThreadingManager::RemoveFromQueue(shared_ptr<QueuedTas
 
         isrunning = false;
         
-        GUARD_LOCK_THIS_OBJECT();
+        GUARD_LOCK();
 
         auto end = UsableThreads.end();
         for(auto iter = UsableThreads.begin(); iter != end; ++iter){
@@ -197,7 +200,7 @@ DLLEXPORT void Leviathan::ThreadingManager::RemoveTasksFromQueue(std::vector<sha
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ThreadingManager::FlushActiveThreads(){
 	// Disallow new tasks //
-    UNIQUE_LOCK_THIS_OBJECT();
+    GUARD_LOCK_NAME(lockit);
     AllowStartTasksFromQueue = false;
 
 
@@ -209,7 +212,7 @@ DLLEXPORT void Leviathan::ThreadingManager::FlushActiveThreads(){
 	while(!allavailable){
 
 		// Wait for tasks to update //
-		TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(10));
+		TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(10));
 
 skipfirstwaitforthreadslabel:
 
@@ -230,7 +233,7 @@ skipfirstwaitforthreadslabel:
 
 DLLEXPORT void Leviathan::ThreadingManager::WaitForAllTasksToFinish(){
 	// Use this lock the entire function //
-	UNIQUE_LOCK_THIS_OBJECT();
+	GUARD_LOCK_NAME(lockit);
 
     // TODO: this could also be done by joining the task queuer thread and returning from there
     // and then restarting the queuer thread
@@ -242,7 +245,7 @@ DLLEXPORT void Leviathan::ThreadingManager::WaitForAllTasksToFinish(){
 		TaskQueueNotify.notify_all();
 
 		// Wait for some time //
-        TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(10));
+        TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(10));
 	}
 
 	// Wait for threads to empty up //
@@ -254,7 +257,7 @@ DLLEXPORT void Leviathan::ThreadingManager::WaitForAllTasksToFinish(){
 	while(!allavailable){
 
 		// Wait for tasks to update //
-        TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(1));
+        TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(1));
 
 skipfirstwaitforthreadslabel2:
 
@@ -276,7 +279,7 @@ DLLEXPORT void Leviathan::ThreadingManager::NotifyTaskFinished(shared_ptr<Queued
 	// We need locking for re-adding it //
 	if(task->IsRepeating()){
 		// Add back to queue //
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 
 		// Or not if we should be quitting soon //
 		if(AllowRepeats)
@@ -292,7 +295,7 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 	QUICKTIME_THISSCOPE;
 	// Disallow new tasks //
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		AllowStartTasksFromQueue = false;
 	}
 
@@ -309,18 +312,18 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 
 	// Set the threads to run the register methods //
 	{
-		UNIQUE_LOCK_THIS_OBJECT();
+		GUARD_LOCK_NAME(lockit);
 
 		for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
-			(*iter)->SetTaskAndNotify(shared_ptr<QueuedTask>(new QueuedTask(boost::bind(RegisterOgreOnThread))));
+			(*iter)->SetTaskAndNotify(shared_ptr<QueuedTask>(new QueuedTask(std::bind(RegisterOgreOnThread))));
 			// Wait for it to end //
 #ifdef __GNUC__
 			while((*iter)->HasRunningTask()){
 				try{
-					TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(50));
+					TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(50));
 				}
 				catch(...){
-					Logger::Get()->Warning(L"ThreadingManager: MakeThreadsWorkWithOgre: linux fix wait interrupted");
+					Logger::Get()->Warning("ThreadingManager: MakeThreadsWorkWithOgre: linux fix wait interrupted");
 				}
 			}
 #endif
@@ -335,13 +338,13 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 
 	// Allow new threads //
 	{
-		GUARD_LOCK_THIS_OBJECT();
+		GUARD_LOCK();
 		AllowStartTasksFromQueue = true;
 	}
 }
 
 DLLEXPORT void Leviathan::ThreadingManager::NotifyQueuerThread(){
-	GUARD_LOCK_THIS_OBJECT();
+	GUARD_LOCK();
 	TaskQueueNotify.notify_all();
 }
 
@@ -356,12 +359,12 @@ DLLEXPORT void Leviathan::ThreadingManager::SetDiscardConditionalTasks(bool disc
 void Leviathan::RunTaskQueuerThread(ThreadingManager* manager){
 
 	// Lock the object //
-	UNIQUE_LOCK_OBJECT(manager);
+	GUARD_LOCK_OTHER(manager);
 
 	while(!manager->StopProcessing){
 
 		// Wait until task queue needs work //
-		manager->TaskQueueNotify.wait_for(lockit, boost::chrono::milliseconds(100));
+		manager->TaskQueueNotify.wait_for(guard, std::chrono::milliseconds(100));
 
 		// Quickly continue if it is empty //
 		if(!manager->AllowStartTasksFromQueue || manager->WaitingTasks.empty()){
@@ -479,7 +482,7 @@ void Leviathan::SetThreadName(TaskThread* thread, const string &name){
 		return;
 
 	// Get the native handle //
-	DWORD nativehandle = GetThreadId(thread->GetBoostThreadObject().native_handle());
+	DWORD nativehandle = GetThreadId(thread->GetInternalThreadObject().native_handle());
 
 	SetThreadNameImpl(nativehandle, name);
 }
@@ -505,7 +508,7 @@ void Leviathan::SetThreadNameImpl(DWORD threadid, const string &name){
 
 void Leviathan::SetThreadName(TaskThread* thread, const string &name){
 
-    pthread_setname_np(thread->GetBoostThreadObject().native_handle(), name.c_str());
+    pthread_setname_np(thread->GetInternalThreadObject().native_handle(), name.c_str());
 }
 
 #else

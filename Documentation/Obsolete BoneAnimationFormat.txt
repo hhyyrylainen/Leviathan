@@ -1,0 +1,54 @@
+Extension: levba
+
+This filetype is used to play animations on rigged meshes (if there is suitable bone structure between animation and rig)
+
+
+Leviathan Bone Animation File can be plain text (discussed first) or binary (discussed later on)
+
+Header:
+Contains information about the version of exporter and animation types
+
+objects:
+contains all of the animations (recommended to have 1 per file)
+
+in this format
+
+CHECK ModelFormat.txt FOR RULES OF FILE CONTENTS
+
+hint: Don't uses tabs, use spaces. You can set notepad++ to replace tabs with spaces in the settings.
+note: tabs might be supported in future versions
+
+
+#### Example file ####
+FileType: BoneAnimation;
+ExporterVersion: 1.0;
+Animation-Name = "DefaultModel_jump";
+Base-Model-Name = "NameOfModelFromWhichThisAnimationWasCreated";
+AnimationType = AnimTypeNormal; //key frame animation
+
+// --------------- HEADER ENDS AFTER THIS LINE ------------- //
+objects {
+    o BoneAnimation "DefaultModel_base_RENAME" { // RENAME should really have a quite unique name
+        l Properties {
+            // info about animation
+            KeyFrames = 250;
+            KeyFrameInterval = 1;
+            AnimationSpeed = 1000; // normal speed
+            FrameLenght = 33333;// what ever the frame lenght is in microseconds for example if 30fps value is 3333,33333333333 don't actually put decimals, it breaks things
+        }
+        t Frame_FRAMENUMBER {
+            // list of bones with their data at this frame
+        
+        }
+    }
+}
+
+// file end, not required but you can make read end before last line
+-!-
+so that this doesn't cause any errors or
+anything
+
+
+
+
+

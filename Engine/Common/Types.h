@@ -2,64 +2,111 @@
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-#include <memory>
-#include <iostream>
-
-// TODO: move ogre conversion functions to another file
-#include "OGRE/OgreQuaternion.h"
-#include "OGRE/OgreColourValue.h"
-#include "OGRE/OgreVector3.h"
-#include "OGRE/OgreVector4.h"
 
 namespace Leviathan{
 
 
-#define NORMALIZATION_TOLERANCE	1e-6f
+struct PotentiallySetIndex {
 
-	class AllocatedBinaryBlock{
-	public:
-		AllocatedBinaryBlock();
-		AllocatedBinaryBlock(unsigned char* ptr, int elements, bool release);
-		~AllocatedBinaryBlock();
-		//~AllocatedBinaryBlock(bool force);
+    PotentiallySetIndex(size_t index) : Index(Index), ValueSet(true) {
+    }
+    PotentiallySetIndex() = default;
 
-		unsigned char* Get(int& Elements);
+    operator bool() const {
 
-	private:
-		unsigned char* Buffer;
-		int BufferSize; // this is actually size of the array NOT size of array in BYTES
+        return ValueSet;
+    }
 
-		bool Release;
-	};
+    operator size_t() const {
+    #ifdef _DEBUG
+        LEVIATHAN_ASSERT(ValueSet, "PotentiallySetIndex size_t() called when ValueSet is false");
+    #endif // _DEBUG
 
-	struct Int1{
-	public:
-		DLLEXPORT Int1();
-		DLLEXPORT Int1(int data);
+        return Index;
+    }
 
-		// ------------------------------------ //
-		DLLEXPORT Int1 operator +(const Int1& val);
-		//DLLEXPORT int operator[]() const;
+    bool operator ==(const PotentiallySetIndex &other) const {
 
-		DLLEXPORT operator int() const;
+        if (!ValueSet)
+            return ValueSet == other.ValueSet;
 
-		DLLEXPORT int GetIntValue() const;
-		DLLEXPORT void SetIntValue(int val);
-		// ------------------------------------ //
+        return Index == other.Index;
+    }
 
-		int iVal;
-	};
+    PotentiallySetIndex& operator=(const PotentiallySetIndex &other) {
+
+        ValueSet = other.ValueSet;
+        Index = other.Index;
+        return *this;
+    }
+
+    PotentiallySetIndex& operator=(const size_t &value) {
+
+        ValueSet = true;
+        Index = value;
+        return *this;
+    }
+
+    bool IsSet() const {
+
+        return ValueSet;
+    }
+
+    bool ValueSet = false;
+    size_t Index = 0;
+};
+
+struct StartEndIndex {
+
+    using Index = PotentiallySetIndex;
+
+    StartEndIndex(size_t start, size_t end) : Start(start), End(end) {
+
+    }
+
+    StartEndIndex(size_t start) : Start(start) {
+
+    }
+
+    StartEndIndex() = default;
+
+    Index Start;
+    Index End;
+};
 
 	struct Int2{
 	public:
-		DLLEXPORT Int2();
-		DLLEXPORT Int2(int x, int y);
-		DLLEXPORT explicit Int2(int data);
-		DLLEXPORT Int2(const Int2 &other);
+        DLLEXPORT Int2() {
+            X = 0;
+            Y = 0;
+        }
+        DLLEXPORT Int2(int x, int y) {
+            X = x;
+            Y = y;
+        }
+        DLLEXPORT explicit Int2(int data) {
+            X = data;
+            Y = data;
+        }
+        DLLEXPORT Int2(const Int2 &other) {
+            X = other.X;
+            Y = other.Y;
+        }
 
 		// ------------------------------------ //
-		DLLEXPORT Int2 operator +(const Int2 &val);
-		DLLEXPORT int operator[](const int nIndex) const;
+        DLLEXPORT Int2 operator +(const Int2 &val) {
+            return Int2(X + val.X, Y + val.Y);
+        }
+
+        DLLEXPORT int operator[](const int nIndex) const {
+            switch (nIndex) {
+            case 0: return X;
+            case 1: return Y;
+            }
+
+            LEVIATHAN_ASSERT(0, "invalid [] access");
+            return 0;
+        }
 		// ------------------------------------ //
 
 		DLLEXPORT void SetData(const int &data){ X = data; Y = data; };
@@ -70,15 +117,41 @@ namespace Leviathan{
 
 	struct Int3{
 	public:
-		DLLEXPORT Int3();
-		DLLEXPORT Int3(int x, int y, int z);
-		DLLEXPORT explicit Int3(int data);
+        DLLEXPORT Int3() {
+            X = 0;
+            Y = 0;
+            Z = 0;
+        }
+        DLLEXPORT Int3(int x, int y, int z) {
+            X = x;
+            Y = y;
+            Z = z;
+        }
+        DLLEXPORT explicit Int3(int data) {
+            // save a bit of space //
+            X = Y = Z = data;
+        }
 
 		// ------------------------------------ //
-		DLLEXPORT Int3 operator +(const Int3 &val);
-		DLLEXPORT int operator[](const int nIndex) const;
-		DLLEXPORT Int3 operator -(const Int3& other) const;
-		DLLEXPORT int AddAllTogether() const;
+        DLLEXPORT Int3 operator +(const Int3 &val) {
+            return Int3(X + val.X, Y + val.Y, Z + val.Z);
+        }
+        DLLEXPORT int operator[](const int nIndex) const {
+            switch (nIndex) {
+            case 0: return X;
+            case 1: return Y;
+            case 2: return Z;
+            }
+
+            LEVIATHAN_ASSERT(0, "invalid Int3[] access");
+            return 0;
+        }
+        DLLEXPORT Int3 operator -(const Int3& other) const {
+            return Int3(X - other.X, Y - other.Y, Z - other.Z);
+        }
+        DLLEXPORT int AddAllTogether() const {
+            return X + Y + Z;
+        }
 		// ------------------------------------ //
 
 		int X, Y, Z;
@@ -86,15 +159,45 @@ namespace Leviathan{
 
 	struct Int4{
 	public:
-		DLLEXPORT Int4();
-		DLLEXPORT Int4(int x, int y, int z, int w);
-		DLLEXPORT explicit Int4(int data);
+        DLLEXPORT Int4() {
+            X = Y = Z = W = 0;
+        }
+        DLLEXPORT Int4(int x, int y, int z, int w) : X(x), Y(y), Z(z), W(w) {
+
+        }
+        DLLEXPORT explicit Int4(int data) {
+            X = Y = Z = W = data;
+        }
 
 		// ------------------------------------ //
-		DLLEXPORT Int4& operator +(const Int4 &val);
-		DLLEXPORT int operator[](const int nIndex) const;
-		DLLEXPORT Int4& operator -(const Int4& val);
-		DLLEXPORT int AddAllTogether() const;
+        DLLEXPORT Int4& operator +(const Int4 &val) {
+            X += val.X;
+            Y += val.Y;
+            Z += val.Z;
+            W += val.W;
+            return *this;
+        }
+        DLLEXPORT int operator[](const int nIndex) const {
+            switch (nIndex) {
+            case 0: return X;
+            case 1: return Y;
+            case 2: return Z;
+            case 3: return W;
+            }
+
+            LEVIATHAN_ASSERT(0, "invalid Int4[] access");
+            return 0;
+        }
+        DLLEXPORT Int4& operator -(const Int4& val) {
+            X -= val.X;
+            Y -= val.Y;
+            Z -= val.Z;
+            W -= val.W;
+            return *this;
+        }
+        DLLEXPORT int AddAllTogether() const {
+            return X + Y + Z + W;
+        }
 		// ------------------------------------ //
 
 		int X, Y, Z, W;
@@ -123,7 +226,10 @@ namespace Leviathan{
 			case 0: return X;
 			case 1: return Y;
 			}
-		}
+
+            LEVIATHAN_ASSERT(0, "invalid [] access");
+            return X;
+        }
 
 		// ------------------- Operators ----------------- //
 		// add elements //
@@ -232,7 +338,7 @@ namespace Leviathan{
 		// safe version of normalization //
 		DLLEXPORT inline Float2 NormalizeSafe(const Float2 &safer) const{
 			// security //
-			assert(safer.IsNormalized() && "safer not normalized");
+			LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");
 			const float len = X*X+Y*Y;
 			if(len == 0){
 				return safer;
@@ -305,12 +411,6 @@ namespace Leviathan{
 			Y = other.Y;
 			Z = other.Z;
 		}
-		DLLEXPORT Float3(const Ogre::Vector3 &vec){
-			// copy values //
-			X = vec.x;
-			Y = vec.y;
-			Z = vec.z;
-		}
 
 		// access operator //
 		DLLEXPORT inline float& operator[](const int &nindex){
@@ -319,8 +419,9 @@ namespace Leviathan{
 			case 1: return Y;
 			case 2: return Z;
 			}
-            throw std::exception();
-		}
+            LEVIATHAN_ASSERT(0, "invalid [] access");
+            return X;
+        }
 
 		// ------------------- Operators ----------------- //
 		// add elements //
@@ -422,7 +523,10 @@ namespace Leviathan{
 			return min.MaxElements(minval);
 		}
 
-		DLLEXPORT inline Float3 DegreesToRadians();
+        DLLEXPORT inline Float3 DegreesToRadians() {
+
+            return Float3(X * DEGREES_TO_RADIANS, Y * DEGREES_TO_RADIANS, Z * DEGREES_TO_RADIANS);
+        }
 
 		// ----------------- Vector math ------------------- //
 		// dot product of the vectors //
@@ -471,7 +575,11 @@ namespace Leviathan{
 		}
 
 		DLLEXPORT static inline Float3 CreateVectorFromAngles(const float &yaw,
-            const float &pitch);
+            const float &pitch) 
+        {
+            return Float3(-sin(yaw*DEGREES_TO_RADIANS), sin(pitch*DEGREES_TO_RADIANS),
+                -cos(yaw*DEGREES_TO_RADIANS)).NormalizeSafe(Zeroed);
+        }
 		// ------------------------------------ //
 		// functions to be compatible with ozz functions //
 		// all zero values object //
@@ -502,11 +610,6 @@ namespace Leviathan{
 		//DLLEXPORT inline operator D3DXVECTOR3(){
 		//	return D3DXVECTOR3(X, Y, Z);
 		//}
-
-		DLLEXPORT inline operator Ogre::Vector3() const{
-			return Ogre::Vector3(X, Y, Z);
-		}
-
 		// ------------------------------------ //
 
 
@@ -541,13 +644,6 @@ namespace Leviathan{
 		DLLEXPORT explicit Float4(float val){
 			X = Y = Z = W = val;
 		}
-		DLLEXPORT Float4(const Ogre::Quaternion &quat){
-			// copy values //
-			X = quat.x;
-			Y = quat.y;
-			Z = quat.z;
-			W = quat.w;
-		}
 
 		// access operator //
 		DLLEXPORT inline float& operator[](const int &nindex){
@@ -557,7 +653,9 @@ namespace Leviathan{
 			case 2: return Z;
 			case 3: return W;
 			}
-            throw std::exception();
+
+            LEVIATHAN_ASSERT(0, "invalid [] access");
+            return X;
 		}
 
 		//! return first value of {X, Y, Z, W} as a pointer
@@ -827,26 +925,6 @@ namespace Leviathan{
 
 
 		// ----------------- casts ------------------- //
-		//DLLEXPORT inline operator D3DXVECTOR4() const{
-		//	return D3DXVECTOR4(X, Y, Z, W);
-		//}
-		//DLLEXPORT inline operator D3DXQUATERNION() const{
-		//	return D3DXQUATERNION(X, Y, Z, W);
-		//}
-
-		DLLEXPORT inline operator Ogre::Quaternion() const{
-
-			return Ogre::Quaternion(W, X, Y, Z);
-		}
-
-		DLLEXPORT inline operator Ogre::ColourValue() const{
-
-			return Ogre::ColourValue(X, Y, Z, W);
-		}
-		DLLEXPORT inline operator Ogre::Vector4() const{
-
-			return Ogre::Vector4(X, Y, Z, W);
-		}
 
 		// ------------------------------------ //
 
@@ -870,6 +948,11 @@ namespace Leviathan{
 
     DLLEXPORT std::ostream& operator <<(std::ostream &stream,
         const Leviathan::Float3 &value);
-}
 
+    DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+        const Leviathan::StartEndIndex &value);
+
+    DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+        const Leviathan::PotentiallySetIndex &value);
+}
 

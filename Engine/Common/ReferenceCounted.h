@@ -2,9 +2,12 @@
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-#include <boost/intrusive_ptr.hpp>
 #include <cstdint>
 #include <atomic>
+#ifdef USING_BOOST
+#include <boost/intrusive_ptr.hpp>
+#endif // USING_BOOST
+
 
 namespace Leviathan{
 
@@ -18,8 +21,10 @@ namespace Leviathan{
 	class ReferenceCounted{
 	public:
 
+#ifdef USING_BOOST
         typedef boost::intrusive_ptr<ReferenceCounted> pointer;
-        
+#endif // USING_BOOST
+
 		DLLEXPORT inline ReferenceCounted() : RefCount(1){}
 		DLLEXPORT virtual ~ReferenceCounted(){}
 
@@ -34,6 +39,7 @@ namespace Leviathan{
             intrusive_ptr_release(this);
         }
 
+#ifdef USING_BOOST
         //! \brief Creates an intrusive_ptr from raw pointer
         template<class ActualType>
         DLLEXPORT static boost::intrusive_ptr<ActualType> MakeShared(ActualType* ptr){
@@ -46,6 +52,7 @@ namespace Leviathan{
 
             return newptr;
         }
+#endif // USING_BOOST
 
         //! \brief Returns the reference count
         //! \todo Make sure that the right memory order is used
@@ -76,4 +83,5 @@ namespace Leviathan{
 	};
 
 }
+
 

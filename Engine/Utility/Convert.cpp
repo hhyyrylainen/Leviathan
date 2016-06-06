@@ -1,3 +1,4 @@
+#include "Include.h"
 // ------------------------------------ //
 #include "Convert.h"
 
@@ -5,6 +6,7 @@
 #include "Common/DataStoring/DataBlock.h"
 #include "../Common/StringOperations.h"
 #include "utf8/checked.h"
+#include <iosfwd>
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -17,47 +19,6 @@ double Convert::RadiansToDegrees(float radians){
 }
 
 
-// ------------------------------------- //
-
-wstring Convert::IntToWstring(const int &i){
-	wstring replace;
-	wstringstream wstream;
-	wstream << i;
-	replace=wstream.str();
-	return replace;
-}
-wstring Convert::FloatToWstring(const float &i){
-	wstring replace;
-	wstringstream wstream;
-	wstream << i;
-	replace=wstream.str();
-	return replace;
-}
-wstring Convert::StringToWstring(const string &str){
-	wstringstream strm;
-	strm << str.c_str();
-	return strm.str();
-}
-
-DLLEXPORT std::wstring Leviathan::Convert::CharPtrToWstring(const char* charsource){
-	wstringstream strm;
-	strm << charsource;
-	return strm.str();
-}
-
-string Convert::WstringToString(const wstring &str){
-	string stri;
-	stri.assign(str.begin(),str.end());
-
-	return stri;
-}
-wstring Convert::CharToWstring(const char &i){
-	wstring replace;
-	wstringstream wstream;
-	wstream << i;
-	replace=wstream.str();
-	return replace;
-}
 int Convert::WstringFromBoolToInt(const wstring &i){
     if(StringOperations::CompareInsensitive<wstring>(i, L"true") || i == L"1"){
 		return true;	
@@ -124,14 +85,19 @@ DLLEXPORT std::wstring Leviathan::Convert::Utf8ToUtf16(const string &utf8str){
 
 	} catch(utf8::invalid_code_point &e1){
 
-		Logger::Get()->Error("Convert: invalid utf code point: "+
+    #ifndef LEVIATHAN_UE_PLUGIN
+		Logger::Get()->Error("Convert: invalid UTF-8 code point: "+
             Convert::ToString(e1.code_point()));
-        
+    #else
+        NOT_UNUSED(e1);
+    #endif //LEVIATHAN_UE_PLUGIN
 		return wstring();
 
 	} catch(utf8::not_enough_room&){
 
+    #ifndef LEVIATHAN_UE_PLUGIN
 		Logger::Get()->Error("Convert: not enough memory for string conversion");
+    #endif //LEVIATHAN_UE_PLUGIN
 		return wstring();
 	}
 
@@ -149,14 +115,18 @@ DLLEXPORT std::string Leviathan::Convert::Utf16ToUtf8(const wstring &utf16str){
 		utf8::utf16to8(utf16str.begin(), utf16str.end(), back_inserter(results));
 
 	} catch(utf8::invalid_code_point &e1){
-
-		Logger::Get()->Error("Convert: invalid utf code point: "+
+    #ifndef LEVIATHAN_UE_PLUGIN
+		Logger::Get()->Error("Convert: invalid UTF-8 code point: "+
             Convert::ToString(e1.code_point()));
+    #else
+        NOT_UNUSED(e1);
+    #endif //LEVIATHAN_UE_PLUGIN
 		return string();
 
 	} catch(utf8::not_enough_room&){
-
+    #ifndef LEVIATHAN_UE_PLUGIN
 		Logger::Get()->Error("Convert: not enough memory for string conversion");
+    #endif //LEVIATHAN_UE_PLUGIN
 		return string();
 	}
 
@@ -164,29 +134,4 @@ DLLEXPORT std::string Leviathan::Convert::Utf16ToUtf8(const wstring &utf16str){
 	return results;
 }
 // ------------------------------------ //
-namespace Leviathan{
-    
-    template<> DLLEXPORT std::string Convert::ToString<Float4>(const Float4 &val){
-            
-        std::stringstream stream;
-        if(!(stream << "[" << val.X << ", " << val.Y << ", " << val.Z << ", " << val.W <<
-                "]"))
-        {
-            return "";
-        }
-            
-        return stream.str();
-    }
 
-    template<> DLLEXPORT std::string Convert::ToString<Float3>(const Float3 &val){
-            
-        std::stringstream stream;
-        if(!(stream << "[" << val.X << ", " << val.Y << ", " << val.Z << ", " << "]"))
-        {
-            return "";
-        }
-            
-        return stream.str();
-    }
-
-}

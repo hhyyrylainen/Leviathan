@@ -2,6 +2,7 @@
 // ------------------------------------ //
 #include "../Common/Types.h"
 #include <cmath>
+#include <vector>
 
 
 namespace Leviathan{

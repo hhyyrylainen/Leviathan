@@ -1,11 +1,11 @@
 #pragma once
+#include "Define.h"
 // ------------------------------------ //
-#include "Include.h"
-#include "../Exceptions.h"
-#include <mutex>
 #include <memory>
+#include <mutex>
 
 namespace Leviathan{
+
 
     // Individual lock objects //
     using Mutex = std::mutex;
@@ -56,17 +56,17 @@ namespace Leviathan{
             return Unique(TurnToPointer(object)->ObjectsLock);
         }
 
-        template<typename ObjectClass>
-        static auto Object(std::shared_ptr<ObjectClass> object){
+        //template<typename ObjectClass>
+        //static auto Object(std::shared_ptr<ObjectClass> object){
 
-            return Unique(object->ObjectsLock);
-        }
+        //    return Unique(object->ObjectsLock);
+        //}
 
-        template<typename ObjectClass>
-        static auto Object(std::unique_ptr<ObjectClass> object){
+        //template<typename ObjectClass>
+        //static auto Object(std::unique_ptr<ObjectClass> object){
 
-            return Unique(object->ObjectsLock);
-        }
+        //    return Unique(object->ObjectsLock);
+        //}
 
         template<class LockType>
         static auto Unique(LockType &lockref){
@@ -103,8 +103,7 @@ namespace Leviathan{
         FORCE_INLINE void VerifyLock(Lock &lockit) const{
             
             // Make sure that the lock is locked //
-			if(!lockit.owns_lock())
-				throw InvalidAccess("lock not locked");
+            LEVIATHAN_ASSERT(lockit.owns_lock(), "lock not locked");
 		}
 
 		//! The main lock facility, mutable for working with const functions
@@ -124,9 +123,10 @@ namespace Leviathan{
 
 }
 
+#ifdef LEAK_INTO_GLOBAL
 using Leviathan::Mutex;
 using Leviathan::RecursiveMutex;
 using Leviathan::Lock;
 using Leviathan::RecursiveLock;
-
+#endif // LEAK_INTO_GLOBAL
 

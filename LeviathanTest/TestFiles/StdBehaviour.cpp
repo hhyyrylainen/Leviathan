@@ -7,7 +7,7 @@ using namespace std;
 
 int TestChanger(int iarg, double idouble, void* output){
 
-    *reinterpret_cast<int*>(output) = iarg + idouble;
+    *reinterpret_cast<int*>(output) = iarg + static_cast<int>(idouble);
     
     return 14;
 }
@@ -35,7 +35,7 @@ TEST_CASE("std::function passing between threads", "[std]"){
     const auto result = (*torun)();
 
     CHECK(result == 14);
-    CHECK(target == 42 + 125.0);
+    CHECK(target == 42 + static_cast<int>(125.0));
 
     target = -12;
 

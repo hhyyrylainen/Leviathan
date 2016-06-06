@@ -1,14 +1,16 @@
 #include "Iterators/StringIterator.h"
 #include "utf8.h"
 
-#include "boost/assign.hpp"
-
 #include "catch.hpp"
+#include "Logger.h"
 
 using namespace Leviathan;
 using namespace std;
 
 TEST_CASE("StringIterator get functions", "[string, objectfile]"){
+
+    // For outputting debug info //
+    Logger log("Test/TestLog.txt");
 
 	StringIterator itr((string*)NULL);
 
@@ -311,8 +313,7 @@ TEST_CASE("StringIterator UTF8 correctness", "[string, objectfile, utf8]"){
 
     // Test UTF8 string handling //
 
-	std::vector<int> unicodeholder = boost::assign::list_of(0x00E4)('_')(0x0503)(0x04E8)(0x0A06)
-        (0x1304)(0xAC93)(0x299D);
+    std::vector<int> unicodeholder = { 0x00E4, '_', 0x0503, 0x04E8, 0x0A06, 0x1304, 0xAC93, 0x299D };
 
 	string toutf8;
 

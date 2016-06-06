@@ -1,44 +1,64 @@
+#include "Include.h"
 // ------------------------------------ //
 #include "Logger.h"
 
 #include "Define.h"
 #include "Common/ThreadSafe.h"
+#ifndef ALTERNATIVE_EXCEPTIONS_FATAL
 #include "Exceptions.h"
+#endif //ALTERNATIVE_EXCEPTIONS_FATAL
 #include "FileSystem.h"
 #include "Utility/Convert.h"
+
 #include <chrono>
 #include <fstream>
 #include <ctime>
 #include <iomanip>
+#include <iostream>
+#define __STDC_WANT_LIB_EXT1__ 1
+#include <time.h>
+#ifdef _WIN32
+#include "WindowsInclude.h"
+#endif //_WIN32
+
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Logger::Logger(const std::string &file):
     Path(file)
 {
-	// Get time for putting to the  beginning of the  log file //
-    auto curtime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+    // Get time for putting to the  beginning of the  log file //
+    auto t = std::time(nullptr);
+
+    struct tm curtime;
+    localtime_s(&curtime, &t);
 
     std::stringstream formatedtime;
 
-    //formatedtime << std::put_time(&curtime, "%S:%M:%H %A %d.%m.%Y (%Z)");
-    formatedtime << "waiting for GCC 5";
-    
-	string write = "Start of Leviathan log for leviathan version: " + VERSIONS;
+    formatedtime << std::put_time(&curtime, "%S:%M:%H %A %d.%m.%Y (%Z)");
+    //formatedtime << "waiting for GCC 5";
 
-    write += "\nWriting to file \""+file+"\"";
-    write += "\n------------------------TIME: "+formatedtime.str()+"------------------------\n";
+    string write = "Start of Leviathan log for leviathan version: " + VERSIONS;
+
+    write += "\nWriting to file \"" + file + "\"";
+    write += "\n------------------------TIME: " + formatedtime.str() + "------------------------\n";
 
     std::ofstream writer(Path);
 
-    if(!writer.is_open()){
+    if (!writer.is_open()) {
 
+    #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
         throw Exception("Cannot open log file");
+    #else
+        LEVIATHAN_ASSERT(0, "Cannot open log file");
+    #endif //ALTERNATIVE_EXCEPTIONS_FATAL
     }
 
     writer << write;
-    
+
     writer.close();
+
     
     PendingLog = "";
 	LatestLogger = this;
@@ -71,6 +91,25 @@ DLLEXPORT void Leviathan::Logger::Write(const std::string &data){
     PendingLog += message;
 
     _LogUpdateEndPart();
+}
+void Leviathan::Logger::WriteLine(const std::string &Text) {
+
+    Write(Text);
+}
+
+void Leviathan::Logger::Fatal(const std::string &data) {
+
+    const auto message = "[FATAL] " + data + "\n";
+
+    Lock lock(LoggerWriteMutex);
+
+    SendDebugMessage(message);
+
+    PendingLog += message;
+
+    _LogUpdateEndPart();
+
+    LEVIATHAN_ASSERT(0, "fatal message printed");
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::Info(const std::string &data){
@@ -138,12 +177,12 @@ void Leviathan::Logger::Print(const string &message){
 
 DLLEXPORT void Leviathan::Logger::SendDebugMessage(const string &str){
 #ifdef _WIN32
-	const wstring converted = Convert::StringToWstring(str);
+	const wstring converted = Convert::Utf8ToUtf16(str);
 	OutputDebugString(&*converted.begin());
 #endif // _WIN32
 	// We also want standard output messages //
 	// Using cout should be fine for most other platforms //
-	cout << str;
+	std::cout << str;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::DirectWriteBuffer(const std::string &data){
@@ -162,7 +201,6 @@ DLLEXPORT Logger* Leviathan::Logger::Get(){
 
     return LatestLogger;
 }
-
 
 
 

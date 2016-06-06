@@ -2,8 +2,18 @@
 #include "TaskThread.h"
 
 #include "ThreadingManager.h"
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
 #include "angelscript.h"
+#endif // LEVIATHAN_USING_ANGELSCRIPT
+
+#ifdef ALLOW_INTERNAL_EXCEPTIONS
+#include "Exceptions.h"
+#endif //ALLOW_INTERNAL_EXCEPTIONS
+
+#ifdef LEVIATHAN_USING_OGRE
 #include "OgreRoot.h"
+#endif // LEVIATHAN_USING_OGRE
+
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -42,16 +52,23 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 
             } catch(const Exception &e){
 
+            #ifndef LEVIATHAN_UE_PLUGIN
                 Logger::Get()->Error("TaskThread: task threw a Leviathan exception: ");
                 e.PrintToLog();
-                
+            #else
+                NOT_UNUSED(e);
+            #endif //LEVIATHAN_UE_PLUGIN
                 DEBUG_BREAK;
 
             } catch(const std::exception &e){
 
+            #ifndef LEVIATHAN_UE_PLUGIN
                 Logger::Get()->Error("TaskThread: task threw a generic exception: ");
                 Logger::Get()->Write(string("\t> ")+e.what());
-                
+            #else
+                NOT_UNUSED(e);
+            #endif //LEVIATHAN_UE_PLUGIN
+
                 DEBUG_BREAK;
             }
 
@@ -112,17 +129,21 @@ void Leviathan::TaskThread::_NewThreadEntryRegister(Lock &guard){
 }
 
 void Leviathan::TaskThread::_ThreadEndClean(Lock &guard){
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
 	// Release script resources //
 	if(asThreadCleanup() < 0){
 
 		Logger::Get()->Error("Releasing threads while scripts are running!");
 	}
-    
+#endif // LEVIATHAN_USING_ANGELSCRIPT
+
+#ifdef LEVIATHAN_USING_OGRE
 	// Release Ogre (if Ogre is still active) //
 	Ogre::Root* tmproot = Ogre::Root::getSingletonPtr();
 
 	if(tmproot)
 		tmproot->getRenderSystem()->unregisterThread();
+#endif // LEVIATHAN_USING_OGRE
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::TaskThread::SetTaskAndNotify(shared_ptr<QueuedTask> task){

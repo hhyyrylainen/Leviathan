@@ -34,6 +34,16 @@ set_property(DIRECTORY PROPERTY COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY")
 
 ######### Options
     
+option(CREATE_UE4_PLUGIN "If set to ON creates a static version without any external libraries" OFF)
+    
+option(USE_ANGELSCRIPT "For using AngelScript, required for normal builds" ON)
+option(USE_BOOST "For using AngelScript, required for normal builds" ON)
+option(USE_OGRE "For using Ogre and direct dependencies, required for normal builds" ON)
+option(USE_SFML "For using SFML, required for normal builds" ON)
+option(USE_NEWTON "For using Newton, required for normal builds" ON)
+    
+option(CREATE_STATIC "Set to ON to create static libraries instead of shared" OFF)
+    
 option(COPY_DEBUG_LIBS "When set copies debug libraries" OFF)
 # \todo this option to copy right libs
 option(INSTALL_CREATE_SDK   "For creating SDKs for developers" OFF)
@@ -43,6 +53,22 @@ option(USE_BREAKPAD "For enabling google breakpad crash handling, set off for lo
 
 # Copies boost libraries to distributions
 option(COPY_BOOST_TO_PACKAGE "For copying all boost libraries to run on system that don't have it" OFF)
+
+set(CMAKE_INSTALL_PREFIX "./Install" CACHE FILEPATH "Install path")
+
+if(CREATE_UE4_PLUGIN)
+    message(STATUS "Creating UE4 Compatible Static Library")
+    set(USE_ANGELSCRIPT OFF)
+    set(USE_BOOST OFF)
+    set(USE_OGRE OFF)
+    set(USE_SFML OFF)
+    set(USE_NEWTON OFF)
+    set(COPY_BOOST_TO_PACKAGE OFF)
+    set(CREATE_STATIC ON)
+    set(USE_BREAKPAD OFF)
+    
+    set(CMAKE_INSTALL_PREFIX "./UE4_Plugin")
+endif()
 
 if(${USE_BREAKPAD})
   set(BREAKPAD_STATE 1)
@@ -65,7 +91,7 @@ option(DOCUMENTATION_LOCAL "Set to OFF to create web documentation" ON)
 option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" ON)
 
 # Include glm directory on windows
-if(WIN32)
+if(WIN32 AND USE_OGRE)
   set(GLM_BASE_DIR "" CACHE FILEPATH "Path to the base directory of glm set to cegui-dependencies/src/glm-0.9.4.5")
 endif()
 
@@ -74,7 +100,7 @@ if(EXISTS "${GLM_BASE_DIR}")
   include_directories("${GLM_BASE_DIR}")
 
 else()
-  if(WIN32)
+  if(WIN32 AND USE_OGRE)
     message(WARNING "GLM_BASE_DIR is not set, probably won't compile correctly depending on CEGUI version") 
   endif()
 endif()
@@ -90,28 +116,19 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/Leap/include/Leap.h")
   
 else()
 
+  if(NOT CREATE_UE4_PLUGIN)
   message(WARNING "Leap motion files aren't installed in leviathan/Leap, Leap motion support is disabled")
-
+  endif()
+  
   set(CAN_USE_LEAP OFF)
   
 endif()
 
-if(${USE_LEAP} AND ${CAN_USE_LEAP})
-  set(L_LEAP_STATE 1)
+if(USE_LEAP AND CAN_USE_LEAP)
+  set(USING_LEAP ON)
 else()
-  set(L_LEAP_STATE 0)
+  set(USING_LEAP OFF)
 endif()
-
-# VisualLeakDetector setting
-if(WIN32)
-    option(USE_VLD "For including vld in the projects" OFF)
-endif()
-
-if(USE_VLD)
-    set(L_VLD_STATE 1)
-else(USE_VLD)
-    set(L_VLD_STATE 0)
-endif(USE_VLD)
 
 
 # For making libs with right names
@@ -131,11 +148,11 @@ if(WIN32)
   # A policy is needed for launchers to work correctly
   
   # This allows the project target property be read the old way
-  cmake_policy(SET CMP0026 OLD)
+  #cmake_policy(SET CMP0026 OLD)
   
   # This makes parameter evaluation expand things more aggressively(?)
-  cmake_policy(SET CMP0053 OLD)
-  cmake_policy(SET CMP0054 OLD)
+  #cmake_policy(SET CMP0053 OLD)
+  #cmake_policy(SET CMP0054 OLD)
   
 else(WIN32)
 
@@ -156,121 +173,157 @@ if(CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Set the build type, usually Release or RelWithDebInfo" FORCE)
 endif(CMAKE_BUILD_TYPE STREQUAL "")
 
-if(NOT WIN32 AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if(NOT WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 	# Not recommended configuration
 	message(STATUS "Configuration is set to: " ${CMAKE_BUILD_TYPE})
 	message(SEND_WARNING "On linux you should only try to build with Release or RelWithDebInfo")
 
-endif(NOT WIN32 AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+endif()
 
 
 # locating the Ogre folder
 if(WIN32)
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{OGRE_HOME}/CMake/")
-    set(OGRE_BASEDIR "$ENV{OGRE_HOME}/")
+    if(NOT USE_OGRE OR NOT EXISTS "$ENV{OGRE_HOME}/")
+        set(CAN_USE_OGRE OFF)
+    else()
+        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{OGRE_HOME}/CMake/")
+        set(OGRE_BASEDIR "$ENV{OGRE_HOME}/")
+        set(CAN_USE_OGRE ON)
+    endif()
 endif(WIN32)
 
 if(UNIX)
-    if(EXISTS "/usr/local/lib/OGRE/cmake")
+    if(NOT USE_OGRE)
+        set(CAN_USE_OGRE OFF)
+    else()
+        set(CAN_USE_OGRE ON)
+        if(EXISTS "/usr/local/lib/OGRE/cmake")
 
-        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/local/lib/OGRE/cmake/")
-        set(OGRE_BASEDIR "/usr/local/lib/OGRE/")
+            set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/local/lib/OGRE/cmake/")
+            set(OGRE_BASEDIR "/usr/local/lib/OGRE/")
+            
+        elseif(EXISTS "/usr/lib/OGRE/cmake")
         
-    elseif(EXISTS "/usr/lib/OGRE/cmake")
-    
-        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/lib/OGRE/cmake/")
-        set(OGRE_BASEDIR "/usr/lib/OGRE/")
-    else(EXISTS "/usr/local/lib/OGRE")
-        message(SEND_ERROR "Failed to find Ogre module path")
-    endif(EXISTS "/usr/local/lib/OGRE/cmake")
+            set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/lib/OGRE/cmake/")
+            set(OGRE_BASEDIR "/usr/lib/OGRE/")
+        else(EXISTS "/usr/local/lib/OGRE")
+            message(SEND_ERROR "Failed to find Ogre module path")
+        endif(EXISTS "/usr/local/lib/OGRE/cmake")
+    endif()
 endif(UNIX)
 
 # Find required libraries
 
 # Ogre is required
-find_package(OGRE REQUIRED Plugin_ParticleFX Plugin_CgProgramManager Plugin_OctreeZone Overlay Paging RenderSystem_GL)
+if(CAN_USE_OGRE)
+    
+    if(NOT USE_BOOST)
+        message(SEND_ERROR "USE_BOOST required for Ogre")
+    endif()
+    
+    if(NOT USE_NEWTON)
+        message(SEND_ERROR "USE_NEWTON required for Ogre")
+    endif()
+    
+    # Components that need linking (NB does not include header-only components like bind)
+    set(OGRE_BOOST_COMPONENTS thread date_time)
 
-# OIS is required for input
-find_package(OIS REQUIRED)
+    find_package(OGRE REQUIRED Plugin_ParticleFX Plugin_CgProgramManager Plugin_OctreeZone Overlay Paging RenderSystem_GL)
 
-# check if it failed
-if(NOT OIS_FOUND)
-	message(SEND_ERROR "Failed to find OIS")
-endif(NOT OIS_FOUND)
+    # OIS is required for input
+    find_package(OIS REQUIRED)
 
-# Find CEGUI
-set(CEGUI_VERSION_MAJOR_DEFAULT 9999)
-find_package(CEGUI REQUIRED OgreRenderer CoreWindowRendererSet ExpatParser FreeImageImageCodec)
-# TODO: allow other parsers/codecs
+    # check if it failed
+    if(NOT OIS_FOUND)
+        message(SEND_ERROR "Failed to find OIS")
+    endif(NOT OIS_FOUND)
 
-if(NOT CEGUI_FOUND)
-  message(SEND_ERROR "Failed to locate CEGUI")
-endif()
+    # Find CEGUI
+    set(CEGUI_VERSION_MAJOR_DEFAULT 9999)
+    find_package(CEGUI REQUIRED OgreRenderer CoreWindowRendererSet ExpatParser FreeImageImageCodec)
+    # TODO: allow other parsers/codecs
 
-set(ALL_CEGUI_LIBRARIES ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
-  ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
+    if(NOT CEGUI_FOUND)
+      message(SEND_ERROR "Failed to locate CEGUI")
+    endif()
 
-include_directories(${CEGUI_INCLUDE_DIR})
+    set(ALL_CEGUI_LIBRARIES ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
+      ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
+
+    include_directories(${CEGUI_INCLUDE_DIR})
+    
+    # set some additional libraries
+    set(ADDITIONAL_OGRE ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES}
+        ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
+
+endif(CAN_USE_OGRE)
+
+if(USE_SFML)
+    set(CAN_USE_SFML ON)
+else()
+    set(CAN_USE_SFML OFF)
+endif(USE_SFML)
 
 # Find sfml
-find_package(SFML 2 COMPONENTS audio network system)
+if(CAN_USE_SFML)
+    find_package(SFML 2 COMPONENTS audio network system)
 
-if(NOT SFML_FOUND)
-    message(SEND_ERROR "Failed to find SFML 2")
-endif()
+    if(NOT SFML_FOUND)
+        message(SEND_ERROR "Failed to find SFML 2")
+    endif()
+endif(CAN_USE_SFML)
 
 include_directories(${SFML_INCLUDE_DIR})
 
-# set some additional libraries
-set(ADDITIONAL_OGRE ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES}
-    ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
-
 # Find Boost
-# Might be a good idea to dynamically link Boost
-set(Boost_USE_STATIC_LIBS FALSE)
+if(USE_BOOST)
+    # Might be a good idea to dynamically link Boost
+    set(Boost_USE_STATIC_LIBS FALSE)
 
-set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
-# Components that need linking (NB does not include header-only components like bind)
-set(OGRE_BOOST_COMPONENTS thread date_time)
+    set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
 
-# Other than these that are required are header-only libraries
-set(LEVIATHAN_BOOST_COMPONENTS chrono system filesystem)
 
-set(REQUIRED_BOOST_COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} ${OGRE_BOOST_COMPONENTS})
+    # Other than these that are required are header-only libraries
+    set(LEVIATHAN_BOOST_COMPONENTS chrono system filesystem)
 
-find_package(Boost COMPONENTS ${REQUIRED_BOOST_COMPONENTS} QUIET)
+    set(REQUIRED_BOOST_COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} ${OGRE_BOOST_COMPONENTS})
 
-if(NOT Boost_FOUND)
-    message("Boost not found, retrying with different settings")
-    # Try again with the other type of libs
-    set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
-    find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS})
-    
+    find_package(Boost COMPONENTS ${REQUIRED_BOOST_COMPONENTS} QUIET)
+
     if(NOT Boost_FOUND)
-        message(SEND_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})        
+        message("Boost not found, retrying with different settings")
+        # Try again with the other type of libs
+        set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
+        find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS})
+        
+        if(NOT Boost_FOUND)
+            message(SEND_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})        
+        endif(NOT Boost_FOUND)
     endif(NOT Boost_FOUND)
-endif(NOT Boost_FOUND)
 
-# Boost is found or the configuration has already failed
+    # Boost is found or the configuration has already failed
 
-# Set up referencing of Boost
-include_directories(${Boost_INCLUDE_DIR})
+    # Set up referencing of Boost
+    include_directories(${Boost_INCLUDE_DIR})
 
-# All libs are linked by cmake
-add_definitions(-DBOOST_ALL_NO_LIB)
+    # All libs are linked by cmake
+    add_definitions(-DBOOST_ALL_NO_LIB)
+endif(USE_BOOST)
 
 # Library linking
-set(LINK_LIBS_TOENGINE_RELEASE optimized Newton ${OGRE_LIBRARIES})
-set(LINK_LIBS_ENGINE_RELEASE optimized angelscript optimized Newton)
+# And Debug libraries for windows
+if(USE_OGRE)
+    set(LINK_LIBS_TOENGINE_RELEASE optimized Newton ${OGRE_LIBRARIES})
+    set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
+endif()
+
+if(USE_ANGELSCRIPT)
+    set(LINK_LIBS_ENGINE_RELEASE optimized angelscript optimized Newton)
+    set(LINK_LIBS_ENGINE_DEBUG debug angelscriptd)
+endif()
 
 
-
-# Debug libraries
-set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
-set(LINK_LIBS_ENGINE_DEBUG debug angelscriptd debug Newton_d)
-
-
-if(${USE_LEAP})
+if(USING_LEAP)
   set(LINK_LIBS_ENGINE_RELEASE ${LINK_LIBS_ENGINE_RELEASE} optimized Leap)
   set(LINK_LIBS_ENGINE_DEBUG ${LINK_LIBS_ENGINE_DEBUG} debug Leapd)
 endif()
@@ -330,27 +383,29 @@ file(COPY "${PROJECT_SOURCE_DIR}/MoveSymbolFile.sh"
   DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
 
 # Copy the tools
-if(UNIX)
+if(USE_BREAKPAD)
+    if(UNIX)
 
-  if(EXISTS "${BREAKPAD_DIR}/src/tools/linux/dump_syms/dump_syms" AND EXISTS "${BREAKPAD_DIR}/src/processor/minidump_stackwalk")
-    file(COPY "${BREAKPAD_DIR}/src/tools/linux/dump_syms/dump_syms" "${BREAKPAD_DIR}/src/processor/minidump_stackwalk" 
-      DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
-  endif()
+      if(EXISTS "${BREAKPAD_DIR}/src/tools/linux/dump_syms/dump_syms" AND EXISTS "${BREAKPAD_DIR}/src/processor/minidump_stackwalk")
+        file(COPY "${BREAKPAD_DIR}/src/tools/linux/dump_syms/dump_syms" "${BREAKPAD_DIR}/src/processor/minidump_stackwalk" 
+          DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
+      endif()
 
-elseif(WIN32)
+    elseif(WIN32)
 
-  if(EXISTS "${BREAKPAD_DIR}/src/tools/windows/binaries/dump_syms.exe")
-    
-    file(COPY "${BREAKPAD_DIR}/src/tools/windows/binaries/dump_syms.exe" DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
-    
-  else()
-    
-    message(SEND_ERROR "Didn't find breakpad symbol dumber, did you forget to run "
-      "${BREAKPAD_DIR}/src/tools/windows/refresh_binaries.bat")
-    
-  endif()
+      if(EXISTS "${BREAKPAD_DIR}/src/tools/windows/binaries/dump_syms.exe")
+        
+        file(COPY "${BREAKPAD_DIR}/src/tools/windows/binaries/dump_syms.exe" DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
+        
+      else()
+        
+        message(SEND_ERROR "Didn't find breakpad symbol dumber, did you forget to run "
+          "${BREAKPAD_DIR}/src/tools/windows/refresh_binaries.bat")
+        
+      endif()
 
-endif()
+    endif()
+endif(USE_BREAKPAD)
 
 # Set the symbol tool name
 if(UNIX)
@@ -363,7 +418,7 @@ endif()
 
 # The bin-folder files
 if(WIN32)
-    file(GLOB RootFolderFiles "bin/*.ini" "bin/*.txt" "bin/VLD data exporter.exe" 
+    file(GLOB RootFolderFiles "bin/*.ini" "bin/*.txt"
         "bin/*.conf")
 else(WIN32)
     file(GLOB RootFolderFiles "bin/*.conf" "bin/*.txt")
@@ -429,19 +484,21 @@ endif(NOT Boost_USE_STATIC_LIBS AND COPY_BOOST_TO_PACKAGE)
 if(WIN32)
 
     # leap
-    if(COPY_DEBUG_LIBS)
-      file(GLOB LeapMoveFiles "Leap/lib/x86/Leap.dll" "Leap/lib/x86/Leapd.dll")
-    else()
-      file(GLOB NewtonMoveFiles "Newton/bin/Release/*")
+    if(USING_LEAP)
+        if(COPY_DEBUG_LIBS)
+          file(GLOB LeapMoveFiles "Leap/lib/x86/Leap.dll" "Leap/lib/x86/Leapd.dll")
+        else()
+          file(GLOB LeapMoveFiles "Leap/lib/x86/Leap.dll")
+        endif()
     endif()
-
+    
     # newton
-    if(${USE_LEAP})
-      if(COPY_DEBUG_LIBS)
-        file(GLOB NewtonMoveFiles "Newton/bin/Release/*" "Newton/bin/Debug/*")
-      else()
-        file(GLOB NewtonMoveFiles "Newton/bin/Release/*")
-      endif()
+    if(USE_NEWTON)
+        if(COPY_DEBUG_LIBS)
+            file(GLOB NewtonMoveFiles "Newton/bin/Release/*" "Newton/bin/Debug/*")
+        else()
+            file(GLOB NewtonMoveFiles "Newton/bin/Release/*")
+        endif()
     endif()
     
     # All files should be copied here
@@ -450,20 +507,25 @@ if(WIN32)
 else(WIN32)
 
     # linux variants of the copy functions
-    if(${USE_LEAP})
+    if(USING_LEAP)
       file(GLOB LeapMoveFiles "Leap/lib/x64/libLeap.so")
     endif()
     
     # newton
-    file(GLOB NewtonMoveFiles "Newton/lib/libNewton.so")
+    if(USE_NEWTON)
+        file(GLOB NewtonMoveFiles "Newton/lib/libNewton.so")
+    endif()
     
-    set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
+    if(USE_OGRE)
+        set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
+            ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
 
-    set(RawFilesToMove ${CEGUIMoveFiles} ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
-      ${OGRE_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES} ${OGRE_Plugin_OctreeZone_LIBRARIES} 
-      ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
-
-  MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
+        set(RawFilesToMove ${CEGUIMoveFiles} ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
+          ${OGRE_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES} 
+          ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
+        
+        MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
+    endif()
       
 endif(WIN32)
 
@@ -504,28 +566,32 @@ file(COPY ${FinalMoveInstallFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 message(STATUS "Done copying")
 
 # And now add the SFML files and others that cause cmake warnings for some reason
-set(SFMLMoveFiles ${SFML_LIBRARIES} ${OIS_LIBRARIES} ${BOOST_MOVE_FILES})
+if(USE_SFML)
+    set(SFMLMoveFiles ${SFML_LIBRARIES} ${OIS_LIBRARIES} ${BOOST_MOVE_FILES})
 
-MakeUniqueAndSanitizeLibraryList(SFMLMoveFiles)
+    MakeUniqueAndSanitizeLibraryList(SFMLMoveFiles)
 
-# Remove debug libs on windows
-if(WIN32 AND NOT COPY_DEBUG_LIBS)
+    # Remove debug libs on windows
+    if(WIN32 AND NOT COPY_DEBUG_LIBS)
 
-  RemoveLibsWithDebugSuffix(SFMLMoveFiles)
+      RemoveLibsWithDebugSuffix(SFMLMoveFiles)
 
-endif(WIN32 AND NOT COPY_DEBUG_LIBS)
+    endif(WIN32 AND NOT COPY_DEBUG_LIBS)
 
-set(SFMLFinalMoveFiles)
+    set(SFMLFinalMoveFiles)
 
-GlobAllVariants(SFMLMoveFiles SFMLFinalMoveFiles)
+    GlobAllVariants(SFMLMoveFiles SFMLFinalMoveFiles)
 
-## All files that need to be installed are here
-set(FinalMoveInstallFiles ${FinalMoveInstallFiles} ${SFMLFinalMoveFiles})
+    ## All files that need to be installed are here
+    set(FinalMoveInstallFiles ${FinalMoveInstallFiles} ${SFMLFinalMoveFiles})
+endif(USE_SFML)
 
 # working directory setting
 if(WIN32)
-
-    include(CreateLaunchers)
+    
+    if(NOT CREATE_UE4_PLUGIN)
+        include(CreateLaunchers)
+    endif()
 
 else(WIN32)
 
@@ -537,20 +603,42 @@ else(WIN32)
 
 endif(WIN32)
 
+# Output Paths #
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
+# First for the generic no-config case (e.g. with mingw)
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
+set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
+set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
+# Second, for multi-config builds (e.g. msvc)
+foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
+    string( TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG )
+    set( CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PROJECT_BINARY_DIR}/bin )
+    set( CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PROJECT_BINARY_DIR}/bin )
+    set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PROJECT_BINARY_DIR}/bin )
+endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
+
 
 # additional include directories
-include_directories("${PROJECT_SOURCE_DIR}/AngelScript/include")
-include_directories("${PROJECT_SOURCE_DIR}/AngelScript")
 include_directories("${PROJECT_SOURCE_DIR}/Engine/")
-include_directories("${PROJECT_SOURCE_DIR}/Newton/include")
-include_directories(${OIS_INCLUDE_DIRS}	${OGRE_INCLUDE_DIRS})
 
-if(${USE_LEAP})
-include_directories("${PROJECT_SOURCE_DIR}/Leap/include")
-include_directories("${PROJECT_SOURCE_DIR}/Leap")
+if(USE_ANGELSCRIPT)
+    include_directories("${PROJECT_SOURCE_DIR}/AngelScript/include")
+    include_directories("${PROJECT_SOURCE_DIR}/AngelScript")
+endif()
+
+if(USE_NEWTON)
+    include_directories("${PROJECT_SOURCE_DIR}/Newton/include")
+endif()
+
+if(CAN_USE_OGRE)
+    include_directories(${OIS_INCLUDE_DIRS}	${OGRE_INCLUDE_DIRS})
+endif()
+
+if(USING_LEAP)
+    include_directories("${PROJECT_SOURCE_DIR}/Leap/include")
+    include_directories("${PROJECT_SOURCE_DIR}/Leap")
 endif()
 
 if(${USE_BREAKPAD})
@@ -558,9 +646,14 @@ if(${USE_BREAKPAD})
 endif()
 
 # libraries paths
-link_directories("${PROJECT_SOURCE_DIR}/AngelScript/lib")
-link_directories("${PROJECT_SOURCE_DIR}/Newton/lib/")
-link_directories("${PROJECT_SOURCE_DIR}/Newton/bin/")
+if(USE_ANGELSCRIPT)
+    link_directories("${PROJECT_SOURCE_DIR}/AngelScript/lib")
+endif()
+
+if(USE_NEWTON)
+    link_directories("${PROJECT_SOURCE_DIR}/Newton/lib/")
+    link_directories("${PROJECT_SOURCE_DIR}/Newton/bin/")
+endif()
 
 if(${USE_BREAKPAD})
   if(UNIX)
@@ -576,9 +669,7 @@ if(${USE_BREAKPAD})
   endif()
 endif()
 
-if(WIN32 AND ${USE_LEAP})
-    link_directories("${PROJECT_SOURCE_DIR}/Leap/lib/x86")
-elseif(UNIX AND ${USE_LEAP})
+if(USE_LEAP)
     link_directories("${PROJECT_SOURCE_DIR}/Leap/lib/x64")
 endif()
 
@@ -589,6 +680,9 @@ link_directories("${PROJECT_BINARY_DIR}/Engine/Debug")
 link_directories("${PROJECT_BINARY_DIR}/Engine/Release")
 link_directories("${PROJECT_BINARY_DIR}/bin")
 
+# Controls how LeviathanCoreProject.cmake works
+set(CREATE_CONSOLE_APP OFF)
+
 # First project must be the file generator
 add_subdirectory(FileGenerator)
 
@@ -598,6 +692,7 @@ add_subdirectory(Engine)
 # test project
 add_subdirectory(LeviathanTest)
 
+if(NOT CREATE_UE4_PLUGIN)
 # example pong master server
 add_subdirectory(PongMasterServer)
 
@@ -606,6 +701,7 @@ add_subdirectory(PongServer)
 
 # pong example game
 add_subdirectory(Pong)
+endif()
 
 # install support
 
@@ -654,42 +750,48 @@ endif()
 
 
 # CPack support
-include(InstallRequiredSystemLibraries)
+if(NOT CREATE_UE4_PLUGIN)
+    include(InstallRequiredSystemLibraries)
 
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Leviathan Game Engine")
-SET(CPACK_PACKAGE_VENDOR "Henri Hyyryläinen")
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md")
-set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/License.txt")
-set(CPACK_PACKAGE_VERSION_MAJOR "${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}")
-set(CPACK_PACKAGE_VERSION_MINOR "${LEVIATHAN_VERSION_MINOR}")
+    SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Leviathan Game Engine")
+    SET(CPACK_PACKAGE_VENDOR "Henri Hyyryläinen")
+    SET(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md")
+    set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/License.txt")
+    set(CPACK_PACKAGE_VERSION_MAJOR "${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}")
+    set(CPACK_PACKAGE_VERSION_MINOR "${LEVIATHAN_VERSION_MINOR}")
 
-if(INSTALL_CREATE_SDK)
-    set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}-sdk")
-else(INSTALL_CREATE_SDK)
-    set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}")
-endif(INSTALL_CREATE_SDK)
+    if(INSTALL_CREATE_SDK)
+        set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}-sdk")
+    else(INSTALL_CREATE_SDK)
+        set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}")
+    endif(INSTALL_CREATE_SDK)
 
-if(STRIP_SYMBOLS_ON_INSTALL)
-  set(CPACK_STRIP_FILES true)
+    if(STRIP_SYMBOLS_ON_INSTALL)
+      set(CPACK_STRIP_FILES true)
+    endif()
+
+    if(WIN32)
+      # There is a bug in NSIS that does not handle full unix paths properly. Make
+      # sure there is at least one set of four (4) backlasshes.
+      set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}\\\\LeviathanIcon.bmp")
+      set(CPACK_NSIS_DISPLAY_NAME "Leviathan Game Engine")
+      set(CPACK_NSIS_HELP_LINK "http:\\\\\\\\boostslair.com/Projects/Leviathan/doxygen/")
+      set(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.boostslair.com/Projects/Leviathan/")
+      set(CPACK_NSIS_CONTACT "boost@boostslair.com")
+      set(CPACK_NSIS_MODIFY_PATH OFF)
+    else(WIN32)
+      set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}/LeviathanIcon.bmp")
+      set(CPACK_NSIS_DISPLAY_NAME "Leviathan Game Engine")
+      set(CPACK_NSIS_HELP_LINK "http://www.boostslair.com/Projects/Leviathan/doxygen/")
+      set(CPACK_NSIS_URL_INFO_ABOUT "http://www.boostslair.com/Projects/Leviathan/")
+      set(CPACK_NSIS_CONTACT "boost@boostslair.com")
+      set(CPACK_NSIS_MODIFY_PATH OFF)
+    endif(WIN32)
+
+    include(CPack)
+
+else()
+
+    # Includes for UE4 are setup in Engine cmake file
+
 endif()
-
-if(WIN32)
-  # There is a bug in NSIS that does not handle full unix paths properly. Make
-  # sure there is at least one set of four (4) backlasshes.
-  set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}\\\\LeviathanIcon.bmp")
-  set(CPACK_NSIS_DISPLAY_NAME "Leviathan Game Engine")
-  set(CPACK_NSIS_HELP_LINK "http:\\\\\\\\boostslair.com/Projects/Leviathan/doxygen/")
-  set(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.boostslair.com/Projects/Leviathan/")
-  set(CPACK_NSIS_CONTACT "boost@boostslair.com")
-  set(CPACK_NSIS_MODIFY_PATH OFF)
-else(WIN32)
-  set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}/LeviathanIcon.bmp")
-  set(CPACK_NSIS_DISPLAY_NAME "Leviathan Game Engine")
-  set(CPACK_NSIS_HELP_LINK "http://www.boostslair.com/Projects/Leviathan/doxygen/")
-  set(CPACK_NSIS_URL_INFO_ABOUT "http://www.boostslair.com/Projects/Leviathan/")
-  set(CPACK_NSIS_CONTACT "boost@boostslair.com")
-  set(CPACK_NSIS_MODIFY_PATH OFF)
-endif(WIN32)
-
-include(CPack)
-

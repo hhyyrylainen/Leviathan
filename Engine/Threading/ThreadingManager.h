@@ -7,13 +7,17 @@
 #include <list>
 #include <vector>
 
+#ifdef _WIN32
+#include "WindowsInclude.h"
+#endif //_WIN32
 
 #define DEFAULT_THREADS_PER_CORE		2
 
 namespace Leviathan{
 
-
+#ifdef LEVIATHAN_USING_OGRE
 	DLLEXPORT void RegisterOgreOnThread();
+#endif //LEVIATHAN_USING_OGRE
 
 	//! \todo Improve performance
 	void RunTaskQueuerThread(ThreadingManager* manager);

@@ -1,7 +1,9 @@
 // ------------------------------------ //
 #include "ThreadingManager.h"
 
+#ifdef LEVIATHAN_USING_OGRE
 #include "OgreRoot.h"
+#endif //LEVIATHAN_USING_OGRE
 #include "QueuedTask.h"
 #include <thread>
 #include "../Utility/Convert.h"
@@ -11,12 +13,13 @@ using namespace std;
 // ------------------------------------ //
 
 // ------------------ Utility functions for threads to run ------------------ //
+#ifdef LEVIATHAN_USING_OGRE
 void Leviathan::RegisterOgreOnThread(){
 
 	Ogre::Root::getSingleton().getRenderSystem()->registerThread();
 	Logger::Get()->Info("Thread registered to work with Ogre");
 }
-
+#endif //LEVIATHAN_USING_OGRE
 
 // ------------------ ThreadingManager ------------------ //
 DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore /*= DEFAULT_THREADS_PER_CORE*/) :
@@ -93,8 +96,9 @@ DLLEXPORT bool Leviathan::ThreadingManager::CheckInit(){
 		}
 
 		if(++loopcount > 1000){
-
+        #ifndef LEVIATHAN_UE_PLUGIN
 			Logger::Get()->Error("ThreadingManager: CheckInit: no threads have started, after 1000 loops");
+        #endif //LEVIATHAN_UE_PLUGIN
 
 			// No threads running //
 			return false;
@@ -103,7 +107,7 @@ DLLEXPORT bool Leviathan::ThreadingManager::CheckInit(){
 		std::this_thread::yield();
 	}
 
-	assert(0 && "Shouldn't get out of that loop");
+	LEVIATHAN_ASSERT(0, "Shouldn't get out of that loop");
 	return false;
 
 
@@ -308,12 +312,16 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 	// All threads are now available //
 
 	// Call pre register function //
+#ifdef LEVIATHAN_USING_OGRE
 	Ogre::Root::getSingleton().getRenderSystem()->preExtraThreadsStarted();
+#endif //LEVIATHAN_USING_OGRE
 
 	// Set the threads to run the register methods //
 	{
 		GUARD_LOCK_NAME(lockit);
 
+#ifdef LEVIATHAN_USING_OGRE
+        Ogre::Root::getSingleton().getRenderSystem()->preExtraThreadsStarted();
 		for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
 			(*iter)->SetTaskAndNotify(shared_ptr<QueuedTask>(new QueuedTask(std::bind(RegisterOgreOnThread))));
 			// Wait for it to end //
@@ -327,14 +335,19 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 				}
 			}
 #endif
+
+
 		}
+#endif //LEVIATHAN_USING_OGRE
 	}
 
 	// Wait for threads to finish //
 	FlushActiveThreads();
 
 	// End registering functions //
+#ifdef LEVIATHAN_USING_OGRE
 	Ogre::Root::getSingleton().getRenderSystem()->postExtraThreadsStarted();
+#endif //LEVIATHAN_USING_OGRE
 
 	// Allow new threads //
 	{

@@ -1,6 +1,7 @@
 #pragma once
 // ------------------------------------ //
 #include "../Common/Types.h"
+#include <sstream>
 
 namespace Leviathan{
 
@@ -14,42 +15,6 @@ namespace Leviathan{
 
 		DLLEXPORT static double DegreesToRadians(float degrees);
 		DLLEXPORT static double RadiansToDegrees(float radians);
-
-
-		DLLEXPORT static std::wstring IntToWstring(const int &i);
-		DLLEXPORT static std::wstring FloatToWstring(const float &i);
-		DLLEXPORT static std::wstring CharToWstring(const char &i);
-
-		//! \brief Converts a string to wide string preserving character codes (not utf8)
-		//! \see Utf8ToUtf16
-		DLLEXPORT static std::wstring StringToWstring(const std::string &str);
-
-		//! \brief Converts a char* string to a wstring (no utf8 translation)
-		//! \see Utf8ToUtf16
-		DLLEXPORT static std::wstring CharPtrToWstring(const char* charsource);
-
-		//! \brief Converts a wstring to a string (potentially messing up characters)
-		//! \see Utf16ToWstring
-		DLLEXPORT static std::string WstringToString(const std::wstring &str);
-
-        //! \todo Redo with stringstream operator defined in Types.h
-		template<class StringStreamType, class ReturnType>
-		DLLEXPORT static ReturnType Float3ToSWstring(const Float3 &data){
-
-			StringStreamType stream;
-
-			stream << "[" << data.X << ", " << data.Y << ", " << data.Z << "]";
-			return stream.str();
-		}
-
-		template<class StringStreamType, class ReturnType>
-		DLLEXPORT static ReturnType Float4ToString(const Float4 &data){
-
-			StringStreamType stream;
-
-			stream << "[" << data.X << ", " << data.Y << ", " << data.Z << ", " << data.W << "]";
-			return stream.str();
-		}
 
 		DLLEXPORT static int WstringFromBoolToInt(const std::wstring &i);
 		DLLEXPORT static int StringFromBoolToInt(const std::string &i);
@@ -130,10 +95,7 @@ namespace Leviathan{
 
 	};
 
-    template<> DLLEXPORT std::string Convert::ToString<Float4>(const Float4 &val);
-    template<> DLLEXPORT std::string Convert::ToString<Float3>(const Float3 &val);
-
-
 
 }
+
 

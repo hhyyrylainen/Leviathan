@@ -1,3 +1,4 @@
+#include "Include.h"
 // ------------------------------------ //
 #include "StringIterator.h"
 
@@ -5,50 +6,43 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
+// Defining debug macro //
+#if defined(_DEBUG) && (defined(LEVIATHAN_BUILD) || !defined(LEVIATHAN_UE_PLUGIN))
+#define ALLOW_DEBUG
+#endif
+
 DLLEXPORT StringIterator::StringIterator() :
     CurrentFlags(0), HandlesDelete(false), DataIterator(NULL), CurrentStored(false)
 {
-#ifdef _DEBUG
-	DebugMode = false;
-#endif // _DEBUG
+
 }
 
 DLLEXPORT Leviathan::StringIterator::StringIterator(StringDataIterator* iterator, bool TakesOwnership) : CurrentFlags(0), 
 	HandlesDelete(TakesOwnership), DataIterator(iterator), CurrentStored(false), CurrentCharacter(-1)
 {
-#ifdef _DEBUG
-	DebugMode = false;
-#endif // _DEBUG
+
 }
 
 DLLEXPORT Leviathan::StringIterator::StringIterator(const string &text) : CurrentFlags(0), HandlesDelete(true), 
 	DataIterator(new StringClassDataIterator<string>(text)), CurrentStored(false), CurrentCharacter(-1)
 {
-#ifdef _DEBUG
-	DebugMode = false;
-#endif // _DEBUG
+
 }
 
 DLLEXPORT Leviathan::StringIterator::StringIterator(const wstring &text) : CurrentFlags(0), HandlesDelete(true), 
 	DataIterator(new StringClassDataIterator<wstring>(text)), CurrentStored(false), CurrentCharacter(-1)
 {
-#ifdef _DEBUG
-	DebugMode = false;
-#endif // _DEBUG
+
 }
 
 DLLEXPORT Leviathan::StringIterator::StringIterator(const wstring* text) : CurrentFlags(0), HandlesDelete(true), 
 	DataIterator(new StringClassPointerIterator<wstring>(text)), CurrentStored(false), CurrentCharacter(-1){
-#ifdef _DEBUG
-	DebugMode = false;
-#endif // _DEBUG
+
 }
 
 DLLEXPORT Leviathan::StringIterator::StringIterator(const string* text) : CurrentFlags(0), HandlesDelete(true), 
 	DataIterator(new StringClassPointerIterator<string>(text)), CurrentStored(false), CurrentCharacter(-1){
-#ifdef _DEBUG
-	DebugMode = false;
-#endif // _DEBUG
+
 }
 
 DLLEXPORT Leviathan::StringIterator::~StringIterator(){
@@ -93,85 +87,6 @@ DLLEXPORT void Leviathan::StringIterator::ReInit(const string* text){
 	ReInit(new StringClassPointerIterator<string>(text), true);
 }
 // ------------------------------------ //
-void Leviathan::StringIterator::StartIterating(std::function<ITERATORCALLBACK_RETURNTYPE()> functorun, int specialflagcopy){
-#ifdef _DEBUG
-	if(DebugMode){
-		Logger::Get()->Write(L"Iterator: begin ----------------------");
-	}
-#endif // _DEBUG
-	// We want to skip multiple checks on same character so we skip checks on first character when starting except the beginning of the string //
-	bool IsStartUpLoop = GetPosition() == 0 ? true: false;
-
-	bool firstiter = true;
-	if(IsStartUpLoop)
-		firstiter = false;
-
-	for(; DataIterator->IsPositionValid(); DataIterator->MoveToNextCharacter()){
-
-        // The GetCharacter call will cache the result but there might be iterators that don't
-        // want to get the current character
-#ifdef _DEBUG
-		int chara = GetCharacter();
-        
-		if(DebugMode){
-			// Convert to UTF8 //
-
-			wstring datathing = L"Iterator: iterating: "+Convert::ToWstring(GetPosition())+L" (";
-
-			// Encode the character //
-			try{
-				string tmputf8;
-				utf8::utf32to8(&chara, (&chara)+1, back_inserter(tmputf8));
-				utf8::utf8to16(tmputf8.begin(), tmputf8.end(), back_inserter(datathing));
-
-			} catch(const utf8::invalid_code_point &error){
-				
-				Logger::Get()->Error(L"STRINGITERATOR: ERROR: YOU ARE USING UTF8 STRING WITHOUT THE UTF8 WRAPPER:");
-				Logger::Get()->Write(L"\t> "+Convert::StringToWstring(error.what()));
-			}
-
-			datathing += L")";
-
-			Logger::Get()->Write(datathing);
-		}
-#endif // _DEBUG
-
-		// First iteration call is the same as the last so skip it //
-		if(!firstiter){
-#ifdef _DEBUG
-			if(DebugMode){
-				Logger::Get()->Write(L"Iterator: handle: CheckActiveFlags, HandleSpecialCharacters");
-			}
-#endif // _DEBUG
-
-			if(CheckActiveFlags() == ITERATORCALLBACK_RETURNTYPE_STOP)
-				break;
-
-			// check current character //
-			if(HandleSpecialCharacters() == ITERATORCALLBACK_RETURNTYPE_STOP)
-				break;
-		}
-
-		firstiter = false;
-
-		// Check for special cases //
-
-#ifdef _DEBUG
-		if(DebugMode){
-			Logger::Get()->Write(L"Iterator: handle: call check function");
-		}
-#endif // _DEBUG
-
-		// valid character/valid iteration call callback //
-		ITERATORCALLBACK_RETURNTYPE retval = functorun();
-		if(retval == ITERATORCALLBACK_RETURNTYPE_STOP)
-			break;
-
-		// Character changes after this //
-		CurrentStored = false;
-	}
-}
-// ------------------------------------ //
 Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialCharacters(){
 	// check should this special character be ignored //
 	if(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)
@@ -187,9 +102,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 				// ignore next special character //
 				CurrentFlags |= ITERATORFLAG_SET_IGNORE_SPECIAL;
 
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 				if(DebugMode){
-					Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_IGNORE_SPECIAL");
+					Logger::Get()->Write("Iterator: setting: ITERATORFLAG_SET_IGNORE_SPECIAL");
 				}
 #endif // _DEBUG
 			}
@@ -201,13 +116,13 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 			if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
 				// a string //
 				if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE)){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 					if(DebugMode){
-						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
+						Logger::Get()->Write("Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
 					}
 
 					if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
-						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
+						Logger::Get()->Write("Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
 					}
 #endif // _DEBUG
 					// set //
@@ -217,9 +132,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 					CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING;
 
 				} else {
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 					if(DebugMode){
-						Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
+						Logger::Get()->Write("Iterator: set flag end: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
 					}
 #endif // _DEBUG
 					// set ending flag //
@@ -234,13 +149,13 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 			if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
 				// a string //
 				if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE)){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 					if(DebugMode){
-						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
+						Logger::Get()->Write("Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
 					}
 
 					if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
-						Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
+						Logger::Get()->Write("Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
 					}
 #endif // _DEBUG
 					// set //
@@ -250,9 +165,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 					CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING;
 
 				} else {
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 					if(DebugMode){
-						Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
+						Logger::Get()->Write("Iterator: set flag end: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
 					}
 #endif // _DEBUG
 
@@ -271,13 +186,13 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 				if(nextchar == '/'){
 					// C++-style comment starts //
 					if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT)){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 						if(DebugMode){
-							Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_CPPCOMMENT");
+							Logger::Get()->Write("Iterator: setting: ITERATORFLAG_SET_INSIDE_CPPCOMMENT");
 						}
 
 						if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
-							Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
+							Logger::Get()->Write("Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
 						}
 #endif // _DEBUG
 						CurrentFlags |= ITERATORFLAG_SET_INSIDE_CPPCOMMENT;
@@ -288,13 +203,13 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 				} else if(nextchar == '*'){
 					// C-style comment starts //
 					if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT)){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 						if(DebugMode){
-							Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_CCOMMENT");
+							Logger::Get()->Write("Iterator: setting: ITERATORFLAG_SET_INSIDE_CCOMMENT");
 						}
 
 						if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
-							Logger::Get()->Write(L"Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
+							Logger::Get()->Write("Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
 						}
 #endif // _DEBUG
 						CurrentFlags |= ITERATORFLAG_SET_INSIDE_CCOMMENT;
@@ -310,9 +225,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 
 						// Set as ending //
 						CurrentFlags |= ITERATORFLAG_SET_CCOMMENT_END;
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 						if(DebugMode){
-							Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_CCOMMENT_END");
+							Logger::Get()->Write("Iterator: set flag end: ITERATORFLAG_SET_CCOMMENT_END");
 						}
 #endif // _DEBUG
 					}
@@ -327,9 +242,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 			if(CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT){
 				// Set as ending //
 				CurrentFlags |= ITERATORFLAG_SET_CPPCOMMENT_END;
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 				if(DebugMode){
-					Logger::Get()->Write(L"Iterator: set flag end: ITERATORFLAG_SET_CPPCOMMENT_END");
+					Logger::Get()->Write("Iterator: set flag end: ITERATORFLAG_SET_CPPCOMMENT_END");
 				}
 #endif // _DEBUG
 			}
@@ -346,17 +261,17 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 
 	// Reset 1 character long flags //
 	if(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 		if(DebugMode){
-			Logger::Get()->Write(L"Iterator: flag: WSTRINGITERATOR_IGNORE_SPECIAL");
+			Logger::Get()->Write("Iterator: flag: STRINGITERATOR_IGNORE_SPECIAL");
 		}
 #endif // _DEBUG
 
 		// check should end now //
 		if(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL_END){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 			if(DebugMode){
-				Logger::Get()->Write(L"Iterator: flag ended: WSTRINGITERATOR_IGNORE_SPECIAL");
+				Logger::Get()->Write("Iterator: flag ended: STRINGITERATOR_IGNORE_SPECIAL");
 			}
 #endif // _DEBUG
 			// unset both //
@@ -364,9 +279,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 			CurrentFlags &= ~ITERATORFLAG_SET_IGNORE_SPECIAL;
 
 		} else {
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 			if(DebugMode){
-				Logger::Get()->Write(L"Iterator: flag ends next character: ITERATORFLAG_SET_IGNORE_SPECIAL");
+				Logger::Get()->Write("Iterator: flag ends next character: ITERATORFLAG_SET_IGNORE_SPECIAL");
 			}
 #endif // _DEBUG
 			// set to end next character //
@@ -376,9 +291,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 
 	// reset end flags before we process this cycle further //
 	if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 		if(DebugMode){
-			Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
+			Logger::Get()->Write("Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
 		}
 #endif // _DEBUG
 		// unset flag //
@@ -387,9 +302,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 	}
 
 	if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 		if(DebugMode){
-			Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
+			Logger::Get()->Write("Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
 		}
 #endif // _DEBUG
 		// unset flag //
@@ -400,9 +315,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 	// Check can we unset the whole string flag //
 	if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING){
 		if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE) && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE)){
-	#ifdef _DEBUG
+	#ifdef ALLOW_DEBUG
 			if(DebugMode){
-				Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING");
+				Logger::Get()->Write("Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING");
 			}
 	#endif // _DEBUG
 			// can unset this //
@@ -412,9 +327,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 
 	// Unsetting comment flags //
 	if(CurrentFlags & ITERATORFLAG_SET_CPPCOMMENT_END){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 		if(DebugMode){
-			Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_CPPCOMMENT_END");
+			Logger::Get()->Write("Iterator: flag ends: ITERATORFLAG_SET_CPPCOMMENT_END");
 		}
 #endif // _DEBUG
 		// unset flag //
@@ -424,9 +339,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 
 	// C-style flag //
 	if(CurrentFlags & ITERATORFLAG_SET_CCOMMENT_END){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 		if(DebugMode){
-			Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_CCOMMENT_END");
+			Logger::Get()->Write("Iterator: flag ends: ITERATORFLAG_SET_CCOMMENT_END");
 		}
 #endif // _DEBUG
 		// unset flag //
@@ -437,9 +352,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 	// Check can we unset the whole comment flag //
 	if(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT){
 		if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT) && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT)){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 			if(DebugMode){
-				Logger::Get()->Write(L"Iterator: flag ends: ITERATORFLAG_SET_INSIDE_COMMENT");
+				Logger::Get()->Write("Iterator: flag ends: ITERATORFLAG_SET_INSIDE_COMMENT");
 			}
 #endif // _DEBUG
 			// can unset this //
@@ -451,7 +366,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::CheckActiveFla
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 // ------------------------------------ //
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 DLLEXPORT void Leviathan::StringIterator::SetDebugMode(const bool &mode){
 	DebugMode = true;
 }
@@ -498,10 +413,10 @@ DLLEXPORT bool Leviathan::StringIterator::MoveToNext(){
 
 	// We need to handle the flags on this position if we aren't on the first character //
 	if(valid && DataIterator->CurrentIteratorPosition() != 0){
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 		if(DebugMode){
-			Logger::Get()->Write(L"Iterator: user move: to next");
-			Logger::Get()->Write(L"Iterator: handle: CheckActiveFlags, HandleSpecialCharacters");
+			Logger::Get()->Write("Iterator: user move: to next");
+			Logger::Get()->Write("Iterator: handle: CheckActiveFlags, HandleSpecialCharacters");
 		}
 #endif // _DEBUG
 
@@ -526,10 +441,10 @@ DLLEXPORT bool Leviathan::StringIterator::IsOutOfBounds(){
 	return !DataIterator->IsPositionValid();
 }
 // ------------------ Iterating functions ------------------ //
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 #define ITR_FUNCDEBUG(x) {\
 	if(DebugMode){\
-	Logger::Get()->Write(L"Iterator: procfunc: "+string(x));\
+	Logger::Get()->Write("Iterator: procfunc: " + std::string(x));\
 	}\
 }
 #else
@@ -550,9 +465,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuote
 
 
 	if(currentcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
-		ITR_FUNCDEBUG(L"Stopping to new line");
+		ITR_FUNCDEBUG("Stopping to new line");
 
-		if(data->Positions.X != -1){
+		if(data->Positions.Start){
 			// Set the last character to two before this (skip the current and " and end there) //
 			int previouscheck = GetPreviousCharacter();
 			
@@ -560,13 +475,13 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuote
 			if((quotes == QUOTETYPE_BOTH && (previouscheck == '"' || previouscheck == '\'')) || 
 				(quotes == QUOTETYPE_DOUBLEQUOTES && previouscheck == '"') || (quotes == QUOTETYPE_SINGLEQUOTES && previouscheck == '\''))
 			{
-				ITR_FUNCDEBUG(L"Going back over an extra quote character");
-				data->Positions.Y = GetPosition()-2;
+				ITR_FUNCDEBUG("Going back over an extra quote character");
+				data->Positions.End = GetPosition()-2;
 			} else {
-				data->Positions.Y = GetPosition()-1;
+				data->Positions.End = GetPosition()-1;
 			}
 
-			ITR_FUNCDEBUG(L"Ending to new line, end is now: "+Convert::ToWstring(data->Positions.Y));
+			ITR_FUNCDEBUG("Ending to new line, end is now: "+Convert::ToString(data->Positions.End));
 		}
 
 		MoveToNext();
@@ -582,13 +497,13 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuote
 					// if we aren't ignoring special disallow //
 					if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
 						TakeChar = false;
-						ITR_FUNCDEBUG(L"Found quote character");
+						ITR_FUNCDEBUG("Found quote character");
 					}
 				}
 
 			} else {
 				End = true;
-				ITR_FUNCDEBUG(L"Outside quotes");
+				ITR_FUNCDEBUG("Outside quotes");
 			}
 		}
 		break;
@@ -600,13 +515,13 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuote
 					// if we aren't ignoring special disallow //
 					if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
 						TakeChar = false;
-						ITR_FUNCDEBUG(L"Found quote character");
+						ITR_FUNCDEBUG("Found quote character");
 					}
 				}
 
 			} else {
 				End = true;
-				ITR_FUNCDEBUG(L"Outside quotes");
+				ITR_FUNCDEBUG("Outside quotes");
 			}
 		}
 		break;
@@ -618,40 +533,40 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuote
 					// if we aren't ignoring special disallow //
 					if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
 						TakeChar = false;
-						ITR_FUNCDEBUG(L"Found quote character");
+						ITR_FUNCDEBUG("Found quote character");
 					}
 				}
 
 			} else {
 				End = true;
-				ITR_FUNCDEBUG(L"Outside quotes");
+				ITR_FUNCDEBUG("Outside quotes");
 			}
 		}
 		break;
 	}
 
 	// If we have found a character this is on the ending quote //
-	if(!TakeChar && data->Positions.X != -1){
+	if(!TakeChar && data->Positions.Start){
 		
 		// Set the last character to the one before this (skip the " and end there) //
-		data->Positions.Y = GetPosition()-1;
-		ITR_FUNCDEBUG(L"On ending quote, end is now: "+Convert::ToWstring(data->Positions.Y));
+		data->Positions.End = GetPosition() - 1;
+		ITR_FUNCDEBUG("On ending quote, end is now: "+Convert::ToString(data->Positions.End));
 	}
 
 	if(End){
 		// if we have found at least a character we can end this here //
-		if(data->Positions.X != -1){
+		if(data->Positions.Start){
 			// Set the last character to two before this (skip the current and " and end there) //
-			data->Positions.Y = GetPosition()-2;
-			ITR_FUNCDEBUG(L"Ending outside quotes, end is now: "+Convert::ToWstring(data->Positions.Y));
+			data->Positions.End = GetPosition() - 2;
+			ITR_FUNCDEBUG("Ending outside quotes, end is now: "+Convert::ToString(data->Positions));
 			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 	} else if(TakeChar){
 		// check is this first quoted character //
-		if(data->Positions.X == -1){
+		if(!data->Positions.Start){
 			// first position! //
-			data->Positions.X = GetPosition();
-			ITR_FUNCDEBUG(L"First character found: "+Convert::ToWstring(data->Positions.X));
+			data->Positions.Start = GetPosition();
+			ITR_FUNCDEBUG("First character found: "+Convert::ToString(data->Positions.Start));
 
 		}
 	}
@@ -659,8 +574,8 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuote
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNormalCharacterString(IteratorPositionData* data, int stopflags, 
-	int specialflags)
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNormalCharacterString(
+    IteratorPositionData* data, int stopflags, int specialflags)
 {
 
 	int currentcharacter = GetCharacter();
@@ -668,12 +583,12 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNormal
 	bool IsValid = true;
 
 	if(currentcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
-		ITR_FUNCDEBUG(L"Stopping to new line");
+		ITR_FUNCDEBUG("Stopping to new line");
 
-		if(data->Positions.X != -1){
+		if(data->Positions.Start){
 			// ended //
-			data->Positions.Y = GetPosition()-1;
-			ITR_FUNCDEBUG(L"Ending to new line, end is now: "+Convert::ToWstring(data->Positions.Y));
+			data->Positions.End = GetPosition() - 1;
+			ITR_FUNCDEBUG("Ending to new line, end is now: "+Convert::ToString(data->Positions.End));
 		}
 
 		MoveToNext();
@@ -722,10 +637,10 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNormal
 
 	if(IsValid){
 		// check is this first character //
-		if(data->Positions.X == -1){
+		if(!data->Positions.Start){
 			// first position! //
-			data->Positions.X = GetPosition();
-			ITR_FUNCDEBUG(L"Started: "+Convert::ToWstring(data->Positions.X));
+			data->Positions.Start = GetPosition();
+			ITR_FUNCDEBUG("Started: "+Convert::ToString(data->Positions.Start));
 		}
 
 	} else {
@@ -734,10 +649,10 @@ invalidcodelabelunnormalcharacter:
 
 
 		// check for end //
-		if(data->Positions.X != -1){
+		if(data->Positions.Start){
 			// ended //
-			data->Positions.Y = GetPosition()-1;
-			ITR_FUNCDEBUG(L"End now: "+Convert::ToWstring(data->Positions.Y));
+			data->Positions.End = GetPosition() - 1;
+			ITR_FUNCDEBUG("End now: "+Convert::ToString(data->Positions.End));
 			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 	}
@@ -745,10 +660,9 @@ invalidcodelabelunnormalcharacter:
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber(IteratorNumberFindData* data, DECIMALSEPARATORTYPE decimal, 
-	int specialflags)
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber(IteratorNumberFindData* data, 
+    DECIMALSEPARATORTYPE decimal, int specialflags)
 {
-
 	// Check is the current element a part of a number //
 
 	int currentcharacter = GetCharacter();
@@ -756,12 +670,12 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber
 	bool IsValid = false;
 
 	if(currentcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
-		ITR_FUNCDEBUG(L"Stopping to new line");
+		ITR_FUNCDEBUG("Stopping to new line");
 
-		if(data->Positions.X != -1){
+		if(data->Positions.Start){
 			// ended //
-			data->Positions.Y = GetPosition()-1;
-			ITR_FUNCDEBUG(L"Ending to new line, end is now: "+Convert::ToWstring(data->Positions.Y));
+			data->Positions.End = GetPosition() - 1;
+			ITR_FUNCDEBUG("Ending to new line, end is now: "+Convert::ToString(data->Positions.End));
 		}
 
 		MoveToNext();
@@ -793,25 +707,25 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber
 			}
 		}
 	} else {
-		ITR_FUNCDEBUG(L"Ignoring inside a comment");
+		ITR_FUNCDEBUG("Ignoring inside a comment");
 	}
 
 	if(IsValid){
 		// check is this first digit //
 		data->DigitsFound++;
-		if(data->Positions.X == -1){
+		if(!data->Positions.Start){
 			// first position! //
 
-			data->Positions.X = GetPosition();
-			ITR_FUNCDEBUG(L"Data started: "+Convert::ToWstring(data->Positions.X));
+			data->Positions.Start = GetPosition();
+			ITR_FUNCDEBUG("Data started: "+Convert::ToString(data->Positions.Start));
 		}
 
 	} else {
 		// check for end //
-		if(data->Positions.X != -1){
+		if(data->Positions.Start){
 			// ended //
-			data->Positions.Y = GetPosition()-1;
-			ITR_FUNCDEBUG(L"End now: "+Convert::ToWstring(data->Positions.Y));
+			data->Positions.End = GetPosition() - 1;
+			ITR_FUNCDEBUG("End now: "+Convert::ToString(data->Positions.End));
 			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 
@@ -819,8 +733,8 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEquality(IteratorAssignmentData* data, EQUALITYCHARACTER equality, 
-	int specialflags)
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEquality(IteratorAssignmentData* data, 
+    EQUALITYCHARACTER equality, int specialflags)
 {
 	// check is current element a valid element //
 	int charvalue = GetCharacter();
@@ -829,7 +743,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 	bool IsStop = false;
 
 	if(charvalue == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
-		ITR_FUNCDEBUG(L"Stopping to new line");
+		ITR_FUNCDEBUG("Stopping to new line");
 
 		MoveToNext();
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
@@ -838,7 +752,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 	// Comments cannot be part of this //
 	if((specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) && (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
 		// Not valid inside a comment //
-		ITR_FUNCDEBUG(L"Comment skipped");
+		ITR_FUNCDEBUG("Comment skipped");
 		IsValid = false;
 
 	} else {
@@ -846,7 +760,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 		// Skip if this is a space //
 		if(charvalue < 33){
 			// Not allowed in a name //
-			ITR_FUNCDEBUG(L"Whitespace skipped");
+			ITR_FUNCDEBUG("Whitespace skipped");
 			IsValid = false;
 		}
 
@@ -856,7 +770,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 
 				if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
 					// If ignored don't stop //
-					ITR_FUNCDEBUG(L"Found = or :");
+					ITR_FUNCDEBUG("Found = or :");
 					IsStop = true;
 				}
 			}
@@ -864,7 +778,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 			// Check for an equality sign //
 			if(charvalue == '='){
 				if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
-					ITR_FUNCDEBUG(L"Found =");
+					ITR_FUNCDEBUG("Found =");
 					IsStop = true;
 				}
 			}
@@ -872,7 +786,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 			// Check does it match the characters //
 			if(charvalue == ':'){
 				if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
-					ITR_FUNCDEBUG(L"Found :");
+					ITR_FUNCDEBUG("Found :");
 					IsStop = true;
 				}
 			}
@@ -882,7 +796,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 	if(!IsStop){
 		// end if end already found //
 		if(data->SeparatorFound){
-			ITR_FUNCDEBUG(L"Found stop");
+			ITR_FUNCDEBUG("Found stop");
 			return ITERATORCALLBACK_RETURNTYPE_STOP;
 		}
 	} else {
@@ -892,15 +806,15 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 
 	if(IsValid){
 		// Check is this the first character //
-		if(data->Positions.X == -1){
+		if(!data->Positions.Start){
 			// first position! //
-			data->Positions.X = GetPosition();
-			ITR_FUNCDEBUG(L"Data started: "+Convert::ToWstring(data->Positions.X));
+			data->Positions.Start = GetPosition();
+			ITR_FUNCDEBUG("Data started: "+Convert::ToString(data->Positions.Start));
 
 		} else {
 			// Set end to this valid character //
-			data->Positions.Y = GetPosition();
-			ITR_FUNCDEBUG(L"End now: "+Convert::ToWstring(data->Positions.Y));
+			data->Positions.End = GetPosition();
+			ITR_FUNCDEBUG("End now: "+Convert::ToString(data->Positions.End));
 		}
 	}
 
@@ -908,15 +822,14 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::SkipSomething(IteratorCharacterData* data, int additionalskip, 
-	int specialflags)
+DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::SkipSomething(IteratorCharacterData &data, 
+    const int additionalskip, const int specialflags)
 {
 
 	int curchara = GetCharacter();
 
-
 	if(curchara == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
-		ITR_FUNCDEBUG(L"Stopping to new line");
+		ITR_FUNCDEBUG("Stopping to new line");
 
 		MoveToNext();
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
@@ -941,7 +854,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::SkipSomething(
 			return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 	}
 
-	if(curchara == data->CharacterToUse){
+	if(curchara == data.CharacterToUse){
 		// We want to skip it //
 		return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 	}
@@ -950,8 +863,8 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::SkipSomething(
 	return ITERATORCALLBACK_RETURNTYPE_STOP;
 }
 
-Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpecificCharacter(IteratorFindUntilData* data, int character, 
-	int specialflags)
+Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpecificCharacter(
+    IteratorFindUntilData* data, int character, int specialflags)
 {
 
 	// Can this character be added //
@@ -960,12 +873,12 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 	int tmpchara = GetCharacter();
 
 	if(tmpchara == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
-		ITR_FUNCDEBUG(L"Stopping to new line");
+		ITR_FUNCDEBUG("Stopping to new line");
 
-		if(data->Positions.X != -1){
+		if(data->Positions.Start){
 			// This should be fine to get here //
-			data->Positions.Y = GetPosition()-1;
-			ITR_FUNCDEBUG(L"Ending to new line, end is now: "+Convert::ToWstring(data->Positions.Y));
+			data->Positions.End = GetPosition() - 1;
+			ITR_FUNCDEBUG("Ending to new line, end is now: "+Convert::ToString(data->Positions.End));
 		}
 
 		MoveToNext();
@@ -977,48 +890,56 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 		&& (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)))
 	{
 		// Check did we encounter stop character //
-		ITR_FUNCDEBUG(wstring(L"Trying to match: ")+((wchar_t)tmpchara)+wstring(L"==")+((wchar_t)character));
+        if (DebugMode) {
+            
+            std::string value = "Trying to match: ";
+            utf8::append(tmpchara, std::back_inserter(value));
+            value += "==" + Convert::ToString(tmpchara);
+
+            Logger::Get()->Write("Iterator: procfunc: " + value); \
+        }
+
 		if(tmpchara == character){
 			// Skip if ignoring special characters //
 			if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)){
 				// Not valid character //
 				ValidChar = false;
-				ITR_FUNCDEBUG(L"Found match");
+				ITR_FUNCDEBUG("Found match");
 				// We must have started to encounter the stop character //
-				if(data->Positions.X != -1){
+				if(data->Positions.Start){
 					// We encountered the stop character //
 					data->FoundEnd = true;
-					ITR_FUNCDEBUG(L"Encountered end");
+					ITR_FUNCDEBUG("Encountered end");
 				}
 			}
 		}
 	} else {
-#ifdef _DEBUG
+#ifdef ALLOW_DEBUG
 		if((CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
-			ITR_FUNCDEBUG(L"Ignoring inside string");
+			ITR_FUNCDEBUG("Ignoring inside string");
 		}
 		if((specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) &&
             (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT))
         {
-			ITR_FUNCDEBUG(L"Ignoring inside comment");
+			ITR_FUNCDEBUG("Ignoring inside comment");
 		}
 #endif // _DEBUG
 	}
 
 	if(ValidChar){
 		// valid character set start if not already set //
-		if(data->Positions.X == -1){
-			data->Positions.X = GetPosition();
-			data->Positions.Y = data->Positions.X;
-			ITR_FUNCDEBUG(L"Data started: "+Convert::ToWstring(data->Positions.X));
+		if(!data->Positions.Start){
+			data->Positions.Start = GetPosition();
+			data->Positions.End = data->Positions.Start;
+			ITR_FUNCDEBUG("Data started: "+Convert::ToString(data->Positions.Start));
 		}
 		return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 	}
 	// let's stop if we have found something //
-	if(data->Positions.X != -1){
+	if(data->Positions.Start){
 		// This should be fine to get here //
-		data->Positions.Y = GetPosition()-1;
-		ITR_FUNCDEBUG(L"Ending here: "+Convert::ToWstring(data->Positions.Y));
+		data->Positions.End = GetPosition() - 1;
+		ITR_FUNCDEBUG("Ending here: "+Convert::ToString(data->Positions.End));
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
 
@@ -1043,12 +964,14 @@ DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilNewLin
 		winmulti = true;
 
 	// All line separator characters should be here //
-	if(curcharacter == '\r' || curcharacter == '\n' || winmulti || curcharacter == 0x0085 || curcharacter == 0x2028 || curcharacter == 0x2029){
+	if(curcharacter == '\r' || curcharacter == '\n' || winmulti || 
+        // Unicode newlines //
+        curcharacter == 0x0085 || curcharacter == 0x2028 || curcharacter == 0x2029){
 
 		if(!data->FoundEnd){
 			// Ignore the first new line //
 			data->FoundEnd = true;
-			ITR_FUNCDEBUG(L"Ignoring first newline character");
+			ITR_FUNCDEBUG("Ignoring first newline character");
 			goto positionisvalidlabelstringiteratorfindnewline;
 		}
 
@@ -1064,11 +987,11 @@ DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilNewLin
 			// Move out of the newline character //
 			MoveToNext();
 		}
-		ITR_FUNCDEBUG(L"Found newline character");
+		ITR_FUNCDEBUG("Found newline character");
 
 		// End before this character //
-		data->Positions.Y = useendpos;
-		ITR_FUNCDEBUG(L"Ending here: "+Convert::ToWstring(data->Positions.Y));
+		data->Positions.End = useendpos;
+		ITR_FUNCDEBUG("Ending here: "+Convert::ToString(data->Positions.End));
 
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
@@ -1077,12 +1000,12 @@ positionisvalidlabelstringiteratorfindnewline:
 
 
 	// Set position //
-	if(data->Positions.X == -1){
+	if(!data->Positions.Start){
 
 		// End before this character //
-		data->Positions.X = GetPosition();
+		data->Positions.Start = GetPosition();
 		data->FoundEnd = true;
-		ITR_FUNCDEBUG(L"Data started: "+Convert::ToWstring(data->Positions.X));
+		ITR_FUNCDEBUG("Data started: "+Convert::ToString(data->Positions.Start));
 	}
 
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
@@ -1125,7 +1048,7 @@ DLLEXPORT ITERATORCALLBACK_RETURNTYPE StringIterator::FindInMatchingParentheses(
 
             if(data->NestingLevel == 0){
 
-                data->Positions.Y = GetPosition()-1;
+                data->Positions.End = GetPosition() - 1;
                 return ITERATORCALLBACK_RETURNTYPE_STOP;
             }
         }
@@ -1133,9 +1056,9 @@ DLLEXPORT ITERATORCALLBACK_RETURNTYPE StringIterator::FindInMatchingParentheses(
 
 isinsidevalidleftrightpair:
 
-    if(data->Positions.X == -1 && data->NestingLevel > 0){
+    if(!data->Positions.Start && data->NestingLevel > 0){
 
-        data->Positions.X = GetPosition();
+        data->Positions.Start = GetPosition();
     }
 
     return ITERATORCALLBACK_RETURNTYPE_CONTINUE;

@@ -3,6 +3,7 @@
 #include "ObjectFiles/ObjectFileProcessor.h"
 
 #include "catch.hpp"
+#include "../DummyLog.h"
 
 using namespace Leviathan;
 using namespace std;
@@ -46,12 +47,14 @@ TEST_CASE("NamedVars creation and value retrieve", "[variable]"){
 
 TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
 
+    DummyReporter reporter;
+
     SECTION("Line 'this= not this'"){
         
         string typelinething = "this= not this";
 
         // creation testing //
-        auto ptry = make_shared<NamedVariableList>(typelinething);
+        auto ptry = make_shared<NamedVariableList>(typelinething, &reporter);
 
         wstring emptystr;
         
@@ -64,7 +67,7 @@ TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
         
         string typelinething = "this=2";
 
-        auto result = shared_ptr<NamedVariableList>(new NamedVariableList(typelinething));
+        auto result = shared_ptr<NamedVariableList>(new NamedVariableList(typelinething, &reporter));
 
         int checkval;
 
@@ -77,7 +80,7 @@ TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
         
         string line = "oh=2;";
 	
-        auto result = make_shared<NamedVariableList>(line);
+        auto result = make_shared<NamedVariableList>(line, &reporter);
 
         REQUIRE(result);
 
@@ -87,7 +90,7 @@ TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
     SECTION("Basic bracket expression"){
 
         
-        NamedVariableList advlist("value = [first, 2]");
+        NamedVariableList advlist("value = [first, 2]", &reporter);
 
         REQUIRE(advlist.GetVariableCount() == 2);
 
@@ -99,7 +102,7 @@ TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
     SECTION("Advanced line 'Color = [[0.1], [4], [true], [\"lol\"]]'"){
 
         string linething = "Color = [[0.1], [4], [true], [\"lol\"]]";
-        NamedVariableList advlist(linething);
+        NamedVariableList advlist(linething, &reporter);
 
         REQUIRE(advlist.GetVariableCount() == 4);
 
@@ -113,6 +116,7 @@ TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
     }
 }
 
+#ifdef SFML_PACKETS
 TEST_CASE("NamedVars packet serialization", "[variable]"){
 
 	NamedVars packettestorig;
@@ -142,12 +146,15 @@ TEST_CASE("NamedVars packet serialization", "[variable]"){
 
     CHECK(static_cast<bool>(receiver2) == true);
 }
+#endif // SFML_PACKETS
 
 TEST_CASE("Specific value parsing", "[variable]"){
 
+    DummyReporter reporter;
+
     SECTION("Width = 1280;"){
 
-        NamedVariableList var("Width = 1280;");
+        NamedVariableList var("Width = 1280;", &reporter);
 
         REQUIRE(var.GetVariableCount() == 1);
         CHECK(var.GetCommonType() == DATABLOCK_TYPE_INT);
@@ -161,7 +168,7 @@ TEST_CASE("Specific value parsing", "[variable]"){
 
             SECTION("Parsing back from string"){
 
-                NamedVariableList var2(var.ToText(0));
+                NamedVariableList var2(var.ToText(0), &reporter);
 
                 REQUIRE(var2.GetVariableCount() == 1);
                 CHECK(var2.GetCommonType() == DATABLOCK_TYPE_INT);
@@ -175,7 +182,7 @@ TEST_CASE("Specific value parsing", "[variable]"){
         NamedVars values("Width = 1280;\n"
             "Height = [[720]];\n"
             "Windowed = [true];\n"
-            "RenderSystemName = [[[\"Open.*GL\"]]];\n"
+            "RenderSystemName = [[[\"Open.*GL\"]]];\n", &reporter
         );
         
         int width;
@@ -205,7 +212,7 @@ TEST_CASE("Specific value parsing", "[variable]"){
 
     SECTION("DataStore things"){
 
-        NamedVariableList var("StartCount = [[1]];");
+        NamedVariableList var("StartCount = [[1]];", &reporter);
 
         REQUIRE(var.GetVariableCount() == 1);
         CHECK(var.GetCommonType() == DATABLOCK_TYPE_INT);

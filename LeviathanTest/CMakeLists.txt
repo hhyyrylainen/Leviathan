@@ -1,5 +1,6 @@
 # LeviathanTest application CMake
 
+if(NOT CREATE_UE4_PLUGIN)
 set(TestSources
   resource.h
   TestMain.cpp
@@ -20,14 +21,31 @@ set(TestSources
   TestFiles/StdBehaviour.cpp
   TestFiles/PacketsAndConnection.cpp
   )
+else()
+  # Just a few tests required
+set(TestSources
+  resource.h
+  TestMain.cpp
+  TestFiles/StringIterator.cpp
+  TestFiles/StringOperations.cpp
+  TestFiles/ObjectFiles.cpp
+  TestFiles/Floats.cpp
+  TestFiles/Regex.cpp
+  TestFiles/NamedVars.cpp
+  TestFiles/StdBehaviour.cpp
+  )
+endif()
+
+set(ExtraFiles "DummyLog.cpp" "DummyLog.h")
 
 include_directories(catch)
 
 set(CurrentProjectName LeviathanTest)
 
-set(AllProjectFiles ${TestSources})
+set(AllProjectFiles ${TestSources} ${ExtraFiles})
 
 # Include the common file
+set(CREATE_CONSOLE_APP ON)
 include(LeviathanCoreProject)
 
 # The project is now defined

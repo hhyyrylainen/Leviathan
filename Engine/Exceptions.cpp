@@ -23,10 +23,19 @@ DLLEXPORT const char* Leviathan::Exception::what() const noexcept{
     return Message;
 }
 // ------------------------------------ //
+#ifndef LEVIATHAN_UE_PLUGIN
 DLLEXPORT void Leviathan::Exception::PrintToLog() const noexcept{
 
     Logger::Get()->Write(string("[EXCEPTION] ")+Message);
 }
+#endif
+
+DLLEXPORT void Leviathan::Exception::Print(LErrorReporter* errorreport) const noexcept {
+   
+    LEVIATHAN_ASSERT(errorreport != nullptr, "erroreport in Exception::Print may not be null");
+    errorreport->Write(string("[EXCEPTION] ") + Message);
+}
+
 // ------------------------------------ //
 DLLEXPORT Leviathan::InvalidAccess::InvalidAccess(const char* description) noexcept : Exception(description){
 }

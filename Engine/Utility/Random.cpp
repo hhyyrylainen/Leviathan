@@ -17,6 +17,8 @@
 #include "../Logger.h"
 #ifndef _WIN32
 #include <sys/time.h>
+#else
+#include "WindowsInclude.h"
 #endif
 using namespace Leviathan;
 // ------------------------------------ //

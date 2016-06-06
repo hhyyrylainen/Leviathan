@@ -1,7 +1,0 @@
-OutputFile exported.xls
-RemoveFilters:
-\\vc\\include\\
-CRTStartup
-Leviathan\:\:Window\:\:Init
-Logger\:\:QueueErrorMessage
-END

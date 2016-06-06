@@ -32,7 +32,7 @@ DLLEXPORT Leviathan::DataStore::DataStore(){
 }
 DLLEXPORT Leviathan::DataStore::DataStore(bool man){
 
-	assert(man && "this shouldn't be called with false");
+	LEVIATHAN_ASSERT(man, "this shouldn't be called with false");
 
 	Staticaccess = this;
 

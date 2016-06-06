@@ -1,9 +1,13 @@
+#include "Include.h"
 // ------------------------------------ //
 #include "StringDataIterator.h"
 
+#if !defined(ALTERNATIVE_EXCEPTIONS_FATAL) || defined(ALLOW_INTERNAL_EXCEPTIONS)
 #include "utf8/checked.h"
+#else
+#include "utf8/unchecked.h"
+#endif //ALTERNATIVE_EXCEPTIONS_FATAL
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::StringDataIterator::StringDataIterator() : CurrentCharacterNumber(0), CurrentLineNumber(1){
 
@@ -13,20 +17,20 @@ DLLEXPORT Leviathan::StringDataIterator::~StringDataIterator(){
 
 }
 // ------------------------------------ //
-bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos, string &receiver){
-	Logger::Get()->Error("StringDataIterator doesn't support getting with type: string, "
+bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos, std::string &receiver){
+    DEBUG_BREAK;
+	LEVIATHAN_ASSERT(0, "StringDataIterator doesn't support getting with type: string, "
         "make sure your provided data source string type is the same as the "
         "request template type");
-	DEBUG_BREAK;
 	return false;
 }
 
 bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos,
-    wstring &receiver)
+    std::wstring &receiver)
 {
-	Logger::Get()->Error("StringDataIterator doesn't support getting with type: wstring, make "
+    DEBUG_BREAK;
+    LEVIATHAN_ASSERT(0, "StringDataIterator doesn't support getting with type: wstring, make "
         "sure your provided data source string type is the same as the request template type");
-	DEBUG_BREAK;
 	return false;
 }
 // ------------------------------------ //
@@ -38,7 +42,7 @@ size_t Leviathan::StringDataIterator::GetCurrentLineNumber() const{
 	return CurrentLineNumber;
 }
 // ------------------ UTF8DataIterator ------------------ //
-Leviathan::UTF8DataIterator::UTF8DataIterator(const string &str) : OurString(str){
+Leviathan::UTF8DataIterator::UTF8DataIterator(const std::string &str) : OurString(str){
 	Current = OurString.begin();
 	End = OurString.end();
 	BeginPos = OurString.begin();
@@ -57,18 +61,36 @@ bool Leviathan::UTF8DataIterator::GetNextCharCode(int &codepointreceiver, size_t
 
 	// We can just peek the next character if forward is 0 //
 	if(!forward){
-
+    #if !defined(ALTERNATIVE_EXCEPTIONS_FATAL) || defined(ALLOW_INTERNAL_EXCEPTIONS)
 		codepointreceiver = utf8::peek_next(Current, End);
+    #else
+        codepointreceiver = utf8::unchecked::peek_next(Current);
+
+        // receiver might be full of garbage at this point //
+
+
+    #endif //ALTERNATIVE_EXCEPTIONS_FATAL
 		return true;
 	}
 
 	// UTF8 string use the utf8 iterating functions //
 	auto shouldbepos = Current;
 
+#if !defined(ALTERNATIVE_EXCEPTIONS_FATAL) || defined(ALLOW_INTERNAL_EXCEPTIONS)
 
 	utf8::advance(shouldbepos, forward, End);
 
 	codepointreceiver = utf8::next(shouldbepos, End);
+#else
+    utf8::unchecked::advance(shouldbepos, forward);
+
+    LEVIATHAN_ASSERT(shouldbepos != End, "GetNextCharCode moved past the end");
+
+    codepointreceiver = utf8::unchecked::next(shouldbepos);
+
+    LEVIATHAN_ASSERT(shouldbepos != End, "GetNextCharCode next moved past the end");
+
+#endif //ALTERNATIVE_EXCEPTIONS_FATAL
 
 	return true;
 }
@@ -77,6 +99,8 @@ bool Leviathan::UTF8DataIterator::GetPreviousCharacter(int &receiver){
 	
 	// Try to get the prior code point //
 	auto shouldbepos = Current;
+
+#if !defined(ALTERNATIVE_EXCEPTIONS_FATAL) || defined(ALLOW_INTERNAL_EXCEPTIONS)
 
 	try{
 		// Try to copy the previous code point into the receiver //
@@ -88,13 +112,29 @@ bool Leviathan::UTF8DataIterator::GetPreviousCharacter(int &receiver){
 		return false;
 	}
 
+#else
+    receiver = utf8::unchecked::prior(shouldbepos);
+
+    if (shouldbepos == End)
+        return false;
+
+#endif //ALTERNATIVE_EXCEPTIONS_FATAL
+
+
 	// If it didn't throw it worked //
 	return true;
 }
 // ------------------------------------ //
 void Leviathan::UTF8DataIterator::MoveToNextCharacter(){
 	// We need to move whole code points //
+#if !defined(ALTERNATIVE_EXCEPTIONS_FATAL) || defined(ALLOW_INTERNAL_EXCEPTIONS)
+
 	utf8::advance(Current, 1, End);
+
+#else
+    utf8::unchecked::advance(Current, 1);
+
+#endif //ALTERNATIVE_EXCEPTIONS_FATAL
 
 	// Don't forget to increment these //
 	++CurrentCharacterNumber;
@@ -122,10 +162,11 @@ size_t Leviathan::UTF8DataIterator::GetLastValidIteratorPosition() const{
 	return OurString.size()-1;
 }
 // ------------------------------------ //
-bool Leviathan::UTF8DataIterator::ReturnSubString(size_t startpos, size_t endpos, string &receiver){
+bool Leviathan::UTF8DataIterator::ReturnSubString(size_t startpos, size_t endpos, std::string &receiver){
+
 	if(startpos >= OurString.size() || endpos >= OurString.size() || startpos > endpos)
 		return false;
 
-	receiver = OurString.substr(startpos, endpos-startpos+1);
+	receiver = OurString.substr(startpos, endpos - startpos + 1);
 	return true;
 }

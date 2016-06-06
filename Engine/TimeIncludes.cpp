@@ -1,9 +1,10 @@
+#include "Include.h"
 // ------------------------------------ //
 #include "TimeIncludes.h"
 
 #ifdef __linux__
 #include <sys/time.h>
-#elif __WIN32
+#elif _WIN32
 #include "WindowsInclude.h"
 #endif
 using namespace Leviathan;
@@ -83,4 +84,3 @@ DLLEXPORT WantedClockType::time_point Time::GetThreadSafeSteadyTimePoint(){
 	return WantedClockType::now();
 }
 // ------------------------------------ //
-

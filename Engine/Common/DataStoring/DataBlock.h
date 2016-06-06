@@ -4,9 +4,17 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "../../Common/ReferenceCounted.h"
-#include "../../Common/SFMLPackets.h"
-#include "../../Exceptions.h"
 #include "../../Utility/Convert.h"
+#include <map>
+#include <memory>
+
+#ifdef SFML_PACKETS
+#include "../../Common/SFMLPackets.h"
+#endif
+
+#ifndef ALTERNATIVE_EXCEPTIONS_FATAL
+#include "../../Exceptions.h"
+#endif
 
 
 static_assert(sizeof(short) == 2, "Short must be 2 bytes for datablocks to work accross the network");
@@ -55,8 +63,7 @@ namespace Leviathan{
 	public:
 		// conversion function that templates overload //
 		static inline TargetType DoConvert(const FromDataBlockType* block){
-//#pragma message ("non valid conversion from types")
-			assert(0 && "conversion not possible");
+            LEVIATHAN_ASSERT(0, "conversion not possible");
 			return TargetType();
 		}
 		static const bool AllowedConversion = false;
@@ -84,7 +91,7 @@ namespace Leviathan{
 			}
 			// cannot return converted value //
 //#pragma message ("cannot return pointer from converted type")
-			assert(0 && "return pointer of converted value not possible");
+            LEVIATHAN_ASSERT(0, "return pointer of converted value not possible");
 			return NULL;
 		}
 		// functions used to check is conversion allowed //
@@ -172,9 +179,12 @@ namespace Leviathan{
 			Type = DataBlockNameResolver<DBlockT>::TVal;
 		}
 
+    #ifdef SFML_PACKETS
+
 		DLLEXPORT DataBlock(sf::Packet &packet);
 
 		DLLEXPORT void AddDataToPacket(sf::Packet &packet);
+    #endif //SFML_PACKETS
 
 		DLLEXPORT DataBlock(const DataBlock &otherdeepcopy) : Value(NULL){
 			// allocate new pointer from the other instance //
@@ -443,6 +453,8 @@ namespace Leviathan{
 			BlockData = static_cast<DataBlockAll*>(new CharBlock(var));
 		}
 
+    #ifdef SFML_PACKETS
+
 		//! \brief Constructs from a packet
 		DLLEXPORT VariableBlock(sf::Packet &packet);
 
@@ -450,6 +462,7 @@ namespace Leviathan{
 		//! \brief Stores data to a packet
 		DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
 
+    #endif //SFML_PACKETS
 
 		// deep copy constructor //
 		DLLEXPORT VariableBlock(const VariableBlock &arg){
@@ -484,6 +497,15 @@ namespace Leviathan{
 		}
 
 		// operators //
+        // Checks is this valid //
+        DLLEXPORT operator bool() const {
+
+            if (!BlockData)
+                return false;
+
+            return true;
+        }
+
 		// copy operators //
 		// shallow copy (when both instances aren't wanted //
 		DLLEXPORT VariableBlock& operator =(VariableBlock* arg){
@@ -562,7 +584,7 @@ namespace Leviathan{
                     *TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(other.BlockData);
 
 			// type that shouldn't be used is used //
-			assert(0 && "unallowed datatype in datablock");
+			LEVIATHAN_ASSERT(0, "unallowed datatype in datablock");
 			return false;
 		}
 
@@ -593,7 +615,7 @@ namespace Leviathan{
 				return *TvalToTypeResolver<DATABLOCK_TYPE_DOUBLE>::Conversion(BlockData);
 
 			// type that shouldn't be used is used //
-			assert(0 && "unallowed datatype in datablock");
+            LEVIATHAN_ASSERT(0, "unallowed datatype in datablock");
 			return ConvertT();
 		}
 		template<class ConvertT>
@@ -619,7 +641,7 @@ namespace Leviathan{
 					return *TvalToTypeResolver<DATABLOCK_TYPE_VOIDPTR>::Conversion(BlockData);
 			}
 			// non matching types //
-			assert(0 && "unallowed cast from type to another with return pointer");
+			LEVIATHAN_ASSERT(0, "unallowed cast from type to another with return pointer");
 			return NULL;
 		}
 
@@ -658,7 +680,7 @@ namespace Leviathan{
 				return TvalToTypeResolver<DATABLOCK_TYPE_VOIDPTR>::Conversion(BlockData)->
                     IsConversionAllowedNonPtr<ConvertT>();
 
-			assert(0 && "invalid datablock type");
+			LEVIATHAN_ASSERT(0, "invalid datablock type");
 			return false;
 		}
 
@@ -690,7 +712,7 @@ namespace Leviathan{
 				return TvalToTypeResolver<DATABLOCK_TYPE_VOIDPTR>::Conversion(BlockData)->
                     IsConversionAllowedPtr<ConvertT>();
 
-			assert(0 && "invalid datablock type");
+			LEVIATHAN_ASSERT(0, "invalid datablock type");
 			return false;
 		}
 
@@ -703,11 +725,8 @@ namespace Leviathan{
 				return false;
 			}
 			// assign directly to the wanted value, should be faster than converting returning and then assigning //
-#ifdef _WIN32
-			var = (ConvertT)*this;
-#else
 			var = this->operator ConvertT();
-#endif
+
 			// assignment succeeded //
 			return true;
 		}
@@ -727,7 +746,7 @@ namespace Leviathan{
 
 	protected:
 		// data storing //
-		DataBlockAll* BlockData;
+		DataBlockAll* BlockData = nullptr;
 
 	};
 
@@ -768,6 +787,7 @@ namespace Leviathan{
 		std::string Name;
 	};
 
+#ifdef USING_ANGELSCRIPT
     //! \brief Reference counted version for scripts
     //!
     //! Also stores the AngelScript ID of the type
@@ -808,7 +828,7 @@ namespace Leviathan{
 
 		int ASTypeID;
 	};
-
+#endif //USING_ANGELSCRIPT
 
 
 	// conversion template specifications //
@@ -880,7 +900,7 @@ namespace Leviathan{
 	// ------------------ WstringBlock conversions ------------------ //
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, std::wstring, (*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, std::string,
-        Convert::WstringToString(*block->Value));
+        Convert::Utf16ToUtf8(*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, bool,
         Convert::WstringFromBoolToInt(*block->Value) != 0);
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(WstringBlock, float,
@@ -894,7 +914,7 @@ namespace Leviathan{
 	//// ------------------ StringBlock conversions ------------------ //
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, std::string, (*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, std::wstring,
-        Convert::StringToWstring(*block->Value));
+        Convert::Utf8ToUtf16(*block->Value));
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, bool,
         Convert::StringFromBoolToInt(*block->Value) != 0);
 	CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(StringBlock, float,

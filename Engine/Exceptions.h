@@ -2,6 +2,7 @@
 // ------------------------------------ //
 #include "Include.h"
 #include <exception>
+#include "ErrorReporter.h"
 
 
 namespace Leviathan{
@@ -13,11 +14,17 @@ namespace Leviathan{
         DLLEXPORT Exception(const char* description) noexcept;
         DLLEXPORT Exception(const Exception &e) noexcept;
 
+        ~Exception() = default;
+
         DLLEXPORT Exception& operator=(const Exception &other) noexcept;
 
         DLLEXPORT const char* what() const noexcept override;
 
+    #ifndef LEVIATHAN_UE_PLUGIN
         DLLEXPORT virtual void PrintToLog() const noexcept;
+    #endif
+
+        DLLEXPORT virtual void Print(LErrorReporter* errorreport) const noexcept;
         
     protected:
         

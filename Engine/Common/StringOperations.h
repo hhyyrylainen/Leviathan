@@ -1,7 +1,9 @@
 #pragma once
 // ------------------------------------ //
 #include <string>
+#include <vector>
 #include "../Utility/Convert.h"
+#include <memory>
 
 namespace Leviathan{
 
@@ -208,7 +210,8 @@ namespace Leviathan{
 			size_t endcopy = filepath.size()-1;
 
 			// Find last path character //
-			int lastpath = -1;
+			size_t lastpath;
+            bool found = false;
 
 			for(size_t i = 0; i < filepath.size(); i++){
 				if(filepath[i] == StringConstants<StringTypeN, CharType>::UniversalPathSeparator || filepath[i] == 
@@ -216,10 +219,11 @@ namespace Leviathan{
 				{
 					// Currently last found path //
 					lastpath = i;
+                    found = true;
 				}
 			}
 
-			if(lastpath < 0){
+			if(!found){
 				// Set start //
 				return StringTypeN();
 			}
@@ -328,14 +332,14 @@ namespace Leviathan{
             std::vector<StringTypeN>& vec)
         {
 			// scan the input and gather positions for string copying //
-            std::vector<Int2> CopyOperations;
+            std::vector<StartEndIndex> CopyOperations;
 			bool PositionStarted = false;
 
 			for(size_t i = 0; i < strtocut.length(); i++){
 				if(!PositionStarted){
 					PositionStarted = true;
 					// add new position index //
-					CopyOperations.push_back(Int2(i, -1));
+					CopyOperations.push_back(StartEndIndex(i));
 				}
 
 				if(strtocut[i] == separator[0]){
@@ -354,7 +358,7 @@ namespace Leviathan{
 								// found match! //
 
 								// end old string to just before this position //
-								CopyOperations.back().Y = i; /*-1;
+								CopyOperations.back().End = i; /*-1;
                                                                not this because we would have to
                                                                add 1 in the copy phase anyway */
 
@@ -382,8 +386,8 @@ namespace Leviathan{
 			}
 
 			// make sure final position has end //
-			if(CopyOperations.back().Y < 0)
-				CopyOperations.back().Y = strtocut.length();
+			if(!CopyOperations.back().End)
+				CopyOperations.back().End = strtocut.length();
 			// length-1 is not used here, because it would have to be added in copy phase to the
             // substring length, and we didn't add that earlier...
 
@@ -393,8 +397,8 @@ namespace Leviathan{
 			// loop through positions and copy substrings to result vector //
 			for(size_t i = 0; i < CopyOperations.size(); i++){
 				// copy using std::wstring method for speed //
-				vec.push_back(strtocut.substr((size_t)CopyOperations[i].X,
-                        (size_t)(CopyOperations[i].Y-CopyOperations[i].X)));
+				vec.push_back(strtocut.substr(static_cast<size_t>(CopyOperations[i].Start),
+                        static_cast<size_t>(CopyOperations[i].Start) - static_cast<size_t>(CopyOperations[i].Start)));
 			}
 
 			// cutting succeeded //
@@ -453,8 +457,8 @@ namespace Leviathan{
 				return data;
 			}
 
-			int copystart = -1;
-			int copyend = -1;
+            PotentiallySetIndex copystart;
+            PotentiallySetIndex copyend;
 
 			// loop through data and copy final characters to out string //
 			for(size_t i = 0; i < data.size(); i++){
@@ -479,11 +483,12 @@ namespace Leviathan{
                     
 					if(IsMatch || toreplace.size() == 1){
 						// First add proper characters //
-						if(copystart > -1 && copyend > -1)
-							out += data.substr(copystart, copyend-copystart+1);
+						if(copystart && copyend)
+							out += data.substr(copystart, 
+                                static_cast<size_t>(copyend) - static_cast<size_t>(copystart) + 1);
 
-						copystart = -1;
-						copyend = -1;
+                        copystart.ValueSet = false;
+                        copyend.ValueSet = false;
 
 						// it is a match, copy everything in replacer and add toreplace length to i //
 						out += replacer;
@@ -494,7 +499,7 @@ namespace Leviathan{
 				}
                 
 				// non matching character mark as to copy //
-				if(copystart == -1){
+				if(!copystart){
 					copystart = i;
 				} else {
 					copyend = i;
@@ -502,8 +507,8 @@ namespace Leviathan{
 			}
 
 			// Copy rest to out //
-			if(copystart > -1 && copyend > -1)
-				out += data.substr(copystart, copyend-copystart+1);
+			if(copystart && copyend)
+				out += data.substr(copystart, static_cast<size_t>(copyend) - static_cast<size_t>(copystart) + 1);
 
 			// Return finished string //
 			return out;
@@ -603,21 +608,21 @@ namespace Leviathan{
 
 		template<class StringTypeN>
 		DLLEXPORT static void RemovePreceedingTrailingSpaces(StringTypeN &str){
-			Int2 CutPositions(-1,-1);
+			StartEndIndex CutPositions;
 
 			// search the right part of the string //
 			for(size_t i = 0; i < str.size(); i++){
 				if(!IsCharacterWhitespace(str[i])){
-					if(CutPositions[0] == -1){
+					if(!CutPositions.Start){
 						// beginning ended //
-						CutPositions.X = i;
+						CutPositions.Start = i;
 					} else {
 						// set last pos as this //
 
 					}
 					continue;
 				}
-				if(CutPositions[0] == -1){
+				if(!CutPositions.Start){
 					// still haven't found a character //
 					continue;
 				}
@@ -637,27 +642,28 @@ namespace Leviathan{
 					continue;
 				}
 				// end found //
-				CutPositions.Y = i-1;
+				CutPositions.End = i-1;
 				break;
 			}
 
-			if(CutPositions.X == -1){
+			if(!CutPositions.Start){
 				// nothing in the string //
 				str.clear();
 				return;
 			}
-			if(CutPositions.Y == -1){
-				if(CutPositions.X == -1){
+			if(!CutPositions.End){
+				if(!CutPositions.Start){
 					// just the first character required //
-					CutPositions.Y = CutPositions.X;
+					CutPositions.End = CutPositions.Start;
 				} else {
 					// no need to cut from the end //
-					CutPositions.Y = str.length()-1;
+					CutPositions.End = str.length()-1;
 				}
 			}
 
 			// set the wstring as it's sub string //
-			str = str.substr((size_t)CutPositions[0], (size_t)(CutPositions[1]-CutPositions[0]+1));
+			str = str.substr(static_cast<size_t>(CutPositions.Start), 
+                static_cast<size_t>(CutPositions.End) - static_cast<size_t>(CutPositions.Start) + 1);
 		}
 
 		template<class StringTypeN>
@@ -833,4 +839,5 @@ namespace Leviathan{
 
 
 }
+
 

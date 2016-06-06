@@ -3,6 +3,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "ObjectFile.h"
+#include "ErrorReporter.h"
 
 namespace Leviathan{
 
@@ -13,7 +14,11 @@ namespace Leviathan{
 		DLLEXPORT static void Release();
 
 		//! \brief Reads an ObjectFile to an in-memory data structure
-		DLLEXPORT static std::unique_ptr<ObjectFile> ProcessObjectFile(const std::string &file);
+		DLLEXPORT static std::unique_ptr<ObjectFile> ProcessObjectFile(const std::string &file, 
+            LErrorReporter* reporterror);
+
+        static DLLEXPORT std::unique_ptr<ObjectFile> ProcessObjectFileFromString(std::string filecontents, 
+            const std::string &filenameforerrors, LErrorReporter* reporterror);
 
 
 		//! \brief Writes an ObjectFile's data structure to a file
@@ -21,7 +26,8 @@ namespace Leviathan{
         //! which is not optimal for config files. It is recommended to only append
 		//! to an existing file to keep comments intact
 		//! \return True when the file has been written, false if something failed
-		DLLEXPORT static bool WriteObjectFile(ObjectFile &data, const std::string &file);
+        DLLEXPORT static bool WriteObjectFile(ObjectFile &data, const std::string &file,
+            LErrorReporter* reporterror);
 
 
 		//! \brief Registers a new value alias for the processor
@@ -34,7 +40,7 @@ namespace Leviathan{
 		// function to shorten value loading in many places //
 		template<class T>
 		DLLEXPORT static bool LoadValueFromNamedVars(NamedVars* block, const std::string &varname,
-            T &receiver, const T &defaultvalue, bool ReportError = false,
+            T &receiver, const T &defaultvalue, LErrorReporter* ReportError = nullptr,
             const std::string &errorprefix = "")
 		{
 			// try to get value and convert to receiver //
@@ -42,7 +48,7 @@ namespace Leviathan{
 				// variable not found / wrong type //
 				// report error if wanted //
 				if(ReportError)
-					Logger::Get()->Error(errorprefix+" invalid variable "+varname+
+                    ReportError->Error(errorprefix+" invalid variable "+varname+
                         ", not found/wrong type");
                 
 				// set value to provided default //
@@ -57,7 +63,7 @@ namespace Leviathan{
 		template<class T>
 		static FORCE_INLINE bool LoadValueFromNamedVars(NamedVars &block,
             const std::string &varname, T &receiver, const T &defaultvalue,
-            bool ReportError = false, const std::string &errorprefix = "")
+            LErrorReporter* ReportError = nullptr, const std::string &errorprefix = "")
 		{
 				return LoadValueFromNamedVars<T>(&block, varname, receiver, defaultvalue,
                     ReportError, errorprefix);
@@ -67,7 +73,7 @@ namespace Leviathan{
 		template<class RType, class SingleType, int VarCount>
 		DLLEXPORT static void LoadMultiPartValueFromNamedVars(NamedVars* block,
             const std::string &varname, RType &receiver, const RType &defaultvalue,
-            bool ReportError = false, const std::string &errorprefix = "")
+            LErrorReporter* ReportError = nullptr, const std::string &errorprefix = "")
 		{
 			// get pointer to value list //
             std::shared_ptr<NamedVariableList> curvalues = block->GetValueDirect(varname);
@@ -76,7 +82,7 @@ namespace Leviathan{
                 
 				// not found //
 				if(ReportError)
-					Logger::Get()->Error(errorprefix+" invalid variable "+varname+", not found");
+					ReportError->Error(errorprefix+" invalid variable "+varname+", not found");
                 
 				// set as default //
 				receiver = defaultvalue;
@@ -93,7 +99,7 @@ namespace Leviathan{
 		template<class RType, class SingleType, int VarCount>
 		DLLEXPORT static bool LoadMultiPartValueFromNamedVariableList(NamedVariableList* block,
             int &valuestartindex, RType &receiver, const RType &defaultvalue,
-            bool ReportError = false, const std::string &errorprefix = "")
+            LErrorReporter* ReportError = nullptr, const std::string &errorprefix = "")
 		{
 			// make sure that size is right and types are correct //
 			if(block->GetVariableCount()-valuestartindex < VarCount ||
@@ -102,7 +108,7 @@ namespace Leviathan{
             {
 				// not enough values / wrong types //
 				if(ReportError){
-					Logger::Get()->Error(errorprefix+" invalid variable "+block->GetName()+
+					ReportError->Error(errorprefix+" invalid variable "+block->GetName()+
                         ", not enough values ("+Convert::ToString<int>(VarCount)+
                         " needed) or wrong types");
 				}
@@ -129,7 +135,7 @@ namespace Leviathan{
 		template<class RType, class SingleType, int VarCount>
 		static FORCE_INLINE void LoadMultiPartValueFromNamedVars(NamedVars &block,
             const std::string &varname, RType &receiver, const RType &defaultvalue,
-            bool ReportError = false, const std::string &errorprefix = "")
+            LErrorReporter* ReportError = nullptr, const std::string &errorprefix = "")
 		{
 			return LoadMultiPartValueFromNamedVars<RType, SingleType, VarCount>(&block,
                 varname, receiver, defaultvalue, ReportError, errorprefix);
@@ -140,7 +146,7 @@ namespace Leviathan{
 		template<class T>
 		static bool LoadVectorOfTypeUPtrFromNamedVars(NamedVars &block, const std::string &varname,
             std::vector<std::unique_ptr<T>> &receiver, size_t mustbedivisableby = 1,
-            bool ReportError = false, const std::string &errorprefix = "")
+            LErrorReporter* ReportError = nullptr, const std::string &errorprefix = "")
 		{
 			NamedVariableList* inanimlist = block.GetValueDirectRaw(varname);
 
@@ -164,7 +170,7 @@ namespace Leviathan{
 
 			// Something isn't right //
 			if(ReportError)
-				Logger::Get()->Error(errorprefix+" invalid variable list "+varname+
+				ReportError->Error(errorprefix+" invalid variable list "+varname+
                     ", not found/wrong type/wrong amount");
 			return false;
 		}
@@ -173,31 +179,31 @@ namespace Leviathan{
 
 		//! \brief Handling function for NamedVariables
 		static std::shared_ptr<NamedVariableList> TryToLoadNamedVariables(const std::string &file,
-            StringIterator &itr, const std::string &preceeding);
+            StringIterator &itr, const std::string &preceeding, LErrorReporter* reporterror);
 
 		//! \brief Handling function for template definitions and instantiations
 		static bool TryToHandleTemplate(const std::string &file, StringIterator &itr,
-            ObjectFile &obj, const std::string &preceeding);
+            ObjectFile &obj, const std::string &preceeding, LErrorReporter* reporterror);
 
 		//! \brief Handling function for loading whole objects
 		static std::shared_ptr<ObjectFileObject> TryToLoadObject(const std::string &file,
-            StringIterator &itr, ObjectFile &obj, const std::string &preceeding);
+            StringIterator &itr, ObjectFile &obj, const std::string &preceeding, LErrorReporter* reporterror);
 
 
 		// Object loading split into parts //
 		//! \brief Loading variable lists
 		static bool TryToLoadVariableList(const std::string &file, StringIterator &itr,
-            ObjectFileObject &obj, size_t startline);
+            ObjectFileObject &obj, size_t startline, LErrorReporter* reporterror);
 
 
 		//! \brief Loading text blocks
 		static bool TryToLoadTextBlock(const std::string &file, StringIterator &itr,
-            ObjectFileObject &obj, size_t startline);
+            ObjectFileObject &obj, size_t startline, LErrorReporter* reporterror);
 
 
 		//! \brief Loading script blocks
 		static bool TryToLoadScriptBlock(const std::string &file, StringIterator &itr,
-            ObjectFileObject &obj, size_t startline);
+            ObjectFileObject &obj, size_t startline, LErrorReporter* reporterror);
 
 
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "Include.h"
 
+
 #include "ForwardDeclarations.h"
 #include "Entities/EntityCommon.h"
 
@@ -19,7 +20,11 @@ namespace Leviathan{
 
     //! \todo Allow this to not be a multiple of TICKSPEED or smaller than it
     static const int INTERPOLATION_TIME  = 100;
+    
+    //! For checking vector normalization
+    static const float NORMALIZATION_TOLERANCE = 1e-6f;
 
+#ifdef LEVIATHAN_VERSION
     static const double VERSION = LEVIATHAN_VERSION;
     static const std::string VERSIONS = LEVIATHAN_VERSION_ANSIS;
 
@@ -27,8 +32,11 @@ namespace Leviathan{
     static const int VERSION_MAJOR = LEVIATHAN_VERSION_MAJOR;
     static const int VERSION_MINOR = LEVIATHAN_VERSION_MINOR;
     static const int VERSION_PATCH = LEVIATHAN_VERSION_PATCH;
+#endif //LEVIATHAN_VERSION
 
+#ifndef PI
     static const float PI = 3.14159265f;
+#endif //PI
     static const float DEGREES_TO_RADIANS = PI/180.f;
     static const float EPSILON = 0.00000001f;
 }
@@ -36,14 +44,17 @@ namespace Leviathan{
 
 #ifdef _MSC_VER
 
+#ifndef DEBUG_BREAK
 #define DEBUG_BREAK __debugbreak();
+#endif //DEBUG_BREAK
 
 #elif defined __linux
 
 // For making SIGINT work as debug break on linux //
 #include <signal.h>
-
+#ifndef DEBUG_BREAK
 #define DEBUG_BREAK { Leviathan::Logger::Get()->Write("DEBUG_BREAK HIT!"); raise(SIGINT); }
+#endif //DEBUG_BREAK
 
 #else
 
@@ -61,10 +72,4 @@ namespace Leviathan{
 
 #define SAFE_DELETE_VECTOR(x) for(size_t vdind = 0; vdind < x.size(); ++vdind){if(x[vdind]){delete x[vdind];}}; \
     x.clear();
-
-// This will break everything if it is defined //
-#undef index
-
-
-#include "Logger.h"
 

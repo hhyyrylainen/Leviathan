@@ -94,14 +94,14 @@ TEST_CASE("String whitespace trimming", "[string]"){
 
 TEST_CASE("StringOperations common work with string and wstring", "[string]"){
 
-	wstring paththing = Convert::StringToWstring(TESTPATHPLAIN);
+	wstring paththing = Convert::Utf8ToUtf16(TESTPATHPLAIN);
 	string paththing2 = TESTPATHSTRWIN;
 
 
 	wstring result = StringOperations::RemoveExtension<wstring, wchar_t>(paththing, true);
 	string result2 = StringOperations::RemoveExtension<string, char>(paththing2, true);
 
-	wstring wstringified = Convert::StringToWstring(result2);
+	wstring wstringified = Convert::Utf8ToUtf16(result2);
 
     CHECK(result == wstringified);
     CHECK(result == L"filesthis");

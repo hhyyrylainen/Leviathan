@@ -5,6 +5,13 @@
 #include "StringDataIterator.h"
 #include "IteratorData.h"
 #include <functional>
+#include <memory>
+
+#if defined(_DEBUG) && (defined(LEVIATHAN_BUILD) || !defined(LEVIATHAN_UE_PLUGIN))
+#include "Logger.h"
+#include "../Utility/Convert.h"
+#include "utf8/checked.h"
+#endif
 
 namespace Leviathan{
 
@@ -108,10 +115,6 @@ namespace Leviathan{
 		//0x100000000
 
 
-	typedef ITERATORCALLBACK_RETURNTYPE (*IteratorWstrCallBack)(StringIterator* instance, void* IteratorData,
-        int parameters);
-
-
 
 	//! Iterator class for getting parts of a string
 	class StringIterator{
@@ -165,22 +168,20 @@ namespace Leviathan{
         {
 
 			// Setup the result object //
-			IteratorPositionData data(-1, -1);
+			IteratorPositionData data;
 
 			// Iterate with our getting function //
-			StartIterating(std::bind(&StringIterator::FindFirstQuotedString, this, &data,
-                    quotes, specialflags), specialflags);
+			StartIterating(specialflags, &StringIterator::FindFirstQuotedString, &data, quotes, specialflags);
 
 			// Create the substring from the result //
             std::unique_ptr<RStrType> resultstr;
 
 			// NULL if nothing found //
-			if(data.Positions.X == -1 || data.Positions.Y == -1)
-				return NULL;
-
+			if(!data.Positions.Start || !data.Positions.End)
+				return nullptr;
 
 			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
 		}
 
 		//! \brief Gets the next number
@@ -199,23 +200,22 @@ namespace Leviathan{
 
 			// iterate over the string getting the proper part //
 			// Iterate with our getting function //
-			StartIterating(std::bind(&StringIterator::FindNextNumber, this, &data, decimal,
-                    specialflags), specialflags);
+			StartIterating(specialflags, &StringIterator::FindNextNumber, &data, decimal, specialflags);
 
 			// Check for nothing found //
-			if(data.Positions.X == -1){
-				return NULL;
+			if(!data.Positions.Start){
+				return nullptr;
 			}
 
 			// create substring of the wanted part //
 
 
 			// Make sure end is fine //
-			if(data.Positions.Y == -1)
-				data.Positions.Y = GetLastValidCharIndex();
+			if(!data.Positions.End)
+				data.Positions.End = GetLastValidCharIndex();
 
 			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
 		}
 
 		//! \brief Gets the next sequence of characters according to stopcaseflags
@@ -228,26 +228,25 @@ namespace Leviathan{
         {
 
 			// Setup the result object //
-			IteratorPositionData data(-1, -1);
-
+			IteratorPositionData data;
 
 			// Iterate with our getting function //
-			StartIterating(std::bind(&StringIterator::FindNextNormalCharacterString, this,
-                    &data, stopcaseflags, specialflags), specialflags);
+			StartIterating(specialflags, &StringIterator::FindNextNormalCharacterString, &data, stopcaseflags, 
+                specialflags);
 
 			// check for nothing found //
-			if(data.Positions.X == -1 && data.Positions.Y == -1){
+			if(!data.Positions.Start && !data.Positions.Start){
 
 				return NULL;
 			}
 
 			// Make sure end is fine //
-			if(data.Positions.Y == -1)
-				data.Positions.Y = GetLastValidCharIndex();
+			if(!data.Positions.End)
+				data.Positions.End = GetLastValidCharIndex();
 			
 
 			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
 		}
 
 		//! \brief Gets the string that is before the equality assignment
@@ -263,23 +262,21 @@ namespace Leviathan{
 			IteratorAssignmentData data;
 
 			// Iterate with our getting function //
-			StartIterating(std::bind(&StringIterator::FindUntilEquality, this, &data, stopcase,
-                    specialflags), specialflags);
-
+			StartIterating(specialflags, &StringIterator::FindUntilEquality, &data, stopcase, specialflags);
 
 			// Check for validity //
-			if(data.Positions.X == data.Positions.Y || data.SeparatorFound == false){
+			if(!data.Positions.Start || data.Positions.Start == data.Positions.End || data.SeparatorFound == false){
 				// nothing found //
-				return NULL;
+				return nullptr;
 			}
 
-			if(data.Positions.Y == -1){
+			if(!data.Positions.End){
 				// Set to start, this only happens if there is just one character //
-				data.Positions.Y = data.Positions.X;
+				data.Positions.End = data.Positions.Start;
 			}
 
 			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
 		}
 
 
@@ -304,22 +301,21 @@ namespace Leviathan{
 			IteratorFindUntilData data;
 
 			// Iterate with our getting function //
-			StartIterating(std::bind(&StringIterator::FindUntilNewLine, this, &data), 0);
-
+			StartIterating(0, &StringIterator::FindUntilNewLine, &data);
 
 			// Check for validity //
-			if(data.Positions.X == -1){
+			if(!data.Positions.Start){
 				// Nothing found //
-				return NULL;
+				return nullptr;
 			}
 
-			if(data.Positions.Y == -1){
+			if(!data.Positions.End){
 				// Set to end of string //
-				data.Positions.Y = GetLastValidCharIndex();
+				data.Positions.End = GetLastValidCharIndex();
 			}
 
 			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
 		}
 
 
@@ -338,13 +334,13 @@ namespace Leviathan{
 			auto data = GetPositionsUntilACharacter(charactertolookfor, specialflags);
 
 			// Check was the end found //
-			if(!data.FoundEnd || data.Positions.X == -1){
+			if(!data.FoundEnd || !data.Positions.Start){
 				// not found the ending character //
-				return NULL;
+				return nullptr;
 			}
 
 			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
 		}
 
 		//! \brief Gets characters until a character or all remaining characters
@@ -361,20 +357,20 @@ namespace Leviathan{
 
 			auto data = GetPositionsUntilACharacter(charactertolookfor, specialflags);
 
-			if(data.Positions.X == -1 || data.Positions.Y == -1){
+			if(!data.Positions.Start|| !data.Positions.End){
 				// return empty string //
-				return NULL;
+				return nullptr;
 			}
 
 			// Return all if not found //
 			if(!data.FoundEnd){
 
-				return GetSubstringFromIndexes<RStrType>(data.Positions.X,
+				return GetSubstringFromIndexes<RStrType>(data.Positions.Start,
                     GetLastValidCharIndex());
 			}
 
 			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
 		}
 
 		//! \brief Gets all characters until a sequence is matched
@@ -390,25 +386,23 @@ namespace Leviathan{
 			IteratorUntilSequenceData<RStrType> data(findstr);
 
 			// Iterate with our getting function //
-			StartIterating(std::bind(&StringIterator::FindUntilSequence<RStrType>, this, &data,
-                    specialflags), specialflags);
-
+			StartIterating(specialflags, &StringIterator::FindUntilSequence<RStrType>, &data, specialflags);
 
 			// Check for validity //
-			if(data.Positions.X == -1){
+			if(!data.Positions.Start){
 				// Nothing found //
-				return NULL;
+				return nullptr;
 			}
 
 			// This only happens when the string ends with a partial match //
 			// Example: look for "this", string is like this: my super nice th
-			if(data.Positions.Y == -1){
+			if(!data.Positions.End){
 				// Set to end of string //
-				data.Positions.Y = GetLastValidCharIndex();
+				data.Positions.End = GetLastValidCharIndex();
 			}
 
 			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
 		}
 
         //! \brief Gets characters inside brackets
@@ -425,18 +419,17 @@ namespace Leviathan{
 			IteratorNestingLevelData data;
 
 			// Iterate with our getting function //
-			StartIterating(std::bind(&StringIterator::FindInMatchingParentheses, this, &data,
-                    '[', ']', specialflags), specialflags);
+			StartIterating(specialflags, &StringIterator::FindInMatchingParentheses, &data, '[', ']', specialflags);
 
 			// Create the substring from the result //
             std::unique_ptr<RStrType> resultstr;
 
 			// NULL if nothing found //
-			if(data.Positions.X == -1 || data.Positions.Y == -1)
-				return NULL;
+			if(!data.Positions.Start || !data.Positions.End)
+				return nullptr;
 
 			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.X, data.Positions.Y);
+			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
 		}
 
 		//! \brief Skips until characters that are not whitespace are found
@@ -454,23 +447,22 @@ namespace Leviathan{
             int specialflags = 0)
         {
 
-			IteratorCharacterData stufftoskip(chartoskip);
+            IteratorCharacterData stufftoskip(chartoskip);
 
 			// Iterate over the string skipping until hit something that doesn't need to be
             // skipped
-			StartIterating(std::bind(&StringIterator::SkipSomething, this, &stufftoskip,
-                    additionalflag, specialflags), specialflags);
+			StartIterating(specialflags, &StringIterator::SkipSomething, stufftoskip, additionalflag, specialflags);
 		}
 
 		// Utility functions //
 
-#ifdef _DEBUG
+#if defined(_DEBUG) && (defined(LEVIATHAN_BUILD) || !defined(LEVIATHAN_UE_PLUGIN))
 		//! \brief When set to true prints lots of debug output
 		DLLEXPORT void SetDebugMode(const bool &mode);
 #endif
 
 		//! \brief Returns the current reading position
-		//! \note This might be expensiveish operation based on the underlying StringDataIterator
+		//! \note This might be somewhat expensive operation based on the underlying StringDataIterator
         //! class (mostly expensive for UTF8 strings)
 		DLLEXPORT size_t GetPosition();
 
@@ -501,7 +493,7 @@ namespace Leviathan{
         {
 			// Don't want to do anything if no string //
 			if(!DataIterator)
-				return NULL;
+				return nullptr;
 
 			// Return a substring from our data source //
             std::unique_ptr<STRSType> returnval(new STRSType());
@@ -512,7 +504,7 @@ namespace Leviathan{
 			}
 
 			// It failed for some reason //
-			return NULL;
+			return nullptr;
 		}
 
 
@@ -524,14 +516,12 @@ namespace Leviathan{
 			IteratorFindUntilData data;
 
 			// Iterate with our getting function //
-			StartIterating(std::bind(&StringIterator::FindUntilSpecificCharacter, this, &data,
-                    character, specialflags), specialflags);
+			StartIterating(specialflags, &StringIterator::FindUntilSpecificCharacter, &data, character, specialflags);
 
-#ifdef _DEBUG
+#if defined(_DEBUG) && (defined(LEVIATHAN_BUILD) || !defined(LEVIATHAN_UE_PLUGIN))
 			if(DebugMode){
 				Logger::Get()->Write("Iterator: find GetPositionsUntilACharacter, positions: "+
-                    Convert::ToString(data.Positions.X)+":"+Convert::ToString(data.Positions.Y)+
-                    ", found: "+Convert::ToString(data.FoundEnd));
+                    Convert::ToString(data.Positions) + ", found: "+Convert::ToString(data.FoundEnd));
 			}
 #endif // _DEBUG
 
@@ -546,20 +536,91 @@ namespace Leviathan{
 		inline ITERATORCALLBACK_RETURNTYPE HandleSpecialCharacters();
 		inline ITERATORCALLBACK_RETURNTYPE CheckActiveFlags();
 
+        template <typename T, typename R, typename ...Args>
+        R proxycall(T & obj, R(T::*mf)(Args...), Args &&... args) {
+            return (obj.*mf)(std::forward<Args>(args)...);
+        }
+
 		//! \brief Loops over the string using functorun to handle continuing
 		//! \param specialflagcopy Depending on set flags this can cause the iterator to treat
         //! line ends as if they were end of input
-		DLLEXPORT void StartIterating(std::function<ITERATORCALLBACK_RETURNTYPE()> functorun,
-            int specialflagcopy);
+        template <typename... Params, typename... Args>
+        void StartIterating(int specialflagcopy, 
+            ITERATORCALLBACK_RETURNTYPE(StringIterator::*mf)(Params...), Args&&... args)
+        {
+        #if defined(_DEBUG) && (defined(LEVIATHAN_BUILD) || !defined(LEVIATHAN_UE_PLUGIN))
+            if (DebugMode) {
+                Logger::Get()->Write("Iterator: begin ----------------------");
+            }
+        #endif // _DEBUG
+            // We want to skip multiple checks on same character so we skip checks on first character when starting except the beginning of the string //
+            bool IsStartUpLoop = GetPosition() == 0 ? true : false;
+
+            bool firstiter = true;
+            if (IsStartUpLoop)
+                firstiter = false;
+
+            for (; DataIterator->IsPositionValid(); DataIterator->MoveToNextCharacter()) {
+
+                // The GetCharacter call will cache the result but there might be iterators that don't
+                // want to get the current character
+            #if defined(_DEBUG) && (defined(LEVIATHAN_BUILD) || !defined(LEVIATHAN_UE_PLUGIN))
+                int chara = GetCharacter();
+
+                if (DebugMode) {
+                    // Convert to UTF8 //
+
+                    string datathing = "Iterator: iterating: " + Convert::ToString(GetPosition()) + " (";
+
+                    // Encode the character //
+                    utf8::utf32to8(&chara, (&chara) + 1, back_inserter(datathing));
+
+                    datathing += ")";
+
+                    Logger::Get()->Write(datathing);
+                }
+            #endif // _DEBUG
+
+                // First iteration call is the same as the last so skip it //
+                if (!firstiter) {
+
+                    if (CheckActiveFlags() == ITERATORCALLBACK_RETURNTYPE_STOP)
+                        break;
+
+                    // check current character //
+                    if (HandleSpecialCharacters() == ITERATORCALLBACK_RETURNTYPE_STOP)
+                        break;
+                }
+
+                firstiter = false;
+
+                // Check for special cases //
+
+                // valid character/valid iteration call callback //
+                ITERATORCALLBACK_RETURNTYPE retval = (this->*mf)(/*std::forward<Args>*/(args)...);
+                if (retval == ITERATORCALLBACK_RETURNTYPE_STOP) {
+
+#if defined(_DEBUG) && (defined(LEVIATHAN_BUILD) || !defined(LEVIATHAN_UE_PLUGIN))
+                    if (DebugMode) {
+                        Logger::Get()->Write("Iterator: stop ----------------------");
+                    }
+#endif // _DEBUG
+                    break;
+                }
+
+                // Character changes after this //
+                CurrentStored = false;
+            }
+        }
 
 
 		// ------------------------------------ //
 		//! Set when we should delete DataIterator
 		bool HandlesDelete;
 
-#ifdef _DEBUG
+#if defined(_DEBUG) && (defined(LEVIATHAN_BUILD) || !defined(LEVIATHAN_UE_PLUGIN))
 		//! Controls debug output printing
-		bool DebugMode;
+		bool DebugMode = false;
 #endif
 		
 		//! Wraps the underlying string
@@ -578,31 +639,31 @@ namespace Leviathan{
 
 		// Iteration functions //
 
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindFirstQuotedString(IteratorPositionData* data,
+		DLLEXPORT inline ITERATORCALLBACK_RETURNTYPE FindFirstQuotedString(IteratorPositionData* data,
             QUOTETYPE quotes, int specialflags);
         
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(
+		DLLEXPORT inline ITERATORCALLBACK_RETURNTYPE FindNextNormalCharacterString(
             IteratorPositionData* data, int stopflags, int specialflags);
         
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindNextNumber(IteratorNumberFindData* data,
+		DLLEXPORT inline ITERATORCALLBACK_RETURNTYPE FindNextNumber(IteratorNumberFindData* data,
             DECIMALSEPARATORTYPE decimal, int specialflags);
         
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilEquality(IteratorAssignmentData* data,
+		DLLEXPORT inline ITERATORCALLBACK_RETURNTYPE FindUntilEquality(IteratorAssignmentData* data,
             EQUALITYCHARACTER equality, int specialflags);
         
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE SkipSomething(IteratorCharacterData* data,
-            int additionalskip, int specialflags);
+		DLLEXPORT inline ITERATORCALLBACK_RETURNTYPE SkipSomething(IteratorCharacterData &data,
+            const int additionalskip, const int specialflags);
         
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilSpecificCharacter(
+		DLLEXPORT inline ITERATORCALLBACK_RETURNTYPE FindUntilSpecificCharacter(
             IteratorFindUntilData* data, int character, int specialflags);
         
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilNewLine(IteratorFindUntilData* data);
+		DLLEXPORT inline ITERATORCALLBACK_RETURNTYPE FindUntilNewLine(IteratorFindUntilData* data);
 
-        DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindInMatchingParentheses(
+        DLLEXPORT inline ITERATORCALLBACK_RETURNTYPE FindInMatchingParentheses(
             IteratorNestingLevelData* data, int left, int right, int specialflags);
 
 		template<class AcceptStr>
-		DLLEXPORT ITERATORCALLBACK_RETURNTYPE FindUntilSequence(
+		DLLEXPORT inline ITERATORCALLBACK_RETURNTYPE FindUntilSequence(
             IteratorUntilSequenceData<AcceptStr>* data, int specialflags)
         {
 			// First check if this is a line end //
@@ -611,9 +672,9 @@ namespace Leviathan{
 			if(curcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
 
 				// Set the end to one before this, if found any //
-				if(data->Positions.X != -1){
+				if(!data->Positions.Start){
 
-					data->Positions.Y = GetPosition()-1;
+					data->Positions.End = GetPosition() - 1;
 				}
 
 				return ITERATORCALLBACK_RETURNTYPE_STOP;
@@ -649,14 +710,14 @@ namespace Leviathan{
 			data->CurMatchedIndex = 0;
 
 			// All is fine //
-			if(data->Positions.X == -1){
+			if(!data->Positions.Start){
 
-				data->Positions.X = GetPosition();
-				data->Positions.Y = data->Positions.X;
+				data->Positions.Start = GetPosition();
+				data->Positions.End = data->Positions.Start;
 			} else {
 
 				// This might be poisonous to performance, but this gets the job done //
-				data->Positions.Y = GetPosition();
+				data->Positions.End = GetPosition();
 			}
 
 			return ITERATORCALLBACK_RETURNTYPE_CONTINUE;

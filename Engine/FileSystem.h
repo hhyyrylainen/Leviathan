@@ -5,8 +5,9 @@
 // ---- includes ---- //
 #include "Common/DataStoring/NamedVars.h"
 #include "Common/ThreadSafe.h"
-#include "Exceptions.h"
+
 #include <regex>
+#include "ErrorReporter.h"
 
 
 namespace Leviathan{
@@ -68,9 +69,9 @@ namespace Leviathan{
 		DLLEXPORT ~FileSystem();
 
         //! \brief Runs the indexing and sorting
-		DLLEXPORT bool Init();
+		DLLEXPORT bool Init(LErrorReporter* errorreport);
 
-        //! \brief Destroyes the current index and recreates it
+        //! \brief Destroys the current index and recreates it
 		DLLEXPORT bool ReSearchFiles();
 
 		DLLEXPORT void SortFileVectors();
@@ -113,8 +114,10 @@ namespace Leviathan{
 		DLLEXPORT static std::string GetFontFolder();
 		DLLEXPORT static std::string GetSoundFolder();
 
+    #ifdef USING_OGRE
 		DLLEXPORT static void RegisterOGREResourceGroups();
 		DLLEXPORT static void RegisterOGREResourceLocation(const std::string &location);
+    #endif // USING_OGRE
 
 		DLLEXPORT static bool DoesExtensionMatch(FileDefinitionType* file,
             const std::vector<int> &Ids);
@@ -132,7 +135,7 @@ namespace Leviathan{
 
 		// file handling //
 		DLLEXPORT static bool LoadDataDump(const std::string &file,
-            std::vector<std::shared_ptr<NamedVariableList>> &vec);
+            std::vector<std::shared_ptr<NamedVariableList>> &vec, LErrorReporter* errorreport);
         
 		// Warning: \todo linux version ignores the defined pattern //
 		DLLEXPORT static bool GetFilesInDirectory(std::vector<std::string> &files,
@@ -146,10 +149,10 @@ namespace Leviathan{
 		DLLEXPORT static bool WriteToFile(const std::wstring &data, const std::wstring &filename);
 		DLLEXPORT static bool AppendToFile(const std::string &data, const std::string &filepath);
         
-		DLLEXPORT static void ReadFileEntirely(const std::string &file,
+		DLLEXPORT static bool ReadFileEntirely(const std::string &file,
             std::string &resultreceiver);
         
-		DLLEXPORT static void ReadFileEntirely(const std::wstring &file,
+		DLLEXPORT static bool ReadFileEntirely(const std::wstring &file,
             std::wstring &resultreceiver);
         
         
@@ -201,6 +204,8 @@ namespace Leviathan{
 		bool IsSorted;
 		bool IsBeingSorted;
 		bool ShouldSortStop;
+
+        LErrorReporter* ErrorReporter = nullptr;
 
 		// ------------------------------------ //
 		static std::string DataFolder;

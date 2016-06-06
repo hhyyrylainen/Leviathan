@@ -29,6 +29,26 @@ macro(RemoveLibsWithDebugSuffix TargetList)
 
 endmacro(RemoveLibsWithDebugSuffix TargetList)
 
+# Removes all .cpp files
+macro(RemoveSourceFilesFromList TargetList)
+  
+  set(PassedItems)
+
+  foreach(clib ${${TargetList}})
+    
+    string(REGEX MATCH "\\.cpp" item ${clib})
+
+    if(NOT item)
+      
+      set(PassedItems ${PassedItems} ${clib})
+
+    endif()
+  endforeach()
+  
+  set(${TargetList} ${PassedItems})
+
+endmacro(RemoveSourceFilesFromList TargetList)
+
 # Goes through a list and globs all files that have the same name as any list item
 # Useful for finding lib.so lib.so.2.5.4 and all other variants
 macro(GlobAllVariants InputList Output)

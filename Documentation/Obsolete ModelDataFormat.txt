@@ -1,0 +1,83 @@
+Extension: levmo
+
+This filetype is to be used with levmd files that define models. This file format is used to store 
+vertex data (normals, uv coordinates etc.) and animations (skeletal and morph target) + data that is
+required by animations (bones, rigs). You will usually have just one levmd file and multiple levmo files
+defining geometry datas for the invidiual parts of the model (or you can just have everything in one levmo file).
+
+Leviathan Model Data File can be plain text (discussed first) or binary (discussed later on)
+
+Header:
+Contains information about the version of exporter and creator .etc
+
+objects:
+contains all of the invidual components of the model (bones, vertices, animations)
+
+in this format
+
+CHECK ModelFormat.txt FOR RULES OF FILE CONTENTS
+
+hint: Don't uses tabs, use spaces. You can set notepad++ to replace tabs with spaces in the settings.
+note: tabs might be supported in future versions
+
+
+#### Example file ####
+FileType: ModelData;
+ExporterVersion: 1.0;
+Model-Name = "DefaultModel_Wings";
+CoordinateSystem = BLENDER; // or LEVIATHAN (directx 'normal' handedness)
+
+// --------------- HEADER ENDS AFTER THIS LINE ------------- //
+objects {
+    o ModelData "Cube_Whole" {
+        t VertexCoordinates {
+            // this is 0 based indexed list of vertex coordinates //
+            0 0 0
+            1 1 1
+            2.543455 12.2525 3544.333
+            // following the three coordinates can be the id of the vertex group it belongs to (used for animation)
+        }
+        t VertexNormals {
+            0.000000 -1.000000 -0.000000
+            // 0 based indexed list of normal vectors, NEEDS to match indexing in vertex coordinate list
+        }
+        t Faces {
+            // list of faces where faces are a list of 0 based indexes to VertexCoordinates and VertexNormals
+            // following the face is the possible uv coordinates
+            0//1 1/0/2 2/1/3
+            0/0/0 0 1
+            1 1 1
+            1//1 0//1 5/5/6
+        }
+        l VertexProperties {
+            // special settings for vertices
+            Face0 = SETSPECIAL_NONE;
+        }        
+        t Bones{
+        
+        
+        } 
+        t MorphTargetPoints {
+            // something to be added later can be just left out for now //
+            
+        
+        }
+        l SpecialProperties {
+            // import of blender custom attributes that can be used to pass data here
+        
+        }
+    }
+    o ModelData "Another_part of model" {
+        ...
+    }
+}
+
+// file end, not required but you can make read end before last line
+-!-
+so that this doesn't cause any errors or
+anything
+
+
+
+
+

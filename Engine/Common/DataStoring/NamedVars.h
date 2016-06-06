@@ -1,16 +1,23 @@
-#ifndef LEVIATHAN_NAMEDVARS
-#define LEVIATHAN_NAMEDVARS
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
-#include "Exceptions.h"
+#include <vector>
+#include <string>
+
+
 #include "Common/DataStoring/DataBlock.h"
 #include "../ReferenceCounted.h"
-#include "SFML/Network/Packet.hpp"
 #include "Common/ThreadSafe.h"
+
+
+#ifndef ALTERNATIVE_EXCEPTIONS_FATAL
+#include "Exceptions.h"
+#endif
+#ifdef SFML_PACKETS
+#include "SFML/Network/Packet.hpp"
+#endif // SFML_PACKETS
+#include "ErrorReporter.h"
 
 namespace Leviathan{
 
@@ -24,23 +31,31 @@ namespace Leviathan{
 		DLLEXPORT NamedVariableList(const NamedVariableList &other);
 		DLLEXPORT NamedVariableList(const std::string &name, VariableBlock* value1);
 		DLLEXPORT NamedVariableList(const std::string &name, const VariableBlock &val);
+    #ifdef USING_ANGELSCRIPT
         DLLEXPORT NamedVariableList(ScriptSafeVariableBlock* const data);
+    #endif // USING_ANGELSCRIPT
 
+    #ifdef SFML_PACKETS
 		//! \brief For receiving NamedVariableLists through the network
 		DLLEXPORT NamedVariableList(sf::Packet &packet);
+
+        //! \brief For passing NamedVariableLists to other instances through the network
+        DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
+
+    #endif //SFML_PACKETS
 
 		//! \warning the vector will be wiped clean after creating new variable
 		DLLEXPORT NamedVariableList(const std::string &name,
             std::vector<VariableBlock*> values_willclear);
         
-		DLLEXPORT NamedVariableList(const std::string &line,
+		DLLEXPORT NamedVariableList(const std::string &line, LErrorReporter* errorreport,
             std::map<std::string, std::shared_ptr<VariableBlock>>* predefined = NULL);
         
-		DLLEXPORT NamedVariableList(const std::string &name, const std::string &valuestr,
+		DLLEXPORT NamedVariableList(const std::string &name, const std::string &valuestr, LErrorReporter* errorreport,
             std::map<std::string, std::shared_ptr<VariableBlock>>* predefined = NULL);
 
 		//! \brief Helper function for constructing values
-		DLLEXPORT void ConstructValuesForObject(const std::string &variablestr,
+		DLLEXPORT bool ConstructValuesForObject(const std::string &variablestr, LErrorReporter* errorreport,
             std::map<std::string, std::shared_ptr<VariableBlock>>* predefined);
 
         //! \brief Handles a found bracket expression "[...]" parsing it recursively
@@ -48,9 +63,18 @@ namespace Leviathan{
         //! \return false on parse error
         DLLEXPORT bool RecursiveParseList(std::vector<VariableBlock*> &resultvalues,
             std::unique_ptr<std::string> expression,
+            LErrorReporter* errorreport,
             std::map<std::string, std::shared_ptr<VariableBlock>>* predefined);
 
 		DLLEXPORT ~NamedVariableList();
+
+        //! \brief Returns true if this is valid
+        DLLEXPORT operator bool() const {
+
+            return Name.length() > 0;
+        }
+
+
 		// ------------------------------------ //
 		DLLEXPORT void SetValue(const VariableBlock &value1);
 		DLLEXPORT void SetValue(VariableBlock* value1);
@@ -60,14 +84,11 @@ namespace Leviathan{
 
 		DLLEXPORT VariableBlock* GetValueDirect();
 		DLLEXPORT VariableBlock& GetValue();
-		DLLEXPORT VariableBlock* GetValueDirect(const int &nindex);
-		DLLEXPORT VariableBlock& GetValue(const int &nindex);
+		DLLEXPORT VariableBlock* GetValueDirect(size_t nindex);
+		DLLEXPORT VariableBlock& GetValue(size_t nindex);
 		DLLEXPORT std::vector<VariableBlock*>& GetValues();
 
 		DLLEXPORT size_t GetVariableCount() const;
-
-		//! \brief For passing NamedVariableLists to other instances through the network
-		DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
 
 
 		DLLEXPORT int GetCommonType() const;
@@ -117,6 +138,7 @@ namespace Leviathan{
 		// process functions //
 		DLLEXPORT static bool ProcessDataDump(const std::string &data,
             std::vector<std::shared_ptr<NamedVariableList>> &vec,
+            LErrorReporter* errorreport,
             std::map<std::string, std::shared_ptr<VariableBlock>>* predefined = NULL);
         
 		// operators //
@@ -156,16 +178,23 @@ namespace Leviathan{
 
 		DLLEXPORT NamedVars(const NamedVars &other);
         //! \todo Allow predefined values
-		DLLEXPORT NamedVars(const std::string &datadump);
+		DLLEXPORT NamedVars(const std::string &datadump, LErrorReporter* errorreport);
 		DLLEXPORT NamedVars(const std::vector<std::shared_ptr<NamedVariableList>> &variables);
 		DLLEXPORT NamedVars(std::shared_ptr<NamedVariableList> variable);
 
         
-		//! \param takevariable New'd ptr that will be owned by this object
+		//! \param takevariable new allocated ptr that will be owned by this object
 		DLLEXPORT NamedVars(NamedVariableList* takevariable);
+
+    #ifdef SFML_PACKETS
 
 		//! \brief Loads a NamedVars object from a packet
 		DLLEXPORT NamedVars(sf::Packet &packet);
+
+        //! \brief Writes this NamedVars to a packet
+        DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
+
+    #endif //SFML_PACKETS
 
 		DLLEXPORT ~NamedVars();
 		// ------------------------------------ //
@@ -193,8 +222,7 @@ namespace Leviathan{
 		DLLEXPORT bool GetValues(const std::string &name,
             std::vector<const VariableBlock*> &receiver) const;
 
-		//! \brief Writes this NamedVars to a packet
-		DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;
+
 
 		DLLEXPORT std::shared_ptr<NamedVariableList> GetValueDirect(const std::string &name) const;
 
@@ -212,7 +240,8 @@ namespace Leviathan{
 				}
 				if(!tmpblock->ConvertAndAssingToVariable<T>(receiver)){
 
-                    throw InvalidType("Unallowed NamedVars block conversion");
+                    // Unallowed NamedVars block conversion
+                    return false;
 				}
 			}
 			catch(...){
@@ -225,15 +254,18 @@ namespace Leviathan{
 
 		DLLEXPORT std::vector<VariableBlock*>* GetValues(const std::string &name);
 
-		// Script accessible functions //
-		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(NamedVars);
+    #ifdef USING_ANGELSCRIPT
+        // Script accessible functions //
+        REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(NamedVars);
 
         //! \brief Finds and returns the first value in a list matching name
-		//! \warning For use from scripts
-		ScriptSafeVariableBlock* GetScriptCompatibleValue(const std::string &name);
+        //! \warning For use from scripts
+        ScriptSafeVariableBlock* GetScriptCompatibleValue(const std::string &name);
 
         //! For use from scripts
         bool AddScriptCompatibleValue(ScriptSafeVariableBlock* value);
+
+    #endif // USING_ANGELSCRIPT 
         
 		// ------------------------------------ //
 		DLLEXPORT int GetVariableType(const std::string &name) const;
@@ -279,13 +311,18 @@ namespace Leviathan{
 		//! \brief Removes a value with the given name if it exists
 		DLLEXPORT void RemoveIfExists(const std::string &name, Lock &guard);
 		// ------------------------------------ //
-		DLLEXPORT bool LoadVarsFromFile(const std::string &file);
+		DLLEXPORT bool LoadVarsFromFile(const std::string &file, LErrorReporter* errorreport);
 
 		DLLEXPORT std::vector<std::shared_ptr<NamedVariableList>>* GetVec();
 		DLLEXPORT void SetVec(std::vector<std::shared_ptr<NamedVariableList>> &vec);
 
 		//! \brief Returns the size of the internal variable vector
 		DLLEXPORT size_t GetVariableCount() const;
+
+        DLLEXPORT operator bool() const {
+
+            return !StateIsInvalid;
+        }
 
 		// ------------------------------------ //
 
@@ -316,9 +353,11 @@ namespace Leviathan{
 		}
 
 	private:
+
 		std::vector<std::shared_ptr<NamedVariableList>> Variables;
+
+        //! If set the input data was invalid and this is in invalid state
+        bool StateIsInvalid = false;
 	};
 
 }
-
-#endif

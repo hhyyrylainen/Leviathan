@@ -1,10 +1,13 @@
+#include "Include.h"
 // ------------------------------------ //
 #include "DataBlock.h"
-#include "Exceptions.h"
 #include "Iterators/StringIterator.h"
-#include "Script/ScriptExecutor.h"
 #include "../StringOperations.h"
 #include <float.h>
+
+#ifdef USING_ANGELSCRIPT
+#include "Script/ScriptExecutor.h"
+#endif //USING_ANGELSCRIPT
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -13,6 +16,7 @@ using namespace std;
 // should also improve compilation speed and reduce the mess in the header and
 // allow includes that are needed and couldn't be in the header
 //
+#ifdef USING_ANGELSCRIPT
 namespace Leviathan{
 // templates for getting AngelScript type id from template //
 #define TYPEIDGETTEMPLATEINSTANTIATION(TypeForTemplate, StringToUse) template<> \
@@ -28,7 +32,7 @@ namespace Leviathan{
     TYPEIDGETTEMPLATEINSTANTIATION(std::string, "string");
 
 }
-
+#endif //USING_ANGELSCRIPT
 // ------------------------------------ //
 DLLEXPORT Leviathan::VariableBlock::VariableBlock(const std::string &valuetoparse,
     map<string, std::shared_ptr<VariableBlock>>* predefined)
@@ -36,7 +40,11 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(const std::string &valuetopars
 	// the text should have all preceding and trailing spaces removed //
 	if(valuetoparse.size() == 0){
 		// can't be anything //
+    #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
 		throw InvalidArgument("no data passed");
+    #else
+        return;
+    #endif
 	}
 	// try to figure out what type of block is required for this variable //
 
@@ -115,6 +123,7 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(const std::string &valuetopars
 
 
 // ------------------ ScriptSafeVariableBlock ------------------ //
+#ifdef USING_ANGELSCRIPT
 Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyfrom,
     const std::string &name) :
     NamedVariableBlock(copyfrom->GetBlock()->AllocateNewFromThis(), name)
@@ -152,7 +161,7 @@ Leviathan::ScriptSafeVariableBlock::ScriptSafeVariableBlock(VariableBlock* copyf
                 "safe block");
 		}
 }
-
+#endif //USING_ANGELSCRIPT
 // ------------------ Loading/saving from/to packets ------------------ //
 #define DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(BlockTypeName, VarTypeName, TmpTypeName) \
 template<> DLLEXPORT void BlockTypeName::AddDataToPacket(sf::Packet &packet){ \
@@ -170,8 +179,8 @@ template<> DLLEXPORT BlockTypeName::DataBlock(sf::Packet &packet){ \
 
 
 // ------------------ Loading/saving from/to packets ------------------ //
+#ifdef SFML_PACKETS
 namespace Leviathan{
-
 	DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(IntBlock, int, int);
 	DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(FloatBlock, float, float);
 	DEFAULTTOANDFROMPACKETCONVERTFUNCTINS(BoolBlock, bool, bool);
@@ -291,3 +300,5 @@ namespace Leviathan{
 	}
 
 }
+#endif //SFML_PACKETS
+

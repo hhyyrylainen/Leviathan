@@ -2,87 +2,88 @@
 // ------------------------------------ //
 #include "../Common/Types.h"
 
-namespace Leviathan{
+namespace Leviathan {
 
-	class IteratorPositionData{
-	public:
-		IteratorPositionData(int val1, int val2) : Positions(val1, val2){
+class IteratorPositionData {
+public:
+    //IteratorPositionData(size_t val1, size_t val2) : Positions(val1, val2) {
 
-		}
-		IteratorPositionData() : Positions(-1, -1){}
+    //}
+    IteratorPositionData(){
+    }
 
-		Int2 Positions;
+    StartEndIndex Positions;
 
-	};
+};
 
-	class IteratorFindUntilData{
-	public:
-		IteratorFindUntilData(int val1, int val2) : Positions(val1, val2), FoundEnd(false){
+class IteratorFindUntilData {
+public:
+    //IteratorFindUntilData(int val1, int val2) : Positions(val1, val2), FoundEnd(false) {
 
-		}
-		IteratorFindUntilData() : Positions(-1, -1), FoundEnd(false){}
+    //}
+    IteratorFindUntilData() : FoundEnd(false) {
+    }
 
-		Int2 Positions;
-		bool FoundEnd;
-	};
-
-
-	class IteratorNumberFindData{
-	public:
-		IteratorNumberFindData() :
-            Positions(-1, -1), DigitsFound(0), DecimalFound(false), NegativeFound(false)
-        {
-            
-		}
-
-		// data //
-		Int2 Positions;
-		int DigitsFound;
-		bool DecimalFound;
-		bool NegativeFound;
-	};
-
-	class IteratorAssignmentData{
-	public:
-		IteratorAssignmentData() : Positions(-1, -1), SeparatorFound(false){
-		}
+    StartEndIndex Positions;
+    bool FoundEnd;
+};
 
 
-		Int2 Positions;
-		bool SeparatorFound;
-	};
+class IteratorNumberFindData {
+public:
+    IteratorNumberFindData() :
+        DigitsFound(0), DecimalFound(false), NegativeFound(false) {
 
-	class IteratorCharacterData{
-	public:
-		IteratorCharacterData(int chartouse) : CharacterToUse(chartouse){
-		}
+    }
 
-		int CharacterToUse;
-	};
+    // data //
+    StartEndIndex Positions;
+    int DigitsFound;
+    bool DecimalFound;
+    bool NegativeFound;
+};
 
-	template<class StrType>
-	class IteratorUntilSequenceData{
-	public:
-		IteratorUntilSequenceData(const StrType &finduntil) :
-            CurMatchedIndex(0), StringToMatch(finduntil), Positions(-1, -1), EndFound(false)
-        {
-            
-		}
+class IteratorAssignmentData {
+public:
+    IteratorAssignmentData() : SeparatorFound(false) {
+    }
 
-		StrType StringToMatch;
-		size_t CurMatchedIndex;
-		Int2 Positions;
-		bool EndFound;
-	};
 
-    class IteratorNestingLevelData{
-    public:
-        IteratorNestingLevelData() : Positions(-1, -1), NestingLevel(0){
-        }
+    StartEndIndex Positions;
+    bool SeparatorFound;
+};
 
-        Int2 Positions;
-        int NestingLevel;
-    };
+class IteratorCharacterData {
+public:
+    IteratorCharacterData(int chartouse) : CharacterToUse(chartouse) {
+    }
+
+    int CharacterToUse;
+};
+
+template<class StrType>
+class IteratorUntilSequenceData {
+public:
+    IteratorUntilSequenceData(const StrType &finduntil) :
+        CurMatchedIndex(0), StringToMatch(finduntil), EndFound(false) {
+
+    }
+
+    StrType StringToMatch;
+    size_t CurMatchedIndex;
+    StartEndIndex Positions;
+    bool EndFound;
+};
+
+class IteratorNestingLevelData {
+public:
+    IteratorNestingLevelData() : NestingLevel(0) {
+    }
+
+    StartEndIndex Positions;
+    int NestingLevel;
+};
 
 }
+
 

@@ -1,23 +1,31 @@
+#include "Include.h"
 // ------------------------------------ //
 #include "FileSystem.h"
 
+#ifdef USING_OGRE
 #include "OgreResourceGroupManager.h"
+#endif
 #include "Common/StringOperations.h"
+
+#ifndef ALTERNATIVE_EXCEPTIONS_FATAL
 #include "Exceptions.h"
+#endif
 #include "TimeIncludes.h"
 
 #include <ostream>
+#include <fstream>
 
 #ifdef __GNUC__
 #include <dirent.h>
 #include <sys/stat.h>
 #else
-#include <initguid.h>
-#include <shlobj.h>
 #endif
 #ifdef _WIN32
+
 #include "WindowsInclude.h"
+
 #endif //_WIN32
+#include <iosfwd>
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -75,7 +83,9 @@ string Leviathan::FileSystem::SoundFolder = "Sound/";
 
 FileSystem* Leviathan::FileSystem::Staticaccess = NULL;
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::FileSystem::Init(){
+DLLEXPORT bool Leviathan::FileSystem::Init(LErrorReporter* errorreport){
+
+    ErrorReporter = errorreport;
 
 	IsSorted = false;
 
@@ -89,8 +99,8 @@ DLLEXPORT bool Leviathan::FileSystem::Init(){
 
 	if(files.size() < 1){
 
-		Logger::Get()->Error("FileSystem: SearchFiles: No files inside data folder, "
-            "cannot possibly work");
+        ErrorReporter->Error(std::string("FileSystem: SearchFiles: No files inside data folder, "
+            "cannot possibly work"));
 		return false;
 	}
 
@@ -125,7 +135,7 @@ DLLEXPORT bool Leviathan::FileSystem::Init(){
 		AllFiles.push_back(tmpptr);
 	}
 	// print some info //
-	Logger::Get()->Info("FileSystem: found "+Convert::ToString(AllFiles.size())+
+    ErrorReporter->Info("FileSystem: found "+Convert::ToString(AllFiles.size())+
         " files in Data folder with "+Convert::ToString(FileTypes.size())+
         " different types of extensions");
 
@@ -136,7 +146,7 @@ DLLEXPORT bool Leviathan::FileSystem::Init(){
 	auto elapsed = Time::GetTimeMicro64() - starttime;
 
 	// print info //
-	Logger::Get()->Info("FileSystem: vectors sorted and indexes created, took "+
+    ErrorReporter->Info("FileSystem: vectors sorted and indexes created, took "+
         Convert::ToString(elapsed)+" micro seconds");
 
 	return true;
@@ -174,40 +184,8 @@ DLLEXPORT bool Leviathan::FileSystem::ReSearchFiles(){
 	SAFE_DELETE_VECTOR(ScriptIndexes);
 
     // Search again //
-	return Init();
+	return Init(ErrorReporter);
 }
-// ------------------------------------ //
-#ifdef _WIN32
-bool Leviathan::FileSystem::OperatingOnVista(){
-
-	OSVERSIONINFO osver;
-	memset(&osver, 0, sizeof(OSVERSIONINFO));
-	osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
-	if(!GetVersionEx(&osver))
-		return false;
-
-	if((osver.dwPlatformId == VER_PLATFORM_WIN32_NT) && (osver.dwMajorVersion >= 6  ))
-		return true;
-
-	return false;
-}
-
-bool Leviathan::FileSystem::OperatingOnXP(){
-
-	OSVERSIONINFO osver;
-	memset(&osver, 0, sizeof(OSVERSIONINFO));
-	osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
-	if(!GetVersionEx(&osver))
-		return false;
-
-	if((osver.dwPlatformId == VER_PLATFORM_WIN32_NT) && (osver.dwMajorVersion >= 5))
-		return true;
-
-	return false;
-}
-#endif
 // ------------------------------------ //
 string Leviathan::FileSystem::GetDataFolder(){
 
@@ -267,7 +245,7 @@ void Leviathan::FileSystem::GetWindowsFolder(wstring &path){
 
 void Leviathan::FileSystem::GetSpecialFolder(wstring &path, int specialtype){
 	wchar_t directory[MAX_PATH];
-	SHGetSpecialFolderPathW(NULL, directory, specialtype, FALSE);
+	SHGetSpecialFolderPathW(NULL, directory, specialtype, false);
 	path = directory;
 	if(path.back() != L'/')
 		path += L'/';
@@ -300,14 +278,14 @@ void Leviathan::FileSystem::SetTextureFolder(const string &folder){
 }
 // ------------------ File handling ------------------ //
 DLLEXPORT bool FileSystem::LoadDataDump(const string &file,
-    vector<shared_ptr<NamedVariableList>>& vec)
+    vector<shared_ptr<NamedVariableList>>& vec, LErrorReporter* errorreport)
 {
 	// Get data //
 	ifstream stream(file);
     
 	if(!stream.good()){
 		// no file ! //
-		Logger::Get()->Error("FileSystem: LoadDataDumb: Failed to read file: "+file);
+        errorreport->Error("FileSystem: LoadDataDumb: Failed to read file: "+file);
 		return false;
 	}
     
@@ -316,7 +294,7 @@ DLLEXPORT bool FileSystem::LoadDataDump(const string &file,
 	auto length = stream.tellg();
 	stream.seekg(0, ios::beg);
     
-	if(length == 0){
+	if(length == std::streampos(0)){
         
 		// empty file ! //
 		return false;
@@ -335,7 +313,7 @@ DLLEXPORT bool FileSystem::LoadDataDump(const string &file,
 	string filecontents = Buff.get();
 
 	// Create values //
-	return NamedVariableList::ProcessDataDump(filecontents, vec);
+	return NamedVariableList::ProcessDataDump(filecontents, vec, errorreport);
 }
 
 #ifdef _WIN32
@@ -345,11 +323,11 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
 	string FilePath;
     string Pattern;
 	HANDLE hFile;
-	WIN32_FIND_DATA FileInfo;
+	WIN32_FIND_DATAA FileInfo;
 
 	Pattern = dirpath + pattern;
 
-	hFile = ::FindFirstFile(Pattern.c_str(), &FileInfo);
+	hFile = ::FindFirstFileA(Pattern.c_str(), &FileInfo);
 	if(hFile != INVALID_HANDLE_VALUE){
 		do{
 
@@ -370,7 +348,7 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
 					files.push_back(dirpath+FileInfo.cFileName);
 				}
 			}
-		}while(::FindNextFile(hFile, &FileInfo) == TRUE);
+		}while(::FindNextFileA(hFile, &FileInfo) == 1);
 
 		// close handle //
 		FindClose(hFile);
@@ -431,7 +409,11 @@ size_t Leviathan::FileSystem::GetFileLength(const string &name){
 		return returnval;
 	}
 
+#ifndef ALTERNATIVE_EXCEPTIONS_FATAL
     throw InvalidArgument("Cannot determine file size it doesn't exist");
+#else
+    return 0;
+#endif
 }
 
 DLLEXPORT bool Leviathan::FileSystem::FileExists(const string &name){
@@ -493,7 +475,7 @@ bool Leviathan::FileSystem::AppendToFile(const string &data, const string &filep
 	return false;
 }
 
-DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file,
+DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const wstring &file,
     wstring &resultreceiver)
 {
 #ifdef _WIN32
@@ -511,9 +493,9 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file,
 
 		// cannot be loaded //
 #ifdef _WIN32
-		assert(SIZE_T_MAX >= rpos);
+		LEVIATHAN_ASSERT(SIZE_T_MAX >= rpos, "file is too large");
 #else
-		assert(std::numeric_limits<size_t>::max() >= rpos);
+        LEVIATHAN_ASSERT(std::numeric_limits<size_t>::max() >= rpos, "file is too large");
 #endif
 		resultreceiver.resize(static_cast<size_t>(rpos));
 		// back to start //
@@ -523,13 +505,13 @@ DLLEXPORT  void Leviathan::FileSystem::ReadFileEntirely(const wstring &file,
 
 		// done, cleanup //
 		reader.close();
-		return;
+		return true;
 	}
 
-	throw InvalidArgument("cannot read given file");
+    return false;
 }
 
-DLLEXPORT void Leviathan::FileSystem::ReadFileEntirely(const string &file,
+DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const string &file,
     string &resultreceiver)
 {
 
@@ -544,11 +526,11 @@ DLLEXPORT void Leviathan::FileSystem::ReadFileEntirely(const string &file,
 
 
 		// cannot be loaded //
-#ifdef _WIN32
-		assert(SIZE_T_MAX >= rpos);
-#else
-		assert(std::numeric_limits<size_t>::max() >= rpos);
-#endif
+    #ifdef _WIN32
+        LEVIATHAN_ASSERT(SIZE_T_MAX >= rpos, "file is too large");
+    #else
+        LEVIATHAN_ASSERT(std::numeric_limits<size_t>::max() >= rpos, "file is too large");
+    #endif
 		resultreceiver.resize(static_cast<size_t>(rpos));
 		// back to start //
 		reader.seekg(0, ios::beg);
@@ -557,10 +539,10 @@ DLLEXPORT void Leviathan::FileSystem::ReadFileEntirely(const string &file,
 
 		// done, cleanup //
 		reader.close();
-		return;
+		return true;
 	}
     
-	throw InvalidArgument("cannot read given file");
+    return false;
 }
 // ------------------ Non static part ------------------ //
 DLLEXPORT void Leviathan::FileSystem::SortFileVectors(){
@@ -647,7 +629,12 @@ DLLEXPORT const string& Leviathan::FileSystem::GetExtensionName(int id) const{
 	}
     
 	// Not found //
+#ifndef ALTERNATIVE_EXCEPTIONS_FATAL
 	throw NotFound("No extension corresponds with id");
+#else
+    LEVIATHAN_ASSERT(0, "No extension corresponds with id");
+    return FileTypes[0]->Name;
+#endif //ALTERNATIVE_EXCEPTIONS_FATAL
 }
 // ------------------------------------ //
 DLLEXPORT string Leviathan::FileSystem::SearchForFile(FILEGROUP which, const string& name, const string& extensions,
@@ -723,7 +710,7 @@ DLLEXPORT string Leviathan::FileSystem::SearchForFile(FILEGROUP which, const str
 	}
 	// not found return empty and if debug build warn //
 
-	Logger::Get()->Error("FileSystem: File not found: "+name+"."+extensions);
+	ErrorReporter->Error("FileSystem: File not found: "+name+"."+extensions);
 
 	return "";
 }
@@ -806,7 +793,7 @@ shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector
     vector<int>& extensions, const string& name, bool UseIndexVector,
     vector<CharWithIndex*>* Index)
 {
-	int StartSpot = 0;
+	size_t StartSpot = 0;
 
 	// use index to get start spot for faster searching //
 	if(UseIndexVector){
@@ -893,6 +880,7 @@ void Leviathan::FileSystem::_CreateIndexesIfMissing(vector<shared_ptr<FileDefini
 	indexed = true;
 }
 
+#ifdef USING_OGRE
 DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 	// get the resource managing singleton //
 	Ogre::ResourceGroupManager& manager = Ogre::ResourceGroupManager::getSingleton();
@@ -992,6 +980,7 @@ DLLEXPORT  void Leviathan::FileSystem::RegisterOGREResourceLocation(const string
 
 	manager.initialiseResourceGroup(groupname);
 }
+#endif // USING_OGRE
 // ------------------ FileDefinitionType ------------------ //
 Leviathan::FileDefinitionType::FileDefinitionType(FileSystem* instance, const string &path) :
     RelativePath(path)

@@ -399,7 +399,7 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
 // ------------------ File operations ------------------ //
 size_t Leviathan::FileSystem::GetFileLength(const string &name){
 
-	ifstream file(name);
+	ifstream file(name, ios::binary);
 
 	if(file.good()){
         
@@ -429,7 +429,7 @@ DLLEXPORT bool Leviathan::FileSystem::FileExists(const string &name){
 }
 
 bool Leviathan::FileSystem::WriteToFile(const string &data, const string &filename){
-	ofstream file(filename);
+	ofstream file(filename, ios::binary);
 	if(file.is_open()){
         
 		file << data;
@@ -444,9 +444,9 @@ bool Leviathan::FileSystem::WriteToFile(const string &data, const string &filena
 
 bool Leviathan::FileSystem::WriteToFile(const wstring &data, const wstring &filename){
 #ifdef _WIN32
-	wofstream file(filename);
+	wofstream file(filename, ios::binary);
 #else
-	wofstream file(Convert::WstringToString(filename));
+	wofstream file(Convert::WstringToString(filename), ios::binary);
 #endif
 	if (file.is_open()){
 		file << data;
@@ -461,7 +461,7 @@ bool Leviathan::FileSystem::WriteToFile(const wstring &data, const wstring &file
 
 bool Leviathan::FileSystem::AppendToFile(const string &data, const string &filepath){
 
-	ofstream file(filepath, ofstream::app);
+	ofstream file(filepath, ofstream::app | ios::binary);
 
 	if(file.is_open()){
         
@@ -479,9 +479,9 @@ DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const wstring &file,
     wstring &resultreceiver)
 {
 #ifdef _WIN32
-	wifstream reader(file, ios::in);
+	wifstream reader(file, ios::in | ios::binary);
 #else
-	wifstream reader(Convert::WstringToString(file), ios::in);
+	wifstream reader(Convert::WstringToString(file), ios::in | ios::binary);
 #endif
 	if(reader){
 
@@ -515,7 +515,7 @@ DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const string &file,
     string &resultreceiver)
 {
 
-	ifstream reader(file, ios::in);
+	ifstream reader(file, ios::in | ios::binary);
 
 	if(reader){
 

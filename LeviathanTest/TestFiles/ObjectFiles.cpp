@@ -36,7 +36,7 @@ TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
     const NamedVars& HeaderVars = *ofile->GetVariables();
 
     // Validate the output //
-    CHECK(HeaderVars.GetVariableCount() == 2);
+    CHECK(HeaderVars.GetVariableCount() == 4);
 
     REQUIRE(ofile->GetTotalObjectCount() == 1);
 

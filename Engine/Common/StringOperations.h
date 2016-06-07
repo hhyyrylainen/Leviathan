@@ -398,7 +398,7 @@ namespace Leviathan{
 			for(size_t i = 0; i < CopyOperations.size(); i++){
 				// copy using std::wstring method for speed //
 				vec.push_back(strtocut.substr(static_cast<size_t>(CopyOperations[i].Start),
-                        static_cast<size_t>(CopyOperations[i].Start) - static_cast<size_t>(CopyOperations[i].Start)));
+                        static_cast<size_t>(CopyOperations[i].End) - static_cast<size_t>(CopyOperations[i].Start)));
 			}
 
 			// cutting succeeded //

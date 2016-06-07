@@ -228,7 +228,7 @@ namespace Leviathan{
 
 		//! \warning You need to make sure that this is valid while the pointer is used
 		DLLEXPORT NamedVariableList* GetValueDirectRaw(const std::string &name) const;
-
+        DLLEXPORT NamedVariableList* GetValueDirectRaw(size_t index) const;
 
 		template<class T>
 		DLLEXPORT bool GetValueAndConvertTo(const std::string &name, T &receiver) const{

@@ -4,7 +4,10 @@
 // ------------------------------------ //
 #include "Common/DataStoring/DataBlock.h"
 #include "Common/DataStoring/NamedVars.h"
+
 #include <vector>
+#include <string>
+#include <memory>
 
 
 #ifdef USING_ANGELSCRIPT
@@ -411,6 +414,9 @@ public:
 	//! \note Only the first object is returned matching the type
 	//! \todo Add a function which returns all that matched the type
 	DLLEXPORT ObjectFileObject* GetObjectWithType(const std::string &typestr) const;
+
+    //! \brief Gets all ObjectFileObjects that have the type
+    DLLEXPORT std::vector<ObjectFileObject*> GetAllObjectsWithType(const std::string &type) const;
 
 	//! \brief Checks whether the given name is in use
 	//! \todo Check template names

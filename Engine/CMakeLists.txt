@@ -27,15 +27,17 @@ set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
     "Common/Visitor.cpp" "Common/Visitor.h"
     )
     
-file(GLOB GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
+set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
     "Common/DataStoring/NamedVars.cpp" "Common/DataStoring/NamedVars.h"
     )
     
-file(GLOB GroupUtility "Utility/Convert.cpp" "Utility/Convert.h"
+set(GroupUtility "Utility/Convert.cpp" "Utility/Convert.h"
     "Utility/Random.cpp" "Utility/Random.h"
     )
     
-file(GLOB GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h")
+set(GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h")
+
+set(GroupEntities "Entities/EntityCommon.h")
 
 else()
 set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
@@ -57,12 +59,12 @@ set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
     "Common/Visitor.cpp" "Common/Visitor.h"
     )
     
-file(GLOB GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h"
+set(GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h"
     "Math/RayTracing.cpp" "Math/RayTracing.h"
     "Math/TriangulateDelaunay.cpp" "Math/TriangulateDelaunay.h"
     )
 
-file(GLOB GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"
+set(GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"
     "Utility/Convert.cpp" "Utility/Convert.h"
     "Utility/DebugVariableNotifier.cpp" "Utility/DebugVariableNotifier.h"
     "Utility/MD5Generator.cpp" "Utility/MD5Generator.h"
@@ -70,9 +72,17 @@ file(GLOB GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"
     "Utility/well.h"
     )
     
-file(GLOB GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
+set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
     "Common/DataStoring/NamedVars.cpp" "Common/DataStoring/NamedVars.h"
     "Common/DataStoring/DataStore.cpp" "Common/DataStoring/DataStore.h"
+    )
+    
+set(GroupEntities "Entities/CommonStateObjects.cpp" "Entities/CommonStateObjects.h"
+    "Entities/Component.cpp" "Entities/Component.h"
+    "Entities/Components.h" "Entities/EntityCommon.h"
+    "Entities/GameWorld.cpp" "Entities/GameWorld.h"
+    "Entities/Node.h" "Entities/Nodes.cpp" "Entities/Nodes.h"
+    "Entities/System.h" "Entities/Systems.cpp" "Entities/Systems.h"
     )
     
 file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
@@ -80,7 +90,7 @@ file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
 file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
 file(GLOB GroupGUI "GUI/*.cpp" "GUI/*.h")
 file(GLOB GroupNewton "Newton/*.cpp" "Newton/*.h")
-file(GLOB GroupEntities "Entities/*.cpp" "Entities/*.h")
+
 
 file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
 file(GLOB GroupEntitiesSerializers "Entities/Serializers/*.cpp" "Entities/Serializers/*.h")
@@ -274,6 +284,9 @@ if(CREATE_UE4_PLUGIN)
   
   RemoveSourceFilesFromList(GroupMath)
   install(FILES ${GroupMath} DESTINATION "include/leviathan/Math")
+  
+  install(FILES ${GroupEntities} DESTINATION "include/leviathan/Entities")
+  
   
 endif()
 

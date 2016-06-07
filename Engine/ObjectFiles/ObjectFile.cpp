@@ -100,6 +100,19 @@ DLLEXPORT ObjectFileObject* Leviathan::ObjectFile::GetObjectWithType(const std::
 	// Nothing found //
 	return NULL;
 }
+
+DLLEXPORT std::vector<ObjectFileObject*> Leviathan::ObjectFile::GetAllObjectsWithType(const std::string &type) const {
+
+    std::vector<ObjectFileObject*> result;
+
+    for (size_t i = 0; i < DefinedObjects.size(); i++) {
+
+        if (DefinedObjects[i]->GetTypeName() == type)
+            result.push_back((DefinedObjects[i].get()));
+    }
+
+    return result;
+}
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ObjectFile::GenerateTemplatedObjects(LErrorReporter* reporterror)
 {

@@ -28,15 +28,15 @@ public:
 class FErrorReporter : public LErrorReporter {
 public:
 
-    virtual void Write(const FString &Text) = 0;
-    virtual void WriteLine(const FString &Text) = 0;
+    virtual void WriteF(const FString &Text) = 0;
+    virtual void WriteLineF(const FString &Text) = 0;
 
-    virtual void Info(const FString &Text) = 0;
-    virtual void Warning(const FString &Text) = 0;
-    virtual void Error(const FString &Text) = 0;
+    virtual void InfoF(const FString &Text) = 0;
+    virtual void WarningF(const FString &Text) = 0;
+    virtual void ErrorF(const FString &Text) = 0;
 
     //! Quits the current game with an error message
-    virtual void Fatal(const FString &Text) = 0;
+    virtual void FatalF(const FString &Text) = 0;
 
 };
 #endif // UE4

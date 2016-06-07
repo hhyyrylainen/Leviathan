@@ -4,6 +4,8 @@
 // ------------------------------------ //
 #include "ObjectFile.h"
 #include "ErrorReporter.h"
+#include <string>
+#include <memory>
 
 namespace Leviathan{
 

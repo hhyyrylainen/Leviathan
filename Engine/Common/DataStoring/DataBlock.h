@@ -498,7 +498,7 @@ namespace Leviathan{
 
 		// operators //
         // Checks is this valid //
-        DLLEXPORT operator bool() const {
+        DLLEXPORT bool IsValid() const {
 
             if (!BlockData)
                 return false;

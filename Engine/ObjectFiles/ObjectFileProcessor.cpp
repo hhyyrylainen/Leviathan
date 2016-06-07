@@ -785,7 +785,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const std::string &file,
 	// Check is it valid //
 	if(!ourname || ourname->size() == 0){
 
-		reporterror->Error("ObjectFile variable list has an invalid name, file: "+
+		reporterror->Error("ObjectFile variable text block has an invalid name, file: "+
             file+"("+Convert::ToString(itr.GetCurrentLine())+")");
 		return false;
 	}

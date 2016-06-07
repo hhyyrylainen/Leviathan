@@ -213,7 +213,7 @@ DLLEXPORT bool NamedVariableList::RecursiveParseList(std::vector<VariableBlock*>
         tmpcreated = std::make_unique<VariableBlock>(*valuestr, predefined);
     #endif //ALTERNATIVE_EXCEPTIONS_FATAL
 
-        if (!tmpcreated || !*tmpcreated) {
+        if (!tmpcreated || !tmpcreated->IsValid()) {
 
             SAFE_DELETE_VECTOR(resultvalues);
             errorreport->Error(std::string("VariableBlock invalid value: " + *valuestr));
@@ -308,7 +308,7 @@ DLLEXPORT bool NamedVariableList::ConstructValuesForObject(const std::string &va
     tmpcreated = std::make_unique<VariableBlock>(variablestr, predefined);
 #endif //ALTERNATIVE_EXCEPTIONS_FATAL
 
-    if (!tmpcreated || !*tmpcreated) {
+    if (!tmpcreated || !tmpcreated->IsValid()) {
 
         SAFE_DELETE_VECTOR(Datas);
         return false;
@@ -995,6 +995,15 @@ DLLEXPORT NamedVariableList* NamedVars::GetValueDirectRaw(const string &name) co
 	}
 
 	return Variables[index].get();
+}
+
+DLLEXPORT NamedVariableList* Leviathan::NamedVars::GetValueDirectRaw(size_t index) const {
+
+    if (index >= Variables.size()) {
+        return nullptr;
+    }
+
+    return Variables[index].get();
 }
 // ------------------------------------ //
 DLLEXPORT int NamedVars::GetVariableType(const string &name) const{

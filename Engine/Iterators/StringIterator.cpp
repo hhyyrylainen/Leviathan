@@ -890,6 +890,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 		&& (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)))
 	{
 		// Check did we encounter stop character //
+    #ifdef ALLOW_DEBUG
         if (DebugMode) {
             
             std::string value = "Trying to match: ";
@@ -898,6 +899,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 
             Logger::Get()->Write("Iterator: procfunc: " + value); \
         }
+    #endif // ALLOW_DEBUG
 
 		if(tmpchara == character){
 			// Skip if ignoring special characters //

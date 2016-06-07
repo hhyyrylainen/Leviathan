@@ -8,7 +8,7 @@ namespace Leviathan{
 
 struct PotentiallySetIndex {
 
-    PotentiallySetIndex(size_t index) : Index(Index), ValueSet(true) {
+    PotentiallySetIndex(size_t index) : Index(index), ValueSet(true) {
     }
     PotentiallySetIndex() = default;
 

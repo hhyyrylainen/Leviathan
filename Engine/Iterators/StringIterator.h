@@ -464,13 +464,16 @@ namespace Leviathan{
 		//! \brief Returns the current reading position
 		//! \note This might be somewhat expensive operation based on the underlying StringDataIterator
         //! class (mostly expensive for UTF8 strings)
-		DLLEXPORT size_t GetPosition();
+		DLLEXPORT inline size_t GetPosition();
 
 		//! \brief Returns the current line the processing is happening
-		DLLEXPORT size_t GetCurrentLine();
+		DLLEXPORT inline size_t GetCurrentLine();
 
 		//! \brief Gets the character in the position current + forward
-		DLLEXPORT int GetCharacter(size_t forward = 0);
+		DLLEXPORT inline int GetCharacter(size_t forward = 0);
+
+        //! \brief Returns true if current character is a new line
+        DLLEXPORT inline bool IsAtNewLine();
 
 		//! \brief Gets the previous character
 		DLLEXPORT int GetPreviousCharacter();
@@ -481,10 +484,13 @@ namespace Leviathan{
 		//! \brief Skips the current character and moves to the next
 		//! \return True when there is a valid character or false if the end
         //! has already been reached
-		DLLEXPORT bool MoveToNext();
+		DLLEXPORT inline bool MoveToNext();
+
+        //! \brief Skips characters until the line number changes
+        DLLEXPORT inline void SkipLineEnd();
 
 		//! \brief Returns true when the read position is valid
-		DLLEXPORT bool IsOutOfBounds();
+		DLLEXPORT inline bool IsOutOfBounds();
 
 		//! \brief Returns substring from the wanted indexes
 		template<class STRSType>
@@ -553,7 +559,8 @@ namespace Leviathan{
                 Logger::Get()->Write("Iterator: begin ----------------------");
             }
         #endif // _DEBUG
-            // We want to skip multiple checks on same character so we skip checks on first character when starting except the beginning of the string //
+            // We want to skip multiple checks on same character so we skip checks on first character when 
+            // starting except the beginning of the string
             bool IsStartUpLoop = GetPosition() == 0 ? true : false;
 
             bool firstiter = true;
@@ -597,7 +604,7 @@ namespace Leviathan{
                 // Check for special cases //
 
                 // valid character/valid iteration call callback //
-                ITERATORCALLBACK_RETURNTYPE retval = (this->*mf)(/*std::forward<Args>*/(args)...);
+                ITERATORCALLBACK_RETURNTYPE retval = (this->*mf)(std::forward<Args>(args)...);
                 if (retval == ITERATORCALLBACK_RETURNTYPE_STOP) {
 
 #if defined(_DEBUG) && (defined(LEVIATHAN_BUILD) || !defined(LEVIATHAN_UE_PLUGIN))
@@ -669,14 +676,15 @@ namespace Leviathan{
 			// First check if this is a line end //
 			int curcharacter = GetCharacter();
 
-			if(curcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+			if(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP && IsAtNewLine()){
 
 				// Set the end to one before this, if found any //
-				if(!data->Positions.Start){
+				if(data->Positions.Start){
 
 					data->Positions.End = GetPosition() - 1;
 				}
 
+                SkipLineEnd();
 				return ITERATORCALLBACK_RETURNTYPE_STOP;
 			}
 

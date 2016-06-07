@@ -143,5 +143,3 @@ TEST_CASE("StringOperations common work with string and wstring", "[string]"){
 
 	CHECK(backlinetest == L"My text is quite nice\nand has\n multiple\n lines\nthat are separated\n");
 }
-
-

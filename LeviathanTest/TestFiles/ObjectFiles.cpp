@@ -89,3 +89,25 @@ TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
     // TODO: add rest of tests
 }
 #endif //LEVIATHAN_UE_PLUGIN
+
+TEST_CASE("Allow missing ending ';' in objectfile", "[objectfile]") {
+
+    DummyReporter reporter;
+    auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("Basic = 12", "missing ; parse test", &reporter);
+
+    REQUIRE(ofile != nullptr);
+
+    const NamedVars& HeaderVars = *ofile->GetVariables();
+
+    // Validate the output //
+    CHECK(HeaderVars.GetVariableCount() == 1);
+
+    CHECK(HeaderVars);
+
+    REQUIRE(HeaderVars.Find("Basic") < HeaderVars.GetVariableCount());
+
+    int number;
+    CHECK(HeaderVars.GetValueAndConvertTo("Basic", number));
+
+    CHECK(number == 12);
+}

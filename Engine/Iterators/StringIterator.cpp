@@ -3,6 +3,7 @@
 #include "StringIterator.h"
 
 #include "utf8/checked.h"
+#include "Common/StringOperations.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -396,7 +397,17 @@ DLLEXPORT int Leviathan::StringIterator::GetCharacter(size_t forward /*= 0*/){
 	return tmpval;
 }
 
-DLLEXPORT int Leviathan::StringIterator::GetPreviousCharacter(){
+
+DLLEXPORT bool Leviathan::StringIterator::IsAtNewLine() {
+
+    // Ignore new lines if '\' is put before them
+    if (CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)
+        return false;
+
+    return StringOperations::IsLineTerminator(GetCharacter());
+}
+
+DLLEXPORT int Leviathan::StringIterator::GetPreviousCharacter() {
 	int tmpval = -1;
 	if(!DataIterator->GetPreviousCharacter(tmpval)){
 		// Darn //
@@ -416,7 +427,6 @@ DLLEXPORT bool Leviathan::StringIterator::MoveToNext(){
 #ifdef ALLOW_DEBUG
 		if(DebugMode){
 			Logger::Get()->Write("Iterator: user move: to next");
-			Logger::Get()->Write("Iterator: handle: CheckActiveFlags, HandleSpecialCharacters");
 		}
 #endif // _DEBUG
 
@@ -429,7 +439,27 @@ DLLEXPORT bool Leviathan::StringIterator::MoveToNext(){
 	return valid;
 }
 
-DLLEXPORT size_t Leviathan::StringIterator::GetPosition(){
+DLLEXPORT void Leviathan::StringIterator::SkipLineEnd() {
+
+#ifdef ALLOW_DEBUG
+    if (DebugMode) {
+        Logger::Get()->Write("Iterator: skip line end");
+    }
+#endif // _DEBUG
+
+    const auto current = GetCharacter(0);
+    const auto next = GetCharacter(1);
+
+    // Move past the current new line //
+    MoveToNext();
+
+    // Skip multi part new lines //
+    if (StringOperations::IsLineTerminator(current, next))
+        MoveToNext();
+
+}
+
+DLLEXPORT size_t Leviathan::StringIterator::GetPosition() {
 	return DataIterator->CurrentIteratorPosition();
 }
 
@@ -457,14 +487,10 @@ DLLEXPORT bool Leviathan::StringIterator::IsOutOfBounds(){
 Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuotedString(IteratorPositionData* data,
     QUOTETYPE quotes,  int specialflags)
 {
-
-	int currentcharacter = GetCharacter();
-
 	bool TakeChar = true;
 	bool End = false;
 
-
-	if(currentcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+	if(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP && IsAtNewLine()){
 		ITR_FUNCDEBUG("Stopping to new line");
 
 		if(data->Positions.Start){
@@ -484,9 +510,11 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuote
 			ITR_FUNCDEBUG("Ending to new line, end is now: "+Convert::ToString(data->Positions.End));
 		}
 
-		MoveToNext();
+		SkipLineEnd();
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
+
+    int currentcharacter = GetCharacter();
 
 	switch(quotes){
 	case QUOTETYPE_BOTH:
@@ -577,12 +605,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuote
 Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNormalCharacterString(
     IteratorPositionData* data, int stopflags, int specialflags)
 {
-
-	int currentcharacter = GetCharacter();
-
 	bool IsValid = true;
 
-	if(currentcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+	if(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP && IsAtNewLine()){
 		ITR_FUNCDEBUG("Stopping to new line");
 
 		if(data->Positions.Start){
@@ -591,7 +616,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNormal
 			ITR_FUNCDEBUG("Ending to new line, end is now: "+Convert::ToString(data->Positions.End));
 		}
 
-		MoveToNext();
+		SkipLineEnd();
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
 
@@ -602,6 +627,7 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNormal
 		goto invalidcodelabelunnormalcharacter;
 	}
 
+    int currentcharacter = GetCharacter();
 
 	if((stopflags & UNNORMALCHARACTER_TYPE_LOWCODES || stopflags & UNNORMALCHARACTER_TYPE_WHITESPACE)
 		&& !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING))
@@ -665,11 +691,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber
 {
 	// Check is the current element a part of a number //
 
-	int currentcharacter = GetCharacter();
-
 	bool IsValid = false;
 
-	if(currentcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+	if(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP && IsAtNewLine()){
 		ITR_FUNCDEBUG("Stopping to new line");
 
 		if(data->Positions.Start){
@@ -678,12 +702,14 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindNextNumber
 			ITR_FUNCDEBUG("Ending to new line, end is now: "+Convert::ToString(data->Positions.End));
 		}
 
-		MoveToNext();
+		SkipLineEnd();
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
 
 	// Comments might be skipped //
 	if(!(specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) || !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+
+        int currentcharacter = GetCharacter();
 
 		if((currentcharacter >= 48) && (currentcharacter <= 57)){
 			// Is a plain old digit //
@@ -737,15 +763,13 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
     EQUALITYCHARACTER equality, int specialflags)
 {
 	// check is current element a valid element //
-	int charvalue = GetCharacter();
-
 	bool IsValid = true;
 	bool IsStop = false;
 
-	if(charvalue == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+	if(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP && IsAtNewLine()){
 		ITR_FUNCDEBUG("Stopping to new line");
 
-		MoveToNext();
+		SkipLineEnd();
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
 
@@ -756,6 +780,8 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 		IsValid = false;
 
 	} else {
+
+        int charvalue = GetCharacter();
 
 		// Skip if this is a space //
 		if(charvalue < 33){
@@ -825,16 +851,12 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilEqual
 DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::SkipSomething(IteratorCharacterData &data, 
     const int additionalskip, const int specialflags)
 {
-
-	int curchara = GetCharacter();
-
-	if(curchara == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+	if(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP && IsAtNewLine()){
 		ITR_FUNCDEBUG("Stopping to new line");
 
-		MoveToNext();
+		SkipLineEnd();
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
-
 
 	// We can probably always skip inside a comment //
 	if((specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) && (CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
@@ -847,7 +869,8 @@ DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::SkipSomething(I
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
 
-	// cCheck does the character match what is being skipped //
+	// Check does the character match what is being skipped //
+    int curchara = GetCharacter();
 
 	if(additionalskip & UNNORMALCHARACTER_TYPE_LOWCODES){
 		if(curchara <= 32)
@@ -866,13 +889,10 @@ DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::SkipSomething(I
 Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpecificCharacter(
     IteratorFindUntilData* data, int character, int specialflags)
 {
-
 	// Can this character be added //
 	bool ValidChar = true;
 
-	int tmpchara = GetCharacter();
-
-	if(tmpchara == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+	if(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP && IsAtNewLine()){
 		ITR_FUNCDEBUG("Stopping to new line");
 
 		if(data->Positions.Start){
@@ -881,9 +901,11 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 			ITR_FUNCDEBUG("Ending to new line, end is now: "+Convert::ToString(data->Positions.End));
 		}
 
-		MoveToNext();
+		SkipLineEnd();
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
+
+    int tmpchara = GetCharacter();
 
 	// We can just continue if we are inside a string //
 	if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING) && !((specialflags & SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING) 
@@ -951,24 +973,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 
 DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilNewLine(IteratorFindUntilData* data){
 	// Continue if the current character is a new line character //
-	int curcharacter = GetCharacter();
-
-	bool winmulti = false;
-
-	// Ignore if ignoring special characters //
-	if(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL){
-
-		goto positionisvalidlabelstringiteratorfindnewline;
-	}
-
-
-	if(curcharacter == '\r' && GetCharacter(1) == '\n')
-		winmulti = true;
 
 	// All line separator characters should be here //
-	if(curcharacter == '\r' || curcharacter == '\n' || winmulti || 
-        // Unicode newlines //
-        curcharacter == 0x0085 || curcharacter == 0x2028 || curcharacter == 0x2029){
+	if(IsAtNewLine()){
 
 		if(!data->FoundEnd){
 			// Ignore the first new line //
@@ -977,29 +984,18 @@ DLLEXPORT ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilNewLin
 			goto positionisvalidlabelstringiteratorfindnewline;
 		}
 
-		size_t useendpos = GetPosition()-1;
-
 		// This is a new line character //
-		if(winmulti){
-			// Two characters have to be skipped \r\n //
-			MoveToNext();
-			MoveToNext();
-
-		} else {
-			// Move out of the newline character //
-			MoveToNext();
-		}
 		ITR_FUNCDEBUG("Found newline character");
 
 		// End before this character //
-		data->Positions.End = useendpos;
-		ITR_FUNCDEBUG("Ending here: "+Convert::ToString(data->Positions.End));
+		data->Positions.End = GetPosition() - 1;
+		ITR_FUNCDEBUG("Ending here: "+Convert::ToString(data->Positions));
 
+        SkipLineEnd();
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}
 
 positionisvalidlabelstringiteratorfindnewline:
-
 
 	// Set position //
 	if(!data->Positions.Start){
@@ -1007,7 +1003,7 @@ positionisvalidlabelstringiteratorfindnewline:
 		// End before this character //
 		data->Positions.Start = GetPosition();
 		data->FoundEnd = true;
-		ITR_FUNCDEBUG("Data started: "+Convert::ToString(data->Positions.Start));
+		ITR_FUNCDEBUG("Data started: "+Convert::ToString(data->Positions));
 	}
 
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
@@ -1020,14 +1016,13 @@ DLLEXPORT ITERATORCALLBACK_RETURNTYPE StringIterator::FindInMatchingParentheses(
 	if(!(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL) &&
         !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING))
     {
-
-        int currentcharacter = GetCharacter();
-        
-        if(currentcharacter == '\n' && specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP){
+        if(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP && IsAtNewLine()){
 
             // Invalid, always //
             return ITERATORCALLBACK_RETURNTYPE_STOP;
         }
+
+        int currentcharacter = GetCharacter();
 
         // Nesting level starts //
         if(currentcharacter == left){

@@ -255,12 +255,13 @@ shared_ptr<NamedVariableList> Leviathan::ObjectFileProcessor::TryToLoadNamedVari
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
 
 	// Get the value //
-	auto valuestr = itr.GetUntilNextCharacterOrNothing<string>(';', SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
+	auto valuestr = itr.GetUntilNextCharacterOrAll<string>(';', 
+        SPECIAL_ITERATOR_ONNEWLINE_STOP | SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
 	if(!valuestr){
-		// No ';' //
-		reporterror->Error("ObjectFile named variable is missing an ending ';' (should be like: \"MyVar = 42;\")"
-			", file: "+file+"("+Convert::ToString(startline)+")");
+		// No ';' or nothing after the equals sign //
+		reporterror->Error("ObjectFile named variable is empty or missing an (optional) ending ';' "
+            "(should be like: \"MyVar = 42;\"), file: "+file+"("+Convert::ToString(startline)+")");
 		return NULL;
 	}
 

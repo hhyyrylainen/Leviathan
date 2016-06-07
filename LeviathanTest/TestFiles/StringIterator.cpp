@@ -429,3 +429,33 @@ TEST_CASE("StringIterator bracket handling", "[string, objectfile]"){
         CHECK(*result == "[things, other], final");
     }
 }
+
+
+TEST_CASE("StringIterator new line handling", "[string]") {
+
+    StringIterator itr;
+    std::unique_ptr<std::string> result;
+
+    SECTION("Until windows multiline line separator") {
+
+        itr.ReInit("Just a normal test string coming through");
+        result = itr.GetUntilCharacterSequence<string>("str", SPECIAL_ITERATOR_ONNEWLINE_STOP);
+
+        REQUIRE(result);
+        CHECK(*result == "Just a normal test ");
+
+        itr.ReInit("Just a normal \r\ntest string coming through");
+        result = itr.GetUntilCharacterSequence<string>("str", SPECIAL_ITERATOR_ONNEWLINE_STOP);
+
+        REQUIRE(result);
+        CHECK(*result == "Just a normal ");
+
+        CHECK(itr.GetCharacter() == 't');
+        result = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
+
+        REQUIRE(result);
+        CHECK(*result == "test");
+    }
+
+}
+

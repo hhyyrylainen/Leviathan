@@ -1,6 +1,7 @@
 #include "Include.h"
 // ------------------------------------ //
 #include "StringDataIterator.h"
+#include "Common/StringOperations.h"
 
 #if !defined(ALTERNATIVE_EXCEPTIONS_FATAL) || defined(ALLOW_INTERNAL_EXCEPTIONS)
 #include "utf8/checked.h"
@@ -41,20 +42,31 @@ size_t Leviathan::StringDataIterator::GetCurrentCharacterNumber() const{
 size_t Leviathan::StringDataIterator::GetCurrentLineNumber() const{
 	return CurrentLineNumber;
 }
+
+void Leviathan::StringDataIterator::CheckLineChange() {
+
+    int32_t checkchar;
+
+    if (GetNextCharCode(checkchar, 0) && StringOperations::IsLineTerminator(checkchar)) {
+
+        // Check for multiline //
+        int32_t evenfurthercharacter;
+        if (!GetNextCharCode(evenfurthercharacter, 1) ||
+            !StringOperations::IsLineTerminator(checkchar, evenfurthercharacter))
+        {
+            ++CurrentLineNumber;
+        }
+    }
+}
+
 // ------------------ UTF8DataIterator ------------------ //
 Leviathan::UTF8DataIterator::UTF8DataIterator(const std::string &str) : OurString(str){
 	Current = OurString.begin();
 	End = OurString.end();
 	BeginPos = OurString.begin();
 
-	int checkchar;
-
-	if(GetNextCharCode(checkchar, 0) && checkchar == '\n'){
-
-		// If the first character is a newline the line number needs to be incremented immediately //
-		++CurrentLineNumber;
-	}
-
+    // If the first character is a newline the line number needs to be incremented immediately //
+    CheckLineChange();
 }
 // ------------------------------------ //
 bool Leviathan::UTF8DataIterator::GetNextCharCode(int &codepointreceiver, size_t forward){
@@ -126,6 +138,10 @@ bool Leviathan::UTF8DataIterator::GetPreviousCharacter(int &receiver){
 }
 // ------------------------------------ //
 void Leviathan::UTF8DataIterator::MoveToNextCharacter(){
+
+    if (!IsPositionValid())
+        return;
+
 	// We need to move whole code points //
 #if !defined(ALTERNATIVE_EXCEPTIONS_FATAL) || defined(ALLOW_INTERNAL_EXCEPTIONS)
 
@@ -142,12 +158,9 @@ void Leviathan::UTF8DataIterator::MoveToNextCharacter(){
 	// Return if position is not valid //
 	if(!IsPositionValid())
 		return;
+
 	// There might be a better way to check this //
-	int curcode;
-	if(GetNextCharCode(curcode, 0)){
-		if(curcode == (int)'\n')
-			++CurrentLineNumber;
-	}
+    CheckLineChange();
 }
 // ------------------------------------ //
 size_t Leviathan::UTF8DataIterator::CurrentIteratorPosition() const{

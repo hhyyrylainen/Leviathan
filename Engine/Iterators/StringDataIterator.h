@@ -66,6 +66,10 @@ namespace Leviathan{
 
 	protected:
 
+        //! Updates CurrentLineNumber if currently on a line break
+        void CheckLineChange();
+
+    protected:
 
 		//! Must be the current character number, not the number of bytes for example one utf8
         //! character might be 4 bytes
@@ -117,11 +121,7 @@ namespace Leviathan{
 			// Don't forget to increment these //
 			++CurrentCharacterNumber;
 			// There might be a better way to check this //
-			int curcode;
-			if(GetNextCharCode(curcode, 0)){
-				if(curcode == (int)'\n')
-					++CurrentLineNumber;
-			}
+            CheckLineChange();
 		}
 
 		virtual bool ReturnSubString(size_t startpos, size_t endpos, STRType &receiver){
@@ -199,12 +199,8 @@ namespace Leviathan{
 			++Current;
 			// Don't forget to increment these //
 			++CurrentCharacterNumber;
-			// There might be a better way to check this //
-			int curcode;
-			if(GetNextCharCode(curcode, 0)){
-				if(curcode == (int)'\n')
-					++CurrentLineNumber;
-			}
+
+            CheckLineChange();
 		}
 
 		virtual bool ReturnSubString(size_t startpos, size_t endpos, STRType &receiver){
@@ -229,8 +225,6 @@ namespace Leviathan{
 
 			return End-1;
 		}
-
-
 
 	protected:
 

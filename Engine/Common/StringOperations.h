@@ -747,6 +747,31 @@ namespace Leviathan{
             return result;
         }
 
+        //! \returns True if a character is a line terminating character
+        DLLEXPORT static bool IsLineTerminator(int32_t codepoint) {
+
+            if (codepoint == '\r' || codepoint == '\n' ||
+                // Unicode newlines //
+                codepoint == 0x0085 || codepoint == 0x2028 || codepoint == 0x2029 ||
+                codepoint == 0x000B || codepoint == 0x000C)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        //! \returns True if two characters are a line terminating sequence
+        DLLEXPORT static bool IsLineTerminator(int32_t codepoint1, int32_t codepoint2) {
+
+            if (codepoint1 == '\r' && codepoint2 == '\n')
+            {
+                return true;
+            }
+
+            return false;
+        }
+
 		// ------------------ Named non-template versions ------------------ //
 		DLLEXPORT FORCE_INLINE static const std::wstring GetExtensionWstring(
             const std::wstring &filepath)

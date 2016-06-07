@@ -248,3 +248,16 @@ TEST_CASE("Converting empty string blocks", "[variable, datablock]"){
     CHECK(empty.GetValue(0).operator bool() == false);
     
 }
+
+TEST_CASE("Allow missing ending';'", "[variable, datablock]") {
+
+    DummyReporter dummy;
+    NamedVariableList testlist("name = 13.5", &dummy);
+
+    REQUIRE(testlist);
+    REQUIRE(testlist.GetVariableCount() == 1);
+
+    REQUIRE(testlist.GetValue().IsConversionAllowedNonPtr<float>());
+
+    CHECK(static_cast<float>(testlist.GetValue()) == 13.5f);
+}

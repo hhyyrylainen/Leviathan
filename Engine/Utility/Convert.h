@@ -92,6 +92,8 @@ namespace Leviathan{
 		//! \return The converted string or an empty string in case the input string is invalid/has invalid format
 		DLLEXPORT static std::string Utf16ToUtf8(const std::wstring &utf16str);
 
+        //! \brief Encodes a Unicode code point as an UTF8 string
+        DLLEXPORT static std::string CodePointToUtf8(int32_t codepoint);
 
 	};
 

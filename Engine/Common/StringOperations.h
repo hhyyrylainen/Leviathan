@@ -26,6 +26,7 @@ namespace Leviathan{
 		static const StringWanted WindowsLineSeparator;
 		static const StringWanted UniversalLineSeparator;
 
+        static const ElementType Space;
 
 	private:
 		StringConstants();
@@ -62,6 +63,9 @@ namespace Leviathan{
 	template<class StringWanted, typename ElementType> const ElementType
     StringConstants<StringWanted, ElementType>::PlusSymbol = (ElementType)(int)'+';
 
+    template<class StringWanted, typename ElementType> const ElementType
+    StringConstants<StringWanted, ElementType>::Space = (ElementType)(int)' ';
+
 	//! \brief Singleton class that has string processing functions
 	//!
 	//! Most functions work with any type of string, but it is recommended to only pass string
@@ -74,6 +78,10 @@ namespace Leviathan{
 		DLLEXPORT static bool IsCharacterWhitespace(CharType character){
 			if((int)character <= 32)
 				return true;
+
+            if (IsLineTerminator(character))
+                return true;
+
 			return false;
 		}
 
@@ -747,6 +755,63 @@ namespace Leviathan{
             return result;
         }
 
+        template<class StringTypeN>
+        DLLEXPORT static StringTypeN Indent(size_t numspaces) {
+
+            if (!numspaces)
+                return StringTypeN();
+
+            return StringTypeN(numspaces, (int)' ');
+        }
+
+        //! \brief Appends spaces number of spaces to each line in str and returns the result
+        template<class StringTypeN>
+        DLLEXPORT static StringTypeN IndentLines(const StringTypeN &str, size_t spaces) {
+
+            const auto indentstr = Indent<StringTypeN>(spaces);
+
+            StringTypeN result;
+            result.reserve(str.size());
+
+            StartEndIndex currentcut;
+
+            for (size_t i = 0; i < str.size(); ++i) {
+
+                // Check for line change //
+                if (IsLineTerminator(str[i])) {
+
+                    result += indentstr;
+
+                    if(currentcut.Start)
+                        result += str.substr(currentcut.Start,
+                            i - static_cast<size_t>(currentcut.Start));
+
+                    result += "\n";
+                    currentcut = StartEndIndex();
+
+                    // Multi character line terminator //
+                    if (i + 1 < str.length() && IsLineTerminator(str[i], str[i + 1]))
+                        ++i;
+                }
+
+                if (!currentcut.Start && !IsCharacterWhitespace(str[i])) {
+
+                    // Started a line //
+                    currentcut.Start = i;
+                }
+            }
+
+            if (currentcut.Start) {
+
+                currentcut.End = str.size();
+
+                result += indentstr + str.substr(currentcut.Start,
+                    static_cast<size_t>(currentcut.End) - static_cast<size_t>(currentcut.Start));
+            }
+
+            return result;
+        }
+
         //! \returns True if a character is a line terminating character
         DLLEXPORT static bool IsLineTerminator(int32_t codepoint) {
 
@@ -855,6 +920,10 @@ namespace Leviathan{
         {
 			return ChangeLineEndsToWindows<std::string, char>(input);
 		}
+
+        DLLEXPORT FORCE_INLINE static std::string IndentLinesString(const std::string &str, size_t spaces) {
+            return IndentLines<std::string>(str, spaces);
+        }
 
 	private:
 		StringOperations();

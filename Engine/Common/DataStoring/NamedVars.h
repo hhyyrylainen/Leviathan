@@ -254,6 +254,10 @@ namespace Leviathan{
 
 		DLLEXPORT std::vector<VariableBlock*>* GetValues(const std::string &name);
 
+        //! \brief Serializes this object into a string representation
+        //! \param lineprefix Appended before each new line
+        DLLEXPORT std::string Serialize(const std::string &lineprefix = "");
+
     #ifdef USING_ANGELSCRIPT
         // Script accessible functions //
         REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(NamedVars);

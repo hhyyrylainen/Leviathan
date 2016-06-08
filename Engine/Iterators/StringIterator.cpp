@@ -10,7 +10,25 @@ using namespace std;
 // Defining debug macro //
 #if defined(_DEBUG) && (defined(LEVIATHAN_BUILD) || !defined(LEVIATHAN_UE_PLUGIN))
 #define ALLOW_DEBUG
+#include "Logger.h"
 #endif
+
+#ifdef ALLOW_DEBUG
+#define ITR_FUNCDEBUG(x) {\
+	if(DebugMode){\
+	Logger::Get()->Write("Iterator: procfunc: " + std::string(x));\
+	}\
+}
+
+#define ITR_COREDEBUG(x) {\
+	if(DebugMode){\
+	Logger::Get()->Write("Iterator: " + std::string(x));\
+	}\
+}
+#else
+#define ITR_FUNCDEBUG(x) {}
+#define ITR_COREDEBUG(x) {}
+#endif // _DEBUG
 
 DLLEXPORT StringIterator::StringIterator() :
     CurrentFlags(0), HandlesDelete(false), DataIterator(NULL), CurrentStored(false)
@@ -59,6 +77,8 @@ DLLEXPORT void Leviathan::StringIterator::ReInit(StringDataIterator* iterator, b
 
 		SAFE_DELETE(DataIterator);
 	}
+
+    ITR_COREDEBUG("ReInit")
 
 	HandlesDelete = TakesOwnership;
 	DataIterator = iterator;
@@ -237,21 +257,20 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::HandleSpecialC
 
 		}
 		break;
-	case '\n':
-		{
-			// A C++-style comment might end //
-			if(CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT){
-				// Set as ending //
-				CurrentFlags |= ITERATORFLAG_SET_CPPCOMMENT_END;
-#ifdef ALLOW_DEBUG
-				if(DebugMode){
-					Logger::Get()->Write("Iterator: set flag end: ITERATORFLAG_SET_CPPCOMMENT_END");
-				}
-#endif // _DEBUG
-			}
-		}
-		break;
 	}
+
+    if (IsAtNewLine()) {
+        // A C++-style comment might end //
+        if (CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT) {
+            // Set as ending //
+            CurrentFlags |= ITERATORFLAG_SET_CPPCOMMENT_END;
+        #ifdef ALLOW_DEBUG
+            if (DebugMode) {
+                Logger::Get()->Write("Iterator: set flag end: ITERATORFLAG_SET_CPPCOMMENT_END");
+            }
+        #endif // _DEBUG
+        }
+    }
 
 	return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
 }
@@ -385,6 +404,8 @@ DLLEXPORT int Leviathan::StringIterator::GetCharacter(size_t forward /*= 0*/){
 
 			DataIterator->GetNextCharCode(CurrentCharacter, 0);
 			CurrentStored = true;
+
+            ITR_COREDEBUG("Current char: (" + Convert::CodePointToUtf8(CurrentCharacter) + ")");
 		}
 
 		return CurrentCharacter;
@@ -393,6 +414,8 @@ DLLEXPORT int Leviathan::StringIterator::GetCharacter(size_t forward /*= 0*/){
 	// Get the character from our iterator and store it to a temporary value and then return it //
 	int tmpval = -1;
 	DataIterator->GetNextCharCode(tmpval, forward);
+
+    ITR_COREDEBUG("Peek forward char: (" + Convert::CodePointToUtf8(tmpval) + ")");
 
 	return tmpval;
 }
@@ -411,8 +434,11 @@ DLLEXPORT int Leviathan::StringIterator::GetPreviousCharacter() {
 	int tmpval = -1;
 	if(!DataIterator->GetPreviousCharacter(tmpval)){
 		// Darn //
+        ITR_COREDEBUG("Failed to get previous character");
 		return 0;
 	}
+
+    ITR_COREDEBUG("Peek back char: (" + Convert::CodePointToUtf8(tmpval) + ")");
 	return tmpval;
 }
 // ------------------------------------ //
@@ -424,11 +450,8 @@ DLLEXPORT bool Leviathan::StringIterator::MoveToNext(){
 
 	// We need to handle the flags on this position if we aren't on the first character //
 	if(valid && DataIterator->CurrentIteratorPosition() != 0){
-#ifdef ALLOW_DEBUG
-		if(DebugMode){
-			Logger::Get()->Write("Iterator: user move: to next");
-		}
-#endif // _DEBUG
+
+        ITR_COREDEBUG("Move to next");
 
 		CheckActiveFlags();
 
@@ -441,11 +464,7 @@ DLLEXPORT bool Leviathan::StringIterator::MoveToNext(){
 
 DLLEXPORT void Leviathan::StringIterator::SkipLineEnd() {
 
-#ifdef ALLOW_DEBUG
-    if (DebugMode) {
-        Logger::Get()->Write("Iterator: skip line end");
-    }
-#endif // _DEBUG
+    ITR_COREDEBUG("Skip line end");
 
     const auto current = GetCharacter(0);
     const auto next = GetCharacter(1);
@@ -471,17 +490,6 @@ DLLEXPORT bool Leviathan::StringIterator::IsOutOfBounds(){
 	return !DataIterator->IsPositionValid();
 }
 // ------------------ Iterating functions ------------------ //
-#ifdef ALLOW_DEBUG
-#define ITR_FUNCDEBUG(x) {\
-	if(DebugMode){\
-	Logger::Get()->Write("Iterator: procfunc: " + std::string(x));\
-	}\
-}
-#else
-#define ITR_FUNCDEBUG(x) {}
-#endif // _DEBUG
-
-
 
 
 Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindFirstQuotedString(IteratorPositionData* data,

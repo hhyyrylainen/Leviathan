@@ -10,7 +10,9 @@
 #ifdef USING_ANGELSCRIPT
 #include "../Script/ScriptExecutor.h"
 #include "../Script/ScriptModule.h"
+#include "../Script/ScriptScript.h"
 #endif // USING_ANGELSCRIPT
+
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -69,11 +71,6 @@ DLLEXPORT NamedVars* Leviathan::ObjectFile::GetVariables(){
 	return &HeaderVars;
 }
 // ------------------------------------ //
-DLLEXPORT size_t Leviathan::ObjectFile::GetTotalObjectCount() const{
-	// Add the template objects to actual objects //
-	return DefinedObjects.size();
-}
-
 DLLEXPORT ObjectFileObject* Leviathan::ObjectFile::GetObjectFromIndex(size_t index) const{
 	// Return from DefinedObjects if it is in range otherwise from the template instances //
 	if(index < DefinedObjects.size()){
@@ -385,6 +382,75 @@ DLLEXPORT ObjectFileTextBlock* Leviathan::ObjectFileObjectProper::GetTextBlock(s
     return TextBlocks[index];
 }
 
+DLLEXPORT std::string Leviathan::ObjectFileObjectProper::Serialize(size_t indentspaces /*= 0*/) const {
+
+    constexpr auto BlockIndent = 4;
+
+    const std::string indentation = StringOperations::Indent<std::string>(indentspaces);
+    const std::string contentindentation = StringOperations::Indent<std::string>(BlockIndent);
+
+    std::string result = indentation + "o ";
+
+    if (TName.size())
+        result += TName + " ";
+
+    for (const auto& prefix : Prefixes) {
+
+        result += *prefix + " ";
+    }
+
+    result += "\"" + Name + "\"{\n\n";
+
+    // First lists //
+    for (ObjectFileList* list : Contents) {
+
+        result += indentation + contentindentation + "l " + list->GetName() + " {\n";
+
+        result += list->GetVariables().Serialize(indentation + contentindentation + contentindentation);
+
+        result += indentation + contentindentation + "} // End " + list->GetName() + "\n\n";
+    }
+
+    // Then text blocks //
+    for (ObjectFileTextBlock* block : TextBlocks) {
+
+        result += indentation + contentindentation + "t " + block->GetName() + " {\n";
+
+        for (size_t i = 0; i < block->GetLineCount(); ++i) {
+
+            result += indentation + contentindentation + contentindentation + block->GetLine(i) + "\n";
+        }
+
+        result += indentation + contentindentation + "} // End " + block->GetName() + "\n\n";
+    }
+
+    if (Script) {
+
+    #ifndef LEVIATHAN_USING_ANGELSCRIPT
+        LEVIATHAN_ASSERT(0, "saving an ObjectFile object that has scripts without scripting support compiled in");
+    #else
+        if (!Script->GetModule()) {
+
+            DEBUG_BREAK;
+
+    } else {
+
+            DEBUG_BREAK;
+            // Don't add a name if it is just a generic generated name //
+            result += indentation + contentindentation + "s " + Script->GetModule()->GetName() + "{\n";
+
+            result += StringOperations::IndentLines(Script->GetModule()->GetIncompleteSourceCode(),
+                BlockIndent + indentspaces);
+
+            result += indentation + contentindentation + "@%};\n\n";
+        }
+    #endif //LEVIATHAN_USING_ANGELSCRIPT
+    }
+
+    result += "}\n";
+    return result;
+}
+
 DLLEXPORT bool Leviathan::ObjectFileObjectProper::IsThisTemplated() const {
     return false;
 }
@@ -452,7 +518,32 @@ Leviathan::ObjectFileTemplateDefinition::CreateFromObject(const string &name,
 
     return resultobj;
 }
+//////////////////////////////////////////////////////////////////////////
+DLLEXPORT std::string Leviathan::ObjectFileTemplateDefinition::Serialize() const {
 
+    std::string result = "template<";
+
+    bool first = true;
+
+    // Parameter names for the template //
+    for (const auto& paramstr : Parameters) {
+
+        if (!first)
+            result += ", ";
+
+        result += *paramstr;
+        first = false;
+    }
+
+    result += "> " + Name + ": \n";
+
+    // The object associated with the template //
+    result += RepresentingObject->Serialize(4);
+
+    return result;
+
+}
+//////////////////////////////////////////////////////////////////////////
 DLLEXPORT std::unique_ptr<Leviathan::ObjectFileTemplateObject> ObjectFileTemplateDefinition::CreateInstanceFromThis(
     const ObjectFileTemplateInstance &instanceargs, LErrorReporter* reporterror /*= nullptr*/) {
     // First make sure that template counts match, return NULL otherwise //
@@ -685,6 +776,29 @@ DLLEXPORT Leviathan::ObjectFileTemplateInstance::ObjectFileTemplateInstance(
     const string &mastertmplname, std::vector<unique_ptr<string>> &templateargs) :
     TemplatesName(mastertmplname), Arguments(move(templateargs)) {
 
+}
+DLLEXPORT std::string Leviathan::ObjectFileTemplateInstance::Serialize(size_t indentspaces) const {
+
+    constexpr auto BlockIndent = 4;
+
+    const std::string indentation = StringOperations::Indent<std::string>(indentspaces);
+    const std::string contentindentation = StringOperations::Indent<std::string>(BlockIndent);
+
+    std::string result = indentation + "template<> " + TemplatesName + "<";
+
+    bool first = true;
+
+    for (const auto& argument : Arguments) {
+
+        if (!first)
+            result += ", ";
+
+        result += *argument;
+        first = false;
+    }
+
+    result += ">\n";
+    return result;
 }
 // ------------------ ObjectFileTemplateObject ------------------ //
 DLLEXPORT Leviathan::ObjectFileTemplateObject::ObjectFileTemplateObject(const std::string &name,

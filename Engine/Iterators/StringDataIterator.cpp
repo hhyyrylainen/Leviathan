@@ -92,11 +92,15 @@ bool Leviathan::UTF8DataIterator::GetNextCharCode(int &codepointreceiver, size_t
 
 	utf8::advance(shouldbepos, forward, End);
 
+    if (shouldbepos == End)
+        return false;
+
 	codepointreceiver = utf8::next(shouldbepos, End);
 #else
     utf8::unchecked::advance(shouldbepos, forward);
 
-    LEVIATHAN_ASSERT(shouldbepos != End, "GetNextCharCode moved past the end");
+    if (shouldbepos == End)
+        return false;
 
     codepointreceiver = utf8::unchecked::next(shouldbepos);
 

@@ -143,3 +143,62 @@ TEST_CASE("StringOperations common work with string and wstring", "[string]"){
 
 	CHECK(backlinetest == L"My text is quite nice\nand has\n multiple\n lines\nthat are separated\n");
 }
+
+TEST_CASE("StringOperations indent creation", "[string]") {
+
+    CHECK(StringOperations::Indent<std::string>(1) == " ");
+    CHECK(StringOperations::Indent<std::string>(3) == "   ");
+
+    CHECK(StringOperations::Indent<std::wstring>(1) == L" ");
+    CHECK(StringOperations::Indent<std::wstring>(3) == L"   ");
+}
+
+TEST_CASE("StringOperations indent lines", "[string]") {
+
+    SECTION("Single line") {
+
+        CHECK(StringOperations::IndentLinesString("this is a line", 2) == "  this is a line");
+    }
+
+    SECTION("Two lines") {
+
+        CHECK(StringOperations::IndentLinesString("this is a line\nthis is a second", 1) == 
+            " this is a line\n this is a second");
+    }
+
+    SECTION("Ends with a new line") {
+
+        CHECK(StringOperations::IndentLinesString("this is a line\n", 1) ==
+            " this is a line\n");
+    }
+
+    SECTION("Remove existing spaces") {
+
+        SECTION("Single line") {
+
+            CHECK(StringOperations::IndentLinesString(" this is a line", 2) == "  this is a line");
+        }
+
+        SECTION("Two lines") {
+
+            CHECK(StringOperations::IndentLinesString("    this is a line\n  this is a second", 1) ==
+                " this is a line\n this is a second");
+        }
+    }
+
+    SECTION("Basic \\n lines") {
+
+        constexpr auto input = "this is a\n multiline story\nthat spans many lines\n";
+        constexpr auto result = "   this is a\n   multiline story\n   that spans many lines\n";
+
+        CHECK(StringOperations::IndentLinesString(input, 3) == result);
+    }
+
+    SECTION("Windows lines") {
+
+        constexpr auto input = "this is a\r\n multiline story\r\nthat spans many lines\r\n";
+        constexpr auto result = "   this is a\n   multiline story\n   that spans many lines\n";
+
+        CHECK(StringOperations::IndentLinesString(input, 3) == result);
+    }
+}

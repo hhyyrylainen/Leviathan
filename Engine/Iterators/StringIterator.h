@@ -580,9 +580,7 @@ namespace Leviathan{
                     string datathing = "Iterator: iterating: " + Convert::ToString(GetPosition()) + " (";
 
                     // Encode the character //
-                    utf8::utf32to8(&chara, (&chara) + 1, back_inserter(datathing));
-
-                    datathing += ")";
+                    datathing += Convert::CodePointToUtf8(chara) + ")";
 
                     Logger::Get()->Write(datathing);
                 }

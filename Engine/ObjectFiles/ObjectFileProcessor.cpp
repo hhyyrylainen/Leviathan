@@ -629,9 +629,9 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(
 	// Now there should be the object contents //
 	itr.MoveToNext();
 
-	while(itr.GetCharacter() != '}'){
+	while(!itr.IsOutOfBounds()){
 		// First skip whitespace //
-		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
+		itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
 		// Then check the character //
 		int curcharacter = itr.GetCharacter();
@@ -674,7 +674,6 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(
 		case '}':
 			{
 				// The object ended properly //
-
 				// Add the object to the file's object //
 				return ourobj;
 			}
@@ -693,9 +692,13 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const std::string &fi
     StringIterator &itr, ObjectFileObject &obj, size_t startline, LErrorReporter* reporterror)
 {
 	// First thing is the name //
+    itr.SkipWhiteSpace();
 	auto ourname = itr.GetNextCharacterSequence<string>(
-        UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+        UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS,
 		SPECIAL_ITERATOR_FILEHANDLING);
+
+    if (ourname)
+        StringOperations::RemovePreceedingTrailingSpaces(*ourname);
 
 	// Check is it valid //
 	if(!ourname || ourname->size() == 0){
@@ -779,9 +782,13 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const std::string &file,
     StringIterator &itr, ObjectFileObject &obj, size_t startline, LErrorReporter* reporterror)
 {
 	// First thing is the name //
+    itr.SkipWhiteSpace();
 	auto ourname = itr.GetNextCharacterSequence<string>(
-        UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS | UNNORMALCHARACTER_TYPE_LOWCODES,
+        UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS,
 		SPECIAL_ITERATOR_FILEHANDLING);
+
+    if (ourname)
+        StringOperations::RemovePreceedingTrailingSpaces(*ourname);
 
 	// Check is it valid //
 	if(!ourname || ourname->size() == 0){
@@ -935,7 +942,65 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const std::string &fil
 DLLEXPORT bool Leviathan::ObjectFileProcessor::WriteObjectFile(ObjectFile &data,
     const std::string &file, LErrorReporter* reporterror)
 {
+    std::string datatowrite;
 
-	return false;
+    if (!SerializeObjectFile(data, datatowrite)) {
+
+        reporterror->Error("WriteObjectFile: failed to serialize data into a string");
+        return false;
+    }
+
+    FileSystem::WriteToFile(datatowrite, file);
+
+	return true;
+}
+
+DLLEXPORT bool Leviathan::ObjectFileProcessor::SerializeObjectFile(ObjectFile &data, std::string &receiver) {
+
+    // Header variables //
+    for (size_t i = 0; i < data.GetVariables()->GetVariableCount(); ++i) {
+
+        const auto* variable = data.GetVariables()->GetValueDirectRaw(i);
+
+        receiver += variable->ToText() + "\n";
+    }
+
+    receiver += "\n";
+
+    // Template definitions //
+    for (size_t i = 0; i < data.GetTemplateDefinitionCount(); ++i) {
+
+        std::shared_ptr<ObjectFileTemplateDefinition> object = data.GetTemplateDefinition(i);
+
+        LEVIATHAN_ASSERT(object, "GetTemplateDefinition iteration invalid");
+
+        receiver += object->Serialize();
+    }
+
+    // Objects //
+    for (size_t i = 0; i < data.GetTotalObjectCount(); ++i) {
+
+        std::shared_ptr<ObjectFileObject> object = data.GetObject(i);
+
+        LEVIATHAN_ASSERT(object, "GetObject iteration invalid");
+
+        if(object->IsThisTemplated())
+            continue;
+
+        receiver += object->Serialize();
+    }
+
+    // Template instantiations //
+    for (size_t i = 0; i < data.GetTemplateInstanceCount(); ++i) {
+
+        std::shared_ptr<ObjectFileTemplateInstance> object = data.GetTemplateInstance(i);
+
+        LEVIATHAN_ASSERT(object, "GetTemplateInstance iteration invalid");
+
+        receiver += object->Serialize();
+    }
+
+    receiver += "\n";
+    return true;
 }
 

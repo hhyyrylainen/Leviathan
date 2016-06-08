@@ -1005,6 +1005,19 @@ DLLEXPORT NamedVariableList* Leviathan::NamedVars::GetValueDirectRaw(size_t inde
 
     return Variables[index].get();
 }
+
+DLLEXPORT std::string Leviathan::NamedVars::Serialize(const std::string &lineprefix /*= ""*/) {
+
+    std::string result;
+
+    for (const auto& variable : Variables) {
+
+        result += lineprefix + variable->ToText(0) + "\n";
+    }
+
+    return result;
+}
+
 // ------------------------------------ //
 DLLEXPORT int NamedVars::GetVariableType(const string &name) const{
 	GUARD_LOCK();

@@ -190,6 +190,9 @@ public:
     //! This is used while saving to a file to avoid writing template objects
     DLLEXPORT virtual bool IsThisTemplated() const = 0;
 
+    //! \returns A string representation of this object
+    DLLEXPORT virtual std::string Serialize(size_t indentspaces = 0) const = 0;
+
 protected:
 
     ObjectFileObject() {
@@ -207,35 +210,38 @@ public:
 
     DLLEXPORT ~ObjectFileObjectProper();
 
-    DLLEXPORT virtual const std::string& GetName() const;
+    DLLEXPORT const std::string& GetName() const override;
 
-    DLLEXPORT virtual bool AddVariableList(std::unique_ptr<ObjectFileList> &list);
+    DLLEXPORT bool AddVariableList(std::unique_ptr<ObjectFileList> &list) override;
 
-    DLLEXPORT virtual bool AddTextBlock(std::unique_ptr<ObjectFileTextBlock> &tblock);
+    DLLEXPORT bool AddTextBlock(std::unique_ptr<ObjectFileTextBlock> &tblock) override;
 
-    DLLEXPORT virtual void AddScriptScript(std::shared_ptr<ScriptScript> script);
+    DLLEXPORT void AddScriptScript(std::shared_ptr<ScriptScript> script) override;
 
-    DLLEXPORT virtual const std::string& GetTypeName() const;
+    DLLEXPORT const std::string& GetTypeName() const override;
 
-    DLLEXPORT virtual ObjectFileList* GetListWithName(const std::string &name) const;
+    DLLEXPORT ObjectFileList* GetListWithName(const std::string &name) const override;
 
-    DLLEXPORT virtual ObjectFileTextBlock* GetTextBlockWithName(const std::string &name) const;
+    DLLEXPORT ObjectFileTextBlock* GetTextBlockWithName(const std::string &name) const override;
 
-    DLLEXPORT virtual std::shared_ptr<ScriptScript> GetScript() const;
+    DLLEXPORT std::shared_ptr<ScriptScript> GetScript() const override;
 
-    DLLEXPORT virtual size_t GetPrefixesCount() const;
+    DLLEXPORT size_t GetPrefixesCount() const override;
 
-    DLLEXPORT virtual const std::string& GetPrefix(size_t index) const;
-    DLLEXPORT virtual const std::string* GetPrefixPtr(size_t index) const;
-    DLLEXPORT virtual bool IsThisTemplated() const;
+    DLLEXPORT const std::string& GetPrefix(size_t index) const override;
+    DLLEXPORT const std::string* GetPrefixPtr(size_t index) const;
+    DLLEXPORT bool IsThisTemplated() const override;
 
-    DLLEXPORT virtual size_t GetListCount() const;
+    DLLEXPORT size_t GetListCount() const override;
 
-    DLLEXPORT virtual ObjectFileList* GetList(size_t index) const;
+    DLLEXPORT ObjectFileList* GetList(size_t index) const override;
 
-    DLLEXPORT virtual size_t GetTextBlockCount() const;
+    DLLEXPORT size_t GetTextBlockCount() const override;
 
-    DLLEXPORT virtual ObjectFileTextBlock* GetTextBlock(size_t index) const;
+    DLLEXPORT ObjectFileTextBlock* GetTextBlock(size_t index) const override;
+
+    DLLEXPORT std::string Serialize(size_t indentspaces = 0) const override;
+
 
 protected:
 
@@ -285,6 +291,7 @@ public:
         return TemplatesName;
     }
 
+    DLLEXPORT std::string Serialize(size_t indentspaces = 0) const;
 
 protected:
 
@@ -326,7 +333,8 @@ public:
     DLLEXPORT std::unique_ptr<ObjectFileTemplateObject> CreateInstanceFromThis(
         const ObjectFileTemplateInstance &instanceargs, LErrorReporter* reporterror = nullptr);
 
-
+    //! \returns A string representation of this object
+    DLLEXPORT std::string Serialize() const;
 
 protected:
 
@@ -403,7 +411,10 @@ public:
 	DLLEXPORT NamedVars* GetVariables();
 
 	//! \brief Gets the total number of objects (objects + template instances)
-	DLLEXPORT size_t GetTotalObjectCount() const;
+    DLLEXPORT inline size_t GetTotalObjectCount() const {
+        // Add the template objects to actual objects //
+        return DefinedObjects.size();
+    }
 
 	//! \brief Gets an ObjectFileObject from an index
 	//! \except ExceptionInvalidArgument when the index is out of bounds
@@ -433,6 +444,45 @@ public:
 	//! \todo Allow template overloading with different number of parameters
 	DLLEXPORT std::shared_ptr<ObjectFileTemplateDefinition> FindTemplateDefinition(
         const std::string &name) const;
+
+    //! \returns The number of template definitions there are available for GetTemplateDefinition
+    DLLEXPORT inline size_t GetTemplateDefinitionCount() const {
+
+        return TemplateDefinitions.size();
+    }
+
+    //! \returns Template definition if index is valid
+    DLLEXPORT inline std::shared_ptr<ObjectFileTemplateDefinition> GetTemplateDefinition(size_t index) {
+
+        if (index >= TemplateDefinitions.size())
+            return nullptr;
+
+        return TemplateDefinitions[index];
+    }
+
+    //! \returns object (that may be a template instance) definition if index is valid
+    DLLEXPORT inline std::shared_ptr<ObjectFileObject> GetObject(size_t index) {
+
+        if (index >= DefinedObjects.size())
+            return nullptr;
+
+        return DefinedObjects[index];
+    }
+
+    //! \returns The number of template instances there are available for GetTemplateInstance
+    DLLEXPORT size_t GetTemplateInstanceCount() const {
+
+        return TemplateInstantiations.size();
+    }
+
+    //! \returns Template instance if index is valid
+    DLLEXPORT std::shared_ptr<ObjectFileTemplateInstance> GetTemplateInstance(size_t index) {
+
+        if (index >= TemplateInstantiations.size())
+            return nullptr;
+
+        return TemplateInstantiations[index];
+    }
 
 protected:
 

@@ -133,5 +133,14 @@ DLLEXPORT std::string Leviathan::Convert::Utf16ToUtf8(const wstring &utf16str){
 	// The result is now done //
 	return results;
 }
+
+DLLEXPORT std::string Leviathan::Convert::CodePointToUtf8(int32_t codepoint) {
+
+    std::string result;
+    utf8::utf32to8(&codepoint, (&codepoint) + 1, std::back_inserter(result));
+
+    return result;
+}
+
 // ------------------------------------ //
 

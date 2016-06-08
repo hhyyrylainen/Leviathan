@@ -31,6 +31,12 @@ namespace Leviathan{
         DLLEXPORT static bool WriteObjectFile(ObjectFile &data, const std::string &file,
             LErrorReporter* reporterror);
 
+        //! \brief Serializes an ObjectFile object into a string
+        //!
+        //! The string can be written to a file and later parsed to get the ObjectFile object back
+        //! \param receiver The generated text will be appended to this string
+        //! \returns True if succeeds, false if the object failed to be serialized for some reason
+        DLLEXPORT static bool SerializeObjectFile(ObjectFile &data, std::string &receiver);
 
 		//! \brief Registers a new value alias for the processor
 		//! \warning Calling this while files are being parsed will cause undefined behavior

@@ -307,6 +307,18 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
         REQUIRE(results != nullptr);
         CHECK(*results == L" to remove junk");
     }
+
+    SECTION("Skipping whitespace with newlines") {
+
+        itr.ReInit("{\n  \n}\n \n");
+
+        CHECK(itr.GetCharacter() == '{');
+        itr.MoveToNext();
+
+        itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
+
+        CHECK(itr.GetCharacter() == '}');
+    }
 }
 
 TEST_CASE("StringIterator UTF8 correctness", "[string, objectfile, utf8]"){

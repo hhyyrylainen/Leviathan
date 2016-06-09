@@ -208,6 +208,10 @@ DLLEXPORT const std::string& Leviathan::ObjectFileListProper::GetName() const {
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ObjectFileListProper::AddVariable(shared_ptr<NamedVariableList> var) {
+
+    if (!var)
+        return false;
+
     // Make sure that name is not in use //
     if (Variables.Find(var->GetName()) < Variables.GetVariableCount()) {
         return false;

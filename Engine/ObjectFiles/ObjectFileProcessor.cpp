@@ -559,23 +559,13 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(
     const std::string &file, StringIterator &itr, ObjectFile &obj,  const string &preceeding, 
     LErrorReporter* reporterror)
 {
-	auto typesname = itr.GetNextCharacterSequence<string>(
-        UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS |
-        UNNORMALCHARACTER_TYPE_LOWCODES, SPECIAL_ITERATOR_FILEHANDLING);
-
-	if(!typesname || !typesname->size()){
-
-		reporterror->Error("ObjectFile object definition has no typename "
-            "(or anything valid, for that matter, after 'o'), file: "+file+"("
-			+Convert::ToString(itr.GetCurrentLine())+")");
-		return NULL;
-	}
 
 	itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
 
 	size_t startline = itr.GetCurrentLine();
 
 	std::vector<unique_ptr<string>> prefixesvec;
+    std::unique_ptr<std::string> typesname;
 
 	// Now there should be variable number of prefixes followed by a name //
 	while(itr.GetCharacter() != '"'){
@@ -584,7 +574,16 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(
             SPECIAL_ITERATOR_FILEHANDLING);
 
 		if(oprefix && oprefix->size()){
-			prefixesvec.push_back(move(oprefix));
+
+            if (!typesname) {
+
+                // First prefix is the type //
+                typesname = std::move(oprefix);
+
+            } else {
+
+                prefixesvec.push_back(move(oprefix));
+            }
 		}
 
 		itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
@@ -624,7 +623,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(
 
 	// Create a new ObjectFileObject to hold our contents //
 	shared_ptr<ObjectFileObject> ourobj = make_shared<ObjectFileObjectProper>(*oname,
-        *typesname, std::move(prefixesvec));
+        typesname ? *typesname : "", std::move(prefixesvec));
 
 	// Now there should be the object contents //
 	itr.MoveToNext();

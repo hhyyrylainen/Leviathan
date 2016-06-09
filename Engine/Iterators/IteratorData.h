@@ -18,14 +18,12 @@ public:
 
 class IteratorFindUntilData {
 public:
-    //IteratorFindUntilData(int val1, int val2) : Positions(val1, val2), FoundEnd(false) {
-
-    //}
-    IteratorFindUntilData() : FoundEnd(false) {
+    IteratorFindUntilData() {
     }
 
     StartEndIndex Positions;
-    bool FoundEnd;
+    bool FoundEnd = false;
+    bool NewLineBreak = false;
 };
 
 

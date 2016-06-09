@@ -909,6 +909,9 @@ Leviathan::ITERATORCALLBACK_RETURNTYPE Leviathan::StringIterator::FindUntilSpeci
 			ITR_FUNCDEBUG("Ending to new line, end is now: "+Convert::ToString(data->Positions.End));
 		}
 
+        // Make sure to not return until end of the whole string //
+        data->NewLineBreak = true;
+
 		SkipLineEnd();
 		return ITERATORCALLBACK_RETURNTYPE_STOP;
 	}

@@ -357,13 +357,13 @@ namespace Leviathan{
 
 			auto data = GetPositionsUntilACharacter(charactertolookfor, specialflags);
 
-			if(!data.Positions.Start|| !data.Positions.End){
+			if(!data.Positions.Start || !data.Positions.End){
 				// return empty string //
 				return nullptr;
 			}
 
 			// Return all if not found //
-			if(!data.FoundEnd){
+			if(!data.FoundEnd && (!data.NewLineBreak || !(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP))){
 
 				return GetSubstringFromIndexes<RStrType>(data.Positions.Start,
                     GetLastValidCharIndex());

@@ -110,23 +110,60 @@ TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
 TEST_CASE("Allow missing ending ';' in objectfile", "[objectfile]") {
 
     DummyReporter reporter;
-    auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("Basic = 12", "missing ; parse test", &reporter);
 
-    REQUIRE(ofile != nullptr);
+    SECTION("Header var") {
 
-    const NamedVars& HeaderVars = *ofile->GetVariables();
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("Basic = 12", "missing ; parse test", &reporter);
 
-    // Validate the output //
-    CHECK(HeaderVars.GetVariableCount() == 1);
+        REQUIRE(ofile != nullptr);
 
-    CHECK(HeaderVars);
+        const NamedVars& HeaderVars = *ofile->GetVariables();
 
-    REQUIRE(HeaderVars.Find("Basic") < HeaderVars.GetVariableCount());
+        // Validate the output //
+        CHECK(HeaderVars.GetVariableCount() == 1);
 
-    int number;
-    CHECK(HeaderVars.GetValueAndConvertTo("Basic", number));
+        CHECK(HeaderVars);
 
-    CHECK(number == 12);
+        REQUIRE(HeaderVars.Find("Basic") < HeaderVars.GetVariableCount());
+
+        int number;
+        CHECK(HeaderVars.GetValueAndConvertTo("Basic", number));
+
+        CHECK(number == 12);
+    }
+
+    SECTION("In variable list") {
+
+        constexpr auto File = "o a \"obj\"{\n"
+            "    \n"
+            "    l values{\n"
+            "        is_default: true\n"
+            "        chat_prefix: \"[NEW] \"\n"
+            "        auto_promote: \"1hr\";\n"
+            "    }\n"
+            "}";
+
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File, "parse test", &reporter);
+
+        REQUIRE(ofile != nullptr);
+
+        REQUIRE(ofile->GetTotalObjectCount() == 1);
+        REQUIRE(ofile->GetObject(0)->GetListWithName("values"));
+
+        const auto& variables = ofile->GetObject(0)->GetListWithName("values")->GetVariables();
+
+        REQUIRE(variables.GetValueDirect("is_default"));
+        CHECK(variables.GetValueDirect("is_default")->GetCommonType() == DATABLOCK_TYPE_BOOL);
+        CHECK(variables.GetValueDirect("is_default")->GetValue().ConvertAndReturnVariable<bool>() == true);
+
+        REQUIRE(variables.GetValueDirect("chat_prefix"));
+        CHECK(variables.GetValueDirect("chat_prefix")->GetCommonType() == DATABLOCK_TYPE_STRING);
+        CHECK(variables.GetValueDirect("chat_prefix")->GetValue().ConvertAndReturnVariable<std::string>() == "[NEW] ");
+
+        REQUIRE(variables.GetValueDirect("auto_promote"));
+        CHECK(variables.GetValueDirect("auto_promote")->GetCommonType() == DATABLOCK_TYPE_STRING);
+        CHECK(variables.GetValueDirect("auto_promote")->GetValue().ConvertAndReturnVariable<std::string>() == "1hr");
+    }
 }
 
 TEST_CASE("Object file saving", "[objectfile]") {
@@ -247,4 +284,54 @@ TEST_CASE("Object file saving", "[objectfile]") {
         REQUIRE(ofile->GetObject(0)->GetPrefix(1) == "second");
         REQUIRE(ofile->GetObject(0)->GetPrefix(2) == "prefix");
     }
+}
+
+
+TEST_CASE("Fabricators permissions parse test", "[objectfile]") {
+
+    constexpr auto File = "permissions_version: 1;\n"
+        "\n"
+        "o Rank \"default\"{\n"
+        "    \n"
+        "    l values{\n"
+        "        is_default: true\n"
+        "        chat_prefix: \"[NEW] \"\n"
+        "        auto_promote: \"1hr\"\n"
+        "    }\n"
+        "    \n"
+        "    l nodes{\n"
+        "        core.tp.request: true\n"
+        "        core.home: true\n"
+        "        core.kill.self: true\n"
+        "        core.kill: default\n"
+        "        core.kill.other: false\n"
+        "    }\n"
+        "}";
+
+    DummyReporter reporter;
+    auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File, "permissions_test1", &reporter);
+
+    REQUIRE(ofile != nullptr);
+
+    REQUIRE(ofile->GetTotalObjectCount() == 1);
+    REQUIRE(ofile->GetObject(0)->GetListWithName("values"));
+    REQUIRE(ofile->GetObject(0)->GetListWithName("nodes"));
+
+    const auto& variables = ofile->GetObject(0)->GetListWithName("values")->GetVariables();
+
+    REQUIRE(variables.GetValueDirect("is_default"));
+    CHECK(variables.GetValueDirect("is_default")->GetValue().ConvertAndReturnVariable<bool>() == true);
+
+    REQUIRE(variables.GetValueDirect("chat_prefix"));
+    CHECK(variables.GetValueDirect("chat_prefix")->GetValue().ConvertAndReturnVariable<std::string>() == "[NEW] ");
+
+
+    const auto& nodes = ofile->GetObject(0)->GetListWithName("nodes")->GetVariables();
+
+    REQUIRE(nodes.GetValueDirect("core.home"));
+    CHECK(nodes.GetValueDirect("core.home")->GetValue().ConvertAndReturnVariable<bool>() == true);
+
+    REQUIRE(nodes.GetValueDirect("core.kill"));
+    CHECK(nodes.GetValueDirect("core.kill")->GetValue().ConvertAndReturnVariable<std::string>() == "default");
+
 }

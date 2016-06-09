@@ -469,5 +469,15 @@ TEST_CASE("StringIterator new line handling", "[string]") {
         CHECK(*result == "test");
     }
 
+    SECTION("Until character new line before character") {
+
+        itr.ReInit("true\n  another = thing\n   final = true;");
+
+        result = itr.GetUntilNextCharacterOrAll<string>(';',
+            SPECIAL_ITERATOR_ONNEWLINE_STOP | SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
+
+        REQUIRE(result);
+        CHECK(*result == "true");
+    }
 }
 

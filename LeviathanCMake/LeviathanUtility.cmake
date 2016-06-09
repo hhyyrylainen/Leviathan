@@ -37,8 +37,9 @@ macro(RemoveSourceFilesFromList TargetList)
   foreach(clib ${${TargetList}})
     
     string(REGEX MATCH "\\.cpp" item ${clib})
-
-    if(NOT item)
+    string(REGEX MATCH "\\.c" item2 ${clib})
+    
+    if(NOT item AND NOT item2)
       
       set(PassedItems ${PassedItems} ${clib})
 

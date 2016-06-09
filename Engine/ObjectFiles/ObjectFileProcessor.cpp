@@ -739,7 +739,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const std::string &fi
 			itr.MoveToNext();
 
 			// Add us to the object //
-			if(!obj.AddVariableList(ourobj)){
+			if(!obj.AddVariableList(std::move(ourobj))){
 
 				reporterror->Error("ObjectFile variable list has conflicting name inside "
                     "it's object, file: "+file+"("+Convert::ToString(ourstartline)+")");
@@ -830,7 +830,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const std::string &file,
 			itr.MoveToNext();
 
 			// Add us to the object //
-			if(!obj.AddTextBlock(ourobj)){
+			if(!obj.AddTextBlock(std::move(ourobj))){
 
 				reporterror->Error("ObjectFile text block has a conflicting name, file: "+
                     file+"("+Convert::ToString(ourstartline)+")");

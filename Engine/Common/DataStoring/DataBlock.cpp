@@ -298,7 +298,30 @@ namespace Leviathan{
 		// Invalid packet //
 		throw InvalidArgument("invalid packet format");
 	}
-
 }
 #endif //SFML_PACKETS
+
+namespace Leviathan {
+
+DLLEXPORT std::ostream& operator<<(std::ostream &stream, const VariableBlock &value) {
+
+    if (!value.GetBlockConst()) {
+
+        stream << "Empty Variable";
+        return stream;
+    }
+
+    if (!value.IsConversionAllowedNonPtr<std::string>()) {
+
+        stream << "No Text Presentation";
+        return stream;
+    }
+
+    stream << value.operator std::string();
+    return stream;
+}
+
+}
+
+
 

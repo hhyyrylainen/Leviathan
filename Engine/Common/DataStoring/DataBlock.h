@@ -830,6 +830,10 @@ namespace Leviathan{
 	};
 #endif //USING_ANGELSCRIPT
 
+    // Stream operators //
+    DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+        const Leviathan::VariableBlock &value);
+
 
 	// conversion template specifications //
 #define CONVERSIONTEMPLATESPECIFICATIONFORDATABLOCK(BlockTypeName, ToConvertTypeName, ConvertActionToDo) template<> \

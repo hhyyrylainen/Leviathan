@@ -286,31 +286,37 @@ DLLEXPORT const std::string* Leviathan::ObjectFileObjectProper::GetPrefixPtr(siz
     return Prefixes[index].get();
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ObjectFileObjectProper::AddVariableList(unique_ptr<ObjectFileList> &list) {
+DLLEXPORT bool Leviathan::ObjectFileObjectProper::AddVariableList(unique_ptr<ObjectFileList>&& list) {
+
+    unique_ptr<ObjectFileList> holder = std::move(list);
+
     // Make sure name is unique //
     for (size_t i = 0; i < Contents.size(); i++) {
 
-        if (Contents[i]->GetName() == list->GetName()) {
+        if (Contents[i]->GetName() == holder->GetName()) {
             return false;
         }
     }
 
     // Add it //
-    Contents.push_back(list.release());
+    Contents.push_back(holder.release());
     return true;
 }
 
-DLLEXPORT bool Leviathan::ObjectFileObjectProper::AddTextBlock(unique_ptr<ObjectFileTextBlock> &tblock) {
+DLLEXPORT bool Leviathan::ObjectFileObjectProper::AddTextBlock(unique_ptr<ObjectFileTextBlock>&& tblock) {
+
+    unique_ptr<ObjectFileTextBlock> holder = std::move(tblock);
+
     // Make sure name is unique //
     for (size_t i = 0; i < TextBlocks.size(); i++) {
 
-        if (TextBlocks[i]->GetName() == tblock->GetName()) {
+        if (TextBlocks[i]->GetName() == holder->GetName()) {
             return false;
         }
     }
 
     // Add it //
-    TextBlocks.push_back(tblock.release());
+    TextBlocks.push_back(holder.release());
     return true;
 }
 
@@ -451,7 +457,7 @@ DLLEXPORT std::string Leviathan::ObjectFileObjectProper::Serialize(size_t indent
     #endif //LEVIATHAN_USING_ANGELSCRIPT
     }
 
-    result += "}\n";
+    result += "} // End Object "+ Name + "\n\n";
     return result;
 }
 
@@ -665,7 +671,7 @@ DLLEXPORT std::unique_ptr<Leviathan::ObjectFileTemplateObject> ObjectFileTemplat
         }
 
         // Add the list to the new object //
-        internalobj->AddVariableList(listobj);
+        internalobj->AddVariableList(std::move(listobj));
 
     }
 
@@ -694,7 +700,7 @@ DLLEXPORT std::unique_ptr<Leviathan::ObjectFileTemplateObject> ObjectFileTemplat
         }
 
         // Add to the object //
-        internalobj->AddTextBlock(textblock);
+        internalobj->AddTextBlock(std::move(textblock));
     }
 
     // Process the script source //

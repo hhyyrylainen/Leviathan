@@ -131,13 +131,13 @@ public:
     //! \brief Add a variable list to this object
     //! \return False when the name collides
     //! \post The list variable will be empty
-    DLLEXPORT virtual bool AddVariableList(std::unique_ptr<ObjectFileList> &list) = 0;
+    DLLEXPORT virtual bool AddVariableList(std::unique_ptr<ObjectFileList>&& list) = 0;
 
 
     //! \brief Add a text block to this object
     //! \return False when the name collides
     //! \post The tblock variable will be empty
-    DLLEXPORT virtual bool AddTextBlock(std::unique_ptr<ObjectFileTextBlock> &tblock) = 0;
+    DLLEXPORT virtual bool AddTextBlock(std::unique_ptr<ObjectFileTextBlock>&& tblock) = 0;
 
 
     //! \brief Add a script block to this object
@@ -212,9 +212,9 @@ public:
 
     DLLEXPORT const std::string& GetName() const override;
 
-    DLLEXPORT bool AddVariableList(std::unique_ptr<ObjectFileList> &list) override;
+    DLLEXPORT bool AddVariableList(std::unique_ptr<ObjectFileList>&& list) override;
 
-    DLLEXPORT bool AddTextBlock(std::unique_ptr<ObjectFileTextBlock> &tblock) override;
+    DLLEXPORT bool AddTextBlock(std::unique_ptr<ObjectFileTextBlock>&& tblock) override;
 
     DLLEXPORT void AddScriptScript(std::shared_ptr<ScriptScript> script) override;
 

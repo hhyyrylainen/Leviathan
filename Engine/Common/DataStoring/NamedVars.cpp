@@ -13,6 +13,10 @@ using namespace std;
 NamedVariableList::NamedVariableList() : Datas(0), Name(""){
 }
 
+DLLEXPORT NamedVariableList::NamedVariableList(const std::string &name) : Datas(0), Name(name) {
+
+}
+
 DLLEXPORT NamedVariableList::NamedVariableList(const string &name, VariableBlock* value1) :
     Datas(1), Name(name)
 {
@@ -465,7 +469,9 @@ bool NamedVariableList::CompareName(const string& name) const{
 	// just default comparison //
 	return Name.compare(name) == 0;
 }
-DLLEXPORT string NamedVariableList::ToText(int WhichSeparator /*= 0*/) const{
+DLLEXPORT std::string Leviathan::NamedVariableList::ToText(int WhichSeparator /*= 0*/, 
+    bool AddAllBrackets /*= false*/) const
+{
 
 	string stringifiedval = Name;
 
@@ -476,8 +482,12 @@ DLLEXPORT string NamedVariableList::ToText(int WhichSeparator /*= 0*/) const{
 	}
 
 	// convert value to string //
+
+    const bool WrapInBrackets = AddAllBrackets ? true : Datas.size() != 1;
+
 	// starting bracket //
-	stringifiedval += "[";
+    if(WrapInBrackets)
+        stringifiedval += "[";
 
 	// reserve some space //
 	stringifiedval.reserve(Datas.size()*4);
@@ -485,7 +495,7 @@ DLLEXPORT string NamedVariableList::ToText(int WhichSeparator /*= 0*/) const{
 	for(size_t i = 0; i < Datas.size(); i++){
 
 		if(i != 0)
-			stringifiedval += ",";
+			stringifiedval += ", ";
         
 		// Check if type is a string type //
 		int blocktype = Datas[i]->GetBlockConst()->Type;
@@ -494,13 +504,23 @@ DLLEXPORT string NamedVariableList::ToText(int WhichSeparator /*= 0*/) const{
             blocktype == DATABLOCK_TYPE_CHAR)
         {
 			// Output in quotes //
-			stringifiedval += "[\""+Datas[i]->operator string()+"\"]";
+            if(AddAllBrackets)
+                stringifiedval += "[\"" + Datas[i]->operator string() + "\"]";
+            else
+                stringifiedval += "\"" + Datas[i]->operator string() + "\"";
             
 		} else if(blocktype == DATABLOCK_TYPE_BOOL){
             
 			// Use true/false for this //
-			stringifiedval += "["+(Datas[i]->operator bool() ? string("true"):
-                string("false"))+"]";
+            if (AddAllBrackets) {
+
+                stringifiedval += "[" + (Datas[i]->operator bool() ? string("true") :
+                    string("false")) + "]";
+
+            } else {
+
+                stringifiedval += Datas[i]->operator bool() ? string("true") : string("false");
+            }
 
 		} else {
 
@@ -513,14 +533,19 @@ DLLEXPORT string NamedVariableList::ToText(int WhichSeparator /*= 0*/) const{
                 LEVIATHAN_ASSERT(0, "value cannot be cast to string");
             #endif //ALTERNATIVE_EXCEPTIONS_FATAL
             }
+            if (AddAllBrackets)
+                stringifiedval += "[" + Datas[i]->operator string() + "]";
+            else
+                stringifiedval += "" + Datas[i]->operator string() + "";
 
-			stringifiedval += "["+Datas[i]->operator string()+"]";
 		}
 	}
 
-
 	// add ending bracket and done //
-	stringifiedval += "];";
+    if(WrapInBrackets)
+        stringifiedval += "];";
+    else
+        stringifiedval += ";";
 
 	return stringifiedval;
 }
@@ -559,6 +584,10 @@ DLLEXPORT bool NamedVariableList::operator==(const NamedVariableList &other) con
 
 	// They truly are the same //
 	return true;
+}
+DLLEXPORT bool Leviathan::NamedVariableList::operator!=(const NamedVariableList &other) const {
+
+    return !(*this == other);
 }
 // ----------------- process functions ------------------- //
 DLLEXPORT  bool NamedVariableList::ProcessDataDump(const std::string &data,
@@ -629,7 +658,7 @@ DLLEXPORT  bool NamedVariableList::ProcessDataDump(const std::string &data,
 
             shared_ptr<NamedVariableList> var(new NamedVariableList(*Lines[i], errorreport, predefined));
 
-            if (!var || !*var) {
+            if (!var || !var->IsValid()) {
                 // Invalid value //
                 continue;
             }

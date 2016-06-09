@@ -29,6 +29,8 @@ namespace Leviathan{
 	public:
 		DLLEXPORT NamedVariableList();
 		DLLEXPORT NamedVariableList(const NamedVariableList &other);
+        //! Creates an empty block with no values
+        DLLEXPORT NamedVariableList(const std::string &name);
 		DLLEXPORT NamedVariableList(const std::string &name, VariableBlock* value1);
 		DLLEXPORT NamedVariableList(const std::string &name, const VariableBlock &val);
     #ifdef USING_ANGELSCRIPT
@@ -69,7 +71,7 @@ namespace Leviathan{
 		DLLEXPORT ~NamedVariableList();
 
         //! \brief Returns true if this is valid
-        DLLEXPORT operator bool() const {
+        DLLEXPORT bool IsValid() const {
 
             return Name.length() > 0;
         }
@@ -133,7 +135,7 @@ namespace Leviathan{
 		DLLEXPORT void SetName(const std::string &name);
 		DLLEXPORT bool CompareName(const std::string &name) const;
 		// ------------------------------------ //
-		DLLEXPORT std::string ToText(int WhichSeparator = 0) const;
+		DLLEXPORT std::string ToText(int WhichSeparator = 0, bool AddAllBrackets = false) const;
         
 		// process functions //
 		DLLEXPORT static bool ProcessDataDump(const std::string &data,
@@ -147,8 +149,10 @@ namespace Leviathan{
 		//! Compare values extensively
 		//!
 		//! If this returns true then the values are the same and assignment would have no visible effect.
-		DLLEXPORT bool operator==(const NamedVariableList &other) const;
+		DLLEXPORT bool operator ==(const NamedVariableList &other) const;
 
+        //! \see operator==
+        DLLEXPORT bool operator !=(const NamedVariableList &other) const;
 
 		// element access operator //
 		DLLEXPORT VariableBlock& operator[](const int &nindex);

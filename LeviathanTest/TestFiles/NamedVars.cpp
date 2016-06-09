@@ -162,8 +162,8 @@ TEST_CASE("Specific value parsing", "[variable]"){
 
         SECTION("Stringification"){
             
-            CHECK(var.ToText(0) == "Width = [[1280]];");
-            CHECK(var.ToText(1) == "Width: [[1280]];");
+            CHECK(var.ToText(0, true) == "Width = [[1280]];");
+            CHECK(var.ToText(1, true) == "Width: [[1280]];");
 
 
             SECTION("Parsing back from string"){
@@ -223,14 +223,19 @@ TEST_CASE("Specific value parsing", "[variable]"){
 
         CHECK(var.GetCommonType() == DATABLOCK_TYPE_INT);
         CHECK(var.GetValue().operator int() == 2);
-        CHECK(var.ToText() == "StartCount = [[2]];");
+        CHECK(var.ToText(0, true) == "StartCount = [[2]];");
+        CHECK(var.ToText(0, false) == "StartCount = 2;");
+        CHECK(var.ToText(1, false) == "StartCount: 2;");
+
 
         var = NamedVariableList("StartCount", new VariableBlock(
                 new IntBlock(var.GetValue().operator int() + 1)));
 
         CHECK(var.GetCommonType() == DATABLOCK_TYPE_INT);
         CHECK(var.GetValue().operator int() == 3);
-        CHECK(var.ToText() == "StartCount = [[3]];");
+        CHECK(var.ToText(0, true) == "StartCount = [[3]];");
+        CHECK(var.ToText(0, false) == "StartCount = 3;");
+
     }
 }
 
@@ -254,10 +259,104 @@ TEST_CASE("Allow missing ending';'", "[variable, datablock]") {
     DummyReporter dummy;
     NamedVariableList testlist("name = 13.5", &dummy);
 
-    REQUIRE(testlist);
+    REQUIRE(testlist.IsValid());
     REQUIRE(testlist.GetVariableCount() == 1);
 
     REQUIRE(testlist.GetValue().IsConversionAllowedNonPtr<float>());
 
     CHECK(static_cast<float>(testlist.GetValue()) == 13.5f);
+}
+
+TEST_CASE("Verify equals operator works", "[variable, datablock]") {
+
+    SECTION("Directly with VariableBlocks") {
+
+        CHECK(VariableBlock(nullptr) != VariableBlock(nullptr));
+
+        CHECK(VariableBlock(new IntBlock(2)) != VariableBlock(nullptr));
+        CHECK(VariableBlock(new IntBlock(2)) != VariableBlock(new IntBlock(3)));
+        CHECK(VariableBlock(new IntBlock(2)) != VariableBlock(new StringBlock("3")));
+
+        CHECK(VariableBlock(new IntBlock(2)) == VariableBlock(new IntBlock(2)));
+        CHECK(!(VariableBlock(new IntBlock(2)) != VariableBlock(new IntBlock(2))));
+
+        CHECK(VariableBlock(std::string("how")) == VariableBlock(std::string("how")));
+        CHECK(VariableBlock(std::string("how")) != VariableBlock(std::string("how2")));
+
+    }
+
+    SECTION("Through NamedVariableList") {
+
+        CHECK(NamedVariableList("val") == NamedVariableList("val"));
+        CHECK(!(NamedVariableList("val") != NamedVariableList("val")));
+
+        CHECK(NamedVariableList("val", new VariableBlock(nullptr)) != 
+            NamedVariableList("val", new VariableBlock(nullptr)));
+
+        CHECK(NamedVariableList("val", new VariableBlock(2)) !=
+            NamedVariableList("val", new VariableBlock(1)));
+
+        CHECK(NamedVariableList("val", new VariableBlock(1)) ==
+            NamedVariableList("val", new VariableBlock(1)));
+
+        CHECK(!(NamedVariableList("val", new VariableBlock(1)) !=
+            NamedVariableList("val", new VariableBlock(1))));
+
+        // Different names //
+        CHECK(NamedVariableList("val2", new VariableBlock(1)) !=
+            NamedVariableList("val", new VariableBlock(1)));
+    }
+
+}
+
+TEST_CASE("Parsing values back from ToText", "[variable, datablock]") {
+
+    DummyReporter dummy;
+
+    SECTION("Empty value into empty string") {
+
+        NamedVariableList original("val");
+
+        const auto asstring = original.ToText(0, false);
+
+        CHECK(asstring.length() > 0);
+
+        NamedVariableList returned(asstring, &dummy);
+
+        CHECK(returned.GetName() == original.GetName());
+        CHECK(returned.GetValueDirect() != original.GetValueDirect());
+        CHECK(returned.GetValueDirect());
+    }
+
+    SECTION("empty string") {
+
+        NamedVariableList original("val", new VariableBlock(std::string("")));
+
+        const auto asstring = original.ToText(0, true);
+
+        CHECK(asstring.length() > 0);
+
+        NamedVariableList returned(asstring, &dummy);
+
+        CHECK(returned.GetName() == original.GetName());
+        REQUIRE(returned.GetValueDirect());
+        REQUIRE(original.GetValueDirect());
+        CHECK(returned.GetValue() == original.GetValue());
+    }
+
+    SECTION("a simple string") {
+
+        NamedVariableList original("val", new VariableBlock(std::string("arc")));
+
+        const auto asstring = original.ToText(0, true);
+
+        CHECK(asstring.length() > 0);
+
+        NamedVariableList returned(asstring, &dummy);
+
+        CHECK(returned.GetName() == original.GetName());
+        REQUIRE(returned.GetValueDirect());
+        REQUIRE(original.GetValueDirect());
+        CHECK(returned.GetValue() == original.GetValue());
+    }
 }

@@ -2,6 +2,8 @@
 // ------------------------------------ //
 #include "Types.h"
 // ------------------------------------ //
+#include <ostream>
+#include <iostream>
 
 // specific colours //
 namespace Leviathan {

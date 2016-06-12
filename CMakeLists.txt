@@ -160,6 +160,11 @@ else(WIN32)
 
   # C++14
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-reorder -Wno-unused-function -Wno-unknown-pragmas")
+
+  if(CREATE_STATIC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  endif()
+      
   
   # We need X11 on linux for window class to work
   find_package(X11)

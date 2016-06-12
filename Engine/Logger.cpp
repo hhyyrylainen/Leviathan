@@ -15,7 +15,6 @@
 #include <ctime>
 #include <iomanip>
 #include <iostream>
-#define __STDC_WANT_LIB_EXT1__ 1
 #include <time.h>
 #ifdef _WIN32
 #include "WindowsInclude.h"
@@ -31,13 +30,16 @@ DLLEXPORT Leviathan::Logger::Logger(const std::string &file):
     // Get time for putting to the  beginning of the  log file //
     auto t = std::time(nullptr);
 
+    std::stringstream formatedtime;
+    
+#ifdef _WIN32
     struct tm curtime;
     localtime_s(&curtime, &t);
-
-    std::stringstream formatedtime;
-
     formatedtime << std::put_time(&curtime, "%S:%M:%H %A %d.%m.%Y (%Z)");
-    //formatedtime << "waiting for GCC 5";
+#else
+    struct tm* curtime = localtime(&t);
+    formatedtime << std::put_time(curtime, "%S:%M:%H %A %d.%m.%Y (%Z)");
+#endif //_WIN32
 
     string write = "Start of Leviathan log for leviathan version: " + VERSIONS;
 

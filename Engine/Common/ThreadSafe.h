@@ -75,7 +75,7 @@ namespace Leviathan{
         }
     };
     
-
+#ifdef MOVE_NEW_LOCKS
 #define GUARD_LOCK() auto guard = std::move(Locker::Object(this));
     
 #define GUARD_LOCK_OTHER(x) auto guard = std::move(Locker::Object(x));
@@ -84,7 +84,16 @@ namespace Leviathan{
     
 #define UNIQUE_LOCK_OBJECT_OTHER(x) auto lockit = std::move(Locker::Object(x));
 #define UNIQUE_LOCK_THIS() auto lockit = std::move(Locker::Object(this));
+#else
+#define GUARD_LOCK() auto guard = (Locker::Object(this));
     
+#define GUARD_LOCK_OTHER(x) auto guard = (Locker::Object(x));
+#define GUARD_LOCK_NAME(y) auto y = (Locker::Object(this));
+#define GUARD_LOCK_OTHER_NAME(x,y) auto y = (Locker::Object(x));
+    
+#define UNIQUE_LOCK_OBJECT_OTHER(x) auto lockit = (Locker::Object(x));
+#define UNIQUE_LOCK_THIS() auto lockit = (Locker::Object(this));
+#endif
 
 	//! \brief Allows the inherited object to be locked
     //! \note Not allowed to be used as a pointer type

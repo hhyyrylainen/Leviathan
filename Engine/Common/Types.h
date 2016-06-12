@@ -2,6 +2,7 @@
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
+#include <cmath>
 
 namespace Leviathan{
 
@@ -304,7 +305,7 @@ struct StartEndIndex {
 		}
 		// Add all elements together after abs() is called on each element //
 		DLLEXPORT inline float HAddAbs() const{
-			return std::abs(X) + std::abs(Y);
+			return std::fabs(X) + std::fabs(Y);
 		}
 		// getting min and max of objects //
 		DLLEXPORT inline Float2 MinElements(const Float2 &other) const{

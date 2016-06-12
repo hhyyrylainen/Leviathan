@@ -347,7 +347,7 @@ namespace Leviathan{
 		// value getting operators //
 		template<class ConvertT>
 		DLLEXPORT operator ConvertT() const{
-			assert(true && "datablock pointer cannot be made into value");
+			LEVIATHAN_ASSERT(false, "datablock pointer cannot be made into value");
 			return ConvertT();
 		}
 		// explicit so that this doesn't get called all the time with invalid values and such //

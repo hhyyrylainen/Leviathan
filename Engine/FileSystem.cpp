@@ -446,7 +446,7 @@ bool Leviathan::FileSystem::WriteToFile(const wstring &data, const wstring &file
 #ifdef _WIN32
 	wofstream file(filename, ios::binary);
 #else
-	wofstream file(Convert::WstringToString(filename), ios::binary);
+	wofstream file(Convert::Utf16ToUtf8(filename), ios::binary);
 #endif
 	if (file.is_open()){
 		file << data;
@@ -481,7 +481,7 @@ DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const wstring &file,
 #ifdef _WIN32
 	wifstream reader(file, ios::in | ios::binary);
 #else
-	wifstream reader(Convert::WstringToString(file), ios::in | ios::binary);
+	wifstream reader(Convert::Utf16ToUtf8(file), ios::in | ios::binary);
 #endif
 	if(reader){
 

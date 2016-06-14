@@ -17,14 +17,14 @@ DLLEXPORT NamedVariableList::NamedVariableList(const std::string &name) : Datas(
 
 }
 
-DLLEXPORT NamedVariableList::NamedVariableList(const string &name, VariableBlock* value1) :
+DLLEXPORT NamedVariableList::NamedVariableList(const std::string &name, VariableBlock* value1) :
     Datas(1), Name(name)
 {
 	// set value //
 	Datas[0] = value1;
 }
 
-DLLEXPORT NamedVariableList::NamedVariableList(const string &name, const VariableBlock &val) :
+DLLEXPORT NamedVariableList::NamedVariableList(const std::string &name, const VariableBlock &val) :
     Datas(1), Name(name)
 {
 	// set value //
@@ -39,7 +39,7 @@ DLLEXPORT NamedVariableList::NamedVariableList(ScriptSafeVariableBlock* const da
 }
 #endif // USING_ANGELSCRIPT
 
-DLLEXPORT NamedVariableList::NamedVariableList(const string &name, vector<VariableBlock*> values_willclear)
+DLLEXPORT NamedVariableList::NamedVariableList(const std::string &name, vector<VariableBlock*> values_willclear)
     : Datas(values_willclear.size()), Name(name)
 {
 	// set values //
@@ -59,13 +59,14 @@ DLLEXPORT NamedVariableList::NamedVariableList(const NamedVariableList &other) :
 	}
 }
 
-DLLEXPORT NamedVariableList::NamedVariableList(const string &line, LErrorReporter* errorreport,
-    map<string, std::shared_ptr<VariableBlock>>* predefined /*= NULL*/)
+DLLEXPORT NamedVariableList::NamedVariableList(const std::string &line,
+    LErrorReporter* errorreport, map<std::string, std::shared_ptr<VariableBlock>>* predefined
+    /*= NULL*/)
 {
 	// using StringIterator makes this shorter //
 	StringIterator itr(&line);
 
-	auto name = itr.GetUntilEqualityAssignment<string>(EQUALITYCHARACTER_TYPE_ALL);
+	auto name = itr.GetUntilEqualityAssignment<std::string>(EQUALITYCHARACTER_TYPE_ALL);
 
 	if(!name){
 		// no name //
@@ -83,8 +84,7 @@ DLLEXPORT NamedVariableList::NamedVariableList(const string &line, LErrorReporte
 	itr.SkipWhiteSpace();
 
 	// get last part of it //
-	//unique_ptr<string> tempvar = itr.GetUntilEnd();
-	auto tempvar = itr.GetUntilNextCharacterOrAll<string>(L';');
+	auto tempvar = itr.GetUntilNextCharacterOrAll<std::string>(L';');
 
 	if(!tempvar || tempvar->size() < 1){
 		// no variable //
@@ -108,7 +108,7 @@ DLLEXPORT NamedVariableList::NamedVariableList(const string &line, LErrorReporte
     }
 }
 
-DLLEXPORT NamedVariableList::NamedVariableList(const string &name, const string &valuestr, 
+DLLEXPORT NamedVariableList::NamedVariableList(const std::string &name, const std::string &valuestr, 
     LErrorReporter* errorreport, map<string,
     std::shared_ptr<VariableBlock>>* predefined /*= NULL*/)
 {
@@ -452,20 +452,20 @@ DLLEXPORT VariableBlock& NamedVariableList::GetValue(size_t nindex){
 	return *Datas[nindex];
 }
 
-string& NamedVariableList::GetName(){
+DLLEXPORT std::string& NamedVariableList::GetName(){
 	return Name;
 }
 
-DLLEXPORT void NamedVariableList::GetName(string &name) const{
+DLLEXPORT void NamedVariableList::GetName(std::string &name) const{
 	// return name in a reference //
 	name = Name;
 }
 
-void NamedVariableList::SetName(const string& name){
+void NamedVariableList::SetName(const std::string& name){
 	Name = name;
 }
 
-bool NamedVariableList::CompareName(const string& name) const{
+bool NamedVariableList::CompareName(const std::string& name) const{
 	// just default comparison //
 	return Name.compare(name) == 0;
 }
@@ -764,7 +764,7 @@ DLLEXPORT NamedVars::NamedVars(NamedVars* stealfrom) : Variables(stealfrom->Vari
 	stealfrom->Variables.clear();
 }
 
-DLLEXPORT NamedVars::NamedVars(const string &datadump, LErrorReporter* errorreport) : Variables(){
+DLLEXPORT NamedVars::NamedVars(const std::string &datadump, LErrorReporter* errorreport) : Variables(){
 
 	// load data directly to vector //
 	if(!NamedVariableList::ProcessDataDump(datadump, Variables, errorreport, NULL)){
@@ -840,7 +840,7 @@ DLLEXPORT void NamedVars::AddDataToPacket(sf::Packet &packet) const{
 }
 #endif // SFML_PACKETS
 // ------------------------------------ //
-DLLEXPORT bool NamedVars::SetValue(const string &name, const VariableBlock &value1){
+DLLEXPORT bool NamedVars::SetValue(const std::string &name, const VariableBlock &value1){
 	GUARD_LOCK();
 	auto index = Find(name);
 
@@ -852,7 +852,7 @@ DLLEXPORT bool NamedVars::SetValue(const string &name, const VariableBlock &valu
 	return true;
 }
 
-DLLEXPORT bool NamedVars::SetValue(const string &name, VariableBlock* value1){
+DLLEXPORT bool NamedVars::SetValue(const std::string &name, VariableBlock* value1){
 	GUARD_LOCK();
 	auto index = Find(guard, name);
 
@@ -864,7 +864,7 @@ DLLEXPORT bool NamedVars::SetValue(const string &name, VariableBlock* value1){
 	return true;
 }
 
-DLLEXPORT bool NamedVars::SetValue(const string &name, const vector<VariableBlock*> &values){
+DLLEXPORT bool NamedVars::SetValue(const std::string &name, const vector<VariableBlock*> &values){
 	GUARD_LOCK();
 	auto index = Find(name);
 
@@ -892,7 +892,7 @@ DLLEXPORT bool NamedVars::SetValue(NamedVariableList &nameandvalues){
 	return true;
 }
 
-DLLEXPORT VariableBlock& NamedVars::GetValueNonConst(const string &name){
+DLLEXPORT VariableBlock& NamedVars::GetValueNonConst(const std::string &name){
 	GUARD_LOCK();
 	auto index = Find(guard, name);
 
@@ -908,7 +908,7 @@ DLLEXPORT VariableBlock& NamedVars::GetValueNonConst(const string &name){
 	return Variables[index]->GetValue();
 }
 
-DLLEXPORT const VariableBlock* NamedVars::GetValue(const string &name) const{
+DLLEXPORT const VariableBlock* NamedVars::GetValue(const std::string &name) const{
 	GUARD_LOCK();
 	auto index = Find(guard, name);
 
@@ -924,7 +924,7 @@ DLLEXPORT const VariableBlock* NamedVars::GetValue(const string &name) const{
 	return Variables[index]->GetValueDirect();
 }
 
-DLLEXPORT bool NamedVars::GetValue(const string &name, VariableBlock &receiver) const{
+DLLEXPORT bool NamedVars::GetValue(const std::string &name, VariableBlock &receiver) const{
 	GUARD_LOCK();
 	auto index = Find(guard, name);
 	// index check //
@@ -936,7 +936,7 @@ DLLEXPORT bool NamedVars::GetValue(const string &name, VariableBlock &receiver) 
 	return true;
 }
 
-DLLEXPORT bool NamedVars::GetValue(const string &name, const int &nindex, VariableBlock &receiver) const{
+DLLEXPORT bool NamedVars::GetValue(const std::string &name, const int &nindex, VariableBlock &receiver) const{
 	GUARD_LOCK();
 
 	auto index = Find(guard, name);
@@ -963,7 +963,7 @@ DLLEXPORT bool NamedVars::GetValue(const int &index, VariableBlock &receiver) co
 	return true;
 }
 
-DLLEXPORT size_t NamedVars::GetValueCount(const string &name) const{
+DLLEXPORT size_t NamedVars::GetValueCount(const std::string &name) const{
 	GUARD_LOCK();
 	auto index = Find(guard, name);
 	// index check //
@@ -974,7 +974,7 @@ DLLEXPORT size_t NamedVars::GetValueCount(const string &name) const{
 	return Variables[index]->GetVariableCount();
 }
 
-DLLEXPORT vector<VariableBlock*>* NamedVars::GetValues(const string &name){
+DLLEXPORT vector<VariableBlock*>* NamedVars::GetValues(const std::string &name){
 	GUARD_LOCK();
 	auto index = Find(guard, name);
 	// index check //
@@ -985,7 +985,7 @@ DLLEXPORT vector<VariableBlock*>* NamedVars::GetValues(const string &name){
 	return &Variables[index]->GetValues();
 }
 
-DLLEXPORT bool NamedVars::GetValues(const string &name, vector<const VariableBlock*> &receiver) const{
+DLLEXPORT bool NamedVars::GetValues(const std::string &name, vector<const VariableBlock*> &receiver) const{
 	GUARD_LOCK();
 	auto index = Find(guard, name);
 	// index check //
@@ -1005,7 +1005,7 @@ DLLEXPORT bool NamedVars::GetValues(const string &name, vector<const VariableBlo
 	return true;
 }
 
-DLLEXPORT std::shared_ptr<NamedVariableList> NamedVars::GetValueDirect(const string &name) const{
+DLLEXPORT std::shared_ptr<NamedVariableList> NamedVars::GetValueDirect(const std::string &name) const{
 	GUARD_LOCK();
 	auto index = Find(guard, name);
 	// index check //
@@ -1015,7 +1015,7 @@ DLLEXPORT std::shared_ptr<NamedVariableList> NamedVars::GetValueDirect(const str
 	return Variables[index];
 }
 
-DLLEXPORT NamedVariableList* NamedVars::GetValueDirectRaw(const string &name) const{
+DLLEXPORT NamedVariableList* NamedVars::GetValueDirectRaw(const std::string &name) const{
 	GUARD_LOCK();
 	auto index = Find(guard, name);
 	// index check //
@@ -1048,7 +1048,7 @@ DLLEXPORT std::string Leviathan::NamedVars::Serialize(const std::string &linepre
 }
 
 // ------------------------------------ //
-DLLEXPORT int NamedVars::GetVariableType(const string &name) const{
+DLLEXPORT int NamedVars::GetVariableType(const std::string &name) const{
 	GUARD_LOCK();
 	// call overload //
 	return GetVariableType(guard, Find(guard, name));
@@ -1059,7 +1059,7 @@ DLLEXPORT int NamedVars::GetVariableType(Lock &guard, size_t index) const{
 	return Variables[index]->GetVariableType();
 }
 
-DLLEXPORT int NamedVars::GetVariableTypeOfAll(const string &name) const{
+DLLEXPORT int NamedVars::GetVariableTypeOfAll(const std::string &name) const{
 	GUARD_LOCK();
 	// call overload //
 	return GetVariableTypeOfAll(guard, Find(guard, name));
@@ -1083,18 +1083,18 @@ DLLEXPORT bool NamedVars::GetName(size_t index, string &name) const{
 	return true;
 }
 
-void NamedVars::SetName(Lock &guard, size_t index, const string &name){
+void NamedVars::SetName(Lock &guard, size_t index, const std::string &name){
 
 	Variables[index]->SetName(name);
 }
 
-void NamedVars::SetName(const string &oldname, const string &name){
+void NamedVars::SetName(const std::string &oldname, const std::string &name){
 	GUARD_LOCK();
 	// call overload //
 	SetName(guard, Find(guard, oldname), name);
 }
 
-bool NamedVars::CompareName(size_t index, const string &name) const{
+bool NamedVars::CompareName(size_t index, const std::string &name) const{
 	GUARD_LOCK();
     
     return Variables[index]->CompareName(name);
@@ -1114,7 +1114,7 @@ DLLEXPORT void NamedVars::AddVar(NamedVariableList* newvaluetoadd){
 	Variables.push_back(shared_ptr<NamedVariableList>(newvaluetoadd));
 }
 
-DLLEXPORT void NamedVars::AddVar(const string &name, VariableBlock* valuetosteal){
+DLLEXPORT void NamedVars::AddVar(const std::string &name, VariableBlock* valuetosteal){
 	GUARD_LOCK();
 	RemoveIfExists(name, guard);
 	// create new smart pointer and push back //
@@ -1128,12 +1128,12 @@ void NamedVars::Remove(size_t index){
 	Variables.erase(Variables.begin()+index);
 }
 
-DLLEXPORT void NamedVars::Remove(const string &name){
+DLLEXPORT void NamedVars::Remove(const std::string &name){
 	// call overload //
 	Remove(Find(name));
 }
 
-DLLEXPORT void NamedVars::RemoveIfExists(const string &name, Lock &guard){
+DLLEXPORT void NamedVars::RemoveIfExists(const std::string &name, Lock &guard){
 	// Try  to find it //
 	size_t index = Find(guard, name);
 
@@ -1144,7 +1144,7 @@ DLLEXPORT void NamedVars::RemoveIfExists(const string &name, Lock &guard){
     Variables.erase(Variables.begin()+index);
 }
 // ------------------------------------ //
-bool NamedVars::LoadVarsFromFile(const string &file, LErrorReporter* errorreport){
+bool NamedVars::LoadVarsFromFile(const std::string &file, LErrorReporter* errorreport){
 	// call datadump loaded with this object's vector //
 	return FileSystem::LoadDataDump(file, Variables, errorreport);
 }
@@ -1156,7 +1156,7 @@ void NamedVars::SetVec(vector<shared_ptr<NamedVariableList>>& vec){
 	Variables = vec;
 }
 // ------------------------------------ //
-DLLEXPORT size_t NamedVars::Find(Lock &guard, const string &name) const{
+DLLEXPORT size_t NamedVars::Find(Lock &guard, const std::string &name) const{
 	for(size_t i = 0; i < Variables.size(); i++){
 		if(Variables[i]->CompareName(name))
 			return i;
@@ -1166,7 +1166,7 @@ DLLEXPORT size_t NamedVars::Find(Lock &guard, const string &name) const{
 }
 // ------------------ Script compatible functions ------------------ //
 #ifdef USING_ANGELSCRIPT
-ScriptSafeVariableBlock* NamedVars::GetScriptCompatibleValue(const string &name){
+ScriptSafeVariableBlock* NamedVars::GetScriptCompatibleValue(const std::string &name){
 	// Use a try block to not throw exceptions to the script engine //
 	try{
 		VariableBlock& tmpblock = GetValueNonConst(name);

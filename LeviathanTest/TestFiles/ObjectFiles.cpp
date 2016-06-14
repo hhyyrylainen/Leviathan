@@ -287,7 +287,7 @@ TEST_CASE("Object file saving", "[objectfile]") {
 }
 
 
-TEST_CASE("Fabricators permissions parse test", "[objectfile]") {
+TEST_CASE("Fabricators permissions parse test", "[objectfile, fabricators]") {
 
     constexpr auto File = "permissions_version: 1;\n"
         "\n"
@@ -335,3 +335,110 @@ TEST_CASE("Fabricators permissions parse test", "[objectfile]") {
     CHECK(nodes.GetValueDirect("core.kill")->GetValue().ConvertAndReturnVariable<std::string>() == "default");
 
 }
+
+TEST_CASE("Fabricators permissions full default file", "[objectfile, fabricators]") {
+
+    constexpr auto DefaultPermissions = "permissions_version: 1;\n"
+    "\n"
+    "o Rank \"default\"{\n"
+    "    \n"
+    "    l values{\n"
+    "        is_default: true\n"
+    "        chat_prefix: \"[NEW] \"\n"
+    "        auto_promote: \"1hr\"\n"
+    "    }\n"
+    "    \n"
+    "    l nodes{\n"
+    "        core.tp.request: true\n"
+    "        core.home: true\n"
+    "        core.kill.self: true\n"
+    "        core.kill: default\n"
+    "        core.kill.other: false\n"
+    "    }\n"
+    "}\n"
+    "\n"
+    "o Rank \"builder\"{\n"
+    "    l values{\n"
+    "        auto_promote: \"100hr\"\n"
+    "        next_of: default\n"
+    "    }\n"
+    "    \n"
+    "    l nodes{\n"
+    "        core.tp.home: true\n"
+    "    }\n"
+    "}\n"
+    "    \n"
+    "o Rank \"regular\"{\n"
+    "    l values{\n"
+    "        chat_prefix: \"[REG] \"\n"
+    "        next_of: builder\n"
+    "    }\n"
+    "    \n"
+    "    l nodes{\n"
+    "        core.tp: true\n"
+    "        core.kill.self: true\n"
+    "        core.votekick: true\n"
+    "    }\n"
+    "}\n"
+    "\n"
+    "o Rank \"vip\"{\n"
+    "    l values{\n"
+    "        chat_prefix: \"[VIP] \"\n"
+    "        next_of: regular\n"
+    "    }\n"
+    "    \n"
+    "    l nodes{\n"
+    "        core.vip.hurray: true\n"
+    "    }\n"
+    "}\n"
+    "    \n"
+    "o Rank \"moderator\"{\n"
+    "    l values{\n"
+    "        next_of: vip\n"
+    "        chat_prefix: \"[MOD] \"\n"
+    "    }\n"
+    "    \n"
+    "    l nodes{\n"
+    "        core.tp: true\n"
+    "        core.tp.other: true\n"
+    "        core.kill: true\n"
+    "        core.kill.other: true\n"
+    "        core.home: inherit\n"
+    "        core.ban: true\n"
+    "        core.chat.mod: true\n"
+    "        core.vip.hurray: false\n"
+    "    }\n"
+    "}\n"
+    "\n"
+    "o Rank \"admin\"{\n"
+    "    l values{\n"
+    "        next_of: moderator\n"
+    "        chat_prefix: \"[ADMIN] \"\n"
+    "    }\n"
+    "    \n"
+    "    l nodes{\n"
+    "        core.ban.no-verify: true\n"
+    "    }\n"
+    "}\n"
+    "\n"
+    "o Rank \"owner\"{\n"
+    "    l values{\n"
+    "        next_of: admin\n"
+    "        chat_prefix: \"[OWNER] \"\n"
+    "    }\n"
+    "    \n"
+    "    l nodes{\n"
+    "        *: true\n"
+    "        core.vip.hurray: false\n"
+    "    }\n"
+    "}";
+
+    DummyReporter Errors;
+    
+    auto FileObj = Leviathan::ObjectFileProcessor::ProcessObjectFileFromString(
+        std::string(DefaultPermissions), 
+        "DefaultPermissionsStr", &Errors);
+
+    REQUIRE(FileObj);
+}
+

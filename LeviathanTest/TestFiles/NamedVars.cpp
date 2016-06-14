@@ -360,3 +360,13 @@ TEST_CASE("Parsing values back from ToText", "[variable, datablock]") {
         CHECK(returned.GetValue() == original.GetValue());
     }
 }
+
+TEST_CASE("Access name"){
+
+    // Not that useful, for making sure functions are defined properly
+    Leviathan::NamedVariableList list("name thing", new VariableBlock(24));
+
+    CHECK(list.GetName() == "name thing");
+    CHECK(list.GetValue().ConvertAndReturnVariable<int>() == 24);
+
+}

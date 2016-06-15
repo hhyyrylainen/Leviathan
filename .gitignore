@@ -15,10 +15,11 @@ SFML/
 *.dia
 *.dia~
 *.*~
-AngelScript/sdk/samples/
-AngelScript/sdk/angelscript/source/
-AngelScript/sdk/angelscript/lib/
-AngelScript/sdk/angelscript/projects/
+/AngelScript/add_on
+/AngelScript/include
+/Breakpad/bin
+/Breakpad/include
+/Newton/bin
 Engine/Include.h
 *.sln
 *.7z
@@ -51,3 +52,4 @@ Leap/head_sha.txt
 Leap/include
 Leap/util
 Leap/version.txt
+/SDK

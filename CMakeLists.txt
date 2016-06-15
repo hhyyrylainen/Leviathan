@@ -5,9 +5,9 @@ project(Leviathan)
 
 # version number
 set(LEVIATHAN_VERSION_STABLE 0)
-set(LEVIATHAN_VERSION_MAJOR 7)
-set(LEVIATHAN_VERSION_MINOR 1)
-set(LEVIATHAN_VERSION_PATCH 1)
+set(LEVIATHAN_VERSION_MAJOR 8)
+set(LEVIATHAN_VERSION_MINOR 0)
+set(LEVIATHAN_VERSION_PATCH 0)
 
 set(LEVIATHAN_VERSION_STR ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}.${LEVIATHAN_VERSION_MINOR}.${LEVIATHAN_VERSION_PATCH})
 set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LEVIATHAN_VERSION_MINOR}${LEVIATHAN_VERSION_PATCH})
@@ -30,7 +30,7 @@ include(cotire)
 include(LeviathanUtility)
 
 # Just in case some unity builds are broken
-set_property(DIRECTORY PROPERTY COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY")
+#set_property(DIRECTORY PROPERTY COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY")
 
 ######### Options
     
@@ -39,14 +39,14 @@ option(CREATE_UE4_PLUGIN "If set to ON creates a static version without any exte
 option(USE_ANGELSCRIPT "For using AngelScript, required for normal builds" ON)
 option(USE_BOOST "For using AngelScript, required for normal builds" ON)
 option(USE_OGRE "For using Ogre and direct dependencies, required for normal builds" ON)
-option(USE_SFML "For using SFML, required for normal builds" ON)
 option(USE_NEWTON "For using Newton, required for normal builds" ON)
+option(USE_CAUDIO "For using cAudio, required for normal builds" ON)
     
 option(CREATE_STATIC "Set to ON to create static libraries instead of shared" OFF)
     
 option(COPY_DEBUG_LIBS "When set copies debug libraries" OFF)
 # \todo this option to copy right libs
-option(INSTALL_CREATE_SDK   "For creating SDKs for developers" OFF)
+option(CREATE_SDK "For creating SDKs for developers" ON)
 
 # Automatically builds symbols as part of the build and enables google breakpad handler
 option(USE_BREAKPAD "For enabling google breakpad crash handling, set off for local debugging" ON)
@@ -57,18 +57,26 @@ option(COPY_BOOST_TO_PACKAGE "For copying all boost libraries to run on system t
 set(CMAKE_INSTALL_PREFIX "./Install" CACHE FILEPATH "Install path")
 
 if(CREATE_UE4_PLUGIN)
-    message(STATUS "Creating UE4 Compatible Static Library")
-    set(USE_ANGELSCRIPT OFF)
-    set(USE_BOOST OFF)
-    set(USE_OGRE OFF)
-    set(USE_SFML OFF)
-    set(USE_NEWTON OFF)
-    set(COPY_BOOST_TO_PACKAGE OFF)
-    set(CREATE_STATIC ON)
-    set(USE_BREAKPAD OFF)
-    
-    set(CMAKE_INSTALL_PREFIX "./UE4_Plugin")
+  
+  message(STATUS "Creating UE4 Compatible Static Library")
+  set(USE_ANGELSCRIPT OFF)
+  set(USE_BOOST OFF)
+  set(USE_OGRE OFF)
+  set(USE_NEWTON OFF)
+  set(COPY_BOOST_TO_PACKAGE OFF)
+  set(CREATE_STATIC ON)
+  set(USE_BREAKPAD OFF)
+  set(USE_CAUDIO OFF)
+  
+  set(CMAKE_INSTALL_PREFIX "./UE4_Plugin")
+  
+elseif(CREATE_SDK)
+
+  set(CMAKE_INSTALL_PREFIX "../SDK")
+  
 endif()
+
+
 
 if(${USE_BREAKPAD})
   set(BREAKPAD_STATE 1)

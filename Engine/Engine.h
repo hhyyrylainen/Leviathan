@@ -1,3 +1,5 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
@@ -8,6 +10,7 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <memory>
 
 
 namespace Leviathan{
@@ -21,7 +24,7 @@ namespace Leviathan{
 		friend GraphicalInputEntity;
 		friend Gui::GuiManager;
         friend GameWorld;
-	public:
+    public:
 		DLLEXPORT Engine(LeviathanApplication* owner);
 		DLLEXPORT ~Engine();
 
@@ -106,9 +109,12 @@ namespace Leviathan{
 		DLLEXPORT PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
 		DLLEXPORT NetworkHandler* GetNetworkHandler(){ return _NetworkHandler; };
 		DLLEXPORT ThreadingManager* GetThreadingManager(){ return _ThreadingManager; };
-		DLLEXPORT ResourceRefreshHandler* GetResourceRefreshHandler(){ return _ResourceRefreshHandler; };
-        DLLEXPORT EntitySerializerManager* GetEntitySerializerManager(){ return _EntitySerializerManager; };
-        DLLEXPORT ConstraintSerializerManager* GetConstraintSerializerManager(){ return _ConstraintSerializerManager; };
+		DLLEXPORT ResourceRefreshHandler* GetResourceRefreshHandler(){
+            return _ResourceRefreshHandler; };
+        DLLEXPORT EntitySerializerManager* GetEntitySerializerManager(){
+            return _EntitySerializerManager; };
+        DLLEXPORT ConstraintSerializerManager* GetConstraintSerializerManager(){
+            return _ConstraintSerializerManager; };
         DLLEXPORT AINetworkCache* GetAINetworkCache(){ return _AINetworkCache; };
 
 #ifdef LEVIATHAN_USES_LEAP
@@ -121,11 +127,6 @@ namespace Leviathan{
 		DLLEXPORT static Engine* GetEngine();
 		DLLEXPORT static Engine* Get();
 
-		// For NoGui mode //
-#ifdef _WIN32
-		DLLEXPORT static void WinAllocateConsole();
-#endif
-
 	protected:
 		// after load function //
 		void PostLoad();
@@ -137,7 +138,8 @@ namespace Leviathan{
         //! \brief Sets the tick clock to a certain value
         //! \note Should only be used to match the server's clock
         //! \param amount The amount of time in milliseconds to set or change
-        //! \param absolute When true sets the time until a tick to amount otherwise changes the remaining
+        //! \param absolute When true sets the time until a tick to amount otherwise
+        //! changes the remaining
         //! time by amount
         void _AdjustTickClock(int amount, bool absolute = true);
 
@@ -145,40 +147,46 @@ namespace Leviathan{
         //! \note Should only be called on the client as this may break some simulations
         void _AdjustTickNumber(int tickamount, bool absolute);
 
-		// ------------------------------------ //
-		AppDef* Define;
-
-		RenderingStatistics* RenderTimer;
-		Graphics* Graph;
+        //! Console input comes through this
+        bool _ReceiveConsoleInput(const std::string &command);
         
-		GraphicalInputEntity* GraphicalEntity1;
+		// ------------------------------------ //
+		AppDef* Define = nullptr;
+
+		RenderingStatistics* RenderTimer = nullptr;
+		Graphics* Graph = nullptr;
+        
+		GraphicalInputEntity* GraphicalEntity1 = nullptr;
         std::vector<GraphicalInputEntity*> AdditionalGraphicalEntities;
 
-		SoundDevice* Sound;
-		DataStore* Mainstore;
-		EventHandler* MainEvents;
-		ScriptExecutor* MainScript;
-		ScriptConsole* MainConsole;
-		FileSystem* MainFileHandler;
-		Random* MainRandom;
-		OutOfMemoryHandler* OutOMemory;
-		NewtonManager* _NewtonManager;
-		PhysicsMaterialManager* PhysMaterials;
-		NetworkHandler* _NetworkHandler;
-		ThreadingManager* _ThreadingManager;
-		RemoteConsole* _RemoteConsole;
-		ResourceRefreshHandler* _ResourceRefreshHandler;
-        EntitySerializerManager* _EntitySerializerManager;
-        ConstraintSerializerManager* _ConstraintSerializerManager;
-        AINetworkCache* _AINetworkCache;
+		SoundDevice* Sound = nullptr;
+		DataStore* Mainstore = nullptr;
+		EventHandler* MainEvents = nullptr;
+		ScriptExecutor* MainScript = nullptr;
+		ScriptConsole* MainConsole = nullptr;
+		FileSystem* MainFileHandler = nullptr;
+		Random* MainRandom = nullptr;
+		OutOfMemoryHandler* OutOMemory = nullptr;
+		NewtonManager* _NewtonManager = nullptr;
+		PhysicsMaterialManager* PhysMaterials = nullptr;
+		NetworkHandler* _NetworkHandler = nullptr;
+		ThreadingManager* _ThreadingManager = nullptr;
+		RemoteConsole* _RemoteConsole = nullptr;
+		ResourceRefreshHandler* _ResourceRefreshHandler = nullptr;
+        EntitySerializerManager* _EntitySerializerManager = nullptr;
+        ConstraintSerializerManager* _ConstraintSerializerManager = nullptr;
+        AINetworkCache* _AINetworkCache = nullptr;
+
+        
+        std::unique_ptr<ConsoleInput> _ConsoleInput;
 
 #ifdef LEVIATHAN_USES_LEAP
-		LeapManager* LeapData;
+		LeapManager* LeapData = nullptr;
 #endif
 
 
-		IDFactory* IDDefaultInstance;
-		LeviathanApplication* Owner;
+		IDFactory* IDDefaultInstance = nullptr;
+		LeviathanApplication* Owner = nullptr;
         
 		//! List of current worlds
 		std::vector<std::shared_ptr<GameWorld>> GameWorlds;
@@ -192,38 +200,35 @@ namespace Leviathan{
 		// data //
 		int64_t LastTickTime;
         
-		int TimePassed;
-		int FrameLimit;
-		int TickCount;
-		int TickTime;
-		int FrameCount;
+		int TimePassed = 0;
+		int FrameLimit = 0;
+		int TickCount = 0;
+        int TickTime = 0;
+        int FrameCount = 0;
 
 		//! Set when PreRelease is called and Tick has happened
-		bool PreReleaseDone;
+		bool PreReleaseDone = false;
         
 		//! Set when PreRelease called and waiting for Tick
 		//! see PreReleaseDone
-		bool PreReleaseWaiting;
+		bool PreReleaseWaiting = false;
 
         // Engine settings //
-		bool NoGui;
-		bool NoLeap;
-        bool NoSTDInput;
+		bool NoGui = false;
+		bool NoLeap = false;
+        bool NoSTDInput = false;
 
         //! \brief Set to true when initialized as a client
         //!
         //! Used to call client specific events
-        bool IsClient;
+        bool IsClient = false;
 
 		// Marks that the Engine has already done prerelease //
-		bool PreReleaseCompleted;
+		bool PreReleaseCompleted = false;
 
 
 		// Stores the command line before running it //
 		std::vector<std::unique_ptr<std::string>> PassedCommands;
-
-		// NoGui input handler //
-		std::thread CinThread;
 
 		static Engine* instance;
 	};

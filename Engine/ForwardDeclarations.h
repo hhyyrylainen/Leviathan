@@ -40,6 +40,7 @@ namespace Leviathan{
     class RenderingStatistics;
     class IDFactory;
     class Time;
+    class ConsoleInput;
 
     class Locker;
 

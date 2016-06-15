@@ -3,14 +3,10 @@
 #include "@ProgramNetHeader@"
 #include "resource.h"
 
-#if @BREAKPAD_STATE@ == 1
-#define USE_BREAKPAD 1
-#else
-#undef USE_BREAKPAD
-#endif
+#define USE_BREAKPAD @USE_BREAKPAD@
 
 // Breakpad is used to detect and report crashes
-#ifdef USE_BREAKPAD
+#if USE_BREAKPAD == ON
 #ifdef __linux
 #include "client/linux/handler/exception_handler.h"
 #elif defined(_WIN32)
@@ -25,7 +21,7 @@ using namespace std;
 
 // Don't look at the mess ahead, just set the variables in your cmake file //
 
-#ifdef USE_BREAKPAD
+#if USE_BREAKPAD == ON
 #ifdef _WIN32
 #ifndef _DEBUG
 bool DumpCallback(const wchar_t* dump_path,
@@ -48,11 +44,6 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* c
 }
 #endif
 #endif //USE_BREAKPAD
-
-#ifdef LEVIATHAN_USES_VLD
-// visual leak detector //
-#include <vld.h>
-#endif // LEVIATHAN_USES_VLD
 
 #ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
@@ -83,13 +74,7 @@ int main(int argcount, char* args[]){
 
 #endif
 
-#ifdef LEVIATHAN_USES_VLD
-    // now that we are in code we can start tracking //
-
-    VLDEnable();
-#endif // LEVIATHAN_USES_VLD
-
-#ifdef USE_BREAKPAD
+#if USE_BREAKPAD == ON
     // Crash handler //
 #ifdef _WIN32
 #ifndef _DEBUG
@@ -104,10 +89,6 @@ int main(int argcount, char* args[]){
 
     google_breakpad::ExceptionHandler ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);
 #endif
-
-
-    
-
 #endif //USE_BREAKPAD
     
     // create program object //

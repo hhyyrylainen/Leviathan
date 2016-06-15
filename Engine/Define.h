@@ -1,6 +1,7 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
 #include "Include.h"
-
 
 #include "ForwardDeclarations.h"
 #include "Entities/EntityCommon.h"
@@ -41,6 +42,12 @@ namespace Leviathan{
     static const float EPSILON = 0.00000001f;
 }
 
+// Logging macros //
+LOG_INFO(x) Logger::Get()->Info(x);
+LOG_WARNING(x) Logger::Get()->Warning(x);
+LOG_ERROR(x) Logger::Get()->Error(x);
+LOG_WRITE(x) Logger::Get()->Write(x);
+
 
 #ifdef _MSC_VER
 
@@ -72,4 +79,9 @@ namespace Leviathan{
 
 #define SAFE_DELETE_VECTOR(x) for(size_t vdind = 0; vdind < x.size(); ++vdind){if(x[vdind]){delete x[vdind];}}; \
     x.clear();
+
+
+#ifdef LEVIATHAN_FULL
+#include "Logger.h"
+#endif // LEVIATHAN_FULL
 

@@ -53,3 +53,4 @@ Leap/include
 Leap/util
 Leap/version.txt
 /SDK
+/compile-commands.json

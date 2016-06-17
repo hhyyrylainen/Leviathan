@@ -203,13 +203,17 @@ if(USE_LEAP)
 endif()
 
 # collect all files to one group
-set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics} ${GroupMath} ${GroupSound}
+set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
+  ${GroupMath} ${GroupSound}
     ${GroupScript} ${GroupGUI}  ${GroupEvents}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
-    ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
+    ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte}
+    ${GroupUtilityFile}
     ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
-    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators} ${GroupGameplay} 
-    ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp} ${GeneratorInput} ${GroupGeneratedFiles}
+    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators}
+    ${GroupGameplay} 
+    ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp}
+    ${GeneratorInput} ${GroupGeneratedFiles}
     ${Grouputf8})
     
 if(USE_LEAP)
@@ -233,8 +237,9 @@ set(FinalEngineLinkLibraries ${Boost_LIBRARIES} ${OGRE_LIBRARIES} ${OIS_LIBRARIE
   ${ADDITIONAL_OGRE} ${ALL_CEGUI_LIBRARIES} ${SFML_LIBRARIES} ${cAudio_LIBRARIES})
 
 if(NOT WIN32)
-# Link with X11 and threads
-set(FinalEngineLinkLibraries ${FinalEngineLinkLibraries} ${X11_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+  # Link with X11 and threads
+  set(FinalEngineLinkLibraries ${FinalEngineLinkLibraries} ${X11_LIBRARIES} ${X11_Xmu_LIB}
+    ${CMAKE_THREAD_LIBS_INIT})
 
 endif(NOT WIN32)
 

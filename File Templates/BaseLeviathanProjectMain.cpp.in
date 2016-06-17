@@ -3,10 +3,10 @@
 #include "@ProgramNetHeader@"
 #include "resource.h"
 
-#define USE_BREAKPAD @USE_BREAKPAD@
+#include "LeviathanMainDll.h"
 
 // Breakpad is used to detect and report crashes
-#if USE_BREAKPAD == ON
+#ifdef LEVIATHAN_USING_BREAKPAD
 #ifdef __linux
 #include "client/linux/handler/exception_handler.h"
 #elif defined(_WIN32)
@@ -21,7 +21,7 @@ using namespace std;
 
 // Don't look at the mess ahead, just set the variables in your cmake file //
 
-#if USE_BREAKPAD == ON
+#if LEVIATHAN_USING_BREAKPAD
 #ifdef _WIN32
 #ifndef _DEBUG
 bool DumpCallback(const wchar_t* dump_path,
@@ -56,11 +56,11 @@ int main(int argcount, char* args[]){
 #endif
     
 #ifdef _WIN32
-    string commandline = lpCmdLine;
+    std::string commandline = lpCmdLine;
 #else
-    string commandline = "";
+    std::string commandline = "";
     for(int i = 1; i < argcount; i++){
-        commandline += string(" ")+args[i];
+        commandline += std::string(" ") + args[i];
     }
 #endif
     
@@ -74,7 +74,7 @@ int main(int argcount, char* args[]){
 
 #endif
 
-#if USE_BREAKPAD == ON
+#if LEVIATHAN_USING_BREAKPAD
     // Crash handler //
 #ifdef _WIN32
 #ifndef _DEBUG
@@ -95,7 +95,8 @@ int main(int argcount, char* args[]){
     @PROGRAMCLASSNAME@ app;
     @PROGRAMNETWORKINGNAME@ network;
 
-    unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine("@PROGRAMLOG@", "@ENGINECONFIGURATION@", 
+    unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine("@PROGRAMLOG@",
+            "@ENGINECONFIGURATION@", 
         "@PROGRAMCONFIGURATION@", "@PROGRAMKEYCONFIGURATION@", &@PROGRAMCHECKCONFIGFUNCNAME@,
         &@PROGRAMCHECKKEYCONFIGFUNCNAME@));
         
@@ -125,7 +126,7 @@ int main(int argcount, char* args[]){
         app.FlushCommandLine();
 
 
-        Logger::Get()->Info("Engine successfully initialized");
+        Logger::Get()->Info(std::string("Engine successfully initialized"));
         Return = app.RunMessageLoop();
     } else {
         Logger::Get()->Error("App init failed, closing");

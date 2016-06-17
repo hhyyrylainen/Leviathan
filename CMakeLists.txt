@@ -79,19 +79,14 @@ elseif(CREATE_SDK)
 endif()
 
 
+if(USE_BREAKPAD)
 
-if(${USE_BREAKPAD})
-  set(BREAKPAD_STATE 1)
-else()
-  set(BREAKPAD_STATE 0)
-endif()
-
-set(BREAKPAD_DIR "" CACHE FILEPATH "Path to the base directory of google breakpad installation")
-
-if(${USE_BREAKPAD})
-  if(NOT EXISTS "${BREAKPAD_DIR}/src")
-    message(SEND_ERROR "Breakpad directory is missing")
+  if(NOT EXISTS "${CMAKE_SOURCE_DIR}/Breakpad/include")
+    message(SEND_ERROR "Breakpad include dir is missing")
   endif()
+
+  include_directories("${CMAKE_SOURCE_DIR}/Breakpad/include")
+  
 endif()
 
 # Whether to use Javascript or php search in doxygen
@@ -174,13 +169,22 @@ else(WIN32)
 
   # Has to be on one line or else ';'s will be included
   # C++14
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-unused-function -Wno-unknown-pragmas -Wno-unused-variable -Wl,--no-undefined -Wno-pragma-once-outside-header")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-unused-function -Wno-unknown-pragmas -Wno-unused-variable -Wl,--no-undefined -Wl,--no-allow-shlib-undefined -Wno-pragma-once-outside-header")
   # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder")
   
   # We need X11 on linux for window class to work
   find_package(X11)
   find_package(Threads)
 
+  if(NOT X11_FOUND)
+    message(SEND_ERROR "Failed to find X11")
+  endif()
+
+  # We need XMU X11 extension for clipboard
+  if(NOT X11_Xmu_FOUND)
+    message(SEND_ERROR "Failed to find X11-Xmu")
+  endif()
+  
   include_directories(${X11_INCLUDE_DIR})
 endif(WIN32)
 
@@ -382,6 +386,10 @@ DefinePreprocessorMacro(USE_NEWTON LEVIATHAN_USING_NEWTON)
 DefinePreprocessorMacro(USE_SFML LEVIATHAN_USING_SFML)
 DefinePreprocessorMacro(USE_LEAP LEVIATHAN_USING_LEAP)
 
+DefinePreprocessorMacro(USE_BREAKPAD LEVIATHAN_USING_BREAKPAD)
+
+
+
 DefinePreprocessorMacro(CREATE_UE4_PLUGIN LEVIATHAN_CREATE_UE4_PLUGIN)
 
 # Configure engine include file
@@ -420,31 +428,8 @@ file(COPY "${PROJECT_SOURCE_DIR}/MoveSymbolFile.sh"
   DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
 
 # Copy the tools
-if(USE_BREAKPAD)
-    if(UNIX)
-
-      if(EXISTS "${BREAKPAD_DIR}/src/tools/linux/dump_syms/dump_syms" AND EXISTS "${BREAKPAD_DIR}/src/processor/minidump_stackwalk")
-        file(COPY "${BREAKPAD_DIR}/src/tools/linux/dump_syms/dump_syms" "${BREAKPAD_DIR}/src/processor/minidump_stackwalk" 
-          DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
-      endif()
-
-    elseif(WIN32)
-
-      if(EXISTS "${BREAKPAD_DIR}/src/tools/windows/binaries/dump_syms.exe")
-        
-        file(COPY "${BREAKPAD_DIR}/src/tools/windows/binaries/dump_syms.exe" DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
-        
-      else()
-        
-        message(SEND_ERROR "Didn't find breakpad symbol dumber, did you forget to run "
-          "${BREAKPAD_DIR}/src/tools/windows/refresh_binaries.bat")
-        
-      endif()
-
-    endif()
-endif(USE_BREAKPAD)
-
 # Set the symbol tool name
+
 if(UNIX)
   set(SYMBOL_EXTRACTOR "./CreateSymbolsForTarget.sh")
 elseif(WIN32)

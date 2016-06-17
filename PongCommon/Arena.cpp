@@ -644,14 +644,17 @@ std::string Pong::Arena::GetMaterialNameForPlayerColour(const Float4 &colour){
 	}
 
 	// Create new //
-    // The prefix in the name allows the clients to generate the texture when they need to use it
-	string generatename = "/Generated/Colour_"+Convert::Float4ToString<stringstream, string>(colour)+"_PaddleMaterial";
+    // The prefix in the name allows the clients to generate the texture when they need to
+    // use it
+    std::stringstream generatename;
+	generatename << "/Generated/Colour_" << colour << "_PaddleMaterial";
 
 	// Generate (only in graphical mode) //
     if(!Engine::Get()->GetNoGui())
-        Leviathan::TextureGenerator::LoadSolidColourLightMaterialToMemory(generatename, colour);
+        Leviathan::TextureGenerator::LoadSolidColourLightMaterialToMemory(
+            generatename.str(), colour);
 
-	ColourMaterialName[colour] = generatename;
-	return generatename;
+	ColourMaterialName[colour] = generatename.str();
+	return generatename.str();
 }
 

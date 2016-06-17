@@ -7,12 +7,14 @@
 
 
 // Returning 0 (as opposed to 1) disables the collision between the objects //
-typedef int  (*PhysicsMaterialAABBCallback) (const NewtonMaterial* material, const NewtonBody* body0, const NewtonBody*
-    body1, int threadIndex);
+typedef int  (*PhysicsMaterialAABBCallback)
+    (const NewtonMaterial* material, const NewtonBody* body0, const NewtonBody* body1,
+        int threadIndex);
 
 // This function is called every time for a collision point between the materials.
 // This is recommended to be used for playing sound effects.
-typedef void (*PhysicsMaterialContactCallback) (const NewtonJoint* contact, dFloat timestep, int threadIndex);
+typedef void (*PhysicsMaterialContactCallback) (const NewtonJoint* contact, dFloat timestep,
+    int threadIndex);
 
 namespace Leviathan{
 
@@ -65,7 +67,8 @@ namespace Leviathan{
 		}
         
 		//! \brief Sets the callback functions that are called when the material interacts
-		DLLEXPORT inline PhysMaterialDataPair& SetCallbacks(const PhysicsMaterialAABBCallback aabb,
+		DLLEXPORT inline PhysMaterialDataPair& SetCallbacks(
+            const PhysicsMaterialAABBCallback aabb,
             const PhysicsMaterialContactCallback contact)
         {
 

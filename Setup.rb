@@ -184,6 +184,9 @@ class Newton < BaseDep
     
     FileUtils.mkdir_p libfolder
     FileUtils.mkdir_p binfolder
+    FileUtils.mkdir_p includefolder
+
+    FileUtils.cp File.join(@Folder, "coreLibrary_300/source/newton", "Newton.h"), includefolder
     
     if BuildPlatform == "linux"
 

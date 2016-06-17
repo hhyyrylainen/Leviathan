@@ -1,10 +1,13 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "Application/Application.h"
 
-// Some core classes that most likely won't conflict are brought to the global namespace here with 'using' statements //
+// Some core classes that most likely won't conflict are brought to the global namespace here
+// with 'using' statements
 
 using Leviathan::Locker;
 using Leviathan::Mutex;

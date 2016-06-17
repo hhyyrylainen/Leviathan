@@ -305,7 +305,7 @@ void Physics::ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat
 	float Iyy; 
 	float Izz; 
 
-	NewtonBodyGetMassMatrix(body, &mass, &Ixx, &Iyy, &Izz);
+	NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
 
     GUARD_LOCK_OTHER(tmp);
 

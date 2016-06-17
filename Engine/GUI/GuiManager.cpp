@@ -23,7 +23,7 @@
 #include <boost/assign/list_of.hpp>
 #include <thread>
 
-#ifdef __linux
+#ifdef __linux__
 // On linux the GuiManager has to create an Xlib window which requires this include...
 #include "XLibInclude.h"
 
@@ -34,9 +34,11 @@
 // ------------------ GuiClipboardHandler ------------------ //
 //! \brief Platform dependent clipboard handler
 //! \todo Add support for linux
-class Leviathan::Gui::GuiClipboardHandler : public CEGUI::NativeClipboardProvider, public ThreadSafe{
+class Leviathan::Gui::GuiClipboardHandler :
+    public CEGUI::NativeClipboardProvider, public ThreadSafe{
 public:
-	GuiClipboardHandler(Leviathan::Window* windprovider) : HWNDSource(windprovider), OurOwnedBuffer(NULL)
+	GuiClipboardHandler(Leviathan::Window* windprovider) :
+        HWNDSource(windprovider), OurOwnedBuffer(NULL)
     {
 #ifdef __linux
         WaitingClipboard = false;
@@ -412,7 +414,8 @@ private:
                     if(OurOwnedBuffer){
                     
                         if((event.xselectionrequest.target == XA_STRING ||
-                                (event.xselectionrequest.target == XA_UTF8_STRING(XDisplay))) &&
+                                (event.xselectionrequest.target == XA_UTF8_STRING(XDisplay)))
+                            &&
                                 event.xselectionrequest.selection == XA_CLIPBOARD(XDisplay))
                         {
 
